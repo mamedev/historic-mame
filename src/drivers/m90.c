@@ -50,7 +50,7 @@ static void set_m90_bank(void)
 	data8_t *rom = memory_region(REGION_USER1);
 
 	if (!rom)
-		usrintf_showmessage("bankswitch with no banked ROM!");
+		ui_popup("bankswitch with no banked ROM!");
 	else
 		memory_set_bankptr(1,rom + bankaddress);
 }

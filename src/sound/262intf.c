@@ -78,8 +78,7 @@ static void *ymf262_start(int sndindex, int clock, const void *config)
 
 	info->intf = config ? config : &dummy;
 
-	if (options.use_filter)
-		rate = clock/288;
+	rate = clock/288;
 
 	/* stream system initialize */
 	info->chip = YMF262Init(clock,rate);

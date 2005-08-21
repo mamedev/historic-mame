@@ -71,7 +71,8 @@ int K001604_vh_start(void)
 	const char *gamename = Machine->gamedrv->name;
 
 	/* HACK !!! To be removed */
-	if( stricmp(gamename, "thrilld") == 0 || stricmp(gamename, "gticlub") == 0 )
+	if( stricmp(gamename, "thrilld") == 0 || stricmp(gamename, "gticlub") == 0
+		|| stricmp(gamename, "gticlubj") == 0 )
 		width = 256;
 	else
 		width = 128;

@@ -649,12 +649,12 @@ static int deco16_pf_update(
 
 	/* Toggle between 8x8 and 16x16 modes (and master enable bit) */
 	if (control1&0x80) {
-		if (!tilemap_8x8) usrintf_showmessage("Deco16: Playfield switched into 8x8 mode but no tilemap defined");
+		if (!tilemap_8x8) ui_popup("Deco16: Playfield switched into 8x8 mode but no tilemap defined");
 
 		if (tilemap_8x8) tilemap_set_enable(tilemap_8x8,control0&0x80);
 		if (tilemap_16x16) tilemap_set_enable(tilemap_16x16,0);
 	} else {
-		if (!tilemap_16x16) usrintf_showmessage("Deco16: Playfield switched into 16x16 mode but no tilemap defined");
+		if (!tilemap_16x16) ui_popup("Deco16: Playfield switched into 16x16 mode but no tilemap defined");
 
 		if (tilemap_8x8) tilemap_set_enable(tilemap_8x8,0);
 		if (tilemap_16x16) tilemap_set_enable(tilemap_16x16,control0&0x80);
@@ -829,31 +829,28 @@ void deco16_pf34_update(const data16_t *rowscroll_1_ptr, const data16_t *rowscro
 
 void deco16_print_debug_info(struct mame_bitmap *bitmap)
 {
-	char buf[64];
-	int j;
+	char buf[64*5];
 
 	if (code_pressed(KEYCODE_O))
 		return;
 
 	if (deco16_pf12_control) {
-		sprintf(buf,"%04X %04X %04X %04X",deco16_pf12_control[0],deco16_pf12_control[1],deco16_pf12_control[2],deco16_pf12_control[3]);
-		for (j = 0;j< 16+3;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,40,0,TRANSPARENCY_NONE,0);
-		sprintf(buf,"%04X %04X %04X %04X",deco16_pf12_control[4],deco16_pf12_control[5],deco16_pf12_control[6],deco16_pf12_control[7]);
-		for (j = 0;j< 16+3;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,48,0,TRANSPARENCY_NONE,0);
+		sprintf(buf,"%04X %04X %04X %04X\n",deco16_pf12_control[0],deco16_pf12_control[1],deco16_pf12_control[2],deco16_pf12_control[3]);
+		sprintf(&buf[strlen(buf)],"%04X %04X %04X %04X\n",deco16_pf12_control[4],deco16_pf12_control[5],deco16_pf12_control[6],deco16_pf12_control[7]);
 	}
+	else
+		sprintf(buf, "\n\n");
+
 	if (deco16_pf34_control) {
-		sprintf(buf,"%04X %04X %04X %04X",deco16_pf34_control[0],deco16_pf34_control[1],deco16_pf34_control[2],deco16_pf34_control[3]);
-		for (j = 0;j< 16+3;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,60,0,TRANSPARENCY_NONE,0);
-		sprintf(buf,"%04X %04X %04X %04X",deco16_pf34_control[4],deco16_pf34_control[5],deco16_pf34_control[6],deco16_pf34_control[7]);
-		for (j = 0;j< 16+3;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,68,0,TRANSPARENCY_NONE,0);
+		sprintf(&buf[strlen(buf)],"%04X %04X %04X %04X\n",deco16_pf34_control[0],deco16_pf34_control[1],deco16_pf34_control[2],deco16_pf34_control[3]);
+		sprintf(&buf[strlen(buf)],"%04X %04X %04X %04X\n",deco16_pf34_control[4],deco16_pf34_control[5],deco16_pf34_control[6],deco16_pf34_control[7]);
 	}
-	sprintf(buf,"%04X",deco16_priority);
-	for (j = 0;j< 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,80,0,TRANSPARENCY_NONE,0);
+	else
+		sprintf(&buf[strlen(buf)], "\n\n");
+
+	sprintf(&buf[strlen(buf)],"%04X",deco16_priority);
+
+	ui_draw_text(buf,60,40);
 }
 
 /*****************************************************************************************/

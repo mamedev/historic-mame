@@ -413,18 +413,18 @@ VIDEO_UPDATE(rabbit)
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 
-//  usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
-//  usrintf_showmessage("%08x", rabbit_viewregs7[0]);
-//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
-//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
+//  ui_popup("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
+//  ui_popup("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
+//  ui_popup("%08x", rabbit_viewregs7[0]);
+//  ui_popup("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
+//  ui_popup("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
 
-//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
+//  ui_popup("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
 
 	/* prio isnt certain but seems to work.. */
 	for (prilevel = 0xf; prilevel >0; prilevel--)
@@ -1162,18 +1162,18 @@ VIDEO_UPDATE( tmmjprd )
 	tilemap_set_scrolly(rabbit_tilemap[1], 0, rabbit_tilemap_regs[1][2] >> 20);
 	tilemap_set_scrolly(rabbit_tilemap[0], 0, rabbit_tilemap_regs[0][2] >> 20);
 
-//  usrintf_showmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
-//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
-//  usrintf_showmessage("%08x", rabbit_viewregs7[0]);
-//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
-//  usrintf_showmessage("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
+//  ui_popup("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[1][0],rabbit_tilemap_regs[1][1],rabbit_tilemap_regs[1][2],rabbit_tilemap_regs[1][3],rabbit_tilemap_regs[1][4],rabbit_tilemap_regs[1][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[2][0],rabbit_tilemap_regs[2][1],rabbit_tilemap_regs[2][2],rabbit_tilemap_regs[2][3],rabbit_tilemap_regs[2][4],rabbit_tilemap_regs[2][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[3][0],rabbit_tilemap_regs[3][1],rabbit_tilemap_regs[3][2],rabbit_tilemap_regs[3][3],rabbit_tilemap_regs[3][4],rabbit_tilemap_regs[3][5]);
+//  ui_popup("%08x %08x %08x %08x %08x %08x %08x", rabbit_spriteregs[0],rabbit_spriteregs[1],rabbit_spriteregs[2],rabbit_spriteregs[3],rabbit_spriteregs[4],rabbit_spriteregs[5], rabbit_spriteregs[6]);
+//  ui_popup("%08x %08x %08x %08x %08x", rabbit_viewregs6[0],rabbit_viewregs6[1],rabbit_viewregs6[2],rabbit_viewregs6[3],rabbit_viewregs6[4]);
+//  ui_popup("%08x", rabbit_viewregs7[0]);
+//  ui_popup("%08x %08x %08x %08x", rabbit_blitterregs[0],rabbit_blitterregs[1],rabbit_blitterregs[2],rabbit_blitterregs[3]);
+//  ui_popup("%08x %08x %08x %08x", rabbit_viewregs9[0],rabbit_viewregs9[1],rabbit_viewregs9[2],rabbit_viewregs9[3]);
 
-//  usrintf_showmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
+//  ui_popup("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
 
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[3],0,0);

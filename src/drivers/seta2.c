@@ -208,7 +208,7 @@ static WRITE16_HANDLER( grdians_lockout_w )
 		coin_counter_w(0,data & 0x01);	// or 0x04
 		coin_counter_w(1,data & 0x02);	// or 0x08
 	}
-//  usrintf_showmessage("%04X", data & 0xffff);
+//  ui_popup("%04X", data & 0xffff);
 }
 
 static ADDRESS_MAP_START( grdians_readmem, ADDRESS_SPACE_PROGRAM, 16 )

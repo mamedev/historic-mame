@@ -147,7 +147,7 @@ static struct pia6821_interface qix_pia_5_intf =
 
 static WRITE8_HANDLER( pia_5_warning_w )
 {
-	usrintf_showmessage("PIA 5 write!!");
+	ui_popup("PIA 5 write!!");
 }
 
 

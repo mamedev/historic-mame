@@ -130,7 +130,7 @@ c13_u12.u12     HN624116 - GFX
 
 *** ROMSET: vgoalsca
 
-Tecmo V Goal Soccer ©1994? Tecmo
+Tecmo V Goal Soccer ?1994? Tecmo
 
 CPU: 68000, Z80
 Sound: YM2610
@@ -640,7 +640,7 @@ static WRITE16_HANDLER( twrldc94_mcu_w )
 		case 0x6b: PC(0x00000746); break;
 		/*(after the P.O.S.T.)*/
 		case 0x6e: PC(0x00000746); break;/*WRONG?*/
-		default: usrintf_showmessage("Unknown MCU CMD %04x",data);
+		default: ui_popup("Unknown MCU CMD %04x",data);
 	}
 }
 

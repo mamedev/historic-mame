@@ -211,8 +211,7 @@ VIDEO_UPDATE( test_vcu )
 	if (dbg_info)
 	{
 		sprintf(buf,"I-info, G-gfx, C-color, V-vbank, 1-4 enable planes");
-		for (j = 0;j < 52;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,4,0,TRANSPARENCY_NONE,0);
+		ui_draw_text(buf, 10, 0 * ui_get_line_height());
 
 		sprintf(buf,"g:%1i c:%1i v:%1i vbk=%1i  planes=%1i%1i%1i%1i  ", dbg_gfx_e&1, dbg_clr_e&1, dbg_vbank, vbank&1,
 			planes_enabled[0],
@@ -220,8 +219,7 @@ VIDEO_UPDATE( test_vcu )
 			planes_enabled[2],
 			planes_enabled[3] );
 
-		for (j = 0;j < 32;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,16,0,TRANSPARENCY_NONE,0);
+		ui_draw_text(buf, 10, 1 * ui_get_line_height());
 
 		if (dbg_lookup!=4)
 		{
@@ -236,8 +234,7 @@ VIDEO_UPDATE( test_vcu )
 				{
 					sprintf( buf+strlen(buf), "%02x ", lookup_RAM[ lookup_offs+x+y*16 ] );
 				}
-				for (j = 0;j < 55;j++)
-					drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,6*j,30+y*8,0,TRANSPARENCY_NONE,0);
+				ui_draw_text(buf, 0, (2 + y) * ui_get_line_height());
 			}
 		}
 	}
@@ -664,7 +661,7 @@ static WRITE8_HANDLER( VCU_video_reg_w )
 	if (VCU_video_reg[offset] != data)
 	{
 		VCU_video_reg[offset] = data;
-		//usrintf_showmessage("video_reg= %02x %02x %02x %02x", VCU_video_reg[0], VCU_video_reg[1], VCU_video_reg[2], VCU_video_reg[3] );
+		//ui_popup("video_reg= %02x %02x %02x %02x", VCU_video_reg[0], VCU_video_reg[1], VCU_video_reg[2], VCU_video_reg[3] );
 		//logerror("video_reg= %02x %02x %02x %02x\n", VCU_video_reg[0], VCU_video_reg[1], VCU_video_reg[2], VCU_video_reg[3] );
 	}
 }
@@ -847,7 +844,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 //}
 	break;
 	default:
-		usrintf_showmessage("not supported VCU drawing mode=%2x", mode);
+		ui_popup("not supported VCU drawing mode=%2x", mode);
 	break;
 	}
 	return 0;
@@ -1036,13 +1033,13 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 		break;
 
 		default:
-			usrintf_showmessage("not supported lookup/color write mode=%2x", ypos);
+			ui_popup("not supported lookup/color write mode=%2x", ypos);
 		break;
 	}
 	break;
 
 	default:
-		usrintf_showmessage("not supported VCU color mode=%2x", mode);
+		ui_popup("not supported VCU color mode=%2x", mode);
 	break;
 
 	}

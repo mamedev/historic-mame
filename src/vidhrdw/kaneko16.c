@@ -593,12 +593,10 @@ void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *c
 #if 0
 if (code_pressed(KEYCODE_Z))
 {	/* Display some info on each sprite */
-	struct DisplayText dt[2];	char buf[10];
+	char buf[10];
 	sprintf(buf, "%X",s->priority);
-	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = s->x;		dt[0].y = s->y;
-	dt[1].text = 0;	/* terminate array */
-	displaytext(bitmap,dt);		}
+	ui_draw_text(buf, s->x, s->y);
+}
 #endif
 #endif
 	}
@@ -893,7 +891,7 @@ if ( code_pressed(KEYCODE_Z) ||
 	if (msk != 0) layers_ctrl &= msk;
 
 #if 0
-	usrintf_showmessage(
+	ui_popup(
 		"%04X %04X %04X %04X %04X %04X %04X %04X - %04X %04X %04X %04X %04X %04X %04X %04X",
 		kaneko16_layers_0_regs[0x0],kaneko16_layers_0_regs[0x1],
 		kaneko16_layers_0_regs[0x2],kaneko16_layers_0_regs[0x3],

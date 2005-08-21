@@ -140,7 +140,7 @@ logerror("Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,Phonem
 				else strcat(buf,PhonemeTable[queue[i]]);
 			}
 
-			usrintf_showmessage(buf);
+			ui_popup(buf);
 		}
 #endif
 

@@ -256,16 +256,14 @@ static int scroll=0;
 {
 
 	int i,j;
-	char buf[20];
+	char buf[60];
 	struct osd_bitmap *mybitmap = bitmap;
 	data8_t *RAM = memory_region(REGION_CPU1);
 
+buf[0] = 0;
 for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",RAM[0x3000+i+1]+(RAM[0x3000+i]<<8));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],0,0,0,3*8*i+8*j+50,8*6,0,TRANSPARENCY_NONE,0);
-}
+	sprintf(&buf[strlen(buf)],"%04X\n",RAM[0x3000+i+1]+(RAM[0x3000+i]<<8));
+ui_draw_text(buf,50,8*6);
 }
 #endif
 

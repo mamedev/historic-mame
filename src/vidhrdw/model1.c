@@ -1484,7 +1484,7 @@ VIDEO_UPDATE(model1)
 			ayy += 0.05;
 		}
 		if(mod)
-			usrintf_showmessage("%g,%g,%g:%g", vxx, vyy, vzz, ayy);
+			ui_popup("%g,%g,%g:%g", vxx, vyy, vzz, ayy);
 	}
 #endif
 

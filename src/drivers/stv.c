@@ -128,7 +128,6 @@ ToDo / Notes:
  Micronet programmers had the "great" idea to *not* use the ST-V input standards,infact
  joystick panel is mapped with readinputport(10) instead of readinputport(2),so for now use
  the mahjong panel instead.
--grdforce: missing roz on RBG0 layer.
 -kiwames: the VDP1 sprites refresh is too slow,causing the "Draw by request" mode to
  flicker.Moved back to default ATM...
 -introdon/batmanfr: These two work *without* the IC13 hack.
@@ -231,6 +230,16 @@ DRIVER_INIT(dnmtdeka);
 DRIVER_INIT(groovef);
 DRIVER_INIT(danchih);
 DRIVER_INIT(astrass);
+DRIVER_INIT(thunt);
+DRIVER_INIT(grdforce);
+DRIVER_INIT(batmanfr);
+DRIVER_INIT(winterht);
+DRIVER_INIT(seabass);
+DRIVER_INIT(vfremix);
+DRIVER_INIT(diehard);
+DRIVER_INIT(sss);
+DRIVER_INIT(othellos);
+DRIVER_INIT(sassisu);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -1688,7 +1697,7 @@ void do_cd_command(void){
 				CR4 = 0x0001;
 				break;
 		case 0xe0:
-				usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_COMMAND 0xe0",  cpu_getactivecpu(),activecpu_get_pc());
+				ui_popup("cpu #%d (PC=%08X) CDBLOCK_COMMAND 0xe0",  cpu_getactivecpu(),activecpu_get_pc());
 				if(LOG_CDB) logerror("CDBLOCK Command 0x%02x\n", (CR1>>8));
 				CD_hirq |= HIRQ_CMOK | HIRQ_EFLS | HIRQ_CSCT;
 				//CDB_SEND_REPORT();
@@ -1745,7 +1754,7 @@ static READ32_HANDLER ( cdregister_r ){
 			//if(LOG_CDB) logerror("SH-1: PC(%08x) CR4 = %08x\n", activecpu_get_pc(), CR4<<16 | CR4);
 			CD_cr_first = 0;
 			//return 0xffff0000 | CR4;
-			//usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_READ",  cpu_getactivecpu(),activecpu_get_pc());
+			//ui_popup("cpu #%d (PC=%08X) CDBLOCK_READ",  cpu_getactivecpu(),activecpu_get_pc());
 			return CR4 <<16 | CR4;
 
 		case 0x98000:
@@ -1792,7 +1801,7 @@ static WRITE32_HANDLER ( cdregister_w ){
 			break;
 		case 0x90018:
 			CR1=data>>16;
-			if (CR1==0xe000){usrintf_showmessage("Cmd 0x93...pc= %08X",activecpu_get_pc());}
+			if (CR1==0xe000){ui_popup("Cmd 0x93...pc= %08X",activecpu_get_pc());}
 			CD_cr_writing = 1;
 			break;
 		case 0x9001c:
@@ -1807,7 +1816,7 @@ static WRITE32_HANDLER ( cdregister_w ){
 			CR4=data>>16;
 			CD_cr_writing = 0;
 			if(LOG_CDB) logerror("CD_hirq %08x CD_mask %08x CR1 %08x, CR2 %08x, CR3 %08x, CR4 %08x ------ command execution\n",CD_hirq,CD_mask,CR1,CR2,CR3,CR4);
-			//usrintf_showmessage("cpu #%d (PC=%08X) CDBLOCK_COMMAND",  cpu_getactivecpu(),activecpu_get_pc());
+			//ui_popup("cpu #%d (PC=%08X) CDBLOCK_COMMAND",  cpu_getactivecpu(),activecpu_get_pc());
 			do_cd_command();
 			break;
 		default:
@@ -2042,7 +2051,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
             ACTIVE LOW
             bit 4(0x10) - Enable Sound System
         */
-		//usrintf_showmessage("PDR2 = %02x",smpc_ram[0x77]);
+		//ui_popup("PDR2 = %02x",smpc_ram[0x77]);
 		if(!(smpc_ram[0x77] & 0x10))
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k on\n");
@@ -2445,10 +2454,10 @@ READ32_HANDLER ( stv_io_r32 )
 					/*Joystick panel*/
 					default:
 				    return (readinputport(2) << 16) | (readinputport(3));
-					//usrintf_showmessage("%02x MUX DATA",mux_data);
+					//ui_popup("%02x MUX DATA",mux_data);
 				}
 			}
-			//default:  usrintf_showmessage("%02x PORT SEL",port_sel);
+			//default:  ui_popup("%02x PORT SEL",port_sel);
 			default: return (readinputport(2) << 16) | (readinputport(3));
 		}
 		case 1:
@@ -2462,7 +2471,7 @@ READ32_HANDLER ( stv_io_r32 )
 			case 0x10:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
 			case 0x60:  return 0xffffffff;/**/
 			default:
-			//usrintf_showmessage("offs: 2 %02x",port_sel);
+			//ui_popup("offs: 2 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
@@ -2471,7 +2480,7 @@ READ32_HANDLER ( stv_io_r32 )
 		{
 			case 0x60:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
 			default:
-			//usrintf_showmessage("offs: 3 %02x",port_sel);
+			//ui_popup("offs: 3 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
@@ -2480,13 +2489,13 @@ READ32_HANDLER ( stv_io_r32 )
 		{
 			case 0x60:  return ioga[5];
 			default:
-			//usrintf_showmessage("offs: 6 %02x",port_sel);
+			//ui_popup("offs: 6 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
 		case 7:
 		if(LOG_IOGA) logerror("(PC %d=%06x) Warning: READ from PORT_AD\n",cpu_getactivecpu(), activecpu_get_pc());
-		usrintf_showmessage("Read from PORT_AD");
+		ui_popup("Read from PORT_AD");
 		i++;
 		return port_ad[i & 7];
 		default:
@@ -2661,7 +2670,7 @@ static UINT32 scu_add_tmp;
 READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
-	//usrintf_showmessage("%02x",DMA_STATUS);
+	//ui_popup("%02x",DMA_STATUS);
 	//if (offset == 23)
 	//{
 		//Super Major League reads here???
@@ -2744,7 +2753,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			/*Sound IRQ*/
 			if(/*(!(stv_scu[40] & 0x40)) &&*/ scsp_to_main_irq == 1)
 			{
-				cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+				//cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
 				logerror("SCSP: Main CPU interrupt\n");
 				#if 0
 				if((scu_dst_0 & 0x7ffffff) != 0x05a00000)
@@ -2805,7 +2814,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			/*Sound IRQ*/
 			if(/*(!(stv_scu[40] & 0x40)) &&*/ scsp_to_main_irq == 1)
 			{
-				cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+				//cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
 				logerror("SCSP: Main CPU interrupt\n");
 			}
 		}
@@ -2855,7 +2864,7 @@ WRITE32_HANDLER( stv_scu_w32 )
 			/*Sound IRQ*/
 			if(/*(!(stv_scu[40] & 0x40)) &&*/ scsp_to_main_irq == 1)
 			{
-				cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
+				//cpunum_set_input_line_and_vector(0, 9, HOLD_LINE , 0x46);
 				logerror("SCSP: Main CPU interrupt\n");
 			}
 		}
@@ -3481,6 +3490,7 @@ static WRITE32_HANDLER( minit_w )
 {
 	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
 	cpu_boost_interleave(0, TIME_IN_USEC(minit_boost));
+	cpu_trigger(1000);
 	cpunum_set_info_int(1, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
@@ -3586,7 +3596,7 @@ static READ32_HANDLER( a_bus_ctrl_r )
 		{
 			logerror("A-Bus control protection read at %06x with data = %08x\n",activecpu_get_pc(),a_bus[3]);
 			#ifdef MAME_DEBUG
-			usrintf_showmessage("Prot read at %06x with data = %08x",activecpu_get_pc(),a_bus[3]);
+			ui_popup("Prot read at %06x with data = %08x",activecpu_get_pc(),a_bus[3]);
 			#endif
 			switch(a_bus[3])
 			{
@@ -3728,7 +3738,7 @@ static WRITE32_HANDLER ( a_bus_ctrl_w )
 			case 0xffbf0000: ctrl_index = (0x1c40000/4)-1; break;
 		}
 	}
-	//usrintf_showmessage("%04x %04x",data,offset/4);
+	//ui_popup("%04x %04x",data,offset/4);
 }
 
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
@@ -4241,7 +4251,9 @@ MACHINE_INIT( stv )
 	/* puyosun doesn't seem to care */
 	if ((!strcmp(Machine->gamedrv->name,"puyosun")) ||
 	    (!strcmp(Machine->gamedrv->name,"mausuke")) ||
-	    (!strcmp(Machine->gamedrv->name,"groovef")))
+	    (!strcmp(Machine->gamedrv->name,"groovef")) ||
+		(!strcmp(Machine->gamedrv->name,"batmanfr")) ||
+		(!strcmp(Machine->gamedrv->name,"colmns97")))
 	{
 		minit_boost = 0;
 		sinit_boost = 0;
@@ -5277,36 +5289,37 @@ GAMEBX( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0,   "Sega",
 
 //GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,      MONITOR
 /* Playable */
+/* Playable */
 GAMEBX( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     				  "Baku Baku Animal (J 950407 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, batmanfr,  stvbios, stvbios, stv, stv,  batmanfr,  ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Columns '97 (JET 961209 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  				  "Cotton 2 (JUET 970902 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  				  "Cotton Boomerang (JUET 980709 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron (Tecmo license)", 	  "Danchi de Hanafuoda (J 990607 V1.400)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Ejihon Tantei Jimusyo (J 950613 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  				  "Guardian Force (JUET 980318 V0.105)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  grdforce,  ROT0,   "Success",  				  "Guardian Force (JUET 980318 V0.105)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    				  "Power Instinct 3 - Groove On Fight (J 970416 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				  "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEBX( 1996, introdon,  stvbios, stvbios, stv, stv,  stv, 		 ROT0,   "Sunsoft / Success", 		  "Karaoke Quiz Intro Don Don! (J 960213 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   				  "Pro Mahjong Kiwame S (J 951020 V1.208)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East",				  "Mausuke no Ojama the World (J 960314 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Success",  				  "Othello Shiyouyo (J 980423 V1.002)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  othellos,  ROT0,   "Success",  				  "Othello Shiyouyo (J 980423 V1.002)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    				  "Princess Clara Daisakusen (J 960910 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  				  "Puyo Puyo Sun (J 961115 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "A wave inc. (Able license)","Sea Bass Fishing (JUET 971110 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  sassisu,   ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1998, seabass,   stvbios, stvbios, stv, stv,  seabass,   ROT0,   "A wave inc. (Able license)","Sea Bass Fishing (JUET 971110 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", 	  "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  				  "Shienryu (JUET 961226 V1.000)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Capcom / Cave / Victor",	  "Steep Slope Sliders (JUET 981110 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  ic13,      ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )//has dsp bugs
+GAMEBX( 1998, sss,       stvbios, stvbios, stv, stv,  sss,       ROT0,   "Capcom / Cave / Victor",	  "Steep Slope Sliders (JUET 981110 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, thunt,     sandor,  stvbios, stv, stv,  thunt,     ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Virtua Fighter Kids (JUET 960319 V0.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Winter Heat (JUET 971012 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0,   "Sega", 	 				  "Winter Heat (JUET 971012 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong (J 961214 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )//missing roz layer,but it seems working to me... -AS
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft",    				  "Astra SuperStars (J 980514 V1.002)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 

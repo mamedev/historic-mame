@@ -73,6 +73,7 @@ enum
 	UI_brokengame,
 	UI_brokenprotection,
 	UI_workingclones,
+	UI_incorrectroms,
 	UI_typeok,
 
 	/* main menu */

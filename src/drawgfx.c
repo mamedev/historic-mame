@@ -848,12 +848,12 @@ INLINE void common_drawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx
 {
 	if (!gfx)
 	{
-		usrintf_showmessage("drawgfx() gfx == 0");
+		ui_popup("drawgfx() gfx == 0");
 		return;
 	}
 	if (!gfx->colortable && !is_raw[transparency])
 	{
-		usrintf_showmessage("drawgfx() gfx->colortable == 0");
+		ui_popup("drawgfx() gfx->colortable == 0");
 		return;
 	}
 
@@ -1264,7 +1264,7 @@ void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 
 	if (transparency != TRANSPARENCY_PEN)
 	{
-		usrintf_showmessage("copyrozbitmap unsupported trans %02x",transparency);
+		ui_popup("copyrozbitmap unsupported trans %02x",transparency);
 		return;
 	}
 
@@ -1371,7 +1371,7 @@ INLINE void common_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxEle
 			&& transparency != TRANSPARENCY_ALPHA && transparency != TRANSPARENCY_ALPHARANGE
 			&& transparency != TRANSPARENCY_NONE)
 	{
-		usrintf_showmessage("drawgfxzoom unsupported trans %02x",transparency);
+		ui_popup("drawgfxzoom unsupported trans %02x",transparency);
 		return;
 	}
 
@@ -3529,14 +3529,13 @@ void drawgfx_toggle_crosshair(void)
 
 void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip,int player)
 {
-	unsigned short black,white;
+	unsigned short white;
 	int i;
 
 	if (!crosshair_enable)
 		return;
 
-	black = Machine->uifont->colortable[0];
-	white = Machine->uifont->colortable[1];
+	white = get_white_pen();
 
 	for (i = 1;i < 6;i++)
 	{
@@ -5324,9 +5323,9 @@ DECLARE(drawgfx_core,(
 
 			default:
 				if (pribuf)
-					usrintf_showmessage("pdrawgfx pen mode not supported");
+					ui_popup("pdrawgfx pen mode not supported");
 				else
-					usrintf_showmessage("drawgfx pen mode not supported");
+					ui_popup("drawgfx pen mode not supported");
 				break;
 		}
 	}
@@ -5411,7 +5410,7 @@ DECLARE(copybitmap_core,(
 				break;
 
 			default:
-				usrintf_showmessage("copybitmap pen mode not supported");
+				ui_popup("copybitmap pen mode not supported");
 				break;
 		}
 	}

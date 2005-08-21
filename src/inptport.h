@@ -30,6 +30,7 @@ struct xml_data_node;
 
 #define MAX_INPUT_PORTS		30
 #define MAX_PLAYERS			8
+#define MAX_BITS_PER_PORT	32
 
 #define IP_ACTIVE_HIGH		0x00000000
 #define IP_ACTIVE_LOW		0xffffffff
@@ -666,7 +667,7 @@ struct InputPort *input_port_initialize(struct IptInitParams *params, UINT32 typ
 struct InputPort *input_port_allocate(void (*construct_ipt)(struct IptInitParams *));
 
 struct InputPortDefinition *get_input_port_list(void);
-struct InputPortDefinition *get_input_port_list_backup(void);
+const struct InputPortDefinition *get_input_port_list_defaults(void);
 
 int input_port_active(const struct InputPort *in);
 int port_type_is_analog(int type);

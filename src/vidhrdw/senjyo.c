@@ -416,7 +416,7 @@ VIDEO_UPDATE( senjyo )
 		senjyo_scrolly3[0x05],
 		senjyo_scrolly3[0x06],
 		senjyo_scrolly3[0x07]);
-	ui_text(baf,0,0);
+	ui_draw_text(baf,0,0);
 	sprintf(baf,"%02x %02x %02x %02x %02x %02x %02x %02x",
 		senjyo_scrolly3[0x08],
 		senjyo_scrolly3[0x09],
@@ -426,7 +426,7 @@ VIDEO_UPDATE( senjyo )
 		senjyo_scrolly3[0x0d],
 		senjyo_scrolly3[0x0e],
 		senjyo_scrolly3[0x0f]);
-	ui_text(baf,0,10);
+	ui_draw_text(baf,0,10);
 	sprintf(baf,"%02x %02x %02x %02x %02x %02x %02x %02x",
 		senjyo_scrolly3[0x10],
 		senjyo_scrolly3[0x11],
@@ -436,7 +436,7 @@ VIDEO_UPDATE( senjyo )
 		senjyo_scrolly3[0x15],
 		senjyo_scrolly3[0x16],
 		senjyo_scrolly3[0x17]);
-	ui_text(baf,0,20);
+	ui_draw_text(baf,0,20);
 	sprintf(baf,"%02x %02x %02x %02x %02x %02x %02x %02x",
 		senjyo_scrolly3[0x18],
 		senjyo_scrolly3[0x19],
@@ -446,7 +446,7 @@ VIDEO_UPDATE( senjyo )
 		senjyo_scrolly3[0x1d],
 		senjyo_scrolly3[0x1e],
 		senjyo_scrolly3[0x1f]);
-	ui_text(baf,0,30);
+	ui_draw_text(baf,0,30);
 }
 #endif
 }

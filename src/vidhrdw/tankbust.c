@@ -159,7 +159,7 @@ WRITE8_HANDLER( tankbust_xscroll_w )
 		if (x>=0x100) x-=0x200;
 		tilemap_set_scrollx(bg_tilemap, 0, x );
 	}
-//usrintf_showmessage("x=%02x %02x", xscroll[0], xscroll[1]);
+//ui_popup("x=%02x %02x", xscroll[0], xscroll[1]);
 }
 
 static UINT8 yscroll[2];
@@ -175,7 +175,7 @@ WRITE8_HANDLER( tankbust_yscroll_w )
 		if (y>=0x80) y-=0x100;
 		tilemap_set_scrolly(bg_tilemap, 0, y );
 	}
-//usrintf_showmessage("y=%02x %02x", yscroll[0], yscroll[1]);
+//ui_popup("y=%02x %02x", yscroll[0], yscroll[1]);
 }
 
 /***************************************************************************

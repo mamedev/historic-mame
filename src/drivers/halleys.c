@@ -531,7 +531,7 @@ if (0) {
 			collision_count++;
 
 			#if HALLEYS_DEBUG
-				usrintf_showmessage("ID:%02x CC:%3d", offset, collision_count);
+				ui_popup("ID:%02x CC:%3d", offset, collision_count);
 			#endif
 		}
 

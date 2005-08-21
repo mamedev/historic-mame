@@ -3,9 +3,6 @@
 
 
 /* in usrintf.c */
-extern int uirotcharwidth, uirotcharheight;
-
-
 static int use_profiler;
 
 
@@ -98,13 +95,11 @@ logerror("Profiler error: FILO buffer underflow\n");
 	}
 }
 
-void profiler_show(struct mame_bitmap *bitmap)
+const char *profiler_get_text(void)
 {
 	int i,j;
 	UINT64 total,normalize;
 	UINT64 computed;
-	int line;
-	char buf[30];
 	static const char *names[PROFILER_TOTAL] =
 	{
 		"CPU 1  ",
@@ -139,9 +134,11 @@ void profiler_show(struct mame_bitmap *bitmap)
 		"Idle   ",
 	};
 	static int showdelay[PROFILER_TOTAL];
+	static char buf[30*20];
+	char *bufptr = buf;
 
 
-	if (!use_profiler) return;
+	if (!use_profiler) return "";
 
 	profiler_mark(PROFILER_PROFILER);
 
@@ -162,9 +159,8 @@ void profiler_show(struct mame_bitmap *bitmap)
 	}
 	total = computed;
 
-	if (total == 0 || normalize == 0) return;	/* we have been just reset */
+	if (total == 0 || normalize == 0) return "";	/* we have been just reset */
 
-	line = 0;
 	for (i = 0;i < PROFILER_TOTAL;i++)
 	{
 		computed = 0;
@@ -178,21 +174,19 @@ void profiler_show(struct mame_bitmap *bitmap)
 			showdelay[i]--;
 
 			if (i < PROFILER_PROFILER)
-				sprintf(buf,"%s%3d%%%3d%%",names[i],
+				bufptr += sprintf(bufptr,"%s%3d%%%3d%%\n",names[i],
 						(int)((computed * 100 + total/2) / total),
 						(int)((computed * 100 + normalize/2) / normalize));
 			else
-				sprintf(buf,"%s%3d%%",names[i],
+				bufptr += sprintf(bufptr,"%s%3d%%\n",names[i],
 						(int)((computed * 100 + total/2) / total));
-			ui_text(bitmap,buf,0,(line++)*uirotcharheight);
 		}
 	}
 
 	i = 0;
 	for (j = 0;j < MEMORY;j++)
 		i += profile.cpu_context_switches[j];
-	sprintf(buf,"CPU switches%4d",i / MEMORY);
-	ui_text(bitmap,buf,0,(line++)*uirotcharheight);
+	bufptr += sprintf(bufptr,"CPU switches%4d\n",i / MEMORY);
 
 	/* reset the counters */
 	memory = (memory + 1) % MEMORY;
@@ -201,4 +195,6 @@ void profiler_show(struct mame_bitmap *bitmap)
 		profile.count[memory][i] = 0;
 
 	profiler_mark(PROFILER_END);
+
+	return buf;
 }

@@ -325,17 +325,7 @@ void osd_pause(int paused);
 int osd_is_bad_read_ptr(const void *ptr, size_t size);
 
 /* aborts the program in some unexpected fatal way */
-#ifdef __GNUC__
-	void CLIB_DECL osd_die(const char *text,...)
-	#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 5)
-		__attribute__((noreturn))
-	#endif
-		__attribute__ ((format (printf, 1, 2)));
-#elif defined(_MSC_VER)
-	__declspec(noreturn) void CLIB_DECL osd_die(const char *text,...);
-#else
-	void CLIB_DECL osd_die(const char *text,...);
-#endif
+DECL_NORETURN void CLIB_DECL osd_die(const char *text,...) ATTR_PRINTF(1,2) ATTR_NORETURN;
 
 
 
@@ -344,11 +334,6 @@ int osd_is_bad_read_ptr(const void *ptr, size_t size);
 #include "osd_mess.h"
 #endif
 
-#ifdef __GNUC__
-void CLIB_DECL logerror(const char *text,...)
-      __attribute__ ((format (printf, 1, 2)));
-#else
-void CLIB_DECL logerror(const char *text,...);
-#endif
+void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);
 
 #endif	/* __OSDEPEND_H__ */

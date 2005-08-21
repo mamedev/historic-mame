@@ -667,7 +667,7 @@ VIDEO_UPDATE( decocass )
 			tape_time = 0.0;
 		else if (tape_time > 999.9)
 			tape_time = 999.9;
-		usrintf_showmessage("%c%c [%05.1fs] %c%c",
+		ui_popup("%c%c [%05.1fs] %c%c",
 			(tape_dir < 0 && tape_speed) ? '<' : ' ',
 			(tape_dir < 0) ? '<' : ' ',
 			tape_time,
@@ -681,7 +681,7 @@ VIDEO_UPDATE( decocass )
 		if (code_pressed_memory(KEYCODE_I))
 			showmsg ^= 1;
 		if (showmsg)
-			usrintf_showmessage_secs(1, "mode:$%02x cm:$%02x ccb:$%02x h:$%02x vl:$%02x vr:$%02x ph:$%02x pv:$%02x ch:$%02x cv:$%02x",
+			ui_popup_time(1, "mode:$%02x cm:$%02x ccb:$%02x h:$%02x vl:$%02x vr:$%02x ph:$%02x pv:$%02x ch:$%02x cv:$%02x",
 				mode_set,
 				color_missiles,
 				color_center_bot,

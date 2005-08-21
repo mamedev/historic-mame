@@ -102,7 +102,7 @@ static WRITE8_HANDLER( msisaac_coin_counter_w )
 static WRITE8_HANDLER( ms_unknown_w )
 {
 	if (data!=0x08)
-		usrintf_showmessage("CPU #0 write to 0xf0a3 data=%2x",data);
+		ui_popup("CPU #0 write to 0xf0a3 data=%2x",data);
 }
 
 
@@ -212,7 +212,7 @@ static WRITE8_HANDLER( msisaac_mcu_w )
 	buggychl_mcu_w(offset,data);
 #else
 	//if(data != 0x0a && data != 0x42 && data != 0x02)
-	//  usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
+	//  ui_popup("PC = %04x %02x",activecpu_get_pc(),data);
 	mcu_val = data;
 #endif
 }
@@ -311,7 +311,7 @@ static UINT8 snd_ctrl1=0;
 static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
-	//usrintf_showmessage("SND0 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);
+	//ui_popup("SND0 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);
 
 	sndti_set_output_gain(SOUND_MSM5232, 0, 0, vol_ctrl[  snd_ctrl0     & 15 ] / 100.0);	/* group1 from msm5232 */
 	sndti_set_output_gain(SOUND_MSM5232, 0, 1, vol_ctrl[ (snd_ctrl0>>4) & 15 ] / 100.0);	/* group2 from msm5232 */
@@ -320,7 +320,7 @@ static WRITE8_HANDLER( sound_control_0_w )
 static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
-	//usrintf_showmessage("SND1 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);
+	//ui_popup("SND1 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);
 }
 
 

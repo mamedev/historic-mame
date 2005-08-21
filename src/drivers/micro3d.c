@@ -678,17 +678,17 @@ static READ32_HANDLER( am_uart_r )
 
 static WRITE16_HANDLER( mystery_w )
 {
-       usrintf_showmessage("Write to 900000: %x",data);
+       ui_popup("Write to 900000: %x",data);
 }
 
 static WRITE16_HANDLER( mystery2_w )
 {
-       usrintf_showmessage("TMS Write to e00000: %x",data);
+       ui_popup("TMS Write to e00000: %x",data);
 }
 
 static WRITE16_HANDLER( mystery3_w )
 {
-       usrintf_showmessage("TMS Write to 2600000: %x",data);
+       ui_popup("TMS Write to 2600000: %x",data);
 }
 
 

@@ -428,10 +428,13 @@ void segae_drawscanline(int line, int chips, int blank)
 		}
 	}
 
-	if (blank) memset(dest+16, 32+16, 8); /* Clear Leftmost column, there should be a register for this like on the SMS i imagine    */
-							   			  /* on the SMS this is bit 5 of register 0 (according to CMD's SMS docs) for system E this  */
-							   			  /* appears to be incorrect, most games need it blanked 99% of the time so we blank it      */
-
+	/* FIX ME!! */
+	if (blank)
+	{
+		if (strcmp(Machine->gamedrv->name,"tetrisse")) /* and we really don't want to do it on tetrise */
+			memset(dest+16, 32+16, 8); /* Clear Leftmost column, there should be a register for this like on the SMS i imagine    */
+							   			  /* on the SMS this is bit 5 of register 0 (according to CMD's SMS docs) for system E this  */							   			  /* appears to be incorrect, most games need it blanked 99% of the time so we blank it      */
+	}
 }
 
 /*-- Drawing a line of tiles --*/

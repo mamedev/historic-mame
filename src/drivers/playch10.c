@@ -405,7 +405,7 @@ static WRITE8_HANDLER( time_w )
 
 	timedata[offset] = data;
 
-	usrintf_showmessage("Time: %d%d%d%d",timedata[3],timedata[2],timedata[1],timedata[0]);
+	ui_popup("Time: %d%d%d%d",timedata[3],timedata[2],timedata[1],timedata[0]);
 }
 
 /******************************************************************************/

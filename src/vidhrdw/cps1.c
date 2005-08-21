@@ -576,7 +576,7 @@ if (offset > 0x22/2 &&
 if (offset == 0x22/2 && (data & ~0x8001) != 0x0e)
 	logerror("port 22 = %04x",data);
 if (cps1_game_config->priority[0] && offset == cps1_game_config->priority[0]/2 && data != 0x00)
-	usrintf_showmessage("priority0 %04x",data);
+	ui_popup("priority0 %04x",data);
 #endif
 #endif
 }
@@ -928,7 +928,7 @@ if (code_pressed(KEYCODE_Z))
 	if (code_pressed(KEYCODE_R)) cps1_layer_enabled[0]=0;
 	if (code_pressed(KEYCODE_T))
 	{
-		usrintf_showmessage("%d %d %d %d layer %02x",
+		ui_popup("%d %d %d %d layer %02x",
 			(layercontrol>>0x06)&03,
 			(layercontrol>>0x08)&03,
 			(layercontrol>>0x0a)&03,
@@ -950,7 +950,7 @@ if (code_pressed(KEYCODE_Z))
 	if (enablemask)
 	{
 		if (((layercontrol & enablemask) && (layercontrol & enablemask) != enablemask))
-			usrintf_showmessage("layer %02x",layercontrol&0xc03f);
+			ui_popup("layer %02x",layercontrol&0xc03f);
 	}
 }
 #endif
@@ -961,7 +961,7 @@ if (code_pressed(KEYCODE_Z))
 			| cps1_game_config->layer_enable_mask[2]
 			| cps1_game_config->layer_enable_mask[3] | cps1_game_config->layer_enable_mask[4];
 	if (((layercontrol & ~enablemask) & 0xc03e) != 0)
-		usrintf_showmessage("layer %02x contact MAMEDEV",layercontrol&0xc03f);
+		ui_popup("layer %02x contact MAMEDEV",layercontrol&0xc03f);
 }
 
 }
@@ -1523,7 +1523,7 @@ static data16_t *cps2_objbase(void)
 
 	if (cps2_objram_bank & 1) baseptr ^= 0x0080;
 
-//usrintf_showmessage("%04x %d",cps2_port(CPS2_OBJ_BASE),cps2_objram_bank&1);
+//ui_popup("%04x %d",cps2_port(CPS2_OBJ_BASE),cps2_objram_bank&1);
 
 	if (baseptr == 0x7000)
 		return cps2_objram1;
@@ -1710,7 +1710,7 @@ void cps1_render_stars(struct mame_bitmap *bitmap,const struct rectangle *clipre
 	if (!stars_rom && (cps1_stars_enabled[0] || cps1_stars_enabled[1]))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("stars enabled but no stars ROM");
+		ui_popup("stars enabled but no stars ROM");
 #endif
 		return;
 	}
@@ -1890,13 +1890,13 @@ VIDEO_UPDATE( cps1 )
 if (	(cps2_port(CPS2_OBJ_BASE) != 0x7080 && cps2_port(CPS2_OBJ_BASE) != 0x7000) ||
 		cps2_port(CPS2_OBJ_UK1) != 0x807d ||
 		(cps2_port(CPS2_OBJ_UK2) != 0x0000 && cps2_port(CPS2_OBJ_UK2) != 0x1101 && cps2_port(CPS2_OBJ_UK2) != 0x0001) ||
-	usrintf_showmessage("base %04x uk1 %04x uk2 %04x",
+	ui_popup("base %04x uk1 %04x uk2 %04x",
 			cps2_port(CPS2_OBJ_BASE),
 			cps2_port(CPS2_OBJ_UK1),
 			cps2_port(CPS2_OBJ_UK2));
 
 if (0 && code_pressed(KEYCODE_Z))
-	usrintf_showmessage("order: %d (%d) %d (%d) %d (%d) %d (%d)",l0,l0pri,l1,l1pri,l2,l2pri,l3,l3pri);
+	ui_popup("order: %d (%d) %d (%d) %d (%d) %d (%d)",l0,l0pri,l1,l1pri,l2,l2pri,l3,l3pri);
 #endif
 
 		/* take out the CPS1 sprites layer */

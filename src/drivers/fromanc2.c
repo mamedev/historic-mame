@@ -146,7 +146,7 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 	if (fromanc2_playerside_old != fromanc2_playerside) {
 		fromanc2_playerside_old = fromanc2_playerside;
 
-		usrintf_showmessage("PLAYER-%01X SIDE", fromanc2_playerside + 1);
+		ui_popup("PLAYER-%01X SIDE", fromanc2_playerside + 1);
 
 		if (!fromanc2_playerside) {
 //          mixer_set_stereo_volume(3, 75, 75); // 1P (LEFT)

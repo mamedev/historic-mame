@@ -57,6 +57,28 @@ typedef union
 
 
 
+
+/***************************************************************************
+ * Union of UINT8, UINT16, UINT32, and UINT64 in native endianess of
+ * the target.  This is used to access bytes and words in a machine
+ * independent manner.
+***************************************************************************/
+typedef union
+{
+#ifdef LSB_FIRST
+	struct { UINT8 l,h,h2,h3,h4,h5,h6,h7; } b;
+	struct { UINT16 l,h,h2,h3; } w;
+	struct { UINT32 l,h; } d;
+#else
+	struct { UINT8 h7,h6,h5,h4,h3,h2,h,l; } b;
+	struct { UINT16 h3,h2,h,l; } w;
+	struct { UINT32 h,l; } d;
+#endif
+	UINT64 lw;
+} PAIR64;
+
+
+
 /***************************************************************************
 
     Common constants
@@ -298,17 +320,27 @@ INLINE UINT64 d2u(double d)
 
 
 /* Some optimizations/warnings cleanups for GCC */
-#if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ > 8)
-#define UNUSEDARG __attribute__((__unused__))
+#if defined(__GNUC__)
+#define ATTR_UNUSED			__attribute__((__unused__))
+#define ATTR_NORETURN		__attribute__((noreturn))
+#define ATTR_PRINTF(x,y)	__attribute__((format(printf, x, y)))
+#define UNEXPECTED(exp)		__builtin_expect((exp), 0)
 #else
-#define UNUSEDARG
+#define ATTR_UNUSED
+#define ATTR_NORETURN
+#define ATTR_PRINTF(x,y)
+#define UNEXPECTED(exp)		(exp)
 #endif
 
-#if (__GNUC__ >= 3)
-#define UNEXPECTED(exp)	 __builtin_expect((exp), 0)
+
+
+/* And some MSVC optimizations/warnings */
+#if defined(_MSC_VER)
+#define DECL_NORETURN		__declspec(noreturn)
 #else
-#define UNEXPECTED(exp)	(exp)
+#define DECL_NORETURN
 #endif
+
 
 
 #endif	/* __MAMECORE_H__ */

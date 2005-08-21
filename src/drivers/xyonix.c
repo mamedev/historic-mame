@@ -47,7 +47,7 @@ void handle_coins(int coin)
 	int coinage_table[4][2] = {{2,3},{2,1},{1,2},{1,1}};
 	int tmp = 0;
 
-//  usrintf_showmessage("Coin %d",coin);
+//  ui_popup("Coin %d",coin);
 
 	if (coin & 1)	// Coin 2 !
 	{
@@ -135,7 +135,7 @@ READ8_HANDLER ( xyonix_io_r )
 	}
 
 //  logerror ("xyonix_port_e0_r - PC = %04x - port = %02x\n", regPC, e0_data);
-//  usrintf_showmessage("%02x",e0_data);
+//  ui_popup("%02x",e0_data);
 
 	return 0xff;
 }

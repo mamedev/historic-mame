@@ -1718,7 +1718,7 @@ static READ8_HANDLER( bank_r )
 	{
 		int sel = (bios_bank >> 6) & 0x03;
 
-//      usrintf_showmessage("Reading from Bank %i",sel);
+//      ui_popup("Reading from Bank %i",sel);
 
 		if(sel == 0)
 			return 0xff;
@@ -1827,7 +1827,7 @@ static WRITE8_HANDLER( megaplay_game_w )
 	{
 		bios_mode = MP_GAME;
 		readpos = 1;
-//      usrintf_showmessage("Game bank selected: 0x%03x",game_banksel);
+//      ui_popup("Game bank selected: 0x%03x",game_banksel);
 		logerror("BIOS [0x%04x]: 68K address space bank selected: 0x%03x\n",activecpu_get_previouspc(),game_banksel);
 	}
 }
@@ -1950,7 +1950,7 @@ static READ8_HANDLER (megatech_bios_port_dd_r)
 
 static WRITE8_HANDLER (megatech_bios_port_7f_w)
 {
-//  usrintf_showmessage("CPU #3: I/O port 0x7F write, data %02x",data);
+//  ui_popup("CPU #3: I/O port 0x7F write, data %02x",data);
 }
 
 

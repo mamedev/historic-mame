@@ -161,7 +161,7 @@ VIDEO_UPDATE(fitfight)
 
 		tilemap_draw(bitmap,cliprect,fof_txt_tilemap,0,0);
 	}
-/*  usrintf_showmessage ("Regs %04x %04x %04x %04x %04x %04x",
+/*  ui_popup ("Regs %04x %04x %04x %04x %04x %04x",
             fof_100000[0], fof_600000[0], fof_700000[0],
             fof_800000[0], fof_900000[0],
             fof_a00000[0] );

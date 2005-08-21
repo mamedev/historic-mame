@@ -349,7 +349,7 @@ static READ8_HANDLER ( kikstart_gears_read )
 	if (kikstart_gear == 2) portreturn |= (0x03);
 	if (kikstart_gear == 3) portreturn |= (0x01);
 
-//usrintf_showmessage   ("Kikstart gear %02x",  kikstart_gear);
+//ui_popup   ("Kikstart gear %02x",  kikstart_gear);
 //Is there a more attractive way to display this mid game?
 	return portreturn;
 }

@@ -2913,7 +2913,7 @@ static void segaic16_road_hangon_draw(struct road_info *info, struct mame_bitmap
 		if (code_pressed(KEYCODE_L)) dx++;
 		if (code_pressed(KEYCODE_I)) dy--;
 		if (code_pressed(KEYCODE_K)) dy++;
-		usrintf_showmessage("X=%d Y=%d", dx, dy);
+		ui_popup("X=%d Y=%d", dx, dy);
 
 		if (code_pressed(KEYCODE_D))
 		{

@@ -446,7 +446,7 @@ VIDEO_UPDATE( suna8 )
 		tilemap_set_scrolly( tilemap, 0, 0);
 		tilemap_draw(bitmap,cliprect, tilemap, 0, 0);
 #if 1
-	usrintf_showmessage("%02X %02X %02X %02X - p%2X g%02X r%02X",
+	ui_popup("%02X %02X %02X %02X - p%2X g%02X r%02X",
 						suna8_rombank, suna8_palettebank, suna8_spritebank, suna8_unknown,
 						page,tiles,rombank	);
 #endif

@@ -546,15 +546,15 @@ if (cliprect->min_y < 30)
 	sprintf(temp, "GSP:%d/%d/%d/%d",
 			gsp_speedup_count[0], gsp_speedup_count[1],
 			gsp_speedup_count[2], gsp_speedup_count[3]);
-	ui_text(bitmap, temp, 0, 0);
+	ui_draw_text(temp, 0, 0);
 	sprintf(temp, "MSP:%d/%d/%d/%d",
 			msp_speedup_count[0], msp_speedup_count[1],
 			msp_speedup_count[2], msp_speedup_count[3]);
-	ui_text(bitmap, temp, 0, 10);
+	ui_draw_text(temp, 0, 10);
 	sprintf(temp, "ADSP:%d/%d/%d/%d",
 			adsp_speedup_count[0], adsp_speedup_count[1],
 			adsp_speedup_count[2], adsp_speedup_count[3]);
-	ui_text(bitmap, temp, 0, 20);
+	ui_draw_text(temp, 0, 20);
 }
 #endif
 }

@@ -217,7 +217,7 @@ VIDEO_UPDATE( crshrace )
 			draw_sprites(bitmap,cliprect);
 			break;
 		default:
-usrintf_showmessage("gfxctrl = %02x",gfxctrl);
+ui_popup("gfxctrl = %02x",gfxctrl);
 			break;
 	}
 }

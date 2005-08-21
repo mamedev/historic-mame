@@ -324,7 +324,7 @@ void sailormn_get_tile_info_2(int tile_index)
 }
 
 
-INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP, UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP, ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
 {
 	if ((VRAM[offset] & ~mem_mask)==(data & ~mem_mask)) return;
 	COMBINE_DATA(&VRAM[offset]);
@@ -346,7 +346,7 @@ INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP, UNUSEDARG offs_t off
     and 408000-407fff both go to the 8x8 tilemap ram. Use this function
     in this cases. Note that the get_tile_info function looks in the
     4000-7fff range for tiles, so we have to write the data there. */
-INLINE void vram_8x8_w(data16_t *VRAM, struct tilemap *TILEMAP,UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+INLINE void vram_8x8_w(data16_t *VRAM, struct tilemap *TILEMAP,ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
 {
 	offset %= 0x4000/2;
 	if ((VRAM[offset] & ~mem_mask)==(data & ~mem_mask)) return;
@@ -1474,15 +1474,15 @@ VIDEO_UPDATE( cave )
 
 #if 1
 		/* Show the video registers (cave_videoregs) */
-		usrintf_showmessage("%04X %04X %04X %04X %04X %04X %04X %04X",
+		ui_popup("%04X %04X %04X %04X %04X %04X %04X %04X",
 			cave_videoregs[0], cave_videoregs[1], cave_videoregs[2], cave_videoregs[3],
 			cave_videoregs[4], cave_videoregs[5], cave_videoregs[6], cave_videoregs[7] );
 #endif
 		/* Show the scroll / flags registers of the selected layer */
-		if ((tilemap_0)&&(msk&0x000f))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_0[0],cave_vctrl_0[1],cave_vctrl_0[2]);
-		if ((tilemap_1)&&(msk&0x00f0))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_1[0],cave_vctrl_1[1],cave_vctrl_1[2]);
-		if ((tilemap_2)&&(msk&0x0f00))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_2[0],cave_vctrl_2[1],cave_vctrl_2[2]);
-		if ((tilemap_3)&&(msk&0xf000))	usrintf_showmessage("x:%04X y:%04X f:%04X",cave_vctrl_3[0],cave_vctrl_3[1],cave_vctrl_3[2]);
+		if ((tilemap_0)&&(msk&0x000f))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_0[0],cave_vctrl_0[1],cave_vctrl_0[2]);
+		if ((tilemap_1)&&(msk&0x00f0))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_1[0],cave_vctrl_1[1],cave_vctrl_1[2]);
+		if ((tilemap_2)&&(msk&0x0f00))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_2[0],cave_vctrl_2[1],cave_vctrl_2[2]);
+		if ((tilemap_3)&&(msk&0xf000))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_3[0],cave_vctrl_3[1],cave_vctrl_3[2]);
 	}
 
 	/* Show the row / "column" scroll enable flags, when they change state */
@@ -1497,7 +1497,7 @@ VIDEO_UPDATE( cave )
 						rasflag |= (cave_vctrl_3[1] & 0x4000) ? 0x2000 : 0;	}
 	if (rasflag != old_rasflag)
 	{
-		usrintf_showmessage("Line Effect: 0:%c%c 1:%c%c 2:%c%c 3:%c%c",
+		ui_popup("Line Effect: 0:%c%c 1:%c%c 2:%c%c 3:%c%c",
 			(rasflag&0x0001)?'x':' ', (rasflag&0x0002)?'y':' ',
 			(rasflag&0x0010)?'x':' ', (rasflag&0x0020)?'y':' ',
 			(rasflag&0x0100)?'x':' ', (rasflag&0x0200)?'y':' ',

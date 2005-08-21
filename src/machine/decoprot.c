@@ -551,7 +551,7 @@ READ16_HANDLER( deco16_66_prot_r ) /* Mutant Fighter */
 	}
 
 #ifdef MAME_DEBUG
-	usrintf_showmessage("Deco66:  Read unmapped port %04x\n",offset*2);
+	ui_popup("Deco66:  Read unmapped port %04x\n",offset*2);
 #endif
 
 	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);

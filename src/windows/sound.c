@@ -408,7 +408,7 @@ int osd_update_audio_stream(INT16 *buffer)
 		prev_overflows = buffer_overflows;
 		prev_underflows = buffer_underflows;
 #if DISPLAY_UNDEROVERFLOW
-		usrintf_showmessage("overflows=%d underflows=%d", buffer_overflows, buffer_underflows);
+		ui_popup("overflows=%d underflows=%d", buffer_overflows, buffer_underflows);
 #endif
 #if LOG_SOUND
 		fprintf(sound_log, "************************ overflows=%d underflows=%d\n", buffer_overflows, buffer_underflows);

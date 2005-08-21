@@ -917,24 +917,17 @@ VIDEO_EOF( dragngun )
 static void print_debug_info(struct mame_bitmap *bitmap)
 {
 	int j;
-	char buf[64];
+	char buf[64*5];
+	char *bufptr = buf;
 
-	sprintf(buf,"%04X %04X %04X %04X",deco32_pf12_control[0]&0xffff,deco32_pf12_control[1]&0xffff,deco32_pf12_control[2]&0xffff,deco32_pf12_control[3]&0xffff);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,40,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X %04X %04X %04X",deco32_pf12_control[4]&0xffff,deco32_pf12_control[5]&0xffff,deco32_pf12_control[6]&0xffff,deco32_pf12_control[7]&0xffff);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,48,0,TRANSPARENCY_NONE,0);
+	bufptr += sprintf(bufptr,"%04X %04X %04X %04X\n",deco32_pf12_control[0]&0xffff,deco32_pf12_control[1]&0xffff,deco32_pf12_control[2]&0xffff,deco32_pf12_control[3]&0xffff);
+	bufptr += sprintf(bufptr,"%04X %04X %04X %04X\n",deco32_pf12_control[4]&0xffff,deco32_pf12_control[5]&0xffff,deco32_pf12_control[6]&0xffff,deco32_pf12_control[7]&0xffff);
 
-	sprintf(buf,"%04X %04X %04X %04X",deco32_pf34_control[0]&0xffff,deco32_pf34_control[1]&0xffff,deco32_pf34_control[2]&0xffff,deco32_pf34_control[3]&0xffff);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,60,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X %04X %04X %04X",deco32_pf34_control[4]&0xffff,deco32_pf34_control[5]&0xffff,deco32_pf34_control[6]&0xffff,deco32_pf34_control[7]&0xffff);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,68,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X",deco32_pri);
-	for (j = 0;j< 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,80,0,TRANSPARENCY_NONE,0);
+	bufptr += sprintf(bufptr,"%04X %04X %04X %04X\n",deco32_pf34_control[0]&0xffff,deco32_pf34_control[1]&0xffff,deco32_pf34_control[2]&0xffff,deco32_pf34_control[3]&0xffff);
+	bufptr += sprintf(bufptr,"%04X %04X %04X %04X\n",deco32_pf34_control[4]&0xffff,deco32_pf34_control[5]&0xffff,deco32_pf34_control[6]&0xffff,deco32_pf34_control[7]&0xffff);
+	bufptr += sprintf(bufptr,"%04X\n",deco32_pri);
+
+	ui_draw_text(buf,60,40);
 }
 
 #endif
@@ -1018,7 +1011,7 @@ static void deco32_setup_scroll(struct tilemap *pf_tilemap, data16_t height, dat
 	/* Colscroll - not fully supported yet! */
 	if (control1&0x20 && coldata) {
 		sy+=coldata[0];
-		//usrintf_showmessage("%08x",coldata[0]);
+		//ui_popup("%08x",coldata[0]);
 	}
 
 	/* Rowscroll enable */

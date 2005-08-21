@@ -21,13 +21,11 @@ static data8_t deco16_io_ram[16];
 void debug_print(struct mame_bitmap *bitmap)
 {
 	int i,j;
-	char buf[20];
+	char buf[20*16];
+	char *bufptr = buf;
 	for (i = 0;i < 16;i+=2)
-	{
-		sprintf(buf,"%04X",deco16_io_ram[i+1]|(deco16_io_ram[i]<<8));
-		for (j = 0;j < 4;j++)
-			drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+3*6*i+6*j,6*6,0,TRANSPARENCY_NONE,0);
-	}
+		bufptr += sprintf(bufptr,"%04X",deco16_io_ram[i+1]|(deco16_io_ram[i]<<8));
+	ui_draw_text(buf, 10, 6*6);
 }
 #endif
 

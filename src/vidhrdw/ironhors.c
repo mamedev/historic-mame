@@ -134,7 +134,7 @@ WRITE8_HANDLER( ironhors_palettebank_w )
 
 	/* bit 6 unknown - set after game over */
 
-	if (data & 0x88) usrintf_showmessage("ironhors_palettebank_w %02x",data);
+	if (data & 0x88) ui_popup("ironhors_palettebank_w %02x",data);
 }
 
 WRITE8_HANDLER( ironhors_flipscreen_w )

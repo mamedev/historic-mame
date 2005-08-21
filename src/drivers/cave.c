@@ -816,7 +816,7 @@ static data16_t leds[2];
 static void show_leds(void)
 {
 #ifdef MAME_DEBUG
-//  usrintf_showmessage("led %04X eep %02X",leds[0],(leds[1] >> 8) & ~0x70);
+//  ui_popup("led %04X eep %02X",leds[0],(leds[1] >> 8) & ~0x70);
 #endif
 }
 
@@ -1007,7 +1007,7 @@ READ16_HANDLER( pwrinst2_eeprom_r )
 	return ~8 + ((EEPROM_read_bit() & 1) ? 8 : 0);
 }
 
-INLINE void vctrl_w(data16_t *VCTRL, UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
+INLINE void vctrl_w(data16_t *VCTRL, ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
 {
 	if ( offset == 4/2 )
 	{
@@ -3669,7 +3669,7 @@ ROM_END
 
                             Power Instinct 2
 
-©1994 Atlus
+?1994 Atlus
 CPU: 68000, Z80
 Sound: YM2203, AR17961 (x2)
 Custom: NMK 112 (sound?), Atlus 8647-01  013, 038 (x4)

@@ -367,7 +367,7 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 										if(st0016_spriteram[offset+5]&0x20)
 										{
 											#ifdef MAME_DEBUG
-											usrintf_showmessage("sprite bit activated");
+											ui_popup("sprite bit activated");
 											#endif
 											break;
 										}

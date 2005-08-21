@@ -228,7 +228,7 @@ ADDRESS_MAP_END
 
 static READ8_HANDLER( s2650_data_r )
 {
-	usrintf_showmessage("S2650 data port read");
+	ui_popup("S2650 data port read");
 	return 0xff;
 }
 

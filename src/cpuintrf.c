@@ -159,6 +159,8 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info);
 void SE3208_get_info(UINT32 state, union cpuinfo *info);
 void mc68hc11_get_info(UINT32 state, union cpuinfo *info);
 void adsp21062_get_info(UINT32 state, union cpuinfo *info);
+void dsp56k_get_info(UINT32 state, union cpuinfo *info);
+
 
 #ifdef MESS
 void apexc_get_info(UINT32 state, union cpuinfo *info);
@@ -680,6 +682,9 @@ const struct
 #endif
 #if (HAS_ADSP21062)
 	{ CPU_ADSP21062, adsp21062_get_info },
+#endif
+#if (HAS_DSP56156)
+	{ CPU_DSP56156, dsp56k_get_info },
 #endif
 
 #ifdef MESS

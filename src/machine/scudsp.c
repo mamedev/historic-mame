@@ -4,6 +4,9 @@ System Control Unit - DSP emulator version 0.06
 Written by Angelo Salese & Mariusz Wojcieszek
 
 Changelog:
+050813: Mariusz Wojcieszek
+- Fixed add number in DSP DMA
+
 050412: Angelo Salese
 - Fixed the T0F behaviour in the DMA operation,it was causing an hang in Treasure Hunt
   due of that.
@@ -36,7 +39,6 @@ Changelog:
 - Disassembler: complete it
 - (Maybe) Convert this to cpu structure
 - Add control flags
-- Check DMA in thunt,there's a bug that causes wrong graphics in it.
 
 ******************************************************************************************/
 #include "driver.h"
@@ -213,16 +215,16 @@ static void dsp_set_dest_mem_reg( UINT32 mode, UINT32 value )
 			dsp_reg.top = value;
 			break;
 		case 0xc:	/* CT0 */
-			dsp_reg.ct0 = value;
+			dsp_reg.ct0 = value & 0x3f;
 			break;
 		case 0xd:	/* CT1 */
-			dsp_reg.ct1 = value;
+			dsp_reg.ct1 = value & 0x3f;
 			break;
 		case 0xe:	/* CT2 */
-			dsp_reg.ct2 = value;
+			dsp_reg.ct2 = value & 0x3f;
 			break;
 		case 0xf:	/* CT3 */
-			dsp_reg.ct3 = value;
+			dsp_reg.ct3 = value & 0x3f;
 			break;
 	}
 }
@@ -574,8 +576,8 @@ static void dsp_dma( void )
 		{
 		  case 0: add = 0; break;  /* 0 */
 		  case 1: add = 4; break;  /* 1 */
-		  case 2: add = 8; break;  /* 2 */ /* verified on DSPEMU */
-		  case 3: add = 16; break; /* 4 */ /* verified on DSPEMU */
+		  case 2: add = 8; break;  /* 2 */
+		  case 3: add = 16; break; /* 4 */
 		  case 4: add = 32; break;  /* 8 */
   		  case 5: add = 64; break; /* 16 */
   		  case 6: add = 128; break; /* 32 */
@@ -590,6 +592,13 @@ static void dsp_dma( void )
 		source &= 0x07ffffff;
 		dest &= 0x07ffffff;
 		transfer_cnt &= 0xff;
+
+		/* check for not B-Bus transfer */
+		if ( !((source >= 0x05a00000) && (source <= 0x05ffffff)) )
+		{
+			if ( add > 0 ) add = 4; /* only add number 1 is valid for not B-Bus transfers */
+		}
+
 #if DEBUG_DSP
         fprintf( log_file, "/*DSP DMA D0,[RAM%d],%d add=%d*/\n", dsp_mem, transfer_cnt, add );
 #endif
@@ -605,7 +614,7 @@ static void dsp_dma( void )
 
 		if ( hold == 0 )
 		{
-			dsp_reg.ra0 += counter * add;
+			dsp_reg.ra0 += ((counter * add) >> 2);
 		}
 	}
 	else
@@ -616,6 +625,12 @@ static void dsp_dma( void )
 		dest &= 0x07ffffff;
 		transfer_cnt &= 0xff;
 		//logerror("[DSP DMA] SRC = %08x | DEST = %08x | SIZE = %08x | ADD VALUE = %08x\n",source,dest,transfer_cnt,add);
+
+		/* check for not B-Bus transfer */
+		if ( !((dest >= 0x05a00000) && (dest <= 0x05ffffff)) )
+		{
+			if ( add > 0 ) add = 4; /* only add number 1 is valid for not B-Bus transfers */
+		}
 
 #if DEBUG_DSP
     fprintf( log_file, "/*DSP DMA [RAM%d],D0,%d\tadd=%d,source=%08X*/\n", dsp_mem, transfer_cnt, add, source );
@@ -628,7 +643,7 @@ static void dsp_dma( void )
 
 		if ( hold == 0 )
 		{
-			dsp_reg.wa0 += counter * add;
+			dsp_reg.wa0 += ((counter * add) >> 2);
 		}
 	}
 

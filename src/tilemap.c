@@ -765,7 +765,7 @@ int tilemap_init( void )
 	return -1;
 }
 
-void tilemap_close( void )
+void tilemap_exit( void )
 {
 	struct tilemap *next;
 

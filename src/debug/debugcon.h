@@ -79,11 +79,7 @@ const char *		debug_cmderr_to_string(CMDERR error);
 /* console management */
 void 				debug_console_clear(void);
 void 				debug_console_write_line(const char *line);
-#ifdef __GNUC__
-void CLIB_DECL		debug_console_printf(const char *format, ...) __attribute__ ((format (printf, 1, 2)));
-#else
-void CLIB_DECL		debug_console_printf(const char *format, ...);
-#endif
+void CLIB_DECL		debug_console_printf(const char *format, ...) ATTR_PRINTF(1,2);
 const char *		debug_console_get_line(int index);
 void				debug_console_get_size(int *rows, int *cols);
 

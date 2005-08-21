@@ -107,6 +107,9 @@ typedef UINT32 rgb_t;
 #define RGB_GREEN(rgb)		(((rgb) >> 8) & 0xff)
 #define RGB_BLUE(rgb)		((rgb) & 0xff)
 
+#define RGB_BLACK			(MAKE_RGB(0,0,0))
+#define RGB_WHITE			(MAKE_RGB(255,255,255))
+
 
 
 /*-------------------------------------------------
@@ -175,6 +178,7 @@ void palette_set_global_brightness_adjust(double adjustment);
 double palette_get_global_brightness(void);
 
 pen_t get_black_pen(void);
+pen_t get_white_pen(void);
 
 
 /* here are some functions to handle commonly used palette layouts, so you don't

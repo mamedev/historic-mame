@@ -176,8 +176,8 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 
 //      if (((source[2] & 0xffff0000) >> 16) == 0x0001)
 //      {
-//          usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
-//          // usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
+//          ui_popup("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
+//          // ui_popup("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
 //      }
 
 		for(ydrw=0;ydrw<=chainy;ydrw++)
@@ -923,7 +923,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 		}
 	}
 
-	// usrintf_showmessage("%d", numPolys) ;
+	// ui_popup("%d", numPolys) ;
 
 	// Clear each of the display list buffers after drawing...
 	for (i = 0; i < 0x81; i++)

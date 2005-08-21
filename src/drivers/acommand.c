@@ -228,7 +228,7 @@ VIDEO_UPDATE( acommand )
 
 	#if SHOW_LEDS
 		draw_led(bitmap, 3, 53, (led0 & 0xff00) >> 8);
-		usrintf_showmessage("%04x",led0);
+		ui_popup("%04x",led0);
 	#endif
 }
 
@@ -286,7 +286,7 @@ data16_t *ac_devram;
 
 static READ16_HANDLER(ac_devices_r)
 {
-//  usrintf_showmessage("(PC=%06x) read at %04x",activecpu_get_pc(),offset*2);
+//  ui_popup("(PC=%06x) read at %04x",activecpu_get_pc(),offset*2);
 	switch(offset)
 	{
 		case 0x0008/2:
@@ -378,7 +378,7 @@ static WRITE16_HANDLER(ac_devices_w)
 static WRITE16_HANDLER(ac_unk2_w)
 {
 	if(data)
-		usrintf_showmessage("UNK-2 enabled %04x",data);
+		ui_popup("UNK-2 enabled %04x",data);
 }
 
 static ADDRESS_MAP_START( acommand, ADDRESS_SPACE_PROGRAM, 16 )

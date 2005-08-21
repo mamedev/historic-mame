@@ -61,6 +61,11 @@ enum
 	CPUINFO_INT_SH2_FRT_INPUT = CPUINFO_INT_CPU_SPECIFIC
 };
 
+enum
+{
+	CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK = CPUINFO_PTR_CPU_SPECIFIC,
+};
+
 struct sh2_config
 {
   int is_slave;

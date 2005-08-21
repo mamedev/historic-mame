@@ -4,12 +4,6 @@
 #include "osd_cpu.h"
 #include "mamedbg.h"
 
-#ifdef  GNU
-#define ARGFMT  __attribute__((format(printf,2,3)))
-#else
-#define ARGFMT
-#endif
-
 #ifndef DECL_SPEC
 #define DECL_SPEC
 #endif
@@ -149,8 +143,8 @@ extern UINT32 win_is_initalized(UINT32 idx);
 extern void win_exit_engine(void);
 extern void win_close(UINT32 idx);
 extern INT32 win_vprintf(UINT32 idx, const char *pszString, va_list arg);
-extern INT32 DECL_SPEC win_printf(UINT32 idx, const char *pszString, ...) ARGFMT;
-extern UINT32 DECL_SPEC win_set_title(UINT32 idx, const char *pszTitle, ... ) ARGFMT;
+extern INT32 DECL_SPEC win_printf(UINT32 idx, const char *pszString, ...) ATTR_PRINTF(2,3);
+extern UINT32 DECL_SPEC win_set_title(UINT32 idx, const char *pszTitle, ... ) ATTR_PRINTF(2,3);
 extern UINT32 win_get_cx(UINT32 idx);
 extern UINT32 win_get_cy(UINT32 idx);
 extern UINT32 win_get_cx_abs(UINT32 idx);

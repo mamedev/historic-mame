@@ -143,7 +143,7 @@ WRITE8_HANDLER( fcombat_videoreg_w )
 
 	/* bits 6-7 sprite lookup table bank */
 	sprite_palette = 0;//(data & 0xc0) >> 6;
-	//usrintf_showmessage("%08x",data);
+	//ui_popup("%08x",data);
 }
 
 

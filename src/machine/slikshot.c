@@ -598,7 +598,7 @@ VIDEO_UPDATE( slikshot )
 		curx = temp;
 
 		compute_sensors();
-//      usrintf_showmessage("V=%02x,%02x  X=%02x", curvx, curvy, curx);
+//      ui_popup("V=%02x,%02x  X=%02x", curvx, curvy, curx);
 		crosshair_vis = 0;
 	}
 	last_ytotal = totaldy;

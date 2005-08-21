@@ -599,7 +599,7 @@ int code_init(void)
 }
 
 
-void code_close(void)
+void code_exit(void)
 {
 	code_count = 0;
 	free(code_map);

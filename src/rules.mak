@@ -1493,6 +1493,17 @@ else
 CPUDEFS += -DHAS_ADSP21062=0
 endif
 
+CPU=$(strip $(findstring DSP56156@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/dsp56k
+CPUDEFS += -DHAS_DSP56156=1
+CPUOBJS += $(OBJ)/cpu/dsp56k/dsp56k.o
+DBGOBJS += $(OBJ)/cpu/dsp56k/dsp56kdasm.o
+$(OBJ)/cpu/dsp56k/dsp56k.o: dsp56k.c dsp56kops.c dsp56k.h
+else
+CPUDEFS += -DHAS_DSP56156=0
+endif
+
 SOUND=$(strip $(findstring CDDA@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_CDDA=1

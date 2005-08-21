@@ -183,7 +183,7 @@ static WRITE16_HANDLER( bit_controls_w )
 		}
 		bitvals[offset] = data & 1;
 	}
-//  usrintf_showmessage("%d%d%d%d-%d%d%d%d--%d%d%d%d-%d%d%d%d",
+//  ui_popup("%d%d%d%d-%d%d%d%d--%d%d%d%d-%d%d%d%d",
 /*
         bitvals[0],
         bitvals[1],

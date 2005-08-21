@@ -215,7 +215,7 @@ VIDEO_UPDATE( yunsun16 )
 	tilemap_set_scrollx(tilemap_1, 0, yunsun16_scroll_1[ 0 ]);
 	tilemap_set_scrolly(tilemap_1, 0, yunsun16_scroll_1[ 1 ]);
 
-//  usrintf_showmessage("%04X", *yunsun16_priority);
+//  ui_popup("%04X", *yunsun16_priority);
 
 	fillbitmap(priority_bitmap,0,cliprect);
 

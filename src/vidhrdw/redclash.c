@@ -248,7 +248,7 @@ static void redclash_draw_sprites( struct mame_bitmap *bitmap )
 						break;
 
 					case 0:
-usrintf_showmessage("unknown sprite size 0");
+ui_popup("unknown sprite size 0");
 						break;
 				}
 			}

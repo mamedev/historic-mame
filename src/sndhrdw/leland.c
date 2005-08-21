@@ -688,7 +688,7 @@ static void update_interrupt_state(void)
 				else if (i186.intr.status & 4)
 					new_vector = 0x13;
 				else
-					usrintf_showmessage("Invalid timer interrupt!");
+					ui_popup("Invalid timer interrupt!");
 
 				/* set the clear mask and generate the int */
 				i186.intr.ack_mask = 0x0001;
@@ -1522,7 +1522,7 @@ static WRITE8_HANDLER( i186_internal_port_w )
 				memory_install_read8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_r);
 				memory_install_write8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_w);
 			}
-/*          usrintf_showmessage("Sound CPU reset");*/
+/*          ui_popup("Sound CPU reset");*/
 			break;
 
 		default:

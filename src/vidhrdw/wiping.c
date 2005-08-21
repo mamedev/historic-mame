@@ -209,7 +209,7 @@ VIDEO_UPDATE( wiping )
 		{
 			char buf[40];
 			sprintf(buf,"%01x",wiping_soundregs[i*8+j]&0xf);
-			ui_text(buf,j*10,i*8);
+			ui_draw_text(buf,j*10,i*8);
 		}
 	}
 
@@ -219,7 +219,7 @@ VIDEO_UPDATE( wiping )
 		{
 			char buf[40];
 			sprintf(buf,"%01x",wiping_soundregs[0x2000+i*8+j]>>4);
-			ui_text(buf,j*10,80+i*8);
+			ui_draw_text(buf,j*10,80+i*8);
 		}
 	}
 }

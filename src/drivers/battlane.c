@@ -92,8 +92,8 @@ WRITE8_HANDLER( battlane_cpu_command_w )
 
 static ADDRESS_MAP_START( battlane_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_SHARE(1)
-    AM_RANGE(0x1000, 0x17ff) AM_RAM AM_WRITE(battlane_tileram_w) AM_BASE(&battlane_tileram)
-    AM_RANGE(0x1800, 0x18ff) AM_RAM AM_WRITE(battlane_spriteram_w) AM_BASE(&battlane_spriteram)
+    AM_RANGE(0x1000, 0x17ff) AM_RAM AM_WRITE(battlane_tileram_w) AM_SHARE(2) AM_BASE(&battlane_tileram)
+    AM_RANGE(0x1800, 0x18ff) AM_RAM AM_WRITE(battlane_spriteram_w) AM_SHARE(3) AM_BASE(&battlane_spriteram)
 	AM_RANGE(0x1c00, 0x1c00) AM_READWRITE(input_port_0_r, battlane_video_ctrl_w)
     AM_RANGE(0x1c01, 0x1c01) AM_READWRITE(input_port_1_r, battlane_scrollx_w)
 	AM_RANGE(0x1c02, 0x1c02) AM_READWRITE(input_port_2_r, battlane_scrolly_w)
@@ -101,10 +101,9 @@ static ADDRESS_MAP_START( battlane_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1c04, 0x1c04) AM_READWRITE(YM3526_status_port_0_r, YM3526_control_port_0_w)
 	AM_RANGE(0x1c05, 0x1c05) AM_WRITE(YM3526_write_port_0_w)
 	AM_RANGE(0x1e00, 0x1e3f) AM_WRITE(battlane_palette_w)
-	AM_RANGE(0x2000, 0x3fff) AM_RAM AM_WRITE(battlane_bitmap_w)
+	AM_RANGE(0x2000, 0x3fff) AM_RAM AM_WRITE(battlane_bitmap_w) AM_SHARE(4)
 	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
-
 
 INTERRUPT_GEN( battlane_cpu1_interrupt )
 {
@@ -296,14 +295,18 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( battlane )
+	ROM_REGION( 0x8000, REGION_USER1, 0 )     /*  */
+	ROM_LOAD( "da00-5",     0x0000, 0x8000, CRC(85b4ed73) SHA1(b8e61eedf8fb75bb07f1df91a7465cee2b6ff372) )
+
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of da00-5 will be copied at 0x4000-0x7fff */
-	ROM_LOAD( "da00-5",    0x4000, 0x8000, CRC(85b4ed73) SHA1(b8e61eedf8fb75bb07f1df91a7465cee2b6ff372) )
-	ROM_LOAD( "da01-5",    0x8000, 0x8000, CRC(7a6c3f02) SHA1(bee1ee858f81453a53afc2d016f549924801b090) )
+	ROM_COPY( REGION_USER1, 0x0000, 0x4000, 0x4000 )
+	ROM_LOAD( "da01-5",     0x8000, 0x8000, CRC(7a6c3f02) SHA1(bee1ee858f81453a53afc2d016f549924801b090) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
-	ROM_LOAD( "da00-5",    0x0000, 0x8000, CRC(85b4ed73) SHA1(b8e61eedf8fb75bb07f1df91a7465cee2b6ff372) )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",    0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
+	/* second half of da00-5 will be copied at 0x4000-0x7fff */
+	ROM_COPY( REGION_USER1, 0x4000, 0x4000, 0x4000 )
+	ROM_LOAD( "da02-2",     0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, CRC(834829d4) SHA1(d56781d2a7ef89b645a637166cd5acde6a65f7f9) ) /* Sprites Plane 1+2 */
@@ -320,14 +323,18 @@ ROM_START( battlane )
 ROM_END
 
 ROM_START( battlan2 )
+	ROM_REGION( 0x8000, REGION_USER1, 0 )
+	ROM_LOAD( "da00-3",     0x0000, 0x8000, CRC(7a0a5d58) SHA1(ef97e5a64a668c437c18cda931c52bf39b580b4a) )
+
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of da00-3 will be copied at 0x4000-0x7fff */
-	ROM_LOAD( "da00-3",    0x4000, 0x8000, CRC(7a0a5d58) SHA1(ef97e5a64a668c437c18cda931c52bf39b580b4a) )
-	ROM_LOAD( "da01-3",    0x8000, 0x8000, CRC(d9e40800) SHA1(dc87ae0d8631c220dbbddbf0e49b6bdaeb635269) )
+	ROM_COPY( REGION_USER1, 0x0000, 0x4000, 0x4000 )
+	ROM_LOAD( "da01-3",     0x8000, 0x8000, CRC(d9e40800) SHA1(dc87ae0d8631c220dbbddbf0e49b6bdaeb635269) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
-	ROM_LOAD( "da00-3",    0x0000, 0x8000, CRC(7a0a5d58) SHA1(ef97e5a64a668c437c18cda931c52bf39b580b4a) )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",    0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
+	/* second half of da00-3 will be copied at 0x4000-0x7fff */
+	ROM_COPY( REGION_USER1, 0x4000, 0x4000, 0x4000 )
+	ROM_LOAD( "da02-2",     0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, CRC(834829d4) SHA1(d56781d2a7ef89b645a637166cd5acde6a65f7f9) ) /* Sprites Plane 1+2 */
@@ -344,14 +351,18 @@ ROM_START( battlan2 )
 ROM_END
 
 ROM_START( battlan3 )
+	ROM_REGION( 0x8000, REGION_USER1, 0 )
+	ROM_LOAD( "bl_04.rom",  0x0000, 0x8000, CRC(5681564c) SHA1(25b3a715e91976830d87c7c45b93b473df709241) )
+
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	/* first half of bl_04.rom will be copied at 0x4000-0x7fff */
-	ROM_LOAD( "bl_04.rom", 0x4000, 0x8000, CRC(5681564c) SHA1(25b3a715e91976830d87c7c45b93b473df709241) )
-	ROM_LOAD( "bl_05.rom", 0x8000, 0x8000, CRC(001c4bbe) SHA1(4320c0a85b5b3505ac7292673759e5288cf4187f) )
+	ROM_COPY( REGION_USER1, 0x0000, 0x4000, 0x4000 )
+	ROM_LOAD( "bl_05.rom",  0x8000, 0x8000, CRC(001c4bbe) SHA1(4320c0a85b5b3505ac7292673759e5288cf4187f) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64K for slave CPU */
-	ROM_LOAD( "bl_04.rom", 0x0000, 0x8000, CRC(5681564c) SHA1(25b3a715e91976830d87c7c45b93b473df709241) )	/* ...second half goes here */
-	ROM_LOAD( "da02-2",    0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
+	/* second half of bl_04.rom will be copied at 0x4000-0x7fff */
+	ROM_COPY( REGION_USER1, 0x4000, 0x4000, 0x4000 )
+	ROM_LOAD( "da02-2",     0x8000, 0x8000, CRC(69d8dafe) SHA1(a7dab13d7f05bf8e3220bb8193066e9b45c86a17) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "da05",      0x00000, 0x8000, CRC(834829d4) SHA1(d56781d2a7ef89b645a637166cd5acde6a65f7f9) ) /* Sprites Plane 1+2 */

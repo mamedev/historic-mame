@@ -68,7 +68,7 @@ static WRITE16_HANDLER( soundcmd_w )
 static WRITE8_HANDLER( okibank_w )
 {
 	/* bit 2 might be reset */
-//  usrintf_showmessage("%02x",data);
+//  ui_popup("%02x",data);
 
 	OKIM6295_set_bank_base(0,(data & 3) * 0x40000);
 }

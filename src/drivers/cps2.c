@@ -665,7 +665,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 	if(cps1_output[0x52/2] & 0x8000)
 		cps1_output[0x52/2] = cps1_output[0x52/2] & 0x1ff;
 
-//  usrintf_showmessage("%04x %04x - %04x %04x",scanline1,scanline2,cps1_output[0x50/2],cps1_output[0x52/2]);
+//  ui_popup("%04x %04x - %04x %04x",scanline1,scanline2,cps1_output[0x50/2],cps1_output[0x52/2]);
 
 	/* raster effects */
 	if(scanline1 == scancount || (scanline1 < scancount && !scancalls))
@@ -675,7 +675,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		cps2_set_sprite_priorities();
 		force_partial_update(16 - 10 + scancount);	/* Machine->visible_area.min_y - [first visible line?] + scancount */
 		scancalls++;
-//          usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
+//          ui_popup("IRQ4 scancounter = %04i",scancount);
 	}
 
 	/* raster effects */
@@ -686,7 +686,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		cps2_set_sprite_priorities();
 		force_partial_update(16 - 10 + scancount);	/* Machine->visible_area.min_y - [first visible line?] + scancount */
 		scancalls++;
-//          usrintf_showmessage("IRQ4 scancounter = %04i",scancount);
+//          ui_popup("IRQ4 scancounter = %04i",scancount);
 	}
 
 	if(scancount == 256)  /* VBlank */
@@ -701,7 +701,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		}
 		cps2_objram_latch();
 	}
-	//usrintf_showmessage("Raster calls = %i",scancalls);
+	//ui_popup("Raster calls = %i",scancalls);
 }
 
 

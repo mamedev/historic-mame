@@ -16,7 +16,7 @@
 
   Video:
    16 bit True Color/Dot
-   Resolution - 320×340 or 512×384
+   Resolution - 320?340 or 512?384
 
   Memory:
     256KByte x2 VRAM

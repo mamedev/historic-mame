@@ -489,7 +489,7 @@ WRITE8_HANDLER( astrocde_magic_control_w )
 	magic_shift_leftover = 0;	/* reset shift buffer on write to this register */
 
 	if (magic_control & 0x04)
-		usrintf_showmessage("unsupported MAGIC ROTATE mode");
+		ui_popup("unsupported MAGIC ROTATE mode");
 }
 
 

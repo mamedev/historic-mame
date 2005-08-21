@@ -989,7 +989,7 @@ static void PC080SN_ctrl_word_w(int chip,offs_t offset,data16_t data,UINT32 mem_
 		}
 	}
 #if 0
-	usrintf_showmessage("PC080SN ctrl = %4x",data);
+	ui_popup("PC080SN ctrl = %4x",data);
 #endif
 }
 
@@ -1299,7 +1299,7 @@ static void PC090OJ_word_w(offs_t offset,data16_t data,UINT32 mem_mask)
 		PC090OJ_ctrl = data;
 
 #if 0
-	usrintf_showmessage("PC090OJ ctrl = %4x",data);
+	ui_popup("PC090OJ ctrl = %4x",data);
 #endif
 	}
 }
@@ -1697,7 +1697,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 			if (!TC0080VCO_has_tx)
 			{
 				if (TC0080VCO_ram[offset])
-				usrintf_showmessage_secs(7,"Write non-zero to TC0080VCO char ram\nPlease report to MAMEDEV");
+				ui_popup_time(7,"Write non-zero to TC0080VCO char ram\nPlease report to MAMEDEV");
 			}
 #endif
 		}
@@ -1709,7 +1709,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 			if (!TC0080VCO_has_tx)
 			{
 				if (TC0080VCO_ram[offset])
-				usrintf_showmessage_secs(7,"Write non-zero to TC0080VCO fg0\nPlease report to MAMEDEV");
+				ui_popup_time(7,"Write non-zero to TC0080VCO fg0\nPlease report to MAMEDEV");
 			}
 #endif
 		}
@@ -1729,7 +1729,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 			if (!TC0080VCO_has_tx)
 			{
 				if (TC0080VCO_ram[offset])
-				usrintf_showmessage_secs(7,"Write non-zero to TC0080VCO char-hi ram\nPlease report to MAMEDEV");
+				ui_popup_time(7,"Write non-zero to TC0080VCO char-hi ram\nPlease report to MAMEDEV");
 			}
 #endif
 		}
@@ -1737,7 +1737,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 		{
 #if 1
 			if (TC0080VCO_ram[offset])
-			usrintf_showmessage_secs(7,"Write non-zero to mystery TC0080VCO area\nPlease report to MAMEDEV");
+			ui_popup_time(7,"Write non-zero to mystery TC0080VCO area\nPlease report to MAMEDEV");
 #endif
 		}
 		else if (offset < 0x1c000/2)	/* chain ram */
@@ -1859,7 +1859,7 @@ static void TC0080VCO_bg0_tilemap_draw(struct mame_bitmap *bitmap,const struct r
 {
 	char buf[100];
 	sprintf(buf,"xmin= %04x xmax= %04x ymin= %04x ymax= %04x",min_x,max_x,min_y,max_y);
-	usrintf_showmessage(buf);
+	ui_popup(buf);
 }
 #endif
 
@@ -2054,7 +2054,7 @@ void TC0080VCO_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *c
 	int disable = 0x00;	/* possibly layer disable bits do exist ?? */
 
 #if 0
-	usrintf_showmessage("layer disable = %x",disable);
+	ui_popup("layer disable = %x",disable);
 #endif
 
 	switch (layer)
@@ -2909,7 +2909,7 @@ int TC0100SCN_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cl
 
 #if 0
 if (disable != 0 && disable != 3 && disable != 7)
-	usrintf_showmessage("layer disable = %x",disable);
+	ui_popup("layer disable = %x",disable);
 #endif
 
 	switch (layer)
@@ -3082,10 +3082,10 @@ WRITE8_HANDLER( TC0360PRI_w )
 	TC0360PRI_regs[offset] = data;
 
 if (offset >= 0x0a)
-	usrintf_showmessage("write %02x to unused TC0360PRI reg %x",data,offset);
+	ui_popup("write %02x to unused TC0360PRI reg %x",data,offset);
 #if 0
 #define regs TC0360PRI_regs
-	usrintf_showmessage("%02x %02x  %02x %02x  %02x %02x %02x %02x %02x %02x",
+	ui_popup("%02x %02x  %02x %02x  %02x %02x %02x %02x %02x %02x",
 		regs[0x00],regs[0x01],regs[0x02],regs[0x03],
 		regs[0x04],regs[0x05],regs[0x06],regs[0x07],
 		regs[0x08],regs[0x09]);
@@ -4347,36 +4347,36 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[0] ^= 1;
-		usrintf_showmessage("RoadA body: %01x",dislayer[0]);
+		ui_popup("RoadA body: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[1] ^= 1;
-		usrintf_showmessage("RoadA l-edge: %01x",dislayer[1]);
+		ui_popup("RoadA l-edge: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[2] ^= 1;
-		usrintf_showmessage("RoadA r-edge: %01x",dislayer[2]);
+		ui_popup("RoadA r-edge: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[3] ^= 1;
-		usrintf_showmessage("RoadB body: %01x",dislayer[3]);
+		ui_popup("RoadB body: %01x",dislayer[3]);
 	}
 
 	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[4] ^= 1;
-		usrintf_showmessage("RoadB l-edge: %01x",dislayer[4]);
+		ui_popup("RoadB l-edge: %01x",dislayer[4]);
 	}
 	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[5] ^= 1;
-		usrintf_showmessage("RoadB r-edge: %01x",dislayer[5]);
+		ui_popup("RoadB r-edge: %01x",dislayer[5]);
 	}
 #endif
 
@@ -4385,7 +4385,7 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 	{
 		char buf3[80];
 		sprintf(buf3,"road control: %04x",road_ctrl);
-		usrintf_showmessage(buf3);
+		ui_popup(buf3);
 	}
 #endif
 
@@ -4873,7 +4873,7 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 	{
 		char buf2[80];
 		sprintf(buf2,"Road twinned for %04x lines",twin_road);
-		usrintf_showmessage(buf2);
+		ui_popup(buf2);
 	}
 #endif
 }

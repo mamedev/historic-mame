@@ -98,7 +98,7 @@ static int remap_colors( int num, int addr, int data )
 
 		#ifdef MAME_DEBUG
 		else
-			usrintf_showmessage( "Unmatched color %02x, at address %04x", data & 0x3f, addr );
+			ui_popup( "Unmatched color %02x, at address %04x", data & 0x3f, addr );
 		#endif
 	}
 

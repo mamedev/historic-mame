@@ -577,18 +577,18 @@ int state_save_load_begin(mame_file *file)
 	ss_dump_file = file;
 	mame_fread(ss_dump_file, ss_dump_array, ss_dump_size);
 
-	if (ss_check_header(ss_dump_array, NULL, signature, usrintf_showmessage, "Error: "))
+	if (ss_check_header(ss_dump_array, NULL, signature, ui_popup, "Error: "))
 		goto bad;
 
 	if(ss_dump_array[9] & SS_NO_SOUND)
 	{
 		if(Machine->sample_rate)
-			usrintf_showmessage("Warning: Game was saved with sound off, but sound is on.  Result may be interesting.");
+			ui_popup("Warning: Game was saved with sound off, but sound is on.  Result may be interesting.");
 	}
 	else
 	{
 		if(!Machine->sample_rate)
-			usrintf_showmessage("Warning: Game was saved with sound on, but sound is off.  Result may be interesting.");
+			ui_popup("Warning: Game was saved with sound on, but sound is off.  Result may be interesting.");
 	}
 
 	offset = 0x18;

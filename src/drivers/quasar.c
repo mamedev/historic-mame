@@ -310,7 +310,7 @@ INPUT_PORTS_START( quasar )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x30, 0x00, "N° Rockets" )				/* confirmed */
+	PORT_DIPNAME( 0x30, 0x00, "N? Rockets" )				/* confirmed */
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )

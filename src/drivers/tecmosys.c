@@ -432,19 +432,14 @@ VIDEO_UPDATE(deroon)
 	}
 	command_data &= 0xff;
 
-	sprintf(buf,"keys: Q,A and C");
-	for (j = 0;j < 16;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,20,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"command code: %2x", command_data);
-	for (j = 0;j < 16;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,10+6*j,40,0,TRANSPARENCY_NONE,0);
-
+	sprintf(buf,"keys: Q,A and C\ncommand code: %2x", command_data);
+	ui_draw_text(buf,10,20);
 
 	if (code_pressed_memory(KEYCODE_C))
 	{
 		soundlatch_w(0,command_data);
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-		usrintf_showmessage("command write=%2x",command_data);
+		ui_popup("command write=%2x",command_data);
 	}
 #endif
 

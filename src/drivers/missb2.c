@@ -52,7 +52,7 @@ VIDEO_UPDATE( missb2 )
 	if (!bublbobl_video_enable) return;
 
 	/* background map register */
-	//usrintf_showmessage("%02x",(*missb2_bgvram) & 0x1f);
+	//ui_popup("%02x",(*missb2_bgvram) & 0x1f);
 	for(bg_offs = ((*missb2_bgvram) << 4);bg_offs<(((*missb2_bgvram)<< 4)|0xf);bg_offs++)
 	{
 		drawgfx(bitmap,Machine->gfx[1],

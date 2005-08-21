@@ -295,7 +295,7 @@ READ16_HANDLER(arabfgt_protection_r)
 	}
 	else
 	{
-		usrintf_showmessage("UNKONWN ARF PROTECTION READ PC=%x\n", PC);
+		ui_popup("UNKONWN ARF PROTECTION READ PC=%x\n", PC);
 	}
 
 	return 0;

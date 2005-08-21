@@ -165,7 +165,7 @@ READ16_HANDLER (sango_protram_r)
 	// otherwise it doesn't seem to use the ram for anything important, we return 0 to avoid test mode corruption
 	// kovplus reads from offset 000e a lot ... why?
 #ifdef MAME_DEBUG
-	usrintf_showmessage ("protection ram r %04x",offset);
+	ui_popup ("protection ram r %04x",offset);
 #endif
 	return 0x0000;
 }
@@ -318,7 +318,7 @@ READ16_HANDLER (ASIC28_r16)
 			if(ASIC28REGS[0]>0x2f)
 			{
 //              PutMessage("Unmapped BA com, report ElSemi",60);
-				usrintf_showmessage	("Unmapped BA com %02x, contact ElSemi / MameDev", ASIC28REGS[0]);
+				ui_popup	("Unmapped BA com %02x, contact ElSemi / MameDev", ASIC28REGS[0]);
 			}
 			break;
 

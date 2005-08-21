@@ -158,7 +158,7 @@ static WRITE8_HANDLER( bankswitch_w )
 	int offs;
 
 	/* bit 0 = RAM bank? */
-if ((data & 1) == 0) usrintf_showmessage("bankswitch RAM bank 0");
+if ((data & 1) == 0) ui_popup("bankswitch RAM bank 0");
 
 	/* bit 1-4 = ROM bank */
 	if (data & 0x10) offs = 0x20000 + (data & 0x06) * 0x1000;

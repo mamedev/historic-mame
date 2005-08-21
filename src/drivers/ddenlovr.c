@@ -177,7 +177,7 @@ static void dynax_blit_flip_w( data8_t data )
 	if ((data ^ dynax_blit_flip) & 0xec)
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("warning dynax_blit_flip = %02x",data);
+		ui_popup("warning dynax_blit_flip = %02x",data);
 #endif
 		logerror("warning dynax_blit_flip = %02x\n",data);
 	}
@@ -287,7 +287,7 @@ INLINE int fetch_bit(UINT8 *src_data,int src_len,int *bit_addr)
 	if (baddr/8 >= src_len)
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFX ROM OVER %06x",baddr/8);
+		ui_popup("GFX ROM OVER %06x",baddr/8);
 #endif
 		return 1;
 	}
@@ -334,7 +334,7 @@ static int blit_draw(int src,int sx)
 
 #ifdef MAME_DEBUG
 	if (pen_size > 4 || arg_size > 8)
-		usrintf_showmessage("pen_size %d arg_size %d",pen_size,arg_size);
+		ui_popup("pen_size %d arg_size %d",pen_size,arg_size);
 #endif
 
 	x = sx;
@@ -351,7 +351,7 @@ static int blit_draw(int src,int sx)
 				break;
 
 			default:
-				usrintf_showmessage("%06x: unknown command %02x",src,cmd);
+				ui_popup("%06x: unknown command %02x",src,cmd);
 //              return (bit_addr + 7) / 8;
 
 			case 1:	// LINE
@@ -416,7 +416,7 @@ static int hanakanz_blit_draw(int src,int sx)
 
 #ifdef MAME_DEBUG
 	if (pen_size > 4 || arg_size > 8)
-		usrintf_showmessage("warning: pen_size %d arg_size %d",pen_size,arg_size);
+		ui_popup("warning: pen_size %d arg_size %d",pen_size,arg_size);
 #endif
 
 	x = sx;
@@ -473,7 +473,7 @@ static int hanakanz_blit_draw(int src,int sx)
 			break;
 
 			default:
-				usrintf_showmessage("%06x: warning unknown command %02x",src,cmd);
+				ui_popup("%06x: warning unknown command %02x",src,cmd);
 logerror("%06x: warning unknown command %02x\n",src,cmd);
 			// fall through
 			case 7:	// STOP
@@ -492,7 +492,7 @@ static void blit_rect_xywh(void)
 
 #ifdef MAME_DEBUG
 	if (dynax_clip_ctrl != 0x0f)
-		usrintf_showmessage("RECT clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+		ui_popup("RECT clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	for (y = 0; y <= dynax_rect_height; y++)
@@ -519,7 +519,7 @@ static void blit_rect_yh(void)
 
 #ifdef MAME_DEBUG
 	if (dynax_clip_ctrl != 0x0f)
-		usrintf_showmessage("UNK8C clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+		ui_popup("UNK8C clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	if (start < 512*512)
@@ -557,7 +557,7 @@ static void blit_fill_xy(int x, int y)
 
 #ifdef MAME_DEBUG
 	if (x || y)
-		usrintf_showmessage("FILL command X %03x Y %03x",x,y);
+		ui_popup("FILL command X %03x Y %03x",x,y);
 #endif
 
 	if (dynax_dest_layer & 0x0001) memset(pixmap[0] + start,dynax_blit_pen,512*512 - start);
@@ -588,13 +588,13 @@ static void blit_fill_xy(int x, int y)
 static void blit_horiz_line(void)
 {
 #ifdef MAME_DEBUG
-	usrintf_showmessage("LINE X");
+	ui_popup("LINE X");
 
 	if (dynax_clip_ctrl != 0x0f)
-		usrintf_showmessage("LINE X clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+		ui_popup("LINE X clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 
 	if (dynax_blit_flip)
-		usrintf_showmessage("LINE X flip=%x",dynax_blit_flip);
+		ui_popup("LINE X flip=%x",dynax_blit_flip);
 #endif
 
 	while (dynax_line_length--)
@@ -616,10 +616,10 @@ static void blit_horiz_line(void)
 static void blit_vert_line(void)
 {
 #ifdef MAME_DEBUG
-	usrintf_showmessage("LINE Y");
+	ui_popup("LINE Y");
 
 	if (dynax_clip_ctrl != 0x0f)
-		usrintf_showmessage("LINE Y clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+		ui_popup("LINE Y clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	while (dynax_line_length--)
@@ -769,7 +769,7 @@ profiler_mark(PROFILER_VIDEO);
 				default:
 							;
 				#ifdef MAME_DEBUG
-					usrintf_showmessage("unknown blitter command %02x",data);
+					ui_popup("unknown blitter command %02x",data);
 					logerror("%06x: unknown blitter command %02x\n", activecpu_get_pc(), data);
 				#endif
 			}
@@ -980,7 +980,7 @@ profiler_mark(PROFILER_VIDEO);
 				default:
 							;
 				#ifdef MAME_DEBUG
-					usrintf_showmessage("unknown blitter command %02x",data);
+					ui_popup("unknown blitter command %02x",data);
 					logerror("%06x: unknown blitter command %02x\n", activecpu_get_pc(), data);
 				#endif
 			}
@@ -1124,7 +1124,7 @@ VIDEO_EOF(ddenlovr)
 //  next = blit_draw(base,0);
 	next = hanakanz_blit_draw(base,0);
 if (code_pressed(KEYCODE_Z))
-	usrintf_showmessage("%06x",base);
+	ui_popup("%06x",base);
 	if (code_pressed(KEYCODE_S)) base = next;
 	if (code_pressed_memory(KEYCODE_X)) base = next;
 	if (code_pressed(KEYCODE_C)) { base--; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base--; }
@@ -1169,7 +1169,7 @@ if (code_pressed(KEYCODE_Z))
 
 		if (pri >= 24)
 		{
-			usrintf_showmessage("priority = %02x",pri);
+			ui_popup("priority = %02x",pri);
 			pri = 0;
 		}
 
@@ -1184,7 +1184,7 @@ if (code_pressed(KEYCODE_Z))
 
 		if (pri >= 24)
 		{
-			usrintf_showmessage("priority2 = %02x",pri);
+			ui_popup("priority2 = %02x",pri);
 			pri = 0;
 		}
 
@@ -2119,7 +2119,7 @@ static WRITE8_HANDLER( hanakanz_coincounter_w )
 		logerror("%04x: warning, coin counter = %02x\n", activecpu_get_pc(), data);
 
 #ifdef MAME_DEBUG
-//      usrintf_showmessage("93 = %02x",data);
+//      ui_popup("93 = %02x",data);
 #endif
 }
 
@@ -2345,7 +2345,7 @@ static WRITE8_HANDLER( mjchuuka_coincounter_w )
 		logerror("%04x: warning, coin counter = %02x\n", activecpu_get_pc(), data);
 
 #ifdef MAME_DEBUG
-//    usrintf_showmessage("40 = %02x",data);
+//    ui_popup("40 = %02x",data);
 #endif
 }
 
@@ -2355,7 +2355,7 @@ static WRITE8_HANDLER( mjchuuka_oki_bank_w )
 	OKIM6295_set_bank_base(0, (data & 0x01) ? 0x40000 : 0);
 
 #ifdef MAME_DEBUG
-//    usrintf_showmessage("1e = %02x",data);
+//    ui_popup("1e = %02x",data);
 #endif
 }
 

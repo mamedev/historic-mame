@@ -144,7 +144,7 @@ INTERRUPT_GEN( toratora_timer )
 	timer++;	/* timer counting at 16 Hz */
 
 	/* also, when the timer overflows (16 seconds) watchdog would kick in */
-	if (timer & 0x100) usrintf_showmessage("watchdog!");
+	if (timer & 0x100) ui_popup("watchdog!");
 }
 
 static READ8_HANDLER( toratora_timer_r )

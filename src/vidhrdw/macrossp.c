@@ -399,7 +399,7 @@ VIDEO_UPDATE(macrossp)
 	tilemap_draw(bitmap,cliprect,macrossp_text_tilemap,0,0);
 
 #if 0
-usrintf_showmessage	("scra - %08x %08x %08x\nscrb - %08x %08x %08x\nscrc - %08x %08x %08x",
+ui_popup	("scra - %08x %08x %08x\nscrb - %08x %08x %08x\nscrc - %08x %08x %08x",
 macrossp_scra_videoregs[0]&0xffff33ff, // yyyyxxxx
 macrossp_scra_videoregs[1], // ??? more scrolling?
 macrossp_scra_videoregs[2], // 08 - 0b

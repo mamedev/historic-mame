@@ -110,7 +110,7 @@ void EEPROM_init(struct EEPROM_interface *interface)
 
 	if ((1 << intf->address_bits) * intf->data_bits / 8 > MEMORY_SIZE)
 	{
-		usrintf_showmessage("EEPROM larger than eeprom.c allows");
+		ui_popup("EEPROM larger than eeprom.c allows");
 		return;
 	}
 

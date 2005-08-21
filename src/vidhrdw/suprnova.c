@@ -311,15 +311,15 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 		if (group_x_offset[3]&0x200) group_x_offset[3] -= 0x400; // Signed
 		if (group_y_offset[3]&0x200) group_y_offset[3] -= 0x400; // Signed
 
-	//  usrintf_showmessage ("x %08x y %08x x2 %08x y2 %08x",sprite_x_scroll, sprite_y_scroll,group_x_offset[1], group_y_offset[1]);
-	//  usrintf_showmessage("%d %d %d %d A:%d B:%d", sprite_kludge_x, sprite_kludge_y, sprite_x_scroll, sprite_y_scroll, (skns_pal_regs[0x00/4] & 0x7000) >> 12, (skns_pal_regs[0x10/4] & 0x7000) >> 12);
+	//  ui_popup ("x %08x y %08x x2 %08x y2 %08x",sprite_x_scroll, sprite_y_scroll,group_x_offset[1], group_y_offset[1]);
+	//  ui_popup("%d %d %d %d A:%d B:%d", sprite_kludge_x, sprite_kludge_y, sprite_x_scroll, sprite_y_scroll, (skns_pal_regs[0x00/4] & 0x7000) >> 12, (skns_pal_regs[0x10/4] & 0x7000) >> 12);
 	//  if (keyboard_pressed(KEYCODE_Q)) sprite_kludge_x++;
 	//  if (keyboard_pressed(KEYCODE_W)) sprite_kludge_x--;
 	//  if (keyboard_pressed(KEYCODE_E)) sprite_kludge_y++;
 	//  if (keyboard_pressed(KEYCODE_D)) sprite_kludge_y--;
 
 		// Tilemap Pri/enables
-	//  usrintf_showmessage("A: %x %x B: %x %x", skns_v3_regs[0x10/4]>>3, skns_v3_regs[0x10/4]&7, skns_v3_regs[0x34/4]>>3, skns_v3_regs[0x34/4]&7);
+	//  ui_popup("A: %x %x B: %x %x", skns_v3_regs[0x10/4]>>3, skns_v3_regs[0x10/4]&7, skns_v3_regs[0x34/4]>>3, skns_v3_regs[0x34/4]&7);
 
 		/* Seems that sprites are consistently off by a fixed no. of pixels in different games
            (Patterns emerge through Manufacturer/Date/Orientation) */

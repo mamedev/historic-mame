@@ -99,7 +99,7 @@ static WRITE8_HANDLER( aquarium_snd_ack_w )
 
 static WRITE16_HANDLER( aquarium_sound_w )
 {
-//  usrintf_showmessage("sound write %04x",data);
+//  ui_popup("sound write %04x",data);
 
 	soundlatch_w(1,data&0xff);
 	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );

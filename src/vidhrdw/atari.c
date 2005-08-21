@@ -803,7 +803,11 @@ VIDEO_UPDATE( atari )
 	if( atari_frame_counter > 0 )
 	{
 		if( --atari_frame_counter )
-			ui_text(bitmap, atari_frame_message, 0, Machine->uiheight - 10);
+		{
+			int width, height;
+			ui_get_bounds(&width, &height);
+			ui_draw_text(atari_frame_message, 0, height - 10);
+		}
 	}
 }
 

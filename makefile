@@ -198,7 +198,7 @@ endif
 
 emulator: maketree $(EMULATOR)
 
-extra:	$(TOOLS) $(TEXTS)
+extra:	$(TOOLS)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)

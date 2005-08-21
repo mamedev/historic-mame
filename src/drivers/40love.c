@@ -317,7 +317,7 @@ static WRITE8_HANDLER( bank_select_w )
 	if ((data!=0x02) && (data!=0xfd))
 	{
 //      logerror("WRONG BANK SELECT = %x !!!!\n",data);
-//      usrintf_showmessage("WRONG BANK SELECT = %x !!!!\n",data);
+//      ui_popup("WRONG BANK SELECT = %x !!!!\n",data);
 	}
 
 	banknum = data&1;
@@ -557,7 +557,7 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 						case 0x06: mcu_out[0][0] = 0x14; break;
 						case 0x07: mcu_out[0][0] = 0xb6; break;
 						default:
-						//  usrintf_showmessage("cmd06: %02x %02x",mcu_in[0][0],mcu_in[0][1]);
+						//  ui_popup("cmd06: %02x %02x",mcu_in[0][0],mcu_in[0][1]);
 							logerror("cmd06: %02x %02x\n",mcu_in[0][0],mcu_in[0][1]);
 					}
 				break;
@@ -586,7 +586,7 @@ static WRITE8_HANDLER( undoukai_mcu_w )
 			default:
 				from_mcu = 0x5d;
 
-//              usrintf_showmessage("unknown cmd%02x: %02x %02x %02x %02x",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
+//              ui_popup("unknown cmd%02x: %02x %02x %02x %02x",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
 //              logerror("unknown cmd%02x: %02x %02x %02x %02x\n",data,mcu_in[0][0],mcu_in[0][1],mcu_in[0][2],mcu_in[0][3]);
 		}
 	}
@@ -823,7 +823,7 @@ static UINT8 snd_ctrl3=0;
 static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
-//  usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	/* this definitely controls main melody voice on 2'-1 and 4'-1 outputs */
 	sndti_set_output_gain(SOUND_MSM5232, 0, 0, vol_ctrl[ (snd_ctrl0>>4) & 15 ] / 100.0);	/* group1 from msm5232 */
@@ -832,7 +832,7 @@ static WRITE8_HANDLER( sound_control_0_w )
 static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
-//  usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 	sndti_set_output_gain(SOUND_MSM5232, 0, 1, vol_ctrl[ (snd_ctrl1>>4) & 15 ] / 100.0);	/* group2 from msm5232 */
 }
 
@@ -841,7 +841,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 	int i;
 
 	snd_ctrl2 = data & 0xff;
-//  usrintf_showmessage("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	for (i=0; i<3; i++)
 		sndti_set_output_gain(SOUND_AY8910, 0, i, vol_ctrl[ (snd_ctrl2>>4) & 15 ] / 100.0);	/* ym2149f all */
@@ -850,7 +850,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 static WRITE8_HANDLER( sound_control_3_w ) /* unknown */
 {
 	snd_ctrl3 = data & 0xff;
-//  usrintf_showmessage("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 }
 
 static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )

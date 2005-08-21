@@ -73,13 +73,13 @@ data16_t *f1gpstr2_ioready;
 #ifdef MAME_DEBUG
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
-	usrintf_showmessage(_format_,_offset_);\
+	ui_popup(_format_,_offset_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
 	logerror(_format_ "\n",_offset_);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	usrintf_showmessage(_format_,_offset_,_data_);\
+	ui_popup(_format_,_offset_,_data_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
 	logerror(_format_ "\n",_offset_,_data_); \
 }
@@ -954,12 +954,9 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 #if 0
 if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
-	struct DisplayText dt[2];
 	sprintf(buf, "%04x",attr);
-	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = sx>>16;	dt[0].y = sy>>16;
-	dt[1].text = 0;	/* terminate array */
-	displaytext(bitmap,dt);		}
+	ui_draw_text(buf, sx>>16, sy>>16);
+}
 #endif
 #endif
 	}	/* end sprite loop */
@@ -1111,12 +1108,9 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 #if 0
 if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
-	struct DisplayText dt[2];
 	sprintf(buf, "%04x",attr);
-	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = sx>>16;	dt[0].y = sy>>16;
-	dt[1].text = 0;	/* terminate array */
-	displaytext(bitmap,dt);		}
+	ui_draw_text(buf, sx>>16, sy>>16);
+}
 #endif
 #endif
 	}	/* end sprite loop */
@@ -1154,7 +1148,7 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) ) \
 	if ( code_pressed(KEYCODE_Z) && code_pressed_memory(KEYCODE_U) ) \
 		show_unknown ^= 1; \
 	if (show_unknown) \
-		usrintf_showmessage("0:%04X 2:%04X 4:%04X 6:%04X c:%04X", \
+		ui_popup("0:%04X 2:%04X 4:%04X 6:%04X c:%04X", \
 			megasys1_vregs[0],megasys1_vregs[1],megasys1_vregs[2],megasys1_vregs[3],megasys1_vregs[0xc/2] ); \
 }
 
@@ -1357,7 +1351,7 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 
 	if (msk != 0) megasys1_active_layers &= msk;
 #if 1
-	usrintf_showmessage("Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
+	ui_popup("Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
 						scudhamm_motor_command,
 						scudhamm_motor_pos_r(0,0),
 						scudhamm_motor_status_r(0,0),

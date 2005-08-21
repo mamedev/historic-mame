@@ -724,7 +724,7 @@ static MACHINE_DRIVER_START( tokio )
 	MDRV_CPU_PROGRAM_MAP(tokio_sound_map, 0) // NMIs are triggered by the main CPU, IRQs are triggered by the YM2203
 
 	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 µs
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 ?s
 	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
 	// video hardware
@@ -769,7 +769,7 @@ static MACHINE_DRIVER_START( bublbobl )
 #endif
 
 	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 µs
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 ?s
 	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
 	// video hardware

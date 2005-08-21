@@ -344,7 +344,7 @@ static WRITE16_HANDLER( othunder_TC0220IOC_w )
 				set_led_status(1, data & 2);
 
 if (data & 4)
-	usrintf_showmessage("OBPRI SET!");
+	ui_popup("OBPRI SET!");
 
 				EEPROM_write_bit(data & 0x40);
 				EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);

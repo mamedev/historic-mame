@@ -390,7 +390,7 @@ static INTERRUPT_GEN( neogeo_interrupt )
 		}
 
 		if (irq2control & IRQ2CTRL_ENABLE)
-			usrintf_showmessage("IRQ2 enabled, need raster driver");
+			ui_popup("IRQ2 enabled, need raster driver");
 
 		/* return a standard vblank interrupt */
 		vblank_int = 1;	   /* vertical blank */
@@ -454,7 +454,7 @@ static void raster_interrupt(int busy)
 		if (code_pressed_memory(KEYCODE_F1))
 		{
 			neogeo_raster_enable ^= 1;
-			usrintf_showmessage("raster effects %sabled",neogeo_raster_enable ? "en" : "dis");
+			ui_popup("raster effects %sabled",neogeo_raster_enable ? "en" : "dis");
 		}
 
 		if (irq2control & IRQ2CTRL_AUTOLOAD_VBLANK)
@@ -967,7 +967,7 @@ static READ8_HANDLER( z80_port_r )
 {
 	char buf[80];
 	sprintf(buf,"%05x %05x %05x %05x",bank[0],bank[1],bank[2],bank[3]);
-	usrintf_showmessage(buf);
+	ui_popup(buf);
 }
 #endif
 
@@ -7026,6 +7026,6 @@ GAMEB( 2002, rotd,     neogeo,	 neogeo, neogeo, neogeo,  rotd,	    ROT0, "Evoga 
 GAMEB( 2002, matrim,   neogeo,   neogeo, raster, neogeo,  matrim,   ROT0, "Noise Factory / Atlus", "Matrimelee / Shin Gouketsuji Ichizoku Toukon" )
 
 /* Breezasoft */
-GAMEBX( 2001, jockeygp, neogeo,   neogeo, neogeo, neogeo,  jockeygp,   ROT0, "Sun Amusement / BrezzaSoft", "Jockey Grand Prix",GAME_NOT_WORKING )
-GAMEBX( 2001, vliner,   neogeo,   neogeo, neogeo, neogeo,  vliner,   ROT0, "Dyna / BreezaSoft", "V-Liner (set 1)",GAME_NOT_WORKING )
-GAMEBX( 2001, vlinero,  vliner,   neogeo, neogeo, neogeo,  vliner,   ROT0, "Dyna / BreezaSoft", "V-Liner (set 2)",GAME_NOT_WORKING )
+GAMEBX(2001, jockeygp, neogeo,   neogeo, neogeo, neogeo,  jockeygp, ROT0, "Sun Amusement / BrezzaSoft", "Jockey Grand Prix",GAME_NOT_WORKING )
+GAMEB( 2001, vliner,   neogeo,   neogeo, neogeo, vliner,  vliner,   ROT0, "Dyna / BreezaSoft", "V-Liner (set 1)" )
+GAMEB( 2001, vlinero,  vliner,   neogeo, neogeo, vliner,  vliner,   ROT0, "Dyna / BreezaSoft", "V-Liner (set 2)" )

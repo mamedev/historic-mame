@@ -43,7 +43,7 @@
 #include "vidhrdw/generic.h"
 #include "state.h"
 
-static struct tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer,*pf1_hlayer;
+static struct tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer;
 static int pf1_control[8],pf2_control[8],pf3_control[8],pf4_control[8];
 static int pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr;
 static int pf1_enable,pf2_enable,pf3_enable;
@@ -54,11 +54,6 @@ static int m92_sprite_list;
 int m92_raster_irq_position,m92_raster_enable;
 unsigned char *m92_vram_data,*m92_spritecontrol;
 int m92_game_kludge;
-
-/* This is a kludgey speedup that I consider to be pretty ugly..  But -
-it gets a massive speed increase (~40fps -> ~65fps).  It works by avoiding
-the need to dirty the top playfield twice a frame */
-#define RYPELEO_SPEEDUP m92_game_kludge==1
 
 extern void m92_sprite_interrupt(void);
 int m92_sprite_buffer_busy;
@@ -165,44 +160,6 @@ static void get_pf1_tile_info(int tile_index)
 			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
 }
 
-static void get_pf1_htile_info(int tile_index)
-{
-	int tile,color,pri;
-	tile_index = 4*tile_index + 0xc000;
-
-	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8)+((m92_vram_data[tile_index+3]&0x80)<<9);
-	color=m92_vram_data[tile_index+2];
-	if (m92_vram_data[tile_index+3]&1) pri = 2;
-	else if (color&0x80) pri = 1;
-	else pri = 0;
-
-	SET_TILE_INFO(
-			0,
-			tile,
-			color&0x7f,
-			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
-}
-
-static void get_pf1_ltile_info(int tile_index)
-{
-	int tile,color,pri;
-	tile_index *= 4;
-	if (pf1_vram_ptr==0x4000) tile_index += 0x4000;
-	else if (pf1_vram_ptr==0x8000) tile_index += 0x8000;
-
-	tile=m92_vram_data[tile_index]+(m92_vram_data[tile_index+1]<<8)+((m92_vram_data[tile_index+3]&0x80)<<9);
-	color=m92_vram_data[tile_index+2];
-	if (m92_vram_data[tile_index+3]&1) pri = 2;
-	else if (color&0x80) pri = 1;
-	else pri = 0;
-
-	SET_TILE_INFO(
-			0,
-			tile,
-			color&0x7f,
-			TILE_FLIPYX((m92_vram_data[tile_index+3] & 0x6)>>1) | TILE_SPLIT(pri))
-}
-
 static void get_pf2_tile_info(int tile_index)
 {
 	int tile,color,pri;
@@ -292,14 +249,6 @@ WRITE8_HANDLER( m92_vram_w )
 	wide=offset&0x7fff;
 	offset&=0x3fff;
 
-	if (RYPELEO_SPEEDUP) {
-		if (a==0xc000) {
-			tilemap_mark_tile_dirty(pf1_hlayer,offset/4);
-			return;
-		}
-		tilemap_mark_tile_dirty(pf1_layer,offset/4);
-	}
-	else
 	if (a==pf1_vram_ptr || (a==pf1_vram_ptr+0x4000)) {
 		tilemap_mark_tile_dirty(pf1_layer,offset/4);
 		tilemap_mark_tile_dirty(pf1_wide_layer,wide/4);
@@ -344,7 +293,6 @@ WRITE8_HANDLER( m92_master_control_w )
 			pf1_vram_ptr=(pf4_control[0]&3)*0x4000;
 			pf1_shape=(pf4_control[0]&4)>>2;
 
-			if (RYPELEO_SPEEDUP) tilemap_set_enable(pf1_hlayer,pf1_enable);
 			if (pf1_shape) {
 				tilemap_set_enable(pf1_layer,0);
 				tilemap_set_enable(pf1_wide_layer,pf1_enable);
@@ -406,30 +354,13 @@ WRITE8_HANDLER( m92_master_control_w )
 
 VIDEO_START( m92 )
 {
-	if (RYPELEO_SPEEDUP) {
-		pf1_hlayer = tilemap_create(
-			get_pf1_htile_info,tilemap_scan_rows,
-			TILEMAP_SPLIT,
-			8,8,
-			64,64
-		);
-		pf1_layer = tilemap_create(
-				get_pf1_ltile_info,tilemap_scan_rows,
-				TILEMAP_SPLIT,
-				8,8,
-				64,64
-			);
-		tilemap_set_transmask(pf1_hlayer,0,0xffff,0x0001);
-		tilemap_set_transmask(pf1_hlayer,1,0x00ff,0xff01);
-		tilemap_set_transmask(pf1_hlayer,2,0x0001,0xffff);
-	}
-	else
-		pf1_layer = tilemap_create(
-			get_pf1_tile_info,tilemap_scan_rows,
-			TILEMAP_SPLIT,
-			8,8,
-			64,64
-		);
+
+	pf1_layer = tilemap_create(
+		get_pf1_tile_info,tilemap_scan_rows,
+		TILEMAP_SPLIT,
+		8,8,
+		64,64
+	);
 
 	pf2_layer = tilemap_create(
 		get_pf2_tile_info,tilemap_scan_rows,
@@ -656,12 +587,6 @@ static void m92_update_scroll_positions(void)
 	tilemap_set_scrolly( pf3_layer,0, (pf3_control[1]<<8)+pf3_control[0] );
 	tilemap_set_scrolly( pf1_wide_layer,0, (pf1_control[1]<<8)+pf1_control[0] );
 	tilemap_set_scrolly( pf3_wide_layer,0, (pf3_control[1]<<8)+pf3_control[0] );
-
-	if (RYPELEO_SPEEDUP) {
-		tilemap_set_scroll_rows(pf1_hlayer,1);
-		tilemap_set_scrollx( pf1_hlayer,0, (pf1_control[5]<<8)+pf1_control[4] );
-		tilemap_set_scrolly( pf1_hlayer,0, (pf1_control[1]<<8)+pf1_control[0] );
-	}
 }
 
 /*****************************************************************************/
@@ -679,19 +604,13 @@ static void m92_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle 
 
 	tilemap_draw(bitmap,cliprect,pf2_layer,TILEMAP_BACK,0);
 	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_BACK,0);
-	if (RYPELEO_SPEEDUP && pf1_vram_ptr==0xc000)
-		tilemap_draw(bitmap,cliprect,pf1_hlayer,TILEMAP_BACK,0);
-	else
-		tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_BACK,0);
+	tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_BACK,0);
 
 	tilemap_draw(bitmap,cliprect,pf3_wide_layer,TILEMAP_FRONT,1);
 	tilemap_draw(bitmap,cliprect,pf3_layer,TILEMAP_FRONT,1);
 	tilemap_draw(bitmap,cliprect,pf2_layer,TILEMAP_FRONT,1);
 	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_FRONT,1);
-	if (RYPELEO_SPEEDUP && pf1_vram_ptr==0xc000)
-		tilemap_draw(bitmap,cliprect,pf1_hlayer,TILEMAP_FRONT,1);
-	else
-		tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_FRONT,1);
 
 	m92_drawsprites(bitmap,cliprect);
 }
@@ -705,9 +624,9 @@ VIDEO_UPDATE( m92 )
 	if (code_pressed_memory(KEYCODE_F1)) {
 		m92_raster_enable ^= 1;
 		if (m92_raster_enable)
-			usrintf_showmessage("Raster IRQ enabled");
+			ui_popup("Raster IRQ enabled");
 		else
-			usrintf_showmessage("Raster IRQ disabled");
+			ui_popup("Raster IRQ disabled");
 	}
 
 	/* Flipscreen appears hardwired to the dipswitch - strange */

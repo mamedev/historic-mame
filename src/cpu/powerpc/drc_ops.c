@@ -213,8 +213,8 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	cycles = (INT8)(result >> 16);
 
 	/* epilogue */
-	drc_append_standard_epilogue(drc, cycles, pcdelta, 1);
 	update_counters(drc);
+	drc_append_standard_epilogue(drc, cycles, pcdelta, 1);
 
 	if (result & RECOMPILE_ADD_DISPATCH)
 		drc_append_dispatcher(drc);

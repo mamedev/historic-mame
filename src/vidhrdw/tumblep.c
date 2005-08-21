@@ -649,7 +649,7 @@ VIDEO_UPDATE( jumppop )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
-//usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x", jumppop_control[0],jumppop_control[1],jumppop_control[2],jumppop_control[3],jumppop_control[4],jumppop_control[5],jumppop_control[6],jumppop_control[7]);
+//ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x", jumppop_control[0],jumppop_control[1],jumppop_control[2],jumppop_control[3],jumppop_control[4],jumppop_control[5],jumppop_control[6],jumppop_control[7]);
 
 	jumpkids_drawsprites(bitmap,cliprect);
 }
@@ -667,7 +667,7 @@ VIDEO_UPDATE( suprtrio )
 
 	jumpkids_drawsprites(bitmap,cliprect);
 #if 0
-usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
+ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x",
  suprtrio_control[0],
  suprtrio_control[1],
  suprtrio_control[2],

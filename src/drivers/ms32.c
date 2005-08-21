@@ -359,7 +359,7 @@ ADDRESS_MAP_END
 static WRITE32_HANDLER( pip_w )
 {
 	if (data)
-		usrintf_showmessage("fce00a7c = %02x",data);
+		ui_popup("fce00a7c = %02x",data);
 }
 
 static ADDRESS_MAP_START( ms32_writemem, ADDRESS_SPACE_PROGRAM, 32 )

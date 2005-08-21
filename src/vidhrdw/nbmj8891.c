@@ -290,7 +290,7 @@ WRITE8_HANDLER( nbmj8891_romsel_w )
 	if ((0x20000 * nbmj8891_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		nbmj8891_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -393,7 +393,7 @@ static void nbmj8891_gfxdraw(void)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+				ui_popup("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr &= (memory_region_length(REGION_GFX1) - 1);
 			}

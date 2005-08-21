@@ -268,7 +268,7 @@ VIDEO_UPDATE (raiden2)
 			tile_bank--;
 		}
 		if(mod) {
-			usrintf_showmessage("%x", tile_bank);
+			ui_popup("%x", tile_bank);
 			tilemap_mark_all_tiles_dirty(foreground_layer);
 		}
 	}

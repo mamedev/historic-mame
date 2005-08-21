@@ -130,7 +130,7 @@ WRITE8_HANDLER( gsword_videoctrl_w )
 {
 	if (data & 0x8f)
 	{
-		usrintf_showmessage("videoctrl %02x",data);
+		ui_popup("videoctrl %02x",data);
 	}
 
 	/* bits 5-6 are char palette bank */

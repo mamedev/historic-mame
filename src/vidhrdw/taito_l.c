@@ -141,7 +141,7 @@ WRITE8_HANDLER( taitol_control_w )
 //  logerror("Control Write %02x (%04x)\n", data, activecpu_get_pc());
 
 	cur_ctrl = data;
-//usrintf_showmessage("%02x",data);
+//ui_popup("%02x",data);
 
 	/* bit 0 unknown */
 

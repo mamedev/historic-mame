@@ -246,12 +246,10 @@ static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 #if 0
 if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
-	struct DisplayText dt[2];	char buf[10];
+	char buf[10];
 	sprintf(buf, "%Xx%X %X",xnum,ynum,(attr>>6)&3);
-	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = sx;		dt[0].y = sy;
-	dt[1].text = 0;	/* terminate array */
-	displaytext(bitmap,dt);		}
+	ui_draw_text(buf, sx, sy);
+}
 #endif
 #endif
 	}

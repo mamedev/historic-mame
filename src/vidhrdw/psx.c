@@ -453,15 +453,15 @@ static void DebugCheckKeys( void )
 			}
 			if( m_n_debuginterleave == -1 )
 			{
-				usrintf_showmessage_secs( 1, "interleave off" );
+				ui_popup_time( 1, "interleave off" );
 			}
 			else if( m_n_debuginterleave == 0 )
 			{
-				usrintf_showmessage_secs( 1, "4 bit interleave" );
+				ui_popup_time( 1, "4 bit interleave" );
 			}
 			else if( m_n_debuginterleave == 1 )
 			{
-				usrintf_showmessage_secs( 1, "8 bit interleave" );
+				ui_popup_time( 1, "8 bit interleave" );
 			}
 		}
 		else
@@ -471,7 +471,7 @@ static void DebugCheckKeys( void )
 			{
 				m_n_debugskip = 0;
 			}
-			usrintf_showmessage_secs( 1, "debug skip %d", m_n_debugskip );
+			ui_popup_time( 1, "debug skip %d", m_n_debugskip );
 		}
 	}
 
@@ -493,7 +493,7 @@ static void DebugCheckKeys( void )
 	if( code_pressed_memory( KEYCODE_S ) )
 	{
 		FILE *f;
-		usrintf_showmessage_secs( 1, "saving..." );
+		ui_popup_time( 1, "saving..." );
 		f = fopen( "VRAM.BIN", "wb" );
 		for( n_y = 0; n_y < 1024; n_y++ )
 		{
@@ -504,7 +504,7 @@ static void DebugCheckKeys( void )
 	if( code_pressed_memory( KEYCODE_L ) )
 	{
 		FILE *f;
-		usrintf_showmessage_secs( 1, "loading..." );
+		ui_popup_time( 1, "loading..." );
 		f = fopen( "VRAM.BIN", "rb" );
 		for( n_y = 0; n_y < 1024; n_y++ )
 		{
@@ -3620,7 +3620,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			break;
 		default:
 #if defined( MAME_DEBUG )
-			usrintf_showmessage_secs( 1, "unknown GPU packet %08x", m_packet.n_entry[ 0 ] );
+			ui_popup_time( 1, "unknown GPU packet %08x", m_packet.n_entry[ 0 ] );
 #endif
 			verboselog( 0, "unknown GPU packet %08x (%08x)\n", m_packet.n_entry[ 0 ], data );
 #if ( STOP_ON_ERROR )
@@ -3784,7 +3784,7 @@ WRITE32_HANDLER( psx_gpu_w )
 			break;
 		default:
 #if defined( MAME_DEBUG )
-			usrintf_showmessage_secs( 1, "unknown GPU command %08x", data );
+			ui_popup_time( 1, "unknown GPU command %08x", data );
 #endif
 			verboselog( 0, "gpu_w( %08x ) unknown GPU command\n", data );
 			break;

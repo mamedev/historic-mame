@@ -318,7 +318,7 @@ logerror("%04x: write %02x to port 80\n",activecpu_get_pc(),data);
 		for (offs = 0; offs < 8; offs++) btz[offs] = (((data >> offs) & 0x01) ? 1 : 0);
 
 		sprintf(mess, "BK:%01X%01X S:%01X B:%01X T:%01X FF:%01X C2:%01X C1:%01X", btz[7], btz[6], btz[5], btz[4], btz[3], btz[2], btz[1], btz[0]);
-		usrintf_showmessage(mess);
+		ui_popup(mess);
 	}
 #endif
 }

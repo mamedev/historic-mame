@@ -13,12 +13,12 @@
 
 extern int he_did_cheat;
 
-void InitCheat(void);
-void StopCheat(void);
+void cheat_init(void);
+void cheat_exit(void);
 
-int cheat_menu(struct mame_bitmap *bitmap, int selection);
-void DoCheat(struct mame_bitmap *bitmap);
+int cheat_menu(int selection);
+void cheat_periodic(void);
 
-void DisplayWatches(struct mame_bitmap * bitmap);
+void cheat_display_watches(void);
 
 #endif	/* __CHEAT_H__ */

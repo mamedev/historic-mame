@@ -16,7 +16,7 @@
 
       Hardware:
 
-          Intel 386 DX 25MHz / 33MHz
+          Intel 386 DX 25MHz
           Z80 8MHz (sound)
           YMF271F Sound chip
           Seibu Custom GFX chip
@@ -24,17 +24,6 @@
       SYS386 seems like a lower-cost version of single-board SPI.
       It has a 40MHz AMD 386 and a considerably weaker sound system (dual MSM6295).
 
-      Bugs:
-
-      Raiden Fighters : Game pauses for a brief second when bosses are encountered
-      Senkyu / BBalls : ---
-      Viper Phase 1   : OLD version (viprp1o) Game locks up / crashes after a few attract loops
-                    (386 writes to z80 fifo with data read from unmapped addresses in steps of 0x20000
-                     past the end of z80 ram)
-                      : lockups / pauses if you keep hold of fire before continue appears
-      RF Jet          : Tile banking problems, sometimes tile banking does not work as it should
-                        resulting in scenes being corrupt sometimes (for example mission briefing)
-      E-Jan HS        : ---
 
 TODO:
 - Alpha blending. Screen shot on www.system16.com show that during attract mode
@@ -752,24 +741,19 @@ static WRITE32_HANDLER( ds2404_clk_w )
 	}
 }
 
-static READ32_HANDLER( eeprom_r )
-{
-	/* TODO */
-	return 0;
-}
-
 static WRITE32_HANDLER( eeprom_w )
 {
 	// tile banks
 	if( !(mem_mask & 0x00ff0000) ) {
 		rf2_set_layer_banks(data >> 16);
+		EEPROM_write_bit((data & 0x800000) ? 1 : 0);
+		EEPROM_set_clock_line((data & 0x400000) ? ASSERT_LINE : CLEAR_LINE);
+		EEPROM_set_cs_line((data & 0x200000) ? CLEAR_LINE : ASSERT_LINE);
 	}
 
 	// oki banking
 	if (sndti_to_sndnum(SOUND_OKIM6295, 1) >= 0)
 		OKIM6295_set_bank_base(1, (data & 0x4000000) ? 0x40000 : 0);
-
-	/* TODO */
 }
 
 static WRITE32_HANDLER( z80_prg_fifo_w )
@@ -807,13 +791,10 @@ static READ32_HANDLER( spi_controls1_r )
 	return 0xffffffff;
 }
 
-static int control_bit40 = 0;
-
 static READ32_HANDLER( spi_controls2_r )
 {
 	if( ACCESSING_LSB32 ) {
-		control_bit40 ^= 0x40;
-		return ((readinputport(2) | 0xffffff00) & ~0x40 ) | control_bit40;
+		return ((readinputport(2) | 0xffffff00) & ~0x40) | (EEPROM_read_bit() << 6);
 	}
 	return 0xffffffff;
 }
@@ -880,6 +861,11 @@ static READ8_HANDLER( z80_jp1_r )
 	return readinputport(3);
 }
 
+static READ8_HANDLER( z80_coin_r )
+{
+	return readinputport(4);
+}
+
 static READ32_HANDLER( soundrom_r )
 {
 	UINT8 *sound = (UINT8*)memory_region(REGION_USER2);
@@ -887,7 +873,6 @@ static READ32_HANDLER( soundrom_r )
 
 	if (mem_mask == 0xffffff00)
 	{
-//      printf("8bit sound read %08x\n",offset);
 		return sound[offset];
 	}
 	else if (mem_mask == 0x00000000)
@@ -923,6 +908,7 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000608, 0x0000060b) AM_READ(spi_unknown_r)		/* Unknown */
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
 	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_fifo_status_r)
+	AM_RANGE(0x00000690, 0x00000693) AM_NOP
 	AM_RANGE(0x000006dc, 0x000006df) AM_READ(ds2404_data_r)
 	AM_RANGE(0x00000800, 0x0003ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
@@ -954,7 +940,7 @@ static ADDRESS_MAP_START( spisound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4008, 0x4008) AM_READ(z80_soundfifo_r)
 	AM_RANGE(0x4009, 0x4009) AM_READ(z80_soundfifo_status_r)
 	AM_RANGE(0x400a, 0x400a) AM_READ(z80_jp1_r)
-	AM_RANGE(0x4013, 0x4013) AM_READNOP
+	AM_RANGE(0x4013, 0x4013) AM_READ(z80_coin_r)
 	AM_RANGE(0x6000, 0x600f) AM_READ(YMF271_0_r)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK4)		/* Banked ram */
 ADDRESS_MAP_END
@@ -1025,7 +1011,7 @@ static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000420, 0x0000042b) AM_READ(MRA32_RAM) AM_BASE(&scroll_ram)
 	AM_RANGE(0x0000042c, 0x00000603) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
-	AM_RANGE(0x00000608, 0x0000060b) AM_READ(eeprom_r)
+	AM_RANGE(0x00000608, 0x0000060b) AM_READ(spi_unknown_r)
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
 	AM_RANGE(0x00000800, 0x0003ffff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
@@ -1076,14 +1062,19 @@ INPUT_PORTS_START( spi_2button )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Coin") PORT_CODE(KEYCODE_7)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("JP1")		/* JP1 */
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x03, "Update"  )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1111,8 +1102,8 @@ INPUT_PORTS_START( spi_3button )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Coin") PORT_CODE(KEYCODE_7)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("JP1")
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
@@ -1120,6 +1111,48 @@ INPUT_PORTS_START( spi_3button )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( seibu386_2button )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Coin") PORT_CODE(KEYCODE_7)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("JP1")		/* JP1 */
+	PORT_DIPNAME( 0x03, 0x03, "JP1" )
+	PORT_DIPSETTING(	0x03, "Update"  )
+	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_BUTTON4 )
 INPUT_PORTS_END
 
 /* E-Jan Highschool has a keyboard with the following keys
@@ -1173,7 +1206,7 @@ INPUT_PORTS_START( spi_ejanhs )
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Coin") PORT_CODE(KEYCODE_7)
 	PORT_BIT( 0xf3, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("JP1")
@@ -1181,6 +1214,11 @@ INPUT_PORTS_START( spi_ejanhs )
 	PORT_DIPSETTING(	0x03, "Update"  )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -1554,12 +1592,26 @@ static NVRAM_HANDLER( spi )
 	nvram_handler_intelflash(1, file, read_or_write);
 }
 
+/* this is a 93C46 but with reset delay */
+static struct EEPROM_interface eeprom_interface =
+{
+	6,				/* address bits */
+	16,				/* data bits */
+	"*110",			/*  read command */
+	"*101",			/* write command */
+	"*111",			/* erase command */
+	"*10000xxxx",	/* lock command */
+	"*10011xxxx",	/* unlock command */
+	1,				/* enable_multi_read */
+	1				/* reset_delay */
+};
+
 static NVRAM_HANDLER( sxx2f )
 {
 	if( read_or_write ) {
 		EEPROM_save(file);
 	} else {
-		EEPROM_init(&eeprom_interface_93C46);
+		EEPROM_init(&eeprom_interface);
 
 		if(file)
 			EEPROM_load(file);
@@ -1645,7 +1697,8 @@ MACHINE_DRIVER_END
 
 static MACHINE_INIT( sxx2f )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, eeprom_r);
+	memory_set_bankptr(4, memory_region(REGION_CPU2));
+
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, eeprom_w);
 }
 
@@ -2832,4 +2885,4 @@ GAMEX( 1997, rdft2us,   rdft2,   sxx2f,    spi_2button, rdft2us,  ROT270, "Seibu
 GAMEX( 1999, rfjetus,   rfjet,   sxx2f,    spi_2button, rfjet,    ROT270, "Seibu Kaihatsu (Fabtek license)", "Raiden Fighters Jet (US, Single Board)", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND  ) // has 1998-99 copyright + planes unlocked
 
 /* SYS386 */
-GAMEX( 2000, rdft22kc,  rdft2,   seibu386, spi_2button, rdft22kc, ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 - 2000 (China)", GAME_IMPERFECT_GRAPHICS )
+GAMEX( 2000, rdft22kc,  rdft2,   seibu386, seibu386_2button, rdft22kc, ROT270, "Seibu Kaihatsu", "Raiden Fighters 2 - 2000 (China)", GAME_IMPERFECT_GRAPHICS )

@@ -265,6 +265,6 @@ VIDEO_UPDATE( qix )
 	}
 #if 0
 	// note the confusing bit order!
-	usrintf_showmessage("self test leds: %d%d %d%d%d%d",BIT(leds,7),BIT(leds,5),BIT(leds,6),BIT(leds,4),BIT(leds,2),BIT(leds,3));
+	ui_popup("self test leds: %d%d %d%d%d%d",BIT(leds,7),BIT(leds,5),BIT(leds,6),BIT(leds,4),BIT(leds,2),BIT(leds,3));
 #endif
 }

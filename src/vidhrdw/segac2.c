@@ -739,7 +739,7 @@ static void vdp_register_w(int data)
 	{
 		case 0x01: /* video modes */
 			if (regdat & 8)
-				usrintf_showmessage("Video height = 240!");
+				ui_popup("Video height = 240!");
 			break;
 
 		case 0x02: /* Scroll A Name Table Base */

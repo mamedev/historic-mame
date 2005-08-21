@@ -113,7 +113,7 @@ static WRITE16_HANDLER( ioc_w )
 //      case 0x88/2:    /* coin control (+ others) ??? */
 //          coin_lockout_w(0, ~data & 0x01);
 //          coin_lockout_w(1, ~data & 0x02);
-//usrintf_showmessage(" address %04x value %04x",offset,data);
+//ui_popup(" address %04x value %04x",offset,data);
 //  }
 
 	switch (offset)

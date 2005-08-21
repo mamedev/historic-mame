@@ -1352,7 +1352,7 @@ static WRITE16_HANDLER( taitoz_sound_w )
 //      char buf[80];
 //
 //      sprintf(buf,"taitoz_sound_w to high byte: %04x",data);
-//      usrintf_showmessage(buf);
+//      ui_popup(buf);
 //  }
 #endif
 }
@@ -1378,7 +1378,7 @@ static WRITE16_HANDLER( taitoz_msb_sound_w )
 		char buf[80];
 
 		sprintf(buf,"taitoz_msb_sound_w to low byte: %04x",data);
-		usrintf_showmessage(buf);
+		ui_popup(buf);
 	}
 #endif
 }

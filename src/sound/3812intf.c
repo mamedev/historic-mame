@@ -87,8 +87,7 @@ static void *ym3812_start(int sndindex, int clock, const void *config)
 
 	info->intf = config ? config : &dummy;
 
-	if (options.use_filter)
-		rate = clock/72;
+	rate = clock/72;
 
 	/* stream system initialize */
 	info->chip = YM3812Init(clock,rate);
@@ -259,8 +258,7 @@ static void *ym3526_start(int sndindex, int clock, const void *config)
 
 	info->intf = config ? config : &dummy;
 
-	if (options.use_filter)
-		rate = clock/72;
+	rate = clock/72;
 
 	/* stream system initialize */
 	info->chip = YM3526Init(clock,rate);
@@ -458,8 +456,7 @@ static void *y8950_start(int sndindex, int clock, const void *config)
 	info->intf = config ? config : &dummy;
 	info->index = sndindex;
 
-	if (options.use_filter)
-		rate = clock/72;
+	rate = clock/72;
 
 	/* stream system initialize */
 	info->chip = Y8950Init(clock,rate);

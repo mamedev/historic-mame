@@ -1080,7 +1080,7 @@ static void update_tilemap_zoom(struct layer_info *layer, const struct rectangle
 	/* enable this code below to display zoom information */
 #if 0
 	if (dstxstep != 0x200 || dstystep != 0x200)
-		usrintf_showmessage("Zoom=%03X,%03X  Cent=%03X,%03X", dstxstep, dstystep,
+		ui_popup("Zoom=%03X,%03X  Cent=%03X,%03X", dstxstep, dstystep,
 			system32_videoram[0x1ff30/2 + 2 * bgnum],
 			system32_videoram[0x1ff32/2 + 2 * bgnum]);
 #endif
@@ -1228,7 +1228,7 @@ static void update_tilemap_rowscroll(struct layer_info *layer, const struct rect
 	/* enable this code below to display scroll information */
 #if 0
 	if (rowscroll || rowselect)
-		usrintf_showmessage("Scroll=%d Select=%d  Table@%06X",
+		ui_popup("Scroll=%d Select=%d  Table@%06X",
 			rowscroll, rowselect, (system32_videoram[0x1ff04/2] >> 10) * 0x800);
 #endif
 }
@@ -2552,7 +2552,7 @@ VIDEO_UPDATE( system32 )
 				strcat(temp, layername[i]);
 			}
 	if (count)
-		usrintf_showmessage("%s", temp);
+		ui_popup("%s", temp);
 }
 #endif
 
@@ -2580,6 +2580,7 @@ for (showclip = 0; showclip < 4; showclip++)
 				if (clips & (1 << i))
 				{
 					struct rectangle rect;
+					pen_t white = get_white_pen();
 					if (!flip)
 					{
 						rect.min_x = system32_videoram[0x1ff60/2 + i * 4] & 0x1ff;
@@ -2600,13 +2601,13 @@ for (showclip = 0; showclip < 4; showclip++)
 					{
 						for (y = rect.min_y; y <= rect.max_y; y++)
 						{
-							bitmap->plot(bitmap, rect.min_x, y, Machine->uifont->colortable[1]);
-							bitmap->plot(bitmap, rect.max_x, y, Machine->uifont->colortable[1]);
+							bitmap->plot(bitmap, rect.min_x, y, white);
+							bitmap->plot(bitmap, rect.max_x, y, white);
 						}
 						for (x = rect.min_x; x <= rect.max_x; x++)
 						{
-							bitmap->plot(bitmap, x, rect.min_y, Machine->uifont->colortable[1]);
-							bitmap->plot(bitmap, x, rect.max_y, Machine->uifont->colortable[1]);
+							bitmap->plot(bitmap, x, rect.min_y, white);
+							bitmap->plot(bitmap, x, rect.max_y, white);
 						}
 					}
 				}

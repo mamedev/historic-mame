@@ -901,22 +901,22 @@ VIDEO_UPDATE( ygv608 )
 
 #ifdef _SHOW_VIDEO_DEBUG
   /* show screen control information */
-  ui_text( bitmap, mode[(ygv608.regs.s.r7 & r7_md) >> 1], 0, 0 );
+  ui_draw_text( mode[(ygv608.regs.s.r7 & r7_md) >> 1], 0, 0 );
   sprintf( buffer, "%02ux%02u", ygv608.page_x, ygv608.page_y );
-  ui_text( bitmap, buffer, 0, 16 );
-  ui_text( bitmap, psize[(ygv608.regs.s.r9 & r9_pts) >> 6], 0, 32 );
+  ui_draw_text( buffer, 0, 16 );
+  ui_draw_text( psize[(ygv608.regs.s.r9 & r9_pts) >> 6], 0, 32 );
   sprintf( buffer, "A: SX:%d SY:%d",
 	   (int)ygv608.scroll_data_table[0][0x80] +
 	   ( ( (int)ygv608.scroll_data_table[0][0x81] & 0x0f ) << 8 ),
 	   (int)ygv608.scroll_data_table[0][0x00] +
 	   ( ( (int)ygv608.scroll_data_table[0][0x01] & 0x0f ) << 8 ) );
-  ui_text( bitmap, buffer, 0, 48 );
+  ui_draw_text( buffer, 0, 48 );
   sprintf( buffer, "B: SX:%d SY:%d",
 	   (int)ygv608.scroll_data_table[1][0x80] +
 	   ( ( (int)ygv608.scroll_data_table[1][0x81] & 0x0f ) << 8 ),
 	   (int)ygv608.scroll_data_table[1][0x00] +
 	   ( ( (int)ygv608.scroll_data_table[1][0x01] & 0x0f ) << 8 ) );
-  ui_text( bitmap, buffer, 0, 64 );
+  ui_draw_text( buffer, 0, 64 );
 #endif
 }
 

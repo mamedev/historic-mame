@@ -145,16 +145,6 @@ Otherwise, the outcome may be unpredictable and not consistent across releases.
 	The default is CHEAT.DAT. Modifying the default may not work at the
 	moment.
 
--history_file
-
-	The default is HISTORY.DAT. Modifying the default may not work at the
-	moment.
-
--mameinfo_file
-
-	The default is MAMEINFO.DAT. Modifying the default may not work at the
-	moment.
-
 
 Windows video options
 ---------------------
@@ -693,14 +683,6 @@ MAME core video options
 	These are the standard MAME rotation options. They are all OFF by
 	default.
 
--debug_resolution wxh / -dr wxh
-
-	Specifies the resolution of the debugger bitmap in the debug build.
-	This controls how big the debugger window will be, and therefore, how
-	many rows/columns it will display. The default value is 0x0, which sets
-	the automatic 640x480 default debugger size. Note that the debugger is
-	only available when running in a window.
-
 -gamma
 
 	This controls the global gamma correction in the game. It is the same
@@ -762,13 +744,6 @@ MAME core sound options
 -[no]samples
 
 	Use samples if available. The default is ON (-samples).
-
--[no]resamplefilter
-
-	If the samplerate of the original hardware does not match the
-	samplerate actually used by an integer factor, apply a filter. This is
-	more faithful to the original sound, however, the sound may not be as
-	crisp. The default is ON (-resamplefilter).
 
 -[no]sound
 
@@ -842,13 +817,6 @@ MAME core misc options
 	Creates a log of illegal memory accesses in ERROR.LOG. The default is
 	OFF (-nolog).
 
--maxlogsize
-
-	Expects a number as parameter. If the size of error.log (in kilobytes)
-	hits that number, MAME will exit. By default, this is set fairly low
-	(10 MB). This is in effect only if you are actually generating the
-	error.log file.
-
 -[no]oslog
 
 	Outputs error.log data to the Windows debugger instead of to a file.
@@ -863,12 +831,6 @@ MAME core misc options
 
 	Forces MAME to skip displaying the game info screen. The default is OFF
 	(-noskip_gameinfo).
-
--[no]crconly
-
-	Tells MAME to only use CRCs for ROM integrity checks. This disables
-	checking against the more reliable SHA1 hashes. Default is OFF
-	(-nocrconly).
 
 -bios
 
@@ -895,56 +857,30 @@ command:
 
 	Displays current MAME version and copyright notice
 
--[no]clones
-
-	Used together with the list commands, enables/disables listing of
-	alternate ("cloned") versions of the same game. The default is ON.
-
--list / -ls
-
-	Displays a list of currently supported games.
-
--listfull / -ll
-
-	Displays a list of game directory names + descriptions.
-
--listgames
-
-	List the supported games, year, manufacturer.
-
--listdetails
-
-	Displays a detailed list of drivers and the hardware they use.
-
--listsourcefile
-
-	Displays the source file (in the drivers directory) containing the
-	driver for the specified game. Useful for finding which driver a game
-	runs on in order to fix bugs.
-
 -listxml / -lx
 
 	List comprehensive details for all of the supported games. The output
 	is quite long, so better redirect this into a file. The output is in
 	XML format.
 
+-listfull / -ll
+
+	Displays a list of game directory names + descriptions.
+
+-listsource / -ls
+
+	Displays the source file (in the drivers directory) containing the
+	driver for the specified game. Useful for finding which driver a game
+	runs on in order to fix bugs.
+
 -listclones / -lc
 
 	Lists clones of the specified game. When no game is specified, this
 	generates a list of all MAME-supported clones.
 
--listsamdir
-
-	List directory names for samples. Some clones can share their samples
-	with their parents (no pun intended).
-
 -listcrc
 
 	List CRC32 checksums of rom files
-
--listdupcrc
-
-	Find romfiles with same CRC32 (for developers).
 
 -listroms
 
@@ -959,22 +895,7 @@ command:
 	Checks specified game(s) for missing and invalid ROMs.	Adding "*"
 	checks all available games.
 
--verifysets
-
-	Checks specified game(s) and reports its status. Adding "*" checks all
-	available games. Terse output.
-
--vset
-
-	Checks specified game(s) and reports its status. Adding "*" checks all
-	available games. Slightly more verbose output.
-
 -verifysamples
-
-	Check selected game for missing samples. Adding "*" checks all
-	available samples.
-
--vsam
 
 	Check selected game for missing samples. Adding "*" checks all
 	available samples.
@@ -988,39 +909,6 @@ command:
 -isknown
 
 	Very terse romident.
-
--crconly
-
-	Uses only CRC-32 for all integrity checks. Disables the use of SHA-1
-	checks when loading the ROMs.
-
--gamelist
-
-	Used internally to create gamelist.txt
-
--sortname
--sortdriver
-
-	Used internally for creating gamelist.txt
-
--listcpu
--listcpuclass
--listgamespersourcefile
--listnosound
--listnvram
--listpalettesize / -lps
--listromdistribution
--listromnumber
--listromsize / -lrs
--listsound
-
-	Lists various statistical data.
-
--listwrongmerge / -lwm
--wrongfps
--wrongorientation
-
-	Attempts to catch careless developers.
 
 
 Keys
@@ -1036,7 +924,7 @@ P	     Pauses the game
 
 Shift+P      While paused, advances to next frame
 
-F1	     toggle raster effects in some games
+F1	     Toggle crosshairs for games that use them
 
 F2	     Service Mode
 
@@ -1050,8 +938,6 @@ F4	     Shows the game palette, decoded GFX, and any tilemaps
 	     Ctrl & Shift are modifiers to change movement speed.
 	     F4 or Esc returns to the emulation.
 	     Note: Not all games have decoded graphics and/or tilemaps.
-
-F5	     Toggle debugger (only in debug build)
 
 F6	     Toggle cheat mode (if started with "-cheat")
 

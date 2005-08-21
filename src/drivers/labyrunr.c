@@ -16,7 +16,7 @@ Driver by Nicola Salmoria
 
 
 /* from vidhrdw/labyrunr.c */
-extern unsigned char *labyrunr_videoram1,*labyrunr_videoram2;
+extern unsigned char *labyrunr_videoram1,*labyrunr_videoram2,*labyrunr_scrollram;
 PALETTE_INIT( labyrunr );
 WRITE8_HANDLER( labyrunr_vram1_w );
 WRITE8_HANDLER( labyrunr_vram2_w );
@@ -42,7 +42,7 @@ static WRITE8_HANDLER( labyrunr_bankswitch_w )
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-if (data & 0xe0) usrintf_showmessage("bankswitch %02x",data);
+if (data & 0xe0) ui_popup("bankswitch %02x",data);
 
 	/* bits 0-2 = bank number */
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
@@ -72,7 +72,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( labyrunr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0007) AM_WRITE(K007121_ctrl_0_w)
-	AM_RANGE(0x0020, 0x005f) AM_WRITE(MWA8_RAM)	/* scroll registers */
+	AM_RANGE(0x0020, 0x005f) AM_WRITE(MWA8_RAM)	AM_BASE(&labyrunr_scrollram) /* scroll registers */
 	AM_RANGE(0x0801, 0x0801) AM_WRITE(YM2203_control_port_0_w)
 	AM_RANGE(0x0800, 0x0800) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x0901, 0x0901) AM_WRITE(YM2203_control_port_1_w)

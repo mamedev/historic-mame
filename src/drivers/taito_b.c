@@ -2632,7 +2632,7 @@ static void mb87078_gain_changed(int channel, int percent)
 		sndti_set_output_gain(type, 0, 0, percent / 100.0);
 		sndti_set_output_gain(type, 1, 0, percent / 100.0);
 		sndti_set_output_gain(type, 2, 0, percent / 100.0);
-		//usrintf_showmessage("MB87078 gain ch#%i percent=%i",channel,percent);
+		//ui_popup("MB87078 gain ch#%i percent=%i",channel,percent);
 	}
 }
 
@@ -3144,14 +3144,6 @@ static MACHINE_DRIVER_START( viofight )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
-
-#if 0
-static void masterw_patch(void)
-{
-	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
-	rom[ 0x3fffe/2 ] = 2; //US version
-}
-#endif
 
 static MACHINE_DRIVER_START( masterw )
 
@@ -3822,6 +3814,22 @@ ROM_START( masterw )
 	ROM_LOAD( "mow-m01.rom", 0x080000, 0x080000, CRC(a24ac26e) SHA1(895715a2bb0cb15334cba2283bd228b4fc08cd0c) )
 ROM_END
 
+ROM_START( masterwu )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "b72-06.rom"   , 0x00000, 0x20000, CRC(ae848eff) SHA1(8715e64c5e03097aff5bf1a27e3809619a7731f0) )
+	ROM_LOAD16_BYTE( "b72-11.bin"   , 0x00001, 0x20000, CRC(0671fee6) SHA1(6bec65d5e6704b4ec62c91f814675841ae9316a0) )
+	ROM_LOAD16_BYTE( "b72-04.rom"   , 0x40000, 0x20000, CRC(141e964c) SHA1(324e881317a3bf9885c81bb53cdc3de782ec2952) )
+	ROM_LOAD16_BYTE( "b72-03.rom"   , 0x40001, 0x20000, CRC(f4523496) SHA1(2c3e9d014ace1ae5127f432292f8d19c3a0ae1b0) )
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "b72-07.rom", 0x00000, 0x4000, CRC(2b1a946f) SHA1(cc9512e44bd92020ab5a53716b6399b7a6cde76d) )
+	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mow-m02.rom", 0x000000, 0x080000, CRC(c519f65a) SHA1(f40cd7e09fa50abdafa95b7f9edf229e94e53d6f) )
+	ROM_LOAD( "mow-m01.rom", 0x080000, 0x080000, CRC(a24ac26e) SHA1(895715a2bb0cb15334cba2283bd228b4fc08cd0c) )
+ROM_END
+
 ROM_START( silentd )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "sr_12-1.rom", 0x00000, 0x20000, CRC(5883d362) SHA1(21c3af053fa92c26f119466ecd655697cc72ff3a) )
@@ -3933,6 +3941,7 @@ ROM_END
 
 
 GAME( 1989, masterw,  0,       masterw,  masterw,  0, ROT270, "Taito Corporation Japan", "Master of Weapon (World)" )
+GAME( 1989, masterwu, masterw, masterw,  masterw,  0, ROT270, "Taito America Corporation", "Master of Weapon (US)" )
 GAME( 1988, nastar,   0,       rastsag2, nastar,   0, ROT0,   "Taito Corporation Japan", "Nastar (World)" )
 GAME( 1988, nastarw,  nastar,  rastsag2, nastarw,  0, ROT0,   "Taito America Corporation", "Nastar Warrior (US)" )
 GAME( 1988, rastsag2, nastar,  rastsag2, rastsag2, 0, ROT0,   "Taito Corporation", "Rastan Saga 2 (Japan)" )

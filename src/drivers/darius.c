@@ -247,7 +247,7 @@ static WRITE16_HANDLER( darius_ioc_w )
 			return;
 
 		case 0x28:	/* unknown, written by both cpus - always 0? */
-//usrintf_showmessage(" address %04x value %04x",offset,data);
+//ui_popup(" address %04x value %04x",offset,data);
 			return;
 
 		case 0x30:	/* coin control */
@@ -258,7 +258,7 @@ static WRITE16_HANDLER( darius_ioc_w )
 			coin_counter_w(0, data & 0x08);
 			coin_counter_w(1, data & 0x40);
 			coin_word = data &0xffff;
-//usrintf_showmessage(" address %04x value %04x",offset,data);
+//ui_popup(" address %04x value %04x",offset,data);
 			return;
 	}
 
@@ -348,7 +348,7 @@ static WRITE8_HANDLER( adpcm_command_w )
 #if 0
 static WRITE8_HANDLER( display_value )
 {
-	usrintf_showmessage("d800=%x",data);
+	ui_popup("d800=%x",data);
 }
 #endif
 
@@ -458,8 +458,8 @@ static WRITE8_HANDLER( darius_da_pan )
 static WRITE8_HANDLER( darius_write_portA0 )
 {
 	// volume control FM #0 PSG #0 A
-	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
-	//usrintf_showmessage(" A0 %02x A1 %02x B0 %02x B1 %02x", port[0], port[1], port[2], port[3] );
+	//ui_popup(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
+	//ui_popup(" A0 %02x A1 %02x B0 %02x B1 %02x", port[0], port[1], port[2], port[3] );
 	darius_vol[0] = darius_def_vol[(data>>4)&0x0f];
 	darius_vol[6] = darius_def_vol[(data>>0)&0x0f];
 	update_fm0();
@@ -469,7 +469,7 @@ static WRITE8_HANDLER( darius_write_portA0 )
 static WRITE8_HANDLER( darius_write_portA1 )
 {
 	// volume control FM #1 PSG #1 A
-	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
+	//ui_popup(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
 	darius_vol[3] = darius_def_vol[(data>>4)&0x0f];
 	darius_vol[7] = darius_def_vol[(data>>0)&0x0f];
 	update_fm1();
@@ -479,7 +479,7 @@ static WRITE8_HANDLER( darius_write_portA1 )
 static WRITE8_HANDLER( darius_write_portB0 )
 {
 	// volume control PSG #0 B/C
-	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
+	//ui_popup(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
 	darius_vol[1] = darius_def_vol[(data>>4)&0x0f];
 	darius_vol[2] = darius_def_vol[(data>>0)&0x0f];
 	update_psg0( 1 );
@@ -489,7 +489,7 @@ static WRITE8_HANDLER( darius_write_portB0 )
 static WRITE8_HANDLER( darius_write_portB1 )
 {
 	// volume control PSG #1 B/C
-	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
+	//ui_popup(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
 	darius_vol[4] = darius_def_vol[(data>>4)&0x0f];
 	darius_vol[5] = darius_def_vol[(data>>0)&0x0f];
 	update_psg1( 1 );

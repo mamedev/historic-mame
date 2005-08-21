@@ -44,7 +44,7 @@ static WRITE8_HANDLER( usg_rombank_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 //  logerror ("BANK WRITE? -%02x-\n",data);
-//usrintf_showmessage("%02x",data);
+//ui_popup("%02x",data);
 
 	memory_set_bankptr( 1,&RAM[ 0x10000 + 0x4000 * data] );
 }

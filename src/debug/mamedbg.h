@@ -136,12 +136,7 @@ extern UINT8 debugger_idle;
 struct GfxElement *build_debugger_font(void);
 void dbg_put_screen_char (int ch, int attr, int x, int y);
 
-#ifdef __GNUC__
-void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
-      __attribute__ ((format (printf, 2, 3)));
-#else
-void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...);
-#endif /* __GNUC__ */
+void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...) ATTR_PRINTF(2,3);
 
 #else	/* MAME_DEBUG */
 

@@ -532,7 +532,7 @@ struct OSCodeInfo
 
 /* single code functions */
 int code_init(void);
-void code_close(void);
+void code_exit(void);
 
 INT32 code_analog_value(input_code_t code);
 int code_pressed(input_code_t code);

@@ -86,7 +86,7 @@ static void aquarium_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 	{
 		char buf[80];
 		sprintf(buf,"sprite rotate offs %04x ?",rotate);
-		usrintf_showmessage(buf);
+		ui_popup(buf);
 	}
 #endif
 }

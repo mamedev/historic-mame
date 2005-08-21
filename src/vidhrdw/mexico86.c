@@ -11,7 +11,7 @@ WRITE8_HANDLER( mexico86_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	if ((data & 7) > 5)
-		usrintf_showmessage( "Switching to invalid bank!" );
+		ui_popup( "Switching to invalid bank!" );
 
 	memory_set_bankptr(1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
 

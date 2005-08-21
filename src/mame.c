@@ -34,7 +34,6 @@
                 - calls chd_set_interface() [chd.c] to initialize the hard disk system
                 - calls rom_load() [common.c] to load the game's ROMs
                 - calls timer_init() [timer.c] to reset the timer system
-                - calls cpu_init_refresh_timer() [cpuexec.c] to start the refresh timer
                 - calls cpu_init() [cpuexec.c] to initialize the CPUs
                 - calls memory_init() [memory.c] to process the game's memory maps
                 - calls the driver's DRIVER_INIT callback
@@ -52,24 +51,23 @@
                     - allocates the scrbitmap
                     - sets the initial refresh rate and visible area
                     - calls init_buffered_spriteram() [mame.c] to set up buffered spriteram
-                    - calls builduifont() [usrintrf.c] to create the user interface font
                     - creates the debugger bitmap and font (old debugger only)
                     - calls palette_init() [palette.c] to finish palette initialization
                     - resets the performance tracking variables
 
                 - calls tilemap_init() [tilemap.c] to initialize the tilemap system
                 - calls the driver's VIDEO_START callback
-                - calls sound_start() [sndintrf.c] to start the audio system
+                - calls sound_init() [sndintrf.c] to start the audio system
                 - disposes of regions marked as disposable
                 - calls run_machine_core() [mame.c]
 
                 run_machine_core() [mame.c]
                     - calls config_load_settings() [config.c] to load the configuration file
+                    - calls ui_init() [usrintrf.c] to initialize the user interface
                     - shows the copyright screen
                     - shows the game warnings
                     - shows the game info screen
-                    - calls init_user_interface() [usrintrf.c] to initialize the user interface
-                    - calls InitCheat() [cheat.c] to initialize the cheat system
+                    - calls cheat_init() [cheat.c] to initialize the cheat system
                     - calls the driver's NVRAM_HANDLER to load NVRAM
                     - calls cpu_run() [cpuexec.c]
 
@@ -101,12 +99,13 @@
                         - calls mame_debug_exit() [mamedbg.c] to shut down the debugger (old debugger only)
 
                     - calls the driver's NVRAM_HANDLER to save NVRAM
-                    - calls StopCheat() [cheat.c] to tear down the cheat system
+                    - calls cheat_exit() [cheat.c] to tear down the cheat system
                     - calls config_save_settings() [config.c] to save the game's configuration
+                    - calls ui_exit() [usrintrf.c] to free up UI resources
 
-                - calls sound_stop() [sndintrf.c] to stop the audio system
+                - calls sound_exit() [sndintrf.c] to stop the audio system
                 - calls the driver's VIDEO_STOP callback
-                - calls tilemap_close() [tilemap.c] to tear down the tilemap system
+                - calls tilemap_exit() [tilemap.c] to tear down the tilemap system
                 - calls vh_close() [mame.c]
 
                 vh_close() [mame.c]
@@ -118,10 +117,10 @@
 
             shutdown_machine() [mame.c]
                 - calls cpu_exit() [cpuexec.c] to tear down the CPU system
-                - calls memory_shutdown() [memory.c] to tear down the memory system
+                - calls memory_exit() [memory.c] to tear down the memory system
                 - frees all the memory regions
                 - calls chd_close_all() [chd.c] to tear down the hard disks
-                - calls code_close() [input.c] to tear down the input system
+                - calls code_exit() [input.c] to tear down the input system
                 - calls state_save_reset() [state.c] to reset the saved state system
                 - calls coin_counter_reset() [common.c] to reset coin counters
 
@@ -199,6 +198,7 @@ static struct performance_info performance;
 
 /* misc other statics */
 static int leds_status;
+static int mame_paused;
 
 /* artwork callbacks */
 #ifndef MESS
@@ -257,7 +257,7 @@ static int init_buffered_spriteram(void);
 
 #ifdef MESS
 #include "mesintrf.h"
-#define handle_user_interface	handle_mess_user_interface
+#define ui_update_and_render	handle_mess_user_interface
 #endif
 
 
@@ -417,7 +417,6 @@ static int init_machine(void)
 	/* first init the timers; some CPUs have built-in timers and will need */
 	/* to allocate them up front */
 	timer_init();
-	cpu_init_refresh_timer();
 
 	/* now set up all the CPUs */
 	cpu_init();
@@ -464,7 +463,7 @@ cant_load_roms:
 cant_allocate_input_ports:
 	Machine->input_ports_default = 0;
 	Machine->input_ports = 0;
-	code_close();
+	code_exit();
 cant_init_input:
 cant_load_language_file:
 	return 1;
@@ -497,7 +496,7 @@ static int run_machine(void)
 		else
 		{
 			/* start the audio system */
-			if (sound_start())
+			if (sound_init())
 				bail_and_print("Unable to start audio emulation");
 			else
 			{
@@ -516,12 +515,15 @@ static int run_machine(void)
 						Machine->memory_region[region].base = 0;
 					}
 
+				/* before doing anything else, update the video and audio system once */
+				update_video_and_audio();
+
 				/* now do the core execution */
 				run_machine_core();
 				res = 0;
 
 				/* store the sound system */
-				sound_stop();
+				sound_exit();
 			}
 
 			/* shut down the driver's video and kill and artwork */
@@ -530,7 +532,7 @@ static int run_machine(void)
 		}
 
 		/* close down the tilemap and video systems */
-		tilemap_close();
+		tilemap_exit();
 		vh_close();
 	}
 
@@ -553,17 +555,18 @@ void run_machine_core(void)
 	/* load the configuration settings now */
 	settingsloaded = config_load_settings();
 
+	/* we need to initialize the user interface before displaying anything */
+	ui_init();
+
 	/* if we didn't find a settings file, show the disclaimer */
-	if (settingsloaded || options.skip_disclaimer || showcopyright(artwork_get_ui_bitmap()) == 0)
+	if (settingsloaded || options.skip_disclaimer || ui_display_copyright(artwork_get_ui_bitmap()) == 0)
 	{
 		/* show info about incorrect behaviour (wrong colors etc.) */
-		if (options.skip_warnings || showgamewarnings(artwork_get_ui_bitmap()) == 0)
+		if (options.skip_warnings || ui_display_game_warnings(artwork_get_ui_bitmap()) == 0)
 		{
 			/* show info about the game */
-			if (options.skip_gameinfo || showgameinfo(artwork_get_ui_bitmap()) == 0)
+			if (options.skip_gameinfo || ui_display_game_info(artwork_get_ui_bitmap()) == 0)
 			{
-				init_user_interface();
-
 				/* enable artwork now */
 				artwork_enable(1);
 
@@ -573,7 +576,7 @@ void run_machine_core(void)
 
 				/* start the cheat engine */
 				if (options.cheat)
-					InitCheat();
+					cheat_init();
 
 				/* load the NVRAM now */
 				if (Machine->drv->nvram_handler)
@@ -600,13 +603,16 @@ void run_machine_core(void)
 
 				/* stop the cheat engine */
 				if (options.cheat)
-					StopCheat();
+					cheat_exit();
 
 				/* save input ports settings */
 				config_save_settings();
 			}
 		}
 	}
+
+	/* free UI resources */
+	ui_exit();
 }
 
 
@@ -629,7 +635,7 @@ static void shutdown_machine(void)
 	cpu_exit();
 
 	/* release any allocated memory */
-	memory_shutdown();
+	memory_exit();
 
 	/* free the memory allocated for various regions */
 	for (i = 0; i < MAX_MEMORY_REGIONS; i++)
@@ -639,7 +645,7 @@ static void shutdown_machine(void)
 	chd_close_all();
 
 	/* close down the input system */
-	code_close();
+	code_exit();
 
 	/* reset the saved states */
 	state_save_reset();
@@ -656,10 +662,18 @@ static void shutdown_machine(void)
 
 void mame_pause(int pause)
 {
+	mame_paused = pause;
+	cpu_pause(pause);
 	osd_pause(pause);
 	osd_sound_enable(!pause);
 	palette_set_global_brightness_adjust(pause ? options.pause_bright : 1.00);
 	schedule_full_refresh();
+}
+
+
+int mame_is_paused(void)
+{
+	return mame_paused;
 }
 
 
@@ -757,15 +771,6 @@ static int vh_open(void)
 		if (init_buffered_spriteram())
 			goto cant_init_buffered_spriteram;
 
-	/* build our private user interface font */
-	/* This must be done AFTER osd_create_display() so the function knows the */
-	/* resolution we are running at and can pick a different font depending on it. */
-	/* It must be done BEFORE palette_init() because that will also initialize */
-	/* (through osd_allocate_colors()) the uifont colortable. */
-	Machine->uifont = builduifont();
-	if (Machine->uifont == NULL)
-		goto cant_build_uifont;
-
 #if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	/* if the debugger is enabled, initialize its bitmap and font */
 	if (mame_debug)
@@ -811,7 +816,6 @@ cant_build_debugger_font:
 cant_create_debug_bitmap:
 #endif
 
-cant_build_uifont:
 cant_init_buffered_spriteram:
 cant_create_scrbitmap:
 cant_create_display:
@@ -839,16 +843,6 @@ static void vh_close(void)
 	}
 
 	/* free the font elements */
-	if (Machine->uifont)
-	{
-		freegfx(Machine->uifont);
-		Machine->uifont = NULL;
-	}
-	if (Machine->uirotfont)
-	{
-		freegfx(Machine->uirotfont);
-		Machine->uirotfont = NULL;
-	}
 	if (Machine->debugger_font)
 	{
 		freegfx(Machine->debugger_font);
@@ -1266,7 +1260,7 @@ void update_video_and_audio(void)
 
 	/* set the vector dirty list */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		if (!full_refresh_pending && !ui_dirty && !skipped_it)
+		if (!full_refresh_pending && !ui_is_dirty() && !skipped_it)
 		{
 			current_display.vector_dirty_pixels = vector_dirty_list;
 			current_display.changed_flags |= VECTOR_PIXELS_CHANGED;
@@ -1306,7 +1300,6 @@ void update_video_and_audio(void)
 	/* reset dirty flags */
 	visible_area_changed = 0;
 	refresh_rate_changed = 0;
-	if (ui_dirty) ui_dirty--;
 }
 
 
@@ -1377,9 +1370,16 @@ int updatescreen(void)
 	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
 	/* to allow it to overlay things on the game display. We must call it even */
 	/* if the frame is skipped, to keep a consistent timing. */
-	if (handle_user_interface(artwork_get_ui_bitmap()))
+	if (ui_update_and_render(artwork_get_ui_bitmap()))
+	{
 		/* quit if the user asked to */
+		record_movie_stop();
 		return 1;
+	}
+
+	/* update our movie recording state */
+	if (!mame_is_paused())
+		record_movie_frame(Machine->scrbitmap);
 
 	/* blit to the screen */
 	update_video_and_audio();

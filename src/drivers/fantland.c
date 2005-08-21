@@ -135,7 +135,7 @@ static WRITE8_HANDLER( borntofi_nmi_enable_w )
 	if ((fantland_nmi_enable != 0) && (fantland_nmi_enable != 8))
 		logerror("CPU #0 PC = %04X: nmi_enable = %02x\n", activecpu_get_pc(), data);
 
-//  usrintf_showmessage("%02X",data);
+//  ui_popup("%02X",data);
 }
 
 // Trackball doesn't work correctly
@@ -170,7 +170,7 @@ static READ8_HANDLER( borntofi_inputs_r )
 	if		(old_y[offset] > 0)	{	ret[offset]	=	(ret[offset] ^ 0x10) | ((  ret[offset]  & 0x10) << 1);	old_y[offset]--;	}
 	else if	(old_y[offset] < 0)	{	ret[offset]	=	(ret[offset] ^ 0x10) | (((~ret[offset]) & 0x10) << 1);	old_y[offset]++;	}
 
-//  if (offset == 0)    usrintf_showmessage("x %02d y %02d",old_x[offset], old_y[offset]);
+//  if (offset == 0)    ui_popup("x %02d y %02d",old_x[offset], old_y[offset]);
 
 	if ((f - old_f[offset]) > 0)
 	{

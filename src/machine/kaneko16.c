@@ -47,7 +47,7 @@ READ16_HANDLER(galpanib_calc_r)
 			return watchdog_reset_r(0);
 
 		case 0x02/2: // unknown (yet!), used by *MANY* games !!!
-			//usrintf_showmessage("unknown collision reg");
+			//ui_popup("unknown collision reg");
 			break;
 
 		case 0x04/2: // similar to the hit detection from SuperNova, but much simpler

@@ -84,7 +84,7 @@ static WRITE8_HANDLER( lastday_bankswitch_w )
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
 	memory_set_bankptr(1,&RAM[bankaddress]);
 
-if (data & 0xf8) usrintf_showmessage("bankswitch %02x",data);
+if (data & 0xf8) ui_popup("bankswitch %02x",data);
 }
 
 static WRITE8_HANDLER( flip_screen_w )

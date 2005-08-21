@@ -102,7 +102,7 @@ WRITE16_HANDLER( shangha3_flipscreen_w )
 		/* bit 7 flips screen, the rest seems to always be set to 0x7e */
 		flip_screen_set(data & 0x80);
 
-		if ((data & 0x7f) != 0x7e) usrintf_showmessage("flipscreen_w %02x",data);
+		if ((data & 0x7f) != 0x7e) ui_popup("flipscreen_w %02x",data);
 	}
 }
 

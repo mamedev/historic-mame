@@ -162,6 +162,7 @@ static struct cpudata cpu[MAX_CPU];
 
 static int time_to_reset;
 static int time_to_quit;
+static int is_paused;
 
 static int vblank;
 static int current_frame;
@@ -216,6 +217,7 @@ static char *loadsave_schedule_name;
  *
  *************************************/
 
+static void cpu_init_refresh_timer(void);
 static void cpu_timeslice(void);
 static void cpu_inittimers(void);
 static void cpu_vblankreset(void);
@@ -256,6 +258,9 @@ static void handle_loadsave(void);
 int cpu_init(void)
 {
 	int cpunum;
+
+	/* initialize the refresh timer */
+	cpu_init_refresh_timer();
 
 	/* loop over all our CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
@@ -399,14 +404,15 @@ void cpu_run(void)
 #endif
 
 	/* loop over multiple resets, until the user quits */
-	time_to_quit = 0;
+	time_to_quit = FALSE;
 	while (!time_to_quit)
 	{
 		/* prepare everything to run */
 		cpu_pre_run();
 
 		/* loop until the user quits or resets */
-		time_to_reset = 0;
+		time_to_reset = FALSE;
+		is_paused = FALSE;
 		while (!time_to_quit && !time_to_reset)
 		{
 			profiler_mark(PROFILER_EXTRA);
@@ -415,8 +421,16 @@ void cpu_run(void)
 			if (loadsave_schedule != LOADSAVE_NONE)
 				handle_loadsave();
 
-			/* execute CPUs */
-			cpu_timeslice();
+			/* execute CPUs if not paused */
+			if (!is_paused)
+				cpu_timeslice();
+
+			/* otherwise, just pump video updates through */
+			else
+			{
+				time_to_quit = updatescreen();
+				reset_partial_updates();
+			}
 
 			profiler_mark(PROFILER_END);
 		}
@@ -453,6 +467,19 @@ void cpu_exit(void)
 
 /*************************************
  *
+ *  Pause/resume execution of CPUs
+ *
+ *************************************/
+
+void cpu_pause(int pause)
+{
+	is_paused = pause;
+}
+
+
+
+/*************************************
+ *
  *  Force a reset at the end of this
  *  timeslice
  *
@@ -460,7 +487,7 @@ void cpu_exit(void)
 
 void machine_reset(void)
 {
-	time_to_reset = 1;
+	time_to_reset = TRUE;
 }
 
 
@@ -515,7 +542,7 @@ static void handle_save(void)
 	}
 	else
 	{
-		usrintf_showmessage("Error: Failed to save state");
+		ui_popup("Error: Failed to save state");
 	}
 
 	/* unschedule the save */
@@ -570,7 +597,7 @@ static void handle_load(void)
 	}
 	else
 	{
-		usrintf_showmessage("Error: Failed to load state");
+		ui_popup("Error: Failed to load state");
 	}
 
 	/* unschedule the load */
@@ -1294,7 +1321,7 @@ int cpu_scalebyfcount(int value)
  *
  *************************************/
 
-void cpu_init_refresh_timer(void)
+static void cpu_init_refresh_timer(void)
 {
 	/* we rely on this being NULL for the time being */
 	vblank_timer = NULL;
@@ -1684,8 +1711,22 @@ static void cpu_vblankreset(void)
 	/* read hi scores from disk */
 	hs_update();
 
+	/* update the cheat engine */
+	if (options.cheat)
+		cheat_periodic();
+
 	/* read keyboard & update the status of the input ports */
 	inputport_vblank_start();
+
+	/* check the watchdog */
+	if (watchdog_counter > 0)
+	{
+		if (--watchdog_counter == 0)
+		{
+			logerror("reset caused by the (vblank) watchdog\n");
+			machine_reset();
+		}
+	}
 
 	/* reset the cycle counters */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -1807,16 +1848,6 @@ static void cpu_updatecallback(int param)
 
 	/* reset partial updating */
 	reset_partial_updates();
-
-	/* check the watchdog */
-	if (watchdog_counter > 0)
-	{
-		if (--watchdog_counter == 0)
-		{
-			logerror("reset caused by the (vblank) watchdog\n");
-			machine_reset();
-		}
-	}
 
 	/* track total frames */
 	current_frame++;

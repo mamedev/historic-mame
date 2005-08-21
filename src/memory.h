@@ -55,15 +55,15 @@ typedef UINT64			data64_t;
 typedef UINT32			offs_t;
 
 /* ----- typedefs for the various common data access handlers ----- */
-typedef data8_t			(*read8_handler)  (UNUSEDARG offs_t offset);
-typedef void			(*write8_handler) (UNUSEDARG offs_t offset, UNUSEDARG data8_t data);
-typedef data16_t		(*read16_handler) (UNUSEDARG offs_t offset, UNUSEDARG data16_t mem_mask);
-typedef void			(*write16_handler)(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask);
-typedef data32_t		(*read32_handler) (UNUSEDARG offs_t offset, UNUSEDARG data32_t mem_mask);
-typedef void			(*write32_handler)(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask);
-typedef data64_t		(*read64_handler) (UNUSEDARG offs_t offset, UNUSEDARG data64_t mem_mask);
-typedef void			(*write64_handler)(UNUSEDARG offs_t offset, UNUSEDARG data64_t data, UNUSEDARG data64_t mem_mask);
-typedef offs_t			(*opbase_handler) (UNUSEDARG offs_t address);
+typedef data8_t			(*read8_handler)  (ATTR_UNUSED offs_t offset);
+typedef void			(*write8_handler) (ATTR_UNUSED offs_t offset, ATTR_UNUSED data8_t data);
+typedef data16_t		(*read16_handler) (ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t mem_mask);
+typedef void			(*write16_handler)(ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask);
+typedef data32_t		(*read32_handler) (ATTR_UNUSED offs_t offset, ATTR_UNUSED data32_t mem_mask);
+typedef void			(*write32_handler)(ATTR_UNUSED offs_t offset, ATTR_UNUSED data32_t data, ATTR_UNUSED data32_t mem_mask);
+typedef data64_t		(*read64_handler) (ATTR_UNUSED offs_t offset, ATTR_UNUSED data64_t mem_mask);
+typedef void			(*write64_handler)(ATTR_UNUSED offs_t offset, ATTR_UNUSED data64_t data, ATTR_UNUSED data64_t mem_mask);
+typedef offs_t			(*opbase_handler) (ATTR_UNUSED offs_t address);
 
 /* ----- this struct contains pointers to the live read/write routines ----- */
 struct data_accessors_t
@@ -90,15 +90,15 @@ typedef void genf(void);
 ***************************************************************************/
 
 /* ----- macros for declaring the various common data access handlers ----- */
-#define READ8_HANDLER(name) 	data8_t  name(UNUSEDARG offs_t offset)
-#define WRITE8_HANDLER(name) 	void     name(UNUSEDARG offs_t offset, UNUSEDARG data8_t data)
-#define READ16_HANDLER(name)	data16_t name(UNUSEDARG offs_t offset, UNUSEDARG data16_t mem_mask)
-#define WRITE16_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data16_t data, UNUSEDARG data16_t mem_mask)
-#define READ32_HANDLER(name)	data32_t name(UNUSEDARG offs_t offset, UNUSEDARG data32_t mem_mask)
-#define WRITE32_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data32_t data, UNUSEDARG data32_t mem_mask)
-#define READ64_HANDLER(name)	data64_t name(UNUSEDARG offs_t offset, UNUSEDARG data64_t mem_mask)
-#define WRITE64_HANDLER(name)	void     name(UNUSEDARG offs_t offset, UNUSEDARG data64_t data, UNUSEDARG data64_t mem_mask)
-#define OPBASE_HANDLER(name)	offs_t   name(UNUSEDARG offs_t address)
+#define READ8_HANDLER(name) 	data8_t  name(ATTR_UNUSED offs_t offset)
+#define WRITE8_HANDLER(name) 	void     name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data8_t data)
+#define READ16_HANDLER(name)	data16_t name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t mem_mask)
+#define WRITE16_HANDLER(name)	void     name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
+#define READ32_HANDLER(name)	data32_t name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data32_t mem_mask)
+#define WRITE32_HANDLER(name)	void     name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data32_t data, ATTR_UNUSED data32_t mem_mask)
+#define READ64_HANDLER(name)	data64_t name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data64_t mem_mask)
+#define WRITE64_HANDLER(name)	void     name(ATTR_UNUSED offs_t offset, ATTR_UNUSED data64_t data, ATTR_UNUSED data64_t mem_mask)
+#define OPBASE_HANDLER(name)	offs_t   name(ATTR_UNUSED offs_t address)
 
 /* ----- macros for accessing bytes and words within larger chunks ----- */
 #ifdef LSB_FIRST
@@ -898,7 +898,7 @@ void io_write_qword_64le(offs_t address, data64_t data);
 
 /* ----- memory setup function ----- */
 int			memory_init(void);
-void		memory_shutdown(void);
+void		memory_exit(void);
 void		memory_set_context(int activecpu);
 
 /* ----- address map functions ----- */

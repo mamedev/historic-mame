@@ -560,7 +560,7 @@ GAME( 1979, astrof2,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East",   "
 GAME( 1979, astrof3,  astrof,   astrof,   astrof,   0,		 ROT90, "Data East",   "Astro Fighter (set 3)" )
 GAME( 1979, abattle,  astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	   "Astro Battle (set 1)" )
 GAME( 1979, abattle2, astrof,	abattle,  abattle,  abattle, ROT90, "Sidam",	   "Astro Battle (set 2)" )
-GAME( 1979, afire,    astrof,   abattle,  abattle,  afire,   ROT90, "René Pierre", "Astro Fire" )
+GAME( 1979, afire,    astrof,   abattle,  abattle,  afire,   ROT90, "Ren? Pierre", "Astro Fire" )
 GAME( 1979, acombat,  astrof,   abattle,  abattle,  afire,   ROT90, "bootleg",     "Astro Combat" )
 GAMEX(1980, tomahawk, 0,        tomahawk, tomahawk, 0,       ROT90, "Data East",   "Tomahawk 777 (Revision 1)", GAME_NO_SOUND )
 GAMEX(1980, tomahaw5, tomahawk, tomahawk, tomahawk, 0,       ROT90, "Data East",   "Tomahawk 777 (Revision 5)", GAME_NO_SOUND )

@@ -75,6 +75,7 @@ static const char *mame_default_text[] =
 	"THIS " CAPGAMENOUN " DOESN'T WORK PROPERLY",
 	"The game has protection which isn't fully emulated.",
 	"There are working clones of this game. They are:",
+	"One or more ROMs/CHDs for this game are incorrect. The " GAMENOUN " may not run correctly.",
 	"Type OK or move the joystick left then right to continue",
 
 	/* main menu */

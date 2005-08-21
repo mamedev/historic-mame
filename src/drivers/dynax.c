@@ -307,7 +307,7 @@ static WRITE8_HANDLER( hnoridur_palette_w )
 		}
 
 		default:
-			usrintf_showmessage("palette_w with bank = %02x",hnoridur_bank);
+			ui_popup("palette_w with bank = %02x",hnoridur_bank);
 			break;
 	}
 
@@ -338,7 +338,7 @@ static WRITE8_HANDLER( yarunara_palette_w )
 			return;
 
 		default:
-			usrintf_showmessage("palette_w with bank = %02x",hnoridur_bank);
+			ui_popup("palette_w with bank = %02x",hnoridur_bank);
 			return;
 	}
 
@@ -368,7 +368,7 @@ static WRITE8_HANDLER( nanajign_palette_w )
 			break;
 
 		default:
-			usrintf_showmessage("palette_w with bank = %02x",hnoridur_bank);
+			ui_popup("palette_w with bank = %02x",hnoridur_bank);
 			break;
 	}
 

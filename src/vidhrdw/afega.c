@@ -287,12 +287,10 @@ static void afega_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 #if 1
 if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
-	struct DisplayText dt[2];	char buf[10];
+	char buf[10];
 	sprintf(buf, "%X",(spriteram16[offs + 0x0/2]&6)/2);
-	dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = sy;		dt[0].y = sx;
-	dt[1].text = 0;	/* terminate array */
-	displaytext(bitmap,dt);		}
+	ui_draw_text(buf, sy, sx);
+}
 #endif
 #endif
 	}

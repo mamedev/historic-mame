@@ -248,7 +248,7 @@ static void update_ethernet_irq(void)
 static void update_stats(void)
 {
 	if (DISPLAY_STATS)
-		usrintf_showmessage("Sent:%d  Rec'd:%d", ethernet.sent, ethernet.recd);
+		ui_popup("Sent:%d  Rec'd:%d", ethernet.sent, ethernet.recd);
 }
 
 

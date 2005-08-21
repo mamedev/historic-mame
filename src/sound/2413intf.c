@@ -55,9 +55,7 @@ static void *ym2413_start(int sndindex, int clock, const void *config)
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
-	if (options.use_filter)
-		rate = clock/72;
-
+	rate = clock/72;
 
 	/* emulator create */
 	info->chip = YM2413Init(clock, rate);

@@ -608,11 +608,6 @@ WRITE8_HANDLER( bowler_bonus_display_w )
 
 static VIDEO_UPDATE( bowler )
 {
-	int x,y,i;
-
-	char score_line_1[] = "Bonus 200 400 500 700 500 400 200";
-	char score_line_2[] = "      110 220 330 550 330 220 110";
-
 
 	/* update the bitmap */
 	video_update_8080bw_common(screen, bitmap, cliprect);
@@ -621,41 +616,50 @@ static VIDEO_UPDATE( bowler )
 	/* draw the current bonus value - on the original game this
        was done using lamps that lit score displays on the bezel. */
 
-	x = 33 * 8;
-	y = 31 * 8;
+/*
+    int x,y,i;
 
-	for (i = 0; i < 33; i++)
-	{
-		int col;
-
-
-		col = UI_COLOR_NORMAL;
-
-		if ((i >= 6) && ((i % 4) != 1))
-		{
-			int bit = (i - 6) / 4;
-
-			if (bowler_bonus_display & (1 << bit))
-			{
-				col = UI_COLOR_INVERSE;
-			}
-		}
+    char score_line_1[] = "Bonus 200 400 500 700 500 400 200";
+    char score_line_2[] = "      110 220 330 550 330 220 110";
 
 
-		drawgfx(bitmap,Machine->uifont,
-				score_line_1[i],col,
-				0,1,
-				x,y,
-				cliprect,TRANSPARENCY_NONE,0);
+    fix me -- this should be done with artwork
+    x = 33 * 8;
+    y = 31 * 8;
 
-		drawgfx(bitmap,Machine->uifont,
-				score_line_2[i],col,
-				0,1,
-				x+8,y,
-				cliprect,TRANSPARENCY_NONE,0);
+    for (i = 0; i < 33; i++)
+    {
+        int col;
 
-		y -= Machine->uifontwidth;
-	}
+
+        col = UI_COLOR_NORMAL;
+
+        if ((i >= 6) && ((i % 4) != 1))
+        {
+            int bit = (i - 6) / 4;
+
+            if (bowler_bonus_display & (1 << bit))
+            {
+                col = UI_COLOR_INVERSE;
+            }
+        }
+
+
+        drawgfx(bitmap,Machine->uifont,
+                score_line_1[i],col,
+                0,1,
+                x,y,
+                cliprect,TRANSPARENCY_NONE,0);
+
+        drawgfx(bitmap,Machine->uifont,
+                score_line_2[i],col,
+                0,1,
+                x+8,y,
+                cliprect,TRANSPARENCY_NONE,0);
+
+        y -= Machine->uifontwidth;
+    }
+*/
 }
 
 

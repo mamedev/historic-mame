@@ -29,7 +29,7 @@ WRITE8_HANDLER( skychut_colorram_w )
 
 WRITE8_HANDLER( skychut_ctrl_w )
 {
-//usrintf_showmessage("%02x",data);
+//ui_popup("%02x",data);
 
 	/* I have NO IDEA if this is correct or not */
 	bottomline = ~data & 0x20;

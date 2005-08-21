@@ -22,7 +22,7 @@ Stephh's notes :
 
 -- Read Me --
 
-Shadow Force ©1993 Technos
+Shadow Force ?1993 Technos
 TA-0032-P1-23
 
 CPU: 68000

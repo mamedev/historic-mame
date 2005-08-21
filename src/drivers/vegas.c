@@ -1414,7 +1414,7 @@ static void remap_dynamic_addresses(void)
 	{
 		static int count = 0;
 		++count;
-		usrintf_showmessage("Remaps = %d", count);
+		ui_popup("Remaps = %d", count);
 	}
 }
 

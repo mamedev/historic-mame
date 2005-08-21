@@ -4,7 +4,6 @@
 #include "sound/samples.h"
 #include "info.h"
 #include "hash.h"
-#include "datafile.h"
 
 /* The size of our hardcoded BIOS ROM array */
 #define MAX_BIOS 32
@@ -636,20 +635,6 @@ static void print_game_sound(FILE* out, const struct GameDriver* game)
 	fprintf(out, "/>\n");
 }
 
-#define HISTORY_BUFFER_MAX 16384
-
-static void print_game_history(FILE* out, const struct GameDriver* game)
-{
-	char buffer[HISTORY_BUFFER_MAX];
-
-	if (load_driver_history(game,buffer,HISTORY_BUFFER_MAX)==0)
-	{
-		fprintf(out, "\t\t<history>");
-		print_free_string(out, buffer);
-		fprintf(out, "</history>\n");
-	}
-}
-
 static void print_game_driver(FILE* out, const struct GameDriver* game)
 {
 	struct InternalMachineDriver driver;
@@ -781,7 +766,6 @@ static void print_game_info(FILE* out, const struct GameDriver* game)
 	if (game->manufacturer)
 		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", normalize_string(game->manufacturer));
 
-	print_game_history(out, game);
 	print_game_bios(out, game);
 	print_game_rom(out, game);
 	print_game_sample(out, game);

@@ -180,7 +180,7 @@ VIDEO_UPDATE(silkroad)
 	if(enable3)	tilemap_draw(bitmap,cliprect,fg3_tilemap,0,0);
 
 /*
-    usrintf_showmessage ("Regs %08x %08x %08x %08x %08x",
+    ui_popup ("Regs %08x %08x %08x %08x %08x",
     silkroad_regs[0],
     silkroad_regs[1],
     silkroad_regs[2],

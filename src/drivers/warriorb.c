@@ -166,7 +166,7 @@ WRITE8_HANDLER( warriorb_pancontrol )
 	offset = offset&3;
 	ninjaw_pandata[offset] = (data<<1) + data;   /* original volume*3 */
 
-//  usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
+//  ui_popup(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
 
 	flt_volume_set_volume(offset, ninjaw_pandata[offset] / 100.0);
 }

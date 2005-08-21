@@ -56,7 +56,7 @@ Supported games:
                ghastly hack
 
                ** update the above two look like genuine Korean release
-          ÿÿ      boards, Raizing probably just missed a few things
+          ??      boards, Raizing probably just missed a few things
 
  ****************************************************************************
  * Battle Garegga and Armed Police Batrider have secret characters.         *

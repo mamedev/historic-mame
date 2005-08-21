@@ -360,5 +360,5 @@ if ( code_pressed(KEYCODE_Z) )
 	if (layers_ctrl & 4)	hedpanic_draw_sprites(bitmap,cliprect);
 
 
-//  usrintf_showmessage("%04x %04x %04x %04x %04x",head_unknown1[0],head_layersize[0],head_unknown3[0],head_unknown4[0],head_unknown5[0]);
+//  ui_popup("%04x %04x %04x %04x %04x",head_unknown1[0],head_layersize[0],head_unknown3[0],head_unknown4[0],head_unknown5[0]);
 }

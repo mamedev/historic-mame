@@ -270,7 +270,7 @@ static UINT8 snd_ctrl3=0;
 static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
-//  usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	/* this definitely controls main melody voice on 2'-1 and 4'-1 outputs */
 	sndti_set_output_gain(SOUND_MSM5232, 0, 0, vol_ctrl[ (snd_ctrl0>>4) & 15 ] / 100.0);	/* group1 from msm5232 */
@@ -279,7 +279,7 @@ static WRITE8_HANDLER( sound_control_0_w )
 static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
-//  usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 	sndti_set_output_gain(SOUND_MSM5232, 0, 1, vol_ctrl[ (snd_ctrl1>>4) & 15 ] / 100.0);	/* group2 from msm5232 */
 }
 
@@ -288,7 +288,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 	int i;
 
 	snd_ctrl2 = data & 0xff;
-//  usrintf_showmessage("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND2 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 
 	for (i=0; i<3; i++)
 		sndti_set_output_gain (SOUND_AY8910, 0, i, vol_ctrl[ (snd_ctrl2>>4) & 15 ] / 100.0);	/* ym2149f all */
@@ -297,7 +297,7 @@ static WRITE8_HANDLER( sound_control_2_w )
 static WRITE8_HANDLER( sound_control_3_w ) /* unknown */
 {
 	snd_ctrl3 = data & 0xff;
-//  usrintf_showmessage("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
+//  ui_popup("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 }
 
 

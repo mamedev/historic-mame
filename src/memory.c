@@ -434,10 +434,10 @@ int memory_init(void)
 
 
 /*-------------------------------------------------
-    memory_shutdown - free memory
+    memory_exit - free memory
 -------------------------------------------------*/
 
-void memory_shutdown(void)
+void memory_exit(void)
 {
 	int cpunum, spacenum, blocknum;
 	struct memory_block_t *block;

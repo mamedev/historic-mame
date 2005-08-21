@@ -392,7 +392,7 @@ else
 		if (code_pressed_memory(KEYCODE_DEL_PAD))
 		{
 			gc_active ^= 1;
-			if (!gc_active) usrintf_showmessage_secs(0, " ");
+			if (!gc_active) ui_popup_time(0, " ");
 		}
 
 		if (gc_active)
@@ -432,7 +432,7 @@ else
 			gc_msg[4] = gc_chip + '0';
 			gc_msg[gc_i  ] = '[';
 			gc_msg[gc_i+3] = ']';
-			usrintf_showmessage("%s", gc_msg);
+			ui_popup("%s", gc_msg);
 			gc_msg[gc_i+3] = gc_msg[gc_i] = ' ';
 		}
 	}

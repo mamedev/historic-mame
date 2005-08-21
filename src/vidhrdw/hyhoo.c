@@ -99,7 +99,7 @@ WRITE8_HANDLER( hyhoo_romsel_w )
 	if ((0x20000 * hyhoo_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		hyhoo_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -201,7 +201,7 @@ void hyhoo_gfxdraw(void)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+				ui_popup("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr = 0;
 			}

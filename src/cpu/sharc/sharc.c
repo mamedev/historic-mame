@@ -483,8 +483,7 @@ static void sharc_set_flag_input(int flag_num, int state)
 
 static offs_t sharc_dasm(char *buffer, offs_t pc)
 {
-	int npc = /*ADDR48_TO_32*/(pc);
-	UINT64 op = ROPCODE(npc);
+	UINT64 op = ROPCODE(pc);
 #ifdef MAME_DEBUG
 	sharc_dasm_one(buffer, pc, op);
 #else

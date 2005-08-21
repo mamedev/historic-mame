@@ -172,7 +172,7 @@ static void scanline_callback(int scanline)
 		if (code_pressed(KEYCODE_E)) { while (code_pressed(KEYCODE_E)) ; irq2_scanline += 1; }
 		if (code_pressed(KEYCODE_R)) { while (code_pressed(KEYCODE_R)) ; irq2_scanline += 10; }
 		if (old != irq2_scanline)
-			usrintf_showmessage("scanline = %d", irq2_scanline);
+			ui_popup("scanline = %d", irq2_scanline);
 	}
 #endif
 }

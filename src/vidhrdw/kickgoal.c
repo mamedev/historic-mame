@@ -143,7 +143,7 @@ VIDEO_UPDATE( kickgoal )
 	tilemap_draw(bitmap,cliprect,kickgoal_fgtm,0,0);
 
 	/*
-    usrintf_showmessage ("Regs %04x %04x %04x %04x %04x %04x %04x %04x",
+    ui_popup ("Regs %04x %04x %04x %04x %04x %04x %04x %04x",
     kickgoal_scrram[0],
     kickgoal_scrram[1],
     kickgoal_scrram[2],

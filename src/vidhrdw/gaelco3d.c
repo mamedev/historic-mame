@@ -423,7 +423,7 @@ void gaelco3d_render(void)
 #if DISPLAY_STATS
 {
 	int scan = cpu_getscanline();
-	usrintf_showmessage("Polys = %4d  Timeleft = %3d", polygons, (lastscan < scan) ? (scan - lastscan) : (scan + (lastscan - Machine->visible_area.max_y)));
+	ui_popup("Polys = %4d  Timeleft = %3d", polygons, (lastscan < scan) ? (scan - lastscan) : (scan + (lastscan - Machine->visible_area.max_y)));
 }
 #endif
 
@@ -525,7 +525,7 @@ VIDEO_UPDATE( gaelco3d )
 					dest[x] = 0;
 			}
 		}
-		usrintf_showmessage("(%04X,%04X)", xv, yv);
+		ui_popup("(%04X,%04X)", xv, yv);
 	}
 	else
 		copybitmap(bitmap, screenbits, 0,0, 0,0, cliprect, TRANSPARENCY_NONE, 0);

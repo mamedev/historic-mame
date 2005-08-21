@@ -60,8 +60,7 @@ static void *ym2151_start(int sndindex, int clock, const void *config)
 
 	if( rate == 0 ) rate = 1000;	/* kludge to prevent nasty crashes */
 
-	if (options.use_filter)
-		rate = clock/64;
+	rate = clock/64;
 
 	/* stream setup */
 	info->stream = stream_create(0,2,rate,info,ym2151_update);

@@ -62,6 +62,8 @@ static UINT8 colormode, highlight_method;
 static pen_t total_colors;
 static pen_t total_colors_with_ui;
 
+static pen_t black_pen, white_pen;
+
 static UINT8 color_correct_table[(MAX_PEN_BRIGHTNESS * MAX_PEN_BRIGHTNESS) >> PEN_BRIGHTNESS_BITS];
 
 
@@ -399,7 +401,7 @@ static void internal_set_shadow_preset(int mode, double factor, int dr, int dg, 
 		} // end of colormode
 
 		#if VERBOSE
-			usrintf_showmessage("shadow %d recalc factor:%1.2f style:%d", mode, factor, style);
+			ui_popup("shadow %d recalc factor:%1.2f style:%d", mode, factor, style);
 		#endif
 	}
 	else // color shadows or highlights(style 0)
@@ -418,7 +420,7 @@ static void internal_set_shadow_preset(int mode, double factor, int dr, int dg, 
 		oldfactor[mode] = -1;
 
 		#if VERBOSE
-			usrintf_showmessage("shadow %d recalc %d %d %d %02x", mode, dr, dg, db, noclip);
+			ui_popup("shadow %d recalc %d %d %d %02x", mode, dr, dg, db, noclip);
 		#endif
 
 		dr <<= 10; dg <<= 5;
@@ -590,7 +592,6 @@ static int palette_alloc(void)
 	{
 		/* we allocate a full 65536 entries table, to prevent memory corruption
          * bugs should the tilemap contains pens >= total_colors
-         * (e.g. Machine->uifont->colortable[0] as returned by get_black_pen())
          */
 		palette_shadow_table = auto_malloc(65536 * sizeof(palette_shadow_table[0]));
 		if (!palette_shadow_table)
@@ -701,15 +702,15 @@ int palette_init(void)
 			{
 				game_palette[total_colors + 0] = adjusted_palette[total_colors + 0] = MAKE_RGB(0x00,0x00,0x00);
 				game_palette[total_colors + 1] = adjusted_palette[total_colors + 1] = MAKE_RGB(0xff,0xff,0xff);
-				Machine->uifont->colortable[0] = Machine->uifont->colortable[3] = total_colors_with_ui++;
-				Machine->uifont->colortable[1] = Machine->uifont->colortable[2] = total_colors_with_ui++;
+				black_pen = total_colors_with_ui++;
+				white_pen = total_colors_with_ui++;
 			}
 			else
 			{
 				game_palette[0] = adjusted_palette[0] = MAKE_RGB(0x00,0x00,0x00);
 				game_palette[65535] = adjusted_palette[65535] = MAKE_RGB(0xff,0xff,0xff);
-				Machine->uifont->colortable[0] = Machine->uifont->colortable[3] = 0;
-				Machine->uifont->colortable[1] = Machine->uifont->colortable[2] = 65535;
+				black_pen = 0;
+				white_pen = 65535;
 			}
 			break;
 		}
@@ -722,8 +723,8 @@ int palette_init(void)
 				Machine->pens[i] = rgb_to_direct15(game_palette[i]);
 
 			/* map the UI pens */
-			Machine->uifont->colortable[0] = Machine->uifont->colortable[3] = rgb_to_direct15(MAKE_RGB(0x00,0x00,0x00));
-			Machine->uifont->colortable[1] = Machine->uifont->colortable[2] = rgb_to_direct15(MAKE_RGB(0xff,0xff,0xff));
+			black_pen = rgb_to_direct15(MAKE_RGB(0x00,0x00,0x00));
+			white_pen = rgb_to_direct15(MAKE_RGB(0xff,0xff,0xff));
 			break;
 		}
 
@@ -734,8 +735,8 @@ int palette_init(void)
 				Machine->pens[i] = rgb_to_direct32(game_palette[i]);
 
 			/* map the UI pens */
-			Machine->uifont->colortable[0] = Machine->uifont->colortable[3] = rgb_to_direct32(MAKE_RGB(0x00,0x00,0x00));
-			Machine->uifont->colortable[1] = Machine->uifont->colortable[2] = rgb_to_direct32(MAKE_RGB(0xff,0xff,0xff));
+			black_pen = rgb_to_direct32(MAKE_RGB(0x00,0x00,0x00));
+			white_pen = rgb_to_direct32(MAKE_RGB(0xff,0xff,0xff));
 			break;
 		}
 	}
@@ -749,7 +750,7 @@ int palette_init(void)
 		if (color < total_colors)
 			Machine->remapped_colortable[i] = Machine->pens[color];
 		else
-			usrintf_showmessage("colortable[%d] (=%d) out of range (total_colors = %d)",
+			ui_popup("colortable[%d] (=%d) out of range (total_colors = %d)",
 					i,color,total_colors);
 	}
 
@@ -1059,13 +1060,13 @@ void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b)
 		*b = RGB_BLUE(game_palette[pen]);
 	}
 	/* special case the black pen */
-	else if (pen == get_black_pen())
+	else if (pen == black_pen)
 		*r = *g = *b = 0;
 	/* special case the white pen (crosshairs) */
-	else if (pen == Machine->uifont->colortable[1])
+	else if (pen == white_pen)
 		*r = *g = *b = 255;
 	else
-	usrintf_showmessage("palette_get_color() out of range");
+	ui_popup("palette_get_color() out of range");
 }
 
 /*-------------------------------------------------
@@ -1216,7 +1217,12 @@ double palette_get_global_brightness(void)
 
 pen_t get_black_pen(void)
 {
-	return Machine->uifont->colortable[0];
+	return black_pen;
+}
+
+pen_t get_white_pen(void)
+{
+	return white_pen;
 }
 
 
@@ -1813,7 +1819,7 @@ INLINE void changecolor_IIIIRRRRGGGGBBBB(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+		ui_popup("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w )
@@ -1839,7 +1845,7 @@ INLINE void changecolor_RRRRGGGGBBBBIIII(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+		ui_popup("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w )
@@ -1868,7 +1874,7 @@ WRITE16_HANDLER( paletteram16_xrgb_word_w )
 	palette_set_color(offset>>1, r, g, b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+		ui_popup("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 
@@ -1891,7 +1897,7 @@ WRITE16_HANDLER( paletteram16_xbgr_word_w )
 	palette_set_color(offset>>1, r, g, b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+		ui_popup("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 

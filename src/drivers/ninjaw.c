@@ -221,7 +221,7 @@ static WRITE16_HANDLER( ninjaw_sound_w )
 
 #ifdef MAME_DEBUG
 	if (data & 0xff00)
-		usrintf_showmessage("ninjaw_sound_w to high byte: %04x",data);
+		ui_popup("ninjaw_sound_w to high byte: %04x",data);
 #endif
 }
 
@@ -239,7 +239,7 @@ WRITE8_HANDLER( ninjaw_pancontrol )
 {
   offset = offset&3;
   ninjaw_pandata[offset] = (float)data * (100.f / 255.0f);
-  //usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
+  //ui_popup(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
   flt_volume_set_volume(offset, ninjaw_pandata[offset] / 100.0);
 }
 

@@ -593,7 +593,7 @@ VIDEO_UPDATE(dadandrn) /* and gaiapols */
 		tilemap_mark_all_tiles_dirty(ult_936_tilemap);
 
 		#if MW_VERBOSE
-			usrintf_showmessage("K053936: PSAC colorbase changed");
+			ui_popup("K053936: PSAC colorbase changed");
 		#endif
 	}
 

@@ -41,7 +41,7 @@ PALETTE_INIT( snk_3bpp_shadow )
 	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
 
 	if(!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+		ui_popup("driver should use VIDEO_HAS_SHADOWS");
 
 	/* prepare shadow draw table */
 	for(i = 0; i <= 5; i++) gfx_drawmode_table[i] = DRAWMODE_SOURCE;
@@ -56,7 +56,7 @@ PALETTE_INIT( snk_4bpp_shadow )
 	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
 
 	if(!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		usrintf_showmessage("driver should use VIDEO_HAS_SHADOWS");
+		ui_popup("driver should use VIDEO_HAS_SHADOWS");
 
 	/* prepare shadow draw table */
 	for(i = 0; i <= 13; i++) gfx_drawmode_table[i] = DRAWMODE_SOURCE;

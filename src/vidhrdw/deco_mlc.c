@@ -370,7 +370,7 @@ VIDEO_UPDATE( avengrgs )
 
 // 22a65c0 == linescroll
 
-	usrintf_showmessage("%08x",base);
+	ui_popup("%08x",base);
 
 	for (my=0; my<16; my++) {
 		for (mx=0; mx<16; mx++) {

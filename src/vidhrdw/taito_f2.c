@@ -651,7 +651,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			continue;
 		}
 
-//usrintf_showmessage("%04x",area);
+//ui_popup("%04x",area);
 
 		/* check for extra scroll offset */
 		if ((spriteram_buffered[(offs+4)/2] & 0xf000) == 0xa000)

@@ -51,9 +51,9 @@ static int blockgal_kludgeoffset;
   Green:.250K ohms
   Green:.495K ohms
   Green:.995K ohms
-  Red:  .495K ohms
-  Red:  .250K ohms
-  Red:  .995K ohms
+  Red:? .495K ohms
+  Red:? .250K ohms
+  Red:? .995K ohms
 
   accurate to +/- .003K ohms.
 

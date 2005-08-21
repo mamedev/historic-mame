@@ -34,7 +34,7 @@ static void lethalen_sprite_callback(int *code, int *color, int *priority_mask)
 	else if (pri==0x30) *priority_mask = 0xf0|0xcc|0xaa; // mask sprites (always in a bad colour, used to do special effects i think
 	else
 	{
-		usrintf_showmessage("unknown pri %04x\n",pri);
+		ui_popup("unknown pri %04x\n",pri);
 		*priority_mask = 0;
 	}
 

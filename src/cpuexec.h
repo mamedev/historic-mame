@@ -70,6 +70,9 @@ void cpu_run(void);
 /* Clean up after quitting */
 void cpu_exit(void);
 
+/* Pause/resume all the CPUs */
+void cpu_pause(int pause);
+
 /* Force a reset after the current timeslice */
 void machine_reset(void);
 
@@ -205,9 +208,6 @@ int cpu_scalebyfcount(int value);
  *  Video timing
  *
  *************************************/
-
-/* Initialize the refresh timer */
-void cpu_init_refresh_timer(void);
 
 /* Recomputes the scanling timing after, e.g., a visible area change */
 void cpu_compute_scanline_timing(void);

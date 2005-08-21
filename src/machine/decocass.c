@@ -1927,7 +1927,7 @@ WRITE8_HANDLER( i8041_p1_w )
 			tape_speed = 0;
 			LOG(2,("tape %5.4fs: stopped\n", tape_time0));
 #if TAPE_UI_DISPLAY
-			usrintf_showmessage("   [%05.1fs]   ", tape_time0);
+			ui_popup("   [%05.1fs]   ", tape_time0);
 #endif
 			set_led_status(0, 0);
 		}
@@ -1950,7 +1950,7 @@ WRITE8_HANDLER( i8041_p1_w )
 			tape_speed = 0;
 			LOG(2,("tape %5.4fs: stopped\n", tape_time0));
 #if TAPE_UI_DISPLAY
-			usrintf_showmessage("   [%05.1fs]   ", tape_time0);
+			ui_popup("   [%05.1fs]   ", tape_time0);
 #endif
 			set_led_status(0, 0);
 		}

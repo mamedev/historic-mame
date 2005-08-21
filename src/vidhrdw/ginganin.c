@@ -274,7 +274,7 @@ if (code_pressed(KEYCODE_Z))
 	tilemap_set_scrolly(bg_tilemap, 0, posy); \
 	tilemap_set_scrollx(fg_tilemap, 0, posx); \
 	tilemap_set_scrolly(fg_tilemap, 0, posy); \
-	usrintf_showmessage("B>%04X:%04X F>%04X:%04X",posx%(BG_NX*16),posy%(BG_NY*16),posx%(FG_NX*16),posy%(FG_NY*16));
+	ui_popup("B>%04X:%04X F>%04X:%04X",posx%(BG_NX*16),posy%(BG_NY*16),posx%(FG_NX*16),posy%(FG_NY*16));
 
 	if (code_pressed(KEYCODE_L))	{ posx +=8; SETSCROLL }
 	if (code_pressed(KEYCODE_J))	{ posx -=8; SETSCROLL }

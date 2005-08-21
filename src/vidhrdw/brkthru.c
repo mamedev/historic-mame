@@ -180,16 +180,10 @@ WRITE8_HANDLER( brkthru_1800_w )
 #if 0
 static void show_register( struct mame_bitmap *bitmap, int x, int y, unsigned long data )
 {
-	int n;
+	char buf[5];
 
-	for( n=0; n<4; n++ ){
-		drawgfx( bitmap, Machine->uifont,
-			"0123456789abcdef"[(data>>(12-4*n))&0xf],
-			0,
-			1,0,
-			y, x + n*8,
-			0,TRANSPARENCY_NONE,0);
-	}
+	sprintf(buf, "%04X", data);
+	ui_draw_text(y, x, buf);
 }
 #endif
 

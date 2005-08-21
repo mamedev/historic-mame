@@ -543,11 +543,10 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 			}
 #if 0
 {	/* Display priority + zoom on each sprite */
-	struct DisplayText dt[2];	char buf[80];
+	char buf[80];
 	sprintf(buf, "%02X %02X",((src[ 0 ] & 0xf800) >> 11)^0x1f,((src[ 1 ] & 0xfc00) >> 10) );
-    dt[0].text = buf;	dt[0].color = UI_COLOR_NORMAL;
-    dt[0].x = x;    dt[0].y = y;    dt[1].text = 0; /* terminate array */
-	displaytext(bitmap,dt);		}
+	ui_draw_text(buf, x, y);
+}
 #endif
 		}
 	}
@@ -687,7 +686,7 @@ if (code_pressed(KEYCODE_Z))
 	{	fillbitmap(bitmap,0,cliprect);
 		layers_ctrl &= msk;	}
 
-	usrintf_showmessage("%x-%x-%x:%04x %04x %04x",
+	ui_popup("%x-%x-%x:%04x %04x %04x",
 				hyprduel_videoregs[0x10/2]&3,(hyprduel_videoregs[0x10/2]&0xc)>>2,(hyprduel_videoregs[0x10/2]&0x30)>>4,
 				hyprduel_videoregs[0x02/2],hyprduel_videoregs[0x08/2],
 				*hyprduel_screenctrl);}

@@ -413,7 +413,7 @@ WRITE16_HANDLER( paletteram16_xrgb_swap_word_w )
 	palette_set_color(offset>>1, r, g, b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		usrintf_showmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+		ui_popup("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 /***************************************************************************
@@ -901,12 +901,10 @@ static void ssv_draw_sprites(struct mame_bitmap *bitmap)
 
 				#ifdef MAME_DEBUG
 				if (code_pressed(KEYCODE_Z))	/* Display some info on each sprite */
-				{	struct DisplayText dt[2];	char buf[10];
+				{	char buf[10];
 					sprintf(buf, "%02X",/*(s2[2] & ~0x3ff)>>8*/mode>>8);
-					dt[0].text = buf;	dt[0].color = ((s1[0] & 0x0200) ? UI_COLOR_INVERSE : UI_COLOR_NORMAL);
-					dt[0].x = sx;		dt[0].y = sy;
-					dt[1].text = 0;	/* terminate array */
-					displaytext(bitmap,dt);		}
+					ui_draw_text(buf, sx, sy);
+				}
 				#endif
 
 			}		/* sprite type */
@@ -1101,12 +1099,11 @@ static void gdfs_draw_zooming_sprites(struct mame_bitmap *bitmap, int priority)
 
 			#ifdef MAME_DEBUG
 			if (code_pressed(KEYCODE_Z))	/* Display some info on each sprite */
-			{	struct DisplayText dt[2];	char buf[10];
+			{
+				char buf[10];
 				sprintf(buf, "%X",size);
-				dt[0].text = buf;	dt[0].color = UI_COLOR_INVERSE;
-				dt[0].x = sx / 0x10000;		dt[0].y = sy / 0x10000;
-				dt[1].text = 0;	/* terminate array */
-				displaytext(bitmap,dt);		}
+				ui_draw_text(buf, sx / 0x10000, sy / 0x10000);
+			}
 			#endif
 		}	/* single-sprites */
 

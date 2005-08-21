@@ -134,7 +134,7 @@ static WRITE8_HANDLER( mcu_data_w )
 
 static READ8_HANDLER( mcu_data_r )
 {
-//  usrintf_showmessage("MCU-r1 PC = %04x %02x",activecpu_get_pc(),mcu_val);
+//  ui_popup("MCU-r1 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	switch(mcu_val)
 	{
 		/* Shot counter control at the green (check $bdf and afterwards in that condition)*/
@@ -145,7 +145,7 @@ static READ8_HANDLER( mcu_data_r )
 
 static READ8_HANDLER( mcu_data_r2 )
 {
-//  usrintf_showmessage("MCU-r2 PC = %04x %02x",activecpu_get_pc(),mcu_val);
+//  ui_popup("MCU-r2 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	return 0x31; //no "bad rom.", no "bad ext."
 }
 

@@ -361,15 +361,8 @@ void amiga_sprite_dma( int scanline )
 ***************************************************************************/
 
 INLINE void amiga_display_msg (struct mame_bitmap *bitmap, const char *str ) {
-	static struct DisplayText dt[2];
-
-	if ( update_regs.once_per_frame == 0 ) {
-		dt[0].text = str;
-		dt[0].color = DT_COLOR_WHITE;
-		dt[0].x = dt[0].y = 10;
-		dt[1].text = 0;
-		displaytext(bitmap, dt);
-	}
+	if ( update_regs.once_per_frame == 0 )
+		ui_draw_text(str, 10, 10);
 
 	update_regs.once_per_frame = 1;
 }

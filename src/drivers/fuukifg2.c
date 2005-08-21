@@ -529,7 +529,7 @@ INTERRUPT_GEN( fuuki16_interrupt )
 		if (code_pressed_memory(KEYCODE_F1))
 		{
 			fuuki16_raster_enable ^= 1;
-			usrintf_showmessage("raster effects %sabled",fuuki16_raster_enable ? "en" : "dis");
+			ui_popup("raster effects %sabled",fuuki16_raster_enable ? "en" : "dis");
 		}
 	}
 

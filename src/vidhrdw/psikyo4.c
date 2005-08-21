@@ -168,10 +168,10 @@ VIDEO_UPDATE( psikyo4 )
 #if 0
 #ifdef MAME_DEBUG
 	{
-		usrintf_showmessage	("Regs %08x %08x %08x",
+		ui_popup	("Regs %08x %08x %08x",
 			psikyo4_vidregs[0], psikyo4_vidregs[1],
 			psikyo4_vidregs[2]);
-//      usrintf_showmessage ("Brightness %08x%08x",
+//      ui_popup ("Brightness %08x%08x",
 //          screen1_brt[0], screen2_brt[0]);
 	}
 #endif

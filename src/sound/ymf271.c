@@ -113,7 +113,6 @@ typedef struct
 	write8_handler ext_mem_write;
 	void (*irq_callback)(int);
 
-	INT32 volume[256*4];			// precalculated attenuation values with some marging for enveloppe and pan levels
 	int index;
 	sound_stream * stream;
 } YMF271Chip;
@@ -243,6 +242,7 @@ static const int feedback_level[8] = { 0, 1, 2, 4, 8, 16, 32, 64 };
 
 static int channel_attenuation[16];
 static int total_level[128];
+static int env_volume_table[256];
 
 INLINE int GET_KEYSCALED_RATE(int rate, int keycode, int keyscale)
 {
@@ -463,9 +463,9 @@ INLINE void update_lfo(YMF271Slot *slot)
 	calculate_step(slot);
 }
 
-INLINE int calculate_slot_volume(YMF271Chip *chip, YMF271Slot *slot)
+INLINE int calculate_slot_volume(YMF271Slot *slot)
 {
-	int volume;
+	UINT64 volume;
 	UINT64 env_volume;
 	UINT64 lfo_volume = 65536;
 
@@ -477,9 +477,9 @@ INLINE int calculate_slot_volume(YMF271Chip *chip, YMF271Slot *slot)
 		case 3: lfo_volume = 65536 - (((UINT64)slot->lfo_amplitude * 4277) >> 16); break;	// 23.625dB
 	}
 
-	env_volume = (UINT64)(chip->volume[255 - (slot->volume >> ENV_VOLUME_SHIFT)] * lfo_volume) >> 16;
+	env_volume = ((UINT64)env_volume_table[255 - (slot->volume >> ENV_VOLUME_SHIFT)] * (UINT64)lfo_volume) >> 16;
 
-	volume = (UINT64)(env_volume * total_level[slot->tl]) >> 16;
+	volume = ((UINT64)env_volume * (UINT64)total_level[slot->tl]) >> 16;
 
 	return volume;
 }
@@ -489,7 +489,7 @@ static void update_pcm(YMF271Chip *chip, int slotnum, INT32 *mixp, int length)
 	int i;
 	int final_volume;
 	INT16 sample;
-	int ch0_vol, ch1_vol, ch2_vol, ch3_vol;
+	INT64 ch0_vol, ch1_vol, ch2_vol, ch3_vol;
 	const UINT8 *rombase;
 
 	YMF271Slot *slot = &chip->slots[slotnum];
@@ -522,7 +522,7 @@ static void update_pcm(YMF271Chip *chip, int slotnum, INT32 *mixp, int length)
 		update_envelope(slot);
 		update_lfo(slot);
 
-		final_volume = calculate_slot_volume(chip, slot);
+		final_volume = calculate_slot_volume(slot);
 
 		ch0_vol = ((UINT64)final_volume * (UINT64)channel_attenuation[slot->ch0_level]) >> 16;
 		ch1_vol = ((UINT64)final_volume * (UINT64)channel_attenuation[slot->ch1_level]) >> 16;
@@ -552,17 +552,17 @@ INLINE INT32 calculate_2op_fm_0(YMF271Chip *chip, int slotnum1, int slotnum2)
 {
 	YMF271Slot *slot1 = &chip->slots[slotnum1];
 	YMF271Slot *slot2 = &chip->slots[slotnum2];
-	int env1, env2;
+	INT64 env1, env2;
 	INT64 slot1_output, slot2_output;
 	INT64 phase_mod;
 	INT64 feedback;
 
 	update_envelope(slot1);
 	update_lfo(slot1);
-	env1 = calculate_slot_volume(chip, slot1);
+	env1 = calculate_slot_volume(slot1);
 	update_envelope(slot2);
 	update_lfo(slot2);
-	env2 = calculate_slot_volume(chip, slot2);
+	env2 = calculate_slot_volume(slot2);
 
 	feedback = (slot1->feedback_modulation0 + slot1->feedback_modulation1) / 2;
 	slot1->feedback_modulation0 = slot1->feedback_modulation1;
@@ -589,17 +589,17 @@ INLINE INT32 calculate_2op_fm_1(YMF271Chip *chip, int slotnum1, int slotnum2)
 {
 	YMF271Slot *slot1 = &chip->slots[slotnum1];
 	YMF271Slot *slot2 = &chip->slots[slotnum2];
-	int env1, env2;
+	INT64 env1, env2;
 	INT64 slot1_output, slot2_output;
 	INT64 phase_mod;
 	INT64 feedback;
 
 	update_envelope(slot1);
 	update_lfo(slot1);
-	env1 = calculate_slot_volume(chip, slot1);
+	env1 = calculate_slot_volume(slot1);
 	update_envelope(slot2);
 	update_lfo(slot2);
-	env2 = calculate_slot_volume(chip, slot2);
+	env2 = calculate_slot_volume(slot2);
 
 	feedback = (slot1->feedback_modulation0 + slot1->feedback_modulation1) / 2;
 	slot1->feedback_modulation0 = slot1->feedback_modulation1;
@@ -623,13 +623,13 @@ INLINE INT32 calculate_2op_fm_1(YMF271Chip *chip, int slotnum1, int slotnum2)
 INLINE INT32 calculate_1op_fm_0(YMF271Chip *chip, int slotnum, int phase_modulation)
 {
 	YMF271Slot *slot = &chip->slots[slotnum];
-	int env;
+	INT64 env;
 	INT64 slot_output;
 	INT64 phase_mod = phase_modulation;
 
 	update_envelope(slot);
 	update_lfo(slot);
-	env = calculate_slot_volume(chip, slot);
+	env = calculate_slot_volume(slot);
 
 	phase_mod = ((phase_mod << (SIN_BITS-2)) * modulation_level[slot->feedback]);
 
@@ -647,13 +647,13 @@ INLINE INT32 calculate_1op_fm_0(YMF271Chip *chip, int slotnum, int phase_modulat
 INLINE INT32 calculate_1op_fm_1(YMF271Chip *chip, int slotnum)
 {
 	YMF271Slot *slot = &chip->slots[slotnum];
-	int env;
+	INT64 env;
 	INT64 slot_output;
 	INT64 feedback;
 
 	update_envelope(slot);
 	update_lfo(slot);
-	env = calculate_slot_volume(chip, slot);
+	env = calculate_slot_volume(slot);
 
 	feedback = slot->feedback_modulation0 + slot->feedback_modulation1;
 	slot->feedback_modulation0 = slot->feedback_modulation1;
@@ -1570,7 +1570,7 @@ static void init_tables(void)
 		// Waveform 0: sin(wt)    (0 <= wt <= 2PI)
 		wavetable[0][i] = (INT16)(m * MAXOUT);
 
-		// Waveform 1: sin²(wt)   (0 <= wt <= PI)     -sin²(wt)  (PI <= wt <= 2PI)
+		// Waveform 1: sin?(wt)   (0 <= wt <= PI)     -sin?(wt)  (PI <= wt <= 2PI)
 		wavetable[1][i] = (i < (SIN_LEN/2)) ? (INT16)((m * m) * MAXOUT) : (INT16)((m * m) * MINOUT);
 
 		// Waveform 2: sin(wt)    (0 <= wt <= PI)     -sin(wt)   (PI <= wt <= 2PI)
@@ -1665,20 +1665,19 @@ static void *ymf271_start(int sndindex, int clock, const void *config)
 	ymf271_init(chip, memory_region(intf->region), intf->irq_callback, intf->ext_read, intf->ext_write);
 	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, ymf271_update);
 
-	// Volume table, 1 = -0.375dB, 8 = -3dB, 256 = -96dB
-	for(i = 0; i < 256; i++)
-		chip->volume[i] = 65536*pow(2.0, (-0.375/6)*i);
-	for(i = 256; i < 256*4; i++)
-		chip->volume[i] = 0;
+	for (i = 0; i < 256; i++)
+	{
+		env_volume_table[i] = (int)(65536.0 / pow(10.0, ((double)i / (256.0 / 96.0)) / 20.0));
+	}
 
 	for (i = 0; i < 16; i++)
 	{
-		channel_attenuation[i] = 65536 * pow(2.0, (-channel_attenuation_table[i] / 6.0));
+		channel_attenuation[i] = (int)(65536.0 / pow(10.0, channel_attenuation_table[i] / 20.0));
 	}
 	for (i = 0; i < 128; i++)
 	{
 		double db = 0.75 * (double)i;
-		total_level[i] = 65536 * pow(2.0, (-db / 6.0));
+		total_level[i] = (int)(65536.0 / pow(10.0, db / 20.0));
 	}
 
 	return chip;

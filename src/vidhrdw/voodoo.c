@@ -282,7 +282,7 @@ static int num_rasters;
 
 /* debugging/stats */
 static UINT32 polycount, wpolycount, pixelcount, lastfps, framecount, totalframes;
-static char stats_buffer[10][30];
+static char stats_buffer[10*30];
 static UINT16 modes_used;
 static offs_t status_lastpc;
 static int status_lastpc_count;
@@ -738,8 +738,8 @@ int voodoo_start_common(void)
 		palette_set_color(i - 1, r, g, b);
 		pen_lookup[i] = i - 1;
 	}
-	pen_lookup[0] = Machine->uifont->colortable[0];
-	pen_lookup[65535] = Machine->uifont->colortable[1];
+	pen_lookup[0] = get_black_pen();
+	pen_lookup[65535] = get_white_pen();
 
 	/* allocate a vblank timer */
 	vblank_timer = timer_alloc(vblank_callback);
@@ -946,14 +946,7 @@ VIDEO_UPDATE( voodoo )
 	}
 	if (display_statistics)
 	{
-		ui_text(bitmap, &stats_buffer[0][0], 0, Machine->uifontheight * 0);
-		ui_text(bitmap, &stats_buffer[1][0], 0, Machine->uifontheight * 1);
-		ui_text(bitmap, &stats_buffer[2][0], 0, Machine->uifontheight * 2);
-		ui_text(bitmap, &stats_buffer[3][0], 0, Machine->uifontheight * 3);
-		ui_text(bitmap, &stats_buffer[4][0], 0, Machine->uifontheight * 4);
-		ui_text(bitmap, &stats_buffer[5][0], 0, Machine->uifontheight * 5);
-		ui_text(bitmap, &stats_buffer[6][0], 0, Machine->uifontheight * 6);
-		ui_text(bitmap, &stats_buffer[7][0], 0, Machine->uifontheight * 7);
+		ui_draw_text(stats_buffer, 0, 0);
 
 		totalframes++;
 		if (totalframes == (int)Machine->drv->frames_per_second)
@@ -1127,21 +1120,22 @@ static void swap_buffers(void)
 	if (display_statistics)
 	{
 		int screen_area = (Machine->visible_area.max_x - Machine->visible_area.min_x + 1) * (Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
+		char *statsptr = stats_buffer;
 		int i;
 
 		total_swaps++;
 
-		sprintf(&stats_buffer[0][0], "Poly:%5d", polycount);
-		sprintf(&stats_buffer[1][0], "WPol:%5d", wpolycount);
-		sprintf(&stats_buffer[2][0], "Rend:%5d%%", pixelcount * 100 / screen_area);
-		sprintf(&stats_buffer[3][0], " FPS:%5d", lastfps);
-		sprintf(&stats_buffer[4][0], "Swap:%5d", total_swaps);
-		sprintf(&stats_buffer[5][0], "Pend:%5d", num_pending_swaps);
-		sprintf(&stats_buffer[6][0], "FIFO:%5d", memory_fifo_count);
-		sprintf(&stats_buffer[7][0], "TexM:");
+		statsptr += sprintf(statsptr, "Poly:%5d\n", polycount);
+		statsptr += sprintf(statsptr, "WPol:%5d\n", wpolycount);
+		statsptr += sprintf(statsptr, "Rend:%5d%%\n", pixelcount * 100 / screen_area);
+		statsptr += sprintf(statsptr, " FPS:%5d\n", lastfps);
+		statsptr += sprintf(statsptr, "Swap:%5d\n", total_swaps);
+		statsptr += sprintf(statsptr, "Pend:%5d\n", num_pending_swaps);
+		statsptr += sprintf(statsptr, "FIFO:%5d\n", memory_fifo_count);
+		statsptr += sprintf(statsptr, "TexM:");
 		for (i = 0; i < 16; i++)
-			stats_buffer[7][i+5] = (modes_used & (1 << i)) ? "0123456789ABCDEF"[i] : ' ';
-		stats_buffer[7][16+5] = 0;
+			*statsptr++ = (modes_used & (1 << i)) ? "0123456789ABCDEF"[i] : ' ';
+		*statsptr = 0;
 
 		polycount = wpolycount = pixelcount = 0;
 		modes_used = 0;

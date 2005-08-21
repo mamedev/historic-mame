@@ -135,7 +135,7 @@ bit3 - SOUND Chan#8 name=AY-3-8910 #2 Ch C
 
 	gain_control = data & 0x0f;
 
-	/*usrintf_showmessage("gain_ctrl = %2x",data&0x0f);*/
+	/*ui_popup("gain_ctrl = %2x",data&0x0f);*/
 
 	percent = (gain_control & 1) ? 1.0 : 0.50;
 	sndti_set_output_gain(SOUND_AY8910, 0, 0, percent);

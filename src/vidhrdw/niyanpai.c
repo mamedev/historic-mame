@@ -108,9 +108,9 @@ void niyanpai_blitter_w(int vram, int offset, int data)
 		case 0x00:	blitter_direction_x[vram] = (data & 0x01) ? 1 : 0;
 					blitter_direction_y[vram] = (data & 0x02) ? 1 : 0;
 					niyanpai_clutmode[vram] = (data & 0x04) ? 1 : 0;
-				//  if (data & 0x08) usrintf_showmessage("Unknown GFX Flag!! (0x08)");
+				//  if (data & 0x08) ui_popup("Unknown GFX Flag!! (0x08)");
 					niyanpai_transparency[vram] = (data & 0x10) ? 1 : 0;
-				//  if (data & 0x20) usrintf_showmessage("Unknown GFX Flag!! (0x20)");
+				//  if (data & 0x20) ui_popup("Unknown GFX Flag!! (0x20)");
 					niyanpai_flipscreen[vram] = (data & 0x40) ? 0 : 1;
 					niyanpai_dispflag[vram] = (data & 0x80) ? 1 : 0;
 					niyanpai_vramflip(vram);
@@ -250,7 +250,7 @@ static void niyanpai_gfxdraw(int vram)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				usrintf_showmessage("GFXROM ADDR OVER:%08X DX,%d,DY:%d,SX:%d,SY:%d", gfxaddr, startx, starty, sizex,sizey);
+				ui_popup("GFXROM ADDR OVER:%08X DX,%d,DY:%d,SX:%d,SY:%d", gfxaddr, startx, starty, sizex,sizey);
 				logerror("GFXROM ADDR OVER:%08X DX,%d,DY:%d,SX:%d,SY:%d\n", gfxaddr, startx, starty, sizex,sizey);
 #endif
 				gfxaddr &= (memory_region_length(REGION_GFX1) - 1);

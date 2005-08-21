@@ -315,7 +315,7 @@ static void psikyosh_drawbackground( struct mame_bitmap *bitmap, const struct re
 
 #if 0
 #ifdef MAME_DEBUG
-	usrintf_showmessage	("Pri %d=%02x-%s %d=%02x-%s %d=%02x-%s",
+	ui_popup	("Pri %d=%02x-%s %d=%02x-%s %d=%02x-%s",
 		0, BG_TYPE(0), BG_LAYER_ENABLE(0)?"y":"n",
  		1, BG_TYPE(1), BG_LAYER_ENABLE(1)?"y":"n",
 		2, BG_TYPE(2), BG_LAYER_ENABLE(2)?"y":"n");
@@ -353,7 +353,7 @@ static void psikyosh_drawbackground( struct mame_bitmap *bitmap, const struct re
 					psikyosh_drawbglayerscroll(i, bitmap, cliprect);
 				break;
 			default:
-				usrintf_showmessage	("Unknown layer type %02x", BG_TYPE(i));
+				ui_popup	("Unknown layer type %02x", BG_TYPE(i));
 		}
 	}
 }
@@ -384,13 +384,13 @@ void psikyosh_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement 
 		transparency != TRANSPARENCY_ALPHA &&
 		transparency != TRANSPARENCY_ALPHARANGE)
 	{
-		usrintf_showmessage("psikyosh_drawgfxzoom unsupported trans %02x",transparency);
+		ui_popup("psikyosh_drawgfxzoom unsupported trans %02x",transparency);
 		return;
 	}
 
 	if (dest_bmp->depth != 32)
 	{
-		usrintf_showmessage("psikyosh_drawgfxzoom unsupported depth %d",dest_bmp->depth);
+		ui_popup("psikyosh_drawgfxzoom unsupported depth %d",dest_bmp->depth);
 		return;
 	}
 
@@ -1018,22 +1018,19 @@ static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct recta
 #ifdef MAME_DEBUG
 				if (code_pressed(KEYCODE_Z))	/* Display some info on each sprite */
 				{
-					struct DisplayText dt[2];
 					char buf[10];
+					int x, y;
 
 					sprintf(buf, "%X",xdim/16); /* Display Zoom in 16.16 */
-					dt[0].text = buf;
-					dt[0].color = (((xscale==0x10000)&&(yscale==0x10000)) ? UI_COLOR_INVERSE : UI_COLOR_NORMAL);
 					if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY) {
-						dt[0].x = ypos;
-						dt[0].y = Machine->visible_area.max_x - xpos; /* ORIENTATION_FLIP_Y */
+						x = ypos;
+						y = Machine->visible_area.max_x - xpos; /* ORIENTATION_FLIP_Y */
 					}
 					else {
-						dt[0].x = xpos;
-						dt[0].y = ypos;
+						x = xpos;
+						y = ypos;
 					}
-					dt[1].text = 0;	/* terminate array */
-					displaytext(bitmap,dt);
+					ui_draw_text(buf, x, y);
 				}
 #endif
 #endif
@@ -1082,7 +1079,7 @@ static void psikyosh_prelineblend( struct mame_bitmap *bitmap, const struct rect
 
 	if (bitmap->depth != 32)
 	{
-		usrintf_showmessage("psikyosh_prelineblend needs 32-bit depth");
+		ui_popup("psikyosh_prelineblend needs 32-bit depth");
 		return;
 	}
 
@@ -1102,7 +1099,7 @@ static void psikyosh_postlineblend( struct mame_bitmap *bitmap, const struct rec
 {
 	if (bitmap->depth != 32)
 	{
-		usrintf_showmessage("psikyosh_postlineblend needs 32-bit depth");
+		ui_popup("psikyosh_postlineblend needs 32-bit depth");
 		return;
 	}
 
@@ -1153,13 +1150,13 @@ VIDEO_EOF( psikyosh )
 	buffer_spriteram32_w(0,0,0);
 }
 
-/*usrintf_showmessage   ("Regs %08x %08x %08x\n     %08x %08x %08x",
+/*ui_popup   ("Regs %08x %08x %08x\n     %08x %08x %08x",
     psikyosh_bgram[0x17f0/4], psikyosh_bgram[0x17f4/4], psikyosh_bgram[0x17f8/4],
     psikyosh_bgram[0x1ff0/4], psikyosh_bgram[0x1ff4/4], psikyosh_bgram[0x1ff8/4]);*/
-/*usrintf_showmessage   ("Regs %08x %08x %08x\n     %08x %08x %08x",
+/*ui_popup   ("Regs %08x %08x %08x\n     %08x %08x %08x",
     psikyosh_bgram[0x13f0/4], psikyosh_bgram[0x13f4/4], psikyosh_bgram[0x13f8/4],
     psikyosh_bgram[0x1bf0/4], psikyosh_bgram[0x1bf4/4], psikyosh_bgram[0x1bf8/4]);*/
-/*usrintf_showmessage   ("Regs %08x %08x %08x %08x %08x %08x %08x %08x",
+/*ui_popup   ("Regs %08x %08x %08x %08x %08x %08x %08x %08x",
     psikyosh_vidregs[0], psikyosh_vidregs[1],
     psikyosh_vidregs[2], psikyosh_vidregs[3],
     psikyosh_vidregs[4], psikyosh_vidregs[5],

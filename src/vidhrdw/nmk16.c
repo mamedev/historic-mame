@@ -379,7 +379,7 @@ WRITE16_HANDLER( nmk_scroll_3_w )
 {
 	COMBINE_DATA(&gunnail_scrollram[offset]);
 
-//  usrintf_showmessage( "scroll %04x, %04x", gunnail_scrollram[0], gunnail_scrollram[0x100]);
+//  ui_popup( "scroll %04x, %04x", gunnail_scrollram[0], gunnail_scrollram[0x100]);
 
 	tilemap_set_scrollx(bg_tilemap,0,gunnail_scrollram[0]-videoshift);
 	tilemap_set_scrolly(bg_tilemap,0,gunnail_scrollram[0x100]);

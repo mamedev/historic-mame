@@ -222,23 +222,23 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 {
-	//usrintf_showmessage ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
+	//ui_popup ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
 }
 
 READ32_HANDLER ( stv_vdp1_framebuffer0_r )
 {
-	//usrintf_showmessage ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
+	//ui_popup ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
 	return 0xffff;
 }
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer1_w )
 {
-	//usrintf_showmessage ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
+	//ui_popup ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
 }
 
 READ32_HANDLER ( stv_vdp1_framebuffer1_r )
 {
-	//usrintf_showmessage ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
+	//ui_popup ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
 	return 0xffff;
 }
 
@@ -468,92 +468,97 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 	data8_t* gfxdata = memory_region(REGION_GFX2);
 	int pix2;
 
-	switch (stv2_current_sprite.CMDPMOD&0x0038)
-	{
-		case 0x0000: // mode 0 16 colour bank mode (4bits) (hanagumi blocks)
-			// most of the shienryu sprites use this mode
-			pix = gfxdata[patterndata+offsetcnt/2];
-			pix = offsetcnt&1 ? (pix & 0x0f):((pix & 0xf0)>>4) ;
-			pix = pix+((stv2_current_sprite.CMDCOLR&0xfff0));
-			mode = 0;
-			transmask = 0xf;
-			break;
-		case 0x0008: // mode 1 16 colour lookup table mode (4bits)
-			// shienryu explosisons (and some enemies) use this mode
-			pix2 = gfxdata[patterndata+offsetcnt/2];
-			pix2 = offsetcnt&1 ?  (pix2 & 0x0f):((pix2 & 0xf0)>>4);
-			pix = pix2&1 ?
-			((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0x0000ffff) >> 0):
-			((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0xffff0000) >> 16);
-
-
-			mode = 1;
-			transmask = 0xf;
-
-			if (pix2 & 0xf)
-			{
-				if (pix & 0x8000)
-				{
-					mode = 5;
-					transmask = 0x7fff;
-
-				}
-
-
-			}
-			else
-			{
-				pix=pix2; // this is messy .. but just ensures that pen 0 isn't drawn
-			}
-			break;
-		case 0x0010: // mode 2 64 colour bank mode (8bits) (character select portraits on hanagumi)
-			pix = gfxdata[patterndata+offsetcnt];
-			mode = 2;
-			pix = pix+(stv2_current_sprite.CMDCOLR&0xffc0);
-			transmask = 0x3f;
-			break;
-		case 0x0018: // mode 3 128 colour bank mode (8bits) (little characters on hanagumi use this mode)
-			pix = gfxdata[patterndata+offsetcnt];
-			pix = pix+(stv2_current_sprite.CMDCOLR&0xff80);
-			transmask = 0x7f;
-			mode = 3;
-		//  pix = rand();
-			break;
-		case 0x0020: // mode 4 256 colour bank mode (8bits) (hanagumi title)
-			pix = gfxdata[patterndata+offsetcnt];
-			pix = pix+(stv2_current_sprite.CMDCOLR&0xff00);
-			transmask = 0xff;
-			mode = 4;
-			break;
-		case 0x0028: // mode 5 32,768 colour RGB mode (16bits)
-			pix = gfxdata[patterndata+offsetcnt*2+1] | (gfxdata[patterndata+offsetcnt*2]<<8) ;
-			mode = 5;
-			transmask = 0x7fff;
-			break;
-		default: // other settings illegal
-			pix = rand();
-			mode = 0;
-			transmask = 0xff;
-	}
-
-	if (stv2_current_sprite.ispoly)
+	if ( stv2_current_sprite.ispoly )
 	{
 		pix = stv2_current_sprite.CMDCOLR&0xffff;
-			mode = 1;
-			transmask = 0xf;
 
-			if (pix & 0x8000)
-			{
+		transmask = 0xffff;
+		if ( pix & 0x8000 )
+		{
+			mode = 5;
+		}
+		else
+		{
+			mode = 1;
+		}
+	}
+	else
+	{
+		switch (stv2_current_sprite.CMDPMOD&0x0038)
+		{
+			case 0x0000: // mode 0 16 colour bank mode (4bits) (hanagumi blocks)
+				// most of the shienryu sprites use this mode
+				pix = gfxdata[patterndata+offsetcnt/2];
+				pix = offsetcnt&1 ? (pix & 0x0f):((pix & 0xf0)>>4) ;
+				pix = pix+((stv2_current_sprite.CMDCOLR&0xfff0));
+				mode = 0;
+				transmask = 0xf;
+				break;
+			case 0x0008: // mode 1 16 colour lookup table mode (4bits)
+				// shienryu explosisons (and some enemies) use this mode
+				pix2 = gfxdata[patterndata+offsetcnt/2];
+				pix2 = offsetcnt&1 ?  (pix2 & 0x0f):((pix2 & 0xf0)>>4);
+				pix = pix2&1 ?
+				((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0x0000ffff) >> 0):
+				((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0xffff0000) >> 16);
+
+
+				mode = 1;
+				transmask = 0xf;
+
+				if (pix2 & 0xf)
+				{
+					if (pix & 0x8000)
+					{
+						mode = 5;
+						transmask = 0x7fff;
+
+					}
+
+
+				}
+				else
+				{
+					pix=pix2; // this is messy .. but just ensures that pen 0 isn't drawn
+				}
+				break;
+			case 0x0010: // mode 2 64 colour bank mode (8bits) (character select portraits on hanagumi)
+				pix = gfxdata[patterndata+offsetcnt];
+				mode = 2;
+				pix = pix+(stv2_current_sprite.CMDCOLR&0xffc0);
+				transmask = 0x3f;
+				break;
+			case 0x0018: // mode 3 128 colour bank mode (8bits) (little characters on hanagumi use this mode)
+				pix = gfxdata[patterndata+offsetcnt];
+				pix = pix+(stv2_current_sprite.CMDCOLR&0xff80);
+				transmask = 0x7f;
+				mode = 3;
+			//  pix = rand();
+				break;
+			case 0x0020: // mode 4 256 colour bank mode (8bits) (hanagumi title)
+				pix = gfxdata[patterndata+offsetcnt];
+				pix = pix+(stv2_current_sprite.CMDCOLR&0xff00);
+				transmask = 0xff;
+				mode = 4;
+				break;
+			case 0x0028: // mode 5 32,768 colour RGB mode (16bits)
+				pix = gfxdata[patterndata+offsetcnt*2+1] | (gfxdata[patterndata+offsetcnt*2]<<8) ;
 				mode = 5;
 				transmask = 0x7fff;
-			}
-	}
+				break;
+			default: // other settings illegal
+				pix = rand();
+				mode = 0;
+				transmask = 0xff;
+		}
 
-	// preliminary end code disable support
-	if ( ((stv2_current_sprite.CMDPMOD & 0x80) == 0) &&
-		 ((pix & transmask) == transmask) )
-	{
-		return;
+
+		// preliminary end code disable support
+		if ( ((stv2_current_sprite.CMDPMOD & 0x80) == 0) &&
+			((pix & transmask) == transmask) )
+		{
+			return;
+		}
 	}
 
 	/* MSBON */
@@ -589,7 +594,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 					break;
 				default:
 					*dest = pix;
-					//usrintf_showmessage( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
+					//ui_popup( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
 					break;
 			}
 		}
@@ -914,6 +919,25 @@ static int y2s(int v)
 	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
+void stv_vdp1_draw_line( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	struct spoint q[4];
+
+	q[0].x = x2s(stv2_current_sprite.CMDXA);
+	q[0].y = y2s(stv2_current_sprite.CMDYA);
+	q[1].x = x2s(stv2_current_sprite.CMDXB);
+	q[1].y = y2s(stv2_current_sprite.CMDYB);
+	q[2].x = x2s(stv2_current_sprite.CMDXA);
+	q[2].y = y2s(stv2_current_sprite.CMDYA);
+	q[3].x = x2s(stv2_current_sprite.CMDXB);
+	q[3].y = y2s(stv2_current_sprite.CMDYB);
+
+	q[0].u = q[3].u = q[1].u = q[2].u = 0;
+	q[0].v = q[1].v = q[2].v = q[3].v = 0;
+
+	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+}
+
 void stv_vpd1_draw_distorted_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	struct spoint q[4];
@@ -924,15 +948,25 @@ void stv_vpd1_draw_distorted_sprite(struct mame_bitmap *bitmap, const struct rec
 
 	direction = (stv2_current_sprite.CMDCTRL & 0x0030)>>4;
 
-	xsize = (stv2_current_sprite.CMDSIZE & 0x3f00) >> 8;
-	xsize = xsize * 8;
-	if (xsize == 0) return; /* setting prohibited */
+	if ( stv2_current_sprite.ispoly )
+	{
+		xsize = ysize = 1;
+		patterndata = 0;
+	}
+	else
+	{
+		xsize = (stv2_current_sprite.CMDSIZE & 0x3f00) >> 8;
+		xsize = xsize * 8;
+		if (xsize == 0) return; /* setting prohibited */
 
-	ysize = (stv2_current_sprite.CMDSIZE & 0x00ff);
-	if (ysize == 0) return; /* setting prohibited */
+		ysize = (stv2_current_sprite.CMDSIZE & 0x00ff);
+		if (ysize == 0) return; /* setting prohibited */
 
-	patterndata = (stv2_current_sprite.CMDSRCA) & 0xffff;
-	patterndata = patterndata * 0x8;
+		patterndata = (stv2_current_sprite.CMDSRCA) & 0xffff;
+		patterndata = patterndata * 0x8;
+
+	}
+
 
 	q[0].x = x2s(stv2_current_sprite.CMDXA);
 	q[0].y = y2s(stv2_current_sprite.CMDYA);
@@ -1346,6 +1380,8 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 				case 0x0006:
 					if (vdp1_sprite_log) logerror ("Sprite List Line\n");
+					stv2_current_sprite.ispoly = 1;
+					stv_vdp1_draw_line(bitmap,cliprect);
 					break;
 
 				case 0x0008:
@@ -1419,5 +1455,5 @@ void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			logerror("Warning: Invalid PTM mode set for VDP1!\n");
 			break;
 	}
-	//usrintf_showmessage("%04x %04x",STV_VDP1_EWRR_X3,STV_VDP1_EWRR_Y3);
+	//ui_popup("%04x %04x",STV_VDP1_EWRR_X3,STV_VDP1_EWRR_Y3);
 }

@@ -85,6 +85,9 @@ struct RunningMachine
 	/* array of memory regions */
 	struct RegionInfo		memory_region[MAX_MEMORY_REGIONS];
 
+	/* number of bad ROMs encountered */
+	int						rom_load_warnings;
+
 
 	/* ----- video-related information ----- */
 
@@ -132,17 +135,6 @@ struct RunningMachine
 
 
 	/* ----- user interface-related information ----- */
-
-	/* font used by the user interface */
-	struct GfxElement *		uifont;
-	struct GfxElement *		uirotfont;
-
-	/* font parameters */
-	int 					uifontwidth, uifontheight;
-
-	/* user interface visible area */
-	int 					uixmin, uiymin;
-	int 					uiwidth, uiheight;
 
 	/* user interface orientation */
 	int 					ui_orientation;
@@ -212,7 +204,6 @@ struct GameOptions
 
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */
-	int		use_filter;		/* 1 to enable FIR filter on final mixer output */
 
 	float	brightness;		/* brightness of the display */
 	float	pause_bright;		/* additional brightness when in pause */
@@ -232,7 +223,6 @@ struct GameOptions
 	int		artwork_crop;	/* 1 to crop artwork to the game screen */
 
 	const char * savegame;	/* string representing a savegame to load; if one length then interpreted as a character */
-	int     crc_only;       /* specify if only CRC should be used as checksum */
 	char *	bios;			/* specify system bios (if used), 0 is default */
 
 	int		debug_width;	/* requested width of debugger bitmap */
@@ -347,6 +337,9 @@ void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), 
 
 /* pause the system */
 void mame_pause(int pause);
+
+/* get the current pause state */
+int mame_is_paused(void);
 
 
 

@@ -240,11 +240,11 @@ VIDEO_UPDATE(maxaflex)
 	{
 		sprintf(text, "  %d", digitC );
 	}
-	ui_text(bitmap, text, 160, 216 );
-	if (lamps & 0x01) ui_text(bitmap, "COIN", 20, 216);
-	if (lamps & 0x02) ui_text(bitmap, "PLAY", 70, 216);
-	if (lamps & 0x04) ui_text(bitmap, "START", 250, 216);
-	if (lamps & 0x08) ui_text(bitmap, "OVER", 300, 216);
+	ui_draw_text(text, 160, 216 );
+	if (lamps & 0x01) ui_draw_text("COIN", 20, 216);
+	if (lamps & 0x02) ui_draw_text("PLAY", 70, 216);
+	if (lamps & 0x04) ui_draw_text("START", 250, 216);
+	if (lamps & 0x08) ui_draw_text("OVER", 300, 216);
 }
 
 int atari_readinputport(int port)

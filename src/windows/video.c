@@ -831,7 +831,7 @@ static void update_visible_area(struct mame_display *display)
 	struct rectangle adjusted = display->game_visible_area;
 
 	// tell the UI where it can draw
-	set_ui_visarea(display->game_visible_area.min_x, display->game_visible_area.min_y,
+	ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
 			display->game_visible_area.max_x, display->game_visible_area.max_y);
 
 	// adjust for orientation
@@ -935,7 +935,7 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 	else
 	{
 		frames_displayed++;
-		if (frames_displayed + 1 == frames_to_display)
+		if (frames_displayed == frames_to_display)
 		{
 			char name[20];
 			mame_file *fp;

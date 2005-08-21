@@ -370,7 +370,7 @@ static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle 
     int value = grchamp_vreg1[0x03]&0xf;
     int i;
     for( i=0; i<value; i++ ){
-        drawgfx( bitmap, Machine->uifont,
+        drawgfx( bitmap, olduifont,
             '*',
             0,
             0,0,

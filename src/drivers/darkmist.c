@@ -47,14 +47,14 @@ VIDEO_UPDATE( darkmist)
 			if(tile<32 || tile >90)tile=32;
 
 			pSource ++;
-			drawgfx(
-				bitmap,Machine->uirotfont,
-				tile,
-				0,
-				0,0,
-				sx,sy,
-				&Machine->visible_area,
-				TRANSPARENCY_NONE,0 );
+/*          drawgfx(
+                bitmap,Machine->uirotfont,
+                tile,
+                0,
+                0,0,
+                sx,sy,
+                &Machine->visible_area,
+                TRANSPARENCY_NONE,0 );*/
 		}
 	}
 }

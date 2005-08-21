@@ -105,7 +105,7 @@ static READ8_HANDLER( unk_r )
 static WRITE8_HANDLER( unk_w )
 {
     unk_data = data;
-    usrintf_showmessage("%04x",data);
+    ui_popup("%04x",data);
 }*/
 
 /*Actually clear RAM stuff,writes 0x90 at start-up.*/
@@ -116,7 +116,7 @@ static WRITE8_HANDLER( merit_prot_w )
 	backup_ram[0x1011] = 0xc9; //ret
 	//unk_data = data;
 	//if(data == 0xc9)
-	//usrintf_showmessage("%02x",data);
+	//ui_popup("%02x",data);
 }
 
 #if 0

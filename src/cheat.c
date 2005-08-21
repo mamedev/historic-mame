@@ -1140,19 +1140,19 @@ static void		RequestStrings(UINT32 length, UINT32 numStrings, UINT32 mainStringL
 static void		InitStringTable(void);
 static void		FreeStringTable(void);
 
-static INT32	UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, CheatEntry * entry);
-static int		EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, int firstTime);
-static int		EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int selection);
-static int		DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int startNew);
-static int		DoSearchMenu(struct mame_bitmap * bitmap, int selection, int startNew);
-static int		AddEditCheatMenu(struct mame_bitmap * bitmap, int selection);
-static int		ViewSearchResults(struct mame_bitmap * bitmap, int selection, int firstTime);
-static int		ChooseWatch(struct mame_bitmap * bitmap, int selection);
-static int		EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selection);
-static INT32	DisplayHelp(struct mame_bitmap * bitmap, int selection);
-static int		SelectOptions(struct mame_bitmap * bitmap, int selection);
-static int		SelectSearchRegions(struct mame_bitmap * bitmap, int selection, SearchInfo * search);
-static int		SelectSearch(struct mame_bitmap * bitmap, int selection);
+static INT32	UserSelectValueMenu(int selection, CheatEntry * entry);
+static int		EnableDisableCheatMenu(int selection, int firstTime);
+static int		EditCheatMenu(CheatEntry * entry, int selection);
+static int		DoSearchMenuClassic(int selection, int startNew);
+static int		DoSearchMenu(int selection, int startNew);
+static int		AddEditCheatMenu(int selection);
+static int		ViewSearchResults(int selection, int firstTime);
+static int		ChooseWatch(int selection);
+static int		EditWatch(WatchInfo * entry, int selection);
+static INT32	DisplayHelp(int selection);
+static int		SelectOptions(int selection);
+static int		SelectSearchRegions(int selection, SearchInfo * search);
+static int		SelectSearch(int selection);
 
 static char *	CreateStringCopy(char * buf);
 
@@ -1258,9 +1258,9 @@ static void		ActivateCheat(CheatEntry * entry);
 static void		DeactivateCheat(CheatEntry * entry);
 static void		TempDeactivateCheat(CheatEntry * entry);
 
-static void		DoCheatOperation(CheatAction * action);
-static void		DoCheatAction(CheatAction * action);
-static void		DoCheatEntry(CheatEntry * entry);
+static void		cheat_periodicOperation(CheatAction * action);
+static void		cheat_periodicAction(CheatAction * action);
+static void		cheat_periodicEntry(CheatEntry * entry);
 
 static void		UpdateAllCheatInfo(void);
 static void		UpdateCheatInfo(CheatEntry * entry, UINT8 isLoadTime);
@@ -1715,7 +1715,7 @@ static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 	return data;
 }
 
-void InitCheat(void)
+void cheat_init(void)
 {
 	int	screenWidth, screenHeight;
 
@@ -1760,7 +1760,7 @@ void InitCheat(void)
 	InitStringTable();
 }
 
-void StopCheat(void)
+void cheat_exit(void)
 {
 	int	i;
 
@@ -1819,7 +1819,7 @@ void StopCheat(void)
 	autoSaveEnabled =		0;
 }
 
-int cheat_menu(struct mame_bitmap * bitmap, int selection)
+int cheat_menu(int selection)
 {
 	enum
 	{
@@ -1853,41 +1853,41 @@ int cheat_menu(struct mame_bitmap * bitmap, int selection)
 		switch(sel)
 		{
 			case kMenu_EnableDisable:
-				submenu_choice = EnableDisableCheatMenu(bitmap, submenu_choice, firstEntry);
+				submenu_choice = EnableDisableCheatMenu(submenu_choice, firstEntry);
 				break;
 
 			case kMenu_AddEdit:
-				submenu_choice = AddEditCheatMenu(bitmap, submenu_choice);
+				submenu_choice = AddEditCheatMenu(submenu_choice);
 				break;
 
 			case kMenu_StartSearch:
 				if(useClassicSearchBox)
-					submenu_choice = DoSearchMenuClassic(bitmap, submenu_choice, 1);
+					submenu_choice = DoSearchMenuClassic( submenu_choice, 1);
 				else
-					submenu_choice = DoSearchMenu(bitmap, submenu_choice, 1);
+					submenu_choice = DoSearchMenu(submenu_choice, 1);
 				break;
 
 			case kMenu_ContinueSearch:
 				if(useClassicSearchBox)
-					submenu_choice = DoSearchMenuClassic(bitmap, submenu_choice, 0);
+					submenu_choice = DoSearchMenuClassic(submenu_choice, 0);
 				else
-					submenu_choice = DoSearchMenu(bitmap, submenu_choice, 0);
+					submenu_choice = DoSearchMenu(submenu_choice, 0);
 				break;
 
 			case kMenu_ViewResults:
-				submenu_choice = ViewSearchResults(bitmap, submenu_choice, firstEntry);
+				submenu_choice = ViewSearchResults(submenu_choice, firstEntry);
 				break;
 
 			case kMenu_ChooseWatch:
-				submenu_choice = ChooseWatch(bitmap, submenu_choice);
+				submenu_choice = ChooseWatch(submenu_choice);
 				break;
 
 			case kMenu_DisplayHelp:
-				submenu_choice = DisplayHelp(bitmap, submenu_choice);
+				submenu_choice = DisplayHelp(submenu_choice);
 				break;
 
 			case kMenu_Options:
-				submenu_choice = SelectOptions(bitmap, submenu_choice);
+				submenu_choice = SelectOptions(submenu_choice);
 				break;
 
 			case kMenu_Return:
@@ -1916,7 +1916,7 @@ int cheat_menu(struct mame_bitmap * bitmap, int selection)
 	menu_item[total++] = ui_getstring(UI_returntomain);
 	menu_item[total] = 0;
 
-	ui_displaymenu(bitmap, menu_item, 0, 0, sel, 0);
+	//ui_draw_menu(menu_item, 0, 0, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -1951,11 +1951,11 @@ int cheat_menu(struct mame_bitmap * bitmap, int selection)
 				{
 					RestoreSearchBackup(search);
 
-					usrintf_showmessage_secs(1, "values restored");
+					ui_popup_time(1, "values restored");
 				}
 				else
 				{
-					usrintf_showmessage_secs(1, "there are no old values");
+					ui_popup_time(1, "there are no old values");
 				}
 			}
 			break;
@@ -2135,7 +2135,7 @@ static void FreeStringTable(void)
 	memset(&menuStrings, 0, sizeof(MenuStringList));
 }
 
-static INT32 UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, CheatEntry * entry)
+static INT32 UserSelectValueMenu(int selection, CheatEntry * entry)
 {
 	char					buf[2048];
 	int						sel;
@@ -2214,7 +2214,7 @@ static INT32 UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, Che
 	strcat(buf, ui_getstring(UI_righthilight));
 
 	// print fake menu
-	ui_displaymessagewindow(bitmap, buf);
+	ui_draw_message_window(buf);
 
 	// get user input
 	if(UIPressedRepeatThrottle(IPT_UI_LEFT, kHorizontalFastKeyRepeatRate))
@@ -2326,7 +2326,7 @@ static INT32 UserSelectValueMenu(struct mame_bitmap * bitmap, int selection, Che
 	return sel + 1;
 }
 
-static INT32 CommentMenu(struct mame_bitmap * bitmap, int selection, CheatEntry * entry)
+static INT32 CommentMenu(int selection, CheatEntry * entry)
 {
 	char	buf[2048];
 	int		sel;
@@ -2346,7 +2346,7 @@ static INT32 CommentMenu(struct mame_bitmap * bitmap, int selection, CheatEntry 
 	sprintf(buf, "%s\n\t%s %s %s", comment, ui_getstring(UI_lefthilight), ui_getstring(UI_OK), ui_getstring(UI_righthilight));
 
 	// print fake menu
-	ui_displaymessagewindow(bitmap, buf);
+	ui_draw_message_window(buf);
 
 	// done?
 	if(input_ui_pressed(IPT_UI_SELECT))
@@ -2372,7 +2372,7 @@ static INT32 CommentMenu(struct mame_bitmap * bitmap, int selection, CheatEntry 
 	return sel + 1;
 }
 
-static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, int firstTime)
+static int EnableDisableCheatMenu(int selection, int firstTime)
 {
 	INT32			sel;
 	static INT32	submenu_choice = 0;
@@ -2398,15 +2398,15 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 		switch(submenu_id)
 		{
 			case 1:
-				submenu_choice = CommentMenu(bitmap, submenu_choice, &cheatList[sel]);
+				submenu_choice = CommentMenu(submenu_choice, &cheatList[sel]);
 				break;
 
 			case 2:
-				submenu_choice = UserSelectValueMenu(bitmap, submenu_choice, &cheatList[sel]);
+				submenu_choice = UserSelectValueMenu(submenu_choice, &cheatList[sel]);
 				break;
 
 			case 3:
-				submenu_choice = EditCheatMenu(bitmap, &cheatList[sel], submenu_choice);
+				submenu_choice = EditCheatMenu(&cheatList[sel], submenu_choice);
 				break;
 
 			default:
@@ -2529,7 +2529,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 				sel++;
 	}
 
-	ui_displaymenu(bitmap, menu_item, menu_subitem, flagBuf, sel, 0);
+	//ui_draw_menu(menu_item, menu_subitem, flagBuf, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -2737,7 +2737,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 					ActivateCheat(&cheatList[sel]);
 
 					if(cheatList[sel].flags & kCheatFlag_OneShot)
-						usrintf_showmessage_secs(1, "%s activated", cheatList[sel].name);
+						ui_popup_time(1, "%s activated", cheatList[sel].name);
 				}
 			}
 			else
@@ -2753,7 +2753,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 					ActivateCheat(&cheatList[sel]);
 
 					if(cheatList[sel].flags & kCheatFlag_OneShot)
-						usrintf_showmessage_secs(1, "%s activated", cheatList[sel].name);
+						ui_popup_time(1, "%s activated", cheatList[sel].name);
 				}
 			}
 		}
@@ -2771,7 +2771,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 			for(i = 0; i < cheatListLength; i++)
 				SaveCheat(&cheatList[i]);
 
-			usrintf_showmessage_secs(1, "%d cheats saved", cheatListLength);
+			ui_popup_time(1, "%d cheats saved", cheatListLength);
 		}
 
 		if(input_ui_pressed(IPT_UI_ADD_CHEAT))
@@ -2818,7 +2818,7 @@ static int EnableDisableCheatMenu(struct mame_bitmap * bitmap, int selection, in
 	return sel + 1;
 }
 
-static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int selection)
+static int EditCheatMenu(CheatEntry * entry, int selection)
 {
 	static const char *	kTypeNames[] =
 	{
@@ -3727,7 +3727,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 	if(editActive)
 		flagBuf[sel] = 1;
 
-	ui_displaymenu(bitmap, menuItem, menuSubItem, flagBuf, sel, 0);
+	//ui_draw_menu(menuItem, menuSubItem, flagBuf, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -4572,7 +4572,7 @@ static int EditCheatMenu(struct mame_bitmap * bitmap, CheatEntry * entry, int se
 	return sel + 1;
 }
 
-static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int startNew)
+static int DoSearchMenuClassic(int selection, int startNew)
 {
 	static const char * energyStrings[] =
 	{
@@ -4683,7 +4683,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 		menu_subitem[kMenu_Slow] =		bitStrings[search->oldOptions.slow];
 	}
 
-	ui_displaymenu(bitmap, menu_item, menu_subitem, 0, sel, 0);
+	//ui_draw_menu(menu_item, menu_subitem, 0, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -4887,15 +4887,15 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 		UpdateSearch(search);
 
 		if(willHaveResults || !startNew)
-			usrintf_showmessage("%d results found", search->numResults);
+			ui_popup("%d results found", search->numResults);
 		else
-			usrintf_showmessage("saved all memory regions");
+			ui_popup("saved all memory regions");
 
 		if(search->numResults == 1)
 		{
 			AddCheatFromFirstResult(search);
 
-			usrintf_showmessage("1 result found, added to list");
+			ui_popup("1 result found, added to list");
 		}
 	}
 
@@ -4926,7 +4926,7 @@ static int DoSearchMenuClassic(struct mame_bitmap * bitmap, int selection, int s
 	return sel + 1;
 }
 
-static int DoSearchMenu(struct mame_bitmap * bitmap, int selection, int startNew)
+static int DoSearchMenu(int selection, int startNew)
 {
 	enum
 	{
@@ -5074,7 +5074,7 @@ static int DoSearchMenu(struct mame_bitmap * bitmap, int selection, int startNew
 	if(editActive)
 		flagBuf[sel] = 1;
 
-	ui_displaymenu(bitmap, menu_item, menu_subitem, flagBuf, sel, 0);
+	//ui_draw_menu(menu_item, menu_subitem, flagBuf, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -5267,13 +5267,13 @@ static int DoSearchMenu(struct mame_bitmap * bitmap, int selection, int startNew
 
 					UpdateSearch(search);
 
-					usrintf_showmessage("%d results found", search->numResults);
+					ui_popup("%d results found", search->numResults);
 
 					if(search->numResults == 1)
 					{
 						AddCheatFromFirstResult(search);
 
-						usrintf_showmessage("1 result found, added to list");
+						ui_popup("1 result found, added to list");
 					}
 					break;
 
@@ -5285,7 +5285,7 @@ static int DoSearchMenu(struct mame_bitmap * bitmap, int selection, int startNew
 
 					UpdateSearch(search);
 
-					usrintf_showmessage("saved all memory regions");
+					ui_popup("saved all memory regions");
 					break;
 			}
 		}
@@ -5321,7 +5321,7 @@ static int DoSearchMenu(struct mame_bitmap * bitmap, int selection, int startNew
 	return sel + 1;
 }
 
-static int AddEditCheatMenu(struct mame_bitmap * bitmap, int selection)
+static int AddEditCheatMenu(int selection)
 {
 	INT32			sel;
 	static INT32	submenuChoice = 0;
@@ -5339,7 +5339,7 @@ static int AddEditCheatMenu(struct mame_bitmap * bitmap, int selection)
 
 	if(submenuChoice)
 	{
-		submenuChoice = EditCheatMenu(bitmap, &cheatList[submenuCheat], submenuChoice);
+		submenuChoice = EditCheatMenu(&cheatList[submenuCheat], submenuChoice);
 
 		if(submenuChoice == -1)
 		{
@@ -5372,7 +5372,7 @@ static int AddEditCheatMenu(struct mame_bitmap * bitmap, int selection)
 	if(sel >= total)
 		sel = total - 1;
 
-	ui_displaymenu(bitmap, menu_item, NULL, NULL, sel, 0);
+	//ui_draw_menu(menu_item, NULL, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -5418,7 +5418,7 @@ static int AddEditCheatMenu(struct mame_bitmap * bitmap, int selection)
 			for(i = 0; i < cheatListLength; i++)
 				SaveCheat(&cheatList[i]);
 
-			usrintf_showmessage_secs(1, "%d cheats saved", cheatListLength);
+			ui_popup_time(1, "%d cheats saved", cheatListLength);
 		}
 		else
 		{
@@ -5476,7 +5476,7 @@ static int AddEditCheatMenu(struct mame_bitmap * bitmap, int selection)
 	return sel + 1;
 }
 
-static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int firstTime)
+static int ViewSearchResults(int selection, int firstTime)
 {
 	enum
 	{
@@ -5635,7 +5635,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 	if(sel > (total - 1))
 		sel = total - 1;
 
-	ui_displaymenu(bitmap, menu_item, NULL, NULL, sel, 0);
+	//ui_draw_menu(menu_item, NULL, NULL, sel, 0);
 
 	if(code_pressed_memory(KEYCODE_END))
 	{
@@ -5790,7 +5790,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 			{
 				InvalidateEntireRegion(search, region);
 
-				usrintf_showmessage_secs(1, "region invalidated - %d results remain", search->numResults);
+				ui_popup_time(1, "region invalidated - %d results remain", search->numResults);
 			}
 		}
 	}
@@ -5815,7 +5815,7 @@ static int ViewSearchResults(struct mame_bitmap * bitmap, int selection, int fir
 	return sel + 1;
 }
 
-static int ChooseWatch(struct mame_bitmap * bitmap, int selection)
+static int ChooseWatch(int selection)
 {
 	INT32			sel;
 	static INT32	submenuChoice = 0;
@@ -5835,7 +5835,7 @@ static int ChooseWatch(struct mame_bitmap * bitmap, int selection)
 
 	if(submenuChoice)
 	{
-		submenuChoice = EditWatch(bitmap, &watchList[submenuWatch], submenuChoice);
+		submenuChoice = EditWatch(&watchList[submenuWatch], submenuChoice);
 
 		if(submenuChoice == -1)
 		{
@@ -5871,7 +5871,7 @@ static int ChooseWatch(struct mame_bitmap * bitmap, int selection)
 	else
 		watch = NULL;
 
-	ui_displaymenu(bitmap, menuItem, NULL, NULL, sel, 0);
+	//ui_draw_menu(menuItem, NULL, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -6005,7 +6005,7 @@ static int ChooseWatch(struct mame_bitmap * bitmap, int selection)
 	return sel + 1;
 }
 
-static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selection)
+static int EditWatch(WatchInfo * entry, int selection)
 {
 	enum
 	{
@@ -6158,7 +6158,7 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 	if(editActive)
 		flagBuf[sel] = 1;
 
-	ui_displaymenu(bitmap, menuItem, menuSubItem, flagBuf, sel, 0);
+	//ui_draw_menu(menuItem, menuSubItem, flagBuf, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -6517,7 +6517,7 @@ static int EditWatch(struct mame_bitmap * bitmap, WatchInfo * entry, int selecti
 	return sel + 1;
 }
 
-static int SelectSearchRegions(struct mame_bitmap * bitmap, int selection, SearchInfo * search)
+static int SelectSearchRegions(int selection, SearchInfo * search)
 {
 	static const char	* kSearchSpeedList[] =
 	{
@@ -6575,7 +6575,7 @@ static int SelectSearchRegions(struct mame_bitmap * bitmap, int selection, Searc
 	else
 		region = NULL;
 
-	ui_displaymenu(bitmap, menuItem, menuSubItem, NULL, sel, 0);
+	//ui_draw_menu(menuItem, menuSubItem, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -6659,7 +6659,7 @@ static int SelectSearchRegions(struct mame_bitmap * bitmap, int selection, Searc
 			{
 				InvalidateEntireRegion(search, region);
 
-				usrintf_showmessage_secs(1, "region invalidated - %d results remain", search->numResults);
+				ui_popup_time(1, "region invalidated - %d results remain", search->numResults);
 			}
 		}
 	}
@@ -6685,7 +6685,7 @@ static int SelectSearchRegions(struct mame_bitmap * bitmap, int selection, Searc
 	return sel + 1;
 }
 
-static int SelectSearch(struct mame_bitmap * bitmap, int selection)
+static int SelectSearch(int selection)
 {
 	INT32			sel;
 	const char		** menuItem;
@@ -6741,7 +6741,7 @@ static int SelectSearch(struct mame_bitmap * bitmap, int selection)
 	if(sel > (total - 1))
 		sel = total - 1;
 
-	ui_displaymenu(bitmap, menuItem, NULL, NULL, sel, 0);
+	//ui_draw_menu(menuItem, NULL, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -6822,7 +6822,7 @@ static int SelectSearch(struct mame_bitmap * bitmap, int selection)
 	return sel + 1;
 }
 
-static INT32 DisplayHelp(struct mame_bitmap * bitmap, int selection)
+static INT32 DisplayHelp(int selection)
 {
 	char	buf[2048];
 	int		sel;
@@ -6835,7 +6835,7 @@ static INT32 DisplayHelp(struct mame_bitmap * bitmap, int selection)
 					"\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_OK), ui_getstring(UI_righthilight));
 
 	// print fake menu
-	ui_displaymessagewindow(bitmap, buf);
+	ui_draw_message_window(buf);
 
 	// done?
 	if(input_ui_pressed(IPT_UI_SELECT))
@@ -6861,7 +6861,7 @@ static INT32 DisplayHelp(struct mame_bitmap * bitmap, int selection)
 	return sel + 1;
 }
 
-static int SelectOptions(struct mame_bitmap * bitmap, int selection)
+static int SelectOptions(int selection)
 {
 	enum
 	{
@@ -6889,11 +6889,11 @@ static int SelectOptions(struct mame_bitmap * bitmap, int selection)
 		switch(sel)
 		{
 			case kMenu_SelectSearchRegions:
-				submenuChoice = SelectSearchRegions(bitmap, submenuChoice, GetCurrentSearch());
+				submenuChoice = SelectSearchRegions(submenuChoice, GetCurrentSearch());
 				break;
 
 			case kMenu_SelectSearch:
-				submenuChoice = SelectSearch(bitmap, submenuChoice);
+				submenuChoice = SelectSearch(submenuChoice);
 				break;
 
 			default:
@@ -6939,7 +6939,7 @@ static int SelectOptions(struct mame_bitmap * bitmap, int selection)
 	menuItem[total] =		NULL;
 	menuSubItem[total] =	NULL;
 
-	ui_displaymenu(bitmap, menuItem, menuSubItem, NULL, sel, 0);
+	//ui_draw_menu(menuItem, menuSubItem, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalSlowKeyRepeatRate))
 	{
@@ -7006,7 +7006,7 @@ static int SelectOptions(struct mame_bitmap * bitmap, int selection)
 				DisposeCheatDatabase();
 				LoadCheatDatabase();
 
-				usrintf_showmessage_secs(1, "cheat database reloaded");
+				ui_popup_time(1, "cheat database reloaded");
 				break;
 
 			case kMenu_SelectSearchRegions:
@@ -7030,7 +7030,7 @@ static int SelectOptions(struct mame_bitmap * bitmap, int selection)
 	return sel + 1;
 }
 
-void DoCheat(struct mame_bitmap * bitmap)
+void cheat_periodic(void)
 {
 	int	i;
 
@@ -7040,13 +7040,13 @@ void DoCheat(struct mame_bitmap * bitmap)
 		{
 			watchesDisabled ^= 1;
 
-			usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_watchpoints), watchesDisabled ? ui_getstring (UI_off) : ui_getstring (UI_on));
+			ui_popup_time(1, "%s %s", ui_getstring(UI_watchpoints), watchesDisabled ? ui_getstring (UI_off) : ui_getstring (UI_on));
 		}
 		else
 		{
 			cheatsDisabled ^= 1;
 
-			usrintf_showmessage_secs(1, "%s %s", ui_getstring(UI_cheats), cheatsDisabled ? ui_getstring (UI_off) : ui_getstring (UI_on));
+			ui_popup_time(1, "%s %s", ui_getstring(UI_cheats), cheatsDisabled ? ui_getstring (UI_off) : ui_getstring (UI_on));
 
 			if(cheatsDisabled)
 			{
@@ -7058,14 +7058,12 @@ void DoCheat(struct mame_bitmap * bitmap)
 		}
 	}
 
-	DisplayWatches(bitmap);
-
 	if(cheatsDisabled)
 		return;
 
 	for(i = 0; i < cheatListLength; i++)
 	{
-		DoCheatEntry(&cheatList[i]);
+		cheat_periodicEntry(&cheatList[i]);
 	}
 }
 
@@ -7131,7 +7129,7 @@ UINT32 PrintASCII(char * buf, UINT32 data, UINT8 size)
 	return 0;
 }
 
-void DisplayWatches(struct mame_bitmap * bitmap)
+void cheat_display_watches(void)
 {
 	int		i;
 
@@ -7155,14 +7153,14 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 				case kWatchLabel_Address:
 					numChars = sprintf(buf, "%.8X: ", info->address);
 
-					ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+					ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 					xOffset += numChars;
 					break;
 
 				case kWatchLabel_String:
 					numChars = sprintf(buf, "%s: ", info->label);
 
-					ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+					ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 					xOffset += numChars;
 					break;
 			}
@@ -7189,7 +7187,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_Hex:
 						numChars = sprintf(buf, "%.*X", kSearchByteDigitsTable[info->elementBytes], data);
 
-						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7197,7 +7195,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_Decimal:
 						numChars = sprintf(buf, "%.*d", kSearchByteDecDigitsTable[info->elementBytes], data);
 
-						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7205,7 +7203,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_Binary:
 						numChars = PrintBinary(buf, data, kSearchByteMaskTable[info->elementBytes]);
 
-						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7213,7 +7211,7 @@ void DisplayWatches(struct mame_bitmap * bitmap)
 					case kWatchDisplayType_ASCII:
 						numChars = PrintASCII(buf, data, info->elementBytes);
 
-						ui_text(bitmap, buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
 						xOffset += numChars;
 						break;
 				}
@@ -7260,7 +7258,7 @@ static void ResizeCheatList(UINT32 newLength)
 		if(!cheatList && (newLength != 0))
 		{
 			logerror("ResizeCheatList: out of memory resizing cheat list\n");
-			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
+			ui_popup_time(2, "out of memory while loading cheat database");
 
 			cheatListLength = 0;
 
@@ -7291,7 +7289,7 @@ static void ResizeCheatListNoDispose(UINT32 newLength)
 		if(!cheatList && (newLength != 0))
 		{
 			logerror("ResizeCheatListNoDispose: out of memory resizing cheat list\n");
-			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
+			ui_popup_time(2, "out of memory while loading cheat database");
 
 			cheatListLength = 0;
 
@@ -7390,7 +7388,7 @@ static void ResizeCheatActionList(CheatEntry * entry, UINT32 newLength)
 		if(!entry->actionList && (newLength != 0))
 		{
 			logerror("ResizeCheatActionList: out of memory resizing cheat action list\n");
-			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
+			ui_popup_time(2, "out of memory while loading cheat database");
 
 			entry->actionListLength = 0;
 
@@ -7414,7 +7412,7 @@ static void ResizeCheatActionListNoDispose(CheatEntry * entry, UINT32 newLength)
 		if(!entry->actionList && (newLength != 0))
 		{
 			logerror("ResizeCheatActionList: out of memory resizing cheat action list\n");
-			usrintf_showmessage_secs(2, "out of memory while loading cheat database");
+			ui_popup_time(2, "out of memory while loading cheat database");
 
 			entry->actionListLength = 0;
 
@@ -7492,7 +7490,7 @@ static void ResizeWatchList(UINT32 newLength)
 		if(!watchList && (newLength != 0))
 		{
 			logerror("ResizeWatchList: out of memory resizing watch list\n");
-			usrintf_showmessage_secs(2, "out of memory while adding watch");
+			ui_popup_time(2, "out of memory while adding watch");
 
 			watchListLength = 0;
 
@@ -7523,7 +7521,7 @@ static void ResizeWatchListNoDispose(UINT32 newLength)
 		if(!watchList && (newLength != 0))
 		{
 			logerror("ResizeWatchList: out of memory resizing watch list\n");
-			usrintf_showmessage_secs(2, "out of memory while adding watch");
+			ui_popup_time(2, "out of memory while adding watch");
 
 			watchListLength = 0;
 
@@ -7694,7 +7692,7 @@ static void ResizeSearchList(UINT32 newLength)
 		if(!searchList && (newLength != 0))
 		{
 			logerror("ResizeSearchList: out of memory resizing search list\n");
-			usrintf_showmessage_secs(2, "out of memory while adding search");
+			ui_popup_time(2, "out of memory while adding search");
 
 			searchListLength = 0;
 
@@ -7725,7 +7723,7 @@ static void ResizeSearchListNoDispose(UINT32 newLength)
 		if(!searchList && (newLength != 0))
 		{
 			logerror("ResizeSearchList: out of memory resizing search list\n");
-			usrintf_showmessage_secs(2, "out of memory while adding search");
+			ui_popup_time(2, "out of memory while adding search");
 
 			searchListLength = 0;
 
@@ -9920,7 +9918,7 @@ static void TempDeactivateCheat(CheatEntry * entry)
 	}
 }
 
-static void DoCheatOperation(CheatAction * action)
+static void cheat_periodicOperation(CheatAction * action)
 {
 	UINT8	operation =	EXTRACT_FIELD(action->type, Operation) |
 						(EXTRACT_FIELD(action->type, OperationExtend) << 2);
@@ -10029,7 +10027,7 @@ static void DoCheatOperation(CheatAction * action)
 	}
 }
 
-static void DoCheatAction(CheatAction * action)
+static void cheat_periodicAction(CheatAction * action)
 {
 	UINT8	parameter = EXTRACT_FIELD(action->type, TypeParameter);
 
@@ -10066,7 +10064,7 @@ static void DoCheatAction(CheatAction * action)
 			{
 				action->frameTimer = 0;
 
-				DoCheatOperation(action);
+				cheat_periodicOperation(action);
 
 				if(TEST_FIELD(action->type, OneShot))
 				{
@@ -10086,7 +10084,7 @@ static void DoCheatAction(CheatAction * action)
 			{
 				if(action->frameTimer <= 0)
 				{
-					DoCheatOperation(action);
+					cheat_periodicOperation(action);
 
 					action->flags &= ~kActionFlag_WasModified;
 
@@ -10124,7 +10122,7 @@ static void DoCheatAction(CheatAction * action)
 
 			if(currentValue != (action->lastValue - parameter))
 			{
-				DoCheatOperation(action);
+				cheat_periodicOperation(action);
 
 				if(TEST_FIELD(action->type, OneShot))
 				{
@@ -10142,7 +10140,7 @@ static void DoCheatAction(CheatAction * action)
 	}
 }
 
-static void DoCheatEntry(CheatEntry * entry)
+static void cheat_periodicEntry(CheatEntry * entry)
 {
 	int	i;
 
@@ -10193,7 +10191,7 @@ static void DoCheatEntry(CheatEntry * entry)
 		// if a subcheat is selected and it's a legal index, handle it
 		if(entry->selection && (entry->selection < entry->actionListLength))
 		{
-			DoCheatAction(&entry->actionList[entry->selection]);
+			cheat_periodicAction(&entry->actionList[entry->selection]);
 		}
 	}
 	else
@@ -10236,7 +10234,7 @@ static void DoCheatEntry(CheatEntry * entry)
 		// update all actions
 		for(i = 0; i < entry->actionListLength; i++)
 		{
-			DoCheatAction(&entry->actionList[i]);
+			cheat_periodicAction(&entry->actionList[i]);
 		}
 
 		// if all actions are done, deactivate the cheat

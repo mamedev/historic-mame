@@ -312,8 +312,8 @@ const char *sndtype_get_info_string(int sndtype, UINT32 state);
  *************************************/
 
 void sndintrf_init(void);
-int sound_start(void);
-void sound_stop(void);
+int sound_init(void);
+void sound_exit(void);
 void sound_reset(void);
 void sound_frame_update(void);
 void sound_register_token(void *token);

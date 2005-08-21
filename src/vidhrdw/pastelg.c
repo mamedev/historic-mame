@@ -107,7 +107,7 @@ WRITE8_HANDLER( pastelg_romsel_w )
 	if ((pastelg_gfxrom << 16) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		pastelg_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -203,7 +203,7 @@ void pastelg_gfxdraw(void)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+				ui_popup("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr = 0;
 			}

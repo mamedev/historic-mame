@@ -109,7 +109,7 @@ static void konamigx_alpha_tile_callback(int layer, int *code, int *color)
 		*code = 0;
 
 		#if VERBOSE
-			usrintf_showmessage("skipped alpha tile(layer=%d mix=%d)", layer, mixcode);
+			ui_popup("skipped alpha tile(layer=%d mix=%d)", layer, mixcode);
 		#endif
 	}
 }

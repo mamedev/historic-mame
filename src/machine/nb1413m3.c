@@ -79,7 +79,7 @@ void nb1413m3_timer_callback(int param)
 	}
 
 #if 0
-	// nbmj1413m3_nmi_clock_w 指定
+	// nbmj1413m3_nmi_clock_w ?w??
 	// ----------------------------------------------------------------------------------------------------------------
 	//                      nbmj8688    Z80:5.00MHz (20000000/4)
 	// 7    144-145         mjsikaku, mjsikakb, otonano, mjcamera
@@ -104,18 +104,18 @@ void nb1413m3_timer_callback(int param)
 
 	// ----------------------------------------------------------------------------------------------------------------
 	//                      nbmj8688    Z80:5.00MHz (20000000/4)
-	// 6     81- 82         crystalg(DAC再生遅い),  crystal2(DAC再生遅い)
-	// 6    130-131         bijokkoy(アニメ変), bijokkog(アニメ変)
+	// 6     81- 82         crystalg(DAC?????x??),  crystal2(DAC?????x??)
+	// 6    130-131         bijokkoy(?A?j????), bijokkog(?A?j????)
 
 	// ----------------------------------------------------------------------------------------------------------------
 	//                      nbmj8688    Z80:5.00MHz (20000000/4)
-	// 4    108-109         bijokkoy(アニメ変), bijokkog(アニメ変)
+	// 4    108-109         bijokkoy(?A?j????), bijokkog(?A?j????)
 
 	// ----------------------------------------------------------------------------------------------------------------
 
-	// nbmj1413m3_nmi_clock_w 未指定
-	//*5    130-131?        hyhoo, hyhoo2   5.00MHz (ちょっとDAC再生速度が早いかも…)
-	//*5    130-131?        taiwanmb        5.00MHz (実機が無いのでDAC再生速度不明)
+	// nbmj1413m3_nmi_clock_w ???w??
+	//*5    130-131?        hyhoo, hyhoo2   5.00MHz (????????DAC???????x???????????c)
+	//*5    130-131?        taiwanmb        5.00MHz (???@??????????DAC???????x?s??)
 	//*5    128-129?        omotesnd        5.00MHz
 	//*2    100-101?        pastelg         2.496MHz (19968000/8) ???
 #endif
@@ -188,7 +188,7 @@ WRITE8_HANDLER( nb1413m3_nmi_clock_w )
 	nb1413m3_74ls193_counter = ((nb1413m3_nmi_clock & 0xf0) >> 4);
 
 #if 0
-	// NightLove用…NMI禁止・許可とサウンドROMバンクがさっぱり分からん(泣)
+	// NightLove?p?cNMI???~?E???????T?E???hROM?o???N??????????????????(??)
 	if (nb1413m3_type == NB1413M3_NIGHTLOV)
 	{
 		nb1413m3_nmi_enable = ((data & 0x08) >> 3);
@@ -222,7 +222,7 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 
 #if NB1413M3_DEBUG
-	usrintf_showmessage("NMI SW:%01X CLOCK:%02X COUNT:%03d", nb1413m3_nmi_enable, nb1413m3_nmi_clock, nb1413m3_nmi_count);
+	ui_popup("NMI SW:%01X CLOCK:%02X COUNT:%03d", nb1413m3_nmi_enable, nb1413m3_nmi_clock, nb1413m3_nmi_count);
 	nb1413m3_nmi_count = 0;
 #endif
 
@@ -332,14 +332,14 @@ READ8_HANDLER( nb1413m3_sndrom_r )
 	offset += 0x08000 * rombank;
 
 #if NB1413M3_DEBUG
-	usrintf_showmessage("Sound ROM %02X:%05X [B1:%02X B2:%02X]", rombank, offset, nb1413m3_sndrombank1, nb1413m3_sndrombank2);
+	ui_popup("Sound ROM %02X:%05X [B1:%02X B2:%02X]", rombank, offset, nb1413m3_sndrombank1, nb1413m3_sndrombank2);
 #endif
 
 	if (offset < memory_region_length(nb1413m3_sndromregion))
 		return memory_region(nb1413m3_sndromregion)[offset];
 	else
 	{
-		usrintf_showmessage("read past sound ROM length (%05x[%02X])",offset, rombank);
+		ui_popup("read past sound ROM length (%05x[%02X])",offset, rombank);
 		return 0;
 	}
 }
@@ -691,7 +691,7 @@ WRITE8_HANDLER( nb1413m3_vcrctrl_w )
 {
 	if (data & 0x08)
 	{
-		usrintf_showmessage(" ** VCR CONTROL ** ");
+		ui_popup(" ** VCR CONTROL ** ");
 		set_led_status(2, 1);
 	}
 	else

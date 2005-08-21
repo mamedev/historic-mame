@@ -1066,7 +1066,7 @@ WRITE32_HANDLER( midvunit_page_control_w )
 		if (LOG_DMA && code_pressed(KEYCODE_L))
 			logerror("##########################################################\n");
 #if KEEP_STATISTICS
-		usrintf_showmessage("Polys:%d  Render:%d%%  FPS:%d",
+		ui_popup("Polys:%d  Render:%d%%  FPS:%d",
 				polycount, pixelcount / (512*4), lastfps);
 		polycount = pixelcount = 0;
 		framecount++;

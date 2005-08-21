@@ -198,7 +198,7 @@ WRITE8_HANDLER( mjsikaku_romsel_w )
 	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		mjsikaku_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -212,7 +212,7 @@ WRITE8_HANDLER( secolove_romsel_w )
 	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		mjsikaku_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -226,7 +226,7 @@ WRITE8_HANDLER( crystalg_romsel_w )
 	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		mjsikaku_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -240,7 +240,7 @@ WRITE8_HANDLER( seiha_romsel_w )
 	if ((mjsikaku_gfxrom << 17) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		usrintf_showmessage("GFXROM BANK OVER!!");
+		ui_popup("GFXROM BANK OVER!!");
 #endif
 		mjsikaku_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -345,8 +345,8 @@ static void mbmj8688_gfxdraw(int gfxtype)
 	}
 
 	gfxaddr = (mjsikaku_gfxrom << 17) + (blitter_src_addr << 1);
-//usrintf_showmessage("ADDR:%08X DX:%03d DY:%03d SX:%03d SY:%03d", gfxaddr, startx, starty, sizex, sizey);
-//if (blitter_direction_x|blitter_direction_y) usrintf_showmessage("ADDR:%08X FX:%01d FY:%01d", gfxaddr, blitter_direction_x, blitter_direction_y);
+//ui_popup("ADDR:%08X DX:%03d DY:%03d SX:%03d SY:%03d", gfxaddr, startx, starty, sizex, sizey);
+//if (blitter_direction_x|blitter_direction_y) ui_popup("ADDR:%08X FX:%01d FY:%01d", gfxaddr, blitter_direction_x, blitter_direction_y);
 
 	for (y = starty, ctry = sizey; ctry >= 0; y += skipy, ctry--)
 	{
@@ -355,7 +355,7 @@ static void mbmj8688_gfxdraw(int gfxtype)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				usrintf_showmessage("GFXROM ADDRESS OVER!!");
+				ui_popup("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr = 0;
 			}

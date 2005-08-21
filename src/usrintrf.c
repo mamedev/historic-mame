@@ -1,3 +1,10 @@
+/*
+To do:
+ - finish memory card menu
+ - finish joystick calibration menu
+ - figure out how to untangle cheat menus
+ - make single step work reliably
+*/
 /*********************************************************************
 
     usrintrf.c
@@ -9,7 +16,6 @@
 #include "driver.h"
 #include "info.h"
 #include "vidhrdw/vector.h"
-#include "datafile.h"
 #include <stdarg.h>
 #include <math.h>
 #include "ui_text.h"
@@ -23,45 +29,101 @@
 
 
 
-/***************************************************************************
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
 
-    Externals
+#define SEL_BITS				12
+#define SEL_MASK				((1<<SEL_BITS)-1)
 
-***************************************************************************/
+#define MENU_STACK_DEPTH		8
+#define MENU_STRING_POOL_SIZE	(64*1024)
 
-/* MARTINEZ.F 990207 Memory Card */
+#define MAX_ANALOG_ENTRIES		80
+#define MAX_DIP_SWITCHES		256
+#define MAX_PORT_ENTRIES		1000
+#define MAX_SETUPMENU_ITEMS		20
+#define MAX_OSD_ITEMS			50
 
-struct MEMCARDinterface memcard_intf;
+enum
+{
+	ANALOG_ITEM_KEYSPEED = 0,
+	ANALOG_ITEM_CENTERSPEED,
+	ANALOG_ITEM_REVERSE,
+	ANALOG_ITEM_SENSITIVITY,
+	ANALOG_ITEM_COUNT
+};
+
+
+
+/*************************************
+ *
+ *  Type definitions
+ *
+ *************************************/
+
+typedef UINT32 (*menu_handler_func)(UINT32 state);
+
+
+
+/*************************************
+ *
+ *  Macros
+ *
+ *************************************/
+
+#define UI_BOX_LR_BORDER		(get_char_width(' ') / 2)
+#define UI_BOX_TB_BORDER		(get_char_width(' ') / 2)
+
+
+
+/*************************************
+ *
+ *  Global variables (yuck, remove)
+ *
+ *************************************/
+
+memcard_interface memcard_intf;
 int	mcd_action;
 int	mcd_number;
 int	memcard_status;
 int	memcard_number;
 int	memcard_manager;
 
-#if defined(__sgi) && !defined(MESS)
-static int game_paused = 0; /* not zero if the game is paused */
-#endif
-/* MARTINEZ.F 990207 Memory Card End */
 
 
-/***************************************************************************
-
-    Local variables
-
-***************************************************************************/
+/*************************************
+ *
+ *  Local variables
+ *
+ *************************************/
 
 /* raw coordinates, relative to the real scrbitmap */
 static struct rectangle uirawbounds;
-static int uirawcharwidth, uirawcharheight;
 
 /* rotated coordinates, easier to deal with */
 static struct rectangle uirotbounds;
 static int uirotwidth, uirotheight;
 int uirotcharwidth, uirotcharheight;
 
-static int setup_selected;
-static int osd_selected;
-static int jukebox_selected;
+/* UI states */
+static int therm_state;
+static int load_save_state;
+
+/* menu states */
+static UINT32 menu_state;
+static menu_handler_func menu_handler;
+
+static int menu_stack_index;
+static UINT32 menu_stack_state[MENU_STACK_DEPTH];
+static menu_handler_func menu_stack_handler[MENU_STACK_DEPTH];
+
+static UINT32 menu_string_pool_offset;
+static char menu_string_pool[MENU_STRING_POOL_SIZE];
+
+
 static int single_step;
 
 static int showfps;
@@ -69,15 +131,47 @@ static int showfpstemp;
 
 static int show_profiler;
 
-UINT8 ui_dirty;
+static UINT8 ui_dirty;
+
+static struct GfxElement *uirotfont;
+static pen_t uirotfont_colortable[2*2];
+
+static char popup_text[200];
+static int popup_text_counter;
+
+
+static void (*onscrd_fnc[MAX_OSD_ITEMS])(int increment,int arg);
+static int onscrd_arg[MAX_OSD_ITEMS];
+static int onscrd_total_items;
+
+
+static input_seq_t starting_seq;
 
 
 
-/***************************************************************************
+/* -- begin this stuff will go away with the new rendering system */
+#define MAX_RENDER_ELEMENTS	1000
 
-    Font data
+struct _render_element
+{
+	int x, y;
+	int x2, y2;
+	UINT16 type;
+	rgb_t color;
+};
+typedef struct _render_element render_element;
 
-***************************************************************************/
+static render_element elemlist[MAX_RENDER_ELEMENTS];
+static int elemindex;
+/* -- end this stuff will go away with the new rendering system */
+
+
+
+/*************************************
+ *
+ *  Font data
+ *
+ *************************************/
 
 static const UINT8 uifontdata[] =
 {
@@ -225,135 +319,387 @@ static const struct GfxLayout uifontlayout =
 
 
 
-/* this stuff will go away with the new rendering system */
+/*************************************
+ *
+ *  Local prototypes
+ *
+ *************************************/
 
-#define MAX_RENDER_ELEMENTS	1000
+static void draw_multiline_text_box(const char *text, int justify, float xpos, float ypos);
+static void create_font(void);
+static void onscrd_init(void);
 
-struct render_element
-{
-	float x, y;
-	float x2, y2;
-	UINT16 type;
-	int color;
-};
+static int handle_keys(struct mame_bitmap *bitmap);
+static void ui_display_fps(void);
+static void ui_display_profiler(void);
+static void ui_display_popup(void);
+static int setup_menu(int selected);
+static int on_screen_display(int selected);
+static void showcharset(struct mame_bitmap *bitmap);
+static void initiate_load_save(int type);
+static int update_load_save(void);
 
-static struct render_element elemlist[MAX_RENDER_ELEMENTS];
-static int elemindex;
+static UINT32 menu_stack_push(menu_handler_func new_handler, UINT32 new_state);
+static UINT32 menu_stack_pop(void);
 
+static UINT32 menu_main(UINT32 state);
+static UINT32 menu_default_input_groups(UINT32 state);
+static UINT32 menu_default_input(UINT32 state);
+static UINT32 menu_game_input(UINT32 state);
+static UINT32 menu_switches(UINT32 state);
+static UINT32 menu_analog(UINT32 state);
+static UINT32 menu_joystick_calibrate(UINT32 state);
+static UINT32 menu_cheat(UINT32 state);
+static UINT32 menu_memory_card(UINT32 state);
+static UINT32 menu_reset_game(UINT32 state);
+
+#ifndef MESS
+static UINT32 menu_bookkeeping(UINT32 state);
+static UINT32 menu_game_info(UINT32 state);
+#else
+static UINT32 menu_image_info(UINT32 state);
+static UINT32 menu_file_manager(UINT32 state);
+static UINT32 menu_tape_control(UINT32 state);
+#endif
+
+static int sprintf_game_info(char *buf);
+
+
+/* -- begin this stuff will go away with the new rendering system */
 static void ui_raw2rot_rect(struct rectangle *rect);
 static void ui_rot2raw_rect(struct rectangle *rect);
+static int get_char_width(UINT16 ch);
+static int get_string_width(const char *s);
+static void add_line(int x1, int y1, int x2, int y2, rgb_t color);
+static void add_fill(int left, int top, int right, int bottom, rgb_t color);
+static void add_char(int x, int y, UINT16 ch, int color);
+static void add_filled_box(int x1, int y1, int x2, int y2);
+static void render_ui(struct mame_bitmap *dest);
+/* -- end this stuff will go away with the new rendering system */
 
-static void get_ui_bounds(float *width, float *height)
+
+
+/*************************************
+ *
+ *  Main initialization
+ *
+ *************************************/
+
+int ui_init(void)
+{
+	/* build up the font */
+	create_font();
+
+	/* clear the input memory */
+	while (code_read_async() != CODE_NONE) ;
+
+	/* initialize the menu state */
+	menu_handler = NULL;
+	menu_state = 0;
+	menu_stack_index = 0;
+
+	/* initialize the on-screen display system */
+	onscrd_init();
+	therm_state = 0;
+
+	/* reset globals */
+	single_step = FALSE;
+	load_save_state = LOADSAVE_NONE;
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *  Clean up
+ *
+ *************************************/
+
+void ui_exit(void)
+{
+	if (uirotfont)
+		freegfx(uirotfont);
+	uirotfont = NULL;
+}
+
+
+
+/*************************************
+ *
+ *  Set the UI visible area
+ *  (called by OSD layer, will go
+ *  away with new rendering system)
+ *
+ *************************************/
+
+void ui_set_visible_area(int xmin, int ymin, int xmax, int ymax)
+{
+	/* fill in the rect */
+	uirawbounds.min_x = xmin;
+	uirawbounds.min_y = ymin;
+	uirawbounds.max_x = xmax;
+	uirawbounds.max_y = ymax;
+
+	/* orient it */
+	uirotbounds = uirawbounds;
+	ui_raw2rot_rect(&uirotbounds);
+
+	/* make some easier-to-access globals */
+	uirotwidth = uirotbounds.max_x - uirotbounds.min_x + 1;
+	uirotheight = uirotbounds.max_y - uirotbounds.min_y + 1;
+
+	/* rebuild the font */
+	create_font();
+}
+
+
+
+/*************************************
+ *
+ *  Update and rendering frontend
+ *
+ *************************************/
+
+int ui_update_and_render(struct mame_bitmap *bitmap)
+{
+	/* if we're single-stepping, pause now */
+	if (single_step)
+	{
+		mame_pause(TRUE);
+		single_step = FALSE;
+	}
+
+	/* first display the FPS counter and profiler */
+	ui_display_fps();
+	ui_display_profiler();
+
+	/* if the load/save display is live, that has focus */
+	if (load_save_state != LOADSAVE_NONE)
+		update_load_save();
+
+	/* otherwise if menus are displayed, they have focus */
+	else if (menu_handler != NULL)
+	{
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
+			menu_state = menu_stack_push(NULL, 0);
+		else
+			menu_state = (*menu_handler)(menu_state);
+	}
+
+	/* otherwise, we handle non-menu cases */
+	else
+	{
+		if (therm_state)
+			therm_state = on_screen_display(therm_state);
+		if (handle_keys(bitmap))
+			return 1;
+	}
+
+	/* then let the cheat engine display its stuff */
+	if (options.cheat)
+		cheat_display_watches();
+
+	/* finally, display any popup messages */
+	ui_display_popup();
+
+	/* flush the UI to the bitmap */
+	render_ui(bitmap);
+
+	/* decrement the dirty count */
+	if (ui_dirty)
+		ui_dirty--;
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *  Accessors for global variables
+ *
+ *************************************/
+
+int ui_is_dirty(void)
+{
+	return ui_dirty;
+}
+
+
+int ui_is_onscrd_active(void)
+{
+	return (therm_state != 0);
+}
+
+
+int ui_is_setup_active(void)
+{
+	return (menu_handler != NULL);
+}
+
+
+
+/*************************************
+ *
+ *  Accessors for rendering
+ *
+ *************************************/
+
+void ui_get_bounds(int *width, int *height)
 {
 	*width = uirotwidth;
 	*height = uirotheight;
 }
 
-static float get_ui_lineheight(void)
+
+int ui_get_line_height(void)
 {
-	return uirotcharheight;
+	return uirotcharheight + 2;
 }
 
-static float get_char_width(UINT16 ch)
+
+
+/*************************************
+ *
+ *  Enable/disable FPS display
+ *
+ *************************************/
+
+void ui_show_fps_temp(double seconds)
 {
-	return uirotcharwidth;
+	if (!showfps)
+		showfpstemp = (int)(seconds * Machine->refresh_rate);
 }
 
-static float get_string_width(const char *s)
-{
-	return strlen(s) * uirotcharwidth;
-}
 
-static void reset_ui_render(void)
+void ui_set_show_fps(int show)
 {
-	elemindex = 0;
-}
-
-static void add_ui_char(float x, float y, UINT16 ch, int color)
-{
-	elemlist[elemindex].x = x;
-	elemlist[elemindex].y = y;
-	elemlist[elemindex].type = ch;
-	elemlist[elemindex].color = color;
-	elemindex++;
-}
-
-static void add_ui_box(float x1, float y1, float x2, float y2)
-{
-	elemlist[elemindex].x = x1;
-	elemlist[elemindex].y = y1;
-	elemlist[elemindex].x2 = x2;
-	elemlist[elemindex].y2 = y2;
-	elemlist[elemindex].type = 0xffff;
-	elemindex++;
-}
-
-static void render_ui(struct mame_bitmap *dest)
-{
-	int i;
-
-	for (i = 0; i < elemindex; i++)
+	showfps = show;
+	if (!show)
 	{
-		struct render_element *elem = &elemlist[i];
-		struct rectangle bounds;
-
-		switch (elem->type)
-		{
-			case 0xffff:	/* box */
-				break;
-
-			default:
-				/* construct a rectangle in rotated coordinates, then transform it */
-				bounds.min_x = elem->x + uirotbounds.min_x;
-				bounds.min_y = elem->y + uirotbounds.min_y;
-				bounds.max_x = bounds.min_x + uirotcharwidth - 1;
-				bounds.max_y = bounds.min_y + uirotcharheight - 1;
-				ui_rot2raw_rect(&bounds);
-
-				/* now render */
-				drawgfx(dest, Machine->uirotfont, elem->type, elem->color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
-				break;
-		}
+		showfps = 0;
+		showfpstemp = 0;
+		schedule_full_refresh();
 	}
 }
 
-enum
-{
-	JUSTIFY_LEFT = 0,
-	JUSTIFY_CENTER,
-	JUSTIFY_RIGHT
-};
 
-enum
+int ui_get_show_fps(void)
 {
-	WRAP_NEVER,
-	WRAP_TRUNCATE,
-	WRAP_WORD
-};
+	return showfps || showfpstemp;
+}
 
-static int draw_text(const char *s, float x, float y, float wrapwidth, int justify, int wrap, rgb_t color, float *totalwidth, float *totalheight)
+
+
+/*************************************
+ *
+ *  Enable/disable profiler display
+ *
+ *************************************/
+
+void ui_set_show_profiler(int show)
+{
+	if (show)
+	{
+		show_profiler = 1;
+		profiler_start();
+	}
+	else
+	{
+		show_profiler = 0;
+		profiler_stop();
+		schedule_full_refresh();
+	}
+}
+
+
+int ui_get_show_profiler(void)
+{
+	return show_profiler;
+}
+
+
+
+/*************************************
+ *
+ *  Popup message registration
+ *
+ *************************************/
+
+void CLIB_DECL ui_popup(const char *text,...)
+{
+	va_list arg;
+	va_start(arg,text);
+	vsprintf(popup_text,text,arg);
+	va_end(arg);
+	popup_text_counter = 2 * Machine->refresh_rate;
+}
+
+
+void CLIB_DECL ui_popup_time(int seconds, const char *text,...)
+{
+	va_list arg;
+	va_start(arg,text);
+	vsprintf(popup_text,text,arg);
+	va_end(arg);
+	popup_text_counter = seconds * Machine->refresh_rate;
+}
+
+
+
+/*************************************
+ *
+ *  Simple text renderer
+ *
+ *************************************/
+
+void ui_draw_text(const char *buf, int x, int y)
+{
+	int ui_width, ui_height;
+	ui_get_bounds(&ui_width, &ui_height);
+	ui_draw_text_full(buf, x, y, ui_width - x, JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, RGB_WHITE, RGB_BLACK, NULL, NULL);
+}
+
+
+
+/*************************************
+ *
+ *  Full featured text renderer
+ *
+ *************************************/
+
+void ui_draw_text_full(const char *s, int x, int y, int wrapwidth, int justify, int wrap, int draw, rgb_t fgcolor, rgb_t bgcolor, int *totalwidth, int *totalheight)
 {
 	const char *linestart;
-	float cury = y;
-	float maxwidth = 0;
+	int cury = y;
+	int maxwidth = 0;
 
 	/* if we don't want wrapping, guarantee a huge wrapwidth */
 	if (wrap == WRAP_NEVER)
-		wrapwidth = 1e28;
+		wrapwidth = 1 << 30;
 
 	/* loop over lines */
 	while (*s)
 	{
 		const char *lastspace = NULL;
-		float lastspace_width = 0;
-		float curwidth = 0;
-		float curx;
+		int line_justify = justify;
+		int lastspace_width = 0;
+		int curwidth = 0;
+		int curx = x;
+
+		/* if the line starts with a tab character, center it regardless */
+		if (*s == '\t')
+		{
+			s++;
+			line_justify = JUSTIFY_CENTER;
+		}
 
 		/* remember the starting position of the line */
 		linestart = s;
 
 		/* loop while we have characters and are less than the wrapwidth */
-		while (*s && curwidth < wrapwidth)
+		while (*s && curwidth <= wrapwidth)
 		{
 			/* if we hit a space, remember the location and the width there */
 			if (*s == ' ')
@@ -408,29 +754,53 @@ static int draw_text(const char *s, float x, float y, float wrapwidth, int justi
 		}
 
 		/* align according to the justfication */
-		if (justify == JUSTIFY_LEFT)
-			curx = x;
-		else if (justify == JUSTIFY_CENTER)
-			curx = x + (wrapwidth - curwidth) / 2;
-		else if (justify == JUSTIFY_RIGHT)
-			curx = wrapwidth - curwidth;
+		if (line_justify == JUSTIFY_CENTER)
+			curx += (wrapwidth - curwidth) / 2;
+		else if (line_justify == JUSTIFY_RIGHT)
+			curx += wrapwidth - curwidth;
 
 		/* track the maximum width of any given line */
 		if (curwidth > maxwidth)
 			maxwidth = curwidth;
 
+		/* if opaque, add a black box */
+		if (draw == DRAW_OPAQUE)
+			add_fill(curx, cury, curx + curwidth - 1, cury + ui_get_line_height() - 1, bgcolor);
+
 		/* loop from the line start and add the characters */
 		while (linestart < s)
 		{
-			add_ui_char(curx, cury, *linestart, color);
+			if (draw != DRAW_NONE)
+			{
+				add_char(curx, cury, *linestart, fgcolor);
+				curx += get_char_width(*linestart);
+			}
 			linestart++;
 		}
 
+		/* append ellipses if needed */
+		if (wrap == WRAP_TRUNCATE && *s != 0 && draw != DRAW_NONE)
+		{
+			add_char(curx, cury, '.', fgcolor);
+			curx += get_char_width('.');
+			add_char(curx, cury, '.', fgcolor);
+			curx += get_char_width('.');
+			add_char(curx, cury, '.', fgcolor);
+			curx += get_char_width('.');
+		}
+
+		/* if we're not word-wrapping, we're done */
+		if (wrap != WRAP_WORD)
+			break;
+
 		/* advance by a row */
-		cury += get_ui_lineheight();
+		cury += ui_get_line_height();
 
 		/* skip past any spaces at the beginning of the next line */
-		while (*s && isspace(*s)) s++;
+		if (*s == '\n')
+			s++;
+		else
+			while (*s && isspace(*s)) s++;
 	}
 
 	/* report the width and height of the resulting space */
@@ -438,173 +808,260 @@ static int draw_text(const char *s, float x, float y, float wrapwidth, int justi
 		*totalwidth = maxwidth;
 	if (totalheight)
 		*totalheight = cury - y;
-
-	return 0;
 }
 
 
-#if 0
-#pragma mark UTILITIES
-#endif
 
-/*-------------------------------------------------
-    ui_markdirty - mark a raw rectangle dirty
--------------------------------------------------*/
+/*************************************
+ *
+ *  Menu rendering
+ *
+ *************************************/
 
-INLINE void ui_markdirty(const struct rectangle *rect)
+void ui_draw_menu(const ui_menu_item *items, int numitems, int selected)
 {
-	artwork_mark_ui_dirty(rect->min_x, rect->min_y, rect->max_x, rect->max_y);
-	ui_dirty = 5;
+	const char *up_arrow = ui_getstring(UI_uparrow);
+	const char *down_arrow = ui_getstring(UI_downarrow);
+	const char *left_arrow = ui_getstring(UI_leftarrow);
+	const char *right_arrow = ui_getstring(UI_rightarrow);
+	const char *left_hilight = ui_getstring(UI_lefthilight);
+	const char *right_hilight = ui_getstring(UI_righthilight);
+
+	int left_hilight_width = get_string_width(left_hilight);
+	int right_hilight_width = get_string_width(right_hilight);
+	int left_arrow_width = get_string_width(left_arrow);
+	int space_width = get_char_width(' ');
+	int line_height = ui_get_line_height();
+
+	int effective_width, effective_left;
+	int visible_width, visible_height;
+	int visible_top, visible_left;
+	int ui_width, ui_height;
+	int selected_subitem_too_big = 0;
+	int visible_lines;
+	int top_line;
+	int itemnum, linenum;
+
+	/* start with the bounds */
+	ui_get_bounds(&ui_width, &ui_height);
+
+	/* compute the width and height of the full menu */
+	visible_width = 0;
+	visible_height = 0;
+	for (itemnum = 0; itemnum < numitems; itemnum++)
+	{
+		const ui_menu_item *item = &items[itemnum];
+		int total_width;
+
+		/* compute width of left hand side */
+		total_width = left_hilight_width + get_string_width(item->text) + right_hilight_width;
+
+		/* add in width of right hand side */
+		if (item->subtext)
+			total_width += 2 * space_width + get_string_width(item->subtext);
+
+		/* track the maximum */
+		if (total_width > visible_width)
+			visible_width = total_width;
+
+		/* track the height as well */
+		visible_height += line_height;
+	}
+
+	/* if we are too wide or too tall, clamp it down */
+	if (visible_width + 2 * UI_BOX_LR_BORDER > ui_width)
+		visible_width = ui_width - 2 * UI_BOX_LR_BORDER;
+	if (visible_height + 2 * UI_BOX_TB_BORDER > ui_height)
+		visible_height = ui_height - 2 * UI_BOX_TB_BORDER;
+	visible_lines = visible_height / line_height;
+	visible_height = visible_lines * line_height;
+
+	/* compute top/left of inner menu area by centering */
+	visible_left = (ui_width - visible_width) / 2;
+	visible_top = (ui_height - visible_height) / 2;
+
+	/* first add us a box */
+	add_filled_box(	visible_left - UI_BOX_LR_BORDER,
+					visible_top - UI_BOX_TB_BORDER,
+					visible_left + visible_width - 1 + UI_BOX_LR_BORDER,
+					visible_top + visible_height - 1 + UI_BOX_TB_BORDER);
+
+	/* determine the first visible line based on the current selection */
+	top_line = selected - visible_lines / 2;
+	if (top_line < 0)
+		top_line = 0;
+	if (top_line + visible_lines >= numitems)
+		top_line = numitems - visible_lines;
+
+	/* determine effective positions taking into account the hilighting arrows */
+	effective_width = visible_width - left_hilight_width - right_hilight_width;
+	effective_left = visible_left + left_hilight_width;
+
+	/* loop over visible lines */
+	for (linenum = 0; linenum < visible_lines; linenum++)
+	{
+		int line_y = visible_top + linenum * line_height;
+		int itemnum = top_line + linenum;
+		const ui_menu_item *item = &items[itemnum];
+
+		/* if we're on the top line, display the up arrow */
+		if (linenum == 0 && top_line != 0)
+			ui_draw_text_full(up_arrow, effective_left, line_y, effective_width,
+						JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+
+		/* if we're on the bottom line, display the down arrow */
+		else if (linenum == visible_lines - 1 && (item + 1)->text)
+			ui_draw_text_full(down_arrow, effective_left, line_y, effective_width,
+						JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+
+		/* if we don't have a subitem, just draw the string centered */
+		else if (!item->subtext)
+			ui_draw_text_full(item->text, effective_left, line_y, effective_width,
+						JUSTIFY_CENTER, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+
+		/* otherwise, draw the item on the left and the subitem text on the right */
+		else
+		{
+			int subitem_invert = item->flags & MENU_FLAG_INVERT;
+			const char *subitem_text = item->subtext;
+			int item_width, subitem_width;
+
+			/* draw the left-side text */
+			ui_draw_text_full(item->text, effective_left, line_y, effective_width,
+						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, &item_width, NULL);
+
+			/* give 2 spaces worth of padding */
+			item_width += 2 * space_width;
+
+			/* if the subitem doesn't fit here, display dots */
+			if (get_string_width(subitem_text) > effective_width - item_width)
+			{
+				subitem_text = "...";
+				if (itemnum == selected)
+					selected_subitem_too_big = 1;
+			}
+
+			/* draw the subitem right-justified */
+			ui_draw_text_full(subitem_text, effective_left + item_width, line_y, effective_width - item_width,
+						JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_OPAQUE, subitem_invert ? RGB_BLACK : RGB_WHITE, subitem_invert ? RGB_WHITE : RGB_BLACK, &subitem_width, NULL);
+
+			/* apply arrows */
+			if (itemnum == selected && (item->flags & MENU_FLAG_LEFT_ARROW))
+				ui_draw_text_full(left_arrow, effective_left + effective_width - subitem_width - left_arrow_width, line_y, left_arrow_width,
+							JUSTIFY_LEFT, WRAP_NEVER, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+			if (itemnum == selected && (item->flags & MENU_FLAG_RIGHT_ARROW))
+				ui_draw_text_full(right_arrow, visible_left, line_y, visible_width,
+							JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+		}
+
+		/* draw the arrows for selected items */
+		if (itemnum == selected)
+		{
+			ui_draw_text_full(left_hilight, visible_left, line_y, visible_width,
+						JUSTIFY_LEFT, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+			if (!(item->flags & (MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW)))
+				ui_draw_text_full(right_hilight, visible_left, line_y, visible_width,
+							JUSTIFY_RIGHT, WRAP_TRUNCATE, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+		}
+	}
+
+	/* if the selected subitem is too big, display it in a separate offset box */
+	if (selected_subitem_too_big)
+	{
+		const ui_menu_item *item = &items[selected];
+		int linenum = selected - top_line;
+		int line_y = visible_top + linenum * line_height;
+		int target_width, target_height;
+		int target_x, target_y;
+
+		/* compute the multi-line target width/height */
+		ui_draw_text_full(item->subtext, 0, 0, visible_width * 3 / 4,
+					JUSTIFY_RIGHT, WRAP_WORD, DRAW_NONE, RGB_WHITE, RGB_BLACK, &target_width, &target_height);
+
+		/* determine the target location */
+		target_x = visible_left + visible_width - target_width - UI_BOX_LR_BORDER;
+		target_y = line_y + line_height + UI_BOX_TB_BORDER;
+		if (target_y + target_height + UI_BOX_TB_BORDER > visible_height)
+			target_y = line_y - target_height - UI_BOX_TB_BORDER;
+
+		/* add a box around that */
+		add_filled_box(	target_x - UI_BOX_LR_BORDER,
+						target_y - UI_BOX_TB_BORDER,
+						target_x + target_width - 1 + UI_BOX_LR_BORDER,
+						target_y + target_height - 1 + UI_BOX_TB_BORDER);
+		ui_draw_text_full(item->subtext, target_x, target_y, target_width,
+					JUSTIFY_RIGHT, WRAP_WORD, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
+	}
 }
 
 
 
-/*-------------------------------------------------
-    ui_raw2rot_rect - convert a rect from raw
-    coordinates to rotated coordinates
--------------------------------------------------*/
+/*************************************
+ *
+ *  Multiline message box rendering
+ *
+ *************************************/
 
-static void ui_raw2rot_rect(struct rectangle *rect)
+static void draw_multiline_text_box(const char *text, int justify, float xpos, float ypos)
 {
-	int temp, w, h;
+	int target_width, target_height;
+	int ui_width, ui_height;
+	int target_x, target_y;
 
-	/* get the effective screen size, including artwork */
-	artwork_get_screensize(&w, &h);
+	/* start with the bounds */
+	ui_get_bounds(&ui_width, &ui_height);
 
-	/* apply X flip */
-	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
-	{
-		temp = w - rect->min_x - 1;
-		rect->min_x = w - rect->max_x - 1;
-		rect->max_x = temp;
-	}
+	/* compute the multi-line target width/height */
+	ui_draw_text_full(text, 0, 0, ui_width - 2 * UI_BOX_LR_BORDER,
+				JUSTIFY_LEFT, WRAP_WORD, DRAW_NONE, RGB_WHITE, RGB_BLACK, &target_width, &target_height);
+	if (target_height > ui_height - 2 * UI_BOX_TB_BORDER)
+		target_height = ((ui_height - 2 * UI_BOX_TB_BORDER) / ui_get_line_height()) * ui_get_line_height();
 
-	/* apply Y flip */
-	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
-	{
-		temp = h - rect->min_y - 1;
-		rect->min_y = h - rect->max_y - 1;
-		rect->max_y = temp;
-	}
+	/* determine the target location */
+	target_x = (int)(xpos * ui_width) - target_width / 2;
+	target_y = (int)(ypos * ui_height) - target_height / 2;
 
-	/* apply X/Y swap first */
-	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
-		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
-	}
+	/* make sure we stay on-screen */
+	if (target_x < UI_BOX_LR_BORDER)
+		target_x = UI_BOX_LR_BORDER;
+	if (target_x + target_width + UI_BOX_LR_BORDER > ui_width)
+		target_x = ui_width - UI_BOX_LR_BORDER - target_width;
+	if (target_y < UI_BOX_TB_BORDER)
+		target_y = UI_BOX_TB_BORDER;
+	if (target_y + target_height + UI_BOX_TB_BORDER > ui_height)
+		target_y = ui_height - UI_BOX_TB_BORDER - target_height;
+
+	/* add a box around that */
+	add_filled_box(	target_x - UI_BOX_LR_BORDER,
+					target_y - UI_BOX_TB_BORDER,
+					target_x + target_width - 1 + UI_BOX_LR_BORDER,
+					target_y + target_height - 1 + UI_BOX_TB_BORDER);
+	ui_draw_text_full(text, target_x, target_y, target_width,
+				JUSTIFY_LEFT, WRAP_WORD, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, NULL);
 }
 
 
-
-/*-------------------------------------------------
-    ui_rot2raw_rect - convert a rect from rotated
-    coordinates to raw coordinates
--------------------------------------------------*/
-
-static void ui_rot2raw_rect(struct rectangle *rect)
+void ui_draw_message_window(const char *text)
 {
-	int temp, w, h;
-
-	/* get the effective screen size, including artwork */
-	artwork_get_screensize(&w, &h);
-
-	/* apply X/Y swap first */
-	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
-		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
-	}
-
-	/* apply X flip */
-	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
-	{
-		temp = w - rect->min_x - 1;
-		rect->min_x = w - rect->max_x - 1;
-		rect->max_x = temp;
-	}
-
-	/* apply Y flip */
-	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
-	{
-		temp = h - rect->min_y - 1;
-		rect->min_y = h - rect->max_y - 1;
-		rect->max_y = temp;
-	}
+	draw_multiline_text_box(text, JUSTIFY_LEFT, 0.5, 0.5);
 }
 
 
 
-/*-------------------------------------------------
-    set_ui_visarea - called by the OSD code to
-    set the UI's domain
--------------------------------------------------*/
+/*************************************
+ *
+ *  Create the UI font
+ *
+ *************************************/
 
-void set_ui_visarea(int xmin, int ymin, int xmax, int ymax)
-{
-	/* fill in the rect */
-	uirawbounds.min_x = xmin;
-	uirawbounds.min_y = ymin;
-	uirawbounds.max_x = xmax;
-	uirawbounds.max_y = ymax;
-
-	/* orient it */
-	uirotbounds = uirawbounds;
-	ui_raw2rot_rect(&uirotbounds);
-
-	/* make some easier-to-access globals */
-	uirotwidth = uirotbounds.max_x - uirotbounds.min_x + 1;
-	uirotheight = uirotbounds.max_y - uirotbounds.min_y + 1;
-
-	/* remove me */
-	Machine->uiwidth = uirotbounds.max_x - uirotbounds.min_x + 1;
-	Machine->uiheight = uirotbounds.max_y - uirotbounds.min_y + 1;
-	Machine->uixmin = uirotbounds.min_x;
-	Machine->uiymin = uirotbounds.min_y;
-
-	/* rebuild the font */
-	builduifont();
-}
-
-
-
-/*-------------------------------------------------
-    erase_screen - erase the screen
--------------------------------------------------*/
-
-static void erase_screen(struct mame_bitmap *bitmap)
-{
-	fillbitmap(bitmap, get_black_pen(), NULL);
-	schedule_full_refresh();
-}
-
-
-
-#if 0
-#pragma mark -
-#pragma mark FONTS & TEXT
-#endif
-
-/*-------------------------------------------------
-    builduifont - build the user interface fonts
--------------------------------------------------*/
-
-struct GfxElement *builduifont(void)
+static void create_font(void)
 {
 	struct GfxLayout layout = uifontlayout;
-	struct GfxElement *font;
 	int temp, i;
 
 	/* free any existing fonts */
-	if (Machine->uifont)
-		freegfx(Machine->uifont);
-	if (Machine->uirotfont)
-		freegfx(Machine->uirotfont);
-
-	/* first decode a straight on version for games */
-	Machine->uifont = font = decodegfx(uifontdata, &layout);
-	Machine->uifontwidth = layout.width;
-	Machine->uifontheight = layout.height;
+	if (uirotfont)
+		freegfx(uirotfont);
 
 	/* pixel double horizontally */
 	if (uirotwidth >= 420)
@@ -648,652 +1105,1226 @@ struct GfxElement *builduifont(void)
 	}
 
 	/* decode rotated font */
-	Machine->uirotfont = decodegfx(uifontdata, &layout);
+	uirotfont = decodegfx(uifontdata, &layout);
+	if (!uirotfont)
+		osd_die("Fatal error: could not allocate memory for UI font!");
 
 	/* set the raw and rotated character width/height */
-	uirawcharwidth = layout.width;
-	uirawcharheight = layout.height;
 	uirotcharwidth = (Machine->ui_orientation & ORIENTATION_SWAP_XY) ? layout.height : layout.width;
 	uirotcharheight = (Machine->ui_orientation & ORIENTATION_SWAP_XY) ? layout.width : layout.height;
 
 	/* set up the bogus colortable */
-	if (font)
+	if (uirotfont)
 	{
-		static pen_t colortable[2*2];
-
 		/* colortable will be set at run time */
-		font->colortable = colortable;
-		font->total_colors = 2;
-		Machine->uirotfont->colortable = colortable;
-		Machine->uirotfont->total_colors = 2;
+		uirotfont->colortable = uirotfont_colortable;
+		uirotfont->total_colors = 2;
 	}
-
-	return font;
 }
 
 
 
-/*-------------------------------------------------
-    ui_drawchar - draw a rotated character
--------------------------------------------------*/
+/*************************************
+ *
+ *  Keyboard handling
+ *
+ *************************************/
 
-void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
+static int handle_keys(struct mame_bitmap *bitmap)
 {
-	struct rectangle bounds;
+	/* if the user pressed ESC, stop the emulation as long as menus aren't up */
+	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CANCEL))
+		return 1;
+
+	/* if menus aren't up and the user has toggled them, turn them on */
+	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CONFIGURE))
+	{
+		/* if we have no menus stacked up, start with the main menu */
+		if (menu_stack_index == 0)
+			menu_stack_push(menu_main, 0);
+
+		/* otherwise, pop the previous menu from the stack */
+		else
+			menu_state = menu_stack_pop();
+
+		/* kill the thermometer view */
+		therm_state = 0;
+	}
+
+	/* if the on-screen display isn't up and the user has toggled it, turn it on */
+#ifdef MAME_DEBUG
+	if (!mame_debug)
+#endif
+		if (therm_state == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
+			therm_state = -1;
+
+	/* handle a reset request */
+	if (input_ui_pressed(IPT_UI_RESET_MACHINE))
+		machine_reset();
+
+	/* handle a request to display graphics/palette (note that this loops internally) */
+	if (input_ui_pressed(IPT_UI_SHOW_GFX))
+	{
+		osd_sound_enable(0);
+		showcharset(bitmap);
+		osd_sound_enable(1);
+	}
+
+	/* handle a save state request */
+	if (input_ui_pressed(IPT_UI_SAVE_STATE))
+		initiate_load_save(LOADSAVE_SAVE);
+
+	/* handle a load state request */
+	if (input_ui_pressed(IPT_UI_LOAD_STATE))
+		initiate_load_save(LOADSAVE_LOAD);
+
+	/* handle a save snapshot request */
+	if (input_ui_pressed(IPT_UI_SNAPSHOT))
+		save_screen_snapshot(bitmap);
+
+	/* toggle pause */
+	if (input_ui_pressed(IPT_UI_PAUSE))
+	{
+		/* with a shift key, it is single step */
+		if (mame_is_paused() && (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT)))
+		{
+			single_step = TRUE;
+			mame_pause(FALSE);
+
+			/* bit of a kludge to prevent flash */
+			palette_set_global_brightness_adjust(options.pause_bright);
+		}
+		else
+			mame_pause(!mame_is_paused());
+	}
+
+	/* toggle movie recording */
+	if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
+		record_movie_toggle();
+
+	/* toggle profiler display */
+	if (input_ui_pressed(IPT_UI_SHOW_PROFILER))
+		ui_set_show_profiler(!ui_get_show_profiler());
+
+	/* toggle FPS display */
+	if (input_ui_pressed(IPT_UI_SHOW_FPS))
+		ui_set_show_fps(!ui_get_show_fps());
+
+	/* toggle crosshair display */
+	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
+		drawgfx_toggle_crosshair();
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *  Menu management
+ *
+ *************************************/
+
+static UINT32 menu_stack_push(menu_handler_func new_handler, UINT32 new_state)
+{
+	if (menu_stack_index >= MENU_STACK_DEPTH)
+		osd_die("Menu stack overflow!");
+
+	/* save the old state/handler */
+	menu_stack_handler[menu_stack_index] = menu_handler;
+	menu_stack_state[menu_stack_index] = menu_state;
+	menu_stack_index++;
+
+	/* set the new ones */
+	menu_handler = new_handler;
+	menu_state = new_state;
+
+	/* force a refresh */
+	schedule_full_refresh();
+	return new_state;
+}
+
+
+static UINT32 menu_stack_pop(void)
+{
+	if (menu_stack_index <= 0)
+		osd_die("Menu stack underflow!");
+
+	/* restore the old state/handler */
+	menu_stack_index--;
+	menu_handler = menu_stack_handler[menu_stack_index];
+
+	/* force a refresh */
+	schedule_full_refresh();
+
+	return menu_stack_state[menu_stack_index];
+}
+
+
+
+/*************************************
+ *
+ *  Generic menu keys
+ *
+ *************************************/
+
+static int menu_generic_keys(int *selected, int num_items)
+{
+	/* hitting cancel or selecting the last item returns to the previous menu */
+	if (input_ui_pressed(IPT_UI_CANCEL) || (*selected == num_items - 1 && input_ui_pressed(IPT_UI_SELECT)))
+	{
+		*selected = menu_stack_pop();
+		return 1;
+	}
+
+	/* up backs up by one item */
+	if (input_ui_pressed_repeat(IPT_UI_UP, 8))
+		*selected = (*selected + num_items - 1) % num_items;
+
+	/* down advances by one item */
+	if (input_ui_pressed_repeat(IPT_UI_DOWN, 8))
+		*selected = (*selected + 1) % num_items;
+
+	/* home goes to the start */
+	if (input_ui_pressed(IPT_UI_HOME))
+		*selected = 0;
+
+	/* end goes to the last */
+	if (input_ui_pressed(IPT_UI_END))
+		*selected = num_items - 1;
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *  Main menu
+ *
+ *************************************/
+
+static UINT32 menu_main(UINT32 state)
+{
+#define ADD_MENU(name, handler, param) \
+do { \
+	item_list[menu_items].text = ui_getstring(name); \
+	handler_list[menu_items] = handler; \
+	param_list[menu_items] = param; \
+	menu_items++; \
+} while (0)
+
+	menu_handler_func handler_list[20];
+	ui_menu_item item_list[20];
+	UINT32 param_list[20];
+	int has_categories = FALSE;
+	int has_configs = FALSE;
+	int has_analog = FALSE;
+	int has_dips = FALSE;
+	struct InputPort *in;
+	int menu_items = 0;
+
+	/* scan the input port array to see what options we need to enable */
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+		if (input_port_active(in))
+		{
+			if (in->type == IPT_DIPSWITCH_NAME)
+				has_dips = TRUE;
+			if (port_type_is_analog(in->type))
+				has_analog = TRUE;
+			if (in->type == IPT_CONFIG_NAME)
+				has_configs = TRUE;
+			if (in->category > 0)
+				has_categories = TRUE;
+		}
+
+	/* reset the menu */
+	memset(item_list, 0, sizeof(item_list));
+
+	/* add default input item */
+	ADD_MENU(UI_inputgeneral, menu_default_input_groups, 0);
+
+	/* add game-specific input item */
+	ADD_MENU(UI_inputspecific, menu_game_input, 0);
+
+	/* add DIP switches menu */
+	if (has_dips)
+		ADD_MENU(UI_dipswitches, menu_switches, (IPT_DIPSWITCH_NAME << 16) | (IPT_DIPSWITCH_SETTING << 24));
 
 #ifdef MESS
-	extern int skip_this_frame;
-	skip_this_frame = 0;
+	/* add configurables menu */
+	if (has_configs)
+		ADD_MENU(UI_CONFIGURATION, menu_switches, (IPT_CONFIG_NAME << 16) | (IPT_CONFIG_SETTING << 24));
+
+	/* add categories menu */
+	if (has_categories)
+		ADD_MENU(UI_CATEGORIES, menu_switches, (IPT_CATEGORY_NAME << 16) | (IPT_CATEGORY_SETTING << 24));
 #endif /* MESS */
 
-	/* construct a rectangle in rotated coordinates, then transform it */
-	bounds.min_x = sx + uirotbounds.min_x;
-	bounds.min_y = sy + uirotbounds.min_y;
-	bounds.max_x = bounds.min_x + uirotcharwidth - 1;
-	bounds.max_y = bounds.min_y + uirotcharheight - 1;
-	ui_rot2raw_rect(&bounds);
+	/* add analog settings menu */
+	if (has_analog)
+		ADD_MENU(UI_analogcontrols, menu_analog, 0);
 
-	/* now render */
-	drawgfx(dest, Machine->uirotfont, ch, color, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_NONE, 0);
+  	/* add joystick calibration menu */
+  	if (osd_joystick_needs_calibration())
+		ADD_MENU(UI_calibrate, menu_joystick_calibrate, 0);
 
-	/* mark dirty */
-	ui_markdirty(&bounds);
+#ifndef MESS
+  	/* add bookkeeping menu */
+	ADD_MENU(UI_bookkeeping, menu_bookkeeping, 0);
+
+	/* add game info menu */
+	ADD_MENU(UI_gameinfo, menu_game_info, 0);
+#else /* MESS */
+  	/* add image info menu */
+	ADD_MENU(UI_IMAGEINFO, menu_image_info, 0);
+
+  	/* add image info menu */
+	ADD_MENU(UI_FILEMANAGER, menu_file_manager, 0);
+
+#if HAS_WAVE
+  	/* add tape control menu */
+	if (device_find(Machine->devices, IO_CASSETTE))
+		ADD_MENU(UI_TAPECONTROL, menu_tape_control, 0);
+#endif /* HAS_WAVE */
+#endif /* !MESS */
+
+	/* add cheat menu */
+	if (options.cheat)
+		ADD_MENU(UI_cheat, menu_cheat, 0);
+
+	/* add memory card menu */
+	if (memcard_intf.create != NULL && memcard_intf.load != NULL && memcard_intf.save != NULL && memcard_intf.eject != NULL)
+		ADD_MENU(UI_memorycard, menu_memory_card, 0);
+
+	/* add reset and exit menus */
+	ADD_MENU(UI_resetgame, menu_reset_game, 0);
+	ADD_MENU(UI_returntogame, NULL, 0);
+
+	/* draw the menu */
+	ui_draw_menu(item_list, menu_items, state);
+
+	/* handle the keys */
+	if (menu_generic_keys(&state, menu_items))
+		return state;
+	if (input_ui_pressed(IPT_UI_SELECT))
+		return menu_stack_push(handler_list[menu_state], param_list[menu_state]);
+
+	return state;
+
+#undef ADD_MENU
 }
 
 
 
-/*-------------------------------------------------
-    ui_text_ex - draw a string to the screen
--------------------------------------------------*/
+/*************************************
+ *
+ *  Default input groups menu
+ *
+ *************************************/
 
-static void ui_text_ex(struct mame_bitmap *bitmap, const char *buf_begin, const char *buf_end, int x, int y, int color)
+static UINT32 menu_default_input_groups(UINT32 state)
 {
-	for ( ; buf_begin != buf_end; ++buf_begin)
+	ui_menu_item item_list[IPG_TOTAL_GROUPS + 2];
+	int menu_items = 0;
+
+	/* reset the menu */
+	memset(item_list, 0, sizeof(item_list));
+
+	/* build up the menu */
+	for (menu_items = 0; menu_items < IPG_TOTAL_GROUPS; menu_items++)
+		item_list[menu_items].text = ui_getstring(UI_uigroup + menu_items);
+
+	/* add an item for the return */
+	item_list[menu_items++].text = ui_getstring(UI_returntomain);
+
+	/* draw the menu */
+	ui_draw_menu(item_list, menu_items, state);
+
+	/* handle the keys */
+	if (menu_generic_keys(&state, menu_items))
+		return state;
+	if (input_ui_pressed(IPT_UI_SELECT))
+		return menu_stack_push(menu_default_input, state << 16);
+
+	return state;
+}
+
+
+
+/*************************************
+ *
+ *  Common input menu routines
+ *
+ *************************************/
+
+INLINE int input_menu_update_polling(input_seq_t *selected_seq, int *record_next, int *polling)
+{
+	int result = seq_read_async(selected_seq, !*record_next);
+
+	/* continue polling only if we get a negative result */
+	*polling = (result < 0);
+
+	/* a zero result means we're done with the sequence; indicate we can append to it */
+	if (result == 0)
+		*record_next = TRUE;
+
+	/* a positive result means the user cancelled */
+	else if (result > 0)
 	{
-		ui_drawchar(bitmap, *buf_begin, color, x, y);
-		x += uirotcharwidth;
-	}
-}
-
-
-
-/*-------------------------------------------------
-    ui_text_ex - draw a string to the screen
--------------------------------------------------*/
-
-void ui_text(struct mame_bitmap *bitmap, const char *buf, int x, int y)
-{
-	ui_text_ex(bitmap, buf, buf + strlen(buf), x, y, UI_COLOR_NORMAL);
-}
-
-
-
-/*-------------------------------------------------
-    displaytext - display a series of text lines
--------------------------------------------------*/
-
-void displaytext(struct mame_bitmap *bitmap, const struct DisplayText *dt)
-{
-   /* loop until we run out of descriptors */
-   for ( ; dt->text; dt++)
-   {
-      ui_text_ex(bitmap, dt->text, dt->text + strlen(dt->text), dt->x, dt->y, dt->color);
-   }
-}
-
-
-
-/*-------------------------------------------------
-    multiline_extract - extract one line from a
-    multiline buffer; return the number of
-    characters in the line; pbegin points to the
-    start of the next line
--------------------------------------------------*/
-
-static unsigned multiline_extract(const char **pbegin, const char *end, unsigned maxchars)
-{
-	const char *begin = *pbegin;
-	unsigned numchars = 0;
-
-	/* loop until we hit the end or max out */
-	while (begin != end && numchars < maxchars)
-	{
-		/* if we hit an EOL, strip it and return the current count */
-		if (*begin == '\n')
-		{
-			*pbegin = begin + 1; /* strip final space */
-			return numchars;
-		}
-
-		/* if we hit a space, word wrap */
-		else if (*begin == ' ')
-		{
-			/* find the end of this word */
-			const char* word_end = begin + 1;
-			while (word_end != end && *word_end != ' ' && *word_end != '\n')
-				++word_end;
-
-			/* if that pushes us past the max, truncate here */
-			if (numchars + word_end - begin > maxchars)
-			{
-				/* if we have at least one character, strip the space */
-				if (numchars)
-				{
-					*pbegin = begin + 1;
-					return numchars;
-				}
-
-				/* otherwise, take as much as we can */
-				else
-				{
-					*pbegin = begin + maxchars;
-					return maxchars;
-				}
-			}
-
-			/* advance to the end of this word */
-			numchars += word_end - begin;
-			begin = word_end;
-		}
-
-		/* for all other chars, just increment */
-		else
-		{
-			++numchars;
-			++begin;
-		}
+		*record_next = FALSE;
+		return TRUE;
 	}
 
-	/* make sure we always make forward progress */
-	if (begin != end && (*begin == '\n' || *begin == ' '))
-		++begin;
-	*pbegin = begin;
-	return numchars;
+	/* return FALSE if the user didn't cancel */
+	return FALSE;
 }
 
 
-
-/*-------------------------------------------------
-    multiline_size - compute the output size of a
-    multiline string
--------------------------------------------------*/
-
-static void multiline_size(int *dx, int *dy, const char *begin, const char *end, unsigned maxchars)
+INLINE void input_menu_toggle_none_default(input_seq_t *selected_seq, input_seq_t *original_seq, const input_seq_t *selected_defseq)
 {
-	unsigned rows = 0;
-	unsigned cols = 0;
+	/* if we used to be "none", toggle to the default value */
+	if (seq_get_1(original_seq) == CODE_NONE)
+		seq_copy(selected_seq, selected_defseq);
 
-	/* extract lines until the end, counting rows and tracking the max columns */
-	while (begin != end)
-	{
-		unsigned len;
-		len = multiline_extract(&begin, end, maxchars);
-		if (len > cols)
-			cols = len;
-		++rows;
-	}
-
-	/* return the final result scaled by the char size */
-	*dx = cols * uirotcharwidth;
-	*dy = (rows - 1) * 3*uirotcharheight/2 + uirotcharheight;
-}
-
-
-
-/*-------------------------------------------------
-    multilinebox_size - compute the output size of
-    a multiline string with box
--------------------------------------------------*/
-
-static void multilinebox_size(int *dx, int *dy, const char *begin, const char *end, unsigned maxchars)
-{
-	/* standard computation, plus an extra char width and height */
-	multiline_size(dx, dy, begin, end, maxchars);
-	*dx += uirotcharwidth;
-	*dy += uirotcharheight;
-}
-
-
-
-/*-------------------------------------------------
-    ui_multitext_ex - display a multiline string
--------------------------------------------------*/
-
-static void ui_multitext_ex(struct mame_bitmap *bitmap, const char *begin, const char *end, unsigned maxchars, int x, int y, int color)
-{
-	/* extract lines until the end */
-	while (begin != end)
-	{
-		const char *line_begin = begin;
-		unsigned len = multiline_extract(&begin, end, maxchars);
-		ui_text_ex(bitmap, line_begin, line_begin + len, x, y, color);
-		y += 3*uirotcharheight/2;
-	}
-}
-
-
-
-/*-------------------------------------------------
-    ui_multitextbox_ex - display a multiline
-    string with box
--------------------------------------------------*/
-
-static void ui_multitextbox_ex(struct mame_bitmap *bitmap, const char *begin, const char *end, unsigned maxchars, int x, int y, int dx, int dy, int color)
-{
-	/* draw the box first */
-	ui_drawbox(bitmap, x, y, dx, dy);
-
-	/* indent by half a character */
-	x += uirotcharwidth/2;
-	y += uirotcharheight/2;
-
-	/* draw the text */
-	ui_multitext_ex(bitmap, begin, end, maxchars, x, y, color);
-}
-
-
-
-/*-------------------------------------------------
-    ui_drawbox - draw a black box with white border
--------------------------------------------------*/
-
-void ui_drawbox(struct mame_bitmap *bitmap, int leftx, int topy, int width, int height)
-{
-	struct rectangle bounds, tbounds;
-	pen_t black, white;
-
-	/* make a rect and clip it */
-	bounds.min_x = uirotbounds.min_x + leftx;
-	bounds.min_y = uirotbounds.min_y + topy;
-	bounds.max_x = bounds.min_x + width - 1;
-	bounds.max_y = bounds.min_y + height - 1;
-	sect_rect(&bounds, &uirotbounds);
-
-	/* pick colors from the colortable */
-	black = Machine->uirotfont->colortable[0];
-	white = Machine->uirotfont->colortable[1];
-
-	/* top edge */
-	tbounds = bounds;
-	tbounds.max_y = tbounds.min_y;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* bottom edge */
-	tbounds = bounds;
-	tbounds.min_y = tbounds.max_y;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* left edge */
-	tbounds = bounds;
-	tbounds.max_x = tbounds.min_x;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* right edge */
-	tbounds = bounds;
-	tbounds.min_x = tbounds.max_x;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* fill in the middle with black */
-	tbounds = bounds;
-	tbounds.min_x++;
-	tbounds.min_y++;
-	tbounds.max_x--;
-	tbounds.max_y--;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, black, &tbounds);
-
-	/* mark things dirty */
-	ui_rot2raw_rect(&bounds);
-	ui_markdirty(&bounds);
-}
-
-
-
-/*-------------------------------------------------
-    drawbar - draw a thermometer bar
--------------------------------------------------*/
-
-static void drawbar(struct mame_bitmap *bitmap, int leftx, int topy, int width, int height, int percentage, int default_percentage)
-{
-	struct rectangle bounds, tbounds;
-	UINT32 black, white;
-
-	/* make a rect and orient/clip it */
-	bounds.min_x = uirotbounds.min_x + leftx;
-	bounds.min_y = uirotbounds.min_y + topy;
-	bounds.max_x = bounds.min_x + width - 1;
-	bounds.max_y = bounds.min_y + height - 1;
-	sect_rect(&bounds, &uirotbounds);
-
-	/* pick colors from the colortable */
-	black = Machine->uirotfont->colortable[0];
-	white = Machine->uirotfont->colortable[1];
-
-	/* draw the top default percentage marker */
-	tbounds = bounds;
-	tbounds.min_x += (width - 1) * default_percentage / 100;
-	tbounds.max_x = tbounds.min_x;
-	tbounds.max_y = tbounds.min_y + height / 8;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* draw the bottom default percentage marker */
-	tbounds = bounds;
-	tbounds.min_x += (width - 1) * default_percentage / 100;
-	tbounds.max_x = tbounds.min_x;
-	tbounds.min_y = tbounds.max_y - height / 8;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* draw the top line of the bar */
-	tbounds = bounds;
-	tbounds.min_y += height / 8;
-	tbounds.max_y = tbounds.min_y;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* draw the bottom line of the bar */
-	tbounds = bounds;
-	tbounds.max_y -= height / 8;
-	tbounds.min_y = tbounds.max_y;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* fill in the percentage */
-	tbounds = bounds;
-	tbounds.max_x = tbounds.min_x + (width - 1) * percentage / 100;
-	tbounds.min_y += height / 8;
-	tbounds.max_y -= height / 8;
-	ui_rot2raw_rect(&tbounds);
-	fillbitmap(bitmap, white, &tbounds);
-
-	/* mark things dirty */
-	ui_rot2raw_rect(&bounds);
-	ui_markdirty(&bounds);
-}
-
-
-
-void ui_displaymenu(struct mame_bitmap *bitmap,const char **items,const char **subitems,char *flag,int selected,int arrowize_subitem)
-{
-	struct DisplayText dt[256];
-	int curr_dt;
-	const char *lefthilight = ui_getstring (UI_lefthilight);
-	const char *righthilight = ui_getstring (UI_righthilight);
-	const char *uparrow = ui_getstring (UI_uparrow);
-	const char *downarrow = ui_getstring (UI_downarrow);
-	const char *leftarrow = ui_getstring (UI_leftarrow);
-	const char *rightarrow = ui_getstring (UI_rightarrow);
-	int i,count,len,maxlen,highlen;
-	int leftoffs,topoffs,visible,topitem;
-	int selected_long;
-
-
-	i = 0;
-	maxlen = 0;
-	highlen = uirotwidth / uirotcharwidth;
-	while (items[i])
-	{
-		len = 3 + strlen(items[i]);
-		if (subitems && subitems[i])
-			len += 2 + strlen(subitems[i]);
-		if (len > maxlen && len <= highlen)
-			maxlen = len;
-		i++;
-	}
-	count = i;
-
-	visible = uirotheight / (3 * uirotcharheight / 2) - 1;
-	topitem = 0;
-	if (visible > count) visible = count;
+	/* otherwise, toggle to "none" */
 	else
-	{
-		topitem = selected - visible / 2;
-		if (topitem < 0) topitem = 0;
-		if (topitem > count - visible) topitem = count - visible;
-	}
+		seq_set_1(selected_seq, CODE_NONE);
+}
 
-	leftoffs = (uirotwidth - maxlen * uirotcharwidth) / 2;
-	topoffs = (uirotheight - (3 * visible + 1) * uirotcharheight / 2) / 2;
 
-	/* black background */
-	ui_drawbox(bitmap,leftoffs,topoffs,maxlen * uirotcharwidth,(3 * visible + 1) * uirotcharheight / 2);
 
-	selected_long = 0;
-	curr_dt = 0;
-	for (i = 0;i < visible;i++)
-	{
-		int item = i + topitem;
+/*************************************
+ *
+ *  Default input settings menu
+ *
+ *************************************/
 
-		if (i == 0 && item > 0)
+INLINE void default_input_menu_add_item(ui_menu_item *item, const char *format, const char *name, const input_seq_t *seq, const input_seq_t *defseq)
+{
+	/* set the item text using the formatting string provided */
+	item->text = &menu_string_pool[menu_string_pool_offset];
+	menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], format, name) + 1;
+
+	/* set the subitem text from the sequence */
+	item->subtext = &menu_string_pool[menu_string_pool_offset];
+	seq_name(seq, &menu_string_pool[menu_string_pool_offset], sizeof(menu_string_pool) - menu_string_pool_offset);
+	menu_string_pool_offset += strlen(&menu_string_pool[menu_string_pool_offset]) + 1;
+
+	/* invert if different from the default */
+	if (seq_cmp(seq, defseq))
+		item->flags |= MENU_FLAG_INVERT;
+}
+
+
+static UINT32 menu_default_input(UINT32 state)
+{
+	static input_seq_t starting_seq;
+
+	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
+	const struct InputPortDefinition *indef;
+	struct InputPortDefinition *in;
+	const input_seq_t *selected_defseq = NULL;
+	input_seq_t *selected_seq = NULL;
+	UINT8 selected_is_analog = FALSE;
+	int selected = state & 0x3fff;
+	int record_next = (state >> 14) & 1;
+	int polling = (state >> 15) & 1;
+	int group = state >> 16;
+	int reset_selected = FALSE;
+	int menu_items = 0;
+
+	/* reset the menu and string pool */
+	memset(item_list, 0, sizeof(item_list));
+	menu_string_pool_offset = 0;
+
+	/* iterate over the input ports and add menu items */
+	for (in = get_input_port_list(), indef = get_input_port_list_defaults(); in->type != IPT_END; in++, indef++)
+
+		/* add if we match the group and we have a valid name */
+		if (in->group == group && in->name && in->name[0] != 0)
 		{
-			dt[curr_dt].text = uparrow;
-			dt[curr_dt].color = UI_COLOR_NORMAL;
-			dt[curr_dt].x = (uirotwidth - uirotcharwidth * strlen(uparrow)) / 2;
-			dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-			curr_dt++;
-		}
-		else if (i == visible - 1 && item < count - 1)
-		{
-			dt[curr_dt].text = downarrow;
-			dt[curr_dt].color = UI_COLOR_NORMAL;
-			dt[curr_dt].x = (uirotwidth - uirotcharwidth * strlen(downarrow)) / 2;
-			dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-			curr_dt++;
-		}
-		else
-		{
-			if (subitems && subitems[item])
+			/* if not analog, just add a standard entry for this item */
+			if (!port_type_is_analog(in->type))
 			{
-				int sublen;
-				len = strlen(items[item]);
-				dt[curr_dt].text = items[item];
-				dt[curr_dt].color = UI_COLOR_NORMAL;
-				dt[curr_dt].x = leftoffs + 3*uirotcharwidth/2;
-				dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-				curr_dt++;
-				sublen = strlen(subitems[item]);
-				if (sublen > maxlen-5-len)
+				if (menu_items == selected)
 				{
-					dt[curr_dt].text = "...";
-					sublen = strlen(dt[curr_dt].text);
-					if (item == selected)
-						selected_long = 1;
-				} else {
-					dt[curr_dt].text = subitems[item];
+					selected_seq = &in->defaultseq;
+					selected_defseq = &indef->defaultseq;
 				}
-				/* If this item is flagged, draw it in inverse print */
-				dt[curr_dt].color = (flag && flag[item]) ? UI_COLOR_INVERSE : UI_COLOR_NORMAL;
-				dt[curr_dt].x = leftoffs + uirotcharwidth * (maxlen-1-sublen) - uirotcharwidth/2;
-				dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-				curr_dt++;
+				default_input_menu_add_item(&item_list[menu_items++], "%s", in->name, &in->defaultseq, &indef->defaultseq);
 			}
+
+			/* if we are analog, add three items */
 			else
 			{
-				dt[curr_dt].text = items[item];
-				dt[curr_dt].color = UI_COLOR_NORMAL;
-				dt[curr_dt].x = (uirotwidth - uirotcharwidth * strlen(items[item])) / 2;
-				dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-				curr_dt++;
+				if (menu_items == selected)
+				{
+					selected_seq = &in->defaultseq;
+					selected_defseq = &indef->defaultseq;
+					selected_is_analog = TRUE;
+				}
+				default_input_menu_add_item(&item_list[menu_items++], "%s Analog", in->name, &in->defaultseq, &indef->defaultseq);
+
+				if (menu_items == selected)
+				{
+					selected_seq = &in->defaultdecseq;
+					selected_defseq = &indef->defaultdecseq;
+				}
+				default_input_menu_add_item(&item_list[menu_items++], "%s Dec", in->name, &in->defaultdecseq, &indef->defaultdecseq);
+
+				if (menu_items == selected)
+				{
+					selected_seq = &in->defaultincseq;
+					selected_defseq = &indef->defaultincseq;
+				}
+				default_input_menu_add_item(&item_list[menu_items++], "%s Inc", in->name, &in->defaultincseq, &indef->defaultincseq);
 			}
 		}
-	}
 
-	i = selected - topitem;
-	if (subitems && subitems[selected] && arrowize_subitem)
+	/* if we're polling, just put an empty entry and arrows for the subitem */
+	if (polling)
 	{
-		if (arrowize_subitem & 1)
-		{
-			int sublen;
-
-			len = strlen(items[selected]);
-
-			dt[curr_dt].text = leftarrow;
-			dt[curr_dt].color = UI_COLOR_NORMAL;
-
-			sublen = strlen(subitems[selected]);
-			if (sublen > maxlen-5-len)
-				sublen = strlen("...");
-
-			dt[curr_dt].x = leftoffs + uirotcharwidth * (maxlen-2 - sublen) - uirotcharwidth/2 - 1;
-			dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-			curr_dt++;
-		}
-		if (arrowize_subitem & 2)
-		{
-			dt[curr_dt].text = rightarrow;
-			dt[curr_dt].color = UI_COLOR_NORMAL;
-			dt[curr_dt].x = leftoffs + uirotcharwidth * (maxlen-1) - uirotcharwidth/2;
-			dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-			curr_dt++;
-		}
+		item_list[selected].subtext = "   ";
+		item_list[selected].flags = MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
 	}
+
+	/* add an item to return */
+	item_list[menu_items++].text = ui_getstring(UI_returntogroup);
+
+	/* draw the menu */
+	ui_draw_menu(item_list, menu_items, selected);
+
+	/* if we're polling, read the sequence */
+	if (polling)
+	{
+		if (input_menu_update_polling(selected_seq, &record_next, &polling))
+			input_menu_toggle_none_default(selected_seq, &starting_seq, selected_defseq);
+	}
+
+	/* otherwise, handle the keys */
 	else
 	{
-		dt[curr_dt].text = righthilight;
-		dt[curr_dt].color = UI_COLOR_NORMAL;
-		dt[curr_dt].x = leftoffs + uirotcharwidth * (maxlen-1) - uirotcharwidth/2;
-		dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-		curr_dt++;
+		int prevsel = selected;
+
+		/* handle generic menu keys */
+		if (menu_generic_keys(&selected, menu_items))
+			return selected;
+
+		/* if an item was selected, start polling on it */
+		if (input_ui_pressed(IPT_UI_SELECT))
+		{
+			seq_read_async_start(selected_is_analog);
+			seq_copy(&starting_seq, selected_seq);
+			polling = TRUE;
+		}
+
+		/* if the clear key was pressed, reset the selected item */
+		if (input_ui_pressed(IPT_UI_CLEAR))
+		{
+			input_menu_toggle_none_default(selected_seq, selected_seq, selected_defseq);
+			record_next = FALSE;
+		}
+
+		/* if the selection changed, update and reset the "record first" flag */
+		if (selected != prevsel)
+			record_next = FALSE;
 	}
-	dt[curr_dt].text = lefthilight;
-	dt[curr_dt].color = UI_COLOR_NORMAL;
-	dt[curr_dt].x = leftoffs + uirotcharwidth/2;
-	dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-	curr_dt++;
 
-	dt[curr_dt].text = 0;	/* terminate array */
-
-	displaytext(bitmap,dt);
-
-	if (selected_long)
+	/* if we are to reset ourselves, do it now */
+	if (reset_selected && selected != menu_items - 1)
 	{
-		int long_dx;
-		int long_dy;
-		int long_x;
-		int long_y;
-		unsigned long_max;
-
-		long_max = (uirotwidth / uirotcharwidth) - 2;
-		multilinebox_size(&long_dx,&long_dy,subitems[selected],subitems[selected] + strlen(subitems[selected]), long_max);
-
-		long_x = uirotwidth - long_dx;
-		long_y = topoffs + (i+1) * 3*uirotcharheight/2;
-
-		/* if too low display up */
-		if (long_y + long_dy > uirotheight)
-			long_y = topoffs + i * 3*uirotcharheight/2 - long_dy;
-
-		ui_multitextbox_ex(bitmap,subitems[selected],subitems[selected] + strlen(subitems[selected]), long_max, long_x,long_y,long_dx,long_dy, UI_COLOR_NORMAL);
+		input_menu_toggle_none_default(selected_seq, &starting_seq, selected_defseq);
+		record_next = FALSE;
 	}
+
+	return selected | (record_next << 14) | (polling << 15) | (group << 16);
 }
 
 
-void ui_displaymessagewindow(struct mame_bitmap *bitmap,const char *text)
+
+/*************************************
+ *
+ *  Game-specific input settings menu
+ *
+ *************************************/
+
+INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, struct InputPort *in, int which)
 {
-	struct DisplayText dt[256];
-	int curr_dt;
-	char *c,*c2;
-	int i,len,maxlen,lines;
-	char textcopy[2048];
-	int leftoffs,topoffs;
-	int maxcols,maxrows;
+	/* set the item text using the formatting string provided */
+	item->text = &menu_string_pool[menu_string_pool_offset];
+	menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], format, input_port_name(in)) + 1;
 
-	maxcols = (uirotwidth / uirotcharwidth) - 1;
-	maxrows = (2 * uirotheight - uirotcharheight) / (3 * uirotcharheight);
+	/* set the subitem text from the sequence */
+	item->subtext = &menu_string_pool[menu_string_pool_offset];
+	seq_name(input_port_seq(in, which), &menu_string_pool[menu_string_pool_offset], sizeof(menu_string_pool) - menu_string_pool_offset);
+	menu_string_pool_offset += strlen(&menu_string_pool[menu_string_pool_offset]) + 1;
 
-	/* copy text, calculate max len, count lines, wrap long lines and crop height to fit */
-	maxlen = 0;
-	lines = 0;
-	c = (char *)text;
-	c2 = textcopy;
-	while (*c)
-	{
-		len = 0;
-		while (*c && *c != '\n')
+	/* invert if different from the default */
+	if (seq_cmp(input_port_seq(in, which), input_port_default_seq(in->type, in->player, which)))
+		item->flags |= MENU_FLAG_INVERT;
+}
+
+
+static UINT32 menu_game_input(UINT32 state)
+{
+	static const input_seq_t default_seq = SEQ_DEF_1(CODE_DEFAULT);
+
+	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
+	input_seq_t *selected_seq = NULL;
+	UINT8 selected_is_analog = FALSE;
+	int selected = state & 0x3fff;
+	int record_next = (state >> 14) & 1;
+	int polling = (state >> 15) & 1;
+	struct InputPort *in;
+	int menu_items = 0;
+
+	/* reset the menu and string pool */
+	memset(item_list, 0, sizeof(item_list));
+	menu_string_pool_offset = 0;
+
+	/* iterate over the input ports and add menu items */
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+
+		/* add if we match the group and we have a valid name */
+		if (input_port_name(in) != NULL &&
+#ifdef MESS
+			(in->category == 0 || input_category_active(in->category)) &&
+#endif /* MESS */
+			((in->type == IPT_OTHER && in->name != IP_NAME_DEFAULT) || port_type_to_group(in->type, in->player) != IPG_INVALID))
 		{
-			*c2++ = *c++;
-			len++;
-			if (len == maxcols && *c != '\n')
+			/* if not analog, just add a standard entry for this item */
+			if (!port_type_is_analog(in->type))
 			{
-				/* attempt word wrap */
-				char *csave = c, *c2save = c2;
-				int lensave = len;
+				if (menu_items == selected)
+					selected_seq = &in->seq;
+				game_input_menu_add_item(&item_list[menu_items++], "%s", in, SEQ_TYPE_STANDARD);
+			}
 
-				/* back up to last space or beginning of line */
-				while (*c != ' ' && *c != '\n' && c > text)
-					--c, --c2, --len;
+			/* if we are analog, add three items */
+			else
+			{
+				if (menu_items == selected)
+				{
+					selected_seq = &in->seq;
+					selected_is_analog = TRUE;
+				}
+				game_input_menu_add_item(&item_list[menu_items++], "%s Analog", in, SEQ_TYPE_STANDARD);
 
-				/* if no space was found, hard wrap instead */
-				if (*c != ' ')
-					c = csave, c2 = c2save, len = lensave;
-				else
-					c++;
+				if (menu_items == selected)
+					selected_seq = &in->analog.decseq;
+				game_input_menu_add_item(&item_list[menu_items++], "%s Dec", in, SEQ_TYPE_DECREMENT);
 
-				*c2++ = '\n'; /* insert wrap */
-				break;
+				if (menu_items == selected)
+					selected_seq = &in->analog.incseq;
+				game_input_menu_add_item(&item_list[menu_items++], "%s Inc", in, SEQ_TYPE_INCREMENT);
 			}
 		}
 
-		if (*c == '\n')
-			*c2++ = *c++;
+	/* if we're polling, just put an empty entry and arrows for the subitem */
+	if (polling)
+	{
+		item_list[selected].subtext = "   ";
+		item_list[selected].flags = MENU_FLAG_LEFT_ARROW | MENU_FLAG_RIGHT_ARROW;
+	}
 
-		if (len > maxlen) maxlen = len;
+	/* add an item to return */
+	item_list[menu_items++].text = ui_getstring(UI_returntomain);
 
-		lines++;
-		if (lines == maxrows)
+	/* draw the menu */
+	ui_draw_menu(item_list, menu_items, selected);
+
+	/* if we're polling, read the sequence */
+	if (polling)
+	{
+		if (input_menu_update_polling(selected_seq, &record_next, &polling))
+			input_menu_toggle_none_default(selected_seq, &starting_seq, &default_seq);
+	}
+
+	/* otherwise, handle the keys */
+	else
+	{
+		int prevsel = selected;
+
+		/* handle generic menu keys */
+		if (menu_generic_keys(&selected, menu_items))
+			return selected;
+
+		/* if an item was selected, start polling on it */
+		if (input_ui_pressed(IPT_UI_SELECT))
+		{
+			seq_read_async_start(selected_is_analog);
+			seq_copy(&starting_seq, selected_seq);
+			polling = TRUE;
+		}
+
+		/* if the clear key was pressed, reset the selected item */
+		if (input_ui_pressed(IPT_UI_CLEAR))
+		{
+			input_menu_toggle_none_default(selected_seq, selected_seq, &default_seq);
+			record_next = FALSE;
+		}
+
+		/* if the selection changed, update and reset the "record first" flag */
+		if (selected != prevsel)
+			record_next = FALSE;
+	}
+
+	return selected | (record_next << 14) | (polling << 15);
+}
+
+
+
+/*************************************
+ *
+ *  DIP switch/configurations/categories
+ *  settings menu
+ *
+ *************************************/
+
+INLINE void switch_menu_add_item(ui_menu_item *item, const struct InputPort *in, int switch_entry)
+{
+	const struct InputPort *tin;
+
+	/* set the text to the name and the subitem text to invalid */
+	item->text = input_port_name(in);
+	item->subtext = NULL;
+
+	/* scan for the current selection in the list */
+	for (tin = in + 1; tin->type == switch_entry; tin++)
+		if (input_port_condition(tin))
+		{
+			/* if this is a match, set the subtext */
+			if (in->default_value == tin->default_value)
+				item->subtext = input_port_name(tin);
+
+			/* else if we haven't seen a match yet, show a left arrow */
+			else if (!item->subtext)
+				item->flags |= MENU_FLAG_LEFT_ARROW;
+
+			/* else if we have seen a match, show a right arrow */
+			else
+				item->flags |= MENU_FLAG_RIGHT_ARROW;
+		}
+
+	/* if no matches, we're invalid */
+	if (!item->subtext)
+		item->subtext = ui_getstring(UI_INVALID);
+}
+
+
+static void switch_menu_pick_previous(struct InputPort *in, int switch_entry)
+{
+	int last_value = in->default_value;
+	const struct InputPort *tin;
+
+	/* scan for the current selection in the list */
+	for (tin = in + 1; tin->type == switch_entry; tin++)
+		if (input_port_condition(tin))
+		{
+			/* if this is a match, we're done */
+			if (in->default_value == tin->default_value)
+			{
+				in->default_value = last_value;
+				return;
+			}
+
+			/* otherwise, keep track of last one found */
+			else
+				last_value = tin->default_value;
+		}
+}
+
+
+static void switch_menu_pick_next(struct InputPort *in, int switch_entry)
+{
+	const struct InputPort *tin;
+	int foundit = FALSE;
+
+	/* scan for the current selection in the list */
+	for (tin = in + 1; tin->type == switch_entry; tin++)
+		if (input_port_condition(tin))
+		{
+			/* if we found the current selection, we pick the next one */
+			if (foundit)
+			{
+				in->default_value = tin->default_value;
+				return;
+			}
+
+			/* if this is a match, note it */
+			if (in->default_value == tin->default_value)
+				foundit = TRUE;
+		}
+}
+
+
+static UINT32 menu_switches(UINT32 state)
+{
+	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
+	int switch_entry = (state >> 24) & 0xff;
+	int switch_name = (state >> 16) & 0xff;
+	int selected = state & 0xffff;
+	struct InputPort *selected_in = NULL;
+	struct InputPort *in;
+	int menu_items = 0;
+
+	/* reset the menu */
+	memset(item_list, 0, sizeof(item_list));
+
+	/* loop over input ports and set up the current values */
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+		if (in->type == switch_name && input_port_active(in))
+		{
+			if (menu_items == selected)
+				selected_in = in;
+			switch_menu_add_item(&item_list[menu_items++], in, switch_entry);
+		}
+
+	/* add an item to return */
+	item_list[menu_items++].text = ui_getstring(UI_returntomain);
+
+	/* draw the menu */
+	ui_draw_menu(item_list, menu_items, selected);
+
+	/* handle generic menu keys */
+	if (menu_generic_keys(&selected, menu_items))
+		return selected;
+
+	/* handle left/right arrows */
+	if (input_ui_pressed(IPT_UI_LEFT) && (item_list[selected].flags & MENU_FLAG_LEFT_ARROW))
+		switch_menu_pick_previous(selected_in, switch_entry);
+	if (input_ui_pressed(IPT_UI_RIGHT) && (item_list[selected].flags & MENU_FLAG_RIGHT_ARROW))
+		switch_menu_pick_next(selected_in, switch_entry);
+
+	return selected | (switch_name << 16) | (switch_entry << 24);
+}
+
+
+
+/*************************************
+ *
+ *  Analog settings menu
+ *
+ *************************************/
+
+INLINE void analog_menu_add_item(ui_menu_item *item, const struct InputPort *in, int append_string, int which_item)
+{
+	int value, minval, maxval;
+
+	/* set the item text using the formatting string provided */
+	item->text = &menu_string_pool[menu_string_pool_offset];
+	menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], "%s %s", input_port_name(in), ui_getstring(append_string)) + 1;
+
+	/* set the subitem text */
+	item->subtext = &menu_string_pool[menu_string_pool_offset];
+	switch (which_item)
+	{
+		case ANALOG_ITEM_KEYSPEED:
+			value = in->analog.delta;
+			minval = 1;
+			maxval = 255;
+			menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], "%d", value) + 1;
+			break;
+
+		case ANALOG_ITEM_CENTERSPEED:
+			value = in->analog.centerdelta;
+			minval = 0;
+			maxval = 255;
+			menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], "%d", value) + 1;
+			break;
+
+		case ANALOG_ITEM_REVERSE:
+			value = in->analog.reverse;
+			minval = 0;
+			maxval = 1;
+			item->subtext = value ? ui_getstring(UI_on) : ui_getstring(UI_off);
+			break;
+
+		case ANALOG_ITEM_SENSITIVITY:
+			value = in->analog.sensitivity;
+			minval = 1;
+			maxval = 255;
+			menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], "%d%%", value) + 1;
 			break;
 	}
-	*c2 = '\0';
 
-	maxlen += 1;
+	/* put on arrows */
+	if (value > minval)
+		item->flags |= MENU_FLAG_LEFT_ARROW;
+	if (value < maxval)
+		item->flags |= MENU_FLAG_RIGHT_ARROW;
+}
 
-	leftoffs = (uirotwidth - uirotcharwidth * maxlen) / 2;
-	if (leftoffs < 0) leftoffs = 0;
-	topoffs = (uirotheight - (3 * lines + 1) * uirotcharheight / 2) / 2;
 
-	/* black background */
-	ui_drawbox(bitmap,leftoffs,topoffs,maxlen * uirotcharwidth,(3 * lines + 1) * uirotcharheight / 2);
+static UINT32 menu_analog(UINT32 state)
+{
+	ui_menu_item item_list[MAX_INPUT_PORTS * 4 * ANALOG_ITEM_COUNT];
+	struct InputPort *selected_in = NULL;
+	struct InputPort *in;
+	int menu_items = 0;
+	int delta = 0;
 
-	curr_dt = 0;
-	c = textcopy;
-	i = 0;
-	while (*c)
+	/* reset the menu and string pool */
+	memset(item_list, 0, sizeof(item_list));
+	menu_string_pool_offset = 0;
+
+	/* loop over input ports and add the items */
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+		if (port_type_is_analog(in->type))
+		{
+			/* track the selected item */
+			if (state >= menu_items && state < menu_items + 4)
+				selected_in = in;
+
+			/* add four items for each one */
+			analog_menu_add_item(&item_list[menu_items++], in, UI_keyjoyspeed, ANALOG_ITEM_KEYSPEED);
+			analog_menu_add_item(&item_list[menu_items++], in, UI_centerspeed, ANALOG_ITEM_CENTERSPEED);
+			analog_menu_add_item(&item_list[menu_items++], in, UI_reverse, ANALOG_ITEM_REVERSE);
+			analog_menu_add_item(&item_list[menu_items++], in, UI_sensitivity, ANALOG_ITEM_SENSITIVITY);
+		}
+
+	/* add an item to return */
+	item_list[menu_items++].text = ui_getstring(UI_returntomain);
+
+	/* draw the menu */
+	ui_draw_menu(item_list, menu_items, state);
+
+	/* handle generic menu keys */
+	if (menu_generic_keys(&state, menu_items))
+		return state;
+
+	/* handle left/right arrows */
+	if (input_ui_pressed(IPT_UI_LEFT) && (item_list[state].flags & MENU_FLAG_LEFT_ARROW))
+		delta = -1;
+	if (input_ui_pressed(IPT_UI_RIGHT) && (item_list[state].flags & MENU_FLAG_RIGHT_ARROW))
+		delta = 1;
+
+	/* adjust the appropriate value */
+	if (delta != 0 && selected_in)
+		switch (state % ANALOG_ITEM_COUNT)
+		{
+			case ANALOG_ITEM_KEYSPEED:		selected_in->analog.delta += delta;			break;
+			case ANALOG_ITEM_CENTERSPEED:	selected_in->analog.centerdelta += delta;	break;
+			case ANALOG_ITEM_REVERSE:		selected_in->analog.reverse += delta;		break;
+			case ANALOG_ITEM_SENSITIVITY:	selected_in->analog.sensitivity += delta;	break;
+		}
+
+	return state;
+}
+
+
+
+/*************************************
+ *
+ *  Joystick calibration menu
+ *
+ *************************************/
+
+static UINT32 menu_joystick_calibrate(UINT32 state)
+{
+	char buf[2048];
+	char *bufptr = buf;
+	int selected = 0;
+
+	/* add the default text */
+	bufptr += sprintf(bufptr, "This feature is temporarily disabled pending completion of the user interface rewrite.\n");
+
+	/* make it look like a menu */
+	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
+
+	/* draw the text */
+	ui_draw_message_window(buf);
+
+	/* handle the keys */
+	menu_generic_keys(&selected, 1);
+	return selected;
+}
+
+
+
+/*************************************
+ *
+ *  Bookkeeping information screen
+ *
+ *************************************/
+
+#ifndef MESS
+static UINT32 menu_bookkeeping(UINT32 state)
+{
+	char buf[2048];
+	char *bufptr = buf;
+	int selected = 0;
+	int ctrnum;
+
+	/* show tickets at the top */
+	if (dispensed_tickets)
+		bufptr += sprintf(bufptr, "%s: %d\n\n", ui_getstring(UI_tickets), dispensed_tickets);
+
+	/* loop over coin counters */
+	for (ctrnum = 0; ctrnum < COIN_COUNTERS; ctrnum++)
 	{
-		c2 = c;
-		while (*c && *c != '\n')
-			c++;
+		/* display the coin counter number */
+		bufptr += sprintf(bufptr, "%s %c: ", ui_getstring(UI_coin), ctrnum + 'A');
 
-		if (*c == '\n')
-		{
-			*c = '\0';
-			c++;
-		}
-
-		if (*c2 == '\t')    /* center text */
-		{
-			c2++;
-			dt[curr_dt].x = (uirotwidth - uirotcharwidth * (c - c2)) / 2;
-		}
+		/* display how many coins */
+		if (!coin_count[ctrnum])
+			bufptr += sprintf(bufptr, "%s", ui_getstring(UI_NA));
 		else
-			dt[curr_dt].x = leftoffs + uirotcharwidth/2;
+			bufptr += sprintf(bufptr, "%d", coin_count[ctrnum]);
 
-		dt[curr_dt].text = c2;
-		dt[curr_dt].color = UI_COLOR_NORMAL;
-		dt[curr_dt].y = topoffs + (3*i+1)*uirotcharheight/2;
-		curr_dt++;
-
-		i++;
+		/* display whether or not we are locked out */
+		if (coinlockedout[ctrnum])
+			bufptr += sprintf(bufptr, " %s", ui_getstring(UI_locked));
+		*bufptr++ = '\n';
 	}
 
-	dt[curr_dt].text = 0;	/* terminate array */
+	/* make it look like a menu */
+	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
 
-	displaytext(bitmap,dt);
+	/* draw the text */
+	ui_draw_message_window(buf);
+
+	/* handle the keys */
+	menu_generic_keys(&selected, 1);
+	return selected;
 }
+#endif
+
+
+
+/*************************************
+ *
+ *  Game information screen
+ *
+ *************************************/
+
+#ifndef MESS
+static UINT32 menu_game_info(UINT32 state)
+{
+	char buf[2048];
+	char *bufptr = buf;
+	int selected = 0;
+
+	/* add the game info */
+	bufptr += sprintf_game_info(bufptr);
+
+	/* make it look like a menu */
+	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
+
+	/* draw the text */
+	ui_draw_message_window(buf);
+
+	/* handle the keys */
+	menu_generic_keys(&selected, 1);
+	return selected;
+}
+#endif
+
+
+
+/*************************************
+ *
+ *  Cheat menu
+ *
+ *************************************/
+
+static UINT32 menu_cheat(UINT32 state)
+{
+	char buf[2048];
+	char *bufptr = buf;
+	int selected = 0;
+
+	/* add the default text */
+	bufptr += sprintf(bufptr, "This feature is temporarily disabled pending completion of the user interface rewrite.\n");
+
+	/* make it look like a menu */
+	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
+
+	/* draw the text */
+	ui_draw_message_window(buf);
+
+	/* handle the keys */
+	menu_generic_keys(&selected, 1);
+	return selected;
+}
+
+
+
+/*************************************
+ *
+ *  Memory card menu
+ *
+ *************************************/
+
+static UINT32 menu_memory_card(UINT32 state)
+{
+	char buf[2048];
+	char *bufptr = buf;
+	int selected = 0;
+
+	/* add the default text */
+	bufptr += sprintf(bufptr, "This feature is temporarily disabled pending completion of the user interface rewrite.\n");
+
+	/* make it look like a menu */
+	bufptr += sprintf(bufptr, "\n\t%s %s %s", ui_getstring(UI_lefthilight), ui_getstring(UI_returntomain), ui_getstring(UI_righthilight));
+
+	/* draw the text */
+	ui_draw_message_window(buf);
+
+	/* handle the keys */
+	menu_generic_keys(&selected, 1);
+	return selected;
+}
+
+
+
+/*************************************
+ *
+ *  Game reset action
+ *
+ *************************************/
+
+static UINT32 menu_reset_game(UINT32 state)
+{
+	/* request a reset */
+	machine_reset();
+
+	/* reset the menu stack */
+	menu_handler = NULL;
+	menu_state = 0;
+	menu_stack_index = 0;
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *  MESS-specific menus
+ *
+ *************************************/
+
+#ifdef MESS
+static UINT32 menu_image_info(UINT32 state)
+{
+	return menu_stack_pop();
+}
+
+
+static UINT32 menu_file_manager(UINT32 state)
+{
+	return menu_stack_pop();
+}
+
+
+static UINT32 menu_tape_control(UINT32 state)
+{
+	return menu_stack_pop();
+}
+#endif
+
+
+
+
+
+
+
+
+static int sprintf_game_info(char *buf)
+{
+	char *bufptr = buf;
+	int cpunum, sndnum;
+	int count;
+
+	/* print description, manufacturer, and CPU: */
+	bufptr += sprintf(bufptr, "%s\n%s %s\n\n%s:\n", Machine->gamedrv->description, Machine->gamedrv->year, Machine->gamedrv->manufacturer, ui_getstring(UI_cpu));
+
+	/* loop over all CPUs */
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type; cpunum += count)
+	{
+		int type = Machine->drv->cpu[cpunum].cpu_type;
+		int clock = Machine->drv->cpu[cpunum].cpu_clock;
+
+		/* count how many identical CPUs we have */
+		for (count = 1; cpunum + count < MAX_CPU; count++)
+			if (Machine->drv->cpu[cpunum + count].cpu_type != type ||
+		        Machine->drv->cpu[cpunum + count].cpu_clock != clock)
+		    	break;
+
+		/* if more than one, prepend a #x in front of the CPU name */
+		if (count > 1)
+			bufptr += sprintf(bufptr, "%dx", count);
+		bufptr += sprintf(bufptr, "%s", cputype_name(type));
+
+		/* display clock in kHz or MHz */
+		if (clock >= 1000000)
+			bufptr += sprintf(bufptr, " %d.%06d MHz\n", clock / 1000000, clock % 1000000);
+		else
+			bufptr += sprintf(bufptr, " %d.%03d kHz\n", clock / 1000, clock % 1000);
+	}
+
+	/* append the Sound: string */
+	bufptr += sprintf(bufptr, "\n%s:\n", ui_getstring(UI_sound));
+
+	/* loop over all sound chips */
+	for (sndnum = 0; sndnum < MAX_SOUND && Machine->drv->sound[sndnum].sound_type; sndnum += count)
+	{
+		int type = Machine->drv->sound[sndnum].sound_type;
+		int clock = sndnum_clock(sndnum);
+
+		/* count how many identical sound chips we have */
+		for (count = 1; sndnum + count < MAX_SOUND; count++)
+			if (Machine->drv->sound[sndnum + count].sound_type != type ||
+		        sndnum_clock(sndnum + count) != clock)
+		    	break;
+
+		/* if more than one, prepend a #x in front of the CPU name */
+		if (count > 1)
+			bufptr += sprintf(bufptr, "%dx", count);
+		bufptr += sprintf(bufptr, "%s", sndnum_name(sndnum));
+
+		/* display clock in kHz or MHz */
+		if (clock >= 1000000)
+			bufptr += sprintf(bufptr, " %d.%06d MHz\n", clock / 1000000, clock % 1000000);
+		else if (clock != 0)
+			bufptr += sprintf(bufptr, " %d.%03d kHz\n", clock / 1000, clock % 1000);
+		else
+			*bufptr++ = '\n';
+	}
+
+	/* display vector information for vector games */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		bufptr += sprintf(bufptr, "\n%s\n", ui_getstring(UI_vectorgame));
+
+	/* display screen resolution and refresh rate info for raster games */
+	else
+		bufptr += sprintf(bufptr,"\n%s:\n%d x %d (%s) %f Hz\n",
+				ui_getstring(UI_screenres),
+				Machine->visible_area.max_x - Machine->visible_area.min_x + 1,
+				Machine->visible_area.max_y - Machine->visible_area.min_y + 1,
+				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
+				Machine->refresh_rate);
+	return bufptr - buf;
+}
+
+
+
+
+
+
+
+
+/*-------------------------------------------------
+    erase_screen - erase the screen
+-------------------------------------------------*/
+
+static void erase_screen(struct mame_bitmap *bitmap)
+{
+	fillbitmap(bitmap, get_black_pen(), NULL);
+	schedule_full_refresh();
+}
+
 
 
 
@@ -1326,7 +2357,8 @@ static void showcharset(struct mame_bitmap *bitmap)
 		static const struct rectangle fullrect = { 0, 10000, 0, 10000 };
 
 		/* mark the whole thing dirty */
-		ui_markdirty(&fullrect);
+		artwork_mark_ui_dirty(fullrect.min_x, fullrect.min_y, fullrect.max_x, fullrect.max_y);
+		ui_dirty = 5;
 
 		switch (mode)
 		{
@@ -1376,12 +2408,12 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 							sx = 3*uirotcharwidth + (uirotcharwidth*4/3)*(i % 16);
 							sprintf(bf,"%X",i);
-							ui_text(bitmap,bf,sx,2*uirotcharheight);
+							ui_draw_text(bf,sx,2*uirotcharheight);
 							if (16*i < colors)
 							{
 								sy = 3*uirotcharheight + (uirotcharheight)*(i % 16);
 								sprintf(bf,"%3X",i+16*palpage);
-								ui_text(bitmap,bf,0,sy);
+								ui_draw_text(bf,0,sy);
 							}
 						}
 
@@ -1397,9 +2429,9 @@ static void showcharset(struct mame_bitmap *bitmap)
 						}
 					}
 					else
-						ui_text(bitmap,"N/A",3*uirotcharwidth,2*uirotcharheight);
+						ui_draw_text("N/A",3*uirotcharwidth,2*uirotcharheight);
 
-					ui_text(bitmap,buf,0,0);
+					ui_draw_text(buf,0,0);
 					changed = 0;
 				}
 
@@ -1449,7 +2481,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					}
 
 					sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
-					ui_text(bitmap,buf,0,0);
+					ui_draw_text(buf,0,0);
 					changed = 0;
 				}
 
@@ -1472,7 +2504,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 					erase_screen(bitmap);
 					tilemap_nb_draw (bitmap, bank, tilemap_xpos, tilemap_ypos);
 					sprintf(buf, "TILEMAP %d (%dx%d)  X:%d  Y:%d", bank, tilemap_width, tilemap_height, tilemap_xpos, tilemap_ypos);
-					ui_text(bitmap,buf,0,0);
+					ui_draw_text(buf,0,0);
 					changed = 0;
 					skip_tmap = 0;
 				}
@@ -1480,6 +2512,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 			}
 		}
 
+		render_ui(bitmap);
 		update_video_and_audio();
 
 		if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
@@ -1706,9 +2739,6 @@ static void showcharset(struct mame_bitmap *bitmap)
 		if (input_ui_pressed(IPT_UI_SNAPSHOT))
 			save_screen_snapshot(bitmap);
 
-		if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
-			record_movie(bitmap);
-
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL));
 
@@ -1720,606 +2750,10 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 
 
-static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_name, UINT32 switch_setting)
-{
-	#define MAX_DIP_SWITCHES 256
-	const char *menu_item[MAX_DIP_SWITCHES+2];	// 2 more for "return to mainmenu" and end-of-list marker
-	const char *menu_subitem[MAX_DIP_SWITCHES+2];
-	struct InputPort *entry[MAX_DIP_SWITCHES];
-	char flag[40];
-	int i,sel;
-	struct InputPort *in;
-	int total;
-	int arrowize;
-
-
-	sel = selected - 1;
-
-
-	in = Machine->input_ports;
-
-	total = 0;
-	while (in->type != IPT_END && total < MAX_DIP_SWITCHES)
-	{
-		if (in->type == switch_name && input_port_active(in))
-		{
-			entry[total] = in;
-			menu_item[total] = input_port_name(in);
-
-			total++;
-		}
-
-		in++;
-	}
-
-	if (total == 0) return 0;
-
-	menu_item[total] = ui_getstring (UI_returntomain);
-	menu_item[total + 1] = 0;	/* terminate array */
-	total++;
-
-
-	for (i = 0;i < total;i++)
-	{
-		flag[i] = 0; /* TODO: flag the dip if it's not the real default */
-		if (i < total - 1)
-		{
-			in = entry[i] + 1;
-			while (in->type == switch_setting &&
-					(in->default_value != entry[i]->default_value || !input_port_condition(in)))
-				in++;
-
-			if (in->type != switch_setting)
-				menu_subitem[i] = ui_getstring (UI_INVALID);
-			else menu_subitem[i] = input_port_name(in);
-		}
-		else menu_subitem[i] = 0;	/* no subitem */
-	}
-
-	arrowize = 0;
-	if (sel < total - 1)
-	{
-		in = entry[sel] + 1;
-		while (in->type == switch_setting &&
-				(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
-			in++;
-
-		if (in->type != switch_setting)
-			/* invalid setting: revert to a valid one */
-			arrowize |= 1;
-		else
-		{
-			in--;
-			while (in->type == switch_setting && !input_port_condition(in))
-				in--;
-			if (in->type == switch_setting)
-				arrowize |= 1;
-		}
-	}
-	if (sel < total - 1)
-	{
-		in = entry[sel] + 1;
-		while (in->type == switch_setting &&
-				(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
-			in++;
-
-		if (in->type != switch_setting)
-			/* invalid setting: revert to a valid one */
-			arrowize |= 2;
-		else
-		{
-			in++;
-			while (in->type == switch_setting && !input_port_condition(in))
-				in++;
-			if (in->type == switch_setting)
-				arrowize |= 2;
-		}
-	}
-
-	ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,arrowize);
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-		sel = (sel + 1) % total;
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-		sel = (sel + total - 1) % total;
-
-	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
-	{
-		if (sel < total - 1)
-		{
-			in = entry[sel] + 1;
-			while (in->type == switch_setting &&
-					(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
-				in++;
-
-			if (in->type != switch_setting)
-				/* invalid setting: revert to a valid one */
-				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
-			else
-			{
-				in++;
-				while (in->type == switch_setting && !input_port_condition(in))
-					in++;
-				if (in->type == switch_setting)
-					entry[sel]->default_value = in->default_value & entry[sel]->mask;
-			}
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
-		}
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
-	{
-		if (sel < total - 1)
-		{
-			in = entry[sel] + 1;
-			while (in->type == switch_setting &&
-					(in->default_value != entry[sel]->default_value || !input_port_condition(in)))
-				in++;
-
-			if (in->type != switch_setting)
-				/* invalid setting: revert to a valid one */
-				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
-			else
-			{
-				in--;
-				while (in->type == switch_setting && !input_port_condition(in))
-					in--;
-				if (in->type == switch_setting)
-					entry[sel]->default_value = in->default_value & entry[sel]->mask;
-			}
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		if (sel == total - 1) sel = -1;
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
-}
-
-
-
-static int setdipswitches(struct mame_bitmap *bitmap, int selected)
-{
-	return switchmenu(bitmap, selected, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
-}
-
-
-
-#ifdef MESS
-static int setconfiguration(struct mame_bitmap *bitmap, int selected)
-{
-	return switchmenu(bitmap, selected, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
-}
-
-
-
-static int setcategories(struct mame_bitmap *bitmap, int selected)
-{
-	return switchmenu(bitmap, selected, IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING);
-}
-#endif /* MESS */
-
-
-
-/* This flag is used for record OR sequence of key/joy */
-/* when is !=0 the first sequence is record, otherwise the first free */
-/* it's used byt setdefkeysettings, setdefjoysettings, setkeysettings, setjoysettings */
-static int record_first_insert = 1;
-
-#define MAX_PORT_ENTRIES		1000
-
-static char menu_item_buffer[MAX_PORT_ENTRIES][96];
-static char menu_subitem_buffer[MAX_PORT_ENTRIES][96];
-
-static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
-{
-	static input_seq_t starting_seq;
-	static int menugroup = -1;
-	const char *menu_item[MAX_PORT_ENTRIES];
-	const char *menu_subitem[MAX_PORT_ENTRIES];
-	input_seq_t *entry[MAX_PORT_ENTRIES];
-	input_seq_t *defentry[MAX_PORT_ENTRIES];
-	UINT8 analog[MAX_PORT_ENTRIES];
-	char flag[MAX_PORT_ENTRIES];
-	int i,sel;
-	struct InputPortDefinition *in, *indef;
-	int total;
-
-	sel = selected - 1;
-
-
-	if (Machine->input_ports == 0)
-		return 0;
-
-	if (menugroup == -1)
-	{
-		for (total = 0; total < IPG_TOTAL_GROUPS; total++)
-			menu_item[total] = ui_getstring(UI_uigroup + total);
-		menu_item[total++] = ui_getstring (UI_returntomain);
-		menu_item[total] = 0;
-
-		ui_displaymenu(bitmap,menu_item,0,0,sel,0);
-	}
-	else
-	{
-		in = get_input_port_list();
-		indef = get_input_port_list_backup();
-
-		total = 0;
-
-		while (in->type != IPT_END)
-		{
-			if (in->name != 0 && in->type != IPT_UNKNOWN && in->type != IPT_DIPSWITCH_NAME && in->name[0] != 0 && in->group == menugroup)
-			{
-				analog[total] = port_type_is_analog(in->type);
-				if (!analog[total])
-				{
-					entry[total] = &in->defaultseq;
-					defentry[total] = &indef->defaultseq;
-					menu_item[total] = in->name;
-					total++;
-				}
-				else
-				{
-					entry[total] = &in->defaultseq;
-					defentry[total] = &indef->defaultseq;
-					sprintf(menu_item_buffer[total], "%s Analog", in->name);
-					menu_item[total] = menu_item_buffer[total];
-					total++;
-
-					analog[total] = 0;
-					entry[total] = &in->defaultdecseq;
-					defentry[total] = &indef->defaultdecseq;
-					sprintf(menu_item_buffer[total], "%s Dec", in->name);
-					menu_item[total] = menu_item_buffer[total];
-					total++;
-
-					analog[total] = 0;
-					entry[total] = &in->defaultincseq;
-					defentry[total] = &indef->defaultincseq;
-					sprintf(menu_item_buffer[total], "%s Inc", in->name);
-					menu_item[total] = menu_item_buffer[total];
-					total++;
-				}
-			}
-
-			in++;
-			indef++;
-		}
-
-		if (total == 0) return 0;
-
-		menu_item[total] = ui_getstring (UI_returntogroup);
-		menu_item[total + 1] = 0;	/* terminate array */
-		total++;
-
-		for (i = 0;i < total;i++)
-		{
-			if (i < total - 1)
-			{
-				seq_name(entry[i],menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
-				menu_subitem[i] = menu_subitem_buffer[i];
-			} else
-				menu_subitem[i] = 0;	/* no subitem */
-			flag[i] = 0;
-		}
-
-		if (sel > SEL_MASK)   /* are we waiting for a new key? */
-		{
-			int ret;
-
-			menu_subitem[sel & SEL_MASK] = "    ";
-			ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel & SEL_MASK,3);
-
-			ret = seq_read_async(entry[sel & SEL_MASK],record_first_insert);
-
-			if (ret >= 0)
-			{
-				sel &= SEL_MASK;
-
-				if (ret > 0 || seq_get_1(entry[sel]) == CODE_NONE)
-				{
-					if (seq_get_1(&starting_seq) == CODE_NONE)
-						seq_copy(entry[sel], defentry[sel]);
-					else
-						seq_set_1(entry[sel],CODE_NONE);
-					ret = 1;
-				}
-
-				/* tell updatescreen() to clean after us (in case the window changes size) */
-				schedule_full_refresh();
-
-				record_first_insert = ret != 0;
-			}
-
-			return sel + 1;
-		}
-
-
-		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel,0);
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-	{
-		sel = (sel + 1) % total;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-	{
-		sel = (sel + total - 1) % total;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		if (sel == total - 1)
-		{
-			if (menugroup == -1)
-				sel = -1;
-			else
-			{
-				sel = menugroup;
-				menugroup = -1;
-			}
-		}
-		else if (menugroup == -1)
-		{
-			menugroup = sel;
-			sel = 0;
-		}
-		else
-		{
-			seq_read_async_start(analog[sel]);
-			seq_copy(&starting_seq,entry[sel]);
-
-			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL))
-	{
-		if (menugroup == -1)
-			sel = -1;
-		else
-		{
-			sel = menugroup;
-			menugroup = -1;
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CLEAR))
-	{
-		if (menugroup != -1)
-		{
-			if (sel < (total - 1))
-			{
-				if (seq_get_1(entry[sel]) == CODE_NONE)
-					seq_copy(entry[sel], defentry[sel]);
-				else
-					seq_set_1(entry[sel], CODE_NONE);
-
-				schedule_full_refresh();
-			}
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		/* tell updatescreen() to clean after us */
-		schedule_full_refresh();
-
-		record_first_insert = 1;
-	}
-
-	return sel + 1;
-}
-
-
-
-static int setcodesettings(struct mame_bitmap *bitmap,int selected)
-{
-	static input_code_t starting_code = CODE_NONE;
-	const char *menu_item[MAX_PORT_ENTRIES];
-	const char *menu_subitem[MAX_PORT_ENTRIES];
-	input_seq_t *seq[MAX_PORT_ENTRIES];
-	UINT8 flag[MAX_PORT_ENTRIES];
-	UINT8 analog[MAX_PORT_ENTRIES];
-	int i,sel;
-	struct InputPort *in;
-	int total;
-
-
-	sel = selected - 1;
-
-
-	if (Machine->input_ports == 0)
-		return 0;
-
-	in = Machine->input_ports;
-
-	total = 0;
-	while (in->type != IPT_END)
-	{
-		if (input_port_name(in) != NULL &&
-#ifdef MESS
-			(in->category == 0 || input_category_active(in->category)) &&
-#endif /* MESS */
-			((in->type == IPT_OTHER && in->name != IP_NAME_DEFAULT) || port_type_to_group(in->type, in->player) != IPG_INVALID))
-		{
-			analog[total] = port_type_is_analog(in->type);
-			if (!analog[total])
-			{
-				seq[total] = &in->seq;
-				menu_item[total] = input_port_name(in);
-				seq_name(input_port_seq(in, SEQ_TYPE_STANDARD), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
-				menu_subitem[total] = menu_subitem_buffer[total];
-				total++;
-			}
-			else
-			{
-				seq[total] = &in->seq;
-				sprintf(menu_item_buffer[total], "%s Analog", input_port_name(in));
-				menu_item[total] = menu_item_buffer[total];
-				seq_name(input_port_seq(in, SEQ_TYPE_STANDARD), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
-				menu_subitem[total] = menu_subitem_buffer[total];
-				total++;
-
-				analog[total] = 0;
-				seq[total] = &in->analog.decseq;
-				sprintf(menu_item_buffer[total], "%s Dec", input_port_name(in));
-				menu_item[total] = menu_item_buffer[total];
-				seq_name(input_port_seq(in, SEQ_TYPE_DECREMENT), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
-				menu_subitem[total] = menu_subitem_buffer[total];
-				total++;
-
-				analog[total] = 0;
-				seq[total] = &in->analog.incseq;
-				sprintf(menu_item_buffer[total], "%s Inc", input_port_name(in));
-				menu_item[total] = menu_item_buffer[total];
-				seq_name(input_port_seq(in, SEQ_TYPE_INCREMENT), menu_subitem_buffer[total], sizeof(menu_subitem_buffer[0]));
-				menu_subitem[total] = menu_subitem_buffer[total];
-				total++;
-			}
-		}
-
-		in++;
-	}
-
-	for (i = 0; i < total; i++)
-	{
-		/* If the key isn't the default, flag it */
-		if (seq_get_1(seq[i]) != CODE_DEFAULT)
-			flag[i] = 1;
-		else
-			flag[i] = 0;
-	}
-
-
-	if (total == 0) return 0;
-
-	menu_item[total] = ui_getstring (UI_returntomain);
-	menu_subitem[total] = 0;	/* no subitem */
-	menu_item[total + 1] = 0;	/* terminate array */
-	total++;
-
-	if (sel > SEL_MASK)   /* are we waiting for a new key? */
-	{
-		int ret;
-
-		menu_subitem[sel & SEL_MASK] = "    ";
-		ui_displaymenu(bitmap,menu_item,menu_subitem, (char *) flag,sel & SEL_MASK,3);
-
-		ret = seq_read_async(seq[sel & SEL_MASK],record_first_insert);
-
-		if (ret >= 0)
-		{
-			sel &= SEL_MASK;
-
-			if (ret > 0 || seq_get_1(seq[sel]) == CODE_NONE)
-			{
-				seq_set_1(seq[sel], (starting_code == CODE_DEFAULT) ? CODE_NONE : CODE_DEFAULT);
-				ret = 1;
-			}
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
-
-			record_first_insert = ret != 0;
-		}
-
-		return sel + 1;
-	}
-
-
-	ui_displaymenu(bitmap,menu_item,menu_subitem, (char *) flag,sel,0);
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-	{
-		sel = (sel + 1) % total;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-	{
-		sel = (sel + total - 1) % total;
-		record_first_insert = 1;
-	}
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		if (sel == total - 1) sel = -1;
-		else
-		{
-			starting_code = seq_get_1(seq[sel]);
-			seq_read_async_start(analog[sel]);
-
-			sel |= 1 << SEL_BITS;	/* we'll ask for a key */
-
-			/* tell updatescreen() to clean after us (in case the window changes size) */
-			schedule_full_refresh();
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
-
-	if (input_ui_pressed(IPT_UI_CLEAR))
-	{
-		if (sel < (total - 1))
-		{
-			if (seq_get_1(seq[sel]) == CODE_NONE)
-				seq_set_1(seq[sel], CODE_DEFAULT);
-			else
-				seq_set_1(seq[sel], CODE_NONE);
-
-			schedule_full_refresh();
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-
-		record_first_insert = 1;
-	}
-
-	return sel + 1;
-}
-
-
-static int calibratejoysticks(struct mame_bitmap *bitmap,int selected)
+static int calibratejoysticks(int selected)
 {
 	const char *msg;
-	static char buf[2048];
+	char buf[2048];
 	int sel;
 	static int calibration_started = 0;
 
@@ -2345,7 +2779,7 @@ static int calibratejoysticks(struct mame_bitmap *bitmap,int selected)
 			sel &= SEL_MASK;
 		}
 
-		ui_displaymessagewindow(bitmap,buf);
+		ui_draw_message_window(buf);
 	}
 	else
 	{
@@ -2360,7 +2794,7 @@ static int calibratejoysticks(struct mame_bitmap *bitmap,int selected)
 		else
 		{
 			strcpy (buf, msg);
-			ui_displaymessagewindow(bitmap,buf);
+			ui_draw_message_window(buf);
 			sel |= 1 << SEL_BITS;
 		}
 	}
@@ -2376,601 +2810,147 @@ static int calibratejoysticks(struct mame_bitmap *bitmap,int selected)
 	return sel + 1;
 }
 
-#define MAX_ANALOG_ENTRIES 80
 
-static int settraksettings(struct mame_bitmap *bitmap,int selected)
+int ui_display_copyright(struct mame_bitmap *bitmap)
 {
-	const char *menu_item[MAX_ANALOG_ENTRIES];
-	const char *menu_subitem[MAX_ANALOG_ENTRIES];
-	struct InputPort *entry[MAX_ANALOG_ENTRIES];
-	int i,sel;
-	struct InputPort *in;
-	int total,total2;
-	int arrowize;
-
-
-	sel = selected - 1;
-
-
-	if (Machine->input_ports == 0)
-		return 0;
-
-	in = Machine->input_ports;
-
-	/* Count the total number of analog controls */
-	total = 0;
-	while (in->type != IPT_END)
-	{
-		if (port_type_is_analog(in->type))
-		{
-			entry[total] = in;
-			total++;
-		}
-		in++;
-	}
-
-	if (total == 0) return 0;
-
-	/* Each analog control has 4 entries - key & joy delta, center delta, reverse, sensitivity */
-
-#define ENTRIES 4
-
-	total2 = total * ENTRIES;
-
-	menu_item[total2] = ui_getstring (UI_returntomain);
-	menu_item[total2 + 1] = 0;	/* terminate array */
-	total2++;
-
-	arrowize = 0;
-	for (i = 0;i < total2;i++)
-	{
-		if (i < total2 - 1)
-		{
-			char label[MAX_ANALOG_ENTRIES][40];
-			char setting[MAX_ANALOG_ENTRIES][40];
-			int sensitivity,delta,centerdelta;
-			int reverse;
-
-			strcpy (label[i], input_port_name(entry[i/ENTRIES]));
-			sensitivity = entry[i/ENTRIES]->analog.sensitivity;
-			delta = entry[i/ENTRIES]->analog.delta;
-			centerdelta = entry[i/ENTRIES]->analog.centerdelta;
-			reverse = entry[i/ENTRIES]->analog.reverse;
-
-			strcat (label[i], " ");
-			switch (i%ENTRIES)
-			{
-				case 0:
-					strcat (label[i], ui_getstring (UI_keyjoyspeed));
-					sprintf(setting[i],"%d",delta);
-					if (i == sel) arrowize = 3;
-					break;
-				case 1:
-					strcat (label[i], ui_getstring (UI_centerspeed));
-					sprintf(setting[i],"%d",centerdelta);
-					if (i == sel) arrowize = 3;
-					break;
-				case 2:
-					strcat (label[i], ui_getstring (UI_reverse));
-					if (reverse)
-						strcpy(setting[i],ui_getstring (UI_on));
-					else
-						strcpy(setting[i],ui_getstring (UI_off));
-					if (i == sel) arrowize = 3;
-					break;
-				case 3:
-					strcat (label[i], ui_getstring (UI_sensitivity));
-					sprintf(setting[i],"%3d%%",sensitivity);
-					if (i == sel) arrowize = 3;
-					break;
-			}
-
-			menu_item[i] = label[i];
-			menu_subitem[i] = setting[i];
-
-			in++;
-		}
-		else menu_subitem[i] = 0;	/* no subitem */
-	}
-
-	ui_displaymenu(bitmap,menu_item,menu_subitem,0,sel,arrowize);
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-		sel = (sel + 1) % total2;
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-		sel = (sel + total2 - 1) % total2;
-
-	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
-	{
-		if(sel != total2 - 1)
-		{
-			if ((sel % ENTRIES) == 0)
-			{
-				/* keyboard/joystick delta */
-				int val = entry[sel/ENTRIES]->analog.delta;
-
-				val --;
-				if (val < 1) val = 1;
-				entry[sel/ENTRIES]->analog.delta = val;
-			}
-			else if ((sel % ENTRIES) == 1)
-			{
-				/* center delta */
-				int val = entry[sel/ENTRIES]->analog.centerdelta;
-
-				val --;
-				if (val < 0) val = 0;
-				entry[sel/ENTRIES]->analog.centerdelta = val;
-			}
-			else if ((sel % ENTRIES) == 2)
-			{
-				/* reverse */
-				entry[sel/ENTRIES]->analog.reverse ^= 1;
-			}
-			else if ((sel % ENTRIES) == 3)
-			{
-				/* sensitivity */
-				int val = entry[sel/ENTRIES]->analog.sensitivity;
-
-				val --;
-				if (val < 1) val = 1;
-				entry[sel/ENTRIES]->analog.sensitivity = val;
-			}
-		}
-	}
-
-	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
-	{
-		if(sel != total2 - 1)
-		{
-			if ((sel % ENTRIES) == 0)
-			{
-				/* keyboard/joystick delta */
-				int val = entry[sel/ENTRIES]->analog.delta;
-
-				val ++;
-				if (val > 255) val = 255;
-				entry[sel/ENTRIES]->analog.delta = val;
-			}
-			else if ((sel % ENTRIES) == 1)
-			{
-				/* center delta */
-				int val = entry[sel/ENTRIES]->analog.centerdelta;
-
-				val ++;
-				if (val > 255) val = 255;
-				entry[sel/ENTRIES]->analog.centerdelta = val;
-			}
-			else if ((sel % ENTRIES) == 2)
-			{
-				/* reverse */
-				entry[sel/ENTRIES]->analog.reverse ^= 1;
-			}
-			else if ((sel % ENTRIES) == 3)
-			{
-				/* sensitivity */
-				int val = entry[sel/ENTRIES]->analog.sensitivity;
-
-				val ++;
-				if (val > 255) val = 255;
-				entry[sel/ENTRIES]->analog.sensitivity = val;
-			}
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		if (sel == total2 - 1) sel = -1;
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL))
-		sel = -1;
-
-	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		sel = -2;
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
-}
-
-#ifndef MESS
-static int mame_stats(struct mame_bitmap *bitmap,int selected)
-{
-	char temp[10];
-	char buf[2048];
-	int sel, i;
-
-
-	sel = selected - 1;
-
-	buf[0] = 0;
-
-	if (dispensed_tickets)
-	{
-		strcat(buf, ui_getstring (UI_tickets));
-		strcat(buf, ": ");
-		sprintf(temp, "%d\n\n", dispensed_tickets);
-		strcat(buf, temp);
-	}
-
-	for (i=0; i<COIN_COUNTERS; i++)
-	{
-		strcat(buf, ui_getstring (UI_coin));
-		sprintf(temp, " %c: ", i+'A');
-		strcat(buf, temp);
-		if (!coin_count[i])
-			strcat (buf, ui_getstring (UI_NA));
-		else
-		{
-			sprintf (temp, "%d", coin_count[i]);
-			strcat (buf, temp);
-		}
-		if (coinlockedout[i])
-		{
-			strcat(buf, " ");
-			strcat(buf, ui_getstring (UI_locked));
-			strcat(buf, "\n");
-		}
-		else
-		{
-			strcat(buf, "\n");
-		}
-	}
-
-	{
-		/* menu system, use the normal menu keys */
-		strcat(buf,"\n\t");
-		strcat(buf,ui_getstring (UI_lefthilight));
-		strcat(buf," ");
-		strcat(buf,ui_getstring (UI_returntomain));
-		strcat(buf," ");
-		strcat(buf,ui_getstring (UI_righthilight));
-
-		ui_displaymessagewindow(bitmap,buf);
-
-		if (input_ui_pressed(IPT_UI_SELECT))
-			sel = -1;
-
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			sel = -1;
-
-		if (input_ui_pressed(IPT_UI_CONFIGURE))
-			sel = -2;
-	}
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
-}
-#endif
-
-int showcopyright(struct mame_bitmap *bitmap)
-{
-	int done;
 	char buf[1000];
-	char buf2[256];
+	char *bufptr = buf;
+	int done;
 
-	strcpy (buf, ui_getstring(UI_copyright1));
-	strcat (buf, "\n\n");
-	sprintf(buf2, ui_getstring(UI_copyright2), Machine->gamedrv->description);
-	strcat (buf, buf2);
-	strcat (buf, "\n\n");
-	strcat (buf, ui_getstring(UI_copyright3));
+	bufptr += sprintf(bufptr, "%s\n\n", ui_getstring(UI_copyright1));
+	bufptr += sprintf(bufptr, ui_getstring(UI_copyright2), Machine->gamedrv->description);
+	bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_copyright3));
 
-	setup_selected = -1;////
+	menu_state = -1;
 	done = 0;
 
 	do
 	{
 		erase_screen(bitmap);
-		ui_drawbox(bitmap,0,0,uirotwidth,uirotheight);
-		ui_displaymessagewindow(bitmap,buf);
+
+		ui_draw_message_window(buf);
+		render_ui(bitmap);
 
 		update_video_and_audio();
 		if (input_ui_pressed(IPT_UI_CANCEL))
 		{
-			setup_selected = 0;////
+			menu_state = 0;
 			return 1;
 		}
-		if (code_pressed_memory(KEYCODE_O) ||
-				input_ui_pressed(IPT_UI_LEFT))
+		if (code_pressed_memory(KEYCODE_O) || input_ui_pressed(IPT_UI_LEFT))
 			done = 1;
-		if (done == 1 && (code_pressed_memory(KEYCODE_K) ||
-				input_ui_pressed(IPT_UI_RIGHT)))
+		if (done == 1 && (code_pressed_memory(KEYCODE_K) || input_ui_pressed(IPT_UI_RIGHT)))
 			done = 2;
 	} while (done < 2);
 
-	setup_selected = 0;////
+	menu_state = 0;
 	erase_screen(bitmap);
 	update_video_and_audio();
 
 	return 0;
 }
 
-static int displaygameinfo(struct mame_bitmap *bitmap,int selected)
+int ui_display_game_warnings(struct mame_bitmap *bitmap)
 {
+#define WARNING_FLAGS (	GAME_NOT_WORKING | \
+						GAME_UNEMULATED_PROTECTION | \
+						GAME_WRONG_COLORS | \
+						GAME_IMPERFECT_COLORS | \
+						GAME_NO_SOUND |  \
+						GAME_IMPERFECT_SOUND |  \
+						GAME_IMPERFECT_GRAPHICS | \
+						GAME_NO_COCKTAIL)
 	int i;
 	char buf[2048];
-	char buf2[32];
-	int sel;
+	char *bufptr = buf;
 
-
-	sel = selected - 1;
-
-
-	sprintf(buf,"%s\n%s %s\n\n%s:\n",Machine->gamedrv->description,Machine->gamedrv->year,Machine->gamedrv->manufacturer,
-		ui_getstring (UI_cpu));
-	i = 0;
-	while (i < MAX_CPU && Machine->drv->cpu[i].cpu_type)
-	{
-		int type,clock,count;
-
-		type = Machine->drv->cpu[i].cpu_type;
-		clock = Machine->drv->cpu[i].cpu_clock;
-		count = 1;
-
-		i++;
-
-		while (i < MAX_CPU
-				&& Machine->drv->cpu[i].cpu_type == type
-				&& Machine->drv->cpu[i].cpu_clock == clock)
-		{
-			count++;
-			i++;
-		}
-
-		if (count > 1)
-			sprintf(&buf[strlen(buf)],"%dx",count);
-
-		sprintf(&buf[strlen(buf)],"%s",cputype_name(type));
-
-		if (clock >= 1000000)
-			sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-					clock / 1000000,
-					clock % 1000000);
-		else
-			sprintf(&buf[strlen(buf)]," %d.%03d kHz",
-					clock / 1000,
-					clock % 1000);
-
-		strcat(buf,"\n");
-	}
-
-	sprintf (buf2, "\n%s", ui_getstring (UI_sound));
-	strcat (buf, buf2);
-	strcat(buf,":\n");
-
-	i = 0;
-	while (i < MAX_SOUND && Machine->drv->sound[i].sound_type)
-	{
-		const char *name;
-		int type,clock,count;
-
-		name = sndnum_name(i);
-		type = Machine->drv->sound[i].sound_type;
-		clock = sndnum_clock(i);
-		count = 1;
-
-		i++;
-
-		while (i < MAX_SOUND
-				&& Machine->drv->sound[i].sound_type == type
-				&& sndnum_clock(i) == clock)
-		{
-			count++;
-			i++;
-		}
-
-		if (count > 1)
-			sprintf(&buf[strlen(buf)],"%dx",count);
-
-		sprintf(&buf[strlen(buf)],"%s",name);
-
-		if (clock)
-		{
-			if (clock >= 1000000)
-				sprintf(&buf[strlen(buf)]," %d.%06d MHz",
-						clock / 1000000,
-						clock % 1000000);
-			else
-				sprintf(&buf[strlen(buf)]," %d.%03d kHz",
-						clock / 1000,
-						clock % 1000);
-		}
-
-		strcat(buf,"\n");
-	}
-
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		sprintf(&buf[strlen(buf)],"\n%s\n", ui_getstring (UI_vectorgame));
-	else
-	{
-		sprintf(&buf[strlen(buf)],"\n%s:\n", ui_getstring (UI_screenres));
-		sprintf(&buf[strlen(buf)],"%d x %d (%s) %f Hz\n",
-				Machine->visible_area.max_x - Machine->visible_area.min_x + 1,
-				Machine->visible_area.max_y - Machine->visible_area.min_y + 1,
-				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
-				Machine->refresh_rate);
-	}
-
-
-	if (sel == -1)
-	{
-		/* startup info, print MAME version and ask for any key */
-
-		sprintf (buf2, "\n\t%s ", ui_getstring (UI_mame));	/* \t means that the line will be centered */
-		strcat(buf, buf2);
-
-		strcat(buf,build_version);
-		sprintf (buf2, "\n\t%s", ui_getstring (UI_anykey));
-		strcat(buf,buf2);
-		ui_drawbox(bitmap,0,0,uirotwidth,uirotheight);
-		ui_displaymessagewindow(bitmap,buf);
-
-		sel = 0;
-		if (code_read_async() != CODE_NONE)
-			sel = -1;
-	}
-	else
-	{
-		/* menu system, use the normal menu keys */
-		strcat(buf,"\n\t");
-		strcat(buf,ui_getstring (UI_lefthilight));
-		strcat(buf," ");
-		strcat(buf,ui_getstring (UI_returntomain));
-		strcat(buf," ");
-		strcat(buf,ui_getstring (UI_righthilight));
-
-		ui_displaymessagewindow(bitmap,buf);
-
-		if (input_ui_pressed(IPT_UI_SELECT))
-			sel = -1;
-
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			sel = -1;
-
-		if (input_ui_pressed(IPT_UI_CONFIGURE))
-			sel = -2;
-	}
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
-}
-
-
-int showgamewarnings(struct mame_bitmap *bitmap)
-{
-	int i;
-	char buf[2048];
-
-	if (Machine->gamedrv->flags &
-			(GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_WRONG_COLORS | GAME_IMPERFECT_COLORS |
-			  GAME_NO_SOUND | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL))
+	if (Machine->rom_load_warnings > 0 || (Machine->gamedrv->flags & WARNING_FLAGS))
 	{
 		int done;
 
-		strcpy(buf, ui_getstring (UI_knownproblems));
-		strcat(buf, "\n\n");
+		if (Machine->rom_load_warnings > 0)
+		{
+			bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_incorrectroms));
+			if (Machine->gamedrv->flags & WARNING_FLAGS)
+				*bufptr++ = '\n';
+		}
+
+		if (Machine->gamedrv->flags & WARNING_FLAGS)
+		{
+			bufptr += sprintf(bufptr, "%s\n\n", ui_getstring(UI_knownproblems));
 
 #ifdef MESS
-		if (Machine->gamedrv->flags & GAME_COMPUTER)
-		{
-			strcpy(buf, ui_getstring (UI_comp1));
-			strcat(buf, "\n\n");
-			strcat(buf, ui_getstring (UI_comp2));
-			strcat(buf, "\n");
-		}
+			if (Machine->gamedrv->flags & GAME_COMPUTER)
+				bufptr += sprintf(bufptr, "%s\n\n%s\n", ui_getstring(UI_comp1), ui_getstring(UI_comp2));
 #endif
 
-		if (Machine->gamedrv->flags & GAME_IMPERFECT_COLORS)
-		{
-			strcat(buf, ui_getstring (UI_imperfectcolors));
-			strcat(buf, "\n");
-		}
+			if (Machine->gamedrv->flags & GAME_IMPERFECT_COLORS)
+				bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_imperfectcolors));
+			if (Machine->gamedrv->flags & GAME_WRONG_COLORS)
+				bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_wrongcolors));
+			if (Machine->gamedrv->flags & GAME_IMPERFECT_GRAPHICS)
+				bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_imperfectgraphics));
+			if (Machine->gamedrv->flags & GAME_IMPERFECT_SOUND)
+				bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_imperfectsound));
+			if (Machine->gamedrv->flags & GAME_NO_SOUND)
+				bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_nosound));
+			if (Machine->gamedrv->flags & GAME_NO_COCKTAIL)
+				bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_nococktail));
 
-		if (Machine->gamedrv->flags & GAME_WRONG_COLORS)
-		{
-			strcat(buf, ui_getstring (UI_wrongcolors));
-			strcat(buf, "\n");
-		}
-
-		if (Machine->gamedrv->flags & GAME_IMPERFECT_GRAPHICS)
-		{
-			strcat(buf, ui_getstring (UI_imperfectgraphics));
-			strcat(buf, "\n");
-		}
-
-		if (Machine->gamedrv->flags & GAME_IMPERFECT_SOUND)
-		{
-			strcat(buf, ui_getstring (UI_imperfectsound));
-			strcat(buf, "\n");
-		}
-
-		if (Machine->gamedrv->flags & GAME_NO_SOUND)
-		{
-			strcat(buf, ui_getstring (UI_nosound));
-			strcat(buf, "\n");
-		}
-
-		if (Machine->gamedrv->flags & GAME_NO_COCKTAIL)
-		{
-			strcat(buf, ui_getstring (UI_nococktail));
-			strcat(buf, "\n");
-		}
-
-		if (Machine->gamedrv->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
-		{
-			const struct GameDriver *maindrv;
-			int foundworking;
-
-			if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+			if (Machine->gamedrv->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 			{
-				strcpy(buf, ui_getstring (UI_brokengame));
-				strcat(buf, "\n");
-			}
-			if (Machine->gamedrv->flags & GAME_UNEMULATED_PROTECTION)
-			{
-				strcat(buf, ui_getstring (UI_brokenprotection));
-				strcat(buf, "\n");
-			}
+				const struct GameDriver *maindrv;
+				int foundworking;
 
-			if (Machine->gamedrv->clone_of && !(Machine->gamedrv->clone_of->flags & NOT_A_DRIVER))
-				maindrv = Machine->gamedrv->clone_of;
-			else maindrv = Machine->gamedrv;
+				if (Machine->gamedrv->flags & GAME_NOT_WORKING)
+					bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_brokengame));
+				if (Machine->gamedrv->flags & GAME_UNEMULATED_PROTECTION)
+					bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_brokenprotection));
 
-			foundworking = 0;
-			i = 0;
-			while (drivers[i])
-			{
-				if (drivers[i] == maindrv || drivers[i]->clone_of == maindrv)
+				if (Machine->gamedrv->clone_of && !(Machine->gamedrv->clone_of->flags & NOT_A_DRIVER))
+					maindrv = Machine->gamedrv->clone_of;
+				else
+					maindrv = Machine->gamedrv;
+
+				foundworking = 0;
+				i = 0;
+				while (drivers[i])
 				{
-					if ((drivers[i]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)) == 0)
+					if (drivers[i] == maindrv || drivers[i]->clone_of == maindrv)
 					{
-						if (foundworking == 0)
+						if ((drivers[i]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)) == 0)
 						{
-							strcat(buf,"\n\n");
-							strcat(buf, ui_getstring (UI_workingclones));
-							strcat(buf,"\n\n");
+							if (foundworking == 0)
+								bufptr += sprintf(bufptr, "\n\n%s\n\n", ui_getstring(UI_workingclones));
+							bufptr += sprintf(bufptr, "%s\n", drivers[i]->name);
+							foundworking = 1;
 						}
-						foundworking = 1;
-
-						sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
 					}
+					i++;
 				}
-				i++;
 			}
 		}
 
-		strcat(buf,"\n\n");
-		strcat(buf,ui_getstring (UI_typeok));
+		bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_typeok));
 
 		done = 0;
 		do
 		{
+			int ui_width, ui_height;
+
 			erase_screen(bitmap);
-			ui_drawbox(bitmap,0,0,uirotwidth,uirotheight);
-			ui_displaymessagewindow(bitmap,buf);
+
+			ui_get_bounds(&ui_width, &ui_height);
+			add_filled_box(0, 0, ui_width - 1, ui_height - 1);
+			ui_draw_message_window(buf);
+			render_ui(bitmap);
 
 			update_video_and_audio();
 			if (input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
-			if (code_pressed_memory(KEYCODE_O) ||
-					input_ui_pressed(IPT_UI_LEFT))
+			if (code_pressed_memory(KEYCODE_O) || input_ui_pressed(IPT_UI_LEFT))
 				done = 1;
-			if (done == 1 && (code_pressed_memory(KEYCODE_K) ||
-					input_ui_pressed(IPT_UI_RIGHT)))
+			if (done == 1 && (code_pressed_memory(KEYCODE_K) || input_ui_pressed(IPT_UI_RIGHT)))
 				done = 2;
 		} while (done < 2);
 	}
@@ -2982,22 +2962,43 @@ int showgamewarnings(struct mame_bitmap *bitmap)
 }
 
 
-int showgameinfo(struct mame_bitmap *bitmap)
+int ui_display_game_info(struct mame_bitmap *bitmap)
 {
+	int ui_width, ui_height;
+	char buf[2048];
+
 	/* clear the input memory */
-	while (code_read_async() != CODE_NONE) {};
+	while (code_read_async() != CODE_NONE) ;
 
-	while (displaygameinfo(bitmap,0) == 1)
+	while (code_read_async() == CODE_NONE)
 	{
+		char *bufptr = buf;
+
+		/* first draw a box around the whole screen */
+		ui_get_bounds(&ui_width, &ui_height);
+		add_filled_box(0, 0, ui_width - 1, ui_height - 1);
+
+		/* add the game info */
+		bufptr += sprintf_game_info(bufptr);
+
+		/* append MAME version and ask for any key */
+		bufptr += sprintf(bufptr, "\n\t%s %s\n\t%s", ui_getstring(UI_mame), build_version, ui_getstring(UI_anykey));
+
+		/* draw the window */
+		ui_draw_message_window(buf);
+
+		/* render and update */
+		render_ui(bitmap);
 		update_video_and_audio();
 	}
 
-	#ifdef MESS
-	while (displayimageinfo(bitmap,0) == 1)
+#ifdef MESS
+	while (displayimageinfo(0) == 1)
 	{
+		render_ui(bitmap);
 		update_video_and_audio();
 	}
-	#endif
+#endif
 
 	erase_screen(bitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
@@ -3009,288 +3010,7 @@ int showgameinfo(struct mame_bitmap *bitmap)
 	return 0;
 }
 
-/* Word-wraps the text in the specified buffer to fit in maxwidth characters per line.
-   The contents of the buffer are modified.
-   Known limitations: Words longer than maxwidth cause the function to fail. */
-static void wordwrap_text_buffer (char *buffer, int maxwidth)
-{
-	int width = 0;
-
-	while (*buffer)
-	{
-		if (*buffer == '\n')
-		{
-			buffer++;
-			width = 0;
-			continue;
-		}
-
-		width++;
-
-		if (width > maxwidth)
-		{
-			/* backtrack until a space is found */
-			while (*buffer != ' ')
-			{
-				buffer--;
-				width--;
-			}
-			if (width < 1) return;	/* word too long */
-
-			/* replace space with a newline */
-			*buffer = '\n';
-		}
-		else
-			buffer++;
-	}
-}
-
-static int count_lines_in_buffer (char *buffer)
-{
-	int lines = 0;
-	char c;
-
-	while ( (c = *buffer++) )
-		if (c == '\n') lines++;
-
-	return lines;
-}
-
-/* Display lines from buffer, starting with line 'scroll', in a width x height text window */
-static void display_scroll_message (struct mame_bitmap *bitmap, int *scroll, int width, int height, char *buf)
-{
-	struct DisplayText dt[256];
-	int curr_dt = 0;
-	const char *uparrow = ui_getstring (UI_uparrow);
-	const char *downarrow = ui_getstring (UI_downarrow);
-	char textcopy[2048];
-	char *copy;
-	int leftoffs,topoffs;
-	int first = *scroll;
-	int buflines,showlines;
-	int i;
-
-
-	/* draw box */
-	leftoffs = (uirotwidth - uirotcharwidth * (width + 1)) / 2;
-	if (leftoffs < 0) leftoffs = 0;
-	topoffs = (uirotheight - (3 * height + 1) * uirotcharheight / 2) / 2;
-	ui_drawbox(bitmap,leftoffs,topoffs,(width + 1) * uirotcharwidth,(3 * height + 1) * uirotcharheight / 2);
-
-	buflines = count_lines_in_buffer (buf);
-	if (first > 0)
-	{
-		if (buflines <= height)
-			first = 0;
-		else
-		{
-			height--;
-			if (first > (buflines - height))
-				first = buflines - height;
-		}
-		*scroll = first;
-	}
-
-	if (first != 0)
-	{
-		/* indicate that scrolling upward is possible */
-		dt[curr_dt].text = uparrow;
-		dt[curr_dt].color = UI_COLOR_NORMAL;
-		dt[curr_dt].x = (uirotwidth - uirotcharwidth * strlen(uparrow)) / 2;
-		dt[curr_dt].y = topoffs + (3*curr_dt+1)*uirotcharheight/2;
-		curr_dt++;
-	}
-
-	if ((buflines - first) > height)
-		showlines = height - 1;
-	else
-		showlines = height;
-
-	/* skip to first line */
-	while (first > 0)
-	{
-		char c;
-
-		while ( (c = *buf++) )
-		{
-			if (c == '\n')
-			{
-				first--;
-				break;
-			}
-		}
-	}
-
-	/* copy 'showlines' lines from buffer, starting with line 'first' */
-	copy = textcopy;
-	for (i = 0; i < showlines; i++)
-	{
-		char *copystart = copy;
-
-		while (*buf && *buf != '\n')
-		{
-			*copy = *buf;
-			copy++;
-			buf++;
-		}
-		*copy = '\0';
-		copy++;
-		if (*buf == '\n')
-			buf++;
-
-		if (*copystart == '\t') /* center text */
-		{
-			copystart++;
-			dt[curr_dt].x = (uirotwidth - uirotcharwidth * (copy - copystart)) / 2;
-		}
-		else
-			dt[curr_dt].x = leftoffs + uirotcharwidth/2;
-
-		dt[curr_dt].text = copystart;
-		dt[curr_dt].color = UI_COLOR_NORMAL;
-		dt[curr_dt].y = topoffs + (3*curr_dt+1)*uirotcharheight/2;
-		curr_dt++;
-	}
-
-	if (showlines == (height - 1))
-	{
-		/* indicate that scrolling downward is possible */
-		dt[curr_dt].text = downarrow;
-		dt[curr_dt].color = UI_COLOR_NORMAL;
-		dt[curr_dt].x = (uirotwidth - uirotcharwidth * strlen(downarrow)) / 2;
-		dt[curr_dt].y = topoffs + (3*curr_dt+1)*uirotcharheight/2;
-		curr_dt++;
-	}
-
-	dt[curr_dt].text = 0;	/* terminate array */
-
-	displaytext(bitmap,dt);
-}
-
-
-/* Display text entry for current driver from history.dat and mameinfo.dat. */
-static int displayhistory (struct mame_bitmap *bitmap, int selected)
-{
-	static int scroll = 0;
-	static char *buf = 0;
-	int maxcols,maxrows;
-	int sel;
-	int bufsize = 256 * 1024; // 256KB of history.dat buffer, enough for everything
-
-	sel = selected - 1;
-
-
-	maxcols = (uirotwidth / uirotcharwidth) - 1;
-	maxrows = (2 * uirotheight - uirotcharheight) / (3 * uirotcharheight);
-	maxcols -= 2;
-	maxrows -= 8;
-
-	if (!buf)
-	{
-		/* allocate a buffer for the text */
-		buf = malloc (bufsize);
-
-		if (buf)
-		{
-			/* try to load entry */
-			if (load_driver_history (Machine->gamedrv, buf, bufsize) == 0)
-			{
-				scroll = 0;
-				wordwrap_text_buffer (buf, maxcols);
-				strcat(buf,"\n\t");
-				strcat(buf,ui_getstring (UI_lefthilight));
-				strcat(buf," ");
-				strcat(buf,ui_getstring (UI_returntomain));
-				strcat(buf," ");
-				strcat(buf,ui_getstring (UI_righthilight));
-				strcat(buf,"\n");
-			}
-			else
-			{
-				free (buf);
-				buf = 0;
-			}
-		}
-	}
-
-	{
-		if (buf)
-			display_scroll_message (bitmap, &scroll, maxcols, maxrows, buf);
-		else
-		{
-			char msg[80];
-
-			strcpy(msg,"\t");
-			strcat(msg,ui_getstring(UI_historymissing));
-			strcat(msg,"\n\n\t");
-			strcat(msg,ui_getstring (UI_lefthilight));
-			strcat(msg," ");
-			strcat(msg,ui_getstring (UI_returntomain));
-			strcat(msg," ");
-			strcat(msg,ui_getstring (UI_righthilight));
-			ui_displaymessagewindow(bitmap,msg);
-		}
-
-		if ((scroll > 0) && input_ui_pressed_repeat(IPT_UI_UP,4))
-		{
-			if (scroll == 2) scroll = 0;	/* 1 would be the same as 0, but with arrow on top */
-			else scroll--;
-		}
-
-		if (input_ui_pressed_repeat(IPT_UI_DOWN,4))
-		{
-			if (scroll == 0) scroll = 2;	/* 1 would be the same as 0, but with arrow on top */
-			else scroll++;
-		}
-
-		if (input_ui_pressed_repeat(IPT_UI_HOME, 4))
-		{
-			scroll = 0;
-		}
-
-		if (input_ui_pressed_repeat(IPT_UI_END, 4))
-		{
-			scroll = count_lines_in_buffer(buf); /* display_scroll_message will fix it */
-		}
-
-		if (input_ui_pressed_repeat(IPT_UI_PAN_UP, 4))
-		{
-			scroll -= maxrows - 2;
-			if (scroll < 0) scroll = 0;
-		}
-
-		if (input_ui_pressed_repeat(IPT_UI_PAN_DOWN, 4))
-		{
-			scroll += maxrows - 2;
-		}
-
-		if (input_ui_pressed(IPT_UI_SELECT))
-			sel = -1;
-
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			sel = -1;
-
-		if (input_ui_pressed(IPT_UI_CONFIGURE))
-			sel = -2;
-	}
-
-	if (sel == -1 || sel == -2)
-	{
-		schedule_full_refresh();
-
-		/* force buffer to be recreated */
-		if (buf)
-		{
-			free (buf);
-			buf = 0;
-		}
-	}
-
-	return sel + 1;
-
-}
-
-int memcard_menu(struct mame_bitmap *bitmap, int selection)
+int memcard_menu(int selection)
 {
 	int sel;
 	int menutotal = 0;
@@ -3336,13 +3056,13 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 		}
 
 		strcat (buf2, "\n\n");
-		ui_displaymessagewindow(bitmap,buf2);
+		ui_draw_message_window(buf2);
 		if (input_ui_pressed(IPT_UI_SELECT))
 			mcd_action = 0;
 	}
 	else
 	{
-		ui_displaymenu(bitmap,menuitem,0,0,sel,0);
+		//ui_draw_menu(menuitem,0,0,sel,0);
 
 		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
 			mcd_number = (mcd_number + 1) % 1000;
@@ -3416,295 +3136,6 @@ int memcard_menu(struct mame_bitmap *bitmap, int selection)
 }
 
 
-#ifndef MESS
-enum { UI_SWITCH = 0,UI_DEFGROUP,UI_CODE,UI_ANALOG,UI_CALIBRATE,
-		UI_STATS,UI_GAMEINFO, UI_HISTORY,
-		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
-#else
-enum { UI_SWITCH = 0,UI_DEFGROUP,UI_CODE,UI_ANALOG,UI_CALIBRATE,
-		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
-		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT,
-		UI_CONFIGURATION, UI_CATEGORIES };
-#endif
-
-
-#define MAX_SETUPMENU_ITEMS 20
-static const char *menu_item[MAX_SETUPMENU_ITEMS];
-static int menu_action[MAX_SETUPMENU_ITEMS];
-static int menu_total;
-
-
-static void append_menu(int uistring, int action)
-{
-	menu_item[menu_total] = ui_getstring(uistring);
-	menu_action[menu_total++] = action;
-}
-
-
-static int has_dipswitches(void)
-{
-	struct InputPort *in;
-	int num;
-
-	/* Determine if there are any dip switches */
-	num = 0;
-	for (in = Machine->input_ports; in->type != IPT_END; in++)
-	{
-		if (in->type == IPT_DIPSWITCH_NAME && input_port_active(in))
-			num++;
-	}
-	return num > 0;
-}
-
-
-static int has_analog(void)
-{
-	struct InputPort *in;
-	int num;
-
-	/* Determine if there are any analog controls */
-	num = 0;
-	for (in = Machine->input_ports; in->type != IPT_END; in++)
- 	{
-		if (port_type_is_analog(in->type) && input_port_active(in))
-			num++;
-	}
-	return num > 0;
-}
-
-
-#ifdef MESS
-static int has_configurables(void)
-{
-	struct InputPort *in;
-	int num;
-
-	num = 0;
-	for (in = Machine->input_ports; in->type != IPT_END; in++)
-	{
-		if (in->type == IPT_CONFIG_NAME && input_port_active(in))
-			num++;
-	}
-	return num > 0;
-}
-
-
-static int has_categories(void)
-{
-	struct InputPort *in;
-	int num;
-
-	num = 0;
-	for (in = Machine->input_ports; in->type != IPT_END; in++)
-	{
-		if (in->category > 0 && input_port_active(in))
-			num++;
-	}
-	return num > 0;
-}
-#endif /* MESS */
-
-
-static void setup_menu_init(void)
-{
-	menu_total = 0;
-
-	append_menu(UI_inputgeneral, UI_DEFGROUP);
-	append_menu(UI_inputspecific, UI_CODE);
-
-	if (has_dipswitches())
-		append_menu(UI_dipswitches, UI_SWITCH);
-
-#ifdef MESS
-	if (has_configurables())
-		append_menu(UI_configuration, UI_CONFIGURATION);
-	if (has_categories())
-		append_menu(UI_categories, UI_CATEGORIES);
-#endif /* MESS */
-
-
-	if (has_analog())
-		append_menu(UI_analogcontrols, UI_ANALOG);
-
-  	/* Joystick calibration possible? */
-  	if ((osd_joystick_needs_calibration()) != 0)
-	{
-		append_menu(UI_calibrate, UI_CALIBRATE);
-	}
-
-#ifndef MESS
-	append_menu(UI_bookkeeping, UI_STATS);
-	append_menu(UI_gameinfo, UI_GAMEINFO);
-	append_menu(UI_history, UI_HISTORY);
-#else /* MESS */
-	append_menu(UI_imageinfo, UI_IMAGEINFO);
-	append_menu(UI_filemanager, UI_FILEMANAGER);
-#if HAS_WAVE
-	if (device_find(Machine->devices, IO_CASSETTE))
-		append_menu(UI_tapecontrol, UI_TAPECONTROL);
-#endif /* HAS_WAVE */
-	append_menu(UI_history, UI_HISTORY);
-#endif /* !MESS */
-
-	if (options.cheat)
-	{
-		append_menu(UI_cheat, UI_CHEAT);
-	}
-
-	if (	memcard_intf.create != NULL &&
-		memcard_intf.load != NULL &&
-		memcard_intf.save != NULL &&
-		memcard_intf.eject != NULL)
-	{
-		append_menu(UI_memorycard, UI_MEMCARD);
-	}
-
-	append_menu(UI_resetgame, UI_RESET);
-	append_menu(UI_returntogame, UI_EXIT);
-	menu_item[menu_total] = 0; /* terminate array */
-}
-
-
-static int setup_menu(struct mame_bitmap *bitmap, int selected)
-{
-	int sel,res=-1;
-	static int menu_lastselected = 0;
-
-
-	if (selected == -1)
-		sel = menu_lastselected;
-	else sel = selected - 1;
-
-	if (sel > SEL_MASK)
-	{
-		switch (menu_action[sel & SEL_MASK])
-		{
-			case UI_SWITCH:
-				res = setdipswitches(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_DEFGROUP:
-				res = setdefcodesettings(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_CODE:
-				res = setcodesettings(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_ANALOG:
-				res = settraksettings(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_CALIBRATE:
-				res = calibratejoysticks(bitmap, sel >> SEL_BITS);
-				break;
-#ifndef MESS
-			case UI_STATS:
-				res = mame_stats(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_GAMEINFO:
-				res = displaygameinfo(bitmap, sel >> SEL_BITS);
-				break;
-#endif
-#ifdef MESS
-			case UI_IMAGEINFO:
-				res = displayimageinfo(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_FILEMANAGER:
-				res = filemanager(bitmap, sel >> SEL_BITS);
-				break;
-#if HAS_WAVE
-			case UI_TAPECONTROL:
-				res = tapecontrol(bitmap, sel >> SEL_BITS);
-				break;
-#endif /* HAS_WAVE */
-			case UI_CONFIGURATION:
-				res = setconfiguration(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_CATEGORIES:
-				res = setcategories(bitmap, sel >> SEL_BITS);
-				break;
-#endif /* MESS */
-			case UI_HISTORY:
-				res = displayhistory(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_CHEAT:
-				res = cheat_menu(bitmap, sel >> SEL_BITS);
-				break;
-			case UI_MEMCARD:
-				res = memcard_menu(bitmap, sel >> SEL_BITS);
-				break;
-		}
-
-		if (res == -1)
-		{
-			menu_lastselected = sel;
-			sel = -1;
-		}
-		else
-			sel = (sel & SEL_MASK) | (res << SEL_BITS);
-
-		return sel + 1;
-	}
-
-
-	ui_displaymenu(bitmap,menu_item,0,0,sel,0);
-
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
-		sel = (sel + 1) % menu_total;
-
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
-		sel = (sel + menu_total - 1) % menu_total;
-
-	if (input_ui_pressed(IPT_UI_SELECT))
-	{
-		switch (menu_action[sel])
-		{
-			case UI_SWITCH:
-			case UI_DEFGROUP:
-			case UI_CODE:
-			case UI_ANALOG:
-			case UI_CALIBRATE:
-			#ifndef MESS
-			case UI_STATS:
-			case UI_GAMEINFO:
-			#else
-			case UI_GAMEINFO:
-			case UI_IMAGEINFO:
-			case UI_FILEMANAGER:
-			case UI_TAPECONTROL:
-			case UI_CONFIGURATION:
-			case UI_CATEGORIES:
-#endif /* !MESS */
-			case UI_HISTORY:
-			case UI_CHEAT:
-			case UI_MEMCARD:
-				sel |= 1 << SEL_BITS;
-				schedule_full_refresh();
-				break;
-
-			case UI_RESET:
-				machine_reset();
-				break;
-
-			case UI_EXIT:
-				menu_lastselected = 0;
-				sel = -1;
-				break;
-		}
-	}
-
-	if (input_ui_pressed(IPT_UI_CANCEL) ||
-			input_ui_pressed(IPT_UI_CONFIGURE))
-	{
-		menu_lastselected = sel;
-		sel = -1;
-	}
-
-	if (sel == -1)
-	{
-		schedule_full_refresh();
-	}
-
-	return sel + 1;
-}
-
 
 
 /*********************************************************************
@@ -3713,36 +3144,69 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 
 *********************************************************************/
 
-static void displayosd(struct mame_bitmap *bitmap,const char *text,int percentage,int default_percentage)
+/*-------------------------------------------------
+    drawbar - draw a thermometer bar
+-------------------------------------------------*/
+
+static void drawbar(int leftx, int topy, int width, int height, int percentage, int default_percentage)
 {
-	struct DisplayText dt[2];
-	int avail;
+	int current_x, default_x;
+	int bar_top, bar_bottom;
 
+	/* compute positions */
+	bar_top = topy + (height + 7)/8;
+	bar_bottom = topy + (height - 1) - (height + 7)/8;
+	default_x = leftx + (width - 1) * default_percentage / 100;
+	current_x = leftx + (width - 1) * percentage / 100;
 
-	avail = (uirotwidth / uirotcharwidth) * 19 / 20;
+	/* draw the top and bottom lines */
+	add_line(leftx, bar_top, leftx + width - 1, bar_top, RGB_WHITE);
+	add_line(leftx, bar_bottom, leftx + width - 1, bar_bottom, RGB_WHITE);
 
-	ui_drawbox(bitmap,(uirotwidth - uirotcharwidth * avail) / 2,
-			(uirotheight - 7*uirotcharheight/2),
-			avail * uirotcharwidth,
-			3*uirotcharheight);
+	/* draw default marker */
+	add_line(default_x, topy, default_x, bar_top, RGB_WHITE);
+	add_line(default_x, bar_bottom, default_x, topy + height - 1, RGB_WHITE);
 
-	avail--;
-
-	drawbar(bitmap,(uirotwidth - uirotcharwidth * avail) / 2,
-			(uirotheight - 3*uirotcharheight),
-			avail * uirotcharwidth,
-			uirotcharheight,
-			percentage,default_percentage);
-
-	dt[0].text = text;
-	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = (uirotwidth - uirotcharwidth * strlen(text)) / 2;
-	dt[0].y = (uirotheight - 2*uirotcharheight) + 2;
-	dt[1].text = 0; /* terminate array */
-	displaytext(bitmap,dt);
+	/* fill in the percentage */
+	add_fill(leftx, bar_top + 1, current_x, bar_bottom - 1, RGB_WHITE);
 }
 
-static void onscrd_adjuster(struct mame_bitmap *bitmap,int increment,int arg)
+
+
+static void displayosd(const char *text,int percentage,int default_percentage)
+{
+	int space_width = get_char_width(' ');
+	int line_height = ui_get_line_height();
+	int ui_width, ui_height;
+	int text_height;
+
+	/* get our UI bounds */
+	ui_get_bounds(&ui_width, &ui_height);
+
+	/* leave a spaces' worth of room along the left/right sides, and a lines' worth on the top/bottom */
+	ui_width -= 2 * space_width;
+	ui_height -= 2 * line_height;
+
+	/* determine the text height */
+	ui_draw_text_full(text, 0, 0, ui_width - 2 * UI_BOX_LR_BORDER,
+				JUSTIFY_CENTER, WRAP_WORD, DRAW_NONE, RGB_WHITE, RGB_BLACK, NULL, &text_height);
+
+	/* add a box around the whole area */
+	add_filled_box(	space_width,
+					line_height + ui_height - text_height - line_height - 2 * UI_BOX_TB_BORDER,
+					space_width + ui_width,
+					line_height + ui_height);
+
+	/* draw the thermometer */
+	drawbar(2 * space_width, line_height + ui_height - UI_BOX_TB_BORDER - text_height - line_height*3/4,
+			ui_width - 2 * space_width, line_height*3/4, percentage, default_percentage);
+
+	/* draw the actual text */
+	ui_draw_text_full(text, space_width + UI_BOX_LR_BORDER, line_height + ui_height - UI_BOX_TB_BORDER - text_height, ui_width - 2 * UI_BOX_LR_BORDER,
+				JUSTIFY_CENTER, WRAP_WORD, DRAW_NORMAL, RGB_WHITE, RGB_BLACK, NULL, &text_height);
+}
+
+static void onscrd_adjuster(int increment,int arg)
 {
 	struct InputPort *in = &Machine->input_ports[arg];
 	char buf[80];
@@ -3760,10 +3224,10 @@ static void onscrd_adjuster(struct mame_bitmap *bitmap,int increment,int arg)
 
 	sprintf(buf,"%s %d%%",in->name,value);
 
-	displayosd(bitmap,buf,value,in->default_value >> 8);
+	displayosd(buf,value,in->default_value >> 8);
 }
 
-static void onscrd_volume(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_volume(int increment,int arg)
 {
 	char buf[20];
 	int attenuation;
@@ -3779,10 +3243,10 @@ static void onscrd_volume(struct mame_bitmap *bitmap,int increment,int arg)
 	attenuation = osd_get_mastervolume();
 
 	sprintf(buf,"%s %3ddB", ui_getstring (UI_volume), attenuation);
-	displayosd(bitmap,buf,100 * (attenuation + 32) / 32,100);
+	displayosd(buf,100 * (attenuation + 32) / 32,100);
 }
 
-static void onscrd_mixervol(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_mixervol(int increment,int arg)
 {
 	static void *driver = 0;
 	char buf[40];
@@ -3862,10 +3326,10 @@ static void onscrd_mixervol(struct mame_bitmap *bitmap,int increment,int arg)
 		sprintf(buf,"%s %s %4.2f", ui_getstring (UI_allchannels), ui_getstring (UI_volume), volume);
 	else
 		sprintf(buf,"%s %s %4.2f",sound_get_user_gain_name(arg), ui_getstring (UI_volume), volume);
-	displayosd(bitmap,buf,volume*50,sound_get_default_gain(arg)*50);
+	displayosd(buf,volume*50,sound_get_default_gain(arg)*50);
 }
 
-static void onscrd_brightness(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_brightness(int increment,int arg)
 {
 	char buf[20];
 	double brightness;
@@ -3882,10 +3346,10 @@ static void onscrd_brightness(struct mame_bitmap *bitmap,int increment,int arg)
 	brightness = palette_get_global_brightness();
 
 	sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), (int)(brightness * 100));
-	displayosd(bitmap,buf,brightness*100,100);
+	displayosd(buf,brightness*100,100);
 }
 
-static void onscrd_gamma(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_gamma(int increment,int arg)
 {
 	char buf[20];
 	double gamma_correction;
@@ -3903,10 +3367,10 @@ static void onscrd_gamma(struct mame_bitmap *bitmap,int increment,int arg)
 	gamma_correction = palette_get_global_gamma();
 
 	sprintf(buf,"%s %1.2f", ui_getstring (UI_gamma), gamma_correction);
-	displayosd(bitmap,buf,100*(gamma_correction-0.5)/(2.0-0.5),100*(1.0-0.5)/(2.0-0.5));
+	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5),100*(1.0-0.5)/(2.0-0.5));
 }
 
-static void onscrd_vector_flicker(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_vector_flicker(int increment,int arg)
 {
 	char buf[1000];
 	float flicker_correction;
@@ -3927,10 +3391,10 @@ static void onscrd_vector_flicker(struct mame_bitmap *bitmap,int increment,int a
 	flicker_correction = vector_get_flicker();
 
 	sprintf(buf,"%s %1.2f", ui_getstring (UI_vectorflicker), flicker_correction);
-	displayosd(bitmap,buf,flicker_correction,0);
+	displayosd(buf,flicker_correction,0);
 }
 
-static void onscrd_vector_intensity(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_vector_intensity(int increment,int arg)
 {
 	char buf[30];
 	float intensity_correction;
@@ -3948,11 +3412,11 @@ static void onscrd_vector_intensity(struct mame_bitmap *bitmap,int increment,int
 	intensity_correction = vector_get_intensity();
 
 	sprintf(buf,"%s %1.2f", ui_getstring (UI_vectorintensity), intensity_correction);
-	displayosd(bitmap,buf,100*(intensity_correction-0.5)/(3.0-0.5),100*(1.5-0.5)/(3.0-0.5));
+	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5),100*(1.5-0.5)/(3.0-0.5));
 }
 
 
-static void onscrd_overclock(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_overclock(int increment,int arg)
 {
 	char buf[30];
 	double overclock;
@@ -3981,10 +3445,10 @@ static void onscrd_overclock(struct mame_bitmap *bitmap,int increment,int arg)
 		sprintf(buf,"%s %s %3d%%", ui_getstring (UI_allcpus), ui_getstring (UI_overclock), oc);
 	else
 		sprintf(buf,"%s %s%d %3d%%", ui_getstring (UI_overclock), ui_getstring (UI_cpu), arg, oc);
-	displayosd(bitmap,buf,oc/2,100/2);
+	displayosd(buf,oc/2,100/2);
 }
 
-static void onscrd_refresh(struct mame_bitmap *bitmap,int increment,int arg)
+static void onscrd_refresh(int increment,int arg)
 {
 	float delta = Machine->refresh_rate - Machine->drv->frames_per_second;
 	char buf[30];
@@ -4012,13 +3476,8 @@ static void onscrd_refresh(struct mame_bitmap *bitmap,int increment,int arg)
 	}
 
 	sprintf(buf,"%s %.3f", ui_getstring (UI_refresh_rate), Machine->refresh_rate);
-	displayosd(bitmap,buf,(10 + delta) * 5,100/2);
+	displayosd(buf,(10 + delta) * 5,100/2);
 }
-
-#define MAX_OSD_ITEMS 50
-static void (*onscrd_fnc[MAX_OSD_ITEMS])(struct mame_bitmap *bitmap,int increment,int arg);
-static int onscrd_arg[MAX_OSD_ITEMS];
-static int onscrd_total_items;
 
 static void onscrd_init(void)
 {
@@ -4085,7 +3544,7 @@ static void onscrd_init(void)
 	onscrd_total_items = item;
 }
 
-static int on_screen_display(struct mame_bitmap *bitmap, int selected)
+static int on_screen_display(int selected)
 {
 	int increment,sel;
 	static int lastselected = 0;
@@ -4105,7 +3564,7 @@ static int on_screen_display(struct mame_bitmap *bitmap, int selected)
 	if (input_ui_pressed_repeat(IPT_UI_UP,8))
 		sel = (sel + onscrd_total_items - 1) % onscrd_total_items;
 
-	(*onscrd_fnc[sel])(bitmap,increment,onscrd_arg[sel]);
+	(*onscrd_fnc[sel])(increment,onscrd_arg[sel]);
 
 	lastselected = sel;
 
@@ -4125,209 +3584,85 @@ static int on_screen_display(struct mame_bitmap *bitmap, int selected)
 
 *********************************************************************/
 
-
-static void displaymessage(struct mame_bitmap *bitmap,const char *text)
+static void initiate_load_save(int type)
 {
-	struct DisplayText dt[2];
-	int avail;
-
-
-	if (uirotwidth < uirotcharwidth * strlen(text))
-	{
-		ui_displaymessagewindow(bitmap,text);
-		return;
-	}
-
-	avail = strlen(text)+2;
-
-	ui_drawbox(bitmap,(uirotwidth - uirotcharwidth * avail) / 2,
-			uirotheight - 3*uirotcharheight,
-			avail * uirotcharwidth,
-			2*uirotcharheight);
-
-	dt[0].text = text;
-	dt[0].color = UI_COLOR_NORMAL;
-	dt[0].x = (uirotwidth - uirotcharwidth * strlen(text)) / 2;
-	dt[0].y = uirotheight - 5*uirotcharheight/2;
-	dt[1].text = 0; /* terminate array */
-	displaytext(bitmap,dt);
+	load_save_state = type;
+	mame_pause(TRUE);
 }
 
 
-static char messagetext[200];
-static int messagecounter;
-
-void CLIB_DECL usrintf_showmessage(const char *text,...)
+static int update_load_save(void)
 {
-	va_list arg;
-	va_start(arg,text);
-	vsprintf(messagetext,text,arg);
-	va_end(arg);
-	messagecounter = 2 * Machine->refresh_rate;
-}
+	input_code_t code;
+	char file = 0;
 
-void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
-{
-	va_list arg;
-	va_start(arg,text);
-	vsprintf(messagetext,text,arg);
-	va_end(arg);
-	messagecounter = seconds * Machine->refresh_rate;
-}
+	/* if we're not in the middle of anything, skip */
+	if (load_save_state == LOADSAVE_NONE)
+		return 0;
 
-void do_loadsave(struct mame_bitmap *bitmap, int request_loadsave)
-{
-	int file = 0;
-
-	mame_pause(1);
-
-	do
-	{
-		input_code_t code;
-
-		if (request_loadsave == LOADSAVE_SAVE)
-			displaymessage(bitmap, "Select position to save to");
-		else
-			displaymessage(bitmap, "Select position to load from");
-
-		update_video_and_audio();
-		reset_partial_updates();
-
-		if (input_ui_pressed(IPT_UI_CANCEL))
-			break;
-
-		code = code_read_async();
-		if (code != CODE_NONE)
-		{
-			if (code >= KEYCODE_A && code <= KEYCODE_Z)
-				file = 'a' + (code - KEYCODE_A);
-			else if (code >= KEYCODE_0 && code <= KEYCODE_9)
-				file = '0' + (code - KEYCODE_0);
-			else if (code >= KEYCODE_0_PAD && code <= KEYCODE_9_PAD)
-				file = '0' + (code - KEYCODE_0);
-		}
-	}
-	while (!file);
-
-	mame_pause(0);
-
-	if (file > 0)
-	{
-		if (request_loadsave == LOADSAVE_SAVE)
-			usrintf_showmessage("Save to position %c", file);
-		else
-			usrintf_showmessage("Load from position %c", file);
-		cpu_loadsave_schedule(request_loadsave, file);
-	}
+	/* okay, we're waiting for a key to select a slot; display a message */
+	if (load_save_state == LOADSAVE_SAVE)
+		ui_draw_message_window("Select position to save to");
 	else
+		ui_draw_message_window("Select position to load from");
+
+	/* check for cancel key */
+	if (input_ui_pressed(IPT_UI_CANCEL))
 	{
-		if (request_loadsave == LOADSAVE_SAVE)
-			usrintf_showmessage("Save cancelled");
+		/* display a popup indicating things were cancelled */
+		if (load_save_state == LOADSAVE_SAVE)
+			ui_popup("Save cancelled");
 		else
-			usrintf_showmessage("Load cancelled");
+			ui_popup("Load cancelled");
+
+		/* reset the state */
+		load_save_state = 0;
+		mame_pause(FALSE);
+		return 0;
 	}
-}
 
+	/* fetch a code; if it's none, we're done */
+	code = code_read_async();
+	if (code == CODE_NONE)
+		return 1;
 
-void ui_show_fps_temp(double seconds)
-{
-	if (!showfps)
-		showfpstemp = (int)(seconds * Machine->refresh_rate);
-}
+	/* check for A-Z or 0-9 */
+	if (code >= KEYCODE_A && code <= KEYCODE_Z)
+		file = code - KEYCODE_A + 'a';
+	if (code >= KEYCODE_0 && code <= KEYCODE_9)
+		file = code - KEYCODE_0 + '0';
+	if (code >= KEYCODE_0_PAD && code <= KEYCODE_9_PAD)
+		file = code - KEYCODE_0_PAD + '0';
+	if (!file)
+		return 1;
 
-void ui_show_fps_set(int show)
-{
-	if (show)
-	{
-		showfps = 1;
-	}
+	/* display a popup indicating that the save will proceed */
+	if (load_save_state == LOADSAVE_SAVE)
+		ui_popup("Save to position %c", file);
 	else
-	{
-		showfps = 0;
-		showfpstemp = 0;
-		schedule_full_refresh();
-	}
+		ui_popup("Load from position %c", file);
+	cpu_loadsave_schedule(load_save_state, file);
+
+	/* remove the pause and reset the state */
+	load_save_state = LOADSAVE_NONE;
+	mame_pause(FALSE);
+	return 0;
 }
 
-int ui_show_fps_get(void)
-{
-	return showfps || showfpstemp;
-}
 
-void ui_show_profiler_set(int show)
+void ui_display_fps(void)
 {
-	if (show)
-	{
-		show_profiler = 1;
-		profiler_start();
-	}
-	else
-	{
-		show_profiler = 0;
-		profiler_stop();
-		schedule_full_refresh();
-	}
-}
-
-int ui_show_profiler_get(void)
-{
-	return show_profiler;
-}
-
-void ui_display_fps(struct mame_bitmap *bitmap)
-{
-	const char *text, *end;
-	char textbuf[256];
-	int done = 0;
-	int x, y = 0;
-	/* remember which area we cover so that we can
-       schedule a full refresh if it gets smaller */
-	int len_hash = 0;
-	static int old_len_hash = -1;
+	int ui_width, ui_height;
 
 	/* if we're not currently displaying, skip it */
 	if (!showfps && !showfpstemp)
-	{
-		/* reset covered area vars */
-		old_len_hash = -1;
 		return;
-	}
+
+	ui_get_bounds(&ui_width, &ui_height);
 
 	/* get the current FPS text */
-	text = osd_get_fps_text(mame_get_performance_info());
-
-	/* loop over lines */
-	while (!done)
-	{
-		/* find the end of this line and copy it to the text buf */
-		end = strchr(text, '\n');
-		if (end)
-		{
-			memcpy(textbuf, text, end - text);
-			textbuf[end - text] = 0;
-			text = end + 1;
-		}
-		else
-		{
-			strcpy(textbuf, text);
-			done = 1;
-		}
-
-		/* render */
-		x = uirotwidth - strlen(textbuf) * uirotcharwidth;
-		ui_text(bitmap, textbuf, x, y);
-		y += uirotcharheight;
-		len_hash += (y / uirotcharheight) * x;
-	}
-
-	if ((old_len_hash != -1) &&
-	    (old_len_hash != len_hash))
-	{
-		schedule_full_refresh();
-		ui_markdirty(&uirawbounds);
-	}
-
-	old_len_hash = len_hash;
+	ui_draw_text_full(osd_get_fps_text(mame_get_performance_info()), 0, 0, ui_width,
+				JUSTIFY_RIGHT, WRAP_WORD, DRAW_OPAQUE, RGB_WHITE, RGB_BLACK, NULL, NULL);
 
 	/* update the temporary FPS display state */
 	if (showfpstemp)
@@ -4338,263 +3673,194 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 	}
 }
 
-
-
-int handle_user_interface(struct mame_bitmap *bitmap)
+static void ui_display_profiler(void)
 {
-#ifdef MESS
-	extern int mess_pause_for_ui;
-#endif
+	int ui_width, ui_height;
 
-reset_ui_render();
-
-	/* if the user pressed F12, save the screen to a file */
-	if (input_ui_pressed(IPT_UI_SNAPSHOT))
-		save_screen_snapshot(bitmap);
-
-	/* if the user pressed LSHIFT+F12, record a movie to a file */
-	record_movie(bitmap);
-
-	/* This call is for the cheat, it must be called once a frame */
-	if (options.cheat) DoCheat(bitmap);
-
-	/* if the user pressed ESC, stop the emulation */
-	/* but don't quit if the setup menu is on screen */
-	if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
+	if (show_profiler)
 	{
-		/* stop recording if still running */
-		record_movie(NULL);
-		return 1;
+		ui_get_bounds(&ui_width, &ui_height);
+		ui_draw_text_full(profiler_get_text(), 0, 0, ui_width, JUSTIFY_LEFT, WRAP_WORD, DRAW_OPAQUE, RGB_WHITE, RGB_BLACK, NULL, NULL);
 	}
+}
 
-	if (setup_selected == 0 && input_ui_pressed(IPT_UI_CONFIGURE))
-	{
-		setup_selected = -1;
-		if (osd_selected != 0)
-		{
-			osd_selected = 0;	/* disable on screen display */
-			schedule_full_refresh();
-		}
-	}
-	if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
-
-#ifdef MAME_DEBUG
-	if (!mame_debug)
-#endif
-		if (osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
-		{
-			osd_selected = -1;
-			if (setup_selected != 0)
-			{
-				setup_selected = 0; /* disable setup menu */
-				schedule_full_refresh();
-			}
-		}
-	if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
-
-	/* if the user pressed F3, reset the emulation */
-	if (input_ui_pressed(IPT_UI_RESET_MACHINE))
-		machine_reset();
-
-	if (input_ui_pressed(IPT_UI_SAVE_STATE))
-		do_loadsave(bitmap, LOADSAVE_SAVE);
-
-	if (input_ui_pressed(IPT_UI_LOAD_STATE))
-		do_loadsave(bitmap, LOADSAVE_LOAD);
-
-#ifndef MESS
-	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
-	{
-#else
-	if (setup_selected)
-		mess_pause_for_ui = 1;
-
-	if (single_step || input_ui_pressed(IPT_UI_PAUSE) || mess_pause_for_ui) /* pause the game */
-	{
-#endif
-/*      osd_selected = 0;      disable on screen display, since we are going   */
-							/* to change parameters affected by it */
-
-		if (single_step == 0)
-			mame_pause(1);
-
-		while (!input_ui_pressed(IPT_UI_PAUSE))
-		{
-			profiler_mark(PROFILER_VIDEO);
-			if (osd_skip_this_frame() == 0)
-			{
-				/* keep calling vh_screenrefresh() while paused so we can stuff */
-				/* debug code in there */
-				draw_screen();
-			}
-			profiler_mark(PROFILER_END);
-
-			if (input_ui_pressed(IPT_UI_SNAPSHOT))
-				save_screen_snapshot(bitmap);
-
-			if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
-				record_movie(bitmap);
-
-
-			if (input_ui_pressed(IPT_UI_SAVE_STATE))
-				do_loadsave(bitmap, LOADSAVE_SAVE);
-
-			if (input_ui_pressed(IPT_UI_LOAD_STATE))
-				do_loadsave(bitmap, LOADSAVE_LOAD);
-
-			/* if the user pressed F4, show the character set */
-			if (input_ui_pressed(IPT_UI_SHOW_GFX))
-				showcharset(bitmap);
-
-			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
-				return 1;
-
-			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CONFIGURE))
-			{
-				setup_selected = -1;
-				if (osd_selected != 0)
-				{
-					osd_selected = 0;	/* disable on screen display */
-					schedule_full_refresh();
-				}
-			}
-			if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
-
-#ifdef MAME_DEBUG
-			if (!mame_debug)
-#endif
-				if (osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
-				{
-					osd_selected = -1;
-					if (setup_selected != 0)
-					{
-						setup_selected = 0; /* disable setup menu */
-						schedule_full_refresh();
-					}
-				}
-			if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
-
-			if (options.cheat) DisplayWatches(bitmap);
-
-			/* show popup message if any */
-			if (messagecounter > 0)
-			{
-				displaymessage(bitmap, messagetext);
-
-				if (--messagecounter == 0)
-					schedule_full_refresh();
-			}
-
-			update_video_and_audio();
-			reset_partial_updates();
-
-#ifdef MESS
-			if (!setup_selected && mess_pause_for_ui)
-			{
-				mess_pause_for_ui = 0;
-				break;
-			}
-#endif /* MESS */
-		}
-
-		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
-			single_step = 1;
-		else
-		{
-			single_step = 0;
-			mame_pause(0);
-		}
-
-		schedule_full_refresh();
-	}
-
-#if defined(__sgi) && !defined(MESS)
-	game_paused = 0;
-#endif
-
+static void ui_display_popup(void)
+{
 	/* show popup message if any */
-	if (messagecounter > 0)
+	if (popup_text_counter > 0)
 	{
-		displaymessage(bitmap, messagetext);
+		draw_multiline_text_box(popup_text, JUSTIFY_CENTER, 0.5, 0.9);
 
-		if (--messagecounter == 0)
+		if (--popup_text_counter == 0)
 			schedule_full_refresh();
 	}
+}
 
 
-	if (input_ui_pressed(IPT_UI_SHOW_PROFILER))
+
+
+
+
+/*************************************
+ *
+ *  Temporary rendering system
+ *
+ *************************************/
+
+static void ui_raw2rot_rect(struct rectangle *rect)
+{
+	int temp, w, h;
+
+	/* get the effective screen size, including artwork */
+	artwork_get_screensize(&w, &h);
+
+	/* apply X flip */
+	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
 	{
-		ui_show_profiler_set(!ui_show_profiler_get());
+		temp = w - rect->min_x - 1;
+		rect->min_x = w - rect->max_x - 1;
+		rect->max_x = temp;
 	}
 
-	if (show_profiler) profiler_show(bitmap);
-
-
-	/* show FPS display? */
-	if (input_ui_pressed(IPT_UI_SHOW_FPS))
+	/* apply Y flip */
+	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
 	{
-		/* toggle fps */
-		ui_show_fps_set(!ui_show_fps_get());
+		temp = h - rect->min_y - 1;
+		rect->min_y = h - rect->max_y - 1;
+		rect->max_y = temp;
 	}
 
-
-	/* if the user pressed F4, show the character set */
-	if (input_ui_pressed(IPT_UI_SHOW_GFX))
+	/* apply X/Y swap first */
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
 	{
-		osd_sound_enable(0);
+		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
+		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
+	}
+}
 
-		showcharset(bitmap);
 
-		osd_sound_enable(1);
+static void ui_rot2raw_rect(struct rectangle *rect)
+{
+	int temp, w, h;
+
+	/* get the effective screen size, including artwork */
+	artwork_get_screensize(&w, &h);
+
+	/* apply X/Y swap first */
+	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
+	{
+		temp = rect->min_x; rect->min_x = rect->min_y; rect->min_y = temp;
+		temp = rect->max_x; rect->max_x = rect->max_y; rect->max_y = temp;
 	}
 
-	/* if the user pressed F1 and this is a lightgun game, toggle the crosshair */
-	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
+	/* apply X flip */
+	if (Machine->ui_orientation & ORIENTATION_FLIP_X)
 	{
-		drawgfx_toggle_crosshair();
+		temp = w - rect->min_x - 1;
+		rect->min_x = w - rect->max_x - 1;
+		rect->max_x = temp;
 	}
 
-	/* add the FPS counter */
-	ui_display_fps(bitmap);
-
-render_ui(bitmap);
-
-	return 0;
+	/* apply Y flip */
+	if (Machine->ui_orientation & ORIENTATION_FLIP_Y)
+	{
+		temp = h - rect->min_y - 1;
+		rect->min_y = h - rect->max_y - 1;
+		rect->max_y = temp;
+	}
 }
 
 
-void init_user_interface(void)
+static int get_char_width(UINT16 ch)
 {
-	/* clear the input memory */
-	while (code_read_async() != CODE_NONE) {};
-
-	setup_menu_init();
-	setup_selected = 0;
-
-	onscrd_init();
-	osd_selected = 0;
-
-	jukebox_selected = -1;
-
-	single_step = 0;
+	return uirotcharwidth;
 }
 
-int onscrd_active(void)
+
+static int get_string_width(const char *s)
 {
-	return osd_selected;
+	return strlen(s) * uirotcharwidth;
 }
 
-int setup_active(void)
+
+static void add_line(int x1, int y1, int x2, int y2, rgb_t color)
 {
-	return setup_selected;
+	elemlist[elemindex].x = (x1 < x2) ? x1 : x2;
+	elemlist[elemindex].y = (y1 < y2) ? y1 : y2;
+	elemlist[elemindex].x2 = (x1 < x2) ? x2 : x1;
+	elemlist[elemindex].y2 = (y1 < y2) ? y2 : y1;
+	elemlist[elemindex].type = 0xfffe;
+	elemlist[elemindex].color = color;
+	elemindex++;
 }
 
-#if defined(__sgi) && !defined(MESS)
 
-/* Return if the game is paused or not */
-int is_game_paused(void)
+static void add_fill(int left, int top, int right, int bottom, rgb_t color)
 {
-	return game_paused;
+	add_line(left, top, right, bottom, color);
 }
 
-#endif
+
+static void add_char(int x, int y, UINT16 ch, int color)
+{
+	elemlist[elemindex].x = x;
+	elemlist[elemindex].y = y;
+	elemlist[elemindex].type = ch;
+	elemlist[elemindex].color = color;
+	elemindex++;
+}
+
+
+static void add_filled_box(int x1, int y1, int x2, int y2)
+{
+	add_fill(x1 + 1, y1 + 1, x2 - 1, y2 - 1, RGB_BLACK);
+
+	add_line(x1, y1, x2, y1, RGB_WHITE);
+	add_line(x2, y1, x2, y2, RGB_WHITE);
+	add_line(x2, y2, x1, y2, RGB_WHITE);
+	add_line(x1, y2, x1, y1, RGB_WHITE);
+}
+
+
+static void render_ui(struct mame_bitmap *dest)
+{
+	int i;
+
+	uirotfont->colortable[0] = get_black_pen();
+	uirotfont->colortable[1] = get_white_pen();
+	uirotfont->colortable[2] = get_white_pen();
+	uirotfont->colortable[3] = get_black_pen();
+
+	for (i = 0; i < elemindex; i++)
+	{
+		render_element *elem = &elemlist[i];
+		struct rectangle bounds;
+
+		switch (elem->type)
+		{
+			case 0xffff:	/* box */
+			case 0xfffe:	/* line */
+				bounds.min_x = uirotbounds.min_x + elem->x;
+				bounds.min_y = uirotbounds.min_y + elem->y;
+				bounds.max_x = uirotbounds.min_x + elem->x2;
+				bounds.max_y = uirotbounds.min_y + elem->y2;
+				ui_rot2raw_rect(&bounds);
+				sect_rect(&bounds, &uirawbounds);
+				fillbitmap(dest, elem->color ? get_white_pen() : get_black_pen(), &bounds);
+				artwork_mark_ui_dirty(bounds.min_x, bounds.min_y, bounds.max_x, bounds.max_y);
+				ui_dirty = 5;
+				break;
+
+			default:
+				bounds.min_x = uirotbounds.min_x + elem->x;
+				bounds.min_y = uirotbounds.min_y + elem->y + 1;
+				bounds.max_x = bounds.min_x + uirotcharwidth - 1;
+				bounds.max_y = bounds.min_y + uirotcharheight - 1;
+				ui_rot2raw_rect(&bounds);
+				drawgfx(dest, uirotfont, elem->type, elem->color ? 0 : 1, 0, 0, bounds.min_x, bounds.min_y, &uirawbounds, TRANSPARENCY_PEN, 0);
+				break;
+		}
+	}
+
+	elemindex = 0;
+}

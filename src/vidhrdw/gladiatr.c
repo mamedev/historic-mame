@@ -179,7 +179,7 @@ WRITE8_HANDLER( ppking_video_registers_w )
 			break;
 	}
 
-//usrintf_showmessage("%02x %02x",fg_scrolly, video_attributes);
+//ui_popup("%02x %02x",fg_scrolly, video_attributes);
 }
 
 WRITE8_HANDLER( gladiatr_video_registers_w )

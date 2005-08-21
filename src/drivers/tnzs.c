@@ -354,7 +354,7 @@ static WRITE8_HANDLER( kageki_csport_w )
 			sample_start_raw(0, sampledata[data], samplesize[data], 7000, 0);
 			sprintf(mess, "VOICE:%02X PLAY", data);
 		}
-	//  usrintf_showmessage(mess);
+	//  ui_popup(mess);
 	}
 }
 

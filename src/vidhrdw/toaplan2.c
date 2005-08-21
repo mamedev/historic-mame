@@ -1479,7 +1479,7 @@ static void mark_tile_priority(int controller)
 			if (fg_tile_priority[controller][priority]) fg[controller]++;
 			if (top_tile_priority[controller][priority]) top[controller]++;
 		}
-		usrintf_showmessage("b=%2d:%2d f=%2d:%2d t=%2d:%2d",bg[0],bg[1],fg[0],fg[1],top[0],top[1]);
+		ui_popup("b=%2d:%2d f=%2d:%2d t=%2d:%2d",bg[0],bg[1],fg[0],fg[1],top[0],top[1]);
 	}
 #endif
 }

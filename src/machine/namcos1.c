@@ -110,8 +110,8 @@ static const write8_handler io_bank_handler_w[16] =
 
 static WRITE8_HANDLER( namcos1_3dcs_w )
 {
-	if (offset & 1)	usrintf_showmessage("LEFT");
-	else			usrintf_showmessage("RIGHT");
+	if (offset & 1)	ui_popup("LEFT");
+	else			ui_popup("RIGHT");
 }
 
 
@@ -122,13 +122,13 @@ static data8_t key[8];
 
 static READ8_HANDLER( no_key_r )
 {
-	usrintf_showmessage("CPU #%d PC %08x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
+	ui_popup("CPU #%d PC %08x: keychip read %04x\n",cpu_getactivecpu(),activecpu_get_pc(),offset);
 	return 0;
 }
 
 static WRITE8_HANDLER( no_key_w )
 {
-	usrintf_showmessage("CPU #%d PC %08x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
+	ui_popup("CPU #%d PC %08x: keychip write %04x=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 }
 
 
@@ -534,7 +534,7 @@ static READ8_HANDLER( key_type3_r )
 	if (op == key_bottom4)	return (offset << 4) | (key[key_swap4_arg] & 0x0f);
 	if (op == key_top4)		return (offset << 4) | (key[key_swap4_arg] >> 4);
 
-	usrintf_showmessage("CPU #%d PC %08x: keychip read %04x",cpu_getactivecpu(),activecpu_get_pc(),offset);
+	ui_popup("CPU #%d PC %08x: keychip read %04x",cpu_getactivecpu(),activecpu_get_pc(),offset);
 
 	return 0;
 }
@@ -651,14 +651,14 @@ static WRITE8_HANDLER( rom_w )
 static READ8_HANDLER( unknown_r )
 {
 	logerror("CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
-//  usrintf_showmessage("CPU #%d PC %04x: read from unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
+//  ui_popup("CPU #%d PC %04x: read from unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
 	return 0;
 }
 
 static WRITE8_HANDLER( unknown_w )
 {
 	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
-//  usrintf_showmessage("CPU #%d PC %04x: wrote to unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
+//  ui_popup("CPU #%d PC %04x: wrote to unknown chip",cpu_getactivecpu(),activecpu_get_pc() );
 }
 
 /* Main bankswitching routine */
@@ -723,7 +723,7 @@ void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
 	if( namcos1_active_bank[bank].bank_handler_r == unknown_r)
 	{
 		logerror("CPU #%d PC %04x:warning unknown chip selected bank %x=$%04x\n", cpu , activecpu_get_pc(), bank , chip[bank] );
-//          if (chip) usrintf_showmessage("CPU #%d PC %04x:unknown chip selected bank %x=$%04x", cpu , activecpu_get_pc(), bank , chip[bank] );
+//          if (chip) ui_popup("CPU #%d PC %04x:unknown chip selected bank %x=$%04x", cpu , activecpu_get_pc(), bank , chip[bank] );
 	}
 
 	/* renew pc base */

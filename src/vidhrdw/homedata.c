@@ -743,7 +743,7 @@ VIDEO_UPDATE( mrokumei )
 		case 0x96: width = 49; break;	// mjclinic
 		default:
 			if (homedata_vreg[0x3])
-				usrintf_showmessage("unknown video control %02x %02x %02x %02x",
+				ui_popup("unknown video control %02x %02x %02x %02x",
 					homedata_vreg[0x3],
 					homedata_vreg[0x4],
 					homedata_vreg[0x5],

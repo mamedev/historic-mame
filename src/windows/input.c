@@ -1913,7 +1913,7 @@ static void poll_lightguns(void)
 
 	// Warning message to users - design wise this probably isn't the best function to put this in...
 	if (win_window_mode)
-		usrintf_showmessage("Lightgun not supported in windowed mode");
+		ui_popup("Lightgun not supported in windowed mode");
 
 	// loop over players
 	for (player = 0; player < MAX_LIGHTGUNS; player++)

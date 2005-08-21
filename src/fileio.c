@@ -1114,11 +1114,6 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
                            functions for which we have an expected checksum to compare with. */
 						functions = hash_data_used_functions(hash);
 
-						/* If user asked for CRC only, and there is an expected checksum
-                           for CRC in the driver, compute only CRC. */
-						if (options.crc_only && (functions & HASH_CRC))
-							functions = HASH_CRC;
-
 						hash_compute(file.hash, file.data, file.length, functions);
 						break;
 					}
@@ -1206,8 +1201,6 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
        checksum). Take also care of crconly: if the user asked, we will calculate
        only the CRC, but only if there is an expected CRC for this file. */
 	functions = hash_data_used_functions(hash);
-	if (options.crc_only && (functions & HASH_CRC))
-		functions = HASH_CRC;
 	hash_compute(hash, data, length, functions);
 
 	/* if the caller wants the data, give it away, otherwise free it */

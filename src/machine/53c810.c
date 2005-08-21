@@ -111,7 +111,7 @@ static void dmaop_block_move(void)
 	}
 }
 
-static void dmaop_io(void)
+static void dmaop_select(void)
 {
 	UINT32 operand;
 
@@ -120,16 +120,103 @@ static void dmaop_io(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_io not implemented\n");
+		osd_die("LSI53C810: dmaop_select not implemented\n");
 	}
 	else
 	{
 		/* initiator mode */
-		osd_die("LSI53C810: dmaop_io not implemented\n");
+		osd_die("LSI53C810: dmaop_select not implemented\n");
 	}
 }
 
-static void dmaop_transfer_control(void)
+static void dmaop_wait_disconnect(void)
+{
+	UINT32 operand;
+
+	operand = FETCH();
+
+	if (lsi810.scntl0 & 0x01)
+	{
+		/* target mode */
+		osd_die("LSI53C810: dmaop_wait_disconnect not implemented\n");
+	}
+	else
+	{
+		/* initiator mode */
+		osd_die("LSI53C810: dmaop_wait_disconnect not implemented\n");
+	}
+}
+
+static void dmaop_wait_reselect(void)
+{
+	UINT32 operand;
+
+	operand = FETCH();
+
+	if (lsi810.scntl0 & 0x01)
+	{
+		/* target mode */
+		osd_die("LSI53C810: dmaop_wait_reselect not implemented\n");
+	}
+	else
+	{
+		/* initiator mode */
+		osd_die("LSI53C810: dmaop_wait_reselect not implemented\n");
+	}
+}
+
+static void dmaop_set(void)
+{
+	UINT32 operand;
+
+	operand = FETCH();
+
+	if (lsi810.scntl0 & 0x01)
+	{
+		/* target mode */
+		osd_die("LSI53C810: dmaop_set not implemented\n");
+	}
+	else
+	{
+		/* initiator mode */
+		osd_die("LSI53C810: dmaop_set not implemented\n");
+	}
+}
+
+static void dmaop_clear(void)
+{
+	UINT32 operand;
+
+	operand = FETCH();
+
+	if (lsi810.scntl0 & 0x01)
+	{
+		/* target mode */
+		osd_die("LSI53C810: dmaop_clear not implemented\n");
+	}
+	else
+	{
+		/* initiator mode */
+		osd_die("LSI53C810: dmaop_clear not implemented\n");
+	}
+}
+
+static void dmaop_move_from_sfbr(void)
+{
+	osd_die("LSI53C810: dmaop_move_from_sfbr not implemented\n");
+}
+
+static void dmaop_move_to_sfbr(void)
+{
+	osd_die("LSI53C810: dmaop_move_to_sfbr not implemented\n");
+}
+
+static void dmaop_read_modify_write(void)
+{
+	osd_die("LSI53C810: dmaop_read_modify_write not implemented\n");
+}
+
+static void dmaop_jump(void)
 {
 	UINT32 dsps, dest;
 
@@ -141,7 +228,47 @@ static void dmaop_transfer_control(void)
 	else
 		dest = dsps;
 
-	osd_die("LSI53C810: dmaop_transfer_control not implemented\n");
+	osd_die("LSI53C810: dmaop_jump not implemented\n");
+}
+
+static void dmaop_call(void)
+{
+	UINT32 dsps, dest;
+
+	dsps = FETCH();
+
+	/* relative or absolute addressing? */
+	if (lsi810.dcmd & 0x08000000)
+		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF000000 : 0));
+	else
+		dest = dsps;
+
+	osd_die("LSI53C810: dmaop_call not implemented\n");
+}
+
+static void dmaop_return(void)
+{
+	UINT32 dsps, dest;
+
+	dsps = FETCH();
+
+	/* relative or absolute addressing? */
+	if (lsi810.dcmd & 0x08000000)
+		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF000000 : 0));
+	else
+		dest = dsps;
+
+	osd_die("LSI53C810: dmaop_return not implemented\n");
+}
+
+static void dmaop_store(void)
+{
+	osd_die("LSI53C810: dmaop_store not implemented\n");
+}
+
+static void dmaop_load(void)
+{
+	osd_die("LSI53C810: dmaop_load not implemented\n");
 }
 
 
@@ -369,9 +496,20 @@ void lsi53c810_init(UINT32 (*fetch)(UINT32 dsp), void (*irq_callback)(void), voi
 	lsi810.irq_callback = irq_callback;
 	lsi810.dma_callback = dma_callback;
 
-	add_opcode(0xc0, 0xfe, dmaop_move_memory);
-	add_opcode(0x98, 0xf8, dmaop_interrupt);
 	add_opcode(0x00, 0xc0, dmaop_block_move);
-	add_opcode(0x40, 0xc0, dmaop_io);
-	add_opcode(0x80, 0xc0, dmaop_transfer_control);
+	add_opcode(0x40, 0xf8, dmaop_select);
+	add_opcode(0x48, 0xf8, dmaop_wait_disconnect);
+	add_opcode(0x50, 0xf8, dmaop_wait_reselect);
+	add_opcode(0x58, 0xf8, dmaop_set);
+	add_opcode(0x60, 0xf8, dmaop_clear);
+	add_opcode(0x68, 0xf8, dmaop_move_from_sfbr);
+	add_opcode(0x70, 0xf8, dmaop_move_to_sfbr);
+	add_opcode(0x78, 0xf8, dmaop_read_modify_write);
+	add_opcode(0x80, 0xf8, dmaop_jump);
+	add_opcode(0x88, 0xf8, dmaop_call);
+	add_opcode(0x90, 0xf8, dmaop_return);
+	add_opcode(0x98, 0xf8, dmaop_interrupt);
+	add_opcode(0xc0, 0xfe, dmaop_move_memory);
+	add_opcode(0xe0, 0xed, dmaop_store);
+	add_opcode(0xe1, 0xed, dmaop_load);
 }

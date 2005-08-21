@@ -423,6 +423,7 @@ ROM_END
 ROM_START( cm2841a )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "msii841.u81",  0x0000,  0x8000, CRC(977db602) SHA1(0fd3d6781b654ac6befdc9278f84ca708d5d448c) )
+	/* there is another identical set, with the 2 halves of this rom swapped */
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "msii841.u4",   0x0000,  0x8000, CRC(e39fff9c) SHA1(22fdc517fa478441622c6245cecb5728c5595757) )
@@ -437,5 +438,5 @@ ROM_START( cm2841a )
 	ROM_LOAD( "msii841.u53",  0x0000, 0x10000, CRC(e92443d3) SHA1(4b6ca4521841610054165f085ae05510e77af191) )
 ROM_END
 
-GAMEX( 198?, cm2v841, 0, cm2v841, cm2v841, 0, ROT0, "Dyna Electronics", "Cherry Master II v8.41", GAME_NOT_WORKING )
-GAMEX( 198?, cm2841a, 0, cm2841a, cm2v841, 0, ROT0, "Dyna Electronics", "Cherry Master II v8.41 (alternate)", GAME_NOT_WORKING )
+GAMEX( 198?, cm2v841, 0,       cm2v841, cm2v841, 0, ROT0, "Dyna Electronics", "Cherry Master II v8.41 (set 1)", GAME_NOT_WORKING )
+GAMEX( 198?, cm2841a, cm2v841, cm2841a, cm2v841, 0, ROT0, "Dyna Electronics", "Cherry Master II v8.41 (set 2)", GAME_NOT_WORKING )

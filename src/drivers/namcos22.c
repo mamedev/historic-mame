@@ -5,7 +5,7 @@
  *
  * driver provided with thanks to:
  * - pstroffo@yahoo.com (Phil Stroffolino)
- * - trackmaster@gmx.net (Björn Sunder)
+ * - trackmaster@gmx.net (Bj?rn Sunder)
  * - team vivanonno
  *
  * Status:

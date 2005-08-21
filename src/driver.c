@@ -1674,6 +1674,7 @@ const struct GameDriver *drivers[] =
 
 	/* Taito B-System games */
 	DRIVER( masterw )	/* B72 (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( masterwu )	/* B72 (c) 1989 America Corporation (US) */
 	DRIVER( nastar )	/* B81 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( nastarw )	/* B81 (c) 1988 Taito America Corporation (US) */
 	DRIVER( rastsag2 )	/* B81 (c) 1988 Taito Corporation (Japan) */
@@ -2886,9 +2887,9 @@ V-V                           TP-027
 	/* Sega System 1 / System 2 games */
 	DRIVER( starjack )	/* 834-5191 (c) 1983 (S1) */
 	DRIVER( starjacs )	/* (c) 1983 Stern (S1) */
-	DRIVER( regulus )	/* 834-5328 (c) 1983 (S1) */
-	DRIVER( reguluso )	/* 834-5328 (c) 1983 (S1) */
-	DRIVER( regulusu )	/* 834-5328 (c) 1983 (S1) */
+	DRIVER( regulus )	/* 834-5328?(c) 1983 (S1) */
+	DRIVER( reguluso )	/* 834-5328?(c) 1983 (S1) */
+	DRIVER( regulusu )	/* 834-5328?(c) 1983 (S1) */
 	DRIVER( upndown )	/* (c) 1983 (S1) */
 	DRIVER( upndownu )	/* (c) 1983 (S1) */
 	DRIVER( mrviking )	/* 834-5383 (c) 1984 (S1) */
@@ -2960,6 +2961,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( ridleofp )	/* (c) 1986 Sega / Nasco */
 	DRIVER( fantzn2 )
 	DRIVER( opaopa )
+	DRIVER( tetrisse )	/* (c) 1988 */
 
 	/* other Sega 8-bit games */
 	DRIVER( turbo )		/* (c) 1981 Sega */
@@ -3598,7 +3600,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( astrof3 )	/* (c) [1980?] */
 	DRIVER( abattle )	/* Sidam */
 	DRIVER( abattle2 )	/* Sidam */
-	DRIVER( afire )		/* René Pierre */
+	DRIVER( afire )		/* Ren? Pierre */
 	DRIVER( acombat )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
@@ -4128,6 +4130,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ssrdrebd )	/* GX064 (c) 1991 (World) */
 	DRIVER( ssrdrebc )	/* GX064 (c) 1991 (World) */
 	DRIVER( ssrdruda )	/* GX064 (c) 1991 (US) */
+	DRIVER( ssrdreaa )	/* GX064 (c) 1991 (US) */
 	DRIVER( ssrdruac )	/* GX064 (c) 1991 (US) */
 	DRIVER( ssrdrubc )	/* GX064 (c) 1991 (US) */
 	DRIVER( ssrdrabd )	/* GX064 (c) 1991 (Asia) */
@@ -4250,6 +4253,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* PowerPC based Konami games */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
+	DRIVER( gticlubj )	/* GX688 (c)1996 */
 	DRIVER( gradius4 )	/* GX837 (c)1999 */
 	DRIVER( sscope )	/* GX830 (c)1999 */
 	DRIVER( sscope2 )	/* GX931 (c)2000 */
@@ -6662,5 +6666,7 @@ Other Sun games
 	DRIVER( starspnr )	/* (c) 1982? ACE */
 	DRIVER( vp906iii )	/* (c) 1985 Casino Electronics Inc. */
 	DRIVER( attckufo )	/* (c) 1980 Ryoto Electric Co. */
+	DRIVER( fortecar )
+	DRIVER( jackpool )	/* (c) 1997 Electronic Projects */
 
 #endif	/* DRIVER_RECURSIVE */

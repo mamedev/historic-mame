@@ -127,7 +127,7 @@ VIDEO_UPDATE(rcasino)
 
 static WRITE8_HANDLER( rcasino_port_10_w )
 {
-//  usrintf_showmessage("port 10 data %u", data);
+//  ui_popup("port 10 data %u", data);
 	// write several values when the wheels are spinning
 }
 

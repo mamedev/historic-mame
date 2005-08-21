@@ -79,6 +79,10 @@ static struct chd_file *disk_handle[4];
 /* system BIOS */
 int system_bios;
 
+/* movie file */
+static mame_file *movie_file = NULL;
+
+
 
 /***************************************************************************
 
@@ -819,47 +823,38 @@ void save_screen_snapshot(struct mame_bitmap *bitmap)
     recording of a MNG movie
 -------------------------------------------------*/
 
-void record_movie(struct mame_bitmap *bitmap)
+void record_movie_toggle(void)
 {
-	static mame_file *fp = NULL;
-
-	if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
+	if (movie_file == NULL)
 	{
-		if (fp == NULL)
-		{
-			fp = mame_fopen_next(FILETYPE_MOVIE);
-			if (fp)
-			{
-				usrintf_showmessage("REC START");
-				save_frame_with(fp, bitmap, mng_capture_start);
-			}
-		}
-		else
-		{
-			mng_capture_stop(fp);
-			mame_fclose(fp);
-			fp = NULL;
-			usrintf_showmessage("REC STOP");
-		}
+		movie_file = mame_fopen_next(FILETYPE_MOVIE);
+		if (movie_file)
+			ui_popup("REC START");
 	}
 	else
 	{
-		if (fp != NULL)
-		{
-			if (bitmap != NULL)
-			{
-				save_frame_with(fp, bitmap, mng_capture_frame);
-			}
-			else
-			{
-				/* Stop recording if no bitmap (exit) */
-				mng_capture_stop(fp);
-				mame_fclose(fp);
-				fp = NULL;
-			}
-		}
+		mng_capture_stop(movie_file);
+		mame_fclose(movie_file);
+		movie_file = NULL;
+		ui_popup("REC STOP");
 	}
 }
+
+
+void record_movie_stop(void)
+{
+	if (movie_file)
+		record_movie_toggle();
+}
+
+
+void record_movie_frame(struct mame_bitmap *bitmap)
+{
+	if (movie_file != NULL && bitmap != NULL)
+		save_frame_with(movie_file, bitmap, mng_capture_frame);
+}
+
+
 
 /***************************************************************************
 
@@ -1216,24 +1211,6 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 
 		/* display the result */
 		printf("%s", romdata->errorbuf);
-
-		/* if we're not getting out of here, wait for a keypress */
-		if (!options.gui_host && !options.skip_warnings && !bailing)
-		{
-			int k;
-
-			/* loop until we get one */
-			printf ("Press any key to continue\n");
-			do
-			{
-				k = code_read_async();
-			}
-			while (k == CODE_NONE || k == KEYCODE_LCONTROL);
-
-			/* bail on a control + C */
-			if (code_pressed(KEYCODE_LCONTROL) && code_pressed(KEYCODE_C))
-				return 1;
-		}
 	}
 
 	/* clean up any regions */
@@ -1859,61 +1836,6 @@ int rom_load(const struct RomModule *romp)
 		}
 
 	/* display the results and exit */
+	Machine->rom_load_warnings = romdata.warnings;
 	return display_rom_load_results(&romdata);
-}
-
-
-/*-------------------------------------------------
-    printromlist - print list of ROMs
--------------------------------------------------*/
-
-void printromlist(const struct RomModule *romp,const char *basename)
-{
-	const struct RomModule *region, *rom, *chunk;
-	char buf[512];
-
-	if (!romp) return;
-
-#ifdef MESS
-	if (!strcmp(basename,"nes")) return;
-#endif
-
-	printf("This is the list of the ROMs required for driver \"%s\".\n"
-			"Name            Size Checksum\n",basename);
-
-	for (region = romp; region; region = rom_next_region(region))
-	{
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
-			const char *name = ROM_GETNAME(rom);
-			const char* hash = ROM_GETHASHDATA(rom);
-			int length = -1; /* default is for disks! */
-
-			if (ROMREGION_ISROMDATA(region))
-			{
-				length = 0;
-				for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
-					length += ROM_GETLENGTH(chunk);
-			}
-
-			printf("%-12s ", name);
-			if (length >= 0)
-				printf("%7d",length);
-				else
-				printf("       ");
-
-			if (!hash_data_has_info(hash, HASH_INFO_NO_DUMP))
-			{
-				if (hash_data_has_info(hash, HASH_INFO_BAD_DUMP))
-					printf(" BAD");
-
-				hash_data_print(hash, 0, buf);
-				printf(" %s", buf);
-			}
-			else
-				printf(" NO GOOD DUMP KNOWN");
-
-			printf("\n");
-		}
-	}
 }

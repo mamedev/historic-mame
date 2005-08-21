@@ -124,7 +124,7 @@ WRITE16_HANDLER( mugsmash_videoram2_w )
 WRITE16_HANDLER (mugsmash_reg_w)
 {
 	mugsmash_regs1[offset] = data;
-//  usrintf_showmessage ("Regs %04x, %04x, %04x, %04x", mugsmash_regs1[0], mugsmash_regs1[1],mugsmash_regs1[2], mugsmash_regs1[3]);
+//  ui_popup ("Regs %04x, %04x, %04x, %04x", mugsmash_regs1[0], mugsmash_regs1[1],mugsmash_regs1[2], mugsmash_regs1[3]);
 
 	switch (offset)
 	{

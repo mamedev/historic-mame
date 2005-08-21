@@ -73,6 +73,6 @@ void profiler__mark(int type);
 /* functions called by usrintf.c */
 void profiler_start(void);
 void profiler_stop(void);
-void profiler_show(struct mame_bitmap *bitmap);
+const char *profiler_get_text(void);
 
 #endif	/* __PROFILER_H__ */

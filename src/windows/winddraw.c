@@ -1260,7 +1260,7 @@ tryagain:
 		if (++count > 100)
 		{
 			total += stop - start;
-			usrintf_showmessage("Avg Flip = %d", (int)(total / (count - 100)));
+			ui_popup("Avg Flip = %d", (int)(total / (count - 100)));
 		}
 #endif
 	}
@@ -1437,7 +1437,7 @@ tryagain:
 		if (++count > 100)
 		{
 			total += stop - start;
-			usrintf_showmessage("Avg Flip = %d", (int)(total / (count - 100)));
+			ui_popup("Avg Flip = %d", (int)(total / (count - 100)));
 		}
 #endif
 	}

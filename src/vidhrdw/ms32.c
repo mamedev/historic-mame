@@ -144,7 +144,7 @@ WRITE32_HANDLER( ms32_brightness_w )
 		}
 	}
 
-//usrintf_showmessage("%04x %04x %04x %04x",brt[0],brt[1],brt[2],brt[3]);
+//ui_popup("%04x %04x %04x %04x",brt[0],brt[1],brt[2],brt[3]);
 }
 
 WRITE32_HANDLER( ms32_palram_w )
@@ -232,7 +232,7 @@ WRITE32_HANDLER( ms32_gfxctrl_w )
 
 		/* bit 3 used by several games, unknown */
 
-//usrintf_showmessage("%08x",data);
+//ui_popup("%08x",data);
 	}
 }
 

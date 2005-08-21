@@ -100,7 +100,7 @@ READ16_HANDLER( othldrby_videoram_r )
 		return vram[vram_addr++];
 	else
 	{
-		usrintf_showmessage("GFXRAM OUT OF BOUNDS %04x",vram_addr);
+		ui_popup("GFXRAM OUT OF BOUNDS %04x",vram_addr);
 		return 0;
 	}
 }
@@ -114,7 +114,7 @@ WRITE16_HANDLER( othldrby_videoram_w )
 		vram[vram_addr++] = data;
 	}
 	else
-		usrintf_showmessage("GFXRAM OUT OF BOUNDS %04x",vram_addr);
+		ui_popup("GFXRAM OUT OF BOUNDS %04x",vram_addr);
 }
 
 WRITE16_HANDLER( othldrby_vreg_addr_w )
@@ -127,7 +127,7 @@ WRITE16_HANDLER( othldrby_vreg_w )
 	if (vreg_addr < VREG_SIZE)
 		vreg[vreg_addr++] = data;
 	else
-		usrintf_showmessage("%06x: VREG OUT OF BOUNDS %04x",activecpu_get_pc(),vreg_addr);
+		ui_popup("%06x: VREG OUT OF BOUNDS %04x",activecpu_get_pc(),vreg_addr);
 }
 
 

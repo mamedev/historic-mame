@@ -439,7 +439,9 @@ void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap);
 void save_screen_snapshot(struct mame_bitmap *bitmap);
 
 /* Movie recording */
-void record_movie(struct mame_bitmap *bitmap);
+void record_movie_toggle(void);
+void record_movie_stop(void);
+void record_movie_frame(struct mame_bitmap *bitmap);
 
 /* disk handling */
 struct chd_file *get_disk_handle(int diskindex);
@@ -452,8 +454,6 @@ const struct RomModule *rom_first_file(const struct RomModule *romp);
 const struct RomModule *rom_next_file(const struct RomModule *romp);
 const struct RomModule *rom_first_chunk(const struct RomModule *romp);
 const struct RomModule *rom_next_chunk(const struct RomModule *romp);
-
-void printromlist(const struct RomModule *romp,const char *name);
 
 
 

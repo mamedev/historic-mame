@@ -38,7 +38,7 @@ extern data16_t *gotcha_fgvideoram,*gotcha_bgvideoram;
 static WRITE16_HANDLER( gotcha_lamps_w )
 {
 #if 0
-	usrintf_showmessage("%c%c%c%c %c%c%c%c %c%c%c%c",
+	ui_popup("%c%c%c%c %c%c%c%c %c%c%c%c",
 			(data & 0x001) ? 'R' : '-',
 			(data & 0x002) ? 'G' : '-',
 			(data & 0x004) ? 'B' : '-',

@@ -104,7 +104,7 @@ static WRITE16_HANDLER( cps1_sound_command_w )
 
 static WRITE16_HANDLER( cps1_coinctrl_w )
 {
-//  usrintf_showmessage("coinctrl %04x",data);
+//  ui_popup("coinctrl %04x",data);
 
 	if (ACCESSING_MSB)
 	{
@@ -135,7 +135,7 @@ static WRITE16_HANDLER( cpsq_coinctrl2_w )
     {
        char baf[40];
        sprintf(baf,"0xf1c004=%04x", data);
-       usrintf_showmessage(baf);
+       ui_popup(baf);
        }
 */
     }
@@ -176,7 +176,7 @@ READ16_HANDLER( qsound_rom_r )
 	if (rom) return rom[offset] | 0xff00;
 	else
 	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
+		ui_popup("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -589,7 +589,7 @@ INPUT_PORTS_START( ghouls )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )		// "Demo Sounds" in manual; doesn´t work
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )		// "Demo Sounds" in manual; doesn't work
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
@@ -671,7 +671,7 @@ INPUT_PORTS_START( ghoulsu )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )		// "Demo Sounds" in manual; doesn´t work
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )		// "Demo Sounds" in manual; doesn't work
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
@@ -752,7 +752,7 @@ INPUT_PORTS_START( daimakai )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )		// "Demo Sounds" in manual; doesn´t work
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )		// "Demo Sounds" in manual; doesn't work
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
@@ -1323,7 +1323,7 @@ INPUT_PORTS_START( 1941 )
 
 	PORT_START_TAG("DSWB")
 	CPS1_DIFFICULTY_1
-	PORT_DIPNAME( 0x18, 0x18, "Life Bar" )
+	PORT_DIPNAME( 0x18, 0x18, "Level Up Timer" )
 	PORT_DIPSETTING(    0x18, "More Slowly" )
 	PORT_DIPSETTING(    0x10, "Slowly" )
 	PORT_DIPSETTING(    0x08, "Quickly" )
@@ -2076,12 +2076,12 @@ INPUT_PORTS_START( 3wonders )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
 	PORT_START_TAG("DSWC")
-	PORT_DIPNAME( 0x03, 0x01, "Lives (Don´t Pull)" )
+	PORT_DIPNAME( 0x03, 0x01, "Lives (Don't Pull)" )
 	PORT_DIPSETTING(    0x03, "1" )
 	PORT_DIPSETTING(    0x02, "2" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x0c, 0x08, "Difficulty (Don´t Pull)" )
+	PORT_DIPNAME( 0x0c, 0x08, "Difficulty (Don't Pull)" )
 	PORT_DIPSETTING(    0x0c, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
@@ -2480,9 +2480,9 @@ INPUT_PORTS_START( knights )
 	PORT_DIPSETTING(    0x01, "7" )
 	PORT_DIPSETTING(    0x00, "8 (Hardest)" )
 	PORT_DIPNAME( 0x38, 0x38, "Enemy's attack power" )
-	PORT_DIPSETTING(    0x10, "1 (Easiest)" )
+	PORT_DIPSETTING(    0x00, "1 (Easiest)" )
 	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x38, "4 (Normal)" )
 	PORT_DIPSETTING(    0x30, "5" )
 	PORT_DIPSETTING(    0x28, "6" )

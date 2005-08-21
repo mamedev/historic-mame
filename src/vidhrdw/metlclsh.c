@@ -261,6 +261,6 @@ VIDEO_UPDATE( metlclsh )
 	metlclsh_draw_sprites(bitmap,cliprect);			// sprites
 	tilemap_draw(bitmap,cliprect,fg_tilemap,2,0);	// high priority tiles of foreground
 
-//  usrintf_showmessage("%02X",metlclsh_scrollx[0]);
+//  ui_popup("%02X",metlclsh_scrollx[0]);
 }
 

@@ -920,8 +920,8 @@ if (code_pressed(KEYCODE_Z))
 	if (code_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 
-	if (tilemap_2)		usrintf_showmessage("VR:%04X-%04X-%04X L0:%04X L1:%04X",seta_vregs[0],seta_vregs[1],seta_vregs[2],seta_vctrl_0[4/2],seta_vctrl_2[4/2]);
-	else if (tilemap_0)	usrintf_showmessage("L0:%04X",seta_vctrl_0[4/2]);
+	if (tilemap_2)		ui_popup("VR:%04X-%04X-%04X L0:%04X L1:%04X",seta_vregs[0],seta_vregs[1],seta_vregs[2],seta_vctrl_0[4/2],seta_vctrl_2[4/2]);
+	else if (tilemap_0)	ui_popup("L0:%04X",seta_vctrl_0[4/2]);
 }
 #endif
 

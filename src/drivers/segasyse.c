@@ -12,7 +12,7 @@
  Mike Beaver - Mimic, although not used as a reference, it was used as an
  inspiration & motivation :p
 
- Stéphane Humbert - Dipswitch Information, Z80 Help, Lots of Notes of ROP, help
+ St?phane Humbert - Dipswitch Information, Z80 Help, Lots of Notes of ROP, help
  with the controller for ROP, and generally being an all round great guy to
  work with.
 
@@ -77,6 +77,7 @@
 ********************************************************************************
 
  Change Log:
+ 18 Aug 2004 | DH - Added Tetris System E
  14 Jun 2001 | Stephh added the dipswitches to ROP (and coinage to the others
              | I added Save State support
  14 Jun 2001 | Nicola improved the Controls for Riddle, stephh added a New
@@ -119,7 +120,9 @@
  - hook up dsw's in riddle, stephh kindly worked them out (see notes below,
    they just need adding to the input ports
  - Fix Astro Flash service mode (it works in Transformer)
+
  - Decrypt the other games (Fantasy Zone 2 & Opa Opa) looks tricky..
+    WE NEED THE ORIGINAL ***WORKING*** CPUS
 
 ********************************************************************************
  Game Notes:
@@ -196,7 +199,6 @@ unsigned char segae_vdp_ctrl_r ( UINT8 chip );
 unsigned char segae_vdp_data_r ( UINT8 chip );
 void segae_vdp_ctrl_w ( UINT8 chip, UINT8 data );
 void segae_vdp_data_w ( UINT8 chip, UINT8 data );
-
 void segae_drawscanline(int line, int chips, int blank);
 
 /*******************************************************************************
@@ -543,6 +545,59 @@ INPUT_PORTS_START( transfrm ) /* Used By Transformer */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( tetrisse ) /* Used By Transformer */
+	PORT_START_TAG("DSW0")	/* Read from Port 0xf2 */
+	SEGA_COIN_A
+	SEGA_COIN_B
+
+	PORT_START_TAG("DSW1")	/* Read from Port 0xf3 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN0")	/* Read from Port 0xe0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 )
+	PORT_SERVICE_NO_TOGGLE(0x04, IP_ACTIVE_LOW)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+
+	PORT_START_TAG("IN1")	/* Read from Port 0xe1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_JOYSTICK_UP  ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNUSED )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( hangonjr ) /* Used By Hang On Jr */
 	PORT_START_TAG("DSW0")	/* Read from Port 0xf2 */
 	SEGA_COIN_A
@@ -807,14 +862,29 @@ static DRIVER_INIT( astrofl )
  Rom Loaders / Game Drivers
 ********************************************************************************
  Good Dumps:
+ tetrisse  - Tetris (System E version)
  hangonjr - Hang On Jr.
  ridleofp - Riddle of Pythagoras (Jp.)
  transfrm - Transformer
- astrofl  - Astro Flash (Jp. Version of Transformer) *Custom CPU, scratched
-                                                      surface 'NEC??'*
+ astrofl  - Astro Flash (Jp. Version of Transformer) (was encrypted)
+
+ NOT DECRYPTED
+
  fantzn2  - Fantasy Zone 2 (set 2) *Rom at IC7 Encrypted*
  opaopa   - Opa Opa                *Roms Encrypted/Bad?*
 *******************************************************************************/
+
+
+ROM_START( tetrisse )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "epr12213.7",	0x00000, 0x08000, CRC(ef3c7a38) SHA1(cbb91aef330ab1a37d3e21ecf1d008143d0dd7ec) ) /* Fixed Code */
+
+	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */
+	ROM_LOAD( "epr12212.5",	0x10000, 0x08000, CRC(28b550bf) SHA1(445922a62e8a7360335c754ad70dabbe0208207b) )
+	ROM_LOAD( "epr12211.4",	0x18000, 0x08000, CRC(5aa114e9) SHA1(f9fc7fe4d0444a264185e74d2abc8475f0976534) )
+	/* ic3 unpopulated */
+	/* ic2 unpopulated */
+ROM_END
 
 ROM_START( hangonjr )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
@@ -860,6 +930,9 @@ ROM_START( astrofl )
 	ROM_LOAD( "epr-7350.ic2",	0x28000, 0x08000, CRC(0052165d) SHA1(cf4b5dffa54238e513515b3fc90faa7ce0b65d34) )
 ROM_END
 
+/* Below are encrypted with an NEC MC-8123 processor... it is ESSENTIAL we find these in working condition
+   AS SOON AS POSSIBLE, the batteries on these are dying at an ever increasing rate */
+
 ROM_START( fantzn2 )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )
 	ROM_LOAD( "fz2_ic7.rom",	0x00000, 0x08000, CRC(76db7b7b) SHA1(d60e2961fc893dcb4445aed5f67515cbd25b610f) )
@@ -888,3 +961,4 @@ GAMEX(1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro
 GAME( 1986, ridleofp, 0,        segae, ridleofp, ridleofp, ROT90, "Sega / Nasco", "Riddle of Pythagoras (Japan)" )
 GAMEX(198?, fantzn2,  0,        segae, dummy,    segasyse, ROT0,  "Sega", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
 GAMEX(198?, opaopa,   0,        segae, dummy,    segasyse, ROT0,  "Sega", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */
+GAME( 1988, tetrisse, 0,        segae, tetrisse, segasyse, ROT0,  "Sega", "Tetris (Japan, System E)" )

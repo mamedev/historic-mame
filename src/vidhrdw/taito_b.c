@@ -73,7 +73,7 @@ static void taitob_video_control (unsigned char data)
 {
 #if 0
 	if (data != video_control)
-		usrintf_showmessage("video control = %02x",data);
+		ui_popup("video control = %02x",data);
 #endif
 
 	video_control = data;
@@ -504,7 +504,7 @@ profiler_mark(PROFILER_USER1);
 
 		if (video_control & 0x10)   /*flip screen*/
 		{
-			/*usrintf_showmessage("1. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
+			/*ui_popup("1. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
 				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
@@ -546,7 +546,7 @@ profiler_mark(PROFILER_USER1);
 	{
 		if (video_control & 0x10)   /*flip screen*/
 		{
-			/*usrintf_showmessage("3. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
+			/*ui_popup("3. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
 				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;

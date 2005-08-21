@@ -128,7 +128,7 @@ static WRITE8_HANDLER( ace_characterram_w )
 		if (data&(~0x07))
 		{
 			logerror("write to %04x data=%02x\n", 0x8000+offset, data);
-			usrintf_showmessage("write to %04x data=%02x\n", 0x8000+offset, data);
+			ui_popup("write to %04x data=%02x\n", 0x8000+offset, data);
 		}
 		ace_characterram[offset] = data;
 	}

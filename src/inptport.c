@@ -115,8 +115,6 @@ extern void *playback;
  *
  *************************************/
 
-#define MAX_BITS_PER_PORT	32
-
 #define DIGITAL_JOYSTICKS_PER_PLAYER	3
 
 /* these constants must match the order of the joystick directions in the IPT definition */
@@ -1634,7 +1632,7 @@ struct InputPortDefinition *get_input_port_list(void)
 }
 
 
-struct InputPortDefinition *get_input_port_list_backup(void)
+const struct InputPortDefinition *get_input_port_list_defaults(void)
 {
 	return default_ports_backup;
 }
@@ -1978,7 +1976,7 @@ static void write_port_value(mame_file *f, UINT32 value)
 
 void inputport_vblank_start(void)
 {
-	int ui_visible = setup_active() || onscrd_active();
+	int ui_visible = ui_is_setup_active() || ui_is_onscrd_active();
 	int portnum, bitnum;
 
 profiler_mark(PROFILER_INPUT);
@@ -2107,7 +2105,7 @@ profiler_mark(PROFILER_END);
 
 void inputport_vblank_end(void)
 {
-	int ui_visible = setup_active() || onscrd_active();
+	int ui_visible = ui_is_setup_active() || ui_is_onscrd_active();
 	int port;
 
 profiler_mark(PROFILER_INPUT);

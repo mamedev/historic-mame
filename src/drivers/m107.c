@@ -132,7 +132,7 @@ static WRITE8_HANDLER( m92_sound_status_w )
 {
 	if (offset == 0)
 	{
-//      usrintf_showmessage("sound answer %02x",data);
+//      ui_popup("sound answer %02x",data);
 		sound_status = data;
 	}
 }
@@ -476,9 +476,9 @@ static INTERRUPT_GEN( m107_raster_interrupt )
 	if (code_pressed_memory(KEYCODE_F1)) {
 		raster_enable ^= 1;
 		if (raster_enable)
-			usrintf_showmessage("Raster IRQ enabled");
+			ui_popup("Raster IRQ enabled");
 		else
-			usrintf_showmessage("Raster IRQ disabled");
+			ui_popup("Raster IRQ disabled");
 	}
 
 	/* Raster interrupt */

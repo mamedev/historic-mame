@@ -561,7 +561,7 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
  *
  *************************************/
 
-int sound_start(void)
+int sound_init(void)
 {
 	/* handle -nosound */
 	nosound_mode = (Machine->sample_rate == 0);
@@ -939,7 +939,7 @@ static int route_sound(void)
  *
  *************************************/
 
-void sound_stop(void)
+void sound_exit(void)
 {
 	int sndnum;
 

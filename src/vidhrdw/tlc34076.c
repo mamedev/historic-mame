@@ -191,7 +191,7 @@ WRITE8_HANDLER( tlc34076_w )
 		case INPUT_CLOCK_SEL:
 			/*
                 3 2 1 0
-                0 0 0 0 Select CLK0 as clock source§
+                0 0 0 0 Select CLK0 as clock source?
                 0 0 0 1 Select CLK1 as clock source
                 0 0 1 0 Select CLK2 as clock source
                 0 0 1 1 Select CLK3 as TTL clock source

@@ -209,5 +209,5 @@ VIDEO_UPDATE( maddonna )
 	oneshot_drawsprites(bitmap,cliprect);
 //  oneshot_drawcrosshairs(bitmap,cliprect); // not a gun game
 
-//  usrintf_showmessage ("%04x %04x %04x %04x %04x %04x %04x %04x", oneshot_scroll[0],oneshot_scroll[1],oneshot_scroll[2],oneshot_scroll[3],oneshot_scroll[4],oneshot_scroll[5],oneshot_scroll[6],oneshot_scroll[7]);
+//  ui_popup ("%04x %04x %04x %04x %04x %04x %04x %04x", oneshot_scroll[0],oneshot_scroll[1],oneshot_scroll[2],oneshot_scroll[3],oneshot_scroll[4],oneshot_scroll[5],oneshot_scroll[6],oneshot_scroll[7]);
 }

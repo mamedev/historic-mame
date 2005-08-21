@@ -290,7 +290,7 @@ INTERRUPT_GEN( gdfs_interrupt )
 */
 static WRITE16_HANDLER( ssv_lockout_w )
 {
-//  usrintf_showmessage("%02X",data & 0xff);
+//  ui_popup("%02X",data & 0xff);
 	if (ACCESSING_LSB)
 	{
 		coin_lockout_w(1,~data & 0x01);
@@ -305,7 +305,7 @@ static WRITE16_HANDLER( ssv_lockout_w )
 /* Same as above but with inverted lockout lines */
 static WRITE16_HANDLER( ssv_lockout_inv_w )
 {
-//  usrintf_showmessage("%02X",data & 0xff);
+//  ui_popup("%02X",data & 0xff);
 	if (ACCESSING_LSB)
 	{
 		coin_lockout_w(1, data & 0x01);
@@ -816,7 +816,7 @@ static WRITE16_HANDLER( srmp7_sound_bank_w )
 		for (voice = 0; voice < 32; voice++)
 			ES5506_voice_bank_0_w(voice, bank);
 	}
-//  usrintf_showmessage("%04X",data);
+//  ui_popup("%04X",data);
 }
 
 static READ16_HANDLER( srmp7_input_r )
@@ -905,7 +905,7 @@ static WRITE16_HANDLER( sxyreact_dial_w )
 
 static WRITE16_HANDLER( sxyreact_motor_w )
 {
-//  usrintf_showmessage("%04X",data);   // 8 = motor on; 0 = motor off
+//  ui_popup("%04X",data);   // 8 = motor on; 0 = motor off
 }
 
 static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -5224,7 +5224,7 @@ ROM_END
 
 //     year   rom       clone     machine   inputs    init      monitor manufacturer          title                                               flags
 
-GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy",              "Dyna Gears",                                       GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy",              "Dyna Gear",                                        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
 GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older

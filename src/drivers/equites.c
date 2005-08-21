@@ -122,10 +122,10 @@ Other unemulated Alpha Denshi and SNK games that may use similar hardware:
 -----------------------------------------------------------
 Maker        Year Genre Name             Japanese Name
 -----------------------------------------------------------
-Alpha Denshi 1984 (SPT) Champion Croquet チャンピオンクロッケー
-Alpha Denshi 1985 (???) Tune Pit(?)      チェーンピット
-Alpha Denshi 1985 (MAJ) Perfect Janputer パーフェクトジャンピューター
-SNK/Eastern  1985 (ACT) Gekisoh          激走
+Alpha Denshi 1984 (SPT) Champion Croquet ?`?????s?I???N???b?P?[
+Alpha Denshi 1985 (???) Tune Pit(?)      ?`?F?[???s?b?g
+Alpha Denshi 1985 (MAJ) Perfect Janputer ?p?[?t?F?N?g?W?????s???[?^?[
+SNK/Eastern  1985 (ACT) Gekisoh          ????
 
 *******************************************************************************/
 // Directives
@@ -319,7 +319,7 @@ static WRITE16_HANDLER(log16_w)
 {
 	int pc = activecpu_get_pc();
 
-	usrintf_showmessage("%04x: %04x(w)\n", pc, data);
+	ui_popup("%04x: %04x(w)\n", pc, data);
 	logerror("%04x: %04x(w)\n", pc, data);
 }
 #endif

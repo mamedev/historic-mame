@@ -125,6 +125,7 @@ CPUS+=PPC603@
 CPUS+=SE3208@
 CPUS+=MC68HC11@
 CPUS+=ADSP21062@
+CPUS+=DSP56156@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -1213,6 +1214,7 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/vidhrdw/esd16.o $(OBJ)/drivers/esd16.o \
 	$(OBJ)/vidhrdw/afega.o $(OBJ)/drivers/afega.o \
 	$(OBJ)/drivers/pkscram.o \
+	$(OBJ)/drivers/jackpool.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \
@@ -1256,6 +1258,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/couple.o \
 	$(OBJ)/drivers/pipeline.o \
 	$(OBJ)/drivers/wink.o \
+	$(OBJ)/drivers/fortecar.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \
@@ -1325,10 +1328,3 @@ OBJS += \
 	$(OBJ)/vidhrdw/poly.o \
 	$(OBJ)/vidhrdw/tlc34076.o \
 	$(OBJ)/vidhrdw/res_net.o \
-
-# generated text files
-TEXTS += gamelist.txt
-
-gamelist.txt: $(EMULATOR)
-	@echo Generating $@...
-	@$(CURPATH)$(EMULATOR) -gamelist -noclones -sortname > docs/gamelist.txt

@@ -502,7 +502,7 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 
 		if(hscr & 0x8000) {
 			//#ifdef MAME_DEBUG
-			usrintf_showmessage("Linescroll with special mode %04x", ctrl);
+			ui_popup("Linescroll with special mode %04x", ctrl);
 			//          return;
 			//#endif
 		} else {
@@ -545,7 +545,7 @@ void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprec
 		}
 		case 3:
 			//#ifdef MAME_DEBUG
-			usrintf_showmessage("Mode 3, please scream");
+			ui_popup("Mode 3, please scream");
 			//#endif
 			break;
 		};

@@ -513,7 +513,7 @@ ADDRESS_MAP_END
 static WRITE8_HANDLER( scorpion_extra_sound_w )
 {
 	if(data != 0xff)
-		usrintf_showmessage("Played sample/speech %02X",data);
+		ui_popup("Played sample/speech %02X",data);
 }
 
 static WRITE8_HANDLER( scorpion_sound_cmd_w )
