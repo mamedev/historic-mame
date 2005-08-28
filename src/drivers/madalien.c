@@ -88,7 +88,7 @@ Input port 2, mapped to memory address $9002:
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
+static tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
 
 static struct rectangle bg_tilemap_l_clip;
 static struct rectangle bg_tilemap_r_clip;
@@ -541,7 +541,7 @@ READ8_HANDLER( madalien_soundreg_r )
 }
 
 
-static struct GfxLayout charlayout_memory =
+static gfx_layout charlayout_memory =
 {
 	8,8,    /* 8*8 characters */
 	256,	/* 256 characters */
@@ -552,7 +552,7 @@ static struct GfxLayout charlayout_memory =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,  /* 16*16 tiles */
 	16+1,	/* 16 tiles + 1 empty tile */
@@ -566,7 +566,7 @@ static struct GfxLayout tilelayout =
 };
 
 
-static struct GfxDecodeInfo madalien_gfxdecodeinfo[] =
+static gfx_decode madalien_gfxdecodeinfo[] =
 {
 	{ 0, 0, &charlayout_memory,	0, 8 }, /* characters (the game dynamically modifies them) */
 	{ REGION_GFX1, 0, &tilelayout,	0, 8 },	/* background tiles */

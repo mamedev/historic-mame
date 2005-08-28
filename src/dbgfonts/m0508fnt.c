@@ -263,7 +263,7 @@ static UINT8 fontdata[] =
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
-static struct GfxLayout fontlayout =
+static gfx_layout fontlayout =
 {
 	5,8,	/* 5*8 characters */
 	256,	/* 256 characters */

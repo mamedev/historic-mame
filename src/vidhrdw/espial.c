@@ -18,7 +18,7 @@ data8_t *espial_spriteram_2;
 data8_t *espial_spriteram_3;
 
 static int flipscreen;
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************
@@ -99,12 +99,12 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( espial )
 {
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 
 	return 0;
 }
@@ -112,13 +112,13 @@ VIDEO_START( espial )
 VIDEO_START( netwars )
 {
 	/* Net Wars has a tile map that's twice as big as Espial's */
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,64);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_scroll_cols(tilemap, 32);
-	tilemap_set_scrolldy(tilemap, 0, 0x100);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
+	tilemap_set_scrolldy(bg_tilemap, 0, 0x100);
 
 	return 0;
 }
@@ -135,7 +135,7 @@ WRITE8_HANDLER( espial_videoram_w )
 	if (espial_videoram[offset] != data)
 	{
 		espial_videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -145,7 +145,7 @@ WRITE8_HANDLER( espial_colorram_w )
 	if (espial_colorram[offset] != data)
 	{
 		espial_colorram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -155,7 +155,7 @@ WRITE8_HANDLER( espial_attributeram_w )
 	if (espial_attributeram[offset] != data)
 	{
 		espial_attributeram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -163,7 +163,7 @@ WRITE8_HANDLER( espial_attributeram_w )
 WRITE8_HANDLER( espial_scrollram_w )
 {
 	espial_scrollram[offset] = data;
-	tilemap_set_scrolly(tilemap, offset, data);
+	tilemap_set_scrolly(bg_tilemap, offset, data);
 }
 
 
@@ -254,7 +254,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE( espial )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_sprites(bitmap, cliprect);
 }

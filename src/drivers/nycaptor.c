@@ -764,7 +764,7 @@ INPUT_PORTS_START( nycaptor )
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -775,7 +775,7 @@ static struct GfxLayout charlayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -788,7 +788,7 @@ static struct GfxLayout spritelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 16 },//16 kolorow
 	{ REGION_GFX1, 0, &spritelayout, 256, 16 },//paleta 2, 16 kolorow

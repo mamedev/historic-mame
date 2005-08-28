@@ -3,7 +3,7 @@
 
 UINT8 *scotrsht_scroll;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int scotrsht_charbank = 0;
 
 /* Similar as Iron Horse */

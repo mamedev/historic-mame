@@ -15,7 +15,7 @@ UINT8 *gottlieb_charram;
 static int background_priority = 0;
 static int spritebank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int swap_bg_ramrom;
 
 /***************************************************************************

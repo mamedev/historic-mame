@@ -11,7 +11,7 @@
 
 static int palettebank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

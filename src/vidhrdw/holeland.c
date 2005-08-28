@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 static int palette_offset;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************

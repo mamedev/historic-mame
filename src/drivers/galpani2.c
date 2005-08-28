@@ -436,7 +436,7 @@ INPUT_PORTS_END
     16x16x8 made of four 8x8x8 tiles arrenged like: 01
                                                     23
 */
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -447,7 +447,7 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*8
 };
 
-static struct GfxDecodeInfo galpani2_gfxdecodeinfo[] =
+static gfx_decode galpani2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,	0,	0x40	}, // [0] Sprites
 	{ -1 }

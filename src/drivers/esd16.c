@@ -38,7 +38,7 @@ Head Panic
 
 extern data16_t *esd16_vram_0, *esd16_scroll_0;
 extern data16_t *esd16_vram_1, *esd16_scroll_1;
-extern struct tilemap *esdtilemap_1_16x16;
+extern tilemap *esdtilemap_1_16x16;
 
 /* Functions defined in vidhrdw: */
 
@@ -412,7 +412,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 16x16x5, made of four 8x8 tiles */
-static struct GfxLayout layout_16x16x5 =
+static gfx_layout layout_16x16x5 =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -424,7 +424,7 @@ static struct GfxLayout layout_16x16x5 =
 };
 
 /* 8x8x8 */
-static struct GfxLayout layout_8x8x8 =
+static gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -436,7 +436,7 @@ static struct GfxLayout layout_8x8x8 =
 	8*8*2,
 };
 
-static struct GfxDecodeInfo esd16_gfxdecodeinfo[] =
+static gfx_decode esd16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x5, 0x200, 8 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,   0x000, 2 }, // [1] Layers
@@ -444,7 +444,7 @@ static struct GfxDecodeInfo esd16_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxLayout hedpanic_layout_8x8x8 =
+static gfx_layout hedpanic_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -455,7 +455,7 @@ static struct GfxLayout hedpanic_layout_8x8x8 =
 	64*8,
 };
 
-static struct GfxLayout hedpanic_layout_16x16x8 =
+static gfx_layout hedpanic_layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -470,7 +470,7 @@ static struct GfxLayout hedpanic_layout_16x16x8 =
 };
 
 
-static struct GfxLayout hedpanic_sprite_16x16x5 =
+static gfx_layout hedpanic_sprite_16x16x5 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -482,7 +482,7 @@ static struct GfxLayout hedpanic_sprite_16x16x5 =
 };
 
 
-static struct GfxDecodeInfo hedpanic_gfxdecodeinfo[] =
+static gfx_decode hedpanic_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hedpanic_sprite_16x16x5, 0x200, 8 }, // [0] Sprites
 	{ REGION_GFX2, 0, &hedpanic_layout_8x8x8,   0x000, 2 }, // [1] Layers

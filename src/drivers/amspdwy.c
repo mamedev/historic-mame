@@ -217,7 +217,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_8x8x2 =
+static gfx_layout layout_8x8x2 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -228,7 +228,7 @@ static struct GfxLayout layout_8x8x2 =
 	8*8
 };
 
-static struct GfxDecodeInfo amspdwy_gfxdecodeinfo[] =
+static gfx_decode amspdwy_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x2,   0, 8 }, // [0] Layer & Sprites
 	{ -1 }

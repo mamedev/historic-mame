@@ -4,7 +4,7 @@
 
 data8_t *baraduke_textram, *baraduke_videoram, *baraduke_spriteram;
 
-static struct tilemap *tx_tilemap, *tilemap[2];
+static tilemap *tx_tilemap, *bg_tilemap[2];
 static int xscroll[2], yscroll[2];
 
 
@@ -122,15 +122,15 @@ static void get_tile_info1(int tile_index)
 VIDEO_START( baraduke )
 {
 	tx_tilemap = tilemap_create(tx_get_tile_info,tx_tilemap_scan,TILEMAP_TRANSPARENT,8,8,36,28);
-	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!tx_tilemap || !tilemap[0] || !tilemap[1])
+	if (!tx_tilemap || !bg_tilemap[0] || !bg_tilemap[1])
 		return 1;
 
 	tilemap_set_transparent_pen(tx_tilemap,3);
-	tilemap_set_transparent_pen(tilemap[0],7);
-	tilemap_set_transparent_pen(tilemap[1],7);
+	tilemap_set_transparent_pen(bg_tilemap[0],7);
+	tilemap_set_transparent_pen(bg_tilemap[1],7);
 
 	tilemap_set_scrolldx(tx_tilemap,0,512-288);
 	tilemap_set_scrolldy(tx_tilemap,16,16);
@@ -158,7 +158,7 @@ WRITE8_HANDLER( baraduke_videoram_w )
 	if (baraduke_videoram[offset] != data)
 	{
 		baraduke_videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset&0xfff)/2);
+		tilemap_mark_tile_dirty(bg_tilemap[offset/0x1000],(offset&0xfff)/2);
 	}
 }
 
@@ -315,8 +315,8 @@ static void set_scroll(int layer)
 		scrolly = -scrolly;
 	}
 
-	tilemap_set_scrollx(tilemap[layer], 0, scrollx);
-	tilemap_set_scrolly(tilemap[layer], 0, scrolly);
+	tilemap_set_scrollx(bg_tilemap[layer], 0, scrollx);
+	tilemap_set_scrolly(bg_tilemap[layer], 0, scrolly);
 }
 
 
@@ -336,9 +336,9 @@ VIDEO_UPDATE( baraduke )
 	else
 		back = 0;
 
-	tilemap_draw(bitmap,cliprect,tilemap[back],TILEMAP_IGNORE_TRANSPARENCY,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[back],TILEMAP_IGNORE_TRANSPARENCY,0);
 	draw_sprites(bitmap,cliprect,0);
-	tilemap_draw(bitmap,cliprect,tilemap[back ^ 1],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[back ^ 1],0,0);
 	draw_sprites(bitmap,cliprect,1);
 
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);

@@ -16,7 +16,7 @@
 
 /* Variables only used here: */
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 
 WRITE8_HANDLER( amspdwy_paletteram_w )
@@ -62,7 +62,7 @@ WRITE8_HANDLER( amspdwy_videoram_w )
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -71,7 +71,7 @@ WRITE8_HANDLER( amspdwy_colorram_w )
 	if (colorram[offset] != data)
 	{
 		colorram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -85,10 +85,10 @@ UINT32 tilemap_scan_cols_back( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 n
 
 VIDEO_START( amspdwy )
 {
-	tilemap	=	tilemap_create(	get_tile_info,	tilemap_scan_cols_back,
+	bg_tilemap	=	tilemap_create(	get_tile_info,	tilemap_scan_cols_back,
 								TILEMAP_OPAQUE,	8,8,	0x20, 0x20 );
 
-	if (tilemap)	return 0;
+	if (bg_tilemap)	return 0;
 	else			return 1;
 }
 
@@ -154,6 +154,6 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 VIDEO_UPDATE( amspdwy )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
 }

@@ -272,7 +272,7 @@ INPUT_PORTS_END
 
 
 #define layout16x16(_name_,_romsize_) \
-static struct GfxLayout _name_ =\
+static gfx_layout _name_ =\
 {\
 	16,16,\
 	(_romsize_)*8/(16*16*4),\
@@ -286,7 +286,7 @@ static struct GfxLayout _name_ =\
 };
 
 #define layout8x8(_name_,_romsize_) \
-static struct GfxLayout _name_ =\
+static gfx_layout _name_ =\
 {\
 	8,8,\
 	(_romsize_)*8/(8*8*4),\
@@ -301,7 +301,7 @@ layout16x16(tilelayout,  0x20000)
 layout8x8  (txtlayout,	 0x04000)
 layout16x16(spritelayout,0x50000)
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,	 256*3, 16 }, /* [0] bg */
 	{ REGION_GFX2, 0, &tilelayout,	 256*2, 16 }, /* [1] fg */

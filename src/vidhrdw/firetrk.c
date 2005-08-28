@@ -36,8 +36,8 @@ struct sprite_data
 
 static struct sprite_data car[2];
 
-static struct tilemap* tilemap1; /* for screen display */
-static struct tilemap* tilemap2; /* for collision detection */
+static tilemap* tilemap1; /* for screen display */
+static tilemap* tilemap2; /* for collision detection */
 
 
 

@@ -645,7 +645,7 @@ ADDRESS_MAP_END
 
 /*********************************************************************/
 
-static struct GfxLayout char512 =
+static gfx_layout char512 =
 {
 	8,8,
 	512,
@@ -656,7 +656,7 @@ static struct GfxLayout char512 =
 	256
 };
 
-static struct GfxLayout char1024 =
+static gfx_layout char1024 =
 {
 	8,8,
 	1024,
@@ -667,7 +667,7 @@ static struct GfxLayout char1024 =
 	256
 };
 
-static struct GfxLayout tile1024 =
+static gfx_layout tile1024 =
 {
 	16,16,
 	1024,
@@ -680,7 +680,7 @@ static struct GfxLayout tile1024 =
 	128*8
 };
 
-static struct GfxLayout tile2048 =
+static gfx_layout tile2048 =
 {
 	16,16,
 	2048,
@@ -693,7 +693,7 @@ static struct GfxLayout tile2048 =
 	128*8
 };
 
-static struct GfxLayout tdfever_tiles =
+static gfx_layout tdfever_tiles =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -706,7 +706,7 @@ static struct GfxLayout tdfever_tiles =
 	128*8
 };
 
-static struct GfxLayout tdfever2_tiles =
+static gfx_layout tdfever2_tiles =
 {
 	16,16,
 	512*6,
@@ -719,7 +719,7 @@ static struct GfxLayout tdfever2_tiles =
 	128*8
 };
 
-static struct GfxLayout sprite512 =
+static gfx_layout sprite512 =
 {
 	16,16,
 	512,
@@ -731,7 +731,7 @@ static struct GfxLayout sprite512 =
 	256
 };
 
-static struct GfxLayout sprite1024 =
+static gfx_layout sprite1024 =
 {
 	16,16,
 	1024,
@@ -743,7 +743,7 @@ static struct GfxLayout sprite1024 =
 	256
 };
 
-static struct GfxLayout big_sprite512 =
+static gfx_layout big_sprite512 =
 {
 	32,32,
 	512,
@@ -766,7 +766,7 @@ static struct GfxLayout big_sprite512 =
 	16*32*2
 };
 
-static struct GfxLayout gwar_sprite1024 =
+static gfx_layout gwar_sprite1024 =
 {
 	16,16,
 	1024,
@@ -781,7 +781,7 @@ static struct GfxLayout gwar_sprite1024 =
 	256
 };
 
-static struct GfxLayout gwar_sprite2048 =
+static gfx_layout gwar_sprite2048 =
 {
 	16,16,
 	2048,
@@ -793,7 +793,7 @@ static struct GfxLayout gwar_sprite2048 =
 	256
 };
 
-static struct GfxLayout gwar_big_sprite1024 =
+static gfx_layout gwar_big_sprite1024 =
 {
 	32,32,
 	1024,
@@ -816,7 +816,7 @@ static struct GfxLayout gwar_big_sprite1024 =
 	1024
 };
 
-static struct GfxLayout tdfever_big_sprite1024 =
+static gfx_layout tdfever_big_sprite1024 =
 {
 	32,32,
 	1024,
@@ -841,7 +841,7 @@ static struct GfxLayout tdfever_big_sprite1024 =
 
 /*********************************************************************/
 
-static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] =
+static gfx_decode tnk3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char512,	128*3,  8 },
 	{ REGION_GFX2, 0x0, &char1024,	128*1, 16 },
@@ -849,7 +849,7 @@ static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo athena_gfxdecodeinfo[] =
+static gfx_decode athena_gfxdecodeinfo[] =
 {
 	/* colors 512-1023 are currently unused, I think they are a second bank */
 	{ REGION_GFX1, 0x0, &char512,	128*3,  8 },	/* colors 384..511 */
@@ -858,7 +858,7 @@ static struct GfxDecodeInfo athena_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo ikari_gfxdecodeinfo[] =
+static gfx_decode ikari_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char512,             256, 16 },
 	{ REGION_GFX2, 0x0, &tile1024,            256, 16 },
@@ -867,7 +867,7 @@ static struct GfxDecodeInfo ikari_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gwar_gfxdecodeinfo[] =
+static gfx_decode gwar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -876,7 +876,7 @@ static struct GfxDecodeInfo gwar_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] =
+static gfx_decode bermudat_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -885,7 +885,7 @@ static struct GfxDecodeInfo bermudat_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo psychos_gfxdecodeinfo[] =
+static gfx_decode psychos_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -894,7 +894,7 @@ static struct GfxDecodeInfo psychos_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
+static gfx_decode tdfever_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
 	{ REGION_GFX2, 0x0, &tdfever_tiles,				256*2, 16 },
@@ -902,7 +902,7 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo tdfever2_gfxdecodeinfo[] =
+static gfx_decode tdfever2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
 	{ REGION_GFX2, 0x0, &tdfever2_tiles,				256*2, 16 },
@@ -3873,6 +3873,147 @@ Actual Play Times listed in manual based on Players & cabinet type:
 	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_START4 ) PORT_NAME("Start Game D")
 INPUT_PORTS_END
 
+INPUT_PORTS_START( tdfeverj )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* sound CPU status */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 ) PORT_NAME("Start Game A")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Start Game B")
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Start Game E")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
+
+	PORT_START_TAG("IN5")
+	PORT_BIT( 0x7f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_CODE_DEC(KEYCODE_Z) PORT_CODE_INC(KEYCODE_X)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN6")
+	PORT_BIT( 0x7f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_CODE_DEC(KEYCODE_N) PORT_CODE_INC(KEYCODE_M) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN7")
+	PORT_BIT( 0x7f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN8")
+	PORT_BIT( 0x7f, 0x00, IPT_DIAL ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10) PORT_PLAYER(4)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "2 Player Upright" )
+	PORT_DIPSETTING(    0x02, "4 Player Cocktail" )
+	PORT_DIPNAME( 0x0c, 0x00, "1st Down Bonus Time" )
+	PORT_DIPSETTING(    0x00, "Every 1st Down" )
+	PORT_DIPSETTING(    0x04, "Every 4 1st Downs" )
+	PORT_DIPSETTING(    0x08, "Every 6 1st Downs" )
+	PORT_DIPSETTING(    0x0c, "Every 8 1st Downs" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )	/* Manual shows these two as blank */
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0c, 0x08, "Game Mode" )
+	PORT_DIPSETTING(    0x0c, "Demo Sound Off" )
+	PORT_DIPSETTING(    0x08, "Demo Sound On" )
+	PORT_DIPSETTING(    0x00, "Freeze" )
+	PORT_DIPSETTING(    0x04, "Never Finish (Cheat)")
+	PORT_DIPNAME( 0x70, 0x70, "Play Time" )
+	PORT_DIPSETTING(    0x70, "1:00" )
+	PORT_DIPSETTING(    0x60, "1:10" )
+	PORT_DIPSETTING(    0x50, "1:20" )
+	PORT_DIPSETTING(    0x40, "1:30" )
+	PORT_DIPSETTING(    0x30, "1:40" )
+	PORT_DIPSETTING(    0x20, "1:50" )
+	PORT_DIPSETTING(    0x10, "2:00" )
+	PORT_DIPSETTING(    0x00, "2:10" )
+/*
+Actual Play Times listed in manual based on Players & cabinet type:
+
+                Upright/Cocktail     Cocktail Only
+ Dip Switch       A       B         C      D      E    <-- Start button "MODE"
+ SW6 SW7 SW8    1PvsCPU 2PvsCPU   1Pvs2P 2Pvs1P 2Pvs2P
+ OFF OFF OFF     1:00    1:10      2:00   2:10   3:00
+ ON  OFF OFF     1:10    1:20      2:10   2:20   3:10
+ OFF ON  OFF     1:20    1:30      2:20   2:30   3:20
+ ON  ON  OFF     1:30    1:40      2:30   2:40   3:30
+ OFF OFF ON      1:40    1:50      2:40   2:50   3:40
+ ON  OFF ON      1:50    2:00      2:50   3:00   3:50
+ OFF ON  ON      2:00    2:10      3:00   3:10   4:00
+ ON  ON  ON      2:10    2:20      3:10   3:20   4:10
+*/
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN11")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_START3 ) PORT_NAME("Start Game C")
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_START4 ) PORT_NAME("Start Game D")
+INPUT_PORTS_END
+
 /***********************************************************************/
 
 /* input port configuration */
@@ -4161,6 +4302,6 @@ GAMEX( 1988, choppera, chopper,  chopper1, choppera, choppera, ROT270, "SNK", "C
 GAMEX( 1988, chopperb, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Chopper I (US set 3)", GAME_NO_COCKTAIL )
 GAMEX( 1988, legofair, chopper,  chopper1, legofair, chopper,  ROT270, "SNK", "Koukuu Kihei Monogatari - The Legend of Air Cavalry (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1987, tdfever,  0,        tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever", GAME_NO_COCKTAIL )
-GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfever,  tdfever,  ROT270, "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1987, tdfeverj, tdfever,  tdfever,  tdfeverj,  tdfever,  ROT270, "SNK", "TouchDown Fever (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1988, tdfever2, tdfever,  tdfever2, tdfever,  tdfever2, ROT270, "SNK", "TouchDown Fever 2", GAME_NO_COCKTAIL ) /* upgrade kit for Touchdown Fever */
 GAMEX( 1988, ftsoccer, 0,        ftsoccer, ftsoccer, ftsoccer, ROT0,   "SNK", "Fighting Soccer", GAME_NO_COCKTAIL )

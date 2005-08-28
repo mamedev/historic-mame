@@ -11,13 +11,13 @@
 struct cdda_info
 {
 	sound_stream *		stream;
-	struct cdrom_file *	disc;
+	cdrom_file *	disc;
 };
 
 static void cdda_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	struct cdda_info *info = param;
-	if (info->disc != (struct cdrom_file *)NULL)
+	if (info->disc != (cdrom_file *)NULL)
 	{
 		cdrom_get_audio_data(info->disc, &outputs[0][0], &outputs[1][0], length);
 	}
@@ -41,7 +41,7 @@ static void *cdda_start(int sndindex, int clock, const void *config)
 void CDDA_set_cdrom(int num, void *file)
 {
 	struct cdda_info *info = sndti_token(SOUND_CDDA, num);
-	info->disc = (struct cdrom_file *)file;
+	info->disc = (cdrom_file *)file;
 }
 
 

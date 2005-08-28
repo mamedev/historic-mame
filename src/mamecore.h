@@ -34,6 +34,32 @@ typedef UINT32 FPTR;
 #endif
 
 
+/* ----- for generic function pointers ----- */
+typedef void genf(void);
+
+
+
+/* These are forward struct declarations that are used to break
+   circular dependencies in the code */
+
+typedef struct _mame_display mame_display;
+typedef struct _game_driver game_driver;
+typedef struct _machine_config machine_config;
+typedef struct _rom_load_data rom_load_data;
+typedef struct _xml_data_node xml_data_node;
+typedef struct _performance_info performance_info;
+
+
+typedef struct _osd_file osd_file;
+
+
+/* rectangles are used throughout the code */
+struct rectangle
+{
+	int min_x,max_x;
+	int min_y,max_y;
+};
+
 
 
 /***************************************************************************
@@ -261,6 +287,15 @@ INLINE int my_stricmp(const char *dst, const char *src)
 	return *dst - *src;
 }
 
+/* compute the intersection of two rectangles */
+INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)
+{
+	if (src->min_x > dst->min_x) dst->min_x = src->min_x;
+	if (src->max_x < dst->max_x) dst->max_x = src->max_x;
+	if (src->min_y > dst->min_y) dst->min_y = src->min_y;
+	if (src->max_y < dst->max_y) dst->max_y = src->max_y;
+}
+
 /* convert a series of 32 bits into a float */
 INLINE float u2f(UINT32 v)
 {
@@ -319,6 +354,7 @@ INLINE UINT64 d2u(double d)
 #endif
 
 
+
 /* Some optimizations/warnings cleanups for GCC */
 #if defined(__GNUC__)
 #define ATTR_UNUSED			__attribute__((__unused__))
@@ -340,6 +376,7 @@ INLINE UINT64 d2u(double d)
 #else
 #define DECL_NORETURN
 #endif
+
 
 
 

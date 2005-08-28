@@ -3,7 +3,7 @@
 
 
 static unsigned char *cbasebal_textram,*cbasebal_scrollram;
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 static int tilebank,spritebank;
 static int text_on,bg_on,obj_on;
 static int flipscreen;

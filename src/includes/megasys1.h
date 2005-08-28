@@ -166,7 +166,7 @@
 ***************************************************************************/
 
 /* Variables */
-extern struct tilemap *megasys1_tmap[3];
+extern tilemap *megasys1_tmap[3];
 
 extern data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
 extern data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;

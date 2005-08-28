@@ -11,7 +11,7 @@
 
 static int background_image;
 
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 WRITE8_HANDLER( bombjack_videoram_w )
 {

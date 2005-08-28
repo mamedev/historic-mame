@@ -338,7 +338,7 @@ INPUT_PORTS_START( cvs )
 
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout8colour =
+static gfx_layout charlayout8colour =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -351,7 +351,7 @@ static struct GfxLayout charlayout8colour =
 
 /* S2636 Mappings */
 
-static struct GfxLayout s2636_character10 =
+static gfx_layout s2636_character10 =
 {
 	8,10,
 	5,
@@ -362,7 +362,7 @@ static struct GfxLayout s2636_character10 =
 	8*16
 };
 
-static struct GfxDecodeInfo cvs_gfxdecodeinfo[] =
+static gfx_decode cvs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Rom chars */
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Ram chars */

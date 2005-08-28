@@ -15,7 +15,7 @@ typedef struct
 {
 	data32_t lba, blocks, last_lba, bytes_per_sector, num_subblocks, cur_subblock;
 	int last_command;
- 	struct cdrom_file *cdrom;
+ 	cdrom_file *cdrom;
 	data8_t last_packet[16];
 } SCSICd;
 
@@ -26,7 +26,7 @@ typedef struct
 
 int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 {
-	struct cdrom_file *cdrom = our_this->cdrom;
+	cdrom_file *cdrom = our_this->cdrom;
 	int retval = 12, trk;
 
 	// remember the last command for the data transfer phase
@@ -192,7 +192,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 	int i;
 	UINT32 last_phys_frame;
 	data8_t *fifo = our_this->last_packet;
-	struct cdrom_file *cdrom = our_this->cdrom;
+	cdrom_file *cdrom = our_this->cdrom;
 	data32_t temp;
 	data8_t tmp_buffer[2048];
 
@@ -457,7 +457,7 @@ void scsicd_write_data(SCSICd *our_this, int bytes, data8_t *pData)
 int scsicd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 {
 	SCSICd *instance, **result;
-	struct cdrom_file **devptr;
+	cdrom_file **devptr;
 
 	switch (operation)
 	{
@@ -501,14 +501,14 @@ int scsicd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 			break;
 
 		case SCSIOP_GET_DEVICE:
-			devptr = (struct cdrom_file **)ptrparm;
+			devptr = (cdrom_file **)ptrparm;
 			instance = (SCSICd *)file;
 			*devptr = instance->cdrom;
 			break;
 
 		case SCSIOP_SET_DEVICE:
 			instance = (SCSICd *)file;
-			instance->cdrom = (struct cdrom_file *)ptrparm;
+			instance->cdrom = (cdrom_file *)ptrparm;
 			break;
 	}
 

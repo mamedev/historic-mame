@@ -13,7 +13,7 @@
 data8_t *gaplus_videoram;
 data8_t *gaplus_spriteram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************

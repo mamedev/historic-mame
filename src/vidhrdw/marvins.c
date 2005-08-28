@@ -4,7 +4,7 @@
 #include "snk.h"
 
 static int flipscreen, sprite_flip_adjust;
-static struct tilemap *fg_tilemap, *bg_tilemap, *tx_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap, *tx_tilemap;
 static unsigned char bg_color, fg_color, old_bg_color, old_fg_color;
 static struct rectangle tilemap_clip;
 
@@ -256,7 +256,7 @@ VIDEO_START( marvins )
 static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const unsigned char *base = videoram+0x400;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
 	{
@@ -287,7 +287,7 @@ static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cli
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scrollx, int scrolly,
 		int priority, unsigned char sprite_partition )
 {
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 	const unsigned char *source, *finish;
 
 	if( sprite_partition>0x64 ) sprite_partition = 0x64;

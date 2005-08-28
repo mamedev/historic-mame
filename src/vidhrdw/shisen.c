@@ -3,7 +3,7 @@
 
 static int gfxbank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( sichuan2_videoram_w )
 {

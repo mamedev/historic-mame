@@ -26,7 +26,7 @@ struct star
 
 static int galaga_gfxbank; // used by catsbee
 
-static struct tilemap *tx_tilemap;
+static tilemap *tx_tilemap;
 
 /*
 Galaga star line and pixel locations pulled directly from

@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 static int charbank;
 static int spritebank;
 static int palettebank;
@@ -166,9 +166,9 @@ VIDEO_START( pacman )
 	/* one pixel to the left to get a more correct placement */
 	xoffsethack = 1;
 
-	tilemap = tilemap_create( pacman_get_tile_info, pacman_scan_rows, TILEMAP_OPAQUE, 8, 8, 36, 28 );
+	bg_tilemap = tilemap_create( pacman_get_tile_info, pacman_scan_rows, TILEMAP_OPAQUE, 8, 8, 36, 28 );
 
-	if( !tilemap )
+	if( !bg_tilemap )
 		return 1;
 
 	return 0;
@@ -179,7 +179,7 @@ WRITE8_HANDLER( pacman_videoram_w )
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap, offset );
+		tilemap_mark_tile_dirty( bg_tilemap, offset );
 	}
 }
 
@@ -188,7 +188,7 @@ WRITE8_HANDLER( pacman_colorram_w )
 	if (colorram[offset] != data)
 	{
 		colorram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap, offset );
+		tilemap_mark_tile_dirty( bg_tilemap, offset );
 	}
 }
 
@@ -197,7 +197,7 @@ WRITE8_HANDLER( pacman_flipscreen_w )
 	if (flipscreen != (data & 1))
 	{
 		flipscreen = data & 1;
-		tilemap_set_flip( tilemap, flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
+		tilemap_set_flip( bg_tilemap, flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
 	}
 }
 
@@ -214,7 +214,7 @@ VIDEO_UPDATE( pacman )
 	if (bgpriority != 0)
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
-		tilemap_draw(bitmap,cliprect,tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	if( spriteram_size )
 	{
@@ -274,7 +274,7 @@ VIDEO_UPDATE( pacman )
 	}
 
 	if (bgpriority != 0)
-		tilemap_draw(bitmap,cliprect,tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
 
@@ -295,9 +295,9 @@ VIDEO_START( pengo )
 
 	xoffsethack = 0;
 
-	tilemap = tilemap_create( pacman_get_tile_info, pacman_scan_rows, TILEMAP_OPAQUE, 8, 8, 36, 28 );
+	bg_tilemap = tilemap_create( pacman_get_tile_info, pacman_scan_rows, TILEMAP_OPAQUE, 8, 8, 36, 28 );
 
-	if( !tilemap )
+	if( !bg_tilemap )
 		return 1;
 
     return 0;
@@ -308,7 +308,7 @@ WRITE8_HANDLER( pengo_palettebank_w )
 	if (palettebank != data)
 	{
 		palettebank = data;
-		tilemap_mark_all_tiles_dirty( tilemap );
+		tilemap_mark_all_tiles_dirty( bg_tilemap );
 	}
 }
 
@@ -317,7 +317,7 @@ WRITE8_HANDLER( pengo_colortablebank_w )
 	if (colortablebank != data)
 	{
 		colortablebank = data;
-		tilemap_mark_all_tiles_dirty( tilemap );
+		tilemap_mark_all_tiles_dirty( bg_tilemap );
 	}
 }
 
@@ -327,7 +327,7 @@ WRITE8_HANDLER( pengo_gfxbank_w )
 	{
 		spritebank = data & 1;
 		charbank = data & 1;
-		tilemap_mark_all_tiles_dirty( tilemap );
+		tilemap_mark_all_tiles_dirty( bg_tilemap );
 	}
 }
 
@@ -373,12 +373,12 @@ VIDEO_START( s2650games )
 {
 	xoffsethack = 1;
 
-	tilemap = tilemap_create( s2650_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
+	bg_tilemap = tilemap_create( s2650_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 
-	if( !tilemap )
+	if( !bg_tilemap )
 		return 1;
 
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 
 	return 0;
 }
@@ -387,7 +387,7 @@ VIDEO_UPDATE( s2650games )
 {
 	int offs;
 
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	for (offs = spriteram_size - 2;offs > 2*2;offs -= 2)
 	{
@@ -428,7 +428,7 @@ VIDEO_UPDATE( s2650games )
 WRITE8_HANDLER( s2650games_videoram_w )
 {
 	videoram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
 WRITE8_HANDLER( s2650games_colorram_w )
@@ -436,18 +436,18 @@ WRITE8_HANDLER( s2650games_colorram_w )
 	int i;
 	colorram[offset & 0x1f] = data;
 	for (i = offset; i < 0x0400; i += 32)
-		tilemap_mark_tile_dirty(tilemap, i);
+		tilemap_mark_tile_dirty(bg_tilemap, i);
 }
 
 WRITE8_HANDLER( s2650games_scroll_w )
 {
-	tilemap_set_scrolly(tilemap, offset, data);
+	tilemap_set_scrolly(bg_tilemap, offset, data);
 }
 
 WRITE8_HANDLER( s2650games_tilesbank_w )
 {
 	tiles_bankram[offset] = data;
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
 
@@ -511,18 +511,18 @@ static void jrpacman_mark_tile_dirty( int offset )
 		int i;
 		for( i = 2 * 0x20; i < 56 * 0x20; i += 0x20 )
 		{
-			tilemap_mark_tile_dirty( tilemap, offset + i );
+			tilemap_mark_tile_dirty( bg_tilemap, offset + i );
 		}
 	}
 	else if (offset < 1792)
 	{
 		/* tiles for playfield */
-		tilemap_mark_tile_dirty( tilemap, offset );
+		tilemap_mark_tile_dirty( bg_tilemap, offset );
 	}
 	else
 	{
 		/* tiles & colors for top and bottom two rows */
-		tilemap_mark_tile_dirty( tilemap, offset & ~0x80 );
+		tilemap_mark_tile_dirty( bg_tilemap, offset & ~0x80 );
 	}
 }
 
@@ -542,13 +542,13 @@ VIDEO_START( jrpacman )
 
 	xoffsethack = 1;
 
-	tilemap = tilemap_create( jrpacman_get_tile_info,jrpacman_scan_rows,TILEMAP_TRANSPARENT,8,8,36,54 );
+	bg_tilemap = tilemap_create( jrpacman_get_tile_info,jrpacman_scan_rows,TILEMAP_TRANSPARENT,8,8,36,54 );
 
-	if( !tilemap )
+	if( !bg_tilemap )
 		return 1;
 
-	tilemap_set_transparent_pen( tilemap, 0 );
-	tilemap_set_scroll_cols( tilemap, 36 );
+	tilemap_set_transparent_pen( bg_tilemap, 0 );
+	tilemap_set_scroll_cols( bg_tilemap, 36 );
 	return 0;
 }
 
@@ -566,7 +566,7 @@ WRITE8_HANDLER( jrpacman_charbank_w )
 	if (charbank != (data & 1))
 	{
 		charbank = data & 1;
-		tilemap_mark_all_tiles_dirty(tilemap);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
 
@@ -580,7 +580,7 @@ WRITE8_HANDLER( jrpacman_scroll_w )
 	int i;
 	for( i = 2; i < 34; i++ )
 	{
-		tilemap_set_scrolly( tilemap, i, data );
+		tilemap_set_scrolly( bg_tilemap, i, data );
 	}
 }
 

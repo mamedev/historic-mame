@@ -129,7 +129,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8, /* character size */
 	1024, /* number of characters */
@@ -140,7 +140,7 @@ static struct GfxLayout charlayout =
 	8*8	/* character offset */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,32, /* sprite size */
 	64, /* number of sprites */
@@ -155,7 +155,7 @@ static struct GfxLayout spritelayout =
 	32*8	/* character offset */
 };
 
-static struct GfxDecodeInfo troangel_gfxdecodeinfo[] =
+static gfx_decode troangel_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,      0, 32 },
 	{ REGION_GFX2, 0x0000, &spritelayout, 32*8, 32 },

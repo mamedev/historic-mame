@@ -19,7 +19,7 @@ data16_t *lemmings_pixel_0_data,*lemmings_pixel_1_data,*lemmings_vram_data,*lemm
 static data16_t *sprite_triple_buffer_0,*sprite_triple_buffer_1;
 static data8_t *vram_buffer, *vram_dirty;
 struct mame_bitmap *bitmap0;
-static struct tilemap *vram_tilemap;
+static tilemap *vram_tilemap;
 
 /******************************************************************************/
 

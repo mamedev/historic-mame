@@ -12,7 +12,7 @@
 
 unsigned char *gundealr_bg_videoram,*gundealr_fg_videoram;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 static int flipscreen;
 
 

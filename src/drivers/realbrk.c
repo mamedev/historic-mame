@@ -718,7 +718,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -729,7 +729,7 @@ static struct GfxLayout layout_8x8x4 =
 	8*8*4
 };
 
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -740,7 +740,7 @@ static struct GfxLayout layout_16x16x4 =
 	16*16*4
 };
 
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -751,7 +751,7 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*8
 };
 
-static struct GfxDecodeInfo realbrk_gfxdecodeinfo[] =
+static gfx_decode realbrk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,		0, 0x80		},	// [0] Backgrounds
 	{ REGION_GFX2, 0, &layout_8x8x4,		0, 0x800	},	// [1] Text

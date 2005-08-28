@@ -101,9 +101,9 @@ Priority word (Midres):
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *pf1_tilemap_0,*pf1_tilemap_1,*pf1_tilemap_2;
-static struct tilemap *pf2_tilemap_0,*pf2_tilemap_1,*pf2_tilemap_2;
-static struct tilemap *pf3_tilemap_0,*pf3_tilemap_1,*pf3_tilemap_2;
+static tilemap *pf1_tilemap_0,*pf1_tilemap_1,*pf1_tilemap_2;
+static tilemap *pf2_tilemap_0,*pf2_tilemap_1,*pf2_tilemap_2;
+static tilemap *pf3_tilemap_0,*pf3_tilemap_1,*pf3_tilemap_2;
 
 data16_t *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
 data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
@@ -222,7 +222,7 @@ static void dec0_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *
 static void dec0_pf1_update(void)
 {
 	int offs,lines,height,scrolly,scrollx;
-	struct tilemap *tilemap_ptr;
+	tilemap *tilemap_ptr;
 
 	/* Flipscreen */
 	flip_screen_set(dec0_pf1_control_0[0]&0x80);
@@ -281,7 +281,7 @@ static void dec0_pf1_update(void)
 static void dec0_pf2_update(void)
 {
 	int offs,lines,height,scrolly,scrollx;
-	struct tilemap *tilemap_ptr;
+	tilemap *tilemap_ptr;
 
 	/* Master scroll registers */
 	scrollx = dec0_pf2_control_1[0];
@@ -350,7 +350,7 @@ static void dec0_pf2_update(void)
 static void dec0_pf3_update(void)
 {
 	int offs,lines,height,scrolly,scrollx;
-	struct tilemap *tilemap_ptr;
+	tilemap *tilemap_ptr;
 
 	/* Master scroll registers */
 	scrollx = dec0_pf3_control_1[0];

@@ -7,7 +7,7 @@
 #include "driver.h"
 
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 UINT8* runaway_video_ram;
 UINT8* runaway_sprite_ram;
@@ -42,7 +42,7 @@ WRITE8_HANDLER( runaway_video_ram_w )
 {
 	if (data != runaway_video_ram[offset])
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	runaway_video_ram[offset] = data;
@@ -54,7 +54,7 @@ WRITE8_HANDLER( runaway_tile_bank_w )
 {
 	if ((data & 1) != tile_bank)
 	{
-		tilemap_mark_all_tiles_dirty(tilemap);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 
 	tile_bank = data & 1;
@@ -80,17 +80,17 @@ static void qwak_get_tile_info(int tile_index)
 
 VIDEO_START( runaway )
 {
-	tilemap = tilemap_create(runaway_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 30);
+	bg_tilemap = tilemap_create(runaway_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 30);
 
-	return tilemap == NULL;
+	return bg_tilemap == NULL;
 }
 
 
 VIDEO_START( qwak )
 {
-	tilemap = tilemap_create(qwak_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 30);
+	bg_tilemap = tilemap_create(qwak_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 30);
 
-	return tilemap == NULL;
+	return bg_tilemap == NULL;
 }
 
 
@@ -99,7 +99,7 @@ VIDEO_UPDATE( runaway )
 {
 	int i;
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	for (i = 0; i < 16; i++)
 	{
@@ -134,7 +134,7 @@ VIDEO_UPDATE( qwak )
 {
 	int i;
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	for (i = 0; i < 16; i++)
 	{

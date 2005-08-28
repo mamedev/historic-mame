@@ -185,7 +185,7 @@ INPUT_PORTS_START( arcadia )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_COCKTAIL
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };

@@ -9,14 +9,14 @@ Atari Orbit video emulation
 UINT8* orbit_playfield_ram;
 UINT8* orbit_sprite_ram;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 static int orbit_flip_screen;
 
 
 WRITE8_HANDLER( orbit_playfield_w )
 {
-	tilemap_mark_tile_dirty(tilemap, offset);
+	tilemap_mark_tile_dirty(bg_tilemap, offset);
 
 	orbit_playfield_ram[offset] = data;
 }
@@ -55,9 +55,9 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( orbit )
 {
-	tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 16, 16, 32, 30);
+	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 16, 16, 32, 30);
 
-	if (tilemap == NULL)
+	if (bg_tilemap == NULL)
 		return 1;
 
 	return 0;
@@ -113,7 +113,7 @@ VIDEO_UPDATE( orbit )
 {
 	orbit_flip_screen = readinputport(3) & 8;
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	orbit_draw_sprites(bitmap, cliprect);
 }

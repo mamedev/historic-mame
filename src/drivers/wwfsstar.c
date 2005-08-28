@@ -266,7 +266,7 @@ INPUT_PORTS_END
  Technos Game ;)
 *******************************************************************************/
 
-static struct GfxLayout tiles8x8_layout =
+static gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -277,7 +277,7 @@ static struct GfxLayout tiles8x8_layout =
 	32*8
 };
 
-static struct GfxLayout tiles16x16_layout =
+static gfx_layout tiles16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -290,7 +290,7 @@ static struct GfxLayout tiles16x16_layout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout,     0, 16 },	/* colors   0-255 */
 	{ REGION_GFX2, 0, &tiles16x16_layout, 128, 16 },	/* colors   128-383 */

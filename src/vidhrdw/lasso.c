@@ -39,7 +39,7 @@ data8_t *lasso_bitmap_ram; 	/* 0x2000 bytes for a 256 x 256 x 1 bitmap */
 data8_t *wwjgtin_track_scroll;
 
 /* variables only used here: */
-static struct tilemap *bg_tilemap, *track_tilemap;
+static tilemap *bg_tilemap, *track_tilemap;
 static int gfxbank;
 static int wwjgtin_track_enable;
 static int flip_screen_x;

@@ -988,7 +988,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout spyhunt_charlayout =
+static gfx_layout spyhunt_charlayout =
 {
 	64,32,
 	RGN_FRAC(1,2),
@@ -1006,7 +1006,7 @@ static struct GfxLayout spyhunt_charlayout =
 };
 
 
-static struct GfxLayout spyhunt_alphalayout =
+static gfx_layout spyhunt_alphalayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1018,7 +1018,7 @@ static struct GfxLayout spyhunt_alphalayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mcr_bg_layout,     0, 4 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout, 0, 4 },
@@ -1026,7 +1026,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
+static gfx_decode spyhunt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spyhunt_charlayout,  1*16, 1 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout,   0*16, 4 },

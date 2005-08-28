@@ -519,7 +519,7 @@ ADDRESS_MAP_END
   GFX decoding
 **************************************************************************/
 
-static struct GfxLayout omegaf_charlayout =
+static gfx_layout omegaf_charlayout =
 {
 	8, 8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -530,7 +530,7 @@ static struct GfxLayout omegaf_charlayout =
 	8*32
 };
 
-static struct GfxLayout omegaf_spritelayout =
+static gfx_layout omegaf_spritelayout =
 {
 	16, 16,	/* 16x16 characters */
 	1024,
@@ -543,7 +543,7 @@ static struct GfxLayout omegaf_spritelayout =
 	16*64
 };
 
-static struct GfxLayout omegaf_bigspritelayout =
+static gfx_layout omegaf_bigspritelayout =
 {
 	32, 32,	/* 32x32 characters */
 	256,
@@ -560,7 +560,7 @@ static struct GfxLayout omegaf_bigspritelayout =
 	16*64*4
 };
 
-static struct GfxLayout omegaf_bglayout =
+static gfx_layout omegaf_bglayout =
 {
 	16, 16,	/* 16x16 characters */
 	4096,
@@ -573,7 +573,7 @@ static struct GfxLayout omegaf_bglayout =
 	16*64
 };
 
-static struct GfxLayout robokid_spritelayout =
+static gfx_layout robokid_spritelayout =
 {
 	16, 16,	/* 16x16 characters */
 	2048,
@@ -586,7 +586,7 @@ static struct GfxLayout robokid_spritelayout =
 	16*64
 };
 
-static struct GfxLayout robokid_bigspritelayout =
+static gfx_layout robokid_bigspritelayout =
 {
 	32, 32,	/* 32x32 characters */
 	512,
@@ -603,7 +603,7 @@ static struct GfxLayout robokid_bigspritelayout =
 	16*64*4
 };
 
-static struct GfxDecodeInfo omegaf_gfxdecodeinfo[] =
+static gfx_decode omegaf_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &omegaf_bglayout,         0*16, 16},
 	{ REGION_GFX2, 0, &omegaf_bglayout,         0*16, 16},
@@ -614,7 +614,7 @@ static struct GfxDecodeInfo omegaf_gfxdecodeinfo[] =
 	{ -1} /* end of array */
 };
 
-static struct GfxDecodeInfo robokid_gfxdecodeinfo[] =
+static gfx_decode robokid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &omegaf_bglayout,          0*16, 16},
 	{ REGION_GFX2, 0, &omegaf_bglayout,          0*16, 16},

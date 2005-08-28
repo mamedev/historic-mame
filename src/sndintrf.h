@@ -13,8 +13,6 @@
 
 #include "sound/streams.h"
 
-struct xml_data_node;
-
 
 
 /*************************************
@@ -182,7 +180,7 @@ union sndinfo
  *
  *************************************/
 
-struct snd_interface
+struct _sound_interface
 {
 	/* table of core functions */
 	void		(*get_info)(void *token, UINT32 state, union sndinfo *info);
@@ -191,6 +189,7 @@ struct snd_interface
 	void		(*stop)(void *token);
 	void		(*reset)(void *token);
 };
+typedef struct _sound_interface sound_interface;
 
 
 
@@ -202,28 +201,33 @@ struct snd_interface
 
 #define ALL_OUTPUTS 	(-1)							/* special value indicating all outputs for the current chip */
 
-struct MachineSoundRoute
+struct _sound_route
 {
 	int			output;									/* output ID */
 	const char *target;									/* tag of the target */
 	float		gain;									/* gain */
 };
+typedef struct _sound_route sound_route;
 
-struct MachineSound
+
+struct _sound_config
 {
 	int			sound_type;								/* what type of sound chip? */
 	int			clock;									/* clock speed */
 	const void *config;									/* configuration for this chip */
 	const char *tag;									/* tag for this chip */
 	int			routes;									/* number of routes we have */
-	struct MachineSoundRoute route[MAX_ROUTES];			/* routes for the various streams */
+	sound_route route[MAX_ROUTES];			/* routes for the various streams */
 };
+typedef struct _sound_config sound_config;
 
-struct MachineSpeaker
+
+struct _speaker_config
 {
 	const char *tag;									/* tag for this speaker */
 	float		x, y, z;								/* positioning vector */
 };
+typedef struct _speaker_config speaker_config;
 
 
 
@@ -319,8 +323,8 @@ void sound_frame_update(void);
 void sound_register_token(void *token);
 int sound_scalebufferpos(int value);
 
-void sndintrf_load(int config_type, struct xml_data_node *parentnode);
-void sndintrf_save(int config_type, struct xml_data_node *parentnode);
+void sndintrf_load(int config_type, xml_data_node *parentnode);
+void sndintrf_save(int config_type, xml_data_node *parentnode);
 
 
 

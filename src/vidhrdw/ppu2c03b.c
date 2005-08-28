@@ -175,7 +175,7 @@ void ppu2c03b_init_palette( int first_entry ) {
 }
 
 /* the charlayout we use for the chargen */
-static struct GfxLayout ppu_charlayout =
+static gfx_layout ppu_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters - modified at runtime */
@@ -745,7 +745,7 @@ static void scanline_callback( int num )
 		/* cache some values */
 		UINT8 *dirtyarray = chips[num].dirtychar;
 		UINT8 *vram = chips[num].videoram;
-		struct GfxElement *gfx = Machine->gfx[intf->gfx_layout_number[num]];
+		gfx_element *gfx = Machine->gfx[intf->gfx_layout_number[num]];
 
 		/* then iterate and decode */
 		for( i = 0; i < CHARGEN_NUM_CHARS; i++ )

@@ -9,7 +9,7 @@
 
 data16_t *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
 
-static struct tilemap *background_layer,*foreground_layer,*text_layer;
+static tilemap *background_layer,*foreground_layer,*text_layer;
 
 static data16_t fg_bank = 0;
 

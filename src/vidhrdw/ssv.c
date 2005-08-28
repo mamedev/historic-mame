@@ -141,7 +141,7 @@ Note: press Z to show some info on each sprite (debug builds only)
 
 int shadow_pen_mask, shadow_pen_shift;
 
-void ssv_drawgfx(	struct mame_bitmap *bitmap, const struct GfxElement *gfx,
+void ssv_drawgfx(	struct mame_bitmap *bitmap, const gfx_element *gfx,
 					unsigned int code,unsigned int color,int flipx,int flipy,int x0,int y0,
 					const struct rectangle *cliprect, int shadow	)
 {
@@ -211,7 +211,7 @@ VIDEO_START( eaglshot )
 	return 0;
 }
 
-static struct tilemap *gdfs_tmap;
+static tilemap *gdfs_tmap;
 
 static void get_tile_info_0(int tile_index)
 {

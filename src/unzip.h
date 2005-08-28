@@ -19,7 +19,8 @@
  * Support for retrieving files from zipfiles
  ***************************************************************************/
 
-struct zipent {
+struct _zip_entry
+{
 	UINT32	cent_file_header_sig;
 	UINT8	version_made_by;
 	UINT8	host_os;
@@ -41,8 +42,10 @@ struct zipent {
 	UINT32	offset_lcl_hdr_frm_frst_disk;
 	char*   name; /* 0 terminated */
 };
+typedef struct _zip_entry zip_entry;
 
-typedef struct _ZIP {
+struct _zip_file
+{
 	char* zip; /* zip name */
 	osd_file* fp; /* zip handler */
 	int pathtype,pathindex;	/* additional path info */
@@ -55,7 +58,7 @@ typedef struct _ZIP {
 
 	unsigned cd_pos; /* position in cent_dir */
 
-	struct zipent ent; /* buffer for readzip */
+	zip_entry ent; /* buffer for readzip */
 
 	/* end_of_cent_dir */
 	UINT32	end_of_cent_dir_sig;
@@ -67,17 +70,18 @@ typedef struct _ZIP {
 	UINT32	offset_to_start_of_cent_dir;
 	UINT16	zipfile_comment_length;
 	char*	zipfile_comment; /* pointer in ecd */
-} ZIP;
+};
+typedef struct _zip_file zip_file;
 
 /* Opens a zip stream for reading
    return:
      !=0 success, zip stream
      ==0 error
 */
-ZIP* openzip(int pathtype, int pathindex, const char* path);
+zip_file* openzip(int pathtype, int pathindex, const char* path);
 
 /* Closes a zip stream */
-void closezip(ZIP* zip);
+void closezip(zip_file* zip);
 
 /* Reads the current entry from a zip stream
    in:
@@ -86,7 +90,7 @@ void closezip(ZIP* zip);
      !=0 success
      ==0 error
 */
-struct zipent* readzip(ZIP* zip);
+zip_entry* readzip(zip_file* zip);
 
 /* Suspend access to a zip file (release file handler)
    in:
@@ -95,7 +99,7 @@ struct zipent* readzip(ZIP* zip);
      A suspended zip is automatically reopened at first call of
      readuncompressd() or readcompressed() functions
 */
-void suspendzip(ZIP* zip);
+void suspendzip(zip_file* zip);
 
 /* Resets a zip stream to the first entry
    in:
@@ -103,7 +107,7 @@ void suspendzip(ZIP* zip);
    note:
      ZIP file must be opened and not suspended
 */
-void rewindzip(ZIP* zip);
+void rewindzip(zip_file* zip);
 
 /* Read compressed data from a zip entry
    in:
@@ -115,7 +119,7 @@ void rewindzip(ZIP* zip);
      ==0 success
      <0 error
 */
-int readcompresszip(ZIP* zip, struct zipent* ent, char* data);
+int readcompresszip(zip_file* zip, zip_entry* ent, char* data);
 
 /* Read decompressed data from a zip entry
    in:
@@ -127,7 +131,7 @@ int readcompresszip(ZIP* zip, struct zipent* ent, char* data);
      ==0 success
      <0 error
 */
-int readuncompresszip(ZIP* zip, struct zipent* ent, char* data);
+int readuncompresszip(zip_file* zip, zip_entry* ent, char* data);
 
 /* public functions */
 int /* error */ load_zipped_file (int pathtype, int pathindex, const char *zipfile, const char *filename,

@@ -589,7 +589,7 @@ all the 8x8 tiles are in one format, the 16x16 sprites in another
 
 */
 
-static struct GfxLayout angelkds_charlayout =
+static gfx_layout angelkds_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -601,7 +601,7 @@ static struct GfxLayout angelkds_charlayout =
 };
 
 
-static struct GfxLayout angelkds_spritelayout =
+static gfx_layout angelkds_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -612,7 +612,7 @@ static struct GfxLayout angelkds_spritelayout =
 	16*32
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &angelkds_charlayout,   0x30, 1  },
 	{ REGION_GFX3, 0, &angelkds_charlayout,   0, 16 },

@@ -381,7 +381,7 @@ WRITE16_HANDLER( koshien_spritebank_w )
 	spritebank_buffered[7] = spritebank_buffered[6] + 0x400;
 }
 
-static void taito_f2_tc360_spritemixdraw( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+static void taito_f2_tc360_spritemixdraw( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int scalex, int scaley)
 {

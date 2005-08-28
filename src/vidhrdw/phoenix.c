@@ -21,7 +21,7 @@ static int palette_bank;
 static int cocktail_mode;
 static int pleiads_protection_question;
 static int survival_protection_value;
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 
 /***************************************************************************

@@ -28,10 +28,10 @@ static int sprite16;
 static int sprite32;
 static int bg;
 
-static struct tilemap *tx_tilemap;
+static tilemap *tx_tilemap;
 
-static struct tilemap *bg1_tilemap;
-static struct tilemap *bg2_tilemap;
+static tilemap *bg1_tilemap;
+static tilemap *bg2_tilemap;
 
 static int bg1_scroll_x, bg1_scroll_y;
 static int bg2_scroll_x, bg2_scroll_y;
@@ -267,7 +267,7 @@ WRITE8_HANDLER( tceptor_bg_scroll_w )
 
 static int decode_bg(int region)
 {
-	static struct GfxLayout bg_layout =
+	static gfx_layout bg_layout =
 	{
 		8, 8,
 		2048,
@@ -309,7 +309,7 @@ static int decode_bg(int region)
 	return 0;
 }
 
-static int decode_sprite(int gfx_index, struct GfxLayout *layout, const void *data)
+static int decode_sprite(int gfx_index, gfx_layout *layout, const void *data)
 {
 	/* decode the graphics */
 	Machine->gfx[gfx_index] = decodegfx(data, layout);
@@ -326,7 +326,7 @@ static int decode_sprite(int gfx_index, struct GfxLayout *layout, const void *da
 // fix sprite order
 static int decode_sprite16(int region)
 {
-	static struct GfxLayout spr16_layout =
+	static gfx_layout spr16_layout =
 	{
 		16, 16,
 		512,
@@ -380,7 +380,7 @@ static int decode_sprite16(int region)
 // fix sprite order
 static int decode_sprite32(int region)
 {
-	static struct GfxLayout spr32_layout =
+	static gfx_layout spr32_layout =
 	{
 		32, 32,
 		1024,

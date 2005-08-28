@@ -20,7 +20,7 @@ UINT8 *yard_scroll_y_low;
 UINT8 *yard_score_panel_disabled;
 static struct mame_bitmap *scroll_panel_bitmap;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 #define SCROLL_PANEL_WIDTH  (14*4)
 #define RADAR_PALETTE_BASE (256+16)

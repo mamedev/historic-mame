@@ -11,7 +11,7 @@
 
 UINT8 *commando_videoram2, *commando_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( commando_videoram_w )
 {

@@ -574,7 +574,7 @@ DRIVER_INIT(ss23)
 */
 }
 #if 0
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -594,7 +594,7 @@ static struct GfxLayout sprite_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
 	{ -1 },

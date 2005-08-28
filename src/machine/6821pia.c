@@ -107,58 +107,6 @@ static void pia_postload(int which)
 	if (p->intf->out_cb2_func) p->intf->out_cb2_func(0, p->out_cb2);
 }
 
-static void pia_postload_0(void)
-{
-	pia_postload(0);
-}
-
-static void pia_postload_1(void)
-{
-	pia_postload(1);
-}
-
-static void pia_postload_2(void)
-{
-	pia_postload(2);
-}
-
-static void pia_postload_3(void)
-{
-	pia_postload(3);
-}
-
-static void pia_postload_4(void)
-{
-	pia_postload(4);
-}
-
-static void pia_postload_5(void)
-{
-	pia_postload(5);
-}
-
-static void pia_postload_6(void)
-{
-	pia_postload(6);
-}
-
-static void pia_postload_7(void)
-{
-	pia_postload(7);
-}
-
-static void (*pia_postload_funcs[MAX_PIA])(void) =
-{
-	pia_postload_0,
-	pia_postload_1,
-	pia_postload_2,
-	pia_postload_3,
-	pia_postload_4,
-	pia_postload_5,
-	pia_postload_6,
-	pia_postload_7
-};
-
 void pia_init(int count)
 {
 	int i;
@@ -183,7 +131,7 @@ void pia_init(int count)
 		state_save_register_UINT8("6821pia", i, "irq_b1",	&pia[i].irq_b1, 1);
 		state_save_register_UINT8("6821pia", i, "irq_b2",	&pia[i].irq_b2, 1);
 		state_save_register_UINT8("6821pia", i, "in_set",	&pia[i].in_set, 1);
-		state_save_register_func_postload(pia_postload_funcs[i]);
+		state_save_register_func_postload_int(pia_postload, i);
 	}
 }
 

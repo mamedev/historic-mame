@@ -3,7 +3,7 @@
 #include "tatsumi.h"
 #include <math.h>
 
-static struct tilemap *bg_layer,*tx_layer;
+static tilemap *bg_layer,*tx_layer;
 static struct mame_bitmap *temp_bitmap;
 
 data16_t *roundup_r_ram, *roundup_p_ram, *roundup_l_ram;
@@ -256,7 +256,7 @@ VIDEO_START( cyclwarr )
 
 /********************************************************************/
 
-INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,unsigned int ssx,unsigned int ssy,
 		const struct rectangle *clip, int scalex, int scaley, int rotate, int write_priority_only )
 {

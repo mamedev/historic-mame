@@ -224,7 +224,7 @@ INPUT_PORTS_START( destroyr )
 INPUT_PORTS_END
 
 
-static struct GfxLayout destroyr_alpha_num_layout =
+static gfx_layout destroyr_alpha_num_layout =
 {
 	8, 8,     /* width, height */
 	64,       /* total         */
@@ -240,7 +240,7 @@ static struct GfxLayout destroyr_alpha_num_layout =
 };
 
 
-static struct GfxLayout destroyr_minor_object_layout =
+static gfx_layout destroyr_minor_object_layout =
 {
 	16, 16,   /* width, height */
 	16,       /* total         */
@@ -258,7 +258,7 @@ static struct GfxLayout destroyr_minor_object_layout =
 };
 
 
-static struct GfxLayout destroyr_major_object_layout =
+static gfx_layout destroyr_major_object_layout =
 {
 	64, 16,   /* width, height */
 	4,        /* total         */
@@ -282,7 +282,7 @@ static struct GfxLayout destroyr_major_object_layout =
 };
 
 
-static struct GfxLayout destroyr_waves_layout =
+static gfx_layout destroyr_waves_layout =
 {
 	64, 2,    /* width, height */
 	2,        /* total         */
@@ -305,7 +305,7 @@ static struct GfxLayout destroyr_waves_layout =
 };
 
 
-static struct GfxDecodeInfo destroyr_gfx_decode_info[] =
+static gfx_decode destroyr_gfx_decode_info[] =
 {
 	{ REGION_GFX1, 0, &destroyr_alpha_num_layout, 4, 1 },
 	{ REGION_GFX2, 0, &destroyr_minor_object_layout, 4, 1 },

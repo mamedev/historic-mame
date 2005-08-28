@@ -22,7 +22,7 @@ int vball_gfxset=0;
 int vb_bgprombank=0xff;
 int vb_spprombank=0xff;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int scrollx[32];
 
 /***************************************************************************
@@ -124,7 +124,7 @@ void vb_mark_all_dirty( void )
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	unsigned char *src = spriteram;
 	int i;
 

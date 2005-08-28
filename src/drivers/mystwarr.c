@@ -821,7 +821,7 @@ static struct K054539interface k054539_interface =
 
 /**********************************************************************************/
 
-static struct GfxLayout bglayout_4bpp =
+static gfx_layout bglayout_4bpp =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -832,7 +832,7 @@ static struct GfxLayout bglayout_4bpp =
 	16*64
 };
 
-static struct GfxLayout bglayout_8bpp =
+static gfx_layout bglayout_8bpp =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -843,13 +843,13 @@ static struct GfxLayout bglayout_8bpp =
 	16*128
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_gaiapols[] =
+static gfx_decode gfxdecodeinfo_gaiapols[] =
 {
 	{ REGION_GFX3, 0, &bglayout_4bpp, 0x0000, 128 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_dadandrn[] =
+static gfx_decode gfxdecodeinfo_dadandrn[] =
 {
 	{ REGION_GFX3, 0, &bglayout_8bpp, 0x0000, 8 },
 	{ -1 } /* end of array */

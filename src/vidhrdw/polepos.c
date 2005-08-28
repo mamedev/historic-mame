@@ -15,7 +15,7 @@ static data16_t polepos_vertical_position_modifier[256];
 
 static data16_t road16_vscroll;
 
-static struct tilemap *bg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*tx_tilemap;
 static int polepos_chacl;
 
 int polepos_gear_bit;
@@ -448,7 +448,7 @@ static void zoom_sprite( struct mame_bitmap *bitmap,int big,
 		unsigned int code,unsigned int color,int flipx,int sx,int sy,
 		int sizex,int sizey)
 {
-	const struct GfxElement *gfx = Machine->gfx[big ? 3 : 2];
+	const gfx_element *gfx = Machine->gfx[big ? 3 : 2];
 	UINT8 *gfxdata = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
 	UINT8 *scaling_rom = memory_region(REGION_GFX6);
 	pen_t *colortable = gfx->colortable + color * gfx->color_granularity;

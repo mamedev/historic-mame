@@ -15,7 +15,7 @@ static int fromanc2_scrollx[2][4], fromanc2_scrolly[2][4];
 static int fromanc2_gfxbank[2][4];
 static data16_t *fromanc2_paletteram[2];
 static data16_t *fromanc2_videoram[2][4];
-static struct tilemap *fromanc2_tilemap[2][4];
+static tilemap *fromanc2_tilemap[2][4];
 
 
 /******************************************************************************

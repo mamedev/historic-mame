@@ -55,7 +55,7 @@ VIDEO_START( gaelco2_dual );
 VIDEO_UPDATE( bang );
 
 
-#define TILELAYOUT16(NUM) static struct GfxLayout tilelayout16_##NUM =				\
+#define TILELAYOUT16(NUM) static gfx_layout tilelayout16_##NUM =				\
 {																					\
 	16,16,											/* 16x16 tiles */				\
 	NUM/32,											/* number of tiles */			\
@@ -66,7 +66,7 @@ VIDEO_UPDATE( bang );
 	32*8																			\
 }
 
-#define GFXDECODEINFO(NUM,ENTRIES) static struct GfxDecodeInfo gfxdecodeinfo_##NUM[] =	\
+#define GFXDECODEINFO(NUM,ENTRIES) static gfx_decode gfxdecodeinfo_##NUM[] =	\
 {																						\
 	{ REGION_GFX1, 0x0000000, &tilelayout16_##NUM,0,	ENTRIES },						\
 	{ -1 }																				\

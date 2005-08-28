@@ -18,7 +18,7 @@ int warpwarp_ball_on;
 int warpwarp_ball_h,warpwarp_ball_v;
 int warpwarp_ball_sizex, warpwarp_ball_sizey;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 static unsigned char geebee_palette[] =

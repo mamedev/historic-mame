@@ -46,7 +46,7 @@ static INTERRUPT_GEN( glass_interrupt )
 }
 
 
-static struct GfxLayout glass_tilelayout16 =
+static gfx_layout glass_tilelayout16 =
 {
 	16,16,									/* 16x16 tiles */
 	0x100000/32,							/* number of tiles */
@@ -63,7 +63,7 @@ static struct GfxLayout glass_tilelayout16 =
 	32*8
 };
 
-static struct GfxDecodeInfo glass_gfxdecodeinfo[] =
+static gfx_decode glass_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &glass_tilelayout16, 0, 64 },
 	{ -1 }

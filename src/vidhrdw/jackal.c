@@ -13,7 +13,7 @@
 
 UINT8 *jackal_scrollram, *jackal_videoctrl;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 PALETTE_INIT( jackal )

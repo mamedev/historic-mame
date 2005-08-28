@@ -36,7 +36,7 @@
 
 UINT8 *nova2001_videoram2, *nova2001_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 PALETTE_INIT( nova2001 )
 {

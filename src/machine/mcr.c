@@ -97,7 +97,7 @@ static void counter_fired_callback(int counter);
  *
  *************************************/
 
-struct GfxLayout mcr_bg_layout =
+gfx_layout mcr_bg_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -113,7 +113,7 @@ struct GfxLayout mcr_bg_layout =
 };
 
 
-struct GfxLayout mcr_sprite_layout =
+gfx_layout mcr_sprite_layout =
 {
 	32,32,
 	RGN_FRAC(1,4),

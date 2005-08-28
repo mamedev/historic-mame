@@ -362,7 +362,7 @@ INPUT_PORTS_END
 
 
 /* BACKGROUNDS */
-static struct GfxLayout tiles16x16x6_layout =
+static gfx_layout tiles16x16x6_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -373,7 +373,7 @@ static struct GfxLayout tiles16x16x6_layout =
 	16*32
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles16x16x6_layout,  0x0000, 256 },
 	{ -1 }

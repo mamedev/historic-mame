@@ -118,7 +118,7 @@ int							win_use_mouse;
 //============================================================
 
 // this will be filled in dynamically
-static struct OSCodeInfo	codelist[MAX_KEYS+MAX_JOY];
+static os_code_info	codelist[MAX_KEYS+MAX_JOY];
 static int					total_codes;
 
 // DirectInput variables
@@ -739,7 +739,7 @@ usage:
 //  autoselect_analog_devices
 //============================================================
 
-static void autoselect_analog_devices(const struct InputPort *inp, int type1, int type2, int type3, int anatype, const char *ananame)
+static void autoselect_analog_devices(const input_port_entry *inp, int type1, int type2, int type3, int anatype, const char *ananame)
 {
 	// loop over input ports
 	for ( ; inp->type != IPT_END; inp++)
@@ -993,7 +993,7 @@ out_of_joysticks:
 
 int win_init_input(void)
 {
-	const struct InputPort *inp;
+	const input_port_entry *inp;
 	HRESULT result;
 
 	// first attempt to initialize DirectInput
@@ -1346,7 +1346,7 @@ static void updatekeyboard(void)
 //  is_key_pressed
 //============================================================
 
-static int is_key_pressed(os_code_t keycode)
+static int is_key_pressed(os_code keycode)
 {
 	int dik = DICODE(keycode);
 
@@ -1431,8 +1431,8 @@ static void init_keycodes(void)
 			char *namecopy = malloc(strlen(instance.tszName) + 1);
 			if (namecopy)
 			{
-				input_code_t standardcode;
-				os_code_t code;
+				input_code standardcode;
+				os_code code;
 				int entry;
 
 				// find the table entry, if there is one
@@ -1538,7 +1538,7 @@ static void update_joystick_axes(void)
 //  add_joylist_entry
 //============================================================
 
-static void add_joylist_entry(const char *name, os_code_t code, input_code_t standardcode)
+static void add_joylist_entry(const char *name, os_code code, input_code standardcode)
 {
 	// copy the name
 	char *namecopy = malloc(strlen(name) + 1);
@@ -1716,7 +1716,7 @@ static void init_joycodes(void)
 //  get_joycode_value
 //============================================================
 
-static INT32 get_joycode_value(os_code_t joycode)
+static INT32 get_joycode_value(os_code joycode)
 {
 	int joyindex = JOYINDEX(joycode);
 	int codetype = CODETYPE(joycode);
@@ -1850,7 +1850,7 @@ static INT32 get_joycode_value(os_code_t joycode)
 //  osd_is_code_pressed
 //============================================================
 
-INT32 osd_get_code_value(os_code_t code)
+INT32 osd_get_code_value(os_code code)
 {
 	if (IS_KEYBOARD_CODE(code))
 		return is_key_pressed(code);
@@ -1864,7 +1864,7 @@ INT32 osd_get_code_value(os_code_t code)
 //  osd_get_code_list
 //============================================================
 
-const struct OSCodeInfo *osd_get_code_list(void)
+const os_code_info *osd_get_code_list(void)
 {
 	return codelist;
 }
@@ -2050,10 +2050,10 @@ void osd_joystick_end_calibration(void)
 //  osd_customize_inputport_list
 //============================================================
 
-void osd_customize_inputport_list(struct InputPortDefinition *defaults)
+void osd_customize_inputport_list(input_port_default_entry *defaults)
 {
-	static input_seq_t no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
-	struct InputPortDefinition *idef = defaults;
+	static input_seq no_alt_tab_seq = SEQ_DEF_5(KEYCODE_TAB, CODE_NOT, KEYCODE_LALT, CODE_NOT, KEYCODE_RALT);
+	input_port_default_entry *idef = defaults;
 
 	// loop over all the defaults
 	while (idef->type != IPT_END)
@@ -2093,10 +2093,10 @@ void osd_customize_inputport_list(struct InputPortDefinition *defaults)
 		// Dual lightguns - remap default buttons to suit
 		if (use_lightgun && use_lightgun_dual)
 		{
-			static input_seq_t p1b2 = SEQ_DEF_3(KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
-			static input_seq_t p1b3 = SEQ_DEF_3(KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
-			static input_seq_t p2b1 = SEQ_DEF_5(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1, CODE_OR, MOUSECODE_1_BUTTON3);
-			static input_seq_t p2b2 = SEQ_DEF_3(KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
+			static input_seq p1b2 = SEQ_DEF_3(KEYCODE_LALT, CODE_OR, JOYCODE_1_BUTTON2);
+			static input_seq p1b3 = SEQ_DEF_3(KEYCODE_SPACE, CODE_OR, JOYCODE_1_BUTTON3);
+			static input_seq p2b1 = SEQ_DEF_5(KEYCODE_A, CODE_OR, JOYCODE_2_BUTTON1, CODE_OR, MOUSECODE_1_BUTTON3);
+			static input_seq p2b2 = SEQ_DEF_3(KEYCODE_S, CODE_OR, JOYCODE_2_BUTTON2);
 
 			if (idef->type == IPT_BUTTON2 && idef->player == 1)
 				seq_copy(&idef->defaultseq, &p1b2);

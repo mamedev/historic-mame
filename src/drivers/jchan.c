@@ -238,8 +238,8 @@ This will benefit galpani3 and other kaneko16 games with TOYBOX MCU.
 ***************************************************************************/
 static data16_t *mcu_ram, jchan_mcu_com[4];
 
-extern const struct GameDriver driver_jchan;
-extern const struct GameDriver driver_jchan2;
+extern const game_driver driver_jchan;
+extern const game_driver driver_jchan2;
 
 void jchan_mcu_run(void)
 {
@@ -670,7 +670,7 @@ cpu #1 (PC=000007B6): unmapped program memory word write to 00600006 = 0140 & FF
 
 
 /* gfx decode , this one seems ok */
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -683,7 +683,7 @@ static struct GfxLayout tilelayout =
 
 // we don't decode the sprites, they are non-tile based and RLE encoded!, see suprnova.c */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 //  { REGION_GFX1, 0, &char2layout,   0, 512  },
 //  { REGION_GFX2, 0, &char2layout,   0, 512  },

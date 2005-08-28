@@ -187,7 +187,7 @@ VIDEO_START( aso )
 
 
 static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
-								const struct GfxElement *gfx )
+								const gfx_element *gfx )
 {
 	static int color[2] = {8, 8};
 	struct rectangle *cliprect;
@@ -227,7 +227,7 @@ static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int 
 }
 
 static void hal21_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
-								const struct GfxElement *gfx )
+								const gfx_element *gfx )
 {
 	struct rectangle *cliprect;
 	UINT8 *sprptr, *endptr;
@@ -259,7 +259,7 @@ static void hal21_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scr
 }
 
 static void aso_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
-								const struct GfxElement *gfx )
+								const gfx_element *gfx )
 {
 	struct rectangle *cliprect;
 	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
@@ -291,7 +291,7 @@ static void aso_draw_background( struct mame_bitmap *bitmap, int scrollx, int sc
 }
 
 static void aso_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
-								const struct GfxElement *gfx )
+								const gfx_element *gfx )
 {
 	struct rectangle *cliprect;
 	UINT8 *sprptr, *endptr;
@@ -518,7 +518,7 @@ INPUT_PORTS_END
 
 /**************************************************************************/
 
-static struct GfxLayout char256 = {
+static gfx_layout char256 = {
 	8,8,
 	0x100,
 	4,
@@ -528,7 +528,7 @@ static struct GfxLayout char256 = {
 	256
 };
 
-static struct GfxLayout char1024 = {
+static gfx_layout char1024 = {
 	8,8,
 	0x400,
 	4,
@@ -538,7 +538,7 @@ static struct GfxLayout char1024 = {
 	256
 };
 
-static struct GfxLayout sprite1024 = {
+static gfx_layout sprite1024 = {
 	16,16,
 	0x400,
 	3,
@@ -554,7 +554,7 @@ static struct GfxLayout sprite1024 = {
 	256
 };
 
-static struct GfxDecodeInfo aso_gfxdecodeinfo[] =
+static gfx_decode aso_gfxdecodeinfo[] =
 {
 	/* colors 512-1023 are currently unused, I think they are a second bank */
 	{ REGION_GFX1, 0, &char256,    128*3,  8 }, /* colors 384..511 */

@@ -20,7 +20,7 @@ unsigned char *ddrible_spriteram_2;
 static int ddribble_vregs[2][5];
 static int charbank[2];
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 
 
 PALETTE_INIT( ddrible )
@@ -172,7 +172,7 @@ byte #4:    attributes
 
 static void ddribble_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char* source, int lenght, int gfxset, int flipscreen )
 {
-	struct GfxElement *gfx = Machine->gfx[gfxset];
+	gfx_element *gfx = Machine->gfx[gfxset];
 	const unsigned char *finish = source + lenght;
 
 	while( source < finish )

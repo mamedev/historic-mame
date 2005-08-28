@@ -37,7 +37,7 @@
  *
  *************************************/
 
-typedef void (*config_callback)(int config_type, struct xml_data_node *parentnode);
+typedef void (*config_callback)(int config_type, xml_data_node *parentnode);
 
 
 

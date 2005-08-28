@@ -14,10 +14,10 @@
  *
  *************************************/
 
-struct hard_disk_file
+struct _hard_disk_file
 {
-	struct chd_file *	chd;				/* CHD file */
-	struct hard_disk_info info;				/* hard disk info */
+	chd_file *	chd;				/* CHD file */
+	hard_disk_info info;				/* hard disk info */
 	UINT32				hunksectors;		/* sectors per hunk */
 	UINT32				cachehunk;			/* which hunk is cached */
 	UINT8 *				cache;				/* cache of the current hunk */
@@ -31,10 +31,10 @@ struct hard_disk_file
  *
  *************************************/
 
-struct hard_disk_file *hard_disk_open(struct chd_file *chd)
+hard_disk_file *hard_disk_open(chd_file *chd)
 {
 	int cylinders, heads, sectors, sectorbytes;
-	struct hard_disk_file *file;
+	hard_disk_file *file;
 	char metadata[256];
 	UINT32 metatag;
 	UINT32 count;
@@ -54,7 +54,7 @@ struct hard_disk_file *hard_disk_open(struct chd_file *chd)
 		return NULL;
 
 	/* allocate memory for the hard disk file */
-	file = malloc(sizeof(struct hard_disk_file));
+	file = malloc(sizeof(hard_disk_file));
 	if (!file)
 		return NULL;
 
@@ -86,7 +86,7 @@ struct hard_disk_file *hard_disk_open(struct chd_file *chd)
  *
  *************************************/
 
-void hard_disk_close(struct hard_disk_file *file)
+void hard_disk_close(hard_disk_file *file)
 {
 	/* free the cache */
 	if (file->cache)
@@ -102,7 +102,7 @@ void hard_disk_close(struct hard_disk_file *file)
  *
  *************************************/
 
-struct chd_file *hard_disk_get_chd(struct hard_disk_file *file)
+chd_file *hard_disk_get_chd(hard_disk_file *file)
 {
 	return file->chd;
 }
@@ -115,7 +115,7 @@ struct chd_file *hard_disk_get_chd(struct hard_disk_file *file)
  *
  *************************************/
 
-struct hard_disk_info *hard_disk_get_info(struct hard_disk_file *file)
+hard_disk_info *hard_disk_get_info(hard_disk_file *file)
 {
 	return &file->info;
 }
@@ -128,7 +128,7 @@ struct hard_disk_info *hard_disk_get_info(struct hard_disk_file *file)
  *
  *************************************/
 
-UINT32 hard_disk_read(struct hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer)
+UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer)
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;
@@ -168,7 +168,7 @@ UINT32 hard_disk_read(struct hard_disk_file *file, UINT32 lbasector, UINT32 nums
  *
  *************************************/
 
-UINT32 hard_disk_write(struct hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, const void *buffer)
+UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, const void *buffer)
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;

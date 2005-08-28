@@ -342,7 +342,7 @@ INPUT_PORTS_END
 
 /*****************************************************************************/
 
-static struct GfxLayout toki_charlayout =
+static gfx_layout toki_charlayout =
 {
 	8,8,
 	4096,
@@ -353,7 +353,7 @@ static struct GfxLayout toki_charlayout =
 	16*8
 };
 
-static struct GfxLayout toki_tilelayout =
+static gfx_layout toki_tilelayout =
 {
 	16,16,
 	4096,
@@ -366,7 +366,7 @@ static struct GfxLayout toki_tilelayout =
 	128*8
 };
 
-static struct GfxLayout toki_spritelayout =
+static gfx_layout toki_spritelayout =
 {
 	16,16,
 	8192,
@@ -379,7 +379,7 @@ static struct GfxLayout toki_spritelayout =
 	128*8
 };
 
-static struct GfxDecodeInfo toki_gfxdecodeinfo[] =
+static gfx_decode toki_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &toki_charlayout,  16*16, 16 },
 	{ REGION_GFX2, 0, &toki_spritelayout, 0*16, 16 },
@@ -388,7 +388,7 @@ static struct GfxDecodeInfo toki_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout tokib_charlayout =
+static gfx_layout tokib_charlayout =
 {
 	8,8,	/* 8 by 8 */
 	4096,	/* 4096 characters */
@@ -399,7 +399,7 @@ static struct GfxLayout tokib_charlayout =
 	8*8
 };
 
-static struct GfxLayout tokib_tilelayout =
+static gfx_layout tokib_tilelayout =
 {
 	16,16,	/* 16 by 16 */
 	4096,	/* 4096 characters */
@@ -415,7 +415,7 @@ static struct GfxLayout tokib_tilelayout =
 	8*8
 };
 
-static struct GfxLayout tokib_spriteslayout =
+static gfx_layout tokib_spriteslayout =
 {
 	16,16,	/* 16 by 16 */
 	8192,	/* 8192 sprites */
@@ -427,7 +427,7 @@ static struct GfxLayout tokib_spriteslayout =
 	16*16
 };
 
-static struct GfxDecodeInfo tokib_gfxdecodeinfo[] =
+static gfx_decode tokib_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tokib_charlayout,	16*16, 16 },
 	{ REGION_GFX2, 0, &tokib_spriteslayout,  0*16, 16 },

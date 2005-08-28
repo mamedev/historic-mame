@@ -12,7 +12,7 @@ static data16_t bg1scrollx,bg1scrolly,bg2scrollx,bg2scrolly,wbbc97_bitmap_enable
 
 static int charpalettebank,spritepalettebank;
 
-static struct tilemap *bg1_tilemap,*bg2_tilemap;
+static tilemap *bg1_tilemap,*bg2_tilemap;
 static int sprite_gfx;
 
 
@@ -211,7 +211,7 @@ WRITE16_HANDLER( aerofgt_bg2videoram_w )
 }
 
 
-static void setbank(struct tilemap *tmap,int num,int bank)
+static void setbank(tilemap *tmap,int num,int bank)
 {
 	if (gfxbank[num] != bank)
 	{
@@ -258,7 +258,7 @@ WRITE16_HANDLER( spinlbrk_gfxbank_w )
 WRITE16_HANDLER( turbofrc_gfxbank_w )
 {
 	static data16_t bank[2];
-	struct tilemap *tmap = (offset == 0) ? bg1_tilemap : bg2_tilemap;
+	tilemap *tmap = (offset == 0) ? bg1_tilemap : bg2_tilemap;
 
 	data = COMBINE_DATA(&bank[offset]);
 
@@ -271,7 +271,7 @@ WRITE16_HANDLER( turbofrc_gfxbank_w )
 WRITE16_HANDLER( aerofgt_gfxbank_w )
 {
 	static data16_t bank[4];
-	struct tilemap *tmap = (offset < 2) ? bg1_tilemap : bg2_tilemap;
+	tilemap *tmap = (offset < 2) ? bg1_tilemap : bg2_tilemap;
 
 	data = COMBINE_DATA(&bank[offset]);
 

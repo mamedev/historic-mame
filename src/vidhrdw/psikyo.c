@@ -64,7 +64,7 @@ int psikyo_ka302c_banking;
 
 /* Variables only used here: */
 
-static struct tilemap 	*tilemap_0_size0, *tilemap_0_size1, *tilemap_0_size2, *tilemap_0_size3,
+static tilemap 	*tilemap_0_size0, *tilemap_0_size1, *tilemap_0_size2, *tilemap_0_size3,
 						*tilemap_1_size0, *tilemap_1_size1, *tilemap_1_size2, *tilemap_1_size3;
 static UINT8 tilemap_0_bank, tilemap_1_bank;
 static UINT32 *spritebuf1, *spritebuf2;
@@ -147,9 +147,9 @@ WRITE32_HANDLER( psikyo_vram_1_w )
 	}
 }
 
-void psikyo_switch_banks( int tilemap, int bank )
+void psikyo_switch_banks( int tmap, int bank )
 {
-	if((tilemap==0) && (bank != tilemap_0_bank))
+	if((tmap==0) && (bank != tilemap_0_bank))
 	{
 		tilemap_0_bank = bank;
 		tilemap_mark_all_tiles_dirty(tilemap_0_size0);
@@ -157,7 +157,7 @@ void psikyo_switch_banks( int tilemap, int bank )
 		tilemap_mark_all_tiles_dirty(tilemap_0_size2);
 		tilemap_mark_all_tiles_dirty(tilemap_0_size3);
 	}
-	else if((tilemap==1) && (bank != tilemap_1_bank))
+	else if((tmap==1) && (bank != tilemap_1_bank))
 	{
 		tilemap_1_bank = bank;
 		tilemap_mark_all_tiles_dirty(tilemap_1_size0);
@@ -445,7 +445,7 @@ VIDEO_UPDATE( psikyo )
 	data32_t layer1_ctrl = psikyo_vregs[ 0x416/4 ];
 	data32_t spr_ctrl = spritebuf2[ 0x1ffe/4 ];
 
-	struct tilemap *tmptilemap0, *tmptilemap1;
+	tilemap *tmptilemap0, *tmptilemap1;
 
 	flip_screen_set(~readinputport(2) & 1);	// hardwired to a DSW bit
 

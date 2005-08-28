@@ -14,7 +14,7 @@ static double time_released;
 static UINT8 prev = 0;
 static UINT8 mask = 0;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static void get_tile_info(int tile_index)
@@ -29,7 +29,7 @@ static WRITE8_HANDLER( mgolf_vram_w )
 {
 	if (mgolf_video_ram[offset] != data)
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	mgolf_video_ram[offset] = data;
@@ -38,9 +38,9 @@ static WRITE8_HANDLER( mgolf_vram_w )
 
 static VIDEO_START( mgolf )
 {
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	return tilemap == NULL;
+	return bg_tilemap == NULL;
 }
 
 
@@ -50,7 +50,7 @@ static VIDEO_UPDATE( mgolf )
 
 	/* draw playfield */
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw sprites */
 
@@ -258,7 +258,7 @@ INPUT_PORTS_START( mgolf )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8, 8,
 	128,
@@ -274,7 +274,7 @@ static struct GfxLayout tile_layout =
 };
 
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	8, 16,
 	16,
@@ -291,7 +291,7 @@ static struct GfxLayout sprite_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0, 2 },
 	{ REGION_GFX2, 0, &sprite_layout, 0, 2 },

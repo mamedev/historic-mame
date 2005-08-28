@@ -12,6 +12,6 @@
 #define __INFO_H__
 
 /* Print the MAME database in XML format */
-void print_mame_xml(FILE* out, const struct GameDriver* games[]);
+void print_mame_xml(FILE* out, const game_driver* games[]);
 
 #endif	/* __INFO_H__ */

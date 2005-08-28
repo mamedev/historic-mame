@@ -18,8 +18,8 @@ extern double mcr68_timing_factor;
 extern struct z80_irq_daisy_chain mcr_daisy_chain[];
 extern UINT8 mcr_cocktail_flip;
 
-extern struct GfxLayout mcr_bg_layout;
-extern struct GfxLayout mcr_sprite_layout;
+extern gfx_layout mcr_bg_layout;
+extern gfx_layout mcr_sprite_layout;
 
 extern UINT32 mcr_cpu_board;
 extern UINT32 mcr_sprite_board;

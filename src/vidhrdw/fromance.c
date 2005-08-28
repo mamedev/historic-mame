@@ -26,7 +26,7 @@ static UINT8 crtc_register;
 static UINT8 crtc_data[0x10];
 static void *crtc_timer;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 static void crtc_interrupt_gen(int param);

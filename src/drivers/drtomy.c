@@ -12,7 +12,7 @@ similar hardware.
 
 static data16_t *drtomy_spriteram;
 static data16_t *drtomy_videoram_bg, *drtomy_videoram_fg;
-static struct tilemap *tilemap_bg, *tilemap_fg;
+static tilemap *tilemap_bg, *tilemap_fg;
 
 static void get_tile_info_fg(int tile_index)
 {
@@ -50,7 +50,7 @@ static void get_tile_info_bg(int tile_index)
 static void drtomy_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int i, x, y, ex, ey;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	static int x_offset[2] = {0x0,0x2};
 	static int y_offset[2] = {0x0,0x1};
@@ -149,7 +149,7 @@ static ADDRESS_MAP_START( drtomy_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xffc000, 0xffffff) AM_RAM	/* Work RAM */
 ADDRESS_MAP_END
 
-static struct GfxLayout tilelayout8=
+static gfx_layout tilelayout8=
 {
 	8,8,									/* 8x8 tiles */
 	RGN_FRAC(1,4),							/* number of tiles */
@@ -160,7 +160,7 @@ static struct GfxLayout tilelayout8=
 	8*8
 };
 
-static struct GfxLayout tilelayout16 =
+static gfx_layout tilelayout16 =
 {
 	16,16,									/* 16x16 tiles */
 	RGN_FRAC(1,4),							/* number of tiles */
@@ -171,7 +171,7 @@ static struct GfxLayout tilelayout16 =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout8,  0x100, 16 }, /* Sprites */
 	{ REGION_GFX1, 0, &tilelayout16, 0x000, 16 }, /* BG */

@@ -23,7 +23,8 @@ UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
 data8_t *neogeo_game_vectors;
 
-
+int memcard_status;
+static int memcard_number;
 
 static void neogeo_custom_memory(void);
 static void neogeo_register_sub_savestate(void);
@@ -793,10 +794,7 @@ static void neogeo_register_sub_savestate(void)
 	state_save_register_UINT16("neogeo", 0, "neogeo_ram16",            neogeo_ram16,             0x10000/2);
 	state_save_register_UINT8 ("neogeo", 0, "neogeo_memcard",          neogeo_memcard,           0x800);
 	state_save_register_UINT8 ("neogeo", 0, "gamevector",              gamevector,               0x80);
-	state_save_register_int   ("neogeo", 0, "mcd_action",              &mcd_action);
-	state_save_register_int   ("neogeo", 0, "mcd_number",              &mcd_number);
 	state_save_register_int   ("neogeo", 0, "memcard_status",          &memcard_status);
 	state_save_register_int   ("neogeo", 0, "memcard_number",          &memcard_number);
-	state_save_register_int   ("neogeo", 0, "memcard_manager",         &memcard_manager);
 	state_save_register_int   ("neogeo", 0, "prot_data",               &prot_data);
 }

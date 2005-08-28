@@ -281,7 +281,7 @@ INPUT_PORTS_START( aquarium )
 #endif
 INPUT_PORTS_END
 
-static struct GfxLayout char5bpplayout =
+static gfx_layout char5bpplayout =
 {
 	16,16,	/* 16*16 characters */
 	RGN_FRAC(1,2),
@@ -292,7 +292,7 @@ static struct GfxLayout char5bpplayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout char_8x8_layout =
+static gfx_layout char_8x8_layout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -303,7 +303,7 @@ static struct GfxLayout char_8x8_layout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -356,7 +356,7 @@ static DRIVER_INIT( aquarium )
 }
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX3, 0, &tilelayout,       0x300, 32 },
 	{ REGION_GFX1, 0, &char5bpplayout,   0x400, 32 },

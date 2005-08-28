@@ -124,7 +124,7 @@ INPUT_PORTS_END
 
 /* text-layer characters */
 
-static struct GfxLayout pts_8x8_4bits_layout =
+static gfx_layout pts_8x8_4bits_layout =
 {
 	8,8,	      /* 8*8 pixels */
 	RGN_FRAC(1,1),        /* 65536 patterns */
@@ -135,7 +135,7 @@ static struct GfxLayout pts_8x8_4bits_layout =
 	8*8*4
 };
 
-static struct GfxLayout pts_16x16_4bits_layout =
+static gfx_layout pts_16x16_4bits_layout =
 {
 	16,16,        /* 16*16 pixels */
 	RGN_FRAC(1,1),        /* 16384 patterns */
@@ -146,7 +146,7 @@ static struct GfxLayout pts_16x16_4bits_layout =
 	16*16*4
 };
 
-static struct GfxLayout pts_32x32_4bits_layout =
+static gfx_layout pts_32x32_4bits_layout =
 {
 	32,32,        /* 32*32 pixels */
 	RGN_FRAC(1,1),         /* 4096 patterns */
@@ -157,7 +157,7 @@ static struct GfxLayout pts_32x32_4bits_layout =
 	32*32*4
 };
 
-static struct GfxLayout pts_64x64_4bits_layout =
+static gfx_layout pts_64x64_4bits_layout =
 {
 	64,64,        /* 32*32 pixels */
 	RGN_FRAC(1,1),         /* 1024 patterns */
@@ -170,7 +170,7 @@ static struct GfxLayout pts_64x64_4bits_layout =
 	64*64*4
 };
 
-static struct GfxLayout pts_8x8_8bits_layout =
+static gfx_layout pts_8x8_8bits_layout =
 {
 	8,8,	      /* 8*8 pixels */
 	RGN_FRAC(1,1),        /* 32768 patterns */
@@ -181,7 +181,7 @@ static struct GfxLayout pts_8x8_8bits_layout =
 	8*8*8
 };
 
-static struct GfxLayout pts_16x16_8bits_layout =
+static gfx_layout pts_16x16_8bits_layout =
 {
 	16,16,        /* 16*16 pixels */
 	RGN_FRAC(1,1),         /* 8192 patterns */
@@ -192,7 +192,7 @@ static struct GfxLayout pts_16x16_8bits_layout =
 	16*16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000000, &pts_8x8_4bits_layout,    0,  16 },
 	{ REGION_GFX1, 0x00000000, &pts_16x16_4bits_layout,  0,  16 },

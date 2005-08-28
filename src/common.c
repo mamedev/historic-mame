@@ -11,6 +11,7 @@
 #include "harddisk.h"
 #include "artwork.h"
 #include "config.h"
+#include "state.h"
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -40,11 +41,12 @@
 
 ***************************************************************************/
 
-struct malloc_info
+struct _malloc_info
 {
 	int tag;
 	void *ptr;
 };
+typedef struct _malloc_info malloc_info;
 
 
 
@@ -61,7 +63,7 @@ unsigned int coinlockedout[COIN_COUNTERS];
 static unsigned int lastcoin[COIN_COUNTERS];
 
 /* malloc tracking */
-static struct malloc_info malloc_list[MAX_MALLOCS];
+static malloc_info malloc_list[MAX_MALLOCS];
 static int malloc_list_index = 0;
 
 /* resource tracking */
@@ -74,13 +76,14 @@ data16_t *generic_nvram16;
 data32_t *generic_nvram32;
 
 /* disks */
-static struct chd_file *disk_handle[4];
+static chd_file *disk_handle[4];
 
 /* system BIOS */
 int system_bios;
 
 /* movie file */
 static mame_file *movie_file = NULL;
+static int movie_frame = 0;
 
 
 
@@ -227,9 +230,9 @@ void free_memory_region(int num)
 
 ***************************************************************************/
 
-void counters_load(int config_type, struct xml_data_node *parentnode)
+void counters_load(int config_type, xml_data_node *parentnode)
 {
-	struct xml_data_node *coinnode, *ticketnode;
+	xml_data_node *coinnode, *ticketnode;
 
 	/* on init, reset the counters */
 	if (config_type == CONFIG_TYPE_INIT)
@@ -261,7 +264,7 @@ void counters_load(int config_type, struct xml_data_node *parentnode)
 }
 
 
-void counters_save(int config_type, struct xml_data_node *parentnode)
+void counters_save(int config_type, xml_data_node *parentnode)
 {
 	int i;
 
@@ -273,7 +276,7 @@ void counters_save(int config_type, struct xml_data_node *parentnode)
 	for (i = 0; i < COIN_COUNTERS; i++)
 		if (coin_count[i] != 0)
 		{
-			struct xml_data_node *coinnode = xml_add_child(parentnode, "coins", NULL);
+			xml_data_node *coinnode = xml_add_child(parentnode, "coins", NULL);
 			if (coinnode)
 			{
 				xml_set_attribute_int(coinnode, "index", i);
@@ -284,7 +287,7 @@ void counters_save(int config_type, struct xml_data_node *parentnode)
 	/* output tickets */
 	if (dispensed_tickets != 0)
 	{
-		struct xml_data_node *tickets = xml_add_child(parentnode, "tickets", NULL);
+		xml_data_node *tickets = xml_add_child(parentnode, "tickets", NULL);
 		if (tickets)
 			xml_set_attribute_int(tickets, "number", dispensed_tickets);
 	}
@@ -542,7 +545,7 @@ void bitmap_free(struct mame_bitmap *bitmap)
 void *auto_malloc(size_t size)
 {
 	void *result = malloc(size);
-	struct malloc_info *info;
+	malloc_info *info;
 
 	/* fail horribly if it doesn't work */
 	if (!result)
@@ -592,7 +595,7 @@ void auto_free(void)
 	/* start at the end and free everything on the current tag */
 	while (malloc_list_index > 0 && malloc_list[malloc_list_index - 1].tag >= tag)
 	{
-		struct malloc_info *info = &malloc_list[--malloc_list_index];
+		malloc_info *info = &malloc_list[--malloc_list_index];
 		free(info->ptr);
 	}
 }
@@ -642,6 +645,7 @@ void end_resource_tracking(void)
 	/* call everyone who tracks resources to let them know */
 	auto_free();
 	timer_free();
+	state_save_free();
 
 	/* decrement the tag counter */
 	resource_tracking_tag--;
@@ -827,6 +831,7 @@ void record_movie_toggle(void)
 {
 	if (movie_file == NULL)
 	{
+		movie_frame = 0;
 		movie_file = mame_fopen_next(FILETYPE_MOVIE);
 		if (movie_file)
 			ui_popup("REC START");
@@ -836,7 +841,7 @@ void record_movie_toggle(void)
 		mng_capture_stop(movie_file);
 		mame_fclose(movie_file);
 		movie_file = NULL;
-		ui_popup("REC STOP");
+		ui_popup("REC STOP (%d frames)", movie_frame);
 	}
 }
 
@@ -851,7 +856,11 @@ void record_movie_stop(void)
 void record_movie_frame(struct mame_bitmap *bitmap)
 {
 	if (movie_file != NULL && bitmap != NULL)
+	{
+		if (movie_frame++ == 0)
+			mng_capture_start(movie_file, bitmap);
 		save_frame_with(movie_file, bitmap, mng_capture_frame);
+	}
 }
 
 
@@ -862,7 +871,7 @@ void record_movie_frame(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-struct chd_file *get_disk_handle(int diskindex)
+chd_file *get_disk_handle(int diskindex)
 {
 	return disk_handle[diskindex];
 }
@@ -880,7 +889,7 @@ struct chd_file *get_disk_handle(int diskindex)
     region
 -------------------------------------------------*/
 
-const struct RomModule *rom_first_region(const struct GameDriver *drv)
+const rom_entry *rom_first_region(const game_driver *drv)
 {
 	return drv->rom;
 }
@@ -891,7 +900,7 @@ const struct RomModule *rom_first_region(const struct GameDriver *drv)
     region
 -------------------------------------------------*/
 
-const struct RomModule *rom_next_region(const struct RomModule *romp)
+const rom_entry *rom_next_region(const rom_entry *romp)
 {
 	romp++;
 	while (!ROMENTRY_ISREGIONEND(romp))
@@ -905,7 +914,7 @@ const struct RomModule *rom_next_region(const struct RomModule *romp)
     file
 -------------------------------------------------*/
 
-const struct RomModule *rom_first_file(const struct RomModule *romp)
+const rom_entry *rom_first_file(const rom_entry *romp)
 {
 	romp++;
 	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
@@ -919,7 +928,7 @@ const struct RomModule *rom_first_file(const struct RomModule *romp)
     file
 -------------------------------------------------*/
 
-const struct RomModule *rom_next_file(const struct RomModule *romp)
+const rom_entry *rom_next_file(const rom_entry *romp)
 {
 	romp++;
 	while (!ROMENTRY_ISFILE(romp) && !ROMENTRY_ISREGIONEND(romp))
@@ -933,7 +942,7 @@ const struct RomModule *rom_next_file(const struct RomModule *romp)
     chunk
 -------------------------------------------------*/
 
-const struct RomModule *rom_first_chunk(const struct RomModule *romp)
+const rom_entry *rom_first_chunk(const rom_entry *romp)
 {
 	return (ROMENTRY_ISFILE(romp)) ? romp : NULL;
 }
@@ -944,7 +953,7 @@ const struct RomModule *rom_first_chunk(const struct RomModule *romp)
     chunk
 -------------------------------------------------*/
 
-const struct RomModule *rom_next_chunk(const struct RomModule *romp)
+const rom_entry *rom_next_chunk(const rom_entry *romp)
 {
 	romp++;
 	return (ROMENTRY_ISCONTINUE(romp)) ? romp : NULL;
@@ -979,9 +988,9 @@ void CLIB_DECL debugload(const char *string, ...)
     from SystemBios structure and options.bios
 -------------------------------------------------*/
 
-int determine_bios_rom(const struct SystemBios *bios)
+int determine_bios_rom(const bios_entry *bios)
 {
-	const struct SystemBios *firstbios = bios;
+	const bios_entry *firstbios = bios;
 
 	/* set to default */
 	int bios_no = 0;
@@ -1024,9 +1033,9 @@ int determine_bios_rom(const struct SystemBios *bios)
     that will need to be loaded
 -------------------------------------------------*/
 
-static int count_roms(const struct RomModule *romp)
+static int count_roms(const rom_entry *romp)
 {
-	const struct RomModule *region, *rom;
+	const rom_entry *region, *rom;
 	int count = 0;
 
 	/* determine the correct biosset to load based on options.bios string */
@@ -1060,7 +1069,7 @@ static void fill_random(UINT8 *base, UINT32 length)
     for missing files
 -------------------------------------------------*/
 
-static void handle_missing_file(struct rom_load_data *romdata, const struct RomModule *romp)
+static void handle_missing_file(rom_load_data *romdata, const rom_entry *romp)
 {
 	/* optional files are okay */
 	if (ROM_ISOPTIONAL(romp))
@@ -1090,7 +1099,7 @@ static void handle_missing_file(struct rom_load_data *romdata, const struct RomM
     correct checksums for a given ROM
 -------------------------------------------------*/
 
-static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, const char* hash, const char* acthash)
+static void dump_wrong_and_correct_checksums(rom_load_data* romdata, const char* hash, const char* acthash)
 {
 	unsigned i;
 	char chksum[256];
@@ -1138,7 +1147,7 @@ static void dump_wrong_and_correct_checksums(struct rom_load_data* romdata, cons
     and hash signatures of a file
 -------------------------------------------------*/
 
-static void verify_length_and_hash(struct rom_load_data *romdata, const char *name, UINT32 explength, const char* hash)
+static void verify_length_and_hash(rom_load_data *romdata, const char *name, UINT32 explength, const char* hash)
 {
 	UINT32 actlength;
 	const char* acthash;
@@ -1188,7 +1197,7 @@ static void verify_length_and_hash(struct rom_load_data *romdata, const char *na
     results of ROM loading
 -------------------------------------------------*/
 
-static int display_rom_load_results(struct rom_load_data *romdata)
+static int display_rom_load_results(rom_load_data *romdata)
 {
 	int region;
 
@@ -1228,7 +1237,7 @@ static int display_rom_load_results(struct rom_load_data *romdata)
     byte swapping and inverting data as necessary
 -------------------------------------------------*/
 
-static void region_post_process(struct rom_load_data *romdata, const struct RomModule *regiondata)
+static void region_post_process(rom_load_data *romdata, const rom_entry *regiondata)
 {
 	int type = ROMREGION_GETTYPE(regiondata);
 	int datawidth = ROMREGION_GETWIDTH(regiondata) / 8;
@@ -1282,9 +1291,9 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
     up the parent and loading by checksum
 -------------------------------------------------*/
 
-static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *romp)
+static int open_rom_file(rom_load_data *romdata, const rom_entry *romp)
 {
-	const struct GameDriver *drv;
+	const game_driver *drv;
 
 	++romdata->romsloaded;
 
@@ -1309,7 +1318,7 @@ static int open_rom_file(struct rom_load_data *romdata, const struct RomModule *
     random data for a NULL file
 -------------------------------------------------*/
 
-static int rom_fread(struct rom_load_data *romdata, UINT8 *buffer, int length)
+static int rom_fread(rom_load_data *romdata, UINT8 *buffer, int length)
 {
 	/* files just pass through */
 	if (romdata->file)
@@ -1328,7 +1337,7 @@ static int rom_fread(struct rom_load_data *romdata, UINT8 *buffer, int length)
     entry
 -------------------------------------------------*/
 
-static int read_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
+static int read_rom_data(rom_load_data *romdata, const rom_entry *romp)
 {
 	int datashift = ROM_GETBITSHIFT(romp);
 	int datamask = ((1 << ROM_GETBITWIDTH(romp)) - 1) << datashift;
@@ -1446,7 +1455,7 @@ static int read_rom_data(struct rom_load_data *romdata, const struct RomModule *
     fill_rom_data - fill a region of ROM space
 -------------------------------------------------*/
 
-static int fill_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
+static int fill_rom_data(rom_load_data *romdata, const rom_entry *romp)
 {
 	UINT32 numbytes = ROM_GETLENGTH(romp);
 	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
@@ -1475,7 +1484,7 @@ static int fill_rom_data(struct rom_load_data *romdata, const struct RomModule *
     copy_rom_data - copy a region of ROM space
 -------------------------------------------------*/
 
-static int copy_rom_data(struct rom_load_data *romdata, const struct RomModule *romp)
+static int copy_rom_data(rom_load_data *romdata, const rom_entry *romp)
 {
 	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
 	int srcregion = ROM_GETFLAGS(romp) >> 24;
@@ -1523,7 +1532,7 @@ static int copy_rom_data(struct rom_load_data *romdata, const struct RomModule *
     for a region
 -------------------------------------------------*/
 
-static int process_rom_entries(struct rom_load_data *romdata, const struct RomModule *romp)
+static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 {
 	UINT32 lastflags = 0;
 
@@ -1563,7 +1572,7 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 		{
 			if (!ROM_GETBIOSFLAGS(romp) || (ROM_GETBIOSFLAGS(romp) == (system_bios+1))) /* alternate bios sets */
 			{
-				const struct RomModule *baserom = romp;
+				const rom_entry *baserom = romp;
 				int explength = 0;
 
 				/* open the file */
@@ -1577,7 +1586,7 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 					/* loop until we run out of continues */
 					do
 					{
-						struct RomModule modified_romp = *romp++;
+						rom_entry modified_romp = *romp++;
 						int readresult;
 
 						/* handle flag inheritance */
@@ -1642,7 +1651,7 @@ fatalerror:
     for a region
 -------------------------------------------------*/
 
-static int process_disk_entries(struct rom_load_data *romdata, const struct RomModule *romp)
+static int process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 {
 	/* loop until we hit the end of this region */
 	while (!ROMENTRY_ISREGIONEND(romp))
@@ -1650,8 +1659,8 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
 		/* handle files */
 		if (ROMENTRY_ISFILE(romp))
 		{
-			struct chd_file *source, *diff = NULL;
-			struct chd_header header;
+			chd_file *source, *diff = NULL;
+			chd_header header;
 			char filename[1024];
 			char acthash[HASH_BUF_SIZE];
 			int err;
@@ -1743,11 +1752,11 @@ static int process_disk_entries(struct rom_load_data *romdata, const struct RomM
     loading system
 -------------------------------------------------*/
 
-int rom_load(const struct RomModule *romp)
+int rom_load(const rom_entry *romp)
 {
-	const struct RomModule *regionlist[REGION_MAX];
-	const struct RomModule *region;
-	static struct rom_load_data romdata;
+	const rom_entry *regionlist[REGION_MAX];
+	const rom_entry *region;
+	static rom_load_data romdata;
 	int regnum;
 
 	/* reset the region list */

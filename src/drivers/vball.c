@@ -357,7 +357,7 @@ INPUT_PORTS_START (vball2pj)
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -368,7 +368,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -382,7 +382,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo vb_gfxdecodeinfo[] =
+static gfx_decode vb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 8 },	/* 8x8 chars */
 	{ REGION_GFX2, 0, &spritelayout, 128, 8 },	/* 16x16 sprites */

@@ -15,7 +15,7 @@ data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_bgcolor;
 
 static int aeroboto_charbank, aeroboto_starsoff;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

@@ -199,7 +199,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout pflayout =
+static gfx_layout pflayout =
 {
 	16,8,
 	RGN_FRAC(1,2),
@@ -212,7 +212,7 @@ static struct GfxLayout pflayout =
 };
 
 
-static struct GfxLayout anlayout =
+static gfx_layout anlayout =
 {
 	16,8,
 	RGN_FRAC(1,1),
@@ -224,7 +224,7 @@ static struct GfxLayout anlayout =
 };
 
 
-static struct GfxLayout molayout =
+static gfx_layout molayout =
 {
 	16,8,
 	RGN_FRAC(1,5),
@@ -236,7 +236,7 @@ static struct GfxLayout molayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &molayout, 0x000, 32 },
 	{ REGION_GFX2, 0, &pflayout, 0x200, 16 },

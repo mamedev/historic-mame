@@ -4,6 +4,7 @@
     POW - Prisoners Of War (Japan)      A7008   SNK 1988
     SAR - Search And Rescue (World)     A8007   SNK 1989
     SAR - Search And Rescue (US)        A8007   SNK 1989
+    SAR - Search And Rescue (Japan)     A8007   SNK 1989
     Street Smart (US version 1)         A8007   SNK 1989
     Street Smart (US version 2)         A7008   SNK 1989
     Street Smart (World version 1)      A8007   SNK 1989
@@ -608,7 +609,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
 	2048,
@@ -619,7 +620,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout pow_spritelayout =
+static gfx_layout pow_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096*4,
@@ -632,7 +633,7 @@ static struct GfxLayout pow_spritelayout =
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout searchar_spritelayout =
+static gfx_layout searchar_spritelayout =
 {
 	16,16,
 	0x6000,
@@ -647,7 +648,7 @@ static struct GfxLayout searchar_spritelayout =
 	64*8
 };
 
-static struct GfxLayout ikari3_spritelayout =
+static gfx_layout ikari3_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096*5,
@@ -660,21 +661,21 @@ static struct GfxLayout ikari3_spritelayout =
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo pow_gfxdecodeinfo[] =
+static gfx_decode pow_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,		 0, 128 },
 	{ REGION_GFX2, 0, &pow_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo searchar_gfxdecodeinfo[] =
+static gfx_decode searchar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,			  0,  16 },
 	{ REGION_GFX2, 0, &searchar_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo ikari3_gfxdecodeinfo[] =
+static gfx_decode ikari3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,			0,	16 },
 	{ REGION_GFX2, 0, &ikari3_spritelayout, 0, 128 },
@@ -977,6 +978,34 @@ ROM_START( sercharu )
 	ROM_LOAD16_BYTE( "bh.4",  0x000001, 0x20000, CRC(eabc5ddf) SHA1(08a2a8fcdf6a08a2694e00f4232a5bfbec98fd27) )
 ROM_END
 
+ROM_START( sercharj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "bh2ver3j.9c", 0x000000, 0x20000, CRC(7ef7b172) SHA1(85669ba72f59e4ff3a483bf611bf41c73f4e1930) )
+	ROM_LOAD16_BYTE( "bh3ver3j.10c", 0x000001, 0x20000, CRC(3fdea793) SHA1(49bafb53466afb7e4486a4894e4fd6fa08ea2eb2) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
+	ROM_LOAD( "bh.5",       0x000000, 0x10000, CRC(53e2fa76) SHA1(cf25b1def82545a1fd013822ab3cf02483074623) )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
+	ROM_LOAD( "bh.7",       0x000000, 0x08000, CRC(b0f1b049) SHA1(ec276984d91b5759a5e2b6815d1db2abc37b99f8) )
+	ROM_LOAD( "bh.8",       0x008000, 0x08000, CRC(174ddba7) SHA1(7b19087cd2ccc409878aefe7fa08bb2e9953d352) )
+
+	ROM_REGION( 0x300000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "bh.c1",      0x000000, 0x80000, CRC(1fb8f0ae) SHA1(d63c7376aa5f01bc009176b23324e720bada4286) )
+	ROM_LOAD( "bh.c3",      0x080000, 0x80000, CRC(fd8bc407) SHA1(88d750293808bf6ea23864b22070314b14fbee3c) )
+	ROM_LOAD( "bh.c5",      0x100000, 0x80000, CRC(1d30acc3) SHA1(e5ca39853779475b83fe37304e7bed2c293bd587) )
+	ROM_LOAD( "bh.c2",      0x180000, 0x80000, CRC(7c803767) SHA1(992516fbb28d00feabbed5769fa3a5748199a7d8) )
+	ROM_LOAD( "bh.c4",      0x200000, 0x80000, CRC(eede7c43) SHA1(7645acf0beb4fff9ec92205dcf34124360cd52f6) )
+	ROM_LOAD( "bh.c6",      0x280000, 0x80000, CRC(9f785cd9) SHA1(e5c7797ae7a3139e1814b068c5ecfe5c6bf30d0f) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* UPD7759 samples */
+	ROM_LOAD( "bh.v1",      0x000000, 0x20000, CRC(07a6114b) SHA1(224df4616b77a56f33974d3b1793473d48ad52ca) )
+
+	ROM_REGION16_BE( 0x40000, REGION_USER1, 0 ) /* Extra code bank */
+	ROM_LOAD16_BYTE( "bhw.1", 0x000000, 0x20000, CRC(62b60066) SHA1(f7e7985c8f5f8191c580e777e1b7ed29d944d23f) )
+	ROM_LOAD16_BYTE( "bhw.4", 0x000001, 0x20000, CRC(16d8525c) SHA1(0098b0a7fcb23de2661bbec9a05254aa46579bb2) )
+ROM_END
+
 ROM_START( streetsm )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "s2-1ver2.14h", 0x00000, 0x20000, CRC(655f4773) SHA1(5374a6cf0b895c5ff839b0f52402df4cc53241cf) )
@@ -1128,6 +1157,7 @@ GAME( 1988, pow,	  0,		pow,	  pow,		0,		  ROT0,  "SNK", "P.O.W. - Prisoners of W
 GAME( 1988, powj,	  pow,		pow,	  powj, 	0,		  ROT0,  "SNK", "Datsugoku - Prisoners of War (Japan)" )
 GAME( 1989, searchar, 0,		searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (World)" )
 GAME( 1989, sercharu, searchar, searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (US)" )
+GAME( 1989, sercharj, searchar, searchar, searchar, searchar, ROT90, "SNK", "SAR - Search And Rescue (Japan)" )
 GAME( 1989, streetsm, 0,		streetsm, streetsm, 0,		  ROT0,  "SNK", "Street Smart (US version 2)" )
 GAME( 1989, streets1, streetsm, searchar, streetsm, 0,		  ROT0,  "SNK", "Street Smart (US version 1)" )
 GAME( 1989, streetsw, streetsm, searchar, streetsj, 0,		  ROT0,  "SNK", "Street Smart (World version 1)" )

@@ -1340,7 +1340,7 @@ int YM2151ReadStatus( void *_chip )
 
 
 //#ifdef USE_MAME_TIMERS
-#if 0 // disabled for now due to crashing with winalloc.c (ERROR_NOT_ENOUGH_MEMORY)
+#if 1 // disabled for now due to crashing with winalloc.c (ERROR_NOT_ENOUGH_MEMORY)
 /*
 *   state save support for MAME
 */

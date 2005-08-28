@@ -127,7 +127,7 @@ WRITE8_HANDLER( troangel_flipscreen_w )
 static void draw_background( struct mame_bitmap *bitmap )
 {
 	int offs;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 	{

@@ -93,10 +93,10 @@ unsigned char *omegaf_bg0_scroll_y;
 unsigned char *omegaf_bg1_scroll_y;
 unsigned char *omegaf_bg2_scroll_y;
 
-static struct tilemap *fg_tilemap;
-static struct tilemap *bg0_tilemap;
-static struct tilemap *bg1_tilemap;
-static struct tilemap *bg2_tilemap;
+static tilemap *fg_tilemap;
+static tilemap *bg0_tilemap;
+static tilemap *bg1_tilemap;
+static tilemap *bg2_tilemap;
 
 static int bg0_enabled = 1;
 static int bg1_enabled = 1;
@@ -607,7 +607,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				if(sprite_overdraw_enabled)
 				{
 					int x,y,offset = 0;
-					const struct GfxElement *gfx = Machine->gfx[(big) ? 4 : 3];
+					const gfx_element *gfx = Machine->gfx[(big) ? 4 : 3];
 					data8_t *srcgfx = gfx->gfxdata + tile * gfx->char_modulo;
 
 					for(y = 0; y < gfx->height; y++)

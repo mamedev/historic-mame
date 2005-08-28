@@ -839,7 +839,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout_1k =
+static gfx_layout charlayout_1k =
 {
 	8,8,
 	128,
@@ -850,7 +850,7 @@ static struct GfxLayout charlayout_1k =
 	8*8
 };
 
-static struct GfxLayout charlayout_2k =
+static gfx_layout charlayout_2k =
 {
 	8,8,
 	256,
@@ -861,19 +861,19 @@ static struct GfxLayout charlayout_2k =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_1k[] =
+static gfx_decode gfxdecodeinfo_1k[] =
 {
 	{ REGION_CPU1, 0x3000, &charlayout_1k, 0, 4 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_2k[] =
+static gfx_decode gfxdecodeinfo_2k[] =
 {
 	{ REGION_CPU1, 0x3000, &charlayout_2k, 0, 2 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_color[] =
+static gfx_decode gfxdecodeinfo_color[] =
 {
 	{ REGION_CPU1, 0x4800, &charlayout_2k, 0, 256 },
 	{ -1 } /* end of array */

@@ -1,4 +1,20 @@
-/* State save/load functions */
+/***************************************************************************
+
+    state.c
+
+    Save state management functions.
+
+    Save state file format:
+
+     0.. 7  'MAMESAVE"
+     8      Format version (this is format 1)
+     9      Flags
+     a..13  Game name padded with \0
+    14..17  Signature
+    18..end Save game data
+
+***************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,33 +23,55 @@
 #include "driver.h"
 #include "zlib.h"
 
-/* Save state file format:
- *
- *  0.. 7  'MAMESAVE"
- *  8      Format version (this is format 1)
- *  9      Flags
- *  a..13  Game name padded with \0
- * 14..17  Signature
- * 18..end Save game data
- */
 
-/* Available flags */
-enum {
-	SS_NO_SOUND = 0x01,
-	SS_MSB_FIRST = 0x02
-};
+
+/*************************************
+ *
+ *  Debugging
+ *
+ *************************************/
 
 //#define VERBOSE
 
 #ifdef VERBOSE
-#define TRACE(x) do {x;} while(0)
+#define TRACE(x) do {x;} while (0)
 #else
 #define TRACE(x)
 #endif
 
-enum {MAX_INSTANCES = 56};
 
-enum {
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
+
+#define SAVE_VERSION		1
+
+#define TAG_STACK_SIZE		4
+
+/* Available flags */
+enum
+{
+	SS_NO_SOUND = 0x01,
+	SS_MSB_FIRST = 0x02
+};
+
+enum
+{
+	MAX_INSTANCES = 64
+};
+
+enum
+{
+	FUNC_NOPARAM,
+	FUNC_INTPARAM,
+	FUNC_PTRPARAM
+};
+
+enum
+{
 	SS_INT8,
 	SS_UINT8,
 	SS_INT16,
@@ -47,51 +85,94 @@ enum {
 	SS_FLOAT
 };
 
-#ifdef VERBOSE
-static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "int", "dbl", "flt" };
-#endif
-static int         ss_size[] =	{  1,   1,     2,     2,     4,     4,     8,     8,     4,     8,     4 };
-
-static void ss_c2(unsigned char *, unsigned);
-static void ss_c4(unsigned char *, unsigned);
-static void ss_c8(unsigned char *, unsigned);
-
-static void (*ss_conv[])(unsigned char *, unsigned) = {
-	0, 0, ss_c2, ss_c2, ss_c4, ss_c4, ss_c8, ss_c8, 0, ss_c8, ss_c4
-};
 
 
-typedef struct ss_entry {
-	struct ss_entry *next;
+/*************************************
+ *
+ *  Type definitions
+ *
+ *************************************/
+
+struct _ss_entry
+{
+	struct _ss_entry *next;
 	char *name;
 	int type;
 	void *data;
 	unsigned size;
 	int tag;
+	int restag;
 	unsigned offset;
-} ss_entry;
+};
+typedef struct _ss_entry ss_entry;
 
-typedef struct ss_module {
-	struct ss_module *next;
+
+struct _ss_module
+{
+	struct _ss_module *next;
 	char *name;
 	ss_entry *instances[MAX_INSTANCES];
-} ss_module;
+};
+typedef struct _ss_module ss_module;
 
-static ss_module *ss_registry;
 
-typedef struct ss_func {
-	struct ss_func *next;
-	void (*func)(void);
+struct _ss_func
+{
+	struct _ss_func *next;
+	int type;
+	union
+	{
+		void (*voidf)(void);
+		void (*intf)(int param);
+		void (*ptrf)(void *param);
+	} func;
+	union
+	{
+		int intp;
+		void *ptrp;
+	} param;
 	int tag;
-} ss_func;
+	int restag;
+};
+typedef struct _ss_func ss_func;
 
+
+
+/*************************************
+ *
+ *  Statics
+ *
+ *************************************/
+
+#ifdef VERBOSE
+static const char *ss_type[] =	{ "i8", "u8", "i16", "u16", "i32", "u32", "i64", "u64", "int", "dbl", "flt" };
+#endif
+static int         ss_size[] =	{  1,   1,     2,     2,     4,     4,     8,     8,     4,     8,     4 };
+
+static void ss_c2(UINT8 *, unsigned);
+static void ss_c4(UINT8 *, unsigned);
+static void ss_c8(UINT8 *, unsigned);
+
+static void (*ss_conv[])(UINT8 *, unsigned) = {
+	0, 0, ss_c2, ss_c2, ss_c4, ss_c4, ss_c8, ss_c8, 0, ss_c8, ss_c4
+};
+
+
+
+static int ss_illegal_regs;
+static ss_module *ss_registry;
 static ss_func *ss_prefunc_reg;
 static ss_func *ss_postfunc_reg;
-static int ss_current_tag;
 
-static unsigned char *ss_dump_array;
+static int ss_tag_stack[TAG_STACK_SIZE];
+static int ss_tag_stack_index;
+
+static int ss_current_tag;
+static int ss_registration_allowed;
+
+static UINT8 *ss_dump_array;
 static mame_file *ss_dump_file;
-static unsigned int ss_dump_size;
+static UINT32 ss_dump_size;
 
 #ifdef MESS
 static const char ss_magic_num[8] = { 'M', 'E', 'S', 'S', 'S', 'A', 'V', 'E' };
@@ -100,151 +181,397 @@ static const char ss_magic_num[8] = { 'M', 'A', 'M', 'E', 'S', 'A', 'V', 'E' };
 #endif
 
 
+
+/*************************************
+ *
+ *  Compute the total size and
+ *  offsets of each individual item
+ *
+ *************************************/
+
+static int compute_size_and_offsets(void)
+{
+	int total_size;
+	ss_module *module;
+
+	/* start with the header size */
+	total_size = 0x18;
+
+	/* iterate over modules */
+	for (module = ss_registry; module; module = module->next)
+	{
+		int instnum;
+
+		/* iterate over instances */
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry *entry;
+
+			/* iterate over entries */
+			for (entry = module->instances[instnum]; entry; entry = entry->next)
+			{
+				/* note the offset and accumulate a total size */
+				entry->offset = total_size;
+				total_size += ss_size[entry->type] * entry->size;
+			}
+		}
+	}
+
+	/* return the total size */
+	return total_size;
+}
+
+
+
+/*************************************
+ *
+ *  Loop through all the hook
+ *  functions and call them
+ *
+ *************************************/
+
+static int call_hook_functions(ss_func *funclist)
+{
+	ss_func *func;
+	int count = 0;
+
+	/* iterate over the list of functions */
+	for (func = funclist; func; func = func->next)
+		if (func->tag == ss_current_tag)
+		{
+			count++;
+
+			/* call with the appropriate parameters */
+			switch (func->type)
+			{
+				case FUNC_NOPARAM:	(func->func.voidf)();					break;
+				case FUNC_INTPARAM:	(func->func.intf)(func->param.intp);	break;
+				case FUNC_PTRPARAM:	(func->func.ptrf)(func->param.ptrp);	break;
+			}
+		}
+
+	return count;
+}
+
+
+
+/*************************************
+ *
+ *  Compute the signature, which is
+ *  a CRC over the structure of the
+ *  data
+ *
+ *************************************/
+
 static UINT32 ss_get_signature(void)
 {
-	ss_module *m;
-	unsigned int size = 0, pos = 0;
-	char *info;
-	UINT32 signature;
+	ss_module *module;
+	UINT32 crc = 0;
 
-	// Pass 1 : compute size
+	/* iterate over modules */
+	for (module = ss_registry; module; module = module->next)
+	{
+		int instnum;
 
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		size += strlen(m->name) + 1;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			size++;
-			for(e = m->instances[i]; e; e=e->next)
-				size += strlen(e->name) + 1 + 1 + 4;
-		}
-	}
+		/* add the module name to the CRC */
+		crc = crc32(crc, (UINT8 *)module->name, strlen(module->name) + 1);
 
-	info = malloc(size);
+		/* iterate over instances */
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry *entry;
+			UINT8 temp[5];
 
-	// Pass 2 : write signature info
+			/* add this instance number to the CRC */
+			temp[0] = instnum;
+			crc = crc32(crc, temp, 1);
 
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		strcpy(info+pos, m->name);
-		pos += strlen(m->name) + 1;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			info[pos++] = i;
-			for(e = m->instances[i]; e; e=e->next) {
-				strcpy(info+pos, e->name);
-				pos += strlen(e->name) + 1;
-				info[pos++] = e->type;
-				info[pos++] = e->size;
-				info[pos++] = e->size >> 8;
-				info[pos++] = e->size >> 16;
-				info[pos++] = e->size >> 24;
+			/* iterate over entries */
+			for (entry = module->instances[instnum]; entry; entry = entry->next)
+			{
+				/* add the entry name to the CRC */
+				crc = crc32(crc, (UINT8 *)entry->name, strlen(entry->name) + 1);
+
+				/* add the type and size to the CRC */
+				temp[0] = entry->type;
+				*(UINT32 *)&temp[1] = LITTLE_ENDIANIZE_INT32(entry->size);
+				crc = crc32(crc, temp, 5);
 			}
 		}
 	}
-
-	// Pass 3 : Compute the crc32
-	signature = crc32(0, (unsigned char *)info, size);
-
-	free(info);
-	return signature;
+	return crc;
 }
 
-void state_save_reset(void)
+
+
+/*************************************
+ *
+ *  Check the header data
+ *
+ *************************************/
+
+static int validate_header(const UINT8 *header, const char *gamename, UINT32 signature,
+	void (CLIB_DECL *errormsg)(const char *fmt, ...), const char *error_prefix)
 {
-	ss_func *f;
-	ss_module *m = ss_registry;
-	while(m) {
-		ss_module *mn = m->next;
-		int i;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e = m->instances[i];
-			while(e) {
-				ss_entry *en = e->next;
-				free(e->name);
-				free(e);
-				e = en;
-			}
+	/* check magic number */
+	if (memcmp(header, ss_magic_num, 8))
+	{
+		if (errormsg)
+			errormsg("%sThis is not a " APPNAME " save file", error_prefix);
+		return -1;
+	}
+
+	/* check save state version */
+	if (header[8] != SAVE_VERSION)
+	{
+		if (errormsg)
+			errormsg("%sWrong version in save file (%d, 1 expected)", error_prefix, header[8]);
+		return -1;
+	}
+
+	/* check gamename, if we were asked to */
+	if (gamename && strcmp(gamename, (const char *)&header[10]))
+	{
+		if (errormsg)
+			errormsg("%s'%s' is not a valid savestate file for game '%s'.", error_prefix, gamename);
+		return -1;
+	}
+
+	/* check signature, if we were asked to */
+	if (signature)
+	{
+		UINT32 rawsig = *(UINT32 *)&header[0x14];
+		UINT32 filesig = LITTLE_ENDIANIZE_INT32(rawsig);
+		if (signature != filesig)
+		{
+			if (errormsg)
+				errormsg("%sIncompatible save file (signature %08x, expected %08x)",
+					error_prefix, filesig, signature);
+			return -1;
 		}
-		free(m->name);
-		free(m);
-		m = mn;
 	}
-	ss_registry = 0;
-
-	f = ss_prefunc_reg;
-	while(f) {
-		ss_func *fn = f->next;
-		free(f);
-		f = fn;
-	}
-	ss_prefunc_reg = 0;
-
-	f = ss_postfunc_reg;
-	while(f) {
-		ss_func *fn = f->next;
-		free(f);
-		f = fn;
-	}
-	ss_postfunc_reg = 0;
-
-	ss_current_tag = 0;
-	ss_dump_array = 0;
-	ss_dump_file = 0;
-	ss_dump_size = 0;
+	return 0;
 }
+
+
+
+/*************************************
+ *
+ *  Free registered functions attached
+ *  to the current resource tag
+ *
+ *************************************/
+
+static void func_free(ss_func **root)
+{
+	int restag = get_resource_tag();
+	ss_func **func;
+
+	/* iterate over the function list */
+	for (func = root; *func; )
+	{
+		/* if this entry matches, free it */
+		if ((*func)->restag == restag)
+		{
+			ss_func *func_to_free = *func;
+
+			/* de-link us from the list and free our memory */
+			*func = (*func)->next;
+			free(func_to_free);
+		}
+
+		/* otherwise, advance */
+		else
+			func = &(*func)->next;
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Free registered pointers attached
+ *  to the current resource tag
+ *
+ *************************************/
+
+void state_save_free(void)
+{
+	int restag = get_resource_tag();
+	ss_module **module;
+
+	/* free everything attached to the current resource tag */
+	for (module = &ss_registry; *module; )
+	{
+		int instnum, remaining = 0;
+
+		/* iterate over instances */
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry **entry;
+
+			/* iterate over entries */
+			for (entry = &(*module)->instances[instnum]; *entry; )
+			{
+				/* if this entry matches, free it */
+				if ((*entry)->restag == restag)
+				{
+					ss_entry *entry_to_free = *entry;
+
+					/* de-link us from the list and free our memory */
+					*entry = (*entry)->next;
+					free(entry_to_free->name);
+					free(entry_to_free);
+				}
+
+				/* if not a match, move on */
+				else
+					entry = &(*entry)->next;
+			}
+
+			/* if anything left, remember that we have some remaining */
+			if ((*module)->instances[instnum] != NULL)
+				remaining++;
+		}
+
+		/* if nothing is left in this module, free the entire module */
+		if (remaining == 0)
+		{
+			ss_module *module_to_free = *module;
+
+			/* de-link us from the list and free our memory */
+			*module = (*module)->next;
+			free(module_to_free->name);
+			free(module_to_free);
+		}
+
+		/* otherwise, advance */
+		else
+			module = &(*module)->next;
+	}
+
+	/* now do the same with the function lists */
+	func_free(&ss_prefunc_reg);
+	func_free(&ss_postfunc_reg);
+
+	/* if we're clear of all registrations, reset the invalid counter */
+	if (ss_registry == NULL && ss_prefunc_reg == NULL && ss_postfunc_reg == NULL)
+		ss_illegal_regs = 0;
+}
+
+
+
+/*************************************
+ *
+ *  Get a module by name or allocate
+ *  a new one
+ *
+ *************************************/
 
 static ss_module *ss_get_module(const char *name)
 {
-	int i;
-	ss_module **mp = &ss_registry;
-	ss_module *m;
-	while((m = *mp) != 0) {
-		int pos = strcmp(m->name, name);
-		if(!pos)
-			return m;
-		if(pos>0)
-			break;
-		mp = &((*mp)->next);
-	}
-	*mp = malloc(sizeof(ss_module));
-	if (*mp == NULL) return NULL;
-	(*mp)->name = malloc (strlen (name) + 1);
-	if ((*mp)->name == NULL) return NULL;
-	strcpy ((*mp)->name, name);
-	(*mp)->next = m;
-	for(i=0; i<MAX_INSTANCES; i++)
-		(*mp)->instances[i] = 0;
-	return *mp;
+	ss_module **module;
+
+	/* find a match */
+	for (module = &ss_registry; *module; module = &(*module)->next)
+		if (!strcmp((*module)->name, name))
+			return *module;
+
+	/* didn't find one; allocate a new one */
+	*module = malloc(sizeof(**module));
+	if (!*module)
+		osd_die("Out of memory allocating a new save state module");
+	memset(*module, 0, sizeof(**module));
+
+	/* allocate space for the name */
+	(*module)->name = malloc(strlen(name) + 1);
+	if (!(*module)->name)
+		osd_die("Out of memory allocating a new save state module");
+	strcpy((*module)->name, name);
+
+	return *module;
 }
 
-static ss_entry *ss_register_entry(const char *module, int instance, const char *name, int type, void *data, unsigned size)
+
+
+/*************************************
+ *
+ *  Count the number of registered
+ *  entries on the current tag
+ *
+ *************************************/
+
+int state_save_get_reg_count(void)
 {
-	ss_module *m = ss_get_module(module);
-	ss_entry **ep = &(m->instances[instance]);
-	ss_entry *e = *ep;
-	while((e = *ep) != 0) {
-		int pos = strcmp(e->name, name);
-		if(!pos) {
-			logerror("Duplicate save state registration entry (%s, %d, %s)\n", module, instance, name);
-			return NULL;
+	ss_module *module;
+	int count = 0;
+
+	/* iterate over modules */
+	for (module = ss_registry; module; module = module->next)
+	{
+		int instnum;
+
+		/* iterate over instances */
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry *entry;
+
+			/* iterate over entries with matching tags */
+			for (entry = module->instances[instnum]; entry; entry = entry->next)
+				if (entry->tag == ss_current_tag)
+					count++;
 		}
-		if(pos>0)
-			break;
-		ep = &((*ep)->next);
 	}
-	*ep = malloc(sizeof(ss_entry));
-	if (*ep == NULL) return NULL;
-	(*ep)->name = malloc (strlen (name) + 1);
-	if ((*ep)->name == NULL) return NULL;
-	strcpy ((*ep)->name, name);
-	(*ep)->next   = e;
-	(*ep)->type   = type;
-	(*ep)->data   = data;
-	(*ep)->size   = size;
-	(*ep)->offset = 0;
-	(*ep)->tag	  = ss_current_tag;
-	return *ep;
+	return count;
+}
+
+
+
+/*************************************
+ *
+ *  Register a new entry
+ *
+ *************************************/
+
+static ss_entry *ss_register_entry(const char *modname, int instance, const char *name, int type, void *data, UINT32 size)
+{
+	ss_module *module = ss_get_module(modname);
+	ss_entry **entry;
+
+	/* check for invalid timing */
+	if (!ss_registration_allowed)
+	{
+		logerror("Attempt to register save state entry after state registration is closed!");
+		ss_illegal_regs++;
+		return NULL;
+	}
+
+	/* look for duplicates and find the end */
+	for (entry = &module->instances[instance]; *entry; entry = &(*entry)->next)
+		if ((*entry)->tag == ss_current_tag && !strcmp((*entry)->name, name))
+			osd_die("Duplicate save state registration entry (%d, %s, %d, %s)\n", ss_current_tag, modname, instance, name);
+
+	/* didn't find one; allocate a new one */
+	*entry = malloc(sizeof(**entry));
+	if (!*entry)
+		osd_die("Out of memory allocating a new save state entry");
+	memset(*entry, 0, sizeof(**entry));
+
+	/* allocate space for the name */
+	(*entry)->name = malloc(strlen(name) + 1);
+	if (!(*entry)->name)
+		osd_die("Out of memory allocating a new save state entry");
+	strcpy((*entry)->name, name);
+
+	/* fill in the rest */
+	(*entry)->type   = type;
+	(*entry)->data   = data;
+	(*entry)->size   = size;
+	(*entry)->offset = 0;
+	(*entry)->tag    = ss_current_tag;
+	(*entry)->restag = get_resource_tag();
+
+	return *entry;
 }
 
 void state_save_register_UINT8 (const char *module, int instance,
@@ -315,307 +642,355 @@ void state_save_register_float(const char *module, int instance,
 
 
 
-static void ss_register_func(ss_func **root, void (*func)(void))
-{
-	ss_func *next = *root;
-	while (next)
-	{
-		if (next->func == func && next->tag == ss_current_tag)
-			osd_die("Duplicate save state function (%d, 0x%x)\n", ss_current_tag, (int)func);
 
-		next = next->next;
-	}
-	next = *root;
-	*root = malloc(sizeof(ss_func));
-	if (*root == NULL)
+/*************************************
+ *
+ *  Tagging and registration
+ *
+ *************************************/
+
+void state_save_push_tag(int tag)
+{
+	if (ss_tag_stack_index == TAG_STACK_SIZE - 1)
+		osd_die("state_save tag stack overflow");
+	ss_tag_stack[ss_tag_stack_index++] = ss_current_tag;
+	ss_current_tag = tag;
+}
+
+
+void state_save_pop_tag(void)
+{
+	if (ss_tag_stack_index == 0)
+		osd_die("state_save tag stack underflow");
+	ss_current_tag = ss_tag_stack[--ss_tag_stack_index];
+}
+
+
+void state_save_allow_registration(int allowed)
+{
+	/* allow/deny registration */
+	ss_registration_allowed = allowed;
+}
+
+
+
+/*************************************
+ *
+ *  Callback function registration
+ *
+ *************************************/
+
+static void ss_register_func_void(ss_func **root, void (*func)(void))
+{
+	ss_func **cur;
+
+	/* check for invalid timing */
+	if (!ss_registration_allowed)
 	{
-		logerror ("malloc failed in ss_register_func\n");
+		logerror("Attempt to register callback function after state registration is closed!");
+		ss_illegal_regs++;
 		return;
 	}
-	(*root)->next = next;
-	(*root)->func = func;
-	(*root)->tag  = ss_current_tag;
+
+	/* scan for duplicates and push through to the end */
+	for (cur = root; *cur; cur = &(*cur)->next)
+		if ((*cur)->func.voidf == func && (*cur)->tag == ss_current_tag)
+			osd_die("Duplicate save state function (%d, 0x%x)\n", ss_current_tag, (int)func);
+
+	/* allocate a new entry */
+	*cur = malloc(sizeof(ss_func));
+	if (*cur == NULL)
+		osd_die("malloc failed in ss_register_func\n");
+
+	/* fill it in */
+	(*cur)->type       = FUNC_NOPARAM;
+	(*cur)->func.voidf = func;
+	(*cur)->tag        = ss_current_tag;
+	(*cur)->restag     = get_resource_tag();
 }
 
 void state_save_register_func_presave(void (*func)(void))
 {
-	ss_register_func(&ss_prefunc_reg, func);
+	ss_register_func_void(&ss_prefunc_reg, func);
 }
 
 void state_save_register_func_postload(void (*func)(void))
 {
-	ss_register_func(&ss_postfunc_reg, func);
+	ss_register_func_void(&ss_postfunc_reg, func);
 }
 
-void state_save_set_current_tag(int tag)
+
+
+static void ss_register_func_int(ss_func **root, void (*func)(int), int param)
 {
-	ss_current_tag = tag;
+	ss_func **cur;
+
+	/* check for invalid timing */
+	if (!ss_registration_allowed)
+		osd_die("Attempt to register callback function after state registration is closed!");
+
+	/* scan for duplicates and push through to the end */
+	for (cur = root; *cur; cur = &(*cur)->next)
+		if ((*cur)->func.intf == func && (*cur)->param.intp == param && (*cur)->tag == ss_current_tag)
+			osd_die("Duplicate save state function (%d, %d, 0x%x)\n", ss_current_tag, param, (int)func);
+
+	/* allocate a new entry */
+	*cur = malloc(sizeof(ss_func));
+	if (*cur == NULL)
+		osd_die("malloc failed in ss_register_func\n");
+
+	/* fill it in */
+	(*cur)->type       = FUNC_INTPARAM;
+	(*cur)->func.intf  = func;
+	(*cur)->param.intp = param;
+	(*cur)->tag        = ss_current_tag;
+	(*cur)->restag     = get_resource_tag();
 }
 
-static void ss_c2(unsigned char *data, unsigned size)
+void state_save_register_func_presave_int(void (*func)(int), int param)
 {
+	ss_register_func_int(&ss_prefunc_reg, func, param);
+}
+
+void state_save_register_func_postload_int(void (*func)(int), int param)
+{
+	ss_register_func_int(&ss_postfunc_reg, func, param);
+}
+
+
+
+static void ss_register_func_ptr(ss_func **root, void (*func)(void *), void *param)
+{
+	ss_func **cur;
+
+	/* check for invalid timing */
+	if (!ss_registration_allowed)
+		osd_die("Attempt to register callback function after state registration is closed!");
+
+	/* scan for duplicates and push through to the end */
+	for (cur = root; *cur; cur = &(*cur)->next)
+		if ((*cur)->func.ptrf == func && (*cur)->param.ptrp == param && (*cur)->tag == ss_current_tag)
+			osd_die("Duplicate save state function (%d, %p, 0x%x)\n", ss_current_tag, param, (int)func);
+
+	/* allocate a new entry */
+	*cur = malloc(sizeof(ss_func));
+	if (*cur == NULL)
+		osd_die("malloc failed in ss_register_func\n");
+
+	/* fill it in */
+	(*cur)->type       = FUNC_PTRPARAM;
+	(*cur)->func.ptrf  = func;
+	(*cur)->param.ptrp = param;
+	(*cur)->tag        = ss_current_tag;
+	(*cur)->restag     = get_resource_tag();
+}
+
+void state_save_register_func_presave_ptr(void (*func)(void *), void * param)
+{
+	ss_register_func_ptr(&ss_prefunc_reg, func, param);
+}
+
+void state_save_register_func_postload_ptr(void (*func)(void *), void * param)
+{
+	ss_register_func_ptr(&ss_postfunc_reg, func, param);
+}
+
+
+
+/*************************************
+ *
+ *  Endian conversion functions
+ *
+ *************************************/
+
+static void ss_c2(UINT8 *data, unsigned size)
+{
+	UINT16 *convert = (UINT16 *)data;
 	unsigned i;
-	for(i=0; i<size; i++) {
-		unsigned char v;
-		v = data[0];
-		data[0] = data[1];
-		data[1] = v;
-		data += 2;
-	}
+
+	for (i = 0; i < size; i++)
+		convert[i] = FLIPENDIAN_INT16(convert[i]);
 }
 
-static void ss_c4(unsigned char *data, unsigned size)
+
+static void ss_c4(UINT8 *data, unsigned size)
 {
+	UINT32 *convert = (UINT32 *)data;
 	unsigned i;
-	for(i=0; i<size; i++) {
-		unsigned char v;
-		v = data[0];
-		data[0] = data[3];
-		data[3] = v;
-		v = data[1];
-		data[1] = data[2];
-		data[2] = v;
-		data += 4;
-	}
+
+	for (i = 0; i < size; i++)
+		convert[i] = FLIPENDIAN_INT32(convert[i]);
 }
 
-static void ss_c8(unsigned char *data, unsigned size)
+
+static void ss_c8(UINT8 *data, unsigned size)
 {
+	UINT64 *convert = (UINT64 *)data;
 	unsigned i;
-	for(i=0; i<size; i++) {
-		unsigned char v;
-		v = data[0];
-		data[0] = data[7];
-		data[7] = v;
-		v = data[1];
-		data[1] = data[6];
-		data[6] = v;
-		v = data[2];
-		data[2] = data[5];
-		data[5] = v;
-		v = data[3];
-		data[3] = data[4];
-		data[4] = v;
-		data += 8;
-	}
+
+	for (i = 0; i < size; i++)
+		convert[i] = FLIPENDIAN_INT64(convert[i]);
 }
 
 
-void state_save_save_begin(mame_file *file)
+
+/*************************************
+ *
+ *  Save state processing
+ *
+ *************************************/
+
+int state_save_save_begin(mame_file *file)
 {
-	ss_module *m;
+	/* if our stack isn't clear, something is wrong */
+	if (ss_tag_stack_index != 0)
+		osd_die("State tag stack not reset properly");
+
+	/* if we have illegal registrations, return an error */
+	if (ss_illegal_regs > 0)
+		return 1;
+
 	TRACE(logerror("Beginning save\n"));
-	ss_dump_size = 0x18;
 	ss_dump_file = file;
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			for(e = m->instances[i]; e; e=e->next) {
-				e->offset = ss_dump_size;
-				ss_dump_size += ss_size[e->type]*e->size;
-			}
-		}
-	}
 
+	/* compute the total dump size and the offsets of each element */
+	ss_dump_size = compute_size_and_offsets();
 	TRACE(logerror("   total size %u\n", ss_dump_size));
+
+	/* allocate memory for the array */
 	ss_dump_array = malloc(ss_dump_size);
-	if (ss_dump_array == NULL)
-	{
-		logerror ("malloc failed in state_save_save_begin\n");
-	}
+	if (!ss_dump_array)
+		logerror("malloc failed in state_save_save_begin\n");
+	return 0;
 }
+
 
 void state_save_save_continue(void)
 {
-	ss_module *m;
-	ss_func * f;
-	int count = 0;
+	ss_module *module;
+	int count;
+
 	TRACE(logerror("Saving tag %d\n", ss_current_tag));
+
+	/* call the pre-save functions */
 	TRACE(logerror("  calling pre-save functions\n"));
-	f = ss_prefunc_reg;
-	while(f) {
-		if(f->tag == ss_current_tag) {
-			count++;
-			(f->func)();
-		}
-		f = f->next;
-	}
+	count = call_hook_functions(ss_prefunc_reg);
 	TRACE(logerror("    %d functions called\n", count));
+
+	/* then copy in all the data */
 	TRACE(logerror("  copying data\n"));
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			for(e = m->instances[i]; e; e=e->next)
-				if(e->tag == ss_current_tag) {
-					if(e->type == SS_INT) {
-						int v = *(int *)(e->data);
-						ss_dump_array[e->offset]   = v ;
-						ss_dump_array[e->offset+1] = v >> 8;
-						ss_dump_array[e->offset+2] = v >> 16;
-						ss_dump_array[e->offset+3] = v >> 24;
-						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+3));
-					} else {
-						memcpy(ss_dump_array + e->offset, e->data, ss_size[e->type]*e->size);
-						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+ss_size[e->type]*e->size-1));
+
+	/* iterate over modules */
+	for (module = ss_registry; module; module = module->next)
+	{
+		int instnum;
+
+		/* iterate over instances */
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry *entry;
+
+			/* iterate over entries with matching tags */
+			for (entry = module->instances[instnum]; entry; entry = entry->next)
+				if (entry->tag == ss_current_tag)
+				{
+					/* write int entries in consistent 32-bit little-endian order */
+					if (entry->type == SS_INT)
+					{
+						int v = *(int *)(entry->data);
+						*(UINT32 *)&ss_dump_array[entry->offset] = LITTLE_ENDIANIZE_INT32(v);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", module->name, instnum, entry->name, entry->offset, entry->offset + 3));
+					}
+
+					/* write everything else by memcpy'ing the data */
+					else
+					{
+						memcpy(ss_dump_array + entry->offset, entry->data, ss_size[entry->type] * entry->size);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", module->name, instnum, entry->name, entry->offset, entry->offset + ss_size[entry->type] * entry->size - 1));
 					}
 				}
 		}
 	}
 }
 
+
 void state_save_save_finish(void)
 {
 	UINT32 signature;
-	unsigned char flags = 0;
+	UINT8 flags = 0;
 
 	TRACE(logerror("Finishing save\n"));
 
-	signature = ss_get_signature();
-	if(!Machine->sample_rate)
+	/* compute the flags */
+	if (!Machine->sample_rate)
 		flags |= SS_NO_SOUND;
-
 #ifndef LSB_FIRST
 	flags |= SS_MSB_FIRST;
 #endif
 
+	/* build up the header */
 	memcpy(ss_dump_array, ss_magic_num, 8);
-	ss_dump_array[8] = 1;
+	ss_dump_array[8] = SAVE_VERSION;
 	ss_dump_array[9] = flags;
 	memset(ss_dump_array+0xa, 0, 10);
 	strcpy((char *)ss_dump_array+0xa, Machine->gamedrv->name);
 
-	ss_dump_array[0x14] = signature;
-	ss_dump_array[0x15] = signature >> 8;
-	ss_dump_array[0x16] = signature >> 16;
-	ss_dump_array[0x17] = signature >> 24;
+	/* copy in the signature */
+	signature = ss_get_signature();
+	*(UINT32 *)&ss_dump_array[0x14] = LITTLE_ENDIANIZE_INT32(signature);
 
+	/* write the file */
 	mame_fwrite(ss_dump_file, ss_dump_array, ss_dump_size);
+
+	/* free memory and reset the global states */
 	free(ss_dump_array);
-	ss_dump_array = 0;
+	ss_dump_array = NULL;
 	ss_dump_size = 0;
-	ss_dump_file = 0;
+	ss_dump_file = NULL;
 }
 
-static int ss_check_header(const unsigned char *header, const char *gamename, UINT32 signature,
-	void (CLIB_DECL *errormsg)(const char *fmt, ...), const char *error_prefix)
-{
-	UINT32 file_sig;
 
-	/* check magic number */
-	if (memcmp(header, ss_magic_num, 8))
-	{
-		if (errormsg)
-			errormsg("%sThis is not a " APPNAME " save file", error_prefix);
-		return -1;
-	}
 
-	/* check save state version */
-	if (header[8] != 1)
-	{
-		if (errormsg)
-			errormsg("%sWrong version in save file (%d, 1 expected)", error_prefix, header[8]);
-		return -1;
-	}
-
-	/* check gamename, if we were asked to */
-	if (gamename && strcmp(gamename, (const char *) &header[10]))
-	{
-		if (errormsg)
-			errormsg("%s'%s' is not a valid savestate file for game '%s'.", error_prefix, gamename);
-		return -1;
-	}
-
-	/* check signature, if we were asked to */
-	if (signature)
-	{
-		file_sig = header[0x14]
-			| (header[0x15] << 8)
-			| (header[0x16] << 16)
-			| (header[0x17] << 24);
-
-		if (file_sig != signature)
-		{
-			if (errormsg)
-				errormsg("%sIncompatible save file (signature %08x, expected %08x)",
-					error_prefix, file_sig, signature);
-			return -1;
-		}
-	}
-
-	return 0;
-}
-
-int state_save_check_file(mame_file *file, const char *gamename, void (CLIB_DECL *errormsg)(const char *fmt, ...))
-{
-	unsigned char header[0x18];
-
-	mame_fseek(file, 0, SEEK_SET);
-
-	if (mame_fread(file, header, sizeof(header)) != sizeof(header))
-	{
-		if (errormsg)
-			errormsg("Could not read " APPNAME " save file header");
-		return -1;
-	}
-	return ss_check_header(header, gamename, 0, errormsg, "");
-}
+/*************************************
+ *
+ *  Load state processing
+ *
+ *************************************/
 
 int state_save_load_begin(mame_file *file)
 {
-	ss_module *m;
-	unsigned int offset = 0;
-	UINT32 signature;
-
 	TRACE(logerror("Beginning load\n"));
 
-	signature = ss_get_signature();
+	/* if our stack isn't clear, something is wrong */
+	if (ss_tag_stack_index != 0)
+		osd_die("State tag stack not reset properly");
 
+	/* read the file into memory */
 	ss_dump_size = mame_fsize(file);
 	ss_dump_array = malloc(ss_dump_size);
 	ss_dump_file = file;
 	mame_fread(ss_dump_file, ss_dump_array, ss_dump_size);
 
-	if (ss_check_header(ss_dump_array, NULL, signature, ui_popup, "Error: "))
-		goto bad;
-
-	if(ss_dump_array[9] & SS_NO_SOUND)
+	/* verify the header and report an error if it doesn't match */
+	if (validate_header(ss_dump_array, NULL, ss_get_signature(), ui_popup, "Error: "))
 	{
-		if(Machine->sample_rate)
-			ui_popup("Warning: Game was saved with sound off, but sound is on.  Result may be interesting.");
-	}
-	else
-	{
-		if(!Machine->sample_rate)
-			ui_popup("Warning: Game was saved with sound on, but sound is off.  Result may be interesting.");
+		free(ss_dump_array);
+		return 1;
 	}
 
-	offset = 0x18;
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			for(e = m->instances[i]; e; e=e->next) {
-				e->offset = offset;
-				offset += ss_size[e->type]*e->size;
-			}
-		}
-	}
+	/* compute the total size and offset of all the entries */
+	compute_size_and_offsets();
 	return 0;
-
- bad:
-	free(ss_dump_array);
-	return 1;
 }
+
 
 void state_save_load_continue(void)
 {
-	ss_module *m;
-	ss_func * f;
-	int count = 0;
+	ss_module *module;
 	int need_convert;
+	int count;
 
+	/* first determine whether or not we need to convert the endianness of the data */
 #ifdef LSB_FIRST
 	need_convert = (ss_dump_array[9] & SS_MSB_FIRST) != 0;
 #else
@@ -624,60 +999,112 @@ void state_save_load_continue(void)
 
 	TRACE(logerror("Loading tag %d\n", ss_current_tag));
 	TRACE(logerror("  copying data\n"));
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			for(e = m->instances[i]; e; e=e->next)
-				if(e->tag == ss_current_tag) {
-					if(e->type == SS_INT) {
-						int v;
-						v = ss_dump_array[e->offset]
-							| (ss_dump_array[e->offset+1] << 8)
-							| (ss_dump_array[e->offset+2] << 16)
-							| (ss_dump_array[e->offset+3] << 24);
-						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+3));
-						*(int *)(e->data) = v;
-					} else {
-						memcpy(e->data, ss_dump_array + e->offset, ss_size[e->type]*e->size);
-						if (need_convert && ss_conv[e->type])
-							ss_conv[e->type](e->data, e->size);
-						TRACE(logerror("    %s.%d.%s: %x..%x\n", m->name, i, e->name, e->offset, e->offset+ss_size[e->type]*e->size-1));
+
+	/* iterate over modules */
+	for (module = ss_registry; module; module = module->next)
+	{
+		int instnum;
+
+		/* iterate over instances */
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry *entry;
+
+			/* iterate over entries with matching tags */
+			for (entry = module->instances[instnum]; entry; entry = entry->next)
+				if (entry->tag == ss_current_tag)
+				{
+					/* read int entries in consistent 32-bit little-endian order */
+					if (entry->type == SS_INT)
+					{
+						UINT32 rawdata = *(UINT32 *)&ss_dump_array[entry->offset];
+						*(int *)entry->data = LITTLE_ENDIANIZE_INT32(rawdata);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", module->name, instnum, entry->name, entry->offset, entry->offset+3));
+					}
+
+					/* read everything else with a memcpy and convert */
+					else
+					{
+						memcpy(entry->data, ss_dump_array + entry->offset, ss_size[entry->type] * entry->size);
+						if (need_convert && ss_conv[entry->type])
+							(*ss_conv[entry->type])(entry->data, entry->size);
+						TRACE(logerror("    %s.%d.%s: %x..%x\n", module->name, instnum, entry->name, entry->offset, entry->offset+ss_size[entry->type]*entry->size-1));
 					}
 				}
 		}
 	}
+
+	/* call the post-load functions */
 	TRACE(logerror("  calling post-load functions\n"));
-	f = ss_postfunc_reg;
-	while(f) {
-		if(f->tag == ss_current_tag) {
-			count++;
-			(f->func)();
-		}
-		f = f->next;
-	}
+	count = call_hook_functions(ss_postfunc_reg);
 	TRACE(logerror("    %d functions called\n", count));
 }
+
 
 void state_save_load_finish(void)
 {
 	TRACE(logerror("Finishing load\n"));
+
+	/* free memory and reset the global states */
 	free(ss_dump_array);
-	ss_dump_array = 0;
+	ss_dump_array = NULL;
 	ss_dump_size = 0;
-	ss_dump_file = 0;
+	ss_dump_file = NULL;
 }
+
+
+
+/*************************************
+ *
+ *  State file validation
+ *
+ *************************************/
+
+int state_save_check_file(mame_file *file, const char *gamename, int validate_signature, void (CLIB_DECL *errormsg)(const char *fmt, ...))
+{
+	UINT32 signature = 0;
+	UINT8 header[0x18];
+
+	/* if we want to validate the signature, compute it */
+	if (validate_signature)
+		signature = ss_get_signature();
+
+	/* seek to the beginning and read the header */
+	mame_fseek(file, 0, SEEK_SET);
+	if (mame_fread(file, header, sizeof(header)) != sizeof(header))
+	{
+		if (errormsg)
+			errormsg("Could not read " APPNAME " save file header");
+		return -1;
+	}
+
+	/* let the generic header check work out the rest */
+	return validate_header(header, gamename, signature, errormsg, "");
+}
+
+
+
+/*************************************
+ *
+ *  Debugging: dump the registry
+ *
+ *************************************/
 
 void state_save_dump_registry(void)
 {
 #ifdef VERBOSE
-	ss_module *m;
-	for(m = ss_registry; m; m=m->next) {
-		int i;
-		for(i=0; i<MAX_INSTANCES; i++) {
-			ss_entry *e;
-			for(e = m->instances[i]; e; e=e->next)
-				logerror("%d %s.%d.%s: %s, %x\n", e->tag, m->name, i, e->name, ss_type[e->type], e->size);
+	ss_module *module;
+
+	for (module = ss_registry; module; module = module->next)
+	{
+		int instnum;
+
+		for (instnum = 0; instnum < MAX_INSTANCES; instnum++)
+		{
+			ss_entry *entry;
+
+			for (entry = module->instances[instnum]; entry; entry=entry->next)
+				logerror("%d %s.%d.%s: %s, %x\n", entry->tag, module->name, instnum, entry->name, ss_type[entry->type], entry->size);
 		}
 	}
 #endif

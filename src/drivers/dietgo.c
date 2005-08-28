@@ -151,7 +151,7 @@ INPUT_PORTS_START( dietgo )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout tile_8x8_layout =
+static gfx_layout tile_8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -162,7 +162,7 @@ static struct GfxLayout tile_8x8_layout =
 	8*16
 };
 
-static struct GfxLayout tile_16x16_layout =
+static gfx_layout tile_16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -173,7 +173,7 @@ static struct GfxLayout tile_16x16_layout =
 	32*16
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -185,7 +185,7 @@ static struct GfxLayout spritelayout =
 	32*32
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_8x8_layout,     0, 32 },	/* Tiles (8x8) */
 	{ REGION_GFX1, 0, &tile_16x16_layout,   0, 32 },	/* Tiles (16x16) */

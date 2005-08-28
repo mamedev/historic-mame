@@ -54,8 +54,8 @@ Notes:
 #include "machine/8255ppi.h"
 #include "cpu/z80/z80daisy.h"
 
-static struct tilemap *tilemap1;
-static struct tilemap *tilemap2;
+static tilemap *tilemap1;
+static tilemap *tilemap2;
 
 static UINT8 *vram1;
 static UINT8 *vram2;
@@ -265,7 +265,7 @@ static ADDRESS_MAP_START( mcu_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0080, 0x0fff) AM_ROM
 ADDRESS_MAP_END
 
-static struct GfxLayout layout_8x8x8 =
+static gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -276,7 +276,7 @@ static struct GfxLayout layout_8x8x8 =
 	8*8
 };
 
-static struct GfxLayout layout_8x8x3 =
+static gfx_layout layout_8x8x3 =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -287,7 +287,7 @@ static struct GfxLayout layout_8x8x3 =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x8, 0x000, 1 }, // 8bpp tiles
 	{ REGION_GFX2, 0, &layout_8x8x3, 0x100, 32 }, // 3bpp tiles

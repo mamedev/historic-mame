@@ -420,7 +420,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	512,   /* 1024 characters */
@@ -431,7 +431,7 @@ static struct GfxLayout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 chars */
 	1024, 	/* 1024 characters */
@@ -445,7 +445,7 @@ static struct GfxLayout spritelayout =
 	16*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 chars */
 	512,	/* 512 characters */
@@ -459,7 +459,7 @@ static struct GfxLayout tilelayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,   256,  8 },	/* characters */
 	{ REGION_GFX1, 0x01000, &charlayout,   256,  8 },	/* characters */
@@ -469,7 +469,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 /* Ring King */
-static struct GfxLayout rk_charlayout1 =
+static gfx_layout rk_charlayout1 =
 {
 	8,8,    /* 8*8 characters */
 	512,   /* 1024 characters */
@@ -480,7 +480,7 @@ static struct GfxLayout rk_charlayout1 =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout rk_charlayout2 =
+static gfx_layout rk_charlayout2 =
 {
 	8,8,    /* 8*8 characters */
 	512,   /* 1024 characters */
@@ -491,7 +491,7 @@ static struct GfxLayout rk_charlayout2 =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout rk_spritelayout =
+static gfx_layout rk_spritelayout =
 {
 	16,16,	/* 16*16 chars */
 	1024, 	/* 1024 characters */
@@ -504,7 +504,7 @@ static struct GfxLayout rk_spritelayout =
 	32*8
 };
 
-static struct GfxLayout rk_tilelayout =
+static gfx_layout rk_tilelayout =
 {
 	16,16,	/* 16*16 chars */
 	512, 	/* 1024 characters */
@@ -517,7 +517,7 @@ static struct GfxLayout rk_tilelayout =
 	32*8
 };
 
-static struct GfxLayout rk_bglayout =
+static gfx_layout rk_bglayout =
 {
 	16,16,	/* 16*16 chars */
 	256, 	/* 1024 characters */
@@ -531,7 +531,7 @@ static struct GfxLayout rk_bglayout =
 };
 
 
-static struct GfxDecodeInfo rk_gfxdecodeinfo[] =
+static gfx_decode rk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &rk_charlayout1,  256,  8 },	/* characters */
 	{ REGION_GFX1, 0x00000, &rk_charlayout2,  256,  8 },	/* characters */

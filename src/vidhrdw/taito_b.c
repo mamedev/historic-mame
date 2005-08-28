@@ -6,7 +6,7 @@ data16_t *TC0180VCU_ram;
 data16_t *taitob_spriteram;
 data16_t *taitob_pixelram;
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static int bg_rambank[2],fg_rambank[2],tx_rambank;
 
 /* framebuffer is a raw bitmap, remapped as a last step */
@@ -447,7 +447,7 @@ static void taitob_draw_sprites (struct mame_bitmap *bitmap,const struct rectang
 }
 
 
-static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tmap,int plane)
+static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,tilemap *tmap,int plane)
 {
 /*plane = 0 fg tilemap*/
 /*plane = 1 bg tilemap*/

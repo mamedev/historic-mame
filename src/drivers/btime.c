@@ -1187,7 +1187,7 @@ INPUT_PORTS_START( sdtennis )
       whatever the coinage Dip Switch are (they are not read in this case) */
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	1024,   /* 1024 characters */
@@ -1198,7 +1198,7 @@ static struct GfxLayout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	256,    /* 256 sprites */
@@ -1211,7 +1211,7 @@ static struct GfxLayout spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout zoar_spritelayout =
+static gfx_layout zoar_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	128,    /* 256 sprites */
@@ -1224,7 +1224,7 @@ static struct GfxLayout zoar_spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout btime_tilelayout =
+static gfx_layout btime_tilelayout =
 {
 	16,16,  /* 16*16 characters */
 	64,    /* 64 characters */
@@ -1237,7 +1237,7 @@ static struct GfxLayout btime_tilelayout =
 	32*8    /* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout cookrace_tilelayout =
+static gfx_layout cookrace_tilelayout =
 {
 	8,8,  /* 8*8 characters */
 	256,    /* 256 characters */
@@ -1248,7 +1248,7 @@ static struct GfxLayout cookrace_tilelayout =
 	8*8    /* every tile takes 8 consecutive bytes */
 };
 
-static struct GfxLayout bnj_tilelayout =
+static gfx_layout bnj_tilelayout =
 {
 	16,16,  /* 16*16 characters */
 	64, /* 64 characters */
@@ -1261,7 +1261,7 @@ static struct GfxLayout bnj_tilelayout =
 	64*8    /* every tile takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo btime_gfxdecodeinfo[] =
+static gfx_decode btime_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
@@ -1269,7 +1269,7 @@ static struct GfxDecodeInfo btime_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo cookrace_gfxdecodeinfo[] =
+static gfx_decode cookrace_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
@@ -1277,14 +1277,14 @@ static struct GfxDecodeInfo cookrace_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo lnc_gfxdecodeinfo[] =
+static gfx_decode lnc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 },     /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 },     /* sprites */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo bnj_gfxdecodeinfo[] =
+static gfx_decode bnj_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
@@ -1292,7 +1292,7 @@ static struct GfxDecodeInfo bnj_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo zoar_gfxdecodeinfo[] =
+static gfx_decode zoar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 8 }, /* char set #1 */
 	{ REGION_GFX4, 0, &zoar_spritelayout,   0, 8 }, /* sprites */
@@ -1300,7 +1300,7 @@ static struct GfxDecodeInfo zoar_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo disco_gfxdecodeinfo[] =
+static gfx_decode disco_gfxdecodeinfo[] =
 {
 	{ 0, 0x2000, &charlayout,          0, 4 }, /* char set #1 */
 	{ 0, 0x2000, &spritelayout,        0, 4 }, /* sprites */

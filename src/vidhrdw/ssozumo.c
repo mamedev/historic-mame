@@ -13,7 +13,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 UINT8 *ssozumo_videoram2;
 UINT8 *ssozumo_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 #define TOTAL_COLORS(gfxn)	(Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 #define COLOR(gfxn,offs)	(colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])

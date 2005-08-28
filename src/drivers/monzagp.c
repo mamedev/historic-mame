@@ -142,7 +142,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	// game doesn't appear to use character-based graphics, but this allows us to view contents of the data
 	// ROMs that do contain bitmaps
@@ -159,7 +159,7 @@ static struct GfxLayout tile_layout =
 	0x200
 };
 
-static struct GfxLayout tile_layout2 =
+static gfx_layout tile_layout2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -174,7 +174,7 @@ static struct GfxLayout tile_layout2 =
 	0x200
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tile_layout,  0, 4 },
 	{ REGION_GFX1, 0x0000, &tile_layout2,  0, 4 },

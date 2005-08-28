@@ -219,7 +219,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout cbasebal_textlayout =
+static gfx_layout cbasebal_textlayout =
 {
 	8,8,	/* 8*8 characters */
 	4096,	/* 4096 characters */
@@ -230,7 +230,7 @@ static struct GfxLayout cbasebal_textlayout =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout cbasebal_tilelayout =
+static gfx_layout cbasebal_tilelayout =
 {
 	16,16,	/* 16*16 tiles */
 	4096,	/* 4096 tiles */
@@ -243,7 +243,7 @@ static struct GfxLayout cbasebal_tilelayout =
 	64*8    /* every tile takes 64 consecutive bytes */
 };
 
-static struct GfxLayout cbasebal_spritelayout =
+static gfx_layout cbasebal_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	4096,   /* 2048 sprites */
@@ -256,7 +256,7 @@ static struct GfxLayout cbasebal_spritelayout =
 	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo cbasebal_gfxdecodeinfo[] =
+static gfx_decode cbasebal_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &cbasebal_textlayout,   256,  8 }, /* colors 256- 287 */
 	{ REGION_GFX2, 0, &cbasebal_tilelayout,   768, 16 }, /* colors 768-1023 */

@@ -122,7 +122,7 @@ WRITE16_HANDLER( rockn_priority_w )
 
 ***************************************************************************/
 
-static struct tilemap *tilemap_bg, *tilemap_fg, *tilemap_rot;
+static tilemap *tilemap_bg, *tilemap_fg, *tilemap_rot;
 
 #define NX_0  (0x40)
 #define NY_0  (0x40)

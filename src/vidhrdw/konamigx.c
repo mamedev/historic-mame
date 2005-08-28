@@ -15,7 +15,7 @@ static int layer_colorbase[4];
 static int gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
 static int gx_tilemode, gx_rozenable, psac_colorbase, last_psac_colorbase;
-static struct tilemap *gx_psac_tilemap, *gx_psac_tilemap2;
+static tilemap *gx_psac_tilemap, *gx_psac_tilemap2;
 extern data32_t *gx_psacram, *gx_subpaletteram32;
 
 static void (*game_tile_callback)(int, int *, int *);

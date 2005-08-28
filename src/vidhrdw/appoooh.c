@@ -16,7 +16,7 @@ unsigned char *appoooh_bg_videoram,*appoooh_bg_colorram;
 #define CHR1_OFST 0x00  /* palette page of char set #1 */
 #define CHR2_OFST 0x10  /* palette page of char set #2 */
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 
 static int scroll_x;
 static int priority;
@@ -235,7 +235,7 @@ WRITE8_HANDLER( appoooh_out_w )
 
 static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 		const struct rectangle *cliprect,
-        const struct GfxElement *gfx,
+        const gfx_element *gfx,
         unsigned char *sprite)
 {
 	int offs;
@@ -268,7 +268,7 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 
 static void robowres_draw_sprites(struct mame_bitmap *dest_bmp,
 		const struct rectangle *cliprect,
-        const struct GfxElement *gfx,
+        const gfx_element *gfx,
         unsigned char *sprite)
 {
 	int offs;

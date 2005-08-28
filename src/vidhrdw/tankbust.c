@@ -9,8 +9,8 @@
 *   variables
 */
 
-static struct tilemap *bg_tilemap;
-static struct tilemap *txt_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *txt_tilemap;
 data8_t * txt_ram;
 
 /***************************************************************************

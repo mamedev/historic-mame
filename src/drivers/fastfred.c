@@ -498,7 +498,7 @@ INPUT_PORTS_START( imago )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -509,7 +509,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -522,7 +522,7 @@ static struct GfxLayout spritelayout =
 	32*8
 };
 
-static struct GfxLayout imago_char_1bpp =
+static gfx_layout imago_char_1bpp =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -533,21 +533,21 @@ static struct GfxLayout imago_char_1bpp =
 	8*8
 };
 
-static struct GfxDecodeInfo fastfred_gfxdecodeinfo[] =
+static gfx_decode fastfred_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 32 },
 	{ REGION_GFX2, 0, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo jumpcoas_gfxdecodeinfo[] =
+static gfx_decode jumpcoas_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 32 },
 	{ REGION_GFX1, 0, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo imago_gfxdecodeinfo[] =
+static gfx_decode imago_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	        0, 32 },
 	{ REGION_GFX2, 0, &spritelayout,        0, 32 },

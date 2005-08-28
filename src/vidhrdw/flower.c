@@ -3,7 +3,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *flower_bg0_tilemap, *flower_bg1_tilemap, *flower_text_tilemap, *flower_text_right_tilemap;
+static tilemap *flower_bg0_tilemap, *flower_bg1_tilemap, *flower_text_tilemap, *flower_text_right_tilemap;
 data8_t *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;
 
 
@@ -27,7 +27,7 @@ PALETTE_INIT( flower )
 
 static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	data8_t *source = spriteram + 0x200;
 	data8_t *finish = source - 0x200;
 

@@ -18,7 +18,7 @@
 #include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
-static struct tilemap *suprgolf_tilemap;
+static tilemap *suprgolf_tilemap;
 
 static int suprgolf_rom_bank;
 
@@ -270,7 +270,7 @@ static struct YM2203interface ym2203_interface =
 	suprgolf_writeB,
 	irqhandler
 };
-static struct GfxLayout gfxlayout =
+static gfx_layout gfxlayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -281,7 +281,7 @@ static struct GfxLayout gfxlayout =
 	8*8*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout,   0, 32 },
 	{ -1 }

@@ -11,7 +11,7 @@
 
 int nmi_enable;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

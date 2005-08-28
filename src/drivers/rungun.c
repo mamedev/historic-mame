@@ -310,7 +310,7 @@ static struct K054539interface k054539_interface =
 
 /**********************************************************************************/
 
-static struct GfxLayout bglayout =
+static gfx_layout bglayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -323,7 +323,7 @@ static struct GfxLayout bglayout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bglayout, 0x0000, 64 },
 	{ -1 } /* end of array */

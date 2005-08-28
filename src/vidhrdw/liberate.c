@@ -14,7 +14,7 @@
 #include "cpu/m6502/m6502.h"
 
 static int background_color,background_disable;
-static struct tilemap *background_tilemap, *fix_tilemap;
+static tilemap *background_tilemap, *fix_tilemap;
 static data8_t deco16_io_ram[16];
 
 #if 0

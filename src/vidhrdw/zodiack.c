@@ -16,7 +16,7 @@ size_t zodiack_bulletsram_size;
 
 extern int percuss_hardware;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( zodiack_videoram_w )
 {

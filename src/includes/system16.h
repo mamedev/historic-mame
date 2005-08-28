@@ -123,7 +123,7 @@ extern MACHINE_INIT( sys16_onetime );
 #define SYS16_MRA16_ROADRAM		MRA16_RAM
 #define SYS16_MWA16_ROADRAM		MWA16_RAM
 
-extern struct GfxDecodeInfo sys16_gfxdecodeinfo[];
+extern gfx_decode sys16_gfxdecodeinfo[];
 
 
 #define SYS16_JOY1 PORT_START_TAG("IN0")\

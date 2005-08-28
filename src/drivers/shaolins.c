@@ -184,7 +184,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout shaolins_charlayout =
+static gfx_layout shaolins_charlayout =
 {
 	8,8,	/* 8*8 chars */
 	512,	/* 512 characters */
@@ -195,7 +195,7 @@ static struct GfxLayout shaolins_charlayout =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout shaolins_spritelayout =
+static gfx_layout shaolins_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	256,	/* 256 sprites */
@@ -208,7 +208,7 @@ static struct GfxLayout shaolins_spritelayout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo shaolins_gfxdecodeinfo[] =
+static gfx_decode shaolins_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &shaolins_charlayout,         0, 16*8 },
 	{ REGION_GFX2, 0, &shaolins_spritelayout, 16*8*16, 16*8 },

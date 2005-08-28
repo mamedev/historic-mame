@@ -9,7 +9,7 @@
 data16_t *quizpani_bg_videoram, *quizpani_txt_videoram;
 data16_t *quizpani_scrollreg;
 
-static struct tilemap *bg_tilemap, *txt_tilemap;
+static tilemap *bg_tilemap, *txt_tilemap;
 
 static int quizpani_bgbank = 0, quizpani_txtbank = 0;
 

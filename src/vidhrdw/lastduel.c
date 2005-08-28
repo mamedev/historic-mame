@@ -11,7 +11,7 @@
 
 data16_t *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 
-static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
 static int sprite_flipy_mask,sprite_pri_mask;
 

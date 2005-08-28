@@ -877,7 +877,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,	/* tile size */
 	RGN_FRAC(1,1),	/* number of tiles */
@@ -888,7 +888,7 @@ static struct GfxLayout tilelayout =
 	32*8	/* offset to next tile */
 };
 
-static struct GfxLayout tile2layout =
+static gfx_layout tile2layout =
 {
 	16,16,	/* tile size */
 	RGN_FRAC(1,1),	/* number of tiles */
@@ -902,7 +902,7 @@ static struct GfxLayout tile2layout =
 	128*8	/* offset to next tile */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,8,	/* sprites size */
 	RGN_FRAC(1,2),	/* number of sprites */
@@ -913,7 +913,7 @@ static struct GfxLayout spritelayout =
 	16*8	/* offset to next sprite */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,        256, 4096 - 256 },	/* tiles 8x8  */
 	{ REGION_GFX2, 0, &tile2layout,       768, 4096 - 768 },	/* tiles 16x16 */
@@ -922,7 +922,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout drgnbowl_tile2layout =
+static gfx_layout drgnbowl_tile2layout =
 {
 	16,16,
 	RGN_FRAC(1,8),
@@ -933,7 +933,7 @@ static struct GfxLayout drgnbowl_tile2layout =
 	32*8
 };
 
-static struct GfxLayout drgnbowl_spritelayout =
+static gfx_layout drgnbowl_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -944,7 +944,7 @@ static struct GfxLayout drgnbowl_spritelayout =
 	32*8
 };
 
-static struct GfxDecodeInfo drgnbowl_gfxdecodeinfo[] =
+static gfx_decode drgnbowl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,       &tilelayout,                0, 16 },	/* tiles 8x8  */
 	{ REGION_GFX2, 0x00000, &drgnbowl_tile2layout,  0x300, 16 },	/* tiles 16x16 */

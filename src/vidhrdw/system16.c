@@ -167,8 +167,8 @@ int sys16_gr_palette_default;
 unsigned char sys16_gr_colorflip[2][4];
 data16_t *sys16_gr_second_road;
 
-static struct tilemap *background, *foreground, *text_layer;
-static struct tilemap *background2, *foreground2;
+static tilemap *background, *foreground, *text_layer;
+static tilemap *background2, *foreground2;
 static int old_bg_page[4],old_fg_page[4], old_tile_bank1, old_tile_bank0;
 static int old_bg2_page[4],old_fg2_page[4];
 

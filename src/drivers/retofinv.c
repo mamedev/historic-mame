@@ -327,7 +327,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),	/* bottom half of ROM is empty */
@@ -338,7 +338,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout bglayout =
+static gfx_layout bglayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -349,7 +349,7 @@ static struct GfxLayout bglayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -362,7 +362,7 @@ static struct GfxLayout spritelayout =
   	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,             0, 256 },
 	{ REGION_GFX2, 0, &bglayout,     64*16+256*2,  64 },

@@ -136,18 +136,19 @@ extern void *playback;
  *
  *************************************/
 
-struct InputBitInfo
+struct _input_bit_info
 {
-	struct InputPort *	port;		/* port for this input */
+	input_port_entry *	port;		/* port for this input */
 	UINT8				impulse;	/* counter for impulse controls */
 	UINT8				last;		/* were we pressed last time? */
 };
+typedef struct _input_bit_info input_bit_info;
 
 
-struct AnalogPortInfo
+struct _analog_port_info
 {
-	struct AnalogPortInfo *next;	/* linked list */
-	struct InputPort *	port;		/* pointer to the input port referenced */
+	struct _analog_port_info *next;	/* linked list */
+	input_port_entry *	port;		/* pointer to the input port referenced */
 	INT32				accum;		/* accumulated value (including relative adjustments) */
 	INT32				previous;	/* previous adjusted value */
 	INT32				minimum;	/* minimum adjusted value */
@@ -163,21 +164,23 @@ struct AnalogPortInfo
 	UINT8				interpolate;/* should we do linear interpolation for mid-frame reads? */
 	UINT8				lastdigital;/* was the last modification caused by a digital form? */
 };
+typedef struct _analog_port_info analog_port_info;
 
 
-struct DigitalJoystickInfo
+struct _digital_joystick_info
 {
-	struct InputPort *	port[4];	/* port for up,down,left,right respectively */
+	input_port_entry *	port[4];	/* port for up,down,left,right respectively */
 	UINT8				inuse;		/* is this joystick used? */
 	UINT8				current;	/* current value */
 	UINT8				current4way;/* current 4-way value */
 	UINT8				previous;	/* previous value */
 };
+typedef struct _digital_joystick_info digital_joystick_info;
 
 
-struct IptInitParams
+struct _input_port_init_params
 {
-	struct InputPort *	ports;		/* base of the port array */
+	input_port_entry *	ports;		/* base of the port array */
 	int					max_ports;	/* maximum number of ports we can support */
 	int					current_port;/* current port index */
 };
@@ -212,11 +215,11 @@ static UINT32 input_port_vblank[MAX_INPUT_PORTS];
 static const char *input_port_tag[MAX_INPUT_PORTS];
 
 /* tracking information for each port bit */
-static struct InputBitInfo bit_info[MAX_INPUT_PORTS][MAX_BITS_PER_PORT];
+static input_bit_info bit_info[MAX_INPUT_PORTS][MAX_BITS_PER_PORT];
 
 /* additiona tracking information for special types of controls */
-static struct AnalogPortInfo *analog_info[MAX_INPUT_PORTS];
-static struct DigitalJoystickInfo joystick_info[MAX_PLAYERS][DIGITAL_JOYSTICKS_PER_PLAYER];
+static analog_port_info *analog_info[MAX_INPUT_PORTS];
+static digital_joystick_info joystick_info[MAX_PLAYERS][DIGITAL_JOYSTICKS_PER_PLAYER];
 
 /* memory for UI keys */
 static UINT8 ui_memory[__ipt_max];
@@ -404,7 +407,7 @@ const char *inptport_default_strings[] =
 #define INPUT_PORT_ANALOG_DEF(player_,group_,type_,name_,seq_,decseq_,incseq_) \
 	{ IPT_##type_, group_, (player_ == 0) ? player_ : (player_) - 1, (player_ == 0) ? #type_ : ("P" #player_ "_" #type_), name_, seq_, incseq_, decseq_ },
 
-static const struct InputPortDefinition default_ports_builtin[] =
+static const input_port_default_entry default_ports_builtin[] =
 {
 	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1,	JOYSTICK_UP,		"P1 Up",				SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP) )
 	INPUT_PORT_DIGITAL_DEF( 1, IPG_PLAYER1,	JOYSTICK_DOWN,      "P1 Down",				SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN) )
@@ -904,8 +907,8 @@ static const struct InputPortDefinition default_ports_builtin[] =
 };
 
 
-static struct InputPortDefinition default_ports[ARRAY_LENGTH(default_ports_builtin)];
-static struct InputPortDefinition default_ports_backup[ARRAY_LENGTH(default_ports_builtin)];
+static input_port_default_entry default_ports[ARRAY_LENGTH(default_ports_builtin)];
+static input_port_default_entry default_ports_backup[ARRAY_LENGTH(default_ports_builtin)];
 static const int inputport_count = ARRAY_LENGTH(default_ports_builtin);
 static int default_ports_lookup[__ipt_max][MAX_PLAYERS];
 
@@ -929,7 +932,7 @@ static void interpolate_analog_port(int port);
  *
  *************************************/
 
-int inputport_init(void (*construct_ipt)(struct IptInitParams *))
+int inputport_init(void (*construct_ipt)(input_port_init_params *))
 {
 	int ipnum, player;
 
@@ -953,7 +956,7 @@ int inputport_init(void (*construct_ipt)(struct IptInitParams *))
 	/* if we have inputs, process them now */
 	if (construct_ipt)
 	{
-		struct InputPort *port;
+		input_port_entry *port;
 		int portnum;
 
 		/* allocate input ports */
@@ -985,7 +988,7 @@ int inputport_init(void (*construct_ipt)(struct IptInitParams *))
 
 static void inputport_postload(void)
 {
-	struct InputPort *port;
+	input_port_entry *port;
 	int portnum, bitnum;
 	UINT32 mask;
 
@@ -1025,7 +1028,7 @@ static void inputport_postload(void)
 			/* if this is an analog port, create an info struct for it */
 			if (IS_ANALOG(port))
 			{
-				struct AnalogPortInfo *info;
+				analog_port_info *info;
 
 				/* allocate memory */
 				info = auto_malloc(sizeof(*info));
@@ -1127,7 +1130,7 @@ static void inputport_postload(void)
 			/* if this is a digital joystick port, update info on it */
 			else if (IS_DIGITAL_JOYSTICK(port))
 			{
-				struct DigitalJoystickInfo *info = JOYSTICK_INFO_FOR_PORT(port);
+				digital_joystick_info *info = JOYSTICK_INFO_FOR_PORT(port);
 				info->port[JOYSTICK_DIR_FOR_PORT(port)] = port;
 				info->inuse = 1;
 			}
@@ -1172,7 +1175,7 @@ static int save_this_port_type(int type)
  *
  *************************************/
 
-INLINE input_code_t get_default_code(int config_type, int type)
+INLINE input_code get_default_code(int config_type, int type)
 {
 	switch (type)
 	{
@@ -1202,7 +1205,7 @@ INLINE int string_to_seq_index(const char *string)
 }
 
 
-static void apply_remaps(input_code_t *remaptable)
+static void apply_remaps(input_code *remaptable)
 {
 	int remapnum, portnum, seqnum;
 
@@ -1228,14 +1231,14 @@ static void apply_remaps(input_code_t *remaptable)
 
 
 
-static int apply_config_to_default(struct xml_data_node *portnode, int type, int player, input_seq_t *newseq)
+static int apply_config_to_default(xml_data_node *portnode, int type, int player, input_seq *newseq)
 {
 	int portnum;
 
 	/* find a matching port in the list */
 	for (portnum = 0; portnum < ARRAY_LENGTH(default_ports_backup); portnum++)
 	{
-		struct InputPortDefinition *updateport = &default_ports[portnum];
+		input_port_default_entry *updateport = &default_ports[portnum];
 		if (updateport->type == type && updateport->player == player)
 		{
 			/* copy the sequence(s) that were specified */
@@ -1252,9 +1255,9 @@ static int apply_config_to_default(struct xml_data_node *portnode, int type, int
 }
 
 
-static int apply_config_to_current(struct xml_data_node *portnode, int type, int player, input_seq_t *newseq)
+static int apply_config_to_current(xml_data_node *portnode, int type, int player, input_seq *newseq)
 {
-	struct InputPort *updateport;
+	input_port_entry *updateport;
 	int mask, defvalue, index;
 
 	/* read the mask, index, and defvalue attributes */
@@ -1294,9 +1297,9 @@ static int apply_config_to_current(struct xml_data_node *portnode, int type, int
 }
 
 
-void inptport_load(int config_type, struct xml_data_node *parentnode)
+void inptport_load(int config_type, xml_data_node *parentnode)
 {
-	struct xml_data_node *portnode;
+	xml_data_node *portnode;
 	int seqnum;
 
 	/* in the completion phase, we finish the initialization with the final ports */
@@ -1310,8 +1313,8 @@ void inptport_load(int config_type, struct xml_data_node *parentnode)
 	/* iterate over all the remap nodes for controller configs only */
 	if (config_type == CONFIG_TYPE_CONTROLLER)
 	{
-		struct xml_data_node *remapnode;
-		input_code_t remap[__code_max];
+		xml_data_node *remapnode;
+		input_code remap[__code_max];
 		int remapnum;
 
 		/* reset the remap table to default */
@@ -1321,8 +1324,8 @@ void inptport_load(int config_type, struct xml_data_node *parentnode)
 		/* build up the remap table */
 		for (remapnode = xml_get_sibling(parentnode->child, "remap"); remapnode; remapnode = xml_get_sibling(remapnode->next, "remap"))
 		{
-			input_code_t origcode = token_to_code(xml_get_attribute_string(remapnode, "origcode", ""));
-			input_code_t newcode = token_to_code(xml_get_attribute_string(remapnode, "newcode", ""));
+			input_code origcode = token_to_code(xml_get_attribute_string(remapnode, "origcode", ""));
+			input_code newcode = token_to_code(xml_get_attribute_string(remapnode, "newcode", ""));
 			if (origcode != CODE_NONE && origcode < __code_max && newcode != CODE_NONE)
 				remap[origcode] = newcode;
 		}
@@ -1334,8 +1337,8 @@ void inptport_load(int config_type, struct xml_data_node *parentnode)
 	/* iterate over all the port nodes */
 	for (portnode = xml_get_sibling(parentnode->child, "port"); portnode; portnode = xml_get_sibling(portnode->next, "port"))
 	{
-		input_seq_t newseq[3], tempseq;
-		struct xml_data_node *seqnode;
+		input_seq newseq[3], tempseq;
+		xml_data_node *seqnode;
 		int type, player;
 
 		/* get the basic port info from the attributes */
@@ -1376,9 +1379,9 @@ void inptport_load(int config_type, struct xml_data_node *parentnode)
  *
  *************************************/
 
-static void add_sequence(struct xml_data_node *parentnode, int type, int porttype, const input_seq_t *seq)
+static void add_sequence(xml_data_node *parentnode, int type, int porttype, const input_seq *seq)
 {
-	struct xml_data_node *seqnode;
+	xml_data_node *seqnode;
 	char seqbuffer[256];
 
 	/* get the string for the sequence */
@@ -1394,15 +1397,15 @@ static void add_sequence(struct xml_data_node *parentnode, int type, int porttyp
 }
 
 
-static void save_default_inputs(struct xml_data_node *parentnode)
+static void save_default_inputs(xml_data_node *parentnode)
 {
 	int portnum;
 
 	/* iterate over ports */
 	for (portnum = 0; portnum < ARRAY_LENGTH(default_ports_backup); portnum++)
 	{
-		struct InputPortDefinition *defport = &default_ports_backup[portnum];
-		struct InputPortDefinition *curport = &default_ports[portnum];
+		input_port_default_entry *defport = &default_ports_backup[portnum];
+		input_port_default_entry *curport = &default_ports[portnum];
 
 		/* only save if something has changed and this port is a type we save */
 		if (save_this_port_type(defport->type) &&
@@ -1411,7 +1414,7 @@ static void save_default_inputs(struct xml_data_node *parentnode)
 			 seq_cmp(&defport->defaultincseq, &curport->defaultincseq) != 0))
 		{
 			/* add a new port node */
-			struct xml_data_node *portnode = xml_add_child(parentnode, "port", NULL);
+			xml_data_node *portnode = xml_add_child(parentnode, "port", NULL);
 			if (portnode)
 			{
 				/* add the port information and attributes */
@@ -1430,15 +1433,15 @@ static void save_default_inputs(struct xml_data_node *parentnode)
 }
 
 
-static void save_game_inputs(struct xml_data_node *parentnode)
+static void save_game_inputs(xml_data_node *parentnode)
 {
 	int portnum;
 
 	/* iterate over ports */
 	for (portnum = 0; Machine->input_ports_default[portnum].type != IPT_END; portnum++)
 	{
-		struct InputPort *defport = &Machine->input_ports_default[portnum];
-		struct InputPort *curport = &Machine->input_ports[portnum];
+		input_port_entry *defport = &Machine->input_ports_default[portnum];
+		input_port_entry *curport = &Machine->input_ports[portnum];
 
 		/* only save if something has changed and this port is a type we save */
 		if (save_this_port_type(defport->type) &&
@@ -1452,7 +1455,7 @@ static void save_game_inputs(struct xml_data_node *parentnode)
 			 seq_cmp(&defport->analog.incseq, &curport->analog.incseq) != 0))
 		{
 			/* add a new port node */
-			struct xml_data_node *portnode = xml_add_child(parentnode, "port", NULL);
+			xml_data_node *portnode = xml_add_child(parentnode, "port", NULL);
 			if (portnode)
 			{
 				/* add the port information and attributes */
@@ -1491,7 +1494,7 @@ static void save_game_inputs(struct xml_data_node *parentnode)
 }
 
 
-void inptport_save(int config_type, struct xml_data_node *parentnode)
+void inptport_save(int config_type, xml_data_node *parentnode)
 {
 	if (parentnode)
 	{
@@ -1511,11 +1514,11 @@ void inptport_save(int config_type, struct xml_data_node *parentnode)
  *
  *************************************/
 
-struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type, const char *tag, UINT32 mask)
+input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type, const char *tag, UINT32 mask)
 {
 	/* this function is used within an INPUT_PORT callback to set up a single port */
-	struct InputPort *port;
-	input_code_t code;
+	input_port_entry *port;
+	input_code code;
 
 	/* are we modifying an existing port? */
 	if (tag != NULL)
@@ -1590,16 +1593,16 @@ struct InputPort *input_port_initialize(struct IptInitParams *iip, UINT32 type, 
 }
 
 
-struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *param))
+input_port_entry *input_port_allocate(void construct_ipt(input_port_init_params *param))
 {
-	struct IptInitParams iip;
+	input_port_init_params iip;
 
 	/* set up the port parameter structure */
  	iip.max_ports = MAX_INPUT_PORTS * MAX_BITS_PER_PORT;
  	iip.current_port = 0;
 
 	/* allocate memory for the input ports */
-	iip.ports = (struct InputPort *)auto_malloc(iip.max_ports * sizeof(*iip.ports));
+	iip.ports = (input_port_entry *)auto_malloc(iip.max_ports * sizeof(*iip.ports));
 	if (!iip.ports)
 		return NULL;
 	memset(iip.ports, 0, iip.max_ports * sizeof(*iip.ports));
@@ -1626,13 +1629,13 @@ struct InputPort *input_port_allocate(void construct_ipt(struct IptInitParams *p
  *
  *************************************/
 
-struct InputPortDefinition *get_input_port_list(void)
+input_port_default_entry *get_input_port_list(void)
 {
 	return default_ports;
 }
 
 
-const struct InputPortDefinition *get_input_port_list_defaults(void)
+const input_port_default_entry *get_input_port_list_defaults(void)
 {
 	return default_ports_backup;
 }
@@ -1690,7 +1693,7 @@ int token_to_port_type(const char *string, int *player)
  *
  *************************************/
 
-int input_port_active(const struct InputPort *port)
+int input_port_active(const input_port_entry *port)
 {
 	return (input_port_name(port) != NULL && !port->unused);
 }
@@ -1704,7 +1707,7 @@ int port_type_is_analog(int type)
 
 int port_type_in_use(int type)
 {
-	struct InputPort *port;
+	input_port_entry *port;
 	for (port = Machine->input_ports; port->type != IPT_END; port++)
 		if (port->type == type)
 			return 1;
@@ -1754,7 +1757,7 @@ read32_handler port_tag_to_handler32(const char *tag)
 }
 
 
-const char *input_port_name(const struct InputPort *port)
+const char *input_port_name(const input_port_entry *port)
 {
 	int defindex;
 
@@ -1772,10 +1775,10 @@ const char *input_port_name(const struct InputPort *port)
 }
 
 
-input_seq_t *input_port_seq(struct InputPort *port, int seqtype)
+input_seq *input_port_seq(input_port_entry *port, int seqtype)
 {
-	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
-	input_seq_t *portseq;
+	static input_seq ip_none = SEQ_DEF_1(CODE_NONE);
+	input_seq *portseq;
 
 	/* if port is disabled, return no key */
 	if (port->unused)
@@ -1813,9 +1816,9 @@ input_seq_t *input_port_seq(struct InputPort *port, int seqtype)
 }
 
 
-input_seq_t *input_port_default_seq(int type, int player, int seqtype)
+input_seq *input_port_default_seq(int type, int player, int seqtype)
 {
-	static input_seq_t ip_none = SEQ_DEF_1(CODE_NONE);
+	static input_seq ip_none = SEQ_DEF_1(CODE_NONE);
 
 	/* find the default setting */
 	int defindex = default_ports_lookup[type][player];
@@ -1835,7 +1838,7 @@ input_seq_t *input_port_default_seq(int type, int player, int seqtype)
 }
 
 
-int input_port_condition(const struct InputPort *in)
+int input_port_condition(const input_port_entry *in)
 {
 	switch (in->dipsetting.condition)
 	{
@@ -1987,7 +1990,7 @@ profiler_mark(PROFILER_INPUT);
 	/* loop over all input ports */
 	for (portnum = 0; portnum < MAX_INPUT_PORTS; portnum++)
 	{
-		struct InputBitInfo *info;
+		input_bit_info *info;
 		UINT32 vblank = 0;
 		UINT32 value = 0;
 
@@ -1998,7 +2001,7 @@ profiler_mark(PROFILER_INPUT);
 		/* now loop back and modify based on the inputs */
 		for (bitnum = 0, info = &bit_info[portnum][0]; bitnum < MAX_BITS_PER_PORT && info->port; bitnum++, info++)
 		{
-			struct InputPort *port = info->port;
+			input_port_entry *port = info->port;
 
 			/* handle the VBLANK type */
 			if (port->type == IPT_VBLANK)
@@ -2044,7 +2047,7 @@ profiler_mark(PROFILER_INPUT);
 					/* if this is a digital joystick type, apply either standard or 4-way rules */
 					else if (IS_DIGITAL_JOYSTICK(port))
 					{
-						struct DigitalJoystickInfo *joyinfo = JOYSTICK_INFO_FOR_PORT(port);
+						digital_joystick_info *joyinfo = JOYSTICK_INFO_FOR_PORT(port);
 						UINT8 mask = port->four_way ? joyinfo->current4way : joyinfo->current;
 						if ((mask >> JOYSTICK_DIR_FOR_PORT(port)) & 1)
 							value ^= port->mask;
@@ -2138,7 +2141,7 @@ static void update_digital_joysticks(void)
 	for (player = 0; player < MAX_PLAYERS; player++)
 		for (joyindex = 0; joyindex < DIGITAL_JOYSTICKS_PER_PLAYER; joyindex++)
 		{
-			struct DigitalJoystickInfo *info = &joystick_info[player][joyindex];
+			digital_joystick_info *info = &joystick_info[player][joyindex];
 			if (info->inuse)
 			{
 				info->previous = info->current;
@@ -2214,9 +2217,9 @@ static void update_digital_joysticks(void)
  *
  *************************************/
 
-INLINE INT32 apply_analog_min_max(const struct AnalogPortInfo *info, INT32 value)
+INLINE INT32 apply_analog_min_max(const analog_port_info *info, INT32 value)
 {
-	const struct InputPort *port = info->port;
+	const input_port_entry *port = info->port;
 	INT32 adjmax, adjmin;
 
 	/* take the analog minimum and maximum values and apply the inverse of the */
@@ -2254,12 +2257,12 @@ INLINE INT32 apply_analog_min_max(const struct AnalogPortInfo *info, INT32 value
 
 static void update_analog_port(int portnum)
 {
-	struct AnalogPortInfo *info;
+	analog_port_info *info;
 
 	/* loop over all analog ports in this port number */
 	for (info = analog_info[portnum]; info != NULL; info = info->next)
 	{
-		struct InputPort *port = info->port;
+		input_port_entry *port = info->port;
 		INT32 delta = 0, rawvalue;
 		int analog_type, keypressed = 0;
 
@@ -2345,7 +2348,7 @@ static void update_analog_port(int portnum)
 
 static void interpolate_analog_port(int port)
 {
-	struct AnalogPortInfo *info;
+	analog_port_info *info;
 
 profiler_mark(PROFILER_INPUT);
 

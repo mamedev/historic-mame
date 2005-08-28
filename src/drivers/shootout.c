@@ -232,7 +232,7 @@ INPUT_PORTS_START( shootouj )
 INPUT_PORTS_END
 
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8,8,	/* 8*8 characters */
 	0x400,	/* 1024 characters */
@@ -242,7 +242,7 @@ static struct GfxLayout char_layout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	16,16,	/* 16*16 sprites */
 	0x800,	/* 2048 sprites */
@@ -252,7 +252,7 @@ static struct GfxLayout sprite_layout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8	/* every char takes 32 consecutive bytes */
 };
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,8,	/* 8*8 characters */
 	0x800,	/* 2048 characters */
@@ -263,7 +263,7 @@ static struct GfxLayout tile_layout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout,   16*4+8*8, 16 }, /* characters */
 	{ REGION_GFX2, 0, &sprite_layout, 16*4, 	 8 }, /* sprites */

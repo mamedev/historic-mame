@@ -9,7 +9,7 @@ data16_t *crshrace_roz_ctrl1,*crshrace_roz_ctrl2;
 
 static int roz_bank,gfxctrl,flipscreen;
 
-static struct tilemap *tilemap1,*tilemap2;
+static tilemap *tilemap1,*tilemap2;
 
 
 

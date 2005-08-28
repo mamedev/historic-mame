@@ -240,7 +240,7 @@ INPUT_PORTS_START( flkatck )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-static struct GfxLayout gfxlayout =
+static gfx_layout gfxlayout =
 {
 	8,8,
 	0x80000/32,
@@ -251,7 +251,7 @@ static struct GfxLayout gfxlayout =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout, 0, 32 },
 	{ -1 } /* end of array */

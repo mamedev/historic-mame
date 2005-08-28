@@ -18,7 +18,7 @@
 #ifndef DRIVER_RECURSIVE
 
 /* The "root" driver, defined so we can have &driver_##NAME in macros. */
-struct GameDriver driver_0 =
+game_driver driver_0 =
 {
 	__FILE__,
 	0,
@@ -41,13 +41,13 @@ struct GameDriver driver_0 =
 #define DRIVER_RECURSIVE
 
 /* step 1: declare all external references */
-#define DRIVER(NAME) extern struct GameDriver driver_##NAME;
+#define DRIVER(NAME) extern game_driver driver_##NAME;
 #include "driver.c"
 
 /* step 2: define the drivers[] array */
 #undef DRIVER
 #define DRIVER(NAME) &driver_##NAME,
-const struct GameDriver *drivers[] =
+const game_driver *drivers[] =
 {
 #include "driver.c"
 	0	/* end of array */
@@ -1653,6 +1653,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( fhawk )		/* B70 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( fhawkj )	/* B70 (c) 1988 Taito Corporation (Japan) */
 	DRIVER( plotting )	/* B96 (c) 1989 Taito Corporation Japan (World) */
+	DRIVER( plottinu )	/* B96 (c) 1989 Taito Corporation Japan (US) */
 	DRIVER( plottina )	/* B96 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwr )	/* C01 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( champwru )	/* C01 (c) 1989 Taito America Corporation (US) */
@@ -3600,7 +3601,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( astrof3 )	/* (c) [1980?] */
 	DRIVER( abattle )	/* Sidam */
 	DRIVER( abattle2 )	/* Sidam */
-	DRIVER( afire )		/* Ren? Pierre */
+	DRIVER( afire )		/* Rene Pierre */
 	DRIVER( acombat )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
@@ -4803,6 +4804,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( powj )		/* A7008 'DG' (c) 1988 */
 	DRIVER( searchar )	/* A8007 'BH' (c) 1989 */
 	DRIVER( sercharu )	/* A8007 'BH' (c) 1989 */
+	DRIVER( sercharj )	/* A8007 'BH' (c) 1989 */
 	DRIVER( streetsm )	/* A8007 'S2' (c) 1989 */
 	DRIVER( streets1 )	/* A7008 'S2' (c) 1989 */
 	DRIVER( streetsw )	/*            (c) 1989 */
@@ -5698,6 +5700,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( s1945iii )	/* (c) 1999 */
 	DRIVER( dragnblz )	/* (c) 2000 */
 	DRIVER( gnbarich )	/* (c) 2001 */
+	/* tgm2 (c) 2000 -- removed at Arika's request */
+	/* tgm2p (c) 2000 -- removed at Arika's request */
 	DRIVER( hotgmck )	/* (c) 1997 */
 	DRIVER( hgkairak )	/* (c) 1998 */
 	DRIVER( hotgmck3 )	/* (c) 1999 */
@@ -6216,6 +6220,7 @@ Other Sun games
 	DRIVER( mmpanic )	/* "70" 1992 Nakanihon/Taito */
 	DRIVER( quizchq )	/* "73" (c) 1993 Nakanihon */
 	DRIVER( quizchql )	/* "73" (c) 1993 Laxan */
+	DRIVER( funkyfig )	/* "74" (c) 1993 Nakanihon + East Technology */
 	DRIVER( animaljr )	/* "75" 1993 Nakanihon/Taito */
 	DRIVER( quiz365 )	/* "78" (c) 1994 Nakanihon */
 	DRIVER( quiz365t )	/* "78" (c) 1994 Nakanihon (Taiwan) */
@@ -6662,11 +6667,13 @@ Other Sun games
 	DRIVER( ampoker2 )	/* (c) 198? Novomatic */
 	DRIVER( ampokr2a )	/* (c) 198? Novomatic */
 	DRIVER( ampokr2b )	/* (c) 198? Novomatic */
+	DRIVER( ampokr2c )	/* (c) 198? Novomatic */
 	DRIVER( lucky8 )	/* (c) 1989 Falcon */
 	DRIVER( starspnr )	/* (c) 1982? ACE */
 	DRIVER( vp906iii )	/* (c) 1985 Casino Electronics Inc. */
 	DRIVER( attckufo )	/* (c) 1980 Ryoto Electric Co. */
 	DRIVER( fortecar )
 	DRIVER( jackpool )	/* (c) 1997 Electronic Projects */
+	DRIVER( murogem )	/* ??? */
 
 #endif	/* DRIVER_RECURSIVE */

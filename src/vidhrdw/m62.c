@@ -21,8 +21,8 @@ data8_t *m62_tileram;
 data8_t *m62_textram;
 data8_t *horizon_scrollram;
 
-static struct tilemap *m62_background;
-static struct tilemap *m62_foreground;
+static tilemap *m62_background;
+static tilemap *m62_foreground;
 static int flipscreen;
 static const unsigned char *sprite_height_prom;
 static int m62_background_hscroll;

@@ -516,7 +516,7 @@ INPUT_PORTS_START( rtriv )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
@@ -528,7 +528,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	64,     /* 64 sprites */
@@ -542,7 +542,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxLayout suprmous_charlayout =
+static gfx_layout suprmous_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -554,7 +554,7 @@ static struct GfxLayout suprmous_charlayout =
 };
 
 
-static struct GfxLayout suprmous_spritelayout =
+static gfx_layout suprmous_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,		/* 64 sprites */
@@ -568,14 +568,14 @@ static struct GfxLayout suprmous_spritelayout =
 };
 
 
-static struct GfxDecodeInfo thepit_gfxdecodeinfo[] =
+static gfx_decode thepit_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 8 },
 	{ REGION_GFX1, 0, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo intrepid_gfxdecodeinfo[] =
+static gfx_decode intrepid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,     0, 8 },
 	{ REGION_GFX1, 0x0000, &spritelayout,   0, 8 },
@@ -584,7 +584,7 @@ static struct GfxDecodeInfo intrepid_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo suprmous_gfxdecodeinfo[] =
+static gfx_decode suprmous_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &suprmous_charlayout,   0, 4 },
 	{ REGION_GFX1, 0x0800, &suprmous_spritelayout, 0, 4 },

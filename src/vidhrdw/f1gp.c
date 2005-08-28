@@ -14,7 +14,7 @@ static unsigned char *dirtychar;
 
 #define TOTAL_CHARS 0x800
 
-static struct tilemap *fg_tilemap,*roz_tilemap;
+static tilemap *fg_tilemap,*roz_tilemap;
 static int f1gp2_roz_bank;
 
 
@@ -266,7 +266,7 @@ static void f1gp_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *
 
 VIDEO_UPDATE( f1gp )
 {
-	static struct GfxLayout tilelayout =
+	static gfx_layout tilelayout =
 	{
 		16,16,
 		TOTAL_CHARS,

@@ -140,7 +140,7 @@ INPUT_PORTS_START( ambush )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 chars */
 	1024,   /* 2048 characters */
@@ -151,7 +151,7 @@ static struct GfxLayout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,  /* 8*8 chars */
 	256,    /* 2048 characters */
@@ -164,7 +164,7 @@ static struct GfxLayout spritelayout =
 	32*8     /* every char takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,   0, 64 },
 	{ REGION_GFX1, 0x0000, &spritelayout, 0, 64 },

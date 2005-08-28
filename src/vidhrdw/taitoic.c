@@ -601,7 +601,7 @@ INLINE void taitoic_drawscanline(
 
 static int has_write_handler(int cpunum, write16_handler handler)
 {
-	const struct address_map_t *map;
+	const address_map *map;
 	for (map = memory_get_map(cpunum, ADDRESS_SPACE_PROGRAM); map && !IS_AMENTRY_END(map); map++)
 		if (map->write.handler16 == handler)
 			return 1;
@@ -708,7 +708,7 @@ static data16_t *PC080SN_ram[PC080SN_MAX_CHIPS],
 static int PC080SN_bgscrollx[PC080SN_MAX_CHIPS][2],PC080SN_bgscrolly[PC080SN_MAX_CHIPS][2];
 static int PC080SN_xoffs,PC080SN_yoffs;
 
-static struct tilemap *PC080SN_tilemap[PC080SN_MAX_CHIPS][2];
+static tilemap *PC080SN_tilemap[PC080SN_MAX_CHIPS][2];
 static int PC080SN_bg_gfx[PC080SN_MAX_CHIPS];
 static int PC080SN_yinvert,PC080SN_dblwidth;
 
@@ -796,21 +796,6 @@ static void PC080SN_restore_scroll(int chip)
 	tilemap_set_flip(PC080SN_tilemap[chip][1],flip);
 }
 
-static void PC080SN_restore_scrl_0(void)
-{
-	PC080SN_restore_scroll(0);
-}
-
-static void PC080SN_restore_scrl_1(void)
-{
-	PC080SN_restore_scroll(1);
-}
-
-void (*PC080SN_restore_scrl[PC080SN_MAX_CHIPS])(void) =
-{
-	PC080SN_restore_scrl_0, PC080SN_restore_scrl_1
-};
-
 
 /* opaque parameter is no longer supported and will be removed */
 
@@ -862,7 +847,7 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 			state_save_register_UINT16(strcat(buf,"a"), 0, "registers", PC080SN_ctrl[i], 8);
 		}
 
-		state_save_register_func_postload(PC080SN_restore_scrl[i]);
+		state_save_register_func_postload_int(PC080SN_restore_scroll, i);
 
 		/* use the given gfx set for bg tiles */
 		PC080SN_bg_gfx[i] = gfxnum;
@@ -1404,7 +1389,7 @@ data16_t *TC0080VCO_chain_ram_0, *TC0080VCO_chain_ram_1,
 static data16_t TC0080VCO_bg0_scrollx,TC0080VCO_bg0_scrolly,
 		TC0080VCO_bg1_scrollx,TC0080VCO_bg1_scrolly;
 
-static struct tilemap *TC0080VCO_tilemap[3];
+static tilemap *TC0080VCO_tilemap[3];
 
 static UINT8 *TC0080VCO_char_dirty;
 static int TC0080VCO_chars_dirty;
@@ -1496,7 +1481,7 @@ static void TC0080VCO_get_tx_tile_info(int tile_index)
 
 /* Is this endian-correct ??? */
 
-static struct GfxLayout TC0080VCO_charlayout =
+static gfx_layout TC0080VCO_charlayout =
 {
 	8, 8,	/* 8x8 pixels */
 	256,	/* 256 chars */
@@ -2102,7 +2087,7 @@ static int TC0100SCN_bgscrollx[TC0100SCN_MAX_CHIPS],TC0100SCN_bgscrolly[TC0100SC
 		TC0100SCN_fgscrollx[TC0100SCN_MAX_CHIPS],TC0100SCN_fgscrolly[TC0100SCN_MAX_CHIPS];
 
 /* We keep two tilemaps for each of the 3 actual tilemaps: one at standard width, one double */
-static struct tilemap *TC0100SCN_tilemap[TC0100SCN_MAX_CHIPS][3][2];
+static tilemap *TC0100SCN_tilemap[TC0100SCN_MAX_CHIPS][3][2];
 static struct rectangle TC0100SCN_cliprect[TC0100SCN_MAX_CHIPS];
 
 static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
@@ -2232,7 +2217,7 @@ void (*TC0100SCN_get_tile_info[TC0100SCN_MAX_CHIPS][3])(int tile_index) =
 };
 
 
-static struct GfxLayout TC0100SCN_charlayout =
+static gfx_layout TC0100SCN_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -2299,26 +2284,6 @@ void TC0100SCN_set_layer_ptrs(int i)
 /* As we can't pass function calls with params in set...func_postload() calls
    in the vh_start, this slightly obnoxious method is used */
 
-static void TC0100SCN_layer_ptr_0(void)
-{
-	TC0100SCN_set_layer_ptrs(0);
-}
-
-static void TC0100SCN_layer_ptr_1(void)
-{
-	TC0100SCN_set_layer_ptrs(1);
-}
-
-static void TC0100SCN_layer_ptr_2(void)
-{
-	TC0100SCN_set_layer_ptrs(2);
-}
-
-void (*TC0100SCN_layer_ptr[TC0100SCN_MAX_CHIPS])(void) =
-{
-	TC0100SCN_layer_ptr_0, TC0100SCN_layer_ptr_1, TC0100SCN_layer_ptr_2
-};
-
 void TC0100SCN_dirty_tilemaps(int chip)
 {
 	tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][0][TC0100SCN_dblwidth[chip]]);
@@ -2326,51 +2291,11 @@ void TC0100SCN_dirty_tilemaps(int chip)
 	tilemap_mark_all_tiles_dirty(TC0100SCN_tilemap[chip][2][TC0100SCN_dblwidth[chip]]);
 }
 
-static void TC0100SCN_dirty_t_0(void)
-{
-	TC0100SCN_dirty_tilemaps(0);
-}
-
-static void TC0100SCN_dirty_t_1(void)
-{
-	TC0100SCN_dirty_tilemaps(1);
-}
-
-static void TC0100SCN_dirty_t_2(void)
-{
-	TC0100SCN_dirty_tilemaps(2);
-}
-
-void (*TC0100SCN_dirty_t[TC0100SCN_MAX_CHIPS])(void) =
-{
-	TC0100SCN_dirty_t_0, TC0100SCN_dirty_t_1, TC0100SCN_dirty_t_2
-};
-
 void TC0100SCN_dirty_chars(int chip)
 {
 	memset(TC0100SCN_char_dirty[chip],1,TC0100SCN_TOTAL_CHARS);
 	TC0100SCN_chars_dirty[chip] = 1;
 }
-
-static void TC0100SCN_dirty_c_0(void)
-{
-	TC0100SCN_dirty_chars(0);
-}
-
-static void TC0100SCN_dirty_c_1(void)
-{
-	TC0100SCN_dirty_chars(1);
-}
-
-static void TC0100SCN_dirty_c_2(void)
-{
-	TC0100SCN_dirty_chars(2);
-}
-
-void (*TC0100SCN_dirty_c[TC0100SCN_MAX_CHIPS])(void) =
-{
-	TC0100SCN_dirty_c_0, TC0100SCN_dirty_c_1, TC0100SCN_dirty_c_2
-};
 
 static void TC0100SCN_restore_scroll(int chip)
 {
@@ -2394,26 +2319,6 @@ static void TC0100SCN_restore_scroll(int chip)
 	tilemap_set_flip(TC0100SCN_tilemap[chip][1][1],flip);
 	tilemap_set_flip(TC0100SCN_tilemap[chip][2][1],flip);
 }
-
-static void TC0100SCN_restore_scrl_0(void)
-{
-	TC0100SCN_restore_scroll(0);
-}
-
-static void TC0100SCN_restore_scrl_1(void)
-{
-	TC0100SCN_restore_scroll(1);
-}
-
-static void TC0100SCN_restore_scrl_2(void)
-{
-	TC0100SCN_restore_scroll(2);
-}
-
-static void (*TC0100SCN_restore_scrl[TC0100SCN_MAX_CHIPS])(void) =
-{
-	TC0100SCN_restore_scrl_0, TC0100SCN_restore_scrl_1, TC0100SCN_restore_scrl_2
-};
 
 
 int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_xoffs,
@@ -2489,10 +2394,10 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 			state_save_register_int   (strcat(buf,"c"), 0, "registers", &TC0100SCN_dblwidth[i]);
 		}
 
-		state_save_register_func_postload(TC0100SCN_layer_ptr[i]);
-		state_save_register_func_postload(TC0100SCN_dirty_c[i]);
-		state_save_register_func_postload(TC0100SCN_dirty_t[i]);	// unnecessary ?
-		state_save_register_func_postload(TC0100SCN_restore_scrl[i]);
+		state_save_register_func_postload_int(TC0100SCN_set_layer_ptrs, i);
+		state_save_register_func_postload_int(TC0100SCN_dirty_chars, i);
+		state_save_register_func_postload_int(TC0100SCN_dirty_tilemaps, i);	// unnecessary ?
+		state_save_register_func_postload_int(TC0100SCN_restore_scroll, i);
 
 		/* find first empty slot to decode gfx */
 		for (gfx_index = 0; gfx_index < MAX_GFX_ELEMENTS; gfx_index++)
@@ -2862,13 +2767,13 @@ void TC0100SCN_tilemap_update(void)
 	}
 }
 
-static void TC0100SCN_tilemap_draw_fg(struct mame_bitmap *bitmap,const struct rectangle *cliprect, int chip, struct tilemap* tilemap ,int flags, UINT32 priority)
+static void TC0100SCN_tilemap_draw_fg(struct mame_bitmap *bitmap,const struct rectangle *cliprect, int chip, tilemap* tmap ,int flags, UINT32 priority)
 {
-	const struct mame_bitmap *src_bitmap = tilemap_get_pixmap(tilemap);
+	const struct mame_bitmap *src_bitmap = tilemap_get_pixmap(tmap);
 	int width_mask, height_mask, x, y, p;
 	int column_offset, src_x=0, src_y=0;
-	int scrollx_delta = - tilemap_get_scrolldx( tilemap );
-	int scrolly_delta = - tilemap_get_scrolldy( tilemap );
+	int scrollx_delta = - tilemap_get_scrolldx( tmap );
+	int scrolly_delta = - tilemap_get_scrolldy( tmap );
 
 	width_mask=src_bitmap->width - 1;
 	height_mask=src_bitmap->height - 1;
@@ -2941,7 +2846,7 @@ int TC0100SCN_bottomlayer(int chip)
 #define TC0280GRD_RAM_SIZE 0x2000
 static data16_t TC0280GRD_ctrl[8];
 static data16_t *TC0280GRD_ram;
-static struct tilemap *TC0280GRD_tilemap;
+static tilemap *TC0280GRD_tilemap;
 static int TC0280GRD_gfxnum,TC0280GRD_base_color;
 
 
@@ -3139,7 +3044,7 @@ static int TC0480SCP_bgscrolly[4];
 int TC0480SCP_pri_reg;
 
 /* We keep two tilemaps for each of the 5 actual tilemaps: one at standard width, one double */
-static struct tilemap *TC0480SCP_tilemap[5][2];
+static tilemap *TC0480SCP_tilemap[5][2];
 static char *TC0480SCP_char_dirty;
 static int TC0480SCP_chars_dirty;
 static int TC0480SCP_bg_gfx,TC0480SCP_tx_gfx;
@@ -3203,7 +3108,7 @@ void (*tc480_get_tile_info[5])(int tile_index) =
 };
 
 
-static struct GfxLayout TC0480SCP_charlayout =
+static gfx_layout TC0480SCP_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -4938,21 +4843,6 @@ void TC0110PCR_restore_colors(int chip)
 	}
 }
 
-static void TC0110PCR_restore_cols_0(void)
-{
-	TC0110PCR_restore_colors(0);
-}
-
-static void TC0110PCR_restore_cols_1(void)
-{
-	TC0110PCR_restore_colors(1);
-}
-
-static void TC0110PCR_restore_cols_2(void)
-{
-	TC0110PCR_restore_colors(2);
-}
-
 
 int TC0110PCR_vh_start(void)
 {
@@ -4962,7 +4852,7 @@ int TC0110PCR_vh_start(void)
 
 	state_save_register_UINT16("TC0110PCR-0", 0, "memory", TC0110PCR_ram[0],
 		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]) / 2);
-	state_save_register_func_postload(TC0110PCR_restore_cols_0);
+	state_save_register_func_postload_int(TC0110PCR_restore_colors, 0);
 
 	TC0110PCR_type = 0;	/* default, xBBBBBGGGGGRRRRR */
 
@@ -4977,7 +4867,7 @@ int TC0110PCR_1_vh_start(void)
 
 	state_save_register_UINT16("TC0110PCR-1", 0, "memory", TC0110PCR_ram[1],
 		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1])/2);
-	state_save_register_func_postload(TC0110PCR_restore_cols_1);
+	state_save_register_func_postload_int(TC0110PCR_restore_colors, 1);
 
 	return 0;
 }
@@ -4990,7 +4880,7 @@ int TC0110PCR_2_vh_start(void)
 
 	state_save_register_UINT16("TC0110PCR-2", 0, "memory", TC0110PCR_ram[2],
 		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2])/2);
-	state_save_register_func_postload(TC0110PCR_restore_cols_2);
+	state_save_register_func_postload_int(TC0110PCR_restore_colors, 2);
 
 	return 0;
 }

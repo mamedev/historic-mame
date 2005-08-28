@@ -361,11 +361,11 @@ static data8_t *taitojc_dirty_map;
 static data32_t *taitojc_char_ram;
 static data32_t *taitojc_tile_ram;
 static int taitojc_char_dirty = 1;
-static struct tilemap *taitojc_tilemap;
+static tilemap *taitojc_tilemap;
 
 #define TAITOJC_NUM_TILES		0x180
 
-static struct GfxLayout taitojc_char_layout =
+static gfx_layout taitojc_char_layout =
 {
 	16,16,
 	TAITOJC_NUM_TILES,
@@ -553,7 +553,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };

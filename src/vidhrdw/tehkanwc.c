@@ -18,7 +18,7 @@ UINT8 *tehkanwc_videoram2;
 static UINT8 scroll_x[2];
 static UINT8 led0,led1;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( tehkanwc_videoram_w )
 {

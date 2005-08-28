@@ -112,7 +112,7 @@ UINT32 firehawk_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 
 			(col % TILES_PER_PAGE_X) * TILES_PER_PAGE_Y;
 }
 
-static struct tilemap *tilemap_0, *tilemap_1;
+static tilemap *tilemap_0, *tilemap_1;
 
 static void get_tile_info_0(int tile_index)
 {

@@ -172,7 +172,7 @@ INPUT_PORTS_END
 /*** GFX DECODE **************************************************************/
 
 
-static struct GfxLayout battlex_charlayout =
+static gfx_layout battlex_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -184,7 +184,7 @@ static struct GfxLayout battlex_charlayout =
 };
 
 
-static struct GfxLayout battlex_spritelayout =
+static gfx_layout battlex_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -198,7 +198,7 @@ static struct GfxLayout battlex_spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &battlex_charlayout,      0, 8 },
 	{ REGION_GFX2, 0, &battlex_spritelayout, 16*8, 8 },

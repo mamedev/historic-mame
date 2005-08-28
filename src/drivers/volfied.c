@@ -276,7 +276,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **************************************************************/
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16, 16,
 	0x1800,
@@ -287,7 +287,7 @@ static struct GfxLayout tilelayout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 4096, 256 },
 	{ -1 } /* end of array */

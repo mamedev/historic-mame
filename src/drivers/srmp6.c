@@ -126,7 +126,7 @@ VIDEO_UPDATE(srmp6)
 {
 	const UINT16 *source = spriteram16;
 	const UINT16 *finish = source+spriteram_size/2;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 
@@ -399,7 +399,7 @@ INPUT_PORTS_END
 
 /* all this is plain wrong, failed attempt at decoding the gfx */
 /*
-static struct GfxLayout wrong_layout =
+static gfx_layout wrong_layout =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -410,7 +410,7 @@ static struct GfxLayout wrong_layout =
     8*8*8
 };
 
-static struct GfxLayout wrong_layout2 =
+static gfx_layout wrong_layout2 =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -421,7 +421,7 @@ static struct GfxLayout wrong_layout2 =
     8*8*1
 };
 */
-static struct GfxLayout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granularity in roms */
+static gfx_layout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granularity in roms */
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -433,7 +433,7 @@ static struct GfxLayout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes gr
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 //  { REGION_GFX1, 0, &wrong_layout,  0, 0x100 },   // sprites (8x8x?)
 //  { REGION_GFX1, 0, &wrong_layout2, 0, 0x100 },   // tiles (16x16x?)

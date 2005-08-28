@@ -4,7 +4,7 @@
 
 data8_t *skykid_textram, *skykid_videoram, *skykid_spriteram;
 
-static struct tilemap *bg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*tx_tilemap;
 static int priority,scroll_x,scroll_y;
 
 

@@ -18,17 +18,17 @@
 #define RECOMPILE_END_OF_STRING			0x0002
 #define RECOMPILE_ADD_DISPATCH			0x0004
 
-static UINT32 compile_one(struct drccore *drc, UINT32 pc);
+static UINT32 compile_one(drc_core *drc, UINT32 pc);
 
-static void append_generate_exception(struct drccore *drc, UINT8 exception);
-static void append_check_interrupts(struct drccore *drc, int inline_generate);
-static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc, UINT32 *opptr);
+static void append_generate_exception(drc_core *drc, UINT8 exception);
+static void append_check_interrupts(drc_core *drc, int inline_generate);
+static UINT32 recompile_instruction(drc_core *drc, UINT32 pc, UINT32 *opptr);
 
 static UINT32 temp_ppc_pc;
 
 static void ppcdrc_init(void)
 {
-	struct drcconfig drconfig;
+	drc_config drconfig;
 
 	/* fill in the config */
 	memset(&drconfig, 0, sizeof(drconfig));
@@ -52,7 +52,7 @@ static void ppcdrc_init(void)
 	ppc.drcoptions = PPCDRC_FASTEST_OPTIONS;
 }
 
-static void ppcdrc_reset(struct drccore *drc)
+static void ppcdrc_reset(drc_core *drc)
 {
 	ppc.invoke_exception_handler = drc->cache_top;
 	drc_append_restore_volatiles(drc);
@@ -103,7 +103,7 @@ static UINT32 *ppcdrc_getopptr(UINT32 address)
 	return result;
 }
 
-static void ppcdrc_recompile(struct drccore *drc)
+static void ppcdrc_recompile(drc_core *drc)
 {
 	int remaining = MAX_INSTRUCTIONS;
 	UINT32 pc = ppc.pc;
@@ -141,9 +141,9 @@ static void ppcdrc_recompile(struct drccore *drc)
 	log_code(drc);
 }
 
-static void update_counters(struct drccore *drc)
+static void update_counters(drc_core *drc)
 {
-	struct linkdata link1;
+	link_info link1;
 
 	/* decrementer */
 	if (ppc.is603 || ppc.is602)
@@ -155,13 +155,13 @@ static void update_counters(struct drccore *drc)
 	}
 }
 
-static void ppcdrc_entrygen(struct drccore *drc)
+static void ppcdrc_entrygen(drc_core *drc)
 {
 	_mov_m32abs_r32(&ppc.host_esp, REG_ESP);
 	append_check_interrupts(drc, 0);
 }
 
-static UINT32 compile_one(struct drccore *drc, UINT32 pc)
+static UINT32 compile_one(drc_core *drc, UINT32 pc)
 {
 	int pcdelta, cycles;
 	UINT32 *opptr;
@@ -222,7 +222,7 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
 	return (result & 0xffff) | ((UINT8)cycles << 16) | ((UINT8)pcdelta << 24);
 }
 
-static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc, UINT32 *opptr)
+static UINT32 recompile_instruction(drc_core *drc, UINT32 pc, UINT32 *opptr)
 {
 	UINT32 opcode;
 	temp_ppc_pc = pc;
@@ -248,9 +248,9 @@ static const UINT32 exception_vector[32] =
 	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00, 0x1400, 0x0300, 0x0400
 };
 
-static void append_generate_exception(struct drccore *drc, UINT8 exception)
+static void append_generate_exception(drc_core *drc, UINT8 exception)
 {
-	struct linkdata link1, link2, link3;
+	link_info link1, link2, link3;
 
 	_mov_r32_m32abs(REG_EAX, &ppc.msr);
 	_and_r32_imm(REG_EAX, 0xff73);
@@ -315,9 +315,9 @@ static void append_generate_exception(struct drccore *drc, UINT8 exception)
 	drc_append_dispatcher(drc);
 }
 
-static void append_check_interrupts(struct drccore *drc, int inline_generate)
+static void append_check_interrupts(drc_core *drc, int inline_generate)
 {
-	struct linkdata link1, link2, link3, link4;
+	link_info link1, link2, link3, link4;
 	_test_m32abs_imm(&ppc.msr, MSR_EE);		/* no interrupt if external interrupts are not enabled */
 	_jcc_short_link(COND_Z, &link1);		/* ZF = 1 if bit == 0 */
 
@@ -343,7 +343,7 @@ static void append_check_interrupts(struct drccore *drc, int inline_generate)
 	_resolve_link(&link2);
 }
 
-static void append_branch_or_dispatch(struct drccore *drc, UINT32 newpc, int cycles)
+static void append_branch_or_dispatch(drc_core *drc, UINT32 newpc, int cycles)
 {
 	void *code = drc_get_code_at_pc(drc, newpc);
 	_mov_r32_imm(REG_EDI, newpc);
@@ -372,7 +372,7 @@ static UINT8 condition_table[4] =
 */
 
 // expects the result value in EDX!!!
-static void append_set_cr0(struct drccore *drc)
+static void append_set_cr0(drc_core *drc)
 {
 	_xor_r32_r32(REG_EBX, REG_EBX);
 	_xor_r32_r32(REG_EAX, REG_EAX);
@@ -400,7 +400,7 @@ static void append_set_cr0(struct drccore *drc)
 	_mov_m8abs_r8(&ppc.cr[0], REG_BL);
 }
 
-static void append_set_cr1(struct drccore *drc)
+static void append_set_cr1(drc_core *drc)
 {
 	_mov_r32_m32abs(REG_EAX, &ppc.fpscr);
 	_shr_r32_imm(REG_EAX, 28);
@@ -408,7 +408,7 @@ static void append_set_cr1(struct drccore *drc)
 	_mov_m8abs_r8(&ppc.cr[1], REG_AL);
 }
 
-static UINT32 recompile_addx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
 	_add_r32_m32abs(REG_EDX, &REG(RB));
@@ -425,7 +425,7 @@ static UINT32 recompile_addx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addcx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addcx(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_mov_r32_m32abs(REG_EBX, &XER);
@@ -450,7 +450,7 @@ static UINT32 recompile_addcx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addex(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -460,7 +460,7 @@ static UINT32 recompile_addex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addi(drc_core *drc, UINT32 op)
 {
 	if (RA == 0)
 	{
@@ -476,7 +476,7 @@ static UINT32 recompile_addi(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addic(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addic(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_mov_r32_m32abs(REG_EBX, &XER);
@@ -493,7 +493,7 @@ static UINT32 recompile_addic(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addic_rc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addic_rc(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_mov_r32_m32abs(REG_EBX, &XER);
@@ -512,7 +512,7 @@ static UINT32 recompile_addic_rc(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addis(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addis(drc_core *drc, UINT32 op)
 {
 	if (RA == 0)
 	{
@@ -528,7 +528,7 @@ static UINT32 recompile_addis(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addmex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addmex(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -538,7 +538,7 @@ static UINT32 recompile_addmex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_addzex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_addzex(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -548,7 +548,7 @@ static UINT32 recompile_addzex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_andx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_andx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_and_r32_m32abs(REG_EDX, &REG(RB));
@@ -561,7 +561,7 @@ static UINT32 recompile_andx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_andcx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_andcx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -576,7 +576,7 @@ static UINT32 recompile_andcx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_andi_rc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_andi_rc(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_and_r32_imm(REG_EDX, UIMM16);
@@ -587,7 +587,7 @@ static UINT32 recompile_andi_rc(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_andis_rc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_andis_rc(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_and_r32_imm(REG_EDX, UIMM16 << 16);
@@ -598,7 +598,7 @@ static UINT32 recompile_andis_rc(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_bx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_bx(drc_core *drc, UINT32 op)
 {
 	UINT32 newpc;
 	INT32 li = op & 0x3fffffc;
@@ -620,9 +620,9 @@ static UINT32 recompile_bx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(0,0) | RECOMPILE_END_OF_STRING;
 }
 
-static UINT32 recompile_bcx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_bcx(drc_core *drc, UINT32 op)
 {
-	struct linkdata link1, link2;
+	link_info link1, link2;
 	int do_link1 = 0, do_link2 = 0;
 	UINT32 newpc;
 
@@ -696,9 +696,9 @@ static UINT32 recompile_bcx(struct drccore *drc, UINT32 op)
 	}
 }
 
-static UINT32 recompile_bcctrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_bcctrx(drc_core *drc, UINT32 op)
 {
-	struct linkdata link1 ,link2;
+	link_info link1 ,link2;
 	int do_link1 = 0, do_link2 = 0;
 
 	if (BO == 20)		/* condition is always true, so the basic block ends here */
@@ -773,9 +773,9 @@ static UINT32 recompile_bcctrx(struct drccore *drc, UINT32 op)
 	}
 }
 
-static UINT32 recompile_bclrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_bclrx(drc_core *drc, UINT32 op)
 {
-	struct linkdata link1, link2;
+	link_info link1, link2;
 	int do_link1 = 0, do_link2 = 0;
 
 	if (BO == 20)		/* condition is always true, so the basic block ends here */
@@ -850,7 +850,7 @@ static UINT32 recompile_bclrx(struct drccore *drc, UINT32 op)
 	}
 }
 
-static UINT32 recompile_cmp(struct drccore *drc, UINT32 op)
+static UINT32 recompile_cmp(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_xor_r32_r32(REG_EBX, REG_EBX);
@@ -873,7 +873,7 @@ static UINT32 recompile_cmp(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_cmpi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_cmpi(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_xor_r32_r32(REG_EBX, REG_EBX);
@@ -896,7 +896,7 @@ static UINT32 recompile_cmpi(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_cmpl(struct drccore *drc, UINT32 op)
+static UINT32 recompile_cmpl(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_xor_r32_r32(REG_EBX, REG_EBX);
@@ -919,7 +919,7 @@ static UINT32 recompile_cmpl(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_cmpli(struct drccore *drc, UINT32 op)
+static UINT32 recompile_cmpli(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_xor_r32_r32(REG_EBX, REG_EBX);
@@ -942,7 +942,7 @@ static UINT32 recompile_cmpli(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_cntlzw(struct drccore *drc, UINT32 op)
+static UINT32 recompile_cntlzw(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EBX, REG_EBX);
 	_mov_r32_imm(REG_EDX, 31);
@@ -960,7 +960,7 @@ static UINT32 recompile_cntlzw(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_crand(struct drccore *drc, UINT32 op)
+static UINT32 recompile_crand(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -970,7 +970,7 @@ static UINT32 recompile_crand(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_crandc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_crandc(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -980,7 +980,7 @@ static UINT32 recompile_crandc(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_creqv(struct drccore *drc, UINT32 op)
+static UINT32 recompile_creqv(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -990,7 +990,7 @@ static UINT32 recompile_creqv(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_crnand(struct drccore *drc, UINT32 op)
+static UINT32 recompile_crnand(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1000,7 +1000,7 @@ static UINT32 recompile_crnand(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_crnor(struct drccore *drc, UINT32 op)
+static UINT32 recompile_crnor(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1010,7 +1010,7 @@ static UINT32 recompile_crnor(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_cror(struct drccore *drc, UINT32 op)
+static UINT32 recompile_cror(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1020,7 +1020,7 @@ static UINT32 recompile_cror(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_crorc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_crorc(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1030,7 +1030,7 @@ static UINT32 recompile_crorc(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_crxor(struct drccore *drc, UINT32 op)
+static UINT32 recompile_crxor(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1040,37 +1040,37 @@ static UINT32 recompile_crxor(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcbf(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcbf(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcbi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcbi(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcbst(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcbst(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcbt(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcbt(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcbtst(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcbtst(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcbz(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcbz(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_divwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_divwx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1080,7 +1080,7 @@ static UINT32 recompile_divwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_divwux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_divwux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1090,12 +1090,12 @@ static UINT32 recompile_divwux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_eieio(struct drccore *drc, UINT32 op)
+static UINT32 recompile_eieio(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_eqvx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_eqvx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_xor_r32_m32abs(REG_EDX, &REG(RB));
@@ -1109,7 +1109,7 @@ static UINT32 recompile_eqvx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_extsbx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_extsbx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_movsx_r32_r8(REG_EDX, REG_DL);
@@ -1122,7 +1122,7 @@ static UINT32 recompile_extsbx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_extshx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_extshx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_movsx_r32_r16(REG_EDX, REG_DX);
@@ -1135,17 +1135,17 @@ static UINT32 recompile_extshx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_icbi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_icbi(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_isync(struct drccore *drc, UINT32 op)
+static UINT32 recompile_isync(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lbz(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lbz(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	if (RA == 0)
@@ -1167,7 +1167,7 @@ static UINT32 recompile_lbz(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lbzu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lbzu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1183,7 +1183,7 @@ static UINT32 recompile_lbzu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lbzux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lbzux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1199,7 +1199,7 @@ static UINT32 recompile_lbzux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lbzx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lbzx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -1217,7 +1217,7 @@ static UINT32 recompile_lbzx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lha(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lha(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	if (RA == 0)
@@ -1239,7 +1239,7 @@ static UINT32 recompile_lha(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhau(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhau(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1255,7 +1255,7 @@ static UINT32 recompile_lhau(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhaux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhaux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1271,7 +1271,7 @@ static UINT32 recompile_lhaux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhax(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhax(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -1289,7 +1289,7 @@ static UINT32 recompile_lhax(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhbrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhbrx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -1308,7 +1308,7 @@ static UINT32 recompile_lhbrx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhz(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhz(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	if (RA == 0)
@@ -1329,7 +1329,7 @@ static UINT32 recompile_lhz(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhzu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhzu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1344,7 +1344,7 @@ static UINT32 recompile_lhzu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhzux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhzux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1359,7 +1359,7 @@ static UINT32 recompile_lhzux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lhzx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lhzx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -1376,7 +1376,7 @@ static UINT32 recompile_lhzx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lmw(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lmw(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1387,7 +1387,7 @@ static UINT32 recompile_lmw(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lswi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lswi(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1398,13 +1398,13 @@ static UINT32 recompile_lswi(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lswx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lswx(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: recompile lswx\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
-static UINT32 recompile_lwarx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lwarx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1415,7 +1415,7 @@ static UINT32 recompile_lwarx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lwbrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lwbrx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -1433,7 +1433,7 @@ static UINT32 recompile_lwbrx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lwz(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lwz(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	if (RA == 0)
@@ -1454,7 +1454,7 @@ static UINT32 recompile_lwz(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lwzu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lwzu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1469,7 +1469,7 @@ static UINT32 recompile_lwzu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lwzux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lwzux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -1484,7 +1484,7 @@ static UINT32 recompile_lwzux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lwzx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lwzx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -1501,7 +1501,7 @@ static UINT32 recompile_lwzx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mcrf(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mcrf(drc_core *drc, UINT32 op)
 {
 	_mov_r8_m8abs(REG_AL, &ppc.cr[RA >> 2]);
 	_mov_m8abs_r8(&ppc.cr[RT >> 2], REG_AL);
@@ -1509,13 +1509,13 @@ static UINT32 recompile_mcrf(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mcrxr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mcrxr(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: recompile mcrxr\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
-static UINT32 recompile_mfcr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mfcr(drc_core *drc, UINT32 op)
 {
 	int i;
 	_xor_r32_r32(REG_EAX, REG_EAX);
@@ -1533,7 +1533,7 @@ static UINT32 recompile_mfcr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mfmsr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mfmsr(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &ppc.msr);
 	_mov_m32abs_r32(&REG(RT), REG_EAX);
@@ -1541,7 +1541,7 @@ static UINT32 recompile_mfmsr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mfspr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mfspr(drc_core *drc, UINT32 op)
 {
 	if (SPR == SPR_LR)			// optimized case, LR
 	{
@@ -1564,7 +1564,7 @@ static UINT32 recompile_mfspr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtcrf(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtcrf(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1575,7 +1575,7 @@ static UINT32 recompile_mtcrf(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtmsr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtmsr(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -1587,7 +1587,7 @@ static UINT32 recompile_mtmsr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtspr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtspr(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
 	if (SPR == SPR_LR)			// optimized case, LR
@@ -1611,7 +1611,7 @@ static UINT32 recompile_mtspr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mulhwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mulhwx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &REG(RA));
 	_mov_r32_m32abs(REG_EBX, &REG(RB));
@@ -1625,7 +1625,7 @@ static UINT32 recompile_mulhwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mulhwux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mulhwux(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &REG(RA));
 	_mov_r32_m32abs(REG_EBX, &REG(RB));
@@ -1639,7 +1639,7 @@ static UINT32 recompile_mulhwux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mulli(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mulli(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &REG(RA));
 	_mov_r32_imm(REG_EBX, SIMM16);
@@ -1649,7 +1649,7 @@ static UINT32 recompile_mulli(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mullwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mullwx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &REG(RA));
 	_mov_r32_m32abs(REG_EBX, &REG(RB));
@@ -1669,7 +1669,7 @@ static UINT32 recompile_mullwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_nandx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_nandx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_and_r32_m32abs(REG_EDX, &REG(RB));
@@ -1683,7 +1683,7 @@ static UINT32 recompile_nandx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_negx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_negx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
 	_neg_r32(REG_EDX);
@@ -1696,7 +1696,7 @@ static UINT32 recompile_negx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_norx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_norx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_or_r32_m32abs(REG_EDX, &REG(RB));
@@ -1710,7 +1710,7 @@ static UINT32 recompile_norx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_orx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_orx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_or_r32_m32abs(REG_EDX, &REG(RB));
@@ -1723,7 +1723,7 @@ static UINT32 recompile_orx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_orcx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_orcx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RB));
 	_not_r32(REG_EDX);
@@ -1737,7 +1737,7 @@ static UINT32 recompile_orcx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_ori(struct drccore *drc, UINT32 op)
+static UINT32 recompile_ori(drc_core *drc, UINT32 op)
 {
 
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -1747,7 +1747,7 @@ static UINT32 recompile_ori(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_oris(struct drccore *drc, UINT32 op)
+static UINT32 recompile_oris(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
 	_or_r32_imm(REG_EAX, UIMM16 << 16);
@@ -1756,7 +1756,7 @@ static UINT32 recompile_oris(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_rfi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_rfi(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDI, &ppc.srr0);	/* get saved PC from SRR0 */
@@ -1770,7 +1770,7 @@ static UINT32 recompile_rfi(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,0) | RECOMPILE_END_OF_STRING | RECOMPILE_ADD_DISPATCH;
 }
 
-static UINT32 recompile_rlwimix(struct drccore *drc, UINT32 op)
+static UINT32 recompile_rlwimix(drc_core *drc, UINT32 op)
 {
 	UINT32 mask = GET_ROTATE_MASK(MB, ME);
 
@@ -1789,7 +1789,7 @@ static UINT32 recompile_rlwimix(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_rlwinmx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_rlwinmx(drc_core *drc, UINT32 op)
 {
 	UINT32 mask = GET_ROTATE_MASK(MB, ME);
 
@@ -1805,7 +1805,7 @@ static UINT32 recompile_rlwinmx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_rlwnmx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_rlwnmx(drc_core *drc, UINT32 op)
 {
 	UINT32 mask = GET_ROTATE_MASK(MB, ME);
 
@@ -1822,14 +1822,14 @@ static UINT32 recompile_rlwnmx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sc(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_imm(&SRR0, temp_ppc_pc + 4);
 	_jmp(ppc.generate_syscall_exception);
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_slwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_slwx(drc_core *drc, UINT32 op)
 {
 #if USE_SSE2
 	_mov_r32_m32abs(REG_ECX, &REG(RB));
@@ -1854,7 +1854,7 @@ static UINT32 recompile_slwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_srawx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_srawx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1865,7 +1865,7 @@ static UINT32 recompile_srawx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_srawix(struct drccore *drc, UINT32 op)
+static UINT32 recompile_srawix(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -1876,7 +1876,7 @@ static UINT32 recompile_srawix(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_srwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_srwx(drc_core *drc, UINT32 op)
 {
 #if USE_SSE2
 	_mov_r32_m32abs(REG_ECX, &REG(RB));
@@ -1901,7 +1901,7 @@ static UINT32 recompile_srwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stb(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stb(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -1925,7 +1925,7 @@ static UINT32 recompile_stb(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stbu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stbu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -1943,7 +1943,7 @@ static UINT32 recompile_stbu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stbux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stbux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -1961,7 +1961,7 @@ static UINT32 recompile_stbux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stbx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stbx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -1981,7 +1981,7 @@ static UINT32 recompile_stbx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sth(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sth(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -2005,7 +2005,7 @@ static UINT32 recompile_sth(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sthbrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sthbrx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -2027,7 +2027,7 @@ static UINT32 recompile_sthbrx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sthu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sthu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -2045,7 +2045,7 @@ static UINT32 recompile_sthu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sthux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sthux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -2063,7 +2063,7 @@ static UINT32 recompile_sthux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sthx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sthx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -2083,7 +2083,7 @@ static UINT32 recompile_sthx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stmw(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stmw(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2094,7 +2094,7 @@ static UINT32 recompile_stmw(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stswi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stswi(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2105,13 +2105,13 @@ static UINT32 recompile_stswi(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stswx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stswx(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: recompile stswx\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
-static UINT32 recompile_stw(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stw(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_m32abs(&REG(RS));
@@ -2132,7 +2132,7 @@ static UINT32 recompile_stw(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stwbrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stwbrx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RS));
@@ -2152,7 +2152,7 @@ static UINT32 recompile_stwbrx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stwcx_rc(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stwcx_rc(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2163,7 +2163,7 @@ static UINT32 recompile_stwcx_rc(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stwu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stwu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_m32abs(&REG(RS));
@@ -2179,7 +2179,7 @@ static UINT32 recompile_stwu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stwux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stwux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_m32abs(&REG(RS));
@@ -2195,7 +2195,7 @@ static UINT32 recompile_stwux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stwx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_m32abs(&REG(RS));
@@ -2213,7 +2213,7 @@ static UINT32 recompile_stwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_subfx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_subfx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RB));
 	_sub_r32_m32abs(REG_EDX, &REG(RA));
@@ -2230,7 +2230,7 @@ static UINT32 recompile_subfx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_subfcx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_subfcx(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_mov_r32_m32abs(REG_EBX, &XER);
@@ -2254,7 +2254,7 @@ static UINT32 recompile_subfcx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_subfex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_subfex(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_mov_r32_m32abs(REG_EBX, &XER);
@@ -2282,7 +2282,7 @@ static UINT32 recompile_subfex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_subfic(struct drccore *drc, UINT32 op)
+static UINT32 recompile_subfic(drc_core *drc, UINT32 op)
 {
 	_xor_r32_r32(REG_EAX, REG_EAX);
 	_mov_r32_m32abs(REG_EBX, &XER);
@@ -2298,7 +2298,7 @@ static UINT32 recompile_subfic(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_subfmex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_subfmex(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2309,7 +2309,7 @@ static UINT32 recompile_subfmex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_subfzex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_subfzex(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2320,14 +2320,14 @@ static UINT32 recompile_subfzex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_sync(struct drccore *drc, UINT32 op)
+static UINT32 recompile_sync(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_tw(struct drccore *drc, UINT32 op)
+static UINT32 recompile_tw(drc_core *drc, UINT32 op)
 {
-	struct linkdata link1, link2, link3, link4, link5, link6;
+	link_info link1, link2, link3, link4, link5, link6;
 	int do_link1 = 0;
 	int do_link2 = 0;
 	int do_link3 = 0;
@@ -2385,9 +2385,9 @@ static UINT32 recompile_tw(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_twi(struct drccore *drc, UINT32 op)
+static UINT32 recompile_twi(drc_core *drc, UINT32 op)
 {
-	struct linkdata link1, link2, link3, link4, link5, link6;
+	link_info link1, link2, link3, link4, link5, link6;
 	int do_link1 = 0;
 	int do_link2 = 0;
 	int do_link3 = 0;
@@ -2445,7 +2445,7 @@ static UINT32 recompile_twi(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_xorx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_xorx(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_xor_r32_m32abs(REG_EDX, &REG(RB));
@@ -2458,7 +2458,7 @@ static UINT32 recompile_xorx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_xori(struct drccore *drc, UINT32 op)
+static UINT32 recompile_xori(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_xor_r32_imm(REG_EDX, UIMM16);
@@ -2467,7 +2467,7 @@ static UINT32 recompile_xori(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_xoris(struct drccore *drc, UINT32 op)
+static UINT32 recompile_xoris(drc_core *drc, UINT32 op)
 {
 	_mov_r32_m32abs(REG_EDX, &REG(RS));
 	_xor_r32_imm(REG_EDX, UIMM16 << 16);
@@ -2476,39 +2476,39 @@ static UINT32 recompile_xoris(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dccci(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dccci(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcread(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcread(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_icbt(struct drccore *drc, UINT32 op)
+static UINT32 recompile_icbt(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_iccci(struct drccore *drc, UINT32 op)
+static UINT32 recompile_iccci(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_icread(struct drccore *drc, UINT32 op)
+static UINT32 recompile_icread(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_rfci(struct drccore *drc, UINT32 op)
+static UINT32 recompile_rfci(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: recompile rfci\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
 #if HAS_PPC403
-static UINT32 recompile_mfdcr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mfdcr(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2519,7 +2519,7 @@ static UINT32 recompile_mfdcr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtdcr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtdcr(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2530,7 +2530,7 @@ static UINT32 recompile_mtdcr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_wrtee(struct drccore *drc, UINT32 op)
+static UINT32 recompile_wrtee(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2541,7 +2541,7 @@ static UINT32 recompile_wrtee(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_wrteei(struct drccore *drc, UINT32 op)
+static UINT32 recompile_wrteei(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2555,7 +2555,7 @@ static UINT32 recompile_wrteei(struct drccore *drc, UINT32 op)
 
 
 
-static UINT32 recompile_invalid(struct drccore *drc, UINT32 op)
+static UINT32 recompile_invalid(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: Invalid opcode %08X PC : %X\n", op, ppc.pc);
 	return RECOMPILE_UNIMPLEMENTED;
@@ -2565,7 +2565,7 @@ static UINT32 recompile_invalid(struct drccore *drc, UINT32 op)
 
 /* PowerPC 60x Recompilers */
 
-static UINT32 recompile_lfs(struct drccore *drc,UINT32 op)
+static UINT32 recompile_lfs(drc_core *drc,UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2594,7 +2594,7 @@ static UINT32 recompile_lfs(struct drccore *drc,UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfsu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfsu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2617,7 +2617,7 @@ static UINT32 recompile_lfsu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfd(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfd(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	if (RA == 0)
@@ -2638,7 +2638,7 @@ static UINT32 recompile_lfd(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfdu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfdu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -2653,7 +2653,7 @@ static UINT32 recompile_lfdu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfs(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfs(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2683,7 +2683,7 @@ static UINT32 recompile_stfs(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfsu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfsu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2708,7 +2708,7 @@ static UINT32 recompile_stfsu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfd(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfd(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r64_m64abs(REG_EDX, REG_EAX, &FPR(RT));
@@ -2731,7 +2731,7 @@ static UINT32 recompile_stfd(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfdu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfdu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r64_m64abs(REG_EDX, REG_EAX, &FPR(RT));
@@ -2749,7 +2749,7 @@ static UINT32 recompile_stfdu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfdux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfdux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EDX, &REG(RA));
@@ -2764,7 +2764,7 @@ static UINT32 recompile_lfdux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfdx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfdx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r32_m32abs(REG_EAX, &REG(RB));
@@ -2781,7 +2781,7 @@ static UINT32 recompile_lfdx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfsux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfsux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2804,7 +2804,7 @@ static UINT32 recompile_lfsux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_lfsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_lfsx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2829,7 +2829,7 @@ static UINT32 recompile_lfsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mfsr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mfsr(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2840,7 +2840,7 @@ static UINT32 recompile_mfsr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mfsrin(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mfsrin(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2851,7 +2851,7 @@ static UINT32 recompile_mfsrin(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mftb(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mftb(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2862,7 +2862,7 @@ static UINT32 recompile_mftb(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtsr(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtsr(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2873,7 +2873,7 @@ static UINT32 recompile_mtsr(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtsrin(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtsrin(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -2884,12 +2884,12 @@ static UINT32 recompile_mtsrin(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_dcba(struct drccore *drc, UINT32 op)
+static UINT32 recompile_dcba(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfdux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfdux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r64_m64abs(REG_EDX, REG_EAX, &FPR(RT));
@@ -2907,7 +2907,7 @@ static UINT32 recompile_stfdux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfdx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfdx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_mov_r64_m64abs(REG_EDX, REG_EAX, &FPR(RT));
@@ -2931,7 +2931,7 @@ static UINT32 recompile_stfdx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfiwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfiwx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2957,7 +2957,7 @@ static UINT32 recompile_stfiwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfsux(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfsux(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -2982,7 +2982,7 @@ static UINT32 recompile_stfsux(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_stfsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_stfsx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 #if USE_SSE2
@@ -3009,34 +3009,34 @@ static UINT32 recompile_stfsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_tlbia(struct drccore *drc, UINT32 op)
+static UINT32 recompile_tlbia(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_tlbie(struct drccore *drc, UINT32 op)
+static UINT32 recompile_tlbie(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_tlbsync(struct drccore *drc, UINT32 op)
+static UINT32 recompile_tlbsync(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_eciwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_eciwx(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: eciwx unimplemented\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
-static UINT32 recompile_ecowx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_ecowx(drc_core *drc, UINT32 op)
 {
 	printf("PPCDRC: ecowx unimplemented\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
-static UINT32 recompile_fabsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fabsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3056,7 +3056,7 @@ static UINT32 recompile_fabsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_faddx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_faddx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3077,7 +3077,7 @@ static UINT32 recompile_faddx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fcmpo(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fcmpo(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3088,7 +3088,7 @@ static UINT32 recompile_fcmpo(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fcmpu(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fcmpu(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3099,7 +3099,7 @@ static UINT32 recompile_fcmpu(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fctiwx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fctiwx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3110,7 +3110,7 @@ static UINT32 recompile_fctiwx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fctiwzx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fctiwzx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3121,7 +3121,7 @@ static UINT32 recompile_fctiwzx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fdivx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fdivx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3143,7 +3143,7 @@ static UINT32 recompile_fdivx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmrx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmrx(drc_core *drc, UINT32 op)
 {
 #if USE_SSE2
 	_movq_r128_m64abs(REG_XMM0, &FPR(RB));
@@ -3163,7 +3163,7 @@ static UINT32 recompile_fmrx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fnabsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fnabsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3184,7 +3184,7 @@ static UINT32 recompile_fnabsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fnegx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fnegx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3205,7 +3205,7 @@ static UINT32 recompile_fnegx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_frspx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_frspx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3223,7 +3223,7 @@ static UINT32 recompile_frspx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_frsqrtex(struct drccore *drc, UINT32 op)
+static UINT32 recompile_frsqrtex(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3234,7 +3234,7 @@ static UINT32 recompile_frsqrtex(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fsqrtx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fsqrtx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3245,7 +3245,7 @@ static UINT32 recompile_fsqrtx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fsubx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fsubx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3267,7 +3267,7 @@ static UINT32 recompile_fsubx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mffsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mffsx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3278,7 +3278,7 @@ static UINT32 recompile_mffsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtfsb0x(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtfsb0x(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3289,7 +3289,7 @@ static UINT32 recompile_mtfsb0x(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtfsb1x(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtfsb1x(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3300,7 +3300,7 @@ static UINT32 recompile_mtfsb1x(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtfsfx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtfsfx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3311,7 +3311,7 @@ static UINT32 recompile_mtfsfx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mtfsfix(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mtfsfix(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3322,7 +3322,7 @@ static UINT32 recompile_mtfsfix(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_mcrfs(struct drccore *drc, UINT32 op)
+static UINT32 recompile_mcrfs(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3333,7 +3333,7 @@ static UINT32 recompile_mcrfs(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_faddsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_faddsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3355,7 +3355,7 @@ static UINT32 recompile_faddsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fdivsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fdivsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3377,7 +3377,7 @@ static UINT32 recompile_fdivsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fresx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fresx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3388,7 +3388,7 @@ static UINT32 recompile_fresx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fsqrtsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fsqrtsx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3399,7 +3399,7 @@ static UINT32 recompile_fsqrtsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fsubsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fsubsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3421,7 +3421,7 @@ static UINT32 recompile_fsubsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmaddx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmaddx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3445,7 +3445,7 @@ static UINT32 recompile_fmaddx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmsubx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmsubx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3469,7 +3469,7 @@ static UINT32 recompile_fmsubx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmulx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmulx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3491,7 +3491,7 @@ static UINT32 recompile_fmulx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fnmaddx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fnmaddx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3502,7 +3502,7 @@ static UINT32 recompile_fnmaddx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fnmsubx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fnmsubx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3513,7 +3513,7 @@ static UINT32 recompile_fnmsubx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fselx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fselx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3524,7 +3524,7 @@ static UINT32 recompile_fselx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmaddsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmaddsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3548,7 +3548,7 @@ static UINT32 recompile_fmaddsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmsubsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmsubsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3572,7 +3572,7 @@ static UINT32 recompile_fmsubsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fmulsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fmulsx(drc_core *drc, UINT32 op)
 {
 #if !COMPILE_FPU || !USE_SSE2
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3594,7 +3594,7 @@ static UINT32 recompile_fmulsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fnmaddsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fnmaddsx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);
@@ -3605,7 +3605,7 @@ static UINT32 recompile_fnmaddsx(struct drccore *drc, UINT32 op)
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 
-static UINT32 recompile_fnmsubsx(struct drccore *drc, UINT32 op)
+static UINT32 recompile_fnmsubsx(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
 	_push_imm(op);

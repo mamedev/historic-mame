@@ -186,7 +186,7 @@ static int tiles_offsety;
 
 static int toaplan1_reset;		/* Hack! See toaplan1_bcu_control below */
 
-static struct tilemap *pf1_tilemap, *pf2_tilemap, *pf3_tilemap, *pf4_tilemap;
+static tilemap *pf1_tilemap, *pf2_tilemap, *pf3_tilemap, *pf4_tilemap;
 
 
 /***************************************************************************

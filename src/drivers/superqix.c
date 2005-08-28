@@ -746,7 +746,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout pbillian_charlayout =
+static gfx_layout pbillian_charlayout =
 {
 	8,8,
 	0x800,	/* doesn't use the whole ROM space */
@@ -757,7 +757,7 @@ static struct GfxLayout pbillian_charlayout =
 	32*8
 };
 
-static struct GfxLayout sqix_charlayout =
+static gfx_layout sqix_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -768,7 +768,7 @@ static struct GfxLayout sqix_charlayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -782,14 +782,14 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo pbillian_gfxdecodeinfo[] =
+static gfx_decode pbillian_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pbillian_charlayout, 16*16, 16 },
 	{ REGION_GFX1, 0, &spritelayout,            0, 16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo sqix_gfxdecodeinfo[] =
+static gfx_decode sqix_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &sqix_charlayout,   0, 16 },	/* Chars */
 	{ REGION_GFX2, 0x00000, &sqix_charlayout,   0, 16 },	/* Background tiles */

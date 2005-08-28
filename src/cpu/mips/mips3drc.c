@@ -170,7 +170,7 @@ typedef struct
 	UINT8		cf[4][8];
 
 	/* internal stuff */
-	struct drccore *drc;
+	drc_core *drc;
 	UINT32		drcoptions;
 	UINT32		nextpc;
 	int 		(*irq_callback)(int irqline);
@@ -205,9 +205,9 @@ typedef struct
 **#################################################################################################*/
 
 static void mips3drc_init(void);
-static void mips3drc_reset(struct drccore *drc);
-static void mips3drc_recompile(struct drccore *drc);
-static void mips3drc_entrygen(struct drccore *drc);
+static void mips3drc_reset(drc_core *drc);
+static void mips3drc_recompile(drc_core *drc);
+static void mips3drc_entrygen(drc_core *drc);
 
 static void update_cycle_counting(void);
 
@@ -577,7 +577,7 @@ static void logtlbentry(void)
     log_code
 ------------------------------------------------------------------*/
 
-static void log_code(struct drccore *drc)
+static void log_code(drc_core *drc)
 {
 #if LOG_CODE
 	FILE *temp;
@@ -593,7 +593,7 @@ static void log_code(struct drccore *drc)
     log_symbol
 ------------------------------------------------------------------*/
 
-static void log_symbol(struct drccore *drc, UINT32 pc)
+static void log_symbol(drc_core *drc, UINT32 pc)
 {
 #if LOG_CODE
 	static int first = 1;

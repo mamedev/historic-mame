@@ -13,7 +13,7 @@
 #include "vidhrdw/generic.h"
 
 data16_t *stadhero_pf1_data,*stadhero_pf2_data;
-static struct tilemap *pf1_tilemap,*pf2_tilemap;
+static tilemap *pf1_tilemap,*pf2_tilemap;
 static int flipscreen;
 
 static data16_t stadhero_pf2_control_0[8];

@@ -6,7 +6,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 /*
 
@@ -69,7 +69,7 @@ WRITE8_HANDLER( speedatk_videoram_w )
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -78,7 +78,7 @@ WRITE8_HANDLER( speedatk_colorram_w )
 	if (colorram[offset] != data)
 	{
 		colorram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -104,9 +104,9 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( speedatk )
 {
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,34,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,34,32);
 
-	if(!tilemap)
+	if(!bg_tilemap)
 		return 1;
 
 	return 0;
@@ -114,5 +114,5 @@ VIDEO_START( speedatk )
 
 VIDEO_UPDATE( speedatk )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }

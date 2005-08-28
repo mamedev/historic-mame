@@ -26,7 +26,7 @@ size_t rpunch_bitmapram_size;
 
 int rpunch_sprite_palette;
 
-static struct tilemap *background[2];
+static tilemap *background[2];
 
 static data16_t videoflags;
 static UINT8 crtc_register;
@@ -120,11 +120,11 @@ WRITE16_HANDLER( rpunch_videoram_w )
 
 	if (oldword != newword)
 	{
-		int tilemap = offset >> 12;
+		int tmap = offset >> 12;
 		int tile_index = offset & 0xfff;
 
 		videoram16[offset] = newword;
-		tilemap_mark_tile_dirty(background[tilemap],tile_index);
+		tilemap_mark_tile_dirty(background[tmap],tile_index);
 	}
 }
 

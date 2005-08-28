@@ -212,7 +212,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tail2nos_charlayout =
+static gfx_layout tail2nos_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -223,7 +223,7 @@ static struct GfxLayout tail2nos_charlayout =
 	32*8
 };
 
-static struct GfxLayout tail2nos_spritelayout =
+static gfx_layout tail2nos_spritelayout =
 {
 	16,32,
 	RGN_FRAC(1,2),
@@ -238,7 +238,7 @@ static struct GfxLayout tail2nos_spritelayout =
 	128*8
 };
 
-static struct GfxDecodeInfo tail2nos_gfxdecodeinfo[] =
+static gfx_decode tail2nos_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tail2nos_charlayout,   0, 128 },
 	{ REGION_GFX2, 0, &tail2nos_spritelayout, 0, 128 },

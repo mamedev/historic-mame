@@ -10,7 +10,7 @@ data16_t *bloodbro_txvideoram;
 data16_t *bloodbro_bgvideoram,*bloodbro_fgvideoram;
 data16_t *bloodbro_scroll;
 
-static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
 
 /***************************************************************************

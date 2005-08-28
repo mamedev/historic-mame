@@ -158,8 +158,8 @@ int deco16_raster_display_position;
 
 static int use_custom_pf1, use_custom_pf2, use_custom_pf3, use_custom_pf4;
 
-static struct tilemap *pf1_tilemap_16x16,*pf2_tilemap_16x16,*pf3_tilemap_16x16,*pf4_tilemap_16x16;
-static struct tilemap *pf1_tilemap_8x8,*pf2_tilemap_8x8;
+static tilemap *pf1_tilemap_16x16,*pf2_tilemap_16x16,*pf3_tilemap_16x16,*pf4_tilemap_16x16;
+static tilemap *pf1_tilemap_8x8,*pf2_tilemap_8x8;
 
 static struct mame_bitmap *sprite_priority_bitmap;
 
@@ -173,8 +173,8 @@ static int (*deco16_bank_callback_1)(const int bank);
 static int (*deco16_bank_callback_2)(const int bank);
 static int (*deco16_bank_callback_3)(const int bank);
 static int (*deco16_bank_callback_4)(const int bank);
-static void custom_tilemap_draw(struct mame_bitmap *bitmap,struct tilemap *tilemap0_8x8,struct tilemap *tilemap0_16x16,
-	struct tilemap *tilemap1_8x8,struct tilemap *tilemap1_16x16, const data16_t *rowscroll_ptr,const data16_t scrollx,
+static void custom_tilemap_draw(struct mame_bitmap *bitmap,tilemap *tilemap0_8x8,tilemap *tilemap0_16x16,
+	tilemap *tilemap1_8x8,tilemap *tilemap1_16x16, const data16_t *rowscroll_ptr,const data16_t scrollx,
 	const data16_t scrolly,const data16_t control0, const data16_t control1,int combine_mask,int combine_shift,int trans_mask,int flags,UINT32 priority);
 
 /******************************************************************************/
@@ -390,9 +390,9 @@ static void get_pf1_tile_info_b(int tile_index)
 /* Each game can have banking set up differently depending on how the roms are
 connected, and what rom slots are used */
 
-void deco16_set_tilemap_bank_callback(int tilemap, int (*callback)(const int bank))
+void deco16_set_tilemap_bank_callback(int tmap, int (*callback)(const int bank))
 {
-	switch (tilemap) {
+	switch (tmap) {
 	case 0: deco16_bank_callback_1=callback; break;
 	case 1: deco16_bank_callback_2=callback; break;
 	case 2: deco16_bank_callback_3=callback; break;
@@ -403,9 +403,9 @@ void deco16_set_tilemap_bank_callback(int tilemap, int (*callback)(const int ban
 /* Each game can have colours set up differently depending on how the playfield
 generator is connected to paletteram */
 
-void deco16_set_tilemap_colour_base(int tilemap, int base)
+void deco16_set_tilemap_colour_base(int tmap, int base)
 {
-	switch (tilemap) {
+	switch (tmap) {
 	case 0: deco16_pf1_colour_bank=base; break;
 	case 1: deco16_pf2_colour_bank=base; break;
 	case 2: deco16_pf3_colour_bank=base; break;
@@ -413,9 +413,9 @@ void deco16_set_tilemap_colour_base(int tilemap, int base)
 	}
 }
 
-void deco16_set_tilemap_colour_mask(int tilemap, int mask)
+void deco16_set_tilemap_colour_mask(int tmap, int mask)
 {
-	switch (tilemap) {
+	switch (tmap) {
 	case 0: deco16_pf1_colourmask=mask; break;
 	case 1: deco16_pf2_colourmask=mask; break;
 	case 2: deco16_pf3_colourmask=mask; break;
@@ -423,9 +423,9 @@ void deco16_set_tilemap_colour_mask(int tilemap, int mask)
 	}
 }
 
-void deco16_set_tilemap_transparency_mask(int tilemap, int mask)
+void deco16_set_tilemap_transparency_mask(int tmap, int mask)
 {
-	switch (tilemap) {
+	switch (tmap) {
 	case 0: deco16_pf1_trans_mask=mask; break;
 	case 1: deco16_pf2_trans_mask=mask; break;
 	case 2: deco16_pf3_trans_mask=mask; break;
@@ -471,7 +471,7 @@ void deco16_pf34_set_gfxbank(int small, int big)
 	deco16_pf34_16x16_gfx_bank=big;
 }
 
-struct tilemap *deco16_get_tilemap(int pf, int size)
+tilemap *deco16_get_tilemap(int pf, int size)
 {
 	switch (pf) {
 	case 0: if (size) return pf1_tilemap_8x8; return pf1_tilemap_16x16;
@@ -637,8 +637,8 @@ int deco_allocate_sprite_bitmap(void)
 /*****************************************************************************************/
 
 static int deco16_pf_update(
-	struct tilemap *tilemap_8x8,
-	struct tilemap *tilemap_16x16,
+	tilemap *tilemap_8x8,
+	tilemap *tilemap_16x16,
 	const data16_t *rowscroll_ptr,
 	const data16_t scrollx,
 	const data16_t scrolly,
@@ -862,7 +862,7 @@ void deco16_clear_sprite_priority_bitmap(void)
 }
 
 /* A special pdrawgfx z-buffered sprite renderer that is needed to properly draw multiple sprite sources with alpha */
-void deco16_pdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void deco16_pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 pri_mask,UINT32 sprite_mask,UINT8 write_pri)
 {
@@ -974,10 +974,10 @@ void deco16_tilemap_34_combine_draw(struct mame_bitmap *bitmap, const struct rec
 
 static void custom_tilemap_draw(
 	struct mame_bitmap *bitmap,
-	struct tilemap *tilemap0_8x8,
-	struct tilemap *tilemap0_16x16,
-	struct tilemap *tilemap1_8x8,
-	struct tilemap *tilemap1_16x16,
+	tilemap *tilemap0_8x8,
+	tilemap *tilemap0_16x16,
+	tilemap *tilemap1_8x8,
+	tilemap *tilemap1_16x16,
 	const data16_t *rowscroll_ptr,
 	const data16_t scrollx,
 	const data16_t scrolly,

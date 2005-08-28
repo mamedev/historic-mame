@@ -91,7 +91,7 @@ ADDRESS_MAP_END
 
 /* gfx decode */
 
-static struct GfxLayout char16layout =
+static gfx_layout char16layout =
 {
 	8,16,
 	RGN_FRAC(1,1),
@@ -104,7 +104,7 @@ static struct GfxLayout char16layout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char16layout,   0, 1  },
 	{ -1 } /* end of array */

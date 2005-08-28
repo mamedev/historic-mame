@@ -3416,7 +3416,7 @@ INPUT_PORTS_END
 
 
 /* 8x8x4 tiles */
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -3428,7 +3428,7 @@ static struct GfxLayout layout_8x8x4 =
 };
 
 /* 8x8x8 tiles for later games */
-static struct GfxLayout layout_8x8x8h =
+static gfx_layout layout_8x8x8h =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -3440,7 +3440,7 @@ static struct GfxLayout layout_8x8x8h =
 };
 
 /* 16x16x4 tiles for later games */
-static struct GfxLayout layout_16x16x4q =
+static gfx_layout layout_16x16x4q =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -3452,7 +3452,7 @@ static struct GfxLayout layout_16x16x4q =
 };
 
 /* 16x16x8 tiles for later games */
-static struct GfxLayout layout_16x16x8o =
+static gfx_layout layout_16x16x8o =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -3463,7 +3463,7 @@ static struct GfxLayout layout_16x16x8o =
 	32*8		/* char modulo (1/8th char step) */
 };
 
-static struct GfxLayout layout_053936 =
+static gfx_layout layout_053936 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -3474,7 +3474,7 @@ static struct GfxLayout layout_053936 =
 	8*8*8
 };
 
-static struct GfxLayout layout_053936_16 =
+static gfx_layout layout_053936_16 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -3490,20 +3490,20 @@ static struct GfxLayout layout_053936_16 =
 	8*8*8*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_14100[] =
+static gfx_decode gfxdecodeinfo_14100[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_14220[] =
+static gfx_decode gfxdecodeinfo_14220[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
+static gfx_decode gfxdecodeinfo_blzntrnd[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
@@ -3511,7 +3511,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_blzntrnd[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_gstrik2[] =
+static gfx_decode gfxdecodeinfo_gstrik2[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles
@@ -3519,7 +3519,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_gstrik2[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_14300[] =
+static gfx_decode gfxdecodeinfo_14300[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles

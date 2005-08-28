@@ -4,7 +4,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-static struct tilemap *background;
+static tilemap *background;
 UINT8 *shangkid_videoreg;
 int shangkid_gfx_type;
 
@@ -64,7 +64,7 @@ WRITE8_HANDLER( shangkid_videoram_w )
 }
 
 static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	int transparent_pen;
 	int bank_index;
 	int c,r;

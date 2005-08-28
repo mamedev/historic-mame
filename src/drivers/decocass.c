@@ -332,7 +332,7 @@ INPUT_PORTS_START( dc_btime )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -343,7 +343,7 @@ static struct GfxLayout charlayout =
 	8*8 	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	256,	/* 256 sprites */
@@ -356,7 +356,7 @@ static struct GfxLayout spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 characters */
 	16+1,	/* 16 tiles (+1 empty tile used in the half-width bg tilemaps) */
@@ -371,7 +371,7 @@ static struct GfxLayout tilelayout =
 	2*16*16 /* every tile takes 64 consecutive bytes */
 };
 
-static struct GfxLayout objlayout =
+static gfx_layout objlayout =
 {
 	64,64,	/* 64x64 object */
 	2,		/* 2 objects */
@@ -400,7 +400,7 @@ static struct GfxLayout objlayout =
 	8*8 /* object takes 8 consecutive bytes */
 };
 
-static struct GfxLayout missilelayout =
+static gfx_layout missilelayout =
 {
 	4,1,	/* 4x1 object ?? */
 	1,		/* 1 object */
@@ -411,7 +411,7 @@ static struct GfxLayout missilelayout =
 	8	/* object takes a 1 bit from somewhere */
 };
 
-static struct GfxDecodeInfo decocass_gfxdecodeinfo[] =
+static gfx_decode decocass_gfxdecodeinfo[] =
 {
 	{ 0, 0x6000, &charlayout,		 0, 4 },  /* char set #1 */
 	{ 0, 0x6000, &spritelayout, 	 0, 4 },  /* sprites */

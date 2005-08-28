@@ -747,7 +747,7 @@ INPUT_PORTS_END
 
 /**********************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -758,7 +758,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -771,7 +771,7 @@ static struct GfxLayout spritelayout =
 	128*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -784,7 +784,7 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
-static struct GfxLayout tilelayout_8bpp =
+static gfx_layout tilelayout_8bpp =
 {
 	16,16,
 	4096,
@@ -797,7 +797,7 @@ static struct GfxLayout tilelayout_8bpp =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,    0, 32 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,    0, 32 },	/* Tiles 16x16 */
@@ -806,7 +806,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_robocop2[] =
+static gfx_decode gfxdecodeinfo_robocop2[] =
 {
 	{ REGION_GFX1, 0, &charlayout,    0, 32 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,    0, 32 },	/* Tiles 16x16 */
@@ -816,7 +816,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_robocop2[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_mutantf[] =
+static gfx_decode gfxdecodeinfo_mutantf[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 64 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,          0, 64 },	/* Tiles 16x16 */

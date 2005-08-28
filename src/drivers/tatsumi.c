@@ -527,7 +527,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static struct GfxLayout roundup5_charlayout =
+static gfx_layout roundup5_charlayout =
 {
 	8,8,	/* 16*16 sprites */
 	RGN_FRAC(1,1),	/* 4096 sprites */
@@ -538,7 +538,7 @@ static struct GfxLayout roundup5_charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout cyclwarr_charlayout =
+static gfx_layout cyclwarr_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -548,7 +548,7 @@ static struct GfxLayout cyclwarr_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8},
 	8*8
 };
-static struct GfxLayout cyclwarr_charlayout2 =
+static gfx_layout cyclwarr_charlayout2 =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -558,7 +558,7 @@ static struct GfxLayout cyclwarr_charlayout2 =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8},
 	8*8
 };
-static struct GfxLayout roundup5_vramlayout =
+static gfx_layout roundup5_vramlayout =
 {
 	8,8,
 	4096 + 2048,
@@ -569,21 +569,21 @@ static struct GfxLayout roundup5_vramlayout =
 	8*16
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_apache3[] =
+static gfx_decode gfxdecodeinfo_apache3[] =
 {
 	{ REGION_GFX1, 0, &roundup5_charlayout,    1024, 128},
 	{ REGION_GFX4, 0, &cyclwarr_charlayout,     768, 16},
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo roundup5_gfxdecodeinfo[] =
+static gfx_decode roundup5_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &roundup5_charlayout,     1024, 256},
 	{ 0, 0, &roundup5_vramlayout,					0, 16},
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo cyclwarr_gfxdecodeinfo[] =
+static gfx_decode cyclwarr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &roundup5_charlayout,    8192, 512},
 	{ REGION_GFX5, 0, &cyclwarr_charlayout,    0, 512},

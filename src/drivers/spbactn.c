@@ -296,7 +296,7 @@ INPUT_PORTS_START( spbactn )
 	PORT_DIPSETTING(    0x00, "1/40" )
 INPUT_PORTS_END
 
-static struct GfxLayout fgtilelayout =
+static gfx_layout fgtilelayout =
 {
 	16,8,
 	RGN_FRAC(1,2),
@@ -308,7 +308,7 @@ static struct GfxLayout fgtilelayout =
 	32*8
 };
 
-static struct GfxLayout bgtilelayout =
+static gfx_layout bgtilelayout =
 {
 	16,8,
 	RGN_FRAC(1,2),
@@ -324,7 +324,7 @@ static struct GfxLayout bgtilelayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -335,7 +335,7 @@ static struct GfxLayout spritelayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fgtilelayout,   0x0200, 16384  },
 	{ REGION_GFX2, 0, &bgtilelayout,   0x0300, 16384  },

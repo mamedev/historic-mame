@@ -113,20 +113,11 @@ static void ym2608_stream_update(void *param, stream_sample_t **inputs, stream_s
 }
 
 
-#ifdef _STATE_H
-static void ym2608_postload(void)
+static void ym2608_postload(void *param)
 {
-	int num;
-
-	for (num=0; num < MAX_SOUND; num++)
-	{
-		struct ym2608_info *info = sndti_token(SOUND_YM2608, num);
-
-		if (info)
-			YM2608Postload(info->chip);
-	}
+	struct ym2608_info *info = param;
+	YM2608Postload(info->chip);
 }
-#endif
 
 
 static void *ym2608_start(int sndindex, int clock, const void *config)
@@ -161,10 +152,7 @@ static void *ym2608_start(int sndindex, int clock, const void *config)
 		           pcmbufa,pcmsizea,
 		           TimerHandler,IRQHandler,&psgintf);
 
-#ifdef _STATE_H
-	if (sndindex == 0)
-		state_save_register_func_postload(ym2608_postload);
-#endif
+	state_save_register_func_postload_ptr(ym2608_postload, info);
 
 	if (info->chip)
 		return info;

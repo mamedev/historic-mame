@@ -117,7 +117,7 @@ INPUT_PORTS_START( gotya )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -128,7 +128,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 characters */
 	64,		/* 64 characters */
@@ -141,7 +141,7 @@ static struct GfxLayout spritelayout =
 	64*8	/* every char takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &spritelayout, 0, 16 },

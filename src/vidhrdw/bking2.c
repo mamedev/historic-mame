@@ -33,7 +33,7 @@ static int flip_screen;
 static struct mame_bitmap* helper0;
 static struct mame_bitmap* helper1;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 /***************************************************************************
@@ -180,7 +180,7 @@ WRITE8_HANDLER( bking2_cont3_w )
 
 	if (palette_bank != ((data >> 1) & 0x03))
 	{
-		tilemap_mark_all_tiles_dirty(tilemap);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 
 	palette_bank = (data >> 1) & 0x03;
@@ -210,7 +210,7 @@ WRITE8_HANDLER( bking2_playfield_w )
 {
 	if (bking2_playfield_ram[offset] != data)
 	{
-		tilemap_mark_tile_dirty(tilemap, offset / 2);
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
 	}
 
 	bking2_playfield_ram[offset] = data;
@@ -255,7 +255,7 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( bking2 )
 {
-	if ((tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 8, 8, 32, 32)) == NULL)
+	if ((bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, 0, 8, 8, 32, 32)) == NULL)
 	{
 		return 1;
 	}
@@ -274,7 +274,7 @@ VIDEO_START( bking2 )
 
 VIDEO_UPDATE( bking2 )
 {
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the balls */
 
@@ -342,13 +342,13 @@ VIDEO_EOF( bking2 )
 		latch = 0x0400;
 	}
 
-	tilemap_set_scrollx(tilemap, 0, flip_screen ? -xld : xld);
-	tilemap_set_scrolly(tilemap, 0, flip_screen ? -yld : yld);
+	tilemap_set_scrollx(bg_tilemap, 0, flip_screen ? -xld : xld);
+	tilemap_set_scrolly(bg_tilemap, 0, flip_screen ? -yld : yld);
 
-	tilemap_draw(helper0, &rect, tilemap, 0, 0);
+	tilemap_draw(helper0, &rect, bg_tilemap, 0, 0);
 
-	tilemap_set_scrollx(tilemap, 0, 0);
-	tilemap_set_scrolly(tilemap, 0, 0);
+	tilemap_set_scrollx(bg_tilemap, 0, 0);
+	tilemap_set_scrolly(bg_tilemap, 0, 0);
 
 	if (latch != 0)
 	{

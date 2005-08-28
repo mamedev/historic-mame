@@ -140,9 +140,9 @@ static data8_t *butasan_bg0ram;
 static data8_t *butasan_bg0backram;
 static data8_t *butasan_txbackram;
 
-static struct tilemap *tx_tilemap  = NULL;
-static struct tilemap *bg0_tilemap = NULL;
-static struct tilemap *bg1_tilemap = NULL;
+static tilemap *tx_tilemap  = NULL;
+static tilemap *bg0_tilemap = NULL;
+static tilemap *bg1_tilemap = NULL;
 
 static data8_t argus_bg_status    = 0x01;
 static data8_t butasan_bg1_status = 0x01;

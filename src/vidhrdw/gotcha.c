@@ -4,7 +4,7 @@
 
 data16_t *gotcha_fgvideoram,*gotcha_bgvideoram;
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 static int banksel,gfxbank[4];
 
 

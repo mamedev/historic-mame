@@ -69,6 +69,6 @@ typedef struct TMS9928a_interface
                                 ** of the INT output of the TMS9918A changes (may be NULL)*/
 } TMS9928a_interface;
 
-extern void mdrv_tms9928a(struct InternalMachineDriver *machine, const TMS9928a_interface *intf);
+extern void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf);
 
 #define MDRV_TMS9928A(intf)		mdrv_tms9928a(machine, (intf));

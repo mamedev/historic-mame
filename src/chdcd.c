@@ -125,7 +125,7 @@ static UINT64 get_file_size(const char *file)
     cdrom_parse_toc - parse a CDRDAO format TOC file
 -------------------------------------------------*/
 
-int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track_input_info *outinfo)
+int cdrom_parse_toc(char *tocfname, cdrom_toc *outtoc, cdrom_track_input_info *outinfo)
 {
 	FILE *infile;
 	int i, j, k, trknum, m, s, f, foundcolon;
@@ -139,8 +139,8 @@ int cdrom_parse_toc(char *tocfname, struct cdrom_toc *outtoc, struct cdrom_track
 	}
 
 	/* clear structures */
-	memset(outtoc, 0, sizeof(struct cdrom_toc));
-	memset(outinfo, 0, sizeof(struct cdrom_track_input_info));
+	memset(outtoc, 0, sizeof(cdrom_toc));
+	memset(outinfo, 0, sizeof(cdrom_track_input_info));
 
 	trknum = -1;
 

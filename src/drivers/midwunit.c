@@ -545,7 +545,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct tms34010_config cpu_config =
+static struct tms34010_config tms_config =
 {
 	0,								/* halt on reset */
 	NULL,							/* generate interrupt */
@@ -579,7 +579,7 @@ static struct tms34010_config cpu_config =
 static MACHINE_DRIVER_START( wunit )
 
 	MDRV_CPU_ADD(TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)

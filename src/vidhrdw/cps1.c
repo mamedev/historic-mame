@@ -613,7 +613,7 @@ static data16_t *cps1_old_palette;
 static int cps1_last_sprite_offset;     /* Offset of the last sprite */
 static int cps1_stars_enabled[2];          /* Layer enabled [Y/N] */
 
-static struct tilemap *tilemap[3];
+static tilemap *bg_tilemap[3];
 
 
 int scroll1x, scroll1y, scroll2x, scroll2y, scroll3x, scroll3y;
@@ -862,17 +862,17 @@ static void cps1_get_video_base(void )
 	if (cps1_scroll1 != cps1_base(CPS1_SCROLL1_BASE,cps1_scroll_size))
 	{
 		cps1_scroll1 = cps1_base(CPS1_SCROLL1_BASE,cps1_scroll_size);
-		tilemap_mark_all_tiles_dirty(tilemap[0]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[0]);
 	}
 	if (cps1_scroll2 != cps1_base(CPS1_SCROLL2_BASE,cps1_scroll_size))
 	{
 		cps1_scroll2 = cps1_base(CPS1_SCROLL2_BASE,cps1_scroll_size);
-		tilemap_mark_all_tiles_dirty(tilemap[1]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[1]);
 	}
 	if (cps1_scroll3 != cps1_base(CPS1_SCROLL3_BASE,cps1_scroll_size))
 	{
 		cps1_scroll3 = cps1_base(CPS1_SCROLL3_BASE,cps1_scroll_size);
-		tilemap_mark_all_tiles_dirty(tilemap[2]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[2]);
 	}
 
 	/* Some of the sf2 hacks use only sprite port 0x9100 and the scroll layers are offset */
@@ -908,9 +908,9 @@ static void cps1_get_video_base(void )
 
 	/* Get layer enable bits */
 	layercontrol=cps1_port(cps1_game_config->layer_control);
-	tilemap_set_enable(tilemap[0],layercontrol & cps1_game_config->layer_enable_mask[0]);
-	tilemap_set_enable(tilemap[1],layercontrol & cps1_game_config->layer_enable_mask[1]);
-	tilemap_set_enable(tilemap[2],layercontrol & cps1_game_config->layer_enable_mask[2]);
+	tilemap_set_enable(bg_tilemap[0],layercontrol & cps1_game_config->layer_enable_mask[0]);
+	tilemap_set_enable(bg_tilemap[1],layercontrol & cps1_game_config->layer_enable_mask[1]);
+	tilemap_set_enable(bg_tilemap[2],layercontrol & cps1_game_config->layer_enable_mask[2]);
 	cps1_stars_enabled[0] = layercontrol & cps1_game_config->layer_enable_mask[3];
 	cps1_stars_enabled[1] = layercontrol & cps1_game_config->layer_enable_mask[4];
 
@@ -976,11 +976,11 @@ WRITE16_HANDLER( cps1_gfxram_w )
 		int page = (offset >> 7) & 0x3c0;
 
 		if (page == (cps1_port(CPS1_SCROLL1_BASE) & 0x3c0))
-			tilemap_mark_tile_dirty(tilemap[0],offset/2 & 0x0fff);
+			tilemap_mark_tile_dirty(bg_tilemap[0],offset/2 & 0x0fff);
 		if (page == (cps1_port(CPS1_SCROLL2_BASE) & 0x3c0))
-			tilemap_mark_tile_dirty(tilemap[1],offset/2 & 0x0fff);
+			tilemap_mark_tile_dirty(bg_tilemap[1],offset/2 & 0x0fff);
 		if (page == (cps1_port(CPS1_SCROLL3_BASE) & 0x3c0))
-			tilemap_mark_tile_dirty(tilemap[2],offset/2 & 0x0fff);
+			tilemap_mark_tile_dirty(bg_tilemap[2],offset/2 & 0x0fff);
 	}
 }
 
@@ -1114,9 +1114,9 @@ static void update_transmasks(void)
 			mask = cps1_port(cps1_game_config->priority[i]) ^ 0xffff;
 		else mask = 0xffff;	/* completely transparent if priority masks not defined (mercs, qad) */
 
-		tilemap_set_transmask(tilemap[0],i,mask,0x8000);
-		tilemap_set_transmask(tilemap[1],i,mask,0x8000);
-		tilemap_set_transmask(tilemap[2],i,mask,0x8000);
+		tilemap_set_transmask(bg_tilemap[0],i,mask,0x8000);
+		tilemap_set_transmask(bg_tilemap[1],i,mask,0x8000);
+		tilemap_set_transmask(bg_tilemap[2],i,mask,0x8000);
 	}
 }
 
@@ -1126,11 +1126,11 @@ VIDEO_START( cps )
 
     machine_init_cps();
 
-	tilemap[0] = tilemap_create(get_tile0_info,tilemap0_scan,TILEMAP_SPLIT, 8, 8,64,64);
-	tilemap[1] = tilemap_create(get_tile1_info,tilemap1_scan,TILEMAP_SPLIT,16,16,64,64);
-	tilemap[2] = tilemap_create(get_tile2_info,tilemap2_scan,TILEMAP_SPLIT,32,32,64,64);
+	bg_tilemap[0] = tilemap_create(get_tile0_info,tilemap0_scan,TILEMAP_SPLIT, 8, 8,64,64);
+	bg_tilemap[1] = tilemap_create(get_tile1_info,tilemap1_scan,TILEMAP_SPLIT,16,16,64,64);
+	bg_tilemap[2] = tilemap_create(get_tile2_info,tilemap2_scan,TILEMAP_SPLIT,32,32,64,64);
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2])
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2])
 		return 1;
 
 	/* front masks will change at runtime to handle sprite occluding */
@@ -1779,7 +1779,7 @@ void cps1_render_layer(struct mame_bitmap *bitmap,const struct rectangle *clipre
 		case 1:
 		case 2:
 		case 3:
-			tilemap_draw(bitmap,cliprect,tilemap[layer-1],TILEMAP_BACK,primask);
+			tilemap_draw(bitmap,cliprect,bg_tilemap[layer-1],TILEMAP_BACK,primask);
 			break;
 	}
 }
@@ -1794,7 +1794,7 @@ void cps1_render_high_layer(struct mame_bitmap *bitmap, const struct rectangle *
 		case 1:
 		case 2:
 		case 3:
-			tilemap_draw(NULL,cliprect,tilemap[layer-1],TILEMAP_FRONT,1);
+			tilemap_draw(NULL,cliprect,bg_tilemap[layer-1],TILEMAP_FRONT,1);
 			break;
 	}
 }
@@ -1830,29 +1830,29 @@ VIDEO_UPDATE( cps1 )
 
 	update_transmasks();
 
-	tilemap_set_scrollx(tilemap[0],0,scroll1x);
-	tilemap_set_scrolly(tilemap[0],0,scroll1y);
+	tilemap_set_scrollx(bg_tilemap[0],0,scroll1x);
+	tilemap_set_scrolly(bg_tilemap[0],0,scroll1y);
 	if (videocontrol & 0x01)	/* linescroll enable */
 	{
 		int scrly=-scroll2y;
 		int i;
 		int otheroffs;
 
-		tilemap_set_scroll_rows(tilemap[1],1024);
+		tilemap_set_scroll_rows(bg_tilemap[1],1024);
 
 		otheroffs = cps1_port(CPS1_ROWSCROLL_OFFS);
 
 		for (i = 0;i < 256;i++)
-			tilemap_set_scrollx(tilemap[1],(i - scrly) & 0x3ff,scroll2x + cps1_other[(i + otheroffs) & 0x3ff]);
+			tilemap_set_scrollx(bg_tilemap[1],(i - scrly) & 0x3ff,scroll2x + cps1_other[(i + otheroffs) & 0x3ff]);
 	}
 	else
 	{
-		tilemap_set_scroll_rows(tilemap[1],1);
-		tilemap_set_scrollx(tilemap[1],0,scroll2x);
+		tilemap_set_scroll_rows(bg_tilemap[1],1);
+		tilemap_set_scrollx(bg_tilemap[1],0,scroll2x);
 	}
-	tilemap_set_scrolly(tilemap[1],0,scroll2y);
-	tilemap_set_scrollx(tilemap[2],0,scroll3x);
-	tilemap_set_scrolly(tilemap[2],0,scroll3y);
+	tilemap_set_scrolly(bg_tilemap[1],0,scroll2y);
+	tilemap_set_scrollx(bg_tilemap[2],0,scroll3x);
+	tilemap_set_scrolly(bg_tilemap[2],0,scroll3y);
 
 
 	/* Blank screen */

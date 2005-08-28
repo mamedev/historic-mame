@@ -10,7 +10,7 @@
 
 unsigned char *bsktball_motion;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( bsktball_videoram_w )
 {

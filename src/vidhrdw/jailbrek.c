@@ -4,7 +4,7 @@
 UINT8 *jailbrek_scroll_x;
 UINT8 *jailbrek_scroll_dir;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( jailbrek )
 {

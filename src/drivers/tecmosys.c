@@ -111,7 +111,7 @@ ae500w07.ad1 - M6295 Samples (23c4001)
 
 static int gametype;
 
-static struct tilemap *txt_tilemap;
+static tilemap *txt_tilemap;
 static void get_tile_info(int tile_index)
 {
 
@@ -320,7 +320,7 @@ INPUT_PORTS_START( deroon )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-static struct GfxLayout gfxlayout =
+static gfx_layout gfxlayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -331,7 +331,7 @@ static struct GfxLayout gfxlayout =
    8*8*4
 };
 
-static struct GfxLayout gfxlayout2 =
+static gfx_layout gfxlayout2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -345,7 +345,7 @@ static struct GfxLayout gfxlayout2 =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &gfxlayout,   0x40*16, 16 },
 	{ REGION_GFX3, 0, &gfxlayout2,   0, 16 },

@@ -13,6 +13,8 @@
 
 #include "driver.h"
 #include "sound/custom.h"
+#include "generic.h"
+
 void *attckufo_custom_start(int, const struct CustomSound_interface*);
 void attckufo_soundport_w (int, int);
 int attckufo_dma_read (int);
@@ -50,7 +52,6 @@ UINT8 attckufo_regs[16];
 #define VIDEORAMSIZE (YSIZE*XSIZE)
 #define CHARGENSIZE (256*HEIGHTPIXEL)
 
-static struct mame_bitmap *attckufo_bitmap;
 static int rasterline = 0, lastline = 0;
 static void attckufo_drawlines (int start, int last);
 
@@ -64,9 +65,8 @@ static UINT16 mono[2];
 
 VIDEO_START( attckufo )
 {
-	attckufo_bitmap = Machine->scrbitmap;
 	mono[0]=0;
-	return 0;
+	return video_start_generic_bitmapped();
 }
 
 
@@ -148,14 +148,14 @@ static void attckufo_draw_character (int ybegin, int yend,
 		for (y = ybegin; y <= yend; y++)
 		{
 			code = attckufo_dma_read ((chargenaddr + ch * 8 + y) );
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff) = color[code >> 7];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 1) = color[(code >> 6) & 1];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 2) = color[(code >> 5) & 1];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 3) = color[(code >> 4) & 1];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 4) = color[(code >> 3) & 1];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 5) = color[(code >> 2) & 1];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 6) = color[(code >> 1) & 1];
-			*((UINT16 *) attckufo_bitmap->line[y + yoff] + xoff + 7) = color[code & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff) = color[code >> 7];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 1) = color[(code >> 6) & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 2) = color[(code >> 5) & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 3) = color[(code >> 4) & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 4) = color[(code >> 3) & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 5) = color[(code >> 2) & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 6) = color[(code >> 1) & 1];
+			*((UINT16 *) tmpbitmap->line[y + yoff] + xoff + 7) = color[code & 1];
 		}
 	}
 }
@@ -204,8 +204,4 @@ INTERRUPT_GEN( attckufo_raster_interrupt )
 		attckufo_drawlines (lastline, MAX_LINES);
 		lastline = 0;
 	}
-}
-
-VIDEO_UPDATE( attckufo )
-{
 }

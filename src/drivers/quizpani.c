@@ -10,7 +10,7 @@
     OSC   : 16.000MHz, 10.000MHz
     RAM   : 62256 (x2), 6116 (x2), 6264 (x4)
     DIPSW : 8 position (x2)
-    CUSTOM: NMK112 (QFP64, near ROMs 31,32,4, possible sound chip/CPU?)
+    CUSTOM: NMK112 (QFP64, near ROMs 31,32,4, M6295 sample ROM banking)
             NMK111 (QFP64, 1x input-related near JAMMA, 2x gfx related near ROMs 11,12,21,22)
             NMK903 (QFP44, x2, near ROMs 11,12,21,22)
             NMK005 (QFP64, near DIPs, possible MCU?)
@@ -33,6 +33,7 @@
 *************************************************************************/
 
 #include "driver.h"
+#include "machine/nmk112.h"
 #include "sound/okim6295.h"
 
 extern data16_t *quizpani_bg_videoram, *quizpani_txt_videoram;
@@ -44,22 +45,6 @@ extern WRITE16_HANDLER( quizpani_tilesbank_w );
 
 extern VIDEO_START( quizpani );
 extern VIDEO_UPDATE( quizpani );
-
-static WRITE16_HANDLER( quizpani_oki6295_bankswitch_w )
-{
-	#define TABLESIZE 0x100
-	#define BANKSIZE 0x10000
-	int banknum = offset & 3;
-	unsigned char *rom = memory_region(REGION_SOUND1);
-	int bankaddr = data * BANKSIZE;
-
-	/* copy the samples */
-	memcpy(rom + banknum * BANKSIZE, rom + 0x40000 + bankaddr, BANKSIZE);
-
-	/* and also copy the samples address table */
-	rom += banknum * TABLESIZE;
-	memcpy(rom, rom + 0x40000 + bankaddr, TABLESIZE);
-}
 
 static ADDRESS_MAP_START( quizpani_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
@@ -80,7 +65,7 @@ static ADDRESS_MAP_START( quizpani_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100016, 0x100017) AM_WRITE(MWA16_NOP) /* IRQ eanble? */
 	AM_RANGE(0x100018, 0x100019) AM_WRITE(quizpani_tilesbank_w)
 	AM_RANGE(0x104000, 0x104001) AM_WRITE(OKIM6295_data_0_lsb_w)
-	AM_RANGE(0x104020, 0x104027) AM_WRITE(quizpani_oki6295_bankswitch_w)
+	AM_RANGE(0x104020, 0x104027) AM_WRITE(NMK112_okibank_lsb_w)
 	AM_RANGE(0x108000, 0x1083ff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x108400, 0x1085ff) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x10c000, 0x10c007) AM_WRITE(MWA16_RAM) AM_BASE(&quizpani_scrollreg)
@@ -237,7 +222,7 @@ INPUT_PORTS_START( quizpani )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -250,7 +235,7 @@ static struct GfxLayout tilelayout =
 	32*32
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0x100, 16 }, /* Background */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 }, /* Text */

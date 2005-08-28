@@ -11,7 +11,7 @@
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 static data8_t *fgram;
 
 static void get_fg_tile_info(int tile_index)
@@ -175,7 +175,7 @@ INPUT_PORTS_START( onetwo )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct GfxLayout tiles8x8x6_layout =
+static gfx_layout tiles8x8x6_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -186,7 +186,7 @@ static struct GfxLayout tiles8x8x6_layout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8x6_layout, 0, 2 },
 	{ -1 }

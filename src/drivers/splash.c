@@ -385,7 +385,7 @@ INPUT_PORTS_START( funystrp )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-static struct GfxLayout tilelayout8 =
+static gfx_layout tilelayout8 =
 {
 	8,8,									/* 8x8 tiles */
 	0x20000/8,								/* number of tiles */
@@ -396,7 +396,7 @@ static struct GfxLayout tilelayout8 =
 	8*8
 };
 
-static struct GfxLayout tilelayout16 =
+static gfx_layout tilelayout16 =
 {
 	16,16,									/* 16x16 tiles */
 	0x20000/32,								/* number of tiles */
@@ -407,7 +407,7 @@ static struct GfxLayout tilelayout16 =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &tilelayout8 ,0,128 },
 	{ REGION_GFX1, 0x000000, &tilelayout16,0,128 },

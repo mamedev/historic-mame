@@ -18,7 +18,7 @@ static data8_t *ojankohs_paletteram;
 static int ojankohs_gfxreg;
 static int ojankohs_flipscreen;
 static int ojankohs_scrollx, ojankohs_scrolly;
-static struct tilemap *ojankohs_tilemap;
+static tilemap *ojankohs_tilemap;
 static int ojankoc_screen_refresh;
 static struct mame_bitmap *ojankoc_tmpbitmap;
 

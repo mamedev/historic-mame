@@ -13,7 +13,7 @@
 
 UINT8 *bagman_video_enable;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 WRITE8_HANDLER( bagman_videoram_w )

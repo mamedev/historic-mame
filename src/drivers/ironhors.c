@@ -310,7 +310,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout ironhors_charlayout =
+static gfx_layout ironhors_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -321,7 +321,7 @@ static struct GfxLayout ironhors_charlayout =
 	32*8
 };
 
-static struct GfxLayout ironhors_spritelayout =
+static gfx_layout ironhors_spritelayout =
 {
 	16,16,
 	512,
@@ -334,7 +334,7 @@ static struct GfxLayout ironhors_spritelayout =
 	32*32
 };
 
-static struct GfxDecodeInfo ironhors_gfxdecodeinfo[] =
+static gfx_decode ironhors_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &ironhors_charlayout,         0, 16*8 },
 	{ REGION_GFX1, 0, &ironhors_spritelayout, 16*8*16, 16*8 },
@@ -343,7 +343,7 @@ static struct GfxDecodeInfo ironhors_gfxdecodeinfo[] =
 };
 
 
-static struct GfxLayout farwest_charlayout =
+static gfx_layout farwest_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -354,7 +354,7 @@ static struct GfxLayout farwest_charlayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout farwest_spritelayout =
+static gfx_layout farwest_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
@@ -367,7 +367,7 @@ static struct GfxLayout farwest_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout farwest_spritelayout2 =
+static gfx_layout farwest_spritelayout2 =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -378,7 +378,7 @@ static struct GfxLayout farwest_spritelayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo farwest_gfxdecodeinfo[] =
+static gfx_decode farwest_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &farwest_charlayout,         0, 16*8 },
 	{ REGION_GFX2, 0, &farwest_spritelayout, 16*8*16, 16*8 },

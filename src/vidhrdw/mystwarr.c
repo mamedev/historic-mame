@@ -15,7 +15,7 @@ static int layer_colorbase[6];
 static int oinprion, cbparam;
 static int sprite_colorbase, sub1_colorbase, last_psac_colorbase, gametype;
 static int roz_enable, roz_rombank;
-static struct tilemap *ult_936_tilemap;
+static tilemap *ult_936_tilemap;
 static char *orig_roms;
 
 // do some trickery since we know the graphics decode doesn't touch the source data again

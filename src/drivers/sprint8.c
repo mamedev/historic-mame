@@ -479,7 +479,7 @@ INPUT_PORTS_START( sprint8p )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout_1 =
+static gfx_layout tile_layout_1 =
 {
 	16, 8,
 	64,
@@ -495,7 +495,7 @@ static struct GfxLayout tile_layout_1 =
 };
 
 
-static struct GfxLayout tile_layout_2 =
+static gfx_layout tile_layout_2 =
 {
 	16, 8,
 	64,
@@ -513,7 +513,7 @@ static struct GfxLayout tile_layout_2 =
 };
 
 
-static struct GfxLayout car_layout =
+static gfx_layout car_layout =
 {
 	16, 8,
 	8,
@@ -530,7 +530,7 @@ static struct GfxLayout car_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout_1, 0, 18 },
 	{ REGION_GFX1, 0, &tile_layout_2, 0, 18 },

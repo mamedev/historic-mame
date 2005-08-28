@@ -2523,7 +2523,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -2533,7 +2533,7 @@ static struct GfxLayout charlayout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
 };
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -2546,14 +2546,14 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0, &tilelayout,  0, 256 },  /* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout rambo3_charlayout =
+static gfx_layout rambo3_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -2563,7 +2563,7 @@ static struct GfxLayout rambo3_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-static struct GfxLayout rambo3_tilelayout =
+static gfx_layout rambo3_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -2576,7 +2576,7 @@ static struct GfxLayout rambo3_tilelayout =
 	32*8
 };
 
-static struct GfxDecodeInfo rambo3_gfxdecodeinfo[] =
+static gfx_decode rambo3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &rambo3_charlayout,  0, 256 },  /* text */
 	{ REGION_GFX1, 0, &rambo3_tilelayout,  0, 256 },  /* sprites & playfield */
@@ -3969,7 +3969,7 @@ GAME( 1994, spacedxj, spacedx, spacedx,  pbobble,  0, ROT0,   "Taito Corporation
 GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, 0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.0" )
 /*
     Sonic Blast Man is a ticket dispensing game.
-    (Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_driver).
+    (Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_config).
     It is a bit different from other games running on this system,
     in that it has a punching pad that player needs to punch to hit
     the enemy.

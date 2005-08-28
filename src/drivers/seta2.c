@@ -1268,7 +1268,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_4bpp_lo =
+static gfx_layout layout_4bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1280,7 +1280,7 @@ static struct GfxLayout layout_4bpp_lo =
 	8*8*2
 };
 
-static struct GfxLayout layout_4bpp_hi =
+static gfx_layout layout_4bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1292,7 +1292,7 @@ static struct GfxLayout layout_4bpp_hi =
 	8*8*2
 };
 
-static struct GfxLayout layout_6bpp =
+static gfx_layout layout_6bpp =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1306,7 +1306,7 @@ static struct GfxLayout layout_6bpp =
 	8*8*2
 };
 
-static struct GfxLayout layout_8bpp =
+static gfx_layout layout_8bpp =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1320,7 +1320,7 @@ static struct GfxLayout layout_8bpp =
 	8*8*2
 };
 
-static struct GfxLayout layout_3bpp_lo =
+static gfx_layout layout_3bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1332,7 +1332,7 @@ static struct GfxLayout layout_3bpp_lo =
 	8*8*2
 };
 
-static struct GfxLayout layout_2bpp_hi =
+static gfx_layout layout_2bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1345,7 +1345,7 @@ static struct GfxLayout layout_2bpp_hi =
 
 /*  Tiles are 8bpp, but the hardware is additionally able to discard
     some bitplanes and use the low 4 bits only, or the high 4 bits only */
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_4bpp_lo, 0, 0x8000/16 },
 	{ REGION_GFX1, 0, &layout_4bpp_hi, 0, 0x8000/16 },

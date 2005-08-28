@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

@@ -27,7 +27,7 @@
 #define STEP16(START,STEP) STEP8(START,STEP),STEP8((START)+8*(STEP),STEP)
 
 
-struct GfxLayout
+struct _gfx_layout
 {
 	UINT16 width,height; /* width and height (in pixels) of chars/sprites */
 	UINT32 total; /* total numer of chars/sprites in the rom */
@@ -37,6 +37,7 @@ struct GfxLayout
 	UINT32 yoffset[MAX_GFX_SIZE]; /* of the given coordinates */
 	UINT32 charincrement; /* distance between two consecutive characters/sprites (in bits) */
 };
+typedef struct _gfx_layout gfx_layout;
 
 #define GFX_RAW 0x12345678
 /* When planeoffset[0] is set to GFX_RAW, the gfx data is left as-is, with no conversion.
@@ -54,7 +55,7 @@ struct GfxLayout
    not be prerotated and will rely on GFX_SWAPXY.
 */
 
-struct GfxElement
+struct _gfx_element
 {
 	UINT16 width,height;
 
@@ -73,36 +74,34 @@ struct GfxElement
 	UINT32 char_modulo;	/* = line_modulo * height */
 	UINT32 flags;
 };
+typedef struct _gfx_element gfx_element;
 
 #define GFX_PACKED				1	/* two 4bpp pixels are packed in one byte of gfxdata */
 #define GFX_SWAPXY				2	/* characters are mirrored along the top-left/bottom-right diagonal */
 #define GFX_DONT_FREE_GFXDATA	4	/* gfxdata was not malloc()ed, so don't free it on exit */
 
 
-struct GfxDecodeInfo
+struct _gfx_decode
 {
 	int memory_region;	/* memory region where the data resides (usually 1) */
 						/* -1 marks the end of the array */
 	UINT32 start;	/* beginning of data to decode */
-	struct GfxLayout *gfxlayout;
+	gfx_layout *gfxlayout;
 	UINT16 color_codes_start;	/* offset in the color lookup table where color codes start */
 	UINT16 total_color_codes;	/* total number of color codes */
 };
+typedef struct _gfx_decode gfx_decode;
 
 
-struct rectangle
+struct _alpha_cache
 {
-	int min_x,max_x;
-	int min_y,max_y;
-};
-
-struct _alpha_cache {
 	const UINT8 *alphas;
 	const UINT8 *alphad;
 	UINT8 alpha[0x101][0x100];
 };
+typedef struct _alpha_cache alpha_cache;
 
-extern struct _alpha_cache alpha_cache;
+extern struct _alpha_cache drawgfx_alpha_cache;
 
 enum
 {
@@ -146,18 +145,18 @@ extern int pdrawgfx_shadow_lowpri;
 #define read_pixel(bm,x,y)		(*(bm)->read)(bm,x,y)
 #define plot_box(bm,x,y,w,h,p)	(*(bm)->plot_box)(bm,x,y,w,h,p)
 
-void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
-struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);
+void decodechar(gfx_element *gfx,int num,const unsigned char *src,const gfx_layout *gl);
+gfx_element *decodegfx(const unsigned char *src,const gfx_layout *gl);
 void set_pixel_functions(struct mame_bitmap *bitmap);
-void freegfx(struct GfxElement *gfx);
-void drawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void freegfx(gfx_element *gfx);
+void drawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
-void pdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		UINT32 priority_mask);
-void mdrawgfx(struct mame_bitmap *dest,const struct GfxElement *gfx,
+void mdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		UINT32 priority_mask);
@@ -185,14 +184,14 @@ void alpha_init(void);
 INLINE void alpha_set_level(int level) {
 	if(level == 0)
 		level = -1;
-	alpha_cache.alphas = alpha_cache.alpha[level+1];
-	alpha_cache.alphad = alpha_cache.alpha[255-level];
+	drawgfx_alpha_cache.alphas = drawgfx_alpha_cache.alpha[level+1];
+	drawgfx_alpha_cache.alphad = drawgfx_alpha_cache.alpha[255-level];
 }
 
 INLINE UINT32 alpha_blend16( UINT32 d, UINT32 s )
 {
-	const UINT8 *alphas = alpha_cache.alphas;
-	const UINT8 *alphad = alpha_cache.alphad;
+	const UINT8 *alphas = drawgfx_alpha_cache.alphas;
+	const UINT8 *alphad = drawgfx_alpha_cache.alphad;
 	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
 		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
 }
@@ -200,16 +199,16 @@ INLINE UINT32 alpha_blend16( UINT32 d, UINT32 s )
 
 INLINE UINT32 alpha_blend32( UINT32 d, UINT32 s )
 {
-	const UINT8 *alphas = alpha_cache.alphas;
-	const UINT8 *alphad = alpha_cache.alphad;
+	const UINT8 *alphas = drawgfx_alpha_cache.alphas;
+	const UINT8 *alphad = drawgfx_alpha_cache.alphad;
 	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
 		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
 }
 
 INLINE UINT32 alpha_blend_r16( UINT32 d, UINT32 s, UINT8 level )
 {
-	const UINT8 *alphas = alpha_cache.alpha[level];
-	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	const UINT8 *alphas = drawgfx_alpha_cache.alpha[level];
+	const UINT8 *alphad = drawgfx_alpha_cache.alpha[255 - level];
 	return (alphas[s & 0x1f] | (alphas[(s>>5) & 0x1f] << 5) | (alphas[(s>>10) & 0x1f] << 10))
 		+ (alphad[d & 0x1f] | (alphad[(d>>5) & 0x1f] << 5) | (alphad[(d>>10) & 0x1f] << 10));
 }
@@ -217,8 +216,8 @@ INLINE UINT32 alpha_blend_r16( UINT32 d, UINT32 s, UINT8 level )
 
 INLINE UINT32 alpha_blend_r32( UINT32 d, UINT32 s, UINT8 level )
 {
-	const UINT8 *alphas = alpha_cache.alpha[level];
-	const UINT8 *alphad = alpha_cache.alpha[255 - level];
+	const UINT8 *alphas = drawgfx_alpha_cache.alpha[level];
+	const UINT8 *alphad = drawgfx_alpha_cache.alpha[255 - level];
 	return (alphas[s & 0xff] | (alphas[(s>>8) & 0xff] << 8) | (alphas[(s>>16) & 0xff] << 16))
 		+ (alphad[d & 0xff] | (alphad[(d>>8) & 0xff] << 8) | (alphad[(d>>16) & 0xff] << 16));
 }
@@ -256,28 +255,20 @@ void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority);
 
 void fillbitmap(struct mame_bitmap *dest,pen_t pen,const struct rectangle *clip);
-void drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
-void pdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void pdrawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
-void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
 
 void drawgfx_toggle_crosshair(void);
 void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip,int player);
-
-INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)
-{
-	if (src->min_x > dst->min_x) dst->min_x = src->min_x;
-	if (src->max_x < dst->max_x) dst->max_x = src->max_x;
-	if (src->min_y > dst->min_y) dst->min_y = src->min_y;
-	if (src->max_y < dst->max_y) dst->max_y = src->max_y;
-}
 
 
 #endif	/* __DRAWGFX_H__ */

@@ -469,7 +469,7 @@ INPUT_PORTS_START( chinagat )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,			/* 8*8 chars */
 	RGN_FRAC(1,1),	/* num of characters */
@@ -480,7 +480,7 @@ static struct GfxLayout charlayout =
 	32*8 /* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,			/* 16x16 chars */
 	RGN_FRAC(1,2),	/* num of Tiles/Sprites */
@@ -492,7 +492,7 @@ static struct GfxLayout tilelayout =
 	64*8 /* every char takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0,16 },	/*  8x8  chars */
 	{ REGION_GFX2, 0, &tilelayout, 128, 8 },	/* 16x16 sprites */

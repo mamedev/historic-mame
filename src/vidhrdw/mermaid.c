@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 UINT8* mermaid_videoram2;
 UINT8* mermaid_bg_scrollram;

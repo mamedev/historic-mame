@@ -35,8 +35,8 @@
  ****************************************************************************/
 /* Long(er) function names, short macro names... */
 #define ABITS	(activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM))
-#define AMASK	(address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3)
-#define AMASKS(s) (address_space[s].addrmask | 3)
+#define AMASK	(active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3)
+#define AMASKS(s) (active_address_space[s].addrmask | 3)
 #define ASHIFT	(activecpu_addrbus_shift(ADDRESS_SPACE_PROGRAM))
 #define ALIGN	(activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8)
 #define INSTL	activecpu_max_instruction_bytes()
@@ -49,17 +49,17 @@ INLINE data8_t RDSPC(int space, offs_t addr)
 	switch (activecpu_databus_width(space)/8)
 	{
 		case 1:
-			return (*address_space[space].accessors->read_byte)(addr);
+			return (*active_address_space[space].accessors->read_byte)(addr);
 		case 2:
-			return (*address_space[space].accessors->read_word)(addr) >> (8 * ((addr & 1) ^ (ENDIAN == CPU_IS_BE ? 1 : 0)));
+			return (*active_address_space[space].accessors->read_word)(addr) >> (8 * ((addr & 1) ^ (ENDIAN == CPU_IS_BE ? 1 : 0)));
 		case 4:
-			return (*address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 3) ^ (ENDIAN == CPU_IS_BE ? 3 : 0)));
+			return (*active_address_space[space].accessors->read_dword)(addr) >> (8 * ((addr & 3) ^ (ENDIAN == CPU_IS_BE ? 3 : 0)));
 		case 8:
-			return (*address_space[space].accessors->read_qword)(addr) >> (8 * ((addr & 7) ^ (ENDIAN == CPU_IS_BE ? 7 : 0)));
+			return (*active_address_space[space].accessors->read_qword)(addr) >> (8 * ((addr & 7) ^ (ENDIAN == CPU_IS_BE ? 7 : 0)));
 	}
 	return 0;
 }
-#define WRSPC(s,a,v) do { if (address_space[s].accessors->write_byte) (*address_space[s].accessors->write_byte)(a,v); } while (0)
+#define WRSPC(s,a,v) do { if (active_address_space[s].accessors->write_byte) (*active_address_space[s].accessors->write_byte)(a,v); } while (0)
 #define RDINT(a)	(program_read_byte(a))
 #define WRINT(a,v)	(program_write_byte(a,v))
 
@@ -541,9 +541,9 @@ rgb_t debugger_palette[] = {
 #include "dbgfonts/m0813fnt.c"
 
 
-struct GfxElement *build_debugger_font(void)
+gfx_element *build_debugger_font(void)
 {
-	struct GfxElement *font;
+	gfx_element *font;
 
 	font = decodegfx(fontdata,&fontlayout);
 
@@ -556,7 +556,7 @@ struct GfxElement *build_debugger_font(void)
 	return font;
 }
 
-static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
+static void toggle_cursor(struct mame_bitmap *bitmap, gfx_element *font)
 {
 	int sx, sy, x, y;
 
@@ -587,7 +587,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 void dbg_put_screen_char(int ch, int attr, int x, int y)
 {
 	struct mame_bitmap *bitmap = Machine->debug_bitmap;
-	struct GfxElement *font = Machine->debugger_font;
+	gfx_element *font = Machine->debugger_font;
 
 	drawgfx(bitmap, font,
 		ch, attr, 0, 0, x*font->width, y*font->height,
@@ -1823,7 +1823,7 @@ static int hit_brk_regs(void)
  **************************************************************************/
 static const char *name_rom( const char *type, int regnum, unsigned *base, unsigned start )
 {
-	const struct RomModule *region, *rom, *chunk;
+	const rom_entry *region, *rom, *chunk;
 	unsigned offset = *base;
 
 	for (region = rom_first_region(Machine->gamedrv); region; region = rom_next_region(region))
@@ -1863,7 +1863,7 @@ static const char *name_rdmem( unsigned base )
 {
 	static char buffer[16][79+1];
 	static int which = 0;
-	const struct address_map_t *map = memory_get_map(active_cpu, ADDRESS_SPACE_PROGRAM);
+	const address_map *map = memory_get_map(active_cpu, ADDRESS_SPACE_PROGRAM);
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
 	char *dst;
@@ -1992,7 +1992,7 @@ static const char *name_wrmem( unsigned base )
 {
 	static char buffer[16][79+1];
 	static int which = 0;
-	const struct address_map_t *map = memory_get_map(active_cpu, ADDRESS_SPACE_PROGRAM);
+	const address_map *map = memory_get_map(active_cpu, ADDRESS_SPACE_PROGRAM);
 	int ram_cnt = 1, nop_cnt = 1;
 	const char *name;
 	char *dst;

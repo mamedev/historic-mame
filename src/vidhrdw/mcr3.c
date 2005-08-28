@@ -33,8 +33,8 @@ size_t spyhunt_alpharam_size;
  *
  *************************************/
 
-static struct tilemap *bg_tilemap;
-static struct tilemap *alpha_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *alpha_tilemap;
 
 
 

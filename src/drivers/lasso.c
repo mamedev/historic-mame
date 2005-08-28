@@ -534,7 +534,7 @@ INPUT_PORTS_START( pinbo )
 INPUT_PORTS_END
 
 
-static struct GfxLayout lasso_charlayout =
+static gfx_layout lasso_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -545,7 +545,7 @@ static struct GfxLayout lasso_charlayout =
 	8*8
 };
 
-static struct GfxLayout lasso_spritelayout =
+static gfx_layout lasso_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -556,7 +556,7 @@ static struct GfxLayout lasso_spritelayout =
 	16*16
 };
 
-static struct GfxLayout wwjgtin_tracklayout =
+static gfx_layout wwjgtin_tracklayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -568,7 +568,7 @@ static struct GfxLayout wwjgtin_tracklayout =
 };
 
 /* Pinbo is 3bpp, otherwise the same */
-static struct GfxLayout pinbo_charlayout =
+static gfx_layout pinbo_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,6),
@@ -579,7 +579,7 @@ static struct GfxLayout pinbo_charlayout =
 	8*8
 };
 
-static struct GfxLayout pinbo_spritelayout =
+static gfx_layout pinbo_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -591,14 +591,14 @@ static struct GfxLayout pinbo_spritelayout =
 };
 
 
-static struct GfxDecodeInfo lasso_gfxdecodeinfo[] =
+static gfx_decode lasso_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lasso_charlayout,   0, 16 },
 	{ REGION_GFX1, 0, &lasso_spritelayout, 0, 16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo wwjgtin_gfxdecodeinfo[] =
+static gfx_decode wwjgtin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lasso_charlayout,       0, 16 },
 	{ REGION_GFX1, 0, &lasso_spritelayout,     0, 16 },
@@ -606,7 +606,7 @@ static struct GfxDecodeInfo wwjgtin_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo pinbo_gfxdecodeinfo[] =
+static gfx_decode pinbo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pinbo_charlayout,   0, 16 },
 	{ REGION_GFX1, 0, &pinbo_spritelayout, 0, 16 },

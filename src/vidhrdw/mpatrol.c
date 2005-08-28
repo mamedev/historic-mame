@@ -17,7 +17,7 @@ static unsigned char bg2xpos;
 static unsigned char bg2ypos;
 static unsigned char bgcontrol;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 /***************************************************************************
@@ -199,14 +199,14 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( mpatrol )
 {
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if (tilemap == 0)
+	if (bg_tilemap == 0)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap, 0);
+	tilemap_set_transparent_pen(bg_tilemap, 0);
 
-	tilemap_set_scroll_rows(tilemap, 16);
+	tilemap_set_scroll_rows(bg_tilemap, 16);
 
 	return 0;
 }
@@ -215,7 +215,7 @@ VIDEO_START( mpatrol )
 
 WRITE8_HANDLER( mpatrol_scroll_w )
 {
-	tilemap_set_scrollx(tilemap, offset, -data);
+	tilemap_set_scrollx(bg_tilemap, offset, -data);
 }
 
 
@@ -224,7 +224,7 @@ WRITE8_HANDLER( mpatrol_videoram_w )
 {
 	if (data != videoram[offset])
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	videoram[offset] = data;
@@ -236,7 +236,7 @@ WRITE8_HANDLER( mpatrol_colorram_w )
 {
 	if (data != colorram[offset])
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	colorram[offset] = data;
@@ -348,9 +348,9 @@ VIDEO_UPDATE( mpatrol )
 		}
 	}
 
-	tilemap_set_flip(tilemap, flip_screen ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
+	tilemap_set_flip(bg_tilemap, flip_screen ? TILEMAP_FLIPX | TILEMAP_FLIPY : 0);
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
 

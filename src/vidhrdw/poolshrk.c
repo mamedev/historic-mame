@@ -10,7 +10,7 @@ UINT8* poolshrk_playfield_ram;
 UINT8* poolshrk_hpos_ram;
 UINT8* poolshrk_vpos_ram;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -27,13 +27,13 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( poolshrk )
 {
-	tilemap = tilemap_create(get_tile_info, get_memory_offset,
+	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset,
 		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
-	if (tilemap == NULL)
+	if (bg_tilemap == NULL)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap, 0);
+	tilemap_set_transparent_pen(bg_tilemap, 0);
 
 	return 0;
 }
@@ -43,7 +43,7 @@ VIDEO_UPDATE( poolshrk )
 {
 	int i;
 
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
@@ -60,5 +60,5 @@ VIDEO_UPDATE( poolshrk )
 
 	/* draw playfield */
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 }

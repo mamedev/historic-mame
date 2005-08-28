@@ -42,9 +42,9 @@ static void ppcdrc403_set_irq_line(int irqline, int state);
 #endif
 
 static void ppcdrc_init(void);
-static void ppcdrc_reset(struct drccore *drc);
-static void ppcdrc_recompile(struct drccore *drc);
-static void ppcdrc_entrygen(struct drccore *drc);
+static void ppcdrc_reset(drc_core *drc);
+static void ppcdrc_recompile(drc_core *drc);
+static void ppcdrc_entrygen(drc_core *drc);
 
 #define RD				((op >> 21) & 0x1F)
 #define RT				((op >> 21) & 0x1f)
@@ -255,7 +255,7 @@ typedef struct {
 	UINT64 tb;			/* 56-bit timebase register */
 
 	int (*irq_callback)(int irqline);
-	struct drccore *drc;
+	drc_core *drc;
 	UINT32 drcoptions;
 
 	void *		invoke_exception_handler;
@@ -306,7 +306,7 @@ typedef struct {
 typedef struct {
 	int code;
 	int subcode;
-	UINT32 (* handler)(struct drccore *, UINT32);
+	UINT32 (* handler)(drc_core *, UINT32);
 } PPC_OPCODE;
 
 
@@ -780,7 +780,7 @@ INLINE UINT32 ppc_get_cr(void)
 	return CR(0) << 28 | CR(1) << 24 | CR(2) << 20 | CR(3) << 16 | CR(4) << 12 | CR(5) << 8 | CR(6) << 4 | CR(7);
 }
 
-static void log_code(struct drccore *drc)
+static void log_code(drc_core *drc)
 {
 #if LOG_CODE
 	FILE *temp;
@@ -791,11 +791,11 @@ static void log_code(struct drccore *drc)
 }
 /***********************************************************************/
 
-static UINT32 (* optable19[1024])(struct drccore *, UINT32);
-static UINT32 (* optable31[1024])(struct drccore *, UINT32);
-static UINT32 (* optable59[1024])(struct drccore *, UINT32);
-static UINT32 (* optable63[1024])(struct drccore *, UINT32);
-static UINT32 (* optable[64])(struct drccore *, UINT32);
+static UINT32 (* optable19[1024])(drc_core *, UINT32);
+static UINT32 (* optable31[1024])(drc_core *, UINT32);
+static UINT32 (* optable59[1024])(drc_core *, UINT32);
+static UINT32 (* optable63[1024])(drc_core *, UINT32);
+static UINT32 (* optable[64])(drc_core *, UINT32);
 
 #include "ppc_mem.c"
 

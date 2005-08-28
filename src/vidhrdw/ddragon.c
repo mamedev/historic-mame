@@ -51,7 +51,7 @@ unsigned char *ddragon_scrolly_lo;
 unsigned char *ddragon_spriteram;
 int technos_video_hw;
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 
 
 
@@ -168,7 +168,7 @@ WRITE8_HANDLER( ddragon_fgvideoram_w )
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 
 	data8_t *src;
 	int i;

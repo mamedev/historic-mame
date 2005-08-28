@@ -29,7 +29,7 @@ int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 #define CONGO_VID	1
 #define FUTSPY_VID	2
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 
 /***************************************************************************
 

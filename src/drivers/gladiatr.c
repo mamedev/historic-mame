@@ -600,7 +600,7 @@ INPUT_PORTS_END
 
 /*******************************************************************/
 
-static struct GfxLayout charlayout  =
+static gfx_layout charlayout  =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -611,7 +611,7 @@ static struct GfxLayout charlayout  =
 	8*8
 };
 
-static struct GfxLayout tilelayout  =
+static gfx_layout tilelayout  =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -622,7 +622,7 @@ static struct GfxLayout tilelayout  =
 	16*8
 };
 
-static struct GfxLayout spritelayout  =
+static gfx_layout spritelayout  =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -635,7 +635,7 @@ static struct GfxLayout spritelayout  =
 	64*8
 };
 
-static struct GfxDecodeInfo ppking_gfxdecodeinfo[] =
+static gfx_decode ppking_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 1 },
 	{ REGION_GFX2, 0, &tilelayout, 0, 32 },
@@ -643,7 +643,7 @@ static struct GfxDecodeInfo ppking_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gladiatr_gfxdecodeinfo[] =
+static gfx_decode gladiatr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0x200, 1 },
 	{ REGION_GFX2, 0, &tilelayout,   0x000, 32 },

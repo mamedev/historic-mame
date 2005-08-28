@@ -7,7 +7,7 @@ Sengoku Mahjong Video Hardware section
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap,*md_tilemap,*fg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*md_tilemap,*fg_tilemap,*tx_tilemap;
 data8_t *sengokmj_bgvram,*sengokmj_mdvram,*sengokmj_fgvram,*sengokmj_txvram;
 
 WRITE8_HANDLER( sengokmj_bgvram_w )

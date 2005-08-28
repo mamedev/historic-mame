@@ -12,7 +12,7 @@ static data16_t *vram,*buf_spriteram,*buf_spriteram2;
 #define VREG_SIZE 18
 static data16_t vreg[VREG_SIZE];
 
-static struct tilemap *tilemap[3];
+static tilemap *bg_tilemap[3];
 
 
 /***************************************************************************
@@ -60,21 +60,21 @@ static void get_tile_info2(int tile_index)
 
 VIDEO_START( othldrby )
 {
-	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	bg_tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
 	vram = auto_malloc(VIDEORAM_SIZE * sizeof(vram[0]));
 	buf_spriteram = auto_malloc(2*SPRITERAM_SIZE * sizeof(buf_spriteram[0]));
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !vram || !buf_spriteram)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !vram || !buf_spriteram)
 		return 1;
 
 	buf_spriteram2 = buf_spriteram + SPRITERAM_SIZE;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_transparent_pen(tilemap[1],0);
-	tilemap_set_transparent_pen(tilemap[2],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[2],0);
 
 	return 0;
 }
@@ -110,7 +110,7 @@ WRITE16_HANDLER( othldrby_videoram_w )
 	if (vram_addr < VIDEORAM_SIZE)
 	{
 		if (vram_addr < SPRITERAM_START)
-			tilemap_mark_tile_dirty(tilemap[vram_addr/0x800],(vram_addr&0x7ff)/2);
+			tilemap_mark_tile_dirty(bg_tilemap[vram_addr/0x800],(vram_addr&0x7ff)/2);
 		vram[vram_addr++] = data;
 	}
 	else
@@ -193,13 +193,13 @@ VIDEO_UPDATE( othldrby )
 	{
 		if (flip_screen)
 		{
-			tilemap_set_scrollx(tilemap[layer],0,vreg[2*layer]+59);
-			tilemap_set_scrolly(tilemap[layer],0,vreg[2*layer+1]+248);
+			tilemap_set_scrollx(bg_tilemap[layer],0,vreg[2*layer]+59);
+			tilemap_set_scrolly(bg_tilemap[layer],0,vreg[2*layer+1]+248);
 		}
 		else
 		{
-			tilemap_set_scrollx(tilemap[layer],0,vreg[2*layer]-58);
-			tilemap_set_scrolly(tilemap[layer],0,vreg[2*layer+1]+9);
+			tilemap_set_scrollx(bg_tilemap[layer],0,vreg[2*layer]-58);
+			tilemap_set_scrolly(bg_tilemap[layer],0,vreg[2*layer+1]+9);
 		}
 	}
 
@@ -208,16 +208,16 @@ VIDEO_UPDATE( othldrby )
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,cliprect,tilemap[layer],0,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[layer],0,0);
 	draw_sprites(bitmap,cliprect,0);
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,cliprect,tilemap[layer],1,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[layer],1,0);
 	draw_sprites(bitmap,cliprect,1);
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,cliprect,tilemap[layer],2,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[layer],2,0);
 	draw_sprites(bitmap,cliprect,2);
 	for (layer = 0;layer < 3;layer++)
-		tilemap_draw(bitmap,cliprect,tilemap[layer],3,0);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[layer],3,0);
 	draw_sprites(bitmap,cliprect,3);
 }
 

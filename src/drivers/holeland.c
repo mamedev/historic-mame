@@ -217,7 +217,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout holeland_charlayout =
+static gfx_layout holeland_charlayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -228,7 +228,7 @@ static struct GfxLayout holeland_charlayout =
 	8*16
 };
 
-static struct GfxLayout crzrally_charlayout =
+static gfx_layout crzrally_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -239,7 +239,7 @@ static struct GfxLayout crzrally_charlayout =
 	8*16
 };
 
-static struct GfxLayout holeland_spritelayout =
+static gfx_layout holeland_spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,4),
@@ -254,7 +254,7 @@ static struct GfxLayout holeland_spritelayout =
 	64*8
 };
 
-static struct GfxLayout crzrally_spritelayout =
+static gfx_layout crzrally_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -269,14 +269,14 @@ static struct GfxLayout crzrally_spritelayout =
 	8*16
 };
 
-static struct GfxDecodeInfo holeland_gfxdecodeinfo[] =
+static gfx_decode holeland_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &holeland_charlayout,   0, 256 },
 	{ REGION_GFX2, 0, &holeland_spritelayout, 0, 256 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo crzrally_gfxdecodeinfo[] =
+static gfx_decode crzrally_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &crzrally_charlayout,   0, 256 },
 	{ REGION_GFX2, 0, &crzrally_spritelayout, 0, 256 },

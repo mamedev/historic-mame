@@ -318,8 +318,8 @@ INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame
 			goto DRAW_SOLID;
 		else
 		{
-			esi = alpha_cache.alphas;
-			edi = alpha_cache.alphad;
+			esi = drawgfx_alpha_cache.alphas;
+			edi = drawgfx_alpha_cache.alphad;
 			goto DRAW_ALPHA;
 		}
 	}
@@ -399,7 +399,7 @@ INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame
 
 // adpoted from generic K053936_zoom_draw()
 static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
-		struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct tilemap *tilemap,
+		struct mame_bitmap *bitmap, const struct rectangle *cliprect, tilemap *tmap,
 		int tilebpp, int blend)
 {
 	struct mame_bitmap *src_bitmap;
@@ -410,7 +410,7 @@ static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
 	UINT32 startx, starty;
 	int incxx, incxy, incyx, incyy, y, maxy, clip;
 
-	src_bitmap = tilemap_get_pixmap(tilemap);
+	src_bitmap = tilemap_get_pixmap(tmap);
 	src_cliprect = &K053936_cliprect[chip];
 	clip = K053936_clip_enabled[chip];
 
@@ -468,15 +468,15 @@ static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
 }
 
 void K053936GP_0_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
-		struct tilemap *tilemap, int tilebpp, int blend)
+		tilemap *tmap, int tilebpp, int blend)
 {
-	K053936GP_zoom_draw(0,K053936_0_ctrl,K053936_0_linectrl,bitmap,cliprect,tilemap,tilebpp,blend);
+	K053936GP_zoom_draw(0,K053936_0_ctrl,K053936_0_linectrl,bitmap,cliprect,tmap,tilebpp,blend);
 }
 
 void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
-		struct tilemap *tilemap, int tilebpp, int blend)
+		tilemap *tmap, int tilebpp, int blend)
 {
-	K053936GP_zoom_draw(1,K053936_1_ctrl,K053936_1_linectrl,bitmap,cliprect,tilemap,tilebpp,blend);
+	K053936GP_zoom_draw(1,K053936_1_ctrl,K053936_1_linectrl,bitmap,cliprect,tmap,tilebpp,blend);
 }
 
 
@@ -497,7 +497,7 @@ void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *c
     pri     : 0 = topmost, 255 = backmost (pixel priority)
 */
 
-INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElement *gfx, const struct rectangle *cliprect,
+INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const gfx_element *gfx, const struct rectangle *cliprect,
 		unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy,
 		int scalex, int scaley, int alpha, int drawmode, int zcode, int pri)
 {
@@ -554,8 +554,8 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const struct GfxElemen
 		if (alpha >= 255) drawmode &= ~2;
 	}
 
-	esi = alpha_cache.alphas;
-	edi = alpha_cache.alphad;
+	esi = drawgfx_alpha_cache.alphas;
+	edi = drawgfx_alpha_cache.alphad;
 
 	// fill internal data structure with default values
 	ozbuf_ptr  = gx_objzbuf;
@@ -1223,7 +1223,7 @@ static int gx_objdma, gx_primode;
 
 // mirrored K053247 and K054338 settings
 static data16_t *K053247_ram;
-static struct GfxElement *K053247_gfx;
+static gfx_element *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053247_dx, K053247_dy;
 
@@ -1273,8 +1273,8 @@ void konamigx_objdma(void)
 }
 
 void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
-					struct tilemap *sub1, int sub1flags,
-					struct tilemap *sub2, int sub2flags,
+					tilemap *sub1, int sub1flags,
+					tilemap *sub2, int sub2flags,
 					int mixerflags)
 {
 	static int xoffset[8] = { 0, 1, 4, 5, 16, 17, 20, 21 };

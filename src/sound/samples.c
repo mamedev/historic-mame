@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "samples.h"
+#include "state.h"
 
 
 struct sample_channel
@@ -7,6 +8,7 @@ struct sample_channel
 	sound_stream *stream;
 	INT16 *		source;
 	int			source_length;
+	int			source_num;
 	UINT32		pos;
 	UINT32		frac;
 	UINT32		step;
@@ -239,6 +241,7 @@ void sample_start(int channel,int samplenum,int loop)
 	sample = &info->samples->sample[samplenum];
 	chan->source = sample->data;
 	chan->source_length = sample->length;
+	chan->source_num = sample->data ? samplenum : -1;
 	chan->pos = 0;
 	chan->frac = 0;
 	chan->step = ((INT64)sample->frequency << FRAC_BITS) / Machine->sample_rate;
@@ -264,6 +267,7 @@ void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,in
 	/* update the parameters */
 	chan->source = sampledata;
 	chan->source_length = samples;
+	chan->source_num = -1;
 	chan->pos = 0;
 	chan->frac = 0;
 	chan->step = ((INT64)frequency << FRAC_BITS) / Machine->sample_rate;
@@ -340,6 +344,7 @@ void sample_stop(int channel)
 	/* force an update before we start */
 	stream_update(chan->stream, 0);
 	chan->source = NULL;
+	chan->source_num = -1;
 }
 
 int sample_playing(int channel)
@@ -412,6 +417,7 @@ static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sa
 				else
 				{
 					chan->source = NULL;
+					chan->source_num = -1;
 					if (length > 0)
 						memset(buffer, 0, length * sizeof(*buffer));
 					break;
@@ -425,6 +431,41 @@ static void sample_update_sound(void *param, stream_sample_t **inputs, stream_sa
 	}
 	else
 		memset(buffer, 0, length * sizeof(*buffer));
+}
+
+
+static void samples_postload(void *param)
+{
+	struct samples_info *info = param;
+	int i;
+
+	/* loop over channels */
+	for (i = 0; i < info->numchannels; i++)
+	{
+		struct sample_channel *chan = &info->channel[i];
+
+		/* attach any samples that were loaded and playing */
+		if (chan->source_num >= 0 && chan->source_num < info->samples->total)
+		{
+			struct loaded_sample *sample = &info->samples->sample[chan->source_num];
+			chan->source = sample->data;
+			chan->source_length = sample->length;
+			if (!sample->data)
+				chan->source_num = -1;
+		}
+
+		/* validate the position against the length in case the sample is smaller */
+		if (chan->source && chan->pos > chan->source_length)
+		{
+			if (chan->loop)
+				chan->pos %= chan->source_length;
+			else
+			{
+				chan->source = NULL;
+				chan->source_num = -1;
+			}
+		}
+	}
 }
 
 
@@ -450,10 +491,21 @@ static void *samples_start(int sndindex, int clock, const void *config)
 	    info->channel[i].stream = stream_create(0, 1, Machine->sample_rate, &info->channel[i], sample_update_sound);
 
 		info->channel[i].source = NULL;
+		info->channel[i].source_num = -1;
 		info->channel[i].step = 0;
 		info->channel[i].loop = 0;
 		info->channel[i].paused = 0;
+
+		/* register with the save state system */
+		state_save_register_int   ("samples", i, "source_length", &info->channel[i].source_length);
+		state_save_register_int   ("samples", i, "source_num", &info->channel[i].source_num);
+		state_save_register_UINT32("samples", i, "pos", &info->channel[i].pos, 1);
+		state_save_register_UINT32("samples", i, "frac", &info->channel[i].frac, 1);
+		state_save_register_UINT32("samples", i, "step", &info->channel[i].step, 1);
+		state_save_register_UINT8 ("samples", i, "loop", &info->channel[i].loop, 1);
+		state_save_register_UINT8 ("samples", i, "paused", &info->channel[i].paused, 1);
 	}
+	state_save_register_func_postload_ptr(samples_postload, info);
 
 	/* initialize any custom handlers */
 	if (intf->start)

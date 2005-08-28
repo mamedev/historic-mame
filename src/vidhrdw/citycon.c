@@ -16,7 +16,7 @@ data8_t *citycon_linecolor;
 data8_t *citycon_scroll;
 
 static int bg_image;
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 /***************************************************************************

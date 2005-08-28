@@ -6,7 +6,7 @@ Atari Flyball video emulation
 
 #include "driver.h"
 
-static struct tilemap* flyball_tilemap;
+static tilemap* flyball_tilemap;
 
 UINT8 flyball_pitcher_vert;
 UINT8 flyball_pitcher_horz;

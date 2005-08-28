@@ -12,7 +12,7 @@
 
 
 unsigned char *circusc_videoram,*circusc_colorram;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 unsigned char *circusc_spritebank;
 unsigned char *circusc_scroll;

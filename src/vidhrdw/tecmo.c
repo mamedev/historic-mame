@@ -15,7 +15,7 @@ int tecmo_video_type = 0;
    This is needed because there is a difference in the tile and sprite indexing.
 */
 
-static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
+static tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 
 
 /***************************************************************************

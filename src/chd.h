@@ -9,7 +9,7 @@
 #ifndef __CHD_H__
 #define __CHD_H__
 
-#include "driver.h"
+#include "mamecore.h"
 
 
 /***************************************************************************
@@ -141,7 +141,7 @@ enum
  *
  *************************************/
 
-struct chd_header
+struct _chd_header
 {
 	UINT32	length;						/* length of header data */
 	UINT32	version;					/* drive format version */
@@ -161,20 +161,23 @@ struct chd_header
 	UINT32	obsolete_heads;				/* obsolete field -- do not use! */
 	UINT32	obsolete_hunksize;			/* obsolete field -- do not use! */
 };
+typedef struct _chd_header chd_header;
 
 
-struct chd_file;
-struct chd_exfile;
-struct chd_interface_file;
+typedef struct _chd_file chd_file;
+typedef struct _chd_exfile chd_exfile;
+typedef struct _chd_interface_file chd_interface_file;
 
-struct chd_interface
+
+struct _chd_interface
 {
-	struct chd_interface_file *(*open)(const char *filename, const char *mode);
-	void (*close)(struct chd_interface_file *file);
-	UINT32 (*read)(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-	UINT32 (*write)(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-	UINT64 (*length)(struct chd_interface_file *file);
+	chd_interface_file *(*open)(const char *filename, const char *mode);
+	void (*close)(chd_interface_file *file);
+	UINT32 (*read)(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+	UINT32 (*write)(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+	UINT64 (*length)(chd_interface_file *file);
 };
+typedef struct _chd_interface chd_interface;
 
 
 
@@ -184,29 +187,29 @@ struct chd_interface
  *
  *************************************/
 
-void chd_set_interface(struct chd_interface *interface);
-void chd_save_interface(struct chd_interface *interface_save);
+void chd_set_interface(chd_interface *new_interface);
+void chd_save_interface(chd_interface *interface_save);
 
-int chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, struct chd_file *parent);
-struct chd_file *chd_open(const char *filename, int writeable, struct chd_file *parent);
-void chd_close(struct chd_file *chd);
+int chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent);
+chd_file *chd_open(const char *filename, int writeable, chd_file *parent);
+void chd_close(chd_file *chd);
 void chd_close_all(void);
 
-UINT32 chd_get_metadata(struct chd_file *chd, UINT32 *metatag, UINT32 metaindex, void *outputbuf, UINT32 outputlen);
-int chd_set_metadata(struct chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen);
+UINT32 chd_get_metadata(chd_file *chd, UINT32 *metatag, UINT32 metaindex, void *outputbuf, UINT32 outputlen);
+int chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen);
 
-UINT32 chd_read(struct chd_file *chd, UINT32 hunknum, UINT32 hunkcount, void *buffer);
-UINT32 chd_write(struct chd_file *chd, UINT32 hunknum, UINT32 hunkcount, const void *buffer);
+UINT32 chd_read(chd_file *chd, UINT32 hunknum, UINT32 hunkcount, void *buffer);
+UINT32 chd_write(chd_file *chd, UINT32 hunknum, UINT32 hunkcount, const void *buffer);
 
 int chd_get_last_error(void);
-const struct chd_header *chd_get_header(struct chd_file *chd);
-int chd_set_header(const char *filename, const struct chd_header *header);
+const chd_header *chd_get_header(chd_file *chd);
+int chd_set_header(const char *filename, const chd_header *header);
 
-int chd_compress(struct chd_file *chd, const char *rawfile, UINT32 offset, void (*progress)(const char *, ...));
-int chd_verify(struct chd_file *chd, void (*progress)(const char *, ...), UINT8 actualmd5[CHD_MD5_BYTES], UINT8 actualsha1[CHD_SHA1_BYTES]);
+int chd_compress(chd_file *chd, const char *rawfile, UINT32 offset, void (*progress)(const char *, ...));
+int chd_verify(chd_file *chd, void (*progress)(const char *, ...), UINT8 actualmd5[CHD_MD5_BYTES], UINT8 actualsha1[CHD_SHA1_BYTES]);
 
-struct chd_exfile *chd_start_compress_ex(struct chd_file *chd);
-int chd_compress_ex(struct chd_exfile *chdex, const char *rawfile, UINT64 offset, UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, UINT32 hunksecsize, void (*progress)(const char *, ...));
-int chd_end_compress_ex(struct chd_exfile *chdex, void (*progress)(const char *, ...));
+chd_exfile *chd_start_compress_ex(chd_file *chd);
+int chd_compress_ex(chd_exfile *chdex, const char *rawfile, UINT64 offset, UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, UINT32 hunksecsize, void (*progress)(const char *, ...));
+int chd_end_compress_ex(chd_exfile *chdex, void (*progress)(const char *, ...));
 
 #endif /* __CHD_H__ */

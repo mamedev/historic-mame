@@ -16,7 +16,7 @@ typedef struct
 {
 	data32_t lba, blocks, last_lba;
 	int last_command;
- 	struct hard_disk_file *disk;
+ 	hard_disk_file *disk;
 	data8_t last_packet[16];
 } SCSIHd;
 
@@ -175,7 +175,7 @@ void scsihd_read_data(SCSIHd *our_this, int bytes, data8_t *pData)
 
 		case 0x25:	// READ CAPACITY
 			{
-				struct hard_disk_info *info;
+				hard_disk_info *info;
 				UINT32 temp;
 
 				info = hard_disk_get_info(our_this->disk);
@@ -230,7 +230,7 @@ void scsihd_write_data(SCSIHd *our_this, int bytes, data8_t *pData)
 int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 {
 	SCSIHd *instance, **result;
-	struct hard_disk_file **devptr;
+	hard_disk_file **devptr;
 
 	switch (operation)
 	{
@@ -271,14 +271,14 @@ int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
 			break;
 
 		case SCSIOP_GET_DEVICE:
-			devptr = (struct hard_disk_file **)ptrparm;
+			devptr = (hard_disk_file **)ptrparm;
 			instance = (SCSIHd *)file;
 			*devptr = instance->disk;
 			break;
 
 		case SCSIOP_SET_DEVICE:
 			instance = (SCSIHd *)file;
-			instance->disk = (struct hard_disk_file *)ptrparm;
+			instance->disk = (hard_disk_file *)ptrparm;
 			break;
 
 	}

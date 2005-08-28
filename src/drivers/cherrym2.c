@@ -32,7 +32,7 @@ Any fixes for this driver should be forwarded to AGEMAME at (http://www.mameworl
 /* vidhrdw */
 
 #if 0 //Disabled
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static WRITE8_HANDLER( cm_videoram_w )
 {
@@ -272,7 +272,7 @@ INPUT_PORTS_START( cm2v841 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	4096,
@@ -283,7 +283,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	80, 32,
 	12,
@@ -304,7 +304,7 @@ static struct GfxLayout spritelayout =
 	10*64*8
 };
 
-static struct GfxLayout spritelayout2 =
+static gfx_layout spritelayout2 =
 {
 	80, 128,
 	6,
@@ -340,13 +340,13 @@ static struct GfxLayout spritelayout2 =
 	128*64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfoalt[] =
+static gfx_decode gfxdecodeinfoalt[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 16 },
 	{ REGION_GFX2, 0x0040, &spritelayout,  0, 16 },

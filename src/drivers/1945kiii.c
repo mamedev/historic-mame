@@ -46,7 +46,7 @@ Notes:
 static data16_t* k3_spriteram_1;
 static data16_t* k3_spriteram_2;
 static data16_t* k3_bgram;
-static struct tilemap *k3_bg_tilemap;
+static tilemap *k3_bg_tilemap;
 
 static WRITE16_HANDLER( k3_bgram_w )
 {
@@ -72,7 +72,7 @@ VIDEO_START(k3)
 
 static void k3_draw_sprites ( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	data16_t *source = k3_spriteram_1;
 	data16_t *source2 = k3_spriteram_2;
 	data16_t *finish = source + 0x1000/2;
@@ -227,7 +227,7 @@ INPUT_PORTS_START( k3 )
 INPUT_PORTS_END
 
 
-static struct GfxLayout k3_layout =
+static gfx_layout k3_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -239,7 +239,7 @@ static struct GfxLayout k3_layout =
 	16*128
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &k3_layout,   0x0, 2  }, /* bg tiles */
 	{ REGION_GFX2, 0, &k3_layout,   0x0, 2  }, /* bg tiles */

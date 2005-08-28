@@ -1241,7 +1241,7 @@ INPUT_PORTS_START( kageki )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct GfxLayout tnzs_charlayout =
+static gfx_layout tnzs_charlayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1254,7 +1254,7 @@ static struct GfxLayout tnzs_charlayout =
 	32*8
 };
 
-static struct GfxLayout insectx_charlayout =
+static gfx_layout insectx_charlayout =
 {
 	16,16,
 	8192,
@@ -1267,13 +1267,13 @@ static struct GfxLayout insectx_charlayout =
 	64*8
 };
 
-static struct GfxDecodeInfo tnzs_gfxdecodeinfo[] =
+static gfx_decode tnzs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tnzs_charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
-static struct GfxDecodeInfo insectx_gfxdecodeinfo[] =
+static gfx_decode insectx_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &insectx_charlayout, 0, 32 },
 	{ -1 }	/* end of array */

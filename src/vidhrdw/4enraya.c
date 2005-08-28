@@ -9,13 +9,13 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( fenraya_videoram_w )
 {
 	videoram[(offset&0x3ff)*2]=data;
 	videoram[(offset&0x3ff)*2+1]=(offset&0xc00)>>10;
-	tilemap_mark_tile_dirty(tilemap,offset&0x3ff);
+	tilemap_mark_tile_dirty(bg_tilemap,offset&0x3ff);
 }
 
 static void get_tile_info(int tile_index)
@@ -30,11 +30,11 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( 4enraya )
 {
-	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
+	bg_tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	return video_start_generic();
 }
 
 VIDEO_UPDATE( 4enraya)
 {
-	tilemap_draw(bitmap,cliprect,tilemap, 0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap, 0,0);
 }

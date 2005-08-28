@@ -4584,7 +4584,7 @@ INPUT_PORTS_END
                         GFX DECODING
 ***********************************************************/
 
-static struct GfxLayout finalb_tilelayout =
+static gfx_layout finalb_tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,2),
@@ -4597,7 +4597,7 @@ static struct GfxLayout finalb_tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -4608,7 +4608,7 @@ static struct GfxLayout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -4619,7 +4619,7 @@ static struct GfxLayout charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout yuyugogo_charlayout =
+static gfx_layout yuyugogo_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -4630,7 +4630,7 @@ static struct GfxLayout yuyugogo_charlayout =
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
-static struct GfxLayout pivotlayout =
+static gfx_layout pivotlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -4641,21 +4641,21 @@ static struct GfxLayout pivotlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo finalb_gfxdecodeinfo[] =
+static gfx_decode finalb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &finalb_tilelayout,  0, 64 },	/* sprites & playfield, 6-bit deep */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo taitof2_gfxdecodeinfo[] =
+static gfx_decode taitof2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo pivot_gfxdecodeinfo[] =
+static gfx_decode pivot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
@@ -4663,14 +4663,14 @@ static struct GfxDecodeInfo pivot_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo yuyugogo_gfxdecodeinfo[] =
+static gfx_decode yuyugogo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &yuyugogo_charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo thundfox_gfxdecodeinfo[] =
+static gfx_decode thundfox_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* TC0100SCN #1 */
@@ -4678,7 +4678,7 @@ static struct GfxDecodeInfo thundfox_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout deadconx_charlayout =
+static gfx_layout deadconx_charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -4689,7 +4689,7 @@ static struct GfxLayout deadconx_charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo deadconx_gfxdecodeinfo[] =
+static gfx_decode deadconx_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &deadconx_charlayout,  0, 256 },	/* sprites & playfield */

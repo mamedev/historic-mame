@@ -5,7 +5,7 @@
  *
  * driver provided with thanks to:
  * - pstroffo@yahoo.com (Phil Stroffolino)
- * - trackmaster@gmx.net (Bj?rn Sunder)
+ * - trackmaster@gmx.net (Bjorn Sunder)
  * - team vivanonno
  *
  * Status:
@@ -1331,7 +1331,7 @@ static NVRAM_HANDLER( namcos22 )
  * Sprites are rendered as part of the polygon draw list, based on a per-sprite Z attribute.
  * Each sprite has explicit placement/color/zoom controls.
  */
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -1350,7 +1350,7 @@ static struct GfxLayout sprite_layout =
 	32*32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
 	{ -1 },

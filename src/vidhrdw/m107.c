@@ -37,7 +37,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *pf4_layer,*pf3_layer,*pf2_layer,*pf1_layer;
+static tilemap *pf4_layer,*pf3_layer,*pf2_layer,*pf1_layer;
 static int m107_control[0x20];
 static unsigned char *m107_spriteram;
 unsigned char *m107_vram_data;

@@ -150,7 +150,7 @@ ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -163,7 +163,7 @@ static struct GfxLayout sprite_layout =
 	32*8
 };
 
-static struct GfxLayout text_layout =
+static gfx_layout text_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -174,7 +174,7 @@ static struct GfxLayout text_layout =
 	16*8
 };
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -187,7 +187,7 @@ static struct GfxLayout tile_layout =
 	32*16
 };
 
-static struct GfxLayout madgear_tile =
+static gfx_layout madgear_tile =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -200,7 +200,7 @@ static struct GfxLayout madgear_tile =
 	64*16
 };
 
-static struct GfxLayout madgear_tile2 =
+static gfx_layout madgear_tile2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -213,7 +213,7 @@ static struct GfxLayout madgear_tile2 =
 	64*16
 };
 
-static struct GfxDecodeInfo lastduel_gfxdecodeinfo[] =
+static gfx_decode lastduel_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,&sprite_layout, 0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX2, 0,&text_layout,   0x300, 16 },	/* colors 0x300-0x33f */
@@ -222,7 +222,7 @@ static struct GfxDecodeInfo lastduel_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo madgear_gfxdecodeinfo[] =
+static gfx_decode madgear_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,&sprite_layout, 0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX2, 0,&text_layout,   0x300, 16 },	/* colors 0x300-0x33f */

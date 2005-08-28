@@ -258,7 +258,7 @@ INPUT_PORTS_END
 ********************************************************************/
 
 
-static struct GfxLayout spritelayout_bionicc=
+static gfx_layout spritelayout_bionicc=
 {
 	16,16,  /* 16*16 sprites */
 	2048,   /* 2048 sprites */
@@ -276,7 +276,7 @@ static struct GfxLayout spritelayout_bionicc=
 	256   /* every sprite takes 256 consecutive bytes */
 };
 
-static struct GfxLayout vramlayout_bionicc=
+static gfx_layout vramlayout_bionicc=
 {
 	8,8,    /* 8*8 characters */
 	1024,   /* 1024 character */
@@ -287,7 +287,7 @@ static struct GfxLayout vramlayout_bionicc=
 	128   /* every character takes 128 consecutive bytes */
 };
 
-static struct GfxLayout scroll2layout_bionicc=
+static gfx_layout scroll2layout_bionicc=
 {
 	8,8,    /* 8*8 tiles */
 	2048,   /* 2048 tiles */
@@ -298,7 +298,7 @@ static struct GfxLayout scroll2layout_bionicc=
 	128   /* every tile takes 128 consecutive bytes */
 };
 
-static struct GfxLayout scroll1layout_bionicc=
+static gfx_layout scroll1layout_bionicc=
 {
 	16,16,  /* 16*16 tiles */
 	2048,   /* 2048 tiles */
@@ -316,7 +316,7 @@ static struct GfxLayout scroll1layout_bionicc=
 	512   /* each tile takes 512 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_bionicc[] =
+static gfx_decode gfxdecodeinfo_bionicc[] =
 {
 	{ REGION_GFX1, 0, &vramlayout_bionicc,    768, 64 },	/* colors 768-1023 */
 	{ REGION_GFX2, 0, &scroll2layout_bionicc,   0,  4 },	/* colors   0-  63 */

@@ -12,15 +12,15 @@ extern data8_t *buggyboy_vram;
 extern data8_t *bb_objram;
 extern data8_t *sky;
 
-extern struct tilemap *buggyb1_tilemap;
-extern struct tilemap *buggyboy_tilemap;
+extern tilemap *buggyb1_tilemap;
+extern tilemap *buggyboy_tilemap;
 extern size_t bb_objectram_size;
 
 
 extern data8_t *tx1_vram;
 extern data8_t *tx1_object_ram;
 
-extern struct tilemap *tx1_tilemap;
+extern tilemap *tx1_tilemap;
 extern size_t tx1_objectram_size;
 
 /*********/
@@ -328,7 +328,7 @@ static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *c
 			int flipx = ((chunk_number>>15) & 0x1) ^ object_flip_x;
 			int flipy = 0;
 
-			const struct GfxElement *gfx = Machine->gfx[bank];
+			const gfx_element *gfx = Machine->gfx[bank];
 
                         if(!(OPCD & 0x80))  /* Seems to work! */
                              trans = TRANSPARENCY_PEN;

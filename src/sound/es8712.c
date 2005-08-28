@@ -398,7 +398,7 @@ void ES8712_play(int which)
 			chip->base_offset = chip->start;
 			chip->sample = 0;
 			chip->count = 2 * (chip->end - chip->start + 1);
-			chip->repeat = 1;
+			chip->repeat = 0;//1;
 
 			/* also reset the ADPCM parameters */
 			chip->signal = -2;
@@ -448,7 +448,6 @@ void ES8712_play(int which)
 static void ES8712_data_w(int which, int offset, UINT32 data)
 {
 	struct es8712 *chip = sndti_token(SOUND_ES8712, which);
-
 	switch (offset)
 	{
 		case 00:	chip->start &= 0x000fff00;
@@ -464,6 +463,8 @@ static void ES8712_data_w(int which, int offset, UINT32 data)
 		case 05:	chip->end   &= 0x0000ffff;
 					chip->end   |= ((data & 0x0f) << 16); break;
 		case 06:
+				ES8712_play(which);
+				break;
 		default:	break;
 	}
 	chip->start &= 0xfffff; chip->end &= 0xfffff;

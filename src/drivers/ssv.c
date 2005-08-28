@@ -3163,7 +3163,7 @@ INPUT_PORTS_END
 /*  16 x 8 tiles. Depth is 8 bits, but can be decreased to 6 (and maybe
     less) at runtime.   */
 
-static struct GfxLayout layout_16x8x8 =
+static gfx_layout layout_16x8x8 =
 {
 	16,8,
 	RGN_FRAC(1,4),
@@ -3177,7 +3177,7 @@ static struct GfxLayout layout_16x8x8 =
 	16*8*2
 };
 
-static struct GfxLayout layout_16x8x6 =
+static gfx_layout layout_16x8x6 =
 {
 	16,8,
 	RGN_FRAC(1,4),
@@ -3191,14 +3191,14 @@ static struct GfxLayout layout_16x8x6 =
 	16*8*2
 };
 
-static struct GfxDecodeInfo ssv_gfxdecodeinfo[] =
+static gfx_decode ssv_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x8x8, 0, 0x8000/64 }, // [0] Sprites (256 colors)
 	{ REGION_GFX1, 0, &layout_16x8x6, 0, 0x8000/64 }, // [1] Sprites (64 colors)
 	{ -1 }
 };
 
-static struct GfxLayout layout_16x8x8_2 =
+static gfx_layout layout_16x8x8_2 =
 {
 	16,8,
 	RGN_FRAC(1,1),
@@ -3209,7 +3209,7 @@ static struct GfxLayout layout_16x8x8_2 =
 	16*8*8
 };
 
-static struct GfxLayout layout_16x8x6_2 =
+static gfx_layout layout_16x8x6_2 =
 {
 	16,8,
 	RGN_FRAC(1,1),
@@ -3220,14 +3220,14 @@ static struct GfxLayout layout_16x8x6_2 =
 	16*8*8
 };
 
-static struct GfxDecodeInfo eaglshot_gfxdecodeinfo[] =
+static gfx_decode eaglshot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x8x8_2, 0, 0x8000/64 }, // [0] Sprites (256 colors, decoded from ram)
 	{ REGION_GFX1, 0, &layout_16x8x6_2, 0, 0x8000/64 }, // [1] Sprites (64 colors, decoded from ram)
 	{ -1 }
 };
 
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -3238,7 +3238,7 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*8
 };
 
-static struct GfxDecodeInfo gdfs_gfxdecodeinfo[] =
+static gfx_decode gdfs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x8x8,   0, 0x8000/64  }, // [0] Sprites (256 colors)
 	{ REGION_GFX1, 0, &layout_16x8x6,   0, 0x8000/64  }, // [1] Sprites (64 colors)

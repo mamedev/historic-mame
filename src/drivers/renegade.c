@@ -632,7 +632,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8, /* 8x8 characters */
 	1024, /* 1024 characters */
@@ -643,7 +643,7 @@ static struct GfxLayout charlayout =
 	32*8 /* offset to next character */
 };
 
-static struct GfxLayout tileslayout1 =
+static gfx_layout tileslayout1 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -663,7 +663,7 @@ static struct GfxLayout tileslayout1 =
 	64*8 /* offset to next tile */
 };
 
-static struct GfxLayout tileslayout2 =
+static gfx_layout tileslayout2 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -683,7 +683,7 @@ static struct GfxLayout tileslayout2 =
 	64*8 /* offset to next tile */
 };
 
-static struct GfxLayout tileslayout3 =
+static gfx_layout tileslayout3 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -703,7 +703,7 @@ static struct GfxLayout tileslayout3 =
 	64*8 /* offset to next tile */
 };
 
-static struct GfxLayout tileslayout4 =
+static gfx_layout tileslayout4 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -723,7 +723,7 @@ static struct GfxLayout tileslayout4 =
 	64*8 /* offset to next tile */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	/* 8x8 text, 8 colors */
 	{ REGION_GFX1, 0x00000, &charlayout,	 0, 4 },	/* colors   0- 32 */

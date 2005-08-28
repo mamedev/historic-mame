@@ -60,7 +60,7 @@ Daraku:           PL1 Button 1 (passes, doesn't test sound)
 Space Bomber:     PL1 Start (passes all, only if bit 0x40 is set. But then EEPROM resets?)
 Gunbird 2:        PL1 Start (passes all, only if bit 0x40 is set. But then EEPROM resets)
 Strikers 1945III: PL1 Start (passes all, only if bit 0x40 is set)
-Dragon Blaze:     PL1 Start (fails on undumped sample rom, bit 0x40 has to be set anyway)
+Dragon Blaze:     PL1 Start (passes all, only if bit 0x40 is set)
 Gunbarich:        PL1 Start (passes all, only if bit 0x40 is set)
 
 
@@ -116,7 +116,157 @@ TAKO-8
 0-2-9-1-0 All Data Initialised
 1-2-3-4-5 Best Score Erased
 
+--- Tetris The Grand Master 2 / TGM2+ ---
+
+4-1-5-7-3 All Data Initialised
+4-1-7-6-5 Best Score Erased
+
+The following 4 are also tested for, but appear to be disabled:
+1-3-5-7-9
+0-2-4-6-8
+4-1-3-7-3
+5-0-2-1-3
+
 ----------------------------------------------------------------*/
+
+/*
+
+Psikyo PS3-V1 hardware readme
+-----------------------------
+
+Strikers 1945 II
+Sol Divid
+Daraku
+Space Bomber
+
+PCB Layout
+----------
+
+PS3-V1
+|-------------------------------------------------|
+|HA13118         3771    PROG_L                   |
+|    VOL  YAC513         PROG_H      |-----|      |
+|      JRC4741                       | SH2 |      |
+|                          *U16      |     |      |
+|     YMF278B  SOUND.U32             |-----|      |
+|                                                 |
+|J                                                |
+|A                57.2727MHz   HY514260   HY514260|
+|M                                                |
+|M                 |-------|                      |
+|A                 |PSIKYO |                      |
+|                  |PS6406B|        *4L.10  0L.4  |
+|          62256   |       |                      |
+|93C56     62256   |-------|        *5L.9   1L.3  |
+|JP5                                              |
+|   *6H.37  *4H.31   2H.20   0H.13  *6L.8   2L.2  |
+|                                                 |
+|                                   *7L.7   3L.1  |
+|   *7H.36  *5H.30   3H.19   1H.12                |
+|-------------------------------------------------|
+Notes:
+      JP5 - hardwired jumper bank (x4) for region selection. Cut 2ND jumper from left
+            for International/English region. All jumpers shorted = Japan region (default)
+      SH2 - Hitachi HD6417604F28 SH-2 CPU, clock input 28.63635 [57.2727/2] (QFP144)
+      YMF278B - Yamaha YMF278B OPL4 sound chip, clock input 28.63635MHz [57.2727/2] (QFP80)
+      PROG_H/PROG_L - 27C4096 DIP40 EPROM
+      All other ROMs - 32M SOP44 MaskROM
+      * - ROM locations not populated
+      VSync - 60Hz
+      HSync - 15.27kHz
+
+
+Psikyo PS5 hardware readme
+--------------------------
+
+Gunbird 2
+Strikers 1945 III / Strikers 1999
+
+PCB Layout
+----------
+
+PS5
+|-------------------------------------------------|
+|HA13118      M514260      PROG_L.U16    DATA.U1  |
+| VOL    3771 M514260      PROG_H.U17             |
+|                                    *PROG_DATA.U2|
+|                          PAL                    |
+|                                                 |
+|   JRC4741                          0H.10   0L.3 |
+|J          |-----|                               |
+|A          | SH2 |      57.2727MHz  1H.11   1L.4 |
+|M  YAC513  |     |                               |
+|M          |-----|       |-------|  2H.12   2L.5 |
+|A                        |PSIKYO |               |
+|                         |PS6406B|  3H.13   3L.6 |
+|                         |       |               |
+|                         |-------| *4H.14  *4L.7 |
+|                                                 |
+|                           62256   *5H.15  *5L.8 |
+|                           62256                 |
+|                   93C56                         |
+|            JP4             YMF278B    SOUND.9   |
+|-------------------------------------------------|
+Notes:
+      JP4 - hardwired jumper bank (x4) for region selection. Cut leftmost jumper
+            for International/English region. All jumpers shorted = Japan region (default)
+      SH2 - Hitachi HD6417604F28 SH-2 CPU, clock input 28.63635 [57.2727/2] (QFP144)
+      YMF278B - Yamaha YMF278B OPL4 sound chip, clock input 28.63635MHz [57.2727/2] (QFP80)
+      PAL - AMD PALCE 16V8H stamped 'PS5-1' (DIP20)
+      PROG_H/PROG_L/DATA - 27C4096 DIP40 EPROM
+      All other ROMs - 64M/32M SOP44 MaskROM
+      * - ROM locations not populated
+      VSync - 60Hz
+      HSync - 15.27kHz
+
+
+Psikyo PS5V2 hardware readme
+----------------------------
+
+Dragon Blaze, Psikyo, 2000
+Gunbarich, Psikyo, 2001
+Tetris The Grand Master 2 , Psikyo, 2000
+Tetris The Grand Master 2+, Psikyo, 2000
+
+PCB Layout
+----------
+
+PS5V2
+|----------------------------------------------------|
+|HA13118  PS5-1  SM81C256  PROG_H.U21 *0H.U11 *0L.U3 |
+|VOL  JRC4741    SM81C256  PROG_L.U22                |
+|     YAC516  3771                    *1H.U12 *1L.U4 |
+|              |-----|          *U23                 |
+|              | SH2 |                *2H.U13 *2L.U5 |
+|              |     |                               |
+|J    YMF278B  |-----|                 3H.U14  3L.U6 |
+|A                          57.2727MHz               |
+|M                                     4H.U15  4L.U7 |
+|M    SND.U52               |-------|                |
+|A                          |PSIKYO |  5H.U16  5L.U8 |
+|                           |PS6406B|                |
+|                           |       | *6H.U17 *6L.U9 |
+|                    62256  |-------|                |
+|         JP3 93C56  62256            *7H.U18 *7L.U10|
+|                                                    |
+|  10L.U58    9L.U41    8L.U28    7L.U19     6L.U1   |
+|                                                    |
+|  10H.U59    9H.U42    8H.U29    7H.U20     6H.U2   |
+|----------------------------------------------------|
+Notes:
+      JP3     - hardwired jumper bank (x4) for region selection. Cut rightmost jumper
+                for International/English region. All jumpers shorted = Japan region (default)
+      SH2     - Hitachi HD6417604F28 SH-2 CPU, clock input 28.63635 [57.2727/2] (QFP144)
+      YMF278B - Yamaha YMF278B OPL4 sound chip, clock input 28.63635MHz [57.2727/2] (QFP80)
+      PROG_H/PROG_L - 27C4096 DIP40 EPROM
+      ROMs U1-U59 (at bottom of PCB) - 16M DIP42 MaskROM
+      ROMs U3-U10 & U11-U18 (at side of PCB) - 16M TSOP48 Type-II surface-mounted MaskROM
+      ROM U52 - 32M TSOP48 Type-II surface-mounted MaskROM
+      * - ROM locations not populated on tgm2 & tgm2+
+      VSync - 60Hz
+      HSync - 15.27kHz
+
+*/
 
 #include "driver.h"
 #include "state.h"
@@ -129,7 +279,7 @@ TAKO-8
 
 #include "psikyosh.h"
 
-#define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
+#define ROMTEST 1 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
 static data8_t factory_eeprom[16]  = { 0x00,0x02,0x00,0x01,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00 };
 static data8_t daraku_eeprom[16]   = { 0x03,0x02,0x00,0x48,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 };
@@ -141,7 +291,7 @@ int use_factory_eeprom;
 
 data32_t *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram;
 
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -152,7 +302,7 @@ static struct GfxLayout layout_16x16x4 =
 	16*16*4
 };
 
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -163,7 +313,7 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x000, 0x100 }, // 4bpp tiles
 	{ REGION_GFX1, 0, &layout_16x16x8, 0x000, 0x100 }, // 8bpp tiles
@@ -477,6 +627,18 @@ static MACHINE_DRIVER_START( psikyo5 )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(ps5_readmem,ps5_writemem)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( psikyo5_240 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(psikyo3v1)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(ps5_readmem,ps5_writemem)
+
+	/* It probably has a register to change visarea */
+	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 30*8-1)
+MACHINE_DRIVER_END
+
 
 #define UNUSED_PORT \
 	PORT_START_TAG("IN2")/* not read? */ \
@@ -855,6 +1017,7 @@ ROM_START( gnbarich )
 ROM_END
 
 
+
 /* are these right? should i fake the counter return?
    'speedups / idle skipping isn't needed for 'hotgmck, hgkairak'
    as the core catches and skips the idle loops automatically'
@@ -990,6 +1153,8 @@ PC  :0602CAF2: BT      $0602CAE6
 	return psh_ram[0x006000C/4];
 }
 
+
+
 static DRIVER_INIT( soldivid )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x600000c, 0x600000f, 0, 0, soldivid_speedup_r );
@@ -1047,15 +1212,15 @@ static DRIVER_INIT( gnbarich )
 /*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
 /* ps3-v1 */
-GAMEX( 1997, soldivid, 0,        psikyo3v1, soldivid, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_SOUND ) // Music Tempo
-GAMEX( 1997, s1945ii,  0,        psikyo3v1, s1945ii,  s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
-GAME ( 1998, daraku,   0,        psikyo3v1, daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels" )
-GAME ( 1998, sbomberb, 0,        psikyo3v1, sbomberb, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)" )
+GAMEX( 1997, soldivid, 0,        psikyo3v1,   soldivid, soldivid, ROT0,   "Psikyo", "Sol Divide - The Sword Of Darkness", GAME_IMPERFECT_SOUND ) // Music Tempo
+GAMEX( 1997, s1945ii,  0,        psikyo3v1,   s1945ii,  s1945ii,  ROT270, "Psikyo", "Strikers 1945 II", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
+GAME ( 1998, daraku,   0,        psikyo3v1,   daraku,   daraku,   ROT0,   "Psikyo", "Daraku Tenshi - The Fallen Angels" )
+GAME ( 1998, sbomberb, 0,        psikyo3v1,   sbomberb, sbomberb, ROT270, "Psikyo", "Space Bomber (ver. B)" )
 
 /* ps5 */
-GAME ( 1998, gunbird2, 0,        psikyo5,   gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2" )
-GAMEX( 1999, s1945iii, 0,        psikyo5,   s1945iii, s1945iii, ROT270, "Psikyo", "Strikers 1945 III (World) / Strikers 1999 (Japan)", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
+GAME ( 1998, gunbird2, 0,        psikyo5,     gunbird2, gunbird2, ROT270, "Psikyo", "Gunbird 2" )
+GAMEX( 1999, s1945iii, 0,        psikyo5,     s1945iii, s1945iii, ROT270, "Psikyo", "Strikers 1945 III (World) / Strikers 1999 (Japan)", GAME_IMPERFECT_GRAPHICS ) // linescroll/zoom
 
 /* ps5v2 */
-GAME ( 2000, dragnblz, 0,        psikyo5,   dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze" )
-GAME ( 2001, gnbarich, 0,        psikyo5,   gnbarich, gnbarich, ROT270, "Psikyo", "Gunbarich" )
+GAME ( 2000, dragnblz, 0,        psikyo5,     dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze" )
+GAME ( 2001, gnbarich, 0,        psikyo5,     gnbarich, gnbarich, ROT270, "Psikyo", "Gunbarich" )

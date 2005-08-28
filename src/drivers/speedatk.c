@@ -239,7 +239,7 @@ INPUT_PORTS_START( speedatk )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(2)
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout_1bpp =
+static gfx_layout charlayout_1bpp =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -250,7 +250,7 @@ static struct GfxLayout charlayout_1bpp =
 	8*8
 };
 
-static struct GfxLayout charlayout_3bpp =
+static gfx_layout charlayout_3bpp =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -262,7 +262,7 @@ static struct GfxLayout charlayout_3bpp =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_1bpp,   0, 32 },
 	{ REGION_GFX2, 0, &charlayout_3bpp,   0, 32 },

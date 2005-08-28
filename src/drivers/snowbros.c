@@ -951,7 +951,7 @@ INPUT_PORTS_END
 
 /* SnowBros */
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -962,7 +962,7 @@ static struct GfxLayout tilelayout =
 	32*32
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
 	{ -1 } /* end of array */
@@ -970,7 +970,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /* Winter Bobble */
 
-static struct GfxLayout tilelayout_wb =
+static gfx_layout tilelayout_wb =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -981,7 +981,7 @@ static struct GfxLayout tilelayout_wb =
 	16*64
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_wb[] =
+static gfx_decode gfxdecodeinfo_wb[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_wb,  0, 16 },
 	{ -1 }
@@ -989,7 +989,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_wb[] =
 
 /* SemiCom */
 
-static struct GfxLayout hyperpac_tilelayout =
+static gfx_layout hyperpac_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1003,7 +1003,7 @@ static struct GfxLayout hyperpac_tilelayout =
 };
 
 
-static struct GfxLayout sb3_tilebglayout =
+static gfx_layout sb3_tilebglayout =
 {
  	16,16,
  	RGN_FRAC(1,1),
@@ -1017,14 +1017,14 @@ static struct GfxLayout sb3_tilebglayout =
 };
 
 
-static struct GfxDecodeInfo sb3_gfxdecodeinfo[] =
+static gfx_decode sb3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
 	{ REGION_GFX2, 0, &sb3_tilebglayout,  0, 2 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo hyperpac_gfxdecodeinfo[] =
+static gfx_decode hyperpac_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hyperpac_tilelayout,  0, 16 },
 	{ -1 } /* end of array */

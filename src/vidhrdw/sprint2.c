@@ -8,7 +8,7 @@
 
 UINT8* sprint2_video_ram;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 static struct mame_bitmap* helper;
 
 static int collision[2];
@@ -31,9 +31,9 @@ VIDEO_START( sprint2 )
 		return 1;
 	}
 
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32);
 
-	if (tilemap == NULL)
+	if (bg_tilemap == NULL)
 	{
 		return 1;
 	}
@@ -66,7 +66,7 @@ WRITE8_HANDLER( sprint2_video_ram_w )
 {
 	if (data != sprint2_video_ram[offset])
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	sprint2_video_ram[offset] = data;
@@ -119,7 +119,7 @@ VIDEO_UPDATE( sprint2 )
 {
 	int i;
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
 
@@ -169,7 +169,7 @@ VIDEO_EOF( sprint2 )
 
 		/* check for sprite-tilemap collisions */
 
-		tilemap_draw(helper, &rect, tilemap, 0, 0);
+		tilemap_draw(helper, &rect, bg_tilemap, 0, 0);
 
 		drawgfx(helper, Machine->gfx[1],
 			get_sprite_code(i),

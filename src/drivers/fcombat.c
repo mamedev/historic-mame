@@ -249,7 +249,7 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -262,7 +262,7 @@ static struct GfxLayout charlayout =
 
 
 /* 16 x 16 sprites -- requires reorganizing characters in init_exerion() */
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -276,7 +276,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,         0, 64 },
 	{ REGION_GFX2, 0, &spritelayout,     256, 64 },

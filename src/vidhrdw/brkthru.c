@@ -15,8 +15,8 @@ static int bgscroll;
 static int bgbasecolor;
 static int flipscreen;
 
-static struct tilemap *fg_tilemap;
-static struct tilemap *bg_tilemap;
+static tilemap *fg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************

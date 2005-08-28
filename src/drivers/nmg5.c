@@ -16,7 +16,7 @@
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 data16_t *nmg5_bitmap;
 static data16_t *fgvideoram,*bgvideoram,*scroll_ram,*sprite_pri;
 static data16_t gfx_bank = 0;
@@ -475,7 +475,7 @@ VIDEO_UPDATE( nmg5 )
 }
 
 
-static struct GfxLayout nmg5_layout_8x8x8 =
+static gfx_layout nmg5_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -486,7 +486,7 @@ static struct GfxLayout nmg5_layout_8x8x8 =
 	8*8
 };
 
-static struct GfxLayout pclubys_layout_8x8x8 =
+static gfx_layout pclubys_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -497,7 +497,7 @@ static struct GfxLayout pclubys_layout_8x8x8 =
 	8*16
 };
 
-static struct GfxLayout layout_16x16x5 =
+static gfx_layout layout_16x16x5 =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -508,14 +508,14 @@ static struct GfxLayout layout_16x16x5 =
 	32*8
 };
 
-static struct GfxDecodeInfo nmg5_gfxdecodeinfo[] =
+static gfx_decode nmg5_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &nmg5_layout_8x8x8, 0x000,  2 },
 	{ REGION_GFX2, 0, &layout_16x16x5,	  0x200, 16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo pclubys_gfxdecodeinfo[] =
+static gfx_decode pclubys_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pclubys_layout_8x8x8, 0x000,  2 },
 	{ REGION_GFX2, 0, &layout_16x16x5,		 0x200, 16 },

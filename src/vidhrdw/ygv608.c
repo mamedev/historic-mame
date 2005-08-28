@@ -44,8 +44,8 @@
 
 static YGV608 ygv608;
 
-static struct tilemap *tilemap_A = NULL;
-static struct tilemap *tilemap_B = NULL;
+static tilemap *tilemap_A = NULL;
+static tilemap *tilemap_B = NULL;
 static struct mame_bitmap *work_bitmap = NULL;
 
 #ifdef MAME_DEBUG

@@ -145,19 +145,20 @@ static void compatiblemodes(int mode,int *start,int *end)
 	}
 }
 
-struct fileinfo
+struct _fileinfo
 {
 	char name[MAX_FILENAME_LEN+1];
 	int size;
 	unsigned char *buf;	/* file is read in here */
 	int listed;
 };
+typedef struct _fileinfo fileinfo;
 
-struct fileinfo files[2][MAX_FILES];
+fileinfo files[2][MAX_FILES];
 float matchscore[MAX_FILES][MAX_FILES][TOTAL_MODES][TOTAL_MODES];
 
 
-static void checkintegrity(const struct fileinfo *file,int side)
+static void checkintegrity(const fileinfo *file,int side)
 {
 	int i;
 	int mask0,mask1;
@@ -325,7 +326,7 @@ static void checkintegrity(const struct fileinfo *file,int side)
 }
 
 
-static int usedbytes(const struct fileinfo *file,int mode)
+static int usedbytes(const fileinfo *file,int mode)
 {
 	switch (mode)
 	{
@@ -352,7 +353,7 @@ static int usedbytes(const struct fileinfo *file,int mode)
 	}
 }
 
-static void basemultmask(const struct fileinfo *file,int mode,int *base,int *mult,int *mask)
+static void basemultmask(const fileinfo *file,int mode,int *base,int *mult,int *mask)
 {
 	*mult = 1;
 	if (mode >= MODE_E) *mult = 2;
@@ -386,7 +387,7 @@ static void basemultmask(const struct fileinfo *file,int mode,int *base,int *mul
 	}
 }
 
-static float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int mode1,int mode2)
+static float filecompare(const fileinfo *file1,const fileinfo *file2,int mode1,int mode2)
 {
 	int i;
 	int match = 0;
@@ -434,7 +435,7 @@ static float filecompare(const struct fileinfo *file1,const struct fileinfo *fil
 }
 
 
-static void readfile(const char *path,struct fileinfo *file)
+static void readfile(const char *path,fileinfo *file)
 {
 	char fullname[256];
 	FILE *f = 0;
@@ -474,14 +475,14 @@ static void readfile(const char *path,struct fileinfo *file)
 }
 
 
-static void freefile(struct fileinfo *file)
+static void freefile(fileinfo *file)
 {
 	free(file->buf);
 	file->buf = 0;
 }
 
 
-static void printname(const struct fileinfo *file1,const struct fileinfo *file2,float score,int mode1,int mode2)
+static void printname(const fileinfo *file1,const fileinfo *file2,float score,int mode1,int mode2)
 {
 	printf("%-12s %s %-12s %s ",file1 ? file1->name : "",modenames[mode1],file2 ? file2->name : "",modenames[mode2]);
 	if (score == 0.0) printf("NO MATCH\n");
@@ -574,8 +575,8 @@ static int load_files(int i, int *found, const char *path)
 	}
 	else
 	{
-		ZIP *zip;
-		struct zipent* zipent;
+		zip_file *zip;
+		zip_entry* zipent;
 
 		/* wasn't a directory, so try to open it as a zip file */
 		if ((zip = openzip(0, 0, path)) == 0)
@@ -596,7 +597,7 @@ static int load_files(int i, int *found, const char *path)
 					i ? "" : zipent->name, i ? zipent->name : "");
 			else
 			{
-				struct fileinfo *file = &files[i][found[i]];
+				fileinfo *file = &files[i][found[i]];
 				const char *delim = strrchr(zipent->name,'/');
 
 				if (delim)

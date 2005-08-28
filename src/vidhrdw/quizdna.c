@@ -14,8 +14,8 @@ Video hardware
 static data8_t *quizdna_bg_ram;
 static data8_t *quizdna_fg_ram;
 
-static struct tilemap *quizdna_bg_tilemap;
-static struct tilemap *quizdna_fg_tilemap;
+static tilemap *quizdna_bg_tilemap;
+static tilemap *quizdna_fg_tilemap;
 
 static UINT8 quizdna_bg_xscroll[2];
 

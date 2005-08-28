@@ -29,7 +29,7 @@ static data8_t *vram2;
 static data8_t *vram3;
 static data8_t *vram4;
 
-static struct tilemap *tx_tilemap;
+static tilemap *tx_tilemap;
 
 static data8_t gfxmode;
 static int flip_x, flip_y;

@@ -383,7 +383,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,			/* 8 x 8 characters */
 	0x40000/32,		/* 8192 characters */
@@ -394,7 +394,7 @@ static struct GfxLayout charlayout =
 	32*8			/* every character takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,8,			/* 8*8 sprites */
 	0x40000/32,		/* 8192 sprites */
@@ -405,7 +405,7 @@ static struct GfxLayout spritelayout =
 	32*8			/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &charlayout,     0,	2 },	/* colors 00..31 */
 	{ REGION_GFX1, 0x040000, &spritelayout,   32,	16 },	/* colors 32..47 but using lookup table */

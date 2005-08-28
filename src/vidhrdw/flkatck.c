@@ -8,7 +8,7 @@
 #include "vidhrdw/konamiic.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *k007121_tilemap[2];
+static tilemap *k007121_tilemap[2];
 static struct rectangle k007121_clip[2];
 
 unsigned char *k007121_ram;

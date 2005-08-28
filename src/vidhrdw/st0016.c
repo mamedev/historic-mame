@@ -33,7 +33,7 @@ int st0016_game;
 static data8_t st0016_vregs[0xc0];
 static int st0016_ramgfx;
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	0x10000,
@@ -336,7 +336,7 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 							int yloop,xloop;
 							int ypos, xpos;
 							int tileno;
-							const struct GfxElement *gfx = Machine->gfx[0];
+							const gfx_element *gfx = Machine->gfx[0];
 							data8_t *srcgfx;
 							int gfxoffs;
 							ypos = sy+y0*8+spr_dy;
@@ -506,7 +506,7 @@ static void drawbgmap(struct mame_bitmap *bitmap,const struct rectangle *cliprec
 							UINT16 *destline;
 							int yloop,xloop;
 							int ypos, xpos;
-							const struct GfxElement *gfx = Machine->gfx[0];
+							const gfx_element *gfx = Machine->gfx[0];
 							data8_t *srcgfx;
 							int gfxoffs;
 							ypos = y*8+spr_dy+((st0016_vregs[j+2]==0xaf)?0x50:0);//hack for mayjinsen title screen

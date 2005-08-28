@@ -842,7 +842,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct tms34010_config cpu_config =
+static struct tms34010_config tms_config =
 {
 	0,								/* halt on reset */
 	NULL,							/* generate interrupt */
@@ -866,7 +866,7 @@ static MACHINE_DRIVER_START( zunit )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 48000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -900,7 +900,7 @@ static MACHINE_DRIVER_START( yunit_core )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 50000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)

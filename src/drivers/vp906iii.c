@@ -63,7 +63,7 @@ Any fixes for this driver should be forwarded to the AGEMAME forum at (http://ww
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( vp906iii )
 {
@@ -254,7 +254,7 @@ INPUT_PORTS_START( vp906iii )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	1024,
@@ -265,7 +265,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 64 },
 	{ -1 }

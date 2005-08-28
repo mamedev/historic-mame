@@ -437,7 +437,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	64,
@@ -449,7 +449,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout fieldlayout =
+static gfx_layout fieldlayout =
 {
 	8,8,
 	64,
@@ -461,7 +461,7 @@ static struct GfxLayout fieldlayout =
 };
 
 
-static struct GfxLayout soccer_fieldlayout =
+static gfx_layout soccer_fieldlayout =
 {
 	8,8,
 	64,
@@ -473,7 +473,7 @@ static struct GfxLayout soccer_fieldlayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,16,
 	64,
@@ -486,7 +486,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxLayout spritemasklayout =
+static gfx_layout spritemasklayout =
 {
 	8,16,
 	64,
@@ -499,7 +499,7 @@ static struct GfxLayout spritemasklayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0x00, 0x01 }, /* offset into colors, # of colors */
 	{ REGION_GFX2, 0, &fieldlayout, 0x02, 0x01 }, /* offset into colors, # of colors */
@@ -507,7 +507,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct GfxDecodeInfo soccer_gfxdecodeinfo[] =
+static gfx_decode soccer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,         0x00, 0x01 }, /* offset into colors, # of colors */
 	{ REGION_GFX3, 0x0400, &soccer_fieldlayout, 0x06, 0x01 }, /* offset into colors, # of colors */

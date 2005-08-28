@@ -136,7 +136,7 @@ ADDRESS_MAP_END
  GFX Decoding Information
 *******************************************************************************/
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,8,	/* tile size */
 	0x400,	/* number of tiles */
@@ -147,7 +147,7 @@ static struct GfxLayout tile_layout =
 	256
 };
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	16,16,	/* tile size */
 	0x100,	/* number of tiles */
@@ -164,7 +164,7 @@ static struct GfxLayout sprite_layout =
 	1024
 };
 
-static struct GfxDecodeInfo ninjakid_gfxdecodeinfo[] =
+static gfx_decode ninjakid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,		0x000, 0x10 },
 	{ REGION_GFX2, 0, &tile_layout,		0x100, 0x10 },

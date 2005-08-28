@@ -52,7 +52,7 @@ data16_t *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
 
 #define LAYER( _N_ ) \
 \
-static struct tilemap *tilemap_##_N_; \
+static tilemap *tilemap_##_N_; \
 \
 static void get_tile_info_##_N_(int tile_index) \
 { \

@@ -13,7 +13,7 @@
 #include "vidhrdw/konamiic.h"
 
 static int ttl_gfx_index;
-static struct tilemap *ttl_tilemap, *rng_936_tilemap;
+static tilemap *ttl_tilemap, *rng_936_tilemap;
 static data16_t ttl_vram[0x1000];
 
 static int sprite_colorbase;
@@ -78,7 +78,7 @@ INLINE void get_rng_936_tile_info(int tile_index)
 
 VIDEO_START(rng)
 {
-	static struct GfxLayout charlayout =
+	static gfx_layout charlayout =
 	{
 		8, 8,	// 8x8
 		4096,	// # of tiles

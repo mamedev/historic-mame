@@ -1017,7 +1017,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout bglayout =
+static gfx_layout bglayout =
 {
 	8,4,
 	RGN_FRAC(1,1),
@@ -1029,7 +1029,7 @@ static struct GfxLayout bglayout =
 };
 
 
-static struct GfxDecodeInfo fromance_gfxdecodeinfo[] =
+static gfx_decode fromance_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bglayout,   0, 128 },
 	{ REGION_GFX2, 0, &bglayout,   0, 128 },

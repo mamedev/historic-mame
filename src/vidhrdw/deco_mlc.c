@@ -20,7 +20,7 @@ VIDEO_START( avengrgs )
 	return 0;
 }
 
-static void mlc_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+static void mlc_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code1,unsigned int code2, unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int use8bpp,
 		int scalex, int scaley)

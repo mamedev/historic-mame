@@ -16,7 +16,7 @@ int pbillian_show_power;
 static int gfxbank;
 static struct mame_bitmap *fg_bitmap[2];
 static int show_bitmap;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************

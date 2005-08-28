@@ -641,7 +641,7 @@ void cischeat_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 	int min_priority, max_priority;
 
 	struct rectangle rect		=	*cliprect;
-	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?5:4];
+	gfx_element *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
 	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 
@@ -732,7 +732,7 @@ void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 	int min_priority, max_priority;
 
 	struct rectangle rect		=	*cliprect;
-	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?5:4];
+	gfx_element *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
 	data16_t *roadram			=	cischeat_roadram[road_num & 1];
 

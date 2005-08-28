@@ -17,7 +17,7 @@
 static data8_t *bgvideoram,*fgvideoram;
 static int bg_bank = 0;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 static WRITE8_HANDLER( background_w )
 {
@@ -242,7 +242,7 @@ VIDEO_UPDATE(dacholer)
 	draw_sprites(bitmap,cliprect);
 }
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -253,7 +253,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -265,7 +265,7 @@ static struct GfxLayout spritelayout =
 	16*16*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &charlayout,   0, 16 },

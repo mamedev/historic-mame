@@ -25,7 +25,7 @@ it will crash shortly afterwards tho
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-static struct tilemap *background_layer,*midground_layer,*foreground_layer,*text_layer;
+static tilemap *background_layer,*midground_layer,*foreground_layer,*text_layer;
 static unsigned char *back_data,*fore_data,*mid_data, *scrollregs;
 static int mid_bank;
 
@@ -40,7 +40,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	const UINT8 *source = spriteram+0x1000-8 ;
 	const UINT8 *finish = spriteram;
 
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 
 //  static int ytlim = 1;
 //  static int xtlim = 1;
@@ -204,7 +204,7 @@ static void get_text_tile_info( int tile_index )
 	SET_TILE_INFO(0,tile,color,0)
 }
 
-static void set_scroll(struct tilemap *tm, int plane)
+static void set_scroll(tilemap *tm, int plane)
 {
 	int x = (scrollregs[plane*4+1]<<8) | scrollregs[plane*4+0];
 	int y = (scrollregs[plane*4+3]<<8) | scrollregs[plane*4+2];
@@ -565,7 +565,7 @@ INPUT_PORTS_END
 
 /* GFX DECODING */
 
-static struct GfxLayout raiden2_charlayout =
+static gfx_layout raiden2_charlayout =
 {
 	8,8,
 	4096,
@@ -577,7 +577,7 @@ static struct GfxLayout raiden2_charlayout =
 };
 
 
-static struct GfxLayout raiden2_tilelayout =
+static gfx_layout raiden2_tilelayout =
 {
 	16,16,
 	0x8000,
@@ -594,7 +594,7 @@ static struct GfxLayout raiden2_tilelayout =
 	128*8
 };
 
-static struct GfxLayout r2_t2 =
+static gfx_layout r2_t2 =
 {
 	16, 16,
 	0x10000,
@@ -606,7 +606,7 @@ static struct GfxLayout r2_t2 =
 	16*16*4
 };
 
-static struct GfxDecodeInfo raiden2_gfxdecodeinfo[] =
+static gfx_decode raiden2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &raiden2_charlayout, 1792, 128 },
 	{ REGION_GFX2, 0x00000, &raiden2_tilelayout, 0x400, 128 },

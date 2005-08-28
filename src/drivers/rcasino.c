@@ -40,7 +40,7 @@ Get correct data for hopper on and lockout.
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int pulse;
 static int hopper;
 PALETTE_INIT( rcasino )
@@ -269,7 +269,7 @@ INPUT_PORTS_START( rcasino )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	RGN_FRAC(1,2),
@@ -280,7 +280,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout charlayout2 =
+static gfx_layout charlayout2 =
 {
 	8, 8,
 	RGN_FRAC(1,2),
@@ -291,7 +291,7 @@ static struct GfxLayout charlayout2 =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,  0, 16 },
 	{ REGION_GFX2, 0x0000, &charlayout2, 0, 16 },

@@ -363,7 +363,7 @@ INPUT_PORTS_START( kchamp )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,	/* tile size */
 	256*8,	/* number of tiles */
@@ -374,7 +374,7 @@ static struct GfxLayout tilelayout =
 	8*8	/* offset to next tile */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* tile size */
 	512,	/* number of tiles */
@@ -388,7 +388,7 @@ static struct GfxLayout spritelayout =
 	16*8	/* ofset to next tile */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &tilelayout,	32*4, 32 },
 	{ REGION_GFX2, 0x08000, &spritelayout,	0, 16 },

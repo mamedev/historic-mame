@@ -15,7 +15,7 @@ UINT8 *bankp_colorram2;
 static int scroll_x;
 static int priority;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 

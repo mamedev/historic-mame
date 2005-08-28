@@ -81,6 +81,73 @@
 
 Any fixes for this driver should be forwarded to the AGEMAME forum at (http://www.mameworld.info)
 
+
+    *** Extra hardware info ***    (added by Roberto Fresca)
+
+    Jolly Poker, TAB Austria
+    ------------------------
+
+    Pinouts:
+    --------
+
+    X1-1   GND                    X1-A   GND
+    X1-2   GND                    X1-B   GND
+    X1-3   GND                    X1-C   GND
+    X1-4   +5V                    X1-D   +5V
+    X1-5   +12V                   X1-E   +12V
+    X1-6   NC                     X1-F   NC
+    X1-7   NC                     X1-G   NC
+    X1-8   NC                     X1-H   NC
+    X1-9   NC                     X1-I   Coin 1
+    X1-10  Coin 2                 X1-J   Pay Out SW
+    X1-11  Hold 3                 X1-K   NC
+    X1-12  NC                     X1-L   GND
+    X1-13  Hold 4                 X1-M   Remote
+    X1-14  Bookkeeping SW         X1-N   GND
+    X1-15  Hold 2                 X1-O   Cancel
+    X1-16  Hold 1                 X1-P   Hold 5
+    X1-17  Start                  X1-Q
+    X1-18  Hopper Out             X1-R
+    X1-19  Red                    X1-S   Green
+    X1-20  Blue                   X1-T   Sync
+    X1-21  GND                    X1-U   Speaker GND
+    X1-22  Speaker +              X1-V   Management SW
+
+
+    X2-1   GND                    X2-A   GND
+    X2-2   NC                     X2-B   NC
+    X2-3   Start                  X2-C   NC
+    X2-4   NC                     X2-D   NC
+    X2-5   NC                     X2-E   NC
+    X2-6   Lamp Start             X2-F   Lamp Hold 1+3
+    X2-7   Lamp Hold 2            X2-G   Lamp Hold 4
+    X2-8   Lamp Hold 5            X2-H   Lamp Cancel
+    X2-9   NC                     X2-I   NC
+    X2-10  Counter In             X2-J   Counter Out
+    X2-11  Hopper Count           X2-K   Hopper Drive
+    X2-12  Counter Remote         X2-L
+    X2-13                         X2-M
+    X2-14                         X2-N
+    X2-15  NC                     X2-O
+    X2-16                         X2-P
+    X2-17                         X2-Q   Coin Counter
+    X2-18                         X2-R
+
+
+    Dip Switch:
+    -----------
+
+         ON                 OFF
+
+    1    Hopper             Manual Payout SW
+    2    Auto Hold          No Auto Hold
+    3    Joker              Without Joker
+    4    Dattl Insert       TAB Insert
+    5    5 Points/Coin      10 Points/Coin     Coin 1
+    6    5 Points/Coin      10 Points/Coin     Coin 2
+    7    10 Points/Pulse    100 Points/Pulse   Remote
+    8    Play               Keyboard Test
+
 */
 
 #include "driver.h"
@@ -89,7 +156,7 @@ Any fixes for this driver should be forwarded to the AGEMAME forum at (http://ww
 #include "vidhrdw/crtc6845.h"
 #include "machine/6821pia.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /* vidhrdw */
 
@@ -272,35 +339,93 @@ INPUT_PORTS_START( funworld )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "State" )
+	PORT_DIPSETTING(    0x00, "Keyboard Test" )
+	PORT_DIPSETTING(    0x01, "Play" )
+	PORT_DIPNAME( 0x02, 0x00, "Remote" )
+	PORT_DIPSETTING(    0x00, "10 Points/Pulse" )
+	PORT_DIPSETTING(    0x02, "100 Points/Pulse" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
+	PORT_DIPSETTING(    0x04, "10 Points/Coin" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
+	PORT_DIPSETTING(    0x08, "10 Points/Coin" )
+	PORT_DIPNAME( 0x10, 0x00, "Insert" )
+	PORT_DIPSETTING(    0x00, "Dattl Insert" )
+	PORT_DIPSETTING(    0x10, "TAB Insert" )
+	PORT_DIPNAME( 0x20, 0x00, "Joker" )
+	PORT_DIPSETTING(    0x00, "With Joker" )    /* enables Five of a kind in jolly card/poker games. */
+	PORT_DIPSETTING(    0x20, "Without Joker" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPSETTING(    0x00, "Auto Hold" )
+	PORT_DIPSETTING(    0x40, "No Auto Hold" )
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )
+	PORT_DIPSETTING(    0x00, "Hopper" )
+	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( magiccrd )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Hold 1")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("Clear / Take")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("Hold 5 / Stake")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Hold 4 / High")
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Hold 2 / Low")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Hold 3")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_CODE(KEYCODE_ENTER) PORT_NAME("Payout")
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW")
+	PORT_DIPNAME( 0x01, 0x01, "State" )
+	PORT_DIPSETTING(    0x00, "Keyboard Test" )
+	PORT_DIPSETTING(    0x01, "Play" )
+	PORT_DIPNAME( 0x02, 0x00, "Remote" )
+	PORT_DIPSETTING(    0x00, "10 Points/Pulse" )
+	PORT_DIPSETTING(    0x02, "100 Points/Pulse" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
+	PORT_DIPSETTING(    0x04, "10 Points/Coin" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, "5 Points/Coin" )
+	PORT_DIPSETTING(    0x08, "10 Points/Coin" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "Joker" )
+	PORT_DIPSETTING(    0x00, "With Joker" )
+	PORT_DIPSETTING(    0x20, "Without Joker" )
+	PORT_DIPNAME( 0x40, 0x00, "Hold" )
+	PORT_DIPSETTING(    0x00, "Auto Hold" )
+	PORT_DIPSETTING(    0x40, "No Auto Hold" )
+	PORT_DIPNAME( 0x80, 0x00, "Payout" )
+	PORT_DIPSETTING(    0x00, "Hopper" )
+	PORT_DIPSETTING(    0x80, "Manual Payout SW" )
 INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	4,
 	8,
@@ -312,7 +437,7 @@ static struct GfxLayout charlayout =
 	8*4*2
 };
 
-static struct GfxLayout magiccrd_charlayout =
+static gfx_layout magiccrd_charlayout =
 {
     4,
 	8,
@@ -326,13 +451,13 @@ static struct GfxLayout magiccrd_charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout, 0, 16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo magiccrd_gfxdecodeinfo[] =
+static gfx_decode magiccrd_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &magiccrd_charlayout, 0, 16 },
 	{ -1 }
@@ -513,4 +638,4 @@ GAMEX( 1986, bonuscrd, 0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "B
 GAMEX( 1986, poker4,   0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (Hungary)", GAME_WRONG_COLORS )
 GAMEX( 1986, poker8,   0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (bad dump?) (Hungary)", GAME_WRONG_COLORS )
 GAMEX( 1990, igpoker,  0, 		funworld, funworld, funworld, ROT0, "Inter Games", "Inter Game Poker?", GAME_NOT_WORKING )
-GAMEX( 1996, magiccrd, 0, 		magiccrd, funworld, funworld, ROT0, "Impera", 	   "Magic Card II (Bulgaria)", GAME_WRONG_COLORS )
+GAMEX( 1996, magiccrd, 0, 		magiccrd, magiccrd, funworld, ROT0, "Impera", 	   "Magic Card II (Bulgaria)", GAME_WRONG_COLORS )

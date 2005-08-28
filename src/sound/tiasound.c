@@ -490,7 +490,7 @@ static void poly_init(UINT8 *poly, int size, int left, int right, int add)
 /* Author:  Ron Fries                                                        */
 /* Date:    September 10, 1996                                               */
 /*                                                                           */
-/* Inputs:  struct MachineSound *msound                                      */
+/* Inputs:  sound_config *msound                                      */
 /*          is a pointer to the struct TIAInterface parameters               */
 /*                                                                           */
 /* Outputs: returns zero on success                                          */

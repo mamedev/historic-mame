@@ -13,7 +13,7 @@ static int spritectrl[3];
 
 int crbaloon_collision;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

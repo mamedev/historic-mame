@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 static int tilebank=0;
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 static int palette_bank,gfxctrl;
 
 UINT8 *ladyfrog_scrlram;
@@ -42,7 +42,7 @@ static void get_tile_info(int tile_index)
 WRITE8_HANDLER( ladyfrog_videoram_w )
 {
 	videoram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset>>1);
+	tilemap_mark_tile_dirty(bg_tilemap,offset>>1);
 }
 
 READ8_HANDLER( ladyfrog_videoram_r )
@@ -75,7 +75,7 @@ WRITE8_HANDLER( ladyfrog_gfxctrl_w )
 WRITE8_HANDLER( ladyfrog_gfxctrl2_w )
 {
 	tilebank=((data & 0x18) >> 3)^3;
-	tilemap_mark_all_tiles_dirty( tilemap );
+	tilemap_mark_all_tiles_dirty( bg_tilemap );
 }
 
 
@@ -92,7 +92,7 @@ READ8_HANDLER( ladyfrog_scrlram_r )
 WRITE8_HANDLER( ladyfrog_scrlram_w )
 {
 	ladyfrog_scrlram[offset] = data;
-	tilemap_set_scrolly(tilemap, offset, data );
+	tilemap_set_scrolly(bg_tilemap, offset, data );
 }
 
 void ladyfrog_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -135,12 +135,12 @@ void ladyfrog_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *c
 VIDEO_START( ladyfrog )
 {
   ladyfrog_spriteram = auto_malloc (160);
-  tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
+  bg_tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 
   paletteram = auto_malloc(0x200);
   paletteram_2 = auto_malloc(0x200);
-  tilemap_set_scroll_cols(tilemap,32);
-  tilemap_set_scrolldy( tilemap,   15, 15 );
+  tilemap_set_scroll_cols(bg_tilemap,32);
+  tilemap_set_scrolldy( bg_tilemap,   15, 15 );
   return 0;
 
 }
@@ -148,7 +148,7 @@ VIDEO_START( ladyfrog )
 
 VIDEO_UPDATE( ladyfrog )
 {
-    tilemap_draw(bitmap,cliprect,tilemap,0,0);
+    tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
     ladyfrog_draw_sprites(bitmap,cliprect);
 }
 

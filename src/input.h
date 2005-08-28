@@ -490,20 +490,24 @@ enum
  *
  *************************************/
 
-typedef UINT32 input_code_t;
-typedef UINT32 os_code_t;
+typedef UINT32 input_code;
+typedef UINT32 os_code;
 
-typedef struct
+
+struct _input_seq
 {
-	input_code_t code[SEQ_MAX];
-} input_seq_t;
+	input_code code[SEQ_MAX];
+};
+typedef struct _input_seq input_seq;
 
-struct OSCodeInfo
+
+struct _os_code_info
 {
 	char *			name;			/* OS dependant name; 0 terminates the list */
-	os_code_t		oscode;			/* OS dependant code */
-	input_code_t	inputcode;		/* CODE_xxx equivalent from list below, or one of CODE_OTHER_* if n/a */
+	os_code		oscode;			/* OS dependant code */
+	input_code	inputcode;		/* CODE_xxx equivalent from list below, or one of CODE_OTHER_* if n/a */
 };
+typedef struct _os_code_info os_code_info;
 
 
 
@@ -534,34 +538,34 @@ struct OSCodeInfo
 int code_init(void);
 void code_exit(void);
 
-INT32 code_analog_value(input_code_t code);
-int code_pressed(input_code_t code);
-int code_pressed_memory(input_code_t code);
-int code_pressed_memory_repeat(input_code_t code, int speed);
-input_code_t code_read_async(void);
+INT32 code_analog_value(input_code code);
+int code_pressed(input_code code);
+int code_pressed_memory(input_code code);
+int code_pressed_memory_repeat(input_code code, int speed);
+input_code code_read_async(void);
 
-int code_analog_type(input_code_t code);
-const char *code_name(input_code_t code);
-input_code_t token_to_code(const char *token);
-void code_to_token(input_code_t code, char *token);
+int code_analog_type(input_code code);
+const char *code_name(input_code code);
+input_code token_to_code(const char *token);
+void code_to_token(input_code code, char *token);
 
 /* Sequence code funtions */
-void seq_set_0(input_seq_t *seq);
-void seq_set_1(input_seq_t *seq, input_code_t code);
-void seq_set_2(input_seq_t *seq, input_code_t code1, input_code_t code2);
-void seq_set_3(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3);
-void seq_set_4(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4);
-void seq_set_5(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4, input_code_t code5);
-void seq_copy(input_seq_t *seqdst, const input_seq_t *seqsrc);
-int seq_cmp(const input_seq_t *seqa, const input_seq_t *seqb);
-void seq_name(const input_seq_t *seq, char *buffer, unsigned max);
-int seq_pressed(const input_seq_t *seq);
-INT32 seq_analog_value(const input_seq_t *seq, int *analogtype);
+void seq_set_0(input_seq *seq);
+void seq_set_1(input_seq *seq, input_code code);
+void seq_set_2(input_seq *seq, input_code code1, input_code code2);
+void seq_set_3(input_seq *seq, input_code code1, input_code code2, input_code code3);
+void seq_set_4(input_seq *seq, input_code code1, input_code code2, input_code code3, input_code code4);
+void seq_set_5(input_seq *seq, input_code code1, input_code code2, input_code code3, input_code code4, input_code code5);
+void seq_copy(input_seq *seqdst, const input_seq *seqsrc);
+int seq_cmp(const input_seq *seqa, const input_seq *seqb);
+void seq_name(const input_seq *seq, char *buffer, unsigned max);
+int seq_pressed(const input_seq *seq);
+INT32 seq_analog_value(const input_seq *seq, int *analogtype);
 void seq_read_async_start(int analog);
-int seq_read_async(input_seq_t *seq, int first);
-int string_to_seq(const char *string, input_seq_t *seq);
-void seq_to_string(const input_seq_t *seq, char *string, int maxlen);
+int seq_read_async(input_seq *seq, int first);
+int string_to_seq(const char *string, input_seq *seq);
+void seq_to_string(const input_seq *seq, char *string, int maxlen);
 
-INLINE input_code_t seq_get_1(const input_seq_t *seq) { return seq->code[0]; }
+INLINE input_code seq_get_1(const input_seq *seq) { return seq->code[0]; }
 
 #endif	/* __INPUT_H__ */

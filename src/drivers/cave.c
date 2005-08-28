@@ -45,6 +45,7 @@ To Do:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
+#include "machine/nmk112.h"
 #include "cpu/z80/z80.h"
 #include "cave.h"
 #include "sound/2203intf.h"
@@ -564,39 +565,6 @@ WRITE16_HANDLER( donpachi_videoregs_w )
 }
 #endif
 
-static WRITE16_HANDLER( nmk_oki6295_bankswitch_w )
-{
-	if (Machine->sample_rate == 0)	return;
-
-	if (ACCESSING_LSB)
-	{
-		/* The OKI6295 ROM space is divided in four banks, each one indepentently
-           controlled. The sample table at the beginning of the addressing space is
-           divided in four pages as well, banked together with the sample data. */
-
-		#define TABLESIZE 0x100
-		#define BANKSIZE 0x10000
-
-		int chip	=	offset / 4;
-		int banknum	=	offset % 4;
-
-		unsigned char *rom	=	memory_region(REGION_SOUND1 + chip);
-		int size			=	memory_region_length(REGION_SOUND1 + chip) - 0x40000;
-
-		int bankaddr		=	(data * BANKSIZE) % size;	// % used: size is not a power of 2
-
-		/* copy the samples */
-		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
-
-		/* and also copy the samples address table (only for chip #1) */
-		if (chip==1)
-		{
-			rom += banknum * TABLESIZE;
-			memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
-		}
-	}
-}
-
 static ADDRESS_MAP_START( donpachi_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
 	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM					)	// RAM
@@ -631,7 +599,7 @@ static ADDRESS_MAP_START( donpachi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa08000, 0xa08fff) AM_WRITE(paletteram16_xGGGGGRRRRRBBBBB_word_w) AM_BASE(&paletteram16)	// Palette
 	AM_RANGE(0xb00000, 0xb00003) AM_WRITE(OKIM6295_data_0_lsb_w				)	// M6295
 	AM_RANGE(0xb00010, 0xb00013) AM_WRITE(OKIM6295_data_1_lsb_w				)	//
-	AM_RANGE(0xb00020, 0xb0002f) AM_WRITE(nmk_oki6295_bankswitch_w			)	//
+	AM_RANGE(0xb00020, 0xb0002f) AM_WRITE(NMK112_okibank_lsb_w				)	//
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(cave_eeprom_msb_w					)	// EEPROM
 ADDRESS_MAP_END
 
@@ -1353,43 +1321,6 @@ ADDRESS_MAP_END
                                 Power Instinct 2
 ***************************************************************************/
 
-// TODO : FIX SAMPLES TABLE BEING OVERWRITTEN IN DONPACHI
-static WRITE8_HANDLER( pwrinst2_okibank_w )
-{
-	/* The OKI6295 ROM space is divided in four banks, each one indepentently
-       controlled. The sample table at the beginning of the addressing space is
-       divided in four pages as well, banked together with the sample data. */
-
-	#define TABLESIZE 0x100
-	#define BANKSIZE 0x10000
-
-	int chip	=	offset / 4;
-	int banknum	=	offset % 4;
-
-	unsigned char *rom	=	memory_region(REGION_SOUND1 + chip);
-	int size			=	memory_region_length(REGION_SOUND1 + chip) - 0x40000;
-
-	int bankaddr		=	data * BANKSIZE;
-
-	if (Machine->sample_rate == 0)	return;
-
-	if (bankaddr >= size)
-	{
-		bankaddr %= size;
-logerror("CPU #1 - PC %06X: chip %d bank %X<-%02X\n",activecpu_get_pc(),chip,banknum,data);
-	}
-
-	/* copy the samples */
-	if (banknum == 0)		/* skip table */
-		memcpy(rom + banknum * BANKSIZE+0x400,rom + 0x40000 + bankaddr+0x400,BANKSIZE-0x400);
-	else
-		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
-
-	/* and also copy the samples address table (only for chip #1) */
-	rom += banknum * TABLESIZE;
-	memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
-}
-
 WRITE8_HANDLER( pwrinst2_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU2);
@@ -1425,7 +1356,7 @@ static ADDRESS_MAP_START( pwrinst2_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(OKIM6295_data_0_w			)	// M6295
 	AM_RANGE(0x08, 0x08) AM_WRITE(OKIM6295_data_1_w			)	//
-	AM_RANGE(0x10, 0x17) AM_WRITE(pwrinst2_okibank_w		)	// Samples bank
+	AM_RANGE(0x10, 0x17) AM_WRITE(NMK112_okibank_w			)	// Samples bank
 	AM_RANGE(0x40, 0x40) AM_WRITE(YM2203_control_port_0_w	)	// YM2203
 	AM_RANGE(0x41, 0x41) AM_WRITE(YM2203_write_port_0_w		)	//
 //  AM_RANGE(0x50, 0x50) AM_WRITE(MWA8_NOP      )   // ?? volume
@@ -1886,7 +1817,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles */
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1898,7 +1829,7 @@ static struct GfxLayout layout_8x8x4 =
 };
 
 /* 8x8x6 tiles (in a 8x8x8 layout) */
-static struct GfxLayout layout_8x8x6 =
+static gfx_layout layout_8x8x6 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1911,7 +1842,7 @@ static struct GfxLayout layout_8x8x6 =
 
 /* 8x8x6 tiles (4 bits in one rom, 2 bits in the other,
    unpacked in 2 pages of 4 bits) */
-static struct GfxLayout layout_8x8x6_2 =
+static gfx_layout layout_8x8x6_2 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1923,7 +1854,7 @@ static struct GfxLayout layout_8x8x6_2 =
 };
 
 /* 8x8x8 tiles */
-static struct GfxLayout layout_8x8x8 =
+static gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1936,7 +1867,7 @@ static struct GfxLayout layout_8x8x8 =
 
 #if 0
 /* 16x16x8 Zooming Sprites - No need to decode them */
-static struct GfxLayout layout_sprites =
+static gfx_layout layout_sprites =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1952,7 +1883,7 @@ static struct GfxLayout layout_sprites =
                                 Dangun Feveron
 ***************************************************************************/
 
-static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
+static gfx_decode dfeveron_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
@@ -1969,7 +1900,7 @@ static struct GfxDecodeInfo dfeveron_gfxdecodeinfo[] =
                                 Dodonpachi
 ***************************************************************************/
 
-static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
+static gfx_decode ddonpach_gfxdecodeinfo[] =
 {
 	/* Layers 0&1 are 4 bit deep and use the first 16 of every 256
        colors for any given color code (a PALETTE_INIT function
@@ -1988,7 +1919,7 @@ static struct GfxDecodeInfo ddonpach_gfxdecodeinfo[] =
                                 Donpachi
 ***************************************************************************/
 
-static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
+static gfx_decode donpachi_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
@@ -2006,7 +1937,7 @@ static struct GfxDecodeInfo donpachi_gfxdecodeinfo[] =
                                 Esprade
 ***************************************************************************/
 
-static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
+static gfx_decode esprade_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
@@ -2019,7 +1950,7 @@ static struct GfxDecodeInfo esprade_gfxdecodeinfo[] =
                                 Hotdog Storm
 ***************************************************************************/
 
-static struct GfxDecodeInfo hotdogst_gfxdecodeinfo[] =
+static gfx_decode hotdogst_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
@@ -2037,7 +1968,7 @@ static struct GfxDecodeInfo hotdogst_gfxdecodeinfo[] =
                                 Koro Koro Quest
 ***************************************************************************/
 
-static struct GfxDecodeInfo korokoro_gfxdecodeinfo[] =
+static gfx_decode korokoro_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
@@ -2048,7 +1979,7 @@ static struct GfxDecodeInfo korokoro_gfxdecodeinfo[] =
                                 Mazinger Z
 ***************************************************************************/
 
-static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
+static gfx_decode mazinger_gfxdecodeinfo[] =
 {
 	/*  Sprites are 4 bit deep.
         Layer 0 is 4 bit deep.
@@ -2069,7 +2000,7 @@ static struct GfxDecodeInfo mazinger_gfxdecodeinfo[] =
                                 Power Instinct 2
 ***************************************************************************/
 
-static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
+static gfx_decode pwrinst2_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x0800+0x8000, 0x40 }, // [0] Layer 0
@@ -2084,7 +2015,7 @@ static struct GfxDecodeInfo pwrinst2_gfxdecodeinfo[] =
                                 Sailor Moon
 ***************************************************************************/
 
-static struct GfxDecodeInfo sailormn_gfxdecodeinfo[] =
+static gfx_decode sailormn_gfxdecodeinfo[] =
 {
 	/* 4 bit sprites ? */
 //    REGION_GFX1                                       // Sprites
@@ -2099,7 +2030,7 @@ static struct GfxDecodeInfo sailormn_gfxdecodeinfo[] =
                                 Uo Poko
 ***************************************************************************/
 
-static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
+static gfx_decode uopoko_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
@@ -3107,7 +3038,7 @@ OSC:          28.000/16.000/4.220MHz
 EEPROM:       ATMEL 93C46
 CUSTOM:       ATLUS 8647-01 013
               038 9429WX727 x3
-              NMK 112 (Sound)
+              NMK 112 (M6295 sample ROM banking)
 
 ---------------------------------------------------
  filenames          devices       kind
@@ -3669,10 +3600,10 @@ ROM_END
 
                             Power Instinct 2
 
-?1994 Atlus
+(c)1994 Atlus
 CPU: 68000, Z80
 Sound: YM2203, AR17961 (x2)
-Custom: NMK 112 (sound?), Atlus 8647-01  013, 038 (x4)
+Custom: NMK 112 (M6295 sample ROM banking), Atlus 8647-01  013, 038 (x4)
 X1 = 12 MHz
 X2 = 28 MHz
 X3 = 16 MHz
@@ -3981,6 +3912,21 @@ DRIVER_INIT( ddonpach )
 	time_vblank_irq = 90;
 }
 
+DRIVER_INIT( donpachi )
+{
+	init_cave();
+
+	cave_default_eeprom = cave_default_eeprom_type2;
+	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
+	cave_region_byte = -1;
+
+	ddonpach_unpack_sprites();
+	cave_spritetype = 1;	// "different" sprites (no zooming?)
+	time_vblank_irq = 90;
+
+	NMK112_set_paged_table(0, 0);	// chip #0 (music) is not paged
+}
+
 DRIVER_INIT( esprade )
 {
 	init_cave();
@@ -4177,9 +4123,9 @@ DRIVER_INIT( korokoro )
 
 GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)" )
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                               ) // region in eeprom
-GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"                            )
-GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                         )
-GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                         )
+GAME( 1995, donpachi, 0,        donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (US)"                            )
+GAME( 1995, donpachj, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                         )
+GAME( 1995, donpachk, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                         )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"                             )
 GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"           )
 GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)"   ) // region in eeprom

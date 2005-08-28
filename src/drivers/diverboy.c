@@ -171,7 +171,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout diverboy_spritelayout =
+static gfx_layout diverboy_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -184,7 +184,7 @@ static struct GfxLayout diverboy_spritelayout =
 	16*64
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &diverboy_spritelayout, 0, 4*16 },
 	{ REGION_GFX2, 0, &diverboy_spritelayout, 0, 4*16 },

@@ -418,7 +418,7 @@ INPUT_PORTS_START( tp84a )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -428,7 +428,7 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8
 };
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -441,7 +441,7 @@ static struct GfxLayout spritelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,        0, 64*8 },
 	{ REGION_GFX2, 0, &spritelayout, 64*4*8, 16*8 },

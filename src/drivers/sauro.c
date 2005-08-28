@@ -274,7 +274,7 @@ INPUT_PORTS_START( tecfri )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
     2048,   /* 2048 characters */
@@ -285,7 +285,7 @@ static struct GfxLayout charlayout =
     8*8*4     /* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout trckydoc_spritelayout =
+static gfx_layout trckydoc_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
     512,	/* 512 sprites */
@@ -299,7 +299,7 @@ static struct GfxLayout trckydoc_spritelayout =
     16*16     /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout sauro_spritelayout =
+static gfx_layout sauro_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
     1024,	/* 1024 sprites */
@@ -313,7 +313,7 @@ static struct GfxLayout sauro_spritelayout =
     16*16     /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo sauro_gfxdecodeinfo[] =
+static gfx_decode sauro_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 64 },
 	{ REGION_GFX2, 0, &charlayout, 0, 64 },
@@ -321,7 +321,7 @@ static struct GfxDecodeInfo sauro_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo trckydoc_gfxdecodeinfo[] =
+static gfx_decode trckydoc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 64 },
 	{ REGION_GFX2, 0, &trckydoc_spritelayout, 0, 64 },

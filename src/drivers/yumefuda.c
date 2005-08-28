@@ -57,7 +57,7 @@ Code disassembling
 #include "machine/eeprom.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static void y_get_bg_tile_info(int tile_index)
 {
@@ -91,7 +91,7 @@ VIDEO_UPDATE( yumefuda )
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -102,7 +102,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-struct GfxDecodeInfo yumefuda_gfxdecodeinfo[] =
+gfx_decode yumefuda_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,   0, 0x10 },
 	{ -1 } /* end of array */

@@ -37,7 +37,7 @@ data8_t *rallyx_videoram,*rallyx_radarattr;
 static data8_t *rallyx_radarx,*rallyx_radary;
 static int video_type, spriteram_base;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 #define MAX_STARS 1000
 #define STARS_COLOR_BASE 32

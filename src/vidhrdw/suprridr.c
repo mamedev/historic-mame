@@ -12,9 +12,9 @@
 data8_t *suprridr_bgram;
 data8_t *suprridr_fgram;
 
-static struct tilemap *fg_tilemap;
-static struct tilemap *bg_tilemap;
-static struct tilemap *bg_tilemap_noscroll;
+static tilemap *fg_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *bg_tilemap_noscroll;
 static UINT8 flipx, flipy;
 
 

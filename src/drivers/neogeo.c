@@ -1373,7 +1373,7 @@ INPUT_PORTS_END
 /******************************************************************************/
 
 /* character layout (same for all games) */
-static struct GfxLayout charlayout =	/* All games */
+static gfx_layout charlayout =	/* All games */
 {
 	8,8,			/* 8 x 8 chars */
 	RGN_FRAC(1,1),
@@ -1385,7 +1385,7 @@ static struct GfxLayout charlayout =	/* All games */
 };
 
 /* Placeholder and also reminder of how this graphic format is put together */
-static struct GfxLayout dummy_mvs_tilelayout =
+static gfx_layout dummy_mvs_tilelayout =
 {
 	16,16,	 /* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -1396,7 +1396,7 @@ static struct GfxLayout dummy_mvs_tilelayout =
 	128*8		/* char modulo */
 };
 
-static struct GfxDecodeInfo neogeo_mvs_gfxdecodeinfo[] =
+static gfx_decode neogeo_mvs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 16 },
 	{ REGION_GFX2, 0, &charlayout, 0, 16 },

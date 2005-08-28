@@ -785,7 +785,7 @@ int palette_get_total_colors_with_ui(void)
     state with our latest info
 -------------------------------------------------*/
 
-void palette_update_display(struct mame_display *display)
+void palette_update_display(mame_display *display)
 {
 	/* palettized case: point to the palette info */
 	if (colormode == PALETTIZED_16BIT)

@@ -12,7 +12,7 @@
 UINT8 *ironhors_scroll;
 static int palettebank, charbank, spriterambank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

@@ -4,7 +4,7 @@
 
 extern data8_t* sbugger_videoram, *sbugger_videoram_attr;
 
-static struct tilemap *sbugger_tilemap;
+static tilemap *sbugger_tilemap;
 
 static void get_sbugger_tile_info(int tile_index)
 {

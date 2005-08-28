@@ -23,6 +23,7 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "machine/nmk112.h"
 #include "sound/okim6295.h"
 
 /* Variables that vidhrdw has access to */
@@ -66,42 +67,6 @@ static WRITE16_HANDLER( powerins_okibank_w )
 			memcpy(&RAM[0x30000],&RAM[0x40000 + 0x10000*new_bank],0x10000);
 		}
 	}
-}
-
-static WRITE8_HANDLER( powerina_okibank_w )
-{
-	/* The OKI6295 ROM space is divided in four banks, each one indepentently
-       controlled. The sample table at the beginning of the addressing space is
-       divided in four pages as well, banked together with the sample data. */
-
-	#define TABLESIZE 0x100
-	#define BANKSIZE 0x10000
-
-	int chip	=	offset / 4;
-	int banknum	=	offset % 4;
-
-	unsigned char *rom	=	memory_region(REGION_SOUND1 + chip);
-	int size			=	memory_region_length(REGION_SOUND1 + chip) - 0x40000;
-
-	int bankaddr		=	data * BANKSIZE;
-
-	if (Machine->sample_rate == 0)	return;
-
-	if (bankaddr >= size)
-	{
-		bankaddr %= size;
-logerror("CPU #1 - PC %06X: chip %d bank %X<-%02X\n",activecpu_get_pc(),chip,banknum,data);
-	}
-
-	/* copy the samples */
-	if (banknum == 0)		/* skip table */
-		memcpy(rom + banknum * BANKSIZE+0x400,rom + 0x40000 + bankaddr+0x400,BANKSIZE-0x400);
-	else
-		memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
-
-	/* and also copy the samples address table (only for chip #1) */
-	rom += banknum * TABLESIZE;
-	memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
 }
 
 static WRITE16_HANDLER( powerina_soundlatch_w )
@@ -182,7 +147,7 @@ static ADDRESS_MAP_START( writeport_snd, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0x88, 0x88) AM_WRITE(OKIM6295_data_1_w)
-	AM_RANGE(0x90, 0x97) AM_WRITE(powerina_okibank_w)
+	AM_RANGE(0x90, 0x97) AM_WRITE(NMK112_okibank_w)
 ADDRESS_MAP_END
 
 /***************************************************************************
@@ -292,7 +257,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles */
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -305,7 +270,7 @@ static struct GfxLayout layout_8x8x4 =
 
 
 /* 16x16x4 tiles (made of four 8x8 tiles) */
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -320,7 +285,7 @@ static struct GfxLayout layout_16x16x4 =
 
 
 /* 16x16x4 tiles (made of four 8x8 tiles). The bytes are swapped */
-static struct GfxLayout layout_16x16x4_swap =
+static gfx_layout layout_16x16x4_swap =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -334,7 +299,7 @@ static struct GfxLayout layout_16x16x4_swap =
 };
 
 
-static struct GfxDecodeInfo powerins_gfxdecodeinfo[] =
+static gfx_decode powerins_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,      0x000, 0x20 }, // [0] Tiles
 	{ REGION_GFX2, 0, &layout_8x8x4,        0x200, 0x10 }, // [1] Tiles

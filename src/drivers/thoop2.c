@@ -24,7 +24,7 @@ VIDEO_START( thoop2 );
 VIDEO_UPDATE( thoop2 );
 
 
-static struct GfxLayout thoop2_tilelayout =
+static gfx_layout thoop2_tilelayout =
 {
 	8,8,									/* 8x8 tiles */
 	0x400000/16,							/* number of tiles */
@@ -35,7 +35,7 @@ static struct GfxLayout thoop2_tilelayout =
 	16*8
 };
 
-static struct GfxLayout thoop2_tilelayout_16 =
+static gfx_layout thoop2_tilelayout_16 =
 {
 	16,16,									/* 16x16 tiles */
 	0x400000/64,							/* number of tiles */
@@ -49,7 +49,7 @@ static struct GfxLayout thoop2_tilelayout_16 =
 };
 
 
-static struct GfxDecodeInfo thoop2_gfxdecodeinfo[] =
+static gfx_decode thoop2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &thoop2_tilelayout, 0,		64 },
 	{ REGION_GFX1, 0x000000, &thoop2_tilelayout_16, 0,	64 },

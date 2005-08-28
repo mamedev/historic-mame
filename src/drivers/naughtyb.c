@@ -314,10 +314,10 @@ INPUT_PORTS_START( trvmstr )
 
 	PORT_START_TAG( "DSW0" )
 	PORT_DIPNAME( 0x03, 0x00, "Screen Orientation" )
-	PORT_DIPSETTING(	0x00, "0?" )
-	PORT_DIPSETTING(	0x02, "90?" )
-	PORT_DIPSETTING(	0x01, "180?" )
-	PORT_DIPSETTING(	0x03, "270?" )
+	PORT_DIPSETTING(	0x00, "0'" )
+	PORT_DIPSETTING(	0x02, "90'" )
+	PORT_DIPSETTING(	0x01, "180'" )
+	PORT_DIPSETTING(	0x03, "270'" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -349,7 +349,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -362,7 +362,7 @@ static struct GfxLayout charlayout =
 
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 32 },
 	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },

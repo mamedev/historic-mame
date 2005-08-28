@@ -4,7 +4,7 @@
 #include "vidhrdw/generic.h"
 
 extern data16_t *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
-struct tilemap *kickgoal_fgtm, *kickgoal_bgtm, *kickgoal_bg2tm;
+tilemap *kickgoal_fgtm, *kickgoal_bgtm, *kickgoal_bg2tm;
 
 /* FG */
 static void get_kickgoal_fg_tile_info(int tile_index)
@@ -97,7 +97,7 @@ WRITE16_HANDLER( kickgoal_bg2ram_w )
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -223,7 +223,7 @@ VIDEO_START( actionhw )
 
 static void actionhw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)

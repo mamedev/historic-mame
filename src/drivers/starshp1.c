@@ -306,7 +306,7 @@ INPUT_PORTS_START( starshp1 )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16, 8,  /* 16x8 tiles      */
 	64,     /* 64 tiles        */
@@ -324,7 +324,7 @@ static struct GfxLayout tilelayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16, 8,  /* 16x8 sprites    */
 	8,      /* 8 sprites       */
@@ -341,7 +341,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxLayout shiplayout =
+static gfx_layout shiplayout =
 {
 	64, 16, /* 64x16 sprites    */
 	4,      /* 4 sprites        */
@@ -365,7 +365,7 @@ static struct GfxLayout shiplayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 1 },
 	{ REGION_GFX2, 0, &spritelayout, 2, 2 },

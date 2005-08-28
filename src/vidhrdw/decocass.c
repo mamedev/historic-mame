@@ -35,7 +35,7 @@ size_t decocass_bgvideoram_size;
 size_t decocass_tileram_size;
 size_t decocass_objectram_size;
 
-static struct tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
+static tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;
 
 static char *sprite_dirty;
 static char *char_dirty;

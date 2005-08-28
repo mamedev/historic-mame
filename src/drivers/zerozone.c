@@ -183,7 +183,7 @@ INPUT_PORTS_START( zerozone )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),	/* 4096 characters */
@@ -195,7 +195,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 256 },         /* sprites & playfield */
 	{ -1 } /* end of array */

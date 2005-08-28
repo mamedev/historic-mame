@@ -3,7 +3,7 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *labyrunr_videoram1,*labyrunr_videoram2,*labyrunr_scrollram;
-static struct tilemap *layer0, *layer1;
+static tilemap *layer0, *layer1;
 static struct rectangle clip0, clip1;
 
 

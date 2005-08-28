@@ -926,7 +926,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -937,7 +937,7 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -954,7 +954,7 @@ static struct GfxLayout spritelayout =
 	32*32*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,   0x0800,   8 },  /* characters */
 	{ REGION_GFX3, 0, &spritelayout, 0x0000, 128 },  /* sprites 32/16/8/4 dots */

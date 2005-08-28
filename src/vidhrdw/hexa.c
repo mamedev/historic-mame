@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 static int charbank;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( hexa_videoram_w )
 {

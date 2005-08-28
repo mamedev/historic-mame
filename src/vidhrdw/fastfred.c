@@ -38,7 +38,7 @@ static int flip_screen_x;
 static int flip_screen_y;
 int fastfred_hardware_type;
 static const UINT8 *fastfred_color_prom;
-static struct tilemap *bg_tilemap, *fg_tilemap, *web_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *web_tilemap;
 
 /***************************************************************************
 

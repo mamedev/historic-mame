@@ -717,7 +717,7 @@ INPUT_PORTS_START( hotmind )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -728,7 +728,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout hotmind_charlayout =
+static gfx_layout hotmind_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -739,7 +739,7 @@ static struct GfxLayout hotmind_charlayout =
 	8*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -752,7 +752,7 @@ static struct GfxLayout tilelayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,4),
@@ -769,7 +769,7 @@ static struct GfxLayout spritelayout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &spritelayout, 0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout,   0x000,  8 },	/* colors 0x000-0x07f */
@@ -779,7 +779,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct GfxLayout wcharlayout =
+static gfx_layout wcharlayout =
 {
 	8,8,
 	RGN_FRAC(1,6),
@@ -790,7 +790,7 @@ static struct GfxLayout wcharlayout =
 	8*8
 };
 
-static struct GfxLayout wtilelayout =
+static gfx_layout wtilelayout =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -804,7 +804,7 @@ static struct GfxLayout wtilelayout =
 };
 
 /* tiles are 6 bpp, sprites only 5bpp */
-static struct GfxLayout wspritelayout =
+static gfx_layout wspritelayout =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -817,7 +817,7 @@ static struct GfxLayout wspritelayout =
 	32*8
 };
 
-static struct GfxDecodeInfo wbeachvl_gfxdecodeinfo[] =
+static gfx_decode wbeachvl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &wspritelayout, 0x600, 16 },	/* colors 0x600-0x7ff */
 	{ REGION_GFX1, 0, &wtilelayout,   0x000, 16 },	/* colors 0x000-0x3ff */
@@ -825,7 +825,7 @@ static struct GfxDecodeInfo wbeachvl_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo excelsr_gfxdecodeinfo[] =
+static gfx_decode excelsr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout, 0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout, 0x000,  8 },	/* colors 0x000-0x07f */
@@ -834,7 +834,7 @@ static struct GfxDecodeInfo excelsr_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo hotmind_gfxdecodeinfo[] =
+static gfx_decode hotmind_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,         0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout,         0x000, 16 },	/* colors 0x000-0x0ff */

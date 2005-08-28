@@ -12,7 +12,7 @@
 
 data8_t *skydiver_videoram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int width = 0;
 
 

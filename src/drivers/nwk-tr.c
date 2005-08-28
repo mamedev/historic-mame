@@ -42,11 +42,11 @@ static UINT32 *K001604_tile_ram;
 static UINT32 *K001604_char_ram;
 static UINT8 *K001604_dirty_map;
 static int K001604_gfx_index, K001604_char_dirty;
-static struct tilemap *K001604_layer[1];
+static tilemap *K001604_layer[1];
 
 #define K001604_NUM_TILES		16384
 
-static struct GfxLayout K001604_char_layout =
+static gfx_layout K001604_char_layout =
 {
 	8, 8,
 	K001604_NUM_TILES,

@@ -201,7 +201,7 @@ INPUT_PORTS_START( sspeedr )
 INPUT_PORTS_END
 
 
-static struct GfxLayout car_layout =
+static gfx_layout car_layout =
 {
 	32, 16,
 	16,
@@ -221,7 +221,7 @@ static struct GfxLayout car_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &car_layout, 0, 1 },
 	{ REGION_GFX2, 0, &car_layout, 0, 1 },

@@ -1960,7 +1960,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048+1,	/* 2048 characters (+ blank one) */
@@ -1971,7 +1971,7 @@ static struct GfxLayout charlayout =
 	32*8     /* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
@@ -1984,7 +1984,7 @@ static struct GfxLayout spritelayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout3216 =
+static gfx_layout spritelayout3216 =
 {
 	32,16,	/* 32*16 sprites */
 	256,	/* 256 sprites */
@@ -1999,7 +1999,7 @@ static struct GfxLayout spritelayout3216 =
 	256*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout1632 =
+static gfx_layout spritelayout1632 =
 {
 	16,32,	/* 16*32 sprites */
 	256,	/* 256 sprites */
@@ -2014,7 +2014,7 @@ static struct GfxLayout spritelayout1632 =
 	256*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout3232 =
+static gfx_layout spritelayout3232 =
 {
 	32,32,	/* 32*32 sprites */
 	128,	/* 128 sprites */
@@ -2031,7 +2031,7 @@ static struct GfxLayout spritelayout3232 =
 	512*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout816 =
+static gfx_layout spritelayout816 =
 {
 	8,16,	/* 16*16 sprites */
 	1024,	/* 1024 sprites */
@@ -2043,7 +2043,7 @@ static struct GfxLayout spritelayout816 =
 	64*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout168 =
+static gfx_layout spritelayout168 =
 {
 	16,8,	/* 16*8 sprites */
 	1024,	/* 1024 sprites */
@@ -2056,7 +2056,7 @@ static struct GfxLayout spritelayout168 =
 
 };
 
-static struct GfxLayout spritelayout6464 =
+static gfx_layout spritelayout6464 =
 {
 	64,64,	/* 32*32 sprites */
 	32,	/* 128 sprites */
@@ -2082,7 +2082,7 @@ static struct GfxLayout spritelayout6464 =
 	2048*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
     { 0, 0x0, &charlayout,   0, 0x80 },	/* the game dynamically modifies this */
     { 0, 0x0, &spritelayout, 0, 0x80 },	/* the game dynamically modifies this */

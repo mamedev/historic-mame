@@ -11,7 +11,7 @@
 #ifndef __AUDIT_H__
 #define __AUDIT_H__
 
-/* return values from VerifyRomSet and VerifySampleSet */
+/* return values from audit_verify_roms and audit_verify_samples */
 #define CORRECT   		0
 #define NOTFOUND  		1
 #define INCORRECT 		2
@@ -19,7 +19,7 @@
 #define BEST_AVAILABLE	4
 #define MISSING_OPTIONAL	5
 
-/* rom status values for tAuditRecord.status */
+/* rom status values for audit_record.status */
 #define AUD_ROM_GOOD				0x00000001
 #define AUD_ROM_NEED_REDUMP			0x00000002
 #define AUD_ROM_NOT_FOUND			0x00000004
@@ -41,7 +41,7 @@
 #define AUD_MAX_SAMPLES		200	/* maximum samples per driver */
 
 
-typedef struct
+struct _audit_record
 {
 	char rom[20];				/* name of rom file */
 	unsigned int explength;		/* expected length of rom file */
@@ -49,21 +49,23 @@ typedef struct
 	const char* exphash;        /* expected hash data */
 	char hash[256];             /* computed hash informations */
 	int status;					/* status of rom file */
-} tAuditRecord;
+};
+typedef struct _audit_record audit_record;
 
-typedef struct
+struct _missing_sample
 {
 	char	name[20];		/* name of missing sample file */
-} tMissingSample;
+};
+typedef struct _missing_sample missing_sample;
 
 typedef void (CLIB_DECL *verify_printf_proc)(const char *fmt,...);
 
-int AuditRomSet (int game, tAuditRecord **audit);
-int VerifyRomSet(int game,verify_printf_proc verify_printf);
-int AuditSampleSet (int game, tMissingSample **audit);
-int VerifySampleSet(int game,verify_printf_proc verify_printf);
-int RomInSet (const struct GameDriver *gamedrv, const char* hash);
-int RomsetMissing (int game);
+int audit_roms(int game, audit_record **audit);
+int audit_verify_roms(int game,verify_printf_proc verify_printf);
+int audit_samples (int game, missing_sample **audit);
+int audit_verify_samples(int game,verify_printf_proc verify_printf);
+int audit_is_rom_used (const game_driver *gamedrv, const char* hash);
+int audit_has_missing_roms (int game);
 
 
 #endif	/* __AUDIT_H__ */

@@ -50,7 +50,7 @@ static data8_t *namcos1_spriteram;
 
 static data8_t namcos1_playfield_control[0x20];
 
-static struct tilemap *tilemap[6];
+static tilemap *bg_tilemap[6];
 static UINT8 *tilemap_maskdata;
 
 
@@ -109,21 +109,21 @@ VIDEO_START( namcos1 )
 	namcos1_spriteram = auto_malloc(0x1000);
 
 	/* initialize playfields */
-	tilemap[0] = tilemap_create(bg_get_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-	tilemap[1] = tilemap_create(bg_get_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-	tilemap[2] = tilemap_create(bg_get_info2,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-	tilemap[3] = tilemap_create(bg_get_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,32);
-	tilemap[4] = tilemap_create(fg_get_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
-	tilemap[5] = tilemap_create(fg_get_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+	bg_tilemap[0] = tilemap_create(bg_get_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	bg_tilemap[1] = tilemap_create(bg_get_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	bg_tilemap[2] = tilemap_create(bg_get_info2,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	bg_tilemap[3] = tilemap_create(bg_get_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,32);
+	bg_tilemap[4] = tilemap_create(fg_get_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+	bg_tilemap[5] = tilemap_create(fg_get_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3] || !tilemap[4] || !tilemap[5]
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !bg_tilemap[3] || !bg_tilemap[4] || !bg_tilemap[5]
 			|| !namcos1_videoram || !namcos1_paletteram)
 		return 1;
 
-	tilemap_set_scrolldx(tilemap[4],73,512-73);
-	tilemap_set_scrolldx(tilemap[5],73,512-73);
-	tilemap_set_scrolldy(tilemap[4],0x10,0x110);
-	tilemap_set_scrolldy(tilemap[5],0x10,0x110);
+	tilemap_set_scrolldx(bg_tilemap[4],73,512-73);
+	tilemap_set_scrolldx(bg_tilemap[5],73,512-73);
+	tilemap_set_scrolldy(bg_tilemap[4],0x10,0x110);
+	tilemap_set_scrolldy(bg_tilemap[5],0x10,0x110);
 
 	/* register videoram to the save state system (post-allocation) */
 	state_save_register_UINT8("video", 0, "vram", namcos1_videoram, 0x8000);
@@ -170,14 +170,14 @@ WRITE8_HANDLER( namcos1_videoram_w )
 		{   /* background 0-3 */
 			int layer = offset >> 13;
 			int num = (offset & 0x1fff) >> 1;
-			tilemap_mark_tile_dirty(tilemap[layer],num);
+			tilemap_mark_tile_dirty(bg_tilemap[layer],num);
 		}
 		else
 		{   /* foreground 4-5 */
 			int layer = (offset >> 11 & 1) + 4;
 			int num = ((offset & 0x7ff) - 0x10) >> 1;
 			if (num >= 0 && num < 0x3f0)
-				tilemap_mark_tile_dirty(tilemap[layer],num);
+				tilemap_mark_tile_dirty(bg_tilemap[layer],num);
 		}
 	}
 }
@@ -285,8 +285,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 {
 	const data8_t *source = &spriteram[0x0800-0x20];	/* the last is NOT a sprite */
 	const data8_t *finish = &spriteram[0];
-	struct GfxElement *gfx = Machine->gfx[1];
-	struct GfxElement mygfx = *gfx;
+	gfx_element *gfx = Machine->gfx[1];
+	gfx_element mygfx = *gfx;
 
 	int sprite_xoffs = spriteram[0x07f5] + ((spriteram[0x07f4] & 1) << 8);
 	int sprite_yoffs = spriteram[0x07f7];
@@ -375,7 +375,7 @@ VIDEO_UPDATE( namcos1 )
 
 	/* set palette base */
 	for (i = 0;i < 6;i++)
-		tilemap_set_palette_offset(tilemap[i],(namcos1_playfield_control[i + 24] & 7) * 256);
+		tilemap_set_palette_offset(bg_tilemap[i],(namcos1_playfield_control[i + 24] & 7) * 256);
 
 	for (i = 0;i < 4;i++)
 	{
@@ -391,8 +391,8 @@ VIDEO_UPDATE( namcos1 )
 			scrolly = -scrolly;
 		}
 
-		tilemap_set_scrollx(tilemap[i],0,scrollx);
-		tilemap_set_scrolly(tilemap[i],0,scrolly);
+		tilemap_set_scrollx(bg_tilemap[i],0,scrollx);
+		tilemap_set_scrolly(bg_tilemap[i],0,scrolly);
 	}
 
 
@@ -405,7 +405,7 @@ VIDEO_UPDATE( namcos1 )
 		for (i = 0;i < 6;i++)
 		{
 			if (namcos1_playfield_control[16 + i] == priority)
-				tilemap_draw_primask(bitmap,&new_clip,tilemap[i],0,priority,0);
+				tilemap_draw_primask(bitmap,&new_clip,bg_tilemap[i],0,priority,0);
 		}
 	}
 

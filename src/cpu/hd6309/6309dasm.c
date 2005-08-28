@@ -3,12 +3,12 @@
 
 /* 6309dasm.c - a 6309 opcode disassembler      */
 /* Version 1.0 5-AUG-2000                       */
-/* Copyright ? 2000 tim lindner                 */
+/* Copyright 2000 tim lindner                   */
 /*                                              */
 /* based on:                                    */
 /*      6809dasm.c - a 6809 opcode disassembler */
 /*      Version 1.4 1-MAR-95                    */
-/*      Copyright ? 1995 Sean Riddle            */
+/*      Copyright 1995 Sean Riddle              */
 /*                                              */
 /*      thanks to Franklin Bowen for bug fixes, ideas */
 
@@ -365,7 +365,7 @@ static opcodeinfo pg2opcodes[] =
 	{ 0x38,0,"PSHSW",    INH,        0,        0,    6},
 	{ 0x39,0,"PULSW",    INH,        0,        0,    6},
 	{ 0x3A,0,"PSHUW",    INH,        0,        0,    6},
-	{ 0x3B,0,"PULSW",    INH,        0,        0,    6},
+	{ 0x3B,0,"PULUW",    INH,        0,        0,    6},
 
 	{ 0x3F,2,"SWI2",     INH,        0,        0,   20},
 

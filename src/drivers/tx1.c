@@ -86,9 +86,9 @@ size_t tx1_objectram_size;
 size_t bb_objectram_size;
 size_t bb_rcram_size;
 
-struct tilemap *tx1_tilemap;
-struct tilemap *buggyboy_tilemap;
-struct tilemap *buggyb1_tilemap;
+tilemap *tx1_tilemap;
+tilemap *buggyboy_tilemap;
+tilemap *buggyb1_tilemap;
 
 /* machine/tx1.c */
 void MMI_74S516(int ins, UINT16 *data);
@@ -682,7 +682,7 @@ ADDRESS_MAP_END
 
 
 /* Common to TX-1 and Buggy Boy */
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8,8,
 	2048,
@@ -693,7 +693,7 @@ static struct GfxLayout char_layout =
 	8*8
 };
 
-static struct GfxLayout bb_object_layout =
+static gfx_layout bb_object_layout =
 {
 	8,8,
 	4096,
@@ -704,7 +704,7 @@ static struct GfxLayout bb_object_layout =
 	8*8
 };
 
-static struct GfxLayout tx1_object_layout =
+static gfx_layout tx1_object_layout =
 {
 	8,8,
 	2048,
@@ -715,7 +715,7 @@ static struct GfxLayout tx1_object_layout =
 	8*8
 };
 
-static struct GfxDecodeInfo bb_gfxdecodeinfo[] =
+static gfx_decode bb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 256 },
 	{ REGION_GFX2, 0, &bb_object_layout, 256, 2048  },
@@ -724,7 +724,7 @@ static struct GfxDecodeInfo bb_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo tx1_gfxdecodeinfo[] =
+static gfx_decode tx1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 16 },
 	{ REGION_GFX2, 0, &tx1_object_layout, 0, 16 },

@@ -20,7 +20,7 @@ scanline by scanline.
 static UINT8 *sprite_mux_buffer;
 static int scanline;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /*
 -The colortable is divided in 2 part:
@@ -239,7 +239,7 @@ VIDEO_START( tp84 )
 
 static void tp84_draw_sprites(struct mame_bitmap *bitmap)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	struct rectangle clip = Machine->visible_area;
 	int offs;
 	int line;

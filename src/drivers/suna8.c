@@ -1495,7 +1495,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles (2 bitplanes per ROM) */
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1506,7 +1506,7 @@ static struct GfxLayout layout_8x8x4 =
 	8*8*2
 };
 
-static struct GfxDecodeInfo suna8_gfxdecodeinfo[] =
+static gfx_decode suna8_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4, 0, 16 }, // [0] Sprites
 	{ -1 }

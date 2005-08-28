@@ -16,7 +16,7 @@ static data8_t	blitter_bank;
 static int		blitter_param_count;
 static data8_t	blitter_param[4];		/* buffers last 4 writes to 0x8006 */
 
-static struct tilemap *tilemap[2][4];
+static tilemap *bg_tilemap[2][4];
 
 
 /*
@@ -515,75 +515,75 @@ static void lemnangl_get_info1_1(int tile_index) { lemnangl_info( tile_index, 1,
 
 VIDEO_START( mrokumei )
 {
-	tilemap[0][0] = tilemap_create( mrokumei_get_info0_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
-	tilemap[0][1] = tilemap_create( mrokumei_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
-	tilemap[1][0] = tilemap_create( mrokumei_get_info1_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
-	tilemap[1][1] = tilemap_create( mrokumei_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
+	bg_tilemap[0][0] = tilemap_create( mrokumei_get_info0_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
+	bg_tilemap[0][1] = tilemap_create( mrokumei_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
+	bg_tilemap[1][0] = tilemap_create( mrokumei_get_info1_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
+	bg_tilemap[1][1] = tilemap_create( mrokumei_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
 
-	if (!tilemap[0][0] || !tilemap[0][1] || !tilemap[1][0] || !tilemap[1][1])
+	if (!bg_tilemap[0][0] || !bg_tilemap[0][1] || !bg_tilemap[1][0] || !bg_tilemap[1][1])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0][1],0);
-	tilemap_set_transparent_pen(tilemap[1][1],0);
+	tilemap_set_transparent_pen(bg_tilemap[0][1],0);
+	tilemap_set_transparent_pen(bg_tilemap[1][1],0);
 
 	return 0;
 }
 
 VIDEO_START( reikaids )
 {
-	tilemap[0][0] = tilemap_create( reikaids_get_info0_0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[0][1] = tilemap_create( reikaids_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[0][2] = tilemap_create( reikaids_get_info0_2, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[0][3] = tilemap_create( reikaids_get_info0_3, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[1][0] = tilemap_create( reikaids_get_info1_0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[1][1] = tilemap_create( reikaids_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[1][2] = tilemap_create( reikaids_get_info1_2, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
-	tilemap[1][3] = tilemap_create( reikaids_get_info1_3, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[0][0] = tilemap_create( reikaids_get_info0_0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[0][1] = tilemap_create( reikaids_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[0][2] = tilemap_create( reikaids_get_info0_2, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[0][3] = tilemap_create( reikaids_get_info0_3, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[1][0] = tilemap_create( reikaids_get_info1_0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[1][1] = tilemap_create( reikaids_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[1][2] = tilemap_create( reikaids_get_info1_2, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
+	bg_tilemap[1][3] = tilemap_create( reikaids_get_info1_3, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32 );
 
-	if (!tilemap[0][0] || !tilemap[0][1] || !tilemap[0][2] || !tilemap[0][3] ||
-		!tilemap[1][0] || !tilemap[1][1] || !tilemap[1][2] || !tilemap[1][3])
+	if (!bg_tilemap[0][0] || !bg_tilemap[0][1] || !bg_tilemap[0][2] || !bg_tilemap[0][3] ||
+		!bg_tilemap[1][0] || !bg_tilemap[1][1] || !bg_tilemap[1][2] || !bg_tilemap[1][3])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0][0],0xff);
-	tilemap_set_transparent_pen(tilemap[0][1],0xff);
-	tilemap_set_transparent_pen(tilemap[0][2],0xff);
-	tilemap_set_transparent_pen(tilemap[0][3],0xff);
-	tilemap_set_transparent_pen(tilemap[1][0],0xff);
-	tilemap_set_transparent_pen(tilemap[1][1],0xff);
-	tilemap_set_transparent_pen(tilemap[1][2],0xff);
-	tilemap_set_transparent_pen(tilemap[1][3],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[0][0],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[0][1],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[0][2],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[0][3],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[1][0],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[1][1],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[1][2],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[1][3],0xff);
 
 	return 0;
 }
 
 VIDEO_START( pteacher )
 {
-	tilemap[0][0] = tilemap_create( pteacher_get_info0_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
-	tilemap[0][1] = tilemap_create( pteacher_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
-	tilemap[1][0] = tilemap_create( pteacher_get_info1_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
-	tilemap[1][1] = tilemap_create( pteacher_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
+	bg_tilemap[0][0] = tilemap_create( pteacher_get_info0_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
+	bg_tilemap[0][1] = tilemap_create( pteacher_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
+	bg_tilemap[1][0] = tilemap_create( pteacher_get_info1_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
+	bg_tilemap[1][1] = tilemap_create( pteacher_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
 
-	if (!tilemap[0][0] || !tilemap[0][1] || !tilemap[1][0] || !tilemap[1][1])
+	if (!bg_tilemap[0][0] || !bg_tilemap[0][1] || !bg_tilemap[1][0] || !bg_tilemap[1][1])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0][1],0xff);
-	tilemap_set_transparent_pen(tilemap[1][1],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[0][1],0xff);
+	tilemap_set_transparent_pen(bg_tilemap[1][1],0xff);
 
 	return 0;
 }
 
 VIDEO_START( lemnangl )
 {
-	tilemap[0][0] = tilemap_create( lemnangl_get_info0_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
-	tilemap[0][1] = tilemap_create( lemnangl_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
-	tilemap[1][0] = tilemap_create( lemnangl_get_info1_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
-	tilemap[1][1] = tilemap_create( lemnangl_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
+	bg_tilemap[0][0] = tilemap_create( lemnangl_get_info0_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
+	bg_tilemap[0][1] = tilemap_create( lemnangl_get_info0_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
+	bg_tilemap[1][0] = tilemap_create( lemnangl_get_info1_0, tilemap_scan_rows, TILEMAP_OPAQUE,      8, 8, 64,32 );
+	bg_tilemap[1][1] = tilemap_create( lemnangl_get_info1_1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64,32 );
 
-	if (!tilemap[0][0] || !tilemap[0][1] || !tilemap[1][0] || !tilemap[1][1])
+	if (!bg_tilemap[0][0] || !bg_tilemap[0][1] || !bg_tilemap[1][0] || !bg_tilemap[1][1])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0][1],0x0f);
-	tilemap_set_transparent_pen(tilemap[1][1],0x0f);
+	tilemap_set_transparent_pen(bg_tilemap[0][1],0x0f);
+	tilemap_set_transparent_pen(bg_tilemap[1][1],0x0f);
 
 	return 0;
 }
@@ -601,7 +601,7 @@ WRITE8_HANDLER( mrokumei_videoram_w )
 	if( videoram[offset] != data )
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap[(offset & 0x2000) >> 13][(offset & 0x1000) >> 12], (offset & 0xffe) >> 1 );
+		tilemap_mark_tile_dirty( bg_tilemap[(offset & 0x2000) >> 13][(offset & 0x1000) >> 12], (offset & 0xffe) >> 1 );
 	}
 }
 
@@ -610,7 +610,7 @@ WRITE8_HANDLER( reikaids_videoram_w )
 	if (videoram[offset] != data)
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap[(offset & 0x2000) >> 13][offset & 3], (offset & 0xffc) >> 2 );
+		tilemap_mark_tile_dirty( bg_tilemap[(offset & 0x2000) >> 13][offset & 3], (offset & 0xffc) >> 2 );
 	}
 }
 
@@ -619,7 +619,7 @@ WRITE8_HANDLER( pteacher_videoram_w )
 	if( videoram[offset] != data )
 	{
 		videoram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap[(offset & 0x2000) >> 13][(offset & 0x1000) >> 12], (offset & 0xffe) >> 1 );
+		tilemap_mark_tile_dirty( bg_tilemap[(offset & 0x2000) >> 13][(offset & 0x1000) >> 12], (offset & 0xffe) >> 1 );
 	}
 }
 
@@ -753,10 +753,10 @@ VIDEO_UPDATE( mrokumei )
 	}
 	set_visible_area(0*8, width*8-1, 2*8, 30*8-1);
 
-	tilemap_set_scrollx(tilemap[homedata_visible_page][0],0,homedata_vreg[0xc] << 1);
+	tilemap_set_scrollx(bg_tilemap[homedata_visible_page][0],0,homedata_vreg[0xc] << 1);
 
-	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][0], 0, 0);
-	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][1], 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap[homedata_visible_page][0], 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap[homedata_visible_page][1], 0, 0);
 }
 /*
 VIDEO_UPDATE( reikaids )
@@ -788,7 +788,7 @@ VIDEO_UPDATE( reikaids )
 
     pri = (blitter_bank & 0x70) >> 4;
     for (i = 0;i < 4;i++)
-        tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][pritable[pri][3-i]], 0, 0);
+        tilemap_draw(bitmap, cliprect, bg_tilemap[homedata_visible_page][pritable[pri][3-i]], 0, 0);
 }
 
 */
@@ -833,7 +833,7 @@ VIDEO_UPDATE( reikaids )
 
 	pri = (blitter_bank & 0x70) >> 4;
 	for (i = 0;i < 4;i++)
-		tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][pritable[homedata_priority][pri][3-i]], 0, 0);
+		tilemap_draw(bitmap, cliprect, bg_tilemap[homedata_visible_page][pritable[homedata_priority][pri][3-i]], 0, 0);
 }
 
 
@@ -907,11 +907,11 @@ VIDEO_UPDATE( pteacher )
 	}
 	scroll_high = homedata_vreg[0xb] >> 2;
 
-	tilemap_set_scrollx(tilemap[homedata_visible_page][0],0,scroll_high*8 + scroll_low);
-	tilemap_set_scrollx(tilemap[homedata_visible_page][1],0,scroll_high*8 + scroll_low);
+	tilemap_set_scrollx(bg_tilemap[homedata_visible_page][0],0,scroll_high*8 + scroll_low);
+	tilemap_set_scrollx(bg_tilemap[homedata_visible_page][1],0,scroll_high*8 + scroll_low);
 
-	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][0], 0, 0);
-	tilemap_draw(bitmap, cliprect, tilemap[homedata_visible_page][1], 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap[homedata_visible_page][0], 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap[homedata_visible_page][1], 0, 0);
 }
 
 

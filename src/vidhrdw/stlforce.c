@@ -2,7 +2,7 @@
 
 #include "driver.h"
 
-static struct tilemap *stlforce_bg_tilemap, *stlforce_mlow_tilemap, *stlforce_mhigh_tilemap, *stlforce_tx_tilemap;
+static tilemap *stlforce_bg_tilemap, *stlforce_mlow_tilemap, *stlforce_mhigh_tilemap, *stlforce_tx_tilemap;
 
 extern data16_t *stlforce_bg_videoram, *stlforce_mlow_videoram, *stlforce_mhigh_videoram, *stlforce_tx_videoram;
 extern data16_t *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhigh_scrollram, *stlforce_vidattrram;
@@ -112,7 +112,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	const UINT16 *source = stlforce_spriteram+0x0;
 	const UINT16 *finish = stlforce_spriteram+0x800;
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 	int ypos, xpos, attr, num;
 
 	while( source<finish )

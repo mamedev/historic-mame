@@ -17,7 +17,7 @@ size_t goindol_fg_videoram_size;
 size_t goindol_bg_videoram_size;
 int goindol_char_bank;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 

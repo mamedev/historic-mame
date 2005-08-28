@@ -116,7 +116,7 @@ WRITE16_HANDLER( hyprduel_paletteram_w )
                             Tilemaps: Rendering
 ***************************************************************************/
 
-static struct tilemap *tilemap[3];
+static tilemap *bg_tilemap[3];
 static UINT8 *empty_tiles;
 
 /* A 2048 x 2048 virtual tilemap */
@@ -270,7 +270,7 @@ INLINE void hyprduel_vram_w(offs_t offset,data16_t data,data16_t mem_mask,int la
 		if	( (col >= 0) && (col < WIN_NX) &&
 			  (row >= 0) && (row < WIN_NY) )
 		{
-			tilemap_mark_tile_dirty(tilemap[layer], row * WIN_NX + col );
+			tilemap_mark_tile_dirty(bg_tilemap[layer], row * WIN_NX + col );
 		}
 	}
 }
@@ -294,7 +294,7 @@ WRITE16_HANDLER( hyprduel_window_w )
 	if ( newdata != olddata )
 	{
 		offset /= 2;
-		tilemap_mark_all_tiles_dirty(tilemap[offset]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[offset]);
 	}
 }
 
@@ -331,20 +331,20 @@ VIDEO_START( hyprduel_14220 )
 	alloc_empty_tiles();
 	hypr_tiletable_old = auto_malloc(hyprduel_tiletable_size);
 
-	tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
-	tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[0] = tilemap_create(get_tile_info_0_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
+	bg_tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !hypr_tiletable_old)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !empty_tiles || !hypr_tiletable_old)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_transparent_pen(tilemap[1],0);
-	tilemap_set_transparent_pen(tilemap[2],0);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_transparent_pen(bg_tilemap[1],0);
+	tilemap_set_transparent_pen(bg_tilemap[2],0);
 
-	tilemap_set_scrolldx(tilemap[0], 0, 0);
-	tilemap_set_scrolldx(tilemap[1], 0, 0);
-	tilemap_set_scrolldx(tilemap[2], 0, 0);
+	tilemap_set_scrolldx(bg_tilemap[0], 0, 0);
+	tilemap_set_scrolldx(bg_tilemap[1], 0, 0);
+	tilemap_set_scrolldx(bg_tilemap[2], 0, 0);
 
 	return 0;
 }
@@ -486,7 +486,7 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 			if (color == 0xf)	/* 8bpp */
 			{
 				/* prepare GfxElement on the fly */
-				struct GfxElement gfx;
+				gfx_element gfx;
 				gfx.width = width;
 				gfx.height = height;
 				gfx.total_elements = 1;
@@ -515,7 +515,7 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 			else
 			{
 				/* prepare GfxElement on the fly */
-				struct GfxElement gfx;
+				gfx_element gfx;
 				gfx.width = width;
 				gfx.height = height;
 				gfx.total_elements = 1;
@@ -586,9 +586,9 @@ static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *clip
 					clip.min_y = offs;
 					clip.max_y = offs;
 
-					tilemap_set_scrollx(tilemap[layer], 0, hyprduel_scrollx[layer][offs+RASTER_LINES-(LAST_VISIBLE_LINE+1)] - wx);
-					tilemap_set_scrolly(tilemap[layer], 0, hyprduel_scrolly[layer][offs+RASTER_LINES-(LAST_VISIBLE_LINE+1)] - wy);
-					tilemap_draw(bitmap,&clip,tilemap[layer], 0, 1<<(3-pri));
+					tilemap_set_scrollx(bg_tilemap[layer], 0, hyprduel_scrollx[layer][offs+RASTER_LINES-(LAST_VISIBLE_LINE+1)] - wx);
+					tilemap_set_scrolly(bg_tilemap[layer], 0, hyprduel_scrolly[layer][offs+RASTER_LINES-(LAST_VISIBLE_LINE+1)] - wy);
+					tilemap_draw(bitmap,&clip,bg_tilemap[layer], 0, 1<<(3-pri));
 				}
 			}
 		}
@@ -610,7 +610,7 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 			data16_t code = vram[offset];
 
 			if (!(code & 0x8000) && dirtyindex[(code & 0x1ff0) >> 4])
-				tilemap_mark_tile_dirty(tilemap[layer], row * WIN_NX + col );
+				tilemap_mark_tile_dirty(bg_tilemap[layer], row * WIN_NX + col );
 		}
 	}
 }

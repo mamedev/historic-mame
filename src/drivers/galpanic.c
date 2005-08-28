@@ -729,7 +729,7 @@ INPUT_PORTS_START( galhustl )
 INPUT_PORTS_END
 
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -742,7 +742,7 @@ static struct GfxLayout spritelayout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,  256, 16 },
 	{ -1 } /* end of array */

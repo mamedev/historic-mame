@@ -61,13 +61,13 @@ data16_t *cave_vram_3, *cave_vctrl_3;
 
 /* Variables only used here: */
 
-static struct tilemap *tilemap_0;
+static tilemap *tilemap_0;
 static int             tiledim_0, old_tiledim_0;
-static struct tilemap *tilemap_1;
+static tilemap *tilemap_1;
 static int             tiledim_1, old_tiledim_1;
-static struct tilemap *tilemap_2;
+static tilemap *tilemap_2;
 static int             tiledim_2, old_tiledim_2;
-static struct tilemap *tilemap_3;
+static tilemap *tilemap_3;
 static int             tiledim_3, old_tiledim_3;
 
 
@@ -324,7 +324,7 @@ void sailormn_get_tile_info_2(int tile_index)
 }
 
 
-INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP, ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
+INLINE void vram_w(data16_t *VRAM, tilemap *TILEMAP, ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
 {
 	if ((VRAM[offset] & ~mem_mask)==(data & ~mem_mask)) return;
 	COMBINE_DATA(&VRAM[offset]);
@@ -346,7 +346,7 @@ INLINE void vram_w(data16_t *VRAM, struct tilemap *TILEMAP, ATTR_UNUSED offs_t o
     and 408000-407fff both go to the 8x8 tilemap ram. Use this function
     in this cases. Note that the get_tile_info function looks in the
     4000-7fff range for tiles, so we have to write the data there. */
-INLINE void vram_8x8_w(data16_t *VRAM, struct tilemap *TILEMAP,ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
+INLINE void vram_8x8_w(data16_t *VRAM, tilemap *TILEMAP,ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
 {
 	offset %= 0x4000/2;
 	if ((VRAM[offset] & ~mem_mask)==(data & ~mem_mask)) return;
@@ -1286,7 +1286,7 @@ static void sprite_draw_donpachi_zbuf( int priority )
 
 INLINE void cave_tilemap_draw(
 	struct mame_bitmap *bitmap, const struct rectangle *cliprect,
-	struct tilemap *TILEMAP, data16_t *VRAM, data16_t *VCTRL,
+	tilemap *TILEMAP, data16_t *VRAM, data16_t *VCTRL,
 	UINT32 flags, UINT32 priority, UINT32 priority2 )
 {
 	int sx, sy, flipx, flipy, offs_x, offs_y, offs_row;

@@ -370,7 +370,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **********************************************************/
 
-static struct GfxLayout tile16x16_layout =
+static gfx_layout tile16x16_layout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -382,7 +382,7 @@ static struct GfxLayout tile16x16_layout =
 	64*16	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -393,7 +393,7 @@ static struct GfxLayout charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo superchs_gfxdecodeinfo[] =
+static gfx_decode superchs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x16_layout,  0, 512 },
 	{ REGION_GFX1, 0x0, &charlayout,        0, 512 },

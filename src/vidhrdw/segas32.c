@@ -219,7 +219,7 @@ struct extents_list
 struct cache_entry
 {
 	struct cache_entry *	next;
-	struct tilemap *		tilemap;
+	tilemap *				tmap;
 	UINT8					page;
 	UINT8					bank;
 };
@@ -301,11 +301,11 @@ static int common_start(int multi32)
 	{
 		struct cache_entry *entry = auto_malloc(sizeof(struct cache_entry));
 
-		entry->tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,16);
+		entry->tmap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,16);
 		entry->page = 0xff;
 		entry->bank = 0;
 		entry->next = cache_head;
-		tilemap_set_user_data(entry->tilemap, entry);
+		tilemap_set_user_data(entry->tmap, entry);
 
 		cache_head = entry;
 	}
@@ -564,7 +564,7 @@ WRITE16_HANDLER( system32_videoram_w )
 		/* scan the cache for a matching pages */
 		for (entry = cache_head; entry != NULL; entry = entry->next)
 			if (entry->page == page)
-				tilemap_mark_tile_dirty(entry->tilemap, offset);
+				tilemap_mark_tile_dirty(entry->tmap, offset);
 	}
 }
 
@@ -753,7 +753,7 @@ WRITE32_HANDLER( multi32_mixer_1_w )
  *
  *************************************/
 
-static struct tilemap *find_cache_entry(int page, int bank)
+static tilemap *find_cache_entry(int page, int bank)
 {
 	struct cache_entry *entry, *prev;
 
@@ -771,7 +771,7 @@ static struct tilemap *find_cache_entry(int page, int bank)
 				entry->next = cache_head;
 				cache_head = entry;
 			}
-			return entry->tilemap;
+			return entry->tmap;
 		}
 
 		/* stop on the last entry */
@@ -784,14 +784,14 @@ static struct tilemap *find_cache_entry(int page, int bank)
 	/* okay, we didn't find one; take over this last entry */
 	entry->page = page;
 	entry->bank = bank;
-	tilemap_mark_all_tiles_dirty(entry->tilemap);
+	tilemap_mark_all_tiles_dirty(entry->tmap);
 
 	/* move it to the head */
 	prev->next = entry->next;
 	entry->next = cache_head;
 	cache_head = entry;
 
-	return entry->tilemap;
+	return entry->tmap;
 }
 
 
@@ -924,7 +924,7 @@ static int compute_clipping_extents(int enable, int clipout, int clipmask, const
  *
  *************************************/
 
-INLINE void get_tilemaps(int bgnum, struct tilemap **tilemaps)
+INLINE void get_tilemaps(int bgnum, tilemap **tilemaps)
 {
 	int tilebank, page;
 
@@ -951,7 +951,7 @@ static void update_tilemap_zoom(struct layer_info *layer, const struct rectangle
 	int clipenable, clipout, clips, clipdraw_start;
 	struct mame_bitmap *bitmap = layer->bitmap;
 	struct extents_list clip_extents;
-	struct tilemap *tilemaps[4];
+	tilemap *tilemaps[4];
 	UINT32 srcx, srcx_start, srcy;
 	UINT32 srcxstep, srcystep;
 	int dstxstep, dstystep;
@@ -1099,7 +1099,7 @@ static void update_tilemap_rowscroll(struct layer_info *layer, const struct rect
 	int clipenable, clipout, clips, clipdraw_start;
 	struct mame_bitmap *bitmap = layer->bitmap;
 	struct extents_list clip_extents;
-	struct tilemap *tilemaps[4];
+	tilemap *tilemaps[4];
 	int rowscroll, rowselect;
 	int xscroll, yscroll;
 	UINT16 *table;

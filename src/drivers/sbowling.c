@@ -47,7 +47,7 @@ PROMs : NEC B406 (1kx4) x2
 static int bgmap = 0;
 
 static int sbw_system = 0;
-static struct tilemap *sb_tilemap;
+static tilemap *sb_tilemap;
 static UINT32 color_prom_address = 0;
 static UINT8 pix_sh = 0;
 static UINT8 pix[2] = {0, 0};
@@ -286,7 +286,7 @@ INPUT_PORTS_START( sbowling )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	256,
@@ -297,7 +297,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0x18, 1 },
 	{ -1 }

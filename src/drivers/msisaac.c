@@ -488,7 +488,7 @@ INPUT_PORTS_START( msisaac )
 INPUT_PORTS_END
 
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8,8,
 	0x400,
@@ -499,7 +499,7 @@ static struct GfxLayout char_layout =
 	8*8
 };
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	16,16,
 	0x100,
@@ -510,7 +510,7 @@ static struct GfxLayout tile_layout =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 64 },
 	{ REGION_GFX2, 0, &char_layout, 0, 64 },

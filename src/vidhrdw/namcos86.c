@@ -13,7 +13,7 @@ data8_t *rthunder_videoram1, *rthunder_videoram2, *rthunder_spriteram;
 static int tilebank;
 static int xscroll[4], yscroll[4];	/* scroll + priority */
 
-static struct tilemap *tilemap[4];
+static tilemap *bg_tilemap[4];
 
 static int backcolor;
 static const UINT8 *tile_address_prom;
@@ -132,18 +132,18 @@ static void get_tile_info3(int tile_index) { get_tile_info(tile_index,3,&rthunde
 
 VIDEO_START( namcos86 )
 {
-	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3])
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !bg_tilemap[3])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],7);
-	tilemap_set_transparent_pen(tilemap[1],7);
-	tilemap_set_transparent_pen(tilemap[2],7);
-	tilemap_set_transparent_pen(tilemap[3],7);
+	tilemap_set_transparent_pen(bg_tilemap[0],7);
+	tilemap_set_transparent_pen(bg_tilemap[1],7);
+	tilemap_set_transparent_pen(bg_tilemap[2],7);
+	tilemap_set_transparent_pen(bg_tilemap[3],7);
 
 	spriteram = rthunder_spriteram + 0x1800;
 
@@ -168,7 +168,7 @@ WRITE8_HANDLER( rthunder_videoram1_w )
 	if (rthunder_videoram1[offset] != data)
 	{
 		rthunder_videoram1[offset] = data;
-		tilemap_mark_tile_dirty(tilemap[offset/0x1000],(offset & 0xfff)/2);
+		tilemap_mark_tile_dirty(bg_tilemap[offset/0x1000],(offset & 0xfff)/2);
 	}
 }
 
@@ -182,7 +182,7 @@ WRITE8_HANDLER( rthunder_videoram2_w )
 	if (rthunder_videoram2[offset] != data)
 	{
 		rthunder_videoram2[offset] = data;
-		tilemap_mark_tile_dirty(tilemap[2+offset/0x1000],(offset & 0xfff)/2);
+		tilemap_mark_tile_dirty(bg_tilemap[2+offset/0x1000],(offset & 0xfff)/2);
 	}
 }
 
@@ -192,8 +192,8 @@ WRITE8_HANDLER( rthunder_tilebank_select_w )
 	if (tilebank != bit)
 	{
 		tilebank = bit;
-		tilemap_mark_all_tiles_dirty(tilemap[0]);
-		tilemap_mark_all_tiles_dirty(tilemap[1]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[0]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[1]);
 	}
 }
 
@@ -283,8 +283,8 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 {
 	const data8_t *source = &spriteram[0x0800-0x20];	/* the last is NOT a sprite */
 	const data8_t *finish = &spriteram[0];
-	struct GfxElement *gfx = Machine->gfx[2];
-	struct GfxElement mygfx = *gfx;
+	gfx_element *gfx = Machine->gfx[2];
+	gfx_element mygfx = *gfx;
 
 	int sprite_xoffs = spriteram[0x07f5] + ((spriteram[0x07f4] & 1) << 8);
 	int sprite_yoffs = spriteram[0x07f7];
@@ -357,8 +357,8 @@ static void set_scroll(int layer)
 		scrollx = -scrollx;
 		scrolly = -scrolly;
 	}
-	tilemap_set_scrollx(tilemap[layer], 0, scrollx);
-	tilemap_set_scrolly(tilemap[layer], 0, scrolly);
+	tilemap_set_scrollx(bg_tilemap[layer], 0, scrollx);
+	tilemap_set_scrolly(bg_tilemap[layer], 0, scrolly);
 }
 
 
@@ -386,7 +386,7 @@ VIDEO_UPDATE( namcos86 )
 		for (i = 3;i >= 0;i--)
 		{
 			if (((xscroll[i] & 0x0e00) >> 9) == layer)
-				tilemap_draw_primask(bitmap,cliprect,tilemap[i],0,layer,0);
+				tilemap_draw_primask(bitmap,cliprect,bg_tilemap[i],0,layer,0);
 		}
 	}
 

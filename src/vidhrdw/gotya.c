@@ -6,7 +6,7 @@ UINT8 *gotya_videoram2;
 
 static int scroll_bit_8;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

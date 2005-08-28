@@ -30,7 +30,7 @@ data16_t *bionicc_fgvideoram;
 data16_t *bionicc_bgvideoram;
 data16_t *bionicc_txvideoram;
 
-static struct tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
+static tilemap *tx_tilemap, *bg_tilemap, *fg_tilemap;
 
 
 /***************************************************************************
@@ -193,7 +193,7 @@ WRITE16_HANDLER( bionicc_gfxctrl_w )
 static void bionicc_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int offs;
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 
 	for (offs = (spriteram_size-8)/2;offs >= 0;offs -= 4)
 	{

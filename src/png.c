@@ -34,7 +34,7 @@ static UINT32 convert_from_network_order (UINT8 *v)
 	return i;
 }
 
-int png_unfilter(struct png_info *p)
+int png_unfilter(png_info *p)
 {
 	int i, j, bpp, filter;
 	INT32 prediction, pA, pB, pC, dA, dB, dC;
@@ -118,7 +118,7 @@ int png_verify_signature (mame_file *fp)
 	return 1;
 }
 
-int png_inflate_image (struct png_info *p)
+int png_inflate_image (png_info *p)
 {
 	unsigned long fbuff_size;
 
@@ -141,7 +141,7 @@ int png_inflate_image (struct png_info *p)
 	return 1;
 }
 
-int png_read_file(mame_file *fp, struct png_info *p)
+int png_read_file(mame_file *fp, png_info *p)
 {
 	/* translates color_type to bytes per pixel */
 	const int samples[] = {1, 0, 3, 1, 2, 0, 4};
@@ -343,7 +343,7 @@ int png_read_file(mame_file *fp, struct png_info *p)
 	return 1;
 }
 
-int png_read_info(mame_file *fp, struct png_info *p)
+int png_read_info(mame_file *fp, png_info *p)
 {
 	UINT32 chunk_length, chunk_type=0, chunk_crc, crc;
 	UINT8 *chunk_data;
@@ -453,7 +453,7 @@ int png_read_info(mame_file *fp, struct png_info *p)
 }
 
 /*  Expands a p->image from p->bit_depth to 8 bit */
-int png_expand_buffer_8bit (struct png_info *p)
+int png_expand_buffer_8bit (png_info *p)
 {
 	int i,j, k;
 	UINT8 *inp, *outp, *outbuf;
@@ -490,7 +490,7 @@ int png_expand_buffer_8bit (struct png_info *p)
 	return 1;
 }
 
-void png_delete_unused_colors (struct png_info *p)
+void png_delete_unused_colors (png_info *p)
 {
 	int i, tab[256], pen=0, trns=0;
 	UINT8 ptemp[3*256], ttemp[256];
@@ -535,14 +535,15 @@ void png_delete_unused_colors (struct png_info *p)
 
 ********************************************************************************/
 
-struct png_text
+struct _png_text
 {
 	char *data;
 	int length;
-	struct png_text *next;
+	struct _png_text *next;
 };
+typedef struct _png_text png_text;
 
-static struct png_text *png_text_list = 0;
+static png_text *png_text_list = 0;
 
 static void convert_to_network_order (UINT32 i, UINT8 *v)
 {
@@ -554,9 +555,9 @@ static void convert_to_network_order (UINT32 i, UINT8 *v)
 
 int png_add_text (const char *keyword, const char *text)
 {
-	struct png_text *pt;
+	png_text *pt;
 
-	pt = malloc (sizeof(struct png_text));
+	pt = malloc (sizeof(png_text));
 	if (pt == 0)
 		return 0;
 
@@ -619,10 +620,10 @@ int png_write_sig(mame_file *fp)
 	return 1;
 }
 
-int png_write_datastream(mame_file *fp, struct png_info *p)
+int png_write_datastream(mame_file *fp, png_info *p)
 {
 	UINT8 ihdr[13];
-	struct png_text *pt;
+	png_text *pt;
 
 	/* IHDR */
 	convert_to_network_order(p->width, ihdr);
@@ -664,7 +665,7 @@ int png_write_datastream(mame_file *fp, struct png_info *p)
 	return 1;
 }
 
-int png_filter(struct png_info *p)
+int png_filter(png_info *p)
 {
 	int i;
 	UINT8 *src, *dst;
@@ -688,7 +689,7 @@ int png_filter(struct png_info *p)
 	return 1;
 }
 
-int png_deflate_image(struct png_info *p)
+int png_deflate_image(png_info *p)
 {
 	unsigned long zbuff_size;
 
@@ -710,7 +711,7 @@ int png_deflate_image(struct png_info *p)
 	return 1;
 }
 
-static int png_pack_buffer (struct png_info *p)
+static int png_pack_buffer (png_info *p)
 {
 	UINT8 *outp, *inp;
 	int i,j,k;
@@ -755,9 +756,9 @@ static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
 	int r, g, b;
 	UINT32 color;
 	UINT8 *ip;
-	struct png_info p;
+	png_info p;
 
-	memset (&p, 0, sizeof (struct png_info));
+	memset (&p, 0, sizeof (png_info));
 	p.xscale = p.yscale = p.source_gamma = 0.0;
 	p.palette = p.trans = p.image = p.zimage = p.fimage = NULL;
 	p.width = bitmap->width;

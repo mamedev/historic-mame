@@ -20,10 +20,10 @@
  *
  *************************************/
 
-struct cdrom_file
+struct _cdrom_file
 {
-	struct chd_file *chd;				/* CHD file */
-	struct cdrom_toc 		cdtoc;		/* TOC for the CD */
+	chd_file *chd;				/* CHD file */
+	cdrom_toc 		cdtoc;		/* TOC for the CD */
 	UINT32				hunksectors;	/* sectors per hunk */
 	UINT32				cachehunk;	/* which hunk is cached */
 	UINT8 *				cache;		/* cache of the current hunk */
@@ -36,6 +36,8 @@ struct cdrom_file
 	INT16 *				audio_bptr;
 };
 
+
+
 /*************************************
  *
  *  Utility functions
@@ -43,7 +45,7 @@ struct cdrom_file
  *************************************/
 
 /* get the track number for a physical frame number */
-UINT32 cdrom_get_track_phys(struct cdrom_file *file, UINT32 frame)
+UINT32 cdrom_get_track_phys(cdrom_file *file, UINT32 frame)
 {
 	int i;
 
@@ -62,7 +64,7 @@ UINT32 cdrom_get_track_phys(struct cdrom_file *file, UINT32 frame)
 }
 
 /* get the track number for a CHD frame number */
-UINT32 cdrom_get_track_chd(struct cdrom_file *file, UINT32 frame)
+UINT32 cdrom_get_track_chd(cdrom_file *file, UINT32 frame)
 {
 	int i;
 
@@ -81,13 +83,13 @@ UINT32 cdrom_get_track_chd(struct cdrom_file *file, UINT32 frame)
 }
 
 /* get physical frame number that a track starts at */
-UINT32 cdrom_get_phys_start_of_track(struct cdrom_file *file, UINT32 track)
+UINT32 cdrom_get_phys_start_of_track(cdrom_file *file, UINT32 track)
 {
 	return file->cdtoc.tracks[track].physframeofs;
 }
 
 /* get CHD frame number that a track starts at */
-UINT32 cdrom_get_chd_start_of_track(struct cdrom_file *file, UINT32 track)
+UINT32 cdrom_get_chd_start_of_track(cdrom_file *file, UINT32 track)
 {
 	// handle lead-out specially
 	if (track == 0xaa)
@@ -99,7 +101,7 @@ UINT32 cdrom_get_chd_start_of_track(struct cdrom_file *file, UINT32 track)
 }
 
 /* convert a physical frame number to a CHD one */
-UINT32 cdrom_phys_frame_to_chd(struct cdrom_file *file, UINT32 frame)
+UINT32 cdrom_phys_frame_to_chd(cdrom_file *file, UINT32 frame)
 {
 	UINT32 trk = cdrom_get_track_phys(file, frame);
 
@@ -110,7 +112,7 @@ UINT32 cdrom_phys_frame_to_chd(struct cdrom_file *file, UINT32 frame)
 }
 
 /* convert a CHD frame number to a physical one */
-UINT32 cdrom_chd_frame_to_phys(struct cdrom_file *file, UINT32 frame)
+UINT32 cdrom_chd_frame_to_phys(cdrom_file *file, UINT32 frame)
 {
 	UINT32 trk = cdrom_get_track_chd(file, frame);
 
@@ -138,10 +140,10 @@ INLINE UINT32 get_bigendian_uint32(const UINT8 *base)
  *
  *************************************/
 
-struct cdrom_file *cdrom_open(struct chd_file *chd)
+cdrom_file *cdrom_open(chd_file *chd)
 {
 	int i;
-	struct cdrom_file *file;
+	cdrom_file *file;
 	UINT32 metatag;
 	UINT32 count, physofs, chdofs;
 	static UINT32 metadata[CD_METADATA_WORDS], *mrp;
@@ -151,7 +153,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
 		return NULL;
 
 	/* allocate memory for the CD-ROM file */
-	file = malloc(sizeof(struct cdrom_file));
+	file = malloc(sizeof(cdrom_file));
 	if (!file)
 		return NULL;
 
@@ -262,7 +264,7 @@ struct cdrom_file *cdrom_open(struct chd_file *chd)
  *
  *************************************/
 
-void cdrom_close(struct cdrom_file *file)
+void cdrom_close(cdrom_file *file)
 {
 	/* free the cache */
 	if (file->cache)
@@ -280,7 +282,7 @@ void cdrom_close(struct cdrom_file *file)
  *
  *************************************/
 
-struct chd_file *cdrom_get_chd(struct cdrom_file *file)
+chd_file *cdrom_get_chd(cdrom_file *file)
 {
 	return file->chd;
 }
@@ -292,7 +294,7 @@ struct chd_file *cdrom_get_chd(struct cdrom_file *file)
  *
  *************************************/
 
-UINT32 cdrom_read_data(struct cdrom_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer, UINT32 datatype)
+UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer, UINT32 datatype)
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;
@@ -358,7 +360,7 @@ UINT32 cdrom_read_data(struct cdrom_file *file, UINT32 lbasector, UINT32 numsect
  *
  *************************************/
 
-UINT32 cdrom_read_subcode(struct cdrom_file *file, UINT32 lbasector, void *buffer)
+UINT32 cdrom_read_subcode(cdrom_file *file, UINT32 lbasector, void *buffer)
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;
@@ -390,7 +392,7 @@ UINT32 cdrom_read_subcode(struct cdrom_file *file, UINT32 lbasector, void *buffe
  * cdrom_start_audio: begin playback of a Red Book audio track
  */
 
-void cdrom_start_audio(struct cdrom_file *file, UINT32 start_chd_lba, UINT32 blocks)
+void cdrom_start_audio(cdrom_file *file, UINT32 start_chd_lba, UINT32 blocks)
 {
 	file->audio_playing = 1;
 	file->audio_pause = 0;
@@ -403,7 +405,7 @@ void cdrom_start_audio(struct cdrom_file *file, UINT32 start_chd_lba, UINT32 blo
  * cdrom_stop_audio: stop playback of a Red Book audio track
  */
 
-void cdrom_stop_audio(struct cdrom_file *file)
+void cdrom_stop_audio(cdrom_file *file)
 {
 	file->audio_playing = 0;
 }
@@ -412,7 +414,7 @@ void cdrom_stop_audio(struct cdrom_file *file)
  * cdrom_pause_audio: pause/unpause playback of a Red Book audio track
  */
 
-void cdrom_pause_audio(struct cdrom_file *file, int pause)
+void cdrom_pause_audio(cdrom_file *file, int pause)
 {
 	file->audio_pause = pause;
 }
@@ -421,7 +423,7 @@ void cdrom_pause_audio(struct cdrom_file *file, int pause)
  * cdrom_audio_active: returns Red Book audio playback status
  */
 
-int cdrom_audio_active(struct cdrom_file *file)
+int cdrom_audio_active(cdrom_file *file)
 {
 	return (file->audio_playing);
 }
@@ -430,7 +432,7 @@ int cdrom_audio_active(struct cdrom_file *file)
  * cdrom_get_audio_lba: returns the current LBA (physical sector) during Red Book playback
  */
 
-UINT32 cdrom_get_audio_lba(struct cdrom_file *file)
+UINT32 cdrom_get_audio_lba(cdrom_file *file)
 {
 	return file->audio_lba;
 }
@@ -439,7 +441,7 @@ UINT32 cdrom_get_audio_lba(struct cdrom_file *file)
  * cdrom_audio_paused: returns if Red Book playback is paused
  */
 
-int cdrom_audio_paused(struct cdrom_file *file)
+int cdrom_audio_paused(cdrom_file *file)
 {
 	return (file->audio_pause);
 }
@@ -448,7 +450,7 @@ int cdrom_audio_paused(struct cdrom_file *file)
  * cdrom_audio_ended: returns if a Red Book track reached it's natural end
  */
 
-int cdrom_audio_ended(struct cdrom_file *file)
+int cdrom_audio_ended(cdrom_file *file)
 {
 	return (file->audio_ended_normally);
 }
@@ -458,7 +460,7 @@ int cdrom_audio_ended(struct cdrom_file *file)
  *                       converts it to 2 16-bit 44.1 kHz streams.
  */
 
-void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted)
+void cdrom_get_audio_data(cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted)
 {
 	int i, sectoread, remaining;
 
@@ -535,13 +537,13 @@ void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream
 }
 
 // returns the last track number
-int cdrom_get_last_track(struct cdrom_file *file)
+int cdrom_get_last_track(cdrom_file *file)
 {
 	return file->cdtoc.numtrks;
 }
 
 // get the ADR | CONTROL for a track
-int cdrom_get_adr_control(struct cdrom_file *file, int track)
+int cdrom_get_adr_control(cdrom_file *file, int track)
 {
 	if (track == 0xaa)
 	{
@@ -557,7 +559,7 @@ int cdrom_get_adr_control(struct cdrom_file *file, int track)
 }
 
 // is a track audio?
-int cdrom_get_track_type(struct cdrom_file *file, int track)
+int cdrom_get_track_type(cdrom_file *file, int track)
 {
 	if (file->cdtoc.tracks[track].trktype == CD_TRACK_AUDIO)
 	{
@@ -576,7 +578,7 @@ INLINE UINT8 make_bcd(UINT8 data)
 // *file = cdrom
 // track = track #
 // msf = 0 for LBA, 1 for BCD M:S:F
-data32_t cdrom_get_track_start(struct cdrom_file *file, int track, int msf)
+data32_t cdrom_get_track_start(cdrom_file *file, int track, int msf)
 {
 	int tstart = cdrom_get_chd_start_of_track(file, track);
 
@@ -606,7 +608,7 @@ data32_t cdrom_get_track_start(struct cdrom_file *file, int track, int msf)
 	}
 }
 
-struct cdrom_toc *cdrom_get_toc(struct cdrom_file *file)
+cdrom_toc *cdrom_get_toc(cdrom_file *file)
 {
 	return &file->cdtoc;
 }

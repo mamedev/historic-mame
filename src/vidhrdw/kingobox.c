@@ -9,7 +9,7 @@ extern int kingofb_nmi_enable;
 
 static int palette_bank;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 

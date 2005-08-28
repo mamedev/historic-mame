@@ -192,24 +192,18 @@ INLINE void update_volumes(struct YMZ280BVoice *voice)
 }
 
 
-static void YMZ280B_state_save_update_step(void)
+static void YMZ280B_state_save_update_step(void *param)
 {
-	int i,j;
-	for (i = 0; i < MAX_SOUND; i++)
+	struct YMZ280BChip *chip = param;
+	int j;
+	for (j = 0; j < 8; j++)
 	{
-		struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, i);
-		if (chip)
-		{
-			for (j = 0; j < 8; j++)
-			{
-				struct YMZ280BVoice *voice = &chip->voice[j];
-				update_step(chip, voice);
-				if(voice->irq_schedule)
-					timer_set_ptr(0, chip, update_irq_state_cb[j]);
-			}
-			timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
-		}
+		struct YMZ280BVoice *voice = &chip->voice[j];
+		update_step(chip, voice);
+		if(voice->irq_schedule)
+			timer_set_ptr(0, chip, update_irq_state_cb[j]);
 	}
+	timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
 }
 
 
@@ -800,8 +794,7 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 		}
 	}
 
-	if (sndindex == 0)
-		state_save_register_func_postload(YMZ280B_state_save_update_step);
+	state_save_register_func_postload_ptr(YMZ280B_state_save_update_step, chip);
 
 #if MAKE_WAVS
 	chip->wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);

@@ -77,8 +77,6 @@
     TYPE DEFINITIONS
 -------------------------------------------------*/
 
-struct mame_display;		/* declared elsewhere */
-
 typedef UINT32 pen_t;
 typedef UINT32 rgb_t;
 
@@ -135,7 +133,7 @@ int palette_start(void);
 int palette_init(void);
 int palette_get_total_colors_with_ui(void);
 
-void palette_update_display(struct mame_display *display);
+void palette_update_display(mame_display *display);
 
 void palette_set_color(pen_t pen, UINT8 r, UINT8 g, UINT8 b);
 void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b);

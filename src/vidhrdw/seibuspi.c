@@ -1,10 +1,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *text_layer;
-static struct tilemap *back_layer;
-static struct tilemap *mid_layer;
-static struct tilemap *fore_layer;
+static tilemap *text_layer;
+static tilemap *back_layer;
+static tilemap *mid_layer;
+static tilemap *fore_layer;
 
 UINT32 *scroll_ram;
 
@@ -231,7 +231,7 @@ WRITE32_HANDLER( video_dma_address_w )
 	COMBINE_DATA( &video_dma_address );
 }
 
-static void draw_blend_gfx(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const struct GfxElement *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
+static void draw_blend_gfx(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const gfx_element *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
 {
 	UINT8 *dp;
 	int i, j;
@@ -362,7 +362,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	int a;
 	int priority;
 	int x,y, x1, y1;
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 
 	if( layer_enable & 0x10 )
 		return;
@@ -539,7 +539,7 @@ VIDEO_START( spi )
 	return 0;
 }
 
-static void set_rowscroll(struct tilemap *layer, int scroll, INT16* rows)
+static void set_rowscroll(tilemap *layer, int scroll, INT16* rows)
 {
 	int i;
 	int x = scroll_ram[scroll] & 0xffff;
@@ -551,7 +551,7 @@ static void set_rowscroll(struct tilemap *layer, int scroll, INT16* rows)
 	tilemap_set_scrolly(layer, 0, y);
 }
 
-static void set_scroll(struct tilemap *layer, int scroll)
+static void set_scroll(tilemap *layer, int scroll)
 {
 	int x = scroll_ram[scroll] & 0xffff;
 	int y = (scroll_ram[scroll] >> 16) & 0xffff;
@@ -560,7 +560,7 @@ static void set_scroll(struct tilemap *layer, int scroll)
 }
 
 
-static void combine_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct tilemap *tile, int x, int y, int opaque, INT16 *rowscroll)
+static void combine_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect, tilemap *tile, int x, int y, int opaque, INT16 *rowscroll)
 {
 	int i,j;
 	UINT16 *s;

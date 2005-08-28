@@ -35,7 +35,7 @@
 
 /* Variables only used here: */
 
-static struct tilemap *tilemap_0a, *tilemap_0b, *tilemap_1;
+static tilemap *tilemap_0a, *tilemap_0b, *tilemap_1;
 
 /* Variables & functions needed by drivers: */
 

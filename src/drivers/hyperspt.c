@@ -74,7 +74,7 @@ static NVRAM_HANDLER( hyperspt )
 
 		if (we_flipped_the_switch)
 		{
-			struct InputPort *in;
+			input_port_entry *in;
 
 
 			/* find the dip switch which resets the high score table, and set it */
@@ -106,7 +106,7 @@ static NVRAM_HANDLER( hyperspt )
 		}
 		else
 		{
-			struct InputPort *in;
+			input_port_entry *in;
 
 
 			/* find the dip switch which resets the high score table, and set it on */
@@ -390,7 +390,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout hyperspt_charlayout =
+static gfx_layout hyperspt_charlayout =
 {
 	8,8,	/* 8*8 sprites */
 	1024,	/* 1024 characters */
@@ -401,7 +401,7 @@ static struct GfxLayout hyperspt_charlayout =
 	16*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxLayout hyperspt_spritelayout =
+static gfx_layout hyperspt_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
@@ -414,7 +414,7 @@ static struct GfxLayout hyperspt_spritelayout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo hyperspt_gfxdecodeinfo[] =
+static gfx_decode hyperspt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hyperspt_charlayout, 	  0, 16 },
 	{ REGION_GFX2, 0, &hyperspt_spritelayout, 16*16, 16 },
@@ -422,7 +422,7 @@ static struct GfxDecodeInfo hyperspt_gfxdecodeinfo[] =
 };
 
 
-static struct GfxLayout roadf_charlayout =
+static gfx_layout roadf_charlayout =
 {
 	8,8,	/* 8*8 sprites */
 	1536,	/* 1536 characters */
@@ -433,7 +433,7 @@ static struct GfxLayout roadf_charlayout =
 	16*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxLayout roadf_spritelayout =
+static gfx_layout roadf_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	256,	/* 256 sprites */
@@ -446,7 +446,7 @@ static struct GfxLayout roadf_spritelayout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxDecodeInfo roadf_gfxdecodeinfo[] =
+static gfx_decode roadf_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &roadf_charlayout,	   0, 16 },
 	{ REGION_GFX2, 0, &roadf_spritelayout, 16*16, 16 },

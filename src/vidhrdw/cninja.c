@@ -121,7 +121,7 @@ VIDEO_EOF( cninja )
 
 static void raster_pf3_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, int pri)
 {
-	struct tilemap *tilemap=deco16_get_tilemap(2,0);
+	tilemap *tmap=deco16_get_tilemap(2,0);
 	int ptr=0,start,end=0;
 	struct rectangle clip;
 	int overflow=deco16_raster_display_position;
@@ -159,7 +159,7 @@ static void raster_pf3_draw(struct mame_bitmap *bitmap, const struct rectangle *
 
 		/* Update tilemap for this register state, and draw */
 		deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
-		tilemap_draw(bitmap,&clip,tilemap,flags,pri);
+		tilemap_draw(bitmap,&clip,tmap,flags,pri);
 	}
 }
 

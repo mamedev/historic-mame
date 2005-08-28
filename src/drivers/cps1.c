@@ -3589,7 +3589,7 @@ INPUT_PORTS_START( rockmanj )
 INPUT_PORTS_END
 
 
-static struct GfxLayout layout8x8 =
+static gfx_layout layout8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -3601,7 +3601,7 @@ static struct GfxLayout layout8x8 =
 	64*8		/* char modulo */
 };
 
-static struct GfxLayout layout16x16 =
+static gfx_layout layout16x16 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -3612,7 +3612,7 @@ static struct GfxLayout layout16x16 =
 	128*8		/* char modulo */
 };
 
-static struct GfxLayout layout32x32 =
+static gfx_layout layout32x32 =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -3623,7 +3623,7 @@ static struct GfxLayout layout32x32 =
 	512*8		/* char modulo */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout8x8,   0, 0x100 },
 	{ REGION_GFX1, 0, &layout16x16, 0, 0x100 },

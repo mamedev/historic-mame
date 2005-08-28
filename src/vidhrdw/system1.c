@@ -51,9 +51,9 @@ static int blockgal_kludgeoffset;
   Green:.250K ohms
   Green:.495K ohms
   Green:.995K ohms
-  Red:? .495K ohms
-  Red:? .250K ohms
-  Red:? .995K ohms
+  Red:  .495K ohms
+  Red:  .250K ohms
+  Red:  .995K ohms
 
   accurate to +/- .003K ohms.
 
@@ -231,8 +231,8 @@ WRITE8_HANDLER( system1_sprites_collisionram_w )
 
 
 
-extern struct GameDriver driver_wbml;
-extern struct GameDriver driver_ufosensi;
+extern game_driver driver_wbml;
+extern game_driver driver_ufosensi;
 
 static void draw_sprite(struct mame_bitmap *bitmap,int spr_number)
 {

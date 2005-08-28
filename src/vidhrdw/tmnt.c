@@ -12,7 +12,7 @@ static int sorted_layer[3];
 static int dim_c,dim_v;	/* ssriders, tmnt2 */
 static int lastdim,lasten;
 
-static struct tilemap *roz_tilemap;
+static tilemap *roz_tilemap;
 
 
 static int glfgreat_roz_rom_bank,glfgreat_roz_char_bank,glfgreat_roz_rom_mode;

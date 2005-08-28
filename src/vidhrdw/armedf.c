@@ -12,8 +12,8 @@ static data16_t armedf_fg_scrollx,armedf_fg_scrolly;
 
 data16_t terraf_scroll_msb;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
-struct tilemap *armedf_tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
+tilemap *armedf_tx_tilemap;
 
 static int scroll_type,sprite_offy, mcu_mode, old_mcu_mode;
 

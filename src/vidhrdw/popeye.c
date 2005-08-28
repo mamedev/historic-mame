@@ -21,7 +21,7 @@ enum { TYPE_SKYSKIPR, TYPE_POPEYE };
 
 #define BGRAM_SIZE 0x2000
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 
 
 /***************************************************************************

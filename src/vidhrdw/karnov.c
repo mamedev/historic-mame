@@ -10,7 +10,7 @@
 static unsigned char *dirty_f;
 static struct mame_bitmap *bitmap_f;
 data16_t karnov_scroll[2], *karnov_pf_data;
-static struct tilemap *fix_tilemap;
+static tilemap *fix_tilemap;
 static int flipscreen;
 
 /***************************************************************************

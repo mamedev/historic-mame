@@ -270,7 +270,7 @@ static PALETTE_INIT( zac2650 )
 ************************************************************************************************/
 
 
-static struct GfxLayout tinvader_character =
+static gfx_layout tinvader_character =
 {
 	24,24,
 	128,
@@ -283,7 +283,7 @@ static struct GfxLayout tinvader_character =
 };
 
 
-static struct GfxLayout s2636_character8 =
+static gfx_layout s2636_character8 =
 {
 	32,30,
 	16,
@@ -296,7 +296,7 @@ static struct GfxLayout s2636_character8 =
 	8*8
 };
 
-static struct GfxLayout s2636_character16 =
+static gfx_layout s2636_character16 =
 {
 	64,60,
 	16,
@@ -312,7 +312,7 @@ static struct GfxLayout s2636_character16 =
 	8*8
 };
 
-static struct GfxDecodeInfo tinvader_gfxdecodeinfo[] =
+static gfx_decode tinvader_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tinvader_character,  0, 2 },
   	{ REGION_CPU1, 0x1F00, &s2636_character8, 0, 2 },	/* dynamic */

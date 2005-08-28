@@ -2116,7 +2116,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout bg1_layout =
+static gfx_layout bg1_layout =
 {
 	8, 8,
 	RGN_FRAC(1,2),
@@ -2127,7 +2127,7 @@ static struct GfxLayout bg1_layout =
 	8*8*2
 };
 
-static struct GfxLayout bg2_layout =
+static gfx_layout bg2_layout =
 {
 	8, 8,
 	RGN_FRAC(1,1),
@@ -2140,7 +2140,7 @@ static struct GfxLayout bg2_layout =
 
 #define O 8*8*2
 #define O2 2*O
-static struct GfxLayout sp1_layout =
+static gfx_layout sp1_layout =
 {
 	16, 16,
 	RGN_FRAC(1,2),
@@ -2155,7 +2155,7 @@ static struct GfxLayout sp1_layout =
 
 #define O 8*8*4
 #define O2 2*O
-static struct GfxLayout sp2_layout =
+static gfx_layout sp2_layout =
 {
 	16, 16,
 	RGN_FRAC(1,1),
@@ -2168,7 +2168,7 @@ static struct GfxLayout sp2_layout =
 #undef O
 #undef O2
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8, 8,
 	1024,
@@ -2179,7 +2179,7 @@ static struct GfxLayout char_layout =
 	8*8*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo1[] =
+static gfx_decode gfxdecodeinfo1[] =
 {
 	{ REGION_GFX1, 0, &bg1_layout, 0, 16 },
 	{ REGION_GFX1, 0, &sp1_layout, 0, 16 },
@@ -2187,7 +2187,7 @@ static struct GfxDecodeInfo gfxdecodeinfo1[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo2[] =
+static gfx_decode gfxdecodeinfo2[] =
 {
 	{ REGION_GFX1, 0, &bg2_layout, 0, 16 },
 	{ REGION_GFX1, 0, &sp2_layout, 0, 16 },
@@ -2721,8 +2721,18 @@ ROM_START( plotting )
 	ROM_RELOAD(             0x10000, 0x10000 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "plot07.bin", 0x00000, 0x10000, CRC(6e0bad2a) SHA1(73996688cd058a2f56f61ea60144b9c673919a58) )
-	ROM_LOAD( "plot08.bin", 0x10000, 0x10000, CRC(fb5f3ca4) SHA1(0c335acceea50133a6899f9e368cff5f61b55a96) )
+	ROM_LOAD( "b96-02.ic9", 0x00000, 0x10000, CRC(6e0bad2a) SHA1(73996688cd058a2f56f61ea60144b9c673919a58) )
+	ROM_LOAD( "b96-03.ic8", 0x10000, 0x10000, CRC(fb5f3ca4) SHA1(0c335acceea50133a6899f9e368cff5f61b55a96) )
+ROM_END
+
+ROM_START( plottinu )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD( "b96-05.ic10",0x00000, 0x10000, CRC(afb99d1f) SHA1(a5cabc182d4f1d5709e6835d8b0a481dd0f9a563) )
+	ROM_RELOAD(             0x10000, 0x10000 )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b96-02.ic9", 0x00000, 0x10000, CRC(6e0bad2a) SHA1(73996688cd058a2f56f61ea60144b9c673919a58) )
+	ROM_LOAD( "b96-03.ic8", 0x10000, 0x10000, CRC(fb5f3ca4) SHA1(0c335acceea50133a6899f9e368cff5f61b55a96) )
 ROM_END
 
 ROM_START( plottina )
@@ -2731,8 +2741,8 @@ ROM_START( plottina )
 	ROM_RELOAD(             0x10000, 0x10000 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic8",        0x10000, 0x10000, CRC(55b8e294) SHA1(14405638f751adfadb022bf7a0123a3972d4a617) )
 	ROM_LOAD( "ic9",        0x00000, 0x10000, CRC(0713a387) SHA1(0fc1242ce02a56279fa1d5270c905bba7cdcd072) )
+	ROM_LOAD( "ic8",        0x10000, 0x10000, CRC(55b8e294) SHA1(14405638f751adfadb022bf7a0123a3972d4a617) )
 ROM_END
 
 ROM_START( puzznic )
@@ -2900,6 +2910,7 @@ GAME( 1988, kurikinu, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Ame
 GAME( 1988, kurikinj, kurikint, kurikint, kurikinj, 0,        ROT0,   "Taito Corporation", "Kuri Kinton (Japan)" )
 GAME( 1988, kurikina, kurikint, kurikina, kurikina, 0,        ROT0,   "Taito Corporation Japan", "Kuri Kinton (World, prototype?)" )
 GAME( 1989, plotting, 0,        plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World set 1)" )
+GAME( 1989, plottinu, plotting, plotting, plotting, 0,        ROT0,   "Taito Corporation Japan", "Plotting (US)" )
 GAME( 1989, plottina, plotting, plotting, plotting, 0,        ROT0,   "Taito Corporation Japan", "Plotting (World set 2)" )
 GAME( 1989, puzznic,  0,        puzznic,  puzznic,  0,        ROT0,   "Taito Corporation Japan", "Puzznic (World)" )
 GAME( 1989, puzznicj, puzznic,  puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)" )

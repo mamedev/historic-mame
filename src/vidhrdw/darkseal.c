@@ -94,7 +94,7 @@ data16_t *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
 static data16_t darkseal_control_0[8];
 static data16_t darkseal_control_1[8];
 
-static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap;
+static tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap;
 static int flipscreen;
 
 /***************************************************************************/

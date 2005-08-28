@@ -929,7 +929,7 @@ static VIDEO_START ( TMS9928A_hack )
 	return TMS9928A_start(&sIntf);
 }
 
-void mdrv_tms9928a(struct InternalMachineDriver *machine, const TMS9928a_interface *intf)
+void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf)
 {
 	int top_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? TOP_BORDER_50HZ : TOP_BORDER_60HZ;
 	int bottom_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? BOTTOM_BORDER_50HZ : BOTTOM_BORDER_60HZ;

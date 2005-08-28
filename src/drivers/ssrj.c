@@ -146,7 +146,7 @@ PORT_START
 
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,3),	/* 1024 characters */
@@ -157,7 +157,7 @@ static struct GfxLayout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 8*4 },
 	{ -1 }	/* end of array */

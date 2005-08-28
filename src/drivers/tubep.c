@@ -749,7 +749,7 @@ INPUT_PORTS_START( rjammer )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -759,13 +759,13 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 /* every char takes 8 consecutive bytes */
 };
-static struct GfxDecodeInfo tubep_gfxdecodeinfo[] =
+static gfx_decode tubep_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1,      0, &charlayout,       0, 32 },	/* 32 color codes */
 	{ -1 }
 };
 
-static struct GfxDecodeInfo rjammer_gfxdecodeinfo[] =
+static gfx_decode rjammer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1,      0, &charlayout,       0, 16 },	/* 16 color codes */
 	{ -1 }

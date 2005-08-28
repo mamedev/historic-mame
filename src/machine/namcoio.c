@@ -592,7 +592,7 @@ void namcoio_51XX_write(int chip,int data)
 
 				{
 					/* kludge for a possible bug in Xevious */
-					extern const struct GameDriver driver_xevious;
+					extern const game_driver driver_xevious;
 
 					if (Machine->gamedrv == &driver_xevious || Machine->gamedrv->clone_of == &driver_xevious)
 					{

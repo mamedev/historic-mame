@@ -5,7 +5,7 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-static struct tilemap *wgp_piv_tilemap[3];
+static tilemap *wgp_piv_tilemap[3];
 
 data16_t *wgp_spritemap;
 size_t wgp_spritemap_size;

@@ -19,7 +19,7 @@ static int chon,objon,sc1on,sc2on;
 #define TileMap(offs) (memory_region(REGION_GFX5)[offs])
 #define BackTileMap(offs) (memory_region(REGION_GFX5)[offs+0x4000])
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 /***************************************************************************
 

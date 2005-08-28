@@ -3,7 +3,7 @@
 
 static int bg_index[4];
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( exprraid_videoram_w )
 {

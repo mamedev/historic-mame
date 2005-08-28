@@ -3,7 +3,7 @@
 data8_t *usg_videoram,*usg_charram;
 
 
-struct tilemap *usg_tilemap;
+tilemap *usg_tilemap;
 
 
 

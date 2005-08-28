@@ -31,14 +31,15 @@
  *
  *************************************/
 
-struct input_code_info
+struct _input_code_info
 {
 	UINT8						analogtype;				/* analog type */
 	INT32						memory;					/* memory */
 	INT32						prev_analog;			/* previous analog value */
-	const struct OSCodeInfo *	osinfo;					/* pointer to the OS code info */
+	const os_code_info *		osinfo;					/* pointer to the OS code info */
 	char						token[MAX_TOKEN_LEN];	/* token string */
 };
+typedef struct _input_code_info input_code_info;
 
 
 
@@ -500,11 +501,11 @@ static struct
  *
  *************************************/
 
-static struct input_code_info *code_map;
-static input_code_t code_count;
+static input_code_info *code_map;
+static input_code code_count;
 
 /* Static information used in key/joy recording */
-static input_code_t record_seq[SEQ_MAX];		/* buffer for key recording */
+static input_code record_seq[SEQ_MAX];		/* buffer for key recording */
 static int record_count;						/* number of key/joy press recorded */
 static clock_t record_last;						/* time of last key/joy press */
 static UINT8 record_analog;						/* are we recording an analog sequence? */
@@ -519,9 +520,9 @@ static UINT8 record_analog;						/* are we recording an analog sequence? */
 
 int code_init(void)
 {
-	const struct OSCodeInfo *codelist = osd_get_code_list();
-	const struct OSCodeInfo *info;
-	input_code_t codenum;
+	const os_code_info *codelist = osd_get_code_list();
+	const os_code_info *info;
+	input_code codenum;
 	int extras;
 
 	/* go through and count how many non-standard inputs we have */
@@ -534,7 +535,7 @@ int code_init(void)
 		}
 
 	/* allocate the table */
-	code_map = (struct input_code_info *)malloc((__code_max + extras) * sizeof(code_map[0]));
+	code_map = (input_code_info *)malloc((__code_max + extras) * sizeof(code_map[0]));
 	if (!code_map)
 		return -1;
 	memset(code_map, 0, (__code_max + extras) * sizeof(code_map[0]));
@@ -614,7 +615,7 @@ void code_exit(void)
  *
  *************************************/
 
-INT32 code_analog_value(input_code_t code)
+INT32 code_analog_value(input_code code)
 {
 	INT32 value = ANALOG_VALUE_INVALID;
 
@@ -635,7 +636,7 @@ INT32 code_analog_value(input_code_t code)
  *
  *************************************/
 
-int code_pressed(input_code_t code)
+int code_pressed(input_code code)
 {
 	int pressed = 0;
 
@@ -656,7 +657,7 @@ int code_pressed(input_code_t code)
  *
  *************************************/
 
-int code_pressed_memory(input_code_t code)
+int code_pressed_memory(input_code code)
 {
 	int pressed = 0;
 
@@ -696,7 +697,7 @@ int code_pressed_memory(input_code_t code)
  *
  *************************************/
 
-int code_pressed_memory_repeat(input_code_t code, int speed)
+int code_pressed_memory_repeat(input_code code, int speed)
 {
 	static int counter;
 	static int keydelay;
@@ -750,7 +751,7 @@ int code_pressed_memory_repeat(input_code_t code, int speed)
  *
  *************************************/
 
-static int code_pressed_not_memorized(input_code_t code)
+static int code_pressed_not_memorized(input_code code)
 {
 	int pressed = 0;
 
@@ -784,9 +785,9 @@ static int code_pressed_not_memorized(input_code_t code)
  *
  *************************************/
 
-input_code_t code_read_async(void)
+input_code code_read_async(void)
 {
-	input_code_t code;
+	input_code code;
 
 	profiler_mark(PROFILER_INPUT);
 
@@ -807,13 +808,13 @@ input_code_t code_read_async(void)
  *
  *************************************/
 
-int code_analog_type(input_code_t code)
+int code_analog_type(input_code code)
 {
 	return ANALOG_TYPE(code);
 }
 
 
-const char *code_name(input_code_t code)
+const char *code_name(input_code code)
 {
 	/* in-range codes just return either the OSD name or the standard name */
 	if (code < code_count && code_map[code].osinfo)
@@ -832,9 +833,9 @@ const char *code_name(input_code_t code)
 }
 
 
-input_code_t token_to_code(const char *token)
+input_code token_to_code(const char *token)
 {
-	input_code_t code;
+	input_code code;
 
 	/* look for special cases */
 	if (!stricmp(token, "OR"))
@@ -855,7 +856,7 @@ input_code_t token_to_code(const char *token)
 }
 
 
-void code_to_token(input_code_t code, char *token)
+void code_to_token(input_code code, char *token)
 {
 	/* first look in the table if we can */
 	if (code < code_count)
@@ -886,7 +887,7 @@ void code_to_token(input_code_t code, char *token)
  *
  *************************************/
 
-void seq_set_0(input_seq_t *seq)
+void seq_set_0(input_seq *seq)
 {
 	int codenum;
 	for (codenum = 0; codenum < SEQ_MAX; codenum++)
@@ -894,7 +895,7 @@ void seq_set_0(input_seq_t *seq)
 }
 
 
-void seq_set_1(input_seq_t *seq, input_code_t code)
+void seq_set_1(input_seq *seq, input_code code)
 {
 	int codenum;
 	seq->code[0] = code;
@@ -903,7 +904,7 @@ void seq_set_1(input_seq_t *seq, input_code_t code)
 }
 
 
-void seq_set_2(input_seq_t *seq, input_code_t code1, input_code_t code2)
+void seq_set_2(input_seq *seq, input_code code1, input_code code2)
 {
 	int codenum;
 	seq->code[0] = code1;
@@ -913,7 +914,7 @@ void seq_set_2(input_seq_t *seq, input_code_t code1, input_code_t code2)
 }
 
 
-void seq_set_3(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3)
+void seq_set_3(input_seq *seq, input_code code1, input_code code2, input_code code3)
 {
 	int codenum;
 	seq->code[0] = code1;
@@ -924,7 +925,7 @@ void seq_set_3(input_seq_t *seq, input_code_t code1, input_code_t code2, input_c
 }
 
 
-void seq_set_4(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4)
+void seq_set_4(input_seq *seq, input_code code1, input_code code2, input_code code3, input_code code4)
 {
 	int codenum;
 	seq->code[0] = code1;
@@ -936,7 +937,7 @@ void seq_set_4(input_seq_t *seq, input_code_t code1, input_code_t code2, input_c
 }
 
 
-void seq_set_5(input_seq_t *seq, input_code_t code1, input_code_t code2, input_code_t code3, input_code_t code4, input_code_t code5)
+void seq_set_5(input_seq *seq, input_code code1, input_code code2, input_code code3, input_code code4, input_code code5)
 {
 	int codenum;
 	seq->code[0] = code1;
@@ -956,13 +957,13 @@ void seq_set_5(input_seq_t *seq, input_code_t code1, input_code_t code2, input_c
  *
  *************************************/
 
-void seq_copy(input_seq_t *seqdst, const input_seq_t *seqsrc)
+void seq_copy(input_seq *seqdst, const input_seq *seqsrc)
 {
 	*seqdst = *seqsrc;
 }
 
 
-int seq_cmp(const input_seq_t *seqa, const input_seq_t *seqb)
+int seq_cmp(const input_seq *seqa, const input_seq *seqb)
 {
 	int codenum;
 	for (codenum = 0; codenum < SEQ_MAX; codenum++)
@@ -979,7 +980,7 @@ int seq_cmp(const input_seq_t *seqa, const input_seq_t *seqb)
  *
  *************************************/
 
-int seq_pressed(const input_seq_t *seq)
+int seq_pressed(const input_seq *seq)
 {
 	int codenum;
 	int result = 1;
@@ -989,7 +990,7 @@ int seq_pressed(const input_seq_t *seq)
 	/* iterate over all of the codes */
 	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
 	{
-		input_code_t code = seq->code[codenum];
+		input_code code = seq->code[codenum];
 
 		switch (code)
 		{
@@ -1033,7 +1034,7 @@ int seq_pressed(const input_seq_t *seq)
  *
  *************************************/
 
-INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
+INT32 seq_analog_value(const input_seq *seq, int *analogtype)
 {
 	int codenum, type = ANALOG_TYPE_NONE;
 	INT32 result = 0;
@@ -1045,7 +1046,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
 	/* iterate over all of the codes */
 	for (codenum = 0; codenum < SEQ_MAX && seq->code[codenum] != CODE_NONE; codenum++)
 	{
-		input_code_t code = seq->code[codenum];
+		input_code code = seq->code[codenum];
 
 		switch (code)
 		{
@@ -1118,7 +1119,7 @@ INT32 seq_analog_value(const input_seq_t *seq, int *analogtype)
  *
  *************************************/
 
-void seq_name(const input_seq_t *seq, char *buffer, unsigned max)
+void seq_name(const input_seq *seq, char *buffer, unsigned max)
 {
 	char *dest = buffer;
 	int codenum;
@@ -1170,7 +1171,7 @@ void seq_name(const input_seq_t *seq, char *buffer, unsigned max)
  *
  *************************************/
 
-static int is_seq_valid(const input_seq_t *seq)
+static int is_seq_valid(const input_seq *seq)
 {
 	int last_code_was_operand = 0;
 	int positive_code_count = 0;
@@ -1180,7 +1181,7 @@ static int is_seq_valid(const input_seq_t *seq)
 
 	for (seqnum = 0; seqnum < SEQ_MAX && seq->code[seqnum] != CODE_NONE; seqnum++)
 	{
-		input_code_t code = seq->code[seqnum];
+		input_code code = seq->code[seqnum];
 
 		switch (code)
 		{
@@ -1245,7 +1246,7 @@ static int is_seq_valid(const input_seq_t *seq)
 
 void seq_read_async_start(int analog)
 {
-	input_code_t codenum;
+	input_code codenum;
 
 	/* reset the recording count and the clock */
 	record_count = 0;
@@ -1264,9 +1265,9 @@ void seq_read_async_start(int analog)
 }
 
 
-int seq_read_async(input_seq_t *seq, int first)
+int seq_read_async(input_seq *seq, int first)
 {
-	input_code_t newcode;
+	input_code newcode;
 
 	/* if UI_CANCEL is pressed, return 1 (abort) */
 	if (input_ui_pressed(IPT_UI_CANCEL))
@@ -1363,7 +1364,7 @@ int seq_read_async(input_seq_t *seq, int first)
  *
  *************************************/
 
-int string_to_seq(const char *string, input_seq_t *seq)
+int string_to_seq(const char *string, input_seq *seq)
 {
 	char token[MAX_TOKEN_LEN + 1];
 	int tokenpos, seqnum = 0;
@@ -1395,7 +1396,7 @@ int string_to_seq(const char *string, input_seq_t *seq)
 }
 
 
-void seq_to_string(const input_seq_t *seq, char *string, int maxlen)
+void seq_to_string(const input_seq *seq, char *string, int maxlen)
 {
 	int seqnum;
 

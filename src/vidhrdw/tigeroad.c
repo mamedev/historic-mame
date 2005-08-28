@@ -1,7 +1,7 @@
 #include "vidhrdw/generic.h"
 
 static int bgcharbank;
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE16_HANDLER( tigeroad_videoram_w )
 {

@@ -18,7 +18,7 @@ static UINT8 *tilerom;
 static int bgon, objon, staron, charon, flipon;
 static unsigned int hflop_74a_n, hcount_191, vcount_191, latch_374;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( sidearms_videoram_w )
 {
@@ -188,7 +188,7 @@ VIDEO_START( sidearms )
 
 void sidearms_draw_sprites_region( struct mame_bitmap *bitmap, int start_offset, int end_offset )
 {
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 	struct rectangle *cliprect = &Machine->visible_area;
 	int offs, attr, color, code, x, y, flipx, flipy;
 

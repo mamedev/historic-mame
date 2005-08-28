@@ -586,7 +586,7 @@ ADDRESS_MAP_END
 
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -597,7 +597,7 @@ static struct GfxLayout tilelayout =
 	8*8*4
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -608,7 +608,7 @@ static struct GfxLayout spritelayout =
 	16*16*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
+static gfx_decode gfxdecodeinfo_Z[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   256*0, 16 },	// [0] Scroll 0
 	{ REGION_GFX2, 0, &tilelayout,   256*2, 16 },	// [1] Scroll 1
@@ -616,7 +616,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_Z[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_ABC[] =
+static gfx_decode gfxdecodeinfo_ABC[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   256*0, 16 },	// [0] Scroll 0
 	{ REGION_GFX2, 0, &tilelayout,   256*1, 16 },	// [1] Scroll 1

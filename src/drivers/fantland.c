@@ -638,7 +638,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout16x16x6 =
+static gfx_layout layout16x16x6 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -649,7 +649,7 @@ static struct GfxLayout layout16x16x6 =
 	16*16*6
 };
 
-static struct GfxDecodeInfo fantland_gfxdecodeinfo[] =
+static gfx_decode fantland_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout16x16x6, 0, 4 }, // [0] Sprites
 	{ -1 }

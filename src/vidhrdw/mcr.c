@@ -12,7 +12,7 @@
 INT8 mcr12_sprite_xoffs;
 INT8 mcr12_sprite_xoffs_flip;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /*************************************
@@ -252,7 +252,7 @@ WRITE8_HANDLER( mcr_91490_videoram_w )
 
 static void render_sprites_91399(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	/* render the sprites into the bitmap, ORing together */
@@ -323,7 +323,7 @@ static void render_sprites_91399(struct mame_bitmap *bitmap, const struct rectan
 
 static void render_sprites_91464(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int primask, int sprmask, int colormask)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	/* render the sprites into the bitmap, working from topmost to bottommost */

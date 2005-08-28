@@ -1299,7 +1299,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout williams2_layout =
+static gfx_layout williams2_layout =
 {
 	24, 16,
 	RGN_FRAC(1,3),
@@ -1315,7 +1315,7 @@ static struct GfxLayout williams2_layout =
 };
 
 
-static struct GfxDecodeInfo williams2_gfxdecodeinfo[] =
+static gfx_decode williams2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &williams2_layout, 0, 8 },
 	{ -1 }

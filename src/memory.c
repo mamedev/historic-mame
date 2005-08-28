@@ -166,7 +166,7 @@
     TYPE DEFINITIONS
 -------------------------------------------------*/
 
-struct memory_block_t
+struct _memory_block
 {
 	UINT8					cpunum;					/* which CPU are we associated with? */
 	UINT8					spacenum;				/* which address space are we associated with? */
@@ -174,8 +174,9 @@ struct memory_block_t
 	offs_t 					start, end;				/* start/end or match/mask for verifying a match */
     UINT8 *					data;					/* pointer to the data for this block */
 };
+typedef struct _memory_block memory_block;
 
-struct bank_data_t
+struct _bank_data
 {
 	UINT8 					used;					/* is this bank used? */
 	UINT8 					dynamic;				/* is this bank allocated dynamically? */
@@ -183,38 +184,43 @@ struct bank_data_t
 	UINT8 					spacenum;				/* the address space it is used for */
 	offs_t 					base;					/* the base offset */
 };
+typedef struct _bank_data bank_data;
 
-union rwhandlers_t
+union _rwhandlers
 {
 	genf *					generic;				/* generic handler void */
-	union read_handlers_t	read;					/* read handlers */
-	union write_handlers_t	write;					/* write handlers */
+	read_handlers			read;					/* read handlers */
+	write_handlers			write;					/* write handlers */
 };
+typedef union _rwhandlers rwhandlers;
 
-struct handler_data_t
+struct _handler_data
 {
-	union rwhandlers_t		handler;				/* function pointer for handler */
+	rwhandlers				handler;				/* function pointer for handler */
 	offs_t					offset;					/* base offset for handler */
 	offs_t					top;					/* maximum offset for handler */
 	offs_t					mask;					/* mask against the final address */
 };
+/* In memory.h: typedef struct _handler_data handler_data */
 
-struct subtable_data_t
+struct _subtable_data
 {
 	UINT8					checksum_valid;			/* is the checksum valid */
 	UINT32					checksum;				/* checksum over all the bytes */
 	UINT32					usecount;				/* number of times this has been used */
 };
+typedef struct _subtable_data subtable_data;
 
-struct table_data_t
+struct _table_data
 {
 	UINT8 *					table;					/* pointer to base of table */
 	UINT8 					subtable_alloc;			/* number of subtables allocated */
-	struct subtable_data_t	subtable[SUBTABLE_COUNT]; /* info about each subtable */
-	struct handler_data_t	handlers[ENTRY_COUNT];	/* array of user-installed handlers */
+	subtable_data			subtable[SUBTABLE_COUNT]; /* info about each subtable */
+	handler_data	handlers[ENTRY_COUNT];	/* array of user-installed handlers */
 };
+typedef struct _table_data table_data;
 
-struct addrspace_data_t
+struct _addrspace_data
 {
 	UINT8					cpunum;					/* CPU index */
 	UINT8					spacenum;				/* address space index */
@@ -224,14 +230,15 @@ struct addrspace_data_t
 	offs_t					rawmask;				/* raw address mask, before adjusting to bytes */
 	offs_t					mask;					/* address mask */
 	data64_t				unmap;					/* unmapped value */
-	struct table_data_t		read;					/* memory read lookup table */
-	struct table_data_t		write;					/* memory write lookup table */
-	struct data_accessors_t *accessors;				/* pointer to the memory accessors */
-	struct address_map_t *	map;					/* original memory map */
-	struct address_map_t *	adjmap;					/* adjusted memory map */
+	table_data				read;					/* memory read lookup table */
+	table_data				write;					/* memory write lookup table */
+	data_accessors *		accessors;				/* pointer to the memory accessors */
+	address_map *			map;					/* original memory map */
+	address_map *			adjmap;					/* adjusted memory map */
 };
+typedef struct _addrspace_data addrspace_data;
 
-struct cpu_data_t
+struct _cpu_data
 {
 	void *					rambase;				/* RAM base pointer */
 	size_t					ramlength;				/* RAM length pointer */
@@ -245,8 +252,9 @@ struct cpu_data_t
 	UINT8		 			opcode_entry;			/* opcode base handler */
 
 	UINT8					spacemask;				/* mask of which address spaces are used */
-	struct addrspace_data_t space[ADDRESS_SPACES];	/* info about each address space */
+	addrspace_data		 	space[ADDRESS_SPACES];	/* info about each address space */
 };
+typedef struct _cpu_data cpu_data;
 
 
 /*-------------------------------------------------
@@ -260,12 +268,12 @@ offs_t						opcode_memory_min;				/* opcode memory minimum */
 offs_t						opcode_memory_max;				/* opcode memory maximum */
 UINT8		 				opcode_entry;					/* opcode readmem entry */
 
-struct address_space_t		address_space[ADDRESS_SPACES];	/* address space data */
+address_space				active_address_space[ADDRESS_SPACES];/* address space data */
 
 static UINT8 *				bank_ptr[STATIC_COUNT];			/* array of bank pointers */
 static void *				shared_ptr[MAX_SHARED_POINTERS];/* array of shared pointers */
 
-static struct memory_block_t memory_block[MAX_MEMORY_BLOCKS];/* array of memory blocks we are tracking */
+static memory_block 		memory_block_list[MAX_MEMORY_BLOCKS];/* array of memory blocks we are tracking */
 static int 					memory_block_count = 0;			/* number of memory_block[] entries used */
 
 static int					cur_context;					/* current CPU context */
@@ -274,14 +282,14 @@ static opbase_handler		opbasefunc;						/* opcode base override */
 
 static int					debugger_access;				/* treat accesses as coming from the debugger */
 
-static struct cpu_data_t	cpudata[MAX_CPU];				/* data gathered for each CPU */
-static struct bank_data_t 	bankdata[STATIC_COUNT];			/* data gathered for each bank */
+static cpu_data				cpudata[MAX_CPU];				/* data gathered for each CPU */
+static bank_data 			bankdata[STATIC_COUNT];			/* data gathered for each bank */
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 static const int *			watchpoint_count;				/* pointer to the count of watchpoints */
 #endif
 
-static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
+static data_accessors memory_accessors[ADDRESS_SPACES][4][2] =
 {
 	/* program accessors */
 	{
@@ -354,21 +362,21 @@ static int init_cpudata(void);
 static int init_addrspace(UINT8 cpunum, UINT8 spacenum);
 static int preflight_memory(void);
 static int populate_memory(void);
-static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed);
+static void install_mem_handler(addrspace_data *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed);
 static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t mirror, int isfixed, int ismasked);
-static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs_t start, offs_t end, offs_t mask);
-static void populate_table_range(struct addrspace_data_t *space, int iswrite, offs_t start, offs_t stop, UINT8 handler);
-static void populate_table_match(struct addrspace_data_t *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler);
-static UINT8 allocate_subtable(struct table_data_t *tabledata);
-static void reallocate_subtable(struct table_data_t *tabledata, UINT8 subentry);
-static int merge_subtables(struct table_data_t *tabledata);
-static void release_subtable(struct table_data_t *tabledata, UINT8 subentry);
-static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index);
-static void close_subtable(struct table_data_t *tabledata, offs_t l1index);
+static UINT8 get_handler_index(handler_data *table, genf *handler, offs_t start, offs_t end, offs_t mask);
+static void populate_table_range(addrspace_data *space, int iswrite, offs_t start, offs_t stop, UINT8 handler);
+static void populate_table_match(addrspace_data *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler);
+static UINT8 allocate_subtable(table_data *tabledata);
+static void reallocate_subtable(table_data *tabledata, UINT8 subentry);
+static int merge_subtables(table_data *tabledata);
+static void release_subtable(table_data *tabledata, UINT8 subentry);
+static UINT8 *open_subtable(table_data *tabledata, offs_t l1index);
+static void close_subtable(table_data *tabledata, offs_t l1index);
 static int allocate_memory(void);
 static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_t end, void *memory);
 static void register_for_save(int cpunum, int spacenum, offs_t start, void *base, size_t numbytes);
-static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t *space, offs_t start, offs_t end, UINT8 *base);
+static address_map *assign_intersecting_blocks(addrspace_data *space, offs_t start, offs_t end, UINT8 *base);
 static int find_memory(void);
 static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t offset);
 static genf *get_static_handler(int databits, int readorwrite, int spacenum, int which);
@@ -404,7 +412,7 @@ int memory_init(void)
 	memset(bank_ptr, 0, sizeof(bank_ptr));
 
 	/* reset our hardcoded and allocated pointer tracking */
-	memset(memory_block, 0, sizeof(memory_block));
+	memset(memory_block_list, 0, sizeof(memory_block_list));
 	memory_block_count = 0;
 
 	/* init the CPUs */
@@ -440,7 +448,7 @@ int memory_init(void)
 void memory_exit(void)
 {
 	int cpunum, spacenum, blocknum;
-	struct memory_block_t *block;
+	memory_block *block;
 
 	/* free all the tables */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
@@ -456,7 +464,7 @@ void memory_exit(void)
 	memset(&cpudata, 0, sizeof(cpudata));
 
 	/* free all the allocated memory */
-	for (blocknum = 0, block = memory_block; blocknum < memory_block_count; blocknum++, block++)
+	for (blocknum = 0, block = memory_block_list; blocknum < memory_block_count; blocknum++, block++)
 		if (block->isallocated)
 			free(block->data);
 }
@@ -489,33 +497,33 @@ void memory_set_context(int activecpu)
 	opcode_entry = cpudata[activecpu].opcode_entry;
 
 	/* program address space */
-	address_space[ADDRESS_SPACE_PROGRAM].addrmask = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].mask;
-	address_space[ADDRESS_SPACE_PROGRAM].readlookup = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].read.table;
-	address_space[ADDRESS_SPACE_PROGRAM].writelookup = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].write.table;
-	address_space[ADDRESS_SPACE_PROGRAM].readhandlers = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].read.handlers;
-	address_space[ADDRESS_SPACE_PROGRAM].writehandlers = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].write.handlers;
-	address_space[ADDRESS_SPACE_PROGRAM].accessors = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].accessors;
+	active_address_space[ADDRESS_SPACE_PROGRAM].addrmask = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].mask;
+	active_address_space[ADDRESS_SPACE_PROGRAM].readlookup = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].read.table;
+	active_address_space[ADDRESS_SPACE_PROGRAM].writelookup = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].write.table;
+	active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].read.handlers;
+	active_address_space[ADDRESS_SPACE_PROGRAM].writehandlers = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].write.handlers;
+	active_address_space[ADDRESS_SPACE_PROGRAM].accessors = cpudata[activecpu].space[ADDRESS_SPACE_PROGRAM].accessors;
 
 	/* data address space */
 	if (cpudata[activecpu].spacemask & (1 << ADDRESS_SPACE_DATA))
 	{
-		address_space[ADDRESS_SPACE_DATA].addrmask = cpudata[activecpu].space[ADDRESS_SPACE_DATA].mask;
-		address_space[ADDRESS_SPACE_DATA].readlookup = cpudata[activecpu].space[ADDRESS_SPACE_DATA].read.table;
-		address_space[ADDRESS_SPACE_DATA].writelookup = cpudata[activecpu].space[ADDRESS_SPACE_DATA].write.table;
-		address_space[ADDRESS_SPACE_DATA].readhandlers = cpudata[activecpu].space[ADDRESS_SPACE_DATA].read.handlers;
-		address_space[ADDRESS_SPACE_DATA].writehandlers = cpudata[activecpu].space[ADDRESS_SPACE_DATA].write.handlers;
-		address_space[ADDRESS_SPACE_DATA].accessors = cpudata[activecpu].space[ADDRESS_SPACE_DATA].accessors;
+		active_address_space[ADDRESS_SPACE_DATA].addrmask = cpudata[activecpu].space[ADDRESS_SPACE_DATA].mask;
+		active_address_space[ADDRESS_SPACE_DATA].readlookup = cpudata[activecpu].space[ADDRESS_SPACE_DATA].read.table;
+		active_address_space[ADDRESS_SPACE_DATA].writelookup = cpudata[activecpu].space[ADDRESS_SPACE_DATA].write.table;
+		active_address_space[ADDRESS_SPACE_DATA].readhandlers = cpudata[activecpu].space[ADDRESS_SPACE_DATA].read.handlers;
+		active_address_space[ADDRESS_SPACE_DATA].writehandlers = cpudata[activecpu].space[ADDRESS_SPACE_DATA].write.handlers;
+		active_address_space[ADDRESS_SPACE_DATA].accessors = cpudata[activecpu].space[ADDRESS_SPACE_DATA].accessors;
 	}
 
 	/* I/O address space */
 	if (cpudata[activecpu].spacemask & (1 << ADDRESS_SPACE_IO))
 	{
-		address_space[ADDRESS_SPACE_IO].addrmask = cpudata[activecpu].space[ADDRESS_SPACE_IO].mask;
-		address_space[ADDRESS_SPACE_IO].readlookup = cpudata[activecpu].space[ADDRESS_SPACE_IO].read.table;
-		address_space[ADDRESS_SPACE_IO].writelookup = cpudata[activecpu].space[ADDRESS_SPACE_IO].write.table;
-		address_space[ADDRESS_SPACE_IO].readhandlers = cpudata[activecpu].space[ADDRESS_SPACE_IO].read.handlers;
-		address_space[ADDRESS_SPACE_IO].writehandlers = cpudata[activecpu].space[ADDRESS_SPACE_IO].write.handlers;
-		address_space[ADDRESS_SPACE_IO].accessors = cpudata[activecpu].space[ADDRESS_SPACE_IO].accessors;
+		active_address_space[ADDRESS_SPACE_IO].addrmask = cpudata[activecpu].space[ADDRESS_SPACE_IO].mask;
+		active_address_space[ADDRESS_SPACE_IO].readlookup = cpudata[activecpu].space[ADDRESS_SPACE_IO].read.table;
+		active_address_space[ADDRESS_SPACE_IO].writelookup = cpudata[activecpu].space[ADDRESS_SPACE_IO].write.table;
+		active_address_space[ADDRESS_SPACE_IO].readhandlers = cpudata[activecpu].space[ADDRESS_SPACE_IO].read.handlers;
+		active_address_space[ADDRESS_SPACE_IO].writehandlers = cpudata[activecpu].space[ADDRESS_SPACE_IO].write.handlers;
+		active_address_space[ADDRESS_SPACE_IO].accessors = cpudata[activecpu].space[ADDRESS_SPACE_IO].accessors;
 	}
 
 	opbasefunc = cpudata[activecpu].opbase;
@@ -531,7 +539,7 @@ void memory_set_context(int activecpu)
     memory map
 -------------------------------------------------*/
 
-const struct address_map_t *memory_get_map(int cpunum, int spacenum)
+const address_map *memory_get_map(int cpunum, int spacenum)
 {
 	return cpudata[cpunum].space[spacenum].map;
 }
@@ -570,10 +578,10 @@ void memory_set_opbase(offs_t pc)
 	}
 
 	/* perform the lookup */
-	pc &= address_space[ADDRESS_SPACE_PROGRAM].addrmask;
-	entry = address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL1_INDEX(pc)];
+	pc &= active_address_space[ADDRESS_SPACE_PROGRAM].addrmask;
+	entry = active_address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL1_INDEX(pc)];
 	if (entry >= SUBTABLE_BASE)
-		entry = address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL2_INDEX(entry,pc)];
+		entry = active_address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL2_INDEX(entry,pc)];
 	opcode_entry = entry;
 
 	/* RAM/ROM/RAMROM */
@@ -593,13 +601,13 @@ void memory_set_opbase(offs_t pc)
 	}
 
 	/* compute the adjusted base */
-	opcode_mask = address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].mask;
-	opcode_base = base - (address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].offset & opcode_mask) + (opcode_base - opcode_arg_base);
-	opcode_arg_base = base - (address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].offset & opcode_mask);
-	opcode_memory_min = address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].offset;
+	opcode_mask = active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].mask;
+	opcode_base = base - (active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].offset & opcode_mask) + (opcode_base - opcode_arg_base);
+	opcode_arg_base = base - (active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].offset & opcode_mask);
+	opcode_memory_min = active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].offset;
 	opcode_memory_max = (entry >= STATIC_RAM && entry <= STATIC_RAMROM)
 		? cpudata[cpu_getactivecpu()].ramlength - 1
-		: address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].top;
+		: active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].top;
 }
 
 
@@ -633,7 +641,7 @@ void memory_set_opcode_base(int cpunum, void *base)
 
 void *memory_get_read_ptr(int cpunum, int spacenum, offs_t offset)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	UINT8 entry;
 
 	/* perform the lookup */
@@ -658,7 +666,7 @@ void *memory_get_read_ptr(int cpunum, int spacenum, offs_t offset)
 
 void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	UINT8 entry;
 
 	/* perform the lookup */
@@ -767,7 +775,7 @@ void memory_set_debugger_access(int debugger)
 
 data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 8, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
@@ -775,7 +783,7 @@ data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, of
 
 data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 16, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
@@ -783,7 +791,7 @@ data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, 
 
 data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 32, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
@@ -791,7 +799,7 @@ data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, 
 
 data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 64, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
@@ -805,7 +813,7 @@ data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, 
 
 data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 8, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
@@ -813,7 +821,7 @@ data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, o
 
 data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 16, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
@@ -821,7 +829,7 @@ data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start,
 
 data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 32, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
@@ -829,7 +837,7 @@ data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start,
 
 data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 64, 0, start, end, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
@@ -844,7 +852,7 @@ data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start,
 
 data8_t *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 8, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
@@ -852,7 +860,7 @@ data8_t *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t
 
 data16_t *memory_install_read16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 16, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
@@ -860,7 +868,7 @@ data16_t *memory_install_read16_matchmask_handler(int cpunum, int spacenum, offs
 
 data32_t *memory_install_read32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 32, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
@@ -868,7 +876,7 @@ data32_t *memory_install_read32_matchmask_handler(int cpunum, int spacenum, offs
 
 data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 64, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
@@ -883,7 +891,7 @@ data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs
 
 data8_t *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 8, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
@@ -891,7 +899,7 @@ data8_t *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_
 
 data16_t *memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 16, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
@@ -899,7 +907,7 @@ data16_t *memory_install_write16_matchmask_handler(int cpunum, int spacenum, off
 
 data32_t *memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 32, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
@@ -907,7 +915,7 @@ data32_t *memory_install_write32_matchmask_handler(int cpunum, int spacenum, off
 
 data64_t *memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 64, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
@@ -918,7 +926,7 @@ data64_t *memory_install_write64_matchmask_handler(int cpunum, int spacenum, off
     construct_map_0 - NULL memory map
 -------------------------------------------------*/
 
-struct address_map_t *construct_map_0(struct address_map_t *map)
+address_map *construct_map_0(address_map *map)
 {
 	map->flags = AM_FLAGS_END;
 	return map;
@@ -963,7 +971,7 @@ static int init_cpudata(void)
     given address space in a standard fashion
 -------------------------------------------------*/
 
-INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, offs_t *start, offs_t *end, offs_t *mask, offs_t *mirror)
+INLINE void adjust_addresses(addrspace_data *space, int ismatchmask, offs_t *start, offs_t *end, offs_t *mask, offs_t *mirror)
 {
 	/* adjust start/end/mask values */
 	if (!*mask) *mask = space->rawmask;
@@ -988,7 +996,7 @@ INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, of
 
 static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	int cputype = Machine->drv->cpu[cpunum].cpu_type;
 	int abits = cputype_addrbus_width(cputype, spacenum);
 	int dbits = cputype_databus_width(cputype, spacenum);
@@ -1017,7 +1025,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	if (internal_map || Machine->drv->cpu[cpunum].construct_map[spacenum][0] || Machine->drv->cpu[cpunum].construct_map[spacenum][1])
 	{
 		/* allocate and clear memory for 2 copies of the map */
-		struct address_map_t *map = malloc(sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
+		address_map *map = malloc(sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 		if (!map)
 		{
 			osd_die("cpu #%d couldn't allocate memory map\n", cpunum);
@@ -1095,8 +1103,8 @@ static int preflight_memory(void)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
-				struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-				const struct address_map_t *map;
+				addrspace_data *space = &cpudata[cpunum].space[spacenum];
+				const address_map *map;
 
 				/* scan the adjusted map */
 				for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
@@ -1156,7 +1164,7 @@ static int preflight_memory(void)
 						/* if we got one, add the data */
 						if (bank >= 1 && bank <= MAX_EXPLICIT_BANKS)
 						{
-							struct bank_data_t *bdata = &bankdata[bank];
+							bank_data *bdata = &bankdata[bank];
 							bdata->used = 1;
 							bdata->dynamic = 0;
 							bdata->cpunum = cpunum;
@@ -1191,8 +1199,8 @@ static int populate_memory(void)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
-				struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-				const struct address_map_t *map;
+				addrspace_data *space = &cpudata[cpunum].space[spacenum];
+				const address_map *map;
 
 				/* install the handlers, using the original, unadjusted memory map */
 				if (space->map)
@@ -1223,10 +1231,10 @@ static int populate_memory(void)
     memory operations
 -------------------------------------------------*/
 
-static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed)
+static void install_mem_handler(addrspace_data *space, int iswrite, int databits, int ismatchmask, offs_t start, offs_t end, offs_t mask, offs_t mirror, genf *handler, int isfixed)
 {
 	offs_t lmirrorbit[LEVEL1_BITS], lmirrorbits, hmirrorbit[LEVEL2_BITS], hmirrorbits, lmirrorcount, hmirrorcount;
-	struct table_data_t *tabledata = iswrite ? &space->write : &space->read;
+	table_data *tabledata = iswrite ? &space->write : &space->read;
 	UINT8 idx, prev_entry = STATIC_INVALID;
 	int cur_index, prev_index = 0;
 	offs_t original_mask = mask;
@@ -1239,7 +1247,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 	/* if we're installing a new bank, make sure we mark it */
 	if (HANDLER_IS_BANK(handler) && !bankdata[HANDLER_TO_BANK(handler)].used)
 	{
-		struct bank_data_t *bdata = &bankdata[HANDLER_TO_BANK(handler)];
+		bank_data *bdata = &bankdata[HANDLER_TO_BANK(handler)];
 		bdata->used = 1;
 		bdata->dynamic = 0;
 		bdata->cpunum = space->cpunum;
@@ -1386,7 +1394,7 @@ static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
     handler, or allocates a new one as necessary
 -------------------------------------------------*/
 
-static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs_t start, offs_t end, offs_t mask)
+static UINT8 get_handler_index(handler_data *table, genf *handler, offs_t start, offs_t end, offs_t mask)
 {
 	int i;
 
@@ -1428,9 +1436,9 @@ static UINT8 get_handler_index(struct handler_data_t *table, genf *handler, offs
     to a range of addresses
 -------------------------------------------------*/
 
-static void populate_table_range(struct addrspace_data_t *space, int iswrite, offs_t start, offs_t stop, UINT8 handler)
+static void populate_table_range(addrspace_data *space, int iswrite, offs_t start, offs_t stop, UINT8 handler)
 {
-	struct table_data_t *tabledata = iswrite ? &space->write : &space->read;
+	table_data *tabledata = iswrite ? &space->write : &space->read;
 	offs_t l2mask = (1 << LEVEL2_BITS) - 1;
 	offs_t l1start = start >> LEVEL2_BITS;
 	offs_t l2start = start & l2mask;
@@ -1492,9 +1500,9 @@ static void populate_table_range(struct addrspace_data_t *space, int iswrite, of
     to a range of addresses
 -------------------------------------------------*/
 
-static void populate_table_match(struct addrspace_data_t *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler)
+static void populate_table_match(addrspace_data *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler)
 {
-	struct table_data_t *tabledata = iswrite ? &space->write : &space->read;
+	table_data *tabledata = iswrite ? &space->write : &space->read;
 	int lowermask, lowermatch;
 	int uppermask, uppermatch;
 	int l1index, l2index;
@@ -1548,7 +1556,7 @@ static void populate_table_match(struct addrspace_data_t *space, int iswrite, of
     and set its usecount to 1
 -------------------------------------------------*/
 
-static UINT8 allocate_subtable(struct table_data_t *tabledata)
+static UINT8 allocate_subtable(table_data *tabledata)
 {
 	/* loop */
 	while (1)
@@ -1588,7 +1596,7 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
     a subtable
 -------------------------------------------------*/
 
-static void reallocate_subtable(struct table_data_t *tabledata, UINT8 subentry)
+static void reallocate_subtable(table_data *tabledata, UINT8 subentry)
 {
 	UINT8 subindex = subentry - SUBTABLE_BASE;
 
@@ -1606,7 +1614,7 @@ static void reallocate_subtable(struct table_data_t *tabledata, UINT8 subentry)
     subtables
 -------------------------------------------------*/
 
-static int merge_subtables(struct table_data_t *tabledata)
+static int merge_subtables(table_data *tabledata)
 {
 	int merged = 0;
 	UINT8 subindex;
@@ -1666,7 +1674,7 @@ static int merge_subtables(struct table_data_t *tabledata)
     a subtable and free it if we're done
 -------------------------------------------------*/
 
-static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
+static void release_subtable(table_data *tabledata, UINT8 subentry)
 {
 	UINT8 subindex = subentry - SUBTABLE_BASE;
 
@@ -1686,7 +1694,7 @@ static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
     modification
 -------------------------------------------------*/
 
-static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index)
+static UINT8 *open_subtable(table_data *tabledata, offs_t l1index)
 {
 	UINT8 subentry = tabledata->table[l1index];
 
@@ -1723,7 +1731,7 @@ static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index)
     close_subtable - stop access to a subtable
 -------------------------------------------------*/
 
-static void close_subtable(struct table_data_t *tabledata, offs_t l1index)
+static void close_subtable(table_data *tabledata, offs_t l1index)
 {
 	/* defer any merging until we run out of tables */
 }
@@ -1734,7 +1742,7 @@ static void close_subtable(struct table_data_t *tabledata, offs_t l1index)
     the need of allocating and registering memory
 -------------------------------------------------*/
 
-static int amentry_needs_backing_store(int cpunum, int spacenum, const struct address_map_t *map)
+static int amentry_needs_backing_store(int cpunum, int spacenum, const address_map *map)
 {
 	int handler;
 
@@ -1786,8 +1794,8 @@ static int allocate_memory(void)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
-				struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-				struct address_map_t *map, *unassigned = NULL;
+				addrspace_data *space = &cpudata[cpunum].space[spacenum];
+				address_map *map, *unassigned = NULL;
 				int start_count = memory_block_count;
 				int i;
 
@@ -1808,7 +1816,7 @@ static int allocate_memory(void)
 
 				/* loop over all blocks just allocated and assign pointers from them */
 				for (i = start_count; i < memory_block_count; i++)
-					unassigned = assign_intersecting_blocks(space, memory_block[i].start, memory_block[i].end, memory_block[i].data);
+					unassigned = assign_intersecting_blocks(space, memory_block_list[i].start, memory_block_list[i].end, memory_block_list[i].data);
 
 				/* if we don't have an unassigned pointer yet, try to find one */
 				if (!unassigned)
@@ -1878,7 +1886,7 @@ static int allocate_memory(void)
 
 static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_t end, void *memory)
 {
-	struct memory_block_t *block = &memory_block[memory_block_count];
+	memory_block *block = &memory_block_list[memory_block_count];
 	int allocatemem = (memory == NULL);
 
 	VPRINTF(("allocate_memory_block(%d,%d,%08X,%08X,%08X)\n", cpunum, spacenum, start, end, (UINT32)memory));
@@ -1943,9 +1951,9 @@ static void register_for_save(int cpunum, int spacenum, offs_t start, void *base
     intersecting blocks and assign their pointers
 -------------------------------------------------*/
 
-static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t *space, offs_t start, offs_t end, UINT8 *base)
+static address_map *assign_intersecting_blocks(addrspace_data *space, offs_t start, offs_t end, UINT8 *base)
 {
-	struct address_map_t *map, *unassigned = NULL;
+	address_map *map, *unassigned = NULL;
 
 	/* loop over the adjusted map and assign memory to any blocks we can */
 	for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
@@ -2010,8 +2018,8 @@ static int find_memory(void)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
-				struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-				const struct address_map_t *map;
+				addrspace_data *space = &cpudata[cpunum].space[spacenum];
+				const address_map *map;
 
 				/* fill in base/size entries, and handle shared memory */
 				for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
@@ -2033,7 +2041,7 @@ static int find_memory(void)
 	for (banknum = 1; banknum <= MAX_BANKS; banknum++)
 		if (bankdata[banknum].used)
 		{
-			struct address_map_t *map;
+			address_map *map;
 			for (map = cpudata[bankdata[banknum].cpunum].space[bankdata[banknum].spacenum].adjmap; map && !IS_AMENTRY_END(map); map++)
 				if (!IS_AMENTRY_EXTENDED(map) && map->start == bankdata[banknum].base)
 				{
@@ -2055,9 +2063,9 @@ static int find_memory(void)
 
 static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t offset)
 {
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	struct address_map_t *map;
-	struct memory_block_t *block;
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	address_map *map;
+	memory_block *block;
 	int blocknum;
 
 	VPRINTF(("memory_find_base(%d,%d,%d,%08X) -> ", cpunum, spacenum, readwrite, offset));
@@ -2086,7 +2094,7 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 		}
 
 	/* if not found there, look in the allocated blocks */
-	for (blocknum = 0, block = memory_block; blocknum < memory_block_count; blocknum++, block++)
+	for (blocknum = 0, block = memory_block_list; blocknum < memory_block_count; blocknum++, block++)
 		if (block->cpunum == cpunum && block->spacenum == spacenum && block->start <= offset && block->end > offset)
 		{
 			VPRINTF(("found in allocated memory block %08X-%08X [%08X]\n", block->start, block->end, (UINT32)block->data + (offset - block->start)));
@@ -2119,17 +2127,17 @@ data8_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~0);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~0);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 1, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(bank_ptr[entry][address]);											\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler8)(address));\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handler8)(address));\
 	return 0;																			\
 }																						\
 
@@ -2138,11 +2146,11 @@ data8_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~0);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~0);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 1, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(bank_ptr[entry][xormacro(address)]);									\
 																						\
@@ -2150,7 +2158,7 @@ data8_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xff << shift)) >> shift);\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2173,17 +2181,17 @@ data16_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~1);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~1);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 2, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data16_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler16)(address >> 1,0));\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handler16)(address >> 1,0));\
 	return 0;																			\
 }																						\
 
@@ -2192,11 +2200,11 @@ data16_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~1);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~1);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 2, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data16_t *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
@@ -2204,7 +2212,7 @@ data16_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffff << shift)) >> shift);\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2225,17 +2233,17 @@ data32_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~3);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~3);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 4, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data32_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler32)(address >> 2,0));\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handler32)(address >> 2,0));\
 	return 0;																			\
 }																						\
 
@@ -2244,11 +2252,11 @@ data32_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~3);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~3);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 4, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data32_t *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
@@ -2256,7 +2264,7 @@ data32_t name(offs_t address)															\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffffffff << shift)) >> shift);\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handlertype)(address >> (ignorebits), ~((masktype)0xffffffff << shift)) >> shift);\
 	}																					\
 	return 0;																			\
 }																						\
@@ -2275,17 +2283,17 @@ data64_t name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
-	PERFORM_LOOKUP(readlookup,address_space[spacenum],~7);								\
+	PERFORM_LOOKUP(readlookup,active_address_space[spacenum],~7);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_READ, address, 8, 0);			\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].readhandlers[entry].offset) & address_space[spacenum].readhandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMREADEND(*(data64_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMREADEND((*address_space[spacenum].readhandlers[entry].handler.read.handler64)(address >> 3,0));\
+		MEMREADEND((*active_address_space[spacenum].readhandlers[entry].handler.read.handler64)(address >> 3,0));\
 	return 0;																			\
 }																						\
 
@@ -2299,17 +2307,17 @@ void name(offs_t address, data8_t data)													\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~0);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~0);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 1, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(bank_ptr[entry][address] = data);									\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler8)(address, data));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handler8)(address, data));\
 }																						\
 
 #define WRITEBYTE(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
@@ -2317,11 +2325,11 @@ void name(offs_t address, data8_t data)													\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~0);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~0);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 1, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(bank_ptr[entry][xormacro(address)] = data);							\
 																						\
@@ -2329,7 +2337,7 @@ void name(offs_t address, data8_t data)													\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xff << shift)));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xff << shift)));\
 	}																					\
 }																						\
 
@@ -2351,17 +2359,17 @@ void name(offs_t address, data16_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~1);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~1);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 2, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler16)(address >> 1, data, 0));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handler16)(address >> 1, data, 0));\
 }																						\
 
 #define WRITEWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
@@ -2369,11 +2377,11 @@ void name(offs_t address, data16_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~1);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~1);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 2, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
@@ -2381,7 +2389,7 @@ void name(offs_t address, data16_t data)												\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffff << shift)));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffff << shift)));\
 	}																					\
 }																						\
 
@@ -2401,17 +2409,17 @@ void name(offs_t address, data32_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~3);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~3);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 4, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler32)(address >> 2, data, 0));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handler32)(address >> 2, data, 0));\
 }																						\
 
 #define WRITEDWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
@@ -2419,11 +2427,11 @@ void name(offs_t address, data32_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~3);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~3);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 4, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
@@ -2431,7 +2439,7 @@ void name(offs_t address, data32_t data)												\
 	else																				\
 	{																					\
 		int shift = 8 * (shiftbytes);													\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffffffff << shift)));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handlertype)(address >> (ignorebits), (masktype)data << shift, ~((masktype)0xffffffff << shift)));\
 	}																					\
 }																						\
 
@@ -2449,17 +2457,17 @@ void name(offs_t address, data64_t data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
-	PERFORM_LOOKUP(writelookup,address_space[spacenum],~7);								\
+	PERFORM_LOOKUP(writelookup,active_address_space[spacenum],~7);								\
 	CHECK_WATCHPOINTS(cur_context, spacenum, WATCHPOINT_WRITE, address, 8, data);		\
 																						\
 	/* handle banks inline */															\
-	address = (address - address_space[spacenum].writehandlers[entry].offset) & address_space[spacenum].writehandlers[entry].mask;\
+	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
 		MEMWRITEEND(*(data64_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
-		MEMWRITEEND((*address_space[spacenum].writehandlers[entry].handler.write.handler64)(address >> 3, data, 0));\
+		MEMWRITEEND((*active_address_space[spacenum].writehandlers[entry].handler.write.handler64)(address >> 3, data, 0));\
 }																						\
 
 
@@ -2883,7 +2891,7 @@ static genf *get_static_handler(int databits, int readorwrite, int spacenum, int
     debugging
 -------------------------------------------------*/
 
-static void dump_map(FILE *file, const struct addrspace_data_t *space, const struct table_data_t *table)
+static void dump_map(FILE *file, const addrspace_data *space, const table_data *table)
 {
 	static const char *strings[] =
 	{

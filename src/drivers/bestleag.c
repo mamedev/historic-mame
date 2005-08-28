@@ -24,7 +24,7 @@ Changes 29/03/2005 - Pierpaolo Prazzoli
 /* Video Handling */
 
 data16_t *bestleag_txram,*bestleag_bgram,*bestleag_fgram,*bestleag_vregs;
-static struct tilemap *tx_tilemap,*bg_tilemap,*fg_tilemap;
+static tilemap *tx_tilemap,*bg_tilemap,*fg_tilemap;
 
 static void get_tx_tile_info(int tile_index)
 {
@@ -288,7 +288,7 @@ INPUT_PORTS_START( bestleag )
 INPUT_PORTS_END
 
 /* GFX Decode */
-static struct GfxLayout bestleag_charlayout =
+static gfx_layout bestleag_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -299,7 +299,7 @@ static struct GfxLayout bestleag_charlayout =
 	8*8
 };
 
-static struct GfxLayout bestleag_char16layout =
+static gfx_layout bestleag_char16layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -311,7 +311,7 @@ static struct GfxLayout bestleag_char16layout =
 	16*16
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bestleag_charlayout,     0x200, 16 },
 	{ REGION_GFX1, 0, &bestleag_char16layout,   0x000, 32 },

@@ -130,7 +130,7 @@ c13_u12.u12     HN624116 - GFX
 
 *** ROMSET: vgoalsca
 
-Tecmo V Goal Soccer ?1994? Tecmo
+Tecmo V Goal Soccer (c)1994? Tecmo
 
 CPU: 68000, Z80
 Sound: YM2610
@@ -232,7 +232,7 @@ static WRITE8_HANDLER( gs_sh_bankswitch_w )
 
 /*** GFX DECODE **************************************************************/
 
-static struct GfxLayout gs_8x8x4_layout =
+static gfx_layout gs_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -244,7 +244,7 @@ static struct GfxLayout gs_8x8x4_layout =
 };
 
 
-static struct GfxLayout gs_16x16x4_layout =
+static gfx_layout gs_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -260,7 +260,7 @@ static struct GfxLayout gs_16x16x4_layout =
 	16*64
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gs_8x8x4_layout,     0, 256 },
 	{ REGION_GFX2, 0, &gs_16x16x4_layout,   0, 256 },

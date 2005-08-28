@@ -457,14 +457,14 @@ TOYBOX_MCU_COM_W(1)
 TOYBOX_MCU_COM_W(2)
 TOYBOX_MCU_COM_W(3)
 
-extern const struct GameDriver driver_bloodwar;
-extern const struct GameDriver driver_bonkadv;
-extern const struct GameDriver driver_gtmr;
-extern const struct GameDriver driver_gtmre;
-extern const struct GameDriver driver_gtmrusa;
-extern const struct GameDriver driver_gtmr2;
-extern const struct GameDriver driver_gtmr2u;
-extern const struct GameDriver driver_gtmr2a;
+extern const game_driver driver_bloodwar;
+extern const game_driver driver_bonkadv;
+extern const game_driver driver_gtmr;
+extern const game_driver driver_gtmre;
+extern const game_driver driver_gtmrusa;
+extern const game_driver driver_gtmr2;
+extern const game_driver driver_gtmr2u;
+extern const game_driver driver_gtmr2a;
 
 void toybox_mcu_run(void)
 {

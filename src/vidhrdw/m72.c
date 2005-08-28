@@ -9,7 +9,7 @@ unsigned char *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
 static unsigned char *m72_spriteram;
 static int rastersplit;
 static int splitline;
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 static int xadjust;
 static int scrollx1[256],scrolly1[256],scrollx2[256],scrolly2[256];
 static int video_off;
@@ -629,7 +629,7 @@ static void majtitle_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 }
 
 static void draw_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
-		struct tilemap *tilemap,int *scrollx,int *scrolly,int priority)
+		tilemap *tmap,int *scrollx,int *scrolly,int priority)
 {
 	int start,i;
 	/* use clip regions to split the screen */
@@ -648,9 +648,9 @@ static void draw_layer(struct mame_bitmap *bitmap,const struct rectangle *clipre
 		clip.min_y = start + 128;
 		clip.max_y = i + 128;
 		sect_rect(&clip,cliprect);
-		tilemap_set_scrollx(tilemap,0,scrollx[start] + xadjust);
-		tilemap_set_scrolly(tilemap,0,scrolly[start]);
-		tilemap_draw(bitmap,&clip,tilemap,priority,0);
+		tilemap_set_scrollx(tmap,0,scrollx[start] + xadjust);
+		tilemap_set_scrolly(tmap,0,scrolly[start]);
+		tilemap_draw(bitmap,&clip,tmap,priority,0);
 
 		start = i+1;
 	} while (start < cliprect->max_y - 128);

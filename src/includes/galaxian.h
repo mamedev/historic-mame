@@ -12,7 +12,7 @@
 ***************************************************************************/
 
 /* defined in drivers/galaxian.c */
-extern struct GfxDecodeInfo galaxian_gfxdecodeinfo[];
+extern gfx_decode galaxian_gfxdecodeinfo[];
 MACHINE_DRIVER_EXTERN(galaxian_base);
 
 

@@ -35,7 +35,7 @@
 
 unsigned char *xain_charram, *xain_bgram0, *xain_bgram1, xain_pri;
 
-static struct tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
+static tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
 
 
 /***************************************************************************

@@ -3,7 +3,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-struct tilemap *freek_tilemap;
+tilemap *freek_tilemap;
 data8_t *freek_videoram;
 
 

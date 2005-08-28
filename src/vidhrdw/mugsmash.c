@@ -2,7 +2,7 @@
 
 #include "driver.h"
 
-static struct tilemap *mugsmash_tilemap1,  *mugsmash_tilemap2;
+static tilemap *mugsmash_tilemap1,  *mugsmash_tilemap2;
 
 extern data16_t *mugsmash_videoram1, *mugsmash_videoram2, *mugs_spriteram;
 extern data16_t *mugsmash_regs1, *mugsmash_regs2;
@@ -31,7 +31,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	const UINT16 *source = mugs_spriteram;
 	const UINT16 *finish = source+0x2000;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	while( source<finish )
 	{

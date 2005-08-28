@@ -1939,7 +1939,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout bgcharlayout =
+static gfx_layout bgcharlayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1952,7 +1952,7 @@ static struct GfxLayout bgcharlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bgcharlayout,   0x00, 0x3ff  },
 	{ -1 } /* end of array */

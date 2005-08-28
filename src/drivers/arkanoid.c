@@ -240,7 +240,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	4096,	/* 4096 characters */
@@ -253,7 +253,7 @@ static struct GfxLayout charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0, 64 },
 	// sprites use the same characters above, but are 16x8

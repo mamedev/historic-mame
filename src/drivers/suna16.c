@@ -538,7 +538,7 @@ INPUT_PORTS_END
 
 /* Tiles are 8x8x4 but the minimum sprite size is 2x2 tiles */
 
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -549,7 +549,7 @@ static struct GfxLayout layout_8x8x4 =
 	8*8*4/2
 };
 
-static struct GfxDecodeInfo suna16_gfxdecodeinfo[] =
+static gfx_decode suna16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4, 0, 16*2 }, // [0] Sprites
 	{ -1 }

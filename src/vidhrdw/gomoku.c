@@ -14,7 +14,7 @@
 
 static int gomoku_flipscreen;
 static int gomoku_bg_dispsw;
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 static struct mame_bitmap *gomoku_bg_bitmap;
 
 data8_t *gomoku_videoram;

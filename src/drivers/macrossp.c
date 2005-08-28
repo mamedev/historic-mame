@@ -709,7 +709,7 @@ INPUT_PORTS_END
 
 /*** GFX DECODE **************************************************************/
 
-static struct GfxLayout macrossp_char16x16x4layout =
+static gfx_layout macrossp_char16x16x4layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -721,7 +721,7 @@ static struct GfxLayout macrossp_char16x16x4layout =
 	16*64
 };
 
-static struct GfxLayout macrossp_char16x16x8layout =
+static gfx_layout macrossp_char16x16x8layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -733,7 +733,7 @@ static struct GfxLayout macrossp_char16x16x8layout =
 	16*128
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &macrossp_char16x16x8layout,   0x000, 0x20 },	/* 8bpp but 6bpp granularity */
 	{ REGION_GFX2, 0, &macrossp_char16x16x8layout,   0x800, 0x20 },	/* 8bpp but 6bpp granularity */

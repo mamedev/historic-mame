@@ -354,7 +354,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	256,
@@ -365,7 +365,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,1,
 	RGN_FRAC(1,8),
@@ -377,7 +377,7 @@ static struct GfxLayout spritelayout =
 	8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ 0,           0, &charlayout,   0, 8 }, /* decoded at runtime */
 	/* sprites are drawn pixel by pixel by draw_sprites() */

@@ -3,7 +3,7 @@
 #include "cpu/z80/z80.h"
 
 static int flipscreen;
-static struct tilemap *bg_tilemap,  *tx_tilemap;
+static tilemap *bg_tilemap,  *tx_tilemap;
 static unsigned char fg_color, old_fg_color;
 
 extern data8_t *jcr_sharedram;
@@ -138,7 +138,7 @@ VIDEO_START( jcross )
 static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	const unsigned char *base =  memory_region(REGION_CPU1)+0xf400;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
 	{
@@ -164,7 +164,7 @@ static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cli
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scrollx, int scrolly )
 {
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 	const unsigned char *source, *finish;
 	source = jcr_sharedram;
 	finish = jcr_sharedram + 0x64;

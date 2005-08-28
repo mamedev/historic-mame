@@ -5,7 +5,7 @@
 data16_t *ohmygod_videoram;
 
 static int spritebank;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 

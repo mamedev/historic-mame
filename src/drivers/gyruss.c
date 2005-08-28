@@ -321,7 +321,7 @@ GYRUSS_COMMON
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -331,7 +331,7 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
 };
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,16,	/* 8*16 sprites */
 	256,	/* 256 sprites */
@@ -345,7 +345,7 @@ static struct GfxLayout spritelayout =
 
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,      0, 16 },
 	{ REGION_GFX2, 0x0000, &spritelayout, 16*4, 16 },	/* upper half */

@@ -20,7 +20,7 @@ static data8_t *fortyl_pixram2;
 static struct mame_bitmap *pixel_bitmap1;
 static struct mame_bitmap *pixel_bitmap2;
 
-static struct tilemap *background;
+static tilemap *background;
 
 int fortyl_pix_color[4];
 

@@ -260,7 +260,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout layout_1bpp =
+static gfx_layout layout_1bpp =
 {
 	8,8,    		/* 8*8 characters */
 	RGN_FRAC(1,2),	/* 256 characters */
@@ -271,7 +271,7 @@ static struct GfxLayout layout_1bpp =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout layout_2bpp =
+static gfx_layout layout_2bpp =
 {
 	8,8,    		/* 8*8 characters */
 	RGN_FRAC(1,2),	/* 256 characters */
@@ -282,7 +282,7 @@ static struct GfxLayout layout_2bpp =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout layout_3bpp =
+static gfx_layout layout_3bpp =
 {
 	8,8,    		/* 8*8 characters */
 	RGN_FRAC(1,3),	/* 256 characters */
@@ -293,7 +293,7 @@ static struct GfxLayout layout_3bpp =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_3bpp, 0,       256/8 },	/* background */
 	{ REGION_GFX2, 0, &layout_2bpp, 8*4,     8 },		/* foreground */

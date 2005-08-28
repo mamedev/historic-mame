@@ -31,20 +31,11 @@ static void ym2151_update(void *param, stream_sample_t **inputs, stream_sample_t
 }
 
 
-#ifdef _STATE_H
-static void ym2151_postload(void)
+static void ym2151_postload(void *param)
 {
-	int num;
-
-	for (num=0; num < MAX_SOUND; num++)
-	{
-		struct ym2151_info *info = sndti_token(SOUND_YM2151, num);
-
-		if (info)
-			YM2151Postload(info->chip);
-	}
+	struct ym2151_info *info = param;
+	YM2151Postload(info->chip);
 }
-#endif
 
 
 static void *ym2151_start(int sndindex, int clock, const void *config)
@@ -67,10 +58,7 @@ static void *ym2151_start(int sndindex, int clock, const void *config)
 
 	info->chip = YM2151Init(sndindex,clock,rate);
 
-#ifdef _STATE_H
-	if (sndindex == 0)
-		state_save_register_func_postload(ym2151_postload);
-#endif
+	state_save_register_func_postload_ptr(ym2151_postload, info);
 
 	if (info->chip != 0)
 	{

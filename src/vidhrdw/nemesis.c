@@ -22,7 +22,7 @@ static int spriteram_words;
 static int tilemap_flip;
 static int flipscreen;
 
-static struct tilemap *background, *foreground;
+static tilemap *background, *foreground;
 
 static unsigned char *blank_characterdata; /* pseudo character */
 

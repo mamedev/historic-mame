@@ -7,7 +7,7 @@
 #include "vidhrdw/generic.h"
 
 static data8_t djboy_videoreg, djboy_scrollx, djboy_scrolly;
-static struct tilemap *background;
+static tilemap *background;
 
 void djboy_set_videoreg( data8_t data )
 {

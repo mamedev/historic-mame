@@ -6,7 +6,7 @@ Omori Electric CAD (OEC) 1981
 #include "vidhrdw/generic.h"
 #include "state.h"
 
-static struct tilemap *carjmbre_tilemap;
+static tilemap *carjmbre_tilemap;
 
 static int carjmbre_flipscreen, carjmbre_bgcolor;
 

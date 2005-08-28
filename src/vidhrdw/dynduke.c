@@ -2,7 +2,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_layer,*fg_layer,*tx_layer;
+static tilemap *bg_layer,*fg_layer,*tx_layer;
 unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
 
 static int flipscreen,back_bankbase,fore_bankbase,back_palbase;

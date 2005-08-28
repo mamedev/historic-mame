@@ -17,15 +17,19 @@
 
 const char *db_filename = "hiscore.dat"; /* high score definition file */
 
+
+struct _memory_range
+{
+	UINT32 cpu, addr, num_bytes, start_value, end_value;
+	struct _memory_range *next;
+};
+typedef struct _memory_range memory_range;
+
+
 static struct
 {
 	int hiscores_have_been_loaded;
-
-	struct mem_range
-	{
-		UINT32 cpu, addr, num_bytes, start_value, end_value;
-		struct mem_range *next;
-	} *mem_range;
+	memory_range *mem_range;
 } state;
 
 /*****************************************************************************/
@@ -131,7 +135,7 @@ static int matching_game_name (const char *pBuf, const char *name)
 /* safe_to_load checks the start and end values of each memory range */
 static int safe_to_load (void)
 {
-	struct mem_range *mem_range = state.mem_range;
+	memory_range *mem_range = state.mem_range;
 	while (mem_range)
 	{
 		if (cpunum_read_byte (mem_range->cpu, mem_range->addr) !=
@@ -152,10 +156,10 @@ static int safe_to_load (void)
 /* hs_free disposes of the mem_range linked list */
 static void hs_free (void)
 {
-	struct mem_range *mem_range = state.mem_range;
+	memory_range *mem_range = state.mem_range;
 	while (mem_range)
 	{
-		struct mem_range *next = mem_range->next;
+		memory_range *next = mem_range->next;
 		free (mem_range);
 		mem_range = next;
 	}
@@ -169,7 +173,7 @@ static void hs_load (void)
 	LOG(("hs_load\n"));
 	if (f)
 	{
-		struct mem_range *mem_range = state.mem_range;
+		memory_range *mem_range = state.mem_range;
 		LOG(("loading...\n"));
 		while (mem_range)
 		{
@@ -196,7 +200,7 @@ static void hs_save (void)
 	LOG(("hs_save\n"));
 	if (f)
 	{
-		struct mem_range *mem_range = state.mem_range;
+		memory_range *mem_range = state.mem_range;
 		LOG(("saving...\n"));
 		while (mem_range)
 		{
@@ -247,7 +251,7 @@ void hs_open (const char *name)
 			else if (is_mem_range (buffer))
 			{
 				const char *pBuf = buffer;
-				struct mem_range *mem_range = malloc(sizeof(struct mem_range));
+				memory_range *mem_range = malloc(sizeof(memory_range));
 				if (mem_range)
 				{
 					mem_range->cpu = hexstr2num (&pBuf);
@@ -258,7 +262,7 @@ void hs_open (const char *name)
 
 					mem_range->next = NULL;
 					{
-						struct mem_range *last = state.mem_range;
+						memory_range *last = state.mem_range;
 						while (last && last->next) last = last->next;
 						if (last == NULL)
 						{
@@ -291,7 +295,7 @@ void hs_open (const char *name)
 /* call hs_init when emulation starts, and when the game is reset */
 void hs_init (void)
 {
-	struct mem_range *mem_range = state.mem_range;
+	memory_range *mem_range = state.mem_range;
 	state.hiscores_have_been_loaded = 0;
 
 	while (mem_range)

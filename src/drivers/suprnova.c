@@ -1058,7 +1058,7 @@ ADDRESS_MAP_END
 
 /***** GFX DECODE *****/
 
-static struct GfxLayout skns_tilemap_layout =
+static gfx_layout skns_tilemap_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1071,7 +1071,7 @@ static struct GfxLayout skns_tilemap_layout =
 	16*16*8
 };
 
-static struct GfxLayout skns_4bpptilemap_layout =
+static gfx_layout skns_4bpptilemap_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1084,7 +1084,7 @@ static struct GfxLayout skns_4bpptilemap_layout =
 	16*16*4
 };
 
-static struct GfxDecodeInfo skns_bg_decode[] =
+static gfx_decode skns_bg_decode[] =
 {
    /* REGION_GFX1 is sprites, RLE encoded */
 	{ REGION_GFX2, 0, &skns_tilemap_layout, 0x000, 128 },

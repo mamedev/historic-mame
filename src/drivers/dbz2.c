@@ -422,7 +422,7 @@ static struct YM2151interface ym2151_interface =
 
 /**********************************************************************************/
 
-static struct GfxLayout bglayout =
+static gfx_layout bglayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -435,7 +435,7 @@ static struct GfxLayout bglayout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX3, 0, &bglayout,     0x400, 64 },
 	{ REGION_GFX4, 0, &bglayout,	 0x800, 64 },

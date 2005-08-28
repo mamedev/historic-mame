@@ -10,7 +10,7 @@ UINT8* sprint4_video_ram;
 
 int sprint4_collision[4];
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 static struct mame_bitmap* helper;
 
 
@@ -38,9 +38,9 @@ VIDEO_START( sprint4 )
 		return 1;
 	}
 
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	if (tilemap == NULL)
+	if (bg_tilemap == NULL)
 	{
 		return 1;
 	}
@@ -53,7 +53,7 @@ WRITE8_HANDLER( sprint4_video_ram_w )
 {
 	if (data != sprint4_video_ram[offset])
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	sprint4_video_ram[offset] = data;
@@ -64,7 +64,7 @@ VIDEO_UPDATE( sprint4 )
 {
 	int i;
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	for (i = 0; i < 4; i++)
 	{
@@ -125,7 +125,7 @@ VIDEO_EOF( sprint4 )
 		if (rect.max_y > Machine->visible_area.max_y)
 			rect.max_y = Machine->visible_area.max_y;
 
-		tilemap_draw(helper, &rect, tilemap, 0, 0);
+		tilemap_draw(helper, &rect, bg_tilemap, 0, 0);
 
 		if (i & 1)
 		{

@@ -93,7 +93,7 @@ unsigned char quaquiz2_default_eeprom[256] = {
 };
 
 data8_t *statriv2_videoram;
-static struct tilemap* statriv2_tilemap;
+static tilemap* statriv2_tilemap;
 
 /* Video Related, move to vidhrdw later */
 
@@ -550,7 +550,7 @@ INPUT_PORTS_START( hangman )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout statriv2_tiles8x16_layout =
+static gfx_layout statriv2_tiles8x16_layout =
 {
 	8,16,
 	RGN_FRAC(1,1),
@@ -562,7 +562,7 @@ static struct GfxLayout statriv2_tiles8x16_layout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &statriv2_tiles8x16_layout, 0, 64 },
 	{ -1 }

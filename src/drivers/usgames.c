@@ -33,7 +33,7 @@ WRITE8_HANDLER( usg_charram_w );
 VIDEO_START(usg);
 PALETTE_INIT(usg);
 VIDEO_UPDATE(usg);
-extern struct tilemap *usg_tilemap;
+extern tilemap *usg_tilemap;
 
 
 extern data8_t *usg_videoram,*usg_charram;
@@ -273,7 +273,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	0x100,
@@ -284,7 +284,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0x2800, &charlayout, 0, 256 },
 	{ -1 } /* end of array */

@@ -9,7 +9,7 @@ static int bg_scrollx_reg,bg_scrolly_reg,bg_page_reg;
 static int fg_scrollx_reg,fg_scrolly_reg,fg_page_reg;
 static int bg_page[4],fg_page[4];
 
-static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
 
 

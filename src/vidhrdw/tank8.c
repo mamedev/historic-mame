@@ -13,8 +13,8 @@ UINT8* tank8_pos_h_ram;
 UINT8* tank8_pos_v_ram;
 UINT8* tank8_pos_d_ram;
 
-static struct tilemap* tilemap1;
-static struct tilemap* tilemap2;
+static tilemap* tilemap1;
+static tilemap* tilemap2;
 
 static struct mame_bitmap* helper1;
 static struct mame_bitmap* helper2;

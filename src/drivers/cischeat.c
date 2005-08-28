@@ -1425,7 +1425,7 @@ INPUT_PORTS_END
 **************************************************************************/
 
 /* 8x8x4, straightforward layout */
-static struct GfxLayout tiles_8x8 =
+static gfx_layout tiles_8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1437,7 +1437,7 @@ static struct GfxLayout tiles_8x8 =
 };
 
 /* 16x16x4, straightforward layout */
-static struct GfxLayout tiles_16x16 =
+static gfx_layout tiles_16x16 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1449,7 +1449,7 @@ static struct GfxLayout tiles_16x16 =
 };
 
 /* 16x16x4, made of four 8x8 tiles */
-static struct GfxLayout tiles_16x16_quad =
+static gfx_layout tiles_16x16_quad =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1461,7 +1461,7 @@ static struct GfxLayout tiles_16x16_quad =
 };
 
 /* Road: 64 x 1 x 4 */
-static struct GfxLayout road_layout =
+static gfx_layout road_layout =
 {
 	64,1,
 	RGN_FRAC(1,1),
@@ -1477,7 +1477,7 @@ static struct GfxLayout road_layout =
                                 Big Run
 **************************************************************************/
 
-static struct GfxDecodeInfo bigrun_gfxdecodeinfo[] =
+static gfx_decode bigrun_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles_8x8,	0x0000, 16 }, // [0] Scroll 0
 	{ REGION_GFX2, 0, &tiles_8x8,	0x0100, 16 }, // [1] Scroll 1
@@ -1492,7 +1492,7 @@ static struct GfxDecodeInfo bigrun_gfxdecodeinfo[] =
                                 Cisco Heat
 **************************************************************************/
 
-static struct GfxDecodeInfo cischeat_gfxdecodeinfo[] =
+static gfx_decode cischeat_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles_8x8,	0x0000, 32  }, // [0] Scroll 0
 	{ REGION_GFX2, 0, &tiles_8x8,	0x0200, 32  }, // [1] Scroll 1
@@ -1507,7 +1507,7 @@ static struct GfxDecodeInfo cischeat_gfxdecodeinfo[] =
                             F1 GrandPrix Star
 **************************************************************************/
 
-static struct GfxDecodeInfo f1gpstar_gfxdecodeinfo[] =
+static gfx_decode f1gpstar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles_8x8,	0x0000, 16  }, // [0] Scroll 0
 	{ REGION_GFX2, 0, &tiles_8x8,	0x0100, 16  }, // [1] Scroll 1
@@ -1522,7 +1522,7 @@ static struct GfxDecodeInfo f1gpstar_gfxdecodeinfo[] =
                                 Scud Hammer
 **************************************************************************/
 
-static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
+static gfx_decode gfxdecodeinfo_scudhamm[] =
 {
 	{ REGION_GFX1, 0, &tiles_8x8,			0x0000, 16  },	// [0] Scroll 0
 	{ REGION_GFX1, 0, &tiles_8x8,			0x0000, 16  },	// [1] UNUSED

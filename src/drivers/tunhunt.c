@@ -247,7 +247,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout alpha_layout =
+static gfx_layout alpha_layout =
 {
 	8,8,
 	0x40,
@@ -259,7 +259,7 @@ static struct GfxLayout alpha_layout =
 };
 
 
-static struct GfxLayout obj_layout =
+static gfx_layout obj_layout =
 {
 	16,16,
 	8, /* number of objects */
@@ -281,7 +281,7 @@ static struct GfxLayout obj_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000, &alpha_layout, 0, 4 },
 	{ REGION_GFX2, 0x200, &obj_layout,	 8, 1 },

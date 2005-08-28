@@ -196,7 +196,7 @@ actual code sent to the hardware.
 #include "vidhrdw/generic.h"
 
 /* Variables defined here, that have to be shared: */
-struct tilemap *megasys1_tmap[3];
+tilemap *megasys1_tmap[3];
 
 data16_t *megasys1_scrollram_0, *megasys1_scrollram_1, *megasys1_scrollram_2;
 data16_t *megasys1_objectram, *megasys1_vregs, *megasys1_ram;
@@ -245,8 +245,8 @@ static int hardware_type_z;
 
 
 
-extern struct GameDriver driver_lomakai;
-extern struct GameDriver driver_soldamj;
+extern game_driver driver_lomakai;
+extern game_driver driver_soldamj;
 
 
 VIDEO_START( megasys1 )
@@ -688,16 +688,16 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 struct priority
 {
-	struct GameDriver *driver;
+	game_driver *driver;
 	int priorities[16];
 };
 
 int megasys1_layers_order[16];
 
 
-extern struct GameDriver driver_64street;
-extern struct GameDriver driver_chimerab;
-extern struct GameDriver driver_iganinju;
+extern game_driver driver_64street;
+extern game_driver driver_chimerab;
+extern game_driver driver_iganinju;
 
 /*
     Layers order encoded as an int like: 0x01234, where

@@ -11,7 +11,7 @@
 #ifndef __TILEMAP_H__
 #define __TILEMAP_H__
 
-struct tilemap; /* appease compiler */
+typedef struct _tilemap tilemap;
 
 #define ALL_TILEMAPS	0
 /* ALL_TILEMAPS may be used with:
@@ -47,7 +47,7 @@ struct tilemap; /* appease compiler */
     available in alpha mode, ignore_transparency isn't.
 */
 
-extern struct tile_info
+struct _tile_data
 {
 	/*
         you must set tile_info.pen_data, tile_info.pal_data and tile_info.pen_usage
@@ -64,10 +64,13 @@ extern struct tile_info
 	UINT32 priority;		/* tile priority */
 	UINT8 *mask_data;		/* for TILEMAP_BITMASK */
 	void *user_data;		/* user-supplied tilemap-wide pointer */
-} tile_info;
+};
+typedef struct _tile_data tile_data;
+
+extern tile_data tile_info;
 
 #define SET_TILE_INFO(GFX,CODE,COLOR,FLAGS) { \
-	const struct GfxElement *gfx = Machine->gfx[(GFX)]; \
+	const gfx_element *gfx = Machine->gfx[(GFX)]; \
 	int _code = (CODE) % gfx->total_elements; \
 	tile_info.tile_number = _code; \
 	tile_info.pen_data = gfx->gfxdata + _code*gfx->char_modulo; \
@@ -104,50 +107,50 @@ extern struct mame_bitmap *priority_bitmap;
 /* don't call these from drivers - they are called from mame.c */
 int tilemap_init( void );
 void tilemap_exit( void );
-void tilemap_dispose( struct tilemap *tilemap );
+void tilemap_dispose( tilemap *tmap );
 
-struct tilemap *tilemap_create(
+tilemap *tilemap_create(
 	void (*tile_get_info)( int memory_offset ),
 	UINT32 (*get_memory_offset)( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows ),
 	int type,
 	int tile_width, int tile_height,
 	int num_cols, int num_rows );
 
-void tilemap_set_transparent_pen( struct tilemap *tilemap, int pen );
-void tilemap_set_transmask( struct tilemap *tilemap, int which, UINT32 fgmask, UINT32 bgmask );
-void tilemap_set_depth( struct tilemap *tilemap, int tile_depth, int tile_granularity );
+void tilemap_set_transparent_pen( tilemap *tmap, int pen );
+void tilemap_set_transmask( tilemap *tmap, int which, UINT32 fgmask, UINT32 bgmask );
+void tilemap_set_depth( tilemap *tmap, int tile_depth, int tile_granularity );
 
-void tilemap_mark_tile_dirty( struct tilemap *tilemap, int memory_offset );
-void tilemap_mark_all_tiles_dirty( struct tilemap *tilemap );
-void tilemap_mark_gfxdata_dirty( struct tilemap *tilemap, UINT8 *dirty_array ); /* TBA */
+void tilemap_mark_tile_dirty( tilemap *tmap, int memory_offset );
+void tilemap_mark_all_tiles_dirty( tilemap *tmap );
+void tilemap_mark_gfxdata_dirty( tilemap *tmap, UINT8 *dirty_array ); /* TBA */
 
-void tilemap_set_scroll_rows( struct tilemap *tilemap, int scroll_rows ); /* default: 1 */
-void tilemap_set_scrolldx( struct tilemap *tilemap, int dx, int dx_if_flipped );
-void tilemap_set_scrollx( struct tilemap *tilemap, int row, int value );
-int tilemap_get_scrolldx( struct tilemap *tilemap );
+void tilemap_set_scroll_rows( tilemap *tmap, int scroll_rows ); /* default: 1 */
+void tilemap_set_scrolldx( tilemap *tmap, int dx, int dx_if_flipped );
+void tilemap_set_scrollx( tilemap *tmap, int row, int value );
+int tilemap_get_scrolldx( tilemap *tmap );
 
-void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols ); /* default: 1 */
-void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped );
-void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
-int tilemap_get_scrolldy( struct tilemap *tilemap );
+void tilemap_set_scroll_cols( tilemap *tmap, int scroll_cols ); /* default: 1 */
+void tilemap_set_scrolldy( tilemap *tmap, int dy, int dy_if_flipped );
+void tilemap_set_scrolly( tilemap *tmap, int col, int value );
+int tilemap_get_scrolldy( tilemap *tmap );
 
-void tilemap_set_palette_offset( struct tilemap *tilemap, int offset );
-void tilemap_set_user_data( struct tilemap *tilemap, void *user_data );
+void tilemap_set_palette_offset( tilemap *tmap, int offset );
+void tilemap_set_user_data( tilemap *tmap, void *user_data );
 
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
-void tilemap_set_flip( struct tilemap *tilemap, int attributes );
-void tilemap_set_enable( struct tilemap *tilemap, int enable );
+void tilemap_set_flip( tilemap *tmap, int attributes );
+void tilemap_set_enable( tilemap *tmap, int enable );
 
-void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
-void tilemap_draw_primask( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority, UINT32 priority_mask );
+void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority );
+void tilemap_draw_primask( struct mame_bitmap *dest, const struct rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority, UINT32 priority_mask );
 
-void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
+void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority );
 
-void tilemap_draw_roz_primask(struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
+void tilemap_draw_roz_primask(struct mame_bitmap *dest,const struct rectangle *cliprect,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority, UINT32 priority_mask );
@@ -162,9 +165,9 @@ void tilemap_draw_roz_primask(struct mame_bitmap *dest,const struct rectangle *c
 #define TILE_FLAG_FG_OPAQUE		(0x10)
 #define TILE_FLAG_BG_OPAQUE		(0x20)
 
-struct mame_bitmap *tilemap_get_pixmap( struct tilemap * tilemap );
-struct mame_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap );
-UINT8 *tilemap_get_transparency_data( struct tilemap * tilemap );  //*
+struct mame_bitmap *tilemap_get_pixmap( tilemap * tmap );
+struct mame_bitmap *tilemap_get_transparency_bitmap( tilemap * tmap );
+UINT8 *tilemap_get_transparency_data( tilemap * tmap );  //*
 
 /*********************************************************************/
 

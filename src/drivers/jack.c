@@ -739,7 +739,7 @@ INPUT_PORTS_START( striv )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -750,13 +750,13 @@ static struct GfxLayout charlayout =
 	8*8	/* every char takes 16 bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout joinem_charlayout =
+static gfx_layout joinem_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -767,7 +767,7 @@ static struct GfxLayout joinem_charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo joinem_gfxdecodeinfo[] =
+static gfx_decode joinem_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &joinem_charlayout, 0, 32 },
 	{ -1 }

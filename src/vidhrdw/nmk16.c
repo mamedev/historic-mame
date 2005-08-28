@@ -14,7 +14,7 @@ static int videoshift;
 static int bioship_background_bank;
 static UINT8 bioship_scroll[4];
 
-static struct tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 static struct mame_bitmap *background_bitmap;
 
 /***************************************************************************

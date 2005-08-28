@@ -108,7 +108,7 @@ static NVRAM_HANDLER( nvram )
 
 /* vidhrdw */
 
-//static struct tilemap *bg_tilemap;
+//static tilemap *bg_tilemap;
 
 PALETTE_INIT( starspnr )
 {
@@ -257,7 +257,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	32, 32,
 	16,
@@ -274,7 +274,7 @@ static struct GfxLayout spritelayout =
 	32*32
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	256,
@@ -287,7 +287,7 @@ static struct GfxLayout charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0x0000, &spritelayout, 0, 16 },

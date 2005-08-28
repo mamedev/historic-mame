@@ -73,7 +73,7 @@ static int ecd_find_sig (char *buffer, int buflen, int *offset)
    out:
      zip->ecd, zip->ecd_length ecd data
 */
-static int ecd_read(ZIP* zip) {
+static int ecd_read(zip_file* zip) {
 	char* buf;
 	int buf_length = 1024; /* initial buffer length */
 
@@ -179,9 +179,9 @@ static int ecd_read(ZIP* zip) {
      !=0 success, zip stream
      ==0 error
 */
-ZIP* openzip(int pathtype, int pathindex, const char* zipfile) {
+zip_file* openzip(int pathtype, int pathindex, const char* zipfile) {
 	/* allocate */
-	ZIP* zip = (ZIP*)malloc( sizeof(ZIP) );
+	zip_file* zip = (zip_file*)malloc( sizeof(zip_file) );
 	if (!zip) {
 		return 0;
 	}
@@ -302,7 +302,7 @@ ZIP* openzip(int pathtype, int pathindex, const char* zipfile) {
      !=0 success
      ==0 error
 */
-struct zipent* readzip(ZIP* zip) {
+zip_entry* readzip(zip_file* zip) {
 
 	/* end of directory */
 	if (zip->cd_pos >= zip->size_of_cent_dir)
@@ -350,7 +350,7 @@ struct zipent* readzip(ZIP* zip) {
 }
 
 /* Closes a zip stream */
-void closezip(ZIP* zip) {
+void closezip(zip_file* zip) {
 	/* release all */
 	free(zip->ent.name);
 	free(zip->cd);
@@ -369,7 +369,7 @@ void closezip(ZIP* zip) {
      A suspended zip is automatically reopened at first call of
      readuncompressd() or readcompressed() functions
 */
-void suspendzip(ZIP* zip) {
+void suspendzip(zip_file* zip) {
 	if (zip->fp) {
 		osd_fclose(zip->fp);
 		zip->fp = 0;
@@ -383,7 +383,7 @@ void suspendzip(ZIP* zip) {
     zip success
     ==0 error (zip must be closed with closezip)
 */
-static ZIP* revivezip(ZIP* zip) {
+static zip_file* revivezip(zip_file* zip) {
 	if (!zip->fp) {
 		zip->fp = osd_fopen(zip->pathtype, zip->pathindex, zip->zip, "rb");
 		if (!zip->fp) {
@@ -400,7 +400,7 @@ static ZIP* revivezip(ZIP* zip) {
    note:
      ZIP file must be opened and not suspended
 */
-void rewindzip(ZIP* zip) {
+void rewindzip(zip_file* zip) {
 	zip->cd_pos = 0;
 }
 
@@ -409,7 +409,7 @@ void rewindzip(ZIP* zip) {
     ==0 success
     <0 error
 */
-int seekcompresszip(ZIP* zip, struct zipent* ent) {
+int seekcompresszip(zip_file* zip, zip_entry* ent) {
 	char buf[ZIPNAME];
 	long offset;
 
@@ -539,7 +539,7 @@ static int inflate_file(osd_file* in_file, unsigned in_size, unsigned char* out_
     ==0 success
     <0 error
 */
-int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
+int readcompresszip(zip_file* zip, zip_entry* ent, char* data) {
 	int err = seekcompresszip(zip,ent);
 	if (err!=0)
 		return err;
@@ -559,7 +559,7 @@ int readcompresszip(ZIP* zip, struct zipent* ent, char* data) {
     ==0 success
     <0 error
 */
-int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
+int readuncompresszip(zip_file* zip, zip_entry* ent, char* data) {
 	if (ent->compression_method == 0x0000) {
 		/* file is not compressed, simply stored */
 
@@ -622,10 +622,10 @@ int readuncompresszip(ZIP* zip, struct zipent* ent, char* data) {
      zip_cache_map[0] is the newer
      zip_cache_map[ZIP_CACHE_MAX-1] is the older
 */
-static ZIP* zip_cache_map[ZIP_CACHE_MAX];
+static zip_file* zip_cache_map[ZIP_CACHE_MAX];
 
-static ZIP* cache_openzip(int pathtype, int pathindex, const char* zipfile) {
-	ZIP* zip;
+static zip_file* cache_openzip(int pathtype, int pathindex, const char* zipfile) {
+	zip_file* zip;
 	unsigned i;
 
 	/* search in the cache buffer */
@@ -683,7 +683,7 @@ static ZIP* cache_openzip(int pathtype, int pathindex, const char* zipfile) {
 	return zip_cache_map[0];
 }
 
-static void cache_closezip(ZIP* zip) {
+static void cache_closezip(zip_file* zip) {
 	unsigned i;
 
 	/* search in the cache buffer */
@@ -763,8 +763,8 @@ static int equal_filename(const char* zipfile, const char* file) {
    buf will be set to point to the uncompressed image of that zipped file.
    length will be set to the length of the uncompressed data. */
 int /* error */ load_zipped_file (int pathtype, int pathindex, const char* zipfile, const char* filename, unsigned char** buf, unsigned int* length) {
-	ZIP* zip;
-	struct zipent* ent;
+	zip_file* zip;
+	zip_entry* ent;
 
 	zip = cache_openzip(pathtype, pathindex, zipfile);
 	if (!zip)
@@ -808,8 +808,8 @@ int /* error */ load_zipped_file (int pathtype, int pathindex, const char* zipfi
     sum will be set to the CRC-32 of that zipped file. */
 /*  The caller can preset sum to the expected checksum to enable "load by CRC" */
 int /* error */ checksum_zipped_file (int pathtype, int pathindex, const char *zipfile, const char *filename, unsigned int *length, unsigned int *sum) {
-	ZIP* zip;
-	struct zipent* ent;
+	zip_file* zip;
+	zip_entry* ent;
 
 	zip = cache_openzip(pathtype, pathindex, zipfile);
 	if (!zip)

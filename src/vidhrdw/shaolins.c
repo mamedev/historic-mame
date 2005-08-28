@@ -12,7 +12,7 @@
 extern UINT8 shaolins_nmi_enable;
 
 static int palettebank;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

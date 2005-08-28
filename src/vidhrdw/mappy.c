@@ -6,7 +6,7 @@ data8_t *mappy_videoram;
 data8_t *mappy_spriteram;
 
 static data8_t mappy_scroll;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static struct mame_bitmap *sprite_bitmap;
 

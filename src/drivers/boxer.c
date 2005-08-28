@@ -255,7 +255,7 @@ INPUT_PORTS_START( boxer )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8, 8,
 	64,
@@ -271,7 +271,7 @@ static struct GfxLayout tile_layout =
 };
 
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	8, 8,
 	64,
@@ -287,7 +287,7 @@ static struct GfxLayout sprite_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &sprite_layout, 0, 1 },
 	{ REGION_GFX2, 0, &sprite_layout, 0, 1 },

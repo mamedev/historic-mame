@@ -229,7 +229,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static struct GfxLayout tiles =
+static gfx_layout tiles =
 {
 	8,8,
 	4096,
@@ -240,7 +240,7 @@ static struct GfxLayout tiles =
 	32*8
 };
 
-static struct GfxLayout sprites =
+static gfx_layout sprites =
 {
 	16,16,
 	1024,
@@ -252,7 +252,7 @@ static struct GfxLayout sprites =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles,       0,  16 }, /* Dynamically modified */
 	{ REGION_GFX1, 0, &sprites,   256,  16 }, /* Dynamically modified */

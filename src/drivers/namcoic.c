@@ -21,7 +21,7 @@ static struct
      * 0x20/2 priority
      * 0x30/2 color
      */
-	struct tilemap *tilemap[6];
+	tilemap *tmap[6];
 	data16_t *videoram;
 	int gfxbank;
 	UINT8 *maskBaseAddr;
@@ -33,7 +33,7 @@ void namco_tilemap_invalidate( void )
 	int i;
 	for( i=0; i<6; i++ )
 	{
-		tilemap_mark_all_tiles_dirty( mTilemapInfo.tilemap[i] );
+		tilemap_mark_all_tiles_dirty( mTilemapInfo.tmap[i] );
 	}
 } /* namco_tilemap_invalidate */
 
@@ -64,19 +64,19 @@ namco_tilemap_init( int gfxbank, void *maskBaseAddr,
 	if( mTilemapInfo.videoram )
 	{
 		/* four scrolling tilemaps */
-		mTilemapInfo.tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-		mTilemapInfo.tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-		mTilemapInfo.tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-		mTilemapInfo.tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+		mTilemapInfo.tmap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+		mTilemapInfo.tmap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+		mTilemapInfo.tmap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+		mTilemapInfo.tmap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
 
 		/* two non-scrolling tilemaps */
-		mTilemapInfo.tilemap[4] = tilemap_create(get_tile_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
-		mTilemapInfo.tilemap[5] = tilemap_create(get_tile_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+		mTilemapInfo.tmap[4] = tilemap_create(get_tile_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+		mTilemapInfo.tmap[5] = tilemap_create(get_tile_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 
 		/* ensure that all tilemaps have been allocated */
 		for( i=0; i<6; i++ )
 		{
-			if( !mTilemapInfo.tilemap[i] ) return -1;
+			if( !mTilemapInfo.tmap[i] ) return -1;
 		}
 
 		/* define offsets for scrolling */
@@ -84,8 +84,8 @@ namco_tilemap_init( int gfxbank, void *maskBaseAddr,
 		{
 			const int adj[4] = { 4,2,1,0 };
 			int dx = 44+adj[i];
-			tilemap_set_scrolldx( mTilemapInfo.tilemap[i], -dx, -(-288-dx) );
-			tilemap_set_scrolldy( mTilemapInfo.tilemap[i], -24, -(-224-24) );
+			tilemap_set_scrolldx( mTilemapInfo.tmap[i], -dx, -(-288-dx) );
+			tilemap_set_scrolldy( mTilemapInfo.tmap[i], -24, -(-224-24) );
 		}
 		return 0;
 	}
@@ -102,8 +102,8 @@ namco_tilemap_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect
 		if( (mTilemapInfo.control[0x20/2+i]&0xf) == pri )
 		{
 			int color = mTilemapInfo.control[0x30/2+i] & 0x07;
-			tilemap_set_palette_offset( mTilemapInfo.tilemap[i], color*256 );
-			tilemap_draw(bitmap,cliprect,mTilemapInfo.tilemap[i],0,0);
+			tilemap_set_palette_offset( mTilemapInfo.tmap[i], color*256 );
+			tilemap_draw(bitmap,cliprect,mTilemapInfo.tmap[i],0,0);
 		}
 	}
 } /* namco_tilemap_draw */
@@ -114,17 +114,17 @@ SetTilemapVideoram( int offset, data16_t newword )
 	mTilemapInfo.videoram[offset] = newword;
 	if( offset<0x4000 )
 	{
-		tilemap_mark_tile_dirty(mTilemapInfo.tilemap[offset>>12],offset&0xfff);
+		tilemap_mark_tile_dirty(mTilemapInfo.tmap[offset>>12],offset&0xfff);
 	}
 	else if( offset>=0x8010/2 && offset<0x87f0/2 )
 	{ /* fixed plane#1 */
 		offset-=0x8010/2;
-		tilemap_mark_tile_dirty( mTilemapInfo.tilemap[4], offset );
+		tilemap_mark_tile_dirty( mTilemapInfo.tmap[4], offset );
 	}
 	else if( offset>=0x8810/2 && offset<0x8ff0/2 )
 	{ /* fixed plane#2 */
 		offset-=0x8810/2;
-		tilemap_mark_tile_dirty( mTilemapInfo.tilemap[5], offset );
+		tilemap_mark_tile_dirty( mTilemapInfo.tmap[5], offset );
 	}
 } /* SetTilemapVideoram */
 
@@ -153,7 +153,7 @@ SetTilemapControl( int offset, data16_t newword )
 			int i;
 			for( i=0; i<=5; i++ )
 			{
-				tilemap_set_flip(mTilemapInfo.tilemap[i],attrs);
+				tilemap_set_flip(mTilemapInfo.tmap[i],attrs);
 			}
 		}
 	}
@@ -165,28 +165,28 @@ SetTilemapControl( int offset, data16_t newword )
 	switch( offset )
 	{
 	case 0x02/2:
-		tilemap_set_scrollx( mTilemapInfo.tilemap[0], 0, newword );
+		tilemap_set_scrollx( mTilemapInfo.tmap[0], 0, newword );
 		break;
 	case 0x06/2:
-		tilemap_set_scrolly( mTilemapInfo.tilemap[0], 0, newword );
+		tilemap_set_scrolly( mTilemapInfo.tmap[0], 0, newword );
 		break;
 	case 0x0a/2:
-		tilemap_set_scrollx( mTilemapInfo.tilemap[1], 0, newword );
+		tilemap_set_scrollx( mTilemapInfo.tmap[1], 0, newword );
 		break;
 	case 0x0e/2:
-		tilemap_set_scrolly( mTilemapInfo.tilemap[1], 0, newword );
+		tilemap_set_scrolly( mTilemapInfo.tmap[1], 0, newword );
 		break;
 	case 0x12/2:
-		tilemap_set_scrollx( mTilemapInfo.tilemap[2], 0, newword );
+		tilemap_set_scrollx( mTilemapInfo.tmap[2], 0, newword );
 		break;
 	case 0x16/2:
-		tilemap_set_scrolly( mTilemapInfo.tilemap[2], 0, newword );
+		tilemap_set_scrolly( mTilemapInfo.tmap[2], 0, newword );
 		break;
 	case 0x1a/2:
-		tilemap_set_scrollx( mTilemapInfo.tilemap[3], 0, newword );
+		tilemap_set_scrollx( mTilemapInfo.tmap[3], 0, newword );
 		break;
 	case 0x1e/2:
-		tilemap_set_scrolly( mTilemapInfo.tilemap[3], 0, newword );
+		tilemap_set_scrolly( mTilemapInfo.tmap[3], 0, newword );
 		break;
 	}
 } /* SetTilemapControl */
@@ -270,7 +270,7 @@ WRITE32_HANDLER( namco_tilemapvideoram32_le_w )
 /**************************************************************************************/
 
 static void zdrawgfxzoom(
-		struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+		struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		int scalex, int scaley, int zpos )
@@ -443,7 +443,7 @@ namcos2_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *clipre
 				int scaley = (sizey<<16)/((word0&0x0200)?0x20:0x10);
 				if(scalex && scaley)
 				{
-					struct GfxElement gfx = *Machine->gfx[rgn];
+					gfx_element gfx = *Machine->gfx[rgn];
 					if( (word0&0x0200)==0 )
 					{
 						gfx.width = 16;
@@ -988,7 +988,7 @@ READ32_HANDLER( namco_obj32_le_r )
  *  Namco System FL - Final Lap R, Speed Racer
  */
 #define ROZ_TILEMAP_COUNT 2
-static struct tilemap *mRozTilemap[ROZ_TILEMAP_COUNT];
+static tilemap *mRozTilemap[ROZ_TILEMAP_COUNT];
 static data16_t *rozbank16;
 static data16_t *rozvideoram16;
 static data16_t *rozcontrol16;
@@ -1179,15 +1179,15 @@ UnpackRozParam( const data16_t *pSource, struct RozParam *pRozParam )
 static void
 DrawRozHelper(
 	struct mame_bitmap *bitmap,
-	struct tilemap *tilemap,
+	tilemap *tmap,
 	const struct rectangle *clip,
 	const struct RozParam *rozInfo )
 {
 	if( bitmap->depth == 15 || bitmap->depth == 16 )
 	{
 		UINT32 size_mask = rozInfo->size-1;
-		struct mame_bitmap *srcbitmap = tilemap_get_pixmap( tilemap );
-		struct mame_bitmap *transparency_bitmap = tilemap_get_transparency_bitmap( tilemap );
+		struct mame_bitmap *srcbitmap = tilemap_get_pixmap( tmap );
+		struct mame_bitmap *transparency_bitmap = tilemap_get_transparency_bitmap( tmap );
 		UINT32 startx = rozInfo->startx + clip->min_x * rozInfo->incxx + clip->min_y * rozInfo->incyx;
 		UINT32 starty = rozInfo->starty + clip->min_x * rozInfo->incxy + clip->min_y * rozInfo->incyy;
 		int sx = clip->min_x;
@@ -1218,12 +1218,12 @@ DrawRozHelper(
 	}
 	else
 	{
-		tilemap_set_palette_offset( tilemap, rozInfo->color );
+		tilemap_set_palette_offset( tmap, rozInfo->color );
 
 		tilemap_draw_roz(
 			bitmap,
 			clip,
-			tilemap,
+			tmap,
 			rozInfo->startx, rozInfo->starty,
 			rozInfo->incxx, rozInfo->incxy,
 			rozInfo->incyx, rozInfo->incyy,
@@ -1277,7 +1277,7 @@ namco_roz_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, in
 				int line;
 				for( line=0; line<224; line++ )
 				{
-					DrawRozScanline( bitmap, line, which, pri, cliprect/*, tilemap*/ );
+					DrawRozScanline( bitmap, line, which, pri, cliprect/*, tmap*/ );
 				}
 			}
 			else
@@ -1467,7 +1467,7 @@ static data16_t *mpRoadRAM; /* at 0x880000 in Final Lap; at 0xa00000 in Lucky&Wi
 static unsigned char *mpRoadDirty;
 static int mbRoadSomethingIsDirty;
 static int mRoadGfxBank;
-static struct tilemap *mpRoadTilemap;
+static tilemap *mpRoadTilemap;
 static pen_t mRoadTransparentColor;
 static int mbRoadNeedTransparent;
 
@@ -1480,7 +1480,7 @@ static int mbRoadNeedTransparent;
 #define ROAD_TILE_COUNT_MAX	(0xfa00/0x40) /* 0x3e8 */
 #define WORDS_PER_ROAD_TILE (0x40/2)
 
-static struct GfxLayout RoadTileLayout =
+static gfx_layout RoadTileLayout =
 {
 	ROAD_TILE_SIZE,
 	ROAD_TILE_SIZE,
@@ -1582,7 +1582,7 @@ namco_road_init( int gfxbank )
 		mpRoadRAM = auto_malloc(0x20000);
 		if( mpRoadRAM )
 		{
-			struct GfxElement *pGfx = decodegfx( 0x10000+(UINT8 *)mpRoadRAM, &RoadTileLayout );
+			gfx_element *pGfx = decodegfx( 0x10000+(UINT8 *)mpRoadRAM, &RoadTileLayout );
 			if( pGfx )
 			{
 				pGfx->colortable = &Machine->remapped_colortable[0xf00];

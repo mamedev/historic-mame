@@ -239,6 +239,9 @@ VIDEO_START( vector )
 	/* build gamma correction table */
 	vector_set_gamma (gamma_correction);
 
+	/* make sure we reset the list */
+	vector_dirty_list[0] = VECTOR_PIXEL_END;
+
 	return 0;
 }
 

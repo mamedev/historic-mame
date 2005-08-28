@@ -203,7 +203,7 @@ INPUT_PORTS_END
    we cut them in 8x8x8 ones in the init function, in order to
    support 8x8, 16x16 and 32x32 sprites. */
 
-static struct GfxLayout layout_8x8x8 =
+static gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -218,7 +218,7 @@ static struct GfxLayout layout_8x8x8 =
                                 Sky Fox
 ***************************************************************************/
 
-static struct GfxDecodeInfo skyfox_gfxdecodeinfo[] =
+static gfx_decode skyfox_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x8,   0, 1 }, // [0] Sprites
 	{ -1 }

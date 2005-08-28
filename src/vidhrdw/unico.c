@@ -100,7 +100,7 @@ WRITE32_HANDLER( unico_palette32_w )
 ***************************************************************************/
 
 #define LAYER( _N_ ) \
-static struct tilemap *tilemap_##_N_; \
+static tilemap *tilemap_##_N_; \
 \
 static void get_tile_info_##_N_(int tile_index) \
 { \

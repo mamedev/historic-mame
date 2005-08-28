@@ -126,7 +126,7 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( coolridr )
 INPUT_PORTS_END
 
-static struct GfxLayout tiles8x8_layout =
+static gfx_layout tiles8x8_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -140,7 +140,7 @@ static struct GfxLayout tiles8x8_layout =
 	16*128
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout, 0, 16 },
 	{ REGION_GFX2, 0, &tiles8x8_layout, 0, 16 },

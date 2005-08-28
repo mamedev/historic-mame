@@ -5,7 +5,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tx_tilemap, *bg_tilemap, *bg2_tilemap;
+static tilemap *tx_tilemap, *bg_tilemap, *bg2_tilemap;
 data8_t *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
 data8_t *tbowl_spriteram;
 

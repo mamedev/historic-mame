@@ -11,7 +11,7 @@ data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 int gaiden_sprite_sizey;
 int raiga_alpha;
 
-static struct tilemap *text_layer,*foreground,*background;
+static tilemap *text_layer,*foreground,*background;
 static struct mame_bitmap *sprite_bitmap, *tile_bitmap_bg, *tile_bitmap_fg;
 
 /***************************************************************************
@@ -382,7 +382,7 @@ static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitm
 		{42,43,46,47,58,59,62,63}
 	};
 
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 	struct mame_bitmap *bitmap = bitmap_bg;
 	const UINT16 *source = (NUM_SPRITES - 1) * 8 + spriteram16;
 	const UINT8 blend_support = (bitmap_fg && bitmap_sp);

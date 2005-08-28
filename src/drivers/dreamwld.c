@@ -22,13 +22,13 @@ data32_t*dreamwld_bg2_videoram;
 data32_t*dreamwld_spriteram;
 data32_t*dreamwld_mainram;
 
-static struct tilemap *dreamwld_bg_tilemap;
-static struct tilemap *dreamwld_bg2_tilemap;
+static tilemap *dreamwld_bg_tilemap;
+static tilemap *dreamwld_bg2_tilemap;
 
 /* this is the sprite format as it is stored in mainram for dreamwld */
 static void dreamwld_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	data32_t *source = dreamwld_spriteram;
 	data32_t *finish = source + 0x1200/4-3;
 	data16_t *redirect = (data16_t *)memory_region(REGION_GFX3);
@@ -332,7 +332,7 @@ INPUT_PORTS_START(dreamwld)
 INPUT_PORTS_END
 
 /*
-static struct GfxLayout tiles8x8_layout =
+static gfx_layout tiles8x8_layout =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -343,7 +343,7 @@ static struct GfxLayout tiles8x8_layout =
     32*8
 };
 */
-static struct GfxLayout tiles16x16_layout =
+static gfx_layout tiles16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -355,7 +355,7 @@ static struct GfxLayout tiles16x16_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles16x16_layout, 0, 16 },
 	{ REGION_GFX2, 0, &tiles16x16_layout, 0, 16 },

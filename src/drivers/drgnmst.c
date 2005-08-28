@@ -299,7 +299,7 @@ INPUT_PORTS_START( drgnmst )
 INPUT_PORTS_END
 
 
-static struct GfxLayout drgnmst_char8x8_layout =
+static gfx_layout drgnmst_char8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -311,7 +311,7 @@ static struct GfxLayout drgnmst_char8x8_layout =
 };
 
 
-static struct GfxLayout drgnmst_char16x16_layout =
+static gfx_layout drgnmst_char16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -326,7 +326,7 @@ static struct GfxLayout drgnmst_char16x16_layout =
 
 
 
-static struct GfxLayout drgnmst_char32x32_layout =
+static gfx_layout drgnmst_char32x32_layout =
 {
 	32,32,
 	RGN_FRAC(1,2),
@@ -345,7 +345,7 @@ static struct GfxLayout drgnmst_char32x32_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &drgnmst_char16x16_layout,   0,      0x200  }, /* sprite tiles */
 	{ REGION_GFX2, 0, &drgnmst_char8x8_layout,     0x200,  0x200  }, /* fg tiles */

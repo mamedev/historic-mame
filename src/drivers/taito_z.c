@@ -3033,7 +3033,7 @@ INPUT_PORTS_END
                        GFX DECODING
 ***********************************************************/
 
-static struct GfxLayout tile16x8_layout =
+static gfx_layout tile16x8_layout =
 {
 	16,8,	/* 16*8 sprites */
 	RGN_FRAC(1,1),
@@ -3044,7 +3044,7 @@ static struct GfxLayout tile16x8_layout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxLayout tile16x16_layout =
+static gfx_layout tile16x16_layout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -3056,7 +3056,7 @@ static struct GfxLayout tile16x16_layout =
 	64*16	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -3067,7 +3067,7 @@ static struct GfxLayout charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout dblaxle_charlayout =
+static gfx_layout dblaxle_charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -3078,7 +3078,7 @@ static struct GfxLayout dblaxle_charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo taitoz_gfxdecodeinfo[] =
+static gfx_decode taitoz_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
@@ -3088,7 +3088,7 @@ static struct GfxDecodeInfo taitoz_gfxdecodeinfo[] =
 /* taitoic.c TC0100SCN routines expect scr stuff to be in second gfx
    slot, so 2nd batch of obj must be placed third */
 
-static struct GfxDecodeInfo chasehq_gfxdecodeinfo[] =
+static gfx_decode chasehq_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x16_layout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */
@@ -3096,7 +3096,7 @@ static struct GfxDecodeInfo chasehq_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo dblaxle_gfxdecodeinfo[] =
+static gfx_decode dblaxle_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x8_layout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &dblaxle_charlayout,  0, 256 },	/* sprites & playfield */
@@ -3145,7 +3145,7 @@ static struct YM2610interface ym2610_interfaceb =
 **************************************************************/
 
 #if 0
-static int subwoofer_sh_start(const struct MachineSound *msound)
+static int subwoofer_sh_start(const sound_config *msound)
 {
 	/* Adjust the lowpass filter of the first three YM2610 channels */
 

@@ -5,7 +5,7 @@
 
 data8_t *mogura_tileram;
 data8_t* mogura_gfxram;
-static struct tilemap *mogura_tilemap;
+static tilemap *mogura_tilemap;
 
 PALETTE_INIT( mogura )
 {
@@ -194,7 +194,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tiles8x8_layout =
+static gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -205,7 +205,7 @@ static struct GfxLayout tiles8x8_layout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout, 0, 8 },
 	{ -1 }

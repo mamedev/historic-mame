@@ -16,7 +16,7 @@ static char *dirtychar;
 static char dirtygfx;
 static data16_t *shaperam;
 static data16_t *cgram;
-static struct tilemap *tilemap[NAMCONA1_NUM_TILEMAPS];
+static tilemap *bg_tilemap[NAMCONA1_NUM_TILEMAPS];
 static int tilemap_palette_bank[NAMCONA1_NUM_TILEMAPS];
 static int palette_is_dirty;
 
@@ -65,7 +65,7 @@ static void tilemap_get_info3(int tile_index){ tilemap_get_info(tile_index,3*0x1
 WRITE16_HANDLER( namcona1_videoram_w )
 {
 	COMBINE_DATA( &videoram16[offset] );
-	tilemap_mark_tile_dirty( tilemap[offset/0x1000], offset&0xfff );
+	tilemap_mark_tile_dirty( bg_tilemap[offset/0x1000], offset&0xfff );
 } /* namcona1_videoram_w */
 
 READ16_HANDLER( namcona1_videoram_r )
@@ -116,7 +116,7 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 
 /*************************************************************************/
 
-static struct GfxLayout shape_layout =
+static gfx_layout shape_layout =
 {
 	8,8,
 	0x1000,
@@ -131,7 +131,7 @@ static struct GfxLayout shape_layout =
 	8*8
 }; /* shape_layout */
 
-static struct GfxLayout cg_layout =
+static gfx_layout cg_layout =
 {
 	8,8,
 	0x1000,
@@ -207,7 +207,7 @@ static void update_gfx( void )
 			{
 				if( dirtychar[*pSource++ & 0xfff] )
 				{
-					tilemap_mark_tile_dirty( tilemap[page], i );
+					tilemap_mark_tile_dirty( bg_tilemap[page], i );
 				}
 			}
 		}
@@ -227,18 +227,18 @@ static void update_gfx( void )
 VIDEO_START( namcona1 )
 {
 	int i;
-	struct GfxElement *gfx0,*gfx1;
+	gfx_element *gfx0,*gfx1;
 	static void (*get_info[4])(int tile_index) =
 	{ tilemap_get_info0, tilemap_get_info1, tilemap_get_info2, tilemap_get_info3 };
 
 	for( i=0; i<NAMCONA1_NUM_TILEMAPS; i++ )
 	{
-		tilemap[i] = tilemap_create(
+		bg_tilemap[i] = tilemap_create(
 			get_info[i],
 			tilemap_scan_rows,
 			TILEMAP_BITMASK,8,8,64,64 );
 
-		if( tilemap[i]==NULL ) return -1;
+		if( bg_tilemap[i]==NULL ) return -1;
 		tilemap_palette_bank[i] = -1;
 	}
 
@@ -277,7 +277,7 @@ static void pdraw_masked_tile(
 		int priority,
 		int bShadow )
 {
-	const struct GfxElement *gfx,*mask;
+	const gfx_element *gfx,*mask;
 	const pen_t *paldata;
 	data8_t *gfx_addr;
 	int gfx_pitch;
@@ -405,7 +405,7 @@ static void pdraw_opaque_tile(
 		int priority,
 		int bShadow )
 {
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	const pen_t *paldata;
 	data8_t *gfx_addr;
 	int gfx_pitch;
@@ -574,7 +574,7 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 	int scrollx, scrolly;
 	struct rectangle clip;
 	const pen_t *paldata;
-	struct GfxElement *pGfx;
+	gfx_element *pGfx;
 
 	pGfx = Machine->gfx[0];
 	paldata = &pGfx->colortable[pGfx->color_granularity * tilemap_palette_bank[which]];
@@ -616,9 +616,9 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 			}
 			else
 			{
-				tilemap_set_scrollx( tilemap[which], 0, scrollx );
-				tilemap_set_scrolly( tilemap[which], 0, scrolly );
-				tilemap_draw( bitmap, &clip, tilemap[which], 0, primask );
+				tilemap_set_scrollx( bg_tilemap[which], 0, scrollx );
+				tilemap_set_scrolly( bg_tilemap[which], 0, scrolly );
+				tilemap_draw( bitmap, &clip, bg_tilemap[which], 0, primask );
 			}
 		}
 	}
@@ -648,7 +648,7 @@ VIDEO_UPDATE( namcona1 )
 			tilemap_color = namcona1_vreg[0x58+(which&3)]&0xf;
 			if( tilemap_color!=tilemap_palette_bank[which] )
 			{
-				tilemap_mark_all_tiles_dirty( tilemap[which] );
+				tilemap_mark_all_tiles_dirty( bg_tilemap[which] );
 				tilemap_palette_bank[which] = tilemap_color;
 			}
 		} /* next tilemap */

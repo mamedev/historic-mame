@@ -45,7 +45,7 @@ extern UINT8 tunhunt_control;
 #define MOBSC0	0x1080	// SCAN ROM START FOR MOBJ (unused?)
 #define MOBSC1	0x1081	// (unused?)
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 
 /****************************************************************************************/
 

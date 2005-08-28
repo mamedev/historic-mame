@@ -9,7 +9,7 @@ Atari Drag Race video emulation
 UINT8* dragrace_playfield_ram;
 UINT8* dragrace_position_ram;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -54,10 +54,10 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( dragrace )
 {
-	tilemap = tilemap_create(
+	bg_tilemap = tilemap_create(
 		get_tile_info, get_memory_offset, TILEMAP_OPAQUE, 16, 16, 16, 16);
 
-	return (tilemap == NULL) ? 1 : 0;
+	return (bg_tilemap == NULL) ? 1 : 0;
 }
 
 
@@ -65,7 +65,7 @@ VIDEO_UPDATE( dragrace )
 {
 	int y;
 
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 
 	for (y = 0; y < 256; y += 4)
 	{
@@ -76,12 +76,12 @@ VIDEO_UPDATE( dragrace )
 		int yl = dragrace_position_ram[y + 2] & 15;
 		int yh = dragrace_position_ram[y + 3] & 15;
 
-		tilemap_set_scrollx(tilemap, 0, 16 * xh + xl - 8);
-		tilemap_set_scrolly(tilemap, 0, 16 * yh + yl);
+		tilemap_set_scrollx(bg_tilemap, 0, 16 * xh + xl - 8);
+		tilemap_set_scrolly(bg_tilemap, 0, 16 * yh + yl);
 
 		if (rect.min_y < y + 0) rect.min_y = y + 0;
 		if (rect.max_y > y + 3) rect.max_y = y + 3;
 
-		tilemap_draw(bitmap, &rect, tilemap, 0, 0);
+		tilemap_draw(bitmap, &rect, bg_tilemap, 0, 0);
 	}
 }

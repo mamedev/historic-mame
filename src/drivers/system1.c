@@ -2205,7 +2205,7 @@ INPUT_PORTS_START( ufosensi )
 	PORT_DIPSETTING(	0x00, "Infinite Lives (both set)" )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -2216,7 +2216,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	/* sprites use colors 0-511, but are not defined here */
 	{ REGION_GFX1, 0, &charlayout, 512, 128 },

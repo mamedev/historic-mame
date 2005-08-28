@@ -86,7 +86,7 @@ static data8_t *calorie_fg;
 static data8_t  calorie_bg;
 static data8_t *calorie_sprites;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 static void get_bg_tile_info(int tile_index)
 {
@@ -320,7 +320,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tiles8x8_layout =
+static gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -331,7 +331,7 @@ static struct GfxLayout tiles8x8_layout =
 	8*8
 };
 
-static struct GfxLayout tiles16x16_layout =
+static gfx_layout tiles16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -343,7 +343,7 @@ static struct GfxLayout tiles16x16_layout =
 	8*32
 };
 
-static struct GfxLayout tiles32x32_layout =
+static gfx_layout tiles32x32_layout =
 {
 	32,32,
 	RGN_FRAC(1,3),
@@ -360,7 +360,7 @@ static struct GfxLayout tiles32x32_layout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tiles8x8_layout,   0, 16 },
 	{ REGION_GFX3, 0, &tiles16x16_layout, 0, 16 },

@@ -66,7 +66,7 @@ typedef void			(*write64_handler)(ATTR_UNUSED offs_t offset, ATTR_UNUSED data64_
 typedef offs_t			(*opbase_handler) (ATTR_UNUSED offs_t address);
 
 /* ----- this struct contains pointers to the live read/write routines ----- */
-struct data_accessors_t
+struct _data_accessors
 {
 	data8_t			(*read_byte)(offs_t offset);
 	data16_t		(*read_word)(offs_t offset);
@@ -78,9 +78,8 @@ struct data_accessors_t
 	void			(*write_dword)(offs_t offset, data32_t data);
 	void			(*write_qword)(offs_t offset, data64_t data);
 };
+typedef struct _data_accessors data_accessors;
 
-/* ----- for generic function pointers ----- */
-typedef void genf(void);
 
 
 /***************************************************************************
@@ -546,8 +545,10 @@ typedef void genf(void);
 
 ***************************************************************************/
 
+typedef struct _handler_data handler_data;
+
 /* ----- a union of all the different read handler types ----- */
-union read_handlers_t
+union _read_handlers
 {
 	genf *				handler;
 	read8_handler		handler8;
@@ -555,9 +556,10 @@ union read_handlers_t
 	read32_handler		handler32;
 	read64_handler		handler64;
 };
+typedef union _read_handlers read_handlers;
 
 /* ----- a union of all the different write handler types ----- */
-union write_handlers_t
+union _write_handlers
 {
 	genf *				handler;
 	write8_handler		handler8;
@@ -565,32 +567,35 @@ union write_handlers_t
 	write32_handler		handler32;
 	write64_handler		handler64;
 };
+typedef union _write_handlers write_handlers;
 
 /* ----- a generic address map type ----- */
-struct address_map_t
+struct _address_map
 {
 	UINT32				flags;				/* flags and additional info about this entry */
 	offs_t				start, end;			/* start/end (or mask/match) values */
 	offs_t				mirror;				/* mirror bits */
 	offs_t				mask;				/* mask bits */
-	union read_handlers_t read;				/* read handler callback */
-	union write_handlers_t write;			/* write handler callback */
+	read_handlers 		read;				/* read handler callback */
+	write_handlers 		write;				/* write handler callback */
 	void *				memory;				/* pointer to memory backing this entry */
 	UINT32				share;				/* index of a shared memory block */
 	void **				base;				/* receives pointer to memory (optional) */
 	size_t *			size;				/* receives size of area in bytes (optional) */
 };
+typedef struct _address_map address_map;
 
 /* ----- structs to contain internal data ----- */
-struct address_space_t
+struct _address_space
 {
 	offs_t				addrmask;			/* address mask */
 	UINT8 *				readlookup;			/* read table lookup */
 	UINT8 *				writelookup;		/* write table lookup */
-	struct handler_data_t *readhandlers;	/* read handlers */
-	struct handler_data_t *writehandlers;	/* write handlers */
-	struct data_accessors_t *accessors;		/* pointers to the data access handlers */
+	handler_data *		readhandlers;		/* read handlers */
+	handler_data *		writehandlers;		/* write handlers */
+	data_accessors *	accessors;			/* pointers to the data access handlers */
 };
+typedef struct _address_space address_space;
 
 
 
@@ -601,15 +606,15 @@ struct address_space_t
 ***************************************************************************/
 
 /* ----- a typedef for pointers to these functions ----- */
-typedef struct address_map_t *(*construct_map_t)(struct address_map_t *map);
+typedef address_map *(*construct_map_t)(address_map *map);
 
 /* use this to declare external references to a machine driver */
 #define ADDRESS_MAP_EXTERN(_name)										\
-struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
+address_map *construct_map_##_name(address_map *map)	\
 
 /* ----- macros for starting, ending, and setting map flags ----- */
 #define ADDRESS_MAP_START(_name,_space,_bits)							\
-struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
+address_map *construct_map_##_name(address_map *map)	\
 {																		\
 	typedef read##_bits##_handler _rh_t;								\
 	typedef write##_bits##_handler _wh_t;								\
@@ -902,7 +907,7 @@ void		memory_exit(void);
 void		memory_set_context(int activecpu);
 
 /* ----- address map functions ----- */
-const struct address_map_t *memory_get_map(int cpunum, int spacenum);
+const address_map *memory_get_map(int cpunum, int spacenum);
 
 /* ----- opcode base control ---- */
 opbase_handler memory_set_opbase_handler(int cpunum, opbase_handler function);
@@ -957,8 +962,8 @@ extern UINT8 *			opcode_arg_base;			/* opcode RAM base */
 extern offs_t			opcode_mask;				/* mask to apply to the opcode address */
 extern offs_t			opcode_memory_min;			/* opcode memory minimum */
 extern offs_t			opcode_memory_max;			/* opcode memory maximum */
-extern struct address_space_t address_space[];		/* address spaces */
-extern struct address_map_t *construct_map_0(struct address_map_t *map);
+extern address_space	active_address_space[];		/* address spaces */
+extern address_map *	construct_map_0(address_map *map);
 
 
 
@@ -995,35 +1000,35 @@ extern struct address_map_t *construct_map_0(struct address_map_t *map);
 #endif
 
 /* ----- generic memory access ----- */
-INLINE data8_t  program_read_byte (offs_t offset) { return (*address_space[ADDRESS_SPACE_PROGRAM].accessors->read_byte)(offset); }
-INLINE data16_t program_read_word (offs_t offset) { return (*address_space[ADDRESS_SPACE_PROGRAM].accessors->read_word)(offset); }
-INLINE data32_t program_read_dword(offs_t offset) { return (*address_space[ADDRESS_SPACE_PROGRAM].accessors->read_dword)(offset); }
-INLINE data64_t program_read_qword(offs_t offset) { return (*address_space[ADDRESS_SPACE_PROGRAM].accessors->read_qword)(offset); }
+INLINE data8_t  program_read_byte (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->read_byte)(offset); }
+INLINE data16_t program_read_word (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->read_word)(offset); }
+INLINE data32_t program_read_dword(offs_t offset) { return (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->read_dword)(offset); }
+INLINE data64_t program_read_qword(offs_t offset) { return (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->read_qword)(offset); }
 
-INLINE void	program_write_byte (offs_t offset, data8_t  data) { (*address_space[ADDRESS_SPACE_PROGRAM].accessors->write_byte)(offset, data); }
-INLINE void	program_write_word (offs_t offset, data16_t data) { (*address_space[ADDRESS_SPACE_PROGRAM].accessors->write_word)(offset, data); }
-INLINE void	program_write_dword(offs_t offset, data32_t data) { (*address_space[ADDRESS_SPACE_PROGRAM].accessors->write_dword)(offset, data); }
-INLINE void	program_write_qword(offs_t offset, data64_t data) { (*address_space[ADDRESS_SPACE_PROGRAM].accessors->write_qword)(offset, data); }
+INLINE void	program_write_byte (offs_t offset, data8_t  data) { (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->write_byte)(offset, data); }
+INLINE void	program_write_word (offs_t offset, data16_t data) { (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->write_word)(offset, data); }
+INLINE void	program_write_dword(offs_t offset, data32_t data) { (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->write_dword)(offset, data); }
+INLINE void	program_write_qword(offs_t offset, data64_t data) { (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->write_qword)(offset, data); }
 
-INLINE data8_t  data_read_byte (offs_t offset) { return (*address_space[ADDRESS_SPACE_DATA].accessors->read_byte)(offset); }
-INLINE data16_t data_read_word (offs_t offset) { return (*address_space[ADDRESS_SPACE_DATA].accessors->read_word)(offset); }
-INLINE data32_t data_read_dword(offs_t offset) { return (*address_space[ADDRESS_SPACE_DATA].accessors->read_dword)(offset); }
-INLINE data64_t data_read_qword(offs_t offset) { return (*address_space[ADDRESS_SPACE_DATA].accessors->read_qword)(offset); }
+INLINE data8_t  data_read_byte (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_DATA].accessors->read_byte)(offset); }
+INLINE data16_t data_read_word (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_DATA].accessors->read_word)(offset); }
+INLINE data32_t data_read_dword(offs_t offset) { return (*active_address_space[ADDRESS_SPACE_DATA].accessors->read_dword)(offset); }
+INLINE data64_t data_read_qword(offs_t offset) { return (*active_address_space[ADDRESS_SPACE_DATA].accessors->read_qword)(offset); }
 
-INLINE void	data_write_byte (offs_t offset, data8_t  data) { (*address_space[ADDRESS_SPACE_DATA].accessors->write_byte)(offset, data); }
-INLINE void	data_write_word (offs_t offset, data16_t data) { (*address_space[ADDRESS_SPACE_DATA].accessors->write_word)(offset, data); }
-INLINE void	data_write_dword(offs_t offset, data32_t data) { (*address_space[ADDRESS_SPACE_DATA].accessors->write_dword)(offset, data); }
-INLINE void	data_write_qword(offs_t offset, data64_t data) { (*address_space[ADDRESS_SPACE_DATA].accessors->write_qword)(offset, data); }
+INLINE void	data_write_byte (offs_t offset, data8_t  data) { (*active_address_space[ADDRESS_SPACE_DATA].accessors->write_byte)(offset, data); }
+INLINE void	data_write_word (offs_t offset, data16_t data) { (*active_address_space[ADDRESS_SPACE_DATA].accessors->write_word)(offset, data); }
+INLINE void	data_write_dword(offs_t offset, data32_t data) { (*active_address_space[ADDRESS_SPACE_DATA].accessors->write_dword)(offset, data); }
+INLINE void	data_write_qword(offs_t offset, data64_t data) { (*active_address_space[ADDRESS_SPACE_DATA].accessors->write_qword)(offset, data); }
 
-INLINE data8_t  io_read_byte (offs_t offset) { return (*address_space[ADDRESS_SPACE_IO].accessors->read_byte)(offset); }
-INLINE data16_t io_read_word (offs_t offset) { return (*address_space[ADDRESS_SPACE_IO].accessors->read_word)(offset); }
-INLINE data32_t io_read_dword(offs_t offset) { return (*address_space[ADDRESS_SPACE_IO].accessors->read_dword)(offset); }
-INLINE data64_t io_read_qword(offs_t offset) { return (*address_space[ADDRESS_SPACE_IO].accessors->read_qword)(offset); }
+INLINE data8_t  io_read_byte (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_IO].accessors->read_byte)(offset); }
+INLINE data16_t io_read_word (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_IO].accessors->read_word)(offset); }
+INLINE data32_t io_read_dword(offs_t offset) { return (*active_address_space[ADDRESS_SPACE_IO].accessors->read_dword)(offset); }
+INLINE data64_t io_read_qword(offs_t offset) { return (*active_address_space[ADDRESS_SPACE_IO].accessors->read_qword)(offset); }
 
-INLINE void	io_write_byte (offs_t offset, data8_t  data) { (*address_space[ADDRESS_SPACE_IO].accessors->write_byte)(offset, data); }
-INLINE void	io_write_word (offs_t offset, data16_t data) { (*address_space[ADDRESS_SPACE_IO].accessors->write_word)(offset, data); }
-INLINE void	io_write_dword(offs_t offset, data32_t data) { (*address_space[ADDRESS_SPACE_IO].accessors->write_dword)(offset, data); }
-INLINE void	io_write_qword(offs_t offset, data64_t data) { (*address_space[ADDRESS_SPACE_IO].accessors->write_qword)(offset, data); }
+INLINE void	io_write_byte (offs_t offset, data8_t  data) { (*active_address_space[ADDRESS_SPACE_IO].accessors->write_byte)(offset, data); }
+INLINE void	io_write_word (offs_t offset, data16_t data) { (*active_address_space[ADDRESS_SPACE_IO].accessors->write_word)(offset, data); }
+INLINE void	io_write_dword(offs_t offset, data32_t data) { (*active_address_space[ADDRESS_SPACE_IO].accessors->write_dword)(offset, data); }
+INLINE void	io_write_qword(offs_t offset, data64_t data) { (*active_address_space[ADDRESS_SPACE_IO].accessors->write_qword)(offset, data); }
 
 /* ----- safe opcode and opcode argument reading ----- */
 data8_t		cpu_readop_safe(offs_t offset);
@@ -1060,7 +1065,7 @@ INLINE data64_t cpu_readop_arg64(offs_t A)	{ if (address_is_unsafe(A)) { memory_
 /* ----- bank switching for CPU cores ----- */
 #define change_pc(pc)																	\
 do {																					\
-	if (address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL1_INDEX((pc) & address_space[ADDRESS_SPACE_PROGRAM].addrmask)] != opcode_entry)	\
+	if (active_address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL1_INDEX((pc) & active_address_space[ADDRESS_SPACE_PROGRAM].addrmask)] != opcode_entry)	\
 		memory_set_opbase(pc);															\
 } while (0)																				\
 

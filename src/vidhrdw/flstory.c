@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 static int char_bank,palette_bank,flipscreen,gfxctrl;
 
 UINT8 *flstory_scrlram;
@@ -46,10 +46,10 @@ static void victnine_get_tile_info(int tile_index)
 
 VIDEO_START( flstory )
 {
-	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32 );
-//  tilemap_set_transparent_pen( tilemap,15 );
-	tilemap_set_transmask(tilemap,0,0x3fff,0xc000);
-	tilemap_set_scroll_cols(tilemap,32);
+	bg_tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,32,32 );
+//  tilemap_set_transparent_pen( bg_tilemap,15 );
+	tilemap_set_transmask(bg_tilemap,0,0x3fff,0xc000);
+	tilemap_set_scroll_cols(bg_tilemap,32);
 
 	paletteram = auto_malloc(0x200);
 	paletteram_2 = auto_malloc(0x200);
@@ -58,8 +58,8 @@ VIDEO_START( flstory )
 
 VIDEO_START( victnine )
 {
-	tilemap = tilemap_create( victnine_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
-	tilemap_set_scroll_cols(tilemap,32);
+	bg_tilemap = tilemap_create( victnine_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
+	tilemap_set_scroll_cols(bg_tilemap,32);
 
 	paletteram = auto_malloc(0x200);
 	paletteram_2 = auto_malloc(0x200);
@@ -69,7 +69,7 @@ VIDEO_START( victnine )
 WRITE8_HANDLER( flstory_videoram_w )
 {
 	videoram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset/2);
+	tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 }
 
 WRITE8_HANDLER( flstory_palette_w )
@@ -130,7 +130,7 @@ READ8_HANDLER( flstory_scrlram_r )
 WRITE8_HANDLER( flstory_scrlram_w )
 {
 	flstory_scrlram[offset] = data;
-	tilemap_set_scrolly(tilemap, offset, data );
+	tilemap_set_scrolly(bg_tilemap, offset, data );
 }
 
 /***************************************************************************
@@ -191,9 +191,9 @@ VIDEO_UPDATE( flstory )
 {
 	int offs;
 
-	tilemap_draw(bitmap,cliprect,tilemap,TILEMAP_BACK,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
 	flstory_draw_sprites(bitmap,cliprect,0x00);
-	tilemap_draw(bitmap,cliprect,tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
 	flstory_draw_sprites(bitmap,cliprect,0x80);
 
 
@@ -275,6 +275,6 @@ void victnine_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *c
 
 VIDEO_UPDATE( victnine )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	victnine_draw_sprites(bitmap,cliprect);
 }

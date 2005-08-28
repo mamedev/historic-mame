@@ -84,7 +84,7 @@ data16_t *gaelco2_vregs;
 static data16_t *gaelco2_videoram;
 
 /* tilemaps */
-static struct tilemap *pant[2];
+static tilemap *pant[2];
 
 int dual_monitor;
 
@@ -385,7 +385,7 @@ VIDEO_START( gaelco2_dual )
 static void gaelco2_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int mask, int xoffs)
 {
 	int j, x, y, ex, ey, px, py;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	/* get sprite ram start and end offsets */
 	int start_offset = (gaelco2_vregs[1] & 0x10)*0x100;

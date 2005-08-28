@@ -337,7 +337,7 @@ COMMON_IN1
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
 	256,	/* 256 characters */
@@ -348,7 +348,7 @@ static struct GfxLayout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout1 =
+static gfx_layout tilelayout1 =
 {
 	16,16,	/* 16*16 tiles */
 	128,	/* 128 tiles */
@@ -361,7 +361,7 @@ static struct GfxLayout tilelayout1 =
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout2 =
+static gfx_layout tilelayout2 =
 {
 	16,16,	/* 16*16 tiles */
 	128,	/* 128 tiles */
@@ -374,7 +374,7 @@ static struct GfxLayout tilelayout2 =
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	1024,	/* 1024 sprites */
@@ -387,7 +387,7 @@ static struct GfxLayout spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,   0x00,  1 },	/* use colors 0x00-0x07 */
 	{ REGION_GFX2, 0x00000, &tilelayout1,  0x80, 16 },	/* use colors 0x80-0xff */

@@ -42,7 +42,7 @@ static unsigned char scrollx[2], scrolly[2];
 
 static int flipscreen, layers;
 
-static struct tilemap *bg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *tx_tilemap;
 
 static const unsigned char *spritepalettebank;
 static int ninjemak_dispdisable;

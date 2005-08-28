@@ -9,7 +9,7 @@ static data8_t *bitmapram;
 static int bm_plane;
 static struct mame_bitmap *pixbitmap;
 static int pixcolor;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 #define PIXMAP_COLOR_BASE (16+32)
 

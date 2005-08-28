@@ -115,6 +115,7 @@ enum
 	UI_locked,
 
 	/* memory card */
+	UI_selectcard,
 	UI_loadcard,
 	UI_ejectcard,
 	UI_createcard,
@@ -124,7 +125,6 @@ enum
 	UI_cardcreated,
 	UI_cardcreatedfailed,
 	UI_cardcreatedfailed2,
-	UI_carderror,
 
 	/* cheat stuff */
 	UI_enablecheat,
@@ -197,7 +197,7 @@ enum
 #include "mui_text.h"
 #endif
 
-struct lang_struct
+struct _lang_struct
 {
 	int version;
 	int multibyte;			/* UNUSED: 1 if this is a multibyte font/language */
@@ -207,8 +207,9 @@ struct lang_struct
 	char fontname[255];
 	char author[255];
 };
+typedef struct _lang_struct lang_struct;
 
-extern struct lang_struct lang;
+extern lang_struct lang;
 
 int uistring_init (mame_file *language_file);
 

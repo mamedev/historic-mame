@@ -92,7 +92,7 @@ VIDEO_UPDATE( suna8 );
     For Debug: there's no tilemap, just sprites.
 ***************************************************************************/
 #if TILEMAPS
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 static int tiles, rombank, page;
 
 static void get_tile_info(int tile_index)
@@ -132,7 +132,7 @@ WRITE8_HANDLER( suna8_spriteram_w )
 	{
 		spriteram[offset] = data;
 #if TILEMAPS
-		tilemap_mark_tile_dirty(tilemap,offset/2);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 #endif
 	}
 }
@@ -144,7 +144,7 @@ WRITE8_HANDLER( suna8_banked_spriteram_w )
 	{
 		spriteram[offset] = data;
 #if TILEMAPS
-		tilemap_mark_tile_dirty(tilemap,offset/2);
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 #endif
 	}
 }
@@ -192,12 +192,12 @@ int suna8_vh_start_common(int dim)
 	}
 
 #if TILEMAPS
-	tilemap = tilemap_create(	get_tile_info, tilemap_scan_cols,
+	bg_tilemap = tilemap_create(	get_tile_info, tilemap_scan_cols,
 								TILEMAP_TRANSPARENT,
 								8,8,0x20*((suna8_text_dim > 0)?4:8),0x20);
 
-	if ( tilemap == NULL )	return 1;
-	tilemap_set_transparent_pen(tilemap,15);
+	if ( bg_tilemap == NULL )	return 1;
+	tilemap_set_transparent_pen(bg_tilemap,15);
 #endif
 
 	return 0;
@@ -442,9 +442,9 @@ VIDEO_UPDATE( suna8 )
 		tiles %= max_tiles;
 		if (tiles < 0)	tiles += max_tiles;
 
-		tilemap_set_scrollx( tilemap, 0, 0x100 * page);
-		tilemap_set_scrolly( tilemap, 0, 0);
-		tilemap_draw(bitmap,cliprect, tilemap, 0, 0);
+		tilemap_set_scrollx( bg_tilemap, 0, 0x100 * page);
+		tilemap_set_scrolly( bg_tilemap, 0, 0);
+		tilemap_draw(bitmap,cliprect, bg_tilemap, 0, 0);
 #if 1
 	ui_popup("%02X %02X %02X %02X - p%2X g%02X r%02X",
 						suna8_rombank, suna8_palettebank, suna8_spritebank, suna8_unknown,

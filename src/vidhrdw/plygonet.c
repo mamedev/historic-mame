@@ -15,7 +15,7 @@
 /* TTL text plane stuff */
 
 static int ttl_gfx_index;
-static struct tilemap *ttl_tilemap;
+static tilemap *ttl_tilemap;
 static data16_t ttl_vram[0x800];
 
 /* TTL text plane */
@@ -58,7 +58,7 @@ WRITE32_HANDLER( polygonet_ttl_ram_w )
 
 VIDEO_START(polygonet_vh_start)
 {
-	static struct GfxLayout charlayout =
+	static gfx_layout charlayout =
 	{
 		8, 8,		// 8x8
 		4096,		// # of tiles

@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *background_layer,*foreground_layer,*text_layer;
+static tilemap *background_layer,*foreground_layer,*text_layer;
 
 data16_t *toki_background1_videoram16;
 data16_t *toki_background2_videoram16;

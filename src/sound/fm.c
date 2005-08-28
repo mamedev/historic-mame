@@ -1603,7 +1603,7 @@ INLINE void CSMKeyControll(FM_CH *CH)
 	FM_KEYON(CH,SLOT4);
 }
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 /* FM channel save , internal state only */
 static void FMsave_state_channel(const char *name,int num,FM_CH *CH,int num_ch)
 {
@@ -2014,9 +2014,7 @@ void OPNPrescaler_w(FM_OPN *OPN , int addr, int pre_divider)
 /* here's the virtual YM2203(OPN) */
 typedef struct
 {
-#ifdef _STATE_H
 	UINT8 REGS[256];		/* registers         */
-#endif
 	FM_OPN OPN;				/* OPN state         */
 	FM_CH CH[3];			/* channel state     */
 } YM2203;
@@ -2132,7 +2130,7 @@ void YM2203ResetChip(void *chip)
 	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteReg(OPN,i,0);
 }
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 void YM2203Postload(void *chip)
 {
 	if (chip)
@@ -2215,7 +2213,7 @@ void * YM2203Init(void *param, int index, int clock, int rate,
 	F2203->OPN.ST.SSG           = ssg;
 	YM2203ResetChip(F2203);
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 	YM2203_save_state(F2203, index);
 #endif
 	return F2203;
@@ -2250,9 +2248,7 @@ int YM2203Write(void *chip,int a,UINT8 v)
 	else
 	{	/* data port */
 		int addr = OPN->ST.address;
-#ifdef _STATE_H
 		F2203->REGS[addr] = v;
-#endif
 		switch( addr & 0xf0 )
 		{
 		case 0x00:	/* 0x00-0x0f : SSG section */
@@ -2341,9 +2337,7 @@ typedef struct
 /* here's the virtual YM2610 */
 typedef struct
 {
-#ifdef _STATE_H
 	UINT8		REGS[512];			/* registers            */
-#endif
 	FM_OPN		OPN;				/* OPN state            */
 	FM_CH		CH[6];				/* channel state        */
 	UINT8		addr_A1;			/* address line A1      */
@@ -2583,7 +2577,7 @@ static void FM_ADPCMAWrite(YM2610 *F2610,int r,int v)
 	}
 }
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 /* FM channel save , internal state only */
 static void FMsave_state_adpcma(const char *name,int num,ADPCM_CH *adpcm)
 {
@@ -3346,7 +3340,7 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	FM_STATUS_SET(State, 0);
 
 }
-#ifdef _STATE_H
+#ifdef __STATE_H__
 void YM2608Postload(void *chip)
 {
 	if (chip)
@@ -3477,7 +3471,7 @@ void * YM2608Init(void *param, int index, int clock, int rate,
 
 	Init_ADPCMATable();
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 	YM2608_save_state(F2608, index);
 #endif
 	return F2608;
@@ -3605,9 +3599,7 @@ int YM2608Write(void *chip, int a,UINT8 v)
 			break;	/* verified on real YM2608 */
 
 		addr = OPN->ST.address;
-#ifdef _STATE_H
 		F2608->REGS[addr] = v;
-#endif
 		switch(addr & 0xf0)
 		{
 		case 0x00:	/* SSG section */
@@ -3645,9 +3637,7 @@ int YM2608Write(void *chip, int a,UINT8 v)
 			break;	/* verified on real YM2608 */
 
 		addr = OPN->ST.address;
-#ifdef _STATE_H
 		F2608->REGS[addr | 0x100] = v;
-#endif
 		YM2608UpdateReq(OPN->ST.param);
 		switch( addr & 0xf0 )
 		{
@@ -4043,7 +4033,7 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length)
 #endif /* BUILD_YM2610B */
 
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 void YM2610Postload(void *chip)
 {
 	if (chip)
@@ -4171,7 +4161,7 @@ void *YM2610Init(void *param, int index, int clock, int rate,
 	YM2610ResetChip(F2610);
 
 	Init_ADPCMATable();
-#ifdef _STATE_H
+#ifdef __STATE_H__
 	YM2610_save_state(F2610, index);
 #endif
 	return F2610;
@@ -4276,9 +4266,7 @@ int YM2610Write(void *chip, int a, UINT8 v)
 			break;	/* verified on real YM2608 */
 
 		addr = OPN->ST.address;
-#ifdef _STATE_H
 		F2610->REGS[addr] = v;
-#endif
 		switch(addr & 0xf0)
 		{
 		case 0x00:	/* SSG section */
@@ -4347,9 +4335,7 @@ int YM2610Write(void *chip, int a, UINT8 v)
 
 		YM2610UpdateReq(OPN->ST.param);
 		addr = OPN->ST.address;
-#ifdef _STATE_H
 		F2610->REGS[addr | 0x100] = v;
-#endif
 		if( addr < 0x30 )
 			/* 100-12f : ADPCM A section */
 			FM_ADPCMAWrite(F2610,addr,v);
@@ -4420,9 +4406,7 @@ int YM2610TimerOver(void *chip,int c)
 /* here's the virtual YM2612 */
 typedef struct
 {
-#ifdef _STATE_H
 	UINT8		REGS[512];			/* registers            */
-#endif
 	FM_OPN		OPN;				/* OPN state            */
 	FM_CH		CH[6];				/* channel state        */
 	UINT8		addr_A1;			/* address line A1      */
@@ -4558,7 +4542,7 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 
 }
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 void YM2612Postload(void *chip)
 {
 	if (chip)
@@ -4638,7 +4622,7 @@ void * YM2612Init(void *param, int index, int clock, int rate,
 	F2612->OPN.ST.IRQ_Handler   = IRQHandler;
 	YM2612ResetChip(F2612);
 
-#ifdef _STATE_H
+#ifdef __STATE_H__
 	YM2612_save_state(F2612, index);
 #endif
 	return F2612;
@@ -4709,9 +4693,7 @@ int YM2612Write(void *chip, int a, UINT8 v)
 			break;	/* verified on real YM2608 */
 
 		addr = F2612->OPN.ST.address;
-#ifdef _STATE_H
 		F2612->REGS[addr] = v;
-#endif
 		switch( addr & 0xf0 )
 		{
 		case 0x20:	/* 0x20-0x2f Mode */
@@ -4749,9 +4731,7 @@ int YM2612Write(void *chip, int a, UINT8 v)
 			break;	/* verified on real YM2608 */
 
 		addr = F2612->OPN.ST.address;
-#ifdef _STATE_H
 		F2612->REGS[addr | 0x100] = v;
-#endif
 		YM2612UpdateReq(F2612->OPN.ST.param);
 		OPNWriteReg(&(F2612->OPN),addr | 0x100,v);
 		break;

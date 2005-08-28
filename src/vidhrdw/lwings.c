@@ -14,7 +14,7 @@ unsigned char *lwings_fgvideoram;
 unsigned char *lwings_bg1videoram;
 
 static int bAvengersHardware, bg2_image;
-static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
+static tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 /***************************************************************************
 

@@ -10,7 +10,7 @@ data32_t *dragngun_sprite_layout_0_ram, *dragngun_sprite_layout_1_ram;
 data32_t *dragngun_sprite_lookup_0_ram, *dragngun_sprite_lookup_1_ram;
 
 static data8_t *dirty_palette;
-static struct tilemap *pf1_tilemap,*pf1a_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
+static tilemap *pf1_tilemap,*pf1a_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static int deco32_pf1_bank,deco32_pf2_bank,deco32_pf3_bank,deco32_pf4_bank;
 static int deco32_pf1_flip,deco32_pf2_flip,deco32_pf3_flip,deco32_pf4_flip;
 static int deco32_pf2_colourbank,deco32_pf4_colourbank,deco32_pri;
@@ -284,7 +284,7 @@ static void tattass_drawsprites(struct mame_bitmap *bitmap, const data32_t *spri
 	}
 }
 
-INLINE void dragngun_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+INLINE void dragngun_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		int scalex, int scaley,struct mame_bitmap *pri_buffer,UINT32 pri_mask, int sprite_screen_width, int  sprite_screen_height )
@@ -1004,7 +1004,7 @@ static void combined_tilemap_draw(struct mame_bitmap *bitmap)
 	}
 }
 
-static void deco32_setup_scroll(struct tilemap *pf_tilemap, data16_t height, data8_t control0, data8_t control1, data16_t sy, data16_t sx, data32_t *rowdata, data32_t *coldata)
+static void deco32_setup_scroll(tilemap *pf_tilemap, data16_t height, data8_t control0, data8_t control1, data16_t sy, data16_t sx, data32_t *rowdata, data32_t *coldata)
 {
 	int rows,offs;
 

@@ -4,7 +4,7 @@
 
 data8_t *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;
 
-static struct tilemap *bg_tilemap,*tx_tilemap;
+static tilemap *bg_tilemap,*tx_tilemap;
 
 
 static int bg_select, tx_color_mode, bg_disable, bg_color_bank;

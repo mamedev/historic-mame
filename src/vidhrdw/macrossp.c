@@ -13,7 +13,7 @@ data32_t *macrossp_spriteram;
 
 static data32_t *spriteram_old,*spriteram_old2;
 
-static struct tilemap  *macrossp_scra_tilemap, *macrossp_scrb_tilemap,*macrossp_scrc_tilemap, *macrossp_text_tilemap;
+static tilemap  *macrossp_scra_tilemap, *macrossp_scrb_tilemap,*macrossp_scrc_tilemap, *macrossp_text_tilemap;
 
 
 /*** SCR A LAYER ***/
@@ -183,7 +183,7 @@ VIDEO_START(macrossp)
 
 static void macrossp_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 //  data32_t *source = macrossp_spriteram;
 	data32_t *source = spriteram_old2; /* buffers by two frames */
 	data32_t *finish = source + spriteram_size/4;
@@ -309,7 +309,7 @@ static void macrossp_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer)
 {
-	struct tilemap *tm;
+	tilemap *tm;
 	data32_t *vr;
 
 	switch (layer)

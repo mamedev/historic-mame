@@ -1443,7 +1443,7 @@ INPUT_PORTS_END
 /********** GFX DECODE **********/
 
 /* sprites are contained in 256x256 "tiles" */
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	256,256,
 	RGN_FRAC(1,1),
@@ -1454,7 +1454,7 @@ static struct GfxLayout spritelayout =
 	256*256*8	/* char modulo */
 };
 
-static struct GfxLayout bglayout =
+static gfx_layout bglayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1466,7 +1466,7 @@ static struct GfxLayout bglayout =
 };
 
 
-static struct GfxLayout txlayout =
+static gfx_layout txlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1477,7 +1477,7 @@ static struct GfxLayout txlayout =
 	8*8*8		/* char modulo */
 };
 
-static struct GfxDecodeInfo ms32_gfxdecodeinfo[] =
+static gfx_decode ms32_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout, 0x0000, 0x10 },
 	{ REGION_GFX2, 0, &bglayout,     0x2000, 0x10 },

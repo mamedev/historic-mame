@@ -333,7 +333,7 @@ INPUT_PORTS_START( marinedt )
     PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(25) PORT_KEYDELTA(10)
 INPUT_PORTS_END
 
-static struct GfxLayout marinedt_charlayout =
+static gfx_layout marinedt_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -344,7 +344,7 @@ static struct GfxLayout marinedt_charlayout =
 	8*8
 };
 
-static struct GfxLayout marinedt_objlayout =
+static gfx_layout marinedt_objlayout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -355,7 +355,7 @@ static struct GfxLayout marinedt_objlayout =
 	32*32*2
 };
 
-static struct GfxDecodeInfo marinedt_gfxdecodeinfo[] =
+static gfx_decode marinedt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &marinedt_charlayout, 0,  4 },	//really only 1 colour set?
 	{ REGION_GFX2, 0, &marinedt_objlayout,  48, 4 },

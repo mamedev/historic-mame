@@ -60,7 +60,7 @@ extern WRITE8_HANDLER( mrflea_spriteram_w );
 extern VIDEO_START( mrflea );
 extern VIDEO_UPDATE( mrflea );
 
-static struct GfxLayout tile_layout = {
+static gfx_layout tile_layout = {
 	8,8,
 	0x800, /* number of tiles */
 	4,
@@ -70,7 +70,7 @@ static struct GfxLayout tile_layout = {
 	8*32
 };
 
-static struct GfxLayout sprite_layout = {
+static gfx_layout sprite_layout = {
 	16,16,
 	0x200, /* number of sprites */
 	4,
@@ -83,7 +83,7 @@ static struct GfxLayout sprite_layout = {
 	16*16
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] = {
+static gfx_decode gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0, &sprite_layout,	0x10, 1 },
 	{ REGION_GFX2, 0, &tile_layout,		0x00, 1 },
 	{ -1 }

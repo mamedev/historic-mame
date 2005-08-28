@@ -207,7 +207,7 @@ INPUT_PORTS_START( skyraid )
 INPUT_PORTS_END
 
 
-static struct GfxLayout skyraid_text_layout =
+static gfx_layout skyraid_text_layout =
 {
 	16, 8,  /* width, height */
 	64,     /* total         */
@@ -224,7 +224,7 @@ static struct GfxLayout skyraid_text_layout =
 };
 
 
-static struct GfxLayout skyraid_sprite_layout =
+static gfx_layout skyraid_sprite_layout =
 {
 	32, 32, /* width, height */
 	8,      /* total         */
@@ -247,7 +247,7 @@ static struct GfxLayout skyraid_sprite_layout =
 };
 
 
-static struct GfxLayout skyraid_missile_layout =
+static gfx_layout skyraid_missile_layout =
 {
 	16, 16, /* width, height */
 	8,      /* total         */
@@ -265,7 +265,7 @@ static struct GfxLayout skyraid_missile_layout =
 };
 
 
-static struct GfxDecodeInfo skyraid_gfxdecodeinfo[] =
+static gfx_decode skyraid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &skyraid_text_layout, 18, 1 },
 	{ REGION_GFX2, 0, &skyraid_sprite_layout, 8, 2 },

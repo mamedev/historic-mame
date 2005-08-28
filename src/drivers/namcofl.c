@@ -224,7 +224,7 @@ INPUT_PORTS_START( sysfl )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static struct GfxLayout obj_layout =
+static gfx_layout obj_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -246,7 +246,7 @@ static struct GfxLayout obj_layout =
 	16*128
 };
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -257,7 +257,7 @@ static struct GfxLayout tile_layout =
 	8*64
 };
 
-static struct GfxLayout roz_layout =
+static gfx_layout roz_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -270,7 +270,7 @@ static struct GfxLayout roz_layout =
 	16*128
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo2[] =
+static gfx_decode gfxdecodeinfo2[] =
 {
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x08 },
 	{ NAMCONB1_SPRITEGFXREGION,	0, &obj_layout,		0x0000, 0x10 },

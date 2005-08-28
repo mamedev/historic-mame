@@ -57,7 +57,7 @@ static UINT32 spr_buffered_tilebank[2];
 
 #define LAYER( _N_ ) \
 \
-static struct tilemap *tilemap_##_N_; \
+static tilemap *tilemap_##_N_; \
 \
 static void get_tile_info_##_N_(int tile_index) \
 { \

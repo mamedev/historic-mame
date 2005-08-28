@@ -3,7 +3,7 @@
 
 static data8_t *vram[2],*unkram;
 static int bankctrl,rambank,pmcbank,gfxrom_select;
-static struct tilemap *tilemap[2];
+static tilemap *bg_tilemap[2];
 
 
 
@@ -43,15 +43,15 @@ static void get_tile_info1(int tile_index)
 
 VIDEO_START( hexion )
 {
-	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
 
-	if (!tilemap[0] || !tilemap[1])
+	if (!bg_tilemap[0] || !bg_tilemap[1])
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap[0],0);
-	tilemap_set_scrollx(tilemap[1],0,-4);
-	tilemap_set_scrolly(tilemap[1],0,4);
+	tilemap_set_transparent_pen(bg_tilemap[0],0);
+	tilemap_set_scrollx(bg_tilemap[1],0,-4);
+	tilemap_set_scrolly(bg_tilemap[1],0,4);
 
 	vram[0] = memory_region(REGION_CPU1) + 0x30000;
 	vram[1] = vram[0] + 0x2000;
@@ -80,7 +80,7 @@ WRITE8_HANDLER( hexion_bankswitch_w )
 	{
 		int bank = unkram[0]&1;
 		memset(vram[bank],unkram[1],0x2000);
-		tilemap_mark_all_tiles_dirty(tilemap[bank]);
+		tilemap_mark_all_tiles_dirty(bg_tilemap[bank]);
 	}
 	/* bit 7 = PMC-BK */
 	pmcbank = (data & 0x80) >> 7;
@@ -128,7 +128,7 @@ WRITE8_HANDLER( hexion_bankedram_w )
 			if (vram[rambank][offset] != data)
 			{
 				vram[rambank][offset] = data;
-				tilemap_mark_tile_dirty(tilemap[rambank],offset/4);
+				tilemap_mark_tile_dirty(bg_tilemap[rambank],offset/4);
 			}
 		}
 		else
@@ -170,6 +170,6 @@ WRITE8_HANDLER( hexion_gfxrom_select_w )
 
 VIDEO_UPDATE( hexion )
 {
-	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
-	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[0],0,0);
 }

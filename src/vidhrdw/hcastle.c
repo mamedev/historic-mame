@@ -11,7 +11,7 @@
 data8_t *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 static int gfx_bank;
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 static int pf2_bankbase,pf1_bankbase;
 
 

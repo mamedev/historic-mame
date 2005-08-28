@@ -636,7 +636,7 @@ INPUT_PORTS_START( bbonk )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 10,					/* 8*10 characters */
 	4*64,					/* 4 * 64 characters */
@@ -647,7 +647,7 @@ static struct GfxLayout charlayout =
 	10*8					/* every char takes 10 bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 2 },
 	{ -1 }					 /* end of array */

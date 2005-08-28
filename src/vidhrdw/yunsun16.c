@@ -38,7 +38,7 @@ data16_t *yunsun16_priority;
 
 ***************************************************************************/
 
-static struct tilemap *tilemap_0, *tilemap_1;
+static tilemap *tilemap_0, *tilemap_1;
 
 #define TMAP_GFX			(0)
 #define TILES_PER_PAGE_X	(0x10)

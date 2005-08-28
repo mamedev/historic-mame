@@ -1234,7 +1234,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static struct GfxLayout tcharlayout =
+static gfx_layout tcharlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1245,7 +1245,7 @@ static struct GfxLayout tcharlayout =
 	16*8
 };
 
-static struct GfxLayout jumppop_tcharlayout =
+static gfx_layout jumppop_tcharlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1256,7 +1256,7 @@ static struct GfxLayout jumppop_tcharlayout =
 	32*8
 };
 
-static struct GfxLayout tlayout =
+static gfx_layout tlayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1269,7 +1269,7 @@ static struct GfxLayout tlayout =
 	64*8
 };
 
-static struct GfxLayout suprtrio_tlayout =
+static gfx_layout suprtrio_tlayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1283,7 +1283,7 @@ static struct GfxLayout suprtrio_tlayout =
 };
 
 
-static struct GfxLayout jumpop_tlayout =
+static gfx_layout jumpop_tlayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1300,7 +1300,7 @@ static struct GfxLayout jumpop_tlayout =
 
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tcharlayout, 256, 16 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &tlayout,     512, 16 },	/* Tiles 16x16 */
@@ -1309,7 +1309,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo suprtrio_gfxdecodeinfo[] =
+static gfx_decode suprtrio_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tcharlayout, 256, 16 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &suprtrio_tlayout,     512, 16 },	/* Tiles 16x16 */
@@ -1318,7 +1318,7 @@ static struct GfxDecodeInfo suprtrio_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo fncywld_gfxdecodeinfo[] =
+static gfx_decode fncywld_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tcharlayout, 0x400, 0x40 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &tlayout,     0x400, 0x40 },	/* Tiles 16x16 */
@@ -1327,7 +1327,7 @@ static struct GfxDecodeInfo fncywld_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo jumppop_gfxdecodeinfo[] =
+static gfx_decode jumppop_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &jumppop_tcharlayout, 0x100, 0x40 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &jumpop_tlayout,     0x100, 0x40 },	/* Tiles 16x16 */

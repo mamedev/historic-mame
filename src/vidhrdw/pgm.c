@@ -4,7 +4,7 @@
 #include "driver.h"
 
 extern data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
-static struct tilemap *pgm_tx_tilemap, *pgm_bg_tilemap;
+static tilemap *pgm_tx_tilemap, *pgm_bg_tilemap;
 static UINT16 *sprite_bitmap;
 static data16_t *pgm_spritebufferram; // buffered spriteram
 

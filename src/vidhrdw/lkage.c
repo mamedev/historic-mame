@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static unsigned char bg_tile_bank, fg_tile_bank;
 unsigned char *lkage_scroll, *lkage_vreg;
 

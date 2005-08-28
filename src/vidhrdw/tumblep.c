@@ -18,7 +18,7 @@ to switch between 8*8 tiles and 16*16 tiles.
 
 static data16_t tumblep_control_0[8];
 data16_t *tumblep_pf1_data,*tumblep_pf2_data;
-static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap,*pf2_alt_tilemap;
+static tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap,*pf2_alt_tilemap;
 static int flipscreen;
 extern data16_t* jumppop_control;
 static data16_t bcstory_tilebank;

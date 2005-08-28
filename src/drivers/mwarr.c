@@ -41,7 +41,7 @@ Notes:
 #include "driver.h"
 #include "sound/okim6295.h"
 
-static struct tilemap *bg_tilemap, *mlow_tilemap, *mhigh_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *mlow_tilemap, *mhigh_tilemap, *tx_tilemap;
 static data16_t *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram, *sprites_buffer;
 static data16_t *bg_scrollram, *mlow_scrollram, *mhigh_scrollram, *vidattrram;
 static data16_t *mwarr_ram;
@@ -233,7 +233,7 @@ INPUT_PORTS_START( mwarr )
 	PORT_SERVICE_NO_TOGGLE( 0x8000, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-static struct GfxLayout mwarr_tile8_layout =
+static gfx_layout mwarr_tile8_layout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -244,7 +244,7 @@ static struct GfxLayout mwarr_tile8_layout =
 	8*16
 };
 
-static struct GfxLayout mwarr_tile16_layout =
+static gfx_layout mwarr_tile16_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -256,7 +256,7 @@ static struct GfxLayout mwarr_tile16_layout =
 	32*16
 };
 
-static struct GfxLayout mwarr_6bpp_sprites =
+static gfx_layout mwarr_6bpp_sprites =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -267,7 +267,7 @@ static struct GfxLayout mwarr_6bpp_sprites =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mwarr_6bpp_sprites,  1024, 16 },
 	{ REGION_GFX2, 0, &mwarr_tile8_layout,	 384,  8 },
@@ -344,7 +344,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 {
 	const UINT16 *source = sprites_buffer+0x800-4;
 	const UINT16 *finish = sprites_buffer;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	int x, y, color, flipx, dy, pri, pri_mask, i;
 
 	while( source>=finish )

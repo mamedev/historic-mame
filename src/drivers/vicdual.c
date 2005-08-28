@@ -1144,7 +1144,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -1155,7 +1155,7 @@ static struct GfxLayout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ 0, 0xe800, &charlayout, 0, 32 },	/* the game dynamically modifies this */
 	{ -1 }	/* end of array */

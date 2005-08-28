@@ -71,7 +71,7 @@ static int silentident,knownstatus;
 
 void get_rom_sample_path (int argc, char **argv, int game_index, char *override_default_rompath);
 
-static const struct GameDriver *gamedrv;
+static const game_driver *gamedrv;
 
 /* compare string[8] using standard(?) DOS wildchars ('?' & '*')      */
 /* for this to work correctly, the shells internal wildcard expansion */
@@ -145,9 +145,9 @@ static void namecopy(char *name_ref,const char *desc)
 
 
 /* Identifies a rom from from this checksum */
-static void match_roms(const struct GameDriver *driver,const char* hash,int *found)
+static void match_roms(const game_driver *driver,const char* hash,int *found)
 {
-	const struct RomModule *region, *rom;
+	const rom_entry *region, *rom;
 
 	for (region = rom_first_region(driver); region; region = rom_next_region(region))
 	{
@@ -283,9 +283,9 @@ void identify_file(const char* name)
 
 void identify_zip(const char* zipname)
 {
-	struct zipent* ent;
+	zip_entry* ent;
 
-	ZIP* zip = openzip( FILETYPE_RAW, 0, zipname );
+	zip_file* zip = openzip( FILETYPE_RAW, 0, zipname );
 	if (!zip)
 		return;
 
@@ -407,8 +407,8 @@ void romident(const char* name,int enter_dirs)
 int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 {
 	int cmp;
-	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
-	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+	game_driver *drv1 = *(game_driver **)elem1;
+	game_driver *drv2 = *(game_driver **)elem2;
 	char name1[200],name2[200];
 	namecopy(name1,drv1->description);
 	namecopy(name2,drv2->description);
@@ -421,15 +421,15 @@ int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 
 int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
 {
-	struct GameDriver *drv1 = *(struct GameDriver **)elem1;
-	struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+	game_driver *drv1 = *(game_driver **)elem1;
+	game_driver *drv2 = *(game_driver **)elem2;
 	return strcmp(drv1->name, drv2->name);
 }
 
 
 int frontend_help (const char *gamename)
 {
-	struct InternalMachineDriver drv;
+	machine_config drv;
 	int i, j;
 	const char *all_games = "*";
 	char *pdest = NULL;
@@ -528,7 +528,7 @@ int frontend_help (const char *gamename)
 			gamedrv = drivers[j];
 			if (list == LIST_ROMS)
 			{
-				const struct RomModule *region, *rom, *chunk;
+				const rom_entry *region, *rom, *chunk;
 				char buf[512];
 
 				printf("This is the list of the ROMs required for driver \"%s\".\n"
@@ -615,7 +615,7 @@ int frontend_help (const char *gamename)
 		case LIST_CRC: /* list all crc-32 */
 			for (i = 0; drivers[i]; i++)
 			{
-				const struct RomModule *region, *rom;
+				const rom_entry *region, *rom;
 
 				for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
 					for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
@@ -658,7 +658,7 @@ int frontend_help (const char *gamename)
 
 			if (verify & VERIFY_ROMS)
 			{
-				res = VerifyRomSet (i, (verify_printf_proc)printf);
+				res = audit_verify_roms (i, (verify_printf_proc)printf);
 
 				if (res == CLONE_NOTFOUND || res == NOTFOUND)
 				{
@@ -683,7 +683,7 @@ int frontend_help (const char *gamename)
 				if (samplenames == 0 || samplenames[0] == 0)
 					goto nextloop;
 
-				res = VerifySampleSet (i, (verify_printf_proc)printf);
+				res = audit_verify_samples (i, (verify_printf_proc)printf);
 				if (res == NOTFOUND)
 				{
 					notfound++;

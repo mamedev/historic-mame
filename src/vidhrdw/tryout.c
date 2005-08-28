@@ -8,7 +8,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 static data8_t vram_bank;
 static data8_t *tryout_vram, *tryout_vram_gfx;
 data8_t *tryout_gfx_control;

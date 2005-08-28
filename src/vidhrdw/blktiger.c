@@ -11,7 +11,7 @@ static unsigned char *scroll_ram;
 static int screen_layout;
 static int chon,objon,bgon;
 
-static struct tilemap *tx_tilemap,*bg_tilemap8x4,*bg_tilemap4x8;
+static tilemap *tx_tilemap,*bg_tilemap8x4,*bg_tilemap4x8;
 
 
 /***************************************************************************

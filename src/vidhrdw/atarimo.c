@@ -27,7 +27,7 @@ struct atarimo_mask
 struct atarimo_data
 {
 	int					gfxchanged;			/* true if the gfx info has changed */
-	struct GfxElement	gfxelement[MAX_GFX_ELEMENTS]; /* local copy of graphics elements */
+	gfx_element	gfxelement[MAX_GFX_ELEMENTS]; /* local copy of graphics elements */
 	int					gfxgranularity[MAX_GFX_ELEMENTS];
 
 	struct mame_bitmap *bitmap;				/* temporary bitmap to render to */
@@ -276,7 +276,7 @@ static void force_update(int scanline)
 
 int atarimo_init(int map, const struct atarimo_desc *desc)
 {
-	struct GfxElement *gfx = Machine->gfx[desc->gfxindex];
+	gfx_element *gfx = Machine->gfx[desc->gfxindex];
 	struct atarimo_data *mo = &atarimo[map];
 	int i;
 
@@ -700,7 +700,7 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
 static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const struct rectangle *cliprect)
 {
 	int gfxindex = mo->gfxlookup[EXTRACT_DATA(entry, mo->gfxmask)];
-	const struct GfxElement *gfx = &mo->gfxelement[gfxindex];
+	const gfx_element *gfx = &mo->gfxelement[gfxindex];
 	struct mame_bitmap *bitmap = mo->bitmap;
 	int x, y, sx, sy;
 

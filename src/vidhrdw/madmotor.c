@@ -17,7 +17,7 @@ static data16_t madmotor_pf2_control[16];
 static data16_t madmotor_pf3_control[16];
 
 static int flipscreen;
-static struct tilemap *madmotor_pf1_tilemap,*madmotor_pf2_tilemap,*madmotor_pf3_tilemap,*madmotor_pf3a_tilemap;
+static tilemap *madmotor_pf1_tilemap,*madmotor_pf2_tilemap,*madmotor_pf3_tilemap,*madmotor_pf3a_tilemap;
 
 
 

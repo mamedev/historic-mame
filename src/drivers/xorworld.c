@@ -161,7 +161,7 @@ INPUT_PORTS_START( xorworld )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,															/* 8x8 tiles */
 	0x10000/16,														/* 4096 tiles */
@@ -172,7 +172,7 @@ static struct GfxLayout tilelayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,																/* 16x16 sprites */
 	0x10000/64,															/* 1024 sprites */
@@ -186,7 +186,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &tilelayout,	0, 64 },
 	{ REGION_GFX1, 0x000000, &spritelayout, 0, 64 },

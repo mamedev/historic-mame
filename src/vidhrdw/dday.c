@@ -16,7 +16,7 @@ unsigned char *dday_fgvideoram;
 unsigned char *dday_textvideoram;
 unsigned char *dday_colorram;
 
-static struct tilemap *fg_tilemap, *bg_tilemap, *text_tilemap, *sl_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap, *text_tilemap, *sl_tilemap;
 struct mame_bitmap *main_bitmap;
 static int control;
 static int sl_image;

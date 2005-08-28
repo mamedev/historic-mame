@@ -633,7 +633,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -644,7 +644,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout tilelayout_256 =
+static gfx_layout tilelayout_256 =
 {
 	16,16,  /* 16x16 characters */
 	256,	/* 256 characters */
@@ -657,7 +657,7 @@ static struct GfxLayout tilelayout_256 =
 	128*8
 };
 
-static struct GfxLayout tilelayout_512 =
+static gfx_layout tilelayout_512 =
 {
 	16,16,  /* 16x16 characters */
 	512,	/* 512 characters */
@@ -670,7 +670,7 @@ static struct GfxLayout tilelayout_512 =
 	128*8
 };
 
-static struct GfxLayout tilelayout_1024 =
+static gfx_layout tilelayout_1024 =
 {
 	16,16,  /* 16x16 characters */
 	1024,	/* 1024 characters */
@@ -683,7 +683,7 @@ static struct GfxLayout tilelayout_1024 =
 	128*8
 };
 
-static struct GfxLayout tilelayout_2048 =
+static gfx_layout tilelayout_2048 =
 {
 	16,16,  /* 16x16 characters */
 	2048,	/* 2048 characters */
@@ -696,7 +696,7 @@ static struct GfxLayout tilelayout_2048 =
 	128*8
 };
 
-static struct GfxLayout tilelayout_4096 =
+static gfx_layout tilelayout_4096 =
 {
 	16,16,  /* 16x16 characters */
 	4096,	/* 4096 characters */
@@ -709,7 +709,7 @@ static struct GfxLayout tilelayout_4096 =
 	128*8
 };
 
-static struct GfxDecodeInfo argus_gfxdecodeinfo[] =
+static gfx_decode argus_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024, 0*16,   8 },
 	{ REGION_GFX2, 0, &tilelayout_1024, 8*16,  16 },
@@ -718,7 +718,7 @@ static struct GfxDecodeInfo argus_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo valtric_gfxdecodeinfo[] =
+static gfx_decode valtric_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024, 0*16, 16 },
 	{ REGION_GFX2, 0, &tilelayout_2048, 16*16, 16 },
@@ -726,7 +726,7 @@ static struct GfxDecodeInfo valtric_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo butasan_gfxdecodeinfo[] =
+static gfx_decode butasan_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096, 0*16,  16 },
 	{ REGION_GFX2, 0, &tilelayout_1024, 16*16, 16 },

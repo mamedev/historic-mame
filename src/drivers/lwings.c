@@ -781,7 +781,7 @@ INPUT_PORTS_START( avengers )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -792,7 +792,7 @@ static struct GfxLayout charlayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -805,7 +805,7 @@ static struct GfxLayout spritelayout =
 	64*8
 };
 
-static struct GfxLayout bg1_tilelayout =
+static gfx_layout bg1_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -818,7 +818,7 @@ static struct GfxLayout bg1_tilelayout =
 	32*8
 };
 
-static struct GfxLayout bg2_tilelayout =
+static gfx_layout bg2_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -832,7 +832,7 @@ static struct GfxLayout bg2_tilelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     512, 16 }, /* colors 512-575 */
 	{ REGION_GFX2, 0, &bg1_tilelayout,   0,  8 }, /* colors   0-127 */
@@ -840,7 +840,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_trojan[] =
+static gfx_decode gfxdecodeinfo_trojan[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     768, 16 }, /* colors 768-831 */
 	{ REGION_GFX2, 0, &bg1_tilelayout, 256,  8 }, /* colors 256-383 */

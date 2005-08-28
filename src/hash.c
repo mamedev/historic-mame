@@ -135,7 +135,7 @@
 #define FALSE   0
 #endif
 
-typedef struct
+struct _hash_function_desc
 {
 	const char* name;           // human-readable name
 	char code;                  // single-char code used within the hash string
@@ -146,7 +146,8 @@ typedef struct
 	void (*calculate_buffer)(const void* mem, unsigned long len);
 	void (*calculate_end)(UINT8* bin_chksum);
 
-} hash_function_desc;
+};
+typedef struct _hash_function_desc hash_function_desc;
 
 static void h_crc_begin(void);
 static void h_crc_buffer(const void* mem, unsigned long len);
@@ -675,7 +676,7 @@ static void h_crc_end(UINT8* bin_chksum)
 }
 
 
-struct sha1_ctx sha1ctx;
+static struct sha1_ctx sha1ctx;
 
 static void h_sha1_begin(void)
 {

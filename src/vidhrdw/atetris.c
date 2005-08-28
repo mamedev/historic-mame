@@ -9,7 +9,7 @@
 #include "atetris.h"
 
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 
 
 /*************************************
@@ -37,7 +37,7 @@ static void get_tile_info(int tile_index)
 WRITE8_HANDLER( atetris_videoram_w )
 {
 	videoram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap, offset / 2);
+	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
 }
 
 
@@ -50,8 +50,8 @@ WRITE8_HANDLER( atetris_videoram_w )
 
 VIDEO_START( atetris )
 {
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
-	if (!tilemap)
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
+	if (!bg_tilemap)
 		return 1;
 	return 0;
 }
@@ -66,5 +66,5 @@ VIDEO_START( atetris )
 
 VIDEO_UPDATE( atetris )
 {
-	tilemap_draw(bitmap, cliprect, tilemap, 0,0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0,0);
 }

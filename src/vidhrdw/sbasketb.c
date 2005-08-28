@@ -13,7 +13,7 @@ UINT8 *sbasketb_scroll;
 UINT8 *sbasketb_palettebank;
 UINT8 *sbasketb_spriteram_select;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

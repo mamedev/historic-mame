@@ -3472,7 +3472,7 @@ INPUT_PORTS_START( luctoday )
 INPUT_PORTS_END
 
 
-static struct GfxLayout galaxian_charlayout =
+static gfx_layout galaxian_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -3482,7 +3482,7 @@ static struct GfxLayout galaxian_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-static struct GfxLayout galaxian_spritelayout =
+static gfx_layout galaxian_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -3495,7 +3495,7 @@ static struct GfxLayout galaxian_spritelayout =
 	32*8
 };
 
-static struct GfxLayout pacmanbl_charlayout =
+static gfx_layout pacmanbl_charlayout =
 {
 	8,8,
 	256,
@@ -3505,7 +3505,7 @@ static struct GfxLayout pacmanbl_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-static struct GfxLayout pacmanbl_spritelayout =
+static gfx_layout pacmanbl_spritelayout =
 {
 	16,16,
 	64,
@@ -3518,7 +3518,7 @@ static struct GfxLayout pacmanbl_spritelayout =
 	32*8
 };
 
-static struct GfxLayout bagmanmc_charlayout =
+static gfx_layout bagmanmc_charlayout =
 {
 	8,8,
 	512,
@@ -3529,7 +3529,7 @@ static struct GfxLayout bagmanmc_charlayout =
 	8*8
 };
 
-static struct GfxLayout _4in1_charlayout =
+static gfx_layout _4in1_charlayout =
 {
 	8,8,
 	1024,
@@ -3539,7 +3539,7 @@ static struct GfxLayout _4in1_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
 };
-static struct GfxLayout _4in1_spritelayout =
+static gfx_layout _4in1_spritelayout =
 {
 	16,16,
 	256,
@@ -3552,7 +3552,7 @@ static struct GfxLayout _4in1_spritelayout =
 	32*8
 };
 
-static struct GfxLayout rockclim_charlayout =
+static gfx_layout rockclim_charlayout =
 {
 	8,8,
 	256,
@@ -3563,7 +3563,7 @@ static struct GfxLayout rockclim_charlayout =
 	8*8*2
 };
 
-static struct GfxDecodeInfo rockclim_gfxdecodeinfo[] =
+static gfx_decode rockclim_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &galaxian_charlayout,   32, 8 },
 	{ REGION_GFX1, 0x0000, &galaxian_spritelayout, 32, 8 },
@@ -3574,14 +3574,14 @@ static struct GfxDecodeInfo rockclim_gfxdecodeinfo[] =
 
 
 
-struct GfxDecodeInfo galaxian_gfxdecodeinfo[] =
+gfx_decode galaxian_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &galaxian_charlayout,   0, 8 },
 	{ REGION_GFX1, 0x0000, &galaxian_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
-struct GfxDecodeInfo gmgalax_gfxdecodeinfo[] =
+gfx_decode gmgalax_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &galaxian_charlayout,   0, 16 },
 	{ REGION_GFX1, 0x0000, &galaxian_spritelayout, 0, 16 },
@@ -3589,21 +3589,21 @@ struct GfxDecodeInfo gmgalax_gfxdecodeinfo[] =
 };
 
 /* separate character and sprite ROMs */
-static struct GfxDecodeInfo pacmanbl_gfxdecodeinfo[] =
+static gfx_decode pacmanbl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &pacmanbl_charlayout,   0, 8 },
 	{ REGION_GFX1, 0x1000, &pacmanbl_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo bagmanmc_gfxdecodeinfo[] =
+static gfx_decode bagmanmc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &bagmanmc_charlayout,    0, 8 },
 	{ REGION_GFX1, 0x2000, &pacmanbl_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo _4in1_gfxdecodeinfo[] =
+static gfx_decode _4in1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &_4in1_charlayout,      0, 8 },
 	{ REGION_GFX1, 0x4000, &_4in1_spritelayout,    0, 8 },

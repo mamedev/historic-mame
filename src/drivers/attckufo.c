@@ -43,11 +43,10 @@ LOIPOIO-B
 ****************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 
 extern VIDEO_START( attckufo );
-extern VIDEO_STOP( attckufo );
-extern VIDEO_UPDATE( attckufo );
 extern unsigned char attckufo_palette[16 * 3];
 
 extern struct CustomSound_interface attckufo_sound_interface;
@@ -164,7 +163,7 @@ static MACHINE_DRIVER_START( attckufo )
 	MDRV_PALETTE_INIT( attckufo )
 
 	MDRV_VIDEO_START( attckufo )
-	MDRV_VIDEO_UPDATE( attckufo )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

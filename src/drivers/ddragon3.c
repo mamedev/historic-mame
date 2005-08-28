@@ -445,7 +445,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	16,16,	/* 16*16 tiles */
 	8192,	/* 8192 tiles */
@@ -458,7 +458,7 @@ static struct GfxLayout tile_layout =
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout sprite_layout = {
+static gfx_layout sprite_layout = {
 	16,16,	/* 16*16 tiles */
 	0x90000/32, /* 4096 tiles */
 	4,	/* 4 bits per pixel */
@@ -472,7 +472,7 @@ static struct GfxLayout sprite_layout = {
 
 /* Graphics Decode Info */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,   256, 32 },
 	{ REGION_GFX2, 0, &sprite_layout,	0, 16 },

@@ -13,7 +13,7 @@
 
 data8_t *zaccaria_videoram,*zaccaria_attributesram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static struct rectangle spritevisiblearea =
 {

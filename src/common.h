@@ -13,6 +13,7 @@
 
 #include "hash.h"
 #include "xmlfile.h"
+#include "chd.h"
 
 
 
@@ -40,7 +41,7 @@ struct mame_bitmap
 };
 
 
-struct RomModule
+struct _rom_entry
 {
 	const char *_name;	/* name of the file to load */
 	UINT32 _offset;		/* offset to load it to */
@@ -48,17 +49,19 @@ struct RomModule
 	UINT32 _flags;		/* flags */
 	const char *_hashdata; /* hashing informations (checksums) */
 };
+typedef struct _rom_entry rom_entry;
 
 
-struct SystemBios
+struct _bios_entry
 {
 	int value;			/* value of mask to apply to ROM_BIOSFLAGS is chosen */
 	const char *_name;	/* name of the bios, e.g "default","japan" */
 	const char *_description;	/* long name of the bios, e.g "Europe MVS (Ver. 2)" */
 };
+typedef struct _bios_entry bios_entry;
 
 
-struct rom_load_data
+struct _rom_load_data
 {
 	int warnings;				/* warning count during processing */
 	int errors;				/* error count during processing */
@@ -74,6 +77,7 @@ struct rom_load_data
 	char errorbuf[4096];			/* accumulated errors */
 	UINT8 tempbuf[65536];			/* temporary buffer */
 };
+/* In mamecore.h: typedef struct _rom_load_data rom_load_data; */
 
 
 
@@ -290,7 +294,7 @@ enum
 ***************************************************************************/
 
 /* ----- start/stop macros ----- */
-#define ROM_START(name)								static const struct RomModule rom_##name[] = {
+#define ROM_START(name)								static const rom_entry rom_##name[] = {
 #define ROM_END                                      { ROMENTRY_END, 0, 0, 0, NULL } };
 
 /* ----- ROM region macros ----- */
@@ -350,7 +354,7 @@ enum
 #define BIOSENTRY_ISEND(b)		((b)->_name == NULL)
 
 /* ----- start/stop macros ----- */
-#define SYSTEM_BIOS_START(name)			static const struct SystemBios system_bios_##name[] = {
+#define SYSTEM_BIOS_START(name)			static const bios_entry system_bios_##name[] = {
 #define SYSTEM_BIOS_END					{ 0, NULL } };
 
 /* ----- ROM region macros ----- */
@@ -392,8 +396,8 @@ int new_memory_region(int num, size_t length, UINT32 flags);
 void free_memory_region(int num);
 
 /* common coin counter helpers */
-void counters_load(int config_type, struct xml_data_node *parentnode);
-void counters_save(int config_type, struct xml_data_node *parentnode);
+void counters_load(int config_type, xml_data_node *parentnode);
+void counters_save(int config_type, xml_data_node *parentnode);
 void coin_counter_reset(void);
 void coin_counter_w(int num,int on);
 void coin_lockout_w(int num,int on);
@@ -444,16 +448,16 @@ void record_movie_stop(void);
 void record_movie_frame(struct mame_bitmap *bitmap);
 
 /* disk handling */
-struct chd_file *get_disk_handle(int diskindex);
+chd_file *get_disk_handle(int diskindex);
 
 /* ROM processing */
-int rom_load(const struct RomModule *romp);
-const struct RomModule *rom_first_region(const struct GameDriver *drv);
-const struct RomModule *rom_next_region(const struct RomModule *romp);
-const struct RomModule *rom_first_file(const struct RomModule *romp);
-const struct RomModule *rom_next_file(const struct RomModule *romp);
-const struct RomModule *rom_first_chunk(const struct RomModule *romp);
-const struct RomModule *rom_next_chunk(const struct RomModule *romp);
+int rom_load(const rom_entry *romp);
+const rom_entry *rom_first_region(const game_driver *drv);
+const rom_entry *rom_next_region(const rom_entry *romp);
+const rom_entry *rom_first_file(const rom_entry *romp);
+const rom_entry *rom_next_file(const rom_entry *romp);
+const rom_entry *rom_first_chunk(const rom_entry *romp);
+const rom_entry *rom_next_chunk(const rom_entry *romp);
 
 
 

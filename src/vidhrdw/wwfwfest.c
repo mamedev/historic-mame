@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
+static tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
 int wwfwfest_pri;
 int wwfwfest_bg0_scrollx, wwfwfest_bg0_scrolly, wwfwfest_bg1_scrollx, wwfwfest_bg1_scrolly;
 data16_t *wwfwfest_fg0_videoram, *wwfwfest_bg0_videoram, *wwfwfest_bg1_videoram;
@@ -172,7 +172,7 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
     **- End of Comments -*/
 
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	data16_t *source = buffered_spriteram16;
 	data16_t *finish = source + 0x2000/2;
 

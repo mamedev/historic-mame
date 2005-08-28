@@ -9,7 +9,7 @@
 
 data16_t *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
 
-static struct tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
+static tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
 //static int legionna_enable;
 
 /******************************************************************************/

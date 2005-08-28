@@ -11,7 +11,7 @@ UINT8* videopin_video_ram;
 static int ball_x;
 static int ball_y;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -30,9 +30,9 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( videopin )
 {
-	tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_OPAQUE, 8, 8, 48, 32);
+	bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_OPAQUE, 8, 8, 48, 32);
 
-	if (tilemap == NULL)
+	if (bg_tilemap == NULL)
 	{
 		return 1;
 	}
@@ -46,9 +46,9 @@ VIDEO_UPDATE( videopin )
 	int col;
 	int row;
 
-	tilemap_set_scrollx(tilemap, 0, -8);   /* account for delayed loading of shift reg C6 */
+	tilemap_set_scrollx(bg_tilemap, 0, -8);   /* account for delayed loading of shift reg C6 */
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	for (row = 0; row < 32; row++)
 	{
@@ -118,7 +118,7 @@ WRITE8_HANDLER( videopin_video_ram_w )
 {
 	if (videopin_video_ram[offset] != data)
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	videopin_video_ram[offset] = data;

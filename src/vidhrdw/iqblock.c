@@ -8,7 +8,7 @@ data8_t *iqblock_fgvideoram;
 int iqblock_videoenable;
 int iqblock_vidhrdw_type;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 /***************************************************************************

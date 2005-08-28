@@ -65,7 +65,7 @@ static UINT8 bank_gfx[3][8];
 static UINT8 bank_color_shift[MAX_GFX_ELEMENTS];
 
 /* basic form of a graphics bank */
-static struct GfxLayout objlayout =
+static gfx_layout objlayout =
 {
 	8,8,	/* 8*8 sprites */
 	4096,	/* 4096 of them */

@@ -11,7 +11,7 @@
 
 unsigned char *suprloco_videoram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int control;
 
 #define SPR_Y_TOP		0

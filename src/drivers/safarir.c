@@ -48,7 +48,7 @@ size_t safarir_ram_size;
 
 static UINT8 *safarir_ram;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 WRITE8_HANDLER( safarir_ram_w )
@@ -201,7 +201,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
 	128,	/* 128 characters */
@@ -213,7 +213,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 2 },
 	{ REGION_GFX2, 0, &charlayout, 0, 2 },

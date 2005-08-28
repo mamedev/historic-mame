@@ -12,7 +12,7 @@
  Mike Beaver - Mimic, although not used as a reference, it was used as an
  inspiration & motivation :p
 
- St?phane Humbert - Dipswitch Information, Z80 Help, Lots of Notes of ROP, help
+ Stephane Humbert - Dipswitch Information, Z80 Help, Lots of Notes of ROP, help
  with the controller for ROP, and generally being an all round great guy to
  work with.
 

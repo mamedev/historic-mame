@@ -10,7 +10,7 @@
 UINT8 *battlane_spriteram;
 UINT8 *battlane_tileram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static int battlane_video_ctrl;
 extern int battlane_cpu_control;

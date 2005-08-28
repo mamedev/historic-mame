@@ -31,7 +31,7 @@
 #include "sound/ay8910.h"
 #include "sound/2203intf.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 static data8_t *videoram2;
 
@@ -651,7 +651,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static struct GfxLayout cntsteer_charlayout =
+static gfx_layout cntsteer_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -662,7 +662,7 @@ static struct GfxLayout cntsteer_charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout zerotrgt_charlayout =
+static gfx_layout zerotrgt_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -673,7 +673,7 @@ static struct GfxLayout zerotrgt_charlayout =
 	8*8	/* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout sprites =
+static gfx_layout sprites =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -685,7 +685,7 @@ static struct GfxLayout sprites =
 	16*16
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	0x400,
@@ -701,7 +701,7 @@ static struct GfxLayout tilelayout =
 	8*16
 };
 
-static struct GfxDecodeInfo cntsteer_gfxdecodeinfo[] =
+static gfx_decode cntsteer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &cntsteer_charlayout, 0, 256 }, /* Only 1 used so far :/ */
 	{ REGION_GFX2, 0x00000, &sprites,			  0, 256 },
@@ -710,7 +710,7 @@ static struct GfxDecodeInfo cntsteer_gfxdecodeinfo[] =
 };
 
 
-static struct GfxDecodeInfo zerotrgt_gfxdecodeinfo[] =
+static gfx_decode zerotrgt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &zerotrgt_charlayout, 0, 256 }, /* Only 1 used so far :/ */
 	{ REGION_GFX2, 0x00000, &sprites,			  0, 256 },

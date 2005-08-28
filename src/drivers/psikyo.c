@@ -1498,7 +1498,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1511,7 +1511,7 @@ static struct GfxLayout layout_16x16x4 =
 	16*16*4
 };
 
-static struct GfxDecodeInfo psikyo_gfxdecodeinfo[] =
+static gfx_decode psikyo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x000, 0x20 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x800, 0x48 }, // [1] Layer 0 + 1

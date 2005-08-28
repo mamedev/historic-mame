@@ -230,7 +230,7 @@ static void segar_common_screenrefresh(struct mame_bitmap *bitmap, int sprite_tr
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if ((sv.char_refresh) && (sv.dirtychar[videoram[offs]]))
+		if ((sv.char_refresh) || (sv.dirtychar[videoram[offs]]))
 			dirtybuffer[offs]=1;
 
 		/* Redraw every character if our palette or scene changed */
@@ -652,7 +652,7 @@ VIDEO_UPDATE( monsterb )
 		/* since last time and update it accordingly. */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			if ((sv.char_refresh) && (sv.dirtychar[videoram[offs]]))
+			if ((sv.char_refresh) || (sv.dirtychar[videoram[offs]]))
 				dirtybuffer[offs]=1;
 
 			/* Redraw every background character if our palette or scene changed */
@@ -829,7 +829,7 @@ VIDEO_UPDATE( sindbadm )
 		/* since last time and update it accordingly. */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			if ((sv.char_refresh) && (sv.dirtychar[videoram[offs]]))
+			if ((sv.char_refresh) || (sv.dirtychar[videoram[offs]]))
 				dirtybuffer[offs]=1;
 
 			/* Redraw every background character if our palette or scene changed */

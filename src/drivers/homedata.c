@@ -1178,7 +1178,7 @@ INPUT_PORTS_END
 /**************************************************************************/
 
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1189,14 +1189,14 @@ static struct GfxLayout char_layout =
 	32*8
 };
 
-static struct GfxDecodeInfo mrokumei_gfxdecodeinfo[] =
+static gfx_decode mrokumei_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0x6000, 0x100 },
 	{ REGION_GFX2, 0, &char_layout, 0x7000, 0x100 },
 	{ -1 }
 };
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1207,7 +1207,7 @@ static struct GfxLayout tile_layout =
 	64*8
 };
 
-static struct GfxDecodeInfo reikaids_gfxdecodeinfo[] =
+static gfx_decode reikaids_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0x6000, 0x20 },
 	{ REGION_GFX2, 0, &tile_layout, 0x4000, 0x20 },
@@ -1216,14 +1216,14 @@ static struct GfxDecodeInfo reikaids_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo pteacher_gfxdecodeinfo[] =
+static gfx_decode pteacher_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0x0000, 0x40 },
 	{ REGION_GFX2, 0, &tile_layout, 0x4000, 0x40 },
 	{ -1 }
 };
 
-static struct GfxLayout tile_layout_4bpp_hi =
+static gfx_layout tile_layout_4bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1234,7 +1234,7 @@ static struct GfxLayout tile_layout_4bpp_hi =
 	64*8
 };
 
-static struct GfxLayout tile_layout_4bpp_lo =
+static gfx_layout tile_layout_4bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1245,7 +1245,7 @@ static struct GfxLayout tile_layout_4bpp_lo =
 	64*8
 };
 
-static struct GfxDecodeInfo lemnangl_gfxdecodeinfo[] =
+static gfx_decode lemnangl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout_4bpp_hi, 0x0000, 0x200 },
 	{ REGION_GFX1, 0, &tile_layout_4bpp_lo, 0x2000, 0x200 },
@@ -1305,7 +1305,7 @@ static struct YM2203interface ym2203_interface =
 };
 
 
-UPD7810_CONFIG cpu_config =
+UPD7810_CONFIG upd_config =
 {
 	TYPE_7810,
 	NULL	/* io_callback */
@@ -1320,7 +1320,7 @@ static MACHINE_DRIVER_START( reikaids )
 	MDRV_CPU_VBLANK_INT(homedata_irq,1)	/* also triggered by the blitter */
 
 	MDRV_CPU_ADD(UPD7807, 8000000)	/* ??? MHz (max speed for the 7807 is 12MHz) */
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(upd_config)
 	MDRV_CPU_PROGRAM_MAP(reikaids_upd7807_readmem,reikaids_upd7807_writemem)
 	MDRV_CPU_IO_MAP(reikaids_upd7807_readport,reikaids_upd7807_writeport)
 	MDRV_CPU_VBLANK_INT(upd7807_irq,1)
@@ -1369,7 +1369,7 @@ static MACHINE_DRIVER_START( pteacher )
 	MDRV_CPU_VBLANK_INT(homedata_irq,1)	/* also triggered by the blitter */
 
 	MDRV_CPU_ADD_TAG("sound", UPD7807, 9000000)	/* 9MHz ? */
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(upd_config)
 	MDRV_CPU_PROGRAM_MAP(pteacher_upd7807_readmem,pteacher_upd7807_writemem)
 	MDRV_CPU_IO_MAP(pteacher_upd7807_readport,pteacher_upd7807_writeport)
 	MDRV_CPU_VBLANK_INT(upd7807_irq,1)

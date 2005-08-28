@@ -14,7 +14,7 @@ data8_t *xevious_fg_videoram,*xevious_fg_colorram;
 data8_t *xevious_bg_videoram,*xevious_bg_colorram;
 data8_t *xevious_sr1,*xevious_sr2,*xevious_sr3;
 
-static struct tilemap *fg_tilemap,*bg_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap;
 
 
 

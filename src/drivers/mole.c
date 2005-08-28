@@ -176,7 +176,7 @@ INPUT_PORTS_START( mole )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,8,	/* character size */
 	512,	/* number of characters */
@@ -188,7 +188,7 @@ static struct GfxLayout tile_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecode[] = {
+static gfx_decode gfxdecode[] = {
 	{ 1, 0x0000, &tile_layout, 0x00, 1 },
 	{ 1, 0x3000, &tile_layout, 0x00, 1 },
 	{ -1 }

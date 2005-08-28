@@ -683,7 +683,7 @@ INPUT_PORTS_START( playc10g )
 INPUT_PORTS_END
 
 
-static struct GfxLayout bios_charlayout =
+static gfx_layout bios_charlayout =
 {
     8,8,    /* 8*8 characters */
     1024,   /* 1024 characters */
@@ -694,7 +694,7 @@ static struct GfxLayout bios_charlayout =
     8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bios_charlayout,   0,  32 },
 	{ -1 }

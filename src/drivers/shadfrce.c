@@ -22,7 +22,7 @@ Stephh's notes :
 
 -- Read Me --
 
-Shadow Force ?1993 Technos
+Shadow Force (c)1993 Technos
 TA-0032-P1-23
 
 CPU: 68000
@@ -491,7 +491,7 @@ INPUT_PORTS_END
 
 /* Graphic Decoding */
 
-static struct GfxLayout fg8x8x4_layout =
+static gfx_layout fg8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -502,7 +502,7 @@ static struct GfxLayout fg8x8x4_layout =
 	32*8
 };
 
-static struct GfxLayout sp16x16x5_layout =
+static gfx_layout sp16x16x5_layout =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -513,7 +513,7 @@ static struct GfxLayout sp16x16x5_layout =
 	16*16
 };
 
-static struct GfxLayout bg16x16x6_layout =
+static gfx_layout bg16x16x6_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -524,7 +524,7 @@ static struct GfxLayout bg16x16x6_layout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fg8x8x4_layout,   0x0000, 256 },
 	{ REGION_GFX2, 0, &sp16x16x5_layout, 0x1000, 128 },

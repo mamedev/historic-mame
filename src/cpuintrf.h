@@ -382,7 +382,7 @@ enum
  *
  *************************************/
 
-struct cpu_interface
+struct _cpu_interface
 {
 	/* table of core functions */
 	void		(*get_info)(UINT32 state, union cpuinfo *info);
@@ -401,6 +401,7 @@ struct cpu_interface
 	int			address_shift;
 	int *		icount;
 };
+typedef struct _cpu_interface cpu_interface;
 
 
 
@@ -652,9 +653,9 @@ void cpu_dump_states(void);
  *************************************/
 
 /* return a pointer to the interface struct for a given CPU type */
-INLINE const struct cpu_interface *cputype_get_interface(int cputype)
+INLINE const cpu_interface *cputype_get_interface(int cputype)
 {
-	extern struct cpu_interface cpuintrf[];
+	extern cpu_interface cpuintrf[];
 	return &cpuintrf[cputype];
 }
 

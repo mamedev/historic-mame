@@ -15,7 +15,7 @@ UINT8 *rockola_charram;
 static int charbank;
 static int backcolor;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 

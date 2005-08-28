@@ -15,7 +15,7 @@ size_t slapfight_videoram_size;
 unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 static int flipscreen;
 
-static struct tilemap *pf1_tilemap,*fix_tilemap;
+static tilemap *pf1_tilemap,*fix_tilemap;
 
 
 

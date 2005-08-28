@@ -1100,7 +1100,7 @@ INPUT_PORTS_END
                         GFX DECODING
 ***********************************************************/
 
-static struct GfxLayout wgp_tilelayout =
+static gfx_layout wgp_tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -1111,7 +1111,7 @@ static struct GfxLayout wgp_tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout wgp_tile2layout =
+static gfx_layout wgp_tile2layout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -1122,7 +1122,7 @@ static struct GfxLayout wgp_tile2layout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -1136,7 +1136,7 @@ static struct GfxLayout charlayout =
 /* taitoic.c TC0100SCN routines expect scr stuff to be in second gfx
    slot */
 
-static struct GfxDecodeInfo wgp_gfxdecodeinfo[] =
+static gfx_decode wgp_gfxdecodeinfo[] =
 {
 	{ REGION_GFX3, 0x0, &wgp_tilelayout,  0, 256 },		/* sprites */
 	{ REGION_GFX1, 0x0, &charlayout,  0, 256 },		/* sprites & playfield */

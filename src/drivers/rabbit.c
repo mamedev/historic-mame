@@ -103,7 +103,7 @@ static int rabbit_vblirqlevel, rabbit_bltirqlevel, rabbit_banking;
 data32_t *rabbit_tilemap_ram[4];
 
 data32_t *rabbit_spriteram;
-static struct tilemap *rabbit_tilemap[4];
+static tilemap *rabbit_tilemap[4];
 
 /* call with tilesize = 0 for 8x8 or 1 for 16x16 */
 INLINE void get_rabbit_tilemap_info(int whichtilemap, int tilesize, int tile_index)
@@ -217,7 +217,7 @@ sprites invisible at the end of a round in rabbit, why?
 static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
 	int xpos,ypos,tileno,xflip,yflip, colr;
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int todraw = (rabbit_spriteregs[5]&0x0fff0000)>>16; // how many sprites to draw (start/end reg..) what is the other half?
 
 	data32_t *source = (rabbit_spriteram+ (todraw*2))-2;
@@ -934,7 +934,7 @@ INPUT_PORTS_START( tmmjprd )
 INPUT_PORTS_END
 
 
-static struct GfxLayout rabbit_sprite_8x8x4_layout =
+static gfx_layout rabbit_sprite_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -945,7 +945,7 @@ static struct GfxLayout rabbit_sprite_8x8x4_layout =
 	8*32
 };
 
-static struct GfxLayout rabbit_sprite_8x8x8_layout =
+static gfx_layout rabbit_sprite_8x8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -958,7 +958,7 @@ static struct GfxLayout rabbit_sprite_8x8x8_layout =
 
 
 
-static struct GfxLayout rabbit_sprite_16x16x4_layout =
+static gfx_layout rabbit_sprite_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -969,7 +969,7 @@ static struct GfxLayout rabbit_sprite_16x16x4_layout =
 	16*32
 };
 
-static struct GfxLayout rabbit_sprite_16x16x8_layout =
+static gfx_layout rabbit_sprite_16x16x8_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -980,7 +980,7 @@ static struct GfxLayout rabbit_sprite_16x16x8_layout =
 	16*64
 };
 
-static struct GfxLayout rabbit_8x8x4_layout =
+static gfx_layout rabbit_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -991,7 +991,7 @@ static struct GfxLayout rabbit_8x8x4_layout =
 	8*32
 };
 
-static struct GfxLayout rabbit_16x16x4_layout =
+static gfx_layout rabbit_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1002,7 +1002,7 @@ static struct GfxLayout rabbit_16x16x4_layout =
 	16*64
 };
 
-static struct GfxLayout rabbit_8x8x8_layout =
+static gfx_layout rabbit_8x8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1013,7 +1013,7 @@ static struct GfxLayout rabbit_8x8x8_layout =
 	8*64
 };
 
-static struct GfxLayout rabbit_16x16x8_layout =
+static gfx_layout rabbit_16x16x8_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1025,7 +1025,7 @@ static struct GfxLayout rabbit_16x16x8_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	/* this seems to be sprites */
 	{ REGION_USER1, 0, &rabbit_sprite_8x8x4_layout,   0x0, 0x1000  },

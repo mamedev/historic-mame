@@ -38,7 +38,7 @@ Any fixes for this driver should be forwarded to the AGEMAME forum at (http://ww
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( ampoker2_videoram_w )
 {
@@ -257,7 +257,7 @@ INPUT_PORTS_START( ampoker2 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	1024,
@@ -268,7 +268,7 @@ static struct GfxLayout charlayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 16 },
 	{ -1 }
@@ -344,6 +344,16 @@ ROM_START( ampokr2b )
 	ROM_LOAD( "poker9.028", 0x0000, 0x4000, CRC(65bccb40) SHA1(75f154a2aaf9f9be62e0e1dd8cbe630b9ea0145c) )
 ROM_END
 
+ROM_START( ampokr2c )
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )
+	ROM_LOAD( "poker7.001", 0x0000, 0x10000, CRC(eca16b9e) SHA1(5063d733721457ab3b08caafbe8d33b2cbe4f88b) )
+	ROM_COPY( REGION_CPU1, 0x4000, 0x0000, 0x4000 ) // poker7.001 contains the 1st and 2nd 16K quarters swapped
+	ROM_COPY( REGION_CPU1, 0x0000, 0x4000, 0x4000 ) // poker7.001 contains the 1st and 2nd 16K quarters swapped
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "poker7.002", 0x0000, 0x4000, CRC(65bccb40) SHA1(75f154a2aaf9f9be62e0e1dd8cbe630b9ea0145c) )
+ROM_END
+
 static DRIVER_INIT( ampoker2 )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -359,3 +369,4 @@ static DRIVER_INIT( ampoker2 )
 GAMEX( 198?, ampoker2, 0,        ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 1)", GAME_NOT_WORKING )
 GAMEX( 198?, ampokr2a, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 2)", GAME_NOT_WORKING )
 GAMEX( 198?, ampokr2b, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 3)", GAME_NOT_WORKING )
+GAMEX( 198?, ampokr2c, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 4)", GAME_NOT_WORKING )

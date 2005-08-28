@@ -36,7 +36,7 @@ static UINT16* LSFR;
 
 static struct mame_bitmap* helper;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static UINT32 get_memory_offset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -59,14 +59,14 @@ VIDEO_START( starshp1 )
 
 	int i;
 
-	if ((tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_TRANSPARENT, 16, 8, 32, 32)) == 0)
+	if ((bg_tilemap = tilemap_create(get_tile_info, get_memory_offset, TILEMAP_TRANSPARENT, 16, 8, 32, 32)) == 0)
 	{
 		return 1;
 	}
 
-	tilemap_set_transparent_pen(tilemap, 0);
+	tilemap_set_transparent_pen(bg_tilemap, 0);
 
-	tilemap_set_scrollx(tilemap, 0, -8);
+	tilemap_set_scrollx(bg_tilemap, 0, -8);
 
 	if ((LSFR = auto_malloc(0x20000)) == 0)
 	{
@@ -148,7 +148,7 @@ WRITE8_HANDLER( starshp1_playfield_w )
 
 		if (starshp1_playfield_ram[offset] != data)
 		{
-			tilemap_mark_tile_dirty(tilemap, offset);
+			tilemap_mark_tile_dirty(bg_tilemap, offset);
 		}
 
 		starshp1_playfield_ram[offset] = data;
@@ -404,7 +404,7 @@ VIDEO_UPDATE( starshp1 )
 	if (starshp1_circle_kill == 0 && starshp1_circle_mod == 0)
 		draw_circle(bitmap);
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	if (starshp1_phasor != 0)
 		draw_phasor(bitmap);

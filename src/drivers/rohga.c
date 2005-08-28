@@ -704,7 +704,7 @@ INPUT_PORTS_END
 
 /**********************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -715,7 +715,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -728,7 +728,7 @@ static struct GfxLayout spritelayout =
 	128*8
 };
 
-static struct GfxLayout spritelayout_6bpp =
+static gfx_layout spritelayout_6bpp =
 {
 	16,16,
 	4096*8,
@@ -741,7 +741,7 @@ static struct GfxLayout spritelayout_6bpp =
 	64*8
 };
 
-static struct GfxLayout spritelayout2 =
+static gfx_layout spritelayout2 =
 {
 	16,16,
 	4096*8,
@@ -754,7 +754,7 @@ static struct GfxLayout spritelayout2 =
 	64*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -767,7 +767,7 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */
@@ -776,7 +776,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_wizdfire[] =
+static gfx_decode gfxdecodeinfo_wizdfire[] =
 {
 	{ REGION_GFX1, 0, &charlayout,        0, 32 },	/* Gfx chip 1 as 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,        0, 32 },	/* Gfx chip 1 as 16x16 */
@@ -786,7 +786,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_wizdfire[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_schmeisr[] =
+static gfx_decode gfxdecodeinfo_schmeisr[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */

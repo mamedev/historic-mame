@@ -211,7 +211,7 @@ INPUT_PORTS_START( spcforc2 )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 chars */
 	512,    /* 512 characters */
@@ -223,7 +223,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 8 },
 	{ -1 } /* end of array */

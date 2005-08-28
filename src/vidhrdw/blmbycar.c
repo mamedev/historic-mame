@@ -75,7 +75,7 @@ WRITE16_HANDLER( blmbycar_palette_w )
 
 ***************************************************************************/
 
-static struct tilemap *tilemap_0, *tilemap_1;
+static tilemap *tilemap_0, *tilemap_1;
 
 #define DIM_NX		(0x40)
 #define DIM_NY		(0x20)

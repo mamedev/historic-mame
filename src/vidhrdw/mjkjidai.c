@@ -5,7 +5,7 @@
 data8_t *mjkjidai_videoram;
 
 static int display_enable;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 

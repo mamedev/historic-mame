@@ -4,7 +4,7 @@
 #include "vidhrdw/taitoic.h"
 
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 data16_t *darius_fg_ram;
 
 struct tempsprite

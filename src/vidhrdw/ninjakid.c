@@ -3,7 +3,7 @@
 #include "state.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 static int flipscreen;
 static UINT8 ninjakun_xscroll,ninjakun_yscroll;
 
@@ -216,7 +216,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x800;
 
-	const struct GfxElement *gfx = Machine->gfx[2];
+	const gfx_element *gfx = Machine->gfx[2];
 
 	while( source<finish ){
 		int tile_number = source[0];

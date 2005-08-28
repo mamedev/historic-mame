@@ -252,7 +252,7 @@ INPUT_PORTS_START( rockrage )
 
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,			/* 8*8 characters */
 	0x20000/16,		/* 8192 characters */
@@ -263,7 +263,7 @@ static struct GfxLayout charlayout =
 	16*8		/* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,8,			/* 8*8 sprites */
 	0x40000/32,	/* 8192 sprites */
@@ -274,7 +274,7 @@ static struct GfxLayout spritelayout =
 	32*8			/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   64, 32 },	/* colors 00..31, but using 2 lookup tables */
 	{ REGION_GFX2, 0, &spritelayout, 32,  1 },	/* colors 32..63 */

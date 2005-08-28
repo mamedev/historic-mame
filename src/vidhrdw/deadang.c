@@ -1,6 +1,6 @@
 #include "vidhrdw/generic.h"
 
-static struct tilemap *pf3_layer,*pf2_layer,*pf1_layer,*text_layer;
+static tilemap *pf3_layer,*pf2_layer,*pf1_layer,*text_layer;
 static int deadangle_tilebank, deadangle_oldtilebank;
 data8_t *deadang_video_data,*deadang_scroll_ram;
 

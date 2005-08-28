@@ -58,7 +58,7 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 
     **- End Sprite Format -*/
 
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	data32_t *source = spriteram32;
 	data16_t *list = (data16_t *)spriteram32 + 0x2c00/2 + 0x04/2; /* 0x2c00/0x2c02 what are these for, pointers? one for each screen */
 	data16_t listlen=(0xc00/2 - 0x04/2), listcntr=0;

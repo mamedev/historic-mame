@@ -72,7 +72,7 @@ static void VS920A_init(int numchips)
 	}
 }
 
-static struct tilemap* VS920A_get_tilemap(int numchip)
+static tilemap* VS920A_get_tilemap(int numchip)
 {
 	return VS920A[numchip].tmap;
 }
@@ -232,7 +232,7 @@ void MB60553_draw(int numchip, struct mame_bitmap* screen, const struct rectangl
 	tilemap_draw(screen, cliprect, MB60553_cur_chip->tmap, 0, priority);
 }
 
-struct tilemap* MB60553_get_tilemap(int numchip)
+tilemap* MB60553_get_tilemap(int numchip)
 {
 	return MB60553[numchip].tmap;
 }

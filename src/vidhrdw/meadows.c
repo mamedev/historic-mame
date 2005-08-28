@@ -13,7 +13,7 @@
 #define SPR_ADJUST_Y    -14
 
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /*************************************

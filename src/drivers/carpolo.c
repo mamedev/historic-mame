@@ -182,7 +182,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -196,7 +196,7 @@ static struct GfxLayout spritelayout =
 	16*8
 };
 
-static struct GfxLayout goallayout =
+static gfx_layout goallayout =
 {
 	8,32,
 	1,
@@ -209,7 +209,7 @@ static struct GfxLayout goallayout =
 	0
 };
 
-static struct GfxLayout alphalayout =
+static gfx_layout alphalayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -220,7 +220,7 @@ static struct GfxLayout alphalayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout, 0,         12 },
 	{ REGION_GFX2, 0, &goallayout,   12*2,      2 },

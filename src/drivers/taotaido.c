@@ -340,7 +340,7 @@ INPUT_PORTS_START( taotaido )
 INPUT_PORTS_END
 
 
-static struct GfxLayout taotaido_layout =
+static gfx_layout taotaido_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -353,7 +353,7 @@ static struct GfxLayout taotaido_layout =
 	128*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &taotaido_layout,  0x000, 256  }, /* sprites */
 	{ REGION_GFX2, 0, &taotaido_layout,  0x300, 256  }, /* bg tiles */

@@ -13,6 +13,7 @@
 
 #include "driver.h"
 #include "namco.h"
+#include "state.h"
 
 
 /* 8 voices max */
@@ -393,9 +394,15 @@ static void *namco_start(int sndindex, int clock, const void *config)
 	/* start with sound enabled, many games don't have a sound enable register */
 	chip->sound_enable = 1;
 
+	/* register with the save state system */
+	state_save_register_int("namco", sndindex, "num_voices", &chip->num_voices);
+	state_save_register_int("namco", sndindex, "sound_enable", &chip->sound_enable);
+
 	/* reset all the voices */
 	for (voice = chip->channel_list; voice < chip->last_channel; voice++)
 	{
+		int state_index = sndindex * MAX_VOICES + (voice - chip->channel_list);
+
 		voice->frequency = 0;
 		voice->volume[0] = voice->volume[1] = 0;
 		voice->waveform_select = 0;
@@ -405,6 +412,18 @@ static void *namco_start(int sndindex, int clock, const void *config)
 		voice->noise_seed = 1;
 		voice->noise_counter = 0;
 		voice->noise_hold = 0;
+
+		/* register with the save state system */
+		state_save_register_UINT32("namco", state_index, "frequency", &voice->frequency, 1);
+		state_save_register_UINT32("namco", state_index, "counter", &voice->counter, 1);
+		state_save_register_int   ("namco", state_index, "volume0", &voice->volume[0]);
+		state_save_register_int   ("namco", state_index, "volume1", &voice->volume[1]);
+		state_save_register_int   ("namco", state_index, "noise_sw", &voice->noise_sw);
+		state_save_register_int   ("namco", state_index, "noise_state", &voice->noise_state);
+		state_save_register_int   ("namco", state_index, "noise_seed", &voice->noise_seed);
+		state_save_register_int   ("namco", state_index, "noise_hold", &voice->noise_hold);
+		state_save_register_UINT32("namco", state_index, "noise_counter", &voice->noise_counter, 1);
+		state_save_register_int   ("namco", state_index, "waveform_select", &voice->waveform_select);
 	}
 
 	return chip;

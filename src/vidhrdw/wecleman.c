@@ -46,7 +46,7 @@ size_t wecleman_roadram_size;
 int wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
 
 /* Variables only used here: */
-static struct tilemap *bg_tilemap, *fg_tilemap, *txt_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *txt_tilemap;
 
 static struct sprite *sprite_list;
 static struct sprite **spr_ptr_list;
@@ -646,7 +646,7 @@ static void wecleman_draw_road(struct mame_bitmap *bitmap, const struct rectangl
 
 // blends two 8x8x16bpp direct RGB tilemaps
 static void wecleman_draw_cloud( struct mame_bitmap *bitmap,
-				 struct GfxElement *gfx,
+				 gfx_element *gfx,
 				 data16_t *tm_base,
 				 int x0, int y0,				// target coordinate
 				 int xcount, int ycount,		// number of tiles to draw in x and y

@@ -749,7 +749,7 @@ struct SearchRegion
 	UINT8	flags;
 
 	UINT8	* cachedPointer;
-	const struct address_map_t
+	const address_map
 			* writeHandler;
 
 	UINT8	* first;
@@ -892,8 +892,6 @@ static INT32				menuItemInfoLength = 0;
 static int					useClassicSearchBox = 1;
 static int					dontPrintNewLabels = 0;
 static int					autoSaveEnabled = 0;
-
-extern int					uirotcharwidth, uirotcharheight;
 
 static const char *	kCheatNameTemplates[] =
 {
@@ -1493,6 +1491,31 @@ static int ReadKeyAsync(int flush)
 
 #endif
 
+
+static void old_style_menu(const char **items, const char **subitems, char *flag, int selected, int arrowize_subitem)
+{
+	static ui_menu_item item_list[1000];
+	int menu_items;
+
+	for (menu_items = 0; items[menu_items]; menu_items++)
+	{
+		item_list[menu_items].text = items[menu_items];
+		item_list[menu_items].subtext = subitems ? subitems[menu_items] : NULL;
+		item_list[menu_items].flags = 0;
+		if (flag && flag[menu_items])
+			item_list[menu_items].flags |= MENU_FLAG_INVERT;
+		if (menu_items == selected)
+		{
+			if (arrowize_subitem & 1)
+				item_list[menu_items].flags |= MENU_FLAG_LEFT_ARROW;
+			if (arrowize_subitem & 2)
+				item_list[menu_items].flags |= MENU_FLAG_RIGHT_ARROW;
+		}
+	}
+	ui_draw_menu(item_list, menu_items, selected);
+}
+
+
 static int UIPressedRepeatThrottle(int code, int baseSpeed)
 {
 	static int	lastCode = -1;
@@ -1745,7 +1768,7 @@ void cheat_init(void)
 	dontPrintNewLabels =	0;
 	autoSaveEnabled =		0;
 
-	fullMenuPageHeight =	screenHeight / (3 * uirotcharheight / 2) - 1;
+	fullMenuPageHeight =	screenHeight / ui_get_line_height() - 1;
 
 	BuildCPUInfoList();
 
@@ -1837,11 +1860,13 @@ int cheat_menu(int selection)
 		kMenu_Max
 	};
 
-	const char		* menu_item[kMenu_Max + 1];
+	ui_menu_item	menu_item[kMenu_Max + 1];
 	INT32			sel;
 	UINT8			total;
 	static INT32	submenu_choice = 0;
 	static int		firstEntry = 0;
+
+	memset(menu_item, 0, sizeof(menu_item));
 
 	cheatEngineWasActive = 1;
 
@@ -1904,19 +1929,18 @@ int cheat_menu(int selection)
 		return sel + 1;
 	}
 
-	menu_item[total++] = ui_getstring(UI_enablecheat);
-	menu_item[total++] = ui_getstring(UI_addeditcheat);
-	menu_item[total++] = ui_getstring(UI_startcheat);
-	menu_item[total++] = ui_getstring(UI_continuesearch);
-	menu_item[total++] = ui_getstring(UI_viewresults);
-	menu_item[total++] = ui_getstring(UI_restoreresults);
-	menu_item[total++] = ui_getstring(UI_memorywatch);
-	menu_item[total++] = ui_getstring(UI_generalhelp);
-	menu_item[total++] = ui_getstring(UI_options);
-	menu_item[total++] = ui_getstring(UI_returntomain);
-	menu_item[total] = 0;
+	menu_item[total++].text = ui_getstring(UI_enablecheat);
+	menu_item[total++].text = ui_getstring(UI_addeditcheat);
+	menu_item[total++].text = ui_getstring(UI_startcheat);
+	menu_item[total++].text = ui_getstring(UI_continuesearch);
+	menu_item[total++].text = ui_getstring(UI_viewresults);
+	menu_item[total++].text = ui_getstring(UI_restoreresults);
+	menu_item[total++].text = ui_getstring(UI_memorywatch);
+	menu_item[total++].text = ui_getstring(UI_generalhelp);
+	menu_item[total++].text = ui_getstring(UI_options);
+	menu_item[total++].text = ui_getstring(UI_returntomain);
 
-	//ui_draw_menu(menu_item, 0, 0, sel, 0);
+	ui_draw_menu(menu_item, total, sel);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -2529,7 +2553,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 				sel++;
 	}
 
-	//ui_draw_menu(menu_item, menu_subitem, flagBuf, sel, 0);
+	old_style_menu(menu_item, menu_subitem, flagBuf, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -3727,7 +3751,7 @@ static int EditCheatMenu(CheatEntry * entry, int selection)
 	if(editActive)
 		flagBuf[sel] = 1;
 
-	//ui_draw_menu(menuItem, menuSubItem, flagBuf, sel, 0);
+	old_style_menu(menuItem, menuSubItem, flagBuf, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -4683,7 +4707,7 @@ static int DoSearchMenuClassic(int selection, int startNew)
 		menu_subitem[kMenu_Slow] =		bitStrings[search->oldOptions.slow];
 	}
 
-	//ui_draw_menu(menu_item, menu_subitem, 0, sel, 0);
+	old_style_menu(menu_item, menu_subitem, 0, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -5074,7 +5098,7 @@ static int DoSearchMenu(int selection, int startNew)
 	if(editActive)
 		flagBuf[sel] = 1;
 
-	//ui_draw_menu(menu_item, menu_subitem, flagBuf, sel, 0);
+	old_style_menu(menu_item, menu_subitem, flagBuf, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -5372,7 +5396,7 @@ static int AddEditCheatMenu(int selection)
 	if(sel >= total)
 		sel = total - 1;
 
-	//ui_draw_menu(menu_item, NULL, NULL, sel, 0);
+	old_style_menu(menu_item, NULL, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -5635,7 +5659,7 @@ static int ViewSearchResults(int selection, int firstTime)
 	if(sel > (total - 1))
 		sel = total - 1;
 
-	//ui_draw_menu(menu_item, NULL, NULL, sel, 0);
+	old_style_menu(menu_item, NULL, NULL, sel, 0);
 
 	if(code_pressed_memory(KEYCODE_END))
 	{
@@ -5871,7 +5895,7 @@ static int ChooseWatch(int selection)
 	else
 		watch = NULL;
 
-	//ui_draw_menu(menuItem, NULL, NULL, sel, 0);
+	old_style_menu(menuItem, NULL, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -6158,7 +6182,7 @@ static int EditWatch(WatchInfo * entry, int selection)
 	if(editActive)
 		flagBuf[sel] = 1;
 
-	//ui_draw_menu(menuItem, menuSubItem, flagBuf, sel, 0);
+	old_style_menu(menuItem, menuSubItem, flagBuf, sel, 0);
 
 	if(AltKeyPressed())
 		increment <<= 4;
@@ -6575,7 +6599,7 @@ static int SelectSearchRegions(int selection, SearchInfo * search)
 	else
 		region = NULL;
 
-	//ui_draw_menu(menuItem, menuSubItem, NULL, sel, 0);
+	old_style_menu(menuItem, menuSubItem, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -6741,7 +6765,7 @@ static int SelectSearch(int selection)
 	if(sel > (total - 1))
 		sel = total - 1;
 
-	//ui_draw_menu(menuItem, NULL, NULL, sel, 0);
+	old_style_menu(menuItem, NULL, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_DOWN, kVerticalKeyRepeatRate))
 	{
@@ -6939,7 +6963,7 @@ static int SelectOptions(int selection)
 	menuItem[total] =		NULL;
 	menuSubItem[total] =	NULL;
 
-	//ui_draw_menu(menuItem, menuSubItem, NULL, sel, 0);
+	old_style_menu(menuItem, menuSubItem, NULL, sel, 0);
 
 	if(UIPressedRepeatThrottle(IPT_UI_RIGHT, kHorizontalSlowKeyRepeatRate))
 	{
@@ -7153,14 +7177,14 @@ void cheat_display_watches(void)
 				case kWatchLabel_Address:
 					numChars = sprintf(buf, "%.8X: ", info->address);
 
-					ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+					ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 					xOffset += numChars;
 					break;
 
 				case kWatchLabel_String:
 					numChars = sprintf(buf, "%s: ", info->label);
 
-					ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+					ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 					xOffset += numChars;
 					break;
 			}
@@ -7187,7 +7211,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_Hex:
 						numChars = sprintf(buf, "%.*X", kSearchByteDigitsTable[info->elementBytes], data);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7195,7 +7219,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_Decimal:
 						numChars = sprintf(buf, "%.*d", kSearchByteDecDigitsTable[info->elementBytes], data);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7203,7 +7227,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_Binary:
 						numChars = PrintBinary(buf, data, kSearchByteMaskTable[info->elementBytes]);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						xOffset++;
 						break;
@@ -7211,7 +7235,7 @@ void cheat_display_watches(void)
 					case kWatchDisplayType_ASCII:
 						numChars = PrintASCII(buf, data, info->elementBytes);
 
-						ui_draw_text(buf, xOffset * uirotcharwidth + info->x, yOffset * uirotcharheight + info->y);
+						ui_draw_text(buf, xOffset * ui_get_char_width('0') + info->x, yOffset * ui_get_line_height() + info->y);
 						xOffset += numChars;
 						break;
 				}
@@ -7469,7 +7493,7 @@ static void DisposeAction(CheatAction * action)
 static void InitWatch(WatchInfo * info, UINT32 idx)
 {
 	if(idx > 0)
-		info->y = watchList[idx - 1].y + uirotcharheight;
+		info->y = watchList[idx - 1].y + ui_get_line_height();
 	else
 		info->y = 0;
 }
@@ -8146,7 +8170,7 @@ static void BuildSearchRegions(SearchInfo * info)
 			}
 			else if(info->targetIdx < cpu_gettotalcpu())
 			{
-				const struct address_map_t			* map = NULL;
+				const address_map			* map = NULL;
 				SearchRegion						* traverse;
 				int									count = 0;
 
@@ -9278,7 +9302,7 @@ static void DoSearch(SearchInfo * search)
 
 static UINT8 ** LookupHandlerMemory(UINT8 cpu, UINT32 address, UINT32 * outRelativeAddress)
 {
-	const struct address_map_t	* map = memory_get_map(cpu, ADDRESS_SPACE_PROGRAM);
+	const address_map	* map = memory_get_map(cpu, ADDRESS_SPACE_PROGRAM);
 
 	while(!IS_AMENTRY_END(map))
 	{
@@ -10347,7 +10371,7 @@ static void BuildCPUInfoList(void)
 
 	// do regions
 	{
-		const struct RomModule *	traverse = rom_first_region(Machine->gamedrv);
+		const rom_entry *	traverse = rom_first_region(Machine->gamedrv);
 
 		memset(regionInfoList, 0, sizeof(CPUInfo) * kRegionListLength);
 

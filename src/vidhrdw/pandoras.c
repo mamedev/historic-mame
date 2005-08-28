@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 static int flipscreen;
-static struct tilemap *layer0;
+static tilemap *layer0;
 extern unsigned char *pandoras_sharedram;
 
 /***********************************************************************

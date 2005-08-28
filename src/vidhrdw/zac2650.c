@@ -14,7 +14,7 @@ int dirtychar[16];
 int CollisionBackground;
 int CollisionSprite;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /**************************************************************/

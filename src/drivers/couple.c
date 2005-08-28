@@ -37,7 +37,7 @@ Provided to you by Thierry (ShinobiZ) & Gerald (COY)
 #include "sound/ay8910.h"
 #include "vidhrdw/crtc6845.h"
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 static data8_t *vram_lo,*vram_hi;
 static data8_t *backup_ram;
 
@@ -64,9 +64,9 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( couple )
 {
-	tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
+	bg_tilemap = tilemap_create(get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
-	if(!tilemap)
+	if(!bg_tilemap)
 		return 1;
 
 	return 0;
@@ -74,19 +74,19 @@ VIDEO_START( couple )
 
 VIDEO_UPDATE( couple )
 {
-	tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
 static WRITE8_HANDLER( couple_vram_lo_w )
 {
 	vram_lo[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
 static WRITE8_HANDLER( couple_vram_hi_w )
 {
 	vram_hi[offset] = data;
-	tilemap_mark_tile_dirty(tilemap,offset);
+	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
 static READ8_HANDLER( dummy_inputs_r )
@@ -401,7 +401,7 @@ INPUT_PORTS_START( couplep )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tiles8x8x4_layout =
+static gfx_layout tiles8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -412,7 +412,7 @@ static struct GfxLayout tiles8x8x4_layout =
 	16*8
 };
 
-static struct GfxLayout tiles8x8x3_layout =
+static gfx_layout tiles8x8x3_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -423,7 +423,7 @@ static struct GfxLayout tiles8x8x3_layout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8x3_layout, 0, 32 },
 	{ REGION_GFX2, 0, &tiles8x8x4_layout, 0, 16 },

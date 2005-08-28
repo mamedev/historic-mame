@@ -170,7 +170,7 @@ VIDEO_UPDATE( snowbro3 )
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
-		struct GfxElement *gfx = Machine->gfx[0];
+		gfx_element *gfx = Machine->gfx[0];
 		int dx = spriteram16[offs+4] & 0xff;
 		int dy = spriteram16[offs+5] & 0xff;
 		int tilecolour = spriteram16[offs+3];

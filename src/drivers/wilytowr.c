@@ -34,7 +34,7 @@ UINT8 *wilytowr_videoram2, *wilytowr_scrollram;
 
 static int pal_bank, fg_flag, sy_offset;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 PALETTE_INIT( wilytowr )
@@ -469,7 +469,7 @@ INPUT_PORTS_START( fghtbskt )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -480,7 +480,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -491,7 +491,7 @@ static struct GfxLayout tilelayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -505,7 +505,7 @@ static struct GfxLayout spritelayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   256, 1 },
 	{ REGION_GFX2, 0, &tilelayout,     0, 32 },
@@ -513,7 +513,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo fghtbskt_gfxdecodeinfo[] =
+static gfx_decode fghtbskt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   16, 1 },
 	{ REGION_GFX2, 0, &tilelayout,    0, 32 },

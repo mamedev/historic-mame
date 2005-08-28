@@ -17,7 +17,7 @@ static UINT16 ddragon3_fg_scrollx;
 static UINT16 ddragon3_fg_scrolly;
 static UINT16 ddragon3_bg_tilebase;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 
 WRITE16_HANDLER( ddragon3_scroll16_w )

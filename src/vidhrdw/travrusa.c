@@ -19,7 +19,7 @@ extern size_t spriteram_size;
 
 unsigned char *travrusa_videoram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 

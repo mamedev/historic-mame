@@ -2266,7 +2266,7 @@ static UINT8 stv_vdp2_check_vram_cycle_pattern_registers(
 	return access_command_ok == 3 ? 1 : 0;
 }
 
-static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
 		int sprite_screen_width, int sprite_screen_height)

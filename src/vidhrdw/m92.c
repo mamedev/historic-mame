@@ -43,7 +43,7 @@
 #include "vidhrdw/generic.h"
 #include "state.h"
 
-static struct tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer;
+static tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer;
 static int pf1_control[8],pf2_control[8],pf3_control[8],pf4_control[8];
 static int pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr;
 static int pf1_enable,pf2_enable,pf3_enable;

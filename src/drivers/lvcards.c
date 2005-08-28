@@ -177,7 +177,7 @@ INPUT_PORTS_START( lvcards )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	2048,   /* 2048 characters */
@@ -188,7 +188,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 16 },
 	{ -1 }

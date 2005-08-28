@@ -10,7 +10,7 @@ enable / disable tilemap bits might be wrong
 #include "vidhrdw/generic.h"
 
 
-static struct tilemap *tx_tilemap,*bgbot_tilemap ,*bgtop_tilemap;
+static tilemap *tx_tilemap,*bgbot_tilemap ,*bgtop_tilemap;
 
 data8_t *angelkds_txvideoram, *angelkds_bgbotvideoram, *angelkds_bgtopvideoram;
 
@@ -152,7 +152,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 {
 	const UINT8 *source = spriteram+0x100-4;
 	const UINT8 *finish = spriteram;
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 
 	while( source>=finish )
 	{

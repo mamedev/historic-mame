@@ -11,7 +11,7 @@
 UINT8 *sbrkout_horiz_ram;
 UINT8 *sbrkout_vert_ram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( sbrkout_videoram_w )
 {

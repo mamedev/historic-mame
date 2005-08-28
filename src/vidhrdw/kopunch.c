@@ -6,7 +6,7 @@ UINT8 *kopunch_videoram2;
 static INT8 scroll[2]; // REMOVE
 static int gfxbank, gfxflip;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 PALETTE_INIT( kopunch )
 {

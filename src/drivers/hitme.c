@@ -18,7 +18,7 @@
 #include "hitme.h"
 #include "sound/discrete.h"
 
-static struct tilemap *hitme_tilemap;
+static tilemap *hitme_tilemap;
 static mame_time timeout_time;
 static data8_t *hitme_vidram;
 
@@ -255,7 +255,7 @@ ADDRESS_MAP_END
     character.
 */
 
-static struct GfxLayout hitme_charlayout =
+static gfx_layout hitme_charlayout =
 {
 	8,10,
 	RGN_FRAC(1,1),
@@ -266,14 +266,14 @@ static struct GfxLayout hitme_charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo hitme_gfxdecodeinfo[] =
+static gfx_decode hitme_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hitme_charlayout, 0, 2  },
 	{ -1 }
 };
 
 
-static struct GfxLayout barricad_charlayout =
+static gfx_layout barricad_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -284,7 +284,7 @@ static struct GfxLayout barricad_charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo barricad_gfxdecodeinfo[] =
+static gfx_decode barricad_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &barricad_charlayout,   0, 1  },
 	{ -1 }

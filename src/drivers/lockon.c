@@ -41,9 +41,9 @@ static int main_inten=0;
 static size_t objectram_size;
 static size_t lockon_ground_size;
 
-static struct tilemap *lockon_tilemap0;
-static struct tilemap *lockon_tilemap1;
-static struct tilemap *lockon_tilemap2;
+static tilemap *lockon_tilemap0;
+static tilemap *lockon_tilemap1;
+static tilemap *lockon_tilemap2;
 
 
 /*
@@ -125,7 +125,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
           int color = 1;
 
-          const struct GfxElement *gfx = Machine->gfx[bank];
+          const gfx_element *gfx = Machine->gfx[bank];
 
 			drawgfxzoom(bitmap, gfx,
 				index,
@@ -495,7 +495,7 @@ static ADDRESS_MAP_START( sound_io, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
-static struct GfxLayout char_layout =
+static gfx_layout char_layout =
 {
 	8,8,
 	1024,
@@ -506,7 +506,7 @@ static struct GfxLayout char_layout =
 	8*8
 };
 
-static struct GfxLayout object_layout =
+static gfx_layout object_layout =
 {
 	8,8,
 	4096,
@@ -517,7 +517,7 @@ static struct GfxLayout object_layout =
 	8*8
 };
 
-static struct GfxLayout scene_layout =
+static gfx_layout scene_layout =
 {
 	8,8,
 	4096,
@@ -528,7 +528,7 @@ static struct GfxLayout scene_layout =
 	8*8
 };
 
-static struct GfxLayout hud_layout =
+static gfx_layout hud_layout =
 {
 	8,8,
 	1024,
@@ -539,7 +539,7 @@ static struct GfxLayout hud_layout =
 	8*8
 };
 
-static struct GfxLayout ground_layout =
+static gfx_layout ground_layout =
 {
 	8,8,
 	8192,
@@ -551,7 +551,7 @@ static struct GfxLayout ground_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &object_layout,  0, 16 },
 	{ REGION_GFX2, 0, &object_layout,  0, 16 },

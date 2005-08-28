@@ -666,7 +666,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout bklayout =
+static gfx_layout bklayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -677,7 +677,7 @@ static struct GfxLayout bklayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bklayout, 0, 8 },
 	{ -1 } /* end of array */

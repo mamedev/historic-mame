@@ -47,8 +47,8 @@ Note:   if MAME_DEBUG is defined, pressing:
 data16_t kaneko16_disp_enable = 1; // default enabled for games not using it
 
 
-struct tilemap *kaneko16_tmap_0, *kaneko16_tmap_1;
-struct tilemap *kaneko16_tmap_2, *kaneko16_tmap_3;
+tilemap *kaneko16_tmap_0, *kaneko16_tmap_1;
+tilemap *kaneko16_tmap_2, *kaneko16_tmap_3;
 data16_t *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;
 data16_t *kaneko16_vscroll_0, *kaneko16_vscroll_1;
 data16_t *kaneko16_vram_2,    *kaneko16_vram_3,    *kaneko16_layers_1_regs;

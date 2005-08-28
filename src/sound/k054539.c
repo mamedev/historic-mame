@@ -607,20 +607,14 @@ static void K054539_w(int chip, offs_t offset, data8_t data) //*
 	regbase[offset] = data;
 }
 
-static void reset_zones(void)
+static void reset_zones(void *param)
 {
-	int chip;
-	for(chip=0; chip<MAX_SOUND; chip++) {
-		struct k054539_info *info = sndti_token(SOUND_K054539, chip);
-		if (info)
-		{
-			int data = info->regs[0x22e];
-			info->cur_zone =
-				data == 0x80 ? info->ram :
-				info->rom + 0x20000*data;
-			info->cur_limit = data == 0x80 ? 0x4000 : 0x20000;
-		}
-	}
+	struct k054539_info *info = param;
+	int data = info->regs[0x22e];
+	info->cur_zone =
+		data == 0x80 ? info->ram :
+		info->rom + 0x20000*data;
+	info->cur_limit = data == 0x80 ? 0x4000 : 0x20000;
 }
 
 static data8_t K054539_r(int chip, offs_t offset)
@@ -690,8 +684,7 @@ static void *k054539_start(int sndindex, int clock, const void *config)
 
 	K054539_init_chip(info, sndindex);
 
-	if (sndindex == 0)
-		state_save_register_func_postload(reset_zones);
+	state_save_register_func_postload_ptr(reset_zones, info);
 	return info;
 }
 

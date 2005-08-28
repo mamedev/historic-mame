@@ -14,9 +14,10 @@ Other: Real Time Clock (Oki MSM6242B or 72421B)
 ---------------------------------------------------------------------------------------------------------------------------
 Year + Game                 Board           CPU     Sound                       Custom                              Notes
 ---------------------------------------------------------------------------------------------------------------------------
-92 Monkey Mole Panic                        2xZ80   AY8910 +          M6295     Dynax NL-001                        8251
-93 Animalandia Jr.                          2xZ80   AY8910 +          M6295     NL-004 (x2), NL-003 (x2), NL-001    TMP82C51 (USART)
+92 Monkey Mole Panic                        2xZ80   AY8910 + YM2413 + M6295     Dynax NL-001                        8251
+93 Animalandia Jr.                          2xZ80   AY8910 + YM2413 + M6295     NL-001, NL-003 (x2), NL-004 (x2)    TMP82C51 (USART)
 93 Quiz Channel Question    N7311208L1-2    Z80              YM2413 + M6295     NAKANIHON NL-002
+93 The First Funky Fighter  N7403208L-2     2xZ80   AY2149 + YM2413 + M6295     NL-001, NL-002, NL-005
 94 Quiz 365                                 68000   AY8910 + YM2413 + M6295
 94 Rong Rong                                Z80              YM2413 + M6295     NAKANIHON NL-002
 95 Don Den Lover Vol 1      D11309208L1     68000   AY8910 + YM2413 + M6295     NAKANIHON NL-005
@@ -169,7 +170,7 @@ VIDEO_START(mmpanic)
 
 static void dynax_flipscreen_w( data8_t data )
 {
-	logerror("flipscreen = %02x\n",data);
+	logerror("flipscreen = %02x (%s)\n",data,(data&1)?"off":"on");
 }
 
 static void dynax_blit_flip_w( data8_t data )
@@ -247,7 +248,7 @@ static void do_plot(int x,int y,int pen)
 	y &= 0x1ff;
 	x &= 0x1ff;
 
-	// swap x & y (seen hanakanz gal check)
+	// swap x & y (see hanakanz gal check)
 	if (dynax_blit_flip & 0x10)	{	temp = x;	x = y;	y = temp;	}
 
 	// clipping rectangle (see hanakanz / hkagerou gal check)
@@ -308,6 +309,12 @@ INLINE int fetch_word(UINT8 *src_data,int src_len,int *bit_addr,int word_len)
 
 
 
+INLINE void log_draw_error(int src, int cmd)
+{
+	ui_popup("%06x: warning unknown pixel command %02x",src,cmd);
+	logerror("%06x: warning unknown pixel command %02x\n",src,cmd);
+}
+
 /*  Copy from ROM
     initialized arguments are
     0D/0E/0F source data pointer
@@ -334,7 +341,7 @@ static int blit_draw(int src,int sx)
 
 #ifdef MAME_DEBUG
 	if (pen_size > 4 || arg_size > 8)
-		ui_popup("pen_size %d arg_size %d",pen_size,arg_size);
+		ui_popup("warning: pen_size %d arg_size %d",pen_size,arg_size);
 #endif
 
 	x = sx;
@@ -349,10 +356,6 @@ static int blit_draw(int src,int sx)
 				dynax_blit_y += yinc;
 				x = sx;
 				break;
-
-			default:
-				ui_popup("%06x: unknown command %02x",src,cmd);
-//              return (bit_addr + 7) / 8;
 
 			case 1:	// LINE
 				{
@@ -394,6 +397,9 @@ static int blit_draw(int src,int sx)
 				pen_size = fetch_word(src_data,src_len,&bit_addr,3) + 1;
 				break;
 
+			default:
+				log_draw_error(src,cmd);
+			// fall through
 			case 7:	// STOP
 				return (bit_addr + 7) / 8;
 		}
@@ -473,8 +479,7 @@ static int hanakanz_blit_draw(int src,int sx)
 			break;
 
 			default:
-				ui_popup("%06x: warning unknown command %02x",src,cmd);
-logerror("%06x: warning unknown command %02x\n",src,cmd);
+				log_draw_error(src,cmd);
 			// fall through
 			case 7:	// STOP
 				return (bit_addr + 15) / 16;
@@ -491,8 +496,8 @@ static void blit_rect_xywh(void)
 	int x,y;
 
 #ifdef MAME_DEBUG
-	if (dynax_clip_ctrl != 0x0f)
-		ui_popup("RECT clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+//  if (dynax_clip_ctrl != 0x0f)
+//      ui_popup("RECT clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	for (y = 0; y <= dynax_rect_height; y++)
@@ -518,8 +523,8 @@ static void blit_rect_yh(void)
 	int length = 512 * (dynax_rect_height+1);
 
 #ifdef MAME_DEBUG
-	if (dynax_clip_ctrl != 0x0f)
-		ui_popup("UNK8C clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+//  if (dynax_clip_ctrl != 0x0f)
+//      ui_popup("UNK8C clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	if (start < 512*512)
@@ -556,8 +561,8 @@ static void blit_fill_xy(int x, int y)
 	int start = 512 * y + x;
 
 #ifdef MAME_DEBUG
-	if (x || y)
-		ui_popup("FILL command X %03x Y %03x",x,y);
+//  if (x || y)
+//      ui_popup("FILL command X %03x Y %03x",x,y);
 #endif
 
 	if (dynax_dest_layer & 0x0001) memset(pixmap[0] + start,dynax_blit_pen,512*512 - start);
@@ -587,6 +592,8 @@ static void blit_fill_xy(int x, int y)
 */
 static void blit_horiz_line(void)
 {
+	int i;
+
 #ifdef MAME_DEBUG
 	ui_popup("LINE X");
 
@@ -597,7 +604,7 @@ static void blit_horiz_line(void)
 		ui_popup("LINE X flip=%x",dynax_blit_flip);
 #endif
 
-	while (dynax_line_length--)
+	for (i = 0; i <= dynax_line_length; i++)
 		do_plot(dynax_blit_x++,dynax_blit_y,dynax_blit_pen);
 }
 
@@ -615,6 +622,8 @@ static void blit_horiz_line(void)
 */
 static void blit_vert_line(void)
 {
+	int i;
+
 #ifdef MAME_DEBUG
 	ui_popup("LINE Y");
 
@@ -622,7 +631,7 @@ static void blit_vert_line(void)
 		ui_popup("LINE Y clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
-	while (dynax_line_length--)
+	for (i = 0; i <= dynax_line_length; i++)
 		do_plot(dynax_blit_x,dynax_blit_y++,dynax_blit_pen);
 }
 
@@ -788,6 +797,164 @@ profiler_mark(PROFILER_VIDEO);
 					cpunum_set_input_line(0,1,HOLD_LINE);
 				}
 			}
+			break;
+
+		default:
+			logerror("%06x: Blitter %d reg %02x = %02x\n", activecpu_get_pc(), blitter, dynax_blit_reg[blitter], data);
+			break;
+		}
+	}
+
+profiler_mark(PROFILER_END);
+}
+
+
+
+
+// differences wrt blitter_data_w: slightly different blitter commands
+static void blitter_w_funkyfig(int blitter, offs_t offset,data8_t data,int irq_vector)
+{
+	static int dynax_blit_reg[2];
+	int hi_bits;
+
+profiler_mark(PROFILER_VIDEO);
+
+	switch(offset)
+	{
+	case 0:
+		dynax_blit_reg[blitter] = data;
+		break;
+
+	case 1:
+		hi_bits = (dynax_blit_reg[blitter] & 0xc0) << 2;
+
+		switch(dynax_blit_reg[blitter] & 0x3f)
+		{
+		case 0x00:
+			if (blitter)	dynax_dest_layer = (dynax_dest_layer & 0x00ff) | (data<<8);
+			else			dynax_dest_layer = (dynax_dest_layer & 0xff00) | (data<<0);
+			break;
+
+		case 0x01:
+			dynax_flipscreen_w(data);
+			break;
+
+		case 0x02:
+			dynax_blit_y = data | hi_bits;
+			break;
+
+		case 0x03:
+			dynax_blit_flip_w(data);
+			break;
+
+		case 0x04:
+			dynax_blit_pen = data;
+			break;
+
+		case 0x05:
+			dynax_blit_pen_mask = data;
+			break;
+
+		case 0x06:
+			// related to pen, can be 0 or 1 for 0x10 blitter command
+			// 0 = only bits 7-4 of dynax_blit_pen contain data
+			// 1 = bits 3-0 contain data as well
+			dynax_blit_pen_mode = data;
+			break;
+
+		case 0x0a:
+			dynax_rect_width = data | hi_bits;
+			break;
+
+		case 0x0b:
+			dynax_rect_height = data | hi_bits;
+			break;
+
+		case 0x0c:
+			dynax_line_length = data | hi_bits;
+			break;
+
+		case 0x0d:
+			dynax_blit_address = (dynax_blit_address & ~0x0000ff) | (data <<0);
+			break;
+		case 0x0e:
+			dynax_blit_address = (dynax_blit_address & ~0x00ff00) | (data <<8);
+			break;
+		case 0x0f:
+			dynax_blit_address = (dynax_blit_address & ~0xff0000) | (data<<16);
+			break;
+
+		case 0x14:
+			dynax_blit_x = data | hi_bits;
+			break;
+
+		case 0x16:
+			dynax_clip_x = data | hi_bits;
+			break;
+
+		case 0x17:
+			dynax_clip_y = data | hi_bits;
+			break;
+
+		case 0x18:
+		case 0x19:
+		case 0x1a:
+		case 0x1b:
+		case 0x1c:
+		case 0x1d:
+		case 0x1e:
+		case 0x1f:
+			dynax_scroll[blitter*8 + (dynax_blit_reg[blitter] & 7)] = data | hi_bits;
+			break;
+
+		case 0x20:
+			dynax_clip_ctrl = data;
+			break;
+
+		case 0x24:
+
+			log_blit(data);
+
+			switch (data)
+			{
+
+				case 0x84:	// same as 04?
+				case 0x04:	blit_fill_xy(0, 0);
+							break;
+
+//              unused?
+//              case 0x14:  blit_fill_xy(dynax_blit_x, dynax_blit_y);
+//                          break;
+
+				case 0x00/*0x10*/:	dynax_blit_address = blit_draw(dynax_blit_address,dynax_blit_x);
+							break;
+
+				case 0x0b:	// same as 03? see the drawing of the R in "cRoss hatch" (key test)
+				case 0x03/*0x13*/:	blit_horiz_line();
+							break;
+//              unused?
+//              case 0x1b:  blit_vert_line();
+//                          break;
+
+				case 0x0c/*0x1c*/:	blit_rect_xywh();
+							break;
+
+				// These two are issued one after the other (43 then 8c)
+				// 8c is issued immediately after 43 has finished, without
+				// changing any argument
+				case 0x43:	break;
+				case 0x8c:	blit_rect_yh();
+							break;
+
+				default:
+							;
+				#ifdef MAME_DEBUG
+					ui_popup("unknown blitter command %02x",data);
+					logerror("%06x: unknown blitter command %02x\n", activecpu_get_pc(), data);
+				#endif
+			}
+
+			cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_vector);
 			break;
 
 		default:
@@ -1211,7 +1378,7 @@ extern void *playback;
 
 static WRITE8_HANDLER( rtc_w )
 {
-	logerror("%04X: RTC reg %x = %02x\n", activecpu_get_pc(), offset, data);
+//  logerror("%04X: RTC reg %x = %02x\n", activecpu_get_pc(), offset, data);
 }
 
 static READ8_HANDLER( rtc_r )
@@ -1422,32 +1589,35 @@ static READ16_HANDLER( unk16_r )
 }
 
 
+static data8_t dynax_select, dynax_select2;
 
-static data8_t quiz365_select;
-
-READ8_HANDLER( quiz365_input_r )
+WRITE8_HANDLER( dynax_select_w )
 {
-	if (!(quiz365_select & 0x01))	return readinputport(3);
-	if (!(quiz365_select & 0x02))	return readinputport(4);
-	if (!(quiz365_select & 0x04))	return readinputport(5);
-	if (!(quiz365_select & 0x08))	return 0xff;//rand();
-	if (!(quiz365_select & 0x10))	return 0xff;//rand();
-	return 0xff;
+	dynax_select = data;
 }
 
-WRITE8_HANDLER( quiz365_select_w )
+WRITE16_HANDLER( dynax_select_16_w )
 {
-	quiz365_select = data;
+	if (ACCESSING_LSB)
+		dynax_select = data;
 }
 
+WRITE8_HANDLER( dynax_select2_w )
+{
+	dynax_select2 = data;
+}
 
-static data8_t rongrong_select2;
+WRITE16_HANDLER( dynax_select2_16_w )
+{
+	if (ACCESSING_LSB)
+		dynax_select2 = data;
+}
 
 READ8_HANDLER( rongrong_input2_r )
 {
-//logerror("%04x: rongrong_input2_r offset %d select %x\n",activecpu_get_pc(),offset,rongrong_select2 );
+//  logerror("%04x: input2_r offset %d select %x\n",activecpu_get_pc(),offset,dynax_select2 );
 	/* 0 and 1 are read from offset 1, 2 from offset 0... */
-	switch( rongrong_select2 )
+	switch( dynax_select2 )
 	{
 		case 0x00:	return readinputport(0);
 		case 0x01:	return readinputport(1);
@@ -1456,17 +1626,22 @@ READ8_HANDLER( rongrong_input2_r )
 	return 0xff;
 }
 
-WRITE8_HANDLER( rongrong_select2_w )
-{
-	rongrong_select2 = data;
-}
 
+READ8_HANDLER( quiz365_input_r )
+{
+	if (!(dynax_select & 0x01))	return readinputport(3);
+	if (!(dynax_select & 0x02))	return readinputport(4);
+	if (!(dynax_select & 0x04))	return readinputport(5);
+	if (!(dynax_select & 0x08))	return 0xff;//rand();
+	if (!(dynax_select & 0x10))	return 0xff;//rand();
+	return 0xff;
+}
 
 READ16_HANDLER( quiz365_input2_r )
 {
-//logerror("%04x: rongrong_input2_r offset %d select %x\n",activecpu_get_pc(),offset,rongrong_select2 );
+//  logerror("%04x: input2_r offset %d select %x\n",activecpu_get_pc(),offset,dynax_select2 );
 	/* 0 and 1 are read from offset 1, 2 from offset 0... */
-	switch( rongrong_select2 )
+	switch( dynax_select2 )
 	{
 		case 0x10:	return readinputport(0);
 		case 0x11:	return readinputport(1);
@@ -1496,17 +1671,11 @@ READ8_HANDLER( rongrong_blitter_busy_r )
 }
 
 
-WRITE16_HANDLER( quiz365_select2_w )
-{
-	if (ACCESSING_LSB)
-		rongrong_select2 = data;
-}
-
 static WRITE16_HANDLER( quiz365_coincounter_w )
 {
 	if (ACCESSING_LSB)
 	{
-		if (rongrong_select2 == 0x1c)
+		if (dynax_select2 == 0x1c)
 		{
 			coin_counter_w(0, ~data & 1);
 			coin_counter_w(1, ~data & 4);
@@ -1551,7 +1720,7 @@ static ADDRESS_MAP_START( quiz365_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x200000, 0x2003ff) AM_WRITE(ddenlovr_palette_w			)	// Palette
 	AM_RANGE(0x200e0a, 0x200e0d) AM_WRITE(quiz365_protection_w			)	// Protection
 //  AM_RANGE(0x201000, 0x2017ff) AM_WRITE(MWA16_RAM                     )   // ?
-	AM_RANGE(0x300200, 0x300201) AM_WRITE(quiz365_select2_w				)
+	AM_RANGE(0x300200, 0x300201) AM_WRITE(dynax_select2_16_w		)
 	AM_RANGE(0x300202, 0x300203) AM_WRITE(quiz365_coincounter_w			)	// Coin Counters + more stuff written on startup
 	AM_RANGE(0x300240, 0x300247) AM_WRITE(ddenlovr_palette_base_w		)
 	AM_RANGE(0x300248, 0x30024f) AM_WRITE(ddenlovr_palette_mask_w		)
@@ -1620,18 +1789,11 @@ static READ16_HANDLER( nettoqc_special_r )
 	return readinputport(2) | (dynax_blitter_irq_flag ? 0x60 : 0x00 );
 }
 
-static data16_t nettoqc_select;
-
-static WRITE16_HANDLER( nettoqc_select_w )
-{
-	COMBINE_DATA(&nettoqc_select);
-}
-
 static READ16_HANDLER( nettoqc_input_r )
 {
-	if (!(nettoqc_select & 0x01))	return readinputport(3);
-	if (!(nettoqc_select & 0x02))	return readinputport(4);
-	if (!(nettoqc_select & 0x04))	return readinputport(5);
+	if (!(dynax_select & 0x01))	return readinputport(3);
+	if (!(dynax_select & 0x02))	return readinputport(4);
+	if (!(dynax_select & 0x04))	return readinputport(5);
 	return 0xffff;
 }
 
@@ -1702,7 +1864,7 @@ static ADDRESS_MAP_START( nettoqc_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300140, 0x300141) AM_WRITE(AY8910_control_port_0_lsb_w	)
 	AM_RANGE(0x300142, 0x300143) AM_WRITE(AY8910_write_port_0_lsb_w		)
 	AM_RANGE(0x300188, 0x300189) AM_WRITE(nettoqc_coincounter_w			)	// Coin Counters
-	AM_RANGE(0x30018a, 0x30018b) AM_WRITE(nettoqc_select_w				)	//
+	AM_RANGE(0x30018a, 0x30018b) AM_WRITE(dynax_select_16_w				)	//
 	AM_RANGE(0x30018c, 0x30018d) AM_WRITE(nettoqc_oki_bank_w			)
 	AM_RANGE(0x3001ca, 0x3001cb) AM_WRITE(ddenlovr_blitter_irq_ack_w	)	// Blitter irq acknowledge
 	AM_RANGE(0x300240, 0x300241) AM_WRITE(OKIM6295_data_0_lsb_w 		)
@@ -1714,15 +1876,13 @@ ADDRESS_MAP_END
                                 Rong Rong
 ***************************************************************************/
 
-static data8_t rongrong_select;
-
 READ8_HANDLER( rongrong_input_r )
 {
-	if (!(rongrong_select & 0x01))	return readinputport(3);
-	if (!(rongrong_select & 0x02))	return readinputport(4);
-	if (!(rongrong_select & 0x04))	return 0xff;//rand();
-	if (!(rongrong_select & 0x08))	return 0xff;//rand();
-	if (!(rongrong_select & 0x10))	return readinputport(5);
+	if (!(dynax_select & 0x01))	return readinputport(3);
+	if (!(dynax_select & 0x02))	return readinputport(4);
+	if (!(dynax_select & 0x04))	return 0xff;//rand();
+	if (!(dynax_select & 0x08))	return 0xff;//rand();
+	if (!(dynax_select & 0x10))	return readinputport(5);
 	return 0xff;
 }
 
@@ -1733,7 +1893,7 @@ WRITE8_HANDLER( rongrong_select_w )
 //logerror("%04x: rongrong_select_w %02x\n",activecpu_get_pc(),data);
 	/* bits 0-4 = **both** ROM bank **AND** input select */
 	memory_set_bankptr(1, &rom[0x10000 + 0x8000 * (data & 0x1f)]);
-	rongrong_select = data;
+	dynax_select = data;
 
 	/* bits 5-7 = RAM bank */
 	memory_set_bankptr(2, &rom[0x110000 + 0x1000 * ((data & 0xe0) >> 5)]);
@@ -1749,11 +1909,9 @@ static ADDRESS_MAP_START( quizchq_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( quizchq_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM					)	// ROM
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM					)	// RAM
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2				)	// RAM (Banked)
-	AM_RANGE(0x8000, 0x81ff) AM_WRITE(rongrong_palette_w		)	// ROM (Banked)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM (Banked)
+	AM_RANGE(0x8000, 0x81ff) AM_WRITE(rongrong_palette_w		)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( quizchq_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1770,7 +1928,7 @@ static ADDRESS_MAP_START( quizchq_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 	AM_RANGE(0x00, 0x01) AM_WRITE(rongrong_blitter_w		)
 	AM_RANGE(0x1b, 0x1b) AM_WRITE(rongrong_blitter_busy_w	)
 	AM_RANGE(0x1e, 0x1e) AM_WRITE(rongrong_select_w			)
-	AM_RANGE(0x20, 0x20) AM_WRITE(rongrong_select2_w		)
+	AM_RANGE(0x20, 0x20) AM_WRITE(dynax_select2_w			)
 	AM_RANGE(0x40, 0x40) AM_WRITE(OKIM6295_data_0_w			)
 	AM_RANGE(0x60, 0x60) AM_WRITE(YM2413_register_port_0_w	)
 	AM_RANGE(0x61, 0x61) AM_WRITE(YM2413_data_port_0_w		)
@@ -1796,11 +1954,9 @@ static ADDRESS_MAP_START( rongrong_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rongrong_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM				)	// ROM
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM				)	// RAM
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2			)	// RAM (Banked)
 	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(rongrong_palette_w	)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM				)	// ROM (Banked)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rongrong_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1828,7 +1984,7 @@ static ADDRESS_MAP_START( rongrong_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 	AM_RANGE(0x94, 0x94) AM_WRITE(dynax_bgcolor_w			)
 	AM_RANGE(0x95, 0x95) AM_WRITE(dynax_priority_w			)
 	AM_RANGE(0x96, 0x96) AM_WRITE(dynax_layer_enable_w		)
-	AM_RANGE(0xa0, 0xa0) AM_WRITE(rongrong_select2_w		)
+	AM_RANGE(0xa0, 0xa0) AM_WRITE(dynax_select2_w			)
 	AM_RANGE(0xc2, 0xc2) AM_WRITE(MWA8_NOP					)	// enables palette RAM at f000, and protection device at f705/f706/f601
 ADDRESS_MAP_END
 /*
@@ -1847,12 +2003,6 @@ a0 input select,a2 input read (protection?)
 static READ8_HANDLER( magic_r )
 {
 	return 0x01;
-}
-
-static data8_t mmpanic_select;
-static WRITE8_HANDLER( mmpanic_select_w )
-{
-	mmpanic_select = data;
 }
 
 static WRITE8_HANDLER( mmpanic_rombank_w )
@@ -1901,7 +2051,7 @@ static WRITE8_HANDLER( mmpanic_leds2_w )
 
 static WRITE8_HANDLER( mmpanic_lockout_w )
 {
-	if (mmpanic_select == 0x0c)
+	if (dynax_select == 0x0c)
 	{
 		coin_counter_w(0,(~data) & 0x01);
 		coin_lockout_w(0,(~data) & 0x02);
@@ -1922,11 +2072,9 @@ static ADDRESS_MAP_START( mmpanic_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM					)	// ROM
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM					)	// RAM
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2				)	// RAM (Banked)
-	AM_RANGE(0x8000, 0x81ff) AM_WRITE(rongrong_palette_w		)	// ROM (Banked)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM					)	// ROM (Banked)
+	AM_RANGE(0x8000, 0x81ff) AM_WRITE(rongrong_palette_w		)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1964,7 +2112,7 @@ static ADDRESS_MAP_START( mmpanic_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_F
 
 	AM_RANGE(0x60, 0x61) AM_WRITE(mmpanic_blitter_w			)
 	AM_RANGE(0x64, 0x65) AM_WRITE(mmpanic_blitter2_w		)
-	AM_RANGE(0x68, 0x68) AM_WRITE(mmpanic_select_w			)
+	AM_RANGE(0x68, 0x68) AM_WRITE(dynax_select_w			)
 	AM_RANGE(0x69, 0x69) AM_WRITE(mmpanic_lockout_w			)
 	AM_RANGE(0x74, 0x74) AM_WRITE(mmpanic_rombank_w			)
 
@@ -1986,9 +2134,7 @@ static ADDRESS_MAP_START( mmpanic_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM		)	// ROM
 	AM_RANGE(0x6000, 0x66ff) AM_WRITE(MWA8_RAM		)	// RAM
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM		)	// ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_sound_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1998,12 +2144,151 @@ static ADDRESS_MAP_START( mmpanic_sound_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mmpanic_sound_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x04, 0x04) AM_WRITE(MWA8_NOP					)	// 0, during NMI
+	AM_RANGE(0x04, 0x04) AM_WRITE(MWA8_NOP					)	// 0, during IRQ
 	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP					)	// almost always 1, sometimes 0
 	AM_RANGE(0x08, 0x08) AM_WRITE(YM2413_register_port_0_w	)
 	AM_RANGE(0x09, 0x09) AM_WRITE(YM2413_data_port_0_w		)
 	AM_RANGE(0x0c, 0x0c) AM_WRITE(AY8910_write_port_0_w		)
 	AM_RANGE(0x0e, 0x0e) AM_WRITE(AY8910_control_port_0_w	)
+ADDRESS_MAP_END
+
+
+
+/***************************************************************************
+                            The First Funky Fighter
+***************************************************************************/
+
+/* Main CPU */
+
+static ADDRESS_MAP_START( funkyfig_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ( MRA8_ROM					)
+	AM_RANGE(0x6000, 0x6fff) AM_READ( MRA8_RAM					)
+	AM_RANGE(0x7000, 0x7fff) AM_READ( MRA8_BANK2				)	// RAM (Banked)
+	AM_RANGE(0x8000, 0xffff) AM_READ( MRA8_BANK1				)	// ROM (Banked)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( funkyfig_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x6000, 0x6fff) AM_WRITE( MWA8_RAM					)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE( MWA8_BANK2				)	// RAM (Banked)
+	AM_RANGE(0x8000, 0x81ff) AM_WRITE( rongrong_palette_w		)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE( MWA8_NOP					)
+ADDRESS_MAP_END
+
+
+static READ8_HANDLER( funkyfig_busy_r )
+{
+					// bit 0 ?
+	return 0x00;	// bit 7 = blitter busy
+}
+
+static WRITE8_HANDLER( funkyfig_blitter_w )
+{
+	blitter_w_funkyfig(0,offset,data,0xe0);
+}
+
+WRITE8_HANDLER( funkyfig_rombank_w )
+{
+	UINT8 *rom = memory_region(REGION_CPU1);
+
+	dynax_select = data;
+
+	memory_set_bankptr(1, &rom[0x10000 + 0x8000 * (data & 0x0f)]);
+	// bit 4 selects palette ram at 8000?
+	memory_set_bankptr(2, &rom[0x90000 + 0x1000 * ((data & 0xe0) >> 5)]);
+}
+
+READ8_HANDLER( funkyfig_dsw_r )
+{
+	if (!(dynax_select & 0x01))	return readinputport(3);
+	if (!(dynax_select & 0x02))	return readinputport(4);
+	if (!(dynax_select & 0x04))	return readinputport(5);
+	logerror("%06x: warning, unknown bits read, dynax_select = %02x\n", activecpu_get_pc(), dynax_select);
+	return 0xff;
+}
+
+static data8_t funkyfig_lockout;
+
+READ8_HANDLER( funkyfig_coin_r )
+{
+	switch( dynax_select2 )
+	{
+		case 0x22:	return readinputport(2);
+		case 0x23:	return funkyfig_lockout;
+	}
+	logerror("%06x: warning, unknown bits read, dynax_select2 = %02x\n", activecpu_get_pc(), dynax_select2);
+	return 0xff;
+}
+
+READ8_HANDLER( funkyfig_key_r )
+{
+	switch( dynax_select2 )
+	{
+		case 0x20:	return readinputport(0);
+		case 0x21:	return readinputport(1);
+	}
+	logerror("%06x: warning, unknown bits read, dynax_select2 = %02x\n", activecpu_get_pc(), dynax_select2);
+	return 0xff;
+}
+
+static WRITE8_HANDLER( funkyfig_lockout_w )
+{
+	switch( dynax_select2 )
+	{
+		case 0x2c:
+			funkyfig_lockout = data;
+			coin_counter_w(0,  data  & 0x01);
+			coin_lockout_w(0,(~data) & 0x02);
+			if (data & ~0x03)
+				logerror("%06x: warning, unknown bits written, lockout = %02x\n", activecpu_get_pc(), data);
+			break;
+
+//      case 0xef:  16 bytes on startup
+
+		default:
+			logerror("%06x: warning, unknown bits written, dynax_select2 = %02x, data = %02x\n", activecpu_get_pc(), dynax_select2, data);
+	}
+}
+
+static ADDRESS_MAP_START( funkyfig_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ( OKIM6295_status_0_r	)	// Sound
+	AM_RANGE(0x04, 0x04) AM_READ( funkyfig_busy_r		)
+	AM_RANGE(0x1c, 0x1c) AM_READ( funkyfig_dsw_r		)
+	AM_RANGE(0x23, 0x23) AM_READ( rongrong_gfxrom_r		)	// Video Chip
+	AM_RANGE(0x40, 0x4f) AM_READ( rtc_r					)	// 6242RTC
+	AM_RANGE(0x78, 0x78) AM_READ( unk_r					)	// ? must be 78 on startup
+	AM_RANGE(0x82, 0x82) AM_READ( funkyfig_coin_r		)
+	AM_RANGE(0x83, 0x83) AM_READ( funkyfig_key_r		)
+//  Other cabinets?
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( funkyfig_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE( OKIM6295_data_0_w		)	// Sound
+	AM_RANGE(0x01, 0x01) AM_WRITE( mmpanic_leds_w			)	// Leds
+	AM_RANGE(0x02, 0x02) AM_WRITE( mmpanic_soundlatch_w		)	//
+	AM_RANGE(0x1e, 0x1e) AM_WRITE( funkyfig_rombank_w		)
+	AM_RANGE(0x20, 0x21) AM_WRITE( funkyfig_blitter_w		)
+	AM_RANGE(0x40, 0x4f) AM_WRITE( rtc_w					)	// 6242RTC
+
+	// Layers 0-3:
+	AM_RANGE(0x60, 0x63) AM_WRITE( dynax_palette_base_w		)
+	AM_RANGE(0x64, 0x67) AM_WRITE( dynax_palette_mask_w		)
+	AM_RANGE(0x68, 0x6b) AM_WRITE( dynax_transparency_pen_w	)
+	AM_RANGE(0x6c, 0x6f) AM_WRITE( dynax_transparency_mask_w)
+	AM_RANGE(0x74, 0x74) AM_WRITE( dynax_bgcolor_w			)
+	AM_RANGE(0x75, 0x75) AM_WRITE( dynax_priority_w			)
+	AM_RANGE(0x76, 0x76) AM_WRITE( dynax_layer_enable_w		)
+
+	AM_RANGE(0x80, 0x80) AM_WRITE( dynax_select2_w			)
+	AM_RANGE(0x81, 0x81) AM_WRITE( funkyfig_lockout_w		)
+	AM_RANGE(0xa2, 0xa2) AM_WRITE( mmpanic_leds2_w			)
+ADDRESS_MAP_END
+
+
+/* Sound CPU */
+
+static ADDRESS_MAP_START( funkyfig_sound_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x02, 0x02) AM_READ(soundlatch_r		)
+	AM_RANGE(0x04, 0x04) AM_READ(MRA8_NOP			)	// read only once at the start
 ADDRESS_MAP_END
 
 
@@ -2030,10 +2315,8 @@ static ADDRESS_MAP_START( hanakanz_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1		)	// ROM (Banked)
 ADDRESS_MAP_END
 static ADDRESS_MAP_START( hanakanz_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM		)	// ROM
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM		)	// RAM
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_BANK2	)	// RAM (Banked)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM		)	// ROM (Banked)
 ADDRESS_MAP_END
 
 
@@ -2844,7 +3127,7 @@ INPUT_PORTS_START( mmpanic )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )	// busy?
 
 	PORT_START	// IN1 6b (68 = 0 & 1)
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	// tested
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("1") PORT_CODE(KEYCODE_1_PAD)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("2") PORT_CODE(KEYCODE_2_PAD)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("3") PORT_CODE(KEYCODE_3_PAD)
@@ -3948,17 +4231,109 @@ INPUT_PORTS_START( mjchuuka )
 
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( funkyfig )
+	PORT_START	// IN0 - Keys (port 83 with port 80 = 20)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("1") PORT_CODE(KEYCODE_1_PAD)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("2") PORT_CODE(KEYCODE_2_PAD)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("3") PORT_CODE(KEYCODE_3_PAD)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("4") PORT_CODE(KEYCODE_4_PAD)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("5") PORT_CODE(KEYCODE_5_PAD)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("6") PORT_CODE(KEYCODE_6_PAD)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("7") PORT_CODE(KEYCODE_7_PAD)
+
+	PORT_START	// IN1 - ? (port 83 with port 80 = 21)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )	// ?
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - Coins (port 82 with port 80 = 22)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("8") PORT_CODE(KEYCODE_8_PAD)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("9") PORT_CODE(KEYCODE_9_PAD)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN3 - DSW1 (low bits, port 1c with rombank = 1e)
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x1c, 0x10, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "0" )
+	PORT_DIPSETTING(    0x14, "1" )
+	PORT_DIPSETTING(    0x1c, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x0c, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+//  PORT_DIPSETTING(    0x04, "5" )
+//  PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x20, 0x20, "Linked Cabinets" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Play Rock Smash" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+
+	PORT_START	// IN4 - DSW2 (low bits, port 1c with rombank = 1d)
+	PORT_DIPNAME( 0x01, 0x01, "2 Player Game" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Unknown 2-2&3*" )
+	PORT_DIPSETTING(    0x0c, "10" )
+	PORT_DIPSETTING(    0x08, "20" )
+	PORT_DIPSETTING(    0x04, "40" )
+	PORT_DIPSETTING(    0x00, "80" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2-4*" )	// used
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5*" )	// used
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, "Unknown 2-6&7*" )	// used
+	PORT_DIPSETTING(    0xc0, "0" )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+
+	PORT_START	// IN5 - DSW1 & 2 (high bits, port 1c with rombank = 1b)
+	PORT_DIPNAME( 0x01, 0x01, "Continue?" )	// related to continue
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x02, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x04, 0x04, "Debug Text" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Country" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Japan ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( USA ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 /***************************************************************************
                             Don Den Lover Vol.1
 ***************************************************************************/
-
-static struct AY8910interface ay8910_interface =
-{
-	quiz365_input_r,
-	0,
-	0,
-	quiz365_select_w
-};
 
 static MACHINE_DRIVER_START( ddenlovr )
 
@@ -3986,8 +4361,7 @@ static MACHINE_DRIVER_START( ddenlovr )
 	MDRV_SOUND_ADD(YM2413, 3579545)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
-	MDRV_SOUND_ADD(AY8910, 2000000)
-	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ADD_TAG("ay8910", AY8910, 2000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 
 	MDRV_SOUND_ADD(OKIM6295, 8000)
@@ -3995,12 +4369,23 @@ static MACHINE_DRIVER_START( ddenlovr )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
+static struct AY8910interface quiz365_ay8910_interface =
+{
+	quiz365_input_r,
+	0,
+	0,
+	dynax_select_w
+};
+
 static MACHINE_DRIVER_START( quiz365 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ddenlovr)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(quiz365_readmem,quiz365_writemem)
+
+	MDRV_SOUND_MODIFY("ay8910")
+	MDRV_SOUND_CONFIG(quiz365_ay8910_interface)
 MACHINE_DRIVER_END
 
 
@@ -4151,7 +4536,6 @@ static MACHINE_DRIVER_START( mmpanic )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 
 	MDRV_SOUND_ADD(AY8910, 2000000)
-	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 
 	MDRV_SOUND_ADD(OKIM6295, 8000)
@@ -4272,6 +4656,20 @@ static MACHINE_DRIVER_START( mjchuuka )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( funkyfig )
+
+	MDRV_IMPORT_FROM(mmpanic)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(funkyfig_readmem,funkyfig_writemem)
+	MDRV_CPU_IO_MAP(funkyfig_readport,funkyfig_writeport)
+	MDRV_CPU_VBLANK_INT(mjchuuka_irq,1)
+
+	MDRV_CPU_MODIFY("sound")
+	MDRV_CPU_IO_MAP(funkyfig_sound_readport,mmpanic_sound_writeport)
+
+	MDRV_VIDEO_START(ddenlovr)	// no extra layers?
+MACHINE_DRIVER_END
+
 
 
 
@@ -4313,9 +4711,8 @@ ROM_START( mmpanic )
 	ROM_LOAD( "nwc7002a",     0x00000, 0x40000, CRC(725b337f) SHA1(4d1f1ebc4de524d959dde60498d3f7038c7f3ed2) )
 	ROM_RELOAD(               0x10000, 0x40000 )
 
-	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* Z80 Code */
-	ROM_LOAD( "nwc7003",      0x00000, 0x20000, CRC(4f02ce44) SHA1(9a3abd9c555d5863a2110d84d1a3f582ba9d56b9) )
-	ROM_RELOAD(               0x10000, 0x20000 )
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_LOAD( "nwc7003",      0x00000, 0x20000, CRC(4f02ce44) SHA1(9a3abd9c555d5863a2110d84d1a3f582ba9d56b9) )	// 1xxxxxxxxxxxxxxxx = 0xFF
 
 	ROM_REGION( 0x280000, REGION_GFX1, 0 )	/* blitter data */
 	ROM_LOAD( "nwc7004",      0x000000, 0x100000, CRC(5b4ad8c5) SHA1(a92a0bef01c71e745597ec96e7b8aa0ec26dc59d) )
@@ -4352,9 +4749,8 @@ ROM_START( animaljr )
 	ROM_LOAD( "7502s.2e",     0x00000, 0x40000, CRC(4b14a4be) SHA1(79f7207f7311c627ece1a0d8571b4bddcdefb336) )
 	ROM_RELOAD(               0x10000, 0x40000 )
 
-	ROM_REGION( 0x30000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "7503s.8e",     0x00000, 0x20000, CRC(d1fac899) SHA1(dde2824d73b13c18b83e4c4b63fe7835bce87ea4) )	// 1xxxxxxxxxxxxxxxx = 0xFF
-	ROM_RELOAD(               0x10000, 0x20000 )
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* blitter data */
 	ROM_LOAD( "7504.17b",     0x000000, 0x100000, CRC(b62de6a3) SHA1(62abf09b52844d3b3325e8931cb572c15581964f) )
@@ -4797,7 +5193,72 @@ ROM_START( mjchuuka )
 ROM_END
 
 
+/***************************************************************************
+
+The First Funky Fighter
+Nakanihon, 1994
+
+PCB Layout
+----------
+
+N7403208L-2
+|------------------------------------------------------------------|
+|    VR1                7401          7402  32.768kHz M6242 3V_BATT|
+|    VR2          358         PAL        M6295  TC55257  PAL       |
+|       YM2413          TC5563                             16MHz   |
+|                 358                          7403                |
+|       YM2149          Z80                         TMPZ84C015BF-8 |
+|                                                                  |
+|J                                                                 |
+|A                                                                 |
+|M          NL-002      PAL                                        |
+|M                                                                 |
+|A                                                     DSW(10)     |
+|                                                                  |
+|                                                      DSW(10)     |
+|                                                                  |
+|       TC5588                           28.6363MHz                |
+|                                          |-ROM-sub-board-N73RSUB-|
+|                                          |                       |
+| DSW(4)                                   |NL-005         PAL     |
+|       SN75179                            |                       |         Sub-board contains 12 sockets.
+|                                          |        7404   7411 |----------- Only these 3 are populated.
+|                                          |        7405   7410 /  |
+|DB9   OMRON              NL-006     TC524258BZ-10  7406   7409/   |
+|      G6A-474P        TC524258BZ-10 TC524258BZ-10  7407           |
+|                      TC524258BZ-10 TC524258BZ-10  7408           |
+|DB9                                 TC524258BZ-10         PAL     |
+|                                          |             (on sub)  |
+|------------------------------------------|-----------------------|
+
+the second halves of 7408.13b, 7409.4b, 7410.3b and 7411.2b are identical
+
+***************************************************************************/
+
+ROM_START( funkyfig )
+	ROM_REGION( 0x90000 + 0x1000*8, REGION_CPU1, 0 )	/* Z80 Code + space for banked RAM */
+	ROM_LOAD( "7403.3c",      0x00000, 0x80000, CRC(ad0f5e14) SHA1(82de58d7ba35266f2d96503d72487796a9693996) )
+	ROM_RELOAD(               0x10000, 0x80000 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_LOAD( "7401.1h",      0x00000, 0x20000, CRC(0f47d785) SHA1(d57733db6dcfb4c2cdaad04b5d3f0f569a0e7461) )	// 1xxxxxxxxxxxxxxxx = 0xFF
+
+ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_ERASE00 )	/* blitter data */
+	ROM_LOAD( "7404.8b",      0x000000, 0x080000, CRC(aa4ddf32) SHA1(864890795a238ab34a85ca55a387d7e5efafccee) )			// \ 7e6f +
+	ROM_LOAD( "7405.9b",      0x080000, 0x080000, CRC(fc125bd8) SHA1(150578f67d89be59eeeb811c159a789e5e9c993e) )			// / 35bb = b42a OK
+	ROM_LOAD( "7406.10b",     0x100000, 0x080000, BAD_DUMP CRC(04a214b1) SHA1(af3e652377f5652377c7dedfad7c2677695eaf46) )	// \ af08 +
+	ROM_LOAD( "7407.11b",     0x180000, 0x080000, BAD_DUMP CRC(635d4052) SHA1(7bc2f20d633c69352fc2d5634349c83055c99408) )	// / 6d64 = 1c6c ERR (should be 1c68!)
+	ROM_LOAD( "7409.4b",      0x200000, 0x100000, CRC(064082c3) SHA1(26b0eec56b06365740b213b34e33a4b94ebc1d25) )			// \ 15bd +
+	ROM_LOAD( "7410.3b",      0x280000, 0x100000, CRC(0ba67874) SHA1(3d984c77a843501e1075cadcc27820a35410ea3b) )			// / 2e4c = 4409 OK
+	ROM_LOAD( "7408.13b",     0x300000, 0x100000, CRC(9efe4c60) SHA1(6462dca2af38517639bd2f182e68b7b1fc98a312) )			// 0f46 + 1825 = 276b OK
+	ROM_LOAD( "7411.2b",      0x400000, 0x100000, CRC(1e9c73dc) SHA1(ba64de6168dc626dc89d38b3f9d8991163f5e63e) )			// f248 + 1825 OK (first half)
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "7402.1e",      0x000000, 0x040000, CRC(5038cc34) SHA1(65618b232a6592ad36f4abbaa40625c208a015fd) )
+ROM_END
+
 GAMEX(1992, mmpanic,  0,       mmpanic,  mmpanic,  0,        ROT0, "Nakanihon + East Technology (Taito license)", "Monkey Mole Panic (USA)",                    GAME_NO_COCKTAIL )
+GAMEX(1993, funkyfig, 0,       funkyfig, funkyfig, 0,        ROT0, "Nakanihon + East Technology (Taito license)", "The First Funky Fighter",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )	// scrolling, priority?
 GAMEX(1993, quizchq,  0,       quizchq,  quizchq,  0,        ROT0, "Nakanihon",                                   "Quiz Channel Question (Ver 1.00) (Japan)",   GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX(1993, quizchql, quizchq, quizchq,  quizchq,  0,        ROT0, "Nakanihon (Laxan license)",                   "Quiz Channel Question (Ver 1.23) (Taiwan?)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX(1993, animaljr, 0,       mmpanic,  animaljr, 0,        ROT0, "Nakanihon + East Technology (Taito license)", "Animalandia Jr.",                            GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )

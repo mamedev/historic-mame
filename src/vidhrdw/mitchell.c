@@ -17,7 +17,7 @@ unsigned char *pang_colorram;
 /* Private */
 static unsigned char *pang_objram;           /* Sprite RAM */
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 static int flipscreen;
 
 

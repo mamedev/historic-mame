@@ -97,7 +97,7 @@ INPUT_PORTS_START( trucocl )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,8,		/* 16*16 characters */
 	0x10000/32,	/* 2048 characters */
@@ -108,7 +108,7 @@ static struct GfxLayout tilelayout =
 	16*8		/* every char takes 16 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, 		&tilelayout,      0, 4 },
 	{ REGION_GFX1, 0x10000, &tilelayout,      0, 4 },

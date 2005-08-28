@@ -14,7 +14,7 @@
 #include "driver.h"
 #include "chd.h"
 
-struct cdrom_file;
+typedef struct _cdrom_file cdrom_file;
 
 #define CD_MAX_TRACKS		(99)	/* AFAIK the theoretical limit */
 #define CD_MAX_SECTOR_DATA	(2352)
@@ -43,7 +43,7 @@ enum
 	CD_SUB_NONE		/* no subcode data stored */
 };
 
-struct cdrom_track_info
+struct _cdrom_track_info
 {
 	/* fields used by CHDMAN and in MAME */
 	UINT32 trktype;		/* track type */
@@ -57,51 +57,54 @@ struct cdrom_track_info
 	UINT32 physframeofs;	/* frame number on the real CD this track starts at */
 	UINT32 chdframeofs;	/* frame number this track starts at on the CHD */
 };
+typedef struct _cdrom_track_info cdrom_track_info;
 
-struct cdrom_track_input_info	/* used only at compression time */
+struct _cdrom_track_input_info	/* used only at compression time */
 {
 	char fname[CD_MAX_TRACKS][256];	/* filename for each track */
 	UINT32 offset[CD_MAX_TRACKS];	/* offset in the data file for each track */
 };
+typedef struct _cdrom_track_input_info cdrom_track_input_info;
 
-struct cdrom_toc
+struct _cdrom_toc
 {
 	UINT32 numtrks;		/* number of tracks */
-	struct cdrom_track_info tracks[CD_MAX_TRACKS];
+	cdrom_track_info tracks[CD_MAX_TRACKS];
 };
+typedef struct _cdrom_toc cdrom_toc;
 
 /* base functionality */
-struct cdrom_file *cdrom_open(struct chd_file *chd);
-UINT32 cdrom_read_data(struct cdrom_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer, UINT32 datatype);
-UINT32 cdrom_read_subcode(struct cdrom_file *file, UINT32 lbasector, void *buffer);
-void cdrom_close(struct cdrom_file *file);
+cdrom_file *cdrom_open(chd_file *chd);
+UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer, UINT32 datatype);
+UINT32 cdrom_read_subcode(cdrom_file *file, UINT32 lbasector, void *buffer);
+void cdrom_close(cdrom_file *file);
 
 /* handy utilities */
-UINT32 cdrom_get_track_phys(struct cdrom_file *file, UINT32 frame);
-UINT32 cdrom_get_track_chd(struct cdrom_file *file, UINT32 frame);
-UINT32 cdrom_get_phys_start_of_track(struct cdrom_file *file, UINT32 track);
-UINT32 cdrom_get_chd_start_of_track(struct cdrom_file *file, UINT32 track);
-UINT32 cdrom_phys_frame_to_chd(struct cdrom_file *file, UINT32 frame);
-UINT32 cdrom_chd_frame_to_phys(struct cdrom_file *file, UINT32 frame);
-struct chd_file *cdrom_get_chd(struct cdrom_file *file);
+UINT32 cdrom_get_track_phys(cdrom_file *file, UINT32 frame);
+UINT32 cdrom_get_track_chd(cdrom_file *file, UINT32 frame);
+UINT32 cdrom_get_phys_start_of_track(cdrom_file *file, UINT32 track);
+UINT32 cdrom_get_chd_start_of_track(cdrom_file *file, UINT32 track);
+UINT32 cdrom_phys_frame_to_chd(cdrom_file *file, UINT32 frame);
+UINT32 cdrom_chd_frame_to_phys(cdrom_file *file, UINT32 frame);
+chd_file *cdrom_get_chd(cdrom_file *file);
 
 /* Red Book audio track utilities */
-void cdrom_start_audio(struct cdrom_file *file, UINT32 start_chd_lba, UINT32 blocks);
-void cdrom_stop_audio(struct cdrom_file *file);
-void cdrom_pause_audio(struct cdrom_file *file, int pause);
-UINT32 cdrom_get_audio_lba(struct cdrom_file *file);
-int cdrom_audio_active(struct cdrom_file *file);
-int cdrom_audio_paused(struct cdrom_file *file);
-int cdrom_audio_ended(struct cdrom_file *file);
+void cdrom_start_audio(cdrom_file *file, UINT32 start_chd_lba, UINT32 blocks);
+void cdrom_stop_audio(cdrom_file *file);
+void cdrom_pause_audio(cdrom_file *file, int pause);
+UINT32 cdrom_get_audio_lba(cdrom_file *file);
+int cdrom_audio_active(cdrom_file *file);
+int cdrom_audio_paused(cdrom_file *file);
+int cdrom_audio_ended(cdrom_file *file);
 
-void cdrom_get_audio_data(struct cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted);
+void cdrom_get_audio_data(cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted);
 
 // TOC utilities
-int cdrom_get_last_track(struct cdrom_file *file);
-int cdrom_get_adr_control(struct cdrom_file *file, int track);
-data32_t cdrom_get_track_start(struct cdrom_file *file, int track, int msf);
-int cdrom_get_track_type(struct cdrom_file *file, int track);
-struct cdrom_toc *cdrom_get_toc(struct cdrom_file *file);
+int cdrom_get_last_track(cdrom_file *file);
+int cdrom_get_adr_control(cdrom_file *file, int track);
+data32_t cdrom_get_track_start(cdrom_file *file, int track, int msf);
+int cdrom_get_track_type(cdrom_file *file, int track);
+cdrom_toc *cdrom_get_toc(cdrom_file *file);
 
 #endif	// __CDROM_H__
 

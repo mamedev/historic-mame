@@ -63,6 +63,8 @@ enum
  *
  *************************************/
 
+typedef UINT32 (*ui_menu_handler)(UINT32 state);
+
 struct _ui_menu_item
 {
    const char *text;
@@ -91,12 +93,6 @@ typedef struct _memcard_interface memcard_interface;
 
 extern memcard_interface memcard_intf;
 
-extern int	mcd_action;
-extern int	mcd_number;
-extern int	memcard_status;
-extern int	memcard_number;
-extern int	memcard_manager;
-
 #define init_memcard() memset(&memcard_intf, 0, sizeof(memcard_interface))
 
 
@@ -123,6 +119,10 @@ void ui_set_visible_area(int xmin, int ymin, int xmax, int ymax);
 /* returns the line height of the font used by the UI system */
 int ui_get_line_height(void);
 
+/* returns the width of a character or string in the UI font */
+int ui_get_char_width(UINT16 ch);
+int ui_get_string_width(const char *s);
+
 /* returns the current width/height of the UI rendering area */
 void ui_get_bounds(int *width, int *height);
 
@@ -137,6 +137,14 @@ void ui_draw_message_window(const char *text);
 
 /* menu rendering system */
 void ui_draw_menu(const ui_menu_item *items, int numitems, int selected);
+
+/* menu keyboard handling */
+int ui_menu_generic_keys(int *selected, int num_items);
+
+/* menu stack management */
+void ui_menu_stack_reset(void);
+UINT32 ui_menu_stack_push(ui_menu_handler new_handler, UINT32 new_state);
+UINT32 ui_menu_stack_pop(void);
 
 /* display a temporary message at the bottom of the screen */
 void CLIB_DECL ui_popup(const char *text, ...) ATTR_PRINTF(1,2);

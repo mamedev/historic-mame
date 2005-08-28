@@ -35,7 +35,7 @@ MACHINE_INIT( sys16_onetime ){
 	sys18_splittab_fg_y=0;
 }
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -46,7 +46,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-struct GfxDecodeInfo sys16_gfxdecodeinfo[] = {
+gfx_decode sys16_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0, &charlayout,	0, 1024 },
 	{ -1 } /* end of array */
 };

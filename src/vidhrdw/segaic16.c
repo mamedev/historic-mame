@@ -398,8 +398,8 @@ struct tilemap_info
 	UINT16			latched_yscroll[4];				/* latched Y scroll values */
 	UINT16			latched_pageselect[4];			/* latched page select values */
 	int				xoffs;							/* X scroll offset */
-	struct tilemap *tilemaps[16];					/* up to 16 tilemap pages */
-	struct tilemap *textmap;						/* a single text tilemap */
+	tilemap *tilemaps[16];					/* up to 16 tilemap pages */
+	tilemap *textmap;						/* a single text tilemap */
 	struct tilemap_callback_info tilemap_info[16];	/* callback info for 16 tilemap pages */
 	struct tilemap_callback_info textmap_info;		/* callback info for a single textmap page */
 	void			(*reset)(struct tilemap_info *info);/* reset callback */
@@ -476,7 +476,7 @@ data16_t *segaic16_rotateram_0;
  *************************************/
 
 static struct palette_info palette;
-static struct tilemap_info tilemap[SEGAIC16_MAX_TILEMAPS];
+static struct tilemap_info bg_tilemap[SEGAIC16_MAX_TILEMAPS];
 static struct sprite_info sprites[SEGAIC16_MAX_SPRITES];
 static struct road_info road[SEGAIC16_MAX_ROADS];
 static struct rotate_info rotate[SEGAIC16_MAX_ROTATE];
@@ -1161,7 +1161,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, struct ma
 
 static void segaic16_tilemap_16b_latch_values(int param)
 {
-	struct tilemap_info *info = &tilemap[param];
+	struct tilemap_info *info = &bg_tilemap[param];
 	data16_t *textram = info->textram;
 	int i;
 
@@ -1194,7 +1194,7 @@ void segaic16_tilemap_16b_reset(struct tilemap_info *info)
 
 int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int numbanks)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 	void (*get_text_info)(int);
 	void (*get_tile_info)(int);
 	int pagenum;
@@ -1303,7 +1303,7 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 
 void segaic16_tilemap_draw(int which, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int map, int priority, int priority_mark)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 
 	/* text layer is a special common case */
 	if (map == SEGAIC16_TILEMAP_TEXT)
@@ -1324,7 +1324,7 @@ void segaic16_tilemap_draw(int which, struct mame_bitmap *bitmap, const struct r
 
 void segaic16_tilemap_reset(int which)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 
 	if (info->reset)
 		(*info->reset)(info);
@@ -1340,7 +1340,7 @@ void segaic16_tilemap_reset(int which)
 
 void segaic16_tilemap_set_bank(int which, int banknum, int offset)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 
 	if (info->bank[banknum] != offset)
 	{
@@ -1360,7 +1360,7 @@ void segaic16_tilemap_set_bank(int which, int banknum, int offset)
 
 void segaic16_tilemap_set_flip(int which, int flip)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 	int pagenum;
 
 	flip = (flip != 0);
@@ -1384,7 +1384,7 @@ void segaic16_tilemap_set_flip(int which, int flip)
 
 void segaic16_tilemap_set_rowscroll(int which, int enable)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 
 	enable = (enable != 0);
 	if (info->rowscroll != enable)
@@ -1404,7 +1404,7 @@ void segaic16_tilemap_set_rowscroll(int which, int enable)
 
 void segaic16_tilemap_set_colscroll(int which, int enable)
 {
-	struct tilemap_info *info = &tilemap[which];
+	struct tilemap_info *info = &bg_tilemap[which];
 
 	enable = (enable != 0);
 	if (info->colscroll != enable)
@@ -1425,7 +1425,7 @@ void segaic16_tilemap_set_colscroll(int which, int enable)
 WRITE16_HANDLER( segaic16_tileram_0_w )
 {
 	COMBINE_DATA(&segaic16_tileram_0[offset]);
-	tilemap_mark_tile_dirty(tilemap[0].tilemaps[offset / (64*32)], offset % (64*32));
+	tilemap_mark_tile_dirty(bg_tilemap[0].tilemaps[offset / (64*32)], offset % (64*32));
 }
 
 
@@ -1436,7 +1436,7 @@ WRITE16_HANDLER( segaic16_textram_0_w )
 		force_partial_update(cpu_getscanline());
 
 	COMBINE_DATA(&segaic16_textram_0[offset]);
-	tilemap_mark_tile_dirty(tilemap[0].textmap, offset);
+	tilemap_mark_tile_dirty(bg_tilemap[0].textmap, offset);
 }
 
 

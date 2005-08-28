@@ -12,7 +12,7 @@
 static int star_speed;
 static int gfxbank;
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 
 /***************************************************************************
 

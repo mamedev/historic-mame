@@ -45,7 +45,8 @@
 
 
 /* PNG support */
-struct png_info {
+struct _png_info
+{
 	UINT32 width, height;
 	UINT32 xres, yres;
 	struct rectangle screen;
@@ -75,19 +76,20 @@ struct png_info {
 	UINT32 zlength;
 	UINT8 *fimage;
 };
+typedef struct _png_info png_info;
 
 int png_verify_signature (mame_file *fp);
-int png_inflate_image (struct png_info *p);
-int png_read_file(mame_file *fp, struct png_info *p);
-int png_read_info(mame_file *fp, struct png_info *p);
-int png_expand_buffer_8bit (struct png_info *p);
-void png_delete_unused_colors (struct png_info *p);
+int png_inflate_image (png_info *p);
+int png_read_file(mame_file *fp, png_info *p);
+int png_read_info(mame_file *fp, png_info *p);
+int png_expand_buffer_8bit (png_info *p);
+void png_delete_unused_colors (png_info *p);
 int png_add_text (const char *keyword, const char *text);
-int png_unfilter(struct png_info *p);
-int png_filter(struct png_info *p);
-int png_deflate_image(struct png_info *p);
+int png_unfilter(png_info *p);
+int png_filter(png_info *p);
+int png_deflate_image(png_info *p);
 int png_write_sig(mame_file *fp);
-int png_write_datastream(mame_file *fp, struct png_info *p);
+int png_write_datastream(mame_file *fp, png_info *p);
 int png_write_bitmap(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap);
 int mng_capture_frame(mame_file *fp, struct mame_bitmap *bitmap);

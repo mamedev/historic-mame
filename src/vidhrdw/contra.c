@@ -15,7 +15,7 @@ unsigned char *contra_fg_vram,*contra_fg_cram;
 unsigned char *contra_text_vram,*contra_text_cram;
 unsigned char *contra_bg_vram,*contra_bg_cram;
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static struct rectangle bg_clip, fg_clip, tx_clip;
 
 /***************************************************************************

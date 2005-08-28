@@ -17,7 +17,7 @@ UINT8 *gsword_spriteattrib_ram;
 
 static int charbank, charpalbank, flipscreen;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( josvolly )
 {

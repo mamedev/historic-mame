@@ -1020,7 +1020,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-struct GfxLayout zaxxon_charlayout1 =
+gfx_layout zaxxon_charlayout1 =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -1031,7 +1031,7 @@ struct GfxLayout zaxxon_charlayout1 =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-struct GfxLayout zaxxon_charlayout2 =
+gfx_layout zaxxon_charlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -1042,7 +1042,7 @@ struct GfxLayout zaxxon_charlayout2 =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout zaxxon_spritelayout =
+static gfx_layout zaxxon_spritelayout =
 {
 	32,32,	/* 32*32 sprites */
 	64, /* 64 sprites */
@@ -1059,7 +1059,7 @@ static struct GfxLayout zaxxon_spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout congo_spritelayout =
+static gfx_layout congo_spritelayout =
 {
 	32,32,	/* 32*32 sprites */
 	128,	/* 128 sprites */
@@ -1078,7 +1078,7 @@ static struct GfxLayout congo_spritelayout =
 
 /* Graphics Decode Info */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &zaxxon_charlayout1,	 0, 32 },	/* characters */
 	{ REGION_GFX2, 0, &zaxxon_charlayout2,	 0, 32 },	/* background tiles */
@@ -1086,7 +1086,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo congo_gfxdecodeinfo[] =
+static gfx_decode congo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &zaxxon_charlayout1,	 0, 32 },	/* characters */
 	{ REGION_GFX2, 0, &zaxxon_charlayout2,	 0, 32 },	/* background tiles */

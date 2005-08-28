@@ -25,7 +25,11 @@ static void tile_callback(int layer,int bank,int *code,int *color)
 
 static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 {
-	*priority = (*color & 0x10) >> 4;
+	if(*color & 0x10)
+		*priority = 0xfe; // under K052109_tilemap[0]
+	else
+		*priority = 0xfc; // under K052109_tilemap[1]
+
 	*color = sprite_colorbase + (*color & 0x0f);
 }
 
@@ -54,11 +58,13 @@ VIDEO_START( blockhl )
 
 VIDEO_UPDATE( blockhl )
 {
+	fillbitmap(priority_bitmap,0,cliprect);
+
 	K052109_tilemap_update();
 
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[2],TILEMAP_IGNORE_TRANSPARENCY,0);
-	K051960_sprites_draw(bitmap,cliprect,1,1);
-	tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
-	K051960_sprites_draw(bitmap,cliprect,0,0);
-	tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,1);
+	tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,2);
+
+	K051960_sprites_draw(bitmap,cliprect,0,-1); // draw sprites with pdrawgfx
 }

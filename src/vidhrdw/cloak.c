@@ -12,7 +12,7 @@ static struct mame_bitmap *tmpbitmap2;
 static UINT8 x,y,bmap;
 static UINT8 *tmpvideoram,*tmpvideoram2;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

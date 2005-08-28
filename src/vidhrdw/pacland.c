@@ -33,7 +33,7 @@ data8_t *pacland_videoram,*pacland_videoram2,*pacland_spriteram;
 static int palette_bank;
 static const UINT8 *pacland_color_prom;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 static struct mame_bitmap *sprite_bitmap,*fg_bitmap;
 
 static int scroll0,scroll1;

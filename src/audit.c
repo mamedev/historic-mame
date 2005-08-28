@@ -13,18 +13,18 @@
 #include "harddisk.h"
 #include "sound/samples.h"
 
-static tAuditRecord *gAudits = NULL;
+static audit_record *audit_records = NULL;
 
-static const struct GameDriver *chd_gamedrv;
+static const game_driver *chd_gamedrv;
 
 /*-------------------------------------------------
     audit_chd_open - interface for opening
     a hard disk image
 -------------------------------------------------*/
 
-struct chd_interface_file *audit_chd_open(const char *filename, const char *mode)
+chd_interface_file *audit_chd_open(const char *filename, const char *mode)
 {
-	const struct GameDriver *drv;
+	const game_driver *drv;
 
 	/* attempt reading up the chain through the parents */
 	for (drv = chd_gamedrv; drv != NULL; drv = drv->clone_of)
@@ -45,7 +45,7 @@ struct chd_interface_file *audit_chd_open(const char *filename, const char *mode
     a hard disk image
 -------------------------------------------------*/
 
-void audit_chd_close(struct chd_interface_file *file)
+void audit_chd_close(chd_interface_file *file)
 {
 	mame_fclose((mame_file *)file);
 }
@@ -57,7 +57,7 @@ void audit_chd_close(struct chd_interface_file *file)
     from a hard disk image
 -------------------------------------------------*/
 
-UINT32 audit_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+UINT32 audit_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fread((mame_file *)file, buffer, count);
@@ -70,7 +70,7 @@ UINT32 audit_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 cou
     to a hard disk image
 -------------------------------------------------*/
 
-UINT32 audit_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+UINT32 audit_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	return 0;
 }
@@ -81,14 +81,14 @@ UINT32 audit_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 co
     the length a hard disk image
 -------------------------------------------------*/
 
-UINT64 audit_chd_length(struct chd_interface_file *file)
+UINT64 audit_chd_length(chd_interface_file *file)
 {
 	return mame_fsize((mame_file *)file);
 }
 
 
 
-static struct chd_interface audit_chd_interface =
+static chd_interface audit_chd_interface =
 {
 	audit_chd_open,
 	audit_chd_close,
@@ -99,9 +99,9 @@ static struct chd_interface audit_chd_interface =
 
 
 /* returns 1 if rom is defined in this set */
-int RomInSet (const struct GameDriver *gamedrv, const char* hash)
+int audit_is_rom_used (const game_driver *gamedrv, const char* hash)
 {
-	const struct RomModule *region, *rom;
+	const rom_entry *region, *rom;
 
 	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
@@ -114,13 +114,13 @@ int RomInSet (const struct GameDriver *gamedrv, const char* hash)
 
 
 /* returns nonzero if romset is missing */
-int RomsetMissing (int game)
+int audit_has_missing_roms (int game)
 {
-	const struct GameDriver *gamedrv = drivers[game];
+	const game_driver *gamedrv = drivers[game];
 
 	if (gamedrv->clone_of)
 	{
-		tAuditRecord	*aud;
+		audit_record	*aud;
 		int				count;
 		int 			i;
 
@@ -128,14 +128,14 @@ int RomsetMissing (int game)
         int cloneRomsFound = 0;
         int uniqueRomsFound = 0;
 
-		if ((count = AuditRomSet (game, &aud)) == 0)
+		if ((count = audit_roms (game, &aud)) == 0)
 			return 1;
 
 		if (count == -1) return 0;
 
         /* count number of roms found that are unique to clone */
         for (i = 0; i < count; i++)
-			if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
+			if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
@@ -144,7 +144,7 @@ int RomsetMissing (int game)
 #else
 		int cloneRomsFound = 0;
 
-		if ((count = AuditRomSet (game, &aud)) == 0)
+		if ((count = audit_roms (game, &aud)) == 0)
 			return 1;
 
 		if (count == -1) return 0;
@@ -152,7 +152,7 @@ int RomsetMissing (int game)
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
 			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
+				if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
 					cloneRomsFound++;
 #endif
 
@@ -165,27 +165,27 @@ int RomsetMissing (int game)
 /* Fills in an audit record for each rom in the romset. Sets 'audit' to
    point to the list of audit records. Returns total number of roms
    in the romset (same as number of audit records), 0 if romset missing. */
-int AuditRomSet (int game, tAuditRecord **audit)
+int audit_roms (int game, audit_record **audit)
 {
-	const struct RomModule *region, *rom, *chunk;
+	const rom_entry *region, *rom, *chunk;
 	const char *name;
-	const struct GameDriver *gamedrv;
+	const game_driver *gamedrv;
 
 	int count = 0;
-	tAuditRecord *aud;
+	audit_record *aud;
 	int	err;
 
-	if (!gAudits)
+	if (!audit_records)
 	{
-		gAudits = (tAuditRecord *)malloc (AUD_MAX_ROMS * sizeof (tAuditRecord));
+		audit_records = (audit_record *)malloc (AUD_MAX_ROMS * sizeof (audit_record));
 
 		// Make sure the memory is cleared - it's needed by the hashing
 		//  engine
-		memset(gAudits, 0, AUD_MAX_ROMS * sizeof(tAuditRecord));
+		memset(audit_records, 0, AUD_MAX_ROMS * sizeof(audit_record));
 	}
 
-	if (gAudits)
-		*audit = aud = gAudits;
+	if (audit_records)
+		*audit = aud = audit_records;
 	else
 		return 0;
 
@@ -207,7 +207,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 		{
 			if (ROMREGION_ISROMDATA(region))
 			{
-				const struct GameDriver *drv;
+				const game_driver *drv;
 
 				name = ROM_GETNAME(rom);
 				strcpy (aud->rom, name);
@@ -255,7 +255,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 						/* If missing ROM is also present in a parent set, indicate that */
 						while (drv)
 						{
-							if (RomInSet (drv, aud->exphash))
+							if (audit_is_rom_used (drv, aud->exphash))
 							{
 								if (drv->flags & NOT_A_DRIVER)
 								{
@@ -298,7 +298,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 			{
 				const UINT8 nullhash[HASH_BUF_SIZE] = { 0 };
 				void *source;
-				struct chd_header header;
+				chd_header header;
 
 				name = ROM_GETNAME(rom);
 				strcpy (aud->rom, name);
@@ -366,7 +366,7 @@ int AuditRomSet (int game, tAuditRecord **audit)
 	return count;
 }
 
-static void VerifyDumpHashData(const char* hash, const char* head, verify_printf_proc verify_printf)
+static void verify_dump_hash_data(const char* hash, const char* head, verify_printf_proc verify_printf)
 {
 	char buf[512];
 
@@ -377,15 +377,15 @@ static void VerifyDumpHashData(const char* hash, const char* head, verify_printf
 
 
 /* Generic function for evaluating a romset. Some platforms may wish to
-   call AuditRomSet() instead and implement their own reporting (like MacMAME). */
-int VerifyRomSet (int game, verify_printf_proc verify_printf)
+   call audit_roms() instead and implement their own reporting (like MacMAME). */
+int audit_verify_roms (int game, verify_printf_proc verify_printf)
 {
-	tAuditRecord			*aud;
+	audit_record			*aud;
 	int						count;
 	int						archive_status = 0;
-	const struct GameDriver *gamedrv = drivers[game];
+	const game_driver *gamedrv = drivers[game];
 
-	if ((count = AuditRomSet (game, &aud)) == 0)
+	if ((count = audit_roms (game, &aud)) == 0)
 		return NOTFOUND;
 
 	if (count == -1) return CORRECT;
@@ -399,7 +399,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 
         /* count number of roms found that are unique to clone */
         for (i = 0; i < count; i++)
-			if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
+			if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
@@ -420,7 +420,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
 			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!RomInSet (gamedrv->clone_of, aud[i].exphash))
+				if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
 					cloneRomsFound++;
 
                 #ifndef MESS
@@ -440,22 +440,22 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 			case AUD_ROM_NOT_FOUND:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND\n",
 					drivers[game]->name, aud->rom, aud->explength);
-				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				verify_dump_hash_data(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_ROM_NOT_FOUND_PARENT:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND (shared with parent)\n",
 					drivers[game]->name, aud->rom, aud->explength);
-				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				verify_dump_hash_data(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_ROM_NOT_FOUND_BIOS:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND (BIOS)\n",
 					drivers[game]->name, aud->rom, aud->explength);
-				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				verify_dump_hash_data(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_OPTIONAL_ROM_NOT_FOUND:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND BUT OPTIONAL\n",
 					drivers[game]->name, aud->rom, aud->explength);
-				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				verify_dump_hash_data(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_NOT_AVAILABLE:
 				verify_printf ("%-8s: %-12s %7d bytes NOT FOUND - NO GOOD DUMP KNOWN\n",
@@ -468,8 +468,8 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 			case AUD_BAD_CHECKSUM:
 				verify_printf ("%-8s: %-12s %7d bytes INCORRECT CHECKSUM:\n",
 					drivers[game]->name, aud->rom, aud->explength);
-				VerifyDumpHashData(aud->exphash, "EXPECTED: ", verify_printf);
-				VerifyDumpHashData(aud->hash,    "   FOUND: ", verify_printf);
+				verify_dump_hash_data(aud->exphash, "EXPECTED: ", verify_printf);
+				verify_dump_hash_data(aud->hash,    "   FOUND: ", verify_printf);
 				break;
 			case AUD_ROM_NEED_REDUMP:
 				verify_printf ("%-8s: %-12s %7d bytes ROM NEEDS REDUMP\n",
@@ -481,32 +481,32 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 			case AUD_LENGTH_MISMATCH:
 				verify_printf ("%-8s: %-12s %7d bytes INCORRECT LENGTH: %8d\n",
 					drivers[game]->name, aud->rom, aud->explength, aud->length);
-				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				verify_dump_hash_data(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_ROM_GOOD:
 #if 0    /* if you want a full accounting of roms */
 				verify_printf ("%-8s: %-12s %7d bytes ROM GOOD\n",
 					drivers[game]->name, aud->rom, aud->explength);
-				VerifyDumpHashData(aud->hash, NULL, verify_printf);
+				verify_dump_hash_data(aud->hash, NULL, verify_printf);
 #endif
 				break;
 			case AUD_DISK_GOOD:
 #if 0    /* if you want a full accounting of roms */
 				verify_printf ("%-8s: %-12s GOOD\n",
 					drivers[game]->name, aud->rom);
-				VerifyDumpHashData(aud->hash, NULL, verify_printf);
+				verify_dump_hash_data(aud->hash, NULL, verify_printf);
 #endif
 				break;
 			case AUD_DISK_NOT_FOUND:
 				verify_printf ("%-8s: %-12s NOT FOUND\n",
 					drivers[game]->name, aud->rom);
-				VerifyDumpHashData(aud->exphash, NULL, verify_printf);
+				verify_dump_hash_data(aud->exphash, NULL, verify_printf);
 				break;
 			case AUD_DISK_BAD_MD5:
 				verify_printf ("%-8s: %-12s INCORRECT CHECKSUM:\n",
 					drivers[game]->name, aud->rom);
-				VerifyDumpHashData(aud->exphash, "EXPECTED: ", verify_printf);
-				VerifyDumpHashData(aud->hash,    "   FOUND: ", verify_printf);
+				verify_dump_hash_data(aud->exphash, "EXPECTED: ", verify_printf);
+				verify_dump_hash_data(aud->hash,    "   FOUND: ", verify_printf);
 				break;
 			case AUD_DISK_NOT_AVAILABLE:
 				verify_printf ("%-8s: %-12s NO GOOD DUMP KNOWN\n",
@@ -515,7 +515,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 			case AUD_DISK_NEED_DUMP:
 				verify_printf ("%-8s: %-12s FOUND BUT NO GOOD DUMP KNOWN\n",
 					drivers[game]->name, aud->rom);
-				VerifyDumpHashData(aud->hash, NULL, verify_printf);
+				verify_dump_hash_data(aud->hash, NULL, verify_printf);
 				break;
 		}
 		aud++;
@@ -533,22 +533,22 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 }
 
 
-static tMissingSample *gMissingSamples = NULL;
+static missing_sample *missing_samples = NULL;
 
 /* Builds a list of every missing sample. Returns total number of missing
    samples, or -1 if no samples were found. Sets audit to point to the
    list of missing samples. */
-int AuditSampleSet (int game, tMissingSample **audit)
+int audit_samples (int game, missing_sample **audit)
 {
-	struct InternalMachineDriver drv;
+	machine_config drv;
 	int skipfirst;
 	mame_file *f;
 	const char **samplenames, *sharedname;
 	int exist;
-	static const struct GameDriver *gamedrv;
+	static const game_driver *gamedrv;
 	int j;
 	int count = 0;
-	tMissingSample *aud;
+	missing_sample *aud;
 
 	gamedrv = drivers[game];
 	expand_machine_driver(gamedrv->drv, &drv);
@@ -591,11 +591,11 @@ int AuditSampleSet (int game, tMissingSample **audit)
 		return -1;
 
 	/* allocate missing samples list (if necessary) */
-	if (!gMissingSamples)
-		gMissingSamples = (tMissingSample *)malloc (AUD_MAX_SAMPLES * sizeof (tMissingSample));
+	if (!missing_samples)
+		missing_samples = (missing_sample *)malloc (AUD_MAX_SAMPLES * sizeof (missing_sample));
 
-	if (gMissingSamples)
-		*audit = aud = gMissingSamples;
+	if (missing_samples)
+		*audit = aud = missing_samples;
 	else
 		return 0;
 
@@ -622,13 +622,13 @@ int AuditSampleSet (int game, tMissingSample **audit)
 
 
 /* Generic function for evaluating a sampleset. Some platforms may wish to
-   call AuditSampleSet() instead and implement their own reporting (like MacMAME). */
-int VerifySampleSet (int game, verify_printf_proc verify_printf)
+   call audit_samples() instead and implement their own reporting (like MacMAME). */
+int audit_verify_samples (int game, verify_printf_proc verify_printf)
 {
-	tMissingSample	*aud;
+	missing_sample	*aud;
 	int				count;
 
-	count = AuditSampleSet (game, &aud);
+	count = audit_samples (game, &aud);
 	if (count==-1)
 		return NOTFOUND;
 	else if (count==0)

@@ -710,7 +710,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout lastday_charlayout =
+static gfx_layout lastday_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -721,7 +721,7 @@ static struct GfxLayout lastday_charlayout =
 	16*8
 };
 
-static struct GfxLayout bluehawk_charlayout =
+static gfx_layout bluehawk_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -732,7 +732,7 @@ static struct GfxLayout bluehawk_charlayout =
 	32*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -749,7 +749,7 @@ static struct GfxLayout tilelayout =
 	512*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -762,7 +762,7 @@ static struct GfxLayout spritelayout =
 	128*8
 };
 
-static struct GfxLayout rshark_spritelayout =
+static gfx_layout rshark_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -775,7 +775,7 @@ static struct GfxLayout rshark_spritelayout =
 	128*8
 };
 
-static struct GfxLayout popbingo_tilelayout =
+static gfx_layout popbingo_tilelayout =
 {
 	32,32,
 	RGN_FRAC(1,2),
@@ -793,7 +793,7 @@ static struct GfxLayout popbingo_tilelayout =
 	512*8
 };
 
-static struct GfxDecodeInfo lastday_gfxdecodeinfo[] =
+static gfx_decode lastday_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lastday_charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
@@ -802,7 +802,7 @@ static struct GfxDecodeInfo lastday_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo flytiger_gfxdecodeinfo[] =
+static gfx_decode flytiger_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lastday_charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
@@ -811,7 +811,7 @@ static struct GfxDecodeInfo flytiger_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo bluehawk_gfxdecodeinfo[] =
+static gfx_decode bluehawk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bluehawk_charlayout,  0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
@@ -821,7 +821,7 @@ static struct GfxDecodeInfo bluehawk_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo primella_gfxdecodeinfo[] =
+static gfx_decode primella_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bluehawk_charlayout,  0, 16 },
 	/* no sprites */
@@ -830,7 +830,7 @@ static struct GfxDecodeInfo primella_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo rshark_gfxdecodeinfo[] =
+static gfx_decode rshark_gfxdecodeinfo[] =
 {
 	/* no chars */
 	{ REGION_GFX1, 0, &rshark_spritelayout,  0, 16 },
@@ -841,7 +841,7 @@ static struct GfxDecodeInfo rshark_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo popbingo_gfxdecodeinfo[] =
+static gfx_decode popbingo_gfxdecodeinfo[] =
 {
 	/* no chars */
 	{ REGION_GFX1, 0, &rshark_spritelayout,   0, 16 },

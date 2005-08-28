@@ -12,9 +12,9 @@ extern int gun_x_p1,gun_y_p1,gun_x_p2,gun_y_p2;
 extern int gun_x_shift;
 
 
-static struct tilemap *oneshot_bg_tilemap;
-static struct tilemap *oneshot_mid_tilemap;
-static struct tilemap *oneshot_fg_tilemap;
+static tilemap *oneshot_bg_tilemap;
+static tilemap *oneshot_mid_tilemap;
+static tilemap *oneshot_fg_tilemap;
 
 /* bg tilemap */
 static void get_oneshot_bg_tile_info(int tile_index)
@@ -127,7 +127,7 @@ static void oneshot_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 {
 	const UINT16 *source = oneshot_sprites;
 	const UINT16 *finish = source+(0x1000/2);
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 
 	int xpos,ypos;
 

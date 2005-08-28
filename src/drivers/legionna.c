@@ -1351,7 +1351,7 @@ INPUT_PORTS_END
 /*****************************************************************************/
 
 
-static struct GfxLayout legionna_charlayout =
+static gfx_layout legionna_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),	/* other half is BK3, decoded in char2layout */
@@ -1362,7 +1362,7 @@ static struct GfxLayout legionna_charlayout =
 	16*8
 };
 
-static struct GfxLayout heatbrl_charlayout =
+static gfx_layout heatbrl_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),	/* second half is junk, like legionna we may need a different decode */
@@ -1374,7 +1374,7 @@ static struct GfxLayout heatbrl_charlayout =
 };
 
 
-static struct GfxLayout legionna_char2layout =
+static gfx_layout legionna_char2layout =
 {
 	16,16,
 	256,	/* Can't use RGN_FRAC as (1,16) not supported */
@@ -1389,7 +1389,7 @@ static struct GfxLayout legionna_char2layout =
 	16*8
 };
 
-static struct GfxLayout legionna_tilelayout =
+static gfx_layout legionna_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1402,7 +1402,7 @@ static struct GfxLayout legionna_tilelayout =
 	128*8
 };
 
-static struct GfxLayout legionna_spritelayout =
+static gfx_layout legionna_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1415,7 +1415,7 @@ static struct GfxLayout legionna_spritelayout =
 	128*8
 };
 
-static struct GfxDecodeInfo legionna_gfxdecodeinfo[] =
+static gfx_decode legionna_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &legionna_charlayout,   48*16, 16 },
 	{ REGION_GFX3, 0, &legionna_tilelayout,    0*16, 16 },
@@ -1426,7 +1426,7 @@ static struct GfxDecodeInfo legionna_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo heatbrl_gfxdecodeinfo[] =
+static gfx_decode heatbrl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &heatbrl_charlayout,    48*16, 16 },
 	{ REGION_GFX3, 0, &legionna_tilelayout,    0*16, 16 },

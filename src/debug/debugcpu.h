@@ -40,8 +40,8 @@ enum
 **  MACROS
 **#################################################################################################*/
 
-#define ADDR2BYTE(val,info,spc) ((((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift) & address_space[spc].addrmask)
-#define BYTE2ADDR(val,info,spc) ((((val) & address_space[spc].addrmask) << (info)->space[spc].addr2byte_rshift) >> (info)->space[spc].addr2byte_lshift)
+#define ADDR2BYTE(val,info,spc) ((((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift) & active_address_space[spc].addrmask)
+#define BYTE2ADDR(val,info,spc) ((((val) & active_address_space[spc].addrmask) << (info)->space[spc].addr2byte_rshift) >> (info)->space[spc].addr2byte_lshift)
 
 
 

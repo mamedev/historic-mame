@@ -23,7 +23,7 @@
  *
  *************************************/
 
-struct MachineCPU
+struct _cpu_config
 {
 	int			cpu_type;					/* index for the CPU type */
 	int			cpu_flags;					/* flags; see #defines below */
@@ -36,6 +36,7 @@ struct MachineCPU
 	void *		reset_param;				/* parameter for cpu_reset */
 	const char *tag;
 };
+typedef struct _cpu_config cpu_config;
 
 
 
@@ -89,11 +90,13 @@ enum
 {
 	LOADSAVE_NONE,
 	LOADSAVE_SAVE,
-	LOADSAVE_LOAD
+	LOADSAVE_LOAD,
+	LOADSAVE_LOAD_POSTRESET
 };
 void cpu_loadsave_schedule(int type, char id);
 void cpu_loadsave_schedule_file(int type, const char *name);
 void cpu_loadsave_reset(void);
+void cpu_loadsave_disallow(void);
 
 
 

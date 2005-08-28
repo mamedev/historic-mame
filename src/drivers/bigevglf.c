@@ -436,7 +436,7 @@ static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static struct GfxLayout gfxlayout =
+static gfx_layout gfxlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -447,7 +447,7 @@ static struct GfxLayout gfxlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout,   0x20*16, 16 },
 	{ -1 }	/* end of array */

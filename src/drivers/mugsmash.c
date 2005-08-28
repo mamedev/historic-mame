@@ -388,7 +388,7 @@ INPUT_PORTS_START( mugsmash )
 INPUT_PORTS_END
 #endif
 
-static struct GfxLayout mugsmash_layout =
+static gfx_layout mugsmash_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -400,7 +400,7 @@ static struct GfxLayout mugsmash_layout =
 	16*64
 };
 
-static struct GfxLayout mugsmash2_layout =
+static gfx_layout mugsmash2_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -411,7 +411,7 @@ static struct GfxLayout mugsmash2_layout =
 	32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mugsmash_layout,   0x00, 16  }, /* sprites */
 	{ REGION_GFX2, 0, &mugsmash2_layout,  0x100, 256  }, /* bg tiles */

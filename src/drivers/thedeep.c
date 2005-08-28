@@ -285,7 +285,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_8x8x2 =
+static gfx_layout layout_8x8x2 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -296,7 +296,7 @@ static struct GfxLayout layout_8x8x2 =
 	8*8
 };
 
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -307,7 +307,7 @@ static struct GfxLayout layout_16x16x4 =
 	16*16
 };
 
-static struct GfxDecodeInfo thedeep_gfxdecodeinfo[] =
+static gfx_decode thedeep_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,	0x080,  8 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4,	0x100, 16 }, // [1] Background Layer

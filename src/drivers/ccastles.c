@@ -207,7 +207,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout ccastles_spritelayout =
+static gfx_layout ccastles_spritelayout =
 {
 	8,16,
 	256,
@@ -220,7 +220,7 @@ static struct GfxLayout ccastles_spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &ccastles_spritelayout,  0, 1 },
 	{ -1 }

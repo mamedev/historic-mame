@@ -217,12 +217,12 @@ static UINT32 *K037122_tile_ram;
 static UINT32 *K037122_char_ram;
 static UINT8 *K037122_dirty_map;
 static int K037122_gfx_index, K037122_char_dirty;
-static struct tilemap *K037122_layer[1];
+static tilemap *K037122_layer[1];
 static UINT32 K037122_reg[256];
 
 #define K037122_NUM_TILES		8192
 
-static struct GfxLayout K037122_char_layout =
+static gfx_layout K037122_char_layout =
 {
 	8, 8,
 	K037122_NUM_TILES,

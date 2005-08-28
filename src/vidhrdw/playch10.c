@@ -13,7 +13,7 @@ extern int pc10_dispmask_old;
 /* from common.c */
 extern int system_bios;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( playch10_videoram_w )
 {

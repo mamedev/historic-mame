@@ -680,7 +680,7 @@ INPUT_PORTS_END
 //
 // ----------------------------------------------------------------------------
 
-static struct GfxLayout fromanc2_tilelayout =
+static gfx_layout fromanc2_tilelayout =
 {
 	8, 8,
 	RGN_FRAC(1, 1),
@@ -691,7 +691,7 @@ static struct GfxLayout fromanc2_tilelayout =
 	32*8
 };
 
-static struct GfxDecodeInfo fromanc2_gfxdecodeinfo[] =
+static gfx_decode fromanc2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fromanc2_tilelayout, (  0 * 2), (256 * 2) },
 	{ REGION_GFX2, 0, &fromanc2_tilelayout, (256 * 2), (256 * 2) },
@@ -700,7 +700,7 @@ static struct GfxDecodeInfo fromanc2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxLayout fromancr_tilelayout =
+static gfx_layout fromancr_tilelayout =
 {
 	8, 8,
 	RGN_FRAC(1, 1),
@@ -711,7 +711,7 @@ static struct GfxLayout fromancr_tilelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo fromancr_gfxdecodeinfo[] =
+static gfx_decode fromancr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fromancr_tilelayout, (512 * 2), 2 },
 	{ REGION_GFX2, 0, &fromancr_tilelayout, (256 * 2), 2 },

@@ -1282,7 +1282,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mcr_bg_layout,     0, 4 },	/* colors 0-15 */
 	{ REGION_GFX2, 0, &mcr_sprite_layout, 0, 4 },	/* colors 16-31 */

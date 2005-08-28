@@ -233,7 +233,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tilelayout1 =
+static gfx_layout tilelayout1 =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -244,7 +244,7 @@ static struct GfxLayout tilelayout1 =
 	8*16
 };
 
-static struct GfxLayout tilelayout2 =
+static gfx_layout tilelayout2 =
 {
 	8,32,
 	RGN_FRAC(1,2),
@@ -258,7 +258,7 @@ static struct GfxLayout tilelayout2 =
 	32*16
 };
 
-static struct GfxLayout tilelayout3 =
+static gfx_layout tilelayout3 =
 {
 	8,32,
 	RGN_FRAC(1,3),
@@ -272,14 +272,14 @@ static struct GfxLayout tilelayout3 =
 	32*16
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_iqblock[] =
+static gfx_decode gfxdecodeinfo_iqblock[] =
 {
 	{ REGION_GFX1, 0, &tilelayout1, 0, 16 },	/* only odd color codes are used */
 	{ REGION_GFX2, 0, &tilelayout2, 0,  4 },	/* only color codes 0 and 3 used */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_cabaret[] =
+static gfx_decode gfxdecodeinfo_cabaret[] =
 {
 	{ REGION_GFX1, 0, &tilelayout1, 0, 16 },
 	{ REGION_GFX2, 0, &tilelayout3, 0, 16 },

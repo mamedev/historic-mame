@@ -8,7 +8,7 @@ extern size_t welltris_spriteram_size;
 extern data16_t *welltris_pixelram;
 extern data16_t *welltris_charvideoram;
 
-static struct tilemap *char_tilemap;
+static tilemap *char_tilemap;
 static unsigned char gfxbank[8];
 static UINT16 charpalettebank;
 static UINT16 spritepalettebank;
@@ -151,7 +151,7 @@ static void welltris_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 	}
 }
 
-static void setbank(struct tilemap *tmap, int num, int bank)
+static void setbank(tilemap *tmap, int num, int bank)
 {
 	if (gfxbank[num] != bank)
 	{

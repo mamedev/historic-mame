@@ -19,8 +19,8 @@ drivers by Acho A. Tang
 //****************************************************************************
 // Local Vars
 
-static struct tilemap *scrollmap[2], *charmap, *fgmap, *bgmap;
-static struct GfxElement *fgfx, *bgfx;
+static tilemap *scrollmap[2], *charmap, *fgmap, *bgmap;
+static gfx_element *fgfx, *bgfx;
 static data8_t *srbase[4], *fgdata, *bgdata;
 static int *srxlat;
 static unsigned sreg[8], palatch=0, srbank=0, mapmask=0, mapflip=0;
@@ -49,7 +49,7 @@ static void fill_srxlat(int *xlat)
 //****************************************************************************
 // Exports
 
-struct GfxLayout bwing_tilelayout =
+gfx_layout bwing_tilelayout =
 {
 	16, 16,
 	BW_NTILES,
@@ -234,7 +234,7 @@ VIDEO_START( bwing )
 static void bwing_drawsprites(struct mame_bitmap *bmp, const struct rectangle *clip, data8_t *ram, int pri)
 {
 	int attrib, fx, fy, code, x, y, color, i;
-	struct GfxElement *gfx = Machine->gfx[1];
+	gfx_element *gfx = Machine->gfx[1];
 
 	for (i=0; i<0x200; i+=4)
 	{

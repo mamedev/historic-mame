@@ -11,7 +11,7 @@
 
 data16_t *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 extern int wwfsstar_scrollx, wwfsstar_scrolly;
-static struct tilemap *fg0_tilemap, *bg0_tilemap;
+static tilemap *fg0_tilemap, *bg0_tilemap;
 
 /*******************************************************************************
  Write Handlers
@@ -134,7 +134,7 @@ static void wwfsstar_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
     **- End of Comments -*/
 
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	data16_t *source = spriteram16;
 	data16_t *finish = source + 0x3ff/2;
 

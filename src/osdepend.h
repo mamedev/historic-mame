@@ -31,14 +31,11 @@ void osd_wait_for_debugger(void);
 /* mame_bitmap used to be declared here, but has moved to common.c */
 /* sadly, the include order requires that at least this forward declaration is here */
 struct mame_bitmap;
-struct mame_display;
-struct performance_info;
 struct rectangle;
-struct rom_load_data;
 
 
 /* these are the parameters passed into osd_create_display */
-struct osd_create_params
+struct _osd_create_params
 {
 	int width, height;			/* width and height */
 	int aspect_x, aspect_y;		/* aspect ratio X:Y */
@@ -47,6 +44,7 @@ struct osd_create_params
 	float fps;					/* frame rate */
 	int video_attributes;		/* video flags from driver */
 };
+typedef struct _osd_create_params osd_create_params;
 
 
 
@@ -74,7 +72,7 @@ struct osd_create_params
 
   Returns 0 on success.
 */
-int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components);
+int osd_create_display(const osd_create_params *params, UINT32 *rgb_components);
 void osd_close_display(void);
 
 
@@ -104,7 +102,7 @@ int osd_skip_this_frame(void);
   simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
   on the window title bar.
 */
-void osd_update_video_and_audio(struct mame_display *display);
+void osd_update_video_and_audio(struct _mame_display *display);
 
 
 /*
@@ -119,7 +117,7 @@ struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rec
   This normally includes information about the frameskip, FPS, and percentage
   of full game speed.
 */
-const char *osd_get_fps_text(const struct performance_info *performance);
+const char *osd_get_fps_text(const performance_info *performance);
 
 
 
@@ -176,14 +174,14 @@ void osd_sound_enable(int enable);
 /*
   return a list of all available inputs (see input.h)
 */
-const struct OSCodeInfo *osd_get_code_list(void);
+const os_code_info *osd_get_code_list(void);
 
 /*
   return the value of the specified input. digital inputs return 0 or 1. analog
   inputs should return a value between -65536 and +65536. oscode is the OS dependent
   code specified in the list returned by osd_get_code_list().
 */
-INT32 osd_get_code_value(os_code_t oscode);
+INT32 osd_get_code_value(os_code oscode);
 
 /*
   Return the Unicode value of the most recently pressed key. This
@@ -205,7 +203,7 @@ int osd_readkey_unicode(int flush);
   This function is called on startup, before reading the configuration from disk.
   Scan the list, and change the keys/joysticks you want.
 */
-void osd_customize_inputport_list(struct InputPortDefinition *defaults);
+void osd_customize_inputport_list(input_port_default_entry *defaults);
 
 
 /* Joystick calibration routines BW 19981216 */
@@ -230,15 +228,13 @@ void osd_joystick_end_calibration(void);
 ******************************************************************************/
 
 /* inp header */
-typedef struct
+struct _inp_header
 {
 	char name[9];      /* 8 bytes for game->name + NUL */
 	char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
 	char reserved[20]; /* for future use, possible store game options? */
-} INP_HEADER;
-
-
-typedef struct _osd_file osd_file;
+};
+typedef struct _inp_header inp_header;
 
 
 /* These values are returned by osd_get_path_info */
@@ -313,7 +309,7 @@ void osd_free_executable(void *ptr);
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */
 /* return non-zero to abort loading */
-int osd_display_loading_rom_message(const char *name,struct rom_load_data *romdata);
+int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 
 /* called when the game is paused/unpaused, so the OS dependent code can do special */
 /* things like changing the title bar or darkening the display. */

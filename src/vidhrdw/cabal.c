@@ -8,7 +8,7 @@
 
 #include "vidhrdw/generic.h"
 
-static struct tilemap *background_layer,*text_layer;
+static tilemap *background_layer,*text_layer;
 
 
 static void get_back_tile_info(int tile_index)

@@ -590,7 +590,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout gfx_layout =
+static gfx_layout gfxlayout =
 {
 	8,8,
 	0x4000,
@@ -601,7 +601,7 @@ static struct GfxLayout gfx_layout =
 	32*8
 };
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,8,
 	0x2000, /* number of tiles */
@@ -612,7 +612,7 @@ static struct GfxLayout tile_layout =
 	8*8
 };
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	16,16,
 	0x800,	/* number of sprites */
@@ -629,14 +629,14 @@ static struct GfxLayout sprite_layout =
 	8*8*4
 };
 
-static struct GfxDecodeInfo combasc_gfxdecodeinfo[] =
+static gfx_decode combasc_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &gfx_layout, 0, 8*16 },
-	{ REGION_GFX2, 0x00000, &gfx_layout, 0, 8*16 },
+	{ REGION_GFX1, 0x00000, &gfxlayout, 0, 8*16 },
+	{ REGION_GFX2, 0x00000, &gfxlayout, 0, 8*16 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo combascb_gfxdecodeinfo[] =
+static gfx_decode combascb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &tile_layout,   0, 8*16 },
 	{ REGION_GFX1, 0x40000, &tile_layout,   0, 8*16 },

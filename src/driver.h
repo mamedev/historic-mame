@@ -83,15 +83,15 @@
 
 /* use this to declare external references to a machine driver */
 #define MACHINE_DRIVER_EXTERN(game)										\
-	void construct_##game(struct InternalMachineDriver *machine)		\
+	void construct_##game(machine_config *machine)						\
 
 
 /* start/end tags for the machine driver */
 #define MACHINE_DRIVER_START(game) 										\
-	void construct_##game(struct InternalMachineDriver *machine)		\
+	void construct_##game(machine_config *machine)						\
 	{																	\
-		struct MachineCPU *cpu = NULL;									\
-		struct MachineSound *sound = NULL;								\
+		cpu_config *cpu = NULL;											\
+		sound_config *sound = NULL;										\
 		(void)cpu;														\
 		(void)sound;													\
 
@@ -298,17 +298,17 @@
 	}																	\
 
 
-struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const char *tag, int type, int cpuclock);
-struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const char *tag);
-void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag);
+cpu_config *machine_add_cpu(machine_config *machine, const char *tag, int type, int cpuclock);
+cpu_config *machine_find_cpu(machine_config *machine, const char *tag);
+void machine_remove_cpu(machine_config *machine, const char *tag);
 
-struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine, const char *tag, float x, float y, float z);
-struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machine, const char *tag);
-void machine_remove_speaker(struct InternalMachineDriver *machine, const char *tag);
+speaker_config *machine_add_speaker(machine_config *machine, const char *tag, float x, float y, float z);
+speaker_config *machine_find_speaker(machine_config *machine, const char *tag);
+void machine_remove_speaker(machine_config *machine, const char *tag);
 
-struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, int clock);
-struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, const char *tag);
-void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag);
+sound_config *machine_add_sound(machine_config *machine, const char *tag, int type, int clock);
+sound_config *machine_find_sound(machine_config *machine, const char *tag);
+void machine_remove_sound(machine_config *machine, const char *tag);
 
 
 
@@ -326,9 +326,9 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
 
 #define MAX_SPEAKER 4 /* MAX_SPEAKER is the maximum number of speakers */
 
-struct InternalMachineDriver
+struct _machine_config
 {
-	struct MachineCPU cpu[MAX_CPU];
+	cpu_config cpu[MAX_CPU];
 	float frames_per_second;
 	int vblank_duration;
 	UINT32 cpu_slices_per_frame;
@@ -343,7 +343,7 @@ struct InternalMachineDriver
 	UINT32 aspect_x, aspect_y;
 	int screen_width,screen_height;
 	struct rectangle default_visible_area;
-	struct GfxDecodeInfo *gfxdecodeinfo;
+	gfx_decode *gfxdecodeinfo;
 	UINT32 total_colors;
 	UINT32 color_table_len;
 
@@ -353,9 +353,10 @@ struct InternalMachineDriver
 	void (*video_eof)(void);
 	void (*video_update)(int screen, struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 
-	struct MachineSound sound[MAX_SOUND];
-	struct MachineSpeaker speaker[MAX_SPEAKER];
+	sound_config sound[MAX_SOUND];
+	speaker_config speaker[MAX_SPEAKER];
 };
+/* In mamecore.h: typedef struct _machine_config machine_config; */
 
 
 
@@ -436,31 +437,32 @@ struct InternalMachineDriver
 
 ***************************************************************************/
 
-struct GameDriver
+struct _game_driver
 {
 	const char *source_file;	/* set this to __FILE__ */
-	const struct GameDriver *clone_of;	/* if this is a clone, point to */
+	const struct _game_driver *clone_of;	/* if this is a clone, point to */
 										/* the main version of the game */
 	const char *name;
-	const struct SystemBios *bios;	/* if this system has alternate bios roms use this */
+	const bios_entry *bios;	/* if this system has alternate bios roms use this */
 									/* structure to list names and ROM_BIOSFLAGS. */
 	const char *description;
 	const char *year;
 	const char *manufacturer;
-	void (*drv)(struct InternalMachineDriver *);
-	void (*construct_ipt)(struct IptInitParams *param);
+	void (*drv)(machine_config *);
+	void (*construct_ipt)(input_port_init_params *param);
 	void (*driver_init)(void);	/* optional function to be called during initialization */
 								/* This is called ONCE, unlike Machine->init_machine */
 								/* which is called every time the game is reset. */
 
-	const struct RomModule *rom;
+	const rom_entry *rom;
 #ifdef MESS
 	void (*sysconfig_ctor)(struct SystemConfigurationParamBlock *cfg);
-	const struct GameDriver *compatible_with;
+	const struct _game_driver *compatible_with;
 #endif
 
 	UINT32 flags;	/* orientation and other flags; see defines below */
 };
+/* In mamecore.h: typedef struct _game_driver game_driver; */
 
 
 
@@ -501,8 +503,8 @@ struct GameDriver
 ***************************************************************************/
 
 #define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT;	\
-const struct GameDriver driver_##NAME =		\
+extern const game_driver driver_##PARENT;	\
+const game_driver driver_##NAME =		\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -519,8 +521,8 @@ const struct GameDriver driver_##NAME =		\
 };
 
 #define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;	\
-const struct GameDriver driver_##NAME =		\
+extern const game_driver driver_##PARENT;	\
+const game_driver driver_##NAME =		\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -537,8 +539,8 @@ const struct GameDriver driver_##NAME =		\
 };
 
 #define GAMEB(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT;	\
-const struct GameDriver driver_##NAME =		\
+extern const game_driver driver_##PARENT;	\
+const game_driver driver_##NAME =		\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -555,8 +557,8 @@ const struct GameDriver driver_##NAME =		\
 };
 
 #define GAMEBX(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;	\
-const struct GameDriver driver_##NAME =		\
+extern const game_driver driver_##PARENT;	\
+const game_driver driver_##NAME =		\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -585,12 +587,13 @@ const struct GameDriver driver_##NAME =		\
 #define system_bios_0 0
 
 
+
 /***************************************************************************
 
     Global variables
 
 ***************************************************************************/
 
-extern const struct GameDriver *drivers[];
+extern const game_driver *drivers[];
 
 #endif	/* __DRIVER_H__ */

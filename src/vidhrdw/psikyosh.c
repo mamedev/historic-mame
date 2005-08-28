@@ -102,7 +102,7 @@ struct mame_bitmap *zoom_bitmap, *z_bitmap;
 /* 'Normal' layers, no line/columnscroll. No per-line effects */
 static void psikyosh_drawbglayer( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	struct GfxElement *gfx;
+	gfx_element *gfx;
 	int offs=0, sx, sy;
 	int scrollx, scrolly, bank, alpha, alphamap, trans, size, width;
 
@@ -168,9 +168,9 @@ static void psikyosh_drawbglayer( int layer, struct mame_bitmap *bitmap, const s
 /* It appears that there are row/column scroll values for 2 seperate layers, just drawing it twice using one of each of the sets of values for now */
 static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	struct GfxElement *gfx;
+	gfx_element *gfx;
 	int offs, sx, sy;
-	int scrollx, scrolly, bank, size, width, scrollbank;
+	int scrollx, scrolly, bank, size, width, scrollbank,trans,alpha,alphamap;
 
 	scrollbank = BG_TYPE(layer); /* Scroll bank appears to be same as layer type */
 
@@ -180,8 +180,21 @@ static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, con
 
 	/* Use first values from the first set of scroll values */
 	bank    = (psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 - 0x4000/4] & 0x000000ff) >> 0;
+	alpha   = (psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 - 0x4000/4] & 0x00003f00) >> 8;
+	alphamap =(psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 - 0x4000/4] & 0x00008000) >> 15;
 	scrollx = (psikyosh_bgram[(scrollbank*0x800)/4 - 0x4000/4] & 0x000001ff) >> 0;
 	scrolly = (psikyosh_bgram[(scrollbank*0x800)/4 - 0x4000/4] & 0x03ff0000) >> 16;
+
+	if(alphamap) { /* alpha values are per-pen */
+		trans = TRANSPARENCY_ALPHARANGE;
+	} else if(alpha) {
+		trans = TRANSPARENCY_ALPHA;
+		alpha = ((0x3f-alpha)*0xff)/0x3f; /* 0x3f-0x00 maps to 0x00-0xff */
+		alpha_set_level(alpha);
+	} else {
+		trans = TRANSPARENCY_PEN;
+	}
+
 
 	if((bank>=0x0c) && (bank<=0x1f)) { /* shouldn't happen, 20 banks of 0x800 bytes */
 		offs=0;
@@ -192,21 +205,33 @@ static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, con
 				tileno = (psikyosh_bgram[(bank*0x800)/4 + offs - 0x4000/4] & 0x0007ffff); /* seems to take into account spriteram, hence -0x4000 */
 				colour = (psikyosh_bgram[(bank*0x800)/4 + offs - 0x4000/4] & 0xff000000) >> 24;
 
-				drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1)),cliprect,TRANSPARENCY_PEN,0); /* normal */
+				drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1)),cliprect,trans,0); /* normal */
 				if(scrollx)
-					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1)),cliprect,TRANSPARENCY_PEN,0); /* wrap x */
+					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1)),cliprect,trans,0); /* wrap x */
 				if(scrolly)
-					drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1))-width,cliprect,TRANSPARENCY_PEN,0); /* wrap y */
+					drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1))-width,cliprect,trans,0); /* wrap y */
 				if(scrollx && scrolly)
-					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1))-width,cliprect,TRANSPARENCY_PEN,0); /* wrap xy */
+					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1))-width,cliprect,trans,0); /* wrap xy */
 
 				offs++;
 	}}}
 
 	/* Use first values from the second set of scroll values */
 	bank    = (psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 + 0x20/4 - 0x4000/4] & 0x000000ff) >> 0;
+	alpha   = (psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 + 0x20/4 - 0x4000/4] & 0x00003f00) >> 8;
+	alphamap =(psikyosh_bgram[(scrollbank*0x800)/4 + 0x400/4 + 0x20/4 - 0x4000/4] & 0x00008000) >> 15;
 	scrollx = (psikyosh_bgram[(scrollbank*0x800)/4 - 0x4000/4 + 0x20/4] & 0x000001ff) >> 0;
 	scrolly = (psikyosh_bgram[(scrollbank*0x800)/4 - 0x4000/4 + 0x20/4] & 0x03ff0000) >> 16;
+
+	if(alphamap) { /* alpha values are per-pen */
+		trans = TRANSPARENCY_ALPHARANGE;
+	} else if(alpha) {
+		trans = TRANSPARENCY_ALPHA;
+		alpha = ((0x3f-alpha)*0xff)/0x3f; /* 0x3f-0x00 maps to 0x00-0xff */
+		alpha_set_level(alpha);
+	} else {
+		trans = TRANSPARENCY_PEN;
+	}
 
 	if((bank>=0x0c) && (bank<=0x1f)) { /* shouldn't happen, 20 banks of 0x800 bytes */
 		offs=0;
@@ -217,13 +242,13 @@ static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, con
 				tileno = (psikyosh_bgram[(bank*0x800)/4 + offs - 0x4000/4] & 0x0007ffff); /* seems to take into account spriteram, hence -0x4000 */
 				colour = (psikyosh_bgram[(bank*0x800)/4 + offs - 0x4000/4] & 0xff000000) >> 24;
 
-				drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1)),cliprect,TRANSPARENCY_PEN,0); /* normal */
+				drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1)),cliprect,trans,0); /* normal */
 				if(scrollx)
-					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1)),cliprect,TRANSPARENCY_PEN,0); /* wrap x */
+					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1)),cliprect,trans,0); /* wrap x */
 				if(scrolly)
-					drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1))-width,cliprect,TRANSPARENCY_PEN,0); /* wrap y */
+					drawgfx(bitmap,gfx,tileno,colour,0,0,(16*sx+scrollx)&0x1ff,((16*sy+scrolly)&(width-1))-width,cliprect,trans,0); /* wrap y */
 				if(scrollx && scrolly)
-					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1))-width,cliprect,TRANSPARENCY_PEN,0); /* wrap xy */
+					drawgfx(bitmap,gfx,tileno,colour,0,0,((16*sx+scrollx)&0x1ff)-0x200,((16*sy+scrolly)&(width-1))-width,cliprect,trans,0); /* wrap xy */
 
 				offs++;
 	}}}
@@ -233,7 +258,7 @@ static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, con
 /* For now I'm just using the first alpha/bank/priority values and sodding the rest of it */
 static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	struct GfxElement *gfx;
+	gfx_element *gfx;
 	int offs, sx, sy;
 	int scrollx, scrolly, bank, alpha, alphamap, trans, size, width, scrollbank;
 
@@ -367,7 +392,7 @@ static void psikyosh_drawbackground( struct mame_bitmap *bitmap, const struct re
 /* sx and sy is top-left of entire sprite regardless of flip */
 /* Note that Level 5-4 of sbomberb boss is perfect! (Alpha blended zoomed) as well as S1945II logo */
 /* pixel is only plotted if z is >= priority_buffer->line[y][x] */
-void psikyosh_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
+void psikyosh_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int offsx,int offsy,
 		const struct rectangle *clip,int transparency,int transparent_color,
 		int zoomx, int zoomy, int wide, int high, unsigned int z)
@@ -952,7 +977,7 @@ static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
     **- End Sprite Format -*/
 
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	data32_t *src = buffered_spriteram32; /* Use buffered spriteram */
 	data16_t *list = (data16_t *)src + 0x3800/2;
 	data16_t listlen=0x800/2, listcntr=0;

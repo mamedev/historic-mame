@@ -152,7 +152,7 @@ struct ide_state
 	UINT8	config_register_num;
 
 	struct ide_interface *intf;
-	struct hard_disk_file *	disk;
+	hard_disk_file *	disk;
 	void *	last_status_timer;
 	void *	reset_timer;
 
@@ -268,10 +268,10 @@ INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buf
  *
  *************************************/
 
-int ide_controller_init_custom(int which, struct ide_interface *intf, struct chd_file *diskhandle)
+int ide_controller_init_custom(int which, struct ide_interface *intf, chd_file *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
-	const struct hard_disk_info *hdinfo;
+	const hard_disk_info *hdinfo;
 
 	/* NULL interface is immediate failure */
 	if (!intf)

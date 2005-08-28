@@ -10,7 +10,7 @@
 
 int portrait_scroll;
 data8_t *portrait_bgvideoram, *portrait_fgvideoram;
-static struct tilemap *foreground, *background;
+static tilemap *foreground, *background;
 
 WRITE8_HANDLER( portrait_bgvideo_write )
 {

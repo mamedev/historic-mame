@@ -11,7 +11,7 @@
 
 
 unsigned char *srumbler_backgroundram,*srumbler_foregroundram;
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 

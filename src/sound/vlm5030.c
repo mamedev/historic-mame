@@ -474,30 +474,24 @@ static void VLM5030_setup_parameter(struct vlm5030_info *chip, UINT8 param)
 		chip->pitch_offset = 0;
 }
 
-#ifdef _STATE_H
-static void VLM5030_resotore_state(void)
+
+static void VLM5030_restore_state(void *param)
 {
-	int i, ch;
+	struct vlm5030_info *chip = param;
+	int i;
 
-	for (ch = 0; ch < MAX_SOUND; ch++)
-	{
-		struct vlm5030_info *chip = sndti_token(SOUND_VLM5030, ch);
-		if (chip)
-		{
-			int interp_effect = FR_SIZE - (chip->interp_count%FR_SIZE);
-			/* restore parameter data */
-			VLM5030_setup_parameter(chip, chip->parameter);
+	int interp_effect = FR_SIZE - (chip->interp_count%FR_SIZE);
+	/* restore parameter data */
+	VLM5030_setup_parameter(chip, chip->parameter);
 
-			/* restore current energy,pitch & filter */
-			chip->current_energy = chip->old_energy + (chip->target_energy - chip->old_energy) * interp_effect / FR_SIZE;
-			if (chip->old_pitch > 1)
-				chip->current_pitch = chip->old_pitch + (chip->target_pitch - chip->old_pitch) * interp_effect / FR_SIZE;
-			for (i = 0; i <= 9 ; i++)
-				chip->current_k[i] = chip->old_k[i] + (chip->target_k[i] - chip->old_k[i]) * interp_effect / FR_SIZE;
-		}
-	}
+	/* restore current energy,pitch & filter */
+	chip->current_energy = chip->old_energy + (chip->target_energy - chip->old_energy) * interp_effect / FR_SIZE;
+	if (chip->old_pitch > 1)
+		chip->current_pitch = chip->old_pitch + (chip->target_pitch - chip->old_pitch) * interp_effect / FR_SIZE;
+	for (i = 0; i <= 9 ; i++)
+		chip->current_k[i] = chip->old_k[i] + (chip->target_k[i] - chip->old_k[i]) * interp_effect / FR_SIZE;
 }
-#endif
+
 
 static void VLM5030_reset(struct vlm5030_info *chip)
 {
@@ -669,7 +663,6 @@ static void *vlm5030_start(int sndindex, int clock, const void *config)
 
 	chip->channel = stream_create(0, 1, emulation_rate,chip,vlm5030_update_callback);
 
-#ifdef _STATE_H
 	/* don't restore "UINT8 *chip->rom" when use VLM5030_set_rom() */
 
 	state_save_register_UINT16 (VLM_NAME,sndindex,"address", &chip->address, 1);
@@ -691,9 +684,8 @@ static void *vlm5030_start(int sndindex, int clock, const void *config)
 	state_save_register_UINT8  (VLM_NAME,sndindex,"tartget pitch" , &chip->target_pitch , 1);
 	state_save_register_INT16  (VLM_NAME,sndindex,"tartget K"     , chip->target_k      ,10);
 	state_save_register_INT32  (VLM_NAME,sndindex,"x"             , chip->x             ,10);
-	if (sndindex == 0)
-		state_save_register_func_postload(VLM5030_resotore_state);
-#endif
+	state_save_register_func_postload_ptr(VLM5030_restore_state, chip);
+
 	return chip;
 }
 

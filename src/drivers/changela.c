@@ -1074,7 +1074,7 @@ INPUT_PORTS_START( changela )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8,16,
 	RGN_FRAC(1,1),
@@ -1086,7 +1086,7 @@ static struct GfxLayout tile_layout =
 	16*32
 };
 
-static struct GfxLayout obj1_layout =
+static gfx_layout obj1_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1097,7 +1097,7 @@ static struct GfxLayout obj1_layout =
 	8*8*2
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tile_layout, 0, 4 },
 	{ REGION_GFX2, 0x0000, &obj1_layout, 0, 16 },

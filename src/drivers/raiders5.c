@@ -207,7 +207,7 @@ INPUT_PORTS_END
 
 /****************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,   /* 8*8 characters */
 	512,   /* 512 characters */
@@ -218,7 +218,7 @@ static struct GfxLayout charlayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,    /* 16*16 characters */
 	128,	  /* 128 sprites */
@@ -232,7 +232,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &spritelayout, 512, 16 }, /* sprite */
 	{ REGION_GFX1, 0x4000, &spritelayout, 512, 16 }, /* sprite */

@@ -17,7 +17,7 @@ End sequence uses rowscroll '98 c0' on pf1 (jmp to 1d61a)
 
 data16_t *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
 static data16_t supbtime_control_0[8];
-static struct tilemap *pf1_tilemap,*pf2_tilemap;
+static tilemap *pf1_tilemap,*pf2_tilemap;
 static int flipscreen;
 
 /******************************************************************************/

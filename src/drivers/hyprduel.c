@@ -598,7 +598,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles */
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -610,7 +610,7 @@ static struct GfxLayout layout_8x8x4 =
 };
 
 /* 8x8x8 tiles for later games */
-static struct GfxLayout layout_8x8x8h =
+static gfx_layout layout_8x8x8h =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -621,7 +621,7 @@ static struct GfxLayout layout_8x8x8h =
 	32*8		/* char modulo (half char step) */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_14220[] =
+static gfx_decode gfxdecodeinfo_14220[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x4,    0x0, 0x200 }, // [0] 4 Bit Tiles
 	{ REGION_GFX1, 0, &layout_8x8x8h,   0x0,  0x20 }, // [1] 8 Bit Tiles

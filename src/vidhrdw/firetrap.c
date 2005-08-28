@@ -15,7 +15,7 @@ unsigned char *firetrap_bg1videoram;
 unsigned char *firetrap_bg2videoram;
 unsigned char *firetrap_fgvideoram;
 
-static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
+static tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
 
 

@@ -45,11 +45,11 @@
     PROTOTYPES
 ***************************************************************************/
 
-static struct chd_interface_file *chdman_open(const char *filename, const char *mode);
-static void chdman_close(struct chd_interface_file *file);
-static UINT32 chdman_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 chdman_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 chdman_length(struct chd_interface_file *file);
+static chd_interface_file *chdman_open(const char *filename, const char *mode);
+static void chdman_close(chd_interface_file *file);
+static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 chdman_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 chdman_length(chd_interface_file *file);
 static UINT64 get_file_size(const char *file);
 
 
@@ -58,7 +58,7 @@ static UINT64 get_file_size(const char *file);
     GLOBAL VARIABLES
 ***************************************************************************/
 
-static struct chd_interface chdman_interface =
+static chd_interface chdman_interface =
 {
 	chdman_open,
 	chdman_close,
@@ -67,7 +67,7 @@ static struct chd_interface chdman_interface =
 	chdman_length
 };
 
-static struct chd_file *special_chd;
+static chd_file *special_chd;
 static UINT64 special_logicalbytes;
 static UINT64 special_original_logicalbytes;
 static UINT64 special_bytes_checksummed;
@@ -221,7 +221,7 @@ static void error(void)
     "fake" raw file for input
 -------------------------------------------------*/
 
-static void special_chd_init(struct chd_file *chd, UINT64 logicalbytes)
+static void special_chd_init(chd_file *chd, UINT64 logicalbytes)
 {
 	/* set the input chd and logical bytes */
 	special_chd = chd;
@@ -245,7 +245,7 @@ static void special_chd_init(struct chd_file *chd, UINT64 logicalbytes)
 static void special_chd_finished(void)
 {
 	static const UINT8 empty_checksum[CHD_SHA1_BYTES] = { 0 };
-	const struct chd_header *header = chd_get_header(special_chd);
+	const chd_header *header = chd_get_header(special_chd);
 	UINT8 final_sha1[CHD_SHA1_BYTES];
 	UINT8 final_md5[CHD_MD5_BYTES];
 
@@ -413,7 +413,7 @@ static void do_createhd(int argc, char *argv[])
 	const char *inputfile, *outputfile;
 	UINT32 sectorsize, hunksize;
 	UINT32 cylinders, heads, sectors, totalsectors;
-	struct chd_file *chd;
+	chd_file *chd;
 	char metadata[256];
 	int offset, err;
 
@@ -512,14 +512,14 @@ static void do_createhd(int argc, char *argv[])
 static void do_createcd(int argc, char *argv[])
 {
 	char *inputfile, *outputfile;
-	struct chd_file *chd;
-	struct chd_exfile *chdex;
+	chd_file *chd;
+	chd_exfile *chdex;
 	int err;
 	UINT32 totalsectors = 0;
 	UINT32 sectorsize = CD_FRAME_SIZE;
 	UINT32 hunksize = ((CD_FRAME_SIZE * CD_FRAMES_PER_HUNK) / sectorsize) * sectorsize;
-	static struct cdrom_toc toc;
-	static struct cdrom_track_input_info track_info;
+	static cdrom_toc toc;
+	static cdrom_track_input_info track_info;
 	int i;
 	static UINT32 metadata[CD_METADATA_WORDS], *mwp;
 
@@ -674,7 +674,7 @@ static void do_createblankhd(int argc, char *argv[])
 	const char *outputfile;
 	UINT32 sectorsize, hunksize;
 	UINT32 cylinders, heads, sectors, totalsectors;
-	struct chd_file *chd;
+	chd_file *chd;
 	char metadata[256];
 	int err;
 	int hunknum;
@@ -812,7 +812,7 @@ INLINE UINT32 lcd_u32(UINT32 a, UINT32 b)
 static void do_copydata(int argc, char *argv[])
 {
 	const char *inputfile, *outputfile;
-	struct chd_file *in_chd, *out_chd;
+	chd_file *in_chd, *out_chd;
 	UINT32 in_hunksize, out_hunksize;
 	UINT32 in_totalhunks, out_totalhunks;
 	UINT32 in_hunknum, out_hunknum;
@@ -934,9 +934,9 @@ static void do_copydata(int argc, char *argv[])
 static void do_extract(int argc, char *argv[])
 {
 	const char *inputfile, *outputfile;
-	struct chd_interface_file *outfile = NULL;
-	struct chd_file *infile = NULL;
-	struct chd_header header;
+	chd_interface_file *outfile = NULL;
+	chd_file *infile = NULL;
+	chd_header header;
 	void *hunk = NULL;
 	clock_t lastupdate;
 	int hunknum;
@@ -1033,10 +1033,10 @@ error:
 static void do_extractcd(int argc, char *argv[])
 {
 	const char *inputfile, *outputfile, *outputfile2;
-	struct chd_file *infile = NULL;
+	chd_file *infile = NULL;
 	void *hunk = NULL;
-	struct cdrom_file *cdrom = NULL;
-	struct cdrom_toc *toc = NULL;
+	cdrom_file *cdrom = NULL;
+	cdrom_toc *toc = NULL;
 	FILE *outfile = NULL, *outfile2 = NULL;
 	int track, m, s, f, frame;
 	long trkoffs, trklen;
@@ -1199,9 +1199,9 @@ error:
 static void do_verify(int argc, char *argv[], int fix)
 {
 	UINT8 actualmd5[CHD_MD5_BYTES], actualsha1[CHD_SHA1_BYTES];
-	struct chd_header header;
+	chd_header header;
 	const char *inputfile;
-	struct chd_file *chd;
+	chd_file *chd;
 	int err, fixed = 0;
 
 	/* require 3 args total */
@@ -1317,9 +1317,9 @@ static void do_info(int argc, char *argv[])
 		"zlib",
 		"zlib+"
 	};
-	struct chd_header header;
+	chd_header header;
 	const char *inputfile;
-	struct chd_file *chd;
+	chd_file *chd;
 
 	/* require 3 args total */
 	if (argc != 3)
@@ -1415,9 +1415,9 @@ static void do_info(int argc, char *argv[])
 -------------------------------------------------*/
 
 #if ENABLE_CUSTOM_CHOMP
-static int handle_custom_chomp(const char *name, struct chd_file *chd, UINT32 *maxhunk)
+static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 {
-	const struct chd_header *header = chd_get_header(chd);
+	const chd_header *header = chd_get_header(chd);
 	int sectors_per_hunk = (header->hunkbytes / IDE_SECTOR_SIZE);
 	UINT8 *temp = malloc(header->hunkbytes);
 	if (!temp)
@@ -1504,10 +1504,10 @@ error:
 static void do_merge_update_chomp(int argc, char *argv[], int operation)
 {
 	const char *parentfile, *inputfile, *outputfile;
-	struct chd_file *parentchd = NULL;
-	struct chd_file *inputchd = NULL;
-	struct chd_file *outputchd = NULL;
-	const struct chd_header *inputheader;
+	chd_file *parentchd = NULL;
+	chd_file *inputchd = NULL;
+	chd_file *outputchd = NULL;
+	const chd_header *inputheader;
 	UINT8 metadata[CHD_MAX_METADATA_SIZE];
 	UINT32 metatag, metasize, metaindex;
 	UINT32 maxhunk = ~0;
@@ -1635,9 +1635,9 @@ error:
 static void do_diff(int argc, char *argv[])
 {
 	const char *parentfile = NULL, *inputfile = NULL, *outputfile = NULL;
-	struct chd_file *parentchd = NULL;
-	struct chd_file *inputchd = NULL;
-	struct chd_file *outputchd = NULL;
+	chd_file *parentchd = NULL;
+	chd_file *inputchd = NULL;
+	chd_file *outputchd = NULL;
 	int err;
 
 	/* require 5 args total */
@@ -1720,8 +1720,8 @@ static void do_setchs(int argc, char *argv[])
 	int oldcyls, oldhds, oldsecs, oldsecsize;
 	int cyls, hds, secs, err;
 	const char *inoutfile;
-	struct chd_header header;
-	struct chd_file *chd = NULL;
+	chd_header header;
+	chd_file *chd = NULL;
 	char metadata[256];
 	UINT64 old_logicalbytes;
 	UINT32 metasize;
@@ -1884,11 +1884,11 @@ static UINT64 get_file_size(const char *file)
     chdman_open - open file
 -------------------------------------------------*/
 
-static struct chd_interface_file *chdman_open(const char *filename, const char *mode)
+static chd_interface_file *chdman_open(const char *filename, const char *mode)
 {
 	/* if it's the special CHD filename, just hand back our handle */
 	if (!strcmp(filename, SPECIAL_CHD_NAME))
-		return (struct chd_interface_file *)special_chd;
+		return (chd_interface_file *)special_chd;
 
 	/* otherwise, open normally */
 	else
@@ -1918,9 +1918,9 @@ static struct chd_interface_file *chdman_open(const char *filename, const char *
 		handle = CreateFile(filename, access, share, NULL, disposition, 0, NULL);
 		if (handle == INVALID_HANDLE_VALUE)
 			return NULL;
-		return (struct chd_interface_file *)handle;
+		return (chd_interface_file *)handle;
 #else
-		return (struct chd_interface_file *)fopen(filename, mode);
+		return (chd_interface_file *)fopen(filename, mode);
 #endif
 	}
 }
@@ -1931,10 +1931,10 @@ static struct chd_interface_file *chdman_open(const char *filename, const char *
     chdman_close - close file
 -------------------------------------------------*/
 
-static void chdman_close(struct chd_interface_file *file)
+static void chdman_close(chd_interface_file *file)
 {
 	/* if it's the special chd handle, do nothing */
-	if (file == (struct chd_interface_file *)special_chd)
+	if (file == (chd_interface_file *)special_chd)
 		return;
 
 #ifdef _WIN32
@@ -1950,12 +1950,12 @@ static void chdman_close(struct chd_interface_file *file)
     chdman_read - read from an offset
 -------------------------------------------------*/
 
-static UINT32 chdman_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	/* if it's the special chd handle, read from it */
-	if (file == (struct chd_interface_file *)special_chd)
+	if (file == (chd_interface_file *)special_chd)
 	{
-		const struct chd_header *header = chd_get_header(special_chd);
+		const chd_header *header = chd_get_header(special_chd);
 		UINT32 result;
 
 		/* validate the read: we can only handle block-aligned reads here */
@@ -2035,10 +2035,10 @@ static UINT32 chdman_read(struct chd_interface_file *file, UINT64 offset, UINT32
     chdman_write - write to an offset
 -------------------------------------------------*/
 
-static UINT32 chdman_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+static UINT32 chdman_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	/* if it's the special chd handle, this is bad */
-	if (file == (struct chd_interface_file *)special_chd)
+	if (file == (chd_interface_file *)special_chd)
 	{
 		printf("Error: chdman write to CHD image = bad!\n");
 		return 0;
@@ -2074,10 +2074,10 @@ static UINT32 chdman_write(struct chd_interface_file *file, UINT64 offset, UINT3
     chdman_length - return the current EOF
 -------------------------------------------------*/
 
-static UINT64 chdman_length(struct chd_interface_file *file)
+static UINT64 chdman_length(chd_interface_file *file)
 {
 	/* if it's the special chd handle, this is bad */
-	if (file == (struct chd_interface_file *)special_chd)
+	if (file == (chd_interface_file *)special_chd)
 		return special_logicalbytes;
 
 	/* otherwise, do it normally */

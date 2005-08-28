@@ -6,7 +6,7 @@ data16_t *sf_objectram,*sf_videoram;
 
 static int sf_active = 0;
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 
 /***************************************************************************

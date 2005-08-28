@@ -2496,9 +2496,6 @@ ROM_START( fpointbj )
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s129.1",  0x0000, 0x0100, CRC(a7c22d96) SHA1(160deae8053b09c09328325246598b3518c7e20b) )
 	ROM_LOAD( "82s123.2",  0x0100, 0x0020, CRC(58bcf8bd) SHA1(e4d3d179b08c0f3424a6bec0f15058fb1b56f8d8) )
-
-	ROM_REGION( 0x800, REGION_USER2, 0 )
-	ROM_LOAD( "d2716.rom",  0x0000, 0x0800, CRC(d7fd8ac4) SHA1(87e5f1c24350adab129ad79a1f68af402580f8f0) )
 ROM_END
 
 ROM_START( goldnabl )
@@ -2770,7 +2767,7 @@ GAMEX(1989, bayrtbl2, bayroute, bayroute, bayroute, bayrtbl1, ROT0,   "bootleg",
 GAME( 1989, dduxbl,   ddux,     dduxbl,   ddux,     dduxbl,   ROT0,   "bootleg", "Dynamite Dux (bootleg)" )
 GAME( 1989, eswatbl,  eswat,    eswatbl,  eswat,    eswatbl,  ROT0,   "bootleg", "E-Swat - Cyber Police (bootleg)" )
 GAME( 1989, fpointbl, fpoint,   fpointbl, fpoint,   fpointbl, ROT0,   "bootleg", "Flash Point (World, bootleg)" )
-GAME( 1989, fpointbj, fpoint,   fpointbl, fpointbj, fpointbl, ROT0,   "bootleg", "Flash Point (Japan, bootleg)" )
+GAMEX( 1989, fpointbj, fpoint,   fpointbl, fpointbj, fpointbl, ROT0,   "bootleg", "Flash Point (Japan, bootleg)", GAME_WRONG_COLORS )
 
 GAMEX(1989, goldnabl, goldnaxe, goldnaxe, goldnaxe, goldnabl, ROT0,   "bootleg", "Golden Axe (bootleg)", GAME_NOT_WORKING )
 

@@ -408,7 +408,7 @@ INPUT_PORTS_START( bcruzm12 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
-static struct GfxLayout marineb_charlayout =
+static gfx_layout marineb_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -419,7 +419,7 @@ static struct GfxLayout marineb_charlayout =
 	16*8	/* every char takes 16 bytes */
 };
 
-static struct GfxLayout wanted_charlayout =
+static gfx_layout wanted_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -430,7 +430,7 @@ static struct GfxLayout wanted_charlayout =
 	16*8	/* every char takes 16 bytes */
 };
 
-static struct GfxLayout hopprobo_charlayout =
+static gfx_layout hopprobo_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -441,7 +441,7 @@ static struct GfxLayout hopprobo_charlayout =
 	16*8	/* every char takes 16 bytes */
 };
 
-static struct GfxLayout marineb_small_spritelayout =
+static gfx_layout marineb_small_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	    /* 64 sprites */
@@ -454,7 +454,7 @@ static struct GfxLayout marineb_small_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxLayout marineb_big_spritelayout =
+static gfx_layout marineb_big_spritelayout =
 {
 	32,32,	/* 32*32 sprites */
 	64,	    /* 64 sprites */
@@ -471,7 +471,7 @@ static struct GfxLayout marineb_big_spritelayout =
 	4*32*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout changes_small_spritelayout =
+static gfx_layout changes_small_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	    /* 64 sprites */
@@ -484,7 +484,7 @@ static struct GfxLayout changes_small_spritelayout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxLayout changes_big_spritelayout =
+static gfx_layout changes_big_spritelayout =
 {
 	32,32,	/* 32*3 sprites */
 	16,	    /* 32 sprites */
@@ -502,7 +502,7 @@ static struct GfxLayout changes_big_spritelayout =
 };
 
 
-static struct GfxDecodeInfo marineb_gfxdecodeinfo[] =
+static gfx_decode marineb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &marineb_charlayout,          0, 64 },
 	{ REGION_GFX2, 0x0000, &marineb_small_spritelayout,  0, 64 },
@@ -510,7 +510,7 @@ static struct GfxDecodeInfo marineb_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo wanted_gfxdecodeinfo[] =
+static gfx_decode wanted_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &wanted_charlayout,           0, 64 },
 	{ REGION_GFX2, 0x0000, &marineb_small_spritelayout,  0, 64 },
@@ -518,7 +518,7 @@ static struct GfxDecodeInfo wanted_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo changes_gfxdecodeinfo[] =
+static gfx_decode changes_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &marineb_charlayout,          0, 64 },
 	{ REGION_GFX2, 0x0000, &changes_small_spritelayout,  0, 64 },
@@ -526,14 +526,14 @@ static struct GfxDecodeInfo changes_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo hoccer_gfxdecodeinfo[] =
+static gfx_decode hoccer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &marineb_charlayout,          0, 16 },	/* no palette banks */
 	{ REGION_GFX2, 0x0000, &changes_small_spritelayout,  0, 16 },	/* no palette banks */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo hopprobo_gfxdecodeinfo[] =
+static gfx_decode hopprobo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &hopprobo_charlayout,         0, 64 },
 	{ REGION_GFX2, 0x0000, &marineb_small_spritelayout,  0, 64 },

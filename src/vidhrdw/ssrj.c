@@ -1,6 +1,6 @@
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tilemap1,*tilemap2,*tilemap4;
+static tilemap *tilemap1,*tilemap2,*tilemap4;
 unsigned char *ssrj_vram1,*ssrj_vram2,*ssrj_vram3,*ssrj_vram4,*ssrj_scrollram;
 
 /* tilemap 1 */

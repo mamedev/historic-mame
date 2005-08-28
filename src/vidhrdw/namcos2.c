@@ -12,7 +12,7 @@ size_t namcos2_68k_roz_ram_size;
 data16_t *namcos2_68k_roz_ram;
 
 static data16_t namcos2_68k_roz_ctrl[0x8];
-static struct tilemap *tilemap_roz;
+static tilemap *tilemap_roz;
 
 static void
 TilemapCB( data16_t code, int *tile, int *mask )
@@ -74,17 +74,17 @@ struct RozParam
 static void
 DrawRozHelper(
 	struct mame_bitmap *bitmap,
-	struct tilemap *tilemap,
+	tilemap *tmap,
 	const struct rectangle *clip,
 	const struct RozParam *rozInfo )
 {
-	tilemap_set_palette_offset( tilemap, rozInfo->color );
+	tilemap_set_palette_offset( tmap, rozInfo->color );
 
 	if( bitmap->depth == 15 || bitmap->depth == 16 )
 	{
 		UINT32 size_mask = rozInfo->size-1;
-		struct mame_bitmap *srcbitmap = tilemap_get_pixmap( tilemap );
-		struct mame_bitmap *transparency_bitmap = tilemap_get_transparency_bitmap( tilemap );
+		struct mame_bitmap *srcbitmap = tilemap_get_pixmap( tmap );
+		struct mame_bitmap *transparency_bitmap = tilemap_get_transparency_bitmap( tmap );
 		UINT32 startx = rozInfo->startx + clip->min_x * rozInfo->incxx + clip->min_y * rozInfo->incyx;
 		UINT32 starty = rozInfo->starty + clip->min_x * rozInfo->incxy + clip->min_y * rozInfo->incyy;
 		int sx = clip->min_x;
@@ -129,7 +129,7 @@ L_SkipPixel:
 		tilemap_draw_roz(
 			bitmap,
 			clip,
-			tilemap,
+			tmap,
 			rozInfo->startx, rozInfo->starty,
 			rozInfo->incxx, rozInfo->incxy,
 			rozInfo->incyx, rozInfo->incyy,

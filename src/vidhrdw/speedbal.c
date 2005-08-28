@@ -12,7 +12,7 @@
 data8_t *speedbal_background_videoram;
 data8_t *speedbal_foreground_videoram;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 static void get_tile_info_bg(int tile_index)
 {

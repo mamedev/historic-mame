@@ -3,7 +3,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct tilemap *gcpinbal_tilemap[3];
+static tilemap *gcpinbal_tilemap[3];
 
 data16_t *gcpinbal_tilemapram;
 data16_t *gcpinbal_ioc_ram;

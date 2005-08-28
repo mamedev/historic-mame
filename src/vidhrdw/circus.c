@@ -19,7 +19,7 @@
 static int clown_x=0,clown_y=0;
 int clown_z=0;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 ***************************************************************************/
@@ -209,7 +209,7 @@ VIDEO_UPDATE( crash )
 
 static void ripcord_draw_skydiver( struct mame_bitmap *bitmap )
 {
-	const struct GfxElement *gfx;
+	const gfx_element *gfx;
 	const struct rectangle *clip;
 	pen_t *pal_ptr;
 	UINT8  *src_lineptr, *src_pixptr;

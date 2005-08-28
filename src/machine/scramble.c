@@ -18,6 +18,8 @@ void cclimber_decode(const unsigned char xortable[8][16]);
 
 
 static int irq_line;
+static mame_timer *int_timer;
+
 
 static void galaxian_7474_9M_2_callback(void)
 {
@@ -61,7 +63,7 @@ static void interrupt_timer(int param)
 
 	param = (param + 0x10) & 0xff;
 
-	timer_set(cpu_getscanlinetime(param), param, interrupt_timer);
+	timer_adjust(int_timer, cpu_getscanlinetime(param), param, 0);
 
 	TTL7474_update(0);
 }
@@ -82,7 +84,8 @@ static void machine_init_common( int line )
 	TTL7474_preset_w(1, 0);
 
 	/* start a timer to generate interrupts */
-	timer_set(cpu_getscanlinetime(0), 0, interrupt_timer);
+	int_timer = timer_alloc(interrupt_timer);
+	timer_adjust(int_timer, cpu_getscanlinetime(0), 0, 0);
 }
 
 MACHINE_INIT( galaxian )

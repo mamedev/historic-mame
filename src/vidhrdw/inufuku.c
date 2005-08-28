@@ -29,8 +29,8 @@ static int inufuku_bg_raster;
 static int inufuku_bg_palettebank;
 static int inufuku_text_palettebank;
 
-static struct tilemap *inufuku_bg_tilemap;
-static struct tilemap *inufuku_text_tilemap;
+static tilemap *inufuku_bg_tilemap;
+static tilemap *inufuku_text_tilemap;
 
 
 /******************************************************************************

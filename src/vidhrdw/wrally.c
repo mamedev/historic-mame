@@ -14,7 +14,7 @@ data16_t *wrally_spriteram;
 data16_t *wrally_vregs;
 data16_t *wrally_videoram;
 
-static struct tilemap *pant[2];
+static tilemap *pant[2];
 
 /* from machine/wrally.c */
 extern data16_t *wrally_encr_table[2];
@@ -123,7 +123,7 @@ VIDEO_START( wrally )
 static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int i, x, y, ex, ey;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	static int x_offset[2] = {0x0,0x2};
 	static int y_offset[2] = {0x0,0x1};

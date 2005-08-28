@@ -37,7 +37,7 @@ int yunsung8_layers_ctrl;
 
 /* Variables only used here: */
 
-static struct tilemap *tilemap_0, *tilemap_1;
+static tilemap *tilemap_0, *tilemap_1;
 static int yunsung8_videobank;
 
 

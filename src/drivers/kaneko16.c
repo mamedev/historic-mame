@@ -658,9 +658,9 @@ ADDRESS_MAP_END
 READ16_HANDLER( gtmr_wheel_r )
 {
 	if ( (readinputport(4) & 0x1800) == 0x10)	// DSW setting
-		return	readinputport(5)<<8;			// 360? Wheel
+		return	readinputport(5)<<8;			// 360' Wheel
 	else
-		return	readinputport(5);				// 270? Wheel
+		return	readinputport(5);				// 270' Wheel
 }
 
 WRITE16_HANDLER( gtmr_oki_0_bank_w )
@@ -765,13 +765,13 @@ READ16_HANDLER( gtmr2_wheel_r )
 {
 	switch (readinputport(4) & 0x1800)
 	{
-		case 0x0000:	// 270? A. Wheel
+		case 0x0000:	// 270' A. Wheel
 			return	(readinputport(5));
 			break;
-		case 0x1000:	// 270? D. Wheel
+		case 0x1000:	// 270' D. Wheel
 			return	(readinputport(6) << 8);
 			break;
-		case 0x0800:	// 360? Wheel
+		case 0x0800:	// 360' Wheel
 			return	(readinputport(7) << 8);
 			break;
 		default:
@@ -1981,7 +1981,7 @@ INPUT_PORTS_END
     16x16x4 made of 4 8x8x4 blocks arrenged like:           01
     (nibbles are swapped for tiles, not for sprites)        23
 */
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1996,7 +1996,7 @@ static struct GfxLayout layout_16x16x4 =
     16x16x8 made of 4 8x8x8 blocks arrenged like:   01
                                                     23
 */
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -2007,20 +2007,20 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*8
 };
 
-static struct GfxDecodeInfo kaneko16_gfx_1x4bit_1x4bit[] =
+static gfx_decode kaneko16_gfx_1x4bit_1x4bit[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0,			0x40 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x40 * 16,	0x40 }, // [1] Layers
 	{ -1 }
 };
-static struct GfxDecodeInfo kaneko16_gfx_1x4bit_2x4bit[] =
+static gfx_decode kaneko16_gfx_1x4bit_2x4bit[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0,			0x40 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x40 * 16,	0x40 }, // [1] Layers
 	{ REGION_GFX3, 0, &layout_16x16x4, 0x40 * 16,	0x40 }, // [2] Layers
 	{ -1 }
 };
-static struct GfxDecodeInfo kaneko16_gfx_1x8bit_2x4bit[] =
+static gfx_decode kaneko16_gfx_1x8bit_2x4bit[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,	0x40 * 256,	0x40 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4,	0,			0x40 }, // [1] Layers
@@ -2029,7 +2029,7 @@ static struct GfxDecodeInfo kaneko16_gfx_1x8bit_2x4bit[] =
 };
 
 /* 16x16x4 tiles (made of four 8x8 tiles) */
-static struct GfxLayout layout_16x16x4_2 =
+static gfx_layout layout_16x16x4_2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -2040,7 +2040,7 @@ static struct GfxLayout layout_16x16x4_2 =
 	{ STEP8(8*8*4*0, 8*4),     STEP8(8*8*4*2, 8*4) },
 	16*16*4
 };
-static struct GfxDecodeInfo sandscrp_gfxdecodeinfo[] =
+static gfx_decode sandscrp_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,   0x000, 0x10 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4_2, 0x400, 0x40 }, // [1] Layers

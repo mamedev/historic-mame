@@ -44,7 +44,7 @@ data16_t *powerins_vram_1, *powerins_vctrl_1;
 data16_t *powerins_vregs;
 
 /* Variables only used here: */
-static struct tilemap *tilemap_0, *tilemap_1;
+static tilemap *tilemap_0, *tilemap_1;
 static int tile_bank;
 
 

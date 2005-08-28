@@ -498,7 +498,7 @@ INPUT_PORTS_START( ninjemak )
 INPUT_PORTS_END
 
 
-#define CHARLAYOUT(NUM) static struct GfxLayout charlayout_##NUM =  \
+#define CHARLAYOUT(NUM) static gfx_layout charlayout_##NUM =  \
 {																	\
 	8,8,	/* 8*8 characters */									\
 	NUM,	/* NUM characters */									\
@@ -512,7 +512,7 @@ INPUT_PORTS_END
 CHARLAYOUT(512);
 CHARLAYOUT(1024);
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	1024,
@@ -524,7 +524,7 @@ static struct GfxLayout tilelayout =
 	16*16*4
 };
 
-#define SPRITELAYOUT(NUM) static struct GfxLayout spritelayout_##NUM =  \
+#define SPRITELAYOUT(NUM) static gfx_layout spritelayout_##NUM =  \
 {																		\
 	16,16,	/* 16*16 sprites */											\
 	NUM,	/* NUM sprites */											\
@@ -541,7 +541,7 @@ SPRITELAYOUT(512);
 SPRITELAYOUT(1024);
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_512,            0,   8 },
 	{ REGION_GFX2, 0, &tilelayout,             8*16,  16 },
@@ -549,7 +549,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo ninjemak_gfxdecodeinfo[] =
+static gfx_decode ninjemak_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_1024,            0,   8 },
 	{ REGION_GFX2, 0, &tilelayout,              8*16,  16 },

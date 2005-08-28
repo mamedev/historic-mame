@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 
 static int tile_bank;
-static UINT16 *tile_data;
-static struct tilemap *bg_tilemap;
+static UINT16 *tileram;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( mole )
 {
@@ -28,15 +28,15 @@ PALETTE_INIT( mole )
 
 static void get_bg_tile_info(int tile_index)
 {
-	UINT16 code = tile_data[tile_index];
+	UINT16 code = tileram[tile_index];
 	SET_TILE_INFO((code & 0x200) ? 1 : 0, code & 0x1ff, 0, 0)
 }
 
 VIDEO_START( mole )
 {
-	tile_data = (UINT16 *)auto_malloc(0x400 * sizeof(UINT16));
+	tileram = (UINT16 *)auto_malloc(0x400 * sizeof(UINT16));
 
-	if ( !tile_data )
+	if ( !tileram )
 		return 1;
 
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
@@ -50,9 +50,9 @@ VIDEO_START( mole )
 
 WRITE8_HANDLER( mole_videoram_w )
 {
-	if (tile_data[offset] != data)
+	if (tileram[offset] != data)
 	{
-		tile_data[offset] = data | (tile_bank << 8);
+		tileram[offset] = data | (tile_bank << 8);
 		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }

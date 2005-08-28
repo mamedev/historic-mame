@@ -414,7 +414,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 */
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -426,7 +426,7 @@ static struct GfxLayout layout_8x8x4 =
 };
 
 /* 16x16x4 */
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -439,7 +439,7 @@ static struct GfxLayout layout_16x16x4 =
 };
 
 /* 16x16x8 */
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -451,7 +451,7 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*4
 };
 
-static struct GfxDecodeInfo fuuki32_gfxdecodeinfo[] =
+static gfx_decode fuuki32_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x400*2, 0x40 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x8, 0x400*0, 0x40 }, // [1] Layer 1

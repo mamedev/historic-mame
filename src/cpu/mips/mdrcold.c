@@ -28,20 +28,20 @@
 **  PROTOTYPES
 **#################################################################################################*/
 
-static UINT32 compile_one(struct drccore *drc, UINT32 pc);
+static UINT32 compile_one(drc_core *drc, UINT32 pc);
 
-static void append_generate_exception(struct drccore *drc, UINT8 exception);
-static void append_update_cycle_counting(struct drccore *drc);
-static void append_check_interrupts(struct drccore *drc, int inline_generate);
-static void append_check_sw_interrupts(struct drccore *drc, int inline_generate);
+static void append_generate_exception(drc_core *drc, UINT8 exception);
+static void append_update_cycle_counting(drc_core *drc);
+static void append_check_interrupts(drc_core *drc, int inline_generate);
+static void append_check_sw_interrupts(drc_core *drc, int inline_generate);
 
-static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc);
-static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op);
-static UINT32 recompile_regimm(struct drccore *drc, UINT32 pc, UINT32 op);
+static UINT32 recompile_instruction(drc_core *drc, UINT32 pc);
+static UINT32 recompile_special(drc_core *drc, UINT32 pc, UINT32 op);
+static UINT32 recompile_regimm(drc_core *drc, UINT32 pc, UINT32 op);
 
-static UINT32 recompile_cop0(struct drccore *drc, UINT32 pc, UINT32 op);
-static UINT32 recompile_cop1(struct drccore *drc, UINT32 pc, UINT32 op);
-static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op);
+static UINT32 recompile_cop0(drc_core *drc, UINT32 pc, UINT32 op);
+static UINT32 recompile_cop1(drc_core *drc, UINT32 pc, UINT32 op);
+static UINT32 recompile_cop1x(drc_core *drc, UINT32 pc, UINT32 op);
 
 
 
@@ -69,7 +69,7 @@ static UINT32 scratchspace[10];
 
 static void mips3drc_init(void)
 {
-	struct drcconfig drconfig;
+	drc_config drconfig;
 
 	/* fill in the config */
 	memset(&drconfig, 0, sizeof(drconfig));
@@ -99,7 +99,7 @@ static void mips3drc_init(void)
     mips3drc_reset
 ------------------------------------------------------------------*/
 
-static void mips3drc_reset(struct drccore *drc)
+static void mips3drc_reset(drc_core *drc)
 {
 	mips3.generate_interrupt_exception = drc->cache_top;
 	append_generate_exception(drc, EXCEPTION_INTERRUPT);
@@ -129,7 +129,7 @@ static void mips3drc_reset(struct drccore *drc)
     mips3drc_recompile
 ------------------------------------------------------------------*/
 
-static void mips3drc_recompile(struct drccore *drc)
+static void mips3drc_recompile(drc_core *drc)
 {
 	int remaining = MAX_INSTRUCTIONS;
 	UINT32 pc = mips3.pc;
@@ -186,7 +186,7 @@ static void mips3drc_recompile(struct drccore *drc)
     mips3drc_entrygen
 ------------------------------------------------------------------*/
 
-static void mips3drc_entrygen(struct drccore *drc)
+static void mips3drc_entrygen(drc_core *drc)
 {
 	append_check_interrupts(drc, 1);
 }
@@ -201,7 +201,7 @@ static void mips3drc_entrygen(struct drccore *drc)
     compile_one
 ------------------------------------------------------------------*/
 
-static UINT32 compile_one(struct drccore *drc, UINT32 pc)
+static UINT32 compile_one(drc_core *drc, UINT32 pc)
 {
 	int pcdelta, cycles;
 	UINT32 *opptr;
@@ -269,10 +269,10 @@ static UINT32 compile_one(struct drccore *drc, UINT32 pc)
     append_generate_exception
 ------------------------------------------------------------------*/
 
-static void append_generate_exception(struct drccore *drc, UINT8 exception)
+static void append_generate_exception(drc_core *drc, UINT8 exception)
 {
 	UINT32 offset = (exception >= EXCEPTION_TLBMOD && exception <= EXCEPTION_TLBSTORE) ? 0x80 : 0x180;
-	struct linkdata link1, link2;
+	link_info link1, link2;
 
 	_mov_m32abs_r32(&mips3.cpr[0][COP0_EPC], REG_EDI);					// mov  [mips3.cpr[0][COP0_EPC]],edi
 	_mov_r32_m32abs(REG_EAX, &mips3.cpr[0][COP0_Cause]);				// mov  eax,[mips3.cpr[0][COP0_Cause]]
@@ -302,7 +302,7 @@ static void append_generate_exception(struct drccore *drc, UINT8 exception)
     append_update_cycle_counting
 ------------------------------------------------------------------*/
 
-static void append_update_cycle_counting(struct drccore *drc)
+static void append_update_cycle_counting(drc_core *drc)
 {
 	_mov_m32abs_r32(&mips3_icount, REG_EBP);							// mov  [mips3_icount],ebp
 	_call((genf *)update_cycle_counting);								// call update_cycle_counting
@@ -314,9 +314,9 @@ static void append_update_cycle_counting(struct drccore *drc)
     append_check_interrupts
 ------------------------------------------------------------------*/
 
-static void append_check_interrupts(struct drccore *drc, int inline_generate)
+static void append_check_interrupts(drc_core *drc, int inline_generate)
 {
-	struct linkdata link1, link2, link3;
+	link_info link1, link2, link3;
 	_mov_r32_m32abs(REG_EAX, &mips3.cpr[0][COP0_Cause]);				// mov  eax,[mips3.cpr[0][COP0_Cause]]
 	_and_r32_m32abs(REG_EAX, &mips3.cpr[0][COP0_Status]);				// and  eax,[mips3.cpr[0][COP0_Status]]
 	_and_r32_imm(REG_EAX, 0xfc00);										// and  eax,0xfc00
@@ -347,7 +347,7 @@ static void append_check_interrupts(struct drccore *drc, int inline_generate)
     append_check_sw_interrupts
 ------------------------------------------------------------------*/
 
-static void append_check_sw_interrupts(struct drccore *drc, int inline_generate)
+static void append_check_sw_interrupts(drc_core *drc, int inline_generate)
 {
 	_test_m32abs_imm(&mips3.cpr[0][COP0_Cause], 0x300);					// test [mips3.cpr[0][COP0_Cause]],0x300
 	_jcc(COND_NZ, mips3.generate_interrupt_exception);					// jnz  generate_interrupt_exception
@@ -358,7 +358,7 @@ static void append_check_sw_interrupts(struct drccore *drc, int inline_generate)
     append_branch_or_dispatch
 ------------------------------------------------------------------*/
 
-static void append_branch_or_dispatch(struct drccore *drc, UINT32 newpc, int cycles)
+static void append_branch_or_dispatch(drc_core *drc, UINT32 newpc, int cycles)
 {
 	void *code = drc_get_code_at_pc(drc, newpc);
 	_mov_r32_imm(REG_EDI, newpc);
@@ -435,7 +435,7 @@ static void ddivu(UINT64 *rs, UINT64 *rt)
     recompile_delay_slot
 ------------------------------------------------------------------*/
 
-static int recompile_delay_slot(struct drccore *drc, UINT32 pc)
+static int recompile_delay_slot(drc_core *drc, UINT32 pc)
 {
 	UINT8 *saved_top;
 	UINT32 result;
@@ -470,7 +470,7 @@ static int recompile_delay_slot(struct drccore *drc, UINT32 pc)
     recompile_lui
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_lui(drc_core *drc, UINT32 pc, UINT32 op)
 {
 	UINT32 address = UIMMVAL << 16;
 	UINT32 targetreg = RTREG;
@@ -847,9 +847,9 @@ static UINT32 recompile_lui(struct drccore *drc, UINT32 pc, UINT32 op)
     recompile_ldlr_le
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_ldlr_le(struct drccore *drc, UINT8 rtreg, UINT8 rsreg, INT16 simmval)
+static UINT32 recompile_ldlr_le(drc_core *drc, UINT8 rtreg, UINT8 rsreg, INT16 simmval)
 {
-	struct linkdata link1, link2;
+	link_info link1, link2;
 	_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov  [mips3_icount],ebp
 	_save_pc_before_call();													// save pc
 	_mov_r32_m32abs(REG_EAX, &mips3.r[rsreg]);								// mov  eax,[rsreg]
@@ -889,9 +889,9 @@ static UINT32 recompile_ldlr_le(struct drccore *drc, UINT8 rtreg, UINT8 rsreg, I
     recompile_lwlr_le
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_lwlr_le(struct drccore *drc, UINT8 rtreg, UINT8 rsreg, INT16 simmval)
+static UINT32 recompile_lwlr_le(drc_core *drc, UINT8 rtreg, UINT8 rsreg, INT16 simmval)
 {
-	struct linkdata link1;
+	link_info link1;
 	_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov  [mips3_icount],ebp
 	_save_pc_before_call();													// save pc
 	_mov_r32_m32abs(REG_EAX, &mips3.r[rsreg]);								// mov  eax,[rsreg]
@@ -924,7 +924,7 @@ static UINT32 recompile_lwlr_le(struct drccore *drc, UINT8 rtreg, UINT8 rsreg, I
     recompile_instruction
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
+static UINT32 recompile_instruction(drc_core *drc, UINT32 pc)
 {
 	static UINT32 ldl_mask[] =
 	{
@@ -970,7 +970,7 @@ static UINT32 recompile_instruction(struct drccore *drc, UINT32 pc)
 		0x0000ffff,0xffffffff,
 		0x00ffffff,0xffffffff
 	};
-	struct linkdata link1, link2, link3;
+	link_info link1, link2, link3;
 	UINT32 op = cpu_readop32(pc);
 	int cycles;
 
@@ -2326,9 +2326,9 @@ if ((nextop >> 26) == 0x2a &&
     recompile_special
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_special(drc_core *drc, UINT32 pc, UINT32 op)
 {
-	struct linkdata link1, link2, link3;
+	link_info link1, link2, link3;
 	int cycles;
 
 	switch (op & 63)
@@ -3397,9 +3397,9 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
     recompile_regimm
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_regimm(struct drccore *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_regimm(drc_core *drc, UINT32 pc, UINT32 op)
 {
-	struct linkdata link1;
+	link_info link1;
 	int cycles;
 
 	switch (RTREG)
@@ -3649,9 +3649,9 @@ static UINT32 recompile_regimm(struct drccore *drc, UINT32 pc, UINT32 op)
     recompile_set_cop0_reg
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_set_cop0_reg(struct drccore *drc, UINT8 reg)
+static UINT32 recompile_set_cop0_reg(drc_core *drc, UINT8 reg)
 {
-	struct linkdata link1;
+	link_info link1;
 
 	switch (reg)
 	{
@@ -3717,9 +3717,9 @@ static UINT32 recompile_set_cop0_reg(struct drccore *drc, UINT8 reg)
     recompile_get_cop0_reg
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_get_cop0_reg(struct drccore *drc, UINT8 reg)
+static UINT32 recompile_get_cop0_reg(drc_core *drc, UINT8 reg)
 {
-	struct linkdata link1;
+	link_info link1;
 
 	switch (reg)
 	{
@@ -3755,9 +3755,9 @@ static UINT32 recompile_get_cop0_reg(struct drccore *drc, UINT8 reg)
     recompile_cop0
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_cop0(struct drccore *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_cop0(drc_core *drc, UINT32 pc, UINT32 op)
 {
-	struct linkdata checklink;
+	link_info checklink;
 	UINT32 result;
 
 	if (mips3.drcoptions & MIPS3DRC_STRICT_COP0)
@@ -3899,9 +3899,9 @@ static UINT32 recompile_cop0(struct drccore *drc, UINT32 pc, UINT32 op)
     recompile_cop1
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_cop1(struct drccore *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_cop1(drc_core *drc, UINT32 pc, UINT32 op)
 {
-	struct linkdata link1;
+	link_info link1;
 	int cycles, i;
 
 	if (mips3.drcoptions & MIPS3DRC_STRICT_COP1)
@@ -4706,7 +4706,7 @@ static UINT32 recompile_cop1(struct drccore *drc, UINT32 pc, UINT32 op)
     recompile_cop1x
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_cop1x(drc_core *drc, UINT32 pc, UINT32 op)
 {
 	if (mips3.drcoptions & MIPS3DRC_STRICT_COP1)
 	{

@@ -592,7 +592,7 @@ INPUT_PORTS_END
                 GFX DECODING
 ************************************************************/
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16x16 pixels */
 	RGN_FRAC(1,4),
@@ -607,7 +607,7 @@ static struct GfxLayout tilelayout =
 	16*16
 };
 
-static struct GfxDecodeInfo airsys_gfxdecodeinfo[] =
+static gfx_decode airsys_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0, 32*16 },
 	{ -1 } /* end of array */

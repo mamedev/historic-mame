@@ -269,6 +269,7 @@ To Do / Unknowns:
 #include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
+#include "machine/nmk112.h"
 #include "sound/2151intf.h"
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
@@ -1107,45 +1108,34 @@ static WRITE8_HANDLER( battleg_bankswitch_w )
 	}
 }
 
-static void raizing_oki6295_set_bankbase( int chip, int channel, int base )
-{
-	/* The OKI6295 ROM space is divided in four banks, each one independantly */
-	/* controlled. The sample table at the beginning of the addressing space  */
-	/* is divided in four pages as well, banked together with the sample data */
-
-	data8_t *rom = (data8_t *)memory_region(REGION_SOUND1 + chip);
-
-	/* copy the samples */
-	memcpy(rom + channel * 0x10000, rom + 0x40000 + base, 0x10000);
-
-	/* and also copy the samples address table */
-	rom += channel * 0x100;
-	memcpy(rom, rom + 0x40000 + base, 0x100);
-}
-
+// what chip do battleg and batrider actually use for soundrom banking?
+// it works the same way as the NMK112 but the interface is different...
+// interesting fact: these two games had the same composer & sfx designer
+// (Manabu NAMIKI) as the NMK games which used the NMK112
+// (macross2, tdragon2, quizpani...)
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_0 )
 {
-	raizing_oki6295_set_bankbase( 0, 0,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 0, 1, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(0,  data		& 0x0f);	// chip 0 bank 0
+	NMK112_okibank_w(1, (data >> 4)	& 0x0f);	// chip 0 bank 1
 }
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_1 )
 {
-	raizing_oki6295_set_bankbase( 0, 2,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 0, 3, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(2,  data		& 0x0f);	// chip 0 bank 2
+	NMK112_okibank_w(3, (data >> 4)	& 0x0f);	// chip 0 bank 3
 }
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_2 )
 {
-	raizing_oki6295_set_bankbase( 1, 0,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 1, 1, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(4,  data		& 0x0f);	// chip 1 bank 0
+	NMK112_okibank_w(5, (data >> 4)	& 0x0f);	// chip 1 bank 1
 }
 
 static WRITE8_HANDLER( raizing_okim6295_bankselect_3 )
 {
-	raizing_oki6295_set_bankbase( 1, 2,  (data       & 0x0f) * 0x10000);
-	raizing_oki6295_set_bankbase( 1, 3, ((data >> 4) & 0x0f) * 0x10000);
+	NMK112_okibank_w(6,  data		& 0x0f);	// chip 1 bank 2
+	NMK112_okibank_w(7, (data >> 4)	& 0x0f);	// chip 1 bank 3
 }
 
 static WRITE8_HANDLER( batrider_bankswitch_w )
@@ -3899,7 +3889,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16x16 */
 	RGN_FRAC(1,2),	/* Number of tiles */
@@ -3912,7 +3902,7 @@ static struct GfxLayout tilelayout =
 	8*4*16
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,8,	/* 8x8 */
 	RGN_FRAC(1,2),	/* Number of 8x8 sprites */
@@ -3923,7 +3913,7 @@ static struct GfxLayout spritelayout =
 	8*16
 };
 
-static struct GfxLayout raizing_textlayout =
+static gfx_layout raizing_textlayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3935,7 +3925,7 @@ static struct GfxLayout raizing_textlayout =
 };
 
 #ifdef LSB_FIRST
-static struct GfxLayout truxton2_tx_tilelayout =
+static gfx_layout truxton2_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3946,7 +3936,7 @@ static struct GfxLayout truxton2_tx_tilelayout =
 	8*64
 };
 #else
-static struct GfxLayout truxton2_tx_tilelayout =
+static gfx_layout truxton2_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3959,7 +3949,7 @@ static struct GfxLayout truxton2_tx_tilelayout =
 #endif
 
 #ifdef LSB_FIRST
-static struct GfxLayout batrider_tx_tilelayout =
+static gfx_layout batrider_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3970,7 +3960,7 @@ static struct GfxLayout batrider_tx_tilelayout =
 	8*32
 };
 #else
-static struct GfxLayout batrider_tx_tilelayout =
+static gfx_layout batrider_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3983,7 +3973,7 @@ static struct GfxLayout batrider_tx_tilelayout =
 #endif
 
 
-static struct GfxLayout fixeighblayout =
+static gfx_layout fixeighblayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -3994,14 +3984,14 @@ static struct GfxLayout fixeighblayout =
    8*8*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_2[] =
+static gfx_decode gfxdecodeinfo_2[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
@@ -4010,7 +4000,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_2[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo truxton2_gfxdecodeinfo[] =
+static gfx_decode truxton2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,       &tilelayout            , 0, 128 },
 	{ REGION_GFX1, 0,       &spritelayout          , 0,  64 },
@@ -4020,7 +4010,7 @@ static struct GfxDecodeInfo truxton2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo raizing_gfxdecodeinfo[] =
+static gfx_decode raizing_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,         0, 128 },
 	{ REGION_GFX1, 0, &spritelayout,       0,  64 },
@@ -4029,7 +4019,7 @@ static struct GfxDecodeInfo raizing_gfxdecodeinfo[] =
 };
 
 /* This is wrong a bit. Text layer is dynamically changed. */
-static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
+static gfx_decode batrider_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,             0, 128 },
 	{ REGION_GFX1, 0, &spritelayout,           0,  64 },
@@ -4037,7 +4027,7 @@ static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo fixeighb_gfxdecodeinfo[] =
+static gfx_decode fixeighb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout     , 0, 128 },
 	{ REGION_GFX1, 0, &spritelayout   , 0,  64 },

@@ -50,7 +50,7 @@ WRITE16_HANDLER( realbrk_flipscreen_w )
 
 ***************************************************************************/
 
-static struct tilemap	*tilemap_0,*tilemap_1,	// Backgrounds
+static tilemap	*tilemap_0,*tilemap_1,	// Backgrounds
 						*tilemap_2;				// Text
 
 

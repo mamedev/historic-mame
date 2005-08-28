@@ -11,7 +11,7 @@
 
 static int gfx_bank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 

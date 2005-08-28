@@ -51,7 +51,7 @@ static int scroll_y;
 static int twincobr_display_on;
 static int twincobr_flip_screen;
 
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
 
 /***************************************************************************

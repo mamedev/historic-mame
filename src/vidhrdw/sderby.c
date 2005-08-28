@@ -1,13 +1,13 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *sderby_tilemap;
+static tilemap *sderby_tilemap;
 extern data16_t *sderby_videoram;
 
-static struct tilemap *sderby_md_tilemap;
+static tilemap *sderby_md_tilemap;
 extern data16_t *sderby_md_videoram;
 
-static struct tilemap *sderby_fg_tilemap;
+static tilemap *sderby_fg_tilemap;
 extern data16_t *sderby_fg_videoram;
 
 /* BG Layer */

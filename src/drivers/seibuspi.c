@@ -1228,7 +1228,7 @@ INPUT_PORTS_END
 #define PLANE_TILE 0
 #define PLANE_SPRITE 1
 
-static struct GfxLayout spi_charlayout =
+static gfx_layout spi_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1240,7 +1240,7 @@ static struct GfxLayout spi_charlayout =
 };
 
 #if PLANE_CHAR
-static struct GfxLayout spi_charlayout0 =
+static gfx_layout spi_charlayout0 =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1251,7 +1251,7 @@ static struct GfxLayout spi_charlayout0 =
 	6*8*8
 };
 
-static struct GfxLayout spi_charlayout1 =
+static gfx_layout spi_charlayout1 =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1262,7 +1262,7 @@ static struct GfxLayout spi_charlayout1 =
 	6*8*8
 };
 
-static struct GfxLayout spi_charlayout2 =
+static gfx_layout spi_charlayout2 =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1273,7 +1273,7 @@ static struct GfxLayout spi_charlayout2 =
 	6*8*8
 };
 
-static struct GfxLayout spi_charlayout3 =
+static gfx_layout spi_charlayout3 =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1284,7 +1284,7 @@ static struct GfxLayout spi_charlayout3 =
 	6*8*8
 };
 
-static struct GfxLayout spi_charlayout4 =
+static gfx_layout spi_charlayout4 =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1295,7 +1295,7 @@ static struct GfxLayout spi_charlayout4 =
 	6*8*8
 };
 
-static struct GfxLayout spi_charlayout5 =
+static gfx_layout spi_charlayout5 =
 {
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
@@ -1307,7 +1307,7 @@ static struct GfxLayout spi_charlayout5 =
 };
 #endif
 
-static struct GfxLayout spi_tilelayout =
+static gfx_layout spi_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1326,7 +1326,7 @@ static struct GfxLayout spi_tilelayout =
 };
 
 #if PLANE_TILE
-static struct GfxLayout spi_tilelayout0 =
+static gfx_layout spi_tilelayout0 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1344,7 +1344,7 @@ static struct GfxLayout spi_tilelayout0 =
 	6*16*16
 };
 
-static struct GfxLayout spi_tilelayout1 =
+static gfx_layout spi_tilelayout1 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1362,7 +1362,7 @@ static struct GfxLayout spi_tilelayout1 =
 	6*16*16
 };
 
-static struct GfxLayout spi_tilelayout2 =
+static gfx_layout spi_tilelayout2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1380,7 +1380,7 @@ static struct GfxLayout spi_tilelayout2 =
 	6*16*16
 };
 
-static struct GfxLayout spi_tilelayout3 =
+static gfx_layout spi_tilelayout3 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1398,7 +1398,7 @@ static struct GfxLayout spi_tilelayout3 =
 	6*16*16
 };
 
-static struct GfxLayout spi_tilelayout4 =
+static gfx_layout spi_tilelayout4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1416,7 +1416,7 @@ static struct GfxLayout spi_tilelayout4 =
 	6*16*16
 };
 
-static struct GfxLayout spi_tilelayout5 =
+static gfx_layout spi_tilelayout5 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1435,7 +1435,7 @@ static struct GfxLayout spi_tilelayout5 =
 };
 #endif
 
-static struct GfxLayout spi_spritelayout =
+static gfx_layout spi_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1451,7 +1451,7 @@ static struct GfxLayout spi_spritelayout =
 };
 
 #if PLANE_SPRITE
-static struct GfxLayout spi_spritelayout0 =
+static gfx_layout spi_spritelayout0 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1466,7 +1466,7 @@ static struct GfxLayout spi_spritelayout0 =
 	16*32
 };
 
-static struct GfxLayout spi_spritelayout1 =
+static gfx_layout spi_spritelayout1 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1481,7 +1481,7 @@ static struct GfxLayout spi_spritelayout1 =
 	16*32
 };
 
-static struct GfxLayout spi_spritelayout2 =
+static gfx_layout spi_spritelayout2 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1496,7 +1496,7 @@ static struct GfxLayout spi_spritelayout2 =
 	16*32
 };
 
-static struct GfxLayout spi_spritelayout3 =
+static gfx_layout spi_spritelayout3 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1511,7 +1511,7 @@ static struct GfxLayout spi_spritelayout3 =
 	16*32
 };
 
-static struct GfxLayout spi_spritelayout4 =
+static gfx_layout spi_spritelayout4 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1526,7 +1526,7 @@ static struct GfxLayout spi_spritelayout4 =
 	16*32
 };
 
-static struct GfxLayout spi_spritelayout5 =
+static gfx_layout spi_spritelayout5 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1542,7 +1542,7 @@ static struct GfxLayout spi_spritelayout5 =
 };
 #endif
 
-static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
+static gfx_decode spi_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spi_charlayout,   5632, 16 },
 	{ REGION_GFX2, 0, &spi_tilelayout,   4096, 24 },

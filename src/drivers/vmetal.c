@@ -87,9 +87,9 @@ data16_t *vmetal_tlookup;
 data16_t *vmetal_videoregs;
 
 
-static struct tilemap *vmetal_texttilemap;
-static struct tilemap *vmetal_mid1tilemap;
-static struct tilemap *vmetal_mid2tilemap;
+static tilemap *vmetal_texttilemap;
+static tilemap *vmetal_mid1tilemap;
+static tilemap *vmetal_mid2tilemap;
 
 /* vidhrdw/metro.c */
 extern data16_t *metro_videoregs;
@@ -340,7 +340,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout char16x16layout =
+static gfx_layout char16x16layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -351,7 +351,7 @@ static struct GfxLayout char16x16layout =
 	16*64
 };
 
-static struct GfxLayout char8x8layout =
+static gfx_layout char8x8layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -362,7 +362,7 @@ static struct GfxLayout char8x8layout =
 	8*32
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char16x16layout,   0x1000, 512  }, /* bg tiles */
 	{ REGION_GFX1, 0, &char8x8layout,   0x1000, 512  }, /* bg tiles */

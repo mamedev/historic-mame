@@ -463,7 +463,6 @@ ROM_END
 
 static DRIVER_INIT( dcheese )
 {
-	EEPROM_init(&eeprom_interface_93C46);
 	ticket_dispenser_init(200, TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_LOW);
 }
 

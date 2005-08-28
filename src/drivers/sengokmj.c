@@ -257,7 +257,7 @@ INPUT_PORTS_START( sengokmj )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 sprites  */
 	RGN_FRAC(1,1),
@@ -270,7 +270,7 @@ static struct GfxLayout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -281,7 +281,7 @@ static struct GfxLayout charlayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0x000, 0x40 }, /* Sprites */
 	{ REGION_GFX2, 0, &tilelayout, 0x400, 0x30 }, /* Tiles */

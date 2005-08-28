@@ -32,13 +32,14 @@
  *
  *************************************/
 
-struct config_type
+struct _config_type
 {
-	struct config_type *	next;				/* next in line */
+	struct _config_type *	next;				/* next in line */
 	const char *			name;				/* node name */
 	config_callback			load;				/* load callback */
 	config_callback			save;				/* save callback */
 };
+typedef struct _config_type config_type;
 
 
 
@@ -48,7 +49,7 @@ struct config_type
  *
  *************************************/
 
-static struct config_type *typelist;
+static config_type *typelist;
 
 
 
@@ -58,8 +59,8 @@ static struct config_type *typelist;
  *
  *************************************/
 
-static int config_load_xml(mame_file *file, int config_type);
-static int config_save_xml(mame_file *file, int config_type);
+static int config_load_xml(mame_file *file, int type);
+static int config_save_xml(mame_file *file, int type);
 
 
 
@@ -90,8 +91,8 @@ void config_init(void)
 
 void config_register(const char *nodename, config_callback load, config_callback save)
 {
-	struct config_type *newtype;
-	struct config_type **ptype;
+	config_type *newtype;
+	config_type **ptype;
 
 	/* allocate a new type */
 	newtype = auto_malloc(sizeof(*newtype));
@@ -115,7 +116,7 @@ void config_register(const char *nodename, config_callback load, config_callback
 
 int config_load_settings(void)
 {
-	struct config_type *type;
+	config_type *type;
 	mame_file *file;
 	int loaded = 0;
 
@@ -165,7 +166,7 @@ int config_load_settings(void)
 
 void config_save_settings(void)
 {
-	struct config_type *type;
+	config_type *type;
 	mame_file *file;
 
 	/* loop over all registrants and call their init function */
@@ -201,10 +202,10 @@ void config_save_settings(void)
  *
  *************************************/
 
-static int config_load_xml(mame_file *file, int config_type)
+static int config_load_xml(mame_file *file, int which_type)
 {
-	struct xml_data_node *root, *confignode, *systemnode;
-	struct config_type *type;
+	xml_data_node *root, *confignode, *systemnode;
+	config_type *type;
 	const char *srcfile;
 	int version, count;
 
@@ -242,7 +243,7 @@ static int config_load_xml(mame_file *file, int config_type)
 		const char *name = xml_get_attribute_string(systemnode, "name", "");
 
 		/* based on the file type, determine whether we have a match */
-		switch (config_type)
+		switch (which_type)
 		{
 			case CONFIG_TYPE_GAME:
 				/* only match on the specific game name */
@@ -273,7 +274,7 @@ static int config_load_xml(mame_file *file, int config_type)
 
 		/* loop over all registrants and call their load function */
 		for (type = typelist; type; type = type->next)
-			(*type->load)(config_type, xml_get_sibling(systemnode->child, type->name));
+			(*type->load)(which_type, xml_get_sibling(systemnode->child, type->name));
 		count++;
 	}
 
@@ -299,11 +300,11 @@ error:
  *
  *************************************/
 
-static int config_save_xml(mame_file *file, int config_type)
+static int config_save_xml(mame_file *file, int which_type)
 {
-	struct xml_data_node *root = xml_file_create();
-	struct xml_data_node *confignode, *systemnode;
-	struct config_type *type;
+	xml_data_node *root = xml_file_create();
+	xml_data_node *confignode, *systemnode;
+	config_type *type;
 
 	/* if we don't have a root, bail */
 	if (!root)
@@ -319,16 +320,16 @@ static int config_save_xml(mame_file *file, int config_type)
 	systemnode = xml_add_child(confignode, "system", NULL);
 	if (!systemnode)
 		goto error;
-	xml_set_attribute(systemnode, "name", (config_type == CONFIG_TYPE_DEFAULT) ? "default" : Machine->gamedrv->name);
+	xml_set_attribute(systemnode, "name", (which_type == CONFIG_TYPE_DEFAULT) ? "default" : Machine->gamedrv->name);
 
 	/* create the input node and write it out */
 	/* loop over all registrants and call their save function */
 	for (type = typelist; type; type = type->next)
 	{
-		struct xml_data_node *curnode = xml_add_child(systemnode, type->name, NULL);
+		xml_data_node *curnode = xml_add_child(systemnode, type->name, NULL);
 		if (!curnode)
 			goto error;
-		(*type->save)(config_type, curnode);
+		(*type->save)(which_type, curnode);
 
 		/* if nothing was added, just nuke the node */
 		if (!curnode->value && !curnode->child)

@@ -221,7 +221,7 @@ INPUT_PORTS_END
 
 /* For the character graphics */
 
-static struct GfxLayout gfxlayout =
+static gfx_layout gfxlayout =
 {
     8,8,
     256,
@@ -234,7 +234,7 @@ static struct GfxLayout gfxlayout =
 
 /* For the LED Fire Beam (made up) */
 
-static struct GfxLayout firelayout =
+static gfx_layout firelayout =
 {
     16,9,
     256,
@@ -245,7 +245,7 @@ static struct GfxLayout firelayout =
     8*9
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
     { 0, 0, &gfxlayout,  0,      64*4 },    /* Dynamically decoded from RAM */
     { 0, 0, &gfxlayout,  1*2*16, 64*4 },    /* Dynamically decoded from RAM */

@@ -511,7 +511,7 @@ INPUT_PORTS_END
                          GFX DECODING
 **************************************************************/
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,    /* 8*8 tiles */
 	RGN_FRAC(1,1),
@@ -522,7 +522,7 @@ static struct GfxLayout tilelayout =
 	32*8    /* every tile takes 32 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -534,7 +534,7 @@ static struct GfxLayout spritelayout =
 	128*8   /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo rainbow_gfxdecodeinfo[] =
+static gfx_decode rainbow_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x000000, &spritelayout, 0, 0x80 },	/* OBJ 16x16 */
 	{ REGION_GFX1, 0x000000, &tilelayout,   0, 0x80 },	/* SCR 8x8 */
@@ -542,7 +542,7 @@ static struct GfxDecodeInfo rainbow_gfxdecodeinfo[] =
 };
 
 
-static struct GfxLayout jumping_tilelayout =
+static gfx_layout jumping_tilelayout =
 {
 	8,8,    /* 8*8 tiles */
 	16384,  /* 16384 tiles */
@@ -553,7 +553,7 @@ static struct GfxLayout jumping_tilelayout =
 	8*8     /* every tile takes 8 consecutive bytes */
 };
 
-static struct GfxLayout jumping_spritelayout =
+static gfx_layout jumping_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	5120,   /* 5120 sprites */
@@ -564,7 +564,7 @@ static struct GfxLayout jumping_spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
+static gfx_decode jumping_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &jumping_spritelayout, 0, 0x80 },	/* OBJ 16x16 */
 	{ REGION_GFX1, 0, &jumping_tilelayout,   0, 0x80 },	/* SCR 8x8 */

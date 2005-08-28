@@ -326,7 +326,7 @@ WRITE16_HANDLER( neo_game_fix_16_w )
 /******************************************************************************/
 
 
-static void NeoMVSDrawGfxLine(UINT16 **line,const struct GfxElement *gfx,
+static void NeoMVSDrawGfxLine(UINT16 **line,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int sx,int sy,
 		int zx,int yoffs,const struct rectangle *clip)
 {
@@ -460,7 +460,7 @@ VIDEO_UPDATE( neogeo )
 	char fullmode = 0;
 	void **line=bitmap->line;
 	unsigned int *pen_usage;
-	struct GfxElement *gfx=Machine->gfx[2]; /* Save constant struct dereference */
+	gfx_element *gfx=Machine->gfx[2]; /* Save constant struct dereference */
 
 profiler_mark(PROFILER_VIDEO);
 

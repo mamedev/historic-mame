@@ -483,7 +483,7 @@ INPUT_PORTS_END
 
 ***********************************************************/
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -499,7 +499,7 @@ static struct GfxLayout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxLayout slapshot_charlayout =
+static gfx_layout slapshot_charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -510,7 +510,7 @@ static struct GfxLayout slapshot_charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static struct GfxDecodeInfo slapshot_gfxdecodeinfo[] =
+static gfx_decode slapshot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tilelayout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &slapshot_charlayout,  0, 256 },	/* sprites & playfield */

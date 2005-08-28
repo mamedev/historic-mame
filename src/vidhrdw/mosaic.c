@@ -13,7 +13,7 @@
 data8_t *mosaic_fgvideoram;
 data8_t *mosaic_bgvideoram;
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 

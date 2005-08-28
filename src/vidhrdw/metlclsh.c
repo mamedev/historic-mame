@@ -22,7 +22,7 @@
 
 /* Local variables: */
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 static data8_t metlclsh_write_mask, *metlclsh_otherram;
 
@@ -185,7 +185,7 @@ VIDEO_START( metlclsh )
 
 static void metlclsh_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	struct GfxElement *gfx = Machine->gfx[0];
+	gfx_element *gfx = Machine->gfx[0];
 	int offs;
 
 	for (offs = 0;offs < spriteram_size; offs += 4)

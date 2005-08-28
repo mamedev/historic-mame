@@ -935,7 +935,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	256,
@@ -947,7 +947,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout backlayout =
+static gfx_layout backlayout =
 {
 	8,8,
 	256,
@@ -959,7 +959,7 @@ static struct GfxLayout backlayout =
 };
 
 
-static struct GfxLayout spaceod_layout =
+static gfx_layout spaceod_layout =
 {
 	8,8,
 	256,
@@ -971,14 +971,14 @@ static struct GfxLayout spaceod_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
 	{ -1 } /* end of array */
 };
 
 
-static struct GfxDecodeInfo monsterb_gfxdecodeinfo[] =
+static gfx_decode monsterb_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
 	{ REGION_GFX1, 0x0000, &backlayout, 0x41, 0x10 },
@@ -989,7 +989,7 @@ static struct GfxDecodeInfo monsterb_gfxdecodeinfo[] =
 };
 
 
-static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
+static gfx_decode spaceod_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout,     0x01, 0x10 },
 	{ REGION_GFX1, 0x0000, &spaceod_layout, 0x41, 1 },

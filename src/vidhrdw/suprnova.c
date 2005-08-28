@@ -515,8 +515,8 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 	}
 }
 
-static struct tilemap *skns_tilemap_A;
-static struct tilemap *skns_tilemap_B;
+static tilemap *skns_tilemap_A;
+static tilemap *skns_tilemap_B;
 
 static void get_tilemap_A_tile_info(int tile_index)
 {

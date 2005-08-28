@@ -202,7 +202,6 @@ static struct rc_option opts[] = {
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
 	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
-	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the " GAMENOUN " info screen" },
 	{ "skip_validitychecks", NULL, rc_bool, &options.skip_validitychecks, "0", 0, 0, NULL, "skip doing the code validity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
@@ -313,7 +312,7 @@ void show_approx_matches(void)
  * return 0 --> no problem
  * return 1 --> something went wrong
  */
-int parse_config (const char* filename, const struct GameDriver *gamedrv)
+int parse_config (const char* filename, const game_driver *gamedrv)
 {
 	mame_file *f;
 	char buffer[128];
@@ -385,7 +384,7 @@ struct rc_struct *cli_rc_create(void)
 
 int cli_frontend_init (int argc, char **argv)
 {
-	struct InternalMachineDriver drv;
+	machine_config drv;
 	char buffer[128];
 	char *cmd_name;
 	int game_index;
@@ -475,10 +474,10 @@ int cli_frontend_init (int argc, char **argv)
 	/* check for game name embedded in .inp header */
 	if (options.playback)
 	{
-		INP_HEADER inp_header;
+		inp_header inp_header;
 
 		/* read playback header */
-		mame_fread(options.playback, &inp_header, sizeof(INP_HEADER));
+		mame_fread(options.playback, &inp_header, sizeof(inp_header));
 
 		if (!isalnum(inp_header.name[0])) /* If first byte is not alpha-numeric */
 			mame_fseek(options.playback, 0, SEEK_SET); /* old .inp file - no header */
@@ -557,7 +556,7 @@ int cli_frontend_init (int argc, char **argv)
 
 	/* nice hack: load source_file.ini (omit if referenced later any) */
 	{
-		const struct GameDriver *tmp_gd;
+		const game_driver *tmp_gd;
 
 		sprintf(buffer, "%s", drivers[game_index]->source_file+4);
 		buffer[strlen(buffer) - 2] = 0;
@@ -595,9 +594,9 @@ int cli_frontend_init (int argc, char **argv)
 
 	if (options.record)
 	{
-		INP_HEADER inp_header;
+		inp_header inp_header;
 
-		memset(&inp_header, '\0', sizeof(INP_HEADER));
+		memset(&inp_header, '\0', sizeof(inp_header));
 		strcpy(inp_header.name, drivers[game_index]->name);
 		/* MAME32 stores the MAME version numbers at bytes 9 - 11
          * MAME DOS keeps this information in a string, the
@@ -608,7 +607,7 @@ int cli_frontend_init (int argc, char **argv)
            inp_header.version[1] = VERSION;
            inp_header.version[2] = BETA_VERSION;
          */
-		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
+		mame_fwrite(options.record, &inp_header, sizeof(inp_header));
 	}
 
 	if( statename )

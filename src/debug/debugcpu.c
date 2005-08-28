@@ -193,7 +193,7 @@ const char *set_ea_info(int what, unsigned value, int size, int access)
 			break;
 
 		case EA_ABS_PC: /* Absolute program counter change */
-			result &= (address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
+			result &= (active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
 			if( size == EA_INT8 || size == EA_UINT8 )
 				width = 2;
 			else
@@ -208,7 +208,7 @@ const char *set_ea_info(int what, unsigned value, int size, int access)
 
 		case EA_REL_PC: /* Relative program counter change */
 		default:
-			result &= (address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
+			result &= (active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
 			width = (activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM) + 3) / 4;
 	}
 	sprintf( buffer[which], "%s$%0*X", sign, width, result );
@@ -1360,7 +1360,7 @@ data8_t debug_read_byte(int spacenum, offs_t address)
 	if (info->read && (*info->read)(spacenum, address, 1, &custom))
 		result = custom;
 	else
-		result = (*address_space[spacenum].accessors->read_byte)(address);
+		result = (*active_address_space[spacenum].accessors->read_byte)(address);
 	memory_set_debugger_access(0);
 	return result;
 }
@@ -1386,10 +1386,10 @@ data16_t debug_read_word(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_word && !(address & 1))
+	if (active_address_space[spacenum].accessors->read_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
-		result = (*address_space[spacenum].accessors->read_word)(address);
+		result = (*active_address_space[spacenum].accessors->read_word)(address);
 		memory_set_debugger_access(0);
 	}
 	else
@@ -1425,10 +1425,10 @@ data32_t debug_read_dword(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_dword && !(address & 3))
+	if (active_address_space[spacenum].accessors->read_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
-		result = (*address_space[spacenum].accessors->read_dword)(address);
+		result = (*active_address_space[spacenum].accessors->read_dword)(address);
 		memory_set_debugger_access(0);
 	}
 	else
@@ -1464,10 +1464,10 @@ data64_t debug_read_qword(int spacenum, offs_t address)
 		if (handled)
 			return custom;
 	}
-	if (address_space[spacenum].accessors->read_qword && !(address & 7))
+	if (active_address_space[spacenum].accessors->read_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
-		result = (*address_space[spacenum].accessors->read_qword)(address);
+		result = (*active_address_space[spacenum].accessors->read_qword)(address);
 		memory_set_debugger_access(0);
 	}
 	else
@@ -1496,7 +1496,7 @@ void debug_write_byte(int spacenum, offs_t address, data8_t data)
 	if (info->write && (*info->write)(spacenum, address, 1, data))
 		;
 	else
-		(*address_space[spacenum].accessors->write_byte)(address, data);
+		(*active_address_space[spacenum].accessors->write_byte)(address, data);
 	memory_set_debugger_access(0);
 }
 
@@ -1519,10 +1519,10 @@ void debug_write_word(int spacenum, offs_t address, data16_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_word && !(address & 1))
+	if (active_address_space[spacenum].accessors->write_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
-		(*address_space[spacenum].accessors->write_word)(address, data);
+		(*active_address_space[spacenum].accessors->write_word)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1556,10 +1556,10 @@ void debug_write_dword(int spacenum, offs_t address, data32_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_dword && !(address & 3))
+	if (active_address_space[spacenum].accessors->write_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
-		(*address_space[spacenum].accessors->write_dword)(address, data);
+		(*active_address_space[spacenum].accessors->write_dword)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1593,10 +1593,10 @@ void debug_write_qword(int spacenum, offs_t address, data64_t data)
 		if (handled)
 			return;
 	}
-	if (address_space[spacenum].accessors->write_qword && !(address & 7))
+	if (active_address_space[spacenum].accessors->write_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
-		(*address_space[spacenum].accessors->write_qword)(address, data);
+		(*active_address_space[spacenum].accessors->write_qword)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)

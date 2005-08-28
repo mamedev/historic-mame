@@ -15,7 +15,7 @@ extern const char *mess_default_text[];
 #endif /* MESS */
 
 
-struct lang_struct lang;
+lang_struct lang;
 
 /* All entries in this table must match the enum ordering in "ui_text.h" */
 static const char *mame_default_text[] =
@@ -119,16 +119,16 @@ static const char *mame_default_text[] =
 	"(locked)",
 
 	/* memory card */
-	"Load Memory Card",
-	"Eject Memory Card",
-	"Create Memory Card",
-	"Failed To Load Memory Card!",
-	"Load OK!",
-	"Memory Card Ejected!",
-	"Memory Card Created OK!",
-	"Failed To Create Memory Card!",
-	"(It already exists ?)",
-	"DAMN!! Internal Error!",
+	"Card Number:",
+	"Load Selected Card",
+	"Eject Current Card",
+	"Create New Card",
+	"Error loading memory card",
+	"Memory card loaded",
+	"Memory card ejected",
+	"Memory card created",
+	"Error creating memory card",
+	"(Card may already exist)",
 
 	/* cheats */
 	"Enable/Disable a Cheat",

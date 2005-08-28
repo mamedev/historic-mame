@@ -1234,7 +1234,7 @@ INPUT_PORTS_START( horizon )
 INPUT_PORTS_END
 
 
-#define TILELAYOUT(NUM) static struct GfxLayout tilelayout_##NUM =  \
+#define TILELAYOUT(NUM) static gfx_layout tilelayout_##NUM =  \
 {                                                                   \
 	8,8,	/* 8*8 characters */                                    \
 	NUM,	/* NUM characters */                                    \
@@ -1250,7 +1250,7 @@ TILELAYOUT(2048);
 TILELAYOUT(4096);
 
 
-static struct GfxLayout battroad_charlayout =
+static gfx_layout battroad_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* number of characters */
@@ -1261,7 +1261,7 @@ static struct GfxLayout battroad_charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout lotlot_charlayout =
+static gfx_layout lotlot_charlayout =
 {
 	12,10, /* character size */
 	256, /* number of characters */
@@ -1272,7 +1272,7 @@ static struct GfxLayout lotlot_charlayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
-static struct GfxLayout kidniki_charlayout =
+static gfx_layout kidniki_charlayout =
 {
 	12,8, /* character size */
 	1024, /* number of characters */
@@ -1283,7 +1283,7 @@ static struct GfxLayout kidniki_charlayout =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
-static struct GfxLayout spelunk2_charlayout =
+static gfx_layout spelunk2_charlayout =
 {
 	12,8, /* character size */
 	512, /* number of characters */
@@ -1298,7 +1298,7 @@ static struct GfxLayout spelunk2_charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout youjyudn_tilelayout =
+static gfx_layout youjyudn_tilelayout =
 {
 	8,16,
 	RGN_FRAC(1,3),
@@ -1310,7 +1310,7 @@ static struct GfxLayout youjyudn_tilelayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -1323,14 +1323,14 @@ static struct GfxLayout spritelayout =
 	32*8
 };
 
-static struct GfxDecodeInfo kungfum_gfxdecodeinfo[] =
+static gfx_decode kungfum_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024,       0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,        256, 32 },	/* use colors 256-511 */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo battroad_gfxdecodeinfo[] =
+static gfx_decode battroad_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_1024,       0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,        256, 32 },	/* use colors 256-511 */
@@ -1338,14 +1338,14 @@ static struct GfxDecodeInfo battroad_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo ldrun3_gfxdecodeinfo[] =
+static gfx_decode ldrun3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_2048,      0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo lotlot_gfxdecodeinfo[] =
+static gfx_decode lotlot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lotlot_charlayout,    0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
@@ -1353,7 +1353,7 @@ static struct GfxDecodeInfo lotlot_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo kidniki_gfxdecodeinfo[] =
+static gfx_decode kidniki_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096,      0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
@@ -1361,7 +1361,7 @@ static struct GfxDecodeInfo kidniki_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo spelunkr_gfxdecodeinfo[] =
+static gfx_decode spelunkr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096,	     0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */
@@ -1369,7 +1369,7 @@ static struct GfxDecodeInfo spelunkr_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
+static gfx_decode spelunk2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_4096,	     0, 64 },	/* use colors   0-511 */
 	{ REGION_GFX2, 0, &spritelayout,       512, 32 },	/* use colors 512-767 */
@@ -1377,7 +1377,7 @@ static struct GfxDecodeInfo spelunk2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo youjyudn_gfxdecodeinfo[] =
+static gfx_decode youjyudn_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &youjyudn_tilelayout,  0, 32 },	/* use colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout,       256, 32 },	/* use colors 256-511 */

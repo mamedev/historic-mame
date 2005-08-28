@@ -414,7 +414,7 @@ VIDEO_UPDATE( exerion )
 		int code2 = code;
 
 		int color = ((flags >> 1) & 0x03) | ((code >> 5) & 0x04) | (code & 0x08) | (sprite_palette * 16);
-		const struct GfxElement *gfx = doubled ? Machine->gfx[2] : Machine->gfx[1];
+		const gfx_element *gfx = doubled ? Machine->gfx[2] : Machine->gfx[1];
 
 		if (exerion_cocktail_flip)
 		{

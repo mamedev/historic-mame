@@ -181,7 +181,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -192,7 +192,7 @@ static struct GfxLayout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -205,7 +205,7 @@ static struct GfxLayout spritelayout =
 	32*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,        0, 32 },
 	{ REGION_GFX2, 0, &charlayout,     32*8, 32 },
@@ -436,7 +436,7 @@ INPUT_PORTS_START( robowres )
 	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
 INPUT_PORTS_END
 
-static struct GfxLayout robowres_charlayout =
+static gfx_layout robowres_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -447,7 +447,7 @@ static struct GfxLayout robowres_charlayout =
 	8*8
 };
 
-static struct GfxLayout robowres_spritelayout =
+static gfx_layout robowres_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -461,7 +461,7 @@ static struct GfxLayout robowres_spritelayout =
 };
 
 
-static struct GfxDecodeInfo robowres_gfxdecodeinfo[] =
+static gfx_decode robowres_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &robowres_charlayout,        0, 32 },
 	{ REGION_GFX2, 0, &robowres_charlayout,     	 0, 32 },

@@ -1415,7 +1415,7 @@ INPUT_PORTS_END
 /* Namco System II - Graphics Declarations                   */
 /*************************************************************/
 
-static struct GfxLayout obj_layout = {
+static gfx_layout obj_layout = {
 	32,32,
 	0x800,	/* number of sprites */
 	8,		/* bits per pixel */
@@ -1438,7 +1438,7 @@ static struct GfxLayout obj_layout = {
 	0x800 /* sprite offset */
 };
 
-static struct GfxLayout chr_layout = {
+static gfx_layout chr_layout = {
 	8,8,
 	RGN_FRAC(1,1),
 	8,
@@ -1448,7 +1448,7 @@ static struct GfxLayout chr_layout = {
 	8*64
 };
 
-static struct GfxLayout roz_layout = {
+static gfx_layout roz_layout = {
 	8,8,
 	0x10000,
 	8,
@@ -1458,7 +1458,7 @@ static struct GfxLayout roz_layout = {
 	8*64
 };
 
-static struct GfxLayout luckywld_sprite_layout = /* same as Namco System21 */
+static gfx_layout luckywld_sprite_layout = /* same as Namco System21 */
 {
 	16,16,
 	RGN_FRAC(1,4),	/* number of tiles */
@@ -1481,7 +1481,7 @@ static struct GfxLayout luckywld_sprite_layout = /* same as Namco System21 */
 	8*64 /* sprite offset */
 };
 
-static struct GfxLayout luckywld_roz_layout =
+static gfx_layout luckywld_roz_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1492,7 +1492,7 @@ static struct GfxLayout luckywld_roz_layout =
 	16*128
 };
 
-static struct GfxLayout metlhawk_sprite_layout = {
+static gfx_layout metlhawk_sprite_layout = {
 	32,32,
 	0x1000,	/* number of sprites */
 	8, /* bits per pixel */
@@ -1502,7 +1502,7 @@ static struct GfxLayout metlhawk_sprite_layout = {
 	32*32*8
 };
 
-static struct GfxDecodeInfo metlhawk_gfxdecodeinfo[] =
+static gfx_decode metlhawk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &metlhawk_sprite_layout,	 0*256, 16 },
 	{ REGION_GFX3, 0x000000, &luckywld_roz_layout,		 0*256, 16 },
@@ -1510,7 +1510,7 @@ static struct GfxDecodeInfo metlhawk_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
@@ -1519,7 +1519,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo finallap_gfxdecodeinfo[] =
+static gfx_decode finallap_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
@@ -1527,7 +1527,7 @@ static struct GfxDecodeInfo finallap_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo sgunner_gfxdecodeinfo[] =
+static gfx_decode sgunner_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &luckywld_sprite_layout,	 0*256, 16 },
 	{ REGION_GFX3, 0x000000, &luckywld_roz_layout,		 0*256, 16 },
@@ -1535,7 +1535,7 @@ static struct GfxDecodeInfo sgunner_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo luckywld_gfxdecodeinfo[] =
+static gfx_decode luckywld_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &luckywld_sprite_layout,	 0*256, 16 },
 	{ REGION_GFX3, 0x000000, &luckywld_roz_layout,		 0*256, 16 },

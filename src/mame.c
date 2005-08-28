@@ -28,6 +28,7 @@
             - calls init_machine() [mame.c]
 
             init_machine() [mame.c]
+                - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls uistring_init() [ui_text.c] to initialize the localized strings
                 - calls code_init() [input.c] to initialize the input system
                 - calls inputport_init() [inptport.c] to set up the input ports
@@ -121,7 +122,6 @@
                 - frees all the memory regions
                 - calls chd_close_all() [chd.c] to tear down the hard disks
                 - calls code_exit() [input.c] to tear down the input system
-                - calls state_save_reset() [state.c] to reset the saved state system
                 - calls coin_counter_reset() [common.c] to reset coin counters
 
             - ends resource tracking (level 2), freeing all auto_mallocs and timers
@@ -170,18 +170,18 @@ int mame_debug; /* !0 when -debug option is specified */
 int bailing;	/* set to 1 if the startup is aborted to prevent multiple error messages */
 
 /* the active machine */
-static struct RunningMachine active_machine;
-struct RunningMachine *Machine = &active_machine;
+static running_machine active_machine;
+running_machine *Machine = &active_machine;
 
 /* the active game driver */
-static const struct GameDriver *gamedrv;
-static struct InternalMachineDriver internal_drv;
+static const game_driver *gamedrv;
+static machine_config internal_drv;
 
 /* various game options filled in by the OSD */
-struct GameOptions options;
+global_options options;
 
 /* the active video display */
-static struct mame_display current_display;
+static mame_display current_display;
 static UINT8 visible_area_changed;
 static UINT8 refresh_rate_changed;
 
@@ -194,7 +194,7 @@ static cycles_t last_fps_time;
 static int frames_since_last_fps;
 static int rendered_frames_since_last_fps;
 static int vfcount;
-static struct performance_info performance;
+static performance_info performance;
 
 /* misc other statics */
 static int leds_status;
@@ -202,7 +202,7 @@ static int mame_paused;
 
 /* artwork callbacks */
 #ifndef MESS
-static struct artwork_callbacks mame_artwork_callbacks =
+static artwork_callbacks mame_artwork_callbacks =
 {
 	NULL,
 	artwork_load_artwork_file
@@ -218,13 +218,13 @@ static struct artwork_callbacks mame_artwork_callbacks =
 
 ***************************************************************************/
 
-static struct chd_interface_file *mame_chd_open(const char *filename, const char *mode);
-static void mame_chd_close(struct chd_interface_file *file);
-static UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 mame_chd_length(struct chd_interface_file *file);
+static chd_interface_file *mame_chd_open(const char *filename, const char *mode);
+static void mame_chd_close(chd_interface_file *file);
+static UINT32 mame_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 mame_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 mame_chd_length(chd_interface_file *file);
 
-static struct chd_interface mame_chd_interface =
+static chd_interface mame_chd_interface =
 {
 	mame_chd_open,
 	mame_chd_close,
@@ -250,8 +250,8 @@ static void recompute_fps(int skipped_it);
 static int vh_open(void);
 static void vh_close(void);
 static int init_game_options(void);
-static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo);
-static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *aspect_x, int *aspect_y);
+static int decode_graphics(const gfx_decode *gfxdecodeinfo);
+static void compute_aspect_ratio(const machine_config *drv, int *aspect_x, int *aspect_y);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
 
@@ -350,7 +350,10 @@ int run_game(int game)
 
 		/* then finish setting up our local machine */
 		if (init_machine())
+		{
+			shutdown_machine();
 			bail_and_print("Unable to initialize machine emulation");
+		}
 		else
 		{
 			/* then run it */
@@ -383,6 +386,9 @@ int run_game(int game)
 
 static int init_machine(void)
 {
+	/* allow save state registrations starting here */
+	state_save_allow_registration(TRUE);
+
 	/* load the localization file */
 	if (uistring_init(options.language_file) != 0)
 	{
@@ -647,9 +653,6 @@ static void shutdown_machine(void)
 	/* close down the input system */
 	code_exit();
 
-	/* reset the saved states */
-	state_save_reset();
-
 	/* reset coin counters */
 	coin_counter_reset();
 }
@@ -683,7 +686,7 @@ int mame_is_paused(void)
     driver from the macroized state
 -------------------------------------------------*/
 
-void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), struct InternalMachineDriver *output)
+void expand_machine_driver(void (*constructor)(machine_config *), machine_config *output)
 {
 	/* keeping this function allows us to pre-init the driver before constructing it */
 	memset(output, 0, sizeof(*output));
@@ -698,8 +701,8 @@ void expand_machine_driver(void (*constructor)(struct InternalMachineDriver *), 
 
 static int vh_open(void)
 {
-	struct osd_create_params params;
-	struct artwork_callbacks *artcallbacks;
+	osd_create_params params;
+	artwork_callbacks *artcallbacks;
 	int bmwidth = Machine->drv->screen_width;
 	int bmheight = Machine->drv->screen_height;
 
@@ -860,7 +863,7 @@ static void vh_close(void)
     ratio encoded in the video attributes
 -------------------------------------------------*/
 
-static void compute_aspect_ratio(const struct InternalMachineDriver *drv, int *aspect_x, int *aspect_y)
+static void compute_aspect_ratio(const machine_config *drv, int *aspect_x, int *aspect_y)
 {
 	/* if it's explicitly specified, use it */
 	if (drv->aspect_x && drv->aspect_y)
@@ -926,7 +929,7 @@ static int init_game_options(void)
     decode_graphics - decode the graphics
 -------------------------------------------------*/
 
-static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo)
+static int decode_graphics(const gfx_decode *gfxdecodeinfo)
 {
 	int i;
 
@@ -935,7 +938,7 @@ static int decode_graphics(const struct GfxDecodeInfo *gfxdecodeinfo)
 	{
 		int region_length = 8 * memory_region_length(gfxdecodeinfo[i].memory_region);
 		UINT8 *region_base = memory_region(gfxdecodeinfo[i].memory_region);
-		struct GfxLayout glcopy;
+		gfx_layout glcopy;
 		int j;
 
 		/* make a copy of the layout */
@@ -1442,7 +1445,7 @@ void set_led_status(int num, int on)
     info
 -------------------------------------------------*/
 
-const struct performance_info *mame_get_performance_info(void)
+const performance_info *mame_get_performance_info(void)
 {
 	return &performance;
 }
@@ -1472,7 +1475,7 @@ int mame_find_cpu_index(const char *tag)
     driver expansion
 -------------------------------------------------*/
 
-struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const char *tag, int type, int cpuclock)
+cpu_config *machine_add_cpu(machine_config *machine, const char *tag, int type, int cpuclock)
 {
 	int cpunum;
 
@@ -1496,7 +1499,7 @@ struct MachineCPU *machine_add_cpu(struct InternalMachineDriver *machine, const 
     machine driver expansion
 -------------------------------------------------*/
 
-struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const char *tag)
+cpu_config *machine_find_cpu(machine_config *machine, const char *tag)
 {
 	int cpunum;
 
@@ -1515,7 +1518,7 @@ struct MachineCPU *machine_find_cpu(struct InternalMachineDriver *machine, const
     during machine driver expansion
 -------------------------------------------------*/
 
-void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
+void machine_remove_cpu(machine_config *machine, const char *tag)
 {
 	int cpunum;
 
@@ -1537,7 +1540,7 @@ void machine_remove_cpu(struct InternalMachineDriver *machine, const char *tag)
     machine driver expansion
 -------------------------------------------------*/
 
-struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine, const char *tag, float x, float y, float z)
+speaker_config *machine_add_speaker(machine_config *machine, const char *tag, float x, float y, float z)
 {
 	int speakernum;
 
@@ -1562,7 +1565,7 @@ struct MachineSpeaker *machine_add_speaker(struct InternalMachineDriver *machine
     system during machine driver expansion
 -------------------------------------------------*/
 
-struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machine, const char *tag)
+speaker_config *machine_find_speaker(machine_config *machine, const char *tag)
 {
 	int speakernum;
 
@@ -1581,7 +1584,7 @@ struct MachineSpeaker *machine_find_speaker(struct InternalMachineDriver *machin
     system during machine driver expansion
 -------------------------------------------------*/
 
-void machine_remove_speaker(struct InternalMachineDriver *machine, const char *tag)
+void machine_remove_speaker(machine_config *machine, const char *tag)
 {
 	int speakernum;
 
@@ -1603,7 +1606,7 @@ void machine_remove_speaker(struct InternalMachineDriver *machine, const char *t
     machine driver expansion
 -------------------------------------------------*/
 
-struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, const char *tag, int type, int clock)
+sound_config *machine_add_sound(machine_config *machine, const char *tag, int type, int clock)
 {
 	int soundnum;
 
@@ -1630,7 +1633,7 @@ struct MachineSound *machine_add_sound(struct InternalMachineDriver *machine, co
     system during machine driver expansion
 -------------------------------------------------*/
 
-struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, const char *tag)
+sound_config *machine_find_sound(machine_config *machine, const char *tag)
 {
 	int soundnum;
 
@@ -1649,7 +1652,7 @@ struct MachineSound *machine_find_sound(struct InternalMachineDriver *machine, c
     system during machine driver expansion
 -------------------------------------------------*/
 
-void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag)
+void machine_remove_sound(machine_config *machine, const char *tag)
 {
 	int soundnum;
 
@@ -1671,12 +1674,12 @@ void machine_remove_sound(struct InternalMachineDriver *machine, const char *tag
     a hard disk image
 -------------------------------------------------*/
 
-struct chd_interface_file *mame_chd_open(const char *filename, const char *mode)
+chd_interface_file *mame_chd_open(const char *filename, const char *mode)
 {
 	/* look for read-only drives first in the ROM path */
 	if (mode[0] == 'r' && !strchr(mode, '+'))
 	{
-		const struct GameDriver *drv;
+		const game_driver *drv;
 
 		/* attempt reading up the chain through the parents */
 		for (drv = Machine->gamedrv; drv != NULL; drv = drv->clone_of)
@@ -1691,7 +1694,7 @@ struct chd_interface_file *mame_chd_open(const char *filename, const char *mode)
 	}
 
 	/* look for read/write drives in the diff area */
-	return (struct chd_interface_file *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
+	return (chd_interface_file *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
 }
 
 
@@ -1701,7 +1704,7 @@ struct chd_interface_file *mame_chd_open(const char *filename, const char *mode)
     a hard disk image
 -------------------------------------------------*/
 
-void mame_chd_close(struct chd_interface_file *file)
+void mame_chd_close(chd_interface_file *file)
 {
 	mame_fclose((mame_file *)file);
 }
@@ -1713,7 +1716,7 @@ void mame_chd_close(struct chd_interface_file *file)
     from a hard disk image
 -------------------------------------------------*/
 
-UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+UINT32 mame_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fread((mame_file *)file, buffer, count);
@@ -1726,7 +1729,7 @@ UINT32 mame_chd_read(struct chd_interface_file *file, UINT64 offset, UINT32 coun
     to a hard disk image
 -------------------------------------------------*/
 
-UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+UINT32 mame_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fwrite((mame_file *)file, buffer, count);
@@ -1738,7 +1741,7 @@ UINT32 mame_chd_write(struct chd_interface_file *file, UINT64 offset, UINT32 cou
     the length a hard disk image
 -------------------------------------------------*/
 
-UINT64 mame_chd_length(struct chd_interface_file *file)
+UINT64 mame_chd_length(chd_interface_file *file)
 {
 	return mame_fsize((mame_file *)file);
 }
@@ -1756,7 +1759,7 @@ int mame_validitychecks(void)
 	int i,j,cpu;
 	UINT8 a,b;
 	int error = 0;
-	const struct InputPort *inp;
+	const input_port_entry *inp;
 	const char *s;
 
 
@@ -1775,8 +1778,8 @@ int mame_validitychecks(void)
 
 	for (i = 0;drivers[i];i++)
 	{
-		struct InternalMachineDriver drv;
-		const struct RomModule *romp;
+		machine_config drv;
+		const rom_entry *romp;
 
 		expand_machine_driver(drivers[i]->drv, &drv);
 
@@ -1946,7 +1949,7 @@ int mame_validitychecks(void)
 					{
 #ifdef MESS
 						/* check to make sure that this CPU core has the necessities filled out */
-						const struct cpu_interface *cpuintrf;
+						const cpu_interface *cpuintrf;
 						union cpuinfo info;
 						const UINT8 *reg;
 						int incomplete_cpu_core = 0;
@@ -2007,12 +2010,12 @@ int mame_validitychecks(void)
 
 							if (drv.cpu[cpu].construct_map[space][mapnum])
 							{
-								struct address_map_t address_map[MAX_ADDRESS_MAP_SIZE];
-								const struct address_map_t *map = address_map;
+								address_map addrmap[MAX_ADDRESS_MAP_SIZE];
+								const address_map *map = addrmap;
 								UINT32 flags, val;
 
-								memset(address_map, 0, sizeof(address_map));
-								(*drv.cpu[cpu].construct_map[space][mapnum])(address_map);
+								memset(addrmap, 0, sizeof(addrmap));
+								(*drv.cpu[cpu].construct_map[space][mapnum])(addrmap);
 
 								if (IS_AMENTRY_END(map))
 									continue;

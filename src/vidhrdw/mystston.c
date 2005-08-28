@@ -20,7 +20,7 @@ UINT8 *mystston_videoram2;
 
 static int mystston_fgcolor, mystston_bgpage;
 
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 /***************************************************************************
 

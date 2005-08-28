@@ -3,7 +3,7 @@
 
 extern data8_t *xyonix_vidram;
 
-static struct tilemap *xyonix_tilemap;
+static tilemap *xyonix_tilemap;
 
 
 PALETTE_INIT( xyonix )

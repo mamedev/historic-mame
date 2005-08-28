@@ -13,7 +13,7 @@ unsigned char *vulgus_fgvideoram,*vulgus_bgvideoram;
 unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
 
 static int vulgus_palette_bank;
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 
 /***************************************************************************

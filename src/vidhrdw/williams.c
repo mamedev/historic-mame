@@ -146,7 +146,7 @@ static UINT8 blaster_color0;
 static UINT8 blaster_video_control;
 
 /* tilemap variables */
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 static UINT16 tilemap_xscroll;
 static UINT8 williams2_fg_color;
 
@@ -195,10 +195,10 @@ VIDEO_START( williams2 )
 	williams2_paletteram = auto_malloc(0x400 * 2);
 
 	/* create the tilemap */
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 24,16, 128,16);
-	if (!tilemap)
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 24,16, 128,16);
+	if (!bg_tilemap)
 		return 1;
-	tilemap_set_scrolldx(tilemap, 2, 0);
+	tilemap_set_scrolldx(bg_tilemap, 2, 0);
 
 	return 0;
 }
@@ -273,7 +273,7 @@ VIDEO_UPDATE( williams2 )
 	int x, y, basecolor;
 
 	/* draw the background */
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* copy the bitmap data on top of that */
 	basecolor = williams2_fg_color * 16;
@@ -477,14 +477,14 @@ WRITE8_HANDLER( williams2_bg_select_w )
 			data &= 0x3f;
 			break;
 	}
-	tilemap_set_palette_offset(tilemap, data * 16);
+	tilemap_set_palette_offset(bg_tilemap, data * 16);
 }
 
 
 WRITE8_HANDLER( williams2_tileram_w )
 {
 	williams2_tileram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap, offset);
+	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
 
@@ -492,7 +492,7 @@ WRITE8_HANDLER( williams2_xscroll_low_w )
 {
 	force_partial_update(cpu_getscanline());
 	tilemap_xscroll = (tilemap_xscroll & ~0x00f) | ((data & 0x80) >> 4) | (data & 0x07);
-	tilemap_set_scrollx(tilemap, 0, (tilemap_xscroll & 7) + ((tilemap_xscroll >> 3) * 6));
+	tilemap_set_scrollx(bg_tilemap, 0, (tilemap_xscroll & 7) + ((tilemap_xscroll >> 3) * 6));
 }
 
 
@@ -500,7 +500,7 @@ WRITE8_HANDLER( williams2_xscroll_high_w )
 {
 	force_partial_update(cpu_getscanline());
 	tilemap_xscroll = (tilemap_xscroll & 0x00f) | (data << 4);
-	tilemap_set_scrollx(tilemap, 0, (tilemap_xscroll & 7) + ((tilemap_xscroll >> 3) * 6));
+	tilemap_set_scrollx(bg_tilemap, 0, (tilemap_xscroll & 7) + ((tilemap_xscroll >> 3) * 6));
 }
 
 

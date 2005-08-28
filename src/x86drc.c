@@ -22,12 +22,12 @@ static UINT16 fp_control[4] = { 0x023f, 0x063f, 0x0a3f, 0x0e3f };
 static UINT32 sse_control[4] = { 0x9fc0, 0xbfc0, 0xdfc0, 0xffc0 };
 
 
-static void append_entry_point(struct drccore *drc);
-static void append_recompile(struct drccore *drc);
-static void append_out_of_cycles(struct drccore *drc);
+static void append_entry_point(drc_core *drc);
+static void append_recompile(drc_core *drc);
+static void append_out_of_cycles(drc_core *drc);
 
 #if LOG_DISPATCHES
-static void log_dispatch(struct drccore *drc);
+static void log_dispatch(drc_core *drc);
 #endif
 
 
@@ -39,11 +39,11 @@ static void log_dispatch(struct drccore *drc);
     drc_init
 ------------------------------------------------------------------*/
 
-struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
+drc_core *drc_init(UINT8 cpunum, drc_config *config)
 {
 	int address_bits = config->address_bits;
 	int effective_address_bits = address_bits - config->lsbs_to_ignore;
-	struct drccore *drc;
+	drc_core *drc;
 
 	/* allocate memory */
 	drc = malloc(sizeof(*drc));
@@ -105,7 +105,7 @@ struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config)
     drc_cache_reset
 ------------------------------------------------------------------*/
 
-void drc_cache_reset(struct drccore *drc)
+void drc_cache_reset(drc_core *drc)
 {
 	int i;
 
@@ -148,7 +148,7 @@ void drc_cache_reset(struct drccore *drc)
     drc_execute
 ------------------------------------------------------------------*/
 
-void drc_execute(struct drccore *drc)
+void drc_execute(drc_core *drc)
 {
 	(*drc->entry_point)();
 }
@@ -158,7 +158,7 @@ void drc_execute(struct drccore *drc)
     drc_exit
 ------------------------------------------------------------------*/
 
-void drc_exit(struct drccore *drc)
+void drc_exit(drc_core *drc)
 {
 	int i;
 
@@ -194,7 +194,7 @@ void drc_exit(struct drccore *drc)
     drc_begin_sequence
 ------------------------------------------------------------------*/
 
-void drc_begin_sequence(struct drccore *drc, UINT32 pc)
+void drc_begin_sequence(drc_core *drc, UINT32 pc)
 {
 	UINT32 l1index = pc >> drc->l1shift;
 	UINT32 l2index = ((pc & drc->l2mask) * drc->l2scale) / 4;
@@ -231,7 +231,7 @@ void drc_begin_sequence(struct drccore *drc, UINT32 pc)
     drc_end_sequence
 ------------------------------------------------------------------*/
 
-void drc_end_sequence(struct drccore *drc)
+void drc_end_sequence(drc_core *drc)
 {
 	int i, j;
 
@@ -253,9 +253,9 @@ void drc_end_sequence(struct drccore *drc)
     drc_register_code_at_cache_top
 ------------------------------------------------------------------*/
 
-void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
+void drc_register_code_at_cache_top(drc_core *drc, UINT32 pc)
 {
-	struct pc_ptr_pair *pair = &drc->sequence_list[drc->sequence_count++];
+	pc_ptr_pair *pair = &drc->sequence_list[drc->sequence_count++];
 	if (drc->sequence_count > drc->sequence_count_max)
 		osd_die("drc_register_code_at_cache_top: too many instructions!\n");
 
@@ -268,7 +268,7 @@ void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc)
     drc_get_code_at_pc
 ------------------------------------------------------------------*/
 
-void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc)
+void *drc_get_code_at_pc(drc_core *drc, UINT32 pc)
 {
 	UINT32 l1index = pc >> drc->l1shift;
 	UINT32 l2index = ((pc & drc->l2mask) * drc->l2scale) / 4;
@@ -280,7 +280,7 @@ void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc)
     drc_append_verify_code
 ------------------------------------------------------------------*/
 
-void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length)
+void drc_append_verify_code(drc_core *drc, void *code, UINT8 length)
 {
 	if (length > 8)
 	{
@@ -344,10 +344,10 @@ void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length)
     drc_append_call_debugger
 ------------------------------------------------------------------*/
 
-void drc_append_call_debugger(struct drccore *drc)
+void drc_append_call_debugger(drc_core *drc)
 {
 #ifdef MAME_DEBUG
-	struct linkdata link;
+	link_info link;
 	_cmp_m32abs_imm(&mame_debug, 0);								// cmp  [mame_debug],0
 	_jcc_short_link(COND_E, &link);									// je   skip
 	drc_append_save_call_restore(drc, (genf *)MAME_Debug, 0);		// save volatiles
@@ -360,7 +360,7 @@ void drc_append_call_debugger(struct drccore *drc)
     drc_append_save_volatiles
 ------------------------------------------------------------------*/
 
-void drc_append_save_volatiles(struct drccore *drc)
+void drc_append_save_volatiles(drc_core *drc)
 {
 	if (drc->icountptr && !drc->icount_in_memory)
 		_mov_m32abs_r32(drc->icountptr, REG_EBP);
@@ -375,7 +375,7 @@ void drc_append_save_volatiles(struct drccore *drc)
     drc_append_restore_volatiles
 ------------------------------------------------------------------*/
 
-void drc_append_restore_volatiles(struct drccore *drc)
+void drc_append_restore_volatiles(drc_core *drc)
 {
 	if (drc->icountptr && !drc->icount_in_memory)
 		_mov_r32_m32abs(REG_EBP, drc->icountptr);
@@ -390,7 +390,7 @@ void drc_append_restore_volatiles(struct drccore *drc)
     drc_append_save_call_restore
 ------------------------------------------------------------------*/
 
-void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stackadj)
+void drc_append_save_call_restore(drc_core *drc, genf *target, UINT32 stackadj)
 {
 	drc_append_save_volatiles(drc);									// save volatiles
 	_call(target);													// call target
@@ -404,7 +404,7 @@ void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stac
     drc_append_standard_epilogue
 ------------------------------------------------------------------*/
 
-void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdelta, int allow_exit)
+void drc_append_standard_epilogue(drc_core *drc, INT32 cycles, INT32 pcdelta, int allow_exit)
 {
 	if (pcdelta != 0 && drc->pc_in_memory)
 		_add_m32abs_imm(drc->pcptr, pcdelta);						// add  [pc],pcdelta
@@ -426,7 +426,7 @@ void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdel
     drc_append_dispatcher
 ------------------------------------------------------------------*/
 
-void drc_append_dispatcher(struct drccore *drc)
+void drc_append_dispatcher(drc_core *drc)
 {
 #if LOG_DISPATCHES
 	_push_imm(drc);													// push drc
@@ -447,7 +447,7 @@ void drc_append_dispatcher(struct drccore *drc)
     drc_append_fixed_dispatcher
 ------------------------------------------------------------------*/
 
-void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
+void drc_append_fixed_dispatcher(drc_core *drc, UINT32 newpc)
 {
 	void **base = drc->lookup_l1[newpc >> drc->l1shift];
 	if (base == drc->lookup_l2_recompile)
@@ -464,9 +464,9 @@ void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
     drc_append_tentative_fixed_dispatcher
 ------------------------------------------------------------------*/
 
-void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
+void drc_append_tentative_fixed_dispatcher(drc_core *drc, UINT32 newpc)
 {
-	struct pc_ptr_pair *pair = &drc->tentative_list[drc->tentative_count++];
+	pc_ptr_pair *pair = &drc->tentative_list[drc->tentative_count++];
 	if (drc->tentative_count > drc->tentative_count_max)
 		osd_die("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
 
@@ -480,7 +480,7 @@ void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc)
     drc_append_set_fp_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex)
+void drc_append_set_fp_rounding(drc_core *drc, UINT8 regindex)
 {
 	_fldcw_m16isd(regindex, 2, &fp_control[0]);						// fldcw [fp_control + reg*2]
 	_fnstcw_m16abs(&drc->fpcw_curr);								// fnstcw [fpcw_curr]
@@ -492,7 +492,7 @@ void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex)
     drc_append_set_temp_fp_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding)
+void drc_append_set_temp_fp_rounding(drc_core *drc, UINT8 rounding)
 {
 	_fldcw_m16abs(&fp_control[rounding]);							// fldcw [fp_control]
 }
@@ -503,7 +503,7 @@ void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding)
     drc_append_restore_fp_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_restore_fp_rounding(struct drccore *drc)
+void drc_append_restore_fp_rounding(drc_core *drc)
 {
 	_fldcw_m16abs(&drc->fpcw_curr);									// fldcw [fpcw_curr]
 }
@@ -514,7 +514,7 @@ void drc_append_restore_fp_rounding(struct drccore *drc)
     drc_append_set_sse_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_set_sse_rounding(struct drccore *drc, UINT8 regindex)
+void drc_append_set_sse_rounding(drc_core *drc, UINT8 regindex)
 {
 	_ldmxcsr_m32isd(regindex, 4, &sse_control[0]);					// ldmxcsr [sse_control + reg*2]
 	_stmxcsr_m32abs(&drc->mxcsr_curr);								// stmxcsr [mxcsr_curr]
@@ -526,7 +526,7 @@ void drc_append_set_sse_rounding(struct drccore *drc, UINT8 regindex)
     drc_append_set_temp_sse_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_set_temp_sse_rounding(struct drccore *drc, UINT8 rounding)
+void drc_append_set_temp_sse_rounding(drc_core *drc, UINT8 rounding)
 {
 	_ldmxcsr_m32abs(&sse_control[rounding]);						// ldmxcsr [sse_control]
 }
@@ -537,7 +537,7 @@ void drc_append_set_temp_sse_rounding(struct drccore *drc, UINT8 rounding)
     drc_append_restore_sse_rounding
 ------------------------------------------------------------------*/
 
-void drc_append_restore_sse_rounding(struct drccore *drc)
+void drc_append_restore_sse_rounding(drc_core *drc)
 {
 	_ldmxcsr_m32abs(&drc->mxcsr_curr);								// ldmxcsr [mxcsr_curr]
 }
@@ -612,7 +612,7 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
     append_entry_point
 ------------------------------------------------------------------*/
 
-static void append_entry_point(struct drccore *drc)
+static void append_entry_point(drc_core *drc)
 {
 	_pushad();														// pushad
 	if (drc->uses_fp)
@@ -636,7 +636,7 @@ static void append_entry_point(struct drccore *drc)
     recompile_code
 ------------------------------------------------------------------*/
 
-static void recompile_code(struct drccore *drc)
+static void recompile_code(drc_core *drc)
 {
 	if (drc->cache_top >= drc->cache_danger)
 		drc_cache_reset(drc);
@@ -648,7 +648,7 @@ static void recompile_code(struct drccore *drc)
     append_recompile
 ------------------------------------------------------------------*/
 
-static void append_recompile(struct drccore *drc)
+static void append_recompile(drc_core *drc)
 {
 	_push_imm(drc);													// push drc
 	drc_append_save_call_restore(drc, (genf *)recompile_code, 4);	// call recompile_code
@@ -660,7 +660,7 @@ static void append_recompile(struct drccore *drc)
     append_out_of_cycles
 ------------------------------------------------------------------*/
 
-static void append_out_of_cycles(struct drccore *drc)
+static void append_out_of_cycles(drc_core *drc)
 {
 	drc_append_save_volatiles(drc);									// save volatiles
 	if (drc->uses_fp)
@@ -716,7 +716,7 @@ UINT32 drc_x86_get_features(void)
 ------------------------------------------------------------------*/
 
 #if LOG_DISPATCHES
-static void log_dispatch(struct drccore *drc)
+static void log_dispatch(drc_core *drc)
 {
 	if (code_pressed(KEYCODE_D))
 		logerror("Disp:%08X\n", *drc->pcptr);

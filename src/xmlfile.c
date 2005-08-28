@@ -75,10 +75,10 @@ static const char *copystring_lower(const char *input)
  *
  *************************************/
 
-static struct xml_data_node *add_child(struct xml_data_node *parent, const char *name, const char *value)
+static xml_data_node *add_child(xml_data_node *parent, const char *name, const char *value)
 {
-	struct xml_data_node **pnode;
-	struct xml_data_node *node;
+	xml_data_node **pnode;
+	xml_data_node *node;
 
 	/* new element: create a new node */
 	node = malloc(sizeof(*node));
@@ -119,9 +119,9 @@ static struct xml_data_node *add_child(struct xml_data_node *parent, const char 
  *
  *************************************/
 
-static struct xml_attribute_node *add_attribute(struct xml_data_node *node, const char *name, const char *value)
+static xml_attribute_node *add_attribute(xml_data_node *node, const char *name, const char *value)
 {
-	struct xml_attribute_node *anode, **panode;
+	xml_attribute_node *anode, **panode;
 
 	/* allocate a new attribute node */
 	anode = malloc(sizeof(*anode));
@@ -161,8 +161,8 @@ static struct xml_attribute_node *add_attribute(struct xml_data_node *node, cons
 
 static void xml_element_start(void *data, const XML_Char *name, const XML_Char **attributes)
 {
-	struct xml_data_node **curnode = data;
-	struct xml_data_node *newnode;
+	xml_data_node **curnode = data;
+	xml_data_node *newnode;
 	int attr;
 
 	/* add a new child node to the current node */
@@ -188,7 +188,7 @@ static void xml_element_start(void *data, const XML_Char *name, const XML_Char *
 
 static void xml_data(void *data, const XML_Char *s, int len)
 {
-	struct xml_data_node **curnode = data;
+	xml_data_node **curnode = data;
 	int oldlen = 0;
 	char *newdata;
 
@@ -221,7 +221,7 @@ static void xml_data(void *data, const XML_Char *s, int len)
 
 static void xml_element_end(void *data, const XML_Char *name)
 {
-	struct xml_data_node **curnode = data;
+	xml_data_node **curnode = data;
 	char *orig;
 
 	/* strip leading/trailing spaces from the value data */
@@ -266,9 +266,9 @@ static void xml_element_end(void *data, const XML_Char *name)
  *
  *************************************/
 
-struct xml_data_node *xml_file_create(void)
+xml_data_node *xml_file_create(void)
 {
-	struct xml_data_node *rootnode;
+	xml_data_node *rootnode;
 
 	/* create a root node */
 	rootnode = malloc(sizeof(*rootnode));
@@ -286,9 +286,9 @@ struct xml_data_node *xml_file_create(void)
  *
  *************************************/
 
-struct xml_data_node *xml_file_read(mame_file *file)
+xml_data_node *xml_file_read(mame_file *file)
 {
-	struct xml_data_node *rootnode, *curnode;
+	xml_data_node *rootnode, *curnode;
 	XML_Parser parser;
 	int done;
 
@@ -344,10 +344,10 @@ struct xml_data_node *xml_file_read(mame_file *file)
  *
  *************************************/
 
-static void xml_write_node_recursive(struct xml_data_node *node, int indent, mame_file *file)
+static void xml_write_node_recursive(xml_data_node *node, int indent, mame_file *file)
 {
-	struct xml_attribute_node *anode;
-	struct xml_data_node *child;
+	xml_attribute_node *anode;
+	xml_data_node *child;
 
 	/* output this tag */
 	mame_fprintf(file, "%*s<%s", indent, "", node->name);
@@ -389,7 +389,7 @@ static void xml_write_node_recursive(struct xml_data_node *node, int indent, mam
  *
  *************************************/
 
-void xml_file_write(struct xml_data_node *node, mame_file *file)
+void xml_file_write(xml_data_node *node, mame_file *file)
 {
 	/* ensure this is a root node */
 	if (node->name)
@@ -412,10 +412,10 @@ void xml_file_write(struct xml_data_node *node, mame_file *file)
  *
  *************************************/
 
-static void xml_free_node_recursive(struct xml_data_node *node)
+static void xml_free_node_recursive(xml_data_node *node)
 {
-	struct xml_attribute_node *anode, *nanode;
-	struct xml_data_node *child, *nchild;
+	xml_attribute_node *anode, *nanode;
+	xml_data_node *child, *nchild;
 
 	/* free name/value */
 	if (node->name)
@@ -457,7 +457,7 @@ static void xml_free_node_recursive(struct xml_data_node *node)
  *
  *************************************/
 
-void xml_file_free(struct xml_data_node *node)
+void xml_file_free(xml_data_node *node)
 {
 	/* ensure this is a root node */
 	if (node->name)
@@ -474,7 +474,7 @@ void xml_file_free(struct xml_data_node *node)
  *
  *************************************/
 
-int xml_count_children(struct xml_data_node *node)
+int xml_count_children(xml_data_node *node)
 {
 	int count = 0;
 
@@ -492,7 +492,7 @@ int xml_count_children(struct xml_data_node *node)
  *
  *************************************/
 
-struct xml_data_node *xml_get_sibling(struct xml_data_node *node, const char *name)
+xml_data_node *xml_get_sibling(xml_data_node *node, const char *name)
 {
 	/* loop over siblings and find a matching name */
 	for ( ; node; node = node->next)
@@ -509,7 +509,7 @@ struct xml_data_node *xml_get_sibling(struct xml_data_node *node, const char *na
  *
  *************************************/
 
-struct xml_data_node *xml_find_matching_sibling(struct xml_data_node *node, const char *name, const char *attribute, const char *matchval)
+xml_data_node *xml_find_matching_sibling(xml_data_node *node, const char *name, const char *attribute, const char *matchval)
 {
 	/* loop over siblings and find a matching attribute */
 	for ( ; node; node = node->next)
@@ -518,7 +518,7 @@ struct xml_data_node *xml_find_matching_sibling(struct xml_data_node *node, cons
 		if (!name || !strcmp(name, node->name))
 		{
 			/* find a matching attribute */
-			struct xml_attribute_node *attr = xml_get_attribute(node, attribute);
+			xml_attribute_node *attr = xml_get_attribute(node, attribute);
 			if (attr && !strcmp(attr->value, matchval))
 				return node;
 		}
@@ -534,9 +534,9 @@ struct xml_data_node *xml_find_matching_sibling(struct xml_data_node *node, cons
  *
  *************************************/
 
-struct xml_attribute_node *xml_get_attribute(struct xml_data_node *node, const char *attribute)
+xml_attribute_node *xml_get_attribute(xml_data_node *node, const char *attribute)
 {
-	struct xml_attribute_node *anode;
+	xml_attribute_node *anode;
 
 	/* loop over attributes and find a match */
 	for (anode = node->attribute; anode; anode = anode->next)
@@ -546,14 +546,14 @@ struct xml_attribute_node *xml_get_attribute(struct xml_data_node *node, const c
 }
 
 
-const char *xml_get_attribute_string(struct xml_data_node *node, const char *attribute, const char *defvalue)
+const char *xml_get_attribute_string(xml_data_node *node, const char *attribute, const char *defvalue)
 {
-	struct xml_attribute_node *attr = xml_get_attribute(node, attribute);
+	xml_attribute_node *attr = xml_get_attribute(node, attribute);
 	return attr ? attr->value : defvalue;
 }
 
 
-int xml_get_attribute_int(struct xml_data_node *node, const char *attribute, int defvalue)
+int xml_get_attribute_int(xml_data_node *node, const char *attribute, int defvalue)
 {
 	const char *string = xml_get_attribute_string(node, attribute, NULL);
 	int value;
@@ -565,7 +565,7 @@ int xml_get_attribute_int(struct xml_data_node *node, const char *attribute, int
 }
 
 
-float xml_get_attribute_float(struct xml_data_node *node, const char *attribute, float defvalue)
+float xml_get_attribute_float(xml_data_node *node, const char *attribute, float defvalue)
 {
 	const char *string = xml_get_attribute_string(node, attribute, NULL);
 	float value;
@@ -584,7 +584,7 @@ float xml_get_attribute_float(struct xml_data_node *node, const char *attribute,
  *
  *************************************/
 
-struct xml_data_node *xml_add_child(struct xml_data_node *node, const char *name, const char *value)
+xml_data_node *xml_add_child(xml_data_node *node, const char *name, const char *value)
 {
 	/* just a standard add child */
 	return add_child(node, name, value);
@@ -599,9 +599,9 @@ struct xml_data_node *xml_add_child(struct xml_data_node *node, const char *name
  *
  *************************************/
 
-struct xml_data_node *xml_get_or_add_child(struct xml_data_node *node, const char *name, const char *value)
+xml_data_node *xml_get_or_add_child(xml_data_node *node, const char *name, const char *value)
 {
-	struct xml_data_node *child;
+	xml_data_node *child;
 
 	/* find the child first */
 	child = xml_get_sibling(node->child, name);
@@ -620,9 +620,9 @@ struct xml_data_node *xml_get_or_add_child(struct xml_data_node *node, const cha
  *
  *************************************/
 
-struct xml_attribute_node *xml_set_attribute(struct xml_data_node *node, const char *name, const char *value)
+xml_attribute_node *xml_set_attribute(xml_data_node *node, const char *name, const char *value)
 {
-	struct xml_attribute_node *anode;
+	xml_attribute_node *anode;
 
 	/* first find an existing one to replace */
 	anode = xml_get_attribute(node, name);
@@ -643,7 +643,7 @@ struct xml_attribute_node *xml_set_attribute(struct xml_data_node *node, const c
 }
 
 
-struct xml_attribute_node *xml_set_attribute_int(struct xml_data_node *node, const char *name, int value)
+xml_attribute_node *xml_set_attribute_int(xml_data_node *node, const char *name, int value)
 {
 	char buffer[100];
 	sprintf(buffer, "%d", value);
@@ -651,7 +651,7 @@ struct xml_attribute_node *xml_set_attribute_int(struct xml_data_node *node, con
 }
 
 
-struct xml_attribute_node *xml_set_attribute_float(struct xml_data_node *node, const char *name, float value)
+xml_attribute_node *xml_set_attribute_float(xml_data_node *node, const char *name, float value)
 {
 	char buffer[100];
 	sprintf(buffer, "%f", value);
@@ -666,9 +666,9 @@ struct xml_attribute_node *xml_set_attribute_float(struct xml_data_node *node, c
  *
  *************************************/
 
-void xml_delete_node(struct xml_data_node *node)
+void xml_delete_node(xml_data_node *node)
 {
-	struct xml_data_node **pnode;
+	xml_data_node **pnode;
 
 	/* first unhook us from the list of children of our parent */
 	for (pnode = &node->parent->child; *pnode; pnode = &(*pnode)->next)

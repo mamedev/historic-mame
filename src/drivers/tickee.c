@@ -306,7 +306,7 @@ static struct AY8910interface ay8910_interface_2 =
  *
  *************************************/
 
-static struct tms34010_config cpu_config =
+static struct tms34010_config tms_config =
 {
 	0,								/* halt on reset */
 	NULL,							/* generate interrupt */
@@ -328,7 +328,7 @@ MACHINE_DRIVER_START( tickee )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -419,7 +419,7 @@ MACHINE_DRIVER_START( ghoshunt )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
-	MDRV_CPU_CONFIG(cpu_config)
+	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_PROGRAM_MAP(ghoshunt_readmem,ghoshunt_writemem)
 
 	MDRV_FRAMES_PER_SECOND(69)

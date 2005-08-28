@@ -63,7 +63,7 @@ static void gradius3_sprite_callback(int *code,int *color,int *priority_mask,int
 VIDEO_START( gradius3 )
 {
 	int i;
-	static struct GfxLayout spritelayout =
+	static gfx_layout spritelayout =
 	{
 		16,16,
 		TOTAL_SPRITES,
@@ -142,7 +142,7 @@ WRITE16_HANDLER( gradius3_gfxram_w )
 
 VIDEO_UPDATE( gradius3 )
 {
-	static struct GfxLayout charlayout =
+	static gfx_layout charlayout =
 	{
 		8,8,
 		TOTAL_CHARS,

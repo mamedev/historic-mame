@@ -456,7 +456,7 @@ void YM_DELTAT_postload(YM_DELTAT *DELTAT,UINT8 *regs)
 }
 void YM_DELTAT_savestate(const char *statename,int num,YM_DELTAT *DELTAT)
 {
-#ifdef _STATE_H
+#ifdef __STATE_H__
 	state_save_register_UINT8 (statename, num, "DeltaT.portstate", &DELTAT->portstate, 1);
 	state_save_register_UINT32(statename, num, "DeltaT.address"  , &DELTAT->now_addr , 1);
 	state_save_register_UINT32(statename, num, "DeltaT.step"     , &DELTAT->now_step , 1);

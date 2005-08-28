@@ -69,7 +69,7 @@ VIDEO_UPDATE( esd16 );
 
 ***************************************************************************/
 
-struct tilemap *esdtilemap_0, *esdtilemap_1, *esdtilemap_1_16x16;
+tilemap *esdtilemap_0, *esdtilemap_1, *esdtilemap_1_16x16;
 
 static void get_tile_info_0(int tile_index)
 {

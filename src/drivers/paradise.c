@@ -410,7 +410,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static struct GfxLayout layout_8x8x4 =
+static gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -421,7 +421,7 @@ static struct GfxLayout layout_8x8x4 =
 	8*8*4
 };
 
-static struct GfxLayout layout_8x8x8 =
+static gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -432,7 +432,7 @@ static struct GfxLayout layout_8x8x8 =
 	8*8*4
 };
 
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -443,7 +443,7 @@ static struct GfxLayout layout_16x16x8 =
 	16*16*4
 };
 
-static struct GfxLayout torus_layout_16x16x8 =
+static gfx_layout torus_layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -454,7 +454,7 @@ static struct GfxLayout torus_layout_16x16x8 =
 	128*8
 };
 
-static struct GfxDecodeInfo paradise_gfxdecodeinfo[] =
+static gfx_decode paradise_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,	0x100, 1  }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x400, 16 }, // [1] Background
@@ -463,7 +463,7 @@ static struct GfxDecodeInfo paradise_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static struct GfxDecodeInfo torus_gfxdecodeinfo[] =
+static gfx_decode torus_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &torus_layout_16x16x8, 0x100, 1  }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	     0x400, 16 }, // [1] Background

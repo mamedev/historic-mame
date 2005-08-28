@@ -27,11 +27,12 @@
 typedef INT64 subseconds_t;
 typedef INT32 seconds_t;
 
-typedef struct
+struct _mame_time
 {
 	seconds_t		seconds;
 	subseconds_t	subseconds;
-} mame_time;
+};
+typedef struct _mame_time mame_time;
 
 extern mame_time time_zero;
 extern mame_time time_never;
@@ -41,6 +42,7 @@ extern UINT32 cycles_per_second[];
 
 #define MAME_TIME_TO_CYCLES(cpu,t) ((t).seconds * cycles_per_second[cpu] + (t).subseconds / subseconds_per_cycle[cpu])
 #define MAME_TIME_IN_CYCLES(c,cpu) (make_mame_time((c) / cycles_per_second[cpu], (c) * subseconds_per_cycle[cpu]))
+
 
 
 /*-------------------------------------------------
@@ -76,19 +78,19 @@ typedef struct _mame_timer mame_timer;
 
 void timer_init(void);
 void timer_free(void);
+int timer_count_anonymous(void);
 
 mame_time mame_timer_next_fire_time(void);
 void mame_timer_set_global_time(mame_time newbase);
-mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line);
-mame_timer *_mame_timer_alloc_ptr(void (*callback)(void *), const char *file, int line);
+mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line, const char *func);
+mame_timer *_mame_timer_alloc_ptr(void (*callback)(void *), const char *file, int line, const char *func);
 void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period);
 void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, void *param, mame_time period);
-void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line);
-void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void *), const char *file, int line);
-void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line);
-void _mame_timer_set_ptr(mame_time duration, void *param, void (*callback)(void *), const char *file, int line);
+void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line, const char *func);
+void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void *), const char *file, int line, const char *func);
+void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line, const char *func);
+void _mame_timer_set_ptr(mame_time duration, void *param, void (*callback)(void *), const char *file, int line, const char *func);
 void mame_timer_reset(mame_timer *which, mame_time duration);
-void mame_timer_remove(mame_timer *which);
 int mame_timer_enable(mame_timer *which, int enable);
 mame_time mame_timer_timeelapsed(mame_timer *which);
 mame_time mame_timer_timeleft(mame_timer *which);
@@ -102,12 +104,12 @@ mame_time mame_timer_firetime(mame_timer *which);
     macros to pass debugging information
 -------------------------------------------------*/
 
-#define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__)
-#define mame_timer_alloc_ptr(c)			_mame_timer_alloc_ptr(c, __FILE__, __LINE__)
-#define mame_timer_pulse(e,p,c)			_mame_timer_pulse(e, p, c, __FILE__, __LINE__)
-#define mame_timer_pulse_ptr(e,p,c)		_mame_timer_pulse_ptr(e, p, c, __FILE__, __LINE__)
-#define mame_timer_set(d,p,c)			_mame_timer_set(d, p, c, __FILE__, __LINE__)
-#define mame_timer_set_ptr(d,p,c)		_mame_timer_set_ptr(d, p, c, __FILE__, __LINE__)
+#define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__, #c)
+#define mame_timer_alloc_ptr(c)			_mame_timer_alloc_ptr(c, __FILE__, __LINE__, #c)
+#define mame_timer_pulse(e,p,c)			_mame_timer_pulse(e, p, c, __FILE__, __LINE__, #c)
+#define mame_timer_pulse_ptr(e,p,c)		_mame_timer_pulse_ptr(e, p, c, __FILE__, __LINE__, #c)
+#define mame_timer_set(d,p,c)			_mame_timer_set(d, p, c, __FILE__, __LINE__, #c)
+#define mame_timer_set_ptr(d,p,c)		_mame_timer_set_ptr(d, p, c, __FILE__, __LINE__, #c)
 
 
 
@@ -124,7 +126,6 @@ mame_time mame_timer_firetime(mame_timer *which);
 #define timer_set(d,p,c)				mame_timer_set(double_to_mame_time(d), p, c)
 #define timer_set_ptr(d,p,c)			mame_timer_set_ptr(double_to_mame_time(d), p, c)
 #define timer_reset(w,d)				mame_timer_reset(w, double_to_mame_time(d))
-#define timer_remove(w)					mame_timer_remove(w)
 #define timer_enable(w,e)				mame_timer_enable(w,e)
 #define timer_timeelapsed(w)			mame_time_to_double(mame_timer_timeelapsed(w))
 #define timer_timeleft(w)				mame_time_to_double(mame_timer_timeleft(w))

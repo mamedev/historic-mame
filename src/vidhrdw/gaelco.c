@@ -16,7 +16,7 @@ data16_t *gaelco_spriteram;
 
 int sprite_count[5];
 int *sprite_table[5];
-static struct tilemap *pant[2];
+static tilemap *pant[2];
 
 
 /***************************************************************************
@@ -186,7 +186,7 @@ static void gaelco_sort_sprites(void)
 static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
 {
 	int j, x, y, ex, ey;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 
 	static int x_offset[2] = {0x0,0x2};
 	static int y_offset[2] = {0x0,0x1};

@@ -2722,7 +2722,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,	/* 8*8 characters */
     RGN_FRAC(1,2),    /* 256 characters */
@@ -2734,7 +2734,7 @@ static struct GfxLayout tilelayout =
 };
 
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,2),	/* 64 sprites */
@@ -2748,7 +2748,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxLayout crush4_tilelayout =
+static gfx_layout crush4_tilelayout =
 {
 	8,8, /* 8*8 characters */
     RGN_FRAC(1,4),
@@ -2759,7 +2759,7 @@ static struct GfxLayout crush4_tilelayout =
     16*8    /* every char takes 16 bytes */
 };
 
-static struct GfxLayout crush4_spritelayout =
+static gfx_layout crush4_spritelayout =
 {
 	16,16, /* 16*16 sprites */
 	RGN_FRAC(1,4),
@@ -2773,7 +2773,7 @@ static struct GfxLayout crush4_spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x1000, &spritelayout, 0, 128 },
@@ -2781,14 +2781,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static struct GfxDecodeInfo s2650games_gfxdecodeinfo[] =
+static gfx_decode s2650games_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x4000, &spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo crush4_gfxdecodeinfo[] =
+static gfx_decode crush4_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &crush4_tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x1000, &crush4_spritelayout, 0, 128 },

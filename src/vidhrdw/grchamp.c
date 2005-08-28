@@ -19,7 +19,7 @@ UINT8 grchamp_vreg1[0x10];	/* background control registers */
 UINT8 *grchamp_videoram;	/* background tilemaps */
 UINT8 *grchamp_radar;		/* bitmap for radar */
 
-struct tilemap *tilemap[3];
+tilemap *bg_tilemap[3];
 
 WRITE8_HANDLER( grchamp_player_xpos_w )
 {
@@ -96,7 +96,7 @@ WRITE8_HANDLER( grchamp_videoram_w )
 	if( grchamp_videoram[offset]!=data )
 	{
 		grchamp_videoram[offset] = data;
-		tilemap_mark_tile_dirty( tilemap[offset/0x800], offset%0x800 );
+		tilemap_mark_tile_dirty( bg_tilemap[offset/0x800], offset%0x800 );
 	}
 }
 
@@ -147,13 +147,13 @@ VIDEO_START( grchamp )
 	if( !work_bitmap )
 		return 1;
 
-	tilemap[0] = tilemap_create(get_bg0_tile_info,get_memory_offset,TILEMAP_OPAQUE,8,8,64,32);
-	tilemap[1] = tilemap_create(get_bg1_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap[2] = tilemap_create(get_bg2_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
-	if( tilemap[0] && tilemap[1] && tilemap[2] )
+	bg_tilemap[0] = tilemap_create(get_bg0_tile_info,get_memory_offset,TILEMAP_OPAQUE,8,8,64,32);
+	bg_tilemap[1] = tilemap_create(get_bg1_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
+	bg_tilemap[2] = tilemap_create(get_bg2_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,64,32);
+	if( bg_tilemap[0] && bg_tilemap[1] && bg_tilemap[2] )
 	{
-		tilemap_set_transparent_pen( tilemap[1], 0 );
-		tilemap_set_transparent_pen( tilemap[2], 0 );
+		tilemap_set_transparent_pen( bg_tilemap[1], 0 );
+		tilemap_set_transparent_pen( bg_tilemap[2], 0 );
 		return 0;
 	}
 	return 1;
@@ -161,7 +161,7 @@ VIDEO_START( grchamp )
 
 static void draw_text( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	const UINT8 *source = videoram;
 	int bank = (grchamp_videoreg0&0x20)?256:0;
 	int offs;
@@ -202,16 +202,16 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 
-	tilemap_set_scrollx( tilemap[0], 0, dx-(grchamp_vreg1[0x0]+grchamp_vreg1[0x1]*256) );
-	tilemap_set_scrolly( tilemap[0], 0, dy - grchamp_vreg1[0x2] );
-	tilemap_set_scrollx( tilemap[1], 0, dx-(grchamp_vreg1[0x5]+grchamp_vreg1[0x6]*256) );
-	tilemap_set_scrolly( tilemap[1], 0, dy - grchamp_vreg1[0x7] );
-	tilemap_set_scrollx( tilemap[2], 0, dx-(grchamp_vreg1[0x9]+ ((attributes&0x20)?256:(grchamp_vreg1[0xa]*256))));
-	tilemap_set_scrolly( tilemap[2], 0, dy - grchamp_vreg1[0xb] );
+	tilemap_set_scrollx( bg_tilemap[0], 0, dx-(grchamp_vreg1[0x0]+grchamp_vreg1[0x1]*256) );
+	tilemap_set_scrolly( bg_tilemap[0], 0, dy - grchamp_vreg1[0x2] );
+	tilemap_set_scrollx( bg_tilemap[1], 0, dx-(grchamp_vreg1[0x5]+grchamp_vreg1[0x6]*256) );
+	tilemap_set_scrolly( bg_tilemap[1], 0, dy - grchamp_vreg1[0x7] );
+	tilemap_set_scrollx( bg_tilemap[2], 0, dx-(grchamp_vreg1[0x9]+ ((attributes&0x20)?256:(grchamp_vreg1[0xa]*256))));
+	tilemap_set_scrolly( bg_tilemap[2], 0, dy - grchamp_vreg1[0xb] );
 
-	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
-	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
-	tilemap_draw(bitmap,cliprect,tilemap[2],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap[2],0,0);
 }
 
 static void draw_player_car( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
@@ -275,7 +275,7 @@ static int collision_check( struct mame_bitmap *bitmap, int which )
 }
 
 static void draw_rain( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
-	const struct GfxElement *gfx = Machine->gfx[4];
+	const gfx_element *gfx = Machine->gfx[4];
 	int tile_number = grchamp_tile_number>>4;
 	if( tile_number ){
 		int scrollx = grchamp_rain_xpos;
@@ -382,7 +382,7 @@ static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle 
 }
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog ){
-	const struct GfxElement *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[3];
 	int bank = (grchamp_videoreg0&0x20)?0x40:0x00;
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x40;

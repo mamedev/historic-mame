@@ -96,7 +96,7 @@ WRITE8_HANDLER( mnchmobl_videoram_w )
 static void draw_status( struct mame_bitmap *bitmap )
 {
 	struct rectangle clip = Machine->visible_area;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 
 	for( row=0; row<4; row++ )
@@ -128,7 +128,7 @@ static void draw_background( struct mame_bitmap *bitmap )
     the tiles in ROM B2.2B
 */
 	unsigned char *tile_data = memory_region(REGION_GFX2);
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 
 	for( offs=0; offs<0x100; offs++ )
@@ -172,7 +172,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	int flags = mnchmobl_vreg[7];					/*   XB?????? */
 	int xadjust = - 128-16 - ((flags&0x80)?1:0);
 	int bank = (flags&0x40)?1:0;
-	const struct GfxElement *gfx = Machine->gfx[2+bank];
+	const gfx_element *gfx = Machine->gfx[2+bank];
 	int color_base = mnchmobl_palette_bank*4+3;
 	int i;
 	for( i=0; i<0x200; i++ )

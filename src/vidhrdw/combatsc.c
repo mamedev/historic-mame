@@ -10,8 +10,8 @@
 #include "vidhrdw/konamiic.h"
 #include "vidhrdw/generic.h"
 
-static struct tilemap *tilemap[2];
-static struct tilemap *textlayer;
+static tilemap *bg_tilemap[2];
+static tilemap *textlayer;
 static unsigned char *private_spriteram[2];
 static int priority;
 
@@ -226,8 +226,8 @@ VIDEO_START( combasc )
 {
 	combasc_vreg = -1;
 
-	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	textlayer =  tilemap_create(get_text_info, tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
 
 	private_spriteram[0] = auto_malloc(0x800);
@@ -235,10 +235,10 @@ VIDEO_START( combasc )
 	memset(private_spriteram[0],0,0x800);
 	memset(private_spriteram[1],0,0x800);
 
-	if (tilemap[0] && tilemap[1] && textlayer)
+	if (bg_tilemap[0] && bg_tilemap[1] && textlayer)
 	{
-		tilemap_set_transparent_pen(tilemap[0],0);
-		tilemap_set_transparent_pen(tilemap[1],0);
+		tilemap_set_transparent_pen(bg_tilemap[0],0);
+		tilemap_set_transparent_pen(bg_tilemap[1],0);
 		tilemap_set_transparent_pen(textlayer,0);
 
 		tilemap_set_scroll_rows(textlayer,32);
@@ -253,8 +253,8 @@ VIDEO_START( combascb )
 {
 	combasc_vreg = -1;
 
-	tilemap[0] = tilemap_create(get_tile_info0_bootleg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
-	tilemap[1] = tilemap_create(get_tile_info1_bootleg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap[0] = tilemap_create(get_tile_info0_bootleg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap[1] = tilemap_create(get_tile_info1_bootleg,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	textlayer =  tilemap_create(get_text_info_bootleg, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
 	private_spriteram[0] = auto_malloc(0x800);
@@ -262,14 +262,14 @@ VIDEO_START( combascb )
 	memset(private_spriteram[0],0,0x800);
 	memset(private_spriteram[1],0,0x800);
 
-	if (tilemap[0] && tilemap[1] && textlayer)
+	if (bg_tilemap[0] && bg_tilemap[1] && textlayer)
 	{
-		tilemap_set_transparent_pen(tilemap[0],0);
-		tilemap_set_transparent_pen(tilemap[1],0);
+		tilemap_set_transparent_pen(bg_tilemap[0],0);
+		tilemap_set_transparent_pen(bg_tilemap[1],0);
 		tilemap_set_transparent_pen(textlayer,0);
 
-		tilemap_set_scroll_rows(tilemap[0],32);
-		tilemap_set_scroll_rows(tilemap[1],32);
+		tilemap_set_scroll_rows(bg_tilemap[0],32);
+		tilemap_set_scroll_rows(bg_tilemap[1],32);
 
 		return 0;
 	}
@@ -296,9 +296,9 @@ WRITE8_HANDLER( combasc_video_w )
 		if( offset<0x800 )
 		{
 			if (combasc_video_circuit)
-				tilemap_mark_tile_dirty(tilemap[1],offset & 0x3ff);
+				tilemap_mark_tile_dirty(bg_tilemap[1],offset & 0x3ff);
 			else
-				tilemap_mark_tile_dirty(tilemap[0],offset & 0x3ff);
+				tilemap_mark_tile_dirty(bg_tilemap[0],offset & 0x3ff);
 		}
 		else if( offset<0x1000 && combasc_video_circuit==0 )
 		{
@@ -314,9 +314,9 @@ WRITE8_HANDLER( combasc_vreg_w )
 	{
 		tilemap_mark_all_tiles_dirty( textlayer );
 		if ((data & 0x0f) != (combasc_vreg & 0x0f))
-			tilemap_mark_all_tiles_dirty( tilemap[0] );
+			tilemap_mark_all_tiles_dirty( bg_tilemap[0] );
 		if ((data >> 4) != (combasc_vreg >> 4))
-			tilemap_mark_all_tiles_dirty( tilemap[1] );
+			tilemap_mark_all_tiles_dirty( bg_tilemap[1] );
 		combasc_vreg = data;
 	}
 }
@@ -432,7 +432,7 @@ WRITE8_HANDLER( combasc_pf_control_w )
 	K007121_ctrl_w(combasc_video_circuit,offset,data);
 
 	if (offset == 7)
-		tilemap_set_flip(tilemap[combasc_video_circuit],(data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+		tilemap_set_flip(bg_tilemap[combasc_video_circuit],(data & 0x08) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	if (offset == 3)
 	{
@@ -476,43 +476,43 @@ VIDEO_UPDATE( combasc )
 
 	if (K007121_ctrlram[0][0x01] & 0x02)
 	{
-		tilemap_set_scroll_rows(tilemap[0],32);
+		tilemap_set_scroll_rows(bg_tilemap[0],32);
 		for (i = 0;i < 32;i++)
 		{
-			tilemap_set_scrollx(tilemap[0],i,combasc_scrollram0[i]);
+			tilemap_set_scrollx(bg_tilemap[0],i,combasc_scrollram0[i]);
 		}
 	}
 	else
 	{
-		tilemap_set_scroll_rows(tilemap[0],1);
-		tilemap_set_scrollx(tilemap[0],0,K007121_ctrlram[0][0x00] | ((K007121_ctrlram[0][0x01] & 0x01) << 8));
+		tilemap_set_scroll_rows(bg_tilemap[0],1);
+		tilemap_set_scrollx(bg_tilemap[0],0,K007121_ctrlram[0][0x00] | ((K007121_ctrlram[0][0x01] & 0x01) << 8));
 	}
 
 	if (K007121_ctrlram[1][0x01] & 0x02)
 	{
-		tilemap_set_scroll_rows(tilemap[1],32);
+		tilemap_set_scroll_rows(bg_tilemap[1],32);
 		for (i = 0;i < 32;i++)
 		{
-			tilemap_set_scrollx(tilemap[1],i,combasc_scrollram1[i]);
+			tilemap_set_scrollx(bg_tilemap[1],i,combasc_scrollram1[i]);
 		}
 	}
 	else
 	{
-		tilemap_set_scroll_rows(tilemap[1],1);
-		tilemap_set_scrollx(tilemap[1],0,K007121_ctrlram[1][0x00] | ((K007121_ctrlram[1][0x01] & 0x01) << 8));
+		tilemap_set_scroll_rows(bg_tilemap[1],1);
+		tilemap_set_scrollx(bg_tilemap[1],0,K007121_ctrlram[1][0x00] | ((K007121_ctrlram[1][0x01] & 0x01) << 8));
 	}
 
-	tilemap_set_scrolly(tilemap[0],0,K007121_ctrlram[0][0x02]);
-	tilemap_set_scrolly(tilemap[1],0,K007121_ctrlram[1][0x02]);
+	tilemap_set_scrolly(bg_tilemap[0],0,K007121_ctrlram[0][0x02]);
+	tilemap_set_scrolly(bg_tilemap[1],0,K007121_ctrlram[1][0x02]);
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (priority == 0)
 	{
-		tilemap_draw(bitmap,cliprect,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|0,4);
-		tilemap_draw(bitmap,cliprect,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|1,8);
-		tilemap_draw(bitmap,cliprect,tilemap[0],0,1);
-		tilemap_draw(bitmap,cliprect,tilemap[0],1,2);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|0,4);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[1],TILEMAP_IGNORE_TRANSPARENCY|1,8);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[0],0,1);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[0],1,2);
 
 		/* we use the priority buffer so sprites are drawn front to back */
 		draw_sprites(bitmap,cliprect,private_spriteram[1],1,0x0f00);
@@ -520,10 +520,10 @@ VIDEO_UPDATE( combasc )
 	}
 	else
 	{
-		tilemap_draw(bitmap,cliprect,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|0,1);
-		tilemap_draw(bitmap,cliprect,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|1,2);
-		tilemap_draw(bitmap,cliprect,tilemap[1],1,4);
-		tilemap_draw(bitmap,cliprect,tilemap[1],0,8);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|0,1);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[0],TILEMAP_IGNORE_TRANSPARENCY|1,2);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[1],1,4);
+		tilemap_draw(bitmap,cliprect,bg_tilemap[1],0,8);
 
 		/* we use the priority buffer so sprites are drawn front to back */
 		draw_sprites(bitmap,cliprect,private_spriteram[1],1,0x0f00);
@@ -584,7 +584,7 @@ byte #4:
 
 static void bootleg_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, const unsigned char *source, int circuit )
 {
-	const struct GfxElement *gfx = Machine->gfx[circuit+2];
+	const gfx_element *gfx = Machine->gfx[circuit+2];
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int limit = ( circuit) ? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
@@ -634,24 +634,24 @@ VIDEO_UPDATE( combascb )
 
 	for( i=0; i<32; i++ )
 	{
-		tilemap_set_scrollx( tilemap[0],i, combasc_io_ram[0x040+i]+5 );
-		tilemap_set_scrollx( tilemap[1],i, combasc_io_ram[0x060+i]+3 );
+		tilemap_set_scrollx( bg_tilemap[0],i, combasc_io_ram[0x040+i]+5 );
+		tilemap_set_scrollx( bg_tilemap[1],i, combasc_io_ram[0x060+i]+3 );
 	}
-	tilemap_set_scrolly( tilemap[0],0, combasc_io_ram[0x000] );
-	tilemap_set_scrolly( tilemap[1],0, combasc_io_ram[0x020] );
+	tilemap_set_scrolly( bg_tilemap[0],0, combasc_io_ram[0x000] );
+	tilemap_set_scrolly( bg_tilemap[1],0, combasc_io_ram[0x020] );
 
 	if (priority == 0)
 	{
-		tilemap_draw( bitmap,cliprect,tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw( bitmap,cliprect,bg_tilemap[1],TILEMAP_IGNORE_TRANSPARENCY,0);
 		bootleg_draw_sprites( bitmap,cliprect, combasc_page[0], 0 );
-		tilemap_draw( bitmap,cliprect,tilemap[0],0 ,0);
+		tilemap_draw( bitmap,cliprect,bg_tilemap[0],0 ,0);
 		bootleg_draw_sprites( bitmap,cliprect, combasc_page[1], 1 );
 	}
 	else
 	{
-		tilemap_draw( bitmap,cliprect,tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+		tilemap_draw( bitmap,cliprect,bg_tilemap[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 		bootleg_draw_sprites( bitmap,cliprect, combasc_page[0], 0 );
-		tilemap_draw( bitmap,cliprect,tilemap[1],0 ,0);
+		tilemap_draw( bitmap,cliprect,bg_tilemap[1],0 ,0);
 		bootleg_draw_sprites( bitmap,cliprect, combasc_page[1], 1 );
 	}
 

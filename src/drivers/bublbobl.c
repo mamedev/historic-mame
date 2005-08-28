@@ -668,7 +668,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	RGN_FRAC(1,2),
@@ -679,7 +679,7 @@ static struct GfxLayout charlayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 16 },
 	{ -1 }
@@ -724,7 +724,7 @@ static MACHINE_DRIVER_START( tokio )
 	MDRV_CPU_PROGRAM_MAP(tokio_sound_map, 0) // NMIs are triggered by the main CPU, IRQs are triggered by the YM2203
 
 	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 ?s
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 us
 	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
 	// video hardware
@@ -769,7 +769,7 @@ static MACHINE_DRIVER_START( bublbobl )
 #endif
 
 	MDRV_FRAMES_PER_SECOND(VSYNC)	// 59.185606 Hz
-	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 ?s
+	MDRV_VBLANK_DURATION(VBLANK) 	// 2560 us
 	MDRV_INTERLEAVE(100) // 100 CPU slices per frame - a high value to ensure proper synchronization of the CPUs
 
 	// video hardware

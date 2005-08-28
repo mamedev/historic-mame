@@ -310,7 +310,7 @@ INPUT_PORTS_START( quasar )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x30, 0x00, "N? Rockets" )				/* confirmed */
+	PORT_DIPNAME( 0x30, 0x00, "Number of Rockets" )			/* confirmed */
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
@@ -375,7 +375,7 @@ INPUT_PORTS_START( quasar )
 
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -388,7 +388,7 @@ static struct GfxLayout charlayout =
 
 /* S2636 Mappings */
 
-static struct GfxLayout s2636_character10 =
+static gfx_layout s2636_character10 =
 {
 	8,10,
 	5,
@@ -399,7 +399,7 @@ static struct GfxLayout s2636_character10 =
 	8*16
 };
 
-static struct GfxLayout charlayout8colour =
+static gfx_layout charlayout8colour =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -410,7 +410,7 @@ static struct GfxLayout charlayout8colour =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,     0, 256},		/* Rom chars */
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Ram chars (NOT USED) */

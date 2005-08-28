@@ -16,7 +16,7 @@ Notes:
 #include "vidhrdw/generic.h"
 
 static int sprite_flip, pow_charbase=0; //*
-static struct tilemap *fix_tilemap;
+static tilemap *fix_tilemap;
 
 /***************************************************************************
 

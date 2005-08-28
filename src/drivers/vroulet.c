@@ -44,7 +44,7 @@ Tomasz Slanina 20050225
 /* vidhrdw */
 
 static UINT8 *vroulet_ball;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 static WRITE8_HANDLER(vroulet_paletteram_w)
 {
@@ -212,7 +212,7 @@ INPUT_PORTS_END
 
 /* Graphics Layout */
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	RGN_FRAC(1,1),
@@ -225,7 +225,7 @@ static struct GfxLayout charlayout =
 
 /* Graphics Decode Information */
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	0, 32 },
 	{ -1 }

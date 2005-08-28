@@ -455,7 +455,7 @@ static data32_t *hng64_soundram;
 
 
 // Stuff from over in vidhrdw...
-extern struct tilemap *hng64_tilemap, *hng64_tilemap2, *hng64_tilemap3, *hng64_tilemap4 ;
+extern tilemap *hng64_tilemap, *hng64_tilemap2, *hng64_tilemap3, *hng64_tilemap4 ;
 extern data32_t *hng64_spriteram, *hng64_videoregs ;
 extern data32_t *hng64_videoram ;
 extern data32_t *hng64_fcram ;
@@ -1117,7 +1117,7 @@ INPUT_PORTS_END
 
 /* the 4bpp gfx encoding is annoying */
 
-static struct GfxLayout hng64_4_even_layout =
+static gfx_layout hng64_4_even_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1128,7 +1128,7 @@ static struct GfxLayout hng64_4_even_layout =
 	8*64
 };
 
-static struct GfxLayout hng64_4_odd_layout =
+static gfx_layout hng64_4_odd_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1142,7 +1142,7 @@ static struct GfxLayout hng64_4_odd_layout =
 };
 
 
-static struct GfxLayout hng64_4_16_layout =
+static gfx_layout hng64_4_16_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1156,7 +1156,7 @@ static struct GfxLayout hng64_4_16_layout =
 };
 
 
-static struct GfxLayout hng64_layout =
+static gfx_layout hng64_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1168,7 +1168,7 @@ static struct GfxLayout hng64_layout =
 };
 
 
-static struct GfxLayout hng64_16_layout =
+static gfx_layout hng64_16_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1184,7 +1184,7 @@ static struct GfxLayout hng64_16_layout =
 #if LOADHNGTEXS
 #if DECODETEXS
 /* not really much point in this, but it allows us to see the 1024x1024 texture pages */
-static struct GfxLayout hng64_tex_layout =
+static gfx_layout hng64_tex_layout =
 {
 	1024,1024,
 	RGN_FRAC(1,1),
@@ -1327,7 +1327,7 @@ static struct GfxLayout hng64_tex_layout =
 #endif
 #endif
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hng64_4_even_layout,     0x0, 0x100 }, /* scrolltiles */
 	{ REGION_GFX1, 0, &hng64_4_odd_layout,     0x0, 0x100 }, /* scrolltiles */

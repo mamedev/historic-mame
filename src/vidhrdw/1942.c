@@ -14,7 +14,7 @@ UINT8 *c1942_fgvideoram;
 UINT8 *c1942_bgvideoram;
 
 static int c1942_palette_bank;
-static struct tilemap *fg_tilemap, *bg_tilemap;
+static tilemap *fg_tilemap, *bg_tilemap;
 
 
 

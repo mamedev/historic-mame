@@ -35,7 +35,7 @@
 
 UINT8 *airbustr_videoram2, *airbustr_colorram2;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 WRITE8_HANDLER( airbustr_videoram_w )
 {

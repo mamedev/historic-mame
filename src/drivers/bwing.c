@@ -37,7 +37,7 @@ Known issues:
 //****************************************************************************
 // Imports
 
-extern struct GfxLayout bwing_tilelayout;
+extern gfx_layout bwing_tilelayout;
 
 extern WRITE8_HANDLER( bwing_paletteram_w );
 extern WRITE8_HANDLER( bwing_videoram_w );
@@ -349,7 +349,7 @@ INPUT_PORTS_END
 //****************************************************************************
 // Graphics Layouts
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	256,
@@ -360,7 +360,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16, 16,
 	512,
@@ -373,7 +373,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1,  0, &charlayout,       0x00, 1 }, // chars
 	{ REGION_GFX2,  0, &spritelayout,     0x20, 2 }, // sprites

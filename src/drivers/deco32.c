@@ -1361,7 +1361,7 @@ INPUT_PORTS_END
 
 /**********************************************************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1372,7 +1372,7 @@ static struct GfxLayout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1386,7 +1386,7 @@ static struct GfxLayout spritelayout =
 	128*8
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1399,7 +1399,7 @@ static struct GfxLayout tilelayout =
 	64*8
 };
 
-static struct GfxLayout tilelayout2 =
+static gfx_layout tilelayout2 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1412,7 +1412,7 @@ static struct GfxLayout tilelayout2 =
 	64*8
 };
 
-static struct GfxLayout spritelayout2 =
+static gfx_layout spritelayout2 =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -1429,7 +1429,7 @@ static struct GfxLayout spritelayout2 =
 	32*8
 };
 
-static struct GfxLayout spritelayout4 =
+static gfx_layout spritelayout4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1442,7 +1442,7 @@ static struct GfxLayout spritelayout4 =
 	16*16*8
 };
 
-static struct GfxLayout spritelayout5 =
+static gfx_layout spritelayout5 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1455,7 +1455,7 @@ static struct GfxLayout spritelayout5 =
 	16*16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_captaven[] =
+static gfx_decode gfxdecodeinfo_captaven[] =
 {
 	{ REGION_GFX1, 0, &charlayout,        512, 32 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &tilelayout,        512, 32 },	/* Tiles 16x16 */
@@ -1464,7 +1464,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_captaven[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_fghthist[] =
+static gfx_decode gfxdecodeinfo_fghthist[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0,  16 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &tilelayout,        256,  16 },	/* Tiles 16x16 */
@@ -1473,7 +1473,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_fghthist[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_dragngun[] =
+static gfx_decode gfxdecodeinfo_dragngun[] =
 {
 	{ REGION_GFX1, 0, &charlayout,        512, 16 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0, &tilelayout,        768, 16 },	/* Tiles 16x16 */
@@ -1483,7 +1483,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_dragngun[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_tattass[] =
+static gfx_decode gfxdecodeinfo_tattass[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 16 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &tilelayout,        256, 16 },	/* Tiles 16x16 */

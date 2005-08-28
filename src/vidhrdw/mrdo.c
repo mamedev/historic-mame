@@ -11,7 +11,7 @@
 
 
 unsigned char *mrdo_bgvideoram,*mrdo_fgvideoram;
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 static int flipscreen;
 
 

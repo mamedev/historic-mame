@@ -17,14 +17,15 @@
 **#################################################################################################*/
 
 /* PC and pointer pair */
-struct pc_ptr_pair
+struct _pc_ptr_pair
 {
 	UINT32		pc;
 	UINT8 *		target;
 };
+typedef struct _pc_ptr_pair pc_ptr_pair;
 
 /* core interface structure for the drc common code */
-struct drccore
+struct _drc_core
 {
 	UINT8 *		cache_base;				/* base pointer to the compiler cache */
 	UINT8 *		cache_top;				/* current top of cache */
@@ -57,20 +58,21 @@ struct drccore
 	UINT16		fpcw_save;				/* saved FPU control word */
 	UINT32		mxcsr_save;				/* saved SSE control word */
 
-	struct pc_ptr_pair *sequence_list;	/* PC/pointer sets for the current instruction sequence */
+	pc_ptr_pair *sequence_list;			/* PC/pointer sets for the current instruction sequence */
 	UINT32		sequence_count;			/* number of instructions in the current sequence */
 	UINT32		sequence_count_max;		/* max number of instructions in the current sequence */
-	struct pc_ptr_pair *tentative_list;	/* PC/pointer sets for tentative branches */
+	pc_ptr_pair *tentative_list;		/* PC/pointer sets for tentative branches */
 	UINT32		tentative_count;		/* number of tentative branches */
 	UINT32		tentative_count_max;	/* max number of tentative branches */
 
-	void 		(*cb_reset)(struct drccore *drc);		/* callback when the cache is reset */
-	void 		(*cb_recompile)(struct drccore *drc);	/* callback when code needs to be recompiled */
-	void 		(*cb_entrygen)(struct drccore *drc);	/* callback before generating the dispatcher on entry */
+	void 		(*cb_reset)(struct _drc_core *drc);		/* callback when the cache is reset */
+	void 		(*cb_recompile)(struct _drc_core *drc);	/* callback when code needs to be recompiled */
+	void 		(*cb_entrygen)(struct _drc_core *drc);	/* callback before generating the dispatcher on entry */
 };
+typedef struct _drc_core drc_core;
 
 /* configuration structure for the drc common code */
-struct drcconfig
+struct _drc_config
 {
 	UINT32		cache_size;				/* size of cache to allocate */
 	UINT32		max_instructions;		/* maximum instructions per sequence */
@@ -85,17 +87,19 @@ struct drcconfig
 	UINT32 *	icountptr;				/* pointer to where the icount is stored */
 	UINT32 *	esiptr;					/* pointer to where the volatile data in ESI is stored */
 
-	void 		(*cb_reset)(struct drccore *drc);		/* callback when the cache is reset */
-	void 		(*cb_recompile)(struct drccore *drc);	/* callback when code needs to be recompiled */
-	void 		(*cb_entrygen)(struct drccore *drc);	/* callback before generating the dispatcher on entry */
+	void 		(*cb_reset)(drc_core *drc);		/* callback when the cache is reset */
+	void 		(*cb_recompile)(drc_core *drc);	/* callback when code needs to be recompiled */
+	void 		(*cb_entrygen)(drc_core *drc);	/* callback before generating the dispatcher on entry */
 };
+typedef struct _drc_config drc_config;
 
 /* structure to hold link data to be filled in later */
-struct linkdata
+struct _link_info
 {
 	UINT8 		size;
 	UINT8 *		target;
 };
+typedef struct _link_info link_info;
 
 
 
@@ -1593,35 +1597,35 @@ do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_MABS(reg, addr); } while (0)
 **#################################################################################################*/
 
 /* init/shutdown */
-struct drccore *drc_init(UINT8 cpunum, struct drcconfig *config);
-void drc_cache_reset(struct drccore *drc);
-void drc_execute(struct drccore *drc);
-void drc_exit(struct drccore *drc);
+drc_core *drc_init(UINT8 cpunum, drc_config *config);
+void drc_cache_reset(drc_core *drc);
+void drc_execute(drc_core *drc);
+void drc_exit(drc_core *drc);
 
 /* code management */
-void drc_begin_sequence(struct drccore *drc, UINT32 pc);
-void drc_end_sequence(struct drccore *drc);
-void drc_register_code_at_cache_top(struct drccore *drc, UINT32 pc);
-void *drc_get_code_at_pc(struct drccore *drc, UINT32 pc);
+void drc_begin_sequence(drc_core *drc, UINT32 pc);
+void drc_end_sequence(drc_core *drc);
+void drc_register_code_at_cache_top(drc_core *drc, UINT32 pc);
+void *drc_get_code_at_pc(drc_core *drc, UINT32 pc);
 
 /* standard appendages */
-void drc_append_dispatcher(struct drccore *drc);
-void drc_append_fixed_dispatcher(struct drccore *drc, UINT32 newpc);
-void drc_append_tentative_fixed_dispatcher(struct drccore *drc, UINT32 newpc);
-void drc_append_call_debugger(struct drccore *drc);
-void drc_append_standard_epilogue(struct drccore *drc, INT32 cycles, INT32 pcdelta, int allow_exit);
-void drc_append_save_volatiles(struct drccore *drc);
-void drc_append_restore_volatiles(struct drccore *drc);
-void drc_append_save_call_restore(struct drccore *drc, genf *target, UINT32 stackadj);
-void drc_append_verify_code(struct drccore *drc, void *code, UINT8 length);
+void drc_append_dispatcher(drc_core *drc);
+void drc_append_fixed_dispatcher(drc_core *drc, UINT32 newpc);
+void drc_append_tentative_fixed_dispatcher(drc_core *drc, UINT32 newpc);
+void drc_append_call_debugger(drc_core *drc);
+void drc_append_standard_epilogue(drc_core *drc, INT32 cycles, INT32 pcdelta, int allow_exit);
+void drc_append_save_volatiles(drc_core *drc);
+void drc_append_restore_volatiles(drc_core *drc);
+void drc_append_save_call_restore(drc_core *drc, genf *target, UINT32 stackadj);
+void drc_append_verify_code(drc_core *drc, void *code, UINT8 length);
 
-void drc_append_set_fp_rounding(struct drccore *drc, UINT8 regindex);
-void drc_append_set_temp_fp_rounding(struct drccore *drc, UINT8 rounding);
-void drc_append_restore_fp_rounding(struct drccore *drc);
+void drc_append_set_fp_rounding(drc_core *drc, UINT8 regindex);
+void drc_append_set_temp_fp_rounding(drc_core *drc, UINT8 rounding);
+void drc_append_restore_fp_rounding(drc_core *drc);
 
-void drc_append_set_sse_rounding(struct drccore *drc, UINT8 regindex);
-void drc_append_set_temp_sse_rounding(struct drccore *drc, UINT8 rounding);
-void drc_append_restore_sse_rounding(struct drccore *drc);
+void drc_append_set_sse_rounding(drc_core *drc, UINT8 regindex);
+void drc_append_set_temp_sse_rounding(drc_core *drc, UINT8 rounding);
+void drc_append_restore_sse_rounding(drc_core *drc);
 
 /* disassembling drc code */
 void drc_dasm(FILE *f, unsigned pc, void *begin, void *end);

@@ -1658,7 +1658,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout_2bpp =
+static gfx_layout charlayout_2bpp =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1669,7 +1669,7 @@ static struct GfxLayout charlayout_2bpp =
 	16*8
 };
 
-static struct GfxLayout charlayout_xevious =
+static gfx_layout charlayout_xevious =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1680,7 +1680,7 @@ static struct GfxLayout charlayout_xevious =
 	8*8
 };
 
-static struct GfxLayout charlayout_digdug =
+static gfx_layout charlayout_digdug =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1691,7 +1691,7 @@ static struct GfxLayout charlayout_digdug =
 	8*8
 };
 
-static struct GfxLayout bgcharlayout =
+static gfx_layout bgcharlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1702,7 +1702,7 @@ static struct GfxLayout bgcharlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout_bosco =
+static gfx_layout spritelayout_bosco =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1715,7 +1715,7 @@ static struct GfxLayout spritelayout_bosco =
 	64*8
 };
 
-static struct GfxLayout spritelayout_galaga =
+static gfx_layout spritelayout_galaga =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1728,7 +1728,7 @@ static struct GfxLayout spritelayout_galaga =
 	64*8
 };
 
-static struct GfxLayout spritelayout_xevious =
+static gfx_layout spritelayout_xevious =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1741,7 +1741,7 @@ static struct GfxLayout spritelayout_xevious =
 	64*8
 };
 
-static struct GfxLayout dotlayout =
+static gfx_layout dotlayout =
 {
 	4,4,
 	8,
@@ -1752,7 +1752,7 @@ static struct GfxLayout dotlayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_bosco[] =
+static gfx_decode gfxdecodeinfo_bosco[] =
 {
 	{ REGION_GFX1, 0, &charlayout_2bpp,       0, 64 },
 	{ REGION_GFX2, 0, &spritelayout_bosco, 64*4, 64 },
@@ -1760,14 +1760,14 @@ static struct GfxDecodeInfo gfxdecodeinfo_bosco[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_galaga[] =
+static gfx_decode gfxdecodeinfo_galaga[] =
 {
 	{ REGION_GFX1, 0, &charlayout_2bpp,        0, 64 },
 	{ REGION_GFX2, 0, &spritelayout_galaga, 64*4, 64 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_xevious[] =
+static gfx_decode gfxdecodeinfo_xevious[] =
 {
 	{ REGION_GFX1, 0, &charlayout_xevious, 128*4+64*8,  64 },
 	{ REGION_GFX2, 0, &bgcharlayout,                0, 128 },
@@ -1775,7 +1775,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_xevious[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo_digdug[] =
+static gfx_decode gfxdecodeinfo_digdug[] =
 {
 	{ REGION_GFX1, 0, &charlayout_digdug,         0, 16 },
 	{ REGION_GFX2, 0, &spritelayout_galaga,    16*2, 64 },

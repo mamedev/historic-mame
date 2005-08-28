@@ -6,7 +6,7 @@ UINT8 *gberet_scrollram;
 
 static int gberet_spritebank;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 
 /***************************************************************************

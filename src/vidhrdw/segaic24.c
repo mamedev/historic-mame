@@ -80,10 +80,10 @@ static UINT16 *sys24_char_ram, *sys24_tile_ram;
 static UINT16 sys24_tile_mask;
 static unsigned char *sys24_char_dirtymap;
 static int sys24_char_dirty, sys24_char_gfx_index;
-static struct tilemap *sys24_tile_layer[4];
+static tilemap *sys24_tile_layer[4];
 
 #ifdef LSB_FIRST
-static struct GfxLayout sys24_char_layout = {
+static gfx_layout sys24_char_layout = {
 	8, 8,
 	SYS24_TILES,
 	4,
@@ -93,7 +93,7 @@ static struct GfxLayout sys24_char_layout = {
 	8*32
 };
 #else
-static struct GfxLayout sys24_char_layout = {
+static gfx_layout sys24_char_layout = {
 	8, 8,
 	SYS24_TILES,
 	4,

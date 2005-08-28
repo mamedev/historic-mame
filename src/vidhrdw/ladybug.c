@@ -15,8 +15,8 @@ extern void redclash_update_stars_state(void);
 extern void redclash_set_stars_speed( UINT8 speed );
 extern void redclash_draw_stars( struct mame_bitmap *bitmap, UINT8 palette_offset, UINT8 sraider, UINT8 firstx, UINT8 lastx);
 
-static struct tilemap *bg_tilemap;
-static struct tilemap *grid_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *grid_tilemap;
 
 /***************************************************************************
 

@@ -10,7 +10,7 @@ UINT8 *c1943_bgscrollx;
 
 static int chon, objon, sc1on, sc2on;
 
-static struct tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
+static tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 

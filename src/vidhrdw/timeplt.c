@@ -5,7 +5,7 @@ extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;
 
 unsigned char *timeplt_videoram,*timeplt_colorram;
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /*
 sprites are multiplexed, so we have to buffer the spriteram
@@ -176,7 +176,7 @@ READ8_HANDLER( timeplt_scanline_r )
 
 static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	struct rectangle clip = *cliprect;
 	int offs;
 	int line;

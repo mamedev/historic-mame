@@ -84,10 +84,10 @@ PALETTE_INIT( vicdual )
 	palette_bank = 0;
 
 	{
-		extern struct GameDriver driver_heiankyo;
-		extern struct GameDriver driver_invinco;
-		extern struct GameDriver driver_digger;
-		extern struct GameDriver driver_tranqgun;
+		extern game_driver driver_heiankyo;
+		extern game_driver driver_invinco;
+		extern game_driver driver_digger;
+		extern game_driver driver_tranqgun;
 
 		/* Heiankyo Alien doesn't write to port 0x40, it expects it to default to 3 */
 		if (Machine->gamedrv == &driver_heiankyo)

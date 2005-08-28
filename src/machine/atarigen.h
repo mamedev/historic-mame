@@ -77,10 +77,10 @@ extern data16_t *		atarigen_yscroll;
 extern data32_t *		atarigen_playfield32;
 extern data32_t *		atarigen_alpha32;
 
-extern struct tilemap *	atarigen_playfield_tilemap;
-extern struct tilemap *	atarigen_playfield2_tilemap;
-extern struct tilemap *	atarigen_alpha_tilemap;
-extern struct tilemap *	atarigen_alpha2_tilemap;
+extern tilemap *		atarigen_playfield_tilemap;
+extern tilemap *		atarigen_playfield2_tilemap;
+extern tilemap *		atarigen_alpha_tilemap;
+extern tilemap *		atarigen_alpha2_tilemap;
 
 extern data16_t *		atarivc_data;
 extern data16_t *		atarivc_eof_data;

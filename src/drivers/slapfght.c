@@ -666,7 +666,7 @@ INPUT_PORTS_START( getstar )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,			/* 8*8 characters */
 	RGN_FRAC(1,2),	/* 1024 characters */
@@ -677,7 +677,7 @@ static struct GfxLayout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout tilelayout =
+static gfx_layout tilelayout =
 {
 	8,8,			/* 8*8 tiles */
 	RGN_FRAC(1,4),	/* 2048/4096 tiles */
@@ -688,7 +688,7 @@ static struct GfxLayout tilelayout =
 	8*8    /* every tile takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,			/* 16*16 sprites */
 	RGN_FRAC(1,4),	/* 512/1024 sprites */
@@ -701,7 +701,7 @@ static struct GfxLayout spritelayout =
 	32*8    /* every sprite takes 64 consecutive bytes */
 };
 
-static struct GfxLayout perfrman_charlayout =
+static gfx_layout perfrman_charlayout =
 {
 	8,8,			/* 8*8 characters */
 	RGN_FRAC(1,3),	/* 1024 characters */
@@ -712,7 +712,7 @@ static struct GfxLayout perfrman_charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout perfrman_spritelayout =
+static gfx_layout perfrman_spritelayout =
 {
 	16,16,			/* 16*16 sprites */
 	RGN_FRAC(1,3),	/* 256 sprites */
@@ -726,14 +726,14 @@ static struct GfxLayout perfrman_spritelayout =
 };
 
 
-static struct GfxDecodeInfo perfrman_gfxdecodeinfo[] =
+static gfx_decode perfrman_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &perfrman_charlayout,     0, 16 },
 	{ REGION_GFX2, 0, &perfrman_spritelayout, 128, 16 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0,  64 },
 	{ REGION_GFX2, 0, &tilelayout,   0,  16 },

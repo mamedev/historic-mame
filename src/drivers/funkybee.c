@@ -256,7 +256,7 @@ INPUT_PORTS_START( skylance )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -267,7 +267,7 @@ static struct GfxLayout charlayout =
 	16*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,32,
 	RGN_FRAC(1,1),
@@ -281,7 +281,7 @@ static struct GfxLayout spritelayout =
 	4*16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 8 },
 	{ REGION_GFX2, 0, &charlayout,	  0, 8 },

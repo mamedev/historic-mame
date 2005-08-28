@@ -3,7 +3,7 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
-static struct tilemap *layer0, *layer1;
+static tilemap *layer0, *layer1;
 static struct rectangle clip0, clip1;
 
 

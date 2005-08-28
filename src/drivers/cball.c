@@ -8,7 +8,7 @@
 
 static UINT8* cball_video_ram;
 
-static struct tilemap* tilemap;
+static tilemap* bg_tilemap;
 
 
 static void get_tile_info(int tile_index)
@@ -23,7 +23,7 @@ static WRITE8_HANDLER( cball_vram_w )
 {
 	if (cball_video_ram[offset] != data)
 	{
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 
 	cball_video_ram[offset] = data;
@@ -32,9 +32,9 @@ static WRITE8_HANDLER( cball_vram_w )
 
 static VIDEO_START( cball )
 {
-	tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
 
-	return tilemap == NULL;
+	return bg_tilemap == NULL;
 }
 
 
@@ -42,7 +42,7 @@ static VIDEO_UPDATE( cball )
 {
 	/* draw playfield */
 
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw sprite */
 
@@ -162,7 +162,7 @@ INPUT_PORTS_START( cball )
 INPUT_PORTS_END
 
 
-static struct GfxLayout tile_layout =
+static gfx_layout tile_layout =
 {
 	8, 8,
 	64,
@@ -178,7 +178,7 @@ static struct GfxLayout tile_layout =
 };
 
 
-static struct GfxLayout sprite_layout =
+static gfx_layout sprite_layout =
 {
 	16, 16,
 	16,
@@ -196,7 +196,7 @@ static struct GfxLayout sprite_layout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0, 2 },
 	{ REGION_GFX2, 0, &sprite_layout, 4, 1 },

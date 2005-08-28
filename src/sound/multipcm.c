@@ -104,20 +104,14 @@ typedef struct MultiPCM_t
 
 } MultiPCMT;
 
-static void MultiPCM_postload(void)
+static void MultiPCM_postload(void *param)
 {
-	int i, j, inum;
-
-	// recalculate all the proper voice pointers
-	for (i = 0; i < MAX_SOUND; i++)
+	MultiPCMT *mpcm = param;
+	int j;
+	for (j = 0; j < 28; j++)
 	{
-		MultiPCMT *mpcm = sndti_token(SOUND_MULTIPCM, i);
-		if (mpcm)
-			for (j = 0; j < 28; j++)
-			{
-				inum = mpcm->registers[j][1] | ((mpcm->registers[j][2]&0x1)<<8);
-			  	mpcm->Voices[j].pSamp = &mpcm->romptr[mpcm->samples[inum].st];
-			}
+		int inum = mpcm->registers[j][1] | ((mpcm->registers[j][2]&0x1)<<8);
+	  	mpcm->Voices[j].pSamp = &mpcm->romptr[mpcm->samples[inum].st];
 	}
 }
 
@@ -339,8 +333,7 @@ static void *multipcm_start(int sndindex, int clock, const void *config)
 		state_save_register_int(mname, sndindex, "curvoice", &mpcm->curvoice);
 	}
 
-	if (sndindex == 0)
-		state_save_register_func_postload(MultiPCM_postload);
+	state_save_register_func_postload_ptr(MultiPCM_postload, mpcm);
 
 	return mpcm;
 }

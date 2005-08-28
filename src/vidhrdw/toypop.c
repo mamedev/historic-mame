@@ -13,7 +13,7 @@ data8_t *toypop_videoram;
 
 extern unsigned char *m68000_sharedram;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 data16_t *toypop_bg_image;
 static int bitmapflip,palettebank;
 

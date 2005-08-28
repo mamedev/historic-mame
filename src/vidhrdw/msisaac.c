@@ -13,7 +13,7 @@ unsigned char *msisaac_videoram2;
 
 static int textbank1, bg2_textbank;
 
-static struct tilemap *background, *background2, *foreground;
+static tilemap *background, *background2, *foreground;
 
 
 /***************************************************************************
@@ -185,7 +185,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		int flipx = (attributes&0x1);
 		int flipy = (attributes&0x2);
 
-		struct GfxElement *gfx = Machine->gfx[2];
+		gfx_element *gfx = Machine->gfx[2];
 
 		if (attributes&4)
 		{

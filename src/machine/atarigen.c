@@ -49,10 +49,10 @@ data16_t *			atarigen_yscroll;
 data32_t *			atarigen_playfield32;
 data32_t *			atarigen_alpha32;
 
-struct tilemap *	atarigen_playfield_tilemap;
-struct tilemap *	atarigen_playfield2_tilemap;
-struct tilemap *	atarigen_alpha_tilemap;
-struct tilemap *	atarigen_alpha2_tilemap;
+tilemap *			atarigen_playfield_tilemap;
+tilemap *			atarigen_playfield2_tilemap;
+tilemap *			atarigen_alpha_tilemap;
+tilemap *			atarigen_alpha2_tilemap;
 
 data16_t *			atarivc_data;
 data16_t *			atarivc_eof_data;
@@ -1464,8 +1464,8 @@ void atarigen_swap_mem(void *ptr1, void *ptr2, int bytes)
 
 void atarigen_blend_gfx(int gfx0, int gfx1, int mask0, int mask1)
 {
-	struct GfxElement *gx0 = Machine->gfx[gfx0];
-	struct GfxElement *gx1 = Machine->gfx[gfx1];
+	gfx_element *gx0 = Machine->gfx[gfx0];
+	gfx_element *gx1 = Machine->gfx[gfx1];
 	int c, x, y;
 
 	/* loop over elements */

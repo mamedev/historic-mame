@@ -352,7 +352,7 @@ INPUT_PORTS_START( fgoal )
 INPUT_PORTS_END
 
 
-static struct GfxLayout gfxlayout =
+static gfx_layout gfxlayout =
 {
 	64, 64,
 	1,
@@ -382,7 +382,7 @@ static struct GfxLayout gfxlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout, 0x00, 8 }, /* foreground */
 	{ REGION_GFX1, 0, &gfxlayout, 0x80, 1 }, /* background */

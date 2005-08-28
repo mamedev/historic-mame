@@ -220,8 +220,8 @@ static UINT8 fg_tile_priority[2][16];
 static UINT8 bg_tile_priority[2][16];
 
 
-static struct tilemap *top_tilemap[2], *fg_tilemap[2], *bg_tilemap[2];
-static struct tilemap *tx_tilemap;	/* Tilemap for extra-text-layer */
+static tilemap *top_tilemap[2], *fg_tilemap[2], *bg_tilemap[2];
+static tilemap *tx_tilemap;	/* Tilemap for extra-text-layer */
 
 static int xoffset[4];
 static int yoffset[4];
@@ -1327,7 +1327,7 @@ void toaplan2_log_vram(void)
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int controller, int priority_to_display, int bank_sel )
 {
-	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
+	const gfx_element *gfx = Machine->gfx[ ((controller*2)+1) ];
 
 	int offs;
 

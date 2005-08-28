@@ -1050,7 +1050,7 @@ static struct MSM5205interface msm5205_interface =
 };
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	16, 16,
 	RGN_FRAC(1, 2),
@@ -1062,13 +1062,13 @@ static struct GfxLayout charlayout =
 	16*16*2
 };
 
-static struct GfxDecodeInfo srmp2_gfxdecodeinfo[] =
+static gfx_decode srmp2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 64 },
 	{ -1 }
 };
 
-static struct GfxDecodeInfo srmp3_gfxdecodeinfo[] =
+static gfx_decode srmp3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 32 },
 	{ -1 }

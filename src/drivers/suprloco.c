@@ -159,7 +159,7 @@ INPUT_PORTS_START( suprloco )
 INPUT_PORTS_END
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8 by 8 */
 	1024,	/* 1024 characters */
@@ -171,7 +171,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	/* sprites use colors 256-511 + 512-767 */
 	{ REGION_GFX1, 0x6000, &charlayout, 0, 16 },

@@ -1236,7 +1236,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -1248,7 +1248,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	0, 1024 },
 	{ -1 }
@@ -1772,9 +1772,9 @@ ROM_END
  **************************************************************************************************************************
     Desert Breaker, Sega System 18
 
-    game N?833-8830-02
-    pcb  N?837-8832-02 (171-5873-02b)
-    rom  N?834-8831-02 (171-5987a)
+    game No. 833-8830-02
+    pcb  No. 837-8832-02 (171-5873-02b)
+    rom  No. 834-8831-02 (171-5987a)
     CPU Hiatchi FD1094 317-0196
 */
 ROM_START( desertbr )

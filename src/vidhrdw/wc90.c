@@ -14,7 +14,7 @@ data8_t *wc90_scroll1ylo, *wc90_scroll1yhi;
 data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
 
 
-static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
+static tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 
 
 

@@ -354,7 +354,7 @@ INPUT_PORTS_END
 
 
 /* 16x16x4 */
-static struct GfxLayout layout_16x16x4 =
+static gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -366,7 +366,7 @@ static struct GfxLayout layout_16x16x4 =
 };
 
 /* 16x16x8 */
-static struct GfxLayout layout_16x16x8 =
+static gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -378,7 +378,7 @@ static struct GfxLayout layout_16x16x8 =
 };
 
 
-static struct GfxDecodeInfo yunsun16_gfxdecodeinfo[] =
+static gfx_decode yunsun16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8, 0x1000, 0x10 }, // [0] Layers
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x0000, 0x20 }, // [1] Sprites

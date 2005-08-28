@@ -64,7 +64,7 @@ static NVRAM_HANDLER( trackfld )
 
 		if (we_flipped_the_switch)
 		{
-			struct InputPort *in;
+			input_port_entry *in;
 
 
 			/* find the dip switch which resets the high score table, and set it */
@@ -96,7 +96,7 @@ static NVRAM_HANDLER( trackfld )
 		}
 		else
 		{
-			struct InputPort *in;
+			input_port_entry *in;
 
 
 			/* find the dip switch which resets the high score table, and set it on */
@@ -684,7 +684,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -695,7 +695,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -708,7 +708,7 @@ static struct GfxLayout spritelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,       0, 16 },
 	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },

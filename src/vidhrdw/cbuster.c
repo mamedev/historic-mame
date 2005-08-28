@@ -9,7 +9,7 @@
 
 data16_t *twocrude_pf1_data,*twocrude_pf2_data,*twocrude_pf3_data,*twocrude_pf4_data;
 
-static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
+static tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static int twocrude_pri,flipscreen;
 
 static data16_t twocrude_control_0[8];

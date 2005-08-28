@@ -26,7 +26,7 @@ static ADDRESS_MAP_START( grtwall_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
-static struct GfxLayout grtwall_charlayout =
+static gfx_layout grtwall_charlayout =
 
 {
 	8,8,
@@ -41,7 +41,7 @@ static struct GfxLayout grtwall_charlayout =
 	8*32
 };
 
-static struct GfxLayout grtwall2_charlayout =
+static gfx_layout grtwall2_charlayout =
 
 {
 	8,8,
@@ -56,7 +56,7 @@ static struct GfxLayout grtwall2_charlayout =
 	8*32*2
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &grtwall_charlayout,   0, 1  },
 	{ REGION_GFX1, 0, &grtwall2_charlayout,   0, 1  },

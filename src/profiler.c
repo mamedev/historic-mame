@@ -19,13 +19,14 @@ static int use_profiler;
 
 #define MEMORY 6
 
-struct profile_data
+struct _profile_data
 {
 	UINT64 count[MEMORY][PROFILER_TOTAL];
 	unsigned int cpu_context_switches[MEMORY];
 };
+typedef struct _profile_data profile_data;
 
-static struct profile_data profile;
+static profile_data profile;
 static int memory;
 
 

@@ -17,7 +17,7 @@ data16_t *tecmo16_videoram2;
 data16_t *tecmo16_colorram2;
 data16_t *tecmo16_charram;
 
-static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
+static tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
 static struct mame_bitmap *sprite_bitmap, *tile_bitmap_bg, *tile_bitmap_fg;
 
 static int flipscreen, game_is_riot;

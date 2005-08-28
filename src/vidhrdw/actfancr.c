@@ -11,7 +11,7 @@
 
 static UINT8 actfancr_control_1[0x20],actfancr_control_2[0x20];
 unsigned char *actfancr_pf1_data,*actfancr_pf2_data,*actfancr_pf1_rowscroll_data;
-static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap;
+static tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap;
 static int flipscreen;
 
 static UINT32 actfancr_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)

@@ -39,8 +39,8 @@ size_t galaxian_bulletsram_size;
 
 static void get_tile_info(int tile_index);
 static void rockclim_get_tile_info(int tile_index);
-static struct tilemap *tilemap;
-static struct tilemap *rockclim_tilemap;
+static tilemap *bg_tilemap;
+static tilemap *rockclim_tilemap;
 static int mooncrst_gfxextend;
 static int gfxbank[5];
 static int spriteram2_present;
@@ -84,7 +84,7 @@ static void frogger_modify_ypos(UINT8 *sy);
 static void stars_blink_callback(int param);
 static void stars_scroll_callback(int param);
 
-static void (*tilemap_set_scroll)( struct tilemap *, int col, int value );
+static void (*tilemap_set_scroll)( tilemap *, int col, int value );
 
 /* star circuit */
 #define STAR_COUNT  252
@@ -452,12 +452,12 @@ PALETTE_INIT( mariner )
 
 static int video_start_common(UINT32 (*get_memory_offset)(UINT32,UINT32,UINT32,UINT32))
 {
-	tilemap = tilemap_create(get_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(get_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
+	tilemap_set_transparent_pen(bg_tilemap,0);
 
 
 	modify_charcode = 0;
@@ -494,7 +494,7 @@ VIDEO_START( galaxian_plain )
 {
 	int ret = video_start_common(tilemap_scan_rows);
 
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	return ret;
@@ -608,7 +608,7 @@ VIDEO_START( sfx )
 {
 	int ret = video_start_common(tilemap_scan_cols);
 
-	tilemap_set_scroll_rows(tilemap, 32);
+	tilemap_set_scroll_rows(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrollx;
 
 	draw_stars = scramble_draw_stars;
@@ -841,13 +841,13 @@ static void drivfrcg_get_tile_info(int tile_index)
 
 VIDEO_START( drivfrcg )
 {
-	tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	modify_charcode = 0;
@@ -882,13 +882,13 @@ VIDEO_START( drivfrcg )
 
 VIDEO_START( ad2083 )
 {
-	tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(drivfrcg_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	modify_charcode = 0;
@@ -926,7 +926,7 @@ data8_t *racknrol_tiles_bank;
 WRITE8_HANDLER( racknrol_tiles_bank_w )
 {
 	racknrol_tiles_bank[offset] = data;
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
 static void racknrol_get_tile_info(int tile_index)
@@ -943,13 +943,13 @@ static void racknrol_get_tile_info(int tile_index)
 
 VIDEO_START( racknrol )
 {
-	tilemap = tilemap_create(racknrol_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	bg_tilemap = tilemap_create(racknrol_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (!tilemap)
+	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(tilemap,0);
-	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_transparent_pen(bg_tilemap,0);
+	tilemap_set_scroll_cols(bg_tilemap, 32);
 	tilemap_set_scroll = tilemap_set_scrolly;
 
 	modify_charcode = 0;
@@ -997,7 +997,7 @@ WRITE8_HANDLER( galaxian_videoram_w )
 	if (galaxian_videoram[offset] != data)
 	{
 		galaxian_videoram[offset] = data;
-		tilemap_mark_tile_dirty(tilemap, offset);
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 	}
 }
 
@@ -1017,7 +1017,7 @@ WRITE8_HANDLER( galaxian_attributesram_w )
 			int i;
 
 			for (i = offset >> 1; i < 0x0400; i += 32)
-				tilemap_mark_tile_dirty(tilemap, i);
+				tilemap_mark_tile_dirty(bg_tilemap, i);
 		}
 		else
 		{
@@ -1026,7 +1026,7 @@ WRITE8_HANDLER( galaxian_attributesram_w )
 				modify_ypos(&data);
 			}
 
-			tilemap_set_scroll(tilemap, offset >> 1, data);
+			tilemap_set_scroll(bg_tilemap, offset >> 1, data);
 		}
 
 		galaxian_attributesram[offset] = data;
@@ -1040,7 +1040,7 @@ WRITE8_HANDLER( galaxian_flip_screen_x_w )
 	{
 		flip_screen_x = data & 0x01;
 
-		tilemap_set_flip(tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
 	}
 }
 
@@ -1050,7 +1050,7 @@ WRITE8_HANDLER( galaxian_flip_screen_y_w )
 	{
 		flip_screen_y = data & 0x01;
 
-		tilemap_set_flip(tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
 	}
 }
 
@@ -1118,7 +1118,7 @@ WRITE8_HANDLER( galaxian_gfxbank_w )
 	{
 		gfxbank[offset] = data;
 
-		tilemap_mark_all_tiles_dirty(tilemap);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 }
 
@@ -2055,7 +2055,7 @@ VIDEO_UPDATE( galaxian )
 	}
 
 
-	tilemap_draw(bitmap, 0, tilemap, 0, 0);
+	tilemap_draw(bitmap, 0, bg_tilemap, 0, 0);
 
 
 	if (draw_bullets)

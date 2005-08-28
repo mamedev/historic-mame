@@ -1440,10 +1440,10 @@ static WRITE16_HANDLER( sub_ctrl_w )
 }
 
 
-const struct GameDriver driver_blandia;
-const struct GameDriver driver_gundhara;
-const struct GameDriver driver_kamenrid;
-const struct GameDriver driver_zingzip;
+const game_driver driver_blandia;
+const game_driver driver_gundhara;
+const game_driver driver_kamenrid;
+const game_driver driver_zingzip;
 
 /*  ---- 3---       Coin #1 Lock Out
     ---- -2--       Coin #0 Lock Out
@@ -6027,7 +6027,7 @@ or 6 planes deep and are stored in a wealth of formats.
 
 
 /* The bitplanes are packed togheter */
-static struct GfxLayout layout_packed =
+static gfx_layout layout_packed =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -6042,7 +6042,7 @@ static struct GfxLayout layout_packed =
 
 
 /* The bitplanes are separated (but there are 2 per rom) */
-static struct GfxLayout layout_planes_2roms =
+static gfx_layout layout_planes_2roms =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -6058,7 +6058,7 @@ static struct GfxLayout layout_planes_2roms =
 /* The bitplanes are separated (but there are 2 per rom).
    Each 8x8 tile is additionally split in 2 vertical halves four bits wide,
    stored one after the other */
-static struct GfxLayout layout_planes_2roms_split =
+static gfx_layout layout_planes_2roms_split =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -6078,7 +6078,7 @@ static struct GfxLayout layout_planes_2roms_split =
 
 
 /* The bitplanes are packed together: 3 roms with 2 bits in each */
-static struct GfxLayout layout_packed_6bits_3roms =
+static gfx_layout layout_packed_6bits_3roms =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -6097,7 +6097,7 @@ static struct GfxLayout layout_packed_6bits_3roms =
    ROM_LOAD16_BYTE. This way we can think of it as a 4 planes rom, with the
    upper 2 planes unused.    */
 
-static struct GfxLayout layout_packed_6bits_2roms =
+static gfx_layout layout_packed_6bits_2roms =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -6116,7 +6116,7 @@ static struct GfxLayout layout_packed_6bits_2roms =
                                 Blandia
 ***************************************************************************/
 
-static struct GfxDecodeInfo blandia_gfxdecodeinfo[] =
+static gfx_decode blandia_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms,       0,           32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_packed_6bits_3roms, 16*32+64*32, 32 }, // [1] Layer 1
@@ -6128,7 +6128,7 @@ static struct GfxDecodeInfo blandia_gfxdecodeinfo[] =
                                 DownTown
 ***************************************************************************/
 
-static struct GfxDecodeInfo downtown_gfxdecodeinfo[] =
+static gfx_decode downtown_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms,       512*0, 32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_planes_2roms_split, 512*0, 32 }, // [1] Layer 1
@@ -6139,7 +6139,7 @@ static struct GfxDecodeInfo downtown_gfxdecodeinfo[] =
                                 J.J.Squawkers
 ***************************************************************************/
 
-static struct GfxDecodeInfo jjsquawk_gfxdecodeinfo[] =
+static gfx_decode jjsquawk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms,       0,             32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_packed_6bits_2roms, 512 + 64*32*0, 32 }, // [1] Layer 1
@@ -6151,7 +6151,7 @@ static struct GfxDecodeInfo jjsquawk_gfxdecodeinfo[] =
                             Mobile Suit Gundam
 ***************************************************************************/
 
-static struct GfxDecodeInfo msgundam_gfxdecodeinfo[] =
+static gfx_decode msgundam_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms, 512*0, 32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_packed,       512*2, 32 }, // [1] Layer 1
@@ -6163,7 +6163,7 @@ static struct GfxDecodeInfo msgundam_gfxdecodeinfo[] =
                                 Quiz Kokology 2
 ***************************************************************************/
 
-static struct GfxDecodeInfo qzkklgy2_gfxdecodeinfo[] =
+static gfx_decode qzkklgy2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms,	512*0, 32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_packed, 		512*0, 32 }, // [1] Layer 1
@@ -6174,7 +6174,7 @@ static struct GfxDecodeInfo qzkklgy2_gfxdecodeinfo[] =
                                 Thundercade
 ***************************************************************************/
 
-static struct GfxDecodeInfo tndrcade_gfxdecodeinfo[] =
+static gfx_decode tndrcade_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms, 512*0, 32 }, // [0] Sprites
 	{ -1 }
@@ -6184,7 +6184,7 @@ static struct GfxDecodeInfo tndrcade_gfxdecodeinfo[] =
                                 Wiggie Waggle
 ****************************************************************************/
 
-static struct GfxLayout wiggie_layout =
+static gfx_layout wiggie_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -6200,7 +6200,7 @@ static struct GfxLayout wiggie_layout =
 };
 
 
-static struct GfxDecodeInfo wiggie_gfxdecodeinfo[] =
+static gfx_decode wiggie_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &wiggie_layout,   0x0, 32  }, /* bg tiles */
 	{ -1 } /* end of array */
@@ -6211,7 +6211,7 @@ static struct GfxDecodeInfo wiggie_gfxdecodeinfo[] =
                                 U.S. Classic
 ***************************************************************************/
 
-static struct GfxDecodeInfo usclssic_gfxdecodeinfo[] =
+static gfx_decode usclssic_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms,       0, 32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_packed_6bits_3roms, 512, 32 }, // [1] Layer 1
@@ -6223,7 +6223,7 @@ static struct GfxDecodeInfo usclssic_gfxdecodeinfo[] =
                                 Zing Zing Zip
 ***************************************************************************/
 
-static struct GfxDecodeInfo zingzip_gfxdecodeinfo[] =
+static gfx_decode zingzip_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_planes_2roms,       512*0, 32 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_packed_6bits_2roms, 512*2, 32 }, // [1] Layer 1

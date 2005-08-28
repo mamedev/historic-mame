@@ -853,7 +853,7 @@ INPUT_PORTS_END
 /* we can't decode the sprite data like this because it isn't tile based.  the
    data decoded by pgm32_charlayout was rearranged at start-up */
 
-static struct GfxLayout pgm8_charlayout =
+static gfx_layout pgm8_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -864,7 +864,7 @@ static struct GfxLayout pgm8_charlayout =
 	8*32
 };
 
-static struct GfxLayout pgm32_charlayout =
+static gfx_layout pgm32_charlayout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -881,7 +881,7 @@ static struct GfxLayout pgm32_charlayout =
 	 32*256
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pgm8_charlayout,    0x800, 32  }, /* 8x8x4 Tiles */
 	{ REGION_GFX2, 0, &pgm32_charlayout,   0x400, 32  }, /* 32x32x5 Tiles */

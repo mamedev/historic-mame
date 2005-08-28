@@ -18,7 +18,7 @@ static unsigned int stars_scrolly;
 
 static int bosco_starcontrol,bosco_starblink[2];
 
-static struct tilemap *bg_tilemap,*fg_tilemap;
+static tilemap *bg_tilemap,*fg_tilemap;
 
 
 struct star

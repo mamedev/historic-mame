@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 
 data8_t *compgolf_bg_ram;
-static struct tilemap *text_tilemap, *background_tilemap;
+static tilemap *text_tilemap, *background_tilemap;
 
 int compgolf_scrollx_lo = 0, compgolf_scrolly_lo = 0, compgolf_scrollx_hi = 0, compgolf_scrolly_hi = 0;
 

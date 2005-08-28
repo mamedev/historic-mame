@@ -10,7 +10,7 @@ UINT8 *gunsmoke_scrolly;
 static int chon, objon, bgon;
 static int sprite3bank;
 
-static struct tilemap *bg_tilemap, *fg_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap;
 
 /***************************************************************************
 

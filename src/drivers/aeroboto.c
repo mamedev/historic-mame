@@ -202,7 +202,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -214,7 +214,7 @@ static struct GfxLayout charlayout =
 };
 /*
 // exact star layout unknown... could be anything
-static struct GfxLayout starlayout =
+static gfx_layout starlayout =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -225,7 +225,7 @@ static struct GfxLayout starlayout =
     8*8
 };
 */
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	8,16,
 	RGN_FRAC(1,3),
@@ -237,7 +237,7 @@ static struct GfxLayout spritelayout =
 	16*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0,  64 },     /* chars */
 //  { REGION_GFX2, 0, &starlayout,     0, 128 },     /* sky */

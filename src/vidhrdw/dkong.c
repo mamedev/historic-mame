@@ -14,7 +14,7 @@ static int gfx_bank, palette_bank;
 static int grid_on;
 static const UINT8 *color_codes;
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 WRITE8_HANDLER( dkong_videoram_w )
 {

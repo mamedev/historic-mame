@@ -2,8 +2,8 @@
 
 static unsigned char bg_color,  old_bg_color;
 #define mainsnk_offset 8
-static struct tilemap *me_fg_tilemap;
-static struct tilemap *me_bg_tilemap;
+static tilemap *me_fg_tilemap;
+static tilemap *me_bg_tilemap;
 data8_t *me_fgram;
 data8_t *me_bgram;
 static int me_gfx_ctrl;
@@ -124,7 +124,7 @@ VIDEO_START(mainsnk)
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scrollx, int scrolly )
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
+	const gfx_element *gfx = Machine->gfx[1];
 	const unsigned char *source, *finish;
 	source =  memory_region(REGION_CPU1)+0xe800;
 	finish =  source + 0x64;
@@ -155,7 +155,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cliprect,int dx,int off )
 {
 	const unsigned char *base = memory_region(REGION_CPU1)+0xf000+off;
-	const struct GfxElement *gfx = Machine->gfx[0];
+	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
 	{

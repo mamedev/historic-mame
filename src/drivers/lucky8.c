@@ -30,7 +30,7 @@ Any fixes for this driver should be forwarded to AGEMAME forum at (http://www.ma
 
 /* vidhrdw */
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 PALETTE_INIT( lucky8 )
 {
@@ -306,7 +306,7 @@ INPUT_PORTS_START( lucky8 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8, 8,
 	4096,
@@ -317,7 +317,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	96, 32,
 	10,
@@ -340,7 +340,7 @@ static struct GfxLayout spritelayout =
 	12*32*8
 };
 
-static struct GfxLayout spritelayout2 =
+static gfx_layout spritelayout2 =
 {
 	64, 32,
 	5,
@@ -359,7 +359,7 @@ static struct GfxLayout spritelayout2 =
 	8*32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 64 },
 	{ REGION_GFX2, 0x0000, &spritelayout,  0, 64 },

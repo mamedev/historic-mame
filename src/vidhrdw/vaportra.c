@@ -18,7 +18,7 @@ static data16_t vaportra_control_0[8];
 static data16_t vaportra_control_1[8];
 static data16_t vaportra_control_2[2];
 
-static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
+static tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static int flipscreen;
 
 /* Function for all 16x16 1024x1024 layers */

@@ -59,7 +59,7 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 #include "vidhrdw/generic.h"
 
 /* Variables only used here */
-static struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
+static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static int layers_ctrl, flipscreen;
 
 /* Variables that driver has access to */

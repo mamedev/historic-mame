@@ -196,7 +196,7 @@ static struct AY8910interface ay8910_interface_2 =
 	dummy_w
 };
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -208,7 +208,7 @@ static struct GfxLayout charlayout =
 };
 
 
-static struct GfxLayout charlayout2 =
+static gfx_layout charlayout2 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -219,7 +219,7 @@ static struct GfxLayout charlayout2 =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -232,7 +232,7 @@ static struct GfxLayout spritelayout =
 	8*8*4
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ REGION_GFX3, 0, &charlayout2,  16*4, 32 },

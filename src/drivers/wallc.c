@@ -52,7 +52,7 @@ Thanks to HIGHWAYMAN for providing info on how to get to these epoxies
 #include "vidhrdw/res_net.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *bg_tilemap;
+static tilemap *bg_tilemap;
 
 /***************************************************************************
 
@@ -226,7 +226,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,3),
@@ -237,7 +237,7 @@ static struct GfxLayout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0     , &charlayout, 0, 4 },
 	{ -1 } /* end of array */

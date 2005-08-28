@@ -122,7 +122,7 @@ lev 7 : 0x7c : 0000 07e0 - input device clear?
 #include "vidhrdw/generic.h"
 #include "sound/3812intf.h"
 
-static struct tilemap *tx_tilemap;
+static tilemap *tx_tilemap;
 static data16_t *tx_vram;
 data16_t *slave_data;
 data16_t *com_ram;
@@ -363,7 +363,7 @@ INPUT_PORTS_START( cybertnk )
 	PORT_BIT( 	  0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-static struct GfxLayout tile_8x8x4 =
+static gfx_layout tile_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -374,7 +374,7 @@ static struct GfxLayout tile_8x8x4 =
     8*8
 };
 
-static struct GfxLayout tile_16x16x4 =
+static gfx_layout tile_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -385,7 +385,7 @@ static struct GfxLayout tile_16x16x4 =
     32*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_8x8x4,     0x1400, 16 }, /*Pal offset???*/
 	{ REGION_GFX2, 0, &tile_8x8x4,     0,      0x400 },

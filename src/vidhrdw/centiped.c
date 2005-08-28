@@ -9,7 +9,7 @@
 #include "centiped.h"
 
 
-static struct tilemap *tilemap;
+static tilemap *bg_tilemap;
 UINT8 centiped_flipscreen, *bullsdrt_tiles_bankram;
 static UINT8 bullsdrt_sprites_bank;
 static UINT8 penmask[64];
@@ -63,8 +63,8 @@ static void bullsdrt_get_tile_info(int tile_index)
 
 VIDEO_START( centiped )
 {
-	tilemap = tilemap_create(centiped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!tilemap)
+	bg_tilemap = tilemap_create(centiped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	if (!bg_tilemap)
 		return 1;
 
 	centiped_flipscreen = 0;
@@ -74,21 +74,21 @@ VIDEO_START( centiped )
 
 VIDEO_START( warlords )
 {
-	tilemap = tilemap_create(warlords_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!tilemap)
+	bg_tilemap = tilemap_create(warlords_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	if (!bg_tilemap)
 		return 1;
 
 	/* we overload centiped_flipscreen here to track the cocktail/upright state */
 	centiped_flipscreen = readinputport(0) & 0x80;
-	tilemap_set_flip(tilemap, centiped_flipscreen ? TILEMAP_FLIPX : 0);
+	tilemap_set_flip(bg_tilemap, centiped_flipscreen ? TILEMAP_FLIPX : 0);
 	return 0;
 }
 
 
 VIDEO_START( milliped )
 {
-	tilemap = tilemap_create(milliped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!tilemap)
+	bg_tilemap = tilemap_create(milliped_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	if (!bg_tilemap)
 		return 1;
 
 	centiped_flipscreen = 0;
@@ -98,8 +98,8 @@ VIDEO_START( milliped )
 
 VIDEO_START( bullsdrt )
 {
-	tilemap = tilemap_create(bullsdrt_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
-	if (!tilemap)
+	bg_tilemap = tilemap_create(bullsdrt_get_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	if (!bg_tilemap)
 		return 1;
 
 	centiped_flipscreen = 0;
@@ -117,7 +117,7 @@ VIDEO_START( bullsdrt )
 WRITE8_HANDLER( centiped_videoram_w )
 {
 	videoram[offset] = data;
-	tilemap_mark_tile_dirty(tilemap, offset);
+	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
 
@@ -144,7 +144,7 @@ WRITE8_HANDLER( centiped_flip_screen_w )
 WRITE8_HANDLER( bullsdrt_tilesbank_w )
 {
 	bullsdrt_tiles_bankram[offset] = data;
-	tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
 
@@ -388,7 +388,7 @@ VIDEO_UPDATE( centiped )
 	int offs;
 
 	/* draw the background */
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* apply the sprite clip */
 	if (centiped_flipscreen)
@@ -421,12 +421,12 @@ VIDEO_UPDATE( warlords )
 	if (centiped_flipscreen != upright_mode)
 	{
 		centiped_flipscreen = upright_mode;
-		tilemap_set_flip(tilemap, upright_mode ? TILEMAP_FLIPX : 0);
-		tilemap_mark_all_tiles_dirty(tilemap);
+		tilemap_set_flip(bg_tilemap, upright_mode ? TILEMAP_FLIPX : 0);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
 	}
 
 	/* draw the background */
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* draw the sprites */
 	for (offs = 0; offs < 0x10; offs++)
@@ -463,7 +463,7 @@ VIDEO_UPDATE( bullsdrt )
 	int offs;
 
 	/* draw the background */
-	tilemap_draw(bitmap, cliprect, tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	/* apply the sprite clip */
 	if (centiped_flipscreen)

@@ -817,7 +817,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static struct GfxLayout zwackery_layout =
+static gfx_layout zwackery_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -830,14 +830,14 @@ static struct GfxLayout zwackery_layout =
 	128
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mcr_bg_layout,     0, 4 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo zwackery_gfxdecodeinfo[] =
+static gfx_decode zwackery_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &zwackery_layout,       0, 16 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout, 0x800, 32 },

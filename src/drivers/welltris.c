@@ -684,7 +684,7 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout welltris_charlayout =
+static gfx_layout welltris_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -695,7 +695,7 @@ static struct GfxLayout welltris_charlayout =
 	32*8
 };
 
-static struct GfxLayout welltris_spritelayout =
+static gfx_layout welltris_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -708,7 +708,7 @@ static struct GfxLayout welltris_spritelayout =
 	64*8
 };
 
-static struct GfxDecodeInfo welltris_gfxdecodeinfo[] =
+static gfx_decode welltris_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &welltris_charlayout,   16* 0, 4*16 },
 	{ REGION_GFX2, 0, &welltris_spritelayout, 16*96, 2*16 },

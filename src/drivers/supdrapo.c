@@ -27,7 +27,7 @@ A3-1J
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static struct tilemap *fg_tilemap;
+static tilemap *fg_tilemap;
 static unsigned char *char_bank;
 
 WRITE8_HANDLER( supdrapo_videoram_w )
@@ -232,7 +232,7 @@ INPUT_PORTS_START( supdrapo )
 
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -243,7 +243,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ -1 }

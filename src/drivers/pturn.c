@@ -78,7 +78,7 @@ ROMS: All ROM labels say only "PROM" and a number.
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-struct tilemap *pturn_tilemap,*pturn_bgmap;
+tilemap *pturn_tilemap,*pturn_bgmap;
 static void get_pturn_tile_info(int tile_index)
 {
 	int tileno,palno;
@@ -205,7 +205,7 @@ static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xffe0, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -216,7 +216,7 @@ static struct GfxLayout charlayout =
 	8*8
 };
 
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,3),
@@ -234,7 +234,7 @@ static struct GfxLayout spritelayout =
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0x000, 32 },
 	{ REGION_GFX2, 0, &charlayout,   0x000, 32 },

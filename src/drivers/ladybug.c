@@ -559,7 +559,7 @@ INPUT_PORTS_START( sraider )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
-static struct GfxLayout charlayout =
+static gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -569,7 +569,7 @@ static struct GfxLayout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static struct GfxLayout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
@@ -581,7 +581,7 @@ static struct GfxLayout spritelayout =
 			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
-static struct GfxLayout spritelayout2 =
+static gfx_layout spritelayout2 =
 {
 	8,8,	/* 8*8 sprites */
 	512,	/* 512 sprites */
@@ -592,7 +592,7 @@ static struct GfxLayout spritelayout2 =
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
 
-static struct GfxLayout gridlayout =
+static gfx_layout gridlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -603,7 +603,7 @@ static struct GfxLayout gridlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout gridlayout2 =
+static gfx_layout gridlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -614,7 +614,7 @@ static struct GfxLayout gridlayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,      0,  8 },
 	{ REGION_GFX2, 0, &spritelayout,  4*8, 16 },
@@ -622,7 +622,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct GfxDecodeInfo sraider_gfxdecodeinfo[] =
+static gfx_decode sraider_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,      0,  8 },
 	{ REGION_GFX2, 0, &spritelayout,  4*8, 16 },

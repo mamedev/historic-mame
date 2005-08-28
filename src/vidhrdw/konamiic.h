@@ -62,7 +62,7 @@ The callback must put:
   structure (e.g. TILE_FLIPX). Note that TILE_FLIPY is handled internally by the
   chip so it must not be set by the callback.
 */
-extern struct tilemap *K052109_tilemap[3];
+extern tilemap *K052109_tilemap[3];
 
 int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int plane3,
 		void (*callback)(int layer,int bank,int *code,int *color));
@@ -166,7 +166,7 @@ int K053247_read_register(int regnum);
 void K053247_set_SpriteOffset(int offsx, int offsy);
 void K053247_wraparound_enable(int status);
 void K05324x_set_z_rejection(int zcode); // common to K053245/6/7
-void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void (**callback)(int *, int *, int *), int *dx, int *dy);
+void K053247_export_config(data16_t **ram, gfx_element **gfx, void (**callback)(int *, int *, int *), int *dx, int *dy);
 
 READ8_HANDLER( K053246_r );
 WRITE8_HANDLER( K053246_w );
@@ -220,8 +220,8 @@ void K051316_set_offset(int chip, int xoffs, int yoffs);
 
 extern data16_t *K053936_0_ctrl,*K053936_0_linectrl;
 extern data16_t *K053936_1_ctrl,*K053936_1_linectrl;
-void K053936_0_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority);
-void K053936_1_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct tilemap *tilemap,int flags,UINT32 priority);
+void K053936_0_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,tilemap *tmap,int flags,UINT32 priority);
+void K053936_1_zoom_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,tilemap *tmap,int flags,UINT32 priority);
 void K053936_wraparound_enable(int chip, int status);
 void K053936_set_offset(int chip, int xoffs, int yoffs);
 
@@ -237,7 +237,7 @@ WRITE16_HANDLER( K053251_msb_w );
 enum { K053251_CI0=0,K053251_CI1,K053251_CI2,K053251_CI3,K053251_CI4 };
 int K053251_get_priority(int ci);
 int K053251_get_palette_index(int ci);
-void K053251_set_tilemaps(struct tilemap *ci0,struct tilemap *ci1,struct tilemap *ci2,struct tilemap *ci3,struct tilemap *ci4);
+void K053251_set_tilemaps(tilemap *ci0,tilemap *ci1,tilemap *ci2,tilemap *ci3,tilemap *ci4);
 int K053251_vh_start(void);
 
 
