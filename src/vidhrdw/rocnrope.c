@@ -119,7 +119,7 @@ VIDEO_START( rocnrope )
 	return 0;
 }
 
-static void rocnrope_draw_sprites( struct mame_bitmap *bitmap )
+static void rocnrope_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

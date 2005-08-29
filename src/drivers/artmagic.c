@@ -23,7 +23,7 @@
 #include "sound/okim6295.h"
 
 
-static data16_t *control;
+static UINT16 *control;
 
 static UINT8 tms_irq, hack_irq;
 

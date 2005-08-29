@@ -10,7 +10,7 @@
 #include "exterm.h"
 
 
-data16_t *exterm_master_videoram, *exterm_slave_videoram;
+UINT16 *exterm_master_videoram, *exterm_slave_videoram;
 
 
 
@@ -94,7 +94,7 @@ VIDEO_UPDATE( exterm )
 	/* 16-bit case */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		data16_t *bgsrc = &exterm_master_videoram[256 * y];
+		UINT16 *bgsrc = &exterm_master_videoram[256 * y];
 		UINT16 *dest = bitmap->line[y];
 
 		/* on the top/bottom of the screen, it's all background */
@@ -108,7 +108,7 @@ VIDEO_UPDATE( exterm )
 		/* elsewhere, we have to blend foreground and background */
 		else
 		{
-			data16_t *fgsrc = (tms34010_get_DPYSTRT(1) & 0x800) ? &exterm_slave_videoram[y*128] : &exterm_slave_videoram[(256+y)*128];
+			UINT16 *fgsrc = (tms34010_get_DPYSTRT(1) & 0x800) ? &exterm_slave_videoram[y*128] : &exterm_slave_videoram[(256+y)*128];
 
 			for (x = 0; x < 256; x += 2)
 			{

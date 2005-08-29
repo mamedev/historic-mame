@@ -8,8 +8,8 @@
 #include "vidhrdw/generic.h"
 
 static unsigned char *dirty_f;
-static struct mame_bitmap *bitmap_f;
-data16_t karnov_scroll[2], *karnov_pf_data;
+static mame_bitmap *bitmap_f;
+UINT16 karnov_scroll[2], *karnov_pf_data;
 static tilemap *fix_tilemap;
 static int flipscreen;
 
@@ -79,7 +79,7 @@ void karnov_flipscreen_w(int data)
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
-static void draw_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_background(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int my,mx,offs,color,tile,fx,fy;
 	int scrollx=karnov_scroll[0];
@@ -140,7 +140,7 @@ static void draw_background(struct mame_bitmap *bitmap, const struct rectangle *
 	copyscrollbitmap(bitmap,bitmap_f,1,&scrollx,1,&scrolly,cliprect,TRANSPARENCY_NONE,0);
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

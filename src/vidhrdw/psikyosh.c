@@ -94,13 +94,13 @@ sol divide doesn't seem to make much use of tilemaps at all, it uses them to fad
 #include "psikyosh.h"
 
 /* Needed for psikyosh_drawgfxzoom */
-struct mame_bitmap *zoom_bitmap, *z_bitmap;
+mame_bitmap *zoom_bitmap, *z_bitmap;
 
 /* Psikyo PS6406B */
 /* --- BACKGROUNDS --- */
 
 /* 'Normal' layers, no line/columnscroll. No per-line effects */
-static void psikyosh_drawbglayer( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void psikyosh_drawbglayer( int layer, mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	gfx_element *gfx;
 	int offs=0, sx, sy;
@@ -166,7 +166,7 @@ static void psikyosh_drawbglayer( int layer, struct mame_bitmap *bitmap, const s
 
 /* This is a complete bodge for the daraku text layers. There is not enough info to be sure how it is supposed to work */
 /* It appears that there are row/column scroll values for 2 seperate layers, just drawing it twice using one of each of the sets of values for now */
-static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void psikyosh_drawbglayertext( int layer, mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	gfx_element *gfx;
 	int offs, sx, sy;
@@ -256,7 +256,7 @@ static void psikyosh_drawbglayertext( int layer, struct mame_bitmap *bitmap, con
 
 /* Row Scroll and/or Column Scroll/Zoom, has per-column Alpha/Bank/Priority. This isn't correct, just testing */
 /* For now I'm just using the first alpha/bank/priority values and sodding the rest of it */
-static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void psikyosh_drawbglayerscroll( int layer, mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	gfx_element *gfx;
 	int offs, sx, sy;
@@ -334,7 +334,7 @@ static void psikyosh_drawbglayerscroll( int layer, struct mame_bitmap *bitmap, c
 }
 
 /* 3 BG layers, with priority */
-static void psikyosh_drawbackground( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 req_pri )
+static void psikyosh_drawbackground( mame_bitmap *bitmap, const rectangle *cliprect, UINT8 req_pri )
 {
 	int i;
 
@@ -392,12 +392,12 @@ static void psikyosh_drawbackground( struct mame_bitmap *bitmap, const struct re
 /* sx and sy is top-left of entire sprite regardless of flip */
 /* Note that Level 5-4 of sbomberb boss is perfect! (Alpha blended zoomed) as well as S1945II logo */
 /* pixel is only plotted if z is >= priority_buffer->line[y][x] */
-void psikyosh_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+void psikyosh_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int offsx,int offsy,
-		const struct rectangle *clip,int transparency,int transparent_color,
+		const rectangle *clip,int transparency,int transparent_color,
 		int zoomx, int zoomy, int wide, int high, unsigned int z)
 {
-	struct rectangle myclip; /* Clip to screen boundaries */
+	rectangle myclip; /* Clip to screen boundaries */
 	int code_offset = 0;
 	int xtile, ytile, xpixel, ypixel;
 
@@ -945,7 +945,7 @@ void psikyosh_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 
 #define SPRITE_PRI(n) (((psikyosh_vidregs[2] << (4*n)) & 0xf0000000 ) >> 28)
 
-static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 req_pri )
+static void psikyosh_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect, UINT8 req_pri )
 {
 	/*- Sprite Format 0x0000 - 0x37ff -**
 
@@ -978,16 +978,16 @@ static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct recta
     **- End Sprite Format -*/
 
 	const gfx_element *gfx;
-	data32_t *src = buffered_spriteram32; /* Use buffered spriteram */
-	data16_t *list = (data16_t *)src + 0x3800/2;
-	data16_t listlen=0x800/2, listcntr=0;
-	data16_t *zoom_table = (data16_t *)psikyosh_zoomram;
-	data8_t  *alpha_table = (data8_t *)psikyosh_vidregs;
+	UINT32 *src = buffered_spriteram32; /* Use buffered spriteram */
+	UINT16 *list = (UINT16 *)src + 0x3800/2;
+	UINT16 listlen=0x800/2, listcntr=0;
+	UINT16 *zoom_table = (UINT16 *)psikyosh_zoomram;
+	UINT8  *alpha_table = (UINT8 *)psikyosh_vidregs;
 
 	while( listcntr < listlen )
 	{
-		data32_t listdat, sprnum, xpos, ypos, high, wide, flpx, flpy, zoomx, zoomy, tnum, colr, dpth;
-		data32_t pri, alpha, alphamap, trans;
+		UINT32 listdat, sprnum, xpos, ypos, high, wide, flpx, flpy, zoomx, zoomy, tnum, colr, dpth;
+		UINT32 pri, alpha, alphamap, trans;
 
 		listdat = list[BYTE_XOR_BE(listcntr)];
 		sprnum = (listdat & 0x03ff) * 4;
@@ -1092,14 +1092,14 @@ VIDEO_START( psikyosh )
 	return 0;
 }
 
-static void psikyosh_prelineblend( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void psikyosh_prelineblend( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/* There are 224 values for pre-lineblending. Using one for every row currently */
 	/* I suspect that it should be blended against black by the amount specified as
        gnbarich sets the 0x000000ff to 0x7f in test mode whilst the others use 0x80.
        As it's only used in testmode I'll just leave it as a toggle for now */
 	UINT32 *dstline;
-	data32_t *linefill = psikyosh_bgram; /* Per row */
+	UINT32 *linefill = psikyosh_bgram; /* Per row */
 	int x,y;
 
 	if (bitmap->depth != 32)
@@ -1120,7 +1120,7 @@ static void psikyosh_prelineblend( struct mame_bitmap *bitmap, const struct rect
 	profiler_mark(PROFILER_END);
 }
 
-static void psikyosh_postlineblend( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void psikyosh_postlineblend( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	if (bitmap->depth != 32)
 	{
@@ -1132,7 +1132,7 @@ static void psikyosh_postlineblend( struct mame_bitmap *bitmap, const struct rec
 	{
 	/* There are 224 values for post-lineblending. Using one for every row currently */
 	UINT32 *dstline;
-	data32_t *lineblend = psikyosh_bgram+0x400/4; /* Per row */
+	UINT32 *lineblend = psikyosh_bgram+0x400/4; /* Per row */
 	int x,y;
 
 	profiler_mark(PROFILER_USER2);

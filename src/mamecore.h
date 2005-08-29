@@ -53,12 +53,37 @@ typedef struct _performance_info performance_info;
 typedef struct _osd_file osd_file;
 
 
+/* pen_t is used to represent pixel values in mame_bitmaps */
+typedef UINT32 pen_t;
+
+
+/* mame_bitmaps are used throughout the code */
+struct _mame_bitmap
+{
+	int width,height;	/* width and height of the bitmap */
+	int depth;			/* bits per pixel */
+	void **line;		/* pointers to the start of each line - can be UINT8 **, UINT16 ** or UINT32 ** */
+
+	/* alternate way of accessing the pixels */
+	void *base;			/* pointer to pixel (0,0) (adjusted for padding) */
+	int rowpixels;		/* pixels per row (including padding) */
+	int rowbytes;		/* bytes per row (including padding) */
+
+	/* functions to render in the correct orientation */
+	void (*plot)(struct _mame_bitmap *bitmap,int x,int y,pen_t pen);
+	pen_t (*read)(struct _mame_bitmap *bitmap,int x,int y);
+	void (*plot_box)(struct _mame_bitmap *bitmap,int x,int y,int width,int height,pen_t pen);
+};
+typedef struct _mame_bitmap mame_bitmap;
+
+
 /* rectangles are used throughout the code */
-struct rectangle
+struct _rectangle
 {
 	int min_x,max_x;
 	int min_y,max_y;
 };
+typedef struct _rectangle rectangle;
 
 
 
@@ -127,6 +152,14 @@ typedef union
     Common macros
 
 ***************************************************************************/
+
+/* Standard MIN/MAX macros */
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
+#ifndef MAX
+#define MAX(x,y) ((x)>(y)?(x):(y))
+#endif
 
 /* Highly useful macro for compile-time knowledge of an array size */
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
@@ -288,7 +321,7 @@ INLINE int my_stricmp(const char *dst, const char *src)
 }
 
 /* compute the intersection of two rectangles */
-INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)
+INLINE void sect_rect(rectangle *dst, const rectangle *src)
 {
 	if (src->min_x > dst->min_x) dst->min_x = src->min_x;
 	if (src->max_x < dst->max_x) dst->max_x = src->max_x;

@@ -276,13 +276,13 @@ static void (*conditiontable[16])(void) =
 #define UPDATEPC()		change_pc(asap.pc)
 
 
-INLINE data8_t READBYTE(offs_t address)
+INLINE UINT8 READBYTE(offs_t address)
 {
 	/* no alignment issues with bytes */
 	return program_read_byte_32le(address);
 }
 
-INLINE data16_t READWORD(offs_t address)
+INLINE UINT16 READWORD(offs_t address)
 {
 	/* aligned reads are easy */
 	if (!(address & 1))
@@ -292,7 +292,7 @@ INLINE data16_t READWORD(offs_t address)
 	return program_read_dword_32le(address & ~3) >> (address & 3);
 }
 
-INLINE data32_t READLONG(offs_t address)
+INLINE UINT32 READLONG(offs_t address)
 {
 	/* aligned reads are easy */
 	if (!(address & 3))
@@ -302,13 +302,13 @@ INLINE data32_t READLONG(offs_t address)
 	return program_read_dword_32le(address & ~3) >> (address & 3);
 }
 
-INLINE void WRITEBYTE(offs_t address, data8_t data)
+INLINE void WRITEBYTE(offs_t address, UINT8 data)
 {
 	/* no alignment issues with bytes */
 	program_write_byte_32le(address, data);
 }
 
-INLINE void WRITEWORD(offs_t address, data16_t data)
+INLINE void WRITEWORD(offs_t address, UINT16 data)
 {
 	/* aligned writes are easy */
 	if (!(address & 1))
@@ -327,7 +327,7 @@ INLINE void WRITEWORD(offs_t address, data16_t data)
 		program_write_byte_32le(address + 1, data);
 }
 
-INLINE void WRITELONG(offs_t address, data32_t data)
+INLINE void WRITELONG(offs_t address, UINT32 data)
 {
 	/* aligned writes are easy */
 	if (!(address & 3))

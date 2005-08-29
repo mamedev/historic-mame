@@ -56,7 +56,7 @@ register. So what is controlling priority.
 #include "sound/2151intf.h"
 #include "sound/msm5205.h"
 
-static data8_t *cchip_ram;
+static UINT8 *cchip_ram;
 static UINT8 adpcm_b[0x08];
 static UINT8 adpcm_c[0x08];
 static int opwolf_gun_xoffs, opwolf_gun_yoffs;

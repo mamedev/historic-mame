@@ -90,7 +90,7 @@ TODO:
 #include <time.h>
 
 static UINT8 *pixmap[8];
-static struct mame_bitmap *framebuffer;
+static mame_bitmap *framebuffer;
 static int extra_layers;
 
 
@@ -168,12 +168,12 @@ VIDEO_START(mmpanic)
 }
 
 
-static void dynax_flipscreen_w( data8_t data )
+static void dynax_flipscreen_w( UINT8 data )
 {
 	logerror("flipscreen = %02x (%s)\n",data,(data&1)?"off":"on");
 }
 
-static void dynax_blit_flip_w( data8_t data )
+static void dynax_blit_flip_w( UINT8 data )
 {
 	if ((data ^ dynax_blit_flip) & 0xec)
 	{
@@ -647,7 +647,7 @@ INLINE void log_blit(int data)
 			dynax_clip_ctrl,dynax_clip_x,dynax_clip_y, dynax_clip_width,dynax_clip_height		);
 }
 
-static void blitter_w(int blitter, offs_t offset,data8_t data,int irq_vector)
+static void blitter_w(int blitter, offs_t offset,UINT8 data,int irq_vector)
 {
 	static int dynax_blit_reg[2];
 	int hi_bits;
@@ -812,7 +812,7 @@ profiler_mark(PROFILER_END);
 
 
 // differences wrt blitter_data_w: slightly different blitter commands
-static void blitter_w_funkyfig(int blitter, offs_t offset,data8_t data,int irq_vector)
+static void blitter_w_funkyfig(int blitter, offs_t offset,UINT8 data,int irq_vector)
 {
 	static int dynax_blit_reg[2];
 	int hi_bits;
@@ -1196,7 +1196,7 @@ static WRITE16_HANDLER( ddenlovr_blitter_irq_ack_w )
 
 static READ8_HANDLER( rongrong_gfxrom_r )
 {
-	data8_t *rom	=	memory_region( REGION_GFX1 );
+	UINT8 *rom	=	memory_region( REGION_GFX1 );
 	size_t size		=	memory_region_length( REGION_GFX1 );
 	int address	=	dynax_blit_address;
 
@@ -1218,7 +1218,7 @@ static READ16_HANDLER( ddenlovr_gfxrom_r )
 
 
 
-static void copylayer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int layer)
+static void copylayer(mame_bitmap *bitmap,const rectangle *cliprect,int layer)
 {
 	int x,y;
 	int scrollx = dynax_scroll[layer/4*8 + (layer%4) + 0];
@@ -1451,7 +1451,7 @@ static WRITE16_HANDLER( ddenlovr_coincounter_1_w )
 }
 
 
-static data8_t palram[0x200];
+static UINT8 palram[0x200];
 
 static WRITE8_HANDLER( rongrong_palette_w )
 {
@@ -1589,7 +1589,7 @@ static READ16_HANDLER( unk16_r )
 }
 
 
-static data8_t dynax_select, dynax_select2;
+static UINT8 dynax_select, dynax_select2;
 
 WRITE8_HANDLER( dynax_select_w )
 {
@@ -1650,7 +1650,7 @@ READ16_HANDLER( quiz365_input2_r )
 	return 0xff;
 }
 
-static data8_t rongrong_blitter_busy_select;
+static UINT8 rongrong_blitter_busy_select;
 
 WRITE8_HANDLER( rongrong_blitter_busy_w )
 {
@@ -1687,7 +1687,7 @@ static WRITE16_HANDLER( quiz365_coincounter_w )
 37,28,12    11      ->      88
 67,4c,3a    ??      ->      51
 */
-static data16_t quiz365_protection[2];
+static UINT16 quiz365_protection[2];
 static READ16_HANDLER( quiz365_protection_r )
 {
 	switch(quiz365_protection[0])
@@ -1804,7 +1804,7 @@ static READ16_HANDLER( nettoqc_input_r )
     Writes 67 4c 3a to 200e0b then 19 to 200e0d. Expects to read 51 from 200c03
 */
 
-static data16_t *nettoqc_protection_val;
+static UINT16 *nettoqc_protection_val;
 
 static READ16_HANDLER( nettoqc_protection_r )
 {
@@ -2028,7 +2028,7 @@ static WRITE8_HANDLER( mmpanic_blitter2_w )
 }
 
 /* A led for each of the 9 buttons */
-static data16_t mmpanic_leds;
+static UINT16 mmpanic_leds;
 
 static void mmpanic_update_leds(void)
 {
@@ -2206,7 +2206,7 @@ READ8_HANDLER( funkyfig_dsw_r )
 	return 0xff;
 }
 
-static data8_t funkyfig_lockout;
+static UINT8 funkyfig_lockout;
 
 READ8_HANDLER( funkyfig_coin_r )
 {
@@ -2320,7 +2320,7 @@ static ADDRESS_MAP_START( hanakanz_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static data8_t keyb,dsw;
+static UINT8 keyb,dsw;
 static WRITE8_HANDLER( hanakanz_keyb_w )
 {
 	keyb = data;
@@ -2332,7 +2332,7 @@ static WRITE8_HANDLER( hanakanz_dsw_w )
 
 static READ8_HANDLER( hanakanz_keyb_r )
 {
-	data8_t val = 0xff;
+	UINT8 val = 0xff;
 
 	if      (!(keyb & 0x01))	val = readinputport(offset * 5 + 1);
 	else if (!(keyb & 0x02))	val = readinputport(offset * 5 + 2);
@@ -2361,11 +2361,11 @@ static READ8_HANDLER( hanakanz_busy_r )
 
 static READ8_HANDLER( hanakanz_gfxrom_r )
 {
-	data8_t *rom	=	memory_region( REGION_GFX1 );
+	UINT8 *rom	=	memory_region( REGION_GFX1 );
 	size_t size		=	memory_region_length( REGION_GFX1 );
 	int address		=	(dynax_blit_address & 0xffffff) * 2;
 
-	static data8_t romdata[2];
+	static UINT8 romdata[2];
 
 	if (address >= size)
 	{
@@ -2494,7 +2494,7 @@ static ADDRESS_MAP_START( hkagerou_writeport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_
 ADDRESS_MAP_END
 
 
-static data8_t mjreach1_protection_val;
+static UINT8 mjreach1_protection_val;
 
 static WRITE8_HANDLER( mjreach1_protection_w )
 {
@@ -2541,7 +2541,7 @@ ADDRESS_MAP_END
 
 static READ8_HANDLER( mjchuuka_keyb_r )
 {
-	data8_t val = 0xff;
+	UINT8 val = 0xff;
 
 	if      (!(keyb & 0x01))	val = readinputport(offset * 5 + 1);
 	else if (!(keyb & 0x02))	val = readinputport(offset * 5 + 2);
@@ -2560,11 +2560,11 @@ static WRITE8_HANDLER( mjchuuka_blitter_w )
 	hanakanz_blitter_data_w(0,data);
 }
 
-static data8_t mjchuuka_romdata[2];
+static UINT8 mjchuuka_romdata[2];
 
 static void mjchuuka_get_romdata(void)
 {
-	data8_t *rom	=	memory_region( REGION_GFX1 );
+	UINT8 *rom	=	memory_region( REGION_GFX1 );
 	size_t size		=	memory_region_length( REGION_GFX1 );
 	int address		=	(dynax_blit_address & 0xffffff) * 2;
 
@@ -2592,7 +2592,7 @@ static READ8_HANDLER( mjchuuka_gfxrom_1_r )
 static WRITE8_HANDLER( mjchuuka_palette_w )
 {
 	static int palette_index;
-	data16_t rgb = (offset & 0xff00) | data;
+	UINT16 rgb = (offset & 0xff00) | data;
 
 	if (rgb & 0x8000)
 	{

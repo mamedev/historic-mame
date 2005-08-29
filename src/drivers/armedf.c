@@ -173,11 +173,11 @@ WRITE16_HANDLER( armedf_bg_scrollx_w );
 WRITE16_HANDLER( armedf_bg_scrolly_w );
 WRITE16_HANDLER( armedf_mcu_cmd );
 
-extern data16_t armedf_vreg;
-extern data16_t *armedf_bg_videoram;
-extern data16_t *armedf_fg_videoram;
-extern data16_t *terraf_text_videoram;
-extern data16_t *legion_cmd;
+extern UINT16 armedf_vreg;
+extern UINT16 *armedf_bg_videoram;
+extern UINT16 *armedf_fg_videoram;
+extern UINT16 *terraf_text_videoram;
+extern UINT16 *legion_cmd;
 extern tilemap *armedf_tx_tilemap;
 
 static WRITE16_HANDLER( io_w )
@@ -1372,7 +1372,7 @@ DRIVER_INIT( legion )
 #if LEGION_HACK
 	/* This is a hack to allow you to use the extra features
          of 3 of the "Unused" Dip Switches (see notes above). */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[0x0001d6/2] = 0x0001;
 	/* To avoid checksum error */
 	RAM[0x000488/2] = 0x4e71;
@@ -1386,7 +1386,7 @@ DRIVER_INIT( legiono )
 #if LEGION_HACK
 	/* This is a hack to allow you to use the extra features
          of 3 of the "Unused" Dip Switches (see notes above). */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[0x0001d6/2] = 0x0001;
 	/* No need to patch the checksum routine (see notes) ! */
 #endif

@@ -7,10 +7,10 @@
 #define SPRITERAM_START 0x1800
 #define SPRITERAM_SIZE (VIDEORAM_SIZE-SPRITERAM_START)
 
-static data16_t *vram,*buf_spriteram,*buf_spriteram2;
+static UINT16 *vram,*buf_spriteram,*buf_spriteram2;
 
 #define VREG_SIZE 18
-static data16_t vreg[VREG_SIZE];
+static UINT16 vreg[VREG_SIZE];
 
 static tilemap *bg_tilemap[3];
 
@@ -23,7 +23,7 @@ static tilemap *bg_tilemap[3];
 
 INLINE void get_tile_info(int tile_index,int plane)
 {
-	data16_t attr;
+	UINT16 attr;
 
 	tile_index = 2*tile_index + 0x800*plane;
 	attr = vram[tile_index];
@@ -138,7 +138,7 @@ WRITE16_HANDLER( othldrby_vreg_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
 {
 	int offs;
 

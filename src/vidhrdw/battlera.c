@@ -14,7 +14,7 @@
 static int HuC6270_registers[20];
 static int VDC_register,vram_ptr;
 static unsigned char *HuC6270_vram,*tile_dirty,*sprite_dirty,*vram_dirty;
-static struct mame_bitmap *tile_bitmap,*front_bitmap;
+static mame_bitmap *tile_bitmap,*front_bitmap;
 
 static int current_scanline,inc_value;
 static int irq_enable,rcr_enable,sb_enable,bb_enable,bldwolf_vblank;
@@ -250,7 +250,7 @@ WRITE8_HANDLER( HuC6270_data_w )
 
 /******************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip,int pri)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *clip,int pri)
 {
 	int offs,my,mx,code,code2,fx,fy,cgy=0,cgx,colour,i;
 
@@ -311,7 +311,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 }
 
-static void screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip)
+static void screenrefresh(mame_bitmap *bitmap,const rectangle *clip)
 {
 	int offs,code,scrollx,scrolly,mx,my;
 

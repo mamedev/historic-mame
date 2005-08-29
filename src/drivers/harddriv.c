@@ -250,7 +250,7 @@ static ADDRESS_MAP_START( driver_gsp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf4800000, 0xf48000ff) AM_READWRITE(hdgsp_control_hi_r, hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
 	AM_RANGE(0xf5000000, 0xf5000fff) AM_READWRITE(hdgsp_paletteram_lo_r, hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
 	AM_RANGE(0xf5800000, 0xf5800fff) AM_READWRITE(hdgsp_paletteram_hi_r, hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
-	AM_RANGE(0xff800000, 0xffffffff) AM_RAM AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
+	AM_RANGE(0xff800000, 0xffffffff) AM_RAM AM_BASE((UINT16 **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
 ADDRESS_MAP_END
 
 
@@ -298,7 +298,7 @@ static ADDRESS_MAP_START( multisync_gsp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf4800000, 0xf48000ff) AM_READWRITE(hdgsp_control_hi_r, hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
 	AM_RANGE(0xf5000000, 0xf5000fff) AM_READWRITE(hdgsp_paletteram_lo_r, hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
 	AM_RANGE(0xf5800000, 0xf5800fff) AM_READWRITE(hdgsp_paletteram_hi_r, hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
-	AM_RANGE(0xff800000, 0xffbfffff) AM_MIRROR(0x0400000) AM_RAM AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
+	AM_RANGE(0xff800000, 0xffbfffff) AM_MIRROR(0x0400000) AM_RAM AM_BASE((UINT16 **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
 ADDRESS_MAP_END
 
 
@@ -337,7 +337,7 @@ static ADDRESS_MAP_START( multisync2_gsp_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf4800000, 0xf48000ff) AM_READWRITE(hdgsp_control_hi_r, hdgsp_control_hi_w) AM_BASE(&hdgsp_control_hi)
 	AM_RANGE(0xf5000000, 0xf5000fff) AM_READWRITE(hdgsp_paletteram_lo_r, hdgsp_paletteram_lo_w) AM_BASE(&hdgsp_paletteram_lo)
 	AM_RANGE(0xf5800000, 0xf5800fff) AM_READWRITE(hdgsp_paletteram_hi_r, hdgsp_paletteram_hi_w) AM_BASE(&hdgsp_paletteram_hi)
-	AM_RANGE(0xff800000, 0xffffffff) AM_RAM AM_BASE((data16_t **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
+	AM_RANGE(0xff800000, 0xffffffff) AM_RAM AM_BASE((UINT16 **)&hdgsp_vram) AM_SIZE(&hdgsp_vram_size)
 ADDRESS_MAP_END
 
 
@@ -3542,11 +3542,11 @@ static void init_ds3(void)
 
 	/* if we have a sound DSP, boot it */
 	if (hdcpu_sound != -1 && Machine->drv->cpu[hdcpu_sound].cpu_type == CPU_ADSP2105)
-		adsp2105_load_boot_data((data8_t *)(memory_region(REGION_CPU1 + hdcpu_sound) + 0x10000),
-								(data32_t *)(memory_region(REGION_CPU1 + hdcpu_sound)));
+		adsp2105_load_boot_data((UINT8 *)(memory_region(REGION_CPU1 + hdcpu_sound) + 0x10000),
+								(UINT32 *)(memory_region(REGION_CPU1 + hdcpu_sound)));
 	if (hdcpu_sounddsp != -1 && Machine->drv->cpu[hdcpu_sounddsp].cpu_type == CPU_ADSP2105)
-		adsp2105_load_boot_data((data8_t *)(memory_region(REGION_CPU1 + hdcpu_sounddsp) + 0x10000),
-								(data32_t *)(memory_region(REGION_CPU1 + hdcpu_sounddsp)));
+		adsp2105_load_boot_data((UINT8 *)(memory_region(REGION_CPU1 + hdcpu_sounddsp) + 0x10000),
+								(UINT32 *)(memory_region(REGION_CPU1 + hdcpu_sounddsp)));
 
 /*
 
@@ -3630,12 +3630,12 @@ static void init_dsk(void)
 	/* install extra RAM */
 	memory_install_read16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x900000, 0x90ffff, 0, 0, hd68k_dsk_ram_r);
 	memory_install_write16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x900000, 0x90ffff, 0, 0, hd68k_dsk_ram_w);
-	hddsk_ram = (data16_t *)(memory_region(REGION_USER3) + 0x40000);
+	hddsk_ram = (UINT16 *)(memory_region(REGION_USER3) + 0x40000);
 
 	/* install extra ZRAM */
 	memory_install_read16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x910000, 0x910fff, 0, 0, hd68k_dsk_zram_r);
 	memory_install_write16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x910000, 0x910fff, 0, 0, hd68k_dsk_zram_w);
-	hddsk_zram = (data16_t *)(memory_region(REGION_USER3) + 0x50000);
+	hddsk_zram = (UINT16 *)(memory_region(REGION_USER3) + 0x50000);
 
 	/* install ASIC65 */
 	memory_install_write16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x914000, 0x917fff, 0, 0, asic65_data_w);
@@ -3644,7 +3644,7 @@ static void init_dsk(void)
 
 	/* install extra ROM */
 	memory_install_read16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x940000, 0x9fffff, 0, 0, hd68k_dsk_small_rom_r);
-	hddsk_rom = (data16_t *)(memory_region(REGION_USER3) + 0x00000);
+	hddsk_rom = (UINT16 *)(memory_region(REGION_USER3) + 0x00000);
 
 	/* set up the ASIC65 */
 	asic65_config(ASIC65_STANDARD);
@@ -3669,11 +3669,11 @@ static void init_dsk2(void)
 	/* install extra RAM */
 	memory_install_read16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x880000, 0x8bffff, 0, 0, hd68k_dsk_ram_r);
 	memory_install_write16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x880000, 0x8bffff, 0, 0, hd68k_dsk_ram_w);
-	hddsk_ram = (data16_t *)(memory_region(REGION_USER3) + 0x100000);
+	hddsk_ram = (UINT16 *)(memory_region(REGION_USER3) + 0x100000);
 
 	/* install extra ROM */
 	memory_install_read16_handler(hdcpu_main, ADDRESS_SPACE_PROGRAM, 0x900000, 0x9fffff, 0, 0, hd68k_dsk_rom_r);
-	hddsk_rom = (data16_t *)(memory_region(REGION_USER3) + 0x000000);
+	hddsk_rom = (UINT16 *)(memory_region(REGION_USER3) + 0x000000);
 
 	/* set up the ASIC65 */
 	asic65_config(ASIC65_STANDARD);
@@ -3781,7 +3781,7 @@ static DRIVER_INIT( stunrun )
 }
 
 
-data32_t *rddsp32_speedup;
+UINT32 *rddsp32_speedup;
 offs_t rddsp32_speedup_pc;
 READ32_HANDLER( rddsp32_speedup_r )
 {

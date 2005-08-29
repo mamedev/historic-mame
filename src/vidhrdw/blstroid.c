@@ -16,7 +16,7 @@
  *
  *************************************/
 
-data16_t *blstroid_priorityram;
+UINT16 *blstroid_priorityram;
 
 
 
@@ -146,7 +146,7 @@ void blstroid_scanline_update(int scanline)
 VIDEO_UPDATE( blstroid )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

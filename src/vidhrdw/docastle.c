@@ -221,7 +221,7 @@ VIDEO_START( docastle )
 	return 0;
 }
 
-static void docastle_draw_sprites( struct mame_bitmap *bitmap )
+static void docastle_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

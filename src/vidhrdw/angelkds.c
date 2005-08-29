@@ -12,7 +12,7 @@ enable / disable tilemap bits might be wrong
 
 static tilemap *tx_tilemap,*bgbot_tilemap ,*bgtop_tilemap;
 
-data8_t *angelkds_txvideoram, *angelkds_bgbotvideoram, *angelkds_bgtopvideoram;
+UINT8 *angelkds_txvideoram, *angelkds_bgbotvideoram, *angelkds_bgtopvideoram;
 
 /*** Text Layer Tilemap
 
@@ -148,7 +148,7 @@ a split down the middle of the screen
 
 */
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int enable_n)
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int enable_n)
 {
 	const UINT8 *source = spriteram+0x100-4;
 	const UINT8 *finish = spriteram;
@@ -296,7 +296,7 @@ VIDEO_START( angelkds )
 
 VIDEO_UPDATE( angelkds )
 {
-	struct rectangle clip;
+	rectangle clip;
 
 	fillbitmap(bitmap,0x3f,cliprect); /* is there a register controling the colour?, we currently use the last colour of the tx palette */
 

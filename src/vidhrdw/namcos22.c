@@ -15,7 +15,7 @@ static int mbSuperSystem22; /* used to conditionally support Super System22-spec
 static INT32 mWindowPri;
 static INT32 mMasterBias;
 
-static data16_t mCode; /* 3d primitive to render */
+static UINT16 mCode; /* 3d primitive to render */
 static namcos22_camera mCamera;
 
 static double mViewMatrix[4][4];
@@ -41,17 +41,17 @@ static unsigned mLitSurfaceIndex;
 #define NUM_CG_CHARS ((CGRAM_SIZE*8)/(64*16)) /* 0x3c0 */
 
 static int mPtRomSize;
-static const data8_t *mpPolyH;
-static const data8_t *mpPolyM;
-static const data8_t *mpPolyL;
+static const UINT8 *mpPolyH;
+static const UINT8 *mpPolyM;
+static const UINT8 *mpPolyL;
 
 #define MAX_DIRECT_POLY 16
 #define DIRECT_POLY_SIZE 0x1c
 static int mDirectPolyCount;
-static data16_t mDirectPolyBuf[MAX_DIRECT_POLY][DIRECT_POLY_SIZE];
+static UINT16 mDirectPolyBuf[MAX_DIRECT_POLY][DIRECT_POLY_SIZE];
 
 static double
-DspFloatToNativeFloat( data32_t iVal )
+DspFloatToNativeFloat( UINT32 iVal )
 {
 	double mantissa = (iVal&0xffff);
 	int exponent = (iVal>>16)&0xff;
@@ -64,20 +64,20 @@ DspFloatToNativeFloat( data32_t iVal )
 }
 
 void
-namcos22_draw_direct_poly( const data16_t *pSource )
+namcos22_draw_direct_poly( const UINT16 *pSource )
 {
 	if( mDirectPolyCount < MAX_DIRECT_POLY )
 	{
-		memcpy( mDirectPolyBuf[mDirectPolyCount++], pSource, DIRECT_POLY_SIZE*sizeof(data16_t) );
+		memcpy( mDirectPolyBuf[mDirectPolyCount++], pSource, DIRECT_POLY_SIZE*sizeof(UINT16) );
 	}
 }
 
 static void
-DrawDirectPolys( struct mame_bitmap *bitmap )
+DrawDirectPolys( mame_bitmap *bitmap )
 {
 	while( mDirectPolyCount )
 	{
-		const data16_t *pSource = mDirectPolyBuf[--mDirectPolyCount];
+		const UINT16 *pSource = mDirectPolyBuf[--mDirectPolyCount];
 		/**
          * 0x03a2 // 0x0fff zcode?
          * 0x0001 // 0x000f tpage?
@@ -157,7 +157,7 @@ GetPolyData( INT32 addr )
 	return result;
 } /* GetPolyData */
 
-data32_t
+UINT32
 namcos22_point_rom_r( offs_t offs )
 {
 	return GetPolyData(offs);
@@ -181,27 +181,27 @@ static gfx_layout cg_layout =
 	64*16
 }; /* cg_layout */
 
-data32_t *namcos22_cgram;
-data32_t *namcos22_textram;
-data32_t *namcos22_polygonram;
-data32_t *namcos22_gamma;
-data32_t *namcos22_vics_data;
-data32_t *namcos22_vics_control;
+UINT32 *namcos22_cgram;
+UINT32 *namcos22_textram;
+UINT32 *namcos22_polygonram;
+UINT32 *namcos22_gamma;
+UINT32 *namcos22_vics_data;
+UINT32 *namcos22_vics_control;
 
 static int cgsomethingisdirty;
 static unsigned char *cgdirty;
 static unsigned char *dirtypal;
 static tilemap *bg_tilemap;
 
-static data8_t
-nthbyte( const data32_t *pSource, int offs )
+static UINT8
+nthbyte( const UINT32 *pSource, int offs )
 {
 	pSource += offs/4;
 	return (pSource[0]<<((offs&3)*8))>>24;
 }
 
-static data16_t
-nthword( const data32_t *pSource, int offs )
+static UINT16
+nthword( const UINT32 *pSource, int offs )
 {
 	pSource += offs/2;
 	return (pSource[0]<<((offs&1)*16))>>16;
@@ -209,7 +209,7 @@ nthword( const data32_t *pSource, int offs )
 
 static void TextTilemapGetInfo( int tile_index )
 {
-	data16_t data = nthword( namcos22_textram,tile_index );
+	UINT16 data = nthword( namcos22_textram,tile_index );
 	/**
      * xxxx------------ palette select
      * ----xx---------- flip
@@ -223,12 +223,12 @@ static void TextTilemapGetInfo( int tile_index )
  */
 static void
 mydrawgfxzoom(
-	struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+	mame_bitmap *dest_bmp,const gfx_element *gfx,
 	unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-	const struct rectangle *clip,int transparency,int transparent_color,
+	const rectangle *clip,int transparency,int transparent_color,
 	int scalex, int scaley, INT32 zcoord )
 {
-	struct rectangle myclip;
+	rectangle myclip;
 	if (!scalex || !scaley) return;
 	if(clip)
 	{
@@ -332,10 +332,10 @@ mydrawgfxzoom(
 
 static void
 DrawSpritesHelper(
-	struct mame_bitmap *bitmap,
-	const struct rectangle *cliprect,
-	const data32_t *pSource,
-	const data32_t *pPal,
+	mame_bitmap *bitmap,
+	const rectangle *cliprect,
+	const UINT32 *pSource,
+	const UINT32 *pPal,
 	int num_sprites,
 	int deltax,
 	int deltay,
@@ -343,7 +343,7 @@ DrawSpritesHelper(
 {
 	int i;
 	int color,flipx,flipy;
-	data32_t xypos, size, attrs, code;
+	UINT32 xypos, size, attrs, code;
 	int numcols, numrows, row, col;
 	int xpos, ypos, tile;
 	int zoomx, zoomy;
@@ -449,7 +449,7 @@ DrawSpritesHelper(
 
 
 static void
-DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+DrawSprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/*
         0x980000:   00060000 00010000 02ff0000 000007ff
@@ -503,8 +503,8 @@ DrawSprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
         ...
     */
 	int num_sprites = (spriteram32[0x04/4]>>16)&0x3ff; /* max 1024 sprites? */
-	const data32_t *pSource = &spriteram32[0x4000/4]+num_sprites*4;
-	const data32_t *pPal = &spriteram32[0x20000/4]+num_sprites*2;
+	const UINT32 *pSource = &spriteram32[0x4000/4]+num_sprites*4;
+	const UINT32 *pPal = &spriteram32[0x20000/4]+num_sprites*2;
 	int deltax = spriteram32[0x14/4]>>16;
 	int deltay = spriteram32[0x18/4]>>16;
 /*
@@ -669,10 +669,10 @@ UpdatePalette( void ) /* for System22 - ignore gamma/fader effects for now */
 } /* UpdatePalette */
 
 static void
-DrawTextLayer( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+DrawTextLayer( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	unsigned i;
-	data32_t data;
+	UINT32 data;
 
 	if( cgsomethingisdirty )
 	{
@@ -750,7 +750,7 @@ TransformNormal( double *nx, double *ny, double *nz, double m[4][4] )
  */
 static void
 BlitQuadHelper(
-		struct mame_bitmap *pBitmap,
+		mame_bitmap *pBitmap,
 		unsigned color,
 		unsigned addr,
 		double m[4][4],
@@ -897,7 +897,7 @@ BlitQuadHelper(
 
 
 static void
-BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
+BlitQuads( mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 {
 	INT32 size = GetPolyData(addr++);
 	INT32 finish = addr + (size&0xff);
@@ -989,7 +989,7 @@ BlitQuads( struct mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 } /* BlitQuads */
 
 static void
-BlitPolyObject( struct mame_bitmap *pBitmap, int code, double M[4][4] )
+BlitPolyObject( mame_bitmap *pBitmap, int code, double M[4][4] )
 {
 	unsigned addr1 = GetPolyData(code);
 	for(;;)
@@ -1118,7 +1118,7 @@ HandleBB0003( const INT32 *pSource )
 } /* HandleBB0003 */
 
 static void
-Handle200002( struct mame_bitmap *bitmap, const INT32 *pSource )
+Handle200002( mame_bitmap *bitmap, const INT32 *pSource )
 {
 	if( mCode>=0x45 )
 	{
@@ -1180,7 +1180,7 @@ Handle233002( const INT32 *pSource )
 } /* Handle233002 */
 
 static void
-SimulateSlaveDSP( struct mame_bitmap *bitmap, int bDebug )
+SimulateSlaveDSP( mame_bitmap *bitmap, int bDebug )
 {
 	const INT32 *pSource = 0x300 + (INT32 *)namcos22_polygonram;
 	INT16 len;
@@ -1253,7 +1253,7 @@ SimulateSlaveDSP( struct mame_bitmap *bitmap, int bDebug )
 } /* SimulateSlaveDSP */
 
 static void
-DrawPolygons( struct mame_bitmap *bitmap )
+DrawPolygons( mame_bitmap *bitmap )
 {
 	if( mbDSPisActive )
 	{
@@ -1343,7 +1343,7 @@ READ32_HANDLER( namcos22_gamma_r )
  */
 WRITE32_HANDLER( namcos22_gamma_w )
 {
-	data32_t old = namcos22_gamma[offset];
+	UINT32 old = namcos22_gamma[offset];
 	COMBINE_DATA( &namcos22_gamma[offset] );
 	if( old!=namcos22_gamma[offset] )
 	{
@@ -1548,18 +1548,18 @@ VIDEO_UPDATE( namcos22 )
 
 /* 16 bit access to DSP RAM */
 
-static data16_t namcos22_dspram_bank;
+static UINT16 namcos22_dspram_bank;
 
 WRITE16_HANDLER( namcos22_dspram16_bank_w )
 {
 	COMBINE_DATA( &namcos22_dspram_bank );
 }
 
-static data16_t mUpperWordLatch;
+static UINT16 mUpperWordLatch;
 
 READ16_HANDLER( namcos22_dspram16_r )
 {
-	data32_t value = namcos22_polygonram[offset];
+	UINT32 value = namcos22_polygonram[offset];
 
 	switch( namcos22_dspram_bank )
 	{
@@ -1579,14 +1579,14 @@ READ16_HANDLER( namcos22_dspram16_r )
 	default:
 		break;
 	}
-	return (data16_t)value;
+	return (UINT16)value;
 }
 
 WRITE16_HANDLER( namcos22_dspram16_w )
 {
-	data32_t value = namcos22_polygonram[offset];
-	data16_t lo = value&0xffff;
-	data16_t hi = value>>16;
+	UINT32 value = namcos22_polygonram[offset];
+	UINT16 lo = value&0xffff;
+	UINT16 hi = value>>16;
 	switch( namcos22_dspram_bank )
 	{
 	case 0:

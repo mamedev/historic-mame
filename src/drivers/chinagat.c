@@ -88,9 +88,9 @@ VIDEO_UPDATE( ddragon );
 
 extern int technos_video_hw;
 extern int ddragon_scrollx_hi, ddragon_scrolly_hi;
-extern data8_t *ddragon_scrollx_lo;
-extern data8_t *ddragon_scrolly_lo;
-extern data8_t *ddragon_bgvideoram,*ddragon_fgvideoram;
+extern UINT8 *ddragon_scrollx_lo;
+extern UINT8 *ddragon_scrolly_lo;
+extern UINT8 *ddragon_bgvideoram,*ddragon_fgvideoram;
 
 /**************** Machine stuff ******************/
 static int sprite_irq, sound_irq, adpcm_sound_irq;
@@ -130,13 +130,13 @@ WRITE8_HANDLER( chinagat_video_ctrl_w )
 
 static WRITE8_HANDLER( chinagat_bankswitch_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	memory_set_bankptr( 1,&RAM[ 0x10000 + (0x4000 * (data & 7)) ] );
 }
 
 static WRITE8_HANDLER( chinagat_sub_bankswitch_w )
 {
-	data8_t *RAM = memory_region( REGION_CPU2 );
+	UINT8 *RAM = memory_region( REGION_CPU2 );
 	memory_set_bankptr( 4,&RAM[ 0x10000 + (0x4000 * (data & 7)) ] );
 }
 
@@ -183,7 +183,7 @@ static WRITE8_HANDLER( saiyugb1_adpcm_control_w )
 {
 	/* i8748 Port 2 write */
 
-	data8_t *saiyugb1_adpcm_rom = memory_region(REGION_SOUND1);
+	UINT8 *saiyugb1_adpcm_rom = memory_region(REGION_SOUND1);
 
 	if (data & 0x80)	/* Reset m5205 and disable ADPCM ROM outputs */
 	{

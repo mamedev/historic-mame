@@ -13,9 +13,9 @@
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-extern data16_t *gaelco_vregs;
-extern data16_t *gaelco_videoram;
-extern data16_t *gaelco_spriteram;
+extern UINT16 *gaelco_vregs;
+extern UINT16 *gaelco_videoram;
+extern UINT16 *gaelco_spriteram;
 
 /* from vidhrdw/gaelco.c */
 WRITE16_HANDLER( gaelco_vram_w );

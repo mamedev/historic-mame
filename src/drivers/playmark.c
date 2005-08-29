@@ -38,15 +38,15 @@ World Beach Volley:
 #include "sound/okim6295.h"
 
 
-static data16_t playmark_snd_command;
-static data16_t playmark_snd_flag;
-static data8_t playmark_oki_control;
-static data8_t playmark_oki_command;
+static UINT16 playmark_snd_command;
+static UINT16 playmark_snd_flag;
+static UINT8 playmark_oki_control;
+static UINT8 playmark_oki_command;
 
 
-extern data16_t *bigtwin_bgvideoram;
-extern data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
-extern data16_t *wbeachvl_rowscroll;
+extern UINT16 *bigtwin_bgvideoram;
+extern UINT16 *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
+extern UINT16 *wbeachvl_rowscroll;
 
 VIDEO_START( bigtwin );
 VIDEO_START( wbeachvl );
@@ -1180,8 +1180,8 @@ static UINT8 playmark_asciitohex(UINT8 data)
 
 static DRIVER_INIT( bigtwin )
 {
-	data8_t *playmark_PICROM_HEX = memory_region(REGION_USER1);
-	data16_t *playmark_PICROM = (data16_t *)memory_region(REGION_CPU2);
+	UINT8 *playmark_PICROM_HEX = memory_region(REGION_USER1);
+	UINT16 *playmark_PICROM = (UINT16 *)memory_region(REGION_CPU2);
 	INT32   offs, data;
 	UINT16  src_pos = 0;
 	UINT16  dst_pos = 0;

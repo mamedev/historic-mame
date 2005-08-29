@@ -721,7 +721,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-static data32_t *namcos12_sharedram;
+static UINT32 *namcos12_sharedram;
 
 static WRITE32_HANDLER( sharedram_w )
 {
@@ -737,19 +737,19 @@ static READ32_HANDLER( sharedram_r )
 
 static WRITE16_HANDLER( sharedram_sub_w )
 {
-	data16_t *shared16 = (data16_t *)namcos12_sharedram;
+	UINT16 *shared16 = (UINT16 *)namcos12_sharedram;
 
 	COMBINE_DATA(&shared16[BYTE_XOR_LE(offset)]);
 }
 
 static READ16_HANDLER( sharedram_sub_r )
 {
-	data16_t *shared16 = (data16_t *)namcos12_sharedram;
+	UINT16 *shared16 = (UINT16 *)namcos12_sharedram;
 
 	return shared16[BYTE_XOR_LE(offset)];
 }
 
-static data32_t m_n_bankoffset, m_n_bankoffseth;
+static UINT32 m_n_bankoffset, m_n_bankoffseth;
 
 // called after a state load to properly set things up again
 static void s12_resetbank(void)
@@ -789,7 +789,7 @@ static WRITE32_HANDLER( bankoffset_w )
 	verboselog( 1, "bankoffset_w( %08x, %08x, %08x ) %08x\n", offset, data, mem_mask, m_n_bankoffset );
 }
 
-static data32_t m_n_dmaoffset, m_n_dmabias;
+static UINT32 m_n_dmaoffset, m_n_dmabias;
 
 static WRITE32_HANDLER( dmaoffset_w )
 {
@@ -810,11 +810,11 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 
 	if (( m_n_dmaoffset >= 0x80000000 ) || ( m_n_dmabias == 0x1f300000 ))
 	{
-		p_n_src = (data32_t *)( memory_region( REGION_USER1 ) + ( m_n_dmaoffset & 0x003fffff ) );
+		p_n_src = (UINT32 *)( memory_region( REGION_USER1 ) + ( m_n_dmaoffset & 0x003fffff ) );
 	}
 	else
 	{
-		p_n_src = (data32_t *)( memory_region( REGION_USER2 ) + ( m_n_dmaoffset & 0x7fffffff ) );
+		p_n_src = (UINT32 *)( memory_region( REGION_USER2 ) + ( m_n_dmaoffset & 0x7fffffff ) );
 	}
 
 	p_n_dst = &g_p_n_psxram[ n_address / 4 ];
@@ -963,7 +963,7 @@ INLINE UINT8 make_bcd(UINT8 data)
 
 static READ8_HANDLER( s12_mcu_rtc_r )
 {
-	data8_t ret = 0;
+	UINT8 ret = 0;
 	time_t curtime;
 	struct tm *exptime;
 	static int weekday[7] = { 7, 1, 2, 3, 4, 5, 6 };

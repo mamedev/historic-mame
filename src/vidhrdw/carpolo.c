@@ -10,8 +10,8 @@
 #include "carpolo.h"
 
 
-data8_t *carpolo_alpharam;
-data8_t *carpolo_spriteram;
+UINT8 *carpolo_alpharam;
+UINT8 *carpolo_spriteram;
 
 
 /* the screen elements' priorties determine their color */
@@ -49,11 +49,11 @@ data8_t *carpolo_spriteram;
 #define RIGHT_BORDER		239
 
 
-static struct mame_bitmap *sprite_sprite_collision_bitmap1;
-static struct mame_bitmap *sprite_sprite_collision_bitmap2;
-static struct mame_bitmap *sprite_goal_collision_bitmap1;
-static struct mame_bitmap *sprite_goal_collision_bitmap2;
-static struct mame_bitmap *sprite_border_collision_bitmap;
+static mame_bitmap *sprite_sprite_collision_bitmap1;
+static mame_bitmap *sprite_sprite_collision_bitmap2;
+static mame_bitmap *sprite_goal_collision_bitmap1;
+static mame_bitmap *sprite_goal_collision_bitmap2;
+static mame_bitmap *sprite_border_collision_bitmap;
 
 
 /***************************************************************************
@@ -199,7 +199,7 @@ VIDEO_START( carpolo )
  *
  *************************************/
 
-static void draw_alpha_line(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+static void draw_alpha_line(mame_bitmap *bitmap, const rectangle *cliprect,
 					   		int alpha_line, int video_line)
 {
 	int x;
@@ -207,7 +207,7 @@ static void draw_alpha_line(struct mame_bitmap *bitmap, const struct rectangle *
 
 	for (x = 0; x < 32; x++)
 	{
-		data8_t code, col;
+		UINT8 code, col;
 
 		code = carpolo_alpharam[alpha_line * 32 + x] >> 2;
 		col  = carpolo_alpharam[alpha_line * 32 + x] & 0x03;
@@ -234,7 +234,7 @@ static void remap_sprite_code(int bank, int code, int *remapped_code, int *flipy
 }
 
 
-static void draw_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+static void draw_sprite(mame_bitmap *bitmap, const rectangle *cliprect,
 						UINT8 x, UINT8 y, int bank, int code, int col)
 {
 	int remapped_code, flipy;
@@ -577,9 +577,9 @@ static int check_sprite_right_goal_collision(int x1, int y1, int code1, int flip
 
 /* returns 1 for collision with vertical border,
    2 for collision with horizontal border */
-static int check_sprite_border_collision(data8_t x1, data8_t y1, int code1, int flipy1)
+static int check_sprite_border_collision(UINT8 x1, UINT8 y1, int code1, int flipy1)
 {
-	data8_t x,y;
+	UINT8 x,y;
 	int collided = 0;
 
 
@@ -601,15 +601,15 @@ static int check_sprite_border_collision(data8_t x1, data8_t y1, int code1, int 
 		{
 			if ((read_pixel(sprite_border_collision_bitmap, x, y) == Machine->pens[1]))
 			{
-				if (((data8_t)(x1 + x) == LEFT_BORDER) ||
-					((data8_t)(x1 + x) == RIGHT_BORDER))
+				if (((UINT8)(x1 + x) == LEFT_BORDER) ||
+					((UINT8)(x1 + x) == RIGHT_BORDER))
 				{
 					collided = 1;
 					break;
 				}
 
-				if (((data8_t)(y1 + y) == TOP_BORDER) ||
-					((data8_t)(y1 + y) == BOTTOM_BORDER))
+				if (((UINT8)(y1 + y) == TOP_BORDER) ||
+					((UINT8)(y1 + y) == BOTTOM_BORDER))
 				{
 					collided = 2;
 					break;

@@ -5,8 +5,8 @@
 
 unsigned char *lastday_txvideoram;
 unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
-data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
-data16_t *popbingo_scroll, *popbingo_scroll2;
+UINT16 *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
+UINT16 *popbingo_scroll, *popbingo_scroll2;
 static int tx_pri;
 static int flytiger_pri;
 static int sprites_disabled;
@@ -87,7 +87,7 @@ WRITE16_HANDLER( rshark_ctrl_w )
 	}
 }
 
-static void draw_layer(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void draw_layer(mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -135,7 +135,7 @@ static void draw_layer(struct mame_bitmap *bitmap,int gfx,const unsigned char *s
 	}
 }
 
-static void bluehawk_draw_layer(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void bluehawk_draw_layer(mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -183,7 +183,7 @@ static void bluehawk_draw_layer(struct mame_bitmap *bitmap,int gfx,const unsigne
 	}
 }
 
-static void bluehawk_draw_layer2(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void bluehawk_draw_layer2(mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -231,7 +231,7 @@ static void bluehawk_draw_layer2(struct mame_bitmap *bitmap,int gfx,const unsign
 	}
 }
 
-static void rshark_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scroll,
+static void rshark_draw_layer(mame_bitmap *bitmap,int gfx,UINT16 *scroll,
 		const unsigned char *tilemap,const unsigned char *tilemap2,int transparency)
 {
 	int offs;
@@ -271,7 +271,7 @@ static void rshark_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scrol
 	}
 }
 
-static void popbingo_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scroll,
+static void popbingo_draw_layer(mame_bitmap *bitmap,int gfx,UINT16 *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 
@@ -322,7 +322,7 @@ static void popbingo_draw_layer(struct mame_bitmap *bitmap,int gfx,data16_t *scr
 }
 
 // it's the same as draw_layer function for now...
-static void flytiger_draw_layer2(struct mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
+static void flytiger_draw_layer2(mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 		const unsigned char *tilemap,int transparency)
 {
 	int offs;
@@ -371,7 +371,7 @@ static void flytiger_draw_layer2(struct mame_bitmap *bitmap,int gfx,const unsign
 	}
 }
 
-static void draw_tx(struct mame_bitmap *bitmap,int yoffset)
+static void draw_tx(mame_bitmap *bitmap,int yoffset)
 {
 	int offs;
 
@@ -397,7 +397,7 @@ static void draw_tx(struct mame_bitmap *bitmap,int yoffset)
 	}
 }
 
-static void bluehawk_draw_tx(struct mame_bitmap *bitmap)
+static void bluehawk_draw_tx(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -423,7 +423,7 @@ static void bluehawk_draw_tx(struct mame_bitmap *bitmap)
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,int pollux_extensions)
+static void draw_sprites(mame_bitmap *bitmap,int pollux_extensions)
 {
 	int offs;
 
@@ -486,7 +486,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,int pollux_extensions)
 	}
 }
 
-static void rshark_draw_sprites(struct mame_bitmap *bitmap)
+static void rshark_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 

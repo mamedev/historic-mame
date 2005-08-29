@@ -4,13 +4,13 @@
 
 static tilemap *bsb_tilemap, *bsb_tilemap2, *bsb_tilemap3;
 
-extern data16_t *bsb_videoram, *bsb_videoram2, *bsb_videoram3;
-extern data16_t *bsb_vidreg1, *bsb_vidreg2;
-extern data16_t *bigstrkb_spriteram;
+extern UINT16 *bsb_videoram, *bsb_videoram2, *bsb_videoram3;
+extern UINT16 *bsb_vidreg1, *bsb_vidreg2;
+extern UINT16 *bigstrkb_spriteram;
 
 /* Sprites */
 
-static void bigstrkb_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void bigstrkb_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/*- SPR RAM Format -**
 
@@ -21,8 +21,8 @@ static void bigstrkb_drawsprites( struct mame_bitmap *bitmap, const struct recta
     **- End of Comments -*/
 
 	const gfx_element *gfx = Machine->gfx[2];
-	data16_t *source = bigstrkb_spriteram;
-	data16_t *finish = source + 0x800/2;
+	UINT16 *source = bigstrkb_spriteram;
+	UINT16 *finish = source + 0x800/2;
 
 	while( source<finish )
 	{

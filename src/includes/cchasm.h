@@ -27,7 +27,7 @@ void *cchasm_sh_start(int clock, const struct CustomSound_interface *config);
 
 /*----------- defined in vidhrdw/cchasm.c -----------*/
 
-extern data16_t *cchasm_ram;
+extern UINT16 *cchasm_ram;
 
 WRITE16_HANDLER( cchasm_refresh_control_w );
 VIDEO_START( cchasm );

@@ -20,7 +20,7 @@ UINT8 *zaxxon_char_color_bank;
 UINT8 *zaxxon_background_position;
 UINT8 *zaxxon_background_color_bank;
 UINT8 *zaxxon_background_enable;
-static struct mame_bitmap *backgroundbitmap1,*backgroundbitmap2;
+static mame_bitmap *backgroundbitmap1,*backgroundbitmap2;
 static const UINT8 *color_codes;
 
 int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
@@ -110,7 +110,7 @@ WRITE8_HANDLER( congo_colorram_w )
 }
 
 
-static void create_background( struct mame_bitmap *dst_bm, struct mame_bitmap *src_bm, int col )
+static void create_background( mame_bitmap *dst_bm, mame_bitmap *src_bm, int col )
 {
 	int offs;
 	int sx,sy;
@@ -134,7 +134,7 @@ static void create_background( struct mame_bitmap *dst_bm, struct mame_bitmap *s
 
 static int zaxxon_create_background(void)
 {
-	struct mame_bitmap *prebitmap;
+	mame_bitmap *prebitmap;
 	int width, height;
 
 	/* leave a screenful of black pixels at each end */
@@ -193,7 +193,7 @@ VIDEO_START( zaxxon )
 	return 0;
 }
 
-static void zaxxon_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void zaxxon_draw_background( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/* copy the background */
 	/* TODO: there's a bug here which shows only in test mode. The background doesn't */
@@ -203,7 +203,7 @@ static void zaxxon_draw_background( struct mame_bitmap *bitmap, const struct rec
 	if (*zaxxon_background_enable)
 	{
 		int i,skew,scroll;
-		struct rectangle clip;
+		rectangle clip;
 
 		/* skew background up one pixel every 2 horizontal pixels */
 		if (!flip_screen_y)
@@ -248,7 +248,7 @@ static void zaxxon_draw_background( struct mame_bitmap *bitmap, const struct rec
 	}
 }
 
-static void zaxxon_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void zaxxon_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -339,7 +339,7 @@ VIDEO_START( razmataz )
 	return 0;
 }
 
-static void razmataz_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void razmataz_draw_background( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	if (*zaxxon_background_enable)
 	{
@@ -389,7 +389,7 @@ VIDEO_START( congo )
 	return 0;
 }
 
-static void congo_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void congo_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 	int i;
@@ -441,7 +441,7 @@ VIDEO_UPDATE( congo )
 
 /* Future Spy */
 
-static void futspy_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void futspy_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

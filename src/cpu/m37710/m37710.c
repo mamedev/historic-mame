@@ -465,7 +465,7 @@ static void m37710_recalc_timer(int timer)
 	}
 }
 
-static data8_t m37710_internal_r(int offset)
+static UINT8 m37710_internal_r(int offset)
 {
 	#if M37710_DEBUG
 	if (offset > 1)
@@ -559,7 +559,7 @@ static data8_t m37710_internal_r(int offset)
 	return m37710i_cpu.m37710_regs[offset];
 }
 
-static void m37710_internal_w(int offset, data8_t data)
+static void m37710_internal_w(int offset, UINT8 data)
 {
 	int i;
 

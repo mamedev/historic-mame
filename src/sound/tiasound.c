@@ -165,7 +165,7 @@ static const UINT8 Div31[POLY5_SIZE] =
 /*                                                                           */
 /*****************************************************************************/
 
-void tia_write(void *_chip, offs_t offset, data8_t data)
+void tia_write(void *_chip, offs_t offset, UINT8 data)
 {
 	struct tia *chip = _chip;
     UINT16 new_val = 0;

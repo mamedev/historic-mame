@@ -7,9 +7,9 @@
 
 /*----------- defined in drivers/segas32.c -----------*/
 
-extern data8_t *ga2_dpram;
-extern data16_t *system32_workram;
-extern data16_t *system32_protram;
+extern UINT8 *ga2_dpram;
+extern UINT16 *system32_workram;
+extern UINT16 *system32_protram;
 
 
 /*----------- defined in machine/segas32.c -----------*/
@@ -36,11 +36,11 @@ WRITE16_HANDLER(sonic_level_load_protection);
 
 /*----------- defined in vidhrdw/segas32.c -----------*/
 
-extern data16_t *system32_videoram;
-extern data16_t *system32_spriteram;
-extern data16_t *system32_paletteram[2];
-extern data16_t system32_displayenable[2];
-extern data16_t system32_tilebank_external;
+extern UINT16 *system32_videoram;
+extern UINT16 *system32_spriteram;
+extern UINT16 *system32_paletteram[2];
+extern UINT16 system32_displayenable[2];
+extern UINT16 system32_tilebank_external;
 
 VIDEO_START(system32);
 VIDEO_START(multi32);

@@ -3,7 +3,7 @@
 
 
 
-data16_t *galpanic_bgvideoram,*galpanic_fgvideoram;
+UINT16 *galpanic_bgvideoram,*galpanic_fgvideoram;
 size_t galpanic_fgvideoram_size;
 
 
@@ -73,7 +73,7 @@ WRITE16_HANDLER( galpanic_paletteram_w )
 
 ***************************************************************************/
 
-static void galpanic_draw_sprites(struct mame_bitmap *bitmap)
+static void galpanic_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 	int sx,sy;
@@ -115,7 +115,7 @@ static void galpanic_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void comad_draw_sprites(struct mame_bitmap *bitmap)
+static void comad_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 	int sx=0, sy=0;
@@ -152,7 +152,7 @@ static void comad_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void draw_fgbitmap(struct mame_bitmap *bitmap)
+static void draw_fgbitmap(mame_bitmap *bitmap)
 {
 	int offs;
 

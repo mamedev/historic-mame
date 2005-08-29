@@ -88,11 +88,11 @@ Sprites - Data East custom chip 52
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *darkseal_pf12_row,*darkseal_pf34_row;
-data16_t *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
+UINT16 *darkseal_pf12_row,*darkseal_pf34_row;
+UINT16 *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
 
-static data16_t darkseal_control_0[8];
-static data16_t darkseal_control_1[8];
+static UINT16 darkseal_control_0[8];
+static UINT16 darkseal_control_1[8];
 
 static tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap;
 static int flipscreen;
@@ -106,7 +106,7 @@ static UINT32 darkseal_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_row
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5) + ((row & 0x20) << 6);
 }
 
-INLINE void get_bg_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
+INLINE void get_bg_tile_info(int tile_index,int gfx_bank,UINT16 *gfx_base)
 {
 	int tile,color;
 
@@ -164,7 +164,7 @@ WRITE16_HANDLER( darkseal_palette_24bit_b_w )
 
 /******************************************************************************/
 
-static void darkseal_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void darkseal_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -233,7 +233,7 @@ static void darkseal_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 
 WRITE16_HANDLER( darkseal_pf1_data_w )
 {
-	data16_t oldword=darkseal_pf1_data[offset];
+	UINT16 oldword=darkseal_pf1_data[offset];
 	COMBINE_DATA(&darkseal_pf1_data[offset]);
 	if (oldword!=darkseal_pf1_data[offset])
 		tilemap_mark_tile_dirty(pf1_tilemap,offset);
@@ -241,7 +241,7 @@ WRITE16_HANDLER( darkseal_pf1_data_w )
 
 WRITE16_HANDLER( darkseal_pf2_data_w )
 {
-	data16_t oldword=darkseal_pf2_data[offset];
+	UINT16 oldword=darkseal_pf2_data[offset];
 	COMBINE_DATA(&darkseal_pf2_data[offset]);
 	if (oldword!=darkseal_pf2_data[offset])
 		tilemap_mark_tile_dirty(pf2_tilemap,offset);
@@ -249,7 +249,7 @@ WRITE16_HANDLER( darkseal_pf2_data_w )
 
 WRITE16_HANDLER( darkseal_pf3_data_w )
 {
-	data16_t oldword=darkseal_pf3_data[offset];
+	UINT16 oldword=darkseal_pf3_data[offset];
 	COMBINE_DATA(&darkseal_pf3_data[offset]);
 	if (oldword!=darkseal_pf3_data[offset])
 		tilemap_mark_tile_dirty(pf3_tilemap,offset);

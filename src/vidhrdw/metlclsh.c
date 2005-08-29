@@ -24,11 +24,11 @@
 
 static tilemap *bg_tilemap,*fg_tilemap;
 
-static data8_t metlclsh_write_mask, *metlclsh_otherram;
+static UINT8 metlclsh_write_mask, *metlclsh_otherram;
 
 /* Variables that driver has access to: */
 
-data8_t *metlclsh_bgram, *metlclsh_fgram, *metlclsh_scrollx;
+UINT8 *metlclsh_bgram, *metlclsh_fgram, *metlclsh_scrollx;
 
 /* Functions that driver has access to: */
 
@@ -46,7 +46,7 @@ WRITE8_HANDLER( metlclsh_rambank_w )
 	}
 }
 
-static data8_t metlclsh_gfxbank;
+static UINT8 metlclsh_gfxbank;
 WRITE8_HANDLER( metlclsh_gfxbank_w )
 {
 	if (!(data & 4) && (metlclsh_gfxbank != data))
@@ -124,8 +124,8 @@ WRITE8_HANDLER( metlclsh_bgram_w )
 
 static void get_fg_tile_info(int tile_index)
 {
-	data8_t code = metlclsh_fgram[tile_index + 0x000];
-	data8_t attr = metlclsh_fgram[tile_index + 0x400];
+	UINT8 code = metlclsh_fgram[tile_index + 0x000];
+	UINT8 attr = metlclsh_fgram[tile_index + 0x400];
 	SET_TILE_INFO(2, code + ((attr & 0x03) << 8), (attr >> 5) & 3, 0)
 	tile_info.priority = ((attr & 0x80) ? 1 : 2);
 }
@@ -183,7 +183,7 @@ VIDEO_START( metlclsh )
 
 ***************************************************************************/
 
-static void metlclsh_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void metlclsh_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	gfx_element *gfx = Machine->gfx[0];
 	int offs;

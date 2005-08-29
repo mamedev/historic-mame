@@ -89,7 +89,7 @@ VIDEO_START( solomon )
 	return 0;
 }
 
-static void solomon_draw_sprites( struct mame_bitmap *bitmap )
+static void solomon_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

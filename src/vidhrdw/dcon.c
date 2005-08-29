@@ -7,10 +7,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,*dcon_textram;
+UINT16 *dcon_back_data,*dcon_fore_data,*dcon_mid_data,*dcon_scroll_ram,*dcon_textram;
 
 static tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
-static data16_t dcon_enable;
+static UINT16 dcon_enable;
 static int dcon_gfx_bank_select;
 
 /******************************************************************************/
@@ -157,7 +157,7 @@ VIDEO_START( dcon )
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay,inc,pri_mask = 0;

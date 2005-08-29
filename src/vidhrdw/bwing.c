@@ -21,7 +21,7 @@ drivers by Acho A. Tang
 
 static tilemap *scrollmap[2], *charmap, *fgmap, *bgmap;
 static gfx_element *fgfx, *bgfx;
-static data8_t *srbase[4], *fgdata, *bgdata;
+static UINT8 *srbase[4], *fgdata, *bgdata;
 static int *srxlat;
 static unsigned sreg[8], palatch=0, srbank=0, mapmask=0, mapflip=0;
 
@@ -91,7 +91,7 @@ WRITE8_HANDLER( bwing_scrollreg_w )
 {
 	static unsigned bp_ready=0;
 	unsigned i;
-	data8_t *src;
+	UINT8 *src;
 
 	sreg[offset] = data;
 
@@ -231,7 +231,7 @@ VIDEO_START( bwing )
 //****************************************************************************
 // Realtime
 
-static void bwing_drawsprites(struct mame_bitmap *bmp, const struct rectangle *clip, data8_t *ram, int pri)
+static void bwing_drawsprites(mame_bitmap *bmp, const rectangle *clip, UINT8 *ram, int pri)
 {
 	int attrib, fx, fy, code, x, y, color, i;
 	gfx_element *gfx = Machine->gfx[1];

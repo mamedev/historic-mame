@@ -13,7 +13,7 @@ struct VerTex
 
 typedef struct
 {
-	struct rectangle clip;
+	rectangle clip;
 	double zoom, cx, cy;
 	double x,y,z; /* unit vector for light direction */
 	double ambient; /* 0.0..1.0 */
@@ -37,11 +37,11 @@ void namcos3d_Rotate( double M[4][4], const struct RotParam *pParam );
 
 int namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM );
 
-void namcos3d_Start( struct mame_bitmap *pBitmap );
+void namcos3d_Start( mame_bitmap *pBitmap );
 
 void namcos22_BlitTri(
-	struct mame_bitmap *pBitmap,
-	/* const struct rectangle *cliprect, */
+	mame_bitmap *pBitmap,
+	/* const rectangle *cliprect, */
 	const struct VerTex v[3],
 	unsigned color,
 	INT32 zsort,

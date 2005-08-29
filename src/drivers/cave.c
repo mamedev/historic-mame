@@ -166,10 +166,10 @@ static READ16_HANDLER( cave_irq_cause_r )
 struct
 {
 	int len;
-	data8_t data[32];
+	UINT8 data[32];
 }	soundbuf;
 
-//static data8_t sound_flag1, sound_flag2;
+//static UINT8 sound_flag1, sound_flag2;
 
 static READ8_HANDLER( soundflags_r )
 {
@@ -219,7 +219,7 @@ static READ16_HANDLER( soundlatch_ack_r )
 {
 	if (soundbuf.len>0)
 	{
-		data8_t data = soundbuf.data[0];
+		UINT8 data = soundbuf.data[0];
 		memmove(soundbuf.data,soundbuf.data+1,(32-1)*sizeof(soundbuf.data[0]));
 		soundbuf.len--;
 		return data;
@@ -267,19 +267,19 @@ static READ16_HANDLER( cave_sound_r )
 
 ***************************************************************************/
 
-static data8_t cave_default_eeprom_type1[16] =	{0x00,0x0C,0x11,0x0D,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF};  /* DFeveron, Guwange */
-static data8_t cave_default_eeprom_type1feversos[18] =	{0x00,0x0C,0x16,0x27,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF,0x05,0x19};  /* Fever SOS (code checks for the 0x0519 or it won't boot) */
-static data8_t cave_default_eeprom_type2[16] =	{0x00,0x0C,0xFF,0xFB,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Esprade, DonPachi, DDonPachi */
-static data8_t cave_default_eeprom_type3[16] =	{0x00,0x03,0x08,0x00,0xFF,0xFF,0xFF,0xFF,0x08,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF};  /* UoPoko */
-static data8_t cave_default_eeprom_type4[16] =	{0xF3,0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Hotdog Storm */
-static data8_t cave_default_eeprom_type5[16] =	{0xED,0xFF,0x00,0x00,0x12,0x31,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* Mazinger Z (6th byte is country code) */
-static data8_t cave_default_eeprom_type6[18] =	{0xa5,0x00,0xa5,0x00,0xa5,0x00,0xa5,0x00,0xa5,0x01,0xa5,0x01,0xa5,0x04,0xa5,0x01,0xa5,0x02};	/* Sailor Moon (last byte is country code) */
+static UINT8 cave_default_eeprom_type1[16] =	{0x00,0x0C,0x11,0x0D,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF};  /* DFeveron, Guwange */
+static UINT8 cave_default_eeprom_type1feversos[18] =	{0x00,0x0C,0x16,0x27,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x11,0x11,0xFF,0xFF,0xFF,0xFF,0x05,0x19};  /* Fever SOS (code checks for the 0x0519 or it won't boot) */
+static UINT8 cave_default_eeprom_type2[16] =	{0x00,0x0C,0xFF,0xFB,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Esprade, DonPachi, DDonPachi */
+static UINT8 cave_default_eeprom_type3[16] =	{0x00,0x03,0x08,0x00,0xFF,0xFF,0xFF,0xFF,0x08,0x00,0x00,0x00,0xFF,0xFF,0xFF,0xFF};  /* UoPoko */
+static UINT8 cave_default_eeprom_type4[16] =	{0xF3,0xFE,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};  /* Hotdog Storm */
+static UINT8 cave_default_eeprom_type5[16] =	{0xED,0xFF,0x00,0x00,0x12,0x31,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};  /* Mazinger Z (6th byte is country code) */
+static UINT8 cave_default_eeprom_type6[18] =	{0xa5,0x00,0xa5,0x00,0xa5,0x00,0xa5,0x00,0xa5,0x01,0xa5,0x01,0xa5,0x04,0xa5,0x01,0xa5,0x02};	/* Sailor Moon (last byte is country code) */
 // Air Gallet. Byte 1f is the country code (0==JAPAN,U.S.A,EUROPE,HONGKONG,TAIWAN,KOREA)
-static data8_t cave_default_eeprom_type7[48] =	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
+static UINT8 cave_default_eeprom_type7[48] =	{0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 												 0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,
 												 0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff};
 
-static data8_t *cave_default_eeprom;
+static UINT8 *cave_default_eeprom;
 static int cave_default_eeprom_length;
 static int cave_region_byte;
 
@@ -779,7 +779,7 @@ ADDRESS_MAP_END
                                Koro Koro Quest
 ***************************************************************************/
 
-static data16_t leds[2];
+static UINT16 leds[2];
 
 static void show_leds(void)
 {
@@ -975,7 +975,7 @@ READ16_HANDLER( pwrinst2_eeprom_r )
 	return ~8 + ((EEPROM_read_bit() & 1) ? 8 : 0);
 }
 
-INLINE void vctrl_w(data16_t *VCTRL, ATTR_UNUSED offs_t offset, ATTR_UNUSED data16_t data, ATTR_UNUSED data16_t mem_mask)
+INLINE void vctrl_w(UINT16 *VCTRL, ATTR_UNUSED offs_t offset, ATTR_UNUSED UINT16 data, ATTR_UNUSED UINT16 mem_mask)
 {
 	if ( offset == 4/2 )
 	{
@@ -1050,7 +1050,7 @@ static READ16_HANDLER( sailormn_input0_r )
 
 static READ16_HANDLER( agallet_irq_cause_r )
 {
-	data16_t irq_cause = cave_irq_cause_r(offset,mem_mask);
+	UINT16 irq_cause = cave_irq_cause_r(offset,mem_mask);
 
 	if (offset == 0)
 	{
@@ -1160,7 +1160,7 @@ ADDRESS_MAP_END
 
 WRITE8_HANDLER( hotdogst_rombank_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU2);
+	UINT8 *RAM = memory_region(REGION_CPU2);
 	int bank = data & 0x0f;
 	if ( data & ~0x0f )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
@@ -1169,7 +1169,7 @@ WRITE8_HANDLER( hotdogst_rombank_w )
 
 WRITE8_HANDLER( hotdogst_okibank_w )
 {
-	data8_t *RAM = memory_region(REGION_SOUND1);
+	UINT8 *RAM = memory_region(REGION_SOUND1);
 	int bank1 = (data >> 0) & 0x3;
 	int bank2 = (data >> 4) & 0x3;
 	if (Machine->sample_rate == 0)	return;
@@ -1214,7 +1214,7 @@ ADDRESS_MAP_END
 
 WRITE8_HANDLER( mazinger_rombank_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU2);
+	UINT8 *RAM = memory_region(REGION_CPU2);
 	int bank = data & 0x07;
 	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
@@ -1258,7 +1258,7 @@ ADDRESS_MAP_END
 
 WRITE8_HANDLER( metmqstr_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU2);
+	UINT8 *ROM = memory_region(REGION_CPU2);
 	int bank = data & 0xf;
 	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank >= 2)	bank += 2;
@@ -1267,7 +1267,7 @@ WRITE8_HANDLER( metmqstr_rombank_w )
 
 WRITE8_HANDLER( metmqstr_okibank0_w )
 {
-	data8_t *ROM = memory_region(REGION_SOUND1);
+	UINT8 *ROM = memory_region(REGION_SOUND1);
 	int bank1 = (data >> 0) & 0x7;
 	int bank2 = (data >> 4) & 0x7;
 	if (Machine->sample_rate == 0)	return;
@@ -1277,7 +1277,7 @@ WRITE8_HANDLER( metmqstr_okibank0_w )
 
 WRITE8_HANDLER( metmqstr_okibank1_w )
 {
-	data8_t *ROM = memory_region(REGION_SOUND2);
+	UINT8 *ROM = memory_region(REGION_SOUND2);
 	int bank1 = (data >> 0) & 0x7;
 	int bank2 = (data >> 4) & 0x7;
 	if (Machine->sample_rate == 0)	return;
@@ -1323,7 +1323,7 @@ ADDRESS_MAP_END
 
 WRITE8_HANDLER( pwrinst2_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU2);
+	UINT8 *ROM = memory_region(REGION_CPU2);
 	int bank = data & 0x07;
 	if ( data & ~0x07 )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 2)	bank+=1;
@@ -1369,7 +1369,7 @@ ADDRESS_MAP_END
                                 Sailor Moon
 ***************************************************************************/
 
-static data8_t *mirror_ram;
+static UINT8 *mirror_ram;
 static READ8_HANDLER( mirror_ram_r )
 {
 	return mirror_ram[offset];
@@ -1381,7 +1381,7 @@ static WRITE8_HANDLER( mirror_ram_w )
 
 WRITE8_HANDLER( sailormn_rombank_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU2);
+	UINT8 *RAM = memory_region(REGION_CPU2);
 	int bank = data & 0x1f;
 	if ( data & ~0x1f )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 	if (bank > 1)	bank+=2;
@@ -1390,7 +1390,7 @@ WRITE8_HANDLER( sailormn_rombank_w )
 
 WRITE8_HANDLER( sailormn_okibank0_w )
 {
-	data8_t *RAM = memory_region(REGION_SOUND1);
+	UINT8 *RAM = memory_region(REGION_SOUND1);
 	int bank1 = (data >> 0) & 0xf;
 	int bank2 = (data >> 4) & 0xf;
 	if (Machine->sample_rate == 0)	return;
@@ -1400,7 +1400,7 @@ WRITE8_HANDLER( sailormn_okibank0_w )
 
 WRITE8_HANDLER( sailormn_okibank1_w )
 {
-	data8_t *RAM = memory_region(REGION_SOUND2);
+	UINT8 *RAM = memory_region(REGION_SOUND2);
 	int bank1 = (data >> 0) & 0xf;
 	int bank2 = (data >> 4) & 0xf;
 	if (Machine->sample_rate == 0)	return;
@@ -3985,7 +3985,7 @@ DRIVER_INIT( hotdogst )
 DRIVER_INIT( mazinger )
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_GFX1);
+	UINT8 *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 
 	init_cave();
@@ -4028,7 +4028,7 @@ DRIVER_INIT( metmqstr )
 DRIVER_INIT( pwrinst2 )
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_GFX1);
+	UINT8 *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 	int i, j;
 
@@ -4063,7 +4063,7 @@ DRIVER_INIT( pwrinst2 )
 DRIVER_INIT( sailormn )
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_GFX1);
+	UINT8 *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 
 	init_cave();

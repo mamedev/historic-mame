@@ -13,8 +13,8 @@
 
 /* in vidhrdw/segasyse.c */
 int start_megatech_video_normal(void);
-void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect );
-void update_megaplay_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect );
+void update_megatech_video_normal(mame_bitmap *bitmap, const rectangle *cliprect );
+void update_megaplay_video_normal(mame_bitmap *bitmap, const rectangle *cliprect );
 
 /******************************************************************************
     Macros
@@ -162,7 +162,7 @@ VIDEO_START( segac2 )
 	}
 
 	/* reset the palettes */
-	memset(paletteram16, 0, 0x800 * sizeof(data16_t));
+	memset(paletteram16, 0, 0x800 * sizeof(UINT16));
 	segac2_bg_palbase = 0x000;
 	segac2_sp_palbase = 0x100;
 	segac2_palbank    = 0x000;
@@ -212,7 +212,7 @@ VIDEO_START( segac2 )
 
 VIDEO_START( puckpkmn )
 {
-	paletteram16 = auto_malloc(0x800 * sizeof(data16_t));
+	paletteram16 = auto_malloc(0x800 * sizeof(UINT16));
 
 	if (video_start_segac2())
 		return 1;
@@ -229,7 +229,7 @@ VIDEO_START( puckpkmn )
 
 VIDEO_START( megatech )
 {
-	paletteram16 = auto_malloc(0x800 * sizeof(data16_t));
+	paletteram16 = auto_malloc(0x800 * sizeof(UINT16));
 
 	if (video_start_segac2())
 		return 1;
@@ -246,7 +246,7 @@ VIDEO_START( megatech )
 
 VIDEO_START( megaplay )
 {
-	paletteram16 = auto_malloc(0x800 * sizeof(data16_t));
+	paletteram16 = auto_malloc(0x800 * sizeof(UINT16));
 
 	if (video_start_segac2())
 		return 1;
@@ -422,7 +422,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 }
 
-void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase, old_bgcol = bgcol;
 	int y;

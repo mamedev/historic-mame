@@ -11,5 +11,5 @@ enum {
 extern void SE3208_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-int SE3208Dasm(data32_t PC,char *Buffer);
+int SE3208Dasm(UINT32 PC,char *Buffer);
 #endif

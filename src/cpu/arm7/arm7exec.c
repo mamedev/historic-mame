@@ -41,8 +41,8 @@
 /* This implementation uses an improved switch() for hopefully faster opcode fetches compared to my last version
 .. though there's still room for improvement. */
 {
-    data32_t pc;
-    data32_t insn;
+    UINT32 pc;
+    UINT32 insn;
 
     ARM7_ICOUNT = cycles;
     do

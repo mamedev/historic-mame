@@ -110,11 +110,11 @@ Main board:
 #include "sound/ay8910.h"
 #include "sound/okim6295.h"
 
-data16_t *bmcbowl_vid1;
-data16_t *bmcbowl_vid2;
+UINT16 *bmcbowl_vid1;
+UINT16 *bmcbowl_vid2;
 
-static data8_t *colorram;
-static data8_t *stats_ram;
+static UINT8 *colorram;
+static UINT8 *stats_ram;
 static size_t	stats_ram_size;
 static int clr_offset=0;
 static int bmc_input=0;
@@ -343,7 +343,7 @@ static ADDRESS_MAP_START( bmcbowl_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x092800, 0x092801) AM_WRITE(AY8910_write_port_0_msb_w		)
 	AM_RANGE(0x092802, 0x092803) AM_READ(AY8910_read_port_0_msb_r) AM_WRITE(AY8910_control_port_0_msb_w	)
 	AM_RANGE(0x093802, 0x093803) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x095000, 0x095fff) AM_RAM AM_BASE((data16_t **)&stats_ram) AM_SIZE(&stats_ram_size) /* 8 bit */
+	AM_RANGE(0x095000, 0x095fff) AM_RAM AM_BASE((UINT16 **)&stats_ram) AM_SIZE(&stats_ram_size) /* 8 bit */
 	AM_RANGE(0x097000, 0x097001) AM_READ(MRA16_NOP)
 	AM_RANGE(0x140000, 0x1bffff) AM_ROM
 	AM_RANGE(0x1c0000, 0x1effff) AM_RAM AM_BASE(&bmcbowl_vid1)

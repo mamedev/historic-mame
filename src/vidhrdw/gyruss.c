@@ -122,9 +122,9 @@ READ8_HANDLER( gyruss_scanline_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(mame_bitmap *bitmap)
 {
-	struct rectangle clip = Machine->visible_area;
+	rectangle clip = Machine->visible_area;
 	int offs;
 	int line;
 

@@ -26,7 +26,7 @@ always false - counter was reloaded and incremented before interrupt occurs
 #include "sound/ay8910.h"
 
 
-data8_t *tugboat_ram,*tugboat_score;
+UINT8 *tugboat_ram,*tugboat_score;
 
 
 static UINT8 hd46505_0_reg[18],hd46505_1_reg[18];
@@ -78,7 +78,7 @@ static WRITE8_HANDLER( tugboat_score_w )
 	tugboat_ram[0x291d + 32*offset] = data ^ 0x0f;	/* ???? */
 }
 
-static void draw_tilemap(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
+static void draw_tilemap(mame_bitmap *bitmap,const rectangle *cliprect,
 		int addr,int gfx0,int gfx1,int transparency)
 {
 	int x,y;

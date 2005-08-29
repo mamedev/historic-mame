@@ -69,8 +69,8 @@ WRITE8_HANDLER( m62_hscroll_low_w );
 WRITE8_HANDLER( m62_hscroll_high_w );
 WRITE8_HANDLER( m62_vscroll_low_w );
 WRITE8_HANDLER( m62_vscroll_high_w );
-extern data8_t *m62_tileram;
-extern data8_t *m62_textram;
+extern UINT8 *m62_tileram;
+extern UINT8 *m62_textram;
 
 VIDEO_START( kungfum );
 VIDEO_UPDATE( kungfum );
@@ -108,7 +108,7 @@ VIDEO_UPDATE( youjyudn );
 VIDEO_START( horizon );
 VIDEO_UPDATE( horizon );
 WRITE8_HANDLER( horizon_scrollram_w );
-extern data8_t *horizon_scrollram;
+extern UINT8 *horizon_scrollram;
 
 static int bankaddress;
 static int bankaddress2;
@@ -2269,7 +2269,7 @@ ROM_START( spelunkr )
 	ROM_CONTINUE(             0x02000, 0x0800 )			/* first and second half identical, */
 	ROM_CONTINUE(             0x00800, 0x0800 )			/* second half not used by the driver */
 	ROM_CONTINUE(             0x02800, 0x0800 )
-	ROM_CONTINUE(             0x00000, 0x0800 )
+	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x03000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
@@ -2335,7 +2335,7 @@ ROM_START( spelnkrj )
 	ROM_CONTINUE(             0x02000, 0x0800 )			/* first and second half identical, */
 	ROM_CONTINUE(             0x00800, 0x0800 )			/* second half not used by the driver */
 	ROM_CONTINUE(             0x02800, 0x0800 )
-	ROM_CONTINUE(             0x00000, 0x0800 )
+	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x03000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )

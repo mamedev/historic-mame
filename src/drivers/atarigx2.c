@@ -36,8 +36,8 @@
 #if 0
 static UINT8 		which_input;
 #endif
-static data32_t *	mo_command;
-static data32_t *	protection_base;
+static UINT32 *	mo_command;
+static UINT32 *	protection_base;
 
 
 
@@ -163,8 +163,8 @@ static WRITE32_HANDLER( mo_command_w )
  *
  *************************************/
 
-static data16_t last_write;
-static data16_t last_write_offset;
+static UINT16 last_write;
+static UINT16 last_write_offset;
 
 static WRITE32_HANDLER( atarigx2_protection_w )
 {
@@ -1124,7 +1124,7 @@ static READ32_HANDLER( atarigx2_protection_r )
 		{ 0xffffffff, 0xffff }
 	};
 
-	data32_t result = protection_base[offset];
+	UINT32 result = protection_base[offset];
 
 	if (offset == 0x300)
 		result |= 0x80000000;
@@ -1186,7 +1186,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xc80000, 0xc80fff) AM_RAM
 	AM_RANGE(0xca0000, 0xca0fff) AM_READWRITE(atarigx2_protection_r, atarigx2_protection_w) AM_BASE(&protection_base)
 	AM_RANGE(0xd00000, 0xd1ffff) AM_READ(a2d_data_r)
-	AM_RANGE(0xd20000, 0xd20fff) AM_READWRITE(atarigen_eeprom_upper32_r, atarigen_eeprom32_w) AM_BASE((data32_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0xd20000, 0xd20fff) AM_READWRITE(atarigen_eeprom_upper32_r, atarigen_eeprom32_w) AM_BASE((UINT32 **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0xd40000, 0xd40fff) AM_READWRITE(MRA32_RAM, atarigen_666_paletteram32_w) AM_BASE(&paletteram32)
 	AM_RANGE(0xd72000, 0xd75fff) AM_WRITE(atarigen_playfield32_w) AM_BASE(&atarigen_playfield32)
 	AM_RANGE(0xd76000, 0xd76fff) AM_WRITE(atarigen_alpha32_w) AM_BASE(&atarigen_alpha32)

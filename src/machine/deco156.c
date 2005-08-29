@@ -33,7 +33,7 @@
 #include "driver.h"
 
 
-static void decrypt(data32_t *src, data32_t *dst, int length)
+static void decrypt(UINT32 *src, UINT32 *dst, int length)
 {
 	int a;
 
@@ -123,9 +123,9 @@ static void decrypt(data32_t *src, data32_t *dst, int length)
 
 void decrypt156(void)
 {
-	data32_t *rom = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *rom = (UINT32 *)memory_region(REGION_CPU1);
 	int length = memory_region_length(REGION_CPU1);
-	data32_t *buf = malloc(length);
+	UINT32 *buf = malloc(length);
 
 	if (buf)
 	{

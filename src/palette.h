@@ -77,7 +77,6 @@
     TYPE DEFINITIONS
 -------------------------------------------------*/
 
-typedef UINT32 pen_t;
 typedef UINT32 rgb_t;
 
 
@@ -117,11 +116,11 @@ typedef UINT32 rgb_t;
 extern UINT32 direct_rgb_components[3];
 extern UINT16 *palette_shadow_table;
 
-extern data8_t *paletteram;
-extern data8_t *paletteram_2;	/* use when palette RAM is split in two parts */
-extern data16_t *paletteram16;
-extern data16_t *paletteram16_2;
-extern data32_t *paletteram32;
+extern UINT8 *paletteram;
+extern UINT8 *paletteram_2;	/* use when palette RAM is split in two parts */
+extern UINT16 *paletteram16;
+extern UINT16 *paletteram16_2;
+extern UINT32 *paletteram32;
 
 
 

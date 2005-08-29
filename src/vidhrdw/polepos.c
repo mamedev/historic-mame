@@ -1,9 +1,9 @@
 #include "driver.h"
 
-data16_t *polepos_view16_memory;
-data16_t *polepos_road16_memory;
-data16_t *polepos_sprite16_memory;
-data16_t *polepos_alpha16_memory;
+UINT16 *polepos_view16_memory;
+UINT16 *polepos_road16_memory;
+UINT16 *polepos_sprite16_memory;
+UINT16 *polepos_alpha16_memory;
 
 /* modified vertical position built from three nibbles (12 bit)
  * of ROMs 136014-142, 136014-143, 136014-144
@@ -11,9 +11,9 @@ data16_t *polepos_alpha16_memory;
  * to this value and the upper 10 bits of the result are used to
  * address the playfield video memory (AB0 - AB9).
  */
-static data16_t polepos_vertical_position_modifier[256];
+static UINT16 polepos_vertical_position_modifier[256];
 
-static data16_t road16_vscroll;
+static UINT16 road16_vscroll;
 
 static tilemap *bg_tilemap,*tx_tilemap;
 static int polepos_chacl;
@@ -152,7 +152,7 @@ PALETTE_INIT( polepos )
 
 static void bg_get_tile_info(int tile_index)
 {
-	data16_t word = polepos_view16_memory[tile_index];
+	UINT16 word = polepos_view16_memory[tile_index];
 	int code = (word & 0xff) | ((word & 0x4000) >> 6);
 	int color = (word & 0x3f00) >> 8;
 	SET_TILE_INFO(
@@ -164,7 +164,7 @@ static void bg_get_tile_info(int tile_index)
 
 static void tx_get_tile_info(int tile_index)
 {
-	data16_t word = polepos_alpha16_memory[tile_index];
+	UINT16 word = polepos_alpha16_memory[tile_index];
 	int code = (word & 0xff) | ((word & 0x4000) >> 6);
 	int color = (word & 0x3f00) >> 8;
 
@@ -281,7 +281,7 @@ READ16_HANDLER( polepos_view16_r )
 
 WRITE16_HANDLER( polepos_view16_w )
 {
-	data16_t oldword = polepos_view16_memory[offset];
+	UINT16 oldword = polepos_view16_memory[offset];
 	COMBINE_DATA(&polepos_view16_memory[offset]);
 	if (oldword != polepos_view16_memory[offset])
 	{
@@ -297,7 +297,7 @@ READ8_HANDLER( polepos_view_r )
 
 WRITE8_HANDLER( polepos_view_w )
 {
-	data16_t oldword = polepos_view16_memory[offset];
+	UINT16 oldword = polepos_view16_memory[offset];
 	polepos_view16_memory[offset] = (polepos_view16_memory[offset] & 0xff00) | data;
 	if (oldword != polepos_view16_memory[offset])
 	{
@@ -308,7 +308,7 @@ WRITE8_HANDLER( polepos_view_w )
 
 WRITE16_HANDLER( polepos_view16_hscroll_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(bg_tilemap,0,scroll);
@@ -337,7 +337,7 @@ READ16_HANDLER( polepos_alpha16_r )
 
 WRITE16_HANDLER( polepos_alpha16_w )
 {
-	data16_t oldword = polepos_alpha16_memory[offset];
+	UINT16 oldword = polepos_alpha16_memory[offset];
 	COMBINE_DATA(&polepos_alpha16_memory[offset]);
 	if (oldword != polepos_alpha16_memory[offset])
 	{
@@ -352,7 +352,7 @@ READ8_HANDLER( polepos_alpha_r )
 
 WRITE8_HANDLER( polepos_alpha_w )
 {
-	data16_t oldword = polepos_alpha16_memory[offset];
+	UINT16 oldword = polepos_alpha16_memory[offset];
 	polepos_alpha16_memory[offset] = (polepos_alpha16_memory[offset] & 0xff00) | data;
 	if (oldword != polepos_alpha16_memory[offset])
 	{
@@ -368,7 +368,7 @@ WRITE8_HANDLER( polepos_alpha_w )
 
 ***************************************************************************/
 
-static void draw_road(struct mame_bitmap *bitmap)
+static void draw_road(mame_bitmap *bitmap)
 {
 	const UINT8 *road_control = memory_region(REGION_GFX5);
 	const UINT8 *road_bits1 = memory_region(REGION_GFX5) + 0x2000;
@@ -444,7 +444,7 @@ static void draw_road(struct mame_bitmap *bitmap)
 	}
 }
 
-static void zoom_sprite( struct mame_bitmap *bitmap,int big,
+static void zoom_sprite( mame_bitmap *bitmap,int big,
 		unsigned int code,unsigned int color,int flipx,int sx,int sy,
 		int sizex,int sizey)
 {
@@ -494,10 +494,10 @@ static void zoom_sprite( struct mame_bitmap *bitmap,int big,
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	data16_t *posmem = &polepos_sprite16_memory[0x380];
-	data16_t *sizmem = &polepos_sprite16_memory[0x780];
+	UINT16 *posmem = &polepos_sprite16_memory[0x380];
+	UINT16 *sizmem = &polepos_sprite16_memory[0x780];
 	int i;
 
 	for (i = 0; i < 64; i++, posmem += 2, sizmem += 2)
@@ -525,7 +525,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 VIDEO_UPDATE( polepos )
 {
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 	clip.max_y = 127;
 	tilemap_draw(bitmap,&clip,bg_tilemap,0,0);
 	draw_road(bitmap);

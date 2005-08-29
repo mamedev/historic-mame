@@ -33,7 +33,7 @@ VIDEO_START( madgear );
 VIDEO_UPDATE( lastduel );
 VIDEO_EOF( lastduel );
 
-extern data16_t *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
+extern UINT16 *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 
 /******************************************************************************/
 

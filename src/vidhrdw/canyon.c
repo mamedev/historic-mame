@@ -39,7 +39,7 @@ VIDEO_START( canyon )
 }
 
 
-static void canyon_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle* cliprect)
+static void canyon_draw_sprites(mame_bitmap *bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -61,7 +61,7 @@ static void canyon_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 }
 
 
-static void canyon_draw_bombs(struct mame_bitmap *bitmap, const struct rectangle* cliprect)
+static void canyon_draw_bombs(mame_bitmap *bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -70,7 +70,7 @@ static void canyon_draw_bombs(struct mame_bitmap *bitmap, const struct rectangle
 		int sx = 254 - canyon_videoram[0x3d0 + 2 * i + 0x5];
 		int sy = 246 - canyon_videoram[0x3d0 + 2 * i + 0xc];
 
-		struct rectangle rect;
+		rectangle rect;
 
 		rect.min_x = sx;
 		rect.min_y = sy;

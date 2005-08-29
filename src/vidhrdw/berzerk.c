@@ -11,11 +11,11 @@
 #include "includes/berzerk.h"
 
 
-data8_t *berzerk_magicram;
+UINT8 *berzerk_magicram;
 
-static data8_t magicram_control = 0xff;
-static data8_t magicram_latch = 0xff;
-static data8_t collision = 0;
+static UINT8 magicram_control = 0xff;
+static UINT8 magicram_latch = 0xff;
+static UINT8 collision = 0;
 
 
 PALETTE_INIT( berzerk )
@@ -35,7 +35,7 @@ PALETTE_INIT( berzerk )
 }
 
 
-INLINE void copy_byte(UINT8 x, UINT8 y, data8_t data, data8_t col)
+INLINE void copy_byte(UINT8 x, UINT8 y, UINT8 data, UINT8 col)
 {
 	pen_t fore, back;
 
@@ -90,7 +90,7 @@ WRITE8_HANDLER( berzerk_colorram_w )
 
 	for (i = 0; i < 4; i++, y++)
 	{
-		data8_t byte = videoram[(y << 5) | (x >> 3)];
+		UINT8 byte = videoram[(y << 5) | (x >> 3)];
 
 		copy_byte(x, y, byte, data);
 	}
@@ -99,8 +99,8 @@ WRITE8_HANDLER( berzerk_colorram_w )
 
 WRITE8_HANDLER( berzerk_magicram_w )
 {
-	data16_t data2;
-	data8_t data3;
+	UINT16 data2;
+	UINT8 data3;
 	int shift_amount;
 
 
@@ -112,7 +112,7 @@ WRITE8_HANDLER( berzerk_magicram_w )
 	data2 >>= (magicram_control & 0x01);
 
 
-	data3 = (data8_t)data2;		/* mask off bit 8 */
+	data3 = (UINT8)data2;		/* mask off bit 8 */
 
 
 	/* Bit 3 is the flip bit */

@@ -5,10 +5,10 @@ PALETTE_INIT( rjammer );
 VIDEO_UPDATE( rjammer );
 VIDEO_START( tubep );
 
-extern data8_t *rjammer_backgroundram;
-extern data8_t *tubep_backgroundram;
-extern data8_t *tubep_textram;
-extern data8_t *tubep_sprite_colorsharedram;
+extern UINT8 *rjammer_backgroundram;
+extern UINT8 *tubep_backgroundram;
+extern UINT8 *tubep_textram;
+extern UINT8 *tubep_sprite_colorsharedram;
 
 extern WRITE8_HANDLER( tubep_textram_w );
 extern WRITE8_HANDLER( rjammer_background_LS377_w );

@@ -1344,8 +1344,8 @@ static DRIVER_INIT( nitrobal )
 
 static DRIVER_INIT( schmeisr )
 {
-	const data8_t *src = memory_region(REGION_GFX2);
-	data8_t *dst = memory_region(REGION_GFX1);
+	const UINT8 *src = memory_region(REGION_GFX2);
+	UINT8 *dst = memory_region(REGION_GFX1);
 
 	memcpy(dst,src,0x20000);
 	memcpy(dst+0x20000,src+0x80000,0x20000);

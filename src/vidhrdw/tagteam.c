@@ -145,7 +145,7 @@ VIDEO_START( tagteam )
 	return 0;
 }
 
-static void tagteam_draw_sprites( struct mame_bitmap *bitmap )
+static void tagteam_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

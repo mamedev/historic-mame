@@ -15,12 +15,12 @@
 static int gomoku_flipscreen;
 static int gomoku_bg_dispsw;
 static tilemap *fg_tilemap;
-static struct mame_bitmap *gomoku_bg_bitmap;
+static mame_bitmap *gomoku_bg_bitmap;
 
-data8_t *gomoku_videoram;
-data8_t *gomoku_colorram;
-data8_t *gomoku_bgram;
-data8_t *gomoku_bg_dirty;
+UINT8 *gomoku_videoram;
+UINT8 *gomoku_colorram;
+UINT8 *gomoku_bgram;
+UINT8 *gomoku_bg_dirty;
 
 
 /******************************************************************************

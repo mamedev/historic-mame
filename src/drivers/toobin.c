@@ -30,7 +30,7 @@
  *
  *************************************/
 
-static data16_t *interrupt_scan;
+static UINT16 *interrupt_scan;
 
 
 

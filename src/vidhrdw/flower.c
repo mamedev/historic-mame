@@ -4,7 +4,7 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *flower_bg0_tilemap, *flower_bg1_tilemap, *flower_text_tilemap, *flower_text_right_tilemap;
-data8_t *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;
+UINT8 *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;
 
 
 PALETTE_INIT( flower )
@@ -25,11 +25,11 @@ PALETTE_INIT( flower )
 	}
 }
 
-static void flower_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void flower_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	data8_t *source = spriteram + 0x200;
-	data8_t *finish = source - 0x200;
+	UINT8 *source = spriteram + 0x200;
+	UINT8 *finish = source - 0x200;
 
 	source -= 8;
 
@@ -167,7 +167,7 @@ VIDEO_START(flower)
 
 VIDEO_UPDATE( flower )
 {
-	struct rectangle myclip = *cliprect;
+	rectangle myclip = *cliprect;
 
 	tilemap_set_scrolly(flower_bg0_tilemap,0, flower_bg0_scroll[0]+16);
 	tilemap_set_scrolly(flower_bg1_tilemap,0, flower_bg1_scroll[0]+16);

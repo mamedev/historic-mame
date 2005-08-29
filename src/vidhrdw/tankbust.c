@@ -11,7 +11,7 @@
 
 static tilemap *bg_tilemap;
 static tilemap *txt_tilemap;
-data8_t * txt_ram;
+UINT8 * txt_ram;
 
 /***************************************************************************
 
@@ -199,7 +199,7 @@ spriteram format (4 bytes per sprite):
     offset  3   xxxxxxxx    x position (8 LSB bits)
 */
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

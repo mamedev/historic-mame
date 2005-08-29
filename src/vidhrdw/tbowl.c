@@ -6,8 +6,8 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *tx_tilemap, *bg_tilemap, *bg2_tilemap;
-data8_t *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
-data8_t *tbowl_spriteram;
+UINT8 *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
+UINT8 *tbowl_spriteram;
 
 /*** Tilemap Stuff
 
@@ -134,7 +134,7 @@ tbowl_bg2yscroll = (tbowl_bg2yscroll & 0x00ff) | (data << 8);
 tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 	const UINT8 layout[8][8] =

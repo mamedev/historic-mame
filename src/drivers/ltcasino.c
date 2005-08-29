@@ -15,7 +15,7 @@ etc.
 #include "driver.h"
 #include "sound/ay8910.h"
 
-data8_t *ltcasino_tile_num_ram, *ltcasino_tile_atr_ram;
+UINT8 *ltcasino_tile_num_ram, *ltcasino_tile_atr_ram;
 
 tilemap *ltcasino_tilemap;
 

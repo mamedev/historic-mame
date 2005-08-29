@@ -90,8 +90,8 @@ C102 - Controls CPU access to ROZ Memory Area.
 
 int namco_tilemap_init(
 		int gfxbank, void *pMaskROM,
-		void (*cb)( data16_t code, int *gfx, int *mask) );
-void namco_tilemap_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+		void (*cb)( UINT16 code, int *gfx, int *mask) );
+void namco_tilemap_draw( mame_bitmap *bitmap, const rectangle *cliprect, int pri );
 void namco_tilemap_invalidate( void );
 WRITE16_HANDLER( namco_tilemapvideoram16_w );
 READ16_HANDLER( namco_tilemapvideoram16_r );
@@ -111,16 +111,16 @@ WRITE32_HANDLER( namco_tilemapcontrol32_le_w );
 /***********************************************************************************/
 
 /* Namco System II Sprite Rendering */
-void namcos2_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int control );
+void namcos2_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int pri, int control );
 
-void namcos2_draw_sprites_metalhawk( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+void namcos2_draw_sprites_metalhawk( mame_bitmap *bitmap, const rectangle *cliprect, int pri );
 
 /***********************************************************************************/
 /* C355 Motion Object Emulation */
 
 /* for palXOR, supply either 0x0 (normal) or 0xf (palette mapping reversed) */
 void namco_obj_init( int gfxbank, int palXOR, int (*code2tile)( int code ) );
-void namco_obj_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+void namco_obj_draw( mame_bitmap *bitmap, const rectangle *cliprect, int pri );
 
 WRITE16_HANDLER( namco_obj16_w );
 READ16_HANDLER( namco_obj16_r );
@@ -140,7 +140,7 @@ READ32_HANDLER( namco_spritepos32_r );
 /* C169 ROZ Layer Emulation */
 
 int namco_roz_init( int gfxbank, int maskregion );
-void namco_roz_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+void namco_roz_draw( mame_bitmap *bitmap, const rectangle *cliprect, int pri );
 
 READ16_HANDLER( namco_rozcontrol16_r );
 WRITE16_HANDLER( namco_rozcontrol16_w );
@@ -165,7 +165,7 @@ WRITE32_HANDLER( namco_rozvideoram32_le_w );
 
 int namco_road_init( int gfxbank );
 void namco_road_set_transparent_color(pen_t pen);
-void namco_road_draw( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri );
+void namco_road_draw( mame_bitmap *bitmap, const rectangle *cliprect, int pri );
 
 READ16_HANDLER( namco_road16_r );
 WRITE16_HANDLER( namco_road16_w );

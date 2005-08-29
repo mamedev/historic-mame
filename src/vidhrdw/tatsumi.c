@@ -4,12 +4,12 @@
 #include <math.h>
 
 static tilemap *bg_layer,*tx_layer;
-static struct mame_bitmap *temp_bitmap;
+static mame_bitmap *temp_bitmap;
 
-data16_t *roundup_r_ram, *roundup_p_ram, *roundup_l_ram;
-data16_t *cyclwarr_videoram, *cyclwarr_videoram2;
-data16_t* tatsumi_sprite_control_ram;
-data8_t* roundup5_vram;
+UINT16 *roundup_r_ram, *roundup_p_ram, *roundup_l_ram;
+UINT16 *cyclwarr_videoram, *cyclwarr_videoram2;
+UINT16* tatsumi_sprite_control_ram;
+UINT8* roundup5_vram;
 
 /******************************************************************************/
 
@@ -150,11 +150,11 @@ WRITE16_HANDLER( cyclwarr_videoram2_w )
 		tilemap_mark_tile_dirty( bg_layer,offset - 0x1400);
 }
 
-static data8_t roundupt_crt_selected_reg;
-static data8_t roundupt_crt_reg[64];
-extern data16_t debugA,debugB,debugC,debugD;
+static UINT8 roundupt_crt_selected_reg;
+static UINT8 roundupt_crt_reg[64];
+extern UINT16 debugA,debugB,debugC,debugD;
 
-static data8_t* shadow_pen_array;
+static UINT8* shadow_pen_array;
 
 WRITE8_HANDLER( roundup5_crt_w )
 {
@@ -256,11 +256,11 @@ VIDEO_START( cyclwarr )
 
 /********************************************************************/
 
-INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+INLINE void roundupt_drawgfxzoomrotate( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,unsigned int ssx,unsigned int ssy,
-		const struct rectangle *clip, int scalex, int scaley, int rotate, int write_priority_only )
+		const rectangle *clip, int scalex, int scaley, int rotate, int write_priority_only )
 {
-	struct rectangle myclip;
+	rectangle myclip;
 
 	if (!scalex || !scaley) return;
 
@@ -291,7 +291,7 @@ INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const gfx_e
 		if( gfx && gfx->colortable )
 		{
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
-			const data8_t *shadow_pens = shadow_pen_array + (gfx->color_granularity * (color % gfx->total_colors));
+			const UINT8 *shadow_pens = shadow_pen_array + (gfx->color_granularity * (color % gfx->total_colors));
 			int source_base = (code % gfx->total_elements) * gfx->height;
 
 			int block_size = 8 * scalex;
@@ -472,9 +472,9 @@ INLINE void roundupt_drawgfxzoomrotate( struct mame_bitmap *dest_bmp,const gfx_e
 	}
 }
 
-void mycopyrozbitmap_core(struct mame_bitmap *bitmap,struct mame_bitmap *srcbitmap,
+void mycopyrozbitmap_core(mame_bitmap *bitmap,mame_bitmap *srcbitmap,
 		int dstx,int dsty, int srcwidth, int srcheight,int incxx,int incxy,int incyx,int incyy,
-		const struct rectangle *clip,int transparency,int transparent_color)
+		const rectangle *clip,int transparency,int transparent_color)
 {
 	UINT32 cx;
 	UINT32 cy;
@@ -534,11 +534,11 @@ void mycopyrozbitmap_core(struct mame_bitmap *bitmap,struct mame_bitmap *srcbitm
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int write_priority_only, int rambank)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int write_priority_only, int rambank)
 {
 	int offs,fx,x,y,color;
 	int w,h,index,lines,scale,rotate;
-	data8_t *src1, *src2;
+	UINT8 *src1, *src2;
 
 	int y_offset;
 
@@ -704,7 +704,7 @@ extent_x=extent_y=0;
 	}
 }
 
-static void draw_sky(struct mame_bitmap *bitmap,const struct rectangle *cliprect, int palette_base, int start_offset)
+static void draw_sky(mame_bitmap *bitmap,const rectangle *cliprect, int palette_base, int start_offset)
 {
 	// all todo
 	int x,y;
@@ -726,7 +726,7 @@ start_offset-=48;
 	}
 }
 
-static void draw_road(struct mame_bitmap *bitmap,const struct rectangle *cliprect,struct mame_bitmap *shadow_bitmap)
+static void draw_road(mame_bitmap *bitmap,const rectangle *cliprect,mame_bitmap *shadow_bitmap)
 {
 /*
 0xf980 0x0008 0x8c80 0x4a00 - road right to below, width unknown (32 pixels guess)
@@ -785,7 +785,7 @@ pos is 11.5 fixed point
 */
 	int y,x;
 	int visible_line=0;
-	const data16_t* data=roundup_r_ram;
+	const UINT16* data=roundup_r_ram;
 
 	// Road layer enable (?)
 	if ((roundup5_unknown0[0x2]&0x1)==0)
@@ -808,7 +808,7 @@ pos is 11.5 fixed point
 		int pal=4; //(data[3]>>8)&0xf;
 		int step=((data[1]&0xff)<<8)|((data[1]&0xff00)>>8);
 		int samplePos=0;
-		const data16_t* linedata=roundup_p_ram;// + (0x100 * pal);
+		const UINT16* linedata=roundup_p_ram;// + (0x100 * pal);
 		int startPos=0, endPos=0;
 
 		int palette_byte;//=roundup_l_ram[visible_line/8];
@@ -851,7 +851,7 @@ offset is from last pixel of first road segment?
 		/* Fill in left of road segment */
 		for (x=0; x<startPos && x<320; x++) {
 			int col = linedata[0]&0xf;
-			data8_t shadow=((data8_t*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
 			if (shadow)
 				plot_pixel(bitmap,x,y,Machine->pens[768 + pal*16 + col]);
 			else
@@ -870,7 +870,7 @@ offset is from last pixel of first road segment?
 		for (x=startPos; x<320 && (samplePos>>11)<0x80; x++) {
 			// look up colour
 			int col = linedata[(samplePos>>11)&0x7f]&0xf;
-			data8_t shadow=((data8_t*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
 
 			/* Clamp if we have reached the end of the pixel data */
 			//if ((samplePos>>11) > 0x7f)
@@ -901,7 +901,7 @@ offset is from last pixel of first road segment?
 		/* Fill pixels */
 		for (x=startPos; x<320 && x<endPos; x++) {
 			int col = linedata[0x80]&0xf;
-			data8_t shadow=((data8_t*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
 
 			/* Clamp if we have reached the end of the pixel data */
 			//if ((samplePos>>11) > 0x7f)
@@ -925,7 +925,7 @@ offset is from last pixel of first road segment?
 		for (/*x=endPos*/; x<320; x++) {
 			// look up colour
 			int col = linedata[((samplePos>>11)&0x7f) + 0x200]&0xf;
-			data8_t shadow=((data8_t*)shadow_bitmap->line[y])[x];
+			UINT8 shadow=((UINT8*)shadow_bitmap->line[y])[x];
 
 			/* Clamp if we have reached the end of the pixel data */
 			if ((samplePos>>11) > 0x7f)
@@ -951,8 +951,8 @@ static void update_cluts(int fake_palette_offset, int object_base, int length)
     */
 	int i;
 	UINT8 r,g,b;
-	const data8_t* bank1=tatsumi_rom_clut0;
-	const data8_t* bank2=tatsumi_rom_clut1;
+	const UINT8* bank1=tatsumi_rom_clut0;
+	const UINT8* bank2=tatsumi_rom_clut1;
 	for (i=0; i<length; i+=8) {
 		palette_get_color(bank1[1]+object_base,&r,&g,&b);
 		palette_set_color(fake_palette_offset+i+0,r,g,b);
@@ -999,8 +999,8 @@ VIDEO_UPDATE( apache3 )
 
 VIDEO_UPDATE( roundup5 )
 {
-//  data16_t bg_x_scroll=roundup5_unknown1[0] | (roundup5_unknown1[1]<<8);
-//  data16_t bg_y_scroll=roundup5_unknown2[0] | (roundup5_unknown2[1]<<8);
+//  UINT16 bg_x_scroll=roundup5_unknown1[0] | (roundup5_unknown1[1]<<8);
+//  UINT16 bg_y_scroll=roundup5_unknown2[0] | (roundup5_unknown2[1]<<8);
 
 	update_cluts(1024, 512, 4096);
 

@@ -47,7 +47,7 @@ static char *WritePadding( char *pBuf, const char *pBuf0 )
 	return pBuf;
 }
 
-static char *DasmCoProc_RT( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0)
+static char *DasmCoProc_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
 	/* co processor register transfer */
 	/* xxxx 1110 oooL nnnn dddd cccc ppp1 mmmm */
@@ -67,7 +67,7 @@ static char *DasmCoProc_RT( char *pBuf, data32_t opcode, char *pConditionCode, c
 	return pBuf;
 }
 
-static char *DasmCoProc_DT( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 )
+static char *DasmCoProc_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 )
 {
 	/* co processor data transfer */
 	/* xxxx 111P UNWL nnnn dddd pppp oooooooo */
@@ -92,7 +92,7 @@ static char *DasmCoProc_DT( char *pBuf, data32_t opcode, char *pConditionCode, c
 	return pBuf;
 }
 
-static char *DasmCoProc_DO( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 )
+static char *DasmCoProc_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 )
 {
 	/* co processor data operation */
 	/* xxxx 1110 oooo nnnn dddd cccc ppp0 mmmm */
@@ -106,10 +106,10 @@ static char *DasmCoProc_DO( char *pBuf, data32_t opcode, char *pConditionCode, c
 	return pBuf;
 }
 
-static char *WriteImmediateOperand( char *pBuf, data32_t opcode )
+static char *WriteImmediateOperand( char *pBuf, UINT32 opcode )
 {
 	/* rrrrbbbbbbbb */
-	data32_t imm;
+	UINT32 imm;
 	int r;
 
 	imm = opcode&0xff;
@@ -119,7 +119,7 @@ static char *WriteImmediateOperand( char *pBuf, data32_t opcode )
 	return pBuf;
 }
 
-static char *WriteDataProcessingOperand( char *pBuf, data32_t opcode, int printOp0, int printOp1, int printOp2 )
+static char *WriteDataProcessingOperand( char *pBuf, UINT32 opcode, int printOp0, int printOp1, int printOp2 )
 {
 	/* ccccctttmmmm */
 	const char *pRegOp[4] = { "LSL","LSR","ASR","ROR" };
@@ -158,7 +158,7 @@ static char *WriteDataProcessingOperand( char *pBuf, data32_t opcode, int printO
 	return pBuf;
 }
 
-static char *WriteRegisterOperand1( char *pBuf, data32_t opcode )
+static char *WriteRegisterOperand1( char *pBuf, UINT32 opcode )
 {
 	/* ccccctttmmmm */
 	const char *pRegOp[4] = { "LSL","LSR","ASR","ROR" };
@@ -189,7 +189,7 @@ static char *WriteRegisterOperand1( char *pBuf, data32_t opcode )
 } /* WriteRegisterOperand */
 
 
-static char *WriteBranchAddress( char *pBuf, data32_t pc, data32_t opcode )
+static char *WriteBranchAddress( char *pBuf, UINT32 pc, UINT32 opcode )
 {
 	opcode &= 0x00ffffff;
 	if( opcode&0x00800000 )
@@ -201,7 +201,7 @@ static char *WriteBranchAddress( char *pBuf, data32_t pc, data32_t opcode )
 	return pBuf;
 } /* WriteBranchAddress */
 
-void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode )
+void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 {
 	const char *pBuf0;
 

@@ -135,8 +135,8 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 			copper.pc += 4;
 		}
 
-		inst = *((data16_t *) ( &(update_regs.RAM[copper.pc]) ));
-		param = *((data16_t *) ( &(update_regs.RAM[copper.pc + 2]) ));
+		inst = *((UINT16 *) ( &(update_regs.RAM[copper.pc]) ));
+		param = *((UINT16 *) ( &(update_regs.RAM[copper.pc + 2]) ));
 
 		if ( !( inst & 1 ) ) { /* MOVE instruction */
 			int min = 0x80 - ( custom_regs.COPCON << 5 );
@@ -263,9 +263,9 @@ void amiga_reload_sprite_info( int spritenum ) {
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-	amiga_sprite_set_pos( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum]] ) );
+	amiga_sprite_set_pos( spritenum, *((UINT16 *) &RAM[custom_regs.SPRxPT[spritenum]] ) );
 
-	amiga_sprite_set_ctrl( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
+	amiga_sprite_set_ctrl( spritenum, *((UINT16 *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
 
 }
 
@@ -360,7 +360,7 @@ void amiga_sprite_dma( int scanline )
 
 ***************************************************************************/
 
-INLINE void amiga_display_msg (struct mame_bitmap *bitmap, const char *str ) {
+INLINE void amiga_display_msg (mame_bitmap *bitmap, const char *str ) {
 	if ( update_regs.once_per_frame == 0 )
 		ui_draw_text(str, 10, 10);
 
@@ -430,7 +430,7 @@ INLINE void init_update_regs( void ) {
 
 ***********************************************************************************/
 #define BEGIN_UPDATE( name ) \
-static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+static void name(mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
 		return; \
@@ -443,7 +443,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 			} \
 			/* fetch the new word from the bitplane pointers, and update them */ \
 			for ( i = 0; i < planes; i++ ) { \
-				custom_regs.BPLxDAT[i] = *((data16_t *) &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
+				custom_regs.BPLxDAT[i] = *((UINT16 *) &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
 				custom_regs.BPLPTR[i] += 2; \
 			} \
 			update_regs.current_bit = 15; \
@@ -460,7 +460,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 #endif
 
 #define BEGIN_UPDATE_WITH_SPRITES( name ) \
-static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+static void name(mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 	int i; \
 	if ( x < update_regs.ddf_start_pixel ) { /* see if we need to start fetching */ \
 		if ( x < update_regs.h_stop ) { \
@@ -481,7 +481,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 			} \
 			/* fetch the new word from the bitplane pointers, and update them */ \
 			for ( i = 0; i < planes; i++ ) { \
-				custom_regs.BPLxDAT[i] = *((data16_t *) &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
+				custom_regs.BPLxDAT[i] = *((UINT16 *) &(update_regs.RAM[custom_regs.BPLPTR[i]]) ); \
 				custom_regs.BPLPTR[i] += 2; \
 			} \
 			update_regs.current_bit = 15; \
@@ -517,7 +517,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 }
 
 #define UNIMPLEMENTED( name ) \
-	static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
+	static void name(mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
 		amiga_display_msg(bitmap,  "Unimplemented screen mode: "#name ); \
 	}
 
@@ -669,7 +669,7 @@ UNIMPLEMENTED( render_pixel_ham_lace )
 UNIMPLEMENTED( render_pixel_ham_sprites )
 UNIMPLEMENTED( render_pixel_ham_lace_sprites )
 
-typedef void (*render_pixel_def)(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x );
+typedef void (*render_pixel_def)(mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x );
 
 static render_pixel_def render_pixel[] = {
 	render_pixel_lores,

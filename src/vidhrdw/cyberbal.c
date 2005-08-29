@@ -26,8 +26,8 @@
  *
  *************************************/
 
-data16_t *cyberbal_paletteram_0;
-data16_t *cyberbal_paletteram_1;
+UINT16 *cyberbal_paletteram_0;
+UINT16 *cyberbal_paletteram_1;
 
 
 
@@ -39,7 +39,7 @@ data16_t *cyberbal_paletteram_1;
 
 static UINT8 current_screen;
 static UINT8 total_screens;
-static data16_t current_slip[2];
+static UINT16 current_slip[2];
 static UINT8 playfield_palette_bank[2];
 static UINT16 playfield_xscroll[2];
 static UINT16 playfield_yscroll[2];
@@ -327,8 +327,8 @@ void cyberbal_scanline_update(int scanline)
 	/* loop over screens */
 	for (i = 0; i < total_screens; i++)
 	{
-		data16_t *vram = i ? atarigen_alpha2 : atarigen_alpha;
-		data16_t *base = &vram[((scanline - 8) / 8) * 64 + 47];
+		UINT16 *vram = i ? atarigen_alpha2 : atarigen_alpha;
+		UINT16 *base = &vram[((scanline - 8) / 8) * 64 + 47];
 
 		/* keep in range */
 		if (base < vram)
@@ -386,10 +386,10 @@ void cyberbal_scanline_update(int scanline)
  *
  *************************************/
 
-static void update_one_screen(int screen, struct mame_bitmap *bitmap, struct rectangle *cliprect)
+static void update_one_screen(int screen, mame_bitmap *bitmap, rectangle *cliprect)
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r, mooffset, temp;
 
 	/* draw the playfield */
@@ -433,7 +433,7 @@ static void update_one_screen(int screen, struct mame_bitmap *bitmap, struct rec
 VIDEO_UPDATE( cyberbal )
 {
 #if (CYBERBALL_DUAL_MODE)
-	struct rectangle rect;
+	rectangle rect;
 
 	if (cliprect->min_x < SCREEN_WIDTH)
 	{

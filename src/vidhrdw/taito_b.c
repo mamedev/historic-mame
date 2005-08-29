@@ -1,18 +1,18 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *taitob_scroll;
-data16_t *TC0180VCU_ram;
-data16_t *taitob_spriteram;
-data16_t *taitob_pixelram;
+UINT16 *taitob_scroll;
+UINT16 *TC0180VCU_ram;
+UINT16 *taitob_spriteram;
+UINT16 *taitob_pixelram;
 
 static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static int bg_rambank[2],fg_rambank[2],tx_rambank;
 
 /* framebuffer is a raw bitmap, remapped as a last step */
-static struct mame_bitmap *framebuffer[2],*pixel_bitmap;
+static mame_bitmap *framebuffer[2],*pixel_bitmap;
 
-static data16_t pixel_scroll[2];
+static UINT16 pixel_scroll[2];
 static int pixel_init;
 
 static int framebuffer_page;
@@ -24,7 +24,7 @@ static int b_tx_color_base = 0;
 
 
 static UINT8 video_control = 0;
-static data16_t TC0180VCU_ctrl[0x10] = {0};
+static UINT16 TC0180VCU_ctrl[0x10] = {0};
 
 /* TC0180VCU control registers:
 * offset:
@@ -92,7 +92,7 @@ READ16_HANDLER( taitob_v_control_r )
 
 WRITE16_HANDLER( taitob_v_control_w )
 {
-	data16_t oldword = TC0180VCU_ctrl[offset];
+	UINT16 oldword = TC0180VCU_ctrl[offset];
 
 	COMBINE_DATA (&TC0180VCU_ctrl[offset]);
 
@@ -263,7 +263,7 @@ READ16_HANDLER( TC0180VCU_word_r )
 
 WRITE16_HANDLER( TC0180VCU_word_w )
 {
-  data16_t oldword = TC0180VCU_ram[offset];
+  UINT16 oldword = TC0180VCU_ram[offset];
   COMBINE_DATA(&TC0180VCU_ram[offset]);
 
   if (oldword != TC0180VCU_ram[offset])
@@ -324,7 +324,7 @@ WRITE16_HANDLER( hitice_pixel_scroll_w )
 }
 
 
-static void taitob_draw_sprites (struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void taitob_draw_sprites (mame_bitmap *bitmap,const rectangle *cliprect)
 {
 /*  Sprite format: (16 bytes per sprite)
   offs:             bits:
@@ -447,11 +447,11 @@ static void taitob_draw_sprites (struct mame_bitmap *bitmap,const struct rectang
 }
 
 
-static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,tilemap *tmap,int plane)
+static void TC0180VCU_tilemap_draw(mame_bitmap *bitmap,const rectangle *cliprect,tilemap *tmap,int plane)
 {
 /*plane = 0 fg tilemap*/
 /*plane = 1 bg tilemap*/
-  struct rectangle my_clip;
+  rectangle my_clip;
   int i;
   int scrollx, scrolly;
   int lines_per_block;	/* number of lines scrolled by the same amount (per one scroll value) */
@@ -488,9 +488,9 @@ static void TC0180VCU_tilemap_draw(struct mame_bitmap *bitmap,const struct recta
 }
 
 
-static void draw_framebuffer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
+static void draw_framebuffer(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
 {
-  struct rectangle myclip = *cliprect;
+  rectangle myclip = *cliprect;
   int x,y;
 
 profiler_mark(PROFILER_USER1);

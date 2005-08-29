@@ -6,7 +6,7 @@
 
 /*----------- defined in drivers/policetr.c -----------*/
 
-extern data32_t *	policetr_rambase;
+extern UINT32 *	policetr_rambase;
 
 
 /*----------- defined in vidhrdw/policetr.c -----------*/

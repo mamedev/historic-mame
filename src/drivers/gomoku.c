@@ -35,12 +35,12 @@ extern WRITE8_HANDLER( gomoku_bgram_w );
 extern WRITE8_HANDLER( gomoku_flipscreen_w );
 extern WRITE8_HANDLER( gomoku_bg_dispsw_w );
 
-extern data8_t *gomoku_videoram;
-extern data8_t *gomoku_colorram;
-extern data8_t *gomoku_bgram;
+extern UINT8 *gomoku_videoram;
+extern UINT8 *gomoku_colorram;
+extern UINT8 *gomoku_bgram;
 
-extern data8_t *gomoku_soundregs1;
-extern data8_t *gomoku_soundregs2;
+extern UINT8 *gomoku_soundregs1;
+extern UINT8 *gomoku_soundregs2;
 extern WRITE8_HANDLER( gomoku_sound1_w );
 extern WRITE8_HANDLER( gomoku_sound2_w );
 

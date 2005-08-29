@@ -7,18 +7,18 @@
 
 #include "driver.h"
 
-extern data8_t *buggyb1_vram;
-extern data8_t *buggyboy_vram;
-extern data8_t *bb_objram;
-extern data8_t *sky;
+extern UINT8 *buggyb1_vram;
+extern UINT8 *buggyboy_vram;
+extern UINT8 *bb_objram;
+extern UINT8 *sky;
 
 extern tilemap *buggyb1_tilemap;
 extern tilemap *buggyboy_tilemap;
 extern size_t bb_objectram_size;
 
 
-extern data8_t *tx1_vram;
-extern data8_t *tx1_object_ram;
+extern UINT8 *tx1_vram;
+extern UINT8 *tx1_object_ram;
 
 extern tilemap *tx1_tilemap;
 extern size_t tx1_objectram_size;
@@ -234,19 +234,19 @@ static void get_buggyboy_tile_info(int tile_index)
 */
 
 /* Rewrite once scale parameters etc. are discovered */
-static void bb_draw_objects(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void bb_draw_objects(mame_bitmap *bitmap,const rectangle *cliprect)
 {
         int offs;
 
         UINT8 PROM_lookup;
         UINT16 ROM_lookup;
 
-        data8_t *rom_lut  = (data8_t *)memory_region(REGION_USER3);             /* Object index ROM */
-        data8_t *prom_lut = (data8_t *)memory_region(REGION_PROMS)+0x1600;      /* Object index PROM */
+        UINT8 *rom_lut  = (UINT8 *)memory_region(REGION_USER3);             /* Object index ROM */
+        UINT8 *prom_lut = (UINT8 *)memory_region(REGION_PROMS)+0x1600;      /* Object index PROM */
 
-        data8_t *ROM_LUTA = (data8_t *)memory_region(REGION_USER2);             /* Object LUT (lower byte) */
-        data8_t *ROM_LUTB = (data8_t *)memory_region(REGION_USER2)+0x8000;      /* Object LUT (lower byte) */
-        data8_t *ROM_CLUT = (data8_t *)memory_region(REGION_USER3)+0x2000;      /* Object palette LUT */
+        UINT8 *ROM_LUTA = (UINT8 *)memory_region(REGION_USER2);             /* Object LUT (lower byte) */
+        UINT8 *ROM_LUTB = (UINT8 *)memory_region(REGION_USER2)+0x8000;      /* Object LUT (lower byte) */
+        UINT8 *ROM_CLUT = (UINT8 *)memory_region(REGION_USER3)+0x2000;      /* Object palette LUT */
 
 	for (offs = 0x0; offs <= (bb_objectram_size); offs += 16)
 	{
@@ -369,7 +369,7 @@ VIDEO_START( buggyboy )
 
 
 /* Gradient sky - 'scrolls' up and down */
-static void draw_sky(struct mame_bitmap *bitmap)
+static void draw_sky(mame_bitmap *bitmap)
 {
 	int x,y,colour;
 	for (y = 0; y < 256; y++)

@@ -528,8 +528,8 @@ ROM_END
 static DRIVER_INIT( abattle )
 {
 	/* use the protection prom to decrypt the roms */
-	data8_t *rom = memory_region(REGION_CPU1);
-	data8_t *prom = memory_region(REGION_USER1);
+	UINT8 *rom = memory_region(REGION_CPU1);
+	UINT8 *prom = memory_region(REGION_USER1);
 	int i;
 
 	for(i = 0xd000; i < 0x10000; i++)
@@ -544,7 +544,7 @@ static DRIVER_INIT( abattle )
 
 static DRIVER_INIT( afire )
 {
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int i;
 
 	for(i = 0xd000; i < 0x10000; i++)

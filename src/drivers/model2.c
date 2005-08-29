@@ -60,11 +60,11 @@
 #include "sound/2612intf.h"
 
 UINT32 *model2_bufferram, *model2_colorxlat, *model2_workram, *model2_backup1, *model2_backup2;
-static data32_t model2_intreq;
-static data32_t model2_intena;
-static data32_t model2_coproctl, model2_coprocnt, model2_geoctl, model2_geocnt;
+static UINT32 model2_intreq;
+static UINT32 model2_intena;
+static UINT32 model2_coproctl, model2_coprocnt, model2_geoctl, model2_geocnt;
 
-static data32_t model2_timervals[4], model2_timerorig[4];
+static UINT32 model2_timervals[4], model2_timerorig[4];
 static int      model2_timerrun[4];
 static void    *model2_timers[4];
 static int model2_ctrlmode;
@@ -381,7 +381,7 @@ static WRITE32_HANDLER(ctrl0_w)
 
 static READ32_HANDLER(ctrl0_r)
 {
-	data32_t ret = readinputport(0);
+	UINT32 ret = readinputport(0);
 	ret <<= 16;
 	if(model2_ctrlmode==0)
 	{
@@ -740,7 +740,7 @@ static unsigned char protram[256];
 static READ32_HANDLER( model2_prot_r )
 {
 	static int a = 0;
-	data32_t retval = 0;
+	UINT32 retval = 0;
 
 	if (offset == 0x10000/4)
 	{
@@ -846,7 +846,7 @@ static int model2_maxxstate = 0;
 
 static READ32_HANDLER( maxx_r )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	if (offset <= 0x1f/4)
 	{
@@ -887,7 +887,7 @@ static READ32_HANDLER( maxx_r )
 
 /* Network board emulation */
 
-static data32_t model2_netram[0x8000/4];
+static UINT32 model2_netram[0x8000/4];
 
 static int zflagi, zflag, sysres;
 
@@ -3323,7 +3323,7 @@ static DRIVER_INIT( genprot )
 
 static DRIVER_INIT( pltkids )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_w);
@@ -3335,7 +3335,7 @@ static DRIVER_INIT( pltkids )
 
 static DRIVER_INIT( zerogun )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_w);
@@ -3347,7 +3347,7 @@ static DRIVER_INIT( zerogun )
 
 static DRIVER_INIT( daytona )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	// kill TGP busywait
 	ROM[0x11c7c/4] = 0x08000004;
@@ -3360,7 +3360,7 @@ static DRIVER_INIT( daytonam )
 
 static DRIVER_INIT( sgt24h )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_w);
@@ -3372,7 +3372,7 @@ static DRIVER_INIT( sgt24h )
 
 static DRIVER_INIT( doa )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d80000, 0x01dfffff, 0, 0, model2_prot_w);

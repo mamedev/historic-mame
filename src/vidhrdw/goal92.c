@@ -7,11 +7,11 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
+UINT16 *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
 
 static tilemap *background_layer,*foreground_layer,*text_layer;
 
-static data16_t fg_bank = 0;
+static UINT16 fg_bank = 0;
 
 READ16_HANDLER( goal92_fg_bank_r )
 {
@@ -96,7 +96,7 @@ static void get_fore_tile_info(int tile_index)
 	SET_TILE_INFO(region,tile,color,0)
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 

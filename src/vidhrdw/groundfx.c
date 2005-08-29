@@ -17,7 +17,7 @@ struct tempsprite
 	int pri;
 };
 static struct tempsprite *spritelist;
-static struct rectangle hack_cliprect;
+static rectangle hack_cliprect;
 
 /******************************************************************/
 
@@ -89,9 +89,9 @@ Heavy use is made of sprite zooming.
 
 ***************************************************************/
 
-static void groundfx_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int do_hack,int x_offs,int y_offs)
+static void groundfx_draw_sprites_16x16(mame_bitmap *bitmap,const rectangle *cliprect,int do_hack,int x_offs,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, dblsize, curx, cury;
 	int sprites_flipscreen = 0;
@@ -202,7 +202,7 @@ static void groundfx_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct 
 	/* this happens only if primsks != NULL */
 	while (sprite_ptr != spritelist)
 	{
-		const struct rectangle *clipper;
+		const rectangle *clipper;
 
 		sprite_ptr--;
 

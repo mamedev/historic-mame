@@ -45,9 +45,9 @@ VIDEO_START( superchs );
 VIDEO_UPDATE( superchs );
 
 static UINT16 coin_word;
-static data32_t *superchs_ram;
-static data32_t *shared_ram;
-extern data32_t *f3_shared_ram;
+static UINT32 *superchs_ram;
+static UINT32 *shared_ram;
+extern UINT32 *f3_shared_ram;
 
 static int steer=0;
 
@@ -143,7 +143,7 @@ static WRITE32_HANDLER( superchs_input_w )
 	#if 0
 	{
 	char t[64];
-	static data32_t mem[2];
+	static UINT32 mem[2];
 	COMBINE_DATA(&mem[offset]);
 	sprintf(t,"%08x %08x",mem[0],mem[1]);
 	//ui_popup(t);
@@ -408,7 +408,7 @@ static gfx_decode superchs_gfxdecodeinfo[] =
 static MACHINE_INIT( superchs )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
 	memory_set_bankptr(1,&RAM[0x80000]);
 
 	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
@@ -437,7 +437,7 @@ static struct EEPROM_interface superchs_eeprom_interface =
 	"0100110000",	/* lock command */
 };
 
-static data8_t default_eeprom[128]={
+static UINT8 default_eeprom[128]={
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x53,0x00,0x2e,0x00,0x43,0x00,0x00,
 	0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0x00,0x01,0xff,0xff,0xff,0xff,0x00,0x01,

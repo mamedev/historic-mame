@@ -147,9 +147,9 @@ VIDEO_START( nost );
 
 WRITE16_HANDLER( mcatadv_videoram1_w );
 WRITE16_HANDLER( mcatadv_videoram2_w );
-data16_t* mcatadv_videoram1, *mcatadv_videoram2;
-data16_t* mcatadv_scroll, *mcatadv_scroll2;
-data16_t* mcatadv_vidregs;
+UINT16* mcatadv_videoram1, *mcatadv_videoram2;
+UINT16* mcatadv_scroll, *mcatadv_scroll2;
+UINT16* mcatadv_vidregs;
 
 
 /*** Main CPU ***/
@@ -238,7 +238,7 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER ( mcatadv_sound_bw_w )
 {
-	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
+	UINT8 *rom = memory_region(REGION_CPU2) + 0x10000;
 
 	memory_set_bankptr(1,rom + data * 0x4000);
 }
@@ -546,7 +546,7 @@ MACHINE_DRIVER_END
 
 static DRIVER_INIT( mcatadv )
 {
-	data8_t *z80rom = memory_region(REGION_CPU2) + 0x10000;
+	UINT8 *z80rom = memory_region(REGION_CPU2) + 0x10000;
 
 	memory_set_bankptr(1, z80rom + 0x4000);
 }

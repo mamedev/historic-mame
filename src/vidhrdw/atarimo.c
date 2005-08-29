@@ -30,7 +30,7 @@ struct atarimo_data
 	gfx_element	gfxelement[MAX_GFX_ELEMENTS]; /* local copy of graphics elements */
 	int					gfxgranularity[MAX_GFX_ELEMENTS];
 
-	struct mame_bitmap *bitmap;				/* temporary bitmap to render to */
+	mame_bitmap *bitmap;				/* temporary bitmap to render to */
 
 	int					linked;				/* are the entries linked? */
 	int					split;				/* are entries split or together? */
@@ -89,7 +89,7 @@ struct atarimo_data
 	int					codehighshift;		/* shift count for the upper code */
 
 	struct atarimo_entry *spriteram;		/* pointer to sprite RAM */
-	data16_t **			slipram;			/* pointer to the SLIP RAM pointer */
+	UINT16 **			slipram;			/* pointer to the SLIP RAM pointer */
 	UINT16 *			codelookup;			/* lookup table for codes */
 	UINT8 *				colorlookup;		/* lookup table for colors */
 	UINT8 *				gfxlookup;			/* lookup table for graphics */
@@ -102,7 +102,7 @@ struct atarimo_data
 	int					dirtywidth;			/* width of dirty grid */
 	int					dirtyheight;		/* height of dirty grid */
 
-	struct rectangle	rectlist[ATARIMO_MAXPERBANK];	/* list of bounding rectangles */
+	rectangle	rectlist[ATARIMO_MAXPERBANK];	/* list of bounding rectangles */
 	int					rectcount;
 
 	int					last_xpos;			/* (during processing) the previous X position */
@@ -131,11 +131,11 @@ struct atarimo_data
     GLOBAL VARIABLES
 ##########################################################################*/
 
-data16_t *atarimo_0_spriteram;
-data16_t *atarimo_0_slipram;
+UINT16 *atarimo_0_spriteram;
+UINT16 *atarimo_0_slipram;
 
-data16_t *atarimo_1_spriteram;
-data16_t *atarimo_1_slipram;
+UINT16 *atarimo_1_spriteram;
+UINT16 *atarimo_1_slipram;
 
 
 
@@ -151,7 +151,7 @@ static struct atarimo_data atarimo[ATARIMO_MAX];
     STATIC FUNCTION DECLARATIONS
 ##########################################################################*/
 
-static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const struct rectangle *cliprect);
+static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const rectangle *cliprect);
 
 
 
@@ -507,7 +507,7 @@ INLINE UINT8 *get_dirty_base(struct atarimo_data *mo, int x, int y)
     cliprect.
 ---------------------------------------------------------------*/
 
-static void erase_dirty_grid(struct atarimo_data *mo, const struct rectangle *cliprect)
+static void erase_dirty_grid(struct atarimo_data *mo, const rectangle *cliprect)
 {
 	int sx = cliprect->min_x >> mo->tilexshift;
 	int ex = cliprect->max_x >> mo->tilexshift;
@@ -530,7 +530,7 @@ static void erase_dirty_grid(struct atarimo_data *mo, const struct rectangle *cl
     series of cliprects.
 ---------------------------------------------------------------*/
 
-static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct rectangle *cliprect, struct atarimo_rect_list *rectlist)
+static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const rectangle *cliprect, struct atarimo_rect_list *rectlist)
 {
 	int sx = cliprect->min_x >> mo->tilexshift;
 	int ex = cliprect->max_x >> mo->tilexshift;
@@ -538,7 +538,7 @@ static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct re
 	int ey = cliprect->max_y >> mo->tileyshift;
 	int tilewidth = 1 << mo->tilexshift;
 	int tileheight = 1 << mo->tileyshift;
-	struct rectangle *rect;
+	rectangle *rect;
 	int x, y;
 
 	/* initialize the rect list */
@@ -593,11 +593,11 @@ static void convert_dirty_grid_to_rects(struct atarimo_data *mo, const struct re
     destination bitmap.
 ---------------------------------------------------------------*/
 
-struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, struct atarimo_rect_list *rectlist)
+mame_bitmap *atarimo_render(int map, const rectangle *cliprect, struct atarimo_rect_list *rectlist)
 {
 	struct atarimo_data *mo = &atarimo[map];
 	int startband, stopband, band, i;
-	struct rectangle *rect;
+	rectangle *rect;
 
 	/* if the graphics info has changed, recompute */
 	if (mo->gfxchanged)
@@ -622,7 +622,7 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
 	for (band = startband; band <= stopband; band++)
 	{
 		struct atarimo_entry **first, **current, **last;
-		struct rectangle bandclip;
+		rectangle bandclip;
 		int link, step;
 
 		/* if we don't use SLIPs, just recapture from 0 */
@@ -697,11 +697,11 @@ struct mame_bitmap *atarimo_render(int map, const struct rectangle *cliprect, st
     to the destination.
 ---------------------------------------------------------------*/
 
-static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const struct rectangle *cliprect)
+static int mo_render_object(struct atarimo_data *mo, const struct atarimo_entry *entry, const rectangle *cliprect)
 {
 	int gfxindex = mo->gfxlookup[EXTRACT_DATA(entry, mo->gfxmask)];
 	const gfx_element *gfx = &mo->gfxelement[gfxindex];
-	struct mame_bitmap *bitmap = mo->bitmap;
+	mame_bitmap *bitmap = mo->bitmap;
 	int x, y, sx, sy;
 
 	/* extract data from the various words */

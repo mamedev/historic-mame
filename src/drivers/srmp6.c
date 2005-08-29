@@ -202,7 +202,7 @@ offset  description
     Main CPU memory handlers
 ***************************************************************************/
 
-static data16_t srmp6_input_select = 0;
+static UINT16 srmp6_input_select = 0;
 
 WRITE16_HANDLER( srmp6_input_select_w )
 {
@@ -226,7 +226,7 @@ READ16_HANDLER( srmp6_inputs_r )
 }
 
 
-static data16_t *video_regs;
+static UINT16 *video_regs;
 
 WRITE16_HANDLER( video_regs_w )
 {
@@ -234,7 +234,7 @@ WRITE16_HANDLER( video_regs_w )
 	{
 
 		case 0x5e/2: // bank switch, used by ROM check
-			memory_set_bankptr(1,(data16_t *)(memory_region(REGION_USER2) + (data & 0x0f)*0x200000));
+			memory_set_bankptr(1,(UINT16 *)(memory_region(REGION_USER2) + (data & 0x0f)*0x200000));
 			break;
 
 

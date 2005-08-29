@@ -868,7 +868,7 @@ WRITE8_HANDLER(tms9995_internal2_w)
 #endif
 
 #ifdef MAME_DEBUG
-	static data16_t dasm_readop(offs_t addr)
+	static UINT16 dasm_readop(offs_t addr)
 	{
 		int val;
 
@@ -955,7 +955,7 @@ WRITE8_HANDLER(tms9995_internal2_w)
 	}
 
 #ifdef MAME_DEBUG
-	static data16_t dasm_readop(offs_t addr)
+	static UINT16 dasm_readop(offs_t addr)
 	{
 		return readword(addr);
 	}
@@ -1102,7 +1102,7 @@ WRITE8_HANDLER(tms9995_internal2_w)
 	}
 
 #ifdef MAME_DEBUG
-	static data16_t dasm_readop(offs_t addr)
+	static UINT16 dasm_readop(offs_t addr)
 	{
 		return readword(addr);
 	}

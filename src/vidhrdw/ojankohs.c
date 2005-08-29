@@ -12,15 +12,15 @@
 #include "cpu/z80/z80.h"
 
 
-static data8_t *ojankohs_videoram;
-static data8_t *ojankohs_colorram;
-static data8_t *ojankohs_paletteram;
+static UINT8 *ojankohs_videoram;
+static UINT8 *ojankohs_colorram;
+static UINT8 *ojankohs_paletteram;
 static int ojankohs_gfxreg;
 static int ojankohs_flipscreen;
 static int ojankohs_scrollx, ojankohs_scrolly;
 static tilemap *ojankohs_tilemap;
 static int ojankoc_screen_refresh;
-static struct mame_bitmap *ojankoc_tmpbitmap;
+static mame_bitmap *ojankoc_tmpbitmap;
 
 WRITE8_HANDLER( ojankoc_videoram_w );
 

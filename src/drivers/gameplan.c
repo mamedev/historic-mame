@@ -207,7 +207,7 @@ VIA 3 - sound
 
 ****************************************************************************/
 
-static data8_t sound_cmd, sound_ack, ca2;
+static UINT8 sound_cmd, sound_ack, ca2;
 
 static WRITE8_HANDLER( sound_reset_w )
 {
@@ -257,7 +257,7 @@ VIA 5 - sound
 
 ****************************************************************************/
 
-static data8_t *r6532_0_ram;
+static UINT8 *r6532_0_ram;
 
 static READ8_HANDLER( r6532_0_ram_r )
 {

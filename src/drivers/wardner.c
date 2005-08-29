@@ -139,7 +139,7 @@ static WRITE8_HANDLER( wardner_ramrom_bank_sw )
 	if (wardner_membank != data) {
 		int bankaddress = 0;
 
-		data8_t *RAM = memory_region(REGION_CPU1);
+		UINT8 *RAM = memory_region(REGION_CPU1);
 
 		wardner_membank = data;
 
@@ -673,8 +673,8 @@ ROM_END
 
 static DRIVER_INIT( wardner )
 {
-	data8_t *source = memory_region(REGION_USER1);
-	data16_t *dest = (data16_t *)memory_region(REGION_CPU3);
+	UINT8 *source = memory_region(REGION_USER1);
+	UINT16 *dest = (UINT16 *)memory_region(REGION_CPU3);
 	int A;
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */

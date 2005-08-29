@@ -64,7 +64,7 @@ VIDEO_START( warriorb )
             SPRITE DRAW ROUTINE
 ************************************************************/
 
-static void warriorb_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int primask,int y_offs)
+static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int primask,int y_offs)
 {
 	int offs, data, data2, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;

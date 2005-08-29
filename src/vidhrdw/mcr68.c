@@ -226,9 +226,9 @@ WRITE16_HANDLER( zwackery_spriteram_w )
  *
  *************************************/
 
-static void mcr68_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void mcr68_update_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
-	struct rectangle sprite_clip = Machine->visible_area;
+	rectangle sprite_clip = Machine->visible_area;
 	int offs;
 
 	/* adjust for clipping */
@@ -278,7 +278,7 @@ static void mcr68_update_sprites(struct mame_bitmap *bitmap, const struct rectan
 }
 
 
-static void zwackery_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void zwackery_update_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs;
 

@@ -23,8 +23,8 @@ convert to tilemaps
 #include "sound/okim6295.h"
 
 /* vidhrdw/funybubl.c */
-extern data8_t* funybubl_banked_videoram;
-extern data8_t *funybubl_paletteram;
+extern UINT8* funybubl_banked_videoram;
+extern UINT8 *funybubl_paletteram;
 WRITE8_HANDLER ( funybubl_paldatawrite );
 VIDEO_START(funybubl);
 VIDEO_UPDATE(funybubl);

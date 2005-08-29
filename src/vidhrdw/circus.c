@@ -61,7 +61,7 @@ VIDEO_START( circus )
 	return 0;
 }
 
-static void draw_line(struct mame_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
+static void draw_line(mame_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
 {
 	/* Draws horizontal and Vertical lines only! */
 	int col = Machine->pens[1];
@@ -91,7 +91,7 @@ static void draw_line(struct mame_bitmap *bitmap, int x1, int y1, int x2, int y2
 	}
 }
 
-static void draw_robot_box (struct mame_bitmap *bitmap, int x, int y)
+static void draw_robot_box (mame_bitmap *bitmap, int x, int y)
 {
 	/* Box */
 
@@ -111,7 +111,7 @@ static void draw_robot_box (struct mame_bitmap *bitmap, int x, int y)
 	draw_line(bitmap,x+16,y,x+16,ey,0);
 }
 
-static void circus_draw_fg( struct mame_bitmap *bitmap )
+static void circus_draw_fg( mame_bitmap *bitmap )
 {
 	/* The sync generator hardware is used to   */
 	/* draw the border and diving boards        */
@@ -140,7 +140,7 @@ VIDEO_UPDATE( circus )
 	circus_draw_fg(bitmap);
 }
 
-static void robotbwl_draw_scoreboard( struct mame_bitmap *bitmap )
+static void robotbwl_draw_scoreboard( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -165,7 +165,7 @@ static void robotbwl_draw_scoreboard( struct mame_bitmap *bitmap )
 	draw_line(bitmap, 39+152,137,47+152,137,0);
 }
 
-static void robotbwl_draw_bowling_alley( struct mame_bitmap *bitmap )
+static void robotbwl_draw_bowling_alley( mame_bitmap *bitmap )
 {
 	draw_line(bitmap, 103,17,103,205,0);
 	draw_line(bitmap, 111,17,111,203,1);
@@ -173,7 +173,7 @@ static void robotbwl_draw_bowling_alley( struct mame_bitmap *bitmap )
 	draw_line(bitmap, 144,17,144,203,1);
 }
 
-static void robotbwl_draw_ball( struct mame_bitmap *bitmap )
+static void robotbwl_draw_ball( mame_bitmap *bitmap )
 {
 	drawgfx(bitmap,Machine->gfx[1],
 			clown_z,
@@ -191,7 +191,7 @@ VIDEO_UPDATE( robotbwl )
 	robotbwl_draw_ball(bitmap);
 }
 
-static void crash_draw_car( struct mame_bitmap *bitmap )
+static void crash_draw_car( mame_bitmap *bitmap )
 {
 	drawgfx(bitmap,Machine->gfx[1],
 		clown_z,
@@ -207,10 +207,10 @@ VIDEO_UPDATE( crash )
 	crash_draw_car(bitmap);
 }
 
-static void ripcord_draw_skydiver( struct mame_bitmap *bitmap )
+static void ripcord_draw_skydiver( mame_bitmap *bitmap )
 {
 	const gfx_element *gfx;
-	const struct rectangle *clip;
+	const rectangle *clip;
 	pen_t *pal_ptr;
 	UINT8  *src_lineptr, *src_pixptr;
 	UINT16 *dst_lineptr, *dst_lineend;

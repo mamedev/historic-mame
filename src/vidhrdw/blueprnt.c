@@ -100,7 +100,7 @@ VIDEO_START( blueprnt )
 	return 0;
 }
 
-static void blueprnt_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void blueprnt_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

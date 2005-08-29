@@ -124,7 +124,7 @@ WRITE8_HANDLER( troangel_flipscreen_w )
 
 
 
-static void draw_background( struct mame_bitmap *bitmap )
+static void draw_background( mame_bitmap *bitmap )
 {
 	int offs;
 	const gfx_element *gfx = Machine->gfx[0];
@@ -191,7 +191,7 @@ static void draw_background( struct mame_bitmap *bitmap )
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

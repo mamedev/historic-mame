@@ -9,12 +9,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static data16_t xscroll;
-static data16_t yscroll;
+static UINT16 xscroll;
+static UINT16 yscroll;
 static tilemap *background, *foreground;
 static const unsigned char *spritepalettebank;
 
-data16_t *amazon_videoram;
+UINT16 *amazon_videoram;
 
 static void
 get_bg_tile_info(int tile_index)
@@ -35,10 +35,10 @@ get_fg_tile_info(int tile_index)
 }
 
 static void
-draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *pGfx = Machine->gfx[2];
-	const data16_t *pSource = spriteram16;
+	const UINT16 *pSource = spriteram16;
 	int i;
 	int transparent_pen;
 

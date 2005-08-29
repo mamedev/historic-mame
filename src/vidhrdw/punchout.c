@@ -29,21 +29,21 @@ unsigned char *punchout_bigsprite1;
 unsigned char *punchout_bigsprite2;
 unsigned char *punchout_palettebank;
 static unsigned char *dirtybuffer2,*bs1dirtybuffer,*bs2dirtybuffer;
-static struct mame_bitmap *bs1tmpbitmap,*bs2tmpbitmap;
+static mame_bitmap *bs1tmpbitmap,*bs2tmpbitmap;
 
 static int top_palette_bank,bottom_palette_bank;
 
-static struct rectangle topvisiblearea =
+static rectangle topvisiblearea =
 {
 	0*8, 32*8-1,
 	0*8, TOP_MONITOR_ROWS*8-1
 };
-static struct rectangle bottomvisiblearea =
+static rectangle bottomvisiblearea =
 {
 	0*8, 32*8-1,
 	TOP_MONITOR_ROWS*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
 };
-static struct rectangle backgroundvisiblearea =
+static rectangle backgroundvisiblearea =
 {
 	0*8, 64*8-1,
 	TOP_MONITOR_ROWS*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1

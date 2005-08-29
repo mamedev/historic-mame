@@ -8,7 +8,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *compgolf_bg_ram;
+UINT8 *compgolf_bg_ram;
 static tilemap *text_tilemap, *background_tilemap;
 
 int compgolf_scrollx_lo = 0, compgolf_scrolly_lo = 0, compgolf_scrollx_hi = 0, compgolf_scrolly_hi = 0;
@@ -94,7 +94,7 @@ xx------ xxxxxxxx -------- -------- sprite code
 -----x-- -------- -------- -------- Flip X
 -------- -------- -------- -------- Flip Y(used?)
 */
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,fx,fy,x,y,color,sprite;
 

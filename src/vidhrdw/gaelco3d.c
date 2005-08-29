@@ -26,8 +26,8 @@ offs_t gaelco3d_mask_size;
 #define IS_POLYEND(x)		(((x) ^ ((x) >> 1)) & 0x4000)
 
 
-static struct mame_bitmap *screenbits;
-static struct mame_bitmap *zbuffer;
+static mame_bitmap *screenbits;
+static mame_bitmap *zbuffer;
 static UINT16 *palette;
 static UINT32 *polydata_buffer;
 static UINT32 polydata_count;
@@ -139,7 +139,7 @@ static int render_poly(UINT32 *polydata)
 	int midx = Machine->drv->screen_width/2;
 	int midy = Machine->drv->screen_height/2;
 	struct poly_vertex vert[3];
-	struct rectangle clip;
+	rectangle clip;
 	int i;
 
 	// shut up the compiler
@@ -460,7 +460,7 @@ WRITE32_HANDLER( gaelco3d_render_w )
  *
  *************************************/
 
-INLINE void update_palette_entry(offs_t offset, data16_t data)
+INLINE void update_palette_entry(offs_t offset, UINT16 data)
 {
 	int r = (data >> 10) & 0x1f;
 	int g = (data >> 5) & 0x1f;

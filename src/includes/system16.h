@@ -75,16 +75,16 @@ extern int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const 
 extern int sys16_sh_shadowpal;
 extern int sys16_MaxShadowColors;
 
-extern data16_t *sys16_tileram;
-extern data16_t *sys16_textram;
-extern data16_t *sys16_spriteram;
+extern UINT16 *sys16_tileram;
+extern UINT16 *sys16_textram;
+extern UINT16 *sys16_spriteram;
 
 /* machine hardware */
-extern data16_t *sys16_workingram;
-extern data16_t *sys16_workingram2;
-extern data16_t *sys16_extraram;
-extern data16_t *sys16_extraram2;
-extern data16_t *sys16_extraram3;
+extern UINT16 *sys16_workingram;
+extern UINT16 *sys16_workingram2;
+extern UINT16 *sys16_extraram;
+extern UINT16 *sys16_extraram2;
+extern UINT16 *sys16_extraram3;
 
 extern void sys16_patch_code( int offset, int data );
 
@@ -243,23 +243,23 @@ extern int sys16_fg2_page[4];
 
 extern int sys18_bg2_active;
 extern int sys18_fg2_active;
-extern data16_t *sys18_splittab_bg_x;
-extern data16_t *sys18_splittab_bg_y;
-extern data16_t *sys18_splittab_fg_x;
-extern data16_t *sys18_splittab_fg_y;
+extern UINT16 *sys18_splittab_bg_x;
+extern UINT16 *sys18_splittab_bg_y;
+extern UINT16 *sys18_splittab_fg_x;
+extern UINT16 *sys18_splittab_fg_y;
 
-extern data16_t *sys16_gr_ver;
-extern data16_t *sys16_gr_hor;
-extern data16_t *sys16_gr_pal;
-extern data16_t *sys16_gr_flip;
+extern UINT16 *sys16_gr_ver;
+extern UINT16 *sys16_gr_hor;
+extern UINT16 *sys16_gr_pal;
+extern UINT16 *sys16_gr_flip;
 extern int sys16_gr_palette;
 extern int sys16_gr_palette_default;
 extern unsigned char sys16_gr_colorflip[2][4];
-extern data16_t *sys16_gr_second_road;
+extern UINT16 *sys16_gr_second_road;
 
-extern data16_t *sys16_tileram;
-extern data16_t *sys16_textram;
-extern data16_t *sys16_spriteram;
+extern UINT16 *sys16_tileram;
+extern UINT16 *sys16_textram;
+extern UINT16 *sys16_spriteram;
 
 /* sound */
 extern struct upd7759_interface sys16_upd7759_interface;

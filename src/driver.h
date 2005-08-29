@@ -32,7 +32,7 @@
 #define VIDEO_START(name)		int video_start_##name(void)
 #define VIDEO_STOP(name)		void video_stop_##name(void)
 #define VIDEO_EOF(name)			void video_eof_##name(void)
-#define VIDEO_UPDATE(name)		void video_update_##name(int screen, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+#define VIDEO_UPDATE(name)		void video_update_##name(int screen, mame_bitmap *bitmap, const rectangle *cliprect)
 
 /* NULL versions */
 #define init_NULL				NULL
@@ -342,7 +342,7 @@ struct _machine_config
 	UINT32 video_attributes;
 	UINT32 aspect_x, aspect_y;
 	int screen_width,screen_height;
-	struct rectangle default_visible_area;
+	rectangle default_visible_area;
 	gfx_decode *gfxdecodeinfo;
 	UINT32 total_colors;
 	UINT32 color_table_len;
@@ -351,7 +351,7 @@ struct _machine_config
 	int (*video_start)(void);
 	void (*video_stop)(void);
 	void (*video_eof)(void);
-	void (*video_update)(int screen, struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+	void (*video_update)(int screen, mame_bitmap *bitmap,const rectangle *cliprect);
 
 	sound_config sound[MAX_SOUND];
 	speaker_config speaker[MAX_SPEAKER];

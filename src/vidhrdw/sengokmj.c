@@ -8,7 +8,7 @@ Sengoku Mahjong Video Hardware section
 #include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap,*md_tilemap,*fg_tilemap,*tx_tilemap;
-data8_t *sengokmj_bgvram,*sengokmj_mdvram,*sengokmj_fgvram,*sengokmj_txvram;
+UINT8 *sengokmj_bgvram,*sengokmj_mdvram,*sengokmj_fgvram,*sengokmj_txvram;
 
 WRITE8_HANDLER( sengokmj_bgvram_w )
 {
@@ -62,7 +62,7 @@ static void sengoku_tx_tile_info(int tile_index)
 	SET_TILE_INFO(2, (tile & 0xfff) + 0x3000, color, 0)
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;

@@ -292,7 +292,7 @@ UINT8 rombank;
 
 void segae_bankswitch (void)
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	memory_set_bankptr( 1, &RAM[ 0x10000 + ( rombank * 0x4000 ) ] );
 }

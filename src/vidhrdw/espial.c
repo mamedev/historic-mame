@@ -9,13 +9,13 @@
 #include "driver.h"
 
 
-data8_t *espial_videoram;
-data8_t *espial_colorram;
-data8_t *espial_attributeram;
-data8_t *espial_scrollram;
-data8_t *espial_spriteram_1;
-data8_t *espial_spriteram_2;
-data8_t *espial_spriteram_3;
+UINT8 *espial_videoram;
+UINT8 *espial_colorram;
+UINT8 *espial_attributeram;
+UINT8 *espial_scrollram;
+UINT8 *espial_spriteram_1;
+UINT8 *espial_spriteram_2;
+UINT8 *espial_spriteram_3;
 
 static int flipscreen;
 static tilemap *bg_tilemap;
@@ -80,9 +80,9 @@ PALETTE_INIT( espial )
 
 static void get_tile_info(int tile_index)
 {
-	data8_t code = espial_videoram[tile_index];
-	data8_t col = espial_colorram[tile_index];
-	data8_t attr = espial_attributeram[tile_index];
+	UINT8 code = espial_videoram[tile_index];
+	UINT8 col = espial_colorram[tile_index];
+	UINT8 attr = espial_attributeram[tile_index];
 	SET_TILE_INFO(0,
 				  code | ((attr & 0x03) << 8),
 				  col & 0x3f,
@@ -181,7 +181,7 @@ WRITE8_HANDLER( espial_flipscreen_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

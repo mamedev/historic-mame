@@ -2,13 +2,13 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *mappy_videoram;
-data8_t *mappy_spriteram;
+UINT8 *mappy_videoram;
+UINT8 *mappy_spriteram;
 
-static data8_t mappy_scroll;
+static UINT8 mappy_scroll;
 static tilemap *bg_tilemap;
 
-static struct mame_bitmap *sprite_bitmap;
+static mame_bitmap *sprite_bitmap;
 
 
 /***************************************************************************
@@ -367,7 +367,7 @@ WRITE8_HANDLER( mappy_scroll_w )
 ***************************************************************************/
 
 /* also used by toypop.c */
-void mappy_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int xoffs, int yoffs, int trans_color )
+void mappy_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int xoffs, int yoffs, int trans_color )
 {
 	int offs;
 
@@ -441,7 +441,7 @@ spriteram_3
 1   -------x  X position MSB
 */
 
-static void phozon_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void phozon_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

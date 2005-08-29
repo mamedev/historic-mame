@@ -86,7 +86,7 @@ VIDEO_START( shootout ){
 	return 1; /* error */
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bank_bits ){
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int bank_bits ){
 	static int bFlicker;
 	const gfx_element *gfx = Machine->gfx[1];
 	const UINT8 *source = spriteram+127*4;

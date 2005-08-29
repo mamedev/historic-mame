@@ -12,8 +12,8 @@ Notes:
 #include "sound/2203intf.h"
 
 
-extern data8_t *mosaic_fgvideoram;
-extern data8_t *mosaic_bgvideoram;
+extern UINT8 *mosaic_fgvideoram;
+extern UINT8 *mosaic_bgvideoram;
 WRITE8_HANDLER( mosaic_fgvideoram_w );
 WRITE8_HANDLER( mosaic_bgvideoram_w );
 VIDEO_START( mosaic );

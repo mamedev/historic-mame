@@ -45,7 +45,7 @@ WRITE8_HANDLER( marineb_flipscreen_y_w )
   the main emulation engine.
 
 ***************************************************************************/
-static void draw_chars(struct mame_bitmap *_tmpbitmap, struct mame_bitmap *bitmap,
+static void draw_chars(mame_bitmap *_tmpbitmap, mame_bitmap *bitmap,
                        int scroll_cols)
 {
 	int offs;

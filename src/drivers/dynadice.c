@@ -188,7 +188,7 @@ VIDEO_START( dynadice )
 
 VIDEO_UPDATE( dynadice )
 {
-	struct rectangle myclip=*cliprect;
+	rectangle myclip=*cliprect;
 	myclip.max_x=15;
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	tilemap_draw(bitmap,&myclip,top_tilemap,0,0);

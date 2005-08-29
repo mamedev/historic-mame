@@ -6,25 +6,25 @@
 #define NAMCONA1_NUM_TILEMAPS 4
 
 /* public variables */
-data16_t *namcona1_vreg;
-data16_t *namcona1_scroll;
-data16_t *namcona1_workram;
-data16_t *namcona1_sparevram;
+UINT16 *namcona1_vreg;
+UINT16 *namcona1_scroll;
+UINT16 *namcona1_workram;
+UINT16 *namcona1_sparevram;
 
 /* private variables */
 static char *dirtychar;
 static char dirtygfx;
-static data16_t *shaperam;
-static data16_t *cgram;
+static UINT16 *shaperam;
+static UINT16 *cgram;
 static tilemap *bg_tilemap[NAMCONA1_NUM_TILEMAPS];
 static int tilemap_palette_bank[NAMCONA1_NUM_TILEMAPS];
 static int palette_is_dirty;
 
 static void tilemap_get_info(
-	int tile_index,const data16_t *tilemap_videoram,int tilemap_color )
+	int tile_index,const UINT16 *tilemap_videoram,int tilemap_color )
 {
 #ifdef LSB_FIRST
-	data16_t *source;
+	UINT16 *source;
 #endif
 	static UINT8 mask_data[8];
 
@@ -78,7 +78,7 @@ READ16_HANDLER( namcona1_videoram_r )
 static void
 UpdatePalette( int offset )
 {
-	data16_t color;
+	UINT16 color;
 	int r,g,b;
 
 	color = paletteram16[offset];
@@ -148,7 +148,7 @@ static gfx_layout cg_layout =
 
 READ16_HANDLER( namcona1_gfxram_r )
 {
-	data16_t type = namcona1_vreg[0x0c/2];
+	UINT16 type = namcona1_vreg[0x0c/2];
 	if( type == 0x03 )
 	{
 		if( offset<0x4000 )
@@ -165,8 +165,8 @@ READ16_HANDLER( namcona1_gfxram_r )
 
 WRITE16_HANDLER( namcona1_gfxram_w )
 {
-	data16_t type = namcona1_vreg[0x0c/2];
-	data16_t old_word;
+	UINT16 type = namcona1_vreg[0x0c/2];
+	UINT16 old_word;
 
 	if( type == 0x03 )
 	{
@@ -195,7 +195,7 @@ WRITE16_HANDLER( namcona1_gfxram_w )
 
 static void update_gfx( void )
 {
-	const data16_t *pSource = videoram16;
+	const UINT16 *pSource = videoram16;
 	int page;
 	int i;
 
@@ -269,7 +269,7 @@ VIDEO_START( namcona1 )
 /*************************************************************************/
 
 static void pdraw_masked_tile(
-		struct mame_bitmap *bitmap,
+		mame_bitmap *bitmap,
 		unsigned code,
 		int color,
 		int sx, int sy,
@@ -279,9 +279,9 @@ static void pdraw_masked_tile(
 {
 	const gfx_element *gfx,*mask;
 	const pen_t *paldata;
-	data8_t *gfx_addr;
+	UINT8 *gfx_addr;
 	int gfx_pitch;
-	data8_t *mask_addr;
+	UINT8 *mask_addr;
 	int mask_pitch;
 	int x,y;
 
@@ -313,7 +313,7 @@ static void pdraw_masked_tile(
 			for( y=0; y<8; y++ )
 			{
 				int ypos = sy+(flipy?7-y:y);
-				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
+				UINT8 *pri = (UINT8 *)priority_bitmap->line[ypos];
 				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
 				if( flipx )
 				{
@@ -355,7 +355,7 @@ static void pdraw_masked_tile(
 			for( y=0; y<8; y++ )
 			{
 				int ypos = sy+(flipy?7-y:y);
-				data8_t *pri = (data8_t *)priority_bitmap->line[ypos];
+				UINT8 *pri = (UINT8 *)priority_bitmap->line[ypos];
 				UINT16 *dest = (UINT16 *)bitmap->line[ypos];
 				if( flipx )
 				{
@@ -397,7 +397,7 @@ static void pdraw_masked_tile(
 } /* pdraw_masked_tile */
 
 static void pdraw_opaque_tile(
-		struct mame_bitmap *bitmap,
+		mame_bitmap *bitmap,
 		unsigned code,
 		int color,
 		int sx, int sy,
@@ -407,11 +407,11 @@ static void pdraw_opaque_tile(
 {
 	const gfx_element *gfx;
 	const pen_t *paldata;
-	data8_t *gfx_addr;
+	UINT8 *gfx_addr;
 	int gfx_pitch;
 	int x,y;
 	int ypos;
-	data8_t *pri;
+	UINT8 *pri;
 	UINT16 *dest;
 
 	if( sx > -8 &&
@@ -429,7 +429,7 @@ static void pdraw_opaque_tile(
 		for( y=0; y<8; y++ )
 		{
 			ypos = sy+(flipy?7-y:y);
-			pri = (data8_t *)priority_bitmap->line[ypos];
+			pri = (UINT8 *)priority_bitmap->line[ypos];
 			dest = (UINT16 *)bitmap->line[ypos];
 			if( flipx )
 			{
@@ -462,22 +462,22 @@ static void pdraw_opaque_tile(
 	}
 } /* pdraw_opaque_tile */
 
-static const data8_t pri_mask[8] = { 0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f };
+static const UINT8 pri_mask[8] = { 0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f };
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( mame_bitmap *bitmap )
 {
 	int which;
-	const data16_t *source = spriteram16;
+	const UINT16 *source = spriteram16;
 	void (*drawtile)(
-		struct mame_bitmap *,
+		mame_bitmap *,
 		unsigned code,
 		int color,
 		int sx, int sy,
 		int flipx, int flipy,
 		int priority,
 		int bShadow );
-	data16_t sprite_control;
-	data16_t ypos,tile,color,xpos;
+	UINT16 sprite_control;
+	UINT16 ypos,tile,color,xpos;
 	int priority;
 	int width,height;
 	int flipy,flipx;
@@ -545,10 +545,10 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 	}
 } /* draw_sprites */
 
-static void draw_pixel_line( UINT16 *pDest, UINT8 *pPri, data16_t *pSource, const pen_t *paldata )
+static void draw_pixel_line( UINT16 *pDest, UINT8 *pPri, UINT16 *pSource, const pen_t *paldata )
 {
 	int x;
-	data16_t data;
+	UINT16 data;
 
 	memset( pPri, 0xff, 38*8 );
 	for( x=0; x<38*8; x+=2 )
@@ -559,7 +559,7 @@ static void draw_pixel_line( UINT16 *pDest, UINT8 *pPri, data16_t *pSource, cons
 	} /* next x */
 } /* draw_pixel_line */
 
-static void draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int which, int primask )
+static void draw_background( mame_bitmap *bitmap, const rectangle *cliprect, int which, int primask )
 {
 	/*          scrollx lineselect
      *  tmap0   ffe000  ffe200
@@ -568,11 +568,11 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
      *  tmap3   ffec00  ffee00
      */
 	int xadjust = 0x3a - which*2;
-	const data16_t *scroll = namcona1_scroll+0x200*which;
+	const UINT16 *scroll = namcona1_scroll+0x200*which;
 	int line;
-	data16_t xdata, ydata;
+	UINT16 xdata, ydata;
 	int scrollx, scrolly;
-	struct rectangle clip;
+	rectangle clip;
 	const pen_t *paldata;
 	gfx_element *pGfx;
 

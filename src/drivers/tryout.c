@@ -16,7 +16,7 @@
 #include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
-extern data8_t *tryout_gfx_control;
+extern UINT8 *tryout_gfx_control;
 
 extern READ8_HANDLER( tryout_vram_r );
 extern WRITE8_HANDLER( tryout_videoram_w );
@@ -46,7 +46,7 @@ static WRITE8_HANDLER( tryout_sound_irq_ack_w )
 
 static WRITE8_HANDLER( tryout_bankswitch_w )
 {
- 	data8_t *RAM = memory_region(REGION_CPU1);
+ 	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	bankaddress = 0x10000 + (data & 0x01) * 0x2000;

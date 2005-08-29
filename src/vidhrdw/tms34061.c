@@ -249,7 +249,7 @@ static WRITE8_HANDLER( register_w )
 static READ8_HANDLER( register_r )
 {
 	int regnum = offset >> 2;
-	data16_t result;
+	UINT16 result;
 
 	/* extract the correct portion of the register */
 	result = tms34061.regs[regnum];
@@ -409,7 +409,7 @@ static READ8_HANDLER( xypixel_r )
  *
  *************************************/
 
-void tms34061_w(int col, int row, int func, data8_t data)
+void tms34061_w(int col, int row, int func, UINT8 data)
 {
 	offs_t offs;
 
@@ -468,7 +468,7 @@ void tms34061_w(int col, int row, int func, data8_t data)
 }
 
 
-data8_t tms34061_r(int col, int row, int func)
+UINT8 tms34061_r(int col, int row, int func)
 {
 	int result = 0;
 	offs_t offs;

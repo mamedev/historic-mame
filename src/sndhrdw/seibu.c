@@ -193,7 +193,7 @@ void seibu_adpcm_stop(void *token)
 
 void seibu_adpcm_decrypt(int region)
 {
-	data8_t *ROM = memory_region(region);
+	UINT8 *ROM = memory_region(region);
 	int i;
 
 	for (i = 0; i < memory_region_length(region); i++)

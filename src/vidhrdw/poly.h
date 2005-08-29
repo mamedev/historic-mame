@@ -33,10 +33,10 @@ struct poly_scanline_data
 	struct poly_scanline scanline[MAX_POLY_SCANLINES];
 };
 
-const struct poly_scanline_data *setup_triangle_0(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
-const struct poly_scanline_data *setup_triangle_1(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
-const struct poly_scanline_data *setup_triangle_2(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
-const struct poly_scanline_data *setup_triangle_3(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
-const struct poly_scanline_data *setup_triangle_4(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
-const struct poly_scanline_data *setup_triangle_5(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
-const struct poly_scanline_data *setup_triangle_6(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_0(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_1(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_2(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_3(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_4(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_5(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);
+const struct poly_scanline_data *setup_triangle_6(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect);

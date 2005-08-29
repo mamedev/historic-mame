@@ -103,8 +103,8 @@
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
 
-data16_t *pass_bg_videoram;
-data16_t *pass_fg_videoram;
+UINT16 *pass_bg_videoram;
+UINT16 *pass_fg_videoram;
 
 /* in vidhrdw */
 

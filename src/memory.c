@@ -229,7 +229,7 @@ struct _addrspace_data
 	UINT8 					dbits;					/* data bits */
 	offs_t					rawmask;				/* raw address mask, before adjusting to bytes */
 	offs_t					mask;					/* address mask */
-	data64_t				unmap;					/* unmapped value */
+	UINT64					unmap;					/* unmapped value */
 	table_data				read;					/* memory read lookup table */
 	table_data				write;					/* memory write lookup table */
 	data_accessors *		accessors;				/* pointer to the memory accessors */
@@ -773,7 +773,7 @@ void memory_set_debugger_access(int debugger)
     read handler for X-bit case
 -------------------------------------------------*/
 
-data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
+UINT8 *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 8, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -781,7 +781,7 @@ data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, of
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
 
-data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
+UINT16 *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 16, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -789,7 +789,7 @@ data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, 
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
 
-data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
+UINT32 *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 32, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -797,7 +797,7 @@ data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, 
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
 
-data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
+UINT64 *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 64, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -811,7 +811,7 @@ data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, 
     write handler for X-bit case
 -------------------------------------------------*/
 
-data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
+UINT8 *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 8, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -819,7 +819,7 @@ data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, o
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
 
-data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
+UINT16 *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 16, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -827,7 +827,7 @@ data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start,
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
 
-data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
+UINT32 *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 32, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -835,7 +835,7 @@ data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start,
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
 
-data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
+UINT64 *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 64, 0, start, end, mask, mirror, (genf *)handler, 0);
@@ -850,7 +850,7 @@ data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start,
     X-bit case
 -------------------------------------------------*/
 
-data8_t *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler)
+UINT8 *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 8, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -858,7 +858,7 @@ data8_t *memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
 }
 
-data16_t *memory_install_read16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler)
+UINT16 *memory_install_read16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 16, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -866,7 +866,7 @@ data16_t *memory_install_read16_matchmask_handler(int cpunum, int spacenum, offs
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
 }
 
-data32_t *memory_install_read32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler)
+UINT32 *memory_install_read32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 32, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -874,7 +874,7 @@ data32_t *memory_install_read32_matchmask_handler(int cpunum, int spacenum, offs
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
 }
 
-data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler)
+UINT64 *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 64, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -889,7 +889,7 @@ data64_t *memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs
     X-bit case
 -------------------------------------------------*/
 
-data8_t *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler)
+UINT8 *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 8, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -897,7 +897,7 @@ data8_t *memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
 }
 
-data16_t *memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler)
+UINT16 *memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 16, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -905,7 +905,7 @@ data16_t *memory_install_write16_matchmask_handler(int cpunum, int spacenum, off
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
 }
 
-data32_t *memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler)
+UINT32 *memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 32, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -913,7 +913,7 @@ data32_t *memory_install_write32_matchmask_handler(int cpunum, int spacenum, off
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
 }
 
-data64_t *memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler)
+UINT64 *memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 64, 1, matchval, maskval, mask, mirror, (genf *)handler, 0);
@@ -1147,7 +1147,7 @@ static int preflight_memory(void)
 
 						/* if we specify an unmap value, set it */
 						if (flags & AMEF_SPECIFIES_UNMAP)
-							space->unmap = ((flags & AMEF_UNMAP_MASK) == 0) ? (data64_t)0 : (data64_t)-1;
+							space->unmap = ((flags & AMEF_UNMAP_MASK) == 0) ? (UINT64)0 : (UINT64)-1;
 					}
 
 					/* otherwise, just track banks and hardcoded memory pointers */
@@ -2123,7 +2123,7 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 -------------------------------------------------*/
 
 #define READBYTE8(name,spacenum)														\
-data8_t name(offs_t address)															\
+UINT8 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2142,7 +2142,7 @@ data8_t name(offs_t address)															\
 }																						\
 
 #define READBYTE(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
-data8_t name(offs_t address)															\
+UINT8 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2163,12 +2163,12 @@ data8_t name(offs_t address)															\
 	return 0;																			\
 }																						\
 
-#define READBYTE16BE(name,space)	READBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1,data16_t)
-#define READBYTE16LE(name,space)	READBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1,data16_t)
-#define READBYTE32BE(name,space)	READBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3,data32_t)
-#define READBYTE32LE(name,space)	READBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3,data32_t)
-#define READBYTE64BE(name,space)	READBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7,data64_t)
-#define READBYTE64LE(name,space)	READBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7,data64_t)
+#define READBYTE16BE(name,space)	READBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1,UINT16)
+#define READBYTE16LE(name,space)	READBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1,UINT16)
+#define READBYTE32BE(name,space)	READBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3,UINT32)
+#define READBYTE32LE(name,space)	READBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3,UINT32)
+#define READBYTE64BE(name,space)	READBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7,UINT64)
+#define READBYTE64LE(name,space)	READBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7,UINT64)
 
 
 /*-------------------------------------------------
@@ -2177,7 +2177,7 @@ data8_t name(offs_t address)															\
 -------------------------------------------------*/
 
 #define READWORD16(name,spacenum)														\
-data16_t name(offs_t address)															\
+UINT16 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2187,7 +2187,7 @@ data16_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data16_t *)&bank_ptr[entry][address]);								\
+		MEMREADEND(*(UINT16 *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2196,7 +2196,7 @@ data16_t name(offs_t address)															\
 }																						\
 
 #define READWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)		\
-data16_t name(offs_t address)															\
+UINT16 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2206,7 +2206,7 @@ data16_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data16_t *)&bank_ptr[entry][xormacro(address)]);					\
+		MEMREADEND(*(UINT16 *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2217,10 +2217,10 @@ data16_t name(offs_t address)															\
 	return 0;																			\
 }																						\
 
-#define READWORD32BE(name,space)	READWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2,data32_t)
-#define READWORD32LE(name,space)	READWORD(name,space,WORD_XOR_LE, handler32,2, address & 2,data32_t)
-#define READWORD64BE(name,space)	READWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6,data64_t)
-#define READWORD64LE(name,space)	READWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6,data64_t)
+#define READWORD32BE(name,space)	READWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2,UINT32)
+#define READWORD32LE(name,space)	READWORD(name,space,WORD_XOR_LE, handler32,2, address & 2,UINT32)
+#define READWORD64BE(name,space)	READWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6,UINT64)
+#define READWORD64LE(name,space)	READWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6,UINT64)
 
 
 /*-------------------------------------------------
@@ -2229,7 +2229,7 @@ data16_t name(offs_t address)															\
 -------------------------------------------------*/
 
 #define READDWORD32(name,spacenum)														\
-data32_t name(offs_t address)															\
+UINT32 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2239,7 +2239,7 @@ data32_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data32_t *)&bank_ptr[entry][address]);								\
+		MEMREADEND(*(UINT32 *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2248,7 +2248,7 @@ data32_t name(offs_t address)															\
 }																						\
 
 #define READDWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
-data32_t name(offs_t address)															\
+UINT32 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2258,7 +2258,7 @@ data32_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data32_t *)&bank_ptr[entry][xormacro(address)]);					\
+		MEMREADEND(*(UINT32 *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2269,8 +2269,8 @@ data32_t name(offs_t address)															\
 	return 0;																			\
 }																						\
 
-#define READDWORD64BE(name,space)	READDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4,data64_t)
-#define READDWORD64LE(name,space)	READDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4,data64_t)
+#define READDWORD64BE(name,space)	READDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4,UINT64)
+#define READDWORD64LE(name,space)	READDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4,UINT64)
 
 
 /*-------------------------------------------------
@@ -2279,7 +2279,7 @@ data32_t name(offs_t address)															\
 -------------------------------------------------*/
 
 #define READQWORD64(name,spacenum)														\
-data64_t name(offs_t address)															\
+UINT64 name(offs_t address)															\
 {																						\
 	UINT32 entry;																		\
 	MEMREADSTART();																		\
@@ -2289,7 +2289,7 @@ data64_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data64_t *)&bank_ptr[entry][address]);								\
+		MEMREADEND(*(UINT64 *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2303,7 +2303,7 @@ data64_t name(offs_t address)															\
 -------------------------------------------------*/
 
 #define WRITEBYTE8(name,spacenum)														\
-void name(offs_t address, data8_t data)													\
+void name(offs_t address, UINT8 data)													\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2321,7 +2321,7 @@ void name(offs_t address, data8_t data)													\
 }																						\
 
 #define WRITEBYTE(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
-void name(offs_t address, data8_t data)													\
+void name(offs_t address, UINT8 data)													\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2341,12 +2341,12 @@ void name(offs_t address, data8_t data)													\
 	}																					\
 }																						\
 
-#define WRITEBYTE16BE(name,space)	WRITEBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1,data16_t)
-#define WRITEBYTE16LE(name,space)	WRITEBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1,data16_t)
-#define WRITEBYTE32BE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3,data32_t)
-#define WRITEBYTE32LE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3,data32_t)
-#define WRITEBYTE64BE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7,data64_t)
-#define WRITEBYTE64LE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7,data64_t)
+#define WRITEBYTE16BE(name,space)	WRITEBYTE(name,space,BYTE_XOR_BE, handler16,1,~address & 1,UINT16)
+#define WRITEBYTE16LE(name,space)	WRITEBYTE(name,space,BYTE_XOR_LE, handler16,1, address & 1,UINT16)
+#define WRITEBYTE32BE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_BE,handler32,2,~address & 3,UINT32)
+#define WRITEBYTE32LE(name,space)	WRITEBYTE(name,space,BYTE4_XOR_LE,handler32,2, address & 3,UINT32)
+#define WRITEBYTE64BE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_BE,handler64,3,~address & 7,UINT64)
+#define WRITEBYTE64LE(name,space)	WRITEBYTE(name,space,BYTE8_XOR_LE,handler64,3, address & 7,UINT64)
 
 
 /*-------------------------------------------------
@@ -2355,7 +2355,7 @@ void name(offs_t address, data8_t data)													\
 -------------------------------------------------*/
 
 #define WRITEWORD16(name,spacenum)														\
-void name(offs_t address, data16_t data)												\
+void name(offs_t address, UINT16 data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2365,7 +2365,7 @@ void name(offs_t address, data16_t data)												\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][address] = data);						\
+		MEMWRITEEND(*(UINT16 *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2373,7 +2373,7 @@ void name(offs_t address, data16_t data)												\
 }																						\
 
 #define WRITEWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
-void name(offs_t address, data16_t data)												\
+void name(offs_t address, UINT16 data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2383,7 +2383,7 @@ void name(offs_t address, data16_t data)												\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][xormacro(address)] = data);			\
+		MEMWRITEEND(*(UINT16 *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2393,10 +2393,10 @@ void name(offs_t address, data16_t data)												\
 	}																					\
 }																						\
 
-#define WRITEWORD32BE(name,space)	WRITEWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2,data32_t)
-#define WRITEWORD32LE(name,space)	WRITEWORD(name,space,WORD_XOR_LE, handler32,2, address & 2,data32_t)
-#define WRITEWORD64BE(name,space)	WRITEWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6,data64_t)
-#define WRITEWORD64LE(name,space)	WRITEWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6,data64_t)
+#define WRITEWORD32BE(name,space)	WRITEWORD(name,space,WORD_XOR_BE, handler32,2,~address & 2,UINT32)
+#define WRITEWORD32LE(name,space)	WRITEWORD(name,space,WORD_XOR_LE, handler32,2, address & 2,UINT32)
+#define WRITEWORD64BE(name,space)	WRITEWORD(name,space,WORD2_XOR_BE,handler64,3,~address & 6,UINT64)
+#define WRITEWORD64LE(name,space)	WRITEWORD(name,space,WORD2_XOR_LE,handler64,3, address & 6,UINT64)
 
 
 /*-------------------------------------------------
@@ -2405,7 +2405,7 @@ void name(offs_t address, data16_t data)												\
 -------------------------------------------------*/
 
 #define WRITEDWORD32(name,spacenum)														\
-void name(offs_t address, data32_t data)												\
+void name(offs_t address, UINT32 data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2415,7 +2415,7 @@ void name(offs_t address, data32_t data)												\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][address] = data);						\
+		MEMWRITEEND(*(UINT32 *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2423,7 +2423,7 @@ void name(offs_t address, data32_t data)												\
 }																						\
 
 #define WRITEDWORD(name,spacenum,xormacro,handlertype,ignorebits,shiftbytes,masktype)	\
-void name(offs_t address, data32_t data)												\
+void name(offs_t address, UINT32 data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2433,7 +2433,7 @@ void name(offs_t address, data32_t data)												\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][xormacro(address)] = data);			\
+		MEMWRITEEND(*(UINT32 *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2443,8 +2443,8 @@ void name(offs_t address, data32_t data)												\
 	}																					\
 }																						\
 
-#define WRITEDWORD64BE(name,space)	WRITEDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4,data64_t)
-#define WRITEDWORD64LE(name,space)	WRITEDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4,data64_t)
+#define WRITEDWORD64BE(name,space)	WRITEDWORD(name,space,DWORD_XOR_BE,handler64,3,~address & 4,UINT64)
+#define WRITEDWORD64LE(name,space)	WRITEDWORD(name,space,DWORD_XOR_LE,handler64,3, address & 4,UINT64)
 
 
 /*-------------------------------------------------
@@ -2453,7 +2453,7 @@ void name(offs_t address, data32_t data)												\
 -------------------------------------------------*/
 
 #define WRITEQWORD64(name,spacenum)														\
-void name(offs_t address, data64_t data)												\
+void name(offs_t address, UINT64 data)												\
 {																						\
 	UINT32 entry;																		\
 	MEMWRITESTART();																	\
@@ -2463,7 +2463,7 @@ void name(offs_t address, data64_t data)												\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data64_t *)&bank_ptr[entry][address] = data);						\
+		MEMWRITEEND(*(UINT64 *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2625,49 +2625,49 @@ WRITEDWORD64LE(io_write_dword_64le, ADDRESS_SPACE_IO)
     safe opcode reading
 -------------------------------------------------*/
 
-data8_t cpu_readop_safe(offs_t offset)
+UINT8 cpu_readop_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop_unsafe(offset);
 }
 
-data16_t cpu_readop16_safe(offs_t offset)
+UINT16 cpu_readop16_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop16_unsafe(offset);
 }
 
-data32_t cpu_readop32_safe(offs_t offset)
+UINT32 cpu_readop32_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop32_unsafe(offset);
 }
 
-data64_t cpu_readop64_safe(offs_t offset)
+UINT64 cpu_readop64_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop64_unsafe(offset);
 }
 
-data8_t cpu_readop_arg_safe(offs_t offset)
+UINT8 cpu_readop_arg_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop_arg_unsafe(offset);
 }
 
-data16_t cpu_readop_arg16_safe(offs_t offset)
+UINT16 cpu_readop_arg16_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop_arg16_unsafe(offset);
 }
 
-data32_t cpu_readop_arg32_safe(offs_t offset)
+UINT32 cpu_readop_arg32_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop_arg32_unsafe(offset);
 }
 
-data64_t cpu_readop_arg64_safe(offs_t offset)
+UINT64 cpu_readop_arg64_safe(offs_t offset)
 {
 	activecpu_set_opbase(offset);
 	return cpu_readop_arg64_unsafe(offset);

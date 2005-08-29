@@ -16,8 +16,8 @@ size_t mnight_backgroundram_size;
 unsigned char   *mnight_foreground_videoram;
 size_t mnight_foregroundram_size;
 
-static struct mame_bitmap *bitmap_bg;
-static struct mame_bitmap *bitmap_sp;
+static mame_bitmap *bitmap_bg;
+static mame_bitmap *bitmap_sp;
 
 static unsigned char     *bg_dirtybuffer;
 static int       bg_enable = 1;
@@ -86,7 +86,7 @@ WRITE8_HANDLER( mnight_sprite_overdraw_w )
 	}
 }
 
-void mnight_draw_foreground(struct mame_bitmap *bitmap)
+void mnight_draw_foreground(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -120,7 +120,7 @@ void mnight_draw_foreground(struct mame_bitmap *bitmap)
 }
 
 
-void mnight_draw_background(struct mame_bitmap *bitmap)
+void mnight_draw_background(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -154,7 +154,7 @@ void mnight_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-void mnight_draw_sprites(struct mame_bitmap *bitmap)
+void mnight_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 

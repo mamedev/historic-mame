@@ -142,7 +142,7 @@ void dsd_555_astbl_step(struct node_description *node)
 	int		count_r = 0;
 	double	dt;					// change in time
 	double	xTime;				// time since change happened
-	double	tRC;				// RC time constant
+	double	tRC = 0;			// RC time constant
 	double	vC = context->vCap;	// Current voltage on capacitor, before dt
 	double	vCnext = 0;			// Voltage on capacitor, after dt
 
@@ -249,9 +249,17 @@ void dsd_555_astbl_step(struct node_description *node)
 			else
 			{
 				/* Discharging */
-				tRC = DSD_555_ASTBL__R2 * DSD_555_ASTBL__C;
-				vCnext = vC - (vC * (1 - exp(-(dt / tRC))));
-				dt = 0;
+				if(DSD_555_ASTBL__R2!=0)
+				{
+					tRC = DSD_555_ASTBL__R2 * DSD_555_ASTBL__C;
+					vCnext = vC - (vC * (1 - exp(-(dt / tRC))));
+					dt = 0;
+				}
+				else
+				{
+					vCnext = context->trigger;
+					dt = 0;
+				}
 
 				/* has it discharged past lower limit? */
 				if (vCnext < context->trigger)

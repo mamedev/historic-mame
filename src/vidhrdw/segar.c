@@ -40,8 +40,8 @@ typedef struct
 	unsigned char backfill;
 	unsigned char fill_background;
 	unsigned int backshift;
-	struct mame_bitmap *horizbackbitmap;
-	struct mame_bitmap *vertbackbitmap;
+	mame_bitmap *horizbackbitmap;
+	mame_bitmap *vertbackbitmap;
 } SEGAR_VID_STRUCT;
 
 static SEGAR_VID_STRUCT sv;
@@ -221,7 +221,7 @@ VIDEO_START( segar )
 This is the refresh code that is common across all the G80 games.  This
 corresponds to the VIDEO I board.
 ***************************************************************************/
-static void segar_common_screenrefresh(struct mame_bitmap *bitmap, int sprite_transparency, int copy_transparency)
+static void segar_common_screenrefresh(mame_bitmap *bitmap, int sprite_transparency, int copy_transparency)
 {
 	int offs;
 	int charcode;
@@ -566,8 +566,8 @@ WRITE8_HANDLER( monsterb_back_port_w )
 
 /* for set 2 */
 /* other ports are also used */
-static data8_t monster2_bbdata;
-static data8_t monster2_b9data;
+static UINT8 monster2_bbdata;
+static UINT8 monster2_b9data;
 
 WRITE8_HANDLER( monster2_bb_back_port_w )
 {

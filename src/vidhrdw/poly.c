@@ -71,7 +71,7 @@ static struct poly_scanline_data scanlines;
 
 #else
 
-const struct poly_scanline_data *FUNC_NAME(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const struct rectangle *cliprect)
+const struct poly_scanline_data *FUNC_NAME(const struct poly_vertex *v1, const struct poly_vertex *v2, const struct poly_vertex *v3, const rectangle *cliprect)
 {
 	INT32 i, y, dy, ey, sx, sdx, ex, edx, temp, longest_scanline;
 	INT64 pstart[MAX_VERTEX_PARAMS], pdelta[MAX_VERTEX_PARAMS];

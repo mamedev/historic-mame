@@ -18,8 +18,8 @@ VIDEO_UPDATE( magmax );
 VIDEO_START( magmax );
 
 extern unsigned short magmax_vreg;
-extern data16_t *magmax_scroll_x;
-extern data16_t *magmax_scroll_y;
+extern UINT16 *magmax_scroll_x;
+extern UINT16 *magmax_scroll_y;
 
 
 static unsigned char sound_latch = 0;

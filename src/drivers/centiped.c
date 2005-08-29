@@ -290,7 +290,7 @@
 static int oldpos[4];
 static UINT8 sign[4];
 static UINT8 dsw_select;
-static data8_t *rambase;
+static UINT8 *rambase;
 
 
 /*************************************

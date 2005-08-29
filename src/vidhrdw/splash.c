@@ -10,11 +10,11 @@
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
-data16_t *splash_vregs;
-data16_t *splash_videoram;
-data16_t *splash_spriteram;
-data16_t *splash_pixelram;
-data16_t *roldfrog_bitmap_mode;
+UINT16 *splash_vregs;
+UINT16 *splash_videoram;
+UINT16 *splash_spriteram;
+UINT16 *splash_pixelram;
+UINT16 *roldfrog_bitmap_mode;
 int splash_bitmap_type;
 static tilemap *bg_tilemap[2];
 
@@ -93,7 +93,7 @@ WRITE16_HANDLER( splash_vram_w )
 		tilemap_mark_tile_dirty(bg_tilemap[offset >> 11],((offset << 1) & 0x0fff) >> 1);
 }
 
-static void splash_draw_bitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void splash_draw_bitmap(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int sx,sy,color,count,colxor,bitswap;
 	colxor = 0; /* splash and some bitmap modes in roldfrog */
@@ -224,7 +224,7 @@ VIDEO_START( splash )
       400| xxxxxxxx -------- | unused
 */
 
-static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void splash_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	const gfx_element *gfx = Machine->gfx[1];
@@ -245,7 +245,7 @@ static void splash_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 	}
 }
 
-static void funystrp_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void funystrp_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	const gfx_element *gfx = Machine->gfx[1];

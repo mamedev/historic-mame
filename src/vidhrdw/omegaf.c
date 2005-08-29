@@ -102,7 +102,7 @@ static int bg0_enabled = 1;
 static int bg1_enabled = 1;
 static int bg2_enabled = 1;
 
-static struct mame_bitmap *bitmap_sp;	/* for sprite overdraw */
+static mame_bitmap *bitmap_sp;	/* for sprite overdraw */
 static int sprite_overdraw_enabled = 0;
 
 static int scrollx_mask = 0x07ff;
@@ -556,7 +556,7 @@ WRITE8_HANDLER( omegaf_flipscreen_w )
   Screen refresh
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -608,7 +608,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				{
 					int x,y,offset = 0;
 					const gfx_element *gfx = Machine->gfx[(big) ? 4 : 3];
-					data8_t *srcgfx = gfx->gfxdata + tile * gfx->char_modulo;
+					UINT8 *srcgfx = gfx->gfxdata + tile * gfx->char_modulo;
 
 					for(y = 0; y < gfx->height; y++)
 					{

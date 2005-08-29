@@ -15,8 +15,8 @@ extern UINT8 balsente_shooter;
 extern UINT8 balsente_shooter_x;
 extern UINT8 balsente_shooter_y;
 extern UINT8 balsente_adc_shift;
-extern data16_t *shrike_shared;
-extern data16_t *shrike_io;
+extern UINT16 *shrike_shared;
+extern UINT16 *shrike_io;
 
 MACHINE_INIT( balsente );
 

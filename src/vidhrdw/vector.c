@@ -80,7 +80,7 @@ static UINT32 *pTcosin;            /* adjust line width */
 static UINT8 Tgamma[256];         /* quick gamma anti-alias table  */
 static UINT8 Tgammar[256];        /* same as above, reversed order */
 
-static struct mame_bitmap *vecbitmap;
+static mame_bitmap *vecbitmap;
 static int vecwidth, vecheight;
 static int xmin, ymin, xmax, ymax; /* clipping area */
 

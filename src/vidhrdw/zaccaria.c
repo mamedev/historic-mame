@@ -11,16 +11,16 @@
 
 
 
-data8_t *zaccaria_videoram,*zaccaria_attributesram;
+UINT8 *zaccaria_videoram,*zaccaria_attributesram;
 
 static tilemap *bg_tilemap;
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	2*8+1, 29*8-1,
 	2*8, 30*8-1
 };
-static struct rectangle spritevisiblearea_flipx =
+static rectangle spritevisiblearea_flipx =
 {
 	3*8+1, 30*8-1,
 	2*8, 30*8-1
@@ -215,10 +215,10 @@ WRITE8_HANDLER( zaccaria_flip_screen_y_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 
 	if (flip_screen_x)
 		sect_rect(&clip, &spritevisiblearea_flipx);

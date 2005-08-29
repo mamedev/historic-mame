@@ -58,7 +58,7 @@ Notes:
 #include "state.h"
 #include "sound/sn76496.h"
 
-extern data8_t *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
+extern UINT8 *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
 extern size_t sprcros2_spriteram_size;
 
 WRITE8_HANDLER( sprcros2_fgvideoram_w );
@@ -69,7 +69,7 @@ WRITE8_HANDLER( sprcros2_bgscrolly_w );
 PALETTE_INIT( sprcros2 );
 VIDEO_START( sprcros2 );
 VIDEO_UPDATE( sprcros2 );
-static data8_t *sprcros2_sharedram;
+static UINT8 *sprcros2_sharedram;
 int sprcros2_m_port7 = 0;
 static int sprcros2_s_port3 = 0;
 

@@ -198,10 +198,10 @@ extern WRITE16_HANDLER( bcstory_tilebank_w );
 extern WRITE16_HANDLER( suprtrio_tilebank_w );
 extern WRITE16_HANDLER( chokchok_tilebank_w );
 
-extern data16_t *tumblep_pf1_data,*tumblep_pf2_data;
-data16_t* tumblep_mainram;
-data16_t* jumppop_control;
-data16_t* suprtrio_control;
+extern UINT16 *tumblep_pf1_data,*tumblep_pf2_data;
+UINT16* tumblep_mainram;
+UINT16* jumppop_control;
+UINT16* suprtrio_control;
 
 /******************************************************************************/
 
@@ -478,7 +478,7 @@ WRITE16_HANDLER( semicom_soundcmd_w )
 
 static WRITE8_HANDLER( oki_sound_bank_w )
 {
-	data8_t *oki = memory_region(REGION_SOUND1);
+	UINT8 *oki = memory_region(REGION_SOUND1);
 	memcpy(&oki[0x30000], &oki[(data * 0x10000) + 0x40000], 0x10000);
 }
 
@@ -1495,7 +1495,7 @@ MACHINE_INIT (htchctch)
 {
 	/* copy protection data every reset */
 
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
 
 	for (i = 0;i < 0x200/2;i++)
@@ -2081,7 +2081,7 @@ ROM_END
 void tumblep_patch_code(UINT16 offset)
 {
 	/* A hack which enables all Dip Switches effects */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[(offset + 0)/2] = 0x0240;
 	RAM[(offset + 2)/2] = 0xffff;	// andi.w  #$f3ff, D0
 }
@@ -2089,7 +2089,7 @@ void tumblep_patch_code(UINT16 offset)
 
 static void tumblepb_gfx1_decrypt(void)
 {
-	data8_t *rom = memory_region(REGION_GFX1);
+	UINT8 *rom = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 	int i;
 
@@ -2140,7 +2140,7 @@ static DRIVER_INIT( fncywld )
 	#if FNCYWLD_HACK
 	/* This is a hack to allow you to use the extra features
          of the 2 first "Unused" Dip Switch (see notes above). */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[0x0005fa/2] = 0x4e71;
 	RAM[0x00060a/2] = 0x4e71;
 	#endif
@@ -2167,12 +2167,12 @@ static DRIVER_INIT ( bcstory )
 static DRIVER_INIT( htchctch )
 {
 
-//  data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//  UINT16 *HCROM = (UINT16*)memory_region(REGION_CPU1);
+	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
 	/* simulate RAM initialization done by the protection MCU */
 	/* verified on real hardware */
-//  static data16_t htchctch_mcu68k[] =
+//  static UINT16 htchctch_mcu68k[] =
 //  {
 //      /* moved to protdata.bin file .. */
 //  };
@@ -2420,8 +2420,8 @@ static DRIVER_INIT( htchctch )
 
 static void suprtrio_decrypt_code(void)
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
-	data16_t *buf = malloc(0x80000);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+	UINT16 *buf = malloc(0x80000);
 	int i;
 
 	/* decrypt main ROMs */
@@ -2441,8 +2441,8 @@ static void suprtrio_decrypt_code(void)
 
 static void suprtrio_decrypt_gfx(void)
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_GFX1);
-	data16_t *buf = malloc(0x100000);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_GFX1);
+	UINT16 *buf = malloc(0x100000);
 	int i;
 
 	/* decrypt tiles */

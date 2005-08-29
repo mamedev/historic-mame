@@ -14,8 +14,8 @@ unsigned char *ttmahjng_videoram1;
 unsigned char *ttmahjng_videoram2;
 size_t ttmahjng_videoram_size;
 
-static struct mame_bitmap *tmpbitmap1;
-static struct mame_bitmap *tmpbitmap2;
+static mame_bitmap *tmpbitmap1;
+static mame_bitmap *tmpbitmap2;
 
 static int video_flip;
 static int video_color_select_1;
@@ -27,7 +27,7 @@ static const unsigned char *ttmahjng_color_prom;
 /* Local functions */
 static void modify_pen(int pen, int colorindex);
 static void common_videoram_w(int offset,int data,
-                              int coloroffset, struct mame_bitmap *bitmap);
+                              int coloroffset, mame_bitmap *bitmap);
 
 
 
@@ -153,7 +153,7 @@ WRITE8_HANDLER( ttmahjng_videoram2_w )
   common_videoram_w
 ***************************************************************************/
 static void common_videoram_w(int offset,int data,
-                              int coloroffset, struct mame_bitmap *bitmap)
+                              int coloroffset, mame_bitmap *bitmap)
 {
 	int x, y, color1, color2, color3, color4;
 

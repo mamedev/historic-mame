@@ -16,7 +16,7 @@ int mjsister_video_enable;
 int vrambank;
 int colorbank;
 
-static struct mame_bitmap *mjsister_tmpbitmap0, *mjsister_tmpbitmap1;
+static mame_bitmap *mjsister_tmpbitmap0, *mjsister_tmpbitmap1;
 static UINT8 *mjsister_videoram0, *mjsister_videoram1;
 
 /****************************************************************************/

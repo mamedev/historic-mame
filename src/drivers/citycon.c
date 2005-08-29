@@ -9,9 +9,9 @@
 #include "sound/2203intf.h"
 
 
-extern data8_t *citycon_videoram;
-extern data8_t *citycon_scroll;
-extern data8_t *citycon_linecolor;
+extern UINT8 *citycon_videoram;
+extern UINT8 *citycon_scroll;
+extern UINT8 *citycon_linecolor;
 WRITE8_HANDLER( citycon_videoram_w );
 WRITE8_HANDLER( citycon_linecolor_w );
 WRITE8_HANDLER( citycon_background_w );

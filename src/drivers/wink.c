@@ -51,7 +51,7 @@ static DRIVER_INIT( wink )
 	unsigned char c;
 	unsigned int i;
 
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	for (i=0; i<memory_region_length(REGION_CPU1); i++)
 	{

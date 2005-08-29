@@ -28,13 +28,13 @@ sprite color 0x7f will erase the tilemap and force it to be transparent.
 #include "vidhrdw/generic.h"
 
 
-data8_t *pacland_videoram,*pacland_videoram2,*pacland_spriteram;
+UINT8 *pacland_videoram,*pacland_videoram2,*pacland_spriteram;
 
 static int palette_bank;
 static const UINT8 *pacland_color_prom;
 
 static tilemap *bg_tilemap, *fg_tilemap;
-static struct mame_bitmap *sprite_bitmap,*fg_bitmap;
+static mame_bitmap *sprite_bitmap,*fg_bitmap;
 
 static int scroll0,scroll1;
 
@@ -250,7 +250,7 @@ WRITE8_HANDLER( pacland_bankswitch_w )
 ***************************************************************************/
 
 /* the sprite generator IC is the same as Mappy */
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int draw_mask )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int draw_mask )
 {
 	int offs;
 
@@ -299,7 +299,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 
-static void draw_fg( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void draw_fg( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	/* clear temp bitmap using color 0x7f */
 	fillbitmap(fg_bitmap, 0x7f, cliprect);

@@ -58,8 +58,8 @@ struct tms34061_display
 int tms34061_start(struct tms34061_interface *interface);
 
 /* reads/writes to the 34061 */
-data8_t tms34061_r(int col, int row, int func);
-void tms34061_w(int col, int row, int func, data8_t data);
+UINT8 tms34061_r(int col, int row, int func);
+void tms34061_w(int col, int row, int func, UINT8 data);
 
 /* latch settings */
 READ8_HANDLER( tms34061_latch_r );

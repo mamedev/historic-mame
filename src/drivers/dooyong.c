@@ -55,8 +55,8 @@ Flying Tiger
 
 extern unsigned char *lastday_txvideoram;
 extern unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
-extern data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
-extern data16_t *popbingo_scroll, *popbingo_scroll2;
+extern UINT16 *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
+extern UINT16 *popbingo_scroll, *popbingo_scroll2;
 
 WRITE8_HANDLER( lastday_ctrl_w );
 WRITE8_HANDLER( pollux_ctrl_w );

@@ -1652,9 +1652,9 @@ cpu #0 (PC=000064E9): unmapped I/O byte write to 000000BB = 01
 */
 	/* the background tilemap rom has a different layout, rearrange it to match the set 1 format */
 	{
-		data8_t *rom = memory_region(REGION_USER1);
+		UINT8 *rom = memory_region(REGION_USER1);
 		int length = memory_region_length(REGION_USER1);
-		data8_t *buf1 = malloc(length);
+		UINT8 *buf1 = malloc(length);
 		int x;
 
 

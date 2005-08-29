@@ -20,7 +20,7 @@ dip 1X8
 
 #include "driver.h"
 
-static data8_t *fortecar_ram;
+static UINT8 *fortecar_ram;
 
 
 static ADDRESS_MAP_START( fortecar_map, ADDRESS_SPACE_PROGRAM, 8 )

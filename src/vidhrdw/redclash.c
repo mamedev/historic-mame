@@ -169,7 +169,7 @@ VIDEO_START( redclash )
 	return 0;
 }
 
-static void redclash_draw_sprites( struct mame_bitmap *bitmap )
+static void redclash_draw_sprites( mame_bitmap *bitmap )
 {
 	int i, offs;
 
@@ -256,7 +256,7 @@ ui_popup("unknown sprite size 0");
 	}
 }
 
-static void redclash_draw_bullets( struct mame_bitmap *bitmap )
+static void redclash_draw_bullets( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -353,7 +353,7 @@ void redclash_set_stars_speed( UINT8 speed )
 /* Space Raider doesn't use the Va bit, and it is also set up to */
 /* window the stars to a certain x range */
 
-void redclash_draw_stars( struct mame_bitmap *bitmap, UINT8 palette_offset, UINT8 sraider, UINT8 firstx, UINT8 lastx)
+void redclash_draw_stars( mame_bitmap *bitmap, UINT8 palette_offset, UINT8 sraider, UINT8 firstx, UINT8 lastx)
 {
 	int i;
 	UINT8 tempbit, feedback, star_color, xloc, yloc;

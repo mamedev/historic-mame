@@ -142,7 +142,7 @@ VIDEO_START( sbasketb )
 	return 0;
 }
 
-static void sbasketb_draw_sprites( struct mame_bitmap *bitmap )
+static void sbasketb_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs = (*sbasketb_spriteram_select & 0x01) * 0x100;
 	int i;

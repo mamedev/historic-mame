@@ -49,8 +49,8 @@ struct atarirle_info
 	INT16 				xoffs;
 	INT16 				yoffs;
 	UINT8 				bpp;
-	const data16_t *	table;
-	const data16_t *	data;
+	const UINT16 *	table;
+	const UINT16 *	data;
 };
 
 /* internal structure containing the state of the motion objects */
@@ -67,7 +67,7 @@ struct atarirle_data
 	int					palettebase;		/* base palette entry */
 	int					maxcolors;			/* maximum number of colors */
 
-	struct rectangle	cliprect;			/* clipping rectangle */
+	rectangle	cliprect;			/* clipping rectangle */
 
 	struct atarirle_mask codemask;			/* mask for the code index */
 	struct atarirle_mask colormask;			/* mask for the color */
@@ -79,13 +79,13 @@ struct atarirle_data
 	struct atarirle_mask prioritymask;		/* mask for the priority */
 	struct atarirle_mask vrammask;			/* mask for the VRAM target */
 
-	const data16_t *	rombase;			/* pointer to the base of the GFX ROM */
+	const UINT16 *	rombase;			/* pointer to the base of the GFX ROM */
 	int					romlength;			/* length of the GFX ROM */
 	int					objectcount;		/* number of objects in the ROM */
 	struct atarirle_info *info;				/* list of info records */
 	struct atarirle_entry *spriteram;		/* pointer to sprite RAM */
 
-	struct mame_bitmap *vram[2][2];			/* pointers to VRAM bitmaps and backbuffers */
+	mame_bitmap *vram[2][2];			/* pointers to VRAM bitmaps and backbuffers */
 	int					partial_scanline;	/* partial update scanline */
 
 	UINT8				control_bits;		/* current control bits */
@@ -109,14 +109,14 @@ struct atarirle_data
     GLOBAL VARIABLES
 ##########################################################################*/
 
-data16_t *atarirle_0_spriteram;
-data32_t *atarirle_0_spriteram32;
+UINT16 *atarirle_0_spriteram;
+UINT32 *atarirle_0_spriteram32;
 
-data16_t *atarirle_0_command;
-data32_t *atarirle_0_command32;
+UINT16 *atarirle_0_command;
+UINT32 *atarirle_0_command32;
 
-data16_t *atarirle_0_table;
-data32_t *atarirle_0_table32;
+UINT16 *atarirle_0_table;
+UINT32 *atarirle_0_table32;
 
 int atarirle_hilite_index = -1;
 
@@ -138,18 +138,18 @@ static UINT16 *rle_table[8];
 ##########################################################################*/
 
 static int build_rle_tables(void);
-static int count_objects(const data16_t *base, int length);
+static int count_objects(const UINT16 *base, int length);
 static void prescan_rle(const struct atarirle_data *mo, int which);
 static void sort_and_render(struct atarirle_data *mo);
 static void compute_checksum(struct atarirle_data *mo);
-static void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
-		int x, int y, int xscale, int yscale, const struct rectangle *clip);
-static void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
+static void draw_rle(struct atarirle_data *mo, mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
+		int x, int y, int xscale, int yscale, const rectangle *clip);
+static void draw_rle_zoom(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		UINT32 palette, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip);
-static void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
+		const rectangle *clip);
+static void draw_rle_zoom_hflip(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		UINT32 palette, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip);
+		const rectangle *clip);
 
 
 
@@ -270,7 +270,7 @@ INLINE int convert_mask(const struct atarirle_entry *input, struct atarirle_mask
 
 int atarirle_init(int map, const struct atarirle_desc *desc)
 {
-	const data16_t *base = (const data16_t *)memory_region(desc->region);
+	const UINT16 *base = (const UINT16 *)memory_region(desc->region);
 	struct atarirle_data *mo = &atarirle[map];
 	int i;
 
@@ -320,7 +320,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	memset(mo->checksums, 0, sizeof(mo->checksums));
 	for (i = 0; i < mo->romlength / 0x20000; i++)
 	{
-		const data16_t *csbase = &mo->rombase[0x10000 * i];
+		const UINT16 *csbase = &mo->rombase[0x10000 * i];
 		int cursum = 0, j;
 		for (j = 0; j < 0x10000; j++)
 			cursum += *csbase++;
@@ -392,7 +392,7 @@ void atarirle_control_w(int map, UINT8 bits)
 	/* if the erase flag was set, erase the front map */
 	if (oldbits & ATARIRLE_CONTROL_ERASE)
 	{
-		struct rectangle cliprect = mo->cliprect;
+		rectangle cliprect = mo->cliprect;
 
 		/* compute the top and bottom of the rect */
 		if (mo->partial_scanline + 1 > cliprect.min_y)
@@ -456,7 +456,7 @@ VIDEO_EOF( atarirle )
 		/* if the erase flag is set, erase to the end of the screen */
 		if (mo->control_bits & ATARIRLE_CONTROL_ERASE)
 		{
-			struct rectangle cliprect = mo->cliprect;
+			rectangle cliprect = mo->cliprect;
 
 			/* compute top only; bottom is equal to visible_area */
 			if (mo->partial_scanline + 1 > cliprect.min_y)
@@ -520,7 +520,7 @@ WRITE32_HANDLER( atarirle_0_spriteram32_w )
     atarirle_get_vram: Return the VRAM bitmap.
 ---------------------------------------------------------------*/
 
-struct mame_bitmap *atarirle_get_vram(int map, int idx)
+mame_bitmap *atarirle_get_vram(int map, int idx)
 {
 	struct atarirle_data *mo = &atarirle[map];
 //logerror("atarirle_get_vram (frame %d)\n", (mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2);
@@ -599,7 +599,7 @@ static int build_rle_tables(void)
     motion object ROM.
 ---------------------------------------------------------------*/
 
-int count_objects(const data16_t *base, int length)
+int count_objects(const UINT16 *base, int length)
 {
 	int lowest_address = length;
 	int i;
@@ -627,10 +627,10 @@ int count_objects(const data16_t *base, int length)
 static void prescan_rle(const struct atarirle_data *mo, int which)
 {
 	struct atarirle_info *rledata = &mo->info[which];
-	data16_t *base = (data16_t *)&mo->rombase[which * 4];
-	const data16_t *end = mo->rombase + mo->romlength / 2;
+	UINT16 *base = (UINT16 *)&mo->rombase[which * 4];
+	const UINT16 *end = mo->rombase + mo->romlength / 2;
 	int width = 0, height, flags, offset;
-	const data16_t *table;
+	const UINT16 *table;
 
 	/* look up the offset */
 	rledata->xoffs = (INT16)base[0];
@@ -643,7 +643,7 @@ static void prescan_rle(const struct atarirle_data *mo, int which)
 
 	/* determine the starting offset */
 	offset = ((base[2] & 0xff) << 16) | base[3];
-	rledata->data = base = (data16_t *)&mo->rombase[offset];
+	rledata->data = base = (UINT16 *)&mo->rombase[offset];
 
 	/* make sure it's valid */
 	if (offset < which * 4 || offset >= mo->romlength)
@@ -736,8 +736,8 @@ static void compute_checksum(struct atarirle_data *mo)
 
 static void sort_and_render(struct atarirle_data *mo)
 {
-	struct mame_bitmap *bitmap1 = mo->vram[0][(~mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2];
-	struct mame_bitmap *bitmap2 = mo->vram[1][(~mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2];
+	mame_bitmap *bitmap1 = mo->vram[0][(~mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2];
+	mame_bitmap *bitmap2 = mo->vram[1][(~mo->control_bits & ATARIRLE_CONTROL_FRAME) >> 2];
 	struct atarirle_entry *obj = mo->spriteram;
 	struct mo_sort_entry sort_entry[256];
 	struct mo_sort_entry *list_head[256];
@@ -908,8 +908,8 @@ fprintf(stderr, "   Sprite: c=%04X l=%04X h=%d X=%4d (o=%4d w=%3d) Y=%4d (o=%4d 
     object.
 ---------------------------------------------------------------*/
 
-void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
-	int x, int y, int xscale, int yscale, const struct rectangle *clip)
+void draw_rle(struct atarirle_data *mo, mame_bitmap *bitmap, int code, int color, int hflip, int vflip,
+	int x, int y, int xscale, int yscale, const rectangle *clip)
 {
 	UINT32 palettebase = mo->palettebase + color;
 	const struct atarirle_info *info = &mo->info[code];
@@ -955,9 +955,9 @@ void draw_rle(struct atarirle_data *mo, struct mame_bitmap *bitmap, int code, in
     bitmap.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
+void draw_rle_zoom(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		UINT32 palette, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip)
+		const rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
 	const UINT16 *table = gfx->table;
@@ -1145,9 +1145,9 @@ void draw_rle_zoom(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
     16-bit bitmap with horizontal flip.
 ---------------------------------------------------------------*/
 
-void draw_rle_zoom_hflip(struct mame_bitmap *bitmap, const struct atarirle_info *gfx,
+void draw_rle_zoom_hflip(mame_bitmap *bitmap, const struct atarirle_info *gfx,
 		UINT32 palette, int sx, int sy, int scalex, int scaley,
-		const struct rectangle *clip)
+		const rectangle *clip)
 {
 	const UINT16 *row_start = gfx->data;
 	const UINT16 *table = gfx->table;

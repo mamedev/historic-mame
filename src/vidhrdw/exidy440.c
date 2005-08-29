@@ -335,7 +335,7 @@ double compute_pixel_time(int x, int y)
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scroll_offset)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int scroll_offset)
 {
 	int i;
 
@@ -436,7 +436,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
  *
  *************************************/
 
-static void update_screen(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scroll_offset)
+static void update_screen(mame_bitmap *bitmap, const rectangle *cliprect, int scroll_offset)
 {
 	int y, sy;
 	int beamx, beamy;

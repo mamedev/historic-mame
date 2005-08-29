@@ -363,7 +363,7 @@ static WRITE8_HANDLER( kabukiz_sound_bank_w )
 	// to avoid the write when the sound chip is initialized
 	if(data != 0xff)
 	{
-		data8_t *ROM = memory_region(REGION_CPU3);
+		UINT8 *ROM = memory_region(REGION_CPU3);
 		memory_set_bankptr(3, &ROM[0x10000 + 0x4000 * (data & 0x07)]);
 	}
 }

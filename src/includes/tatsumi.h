@@ -1,12 +1,12 @@
 // drivers/tatsumi.c
-extern data8_t* tatsumi_rom_sprite_lookup1;
-extern data8_t* tatsumi_rom_sprite_lookup2;
-extern data8_t* tatsumi_rom_clut0;
-extern data8_t* tatsumi_rom_clut1;
+extern UINT8* tatsumi_rom_sprite_lookup1;
+extern UINT8* tatsumi_rom_sprite_lookup2;
+extern UINT8* tatsumi_rom_clut0;
+extern UINT8* tatsumi_rom_clut1;
 
-extern data16_t *roundup5_d0000_ram, *roundup5_e0000_ram;
-extern data16_t *cyclwarr_videoram, *cyclwarr_videoram2;
-extern data8_t *roundup5_unknown0, *roundup5_unknown1, *roundup5_unknown2;
+extern UINT16 *roundup5_d0000_ram, *roundup5_e0000_ram;
+extern UINT16 *cyclwarr_videoram, *cyclwarr_videoram2;
+extern UINT8 *roundup5_unknown0, *roundup5_unknown1, *roundup5_unknown2;
 
 // machine/tatsumi.c
 READ8_HANDLER( apache3_bank_r );
@@ -33,10 +33,10 @@ WRITE16_HANDLER( roundup5_e0000_w );
 READ8_HANDLER(tatsumi_hack_ym2151_r);
 READ8_HANDLER(tatsumi_hack_oki_r);
 
-extern data16_t *tatsumi_68k_ram;
-extern data8_t *apache3_z80_ram;
-extern data16_t tatsumi_control_word;
-extern data16_t apache3_a0000[16];
+extern UINT16 *tatsumi_68k_ram;
+extern UINT8 *apache3_z80_ram;
+extern UINT16 tatsumi_control_word;
+extern UINT16 apache3_a0000[16];
 
 void tatsumi_reset(void);
 
@@ -52,9 +52,9 @@ WRITE16_HANDLER( cyclwarr_videoram2_w );
 READ8_HANDLER(roundup5_vram_r);
 WRITE8_HANDLER(roundup5_vram_w);
 
-extern data16_t* tatsumi_sprite_control_ram;
-extern data16_t *cyclwarr_videoram, *cyclwarr_videoram2;
-extern data16_t *roundup_r_ram, *roundup_p_ram, *roundup_l_ram;
+extern UINT16* tatsumi_sprite_control_ram;
+extern UINT16 *cyclwarr_videoram, *cyclwarr_videoram2;
+extern UINT16 *roundup_r_ram, *roundup_p_ram, *roundup_l_ram;
 
 VIDEO_START( apache3 );
 VIDEO_START( roundup5 );

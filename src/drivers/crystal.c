@@ -127,24 +127,24 @@ Notes:
 #define IDLE_LOOP_SPEEDUP
 
 #ifdef IDLE_LOOP_SPEEDUP
-static data8_t FlipCntRead;
+static UINT8 FlipCntRead;
 #endif
 
-static data32_t *workram,*textureram,*frameram;
-static data32_t *sysregs,*vidregs;
-static data32_t Bank;
-static data8_t FlipCount,IntHigh;
-static data32_t Timer0ctrl,Timer1ctrl,Timer2ctrl,Timer3ctrl;
+static UINT32 *workram,*textureram,*frameram;
+static UINT32 *sysregs,*vidregs;
+static UINT32 Bank;
+static UINT8 FlipCount,IntHigh;
+static UINT32 Timer0ctrl,Timer1ctrl,Timer2ctrl,Timer3ctrl;
 static void *Timer0,*Timer1,*Timer2,*Timer3;
-static data32_t FlashCmd,PIO;
-static data32_t DMA0ctrl,DMA1ctrl;
-static data8_t OldPort4;
-static data32_t *ResetPatch;
+static UINT32 FlashCmd,PIO;
+static UINT32 DMA0ctrl,DMA1ctrl;
+static UINT8 OldPort4;
+static UINT32 *ResetPatch;
 
 static void IntReq(int num)
 {
-	data32_t IntEn=program_read_dword_32le(0x01800c08);
-	data32_t IntPend=program_read_dword_32le(0x01800c0c);
+	UINT32 IntEn=program_read_dword_32le(0x01800c08);
+	UINT32 IntPend=program_read_dword_32le(0x01800c0c);
 	if(IntEn&(1<<num))
 	{
 		IntPend|=(1<<num);
@@ -160,7 +160,7 @@ static void IntReq(int num)
 static READ32_HANDLER(FlipCount_r)
 {
 #ifdef IDLE_LOOP_SPEEDUP
-	data32_t IntPend=program_read_dword_32le(0x01800c0c);
+	UINT32 IntPend=program_read_dword_32le(0x01800c0c);
 	FlipCntRead++;
 	if(FlipCntRead>=16 && !IntPend && FlipCount!=0)
 		cpunum_suspend(0,SUSPEND_REASON_SPIN,1);
@@ -188,7 +188,7 @@ static READ32_HANDLER(Input_r)
 		return readinputport(2)|(readinputport(3)<<16);
 	else if(offset==2)
 	{
-		data8_t Port4=readinputport(4);
+		UINT8 Port4=readinputport(4);
 		if(!(Port4&0x10) && ((OldPort4^Port4)&0x10))	//coin buttons trigger IRQs
 			IntReq(12);
 		if(!(Port4&0x20) && ((OldPort4^Port4)&0x20))
@@ -201,7 +201,7 @@ static READ32_HANDLER(Input_r)
 
 static WRITE32_HANDLER(IntAck_w)
 {
-	data32_t IntPend=program_read_dword_32le(0x01800c0c);
+	UINT32 IntPend=program_read_dword_32le(0x01800c0c);
 	if((~mem_mask)&0xff)
 	{
 		IntPend&=~(1<<(data&0x1f));
@@ -216,7 +216,7 @@ static WRITE32_HANDLER(IntAck_w)
 static int icallback(int line)
 {
 	int i;
-	data32_t IntPend=program_read_dword_32le(0x01800c0c);
+	UINT32 IntPend=program_read_dword_32le(0x01800c0c);
 
 	for(i=0;i<32;++i)
 	{
@@ -357,7 +357,7 @@ static READ32_HANDLER(FlashCmd_r)
 	{
 		if(Bank<=2)
 		{
-			data32_t *ptr=(data32_t*)(memory_region(REGION_USER1)+Bank*0x1000000);
+			UINT32 *ptr=(UINT32*)(memory_region(REGION_USER1)+Bank*0x1000000);
 			return ptr[0];
 		}
 		else
@@ -410,10 +410,10 @@ static WRITE32_HANDLER(DMA0_w)
 {
 	if(((data^DMA0ctrl)&(1<<10)) && (data&(1<<10)))	//DMAOn
 	{
-		data32_t CTR=data;
-		data32_t SRC=program_read_dword_32le(0x01800804);
-		data32_t DST=program_read_dword_32le(0x01800808);
-		data32_t CNT=program_read_dword_32le(0x0180080C);
+		UINT32 CTR=data;
+		UINT32 SRC=program_read_dword_32le(0x01800804);
+		UINT32 DST=program_read_dword_32le(0x01800808);
+		UINT32 CNT=program_read_dword_32le(0x0180080C);
 		int i;
 
 		if(CTR&0x2)	//32 bits
@@ -456,10 +456,10 @@ static WRITE32_HANDLER(DMA1_w)
 {
 	if(((data^DMA1ctrl)&(1<<10)) && (data&(1<<10)))	//DMAOn
 	{
-		data32_t CTR=data;
-		data32_t SRC=program_read_dword_32le(0x01800814);
-		data32_t DST=program_read_dword_32le(0x01800818);
-		data32_t CNT=program_read_dword_32le(0x0180081C);
+		UINT32 CTR=data;
+		UINT32 SRC=program_read_dword_32le(0x01800814);
+		UINT32 DST=program_read_dword_32le(0x01800818);
+		UINT32 CNT=program_read_dword_32le(0x0180081C);
 		int i;
 
 		if(CTR&0x2)	//32 bits
@@ -537,7 +537,7 @@ static void PatchReset(void)
 	//I'll add some code there that makes the game stay in a loop
 	//reading the flip register so the idle skip works
 
-	const data8_t Patch[]={	0x01,0xEA,0xC0,0x40,0x0A,0x40,0x06,0xE9,
+	const UINT8 Patch[]={	0x01,0xEA,0xC0,0x40,0x0A,0x40,0x06,0xE9,
 				0x20,0x2A,0xC0,0x40,0x0A,0x40,0x06,0xE9,
 				0x20,0x3A,0xD0,0xA1,0xFA,0xD4,0xF4,0xDE};
 /*
@@ -603,7 +603,7 @@ static VIDEO_START(crystal)
 	return 0;
 }
 
-static void plot_pixel_rgb(struct mame_bitmap *bitmap, int x, int y , int color)
+static void plot_pixel_rgb(mame_bitmap *bitmap, int x, int y , int color)
 {
 	//565 to 555
 	color=(color&0x1f)|((color>>1)&0x7fe0);
@@ -620,12 +620,12 @@ static void plot_pixel_rgb(struct mame_bitmap *bitmap, int x, int y , int color)
 	}
 }
 
-static data16_t GetVidReg(data16_t reg)
+static UINT16 GetVidReg(UINT16 reg)
 {
 	return program_read_word_32le(0x03000000+reg);
 }
 
-static void SetVidReg(data16_t reg,data16_t val)
+static void SetVidReg(UINT16 reg,UINT16 val)
 {
 	program_write_word_32le(0x03000000+reg,val);
 }
@@ -642,7 +642,7 @@ static VIDEO_UPDATE(crystal)
 	UINT16 *Visible,*DrawDest;
 	UINT16 *srcline;
 	int x,y;
-	data16_t head,tail;
+	UINT16 head,tail;
 
 	if(GetVidReg(0x8e)&1)
 	{
@@ -692,14 +692,14 @@ static VIDEO_UPDATE(crystal)
 
 VIDEO_EOF(crystal)
 {
-	data16_t head,tail;
+	UINT16 head,tail;
 	int DoFlip=0;
 
 	head=GetVidReg(0x82);
 	tail=GetVidReg(0x80);
 	while((head&0x7ff)!=(tail&0x7ff))
 	{
-		data16_t Packet0=program_read_word_32le(0x03800000+head*64);
+		UINT16 Packet0=program_read_word_32le(0x03800000+head*64);
 		if(Packet0&0x81)
 			DoFlip=1;
 		head++;
@@ -869,7 +869,7 @@ ROM_END
 
 DRIVER_INIT(crysking)
 {
-	data16_t *Rom=(data16_t*) memory_region(REGION_USER1);
+	UINT16 *Rom=(UINT16*) memory_region(REGION_USER1);
 
 	//patch the data feed by the protection
 
@@ -889,7 +889,7 @@ DRIVER_INIT(crysking)
 
 DRIVER_INIT(evosocc)
 {
-	data16_t *Rom=(data16_t*) memory_region(REGION_USER1);
+	UINT16 *Rom=(UINT16*) memory_region(REGION_USER1);
 	Rom+=0x1000000*2/2;
 
 	Rom[0x97388E/2]=0x90FC;	//PUSH R2..R7

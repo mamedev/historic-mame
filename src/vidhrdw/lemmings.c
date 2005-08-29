@@ -15,15 +15,15 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *lemmings_pixel_0_data,*lemmings_pixel_1_data,*lemmings_vram_data,*lemmings_control_data;
-static data16_t *sprite_triple_buffer_0,*sprite_triple_buffer_1;
-static data8_t *vram_buffer, *vram_dirty;
-struct mame_bitmap *bitmap0;
+UINT16 *lemmings_pixel_0_data,*lemmings_pixel_1_data,*lemmings_vram_data,*lemmings_control_data;
+static UINT16 *sprite_triple_buffer_0,*sprite_triple_buffer_1;
+static UINT8 *vram_buffer, *vram_dirty;
+mame_bitmap *bitmap0;
 static tilemap *vram_tilemap;
 
 /******************************************************************************/
 
-static void lemmings_drawsprites(struct mame_bitmap *bitmap, data16_t *spritedata, int gfxbank, data16_t pri)
+static void lemmings_drawsprites(mame_bitmap *bitmap, UINT16 *spritedata, int gfxbank, UINT16 pri)
 {
 	int offs;
 
@@ -82,7 +82,7 @@ static void lemmings_drawsprites(struct mame_bitmap *bitmap, data16_t *spritedat
 
 static void get_tile_info(int tile_index)
 {
-	data16_t tile=lemmings_vram_data[tile_index];
+	UINT16 tile=lemmings_vram_data[tile_index];
 
 	SET_TILE_INFO(
 			2,
@@ -96,10 +96,10 @@ VIDEO_START( lemmings )
 	bitmap0 = auto_bitmap_alloc(2048,256);
 	vram_tilemap = tilemap_create(get_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	vram_buffer = (data8_t*)auto_malloc(2048*64); /* 64 bytes per VRAM character */
-	vram_dirty = (data8_t*)auto_malloc(2048);
-	sprite_triple_buffer_0 = (data16_t*)auto_malloc(0x800);
-	sprite_triple_buffer_1 = (data16_t*)auto_malloc(0x800);
+	vram_buffer = (UINT8*)auto_malloc(2048*64); /* 64 bytes per VRAM character */
+	vram_dirty = (UINT8*)auto_malloc(2048);
+	sprite_triple_buffer_0 = (UINT16*)auto_malloc(0x800);
+	sprite_triple_buffer_1 = (UINT16*)auto_malloc(0x800);
 
 	tilemap_set_transparent_pen(vram_tilemap,0);
 	fillbitmap(bitmap0,0x100,0);
@@ -166,7 +166,7 @@ WRITE16_HANDLER( lemmings_vram_w )
 VIDEO_UPDATE( lemmings )
 {
 	int x1=-lemmings_control_data[0],x0=-lemmings_control_data[2],i,y=0;
-	struct rectangle rect;
+	rectangle rect;
 	rect.max_y=cliprect->max_y;
 	rect.min_y=cliprect->min_y;
 

@@ -435,7 +435,7 @@ INPUT_PORTS_START( macs )
 INPUT_PORTS_END
 
 
-extern data8_t *st0016_charram;
+extern UINT8 *st0016_charram;
 static struct ST0016interface st0016_interface =
 {
 	&st0016_charram

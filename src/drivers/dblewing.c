@@ -51,7 +51,7 @@ x = xpos
 
 
 
-static void dblewing_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void dblewing_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

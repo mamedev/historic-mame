@@ -46,8 +46,8 @@ Notes:
 
 extern int suna8_text_dim; /* specifies format of text layer */
 
-extern data8_t suna8_rombank, suna8_spritebank, suna8_palettebank;
-extern data8_t suna8_unknown;
+extern UINT8 suna8_rombank, suna8_spritebank, suna8_palettebank;
+extern UINT8 suna8_unknown;
 
 /* Functions defined in vidhrdw: */
 
@@ -85,7 +85,7 @@ void suna8_sh_start(void);
 
 DRIVER_INIT( hardhead )
 {
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int i;
 
 	for (i = 0; i < 0x8000; i++)
@@ -118,7 +118,7 @@ static DRIVER_INIT( hardhedb )
 
 static void brickzn_decrypt(void)
 {
-	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	UINT8	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
 	int i;
 
@@ -138,7 +138,7 @@ static void brickzn_decrypt(void)
 		};
 		int opcode_swap = opcode_swaptable[((i & 0x00c) >> 2) | ((i & 0x040) >> 4)];
 		int data_swap = (i >= 0x8000) ? 0 : data_swaptable[(i & 0x003) | ((i & 0x008) >> 1) | ((i & 0x400) >> 7)];
-		data8_t x = RAM[i];
+		UINT8 x = RAM[i];
 
 		if (data_swap)
 		{
@@ -158,7 +158,7 @@ static void brickzn_decrypt(void)
 
 DRIVER_INIT( brickzn )
 {
-	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	UINT8	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
 	int i;
 
@@ -188,7 +188,7 @@ DRIVER_INIT( brickzn )
 
 DRIVER_INIT( brickzn3 )
 {
-	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	UINT8	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
 	int i;
 
@@ -223,9 +223,9 @@ DRIVER_INIT( brickzn3 )
 
 DRIVER_INIT( hardhea2 )
 {
-	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	UINT8	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
-	data8_t x;
+	UINT8 x;
 	int i;
 
 	memory_set_opcode_base(0,RAM + size);
@@ -306,9 +306,9 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
 
 DRIVER_INIT( starfigh )
 {
-	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	UINT8	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
-	data8_t x;
+	UINT8 x;
 	int i;
 
 	memory_set_opcode_base(0,RAM + size);
@@ -370,9 +370,9 @@ DRIVER_INIT( starfigh )
 
 static DRIVER_INIT( sparkman )
 {
-	data8_t	*RAM	=	memory_region(REGION_CPU1);
+	UINT8	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
-	data8_t x;
+	UINT8 x;
 	int i;
 
 	memory_set_opcode_base(0,RAM + size);
@@ -439,7 +439,7 @@ static DRIVER_INIT( sparkman )
                                 Hard Head
 ***************************************************************************/
 
-static data8_t protection_val;
+static UINT8 protection_val;
 
 static READ8_HANDLER( hardhead_protection_r )
 {
@@ -471,7 +471,7 @@ static WRITE8_HANDLER( hardhead_protection_w )
                                 Hard Head
 ***************************************************************************/
 
-static data8_t *hardhead_ip;
+static UINT8 *hardhead_ip;
 
 static READ8_HANDLER( hardhead_ip_r )
 {
@@ -494,7 +494,7 @@ static READ8_HANDLER( hardhead_ip_r )
 */
 static WRITE8_HANDLER( hardhead_bankswitch_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0xef) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
@@ -567,7 +567,7 @@ ADDRESS_MAP_END
 */
 static WRITE8_HANDLER( rranger_bankswitch_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x07;
 	if ((~data & 0x10) && (bank >= 4))	bank += 4;
 
@@ -678,7 +678,7 @@ static WRITE8_HANDLER( brickzn_unknown_w )
 */
 static WRITE8_HANDLER( brickzn_rombank_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
@@ -729,7 +729,7 @@ ADDRESS_MAP_END
                                 Hard Head 2
 ***************************************************************************/
 
-static data8_t suna8_nmi_enable;
+static UINT8 suna8_nmi_enable;
 
 /* Probably wrong: */
 static WRITE8_HANDLER( hardhea2_nmi_w )
@@ -773,7 +773,7 @@ static WRITE8_HANDLER( hardhea2_spritebank_w )
 */
 static WRITE8_HANDLER( hardhea2_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
@@ -793,12 +793,12 @@ static WRITE8_HANDLER( hardhea2_spritebank_1_w )
 
 static WRITE8_HANDLER( hardhea2_rambank_0_w )
 {
-	data8_t *RAM = memory_region(REGION_USER3);
+	UINT8 *RAM = memory_region(REGION_USER3);
 	memory_set_bankptr(2,&RAM[0x2000 * 0]);
 }
 static WRITE8_HANDLER( hardhea2_rambank_1_w )
 {
-	data8_t *RAM = memory_region(REGION_USER3);
+	UINT8 *RAM = memory_region(REGION_USER3);
 	memory_set_bankptr(2,&RAM[0x2000 * 1]);
 }
 
@@ -856,7 +856,7 @@ ADDRESS_MAP_END
                                 Star Fighter
 ***************************************************************************/
 
-static data8_t spritebank_latch;
+static UINT8 spritebank_latch;
 static WRITE8_HANDLER( starfigh_spritebank_latch_w )
 {
 	spritebank_latch = (data >> 2) & 1;
@@ -949,7 +949,7 @@ static WRITE8_HANDLER( sparkman_spritebank_w )
 */
 static WRITE8_HANDLER( sparkman_rombank_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);

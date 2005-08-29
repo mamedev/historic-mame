@@ -34,10 +34,10 @@ HgKairak: 86010000 1f201918 a0000000 Large Screen
 static UINT32 screen; /* for PS4 games when DUAL_SCREEN=0 */
 
 /* defined in drivers/psikyo4.c */
-extern data32_t *bgpen_1, *bgpen_2, *ps4_io_select, *psikyo4_vidregs;
+extern UINT32 *bgpen_1, *bgpen_2, *ps4_io_select, *psikyo4_vidregs;
 
 /* --- SPRITES --- */
-static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT32 scr )
+static void psikyo4_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect, UINT32 scr )
 {
 	/*- Sprite Format 0x0000 - 0x2bff -**
 
@@ -59,9 +59,9 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
     **- End Sprite Format -*/
 
 	const gfx_element *gfx = Machine->gfx[0];
-	data32_t *source = spriteram32;
-	data16_t *list = (data16_t *)spriteram32 + 0x2c00/2 + 0x04/2; /* 0x2c00/0x2c02 what are these for, pointers? one for each screen */
-	data16_t listlen=(0xc00/2 - 0x04/2), listcntr=0;
+	UINT32 *source = spriteram32;
+	UINT16 *list = (UINT16 *)spriteram32 + 0x2c00/2 + 0x04/2; /* 0x2c00/0x2c02 what are these for, pointers? one for each screen */
+	UINT16 listlen=(0xc00/2 - 0x04/2), listcntr=0;
 	int flipscreen1, flipscreen2;
 
 	flipscreen1 = (((psikyo4_vidregs[1]>>30)&2) == 2) ? 1 : 0;
@@ -69,7 +69,7 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 
 	while( listcntr < listlen )
 	{
-		data16_t listdat, sprnum, thisscreen;
+		UINT16 listdat, sprnum, thisscreen;
 
 		listdat = list[BYTE_XOR_BE(listcntr)];
 		sprnum = (listdat & 0x03ff) * 2;
@@ -81,7 +81,7 @@ static void psikyo4_drawsprites( struct mame_bitmap *bitmap, const struct rectan
 		if (!(listdat & 0x8000) && thisscreen) /* draw only selected screen */
 		{
 			int loopnum=0, i, j;
-			data32_t xpos, ypos, tnum, wide, high, colr, flipx, flipy;
+			UINT32 xpos, ypos, tnum, wide, high, colr, flipx, flipy;
 			int xstart, ystart, xend, yend, xinc, yinc;
 
 			ypos = (source[sprnum+0] & 0x03ff0000) >> 16;
@@ -136,7 +136,7 @@ VIDEO_UPDATE( psikyo4 )
 {
 #if DUAL_SCREEN
 	{
-		struct rectangle clip;
+		rectangle clip;
 
 		clip.min_x = 0;
 		clip.max_x = 40*8-1;

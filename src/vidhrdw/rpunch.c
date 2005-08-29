@@ -21,14 +21,14 @@
  *
  *************************************/
 
-data16_t *rpunch_bitmapram;
+UINT16 *rpunch_bitmapram;
 size_t rpunch_bitmapram_size;
 
 int rpunch_sprite_palette;
 
 static tilemap *background[2];
 
-static data16_t videoflags;
+static UINT16 videoflags;
 static UINT8 crtc_register;
 static void *crtc_timer;
 static UINT8 bins, gins;
@@ -220,7 +220,7 @@ WRITE16_HANDLER( rpunch_ins_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int start, int stop)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int start, int stop)
 {
 	int offs;
 
@@ -256,7 +256,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
  *
  *************************************/
 
-static void draw_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_bitmap(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int colourbase;
 	int xxx=512/4;

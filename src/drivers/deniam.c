@@ -37,7 +37,7 @@ Notes:
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-extern data16_t *deniam_videoram,*deniam_textram;
+extern UINT16 *deniam_videoram,*deniam_textram;
 
 DRIVER_INIT( logicpro );
 DRIVER_INIT( karianx );

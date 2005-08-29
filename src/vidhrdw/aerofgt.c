@@ -1,14 +1,14 @@
 #include "driver.h"
 
 
-data16_t *aerofgt_rasterram;
-data16_t *aerofgt_bg1videoram,*aerofgt_bg2videoram;
-data16_t *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
-data16_t *wbbc97_bitmapram;
+UINT16 *aerofgt_rasterram;
+UINT16 *aerofgt_bg1videoram,*aerofgt_bg2videoram;
+UINT16 *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
+UINT16 *wbbc97_bitmapram;
 size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size,aerofgt_spriteram3_size;
 
 static unsigned char gfxbank[8];
-static data16_t bg1scrollx,bg1scrolly,bg2scrollx,bg2scrolly,wbbc97_bitmap_enable;
+static UINT16 bg1scrollx,bg1scrolly,bg2scrollx,bg2scrolly,wbbc97_bitmap_enable;
 
 static int charpalettebank,spritepalettebank;
 
@@ -144,7 +144,7 @@ VIDEO_START( spinlbrk )
 	/* sprite maps are hardcoded in this game */
 
 	/* enemy sprites use ROM instead of RAM */
-	aerofgt_spriteram2 = (data16_t *)memory_region(REGION_GFX5);
+	aerofgt_spriteram2 = (UINT16 *)memory_region(REGION_GFX5);
 	aerofgt_spriteram2_size = 0x20000;
 
 	/* front sprites are direct maps */
@@ -257,7 +257,7 @@ WRITE16_HANDLER( spinlbrk_gfxbank_w )
 
 WRITE16_HANDLER( turbofrc_gfxbank_w )
 {
-	static data16_t bank[2];
+	static UINT16 bank[2];
 	tilemap *tmap = (offset == 0) ? bg1_tilemap : bg2_tilemap;
 
 	data = COMBINE_DATA(&bank[offset]);
@@ -270,7 +270,7 @@ WRITE16_HANDLER( turbofrc_gfxbank_w )
 
 WRITE16_HANDLER( aerofgt_gfxbank_w )
 {
-	static data16_t bank[4];
+	static UINT16 bank[4];
 	tilemap *tmap = (offset < 2) ? bg1_tilemap : bg2_tilemap;
 
 	data = COMBINE_DATA(&bank[offset]);
@@ -323,7 +323,7 @@ WRITE16_HANDLER( wbbc97_bitmap_enable_w )
 
 ***************************************************************************/
 
-static void aerofgt_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
+static void aerofgt_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
 {
 	int offs;
 
@@ -395,7 +395,7 @@ static void aerofgt_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 	}
 }
 
-static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip)
+static void turbofrc_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int chip)
 {
 	int attr_start,base,first;
 
@@ -469,7 +469,7 @@ static void turbofrc_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	}
 }
 
-static void pspikesb_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void pspikesb_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 
@@ -504,7 +504,7 @@ static void pspikesb_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	}
 }
 
-static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void aerfboot_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int attr_start;//,base,first;
 
@@ -574,7 +574,7 @@ static void aerfboot_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	}
 }
 
-static void wbbc97_draw_bitmap(struct mame_bitmap *bitmap)
+static void wbbc97_draw_bitmap(mame_bitmap *bitmap)
 {
 	int x,y,count;
 	int color;

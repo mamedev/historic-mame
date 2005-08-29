@@ -563,7 +563,7 @@ struct
 	{ 0x00, 0x00, NULL }
 };
 
-static data32_t log_bioscall_parameter( int parm )
+static UINT32 log_bioscall_parameter( int parm )
 {
 	if( parm < 4 )
 	{
@@ -578,7 +578,7 @@ static data32_t log_bioscall_parameter( int parm )
 static const char *log_bioscall_string( int parm )
 {
 	int pos;
-	data32_t address;
+	UINT32 address;
 	static char string[ 1024 ];
 
 	address = log_bioscall_parameter( parm );
@@ -592,7 +592,7 @@ static const char *log_bioscall_string( int parm )
 
 	for( ;; )
 	{
-		data8_t c = program_read_byte_32le( address );
+		UINT8 c = program_read_byte_32le( address );
 		if( c == 0 )
 		{
 			break;
@@ -686,7 +686,7 @@ static void log_bioscall( void )
 			{
 				while( nbytes > 0 )
 				{
-					data8_t c = program_read_byte_32le( buf );
+					UINT8 c = program_read_byte_32le( buf );
 					putchar( c );
 					nbytes--;
 					buf++;
@@ -769,12 +769,12 @@ static void log_bioscall( void )
 					{
 						if( parm > 0 )
 						{
-							data32_t format = log_bioscall_parameter( parm - 1 );
+							UINT32 format = log_bioscall_parameter( parm - 1 );
 							const char *parmstr = NULL;
 							int percent = 0;
 							for( ;; )
 							{
-								data8_t c = program_read_byte_32le( format );
+								UINT8 c = program_read_byte_32le( format );
 								if( c == 0 )
 								{
 									break;

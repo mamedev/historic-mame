@@ -23,12 +23,12 @@
 /* protection data types */
 struct protection_data
 {
-	data16_t	reset_sequence[3];
-	data16_t	data_sequence[100];
+	UINT16	reset_sequence[3];
+	UINT16	data_sequence[100];
 };
 static const struct protection_data *prot_data;
-static data16_t prot_result;
-static data16_t prot_sequence[3];
+static UINT16 prot_result;
+static UINT16 prot_sequence[3];
 static UINT8 prot_index;
 
 
@@ -36,7 +36,7 @@ static UINT8 prot_index;
 static UINT8	term2_analog_select;
 
 /* CMOS-related variables */
-       data16_t *midyunit_cmos_ram;
+       UINT16 *midyunit_cmos_ram;
        UINT32 	midyunit_cmos_page;
 static UINT8	cmos_w_enable;
 
@@ -44,7 +44,7 @@ static UINT8	cmos_w_enable;
 static UINT8	sound_type;
 
 /* hack-related variables */
-static data16_t *t2_hack_mem;
+static UINT16 *t2_hack_mem;
 
 
 

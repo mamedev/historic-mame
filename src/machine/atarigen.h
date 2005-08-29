@@ -59,31 +59,31 @@ extern UINT8			atarigen_scanline_int_state;
 extern UINT8			atarigen_sound_int_state;
 extern UINT8			atarigen_video_int_state;
 
-extern const data16_t *	atarigen_eeprom_default;
-extern data16_t *		atarigen_eeprom;
+extern const UINT16 *	atarigen_eeprom_default;
+extern UINT16 *		atarigen_eeprom;
 extern size_t 			atarigen_eeprom_size;
 
 extern UINT8			atarigen_cpu_to_sound_ready;
 extern UINT8			atarigen_sound_to_cpu_ready;
 
-extern data16_t *		atarigen_playfield;
-extern data16_t *		atarigen_playfield2;
-extern data16_t *		atarigen_playfield_upper;
-extern data16_t *		atarigen_alpha;
-extern data16_t *		atarigen_alpha2;
-extern data16_t *		atarigen_xscroll;
-extern data16_t *		atarigen_yscroll;
+extern UINT16 *		atarigen_playfield;
+extern UINT16 *		atarigen_playfield2;
+extern UINT16 *		atarigen_playfield_upper;
+extern UINT16 *		atarigen_alpha;
+extern UINT16 *		atarigen_alpha2;
+extern UINT16 *		atarigen_xscroll;
+extern UINT16 *		atarigen_yscroll;
 
-extern data32_t *		atarigen_playfield32;
-extern data32_t *		atarigen_alpha32;
+extern UINT32 *		atarigen_playfield32;
+extern UINT32 *		atarigen_alpha32;
 
 extern tilemap *		atarigen_playfield_tilemap;
 extern tilemap *		atarigen_playfield2_tilemap;
 extern tilemap *		atarigen_alpha_tilemap;
 extern tilemap *		atarigen_alpha2_tilemap;
 
-extern data16_t *		atarivc_data;
-extern data16_t *		atarivc_eof_data;
+extern UINT16 *		atarivc_data;
+extern UINT16 *		atarivc_eof_data;
 extern struct atarivc_state_desc atarivc_state;
 
 
@@ -184,8 +184,8 @@ void atarigen_set_oki6295_vol(int volume);
     VIDEO CONTROLLER
 ---------------------------------------------------------------*/
 
-void atarivc_reset(data16_t *eof_data, int playfields);
-void atarivc_update(const data16_t *data);
+void atarivc_reset(UINT16 *eof_data, int playfields);
+void atarivc_update(const UINT16 *data);
 
 WRITE16_HANDLER( atarivc_w );
 READ16_HANDLER( atarivc_r );

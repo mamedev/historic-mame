@@ -17,16 +17,16 @@ Tilemap flip flags were reversed
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data32_t *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
-extern data32_t *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
-extern data32_t *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
-extern data32_t skns_v3t_dirty[0x4000]; // allocate this elsewhere?
-extern data32_t skns_v3t_4bppdirty[0x8000]; // allocate this elsewhere?
+extern UINT32 *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
+extern UINT32 *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
+extern UINT32 *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
+extern UINT32 skns_v3t_dirty[0x4000]; // allocate this elsewhere?
+extern UINT32 skns_v3t_4bppdirty[0x8000]; // allocate this elsewhere?
 extern int skns_v3t_somedirty,skns_v3t_4bpp_somedirty;
 
 void skns_palette_update(void);
 
-static data8_t decodebuffer[64*128];
+static UINT8 decodebuffer[64*128];
 static int old_depthA=0, depthA=0;
 static int old_depthB=0, depthB=0;
 
@@ -35,8 +35,8 @@ static int sprite_kludge_x=0, sprite_kludge_y=0;
 
 static int skns_rle_decode ( int romoffset, int size )
 {
-	data8_t *src = memory_region (REGION_GFX1)+ romoffset;
-	data8_t *dst = decodebuffer;
+	UINT8 *src = memory_region (REGION_GFX1)+ romoffset;
+	UINT8 *dst = decodebuffer;
 
 	while(size>0) {
 		UINT8 code = *src++;
@@ -75,7 +75,7 @@ void skns_sprite_kludge(int x, int y)
 	int xs, ys, xd, yd, old, old2;		\
 	int step_spr = step;				\
 	int bxs = 0, bys = 0;				\
-	struct rectangle clip;					\
+	rectangle clip;					\
 	clip.min_x = cliprect->min_x<<6;					\
 	clip.max_x = (cliprect->max_x+1)<<6;					\
 	clip.min_y = cliprect->min_y<<6;					\
@@ -163,7 +163,7 @@ void skns_sprite_kludge(int x, int y)
 		old2 += 0x40;				\
 	}
 
-static void blit_nf_z(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
+static void blit_nf_z(mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
 {
 	z_decls(sx);
 	z_clamp_x_min();
@@ -177,7 +177,7 @@ static void blit_nf_z(struct mame_bitmap *bitmap, const struct rectangle *clipre
 	}
 }
 
-static void blit_fy_z(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
+static void blit_fy_z(mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
 {
 	z_decls(sx);
 	z_clamp_x_min();
@@ -191,7 +191,7 @@ static void blit_fy_z(struct mame_bitmap *bitmap, const struct rectangle *clipre
 	}
 }
 
-static void blit_fx_z(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
+static void blit_fx_z(mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
 {
 	z_decls(sx);
 	z_clamp_x_max();
@@ -205,7 +205,7 @@ static void blit_fx_z(struct mame_bitmap *bitmap, const struct rectangle *clipre
 	}
 }
 
-static void blit_fxy_z(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
+static void blit_fxy_z(mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour)
 {
 	z_decls(sx);
 	z_clamp_x_max();
@@ -219,14 +219,14 @@ static void blit_fxy_z(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	}
 }
 
-static void (*blit_z[4])(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour) = {
+static void (*blit_z[4])(mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *src, int x, int y, int sx, int sy, UINT16 zx, UINT16 zy, int colour) = {
 	blit_nf_z,
 	blit_fy_z,
 	blit_fx_z,
 	blit_fxy_z,
 };
 
-void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+void skns_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/*- SPR RAM Format -**
 
@@ -262,8 +262,8 @@ void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *clipr
 
 	/* sprite ram start / end is not really fixed registers change it */
 
-	data32_t *source = buffered_spriteram32;
-	data32_t *finish = source + spriteram_size/4;
+	UINT32 *source = buffered_spriteram32;
+	UINT32 *finish = source + spriteram_size/4;
 
 	int group_x_offset[4];
 	int group_y_offset[4];
@@ -602,7 +602,7 @@ VIDEO_START(skns)
 	return 0;
 }
 
-static void supernova_draw_a( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int tran )
+static void supernova_draw_a( mame_bitmap *bitmap, const rectangle *cliprect, int tran )
 {
 		int enable_a  = (skns_v3_regs[0x10/4] >> 0) & 0x0001;
 	UINT32 startx,starty;
@@ -654,7 +654,7 @@ static void supernova_draw_a( struct mame_bitmap *bitmap, const struct rectangle
 	}
 }
 
-static void supernova_draw_b( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int tran )
+static void supernova_draw_b( mame_bitmap *bitmap, const rectangle *cliprect, int tran )
 {
 		int enable_b  = (skns_v3_regs[0x34/4] >> 0) & 0x0001;
 	UINT32 startx,starty;
@@ -710,7 +710,7 @@ VIDEO_UPDATE(skns)
 {
 	int i, offset;
 
-	data8_t *btiles;
+	UINT8 *btiles;
 
 
 	skns_palette_update();
@@ -735,7 +735,7 @@ VIDEO_UPDATE(skns)
 			{
 				if (skns_v3t_dirty[i] == 1)
 				{
-					decodechar(Machine->gfx[1], i, (data8_t*)btiles, Machine->drv->gfxdecodeinfo[0].gfxlayout);
+					decodechar(Machine->gfx[1], i, (UINT8*)btiles, Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
 					skns_v3t_dirty[i] = 0;
 				}
@@ -761,7 +761,7 @@ VIDEO_UPDATE(skns)
 			{
 				if (skns_v3t_4bppdirty[i] == 1)
 				{
-					decodechar(Machine->gfx[3], i, (data8_t*)btiles, Machine->drv->gfxdecodeinfo[3].gfxlayout);
+					decodechar(Machine->gfx[3], i, (UINT8*)btiles, Machine->drv->gfxdecodeinfo[3].gfxlayout);
 
 					skns_v3t_4bppdirty[i] = 0;
 				}

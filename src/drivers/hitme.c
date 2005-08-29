@@ -20,7 +20,7 @@
 
 static tilemap *hitme_tilemap;
 static mame_time timeout_time;
-static data8_t *hitme_vidram;
+static UINT8 *hitme_vidram;
 
 
 
@@ -33,7 +33,7 @@ static data8_t *hitme_vidram;
 static void get_hitme_tile_info(int tile_index)
 {
 	/* the code is the low 6 bits */
-	data8_t code = hitme_vidram[tile_index] & 0x3f;
+	UINT8 code = hitme_vidram[tile_index] & 0x3f;
 	SET_TILE_INFO(0, code, 0, 0);
 }
 
@@ -126,18 +126,18 @@ static VIDEO_UPDATE(barricad)
  *
  *************************************/
 
-static data8_t read_port_and_t0(int port)
+static UINT8 read_port_and_t0(int port)
 {
-	data8_t val = readinputport(port);
+	UINT8 val = readinputport(port);
 	if (compare_mame_times(mame_timer_get_time(), timeout_time) > 0)
 		val ^= 0x80;
 	return val;
 }
 
 
-static data8_t read_port_and_t0_and_hblank(int port)
+static UINT8 read_port_and_t0_and_hblank(int port)
 {
-	data8_t val = read_port_and_t0(port);
+	UINT8 val = read_port_and_t0(port);
 	if (cpu_gethorzbeampos() < (Machine->drv->screen_width * 9 / 10))
 		val ^= 0x04;
 	return val;
@@ -183,7 +183,7 @@ static WRITE8_HANDLER( output_port_0_w )
         In fact, it is very important that our timing calculation timeout AFTER the sound
         system's equivalent computation, or else we will hang notes.
     */
-	data8_t raw_game_speed = readinputport(6);
+	UINT8 raw_game_speed = readinputport(6);
 	double resistance = raw_game_speed * 25000 / 100;
 	mame_time duration = make_mame_time(0, MAX_SUBSECONDS * 0.45 * 6.8e-6 * resistance * (data+1));
 	timeout_time = add_mame_times(mame_timer_get_time(), duration);

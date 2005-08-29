@@ -172,13 +172,13 @@
 /* memory access function table */
 typedef struct
 {
-	data8_t		(*readbyte)(offs_t);
-	data16_t	(*readword)(offs_t);
-	data32_t	(*readlong)(offs_t);
+	UINT8		(*readbyte)(offs_t);
+	UINT16	(*readword)(offs_t);
+	UINT32	(*readlong)(offs_t);
 	UINT64		(*readdouble)(offs_t);
-	void		(*writebyte)(offs_t, data8_t);
-	void		(*writeword)(offs_t, data16_t);
-	void		(*writelong)(offs_t, data32_t);
+	void		(*writebyte)(offs_t, UINT8);
+	void		(*writeword)(offs_t, UINT16);
+	void		(*writelong)(offs_t, UINT32);
 	void		(*writedouble)(offs_t, UINT64);
 } memory_handlers;
 
@@ -222,8 +222,8 @@ typedef struct
 	memory_handlers memory;
 
 	/* cache memory */
-	data32_t *	icache;
-	data32_t *	dcache;
+	UINT32 *	icache;
+	UINT32 *	dcache;
 	size_t		icache_size;
 	size_t		dcache_size;
 } mips3_regs;
@@ -1696,7 +1696,7 @@ static void write_qword_32le(offs_t offset, UINT64 data)
 static void lwl_be(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL32;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if (!(offs & 3)) RTVAL64 = (INT32)temp;
@@ -1711,7 +1711,7 @@ static void lwl_be(UINT32 op)
 static void lwr_be(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL32;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if ((offs & 3) == 3) RTVAL64 = (INT32)temp;
@@ -1761,7 +1761,7 @@ static void swl_be(UINT32 op)
 	if (!(offs & 3)) WLONG(offs, RTVAL32);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0xffffff00 << (24 - shift))) | (RTVAL32 >> shift));
 	}
@@ -1774,7 +1774,7 @@ static void swr_be(UINT32 op)
 	if ((offs & 3) == 3) WLONG(offs & ~3, RTVAL32);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0x00ffffff >> shift)) | (RTVAL32 << (24 - shift)));
 	}
@@ -1811,7 +1811,7 @@ static void sdr_be(UINT32 op)
 static void lwl_le(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL32;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if ((offs & 3) == 3) RTVAL64 = (INT32)temp;
@@ -1826,7 +1826,7 @@ static void lwl_le(UINT32 op)
 static void lwr_le(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL32;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if (!(offs & 3)) RTVAL64 = (INT32)temp;
@@ -1876,7 +1876,7 @@ static void swl_le(UINT32 op)
 	if ((offs & 3) == 3) WLONG(offs & ~3, RTVAL32);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0xffffff00 << shift)) | (RTVAL32 >> (24 - shift)));
 	}
@@ -1888,7 +1888,7 @@ static void swr_le(UINT32 op)
 	if (!(offs & 3)) WLONG(offs, RTVAL32);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0x00ffffff >> (24 - shift))) | (RTVAL32 << shift));
 	}

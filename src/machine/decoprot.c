@@ -62,8 +62,8 @@ READ16_HANDLER( deco16_104_rohga_prot_r ); // todo
 
 #define DECO_PORT(p) (prot_ram[p/2])
 
-data16_t *deco16_prot_ram;
-data32_t *deco32_prot_ram;
+UINT16 *deco16_prot_ram;
+UINT32 *deco32_prot_ram;
 
 /***************************************************************************/
 
@@ -578,7 +578,7 @@ WRITE32_HANDLER( deco32_fghthist_prot_w )
 
 READ32_HANDLER( deco32_fghthist_prot_r )
 {
-	data16_t val;
+	UINT16 val;
 
 
 	if (activecpu_get_pc()==0x163dc || activecpu_get_pc()==0x16390)
@@ -1120,10 +1120,10 @@ READ16_HANDLER( deco16_146_funkyjet_prot_r )
 
 /***************************************************************************/
 //#include <windows.h>//todo
-static data8_t deco16_prot_backbuffer_selected=0;
-static data16_t deco16_prot_backbuffer[0x100]; // todo
-static data16_t deco16_xor=0;
-static data16_t deco16_mask=0xffff;
+static UINT8 deco16_prot_backbuffer_selected=0;
+static UINT16 deco16_prot_backbuffer[0x100]; // todo
+static UINT16 deco16_xor=0;
+static UINT16 deco16_mask=0xffff;
 
 void deco16_104_rohga_reset(void)
 {
@@ -1173,7 +1173,7 @@ void deco16_104_rohga_reset(void)
 		fprintf(fp,"\n\n#WRITE PROGRAM\n");
 		for (i=0; i<0x80; i++)
 		{
-			data16_t r=rand()%0xffff;
+			UINT16 r=rand()%0xffff;
 			deco16_prot_backbuffer[i]=deco16_prot_ram[i]=r;
 			fprintf(fp,"ww %04x %06x\n", r, 0x280000 + (i*2));
 		}
@@ -1275,7 +1275,7 @@ void deco16_104_rohga_reset(void)
 		fprintf(fp,"\n\n#WRITE PROGRAM\n");
 		for (i=0; i<0x80; i++)
 		{
-			data16_t r=rand()%0xffff;
+			UINT16 r=rand()%0xffff;
 			deco16_prot_backbuffer[i]=deco16_prot_ram[i]=r;
 			fprintf(fp,"ww %04x %06x\n", r, 0x1a0000 + (i*2));
 		}
@@ -1445,7 +1445,7 @@ WRITE16_HANDLER( deco16_104_rohga_prot_w )
 
 READ16_HANDLER( deco16_104_rohga_prot_r )
 {
-	const data16_t* prot_ram=deco16_prot_backbuffer_selected ? deco16_prot_backbuffer : deco16_prot_ram;
+	const UINT16* prot_ram=deco16_prot_backbuffer_selected ? deco16_prot_backbuffer : deco16_prot_ram;
 
 //  if (offset!=0x88/2 && offset!=0x44c/2 && offset!=0x36c/2 && offset!=0x292/2)
 //      logerror("Protection PC %06x: warning - read prot address %04x\n",activecpu_get_pc(),offset<<1);
@@ -1827,7 +1827,7 @@ READ16_HANDLER( deco16_146_nitroball_prot_r )
 	const int readport=offset*2;
 	static int a;
 
-	const data16_t* prot_ram=deco16_prot_ram;
+	const UINT16* prot_ram=deco16_prot_ram;
 
 	a++;
 
@@ -1979,7 +1979,7 @@ WRITE16_HANDLER( dietgo_104_prot_w )
 
 READ16_HANDLER( deco16_104_pktgaldx_prot_r )
 {
-	const data16_t* prot_ram=deco16_prot_ram;
+	const UINT16* prot_ram=deco16_prot_ram;
 
 	switch (offset * 2)
 	{

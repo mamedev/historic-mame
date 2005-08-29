@@ -87,7 +87,7 @@ VIDEO_START( markham )
 	return 0;
 }
 
-static void markham_draw_sprites( struct mame_bitmap *bitmap )
+static void markham_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

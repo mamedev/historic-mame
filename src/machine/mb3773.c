@@ -10,7 +10,7 @@
 #include "machine/mb3773.h"
 
 static void *watchdog_timer;
-static data8_t ck = 0;
+static UINT8 ck = 0;
 
 static void watchdog_timeout( int unused )
 {
@@ -22,7 +22,7 @@ static void reset_timer( void )
 	timer_adjust( watchdog_timer, TIME_IN_SEC( 5 ), 0, 0 );
 }
 
-void mb3773_set_ck( data8_t new_ck )
+void mb3773_set_ck( UINT8 new_ck )
 {
 	if( new_ck == 0 && ck != 0 )
 	{

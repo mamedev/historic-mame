@@ -9,8 +9,8 @@
 #include "ccastles.h"
 
 
-static struct mame_bitmap *sprite_bm;
-static struct mame_bitmap *maskbitmap;
+static mame_bitmap *sprite_bm;
+static mame_bitmap *maskbitmap;
 
 unsigned char *ccastles_screen_addr;
 unsigned char *ccastles_screen_inc;

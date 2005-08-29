@@ -9,13 +9,13 @@ UINT8* mermaid_fg_scrollram;
 
 static int rougien_gfxbank1, rougien_gfxbank2;
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	0*8, 26*8-1,
 	2*8, 30*8-1
 };
 
-static struct rectangle flip_spritevisiblearea =
+static rectangle flip_spritevisiblearea =
 {
 	6*8, 31*8-1,
 	2*8, 30*8-1
@@ -170,7 +170,7 @@ VIDEO_START( mermaid )
 	return 0;
 }
 
-static void mermaid_draw_sprites( struct mame_bitmap *bitmap )
+static void mermaid_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

@@ -2734,6 +2734,7 @@ V-V                           TP-027
 	DRIVER( sftm111 )	/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftmj )		/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( shufshot )	/* (c) Strata/Incredible Technologies */
+	DRIVER( sshot139 )	/* (c) Strata/Incredible Technologies */
 	DRIVER( sshot137 )	/* (c) Strata/Incredible Technologies */
 	DRIVER( wcbowldx )	/* (c) 1999 Incredible Technologies */
 
@@ -6491,6 +6492,7 @@ Other Sun games
 	DRIVER( plctr13b )  /* (c) 1996 P&P Marketing */
 	DRIVER( sshooter )	/* (c) 1998 P&P Marketing */
 	DRIVER( sshoot12 )	/* (c) 1998 P&P Marketing */
+	DRIVER( sshoot11 )	/* (c) 1998 P&P Marketing */
 	DRIVER( pass )		/* (c) 1992 Oksan */
 	DRIVER( news )		/* "Virus"??? ((c) 1993 Poby in ROM VIRUS.4) */
 	DRIVER( taxidrvr )	/* [1984 Graphic Techno] */
@@ -6619,8 +6621,8 @@ Other Sun games
 	DRIVER( yujan )		/* (C) 1999 Yubis */
 	DRIVER( onetwo )	/* (c) 1997 Barko */
 	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
-	DRIVER( pchmp95 )	/* (c) 1992 Sega / Vic Tokai / Excellent Systems */
-	DRIVER( pchmp95v )	/* (c) 1995 Veltmeijer Automaten */
+	DRIVER( witch )		/* (c) 1992 Sega / Vic Tokai / Excellent Systems */
+	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( pitboss )	/* (c) 1983 Merit */
 	DRIVER( trvwhiz )	/* (c) 1985 Merit */

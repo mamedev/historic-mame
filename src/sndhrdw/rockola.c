@@ -117,8 +117,8 @@ INLINE void validate_tone_channel(int channel)
 {
 	if (!tone_channels[channel].mute)
 	{
-		data8_t *ROM = memory_region(REGION_SOUND1);
-		data8_t romdata = ROM[tone_channels[channel].base + tone_channels[channel].offset];
+		UINT8 *ROM = memory_region(REGION_SOUND1);
+		UINT8 romdata = ROM[tone_channels[channel].base + tone_channels[channel].offset];
 
 		if (romdata != 0xff)
 			tone_channels[channel].sample_step = tone_channels[channel].sample_rate / (256 - romdata);
@@ -750,7 +750,7 @@ int	hd38880_data_bytes;
 double	hd38880_speed;
 
 
-static void rockola_speech_w(data8_t data, data16_t *table, int start)
+static void rockola_speech_w(UINT8 data, UINT16 *table, int start)
 {
 	/*
         bit description
@@ -893,7 +893,7 @@ static void rockola_speech_w(data8_t data, data16_t *table, int start)
 
 WRITE8_HANDLER( vanguard_speech_w )
 {
-	static data16_t vanguard_table[16] =
+	static UINT16 vanguard_table[16] =
 	{
 		0x04000,
 		0x04325,
@@ -918,7 +918,7 @@ WRITE8_HANDLER( vanguard_speech_w )
 
 WRITE8_HANDLER( fantasy_speech_w )
 {
-	static data16_t fantasy_table[16] =
+	static UINT16 fantasy_table[16] =
 	{
 		0x04000,
 		0x04297,

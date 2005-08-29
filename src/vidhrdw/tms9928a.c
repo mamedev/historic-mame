@@ -110,18 +110,18 @@ static unsigned char TMS9928A_palette[16*3] =
 /*
 ** Forward declarations of internal functions.
 */
-static void _TMS9928A_mode0 (struct mame_bitmap*);
-static void _TMS9928A_mode1 (struct mame_bitmap*);
-static void _TMS9928A_mode2 (struct mame_bitmap*);
-static void _TMS9928A_mode12 (struct mame_bitmap*);
-static void _TMS9928A_mode3 (struct mame_bitmap*);
-static void _TMS9928A_mode23 (struct mame_bitmap*);
-static void _TMS9928A_modebogus (struct mame_bitmap*);
-static void _TMS9928A_sprites (struct mame_bitmap*);
+static void _TMS9928A_mode0 (mame_bitmap*);
+static void _TMS9928A_mode1 (mame_bitmap*);
+static void _TMS9928A_mode2 (mame_bitmap*);
+static void _TMS9928A_mode12 (mame_bitmap*);
+static void _TMS9928A_mode3 (mame_bitmap*);
+static void _TMS9928A_mode23 (mame_bitmap*);
+static void _TMS9928A_modebogus (mame_bitmap*);
+static void _TMS9928A_sprites (mame_bitmap*);
 static void _TMS9928A_change_register (int reg, UINT8 data);
 static void _TMS9928A_set_dirty (char);
 
-static void (*ModeHandlers[])(struct mame_bitmap*) = {
+static void (*ModeHandlers[])(mame_bitmap*) = {
         _TMS9928A_mode0, _TMS9928A_mode1, _TMS9928A_mode2,  _TMS9928A_mode12,
         _TMS9928A_mode3, _TMS9928A_modebogus, _TMS9928A_mode23,
         _TMS9928A_modebogus };
@@ -152,7 +152,7 @@ typedef struct {
     void (*INTCallback)(int);
     /* memory */
     UINT8 *vMem, *dBackMem;
-    struct mame_bitmap *tmpbmp;
+    mame_bitmap *tmpbmp;
     int vramsize, model;
     /* emulation settings */
     int LimitSprites; /* max 4 sprites on a row, like original TMS9918A */
@@ -492,7 +492,7 @@ VIDEO_UPDATE( tms9928a )
 	{
 		copybitmap(bitmap, tms.tmpbmp, 0, 0, LEFT_BORDER, TOP_BORDER, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 		{
-			struct rectangle rt;
+			rectangle rt;
 
 			/* set borders */
 			rt.min_x = 0; rt.max_x = LEFT_BORDER+256+RIGHT_BORDER-1;
@@ -542,10 +542,10 @@ int TMS9928A_interrupt () {
     return b;
 }
 
-static void _TMS9928A_mode1 (struct mame_bitmap *bmp) {
+static void _TMS9928A_mode1 (mame_bitmap *bmp) {
     int pattern,x,y,yy,xx,name,charcode;
     UINT8 fg,bg,*patternptr;
-	struct rectangle rt;
+	rectangle rt;
 
     if ( !(tms.anyDirtyColour || tms.anyDirtyName || tms.anyDirtyPattern) )
          return;
@@ -584,10 +584,10 @@ static void _TMS9928A_mode1 (struct mame_bitmap *bmp) {
     _TMS9928A_set_dirty (0);
 }
 
-static void _TMS9928A_mode12 (struct mame_bitmap *bmp) {
+static void _TMS9928A_mode12 (mame_bitmap *bmp) {
     int pattern,x,y,yy,xx,name,charcode;
     UINT8 fg,bg,*patternptr;
-	struct rectangle rt;
+	rectangle rt;
 
     if ( !(tms.anyDirtyColour || tms.anyDirtyName || tms.anyDirtyPattern) )
          return;
@@ -626,7 +626,7 @@ static void _TMS9928A_mode12 (struct mame_bitmap *bmp) {
     _TMS9928A_set_dirty (0);
 }
 
-static void _TMS9928A_mode0 (struct mame_bitmap *bmp) {
+static void _TMS9928A_mode0 (mame_bitmap *bmp) {
     int pattern,x,y,yy,xx,name,charcode,colour;
     UINT8 fg,bg,*patternptr;
 
@@ -654,7 +654,7 @@ static void _TMS9928A_mode0 (struct mame_bitmap *bmp) {
     _TMS9928A_set_dirty (0);
 }
 
-static void _TMS9928A_mode2 (struct mame_bitmap *bmp) {
+static void _TMS9928A_mode2 (mame_bitmap *bmp) {
     int colour,name,x,y,yy,pattern,xx,charcode;
     UINT8 fg,bg;
     UINT8 *colourptr,*patternptr;
@@ -689,7 +689,7 @@ static void _TMS9928A_mode2 (struct mame_bitmap *bmp) {
     _TMS9928A_set_dirty (0);
 }
 
-static void _TMS9928A_mode3 (struct mame_bitmap *bmp) {
+static void _TMS9928A_mode3 (mame_bitmap *bmp) {
     int x,y,yy,yyy,name,charcode;
     UINT8 fg,bg,*patternptr;
 
@@ -723,7 +723,7 @@ static void _TMS9928A_mode3 (struct mame_bitmap *bmp) {
     _TMS9928A_set_dirty (0);
 }
 
-static void _TMS9928A_mode23 (struct mame_bitmap *bmp) {
+static void _TMS9928A_mode23 (mame_bitmap *bmp) {
     int x,y,yy,yyy,name,charcode;
     UINT8 fg,bg,*patternptr;
 
@@ -758,7 +758,7 @@ static void _TMS9928A_mode23 (struct mame_bitmap *bmp) {
     _TMS9928A_set_dirty (0);
 }
 
-static void _TMS9928A_modebogus (struct mame_bitmap *bmp) {
+static void _TMS9928A_modebogus (mame_bitmap *bmp) {
     UINT8 fg,bg;
     int x,y,n,xx;
 
@@ -790,7 +790,7 @@ static void _TMS9928A_modebogus (struct mame_bitmap *bmp) {
 **
 ** This code should be optimized. One day.
 */
-static void _TMS9928A_sprites (struct mame_bitmap *bmp) {
+static void _TMS9928A_sprites (mame_bitmap *bmp) {
     UINT8 *attributeptr,*patternptr,c;
     int p,x,y,size,i,j,large,yy,xx,limit[192],
         illegalsprite,illegalspriteline;

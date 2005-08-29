@@ -76,8 +76,8 @@
 
 int suna8_text_dim; /* specifies format of text layer */
 
-data8_t suna8_rombank, suna8_spritebank, suna8_palettebank;
-data8_t suna8_unknown;
+UINT8 suna8_rombank, suna8_spritebank, suna8_palettebank;
+UINT8 suna8_unknown;
 
 /* Functions defined in vidhrdw: */
 
@@ -97,9 +97,9 @@ static int tiles, rombank, page;
 
 static void get_tile_info(int tile_index)
 {
-	data8_t code, attr;
+	UINT8 code, attr;
 	if (code_pressed(KEYCODE_X))
-	{	data8_t *rom = memory_region(REGION_CPU1) + 0x10000 + 0x4000*rombank;
+	{	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000 + 0x4000*rombank;
 		code = rom[ 2 * tile_index + 0 ];
 		attr = rom[ 2 * tile_index + 1 ];	}
 	else
@@ -215,7 +215,7 @@ VIDEO_START( suna8_textdim12 )	{ return suna8_vh_start_common(12); }
 
 ***************************************************************************/
 
-void suna8_draw_normal_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+void suna8_draw_normal_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	int mx = 0;	// multisprite x counter
@@ -346,7 +346,7 @@ void suna8_draw_normal_sprites(struct mame_bitmap *bitmap,const struct rectangle
 	}
 }
 
-void suna8_draw_text_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+void suna8_draw_text_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 

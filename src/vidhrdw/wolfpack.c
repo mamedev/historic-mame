@@ -27,7 +27,7 @@ static UINT8 wolfpack_torpedo_v;
 
 static UINT8* LFSR;
 
-static struct mame_bitmap* helper;
+static mame_bitmap* helper;
 
 
 WRITE8_HANDLER( wolfpack_ship_size_w )
@@ -134,7 +134,7 @@ VIDEO_START( wolfpack )
 }
 
 
-static void draw_ship(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_ship(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	static const UINT32 scaler[] =
 	{
@@ -170,7 +170,7 @@ static void draw_ship(struct mame_bitmap* bitmap, const struct rectangle* clipre
 }
 
 
-static void draw_torpedo(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_torpedo(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	int count = 0;
 
@@ -210,9 +210,9 @@ static void draw_torpedo(struct mame_bitmap* bitmap, const struct rectangle* cli
 }
 
 
-static void draw_pt(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_pt(mame_bitmap* bitmap, const rectangle* cliprect)
 {
-	struct rectangle rect = *cliprect;
+	rectangle rect = *cliprect;
 
 	if (!(wolfpack_pt_pic & 0x20))
 	{
@@ -243,9 +243,9 @@ static void draw_pt(struct mame_bitmap* bitmap, const struct rectangle* cliprect
 }
 
 
-static void draw_water(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_water(mame_bitmap* bitmap, const rectangle* cliprect)
 {
-	struct rectangle rect = *cliprect;
+	rectangle rect = *cliprect;
 
 	int x;
 	int y;
@@ -300,7 +300,7 @@ VIDEO_UPDATE( wolfpack )
 
 VIDEO_EOF( wolfpack )
 {
-	struct rectangle rect;
+	rectangle rect;
 
 	int x;
 	int y;

@@ -101,9 +101,9 @@ void intelflash_init(int chip, int type, void *data)
 	state_save_register_UINT8( "intelfsh", chip, "flash_memory", c->flash_memory, c->size );
 }
 
-data32_t intelflash_read(int chip, data32_t address)
+UINT32 intelflash_read(int chip, UINT32 address)
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	struct flash_chip *c;
 	if( chip >= FLASH_CHIPS_MAX )
 	{
@@ -120,13 +120,13 @@ data32_t intelflash_read(int chip, data32_t address)
 		{
 		case 8:
 			{
-				data8_t *flash_memory = c->flash_memory;
+				UINT8 *flash_memory = c->flash_memory;
 				data = flash_memory[ address ];
 			}
 			break;
 		case 16:
 			{
-				data16_t *flash_memory = c->flash_memory;
+				UINT16 *flash_memory = c->flash_memory;
 				data = flash_memory[ address ];
 			}
 			break;
@@ -178,7 +178,7 @@ data32_t intelflash_read(int chip, data32_t address)
 	return data;
 }
 
-void intelflash_write(int chip, data32_t address, data32_t data)
+void intelflash_write(int chip, UINT32 address, UINT32 data)
 {
 	struct flash_chip *c;
 	if( chip >= FLASH_CHIPS_MAX )
@@ -256,13 +256,13 @@ void intelflash_write(int chip, data32_t address, data32_t data)
 		{
 		case 8:
 			{
-				data8_t *flash_memory = c->flash_memory;
+				UINT8 *flash_memory = c->flash_memory;
 				flash_memory[ address ] = data;
 			}
 			break;
 		case 16:
 			{
-				data16_t *flash_memory = c->flash_memory;
+				UINT16 *flash_memory = c->flash_memory;
 				flash_memory[ address ] = data;
 			}
 			break;
@@ -277,13 +277,13 @@ void intelflash_write(int chip, data32_t address, data32_t data)
 			{
 			case 8:
 				{
-					data8_t *flash_memory = c->flash_memory;
+					UINT8 *flash_memory = c->flash_memory;
 					memset( &flash_memory[ address & ~0xffff ], 0xff, 64 * 1024 );
 				}
 				break;
 			case 16:
 				{
-					data16_t *flash_memory = c->flash_memory;
+					UINT16 *flash_memory = c->flash_memory;
 					memset( &flash_memory[ address & ~0x7fff ], 0xff, 64 * 1024 );
 				}
 				break;

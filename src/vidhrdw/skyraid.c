@@ -12,7 +12,7 @@ UINT8* skyraid_alpha_num_ram;
 UINT8* skyraid_pos_ram;
 UINT8* skyraid_obj_ram;
 
-static struct mame_bitmap *helper;
+static mame_bitmap *helper;
 
 
 VIDEO_START( skyraid )
@@ -24,7 +24,7 @@ VIDEO_START( skyraid )
 }
 
 
-static void draw_text(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_text(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	const UINT8* p = skyraid_alpha_num_ram;
 
@@ -46,7 +46,7 @@ static void draw_text(struct mame_bitmap* bitmap, const struct rectangle* clipre
 }
 
 
-static void draw_terrain(struct mame_bitmap* bitmap)
+static void draw_terrain(mame_bitmap* bitmap)
 {
 	const UINT8* p = memory_region(REGION_USER1);
 
@@ -66,7 +66,7 @@ static void draw_terrain(struct mame_bitmap* bitmap)
 			int color = val / 32;
 			int count = val % 32;
 
-			struct rectangle r;
+			rectangle r;
 
 			r.min_y = y;
 			r.min_x = x;
@@ -81,7 +81,7 @@ static void draw_terrain(struct mame_bitmap* bitmap)
 }
 
 
-static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_sprites(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -104,7 +104,7 @@ static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cli
 }
 
 
-static void draw_missiles(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_missiles(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -126,7 +126,7 @@ static void draw_missiles(struct mame_bitmap* bitmap, const struct rectangle* cl
 }
 
 
-static void draw_trapezoid(struct mame_bitmap* dst, struct mame_bitmap* src)
+static void draw_trapezoid(mame_bitmap* dst, mame_bitmap* src)
 {
 	const UINT8* p = memory_region(REGION_USER2);
 

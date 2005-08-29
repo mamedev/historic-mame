@@ -208,10 +208,10 @@ static int dec6(int val)
 }
 
 
-static void sprite_reorder(data8_t *buffer)
+static void sprite_reorder(UINT8 *buffer)
 {
 	int j;
-	data8_t temp[64];
+	UINT8 temp[64];
 	for( j=0; j < 16; j++ ) {
 		temp[2*(j*2)+0] = buffer[2*j+0];
 		temp[2*(j*2)+1] = buffer[2*j+1];

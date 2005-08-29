@@ -63,9 +63,9 @@ struct voice
 
 struct sequence
 {
-	data8_t volume;
-	data8_t reg2; /* master freq? */
-	data8_t tempo;
+	UINT8 volume;
+	UINT8 reg2; /* master freq? */
+	UINT8 tempo;
 	int addr;
 	int pause;
 	int channel[8];
@@ -82,8 +82,8 @@ struct namcona
 	sound_stream * mStream;
 	INT16 *mpMixerBuffer;
 	INT32 *mpPitchTable;
-	data16_t *mpROM;
-	data16_t *mpMetaData;
+	UINT16 *mpROM;
+	UINT16 *mpMetaData;
 	struct sequence mSequence[MAX_SEQUENCE];
 	struct voice mVoice[MAX_VOICE];
 };
@@ -97,7 +97,7 @@ struct namcona
  * ---------x------ 1 if the main CPU has written a new sound command
  * ----------xxxxxx unknown/unused
  */
-data16_t *
+UINT16 *
 GetSequenceStatusAddr( struct namcona *chip, struct sequence *pSeq )
 {
 	int offs = pSeq - chip->mSequence;
@@ -114,19 +114,19 @@ Silence( struct namcona *chip )
 	}
 	for( i=0; i<MAX_SEQUENCE; i++ )
 	{
-		data16_t *pStatus = GetSequenceStatusAddr(chip, &chip->mSequence[i]);
+		UINT16 *pStatus = GetSequenceStatusAddr(chip, &chip->mSequence[i]);
 		*pStatus &= 0xff7f; /* wipe "sequence-is-playing" flag */
 	}
 }
 
-static data8_t
+static UINT8
 ReadMetaDataByte( struct namcona *chip, int addr )
 {
-	data16_t data = chip->mpMetaData[addr/2];
+	UINT16 data = chip->mpMetaData[addr/2];
 	return (addr&1)?(data&0xff):(data>>8);
 } /* ReadMetaDataByte */
 
-static data16_t
+static UINT16
 ReadMetaDataWord( struct namcona *chip, int addr )
 {
 	return ReadMetaDataByte(chip, addr)+ReadMetaDataByte(chip, addr+1)*256;
@@ -135,7 +135,7 @@ ReadMetaDataWord( struct namcona *chip, int addr )
 static signed char
 ReadPCMSample(struct namcona *chip, int addr, int flag )
 {
-	data16_t data16 = chip->mpROM[addr/2];
+	UINT16 data16 = chip->mpROM[addr/2];
 	int dat = (addr&1)?(data16&0xff):(data16>>8);
 
 	if( flag&0x100 )
@@ -202,7 +202,7 @@ PopSequenceAddr(struct namcona *chip, struct sequence *pSequence )
 	}
 	else
 	{
-		data16_t *pStatus = GetSequenceStatusAddr(chip,pSequence);
+		UINT16 *pStatus = GetSequenceStatusAddr(chip,pSequence);
 		*pStatus &= 0xff7f; /* wipe "sequence-is-playing" flag */
 	}
 } /* PopSequenceAddr */
@@ -252,10 +252,10 @@ HandleRepeatOut(struct namcona *chip, struct sequence *pSequence )
 static void
 MapArgs(struct namcona *chip, struct sequence *pSequence,
 		 int bCommon,
-		 void (*callback)( struct namcona *chip, struct sequence *, int chan, data8_t data ) )
+		 void (*callback)( struct namcona *chip, struct sequence *, int chan, UINT8 data ) )
 {
-	data8_t set = ReadMetaDataByte(chip,pSequence->addr++);
-	data8_t data = 0;
+	UINT8 set = ReadMetaDataByte(chip,pSequence->addr++);
+	UINT8 data = 0;
 	int i;
 	if( bCommon )
 	{
@@ -275,7 +275,7 @@ MapArgs(struct namcona *chip, struct sequence *pSequence,
 } /* MapArgs */
 
 static void
-AssignChannel(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+AssignChannel(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	if( data<MAX_VOICE )
 	{
@@ -291,12 +291,12 @@ AssignChannel(struct namcona *chip, struct sequence *pSequence, int chan, data8_
 } /* AssignChannel */
 
 static void
-IgnoreUnknownOp(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+IgnoreUnknownOp(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 } /* IgnoreUnknownOp */
 
 static void
-SelectWave(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+SelectWave(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	int bank = 0x20000 + pVoice->bank*0x20000;
@@ -318,7 +318,7 @@ SelectWave(struct namcona *chip, struct sequence *pSequence, int chan, data8_t d
 } /* SelectWave */
 
 static void
-PlayNote(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+PlayNote(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	if( data & 0x80 )
@@ -327,7 +327,7 @@ PlayNote(struct namcona *chip, struct sequence *pSequence, int chan, data8_t dat
 	}
 	else
 	{
-		data16_t Note = (data<<8) + (pVoice->dnote<<8) + pVoice->detune + pVoice->baseFreq;
+		UINT16 Note = (data<<8) + (pVoice->dnote<<8) + pVoice->detune + pVoice->baseFreq;
 		if (Note < 0x7f00)
 		{
 			pVoice->delta = chip->mpPitchTable[Note>>8];
@@ -345,7 +345,7 @@ PlayNote(struct namcona *chip, struct sequence *pSequence, int chan, data8_t dat
 } /* PlayNote */
 
 static void
-Detune(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+Detune(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	pVoice->detune = data;
@@ -353,21 +353,21 @@ Detune(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data 
 
 
 static void
-DNote(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+DNote(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	pVoice->dnote = data;
 } /* DNote */
 
 static void
-Pan(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+Pan(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	pVoice->pan = data;
 } /* Pan */
 
 static void
-Volume(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data )
+Volume(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	pVoice->volume = data;
@@ -376,8 +376,8 @@ Volume(struct namcona *chip, struct sequence *pSequence, int chan, data8_t data 
 static void
 UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 {
-	data16_t *pStatus = GetSequenceStatusAddr(chip,pSequence);
-	data16_t data = *pStatus;
+	UINT16 *pStatus = GetSequenceStatusAddr(chip,pSequence);
+	UINT16 data = *pStatus;
 
 	if( data&0x0040 )
 	{ /* bit 0x0040 indicates that a sound request was written by the main CPU */
@@ -507,7 +507,7 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 						if (no < MAX_SEQUENCE)
 						{
 							struct sequence *pSequence2 = &chip->mSequence[no];
-							data16_t *pStatus2 = GetSequenceStatusAddr(chip,pSequence2);
+							UINT16 *pStatus2 = GetSequenceStatusAddr(chip,pSequence2);
 							int offs = 0x12+cod*2;
 							*pStatus2 = (cod<<8)|0x0080;
 							memset( pSequence2, 0x00, sizeof(struct sequence) );
@@ -526,8 +526,8 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 
 				case 0x23:
 					{
-						data8_t reg23_0 = ReadMetaDataByte(chip,pSequence->addr++); /* Channel select */
-						data8_t reg23_1 = ReadMetaDataByte(chip,pSequence->addr++); /* PCM bank select */
+						UINT8 reg23_0 = ReadMetaDataByte(chip,pSequence->addr++); /* Channel select */
+						UINT8 reg23_1 = ReadMetaDataByte(chip,pSequence->addr++); /* PCM bank select */
 						/* reg23_0: 0 = Ch. 0- 3 PCM Bank select
                                     1 = Ch. 4- 7 PCM Bank select
                                     2 = Ch. 8-11 PCM Bank select
@@ -616,7 +616,7 @@ static void *namcona_start(int sndindex, int clock, const void *config)
 	memset(chip, 0, sizeof(*chip));
 	chip->mSampleRate = clock;
 	chip->mStream = stream_create(0, 2, chip->mSampleRate, chip, UpdateSound);
-	chip->mpROM = (data16_t *)memory_region(REGION_CPU1);
+	chip->mpROM = (UINT16 *)memory_region(REGION_CPU1);
 	chip->mpMetaData = chip->mpROM+intf->metadata_offset;
 
 	memset( chip->mVoice, 0x00, sizeof(chip->mVoice) );

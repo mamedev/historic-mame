@@ -135,7 +135,7 @@
 
 static UINT8 speech_val;
 static UINT8 last_speech_write;
-static data16_t sound_reset_val;
+static UINT16 sound_reset_val;
 
 
 

@@ -5,13 +5,13 @@
 ***************************************************************************/
 
 /* defined in vihdrdw/espial.c */
-extern data8_t *espial_videoram;
-extern data8_t *espial_colorram;
-extern data8_t *espial_attributeram;
-extern data8_t *espial_scrollram;
-extern data8_t *espial_spriteram_1;
-extern data8_t *espial_spriteram_2;
-extern data8_t *espial_spriteram_3;
+extern UINT8 *espial_videoram;
+extern UINT8 *espial_colorram;
+extern UINT8 *espial_attributeram;
+extern UINT8 *espial_scrollram;
+extern UINT8 *espial_spriteram_1;
+extern UINT8 *espial_spriteram_2;
+extern UINT8 *espial_spriteram_3;
 
 PALETTE_INIT( espial );
 VIDEO_START( espial );

@@ -1277,7 +1277,7 @@ static void decode_opcode(UINT32 pc, M68HC11_OPCODE *op_table)
 	}
 }
 
-offs_t mc68hc11_dasm_one(char *buffer, data32_t pc)
+offs_t mc68hc11_dasm_one(char *buffer, UINT32 pc)
 {
 	UINT8 opcode;
 

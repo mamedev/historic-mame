@@ -1368,7 +1368,7 @@ void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
     Read a byte
 --------------------------*/
 
-data8_t cpunum_read_byte(int cpunum, offs_t address)
+UINT8 cpunum_read_byte(int cpunum, offs_t address)
 {
 	int result;
 	VERIFY_CPUNUM(0, cpunum_read_byte);
@@ -1383,7 +1383,7 @@ data8_t cpunum_read_byte(int cpunum, offs_t address)
     Write a byte
 --------------------------*/
 
-void cpunum_write_byte(int cpunum, offs_t address, data8_t data)
+void cpunum_write_byte(int cpunum, offs_t address, UINT8 data)
 {
 	VERIFY_CPUNUM_VOID(cpunum_write_byte);
 	cpuintrf_push_context(cpunum);

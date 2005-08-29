@@ -42,8 +42,8 @@ static char *char_dirty;
 static char *tile_dirty;
 static char object_dirty;
 
-static struct rectangle bg_tilemap_l_clip;
-static struct rectangle bg_tilemap_r_clip;
+static rectangle bg_tilemap_l_clip;
+static rectangle bg_tilemap_r_clip;
 
 static UINT32 tile_offset[32*32] = {
 	0x078,0x079,0x07a,0x07b,0x07c,0x07d,0x07e,0x07f,0x0ff,0x0fe,0x0fd,0x0fc,0x0fb,0x0fa,0x0f9,0x0f8,0x278,0x279,0x27a,0x27b,0x27c,0x27d,0x27e,0x27f,0x2ff,0x2fe,0x2fd,0x2fc,0x2fb,0x2fa,0x2f9,0x2f8,
@@ -150,7 +150,7 @@ static void get_fg_tile_info(int tile_index)
     big object
  ********************************************/
 
-static void draw_object(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int sx, sy, color;
 
@@ -172,7 +172,7 @@ static void draw_object(struct mame_bitmap *bitmap, const struct rectangle *clip
 	drawgfx(bitmap, Machine->gfx[3], 1, color, 0, 1, sx, sy - 64, cliprect, TRANSPARENCY_PEN, 0);
 }
 
-static void draw_center(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_center(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int sx, sy, x, y, color;
 
@@ -453,7 +453,7 @@ WRITE8_HANDLER( decocass_center_v_shift_w )
     memory handlers
  ********************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int color,
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int color,
 						int sprite_y_adjust, int sprite_y_adjust_flip_screen,
 						unsigned char *sprite_ram, int interleave)
 {
@@ -504,7 +504,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 }
 
 
-static void draw_missiles(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+static void draw_missiles(mame_bitmap *bitmap, const rectangle *cliprect,
 						int missile_y_adjust, int missile_y_adjust_flip_screen,
 						unsigned char *missile_ram, int interleave)
 {
@@ -649,7 +649,7 @@ VIDEO_START( decocass )
 VIDEO_UPDATE( decocass )
 {
 	int scrollx, scrolly_l, scrolly_r;
-	struct rectangle clip;
+	rectangle clip;
 
 	if (0xc0 != (input_port_2_r(0) & 0xc0))  /* coin slots assert an NMI */
 		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);

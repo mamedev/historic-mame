@@ -26,9 +26,9 @@ Revisions:
 #include "sound/ay8910.h"
 
 
-extern data8_t *aeroboto_videoram;
-extern data8_t *aeroboto_hscroll, *aeroboto_vscroll, *aeroboto_tilecolor;
-extern data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_bgcolor;
+extern UINT8 *aeroboto_videoram;
+extern UINT8 *aeroboto_hscroll, *aeroboto_vscroll, *aeroboto_tilecolor;
+extern UINT8 *aeroboto_starx, *aeroboto_stary, *aeroboto_bgcolor;
 
 VIDEO_START( aeroboto );
 VIDEO_UPDATE( aeroboto );
@@ -38,7 +38,7 @@ WRITE8_HANDLER( aeroboto_3000_w );
 WRITE8_HANDLER( aeroboto_videoram_w );
 WRITE8_HANDLER( aeroboto_tilecolor_w );
 
-static data8_t *aeroboto_mainram;
+static UINT8 *aeroboto_mainram;
 static int disable_irq = 0;
 
 

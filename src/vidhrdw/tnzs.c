@@ -61,7 +61,7 @@ PALETTE_INIT( arknoid2 )
 
 ***************************************************************************/
 
-void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
+void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 {
 	int x,y,column,tot;
 	int scrollx, scrolly;
@@ -140,7 +140,7 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 	}
 }
 
-void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
+void tnzs_vh_draw_foreground(mame_bitmap *bitmap,
 							 unsigned char *char_pointer,
 							 unsigned char *x_pointer,
 							 unsigned char *y_pointer,

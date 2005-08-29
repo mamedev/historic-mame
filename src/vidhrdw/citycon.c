@@ -11,9 +11,9 @@
 
 
 
-data8_t *citycon_videoram;
-data8_t *citycon_linecolor;
-data8_t *citycon_scroll;
+UINT8 *citycon_videoram;
+UINT8 *citycon_linecolor;
+UINT8 *citycon_scroll;
 
 static int bg_image;
 static tilemap *bg_tilemap,*fg_tilemap;
@@ -42,7 +42,7 @@ static void get_fg_tile_info(int tile_index)
 
 static void get_bg_tile_info(int tile_index)
 {
-	data8_t *rom = memory_region(REGION_GFX4);
+	UINT8 *rom = memory_region(REGION_GFX4);
 	int code = rom[0x1000 * bg_image + tile_index];
 	SET_TILE_INFO(
 			3 + bg_image,
@@ -124,7 +124,7 @@ WRITE8_HANDLER( citycon_background_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

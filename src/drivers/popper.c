@@ -81,7 +81,7 @@ Notes:
 #include "driver.h"
 #include "sound/ay8910.h"
 
-extern data8_t *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
+extern UINT8 *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
 extern size_t popper_spriteram_size;
 
 WRITE8_HANDLER( popper_videoram_w );
@@ -95,7 +95,7 @@ WRITE8_HANDLER( popper_gfx_bank_w );
 PALETTE_INIT( popper );
 VIDEO_START( popper );
 VIDEO_UPDATE( popper );
-static data8_t *popper_sharedram;
+static UINT8 *popper_sharedram;
 
 static READ8_HANDLER( popper_sharedram_r )
 {
@@ -131,7 +131,7 @@ static READ8_HANDLER( popper_sharedram_r )
 //                      -------x  sound
 static READ8_HANDLER( popper_input_ports_r )
 {
-	data8_t data=0;
+	UINT8 data=0;
 	switch (offset)
 	{
 		//           player inputs        dsw1                           dsw2

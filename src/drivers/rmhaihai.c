@@ -165,7 +165,7 @@ static WRITE8_HANDLER( ctrl_w )
 
 static WRITE8_HANDLER( themj_rombank_w )
 {
-	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
+	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
 	int bank = data & 0x03;
 logerror("banksw %d\n",bank);
 	memory_set_bankptr(1, rom + bank*0x4000);
@@ -730,7 +730,7 @@ ROM_END
 
 static DRIVER_INIT( rmhaihai )
 {
-	data8_t *rom = memory_region(REGION_GFX1);
+	UINT8 *rom = memory_region(REGION_GFX1);
 	int size = memory_region_length(REGION_GFX1);
 	int a,b;
 

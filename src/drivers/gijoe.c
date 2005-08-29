@@ -49,8 +49,8 @@ Known Issues
 VIDEO_START( gijoe );
 VIDEO_UPDATE( gijoe );
 
-static data16_t *gijoe_workram;
-static data16_t cur_control2;
+static UINT16 *gijoe_workram;
+static UINT16 cur_control2;
 static int init_eeprom_count;
 static void *dmadelay_timer;
 
@@ -136,7 +136,7 @@ static WRITE16_HANDLER( control2_w )
 
 static void gijoe_objdma(void)
 {
-	data16_t *src_head, *src_tail, *dst_head, *dst_tail;
+	UINT16 *src_head, *src_tail, *dst_head, *dst_tail;
 
 	src_head = spriteram16;
 	src_tail = spriteram16 + 255*8;

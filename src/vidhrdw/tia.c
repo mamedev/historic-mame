@@ -67,7 +67,7 @@ static UINT8 prevGRP0;
 static UINT8 prevGRP1;
 static UINT8 prevENABL;
 
-static struct mame_bitmap *helper[2];
+static mame_bitmap *helper[2];
 
 
 static const int nusiz[8][3] =

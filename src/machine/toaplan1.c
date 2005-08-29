@@ -23,7 +23,7 @@ static unsigned int dsp_addr_w, main_ram_seg;	/* Demon world */
 
 int toaplan1_unk_reset_port;
 
-data8_t *toaplan1_sharedram;
+UINT8 *toaplan1_sharedram;
 
 
 
@@ -61,7 +61,7 @@ READ16_HANDLER( demonwld_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
-	data16_t input_data = 0;
+	UINT16 input_data = 0;
 	switch (main_ram_seg) {
 		case 0xc00000:	cpuintrf_push_context(0); input_data = program_read_word(main_ram_seg + dsp_addr_w); cpuintrf_pop_context(); break;
 		default:		logerror("DSP PC:%04x Warning !!! IO reading from %08x (port 1)\n",activecpu_get_previouspc(),main_ram_seg + dsp_addr_w);

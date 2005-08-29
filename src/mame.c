@@ -1067,10 +1067,10 @@ static int init_buffered_spriteram(void)
 	}
 
 	/* make 16-bit and 32-bit pointer variants */
-	buffered_spriteram16 = (data16_t *)buffered_spriteram;
-	buffered_spriteram32 = (data32_t *)buffered_spriteram;
-	buffered_spriteram16_2 = (data16_t *)buffered_spriteram_2;
-	buffered_spriteram32_2 = (data32_t *)buffered_spriteram_2;
+	buffered_spriteram16 = (UINT16 *)buffered_spriteram;
+	buffered_spriteram32 = (UINT32 *)buffered_spriteram;
+	buffered_spriteram16_2 = (UINT16 *)buffered_spriteram_2;
+	buffered_spriteram32_2 = (UINT32 *)buffered_spriteram_2;
 	return 0;
 }
 
@@ -1179,7 +1179,7 @@ void reset_partial_updates(void)
 
 void force_partial_update(int scanline)
 {
-	struct rectangle clip = Machine->visible_area;
+	rectangle clip = Machine->visible_area;
 
 	/* if skipping this frame, bail */
 	if (osd_skip_this_frame())

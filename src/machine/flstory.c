@@ -140,7 +140,7 @@ READ8_HANDLER( flstory_mcu_status_r )
 
 WRITE8_HANDLER( onna34ro_mcu_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	UINT16 score_adr = RAM[0xe29e]*0x100 + RAM[0xe29d];
 
 	switch (data)
@@ -180,7 +180,7 @@ READ8_HANDLER( onna34ro_mcu_status_r )
 
 #define VICTNINE_MCU_SEED	(memory_region(REGION_CPU1)[0xE685])
 
-static data8_t victnine_mcu_data[0x100] =
+static UINT8 victnine_mcu_data[0x100] =
 {
 	0x3e, 0x08, 0xdd, 0x29, 0xcb, 0x14, 0xfd, 0x29,
 	0xcb, 0x15, 0xd9, 0x29, 0xd9, 0x30, 0x0d, 0xd9,
@@ -220,7 +220,7 @@ static int mcu_select = 0;
 
 WRITE8_HANDLER( victnine_mcu_w )
 {
-	data8_t seed = VICTNINE_MCU_SEED;
+	UINT8 seed = VICTNINE_MCU_SEED;
 
 	if (!seed && (data & 0x37) == 0x37)
 	{
@@ -245,7 +245,7 @@ WRITE8_HANDLER( victnine_mcu_w )
 		}
 		else if (data >= 0x38 && data <= 0x3a)
 		{
-			data8_t *RAM = memory_region(REGION_CPU1);
+			UINT8 *RAM = memory_region(REGION_CPU1);
 
 			from_mcu = RAM[0xe691 - 0x38 + data];
 		}

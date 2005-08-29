@@ -284,7 +284,7 @@ static void finish_enqueue(int param)
 		if (ethernet.fifo_count < ETHER_RX_BUFFERS)
 		{
 			int buffer_len = ((ethernet.tx[3] << 8) | ethernet.tx[2]) & 0x7ff;
-			data8_t *packet = &ethernet.rx[ethernet.fifo_count++ * ETHER_BUFFER_SIZE];
+			UINT8 *packet = &ethernet.rx[ethernet.fifo_count++ * ETHER_BUFFER_SIZE];
 			int packet_len;
 
 			/* compute the packet length */
@@ -407,7 +407,7 @@ static void process_command(UINT16 data)
 
 READ16_HANDLER( smc91c94_r )
 {
-	data32_t result = ~0;
+	UINT32 result = ~0;
 
 	/* determine the effective register */
 	offset %= 8;
@@ -428,7 +428,7 @@ READ16_HANDLER( smc91c94_r )
 		case EREG_DATA_0:	/* data register */
 		case EREG_DATA_1:	/* data register */
 		{
-			data8_t *buffer = (ethernet.reg[EREG_POINTER] & 0x8000) ? ethernet.rx : ethernet.tx;
+			UINT8 *buffer = (ethernet.reg[EREG_POINTER] & 0x8000) ? ethernet.rx : ethernet.tx;
 			int addr = ethernet.reg[EREG_POINTER] & 0x7ff;
 			result = buffer[addr++];
 			if (!(mem_mask & 0xff00))
@@ -546,7 +546,7 @@ WRITE16_HANDLER( smc91c94_w )
 		case EREG_DATA_0:	/* data register */
 		case EREG_DATA_1:	/* data register */
 		{
-			data8_t *buffer = (ethernet.reg[EREG_POINTER] & 0x8000) ? ethernet.rx : ethernet.tx;
+			UINT8 *buffer = (ethernet.reg[EREG_POINTER] & 0x8000) ? ethernet.rx : ethernet.tx;
 			int addr = ethernet.reg[EREG_POINTER] & 0x7ff;
 			buffer[addr++] = data;
 			if (!(mem_mask & 0xff00))

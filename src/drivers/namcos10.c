@@ -44,7 +44,7 @@ ADDRESS_MAP_END
 static DRIVER_INIT( namcos10 )
 {
 	int i;
-	data16_t *RAM = (data16_t *)memory_region( REGION_USER1 );
+	UINT16 *RAM = (UINT16 *)memory_region( REGION_USER1 );
 
 	for( i = 0; i < memory_region_length( REGION_USER1 ) / 2; i++ )
 	{

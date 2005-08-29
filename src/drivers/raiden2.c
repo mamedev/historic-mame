@@ -34,7 +34,7 @@ static unsigned char zz[0x400];
 
 /* SPRITE DRAWING (move to vidhrdw file) */
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect ,int pri_mask )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect ,int pri_mask )
 {
 
 	const UINT8 *source = spriteram+0x1000-8 ;

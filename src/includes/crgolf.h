@@ -6,11 +6,11 @@
 
 /*----------- defined in vidhrdw/crgolf.c -----------*/
 
-extern data8_t *crgolf_color_select;
-extern data8_t *crgolf_screen_flip;
-extern data8_t *crgolf_screen_select;
-extern data8_t *crgolf_screenb_enable;
-extern data8_t *crgolf_screena_enable;
+extern UINT8 *crgolf_color_select;
+extern UINT8 *crgolf_screen_flip;
+extern UINT8 *crgolf_screen_select;
+extern UINT8 *crgolf_screenb_enable;
+extern UINT8 *crgolf_screena_enable;
 
 WRITE8_HANDLER( crgolf_videoram_bit0_w );
 WRITE8_HANDLER( crgolf_videoram_bit1_w );

@@ -992,7 +992,7 @@ void atari_interrupt_cb(int mask)
 
 READ8_HANDLER ( atari_pia_r )
 {
-	data8_t result;
+	UINT8 result;
 	switch (offset & 3)
 	{
 		case 0: /* PIA port A */

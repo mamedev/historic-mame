@@ -15,12 +15,12 @@ ToDo: Fix Sprites for Cocktail
 #include "vidhrdw/generic.h"
 
 /* Defined in driver */
-extern data16_t *mcatadv_videoram1, *mcatadv_videoram2;
-extern data16_t *mcatadv_scroll, *mcatadv_scroll2;
-extern data16_t *mcatadv_vidregs;
+extern UINT16 *mcatadv_videoram1, *mcatadv_videoram2;
+extern UINT16 *mcatadv_scroll, *mcatadv_scroll2;
+extern UINT16 *mcatadv_vidregs;
 
 static tilemap *mcatadv_tilemap1,  *mcatadv_tilemap2;
-static data16_t *spriteram_old, *vidregs_old;
+static UINT16 *spriteram_old, *vidregs_old;
 static int palette_bank1, palette_bank2;
 
 
@@ -67,10 +67,10 @@ WRITE16_HANDLER( mcatadv_videoram2_w )
 }
 
 
-static void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void mcatadv_drawsprites ( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	data16_t *source = spriteram_old;
-	data16_t *finish = source + (spriteram_size/2)/2;
+	UINT16 *source = spriteram_old;
+	UINT16 *finish = source + (spriteram_size/2)/2;
 	int global_x = mcatadv_vidregs[0]-0x184;
 	int global_y = mcatadv_vidregs[1]-0x1f1;
 
@@ -104,7 +104,7 @@ static void mcatadv_drawsprites ( struct mame_bitmap *bitmap, const struct recta
 		int width = ((source[2]&0xf000)>>12)*16;
 		int offset = tileno * 256;
 
-		data8_t *sprdata = memory_region ( REGION_GFX1 );
+		UINT8 *sprdata = memory_region ( REGION_GFX1 );
 
 		int drawxpos, drawypos;
 		int xcnt,ycnt;

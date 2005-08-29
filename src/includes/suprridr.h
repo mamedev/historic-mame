@@ -6,8 +6,8 @@
 
 /*----------- defined in vidhrdw/suprridr.c -----------*/
 
-extern data8_t *suprridr_fgram;
-extern data8_t *suprridr_bgram;
+extern UINT8 *suprridr_fgram;
+extern UINT8 *suprridr_bgram;
 
 VIDEO_START( suprridr );
 PALETTE_INIT( suprridr );

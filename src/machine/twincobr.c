@@ -28,7 +28,7 @@ static unsigned int dsp_addr_w, main_ram_seg;
 const static int toaplan_port_type[2] = { 0x7800c, 0x5c };
 #endif
 
-data8_t *twincobr_sharedram;
+UINT8 *twincobr_sharedram;
 
 
 
@@ -71,7 +71,7 @@ READ16_HANDLER( twincobr_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
-	data16_t input_data = 0;
+	UINT16 input_data = 0;
 	switch (main_ram_seg) {
 		case 0x30000:
 		case 0x40000:
@@ -124,7 +124,7 @@ READ16_HANDLER( wardner_dsp_r )
 {
 	/* DSP can read data from main CPU RAM via DSP IO port 1 */
 
-	data16_t input_data = 0;
+	UINT16 input_data = 0;
 	switch (main_ram_seg) {
 		case 0x7000:
 		case 0x8000:

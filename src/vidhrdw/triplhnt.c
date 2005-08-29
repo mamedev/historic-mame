@@ -17,7 +17,7 @@ UINT8* triplhnt_orga_ram;
 int triplhnt_sprite_zoom;
 int triplhnt_sprite_bank;
 
-static struct mame_bitmap* helper;
+static mame_bitmap* helper;
 static tilemap* bg_tilemap;
 
 
@@ -51,7 +51,7 @@ VIDEO_START( triplhnt )
 }
 
 
-static void triplhnt_draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void triplhnt_draw_sprites(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -60,7 +60,7 @@ static void triplhnt_draw_sprites(struct mame_bitmap* bitmap, const struct recta
 
 	for (i = 0; i < 16; i++)
 	{
-		struct rectangle rect;
+		rectangle rect;
 
 		int j = (triplhnt_orga_ram[i] & 15) ^ 15;
 

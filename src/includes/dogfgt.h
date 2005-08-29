@@ -1,4 +1,4 @@
-extern data8_t *dogfgt_bgvideoram;
+extern UINT8 *dogfgt_bgvideoram;
 
 WRITE8_HANDLER( dogfgt_plane_select_w );
 READ8_HANDLER( dogfgt_bitmapram_r );

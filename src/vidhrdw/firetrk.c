@@ -13,15 +13,15 @@ UINT8* firetrk_playfield_ram;
 int firetrk_skid[2];
 int firetrk_crash[2];
 
-static struct mame_bitmap *helper1;
-static struct mame_bitmap *helper2;
+static mame_bitmap *helper1;
+static mame_bitmap *helper2;
 
 static int blink;
 static int flash;
 static int drone_hpos;
 static int drone_vpos;
 
-static const struct rectangle playfield_window = { 0x02A, 0x115, 0x000, 0x0FF };
+static const rectangle playfield_window = { 0x02A, 0x115, 0x000, 0x0FF };
 
 struct sprite_data
 {
@@ -359,7 +359,7 @@ static void calc_car_positions(void)
 }
 
 
-static void draw_text(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_text(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	const UINT8* p = firetrk_alpha_num_ram;
 

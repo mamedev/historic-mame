@@ -305,7 +305,7 @@ WRITE8_HANDLER( swimmer_sidepanel_enable_w )
   the main emulation engine.
 
 ***************************************************************************/
-static void drawbigsprite(struct mame_bitmap *bitmap)
+static void drawbigsprite(mame_bitmap *bitmap)
 {
 	int offs;
 	int ox,oy,sx,sy,flipx,flipy;

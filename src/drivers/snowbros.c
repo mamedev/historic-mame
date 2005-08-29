@@ -71,7 +71,7 @@ VIDEO_UPDATE( snowbros );
 VIDEO_UPDATE( wintbob );
 VIDEO_UPDATE( snowbro3 );
 
-static data16_t *hyperpac_ram;
+static UINT16 *hyperpac_ram;
 int sb3_music_is_playing;
 int sb3_music;
 
@@ -1053,7 +1053,7 @@ static struct YM2151interface ym2151_interface =
 
 MACHINE_INIT (semiprot)
 {
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
 
 	for (i = 0;i < 0x200/2;i++)
@@ -1062,7 +1062,7 @@ MACHINE_INIT (semiprot)
 
 MACHINE_INIT (finalttr)
 {
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
 
 	for (i = 0;i < 0x200/2;i++)
@@ -1544,7 +1544,7 @@ READ16_HANDLER ( moremorp_0a_read )
 
 static DRIVER_INIT( moremorp )
 {
-//  data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//  UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 //  int i;
 
 //  for (i = 0;i < 0x200/2;i++)
@@ -1557,15 +1557,15 @@ static DRIVER_INIT( moremorp )
 
 static DRIVER_INIT( cookbib2 )
 {
-//  data16_t *HCROM = (data16_t*)memory_region(REGION_CPU1);
-//  data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+//  UINT16 *HCROM = (UINT16*)memory_region(REGION_CPU1);
+//  UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 //  int i;
 //  hyperpac_ram[0xf000/2] = 0x46fc;
 //  hyperpac_ram[0xf002/2] = 0x2700;
 
 // verified on real hardware, need to move this to a file really
 
-//  static data16_t cookbib2_mcu68k[] =
+//  static UINT16 cookbib2_mcu68k[] =
 //  {
 //      // moved to protdata.bin
 //  };
@@ -1920,7 +1920,7 @@ READ16_HANDLER ( _4in1_02_read )
 static DRIVER_INIT(4in1boot)
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_CPU1);
+	UINT8 *src = memory_region(REGION_CPU1);
 	int len = memory_region_length(REGION_CPU1);
 
 	/* strange order */
@@ -1953,7 +1953,7 @@ static DRIVER_INIT(4in1boot)
 static DRIVER_INIT(snowbro3)
 {
 	unsigned char *buffer;
-	data8_t *src = memory_region(REGION_CPU1);
+	UINT8 *src = memory_region(REGION_CPU1);
 	int len = memory_region_length(REGION_CPU1);
 
 	/* strange order */

@@ -46,7 +46,7 @@ Registers per channel:
 #define GAELCO_NUM_CHANNELS 	0x07
 #define VOLUME_LEVELS 			0x10
 
-data16_t *gaelco_sndregs;
+UINT16 *gaelco_sndregs;
 
 /* fix me -- asumes that only one type can be active at a time */
 static int chip_type;

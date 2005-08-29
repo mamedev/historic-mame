@@ -210,9 +210,9 @@ WRITE8_HANDLER( kncljoe_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 	const gfx_element *gfx = Machine->gfx[1 + sprite_bank];
 	int i, j, pribase[4]={0x0180, 0x0080, 0x0100, 0x0000};
 

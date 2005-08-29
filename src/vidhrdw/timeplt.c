@@ -174,10 +174,10 @@ READ8_HANDLER( timeplt_scanline_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 	int offs;
 	int line;
 

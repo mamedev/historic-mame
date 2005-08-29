@@ -48,7 +48,7 @@ static WRITE8_HANDLER( thedeep_sound_w )
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static data8_t protection_command, protection_data;
+static UINT8 protection_command, protection_data;
 static int protection_index, protection_irq;
 static int rombank;
 

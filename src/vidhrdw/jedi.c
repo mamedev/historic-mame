@@ -21,7 +21,7 @@ static UINT32 jedi_hscroll;
 static UINT32 jedi_alpha_bank;
 static int video_off, smooth_table;
 static UINT8 *fgdirty, *bgdirty;
-static struct mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
+static mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
 
 
 
@@ -380,7 +380,7 @@ VIDEO_UPDATE( jedi )
 		int x = spriteram[offs + 0x100] + ((spriteram[offs + 0x40] & 0x01) << 8) - 2;
 		int y = 240 - spriteram[offs + 0x80] + 1;
 		int tall = spriteram[offs + 0x40] & 0x08;
-		struct rectangle bounds;
+		rectangle bounds;
 
 		/* compute the bounds */
 		bounds.min_x = x;

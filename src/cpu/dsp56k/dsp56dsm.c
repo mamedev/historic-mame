@@ -41,34 +41,34 @@ void AppendDXMDR(char *buffer, UINT16 op) ;
 
 // Helper functions
 #define BITS(CUR,MASK) (Dsp56kOpMask(CUR,MASK))
-UINT16 Dsp56kOpMask(UINT16 op, UINT16 mask) ;
+static UINT16 Dsp56kOpMask(UINT16 op, UINT16 mask) ;
 
 
 enum bbbType  { BBB_UPPER, BBB_MIDDLE, BBB_LOWER } ;
 
 // Table decoder functions...
 int  DecodeBBBTable  (UINT16 BBB             ) ;
-void DecodeccccTable (UINT16 cccc,           char *mnemonic) ;
-void DecodeDDDDDTable(UINT16 DDDDD,          char *SD) ;
-void DecodeDDTable   (UINT16 DD,             char *SD) ;
+static void DecodeccccTable (UINT16 cccc,           char *mnemonic) ;
+static void DecodeDDDDDTable(UINT16 DDDDD,          char *SD) ;
+static void DecodeDDTable   (UINT16 DD,             char *SD) ;
 void DecodeDDFTable  (UINT16 DD,   UINT16 F, char *S, char *D) ;
 void DecodeEETable   (UINT16 EE,             char *D) ;
-void DecodeFTable    (UINT16 F,              char *SD) ;
-void Decodeh0hFTable (UINT16 h0h,  UINT16 F, char *S, char *D) ;
-void DecodeHHTable   (UINT16 HH,             char *SD) ;
-void DecodeHHHTable  (UINT16 HHH,            char *SD) ;
-void DecodeIIIITable (UINT16 IIII,           char *S, char *D) ;
-void DecodeJJJFTable (UINT16 JJJ,  UINT16 F, char *S, char *D) ;
-void DecodeJJFTable  (UINT16 JJ,   UINT16 F, char *S, char *D) ;
+static void DecodeFTable    (UINT16 F,              char *SD) ;
+static void Decodeh0hFTable (UINT16 h0h,  UINT16 F, char *S, char *D) ;
+static void DecodeHHTable   (UINT16 HH,             char *SD) ;
+static void DecodeHHHTable  (UINT16 HHH,            char *SD) ;
+static void DecodeIIIITable (UINT16 IIII,           char *S, char *D) ;
+static void DecodeJJJFTable (UINT16 JJJ,  UINT16 F, char *S, char *D) ;
+static void DecodeJJFTable  (UINT16 JJ,   UINT16 F, char *S, char *D) ;
 void DecodeJFTable   (UINT16 J,    UINT16 F, char *S, char *D) ;
 void DecodekTable    (UINT16 k,              char *Dnot) ;
 void DecodekSignTable(UINT16 k,              char *plusMinus) ;
 void DecodeKKKTable  (UINT16 KKK,            char *D1, char *D2) ;
 int  DecodeNNTable   (UINT16 NN) ;
 void DecodeQQFTable  (UINT16 QQ,   UINT16 F, char *S1, char *S2, char *D) ;
-void DecodeQQFTableSp(UINT16 QQ,   UINT16 F, char *S1, char *S2, char *D) ;
+static void DecodeQQFTableSp(UINT16 QQ,   UINT16 F, char *S1, char *S2, char *D) ;
 void DecodeQQQFTable (UINT16 QQQ,  UINT16 F, char *S1, char *S2, char *D) ;
-int  DecodeRRTable   (UINT16 RR) ;
+static int  DecodeRRTable   (UINT16 RR) ;
 void DecodesTable    (UINT16 s,              char *arithmetic) ;
 void DecodessTable   (UINT16 ss,             char *arithmetic) ;
 void DecodeuuuuFTable(UINT16 uuuu, UINT16 F, char *arg, char *S, char *D) ;
@@ -82,12 +82,12 @@ void AssembleeaFromtTable (UINT16 t,  UINT16 val,     char *ea) ;
 void AssembleeaFromqTable (UINT16 q,  int n,          char *ea) ;
 void AssembleeaFromzTable (UINT16 z,  int n,          char *ea) ;
 
-void AssembleDFromPTable(UINT16 P, UINT16 ppppp, char *D) ;
+static void AssembleDFromPTable(UINT16 P, UINT16 ppppp, char *D) ;
 void AssembleArgumentsFromWTable(UINT16 W, char *args, char ma, char *SD, char *ea) ;
 void AssembleRegFromWTable(UINT16 W, char *args, char ma, char *SD, UINT8 xx) ;
 
-void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea) ;
-void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea) ;
+static void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea) ;
+static void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea) ;
 
 // Main disassembly function
 unsigned dasm_dsp56k(char *buffer, unsigned pc)
@@ -1455,7 +1455,7 @@ int DecodeBBBTable(UINT16 BBB)
 	return BBB_LOWER ;                          // Not really safe...
 }
 
-void DecodeccccTable(UINT16 cccc, char *mnemonic)
+static void DecodeccccTable(UINT16 cccc, char *mnemonic)
 {
 	switch (cccc)
 	{
@@ -1478,7 +1478,7 @@ void DecodeccccTable(UINT16 cccc, char *mnemonic)
 	}
 }
 
-void DecodeDDDDDTable(UINT16 DDDDD, char *SD)
+static void DecodeDDDDDTable(UINT16 DDDDD, char *SD)
 {
 	switch(DDDDD)
 	{
@@ -1518,7 +1518,7 @@ void DecodeDDDDDTable(UINT16 DDDDD, char *SD)
 	}
 }
 
-void DecodeDDTable(UINT16 DD, char *SD)
+static void DecodeDDTable(UINT16 DD, char *SD)
 {
 	switch (DD)
 	{
@@ -1556,7 +1556,7 @@ void DecodeEETable(UINT16 EE, char *D)
 	}
 }
 
-void DecodeFTable(UINT16 F, char *SD)
+static void DecodeFTable(UINT16 F, char *SD)
 {
 	switch(F)
 	{
@@ -1565,7 +1565,7 @@ void DecodeFTable(UINT16 F, char *SD)
 	}
 }
 
-void Decodeh0hFTable(UINT16 h0h, UINT16 F, char *S, char *D)
+static void Decodeh0hFTable(UINT16 h0h, UINT16 F, char *S, char *D)
 {
 	UINT16 switchVal = (h0h << 1) | F ;
 
@@ -1582,7 +1582,7 @@ void Decodeh0hFTable(UINT16 h0h, UINT16 F, char *S, char *D)
 	}
 }
 
-void DecodeHHTable(UINT16 HH, char *SD)
+static void DecodeHHTable(UINT16 HH, char *SD)
 {
 	switch(HH)
 	{
@@ -1593,7 +1593,7 @@ void DecodeHHTable(UINT16 HH, char *SD)
 	}
 }
 
-void DecodeHHHTable(UINT16 HHH, char *SD)
+static void DecodeHHHTable(UINT16 HHH, char *SD)
 {
 	switch(HHH)
 	{
@@ -1609,7 +1609,7 @@ void DecodeHHHTable(UINT16 HHH, char *SD)
 }
 
 // I don't know if this is ever used?
-void DecodeIIIITable(UINT16 IIII, char *S, char *D)
+static void DecodeIIIITable(UINT16 IIII, char *S, char *D)
 {
 	switch(IIII)
 	{
@@ -1630,7 +1630,7 @@ void DecodeIIIITable(UINT16 IIII, char *S, char *D)
 	}
 }
 
-void DecodeJJJFTable(UINT16 JJJ, UINT16 F, char *S, char *D)
+static void DecodeJJJFTable(UINT16 JJJ, UINT16 F, char *S, char *D)
 {
 	UINT16 switchVal = (JJJ << 1) | F ;
 
@@ -1653,7 +1653,7 @@ void DecodeJJJFTable(UINT16 JJJ, UINT16 F, char *S, char *D)
 	}
 }
 
-void DecodeJJFTable(UINT16 JJ, UINT16 F, char *S, char *D)
+static void DecodeJJFTable(UINT16 JJ, UINT16 F, char *S, char *D)
 {
 	UINT16 switchVal = (JJ << 1) | F ;
 
@@ -1738,7 +1738,7 @@ void DecodeQQFTable(UINT16 QQ, UINT16 F, char *S1, char *S2, char *D)
 	}
 }
 
-void DecodeQQFTableSp(UINT16 QQ, UINT16 F, char *S1, char *S2, char *D)
+static void DecodeQQFTableSp(UINT16 QQ, UINT16 F, char *S1, char *S2, char *D)
 {
 	UINT16 switchVal = (QQ << 1) | F ;
 
@@ -1780,7 +1780,7 @@ void DecodeQQQFTable(UINT16 QQQ, UINT16 F, char *S1, char *S2, char *D)
 	}
 }
 
-int DecodeRRTable(UINT16 RR)
+static int DecodeRRTable(UINT16 RR)
 {
 	return RR ;
 }
@@ -1900,7 +1900,7 @@ void AssembleeaFromzTable(UINT16 z, int n, char *ea)
 	}
 }
 
-void AssembleDFromPTable(UINT16 P, UINT16 ppppp, char *D)
+static void AssembleDFromPTable(UINT16 P, UINT16 ppppp, char *D)
 {
 	char fullAddy[128] ;		// Convert Short Absolute Address to full 16-bit
 
@@ -1932,7 +1932,7 @@ void AssembleRegFromWTable(UINT16 W, char *args, char ma, char *SD, UINT8 xx)
 	}
 }
 
-void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea)
+static void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea)
 {
 	UINT16 fullAddy = 0xffe0 ;
 	fullAddy |= pp ;
@@ -1940,7 +1940,7 @@ void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea)
 	sprintf(ea, "%.04x", fullAddy) ;
 }
 
-void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea)
+static void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea)
 {
 	UINT16 fullAddy = srs ;
 	if (fullAddy & 0x0020) fullAddy |= 0xffc0 ;
@@ -1954,7 +1954,7 @@ void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea)
 // HELPER FUNCTIONS //
 //////////////////////
 
-UINT16 Dsp56kOpMask(UINT16 cur, UINT16 mask)
+static UINT16 Dsp56kOpMask(UINT16 cur, UINT16 mask)
 {
 	int i ;
 

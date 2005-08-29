@@ -81,22 +81,22 @@ In other words,the first three types uses the offset and not the color allocated
 
 #include "driver.h"
 
-data32_t* stv_vdp2_regs;
-data32_t* stv_vdp2_vram;
+UINT32* stv_vdp2_regs;
+UINT32* stv_vdp2_vram;
 /* this won't be used in the end .. */
-data8_t*  stv_vdp2_vram_dirty_8x8x4;
-data8_t*  stv_vdp2_vram_dirty_8x8x8;
+UINT8*  stv_vdp2_vram_dirty_8x8x4;
+UINT8*  stv_vdp2_vram_dirty_8x8x8;
 
 static int stv_vdp2_render_rbg0;
 
-data32_t* stv_vdp2_cram;
-extern void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+UINT32* stv_vdp2_cram;
+extern void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect);
 extern int stv_vdp1_start ( void );
 static void stv_vdp2_dynamic_res_change(void);
 static void stv_vdp2_fade_effects(void);
 static void refresh_palette_data(void);
 static int stv_vdp2_window_process(int x,int y);
-static struct mame_bitmap *stv_vdp2_roz_bitmap;
+static mame_bitmap *stv_vdp2_roz_bitmap;
 
 #ifdef MAME_DEBUG
 #define LOG_VDP2 1
@@ -2266,12 +2266,12 @@ static UINT8 stv_vdp2_check_vram_cycle_pattern_registers(
 	return access_command_ok == 3 ? 1 : 0;
 }
 
-static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+static void stv_vdp2_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
+		const rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
 		int sprite_screen_width, int sprite_screen_height)
 {
-	struct rectangle myclip;
+	rectangle myclip;
 
 	if (!scalex || !scaley) return;
 
@@ -2506,11 +2506,11 @@ static void stv_vdp2_compute_color_offset_RGB555( int *r, int *g, int *b, int co
 
 }
 
-static void stv_vdp2_drawgfx_rgb555( struct mame_bitmap *dest_bmp, unsigned int code, int flipx, int flipy,
-									 int sx, int sy, const struct rectangle *clip, int transparency)
+static void stv_vdp2_drawgfx_rgb555( mame_bitmap *dest_bmp, unsigned int code, int flipx, int flipy,
+									 int sx, int sy, const rectangle *clip, int transparency)
 {
-	struct rectangle myclip;
-	data8_t* gfxdata;
+	rectangle myclip;
+	UINT8* gfxdata;
 	int t_pen;
 	int sprite_screen_width, sprite_screen_height;
 
@@ -2632,7 +2632,7 @@ static void stv_vdp2_drawgfx_rgb555( struct mame_bitmap *dest_bmp, unsigned int 
 
 }
 
-static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 //  if(LOG_VDP2) logerror ("bitmap enable %02x size %08x depth %08x\n", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
 //  ui_popup ("bitmap enable %02x size %08x depth %08x number %02x", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
@@ -2642,10 +2642,10 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	int ysize = 0;
 	int xlinesize = 0, xpixelsize = 0;
 	int xcnt,ycnt;
-	data8_t* gfxdata = memory_region(REGION_GFX1);
+	UINT8* gfxdata = memory_region(REGION_GFX1);
 	static UINT16 *destline;
 	UINT16 pal_color_offset = 0;
-	data8_t* gfxdatalow, *gfxdatahigh;
+	UINT8* gfxdatalow, *gfxdatahigh;
 	int yoffs = 0;
 
 	/*Window effect 1=no draw*/
@@ -2914,7 +2914,7 @@ map is always enabled?
 
 */
 
-static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/* hopefully this is easier to follow than it is efficient .. */
 
@@ -3235,14 +3235,14 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 				tilecode &=0x3fff;
 				if (stv2_current_tilemap.tile_size==1)
 				{ /* we're treating 16x16 tiles as 4 8x8's atm */
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode+1] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+1] = 0; decodechar(Machine->gfx[2], tilecode+1,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode+2] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+2] = 0; decodechar(Machine->gfx[2], tilecode+2,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode+3] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+3] = 0; decodechar(Machine->gfx[2], tilecode+3,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode+1] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+1] = 0; decodechar(Machine->gfx[2], tilecode+1,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode+2] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+2] = 0; decodechar(Machine->gfx[2], tilecode+2,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode+3] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+3] = 0; decodechar(Machine->gfx[2], tilecode+3,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
 				}
 				else
 				{
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
 				}
 
 			}
@@ -3254,14 +3254,14 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 				tilecode &=0x7fff;
 				if (stv2_current_tilemap.tile_size==1)
 				{ /* we're treating 16x16 tiles as 4 8x8's atm */
-					if (stv_vdp2_vram_dirty_8x8x4[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode] = 0; decodechar(Machine->gfx[0], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x4[tilecode+1] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode+1] = 0; decodechar(Machine->gfx[0], tilecode+1,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x4[tilecode+2] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode+2] = 0; decodechar(Machine->gfx[0], tilecode+2,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x4[tilecode+3] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode+3] = 0; decodechar(Machine->gfx[0], tilecode+3,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x4[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode] = 0; decodechar(Machine->gfx[0], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x4[tilecode+1] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode+1] = 0; decodechar(Machine->gfx[0], tilecode+1,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x4[tilecode+2] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode+2] = 0; decodechar(Machine->gfx[0], tilecode+2,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x4[tilecode+3] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode+3] = 0; decodechar(Machine->gfx[0], tilecode+3,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
 				}
 				else
 				{
-					if (stv_vdp2_vram_dirty_8x8x4[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode] = 0; decodechar(Machine->gfx[0], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x4[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x4[tilecode] = 0; decodechar(Machine->gfx[0], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout); };
 				}
 			}
 /* TILES ARE NOW DECODED */
@@ -3390,7 +3390,7 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 }
 
 
-static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_check_tilemap(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/* the idea is here we check the tilemap capabilities / whats enabled and call an appropriate tilemap drawing routine, or
       at the very list throw up a few errors if the tilemaps want to do something we don't support yet */
@@ -3417,9 +3417,9 @@ static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rect
 	}
 }
 
-static void stv_vdp2_copy_roz_bitmap(struct mame_bitmap *bitmap,
-									 struct mame_bitmap *roz_bitmap,
-									 const struct rectangle *cliprect,
+static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
+									 mame_bitmap *roz_bitmap,
+									 const rectangle *cliprect,
 									 int iRP,
 									 int planesizex,
 									 int planesizey,
@@ -3762,7 +3762,7 @@ static void stv_vdp2_copy_roz_bitmap(struct mame_bitmap *bitmap,
 	}
 }
 
-static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_NBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
        Colours           : 16, 256, 2048, 32768, 16770000
@@ -3845,7 +3845,7 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
-static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_NBG1(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
        Colours           : 16, 256, 2048, 32768
@@ -3928,7 +3928,7 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
-static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_NBG2(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
        NBG2 is the first of the 2 more basic tilemaps, it has exactly the same capabilities as NBG3
@@ -4021,7 +4021,7 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
-static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_NBG3(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
        NBG3 is the second of the 2 more basic tilemaps, it has exactly the same capabilities as NBG2
@@ -4115,7 +4115,7 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 }
 
 
-static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
        Colours           : 16, 256, 2048, 32768, 16770000
@@ -4131,7 +4131,7 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
        Column Scroll     : Yes
        Mosaic            : Yes
     */
-	struct rectangle roz_clip_rect;
+	rectangle roz_clip_rect;
 	int planesizex = 0, planesizey = 0, planerenderedsizex = 0, planerenderedsizey = 0;
 	UINT8 colour_calculation_enabled;
 
@@ -4328,10 +4328,10 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 }
 
-static void stv_vdp2_draw_back(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void stv_vdp2_draw_back(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int xcnt,ycnt;
-	data8_t* gfxdata = memory_region(REGION_GFX1);
+	UINT8* gfxdata = memory_region(REGION_GFX1);
 	static UINT16 *destline;
 
 	if(!(STV_VDP2_BDCLMD & 1))
@@ -4366,7 +4366,7 @@ static void stv_vdp2_draw_back(struct mame_bitmap *bitmap, const struct rectangl
 
 WRITE32_HANDLER ( stv_vdp2_vram_w )
 {
-	data8_t *stv_vdp2_vram_decode = memory_region(REGION_GFX1);
+	UINT8 *stv_vdp2_vram_decode = memory_region(REGION_GFX1);
 
 	COMBINE_DATA(&stv_vdp2_vram[offset]);
 
@@ -4854,7 +4854,7 @@ extern int		 stv_framebuffer_height;
 extern int		 stv_framebuffer_double_interlace;
 extern int       stv_framebuffer_mode;
 
-void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 pri)
+void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 pri)
 {
 	int x,y,r,g,b;
 	int i;
@@ -5066,7 +5066,7 @@ void stv_vdp2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cl
 	}
 }
 
-extern data32_t *stv_vdp1_vram;
+extern UINT32 *stv_vdp1_vram;
 
 VIDEO_UPDATE( stv_vdp2 )
 {
@@ -5151,41 +5151,41 @@ VIDEO_UPDATE( stv_vdp2 )
 
 		for (tilecode = 0;tilecode<0x8000;tilecode++)
 		{
-			decodechar(Machine->gfx[0], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout);
+			decodechar(Machine->gfx[0], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[0].gfxlayout);
 		}
 
 		for (tilecode = 0;tilecode<0x2000;tilecode++)
 		{
-			decodechar(Machine->gfx[1], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[1].gfxlayout);
+			decodechar(Machine->gfx[1], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[1].gfxlayout);
 		}
 
 		for (tilecode = 0;tilecode<0x4000;tilecode++)
 		{
-			decodechar(Machine->gfx[2], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout);
+			decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout);
 		}
 
 		for (tilecode = 0;tilecode<0x1000;tilecode++)
 		{
-			decodechar(Machine->gfx[3], tilecode,  (data8_t*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[3].gfxlayout);
+			decodechar(Machine->gfx[3], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[3].gfxlayout);
 		}
 
 		/* vdp 1 ... doesn't have to be tile based */
 
 		for (tilecode = 0;tilecode<0x8000;tilecode++)
 		{
-			decodechar(Machine->gfx[4], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[4].gfxlayout);
+			decodechar(Machine->gfx[4], tilecode,  (UINT8*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[4].gfxlayout);
 		}
 		for (tilecode = 0;tilecode<0x2000;tilecode++)
 		{
-			decodechar(Machine->gfx[5], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[5].gfxlayout);
+			decodechar(Machine->gfx[5], tilecode,  (UINT8*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[5].gfxlayout);
 		}
 		for (tilecode = 0;tilecode<0x4000;tilecode++)
 		{
-			decodechar(Machine->gfx[6], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[6].gfxlayout);
+			decodechar(Machine->gfx[6], tilecode,  (UINT8*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[6].gfxlayout);
 		}
 		for (tilecode = 0;tilecode<0x1000;tilecode++)
 		{
-			decodechar(Machine->gfx[7], tilecode,  (data8_t*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[7].gfxlayout);
+			decodechar(Machine->gfx[7], tilecode,  (UINT8*)memory_region(REGION_GFX2), Machine->drv->gfxdecodeinfo[7].gfxlayout);
 		}
 	}
 

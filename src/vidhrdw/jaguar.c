@@ -215,7 +215,7 @@ static pen_t *pen_table;
 
 /* from jagobj.c */
 static int jagobj_init(void);
-static void process_object_list(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+static void process_object_list(mame_bitmap *bitmap, const rectangle *cliprect);
 
 /* from jagblit.c */
 static void generic_blitter(UINT32 command, UINT32 a1flags, UINT32 a2flags);

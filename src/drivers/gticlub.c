@@ -9,11 +9,11 @@
 #include "cpu/sharc/sharc.h"
 #include "machine/konppc.h"
 
-static data8_t led_reg0 = 0x7f, led_reg1 = 0x7f;
+static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 int K001604_vh_start(void);
 void K001604_tile_update(void);
-void K001604_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+void K001604_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect);
 READ32_HANDLER(K001604_tile_r);
 READ32_HANDLER(K001604_char_r);
 WRITE32_HANDLER(K001604_tile_w);
@@ -201,11 +201,11 @@ static WRITE32_HANDLER( sysreg_w )
 		return;
 }
 
-static data8_t sndto68k[16], sndtoppc[16];	/* read/write split mapping */
+static UINT8 sndto68k[16], sndtoppc[16];	/* read/write split mapping */
 
 static READ32_HANDLER( ppc_sound_r )
 {
-	data32_t reg, w[4], rv = 0;
+	UINT32 reg, w[4], rv = 0;
 
 	reg = offset * 4;
 

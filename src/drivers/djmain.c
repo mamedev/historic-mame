@@ -46,22 +46,22 @@
 #include "vidhrdw/konamiic.h"
 
 
-extern data32_t *djmain_obj_ram;
+extern UINT32 *djmain_obj_ram;
 
 VIDEO_UPDATE( djmain );
 VIDEO_START( djmain );
 
 
 static int sndram_bank;
-static data8_t *sndram;
+static UINT8 *sndram;
 
 static int turntable_select;
-static data8_t turntable_last_pos[2];
-static data16_t turntable_pos[2];
+static UINT8 turntable_last_pos[2];
+static UINT16 turntable_pos[2];
 
 static int pending_vb_int;
-static data16_t v_ctrl;
-static data32_t obj_regs[0xa0/4];
+static UINT16 v_ctrl;
+static UINT32 obj_regs[0xa0/4];
 
 #define DISABLE_VB_INT	(!(v_ctrl & 0x8000))
 
@@ -105,7 +105,7 @@ static WRITE32_HANDLER( sndram_bank_w )
 
 static READ32_HANDLER( sndram_r )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 
 	if ((mem_mask & 0xff000000) == 0)
 		data |= sndram[offset * 4] << 24;
@@ -142,7 +142,7 @@ static WRITE32_HANDLER( sndram_w )
 
 static READ16_HANDLER( dual539_16_r )
 {
-	data16_t ret = 0;
+	UINT16 ret = 0;
 
 	if (ACCESSING_LSB16)
 		ret |= K054539_1_r(offset);
@@ -162,7 +162,7 @@ static WRITE16_HANDLER( dual539_16_w )
 
 static READ32_HANDLER( dual539_r )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 
 	if (~mem_mask & 0xffff0000)
 		data |= dual539_16_r(offset * 2, mem_mask >> 16) << 16;
@@ -200,7 +200,7 @@ static WRITE32_HANDLER( obj_ctrl_w )
 
 static READ32_HANDLER( obj_rom_r )
 {
-	data8_t *mem8 = memory_region(REGION_GFX1);
+	UINT8 *mem8 = memory_region(REGION_GFX1);
 	int bank = obj_regs[0x28/4] >> 16;
 
 	offset += bank * 0x200;
@@ -236,7 +236,7 @@ static WRITE32_HANDLER( v_ctrl_w )
 
 static READ32_HANDLER( v_rom_r )
 {
-	data8_t *mem8 = memory_region(REGION_GFX2);
+	UINT8 *mem8 = memory_region(REGION_GFX2);
 	int bank = K056832_word_r(0x34/2, 0xffff);
 
 	offset *= 2;
@@ -257,7 +257,7 @@ static READ32_HANDLER( v_rom_r )
 
 static READ32_HANDLER( inp1_r )
 {
-	data32_t result = (readinputport(5)<<24) | (readinputport(2)<<16) | (readinputport(1)<<8) | readinputport(0);
+	UINT32 result = (readinputport(5)<<24) | (readinputport(2)<<16) | (readinputport(1)<<8) | readinputport(0);
 
 	return result;
 }
@@ -269,11 +269,11 @@ static READ32_HANDLER( inp2_r )
 
 static READ32_HANDLER( turntable_r )
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 
 	if (!(mem_mask & 0x0000ff00))
 	{
-		data8_t pos;
+		UINT8 pos;
 		int delta;
 
 		pos = readinputport(6 + turntable_select);

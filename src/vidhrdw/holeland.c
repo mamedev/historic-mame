@@ -116,7 +116,7 @@ WRITE8_HANDLER( holeland_flipscreen_w )
 }
 
 
-static void holeland_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void holeland_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
@@ -155,7 +155,7 @@ static void holeland_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 	}
 }
 
-static void crzrally_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void crzrally_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 

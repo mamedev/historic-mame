@@ -64,7 +64,7 @@ VIDEO_START( orbit )
 }
 
 
-static void orbit_draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void orbit_draw_sprites(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	const UINT8* p = orbit_sprite_ram;
 

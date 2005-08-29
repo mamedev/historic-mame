@@ -94,7 +94,7 @@ VIDEO_START( tankbatt )
 	return 0;
 }
 
-static void tankbatt_draw_bullets( struct mame_bitmap *bitmap )
+static void tankbatt_draw_bullets( mame_bitmap *bitmap )
 {
 	int offs;
 

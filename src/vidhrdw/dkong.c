@@ -238,7 +238,7 @@ WRITE8_HANDLER( dkong_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, unsigned int mask_bank, unsigned int shift_bits)
+static void draw_sprites(mame_bitmap *bitmap, unsigned int mask_bank, unsigned int shift_bits)
 {
 	int offs;
 
@@ -299,7 +299,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, unsigned int mask_bank, uns
 	}
 }
 
-static void draw_grid(struct mame_bitmap *bitmap)
+static void draw_grid(mame_bitmap *bitmap)
 {
 	const UINT8 *table = memory_region(REGION_GFX3);
 	int x,y,counter;

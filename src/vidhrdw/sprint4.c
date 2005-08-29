@@ -11,7 +11,7 @@ UINT8* sprint4_video_ram;
 int sprint4_collision[4];
 
 static tilemap* bg_tilemap;
-static struct mame_bitmap* helper;
+static mame_bitmap* helper;
 
 
 static void get_tile_info(int tile_index)
@@ -100,7 +100,7 @@ VIDEO_EOF( sprint4 )
 
 	for (i = 0; i < 4; i++)
 	{
-		struct rectangle rect;
+		rectangle rect;
 
 		int x;
 		int y;

@@ -1,11 +1,11 @@
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
-data16_t* pcktgaldb_fgram;
-data16_t* pcktgaldb_sprites;
+UINT16* pcktgaldb_fgram;
+UINT16* pcktgaldb_sprites;
 
 
-static void pktgaldx_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void pktgaldx_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 	int flipscreen=!flip_screen;

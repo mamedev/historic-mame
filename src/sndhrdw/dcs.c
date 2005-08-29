@@ -184,13 +184,13 @@ static INT8 dcs_cpunum;
 
 static struct dcs_state dcs;
 
-static data16_t *dcs_sram_bank0;
-static data16_t *dcs_sram_bank1;
+static UINT16 *dcs_sram_bank0;
+static UINT16 *dcs_sram_bank1;
 
-static data16_t *dcs_polling_base;
+static UINT16 *dcs_polling_base;
 
-static data16_t *dcs_data_ram;
-static data32_t *dcs_program_ram;
+static UINT16 *dcs_data_ram;
+static UINT32 *dcs_program_ram;
 
 static size_t bank20_size;
 static size_t bootbank_stride;
@@ -236,7 +236,7 @@ static void sound_tx_callback(int port, INT32 data);
 static READ16_HANDLER( dcs_polling_r );
 
 static void transfer_watchdog_callback(int param);
-static int preprocess_write(data16_t data);
+static int preprocess_write(UINT16 data);
 
 
 
@@ -1129,7 +1129,7 @@ static void s1_ack_callback1(int data)
 }
 
 
-static int preprocess_stage_1(data16_t data)
+static int preprocess_stage_1(UINT16 data)
 {
 	switch (transfer_state)
 	{
@@ -1249,7 +1249,7 @@ static void s2_ack_callback(int data)
 }
 
 
-static int preprocess_stage_2(data16_t data)
+static int preprocess_stage_2(UINT16 data)
 {
 	switch (transfer_state)
 	{
@@ -1340,7 +1340,7 @@ static int preprocess_stage_2(data16_t data)
 }
 
 
-static int preprocess_write(data16_t data)
+static int preprocess_write(UINT16 data)
 {
 	int result;
 

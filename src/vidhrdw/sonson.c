@@ -145,7 +145,7 @@ VIDEO_START( sonson )
 	return 0;
 }
 
-static void sonson_draw_sprites( struct mame_bitmap *bitmap )
+static void sonson_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

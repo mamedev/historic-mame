@@ -19,7 +19,7 @@ VIDEO_UPDATE( findout )
 }
 
 
-static data8_t drawctrl[3];
+static UINT8 drawctrl[3];
 
 static WRITE8_HANDLER( findout_drawctrl_w )
 {
@@ -155,7 +155,7 @@ static WRITE8_HANDLER( signature_w )
 	if (data == 0) signature_pos = 0;
 	else
 	{
-		static data8_t signature[8] = { 0xff, 0x01, 0xfd, 0x05, 0xf5, 0x15, 0xd5, 0x55 };
+		static UINT8 signature[8] = { 0xff, 0x01, 0xfd, 0x05, 0xf5, 0x15, 0xd5, 0x55 };
 
 		signature_answer = signature[signature_pos++];
 

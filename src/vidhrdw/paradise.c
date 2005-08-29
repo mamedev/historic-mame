@@ -30,12 +30,12 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-data8_t *paradise_vram_0,*paradise_vram_1,*paradise_vram_2;
+UINT8 *paradise_vram_0,*paradise_vram_1,*paradise_vram_2;
 int paradise_sprite_inc;
 
 /* Variables only used here */
 
-static data8_t paradise_palbank, paradise_priority;
+static UINT8 paradise_palbank, paradise_priority;
 
 WRITE8_HANDLER( paradise_flipscreen_w )
 {
@@ -202,7 +202,7 @@ WRITE8_HANDLER( paradise_priority_w )
 	paradise_priority = data;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	for (i = 0; i < spriteram_size ; i += paradise_sprite_inc)

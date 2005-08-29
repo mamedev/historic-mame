@@ -215,7 +215,7 @@ MACHINE_DRIVER_END
 
 DRIVER_INIT( aleck64 )
 {
-	data8_t *ROM = memory_region(REGION_USER1);
+	UINT8 *ROM = memory_region(REGION_USER1);
 	memory_set_bankptr(1,&ROM[0x000000]);
 }
 

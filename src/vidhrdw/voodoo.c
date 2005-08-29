@@ -140,8 +140,8 @@ struct fifo_entry
 {
 	write32_handler writefunc;
 	offs_t offset;
-	data32_t data;
-	data32_t mem_mask;
+	UINT32 data;
+	UINT32 mem_mask;
 };
 
 /* a single triangle vertex */
@@ -180,7 +180,7 @@ static UINT16 *pen_lookup;
 static UINT16 *lod_lookup;
 
 /* register pointers */
-static data32_t voodoo_regs[0x400];
+static UINT32 voodoo_regs[0x400];
 static float *fvoodoo_regs = (float *)voodoo_regs;
 
 /* color DAC fake registers */
@@ -190,7 +190,7 @@ static UINT8 dac_read_result;
 /* clut table */
 static UINT32 clut_table[33];
 
-static data32_t init_enable;
+static UINT32 init_enable;
 
 /* texel tables */
 static UINT32 *texel_lookup[MAX_TMUS][16];
@@ -220,9 +220,9 @@ static UINT8 memory_fifo_texture;
 static UINT8 memory_fifo_in_process;
 
 /* fbzMode variables */
-static struct rectangle *fbz_cliprect;
-static struct rectangle fbz_noclip;
-static struct rectangle fbz_clip;
+static rectangle *fbz_cliprect;
+static rectangle fbz_noclip;
+static rectangle fbz_clip;
 static UINT8 fbz_dithering;
 static UINT8 fbz_rgb_write;
 static UINT8 fbz_depth_write;
@@ -362,7 +362,7 @@ static void reset_buffers(void);
 static void update_memory_fifo(void);
 static void swap_buffers(void);
 static void vblank_callback(int scanline);
-static void cmdfifo_process_pending(data32_t old_depth);
+static void cmdfifo_process_pending(UINT32 old_depth);
 
 /* from vooddraw.h */
 static void fastfill(void);
@@ -985,7 +985,7 @@ VIDEO_UPDATE( voodoo )
  *
  *************************************/
 
-INLINE void add_to_memory_fifo(write32_handler handler, offs_t offset, data32_t data, data32_t mem_mask)
+INLINE void add_to_memory_fifo(write32_handler handler, offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	struct fifo_entry *entry;
 
@@ -1198,7 +1198,7 @@ static void vblank_callback(int scanline)
  *
  *************************************/
 
-void voodoo_set_init_enable(data32_t newval)
+void voodoo_set_init_enable(UINT32 newval)
 {
 	init_enable = newval;
 }
@@ -1433,7 +1433,7 @@ WRITE32_HANDLER( voodoo_textureram_w )
 
 WRITE32_HANDLER( voodoo_regs_w )
 {
-	void (*handler)(int, offs_t, data32_t);
+	void (*handler)(int, offs_t, UINT32);
 	offs_t regnum;
 	int chips;
 
@@ -1491,7 +1491,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 
 READ32_HANDLER( voodoo_regs_r )
 {
-	data32_t result;
+	UINT32 result;
 
 	if ((offset & 0x800c0) == 0x80000 && (voodoo_regs[fbiInit3] & 1))
 		offset = register_alias_map[offset & 0x3f];
@@ -1591,7 +1591,7 @@ READ32_HANDLER( voodoo_regs_r )
 #pragma mark VOODOO 2 COMMAND FIFO
 #endif
 
-static void voodoo2_handle_register_w(offs_t offset, data32_t data);
+static void voodoo2_handle_register_w(offs_t offset, UINT32 data);
 
 
 /*************************************
@@ -1842,7 +1842,7 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 }
 
 
-static void cmdfifo_process_pending(data32_t old_depth)
+static void cmdfifo_process_pending(UINT32 old_depth)
 {
 	/* if we have data, process it */
 	if (voodoo_regs[cmdFifoDepth])
@@ -1876,9 +1876,9 @@ static void cmdfifo_process_pending(data32_t old_depth)
  *
  *************************************/
 
-static void voodoo2_handle_register_w(offs_t offset, data32_t data)
+static void voodoo2_handle_register_w(offs_t offset, UINT32 data)
 {
-	void (*handler)(int, offs_t, data32_t);
+	void (*handler)(int, offs_t, UINT32);
 	offs_t regnum;
 	int chips;
 
@@ -1920,7 +1920,7 @@ static void voodoo2_handle_register_w(offs_t offset, data32_t data)
 
 WRITE32_HANDLER( voodoo2_regs_w )
 {
-	data32_t old_depth;
+	UINT32 old_depth;
 	offs_t addr;
 
 	/* if we're blocked on a swap, all writes must go into the FIFO */

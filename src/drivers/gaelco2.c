@@ -22,9 +22,9 @@
 #include "cpu/m68000/m68000.h"
 #include "sound/gaelco.h"
 
-extern data16_t *gaelco_sndregs;
-extern data16_t *gaelco2_vregs;
-extern data16_t *snowboar_protection;
+extern UINT16 *gaelco_sndregs;
+extern UINT16 *gaelco2_vregs;
+extern UINT16 *snowboar_protection;
 
 /* comment this line to display 2 monitors for the dual monitor games */
 //#define ONE_MONITOR

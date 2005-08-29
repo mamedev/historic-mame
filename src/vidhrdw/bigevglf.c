@@ -18,7 +18,7 @@ static UINT32 plane_visible = 0;
 static UINT8 *vidram;
 
 
-static struct mame_bitmap *tmp_bitmap[4];
+static mame_bitmap *tmp_bitmap[4];
 
 WRITE8_HANDLER(beg_palette_w)
 {
@@ -69,7 +69,7 @@ VIDEO_START( bigevglf )
 	return 0;
 }
 
-void beg_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void beg_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i,j;
 	for (i = 0xc0-4; i >= 0; i-=4)

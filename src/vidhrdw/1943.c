@@ -210,7 +210,7 @@ VIDEO_START( 1943 )
 	return 0;
 }
 
-static void c1943_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void c1943_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	int offs;
 

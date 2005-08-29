@@ -42,9 +42,9 @@ static int fuuki16_raster_enable = 1; /* Enabled by default */
 
 /* Variables defined in vidhrdw: */
 
-extern data16_t *fuuki16_vram_0, *fuuki16_vram_1;
-extern data16_t *fuuki16_vram_2, *fuuki16_vram_3;
-extern data16_t *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
+extern UINT16 *fuuki16_vram_0, *fuuki16_vram_1;
+extern UINT16 *fuuki16_vram_2, *fuuki16_vram_3;
+extern UINT16 *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
 
 /* Functions defined in vidhrdw: */
 

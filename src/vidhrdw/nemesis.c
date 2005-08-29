@@ -8,15 +8,15 @@
 #include "vidhrdw/generic.h"
 #include <math.h>
 
-data16_t *nemesis_videoram1b;
-data16_t *nemesis_videoram2b;
-data16_t *nemesis_videoram1f;
-data16_t *nemesis_videoram2f;
+UINT16 *nemesis_videoram1b;
+UINT16 *nemesis_videoram2b;
+UINT16 *nemesis_videoram1f;
+UINT16 *nemesis_videoram2f;
 
-data16_t *nemesis_characterram;
+UINT16 *nemesis_characterram;
 size_t nemesis_characterram_size;
-data16_t *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
-data16_t *nemesis_yscroll1,*nemesis_yscroll2;
+UINT16 *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
+UINT16 *nemesis_yscroll1,*nemesis_yscroll2;
 
 static int spriteram_words;
 static int tilemap_flip;
@@ -227,7 +227,7 @@ READ16_HANDLER( nemesis_characterram_word_r )
 
 WRITE16_HANDLER( nemesis_characterram_word_w )
 {
-	data16_t oldword = nemesis_characterram[offset];
+	UINT16 oldword = nemesis_characterram[offset];
 	COMBINE_DATA(nemesis_characterram + offset);
 	data = nemesis_characterram[offset];
 
@@ -334,7 +334,7 @@ VIDEO_START( nemesis )
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
      *  16 bytes per sprite, in memory from 56000-56fff
@@ -630,7 +630,7 @@ VIDEO_UPDATE( nemesis )
 VIDEO_UPDATE( salamand )
 {
 	int offs;
-	struct rectangle clip;
+	rectangle clip;
 
 	update_gfx();
 

@@ -39,8 +39,8 @@ DSW1          6116
 #include "driver.h"
 #include "sound/okim6295.h"
 
-data16_t *gumbo_bg_videoram;
-data16_t *gumbo_fg_videoram;
+UINT16 *gumbo_bg_videoram;
+UINT16 *gumbo_fg_videoram;
 
 WRITE16_HANDLER( gumbo_bg_videoram_w );
 WRITE16_HANDLER( gumbo_fg_videoram_w );

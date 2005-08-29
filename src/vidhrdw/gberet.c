@@ -126,7 +126,7 @@ VIDEO_START( gberet )
 	return 0;
 }
 
-static void gberet_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void gberet_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 	UINT8 *sr;
@@ -183,7 +183,7 @@ WRITE8_HANDLER( gberetb_scroll_w )
 		tilemap_set_scrollx(bg_tilemap, offset, scroll + 64-8);
 }
 
-static void gberetb_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void gberetb_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

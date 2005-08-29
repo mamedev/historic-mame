@@ -4,14 +4,14 @@
 
 static tilemap *sslam_bg_tilemap, *sslam_tx_tilemap, *sslam_md_tilemap;
 
-extern data16_t *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
-extern data16_t *sslam_spriteram, *sslam_regs;
+extern UINT16 *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
+extern UINT16 *sslam_spriteram, *sslam_regs;
 
-static void sslam_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void sslam_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[3];
-	data16_t *source = sslam_spriteram;
-	data16_t *finish = source + 0x20000/2;
+	UINT16 *source = sslam_spriteram;
+	UINT16 *finish = source + 0x20000/2;
 
 	source += 3; // strange
 
@@ -151,7 +151,7 @@ VIDEO_UPDATE(sslam)
 	/* remove wraparound from the tilemap (used on title screen) */
 	if(sslam_regs[2]+2 > 0x8c8)
 	{
-		struct rectangle md_clip;
+		rectangle md_clip;
 		md_clip.min_x = cliprect->min_x;
 		md_clip.max_x = cliprect->max_x - (sslam_regs[2]+2 - 0x8c8);
 		md_clip.min_y = cliprect->min_y;

@@ -27,7 +27,7 @@ VIDEO_UPDATE( xmen );
 VIDEO_UPDATE( xmen6p );
 VIDEO_EOF( xmen6p );
 
-data16_t xmen_current_frame;
+UINT16 xmen_current_frame;
 
 /***************************************************************************
 
@@ -158,7 +158,7 @@ static WRITE16_HANDLER( xmen_18fa00_w )
 	}
 }
 
-static data8_t sound_curbank;
+static UINT8 sound_curbank;
 
 static void sound_reset_bank(void)
 {
@@ -273,10 +273,10 @@ static ADDRESS_MAP_START( readmem6p, ADDRESS_SPACE_PROGRAM, 16 )
 
 ADDRESS_MAP_END
 
-data16_t*xmen6p_spriteramleft;
-data16_t*xmen6p_spriteramright;
-data16_t*xmen6p_tilemapleft;
-data16_t*xmen6p_tilemapright;
+UINT16*xmen6p_spriteramleft;
+UINT16*xmen6p_spriteramright;
+UINT16*xmen6p_tilemapleft;
+UINT16*xmen6p_tilemapright;
 
 static ADDRESS_MAP_START( writemem6p, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)

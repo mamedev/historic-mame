@@ -9,9 +9,9 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *fg_tilemap, *bg_tilemap;
-static data8_t vram_bank;
-static data8_t *tryout_vram, *tryout_vram_gfx;
-data8_t *tryout_gfx_control;
+static UINT8 vram_bank;
+static UINT8 *tryout_vram, *tryout_vram_gfx;
+UINT8 *tryout_gfx_control;
 
 PALETTE_INIT( tryout )
 {
@@ -87,7 +87,7 @@ WRITE8_HANDLER( tryout_vram_w )
     gfx data and then set high from that point onwards.
 
     */
-	const data8_t bank=(vram_bank>>1)&0x7;
+	const UINT8 bank=(vram_bank>>1)&0x7;
 
 
 	if ((bank==0 || bank==2 || bank==4 || bank==6) && (offset&0x7ff)<0x400) {
@@ -191,7 +191,7 @@ VIDEO_START( tryout )
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,fx,fy,x,y,color,sprite,inc;
 
@@ -244,7 +244,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 VIDEO_UPDATE( tryout )
 {
-//  data8_t* mem=memory_region(REGION_CPU1);
+//  UINT8* mem=memory_region(REGION_CPU1);
 
 	int scrollx;
 

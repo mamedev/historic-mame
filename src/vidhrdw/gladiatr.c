@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *gladiatr_videoram, *gladiatr_colorram, *gladiatr_textram;
+UINT8 *gladiatr_videoram, *gladiatr_colorram, *gladiatr_textram;
 
 static int video_attributes;
 static int fg_scrollx, fg_scrolly, bg_scrollx, bg_scrolly;
@@ -222,7 +222,7 @@ WRITE8_HANDLER( gladiatr_video_registers_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -233,7 +233,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 			{0x0,0x1},
 			{0x2,0x3},
 		};
-		data8_t *src = &spriteram[offs + (sprite_buffer << 7)];
+		UINT8 *src = &spriteram[offs + (sprite_buffer << 7)];
 		int attributes = src[0x800];
 		int size = (attributes & 0x10) >> 4;
 		int bank = (attributes & 0x01) + ((attributes & 0x02) ? sprite_bank : 0);
@@ -280,7 +280,7 @@ VIDEO_UPDATE( ppking )
 
 	/* the fg layer just selects the upper palette bank on underlying pixels */
 	{
-		struct mame_bitmap *transparency_bitmap;
+		mame_bitmap *transparency_bitmap;
 		int sx = cliprect->min_x;
 		int sy = cliprect->min_y;
 

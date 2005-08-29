@@ -10,17 +10,17 @@ zooming might be wrong (only used on title logo?)
 
 #include "driver.h"
 
-static data16_t taotaido_sprite_character_bank_select[8];
-static data16_t taotaido_video_bank_select[8];
+static UINT16 taotaido_sprite_character_bank_select[8];
+static UINT16 taotaido_video_bank_select[8];
 static tilemap *bg_tilemap;
 
-extern data16_t *taotaido_spriteram;
-extern data16_t *taotaido_spriteram2;
-extern data16_t *taotaido_scrollram;
-extern data16_t *taotaido_bgram;
+extern UINT16 *taotaido_spriteram;
+extern UINT16 *taotaido_spriteram2;
+extern UINT16 *taotaido_scrollram;
+extern UINT16 *taotaido_bgram;
 
-static data16_t *taotaido_spriteram_old, *taotaido_spriteram_older;
-static data16_t *taotaido_spriteram2_old, *taotaido_spriteram2_older;
+static UINT16 *taotaido_spriteram_old, *taotaido_spriteram_older;
+static UINT16 *taotaido_spriteram2_old, *taotaido_spriteram2_older;
 
 /* sprite tile codes 0x4000 - 0x7fff get remapped according to the content of these registers */
 WRITE16_HANDLER( taotaido_sprite_character_bank_select_w )
@@ -34,7 +34,7 @@ WRITE16_HANDLER( taotaido_sprite_character_bank_select_w )
 /* sprites are like the other video system / psikyo games, we can merge this with aerofgt and plenty of other
    things eventually */
 
-static void taotaido_drawsprite( UINT16 spriteno, struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void taotaido_drawsprite( UINT16 spriteno, mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/*- SPR RAM Format -**
 
@@ -49,7 +49,7 @@ static void taotaido_drawsprite( UINT16 spriteno, struct mame_bitmap *bitmap, co
 
 	int x,y;
 
-	data16_t *source = &taotaido_spriteram_older[spriteno*4];
+	UINT16 *source = &taotaido_spriteram_older[spriteno*4];
 	const gfx_element *gfx = Machine->gfx[0];
 
 
@@ -118,11 +118,11 @@ static void taotaido_drawsprite( UINT16 spriteno, struct mame_bitmap *bitmap, co
 	}
 }
 
-static void taotaido_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void taotaido_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/* first part of sprite ram is the list of sprites to draw, terminated with 0x4000 */
-	data16_t *source = taotaido_spriteram_older;
-	data16_t *finish = taotaido_spriteram_older + 0x2000/2;
+	UINT16 *source = taotaido_spriteram_older;
+	UINT16 *finish = taotaido_spriteram_older + 0x2000/2;
 
 	while( source<finish )
 	{
@@ -215,7 +215,7 @@ VIDEO_UPDATE(taotaido)
 
 	/* not amazingly efficient however it should be functional for row select and linescroll */
 	int line;
-	struct rectangle clip;
+	rectangle clip;
 
 	clip.min_x = Machine->visible_area.min_x;
 	clip.max_x = Machine->visible_area.max_x;

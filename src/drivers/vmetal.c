@@ -80,11 +80,11 @@ cleanup
 #include "sound/es8712.h"
 #include "vidhrdw/generic.h"
 
-data16_t *vmetal_texttileram;
-data16_t *vmetal_mid1tileram;
-data16_t *vmetal_mid2tileram;
-data16_t *vmetal_tlookup;
-data16_t *vmetal_videoregs;
+UINT16 *vmetal_texttileram;
+UINT16 *vmetal_mid1tileram;
+UINT16 *vmetal_mid2tileram;
+UINT16 *vmetal_tlookup;
+UINT16 *vmetal_videoregs;
 
 
 static tilemap *vmetal_texttilemap;
@@ -92,16 +92,16 @@ static tilemap *vmetal_mid1tilemap;
 static tilemap *vmetal_mid2tilemap;
 
 /* vidhrdw/metro.c */
-extern data16_t *metro_videoregs;
-extern void metro_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+extern UINT16 *metro_videoregs;
+extern void metro_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect);
 WRITE16_HANDLER( metro_paletteram_w );
 
 READ16_HANDLER ( varia_crom_read )
 {
 	/* game reads the cgrom, result is 7772, verified to be correct on the real board */
 
-	data8_t *cgrom = memory_region(REGION_GFX1);
-	data16_t retdat;
+	UINT8 *cgrom = memory_region(REGION_GFX1);
+	UINT16 retdat;
 	offset = offset << 1;
 	offset |= (vmetal_videoregs[0x0ab/2]&0x7f) << 16;
 	retdat = ((cgrom[offset] <<8)| (cgrom[offset+1]))^0xffff; // invert because we inverted the data..

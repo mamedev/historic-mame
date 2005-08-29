@@ -12,7 +12,7 @@ Video hardware
 
 static int flipscreen;
 
-static data8_t *drmicro_videoram;
+static UINT8 *drmicro_videoram;
 static tilemap *drmicro_bg1;
 static tilemap *drmicro_bg2;
 

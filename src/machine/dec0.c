@@ -507,7 +507,7 @@ void dec0_i8751_reset(void)
 
 static WRITE16_HANDLER( sprite_mirror_w )
 {
-	extern data16_t *spriteram16;
+	extern UINT16 *spriteram16;
 	COMBINE_DATA(&spriteram16[offset]);
 }
 
@@ -585,7 +585,7 @@ DRIVER_INIT( hbarrel )
 {
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
-data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 rom[0xb68/2] = 0x8008;
 }
 }
@@ -594,14 +594,14 @@ DRIVER_INIT( hbarrelw )
 {
 	GAME=1;
 { /* Remove this patch once processing time of i8751 is simulated */
-data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 rom[0xb3e/2] = 0x8008;
 }
 }
 
 DRIVER_INIT( birdtry )
 {
-	data8_t *src, tmp;
+	UINT8 *src, tmp;
 	int i, j, k;
 
 	GAME=3;

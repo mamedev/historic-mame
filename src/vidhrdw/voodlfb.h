@@ -11,75 +11,75 @@
  *
  *************************************/
 
-static void lfbwrite_0_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_1_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_2_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_3_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_4_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_5_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_6_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_7_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_8_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_9_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_a_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_b_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_c_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_d_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_e_argb(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_f_argb(offs_t offset, data32_t data, data32_t mem_mask);
+static void lfbwrite_0_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_1_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_2_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_3_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_4_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_5_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_6_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_7_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_8_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_9_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_a_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_b_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_c_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_d_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_e_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_f_argb(offs_t offset, UINT32 data, UINT32 mem_mask);
 
-static void lfbwrite_0_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_1_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_2_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_3_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_4_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_5_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_6_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_7_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_8_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_9_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_a_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_b_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_c_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_d_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_e_abgr(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_f_abgr(offs_t offset, data32_t data, data32_t mem_mask);
+static void lfbwrite_0_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_1_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_2_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_3_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_4_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_5_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_6_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_7_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_8_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_9_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_a_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_b_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_c_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_d_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_e_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_f_abgr(offs_t offset, UINT32 data, UINT32 mem_mask);
 
-static void lfbwrite_0_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_1_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_2_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_3_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_4_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_5_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_6_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_7_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_8_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_9_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_a_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_b_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_c_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_d_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_e_rgba(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_f_rgba(offs_t offset, data32_t data, data32_t mem_mask);
+static void lfbwrite_0_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_1_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_2_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_3_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_4_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_5_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_6_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_7_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_8_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_9_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_a_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_b_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_c_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_d_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_e_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_f_rgba(offs_t offset, UINT32 data, UINT32 mem_mask);
 
-static void lfbwrite_0_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_1_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_2_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_3_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_4_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_5_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_6_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_7_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_8_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_9_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_a_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_b_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_c_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_d_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_e_bgra(offs_t offset, data32_t data, data32_t mem_mask);
-static void lfbwrite_f_bgra(offs_t offset, data32_t data, data32_t mem_mask);
+static void lfbwrite_0_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_1_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_2_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_3_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_4_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_5_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_6_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_7_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_8_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_9_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_a_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_b_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_c_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_d_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_e_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
+static void lfbwrite_f_bgra(offs_t offset, UINT32 data, UINT32 mem_mask);
 
-static void (*lfbwrite[16*4])(offs_t offset, data32_t data, data32_t mem_mask) =
+static void (*lfbwrite[16*4])(offs_t offset, UINT32 data, UINT32 mem_mask) =
 {
 	lfbwrite_0_argb,	lfbwrite_1_argb,	lfbwrite_2_argb,	lfbwrite_3_argb,
 	lfbwrite_4_argb,	lfbwrite_5_argb,	lfbwrite_6_argb,	lfbwrite_7_argb,
@@ -157,7 +157,7 @@ READ32_HANDLER( voodoo_framebuf_r )
  *
  *************************************/
 
-static void lfbwrite_0_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_0_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / (FRAMEBUF_WIDTH/2);
@@ -172,7 +172,7 @@ static void lfbwrite_0_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 0 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_0_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_0_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / (FRAMEBUF_WIDTH/2);
@@ -187,12 +187,12 @@ static void lfbwrite_0_abgr(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 0 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_0_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_0_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 0 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_0_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_0_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 0 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -205,7 +205,7 @@ static void lfbwrite_0_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_1_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_1_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / (FRAMEBUF_WIDTH/2);
@@ -220,7 +220,7 @@ static void lfbwrite_1_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 1 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_1_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_1_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / (FRAMEBUF_WIDTH/2);
@@ -235,12 +235,12 @@ static void lfbwrite_1_abgr(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 1 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_1_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_1_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 1 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_1_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_1_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 1 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -253,7 +253,7 @@ static void lfbwrite_1_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_2_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_2_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / (FRAMEBUF_WIDTH/2);
@@ -268,17 +268,17 @@ static void lfbwrite_2_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 2 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_2_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_2_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 2 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_2_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_2_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 2 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_2_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_2_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 2 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -291,22 +291,22 @@ static void lfbwrite_2_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_3_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_3_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 3 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_3_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_3_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 3 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_3_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_3_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 3 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_3_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_3_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 3 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -319,7 +319,7 @@ static void lfbwrite_3_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_4_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_4_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / FRAMEBUF_WIDTH;
@@ -331,17 +331,17 @@ static void lfbwrite_4_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 4 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_4_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_4_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 4 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_4_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_4_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 4 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_4_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_4_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 4 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -354,7 +354,7 @@ static void lfbwrite_4_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_5_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_5_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / FRAMEBUF_WIDTH;
@@ -366,17 +366,17 @@ static void lfbwrite_5_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode 5 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_5_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_5_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 5 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_5_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_5_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 5 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_5_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_5_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 5 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -389,22 +389,22 @@ static void lfbwrite_5_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_6_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_6_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 6 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_6_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_6_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 6 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_6_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_6_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 6 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_6_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_6_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 6 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -417,22 +417,22 @@ static void lfbwrite_6_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_7_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_7_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 7 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_7_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_7_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 7 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_7_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_7_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 7 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_7_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_7_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 7 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -445,22 +445,22 @@ static void lfbwrite_7_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_8_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_8_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 8 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_8_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_8_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 8 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_8_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_8_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 8 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_8_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_8_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 8 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -473,22 +473,22 @@ static void lfbwrite_8_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_9_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_9_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 9 ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_9_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_9_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 9 ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_9_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_9_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 9 RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_9_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_9_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode 9 BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -501,22 +501,22 @@ static void lfbwrite_9_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_a_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_a_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode a ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_a_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_a_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode a ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_a_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_a_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode a RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_a_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_a_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode a BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -529,22 +529,22 @@ static void lfbwrite_a_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_b_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_b_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode b ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_b_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_b_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode b ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_b_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_b_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode b RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_b_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_b_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode b BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -557,7 +557,7 @@ static void lfbwrite_b_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_c_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_c_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / FRAMEBUF_WIDTH;
@@ -572,7 +572,7 @@ static void lfbwrite_c_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode c ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_c_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_c_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / FRAMEBUF_WIDTH;
@@ -587,12 +587,12 @@ static void lfbwrite_c_abgr(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode c ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_c_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_c_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode c RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_c_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_c_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode c BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -605,7 +605,7 @@ static void lfbwrite_c_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_d_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_d_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / FRAMEBUF_WIDTH;
@@ -620,17 +620,17 @@ static void lfbwrite_d_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode d ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_d_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_d_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode d ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_d_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_d_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode d RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_d_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_d_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode d BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -643,7 +643,7 @@ static void lfbwrite_d_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_e_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_e_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	UINT16 *buffer = *lfb_write_buffer;
 	int y = offset / FRAMEBUF_WIDTH;
@@ -658,17 +658,17 @@ static void lfbwrite_e_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode e ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_e_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_e_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode e ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_e_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_e_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode e RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_e_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_e_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode e BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
@@ -681,7 +681,7 @@ static void lfbwrite_e_bgra(offs_t offset, data32_t data, data32_t mem_mask)
  *
  *************************************/
 
-static void lfbwrite_f_argb(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_f_argb(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	int y = offset / (FRAMEBUF_WIDTH/2);
 	int x = (offset % (FRAMEBUF_WIDTH/2)) * 2;
@@ -695,17 +695,17 @@ static void lfbwrite_f_argb(offs_t offset, data32_t data, data32_t mem_mask)
 //  logerror("%06X:LFB write mode f ARGB @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_f_abgr(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_f_abgr(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode f ABGR @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_f_rgba(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_f_rgba(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode f RGBA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }
 
-static void lfbwrite_f_bgra(offs_t offset, data32_t data, data32_t mem_mask)
+static void lfbwrite_f_bgra(offs_t offset, UINT32 data, UINT32 mem_mask)
 {
 	osd_die("%06X:Unimplementd LFB write mode f BGRA @ %08X = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
 }

@@ -51,7 +51,7 @@ lev 7 : 0x7c : 0000 0000 - x
    Ditto for samples 65, 66, 67 and 68.
 */
 
-static const data8_t kickgoal_cmd_snd[128] =
+static const UINT8 kickgoal_cmd_snd[128] =
 {
 /*00*/	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 /*08*/	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x70, 0x71,
@@ -113,7 +113,7 @@ static int kickgoal_snd_bank;
 static int snd_new, snd_sam[4];
 
 
-data16_t *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
+UINT16 *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
 
 WRITE16_HANDLER( kickgoal_fgram_w  );
 WRITE16_HANDLER( kickgoal_bgram_w  );
@@ -426,7 +426,7 @@ static INTERRUPT_GEN( kickgoal_interrupt )
 }
 
 
-static data8_t *kickgoal_default_eeprom;
+static UINT8 *kickgoal_default_eeprom;
 static int kickgoal_default_eeprom_length;
 
 static unsigned char kickgoal_default_eeprom_type1[128] = {
@@ -788,7 +788,7 @@ ROM_END
 DRIVER_INIT( kickgoal )
 {
 #if 0 /* we should find a real fix instead  */
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	/* fix "bug" that prevents game from writing to EEPROM */
 	rom[0x12b0/2] = 0x0001;

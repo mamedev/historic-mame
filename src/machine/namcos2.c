@@ -22,9 +22,9 @@ static unsigned mFinalLapProtCount;
 
 READ16_HANDLER( namcos2_flap_prot_r )
 {
-	const data16_t table0[8] = { 0x0000,0x0040,0x0440,0x2440,0x2480,0xa080,0x8081,0x8041 };
-	const data16_t table1[8] = { 0x0040,0x0060,0x0060,0x0860,0x0864,0x08e4,0x08e5,0x08a5 };
-	data16_t data;
+	const UINT16 table0[8] = { 0x0000,0x0040,0x0440,0x2440,0x2480,0xa080,0x8081,0x8041 };
+	const UINT16 table1[8] = { 0x0040,0x0060,0x0060,0x0860,0x0864,0x08e4,0x08e5,0x08a5 };
+	UINT16 data;
 
 	switch( offset )
 	{
@@ -93,7 +93,7 @@ MACHINE_INIT( namcos2 ){
 /* EEPROM Load/Save and read/write handling                  */
 /*************************************************************/
 
-data16_t *namcos2_eeprom;
+UINT16 *namcos2_eeprom;
 size_t namcos2_eeprom_size;
 
 NVRAM_HANDLER( namcos2 )
@@ -132,7 +132,7 @@ READ16_HANDLER( namcos2_68k_eeprom_r ){
 /* 68000 Shared memory area - Data ROM area                  */
 /*************************************************************/
 READ16_HANDLER( namcos2_68k_data_rom_r ){
-	data16_t *ROM = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_USER1);
 	return ROM[offset];
 }
 
@@ -142,8 +142,8 @@ READ16_HANDLER( namcos2_68k_data_rom_r ){
 /* 68000 Shared serial communications processor (CPU5?)       */
 /**************************************************************/
 
-data16_t  namcos2_68k_serial_comms_ctrl[0x8];
-data16_t *namcos2_68k_serial_comms_ram;
+UINT16  namcos2_68k_serial_comms_ctrl[0x8];
+UINT16 *namcos2_68k_serial_comms_ram;
 
 READ16_HANDLER( namcos2_68k_serial_comms_ram_r ){
 	return namcos2_68k_serial_comms_ram[offset];
@@ -155,7 +155,7 @@ WRITE16_HANDLER( namcos2_68k_serial_comms_ram_w ){
 
 READ16_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 {
-	data16_t retval = namcos2_68k_serial_comms_ctrl[offset];
+	UINT16 retval = namcos2_68k_serial_comms_ctrl[offset];
 
 	switch(offset){
 	case 0x00:
@@ -411,16 +411,16 @@ WRITE16_HANDLER( namcos2_68k_key_w )
 #define FRAME_TIME		(1.0/60.0)
 #define LINE_LENGTH 	(FRAME_TIME/NO_OF_LINES)
 
-data16_t  namcos2_68k_master_C148[0x20];
-data16_t  namcos2_68k_slave_C148[0x20];
+UINT16  namcos2_68k_master_C148[0x20];
+UINT16  namcos2_68k_slave_C148[0x20];
 
-static data16_t
-ReadWriteC148( int cpu, offs_t offset, data16_t data, int bWrite )
+static UINT16
+ReadWriteC148( int cpu, offs_t offset, UINT16 data, int bWrite )
 {
 	offs_t addr = ((offset*2)+0x1c0000)&0x1fe000;
-	data16_t *pC148Reg   = (cpu==CPU_MASTER)?namcos2_68k_master_C148:namcos2_68k_slave_C148;
-	data16_t *pC148RegAlt = (cpu==CPU_SLAVE)?namcos2_68k_master_C148:namcos2_68k_slave_C148;
-	data16_t result = pC148Reg[(addr>>13)&0x1f];
+	UINT16 *pC148Reg   = (cpu==CPU_MASTER)?namcos2_68k_master_C148:namcos2_68k_slave_C148;
+	UINT16 *pC148RegAlt = (cpu==CPU_SLAVE)?namcos2_68k_master_C148:namcos2_68k_slave_C148;
+	UINT16 result = pC148Reg[(addr>>13)&0x1f];
 	int altCPU = (cpu==CPU_MASTER)?CPU_SLAVE:CPU_MASTER;
 
 	if( bWrite )

@@ -111,7 +111,7 @@ VIDEO_START( crbaloon )
 	return 0;
 }
 
-static void crbaloon_draw_sprites( struct mame_bitmap *bitmap )
+static void crbaloon_draw_sprites( mame_bitmap *bitmap )
 {
 	int x,y;
 

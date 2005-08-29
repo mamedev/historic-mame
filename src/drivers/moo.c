@@ -57,9 +57,9 @@ VIDEO_UPDATE(moo);
 void moo_set_alpha(int on);
 
 static int init_eeprom_count, init_nosound_count, game_type;
-static data16_t *workram;
-static data16_t protram[16];
-static data16_t cur_control2;
+static UINT16 *workram;
+static UINT16 protram[16];
+static UINT16 cur_control2;
 
 
 static struct EEPROM_interface eeprom_interface =
@@ -145,7 +145,7 @@ static WRITE16_HANDLER( control2_w )
 static void moo_objdma(int type)
 {
 	int counter, num_inactive;
-	data16_t *src, *dst, zmask;
+	UINT16 *src, *dst, zmask;
 
 	K053247_export_config(&dst, 0, 0, 0, &counter);
 	src = spriteram16;

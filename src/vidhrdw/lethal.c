@@ -122,7 +122,7 @@ WRITE8_HANDLER(le_palette_control)
 	}
 }
 
-extern data16_t *K056832_videoram;
+extern UINT16 *K056832_videoram;
 
 VIDEO_UPDATE(lethalen)
 {

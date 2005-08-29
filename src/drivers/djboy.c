@@ -71,7 +71,7 @@ BS07    4464 4464     BS-64           BS-200
 #include "sound/okim6295.h"
 
 /* public functions from vidhrdw/djboy.h */
-extern void djboy_set_videoreg( data8_t data );
+extern void djboy_set_videoreg( UINT8 data );
 extern WRITE8_HANDLER( djboy_scrollx_w );
 extern WRITE8_HANDLER( djboy_scrolly_w );
 extern WRITE8_HANDLER( djboy_videoram_w );
@@ -79,12 +79,12 @@ extern WRITE8_HANDLER( djboy_paletteram_w );
 extern VIDEO_START( djboy );
 extern VIDEO_UPDATE( djboy );
 
-static data8_t *sharedram;
+static UINT8 *sharedram;
 static READ8_HANDLER( sharedram_r )	{ return sharedram[offset]; }
 static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
 
 static int prot_offs;
-static data8_t prot_ram[0x80];
+static UINT8 prot_ram[0x80];
 
 /******************************************************************************/
 
@@ -114,7 +114,7 @@ static WRITE8_HANDLER( cpu1_bankswitch_w )
 
 static WRITE8_HANDLER( cpu2_bankswitch_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU2);
+	UINT8 *RAM = memory_region(REGION_CPU2);
 
 	djboy_set_videoreg( data );
 
@@ -209,7 +209,7 @@ static WRITE8_HANDLER( cpu2_data_w )
 
 static READ8_HANDLER( cpu2_data_r )
 {
-	data8_t result = 0x00;
+	UINT8 result = 0x00;
 	static int which;
 
 	switch( activecpu_get_pc() )

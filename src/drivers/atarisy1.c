@@ -361,7 +361,7 @@ static READ8_HANDLER( via_pa_r )
 
 static WRITE8_HANDLER( via_pb_w )
 {
-	data8_t old = tms5220_ctl;
+	UINT8 old = tms5220_ctl;
 	tms5220_ctl = data;
 
 	/* write strobe */

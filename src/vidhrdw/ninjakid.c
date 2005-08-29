@@ -212,7 +212,7 @@ VIDEO_START( ninjakid ){
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect ){
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source+0x800;
 

@@ -39,7 +39,7 @@
  *
  *************************************/
 
-data16_t *atarisy1_bankselect;
+UINT16 *atarisy1_bankselect;
 
 
 
@@ -52,7 +52,7 @@ data16_t *atarisy1_bankselect;
 /* playfield parameters */
 static UINT16 playfield_lookup[256];
 static UINT8 playfield_tile_bank;
-static data16_t playfield_priority_pens;
+static UINT16 playfield_priority_pens;
 static void *yscroll_reset_timer;
 
 /* INT3 tracking */
@@ -223,8 +223,8 @@ VIDEO_START( atarisy1 )
 
 WRITE16_HANDLER( atarisy1_bankselect_w )
 {
-	data16_t oldselect = *atarisy1_bankselect;
-	data16_t newselect = oldselect, diff;
+	UINT16 oldselect = *atarisy1_bankselect;
+	UINT16 newselect = oldselect, diff;
 	int scanline = cpu_getscanline();
 
 	/* update memory */
@@ -267,8 +267,8 @@ WRITE16_HANDLER( atarisy1_bankselect_w )
 
 WRITE16_HANDLER( atarisy1_priority_w )
 {
-	data16_t oldpens = playfield_priority_pens;
-	data16_t newpens = oldpens;
+	UINT16 oldpens = playfield_priority_pens;
+	UINT16 newpens = oldpens;
 
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newpens);
@@ -287,8 +287,8 @@ WRITE16_HANDLER( atarisy1_priority_w )
 
 WRITE16_HANDLER( atarisy1_xscroll_w )
 {
-	data16_t oldscroll = *atarigen_xscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_xscroll;
+	UINT16 newscroll = oldscroll;
 
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newscroll);
@@ -318,8 +318,8 @@ static void reset_yscroll_callback(int newscroll)
 
 WRITE16_HANDLER( atarisy1_yscroll_w )
 {
-	data16_t oldscroll = *atarigen_yscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_yscroll;
+	UINT16 newscroll = oldscroll;
 	int scanline = cpu_getscanline();
 	int adjusted_scroll;
 
@@ -498,7 +498,7 @@ static void update_timers(int scanline)
 VIDEO_UPDATE( atarisy1 )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

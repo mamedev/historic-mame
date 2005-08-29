@@ -44,7 +44,7 @@
 
 #define RDMEM(a)	(program_read_byte(a))
 #define WRMEM(a,v)	(program_write_byte(a,v))
-INLINE data8_t RDSPC(int space, offs_t addr)
+INLINE UINT8 RDSPC(int space, offs_t addr)
 {
 	switch (activecpu_databus_width(space)/8)
 	{
@@ -556,7 +556,7 @@ gfx_element *build_debugger_font(void)
 	return font;
 }
 
-static void toggle_cursor(struct mame_bitmap *bitmap, gfx_element *font)
+static void toggle_cursor(mame_bitmap *bitmap, gfx_element *font)
 {
 	int sx, sy, x, y;
 
@@ -586,7 +586,7 @@ static void toggle_cursor(struct mame_bitmap *bitmap, gfx_element *font)
 
 void dbg_put_screen_char(int ch, int attr, int x, int y)
 {
-	struct mame_bitmap *bitmap = Machine->debug_bitmap;
+	mame_bitmap *bitmap = Machine->debug_bitmap;
 	gfx_element *font = Machine->debugger_font;
 
 	drawgfx(bitmap, font,
@@ -2156,7 +2156,7 @@ static int DECL_SPEC win_msgbox( UINT8 color, const char *title, const char *fmt
  * dbg_set_rect
  * set a rectangle from x,y,w and h
  **************************************************************************/
-INLINE void dbg_set_rect( struct rectangle *r, int x, int y, int w, int h )
+INLINE void dbg_set_rect( rectangle *r, int x, int y, int w, int h )
 {
 	r->min_x = x;
 	r->max_x = x + w - 1;
@@ -2185,7 +2185,7 @@ static void dbg_open_windows( void )
 	for( i = 0; i < total_cpu; i++ )
 	{
 		const UINT8 *win_layout = (UINT8*)cpunum_window_layout(i);
-		struct rectangle regs, dasm, mem1, mem2, cmds;
+		rectangle regs, dasm, mem1, mem2, cmds;
 
 		#define REGS_X	win_layout[0*4+0]
 		#define REGS_Y	win_layout[0*4+1]

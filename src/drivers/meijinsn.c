@@ -50,7 +50,7 @@ zip also contains 4 jpg images (1.jpg is the board)
 #include "driver.h"
 #include "machine/random.h"
 
-static data16_t *meijinsn_fg_videoram;
+static UINT16 *meijinsn_fg_videoram;
 
 READ16_HANDLER( meijinsn_read_random )
 {

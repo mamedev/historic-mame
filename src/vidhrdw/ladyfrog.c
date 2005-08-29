@@ -95,7 +95,7 @@ WRITE8_HANDLER( ladyfrog_scrlram_w )
 	tilemap_set_scrolly(bg_tilemap, offset, data );
 }
 
-void ladyfrog_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void ladyfrog_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i;
 	for (i=0;i<0x20;i++)

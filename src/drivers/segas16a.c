@@ -145,7 +145,7 @@ Tetris         -         -         -         -         EPR12169  EPR12170  -    
  *
  *************************************/
 
-static data16_t *workram;
+static UINT16 *workram;
 
 static UINT8 video_control;
 static UINT8 mj_input_num;

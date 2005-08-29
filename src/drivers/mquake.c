@@ -11,7 +11,7 @@
 #include "includes/amiga.h"
 #include "vidhrdw/generic.h"
 
-data16_t *qchip_ram;
+UINT16 *qchip_ram;
 
 static READ16_HANDLER( io_handler2 )
 {
@@ -176,7 +176,7 @@ static void mquake_cia_0_portB_w( int data )
 	/* parallel port */
 }
 
-static data16_t mquake_read_joy0dat(void)
+static UINT16 mquake_read_joy0dat(void)
 {
 	int input = ( readinputport( 1 ) >> 4 );
 	int	top,bot,lft,rgt;
@@ -192,7 +192,7 @@ static data16_t mquake_read_joy0dat(void)
 	return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
 }
 
-static data16_t mquake_read_joy1dat(void)
+static UINT16 mquake_read_joy1dat(void)
 {
 	int input = ( readinputport( 1 ) & 0x0f );
 	int	top,bot,lft,rgt;

@@ -137,7 +137,7 @@ VIDEO_START( tehkanwc )
    bit 7 = enable (0 = display off)
  */
 
-static void gridiron_drawled(struct mame_bitmap *bitmap,UINT8 led,int player)
+static void gridiron_drawled(mame_bitmap *bitmap,UINT8 led,int player)
 {
 	int i;
 
@@ -173,7 +173,7 @@ static void gridiron_drawled(struct mame_bitmap *bitmap,UINT8 led,int player)
 else logerror("unknown LED %02x for player %d\n",led,player);
 }
 
-static void tehkanwc_draw_sprites( struct mame_bitmap *bitmap )
+static void tehkanwc_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

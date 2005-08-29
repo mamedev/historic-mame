@@ -683,7 +683,7 @@ static void draw_sprites(UINT32 *dest, UINT8 *edest, int scanline, UINT8 mask, i
 
 ***************************************************************************/
 
-static void turbo_render(struct mame_bitmap *bitmap)
+static void turbo_render(mame_bitmap *bitmap)
 {
 	UINT8 *overall_priority_base = &overall_priority[(turbo_fbpla & 8) << 6];
 	UINT8 *sprite_priority_base = &sprite_priority[(turbo_fbpla & 7) << 7];
@@ -816,7 +816,7 @@ static void turbo_render(struct mame_bitmap *bitmap)
 }
 
 
-static void subroc3d_render(struct mame_bitmap *bitmap)
+static void subroc3d_render(mame_bitmap *bitmap)
 {
 	UINT8 *sprite_priority_base = &sprite_expanded_priority[(subroc3d_ply & 15) << 8];
 	pen_t *colortable;
@@ -880,7 +880,7 @@ static void subroc3d_render(struct mame_bitmap *bitmap)
 }
 
 
-static void buckrog_render(struct mame_bitmap *bitmap)
+static void buckrog_render(mame_bitmap *bitmap)
 {
 	int y;
 

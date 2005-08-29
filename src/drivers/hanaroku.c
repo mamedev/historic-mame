@@ -42,7 +42,7 @@ VIDEO_START(hanaroku)
 	return 0;
 }
 
-static void hanaroku_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void hanaroku_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 

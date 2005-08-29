@@ -52,12 +52,12 @@ unsigned char *s2636_1_ram;
 unsigned char *s2636_2_ram;
 unsigned char *s2636_3_ram;
 
-struct mame_bitmap *s2636_1_bitmap;
-struct mame_bitmap *s2636_2_bitmap;
-struct mame_bitmap *s2636_3_bitmap;
-struct mame_bitmap *collision_bitmap;
-struct mame_bitmap *collision_background;
-struct mame_bitmap *scrolled_background;
+mame_bitmap *s2636_1_bitmap;
+mame_bitmap *s2636_2_bitmap;
+mame_bitmap *s2636_3_bitmap;
+mame_bitmap *collision_bitmap;
+mame_bitmap *collision_background;
+mame_bitmap *scrolled_background;
 
 unsigned char s2636_1_dirty[4];
 unsigned char s2636_2_dirty[4];
@@ -444,7 +444,7 @@ INTERRUPT_GEN( cvs_interrupt )
 	cpunum_set_input_line(0,0,PULSE_LINE);
 }
 
-INLINE void plot_star(struct mame_bitmap *bitmap, int x, int y)
+INLINE void plot_star(mame_bitmap *bitmap, int x, int y)
 {
 	if (flip_screen_x)
 	{

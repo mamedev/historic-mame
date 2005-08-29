@@ -5,7 +5,7 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-data16_t *othunder_ram;
+UINT16 *othunder_ram;
 
 struct tempsprite
 {
@@ -104,9 +104,9 @@ spriteram is being tested, take no notice of that.]
 ********************************************************/
 
 
-static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int y_offs)
+static void othunder_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int *primasks,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;

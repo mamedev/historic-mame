@@ -3,10 +3,10 @@
 
 struct ST0016interface
 {
-	data8_t **p_soundram;
+	UINT8 **p_soundram;
 };
 
-extern data8_t *st0016_sound_regs;
+extern UINT8 *st0016_sound_regs;
 
 WRITE8_HANDLER(st0016_snd_w);
 

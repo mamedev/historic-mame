@@ -24,15 +24,15 @@ unsigned char *kikstart_scrollram;
 unsigned char *taitosj_spritebank;
 static unsigned char taitosj_collision_reg[4];
 static unsigned char *dirtybuffer2,*dirtybuffer3;
-static struct mame_bitmap *taitosj_tmpbitmap[3];
-static struct mame_bitmap *sprite_sprite_collbitmap1,*sprite_sprite_collbitmap2;
-static struct mame_bitmap *sprite_plane_collbitmap1;
-static struct mame_bitmap *sprite_plane_collbitmap2[3];
+static mame_bitmap *taitosj_tmpbitmap[3];
+static mame_bitmap *sprite_sprite_collbitmap1,*sprite_sprite_collbitmap2;
+static mame_bitmap *sprite_plane_collbitmap1;
+static mame_bitmap *sprite_plane_collbitmap2[3];
 static unsigned char dirtycharacter1[256],dirtycharacter2[256];
 static unsigned char dirtysprite1[64],dirtysprite2[64];
 static int taitosj_video_enable;
 static int flipscreen[2];
-static struct rectangle spritearea[32]; /*areas on bitmap (sprite locations)*/
+static rectangle spritearea[32]; /*areas on bitmap (sprite locations)*/
 static int spriteon[32]; /* 1 if sprite is active */
 
 static int playfield_enable_mask[3] = { 0x10, 0x20, 0x40 };
@@ -632,19 +632,19 @@ static void check_sprite_plane_collision(void)
 }
 
 
-static void drawsprites(struct mame_bitmap *bitmap)
+static void drawsprites(mame_bitmap *bitmap)
 {
 	/* sprite visibility area is missing 4 pixels from the sides, surely to reduce
        wraparound side effects. This was verified on a real Elevator Action.
        Note that the clipping is asymmetrical. This matches the real thing.
        I'm not sure of what should happen when the screen is flipped, though.
      */
-	static struct rectangle spritevisiblearea =
+	static rectangle spritevisiblearea =
 	{
 		0*8+3, 32*8-1-1,
 		2*8, 30*8-1
 	};
-	static struct rectangle spritevisibleareaflip =
+	static rectangle spritevisibleareaflip =
 	{
 		0*8+1, 32*8-3-1,
 		2*8, 30*8-1
@@ -700,7 +700,7 @@ static void drawsprites(struct mame_bitmap *bitmap)
 }
 
 
-static void drawplayfield(int n, struct mame_bitmap *bitmap)
+static void drawplayfield(int n, mame_bitmap *bitmap)
 {
 	static int fudge1[3] = { 3,  1, -1 };
 	static int fudge2[3] = { 8, 10, 12 };
@@ -739,7 +739,7 @@ static void drawplayfield(int n, struct mame_bitmap *bitmap)
 	}
 }
 
-static void kikstart_drawplayfield(int n, struct mame_bitmap *bitmap)
+static void kikstart_drawplayfield(int n, mame_bitmap *bitmap)
 {
 	if (taitosj_video_enable & playfield_enable_mask[n])
 	{
@@ -779,7 +779,7 @@ static void kikstart_drawplayfield(int n, struct mame_bitmap *bitmap)
 }
 
 
-static void drawplane(int n,struct mame_bitmap *bitmap)
+static void drawplane(int n,mame_bitmap *bitmap)
 {
 	switch (n)
 	{

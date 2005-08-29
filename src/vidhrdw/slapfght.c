@@ -156,7 +156,7 @@ void slapfght_log_vram(void)
   Render the Sprites
 
 ***************************************************************************/
-static void perfrman_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority_to_display )
+static void perfrman_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority_to_display )
 {
 	int offs;
 

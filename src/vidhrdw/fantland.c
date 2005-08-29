@@ -58,9 +58,9 @@
 
 #include "vidhrdw/generic.h"
 
-static void fantland_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void fantland_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
-	data8_t	*indx_ram	=	spriteram + 0x2000,	// this ram contains indexes into offs_ram
+	UINT8	*indx_ram	=	spriteram + 0x2000,	// this ram contains indexes into offs_ram
 			*offs_ram	=	spriteram + 0x2400,	// this ram contains x,y offsets or indexes into spriteram_2
 			*ram		=	spriteram,			// current sprite pointer in spriteram
 			*ram2		=	indx_ram;			// current sprite pointer in indx_ram

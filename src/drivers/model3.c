@@ -373,7 +373,7 @@ static UINT64 *work_ram;
 static UINT64 *model3_backup;
 static int model3_crom_bank = 0;
 static int model3_controls_bank;
-static data32_t real3d_device_id;
+static UINT32 real3d_device_id;
 
 extern UINT64 *paletteram64;
 
@@ -537,8 +537,8 @@ static void pci_device_set_reg(int device, int reg, UINT32 value)
 /*****************************************************************************/
 /* Motorola MPC105 PCI Bridge/Memory Controller */
 
-static data32_t mpc105_regs[0x40];
-static data32_t mpc105_addr;
+static UINT32 mpc105_regs[0x40];
+static UINT32 mpc105_addr;
 static int pci_bus;
 static int pci_device;
 static int pci_function;
@@ -610,8 +610,8 @@ static void mpc105_init(void)
 /*****************************************************************************/
 /* Motorola MPC106 PCI Bridge/Memory Controller */
 
-static data32_t mpc106_regs[0x40];
-static data32_t mpc106_addr;
+static UINT32 mpc106_regs[0x40];
+static UINT32 mpc106_addr;
 
 static READ64_HANDLER( mpc106_addr_r )
 {
@@ -784,12 +784,12 @@ static void scsi_irq_callback(void)
 /*****************************************************************************/
 /* Real3D DMA */
 
-static data32_t dma_data;
-static data32_t dma_status;
-static data32_t dma_source;
-static data32_t dma_dest;
-static data32_t dma_endian;
-static data32_t dma_irq;
+static UINT32 dma_data;
+static UINT32 dma_status;
+static UINT32 dma_source;
+static UINT32 dma_dest;
+static UINT32 dma_endian;
+static UINT32 dma_irq;
 
 static READ64_HANDLER( real3d_dma_r )
 {
@@ -986,12 +986,12 @@ static MACHINE_INIT(model3_15) { model3_init(0x15); }
 static MACHINE_INIT(model3_20) { model3_init(0x20); }
 static MACHINE_INIT(model3_21) { model3_init(0x21); }
 
-static data32_t eeprom_bit = 0;
+static UINT32 eeprom_bit = 0;
 
 static UINT64 controls_2;
 static UINT64 controls_3;
-static data8_t model3_serial_fifo1;
-static data8_t model3_serial_fifo2;
+static UINT8 model3_serial_fifo1;
+static UINT8 model3_serial_fifo2;
 static int lightgun_reg_sel;
 static int adc_channel;
 

@@ -13,6 +13,6 @@ WRITE32_HANDLER( cgboard_dsp_comm_w_sharc );
 READ32_HANDLER( cgboard_dsp_shared_r_sharc );
 WRITE32_HANDLER( cgboard_dsp_shared_w_sharc );
 
-void draw_7segment_led(struct mame_bitmap *bitmap, int x, int y, data8_t value);
+void draw_7segment_led(mame_bitmap *bitmap, int x, int y, UINT8 value);
 
 #endif

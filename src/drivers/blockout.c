@@ -13,8 +13,8 @@ driver by Nicola Salmoria
 #include "sound/okim6295.h"
 
 
-extern data16_t *blockout_videoram;
-extern data16_t *blockout_frontvideoram;
+extern UINT16 *blockout_videoram;
+extern UINT16 *blockout_frontvideoram;
 extern unsigned char *blockout_frontcolor;
 
 WRITE16_HANDLER( blockout_videoram_w );

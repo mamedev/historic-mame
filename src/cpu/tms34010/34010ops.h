@@ -28,7 +28,7 @@
 
 #define TMS34010_RDMEM(A)			((unsigned)program_read_byte_16le (A))
 #define TMS34010_RDMEM_WORD(A)		((unsigned)program_read_word_16le (A))
-INLINE data32_t TMS34010_RDMEM_DWORD(offs_t A)
+INLINE UINT32 TMS34010_RDMEM_DWORD(offs_t A)
 {
 	UINT32 result = program_read_word_16le(A);
 	return result | (program_read_word_16le(A+2)<<16);
@@ -36,7 +36,7 @@ INLINE data32_t TMS34010_RDMEM_DWORD(offs_t A)
 
 #define TMS34010_WRMEM(A,V)			(program_write_byte_16le(A,V))
 #define TMS34010_WRMEM_WORD(A,V)	(program_write_word_16le(A,V))
-INLINE void TMS34010_WRMEM_DWORD(offs_t A,data32_t V)
+INLINE void TMS34010_WRMEM_DWORD(offs_t A,UINT32 V)
 {
 	program_write_word_16le(A,V);
 	program_write_word_16le(A+2,V>>16);

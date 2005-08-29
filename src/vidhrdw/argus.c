@@ -125,29 +125,29 @@ BG0 palette intensity ( $C47F, $C4FF )
 #define BUTASAN_BG0BACK_RAMSIZE		0x0800
 
 
-data8_t *argus_paletteram;
-data8_t *argus_txram;
-data8_t *argus_bg0_scrollx;
-data8_t *argus_bg0_scrolly;
-data8_t *argus_bg1ram;
-data8_t *argus_bg1_scrollx;
-data8_t *argus_bg1_scrolly;
-data8_t *butasan_bg1ram;
+UINT8 *argus_paletteram;
+UINT8 *argus_txram;
+UINT8 *argus_bg0_scrollx;
+UINT8 *argus_bg0_scrolly;
+UINT8 *argus_bg1ram;
+UINT8 *argus_bg1_scrollx;
+UINT8 *argus_bg1_scrolly;
+UINT8 *butasan_bg1ram;
 
-static data8_t *argus_dummy_bg0ram;
-static data8_t *butasan_txram;
-static data8_t *butasan_bg0ram;
-static data8_t *butasan_bg0backram;
-static data8_t *butasan_txbackram;
+static UINT8 *argus_dummy_bg0ram;
+static UINT8 *butasan_txram;
+static UINT8 *butasan_bg0ram;
+static UINT8 *butasan_bg0backram;
+static UINT8 *butasan_txbackram;
 
 static tilemap *tx_tilemap  = NULL;
 static tilemap *bg0_tilemap = NULL;
 static tilemap *bg1_tilemap = NULL;
 
-static data8_t argus_bg_status    = 0x01;
-static data8_t butasan_bg1_status = 0x01;
-static data8_t argus_bg_purple  = 0;
-static data8_t argus_flipscreen = 0;
+static UINT8 argus_bg_status    = 0x01;
+static UINT8 butasan_bg1_status = 0x01;
+static UINT8 argus_bg_purple  = 0;
+static UINT8 argus_flipscreen = 0;
 
 static int argus_palette_intensity = 0;
 
@@ -380,8 +380,8 @@ static void argus_write_dummy_rams( int dramoffs, int vromoffs )
 	int voffs;
 	int offs;
 
-	data8_t *VROM1 = memory_region( REGION_USER1 );		/* "ag_15.bin" */
-	data8_t *VROM2 = memory_region( REGION_USER2 );		/* "ag_16.bin" */
+	UINT8 *VROM1 = memory_region( REGION_USER1 );		/* "ag_15.bin" */
+	UINT8 *VROM2 = memory_region( REGION_USER2 );		/* "ag_16.bin" */
 
 	/* offset in pattern data */
 	offs = VROM1[ vromoffs ] | ( VROM1[ vromoffs + 1 ] << 8 );
@@ -980,7 +980,7 @@ static void argus_bg0_scroll_handle( void )
 
 }
 
-static void argus_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void argus_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs;
 
@@ -1036,7 +1036,7 @@ static void argus_draw_sprites(struct mame_bitmap *bitmap, const struct rectangl
 	}
 }
 
-static void valtric_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void valtric_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -1089,7 +1089,7 @@ static void valtric_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 	}
 }
 
-void butasan_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void butasan_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

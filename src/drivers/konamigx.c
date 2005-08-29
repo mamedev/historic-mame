@@ -129,14 +129,14 @@ WRITE32_HANDLER( konamigx_555_palette_w );
 WRITE32_HANDLER( konamigx_555_palette2_w );
 WRITE32_HANDLER( konamigx_tilebank_w );
 
-data32_t *gx_psacram, *gx_subpaletteram32;
+UINT32 *gx_psacram, *gx_subpaletteram32;
 WRITE32_HANDLER( konamigx_t1_psacmap_w );
 WRITE32_HANDLER( konamigx_t4_psacmap_w );
 
 int konamigx_cfgport;
 
-static data32_t *gx_workram; /* workram pointer for ESC protection fun */
-static data16_t *gx_sndram;
+static UINT32 *gx_workram; /* workram pointer for ESC protection fun */
+static UINT16 *gx_sndram;
 static int gx_rdport1_3, gx_syncen;
 
 static void *dmadelay_timer;
@@ -495,7 +495,7 @@ static READ32_HANDLER( eeprom_r )
 
 static WRITE32_HANDLER( eeprom_w )
 {
-	data32_t odata;
+	UINT32 odata;
 
 	if (!(mem_mask & 0xff000000))
 	{
@@ -593,7 +593,7 @@ static int suspension_active, resume_trigger;
 
 static READ32_HANDLER(waitskip_r)
 {
-	data32_t data = gx_workram[waitskip.offs+offset];
+	UINT32 data = gx_workram[waitskip.offs+offset];
 	mem_mask = ~mem_mask;
 
 	if (activecpu_get_pc() == waitskip.pc && (data & mem_mask) == (waitskip.data & mem_mask))
@@ -754,12 +754,12 @@ static INTERRUPT_GEN(konamigx_hbinterrupt)
 /**********************************************************************************/
 /* sound communication handlers */
 
-static data8_t sndto000[16], sndto020[16];	/* read/write split mapping */
+static UINT8 sndto000[16], sndto020[16];	/* read/write split mapping */
 static int snd020_hack;
 
 static READ32_HANDLER( sound020_r )
 {
-	data32_t reg, MSW, LSW, rv = 0;
+	UINT32 reg, MSW, LSW, rv = 0;
 
 	reg = offset << 1;
 
@@ -916,14 +916,14 @@ static READ32_HANDLER( gx6bppspr_r )
 
 static READ32_HANDLER( type1_roz_r1 )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_GFX3);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_GFX3);
 
 	return ROM[offset];
 }
 
 static READ32_HANDLER( type1_roz_r2 )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_GFX3);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_GFX3);
 
 	ROM += (0x600000/2);
 
@@ -1143,10 +1143,10 @@ static ADDRESS_MAP_START( gx_type1_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xdda000, 0xddafff) AM_WRITE(adc0834_w)
 	AM_RANGE(0xddc000, 0xddcfff) AM_READ(adc0834_r)
 	AM_RANGE(0xdde000, 0xdde003) AM_WRITE(type1_cablamps_w)
-	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl)
+	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((UINT32**)&K053936_1_ctrl)
 	AM_RANGE(0xe20000, 0xe2000f) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe40000, 0xe40003) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0xe80000, 0xe81fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl) 	// chips 21L+19L / S
+	AM_RANGE(0xe80000, 0xe81fff) AM_RAM AM_BASE((UINT32**)&K053936_1_linectrl) 	// chips 21L+19L / S
 	AM_RANGE(0xec0000, 0xedffff) AM_RAM AM_WRITE(konamigx_t1_psacmap_w) AM_BASE(&gx_psacram)  // chips 20J+23J+18J / S
 	AM_RANGE(0xf00000, 0xf3ffff) AM_READ(type1_roz_r1)	// ROM readback
 	AM_RANGE(0xf40000, 0xf7ffff) AM_READ(type1_roz_r2)	// ROM readback
@@ -1162,10 +1162,10 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( gx_type3_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xd90000, 0xd97fff) AM_RAM
 	AM_RANGE(0xcc0000, 0xcc0007) AM_WRITE(type4_prot_w)
-	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl)
+	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((UINT32**)&K053936_1_ctrl)
 	AM_RANGE(0xe20000, 0xe20003) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe40000, 0xe40003) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl)
+	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((UINT32**)&K053936_1_linectrl)
 	AM_RANGE(0xe80000, 0xe87fff) AM_RAM AM_WRITE(konamigx_555_palette_w) AM_BASE(&paletteram32) 	// main monitor palette (twice as large as reality)
 	AM_RANGE(0xea0000, 0xea3fff) AM_RAM AM_WRITE(konamigx_555_palette2_w) AM_BASE(&gx_subpaletteram32) // sub monitor palette
 	AM_RANGE(0xec0000, 0xec0003) AM_READ(type3_sync_r)
@@ -1175,10 +1175,10 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( gx_type4_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xcc0000, 0xcc0007) AM_WRITE(type4_prot_w)
 	AM_RANGE(0xd90000, 0xd97fff) AM_RAM
-	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((data32_t**)&K053936_1_ctrl)
+	AM_RANGE(0xe00000, 0xe0001f) AM_RAM AM_BASE((UINT32**)&K053936_1_ctrl)
 	AM_RANGE(0xe20000, 0xe20003) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0xe40000, 0xe40003) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((data32_t**)&K053936_1_linectrl)  // 29C & 29G (PSAC2 line control)
+	AM_RANGE(0xe60000, 0xe60fff) AM_RAM AM_BASE((UINT32**)&K053936_1_linectrl)  // 29C & 29G (PSAC2 line control)
 	AM_RANGE(0xe80000, 0xe8ffff) AM_RAM AM_WRITE(konamigx_palette_w) AM_BASE(&paletteram32) // 11G/13G/15G (main screen palette RAM) (twice as large as reality)
 	AM_RANGE(0xea0000, 0xea7fff) AM_RAM AM_WRITE(konamigx_palette2_w) AM_BASE(&gx_subpaletteram32) // 5G/7G/9G (sub screen palette RAM)
 	AM_RANGE(0xec0000, 0xec0003) AM_READ(type3_sync_r)		// type 4 polls this too
@@ -1190,7 +1190,7 @@ ADDRESS_MAP_END
 
 static READ16_HANDLER( dual539_r )
 {
-	data16_t ret = 0;
+	UINT16 ret = 0;
 
 	if (ACCESSING_LSB16)
 		ret |= K054539_1_r(offset);
@@ -3306,7 +3306,7 @@ static DRIVER_INIT(konamigx)
 
 	else if (!strcmp(Machine->gamedrv->name, "tkmmpzdm"))
 	{
-		data32_t *rom = (data32_t*)memory_region(REGION_CPU1);
+		UINT32 *rom = (UINT32*)memory_region(REGION_CPU1);
 
 		// The display is initialized after POST but the copyright screen disabled
 		// planes B,C,D and didn't bother restoring them. I've spent a good

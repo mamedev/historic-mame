@@ -93,8 +93,8 @@ void decrypt_chmplst2(void)
 {
 
 	int i,j;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1));
-	data16_t *result_data;
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1));
+	UINT16 *result_data;
 
 	int rom_size = 0x80000;
 

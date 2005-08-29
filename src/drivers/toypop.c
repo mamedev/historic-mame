@@ -36,8 +36,8 @@ TODO:
 
 
 // vidhrdw\toypop.c
-extern data16_t *toypop_bg_image;
-extern data8_t *toypop_videoram;
+extern UINT16 *toypop_bg_image;
+extern UINT8 *toypop_videoram;
 WRITE8_HANDLER( toypop_videoram_w );
 READ16_HANDLER( toypop_merged_background_r );
 WRITE16_HANDLER( toypop_merged_background_w );
@@ -126,7 +126,7 @@ static DRIVER_INIT( 58_56_56 )
 
 
 static int interrupt_enable_68k;
-static data8_t *toypop_m68000_sharedram;
+static UINT8 *toypop_m68000_sharedram;
 
 
 READ8_HANDLER( toypop_sound_sharedram_r )

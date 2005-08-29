@@ -145,7 +145,7 @@ WRITE8_HANDLER( nycaptor_scrlram_w )
 	tilemap_set_scrolly(bg_tilemap, offset, data );
 }
 
-void nycaptor_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect,int pri)
+void nycaptor_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect,int pri)
 {
 	int i;
 	for (i=0;i<0x20;i++)

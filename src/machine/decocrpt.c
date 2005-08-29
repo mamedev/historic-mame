@@ -600,9 +600,9 @@ static const UINT8 deco74_swap_table[0x800] =
 
 static void deco_decrypt(int mem_region,const UINT8 *xor_table,const UINT16 *address_table,const UINT8 *swap_table,int remap_only)
 {
-	data16_t *rom = (data16_t *)memory_region(mem_region);
+	UINT16 *rom = (UINT16 *)memory_region(mem_region);
 	int len = memory_region_length(mem_region)/2;
-	data16_t *buffer = malloc(len*2);
+	UINT16 *buffer = malloc(len*2);
 	int i;
 
 #ifdef LSB_FIRST

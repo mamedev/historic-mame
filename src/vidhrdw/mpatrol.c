@@ -279,9 +279,9 @@ WRITE8_HANDLER( mpatrol_flipscreen_w )
 
 
 
-static void draw_background(struct mame_bitmap *bitmap, int xpos, int ypos, int image)
+static void draw_background(mame_bitmap *bitmap, int xpos, int ypos, int image)
 {
-	struct rectangle rect;
+	rectangle rect;
 
 	if (flip_screen)
 	{

@@ -36,44 +36,44 @@ struct psxinfo
 {
 	const struct PSXSPUinterface *intf;
 
-	data32_t *g_p_n_psxram;
-	data16_t m_n_mainvolumeleft;
-	data16_t m_n_mainvolumeright;
-	data16_t m_n_reverberationdepthleft;
-	data16_t m_n_reverberationdepthright;
-	data32_t m_n_voiceon;
-	data32_t m_n_voiceoff;
-	data32_t m_n_modulationmode;
-	data32_t m_n_noisemode;
-	data32_t m_n_reverbmode;
-	data32_t m_n_channelonoff;
-	data16_t m_n_reverbworkareastart;
-	data16_t m_n_irqaddress;
-	data32_t m_n_spuoffset;
-	data16_t m_n_spudata;
-	data16_t m_n_spucontrol;
-	data32_t m_n_spustatus;
-	data16_t m_n_cdvolumeleft;
-	data16_t m_n_cdvolumeright;
-	data16_t m_n_externalvolumeleft;
-	data16_t m_n_externalvolumeright;
-	data16_t m_p_n_volumeleft[ MAX_CHANNEL ];
-	data16_t m_p_n_volumeright[ MAX_CHANNEL ];
-	data16_t m_p_n_pitch[ MAX_CHANNEL ];
-	data16_t m_p_n_address[ MAX_CHANNEL ];
-	data16_t m_p_n_attackdecaysustain[ MAX_CHANNEL ];
-	data16_t m_p_n_sustainrelease[ MAX_CHANNEL ];
-	data16_t m_p_n_adsrvolume[ MAX_CHANNEL ];
-	data16_t m_p_n_repeataddress[ MAX_CHANNEL ];
-	data32_t m_p_n_effect[ 16 ];
-	data16_t *m_p_n_spuram;
-	data32_t m_p_n_blockaddress[ MAX_CHANNEL ];
-	data32_t m_p_n_blockoffset[ MAX_CHANNEL ];
-	data32_t m_p_n_blockstatus[ MAX_CHANNEL ];
+	UINT32 *g_p_n_psxram;
+	UINT16 m_n_mainvolumeleft;
+	UINT16 m_n_mainvolumeright;
+	UINT16 m_n_reverberationdepthleft;
+	UINT16 m_n_reverberationdepthright;
+	UINT32 m_n_voiceon;
+	UINT32 m_n_voiceoff;
+	UINT32 m_n_modulationmode;
+	UINT32 m_n_noisemode;
+	UINT32 m_n_reverbmode;
+	UINT32 m_n_channelonoff;
+	UINT16 m_n_reverbworkareastart;
+	UINT16 m_n_irqaddress;
+	UINT32 m_n_spuoffset;
+	UINT16 m_n_spudata;
+	UINT16 m_n_spucontrol;
+	UINT32 m_n_spustatus;
+	UINT16 m_n_cdvolumeleft;
+	UINT16 m_n_cdvolumeright;
+	UINT16 m_n_externalvolumeleft;
+	UINT16 m_n_externalvolumeright;
+	UINT16 m_p_n_volumeleft[ MAX_CHANNEL ];
+	UINT16 m_p_n_volumeright[ MAX_CHANNEL ];
+	UINT16 m_p_n_pitch[ MAX_CHANNEL ];
+	UINT16 m_p_n_address[ MAX_CHANNEL ];
+	UINT16 m_p_n_attackdecaysustain[ MAX_CHANNEL ];
+	UINT16 m_p_n_sustainrelease[ MAX_CHANNEL ];
+	UINT16 m_p_n_adsrvolume[ MAX_CHANNEL ];
+	UINT16 m_p_n_repeataddress[ MAX_CHANNEL ];
+	UINT32 m_p_n_effect[ 16 ];
+	UINT16 *m_p_n_spuram;
+	UINT32 m_p_n_blockaddress[ MAX_CHANNEL ];
+	UINT32 m_p_n_blockoffset[ MAX_CHANNEL ];
+	UINT32 m_p_n_blockstatus[ MAX_CHANNEL ];
 	INT16 m_p_n_blockbuffer[ MAX_CHANNEL * SAMPLES_PER_BLOCK ];
 	INT16 m_p_n_s1[ MAX_CHANNEL ];
 	INT16 m_p_n_s2[ MAX_CHANNEL ];
-	data32_t m_n_loop[ MAX_CHANNEL ];
+	UINT32 m_n_loop[ MAX_CHANNEL ];
 
 	sound_stream *stream;
 };
@@ -81,7 +81,7 @@ struct psxinfo
 #define SPU_REG( a ) ( ( a - 0xc00 ) / 4 )
 #define SPU_CHANNEL_REG( a ) ( a / 4 )
 
-INLINE int volume( data16_t n_volume )
+INLINE int volume( UINT16 n_volume )
 {
 	if( ( n_volume & 0x8000 ) != 0 )
 	{
@@ -355,7 +355,7 @@ static void *psxspu_start(int sndindex, int clock, const void *config)
 }
 
 
-static data32_t psx_spu_delay = 0;
+static UINT32 psx_spu_delay = 0;
 
 WRITE32_HANDLER( psx_spu_delay_w )
 {

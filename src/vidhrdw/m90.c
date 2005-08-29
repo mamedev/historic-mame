@@ -73,7 +73,7 @@ VIDEO_START( m90 )
 	return 0;
 }
 
-static void m90_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void m90_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -108,7 +108,7 @@ static void m90_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *c
 }
 
 #if 0
-static void bootleg_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void bootleg_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

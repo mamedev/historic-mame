@@ -162,7 +162,7 @@ WRITE8_HANDLER( spdodgeb_videoram_w )
 					(which+order),color+ 8 * sprite_palbank,flipx,flipy,sx,sy, \
 					cliprect,TRANSPARENCY_PEN,0);
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[1];
 	unsigned char *src;

@@ -28,9 +28,9 @@ lev 7 : 0x7c : 0000 05be - xxx
 
 */
 
-data16_t *bsb_videoram, *bsb_videoram2, *bsb_videoram3;
-data16_t *bsb_vidreg1, *bsb_vidreg2;
-data16_t *bigstrkb_spriteram;
+UINT16 *bsb_videoram, *bsb_videoram2, *bsb_videoram3;
+UINT16 *bsb_vidreg1, *bsb_vidreg2;
+UINT16 *bigstrkb_spriteram;
 
 WRITE16_HANDLER( bsb_videoram_w );
 WRITE16_HANDLER( bsb_videoram2_w );

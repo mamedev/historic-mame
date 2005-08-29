@@ -10,12 +10,12 @@
 
 #define VERBOSE (0)
 
-data8_t *st0016_sound_regs;
+UINT8 *st0016_sound_regs;
 
 struct st0016_info
 {
 	sound_stream * stream;
-	data8_t *sound_ram;
+	UINT8 *sound_ram;
 	int vpos[8], frac[8], lponce[8];
 };
 

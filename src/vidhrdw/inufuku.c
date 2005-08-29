@@ -15,13 +15,13 @@
 #include "vidhrdw/generic.h"
 
 
-extern data16_t *inufuku_spriteram1;
-extern data16_t *inufuku_spriteram2;
+extern UINT16 *inufuku_spriteram1;
+extern UINT16 *inufuku_spriteram2;
 extern size_t inufuku_spriteram1_size;
 
-extern data16_t *inufuku_bg_videoram;
-extern data16_t *inufuku_bg_rasterram;
-extern data16_t *inufuku_text_videoram;
+extern UINT16 *inufuku_bg_videoram;
+extern UINT16 *inufuku_bg_rasterram;
+extern UINT16 *inufuku_text_videoram;
 
 static int inufuku_bg_scrollx, inufuku_bg_scrolly;
 static int inufuku_text_scrollx, inufuku_text_scrolly;
@@ -69,7 +69,7 @@ WRITE16_HANDLER( inufuku_scrollreg_w )
 
 ******************************************************************************/
 
-static void inufuku_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void inufuku_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

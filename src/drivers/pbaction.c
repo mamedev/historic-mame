@@ -60,7 +60,7 @@ static WRITE8_HANDLER( pbaction_sh_command_w )
 }
 
 
-static data8_t *work_ram;
+static UINT8 *work_ram;
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

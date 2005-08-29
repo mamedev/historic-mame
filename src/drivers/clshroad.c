@@ -21,12 +21,12 @@ XTAL        :   18.432 MHz
 #include "vidhrdw/generic.h"
 #include "sound/custom.h"
 
-data8_t *clshroad_sharedram;
+UINT8 *clshroad_sharedram;
 
 /* Variables & functions defined in vidhrdw: */
 
-extern data8_t *clshroad_vram_0, *clshroad_vram_1;
-extern data8_t *clshroad_vregs;
+extern UINT8 *clshroad_vram_0, *clshroad_vram_1;
+extern UINT8 *clshroad_vregs;
 
 WRITE8_HANDLER( clshroad_vram_0_w );
 WRITE8_HANDLER( clshroad_vram_1_w );
@@ -517,7 +517,7 @@ without this the death sequence never ends so the game is unplayable after you
 die once, it would be nice to avoid the hack however
 
 */
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	ROM[0x05C6] = 0xc3;
 	ROM[0x05C7] = 0x8d;

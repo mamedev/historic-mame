@@ -23,24 +23,6 @@
 
 ***************************************************************************/
 
-struct mame_bitmap
-{
-	int width,height;	/* width and height of the bitmap */
-	int depth;			/* bits per pixel */
-	void **line;		/* pointers to the start of each line - can be UINT8 **, UINT16 ** or UINT32 ** */
-
-	/* alternate way of accessing the pixels */
-	void *base;			/* pointer to pixel (0,0) (adjusted for padding) */
-	int rowpixels;		/* pixels per row (including padding) */
-	int rowbytes;		/* bytes per row (including padding) */
-
-	/* functions to render in the correct orientation */
-	void (*plot)(struct mame_bitmap *bitmap,int x,int y,pen_t pen);
-	pen_t (*read)(struct mame_bitmap *bitmap,int x,int y);
-	void (*plot_box)(struct mame_bitmap *bitmap,int x,int y,int width,int height,pen_t pen);
-};
-
-
 struct _rom_entry
 {
 	const char *_name;	/* name of the file to load */
@@ -405,16 +387,16 @@ void coin_lockout_global_w(int on);  /* Locks out all coin inputs */
 
 /* generic NVRAM handler */
 extern size_t generic_nvram_size;
-extern data8_t *generic_nvram;
-extern data16_t *generic_nvram16;
-extern data32_t *generic_nvram32;
+extern UINT8 *generic_nvram;
+extern UINT16 *generic_nvram16;
+extern UINT32 *generic_nvram32;
 void nvram_handler_generic_0fill(mame_file *file, int read_or_write);
 void nvram_handler_generic_1fill(mame_file *file, int read_or_write);
 
 /* bitmap allocation */
-struct mame_bitmap *bitmap_alloc(int width,int height);
-struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth);
-void bitmap_free(struct mame_bitmap *bitmap);
+mame_bitmap *bitmap_alloc(int width,int height);
+mame_bitmap *bitmap_alloc_depth(int width,int height,int depth);
+void bitmap_free(mame_bitmap *bitmap);
 
 /* automatic resource management */
 void begin_resource_tracking(void);
@@ -428,8 +410,8 @@ INLINE int get_resource_tag(void)
 /* automatically-freeing memory */
 void *auto_malloc(size_t size);
 char *auto_strdup(const char *str);
-struct mame_bitmap *auto_bitmap_alloc(int width,int height);
-struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
+mame_bitmap *auto_bitmap_alloc(int width,int height);
+mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
 
 /*
   Save a screen shot of the game display. It is suggested to use the core
@@ -439,13 +421,13 @@ struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
   file name. This isn't scrictly necessary, so you can just call
   save_screen_snapshot() to let the core automatically pick a default name.
 */
-void save_screen_snapshot_as(mame_file *fp, struct mame_bitmap *bitmap);
-void save_screen_snapshot(struct mame_bitmap *bitmap);
+void save_screen_snapshot_as(mame_file *fp, mame_bitmap *bitmap);
+void save_screen_snapshot(mame_bitmap *bitmap);
 
 /* Movie recording */
 void record_movie_toggle(void);
 void record_movie_stop(void);
-void record_movie_frame(struct mame_bitmap *bitmap);
+void record_movie_frame(mame_bitmap *bitmap);
 
 /* disk handling */
 chd_file *get_disk_handle(int diskindex);

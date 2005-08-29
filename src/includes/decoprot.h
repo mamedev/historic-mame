@@ -20,5 +20,5 @@ WRITE32_HANDLER( deco32_fghthist_prot_w );
 
 void deco16_104_rohga_reset(void);
 
-extern data16_t *deco16_prot_ram;
-extern data32_t *deco32_prot_ram;
+extern UINT16 *deco16_prot_ram;
+extern UINT32 *deco32_prot_ram;

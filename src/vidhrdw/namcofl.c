@@ -6,15 +6,15 @@
 #include "namcoic.h"
 #include "namcos2.h"
 
-data32_t *namcofl_spritebank32;
-//data32_t *namcofl_tilebank32;
-data32_t *namcofl_mcuram;
+UINT32 *namcofl_spritebank32;
+//UINT32 *namcofl_tilebank32;
+UINT32 *namcofl_mcuram;
 
 /* nth_word32 is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of 16 bit words.
  */
-INLINE data16_t
-nth_word32( const data32_t *source, int which )
+INLINE UINT16
+nth_word32( const UINT32 *source, int which )
 {
 	source += which/2;
 	which ^= 1;	/* i960 is little-endian */
@@ -31,10 +31,10 @@ nth_word32( const data32_t *source, int which )
 /* nth_byte32 is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of bytes.
  */
-INLINE data8_t
-nth_byte32( const data32_t *pSource, int which )
+INLINE UINT8
+nth_byte32( const UINT32 *pSource, int which )
 {
-		data32_t data = pSource[which/4];
+		UINT32 data = pSource[which/4];
 
 		which ^= 3;	/* i960 is little-endian */
 		switch( which&3 )
@@ -50,8 +50,8 @@ static void
 namcofl_install_palette( void )
 {
 	int pen, page, dword_offset, byte_offset;
-	data32_t r,g,b;
-	data32_t *pSource;
+	UINT32 r,g,b;
+	UINT32 *pSource;
 
 	/* this is unnecessarily expensive.  Better would be to mark palette entries dirty as
      * they are modified, and only process those that have changed.
@@ -83,7 +83,7 @@ handle_mcu( void )
 {
 #if 0	// phil's mcu simulation from NB-1/2
 	static int toggle;
-	static data16_t credits;
+	static UINT16 credits;
 	static int old_coin_state;
 	static int old_p1;
 	static int old_p2;
@@ -122,7 +122,7 @@ handle_mcu( void )
 	namcofl_mcuram[0xa01e/4] &= 0xffff0000;
 	namcofl_mcuram[0xa01e/4] |= credits;
 #else	// ElSemi's MCU simulation
-	data8_t *IORAM = (data8_t *)namcofl_mcuram;
+	UINT8 *IORAM = (UINT8 *)namcofl_mcuram;
 	static int toggle;
 	static int old_p1;
 	static int old_p2;
@@ -168,7 +168,7 @@ handle_mcu( void )
 } /* handle_mcu */
 
 INLINE void
-TilemapCB(data16_t code, int *tile, int *mask )
+TilemapCB(UINT16 code, int *tile, int *mask )
 {
 	*tile = code;
 	*mask = code;

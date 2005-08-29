@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *mjkjidai_videoram;
+UINT8 *mjkjidai_videoram;
 
 static int display_enable;
 static tilemap *bg_tilemap;
@@ -59,7 +59,7 @@ WRITE8_HANDLER( mjkjidai_videoram_w )
 
 WRITE8_HANDLER( mjkjidai_ctrl_w )
 {
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 //  logerror("%04x: port c0 = %02x\n",activecpu_get_pc(),data);
 
@@ -95,7 +95,7 @@ WRITE8_HANDLER( mjkjidai_ctrl_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

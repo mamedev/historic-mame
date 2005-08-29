@@ -173,7 +173,7 @@ Offset:                 Values:
 
 */
 
-static void airbustr_draw_sprites( struct mame_bitmap *bitmap,const struct rectangle *cliprect )
+static void airbustr_draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect )
 {
 	int i, offs;
 

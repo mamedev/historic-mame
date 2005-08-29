@@ -29,8 +29,8 @@ UINT8 balsente_shooter;
 UINT8 balsente_shooter_x;
 UINT8 balsente_shooter_y;
 UINT8 balsente_adc_shift;
-data16_t *shrike_shared;
-data16_t *shrike_io;
+UINT16 *shrike_shared;
+UINT16 *shrike_io;
 
 
 /* 8253 counter state */
@@ -1184,7 +1184,7 @@ READ8_HANDLER( grudge_steering_r )
 
 READ8_HANDLER( shrike_shared_6809_r )
 {
-  data16_t mem_mask = offset & 1 ? 0xff : 0xff00;
+  UINT16 mem_mask = offset & 1 ? 0xff : 0xff00;
 
   switch( offset )
   {
@@ -1198,7 +1198,7 @@ READ8_HANDLER( shrike_shared_6809_r )
 
 WRITE8_HANDLER( shrike_shared_6809_w )
 {
-  data16_t mem_mask = offset & 1 ? 0xff : 0xff00;
+  UINT16 mem_mask = offset & 1 ? 0xff : 0xff00;
   shrike_shared[offset >> 1] = ( shrike_shared[offset >> 1] & ~mem_mask ) | ( data << ( ~mem_mask & 0x8 ) );
 }
 

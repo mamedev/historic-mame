@@ -14,20 +14,20 @@ unico used for zero point etc.
 #include "sound/okim6295.h"
 
 
-static data16_t drgnmst_snd_command;
-static data16_t drgnmst_snd_flag;
-static data8_t drgnmst_oki_control;
-static data8_t drgnmst_oki_command;
-static data8_t pic16c5x_port0;
-static data8_t drgnmst_oki0_bank;
-static data8_t drgnmst_oki1_bank;
+static UINT16 drgnmst_snd_command;
+static UINT16 drgnmst_snd_flag;
+static UINT8 drgnmst_oki_control;
+static UINT8 drgnmst_oki_command;
+static UINT8 pic16c5x_port0;
+static UINT8 drgnmst_oki0_bank;
+static UINT8 drgnmst_oki1_bank;
 
-data16_t *drgnmst_vidregs;
-data16_t *drgnmst_rowscrollram;
-data16_t *drgnmst_fg_videoram;
-data16_t *drgnmst_bg_videoram;
-data16_t *drgnmst_md_videoram;
-data16_t *drgnmst_vidregs2;
+UINT16 *drgnmst_vidregs;
+UINT16 *drgnmst_rowscrollram;
+UINT16 *drgnmst_fg_videoram;
+UINT16 *drgnmst_bg_videoram;
+UINT16 *drgnmst_md_videoram;
+UINT16 *drgnmst_vidregs2;
 
 
 WRITE16_HANDLER( drgnmst_fg_videoram_w );
@@ -444,9 +444,9 @@ static UINT8 drgnmst_asciitohex(UINT8 data)
 
 static DRIVER_INIT( drgnmst )
 {
-	data8_t *drgnmst_PICROM_HEX = memory_region(REGION_USER1);
-	data16_t *drgnmst_PICROM = (data16_t *)memory_region(REGION_CPU2);
-	data8_t *drgnmst_PCM = memory_region(REGION_SOUND1);
+	UINT8 *drgnmst_PICROM_HEX = memory_region(REGION_USER1);
+	UINT16 *drgnmst_PICROM = (UINT16 *)memory_region(REGION_CPU2);
+	UINT8 *drgnmst_PCM = memory_region(REGION_SOUND1);
 	INT32   offs, data;
 	UINT16  src_pos = 0;
 	UINT16  dst_pos = 0;

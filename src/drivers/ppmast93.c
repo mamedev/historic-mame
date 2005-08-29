@@ -130,7 +130,7 @@ one for shoot and one for select.
 #include "sound/2413intf.h"
 
 static tilemap *ppmast93_fg_tilemap, *ppmast93_bg_tilemap;
-data8_t *ppmast93_fgram, *ppmast93_bgram;
+UINT8 *ppmast93_fgram, *ppmast93_bgram;
 
 WRITE8_HANDLER( ppmast93_fgram_w )
 {

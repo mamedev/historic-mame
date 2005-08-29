@@ -53,7 +53,7 @@ RSSENGO2.72   chr.
 #include "sndhrdw/seibu.h"
 #include "sound/3812intf.h"
 
-extern data8_t *sengokmj_bgvram,*sengokmj_mdvram,*sengokmj_fgvram,*sengokmj_txvram;
+extern UINT8 *sengokmj_bgvram,*sengokmj_mdvram,*sengokmj_fgvram,*sengokmj_txvram;
 static UINT8 sengokumj_mux_data;
 
 WRITE8_HANDLER( sengokmj_bgvram_w );
@@ -89,7 +89,7 @@ static WRITE8_HANDLER( mahjong_panel_w )
 
 static WRITE8_HANDLER( sengokmj_out_w )
 {
-	static data8_t old = 0;
+	static UINT8 old = 0;
 	static int coins_used = 0;
 
 	if(!offset)

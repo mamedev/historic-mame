@@ -17,8 +17,8 @@
 
 WRITE8_HANDLER( snkwave_w );
 
-extern data8_t *me_fgram;
-extern data8_t *me_bgram;
+extern UINT8 *me_fgram;
+extern UINT8 *me_bgram;
 WRITE8_HANDLER(me_c600_w);
 WRITE8_HANDLER(me_fgram_w);
 WRITE8_HANDLER(me_bgram_w);

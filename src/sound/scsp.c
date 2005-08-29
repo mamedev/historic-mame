@@ -30,7 +30,7 @@
 #define ICLIP16(x) (x<-32768)?-32768:((x>32767)?32767:x)
 
 #define SHIFT	12
-#define FIX(v)	((data32_t) ((float) (1<<SHIFT)*(v)))
+#define FIX(v)	((UINT32) ((float) (1<<SHIFT)*(v)))
 
 
 #define EG_SHIFT	8
@@ -116,21 +116,21 @@ struct _EG
 	int RR;		//Release
 
 	int DL;		//Decay level
-	data8_t EGHOLD;
-	data8_t LPLINK;
+	UINT8 EGHOLD;
+	UINT8 LPLINK;
 };
 
 struct _SLOT
 {
 	union
 	{
-		data16_t data[0x10];	//only 0x1a bytes used
-		data8_t datab[0x20];
+		UINT16 data[0x10];	//only 0x1a bytes used
+		UINT8 datab[0x20];
 	} udata;
-	data8_t active;	//this slot is currently playing
-	data8_t *base;		//samples base address
-	data32_t cur_addr;	//current play address (24.8)
-	data32_t step;		//pitch step (24.8)
+	UINT8 active;	//this slot is currently playing
+	UINT8 *base;		//samples base address
+	UINT32 cur_addr;	//current play address (24.8)
+	UINT32 step;		//pitch step (24.8)
 	struct _EG EG;			//Envelope
 	struct _LFO PLFO;		//Phase LFO
 	struct _LFO ALFO;		//Amplitude LFO
@@ -167,8 +167,8 @@ struct _SCSP
 {
 	union
 	{
-		data16_t data[0x30/2];
-		data8_t datab[0x30];
+		UINT16 data[0x30/2];
+		UINT8 datab[0x30];
 	} udata;
 	struct _SLOT Slots[32];
 	signed short RINGBUF[64];
@@ -180,15 +180,15 @@ struct _SCSP
 
 	signed int *buffertmpl,*buffertmpr;
 
-	data32_t IrqTimA;
-	data32_t IrqTimBC;
-	data32_t IrqMidi;
+	UINT32 IrqTimA;
+	UINT32 IrqTimBC;
+	UINT32 IrqMidi;
 
-	data8_t MidiOutW,MidiOutR;
-	data8_t MidiStack[16];
-	data8_t MidiW,MidiR;
+	UINT8 MidiOutW,MidiOutR;
+	UINT8 MidiStack[16];
+	UINT8 MidiW,MidiR;
 
-	data32_t FNS_Table[0x400];
+	UINT32 FNS_Table[0x400];
 
 	int LPANTABLE[0x10000];
 	int RPANTABLE[0x10000];
@@ -235,8 +235,8 @@ static unsigned char DecodeSCI(struct _SCSP *SCSP,unsigned char irq)
 
 void CheckPendingIRQ(struct _SCSP *SCSP)
 {
-	data32_t pend=SCSP->udata.data[0x20/2];
-	data32_t en=SCSP->udata.data[0x1e/2];
+	UINT32 pend=SCSP->udata.data[0x20/2];
+	UINT32 en=SCSP->udata.data[0x1e/2];
 	if(SCSP->MidiW!=SCSP->MidiR)
 	{
 		SCSP->Int68kCB(SCSP->IrqMidi);
@@ -355,7 +355,7 @@ static int EG_Update(struct _SLOT *slot)
 	return (slot->EG.volume>>EG_SHIFT)<<(SHIFT-10);
 }
 
-static data32_t SCSP_Step(struct _SLOT *slot)
+static UINT32 SCSP_Step(struct _SLOT *slot)
 {
 	int octave=OCT(slot);
 	int Fo=44100;
@@ -769,7 +769,7 @@ static void SCSP_Update##_8bit##lfo##alfo##loop(struct _SCSP *SCSP, struct _SLOT
 SCSPNAME(_8bit,lfo,alfo,loop)\
 {\
 	signed int sample;\
-	data32_t addr;\
+	UINT32 addr;\
 	unsigned int s;\
 	for(s=0;s<nsamples;++s)\
 	{\
@@ -1084,7 +1084,7 @@ READ16_HANDLER( SCSP_0_r )
 	return SCSP_r16(SCSP, offset*2);
 }
 
-extern data32_t* stv_scu;
+extern UINT32* stv_scu;
 
 WRITE16_HANDLER( SCSP_0_w )
 {

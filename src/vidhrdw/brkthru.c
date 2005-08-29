@@ -109,7 +109,7 @@ WRITE8_HANDLER( brkthru_bgram_w )
 
 static void get_fg_tile_info(int tile_index)
 {
-	data8_t code = brkthru_videoram[tile_index];
+	UINT8 code = brkthru_videoram[tile_index];
 	SET_TILE_INFO(0, code, 0, 0)
 }
 
@@ -178,7 +178,7 @@ WRITE8_HANDLER( brkthru_1800_w )
 
 
 #if 0
-static void show_register( struct mame_bitmap *bitmap, int x, int y, unsigned long data )
+static void show_register( mame_bitmap *bitmap, int x, int y, unsigned long data )
 {
 	char buf[5];
 
@@ -195,7 +195,7 @@ static void show_register( struct mame_bitmap *bitmap, int x, int y, unsigned lo
 
 ***************************************************************************/
 
-static void brkthru_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int prio )
+static void brkthru_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect, int prio )
 	{
 	int offs;
 	/* Draw the sprites. Note that it is important to draw them exactly in this */

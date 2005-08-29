@@ -9,12 +9,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *toypop_videoram;
+UINT8 *toypop_videoram;
 
 extern unsigned char *m68000_sharedram;
 
 static tilemap *bg_tilemap;
-data16_t *toypop_bg_image;
+UINT16 *toypop_bg_image;
 static int bitmapflip,palettebank;
 
 /***************************************************************************
@@ -169,7 +169,7 @@ WRITE16_HANDLER( toypop_merged_background_w )
 		toypop_bg_image[2*offset+1] = (data & 0xf) | ((data & 0xf0) << 4);
 }
 
-static void draw_background(struct mame_bitmap *bitmap)
+static void draw_background(mame_bitmap *bitmap)
 {
 	register int offs, x, y;
 	UINT8 scanline[288];
@@ -182,7 +182,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 		{
 			for (x = 0; x < 288; x+=2)
 			{
-				data16_t data = toypop_bg_image[offs];
+				UINT16 data = toypop_bg_image[offs];
 				scanline[x]   = data;
 				scanline[x+1] = data >> 8;
 				offs--;
@@ -197,7 +197,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 		{
 			for (x = 0; x < 288; x+=2)
 			{
-				data16_t data = toypop_bg_image[offs];
+				UINT16 data = toypop_bg_image[offs];
 				scanline[x]   = data >> 8;
 				scanline[x+1] = data;
 				offs++;
@@ -216,7 +216,7 @@ static void draw_background(struct mame_bitmap *bitmap)
 ***************************************************************************/
 
 /* from mappy.c */
-void mappy_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int xoffs, int yoffs, int trans_color );
+void mappy_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int xoffs, int yoffs, int trans_color );
 
 
 VIDEO_UPDATE( toypop )

@@ -82,12 +82,12 @@ WRITE16_HANDLER(es5510_dsp_w);
 WRITE16_HANDLER(f3_volume_w);
 WRITE16_HANDLER(f3_es5505_bank_w);
 void f3_68681_reset(void);
-extern data32_t *f3_shared_ram;
+extern UINT32 *f3_shared_ram;
 
 static UINT16 coin_word, frame_counter=0;
 static UINT16 port_sel = 0;
 extern UINT16 groundfx_rotate_ctrl[8];
-static data32_t *groundfx_ram;
+static UINT32 *groundfx_ram;
 
 /***********************************************************
                 COLOR RAM
@@ -126,7 +126,7 @@ static void groundfx_interrupt5(int x)
                 EPROM
 **********************************************************/
 
-static data8_t default_eeprom[128]=
+static UINT8 default_eeprom[128]=
 {
 	0x02,0x01,0x11,0x12,0x01,0x01,0x01,0x00,0x80,0x80,0x30,0x01,0x00,0x00,0x62,0x45,
 	0xe0,0xa0,0xff,0x28,0xff,0xff,0xfa,0xd7,0x33,0x28,0x00,0x00,0x33,0x28,0x00,0x00,
@@ -432,7 +432,7 @@ static gfx_decode groundfx_gfxdecodeinfo[] =
 static MACHINE_INIT( groundfx )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
 	memory_set_bankptr(1,&RAM[0x80000]);
 
 	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */

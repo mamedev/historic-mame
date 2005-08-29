@@ -23,7 +23,7 @@ Changes 29/03/2005 - Pierpaolo Prazzoli
 
 /* Video Handling */
 
-data16_t *bestleag_txram,*bestleag_bgram,*bestleag_fgram,*bestleag_vregs;
+UINT16 *bestleag_txram,*bestleag_bgram,*bestleag_fgram,*bestleag_vregs;
 static tilemap *tx_tilemap,*bg_tilemap,*fg_tilemap;
 
 static void get_tx_tile_info(int tile_index)
@@ -90,7 +90,7 @@ Note: sprite chip is different than the other Big Striker sets and they
       include several similiarities with other Playmark games (including
       the sprite end code and the data being offset (i.e. spriteram starting from 0x16/2))
 */
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 
 	/*

@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *gaplus_videoram;
-data8_t *gaplus_spriteram;
+UINT8 *gaplus_videoram;
+UINT8 *gaplus_spriteram;
 
 static tilemap *bg_tilemap;
 
@@ -249,7 +249,7 @@ WRITE8_HANDLER( gaplus_starfield_control_w )
 
 ***************************************************************************/
 
-static void starfield_render( struct mame_bitmap *bitmap )
+static void starfield_render( mame_bitmap *bitmap )
 {
 	int i;
 	int width, height;
@@ -276,7 +276,7 @@ static void starfield_render( struct mame_bitmap *bitmap )
 	}
 }
 
-static void gaplus_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void gaplus_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

@@ -122,8 +122,8 @@ enum
 #define Z180_INT_ASCI1	9			/* Internal ASCI channel 1 */
 
 /* MMU mapped memory lookup */
-extern data8_t cpu_readmemz180(offs_t offset);
-extern void cpu_writememz180(offs_t offset, data8_t data);
+extern UINT8 cpu_readmemz180(offs_t offset);
+extern void cpu_writememz180(offs_t offset, UINT8 data);
 extern void cpu_setOPbasez180(int pc);
 
 extern void z180_get_info(UINT32 state, union cpuinfo *info);

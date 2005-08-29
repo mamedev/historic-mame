@@ -25,7 +25,7 @@ some bits by David Haywood
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-extern data16_t *crospang_bg_videoram,*crospang_fg_videoram;
+extern UINT16 *crospang_bg_videoram,*crospang_fg_videoram;
 
 extern VIDEO_START( crospang );
 extern VIDEO_UPDATE( crospang );

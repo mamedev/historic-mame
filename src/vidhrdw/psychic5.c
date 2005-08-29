@@ -333,7 +333,7 @@ VIDEO_START( psychic5 )
 
 #define DRAW_SPRITE(code, sx, sy) drawgfx(bitmap, Machine->gfx[0], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 15);
 
-void psychic5_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+void psychic5_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -401,7 +401,7 @@ void psychic5_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *
 	}
 }
 
-static void psychic5_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void psychic5_draw_background( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int bg_scrollx = (ps5_io_ram[BG_SCROLLX_LSB] + ((ps5_io_ram[BG_SCROLLX_MSB] & 0x03) << 8)) & 0x3ff;
 	int bg_scrolly = (ps5_io_ram[BG_SCROLLY_LSB] + ((ps5_io_ram[BG_SCROLLY_MSB] & 0x01) << 8)) & 0x1ff;
@@ -415,7 +415,7 @@ static void psychic5_draw_background( struct mame_bitmap *bitmap, const struct r
 	{
 		if (title_screen)
 		{
-			struct rectangle clip = *cliprect;
+			rectangle clip = *cliprect;
 
 			int sx1 = spriteram[12];		/* sprite 0 */
 			int sy1 = spriteram[11];

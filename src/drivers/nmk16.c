@@ -134,9 +134,9 @@ for more info on this.
 #include "machine/nmk112.h"
 
 
-extern data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
-extern data16_t *gunnail_scrollram;
-extern data16_t tharrier_scroll;
+extern UINT16 *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
+extern UINT16 *gunnail_scrollram;
+extern UINT16 tharrier_scroll;
 
 READ16_HANDLER( nmk_bgvideoram_r );
 WRITE16_HANDLER( nmk_bgvideoram_w );
@@ -218,7 +218,7 @@ WRITE8_HANDLER ( ssmissin_soundbank_w )
 }
 
 
-static data16_t *ram;
+static UINT16 *ram;
 
 
 static WRITE16_HANDLER( tharrier_shared_w )
@@ -557,8 +557,8 @@ anything to compare,infact
 
 ******************************************************************************************/
 
-data16_t *mcu_shared_ram;
-data16_t *work_ram;
+UINT16 *mcu_shared_ram;
+UINT16 *work_ram;
 
 #define PROT_JSR(_offs_,_protvalue_,_pc_) \
 	if(mcu_shared_ram[(_offs_)/2] == _protvalue_) \
@@ -4519,7 +4519,7 @@ static DRIVER_INIT( nmk )
 
 static DRIVER_INIT( hachamf )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	//rom[0x0006/2] = 0x7dc2;   /* replace reset vector with the "real" one */
 
@@ -4530,7 +4530,7 @@ static DRIVER_INIT( hachamf )
 
 static DRIVER_INIT( tdragonb )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	decode_tdragonb();
 
@@ -4541,7 +4541,7 @@ static DRIVER_INIT( tdragonb )
 
 static DRIVER_INIT( tdragon )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	//rom[0x94b0/2] = 0; /* Patch out JMP to shared memory (protection) */
 	//rom[0x94b2/2] = 0x92f4;
@@ -4588,7 +4588,7 @@ static WRITE16_HANDLER ( test_2a_mustang_w )
 
 static DRIVER_INIT( blkheart )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	is_blkheart = 1; // sprite enable is different?
 
@@ -4606,7 +4606,7 @@ static DRIVER_INIT( blkheart )
 
 static DRIVER_INIT( mustang )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	is_blkheart = 1; // sprite enable is different?
 
@@ -4641,7 +4641,7 @@ static DRIVER_INIT( bjtwin )
  *  008F7E: 207C 000F 9000           movea.l #$f9000, A0
  */
 
-//  data 16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+//  data 16_t *rom = (UINT16 *)memory_region(REGION_CPU1);
 //  rom[0x09172/2] = 0x6006;    /* patch checksum error */
 //  rom[0x08f74/2] = 0x4e71);
 }

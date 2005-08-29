@@ -99,12 +99,12 @@ struct jaguar_config
 **#################################################################################################*/
 
 extern void jaguargpu_get_info(UINT32 state, union cpuinfo *info);
-extern void jaguargpu_ctrl_w(int cpunum, offs_t offset, data32_t data, data32_t mem_mask);
-extern data32_t jaguargpu_ctrl_r(int cpunum, offs_t offset);
+extern void jaguargpu_ctrl_w(int cpunum, offs_t offset, UINT32 data, UINT32 mem_mask);
+extern UINT32 jaguargpu_ctrl_r(int cpunum, offs_t offset);
 
 extern void jaguardsp_get_info(UINT32 state, union cpuinfo *info);
-extern void jaguardsp_ctrl_w(int cpunum, offs_t offset, data32_t data, data32_t mem_mask);
-extern data32_t jaguardsp_ctrl_r(int cpunum, offs_t offset);
+extern void jaguardsp_ctrl_w(int cpunum, offs_t offset, UINT32 data, UINT32 mem_mask);
+extern UINT32 jaguardsp_ctrl_r(int cpunum, offs_t offset);
 
 
 #endif /* _JAGUAR_H */

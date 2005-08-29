@@ -82,7 +82,7 @@ VIDEO_START( kchamp )
             3             XXXXXXXX
 */
 
-static void kchamp_draw_sprites( struct mame_bitmap *bitmap )
+static void kchamp_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -110,7 +110,7 @@ static void kchamp_draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-static void kchampvs_draw_sprites( struct mame_bitmap *bitmap )
+static void kchampvs_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

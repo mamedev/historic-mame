@@ -132,7 +132,7 @@ Notes:
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
-extern data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
+extern UINT16 *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 extern int gaiden_sprite_sizey;
 
 extern int raiga_alpha;
@@ -1436,9 +1436,9 @@ static DRIVER_INIT( raiga )
 static DRIVER_INIT( drgnbowl )
 {
 	int i;
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 	size_t  size = memory_region_length(REGION_CPU1);
-	data8_t *buffer = malloc(size);
+	UINT8 *buffer = malloc(size);
 
 	if(!buffer) return;
 

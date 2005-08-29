@@ -150,7 +150,7 @@ WRITE8_HANDLER( pandoras_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char* sr)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, unsigned char* sr)
 {
 	int offs;
 

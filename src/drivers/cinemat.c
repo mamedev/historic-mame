@@ -38,7 +38,7 @@
 #include "state.h"
 
 
-static data16_t *rambase;
+static UINT16 *rambase;
 
 static UINT8 coin_detected;
 static UINT8 coin_last_input;

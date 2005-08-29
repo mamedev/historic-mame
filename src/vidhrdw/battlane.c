@@ -15,7 +15,7 @@ static tilemap *bg_tilemap;
 static int battlane_video_ctrl;
 extern int battlane_cpu_control;
 
-static struct mame_bitmap *screen_bitmap;
+static mame_bitmap *screen_bitmap;
 
 /*
     Video control register
@@ -161,7 +161,7 @@ VIDEO_START( battlane )
 	return 0;
 }
 
-static void battlane_draw_sprites( struct mame_bitmap *bitmap )
+static void battlane_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs, attr, code, color, sx, sy, flipx, flipy, dy;
 
@@ -226,7 +226,7 @@ static void battlane_draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-static void battlane_draw_fg_bitmap( struct mame_bitmap *bitmap )
+static void battlane_draw_fg_bitmap( mame_bitmap *bitmap )
 {
 	int x, y, data;
 

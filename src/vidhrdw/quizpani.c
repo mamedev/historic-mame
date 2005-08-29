@@ -6,8 +6,8 @@
 
 #include "driver.h"
 
-data16_t *quizpani_bg_videoram, *quizpani_txt_videoram;
-data16_t *quizpani_scrollreg;
+UINT16 *quizpani_bg_videoram, *quizpani_txt_videoram;
+UINT16 *quizpani_scrollreg;
 
 static tilemap *bg_tilemap, *txt_tilemap;
 

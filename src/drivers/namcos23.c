@@ -315,7 +315,7 @@ Normalize( UINT32 data )
 }
 
 static void
-DrawLine( struct mame_bitmap *bitmap, int x0, int y0, int x1, int y1 )
+DrawLine( mame_bitmap *bitmap, int x0, int y0, int x1, int y1 )
 {
 	if( x0>=0 && x0<bitmap->width &&
 		x1>=0 && x1<bitmap->width &&
@@ -349,7 +349,7 @@ DrawLine( struct mame_bitmap *bitmap, int x0, int y0, int x1, int y1 )
 } /* DrawLine */
 
 static void
-DrawPoly( struct mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
+DrawPoly( mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 {
 	UINT32 flags = *pSource++;
 	UINT32 unk = *pSource++;
@@ -564,7 +564,7 @@ INPUT_PORTS_END
 DRIVER_INIT(ss23)
 {
 /*
-    data32_t * pSrc = (data32_t *)memory_region(REGION_GFX4);
+    UINT32 * pSrc = (UINT32 *)memory_region(REGION_GFX4);
     int i;
     for( i=0; i<0x200000; i++ )
     {

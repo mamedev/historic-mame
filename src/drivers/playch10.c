@@ -396,7 +396,7 @@ static NVRAM_HANDLER( playch10 )
 }
 
 /* Only used in single monitor bios */
-static data8_t *timedata;
+static UINT8 *timedata;
 
 static WRITE8_HANDLER( time_w )
 {

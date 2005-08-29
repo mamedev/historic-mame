@@ -39,7 +39,7 @@ TO DO:
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
-static data8_t *cfb_ram;
+static UINT8 *cfb_ram;
 
 static UINT32 VCU_gfx_addr = 0;
 static UINT32 VCU_gfx_param_addr = 0;
@@ -100,7 +100,7 @@ static PALETTE_INIT( mazerbla )
 }
 
 
-static struct mame_bitmap * tmpbitmaps[4];
+static mame_bitmap * tmpbitmaps[4];
 
 VIDEO_START( mazerbla )
 {
@@ -323,7 +323,7 @@ note:
 
 
 
-static data8_t *cfb_zpu_sharedram;
+static UINT8 *cfb_zpu_sharedram;
 static WRITE8_HANDLER ( sharedram_CFB_ZPU_w )
 {
 	cfb_zpu_sharedram[offset] = data;

@@ -51,9 +51,9 @@ extern VIDEO_UPDATE( bwing );
 //****************************************************************************
 // Local Vars
 
-static data8_t sound_fifo[MAX_SOUNDS];
-static data8_t *bwp123_membase[3], *bwp3_rombase;
-static data8_t *bwp1_sharedram1, *bwp2_sharedram1;
+static UINT8 sound_fifo[MAX_SOUNDS];
+static UINT8 *bwp123_membase[3], *bwp3_rombase;
+static UINT8 *bwp1_sharedram1, *bwp2_sharedram1;
 static size_t bwp3_romsize;
 static int bwp3_nmimask, bwp3_u8F_d, ffcount, ffhead, fftail;
 
@@ -63,7 +63,7 @@ static int bwp3_nmimask, bwp3_u8F_d, ffcount, ffhead, fftail;
 INTERRUPT_GEN ( bwp1_interrupt )
 {
 	static int coin = 0;
-	data8_t latch_data;
+	UINT8 latch_data;
 
 	switch (cpu_getiloops())
 	{

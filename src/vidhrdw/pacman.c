@@ -28,10 +28,10 @@ static int flipscreen;
 static int bgpriority;
 
 static int xoffsethack;
-data8_t *sprite_bank;
-data8_t *tiles_bankram;
+UINT8 *sprite_bank;
+UINT8 *tiles_bankram;
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	2*8, 34*8-1,
 	0*8, 28*8-1
@@ -220,7 +220,7 @@ VIDEO_UPDATE( pacman )
 	{
 		int offs;
 
-		struct rectangle spriteclip = spritevisiblearea;
+		rectangle spriteclip = spritevisiblearea;
 		sect_rect(&spriteclip, cliprect);
 
 		/* Draw the sprites. Note that it is important to draw them exactly in this */

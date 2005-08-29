@@ -19,10 +19,10 @@ extern int namcona1_gametype;
 
 #define NA1_NVRAM_SIZE (0x800)
 
-extern data16_t *namcona1_workram;
-extern data16_t *namcona1_vreg;
-extern data16_t *namcona1_scroll;
-extern data16_t *namcona1_sparevram;
+extern UINT16 *namcona1_workram;
+extern UINT16 *namcona1_vreg;
+extern UINT16 *namcona1_scroll;
+extern UINT16 *namcona1_sparevram;
 
 extern WRITE16_HANDLER( namcona1_videoram_w );
 extern READ16_HANDLER( namcona1_videoram_r );

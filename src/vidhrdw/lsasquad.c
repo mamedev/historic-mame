@@ -5,7 +5,7 @@ unsigned char *lsasquad_scrollram;
 
 
 
-static void draw_layer(struct mame_bitmap *bitmap,unsigned char *scrollram)
+static void draw_layer(mame_bitmap *bitmap,unsigned char *scrollram)
 {
 	int offs,scrollx,scrolly;
 
@@ -51,7 +51,7 @@ static void draw_layer(struct mame_bitmap *bitmap,unsigned char *scrollram)
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 

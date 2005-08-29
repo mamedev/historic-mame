@@ -7,8 +7,8 @@ todo - convert to tilemap
 
 #include "driver.h"
 
-data8_t* funybubl_banked_videoram;
-data8_t *funybubl_paletteram;
+UINT8* funybubl_banked_videoram;
+UINT8 *funybubl_paletteram;
 
 
 WRITE8_HANDLER ( funybubl_paldatawrite )
@@ -37,12 +37,12 @@ VIDEO_START(funybubl)
 	return 0;
 }
 
-static void funybubl_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void funybubl_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 
 
-	data8_t *source = &funybubl_banked_videoram[0x2000-0x20];
-	data8_t *finish = source - 0x1000;
+	UINT8 *source = &funybubl_banked_videoram[0x2000-0x20];
+	UINT8 *finish = source - 0x1000;
 
 
 	while( source>finish )

@@ -67,8 +67,8 @@ VIDEO_UPDATE(pktgaldb);
 
 extern void deco102_decrypt(int region, int address_xor, int data_select_xor, int opcode_select_xor);
 
-extern data16_t* pcktgaldb_fgram;
-extern data16_t* pcktgaldb_sprites;
+extern UINT16* pcktgaldb_fgram;
+extern UINT16* pcktgaldb_sprites;
 
 /**********************************************************************************/
 
@@ -113,7 +113,7 @@ WRITE16_HANDLER( paletteram16_xRGB_w )
 {
 	int pen;
 	int r,g,b;
-	data32_t paldat;
+	UINT32 paldat;
 
 	COMBINE_DATA(&paletteram16[offset]);
 

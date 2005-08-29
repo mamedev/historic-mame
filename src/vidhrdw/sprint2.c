@@ -9,7 +9,7 @@
 UINT8* sprint2_video_ram;
 
 static tilemap* bg_tilemap;
-static struct mame_bitmap* helper;
+static mame_bitmap* helper;
 
 static int collision[2];
 
@@ -73,7 +73,7 @@ WRITE8_HANDLER( sprint2_video_ram_w )
 }
 
 
-static UINT8 collision_check(struct rectangle* rect)
+static UINT8 collision_check(rectangle* rect)
 {
 	UINT8 data = 0;
 
@@ -151,7 +151,7 @@ VIDEO_EOF( sprint2 )
 
 	for (i = 0; i < 2; i++)
 	{
-		struct rectangle rect;
+		rectangle rect;
 
 		rect.min_x = get_sprite_x(i);
 		rect.min_y = get_sprite_y(i);

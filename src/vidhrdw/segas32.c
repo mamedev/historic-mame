@@ -204,7 +204,7 @@
 
 struct layer_info
 {
-	struct mame_bitmap *	bitmap;
+	mame_bitmap *	bitmap;
 	UINT8 *					transparent;
 };
 
@@ -232,11 +232,11 @@ struct cache_entry
  *
  *************************************/
 
-data16_t *system32_videoram;
-data16_t *system32_spriteram;
-data16_t *system32_paletteram[2];
-data16_t system32_displayenable[2];
-data16_t system32_tilebank_external;
+UINT16 *system32_videoram;
+UINT16 *system32_spriteram;
+UINT16 *system32_paletteram[2];
+UINT16 system32_displayenable[2];
+UINT16 system32_tilebank_external;
 
 
 
@@ -253,7 +253,7 @@ static struct cache_entry *cache_head;
 
 /* mixer data */
 static struct layer_info layer_data[11];
-static data16_t mixer_control[2][0x40];
+static UINT16 mixer_control[2][0x40];
 static UINT16 *solid_0000;
 static UINT16 *solid_ffff;
 
@@ -261,7 +261,7 @@ static UINT16 *solid_ffff;
 static UINT8 sprite_render_count;
 static UINT8 sprite_control_latched[8];
 static UINT8 sprite_control[8];
-static data32_t *spriteram_32bit;
+static UINT32 *spriteram_32bit;
 
 
 
@@ -389,7 +389,7 @@ void system32_set_vblank(int state)
  *
  *************************************/
 
-INLINE data16_t xBBBBBGGGGGRRRRR_to_xBGRBBBBGGGGRRRR(data16_t value)
+INLINE UINT16 xBBBBBGGGGGRRRRR_to_xBGRBBBBGGGGRRRR(UINT16 value)
 {
 	int r = (value >> 0) & 0x1f;
 	int g = (value >> 5) & 0x1f;
@@ -400,7 +400,7 @@ INLINE data16_t xBBBBBGGGGGRRRRR_to_xBGRBBBBGGGGRRRR(data16_t value)
 }
 
 
-INLINE data16_t xBGRBBBBGGGGRRRR_to_xBBBBBGGGGGRRRRR(data16_t value)
+INLINE UINT16 xBGRBBBBGGGGRRRR_to_xBBBBBGGGGGRRRRR(UINT16 value)
 {
 	int r = ((value >> 12) & 0x01) | ((value << 1) & 0x1e);
 	int g = ((value >> 13) & 0x01) | ((value >> 3) & 0x1e);
@@ -409,7 +409,7 @@ INLINE data16_t xBGRBBBBGGGGRRRR_to_xBBBBBGGGGGRRRRR(data16_t value)
 }
 
 
-INLINE void update_color(int offset, data16_t data)
+INLINE void update_color(int offset, UINT16 data)
 {
 	int r, g, b;
 
@@ -432,7 +432,7 @@ INLINE void update_color(int offset, data16_t data)
 }
 
 
-INLINE data16_t common_paletteram_r(int which, offs_t offset)
+INLINE UINT16 common_paletteram_r(int which, offs_t offset)
 {
 	int convert;
 
@@ -450,9 +450,9 @@ INLINE data16_t common_paletteram_r(int which, offs_t offset)
 }
 
 
-static void common_paletteram_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
+static void common_paletteram_w(int which, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
-	data16_t value;
+	UINT16 value;
 	int convert;
 
 	/* the lower half of palette RAM is formatted xBBBBBGGGGGRRRRR */
@@ -708,7 +708,7 @@ WRITE32_HANDLER( multi32_spriteram_w )
 {
 	data = SWAP_HALVES(data);
 	mem_mask = SWAP_HALVES(mem_mask);
-	COMBINE_DATA((data32_t *)&system32_spriteram[offset*2]);
+	COMBINE_DATA((UINT32 *)&system32_spriteram[offset*2]);
 	spriteram_32bit[offset/2] =
 		((system32_spriteram[offset |  1] >> 8 ) & 0x000000ff) |
 		((system32_spriteram[offset |  1] << 8 ) & 0x0000ff00) |
@@ -734,7 +734,7 @@ WRITE32_HANDLER( multi32_mixer_0_w )
 {
 	data = SWAP_HALVES(data);
 	mem_mask = SWAP_HALVES(mem_mask);
-	COMBINE_DATA((data32_t *)&mixer_control[0][offset*2]);
+	COMBINE_DATA((UINT32 *)&mixer_control[0][offset*2]);
 }
 
 
@@ -742,7 +742,7 @@ WRITE32_HANDLER( multi32_mixer_1_w )
 {
 	data = SWAP_HALVES(data);
 	mem_mask = SWAP_HALVES(mem_mask);
-	COMBINE_DATA((data32_t *)&mixer_control[1][offset*2]);
+	COMBINE_DATA((UINT32 *)&mixer_control[1][offset*2]);
 }
 
 
@@ -805,7 +805,7 @@ static tilemap *find_cache_entry(int page, int bank)
 static void get_tile_info(int tile_index)
 {
 	struct cache_entry *entry = tile_info.user_data;
-	data16_t data = system32_videoram[(entry->page & 0x7f) * 0x200 + tile_index];
+	UINT16 data = system32_videoram[(entry->page & 0x7f) * 0x200 + tile_index];
 	SET_TILE_INFO(0, (entry->bank << 13) + (data & 0x1fff), (data >> 4) & 0x1ff, (data >> 14) & 3);
 }
 
@@ -817,11 +817,11 @@ static void get_tile_info(int tile_index)
  *
  *************************************/
 
-static int compute_clipping_extents(int enable, int clipout, int clipmask, const struct rectangle *cliprect, struct extents_list *list)
+static int compute_clipping_extents(int enable, int clipout, int clipmask, const rectangle *cliprect, struct extents_list *list)
 {
 	int flip = (system32_videoram[0x1ff00/2] >> 9) & 1;
-	struct rectangle tempclip;
-	struct rectangle clips[5];
+	rectangle tempclip;
+	rectangle clips[5];
 	int sorted[5];
 	int i, j, y;
 
@@ -880,7 +880,7 @@ static int compute_clipping_extents(int enable, int clipout, int clipmask, const
 			for (j = 0; j < 5; j++)
 				if (i & (1 << sorted[j]))
 				{
-					const struct rectangle *cur = &clips[sorted[j]];
+					const rectangle *cur = &clips[sorted[j]];
 
 					/* see if this intersects our last extent */
 					if (extent != &list->extent[i][1] && cur->min_x <= extent[-1])
@@ -946,10 +946,10 @@ INLINE void get_tilemaps(int bgnum, tilemap **tilemaps)
 }
 
 
-static void update_tilemap_zoom(struct layer_info *layer, const struct rectangle *cliprect, int bgnum)
+static void update_tilemap_zoom(struct layer_info *layer, const rectangle *cliprect, int bgnum)
 {
 	int clipenable, clipout, clips, clipdraw_start;
-	struct mame_bitmap *bitmap = layer->bitmap;
+	mame_bitmap *bitmap = layer->bitmap;
 	struct extents_list clip_extents;
 	tilemap *tilemaps[4];
 	UINT32 srcx, srcx_start, srcy;
@@ -1094,10 +1094,10 @@ static void update_tilemap_zoom(struct layer_info *layer, const struct rectangle
  *
  *************************************/
 
-static void update_tilemap_rowscroll(struct layer_info *layer, const struct rectangle *cliprect, int bgnum)
+static void update_tilemap_rowscroll(struct layer_info *layer, const rectangle *cliprect, int bgnum)
 {
 	int clipenable, clipout, clips, clipdraw_start;
-	struct mame_bitmap *bitmap = layer->bitmap;
+	mame_bitmap *bitmap = layer->bitmap;
 	struct extents_list clip_extents;
 	tilemap *tilemaps[4];
 	int rowscroll, rowselect;
@@ -1241,9 +1241,9 @@ static void update_tilemap_rowscroll(struct layer_info *layer, const struct rect
  *
  *************************************/
 
-static void update_tilemap_text(struct layer_info *layer, const struct rectangle *cliprect)
+static void update_tilemap_text(struct layer_info *layer, const rectangle *cliprect)
 {
-	struct mame_bitmap *bitmap = layer->bitmap;
+	mame_bitmap *bitmap = layer->bitmap;
 	UINT16 *tilebase;
 	UINT16 *gfxbase;
 	int startx, starty;
@@ -1398,10 +1398,10 @@ static void update_tilemap_text(struct layer_info *layer, const struct rectangle
  *
  *************************************/
 
-static void update_bitmap(struct layer_info *layer, const struct rectangle *cliprect)
+static void update_bitmap(struct layer_info *layer, const rectangle *cliprect)
 {
 	int clipenable, clipout, clips, clipdraw_start;
-	struct mame_bitmap *bitmap = layer->bitmap;
+	mame_bitmap *bitmap = layer->bitmap;
 	struct extents_list clip_extents;
 	int xscroll, yscroll;
 	int color;
@@ -1501,9 +1501,9 @@ static void update_bitmap(struct layer_info *layer, const struct rectangle *clip
  *
  *************************************/
 
-static void update_background(struct layer_info *layer, const struct rectangle *cliprect)
+static void update_background(struct layer_info *layer, const rectangle *cliprect)
 {
-	struct mame_bitmap *bitmap = layer->bitmap;
+	mame_bitmap *bitmap = layer->bitmap;
 	int x, y;
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
@@ -1525,7 +1525,7 @@ static void update_background(struct layer_info *layer, const struct rectangle *
 }
 
 
-static UINT8 update_tilemaps(const struct rectangle *cliprect)
+static UINT8 update_tilemaps(const rectangle *cliprect)
 {
 	int enable0 = !(system32_videoram[0x1ff02/2] & 0x0001) && !(system32_videoram[0x1ff8e/2] & 0x0002);
 	int enable1 = !(system32_videoram[0x1ff02/2] & 0x0002) && !(system32_videoram[0x1ff8e/2] & 0x0004);
@@ -1689,7 +1689,7 @@ static void sprite_swap_buffers(void)
 		}																	\
 	}
 
-static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const struct rectangle *clipin, const struct rectangle *clipout)
+static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const rectangle *clipin, const rectangle *clipout)
 {
 	static const int transparency_masks[4][4] =
 	{
@@ -1699,7 +1699,7 @@ static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const struct rect
 		{ 0x1fff, 0x0fff, 0x07ff, 0x03ff }
 	};
 
-	struct mame_bitmap *bitmap = layer_data[(!is_multi32 || !(data[3] & 0x0800)) ? MIXER_LAYER_SPRITES_2 : MIXER_LAYER_MULTISPR_2].bitmap;
+	mame_bitmap *bitmap = layer_data[(!is_multi32 || !(data[3] & 0x0800)) ? MIXER_LAYER_SPRITES_2 : MIXER_LAYER_MULTISPR_2].bitmap;
 	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x400000;
 	const UINT32 *spritebase = (const UINT32 *)memory_region(REGION_GFX2);
 
@@ -1892,7 +1892,7 @@ bail:
 
 static void sprite_render_list(void)
 {
-	struct rectangle outerclip, clipin, clipout;
+	rectangle outerclip, clipin, clipout;
 	int xoffs = 0, yoffs = 0;
 	int numentries = 0;
 	int spritenum = 0;
@@ -2028,7 +2028,7 @@ INLINE UINT16 *get_layer_scanline(int layer, int scanline)
 	return (UINT16 *)layer_data[layer].bitmap->line[scanline];
 }
 
-static void mix_all_layers(int which, int xoffs, struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 enablemask)
+static void mix_all_layers(int which, int xoffs, mame_bitmap *bitmap, const rectangle *cliprect, UINT8 enablemask)
 {
 	int blendenable = mixer_control[which][0x4e/2] & 0x0800;
 	int blendfactor = (mixer_control[which][0x4e/2] >> 8) & 7;
@@ -2579,7 +2579,7 @@ for (showclip = 0; showclip < 4; showclip++)
 			for (i = 0; i < 4; i++)
 				if (clips & (1 << i))
 				{
-					struct rectangle rect;
+					rectangle rect;
 					pen_t white = get_white_pen();
 					if (!flip)
 					{
@@ -2622,7 +2622,7 @@ for (showclip = 0; showclip < 4; showclip++)
 
 VIDEO_UPDATE( multi32 )
 {
-	struct rectangle clipleft, clipright;
+	rectangle clipleft, clipright;
 	UINT8 enablemask;
 
 	/* update the visible area */

@@ -60,13 +60,13 @@ enum
 };
 
 #define ARM7CORE_REGS \
-    data32_t sArmRegister[kNumRegisters]; \
-    data8_t pendingIrq; \
-    data8_t pendingFiq; \
-    data8_t pendingAbtD; \
-    data8_t pendingAbtP; \
-    data8_t pendingUnd; \
-    data8_t pendingSwi; \
+    UINT32 sArmRegister[kNumRegisters]; \
+    UINT8 pendingIrq; \
+    UINT8 pendingFiq; \
+    UINT8 pendingAbtD; \
+    UINT8 pendingAbtP; \
+    UINT8 pendingUnd; \
+    UINT8 pendingSwi; \
     int (*irq_callback)(int);
 
 
@@ -178,13 +178,13 @@ static const int sRegisterTable[ARM7_NUM_MODES][18] =
 #define F_BIT   6
 #define T_BIT   5   //Thumb mode
 
-#define N_MASK  ((data32_t)(1<<N_BIT)) /* Negative flag */
-#define Z_MASK  ((data32_t)(1<<Z_BIT)) /* Zero flag */
-#define C_MASK  ((data32_t)(1<<C_BIT)) /* Carry flag */
-#define V_MASK  ((data32_t)(1<<V_BIT)) /* oVerflow flag */
-#define I_MASK  ((data32_t)(1<<I_BIT)) /* Interrupt request disable */
-#define F_MASK  ((data32_t)(1<<F_BIT)) /* Fast interrupt request disable */
-#define T_MASK  ((data32_t)(1<<T_BIT)) /* Thumb Mode flag */
+#define N_MASK  ((UINT32)(1<<N_BIT)) /* Negative flag */
+#define Z_MASK  ((UINT32)(1<<Z_BIT)) /* Zero flag */
+#define C_MASK  ((UINT32)(1<<C_BIT)) /* Carry flag */
+#define V_MASK  ((UINT32)(1<<V_BIT)) /* oVerflow flag */
+#define I_MASK  ((UINT32)(1<<I_BIT)) /* Interrupt request disable */
+#define F_MASK  ((UINT32)(1<<F_BIT)) /* Fast interrupt request disable */
+#define T_MASK  ((UINT32)(1<<T_BIT)) /* Thumb Mode flag */
 
 #define N_IS_SET(pc)    ((pc) & N_MASK)
 #define Z_IS_SET(pc)    ((pc) & Z_MASK)
@@ -202,38 +202,38 @@ static const int sRegisterTable[ARM7_NUM_MODES][18] =
 
 /* Deconstructing an instruction */
 //todo: use these in all places (including dasm file)
-#define INSN_COND           ((data32_t) 0xf0000000u)
-#define INSN_SDT_L          ((data32_t) 0x00100000u)
-#define INSN_SDT_W          ((data32_t) 0x00200000u)
-#define INSN_SDT_B          ((data32_t) 0x00400000u)
-#define INSN_SDT_U          ((data32_t) 0x00800000u)
-#define INSN_SDT_P          ((data32_t) 0x01000000u)
-#define INSN_BDT_L          ((data32_t) 0x00100000u)
-#define INSN_BDT_W          ((data32_t) 0x00200000u)
-#define INSN_BDT_S          ((data32_t) 0x00400000u)
-#define INSN_BDT_U          ((data32_t) 0x00800000u)
-#define INSN_BDT_P          ((data32_t) 0x01000000u)
-#define INSN_BDT_REGS       ((data32_t) 0x0000ffffu)
-#define INSN_SDT_IMM        ((data32_t) 0x00000fffu)
-#define INSN_MUL_A          ((data32_t) 0x00200000u)
-#define INSN_MUL_RM         ((data32_t) 0x0000000fu)
-#define INSN_MUL_RS         ((data32_t) 0x00000f00u)
-#define INSN_MUL_RN         ((data32_t) 0x0000f000u)
-#define INSN_MUL_RD         ((data32_t) 0x000f0000u)
-#define INSN_I              ((data32_t) 0x02000000u)
-#define INSN_OPCODE         ((data32_t) 0x01e00000u)
-#define INSN_S              ((data32_t) 0x00100000u)
-#define INSN_BL             ((data32_t) 0x01000000u)
-#define INSN_BRANCH         ((data32_t) 0x00ffffffu)
-#define INSN_SWI            ((data32_t) 0x00ffffffu)
-#define INSN_RN             ((data32_t) 0x000f0000u)
-#define INSN_RD             ((data32_t) 0x0000f000u)
-#define INSN_OP2            ((data32_t) 0x00000fffu)
-#define INSN_OP2_SHIFT      ((data32_t) 0x00000f80u)
-#define INSN_OP2_SHIFT_TYPE ((data32_t) 0x00000070u)
-#define INSN_OP2_RM         ((data32_t) 0x0000000fu)
-#define INSN_OP2_ROTATE     ((data32_t) 0x00000f00u)
-#define INSN_OP2_IMM        ((data32_t) 0x000000ffu)
+#define INSN_COND           ((UINT32) 0xf0000000u)
+#define INSN_SDT_L          ((UINT32) 0x00100000u)
+#define INSN_SDT_W          ((UINT32) 0x00200000u)
+#define INSN_SDT_B          ((UINT32) 0x00400000u)
+#define INSN_SDT_U          ((UINT32) 0x00800000u)
+#define INSN_SDT_P          ((UINT32) 0x01000000u)
+#define INSN_BDT_L          ((UINT32) 0x00100000u)
+#define INSN_BDT_W          ((UINT32) 0x00200000u)
+#define INSN_BDT_S          ((UINT32) 0x00400000u)
+#define INSN_BDT_U          ((UINT32) 0x00800000u)
+#define INSN_BDT_P          ((UINT32) 0x01000000u)
+#define INSN_BDT_REGS       ((UINT32) 0x0000ffffu)
+#define INSN_SDT_IMM        ((UINT32) 0x00000fffu)
+#define INSN_MUL_A          ((UINT32) 0x00200000u)
+#define INSN_MUL_RM         ((UINT32) 0x0000000fu)
+#define INSN_MUL_RS         ((UINT32) 0x00000f00u)
+#define INSN_MUL_RN         ((UINT32) 0x0000f000u)
+#define INSN_MUL_RD         ((UINT32) 0x000f0000u)
+#define INSN_I              ((UINT32) 0x02000000u)
+#define INSN_OPCODE         ((UINT32) 0x01e00000u)
+#define INSN_S              ((UINT32) 0x00100000u)
+#define INSN_BL             ((UINT32) 0x01000000u)
+#define INSN_BRANCH         ((UINT32) 0x00ffffffu)
+#define INSN_SWI            ((UINT32) 0x00ffffffu)
+#define INSN_RN             ((UINT32) 0x000f0000u)
+#define INSN_RD             ((UINT32) 0x0000f000u)
+#define INSN_OP2            ((UINT32) 0x00000fffu)
+#define INSN_OP2_SHIFT      ((UINT32) 0x00000f80u)
+#define INSN_OP2_SHIFT_TYPE ((UINT32) 0x00000070u)
+#define INSN_OP2_RM         ((UINT32) 0x0000000fu)
+#define INSN_OP2_ROTATE     ((UINT32) 0x00000f00u)
+#define INSN_OP2_IMM        ((UINT32) 0x000000ffu)
 #define INSN_OP2_SHIFT_TYPE_SHIFT   4
 #define INSN_OP2_SHIFT_SHIFT        7
 #define INSN_OP2_ROTATE_SHIFT       8
@@ -297,7 +297,7 @@ enum
 #define SET_CPSR(v)             (GET_CPSR = (v))
 #define MODE_FLAG               0xF                                 //Mode bits are 4:0 of CPSR, but we ignore bit 4.
 #define GET_MODE                (GET_CPSR & MODE_FLAG)
-#define SIGN_BIT                ((data32_t)(1<<31))
+#define SIGN_BIT                ((UINT32)(1<<31))
 #define SIGN_BITS_DIFFER(a,b)   (((a)^(b)) >> 31)
 
 /* At one point I thought these needed to be cpu implementation specific, but they don't.. */
@@ -308,15 +308,15 @@ enum
 extern WRITE32_HANDLER((*arm7_coproc_do_callback));
 extern READ32_HANDLER((*arm7_coproc_rt_r_callback));
 extern WRITE32_HANDLER((*arm7_coproc_rt_w_callback));
-extern void (*arm7_coproc_dt_r_callback)(data32_t insn, data32_t* prn, data32_t (*read32)(int addr));
-extern void (*arm7_coproc_dt_w_callback)(data32_t insn, data32_t* prn, void (*write32)(int addr, data32_t data));
+extern void (*arm7_coproc_dt_r_callback)(UINT32 insn, UINT32* prn, UINT32 (*read32)(int addr));
+extern void (*arm7_coproc_dt_w_callback)(UINT32 insn, UINT32* prn, void (*write32)(int addr, UINT32 data));
 
 #ifdef MAME_DEBUG
-extern void arm7_disasm( char *pBuf, data32_t pc, data32_t opcode );
+extern void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode );
 
-extern char *(*arm7_dasm_cop_dt_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
-extern char *(*arm7_dasm_cop_rt_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
-extern char *(*arm7_dasm_cop_do_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
+extern char *(*arm7_dasm_cop_dt_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );
+extern char *(*arm7_dasm_cop_rt_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );
+extern char *(*arm7_dasm_cop_do_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );
 #endif
 
 #endif /* ARM7CORE_H */

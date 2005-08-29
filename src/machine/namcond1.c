@@ -46,7 +46,7 @@ MACHINE_INIT( namcond1 )
 }
 
 // instance of the shared ram pointer
-data16_t *namcond1_shared_ram;
+UINT16 *namcond1_shared_ram;
 
 READ16_HANDLER( namcond1_shared_ram_r )
 {

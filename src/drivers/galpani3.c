@@ -66,7 +66,7 @@ Dumped by Uki
 #include "driver.h"
 #include "sound/ymz280b.h"
 
-extern data32_t* skns_spc_regs;
+extern UINT32* skns_spc_regs;
 
 /***************************************************************************
 
@@ -74,7 +74,7 @@ extern data32_t* skns_spc_regs;
 
 ***************************************************************************/
 
-static data16_t *galpani3_sprregs, *galpani3_spriteram;
+static UINT16 *galpani3_sprregs, *galpani3_spriteram;
 
 INTERRUPT_GEN( galpani3_vblank ) // 2, 3, 5 ?
 {
@@ -99,7 +99,7 @@ VIDEO_START(galpani3)
 	return 0;
 }
 
-extern void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
+extern void skns_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect );
 
 
 VIDEO_UPDATE(galpani3)
@@ -197,13 +197,13 @@ WRITE16_HANDLER( galpani3_suprnova_sprite32regs_w )
                 (follows the implementation of kaneko16.c)
 
 ***************************************************************************/
-static data16_t *mcu_ram, galpani3_mcu_com[4];
+static UINT16 *mcu_ram, galpani3_mcu_com[4];
 
 void galpani3_mcu_run(void)
 {
-	data16_t mcu_command = mcu_ram[0x0010/2];		/* command nb */
-	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2;	/* offset in shared RAM where MCU will write */
-	data16_t mcu_subcmd  = mcu_ram[0x0014/2];		/* sub-command parameter, happens only for command #4 */
+	UINT16 mcu_command = mcu_ram[0x0010/2];		/* command nb */
+	UINT16 mcu_offset  = mcu_ram[0x0012/2] / 2;	/* offset in shared RAM where MCU will write */
+	UINT16 mcu_subcmd  = mcu_ram[0x0014/2];		/* sub-command parameter, happens only for command #4 */
 
 	logerror("(PC=%06X): MCU executed command : %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2);
 
@@ -296,7 +296,7 @@ WRITE16_HANDLER( galpani3_mcu_com##_n_##_w ) \
 	if (galpani3_mcu_com[2] != 0xFFFF)	return; \
 	if (galpani3_mcu_com[3] != 0xFFFF)	return; \
 \
-	memset(galpani3_mcu_com, 0, 4 * sizeof( data16_t ) ); \
+	memset(galpani3_mcu_com, 0, 4 * sizeof( UINT16 ) ); \
 	galpani3_mcu_run(); \
 }
 
@@ -424,14 +424,14 @@ ROM_END
 
 DRIVER_INIT( galpani3 )
 {
-	data16_t *patchrom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *patchrom = (UINT16 *)memory_region(REGION_CPU1);
 
 	// weird checks of supposed tilemap registers
 	patchrom[0x3a0c6/2] = 0x4e71;
 	patchrom[0x3a0d6/2] = 0x4e71;
 	patchrom[0x3a0e0/2] = 0x4e71;
 
-	memset(galpani3_mcu_com, 0, 4 * sizeof( data16_t) );
+	memset(galpani3_mcu_com, 0, 4 * sizeof( UINT16) );
 }
 
 GAMEX( 1995, galpani3, 0, galpani3, galpani3, galpani3, ROT90, "Kaneko", "Gals Panic 3", GAME_NOT_WORKING )

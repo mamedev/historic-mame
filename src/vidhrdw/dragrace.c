@@ -69,7 +69,7 @@ VIDEO_UPDATE( dragrace )
 
 	for (y = 0; y < 256; y += 4)
 	{
-		struct rectangle rect = *cliprect;
+		rectangle rect = *cliprect;
 
 		int xl = dragrace_position_ram[y + 0] & 15;
 		int xh = dragrace_position_ram[y + 1] & 15;

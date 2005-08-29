@@ -13,16 +13,16 @@
 struct timekeeper_chip
 {
 	void *timer;
-	data8_t control;
-	data8_t seconds;
-	data8_t minutes;
-	data8_t hours;
-	data8_t day;
-	data8_t date;
-	data8_t month;
-	data8_t year;
-	data8_t century;
-	data8_t *data;
+	UINT8 control;
+	UINT8 seconds;
+	UINT8 minutes;
+	UINT8 hours;
+	UINT8 day;
+	UINT8 date;
+	UINT8 month;
+	UINT8 year;
+	UINT8 century;
+	UINT8 *data;
 	int type;
 	int size;
 	int offset_control;
@@ -74,7 +74,7 @@ INLINE UINT8 from_bcd( UINT8 data )
 	return ( ( ( data >> 4 ) & 15 ) * 10 ) + ( data & 15 );
 }
 
-static int inc_bcd( data8_t *data, int mask, int min, int max )
+static int inc_bcd( UINT8 *data, int mask, int min, int max )
 {
 	int bcd;
 	int carry;
@@ -97,7 +97,7 @@ static int inc_bcd( data8_t *data, int mask, int min, int max )
 	return carry;
 }
 
-static void counter_to_ram( data8_t *data, int offset, int counter )
+static void counter_to_ram( UINT8 *data, int offset, int counter )
 {
 	if( offset >= 0 )
 	{
@@ -120,7 +120,7 @@ static void counters_to_ram( int chip )
 	counter_to_ram( c->data, c->offset_century, c->century );
 }
 
-static int counter_from_ram( data8_t *data, int offset )
+static int counter_from_ram( UINT8 *data, int offset )
 {
 	if( offset >= 0 )
 	{
@@ -168,10 +168,10 @@ static void timekeeper_tick( int chip )
 
 	if( carry )
 	{
-		data8_t month;
-		data8_t year;
-		data8_t maxdays;
-		data8_t daysinmonth[] = { 0x31, 0x28, 0x31, 0x30, 0x31, 0x30, 0x31, 0x31, 0x30, 0x31, 0x30, 0x31 };
+		UINT8 month;
+		UINT8 year;
+		UINT8 maxdays;
+		UINT8 daysinmonth[] = { 0x31, 0x28, 0x31, 0x30, 0x31, 0x30, 0x31, 0x31, 0x30, 0x31, 0x30, 0x31 };
 
 		inc_bcd( &c->day, MASK_DAY, 0x01, 0x07 );
 
@@ -223,7 +223,7 @@ static void start_timer( int chip )
 	timer_adjust( c->timer, TIME_IN_SEC( 1 ), chip, TIME_IN_SEC( 1 ) );
 }
 
-void timekeeper_init( int chip, int type, data8_t *data )
+void timekeeper_init( int chip, int type, UINT8 *data )
 {
 	time_t currenttime;
 	struct tm *mytime;
@@ -342,9 +342,9 @@ static void timekeeper_nvram( int chip, mame_file *file, int read_or_write )
 
 NVRAM_HANDLER( timekeeper_0 ) { timekeeper_nvram( 0, file, read_or_write ); }
 
-static data8_t timekeeper_read( data32_t chip, offs_t offset )
+static UINT8 timekeeper_read( UINT32 chip, offs_t offset )
 {
-	data8_t data;
+	UINT8 data;
 	struct timekeeper_chip *c;
 	if( chip >= MAX_TIMEKEEPER_CHIPS )
 	{
@@ -358,7 +358,7 @@ static data8_t timekeeper_read( data32_t chip, offs_t offset )
 	return data;
 }
 
-static void timekeeper_write( data32_t chip, offs_t offset, data8_t data )
+static void timekeeper_write( UINT32 chip, offs_t offset, UINT8 data )
 {
 	struct timekeeper_chip *c;
 	if( chip >= MAX_TIMEKEEPER_CHIPS )
@@ -402,9 +402,9 @@ static void timekeeper_write( data32_t chip, offs_t offset, data8_t data )
 
 /* 16bit memory handlers */
 
-static data16_t timekeeper_msb16_read( data32_t chip, offs_t offset, data16_t mem_mask )
+static UINT16 timekeeper_msb16_read( UINT32 chip, offs_t offset, UINT16 mem_mask )
 {
-	data16_t data = 0;
+	UINT16 data = 0;
 	if( ACCESSING_MSB16 )
 	{
 		data |= timekeeper_read( chip, offset ) << 8;
@@ -412,7 +412,7 @@ static data16_t timekeeper_msb16_read( data32_t chip, offs_t offset, data16_t me
 	return data;
 }
 
-static void timekeeper_msb16_write( data32_t chip, offs_t offset, data16_t data, data16_t mem_mask )
+static void timekeeper_msb16_write( UINT32 chip, offs_t offset, UINT16 data, UINT16 mem_mask )
 {
 	if( ACCESSING_MSB16 )
 	{
@@ -425,9 +425,9 @@ WRITE16_HANDLER( timekeeper_0_msb16_w ) { timekeeper_msb16_write( 0, offset, dat
 
 /* 32bit memory handlers */
 
-static data32_t timekeeper_32be_read( data32_t chip, offs_t offset, data32_t mem_mask )
+static UINT32 timekeeper_32be_read( UINT32 chip, offs_t offset, UINT32 mem_mask )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	if( ACCESSING_MSB32 )
 	{
 		data |= timekeeper_read( chip, ( offset * 4 ) + 0 ) << 24;
@@ -447,7 +447,7 @@ static data32_t timekeeper_32be_read( data32_t chip, offs_t offset, data32_t mem
 	return data;
 }
 
-static void timekeeper_32be_write( data32_t chip, offs_t offset, data32_t data, data32_t mem_mask )
+static void timekeeper_32be_write( UINT32 chip, offs_t offset, UINT32 data, UINT32 mem_mask )
 {
 	if( ACCESSING_MSB32 )
 	{
@@ -470,9 +470,9 @@ static void timekeeper_32be_write( data32_t chip, offs_t offset, data32_t data, 
 READ32_HANDLER( timekeeper_0_32be_r ) { return timekeeper_32be_read( 0, offset, mem_mask ); }
 WRITE32_HANDLER( timekeeper_0_32be_w ) { timekeeper_32be_write( 0, offset, data, mem_mask ); }
 
-static data32_t timekeeper_32le_lsb16_read( data32_t chip, offs_t offset, data32_t mem_mask )
+static UINT32 timekeeper_32le_lsb16_read( UINT32 chip, offs_t offset, UINT32 mem_mask )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	if( ACCESSING_LSB32 )
 	{
 		data |= timekeeper_read( chip, ( offset * 2 ) + 0 ) << 0;
@@ -484,7 +484,7 @@ static data32_t timekeeper_32le_lsb16_read( data32_t chip, offs_t offset, data32
 	return data;
 }
 
-static void timekeeper_32le_lsb16_write( data32_t chip, offs_t offset, data32_t data, data32_t mem_mask )
+static void timekeeper_32le_lsb16_write( UINT32 chip, offs_t offset, UINT32 data, UINT32 mem_mask )
 {
 	if( ACCESSING_LSB32 )
 	{

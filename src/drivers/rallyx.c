@@ -186,7 +186,7 @@ TODO:
 #include "sound/samples.h"
 
 
-extern data8_t *rallyx_videoram,*rallyx_radarattr;
+extern UINT8 *rallyx_videoram,*rallyx_radarattr;
 WRITE8_HANDLER( rallyx_videoram_w );
 WRITE8_HANDLER( rallyx_scrollx_w );
 WRITE8_HANDLER( rallyx_scrolly_w );

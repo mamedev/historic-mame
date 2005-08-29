@@ -42,7 +42,7 @@ VIDEO_START( bsktball )
 	return 0;
 }
 
-static void bsktball_draw_sprites( struct mame_bitmap *bitmap )
+static void bsktball_draw_sprites( mame_bitmap *bitmap )
 {
 	int motion;
 

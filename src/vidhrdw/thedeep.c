@@ -38,8 +38,8 @@ static tilemap *tilemap_0,*tilemap_1;
 
 /* Variables & functions needed by drivers: */
 
-data8_t *thedeep_vram_0, *thedeep_vram_1;
-data8_t *thedeep_scroll, *thedeep_scroll2;
+UINT8 *thedeep_vram_0, *thedeep_vram_1;
+UINT8 *thedeep_scroll, *thedeep_scroll2;
 
 
 /***************************************************************************
@@ -55,8 +55,8 @@ static UINT32 tilemap_scan_rows_back( UINT32 col, UINT32 row, UINT32 num_cols, U
 
 static void get_tile_info_0( int tile_index )
 {
-	data8_t code	=	thedeep_vram_0[ tile_index * 2 + 0 ];
-	data8_t color	=	thedeep_vram_0[ tile_index * 2 + 1 ];
+	UINT8 code	=	thedeep_vram_0[ tile_index * 2 + 0 ];
+	UINT8 color	=	thedeep_vram_0[ tile_index * 2 + 1 ];
 	SET_TILE_INFO(
 			1,
 			code + (color << 8),
@@ -66,8 +66,8 @@ static void get_tile_info_0( int tile_index )
 
 static void get_tile_info_1( int tile_index )
 {
-	data8_t code	=	thedeep_vram_1[ tile_index * 2 + 0 ];
-	data8_t color	=	thedeep_vram_1[ tile_index * 2 + 1 ];
+	UINT8 code	=	thedeep_vram_1[ tile_index * 2 + 0 ];
+	UINT8 color	=	thedeep_vram_1[ tile_index * 2 + 1 ];
 	SET_TILE_INFO(
 			2,
 			code + (color << 8),
@@ -168,9 +168,9 @@ Offset:     Bits:       Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	data8_t *s = spriteram, *end = s + spriteram_size;
+	UINT8 *s = spriteram, *end = s + spriteram_size;
 
 	while (s < end)
 	{

@@ -214,7 +214,7 @@ static void update_palette( void )
 	}
 }
 
-static void draw_motion_object( struct mame_bitmap *bitmap )
+static void draw_motion_object( mame_bitmap *bitmap )
 {
 /*
  *      VSTRLO  0x1202
@@ -236,7 +236,7 @@ static void draw_motion_object( struct mame_bitmap *bitmap )
 	int color;
 	int count,pen;
 	const unsigned char *source;
-	struct rectangle clip = Machine->visible_area;
+	rectangle clip = Machine->visible_area;
 
 	for( line=0; line<64; line++ )
 	{
@@ -295,7 +295,7 @@ static void draw_motion_object( struct mame_bitmap *bitmap )
 	);
 }
 
-static void draw_box( struct mame_bitmap *bitmap )
+static void draw_box( mame_bitmap *bitmap )
 {
 /*
     This is unnecessarily slow, but the box priorities aren't completely understood,
@@ -319,7 +319,7 @@ static void draw_box( struct mame_bitmap *bitmap )
 	UINT8 *pMem;
 	int color;
 	int pen;
-//  struct rectangle bbox;
+//  rectangle bbox;
 	int z;
 	int x0,y0,y1;
 	pMem = memory_region( REGION_CPU1 );
@@ -351,7 +351,7 @@ static void draw_box( struct mame_bitmap *bitmap )
 
 /* "shell" graphics are 16x16 pixel tiles used for player shots and targeting cursor */
 static void draw_shell(
-		struct mame_bitmap *bitmap,
+		mame_bitmap *bitmap,
 		int picture_code,
 		int hposition,
 		int vstart,

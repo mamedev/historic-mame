@@ -112,8 +112,8 @@
  *
  *************************************/
 
-static data32_t *	ram_base;
-static data32_t *	rom_base;
+static UINT32 *	ram_base;
+static UINT32 *	rom_base;
 
 static double		hblank_offset;
 
@@ -493,7 +493,7 @@ ROM_END
 */
 
 
-static data32_t *speedup_data;
+static UINT32 *speedup_data;
 static READ32_HANDLER( speedup_r )
 {
 	int result = *speedup_data;
@@ -503,7 +503,7 @@ static READ32_HANDLER( speedup_r )
 }
 
 
-static data32_t *movie_speedup_data;
+static UINT32 *movie_speedup_data;
 static READ32_HANDLER( movie_speedup_r )
 {
 	int result = *movie_speedup_data;

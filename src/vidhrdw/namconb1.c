@@ -6,13 +6,13 @@
 #include "namcoic.h"
 #include "namcos2.h"
 
-static data32_t tilemap_tile_bank[4];
+static UINT32 tilemap_tile_bank[4];
 
 /* nth_word32 is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of 16 bit words.
  */
-INLINE data16_t
-nth_word32( const data32_t *source, int which )
+INLINE UINT16
+nth_word32( const UINT32 *source, int which )
 {
 	source += which/2;
 	if( which&1 )
@@ -28,10 +28,10 @@ nth_word32( const data32_t *source, int which )
 /* nth_byte32 is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of bytes.
  */
-INLINE data8_t
-nth_byte32( const data32_t *pSource, int which )
+INLINE UINT8
+nth_byte32( const UINT32 *pSource, int which )
 {
-	data32_t data = pSource[which/4];
+	UINT32 data = pSource[which/4];
 	switch( which&3 )
 	{
 	case 0: return data>>24;
@@ -42,14 +42,14 @@ nth_byte32( const data32_t *pSource, int which )
 } /* nth_byte32 */
 
 INLINE void
-NB1TilemapCB(data16_t code, int *tile, int *mask )
+NB1TilemapCB(UINT16 code, int *tile, int *mask )
 {
 	*tile = code;
 	*mask = code;
 } /* NB1TilemapCB */
 
 INLINE void
-NB2TilemapCB(data16_t code, int *tile, int *mask )
+NB2TilemapCB(UINT16 code, int *tile, int *mask )
 {
 	int mangle;
 
@@ -77,8 +77,8 @@ static void
 namconb1_install_palette( void )
 {
 	int pen, page, dword_offset, byte_offset;
-	data32_t r,g,b;
-	data32_t *pSource;
+	UINT32 r,g,b;
+	UINT32 *pSource;
 
 	/**
      * This is unnecessarily expensive.  Better would be to mark palette entries dirty as
@@ -111,7 +111,7 @@ static void
 handle_mcu( void )
 {
 	static int toggle;
-	static data16_t credits;
+	static UINT16 credits;
 	static int old_coin_state;
 	static int old_p1;
 	static int old_p2;
@@ -160,7 +160,7 @@ handle_mcu( void )
 } /* handle_mcu */
 
 static void
-video_update_common( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bROZ )
+video_update_common( mame_bitmap *bitmap, const rectangle *cliprect, int bROZ )
 {
 	int pri;
 	handle_mcu();
@@ -194,10 +194,10 @@ VIDEO_UPDATE( namconb1 )
 {
 	int beamx,beamy;
 	/* compute window for custom screen blanking */
-	struct rectangle clip;
+	rectangle clip;
 	//004a 016a 0021 0101 0144 0020 (nebulas ray)
-	data32_t xclip = paletteram32[0x1800/4];
-	data32_t yclip = paletteram32[0x1804/4];
+	UINT32 xclip = paletteram32[0x1800/4];
+	UINT32 yclip = paletteram32[0x1804/4];
 	clip.min_x = (xclip>>16)    - 0x4a;
 	clip.max_x = (xclip&0xffff) - 0x4a - 1;
 	clip.min_y = (yclip>>16)    - 0x21;
@@ -246,10 +246,10 @@ VIDEO_START( namconb1 )
 VIDEO_UPDATE( namconb2 )
 {
 	/* compute window for custom screen blanking */
-	struct rectangle clip;
+	rectangle clip;
 	//004a016a 00210101 01440020
-	data32_t xclip = paletteram32[0x1800/4];
-	data32_t yclip = paletteram32[0x1804/4];
+	UINT32 xclip = paletteram32[0x1800/4];
+	UINT32 yclip = paletteram32[0x1804/4];
 	clip.min_x = (xclip>>16)    - 0x4b;
 	clip.max_x = (xclip&0xffff) - 0x4b - 1;
 	clip.min_y = (yclip>>16)    - 0x21;

@@ -119,55 +119,55 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 	return 1;
 }
 
-static data8_t ppc_read8_translated(offs_t address)
+static UINT8 ppc_read8_translated(offs_t address)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
 	return program_read_byte_64be(address);
 }
 
-static data16_t ppc_read16_translated(offs_t address)
+static UINT16 ppc_read16_translated(offs_t address)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
 	return program_read_word_64be(address);
 }
 
-static data32_t ppc_read32_translated(offs_t address)
+static UINT32 ppc_read32_translated(offs_t address)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
 	return program_read_dword_64be(address);
 }
 
-static data64_t ppc_read64_translated(offs_t address)
+static UINT64 ppc_read64_translated(offs_t address)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
 	return program_read_qword_64be(address);
 }
 
-static void ppc_write8_translated(offs_t address, data8_t data)
+static void ppc_write8_translated(offs_t address, UINT8 data)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
 	program_write_byte_64be(address, data);
 }
 
-static void ppc_write16_translated(offs_t address, data16_t data)
+static void ppc_write16_translated(offs_t address, UINT16 data)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
 	program_write_word_64be(address, data);
 }
 
-static void ppc_write32_translated(offs_t address, data32_t data)
+static void ppc_write32_translated(offs_t address, UINT32 data)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
 	program_write_dword_64be(address, data);
 }
 
-static void ppc_write64_translated(offs_t address, data64_t data)
+static void ppc_write64_translated(offs_t address, UINT64 data)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_WRITE);
 	program_write_qword_64be(address, data);
 }
 
-static data32_t ppc_readop_translated(offs_t address)
+static UINT32 ppc_readop_translated(offs_t address)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ);
 	return program_read_dword_64be(address);

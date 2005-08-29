@@ -13,7 +13,7 @@
 extern READ32_HANDLER(K001005_r);
 extern WRITE32_HANDLER(K001005_w);
 
-static data8_t led_reg0 = 0x7f, led_reg1 = 0x7f;
+static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 static WRITE32_HANDLER( paletteram32_w )
 {
@@ -124,11 +124,11 @@ static WRITE32_HANDLER( sysreg_w )
 	printf("sysreg_w: %08X, %08X, %08X\n", offset, data, mem_mask);
 }
 
-static data8_t sndto68k[16], sndtoppc[16];	/* read/write split mapping */
+static UINT8 sndto68k[16], sndtoppc[16];	/* read/write split mapping */
 
 static READ32_HANDLER( ppc_sound_r )
 {
-	data32_t reg, w[4], rv = 0;
+	UINT32 reg, w[4], rv = 0;
 
 	reg = offset * 4;
 
@@ -238,7 +238,7 @@ ADDRESS_MAP_END
 
 static READ16_HANDLER( dual539_r )
 {
-	data16_t ret = 0;
+	UINT16 ret = 0;
 
 	if (ACCESSING_LSB16)
 		ret |= K054539_1_r(offset);

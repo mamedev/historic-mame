@@ -230,10 +230,10 @@ WRITE8_HANDLER( polepos_engine_sound_lsb_w );
 WRITE8_HANDLER( polepos_engine_sound_msb_w );
 
 /* from vidhrdw */
-extern data16_t *polepos_view16_memory;
-extern data16_t *polepos_road16_memory;
-extern data16_t *polepos_alpha16_memory;
-extern data16_t *polepos_sprite16_memory;
+extern UINT16 *polepos_view16_memory;
+extern UINT16 *polepos_road16_memory;
+extern UINT16 *polepos_alpha16_memory;
+extern UINT16 *polepos_sprite16_memory;
 extern int polepos_gear_bit;
 
 VIDEO_START( polepos );

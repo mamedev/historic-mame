@@ -16,7 +16,7 @@ WRITE16_HANDLER( vertigo_8254_w );
 
 MACHINE_INIT( vertigo );
 
-extern data16_t *vertigo_vectorram;
+extern UINT16 *vertigo_vectorram;
 
 void vertigo_vproc_init(void);
 void vertigo_vproc(int cycles, int irq4);

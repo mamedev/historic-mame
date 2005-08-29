@@ -34,7 +34,7 @@ int starshp1_mux;
 
 static UINT16* LSFR;
 
-static struct mame_bitmap* helper;
+static mame_bitmap* helper;
 
 static tilemap* bg_tilemap;
 
@@ -156,7 +156,7 @@ WRITE8_HANDLER( starshp1_playfield_w )
 }
 
 
-static void draw_starfield(struct mame_bitmap* bitmap)
+static void draw_starfield(mame_bitmap* bitmap)
 {
 	/*
      * The LSFR is reset once per frame at the position of
@@ -194,7 +194,7 @@ static int get_sprite_vpos(int i)
 }
 
 
-static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_sprites(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	int i;
 
@@ -213,7 +213,7 @@ static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cli
 }
 
 
-static void draw_spaceship(struct mame_bitmap* bitmap, const struct rectangle* cliprect)
+static void draw_spaceship(mame_bitmap* bitmap, const rectangle* cliprect)
 {
 	double scaler = -5 * log(1 - starshp1_ship_size / 256.0); /* ? */
 
@@ -242,7 +242,7 @@ static void draw_spaceship(struct mame_bitmap* bitmap, const struct rectangle* c
 }
 
 
-static void draw_phasor(struct mame_bitmap* bitmap)
+static void draw_phasor(mame_bitmap* bitmap)
 {
 	int i;
 
@@ -273,7 +273,7 @@ static int get_circle_vpos(void)
 }
 
 
-static void draw_circle_line(struct mame_bitmap *bitmap, int x, int y, int l)
+static void draw_circle_line(mame_bitmap *bitmap, int x, int y, int l)
 {
 	if (y >= 0 && y <= bitmap->height - 1)
 	{
@@ -307,7 +307,7 @@ static void draw_circle_line(struct mame_bitmap *bitmap, int x, int y, int l)
 }
 
 
-static void draw_circle(struct mame_bitmap* bitmap)
+static void draw_circle(mame_bitmap* bitmap)
 {
 	int cx = get_circle_hpos();
 	int cy = get_circle_vpos();
@@ -340,7 +340,7 @@ static void draw_circle(struct mame_bitmap* bitmap)
 }
 
 
-static int spaceship_collision(struct mame_bitmap* bitmap, struct rectangle* rect)
+static int spaceship_collision(mame_bitmap* bitmap, rectangle* rect)
 {
 	int x;
 	int y;
@@ -371,7 +371,7 @@ static int point_in_circle(int x, int y, int center_x, int center_y, int r)
 }
 
 
-static int circle_collision(struct rectangle* rect)
+static int circle_collision(rectangle* rect)
 {
 	int center_x = get_circle_hpos();
 	int center_y = get_circle_vpos();
@@ -413,7 +413,7 @@ VIDEO_UPDATE( starshp1 )
 
 VIDEO_EOF( starshp1 )
 {
-	struct rectangle rect;
+	rectangle rect;
 
 	rect.min_x = get_sprite_hpos(13);
 	rect.min_y = get_sprite_vpos(13);

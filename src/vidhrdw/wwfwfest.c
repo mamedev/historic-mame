@@ -12,7 +12,7 @@
 static tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
 int wwfwfest_pri;
 int wwfwfest_bg0_scrollx, wwfwfest_bg0_scrolly, wwfwfest_bg1_scrollx, wwfwfest_bg1_scrolly;
-data16_t *wwfwfest_fg0_videoram, *wwfwfest_bg0_videoram, *wwfwfest_bg1_videoram;
+UINT16 *wwfwfest_fg0_videoram, *wwfwfest_bg0_videoram, *wwfwfest_bg1_videoram;
 static int sprite_xoff, bg0_dx, bg1_dx[2];
 
 /*******************************************************************************
@@ -75,7 +75,7 @@ static void get_fg0_tile_info(int tile_index)
 
     **- End of Comments -*/
 
-	data16_t *tilebase;
+	UINT16 *tilebase;
 	int tileno;
 	int colbank;
 	tilebase =  &wwfwfest_fg0_videoram[tile_index*2];
@@ -105,7 +105,7 @@ static void get_bg0_tile_info(int tile_index)
 
     **- End of Comments -*/
 
-	data16_t *tilebase;
+	UINT16 *tilebase;
 	int tileno,colbank;
 
 	tilebase =  &wwfwfest_bg0_videoram[tile_index*2];
@@ -131,7 +131,7 @@ static void get_bg1_tile_info(int tile_index)
 
     **- End of Comments -*/
 
-	data16_t *tilebase;
+	UINT16 *tilebase;
 	int tileno;
 	int colbank;
 	tilebase =  &wwfwfest_bg1_videoram[tile_index];
@@ -150,7 +150,7 @@ static void get_bg1_tile_info(int tile_index)
  sprite drawing could probably be improved a bit
 *******************************************************************************/
 
-static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void wwfwfest_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/*- SPR RAM Format -**
 
@@ -173,8 +173,8 @@ static void wwfwfest_drawsprites( struct mame_bitmap *bitmap, const struct recta
     **- End of Comments -*/
 
 	const gfx_element *gfx = Machine->gfx[1];
-	data16_t *source = buffered_spriteram16;
-	data16_t *finish = source + 0x2000/2;
+	UINT16 *source = buffered_spriteram16;
+	UINT16 *finish = source + 0x2000/2;
 
 	while( source<finish )
 	{

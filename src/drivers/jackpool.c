@@ -15,11 +15,11 @@ Copyright (C) 1992 HI-TECH Software..Brisbane, QLD Australia
 
 
 static tilemap *jackpool_layer0_tilemap;
-static data16_t *jackpool_layer0_videoram;
+static UINT16 *jackpool_layer0_videoram;
 static tilemap *jackpool_layer1_tilemap;
-static data16_t *jackpool_layer1_videoram;
+static UINT16 *jackpool_layer1_videoram;
 static tilemap *jackpool_layer2_tilemap;
-static data16_t *jackpool_layer2_videoram;
+static UINT16 *jackpool_layer2_videoram;
 
 
 static void get_jackpool_layer0_tile_info(int tile_index)

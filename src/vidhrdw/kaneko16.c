@@ -44,25 +44,25 @@ Note:   if MAME_DEBUG is defined, pressing:
 #include "kaneko16.h"
 
 
-data16_t kaneko16_disp_enable = 1; // default enabled for games not using it
+UINT16 kaneko16_disp_enable = 1; // default enabled for games not using it
 
 
 tilemap *kaneko16_tmap_0, *kaneko16_tmap_1;
 tilemap *kaneko16_tmap_2, *kaneko16_tmap_3;
-data16_t *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;
-data16_t *kaneko16_vscroll_0, *kaneko16_vscroll_1;
-data16_t *kaneko16_vram_2,    *kaneko16_vram_3,    *kaneko16_layers_1_regs;
-data16_t *kaneko16_vscroll_2, *kaneko16_vscroll_3;
+UINT16 *kaneko16_vram_0,    *kaneko16_vram_1,    *kaneko16_layers_0_regs;
+UINT16 *kaneko16_vscroll_0, *kaneko16_vscroll_1;
+UINT16 *kaneko16_vram_2,    *kaneko16_vram_3,    *kaneko16_layers_1_regs;
+UINT16 *kaneko16_vscroll_2, *kaneko16_vscroll_3;
 
 
 int kaneko16_sprite_type;
-data16_t kaneko16_sprite_xoffs, kaneko16_sprite_flipx;
-data16_t kaneko16_sprite_yoffs, kaneko16_sprite_flipy;
-data16_t *kaneko16_sprites_regs;
+UINT16 kaneko16_sprite_xoffs, kaneko16_sprite_flipx;
+UINT16 kaneko16_sprite_yoffs, kaneko16_sprite_flipy;
+UINT16 *kaneko16_sprites_regs;
 
 
-data16_t *kaneko16_bg15_select, *kaneko16_bg15_reg;
-static struct mame_bitmap *kaneko16_bg15_bitmap;
+UINT16 *kaneko16_bg15_select, *kaneko16_bg15_reg;
+static mame_bitmap *kaneko16_bg15_bitmap;
 
 struct tempsprite
 {
@@ -110,16 +110,16 @@ Offset:
 #define KANEKO16_LAYER(_N_) \
 static void get_tile_info_##_N_(int tile_index) \
 { \
-	data16_t code_hi = kaneko16_vram_##_N_[ 2 * tile_index + 0]; \
-	data16_t code_lo = kaneko16_vram_##_N_[ 2 * tile_index + 1]; \
+	UINT16 code_hi = kaneko16_vram_##_N_[ 2 * tile_index + 0]; \
+	UINT16 code_lo = kaneko16_vram_##_N_[ 2 * tile_index + 1]; \
 	SET_TILE_INFO(1 + _N_/2, code_lo, (code_hi >> 2) & 0x3f, TILE_FLIPXY( code_hi & 3 )); \
 	tile_info.priority	=	(code_hi >> 8) & 3; \
 } \
 \
 WRITE16_HANDLER( kaneko16_vram_##_N_##_w ) \
 { \
-	data16_t old_data	=	kaneko16_vram_##_N_[offset]; \
-	data16_t new_data	=	COMBINE_DATA(&kaneko16_vram_##_N_[offset]); \
+	UINT16 old_data	=	kaneko16_vram_##_N_[offset]; \
+	UINT16 new_data	=	COMBINE_DATA(&kaneko16_vram_##_N_[offset]); \
 	if (old_data != new_data)	tilemap_mark_tile_dirty(kaneko16_tmap_##_N_, offset/2); \
 }
 
@@ -475,7 +475,7 @@ int kaneko16_parse_sprite_type3(int i, struct tempsprite *s)
 
 /* Build a list of sprites to display & draw them */
 
-void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+void kaneko16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
 {
 	/* Sprites *must* be parsed from the first in RAM to the last,
        because of the multisprite feature. But they *must* be drawn
@@ -678,7 +678,7 @@ READ16_HANDLER( kaneko16_sprites_regs_r )
 
 WRITE16_HANDLER( kaneko16_sprites_regs_w )
 {
-	data16_t new_data;
+	UINT16 new_data;
 
 	COMBINE_DATA(&kaneko16_sprites_regs[offset]);
 	new_data  = kaneko16_sprites_regs[offset];
@@ -801,8 +801,8 @@ VIDEO_UPDATE( kaneko16 )
 	int layers_ctrl = -1;
 	int i,flag;
 
-	data16_t layer0_scrollx, layer0_scrolly;
-	data16_t layer1_scrollx, layer1_scrolly;
+	UINT16 layer0_scrollx, layer0_scrolly;
+	UINT16 layer1_scrollx, layer1_scrolly;
 
 	layers_flip_0 = kaneko16_layers_0_regs[ 4 ];
 	if (kaneko16_tmap_2)
@@ -843,7 +843,7 @@ VIDEO_UPDATE( kaneko16 )
 
 	for (i=0; i<0x200; i++)
 	{
-		data16_t scroll;
+		UINT16 scroll;
 		scroll = (layers_flip_0 & 0x0800) ? kaneko16_vscroll_0[i] : 0;
 		tilemap_set_scrollx(kaneko16_tmap_0,i,(layer0_scrollx + scroll) >> 6 );
 		scroll = (layers_flip_0 & 0x0008) ? kaneko16_vscroll_1[i] : 0;
@@ -862,7 +862,7 @@ VIDEO_UPDATE( kaneko16 )
 
 	for (i=0; i<0x200; i++)
 	{
-		data16_t scroll;
+		UINT16 scroll;
 		scroll = (layers_flip_1 & 0x0800) ? kaneko16_vscroll_2[i] : 0;
 		tilemap_set_scrollx(kaneko16_tmap_2,i,(layer0_scrollx + scroll) >> 6 );
 		scroll = (layers_flip_1 & 0x0008) ? kaneko16_vscroll_3[i] : 0;

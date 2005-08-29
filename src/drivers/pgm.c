@@ -256,8 +256,8 @@ Notes:
 #include "sound/ics2115.h"
 #include <time.h>
 
-data16_t *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
-static data8_t *z80_mainram;
+UINT16 *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
+static UINT8 *z80_mainram;
 WRITE16_HANDLER( pgm_tx_videoram_w );
 WRITE16_HANDLER( pgm_bg_videoram_w );
 VIDEO_START( pgm );
@@ -942,8 +942,8 @@ MACHINE_DRIVER_END
 
 static void expand_32x32x5bpp(void)
 {
-	data8_t *src    = memory_region       ( REGION_GFX1 );
-	data8_t *dst    = memory_region       ( REGION_GFX2 );
+	UINT8 *src    = memory_region       ( REGION_GFX1 );
+	UINT8 *dst    = memory_region       ( REGION_GFX2 );
 	size_t  srcsize = memory_region_length( REGION_GFX1 );
 	int cnt, pix;
 
@@ -963,12 +963,12 @@ static void expand_32x32x5bpp(void)
 /* This function expands the sprite colour data (in the A Roms) from 3 pixels
    in each word to a byte per pixel making it easier to use */
 
-data8_t *pgm_sprite_a_region;
+UINT8 *pgm_sprite_a_region;
 size_t	pgm_sprite_a_region_allocate;
 
 static void expand_colourdata(void)
 {
-	data8_t *src    = memory_region       ( REGION_GFX3 );
+	UINT8 *src    = memory_region       ( REGION_GFX3 );
 	size_t  srcsize = memory_region_length( REGION_GFX3 );
 	int cnt;
 	size_t	needed = srcsize / 2 * 3;
@@ -984,7 +984,7 @@ static void expand_colourdata(void)
 
 	for (cnt = 0 ; cnt < srcsize/2 ; cnt++)
 	{
-		data16_t colpack;
+		UINT16 colpack;
 
 		colpack = ((src[cnt*2]) | (src[cnt*2+1] << 8));
 		pgm_sprite_a_region[cnt*3+0] = (colpack >> 0 ) & 0x1f;
@@ -1035,7 +1035,7 @@ static void drgwld2_common_init(void)
 
 static DRIVER_INIT( drgw2 )
 {
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *mem16 = (UINT16 *)memory_region(REGION_CPU1);
 	drgwld2_common_init();
 	/* patches .. i hate patches .. */
 	mem16[0x131098/2]=0x4e93;
@@ -1045,7 +1045,7 @@ static DRIVER_INIT( drgw2 )
 
 static DRIVER_INIT( drgw2c )
 {
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *mem16 = (UINT16 *)memory_region(REGION_CPU1);
 	drgwld2_common_init();
 	/* this seems to be some strange protection
     ElSemi
@@ -1124,7 +1124,7 @@ static DRIVER_INIT( killbld )
 
 /* ddp2 rubbish */
 
-data16_t *ddp2_protram;
+UINT16 *ddp2_protram;
 static int ddp2_asic27_0xd10000 = 0;
 
 static WRITE16_HANDLER ( ddp2_asic27_0xd10000_w )
@@ -1188,7 +1188,7 @@ static DRIVER_INIT( puzzli2 )
      it uses an arm with no external rom
      an acts in a similar way to kov etc. */
 
-	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *mem16 = (UINT16 *)memory_region(REGION_CPU1);
 
 	pgm_basic_init();
 

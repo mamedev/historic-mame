@@ -123,7 +123,7 @@ static void copy_pixel(int x,int y,int pen)
 
 WRITE8_HANDLER( dynax_blitter_rev1_start_w )
 {
-	data8_t *rom = memory_region(REGION_GFX1);
+	UINT8 *rom = memory_region(REGION_GFX1);
 	int romlen = memory_region_length(REGION_GFX1);
 	int sx = blit_dest & 0xff;
 	int sy = blit_dest >> 8;
@@ -216,7 +216,7 @@ WRITE8_HANDLER( hnayayoi_palbank_w )
 }
 
 
-static void draw_layer_interleaved(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+static void draw_layer_interleaved(mame_bitmap *bitmap, const rectangle *cliprect,
 		int left_pixmap, int right_pixmap, int palbase, int transp)
 {
 	int county,countx,pen,offs;

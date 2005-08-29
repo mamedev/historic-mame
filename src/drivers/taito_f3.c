@@ -47,10 +47,10 @@ VIDEO_UPDATE( f3 );
 VIDEO_EOF( f3 );
 VIDEO_STOP( f3 );
 
-extern data32_t *f3_vram,*f3_line_ram;
-extern data32_t *f3_pf_data,*f3_pivot_ram;
-static data32_t coin_word[2], *f3_ram;
-data32_t *f3_shared_ram;
+extern UINT32 *f3_vram,*f3_line_ram;
+extern UINT32 *f3_pf_data,*f3_pivot_ram;
+static UINT32 coin_word[2], *f3_ram;
+UINT32 *f3_shared_ram;
 int f3_game;
 
 WRITE32_HANDLER( f3_control_0_w );
@@ -156,7 +156,7 @@ static WRITE32_HANDLER( f3_sound_reset_1_w )
 static WRITE32_HANDLER( f3_sound_bankswitch_w )
 {
 	if (f3_game==KIRAMEKI) {
-		data16_t *rom = (data16_t *)memory_region(REGION_CPU2);
+		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU2);
 		unsigned int idx;
 
 		idx = (offset << 1) & 0x1e;
@@ -437,7 +437,7 @@ static INTERRUPT_GEN( f3_interrupt )
 static MACHINE_INIT( f3 )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
 	memory_set_bankptr(1,&RAM[0x80000]);
 	memory_set_bankptr(2,&RAM[0x90000]);
 	memory_set_bankptr(3,&RAM[0xa0000]);
@@ -463,7 +463,7 @@ NVRAM_HANDLER( taito_f3 )
 		EEPROM_save(file);
 	else
 	{
-		static const data8_t recalh_eeprom[128] =	{
+		static const UINT8 recalh_eeprom[128] =	{
 			0x85,0x54,0x00,0x00,0x30,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xf3,0x35,
 			0x00,0x01,0x86,0xa0,0x00,0x13,0x04,0x13,0x00,0x00,0xc3,0x50,0x00,0x19,0x00,0x0a,
 			0x00,0x00,0x4e,0x20,0x00,0x03,0x18,0x0d,0x00,0x00,0x27,0x10,0x00,0x05,0x14,0x18,
@@ -3316,7 +3316,7 @@ static DRIVER_INIT( trstaroj )
 
 static DRIVER_INIT( scfinals )
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
+	UINT32 *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
 	/* Doesn't boot without this - eprom related? */
     RAM[0x5af0/4]=0x4e710000|(RAM[0x5af0/4]&0xffff);
@@ -3421,7 +3421,7 @@ static DRIVER_INIT( landmakr )
 
 static DRIVER_INIT( landmkrp )
 {
-	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
+	UINT32 *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
 	/* For some reason the least significant byte in the last 2 long words of
     ROM is swapped.  As the roms have been verified ok, I assume this is some

@@ -10,8 +10,8 @@ similar hardware.
 #include "driver.h"
 #include "sound/okim6295.h"
 
-static data16_t *drtomy_spriteram;
-static data16_t *drtomy_videoram_bg, *drtomy_videoram_fg;
+static UINT16 *drtomy_spriteram;
+static UINT16 *drtomy_videoram_bg, *drtomy_videoram_fg;
 static tilemap *tilemap_bg, *tilemap_fg;
 
 static void get_tile_info_fg(int tile_index)
@@ -47,7 +47,7 @@ static void get_tile_info_bg(int tile_index)
       3  | xxxxxxxx xxxxxx-- | sprite code
 */
 
-static void drtomy_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void drtomy_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i, x, y, ex, ey;
 	const gfx_element *gfx = Machine->gfx[0];

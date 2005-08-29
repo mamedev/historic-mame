@@ -101,12 +101,12 @@ typedef struct tms34010_regs
 	UINT32 fw[2];
 	UINT32 fw_inc[2];  /* Same as fw[], except when fw = 0, fw_inc = 32 */
 	UINT32 reset_deferred;
-	void (*f0_write)(offs_t offset,data32_t data);
-	void (*f1_write)(offs_t offset,data32_t data);
-	void (*pixel_write)(offs_t offset,data32_t data);
-	data32_t (*f0_read)(offs_t offset);
-	data32_t (*f1_read)(offs_t offset);
-	data32_t (*pixel_read)(offs_t offset);
+	void (*f0_write)(offs_t offset,UINT32 data);
+	void (*f1_write)(offs_t offset,UINT32 data);
+	void (*pixel_write)(offs_t offset,UINT32 data);
+	UINT32 (*f0_read)(offs_t offset);
+	UINT32 (*f1_read)(offs_t offset);
+	UINT32 (*pixel_read)(offs_t offset);
 	UINT32 transparency;
 	UINT32 window_checking;
 	 INT32 (*raster_op)(INT32 newpix, INT32 oldpix);
@@ -114,7 +114,7 @@ typedef struct tms34010_regs
 	UINT32 convdp;
 	UINT32 convmp;
 	UINT32 pixelshift;
-	data16_t *shiftreg;
+	UINT16 *shiftreg;
 	int gfxcycles;
 	UINT8  is_34020;
 	UINT8  ext_irq_lines;
@@ -184,40 +184,40 @@ static void tms34010_state_postload(void);
 **  FUNCTION TABLES
 **#################################################################################################*/
 
-extern void wfield_01(offs_t offset,data32_t data);
-extern void wfield_02(offs_t offset,data32_t data);
-extern void wfield_03(offs_t offset,data32_t data);
-extern void wfield_04(offs_t offset,data32_t data);
-extern void wfield_05(offs_t offset,data32_t data);
-extern void wfield_06(offs_t offset,data32_t data);
-extern void wfield_07(offs_t offset,data32_t data);
-extern void wfield_08(offs_t offset,data32_t data);
-extern void wfield_09(offs_t offset,data32_t data);
-extern void wfield_10(offs_t offset,data32_t data);
-extern void wfield_11(offs_t offset,data32_t data);
-extern void wfield_12(offs_t offset,data32_t data);
-extern void wfield_13(offs_t offset,data32_t data);
-extern void wfield_14(offs_t offset,data32_t data);
-extern void wfield_15(offs_t offset,data32_t data);
-extern void wfield_16(offs_t offset,data32_t data);
-extern void wfield_17(offs_t offset,data32_t data);
-extern void wfield_18(offs_t offset,data32_t data);
-extern void wfield_19(offs_t offset,data32_t data);
-extern void wfield_20(offs_t offset,data32_t data);
-extern void wfield_21(offs_t offset,data32_t data);
-extern void wfield_22(offs_t offset,data32_t data);
-extern void wfield_23(offs_t offset,data32_t data);
-extern void wfield_24(offs_t offset,data32_t data);
-extern void wfield_25(offs_t offset,data32_t data);
-extern void wfield_26(offs_t offset,data32_t data);
-extern void wfield_27(offs_t offset,data32_t data);
-extern void wfield_28(offs_t offset,data32_t data);
-extern void wfield_29(offs_t offset,data32_t data);
-extern void wfield_30(offs_t offset,data32_t data);
-extern void wfield_31(offs_t offset,data32_t data);
-extern void wfield_32(offs_t offset,data32_t data);
+extern void wfield_01(offs_t offset,UINT32 data);
+extern void wfield_02(offs_t offset,UINT32 data);
+extern void wfield_03(offs_t offset,UINT32 data);
+extern void wfield_04(offs_t offset,UINT32 data);
+extern void wfield_05(offs_t offset,UINT32 data);
+extern void wfield_06(offs_t offset,UINT32 data);
+extern void wfield_07(offs_t offset,UINT32 data);
+extern void wfield_08(offs_t offset,UINT32 data);
+extern void wfield_09(offs_t offset,UINT32 data);
+extern void wfield_10(offs_t offset,UINT32 data);
+extern void wfield_11(offs_t offset,UINT32 data);
+extern void wfield_12(offs_t offset,UINT32 data);
+extern void wfield_13(offs_t offset,UINT32 data);
+extern void wfield_14(offs_t offset,UINT32 data);
+extern void wfield_15(offs_t offset,UINT32 data);
+extern void wfield_16(offs_t offset,UINT32 data);
+extern void wfield_17(offs_t offset,UINT32 data);
+extern void wfield_18(offs_t offset,UINT32 data);
+extern void wfield_19(offs_t offset,UINT32 data);
+extern void wfield_20(offs_t offset,UINT32 data);
+extern void wfield_21(offs_t offset,UINT32 data);
+extern void wfield_22(offs_t offset,UINT32 data);
+extern void wfield_23(offs_t offset,UINT32 data);
+extern void wfield_24(offs_t offset,UINT32 data);
+extern void wfield_25(offs_t offset,UINT32 data);
+extern void wfield_26(offs_t offset,UINT32 data);
+extern void wfield_27(offs_t offset,UINT32 data);
+extern void wfield_28(offs_t offset,UINT32 data);
+extern void wfield_29(offs_t offset,UINT32 data);
+extern void wfield_30(offs_t offset,UINT32 data);
+extern void wfield_31(offs_t offset,UINT32 data);
+extern void wfield_32(offs_t offset,UINT32 data);
 
-static void (*wfield_functions[32])(offs_t offset,data32_t data) =
+static void (*wfield_functions[32])(offs_t offset,UINT32 data) =
 {
 	wfield_32, wfield_01, wfield_02, wfield_03, wfield_04, wfield_05,
 	wfield_06, wfield_07, wfield_08, wfield_09, wfield_10, wfield_11,
@@ -227,40 +227,40 @@ static void (*wfield_functions[32])(offs_t offset,data32_t data) =
 	wfield_30, wfield_31
 };
 
-extern data32_t rfield_z_01(offs_t offset);
-extern data32_t rfield_z_02(offs_t offset);
-extern data32_t rfield_z_03(offs_t offset);
-extern data32_t rfield_z_04(offs_t offset);
-extern data32_t rfield_z_05(offs_t offset);
-extern data32_t rfield_z_06(offs_t offset);
-extern data32_t rfield_z_07(offs_t offset);
-extern data32_t rfield_z_08(offs_t offset);
-extern data32_t rfield_z_09(offs_t offset);
-extern data32_t rfield_z_10(offs_t offset);
-extern data32_t rfield_z_11(offs_t offset);
-extern data32_t rfield_z_12(offs_t offset);
-extern data32_t rfield_z_13(offs_t offset);
-extern data32_t rfield_z_14(offs_t offset);
-extern data32_t rfield_z_15(offs_t offset);
-extern data32_t rfield_z_16(offs_t offset);
-extern data32_t rfield_z_17(offs_t offset);
-extern data32_t rfield_z_18(offs_t offset);
-extern data32_t rfield_z_19(offs_t offset);
-extern data32_t rfield_z_20(offs_t offset);
-extern data32_t rfield_z_21(offs_t offset);
-extern data32_t rfield_z_22(offs_t offset);
-extern data32_t rfield_z_23(offs_t offset);
-extern data32_t rfield_z_24(offs_t offset);
-extern data32_t rfield_z_25(offs_t offset);
-extern data32_t rfield_z_26(offs_t offset);
-extern data32_t rfield_z_27(offs_t offset);
-extern data32_t rfield_z_28(offs_t offset);
-extern data32_t rfield_z_29(offs_t offset);
-extern data32_t rfield_z_30(offs_t offset);
-extern data32_t rfield_z_31(offs_t offset);
-extern data32_t rfield_32(offs_t offset);
+extern UINT32 rfield_z_01(offs_t offset);
+extern UINT32 rfield_z_02(offs_t offset);
+extern UINT32 rfield_z_03(offs_t offset);
+extern UINT32 rfield_z_04(offs_t offset);
+extern UINT32 rfield_z_05(offs_t offset);
+extern UINT32 rfield_z_06(offs_t offset);
+extern UINT32 rfield_z_07(offs_t offset);
+extern UINT32 rfield_z_08(offs_t offset);
+extern UINT32 rfield_z_09(offs_t offset);
+extern UINT32 rfield_z_10(offs_t offset);
+extern UINT32 rfield_z_11(offs_t offset);
+extern UINT32 rfield_z_12(offs_t offset);
+extern UINT32 rfield_z_13(offs_t offset);
+extern UINT32 rfield_z_14(offs_t offset);
+extern UINT32 rfield_z_15(offs_t offset);
+extern UINT32 rfield_z_16(offs_t offset);
+extern UINT32 rfield_z_17(offs_t offset);
+extern UINT32 rfield_z_18(offs_t offset);
+extern UINT32 rfield_z_19(offs_t offset);
+extern UINT32 rfield_z_20(offs_t offset);
+extern UINT32 rfield_z_21(offs_t offset);
+extern UINT32 rfield_z_22(offs_t offset);
+extern UINT32 rfield_z_23(offs_t offset);
+extern UINT32 rfield_z_24(offs_t offset);
+extern UINT32 rfield_z_25(offs_t offset);
+extern UINT32 rfield_z_26(offs_t offset);
+extern UINT32 rfield_z_27(offs_t offset);
+extern UINT32 rfield_z_28(offs_t offset);
+extern UINT32 rfield_z_29(offs_t offset);
+extern UINT32 rfield_z_30(offs_t offset);
+extern UINT32 rfield_z_31(offs_t offset);
+extern UINT32 rfield_32(offs_t offset);
 
-static data32_t (*rfield_functions_z[32])(offs_t offset) =
+static UINT32 (*rfield_functions_z[32])(offs_t offset) =
 {
 	rfield_32  , rfield_z_01, rfield_z_02, rfield_z_03, rfield_z_04, rfield_z_05,
 	rfield_z_06, rfield_z_07, rfield_z_08, rfield_z_09, rfield_z_10, rfield_z_11,
@@ -270,39 +270,39 @@ static data32_t (*rfield_functions_z[32])(offs_t offset) =
 	rfield_z_30, rfield_z_31
 };
 
-extern data32_t rfield_s_01(offs_t offset);
-extern data32_t rfield_s_02(offs_t offset);
-extern data32_t rfield_s_03(offs_t offset);
-extern data32_t rfield_s_04(offs_t offset);
-extern data32_t rfield_s_05(offs_t offset);
-extern data32_t rfield_s_06(offs_t offset);
-extern data32_t rfield_s_07(offs_t offset);
-extern data32_t rfield_s_08(offs_t offset);
-extern data32_t rfield_s_09(offs_t offset);
-extern data32_t rfield_s_10(offs_t offset);
-extern data32_t rfield_s_11(offs_t offset);
-extern data32_t rfield_s_12(offs_t offset);
-extern data32_t rfield_s_13(offs_t offset);
-extern data32_t rfield_s_14(offs_t offset);
-extern data32_t rfield_s_15(offs_t offset);
-extern data32_t rfield_s_16(offs_t offset);
-extern data32_t rfield_s_17(offs_t offset);
-extern data32_t rfield_s_18(offs_t offset);
-extern data32_t rfield_s_19(offs_t offset);
-extern data32_t rfield_s_20(offs_t offset);
-extern data32_t rfield_s_21(offs_t offset);
-extern data32_t rfield_s_22(offs_t offset);
-extern data32_t rfield_s_23(offs_t offset);
-extern data32_t rfield_s_24(offs_t offset);
-extern data32_t rfield_s_25(offs_t offset);
-extern data32_t rfield_s_26(offs_t offset);
-extern data32_t rfield_s_27(offs_t offset);
-extern data32_t rfield_s_28(offs_t offset);
-extern data32_t rfield_s_29(offs_t offset);
-extern data32_t rfield_s_30(offs_t offset);
-extern data32_t rfield_s_31(offs_t offset);
+extern UINT32 rfield_s_01(offs_t offset);
+extern UINT32 rfield_s_02(offs_t offset);
+extern UINT32 rfield_s_03(offs_t offset);
+extern UINT32 rfield_s_04(offs_t offset);
+extern UINT32 rfield_s_05(offs_t offset);
+extern UINT32 rfield_s_06(offs_t offset);
+extern UINT32 rfield_s_07(offs_t offset);
+extern UINT32 rfield_s_08(offs_t offset);
+extern UINT32 rfield_s_09(offs_t offset);
+extern UINT32 rfield_s_10(offs_t offset);
+extern UINT32 rfield_s_11(offs_t offset);
+extern UINT32 rfield_s_12(offs_t offset);
+extern UINT32 rfield_s_13(offs_t offset);
+extern UINT32 rfield_s_14(offs_t offset);
+extern UINT32 rfield_s_15(offs_t offset);
+extern UINT32 rfield_s_16(offs_t offset);
+extern UINT32 rfield_s_17(offs_t offset);
+extern UINT32 rfield_s_18(offs_t offset);
+extern UINT32 rfield_s_19(offs_t offset);
+extern UINT32 rfield_s_20(offs_t offset);
+extern UINT32 rfield_s_21(offs_t offset);
+extern UINT32 rfield_s_22(offs_t offset);
+extern UINT32 rfield_s_23(offs_t offset);
+extern UINT32 rfield_s_24(offs_t offset);
+extern UINT32 rfield_s_25(offs_t offset);
+extern UINT32 rfield_s_26(offs_t offset);
+extern UINT32 rfield_s_27(offs_t offset);
+extern UINT32 rfield_s_28(offs_t offset);
+extern UINT32 rfield_s_29(offs_t offset);
+extern UINT32 rfield_s_30(offs_t offset);
+extern UINT32 rfield_s_31(offs_t offset);
 
-static data32_t (*rfield_functions_s[32])(offs_t offset) =
+static UINT32 (*rfield_functions_s[32])(offs_t offset) =
 {
 	rfield_32  , rfield_s_01, rfield_s_02, rfield_s_03, rfield_s_04, rfield_s_05,
 	rfield_s_06, rfield_s_07, rfield_s_08, rfield_s_09, rfield_s_10, rfield_s_11,
@@ -503,7 +503,7 @@ INLINE INT32 PARAM_LONG_NO_INC(void)
 }
 
 /* read memory byte */
-INLINE data32_t RBYTE(offs_t offset)
+INLINE UINT32 RBYTE(offs_t offset)
 {
 	UINT32 ret;
 	RFIELDMAC_8;
@@ -511,19 +511,19 @@ INLINE data32_t RBYTE(offs_t offset)
 }
 
 /* write memory byte */
-INLINE void WBYTE(offs_t offset,data32_t data)
+INLINE void WBYTE(offs_t offset,UINT32 data)
 {
 	WFIELDMAC_8;
 }
 
 /* read memory long */
-INLINE data32_t RLONG(offs_t offset)
+INLINE UINT32 RLONG(offs_t offset)
 {
 	RFIELDMAC_32;
 }
 
 /* write memory long */
-INLINE void WLONG(offs_t offset,data32_t data)
+INLINE void WLONG(offs_t offset,UINT32 data)
 {
 	WFIELDMAC_32;
 }
@@ -552,18 +552,18 @@ INLINE INT32 POP(void)
 	/* TODO: Plane masking */								\
 	return (TMS34010_RDMEM_WORD(TOBYTE(offset & 0xfffffff0)) >> (offset & m1)) & m2;
 
-static data32_t read_pixel_1(offs_t offset) { RP(0x0f,0x01) }
-static data32_t read_pixel_2(offs_t offset) { RP(0x0e,0x03) }
-static data32_t read_pixel_4(offs_t offset) { RP(0x0c,0x0f) }
-static data32_t read_pixel_8(offs_t offset) { RP(0x08,0xff) }
-static data32_t read_pixel_16(offs_t offset)
+static UINT32 read_pixel_1(offs_t offset) { RP(0x0f,0x01) }
+static UINT32 read_pixel_2(offs_t offset) { RP(0x0e,0x03) }
+static UINT32 read_pixel_4(offs_t offset) { RP(0x0c,0x0f) }
+static UINT32 read_pixel_8(offs_t offset) { RP(0x08,0xff) }
+static UINT32 read_pixel_16(offs_t offset)
 {
 	/* TODO: Plane masking */
 	return TMS34010_RDMEM_WORD(TOBYTE(offset & 0xfffffff0));
 }
 
 /* Shift register read */
-static data32_t read_pixel_shiftreg(offs_t offset)
+static UINT32 read_pixel_shiftreg(offs_t offset)
 {
 	if (state.config->to_shiftreg)
 		state.config->to_shiftreg(offset, &state.shiftreg[0]);
@@ -631,22 +631,22 @@ static data32_t read_pixel_shiftreg(offs_t offset)
 
 
 /* No Raster Op + No Transparency */
-static void write_pixel_1(offs_t offset,data32_t data) { WP(0x0f, 0x01); }
-static void write_pixel_2(offs_t offset,data32_t data) { WP(0x0e, 0x03); }
-static void write_pixel_4(offs_t offset,data32_t data) { WP(0x0c, 0x0f); }
-static void write_pixel_8(offs_t offset,data32_t data) { WP(0x08, 0xff); }
-static void write_pixel_16(offs_t offset,data32_t data)
+static void write_pixel_1(offs_t offset,UINT32 data) { WP(0x0f, 0x01); }
+static void write_pixel_2(offs_t offset,UINT32 data) { WP(0x0e, 0x03); }
+static void write_pixel_4(offs_t offset,UINT32 data) { WP(0x0c, 0x0f); }
+static void write_pixel_8(offs_t offset,UINT32 data) { WP(0x08, 0xff); }
+static void write_pixel_16(offs_t offset,UINT32 data)
 {
 	/* TODO: plane masking */
 	TMS34010_WRMEM_WORD(TOBYTE(offset & 0xfffffff0), data);
 }
 
 /* No Raster Op + Transparency */
-static void write_pixel_t_1(offs_t offset,data32_t data) { WP_T(0x0f, 0x01); }
-static void write_pixel_t_2(offs_t offset,data32_t data) { WP_T(0x0e, 0x03); }
-static void write_pixel_t_4(offs_t offset,data32_t data) { WP_T(0x0c, 0x0f); }
-static void write_pixel_t_8(offs_t offset,data32_t data) { WP_T(0x08, 0xff); }
-static void write_pixel_t_16(offs_t offset,data32_t data)
+static void write_pixel_t_1(offs_t offset,UINT32 data) { WP_T(0x0f, 0x01); }
+static void write_pixel_t_2(offs_t offset,UINT32 data) { WP_T(0x0e, 0x03); }
+static void write_pixel_t_4(offs_t offset,UINT32 data) { WP_T(0x0c, 0x0f); }
+static void write_pixel_t_8(offs_t offset,UINT32 data) { WP_T(0x08, 0xff); }
+static void write_pixel_t_16(offs_t offset,UINT32 data)
 {
 	/* TODO: plane masking */
 	if (data)
@@ -654,11 +654,11 @@ static void write_pixel_t_16(offs_t offset,data32_t data)
 }
 
 /* Raster Op + No Transparency */
-static void write_pixel_r_1(offs_t offset,data32_t data) { WP_R(0x0f, 0x01); }
-static void write_pixel_r_2(offs_t offset,data32_t data) { WP_R(0x0e, 0x03); }
-static void write_pixel_r_4(offs_t offset,data32_t data) { WP_R(0x0c, 0x0f); }
-static void write_pixel_r_8(offs_t offset,data32_t data) { WP_R(0x08, 0xff); }
-static void write_pixel_r_16(offs_t offset,data32_t data)
+static void write_pixel_r_1(offs_t offset,UINT32 data) { WP_R(0x0f, 0x01); }
+static void write_pixel_r_2(offs_t offset,UINT32 data) { WP_R(0x0e, 0x03); }
+static void write_pixel_r_4(offs_t offset,UINT32 data) { WP_R(0x0c, 0x0f); }
+static void write_pixel_r_8(offs_t offset,UINT32 data) { WP_R(0x08, 0xff); }
+static void write_pixel_r_16(offs_t offset,UINT32 data)
 {
 	/* TODO: plane masking */
 	UINT32 a = TOBYTE(offset & 0xfffffff0);
@@ -666,11 +666,11 @@ static void write_pixel_r_16(offs_t offset,data32_t data)
 }
 
 /* Raster Op + Transparency */
-static void write_pixel_r_t_1(offs_t offset,data32_t data) { WP_R_T(0x0f,0x01); }
-static void write_pixel_r_t_2(offs_t offset,data32_t data) { WP_R_T(0x0e,0x03); }
-static void write_pixel_r_t_4(offs_t offset,data32_t data) { WP_R_T(0x0c,0x0f); }
-static void write_pixel_r_t_8(offs_t offset,data32_t data) { WP_R_T(0x08,0xff); }
-static void write_pixel_r_t_16(offs_t offset,data32_t data)
+static void write_pixel_r_t_1(offs_t offset,UINT32 data) { WP_R_T(0x0f,0x01); }
+static void write_pixel_r_t_2(offs_t offset,UINT32 data) { WP_R_T(0x0e,0x03); }
+static void write_pixel_r_t_4(offs_t offset,UINT32 data) { WP_R_T(0x0c,0x0f); }
+static void write_pixel_r_t_8(offs_t offset,UINT32 data) { WP_R_T(0x08,0xff); }
+static void write_pixel_r_t_16(offs_t offset,UINT32 data)
 {
 	/* TODO: plane masking */
 	UINT32 a = TOBYTE(offset & 0xfffffff0);
@@ -681,7 +681,7 @@ static void write_pixel_r_t_16(offs_t offset,data32_t data)
 }
 
 /* Shift register write */
-static void write_pixel_shiftreg(offs_t offset,data32_t data)
+static void write_pixel_shiftreg(offs_t offset,UINT32 data)
 {
 	if (state.config->from_shiftreg)
 		state.config->from_shiftreg(offset, &state.shiftreg[0]);
@@ -1138,7 +1138,7 @@ static offs_t tms34020_dasm(char *buffer, offs_t pc)
 **  PIXEL OPS
 **#################################################################################################*/
 
-static void (*pixel_write_ops[4][5])(offs_t offset,data32_t data) =
+static void (*pixel_write_ops[4][5])(offs_t offset,UINT32 data) =
 {
 	{ write_pixel_1,     write_pixel_2,     write_pixel_4,     write_pixel_8,     write_pixel_16     },
 	{ write_pixel_r_1,   write_pixel_r_2,   write_pixel_r_4,   write_pixel_r_8,   write_pixel_r_16   },
@@ -1146,7 +1146,7 @@ static void (*pixel_write_ops[4][5])(offs_t offset,data32_t data) =
 	{ write_pixel_r_t_1, write_pixel_r_t_2, write_pixel_r_t_4, write_pixel_r_t_8, write_pixel_r_t_16 }
 };
 
-static data32_t (*pixel_read_ops[5])(offs_t offset) =
+static UINT32 (*pixel_read_ops[5])(offs_t offset) =
 {
 	read_pixel_1,        read_pixel_2,      read_pixel_4,      read_pixel_8,      read_pixel_16
 };

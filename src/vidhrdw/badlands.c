@@ -122,7 +122,7 @@ WRITE16_HANDLER( badlands_pf_bank_w )
 VIDEO_UPDATE( badlands )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

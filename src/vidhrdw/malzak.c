@@ -46,7 +46,7 @@ struct	{
 
 unsigned char* saa5050_vidram;  /* Video RAM for SAA 5050 */
 
-static struct mame_bitmap* collision_bitmap;
+static mame_bitmap* collision_bitmap;
 
 int temp_x,temp_y;
 

@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-data16_t *deniam_videoram,*deniam_textram;
+UINT16 *deniam_videoram,*deniam_textram;
 static int display_enable;
 static int bg_scrollx_offs,bg_scrolly_offs,fg_scrollx_offs,fg_scrolly_offs;
 static int bg_scrollx_reg,bg_scrolly_reg,bg_page_reg;
@@ -166,7 +166,7 @@ WRITE16_HANDLER( deniam_palette_w )
 }
 
 
-static data16_t coinctrl;
+static UINT16 coinctrl;
 
 READ16_HANDLER( deniam_coinctrl_r )
 {
@@ -218,7 +218,7 @@ WRITE16_HANDLER( deniam_coinctrl_w )
  *   c  | ---------------- | zoomy like in System 16?
  *   e  | ---------------- |
  */
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

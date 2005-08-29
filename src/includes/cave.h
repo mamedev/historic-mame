@@ -8,12 +8,12 @@
 extern int cave_spritetype;
 extern int cave_kludge;
 
-extern data16_t *cave_videoregs;
+extern UINT16 *cave_videoregs;
 
-extern data16_t *cave_vram_0, *cave_vctrl_0;
-extern data16_t *cave_vram_1, *cave_vctrl_1;
-extern data16_t *cave_vram_2, *cave_vctrl_2;
-extern data16_t *cave_vram_3, *cave_vctrl_3;
+extern UINT16 *cave_vram_0, *cave_vctrl_0;
+extern UINT16 *cave_vram_1, *cave_vctrl_1;
+extern UINT16 *cave_vram_2, *cave_vctrl_2;
+extern UINT16 *cave_vram_3, *cave_vctrl_3;
 
 /* Functions defined in vidhrdw */
 

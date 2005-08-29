@@ -15,10 +15,10 @@
 
 static int background_color,background_disable;
 static tilemap *background_tilemap, *fix_tilemap;
-static data8_t deco16_io_ram[16];
+static UINT8 deco16_io_ram[16];
 
 #if 0
-void debug_print(struct mame_bitmap *bitmap)
+void debug_print(mame_bitmap *bitmap)
 {
 	int i,j;
 	char buf[20*16];
@@ -43,7 +43,7 @@ static UINT32 fix_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 
 static void get_back_tile_info( int tile_index )
 {
-	const data8_t *RAM = memory_region(REGION_USER1);
+	const UINT8 *RAM = memory_region(REGION_USER1);
 	int tile,bank;
 
 	/* Convert tile index of 512x512 to paged format */
@@ -197,7 +197,7 @@ PALETTE_INIT( liberate )
 
 /***************************************************************************/
 
-static void liberate_drawsprites(struct mame_bitmap *bitmap)
+static void liberate_drawsprites(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -248,7 +248,7 @@ static void liberate_drawsprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void prosport_drawsprites(struct mame_bitmap *bitmap)
+static void prosport_drawsprites(mame_bitmap *bitmap)
 {
 	int offs,multi,fx,fy,sx,sy,sy2,code,code2,color;
 
@@ -303,7 +303,7 @@ static void prosport_drawsprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void boomrang_drawsprites(struct mame_bitmap *bitmap, int pri)
+static void boomrang_drawsprites(mame_bitmap *bitmap, int pri)
 {
 	int offs,multi,fx,fy,sx,sy,sy2,code,code2,color;
 

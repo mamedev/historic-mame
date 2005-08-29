@@ -51,7 +51,7 @@ READ16_HANDLER(ddd_053936_tilerom_1_r);
 READ16_HANDLER(gai_053936_tilerom_2_r);
 READ16_HANDLER(ddd_053936_tilerom_2_r);
 
-static data16_t *gx_workram;
+static UINT16 *gx_workram;
 
 static int init_eeprom_count;
 static int mw_irq_control;

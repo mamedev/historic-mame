@@ -123,8 +123,8 @@ VIDEO_UPDATE( playch10 )
 	/* Dual monitor version */
 	if(system_bios == 0)
 	{
-		struct rectangle top_monitor = Machine->visible_area;
-		struct rectangle bottom_monitor = Machine->visible_area;
+		rectangle top_monitor = Machine->visible_area;
+		rectangle bottom_monitor = Machine->visible_area;
 
 		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 		bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
@@ -159,7 +159,7 @@ VIDEO_UPDATE( playch10 )
 	}
 	else	/* Single Monitor version */
 	{
-		struct rectangle top_monitor = Machine->visible_area;
+		rectangle top_monitor = Machine->visible_area;
 
 		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 

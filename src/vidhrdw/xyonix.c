@@ -1,7 +1,7 @@
 
 #include "driver.h"
 
-extern data8_t *xyonix_vidram;
+extern UINT8 *xyonix_vidram;
 
 static tilemap *xyonix_tilemap;
 

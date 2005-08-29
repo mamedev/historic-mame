@@ -9,7 +9,7 @@
         * Sharpshooter
 
     Known bugs:
-        * flip screen not supported
+        * Flip screen not supported
 
 Note:   Police Trainer v1.3B runs on the same revision PCB as Sharpshooter - Rev 0.5B
         If you hold the test button down and boot the game, all program roms
@@ -22,32 +22,36 @@ Program Roms:  C121012 - Code version 1.2, Graphics v1.0 & Sound v1.2
 Graphic Roms:  G10     - Graphics rom v1.0 (in diagnostics mode it's called "Art")
   Sound Roms:  S12     - Sound rom v1.2
 
-Note: For SharpShooter v1.7, in Circus of Mystery, the ballon challenge has been rewritten
-      and in Alien Encounter, the first saucer challenge has been modified compared to v1.2
+Noted differences in versions of SharpShooter:
+ Initial High Score names are changed between v1.1 and v1.2
+  Circus of Mystery:
+    The ballon challenge has been rewritten for v1.7
+    Jugglers throw balls painted with targets for v1.1 & v1.2  Version 1.7 uses regular targets
+  Alien Encounter:
+    First saucer challenge has been modified for v1.7
 
 The ATTILA Video System PCB (by EXIT Entertainment):
 
 Sharpshooter PCB is Rev 0.5B
 Police Trainer PCB is Rev 0.3
 
-               JAMMA Connector
-GUN1   XILINX-1
-
-GUN2
-
-LED1 LED2                    93C66
-
-                IDT71024 x 2  Bt481
-   8-way DIP  AT001
-
-U127                 U113       U162
-U125  IDT71256 x 4   U112
-U123                 U111       U160
-U121                 U110
-U126
-U124  OSC    IDT79R3041    XILINX-2
-U122  48.000MHz                 XILINX-3
-U120                             BSMT2000
+|------------JAMMA Connector------------|
+|                     CN7               |
+| GUN1   XILINX-1              93C66    |
+| GUN2                                  |
+|                                       |
+| LED1 LED2         IDT71024 x 2  Bt481 |
+|             AT001                     |
+|  DSW(8)                               |
+|U127                       U113    U162|
+|U125  IDT71256 x 4         U112        |
+|U123                       U111    U160|
+|U121                       U110        |
+|U126                                   |
+|U124  OSC    IDT79R3041  XILINX-2      |
+|U122  48.000MHz             XILINX-3   |
+|U120                          BSMT2000 |
+|---------------------------------------|
 
 Chips:
   CPU: IDT 79R3041-25J (MIPS R3000 core)
@@ -55,15 +59,16 @@ Sound: BSMT2000
 Other: Bt481AKPJ110 (44 Pin PQFP, Brooktree RAMDAC)
        AT001 (160 Pin PQFP, P & P Marketing Custom)
        ATMEL 93C66 (EEPROM)
+       CN7 - 4 pin connector for stero speaker output
 PLDs:
        XILINX-1 Labeled as U175A (Rev 3: Not Used)
        XILINX-2 Labeled as U109A (Rev 3: Lattice - U109.P)
        XILINX-3 Labeled as U151A (Rev 3: Lattice - U151.P)
 
-
 Note #1: On a Rev 3 PCB, the XILINX PLDs are replace with Lattice PLDs
-Note #2: On a Rev 3 PCB there is a small daughter card to help with gun input
-Note #3: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
+Note #2: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
+Note #3: For Rev 3 PCBs there is an optional daughter card to help with horizontal
+         light gun accuracy
 
 ***************************************************************************/
 
@@ -79,17 +84,17 @@ Note #3: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
 
 
 /* global variables */
-data32_t *	policetr_rambase;
+UINT32 *	policetr_rambase;
 
 
 /* local variables */
-static data32_t control_data;
+static UINT32 control_data;
 
-static data32_t bsmt_reg;
-static data32_t bsmt_data_bank;
-static data32_t bsmt_data_offset;
+static UINT32 bsmt_reg;
+static UINT32 bsmt_data_bank;
+static UINT32 bsmt_data_offset;
 
-static data32_t *speedup_data;
+static UINT32 *speedup_data;
 static UINT32 last_cycles;
 static UINT32 loop_count;
 
@@ -598,6 +603,33 @@ ROM_START( sshoot12 )
 ROM_END
 
 
+ROM_START( sshoot11 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
+	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
+	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
+	ROM_LOAD16_BYTE( "ss-u125.bin", 0x200000, 0x100000, CRC(79e8520a) SHA1(682e5c7954f96db65a137f05cde67c310b85b526) ) // 2:1
+	ROM_LOAD16_BYTE( "ss-u124.bin", 0x200001, 0x100000, CRC(8e805970) SHA1(bfc9940ed6425f136d768170275279c590da7003) ) // 2:2
+	ROM_LOAD16_BYTE( "ss-u123.bin", 0x400000, 0x100000, CRC(d045bb62) SHA1(839209ff6a8e5db63a51a3494a6c973e0068a3c6) ) // 3:1
+	ROM_LOAD16_BYTE( "ss-u122.bin", 0x400001, 0x100000, CRC(163cc133) SHA1(a5e84b5060fd32362aa097d0194ce72e8a90357c) ) // 3:2
+	ROM_LOAD16_BYTE( "ss-u127.bin", 0x600000, 0x100000, CRC(76a7a591) SHA1(9fd7cce21b01f388966a3e8388ba95820ac10bfd) ) // 4:1
+	ROM_LOAD16_BYTE( "ss-u126.bin", 0x600001, 0x100000, CRC(ab1b9d60) SHA1(ff51a71443f7774d3abf96c2eb8ef6a54d73dd8e) ) // 4:2
+
+	ROM_REGION32_BE( 0x100000, REGION_USER1, 0 )
+	ROM_LOAD32_BYTE( "ss-u113.v11", 0x00000, 0x40000, CRC(c19693f3) SHA1(2f1576261f741d5e69d30f645aea0ed359b8dc03) ) // 1:1
+	ROM_LOAD32_BYTE( "ss-u112.v11", 0x00001, 0x40000, CRC(a5ab6d82) SHA1(b2cc3fd875f0c6702cee973b77fd608f4cfe0555) ) // 1:2
+	ROM_LOAD32_BYTE( "ss-u111.v11", 0x00002, 0x40000, CRC(ec209b5f) SHA1(1408b509853b325e865d0b23d237bca321e73f60) ) // 1:3
+	ROM_LOAD32_BYTE( "ss-u110.v11", 0x00003, 0x40000, CRC(0f1de201) SHA1(5001de3349357545a6a45102340caf0008b50d7b) ) // 1:4
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Sound v1.2 */
+	ROM_LOAD( "ss-u160.bin", 0x000000, 0x100000, CRC(1c603d42) SHA1(880992871be52129684052d542946de0cc32ba9a) ) // 1:1
+	ROM_RELOAD(              0x3f8000, 0x100000 )
+	ROM_LOAD( "ss-u162.bin", 0x100000, 0x100000, CRC(40ef448a) SHA1(c96f7b169be2576e9f3783af84c07259efefb812) ) // 2:1
+	ROM_RELOAD(              0x4f8000, 0x100000 )
+ROM_END
+
+
 
 /*************************************
  *
@@ -643,3 +675,4 @@ GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P&P Marketi
 GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)" )
 GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)" )
 GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)" )
+GAME( 1998, sshoot11, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.1)" )

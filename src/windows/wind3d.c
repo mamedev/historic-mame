@@ -133,7 +133,7 @@ static int max_height;
 static int pref_depth;
 static int effect_min_xscale;
 static int effect_min_yscale;
-static struct rectangle last_bounds;
+static rectangle last_bounds;
 static double aspect_ratio;
 
 // mode finding
@@ -170,7 +170,7 @@ static void erase_surfaces(void);
 static int restore_surfaces(void);
 static void release_surfaces(void);
 static void compute_color_masks(const DDSURFACEDESC2 *desc);
-static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
+static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 static int render_and_flip(LPRECT src, LPRECT dst, int update, int wait_for_lock);
 static HRESULT blit_rgb_pattern(LPRECT dst, LPDIRECTDRAWSURFACE7 surface);
 static void init_vertices_preprocess(LPRECT src);
@@ -1850,7 +1850,7 @@ static void compute_color_masks(const DDSURFACEDESC2 *desc)
 //  win_d3d_draw
 //============================================================
 
-int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+int win_d3d_draw(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int result;
 
@@ -1877,7 +1877,7 @@ int win_d3d_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, voi
 //  lock_must_succeed
 //============================================================
 
-static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_pixels)
+static int lock_must_succeed(const rectangle *bounds, void *vector_dirty_pixels)
 {
 	// determine up front if this lock must succeed; by default, it depends on
 	// whether or not we're throttling
@@ -1906,12 +1906,12 @@ static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_
 //  render_to_blit
 //============================================================
 
-static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int dstdepth = blit_desc.DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
 	struct win_blit_params params;
-	struct rectangle temprect;
+	rectangle temprect;
 	RECT src, dst, margins;
 	int blit_width, blit_height;
 	int dstxoffs;

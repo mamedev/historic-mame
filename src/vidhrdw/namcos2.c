@@ -5,17 +5,17 @@
 #include "namcos2.h"
 #include "namcoic.h"
 
-data16_t *namcos2_sprite_ram;
-data16_t *namcos2_68k_palette_ram;
+UINT16 *namcos2_sprite_ram;
+UINT16 *namcos2_68k_palette_ram;
 size_t namcos2_68k_palette_size;
 size_t namcos2_68k_roz_ram_size;
-data16_t *namcos2_68k_roz_ram;
+UINT16 *namcos2_68k_roz_ram;
 
-static data16_t namcos2_68k_roz_ctrl[0x8];
+static UINT16 namcos2_68k_roz_ctrl[0x8];
 static tilemap *tilemap_roz;
 
 static void
-TilemapCB( data16_t code, int *tile, int *mask )
+TilemapCB( UINT16 code, int *tile, int *mask )
 {
 	*mask = code;
 
@@ -44,7 +44,7 @@ TilemapCB( data16_t code, int *tile, int *mask )
  * ---- ---- xxxx ---- always zero?
  * ---- ---- ---- xxxx sprite bank
  */
-static data16_t namcos2_gfx_ctrl;
+static UINT16 namcos2_gfx_ctrl;
 
 READ16_HANDLER( namcos2_gfx_ctrl_r )
 {
@@ -73,9 +73,9 @@ struct RozParam
 
 static void
 DrawRozHelper(
-	struct mame_bitmap *bitmap,
+	mame_bitmap *bitmap,
 	tilemap *tmap,
-	const struct rectangle *clip,
+	const rectangle *clip,
 	const struct RozParam *rozInfo )
 {
 	tilemap_set_palette_offset( tmap, rozInfo->color );
@@ -83,8 +83,8 @@ DrawRozHelper(
 	if( bitmap->depth == 15 || bitmap->depth == 16 )
 	{
 		UINT32 size_mask = rozInfo->size-1;
-		struct mame_bitmap *srcbitmap = tilemap_get_pixmap( tmap );
-		struct mame_bitmap *transparency_bitmap = tilemap_get_transparency_bitmap( tmap );
+		mame_bitmap *srcbitmap = tilemap_get_pixmap( tmap );
+		mame_bitmap *transparency_bitmap = tilemap_get_transparency_bitmap( tmap );
 		UINT32 startx = rozInfo->startx + clip->min_x * rozInfo->incxx + clip->min_y * rozInfo->incyx;
 		UINT32 starty = rozInfo->starty + clip->min_x * rozInfo->incxy + clip->min_y * rozInfo->incyy;
 		int sx = clip->min_x;
@@ -138,7 +138,7 @@ L_SkipPixel:
 } /* DrawRozHelper */
 
 static void
-DrawROZ(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+DrawROZ(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	const int xoffset = 38,yoffset = 0;
 	struct RozParam rozParam;
@@ -206,7 +206,7 @@ READ16_HANDLER( namcos2_68k_roz_ram_r )
 WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 {
 //  extern int debug_key_pressed;
-	data16_t oldword = namcos2_68k_roz_ram[offset];
+	UINT16 oldword = namcos2_68k_roz_ram[offset];
 	COMBINE_DATA(&namcos2_68k_roz_ram[offset]);
 	if (oldword != namcos2_68k_roz_ram[offset])
 	{
@@ -251,10 +251,10 @@ WRITE16_HANDLER( namcos2_68k_video_palette_w )
 	}
 } /* namcos2_68k_video_palette_w */
 
-static data16_t
+static UINT16
 GetPaletteRegister( int which )
 {
-	const data16_t *source = &namcos2_68k_palette_ram[0x3000/2];
+	const UINT16 *source = &namcos2_68k_palette_ram[0x3000/2];
 	return ((source[which*2]&0xff)<<8) | (source[which*2+1]&0xff);
 }
 
@@ -326,7 +326,7 @@ READ16_HANDLER( namcos2_sprite_ram_r )
 /**************************************************************************/
 
 static void
-DrawCrossshair( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+DrawCrossshair( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int x1port, y1port, x2port, y2port;
 	int beamx, beamy;
@@ -388,7 +388,7 @@ VIDEO_START( namcos2 )
 }
 
 static void
-ApplyClip( struct rectangle *clip, const struct rectangle *cliprect )
+ApplyClip( rectangle *clip, const rectangle *cliprect )
 {
 	clip->min_x = GetPaletteRegister(0) - 0x4a;
 	clip->max_x = GetPaletteRegister(1) - 0x4a - 1;
@@ -403,7 +403,7 @@ ApplyClip( struct rectangle *clip, const struct rectangle *cliprect )
 
 VIDEO_UPDATE( namcos2_default )
 {
-	struct rectangle clip;
+	rectangle clip;
 	int pri;
 
 	UpdatePalette();
@@ -444,7 +444,7 @@ VIDEO_START( finallap )
 
 VIDEO_UPDATE( finallap )
 {
-	struct rectangle clip;
+	rectangle clip;
 	int pri;
 
 	UpdatePalette();
@@ -484,7 +484,7 @@ VIDEO_START( luckywld )
 
 VIDEO_UPDATE( luckywld )
 {
-	struct rectangle clip;
+	rectangle clip;
 	int pri;
 
 	UpdatePalette();
@@ -521,7 +521,7 @@ VIDEO_START( sgunner )
 
 VIDEO_UPDATE( sgunner )
 {
-	struct rectangle clip;
+	rectangle clip;
 	int pri;
 
 	UpdatePalette();
@@ -551,7 +551,7 @@ VIDEO_START( metlhawk )
 
 VIDEO_UPDATE( metlhawk )
 {
-	struct rectangle clip;
+	rectangle clip;
 	int pri;
 
 	UpdatePalette();

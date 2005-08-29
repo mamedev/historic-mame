@@ -2,12 +2,12 @@
 
 #include "driver.h"
 
-data8_t *speedspn_attram;
+UINT8 *speedspn_attram;
 
 static tilemap *speedspn_tilemap;
 static UINT8 speedspn_display_disable = 0;
 static int speedspn_bank_vidram = 0;
-static data8_t* speedspn_vidram;
+static UINT8* speedspn_vidram;
 
 
 static void get_speedspn_tile_info(int tile_index)
@@ -59,11 +59,11 @@ WRITE8_HANDLER(speedspn_global_display_w)
 }
 
 
-static void speedspn_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void speedspn_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	data8_t *source = speedspn_vidram+ 0x1000;
-	data8_t *finish = source + 0x1000;
+	UINT8 *source = speedspn_vidram+ 0x1000;
+	UINT8 *finish = source + 0x1000;
 
 	while( source<finish )
 	{

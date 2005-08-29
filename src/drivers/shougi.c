@@ -196,7 +196,7 @@ int offs;
 
 
 
-static data8_t *cpu_sharedram;
+static UINT8 *cpu_sharedram;
 static UINT8 cpu_sharedram_control_val = 0;
 
 //to do:

@@ -107,9 +107,9 @@ OSC:    12.000MHz
 #include "sound/okim6295.h"
 
 static tilemap *sc3_tilemap, *sc0_tilemap,*sc1_tilemap,*sc2_tilemap;
-data16_t *sc3_vram, *sc0_vram,*sc1_vram,*sc2_vram;
-data16_t *jm_regs,*jm_ram,*jm_mcu_code;
-data16_t *jm_scrollram,*jm_vregs;
+UINT16 *sc3_vram, *sc0_vram,*sc1_vram,*sc2_vram;
+UINT16 *jm_regs,*jm_ram,*jm_mcu_code;
+UINT16 *jm_scrollram,*jm_vregs;
 static UINT16 sc0bank,pri;
 /*
 MCU program number,different for each game(n.b. the numbering scheme is *mine*,do not
@@ -529,7 +529,7 @@ WRITE16_HANDLER( jalmah_okirom_w )
 {
 	if(ACCESSING_LSB)
 	{
-		data8_t *oki = memory_region(REGION_SOUND1);
+		UINT8 *oki = memory_region(REGION_SOUND1);
 		oki_rom = data & 1;
 		memcpy(&oki[0x20000], &oki[(oki_rom * 0x80000) + (oki_bank * 0x20000) + 0x40000], 0x20000);
 	}
@@ -543,7 +543,7 @@ static WRITE16_HANDLER( jalmah_okibank_w )
 {
 	if(ACCESSING_LSB)
 	{
-		data8_t *oki = memory_region(REGION_SOUND1);
+		UINT8 *oki = memory_region(REGION_SOUND1);
 		oki_bank = data & 3;
 		memcpy(&oki[0x20000], &oki[(oki_rom * 0x80000) + (oki_bank * 0x20000) + 0x40000], 0x20000);
 	}

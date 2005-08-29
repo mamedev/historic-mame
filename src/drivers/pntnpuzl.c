@@ -157,7 +157,7 @@ static NVRAM_HANDLER( pntnpuzl )
 	}
 }
 
-static data16_t pntnpuzl_eeprom;
+static UINT16 pntnpuzl_eeprom;
 
 READ16_HANDLER( pntnpuzl_eeprom_r )
 {
@@ -181,8 +181,8 @@ WRITE16_HANDLER( pntnpuzl_eeprom_w )
 
 
 
-data16_t* pntnpuzl_3a0000ram;
-data16_t* pntnpuzl_bank;
+UINT16* pntnpuzl_3a0000ram;
+UINT16* pntnpuzl_bank;
 /* vid */
 VIDEO_START( pntnpuzl )
 {
@@ -327,7 +327,7 @@ write                                     read
 01 53 45 32 0d                       ---> 80 0c
 01 03 46 31 38 0d                    ---> 80 0c
 */
-static data16_t pntpzl_200000, serial, serial_out,read_count;
+static UINT16 pntpzl_200000, serial, serial_out,read_count;
 
 WRITE16_HANDLER( pntnpuzl_200000_w )
 {

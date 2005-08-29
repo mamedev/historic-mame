@@ -74,13 +74,13 @@
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
-static data16_t *cyclwarr_cpub_ram;
-data16_t *tatsumi_c_ram, *apache3_g_ram;
-data16_t *roundup5_d0000_ram, *roundup5_e0000_ram;
-data8_t *tatsumi_rom_sprite_lookup1, *tatsumi_rom_sprite_lookup2;
-data8_t *tatsumi_rom_clut0, *tatsumi_rom_clut1;
-data8_t *roundup5_unknown0, *roundup5_unknown1, *roundup5_unknown2;
-data8_t *apache3_bg_ram;
+static UINT16 *cyclwarr_cpub_ram;
+UINT16 *tatsumi_c_ram, *apache3_g_ram;
+UINT16 *roundup5_d0000_ram, *roundup5_e0000_ram;
+UINT8 *tatsumi_rom_sprite_lookup1, *tatsumi_rom_sprite_lookup2;
+UINT8 *tatsumi_rom_clut0, *tatsumi_rom_clut1;
+UINT8 *roundup5_unknown0, *roundup5_unknown1, *roundup5_unknown2;
+UINT8 *apache3_bg_ram;
 
 /***************************************************************************/
 

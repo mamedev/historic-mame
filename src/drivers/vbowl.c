@@ -85,12 +85,12 @@ void decrypt_vbowl(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1));
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1));
 
 	int rom_size = 0x80000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if((i & 0x4100) == 0x0100)
 			x ^= 0x0002;

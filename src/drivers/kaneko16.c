@@ -856,8 +856,8 @@ WRITE16_HANDLER( sandscrp_coin_counter_w )
 	}
 }
 
-static data8_t latch1_full;
-static data8_t latch2_full;
+static UINT8 latch1_full;
+static UINT8 latch2_full;
 
 static READ16_HANDLER( sandscrp_latchstatus_word_r )
 {

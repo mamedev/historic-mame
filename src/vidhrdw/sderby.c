@@ -2,13 +2,13 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *sderby_tilemap;
-extern data16_t *sderby_videoram;
+extern UINT16 *sderby_videoram;
 
 static tilemap *sderby_md_tilemap;
-extern data16_t *sderby_md_videoram;
+extern UINT16 *sderby_md_videoram;
 
 static tilemap *sderby_fg_tilemap;
-extern data16_t *sderby_fg_videoram;
+extern UINT16 *sderby_fg_videoram;
 
 /* BG Layer */
 
@@ -71,7 +71,7 @@ WRITE16_HANDLER( sderby_fg_videoram_w )
 }
 
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int codeshift)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int codeshift)
 {
 	int offs;
 	int height = Machine->gfx[0]->height;
@@ -124,7 +124,7 @@ VIDEO_UPDATE( sderby )
 
 WRITE16_HANDLER( sderby_scroll_w )
 {
-	static data16_t scroll[6];
+	static UINT16 scroll[6];
 
 
 	data = COMBINE_DATA(&scroll[offset]);

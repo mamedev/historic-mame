@@ -250,7 +250,7 @@ WRITE8_HANDLER( mcr_91490_videoram_w )
  *
  *************************************/
 
-static void render_sprites_91399(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void render_sprites_91399(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
@@ -321,7 +321,7 @@ static void render_sprites_91399(struct mame_bitmap *bitmap, const struct rectan
  *
  *************************************/
 
-static void render_sprites_91464(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int primask, int sprmask, int colormask)
+static void render_sprites_91464(mame_bitmap *bitmap, const rectangle *cliprect, int primask, int sprmask, int colormask)
 {
 	const gfx_element *gfx = Machine->gfx[1];
 	int offs;

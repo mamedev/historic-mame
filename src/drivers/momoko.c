@@ -20,8 +20,8 @@ Flipped screen looks wrong, but it is correct.
 #include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
-extern data8_t *momoko_bg_scrollx;
-extern data8_t *momoko_bg_scrolly;
+extern UINT8 *momoko_bg_scrollx;
+extern UINT8 *momoko_bg_scrolly;
 
 VIDEO_UPDATE( momoko );
 
@@ -38,7 +38,7 @@ WRITE8_HANDLER( momoko_bg_priority_w);
 
 WRITE8_HANDLER( momoko_bg_read_bank_w )
 {
-	data8_t *BG_MAP = memory_region(REGION_USER1);
+	UINT8 *BG_MAP = memory_region(REGION_USER1);
 	int bank_address = (data & 0x1f) * 0x1000;
 	memory_set_bankptr(1, &BG_MAP[bank_address]);
 }

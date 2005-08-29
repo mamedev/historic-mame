@@ -6,8 +6,8 @@
 
 /*----------- defined in vidhrdw/exterm.c -----------*/
 
-extern data16_t *exterm_master_videoram;
-extern data16_t *exterm_slave_videoram;
+extern UINT16 *exterm_master_videoram;
+extern UINT16 *exterm_slave_videoram;
 
 PALETTE_INIT( exterm );
 VIDEO_UPDATE( exterm );

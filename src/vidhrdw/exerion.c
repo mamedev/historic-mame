@@ -257,7 +257,7 @@ READ8_HANDLER( exerion_video_timing_r )
  *
  *************************************/
 
-void draw_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void draw_background(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	UINT8 *latches = &background_latches[cliprect->min_y * 16];
 	int x, y;

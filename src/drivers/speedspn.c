@@ -79,7 +79,7 @@ mw-9.rom = ST M27C1001 / GFX
 ******************************************************************************/
 
 /* in vidhrdw */
-extern data8_t *speedspn_attram;
+extern UINT8 *speedspn_attram;
 
 WRITE8_HANDLER( speedspn_vidram_w );
 WRITE8_HANDLER( speedspn_attram_w );

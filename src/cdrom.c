@@ -578,13 +578,13 @@ INLINE UINT8 make_bcd(UINT8 data)
 // *file = cdrom
 // track = track #
 // msf = 0 for LBA, 1 for BCD M:S:F
-data32_t cdrom_get_track_start(cdrom_file *file, int track, int msf)
+UINT32 cdrom_get_track_start(cdrom_file *file, int track, int msf)
 {
 	int tstart = cdrom_get_chd_start_of_track(file, track);
 
 	if (msf)
 	{
-		data8_t m, s, f;
+		UINT8 m, s, f;
 
 		m = tstart / (60*75);
 		tstart -= (m * 60 * 75);

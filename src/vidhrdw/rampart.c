@@ -17,7 +17,7 @@
  *
  *************************************/
 
-data16_t *rampart_bitmap;
+UINT16 *rampart_bitmap;
 
 
 
@@ -28,7 +28,7 @@ data16_t *rampart_bitmap;
  *************************************/
 
 static UINT8 *pfdirty;
-static struct mame_bitmap *pfbitmap;
+static mame_bitmap *pfbitmap;
 static int xdim, ydim;
 
 
@@ -102,7 +102,7 @@ VIDEO_START( rampart )
 VIDEO_UPDATE( rampart )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */
@@ -190,7 +190,7 @@ WRITE16_HANDLER( rampart_bitmap_w )
  *
  *************************************/
 
-void rampart_bitmap_render(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void rampart_bitmap_render(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int x, y;
 
@@ -198,7 +198,7 @@ void rampart_bitmap_render(struct mame_bitmap *bitmap, const struct rectangle *c
 	for (y = 0; y < ydim; y++)
 		if (pfdirty[y])
 		{
-			const data16_t *src = &rampart_bitmap[256 * y];
+			const UINT16 *src = &rampart_bitmap[256 * y];
 			UINT8 scanline[512];
 			UINT8 *dst = scanline;
 

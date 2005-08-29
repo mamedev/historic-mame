@@ -66,9 +66,9 @@ write:
 #include "sound/ay8910.h"
 
 
-extern data8_t *vastar_bg1videoram,*vastar_bg2videoram,*vastar_fgvideoram;
-extern data8_t *vastar_bg1_scroll,*vastar_bg2_scroll;
-extern data8_t *vastar_sprite_priority;
+extern UINT8 *vastar_bg1videoram,*vastar_bg2videoram,*vastar_fgvideoram;
+extern UINT8 *vastar_bg1_scroll,*vastar_bg2_scroll;
+extern UINT8 *vastar_sprite_priority;
 
 WRITE8_HANDLER( vastar_bg1videoram_w );
 WRITE8_HANDLER( vastar_bg2videoram_w );

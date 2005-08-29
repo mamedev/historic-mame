@@ -85,8 +85,8 @@ VIDEO_UPDATE(coolridr)
 
 /* end video */
 
-data32_t* sysh1_workram_h;
-data16_t* sysh1_soundram;
+UINT32* sysh1_workram_h;
+UINT16* sysh1_soundram;
 
 static ADDRESS_MAP_START( system_h1_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_ROM

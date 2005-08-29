@@ -74,7 +74,7 @@
 #include "vidhrdw/generic.h"
 #include "seta.h"
 
-data16_t *seta2_vregs;
+UINT16 *seta2_vregs;
 
 static int yoffset;
 
@@ -159,12 +159,12 @@ WRITE16_HANDLER( seta2_vregs_w )
 
 ***************************************************************************/
 
-static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void seta2_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	/* Sprites list */
 
-	data16_t *s1  = buffered_spriteram16 + 0x3000/2;
-	data16_t *end = &buffered_spriteram16[spriteram_size/2];
+	UINT16 *s1  = buffered_spriteram16 + 0x3000/2;
+	UINT16 *end = &buffered_spriteram16[spriteram_size/2];
 
 	for ( ; s1 < end; s1+=4 )
 	{
@@ -175,7 +175,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 		int sprite	= s1[3];
 
 		/* Single-sprite address */
-		data16_t *s2 = &buffered_spriteram16[(sprite & 0x7fff) * 4];
+		UINT16 *s2 = &buffered_spriteram16[(sprite & 0x7fff) * 4];
 
 		/* Single-sprite tile size */
 		int global_sizex = xoffs & 0x0c00;
@@ -221,7 +221,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 			if (sprite & 0x8000)
 			{
-				struct rectangle clip;
+				rectangle clip;
 				int dx,x,y;
 				int flipx;
 				int flipy;
@@ -268,7 +268,7 @@ static void seta2_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 						int px = ((dx + x * (8 << tilesize) + 0x10) & 0x3ff) - 0x10;
 						int tx, ty;
 						int attr, code, color;
-						data16_t *s3;
+						UINT16 *s3;
 
 						if (px < clip.min_x - 0x10) continue;
 						if (px > clip.max_x) continue;

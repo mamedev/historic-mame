@@ -11,6 +11,7 @@ static int rastersplit;
 static int splitline;
 static tilemap *fg_tilemap,*bg_tilemap;
 static int xadjust;
+static int bgadjust;
 static int scrollx1[256],scrolly1[256],scrollx2[256],scrolly2[256];
 static int video_off;
 extern unsigned char *spriteram,*spriteram_2;
@@ -132,11 +133,6 @@ static void hharry_get_bg_tile_info(int tile_index)
 	m72_get_tile_info(tile_index,m72_videoram2,1);
 }
 
-static void hharry_get_fg_tile_info(int tile_index)
-{
-	m72_get_tile_info(tile_index,m72_videoram1,1);
-}
-
 static void rtype2_get_bg_tile_info(int tile_index)
 {
 	rtype2_get_tile_info(tile_index,m72_videoram2,1);
@@ -195,6 +191,7 @@ VIDEO_START( m72 )
 	memset(m72_spriteram,0,spriteram_size);
 
 	xadjust = 0;
+	bgadjust = 0;
 
 	register_savestate();
 
@@ -222,6 +219,7 @@ VIDEO_START( rtype2 )
 	memset(m72_spriteram,0,spriteram_size);
 
 	xadjust = -4;
+	bgadjust = 0;
 
 	register_savestate();
 
@@ -265,6 +263,7 @@ VIDEO_START( majtitle )
 	memset(m72_spriteram,0,spriteram_size);
 
 	xadjust = -4;
+	bgadjust = 0;
 
 	register_savestate();
 
@@ -274,7 +273,7 @@ VIDEO_START( majtitle )
 VIDEO_START( hharry )
 {
 	bg_tilemap = tilemap_create(hharry_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
-	fg_tilemap = tilemap_create(hharry_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(m72_get_fg_tile_info,   tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = auto_malloc(spriteram_size);
 
@@ -292,6 +291,7 @@ VIDEO_START( hharry )
 	memset(m72_spriteram,0,spriteram_size);
 
 	xadjust = -4;
+	bgadjust = -2;
 
 	register_savestate();
 
@@ -525,7 +525,7 @@ WRITE8_HANDLER( majtitle_gfx_ctrl_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -578,7 +578,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	}
 }
 
-static void majtitle_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void majtitle_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -628,12 +628,12 @@ static void majtitle_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 	}
 }
 
-static void draw_layer(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
-		tilemap *tmap,int *scrollx,int *scrolly,int priority)
+static void draw_layer(mame_bitmap *bitmap,const rectangle *cliprect,
+		tilemap *tmap,int *scrollx,int *scrolly,int priority,int adjust_xpos)
 {
 	int start,i;
 	/* use clip regions to split the screen */
-	struct rectangle clip;
+	rectangle clip;
 
 	clip.min_x = cliprect->min_x;
 	clip.max_x = cliprect->max_x;
@@ -648,7 +648,7 @@ static void draw_layer(struct mame_bitmap *bitmap,const struct rectangle *clipre
 		clip.min_y = start + 128;
 		clip.max_y = i + 128;
 		sect_rect(&clip,cliprect);
-		tilemap_set_scrollx(tmap,0,scrollx[start] + xadjust);
+		tilemap_set_scrollx(tmap,0,scrollx[start] + adjust_xpos);
 		tilemap_set_scrolly(tmap,0,scrolly[start]);
 		tilemap_draw(bitmap,&clip,tmap,priority,0);
 
@@ -656,14 +656,14 @@ static void draw_layer(struct mame_bitmap *bitmap,const struct rectangle *clipre
 	} while (start < cliprect->max_y - 128);
 }
 
-static void draw_bg(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
+static void draw_bg(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
 {
-	draw_layer(bitmap,cliprect,bg_tilemap,scrollx2,scrolly2,priority);
+	draw_layer(bitmap,cliprect,bg_tilemap,scrollx2,scrolly2,priority,xadjust + bgadjust);
 }
 
-static void draw_fg(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
+static void draw_fg(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
 {
-	draw_layer(bitmap,cliprect,fg_tilemap,scrollx1,scrolly1,priority);
+	draw_layer(bitmap,cliprect,fg_tilemap,scrollx1,scrolly1,priority,xadjust);
 }
 
 

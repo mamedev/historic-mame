@@ -703,6 +703,7 @@ static void ss_register_func_void(ss_func **root, void (*func)(void))
 		osd_die("malloc failed in ss_register_func\n");
 
 	/* fill it in */
+	(*cur)->next       = NULL;
 	(*cur)->type       = FUNC_NOPARAM;
 	(*cur)->func.voidf = func;
 	(*cur)->tag        = ss_current_tag;
@@ -740,6 +741,7 @@ static void ss_register_func_int(ss_func **root, void (*func)(int), int param)
 		osd_die("malloc failed in ss_register_func\n");
 
 	/* fill it in */
+	(*cur)->next       = NULL;
 	(*cur)->type       = FUNC_INTPARAM;
 	(*cur)->func.intf  = func;
 	(*cur)->param.intp = param;
@@ -778,6 +780,7 @@ static void ss_register_func_ptr(ss_func **root, void (*func)(void *), void *par
 		osd_die("malloc failed in ss_register_func\n");
 
 	/* fill it in */
+	(*cur)->next       = NULL;
 	(*cur)->type       = FUNC_PTRPARAM;
 	(*cur)->func.ptrf  = func;
 	(*cur)->param.ptrp = param;

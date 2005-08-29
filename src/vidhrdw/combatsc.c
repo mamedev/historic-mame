@@ -461,7 +461,7 @@ WRITE8_HANDLER( combasc_scrollram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const unsigned char *source,int circuit,UINT32 pri_mask)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, const unsigned char *source,int circuit,UINT32 pri_mask)
 {
 	int base_color = (circuit*4)*16+(K007121_ctrlram[circuit][6]&0x10)*2;
 
@@ -542,7 +542,7 @@ VIDEO_UPDATE( combasc )
 	/* chop the extreme columns if necessary */
 	if (K007121_ctrlram[0][0x03] & 0x40)
 	{
-		struct rectangle clip;
+		rectangle clip;
 
 		clip = *cliprect;
 		clip.max_x = clip.min_x + 7;
@@ -582,7 +582,7 @@ byte #4:
 
 ***************************************************************************/
 
-static void bootleg_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, const unsigned char *source, int circuit )
+static void bootleg_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, const unsigned char *source, int circuit )
 {
 	const gfx_element *gfx = Machine->gfx[circuit+2];
 

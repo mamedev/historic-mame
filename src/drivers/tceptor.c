@@ -29,17 +29,17 @@ extern READ8_HANDLER( tceptor_bg_ram_r );
 extern WRITE8_HANDLER( tceptor_bg_ram_w );
 extern WRITE8_HANDLER( tceptor_bg_scroll_w );
 
-extern data8_t *tceptor_tile_ram;
-extern data8_t *tceptor_tile_attr;
-extern data8_t *tceptor_bg_ram;
-extern data16_t *tceptor_sprite_ram;
+extern UINT8 *tceptor_tile_ram;
+extern UINT8 *tceptor_tile_attr;
+extern UINT8 *tceptor_bg_ram;
+extern UINT16 *tceptor_sprite_ram;
 
 
 /*******************************************************************/
 
-static data8_t *m6502_a_shared_ram;
-static data8_t *m6502_b_shared_ram;
-static data8_t *m68k_shared_ram;
+static UINT8 *m6502_a_shared_ram;
+static UINT8 *m6502_b_shared_ram;
+static UINT8 *m68k_shared_ram;
 
 static int m6809_irq_enable;
 static int m68k_irq_enable;
@@ -150,9 +150,9 @@ static WRITE8_HANDLER( voice_w )
 
 
 /* fix dsw/input data to memory mapped data */
-static data8_t fix_input0(data8_t in1, data8_t in2)
+static UINT8 fix_input0(UINT8 in1, UINT8 in2)
 {
-	data8_t r = 0;
+	UINT8 r = 0;
 
 	r |= (in1 & 0x80) >> 7;
 	r |= (in1 & 0x20) >> 4;
@@ -166,9 +166,9 @@ static data8_t fix_input0(data8_t in1, data8_t in2)
 	return r;
 }
 
-static data8_t fix_input1(data8_t in1, data8_t in2)
+static UINT8 fix_input1(UINT8 in1, UINT8 in2)
 {
-	data8_t r = 0;
+	UINT8 r = 0;
 
 	r |= (in1 & 0x40) >> 6;
 	r |= (in1 & 0x10) >> 3;

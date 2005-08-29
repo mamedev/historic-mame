@@ -122,7 +122,7 @@ It's used in (at least) three places :
 
 static int char_bank = 0;
 static tilemap *bg_tilemap, *fg_tilemap;
-static data8_t *bgram;
+static UINT8 *bgram;
 static int bgadr=0;
 
 static WRITE8_HANDLER( char_bank_w )

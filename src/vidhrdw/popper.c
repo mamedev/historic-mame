@@ -7,10 +7,10 @@ Omori Electric CAD (OEC) 1983
 #include "state.h"
 
 static tilemap *popper_p123_tilemap, *popper_p0_tilemap, *popper_ol_p123_tilemap, *popper_ol_p0_tilemap;
-data8_t *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
+UINT8 *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
 size_t popper_spriteram_size;
 static int popper_flipscreen, popper_e002, popper_gfx_bank;
-static struct rectangle tilemap_clip;
+static rectangle tilemap_clip;
 
 PALETTE_INIT( popper )
 {
@@ -194,7 +194,7 @@ VIDEO_START( popper )
 	return 0;
 }
 
-static void popper_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void popper_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,sx,sy,flipx,flipy;
 
@@ -238,7 +238,7 @@ static void popper_draw_sprites(struct mame_bitmap *bitmap,const struct rectangl
 
 VIDEO_UPDATE( popper )
 {
-	struct rectangle finalclip = tilemap_clip;
+	rectangle finalclip = tilemap_clip;
 	sect_rect(&finalclip, cliprect);
 
 	//attribram

@@ -856,7 +856,7 @@ WW.B11    Object 5 - Even
  *
  *************************************/
 
-static data16_t *workram;
+static UINT16 *workram;
 
 static UINT8 rom_board;
 static int atomicp_sound_rate;
@@ -973,7 +973,7 @@ static const struct segaic16_memory_map_entry *region_info_list[] =
  *
  *************************************/
 
-static void sound_w(data8_t data)
+static void sound_w(UINT8 data)
 {
 	if (has_sound_cpu)
 	{
@@ -1312,7 +1312,7 @@ static INTERRUPT_GEN( i8751_main_cpu_vblank )
 
 static void altbeast_common_i8751_sim(offs_t soundoffs, offs_t inputoffs)
 {
-	data16_t temp;
+	UINT16 temp;
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
@@ -1365,7 +1365,7 @@ static void goldnaxe_i8751_init(void)
 
 static void goldnaxe_i8751_sim(void)
 {
-	data16_t temp;
+	UINT16 temp;
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
@@ -1395,7 +1395,7 @@ static void goldnaxe_i8751_sim(void)
 
 static void tturf_i8751_sim(void)
 {
-	data16_t temp;
+	UINT16 temp;
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
@@ -1417,7 +1417,7 @@ static void tturf_i8751_sim(void)
 
 static void wb3_i8751_sim(void)
 {
-	data16_t temp;
+	UINT16 temp;
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
@@ -1434,7 +1434,7 @@ static void wb3_i8751_sim(void)
 
 static void wrestwar_i8751_sim(void)
 {
-	data16_t temp;
+	UINT16 temp;
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
@@ -1508,7 +1508,7 @@ static READ16_HANDLER( dunkshot_custom_io_r )
 
 static READ16_HANDLER( hwchamp_custom_io_r )
 {
-	data16_t result;
+	UINT16 result;
 
 	switch (offset & (0x3000/2))
 	{
@@ -5828,7 +5828,7 @@ static DRIVER_INIT( sdi )
 static DRIVER_INIT( defense )
 {
 	void fd1089_decrypt_0028(void);
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	rom[0x0F77C/2] = rom[0x0F77C/2]^0x80; // one of the program roms is bad :-(
 

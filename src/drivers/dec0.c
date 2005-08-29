@@ -44,8 +44,8 @@ Boulderdash use the same graphics chips but are different pcbs.
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
 
-data16_t *dec0_ram;
-data8_t *robocop_shared_ram;
+UINT16 *dec0_ram;
+UINT8 *robocop_shared_ram;
 
 /******************************************************************************/
 

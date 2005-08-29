@@ -16,9 +16,9 @@ UINT8* tank8_pos_d_ram;
 static tilemap* tilemap1;
 static tilemap* tilemap2;
 
-static struct mame_bitmap* helper1;
-static struct mame_bitmap* helper2;
-static struct mame_bitmap* helper3;
+static mame_bitmap* helper1;
+static mame_bitmap* helper2;
+static mame_bitmap* helper3;
 
 
 
@@ -129,7 +129,7 @@ static int get_y_pos(int n)
 }
 
 
-static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* clip)
+static void draw_sprites(mame_bitmap* bitmap, const rectangle* clip)
 {
 	int i;
 
@@ -152,13 +152,13 @@ static void draw_sprites(struct mame_bitmap* bitmap, const struct rectangle* cli
 }
 
 
-static void draw_bullets(struct mame_bitmap* bitmap, const struct rectangle* clip)
+static void draw_bullets(mame_bitmap* bitmap, const rectangle* clip)
 {
 	int i;
 
 	for (i = 0; i < 8; i++)
 	{
-		struct rectangle rect;
+		rectangle rect;
 
 		int x = get_x_pos(8 + i);
 		int y = get_y_pos(8 + i);
@@ -195,7 +195,7 @@ VIDEO_UPDATE( tank8 )
 
 VIDEO_EOF( tank8 )
 {
-	const struct rectangle* clip = &Machine->visible_area;
+	const rectangle* clip = &Machine->visible_area;
 
 	int x;
 	int y;

@@ -25,10 +25,10 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/arm/arm.h"
 
-static data32_t *ertictac_mainram;
-static data32_t *ram;
-static data32_t IRQSTA, IRQMSKA, IRQMSKB, FIQMSK, T1low, T1high;
-static data32_t vidFIFO[256];
+static UINT32 *ertictac_mainram;
+static UINT32 *ram;
+static UINT32 IRQSTA, IRQMSKA, IRQMSKB, FIQMSK, T1low, T1high;
+static UINT32 vidFIFO[256];
 
 static READ32_HANDLER(ram_r)
 {
@@ -341,7 +341,7 @@ ROM_END
 
 static DRIVER_INIT( ertictac )
 {
-	((data32_t *)memory_region(REGION_USER1))[0x55]=0;// patched TSTS r11,r15,lsl #32  @ $3800154
+	((UINT32 *)memory_region(REGION_USER1))[0x55]=0;// patched TSTS r11,r15,lsl #32  @ $3800154
 }
 
 GAMEX( 1990, ertictac, 0, ertictac, ertictac, ertictac, ROT0, "Sisteme", "Erotictac/Tactic" ,GAME_NO_SOUND)

@@ -18,7 +18,7 @@ UINT8 *yard_scroll_x_low;
 UINT8 *yard_scroll_x_high;
 UINT8 *yard_scroll_y_low;
 UINT8 *yard_score_panel_disabled;
-static struct mame_bitmap *scroll_panel_bitmap;
+static mame_bitmap *scroll_panel_bitmap;
 
 static tilemap *bg_tilemap;
 
@@ -27,13 +27,13 @@ static tilemap *bg_tilemap;
 #define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 #define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-static struct rectangle clippanel =
+static rectangle clippanel =
 {
 	26*8, 32*8-1,
 	1*8, 31*8-1
 };
 
-static struct rectangle clippanelflip =
+static rectangle clippanelflip =
 {
 	0*8, 6*8-1,
 	1*8, 31*8-1
@@ -224,7 +224,7 @@ VIDEO_START( yard )
 
 #define DRAW_SPRITE(code, sy) drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_COLOR, 256);
 
-static void yard_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void yard_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -269,7 +269,7 @@ static void yard_draw_sprites( struct mame_bitmap *bitmap, const struct rectangl
 	}
 }
 
-static void yard_draw_panel( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void yard_draw_panel( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	if (! *yard_score_panel_disabled)
 	{

@@ -3,12 +3,12 @@
 #include "f1gp.h"
 
 
-data16_t *f1gp_spr1vram,*f1gp_spr2vram,*f1gp_spr1cgram,*f1gp_spr2cgram;
-data16_t *f1gp_fgvideoram,*f1gp_rozvideoram;
-data16_t *f1gp2_sprcgram,*f1gp2_spritelist;
+UINT16 *f1gp_spr1vram,*f1gp_spr2vram,*f1gp_spr1cgram,*f1gp_spr2cgram;
+UINT16 *f1gp_fgvideoram,*f1gp_rozvideoram;
+UINT16 *f1gp2_sprcgram,*f1gp2_spritelist;
 size_t f1gp_spr1cgram_size,f1gp_spr2cgram_size;
 
-static data16_t *zoomdata;
+static UINT16 *zoomdata;
 static int dirtygfx,flipscreen,gfxctrl;
 static unsigned char *dirtychar;
 
@@ -69,7 +69,7 @@ VIDEO_START( f1gp )
 		return 1;
 	memset(dirtychar,1,TOTAL_CHARS);
 
-	zoomdata = (data16_t *)memory_region(REGION_GFX4);
+	zoomdata = (UINT16 *)memory_region(REGION_GFX4);
 
 	return 0;
 }
@@ -95,7 +95,7 @@ VIDEO_START( f1gp2 )
 		return 1;
 	memset(dirtychar,1,TOTAL_CHARS);
 
-	zoomdata = (data16_t *)memory_region(REGION_GFX4);
+	zoomdata = (UINT16 *)memory_region(REGION_GFX4);
 
 	return 0;
 }
@@ -192,10 +192,10 @@ WRITE16_HANDLER( f1gp2_gfxctrl_w )
 
 ***************************************************************************/
 
-static void f1gp_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int chip,int primask)
+static void f1gp_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int primask)
 {
 	int attr_start,first;
-	data16_t *spram = chip ? f1gp_spr2vram : f1gp_spr1vram;
+	UINT16 *spram = chip ? f1gp_spr2vram : f1gp_spr1vram;
 
 	first = 4 * spram[0x1fe];
 
@@ -326,7 +326,7 @@ VIDEO_UPDATE( f1gp )
 
 
 
-static void f1gp2_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void f1gp2_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

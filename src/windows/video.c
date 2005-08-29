@@ -382,7 +382,7 @@ static int decode_aspect(struct rc_option *option, const char *arg, int priority
 //  win_orient_rect
 //============================================================
 
-void win_orient_rect(struct rectangle *rect)
+void win_orient_rect(rectangle *rect)
 {
 	int temp;
 
@@ -416,7 +416,7 @@ void win_orient_rect(struct rectangle *rect)
 //  win_disorient_rect
 //============================================================
 
-void win_disorient_rect(struct rectangle *rect)
+void win_disorient_rect(rectangle *rect)
 {
 	int temp;
 
@@ -828,7 +828,7 @@ static void update_palette(mame_display *display)
 
 static void update_visible_area(mame_display *display)
 {
-	struct rectangle adjusted = display->game_visible_area;
+	rectangle adjusted = display->game_visible_area;
 
 	// tell the UI where it can draw
 	ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
@@ -914,7 +914,7 @@ void update_autoframeskip(void)
 //  render_frame
 //============================================================
 
-static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
+static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels)
 {
 	cycles_t curr;
 
@@ -976,7 +976,7 @@ static void render_frame(struct mame_bitmap *bitmap, const struct rectangle *bou
 
 void osd_update_video_and_audio(mame_display *display)
 {
-	struct rectangle updatebounds = display->game_bitmap_update;
+	rectangle updatebounds = display->game_bitmap_update;
 	cycles_t cps = osd_cycles_per_second();
 
 	// if this is the first time through, initialize the previous time value
@@ -1052,10 +1052,10 @@ void osd_update_video_and_audio(mame_display *display)
 //  osd_override_snapshot
 //============================================================
 
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds)
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
 {
-	struct rectangle newbounds;
-	struct mame_bitmap *copy;
+	rectangle newbounds;
+	mame_bitmap *copy;
 	int x, y, w, h, t;
 
 	// if we can send it in raw, no need to override anything

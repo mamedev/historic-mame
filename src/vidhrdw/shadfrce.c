@@ -2,10 +2,10 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *shadfrce_fgtilemap, *shadfrce_bg0tilemap,  *shadfrce_bg1tilemap;
-extern data16_t *shadfrce_fgvideoram, *shadfrce_bg0videoram,  *shadfrce_bg1videoram,   *shadfrce_spvideoram;
-/* extern data16_t *shadfrce_videoregs; */
+extern UINT16 *shadfrce_fgvideoram, *shadfrce_bg0videoram,  *shadfrce_bg1videoram,   *shadfrce_spvideoram;
+/* extern UINT16 *shadfrce_videoregs; */
 
-static data16_t *shadfrce_spvideoram_old; /* I *think* the sprites need to be delayed anyway */
+static UINT16 *shadfrce_spvideoram_old; /* I *think* the sprites need to be delayed anyway */
 
 
 static void get_shadfrce_fgtile_info(int tile_index)
@@ -112,7 +112,7 @@ WRITE16_HANDLER ( shadfrce_bg1scrolly_w )
 
 
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 
 	/* | ---- ---- hhhf Fe-Y | ---- ---- yyyy yyyy | ---- ---- TTTT TTTT | ---- ---- tttt tttt |
@@ -130,8 +130,8 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
     */
 
 	const gfx_element *gfx = Machine->gfx[1];
-	data16_t *finish = shadfrce_spvideoram_old;
-	data16_t *source = finish + 0x2000/2 - 8;
+	UINT16 *finish = shadfrce_spvideoram_old;
+	UINT16 *source = finish + 0x2000/2 - 8;
 	int hcount;
 	while( source>=finish )
 	{

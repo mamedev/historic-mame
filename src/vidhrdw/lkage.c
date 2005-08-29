@@ -105,7 +105,7 @@ VIDEO_START( lkage )
 } /* VIDEO_START( lkage ) */
 
 static void
-draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const unsigned char *source = spriteram;
 	const unsigned char *finish = source+0x60;

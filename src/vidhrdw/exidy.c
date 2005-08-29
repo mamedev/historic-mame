@@ -16,9 +16,9 @@ UINT8 exidy_collision_invert;
 UINT8 *exidy_palette;
 UINT16 *exidy_colortable;
 
-static struct mame_bitmap *motion_object_1_vid;
-static struct mame_bitmap *motion_object_2_vid;
-static struct mame_bitmap *motion_object_2_clip;
+static mame_bitmap *motion_object_1_vid;
+static mame_bitmap *motion_object_2_vid;
+static mame_bitmap *motion_object_2_clip;
 
 static UINT8 chardirty[256];
 static UINT8 update_complete;
@@ -398,7 +398,7 @@ INLINE int sprite_2_enabled(void)
 VIDEO_EOF( exidy )
 {
 	UINT8 enable_set = ((sprite_enable & 0x20) != 0);
-    struct rectangle clip = { 0, 15, 0, 15 };
+    rectangle clip = { 0, 15, 0, 15 };
     int pen0 = Machine->pens[0];
     int org_1_x = 0, org_1_y = 0;
     int org_2_x = 0, org_2_y = 0;

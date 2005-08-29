@@ -9,16 +9,16 @@ this could get messy if games change their own code after initial loading as we'
 #include "cpu/m68000/m68000.h"
 #include "machine/fd1094.h"
 
-extern data16_t *s24_mainram1;
+extern UINT16 *s24_mainram1;
 
 #define S16_NUMCACHE 8
 
 static unsigned char *s24_fd1094_key; // the memory region containing key
-static data16_t *s24_fd1094_cpuregion; // the CPU region with encrypted code
+static UINT16 *s24_fd1094_cpuregion; // the CPU region with encrypted code
 static UINT32  s24_fd1094_cpuregionsize; // the size of this region in bytes
 
-static data16_t* s24_fd1094_userregion; // a user region where the current decrypted state is put and executed from
-static data16_t* s24_fd1094_cacheregion[S16_NUMCACHE]; // a cache region where S16_NUMCACHE states are stored to improve performance
+static UINT16* s24_fd1094_userregion; // a user region where the current decrypted state is put and executed from
+static UINT16* s24_fd1094_cacheregion[S16_NUMCACHE]; // a cache region where S16_NUMCACHE states are stored to improve performance
 static int fd1094_cached_states[S16_NUMCACHE]; // array of cached state numbers
 static int fd1094_current_cacheposition; // current position in cache array
 
@@ -128,7 +128,7 @@ void s24_fd1094_driver_init(void)
 {
 	int i;
 
-	s24_fd1094_cpuregion = (data16_t*)s24_mainram1;
+	s24_fd1094_cpuregion = (UINT16*)s24_mainram1;
 	s24_fd1094_cpuregionsize = 0x40000;
 	s24_fd1094_key = memory_region(REGION_USER3);
 

@@ -10,7 +10,7 @@
 
 #include "driver.h"
 
-extern void timekeeper_init( int chip, int type, data8_t *data );
+extern void timekeeper_init( int chip, int type, UINT8 *data );
 
 #define MAX_TIMEKEEPER_CHIPS ( 1 )
 

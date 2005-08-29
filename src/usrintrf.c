@@ -83,10 +83,10 @@ memcard_interface memcard_intf;
  *************************************/
 
 /* raw coordinates, relative to the real scrbitmap */
-static struct rectangle uirawbounds;
+static rectangle uirawbounds;
 
 /* rotated coordinates, easier to deal with */
-static struct rectangle uirotbounds;
+static rectangle uirotbounds;
 static int uirotwidth, uirotheight;
 static int uirotcharwidth, uirotcharheight;
 
@@ -311,13 +311,12 @@ static void draw_multiline_text_box(const char *text, int justify, float xpos, f
 static void create_font(void);
 static void onscrd_init(void);
 
-static int handle_keys(struct mame_bitmap *bitmap);
-static void ui_display_fps(void);
+static int handle_keys(mame_bitmap *bitmap);
 static void ui_display_profiler(void);
 static void ui_display_popup(void);
 static int setup_menu(int selected);
 static int on_screen_display(int selected);
-static void showcharset(struct mame_bitmap *bitmap);
+static void showcharset(mame_bitmap *bitmap);
 static void initiate_load_save(int type);
 static int update_load_save(void);
 
@@ -336,7 +335,6 @@ static UINT32 menu_reset_game(UINT32 state);
 static UINT32 menu_bookkeeping(UINT32 state);
 static UINT32 menu_game_info(UINT32 state);
 #else
-static UINT32 menu_image_info(UINT32 state);
 static UINT32 menu_file_manager(UINT32 state);
 static UINT32 menu_tape_control(UINT32 state);
 #endif
@@ -345,13 +343,13 @@ static int sprintf_game_info(char *buf);
 
 
 /* -- begin this stuff will go away with the new rendering system */
-static void ui_raw2rot_rect(struct rectangle *rect);
-static void ui_rot2raw_rect(struct rectangle *rect);
+static void ui_raw2rot_rect(rectangle *rect);
+static void ui_rot2raw_rect(rectangle *rect);
 static void add_line(int x1, int y1, int x2, int y2, rgb_t color);
 static void add_fill(int left, int top, int right, int bottom, rgb_t color);
 static void add_char(int x, int y, UINT16 ch, int color);
 static void add_filled_box(int x1, int y1, int x2, int y2);
-static void render_ui(struct mame_bitmap *dest);
+static void render_ui(mame_bitmap *dest);
 /* -- end this stuff will go away with the new rendering system */
 
 
@@ -436,7 +434,7 @@ void ui_set_visible_area(int xmin, int ymin, int xmax, int ymax)
  *
  *************************************/
 
-int ui_update_and_render(struct mame_bitmap *bitmap)
+int ui_update_and_render(mame_bitmap *bitmap)
 {
 	/* if we're single-stepping, pause now */
 	if (single_step)
@@ -1204,7 +1202,7 @@ static void create_font(void)
  *
  *************************************/
 
-static int handle_keys(struct mame_bitmap *bitmap)
+static int handle_keys(mame_bitmap *bitmap)
 {
 	/* if the user pressed ESC, stop the emulation as long as menus aren't up */
 	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CANCEL))
@@ -1349,11 +1347,11 @@ do { \
 #ifdef MESS
 	/* add configurables menu */
 	if (has_configs)
-		ADD_MENU(UI_CONFIGURATION, menu_switches, (IPT_CONFIG_NAME << 16) | (IPT_CONFIG_SETTING << 24));
+		ADD_MENU(UI_configuration, menu_switches, (IPT_CONFIG_NAME << 16) | (IPT_CONFIG_SETTING << 24));
 
 	/* add categories menu */
 	if (has_categories)
-		ADD_MENU(UI_CATEGORIES, menu_switches, (IPT_CATEGORY_NAME << 16) | (IPT_CATEGORY_SETTING << 24));
+		ADD_MENU(UI_categories, menu_switches, (IPT_CATEGORY_NAME << 16) | (IPT_CATEGORY_SETTING << 24));
 #endif /* MESS */
 
 	/* add analog settings menu */
@@ -1372,15 +1370,15 @@ do { \
 	ADD_MENU(UI_gameinfo, menu_game_info, 0);
 #else /* MESS */
   	/* add image info menu */
-	ADD_MENU(UI_IMAGEINFO, menu_image_info, 0);
+	ADD_MENU(UI_imageinfo, ui_menu_image_info, 0);
 
   	/* add image info menu */
-	ADD_MENU(UI_FILEMANAGER, menu_file_manager, 0);
+	ADD_MENU(UI_filemanager, menu_file_manager, 1);
 
 #if HAS_WAVE
   	/* add tape control menu */
 	if (device_find(Machine->devices, IO_CASSETTE))
-		ADD_MENU(UI_TAPECONTROL, menu_tape_control, 0);
+		ADD_MENU(UI_tapecontrol, menu_tape_control, 1);
 #endif /* HAS_WAVE */
 #endif /* !MESS */
 
@@ -1400,7 +1398,7 @@ do { \
 	ui_draw_menu(item_list, menu_items, state);
 
 	/* handle the keys */
-	if (ui_menu_generic_keys(&state, menu_items))
+	if (ui_menu_generic_keys((int *) &state, menu_items))
 		return state;
 	if (input_ui_pressed(IPT_UI_SELECT))
 		return ui_menu_stack_push(handler_list[menu_state], param_list[menu_state]);
@@ -1437,7 +1435,7 @@ static UINT32 menu_default_input_groups(UINT32 state)
 	ui_draw_menu(item_list, menu_items, state);
 
 	/* handle the keys */
-	if (ui_menu_generic_keys(&state, menu_items))
+	if (ui_menu_generic_keys((int *) &state, menu_items))
 		return state;
 	if (input_ui_pressed(IPT_UI_SELECT))
 		return ui_menu_stack_push(menu_default_input, state << 16);
@@ -1986,7 +1984,7 @@ static UINT32 menu_analog(UINT32 state)
 	ui_draw_menu(item_list, menu_items, state);
 
 	/* handle generic menu keys */
-	if (ui_menu_generic_keys(&state, menu_items))
+	if (ui_menu_generic_keys((int *) &state, menu_items))
 		return state;
 
 	/* handle left/right arrows */
@@ -2260,21 +2258,21 @@ static UINT32 menu_reset_game(UINT32 state)
  *************************************/
 
 #ifdef MESS
-static UINT32 menu_image_info(UINT32 state)
-{
-	return ui_menu_stack_pop();
-}
-
-
 static UINT32 menu_file_manager(UINT32 state)
 {
+	int result = filemanager(state);
+	if (result == 0)
 	return ui_menu_stack_pop();
+	return result;
 }
 
 
 static UINT32 menu_tape_control(UINT32 state)
 {
+	int result = tapecontrol(state);
+	if (result == 0)
 	return ui_menu_stack_pop();
+	return result;
 }
 #endif
 
@@ -2373,7 +2371,7 @@ static int sprintf_game_info(char *buf)
     erase_screen - erase the screen
 -------------------------------------------------*/
 
-static void erase_screen(struct mame_bitmap *bitmap)
+static void erase_screen(mame_bitmap *bitmap)
 {
 	fillbitmap(bitmap, get_black_pen(), NULL);
 	schedule_full_refresh();
@@ -2406,9 +2404,9 @@ void showgfx_show(int visible)
 }
 
 
-void showgfx_render(struct mame_bitmap *bitmap)
+void showgfx_render(mame_bitmap *bitmap)
 {
-	static const struct rectangle fullrect = { 0, 10000, 0, 10000 };
+	static const rectangle fullrect = { 0, 10000, 0, 10000 };
 	int num_tilemap = tilemap_count();
 	int num_gfx;
 
@@ -2517,7 +2515,7 @@ static void show_colors(int submode)
 	/* now draw the pretty boxes */
 	for (colornum = 0; colornum < colors; colornum++)
 	{
-		struct rectangle bounds;
+		rectangle bounds;
 
 		/* compute the bounds of the box */
 		bounds.min_x = grid_left + (colornum % 16) * boxwidth;
@@ -2563,7 +2561,7 @@ static void show_colors(int submode)
 #endif
 
 
-static void showcharset(struct mame_bitmap *bitmap)
+static void showcharset(mame_bitmap *bitmap)
 {
 	int i;
 	char buf[80];
@@ -2589,7 +2587,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 	do
 	{
-		static const struct rectangle fullrect = { 0, 10000, 0, 10000 };
+		static const rectangle fullrect = { 0, 10000, 0, 10000 };
 
 		/* mark the whole thing dirty */
 		artwork_mark_ui_dirty(fullrect.min_x, fullrect.min_y, fullrect.max_x, fullrect.max_y);
@@ -2654,7 +2652,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 						for (i = 0;i < colors;i++)
 						{
-							struct rectangle bounds;
+							rectangle bounds;
 							bounds.min_x = uirotbounds.min_x + 3*uirotcharwidth + (uirotcharwidth*4/3)*(i % 16);
 							bounds.min_y = uirotbounds.min_y + 2*uirotcharheight + (uirotcharheight)*(i / 16) + uirotcharheight;
 							bounds.max_x = bounds.min_x + uirotcharwidth*4/3 - 1;
@@ -2700,7 +2698,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 					for (i = 0; i+firstdrawn < Machine->gfx[bank]->total_elements && i<cpx*cpy; i++)
 					{
-						struct rectangle bounds;
+						rectangle bounds;
 						bounds.min_x = (i % cpx) * crotwidth + uirotbounds.min_x;
 						bounds.min_y = uirotcharheight + (i / cpx) * crotheight + uirotbounds.min_y;
 						bounds.max_x = bounds.min_x + crotwidth - 1;
@@ -2985,7 +2983,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 
 
-int ui_display_copyright(struct mame_bitmap *bitmap)
+int ui_display_copyright(mame_bitmap *bitmap)
 {
 	char buf[1000];
 	char *bufptr = buf;
@@ -3024,7 +3022,7 @@ int ui_display_copyright(struct mame_bitmap *bitmap)
 	return 0;
 }
 
-int ui_display_game_warnings(struct mame_bitmap *bitmap)
+int ui_display_game_warnings(mame_bitmap *bitmap)
 {
 #define WARNING_FLAGS (	GAME_NOT_WORKING | \
 						GAME_UNEMULATED_PROTECTION | \
@@ -3136,7 +3134,7 @@ int ui_display_game_warnings(struct mame_bitmap *bitmap)
 }
 
 
-int ui_display_game_info(struct mame_bitmap *bitmap)
+int ui_display_game_info(mame_bitmap *bitmap)
 {
 	int ui_width, ui_height;
 	char buf[2048];
@@ -3167,8 +3165,28 @@ int ui_display_game_info(struct mame_bitmap *bitmap)
 	}
 
 #ifdef MESS
-	while (displayimageinfo(0) == 1)
+	erase_screen(bitmap);
+	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
+	update_video_and_audio();
+	update_video_and_audio();
+	update_video_and_audio();
+	update_video_and_audio();
+
+	while (code_read_async() == CODE_NONE)
 	{
+		char *bufptr = buf;
+
+		/* first draw a box around the whole screen */
+		ui_get_bounds(&ui_width, &ui_height);
+		add_filled_box(0, 0, ui_width - 1, ui_height - 1);
+
+		/* add the game info */
+		bufptr += ui_sprintf_image_info(bufptr);
+
+		/* draw the window */
+		ui_draw_message_window(buf);
+
+		/* render and update */
 		render_ui(bitmap);
 		update_video_and_audio();
 	}
@@ -3756,7 +3774,7 @@ static void ui_display_popup(void)
  *
  *************************************/
 
-static void ui_raw2rot_rect(struct rectangle *rect)
+static void ui_raw2rot_rect(rectangle *rect)
 {
 	int temp, w, h;
 
@@ -3788,7 +3806,7 @@ static void ui_raw2rot_rect(struct rectangle *rect)
 }
 
 
-static void ui_rot2raw_rect(struct rectangle *rect)
+static void ui_rot2raw_rect(rectangle *rect)
 {
 	int temp, w, h;
 
@@ -3822,13 +3840,16 @@ static void ui_rot2raw_rect(struct rectangle *rect)
 
 static void add_line(int x1, int y1, int x2, int y2, rgb_t color)
 {
-	elemlist[elemindex].x = (x1 < x2) ? x1 : x2;
-	elemlist[elemindex].y = (y1 < y2) ? y1 : y2;
-	elemlist[elemindex].x2 = (x1 < x2) ? x2 : x1;
-	elemlist[elemindex].y2 = (y1 < y2) ? y2 : y1;
-	elemlist[elemindex].type = 0xfffe;
-	elemlist[elemindex].color = color;
-	elemindex++;
+	if (elemindex < ARRAY_LENGTH(elemlist))
+	{
+		elemlist[elemindex].x = (x1 < x2) ? x1 : x2;
+		elemlist[elemindex].y = (y1 < y2) ? y1 : y2;
+		elemlist[elemindex].x2 = (x1 < x2) ? x2 : x1;
+		elemlist[elemindex].y2 = (y1 < y2) ? y2 : y1;
+		elemlist[elemindex].type = 0xfffe;
+		elemlist[elemindex].color = color;
+		elemindex++;
+	}
 }
 
 
@@ -3840,11 +3861,14 @@ static void add_fill(int left, int top, int right, int bottom, rgb_t color)
 
 static void add_char(int x, int y, UINT16 ch, int color)
 {
-	elemlist[elemindex].x = x;
-	elemlist[elemindex].y = y;
-	elemlist[elemindex].type = ch;
-	elemlist[elemindex].color = color;
-	elemindex++;
+	if (elemindex < ARRAY_LENGTH(elemlist))
+	{
+		elemlist[elemindex].x = x;
+		elemlist[elemindex].y = y;
+		elemlist[elemindex].type = ch;
+		elemlist[elemindex].color = color;
+		elemindex++;
+	}
 }
 
 
@@ -3859,7 +3883,7 @@ static void add_filled_box(int x1, int y1, int x2, int y2)
 }
 
 
-static void render_ui(struct mame_bitmap *dest)
+static void render_ui(mame_bitmap *dest)
 {
 	int i;
 
@@ -3871,7 +3895,7 @@ static void render_ui(struct mame_bitmap *dest)
 	for (i = 0; i < elemindex; i++)
 	{
 		render_element *elem = &elemlist[i];
-		struct rectangle bounds;
+		rectangle bounds;
 
 		switch (elem->type)
 		{

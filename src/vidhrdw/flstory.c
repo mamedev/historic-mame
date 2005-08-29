@@ -141,7 +141,7 @@ WRITE8_HANDLER( flstory_scrlram_w )
 
 ***************************************************************************/
 
-void flstory_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+void flstory_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
 {
 	int i;
 
@@ -227,7 +227,7 @@ VIDEO_UPDATE( flstory )
 
 }
 
-void victnine_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void victnine_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i;
 

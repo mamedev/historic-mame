@@ -17,9 +17,9 @@
 
 struct at28c16_chip
 {
-	data8_t data[ DATA_SIZE ];
-	data8_t id[ ID_SIZE ];
-	data8_t a9_12v;
+	UINT8 data[ DATA_SIZE ];
+	UINT8 id[ ID_SIZE ];
+	UINT8 a9_12v;
 };
 
 static struct at28c16_chip at28c16[ MAX_AT28C16_CHIPS ];
@@ -91,7 +91,7 @@ NVRAM_HANDLER( at28c16_3 ) { nvram_handler_at28c16( 3, file, read_or_write ); }
 
 /* read / write */
 
-static data8_t at28c16_read( data32_t chip, offs_t offset )
+static UINT8 at28c16_read( UINT32 chip, offs_t offset )
 {
 	struct at28c16_chip *c;
 	if( chip >= MAX_AT28C16_CHIPS )
@@ -113,7 +113,7 @@ static data8_t at28c16_read( data32_t chip, offs_t offset )
 	}
 }
 
-static void at28c16_write( data32_t chip, offs_t offset, data8_t data )
+static void at28c16_write( UINT32 chip, offs_t offset, UINT8 data )
 {
 	struct at28c16_chip *c;
 	if( chip >= MAX_AT28C16_CHIPS )
@@ -137,9 +137,9 @@ static void at28c16_write( data32_t chip, offs_t offset, data8_t data )
 
 /* 16bit memory handlers */
 
-static data16_t at28c16_16msb_read( data32_t chip, offs_t offset, data32_t mem_mask )
+static UINT16 at28c16_16msb_read( UINT32 chip, offs_t offset, UINT32 mem_mask )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	if( ACCESSING_MSB16 )
 	{
 		data |= at28c16_read( chip, offset ) << 8;
@@ -147,7 +147,7 @@ static data16_t at28c16_16msb_read( data32_t chip, offs_t offset, data32_t mem_m
 	return data;
 }
 
-static void at28c16_16msb_write( data32_t chip, offs_t offset, data32_t data, data32_t mem_mask )
+static void at28c16_16msb_write( UINT32 chip, offs_t offset, UINT32 data, UINT32 mem_mask )
 {
 	if( ACCESSING_MSB16 )
 	{
@@ -166,9 +166,9 @@ WRITE16_HANDLER( at28c16_16msb_3_w ) { at28c16_16msb_write( 3, offset, data, mem
 
 /* 32bit memory handlers */
 
-static data32_t at28c16_32le_read( data32_t chip, offs_t offset, data32_t mem_mask )
+static UINT32 at28c16_32le_read( UINT32 chip, offs_t offset, UINT32 mem_mask )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	if( ACCESSING_LSB32 )
 	{
 		data |= at28c16_read( chip, ( offset * 4 ) + 0 ) << 0;
@@ -188,7 +188,7 @@ static data32_t at28c16_32le_read( data32_t chip, offs_t offset, data32_t mem_ma
 	return data;
 }
 
-static void at28c16_32le_write( data32_t chip, offs_t offset, data32_t data, data32_t mem_mask )
+static void at28c16_32le_write( UINT32 chip, offs_t offset, UINT32 data, UINT32 mem_mask )
 {
 	if( ACCESSING_LSB32 )
 	{
@@ -217,9 +217,9 @@ WRITE32_HANDLER( at28c16_32le_1_w ) { at28c16_32le_write( 1, offset, data, mem_m
 WRITE32_HANDLER( at28c16_32le_2_w ) { at28c16_32le_write( 2, offset, data, mem_mask ); }
 WRITE32_HANDLER( at28c16_32le_3_w ) { at28c16_32le_write( 3, offset, data, mem_mask ); }
 
-static data32_t at28c16_32le_16lsb_read( data32_t chip, offs_t offset, data32_t mem_mask )
+static UINT32 at28c16_32le_16lsb_read( UINT32 chip, offs_t offset, UINT32 mem_mask )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	if( ACCESSING_LSB32 )
 	{
 		data |= at28c16_read( chip, ( offset * 2 ) + 0 ) << 0;
@@ -231,7 +231,7 @@ static data32_t at28c16_32le_16lsb_read( data32_t chip, offs_t offset, data32_t 
 	return data;
 }
 
-static void at28c16_32le_16lsb_write( data32_t chip, offs_t offset, data32_t data, data32_t mem_mask )
+static void at28c16_32le_16lsb_write( UINT32 chip, offs_t offset, UINT32 data, UINT32 mem_mask )
 {
 	if( ACCESSING_LSB32 )
 	{

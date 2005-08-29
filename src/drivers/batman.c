@@ -30,7 +30,7 @@
  *
  *************************************/
 
-static data16_t latch_data;
+static UINT16 latch_data;
 
 
 
@@ -303,7 +303,7 @@ ROM_END
 
 static DRIVER_INIT( batman )
 {
-	static const data16_t default_eeprom[] =
+	static const UINT16 default_eeprom[] =
 	{
 		0x0001,0x01F1,0x0154,0x01C5,0x0100,0x0113,0x0300,0x0173,
 		0x0700,0x0154,0x0200,0x0107,0x0100,0x0120,0x0300,0x0165,

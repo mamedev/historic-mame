@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
+UINT16 *legionna_back_data,*legionna_fore_data,*legionna_mid_data,*legionna_scrollram16,*legionna_textram;
 
 static tilemap *background_layer,*foreground_layer,*midground_layer,*text_layer;
 //static int legionna_enable;
@@ -200,7 +200,7 @@ VIDEO_START( cupsoc )
 
 *************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 {
 	int offs,fx,fy,x,y,color,sprite;
 	int dx,dy,ax,ay;

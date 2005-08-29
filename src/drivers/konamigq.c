@@ -57,8 +57,8 @@
 
 /* Sound */
 
-static data8_t sndto000[ 16 ];
-static data8_t sndtor3k[ 16 ];
+static UINT8 sndto000[ 16 ];
+static UINT8 sndtor3k[ 16 ];
 
 static WRITE32_HANDLER( soundr3k_w )
 {
@@ -78,7 +78,7 @@ static WRITE32_HANDLER( soundr3k_w )
 
 static READ32_HANDLER( soundr3k_r )
 {
-	data32_t data;
+	UINT32 data;
 
 	data = ( sndtor3k[ ( offset << 1 ) + 1 ] << 16 ) | sndtor3k[ offset << 1 ];
 
@@ -164,7 +164,7 @@ static NVRAM_HANDLER( konamigq_93C46 )
 		}
 		else
 		{
-			static data8_t def_eeprom[ 128 ] =
+			static UINT8 def_eeprom[ 128 ] =
 			{
 				0x29, 0x2b, 0x52, 0x56, 0x20, 0x94, 0x41, 0x55, 0x00, 0x41, 0x14, 0x14, 0x00, 0x03, 0x01, 0x01,
 				0x01, 0x03, 0x00, 0x00, 0x07, 0x07, 0x00, 0x01, 0xaa, 0x00, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa, 0xaa,
@@ -196,7 +196,7 @@ static READ32_HANDLER( eeprom_r )
 
 /* PCM RAM */
 
-static data8_t *m_p_n_pcmram;
+static UINT8 *m_p_n_pcmram;
 
 static WRITE32_HANDLER( pcmram_w )
 {
@@ -274,7 +274,7 @@ ADDRESS_MAP_END
 
 static READ16_HANDLER( dual539_r )
 {
-	data16_t data;
+	UINT16 data;
 
 	data = 0;
 	if( ACCESSING_LSB16 )
@@ -336,7 +336,7 @@ static struct K054539interface k054539_interface =
 
 /* SCSI */
 
-static data8_t sector_buffer[ 512 ];
+static UINT8 sector_buffer[ 512 ];
 
 static void scsi_dma_read( UINT32 n_address, INT32 n_size )
 {

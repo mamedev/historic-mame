@@ -29,9 +29,9 @@ struct star
 
 #define VIDEO_RAM_SIZE 0x400
 
-data8_t *bosco_videoram;
-data8_t *bosco_radarattr;
-static data8_t *bosco_radarx,*bosco_radary;
+UINT8 *bosco_videoram;
+UINT8 *bosco_radarattr;
+static UINT8 *bosco_radarx,*bosco_radary;
 
 /* see Galaga.c for starfield locations data */
 
@@ -221,7 +221,7 @@ WRITE8_HANDLER( bosco_starclr_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -243,7 +243,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 
-static void draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_bullets( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -265,7 +265,7 @@ static void draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 
-static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_stars( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 
 	if (1)
@@ -316,8 +316,8 @@ VIDEO_UPDATE( bosco )
 {
 	/* the radar tilemap is just 8x32. We rely on the tilemap code to repeat it across
        the screen, and clip it to only the position where it is supposed to be shown */
-	struct rectangle fg_clip = *cliprect;
-	struct rectangle bg_clip = *cliprect;
+	rectangle fg_clip = *cliprect;
+	rectangle bg_clip = *cliprect;
 	if (flip_screen)
 	{
 		bg_clip.min_x = 8*8;

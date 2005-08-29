@@ -52,10 +52,10 @@
 #define DRMATH_MONITOR_DISPLAY 0
 #endif
 
-data16_t *micro3d_sprite_vram;
-data16_t *m68681_base;
-data16_t *m68901_base;
-data16_t dpyadr;
+UINT16 *micro3d_sprite_vram;
+UINT16 *m68681_base;
+UINT16 *m68901_base;
+UINT16 dpyadr;
 int dpyadrscan;
 
     struct {
@@ -170,7 +170,7 @@ static MACHINE_INIT( micro3d )
 
 static DRIVER_INIT( stankatk )
 {
-       data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+       UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
        rom[0x1F543]=0x4E71;                                       /* 3ea86 - nop */
        rom[0x1F546]=0x4E71;                                       /* 3ea8c - nop */
        rom[0x1F596]=0x4E71;
@@ -185,7 +185,7 @@ static DRIVER_INIT( stankatk )
 
 static DRIVER_INIT( botss )
 {
-       data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+       UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
        rom[0x1FCC0]=0x4E71;         /* Eliminate startup Am29000 timeout */
        rom[0x1FBF0]=0x4E71;         /* Skip AM29k code version detect */
        rom[0x1FC88]=0x4E71;
@@ -197,7 +197,7 @@ static DRIVER_INIT( botss )
 
 static DRIVER_INIT( f15se )
 {
-       data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+       UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
        rom[0x2A8B3]=0x6006;                          //055166: 6606                     bne     5516e -> bra
        rom[0x2A8BF]=0x4E71;                          //05517E: 6704                     beq     55184 -> nop
        rom[0x28AD1]=0x4E71;                          //0515A2: 67F8                     beq     5159c -> nop

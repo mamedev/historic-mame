@@ -213,19 +213,19 @@ Playfield tile info:
 
 static tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static tilemap *pixel_layer,*vram_layer;
-static data32_t *spriteram32_buffered;
+static UINT32 *spriteram32_buffered;
 static int vram_dirty[256];
 static int pivot_changed,vram_changed;
-static data32_t f3_control_0[8];
-static data32_t f3_control_1[8];
+static UINT32 f3_control_0[8];
+static UINT32 f3_control_1[8];
 static int flipscreen;
 
 static UINT8 *pivot_dirty;
 
-static data32_t *f3_pf_data_1,*f3_pf_data_2,*f3_pf_data_3,*f3_pf_data_4;
+static UINT32 *f3_pf_data_1,*f3_pf_data_2,*f3_pf_data_3,*f3_pf_data_4;
 
-data32_t *f3_vram,*f3_line_ram;
-data32_t *f3_pf_data,*f3_pivot_ram;
+UINT32 *f3_vram,*f3_line_ram;
+UINT32 *f3_pf_data,*f3_pivot_ram;
 
 extern int f3_game;
 
@@ -292,7 +292,7 @@ struct tempsprite
 static struct tempsprite *spritelist;
 static const struct tempsprite *sprite_end;
 
-static void get_sprite_info(const data32_t *spriteram32_ptr);
+static void get_sprite_info(const UINT32 *spriteram32_ptr);
 static int sprite_lag=1;
 static UINT8 sprite_pri_usage=0;
 
@@ -335,7 +335,7 @@ static struct f3_playfield_line_inf *pf_line_inf;
 static struct f3_spritealpha_line_inf *sa_line_inf;
 
 
-static struct mame_bitmap *pri_alp_bitmap;
+static mame_bitmap *pri_alp_bitmap;
 /*
 pri_alp_bitmap
 ---- ---1    sprite priority 0
@@ -367,7 +367,7 @@ static UINT8 *tile_opaque_pf;
 
 /******************************************************************************/
 
-static void print_debug_info(struct mame_bitmap *bitmap)
+static void print_debug_info(mame_bitmap *bitmap)
 {
 	int l[16];
 	char buf[64*16];
@@ -441,9 +441,9 @@ static void print_debug_info(struct mame_bitmap *bitmap)
 
 /******************************************************************************/
 
-INLINE void get_tile_info(int tile_index, data32_t *gfx_base)
+INLINE void get_tile_info(int tile_index, UINT32 *gfx_base)
 {
-	data32_t tile=gfx_base[tile_index];
+	UINT32 tile=gfx_base[tile_index];
 	UINT8 abtype=(tile>>(16+9))&0x1f;
 
 	SET_TILE_INFO(
@@ -1369,7 +1369,7 @@ static void init_alpha_blend_func(void)
 /*============================================================================*/
 
 INLINE void f3_drawscanlines(
-		struct mame_bitmap *bitmap,int xsize,INT16 *draw_line_num,
+		mame_bitmap *bitmap,int xsize,INT16 *draw_line_num,
 		const struct f3_playfield_line_inf **line_t,
 		const int *sprite,
 		UINT32 orient,
@@ -1588,9 +1588,9 @@ INLINE void f3_drawscanlines(
 static void visible_tile_check(struct f3_playfield_line_inf *line_t,
 								int line,
 								UINT32 x_index_fx,UINT32 y_index,
-								data32_t *f3_pf_data_n)
+								UINT32 *f3_pf_data_n)
 {
-	data32_t *pf_base;
+	UINT32 *pf_base;
 	int i,trans_all,tile_index,tile_num;
 	int alpha_type,alpha_mode;
 	int opaque_all;
@@ -1877,11 +1877,11 @@ static void get_spritealphaclip_info(void)
 }
 
 /* sx and sy are 16.16 fixed point numbers */
-static void get_line_ram_info(tilemap *tmap, int sx, int sy, int pos, data32_t *f3_pf_data_n)
+static void get_line_ram_info(tilemap *tmap, int sx, int sy, int pos, UINT32 *f3_pf_data_n)
 {
 	struct f3_playfield_line_inf *line_t=&pf_line_inf[pos];
-	const struct mame_bitmap *srcbitmap;
-	const struct mame_bitmap *transbitmap;
+	const mame_bitmap *srcbitmap;
+	const mame_bitmap *transbitmap;
 
 	int y,y_start,y_end,y_inc;
 	int line_base,zoom_base,col_base,pri_base,inc;
@@ -2101,8 +2101,8 @@ static void get_vram_info(tilemap *vram_tilemap, tilemap *pixel_tilemap, int sx,
 {
 	const struct f3_spritealpha_line_inf *sprite_alpha_line_t=&sa_line_inf[0];
 	struct f3_playfield_line_inf *line_t=&pf_line_inf[4];
-	const struct mame_bitmap *srcbitmap_pixel, *srcbitmap_vram;
-	const struct mame_bitmap *transbitmap_pixel, *transbitmap_vram;
+	const mame_bitmap *srcbitmap_pixel, *srcbitmap_vram;
+	const mame_bitmap *transbitmap_pixel, *transbitmap_vram;
 
 	int y,y_start,y_end,y_inc;
 	int pri_base,inc;
@@ -2225,7 +2225,7 @@ static void get_vram_info(tilemap *vram_tilemap, tilemap *pixel_tilemap, int sx,
 
 /******************************************************************************/
 
-static void f3_scanline_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void f3_scanline_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i,j,y,ys,ye;
 	int y_start,y_end,y_start_next,y_end_next;
@@ -2647,15 +2647,15 @@ static void f3_scanline_draw(struct mame_bitmap *bitmap, const struct rectangle 
 	dest++;						\
 	pri++;
 
-INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+INLINE void f3_drawgfx( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,
 		unsigned int color,
 		int flipx,int flipy,
 		int sx,int sy,
-		const struct rectangle *clip,
+		const rectangle *clip,
 		UINT8 pri_dst)
 {
-	struct rectangle myclip;
+	rectangle myclip;
 
 	pri_dst=1<<pri_dst;
 
@@ -2810,16 +2810,16 @@ INLINE void f3_drawgfx( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 #undef NEXT_P
 
 
-INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+INLINE void f3_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,
 		unsigned int color,
 		int flipx,int flipy,
 		int sx,int sy,
-		const struct rectangle *clip,
+		const rectangle *clip,
 		int scalex, int scaley,
 		UINT8 pri_dst)
 {
-	struct rectangle myclip;
+	rectangle myclip;
 
 	pri_dst=1<<pri_dst;
 
@@ -2946,7 +2946,7 @@ INLINE void f3_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
 	/*zoom##p = p##_addition << 12;*/							\
 }
 
-static void get_sprite_info(const data32_t *spriteram32_ptr)
+static void get_sprite_info(const UINT32 *spriteram32_ptr)
 {
 	const int min_x=Machine->visible_area.min_x,max_x=Machine->visible_area.max_x;
 	const int min_y=Machine->visible_area.min_y,max_y=Machine->visible_area.max_y;
@@ -2977,9 +2977,9 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 
 		/* Check if the sprite list jump command bit is set */
 		if ((spriteram32_ptr[current_offs+3]>>16) & 0x8000) {
-			data32_t jump = (spriteram32_ptr[current_offs+3]>>16)&0x3ff;
+			UINT32 jump = (spriteram32_ptr[current_offs+3]>>16)&0x3ff;
 
-			data32_t new_offs=((offs&0x2000)|((jump<<4)/4));
+			UINT32 new_offs=((offs&0x2000)|((jump<<4)/4));
 			if (new_offs==offs)
 				break;
 			offs=new_offs - 4;
@@ -2987,7 +2987,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 
 		/* Check if special command bit is set */
 		if (spriteram32_ptr[current_offs+1] & 0x8000) {
-			data32_t cntrl=(spriteram32_ptr[current_offs+2])&0xffff;
+			UINT32 cntrl=(spriteram32_ptr[current_offs+2])&0xffff;
 			flipscreen=cntrl&0x2000;
 
 			/*  cntrl&0x1000 = disabled?  (From F2 driver, doesn't seem used anywhere)
@@ -3209,7 +3209,7 @@ static void get_sprite_info(const data32_t *spriteram32_ptr)
 #undef CALC_ZOOM
 
 
-static void f3_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void f3_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	const struct tempsprite *sprite_ptr;
 	const gfx_element *sprite_gfx = Machine->gfx[2];

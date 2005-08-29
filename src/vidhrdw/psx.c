@@ -280,7 +280,7 @@ PALETTE_INIT( psx )
 #if defined( MAME_DEBUG )
 
 #define DEBUG_COORDS ( 10 )
-static struct mame_bitmap *debugmesh;
+static mame_bitmap *debugmesh;
 static int m_b_debugclear;
 static int m_b_debugmesh;
 static int m_n_debugskip;
@@ -515,7 +515,7 @@ static void DebugCheckKeys( void )
 #endif
 }
 
-static int DebugMeshDisplay( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static int DebugMeshDisplay( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	if( m_b_debugmesh )
 	{
@@ -525,7 +525,7 @@ static int DebugMeshDisplay( struct mame_bitmap *bitmap, const struct rectangle 
 	return m_b_debugmesh;
 }
 
-static int DebugTextureDisplay( struct mame_bitmap *bitmap )
+static int DebugTextureDisplay( mame_bitmap *bitmap )
 {
 	UINT32 n_y;
 
@@ -914,15 +914,15 @@ VIDEO_UPDATE( psx )
 			n_line = n_lines;
 			while( n_line > 0 )
 			{
-				data16_t *p_n_src = m_p_p_vram[ n_y + m_n_displaystarty ] + n_x + n_displaystartx;
-				data16_t *p_n_dest = &( (data16_t *)bitmap->line[ n_y + n_top ] )[ n_x + n_left ];
+				UINT16 *p_n_src = m_p_p_vram[ n_y + m_n_displaystarty ] + n_x + n_displaystartx;
+				UINT16 *p_n_dest = &( (UINT16 *)bitmap->line[ n_y + n_top ] )[ n_x + n_left ];
 
 				n_column = n_columns;
 				while( n_column > 0 )
 				{
-					data32_t n_g0r0 = *( p_n_src++ );
-					data32_t n_r1b0 = *( p_n_src++ );
-					data32_t n_b1g1 = *( p_n_src++ );
+					UINT32 n_g0r0 = *( p_n_src++ );
+					UINT32 n_r1b0 = *( p_n_src++ );
+					UINT32 n_b1g1 = *( p_n_src++ );
 
 					*( p_n_dest++ ) = m_p_n_g0r0[ n_g0r0 ] | m_p_n_b0[ n_r1b0 ];
 					n_column--;

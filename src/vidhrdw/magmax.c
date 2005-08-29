@@ -10,8 +10,8 @@ Additional tweaking by Jarek Burczynski
 #include "driver.h"
 #include "generic.h"
 
-data16_t *magmax_scroll_x;
-data16_t *magmax_scroll_y;
+UINT16 *magmax_scroll_x;
+UINT16 *magmax_scroll_y;
 unsigned short magmax_vreg;
 static int flipscreen = 0;
 
@@ -19,7 +19,7 @@ static UINT32 pens_line_tab[256];
 static UINT32 *prom_tab = NULL;
 
 
-static void blit_horiz_pixel_line(struct mame_bitmap *b,int x,int y,int w, UINT32* pens)
+static void blit_horiz_pixel_line(mame_bitmap *b,int x,int y,int w, UINT32* pens)
 {
 	UINT16* lineadr = &(((UINT16*)b->line[y])[x]);
 	while(w-->0)

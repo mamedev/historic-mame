@@ -28,9 +28,9 @@
 
 /* Variables that driver has access to: */
 
-data16_t *fuuki16_vram_0, *fuuki16_vram_1;
-data16_t *fuuki16_vram_2, *fuuki16_vram_3;
-data16_t *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
+UINT16 *fuuki16_vram_0, *fuuki16_vram_1;
+UINT16 *fuuki16_vram_2, *fuuki16_vram_3;
+UINT16 *fuuki16_vregs,  *fuuki16_priority, *fuuki16_unknown;
 
 
 /***************************************************************************
@@ -56,15 +56,15 @@ static tilemap *tilemap_##_N_; \
 \
 static void get_tile_info_##_N_(int tile_index) \
 { \
-	data16_t code = fuuki16_vram_##_N_[ 2 * tile_index + 0 ]; \
-	data16_t attr = fuuki16_vram_##_N_[ 2 * tile_index + 1 ]; \
+	UINT16 code = fuuki16_vram_##_N_[ 2 * tile_index + 0 ]; \
+	UINT16 attr = fuuki16_vram_##_N_[ 2 * tile_index + 1 ]; \
 	SET_TILE_INFO(1 + _N_, code, attr & 0x3f,TILE_FLIPYX( (attr >> 6) & 3 )) \
 } \
 \
 WRITE16_HANDLER( fuuki16_vram_##_N_##_w ) \
 { \
-	data16_t old_data	=	fuuki16_vram_##_N_[offset]; \
-	data16_t new_data	=	COMBINE_DATA(&fuuki16_vram_##_N_[offset]); \
+	UINT16 old_data	=	fuuki16_vram_##_N_[offset]; \
+	UINT16 new_data	=	COMBINE_DATA(&fuuki16_vram_##_N_[offset]); \
 	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_##_N_,offset/2); \
 }
 
@@ -148,7 +148,7 @@ VIDEO_START( fuuki16 )
 
 ***************************************************************************/
 
-static void fuuki16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void fuuki16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -272,7 +272,7 @@ if (code_pressed(KEYCODE_X))
 ***************************************************************************/
 
 /* Wrapper to handle bg and bg2 ttogether */
-static void fuuki16_draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int i, int flag, int pri)
+static void fuuki16_draw_layer(mame_bitmap *bitmap, const rectangle *cliprect, int i, int flag, int pri)
 {
 	int buffer = (fuuki16_vregs[0x1e/2] & 0x40);
 
@@ -290,10 +290,10 @@ static void fuuki16_draw_layer(struct mame_bitmap *bitmap, const struct rectangl
 
 VIDEO_UPDATE( fuuki16 )
 {
-	data16_t layer0_scrollx, layer0_scrolly;
-	data16_t layer1_scrollx, layer1_scrolly;
-	data16_t layer2_scrollx, layer2_scrolly;
-	data16_t scrollx_offs,   scrolly_offs;
+	UINT16 layer0_scrollx, layer0_scrolly;
+	UINT16 layer1_scrollx, layer1_scrolly;
+	UINT16 layer2_scrollx, layer2_scrolly;
+	UINT16 scrollx_offs,   scrolly_offs;
 
 	/*
     It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.

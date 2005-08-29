@@ -33,13 +33,13 @@ ADDRESS_MAP_EXTERN(frogger_sound_writeport);
 
 
 /* defined in vidhrdw/galaxian.c */
-extern data8_t *galaxian_videoram;
-extern data8_t *galaxian_spriteram;
-extern data8_t *galaxian_spriteram2;
-extern data8_t *galaxian_attributesram;
-extern data8_t *galaxian_bulletsram;
-extern data8_t *rockclim_videoram;
-extern data8_t *racknrol_tiles_bank;
+extern UINT8 *galaxian_videoram;
+extern UINT8 *galaxian_spriteram;
+extern UINT8 *galaxian_spriteram2;
+extern UINT8 *galaxian_attributesram;
+extern UINT8 *galaxian_bulletsram;
+extern UINT8 *rockclim_videoram;
+extern UINT8 *racknrol_tiles_bank;
 
 
 extern size_t galaxian_spriteram_size;

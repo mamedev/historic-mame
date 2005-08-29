@@ -205,14 +205,14 @@
 #include "mamedbg.h"
 #include "e132xs.h"
 
-data8_t  (*hyp_cpu_read_byte)(offs_t address);
-data16_t (*hyp_cpu_read_half_word)(offs_t address);
-data32_t (*hyp_cpu_read_word)(offs_t address);
-data32_t (*hyp_cpu_read_io_word)(offs_t address);
-void (*hyp_cpu_write_byte)(offs_t address, data8_t data);
-void (*hyp_cpu_write_half_word)(offs_t address, data16_t data);
-void (*hyp_cpu_write_word)(offs_t address, data32_t data);
-void (*hyp_cpu_write_io_word)(offs_t address, data32_t data);
+UINT8  (*hyp_cpu_read_byte)(offs_t address);
+UINT16 (*hyp_cpu_read_half_word)(offs_t address);
+UINT32 (*hyp_cpu_read_word)(offs_t address);
+UINT32 (*hyp_cpu_read_io_word)(offs_t address);
+void (*hyp_cpu_write_byte)(offs_t address, UINT8 data);
+void (*hyp_cpu_write_half_word)(offs_t address, UINT16 data);
+void (*hyp_cpu_write_word)(offs_t address, UINT32 data);
+void (*hyp_cpu_write_io_word)(offs_t address, UINT32 data);
 int hyp_type_16bit;
 
 // set C in adds/addsi/subs/sums
@@ -503,23 +503,23 @@ struct regs_decode
 #define SAME_SRC_DSTF  current_regs.same_src_dstf
 #define SAME_SRCF_DST  current_regs.same_srcf_dst
 
-static data32_t program_read_dword_16be(offs_t address)
+static UINT32 program_read_dword_16be(offs_t address)
 {
 	return (program_read_word_16be(address & ~1) << 16) | program_read_word_16be((address & ~1) + 2);
 }
 
-static void program_write_dword_16be(offs_t address, data32_t data)
+static void program_write_dword_16be(offs_t address, UINT32 data)
 {
 	program_write_word_16be(address & ~1, (data & 0xffff0000)>>16);
 	program_write_word_16be((address & ~1)+2, data & 0xffff);
 }
 
-static data32_t io_read_dword_16be(offs_t address)
+static UINT32 io_read_dword_16be(offs_t address)
 {
 	return (io_read_word_16be(address & ~1)<< 16) | io_read_word_16be((address & ~1) + 2);
 }
 
-static void io_write_dword_16be(offs_t address, data32_t data)
+static void io_write_dword_16be(offs_t address, UINT32 data)
 {
 	io_write_word_16be(address & ~1, (data & 0xffff0000)>>16);
 	io_write_word_16be((address & ~1)+2, data & 0xffff);

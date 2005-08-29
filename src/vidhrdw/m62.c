@@ -17,9 +17,9 @@ Tile/sprite priority system (for the Kung Fu Master M62 board):
 #include "vidhrdw/generic.h"
 #include "state.h"
 
-data8_t *m62_tileram;
-data8_t *m62_textram;
-data8_t *horizon_scrollram;
+UINT8 *m62_tileram;
+UINT8 *m62_textram;
+UINT8 *horizon_scrollram;
 
 static tilemap *m62_background;
 static tilemap *m62_foreground;
@@ -292,7 +292,7 @@ WRITE8_HANDLER( m62_textram_w )
   the main emulation engine.
 
 ***************************************************************************/
-static void draw_sprites(struct mame_bitmap *bitmap, int colormask, int prioritymask, int priority)
+static void draw_sprites(mame_bitmap *bitmap, int colormask, int prioritymask, int priority)
 {
 	int offs;
 
@@ -627,7 +627,7 @@ WRITE8_HANDLER( kidniki_background_bank_w )
 	if (kidniki_background_bank != (data & 1))
 	{
 		kidniki_background_bank = data & 1;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(m62_background);
 	}
 }
 
@@ -688,7 +688,8 @@ WRITE8_HANDLER( spelunkr_palbank_w )
 	if (spelunkr_palbank != (data & 0x01))
 	{
 		spelunkr_palbank = data & 0x01;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(m62_background);
+		tilemap_mark_all_tiles_dirty(m62_foreground);
 	}
 }
 
@@ -698,7 +699,7 @@ static void get_spelunkr_bg_tile_info( int offs )
 	int color;
 	code = m62_tileram[ offs << 1 ];
 	color = m62_tileram[ ( offs << 1 ) | 1 ];
-	SET_TILE_INFO( 0, code | ( ( color & 0x10 ) << 4 ) | ( ( color & 0x20 ) << 6 ) | ( ( color & 0xc0 ) << 3 ), ( color & 0x1f ) | ( spelunkr_palbank << 4 ), 0 );
+	SET_TILE_INFO( 0, code | ( ( color & 0x10 ) << 4 ) | ( ( color & 0x20 ) << 6 ) | ( ( color & 0xc0 ) << 3 ), ( color & 0x0f ) | ( spelunkr_palbank << 4 ), 0 );
 }
 
 static void get_spelunkr_fg_tile_info( int offs )
@@ -737,7 +738,8 @@ WRITE8_HANDLER( spelunk2_gfxport_w )
 	if (spelunkr_palbank != ((data & 0x0c) >> 2))
 	{
 		spelunkr_palbank = (data & 0x0c) >> 2;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(m62_background);
+		tilemap_mark_all_tiles_dirty(m62_foreground);
 	}
 }
 

@@ -90,9 +90,9 @@ typedef struct _artwork_overlay_piece artwork_overlay_piece;
 
 int artwork_create_display(osd_create_params *params, UINT32 *rgb_components, const artwork_callbacks *callbacks);
 void artwork_update_video_and_audio(mame_display *display);
-void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rectangle *rect, UINT32 *rgb_components);
+void artwork_override_screenshot_params(mame_bitmap **bitmap, rectangle *rect, UINT32 *rgb_components);
 
-struct mame_bitmap *artwork_get_ui_bitmap(void);
+mame_bitmap *artwork_get_ui_bitmap(void);
 void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy);
 void artwork_get_screensize(int *width, int *height);
 void artwork_enable(int enable);
@@ -105,7 +105,7 @@ mame_file *artwork_load_artwork_file(const game_driver **driver);
 /*
  * Export some variables needed by OSD vector code in xmame.
  */
-const struct rectangle *artwork_get_game_rect(void);
+const rectangle *artwork_get_game_rect(void);
 int artwork_overlay_active(void);
 
 #endif /* __ARTWORK_H__ */

@@ -184,7 +184,7 @@ VIDEO_START( vidvince )
 	return gottlieb_video_start_common();
 }
 
-static void gottlieb_draw_sprites( struct mame_bitmap *bitmap )
+static void gottlieb_draw_sprites( mame_bitmap *bitmap )
 {
     int offs;
 

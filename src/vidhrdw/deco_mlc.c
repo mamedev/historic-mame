@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data32_t *avengrgs_vram;
+UINT32 *avengrgs_vram;
 
 /******************************************************************************/
 
@@ -20,12 +20,12 @@ VIDEO_START( avengrgs )
 	return 0;
 }
 
-static void mlc_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+static void mlc_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code1,unsigned int code2, unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,int use8bpp,
+		const rectangle *clip,int transparency,int transparent_color,int use8bpp,
 		int scalex, int scaley)
 {
-	struct rectangle myclip;
+	rectangle myclip;
 
 	if (!scalex || !scaley) return;
 
@@ -181,13 +181,13 @@ static void mlc_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
-	data32_t *index_ptr;
+	UINT32 *index_ptr;
 	int offs,fx=0,fy=0,x,y,color,sprite,indx,h,w,bx,by;
 	int xmult,ymult,xoffs,yoffs;
-	data8_t *rom = memory_region(REGION_GFX4) + 0x20000, *index_ptr8;
-	data8_t *rawrom = memory_region(REGION_GFX4); //fix above
+	UINT8 *rom = memory_region(REGION_GFX4) + 0x20000, *index_ptr8;
+	UINT8 *rawrom = memory_region(REGION_GFX4); //fix above
 	int blockIsTilemapIndex=0;
 	int sprite2=0,indx2=0,use8bppMode=0;
 	int yscale,xscale;
@@ -197,7 +197,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	for (offs = (0x3000/4)-8; offs>=0x100; offs-=8) // TEST - REMOVE TOP ENTRIES!
 	{
 		if ((spriteram32[offs+0]&0x8000)==0) {
-			//memset((data8_t*)spriteram32,0,8*4);
+			//memset((UINT8*)spriteram32,0,8*4);
 			continue; //check
 		}
 
@@ -241,7 +241,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			sprite |= (index_ptr8[4]&3)<<16;
 
 			if (use8bppMode) {
-				data8_t* index_ptr28=rom + indx2*8;
+				UINT8* index_ptr28=rom + indx2*8;
 				sprite2=(index_ptr28[7]<<8)|index_ptr28[6];
 			//  fx=spriteram32[offs+1]&0x10;
 			}
@@ -262,7 +262,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 			if (!w) w=16; //test above in sprites too
 
 			if (use8bppMode) {
-				data32_t* index_ptr2=avengrgs_vram + indx2*4;
+				UINT32* index_ptr2=avengrgs_vram + indx2*4;
 				sprite2=((index_ptr2[2]&0x3)<<16) | (index_ptr2[3]&0xffff);
 			}
 
@@ -297,12 +297,12 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 				int bank=sprite>>16;
 
 				if (blockIsTilemapIndex) {
-					const data8_t* ptr=rawrom+(sprite*2);
+					const UINT8* ptr=rawrom+(sprite*2);
 					tile=(*ptr) + ((*(ptr+1))<<8);
 					bank=0;
 
 					if (use8bppMode) {
-						const data8_t* ptr2=rawrom+(sprite2*2);
+						const UINT8* ptr2=rawrom+(sprite2*2);
 						tile2=(*ptr2) + ((*(ptr2+1))<<8);
 					}
 				}
@@ -354,10 +354,10 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 VIDEO_UPDATE( avengrgs )
 {
 	int mx,my;
-	data32_t *vram_ptr=avengrgs_vram + (0x1dc00/4);
+	UINT32 *vram_ptr=avengrgs_vram + (0x1dc00/4);
 
 #if 0
-//  data8_t *rom = memory_region(REGION_GFX4);
+//  UINT8 *rom = memory_region(REGION_GFX4);
 
 //  static int bank=0;
 //  static int base=0x40000;

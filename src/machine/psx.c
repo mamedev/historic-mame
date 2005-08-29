@@ -33,10 +33,10 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-data32_t *g_p_n_psxram;
+UINT32 *g_p_n_psxram;
 size_t g_n_psxramsize;
 
-INLINE void psxwriteword( data32_t n_address, data16_t n_data )
+INLINE void psxwriteword( UINT32 n_address, UINT16 n_data )
 {
 	*( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) ) = n_data;
 }
@@ -46,7 +46,7 @@ INLINE UINT16 psxreadword( UINT32 n_address )
 	return *( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) );
 }
 
-static data32_t psx_com_delay = 0;
+static UINT32 psx_com_delay = 0;
 
 WRITE32_HANDLER( psx_com_delay_w )
 {
@@ -432,10 +432,10 @@ READ32_HANDLER( psx_dma_r )
 /* Root Counters */
 
 static void *m_p_timer_root[ 3 ];
-static data16_t m_p_n_root_count[ 3 ];
-static data16_t m_p_n_root_mode[ 3 ];
-static data16_t m_p_n_root_target[ 3 ];
-static data32_t m_p_n_root_start[ 3 ];
+static UINT16 m_p_n_root_count[ 3 ];
+static UINT16 m_p_n_root_mode[ 3 ];
+static UINT16 m_p_n_root_target[ 3 ];
+static UINT32 m_p_n_root_start[ 3 ];
 
 #define RC_STOP ( 0x01 )
 #define RC_RESET ( 0x04 ) /* guess */
@@ -470,7 +470,7 @@ static int root_divider( int n_counter )
 	return 1;
 }
 
-static data16_t root_current( int n_counter )
+static UINT16 root_current( int n_counter )
 {
 	if( ( m_p_n_root_mode[ n_counter ] & RC_STOP ) != 0 )
 	{
@@ -478,7 +478,7 @@ static data16_t root_current( int n_counter )
 	}
 	else
 	{
-		data32_t n_current;
+		UINT32 n_current;
 		n_current = psxcpu_gettotalcycles() - m_p_n_root_start[ n_counter ];
 		n_current /= root_divider( n_counter );
 		n_current += m_p_n_root_count[ n_counter ];
@@ -588,7 +588,7 @@ WRITE32_HANDLER( psx_counter_w )
 READ32_HANDLER( psx_counter_r )
 {
 	int n_counter;
-	data32_t data;
+	UINT32 data;
 
 	n_counter = offset / 4;
 
@@ -615,20 +615,20 @@ READ32_HANDLER( psx_counter_r )
 
 #define SIO_BUF_SIZE ( 8 )
 
-static data32_t m_p_n_sio_status[ 2 ];
-static data32_t m_p_n_sio_mode[ 2 ];
-static data32_t m_p_n_sio_control[ 2 ];
-static data32_t m_p_n_sio_baud[ 2 ];
-static data32_t m_p_n_sio_tx[ 2 ];
-static data32_t m_p_n_sio_rx[ 2 ];
-static data32_t m_p_n_sio_tx_prev[ 2 ];
-static data32_t m_p_n_sio_rx_prev[ 2 ];
-static data32_t m_p_n_sio_tx_data[ 2 ];
-static data32_t m_p_n_sio_rx_data[ 2 ];
-static data32_t m_p_n_sio_tx_shift[ 2 ];
-static data32_t m_p_n_sio_rx_shift[ 2 ];
-static data32_t m_p_n_sio_tx_bits[ 2 ];
-static data32_t m_p_n_sio_rx_bits[ 2 ];
+static UINT32 m_p_n_sio_status[ 2 ];
+static UINT32 m_p_n_sio_mode[ 2 ];
+static UINT32 m_p_n_sio_control[ 2 ];
+static UINT32 m_p_n_sio_baud[ 2 ];
+static UINT32 m_p_n_sio_tx[ 2 ];
+static UINT32 m_p_n_sio_rx[ 2 ];
+static UINT32 m_p_n_sio_tx_prev[ 2 ];
+static UINT32 m_p_n_sio_rx_prev[ 2 ];
+static UINT32 m_p_n_sio_tx_data[ 2 ];
+static UINT32 m_p_n_sio_rx_data[ 2 ];
+static UINT32 m_p_n_sio_tx_shift[ 2 ];
+static UINT32 m_p_n_sio_rx_shift[ 2 ];
+static UINT32 m_p_n_sio_tx_bits[ 2 ];
+static UINT32 m_p_n_sio_rx_bits[ 2 ];
 
 static void *m_p_timer_sio[ 2 ];
 static psx_sio_handler m_p_f_sio_handler[ 2 ];
@@ -873,7 +873,7 @@ WRITE32_HANDLER( psx_sio_w )
 
 READ32_HANDLER( psx_sio_r )
 {
-	data32_t data;
+	UINT32 data;
 	int n_port;
 
 	n_port = offset / 4;

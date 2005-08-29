@@ -80,7 +80,7 @@ int jagobj_init(void)
  *
  *************************************/
 
-INLINE void bitmap_4_draw(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos, UINT8 flags, INT32 dxpos)
+INLINE void bitmap_4_draw(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos, UINT8 flags, INT32 dxpos)
 {
 	if (firstpix & 7)
 	{
@@ -186,47 +186,47 @@ INLINE void bitmap_4_draw(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpo
 	}
 }
 
-static void bitmap_4_0(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_0(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 0, 1);
 }
 
-static void bitmap_4_1(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_1(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 1, -1);
 }
 
-static void bitmap_4_2(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_2(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 2, 1);
 }
 
-static void bitmap_4_3(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_3(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 3, -1);
 }
 
-static void bitmap_4_4(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_4(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 4, 1);
 }
 
-static void bitmap_4_5(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_5(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 5, -1);
 }
 
-static void bitmap_4_6(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_6(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 6, 1);
 }
 
-static void bitmap_4_7(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_4_7(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_4_draw(firstpix, iwidth, src, xpos, 7, -1);
 }
 
-static void (*bitmap4[8])(INT32, INT32, data32_t *, INT32) =
+static void (*bitmap4[8])(INT32, INT32, UINT32 *, INT32) =
 {
 	bitmap_4_0,
 	bitmap_4_1,
@@ -246,7 +246,7 @@ static void (*bitmap4[8])(INT32, INT32, data32_t *, INT32) =
  *
  *************************************/
 
-INLINE void bitmap_8_draw(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos, UINT8 flags, INT32 dxpos)
+INLINE void bitmap_8_draw(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos, UINT8 flags, INT32 dxpos)
 {
 	if (firstpix & 3)
 	{
@@ -316,47 +316,47 @@ INLINE void bitmap_8_draw(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpo
 	}
 }
 
-static void bitmap_8_0(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_0(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 0, 1);
 }
 
-static void bitmap_8_1(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_1(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 1, -1);
 }
 
-static void bitmap_8_2(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_2(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 2, 1);
 }
 
-static void bitmap_8_3(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_3(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 3, -1);
 }
 
-static void bitmap_8_4(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_4(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 4, 1);
 }
 
-static void bitmap_8_5(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_5(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 5, -1);
 }
 
-static void bitmap_8_6(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_6(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 6, 1);
 }
 
-static void bitmap_8_7(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_8_7(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_8_draw(firstpix, iwidth, src, xpos, 7, -1);
 }
 
-static void (*bitmap8[8])(INT32, INT32, data32_t *, INT32) =
+static void (*bitmap8[8])(INT32, INT32, UINT32 *, INT32) =
 {
 	bitmap_8_0,
 	bitmap_8_1,
@@ -376,7 +376,7 @@ static void (*bitmap8[8])(INT32, INT32, data32_t *, INT32) =
  *
  *************************************/
 
-INLINE void bitmap_16_draw(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos, UINT8 flags, INT32 dxpos)
+INLINE void bitmap_16_draw(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos, UINT8 flags, INT32 dxpos)
 {
 	if (firstpix & 1)
 	{
@@ -423,47 +423,47 @@ INLINE void bitmap_16_draw(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xp
 	}
 }
 
-static void bitmap_16_0(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_0(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 0, 1);
 }
 
-static void bitmap_16_1(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_1(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 1, -1);
 }
 
-static void bitmap_16_2(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_2(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 2, 1);
 }
 
-static void bitmap_16_3(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_3(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 3, -1);
 }
 
-static void bitmap_16_4(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_4(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 4, 1);
 }
 
-static void bitmap_16_5(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_5(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 5, -1);
 }
 
-static void bitmap_16_6(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_6(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 6, 1);
 }
 
-static void bitmap_16_7(INT32 firstpix, INT32 iwidth, data32_t *src, INT32 xpos)
+static void bitmap_16_7(INT32 firstpix, INT32 iwidth, UINT32 *src, INT32 xpos)
 {
 	bitmap_16_draw(firstpix, iwidth, src, xpos, 7, -1);
 }
 
-static void (*bitmap16[8])(INT32, INT32, data32_t *, INT32) =
+static void (*bitmap16[8])(INT32, INT32, UINT32 *, INT32) =
 {
 	bitmap_16_0,
 	bitmap_16_1,
@@ -477,10 +477,10 @@ static void (*bitmap16[8])(INT32, INT32, data32_t *, INT32) =
 
 
 
-INLINE UINT8 lookup_pixel(const data32_t *src, int i, int pitch, int depth)
+INLINE UINT8 lookup_pixel(const UINT32 *src, int i, int pitch, int depth)
 {
 	int ppl			= 32 / depth;
-	data32_t data	= src[((i & ppl) / ppl) + ((i / (ppl*2)) * 2 * pitch)];
+	UINT32 data	= src[((i & ppl) / ppl) + ((i / (ppl*2)) * 2 * pitch)];
 	UINT8 pix		= (data >> ((~i & (ppl-1)) * depth)) & ((1 << depth) - 1);
 	return pix;
 }
@@ -493,7 +493,7 @@ INLINE UINT8 lookup_pixel(const data32_t *src, int i, int pitch, int depth)
  *
  *************************************/
 
-static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
+static UINT32 *process_bitmap(UINT32 *objdata, int vc, int logit)
 {
 	/* extract minimal data */
 	UINT32 upper = objdata[0];
@@ -502,7 +502,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 	UINT32 height = (lower >> 14) & 0x3ff;
 	UINT32 link = (lower >> 24) | ((upper & 0x7ff) << 8);
 	UINT32 data = (upper >> 11);
-	data32_t *src = (data32_t *)get_jaguar_memory(data << 3);
+	UINT32 *src = (UINT32 *)get_jaguar_memory(data << 3);
 
 	if (logit)
 	{
@@ -655,7 +655,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
 		objdata[1] = lower - (1 << 14);
 	}
 
-	return (data32_t *)get_jaguar_memory(link << 3);
+	return (UINT32 *)get_jaguar_memory(link << 3);
 }
 
 
@@ -666,7 +666,7 @@ static data32_t *process_bitmap(data32_t *objdata, int vc, int logit)
  *
  *************************************/
 
-static data32_t *process_scaled_bitmap(data32_t *objdata, int vc, int logit)
+static UINT32 *process_scaled_bitmap(UINT32 *objdata, int vc, int logit)
 {
 	/* extract data */
 	UINT32 upper = objdata[0];
@@ -675,7 +675,7 @@ static data32_t *process_scaled_bitmap(data32_t *objdata, int vc, int logit)
 	UINT32 height = (lower >> 14) & 0x3ff;
 	UINT32 link = (lower >> 24) | ((upper & 0x7ff) << 8);
 	UINT32 data = (upper >> 11);
-	data32_t *src = (data32_t *)get_jaguar_memory(data << 3);
+	UINT32 *src = (UINT32 *)get_jaguar_memory(data << 3);
 
 	/* third phrase */
 	UINT32 lower3 = objdata[5];
@@ -828,7 +828,7 @@ static data32_t *process_scaled_bitmap(data32_t *objdata, int vc, int logit)
 		objdata[5] = (lower3 & ~0xff0000) | ((remainder & 0xff) << 16);
 	}
 
-	return (data32_t *)get_jaguar_memory(link << 3);
+	return (UINT32 *)get_jaguar_memory(link << 3);
 }
 
 
@@ -839,7 +839,7 @@ static data32_t *process_scaled_bitmap(data32_t *objdata, int vc, int logit)
  *
  *************************************/
 
-static data32_t *process_branch(data32_t *objdata, int vc, int logit)
+static UINT32 *process_branch(UINT32 *objdata, int vc, int logit)
 {
 	UINT32 upper = objdata[0];
 	UINT32 lower = objdata[1];
@@ -893,7 +893,7 @@ static data32_t *process_branch(data32_t *objdata, int vc, int logit)
 	}
 
 	/* handle the branch */
-	return taken ? (data32_t *)get_jaguar_memory(link << 3) : (objdata + 2);
+	return taken ? (UINT32 *)get_jaguar_memory(link << 3) : (objdata + 2);
 }
 
 
@@ -904,9 +904,9 @@ static data32_t *process_branch(data32_t *objdata, int vc, int logit)
  *
  *************************************/
 
-static void process_object_list(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void process_object_list(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	data32_t *objdata;
+	UINT32 *objdata;
 	int y, x, pass;
 	int logit;
 
@@ -930,7 +930,7 @@ static void process_object_list(struct mame_bitmap *bitmap, const struct rectang
 			int done = 0, count = 0;
 
 			/* fetch the object pointer */
-			objdata = (data32_t *)get_jaguar_memory((gpu_regs[OLP_H] << 16) | gpu_regs[OLP_L]);
+			objdata = (UINT32 *)get_jaguar_memory((gpu_regs[OLP_H] << 16) | gpu_regs[OLP_L]);
 			while (!done && objdata && count++ < 100)
 			{
 				/* the low 3 bits determine the command */

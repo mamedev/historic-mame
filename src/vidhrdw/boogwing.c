@@ -1,7 +1,7 @@
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
-static void boogie_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect, data16_t* spriteram_base, int gfx_region)
+static void boogie_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect, UINT16* spriteram_base, int gfx_region)
 {
 	int offs;
 	int flipscreen=!flip_screen;

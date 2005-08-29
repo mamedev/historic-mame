@@ -75,7 +75,7 @@ void fd1094_machine_init(void);
 void fd1094_driver_init(void);
 
 /* vidhrdw/segac2.c */
-extern void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
+extern void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect );
 extern void start_system18_vdp(void);
 extern READ16_HANDLER( segac2_vdp_r );
 extern WRITE16_HANDLER( segac2_vdp_w );
@@ -974,7 +974,7 @@ ADDRESS_MAP_END
 
 
 static void astormbl_update_proc( void ){
-	data16_t data;
+	UINT16 data;
 	sys16_fg_scrollx = sys16_textram[0x0e98/2];
 	sys16_bg_scrollx = sys16_textram[0x0e9a/2];
 	sys16_fg_scrolly = sys16_textram[0x0e90/2];

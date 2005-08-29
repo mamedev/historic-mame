@@ -48,8 +48,8 @@ WRITE8_HANDLER( amspdwy_flipscreen_w )
 
 static void get_tile_info( int tile_index )
 {
-	data8_t code	=	videoram[ tile_index ];
-	data8_t color	=	colorram[ tile_index ];
+	UINT8 code	=	videoram[ tile_index ];
+	UINT8 color	=	colorram[ tile_index ];
 	SET_TILE_INFO(
 			0,
 			code + ((color & 0x18)<<5),
@@ -112,7 +112,7 @@ Offset:     Format:     Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 	int max_x = Machine->drv->screen_width  - 1;

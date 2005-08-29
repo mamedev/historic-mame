@@ -1,8 +1,8 @@
 /*
 Pinball Champ '95 / Witch
 
-pchmp95 : Witch
-pchmp95v: Pinball Champ '95. Seems to be a simple mod with the following differences:
+witch   : Witch
+pbchmp95: Pinball Champ '95. Seems to be a simple mod with the following differences:
                         -The title screen is changed
                         -The sample saying "witch" is not played (obviously)
                         -Different configuration values (time limit, etc)
@@ -11,8 +11,6 @@ pchmp95v: Pinball Champ '95. Seems to be a simple mod with the following differe
 
 
 rom will be banked
-
-seems to have some gambling elements to it - should i care?
 
 
 This is so far what could be reverse-engineered from the code.
@@ -258,18 +256,18 @@ TODO :
 static tilemap *gfx0_tilemap;
 static tilemap *gfx1_tilemap;
 
-static data8_t *gfx0_cram;
-static data8_t *gfx0_vram;
+static UINT8 *gfx0_cram;
+static UINT8 *gfx0_vram;
 
-static data8_t *gfx1_cram;
-static data8_t *gfx1_vram;
+static UINT8 *gfx1_cram;
+static UINT8 *gfx1_vram;
 
-static data8_t *sprite_ram;
+static UINT8 *sprite_ram;
 
 static int scrollx=0;
 static int scrolly=0;
 
-static data8_t reg_a002=0;
+static UINT8 reg_a002=0;
 static int bank=-1;
 
 static void get_gfx0_tile_info(int tile_index)
@@ -416,7 +414,7 @@ static WRITE8_HANDLER(write_a00x)
 
 	    if(newbank!=bank)
 	    {
-	      data8_t *ROM = memory_region(REGION_CPU1);
+	      UINT8 *ROM = memory_region(REGION_CPU1);
 	      bank=newbank;
 		    ROM = &ROM[0x8000 * newbank + UNBANKED_SIZE];
 		    memory_set_bankptr(1,ROM);
@@ -615,7 +613,7 @@ static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-INPUT_PORTS_START( pbchmp95 )
+INPUT_PORTS_START( witch )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x01, 0x01, "A0" )
 	PORT_DIPSETTING(    0x00, "0" )
@@ -862,7 +860,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-VIDEO_START(pbchmp95)
+VIDEO_START(witch)
 {
 	gfx0_tilemap = tilemap_create(get_gfx0_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	gfx1_tilemap = tilemap_create(get_gfx1_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
@@ -878,7 +876,7 @@ VIDEO_START(pbchmp95)
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(mame_bitmap *bitmap)
 {
 	int i,sx,sy,tileno,flags,color;
 	int flipx=0;
@@ -929,7 +927,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 }
 
-VIDEO_UPDATE(pbchmp95)
+VIDEO_UPDATE(witch)
 {
 	tilemap_set_scrollx( gfx1_tilemap, 0, scrollx-7 ); //offset to have it aligned with the sprites
 	tilemap_set_scrolly( gfx1_tilemap, 0, scrolly );
@@ -939,23 +937,16 @@ VIDEO_UPDATE(pbchmp95)
 	tilemap_draw(bitmap,cliprect,gfx0_tilemap,0,0);
 }
 
-VIDEO_STOP(pbchmp95)
-{
-	tilemap_dispose(gfx1_tilemap);
-	tilemap_dispose(gfx0_tilemap);
-}
-
-
-static INTERRUPT_GEN( pbchmp95 ) {
+static INTERRUPT_GEN( witch_interrupt ) {
 	cpunum_set_input_line(0,0,ASSERT_LINE);
 	cpunum_set_input_line(1,0,ASSERT_LINE);
 }
 
-static MACHINE_DRIVER_START( pbchmp95 )
+static MACHINE_DRIVER_START( witch )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(pbchmp95,1)
+	MDRV_CPU_VBLANK_INT(witch_interrupt,1)
 
 	/* 2nd z80 */
 	MDRV_CPU_ADD(Z80,8000000)		 /* ? MHz */
@@ -970,14 +961,13 @@ static MACHINE_DRIVER_START( pbchmp95 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
 	MDRV_SCREEN_SIZE(256, 256)
-	//MDRV_VISIBLE_AREA(8, 256-1-8, 8*2, 256-8*2)
-	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_VISIBLE_AREA(8, 256-1-8, 8*2, 256-8*2)
+//  MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x300)
 
-	MDRV_VIDEO_START(pbchmp95)
-	MDRV_VIDEO_UPDATE(pbchmp95)
-	MDRV_VIDEO_STOP(pbchmp95)
+	MDRV_VIDEO_START(witch)
+	MDRV_VIDEO_UPDATE(witch)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -997,7 +987,7 @@ static MACHINE_DRIVER_START( pbchmp95 )
 MACHINE_DRIVER_END
 
 /* this set has (c)1992 Sega / Vic Tokai in the roms? */
-ROM_START( pchmp95 )
+ROM_START( witch )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "rom.u5", 0x00000, 0x08000, CRC(348fccb8) SHA1(947defd86c4a597fbfb9327eec4903aa779b3788)  )
 	ROM_CONTINUE ( 0x10000, 0x18000)
@@ -1016,7 +1006,7 @@ ROM_START( pchmp95 )
 ROM_END
 
 /* no sega logo? a bootleg? */
-ROM_START( pchmp95v )
+ROM_START( pbchmp95 )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )
 	ROM_LOAD( "3.bin", 0x00000, 0x08000, CRC(e881aa05) SHA1(10d259396cac4b9a1b72c262c11ffa5efbdac433)  )
 	ROM_CONTINUE ( 0x10000, 0x18000)
@@ -1034,12 +1024,12 @@ ROM_START( pchmp95v )
 	ROM_LOAD( "5.bin", 0x00000, 0x40000, CRC(62e42371) SHA1(5042abc2176d0c35fd6b698eca4145f93b0a3944) )
 ROM_END
 
-DRIVER_INIT(pchmp95)
+DRIVER_INIT(witch)
 {
- 	data8_t *ROM = (data8_t *)memory_region(REGION_CPU1);
+ 	UINT8 *ROM = (UINT8 *)memory_region(REGION_CPU1);
 
 	memory_set_bankptr(1,&ROM[UNBANKED_SIZE]);
 }
 
-GAMEX( 1992, pchmp95,  0 ,      pbchmp95, pbchmp95, pchmp95, ROT0, "Sega / Vic Tokai / Excellent Systems", "Pinball Champ '95(?) (Excellent Systems)", GAME_NOT_WORKING ) // title not known
-GAMEX( 1995, pchmp95v, pchmp95, pbchmp95, pbchmp95, pchmp95, ROT0, "Veltmeijer Automaten", "Pinball Champ '95 (Veltmeijer Automaten, bootleg?)", GAME_NOT_WORKING )
+GAMEX( 1992, witch,    0,     witch, witch, witch, ROT0, "Sega / Vic Tokai", "Witch", GAME_NOT_WORKING )
+GAMEX( 1995, pbchmp95, witch, witch, witch, witch, ROT0, "Veltmeijer Automaten", "Pinball Champ '95 (bootleg?)", GAME_NOT_WORKING )

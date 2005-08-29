@@ -7385,7 +7385,7 @@ static DRIVER_INIT( slammast )
 
 static DRIVER_INIT( pang3 )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 	int A,src,dst;
 
 	for (A = 0x80000;A < 0x100000;A += 2)

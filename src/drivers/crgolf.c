@@ -35,8 +35,8 @@ WHO AM I?      (In place of "ARIES ELECA")
 
 
 /* local variables */
-static data8_t port_select;
-static data8_t main_to_sound_data, sound_to_main_data;
+static UINT8 port_select;
+static UINT8 main_to_sound_data, sound_to_main_data;
 
 
 

@@ -1382,7 +1382,7 @@ static DRIVER_INIT( hero )
 
 static DRIVER_INIT( raiders )
 {
-	data8_t *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int i;
 
 	/* Data lines D1 and D5 swapped */

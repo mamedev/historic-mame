@@ -24,7 +24,7 @@ To do:
 VIDEO_START( tankbust );
 VIDEO_UPDATE( tankbust );
 
-extern data8_t * txt_ram;
+extern UINT8 * txt_ram;
 
 WRITE8_HANDLER( tankbust_background_videoram_w );
 READ8_HANDLER ( tankbust_background_videoram_r );

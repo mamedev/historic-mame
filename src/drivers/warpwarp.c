@@ -133,7 +133,7 @@ TODO:
 
 
 /* from vidhrdw/warpwarp.c */
-extern data8_t *geebee_videoram,*warpwarp_videoram;
+extern UINT8 *geebee_videoram,*warpwarp_videoram;
 extern int geebee_bgw;
 extern int warpwarp_ball_on;
 extern int warpwarp_ball_h, warpwarp_ball_v;

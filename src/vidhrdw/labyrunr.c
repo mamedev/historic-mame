@@ -4,7 +4,7 @@
 
 unsigned char *labyrunr_videoram1,*labyrunr_videoram2,*labyrunr_scrollram;
 static tilemap *layer0, *layer1;
-static struct rectangle clip0, clip1;
+static rectangle clip0, clip1;
 
 
 PALETTE_INIT( labyrunr )
@@ -152,7 +152,7 @@ WRITE8_HANDLER( labyrunr_vram2_w )
 
 VIDEO_UPDATE( labyrunr )
 {
-	struct rectangle finalclip0, finalclip1;
+	rectangle finalclip0, finalclip1;
 
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,get_black_pen(),cliprect);
@@ -187,7 +187,7 @@ VIDEO_UPDATE( labyrunr )
 	else
 	{
 		int use_clip3[2] = { 0, 0 };
-		struct rectangle finalclip3;
+		rectangle finalclip3;
 
 		/* custom cliprects needed for the weird effect used in the endinq sequence to hide and show the needed part of text */
 		finalclip0.min_y = finalclip1.min_y = cliprect->min_y;

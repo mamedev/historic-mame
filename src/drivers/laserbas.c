@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static data8_t *vram1,*vram2;
+static UINT8 *vram1,*vram2;
 static int vrambank=0;
 
 VIDEO_START(laserbas)

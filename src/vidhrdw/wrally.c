@@ -10,14 +10,14 @@
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
-data16_t *wrally_spriteram;
-data16_t *wrally_vregs;
-data16_t *wrally_videoram;
+UINT16 *wrally_spriteram;
+UINT16 *wrally_vregs;
+UINT16 *wrally_videoram;
 
 static tilemap *pant[2];
 
 /* from machine/wrally.c */
-extern data16_t *wrally_encr_table[2];
+extern UINT16 *wrally_encr_table[2];
 
 /***************************************************************************
 
@@ -120,7 +120,7 @@ VIDEO_START( wrally )
       preliminary
 */
 
-static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void gaelco_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i, x, y, ex, ey;
 	const gfx_element *gfx = Machine->gfx[0];

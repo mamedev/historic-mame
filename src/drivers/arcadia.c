@@ -70,12 +70,12 @@ discarded, this looks like game bug
 
 #ifdef LSB_FIRST
 #define WRITE_WORD(offs, data) \
-	*(offs) = ((data16_t)data & 0x00ff); \
-	*(offs + 1) = ((data16_t)data & 0xff00) >> 8;
+	*(offs) = ((UINT16)data & 0x00ff); \
+	*(offs + 1) = ((UINT16)data & 0xff00) >> 8;
 #else
 #define WRITE_WORD(offs, data) \
-	*(offs + 1) = ((data16_t)data & 0x00ff); \
-	*(offs) = ((data16_t)data & 0xff00) >> 8;
+	*(offs + 1) = ((UINT16)data & 0x00ff); \
+	*(offs) = ((UINT16)data & 0xff00) >> 8;
 #endif
 
 #define NORMAL( offs, data ) WRITE_WORD( offs, ( data & 0xf0 ) << 8 ); WRITE_WORD( offs+2, ( data & 0x0f ) << 12 );
@@ -84,10 +84,10 @@ discarded, this looks like game bug
 static void autoconfig_init( UINT32 rom_boot_vector )
 {
 
-	data8_t *autoconf, *expansion;
+	UINT8 *autoconf, *expansion;
 
-	autoconf = (data8_t*)amiga_autoconfig_mem;
-	expansion = (data8_t*)amiga_expansion_ram;
+	autoconf = (UINT8*)amiga_autoconfig_mem;
+	expansion = (UINT8*)amiga_expansion_ram;
 
 	/* setup a dummy autoconfig device */
 	memset( autoconf, 0xff, 0x2000 );
@@ -808,7 +808,7 @@ static void arcadia_reset_coins(void)
 	coin_counter[0] = coin_counter[1] = 0;
 }
 
-static data16_t arcadia_read_joy0dat(void)
+static UINT16 arcadia_read_joy0dat(void)
 {
 	int input = ( readinputport( 2 ) >> 4 );
 	int	top,bot,lft,rgt;
@@ -824,7 +824,7 @@ static data16_t arcadia_read_joy0dat(void)
 	return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
 }
 
-static data16_t arcadia_read_joy1dat(void)
+static UINT16 arcadia_read_joy1dat(void)
 {
 	int input = ( readinputport( 2 ) & 0x0f );
 	int	top,bot,lft,rgt;
@@ -954,7 +954,7 @@ READ16_HANDLER( dart_kludge2 )
 READ16_HANDLER( dart_kludge1 )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x02a804, 0x02a805, 0, 0, dart_kludge2 );
-	return ((data16_t*)generic_nvram16)[0];
+	return ((UINT16*)generic_nvram16)[0];
 }
 
 DRIVER_INIT( ar_dart )

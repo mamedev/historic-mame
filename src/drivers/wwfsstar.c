@@ -95,7 +95,7 @@ static WRITE16_HANDLER( wwfsstar_flipscreen_w )
  some unknown writes in the 0x180000 region
 *******************************************************************************/
 
-extern data16_t *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
+extern UINT16 *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)	/* Rom */

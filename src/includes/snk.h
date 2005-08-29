@@ -34,8 +34,8 @@ extern VIDEO_UPDATE( tdfever );
 extern VIDEO_UPDATE( gwar );
 extern VIDEO_UPDATE( sgladiat );
 
-extern void tnk3_draw_text( struct mame_bitmap *bitmap, int bank, unsigned char *source );
-extern void tnk3_draw_status( struct mame_bitmap *bitmap, int bank, unsigned char *source );
+extern void tnk3_draw_text( mame_bitmap *bitmap, int bank, unsigned char *source );
+extern void tnk3_draw_status( mame_bitmap *bitmap, int bank, unsigned char *source );
 
 extern int snk_bg_tilemap_baseaddr;
 

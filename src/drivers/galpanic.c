@@ -112,7 +112,7 @@ The roms are piggy-backed in the same way.
 #include "sound/okim6295.h"
 
 
-extern data16_t *galpanic_bgvideoram,*galpanic_fgvideoram;
+extern UINT16 *galpanic_bgvideoram,*galpanic_fgvideoram;
 extern size_t galpanic_fgvideoram_size;
 
 PALETTE_INIT( galpanic );

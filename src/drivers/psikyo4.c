@@ -13,9 +13,13 @@ This driver is for the dual-screen PS4 boards
  Taisen Hot Gimmick (c)1997
  Taisen Hot Gimmick Kairakuten (c)1998
  Taisen Hot Gimmick 3 Digital Surfing (c)1999
- Taisen Hot Gimmick 4 Ever (c)2000 (confirmed by Japump)
  Lode Runner - The Dig Fight (c)2000
  Quiz de Idol! Hot Debut (c)2000
+
+Not dumped yet:
+ Taisen Hot Gimmick 4 Ever (c)2000 (confirmed by Japump)
+ Taisen Hot Gimmick Integral (c)2001 (confirmed by Yahoo! Japan auction)
+
 
  The PS4 board appears to be a cheaper board than PS3/5/5v2, with only simple sprites, no bgs,
  smaller palette etc, only 8bpp sprites too.
@@ -72,8 +76,8 @@ Or use these cheats:
 #define DUAL_SCREEN 1 /* Display both screens simultaneously if 1, change in vidhrdw too */
 #define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
-data32_t *psikyo4_vidregs, *ps4_ram, *ps4_io_select;
-data32_t *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
+UINT32 *psikyo4_vidregs, *ps4_ram, *ps4_io_select;
+UINT32 *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
 
 #define MASTER_CLOCK 57272700	// main oscillator frequency
 

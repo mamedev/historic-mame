@@ -75,9 +75,9 @@ TO DO :
 #include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
-data16_t *sderby_fg_videoram;
-data16_t *sderby_md_videoram;
-data16_t *sderby_videoram;
+UINT16 *sderby_fg_videoram;
+UINT16 *sderby_md_videoram;
+UINT16 *sderby_videoram;
 
 WRITE16_HANDLER( sderby_videoram_w );
 WRITE16_HANDLER( sderby_md_videoram_w );
@@ -289,7 +289,7 @@ DRIVER_INIT(pmroulet)
 
 
       */
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	rom[0x00440/2] = 0x33fc;
 

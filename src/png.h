@@ -49,7 +49,7 @@ struct _png_info
 {
 	UINT32 width, height;
 	UINT32 xres, yres;
-	struct rectangle screen;
+	rectangle screen;
 	double xscale, yscale;
 	double source_gamma;
 	UINT32 chromaticities[8];
@@ -90,9 +90,9 @@ int png_filter(png_info *p);
 int png_deflate_image(png_info *p);
 int png_write_sig(mame_file *fp);
 int png_write_datastream(mame_file *fp, png_info *p);
-int png_write_bitmap(mame_file *fp, struct mame_bitmap *bitmap);
-int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap);
-int mng_capture_frame(mame_file *fp, struct mame_bitmap *bitmap);
+int png_write_bitmap(mame_file *fp, mame_bitmap *bitmap);
+int mng_capture_start(mame_file *fp, mame_bitmap *bitmap);
+int mng_capture_frame(mame_file *fp, mame_bitmap *bitmap);
 int mng_capture_stop(mame_file *fp);
 
 #endif	/* __PNG_H__ */

@@ -106,7 +106,7 @@ TODO:
 #include "cpu/m6800/m6800.h"
 #include "sound/namco.h"
 
-extern data8_t *baraduke_textram, *spriteram, *baraduke_videoram, *baraduke_spriteram;
+extern UINT8 *baraduke_textram, *spriteram, *baraduke_videoram, *baraduke_spriteram;
 
 /* from vidhrdw/baraduke.c */
 VIDEO_START( baraduke );
@@ -595,7 +595,7 @@ ROM_END
 
 static DRIVER_INIT( baraduke )
 {
-	data8_t *rom;
+	UINT8 *rom;
 	int i;
 
 	/* unpack the third tile ROM */

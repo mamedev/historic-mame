@@ -82,15 +82,15 @@ Notes:
 #include "machine/segacrpt.h"
 #include "sound/ay8910.h"
 
-static data8_t *calorie_fg;
-static data8_t  calorie_bg;
-static data8_t *calorie_sprites;
+static UINT8 *calorie_fg;
+static UINT8  calorie_bg;
+static UINT8 *calorie_sprites;
 
 static tilemap *bg_tilemap,*fg_tilemap;
 
 static void get_bg_tile_info(int tile_index)
 {
-	data8_t *src = memory_region(REGION_USER1);
+	UINT8 *src = memory_region(REGION_USER1);
 	int bg_base = (calorie_bg & 0x0f) * 0x200;
 	int code  = src[bg_base + tile_index] | (((src[bg_base + tile_index + 0x100]) & 0x10) << 4);
 	int color = src[bg_base + tile_index + 0x100] & 0x0f;
@@ -195,7 +195,7 @@ static WRITE8_HANDLER( calorie_flipscreen_w )
 
 static READ8_HANDLER( calorie_soundlatch_r )
 {
-	data8_t latch = soundlatch_r(0);
+	UINT8 latch = soundlatch_r(0);
 	soundlatch_clear_w(0,0);
 	return latch;
 }

@@ -47,12 +47,12 @@
 static WRITE32_HANDLER(test_do_callback);
 static READ32_HANDLER(test_rt_r_callback);
 static WRITE32_HANDLER(test_rt_w_callback);
-static void test_dt_r_callback (data32_t insn, data32_t* prn, data32_t (*read32)(int addr));
-static void test_dt_w_callback (data32_t insn, data32_t* prn, void (*write32)(int addr, data32_t data));
+static void test_dt_r_callback (UINT32 insn, UINT32* prn, UINT32 (*read32)(int addr));
+static void test_dt_w_callback (UINT32 insn, UINT32* prn, void (*write32)(int addr, UINT32 data));
 #ifdef MAME_DEBUG
-char *Spec_RT( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0);
-char *Spec_DT( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0);
-char *Spec_DO( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0);
+char *Spec_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
+char *Spec_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
+char *Spec_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
 #endif
 #endif
 
@@ -162,7 +162,7 @@ static offs_t arm7_dasm(char *buffer, offs_t pc)
 #endif
 }
 
-static data8_t arm7_reg_layout[] =
+static UINT8 arm7_reg_layout[] =
 {
     -1,
     ARM7_R0,  ARM7_IR13, -1,
@@ -459,7 +459,7 @@ static WRITE32_HANDLER(test_do_callback)
 }
 static READ32_HANDLER(test_rt_r_callback)
 {
-    data32_t data=0;
+    UINT32 data=0;
     LOG(("test_rt_r_callback opcode=%x\n",offset));
     return data;
 }
@@ -467,28 +467,28 @@ static WRITE32_HANDLER(test_rt_w_callback)
 {
     LOG(("test_rt_w_callback opcode=%x, data from ARM7 register=%x\n",offset,data));
 }
-static void test_dt_r_callback (data32_t insn, data32_t* prn, data32_t (*read32)(int addr))
+static void test_dt_r_callback (UINT32 insn, UINT32* prn, UINT32 (*read32)(int addr))
 {
     LOG(("test_dt_r_callback: insn = %x\n",insn));
 }
-static void test_dt_w_callback (data32_t insn, data32_t* prn, void (*write32)(int addr, data32_t data))
+static void test_dt_w_callback (UINT32 insn, UINT32* prn, void (*write32)(int addr, UINT32 data))
 {
     LOG(("test_dt_w_callback: opcode = %x\n",insn));
 }
 
 /* Custom Co-proc DASM handlers */
 #ifdef MAME_DEBUG
-char *Spec_RT( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0)
+char *Spec_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
     pBuf += sprintf( pBuf, "SPECRT");
     return pBuf;
 }
-char *Spec_DT( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0)
+char *Spec_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
     pBuf += sprintf( pBuf, "SPECDT");
     return pBuf;
 }
-char *Spec_DO( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0)
+char *Spec_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
     pBuf += sprintf( pBuf, "SPECDO");
     return pBuf;

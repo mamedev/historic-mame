@@ -42,9 +42,9 @@ Notes:
 #include "sound/okim6295.h"
 
 static tilemap *bg_tilemap, *mlow_tilemap, *mhigh_tilemap, *tx_tilemap;
-static data16_t *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram, *sprites_buffer;
-static data16_t *bg_scrollram, *mlow_scrollram, *mhigh_scrollram, *vidattrram;
-static data16_t *mwarr_ram;
+static UINT16 *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram, *sprites_buffer;
+static UINT16 *bg_scrollram, *mlow_scrollram, *mhigh_scrollram, *vidattrram;
+static UINT16 *mwarr_ram;
 
 static WRITE16_HANDLER( bg_videoram_w )
 {
@@ -324,7 +324,7 @@ VIDEO_START( mwarr )
 	mhigh_tilemap = tilemap_create(get_mhigh_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT, 16, 16,64,16);
 	tx_tilemap    = tilemap_create(get_tx_tile_info,   tilemap_scan_rows,TILEMAP_TRANSPARENT,  8,  8,64,32);
 
-	sprites_buffer = auto_malloc(sizeof(data16_t) * 0x800);
+	sprites_buffer = auto_malloc(sizeof(UINT16) * 0x800);
 
 	if(!bg_tilemap || !mlow_tilemap || !tx_tilemap || !sprites_buffer)
 		return 1;
@@ -340,7 +340,7 @@ VIDEO_START( mwarr )
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const UINT16 *source = sprites_buffer+0x800-4;
 	const UINT16 *finish = sprites_buffer;

@@ -50,8 +50,8 @@ static int sslam_sound;
 static int sslam_melody;
 static int sslam_melody_loop;
 static int sslam_snd_bank;
-data16_t *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
-data16_t *sslam_spriteram, *sslam_regs;
+UINT16 *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
+UINT16 *sslam_spriteram, *sslam_regs;
 
 
 
@@ -72,7 +72,7 @@ data16_t *sslam_spriteram, *sslam_regs;
    against a real game board.
 */
 
-static const data8_t sslam_cmd_snd[128] =
+static const UINT8 sslam_cmd_snd[128] =
 {
 /*00*/	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
 /*08*/	0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x70, 0x71,

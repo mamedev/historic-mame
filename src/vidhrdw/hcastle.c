@@ -8,7 +8,7 @@
 #include "vidhrdw/konamiic.h"
 #include "vidhrdw/generic.h"
 
-data8_t *hcastle_pf1_videoram,*hcastle_pf2_videoram;
+UINT8 *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 static int gfx_bank;
 
 static tilemap *fg_tilemap,*bg_tilemap;
@@ -190,7 +190,7 @@ WRITE8_HANDLER( hcastle_pf2_control_w )
 
 /*****************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, unsigned char *sbank, int bank )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, unsigned char *sbank, int bank )
 {
 	int bank_base = (bank == 0) ? 0x4000 * (gfx_bank & 1) : 0;
 	K007121_sprites_draw(bank,bitmap,cliprect,sbank,(K007121_ctrlram[bank][6]&0x30)*2,0,bank_base,-1);

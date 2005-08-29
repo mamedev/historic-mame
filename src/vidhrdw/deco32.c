@@ -3,13 +3,13 @@
 #include "state.h"
 #include "deco16ic.h"
 
-data32_t *deco32_pf1_data,*deco32_pf2_data,*deco32_pf3_data,*deco32_pf4_data;
-data32_t *deco32_pf12_control,*deco32_pf34_control;
-data32_t *deco32_pf1_rowscroll,*deco32_pf2_rowscroll,*deco32_pf3_rowscroll,*deco32_pf4_rowscroll;
-data32_t *dragngun_sprite_layout_0_ram, *dragngun_sprite_layout_1_ram;
-data32_t *dragngun_sprite_lookup_0_ram, *dragngun_sprite_lookup_1_ram;
+UINT32 *deco32_pf1_data,*deco32_pf2_data,*deco32_pf3_data,*deco32_pf4_data;
+UINT32 *deco32_pf12_control,*deco32_pf34_control;
+UINT32 *deco32_pf1_rowscroll,*deco32_pf2_rowscroll,*deco32_pf3_rowscroll,*deco32_pf4_rowscroll;
+UINT32 *dragngun_sprite_layout_0_ram, *dragngun_sprite_layout_1_ram;
+UINT32 *dragngun_sprite_lookup_0_ram, *dragngun_sprite_lookup_1_ram;
 
-static data8_t *dirty_palette;
+static UINT8 *dirty_palette;
 static tilemap *pf1_tilemap,*pf1a_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
 static int deco32_pf1_bank,deco32_pf2_bank,deco32_pf3_bank,deco32_pf4_bank;
 static int deco32_pf1_flip,deco32_pf2_flip,deco32_pf3_flip,deco32_pf4_flip;
@@ -18,13 +18,13 @@ static int deco32_pf2_colourbank,deco32_pf4_colourbank,deco32_pri;
 static int dragngun_sprite_ctrl;
 
 int deco32_raster_display_position;
-data16_t *deco32_raster_display_list;
+UINT16 *deco32_raster_display_list;
 
 /******************************************************************************/
 
 WRITE32_HANDLER( deco32_pf1_data_w )
 {
-	const data32_t oldword=deco32_pf1_data[offset];
+	const UINT32 oldword=deco32_pf1_data[offset];
 	COMBINE_DATA(&deco32_pf1_data[offset]);
 
 	if (oldword!=deco32_pf1_data[offset]) {
@@ -36,7 +36,7 @@ WRITE32_HANDLER( deco32_pf1_data_w )
 
 WRITE32_HANDLER( deco32_pf2_data_w )
 {
-	const data32_t oldword=deco32_pf2_data[offset];
+	const UINT32 oldword=deco32_pf2_data[offset];
 	COMBINE_DATA(&deco32_pf2_data[offset]);
 
 	if (oldword!=deco32_pf2_data[offset])
@@ -45,7 +45,7 @@ WRITE32_HANDLER( deco32_pf2_data_w )
 
 WRITE32_HANDLER( deco32_pf3_data_w )
 {
-	const data32_t oldword=deco32_pf3_data[offset];
+	const UINT32 oldword=deco32_pf3_data[offset];
 	COMBINE_DATA(&deco32_pf3_data[offset]);
 
 	if (oldword!=deco32_pf3_data[offset])
@@ -54,7 +54,7 @@ WRITE32_HANDLER( deco32_pf3_data_w )
 
 WRITE32_HANDLER( deco32_pf4_data_w )
 {
-	const data32_t oldword=deco32_pf4_data[offset];
+	const UINT32 oldword=deco32_pf4_data[offset];
 	COMBINE_DATA(&deco32_pf4_data[offset]);
 
 	if (oldword!=deco32_pf4_data[offset])
@@ -124,7 +124,7 @@ WRITE32_HANDLER( deco32_palette_dma_w )
 
 /******************************************************************************/
 
-static void captaven_drawsprites(struct mame_bitmap *bitmap, const data32_t *spritedata, int gfxbank)
+static void captaven_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank)
 {
 	int offs;
 
@@ -209,7 +209,7 @@ static void captaven_drawsprites(struct mame_bitmap *bitmap, const data32_t *spr
 	}
 }
 
-static void tattass_drawsprites(struct mame_bitmap *bitmap, const data32_t *spritedata, int gfxbank, int mask)
+static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank, int mask)
 {
 	int offs;
 
@@ -284,12 +284,12 @@ static void tattass_drawsprites(struct mame_bitmap *bitmap, const data32_t *spri
 	}
 }
 
-INLINE void dragngun_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element *gfx,
+INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,
-		int scalex, int scaley,struct mame_bitmap *pri_buffer,UINT32 pri_mask, int sprite_screen_width, int  sprite_screen_height )
+		const rectangle *clip,int transparency,int transparent_color,
+		int scalex, int scaley,mame_bitmap *pri_buffer,UINT32 pri_mask, int sprite_screen_width, int  sprite_screen_height )
 {
-	struct rectangle myclip;
+	rectangle myclip;
 
 	if (!scalex || !scaley) return;
 
@@ -487,10 +487,10 @@ INLINE void dragngun_drawgfxzoom( struct mame_bitmap *dest_bmp,const gfx_element
 	}
 }
 
-static void dragngun_drawsprites(struct mame_bitmap *bitmap, const data32_t *spritedata)
+static void dragngun_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata)
 {
-	const data32_t *layout_ram;
-	const data32_t *lookup_ram;
+	const UINT32 *layout_ram;
+	const UINT32 *lookup_ram;
 	int offs;
 
 	/*
@@ -684,9 +684,9 @@ static void get_pf1a_tile_info(int tile_index)
 
 static void get_pf2_tile_info(int tile_index)
 {
-	data32_t tile=deco32_pf2_data[tile_index];
-	data8_t	colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT32 tile=deco32_pf2_data[tile_index];
+	UINT8	colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco32_pf12_control[6]>>8)&0x01) {
@@ -704,9 +704,9 @@ static void get_pf2_tile_info(int tile_index)
 
 static void get_pf3_tile_info(int tile_index)
 {
-	data32_t tile=deco32_pf3_data[tile_index];
-	data8_t	colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT32 tile=deco32_pf3_data[tile_index];
+	UINT8	colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco32_pf34_control[6]>>0)&0x01) {
@@ -724,9 +724,9 @@ static void get_pf3_tile_info(int tile_index)
 
 static void get_pf4_tile_info(int tile_index)
 {
-	data32_t tile=deco32_pf4_data[tile_index];
-	data8_t	colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT32 tile=deco32_pf4_data[tile_index];
+	UINT8	colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco32_pf34_control[6]>>8)&0x01) {
@@ -751,8 +751,8 @@ static void get_ca_pf3_tile_info(int tile_index)
 
 static void get_ll_pf3_tile_info(int tile_index)
 {
-	data32_t tile=deco32_pf3_data[tile_index];
-	data8_t flags=0;
+	UINT32 tile=deco32_pf3_data[tile_index];
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco32_pf34_control[6]>>0)&0x01)
@@ -766,8 +766,8 @@ static void get_ll_pf3_tile_info(int tile_index)
 
 static void get_ll_pf4_tile_info(int tile_index)
 {
-	data32_t tile=deco32_pf4_data[tile_index];
-	data8_t flags=0;
+	UINT32 tile=deco32_pf4_data[tile_index];
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco32_pf34_control[6]>>8)&0x01)
@@ -914,7 +914,7 @@ VIDEO_EOF( dragngun )
 }
 
 #if 0
-static void print_debug_info(struct mame_bitmap *bitmap)
+static void print_debug_info(mame_bitmap *bitmap)
 {
 	int j;
 	char buf[64*5];
@@ -932,10 +932,10 @@ static void print_debug_info(struct mame_bitmap *bitmap)
 
 #endif
 
-static void tilemap_raster_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, int pri)
+static void tilemap_raster_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, int pri)
 {
 	int ptr=0,sx0,sy0,sx1,sy1,start,end=0;
-	struct rectangle clip;
+	rectangle clip;
 	int overflow=deco32_raster_display_position;
 
 	clip.min_x = cliprect->min_x;
@@ -965,22 +965,22 @@ static void tilemap_raster_draw(struct mame_bitmap *bitmap, const struct rectang
 	}
 }
 
-static void combined_tilemap_draw(struct mame_bitmap *bitmap)
+static void combined_tilemap_draw(mame_bitmap *bitmap)
 {
-	const struct mame_bitmap *bitmap0 = tilemap_get_pixmap(pf3_tilemap);
-	const struct mame_bitmap *bitmap1 = tilemap_get_pixmap(pf4_tilemap);
+	const mame_bitmap *bitmap0 = tilemap_get_pixmap(pf3_tilemap);
+	const mame_bitmap *bitmap1 = tilemap_get_pixmap(pf4_tilemap);
 	int x,y,p;
 
-	const data16_t width_mask=0x3ff;
-	const data16_t height_mask=0x1ff;
-	const data16_t y_src=deco32_pf34_control[2];
-//  const data32_t *rows=deco32_pf3_rowscroll;
+	const UINT16 width_mask=0x3ff;
+	const UINT16 height_mask=0x1ff;
+	const UINT16 y_src=deco32_pf34_control[2];
+//  const UINT32 *rows=deco32_pf3_rowscroll;
 
-	const data16_t *bitmap0_y;
-	const data16_t *bitmap1_y;
-	data32_t *bitmap2_y;
+	const UINT16 *bitmap0_y;
+	const UINT16 *bitmap1_y;
+	UINT32 *bitmap2_y;
 
-	data16_t x_src;
+	UINT16 x_src;
 
 	for (y=8; y<248; y++) {
 		const int py=(y_src+y)&height_mask;
@@ -1004,7 +1004,7 @@ static void combined_tilemap_draw(struct mame_bitmap *bitmap)
 	}
 }
 
-static void deco32_setup_scroll(tilemap *pf_tilemap, data16_t height, data8_t control0, data8_t control1, data16_t sy, data16_t sx, data32_t *rowdata, data32_t *coldata)
+static void deco32_setup_scroll(tilemap *pf_tilemap, UINT16 height, UINT8 control0, UINT8 control1, UINT16 sy, UINT16 sx, UINT32 *rowdata, UINT32 *coldata)
 {
 	int rows,offs;
 
@@ -1156,7 +1156,7 @@ VIDEO_UPDATE( dragngun )
 	/* Raster update */
 	if (deco32_raster_display_position) {
 		int ptr=0,start,end=0;
-		struct rectangle clip;
+		rectangle clip;
 		int overflow=deco32_raster_display_position;
 
 		clip.min_x = cliprect->min_x;

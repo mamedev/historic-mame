@@ -137,18 +137,18 @@ Abnormalities:
 #define TOAPLAN1_SPRITERAM_SIZE      0x800	/* sprite ram */
 #define TOAPLAN1_SPRITESIZERAM_SIZE  0x80	/* sprite size ram */
 
-static data16_t *pf4_tilevram16;	/*  ||  Drawn in this order */
-static data16_t *pf3_tilevram16;	/*  ||  */
-static data16_t *pf2_tilevram16;	/* \||/ */
-static data16_t *pf1_tilevram16;	/*  \/  */
+static UINT16 *pf4_tilevram16;	/*  ||  Drawn in this order */
+static UINT16 *pf3_tilevram16;	/*  ||  */
+static UINT16 *pf2_tilevram16;	/* \||/ */
+static UINT16 *pf1_tilevram16;	/*  \/  */
 
-static data16_t *toaplan1_spritesizeram16;
-static data16_t *toaplan1_buffered_spritesizeram16;
+static UINT16 *toaplan1_spritesizeram16;
+static UINT16 *toaplan1_buffered_spritesizeram16;
 
 size_t toaplan1_colorram1_size;
 size_t toaplan1_colorram2_size;
-data16_t *toaplan1_colorram1;
-data16_t *toaplan1_colorram2;
+UINT16 *toaplan1_colorram1;
+UINT16 *toaplan1_colorram2;
 
 static int bcu_flipscreen;		/* Tile   controller flip flag */
 static int fcu_flipscreen;		/* Sprite controller flip flag */
@@ -286,7 +286,7 @@ static int toaplan1_create_tilemaps(void)
 
 static int toaplan1_paletteram_alloc(void)
 {
-	if ((paletteram16 = (data16_t *)auto_malloc(toaplan1_colorram1_size + toaplan1_colorram2_size)) == 0)
+	if ((paletteram16 = (UINT16 *)auto_malloc(toaplan1_colorram1_size + toaplan1_colorram2_size)) == 0)
 		return 1;
 
 	return 0;
@@ -294,19 +294,19 @@ static int toaplan1_paletteram_alloc(void)
 
 static int toaplan1_vram_alloc(void)
 {
-	if ((pf1_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
+	if ((pf1_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
 	memset(pf1_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf2_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
+	if ((pf2_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
 	memset(pf2_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf3_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
+	if ((pf3_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
 	memset(pf3_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf4_tilevram16 = (data16_t *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
+	if ((pf4_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
 		return 1;
 	memset(pf4_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
@@ -315,19 +315,19 @@ static int toaplan1_vram_alloc(void)
 
 static int toaplan1_spritevram_alloc(void)
 {
-	if ((spriteram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
+	if ((spriteram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
 		return 1;
 	memset(spriteram16,0,TOAPLAN1_SPRITERAM_SIZE);
 
-	if ((buffered_spriteram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
+	if ((buffered_spriteram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
 		return 1;
 	memset(buffered_spriteram16,0,TOAPLAN1_SPRITERAM_SIZE);
 
-	if ((toaplan1_spritesizeram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
+	if ((toaplan1_spritesizeram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
 		return 1;
 	memset(toaplan1_spritesizeram16,0,TOAPLAN1_SPRITESIZERAM_SIZE);
 
-	if ((toaplan1_buffered_spritesizeram16 = (data16_t *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
+	if ((toaplan1_buffered_spritesizeram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
 		return 1;
 	memset(toaplan1_buffered_spritesizeram16,0,TOAPLAN1_SPRITESIZERAM_SIZE);
 
@@ -654,7 +654,7 @@ WRITE16_HANDLER( toaplan1_tileram_offs_w )
 READ16_HANDLER( toaplan1_tileram16_r )
 {
 	offs_t vram_offset;
-	data16_t video_data = 0;
+	UINT16 video_data = 0;
 
 	switch (pf_voffs & 0xf000)	/* Locate Layer (PlayField) */
 	{
@@ -684,7 +684,7 @@ READ16_HANDLER( toaplan1_tileram16_r )
 
 READ16_HANDLER( rallybik_tileram16_r )
 {
-	data16_t data = toaplan1_tileram16_r(offset, mem_mask);
+	UINT16 data = toaplan1_tileram16_r(offset, mem_mask);
 
 	if (offset == 0)	/* some bit lines may be stuck to others */
 	{
@@ -696,7 +696,7 @@ READ16_HANDLER( rallybik_tileram16_r )
 
 WRITE16_HANDLER( toaplan1_tileram16_w )
 {
-	data16_t oldword = 0;
+	UINT16 oldword = 0;
 	offs_t vram_offset;
 
 	switch (pf_voffs & 0xf000)	/* Locate Layer (PlayField) */
@@ -747,7 +747,7 @@ WRITE16_HANDLER( toaplan1_tileram16_w )
 
 READ16_HANDLER( toaplan1_scroll_regs_r )
 {
-	data16_t scroll = 0;
+	UINT16 scroll = 0;
 
 	switch(offset)
 	{
@@ -812,8 +812,8 @@ void toaplan1_log_vram(void)
 		if (toaplan1_spritesizeram16)			/* FCU controller */
 		{
 			int schar,sattr,sxpos,sypos,bschar,bsattr,bsxpos,bsypos;
-			data16_t *size  = (data16_t *)(toaplan1_spritesizeram16);
-			data16_t *bsize = (data16_t *)(toaplan1_buffered_spritesizeram16);
+			UINT16 *size  = (UINT16 *)(toaplan1_spritesizeram16);
+			UINT16 *bsize = (UINT16 *)(toaplan1_buffered_spritesizeram16);
 			logerror("Scrolls    PF1-X  PF1-Y     PF2-X  PF2-Y     PF3-X  PF3-Y     PF4-X  PF4-Y\n");
 			logerror("------>    #%04x  #%04x     #%04x  #%04x     #%04x  #%04x     #%04x  #%04x\n",pf1_scrollx,pf1_scrolly,pf2_scrollx,pf2_scrolly,pf3_scrollx,pf3_scrolly,pf4_scrollx,pf4_scrolly);
 			for ( sprite_voffs = 0; sprite_voffs < (spriteram_size/2); sprite_voffs += 4 )
@@ -855,8 +855,8 @@ void toaplan1_log_vram(void)
 
 	if ( code_pressed(KEYCODE_SLASH) )
 	{
-		data16_t *size  = (data16_t *)(toaplan1_spritesizeram16);
-		data16_t *bsize = (data16_t *)(toaplan1_buffered_spritesizeram16);
+		UINT16 *size  = (UINT16 *)(toaplan1_spritesizeram16);
+		UINT16 *bsize = (UINT16 *)(toaplan1_buffered_spritesizeram16);
 		offs_t offs;
 		while (code_pressed(KEYCODE_SLASH)) ;
 		if (toaplan1_spritesizeram16)			/* FCU controller */
@@ -1040,10 +1040,10 @@ static void mark_rallybik_sprite_priority(void)
     Sprite Handlers
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority_to_display )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority_to_display )
 {
-	data16_t *source = (data16_t *)(buffered_spriteram16);
-	data16_t *size   = (data16_t *)(toaplan1_buffered_spritesizeram16);
+	UINT16 *source = (UINT16 *)(buffered_spriteram16);
+	UINT16 *size   = (UINT16 *)(toaplan1_buffered_spritesizeram16);
 
 	offs_t offs;
 
@@ -1107,7 +1107,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 
-static void draw_rallybik_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void draw_rallybik_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	int offs;
 

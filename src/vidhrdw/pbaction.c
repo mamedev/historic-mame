@@ -103,7 +103,7 @@ VIDEO_START( pbaction )
 	return 0;
 }
 
-static void pbaction_draw_sprites( struct mame_bitmap *bitmap )
+static void pbaction_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

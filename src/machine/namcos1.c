@@ -17,8 +17,8 @@ WRITE8_HANDLER( namcos1_spriteram_w );
 extern void namcos1_set_scroll_offsets( const int *bgx, const int *bgy, int negative, int optimize );
 extern void namcos1_set_sprite_offsets( int x, int y );
 
-static data8_t *namcos1_triram;
-static data8_t *s1ram;
+static UINT8 *namcos1_triram;
+static UINT8 *s1ram;
 
 
 /*******************************************************************************
@@ -117,7 +117,7 @@ static WRITE8_HANDLER( namcos1_3dcs_w )
 
 
 static int key_id,key_reg,key_rng,key_swap4_arg,key_swap4,key_bottom4,key_top4;
-static data8_t key[8];
+static UINT8 key[8];
 
 
 static READ8_HANDLER( no_key_r )
@@ -556,7 +556,7 @@ static WRITE8_HANDLER( key_type3_w )
 
 WRITE8_HANDLER( namcos1_sound_bankswitch_w )
 {
-	data8_t *rom = memory_region(REGION_CPU3) + 0xc000;
+	UINT8 *rom = memory_region(REGION_CPU3) + 0xc000;
 
 	int bank = (data & 0x70) >> 4;
 	memory_set_bankptr(17,rom + 0x4000 * bank);
@@ -701,7 +701,7 @@ static void set_bank(int banknum, bankhandler *handler)
 	namcos1_active_bank[banknum] = *handler;
 }
 
-void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
+void namcos1_bankswitch(int cpu, offs_t offset, UINT8 data)
 {
 	static int chip[16];
 	int bank = (cpu*8) + (( offset >> 9) & 0x07);
@@ -775,7 +775,7 @@ static void namcos1_build_banks(read8_handler key_r,write8_handler key_w)
 	int i;
 
 	/**** kludge alert ****/
-	data8_t *dummyrom = auto_malloc(0x2000);
+	UINT8 *dummyrom = auto_malloc(0x2000);
 
 	/* when the games want to reset because the test switch has been flipped (or
        because the protection checks failed!) they just set the top bits of bank #7
@@ -816,7 +816,7 @@ static void namcos1_build_banks(read8_handler key_r,write8_handler key_w)
 
 	/* PRG0-PRG7 */
 	{
-		data8_t *rom = memory_region(REGION_USER1);
+		UINT8 *rom = memory_region(REGION_USER1);
 
 		namcos1_install_bank(0x200,0x3ff,0,rom_w,0,rom);
 
@@ -825,7 +825,7 @@ static void namcos1_build_banks(read8_handler key_r,write8_handler key_w)
 		{
 			if ((i & 0x010000) == 0)
 			{
-				data8_t t = rom[i];
+				UINT8 t = rom[i];
 				rom[i] = rom[i + 0x010000];
 				rom[i + 0x010000] = t;
 			}
@@ -1102,8 +1102,8 @@ DRIVER_INIT( bakutotu )
 #if 0
 	// resolves CPU deadlocks caused by sloppy coding(see driver\namcos1.c)
 	{
-		data8_t target[8] = {0x34,0x37,0x35,0x37,0x96,0x00,0x2e,0xed};
-		data8_t *rombase, *srcptr, *endptr, *scanptr;
+		UINT8 target[8] = {0x34,0x37,0x35,0x37,0x96,0x00,0x2e,0xed};
+		UINT8 *rombase, *srcptr, *endptr, *scanptr;
 
 		rombase = memory_region(REGION_USER1);
 		srcptr = rombase + 0x1e000;

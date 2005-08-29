@@ -138,7 +138,7 @@
  *
  *************************************/
 
-data8_t *itech8_grom_bank;
+UINT8 *itech8_grom_bank;
 
 static UINT8 blitter_data[16];
 static UINT8 blit_in_progress;

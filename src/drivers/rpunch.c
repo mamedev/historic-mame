@@ -120,7 +120,7 @@
 VIDEO_START( rpunch );
 VIDEO_UPDATE( rpunch );
 
-extern data16_t *rpunch_bitmapram;
+extern UINT16 *rpunch_bitmapram;
 extern size_t rpunch_bitmapram_size;
 extern int rpunch_sprite_palette;
 

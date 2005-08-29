@@ -58,7 +58,7 @@ VIDEO_UPDATE( videopin )
 
 			if (videopin_video_ram[offset] & 0x80)   /* ball bit found */
 			{
-				struct rectangle rect;
+				rectangle rect;
 
 				int x = 8 * col;
 				int y = 8 * row;

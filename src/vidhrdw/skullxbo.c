@@ -110,8 +110,8 @@ VIDEO_START( skullxbo )
 WRITE16_HANDLER( skullxbo_xscroll_w )
 {
 	/* combine data */
-	data16_t oldscroll = *atarigen_xscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_xscroll;
+	UINT16 newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
 
 	/* if something changed, force an update */
@@ -131,9 +131,9 @@ WRITE16_HANDLER( skullxbo_yscroll_w )
 {
 	/* combine data */
 	int scanline = cpu_getscanline();
-	data16_t oldscroll = *atarigen_yscroll;
-	data16_t newscroll = oldscroll;
-	data16_t effscroll;
+	UINT16 oldscroll = *atarigen_yscroll;
+	UINT16 newscroll = oldscroll;
+	UINT16 effscroll;
 	COMBINE_DATA(&newscroll);
 
 	/* if something changed, force an update */
@@ -190,7 +190,7 @@ WRITE16_HANDLER( skullxbo_playfieldlatch_w )
 
 void skullxbo_scanline_update(int scanline)
 {
-	data16_t *base = &atarigen_alpha[(scanline / 8) * 64 + 42];
+	UINT16 *base = &atarigen_alpha[(scanline / 8) * 64 + 42];
 	int x;
 
 	/* keep in range */
@@ -208,8 +208,8 @@ void skullxbo_scanline_update(int scanline)
 	/* update the current parameters */
 	for (x = 42; x < 64; x++)
 	{
-		data16_t data = *base++;
-		data16_t command = data & 0x000f;
+		UINT16 data = *base++;
+		UINT16 command = data & 0x000f;
 
 		/* only command I've ever seen */
 		if (command == 0x0d)
@@ -242,7 +242,7 @@ void skullxbo_scanline_update(int scanline)
 VIDEO_UPDATE( skullxbo )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

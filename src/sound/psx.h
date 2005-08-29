@@ -17,7 +17,7 @@ typedef void ( *spu_handler )( UINT32, INT32 );
 
 struct PSXSPUinterface
 {
-	data32_t **p_psxram;
+	UINT32 **p_psxram;
 	void (*irq_set)(UINT32);
 	void (*spu_install_read_handler)(int,spu_handler);
 	void (*spu_install_write_handler)(int,spu_handler);

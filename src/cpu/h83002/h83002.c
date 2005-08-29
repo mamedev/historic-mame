@@ -52,13 +52,13 @@
 extern UINT8 h8_register_read8(UINT32 address);
 extern void h8_register_write8(UINT32 address, UINT8 val);
 
-INLINE data32_t h8_mem_read32(offs_t address)
+INLINE UINT32 h8_mem_read32(offs_t address)
 {
-	data32_t result = program_read_word_16be(address) << 16;
+	UINT32 result = program_read_word_16be(address) << 16;
 	return result | program_read_word_16be(address + 2);
 }
 
-INLINE void h8_mem_write32(offs_t address, data32_t data)
+INLINE void h8_mem_write32(offs_t address, UINT32 data)
 {
 	program_write_word_16be(address, data >> 16);
 	program_write_word_16be(address + 2, data);

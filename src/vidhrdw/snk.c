@@ -82,11 +82,11 @@ VIDEO_START( snk )
 
 /**************************************************************************************/
 
-static void tnk3_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly,
+static void tnk3_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly,
 					int x_size, int y_size, int bg_type )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_number, attributes, color, sx, sy;
 	int offs, x, y;
@@ -127,10 +127,10 @@ static void tnk3_draw_background( struct mame_bitmap *bitmap, int scrollx, int s
 	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,clip,TRANSPARENCY_NONE,0);
 }
 
-void tnk3_draw_text( struct mame_bitmap *bitmap, int bank, unsigned char *source )
+void tnk3_draw_text( mame_bitmap *bitmap, int bank, unsigned char *source )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_number, color, sx, sy;
 	int x, y;
@@ -154,10 +154,10 @@ void tnk3_draw_text( struct mame_bitmap *bitmap, int bank, unsigned char *source
 	}
 }
 
-void tnk3_draw_status_main( struct mame_bitmap *bitmap, int bank, unsigned char *source, int start )
+void tnk3_draw_status_main( mame_bitmap *bitmap, int bank, unsigned char *source, int start )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_number, color, sx, sy;
 	int x, y;
@@ -179,17 +179,17 @@ void tnk3_draw_status_main( struct mame_bitmap *bitmap, int bank, unsigned char 
 	}
 }
 
-void tnk3_draw_status( struct mame_bitmap *bitmap, int bank, unsigned char *source )
+void tnk3_draw_status( mame_bitmap *bitmap, int bank, unsigned char *source )
 {
 
 	tnk3_draw_status_main(bitmap,bank,source, 0);
 	tnk3_draw_status_main(bitmap,bank,source,30);
 }
 
-void tnk3_draw_sprites( struct mame_bitmap *bitmap, int xscroll, int yscroll )
+void tnk3_draw_sprites( mame_bitmap *bitmap, int xscroll, int yscroll )
 {
 	const gfx_element *gfx = Machine->gfx[2];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_number, attributes, color, sx, sy;
 	int offs;
@@ -271,10 +271,10 @@ VIDEO_START( sgladiat )
 	return 0;
 }
 
-static void sgladiat_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly )
+static void sgladiat_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_number, color, sx, sy;
 	int offs, x, y;
@@ -322,10 +322,10 @@ VIDEO_UPDATE( sgladiat )
 
 /**************************************************************************************/
 
-static void ikari_draw_sprites( struct mame_bitmap *bitmap, int start, int xscroll, int yscroll,
+static void ikari_draw_sprites( mame_bitmap *bitmap, int start, int xscroll, int yscroll,
 				unsigned char *source, int mode )
 {
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 	gfx_element *gfx = Machine->gfx[mode];
 	int tile_number, attributes, color, sx, sy;
 	int which, finish;
@@ -392,11 +392,11 @@ VIDEO_UPDATE( ikari )
 
 /**************************************************************/
 
-static void tdfever_draw_bg( struct mame_bitmap *bitmap, int xscroll, int yscroll )
+static void tdfever_draw_bg( mame_bitmap *bitmap, int xscroll, int yscroll )
 {
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xd000];
 	const gfx_element *gfx = Machine->gfx[1];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_number, attributes, color, sx, sy;
 	int offs, x, y;
@@ -451,11 +451,11 @@ byte3: attributes
     -xx-x--- (bank number)
     x------- (x offset bit8)
 */
-static void tdfever_draw_sp( struct mame_bitmap *bitmap, int xscroll, int yscroll, int mode )
+static void tdfever_draw_sp( mame_bitmap *bitmap, int xscroll, int yscroll, int mode )
 {
 	const unsigned char *source = &memory_region(REGION_CPU1)[(mode==2)?0xe800:0xe000];
 	const gfx_element *gfx = Machine->gfx[(mode==1)?3:2];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 	int tile_number, attributes, sx, sy, color, pen_mode;
 	int which, finish, sp_size;
 
@@ -506,11 +506,11 @@ static void tdfever_draw_sp( struct mame_bitmap *bitmap, int xscroll, int yscrol
 	}
 }
 
-static void tdfever_draw_tx( struct mame_bitmap *bitmap, int attributes, int dx, int dy, int base )
+static void tdfever_draw_tx( mame_bitmap *bitmap, int attributes, int dx, int dy, int base )
 {
 	const unsigned char *source = &memory_region(REGION_CPU1)[base];
 	const gfx_element *gfx = Machine->gfx[0];
-	struct rectangle *clip = &Machine->visible_area;
+	rectangle *clip = &Machine->visible_area;
 
 	int tile_high = (attributes & 0xf0) << 4;
 	int color = attributes & 0xf;

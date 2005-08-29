@@ -13,9 +13,9 @@ The DS5002FP has up to 128KB undumped gameplay code making the game unplayable :
 #include "cpu/m68000/m68000.h"
 #include "sound/okim6295.h"
 
-extern data16_t *glass_vregs;
-extern data16_t *glass_videoram;
-extern data16_t *glass_spriteram;
+extern UINT16 *glass_vregs;
+extern UINT16 *glass_videoram;
+extern UINT16 *glass_spriteram;
 extern int glass_current_bit;
 
 /* from vidhrdw/glass.c */

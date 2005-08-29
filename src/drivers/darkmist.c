@@ -34,9 +34,9 @@ VIDEO_UPDATE( darkmist)
 {
 //tilemap_draw(bitmap,cliprect,tilemap,0,0);
 
-	const data8_t *pSource;
+	const UINT8 *pSource;
 	int sx,sy;
-	data8_t tile;
+	UINT8 tile;
 
 	pSource = videoram;
 	for( sy=0; sy<256; sy+=8 )

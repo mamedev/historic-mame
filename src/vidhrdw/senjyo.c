@@ -29,7 +29,7 @@ static tilemap *fg_tilemap,*bg1_tilemap,*bg2_tilemap,*bg3_tilemap;
 static int senjyo, scrollhack;
 static int senjyo_bgstripes;
 
-static struct mame_bitmap *bgbitmap;
+static mame_bitmap *bgbitmap;
 
 
 DRIVER_INIT( starforc )
@@ -217,7 +217,7 @@ WRITE8_HANDLER( senjyo_bgstripes_w )
 
 ***************************************************************************/
 
-static void draw_bgbitmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_bgbitmap(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int x,y,pen,strwid,count;
 
@@ -265,7 +265,7 @@ static void draw_bgbitmap(struct mame_bitmap *bitmap,const struct rectangle *cli
 	copybitmap(bitmap,bgbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 }
 
-static void draw_radar(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_radar(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,x;
 
@@ -299,7 +299,7 @@ static void draw_radar(struct mame_bitmap *bitmap,const struct rectangle *clipre
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
 {
 	int offs;
 

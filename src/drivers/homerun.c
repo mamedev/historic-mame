@@ -22,7 +22,7 @@ Todo :
 extern int homerun_gc_up;
 extern int homerun_gc_down;
 extern int homerun_xpa,homerun_xpb,homerun_xpc;
-extern data8_t *homerun_videoram;
+extern UINT8 *homerun_videoram;
 
 WRITE8_HANDLER( homerun_videoram_w );
 WRITE8_HANDLER( homerun_color_w );

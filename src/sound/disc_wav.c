@@ -335,6 +335,14 @@ int	dss_lfsr_function(int myfunc,int in0,int in1,int bitmask)
 			retval=in0&~in1;
 			retval=retval|in1;
 			break;
+		case DISC_LFSR_XOR_INV_IN0:
+			retval = in0^bitmask; /* invert in0 */
+			retval = retval^in1;  /* xor in1 */
+			break;
+		case DISC_LFSR_XOR_INV_IN1:
+			retval = in1^bitmask; /* invert in1 */
+			retval = retval^in0;  /* xor in0 */
+			break;
 		default:
 			discrete_log("dss_lfsr_function - Invalid function type passed");
 			retval=0;

@@ -10,9 +10,9 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *xevious_fg_videoram,*xevious_fg_colorram;
-data8_t *xevious_bg_videoram,*xevious_bg_colorram;
-data8_t *xevious_sr1,*xevious_sr2,*xevious_sr3;
+UINT8 *xevious_fg_videoram,*xevious_fg_colorram;
+UINT8 *xevious_bg_videoram,*xevious_bg_colorram;
+UINT8 *xevious_sr1,*xevious_sr2,*xevious_sr3;
 
 static tilemap *fg_tilemap,*bg_tilemap;
 
@@ -345,9 +345,9 @@ WRITE8_HANDLER( xevious_bs_w )
 
 READ8_HANDLER( xevious_bb_r )
 {
-	data8_t *rom2a = memory_region(REGION_GFX4);
-	data8_t *rom2b = memory_region(REGION_GFX4)+0x1000;
-	data8_t *rom2c = memory_region(REGION_GFX4)+0x3000;
+	UINT8 *rom2a = memory_region(REGION_GFX4);
+	UINT8 *rom2b = memory_region(REGION_GFX4)+0x1000;
+	UINT8 *rom2c = memory_region(REGION_GFX4)+0x3000;
 	int adr_2b,adr_2c;
 	int dat1,dat2;
 
@@ -441,7 +441,7 @@ ROM 3M,3L color replace table for sprite
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,sx,sy;
 

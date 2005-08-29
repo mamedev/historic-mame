@@ -142,18 +142,18 @@ Rowscroll style:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *deco16_pf1_data,*deco16_pf2_data;
-data16_t *deco16_pf3_data,*deco16_pf4_data;
-data16_t *deco16_pf1_rowscroll,*deco16_pf2_rowscroll;
-data16_t *deco16_pf3_rowscroll,*deco16_pf4_rowscroll;
+UINT16 *deco16_pf1_data,*deco16_pf2_data;
+UINT16 *deco16_pf3_data,*deco16_pf4_data;
+UINT16 *deco16_pf1_rowscroll,*deco16_pf2_rowscroll;
+UINT16 *deco16_pf3_rowscroll,*deco16_pf4_rowscroll;
 
-static const data16_t *pf1_rowscroll_ptr, *pf2_rowscroll_ptr;
-static const data16_t *pf3_rowscroll_ptr, *pf4_rowscroll_ptr;
+static const UINT16 *pf1_rowscroll_ptr, *pf2_rowscroll_ptr;
+static const UINT16 *pf3_rowscroll_ptr, *pf4_rowscroll_ptr;
 
-data16_t *deco16_pf12_control,*deco16_pf34_control;
-data16_t deco16_priority;
+UINT16 *deco16_pf12_control,*deco16_pf34_control;
+UINT16 deco16_priority;
 
-data16_t *deco16_raster_display_list;
+UINT16 *deco16_raster_display_list;
 int deco16_raster_display_position;
 
 static int use_custom_pf1, use_custom_pf2, use_custom_pf3, use_custom_pf4;
@@ -161,9 +161,9 @@ static int use_custom_pf1, use_custom_pf2, use_custom_pf3, use_custom_pf4;
 static tilemap *pf1_tilemap_16x16,*pf2_tilemap_16x16,*pf3_tilemap_16x16,*pf4_tilemap_16x16;
 static tilemap *pf1_tilemap_8x8,*pf2_tilemap_8x8;
 
-static struct mame_bitmap *sprite_priority_bitmap;
+static mame_bitmap *sprite_priority_bitmap;
 
-static data8_t *dirty_palette;
+static UINT8 *dirty_palette;
 static int deco16_pf1_bank,deco16_pf2_bank,deco16_pf3_bank,deco16_pf4_bank;
 static int deco16_pf12_16x16_gfx_bank,deco16_pf34_16x16_gfx_bank,deco16_pf12_8x8_gfx_bank;
 static int deco16_pf1_colourmask,deco16_pf2_colourmask,deco16_pf3_colourmask,deco16_pf4_colourmask;
@@ -173,9 +173,9 @@ static int (*deco16_bank_callback_1)(const int bank);
 static int (*deco16_bank_callback_2)(const int bank);
 static int (*deco16_bank_callback_3)(const int bank);
 static int (*deco16_bank_callback_4)(const int bank);
-static void custom_tilemap_draw(struct mame_bitmap *bitmap,tilemap *tilemap0_8x8,tilemap *tilemap0_16x16,
-	tilemap *tilemap1_8x8,tilemap *tilemap1_16x16, const data16_t *rowscroll_ptr,const data16_t scrollx,
-	const data16_t scrolly,const data16_t control0, const data16_t control1,int combine_mask,int combine_shift,int trans_mask,int flags,UINT32 priority);
+static void custom_tilemap_draw(mame_bitmap *bitmap,tilemap *tilemap0_8x8,tilemap *tilemap0_16x16,
+	tilemap *tilemap1_8x8,tilemap *tilemap1_16x16, const UINT16 *rowscroll_ptr,const UINT16 scrollx,
+	const UINT16 scrolly,const UINT16 control0, const UINT16 control1,int combine_mask,int combine_shift,int trans_mask,int flags,UINT32 priority);
 
 /******************************************************************************/
 
@@ -243,9 +243,9 @@ static UINT32 deco16_scan_rows(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_
 
 static void get_pf4_tile_info(int tile_index)
 {
-	data16_t tile=deco16_pf4_data[tile_index];
-	data8_t colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT16 tile=deco16_pf4_data[tile_index];
+	UINT8 colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco16_pf34_control[6]>>8)&0x01) {
@@ -267,9 +267,9 @@ static void get_pf4_tile_info(int tile_index)
 
 static void get_pf3_tile_info(int tile_index)
 {
-	data16_t tile=deco16_pf3_data[tile_index];
-	data8_t colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT16 tile=deco16_pf3_data[tile_index];
+	UINT8 colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco16_pf34_control[6]>>0)&0x01) {
@@ -291,9 +291,9 @@ static void get_pf3_tile_info(int tile_index)
 
 static void get_pf2_tile_info(int tile_index)
 {
-	data16_t tile=deco16_pf2_data[tile_index];
-	data8_t colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT16 tile=deco16_pf2_data[tile_index];
+	UINT8 colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>8)&0x01) {
@@ -315,9 +315,9 @@ static void get_pf2_tile_info(int tile_index)
 
 static void get_pf1_tile_info(int tile_index)
 {
-	data16_t tile=deco16_pf1_data[tile_index];
-	data8_t colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT16 tile=deco16_pf1_data[tile_index];
+	UINT8 colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>0)&0x01) {
@@ -339,9 +339,9 @@ static void get_pf1_tile_info(int tile_index)
 
 static void get_pf2_tile_info_b(int tile_index)
 {
-	data16_t tile=deco16_pf2_data[tile_index];
-	data8_t colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT16 tile=deco16_pf2_data[tile_index];
+	UINT8 colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>8)&0x01) {
@@ -363,9 +363,9 @@ static void get_pf2_tile_info_b(int tile_index)
 
 static void get_pf1_tile_info_b(int tile_index)
 {
-	data16_t tile=deco16_pf1_data[tile_index];
-	data8_t colour=(tile>>12)&0xf;
-	data8_t flags=0;
+	UINT16 tile=deco16_pf1_data[tile_index];
+	UINT8 colour=(tile>>12)&0xf;
+	UINT8 flags=0;
 
 	if (tile&0x8000) {
 		if ((deco16_pf12_control[6]>>0)&0x01) {
@@ -486,7 +486,7 @@ tilemap *deco16_get_tilemap(int pf, int size)
 
 WRITE16_HANDLER( deco16_pf1_data_w )
 {
-	data16_t oldword=deco16_pf1_data[offset];
+	UINT16 oldword=deco16_pf1_data[offset];
 	COMBINE_DATA(&deco16_pf1_data[offset]);
 	if (oldword!=deco16_pf1_data[offset]) {
 		tilemap_mark_tile_dirty(pf1_tilemap_8x8,offset);
@@ -497,7 +497,7 @@ WRITE16_HANDLER( deco16_pf1_data_w )
 
 WRITE16_HANDLER( deco16_pf2_data_w )
 {
-	data16_t oldword=deco16_pf2_data[offset];
+	UINT16 oldword=deco16_pf2_data[offset];
 	COMBINE_DATA(&deco16_pf2_data[offset]);
 	if (oldword!=deco16_pf2_data[offset]) {
 		tilemap_mark_tile_dirty(pf2_tilemap_8x8,offset);
@@ -508,7 +508,7 @@ WRITE16_HANDLER( deco16_pf2_data_w )
 
 WRITE16_HANDLER( deco16_pf3_data_w )
 {
-	data16_t oldword=deco16_pf3_data[offset];
+	UINT16 oldword=deco16_pf3_data[offset];
 	COMBINE_DATA(&deco16_pf3_data[offset]);
 	if (oldword!=deco16_pf3_data[offset]) {
 		tilemap_mark_tile_dirty(pf3_tilemap_16x16,offset);
@@ -517,7 +517,7 @@ WRITE16_HANDLER( deco16_pf3_data_w )
 
 WRITE16_HANDLER( deco16_pf4_data_w )
 {
-	data16_t oldword=deco16_pf4_data[offset];
+	UINT16 oldword=deco16_pf4_data[offset];
 	COMBINE_DATA(&deco16_pf4_data[offset]);
 	if (oldword!=deco16_pf4_data[offset])
 		tilemap_mark_tile_dirty(pf4_tilemap_16x16,offset);
@@ -639,11 +639,11 @@ int deco_allocate_sprite_bitmap(void)
 static int deco16_pf_update(
 	tilemap *tilemap_8x8,
 	tilemap *tilemap_16x16,
-	const data16_t *rowscroll_ptr,
-	const data16_t scrollx,
-	const data16_t scrolly,
-	const data16_t control0,
-	const data16_t control1)
+	const UINT16 *rowscroll_ptr,
+	const UINT16 scrollx,
+	const UINT16 scrolly,
+	const UINT16 control0,
+	const UINT16 control1)
 {
 	int rows, cols, offs, use_custom=0;
 
@@ -760,7 +760,7 @@ static int deco16_pf_update(
 	return use_custom;
 }
 
-void deco16_pf12_update(const data16_t *rowscroll_1_ptr, const data16_t *rowscroll_2_ptr)
+void deco16_pf12_update(const UINT16 *rowscroll_1_ptr, const UINT16 *rowscroll_2_ptr)
 {
 	int bank1, bank2;
 
@@ -792,7 +792,7 @@ void deco16_pf12_update(const data16_t *rowscroll_1_ptr, const data16_t *rowscro
 	}
 }
 
-void deco16_pf34_update(const data16_t *rowscroll_1_ptr, const data16_t *rowscroll_2_ptr)
+void deco16_pf34_update(const UINT16 *rowscroll_1_ptr, const UINT16 *rowscroll_2_ptr)
 {
 	int bank1, bank2;
 
@@ -827,7 +827,7 @@ void deco16_pf34_update(const data16_t *rowscroll_1_ptr, const data16_t *rowscro
 
 /*****************************************************************************************/
 
-void deco16_print_debug_info(struct mame_bitmap *bitmap)
+void deco16_print_debug_info(mame_bitmap *bitmap)
 {
 	char buf[64*5];
 
@@ -862,9 +862,9 @@ void deco16_clear_sprite_priority_bitmap(void)
 }
 
 /* A special pdrawgfx z-buffered sprite renderer that is needed to properly draw multiple sprite sources with alpha */
-void deco16_pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
+void deco16_pdrawgfx(mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		const struct rectangle *clip,int transparency,int transparent_color,UINT32 pri_mask,UINT32 sprite_mask,UINT8 write_pri)
+		const rectangle *clip,int transparency,int transparent_color,UINT32 pri_mask,UINT32 sprite_mask,UINT8 write_pri)
 {
 	int ox,oy,cx,cy;
 	int x_index,y_index,x,y;
@@ -924,13 +924,13 @@ void deco16_pdrawgfx(struct mame_bitmap *dest,const gfx_element *gfx,
 
 /*****************************************************************************************/
 
-void deco16_tilemap_1_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, UINT32 priority)
+void deco16_tilemap_1_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
 {
 	if (pf1_tilemap_8x8) tilemap_draw(bitmap,cliprect,pf1_tilemap_8x8,flags,priority);
 	if (pf1_tilemap_16x16) tilemap_draw(bitmap,cliprect,pf1_tilemap_16x16,flags,priority);
 }
 
-void deco16_tilemap_2_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, UINT32 priority)
+void deco16_tilemap_2_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
 {
 	if (use_custom_pf2)
 	{
@@ -942,13 +942,13 @@ void deco16_tilemap_2_draw(struct mame_bitmap *bitmap, const struct rectangle *c
 	}
 }
 
-void deco16_tilemap_3_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, UINT32 priority)
+void deco16_tilemap_3_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
 {
 	if (use_custom_pf3) custom_tilemap_draw(bitmap,0,pf3_tilemap_16x16,0,0,pf3_rowscroll_ptr,deco16_pf34_control[1], deco16_pf34_control[2], deco16_pf34_control[5]&0xff, deco16_pf34_control[6]&0xff, 0, 0, deco16_pf3_trans_mask, flags, priority);
 	else if (pf3_tilemap_16x16) tilemap_draw(bitmap,cliprect,pf3_tilemap_16x16,flags,priority);
 }
 
-void deco16_tilemap_4_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, UINT32 priority)
+void deco16_tilemap_4_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
 {
 	if (use_custom_pf4) custom_tilemap_draw(bitmap,0,pf4_tilemap_16x16,0,0,pf4_rowscroll_ptr,deco16_pf34_control[3], deco16_pf34_control[4], deco16_pf34_control[5]>>8, deco16_pf34_control[6]>>8, 0, 0, deco16_pf4_trans_mask, flags, priority);
 	else if (pf4_tilemap_16x16) tilemap_draw(bitmap,cliprect,pf4_tilemap_16x16,flags,priority);
@@ -957,7 +957,7 @@ void deco16_tilemap_4_draw(struct mame_bitmap *bitmap, const struct rectangle *c
 /*****************************************************************************************/
 
 // Combines the output of two 4BPP tilemaps into an 8BPP tilemap
-void deco16_tilemap_34_combine_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, UINT32 priority)
+void deco16_tilemap_34_combine_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
 {
 	custom_tilemap_draw(bitmap,0,pf3_tilemap_16x16,0,pf4_tilemap_16x16,pf3_rowscroll_ptr,deco16_pf34_control[1], deco16_pf34_control[2], deco16_pf34_control[5]&0xff, deco16_pf34_control[6]&0xff, 0xf, 4, 0xff, flags, priority);
 }
@@ -973,24 +973,24 @@ void deco16_tilemap_34_combine_draw(struct mame_bitmap *bitmap, const struct rec
 */
 
 static void custom_tilemap_draw(
-	struct mame_bitmap *bitmap,
+	mame_bitmap *bitmap,
 	tilemap *tilemap0_8x8,
 	tilemap *tilemap0_16x16,
 	tilemap *tilemap1_8x8,
 	tilemap *tilemap1_16x16,
-	const data16_t *rowscroll_ptr,
-	const data16_t scrollx,
-	const data16_t scrolly,
-	const data16_t control0,
-	const data16_t control1,
+	const UINT16 *rowscroll_ptr,
+	const UINT16 scrollx,
+	const UINT16 scrolly,
+	const UINT16 control0,
+	const UINT16 control1,
 	int combine_mask,
 	int combine_shift,
 	int trans_mask,
 	int flags,
 	UINT32 priority)
 {
-	const struct mame_bitmap *src_bitmap0 = (control1&0x80) ? tilemap_get_pixmap(tilemap0_8x8) : tilemap_get_pixmap(tilemap0_16x16);
-	const struct mame_bitmap *src_bitmap1 = (control1&0x80) ? tilemap_get_pixmap(tilemap1_8x8) : tilemap_get_pixmap(tilemap1_16x16);
+	const mame_bitmap *src_bitmap0 = (control1&0x80) ? tilemap_get_pixmap(tilemap0_8x8) : tilemap_get_pixmap(tilemap0_16x16);
+	const mame_bitmap *src_bitmap1 = (control1&0x80) ? tilemap_get_pixmap(tilemap1_8x8) : tilemap_get_pixmap(tilemap1_16x16);
 	int width_mask, height_mask, x, y, p;
 	int column_offset, src_x=0, src_y=0;
 	int	row_type=1 << ((control0>>3)&0xf);

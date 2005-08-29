@@ -448,36 +448,36 @@ or fatal fury for example)
 #include "cpu/mips/mips3.h"
 #include "machine/random.h"
 
-static data32_t *hng_mainram;
-static data32_t *hng_cart;
-static data32_t *hng64_dualport;
-static data32_t *hng64_soundram;
+static UINT32 *hng_mainram;
+static UINT32 *hng_cart;
+static UINT32 *hng64_dualport;
+static UINT32 *hng64_soundram;
 
 
 // Stuff from over in vidhrdw...
 extern tilemap *hng64_tilemap, *hng64_tilemap2, *hng64_tilemap3, *hng64_tilemap4 ;
-extern data32_t *hng64_spriteram, *hng64_videoregs ;
-extern data32_t *hng64_videoram ;
-extern data32_t *hng64_fcram ;
+extern UINT32 *hng64_spriteram, *hng64_videoregs ;
+extern UINT32 *hng64_videoram ;
+extern UINT32 *hng64_fcram ;
 
-extern data32_t hng64_dls[2][0x81] ;
+extern UINT32 hng64_dls[2][0x81] ;
 
 VIDEO_START( hng64 ) ;
 VIDEO_UPDATE( hng64 ) ;
 
-static data32_t activeBuffer ;
+static UINT32 activeBuffer ;
 
 
-data32_t no_machine_error_code;
+UINT32 no_machine_error_code;
 static int hng64_interrupt_level_request;
 WRITE32_HANDLER( hng64_videoram_w );
 
 /* AJG */
-static data32_t *hng64_3d_1 ;
-static data32_t *hng64_3d_2 ;
-static data32_t *hng64_dl ;
+static UINT32 *hng64_3d_1 ;
+static UINT32 *hng64_3d_2 ;
+static UINT32 *hng64_dl ;
 
-static data32_t *hng64_q2 ;
+static UINT32 *hng64_q2 ;
 
 
 char writeString[1024] ;
@@ -1399,7 +1399,7 @@ static INTERRUPT_GEN( irq_start )
 MACHINE_INIT(hyperneo)
 {
 	FILE *fp;
-	data8_t *RAM = (data8_t*)hng64_soundram;
+	UINT8 *RAM = (UINT8*)hng64_soundram;
 	memory_set_bankptr(1,&RAM[0x1e0000]);
 	memory_set_bankptr(2,&RAM[0x001000]); // where..
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);

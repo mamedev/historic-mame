@@ -17,21 +17,21 @@ main ram, the interrupt is pointed to the data in ram.
 #include "driver.h"
 #include "machine/random.h"
 
-data32_t*dreamwld_bg_videoram;
-data32_t*dreamwld_bg2_videoram;
-data32_t*dreamwld_spriteram;
-data32_t*dreamwld_mainram;
+UINT32*dreamwld_bg_videoram;
+UINT32*dreamwld_bg2_videoram;
+UINT32*dreamwld_spriteram;
+UINT32*dreamwld_mainram;
 
 static tilemap *dreamwld_bg_tilemap;
 static tilemap *dreamwld_bg2_tilemap;
 
 /* this is the sprite format as it is stored in mainram for dreamwld */
-static void dreamwld_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void dreamwld_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	data32_t *source = dreamwld_spriteram;
-	data32_t *finish = source + 0x1200/4-3;
-	data16_t *redirect = (data16_t *)memory_region(REGION_GFX3);
+	UINT32 *source = dreamwld_spriteram;
+	UINT32 *finish = source + 0x1200/4-3;
+	UINT16 *redirect = (UINT16 *)memory_region(REGION_GFX3);
 
 //  source++;
 

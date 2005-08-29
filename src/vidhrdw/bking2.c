@@ -30,8 +30,8 @@ static int controller;
 static int hit;
 static int flip_screen;
 
-static struct mame_bitmap* helper0;
-static struct mame_bitmap* helper1;
+static mame_bitmap* helper0;
+static mame_bitmap* helper1;
 
 static tilemap* bg_tilemap;
 
@@ -305,7 +305,7 @@ VIDEO_UPDATE( bking2 )
 
 VIDEO_EOF( bking2 )
 {
-	static struct rectangle rect = { 0, 7, 0, 15 };
+	static rectangle rect = { 0, 7, 0, 15 };
 
 	int xld = 0;
 	int yld = 0;

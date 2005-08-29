@@ -75,9 +75,9 @@ Heavy use is made of sprite zooming.
 
 ********************************************************/
 
-static void gunbustr_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int x_offs,int y_offs)
+static void gunbustr_draw_sprites_16x16(mame_bitmap *bitmap,const rectangle *cliprect,int *primasks,int x_offs,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, dblsize, curx, cury;
 	int sprites_flipscreen = 0;

@@ -177,7 +177,7 @@ VIDEO_START( gunsmoke )
 	return 0;
 }
 
-static void gunsmoke_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void gunsmoke_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

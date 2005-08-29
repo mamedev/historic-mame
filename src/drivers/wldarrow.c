@@ -21,9 +21,9 @@ Probably missing sound board.
 #include "vidhrdw/generic.h"
 
 
-data8_t *vram1;
-data8_t *vram2;
-data8_t *vram3;
+UINT8 *vram1;
+UINT8 *vram2;
+UINT8 *vram3;
 
 static void putpixel(int offset)
 {

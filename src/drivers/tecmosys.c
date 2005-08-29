@@ -124,7 +124,7 @@ static void get_tile_info(int tile_index)
 
 
 
-static data16_t* protram;
+static UINT16* protram;
 
 static UINT8 device[0x10000];
 static UINT32 device_read_ptr = 0;
@@ -466,7 +466,7 @@ VIDEO_UPDATE(deroon)
 			cpunum_set_reg(0, M68K_PC, 0x23ae8); /* deroon */
 		else
 		{
-			data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+			UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 			ROM[0x3aaa/2] = 0x4e73; // rte (trap 0)
 			cpunum_set_reg(0, M68K_PC, 0x182a0); /* angel eyes */
 		}
@@ -476,7 +476,7 @@ VIDEO_UPDATE(deroon)
 	{
 		if(gametype)
 		{
-			data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+			UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 			ROM[0x3aaa/2] = 0x4e73; // rte (trap 0)
 			cpunum_set_reg(0, M68K_PC, 0x17d2a); /* angel eyes */
 		}
@@ -656,7 +656,7 @@ static void reset_callback(int param)
 
 static DRIVER_INIT( deroon )
 {
-	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 	ROM[0x39C2/2] = 0x0001;
 	ROM[0x0448/2] = 0x4E71;
 	ROM[0x044A/2] = 0x4E71;
@@ -668,7 +668,7 @@ static DRIVER_INIT( deroon )
 
 static DRIVER_INIT( tkdensho )
 {
-	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 	ROM[0x222c/2] = 0x4E71;
 	ROM[0x222c/2] = 0x4E71;
 

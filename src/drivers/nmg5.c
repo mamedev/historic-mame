@@ -17,10 +17,10 @@
 #include "sound/3812intf.h"
 
 static tilemap *fg_tilemap,*bg_tilemap;
-data16_t *nmg5_bitmap;
-static data16_t *fgvideoram,*bgvideoram,*scroll_ram,*sprite_pri;
-static data16_t gfx_bank = 0;
-static data16_t input_data;
+UINT16 *nmg5_bitmap;
+static UINT16 *fgvideoram,*bgvideoram,*scroll_ram,*sprite_pri;
+static UINT16 gfx_bank = 0;
+static UINT16 input_data;
 
 static WRITE16_HANDLER( fgvideoram_w )
 {
@@ -358,7 +358,7 @@ INPUT_PORTS_START( pclubys )
 INPUT_PORTS_END
 
 
-INLINE void get_tile_info(int tile_index,data16_t *vram,int color)
+INLINE void get_tile_info(int tile_index,UINT16 *vram,int color)
 {
 	SET_TILE_INFO(0,vram[tile_index] | (gfx_bank << 16),color,0)
 }
@@ -380,7 +380,7 @@ VIDEO_START( nmg5 )
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -416,7 +416,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	}
 }
 
-static void draw_bitmap(struct mame_bitmap *bitmap)
+static void draw_bitmap(mame_bitmap *bitmap)
 {
 	int yyy=256;
 	int xxx=512/4;

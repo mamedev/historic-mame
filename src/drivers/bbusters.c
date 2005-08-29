@@ -183,8 +183,8 @@ VIDEO_START( mechatt );
 VIDEO_UPDATE( bbuster );
 VIDEO_UPDATE( mechatt );
 
-static data16_t *bbuster_ram, *eprom_data;
-extern data16_t *bbuster_pf1_data,*bbuster_pf2_data,*bbuster_pf1_scroll_data,*bbuster_pf2_scroll_data;
+static UINT16 *bbuster_ram, *eprom_data;
+extern UINT16 *bbuster_pf1_data,*bbuster_pf2_data,*bbuster_pf1_scroll_data,*bbuster_pf2_scroll_data;
 
 WRITE16_HANDLER( bbuster_pf1_w );
 WRITE16_HANDLER( bbuster_pf2_w );
@@ -195,7 +195,7 @@ WRITE16_HANDLER( bbuster_video_w );
 #if BBUSTERS_HACK
 static MACHINE_INIT( bbusters )
 {
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	int data = readinputportbytag("FAKE1") & 0x03;
 
 	/* Country/Version :
@@ -214,7 +214,7 @@ static MACHINE_INIT( bbusters )
 #if MECHATT_HACK
 static MACHINE_INIT( mechatt )
 {
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	int data = readinputportbytag("FAKE1") & 0x03;
 
 	/* Country :
@@ -912,7 +912,7 @@ ROM_END
 static void bbusters_patch_code(UINT16 offset)
 {
 	/* To avoid checksum error */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[(offset +  0)/2] = 0x4e71;
 	RAM[(offset +  2)/2] = 0x4e71;
 	RAM[(offset + 10)/2] = 0x4e71;

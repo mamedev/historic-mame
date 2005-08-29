@@ -42,7 +42,7 @@ TODO:
 #include "sound/sn76496.h"
 
 
-extern data8_t *freek_videoram;
+extern UINT8 *freek_videoram;
 
 VIDEO_START(freekick);
 VIDEO_UPDATE(gigas);

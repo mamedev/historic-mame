@@ -85,7 +85,7 @@ static const int sRegisterTable[kNumModes][16] =
 	}
 };
 
-static data8_t arm_reg_layout[] =
+static UINT8 arm_reg_layout[] =
 {
 	ARM32_R0, -2,    -1,
 	ARM32_R1, -2,    -1,
@@ -120,12 +120,12 @@ static UINT8 arm_win_layout[] = {
 #define I_BIT	27
 #define F_BIT	26
 
-#define N_MASK	((data32_t)(1<<N_BIT)) /* Negative flag */
-#define Z_MASK	((data32_t)(1<<Z_BIT)) /* Zero flag */
-#define C_MASK	((data32_t)(1<<C_BIT)) /* Carry flag */
-#define V_MASK	((data32_t)(1<<V_BIT)) /* oVerflow flag */
-#define I_MASK	((data32_t)(1<<I_BIT)) /* Interrupt request disable */
-#define F_MASK	((data32_t)(1<<F_BIT)) /* Fast interrupt request disable */
+#define N_MASK	((UINT32)(1<<N_BIT)) /* Negative flag */
+#define Z_MASK	((UINT32)(1<<Z_BIT)) /* Zero flag */
+#define C_MASK	((UINT32)(1<<C_BIT)) /* Carry flag */
+#define V_MASK	((UINT32)(1<<V_BIT)) /* oVerflow flag */
+#define I_MASK	((UINT32)(1<<I_BIT)) /* Interrupt request disable */
+#define F_MASK	((UINT32)(1<<F_BIT)) /* Fast interrupt request disable */
 
 #define N_IS_SET(pc)	((pc) & N_MASK)
 #define Z_IS_SET(pc)	((pc) & Z_MASK)
@@ -141,49 +141,49 @@ static UINT8 arm_win_layout[] = {
 #define I_IS_CLEAR(pc)	(!I_IS_SET(pc))
 #define F_IS_CLEAR(pc)	(!F_IS_SET(pc))
 
-#define PSR_MASK		((data32_t) 0xfc000000u)
-#define ADDRESS_MASK	((data32_t) 0x03fffffcu)
-#define MODE_MASK		((data32_t) 0x00000003u)
+#define PSR_MASK		((UINT32) 0xfc000000u)
+#define ADDRESS_MASK	((UINT32) 0x03fffffcu)
+#define MODE_MASK		((UINT32) 0x00000003u)
 
 #define R15						arm.sArmRegister[eR15]
 #define MODE					(R15&0x03)
-#define SIGN_BIT				((data32_t)(1<<31))
+#define SIGN_BIT				((UINT32)(1<<31))
 #define SIGN_BITS_DIFFER(a,b)	(((a)^(b)) >> 31)
 
 /* Deconstructing an instruction */
 
-#define INSN_COND			((data32_t) 0xf0000000u)
-#define INSN_SDT_L			((data32_t) 0x00100000u)
-#define INSN_SDT_W			((data32_t) 0x00200000u)
-#define INSN_SDT_B			((data32_t) 0x00400000u)
-#define INSN_SDT_U			((data32_t) 0x00800000u)
-#define INSN_SDT_P			((data32_t) 0x01000000u)
-#define INSN_BDT_L			((data32_t) 0x00100000u)
-#define INSN_BDT_W			((data32_t) 0x00200000u)
-#define INSN_BDT_S			((data32_t) 0x00400000u)
-#define INSN_BDT_U			((data32_t) 0x00800000u)
-#define INSN_BDT_P			((data32_t) 0x01000000u)
-#define INSN_BDT_REGS		((data32_t) 0x0000ffffu)
-#define INSN_SDT_IMM		((data32_t) 0x00000fffu)
-#define INSN_MUL_A			((data32_t) 0x00200000u)
-#define INSN_MUL_RM			((data32_t) 0x0000000fu)
-#define INSN_MUL_RS			((data32_t) 0x00000f00u)
-#define INSN_MUL_RN			((data32_t) 0x0000f000u)
-#define INSN_MUL_RD			((data32_t) 0x000f0000u)
-#define INSN_I				((data32_t) 0x02000000u)
-#define INSN_OPCODE			((data32_t) 0x01e00000u)
-#define INSN_S				((data32_t) 0x00100000u)
-#define INSN_BL				((data32_t) 0x01000000u)
-#define INSN_BRANCH			((data32_t) 0x00ffffffu)
-#define INSN_SWI			((data32_t) 0x00ffffffu)
-#define INSN_RN				((data32_t) 0x000f0000u)
-#define INSN_RD				((data32_t) 0x0000f000u)
-#define INSN_OP2			((data32_t) 0x00000fffu)
-#define INSN_OP2_SHIFT		((data32_t) 0x00000f80u)
-#define INSN_OP2_SHIFT_TYPE	((data32_t) 0x00000070u)
-#define INSN_OP2_RM			((data32_t) 0x0000000fu)
-#define INSN_OP2_ROTATE		((data32_t) 0x00000f00u)
-#define INSN_OP2_IMM		((data32_t) 0x000000ffu)
+#define INSN_COND			((UINT32) 0xf0000000u)
+#define INSN_SDT_L			((UINT32) 0x00100000u)
+#define INSN_SDT_W			((UINT32) 0x00200000u)
+#define INSN_SDT_B			((UINT32) 0x00400000u)
+#define INSN_SDT_U			((UINT32) 0x00800000u)
+#define INSN_SDT_P			((UINT32) 0x01000000u)
+#define INSN_BDT_L			((UINT32) 0x00100000u)
+#define INSN_BDT_W			((UINT32) 0x00200000u)
+#define INSN_BDT_S			((UINT32) 0x00400000u)
+#define INSN_BDT_U			((UINT32) 0x00800000u)
+#define INSN_BDT_P			((UINT32) 0x01000000u)
+#define INSN_BDT_REGS		((UINT32) 0x0000ffffu)
+#define INSN_SDT_IMM		((UINT32) 0x00000fffu)
+#define INSN_MUL_A			((UINT32) 0x00200000u)
+#define INSN_MUL_RM			((UINT32) 0x0000000fu)
+#define INSN_MUL_RS			((UINT32) 0x00000f00u)
+#define INSN_MUL_RN			((UINT32) 0x0000f000u)
+#define INSN_MUL_RD			((UINT32) 0x000f0000u)
+#define INSN_I				((UINT32) 0x02000000u)
+#define INSN_OPCODE			((UINT32) 0x01e00000u)
+#define INSN_S				((UINT32) 0x00100000u)
+#define INSN_BL				((UINT32) 0x01000000u)
+#define INSN_BRANCH			((UINT32) 0x00ffffffu)
+#define INSN_SWI			((UINT32) 0x00ffffffu)
+#define INSN_RN				((UINT32) 0x000f0000u)
+#define INSN_RD				((UINT32) 0x0000f000u)
+#define INSN_OP2			((UINT32) 0x00000fffu)
+#define INSN_OP2_SHIFT		((UINT32) 0x00000f80u)
+#define INSN_OP2_SHIFT_TYPE	((UINT32) 0x00000070u)
+#define INSN_OP2_RM			((UINT32) 0x0000000fu)
+#define INSN_OP2_ROTATE		((UINT32) 0x00000f00u)
+#define INSN_OP2_IMM		((UINT32) 0x000000ffu)
 #define INSN_OP2_SHIFT_TYPE_SHIFT	4
 #define INSN_OP2_SHIFT_SHIFT		7
 #define INSN_OP2_ROTATE_SHIFT		8
@@ -249,9 +249,9 @@ enum
 /* sArmRegister defines the CPU state */
 typedef struct
 {
-	data32_t sArmRegister[kNumRegisters];
-	data8_t pendingIrq;
-	data8_t pendingFiq;
+	UINT32 sArmRegister[kNumRegisters];
+	UINT8 pendingIrq;
+	UINT8 pendingFiq;
 	int (*irq_callback)(int);
 } ARM_REGS;
 
@@ -260,30 +260,30 @@ static ARM_REGS arm;
 static int arm_icount;
 
 /* Prototypes */
-static void HandleALU( data32_t insn);
-static void HandleMul( data32_t insn);
-static void HandleBranch( data32_t insn);
-static void HandleMemSingle( data32_t insn);
-static void HandleMemBlock( data32_t insn);
-static data32_t decodeShift( data32_t insn, data32_t *pCarry);
+static void HandleALU( UINT32 insn);
+static void HandleMul( UINT32 insn);
+static void HandleBranch( UINT32 insn);
+static void HandleMemSingle( UINT32 insn);
+static void HandleMemBlock( UINT32 insn);
+static UINT32 decodeShift( UINT32 insn, UINT32 *pCarry);
 
 /***************************************************************************/
 
-INLINE void cpu_write32( int addr, data32_t data )
+INLINE void cpu_write32( int addr, UINT32 data )
 {
 	/* Unaligned writes are treated as normal writes */
 	program_write_dword_32le(addr&ADDRESS_MASK,data);
 	if (ARM_DEBUG_CORE && addr&3) logerror("%08x: Unaligned write %08x\n",R15,addr);
 }
 
-INLINE void cpu_write8( int addr, data8_t data )
+INLINE void cpu_write8( int addr, UINT8 data )
 {
 	program_write_byte_32le(addr,data);
 }
 
-INLINE data32_t cpu_read32( int addr )
+INLINE UINT32 cpu_read32( int addr )
 {
-	data32_t result = program_read_dword_32le(addr&ADDRESS_MASK);
+	UINT32 result = program_read_dword_32le(addr&ADDRESS_MASK);
 
 	/* Unaligned reads rotate the word, they never combine words */
 	if (addr&3) {
@@ -301,17 +301,17 @@ INLINE data32_t cpu_read32( int addr )
 	return result;
 }
 
-INLINE data8_t cpu_read8( int addr )
+INLINE UINT8 cpu_read8( int addr )
 {
 	return program_read_byte_32le(addr);
 }
 
-INLINE data32_t GetRegister( int rIndex )
+INLINE UINT32 GetRegister( int rIndex )
 {
 	return arm.sArmRegister[sRegisterTable[MODE][rIndex]];
 }
 
-INLINE void SetRegister( int rIndex, data32_t value )
+INLINE void SetRegister( int rIndex, UINT32 value )
 {
 	arm.sArmRegister[sRegisterTable[MODE][rIndex]] = value;
 }
@@ -333,8 +333,8 @@ static void arm_exit(void)
 
 static int arm_execute( int cycles )
 {
-	data32_t pc;
-	data32_t insn;
+	UINT32 pc;
+	UINT32 insn;
 
 	arm_icount = cycles;
 	do
@@ -460,7 +460,7 @@ static void arm_set_context(void *src)
 
 static void arm_check_irq_state(void)
 {
-	data32_t pc = R15+4; /* save old pc (already incremented in pipeline) */;
+	UINT32 pc = R15+4; /* save old pc (already incremented in pipeline) */;
 
 	/* Exception priorities (from ARM6, not specifically ARM2/3):
 
@@ -537,9 +537,9 @@ static void arm_init(void)
 
 /***************************************************************************/
 
-static void HandleBranch(  data32_t insn )
+static void HandleBranch(  UINT32 insn )
 {
-	data32_t off = (insn & INSN_BRANCH) << 2;
+	UINT32 off = (insn & INSN_BRANCH) << 2;
 
 	/* Save PC into LR if this is a branch with link */
 	if (insn & INSN_BL)
@@ -558,9 +558,9 @@ static void HandleBranch(  data32_t insn )
 	}
 }
 
-static void HandleMemSingle( data32_t insn )
+static void HandleMemSingle( UINT32 insn )
 {
-	data32_t rn, rnv, off, rd;
+	UINT32 rn, rnv, off, rd;
 
 	/* Fetch the offset */
 	if (insn & INSN_I)
@@ -620,7 +620,7 @@ static void HandleMemSingle( data32_t insn )
 		/* Load */
 		if (insn & INSN_SDT_B)
 		{
-			SetRegister(rd,(data32_t) READ8(rnv));
+			SetRegister(rd,(UINT32) READ8(rnv));
 		}
 		else
 		{
@@ -645,7 +645,7 @@ static void HandleMemSingle( data32_t insn )
 			if (ARM_DEBUG_CORE && rd==eR15)
 				logerror("Wrote R15 in byte mode\n");
 
-			WRITE8(rnv, (data8_t) GetRegister(rd) & 0xffu);
+			WRITE8(rnv, (UINT8) GetRegister(rd) & 0xffu);
 		}
 		else
 		{
@@ -732,11 +732,11 @@ static void HandleMemSingle( data32_t insn )
                      | (((sc) != 0) << C_BIT)) + 4; \
   else R15 += 4;
 
-static void HandleALU( data32_t insn )
+static void HandleALU( UINT32 insn )
 {
-	data32_t op2, sc=0, rd, rn, opcode;
-	data32_t by, rdn;
-	data32_t oldMode=R15&3;
+	UINT32 op2, sc=0, rd, rn, opcode;
+	UINT32 by, rdn;
+	UINT32 oldMode=R15&3;
 
 	opcode = (insn & INSN_OPCODE) >> INSN_OPCODE_SHIFT;
 
@@ -888,9 +888,9 @@ static void HandleALU( data32_t insn )
 	}
 }
 
-static void HandleMul( data32_t insn)
+static void HandleMul( UINT32 insn)
 {
-	data32_t r;
+	UINT32 r;
 
 	/* Do the basic multiply of Rm and Rs */
 	r =	GetRegister( insn&INSN_MUL_RM ) *
@@ -918,7 +918,7 @@ static void HandleMul( data32_t insn)
 	}
 }
 
-static int loadInc ( data32_t pat, data32_t rbv, data32_t s)
+static int loadInc ( UINT32 pat, UINT32 rbv, UINT32 s)
 {
 	int i,result;
 
@@ -941,7 +941,7 @@ static int loadInc ( data32_t pat, data32_t rbv, data32_t s)
 	return result;
 }
 
-static int loadDec( data32_t pat, data32_t rbv, data32_t s)
+static int loadDec( UINT32 pat, UINT32 rbv, UINT32 s)
 {
 	int i,result;
 
@@ -964,7 +964,7 @@ static int loadDec( data32_t pat, data32_t rbv, data32_t s)
 	return result;
 }
 
-static int storeInc( data32_t pat, data32_t rbv)
+static int storeInc( UINT32 pat, UINT32 rbv)
 {
 	int i,result;
 
@@ -983,7 +983,7 @@ static int storeInc( data32_t pat, data32_t rbv)
 	return result;
 } /* storeInc */
 
-static int storeDec( data32_t pat, data32_t rbv)
+static int storeDec( UINT32 pat, UINT32 rbv)
 {
 	int i,result;
 
@@ -1002,10 +1002,10 @@ static int storeDec( data32_t pat, data32_t rbv)
 	return result;
 } /* storeDec */
 
-static void HandleMemBlock( data32_t insn)
+static void HandleMemBlock( UINT32 insn)
 {
-	data32_t rb = (insn & INSN_RN) >> INSN_RN_SHIFT;
-	data32_t rbp = GetRegister(rb);
+	UINT32 rb = (insn & INSN_RN) >> INSN_RN_SHIFT;
+	UINT32 rbp = GetRegister(rb);
 	int result;
 
 	if (ARM_DEBUG_CORE && insn & INSN_BDT_S)
@@ -1102,11 +1102,11 @@ static void HandleMemBlock( data32_t insn)
  * shifter carry output will manifest itself as @*carry == 0@ for carry clear
  * and @*carry != 0@ for carry set.
  */
-static data32_t decodeShift( data32_t insn, data32_t *pCarry)
+static UINT32 decodeShift( UINT32 insn, UINT32 *pCarry)
 {
-	data32_t k	= (insn & INSN_OP2_SHIFT) >> INSN_OP2_SHIFT_SHIFT;
-	data32_t rm	= GetRegister( insn & INSN_OP2_RM );
-	data32_t t	= (insn & INSN_OP2_SHIFT_TYPE) >> INSN_OP2_SHIFT_TYPE_SHIFT;
+	UINT32 k	= (insn & INSN_OP2_SHIFT) >> INSN_OP2_SHIFT_SHIFT;
+	UINT32 rm	= GetRegister( insn & INSN_OP2_RM );
+	UINT32 t	= (insn & INSN_OP2_SHIFT_TYPE) >> INSN_OP2_SHIFT_TYPE_SHIFT;
 
 	if ((insn & INSN_OP2_RM)==0xf) {
 		/* If hardwired shift, then PC is 8 bytes ahead, else if register shift

@@ -126,7 +126,7 @@ WRITE8_HANDLER( raiden_control_w )
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri_mask)
 {
 	int offs,fx,fy,x,y,color,sprite;
 

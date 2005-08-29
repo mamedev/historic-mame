@@ -3,13 +3,13 @@
 
 #include "driver.h"
 
-extern data16_t *spbactn_bgvideoram, *spbactn_fgvideoram, *spbactn_spvideoram;
-static struct mame_bitmap *tile_bitmap_bg, *tile_bitmap_fg;
+extern UINT16 *spbactn_bgvideoram, *spbactn_fgvideoram, *spbactn_spvideoram;
+static mame_bitmap *tile_bitmap_bg, *tile_bitmap_fg;
 
 /* mix & blend the paletted 16-bit tile and sprite bitmaps into an RGB 32-bit bitmap */
 static void blendbitmaps(
-		struct mame_bitmap *dest,struct mame_bitmap *src1,struct mame_bitmap *src2,
-		int sx,int sy,const struct rectangle *clip)
+		mame_bitmap *dest,mame_bitmap *src1,mame_bitmap *src2,
+		int sx,int sy,const rectangle *clip)
 {
 	int ox;
 	int oy;
@@ -103,7 +103,7 @@ static void blendbitmaps(
 }
 
 /* from gals pinball (which was in turn from ninja gaiden) */
-static int draw_sprites(struct mame_bitmap *bitmap, int priority)
+static int draw_sprites(mame_bitmap *bitmap, int priority)
 {
 	const UINT8 layout[8][8] =
 	{

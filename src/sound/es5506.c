@@ -1255,7 +1255,7 @@ INLINE void es5506_reg_write_test(struct ES5506Chip *chip, struct ES5506Voice *v
 	}
 }
 
-static void es5506_reg_write(struct ES5506Chip *chip, offs_t offset, data8_t data)
+static void es5506_reg_write(struct ES5506Chip *chip, offs_t offset, UINT8 data)
 {
 	struct ES5506Voice *voice = &chip->voice[chip->current_page & 0x1f];
 	int shift = 8 * (offset & 3);
@@ -1463,7 +1463,7 @@ INLINE UINT32 es5506_reg_read_test(struct ES5506Chip *chip, struct ES5506Voice *
 	return result;
 }
 
-static data8_t es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
+static UINT8 es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 {
 	struct ES5506Voice *voice = &chip->voice[chip->current_page & 0x1f];
 	int shift = 8 * (offset & 3);
@@ -1920,7 +1920,7 @@ INLINE void es5505_reg_write_test(struct ES5506Chip *chip, struct ES5506Voice *v
 }
 
 
-static void es5505_reg_write(struct ES5506Chip *chip, offs_t offset, data16_t data, data16_t mem_mask)
+static void es5505_reg_write(struct ES5506Chip *chip, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
 	struct ES5506Voice *voice = &chip->voice[chip->current_page & 0x1f];
 
@@ -2130,10 +2130,10 @@ INLINE UINT16 es5505_reg_read_test(struct ES5506Chip *chip, struct ES5506Voice *
 }
 
 
-static data16_t es5505_reg_read(struct ES5506Chip *chip, offs_t offset)
+static UINT16 es5505_reg_read(struct ES5506Chip *chip, offs_t offset)
 {
 	struct ES5506Voice *voice = &chip->voice[chip->current_page & 0x1f];
-	data16_t result = 0;
+	UINT16 result = 0;
 
 	if (LOG_COMMANDS && eslog)
 		fprintf(eslog, "read from %02x/%02x -> ", chip->current_page, offset);

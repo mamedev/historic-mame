@@ -29,9 +29,9 @@ int twincobr_bg_ram_bank;
 int wardner_sprite_hack;	/* Required for weird sprite priority in wardner */
 							/* when hero is in shop. Hero should cover shop owner */
 
-static data16_t *twincobr_bgvideoram16;
-static data16_t *twincobr_fgvideoram16;
-static data16_t *twincobr_txvideoram16;
+static UINT16 *twincobr_bgvideoram16;
+static UINT16 *twincobr_fgvideoram16;
+static UINT16 *twincobr_txvideoram16;
 
 static size_t twincobr_bgvideoram_size;
 static size_t twincobr_fgvideoram_size;
@@ -222,7 +222,7 @@ READ16_HANDLER( twincobr_txram_r )
 }
 WRITE16_HANDLER( twincobr_txram_w )
 {
-	data16_t oldword = twincobr_txvideoram16[txoffs];
+	UINT16 oldword = twincobr_txvideoram16[txoffs];
 
 	if (data != oldword)
 	{
@@ -242,7 +242,7 @@ READ16_HANDLER( twincobr_bgram_r )
 }
 WRITE16_HANDLER( twincobr_bgram_w )
 {
-	data16_t oldword = twincobr_bgvideoram16[bgoffs+twincobr_bg_ram_bank];
+	UINT16 oldword = twincobr_bgvideoram16[bgoffs+twincobr_bg_ram_bank];
 
 	if (data != oldword)
 	{
@@ -262,7 +262,7 @@ READ16_HANDLER( twincobr_fgram_r )
 }
 WRITE16_HANDLER( twincobr_fgram_w )
 {
-	data16_t oldword = twincobr_fgvideoram16[fgoffs];
+	UINT16 oldword = twincobr_fgvideoram16[fgoffs];
 
 	if (data != oldword)
 	{
@@ -482,7 +482,7 @@ void twincobr_log_vram(void)
     Sprite Handlers
 ***************************************************************************/
 
-static void twincobr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void twincobr_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	int offs;
 

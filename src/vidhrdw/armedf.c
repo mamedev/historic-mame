@@ -2,15 +2,15 @@
 #include "vidhrdw/generic.h"
 
 
-data16_t armedf_vreg;
+UINT16 armedf_vreg;
 
-data16_t *terraf_text_videoram;
-data16_t *armedf_bg_videoram;
-data16_t *armedf_fg_videoram;
-data16_t *legion_cmd;
-static data16_t armedf_fg_scrollx,armedf_fg_scrolly;
+UINT16 *terraf_text_videoram;
+UINT16 *armedf_bg_videoram;
+UINT16 *armedf_fg_videoram;
+UINT16 *legion_cmd;
+static UINT16 armedf_fg_scrollx,armedf_fg_scrolly;
 
-data16_t terraf_scroll_msb;
+UINT16 terraf_scroll_msb;
 
 static tilemap *bg_tilemap, *fg_tilemap;
 tilemap *armedf_tx_tilemap;
@@ -217,14 +217,14 @@ WRITE16_HANDLER( armedf_fg_scrolly_w )
 
 WRITE16_HANDLER( armedf_bg_scrollx_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(bg_tilemap,0,scroll);
 }
 
 WRITE16_HANDLER( armedf_bg_scrolly_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrolly(bg_tilemap,0,scroll);
 }
@@ -242,7 +242,7 @@ WRITE16_HANDLER( armedf_mcu_cmd )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	int offs;
 

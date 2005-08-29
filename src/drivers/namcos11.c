@@ -282,8 +282,8 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 	}
 }
 
-static data32_t *namcos11_sharedram;
-static data32_t *namcos11_keycus;
+static UINT32 *namcos11_sharedram;
+static UINT32 *namcos11_keycus;
 static size_t namcos11_keycus_size;
 
 static WRITE32_HANDLER( keycus_w )
@@ -296,7 +296,7 @@ static WRITE32_HANDLER( keycus_w )
 static READ32_HANDLER( keycus_c406_r )
 {
 	/* todo: verify behaviour */
-	data32_t data;
+	UINT32 data;
 
 	data = namcos11_keycus[ offset ];
 	switch( offset )
@@ -317,7 +317,7 @@ static READ32_HANDLER( keycus_c406_r )
 static READ32_HANDLER( keycus_c409_r )
 {
 	/* todo: verify behaviour */
-	data32_t data;
+	UINT32 data;
 
 	data = namcos11_keycus[ offset ];
 	switch( offset )
@@ -333,8 +333,8 @@ static READ32_HANDLER( keycus_c409_r )
 /* dunk mania */
 static READ32_HANDLER( keycus_c410_r )
 {
-	data32_t data;
-	data32_t n_value;
+	UINT32 data;
+	UINT32 n_value;
 
 	if( ( namcos11_keycus[ 0 ] & 0x0000ffff ) != 0xfffe )
 	{
@@ -367,8 +367,8 @@ static READ32_HANDLER( keycus_c410_r )
 /* prime goal ex */
 static READ32_HANDLER( keycus_c411_r )
 {
-	data32_t data;
-	data32_t n_value;
+	UINT32 data;
+	UINT32 n_value;
 
 	data = namcos11_keycus[ offset ];
 	if( ( namcos11_keycus[ 1 ] & 0x0000ffff ) == 0x00007256 )
@@ -400,7 +400,7 @@ static READ32_HANDLER( keycus_c411_r )
 /* xevious 3d/g */
 static READ32_HANDLER( keycus_c430_r )
 {
-	data32_t data;
+	UINT32 data;
 	UINT16 n_value;
 
 	if( ( namcos11_keycus[ 2 ] & 0x0000ffff ) == 0x0000e296 )
@@ -434,7 +434,7 @@ static READ32_HANDLER( keycus_c430_r )
 /* dancing eyes */
 static READ32_HANDLER( keycus_c431_r )
 {
-	data32_t data;
+	UINT32 data;
 	UINT16 n_value;
 
 	if( ( namcos11_keycus[ 0 ] & 0x0000ffff ) == 0x00009e61 )
@@ -665,7 +665,7 @@ static WRITE32_HANDLER( lightgun_w )
 
 static READ32_HANDLER( lightgun_r )
 {
-	data32_t data = 0;
+	UINT32 data = 0;
 	switch( offset )
 	{
 	case 0:

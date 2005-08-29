@@ -338,7 +338,7 @@ VIDEO_START( liberatr )
 
 ***************************************************************************/
 
-static void liberatr_draw_planet(struct mame_bitmap *bitmap)
+static void liberatr_draw_planet(mame_bitmap *bitmap)
 {
 	UINT8 latitude;
 	UINT8 *buffer;

@@ -40,7 +40,7 @@ VIDEO_START( sbrkout )
 	return 0;
 }
 
-static void sbrkout_draw_balls( struct mame_bitmap *bitmap )
+static void sbrkout_draw_balls( mame_bitmap *bitmap )
 {
 	int ball;
 

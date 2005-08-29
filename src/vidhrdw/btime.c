@@ -25,7 +25,7 @@ static int btime_palette = 0;
 static unsigned char bnj_scroll1 = 0;
 static unsigned char bnj_scroll2 = 0;
 static unsigned char *dirtybuffer2 = 0;
-static struct mame_bitmap *background_bitmap;
+static mame_bitmap *background_bitmap;
 static int lnc_sound_interrupt_enabled = 0;
 
 /***************************************************************************
@@ -353,7 +353,7 @@ Do NOT call osd_update_display() from this function, it will be called by
 the main emulation engine.
 
 ***************************************************************************/
-static void drawchars(struct mame_bitmap *bitmap, int transparency, int color, int priority)
+static void drawchars(mame_bitmap *bitmap, int transparency, int color, int priority)
 {
     int offs;
 
@@ -392,7 +392,7 @@ static void drawchars(struct mame_bitmap *bitmap, int transparency, int color, i
     }
 }
 
-static void drawsprites(struct mame_bitmap *bitmap, int color,
+static void drawsprites(mame_bitmap *bitmap, int color,
                         int sprite_y_adjust, int sprite_y_adjust_flip_screen,
                         unsigned char *sprite_ram, int interleave)
 {
@@ -442,7 +442,7 @@ static void drawsprites(struct mame_bitmap *bitmap, int color,
 }
 
 
-static void drawbackground(struct mame_bitmap *bitmap, unsigned char* tilemap)
+static void drawbackground(mame_bitmap *bitmap, unsigned char* tilemap)
 {
     int i, offs;
 

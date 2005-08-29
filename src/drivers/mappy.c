@@ -559,8 +559,8 @@ PALETTE_INIT( phozon );
 VIDEO_UPDATE( phozon );
 
 /* video driver data & functions */
-extern data8_t *mappy_videoram;
-extern data8_t *mappy_spriteram;
+extern UINT8 *mappy_videoram;
+extern UINT8 *mappy_spriteram;
 PALETTE_INIT( superpac );
 PALETTE_INIT( mappy );
 VIDEO_START( superpac );

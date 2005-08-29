@@ -98,9 +98,9 @@ VIDEO_START( mustache )
 	return 0;
 }
 
-static void mustache_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void mustache_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
 

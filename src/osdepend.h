@@ -28,12 +28,6 @@ void osd_wait_for_debugger(void);
 
 ******************************************************************************/
 
-/* mame_bitmap used to be declared here, but has moved to common.c */
-/* sadly, the include order requires that at least this forward declaration is here */
-struct mame_bitmap;
-struct rectangle;
-
-
 /* these are the parameters passed into osd_create_display */
 struct _osd_create_params
 {
@@ -110,7 +104,7 @@ void osd_update_video_and_audio(struct _mame_display *display);
   snapshot.  This function will either return a new bitmap, for which the
   caller is responsible for freeing.
 */
-struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, struct rectangle *bounds);
+mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds);
 
 /*
   Returns a pointer to the text to display when the FPS display is toggled.

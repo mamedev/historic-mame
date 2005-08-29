@@ -15,7 +15,7 @@ UINT8 *kangaroo_blitter;
 UINT8 *kangaroo_scroll;
 
 static int screen_flipped;
-static struct mame_bitmap *tmpbitmap2;
+static mame_bitmap *tmpbitmap2;
 
 
 /***************************************************************************
@@ -197,7 +197,7 @@ WRITE8_HANDLER( kangaroo_blitter_w )
 
 
 
-INLINE void kangaroo_plot_pixel(struct mame_bitmap *bitmap, int x, int y, int col, int color_base, int flip)
+INLINE void kangaroo_plot_pixel(mame_bitmap *bitmap, int x, int y, int col, int color_base, int flip)
 {
 	if (flip)
 	{

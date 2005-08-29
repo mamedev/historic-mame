@@ -111,8 +111,8 @@ TP-S.1 TP-S.2 TP-S.3 TP-B.1  8212 TP-B.2 TP-B.3          TP-B.4
 #include "tubep.h"
 
 
-static data8_t *cpu_sharedram;
-static data8_t *tubep_sprite_sharedram;
+static UINT8 *cpu_sharedram;
+static UINT8 *tubep_sprite_sharedram;
 
 static int sound_latch;
 

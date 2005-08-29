@@ -20,7 +20,7 @@ extern UINT8* flyball_playfield_ram;
 static UINT8 flyball_potmask;
 static UINT8 flyball_potsense;
 
-static data8_t *rombase;
+static UINT8 *rombase;
 
 
 static void flyball_joystick_callback(int potsense)

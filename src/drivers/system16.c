@@ -192,7 +192,7 @@ WRITE8_HANDLER( sys16_7751_sh_rom_select_w );
 
 /***************************************************************************/
 
-static data16_t coinctrl;
+static UINT16 coinctrl;
 
 static WRITE16_HANDLER( sys16_3d_coinctrl_w )
 {
@@ -455,7 +455,7 @@ static WRITE16_HANDLER( sound_command_nmi_w )
 	}
 }
 
-//static data16_t coinctrl;
+//static UINT16 coinctrl;
 
 
 static WRITE16_HANDLER( sys16_coinctrl_w )
@@ -1469,7 +1469,7 @@ static int passht4b_io3_val;
 
 static READ16_HANDLER( passht4b_service_r )
 {
-	data16_t val=input_port_2_word_r(offset,0);
+	UINT16 val=input_port_2_word_r(offset,0);
 	if(!(readinputport(0) & 0x40)) val&=0xef;
 	if(!(readinputport(1) & 0x40)) val&=0xdf;
 	if(!(readinputport(5) & 0x40)) val&=0xbf;

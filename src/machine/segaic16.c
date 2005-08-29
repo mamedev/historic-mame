@@ -35,8 +35,8 @@ struct memory_mapper_chip
 	UINT8	regs[0x20];
 	int		cpunum;
 	const struct segaic16_memory_map_entry *map;
-	void	(*sound_w)(data8_t);
-	data8_t	(*sound_r)(void);
+	void	(*sound_w)(UINT8);
+	UINT8	(*sound_r)(void);
 };
 
 
@@ -57,7 +57,7 @@ struct compare_timer_chip
 	UINT16	regs[16];
 	UINT16	counter;
 	UINT8	bit;
-	void	(*sound_w)(data8_t);
+	void	(*sound_w)(UINT8);
 	void	(*timer_ack)(void);
 };
 
@@ -95,7 +95,7 @@ static void update_memory_mapping(struct memory_mapper_chip *chip);
 READ16_HANDLER( segaic16_open_bus_r )
 {
 	static UINT8 recurse = 0;
-	data16_t result;
+	UINT16 result;
 
 	/* Unmapped memory returns the last word on the data bus, which is almost always the opcode */
 	/* of the next instruction due to prefetch; however, since we may be encrypted, we actually */
@@ -124,7 +124,7 @@ READ16_HANDLER( segaic16_open_bus_r )
  *
  *************************************/
 
-void segaic16_memory_mapper_init(int cpunum, const struct segaic16_memory_map_entry *entrylist, void (*sound_w_callback)(data8_t), data8_t (*sound_r_callback)(void))
+void segaic16_memory_mapper_init(int cpunum, const struct segaic16_memory_map_entry *entrylist, void (*sound_w_callback)(UINT8), UINT8 (*sound_r_callback)(void))
 {
 	struct memory_mapper_chip *chip = &memory_mapper;
 
@@ -157,7 +157,7 @@ void segaic16_memory_mapper_config(const UINT8 *map_data)
 }
 
 
-static void memory_mapper_w(struct memory_mapper_chip *chip, offs_t offset, data8_t data)
+static void memory_mapper_w(struct memory_mapper_chip *chip, offs_t offset, UINT8 data)
 {
 	UINT8 oldval;
 
@@ -208,7 +208,7 @@ static void memory_mapper_w(struct memory_mapper_chip *chip, offs_t offset, data
 			else if (data == 0x02)
 			{
 				offs_t addr = (chip->regs[0x07] << 17) | (chip->regs[0x08] << 9) | (chip->regs[0x09] << 1);
-				data16_t result;
+				UINT16 result;
 				cpuintrf_push_context(chip->cpunum);
 				result = program_read_word_16be(addr);
 				cpuintrf_pop_context();
@@ -244,7 +244,7 @@ static void memory_mapper_w(struct memory_mapper_chip *chip, offs_t offset, data
 }
 
 
-static data16_t memory_mapper_r(struct memory_mapper_chip *chip, offs_t offset, data16_t unmapped_val)
+static UINT16 memory_mapper_r(struct memory_mapper_chip *chip, offs_t offset, UINT16 unmapped_val)
 {
 	/* wraps every 32 bytes */
 	offset &= 0x1f;
@@ -374,7 +374,7 @@ WRITE16_HANDLER( segaic16_memory_mapper_lsb_w )
  *
  *************************************/
 
-static data16_t multiply_r(int which, offs_t offset, data16_t mem_mask)
+static UINT16 multiply_r(int which, offs_t offset, UINT16 mem_mask)
 {
 	offset &= 3;
 	switch (offset)
@@ -388,7 +388,7 @@ static data16_t multiply_r(int which, offs_t offset, data16_t mem_mask)
 }
 
 
-static void multiply_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
+static void multiply_w(int which, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
 	offset &= 3;
 	switch (offset)
@@ -477,7 +477,7 @@ static void update_divide(int which, int mode)
 	}
 }
 
-static data16_t divide_r(int which, offs_t offset, data16_t mem_mask)
+static UINT16 divide_r(int which, offs_t offset, UINT16 mem_mask)
 {
 	/* 8 effective read registers */
 	offset &= 7;
@@ -494,7 +494,7 @@ static data16_t divide_r(int which, offs_t offset, data16_t mem_mask)
 }
 
 
-static void divide_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
+static void divide_w(int which, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
 	int a4 = offset & 8;
 	int a3 = offset & 4;
@@ -531,7 +531,7 @@ WRITE16_HANDLER( segaic16_divide_2_w ) { divide_w(2, offset, data, mem_mask); }
  *
  *************************************/
 
-void segaic16_compare_timer_init(int which, void (*sound_write_callback)(data8_t), void (*timer_ack_callback)(void))
+void segaic16_compare_timer_init(int which, void (*sound_write_callback)(UINT8), void (*timer_ack_callback)(void))
 {
 	compare_timer[which].sound_w = sound_write_callback;
 	compare_timer[which].timer_ack = timer_ack_callback;
@@ -594,7 +594,7 @@ static void timer_interrupt_ack(int which)
 }
 
 
-static data16_t compare_timer_r(int which, offs_t offset, data16_t mem_mask)
+static UINT16 compare_timer_r(int which, offs_t offset, UINT16 mem_mask)
 {
 	offset &= 0xf;
 	if (LOG_COMPARE) logerror("%06X:compare%d_r(%X) = %04X\n", activecpu_get_pc(), which, offset, compare_timer[which].regs[offset]);
@@ -615,7 +615,7 @@ static data16_t compare_timer_r(int which, offs_t offset, data16_t mem_mask)
 }
 
 
-static void compare_timer_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
+static void compare_timer_w(int which, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
 	offset &= 0xf;
 	if (LOG_COMPARE) logerror("%06X:compare%d_w(%X) = %04X\n", activecpu_get_pc(), which, offset, data);

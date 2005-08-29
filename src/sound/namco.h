@@ -20,8 +20,8 @@ WRITE8_HANDLER( namco_15xx_w );
 WRITE8_HANDLER( namcos1_cus30_w );	/* wavedata + sound registers + RAM */
 READ8_HANDLER( namcos1_cus30_r );
 
-extern data8_t *namco_soundregs;
-extern data8_t *namco_wavedata;
+extern UINT8 *namco_soundregs;
+extern UINT8 *namco_wavedata;
 
 #define pacman_soundregs namco_soundregs
 #define polepos_soundregs namco_soundregs

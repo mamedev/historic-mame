@@ -8,7 +8,7 @@
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
-static data16_t * rohga_spriteram;
+static UINT16 * rohga_spriteram;
 
 /******************************************************************************/
 
@@ -27,7 +27,7 @@ static int wizdfire_bank_callback(const int bank)
 
 VIDEO_START( rohga )
 {
-	rohga_spriteram = (data16_t*)auto_malloc(0x800);
+	rohga_spriteram = (UINT16*)auto_malloc(0x800);
 
 	if (!rohga_spriteram || deco16_2_video_init(0))
 		return 1;
@@ -79,7 +79,7 @@ VIDEO_START( nitrobal )
 
 /******************************************************************************/
 
-static void rohga_drawsprites(struct mame_bitmap *bitmap, const data16_t *spriteptr, int is_schmeisr)
+static void rohga_drawsprites(mame_bitmap *bitmap, const UINT16 *spriteptr, int is_schmeisr)
 {
 	int offs;
 
@@ -156,7 +156,7 @@ static void rohga_drawsprites(struct mame_bitmap *bitmap, const data16_t *sprite
 	}
 }
 
-static void wizdfire_drawsprites(struct mame_bitmap *bitmap, data16_t *spriteptr, int mode, int bank)
+static void wizdfire_drawsprites(mame_bitmap *bitmap, UINT16 *spriteptr, int mode, int bank)
 {
 	int offs;
 
@@ -253,7 +253,7 @@ static void wizdfire_drawsprites(struct mame_bitmap *bitmap, data16_t *spriteptr
 	}
 }
 
-static void nitrobal_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *spriteptr, int gfxbank)
+static void nitrobal_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, const UINT16 *spriteptr, int gfxbank)
 {
 	int offs,end,inc;
 
@@ -445,7 +445,7 @@ sprite 2:
 
 /******************************************************************************/
 
-static void update_rohga(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int is_schmeisr)
+static void update_rohga(mame_bitmap *bitmap, const rectangle *cliprect, int is_schmeisr)
 {
 	/* Update playfields */
 	flip_screen_set( deco16_pf12_control[0]&0x80 );

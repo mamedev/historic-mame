@@ -2013,7 +2013,7 @@ static void adsp2104_set_context(void *src)
 	check_irqs();
 }
 
-void adsp2104_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+void adsp2104_load_boot_data(UINT8 *srcdata, UINT32 *dstdata)
 {
 	/* see how many words we need to copy */
 	int pagelen = (srcdata[(3)] + 1) * 8;
@@ -2101,7 +2101,7 @@ static void adsp2105_set_context(void *src)
 	check_irqs();
 }
 
-void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+void adsp2105_load_boot_data(UINT8 *srcdata, UINT32 *dstdata)
 {
 	adsp2104_load_boot_data(srcdata, dstdata);
 }
@@ -2178,7 +2178,7 @@ static void adsp2115_set_context(void *src)
 	check_irqs();
 }
 
-void adsp2115_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+void adsp2115_load_boot_data(UINT8 *srcdata, UINT32 *dstdata)
 {
 	adsp2104_load_boot_data(srcdata, dstdata);
 }
@@ -2259,7 +2259,7 @@ static void adsp2181_set_context(void *src)
 	check_irqs();
 }
 
-void adsp2181_load_boot_data(data8_t *srcdata, data32_t *dstdata)
+void adsp2181_load_boot_data(UINT8 *srcdata, UINT32 *dstdata)
 {
 	adsp2104_load_boot_data(srcdata, dstdata);
 }
@@ -2318,13 +2318,13 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-void adsp2181_idma_addr_w(data16_t data)
+void adsp2181_idma_addr_w(UINT16 data)
 {
 	adsp2100.idma_addr = data;
 	adsp2100.idma_offs = 0;
 }
 
-void adsp2181_idma_data_w(data16_t data)
+void adsp2181_idma_data_w(UINT16 data)
 {
 	/* program memory? */
 	if (!(adsp2100.idma_addr & 0x4000))
@@ -2349,9 +2349,9 @@ void adsp2181_idma_data_w(data16_t data)
 		WWORD_DATA(adsp2100.idma_addr++ & 0x3fff, data);
 }
 
-data16_t adsp2181_idma_data_r(data16_t data)
+UINT16 adsp2181_idma_data_r(UINT16 data)
 {
-	data16_t result = 0xffff;
+	UINT16 result = 0xffff;
 
 	/* program memory? */
 	if (!(adsp2100.idma_addr & 0x4000))

@@ -119,11 +119,11 @@ VIDEO_EOF( cninja )
 	deco16_raster_display_position=0;
 }
 
-static void raster_pf3_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, int pri)
+static void raster_pf3_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, int pri)
 {
 	tilemap *tmap=deco16_get_tilemap(2,0);
 	int ptr=0,start,end=0;
-	struct rectangle clip;
+	rectangle clip;
 	int overflow=deco16_raster_display_position;
 
 	clip.min_x = cliprect->min_x;
@@ -165,7 +165,7 @@ static void raster_pf3_draw(struct mame_bitmap *bitmap, const struct rectangle *
 
 /******************************************************************************/
 
-static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void cninja_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -234,7 +234,7 @@ static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangl
 	}
 }
 
-static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void robocop2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -302,7 +302,7 @@ static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 	}
 }
 
-static void mutantf_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *spriteptr, int gfxbank)
+static void mutantf_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, const UINT16 *spriteptr, int gfxbank)
 {
 	int offs,end,inc;
 

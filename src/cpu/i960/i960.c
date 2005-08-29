@@ -411,7 +411,7 @@ static void take_interrupt(int vector, int lvl)
 	int int_tab =  program_read_dword_32le(i960.PRCB+20);	// interrupt table
 	int int_SP  =  program_read_dword_32le(i960.PRCB+24);	// interrupt stack
 	int SP;
-	data32_t IRQV;
+	UINT32 IRQV;
 
 	IRQV = program_read_dword_32le(int_tab + 36 + (vector-8)*4);
 

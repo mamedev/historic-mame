@@ -4,17 +4,17 @@
 #include "homedata.h"
 
 
-data8_t *homedata_vreg;	/* pointer to RAM associated with 0x7ffx */
-data8_t reikaids_which;
+UINT8 *homedata_vreg;	/* pointer to RAM associated with 0x7ffx */
+UINT8 reikaids_which;
 int homedata_visible_page;
 int homedata_priority;
 static int homedata_flipscreen;
 
-static data8_t	reikaids_gfx_bank[2];
-static data8_t	pteacher_gfx_bank;
-static data8_t	blitter_bank;
+static UINT8	reikaids_gfx_bank[2];
+static UINT8	pteacher_gfx_bank;
+static UINT8	blitter_bank;
 static int		blitter_param_count;
-static data8_t	blitter_param[4];		/* buffers last 4 writes to 0x8006 */
+static UINT8	blitter_param[4];		/* buffers last 4 writes to 0x8006 */
 
 static tilemap *bg_tilemap[2][4];
 
@@ -57,7 +57,7 @@ static void mrokumei_handleblit( int rom_base )
 	int DestAddr;
 	int BaseAddr;
 	int opcode,data,NumTiles;
-	data8_t *pBlitData = memory_region(REGION_USER1) + rom_base;
+	UINT8 *pBlitData = memory_region(REGION_USER1) + rom_base;
 
 	DestParam =
 		blitter_param[(blitter_param_count-4)&3]*256+
@@ -143,7 +143,7 @@ static void reikaids_handleblit( int rom_base )
 	int flipx;
 	int SourceAddr, BaseAddr;
 	int DestAddr;
-	data8_t *pBlitData = memory_region(REGION_USER1) + rom_base;
+	UINT8 *pBlitData = memory_region(REGION_USER1) + rom_base;
 
 	int opcode,data,NumTiles;
 
@@ -243,7 +243,7 @@ static void pteacher_handleblit( int rom_base )
 	int SourceAddr;
 	int DestAddr, BaseAddr;
 	int opcode,data,NumTiles;
-	data8_t *pBlitData = memory_region(REGION_USER1) + rom_base;
+	UINT8 *pBlitData = memory_region(REGION_USER1) + rom_base;
 
 	DestParam =
 		blitter_param[(blitter_param_count-4)&3]*256+

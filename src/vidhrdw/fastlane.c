@@ -4,7 +4,7 @@
 
 unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
 static tilemap *layer0, *layer1;
-static struct rectangle clip0, clip1;
+static rectangle clip0, clip1;
 
 
 PALETTE_INIT( fastlane )
@@ -136,7 +136,7 @@ WRITE8_HANDLER( fastlane_vram2_w )
 
 VIDEO_UPDATE( fastlane )
 {
-	struct rectangle finalclip0 = clip0, finalclip1 = clip1;
+	rectangle finalclip0 = clip0, finalclip1 = clip1;
 	int i, xoffs;
 
 	sect_rect(&finalclip0, cliprect);

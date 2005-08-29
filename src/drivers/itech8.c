@@ -484,15 +484,15 @@ static UINT8 blitter_int;
 static UINT8 tms34061_int;
 static UINT8 periodic_int;
 
-static data8_t sound_data;
+static UINT8 sound_data;
 
-static data8_t pia_porta_data;
-static data8_t pia_portb_data;
+static UINT8 pia_porta_data;
+static UINT8 pia_portb_data;
 
-static data8_t *main_ram;
+static UINT8 *main_ram;
 static size_t main_ram_size;
 
-static const struct rectangle *visarea;
+static const rectangle *visarea;
 
 
 
@@ -700,7 +700,7 @@ static WRITE8_HANDLER( rimrockn_bank_w )
 /* used by most games */
 static READ8_HANDLER( special_port0_r )
 {
-	data8_t result = readinputport(0);
+	UINT8 result = readinputport(0);
 	result = (result & 0xfe) | (pia_portb_data & 0x01);
 	return result;
 }
@@ -709,7 +709,7 @@ static READ8_HANDLER( special_port0_r )
 /* used by Rim Rockin' Basketball */
 static READ8_HANDLER( special_port1_r )
 {
-	data8_t result = readinputport(1);
+	UINT8 result = readinputport(1);
 	result = (result & 0x7f) | ((pia_portb_data & 0x01) << 7);
 	return result;
 }
@@ -2605,28 +2605,28 @@ static DRIVER_INIT( sstrike )
 
 static DRIVER_INIT( hstennis )
 {
-	static const struct rectangle visible = { 0, 375, 0, 239 };
+	static const rectangle visible = { 0, 375, 0, 239 };
 	visarea = &visible;
 }
 
 
 static DRIVER_INIT( arligntn )
 {
-	static const struct rectangle visible = { 16, 389, 0, 239 };
+	static const rectangle visible = { 16, 389, 0, 239 };
 	visarea = &visible;
 }
 
 
 static DRIVER_INIT( peggle )
 {
-	static const struct rectangle visible = { 18, 367, 0, 239 };
+	static const rectangle visible = { 18, 367, 0, 239 };
 	visarea = &visible;
 }
 
 
 static DRIVER_INIT( neckneck )
 {
-	static const struct rectangle visible = { 8, 375, 0, 239 };
+	static const rectangle visible = { 8, 375, 0, 239 };
 	visarea = &visible;
 }
 

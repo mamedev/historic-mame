@@ -3183,7 +3183,7 @@ static DRIVER_INIT( kram3 )
 		0xffe1,0x59,0x7e, -1
 	};
 
-	data8_t *rom;
+	UINT8 *rom;
 	int diff;
 	int i;
 

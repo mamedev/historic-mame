@@ -100,7 +100,7 @@ struct DEBUGOPTS
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0,0,0}, 0, 0, 0};
 /*                                    red   green  blue    purple  yellow cyan    grey    white */
 static UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };
-static UINT8 snes_dbg_vidhrdw(struct mame_bitmap *bitmap, UINT16 curline);
+static UINT8 snes_dbg_vidhrdw(mame_bitmap *bitmap, UINT16 curline);
 #endif /* SNES_DBG_VIDHRDW */
 
 /* Forward declarations */
@@ -1823,7 +1823,7 @@ static void snes_update_offsets(void)
  *
  * Redraw the current line.
  *********************************************/
-void snes_refresh_scanline( struct mame_bitmap *bitmap, UINT16 curline )
+void snes_refresh_scanline( mame_bitmap *bitmap, UINT16 curline )
 {
 	UINT16 ii;
 
@@ -1831,7 +1831,7 @@ void snes_refresh_scanline( struct mame_bitmap *bitmap, UINT16 curline )
 
 	if( snes_ram[INIDISP] & 0x80 ) /* screen is forced blank */
 	{
-		struct rectangle r = Machine->visible_area;
+		rectangle r = Machine->visible_area;
 		r.min_y = r.max_y = curline;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}
@@ -1922,7 +1922,7 @@ VIDEO_UPDATE( snes )
 
 #ifdef SNES_DBG_VIDHRDW
 
-static void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, UINT16 curline, UINT8 layer )
+static void snes_dbg_draw_maps( mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, UINT16 curline, UINT8 layer )
 {
 	UINT32 tile, addr = tilemap;
 	UINT16 ii, vflip, hflip, pal;
@@ -1963,7 +1963,7 @@ static void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT
 	ui_draw_text( str, 0, 227 );
 }
 
-static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8 bpl, UINT16 pal )
+static void snes_dbg_draw_all_tiles( mame_bitmap *bitmap, UINT32 tileaddr, UINT8 bpl, UINT16 pal )
 {
 	UINT16 ii, jj, kk;
 	UINT32 addr = tileaddr;
@@ -2002,7 +2002,7 @@ static void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr
 	ui_draw_text( str, 0, 227 );
 }
 
-static UINT8 snes_dbg_vidhrdw( struct mame_bitmap *bitmap, UINT16 curline )
+static UINT8 snes_dbg_vidhrdw( mame_bitmap *bitmap, UINT16 curline )
 {
 	UINT16 ii;
 

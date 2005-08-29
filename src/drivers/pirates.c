@@ -91,9 +91,9 @@ Notes:
 #include "machine/eeprom.h"
 #include "sound/okim6295.h"
 
-extern data16_t *pirates_tx_tileram, *pirates_spriteram;
-extern data16_t *pirates_fg_tileram,  *pirates_bg_tileram;
-extern data16_t *pirates_scroll;
+extern UINT16 *pirates_tx_tileram, *pirates_spriteram;
+extern UINT16 *pirates_fg_tileram,  *pirates_bg_tileram;
+extern UINT16 *pirates_scroll;
 
 VIDEO_START(pirates);
 WRITE16_HANDLER( pirates_tx_tileram_w );
@@ -472,7 +472,7 @@ static void pirates_decrypt_oki(void)
 
 static DRIVER_INIT( pirates )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	pirates_decrypt_68k();
 	pirates_decrypt_p();

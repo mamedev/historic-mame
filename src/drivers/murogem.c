@@ -82,7 +82,7 @@ f205v
 #include "driver.h"
 #include "vidhrdw/crtc6845.h"
 
-static data8_t *murogem_videoram;
+static UINT8 *murogem_videoram;
 
 static ADDRESS_MAP_START( murogem_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x007f) AM_RAM

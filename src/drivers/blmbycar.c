@@ -22,8 +22,8 @@ To Do:
 
 /* Variables defined in vidhrdw: */
 
-extern data16_t *blmbycar_vram_0, *blmbycar_scroll_0;
-extern data16_t *blmbycar_vram_1, *blmbycar_scroll_1;
+extern UINT16 *blmbycar_vram_0, *blmbycar_scroll_0;
+extern UINT16 *blmbycar_vram_1, *blmbycar_scroll_1;
 
 /* Functions defined in vidhrdw: */
 
@@ -65,7 +65,7 @@ WRITE16_HANDLER( blmbycar_okibank_w )
 
 /* Preliminary potentiometric wheel support */
 
-static data8_t pot_wheel = 0;
+static UINT8 pot_wheel = 0;
 
 static WRITE16_HANDLER( blmbycar_pot_wheel_reset_w )
 {
@@ -362,13 +362,13 @@ ROM_END
 
 DRIVER_INIT( blmbycar )
 {
-	data16_t *RAM  = (data16_t *) memory_region(REGION_CPU1);
+	UINT16 *RAM  = (UINT16 *) memory_region(REGION_CPU1);
 	size_t    size = memory_region_length(REGION_CPU1) / 2;
 	int i;
 
 	for (i = 0; i < size; i++)
 	{
-		data16_t x = RAM[i];
+		UINT16 x = RAM[i];
 		x = (x & ~0x0606) | ((x & 0x0202) << 1) | ((x & 0x0404) >> 1);
 		RAM[i] = x;
 	}

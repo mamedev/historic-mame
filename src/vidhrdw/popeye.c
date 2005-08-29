@@ -14,7 +14,7 @@ UINT8 *popeye_palettebank;
 static UINT8 *popeye_bitmapram;
 static size_t popeye_bitmapram_size = 0x2000;
 
-static struct mame_bitmap *tmpbitmap2;
+static mame_bitmap *tmpbitmap2;
 static int invertmask;
 static int bitmap_type;
 enum { TYPE_SKYSKIPR, TYPE_POPEYE };
@@ -308,7 +308,7 @@ VIDEO_START( popeye )
 	return 0;
 }
 
-static void popeye_draw_background(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void popeye_draw_background(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 	static int lastflip = 0;
@@ -347,7 +347,7 @@ static void popeye_draw_background(struct mame_bitmap *bitmap, const struct rect
 	}
 }
 
-static void popeye_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void popeye_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

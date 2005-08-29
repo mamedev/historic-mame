@@ -26,7 +26,7 @@ extern struct discrete_sound_block skydiver_discrete_interface[];
 
 /*----------- defined in vidhrdw/skydiver.c -----------*/
 
-extern data8_t *skydiver_videoram;
+extern UINT8 *skydiver_videoram;
 
 MACHINE_INIT( skydiver );
 WRITE8_HANDLER( skydiver_videoram_w );

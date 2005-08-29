@@ -82,9 +82,9 @@ Palette related:
 #include "sound/okim6295.h"
 
 /* from vidhrdw/wrally.c */
-extern data16_t *wrally_vregs;
-extern data16_t *wrally_videoram;
-extern data16_t *wrally_spriteram;
+extern UINT16 *wrally_vregs;
+extern UINT16 *wrally_videoram;
+extern UINT16 *wrally_spriteram;
 
 WRITE16_HANDLER( wrally_vram_w );
 VIDEO_START( wrally );

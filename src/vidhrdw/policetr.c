@@ -17,11 +17,11 @@
 
 
 /* local variables */
-static data32_t palette_offset;
+static UINT32 palette_offset;
 static UINT8 palette_index;
 static UINT8 palette_data[3];
 
-static struct rectangle render_clip;
+static rectangle render_clip;
 static UINT8 *srcbitmap;
 static UINT8 *dstbitmap;
 

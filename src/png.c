@@ -750,7 +750,7 @@ static int png_pack_buffer (png_info *p)
 
  *********************************************************************/
 
-static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
+static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 {
 	int i, j;
 	int r, g, b;
@@ -870,7 +870,7 @@ static int png_create_datastream(void *fp, struct mame_bitmap *bitmap)
 	return 1;
 }
 
-int png_write_bitmap(mame_file *fp, struct mame_bitmap *bitmap)
+int png_write_bitmap(mame_file *fp, mame_bitmap *bitmap)
 {
 	char text[1024];
 
@@ -895,7 +895,7 @@ int png_write_bitmap(mame_file *fp, struct mame_bitmap *bitmap)
 ********************************************************************************/
 
 
-int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
+int mng_capture_start(mame_file *fp, mame_bitmap *bitmap)
 {
 	UINT8 mhdr[28];
 	char text[1024];
@@ -924,7 +924,7 @@ int mng_capture_start(mame_file *fp, struct mame_bitmap *bitmap)
 	return 1;
 }
 
-int mng_capture_frame(mame_file *fp, struct mame_bitmap *bitmap)
+int mng_capture_frame(mame_file *fp, mame_bitmap *bitmap)
 {
 	if(png_create_datastream(fp, bitmap) == 0)
 		return 0;

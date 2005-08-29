@@ -39,15 +39,15 @@
  *
  *************************************/
 
-static data16_t *vram_base;
+static UINT16 *vram_base;
 
-static data16_t dpyadr;
+static UINT16 dpyadr;
 static int dpyadrscan;
 static int last_dpyint;
 
 static UINT8 cmd_pending;
-static data16_t iop_cmd;
-static data16_t iop_answer;
+static UINT16 iop_cmd;
+static UINT16 iop_answer;
 static int iop_romaddr;
 static UINT8 amerdart_iop_echo;
 
@@ -81,7 +81,7 @@ static void nvram_write_timeout(int param);
 
 static VIDEO_UPDATE( amerdart )
 {
-	data16_t *base = &vram_base[TOWORD(0x800) + cliprect->min_y * TOWORD(0x800)];
+	UINT16 *base = &vram_base[TOWORD(0x800) + cliprect->min_y * TOWORD(0x800)];
 	int x, y;
 
 	/* if we're blank, just blank the screen */
@@ -109,7 +109,7 @@ static VIDEO_UPDATE( amerdart )
 		/* render 4bpp data */
 		for (x = cliprect->min_x; x <= cliprect->max_x; x += 4)
 		{
-			data16_t pixels = base[x / 4];
+			UINT16 pixels = base[x / 4];
 			*dest++ = (pixels >> 0) & 15;
 			*dest++ = (pixels >> 4) & 15;
 			*dest++ = (pixels >> 8) & 15;
@@ -122,7 +122,7 @@ static VIDEO_UPDATE( amerdart )
 
 static VIDEO_UPDATE( coolpool )
 {
-	data16_t dpytap, dudate, dumask, vsblnk, veblnk;
+	UINT16 dpytap, dudate, dumask, vsblnk, veblnk;
 	int startscan = cliprect->min_y, endscan = cliprect->max_y;
 	int x, y, offset, scanoffs = 0;
 
@@ -178,7 +178,7 @@ static VIDEO_UPDATE( coolpool )
 		{
 			for (x = cliprect->min_x; x <= cliprect->max_x; x += 2)
 			{
-				data16_t pixels = vram_base[(offset & ~dumask & TOWORD(0x1fffff)) | ((offset + x/2) & dumask)];
+				UINT16 pixels = vram_base[(offset & ~dumask & TOWORD(0x1fffff)) | ((offset + x/2) & dumask)];
 				*dest++ = (pixels >> 0) & 0xff;
 				*dest++ = (pixels >> 8) & 0xff;
 			}
@@ -493,7 +493,7 @@ static READ16_HANDLER( dsp_hold_line_r )
 
 static READ16_HANDLER( dsp_rom_r )
 {
-	data8_t *rom = memory_region(REGION_USER2);
+	UINT8 *rom = memory_region(REGION_USER2);
 	return rom[iop_romaddr & (memory_region_length(REGION_USER2) - 1)];
 }
 
@@ -1044,10 +1044,10 @@ static DRIVER_INIT( coolpool )
 static DRIVER_INIT( 9ballsht )
 {
 	int a;
-	data16_t *rom;
+	UINT16 *rom;
 
 	/* decrypt the main program ROMs */
-	rom = (data16_t *)memory_region(REGION_USER1);
+	rom = (UINT16 *)memory_region(REGION_USER1);
 	for (a = 0;a < memory_region_length(REGION_USER1)/2;a++)
 	{
 		int hi,lo,nhi,nlo;
@@ -1070,11 +1070,11 @@ static DRIVER_INIT( 9ballsht )
 	}
 
 	/* decrypt the sub data ROMs */
-	rom = (data16_t *)memory_region(REGION_USER2);
+	rom = (UINT16 *)memory_region(REGION_USER2);
 	for (a = 1;a < memory_region_length(REGION_USER2)/2;a+=4)
 	{
 		/* just swap bits 1 and 2 of the address */
-		data16_t tmp = rom[a];
+		UINT16 tmp = rom[a];
 		rom[a] = rom[a+1];
 		rom[a+1] = tmp;
 	}

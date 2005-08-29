@@ -257,14 +257,14 @@ WRITE8_HANDLER( cosmic_background_enable_w )
 }
 
 
-static void draw_bitmap(struct mame_bitmap *bitmap)
+static void draw_bitmap(mame_bitmap *bitmap)
 {
 	offs_t offs;
 
 
 	for (offs = 0; offs < videoram_size; offs++)
 	{
-		data8_t data = videoram[offs];
+		UINT8 data = videoram[offs];
 
 		if (data != 0)	/* optimization, not absolutely neccessary */
 		{
@@ -293,7 +293,7 @@ static void draw_bitmap(struct mame_bitmap *bitmap)
 }
 
 
-static void draw_sprites(struct mame_bitmap *bitmap, int color_mask, int extra_sprites)
+static void draw_sprites(mame_bitmap *bitmap, int color_mask, int extra_sprites)
 {
 	int offs;
 
@@ -337,11 +337,11 @@ static void draw_sprites(struct mame_bitmap *bitmap, int color_mask, int extra_s
 }
 
 
-static void cosmica_draw_starfield(struct mame_bitmap *bitmap)
+static void cosmica_draw_starfield(mame_bitmap *bitmap)
 {
 	UINT8 y = 0;
 	UINT8 map = 0;
-	data8_t *PROM = memory_region(REGION_USER2);
+	UINT8 *PROM = memory_region(REGION_USER2);
 
 
 	while (1)
@@ -396,11 +396,11 @@ static void cosmica_draw_starfield(struct mame_bitmap *bitmap)
 }
 
 
-static void devzone_draw_grid(struct mame_bitmap *bitmap)
+static void devzone_draw_grid(mame_bitmap *bitmap)
 {
 	UINT8 y;
-	data8_t *horz_PROM = memory_region(REGION_USER2);
-	data8_t *vert_PROM = memory_region(REGION_USER3);
+	UINT8 *horz_PROM = memory_region(REGION_USER2);
+	UINT8 *vert_PROM = memory_region(REGION_USER3);
 	offs_t horz_addr = 0;
 
 	UINT8 count = 0;
@@ -465,11 +465,11 @@ static void devzone_draw_grid(struct mame_bitmap *bitmap)
 }
 
 
-static void nomnlnd_draw_background(struct mame_bitmap *bitmap)
+static void nomnlnd_draw_background(mame_bitmap *bitmap)
 {
 	UINT8 y = 0;
 	UINT8 water = cpu_getcurrentframe();
-	data8_t *PROM = memory_region(REGION_USER2);
+	UINT8 *PROM = memory_region(REGION_USER2);
 
 
 	/* all positioning is via logic gates:
@@ -541,8 +541,8 @@ static void nomnlnd_draw_background(struct mame_bitmap *bitmap)
 					offs_t offs = ((x >> 3) & 0x03) | ((y & 0x1f) << 2) |
 					              (flip_screen ? 0x80 : 0);
 
-					data8_t plane1 = PROM[offs         ] << (x & 0x07);
-					data8_t plane2 = PROM[offs | 0x0400] << (x & 0x07);
+					UINT8 plane1 = PROM[offs         ] << (x & 0x07);
+					UINT8 plane2 = PROM[offs | 0x0400] << (x & 0x07);
 
 					plane1 >>= 7;
 					plane2 >>= 7;
@@ -559,8 +559,8 @@ static void nomnlnd_draw_background(struct mame_bitmap *bitmap)
 				{
 					offs_t offs = hd | (water << 1) | 0x0200;
 
-					data8_t plane1 = PROM[offs         ] << (x & 0x07);
-					data8_t plane2 = PROM[offs | 0x0400] << (x & 0x07);
+					UINT8 plane1 = PROM[offs         ] << (x & 0x07);
+					UINT8 plane2 = PROM[offs | 0x0400] << (x & 0x07);
 
 					plane1 >>= 7;
 					plane2 >>= 7;

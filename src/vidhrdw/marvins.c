@@ -6,7 +6,7 @@
 static int flipscreen, sprite_flip_adjust;
 static tilemap *fg_tilemap, *bg_tilemap, *tx_tilemap;
 static unsigned char bg_color, fg_color, old_bg_color, old_fg_color;
-static struct rectangle tilemap_clip;
+static rectangle tilemap_clip;
 
 /***************************************************************************
 **
@@ -253,7 +253,7 @@ VIDEO_START( marvins )
 **
 ***************************************************************************/
 
-static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_status( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const unsigned char *base = videoram+0x400;
 	const gfx_element *gfx = Machine->gfx[0];
@@ -284,7 +284,7 @@ static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cli
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scrollx, int scrolly,
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int scrollx, int scrolly,
 		int priority, unsigned char sprite_partition )
 {
 	const gfx_element *gfx = Machine->gfx[3];
@@ -358,7 +358,7 @@ VIDEO_UPDATE( marvins )
 	int fg_scrolly = mem[0xfc00];
 	int fg_scrollx = mem[0xfd00];
 
-	struct rectangle finalclip = tilemap_clip;
+	rectangle finalclip = tilemap_clip;
 	sect_rect(&finalclip, cliprect);
 
 	if( (scroll_attributes & 4)==0 ) bg_scrollx += 256;
@@ -417,7 +417,7 @@ VIDEO_UPDATE( madcrash )
 	int fg_scrolly = mem[0xfe00];
 	int fg_scrollx = mem[0xff00];
 
-	struct rectangle finalclip = tilemap_clip;
+	rectangle finalclip = tilemap_clip;
 	sect_rect(&finalclip, cliprect);
 
 	if( (scroll_attributes & 4)==0 ) bg_scrollx += 256;

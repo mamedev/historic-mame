@@ -69,11 +69,11 @@
  *
  *************************************/
 
-data32_t *jaguar_shared_ram;
-data32_t *jaguar_gpu_ram;
-data32_t *jaguar_gpu_clut;
-data32_t *jaguar_dsp_ram;
-data32_t *jaguar_wave_rom;
+UINT32 *jaguar_shared_ram;
+UINT32 *jaguar_gpu_ram;
+UINT32 *jaguar_gpu_clut;
+UINT32 *jaguar_dsp_ram;
+UINT32 *jaguar_wave_rom;
 UINT8 cojag_is_r3000;
 
 
@@ -84,10 +84,10 @@ UINT8 cojag_is_r3000;
  *
  *************************************/
 
-static data32_t misc_control_data;
+static UINT32 misc_control_data;
 static UINT8 eeprom_enable;
 
-static data32_t *rom_base;
+static UINT32 *rom_base;
 static size_t rom_size;
 
 static struct ide_interface ide_intf =
@@ -321,9 +321,9 @@ static WRITE32_HANDLER( eeprom_data_w )
     run it until we get back to the spin loop.
 */
 
-static data32_t *gpu_jump_address;
+static UINT32 *gpu_jump_address;
 static UINT8 gpu_command_pending;
-static data32_t gpu_spin_pc;
+static UINT32 gpu_spin_pc;
 
 static void gpu_sync_timer(int param)
 {
@@ -388,7 +388,7 @@ static READ32_HANDLER( gpu_jump_r )
 
 #if ENABLE_SPEEDUP_HACKS
 
-static data32_t *main_speedup;
+static UINT32 *main_speedup;
 static int main_speedup_hits;
 static UINT32 main_speedup_last_cycles;
 static UINT32 main_speedup_max_cycles;

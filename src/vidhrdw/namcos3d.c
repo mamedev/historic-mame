@@ -56,10 +56,10 @@ Mixer:
 
 INT32 *namco_zbuffer;
 
-static data16_t *mpTextureTileMap16;
-static data8_t *mpTextureTileMapAttr;
-static data8_t *mpTextureTileData;
-static data8_t mXYAttrToPixel[16][16][16];
+static UINT16 *mpTextureTileMap16;
+static UINT8 *mpTextureTileMapAttr;
+static UINT8 *mpTextureTileData;
+static UINT8 mXYAttrToPixel[16][16][16];
 static unsigned texel( unsigned x, unsigned y );
 
 static void
@@ -120,8 +120,8 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 		if( pTilemapROM && pTextureROM )
 		{ /* following setup is Namco System 22 specific */
 			int i;
-			const data8_t *pPackedTileAttr = 0x200000 + (data8_t *)pTilemapROM;
-			data8_t *pUnpackedTileAttr = auto_malloc(0x080000*2);
+			const UINT8 *pPackedTileAttr = 0x200000 + (UINT8 *)pTilemapROM;
+			UINT8 *pUnpackedTileAttr = auto_malloc(0x080000*2);
 			if( pUnpackedTileAttr )
 			{
 				InitXYAttrToPixel();
@@ -141,7 +141,7 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 					unsigned i;
 					for( i=0; i<0x200000/2; i++ )
 					{
-						data16_t data = mpTextureTileMap16[i];
+						UINT16 data = mpTextureTileMap16[i];
 						mpTextureTileMap16[i] = (data>>8)|(data<<8);
 					}
 				}
@@ -157,7 +157,7 @@ namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 }
 
 void
-namcos3d_Start( struct mame_bitmap *pBitmap )
+namcos3d_Start( mame_bitmap *pBitmap )
 {
 	memset( namco_zbuffer, 0x7f, pBitmap->width*pBitmap->height*sizeof(*namco_zbuffer) );
 }
@@ -189,14 +189,14 @@ static unsigned texel( unsigned x, unsigned y )
 } /* texel */
 
 typedef void drawscanline_t(
-	struct mame_bitmap *bitmap,
-	const struct rectangle *clip,
+	mame_bitmap *bitmap,
+	const rectangle *clip,
 	const edge *e1,
 	const edge *e2,
 	int sy );
 
 static void
-renderscanline_uvi( struct mame_bitmap *bitmap, const struct rectangle *clip, const edge *e1, const edge *e2, int sy )
+renderscanline_uvi( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy )
 {
 	if( e1->x > e2->x )
 	{
@@ -267,8 +267,8 @@ renderscanline_uvi( struct mame_bitmap *bitmap, const struct rectangle *clip, co
  */
 static void
 rendertri(
-		struct mame_bitmap *bitmap,
-		const struct rectangle *clip,
+		mame_bitmap *bitmap,
+		const rectangle *clip,
 		const vertex *v0,
 		const vertex *v1,
 		const vertex *v2,
@@ -439,7 +439,7 @@ ProjectPoint( const struct VerTex *v, vertex *pv, const namcos22_camera *camera 
 
 static void
 BlitTriHelper(
-		struct mame_bitmap *pBitmap,
+		mame_bitmap *pBitmap,
 		const struct VerTex *v0,
 		const struct VerTex *v1,
 		const struct VerTex *v2,
@@ -476,7 +476,7 @@ VertexEqual( const struct VerTex *a, const struct VerTex *b )
  */
 void
 namcos22_BlitTri(
-	struct mame_bitmap *pBitmap,
+	mame_bitmap *pBitmap,
 	const struct VerTex v[3],
 	unsigned color, INT32 zsort, INT32 flags,
 	const namcos22_camera *camera )

@@ -84,7 +84,7 @@ static WRITE8_HANDLER( joinem_misc_w )
 
 static READ8_HANDLER( joinem_input1_r )
 {
-	data8_t ret = readinputport(1) & ~0x20;
+	UINT8 ret = readinputport(1) & ~0x20;
 
 	if((readinputport(4) & 0x80) && !joinem_snd_bit)
 		ret |= 0x20;
@@ -116,7 +116,7 @@ static READ8_HANDLER( striv_question_r )
 	// Read the actual byte from question roms
 	else
 	{
-		data8_t *ROM = memory_region(REGION_USER1);
+		UINT8 *ROM = memory_region(REGION_USER1);
 		int real_address;
 
 		real_address = question_address | (offset & 0x3f0) | remap_address[offset & 0x0f];
@@ -1283,7 +1283,7 @@ static DRIVER_INIT( zzyzzyxx )
 static DRIVER_INIT( striv )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
-	data8_t data;
+	UINT8 data;
 	int A;
 
 	/* decrypt program rom */

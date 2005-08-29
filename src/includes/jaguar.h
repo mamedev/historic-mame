@@ -17,11 +17,11 @@
 
 extern UINT8 cojag_is_r3000;
 
-extern data32_t *jaguar_shared_ram;
-extern data32_t *jaguar_gpu_ram;
-extern data32_t *jaguar_gpu_clut;
-extern data32_t *jaguar_dsp_ram;
-extern data32_t *jaguar_wave_rom;
+extern UINT32 *jaguar_shared_ram;
+extern UINT32 *jaguar_gpu_ram;
+extern UINT32 *jaguar_gpu_clut;
+extern UINT32 *jaguar_dsp_ram;
+extern UINT32 *jaguar_wave_rom;
 
 
 /*----------- defined in sndhrdw/jaguar.c -----------*/

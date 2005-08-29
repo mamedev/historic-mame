@@ -81,7 +81,7 @@ static void get_bg_tile_info(int tile_index)
 }
 
 #if 0
-static void chrmstr_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void chrmstr_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	// THIS IS COMPLETELY WRONG AND ONLY A PLACEHOLDER, IT HAS BEEN DISABLED TO KEEP THE COMPILER HAPPY
 	int offs;

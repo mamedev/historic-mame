@@ -32,9 +32,9 @@ VIDEO_UPDATE( qdrmfgp );
 
 
 
-static data8_t *sndram;
-static data16_t *workram;
-static data16_t control;
+static UINT8 *sndram;
+static UINT16 *workram;
+static UINT16 control;
 static int qdrmfgp_pal;
 static int gp2_irq_control;
 
@@ -128,7 +128,7 @@ static WRITE16_HANDLER( gp2_control_w )
 
 static READ16_HANDLER( v_rom_r )
 {
-	data8_t *mem8 = memory_region(REGION_GFX1);
+	UINT8 *mem8 = memory_region(REGION_GFX1);
 	int bank = K056832_word_r(0x34/2, 0xffff);
 
 	offset += bank * 0x800 * 4;

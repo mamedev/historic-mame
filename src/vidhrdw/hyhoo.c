@@ -21,7 +21,7 @@ static int hyhoo_highcolorflag;
 static int hyhoo_flipscreen;
 static int hyhoo_screen_refresh;
 
-static struct mame_bitmap *hyhoo_tmpbitmap;
+static mame_bitmap *hyhoo_tmpbitmap;
 static unsigned short *hyhoo_videoram;
 static unsigned short *hyhoo_videoworkram;
 static unsigned char *hyhoo_clut;
@@ -326,10 +326,10 @@ void hyhoo_gfxdraw(void)
 VIDEO_START( hyhoo )
 {
 	if ((hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data16_t))) == 0) return 1;
-	if ((hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data16_t))) == 0) return 1;
-	if ((hyhoo_clut = auto_malloc(0x10 * sizeof(data8_t))) == 0) return 1;
-	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data16_t)));
+	if ((hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16))) == 0) return 1;
+	if ((hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16))) == 0) return 1;
+	if ((hyhoo_clut = auto_malloc(0x10 * sizeof(UINT8))) == 0) return 1;
+	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
 	return 0;
 }
 

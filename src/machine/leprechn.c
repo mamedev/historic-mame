@@ -4,7 +4,7 @@
 #include "includes/leprechn.h"
 
 
-static data8_t input_port_select;
+static UINT8 input_port_select;
 
 static WRITE8_HANDLER( leprechn_input_port_select_w )
 {

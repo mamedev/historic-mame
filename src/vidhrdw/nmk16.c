@@ -1,21 +1,21 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
-data16_t *gunnail_scrollram;
-static data16_t gunnail_scrolly;
-data16_t tharrier_scroll;
+UINT16 *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
+UINT16 *gunnail_scrollram;
+static UINT16 gunnail_scrolly;
+UINT16 tharrier_scroll;
 
 static int redraw_bitmap;
 
-static data16_t *spriteram_old,*spriteram_old2;
+static UINT16 *spriteram_old,*spriteram_old2;
 static int bgbank;
 static int videoshift;
 static int bioship_background_bank;
 static UINT8 bioship_scroll[4];
 
 static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
-static struct mame_bitmap *background_bitmap;
+static mame_bitmap *background_bitmap;
 
 /***************************************************************************
 
@@ -460,7 +460,7 @@ extern int is_blkheart;
 
 // manybloc uses extra flip bits on the sprites, but these break other games
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs;
 
@@ -512,7 +512,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 }
 
 /* sprites have flipping and are not delayed 2 frames */
-static void manybloc_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void manybloc_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs;
 
@@ -571,7 +571,7 @@ static void manybloc_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 	}
 }
 
-static void tharrier_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void tharrier_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	int offs;
 
@@ -646,8 +646,8 @@ VIDEO_UPDATE( macross )
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 }
 
-extern data16_t *mcu_shared_ram;
-extern data16_t *work_ram;
+extern UINT16 *mcu_shared_ram;
+extern UINT16 *work_ram;
 
 /*coin setting MCU simulation*/
 static void mcu_run(UINT8 dsw_setting)
@@ -840,7 +840,7 @@ VIDEO_UPDATE( gunnail )
 
 VIDEO_UPDATE( bioship )
 {
-	data16_t *tilerom = (data16_t *)memory_region(REGION_GFX5);
+	UINT16 *tilerom = (UINT16 *)memory_region(REGION_GFX5);
 	int scrollx=-(bioship_scroll[1] + bioship_scroll[0]*256);
 	int scrolly=-(bioship_scroll[3] + bioship_scroll[2]*256);
 
@@ -854,7 +854,7 @@ VIDEO_UPDATE( bioship )
 
 		/* Draw background from tile rom */
 		for (offs = 0;offs <0x1000;offs++) {
-				data16_t data = tilerom[offs+bank];
+				UINT16 data = tilerom[offs+bank];
 				int numtile = data&0xfff;
 				int color = (data&0xf000)>>12;
 

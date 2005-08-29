@@ -105,7 +105,7 @@ VIDEO_START( higemaru )
 	return 0;
 }
 
-static void higemaru_draw_sprites( struct mame_bitmap *bitmap )
+static void higemaru_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

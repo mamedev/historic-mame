@@ -15,8 +15,8 @@ size_t ninjakd2_backgroundram_size;
 unsigned char 	*ninjakd2_foreground_videoram;
 size_t ninjakd2_foregroundram_size;
 
-static struct mame_bitmap *bitmap_bg;
-static struct mame_bitmap *bitmap_sp;
+static mame_bitmap *bitmap_bg;
+static mame_bitmap *bitmap_sp;
 
 static unsigned char 	 *bg_dirtybuffer;
 static int 		 bg_enable = 1;
@@ -76,7 +76,7 @@ WRITE8_HANDLER( ninjakd2_sprite_overdraw_w )
 	}
 }
 
-void ninjakd2_draw_foreground(struct mame_bitmap *bitmap)
+void ninjakd2_draw_foreground(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -110,7 +110,7 @@ void ninjakd2_draw_foreground(struct mame_bitmap *bitmap)
 }
 
 
-void ninjakd2_draw_background(struct mame_bitmap *bitmap)
+void ninjakd2_draw_background(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -145,7 +145,7 @@ void ninjakd2_draw_background(struct mame_bitmap *bitmap)
 	}
 }
 
-void ninjakd2_draw_sprites(struct mame_bitmap *bitmap)
+void ninjakd2_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 

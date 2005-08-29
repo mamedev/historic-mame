@@ -19,8 +19,8 @@ Might be some priority glitches
 #include "sound/msm5205.h"
 
 /* in vidhrdw/tbowl.c */
-extern data8_t *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
-extern data8_t *tbowl_spriteram;
+extern UINT8 *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;
+extern UINT8 *tbowl_spriteram;
 
 WRITE8_HANDLER (tbowl_bg2videoram_w);
 WRITE8_HANDLER (tbowl_bgvideoram_w);

@@ -37,9 +37,9 @@ Year + Game         Board#
 
 /* Variables defined in vidhrdw: */
 
-extern data16_t *yunsun16_vram_0,   *yunsun16_vram_1;
-extern data16_t *yunsun16_scroll_0, *yunsun16_scroll_1;
-extern data16_t *yunsun16_priority;
+extern UINT16 *yunsun16_vram_0,   *yunsun16_vram_1;
+extern UINT16 *yunsun16_scroll_0, *yunsun16_scroll_1;
+extern UINT16 *yunsun16_priority;
 
 /* Functions defined in vidhrdw: */
 

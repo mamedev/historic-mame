@@ -26,7 +26,7 @@ TODO:
 #include "sound/sn76496.h"
 #include "sound/msm5205.h"
 
-extern data8_t *mjkjidai_videoram;
+extern UINT8 *mjkjidai_videoram;
 
 VIDEO_START( mjkjidai );
 VIDEO_UPDATE( mjkjidai );
@@ -80,7 +80,7 @@ static WRITE8_HANDLER( keyboard_select_w )
 	}
 }
 
-static data8_t *nvram;
+static UINT8 *nvram;
 static size_t nvram_size;
 
 void nvram_handler_mjkjidai(mame_file *file, int read_or_write)

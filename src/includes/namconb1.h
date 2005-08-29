@@ -13,10 +13,10 @@
 #define NAMCONB1_SPRITEGFX		1
 #define NAMCONB1_ROTGFX			2
 
-extern data32_t *namconb1_workram32;
-extern data32_t *namconb1_spritebank32;
-extern data32_t *namconb1_tilebank32;
-extern data32_t *namconb1_spritepos32;
+extern UINT32 *namconb1_workram32;
+extern UINT32 *namconb1_spritebank32;
+extern UINT32 *namconb1_tilebank32;
+extern UINT32 *namconb1_spritepos32;
 
 VIDEO_UPDATE( namconb1 );
 VIDEO_START( namconb1 );

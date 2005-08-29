@@ -93,11 +93,11 @@ type1       type0           function
 #include "vidhrdw/res_net.h"
 
 /* vidhrdw/segac2.c */
-extern void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
+extern void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect );
 extern void start_system18_vdp(void);
 extern READ16_HANDLER( segac2_vdp_r );
 extern WRITE16_HANDLER( segac2_vdp_w );
-data16_t sys18_ddcrew_bankregs[0x20];
+UINT16 sys18_ddcrew_bankregs[0x20];
 
 
 
@@ -105,9 +105,9 @@ data16_t sys18_ddcrew_bankregs[0x20];
 /* callback to poll video registers */
 void (* sys16_update_proc)( void );
 
-data16_t *sys16_tileram;
-data16_t *sys16_textram;
-data16_t *sys16_spriteram;
+UINT16 *sys16_tileram;
+UINT16 *sys16_textram;
+UINT16 *sys16_spriteram;
 
 static int num_sprites;
 
@@ -153,19 +153,19 @@ int sys16_fg2_page[4];
 
 int sys18_bg2_active;
 int sys18_fg2_active;
-data16_t *sys18_splittab_bg_x;
-data16_t *sys18_splittab_bg_y;
-data16_t *sys18_splittab_fg_x;
-data16_t *sys18_splittab_fg_y;
+UINT16 *sys18_splittab_bg_x;
+UINT16 *sys18_splittab_bg_y;
+UINT16 *sys18_splittab_fg_x;
+UINT16 *sys18_splittab_fg_y;
 
-data16_t *sys16_gr_ver;
-data16_t *sys16_gr_hor;
-data16_t *sys16_gr_pal;
-data16_t *sys16_gr_flip;
+UINT16 *sys16_gr_ver;
+UINT16 *sys16_gr_hor;
+UINT16 *sys16_gr_pal;
+UINT16 *sys16_gr_flip;
 int sys16_gr_palette;
 int sys16_gr_palette_default;
 unsigned char sys16_gr_colorflip[2][4];
-data16_t *sys16_gr_second_road;
+UINT16 *sys16_gr_second_road;
 
 static tilemap *background, *foreground, *text_layer;
 static tilemap *background2, *foreground2;
@@ -196,8 +196,8 @@ READ16_HANDLER( sys16_tileram_r ){
 */
 
 static void draw_sprite( //*
-	struct mame_bitmap *bitmap,
-	const struct rectangle *cliprect,
+	mame_bitmap *bitmap,
+	const rectangle *cliprect,
 	const unsigned char *addr, int pitch,
 	const pen_t *paldata,
 	int x0, int y0, int screen_width, int screen_height,
@@ -336,12 +336,12 @@ static void draw_sprite( //*
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int b3d ) //*
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int b3d ) //*
 {
 	const pen_t *base_pal = Machine->gfx[0]->colortable;
 	const unsigned char *base_gfx = memory_region(REGION_GFX2);
 	const int gfx_rom_size = memory_region_length(REGION_GFX2);
-	const data16_t *source = sys16_spriteram;
+	const UINT16 *source = sys16_spriteram;
 	struct sys16_sprite_attributes sprite;
 	int xpos, ypos, screen_width, width, logical_height, pitch, flipy, flipx;
 	int i, mod_h, mod_x, eos;
@@ -476,8 +476,8 @@ static double weights[2][3][6];
 
 WRITE16_HANDLER( sys16_paletteram_w )
 {
-	data16_t oldword = paletteram16[offset];
-	data16_t newword;
+	UINT16 oldword = paletteram16[offset];
+	UINT16 newword;
 	COMBINE_DATA( &paletteram16[offset] );
 	newword = paletteram16[offset];
 
@@ -672,7 +672,7 @@ static void get_fg2_tile_info( int offset ){
 }
 
 WRITE16_HANDLER( sys16_tileram_w ){
-	data16_t oldword = sys16_tileram[offset];
+	UINT16 oldword = sys16_tileram[offset];
 	COMBINE_DATA( &sys16_tileram[offset] );
 	if( oldword != sys16_tileram[offset] ){
 		int page = offset/(64*32);
@@ -705,7 +705,7 @@ WRITE16_HANDLER( sys16_tileram_w ){
 /***************************************************************************/
 
 static void get_text_tile_info( int offset ){
-	const data16_t *source = sys16_textram;
+	const UINT16 *source = sys16_textram;
 	int tile_number = source[offset];
 	int pri = tile_number >> 8;
 	{

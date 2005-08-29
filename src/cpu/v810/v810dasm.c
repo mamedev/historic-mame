@@ -31,7 +31,7 @@ const static char *dRegs[]={
 #define GET2s(opcode) dRegs[((opcode)>>5)&0x1f]
 #define GETRs(opcode) dRegs[32+((opcode)&0x1f)]
 
-unsigned v810_disasm( char *buffer, data32_t oldpc )
+unsigned v810_disasm( char *buffer, UINT32 oldpc )
 {
 	UINT32 opc,opc2;
 	UINT32 pc=oldpc;

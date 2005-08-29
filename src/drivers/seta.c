@@ -1367,7 +1367,7 @@ static struct YM3438interface utoukond_ym3438_intf =
  Mirror RAM
 
 */
-static data16_t *mirror_ram;
+static UINT16 *mirror_ram;
 
 READ16_HANDLER( mirror_ram_r )
 {
@@ -1393,7 +1393,7 @@ WRITE16_HANDLER( mirror_ram_w )
 
 static READ16_HANDLER( sharedram_68000_r )
 {
-	return ((data16_t) sharedram[offset]) & 0xff;
+	return ((UINT16) sharedram[offset]) & 0xff;
 }
 
 static WRITE16_HANDLER( sharedram_68000_w )
@@ -1476,7 +1476,7 @@ void seta_coin_lockout_w(int data)
 /* DSW reading for 16 bit CPUs */
 static READ16_HANDLER( seta_dsw_r )
 {
-	data16_t dsw = readinputport(3);
+	UINT16 dsw = readinputport(3);
 	if (offset == 0)	return (dsw >> 8) & 0xff;
 	else				return (dsw >> 0) & 0xff;
 }
@@ -2528,7 +2528,7 @@ ADDRESS_MAP_END
                             Pro Mahjong Kiwame
 ***************************************************************************/
 
-data16_t *kiwame_nvram;
+UINT16 *kiwame_nvram;
 
 READ16_HANDLER( kiwame_nvram_r )
 {
@@ -2758,7 +2758,7 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER( sub_bankswitch_w )
 {
-	data8_t *rom = memory_region(REGION_CPU2);
+	UINT8 *rom = memory_region(REGION_CPU2);
 	int bank = data >> 4;
 
 	memory_set_bankptr(1, &rom[bank * 0x4000 + 0xc000]);
@@ -8615,7 +8615,7 @@ READ16_HANDLER( twineagl_debug_r )
 
 /* Extra RAM ? Check code at 0x00ba90 */
 /* 2000F8 = A3 enables it, 2000F8 = 00 disables? see downtown too */
-static data8_t xram[8];
+static UINT8 xram[8];
 READ16_HANDLER( twineagl_200100_r )
 {
 logerror("%04x: twineagl_200100_r %d\n",activecpu_get_pc(),offset);
@@ -8640,7 +8640,7 @@ DRIVER_INIT( twineagl )
 
 
 /* Protection? NVRAM is handled writing commands here */
-data16_t downtown_protection[0x200/2];
+UINT16 downtown_protection[0x200/2];
 static READ16_HANDLER( downtown_protection_r )
 {
 	int job = downtown_protection[0xf8/2] & 0xff;
@@ -8692,7 +8692,7 @@ DRIVER_INIT( arbalest )
 
 DRIVER_INIT( metafox )
 {
-	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *) memory_region(REGION_CPU1);
 
 	/* This game uses the 21c000-21ffff area for protection? */
 //  memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MRA16_NOP);
@@ -8755,7 +8755,7 @@ DRIVER_INIT( zombraid )
 
 DRIVER_INIT( kiwame )
 {
-	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *) memory_region(REGION_CPU1);
 
 	/* WARNING: This game writes to the interrupt vector
        table. Lev 1 routine address is stored at $100 */
@@ -8772,9 +8772,9 @@ DRIVER_INIT( rezon )
 
 static DRIVER_INIT(wiggie)
 {
-	data8_t *src;
+	UINT8 *src;
 	int len;
-	data8_t temp[16];
+	UINT8 temp[16];
 	int i,j;
 
 	src = memory_region(REGION_CPU1);

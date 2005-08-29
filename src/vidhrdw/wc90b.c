@@ -2,13 +2,13 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *wc90b_fgvideoram,*wc90b_bgvideoram,*wc90b_txvideoram;
+UINT8 *wc90b_fgvideoram,*wc90b_bgvideoram,*wc90b_txvideoram;
 
-data8_t *wc90b_scroll1x;
-data8_t *wc90b_scroll2x;
+UINT8 *wc90b_scroll1x;
+UINT8 *wc90b_scroll2x;
 
-data8_t *wc90b_scroll1y;
-data8_t *wc90b_scroll2y;
+UINT8 *wc90b_scroll1y;
+UINT8 *wc90b_scroll2y;
 
 
 static tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
@@ -119,7 +119,7 @@ WRITE8_HANDLER( wc90b_txvideoram_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority ){
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority ){
   int offs;
 
   /* draw all visible sprites of specified priority */

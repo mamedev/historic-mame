@@ -56,8 +56,8 @@ extern INTERRUPT_GEN( attckufo_raster_interrupt );
 extern WRITE8_HANDLER ( attckufo_port_w );
 extern READ8_HANDLER ( attckufo_port_r );
 
-static data8_t *mainram;
-static data8_t *tileram;
+static UINT8 *mainram;
+static UINT8 *tileram;
 
 static PALETTE_INIT( attckufo )
 {

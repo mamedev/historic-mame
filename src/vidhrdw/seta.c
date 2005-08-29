@@ -149,11 +149,11 @@ static int tilemaps_flip;
 
 int seta_tiles_offset;
 
-data16_t *seta_vram_0, *seta_vctrl_0;
-data16_t *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
-data16_t *seta_vregs;
+UINT16 *seta_vram_0, *seta_vctrl_0;
+UINT16 *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
+UINT16 *seta_vregs;
 
-data16_t *seta_workram; // Used for zombraid crosshair hack
+UINT16 *seta_workram; // Used for zombraid crosshair hack
 
 static int twineagl_tilebank[4];
 static int	seta_samples_bank;
@@ -331,10 +331,10 @@ Offset + 0x4:
 
 ***************************************************************************/
 
-INLINE void twineagl_tile_info( int tile_index, data16_t *vram )
+INLINE void twineagl_tile_info( int tile_index, UINT16 *vram )
 {
-	data16_t code =	vram[ tile_index ];
-	data16_t attr =	vram[ tile_index + 0x800 ];
+	UINT16 code =	vram[ tile_index ];
+	UINT16 attr =	vram[ tile_index + 0x800 ];
 	if ((code & 0x3e00) == 0x3e00)
 		code = (code & 0xc07f) | ((twineagl_tilebank[(code & 0x0180) >> 7] >> 1) << 7);
 	SET_TILE_INFO( 1, (code & 0x3fff), attr & 0x1f, TILE_FLIPXY((code & 0xc000) >> 14) )
@@ -344,10 +344,10 @@ static void twineagl_get_tile_info_0( int tile_index ) { twineagl_tile_info( til
 static void twineagl_get_tile_info_1( int tile_index ) { twineagl_tile_info( tile_index, seta_vram_0 + 0x1000 ); }
 
 
-INLINE void get_tile_info( int tile_index, int layer, data16_t *vram )
+INLINE void get_tile_info( int tile_index, int layer, UINT16 *vram )
 {
-	data16_t code =	vram[ tile_index ];
-	data16_t attr =	vram[ tile_index + 0x800 ];
+	UINT16 code =	vram[ tile_index ];
+	UINT16 attr =	vram[ tile_index + 0x800 ];
 	SET_TILE_INFO( 1 + layer, seta_tiles_offset + (code & 0x3fff), attr & 0x1f, TILE_FLIPXY((code & 0xc000) >> 14) )
 }
 
@@ -359,8 +359,8 @@ static void get_tile_info_3( int tile_index ) { get_tile_info( tile_index, 1, se
 
 WRITE16_HANDLER( seta_vram_0_w )
 {
-	data16_t oldword = seta_vram_0[offset];
-	data16_t newword = COMBINE_DATA(&seta_vram_0[offset]);
+	UINT16 oldword = seta_vram_0[offset];
+	UINT16 newword = COMBINE_DATA(&seta_vram_0[offset]);
 	if (oldword != newword)
 	{
 		if (offset & 0x1000)
@@ -372,8 +372,8 @@ WRITE16_HANDLER( seta_vram_0_w )
 
 WRITE16_HANDLER( seta_vram_2_w )
 {
-	data16_t oldword = seta_vram_2[offset];
-	data16_t newword = COMBINE_DATA(&seta_vram_2[offset]);
+	UINT16 oldword = seta_vram_2[offset];
+	UINT16 newword = COMBINE_DATA(&seta_vram_2[offset]);
 	if (oldword != newword)
 	{
 		if (offset & 0x1000)
@@ -648,7 +648,7 @@ PALETTE_INIT( usclssic )
 ***************************************************************************/
 
 
-static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void seta_draw_sprites_map(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs, col;
 	int xoffs, yoffs;
@@ -662,7 +662,7 @@ static void seta_draw_sprites_map(struct mame_bitmap *bitmap,const struct rectan
 	int numcol	=	ctrl2 & 0x000f;
 
 	/* Sprites Banking and/or Sprites Buffering */
-	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
+	UINT16 *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
 	int upper	=	( spriteram16[ 0x604/2 ] & 0xFF ) +
 					( spriteram16[ 0x606/2 ] & 0xFF ) * 256;
@@ -752,7 +752,7 @@ twineagl:   000 027 00 0f   (test mode)
 
 
 
-static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void seta_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 	int xoffs, yoffs;
@@ -765,7 +765,7 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 	int flip	=	ctrl & 0x40;
 
 	/* Sprites Banking and/or Sprites Buffering */
-	data16_t *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
+	UINT16 *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
 	int max_y	=	0xf0;
 
@@ -822,7 +822,7 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 
 ***************************************************************************/
 
-static void zombraid_drawcrosshairs( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void zombraid_drawcrosshairs( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int p1_x = seta_workram[0xC4AA/2];
 	int p1_y = 0x08+0xff - seta_workram[0xC4AC/2];

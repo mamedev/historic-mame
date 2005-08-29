@@ -10,11 +10,11 @@
 
 /******************************************************************************/
 
-static void dassault_drawsprites(struct mame_bitmap *bitmap, int pf_priority)
+static void dassault_drawsprites(mame_bitmap *bitmap, int pf_priority)
 {
 	int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 	int offs, bank, gfxbank;
-	const data16_t *spritebase;
+	const UINT16 *spritebase;
 
 	/* Have to loop over the two sprite sources */
 	for (bank=0; bank<2; bank++)

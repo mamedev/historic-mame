@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;
+UINT8 *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;
 
 static tilemap *bg_tilemap,*tx_tilemap;
 
@@ -95,7 +95,7 @@ static UINT32 tilemap_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows
 
 static void bg_get_tile_info(int tile_index)
 {
-	data8_t *rom = memory_region(REGION_GFX4);
+	UINT8 *rom = memory_region(REGION_GFX4);
 	int code = rom[tile_index | (bg_select << 10)];
 	/* when the background is "disabled", it is actually still drawn, but using
        a color code that makes all pixels black. There are pullups setting the
@@ -249,13 +249,13 @@ WRITE8_HANDLER( digdug_PORT_w )
 
 ***************************************************************************/
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	2*8, 34*8-1,
 	0*8, 28*8-1
 };
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

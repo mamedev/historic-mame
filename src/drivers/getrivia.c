@@ -34,7 +34,7 @@ RAM: 6117on ROM board and (24) MCM4517s on main board
 #include "machine/8255ppi.h"
 #include "sound/dac.h"
 
-static data8_t *drawctrl;
+static UINT8 *drawctrl;
 
 static WRITE8_HANDLER( getrivia_bitmap_w )
 {

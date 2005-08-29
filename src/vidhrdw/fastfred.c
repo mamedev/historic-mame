@@ -11,29 +11,29 @@
 
 extern int galaxian_stars_on;
 extern void galaxian_init_stars(int colors_offset);
-extern void galaxian_draw_stars(struct mame_bitmap *bitmap);
+extern void galaxian_draw_stars(mame_bitmap *bitmap);
 
-data8_t *fastfred_videoram;
-data8_t *fastfred_spriteram;
+UINT8 *fastfred_videoram;
+UINT8 *fastfred_spriteram;
 size_t fastfred_spriteram_size;
-data8_t *fastfred_attributesram;
-data8_t *imago_fg_videoram;
+UINT8 *fastfred_attributesram;
+UINT8 *imago_fg_videoram;
 
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
       2*8, 32*8-1,
       2*8, 30*8-1
 };
 
-static struct rectangle spritevisibleareaflipx =
+static rectangle spritevisibleareaflipx =
 {
         0*8, 30*8-1,
         2*8, 30*8-1
 };
 
-static data16_t charbank;
-static data8_t colorbank;
+static UINT16 charbank;
+static UINT8 colorbank;
 static int flip_screen_x;
 static int flip_screen_y;
 int fastfred_hardware_type;
@@ -112,10 +112,10 @@ PALETTE_INIT( fastfred )
 
 static void get_tile_info(int tile_index)
 {
-	data8_t x = tile_index & 0x1f;
+	UINT8 x = tile_index & 0x1f;
 
-	data16_t code = charbank | fastfred_videoram[tile_index];
-	data8_t color = colorbank | (fastfred_attributesram[2 * x + 1] & 0x07);
+	UINT16 code = charbank | fastfred_videoram[tile_index];
+	UINT8 color = colorbank | (fastfred_attributesram[2 * x + 1] & 0x07);
 
 	SET_TILE_INFO(0, code, color, 0)
 }
@@ -183,7 +183,7 @@ WRITE8_HANDLER( fastfred_attributes_w )
 
 WRITE8_HANDLER( fastfred_charbank1_w )
 {
-	data16_t new_data = (charbank & 0x0200) | ((data & 0x01) << 8);
+	UINT16 new_data = (charbank & 0x0200) | ((data & 0x01) << 8);
 
 	if (new_data != charbank)
 	{
@@ -195,7 +195,7 @@ WRITE8_HANDLER( fastfred_charbank1_w )
 
 WRITE8_HANDLER( fastfred_charbank2_w )
 {
-	data16_t new_data = (charbank & 0x0100) | ((data & 0x01) << 9);
+	UINT16 new_data = (charbank & 0x0100) | ((data & 0x01) << 9);
 
 	if (new_data != charbank)
 	{
@@ -208,7 +208,7 @@ WRITE8_HANDLER( fastfred_charbank2_w )
 
 WRITE8_HANDLER( fastfred_colorbank1_w )
 {
-	data8_t new_data = (colorbank & 0x10) | ((data & 0x01) << 3);
+	UINT8 new_data = (colorbank & 0x10) | ((data & 0x01) << 3);
 
 	if (new_data != colorbank)
 	{
@@ -220,7 +220,7 @@ WRITE8_HANDLER( fastfred_colorbank1_w )
 
 WRITE8_HANDLER( fastfred_colorbank2_w )
 {
-	data8_t new_data = (colorbank & 0x08) | ((data & 0x01) << 4);
+	UINT8 new_data = (colorbank & 0x08) | ((data & 0x01) << 4);
 
 	if (new_data != colorbank)
 	{
@@ -265,7 +265,7 @@ WRITE8_HANDLER( fastfred_flip_screen_y_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -350,10 +350,10 @@ VIDEO_UPDATE( fastfred )
 
 static void imago_get_tile_info_bg(int tile_index)
 {
-	data8_t x = tile_index & 0x1f;
+	UINT8 x = tile_index & 0x1f;
 
-	data16_t code = charbank * 0x100 + fastfred_videoram[tile_index];
-	data8_t color = colorbank | (fastfred_attributesram[2 * x + 1] & 0x07);
+	UINT16 code = charbank * 0x100 + fastfred_videoram[tile_index];
+	UINT8 color = colorbank | (fastfred_attributesram[2 * x + 1] & 0x07);
 
 	SET_TILE_INFO(0, code, color, 0)
 }

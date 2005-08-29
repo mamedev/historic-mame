@@ -24,12 +24,12 @@ extern enum namcos22_gametype
 
 #define NAMCOS22_PALETTE_SIZE 0x8000
 
-extern data32_t *namcos22_cgram;
-extern data32_t *namcos22_textram;
-extern data32_t *namcos22_polygonram;
-extern data32_t *namcos22_gamma;
-extern data32_t *namcos22_vics_data;
-extern data32_t *namcos22_vics_control;
+extern UINT32 *namcos22_cgram;
+extern UINT32 *namcos22_textram;
+extern UINT32 *namcos22_polygonram;
+extern UINT32 *namcos22_gamma;
+extern UINT32 *namcos22_vics_data;
+extern UINT32 *namcos22_vics_control;
 
 WRITE16_HANDLER( namcos22_dspram16_bank_w );
 READ16_HANDLER( namcos22_dspram16_r );
@@ -55,6 +55,6 @@ VIDEO_UPDATE( namcos22 );
 VIDEO_START( namcos22s );
 VIDEO_UPDATE( namcos22s );
 
-void namcos22_WriteDataToRenderDevice( data32_t data );
+void namcos22_WriteDataToRenderDevice( UINT32 data );
 void namcos22_UploadCodeToDSP( void );
-void namcos22_draw_direct_poly( const data16_t *pSource );
+void namcos22_draw_direct_poly( const UINT16 *pSource );

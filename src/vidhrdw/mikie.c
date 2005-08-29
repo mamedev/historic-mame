@@ -146,7 +146,7 @@ VIDEO_START( mikie )
 	return 0;
 }
 
-static void mikie_draw_sprites( struct mame_bitmap *bitmap )
+static void mikie_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

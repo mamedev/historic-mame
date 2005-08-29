@@ -3038,7 +3038,7 @@ static DRIVER_INIT (gatsbee)
 
 static DRIVER_INIT( xevious )
 {
-	data8_t *rom;
+	UINT8 *rom;
 	int i;
 
 	rom = memory_region(REGION_GFX3) + 0x5000;

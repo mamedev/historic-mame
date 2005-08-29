@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *k007121_tilemap[2];
-static struct rectangle k007121_clip[2];
+static rectangle k007121_clip[2];
 
 unsigned char *k007121_ram;
 
@@ -147,7 +147,7 @@ WRITE8_HANDLER( flkatck_k007121_regs_w )
 
 VIDEO_UPDATE( flkatck )
 {
-	struct rectangle final_clip[2];
+	rectangle final_clip[2];
 
 #if 0
 ui_popup("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",

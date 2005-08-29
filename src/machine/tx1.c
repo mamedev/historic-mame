@@ -591,9 +591,9 @@ ST
 
 READ8_HANDLER(BB_AU_R)
 {
-data8_t *AU_instr = (data8_t *)memory_region(REGION_USER1);
-//data8_t *AU_PROM1 = (data8_t *)memory_region(REGION_PROMS) + 0x1700;
-//data8_t *AU_PROM2 = (data8_t *)memory_region(REGION_PROMS) + 0x1900;
+UINT8 *AU_instr = (UINT8 *)memory_region(REGION_USER1);
+//UINT8 *AU_PROM1 = (UINT8 *)memory_region(REGION_PROMS) + 0x1700;
+//UINT8 *AU_PROM2 = (UINT8 *)memory_region(REGION_PROMS) + 0x1900;
 
 INT8 value = 0;
 
@@ -640,8 +640,8 @@ INT8 value = 0;
 
 WRITE8_HANDLER(BB_AU_W)
 {
-//data8_t *AU_PROM1 = (data8_t *)memory_region(REGION_PROMS) + 0x1700;
-//data8_t *AU_PROM2 = (data8_t *)memory_region(REGION_PROMS) + 0x1900;
+//UINT8 *AU_PROM1 = (UINT8 *)memory_region(REGION_PROMS) + 0x1700;
+//UINT8 *AU_PROM2 = (UINT8 *)memory_region(REGION_PROMS) + 0x1900;
 
       switch (offset)
       {

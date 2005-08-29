@@ -29,19 +29,19 @@ static int bankreg;
 // true if cabinet == cocktail -AND- handling player 2
 int naughtyb_cocktail;
 
-static struct rectangle scrollvisiblearea =
+static rectangle scrollvisiblearea =
 {
 	2*8, 34*8-1,
 	0*8, 28*8-1
 };
 
-static struct rectangle leftvisiblearea =
+static rectangle leftvisiblearea =
 {
 	0*8, 2*8-1,
 	0*8, 28*8-1
 };
 
-static struct rectangle rightvisiblearea =
+static rectangle rightvisiblearea =
 {
 	34*8, 36*8-1,
 	0*8, 28*8-1

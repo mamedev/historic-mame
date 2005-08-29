@@ -10,7 +10,7 @@
 
 #define SCSI_MAX_DEVICES	(16)
 
-typedef int (* pSCSIDispatch)(int operation, void *file, INT64 intparm, data8_t *ptrparm);
+typedef int (* pSCSIDispatch)(int operation, void *file, INT64 intparm, UINT8 *ptrparm);
 
 typedef struct scsiconfigitem
 {
@@ -55,10 +55,10 @@ enum
 #define SCSI_DEVICE_HARDDISK scsihd_dispatch
 
 // CD-ROM handler
-int scsicd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm);
+int scsicd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm);
 
 // hard disk handler
-int scsihd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm);
+int scsihd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm);
 
 #endif
 

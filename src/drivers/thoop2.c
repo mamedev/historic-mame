@@ -14,9 +14,9 @@ The DS5002FP has up to 128 KB undumped gameplay code
 #include "cpu/m68000/m68000.h"
 #include "sound/okim6295.h"
 
-extern data16_t *thoop2_vregs;
-extern data16_t *thoop2_videoram;
-extern data16_t *thoop2_spriteram;
+extern UINT16 *thoop2_vregs;
+extern UINT16 *thoop2_videoram;
+extern UINT16 *thoop2_spriteram;
 
 /* from vidhrdw/thoop2.c */
 WRITE16_HANDLER( thoop2_vram_w );

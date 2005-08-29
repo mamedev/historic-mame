@@ -20,7 +20,7 @@
 VIDEO_START(bishi);
 VIDEO_UPDATE(bishi);
 
-static data16_t cur_control, cur_control2;
+static UINT16 cur_control, cur_control2;
 
 static READ16_HANDLER( control_r )
 {
@@ -96,7 +96,7 @@ static READ16_HANDLER( player2_r )	// players 2 and 4
 
 static READ16_HANDLER( bishi_K056832_rom_r )
 {
-	data16_t ouroffs;
+	UINT16 ouroffs;
 
 	ouroffs = (offset>>1)*8;
 	if (offset&1)

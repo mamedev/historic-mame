@@ -36,8 +36,8 @@
 #include "machine/nmk112.h"
 #include "sound/okim6295.h"
 
-extern data16_t *quizpani_bg_videoram, *quizpani_txt_videoram;
-extern data16_t *quizpani_scrollreg;
+extern UINT16 *quizpani_bg_videoram, *quizpani_txt_videoram;
+extern UINT16 *quizpani_scrollreg;
 
 extern WRITE16_HANDLER( quizpani_bg_videoram_w );
 extern WRITE16_HANDLER( quizpani_txt_videoram_w );

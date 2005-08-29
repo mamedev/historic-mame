@@ -10,9 +10,9 @@
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
-data16_t *gaelco_vregs;
-data16_t *gaelco_videoram;
-data16_t *gaelco_spriteram;
+UINT16 *gaelco_vregs;
+UINT16 *gaelco_videoram;
+UINT16 *gaelco_spriteram;
 
 int sprite_count[5];
 int *sprite_table[5];
@@ -183,7 +183,7 @@ static void gaelco_sort_sprites(void)
       3  | xxxxxxxx xxxxxx-- | sprite code
 */
 
-static void gaelco_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void gaelco_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
 {
 	int j, x, y, ex, ey;
 	const gfx_element *gfx = Machine->gfx[0];

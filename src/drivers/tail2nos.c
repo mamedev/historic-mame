@@ -16,7 +16,7 @@ press F1+F3 to see ROM/RAM tests and the final animation
 #include "sound/2608intf.h"
 
 
-extern data16_t *tail2nos_bgvideoram;
+extern UINT16 *tail2nos_bgvideoram;
 
 WRITE16_HANDLER( tail2nos_bgvideoram_w );
 READ16_HANDLER( tail2nos_zoomdata_r );

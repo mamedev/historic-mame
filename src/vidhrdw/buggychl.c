@@ -9,7 +9,7 @@ unsigned char *buggychl_character_ram;
 
 static int *dirtychar;
 
-static struct mame_bitmap *tmpbitmap1,*tmpbitmap2;
+static mame_bitmap *tmpbitmap1,*tmpbitmap2;
 static int sl_bank,bg_on,sky_on,sprite_color_base,bg_scrollx;
 
 
@@ -96,7 +96,7 @@ WRITE8_HANDLER( buggychl_bg_scrollx_w )
 
 
 
-static void draw_sky(struct mame_bitmap *bitmap)
+static void draw_sky(mame_bitmap *bitmap)
 {
 	int x,y;
 
@@ -110,7 +110,7 @@ static void draw_sky(struct mame_bitmap *bitmap)
 }
 
 
-static void draw_bg(struct mame_bitmap *bitmap)
+static void draw_bg(mame_bitmap *bitmap)
 {
 	int offs;
 	int scroll[256];
@@ -152,7 +152,7 @@ static void draw_bg(struct mame_bitmap *bitmap)
 }
 
 
-static void draw_fg(struct mame_bitmap *bitmap)
+static void draw_fg(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -179,7 +179,7 @@ static void draw_fg(struct mame_bitmap *bitmap)
 }
 
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 

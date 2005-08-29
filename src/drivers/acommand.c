@@ -57,8 +57,8 @@ JALCF1   BIN     1,048,576  02-07-99  1:11a JALCF1.BIN
 #include "sound/okim6295.h"
 
 static tilemap *tx_tilemap,*bg_tilemap;
-data16_t *ac_txvram,*ac_bgvram;
-data16_t *ac_vregs;
+UINT16 *ac_txvram,*ac_bgvram;
+UINT16 *ac_vregs;
 
 static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
@@ -86,7 +86,7 @@ static void ac_get_tx_tile_info(int tile_index)
 			0)
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority, int pri_mask)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority, int pri_mask)
 {
 	int offs;
 
@@ -170,7 +170,7 @@ VIDEO_START( acommand )
 #define SHOW_LEDS	0
 
 #if SHOW_LEDS
-static void draw_led(struct mame_bitmap *bitmap, int x, int y,data8_t value)
+static void draw_led(mame_bitmap *bitmap, int x, int y,UINT8 value)
 {
 	plot_box(bitmap, x, y, 5, 9, 0x00000000);
 
@@ -281,7 +281,7 @@ static WRITE16_HANDLER(ac_txscroll_w)
 
 /******************************************************************************************/
 
-data16_t *ac_devram;
+UINT16 *ac_devram;
 
 
 static READ16_HANDLER(ac_devices_r)

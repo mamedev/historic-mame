@@ -9,8 +9,8 @@
 #include "suprridr.h"
 
 
-data8_t *suprridr_bgram;
-data8_t *suprridr_fgram;
+UINT8 *suprridr_bgram;
+UINT8 *suprridr_fgram;
 
 static tilemap *fg_tilemap;
 static tilemap *bg_tilemap;
@@ -27,14 +27,14 @@ static UINT8 flipx, flipy;
 
 static void get_tile_info(int tile_index)
 {
-	data8_t code = suprridr_bgram[tile_index];
+	UINT8 code = suprridr_bgram[tile_index];
 	SET_TILE_INFO(0, code, 0, 0);
 }
 
 
 static void get_tile_info2(int tile_index)
 {
-	data8_t code = suprridr_fgram[tile_index];
+	UINT8 code = suprridr_fgram[tile_index];
 	SET_TILE_INFO(1, code, 0, 0);
 }
 
@@ -165,7 +165,7 @@ WRITE8_HANDLER( suprridr_fgram_w )
 
 VIDEO_UPDATE( suprridr )
 {
-	struct rectangle subclip;
+	rectangle subclip;
 	int i;
 
 	/* render left 4 columns with no scroll */

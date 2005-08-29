@@ -315,10 +315,10 @@ TODO:
 #include "driver.h"
 #include "sound/2610intf.h"
 
-data16_t *welltris_spriteram;
+UINT16 *welltris_spriteram;
 size_t welltris_spriteram_size;
-data16_t *welltris_pixelram;
-data16_t *welltris_charvideoram;
+UINT16 *welltris_pixelram;
+UINT16 *welltris_charvideoram;
 
 READ16_HANDLER( welltris_spriteram_r );
 WRITE16_HANDLER( welltris_spriteram_w );
@@ -333,7 +333,7 @@ VIDEO_UPDATE( welltris );
 
 static WRITE8_HANDLER( welltris_sh_bankswitch_w )
 {
-	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
+	UINT8 *rom = memory_region(REGION_CPU2) + 0x10000;
 
 	memory_set_bankptr(1,rom + (data & 0x03) * 0x8000);
 }
@@ -735,7 +735,7 @@ static void init_welltris(void)
 {
 #if WELLTRIS_4P_HACK
 	/* A Hack which shows 4 player mode in code which is disabled */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[0xB91C/2] = 0x4e71;
 	RAM[0xB91E/2] = 0x4e71;
 #endif

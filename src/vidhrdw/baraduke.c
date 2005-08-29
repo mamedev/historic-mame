@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-data8_t *baraduke_textram, *baraduke_videoram, *baraduke_spriteram;
+UINT8 *baraduke_textram, *baraduke_videoram, *baraduke_spriteram;
 
 static tilemap *tx_tilemap, *bg_tilemap[2];
 static int xscroll[2], yscroll[2];
@@ -227,10 +227,10 @@ WRITE8_HANDLER( baraduke_spriteram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_priority)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int sprite_priority)
 {
-	const data8_t *source = &spriteram[0];
-	const data8_t *finish = &spriteram[0x0800-16];	/* the last is NOT a sprite */
+	const UINT8 *source = &spriteram[0];
+	const UINT8 *finish = &spriteram[0x0800-16];	/* the last is NOT a sprite */
 
 	int sprite_xoffs = spriteram[0x07f5] - 256 * (spriteram[0x07f4] & 1);
 	int sprite_yoffs = spriteram[0x07f7];

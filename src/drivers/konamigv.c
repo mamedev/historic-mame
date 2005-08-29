@@ -208,7 +208,7 @@ ADDRESS_MAP_END
 
 /* SCSI */
 
-static data8_t sector_buffer[ 4096 ];
+static UINT8 sector_buffer[ 4096 ];
 
 static void scsi_dma_read( UINT32 n_address, INT32 n_size )
 {
@@ -504,16 +504,16 @@ static WRITE32_HANDLER( flash_w )
 	}
 }
 
-static data16_t trackball_prev[ 2 ];
-static data32_t trackball_data[ 2 ];
+static UINT16 trackball_prev[ 2 ];
+static UINT32 trackball_data[ 2 ];
 
 static READ32_HANDLER( trackball_r )
 {
 	if( offset == 0 && mem_mask == 0xffff0000 )
 	{
 		int axis;
-		data16_t diff;
-		data16_t value;
+		UINT16 diff;
+		UINT16 value;
 
 		for( axis = 0; axis < 2; axis++ )
 		{
@@ -647,8 +647,8 @@ static WRITE32_HANDLER( btcflash_w )
 	}
 }
 
-static data16_t btc_trackball_prev[ 4 ];
-static data32_t btc_trackball_data[ 4 ];
+static UINT16 btc_trackball_prev[ 4 ];
+static UINT32 btc_trackball_data[ 4 ];
 
 static READ32_HANDLER( btc_trackball_r )
 {
@@ -657,8 +657,8 @@ static READ32_HANDLER( btc_trackball_r )
 	if( offset == 1 && mem_mask == 0x0000ffff )
 	{
 		int axis;
-		data16_t diff;
-		data16_t value;
+		UINT16 diff;
+		UINT16 value;
 
 		for( axis = 0; axis < 4; axis++ )
 		{

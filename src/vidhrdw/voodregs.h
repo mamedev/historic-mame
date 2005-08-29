@@ -15,163 +15,163 @@
  *
  *************************************/
 
-static void vertexAx_w(int chips, offs_t regnum, data32_t data)
+static void vertexAx_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_va.x = (float)(INT16)data * (1.0f / 16.0f);
 }
 
-static void vertexAy_w(int chips, offs_t regnum, data32_t data)
+static void vertexAy_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_va.y = (float)(INT16)data * (1.0f / 16.0f);
 }
 
-static void vertexBx_w(int chips, offs_t regnum, data32_t data)
+static void vertexBx_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vb.x = (float)(INT16)data * (1.0f / 16.0f);
 }
 
-static void vertexBy_w(int chips, offs_t regnum, data32_t data)
+static void vertexBy_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vb.y = (float)(INT16)data * (1.0f / 16.0f);
 }
 
-static void vertexCx_w(int chips, offs_t regnum, data32_t data)
+static void vertexCx_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vc.x = (float)(INT16)data * (1.0f / 16.0f);
 }
 
-static void vertexCy_w(int chips, offs_t regnum, data32_t data)
+static void vertexCy_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vc.y = (float)(INT16)data * (1.0f / 16.0f);
 }
 
-static void startR_w(int chips, offs_t regnum, data32_t data)
+static void startR_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startr = ((INT32)data << 8) >> 4;
 }
 
-static void startG_w(int chips, offs_t regnum, data32_t data)
+static void startG_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startg = ((INT32)data << 8) >> 4;
 }
 
-static void startB_w(int chips, offs_t regnum, data32_t data)
+static void startB_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startb = ((INT32)data << 8) >> 4;
 }
 
-static void startA_w(int chips, offs_t regnum, data32_t data)
+static void startA_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_starta = ((INT32)data << 8) >> 4;
 }
 
-static void startZ_w(int chips, offs_t regnum, data32_t data)
+static void startZ_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startz = (INT32)data;
 }
 
-static void startW_w(int chips, offs_t regnum, data32_t data)
+static void startW_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startw = (float)(INT32)data * (1.0 / (float)(1 << 30));
 	if (chips & 2) tri_startw0 = (float)(INT32)data * (1.0 / (float)(1 << 30));
 	if (chips & 4) tri_startw1 = (float)(INT32)data * (1.0 / (float)(1 << 30));
 }
 
-static void startS_w(int chips, offs_t regnum, data32_t data)
+static void startS_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_starts0 = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_starts1 = (float)(INT32)data * (1.0 / (float)(1 << 18));
 }
 
-static void startT_w(int chips, offs_t regnum, data32_t data)
+static void startT_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_startt0 = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_startt1 = (float)(INT32)data * (1.0 / (float)(1 << 18));
 }
 
-static void dRdX_w(int chips, offs_t regnum, data32_t data)
+static void dRdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_drdx = ((INT32)data << 8) >> 4;
 }
 
-static void dGdX_w(int chips, offs_t regnum, data32_t data)
+static void dGdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dgdx = ((INT32)data << 8) >> 4;
 }
 
-static void dBdX_w(int chips, offs_t regnum, data32_t data)
+static void dBdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dbdx = ((INT32)data << 8) >> 4;
 }
 
-static void dAdX_w(int chips, offs_t regnum, data32_t data)
+static void dAdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dadx = ((INT32)data << 8) >> 4;
 }
 
-static void dZdX_w(int chips, offs_t regnum, data32_t data)
+static void dZdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dzdx = (INT32)data;
 }
 
-static void dWdX_w(int chips, offs_t regnum, data32_t data)
+static void dWdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dwdx = (float)(INT32)data * (1.0 / (float)(1 << 30));
 	if (chips & 2) tri_dw0dx = (float)(INT32)data * (1.0 / (float)(1 << 30));
 	if (chips & 4) tri_dw1dx = (float)(INT32)data * (1.0 / (float)(1 << 30));
 }
 
-static void dSdX_w(int chips, offs_t regnum, data32_t data)
+static void dSdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_ds0dx = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_ds1dx = (float)(INT32)data * (1.0 / (float)(1 << 18));
 }
 
-static void dTdX_w(int chips, offs_t regnum, data32_t data)
+static void dTdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_dt0dx = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_dt1dx = (float)(INT32)data * (1.0 / (float)(1 << 18));
 }
 
-static void dRdY_w(int chips, offs_t regnum, data32_t data)
+static void dRdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_drdy = ((INT32)data << 8) >> 4;
 }
 
-static void dGdY_w(int chips, offs_t regnum, data32_t data)
+static void dGdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dgdy = ((INT32)data << 8) >> 4;
 }
 
-static void dBdY_w(int chips, offs_t regnum, data32_t data)
+static void dBdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dbdy = ((INT32)data << 8) >> 4;
 }
 
-static void dAdY_w(int chips, offs_t regnum, data32_t data)
+static void dAdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dady = ((INT32)data << 8) >> 4;
 }
 
-static void dZdY_w(int chips, offs_t regnum, data32_t data)
+static void dZdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dzdy = (INT32)data;
 }
 
-static void dWdY_w(int chips, offs_t regnum, data32_t data)
+static void dWdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dwdy = (float)(INT32)data * (1.0 / (float)(1 << 30));
 	if (chips & 2) tri_dw0dy = (float)(INT32)data * (1.0 / (float)(1 << 30));
 	if (chips & 4) tri_dw1dy = (float)(INT32)data * (1.0 / (float)(1 << 30));
 }
 
-static void dSdY_w(int chips, offs_t regnum, data32_t data)
+static void dSdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_ds0dy = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_ds1dy = (float)(INT32)data * (1.0 / (float)(1 << 18));
 }
 
-static void dTdY_w(int chips, offs_t regnum, data32_t data)
+static void dTdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_dt0dy = (float)(INT32)data * (1.0 / (float)(1 << 18));
 	if (chips & 4) tri_dt1dy = (float)(INT32)data * (1.0 / (float)(1 << 18));
@@ -190,163 +190,163 @@ static void dTdY_w(int chips, offs_t regnum, data32_t data)
  *
  *************************************/
 
-static void fvertexAx_w(int chips, offs_t regnum, data32_t data)
+static void fvertexAx_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_va.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
-static void fvertexAy_w(int chips, offs_t regnum, data32_t data)
+static void fvertexAy_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_va.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
-static void fvertexBx_w(int chips, offs_t regnum, data32_t data)
+static void fvertexBx_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vb.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
-static void fvertexBy_w(int chips, offs_t regnum, data32_t data)
+static void fvertexBy_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vb.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
-static void fvertexCx_w(int chips, offs_t regnum, data32_t data)
+static void fvertexCx_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vc.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
-static void fvertexCy_w(int chips, offs_t regnum, data32_t data)
+static void fvertexCy_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_vc.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
-static void fstartR_w(int chips, offs_t regnum, data32_t data)
+static void fstartR_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startr = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fstartG_w(int chips, offs_t regnum, data32_t data)
+static void fstartG_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startg = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fstartB_w(int chips, offs_t regnum, data32_t data)
+static void fstartB_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startb = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fstartA_w(int chips, offs_t regnum, data32_t data)
+static void fstartA_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_starta = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fstartZ_w(int chips, offs_t regnum, data32_t data)
+static void fstartZ_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startz = (INT32)(u2f(data) * 4096.0);
 }
 
-static void fstartW_w(int chips, offs_t regnum, data32_t data)
+static void fstartW_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_startw = u2f(data);
 	if (chips & 2) tri_startw0 = u2f(data);
 	if (chips & 4) tri_startw1 = u2f(data);
 }
 
-static void fstartS_w(int chips, offs_t regnum, data32_t data)
+static void fstartS_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_starts0 = u2f(data);
 	if (chips & 4) tri_starts1 = u2f(data);
 }
 
-static void fstartT_w(int chips, offs_t regnum, data32_t data)
+static void fstartT_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_startt0 = u2f(data);
 	if (chips & 4) tri_startt1 = u2f(data);
 }
 
-static void fdRdX_w(int chips, offs_t regnum, data32_t data)
+static void fdRdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_drdx = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdGdX_w(int chips, offs_t regnum, data32_t data)
+static void fdGdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dgdx = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdBdX_w(int chips, offs_t regnum, data32_t data)
+static void fdBdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dbdx = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdAdX_w(int chips, offs_t regnum, data32_t data)
+static void fdAdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dadx = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdZdX_w(int chips, offs_t regnum, data32_t data)
+static void fdZdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dzdx = (INT32)(u2f(data) * 4096.0);
 }
 
-static void fdWdX_w(int chips, offs_t regnum, data32_t data)
+static void fdWdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dwdx = u2f(data);
 	if (chips & 2) tri_dw0dx = u2f(data);
 	if (chips & 4) tri_dw1dx = u2f(data);
 }
 
-static void fdSdX_w(int chips, offs_t regnum, data32_t data)
+static void fdSdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_ds0dx = u2f(data);
 	if (chips & 4) tri_ds1dx = u2f(data);
 }
 
-static void fdTdX_w(int chips, offs_t regnum, data32_t data)
+static void fdTdX_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_dt0dx = u2f(data);
 	if (chips & 4) tri_dt1dx = u2f(data);
 }
 
-static void fdRdY_w(int chips, offs_t regnum, data32_t data)
+static void fdRdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_drdy = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdGdY_w(int chips, offs_t regnum, data32_t data)
+static void fdGdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dgdy = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdBdY_w(int chips, offs_t regnum, data32_t data)
+static void fdBdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dbdy = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdAdY_w(int chips, offs_t regnum, data32_t data)
+static void fdAdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dady = (INT32)(u2f(data) * 65536.0);
 }
 
-static void fdZdY_w(int chips, offs_t regnum, data32_t data)
+static void fdZdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dzdy = (INT32)(u2f(data) * 4096.0);
 }
 
-static void fdWdY_w(int chips, offs_t regnum, data32_t data)
+static void fdWdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 1) tri_dwdy = u2f(data);
 	if (chips & 2) tri_dw0dy = u2f(data);
 	if (chips & 4) tri_dw1dy = u2f(data);
 }
 
-static void fdSdY_w(int chips, offs_t regnum, data32_t data)
+static void fdSdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_ds0dy = u2f(data);
 	if (chips & 4) tri_ds1dy = u2f(data);
 }
 
-static void fdTdY_w(int chips, offs_t regnum, data32_t data)
+static void fdTdY_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2) tri_dt0dy = u2f(data);
 	if (chips & 4) tri_dt1dy = u2f(data);
@@ -365,7 +365,7 @@ static void fdTdY_w(int chips, offs_t regnum, data32_t data)
  *
  *************************************/
 
-static void fbzMode_w(int chips, offs_t regnum, data32_t data)
+static void fbzMode_w(int chips, offs_t regnum, UINT32 data)
 {
 	/* bit 0 = enable clipping rectangle (1=enable) */
 	/* bit 1 = enable chroma keying (1=enable) */
@@ -397,7 +397,7 @@ static void fbzMode_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void lfbMode_w(int chips, offs_t regnum, data32_t data)
+static void lfbMode_w(int chips, offs_t regnum, UINT32 data)
 {
 	/* bit 0-3 = write format */
 	/* bit 4-5 = write buffer select (0=front, 1=back) */
@@ -419,21 +419,21 @@ static void lfbMode_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void clipLeftRight_w(int chips, offs_t regnum, data32_t data)
+static void clipLeftRight_w(int chips, offs_t regnum, UINT32 data)
 {
 	fbz_clip.min_x = ((data >> 16) & 0x3ff) << 4;
 	fbz_clip.max_x = ((data & 0x3ff) << 4);
 }
 
 
-static void clipLowYHighY_w(int chips, offs_t regnum, data32_t data)
+static void clipLowYHighY_w(int chips, offs_t regnum, UINT32 data)
 {
 	fbz_clip.min_y = ((data >> 16) & 0x3ff) << 4;
 	fbz_clip.max_y = ((data & 0x3ff) << 4);
 }
 
 
-static void videoDimensions_w(int chips, offs_t regnum, data32_t data)
+static void videoDimensions_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (data & 0x3ff)
 		video_width = data & 0x3ff;
@@ -445,7 +445,7 @@ static void videoDimensions_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void fbiInit0_w(int chips, offs_t regnum, data32_t data)
+static void fbiInit0_w(int chips, offs_t regnum, UINT32 data)
 {
 	/* writes 0x00000006 */
 	/* writes 0x00000002 */
@@ -466,7 +466,7 @@ static void fbiInit0_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void fbiInit3_w(int chips, offs_t regnum, data32_t data)
+static void fbiInit3_w(int chips, offs_t regnum, UINT32 data)
 {
 	/* writes 0x00114000 */
 
@@ -478,7 +478,7 @@ static void fbiInit3_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void clutData_w(int chips, offs_t regnum, data32_t data)
+static void clutData_w(int chips, offs_t regnum, UINT32 data)
 {
 	int index = (data >> 24) & 0x3f;
 
@@ -492,7 +492,7 @@ static void clutData_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void dacData_w(int chips, offs_t regnum, data32_t data)
+static void dacData_w(int chips, offs_t regnum, UINT32 data)
 {
 	/* bit 0-7 = data to write */
 	/* bit 8-10 = register number */
@@ -524,7 +524,7 @@ static void dacData_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void texture_changed_w(int chips, offs_t regnum, data32_t data)
+static void texture_changed_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 		trex_dirty[0] = 1;
@@ -533,7 +533,7 @@ static void texture_changed_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void vSync_w(int chips, offs_t regnum, data32_t data)
+static void vSync_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (voodoo_regs[hSync] != 0 && voodoo_regs[vSync] != 0)
 	{
@@ -552,7 +552,7 @@ static void vSync_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void sARGB_w(int chips, offs_t regnum, data32_t data)
+static void sARGB_w(int chips, offs_t regnum, UINT32 data)
 {
 	voodoo_regs[sAlpha] = data >> 24;
 	voodoo_regs[sRed] = (data >> 16) & 0xff;
@@ -561,9 +561,9 @@ static void sARGB_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void cmdFifoBump_w(int chips, offs_t regnum, data32_t data)
+static void cmdFifoBump_w(int chips, offs_t regnum, UINT32 data)
 {
-	data32_t old_depth = voodoo_regs[cmdFifoDepth];
+	UINT32 old_depth = voodoo_regs[cmdFifoDepth];
 	voodoo_regs[cmdFifoDepth] += (UINT16)data;
 	cmdfifo_process_pending(old_depth);
 }
@@ -581,21 +581,21 @@ static void cmdFifoBump_w(int chips, offs_t regnum, data32_t data)
  *
  *************************************/
 
-static void triangleCMD_w(int chips, offs_t regnum, data32_t data)
+static void triangleCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	cheating_allowed = (tri_va.x != 0 || tri_va.y != 0 || tri_vb.x > 50 || tri_vb.y != 0 || tri_vc.x != 0 || tri_vc.y > 50);
 	draw_triangle();
 }
 
 
-static void ftriangleCMD_w(int chips, offs_t regnum, data32_t data)
+static void ftriangleCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	cheating_allowed = 1;
 	draw_triangle();
 }
 
 
-static void nopCMD_w(int chips, offs_t regnum, data32_t data)
+static void nopCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (LOG_COMMANDS)
 		logerror("%06X:NOP command\n", memory_fifo_in_process ? 0 : activecpu_get_pc());
@@ -612,7 +612,7 @@ static void nopCMD_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void fastfillCMD_w(int chips, offs_t regnum, data32_t data)
+static void fastfillCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (LOG_COMMANDS)
 		logerror("%06X:FASTFILL command\n", memory_fifo_in_process ? 0 : activecpu_get_pc());
@@ -620,7 +620,7 @@ static void fastfillCMD_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void swapbufferCMD_w(int chips, offs_t regnum, data32_t data)
+static void swapbufferCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (LOG_COMMANDS)
 		logerror("%06X:SWAPBUFFER command = %08X (pend=%d)\n", memory_fifo_in_process ? 0 : activecpu_get_pc(), data, num_pending_swaps);
@@ -645,7 +645,7 @@ static void swapbufferCMD_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void sBeginTriCMD_w(int chips, offs_t regnum, data32_t data)
+static void sBeginTriCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (LOG_COMMANDS)
 		logerror("%06X:BEGIN TRIANGLE command\n", memory_fifo_in_process ? 0 : activecpu_get_pc());
@@ -670,7 +670,7 @@ static void sBeginTriCMD_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void sDrawTriCMD_w(int chips, offs_t regnum, data32_t data)
+static void sDrawTriCMD_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (LOG_COMMANDS)
 		logerror("%06X:DRAW TRIANGLE command\n", memory_fifo_in_process ? 0 : activecpu_get_pc());
@@ -698,7 +698,7 @@ static void sDrawTriCMD_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void blt_start_w(int chips, offs_t regnum, data32_t data)
+static void blt_start_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (data & 0x80000000)
 		fprintf(stderr, "WARNING: blt command %08X\n", voodoo_regs[bltCommand] & ~0x80000000);
@@ -717,7 +717,7 @@ static void blt_start_w(int chips, offs_t regnum, data32_t data)
  *
  *************************************/
 
-static void nccTable0y_w(int chips, offs_t regnum, data32_t data)
+static void nccTable0y_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 	{
@@ -742,7 +742,7 @@ static void nccTable0y_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void nccTable0irgb_w(int chips, offs_t regnum, data32_t data)
+static void nccTable0irgb_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 	{
@@ -788,7 +788,7 @@ static void nccTable0irgb_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void nccTable0qrgb_w(int chips, offs_t regnum, data32_t data)
+static void nccTable0qrgb_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 	{
@@ -834,7 +834,7 @@ static void nccTable0qrgb_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void nccTable1y_w(int chips, offs_t regnum, data32_t data)
+static void nccTable1y_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 	{
@@ -859,7 +859,7 @@ static void nccTable1y_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void nccTable1irgb_w(int chips, offs_t regnum, data32_t data)
+static void nccTable1irgb_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 	{
@@ -882,7 +882,7 @@ static void nccTable1irgb_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void nccTable1qrgb_w(int chips, offs_t regnum, data32_t data)
+static void nccTable1qrgb_w(int chips, offs_t regnum, UINT32 data)
 {
 	if (chips & 2)
 	{
@@ -905,7 +905,7 @@ static void nccTable1qrgb_w(int chips, offs_t regnum, data32_t data)
 }
 
 
-static void fogTable_w(int chips, offs_t regnum, data32_t data)
+static void fogTable_w(int chips, offs_t regnum, UINT32 data)
 {
 	int base = (regnum - fogTable) * 2;
 	fog_delta[base + 0] = (data >> 0) & 0xff;
@@ -927,7 +927,7 @@ static void fogTable_w(int chips, offs_t regnum, data32_t data)
  *
  *************************************/
 
-static void (*voodoo_handler_w[0x100])(int chips, offs_t offset, data32_t data) =
+static void (*voodoo_handler_w[0x100])(int chips, offs_t offset, UINT32 data) =
 {
 	/* 0x000 */
 	NULL,				NULL,				vertexAx_w,			vertexAy_w,
@@ -1045,7 +1045,7 @@ static const UINT8 register_alias_map[0x40] =
  *
  *************************************/
 
-static void (*voodoo2_handler_w[0x100])(int chips, offs_t offset, data32_t data) =
+static void (*voodoo2_handler_w[0x100])(int chips, offs_t offset, UINT32 data) =
 {
 	/* 0x000 */
 	NULL,				NULL,				vertexAx_w,			vertexAy_w,

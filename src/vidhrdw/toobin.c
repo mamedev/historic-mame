@@ -167,8 +167,8 @@ WRITE16_HANDLER( toobin_intensity_w )
 
 WRITE16_HANDLER( toobin_xscroll_w )
 {
-	data16_t oldscroll = *atarigen_xscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_xscroll;
+	UINT16 newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
 
 	/* if anything has changed, force a partial update */
@@ -186,8 +186,8 @@ WRITE16_HANDLER( toobin_xscroll_w )
 
 WRITE16_HANDLER( toobin_yscroll_w )
 {
-	data16_t oldscroll = *atarigen_yscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_yscroll;
+	UINT16 newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
 
 	/* if anything has changed, force a partial update */
@@ -235,7 +235,7 @@ WRITE16_HANDLER( toobin_slip_w )
 VIDEO_UPDATE( toobin )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

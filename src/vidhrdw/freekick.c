@@ -4,7 +4,7 @@
 #include "vidhrdw/generic.h"
 
 tilemap *freek_tilemap;
-data8_t *freek_videoram;
+UINT8 *freek_videoram;
 
 
 static void get_freek_tile_info(int tile_index)
@@ -32,7 +32,7 @@ WRITE8_HANDLER( freek_videoram_w )
 	tilemap_mark_tile_dirty(freek_tilemap,offset&0x3ff);
 }
 
-static void gigas_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void gigas_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -67,7 +67,7 @@ static void gigas_draw_sprites( struct mame_bitmap *bitmap, const struct rectang
 }
 
 
-static void pbillrd_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void pbillrd_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -103,7 +103,7 @@ static void pbillrd_draw_sprites( struct mame_bitmap *bitmap, const struct recta
 
 
 
-static void freekick_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void freekick_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

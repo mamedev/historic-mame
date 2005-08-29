@@ -105,17 +105,17 @@ static tilemap *pf1_tilemap_0,*pf1_tilemap_1,*pf1_tilemap_2;
 static tilemap *pf2_tilemap_0,*pf2_tilemap_1,*pf2_tilemap_2;
 static tilemap *pf3_tilemap_0,*pf3_tilemap_1,*pf3_tilemap_2;
 
-data16_t *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
-data16_t *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
-data16_t *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
-static data16_t dec0_pf1_control_0[4];
-static data16_t dec0_pf1_control_1[4];
-static data16_t dec0_pf2_control_0[4];
-static data16_t dec0_pf2_control_1[4];
-static data16_t dec0_pf3_control_0[4];
-static data16_t dec0_pf3_control_1[4];
-static data16_t *dec0_spriteram;
-static data16_t dec0_pri;
+UINT16 *dec0_pf1_data,*dec0_pf2_data,*dec0_pf3_data;
+UINT16 *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
+UINT16 *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
+static UINT16 dec0_pf1_control_0[4];
+static UINT16 dec0_pf1_control_1[4];
+static UINT16 dec0_pf2_control_0[4];
+static UINT16 dec0_pf2_control_1[4];
+static UINT16 dec0_pf3_control_0[4];
+static UINT16 dec0_pf3_control_1[4];
+static UINT16 *dec0_spriteram;
+static UINT16 dec0_pri;
 
 /******************************************************************************/
 
@@ -151,7 +151,7 @@ WRITE16_HANDLER( dec0_paletteram_b_w )
 
 /******************************************************************************/
 
-static void dec0_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask,int pri_val)
+static void dec0_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri_mask,int pri_val)
 {
 	int offs;
 
@@ -419,7 +419,7 @@ static void dec0_pf3_update(void)
 
 /******************************************************************************/
 
-static void dec0_pf1_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int flags,int pri)
+static void dec0_pf1_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags,int pri)
 {
 	tilemap_set_enable(pf1_tilemap_0,0);
 	tilemap_set_enable(pf1_tilemap_1,0);
@@ -442,7 +442,7 @@ static void dec0_pf1_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 	}
 }
 
-static void dec0_pf2_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int flags,int pri)
+static void dec0_pf2_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags,int pri)
 {
 	tilemap_set_enable(pf2_tilemap_0,0);
 	tilemap_set_enable(pf2_tilemap_1,0);
@@ -465,7 +465,7 @@ static void dec0_pf2_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 	}
 }
 
-static void dec0_pf3_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int flags,int pri)
+static void dec0_pf3_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags,int pri)
 {
 	tilemap_set_enable(pf3_tilemap_0,0);
 	tilemap_set_enable(pf3_tilemap_1,0);
@@ -729,7 +729,7 @@ WRITE16_HANDLER( dec0_pf1_control_1_w )
 
 WRITE16_HANDLER( dec0_pf1_data_w )
 {
-	data16_t oldword=dec0_pf1_data[offset];
+	UINT16 oldword=dec0_pf1_data[offset];
 	COMBINE_DATA(&dec0_pf1_data[offset]);
 	if (oldword!=dec0_pf1_data[offset]) {
 		tilemap_mark_tile_dirty(pf1_tilemap_0,offset);
@@ -750,7 +750,7 @@ WRITE16_HANDLER( dec0_pf2_control_1_w )
 
 WRITE16_HANDLER( dec0_pf2_data_w )
 {
-	data16_t oldword=dec0_pf2_data[offset];
+	UINT16 oldword=dec0_pf2_data[offset];
 	COMBINE_DATA(&dec0_pf2_data[offset]);
 	if (oldword!=dec0_pf2_data[offset]) {
 		tilemap_mark_tile_dirty(pf2_tilemap_0,offset);
@@ -771,7 +771,7 @@ WRITE16_HANDLER( dec0_pf3_control_1_w )
 
 WRITE16_HANDLER( dec0_pf3_data_w )
 {
-	data16_t oldword=dec0_pf3_data[offset];
+	UINT16 oldword=dec0_pf3_data[offset];
 	COMBINE_DATA(&dec0_pf3_data[offset]);
 	if (oldword!=dec0_pf3_data[offset]) {
 		tilemap_mark_tile_dirty(pf3_tilemap_0,offset);
@@ -788,7 +788,7 @@ WRITE16_HANDLER( dec0_priority_w )
 WRITE8_HANDLER( dec0_pf3_control_8bit_w )
 {
 	static int buffer[0x20];
-	data16_t myword;
+	UINT16 myword;
 
 	buffer[offset]=data;
 
@@ -803,13 +803,13 @@ WRITE8_HANDLER( dec0_pf3_control_8bit_w )
 WRITE8_HANDLER( dec0_pf3_data_8bit_w )
 {
 	if (offset&1) { /* MSB has changed */
-		data16_t lsb=dec0_pf3_data[offset>>1];
-		data16_t newword=(lsb&0xff) | (data<<8);
+		UINT16 lsb=dec0_pf3_data[offset>>1];
+		UINT16 newword=(lsb&0xff) | (data<<8);
 		dec0_pf3_data[offset>>1]=newword;
 	}
 	else { /* LSB has changed */
-		data16_t msb=dec0_pf3_data[offset>>1];
-		data16_t newword=(msb&0xff00) | data;
+		UINT16 msb=dec0_pf3_data[offset>>1];
+		UINT16 newword=(msb&0xff00) | data;
 		dec0_pf3_data[offset>>1]=newword;
 	}
 	tilemap_mark_tile_dirty(pf3_tilemap_0,offset>>1);

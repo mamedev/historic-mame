@@ -62,7 +62,7 @@ WRITE8_HANDLER( ppi8255_7_w );
 
 #ifdef MESS
 /* Peek at the ports */
-data8_t ppi8255_peek( int which, offs_t offset );
+UINT8 ppi8255_peek( int which, offs_t offset );
 #endif
 
 #endif /* _8255PPI_H_ */

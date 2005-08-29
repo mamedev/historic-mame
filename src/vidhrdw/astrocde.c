@@ -47,8 +47,8 @@ static int BackgroundData,VerticalBlank;
 
 static int sparkle[MAX_INT_PER_FRAME][4];	/* sparkle[line][0] is star enable */
 
-static void wow_update_line(struct mame_bitmap *bitmap,int line);
-static void profpac_update_line(struct mame_bitmap *bitmap,int line);
+static void wow_update_line(mame_bitmap *bitmap,int line);
+static void profpac_update_line(mame_bitmap *bitmap,int line);
 
 /* This is the handler for reading the display memory */
 /* It is switched at init time for different games */
@@ -913,7 +913,7 @@ VIDEO_START( astrocde_stars )
 
 /****************************************************************************/
 
-void wow_update_line(struct mame_bitmap *bitmap,int line)
+void wow_update_line(mame_bitmap *bitmap,int line)
 {
 	/* Copy one line to bitmap, using current color register settings */
 
@@ -989,7 +989,7 @@ VIDEO_START( profpac )
 	return 0;
 }
 
-void profpac_update_line(struct mame_bitmap *bitmap,int line)
+void profpac_update_line(mame_bitmap *bitmap,int line)
 {
 	int i,j;
 	UINT8 scanline[80*4];

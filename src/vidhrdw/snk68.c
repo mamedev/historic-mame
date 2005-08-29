@@ -132,7 +132,7 @@ WRITE16_HANDLER( pow_flipscreen16_w )
 
 WRITE16_HANDLER( pow_paletteram16_word_w )
 {
-	data16_t newword;
+	UINT16 newword;
 	int r,g,b;
 
 	COMBINE_DATA(&paletteram16[offset]);
@@ -162,7 +162,7 @@ WRITE16_HANDLER( pow_video16_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j,int pos)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int j,int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -235,7 +235,7 @@ VIDEO_UPDATE( pow )
 }
 
 
-static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j, int z, int pos)
+static void draw_sprites2(mame_bitmap *bitmap, const rectangle *cliprect, int j, int z, int pos)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 

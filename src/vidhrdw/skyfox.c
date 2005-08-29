@@ -163,7 +163,7 @@ Offset:         Value:
 
 ***************************************************************************/
 
-void skyfox_draw_sprites(struct mame_bitmap *bitmap)
+void skyfox_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -242,7 +242,7 @@ void skyfox_draw_sprites(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void skyfox_draw_background(struct mame_bitmap *bitmap)
+void skyfox_draw_background(mame_bitmap *bitmap)
 {
 	unsigned char *RAM	=	memory_region(REGION_GFX2);
 	int x,y,i;

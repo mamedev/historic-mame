@@ -182,7 +182,7 @@ TODO:
 #include "sound/namco.h"
 #include "sound/n63701x.h"
 
-extern data8_t *rthunder_videoram1, *rthunder_videoram2, *rthunder_spriteram;
+extern UINT8 *rthunder_videoram1, *rthunder_videoram2, *rthunder_spriteram;
 
 PALETTE_INIT( namcos86 );
 VIDEO_START( namcos86 );

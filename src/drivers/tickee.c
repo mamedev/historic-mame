@@ -22,10 +22,10 @@
 #include "sound/ay8910.h"
 
 
-data16_t *tickee_control;
+UINT16 *tickee_control;
 
 
-static data16_t *code_rom;
+static UINT16 *code_rom;
 
 
 /*************************************
@@ -72,7 +72,7 @@ static READ8_HANDLER( port2_r )
 
 static WRITE16_HANDLER( tickee_control_w )
 {
-	data16_t olddata = tickee_control[offset];
+	UINT16 olddata = tickee_control[offset];
 
 	/* offsets:
 

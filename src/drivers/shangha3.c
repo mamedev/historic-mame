@@ -25,7 +25,7 @@ blocken:
 #include "sound/okim6295.h"
 #include "sound/2612intf.h"
 
-extern data16_t *shangha3_ram;
+extern UINT16 *shangha3_ram;
 extern size_t shangha3_ram_size;
 extern int shangha3_do_shadows;
 

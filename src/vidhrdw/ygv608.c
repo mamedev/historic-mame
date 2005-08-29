@@ -46,7 +46,7 @@ static YGV608 ygv608;
 
 static tilemap *tilemap_A = NULL;
 static tilemap *tilemap_B = NULL;
-static struct mame_bitmap *work_bitmap = NULL;
+static mame_bitmap *work_bitmap = NULL;
 
 #ifdef MAME_DEBUG
 static void ShowYGV608Registers( void );
@@ -485,13 +485,13 @@ VIDEO_STOP( ygv608 )
 	tilemap_B = NULL;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 #ifdef _ENABLE_SPRITES
 
   // sprites are always clipped to 512x512
   // - regardless of the visible display dimensions
-  static struct rectangle spriteClip = { 0, 512, 0, 512 };
+  static rectangle spriteClip = { 0, 512, 0, 512 };
 
   PSPRITE_ATTR sa;
   int flipx = 0, flipy = 0;
@@ -689,7 +689,7 @@ VIDEO_UPDATE( ygv608 )
     int xc, yc;
     double r, alpha, sin_theta, cos_theta;
 #endif
-	struct rectangle finalclip;
+	rectangle finalclip;
 
 	// clip to the current bitmap
 	finalclip.min_x = 0;
@@ -931,7 +931,7 @@ READ16_HANDLER( ygv608_r )
 	static int p3_state = 0;
 	static int pattern_name_base = 0;  /* pattern name table base address */
 	int pn=0;
-	data16_t  data = 0;
+	UINT16  data = 0;
 
 	switch (offset)
 	{
@@ -1074,7 +1074,7 @@ READ16_HANDLER( ygv608_r )
 
 		case 0x06:
 		case 0x07:
-			return( (data16_t)(ygv608.ports.b[offset]) << 8 );
+			return( (UINT16)(ygv608.ports.b[offset]) << 8 );
 
 		default :
 			logerror( "unknown ygv608 register (%d)\n", offset );
@@ -1340,7 +1340,7 @@ void HandleRomTransfers( void )
 #endif
 }
 
-void nvsram( offs_t offset, data16_t data )
+void nvsram( offs_t offset, UINT16 data )
 {
   static int i = 0;
 

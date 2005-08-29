@@ -12,9 +12,9 @@
     Longer term:
         - struct mame_layer
           {
-            struct mame_bitmap *bitmap;
+            mame_bitmap *bitmap;
             int rectcount;
-            struct rectangle rectlist[MAX_RECTS];
+            rectangle rectlist[MAX_RECTS];
           }
         - add 4 mame_layers for backdrop, overlay, bezel, ui to mame_display
         - some mechanism to let the OSD do the blending
@@ -372,16 +372,16 @@ struct _artwork_piece
 	char *					alpha_filename;
 
 	/* bitmaps */
-	struct mame_bitmap *	rawbitmap;
-	struct mame_bitmap *	prebitmap;
-	struct mame_bitmap *	yrgbbitmap;
+	mame_bitmap *	rawbitmap;
+	mame_bitmap *	prebitmap;
+	mame_bitmap *	yrgbbitmap;
 	UINT32 *				scanlinehint;
 	UINT8					blendflags;
 
 	/* derived/dynamic data */
 	int						intersects_game;
 	int						visible;
-	struct rectangle		bounds;
+	rectangle		bounds;
 };
 typedef struct _artwork_piece artwork_piece;
 
@@ -401,14 +401,14 @@ static artwork_piece *artwork_list;
 static int num_underlays, num_overlays, num_bezels;
 static int num_pieces;
 
-static struct mame_bitmap *underlay, *overlay, *overlay_yrgb, *bezel, *final;
-static struct rectangle underlay_invalid, overlay_invalid, bezel_invalid;
-static struct rectangle gamerect, screenrect;
+static mame_bitmap *underlay, *overlay, *overlay_yrgb, *bezel, *final;
+static rectangle underlay_invalid, overlay_invalid, bezel_invalid;
+static rectangle gamerect, screenrect;
 static int gamescale;
 
-static struct mame_bitmap *uioverlay;
+static mame_bitmap *uioverlay;
 static UINT32 *uioverlayhint;
-static struct rectangle uibounds, last_uibounds;
+static rectangle uibounds, last_uibounds;
 
 static UINT32 *palette_lookup;
 
@@ -437,15 +437,15 @@ static int validate_pieces(void);
 static void sort_pieces(void);
 static void update_palette_lookup(mame_display *display);
 static int update_layers(void);
-static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
-static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display);
-static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bounds, UINT32 color);
-static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds, const UINT32 *hintlist);
-static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds);
-static void cmy_blend_intersecting_rect(struct mame_bitmap *dstbitmap, struct mame_bitmap *dstyrgbbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, struct mame_bitmap *srcyrgbbitmap, const struct rectangle *srcbounds, UINT8 blendflags);
+static void render_game_bitmap(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_game_bitmap_underlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_game_bitmap_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_game_bitmap_underlay_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display);
+static void render_ui_overlay(mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display);
+static void erase_rect(mame_bitmap *bitmap, const rectangle *bounds, UINT32 color);
+static void alpha_blend_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds, const UINT32 *hintlist);
+static void add_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds);
+static void cmy_blend_intersecting_rect(mame_bitmap *dstbitmap, mame_bitmap *dstyrgbbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, mame_bitmap *srcyrgbbitmap, const rectangle *srcbounds, UINT8 blendflags);
 static int generate_overlay(const artwork_overlay_piece *list, int width, int height);
 static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int endx);
 
@@ -459,7 +459,7 @@ static void add_range_to_hint(UINT32 *hintbase, int scanline, int startx, int en
     union_rect - compute the union of two rects
 -------------------------------------------------*/
 
-INLINE void union_rect(struct rectangle *dst, const struct rectangle *src)
+INLINE void union_rect(rectangle *dst, const rectangle *src)
 {
 	if (dst->max_x == 0)
 		*dst = *src;
@@ -798,7 +798,7 @@ void artwork_update_visible_area(mame_display *display)
 
 void artwork_update_video_and_audio(mame_display *display)
 {
-	static struct rectangle ui_changed_bounds;
+	static rectangle ui_changed_bounds;
 	static int ui_changed;
 	int artwork_changed = 0, ui_visible = 0;
 
@@ -917,7 +917,7 @@ void artwork_update_video_and_audio(mame_display *display)
     certain parameters when saving a screenshot
 -------------------------------------------------*/
 
-void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rectangle *rect, UINT32 *rgb_components)
+void artwork_override_screenshot_params(mame_bitmap **bitmap, rectangle *rect, UINT32 *rgb_components)
 {
 	if ((*bitmap == Machine->scrbitmap || *bitmap == uioverlay) && artwork_system_active())
 	{
@@ -937,7 +937,7 @@ void artwork_override_screenshot_params(struct mame_bitmap **bitmap, struct rect
     artwork_get_ui_bitmap - get the UI bitmap
 -------------------------------------------------*/
 
-struct mame_bitmap *artwork_get_ui_bitmap(void)
+mame_bitmap *artwork_get_ui_bitmap(void)
 {
 	return uioverlay ? uioverlay : Machine->scrbitmap;
 }
@@ -954,7 +954,7 @@ void artwork_mark_ui_dirty(int minx, int miny, int maxx, int maxy)
 	/* add to the UI overlay hint if it exists */
 	if (uioverlayhint)
 	{
-		struct rectangle rect;
+		rectangle rect;
 		int y;
 
 		/* clip to visible */
@@ -1075,7 +1075,7 @@ void artwork_show(const char *tag, int show)
 static int update_layers(void)
 {
 	artwork_piece *piece = artwork_list;
-	struct rectangle combined;
+	rectangle combined;
 	int changed = 0;
 
 	/* update the underlays */
@@ -1137,7 +1137,7 @@ static int update_layers(void)
     bitmap
 -------------------------------------------------*/
 
-static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bounds, UINT32 color)
+static void erase_rect(mame_bitmap *bitmap, const rectangle *bounds, UINT32 color)
 {
 	int x, y;
 
@@ -1157,9 +1157,9 @@ static void erase_rect(struct mame_bitmap *bitmap, const struct rectangle *bound
     artwork piece into a bitmap
 -------------------------------------------------*/
 
-static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds, const UINT32 *hintlist)
+static void alpha_blend_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds, const UINT32 *hintlist)
 {
-	struct rectangle sect = *srcbounds;
+	rectangle sect = *srcbounds;
 	UINT32 dummy_range[2];
 	int lclip, rclip;
 	int x, y, h;
@@ -1239,9 +1239,9 @@ static void alpha_blend_intersecting_rect(struct mame_bitmap *dstbitmap, const s
     artwork piece into a bitmap
 -------------------------------------------------*/
 
-static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct rectangle *dstbounds, struct mame_bitmap *srcbitmap, const struct rectangle *srcbounds)
+static void add_intersecting_rect(mame_bitmap *dstbitmap, const rectangle *dstbounds, mame_bitmap *srcbitmap, const rectangle *srcbounds)
 {
-	struct rectangle sect = *srcbounds;
+	rectangle sect = *srcbounds;
 	int x, y, width;
 
 	/* compute the intersection and resulting width */
@@ -1274,11 +1274,11 @@ static void add_intersecting_rect(struct mame_bitmap *dstbitmap, const struct re
 -------------------------------------------------*/
 
 static void cmy_blend_intersecting_rect(
-	struct mame_bitmap *dstprebitmap, struct mame_bitmap *dstyrgbbitmap, const struct rectangle *dstbounds,
-	struct mame_bitmap *srcprebitmap, struct mame_bitmap *srcyrgbbitmap, const struct rectangle *srcbounds,
+	mame_bitmap *dstprebitmap, mame_bitmap *dstyrgbbitmap, const rectangle *dstbounds,
+	mame_bitmap *srcprebitmap, mame_bitmap *srcyrgbbitmap, const rectangle *srcbounds,
 	UINT8 blendflags)
 {
-	struct rectangle sect = *srcbounds;
+	rectangle sect = *srcbounds;
 	int x, y, width;
 
 	/* compute the intersection and resulting width */
@@ -1415,7 +1415,7 @@ static void update_palette_lookup(mame_display *display)
 
 #define PIXEL(x,y,srcdstbase,srcdstrpix,bits)	(*((UINT##bits *)srcdstbase##base + (y) * srcdstrpix##rowpixels + (x)))
 
-static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1540,7 +1540,7 @@ static void render_game_bitmap(struct mame_bitmap *bitmap, const rgb_t *palette,
     bitmap on top of an underlay
 -------------------------------------------------*/
 
-static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap_underlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1672,7 +1672,7 @@ static void render_game_bitmap_underlay(struct mame_bitmap *bitmap, const rgb_t 
     bitmap blended with an overlay
 -------------------------------------------------*/
 
-static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1812,7 +1812,7 @@ static void render_game_bitmap_overlay(struct mame_bitmap *bitmap, const rgb_t *
     added to an underlay
 -------------------------------------------------*/
 
-static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
+static void render_game_bitmap_underlay_overlay(mame_bitmap *bitmap, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -1957,7 +1957,7 @@ static void render_game_bitmap_underlay_overlay(struct mame_bitmap *bitmap, cons
     render_ui_overlay - render the UI overlay
 -------------------------------------------------*/
 
-static void render_ui_overlay(struct mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display)
+static void render_ui_overlay(mame_bitmap *bitmap, UINT32 *dirty, const rgb_t *palette, mame_display *display)
 {
 	int srcrowpixels = bitmap->rowpixels;
 	int dstrowpixels = final->rowpixels;
@@ -2874,7 +2874,7 @@ static int generate_rect_piece(artwork_piece *piece, const artwork_overlay_piece
     overlay piece
 -------------------------------------------------*/
 
-static void render_disk(struct mame_bitmap *bitmap, int r, UINT32 color)
+static void render_disk(mame_bitmap *bitmap, int r, UINT32 color)
 {
 	int xc = bitmap->width / 2, yc = bitmap->height / 2;
 	int x = 0, twox = 0;
@@ -2914,7 +2914,7 @@ static void render_disk(struct mame_bitmap *bitmap, int r, UINT32 color)
 static int generate_disk_piece(artwork_piece *piece, const artwork_overlay_piece *data, int width, int height)
 {
 	double x = data->left, y = data->top, r = data->right;
-	struct rectangle temprect;
+	rectangle temprect;
 	int gfxwidth, gfxradius;
 
 	/* convert from pixel coordinates if necessary */
@@ -3319,7 +3319,7 @@ intersect:
 /*
  * Export some variables needed by OSD vector code in xmame.
  */
-const struct rectangle *artwork_get_game_rect(void)
+const rectangle *artwork_get_game_rect(void)
 {
 	if (artwork_list)
 		return &gamerect;

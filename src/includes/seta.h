@@ -11,11 +11,11 @@ void seta_coin_lockout_w(int data);
 
 /* Variables and functions defined in vidhrdw/seta.c */
 
-extern data16_t *seta_vram_0, *seta_vctrl_0;
-extern data16_t *seta_vram_2, *seta_vctrl_2;
-extern data16_t *seta_vregs;
+extern UINT16 *seta_vram_0, *seta_vctrl_0;
+extern UINT16 *seta_vram_2, *seta_vctrl_2;
+extern UINT16 *seta_vregs;
 
-extern data16_t *seta_workram; // Needed for zombraid Crosshair hack
+extern UINT16 *seta_workram; // Needed for zombraid Crosshair hack
 
 extern int seta_tiles_offset;
 
@@ -43,7 +43,7 @@ VIDEO_UPDATE( seta_no_layers );
 
 /* Variables and functions defined in vidhrdw/seta2.c */
 
-extern data16_t *seta2_vregs;
+extern UINT16 *seta2_vregs;
 
 WRITE16_HANDLER( seta2_vregs_w );
 
@@ -59,7 +59,7 @@ VIDEO_EOF( seta2 );
 
 /* Variables and functions defined in vidhrdw/ssv.c */
 
-extern data16_t *ssv_scroll;
+extern UINT16 *ssv_scroll;
 
 extern int ssv_special;
 
@@ -68,7 +68,7 @@ extern int ssv_tile_code[16];
 extern int ssv_sprites_offsx, ssv_sprites_offsy;
 extern int ssv_tilemap_offsx, ssv_tilemap_offsy;
 
-extern data16_t *eaglshot_gfxram, *gdfs_tmapram, *gdfs_tmapscroll;
+extern UINT16 *eaglshot_gfxram, *gdfs_tmapram, *gdfs_tmapscroll;
 extern char eaglshot_dirty, *eaglshot_dirty_tile;
 
 READ16_HANDLER( ssv_vblank_r );

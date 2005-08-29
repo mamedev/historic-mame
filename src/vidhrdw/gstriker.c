@@ -3,8 +3,8 @@
 #include "gstriker.h"
 
 /* imports from driver file */
-extern data16_t *gs_videoram3;
-extern data16_t *gs_mixer_regs;
+extern UINT16 *gs_videoram3;
+extern UINT16 *gs_mixer_regs;
 
 
 /*** VS920A (score tilemap) **********************************************/
@@ -87,7 +87,7 @@ static void VS920A_set_gfx_region(int numchip, int gfx_region)
 	VS920A[numchip].gfx_region = gfx_region;
 }
 
-static void VS920A_draw(int numchip, struct mame_bitmap* screen, const struct rectangle* cliprect, int priority)
+static void VS920A_draw(int numchip, mame_bitmap* screen, const rectangle* cliprect, int priority)
 {
 	VS920A_cur_chip = &VS920A[numchip];
 
@@ -225,7 +225,7 @@ void MB60553_set_gfx_region(int numchip, int gfx_region)
 	MB60553[numchip].gfx_region = gfx_region;
 }
 
-void MB60553_draw(int numchip, struct mame_bitmap* screen, const struct rectangle* cliprect, int priority)
+void MB60553_draw(int numchip, mame_bitmap* screen, const rectangle* cliprect, int priority)
 {
 	MB60553_cur_chip = &MB60553[numchip];
 
@@ -240,7 +240,7 @@ tilemap* MB60553_get_tilemap(int numchip)
 
 WRITE16_HANDLER(MB60553_0_regs_w)
 {
-	data16_t oldreg = MB60553[0].regs[offset];
+	UINT16 oldreg = MB60553[0].regs[offset];
 
 	COMBINE_DATA(&MB60553[0].regs[offset]);
 
@@ -250,7 +250,7 @@ WRITE16_HANDLER(MB60553_0_regs_w)
 
 WRITE16_HANDLER(MB60553_1_regs_w)
 {
-	data16_t oldreg = MB60553[1].regs[offset];
+	UINT16 oldreg = MB60553[1].regs[offset];
 
 	COMBINE_DATA(&MB60553[1].regs[offset]);
 
@@ -333,7 +333,7 @@ Abstracts the VS9210
 tCG10103 CG10103[MAX_CG10103];
 static tCG10103* CG10103_cur_chip;
 
-static void CG10103_draw_sprite(struct mame_bitmap* screen, const struct rectangle* cliprect, UINT16* spr, int drawpri)
+static void CG10103_draw_sprite(mame_bitmap* screen, const rectangle* cliprect, UINT16* spr, int drawpri)
 {
 	int ypos = spr[0] & 0x1FF;
 	int xpos = (spr[1] & 0x1FF);
@@ -409,9 +409,9 @@ static void CG10103_draw_sprite(struct mame_bitmap* screen, const struct rectang
 }
 
 
-static void CG10103_draw(int numchip, struct mame_bitmap* screen, const struct rectangle* cliprect, int priority)
+static void CG10103_draw(int numchip, mame_bitmap* screen, const rectangle* cliprect, int priority)
 {
-	data16_t* splist;
+	UINT16* splist;
 	int i;
 
 	CG10103_cur_chip = &CG10103[numchip];

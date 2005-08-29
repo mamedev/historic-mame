@@ -9,8 +9,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *speedbal_background_videoram;
-data8_t *speedbal_foreground_videoram;
+UINT8 *speedbal_background_videoram;
+UINT8 *speedbal_foreground_videoram;
 
 static tilemap *bg_tilemap, *fg_tilemap;
 
@@ -93,7 +93,7 @@ WRITE8_HANDLER( speedbal_background_videoram_w )
  *                                   *
  *************************************/
 
-void speedbal_draw_sprites (struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void speedbal_draw_sprites (mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int x,y,code,color,offset,flipx,flipy;
 

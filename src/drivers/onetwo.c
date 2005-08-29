@@ -12,7 +12,7 @@
 #include "sound/3812intf.h"
 
 static tilemap *fg_tilemap;
-static data8_t *fgram;
+static UINT8 *fgram;
 
 static void get_fg_tile_info(int tile_index)
 {

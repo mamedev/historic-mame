@@ -2,16 +2,16 @@
 #include "vidhrdw/generic.h"
 
 
-data8_t *wc90_fgvideoram,*wc90_bgvideoram,*wc90_txvideoram;
+UINT8 *wc90_fgvideoram,*wc90_bgvideoram,*wc90_txvideoram;
 
 
-data8_t *wc90_scroll0xlo, *wc90_scroll0xhi;
-data8_t *wc90_scroll1xlo, *wc90_scroll1xhi;
-data8_t *wc90_scroll2xlo, *wc90_scroll2xhi;
+UINT8 *wc90_scroll0xlo, *wc90_scroll0xhi;
+UINT8 *wc90_scroll1xlo, *wc90_scroll1xhi;
+UINT8 *wc90_scroll2xlo, *wc90_scroll2xhi;
 
-data8_t *wc90_scroll0ylo, *wc90_scroll0yhi;
-data8_t *wc90_scroll1ylo, *wc90_scroll1yhi;
-data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
+UINT8 *wc90_scroll0ylo, *wc90_scroll0yhi;
+UINT8 *wc90_scroll1ylo, *wc90_scroll1yhi;
+UINT8 *wc90_scroll2ylo, *wc90_scroll2yhi;
 
 
 static tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
@@ -212,12 +212,12 @@ static char* p64x64[4] = {
 	pos64x64xy
 };
 
-static void drawsprite_16x16( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_16x16( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	WC90_DRAW_SPRITE( code, sx, sy );
 }
 
-static void drawsprite_16x32( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_16x32( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 2 ) {
 		WC90_DRAW_SPRITE( code+1, sx, sy+16 );
@@ -228,7 +228,7 @@ static void drawsprite_16x32( struct mame_bitmap *bitmap, const struct rectangle
 	}
 }
 
-static void drawsprite_16x64( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_16x64( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 2 ) {
 		WC90_DRAW_SPRITE( code+3, sx, sy+48 );
@@ -243,7 +243,7 @@ static void drawsprite_16x64( struct mame_bitmap *bitmap, const struct rectangle
 	}
 }
 
-static void drawsprite_32x16( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_32x16( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 1 ) {
 		WC90_DRAW_SPRITE( code+1, sx+16, sy );
@@ -254,7 +254,7 @@ static void drawsprite_32x16( struct mame_bitmap *bitmap, const struct rectangle
 	}
 }
 
-static void drawsprite_32x32( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_32x32( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p32x32[ bank&3 ];
@@ -265,7 +265,7 @@ static void drawsprite_32x32( struct mame_bitmap *bitmap, const struct rectangle
 	WC90_DRAW_SPRITE( code+p[3], sx+16, sy+16 );
 }
 
-static void drawsprite_32x64( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_32x64( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p32x64[ bank&3 ];
@@ -280,7 +280,7 @@ static void drawsprite_32x64( struct mame_bitmap *bitmap, const struct rectangle
 	WC90_DRAW_SPRITE( code+p[7], sx+16, sy+48 );
 }
 
-static void drawsprite_64x16( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_64x16( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 	if ( bank & 1 ) {
 		WC90_DRAW_SPRITE( code+3, sx+48, sy );
@@ -295,7 +295,7 @@ static void drawsprite_64x16( struct mame_bitmap *bitmap, const struct rectangle
 	}
 }
 
-static void drawsprite_64x32( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_64x32( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p64x32[ bank&3 ];
@@ -310,7 +310,7 @@ static void drawsprite_64x32( struct mame_bitmap *bitmap, const struct rectangle
 	WC90_DRAW_SPRITE( code+p[7], sx+48, sy+16 );
 }
 
-static void drawsprite_64x64( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_64x64( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 							  int sx, int sy, int bank, int flags ) {
 
 	char *p = p64x64[ bank&3 ];
@@ -334,12 +334,12 @@ static void drawsprite_64x64( struct mame_bitmap *bitmap, const struct rectangle
 	WC90_DRAW_SPRITE( code+p[15], sx+48, sy+48 );
 }
 
-static void drawsprite_invalid( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int code,
+static void drawsprite_invalid( mame_bitmap *bitmap, const rectangle *cliprect, int code,
 											int sx, int sy, int bank, int flags ) {
 	logerror("8 pixel sprite size not supported\n" );
 }
 
-typedef void (*drawsprites_procdef)( struct mame_bitmap *, const struct rectangle *, int, int, int, int, int );
+typedef void (*drawsprites_procdef)( mame_bitmap *, const rectangle *, int, int, int, int, int );
 
 static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_invalid,		/* 0000 = 08x08 */
@@ -360,7 +360,7 @@ static drawsprites_procdef drawsprites_proc[16] = {
 	drawsprite_64x64		/* 1111 = 64x64 */
 };
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	int offs, sx,sy, flags, which;
 

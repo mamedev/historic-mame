@@ -205,7 +205,7 @@ VIDEO_START( exedexes )
 	return 0;
 }
 
-static void exedexes_draw_sprites(struct mame_bitmap *bitmap, int priority)
+static void exedexes_draw_sprites(mame_bitmap *bitmap, int priority)
 {
 	int offs;
 

@@ -27,7 +27,7 @@ TODO:
 #include "sound/3812intf.h"
 
 
-extern data16_t *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
+extern UINT16 *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
 
 PALETTE_INIT( galspnbl );
 WRITE16_HANDLER( galspnbl_bgvideoram_w );

@@ -5,17 +5,17 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data16_t *drgnmst_vidregs;
+extern UINT16 *drgnmst_vidregs;
 
-extern data16_t *drgnmst_fg_videoram;
+extern UINT16 *drgnmst_fg_videoram;
 static tilemap *drgnmst_fg_tilemap;
-extern data16_t *drgnmst_bg_videoram;
+extern UINT16 *drgnmst_bg_videoram;
 static tilemap *drgnmst_bg_tilemap;
-extern data16_t *drgnmst_md_videoram;
+extern UINT16 *drgnmst_md_videoram;
 static tilemap *drgnmst_md_tilemap;
 
-extern data16_t *drgnmst_rowscrollram;
-extern data16_t *drgnmst_vidregs2;
+extern UINT16 *drgnmst_rowscrollram;
+extern UINT16 *drgnmst_vidregs2;
 
 
 static void get_drgnmst_fg_tile_info(int tile_index)
@@ -69,11 +69,11 @@ WRITE16_HANDLER( drgnmst_md_videoram_w )
 	tilemap_mark_tile_dirty(drgnmst_md_tilemap,offset/2);
 }
 
-static void drgnmst_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void drgnmst_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	data16_t *source = spriteram16;
-	data16_t *finish = source + 0x800/2;
+	UINT16 *source = spriteram16;
+	UINT16 *finish = source + 0x800/2;
 
 	while( source<finish )
 	{

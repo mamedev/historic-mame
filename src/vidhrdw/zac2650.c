@@ -8,7 +8,7 @@
 #include "vidhrdw/generic.h"
 
 UINT8 *s2636ram;
-struct mame_bitmap *spritebitmap;
+mame_bitmap *spritebitmap;
 
 int dirtychar[16];
 int CollisionBackground;
@@ -158,7 +158,7 @@ VIDEO_START( tinvader )
 	return 0;
 }
 
-static void tinvader_draw_sprites( struct mame_bitmap *bitmap )
+static void tinvader_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

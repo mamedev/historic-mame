@@ -11,9 +11,9 @@
 
 
 
-data8_t *vastar_bg1videoram,*vastar_bg2videoram,*vastar_fgvideoram;
-data8_t *vastar_bg1_scroll,*vastar_bg2_scroll;
-data8_t *vastar_sprite_priority;
+UINT8 *vastar_bg1videoram,*vastar_bg2videoram,*vastar_fgvideoram;
+UINT8 *vastar_bg1_scroll,*vastar_bg2_scroll;
+UINT8 *vastar_sprite_priority;
 
 static tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
 
@@ -133,7 +133,7 @@ READ8_HANDLER( vastar_bg2videoram_r )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

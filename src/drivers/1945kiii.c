@@ -43,9 +43,9 @@ Notes:
 #include "driver.h"
 #include "sound/okim6295.h"
 
-static data16_t* k3_spriteram_1;
-static data16_t* k3_spriteram_2;
-static data16_t* k3_bgram;
+static UINT16* k3_spriteram_1;
+static UINT16* k3_spriteram_2;
+static UINT16* k3_bgram;
 static tilemap *k3_bg_tilemap;
 
 static WRITE16_HANDLER( k3_bgram_w )
@@ -70,12 +70,12 @@ VIDEO_START(k3)
 	return 0;
 }
 
-static void k3_draw_sprites ( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void k3_draw_sprites ( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	data16_t *source = k3_spriteram_1;
-	data16_t *source2 = k3_spriteram_2;
-	data16_t *finish = source + 0x1000/2;
+	UINT16 *source = k3_spriteram_1;
+	UINT16 *source2 = k3_spriteram_2;
+	UINT16 *finish = source + 0x1000/2;
 
 	while( source<finish )
 	{

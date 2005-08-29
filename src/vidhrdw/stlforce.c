@@ -4,10 +4,10 @@
 
 static tilemap *stlforce_bg_tilemap, *stlforce_mlow_tilemap, *stlforce_mhigh_tilemap, *stlforce_tx_tilemap;
 
-extern data16_t *stlforce_bg_videoram, *stlforce_mlow_videoram, *stlforce_mhigh_videoram, *stlforce_tx_videoram;
-extern data16_t *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhigh_scrollram, *stlforce_vidattrram;
+extern UINT16 *stlforce_bg_videoram, *stlforce_mlow_videoram, *stlforce_mhigh_videoram, *stlforce_tx_videoram;
+extern UINT16 *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhigh_scrollram, *stlforce_vidattrram;
 
-extern data16_t *stlforce_spriteram;
+extern UINT16 *stlforce_spriteram;
 
 int stlforce_sprxoffs;
 
@@ -107,7 +107,7 @@ WRITE16_HANDLER( stlforce_tx_videoram_w )
 
 /* sprites - quite a bit still needs doing .. */
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 
 	const UINT16 *source = stlforce_spriteram+0x0;

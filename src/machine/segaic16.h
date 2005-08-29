@@ -17,11 +17,11 @@ struct segaic16_memory_map_entry
 	offs_t			romoffset;			/* offset within REGION_CPU0, or ~0 for independent entries */
 	read16_handler	read;				/* read handler */
 	write16_handler	write;				/* write handler */
-	data16_t **		base;				/* pointer to memory base */
+	UINT16 **		base;				/* pointer to memory base */
 	const char *	name;				/* friendly name for debugging */
 };
 
-void segaic16_memory_mapper_init(int cpunum, const struct segaic16_memory_map_entry *entrylist, void (*sound_w_callback)(data8_t), data8_t (*sound_r_callback)(void));
+void segaic16_memory_mapper_init(int cpunum, const struct segaic16_memory_map_entry *entrylist, void (*sound_w_callback)(UINT8), UINT8 (*sound_r_callback)(void));
 void segaic16_memory_mapper_reset(void);
 void segaic16_memory_mapper_config(const UINT8 *map_data);
 READ8_HANDLER( segaic16_memory_mapper_r );
@@ -46,7 +46,7 @@ WRITE16_HANDLER( segaic16_divide_1_w );
 WRITE16_HANDLER( segaic16_divide_2_w );
 
 /* compare/timer chip */
-void segaic16_compare_timer_init(int which, void (*sound_write_callback)(data8_t), void (*timer_ack_callback)(void));
+void segaic16_compare_timer_init(int which, void (*sound_write_callback)(UINT8), void (*timer_ack_callback)(void));
 int segaic16_compare_timer_clock(int which);
 READ16_HANDLER( segaic16_compare_timer_0_r );
 READ16_HANDLER( segaic16_compare_timer_1_r );

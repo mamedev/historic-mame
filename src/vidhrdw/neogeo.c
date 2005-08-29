@@ -56,12 +56,12 @@ Notes:
 #include "neogeo.h"
 #include "state.h"
 
-static data16_t *neogeo_vidram16;
-static data16_t *neogeo_paletteram16;	/* pointer to 1 of the 2 palette banks */
-static data16_t *neogeo_palettebank[2]; /* 0x100*16 2 byte palette entries */
+static UINT16 *neogeo_vidram16;
+static UINT16 *neogeo_paletteram16;	/* pointer to 1 of the 2 palette banks */
+static UINT16 *neogeo_palettebank[2]; /* 0x100*16 2 byte palette entries */
 static int neogeo_palette_index;
-static data16_t neogeo_vidram16_modulo;
-static data16_t neogeo_vidram16_offset;
+static UINT16 neogeo_vidram16_modulo;
+static UINT16 neogeo_vidram16_offset;
 static int high_tile;
 static int vhigh_tile;
 static int vvhigh_tile;
@@ -131,7 +131,7 @@ static void set_palettebank_on_postload(void)
 
 	for (i = 0; i < 0x2000 >> 1; i++)
 	{
-		data16_t newword = neogeo_paletteram16[i];
+		UINT16 newword = neogeo_paletteram16[i];
 		int r,g,b;
 
 		r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
@@ -211,7 +211,7 @@ static void swap_palettes(void)
 
 	for (i = 0; i < 0x2000 >> 1; i++)
 	{
-		data16_t newword = neogeo_paletteram16[i];
+		UINT16 newword = neogeo_paletteram16[i];
 		int r,g,b;
 
 		r = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
@@ -257,7 +257,7 @@ READ16_HANDLER( neogeo_paletteram16_r )
 
 WRITE16_HANDLER( neogeo_paletteram16_w )
 {
-	data16_t oldword, newword;
+	UINT16 oldword, newword;
 	int r,g,b;
 
 	offset &=0xfff; // mirrored
@@ -328,7 +328,7 @@ WRITE16_HANDLER( neo_game_fix_16_w )
 
 static void NeoMVSDrawGfxLine(UINT16 **line,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int sx,int sy,
-		int zx,int yoffs,const struct rectangle *clip)
+		int zx,int yoffs,const rectangle *clip)
 {
 	UINT16 *bm = line[sy]+sx;
 	int col;

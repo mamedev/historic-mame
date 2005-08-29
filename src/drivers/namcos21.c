@@ -294,14 +294,14 @@ CPU68 PCB:
 static struct
 {
 	unsigned masterSourceAddr;
-	data16_t slaveInputBuffer[DSP_BUF_MAX];
+	UINT16 slaveInputBuffer[DSP_BUF_MAX];
 	size_t slaveInputSize;
 	unsigned slaveSourceAddr;
 
-	data16_t slaveOutputBuffer[DSP_BUF_MAX];
+	UINT16 slaveOutputBuffer[DSP_BUF_MAX];
 	unsigned slaveOutputSize;
 
-	data16_t masterDirectDrawBuffer[256];
+	UINT16 masterDirectDrawBuffer[256];
 	unsigned masterDirectDrawSize;
 } *mpDspState;
 
@@ -315,14 +315,14 @@ UpdatePolyFrameBufferAndResetDSPs( void )
 }
 
 /* globals (shared by videohrdw/namcos21.c) */
-data16_t *namcos21_dspram16;
-data16_t *namcos21_spritepos;
+UINT16 *namcos21_dspram16;
+UINT16 *namcos21_spritepos;
 
 /* private data */
-static data16_t	*mpDataROM;
-static data16_t	*mpSharedRAM1;
-static data8_t	*mpDualPortRAM;
-static data16_t namcos21_dsp_control[1];
+static UINT16	*mpDataROM;
+static UINT16	*mpSharedRAM1;
+static UINT8	*mpDualPortRAM;
+static UINT16 namcos21_dsp_control[1];
 
 /* memory handlers for shared DSP RAM (used to pass 3d parameters) */
 
@@ -333,12 +333,12 @@ static READ16_HANDLER( uploadhack_r )
 
 void namcos21_enabledsps( void )
 {
-	data16_t *pMem;
+	UINT16 *pMem;
 
-	pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+	pMem = (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
 	pMem[1] = 0x0100;
 
-	pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+	pMem = (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
 	pMem[1] = 0x0100;
 }
 
@@ -412,9 +412,9 @@ static READ16_HANDLER( dspram16_r )
 		{
 			int i;
 			unsigned len;
-			data16_t *pUploadDest;
+			UINT16 *pUploadDest;
 			static int count;
-			data16_t *pMem;
+			UINT16 *pMem;
 
 			/* This signals that a large chunk of code/data has been written by the main CPU.
              * The 68k CPU waits for this flag to be cleared.
@@ -431,12 +431,12 @@ static READ16_HANDLER( dspram16_r )
 			if( len )
 			{
 				logerror( "upload master\n" );
-				pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+				pUploadDest = 0x8000 + (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
 				for( i=0; i<len; i++ )
 				{
 					pUploadDest[i] = namcos21_dspram16[0x2000/2+i];
 				}
-				pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+				pMem = (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
 				pMem[1] = 0x0100;
 			}
 
@@ -445,12 +445,12 @@ static READ16_HANDLER( dspram16_r )
 			if( len )
 			{
 				logerror( "upload slave\n" );
-				pUploadDest = 0x8000 + (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+				pUploadDest = 0x8000 + (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
 				for( i=0; i<len; i++ )
 				{
 					pUploadDest[i] = namcos21_dspram16[0xa000/2+i];
 				}
-				pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+				pMem = (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
 				pMem[1] = 0x0100;
 			}
 		}
@@ -472,8 +472,8 @@ static WRITE16_HANDLER( dspram16_w )
 static int
 InitDSP( void )
 {
-	data16_t *pMem;
-	data16_t pc, loop;
+	UINT16 *pMem;
+	UINT16 pc, loop;
 
 	mpDspState = auto_malloc( sizeof(*mpDspState) );
 	if( !mpDspState )
@@ -483,7 +483,7 @@ InitDSP( void )
 
 	memset( mpDspState, 0, sizeof(*mpDspState) );
 
-	pMem = (data16_t *)memory_region(CPU_DSP_MASTER_REGION);
+	pMem = (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
 	pc = 0;
 	pMem[pc++] = 0xff80; /* b */
 	pMem[pc++] = 0; /* 0x0100; */
@@ -511,7 +511,7 @@ InitDSP( void )
 	pMem[pc++] = 0xff80; /* b */
 	pMem[pc++] = loop;
 
-	pMem = (data16_t *)memory_region(CPU_DSP_SLAVE_REGION);
+	pMem = (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
 	pc = 0;
 	pMem[pc++] = 0xff80; /* b */
 	pMem[pc++] = 0;
@@ -626,7 +626,7 @@ static WRITE16_HANDLER(dsp_portc_w)
 
 /***********************************************************/
 
-static data16_t mCusKeyState;
+static UINT16 mCusKeyState;
 
 static WRITE16_HANDLER(dspcuskey_w)
 {
@@ -646,7 +646,7 @@ static WRITE16_HANDLER(dspcuskey_w)
 }
 static READ16_HANDLER(dspcuskey_r)
 {
-	data16_t result = 0;
+	UINT16 result = 0;
 
 	if( namcos2_gametype == NAMCOS21_SOLVALOU )
 	{
@@ -692,7 +692,7 @@ ADDRESS_MAP_END
 /************************************************************************************/
 
 static void
-TransmitWordToSlave( data16_t data )
+TransmitWordToSlave( UINT16 data )
 {
 	if( mpDspState->slaveInputSize < DSP_BUF_MAX )
 	{
@@ -716,7 +716,7 @@ TransferDspData( void )
 		mpDspState->slaveSourceAddr >= mpDspState->slaveInputSize )
 	{
 		const INT32 *pPointData = (INT32 *)memory_region( REGION_USER2 );
-		const data16_t *pSource = &namcos21_dspram16[mpDspState->masterSourceAddr - 0x8000];
+		const UINT16 *pSource = &namcos21_dspram16[mpDspState->masterSourceAddr - 0x8000];
 
 		mpDspState->slaveInputSize = 0;
 		mpDspState->slaveSourceAddr = 0;
@@ -724,10 +724,10 @@ TransferDspData( void )
 		for(;;)
 		{
 			int i;
-			data16_t code = *pSource++;
+			UINT16 code = *pSource++;
 			if( code == 0xffff )
 			{
-				data16_t addr = *pSource++;
+				UINT16 addr = *pSource++;
 				mpDspState->masterSourceAddr = addr;
 				return;
 			}
@@ -747,7 +747,7 @@ TransferDspData( void )
 			}
 			else
 			{
-				data16_t len = *pSource++;
+				UINT16 len = *pSource++;
 				INT32 masterAddr = pPointData[code];
 				for(;;)
 				{
@@ -797,11 +797,11 @@ FindPrimitiveDataBySurfaceID( int surfID )
 			}
 			else
 			{
-				data16_t len = pPointData[subAddr+0];
+				UINT16 len = pPointData[subAddr+0];
 				if( len>2 )
 				{
 					int id = pPointData[subAddr+1];
-					data16_t vertexCount = pPointData[subAddr+2];
+					UINT16 vertexCount = pPointData[subAddr+2];
 					if( id == surfID )
 					{
 						unsigned offs = subAddr + 4 + vertexCount*3;
@@ -815,7 +815,7 @@ FindPrimitiveDataBySurfaceID( int surfID )
 } /* FindPrimitiveDataBySurfaceID */
 
 static void
-RenderSlaveOutput( data16_t data )
+RenderSlaveOutput( UINT16 data )
 {
 	if( mpDspState->slaveOutputSize >= 4096 )
 	{
@@ -825,12 +825,12 @@ RenderSlaveOutput( data16_t data )
 	mpDspState->slaveOutputBuffer[mpDspState->slaveOutputSize++] = data;
 	if(1)
 	{
-		data16_t *pSource = mpDspState->slaveOutputBuffer;
-		data16_t count = *pSource++;
+		UINT16 *pSource = mpDspState->slaveOutputBuffer;
+		UINT16 count = *pSource++;
 		if( count && mpDspState->slaveOutputSize > count )
 		{
-			data16_t surfaceID = *pSource++;
-			data16_t *pVertexList = pSource;
+			UINT16 surfaceID = *pSource++;
+			UINT16 *pVertexList = pSource;
 			int sx[4], sy[4],zcode[4];
 			int j;
 			if( surfaceID&0x8000 )
@@ -848,13 +848,13 @@ RenderSlaveOutput( data16_t data )
 				const INT32 *pSurf = FindPrimitiveDataBySurfaceID( surfaceID );
 				if( pSurf )
 				{
-					data16_t surfCount = *pSurf++;
+					UINT16 surfCount = *pSurf++;
 					while( surfCount-- )
 					{
-						data16_t color;
+						UINT16 color;
 						for( j=0; j<4; j++ )
 						{
-							data16_t vi = *pSurf++;
+							UINT16 vi = *pSurf++;
 							sx[j] = NAMCOS21_POLY_FRAME_WIDTH/2  + (INT16)pVertexList[3*vi+0];
 							sy[j] = NAMCOS21_POLY_FRAME_HEIGHT/2 + (INT16)pVertexList[3*vi+1];
 							zcode[j] = pVertexList[3*vi+2];
@@ -877,7 +877,7 @@ GetInputBytesAvailableForSlave( void )
 
 static READ16_HANDLER(slave_port2_r)
 {
-	data16_t result;
+	UINT16 result;
 	TransferDspData();
 	result = GetInputBytesAvailableForSlave();
 	if( result )
@@ -889,7 +889,7 @@ static READ16_HANDLER(slave_port2_r)
 
 static READ16_HANDLER(slave_port0_r)
 { /* read data */
-	data16_t result;
+	UINT16 result;
 	TransferDspData();
 	if( GetInputBytesAvailableForSlave()>0 )
 	{ /* data is available */
@@ -905,7 +905,7 @@ static READ16_HANDLER(slave_port0_r)
 
 static READ16_HANDLER(slave_port3_r)
 { /* number of bytes in output buffer (slave blocks if too large) */
-	data16_t result = 0;
+	UINT16 result = 0;
 	return result;
 }
 
@@ -976,7 +976,7 @@ static READ16_HANDLER( namcos21_dsp_control_r )
 }
 
 #define PTRAM_SIZE 0x20000
-static data8_t *ptram;
+static UINT8 *ptram;
 static unsigned int ptram_addr;
 
 static WRITE16_HANDLER( namcos21_dsp_data_w )
@@ -1068,7 +1068,7 @@ static WRITE16_HANDLER( unk_48000X_w )
 {
 	/* 0x400 bytes - gamma table? */
 }
-static data16_t namcos21_unk_reg;
+static UINT16 namcos21_unk_reg;
 WRITE16_HANDLER( namcos21_unk_reg_w )
 {
 	/* 0x40 or 0x00 */
@@ -1123,7 +1123,7 @@ ADDRESS_MAP_END
  *************************************************************/
 
 /* TBA: add support for more than two CPUs to C148 emulation */
-static data16_t gpu_vblank_irq_level;
+static UINT16 gpu_vblank_irq_level;
 
 static READ16_HANDLER( gpu_c148_r )
 {
@@ -1164,7 +1164,7 @@ static INTERRUPT_GEN( namcos2_gpu_vblank )
 
 static READ16_HANDLER( gpu_data_r )
 {
-	const data16_t *pSrc = (data16_t *)memory_region( REGION_USER3 );
+	const UINT16 *pSrc = (UINT16 *)memory_region( REGION_USER3 );
 	return pSrc[offset];
 }
 
@@ -1902,7 +1902,7 @@ static void namcos21_init( int game_type )
 {
 	namcos2_gametype = game_type;
 	ptram = auto_malloc(PTRAM_SIZE);
-	mpDataROM = (data16_t *)memory_region( REGION_USER1 );
+	mpDataROM = (UINT16 *)memory_region( REGION_USER1 );
 	InitDSP();
 } /* namcos21_init */
 
@@ -1910,14 +1910,14 @@ static DRIVER_INIT( winrun )
 {
 	/* don't use the generic namcos21_init; hardware is different */
 	namcos2_gametype = NAMCOS21_WINRUN91;
-	mpDataROM = (data16_t *)memory_region( REGION_USER1 );
+	mpDataROM = (UINT16 *)memory_region( REGION_USER1 );
 }
 
 static DRIVER_INIT( aircombt )
 {
 #if 0
 	/* replace first four tests of aircombj to reveal special "hidden" tests */
-	data16_t *pMem = (data16_t *)memory_region( REGION_CPU1 );
+	UINT16 *pMem = (UINT16 *)memory_region( REGION_CPU1 );
 	pMem[0x2a32/2] = 0x90;
 	pMem[0x2a34/2] = 0x94;
 	pMem[0x2a36/2] = 0x88;

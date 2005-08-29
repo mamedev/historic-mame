@@ -19,19 +19,19 @@
 #define TX_COLOR1	0x0b
 #define TX_COLOR2	0x3f
 
-data8_t *chaknpop_txram;
-data8_t *chaknpop_sprram;
+UINT8 *chaknpop_txram;
+UINT8 *chaknpop_sprram;
 size_t chaknpop_sprram_size;
-data8_t *chaknpop_attrram;
+UINT8 *chaknpop_attrram;
 
-static data8_t *vram1;
-static data8_t *vram2;
-static data8_t *vram3;
-static data8_t *vram4;
+static UINT8 *vram1;
+static UINT8 *vram2;
+static UINT8 *vram3;
+static UINT8 *vram4;
 
 static tilemap *tx_tilemap;
 
-static data8_t gfxmode;
+static UINT8 gfxmode;
 static int flip_x, flip_y;
 
 
@@ -78,7 +78,7 @@ PALETTE_INIT( chaknpop )
 
 static void set_vram_bank(void)
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	if (gfxmode & GFX_VRAM_BANK)
@@ -183,7 +183,7 @@ static void chaknpop_get_tx_tile_info(int tile_index)
 
 VIDEO_START( chaknpop )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/*                          info                       offset             type             w   h  col row */
 	tx_tilemap = tilemap_create(chaknpop_get_tx_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,  8,  8, 32, 32);
@@ -220,7 +220,7 @@ VIDEO_START( chaknpop )
   Screen refresh
 ***************************************************************************/
 
-static void chaknpop_draw_sprites(struct mame_bitmap *bitmap)
+static void chaknpop_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 
@@ -255,7 +255,7 @@ static void chaknpop_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-static void chaknpop_draw_bitmap(struct mame_bitmap *bitmap)
+static void chaknpop_draw_bitmap(mame_bitmap *bitmap)
 {
 	int dx = flip_x ? -1 : 1;
 	int offs, i;

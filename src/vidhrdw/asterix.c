@@ -5,7 +5,7 @@
 
 static int sprite_colorbase;
 static int layer_colorbase[4], layerpri[3];
-static data16_t spritebank;
+static UINT16 spritebank;
 static int tilebanks[4];
 static int spritebanks[4];
 

@@ -285,20 +285,20 @@ WRITE8_HANDLER( travrusa_flipscreen_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
-	static struct rectangle spritevisiblearea =
+	static rectangle spritevisiblearea =
 	{
 		1*8, 31*8-1,
 		0*8, 24*8-1
 	};
-	static struct rectangle spritevisibleareaflip =
+	static rectangle spritevisibleareaflip =
 	{
 		1*8, 31*8-1,
 		8*8, 32*8-1
 	};
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 	if (flip_screen)
 		sect_rect(&clip, &spritevisibleareaflip);
 	else

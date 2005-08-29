@@ -73,7 +73,7 @@ namcos21_ClearPolyFrameBuffer( void )
 } /* namcos21_ClearPolyFrameBuffer */
 
 static void
-CopyVisiblePolyFrameBuffer( struct mame_bitmap *bitmap, const struct rectangle *clip )
+CopyVisiblePolyFrameBuffer( mame_bitmap *bitmap, const rectangle *clip )
 { /* blit the visible framebuffer */
 	int sy;
 	for( sy=clip->min_y; sy<=clip->max_y; sy++ )

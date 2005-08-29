@@ -171,17 +171,17 @@ extern  size_t paletteram_size;
 #define CPU_2_V25		0xff
 
 
-static data16_t *bgvideoram16[2];
-static data16_t *fgvideoram16[2];
-static data16_t *topvideoram16[2];
-static data16_t *spriteram16_now[2];	/* Sprites to draw this frame */
-static data16_t *spriteram16_new[2];	/* Sprites to add to next frame */
-static data16_t *spriteram16_n[2];
-data16_t *toaplan2_txvideoram16;		/* Video ram for extra text layer */
-data16_t *toaplan2_txvideoram16_offs;	/* Text layer tile flip and positon ? */
-data16_t *toaplan2_txscrollram16;		/* Text layer scroll ? */
-data16_t *toaplan2_tx_gfxram16;			/* Text Layer RAM based tiles */
-data16_t *raizing_tx_gfxram16;			/* Text Layer RAM based tiles (Batrider) */
+static UINT16 *bgvideoram16[2];
+static UINT16 *fgvideoram16[2];
+static UINT16 *topvideoram16[2];
+static UINT16 *spriteram16_now[2];	/* Sprites to draw this frame */
+static UINT16 *spriteram16_new[2];	/* Sprites to add to next frame */
+static UINT16 *spriteram16_n[2];
+UINT16 *toaplan2_txvideoram16;		/* Video ram for extra text layer */
+UINT16 *toaplan2_txvideoram16_offs;	/* Text layer tile flip and positon ? */
+UINT16 *toaplan2_txscrollram16;		/* Text layer scroll ? */
+UINT16 *toaplan2_tx_gfxram16;			/* Text Layer RAM based tiles */
+UINT16 *raizing_tx_gfxram16;			/* Text Layer RAM based tiles (Batrider) */
 static int toaplan2_overflow_vram;		/* Teki Paki VRAM test is bugged. It goes out of range */
 
 static int toaplan2_scroll_reg[2];
@@ -481,23 +481,23 @@ static int batrider_create_tilemaps_0(void)
 
 static int toaplan2_vram_alloc(int controller)
 {
-	if ((spriteram16_new[controller] = (data16_t *)auto_malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
+	if ((spriteram16_new[controller] = (UINT16 *)auto_malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
 		return 1;
 	memset(spriteram16_new[controller],0,TOAPLAN2_SPRITERAM_SIZE);
 
-	if ((spriteram16_now[controller] = (data16_t *)auto_malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
+	if ((spriteram16_now[controller] = (UINT16 *)auto_malloc(TOAPLAN2_SPRITERAM_SIZE)) == 0)
 		return 1;
 	memset(spriteram16_now[controller],0,TOAPLAN2_SPRITERAM_SIZE);
 
-	if ((topvideoram16[controller] = (data16_t *)auto_malloc(TOAPLAN2_TOP_VRAM_SIZE)) == 0)
+	if ((topvideoram16[controller] = (UINT16 *)auto_malloc(TOAPLAN2_TOP_VRAM_SIZE)) == 0)
 		return 1;
 	memset(topvideoram16[controller],0,TOAPLAN2_TOP_VRAM_SIZE);
 
-	if ((fgvideoram16[controller] = (data16_t *)auto_malloc(TOAPLAN2_FG_VRAM_SIZE)) == 0)
+	if ((fgvideoram16[controller] = (UINT16 *)auto_malloc(TOAPLAN2_FG_VRAM_SIZE)) == 0)
 		return 1;
 	memset(fgvideoram16[controller],0,TOAPLAN2_FG_VRAM_SIZE);
 
-	if ((bgvideoram16[controller] = (data16_t *)auto_malloc(TOAPLAN2_BG_VRAM_SIZE)) == 0)
+	if ((bgvideoram16[controller] = (UINT16 *)auto_malloc(TOAPLAN2_BG_VRAM_SIZE)) == 0)
 		return 1;
 	memset(bgvideoram16[controller],0,TOAPLAN2_BG_VRAM_SIZE);
 
@@ -587,7 +587,7 @@ VIDEO_START( battleg_0 )
 
 VIDEO_START( batrider_0 )
 {
-	if ((raizing_tx_gfxram16 = (data16_t *)auto_malloc(RAIZING_TX_GFXRAM_SIZE)) == 0)
+	if ((raizing_tx_gfxram16 = (UINT16 *)auto_malloc(RAIZING_TX_GFXRAM_SIZE)) == 0)
 		return 1;
 	memset(raizing_tx_gfxram16,0,RAIZING_TX_GFXRAM_SIZE);
 
@@ -610,7 +610,7 @@ VIDEO_START( batrider_0 )
 
 ***************************************************************************/
 
-void toaplan2_voffs_w(offs_t offset, data16_t data, UINT32 mem_mask, int controller)
+void toaplan2_voffs_w(offs_t offset, UINT16 data, UINT32 mem_mask, int controller)
 {
 	if (data >= 0x1c00)
 		logerror("Hmmm, unknown video controller %01x layer being selected (%08x)\n",controller,data);
@@ -634,7 +634,7 @@ READ16_HANDLER( toaplan2_txvideoram16_r )
 
 WRITE16_HANDLER( toaplan2_txvideoram16_w )
 {
-	data16_t oldword = toaplan2_txvideoram16[offset];
+	UINT16 oldword = toaplan2_txvideoram16[offset];
 
 	if (oldword != data)
 	{
@@ -655,7 +655,7 @@ WRITE16_HANDLER( toaplan2_txvideoram16_offs_w )
 	/* Maybe specifies which line to draw text info (line number data is */
 	/*   opposite when flip bits are on) */
 
-	data16_t oldword = toaplan2_txvideoram16_offs[offset];
+	UINT16 oldword = toaplan2_txvideoram16_offs[offset];
 
 	if (oldword != data)
 	{
@@ -704,8 +704,8 @@ WRITE16_HANDLER( toaplan2_tx_gfxram16_w )
 {
 	/*** Dynamic GFX decoding for Truxton 2 / FixEight ***/
 
-	data16_t oldword = toaplan2_tx_gfxram16[offset];
-	data8_t *toaplan2_tx_gfxram = (data8_t *)(toaplan2_tx_gfxram16);
+	UINT16 oldword = toaplan2_tx_gfxram16[offset];
+	UINT8 *toaplan2_tx_gfxram = (UINT8 *)(toaplan2_tx_gfxram16);
 
 	if (oldword != data)
 	{
@@ -727,7 +727,7 @@ WRITE16_HANDLER( raizing_tx_gfxram16_w )
 {
 	/*** Dynamic Text GFX decoding for Batrider ***/
 
-	data16_t oldword = raizing_tx_gfxram16[offset + (0x3400 / 2)];
+	UINT16 oldword = raizing_tx_gfxram16[offset + (0x3400 / 2)];
 
 	if (oldword != data)
 	{
@@ -742,8 +742,8 @@ WRITE16_HANDLER( batrider_textdata_decode )
 	/*** Only done once during start-up ***/
 
 	int code;
-	data8_t *raizing_tx_gfxram = (data8_t *)raizing_tx_gfxram16;
-	data16_t *dest = (data16_t *)raizing_tx_gfxram16;
+	UINT8 *raizing_tx_gfxram = (UINT8 *)raizing_tx_gfxram16;
+	UINT16 *dest = (UINT16 *)raizing_tx_gfxram16;
 
 	memcpy(dest, toaplan2_txvideoram16, toaplan2_tx_vram_size);
 	dest += (toaplan2_tx_vram_size/2);
@@ -776,7 +776,7 @@ WRITE16_HANDLER( batrider_objectbank_w )
 
 int toaplan2_videoram16_r(offs_t offset, int controller)
 {
-	static data16_t video_data = 0;
+	static UINT16 video_data = 0;
 	static offs_t vram_offset;
 
 
@@ -820,9 +820,9 @@ READ16_HANDLER( toaplan2_1_videoram16_r )
 	return toaplan2_videoram16_r(offset, 1);
 }
 
-void toaplan2_videoram16_w(offs_t offset, data16_t data, UINT32 mem_mask, int controller)
+void toaplan2_videoram16_w(offs_t offset, UINT16 data, UINT32 mem_mask, int controller)
 {
-	data16_t oldword = 0;
+	UINT16 oldword = 0;
 	offs_t vram_offset;
 
 	switch (toaplan2_voffs[controller] & 0xfc00)
@@ -880,7 +880,7 @@ WRITE16_HANDLER( toaplan2_1_videoram16_w )
 }
 
 
-void toaplan2_scroll_reg_select_w(offs_t offset, data16_t data, UINT32 mem_mask, int controller)
+void toaplan2_scroll_reg_select_w(offs_t offset, UINT16 data, UINT32 mem_mask, int controller)
 {
 	if (ACCESSING_LSB)
 	{
@@ -905,7 +905,7 @@ WRITE16_HANDLER( toaplan2_1_scroll_reg_select_w )
 }
 
 
-void toaplan2_scroll_reg_data_w(offs_t offset, data16_t data, UINT32 mem_mask, int controller)
+void toaplan2_scroll_reg_data_w(offs_t offset, UINT16 data, UINT32 mem_mask, int controller)
 {
 	/************************************************************************/
 	/***** layer X and Y flips can be set independantly, so emulate it ******/
@@ -1174,17 +1174,17 @@ void toaplan2_log_vram(void)
 
 	if ( code_pressed_memory(KEYCODE_M) )
 	{
-		data16_t *source_now0  = (data16_t *)(spriteram16_now[0]);
-		data16_t *source_new0  = (data16_t *)(spriteram16_new[0]);
-		data16_t *source_now1  = (data16_t *)(spriteram16_now[0]);
-		data16_t *source_new1  = (data16_t *)(spriteram16_new[0]);
+		UINT16 *source_now0  = (UINT16 *)(spriteram16_now[0]);
+		UINT16 *source_new0  = (UINT16 *)(spriteram16_new[0]);
+		UINT16 *source_now1  = (UINT16 *)(spriteram16_now[0]);
+		UINT16 *source_new1  = (UINT16 *)(spriteram16_new[0]);
 
 		int schar[2],sattr[2],sxpos[2],sypos[2];
 
 		if (vid_controllers == 2)
 		{
-			source_now1  = (data16_t *)(spriteram16_now[1]);
-			source_new1  = (data16_t *)(spriteram16_new[1]);
+			source_now1  = (UINT16 *)(spriteram16_now[1]);
+			source_new1  = (UINT16 *)(spriteram16_new[1]);
 		}
 
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
@@ -1325,13 +1325,13 @@ void toaplan2_log_vram(void)
     Sprite Handlers
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int controller, int priority_to_display, int bank_sel )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int controller, int priority_to_display, int bank_sel )
 {
 	const gfx_element *gfx = Machine->gfx[ ((controller*2)+1) ];
 
 	int offs;
 
-	data16_t *source = (data16_t *)(spriteram16_n[controller]);
+	UINT16 *source = (UINT16 *)(spriteram16_n[controller]);
 
 
 	priority_to_display <<= 8;
@@ -1435,7 +1435,7 @@ static void mark_sprite_priority(int controller)
 {
 	int priority, offs;
 
-	data16_t *source = (data16_t *)(spriteram16_n[controller]);
+	UINT16 *source = (UINT16 *)(spriteram16_n[controller]);
 
 
 	for (priority = 0; priority < 16; priority++)
@@ -1593,7 +1593,7 @@ VIDEO_UPDATE( batrider_0 )
 	int priority;
 
 	int line;
-	struct rectangle clip;
+	rectangle clip;
 
 #ifdef MAME_DEBUG
 	toaplan2_log_vram();

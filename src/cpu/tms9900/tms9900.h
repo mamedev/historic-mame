@@ -217,7 +217,7 @@ typedef struct tms99110areset_param
 #endif
 
 #ifdef MAME_DEBUG
-unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(offs_t address), data16_t (*readop_arg)(offs_t address));
+unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(offs_t address), UINT16 (*readop_arg)(offs_t address));
 #endif
 
 #endif

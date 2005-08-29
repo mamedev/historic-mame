@@ -186,11 +186,11 @@ VIDEO_START( aso )
 }
 
 
-static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
+static void hal21_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
 								const gfx_element *gfx )
 {
 	static int color[2] = {8, 8};
-	struct rectangle *cliprect;
+	rectangle *cliprect;
 	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
 
 	cliprect = &Machine->visible_area;
@@ -226,10 +226,10 @@ static void hal21_draw_background( struct mame_bitmap *bitmap, int scrollx, int 
 		}
 }
 
-static void hal21_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
+static void hal21_draw_sprites( mame_bitmap *bitmap, int scrollx, int scrolly,
 								const gfx_element *gfx )
 {
-	struct rectangle *cliprect;
+	rectangle *cliprect;
 	UINT8 *sprptr, *endptr;
 	int attrs, tile, x, y, color, fy;
 
@@ -258,10 +258,10 @@ static void hal21_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scr
 	}
 }
 
-static void aso_draw_background( struct mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
+static void aso_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly, int attrs,
 								const gfx_element *gfx )
 {
-	struct rectangle *cliprect;
+	rectangle *cliprect;
 	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
 
 	cliprect = &Machine->visible_area;
@@ -290,10 +290,10 @@ static void aso_draw_background( struct mame_bitmap *bitmap, int scrollx, int sc
 		}
 }
 
-static void aso_draw_sprites( struct mame_bitmap *bitmap, int scrollx, int scrolly,
+static void aso_draw_sprites( mame_bitmap *bitmap, int scrollx, int scrolly,
 								const gfx_element *gfx )
 {
-	struct rectangle *cliprect;
+	rectangle *cliprect;
 	UINT8 *sprptr, *endptr;
 	int attrs, tile, x, y, color;
 

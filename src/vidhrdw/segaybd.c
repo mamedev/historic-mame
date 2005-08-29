@@ -16,7 +16,7 @@
  *
  *************************************/
 
-static struct mame_bitmap *yboard_bitmap;
+static mame_bitmap *yboard_bitmap;
 
 
 
@@ -57,7 +57,7 @@ VIDEO_START( yboard )
 
 VIDEO_UPDATE( yboard )
 {
-	struct rectangle yboard_clip;
+	rectangle yboard_clip;
 
 	/* if no drawing is happening, fill with black and get out */
 	if (!segaic16_display_enable)

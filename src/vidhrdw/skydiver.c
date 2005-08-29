@@ -10,7 +10,7 @@
 #include "sound/discrete.h"
 
 
-data8_t *skydiver_videoram;
+UINT8 *skydiver_videoram;
 
 static tilemap *bg_tilemap;
 static int width = 0;
@@ -42,7 +42,7 @@ MACHINE_INIT( skydiver )
 
 static void get_tile_info(int tile_index)
 {
-	data8_t code = skydiver_videoram[tile_index];
+	UINT8 code = skydiver_videoram[tile_index];
 	SET_TILE_INFO(0, code & 0x3f, code >> 6, 0)
 }
 
@@ -171,7 +171,7 @@ WRITE8_HANDLER( skydiver_2000_201F_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int pic;
 

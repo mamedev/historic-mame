@@ -32,7 +32,7 @@
  *
  *************************************/
 
-static data16_t *workram;
+static UINT16 *workram;
 
 static UINT8 adc_select;
 static UINT8 sound_control;
@@ -354,7 +354,7 @@ static void sound_irq(int irq)
 
 static READ8_HANDLER( sound_data_r )
 {
-	data8_t result = soundlatch_r(offset);
+	UINT8 result = soundlatch_r(offset);
 	sound_control &= ~0x80;
 	return result;
 }
@@ -1498,8 +1498,8 @@ static DRIVER_INIT( enduror )
 
 static DRIVER_INIT( endurobl )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
-	data16_t *decrypt = (data16_t *)auto_malloc(0x50000);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+	UINT16 *decrypt = (UINT16 *)auto_malloc(0x50000);
 
 	hangon_generic_init();
 	memory_set_opcode_base(0, decrypt);
@@ -1511,8 +1511,8 @@ static DRIVER_INIT( endurobl )
 
 static DRIVER_INIT( endurob2 )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
-	data16_t *decrypt = (data16_t *)auto_malloc(0x50000);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+	UINT16 *decrypt = (UINT16 *)auto_malloc(0x50000);
 
 	hangon_generic_init();
 	memory_set_opcode_base(0, decrypt);

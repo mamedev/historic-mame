@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "spiders.h"
 #include "machine/6821pia.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
@@ -34,17 +35,22 @@ static WRITE8_HANDLER( spiders_soundcmd_w )
 
 static WRITE8_HANDLER( spiders_sounda_w )
 {
-
+	discrete_sound_w(SPIDER_WEB_SOUND_MOD_DATA, 1 + (data & 4) * 8 + (data & 2) * 4 + (data & 1) * 2);
 }
 
 static WRITE8_HANDLER( spiders_soundb_w )
 {
-
+	discrete_sound_w(SPIDERS_WEB_SOUND_DATA, data);
 }
 
 
 static WRITE8_HANDLER( spiders_soundctrl_w )
 {
+	discrete_sound_w(SPIDERS_FIRE_EN, data & 0x10 ? 1 : 0);
+	discrete_sound_w(SPIDERS_EXP_EN, data & 0x08 ? 1 : 0);
+	discrete_sound_w(SPIDERS_SUPER_WEB_EXPL_EN, data & 0x04 ? 1 : 0);
+	discrete_sound_w(SPIDERS_SUPER_WEB_EN, data & 0x02 ? 1 : 0);
+	discrete_sound_w(SPIDERS_X_EN, data & 0x01 ? 1 : 0);
 
 }
 

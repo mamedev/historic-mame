@@ -1,7 +1,7 @@
 #include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
-static void dietgogo_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void dietgogo_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

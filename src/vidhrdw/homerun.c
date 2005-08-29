@@ -6,7 +6,7 @@ static int homerun_gc_up,homerun_gc_down;
 int homerun_xpa,homerun_xpb,homerun_xpc;
 
 tilemap *homerun_tilemap;
-data8_t *homerun_videoram;
+UINT8 *homerun_videoram;
 
 #define half_screen 116
 
@@ -68,7 +68,7 @@ VIDEO_START(homerun)
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 	for (offs = spriteram_size-4; offs >=0; offs -= 4)
@@ -91,7 +91,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 VIDEO_UPDATE(homerun)
 {
-	struct rectangle myclip=*cliprect;
+	rectangle myclip=*cliprect;
 
 	/* upper part */
 

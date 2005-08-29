@@ -344,7 +344,7 @@ Boards:
 
 MACHINE_INIT( mschamp )
 {
-	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
+	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
 	int bankaddr = ((readinputportbytag("GAME") & 1) * 0x8000);
 
 	memory_set_bankptr(1,&rom[bankaddr]);
@@ -698,7 +698,7 @@ static READ8_HANDLER( porky_port1_r )
  *
  ************************************/
 
-static data8_t *rocktrv2_prot_data, rocktrv2_question_bank = 0;
+static UINT8 *rocktrv2_prot_data, rocktrv2_question_bank = 0;
 
 static READ8_HANDLER( rocktrv2_prot1_data_r )
 {

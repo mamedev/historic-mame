@@ -9,12 +9,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *madmotor_pf1_rowscroll;
-data16_t *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
+UINT16 *madmotor_pf1_rowscroll;
+UINT16 *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;
 
-static data16_t madmotor_pf1_control[16];
-static data16_t madmotor_pf2_control[16];
-static data16_t madmotor_pf3_control[16];
+static UINT16 madmotor_pf1_control[16];
+static UINT16 madmotor_pf2_control[16];
+static UINT16 madmotor_pf3_control[16];
 
 static int flipscreen;
 static tilemap *madmotor_pf1_tilemap,*madmotor_pf2_tilemap,*madmotor_pf3_tilemap,*madmotor_pf3a_tilemap;
@@ -203,7 +203,7 @@ WRITE16_HANDLER( madmotor_pf1_rowscroll_w )
 
 /******************************************************************************/
 
-static void madmotor_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int pri_mask,int pri_val)
+static void madmotor_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri_mask,int pri_val)
 {
 	int offs;
 

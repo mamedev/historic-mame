@@ -14,12 +14,12 @@ unsigned char *thepit_attributesram;
 
 static int graphics_bank = 0;
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	2*8+1, 32*8-1,
 	2*8, 30*8-1
 };
-static struct rectangle spritevisibleareaflipx =
+static rectangle spritevisibleareaflipx =
 {
 	0*8, 30*8-2,
 	2*8, 30*8-1
@@ -188,7 +188,7 @@ WRITE8_HANDLER( thepit_sound_enable_w )
   the main emulation engine.
 
 ***************************************************************************/
-static void drawtiles(struct mame_bitmap *bitmap,int priority)
+static void drawtiles(mame_bitmap *bitmap,int priority)
 {
 	int offs,spacechar=0;
 
@@ -279,7 +279,7 @@ static void drawtiles(struct mame_bitmap *bitmap,int priority)
 	}
 }
 
-static void drawsprites(struct mame_bitmap *bitmap,int priority)
+static void drawsprites(mame_bitmap *bitmap,int priority)
 {
 	int offs;
 

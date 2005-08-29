@@ -425,7 +425,7 @@ static void dsp56k_exit(void)
 
 #define ROPCODE(pc)   cpu_readop16(pc)
 
-#include "dsp56kops.c"
+#include "dsp56ops.c"
 
 
 

@@ -17,10 +17,10 @@ static int screen_red_enabled;		/* 1 for games that can turn the screen red */
 static int color_map_select;
 static int background_color;
 static UINT8 cloud_pos;
-static data8_t bowler_bonus_display;
+static UINT8 bowler_bonus_display;
 
 static write8_handler videoram_w_p;
-static void (*video_update_p)(int screen,struct mame_bitmap *bitmap,const struct rectangle *cliprect);
+static void (*video_update_p)(int screen,mame_bitmap *bitmap,const rectangle *cliprect);
 
 static WRITE8_HANDLER( bw_videoram_w );
 static WRITE8_HANDLER( schaser_videoram_w );
@@ -503,7 +503,7 @@ static VIDEO_UPDATE( 8080bw_common )
 }
 
 
-static void draw_sight(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int x_center, int y_center)
+static void draw_sight(mame_bitmap *bitmap,const rectangle *cliprect,int x_center, int y_center)
 {
 	int x,y;
 	int sight_xs;

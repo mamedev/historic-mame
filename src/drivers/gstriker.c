@@ -176,8 +176,8 @@ VSIS-20V3
 ******************************************************************************/
 
 
-data16_t *gs_videoram3;
-data16_t *gs_mixer_regs;
+UINT16 *gs_videoram3;
+UINT16 *gs_mixer_regs;
 
 /* in vidhrdw */
 WRITE16_HANDLER( gsx_videoram3_w );
@@ -288,7 +288,7 @@ static struct YM2610interface ym2610_interface =
 
 /*** MEMORY LAYOUTS **********************************************************/
 
-static data16_t *work_ram;
+static UINT16 *work_ram;
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)

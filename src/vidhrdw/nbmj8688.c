@@ -24,11 +24,11 @@ static int mjsikaku_flipscreen;
 static int mjsikaku_screen_refresh;
 static int mjsikaku_gfxmode;
 
-static struct mame_bitmap *mjsikaku_tmpbitmap;
-static data16_t *mjsikaku_videoram;
-static data8_t *nbmj8688_clut;
+static mame_bitmap *mjsikaku_tmpbitmap;
+static UINT16 *mjsikaku_videoram;
+static UINT8 *nbmj8688_clut;
 
-static data8_t *HD61830B_ram[2];
+static UINT8 *HD61830B_ram[2];
 static int HD61830B_instr[2];
 static int HD61830B_addr[2];
 
@@ -565,9 +565,9 @@ static void mbmj8688_gfxdraw(int gfxtype)
 static int common_video_start(void)
 {
 	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(512, 256)) == 0) return 1;
-	if ((mjsikaku_videoram = auto_malloc(512 * 256 * sizeof(data16_t))) == 0) return 1;
-	if ((nbmj8688_clut = auto_malloc(0x20 * sizeof(data8_t))) == 0) return 1;
-	memset(mjsikaku_videoram, 0, (512 * 256 * sizeof(data16_t)));
+	if ((mjsikaku_videoram = auto_malloc(512 * 256 * sizeof(UINT16))) == 0) return 1;
+	if ((nbmj8688_clut = auto_malloc(0x20 * sizeof(UINT8))) == 0) return 1;
+	memset(mjsikaku_videoram, 0, (512 * 256 * sizeof(UINT16)));
 
 	mjsikaku_scrolly = 0;	// reset because crystalg/crystal2 don't write to this register
 
@@ -724,7 +724,7 @@ VIDEO_UPDATE( mbmj8688 )
 VIDEO_UPDATE( mbmj8688_LCD )
 {
 	int x, y, b;
-	struct rectangle clip = *cliprect;
+	rectangle clip = *cliprect;
 
 	clip.min_y += 64;
 	clip.max_y -= 64;

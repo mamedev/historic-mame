@@ -182,7 +182,7 @@ READ8_HANDLER( suprloco_control_r )
 
 ***************************************************************************/
 
-INLINE void draw_pixel(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int x,int y,int color)
+INLINE void draw_pixel(mame_bitmap *bitmap,const rectangle *cliprect,int x,int y,int color)
 {
 	if (flip_screen)
 	{
@@ -200,7 +200,7 @@ INLINE void draw_pixel(struct mame_bitmap *bitmap,const struct rectangle *clipre
 }
 
 
-static void render_sprite(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int spr_number)
+static void render_sprite(mame_bitmap *bitmap,const rectangle *cliprect,int spr_number)
 {
 	int sx,sy,col,row,height,src,adjy,dy;
 	unsigned char *spr_reg;
@@ -271,7 +271,7 @@ static void render_sprite(struct mame_bitmap *bitmap,const struct rectangle *cli
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int spr_number;
 	unsigned char *spr_reg;

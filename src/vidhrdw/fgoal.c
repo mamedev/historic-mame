@@ -8,8 +8,8 @@
 
 extern UINT8* fgoal_video_ram;
 
-static struct mame_bitmap *fgbitmap;
-static struct mame_bitmap *bgbitmap;
+static mame_bitmap *fgbitmap;
+static mame_bitmap *bgbitmap;
 
 extern int fgoal_player;
 

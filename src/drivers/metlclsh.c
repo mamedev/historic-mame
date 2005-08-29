@@ -39,7 +39,7 @@ metlclsh:
 
 /* Variables defined in vidhrdw: */
 
-extern data8_t *metlclsh_bgram, *metlclsh_fgram, *metlclsh_scrollx;
+extern UINT8 *metlclsh_bgram, *metlclsh_fgram, *metlclsh_scrollx;
 
 /* Functions defined in vidhrdw: */
 
@@ -57,7 +57,7 @@ VIDEO_UPDATE( metlclsh );
 
 ***************************************************************************/
 
-static data8_t *sharedram;
+static UINT8 *sharedram;
 
 static READ8_HANDLER ( sharedram_r )	{ return sharedram[offset]; }
 static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }

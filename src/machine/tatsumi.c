@@ -4,13 +4,13 @@
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
-/*static*/ data16_t tatsumi_control_word=0;
-static data16_t tatsumi_last_control=0;
-static data16_t tatsumi_last_irq=0;
-static data8_t apache3_adc;
+/*static*/ UINT16 tatsumi_control_word=0;
+static UINT16 tatsumi_last_control=0;
+static UINT16 tatsumi_last_irq=0;
+static UINT8 apache3_adc;
 
-data16_t *tatsumi_68k_ram;
-data8_t *apache3_z80_ram;
+UINT16 *tatsumi_68k_ram;
+UINT8 *apache3_z80_ram;
 
 /******************************************************************************/
 
@@ -90,7 +90,7 @@ WRITE16_HANDLER( apache3_irq_ack_w )
 
 READ8_HANDLER( apache3_v30_v20_r )
 {
-	const data8_t* rom=(data8_t*)memory_region(REGION_CPU3);
+	const UINT8* rom=(UINT8*)memory_region(REGION_CPU3);
 
 	/* Each V20 byte maps to a V30 word */
 	if ((tatsumi_control_word&0xe0)==0xe0)
@@ -107,7 +107,7 @@ READ8_HANDLER( apache3_v30_v20_r )
 
 WRITE8_HANDLER( apache3_v30_v20_w )
 {
-	data8_t* ram=(data8_t*)memory_region(REGION_CPU3);
+	UINT8* ram=(UINT8*)memory_region(REGION_CPU3);
 
 	if ((tatsumi_control_word&0xe0)!=0x80)
 		logerror("%08x: write unmapped v30 rom %08x\n",activecpu_get_pc(),offset);
@@ -141,7 +141,7 @@ WRITE8_HANDLER( apache3_adc_w )
 	apache3_adc=offset;
 }
 
-data16_t apache3_a0000[16]; // TODO
+UINT16 apache3_a0000[16]; // TODO
 int a3counter=0; // TODO
 
 WRITE16_HANDLER( apache3_a0000_w )
@@ -155,7 +155,7 @@ WRITE16_HANDLER( apache3_a0000_w )
 
 READ8_HANDLER( roundup_v30_z80_r )
 {
-	const data8_t* rom=(data8_t*)memory_region(REGION_CPU3);
+	const UINT8* rom=(UINT8*)memory_region(REGION_CPU3);
 
 	/* Each Z80 byte maps to a V30 word */
 	if (tatsumi_control_word&0x20)
@@ -166,7 +166,7 @@ READ8_HANDLER( roundup_v30_z80_r )
 
 WRITE8_HANDLER( roundup_v30_z80_w )
 {
-	data8_t* ram=(data8_t*)memory_region(REGION_CPU3);
+	UINT8* ram=(UINT8*)memory_region(REGION_CPU3);
 
 	/* Only 8 bits of the V30 data bus are connected - ignore writes to the other half */
 	if (offset&1)
@@ -304,7 +304,7 @@ WRITE16_HANDLER(cyclwarr_control_w)
 
 READ8_HANDLER( tatsumi_v30_68000_r )
 {
-	const data16_t* rom=(data16_t*)memory_region(REGION_CPU2);
+	const UINT16* rom=(UINT16*)memory_region(REGION_CPU2);
 
 	/* Read from 68k RAM */
 	if ((tatsumi_control_word&0x1f)==0x18) {
@@ -336,7 +336,7 @@ READ8_HANDLER( tatsumi_v30_68000_r )
 
 WRITE8_HANDLER( tatsumi_v30_68000_w )
 {
-	data16_t d=tatsumi_68k_ram[offset/2];
+	UINT16 d=tatsumi_68k_ram[offset/2];
 	if ((offset&1)==0) d=(d&0xff00)|data;
 	else d=(d&0xff)|(data<<8);
 

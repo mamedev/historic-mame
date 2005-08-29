@@ -463,7 +463,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 {
 	int srcdepth = (blit->srcdepth + 7) / 8;
 	int dstdepth = (blit->dstdepth + 7) / 8;
-	struct rectangle temprect;
+	rectangle temprect;
 	blitter_func blitter;
 	int srcx, srcy;
 
@@ -556,7 +556,7 @@ static int blit_vectors(const struct win_blit_params *blit)
 		blit->flipy != active_vector_params.flipy ||
 		blit->swapxy != active_vector_params.swapxy)
 	{
-		struct rectangle temprect;
+		rectangle temprect;
 		int x;
 
 		for (x = 0; x < MAX_SCREEN_DIM; x++)

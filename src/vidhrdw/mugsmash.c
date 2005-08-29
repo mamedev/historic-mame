@@ -4,10 +4,10 @@
 
 static tilemap *mugsmash_tilemap1,  *mugsmash_tilemap2;
 
-extern data16_t *mugsmash_videoram1, *mugsmash_videoram2, *mugs_spriteram;
-extern data16_t *mugsmash_regs1, *mugsmash_regs2;
+extern UINT16 *mugsmash_videoram1, *mugsmash_videoram2, *mugs_spriteram;
+extern UINT16 *mugsmash_regs1, *mugsmash_regs2;
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 
 	/* Each Sprite takes 16 bytes, 5 used? */

@@ -3,20 +3,20 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data16_t *aquarium_scroll, *aquarium_priority;
+extern UINT16 *aquarium_scroll, *aquarium_priority;
 
 static tilemap *aquarium_txt_tilemap;
-extern data16_t *aquarium_txt_videoram;
+extern UINT16 *aquarium_txt_videoram;
 
 static tilemap *aquarium_mid_tilemap;
-extern data16_t *aquarium_mid_videoram;
+extern UINT16 *aquarium_mid_videoram;
 
 static tilemap *aquarium_bak_tilemap;
-extern data16_t *aquarium_bak_videoram;
+extern UINT16 *aquarium_bak_videoram;
 
 
 /* gcpinbal.c modified */
-static void aquarium_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void aquarium_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
 	int offs,chain_pos;
 	int x,y,curx,cury;

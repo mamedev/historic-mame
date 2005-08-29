@@ -16,11 +16,11 @@ make more configurable (select caches per game?)
 #define S16_NUMCACHE 8
 
 static unsigned char *fd1094_key; // the memory region containing key
-static data16_t *fd1094_cpuregion; // the CPU region with encrypted code
+static UINT16 *fd1094_cpuregion; // the CPU region with encrypted code
 static UINT32  fd1094_cpuregionsize; // the size of this region in bytes
 
-static data16_t* fd1094_userregion; // a user region where the current decrypted state is put and executed from
-static data16_t* fd1094_cacheregion[S16_NUMCACHE]; // a cache region where S16_NUMCACHE states are stored to improve performance
+static UINT16* fd1094_userregion; // a user region where the current decrypted state is put and executed from
+static UINT16* fd1094_cacheregion[S16_NUMCACHE]; // a cache region where S16_NUMCACHE states are stored to improve performance
 static int fd1094_cached_states[S16_NUMCACHE]; // array of cached state numbers
 static int fd1094_current_cacheposition; // current position in cache array
 
@@ -130,7 +130,7 @@ void fd1094_driver_init(void)
 {
 	int i;
 
-	fd1094_cpuregion = (data16_t*)memory_region(REGION_CPU1);
+	fd1094_cpuregion = (UINT16*)memory_region(REGION_CPU1);
 	fd1094_cpuregionsize = memory_region_length(REGION_CPU1);
 	fd1094_key = memory_region(REGION_USER1);
 

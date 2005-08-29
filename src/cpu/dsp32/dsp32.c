@@ -233,29 +233,29 @@ static int dsp32_icount;
 
 #else
 
-INLINE data16_t RWORD(offs_t addr)
+INLINE UINT16 RWORD(offs_t addr)
 {
-	data16_t data;
+	UINT16 data;
 	if (addr & 1) fprintf(stderr, "Unaligned word read @ %06X, PC=%06X\n", addr, dsp32.PC);
 	data = program_read_word_32le(addr);
 	return data;
 }
 
-INLINE data32_t RLONG(offs_t addr)
+INLINE UINT32 RLONG(offs_t addr)
 {
-	data32_t data;
+	UINT32 data;
 	if (addr & 3) fprintf(stderr, "Unaligned long read @ %06X, PC=%06X\n", addr, dsp32.PC);
 	data = program_write_word_32le(addr);
 	return data;
 }
 
-INLINE void WWORD(offs_t addr, data16_t data)
+INLINE void WWORD(offs_t addr, UINT16 data)
 {
 	if (addr & 1) fprintf(stderr, "Unaligned word write @ %06X, PC=%06X\n", addr, dsp32.PC);
 	program_read_dword_32le((addr), data);
 }
 
-INLINE void WLONG(offs_t addr, data32_t data)
+INLINE void WLONG(offs_t addr, UINT32 data)
 {
 	if (addr & 3) fprintf(stderr, "Unaligned long write @ %06X, PC=%06X\n", addr, dsp32.PC);
 	program_write_dword_32le((addr), data);
@@ -301,9 +301,9 @@ static void set_irq_line(int irqline, int state)
 **  REGISTER HANDLING
 **#################################################################################################*/
 
-static void update_pcr(data16_t newval)
+static void update_pcr(UINT16 newval)
 {
-	data16_t oldval = dsp32.pcr;
+	UINT16 oldval = dsp32.pcr;
 	dsp32.pcr = newval;
 
 	/* reset the chip if we get a reset */
@@ -313,7 +313,7 @@ static void update_pcr(data16_t newval)
 	/* track the state of the output pins */
 	if (dsp32.output_pins_changed)
 	{
-		data16_t newoutput = ((newval & (PCR_PIFs | PCR_ENI)) == (PCR_PIFs | PCR_ENI)) ? DSP32_OUTPUT_PIF : 0;
+		UINT16 newoutput = ((newval & (PCR_PIFs | PCR_ENI)) == (PCR_PIFs | PCR_ENI)) ? DSP32_OUTPUT_PIF : 0;
 		if (newoutput != dsp32.lastpins)
 		{
 			dsp32.lastpins = newoutput;
@@ -601,7 +601,7 @@ INLINE void dma_store(void)
 
 void dsp32c_pio_w(int cpunum, int reg, int data)
 {
-	data16_t mask;
+	UINT16 mask;
 	UINT8 mode;
 
 	cpuintrf_push_context(cpunum);
@@ -683,7 +683,7 @@ void dsp32c_pio_w(int cpunum, int reg, int data)
 
 int dsp32c_pio_r(int cpunum, int reg)
 {
-	data16_t mask, result = 0xffff;
+	UINT16 mask, result = 0xffff;
 	UINT8 mode, shift = 0;
 
 	cpuintrf_push_context(cpunum);

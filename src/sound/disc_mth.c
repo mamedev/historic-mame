@@ -31,6 +31,7 @@
  * DST_RAMP              - Ramp up/down
  * DST_SAMPHOLD          - Sample & Hold Implementation
  * DST_SWITCH            - Switch implementation
+ * DST_ASWITCH           - Analog switch
  * DST_TRANSFORM         - Multiple math functions
  * DST_TVCA_OP_AMP       - Triggered op amp voltage controlled amplifier
  *
@@ -1330,6 +1331,33 @@ void dst_switch_step(struct node_description *node)
 	}
 }
 
+/************************************************************************
+ *
+ * DSS_ASWITCH - Analog switch
+ *
+ * input[0]    - Enable input value
+ * input[1]    - Control
+ * input[2]    - Input
+ * input[3]    - Threshold for enable
+ *
+ ************************************************************************/
+#define DSS_ASWITCH__ENABLE		(*(node->input[0]))
+#define DSS_ASWITCH__CTRL		(*(node->input[1]))
+#define DSS_ASWITCH__IN			(*(node->input[2]))
+#define DSS_ASWITCH__THRESHOLD	(*(node->input[3]))
+
+
+void dst_aswitch_step(struct node_description *node)
+{
+	if(DSS_SWITCH__ENABLE)
+	{
+		node->output=DSS_ASWITCH__CTRL > DSS_ASWITCH__THRESHOLD ? DSS_ASWITCH__IN : 0;
+	}
+	else
+	{
+		node->output=0;
+	}
+}
 
 /************************************************************************
  *

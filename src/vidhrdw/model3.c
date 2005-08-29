@@ -56,18 +56,18 @@ extern int model3_draw_crosshair;
 UINT64 *paletteram64;
 static UINT32 *vrom;
 
-static data8_t model3_layer_enable = 0;
-static data32_t layer_modulate_r;
-static data32_t layer_modulate_g;
-static data32_t layer_modulate_b;
-static data32_t model3_layer_modulate1;
-static data32_t model3_layer_modulate2;
-static data64_t layer_scroll[2];
+static UINT8 model3_layer_enable = 0;
+static UINT32 layer_modulate_r;
+static UINT32 layer_modulate_g;
+static UINT32 layer_modulate_b;
+static UINT32 model3_layer_modulate1;
+static UINT32 model3_layer_modulate2;
+static UINT64 layer_scroll[2];
 
-static data64_t *m3_char_ram;
-static data64_t *m3_tile_ram;
+static UINT64 *m3_char_ram;
+static UINT64 *m3_tile_ram;
 
-static data32_t *texture_fifo;
+static UINT32 *texture_fifo;
 static int texture_fifo_pos = 0;
 
 static UINT16 *texture_ram[2];
@@ -79,10 +79,10 @@ static UINT16 *pal_lookup;
 
 static int real3d_display_list = 0;
 
-static struct mame_bitmap *bitmap3d;
-static struct mame_bitmap *zbuffer;
-static struct rectangle clip3d;
-static struct rectangle *screen_clip;
+static mame_bitmap *bitmap3d;
+static mame_bitmap *zbuffer;
+static rectangle clip3d;
+static rectangle *screen_clip;
 
 #define BYTE_REVERSE32(x)		(((x >> 24) & 0xff) | \
 								((x >> 8) & 0xff00) | \
@@ -139,7 +139,7 @@ VIDEO_START( model3 )
 	return 0;
 }
 
-static void draw_tile_4bit(struct mame_bitmap *bitmap, int tx, int ty, int tilenum)
+static void draw_tile_4bit(mame_bitmap *bitmap, int tx, int ty, int tilenum)
 {
 	int x, y;
 	UINT8 *tile_base = (UINT8*)m3_char_ram;
@@ -174,7 +174,7 @@ static void draw_tile_4bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 	}
 }
 
-static void draw_tile_8bit(struct mame_bitmap *bitmap, int tx, int ty, int tilenum)
+static void draw_tile_8bit(mame_bitmap *bitmap, int tx, int ty, int tilenum)
 {
 	int x, y;
 	UINT8 *tile_base = (UINT8*)m3_char_ram;
@@ -205,7 +205,7 @@ static void draw_tile_8bit(struct mame_bitmap *bitmap, int tx, int ty, int tilen
 	}
 }
 #if 0
-static void draw_texture_sheet(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_texture_sheet(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int x,y;
 	for(y = cliprect->min_y; y <= cliprect->max_y; y++)
@@ -223,7 +223,7 @@ static void draw_texture_sheet(struct mame_bitmap *bitmap, const struct rectangl
 }
 #endif
 
-static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int bitdepth)
+static void draw_layer(mame_bitmap *bitmap, const rectangle *cliprect, int layer, int bitdepth)
 {
 	int x, y;
 	int tile_index = 0;
@@ -297,7 +297,7 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	}
 }
 
-static void copy_screen(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void copy_screen(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int x,y;
 	for(y=cliprect->min_y; y <= cliprect->max_y; y++) {
@@ -334,7 +334,7 @@ VIDEO_UPDATE( model3 )
 	layer_scroll_y[3] = (layer_data[3] & 0x8000) ? (layer_data[3] & 0x1ff) : -(layer_data[3] & 0x1ff);
 
 	//bitmap3d = bitmap;
-	screen_clip = (struct rectangle*)cliprect;
+	screen_clip = (rectangle*)cliprect;
 
 	/* layer disable debug keys */
 	tick++;

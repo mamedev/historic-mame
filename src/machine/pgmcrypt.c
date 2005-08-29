@@ -25,12 +25,12 @@ void pgm_kov_decrypt(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x400000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if((i & 0x040480) != 0x000080)
 			x ^= 0x0001;
@@ -87,12 +87,12 @@ void pgm_kovsh_decrypt(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x400000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if((i & 0x040080) != 0x000080)
 			x ^= 0x0001;
@@ -128,12 +128,12 @@ void pgm_dw2_decrypt(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x80000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if(((i & 0x020890) == 0x000000)
 		   || ((i & 0x020000) == 0x020000 && (i & 0x001500) != 0x001400))
@@ -170,12 +170,12 @@ void pgm_djlzz_decrypt(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x400000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 	    if((i & 0x40080) != 0x00080)
 	      x ^= 0x0001;
@@ -230,7 +230,7 @@ void pgm_pstar_decrypt(void)
 {
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x100000;
 
@@ -270,12 +270,12 @@ void pgm_dw3_decrypt(void)
 //  unsigned short *src=(unsigned short *) (OP_ROM+0x100000);
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x100000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if((i & 0x005460) == 0x001400)
 			x ^= 0x0100;
@@ -302,12 +302,12 @@ void pgm_killbld_decrypt(void)
 //  unsigned short *src=(unsigned short *) (OP_ROM+0x100000);
 
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x200000;
 
 	for(i=0; i<rom_size/2; i++) {
-		data16_t x = src[i];
+		UINT16 x = src[i];
 
 		if((i & 0x6d00) == 0x0400 || (i & 0x6c80) == 0x0880)
 			x ^= 0x0800;
@@ -341,7 +341,7 @@ static unsigned char puzzli2_tab[256] = {
 void pgm_puzzli2_decrypt(void)
 {
 	int i;
-	data16_t *src = (data16_t *) (memory_region(REGION_CPU1)+0x100000);
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1)+0x100000);
 
 	int rom_size = 0x100000;
 

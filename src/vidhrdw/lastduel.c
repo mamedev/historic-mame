@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
+UINT16 *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 
 static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
@@ -145,7 +145,7 @@ WRITE16_HANDLER( lastduel_flip_w )
 
 WRITE16_HANDLER( lastduel_scroll_w )
 {
-	static data16_t scroll[4];
+	static UINT16 scroll[4];
 
 	data = COMBINE_DATA(&scroll[offset]);
 	switch (offset)
@@ -205,7 +205,7 @@ WRITE16_HANDLER( madgear_scroll2_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
 {
 	int offs;
 

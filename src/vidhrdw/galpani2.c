@@ -24,13 +24,13 @@
 
 ***************************************************************************/
 
-data16_t *galpani2_bg8_0,         *galpani2_bg8_1;
-data16_t *galpani2_palette_0,     *galpani2_palette_1;
-data16_t *galpani2_bg8_regs_0,    *galpani2_bg8_regs_1;
-data16_t *galpani2_bg8_0_scrollx, *galpani2_bg8_1_scrollx;
-data16_t *galpani2_bg8_0_scrolly, *galpani2_bg8_1_scrolly;
+UINT16 *galpani2_bg8_0,         *galpani2_bg8_1;
+UINT16 *galpani2_palette_0,     *galpani2_palette_1;
+UINT16 *galpani2_bg8_regs_0,    *galpani2_bg8_regs_1;
+UINT16 *galpani2_bg8_0_scrollx, *galpani2_bg8_1_scrollx;
+UINT16 *galpani2_bg8_0_scrolly, *galpani2_bg8_1_scrolly;
 
-static struct mame_bitmap *galpani2_bg8_bitmap_0, *galpani2_bg8_bitmap_1;
+static mame_bitmap *galpani2_bg8_bitmap_0, *galpani2_bg8_bitmap_1;
 
 #define galpani2_BG8_REGS_R( _n_ ) \
 READ16_HANDLER( galpani2_bg8_regs_##_n_##_r ) \
@@ -61,7 +61,7 @@ WRITE16_HANDLER( galpani2_bg8_regs_##_n_##_w ) \
 WRITE16_HANDLER( galpani2_bg8_##_n_##_w ) \
 { \
 	int x,y,pen; \
-	data16_t newword = COMBINE_DATA(&galpani2_bg8_##_n_[offset]); \
+	UINT16 newword = COMBINE_DATA(&galpani2_bg8_##_n_[offset]); \
 	pen	=	newword & 0xff; \
 	x	=	(offset % 512);	/* 512 x 256 */ \
 	y	=	(offset / 512); \
@@ -71,7 +71,7 @@ WRITE16_HANDLER( galpani2_bg8_##_n_##_w ) \
 #define galpani2_BG8_PALETTE_W( _n_ ) \
 WRITE16_HANDLER( galpani2_palette_##_n_##_w ) \
 { \
-	data16_t newword = COMBINE_DATA(&galpani2_palette_##_n_[offset]); \
+	UINT16 newword = COMBINE_DATA(&galpani2_palette_##_n_[offset]); \
 	int r = (newword >>  5) & 0x1f; \
 	int g = (newword >> 10) & 0x1f; \
 	int b = (newword >>  0) & 0x1f; \
@@ -99,14 +99,14 @@ galpani2_BG8_PALETTE_W( 1 )
 
 ***************************************************************************/
 
-data16_t *galpani2_bg15;
+UINT16 *galpani2_bg15;
 
-static struct mame_bitmap *galpani2_bg15_bitmap;
+static mame_bitmap *galpani2_bg15_bitmap;
 
 /* 8 horizontal pages of 256x256 pixels? */
 WRITE16_HANDLER( galpani2_bg15_w )
 {
-	data16_t newword = COMBINE_DATA(&galpani2_bg15[offset]);
+	UINT16 newword = COMBINE_DATA(&galpani2_bg15[offset]);
 
 	int x = (offset % 256) + (offset / (256*256)) * 256 ;
 	int y = (offset / 256) % 256;

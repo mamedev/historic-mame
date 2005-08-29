@@ -21,9 +21,9 @@ static int blitter_direction_x, blitter_direction_y;
 static int pastelg_screen_refresh;
 static int pastelg_palbank;
 
-static struct mame_bitmap *pastelg_tmpbitmap;
-static data8_t *pastelg_videoram;
-static data8_t *pastelg_clut;
+static mame_bitmap *pastelg_tmpbitmap;
+static UINT8 *pastelg_videoram;
+static UINT8 *pastelg_clut;
 
 
 void pastelg_vramflip(void);
@@ -264,9 +264,9 @@ void pastelg_gfxdraw(void)
 VIDEO_START( pastelg )
 {
 	if ((pastelg_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((pastelg_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data8_t))) == 0) return 1;
-	if ((pastelg_clut = auto_malloc(0x10 * sizeof(data8_t))) == 0) return 1;
-	memset(pastelg_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(data8_t)));
+	if ((pastelg_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8))) == 0) return 1;
+	if ((pastelg_clut = auto_malloc(0x10 * sizeof(UINT8))) == 0) return 1;
+	memset(pastelg_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8)));
 	return 0;
 }
 

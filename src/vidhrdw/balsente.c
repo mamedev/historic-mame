@@ -198,9 +198,9 @@ WRITE8_HANDLER( shrike_sprite_select_w )
  *
  *************************************/
 
-static void draw_one_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 *sprite)
+static void draw_one_sprite(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 *sprite)
 {
-	struct rectangle finalclip = *cliprect;
+	rectangle finalclip = *cliprect;
 	int flags = sprite[0];
 	int image = sprite[1] | ((flags & 7) << 8);
 	int ypos = sprite[2] + 17;

@@ -19,7 +19,7 @@
 static UINT8	cmos_write_enable;
 
 /* I/O-related variables */
-static data16_t	iodata[8];
+static UINT16	iodata[8];
 static UINT8	ioshuffle[16];
 static UINT8	midxunit_analog_port;
 

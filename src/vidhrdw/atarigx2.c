@@ -43,7 +43,7 @@ UINT16 atarigx2_motion_object_mask;
  *
  *************************************/
 
-static data16_t current_control;
+static UINT16 current_control;
 static UINT8 playfield_tile_bank;
 static UINT8 playfield_color_bank;
 static UINT16 playfield_xscroll;
@@ -165,7 +165,7 @@ WRITE16_HANDLER( atarigx2_mo_control_w )
 
 void atarigx2_scanline_update(int scanline)
 {
-	data32_t *base = &atarigen_alpha32[(scanline / 8) * 32 + 24];
+	UINT32 *base = &atarigen_alpha32[(scanline / 8) * 32 + 24];
 	int i;
 
 	if (scanline == 0) logerror("-------\n");
@@ -177,7 +177,7 @@ void atarigx2_scanline_update(int scanline)
 	/* update the playfield scrolls */
 	for (i = 0; i < 8; i++)
 	{
-		data32_t word = *base++;
+		UINT32 word = *base++;
 
 		if (word & 0x80000000)
 		{
@@ -240,7 +240,7 @@ VIDEO_UPDATE( atarigx2 )
 
 	/* copy the motion objects on top */
 	{
-		struct mame_bitmap *mo_bitmap = atarirle_get_vram(0, 0);
+		mame_bitmap *mo_bitmap = atarirle_get_vram(0, 0);
 		int left	= cliprect->min_x;
 		int top		= cliprect->min_y;
 		int right	= cliprect->max_x + 1;

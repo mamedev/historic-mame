@@ -32,7 +32,7 @@ extern int m107_raster_irq_position,m107_sprite_list;
 #define m107_IRQ_3 ((m107_irq_vectorbase+12)/4) /* ??? */
 
 WRITE8_HANDLER( m107_spritebuffer_w );
-void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip);
+void m107_screenrefresh(mame_bitmap *bitmap,const rectangle *clip);
 VIDEO_UPDATE( m107 );
 VIDEO_UPDATE( dsoccr );
 VIDEO_START( m107 );

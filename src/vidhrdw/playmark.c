@@ -3,9 +3,9 @@
 
 
 
-data16_t *bigtwin_bgvideoram;
-data16_t *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
-data16_t *wbeachvl_rowscroll;
+UINT16 *bigtwin_bgvideoram;
+UINT16 *wbeachvl_videoram1,*wbeachvl_videoram2,*wbeachvl_videoram3;
+UINT16 *wbeachvl_rowscroll;
 
 static int bgscrollx,bgscrolly,bg_enable,bg_full_size;
 static int fgscrollx,fg_rowscroll_enable;
@@ -241,7 +241,7 @@ WRITE16_HANDLER( bigtwin_paletteram_w )
 
 WRITE16_HANDLER( bigtwin_scroll_w )
 {
-	static data16_t scroll[6];
+	static UINT16 scroll[6];
 
 	data = COMBINE_DATA(&scroll[offset]);
 
@@ -261,7 +261,7 @@ WRITE16_HANDLER( bigtwin_scroll_w )
 
 WRITE16_HANDLER( wbeachvl_scroll_w )
 {
-	static data16_t scroll[6];
+	static UINT16 scroll[6];
 
 	data = COMBINE_DATA(&scroll[offset]);
 
@@ -280,7 +280,7 @@ WRITE16_HANDLER( wbeachvl_scroll_w )
 
 WRITE16_HANDLER( excelsr_scroll_w )
 {
-	static data16_t scroll[6];
+	static UINT16 scroll[6];
 
 	data = COMBINE_DATA(&scroll[offset]);
 
@@ -300,7 +300,7 @@ WRITE16_HANDLER( excelsr_scroll_w )
 
 WRITE16_HANDLER( hotmind_scroll_w )
 {
-	static data16_t scroll[6];
+	static UINT16 scroll[6];
 
 	data = COMBINE_DATA(&scroll[offset]);
 
@@ -321,7 +321,7 @@ WRITE16_HANDLER( hotmind_scroll_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority,int codeshift)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int priority,int codeshift)
 {
 	int offs;
 	int height = Machine->gfx[0]->height;
@@ -356,7 +356,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 	}
 }
 
-static void draw_bitmap(struct mame_bitmap *bitmap)
+static void draw_bitmap(mame_bitmap *bitmap)
 {
 	int x,y,count;
 	int color;

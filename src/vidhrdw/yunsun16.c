@@ -25,9 +25,9 @@
 
 /* Variables that driver has access to: */
 
-data16_t *yunsun16_vram_0,   *yunsun16_vram_1;
-data16_t *yunsun16_scroll_0, *yunsun16_scroll_1;
-data16_t *yunsun16_priority;
+UINT16 *yunsun16_vram_0,   *yunsun16_vram_1;
+UINT16 *yunsun16_scroll_0, *yunsun16_scroll_1;
+UINT16 *yunsun16_priority;
 
 
 /***************************************************************************
@@ -57,8 +57,8 @@ UINT32 yunsun16_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 
 
 static void get_tile_info_0(int tile_index)
 {
-	data16_t code = yunsun16_vram_0[ 2 * tile_index + 0 ];
-	data16_t attr = yunsun16_vram_0[ 2 * tile_index + 1 ];
+	UINT16 code = yunsun16_vram_0[ 2 * tile_index + 0 ];
+	UINT16 attr = yunsun16_vram_0[ 2 * tile_index + 1 ];
 	SET_TILE_INFO(
 			TMAP_GFX,
 			code,
@@ -68,8 +68,8 @@ static void get_tile_info_0(int tile_index)
 
 static void get_tile_info_1(int tile_index)
 {
-	data16_t code = yunsun16_vram_1[ 2 * tile_index + 0 ];
-	data16_t attr = yunsun16_vram_1[ 2 * tile_index + 1 ];
+	UINT16 code = yunsun16_vram_1[ 2 * tile_index + 0 ];
+	UINT16 attr = yunsun16_vram_1[ 2 * tile_index + 1 ];
 	SET_TILE_INFO(
 			TMAP_GFX,
 			code,
@@ -79,15 +79,15 @@ static void get_tile_info_1(int tile_index)
 
 WRITE16_HANDLER( yunsun16_vram_0_w )
 {
-	data16_t old_data	=	yunsun16_vram_0[offset];
-	data16_t new_data	=	COMBINE_DATA(&yunsun16_vram_0[offset]);
+	UINT16 old_data	=	yunsun16_vram_0[offset];
+	UINT16 new_data	=	COMBINE_DATA(&yunsun16_vram_0[offset]);
 	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_0,offset/2);
 }
 
 WRITE16_HANDLER( yunsun16_vram_1_w )
 {
-	data16_t old_data	=	yunsun16_vram_1[offset];
-	data16_t new_data	=	COMBINE_DATA(&yunsun16_vram_1[offset]);
+	UINT16 old_data	=	yunsun16_vram_1[offset];
+	UINT16 new_data	=	COMBINE_DATA(&yunsun16_vram_1[offset]);
 	if (old_data != new_data)	tilemap_mark_tile_dirty(tilemap_1,offset/2);
 }
 
@@ -150,7 +150,7 @@ VIDEO_START( yunsun16 )
 
 ***************************************************************************/
 
-static void yunsun16_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void yunsun16_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -231,7 +231,7 @@ VIDEO_UPDATE( yunsun16 )
 	/* tilemap.c only copes with screen widths which are a multiple of 8 pixels */
 	if ( (Machine->drv->screen_width-1-Machine->visible_area.max_x) & 7 )
 	{
-		struct rectangle clip;
+		rectangle clip;
 		clip.min_x = Machine->visible_area.max_x+1;
 		clip.max_x = Machine->drv->screen_width-1;
 		clip.min_y = Machine->visible_area.min_y;

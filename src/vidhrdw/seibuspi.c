@@ -14,7 +14,7 @@ static UINT32 video_dma_length;
 static UINT32 video_dma_address;
 
 static int rf2_layer_bank[3];
-extern data32_t *spimainram;
+extern UINT32 *spimainram;
 static UINT32 *tilemap_ram;
 static UINT32 *palette_ram;
 static UINT32 *sprite_ram;
@@ -231,7 +231,7 @@ WRITE32_HANDLER( video_dma_address_w )
 	COMBINE_DATA( &video_dma_address );
 }
 
-static void draw_blend_gfx(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const gfx_element *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
+static void draw_blend_gfx(mame_bitmap *bitmap, const rectangle *cliprect, const gfx_element *gfx, unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy)
 {
 	UINT8 *dp;
 	int i, j;
@@ -353,7 +353,7 @@ static int sprite_ytable[2][8] =
 	{ 7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 }
 };
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri_mask)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri_mask)
 {
 	INT16 xpos, ypos;
 	int tile_num, color;
@@ -560,15 +560,15 @@ static void set_scroll(tilemap *layer, int scroll)
 }
 
 
-static void combine_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect, tilemap *tile, int x, int y, int opaque, INT16 *rowscroll)
+static void combine_tilemap(mame_bitmap *bitmap, const rectangle *cliprect, tilemap *tile, int x, int y, int opaque, INT16 *rowscroll)
 {
 	int i,j;
 	UINT16 *s;
 	UINT16 *d;
 	UINT8 *t;
 	UINT32 xscroll_mask, yscroll_mask;
-	struct mame_bitmap *pen_bitmap;
-	struct mame_bitmap *trans_bitmap;
+	mame_bitmap *pen_bitmap;
+	mame_bitmap *trans_bitmap;
 
 	pen_bitmap = tilemap_get_pixmap(tile);
 	trans_bitmap = tilemap_get_transparency_bitmap(tile);

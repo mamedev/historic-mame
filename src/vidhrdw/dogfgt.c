@@ -3,11 +3,11 @@
 #include "dogfgt.h"
 
 
-data8_t *dogfgt_bgvideoram;
+UINT8 *dogfgt_bgvideoram;
 
-static data8_t *bitmapram;
+static UINT8 *bitmapram;
 static int bm_plane;
-static struct mame_bitmap *pixbitmap;
+static mame_bitmap *pixbitmap;
 static int pixcolor;
 static tilemap *bg_tilemap;
 
@@ -190,7 +190,7 @@ WRITE8_HANDLER( dogfgt_1800_w )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

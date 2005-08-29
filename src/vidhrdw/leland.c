@@ -35,7 +35,7 @@ struct vram_state_data
 /* video RAM */
 UINT8 *ataxx_qram;
 UINT8 leland_last_scanline_int;
-static struct mame_bitmap *fgbitmap;
+static mame_bitmap *fgbitmap;
 static UINT8 *leland_video_ram;
 
 /* video RAM bitmap drawing */

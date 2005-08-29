@@ -85,7 +85,7 @@ EB26IC73.BIN    27C240      /  Main Program
 #include "sound/2610intf.h"
 
 
-extern data16_t *suprslam_screen_videoram, *suprslam_bg_videoram,*suprslam_sp_videoram, *suprslam_spriteram;
+extern UINT16 *suprslam_screen_videoram, *suprslam_bg_videoram,*suprslam_sp_videoram, *suprslam_spriteram;
 
 /* in vidhrdw */
 

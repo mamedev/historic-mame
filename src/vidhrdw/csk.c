@@ -18,8 +18,8 @@ unsigned char * cpk_expram;
 
 static unsigned char * dirtybuffer;
 static unsigned char * dirtybuffer1;
-static struct mame_bitmap *tmpbitmap;
-static struct mame_bitmap *tmpbitmap2;
+static mame_bitmap *tmpbitmap;
+static mame_bitmap *tmpbitmap2;
 
 static int hopperOK = 0;
 static int intstate1 = 0;	/* unknown */

@@ -89,7 +89,7 @@ VIDEO_START( bombjack )
 	return 0;
 }
 
-static void bombjack_draw_sprites( struct mame_bitmap *bitmap )
+static void bombjack_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

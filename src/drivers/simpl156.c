@@ -98,8 +98,8 @@ extern void decrypt156(void);
 #include "sound/okim6295.h"
 #include "deco16ic.h"
 
-static data32_t *simpl156_systemram;
-data8_t *simpl156_default_eeprom;
+static UINT32 *simpl156_systemram;
+UINT8 *simpl156_default_eeprom;
 
 extern VIDEO_START( simpl156 );
 extern VIDEO_UPDATE( simpl156 );
@@ -237,7 +237,7 @@ WRITE32_HANDLER( simpl156_spriteram_w )
 	COMBINE_DATA(&spriteram32[offset]);
 }
 
-static data32_t*simpl156_mainram;
+static UINT32*simpl156_mainram;
 
 
 READ32_HANDLER( simpl156_mainram_r )
@@ -561,9 +561,9 @@ MACHINE_DRIVER_END
 
 DRIVER_INIT(simpl156)
 {
-	data8_t *rom = memory_region(REGION_SOUND2);
+	UINT8 *rom = memory_region(REGION_SOUND2);
 	int length = memory_region_length(REGION_SOUND2);
-	data8_t *buf1 = malloc(length);
+	UINT8 *buf1 = malloc(length);
 
 	UINT32 x;
 

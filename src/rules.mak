@@ -1498,8 +1498,8 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/dsp56k
 CPUDEFS += -DHAS_DSP56156=1
 CPUOBJS += $(OBJ)/cpu/dsp56k/dsp56k.o
-DBGOBJS += $(OBJ)/cpu/dsp56k/dsp56kdasm.o
-$(OBJ)/cpu/dsp56k/dsp56k.o: dsp56k.c dsp56kops.c dsp56k.h
+DBGOBJS += $(OBJ)/cpu/dsp56k/dsp56dsm.o
+$(OBJ)/cpu/dsp56k/dsp56k.o: dsp56k.c dsp56ops.c dsp56k.h
 else
 CPUDEFS += -DHAS_DSP56156=0
 endif

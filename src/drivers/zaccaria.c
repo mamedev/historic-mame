@@ -42,7 +42,7 @@ Notes:
 #include "sound/5220intf.h"
 
 
-extern data8_t *zaccaria_videoram,*zaccaria_attributesram;
+extern UINT8 *zaccaria_videoram,*zaccaria_attributesram;
 
 PALETTE_INIT( zaccaria );
 VIDEO_START( zaccaria );

@@ -18,30 +18,30 @@ extern INT8 hdcpu_dsp32;
 extern UINT8 hd34010_host_access;
 extern UINT8 hddsk_pio_access;
 
-extern data16_t *hdmsp_ram;
-extern data16_t *hddsk_ram;
-extern data16_t *hddsk_rom;
-extern data16_t *hddsk_zram;
-extern data16_t *hd68k_slapstic_base;
-extern data16_t *st68k_sloop_alt_base;
+extern UINT16 *hdmsp_ram;
+extern UINT16 *hddsk_ram;
+extern UINT16 *hddsk_rom;
+extern UINT16 *hddsk_zram;
+extern UINT16 *hd68k_slapstic_base;
+extern UINT16 *st68k_sloop_alt_base;
 
-extern data16_t *hdadsp_data_memory;
-extern data32_t *hdadsp_pgm_memory;
+extern UINT16 *hdadsp_data_memory;
+extern UINT32 *hdadsp_pgm_memory;
 
-extern data16_t *hdgsp_protection;
-extern data16_t *stmsp_sync[3];
+extern UINT16 *hdgsp_protection;
+extern UINT16 *stmsp_sync[3];
 
-extern data16_t *hdgsp_speedup_addr[2];
+extern UINT16 *hdgsp_speedup_addr[2];
 extern offs_t hdgsp_speedup_pc;
 
-extern data16_t *hdmsp_speedup_addr;
+extern UINT16 *hdmsp_speedup_addr;
 extern offs_t hdmsp_speedup_pc;
 
-extern data16_t *hdds3_speedup_addr;
+extern UINT16 *hdds3_speedup_addr;
 extern offs_t hdds3_speedup_pc;
 extern offs_t hdds3_transfer_pc;
 
-extern data32_t *rddsp32_sync[2];
+extern UINT32 *rddsp32_sync[2];
 
 extern UINT32 gsp_speedup_count[4];
 extern UINT32 msp_speedup_count[4];
@@ -172,7 +172,7 @@ READ16_HANDLER( hdds3_speedup_r );
 
 void hdsnd_init(void);
 
-extern data16_t *hdsnddsp_ram;
+extern UINT16 *hdsnddsp_ram;
 
 READ16_HANDLER( hd68k_snd_data_r );
 READ16_HANDLER( hd68k_snd_status_r );
@@ -214,10 +214,10 @@ READ16_HANDLER( hdsnddsp_compare_r );
 
 extern UINT8 hdgsp_multisync;
 extern UINT8 *hdgsp_vram;
-extern data16_t *hdgsp_control_lo;
-extern data16_t *hdgsp_control_hi;
-extern data16_t *hdgsp_paletteram_lo;
-extern data16_t *hdgsp_paletteram_hi;
+extern UINT16 *hdgsp_control_lo;
+extern UINT16 *hdgsp_control_hi;
+extern UINT16 *hdgsp_paletteram_lo;
+extern UINT16 *hdgsp_paletteram_hi;
 extern size_t hdgsp_vram_size;
 
 VIDEO_START( harddriv );

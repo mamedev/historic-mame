@@ -89,7 +89,7 @@ DM81LS95 = TriState buffer
 #include "vidhrdw/generic.h"
 #include "sound/5220intf.h"
 
-extern data8_t *portrait_bgvideoram,*portrait_fgvideoram;
+extern UINT8 *portrait_bgvideoram,*portrait_fgvideoram;
 
 extern int portrait_scroll;
 

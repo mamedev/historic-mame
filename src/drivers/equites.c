@@ -175,7 +175,7 @@ extern WRITE8_HANDLER(equites_8910data_w);
 extern WRITE8_HANDLER(equites_dac0_w);
 extern WRITE8_HANDLER(equites_dac1_w);
 
-extern data16_t *equites_8404ram;
+extern UINT16 *equites_8404ram;
 extern struct MSM5232interface equites_5232intf;
 extern struct AY8910interface equites_8910intf;
 
@@ -225,7 +225,7 @@ extern WRITE16_HANDLER(splndrbt_selchar0_w);
 extern WRITE16_HANDLER(splndrbt_selchar1_w);
 extern WRITE16_HANDLER(splndrbt_scrollram_w);
 extern WRITE16_HANDLER(splndrbt_bgcolor_w);
-extern data16_t *splndrbt_scrollx, *splndrbt_scrolly;
+extern UINT16 *splndrbt_scrollx, *splndrbt_scrolly;
 
 /******************************************************************************/
 // Locals
@@ -237,7 +237,7 @@ static int disablejoyport2 = 0;
 // Exports
 
 // Common
-data16_t *equites_workram;
+UINT16 *equites_workram;
 int equites_id;
 
 // Equites Hardware

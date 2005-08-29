@@ -83,11 +83,11 @@ struct _tilemap
 	UINT8 all_tiles_clean;
 
 	/* cached color data */
-	struct mame_bitmap *pixmap;
+	mame_bitmap *pixmap;
 	UINT32 pixmap_pitch_line;
 	UINT32 pixmap_pitch_row;
 
-	struct mame_bitmap *transparency_bitmap;
+	mame_bitmap *transparency_bitmap;
 	UINT32 transparency_bitmap_pitch_line;
 	UINT32 transparency_bitmap_pitch_row;
 	UINT8 *transparency_data, **transparency_data_row;
@@ -95,7 +95,7 @@ struct _tilemap
 	struct _tilemap *next; /* resource tracking */
 };
 
-struct mame_bitmap *		priority_bitmap;
+mame_bitmap *		priority_bitmap;
 UINT32					priority_bitmap_pitch_line;
 UINT32					priority_bitmap_pitch_row;
 
@@ -115,7 +115,7 @@ static struct
 	blitopaque_t draw_opaque;
 	int clip_left, clip_top, clip_right, clip_bottom;
 	UINT32 tilemap_priority_code;
-	struct mame_bitmap *	screen_bitmap;
+	mame_bitmap *	screen_bitmap;
 	UINT32				screen_bitmap_pitch_line;
 	UINT32				screen_bitmap_pitch_row;
 } blit;
@@ -725,7 +725,7 @@ static void install_draw_handlers( tilemap *tmap )
 	}
 }
 
-INLINE tilemap_draw_func pick_draw_func( struct mame_bitmap *dest )
+INLINE tilemap_draw_func pick_draw_func( mame_bitmap *dest )
 {
 	switch (dest ? dest->depth : Machine->scrbitmap->depth)
 	{
@@ -1002,7 +1002,7 @@ profiler_mark(PROFILER_TILEMAP_UPDATE);
 profiler_mark(PROFILER_END);
 }
 
-struct mame_bitmap *tilemap_get_pixmap( tilemap * tmap )
+mame_bitmap *tilemap_get_pixmap( tilemap * tmap )
 {
 	UINT32 cached_indx = 0;
 	UINT32 row,col;
@@ -1045,7 +1045,7 @@ profiler_mark(PROFILER_END);
 	return tmap->pixmap;
 }
 
-struct mame_bitmap *tilemap_get_transparency_bitmap( tilemap * tmap )
+mame_bitmap *tilemap_get_transparency_bitmap( tilemap * tmap )
 {
 	return tmap->transparency_bitmap;
 }
@@ -1155,12 +1155,12 @@ void tilemap_set_user_data( tilemap *tmap, void *user_data )
 
 /***********************************************************************************/
 
-void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority )
+void tilemap_draw( mame_bitmap *dest, const rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority )
 {
 	tilemap_draw_primask( dest, cliprect, tmap, flags, priority, 0xff );
 }
 
-void tilemap_draw_primask( struct mame_bitmap *dest, const struct rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority, UINT32 priority_mask )
+void tilemap_draw_primask( mame_bitmap *dest, const rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority, UINT32 priority_mask )
 {
 	tilemap_draw_func drawfunc = pick_draw_func(dest);
 	int xpos,ypos,mask,value;
@@ -1481,7 +1481,7 @@ profiler_mark(PROFILER_END);
    - startx and starty MUST be UINT32 for calculations to work correctly
    - srcbitmap->width and height are assumed to be a power of 2 to speed up wraparound
    */
-void tilemap_draw_roz( struct mame_bitmap *dest,const struct rectangle *cliprect,tilemap *tmap,
+void tilemap_draw_roz( mame_bitmap *dest,const rectangle *cliprect,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority )
@@ -1489,7 +1489,7 @@ void tilemap_draw_roz( struct mame_bitmap *dest,const struct rectangle *cliprect
 	tilemap_draw_roz_primask( dest,cliprect,tmap,startx,starty,incxx,incxy,incyx,incyy,wraparound,flags,priority, 0xff );
 }
 
-void tilemap_draw_roz_primask( struct mame_bitmap *dest,const struct rectangle *cliprect,tilemap *tmap,
+void tilemap_draw_roz_primask( mame_bitmap *dest,const rectangle *cliprect,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority, UINT32 priority_mask )
@@ -1624,7 +1624,7 @@ void tilemap_nb_size( UINT32 number, UINT32 *width, UINT32 *height )
 	*height = tmap->cached_height;
 }
 
-void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly )
+void tilemap_nb_draw( mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly )
 {
 	tilemap_draw_func drawfunc = pick_draw_func(dest);
 	int xpos,ypos;
@@ -1738,9 +1738,9 @@ void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, U
 
 #ifdef DECLARE
 
-DECLARE(copyroz_core,(struct mame_bitmap *bitmap,tilemap *tmap,
+DECLARE(copyroz_core,(mame_bitmap *bitmap,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,int wraparound,
-		const struct rectangle *clip,
+		const rectangle *clip,
 		int mask,int value,
 		UINT32 priority,UINT32 priority_mask,UINT32 palette_offset),
 {
@@ -1751,8 +1751,8 @@ DECLARE(copyroz_core,(struct mame_bitmap *bitmap,tilemap *tmap,
 	int sy;
 	int ex;
 	int ey;
-	struct mame_bitmap *srcbitmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *srcbitmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	const int xmask = srcbitmap->width-1;
 	const int ymask = srcbitmap->height-1;
 	const int widthshifted = srcbitmap->width << 16;
@@ -1944,7 +1944,7 @@ DECLARE( draw, (tilemap *tmap, int xpos, int ypos, int mask, int value ),
 	trans_t transCur;
 	const UINT8 *pTrans;
 	UINT32 cached_indx;
-	struct mame_bitmap *screen = blit.screen_bitmap;
+	mame_bitmap *screen = blit.screen_bitmap;
 	int tilemap_priority_code = blit.tilemap_priority_code;
 	int x1 = xpos;
 	int y1 = ypos;
@@ -2137,8 +2137,8 @@ static UINT8 TRANSP(HandleTransparencyBitmask)(tilemap *tmap, UINT32 x0, UINT32 
 {
 	UINT32 tile_width = tmap->cached_tile_width;
 	UINT32 tile_height = tmap->cached_tile_height;
-	struct mame_bitmap *pixmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *pixmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel;
@@ -2235,8 +2235,8 @@ static UINT8 TRANSP(HandleTransparencyColor)(tilemap *tmap, UINT32 x0, UINT32 y0
 {
 	UINT32 tile_width = tmap->cached_tile_width;
 	UINT32 tile_height = tmap->cached_tile_height;
-	struct mame_bitmap *pixmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *pixmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tmap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
@@ -2335,8 +2335,8 @@ static UINT8 TRANSP(HandleTransparencyPen)(tilemap *tmap, UINT32 x0, UINT32 y0, 
 {
 	UINT32 tile_width = tmap->cached_tile_width;
 	UINT32 tile_height = tmap->cached_tile_height;
-	struct mame_bitmap *pixmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *pixmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tmap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
@@ -2433,8 +2433,8 @@ static UINT8 TRANSP(HandleTransparencyPenBit)(tilemap *tmap, UINT32 x0, UINT32 y
 {
 	UINT32 tile_width = tmap->cached_tile_width;
 	UINT32 tile_height = tmap->cached_tile_height;
-	struct mame_bitmap *pixmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *pixmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tmap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
@@ -2513,8 +2513,8 @@ static UINT8 TRANSP(HandleTransparencyPens)(tilemap *tmap, UINT32 x0, UINT32 y0,
 {
 	UINT32 tile_width = tmap->cached_tile_width;
 	UINT32 tile_height = tmap->cached_tile_height;
-	struct mame_bitmap *pixmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *pixmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tmap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];
@@ -2599,8 +2599,8 @@ static UINT8 TRANSP(HandleTransparencyNone)(tilemap *tmap, UINT32 x0, UINT32 y0,
 {
 	UINT32 tile_width = tmap->cached_tile_width;
 	UINT32 tile_height = tmap->cached_tile_height;
-	struct mame_bitmap *pixmap = tmap->pixmap;
-	struct mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
+	mame_bitmap *pixmap = tmap->pixmap;
+	mame_bitmap *transparency_bitmap = tmap->transparency_bitmap;
 	int pitch = tile_width + tile_info.skip;
 	PAL_INIT;
 	UINT32 *pPenToPixel = tmap->pPenToPixel[flags&(TILE_FLIPY|TILE_FLIPX)];

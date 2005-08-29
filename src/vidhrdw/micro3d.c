@@ -11,11 +11,11 @@
 #include "palette.h"
 
 
-extern data16_t *micro3d_sprite_vram;
-data16_t dpytap, dudate, dumask;
-extern data16_t dpyadr;
+extern UINT16 *micro3d_sprite_vram;
+UINT16 dpytap, dudate, dumask;
+extern UINT16 dpyadr;
 extern int dpyadrscan;
-//extern data16_t *m68681_base;
+//extern UINT16 *m68681_base;
 
 extern struct {
 
@@ -85,8 +85,8 @@ VIDEO_START(micro3d)
 VIDEO_UPDATE( micro3d )
 {
 
-data16_t *asrc;
-//data16_t dudate, dumask;
+UINT16 *asrc;
+//UINT16 dudate, dumask;
 int x,y;
 static UINT32 offset=0x1e00;
 

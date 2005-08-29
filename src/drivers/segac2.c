@@ -52,7 +52,7 @@
     0.41 | Mapped more Dipswitches and the odd minor fix.
     0.40 | Updated the Driver so it 'works' with the new memory system introduced in 0.37b8
          | I'm pretty sure I've not done this right in places (for example writes to VRAM
-         | should probably use data16_t or something.  <request>Help</request> :)
+         | should probably use UINT16 or something.  <request>Help</request> :)
          | Also Added dipswitches to a few more of the games (Borench & PotoPoto) zzzz.
     0.38 | Started Mapping Dipswitches & Controls on a Per Game basis.  Thunderforce AC now has
          | this information correct.
@@ -177,7 +177,7 @@ static UINT16 		prot_write_buf;		/* remembers what was written */
 static UINT16		prot_read_buf;		/* remembers what was returned */
 
 /* Ribbit! palette swizzling */
-static data16_t *	ribbit_palette_select;	/* pointer to base of ROM we're interested in */
+static UINT16 *	ribbit_palette_select;	/* pointer to base of ROM we're interested in */
 static offs_t		swizzle_table_index;/* which kind of swizzling is active? */
 
 /* sound-related variables */
@@ -185,15 +185,15 @@ static UINT8		sound_banks;		/* number of sound banks */
 static UINT8		bloxeed_sound;		/* use kludge for bloxeed sound? */
 
 /* RAM pointers */
-static data16_t *	main_ram;			/* pointer to main RAM */
+static UINT16 *	main_ram;			/* pointer to main RAM */
 
 /* Genesis based */
 unsigned int	z80_68000_latch			= 0;
 unsigned int	z80_latch_bitcount		= 0;
 static int z80running;
-static data16_t *genesis_68k_ram;
+static UINT16 *genesis_68k_ram;
 static unsigned char *genesis_z80_ram;
-static data16_t *ic36_ram;
+static UINT16 *ic36_ram;
 
 /* Megatech BIOS specific */
 unsigned int bios_port_ctrl;
@@ -815,7 +815,7 @@ static READ16_HANDLER( puyopuy2_prot_r )
 /* kludge for Ribbit! */
 static READ16_HANDLER( ribbit_prot_hack_r )
 {
-	data16_t result = main_ram[0xc166/2];
+	UINT16 result = main_ram[0xc166/2];
 
 	/* Ribbit is kind of evil in that they store the table shifted one state out of sequence */
 	/* the following code just makes sure that the important comparison works */
@@ -1276,7 +1276,7 @@ $A1001F Port C serial control
 
 */
 
-data16_t *genesis_io_ram;
+UINT16 *genesis_io_ram;
 
 READ16_HANDLER ( genesis_io_r )
 {
@@ -1640,7 +1640,7 @@ UINT8 mt_ram;
 
 static READ8_HANDLER( megatech_instr_r )
 {
-	data8_t* instr = memory_region(REGION_USER1);
+	UINT8* instr = memory_region(REGION_USER1);
 
 	if(mt_ram == 0)
 		return instr[offset/2];
@@ -1708,8 +1708,8 @@ static WRITE8_HANDLER( megaplay_bios_gamesel_w )
 
 static READ8_HANDLER( bank_r )
 {
-	data8_t* bank = memory_region(REGION_CPU3);
-	data8_t* game = memory_region(REGION_CPU1);
+	UINT8* bank = memory_region(REGION_CPU3);
+	UINT8* game = memory_region(REGION_CPU1);
 
 	if(game_banksel == 0x142) // Genesis I/O
 		return megaplay_genesis_io_r((offset/2) & 0x1f, 0xffff);
@@ -4765,7 +4765,7 @@ static DRIVER_INIT( tantrkor )
 #if 0
 	{
 		int base = 0x5ce;
-		data8_t *rom	=	memory_region(REGION_CPU1);
+		UINT8 *rom	=	memory_region(REGION_CPU1);
 		int a,b;
 
 		for (a=0;a<256;a+=8) {
@@ -4970,7 +4970,7 @@ static DRIVER_INIT( pclub )
 
 DRIVER_INIT( puckpkmn )
 {
-	data8_t *rom	=	memory_region(REGION_CPU1);
+	UINT8 *rom	=	memory_region(REGION_CPU1);
 	size_t len		=	memory_region_length(REGION_CPU1);
 	int i;
 	for (i = 0; i < len; i++)
@@ -5112,9 +5112,9 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 
 static DRIVER_INIT (megaplay)
 {
-	data8_t *src = memory_region(REGION_CPU3);
-	data8_t *instruction_rom = memory_region(REGION_USER1);
-	data8_t *game_rom = memory_region(REGION_CPU1);
+	UINT8 *src = memory_region(REGION_CPU3);
+	UINT8 *instruction_rom = memory_region(REGION_USER1);
+	UINT8 *game_rom = memory_region(REGION_CPU1);
 	int offs;
 
 	memmove(src+0x10000,src+0x8000,0x18000); // move bios..
@@ -5123,7 +5123,7 @@ static DRIVER_INIT (megaplay)
       through a handler instead?.. */
 	for (offs=0;offs<0x8000;offs++)
 	{
-		data8_t dat;
+		UINT8 dat;
 
 		dat=instruction_rom[offs];
 

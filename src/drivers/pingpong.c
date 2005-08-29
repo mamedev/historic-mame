@@ -384,7 +384,7 @@ ROM_END
 
 DRIVER_INIT( merlinmm )
 {
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 	int i;
 
 	/* decrypt program code */

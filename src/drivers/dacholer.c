@@ -14,7 +14,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static data8_t *bgvideoram,*fgvideoram;
+static UINT8 *bgvideoram,*fgvideoram;
 static int bg_bank = 0;
 
 static tilemap *bg_tilemap,*fg_tilemap;
@@ -203,7 +203,7 @@ VIDEO_START( dacholer )
 	return 0;
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs,code,attr,sx,sy,flipx,flipy;
 

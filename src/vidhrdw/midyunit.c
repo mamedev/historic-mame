@@ -50,7 +50,7 @@ static int		last_update_scanline;
 
 /* DMA-related variables */
 static UINT8	yawdim_dma;
-static data16_t dma_register[16];
+static UINT16 dma_register[16];
 static struct
 {
 	UINT32		offset;			/* source offset, in bits */
@@ -851,7 +851,7 @@ VIDEO_UPDATE( midyunit )
 	/* blank the left side */
 	if (leftscroll > 0)
 	{
-		struct rectangle erase = *cliprect;
+		rectangle erase = *cliprect;
 		erase.max_x = leftscroll - 1;
 		fillbitmap(bitmap, get_black_pen(), &erase);
 	}

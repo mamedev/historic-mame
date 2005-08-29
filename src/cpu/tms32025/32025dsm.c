@@ -37,7 +37,7 @@
 #include "memory.h"
 #include "tms32025.h"
 #include "mamedbg.h"
-extern data16_t *tms32025_pgmmap[0x200];
+extern UINT16 *tms32025_pgmmap[0x200];
 //#define READOP16(A)  (cpu_readop16((A)     | (TMS32025_PGM_OFFSET << 1)))
 //#define READARG16(A) (cpu_readop_arg16((A) | (TMS32025_PGM_OFFSET << 1)))
 #define READOP16(A)		((tms32025_pgmmap[(A) >> 7]) ? (tms32025_pgmmap[(A) >> 7][(A) & 0x7f]) : cpu_readop16((A)<<1))

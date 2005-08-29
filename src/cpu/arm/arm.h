@@ -17,7 +17,7 @@
 extern void arm_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern void arm_disasm( char *pBuf, data32_t pc, data32_t opcode );
+extern void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode );
 #endif
 
 enum

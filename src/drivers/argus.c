@@ -94,15 +94,15 @@ Known issues :
 
 ***************************************************************************/
 
-extern data8_t *argus_paletteram;
-extern data8_t *argus_txram;
-extern data8_t *argus_bg0ram;
-extern data8_t *argus_bg0_scrollx;
-extern data8_t *argus_bg0_scrolly;
-extern data8_t *argus_bg1ram;
-extern data8_t *argus_bg1_scrollx;
-extern data8_t *argus_bg1_scrolly;
-extern data8_t *butasan_bg1ram;
+extern UINT8 *argus_paletteram;
+extern UINT8 *argus_txram;
+extern UINT8 *argus_bg0ram;
+extern UINT8 *argus_bg0_scrollx;
+extern UINT8 *argus_bg0_scrolly;
+extern UINT8 *argus_bg1ram;
+extern UINT8 *argus_bg1_scrollx;
+extern UINT8 *argus_bg1_scrolly;
+extern UINT8 *butasan_bg1ram;
 
 VIDEO_START( argus );
 VIDEO_START( valtric );
@@ -111,8 +111,8 @@ VIDEO_UPDATE( argus );
 VIDEO_UPDATE( valtric );
 VIDEO_UPDATE( butasan );
 
-static data8_t argus_bank_latch   = 0x00;
-static data8_t butasan_page_latch = 0x00;
+static UINT8 argus_bank_latch   = 0x00;
+static UINT8 butasan_page_latch = 0x00;
 
 READ8_HANDLER( argus_txram_r );
 READ8_HANDLER( butasan_txram_r );
@@ -189,7 +189,7 @@ static READ8_HANDLER( argus_bankselect_r )
 
 static WRITE8_HANDLER( argus_bankselect_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
 	if (data != argus_bank_latch)

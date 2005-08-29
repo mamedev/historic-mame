@@ -125,7 +125,7 @@ static void ojankohs_adpcm_int(int irq)
 
 static WRITE8_HANDLER( ojankoc_ctrl_w )
 {
-	data8_t *BANKROM = memory_region(REGION_USER1);
+	UINT8 *BANKROM = memory_region(REGION_USER1);
 	UINT32 bank_address = (data & 0x0f) * 0x8000;
 
 	memory_set_bankptr(1, &BANKROM[bank_address]);

@@ -186,10 +186,10 @@ VIDEO_START( sidearms )
 	return 0;
 }
 
-void sidearms_draw_sprites_region( struct mame_bitmap *bitmap, int start_offset, int end_offset )
+void sidearms_draw_sprites_region( mame_bitmap *bitmap, int start_offset, int end_offset )
 {
 	const gfx_element *gfx = Machine->gfx[2];
-	struct rectangle *cliprect = &Machine->visible_area;
+	rectangle *cliprect = &Machine->visible_area;
 	int offs, attr, color, code, x, y, flipx, flipy;
 
 	flipy = flipx = flipon;
@@ -219,7 +219,7 @@ void sidearms_draw_sprites_region( struct mame_bitmap *bitmap, int start_offset,
 	}
 }
 
-static void sidearms_draw_starfield( struct mame_bitmap *bitmap )
+static void sidearms_draw_starfield( mame_bitmap *bitmap )
 {
 	int x, y, i;
 	unsigned int hadd_283, vadd_283, _hflop_74a_n, _hcount_191, _vcount_191;
@@ -342,7 +342,7 @@ static void sidearms_draw_starfield( struct mame_bitmap *bitmap )
 #endif
 }
 
-static void sidearms_draw_sprites( struct mame_bitmap *bitmap )
+static void sidearms_draw_sprites( mame_bitmap *bitmap )
 {
 	if (sidearms_gameid == 2 || sidearms_gameid == 3) // Dyger and Whizz have simple front-to-back sprite priority
 		sidearms_draw_sprites_region(bitmap, 0x0000, 0x1000);

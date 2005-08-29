@@ -22,7 +22,7 @@ Namco System 1 Video Hardware
   7810-7fef : fixed playfield (5)  : 36*28*2
   7ff0-7fff : ?
 */
-static data8_t *namcos1_videoram;
+static UINT8 *namcos1_videoram;
 
 /*
   paletteram map (s1ram  0x0000-0x7fff)
@@ -35,8 +35,8 @@ static data8_t *namcos1_videoram;
 
   so there is just 3x0x2000 RAM, plus the CUS116 internal registers.
 */
-static data8_t *namcos1_paletteram;
-static data8_t namcos1_cus116[0x10];
+static UINT8 *namcos1_paletteram;
+static UINT8 namcos1_cus116[0x10];
 
 /*
   spriteram map (s1ram 0x10000-0x10fff)
@@ -46,9 +46,9 @@ static data8_t namcos1_cus116[0x10];
 
   1000-1fff : playfield control registers
 */
-static data8_t *namcos1_spriteram;
+static UINT8 *namcos1_spriteram;
 
-static data8_t namcos1_playfield_control[0x20];
+static UINT8 namcos1_playfield_control[0x20];
 
 static tilemap *bg_tilemap[6];
 static UINT8 *tilemap_maskdata;
@@ -62,7 +62,7 @@ static UINT8 *tilemap_maskdata;
 
 ***************************************************************************/
 
-INLINE void bg_get_info(int tile_index,data8_t *info_vram)
+INLINE void bg_get_info(int tile_index,UINT8 *info_vram)
 {
 	int code;
 
@@ -72,7 +72,7 @@ INLINE void bg_get_info(int tile_index,data8_t *info_vram)
 	tile_info.mask_data = &tilemap_maskdata[code << 3];
 }
 
-INLINE void fg_get_info(int tile_index,data8_t *info_vram)
+INLINE void fg_get_info(int tile_index,UINT8 *info_vram)
 {
 	int code;
 
@@ -281,10 +281,10 @@ sprite format:
 15   xxxxxxxx  Y position
 */
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	const data8_t *source = &spriteram[0x0800-0x20];	/* the last is NOT a sprite */
-	const data8_t *finish = &spriteram[0];
+	const UINT8 *source = &spriteram[0x0800-0x20];	/* the last is NOT a sprite */
+	const UINT8 *finish = &spriteram[0];
 	gfx_element *gfx = Machine->gfx[1];
 	gfx_element mygfx = *gfx;
 
@@ -348,7 +348,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 VIDEO_UPDATE( namcos1 )
 {
 	int i, j, scrollx, scrolly, priority;
-	struct rectangle new_clip = *cliprect;
+	rectangle new_clip = *cliprect;
 
 	/* flip screen is embedded in the sprite control registers */
 	/* can't use flip_screen_set() because the visible area is asymmetrical */

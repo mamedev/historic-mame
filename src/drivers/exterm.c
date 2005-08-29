@@ -75,8 +75,8 @@
  *
  *************************************/
 
-static data8_t aimpos[2];
-static data8_t trackball_old[2];
+static UINT8 aimpos[2];
+static UINT8 trackball_old[2];
 
 static mame_timer *sound_nmi_timer;
 static UINT8 master_sound_latch;
@@ -134,15 +134,15 @@ READ16_HANDLER( exterm_host_data_r )
  *
  *************************************/
 
-static data16_t exterm_trackball_port_r(int which, data16_t mem_mask)
+static UINT16 exterm_trackball_port_r(int which, UINT16 mem_mask)
 {
-	data16_t port;
+	UINT16 port;
 
 	/* Read the fake input port */
-	data8_t trackball_pos = readinputport(3 + which);
+	UINT8 trackball_pos = readinputport(3 + which);
 
 	/* Calculate the change from the last position. */
-	data8_t trackball_diff = trackball_old[which] - trackball_pos;
+	UINT8 trackball_diff = trackball_old[which] - trackball_pos;
 
 	/* Store the new position for the next comparision. */
 	trackball_old[which] = trackball_pos;
@@ -184,7 +184,7 @@ READ16_HANDLER( exterm_input_port_1_r )
 WRITE16_HANDLER( exterm_output_port_0_w )
 {
 	/* All the outputs are activated on the rising edge */
-	static data16_t last = 0;
+	static UINT16 last = 0;
 
 	if (ACCESSING_LSB)
 	{

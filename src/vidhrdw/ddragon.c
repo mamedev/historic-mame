@@ -166,17 +166,17 @@ WRITE8_HANDLER( ddragon_fgvideoram_w )
 					(which+order),color,flipx,flipy,sx,sy, \
 					cliprect,TRANSPARENCY_PEN,0);
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[1];
 
-	data8_t *src;
+	UINT8 *src;
 	int i;
 
 	if ( technos_video_hw == 1 ) {		/* China Gate Sprite RAM */
-		src = (data8_t *) (spriteram);
+		src = (UINT8 *) (spriteram);
 	} else {
-		src = (data8_t *) (&( ddragon_spriteram[0x800] ));
+		src = (UINT8 *) (&( ddragon_spriteram[0x800] ));
 	}
 
 	for( i = 0; i < ( 64 * 5 ); i += 5 ) {

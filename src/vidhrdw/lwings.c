@@ -194,7 +194,7 @@ INLINE int is_sprite_on(int offs)
 	return sx || sy;
 }
 
-static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void lwings_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -231,7 +231,7 @@ static void lwings_draw_sprites(struct mame_bitmap *bitmap, const struct rectang
 	}
 }
 
-static void trojan_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void trojan_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

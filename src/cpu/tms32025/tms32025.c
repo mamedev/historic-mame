@@ -136,39 +136,39 @@ Table 3-2.  TMS32025/26 Memory Blocks
 #endif
 
 
-data16_t *tms32025_pgmmap[0x200];
-data16_t *tms32025_datamap[0x200];
+UINT16 *tms32025_pgmmap[0x200];
+UINT16 *tms32025_datamap[0x200];
 
-INLINE data16_t M_RDROM(offs_t addr)
+INLINE UINT16 M_RDROM(offs_t addr)
 {
-	data16_t *ram;
+	UINT16 *ram;
 	addr &= 0xffff;
 	ram = tms32025_pgmmap[addr >> 7];
 	if (ram) return ram[addr & 0x7f];
 	return program_read_word_16be(addr << 1);
 }
 
-INLINE void M_WRTROM(offs_t addr, data16_t data)
+INLINE void M_WRTROM(offs_t addr, UINT16 data)
 {
-	data16_t *ram;
+	UINT16 *ram;
 	addr &= 0xffff;
 	ram = tms32025_pgmmap[addr >> 7];
 	if (ram) { ram[addr & 0x7f] = data; }
 	else program_write_word_16be(addr << 1, data);
 }
 
-INLINE data16_t M_RDRAM(offs_t addr)
+INLINE UINT16 M_RDRAM(offs_t addr)
 {
-	data16_t *ram;
+	UINT16 *ram;
 	addr &= 0xffff;
 	ram = tms32025_datamap[addr >> 7];
 	if (ram) return ram[addr & 0x7f];
 	return data_read_word_16be(addr << 1);
 }
 
-INLINE void M_WRTRAM(offs_t addr, data16_t data)
+INLINE void M_WRTRAM(offs_t addr, UINT16 data)
 {
-	data16_t *ram;
+	UINT16 *ram;
 	addr &= 0xffff;
 	ram = tms32025_datamap[addr >> 7];
 	if (ram) { ram[addr & 0x7f] = data; }
@@ -229,8 +229,8 @@ typedef struct			/* Page 3-6 (45) shows all registers */
 	int		tms32025_irq_cycles;
 	int		tms32025_dec_cycles;
 	int		(*irq_callback)(int irqline);
-	data16_t *datamap_save[16];
-	data16_t *pgmmap_save[12];
+	UINT16 *datamap_save[16];
+	UINT16 *pgmmap_save[12];
 } tms32025_Regs;
 
 static tms32025_Regs R;
@@ -318,9 +318,9 @@ INLINE void MODIFY_ARB(int data) { R.STR1 &= ~ARB_REG; R.STR1 |= ((data << 13) &
 
 static int mHackIgnoreARP; /* special handling for lst, lst1 instructions */
 
-static data16_t reverse_carry_add( data16_t arg0, data16_t arg1 )
+static UINT16 reverse_carry_add( UINT16 arg0, UINT16 arg1 )
 {
-	data16_t result = 0;
+	UINT16 result = 0;
 	int carry = 0;
 	int count;
 	for( count=0; count<16; count++ )
@@ -1172,7 +1172,7 @@ static void nop(void) { }   // NOP is a subset of the MAR instruction
 */
 static void norm(void)
 {
-	data32_t acc = R.ACC.d;
+	UINT32 acc = R.ACC.d;
 
 	if( acc == 0 || ((acc^(acc<<1))&(1<<31))!=0 )
 	{
@@ -2185,10 +2185,10 @@ static int tms32025_readop(UINT32 offset, int size, UINT64 *value)
 	ptr = &((UINT8 *)&tms32025_pgmmap[offset >> 8])[offset & 0xff];
 	switch (size)
 	{
-		case 1:	*value = *((data8_t *) ptr);
-		case 2:	*value = *((data16_t *) ptr);
-		case 4:	*value = *((data32_t *) ptr);
-		case 8:	*value = *((data64_t *) ptr);
+		case 1:	*value = *((UINT8 *) ptr);
+		case 2:	*value = *((UINT16 *) ptr);
+		case 4:	*value = *((UINT32 *) ptr);
+		case 8:	*value = *((UINT64 *) ptr);
 	}
 	return 1;
 }
@@ -2223,10 +2223,10 @@ static int tms32025_read(int space, UINT32 offset, int size, UINT64 *value)
 	switch (size)
 	{
 		case 1:
-			*value = ((data8_t *)ptr)[BYTE_XOR_BE(offset & 0xff)];
+			*value = ((UINT8 *)ptr)[BYTE_XOR_BE(offset & 0xff)];
 			break;
 		case 2:
-			*value = ((data16_t *)ptr)[(offset & 0xff) / 2];
+			*value = ((UINT16 *)ptr)[(offset & 0xff) / 2];
 			break;
 		case 4:
 			tms32025_read(space, offset + 0, 2, &temp);
@@ -2273,10 +2273,10 @@ static int tms32025_write(int space, UINT32 offset, int size, UINT64 value)
 	switch (size)
 	{
 		case 1:
-			((data8_t *)ptr)[BYTE_XOR_BE(offset & 0xff)] = value;
+			((UINT8 *)ptr)[BYTE_XOR_BE(offset & 0xff)] = value;
 			break;
 		case 2:
-			((data16_t *)ptr)[(offset & 0xff) / 2] = value;
+			((UINT16 *)ptr)[(offset & 0xff) / 2] = value;
 			break;
 		case 4:
 			tms32025_write(space, offset + 0, 2, value >> 16);

@@ -67,7 +67,7 @@ static void get_text_tile_info(int tile_index)
 	SET_TILE_INFO(0,code,((attr>>2)&7),flags)
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const unsigned char *source = spriteram+spriteram_size-4;
 	const unsigned char *finish = spriteram;

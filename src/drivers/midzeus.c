@@ -22,13 +22,13 @@
 #include "sndhrdw/dcs.h"
 
 
-static data32_t *ram_base;
+static UINT32 *ram_base;
 static UINT8 cmos_protected;
 
 static void *timer[2];
 
-static data32_t *tms32031_control;
-static data32_t *graphics_ram;
+static UINT32 *tms32031_control;
+static UINT32 *graphics_ram;
 
 
 //------------------------------
@@ -695,7 +695,7 @@ INLINE UINT32 *graphics_pixaddr(void)
 
 READ32_HANDLER( graphics_r )
 {
-	data32_t result;
+	UINT32 result;
 	int logit = 1;
 
 	if (offset >= 0xb0 && offset <= 0xb7)
@@ -937,7 +937,7 @@ static WRITE32_HANDLER( tms32031_control_w )
 // read 8d0003, check bit 1, skip some stuff if 0
 // write junk to 9e0000
 
-static data32_t *unknown_8d0000;
+static UINT32 *unknown_8d0000;
 static READ32_HANDLER( unknown_8d0000_r )
 {
 	return unknown_8d0000[offset];

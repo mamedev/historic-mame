@@ -314,7 +314,7 @@ static const enum opcodes ops_001c_002f_s0[20]=
 static int PC;
 
 
-static int print_arg (char *dest, int mode, int arg, data16_t (*readop_arg)(offs_t address))
+static int print_arg (char *dest, int mode, int arg, UINT16 (*readop_arg)(offs_t address))
 {
 	int	base;
 
@@ -345,7 +345,7 @@ static int print_arg (char *dest, int mode, int arg, data16_t (*readop_arg)(offs
 /*****************************************************************************
  *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
-unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, data16_t (*readop)(offs_t address), data16_t (*readop_arg)(offs_t address))
+unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(offs_t address), UINT16 (*readop_arg)(offs_t address))
 {
 	int	OP, OP2, opc;
 	int sarg, darg, smode, dmode;

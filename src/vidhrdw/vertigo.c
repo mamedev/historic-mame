@@ -37,10 +37,10 @@
 #include "vidhrdw/vector.h"
 #include "vertigo.h"
 
-static data16_t *vertigo_vectorrom;
-static data64_t *mcode;
+static UINT16 *vertigo_vectorrom;
+static UINT64 *mcode;
 
-data16_t *vertigo_vectorram;
+UINT16 *vertigo_vectorram;
 
 #define MC_X      ((mcode[vs.pc] >> 44) & 0x3f)
 #define MC_A      ((mcode[vs.pc] >> 40) & 0xf)
@@ -103,8 +103,8 @@ void vertigo_vproc_init(void)
 {
 	int i;
 
-	vertigo_vectorrom = (data16_t *)memory_region(REGION_USER1);
-	mcode = (data64_t *)memory_region(REGION_PROMS);
+	vertigo_vectorrom = (UINT16 *)memory_region(REGION_USER1);
+	mcode = (UINT64 *)memory_region(REGION_PROMS);
 
 	for (i=0; i<16; i++)
 		vs.reg[i]=0;

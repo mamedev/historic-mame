@@ -146,9 +146,9 @@ VIDEO_EOF( taito_no_buffer );
 VIDEO_START( slapshot );
 VIDEO_UPDATE( slapshot );
 
-static data16_t *color_ram;
+static UINT16 *color_ram;
 
-extern data16_t *taito_sprite_ext;
+extern UINT16 *taito_sprite_ext;
 extern size_t taito_spriteext_size;
 
 

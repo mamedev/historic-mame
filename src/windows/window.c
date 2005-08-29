@@ -211,7 +211,7 @@ static struct win_effect_data effect_table[] =
 	{ "sharp",   EFFECT_SHARP,       2, 2, 2, 2 },
 };
 
-static struct mame_bitmap *last_bitmap;
+static mame_bitmap *last_bitmap;
 
 
 //============================================================
@@ -220,13 +220,13 @@ static struct mame_bitmap *last_bitmap;
 
 static void compute_multipliers_internal(const RECT *rect, int visible_width, int visible_height, int *xmult, int *ymult);
 static void update_system_menu(void);
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
+static void draw_video_contents(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
+static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 
 #ifndef NEW_DEBUGGER
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
+static void draw_debug_contents(HDC dc, mame_bitmap *bitmap, const rgb_t *palette);
 #endif
 
 
@@ -705,7 +705,7 @@ static void update_system_menu(void)
 //  win_update_video_window
 //============================================================
 
-void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels)
+void win_update_video_window(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
@@ -722,7 +722,7 @@ void win_update_video_window(struct mame_bitmap *bitmap, const struct rectangle 
 //  draw_video_contents
 //============================================================
 
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static void draw_video_contents(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	// if no bitmap, use the last one we got
 	if (bitmap == NULL)
@@ -1577,7 +1577,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //  dib_draw_window
 //============================================================
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	struct win_blit_params params;

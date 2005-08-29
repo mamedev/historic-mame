@@ -94,7 +94,7 @@ struct {
 	   UINT32 internal_prg[0x100];
 } dsp_reg;
 
-extern data32_t* stv_scu;
+extern UINT32* stv_scu;
 
 static UINT32 opcode;
 static UINT8 update_mul = 0;

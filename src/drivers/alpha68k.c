@@ -203,7 +203,7 @@ WRITE16_HANDLER( alpha68k_videoram_w );
 WRITE16_HANDLER( alpha68k_II_video_bank_w );
 WRITE16_HANDLER( alpha68k_V_video_control_w );
 
-static data16_t *shared_ram;
+static UINT16 *shared_ram;
 static int invert_controls;
 int microcontroller_id, coin_id;
 
@@ -3366,7 +3366,7 @@ static DRIVER_INIT( gangwarb )
 
 static DRIVER_INIT( sbasebal )
 {
-	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 
 	/* Game hangs on divide by zero?!  Patch it */
 	rom[0xb672/2] = 0x4e71;

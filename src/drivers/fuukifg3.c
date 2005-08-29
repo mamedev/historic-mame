@@ -93,12 +93,12 @@ FG-3J ROM-J 507KA0301P04       Rev:1.3
 #include "sound/ymf278b.h"
 
 static int fuuki32_raster_enable = 1; /* Enabled by default */
-static data8_t fuuki32_shared_ram[16];
+static UINT8 fuuki32_shared_ram[16];
 
 // Described in src/vidhrdw/fuuki32.c
-extern data32_t *fuuki32_vram_0, *fuuki32_vram_1;
-extern data32_t *fuuki32_vram_2, *fuuki32_vram_3;
-extern data32_t *fuuki32_vregs, *fuuki32_priority, *fuuki32_tilebank;
+extern UINT32 *fuuki32_vram_0, *fuuki32_vram_1;
+extern UINT32 *fuuki32_vram_2, *fuuki32_vram_3;
+extern UINT32 *fuuki32_vregs, *fuuki32_priority, *fuuki32_tilebank;
 
 
 /* Functions defined in vidhrdw: */
@@ -112,7 +112,7 @@ VIDEO_START( fuuki32 );
 VIDEO_UPDATE( fuuki32 );
 VIDEO_EOF( fuuki32 );
 
-//data32_t *fuuki32_shared_ram;
+//UINT32 *fuuki32_shared_ram;
 
 static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
 {
@@ -252,7 +252,7 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER ( fuuki32_sound_bw_w )
 {
-	data8_t *rom = memory_region(REGION_CPU2);
+	UINT8 *rom = memory_region(REGION_CPU2);
 
 	memory_set_bankptr(1, rom + 0x10000 + (data * 0x8000));
 }

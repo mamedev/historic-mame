@@ -51,10 +51,10 @@ sprite RAM
 #include "taitoic.h"
 
 
-extern data16_t	*TC0080VCO_chain_ram_0;
-extern data16_t	*TC0080VCO_chain_ram_1;
-extern data16_t	*TC0080VCO_spriteram;
-extern data16_t	*TC0080VCO_scroll_ram;
+extern UINT16	*TC0080VCO_chain_ram_0;
+extern UINT16	*TC0080VCO_chain_ram_1;
+extern UINT16	*TC0080VCO_spriteram;
+extern UINT16	*TC0080VCO_scroll_ram;
 extern int		TC0080VCO_flipscreen;
 
 /* Needed in the sprite palette color marking */
@@ -94,7 +94,7 @@ VIDEO_START( taitoair )
   Screen refresh
 ***************************************************************************/
 
-static void taitoair_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void taitoair_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
        is always 64 pixels. */
@@ -206,7 +206,7 @@ static void taitoair_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 	}
 }
 
-extern data16_t	*taitoair_line_ram;
+extern UINT16	*taitoair_line_ram;
 
 enum { FRAC_SHIFT = 16, POLY_MAX_PT = 16 };
 
@@ -224,7 +224,7 @@ struct poly {
 	int col;
 };
 
-static void fill_slope(struct mame_bitmap *bitmap, int color, INT32 x1, INT32 x2, INT32 sl1, INT32 sl2, INT32 y1, INT32 y2, INT32 *nx1, INT32 *nx2)
+static void fill_slope(mame_bitmap *bitmap, int color, INT32 x1, INT32 x2, INT32 sl1, INT32 sl2, INT32 y1, INT32 y2, INT32 *nx1, INT32 *nx2)
 {
 	if(y1 > view.y2)
 		return;
@@ -287,7 +287,7 @@ static void fill_slope(struct mame_bitmap *bitmap, int color, INT32 x1, INT32 x2
 	*nx2 = x2;
 }
 
-static void fill_poly(struct mame_bitmap *bitmap, const struct poly *q)
+static void fill_poly(mame_bitmap *bitmap, const struct poly *q)
 {
 	INT32 sl1, sl2, cury, limy, x1, x2;
 	int pmin, pmax, i, ps1, ps2;

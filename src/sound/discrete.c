@@ -152,10 +152,10 @@ struct discrete_module module_list[] =
 	/* from disc_inp.c */
 	{ DSS_ADJUSTMENT  ,"DSS_ADJUSTMENT"  ,sizeof(struct dss_adjustment_context)  ,dss_adjustment_reset  ,dss_adjustment_step  },
 	{ DSS_CONSTANT    ,"DSS_CONSTANT"    ,0                                      ,NULL                  ,dss_constant_step    },
-	{ DSS_INPUT_DATA  ,"DSS_INPUT_DATA"  ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_step       },
-	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,sizeof(data8_t)                        ,dss_input_reset       ,dss_input_pulse_step },
+	{ DSS_INPUT_DATA  ,"DSS_INPUT_DATA"  ,sizeof(UINT8)                        ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_LOGIC ,"DSS_INPUT_LOGIC" ,sizeof(UINT8)                        ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_NOT   ,"DSS_INPUT_NOT"   ,sizeof(UINT8)                        ,dss_input_reset       ,dss_input_step       },
+	{ DSS_INPUT_PULSE ,"DSS_INPUT_PULSE" ,sizeof(UINT8)                        ,dss_input_reset       ,dss_input_pulse_step },
 	{ DSS_INPUT_STREAM,"DSS_INPUT_STREAM",sizeof(stream_sample_t)                ,dss_input_stream_reset,dss_input_stream_step},
 
 	/* from disc_wav.c */
@@ -195,6 +195,7 @@ struct discrete_module module_list[] =
 	{ DST_RAMP        ,"DST_RAMP"        ,sizeof(struct dss_ramp_context)        ,dst_ramp_reset        ,dst_ramp_step        },
 	{ DST_SAMPHOLD    ,"DST_SAMPHOLD"    ,sizeof(struct dst_samphold_context)    ,dst_samphold_reset    ,dst_samphold_step    },
 	{ DST_SWITCH      ,"DST_SWITCH"      ,0                                      ,NULL                  ,dst_switch_step      },
+	{ DST_ASWITCH     ,"DST_ASWITCH"     ,0                                      ,NULL                  ,dst_aswitch_step     },
 	{ DST_TRANSFORM   ,"DST_TRANSFORM"   ,0                                      ,NULL                  ,dst_transform_step   },
 	/* Component specific */
 	{ DST_COMP_ADDER  ,"DST_COMP_ADDER"  ,0                                      ,NULL                  ,dst_comp_adder_step  },
@@ -216,6 +217,7 @@ struct discrete_module module_list[] =
 	{ DST_RCDISC2     ,"DST_RCDISC2"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc2_reset     ,dst_rcdisc2_step     },
 	{ DST_RCDISC3     ,"DST_RCDISC3"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc3_reset     ,dst_rcdisc3_step     },
 	{ DST_RCDISC4     ,"DST_RCDISC4"     ,sizeof(struct dst_rcdisc4_context)     ,dst_rcdisc4_reset     ,dst_rcdisc4_step     },
+	{ DST_RCDISC5     ,"DST_RCDISC5"     ,sizeof(struct dst_rcdisc_context)      ,dst_rcdisc5_reset     ,dst_rcdisc5_step     },
 	{ DST_RCFILTER    ,"DST_RCFILTER"    ,sizeof(struct dst_rcfilter_context)    ,dst_rcfilter_reset    ,dst_rcfilter_step    },
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	{ DST_RCFILTERN   ,"DST_RCFILTERN"   ,sizeof(struct dss_filter1_context)     ,dst_rcfilterN_reset   ,dst_filter1_step     },

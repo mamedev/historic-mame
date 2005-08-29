@@ -32,13 +32,13 @@ WRITE16_HANDLER( twocrude_control_1_w );
 WRITE16_HANDLER( twocrude_palette_24bit_rg_w );
 WRITE16_HANDLER( twocrude_palette_24bit_b_w );
 
-extern data16_t *twocrude_pf1_rowscroll,*twocrude_pf2_rowscroll;
-extern data16_t *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
-extern data16_t *twocrude_pf1_data, *twocrude_pf2_data, *twocrude_pf3_data, *twocrude_pf4_data;
-static data16_t *twocrude_ram;
+extern UINT16 *twocrude_pf1_rowscroll,*twocrude_pf2_rowscroll;
+extern UINT16 *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
+extern UINT16 *twocrude_pf1_data, *twocrude_pf2_data, *twocrude_pf3_data, *twocrude_pf4_data;
+static UINT16 *twocrude_ram;
 extern void twocrude_pri_w(int pri);
 WRITE16_HANDLER( twocrude_update_sprites_w );
-static data16_t prot;
+static UINT16 prot;
 
 /******************************************************************************/
 

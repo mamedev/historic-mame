@@ -58,7 +58,7 @@ PALETTE_INIT( ambush )
 
 ***************************************************************************/
 
-static void draw_chars(struct mame_bitmap *bitmap, int priority)
+static void draw_chars(mame_bitmap *bitmap, int priority)
 {
 	int offs, transparency;
 

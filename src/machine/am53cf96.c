@@ -13,7 +13,7 @@
 #include "state.h"
 #include "am53cf96.h"
 
-data8_t scsi_regs[32], fifo[16], fptr = 0, xfer_state, last_id;
+UINT8 scsi_regs[32], fifo[16], fptr = 0, xfer_state, last_id;
 static struct AM53CF96interface *intf;
 
 typedef struct
@@ -208,7 +208,7 @@ void am53cf96_init( struct AM53CF96interface *interface )
 	for (i = 0; i < interface->scsidevs->devs_present; i++)
 	{
 		devices[interface->scsidevs->devices[i].scsiID].handler = interface->scsidevs->devices[i].handler;
-		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (data8_t *)NULL);
+		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
 	}
 
 	state_save_register_UINT8("53cf96", 0, "registers", scsi_regs, 32);
@@ -218,7 +218,7 @@ void am53cf96_init( struct AM53CF96interface *interface )
 }
 
 // retrieve data from the SCSI controller
-void am53cf96_read_data(int bytes, data8_t *pData)
+void am53cf96_read_data(int bytes, UINT8 *pData)
 {
 	scsi_regs[REG_STATUS] |= 0x10;	// indicate DMA finished
 
@@ -233,7 +233,7 @@ void am53cf96_read_data(int bytes, data8_t *pData)
 }
 
 // write data to the SCSI controller
-void am53cf96_write_data(int bytes, data8_t *pData)
+void am53cf96_write_data(int bytes, UINT8 *pData)
 {
 //  int i;
 
@@ -257,7 +257,7 @@ void *am53cf96_get_device(int id)
 	if (devices[id].handler)
 	{
 		logerror("53cf96: fetching dev pointer for SCSI ID %d\n", id);
-		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (data8_t *)&ret);
+		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (UINT8 *)&ret);
 
 		return ret;
 	}

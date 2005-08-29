@@ -1091,8 +1091,8 @@ static DRIVER_INIT( twincobr )
 
 static DRIVER_INIT( fshark )
 {
-	data8_t *source = memory_region(REGION_USER1);
-	data16_t *dest = (data16_t *)memory_region(REGION_CPU3);
+	UINT8 *source = memory_region(REGION_USER1);
+	UINT16 *dest = (UINT16 *)memory_region(REGION_CPU3);
 	int A;
 
 	/* The ROM loader fixes the nibble images. Here we fix the byte ordering. */

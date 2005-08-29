@@ -28,23 +28,23 @@
 #include <time.h>
 
 
-static data32_t *ram_base;
-static data32_t *fastram_base;
+static UINT32 *ram_base;
+static UINT32 *fastram_base;
 static UINT8 cmos_protected;
 static UINT16 control_data;
 
 static UINT8 adc_data;
 static UINT8 adc_shift;
 
-static data16_t last_port0;
+static UINT16 last_port0;
 static UINT8 shifter_state;
 
 static void *timer[2];
 static double timer_rate;
 
-static data32_t *tms32031_control;
+static UINT32 *tms32031_control;
 
-static data32_t *midvplus_misc;
+static UINT32 *midvplus_misc;
 
 
 
@@ -89,8 +89,8 @@ static MACHINE_INIT( midvplus )
 
 static READ32_HANDLER( port0_r )
 {
-	data16_t val = readinputport(0);
-	data16_t diff = val ^ last_port0;
+	UINT16 val = readinputport(0);
+	UINT16 diff = val ^ last_port0;
 
 	/* make sure the shift controls are mutually exclusive */
 	if ((diff & 0x0400) && !(val & 0x0400))
@@ -393,7 +393,7 @@ static WRITE32_HANDLER( offroadc_serial_data_w )
 
 static READ32_HANDLER( midvplus_misc_r )
 {
-	data32_t result = midvplus_misc[offset];
+	UINT32 result = midvplus_misc[offset];
 
 	switch (offset)
 	{
@@ -418,7 +418,7 @@ static READ32_HANDLER( midvplus_misc_r )
 
 static WRITE32_HANDLER( midvplus_misc_w )
 {
-	data32_t olddata = midvplus_misc[offset];
+	UINT32 olddata = midvplus_misc[offset];
 	int logit = 1;
 
 	COMBINE_DATA(&midvplus_misc[offset]);
@@ -476,7 +476,7 @@ static ADDRESS_MAP_START( midvunit_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x600000, 0x600000) AM_WRITE(midvunit_dma_queue_w)
 	AM_RANGE(0x808000, 0x80807f) AM_READWRITE(tms32031_control_r, tms32031_control_w) AM_BASE(&tms32031_control)
 	AM_RANGE(0x809800, 0x809fff) AM_RAM
-	AM_RANGE(0x900000, 0x97ffff) AM_READWRITE(midvunit_videoram_r, midvunit_videoram_w) AM_BASE((data32_t **)&midvunit_videoram)
+	AM_RANGE(0x900000, 0x97ffff) AM_READWRITE(midvunit_videoram_r, midvunit_videoram_w) AM_BASE((UINT32 **)&midvunit_videoram)
 	AM_RANGE(0x980000, 0x980000) AM_READ(midvunit_dma_queue_entries_r)
 	AM_RANGE(0x980020, 0x980020) AM_READ(midvunit_scanline_r)
 	AM_RANGE(0x980020, 0x98002b) AM_WRITE(midvunit_video_control_w)
@@ -509,7 +509,7 @@ static ADDRESS_MAP_START( midvplus_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x600000, 0x600000) AM_WRITE(midvunit_dma_queue_w)
 	AM_RANGE(0x808000, 0x80807f) AM_READWRITE(tms32031_control_r, tms32031_control_w) AM_BASE(&tms32031_control)
 	AM_RANGE(0x809800, 0x809fff) AM_RAM
-	AM_RANGE(0x900000, 0x97ffff) AM_READWRITE(midvunit_videoram_r, midvunit_videoram_w) AM_BASE((data32_t **)&midvunit_videoram)
+	AM_RANGE(0x900000, 0x97ffff) AM_READWRITE(midvunit_videoram_r, midvunit_videoram_w) AM_BASE((UINT32 **)&midvunit_videoram)
 	AM_RANGE(0x980000, 0x980000) AM_READ(midvunit_dma_queue_entries_r)
 	AM_RANGE(0x980020, 0x980020) AM_READ(midvunit_scanline_r)
 	AM_RANGE(0x980020, 0x98002b) AM_WRITE(midvunit_video_control_w)
@@ -1288,7 +1288,7 @@ ROM_END
  *
  *************************************/
 
-static data32_t *generic_speedup;
+static UINT32 *generic_speedup;
 static READ32_HANDLER( generic_speedup_r )
 {
 	activecpu_eat_cycles(100);

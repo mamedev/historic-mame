@@ -310,7 +310,7 @@ ADDRESS_MAP_END
 static MACHINE_INIT( turbosub )
 {
 #if ROM_PATCHES
-       data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
+       UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
 
        rom[0xf564]=0;              /* Display test status */
        rom[0xf60a]=0x20;           /* Skip on error */

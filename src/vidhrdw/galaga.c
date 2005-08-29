@@ -14,9 +14,9 @@
 #define MAX_STARS 252
 #define STARS_COLOR_BASE 32
 
-data8_t *galaga_videoram;
-data8_t *galaga_ram1,*galaga_ram2,*galaga_ram3;
-data8_t galaga_starcontrol[6];
+UINT8 *galaga_videoram;
+UINT8 *galaga_ram1,*galaga_ram2,*galaga_ram3;
+UINT8 galaga_starcontrol[6];
 static unsigned int stars_scrollx,stars_scrolly;
 
 struct star
@@ -499,7 +499,7 @@ WRITE8_HANDLER ( gatsbee_bank_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -546,7 +546,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 }
 
 
-static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_stars( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/* draw the stars */
 

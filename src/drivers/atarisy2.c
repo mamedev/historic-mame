@@ -142,7 +142,7 @@
  *************************************/
 
 static UINT8 interrupt_enable;
-static data16_t *bankselect;
+static UINT16 *bankselect;
 
 static INT8 pedal_count;
 
@@ -675,7 +675,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_RAM
-	AM_RANGE(0x1000, 0x17ff) AM_RAM AM_BASE((data8_t **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
+	AM_RANGE(0x1000, 0x17ff) AM_RAM AM_BASE((UINT8 **)&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0x1800, 0x180f) AM_READWRITE(pokey1_r, pokey1_w)
 	AM_RANGE(0x1810, 0x1813) AM_READ(leta_r)
 	AM_RANGE(0x1830, 0x183f) AM_READWRITE(pokey2_r, pokey2_w)
@@ -3157,7 +3157,7 @@ ROM_END
 
 static DRIVER_INIT( paperboy )
 {
-	static const data16_t compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x4300,0x0113,0x0124,0x0150,0x0153,0x0154,0x0100,
 		0x0112,0x01C0,0x0155,0x0143,0x0148,0x0100,0x0112,0x015C,
@@ -3214,7 +3214,7 @@ static DRIVER_INIT( 720 )
 }
 
 
-static void ssprint_init_common(const data16_t *default_eeprom)
+static void ssprint_init_common(const UINT16 *default_eeprom)
 {
 	int i;
 
@@ -3231,7 +3231,7 @@ static void ssprint_init_common(const data16_t *default_eeprom)
 
 static DRIVER_INIT( ssprint )
 {
-	static const data16_t compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x01FF,0x0E00,0x01FF,0x0100,0x0120,0x0100,0x0120,
 		0x0300,0x0120,0x0500,0x0120,0x01FF,0x0100,0x0140,0x0100,
@@ -3263,7 +3263,7 @@ static DRIVER_INIT( ssprint )
 
 static DRIVER_INIT( ssprint1 )
 {
-	static const data16_t compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x1e00,0x01ff,0x2500,0x0103,0x01e8,0x0152,0x0157,
 		0x0157,0x0103,0x01de,0x014b,0x0146,0x0154,0x0103,0x01d4,
@@ -3309,7 +3309,7 @@ static DRIVER_INIT( ssprint1 )
 
 static DRIVER_INIT( csprint )
 {
-	static const data16_t compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x01FF,0x0E00,0x0128,0x01D0,0x0127,0x0100,0x0120,
 		0x0300,0x01F7,0x01D0,0x0107,0x0300,0x0120,0x010F,0x01F0,

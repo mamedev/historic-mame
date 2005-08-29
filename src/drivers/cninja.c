@@ -46,7 +46,7 @@ Caveman Ninja Issues:
 
 static int cninja_scanline, cninja_irq_mask;
 static void *raster_irq_timer;
-static data16_t *cninja_ram;
+static UINT16 *cninja_ram;
 
 /**********************************************************************************/
 
@@ -1730,14 +1730,14 @@ ROM_END
 
 static void cninja_patch(void)
 {
-	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	int i;
 
 	for (i=0; i<0x80000/2; i++) {
 		int aword=RAM[i];
 
 		if (aword==0x66ff || aword==0x67ff) {
-			data16_t doublecheck=RAM[i-4];
+			UINT16 doublecheck=RAM[i-4];
 
 			/* Cmpi + btst controlling opcodes */
 			if (doublecheck==0xc39 || doublecheck==0x839) {
@@ -1766,8 +1766,8 @@ static DRIVER_INIT( stoneage )
 
 static DRIVER_INIT( mutantf )
 {
-	const data8_t *src = memory_region(REGION_GFX2);
-	data8_t *dst = memory_region(REGION_GFX1);
+	const UINT8 *src = memory_region(REGION_GFX2);
+	UINT8 *dst = memory_region(REGION_GFX1);
 
 	/* The 16x16 graphic has some 8x8 chars in it - decode them in GFX1 */
 	memcpy(dst+0x50000,dst+0x10000,0x10000);

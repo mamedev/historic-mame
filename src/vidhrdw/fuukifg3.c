@@ -31,9 +31,9 @@
 
 /* Variables that driver has access to: */
 
-data32_t *fuuki32_vram_0, *fuuki32_vram_1;
-data32_t *fuuki32_vram_2, *fuuki32_vram_3;
-data32_t *fuuki32_vregs,  *fuuki32_priority, *fuuki32_tilebank;
+UINT32 *fuuki32_vram_0, *fuuki32_vram_1;
+UINT32 *fuuki32_vram_2, *fuuki32_vram_3;
+UINT32 *fuuki32_vregs,  *fuuki32_priority, *fuuki32_tilebank;
 
 static UINT32 spr_buffered_tilebank[2];
 
@@ -61,8 +61,8 @@ static tilemap *tilemap_##_N_; \
 \
 static void get_tile_info_##_N_(int tile_index) \
 { \
-	data16_t code = (fuuki32_vram_##_N_[tile_index]&0xffff0000)>>16; \
-	data16_t attr = (fuuki32_vram_##_N_[tile_index]&0x0000ffff); \
+	UINT16 code = (fuuki32_vram_##_N_[tile_index]&0xffff0000)>>16; \
+	UINT16 attr = (fuuki32_vram_##_N_[tile_index]&0x0000ffff); \
 	SET_TILE_INFO(1 + _N_, code, attr & 0x3f,TILE_FLIPYX( (attr >> 6) & 3 )) \
 } \
 \
@@ -149,14 +149,14 @@ VIDEO_START( fuuki32 )
 
 ***************************************************************************/
 
-static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void fuuki32_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
 	int max_x		=	Machine->visible_area.max_x+1;
 	int max_y		=	Machine->visible_area.max_y+1;
 
-	data32_t *src = buffered_spriteram32_2; /* Use spriteram buffered by 2 frames, need palette buffered by one frame? */
+	UINT32 *src = buffered_spriteram32_2; /* Use spriteram buffered by 2 frames, need palette buffered by one frame? */
 
 	/* Draw them backwards, for pdrawgfx */
 	for ( offs = (spriteram_size-8)/4; offs >=0; offs -= 8/4 )
@@ -290,7 +290,7 @@ if (code_pressed(KEYCODE_X))
 ***************************************************************************/
 
 /* Wrapper to handle bg and bg2 ttogether */
-static void fuuki32_draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int i, int flag, int pri)
+static void fuuki32_draw_layer(mame_bitmap *bitmap, const rectangle *cliprect, int i, int flag, int pri)
 {
 	int buffer = ((fuuki32_vregs[0x1e/4]&0x0000ffff) & 0x40);
 
@@ -308,10 +308,10 @@ static void fuuki32_draw_layer(struct mame_bitmap *bitmap, const struct rectangl
 
 VIDEO_UPDATE( fuuki32 )
 {
-	data16_t layer0_scrollx, layer0_scrolly;
-	data16_t layer1_scrollx, layer1_scrolly;
-	data16_t layer2_scrollx, layer2_scrolly;
-	data16_t scrollx_offs,   scrolly_offs;
+	UINT16 layer0_scrollx, layer0_scrolly;
+	UINT16 layer1_scrollx, layer1_scrolly;
+	UINT16 layer2_scrollx, layer2_scrolly;
+	UINT16 scrollx_offs,   scrolly_offs;
 
 	/*
     It's not independant bits causing layers to switch, that wouldn't make sense with 3 bits.

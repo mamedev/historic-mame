@@ -14,7 +14,7 @@
 #define BLITTER_DEST_HEIGHT			512
 
 
-static data16_t blitter_data[8];
+static UINT16 blitter_data[8];
 
 static UINT16 *screenram;
 static UINT16 *blitter_base;
@@ -47,7 +47,7 @@ INLINE void get_crosshair_xy(int player, int *x, int *y)
 
 READ16_HANDLER( lethalj_gun_r )
 {
-	data16_t result = 0;
+	UINT16 result = 0;
 	int beamx, beamy;
 
 	switch (offset)

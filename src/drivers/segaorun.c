@@ -36,8 +36,8 @@
  *
  *************************************/
 
-static data16_t *workram;
-static data16_t *cpu1ram, *cpu1rom;
+static UINT16 *workram;
+static UINT16 *cpu1ram, *cpu1rom;
 
 static UINT8 adc_select;
 
@@ -118,7 +118,7 @@ static const struct segaic16_memory_map_entry outrun_info[] =
  *
  *************************************/
 
-static void sound_w(data8_t data)
+static void sound_w(UINT8 data)
 {
 	soundlatch_w(0, data);
 	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
@@ -1638,8 +1638,8 @@ static DRIVER_INIT( outrun )
 static DRIVER_INIT( outrunb )
 {
 	static const UINT8 memory_map[] = { 0x02,0x00,0x0d,0x10,0x00,0x12,0x0c,0x13,0x08,0x14,0x0f,0x20,0x00,0x00,0x00,0x00 };
-	data16_t *word;
-	data8_t *byte;
+	UINT16 *word;
+	UINT8 *byte;
 	int i, length;
 
 	outrun_generic_init();
@@ -1648,13 +1648,13 @@ static DRIVER_INIT( outrunb )
 	custom_io_w = outrun_custom_io_w;
 
 	/* main CPU: swap bits 11,12 and 6,7 */
-	word = (data16_t *)memory_region(REGION_CPU1);
+	word = (UINT16 *)memory_region(REGION_CPU1);
 	length = memory_region_length(REGION_CPU1) / 2;
 	for (i = 0; i < length; i++)
 		word[i] = BITSWAP16(word[i], 15,14,11,12,13,10,9,8,6,7,5,4,3,2,1,0);
 
 	/* sub CPU: swap bits 14,15 and 2,3 */
-	word = (data16_t *)memory_region(REGION_CPU2);
+	word = (UINT16 *)memory_region(REGION_CPU2);
 	length = memory_region_length(REGION_CPU2) / 2;
 	for (i = 0; i < length; i++)
 		word[i] = BITSWAP16(word[i], 14,15,13,12,11,10,9,8,7,6,5,4,2,3,1,0);

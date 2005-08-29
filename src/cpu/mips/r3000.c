@@ -124,12 +124,12 @@
 /* memory access function table */
 typedef struct
 {
-	data8_t		(*readbyte)(offs_t);
-	data16_t	(*readword)(offs_t);
-	data32_t	(*readlong)(offs_t);
-	void		(*writebyte)(offs_t, data8_t);
-	void		(*writeword)(offs_t, data16_t);
-	void		(*writelong)(offs_t, data32_t);
+	UINT8		(*readbyte)(offs_t);
+	UINT16	(*readword)(offs_t);
+	UINT32	(*readlong)(offs_t);
+	void		(*writebyte)(offs_t, UINT8);
+	void		(*writeword)(offs_t, UINT16);
+	void		(*writelong)(offs_t, UINT32);
 } memory_handlers;
 
 /* R3000 Registers */
@@ -167,9 +167,9 @@ typedef struct
 	const memory_handlers *cache_hand;
 
 	/* cache memory */
-	data32_t *	cache;
-	data32_t *	icache;
-	data32_t *	dcache;
+	UINT32 *	cache;
+	UINT32 *	icache;
+	UINT32 *	dcache;
 	size_t		cache_size;
 	size_t		icache_size;
 	size_t		dcache_size;
@@ -191,19 +191,19 @@ static void lwr_le(UINT32 op);
 static void swl_le(UINT32 op);
 static void swr_le(UINT32 op);
 
-static data8_t readcache_be(offs_t offset);
-static data16_t readcache_be_word(offs_t offset);
-static data32_t readcache_be_dword(offs_t offset);
-static void writecache_be(offs_t offset, data8_t data);
-static void writecache_be_word(offs_t offset, data16_t data);
-static void writecache_be_dword(offs_t offset, data32_t data);
+static UINT8 readcache_be(offs_t offset);
+static UINT16 readcache_be_word(offs_t offset);
+static UINT32 readcache_be_dword(offs_t offset);
+static void writecache_be(offs_t offset, UINT8 data);
+static void writecache_be_word(offs_t offset, UINT16 data);
+static void writecache_be_dword(offs_t offset, UINT32 data);
 
-static data8_t readcache_le(offs_t offset);
-static data16_t readcache_le_word(offs_t offset);
-static data32_t readcache_le_dword(offs_t offset);
-static void writecache_le(offs_t offset, data8_t data);
-static void writecache_le_word(offs_t offset, data16_t data);
-static void writecache_le_dword(offs_t offset, data32_t data);
+static UINT8 readcache_le(offs_t offset);
+static UINT16 readcache_le_word(offs_t offset);
+static UINT32 readcache_le_dword(offs_t offset);
+static void writecache_le(offs_t offset, UINT8 data);
+static void writecache_le_word(offs_t offset, UINT16 data);
+static void writecache_le_dword(offs_t offset, UINT32 data);
 
 
 /*###################################################################################################
@@ -1000,76 +1000,76 @@ static offs_t r3000_dasm(char *buffer, offs_t pc)
 **  CACHE I/O
 **#################################################################################################*/
 
-static data8_t readcache_be(offs_t offset)
+static UINT8 readcache_be(offs_t offset)
 {
 	offset &= 0x1fffffff;
 	return (offset * 4 < r3000.cache_size) ? r3000.cache[BYTE4_XOR_BE(offset)] : 0xff;
 }
 
-static data16_t readcache_be_word(offs_t offset)
+static UINT16 readcache_be_word(offs_t offset)
 {
 	offset &= 0x1fffffff;
-	return (offset * 4 < r3000.cache_size) ? *(data16_t *)&r3000.cache[WORD_XOR_BE(offset)] : 0xffff;
+	return (offset * 4 < r3000.cache_size) ? *(UINT16 *)&r3000.cache[WORD_XOR_BE(offset)] : 0xffff;
 }
 
-static data32_t readcache_be_dword(offs_t offset)
+static UINT32 readcache_be_dword(offs_t offset)
 {
 	offset &= 0x1fffffff;
-	return (offset * 4 < r3000.cache_size) ? *(data32_t *)&r3000.cache[offset] : 0xffffffff;
+	return (offset * 4 < r3000.cache_size) ? *(UINT32 *)&r3000.cache[offset] : 0xffffffff;
 }
 
-static void writecache_be(offs_t offset, data8_t data)
+static void writecache_be(offs_t offset, UINT8 data)
 {
 	offset &= 0x1fffffff;
 	if (offset * 4 < r3000.cache_size) r3000.cache[BYTE4_XOR_BE(offset)] = data;
 }
 
-static void writecache_be_word(offs_t offset, data16_t data)
+static void writecache_be_word(offs_t offset, UINT16 data)
 {
 	offset &= 0x1fffffff;
-	if (offset * 4 < r3000.cache_size) *(data16_t *)&r3000.cache[WORD_XOR_BE(offset)] = data;
+	if (offset * 4 < r3000.cache_size) *(UINT16 *)&r3000.cache[WORD_XOR_BE(offset)] = data;
 }
 
-static void writecache_be_dword(offs_t offset, data32_t data)
+static void writecache_be_dword(offs_t offset, UINT32 data)
 {
 	offset &= 0x1fffffff;
-	if (offset * 4 < r3000.cache_size) *(data32_t *)&r3000.cache[offset] = data;
+	if (offset * 4 < r3000.cache_size) *(UINT32 *)&r3000.cache[offset] = data;
 }
 
-static data8_t readcache_le(offs_t offset)
+static UINT8 readcache_le(offs_t offset)
 {
 	offset &= 0x1fffffff;
 	return (offset * 4 < r3000.cache_size) ? r3000.cache[BYTE4_XOR_LE(offset)] : 0xff;
 }
 
-static data16_t readcache_le_word(offs_t offset)
+static UINT16 readcache_le_word(offs_t offset)
 {
 	offset &= 0x1fffffff;
-	return (offset * 4 < r3000.cache_size) ? *(data16_t *)&r3000.cache[WORD_XOR_LE(offset)] : 0xffff;
+	return (offset * 4 < r3000.cache_size) ? *(UINT16 *)&r3000.cache[WORD_XOR_LE(offset)] : 0xffff;
 }
 
-static data32_t readcache_le_dword(offs_t offset)
+static UINT32 readcache_le_dword(offs_t offset)
 {
 	offset &= 0x1fffffff;
-	return (offset * 4 < r3000.cache_size) ? *(data32_t *)&r3000.cache[offset] : 0xffffffff;
+	return (offset * 4 < r3000.cache_size) ? *(UINT32 *)&r3000.cache[offset] : 0xffffffff;
 }
 
-static void writecache_le(offs_t offset, data8_t data)
+static void writecache_le(offs_t offset, UINT8 data)
 {
 	offset &= 0x1fffffff;
 	if (offset * 4 < r3000.cache_size) r3000.cache[BYTE4_XOR_LE(offset)] = data;
 }
 
-static void writecache_le_word(offs_t offset, data16_t data)
+static void writecache_le_word(offs_t offset, UINT16 data)
 {
 	offset &= 0x1fffffff;
-	if (offset * 4 < r3000.cache_size) *(data16_t *)&r3000.cache[WORD_XOR_LE(offset)] = data;
+	if (offset * 4 < r3000.cache_size) *(UINT16 *)&r3000.cache[WORD_XOR_LE(offset)] = data;
 }
 
-static void writecache_le_dword(offs_t offset, data32_t data)
+static void writecache_le_dword(offs_t offset, UINT32 data)
 {
 	offset &= 0x1fffffff;
-	if (offset * 4 < r3000.cache_size) *(data32_t *)&r3000.cache[offset] = data;
+	if (offset * 4 < r3000.cache_size) *(UINT32 *)&r3000.cache[offset] = data;
 }
 
 
@@ -1081,7 +1081,7 @@ static void writecache_le_dword(offs_t offset, data32_t data)
 static void lwl_be(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if (!(offs & 3)) RTVAL = temp;
@@ -1096,7 +1096,7 @@ static void lwl_be(UINT32 op)
 static void lwr_be(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if ((offs & 3) == 3) RTVAL = temp;
@@ -1114,7 +1114,7 @@ static void swl_be(UINT32 op)
 	if (!(offs & 3)) WLONG(offs, RTVAL);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0xffffff00 << (24 - shift))) | (RTVAL >> shift));
 	}
@@ -1127,7 +1127,7 @@ static void swr_be(UINT32 op)
 	if ((offs & 3) == 3) WLONG(offs & ~3, RTVAL);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0x00ffffff >> shift)) | (RTVAL << (24 - shift)));
 	}
@@ -1138,7 +1138,7 @@ static void swr_be(UINT32 op)
 static void lwl_le(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if (!(offs & 3)) RTVAL = temp;
@@ -1153,7 +1153,7 @@ static void lwl_le(UINT32 op)
 static void lwr_le(UINT32 op)
 {
 	offs_t offs = SIMMVAL + RSVAL;
-	data32_t temp = RLONG(offs & ~3);
+	UINT32 temp = RLONG(offs & ~3);
 	if (RTREG)
 	{
 		if ((offs & 3) == 3) RTVAL = temp;
@@ -1171,7 +1171,7 @@ static void swl_le(UINT32 op)
 	if (!(offs & 3)) WLONG(offs, RTVAL);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0x00ffffff >> (24 - shift))) | (RTVAL << shift));
 	}
@@ -1183,7 +1183,7 @@ static void swr_le(UINT32 op)
 	if ((offs & 3) == 3) WLONG(offs & ~3, RTVAL);
 	else
 	{
-		data32_t temp = RLONG(offs & ~3);
+		UINT32 temp = RLONG(offs & ~3);
 		int shift = 8 * (offs & 3);
 		WLONG(offs & ~3, (temp & (0xffffff00 << shift)) | (RTVAL >> (24 - shift)));
 	}

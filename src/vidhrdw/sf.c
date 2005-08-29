@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-data16_t *sf_objectram,*sf_videoram;
+UINT16 *sf_objectram,*sf_videoram;
 
 static int sf_active = 0;
 
@@ -92,14 +92,14 @@ WRITE16_HANDLER( sf_videoram_w )
 
 WRITE16_HANDLER( sf_bg_scroll_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(bg_tilemap,0,scroll);
 }
 
 WRITE16_HANDLER( sf_fg_scroll_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(fg_tilemap,0,scroll);
 }
@@ -138,7 +138,7 @@ INLINE int sf_invert(int nb)
 	return nb ^ delta[(nb >> 3) & 3];
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

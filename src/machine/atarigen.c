@@ -31,31 +31,31 @@ UINT8 				atarigen_scanline_int_state;
 UINT8 				atarigen_sound_int_state;
 UINT8 				atarigen_video_int_state;
 
-const data16_t *	atarigen_eeprom_default;
-data16_t *			atarigen_eeprom;
+const UINT16 *	atarigen_eeprom_default;
+UINT16 *			atarigen_eeprom;
 size_t 				atarigen_eeprom_size;
 
 UINT8 				atarigen_cpu_to_sound_ready;
 UINT8 				atarigen_sound_to_cpu_ready;
 
-data16_t *			atarigen_playfield;
-data16_t *			atarigen_playfield2;
-data16_t *			atarigen_playfield_upper;
-data16_t *			atarigen_alpha;
-data16_t *			atarigen_alpha2;
-data16_t *			atarigen_xscroll;
-data16_t *			atarigen_yscroll;
+UINT16 *			atarigen_playfield;
+UINT16 *			atarigen_playfield2;
+UINT16 *			atarigen_playfield_upper;
+UINT16 *			atarigen_alpha;
+UINT16 *			atarigen_alpha2;
+UINT16 *			atarigen_xscroll;
+UINT16 *			atarigen_yscroll;
 
-data32_t *			atarigen_playfield32;
-data32_t *			atarigen_alpha32;
+UINT32 *			atarigen_playfield32;
+UINT32 *			atarigen_alpha32;
 
 tilemap *			atarigen_playfield_tilemap;
 tilemap *			atarigen_playfield2_tilemap;
 tilemap *			atarigen_alpha_tilemap;
 tilemap *			atarigen_alpha2_tilemap;
 
-data16_t *			atarivc_data;
-data16_t *			atarivc_eof_data;
+UINT16 *			atarivc_data;
+UINT16 *			atarivc_eof_data;
 struct atarivc_state_desc atarivc_state;
 
 
@@ -70,7 +70,7 @@ static void *		scanline_interrupt_timer;
 static UINT8 		eeprom_unlocked;
 
 static UINT8 		atarigen_slapstic_num;
-static data16_t *	atarigen_slapstic;
+static UINT16 *	atarigen_slapstic;
 static int			atarigen_slapstic_bank;
 static void *		atarigen_slapstic_bank0;
 
@@ -100,8 +100,8 @@ static int			playfield2_latch;
 
 static void scanline_interrupt_callback(int param);
 
-static void decompress_eeprom_word(const data16_t *data);
-static void decompress_eeprom_byte(const data16_t *data);
+static void decompress_eeprom_word(const UINT16 *data);
+static void decompress_eeprom_byte(const UINT16 *data);
 
 static void update_6502_irq(void);
 static void sound_comm_timer(int reps_left);
@@ -114,7 +114,7 @@ static void atarigen_set_vol(int volume, int type);
 static void vblank_timer(int param);
 static void scanline_timer(int scanline);
 
-static void atarivc_common_w(offs_t offset, data16_t newword);
+static void atarivc_common_w(offs_t offset, UINT16 newword);
 
 static void unhalt_cpu(int param);
 
@@ -386,10 +386,10 @@ NVRAM_HANDLER( atarigen )
     that has every other byte invalid.
 ---------------------------------------------------------------*/
 
-void decompress_eeprom_word(const data16_t *data)
+void decompress_eeprom_word(const UINT16 *data)
 {
-	data16_t *dest = (data16_t *)atarigen_eeprom;
-	data16_t value;
+	UINT16 *dest = (UINT16 *)atarigen_eeprom;
+	UINT16 value;
 
 	while ((value = *data++) != 0)
 	{
@@ -407,10 +407,10 @@ void decompress_eeprom_word(const data16_t *data)
     that is byte-packed.
 ---------------------------------------------------------------*/
 
-void decompress_eeprom_byte(const data16_t *data)
+void decompress_eeprom_byte(const UINT16 *data)
 {
 	UINT8 *dest = (UINT8 *)atarigen_eeprom;
-	data16_t value;
+	UINT16 value;
 
 	while ((value = *data++) != 0)
 	{
@@ -910,7 +910,7 @@ static void atarivc_eof_update(int param)
     atarivc_reset: Initializes the video controller.
 ---------------------------------------------------------------*/
 
-void atarivc_reset(data16_t *eof_data, int playfields)
+void atarivc_reset(UINT16 *eof_data, int playfields)
 {
 	/* this allows us to manually reset eof_data to NULL if it's not used */
 	atarivc_eof_data = eof_data;
@@ -935,7 +935,7 @@ void atarivc_reset(data16_t *eof_data, int playfields)
     once/frame into the video controller registers.
 ---------------------------------------------------------------*/
 
-void atarivc_update(const data16_t *data)
+void atarivc_update(const UINT16 *data)
 {
 	int i;
 
@@ -994,7 +994,7 @@ WRITE16_HANDLER( atarivc_w )
     write.
 ---------------------------------------------------------------*/
 
-static void atarivc_common_w(offs_t offset, data16_t newword)
+static void atarivc_common_w(offs_t offset, UINT16 newword)
 {
 	int oldword = atarivc_data[offset];
 	atarivc_data[offset] = newword;

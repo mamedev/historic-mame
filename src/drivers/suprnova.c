@@ -184,12 +184,12 @@ NEP-16
 // Defined in vidhrdw
 extern void skns_sprite_kludge(int x, int y);
 
-data32_t *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
-data32_t *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
-data32_t *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
+UINT32 *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
+UINT32 *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;
+UINT32 *skns_pal_regs, *skns_v3_regs, *skns_spc_regs;
 
-data32_t skns_v3t_dirty[0x4000]; // allocate this elsewhere?
-data32_t skns_v3t_4bppdirty[0x8000]; // allocate this elsewhere?
+UINT32 skns_v3t_dirty[0x4000]; // allocate this elsewhere?
+UINT32 skns_v3t_4bppdirty[0x8000]; // allocate this elsewhere?
 int skns_v3t_somedirty,skns_v3t_4bpp_somedirty;
 
 static UINT8 bright_spc_b=0x00, bright_spc_g=0x00, bright_spc_r=0x00;
@@ -985,7 +985,7 @@ static WRITE32_HANDLER ( skns_palette_ram_w )
 
 static WRITE32_HANDLER( skns_v3t_w )
 {
-	data8_t *btiles = memory_region(REGION_GFX3);
+	UINT8 *btiles = memory_region(REGION_GFX3);
 
 	COMBINE_DATA(&skns_v3t_ram[offset]);
 

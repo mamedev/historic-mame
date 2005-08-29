@@ -5,13 +5,13 @@
 #include "vidhrdw/generic.h"
 
 
-data32_t *macrossp_scra_videoram, *macrossp_scra_videoregs;
-data32_t *macrossp_scrb_videoram, *macrossp_scrb_videoregs;
-data32_t *macrossp_scrc_videoram, *macrossp_scrc_videoregs;
-data32_t *macrossp_text_videoram, *macrossp_text_videoregs;
-data32_t *macrossp_spriteram;
+UINT32 *macrossp_scra_videoram, *macrossp_scra_videoregs;
+UINT32 *macrossp_scrb_videoram, *macrossp_scrb_videoregs;
+UINT32 *macrossp_scrc_videoram, *macrossp_scrc_videoregs;
+UINT32 *macrossp_text_videoram, *macrossp_text_videoregs;
+UINT32 *macrossp_spriteram;
 
-static data32_t *spriteram_old,*spriteram_old2;
+static UINT32 *spriteram_old,*spriteram_old2;
 
 static tilemap  *macrossp_scra_tilemap, *macrossp_scrb_tilemap,*macrossp_scrc_tilemap, *macrossp_text_tilemap;
 
@@ -181,12 +181,12 @@ VIDEO_START(macrossp)
 
 
 
-static void macrossp_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority )
+static void macrossp_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect, int priority )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-//  data32_t *source = macrossp_spriteram;
-	data32_t *source = spriteram_old2; /* buffers by two frames */
-	data32_t *finish = source + spriteram_size/4;
+//  UINT32 *source = macrossp_spriteram;
+	UINT32 *source = spriteram_old2; /* buffers by two frames */
+	UINT32 *finish = source + spriteram_size/4;
 
 
 	while( source<finish )
@@ -307,10 +307,10 @@ static void macrossp_drawsprites( struct mame_bitmap *bitmap, const struct recta
 }
 
 
-static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer)
+static void draw_layer(mame_bitmap *bitmap, const rectangle *cliprect, int layer)
 {
 	tilemap *tm;
-	data32_t *vr;
+	UINT32 *vr;
 
 	switch (layer)
 	{

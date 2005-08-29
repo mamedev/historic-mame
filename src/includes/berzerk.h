@@ -13,7 +13,7 @@ READ8_HANDLER( berzerk_led_off_r );
 
 /* defined in vidrhdw/berzerk.c */
 
-extern data8_t *berzerk_magicram;
+extern UINT8 *berzerk_magicram;
 
 PALETTE_INIT( berzerk );
 WRITE8_HANDLER( berzerk_videoram_w );

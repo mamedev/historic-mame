@@ -67,8 +67,8 @@ static int debugsprites;	// For debug purposes
 
 /* Variables that driver has access to: */
 
-data16_t *cischeat_roadram[2];
-data16_t *f1gpstr2_ioready;
+UINT16 *cischeat_roadram[2];
+UINT16 *f1gpstr2_ioready;
 
 #ifdef MAME_DEBUG
 #define SHOW_READ_ERROR(_format_,_offset_)\
@@ -255,8 +255,8 @@ READ16_HANDLER( bigrun_vregs_r )
 
 WRITE16_HANDLER( bigrun_vregs_w )
 {
-	data16_t old_data = megasys1_vregs[offset];
-	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+	UINT16 old_data = megasys1_vregs[offset];
+	UINT16 new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
@@ -349,8 +349,8 @@ READ16_HANDLER( cischeat_vregs_r )
 
 WRITE16_HANDLER( cischeat_vregs_w )
 {
-	data16_t old_data = megasys1_vregs[offset];
-	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+	UINT16 old_data = megasys1_vregs[offset];
+	UINT16 new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
@@ -488,8 +488,8 @@ READ16_HANDLER( wildplt_vregs_r )
 
 WRITE16_HANDLER( f1gpstar_vregs_w )
 {
-//  data16_t old_data = megasys1_vregs[offset];
-	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+//  UINT16 old_data = megasys1_vregs[offset];
+	UINT16 new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	switch (offset)
 	{
@@ -545,8 +545,8 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 WRITE16_HANDLER( f1gpstr2_vregs_w )
 {
-//  data16_t old_data = megasys1_vregs[offset];
-	data16_t new_data = COMBINE_DATA(&megasys1_vregs[offset]);
+//  UINT16 old_data = megasys1_vregs[offset];
+	UINT16 new_data = COMBINE_DATA(&megasys1_vregs[offset]);
 
 	if ((offset >= 0x1000/2) && (offset < 0x2000/2))
 		return;
@@ -635,15 +635,15 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 /*  Draw the road in the given bitmap. The priority1 and priority2 parameters
     specify the range of lines to draw  */
 
-void cischeat_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
+void cischeat_draw_road(mame_bitmap *bitmap, const rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
 {
 	int curr_code,sx,sy;
 	int min_priority, max_priority;
 
-	struct rectangle rect		=	*cliprect;
+	rectangle rect		=	*cliprect;
 	gfx_element *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
-	data16_t *roadram			=	cischeat_roadram[road_num & 1];
+	UINT16 *roadram			=	cischeat_roadram[road_num & 1];
 
 	int min_y = rect.min_y;
 	int max_y = rect.max_y;
@@ -725,16 +725,16 @@ void cischeat_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
 /*  Draw the road in the given bitmap. The priority1 and priority2 parameters
     specify the range of lines to draw  */
 
-void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
+void f1gpstar_draw_road(mame_bitmap *bitmap, const rectangle *cliprect, int road_num, int priority1, int priority2, int transparency)
 {
 	int sx,sy;
 	int xstart;
 	int min_priority, max_priority;
 
-	struct rectangle rect		=	*cliprect;
+	rectangle rect		=	*cliprect;
 	gfx_element *gfx		=	Machine->gfx[(road_num & 1)?5:4];
 
-	data16_t *roadram			=	cischeat_roadram[road_num & 1];
+	UINT16 *roadram			=	cischeat_roadram[road_num & 1];
 
 	int min_y = rect.min_y;
 	int max_y = rect.max_y;
@@ -841,7 +841,7 @@ void f1gpstar_draw_road(struct mame_bitmap *bitmap, const struct rectangle *clip
     sprites whose priority nibble is between 0 and 15 and whose
     colour code's high bit is set.  */
 
-static void cischeat_draw_sprites(struct mame_bitmap *bitmap , const struct rectangle *cliprect, int priority1, int priority2)
+static void cischeat_draw_sprites(mame_bitmap *bitmap , const rectangle *cliprect, int priority1, int priority2)
 {
 	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
 	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
@@ -849,8 +849,8 @@ static void cischeat_draw_sprites(struct mame_bitmap *bitmap , const struct rect
 
 	int min_priority, max_priority, high_sprites;
 
-	data16_t		*source	=	spriteram16;
-	const data16_t	*finish	=	source + 0x1000/2;
+	UINT16		*source	=	spriteram16;
+	const UINT16	*finish	=	source + 0x1000/2;
 
 
 	/* Move the priority values in place */
@@ -996,7 +996,7 @@ if (code_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-static void bigrun_draw_sprites(struct mame_bitmap *bitmap , const struct rectangle *cliprect, int priority1, int priority2)
+static void bigrun_draw_sprites(mame_bitmap *bitmap , const rectangle *cliprect, int priority1, int priority2)
 {
 	int x, sx, flipx, xzoom, xscale, xdim, xnum, xstart, xend, xinc;
 	int y, sy, flipy, yzoom, yscale, ydim, ynum, ystart, yend, yinc;
@@ -1004,8 +1004,8 @@ static void bigrun_draw_sprites(struct mame_bitmap *bitmap , const struct rectan
 
 	int min_priority, max_priority, high_sprites;
 
-	data16_t		*source	=	spriteram16;
-	const data16_t	*finish	=	source + 0x1000/2;
+	UINT16		*source	=	spriteram16;
+	const UINT16	*finish	=	source + 0x1000/2;
 
 	/* Move the priority values in place */
 	high_sprites = (priority1 >= 16) | (priority2 >= 16);
@@ -1324,7 +1324,7 @@ VIDEO_UPDATE( f1gpstar )
                                 Scud Hammer
 **************************************************************************/
 
-extern data16_t scudhamm_motor_command;
+extern UINT16 scudhamm_motor_command;
 
 	READ16_HANDLER( scudhamm_motor_pos_r );
 	READ16_HANDLER( scudhamm_motor_status_r );

@@ -250,7 +250,7 @@ INLINE void check_bounds( struct K053260_chip_def *ic, int channel ) {
 #endif
 }
 
-void K053260_write( int chip, offs_t offset, data8_t data )
+void K053260_write( int chip, offs_t offset, UINT8 data )
 {
 	int i, t;
 	int r = offset;
@@ -368,7 +368,7 @@ void K053260_write( int chip, offs_t offset, data8_t data )
 	}
 }
 
-data8_t K053260_read( int chip, offs_t offset )
+UINT8 K053260_read( int chip, offs_t offset )
 {
 	struct K053260_chip_def *ic = sndti_token(SOUND_K053260, chip);
 

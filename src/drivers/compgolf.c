@@ -14,7 +14,7 @@ as well.
 #include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
-extern data8_t *compgolf_bg_ram;
+extern UINT8 *compgolf_bg_ram;
 extern int compgolf_scrollx_lo, compgolf_scrolly_lo, compgolf_scrollx_hi, compgolf_scrolly_hi;
 
 extern WRITE8_HANDLER( compgolf_video_w );

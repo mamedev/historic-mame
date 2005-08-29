@@ -6,9 +6,9 @@
 
 #include "vidhrdw/generic.h"
 
-data16_t *bloodbro_txvideoram;
-data16_t *bloodbro_bgvideoram,*bloodbro_fgvideoram;
-data16_t *bloodbro_scroll;
+UINT16 *bloodbro_txvideoram;
+UINT16 *bloodbro_bgvideoram,*bloodbro_fgvideoram;
+UINT16 *bloodbro_scroll;
 
 static tilemap *bg_tilemap,*fg_tilemap,*tx_tilemap;
 
@@ -154,7 +154,7 @@ WRITE16_HANDLER( bloodbro_txvideoram_w )
    -------X XXXXXXXX
    -------- YYYYYYYY */
 
-static void bloodbro_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void bloodbro_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
@@ -201,7 +201,7 @@ static void bloodbro_draw_sprites( struct mame_bitmap *bitmap, const struct rect
    -------X XXXXXXXX
 */
 
-static void weststry_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void weststry_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

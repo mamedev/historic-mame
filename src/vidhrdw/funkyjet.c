@@ -18,7 +18,7 @@ VIDEO_START( funkyjet )
 	return 0;
 }
 
-static void funkyjet_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void funkyjet_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

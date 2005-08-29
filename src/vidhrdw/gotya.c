@@ -119,7 +119,7 @@ VIDEO_START( gotya )
 	return 0;
 }
 
-static void gotya_draw_status_row( struct mame_bitmap *bitmap, int sx, int col )
+static void gotya_draw_status_row( mame_bitmap *bitmap, int sx, int col )
 {
 	int row;
 
@@ -151,7 +151,7 @@ static void gotya_draw_status_row( struct mame_bitmap *bitmap, int sx, int col )
 	}
 }
 
-static void gotya_draw_sprites( struct mame_bitmap *bitmap )
+static void gotya_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 
@@ -176,7 +176,7 @@ static void gotya_draw_sprites( struct mame_bitmap *bitmap )
 	}
 }
 
-static void gotya_draw_status( struct mame_bitmap *bitmap )
+static void gotya_draw_status( mame_bitmap *bitmap )
 {
 	gotya_draw_status_row(bitmap, 0,  1);
 	gotya_draw_status_row(bitmap, 1,  0);

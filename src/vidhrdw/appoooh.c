@@ -233,8 +233,8 @@ WRITE8_HANDLER( appoooh_out_w )
 	/* bit 7 unknown (used) */
 }
 
-static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
-		const struct rectangle *cliprect,
+static void appoooh_draw_sprites(mame_bitmap *dest_bmp,
+		const rectangle *cliprect,
         const gfx_element *gfx,
         unsigned char *sprite)
 {
@@ -266,8 +266,8 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 	 }
 }
 
-static void robowres_draw_sprites(struct mame_bitmap *dest_bmp,
-		const struct rectangle *cliprect,
+static void robowres_draw_sprites(mame_bitmap *dest_bmp,
+		const rectangle *cliprect,
         const gfx_element *gfx,
         unsigned char *sprite)
 {

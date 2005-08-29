@@ -508,7 +508,7 @@ static int result_code;
 /* Calendar, coins + Z80 communication */
 static READ16_HANDLER( timer16_r )
 {
-	data16_t res;
+	UINT16 res;
 	int coinflip = pd4990a_testbit_r(0);
 	int databit = pd4990a_databit_r(0);
 
@@ -550,7 +550,7 @@ static WRITE16_HANDLER ( mjneogeo_w )
 
 static READ16_HANDLER ( mjneogeo_r )
 {
-	data16_t res;
+	UINT16 res;
 
 /*
 cpu #0 (PC=00C18B9A): unmapped memory word write to 00380000 = 0012 & 00FF
@@ -597,7 +597,7 @@ static WRITE16_HANDLER( trackball_select_16_w )
 
 static READ16_HANDLER( controller1_16_r )
 {
-	data16_t res;
+	UINT16 res;
 
 	if (neogeo_has_trackball)
 		res = (readinputport(ts?7:0) << 8) + readinputport(3);
@@ -608,7 +608,7 @@ static READ16_HANDLER( controller1_16_r )
 }
 static READ16_HANDLER( controller2_16_r )
 {
-	data16_t res;
+	UINT16 res;
 
 	res = (readinputport(1) << 8);
 
@@ -628,7 +628,7 @@ static READ16_HANDLER( controller4_16_r )
 
 static READ16_HANDLER( popbounc1_16_r )
 {
-	data16_t res;
+	UINT16 res;
 
 	res = (readinputport(ts?0:7) << 8) + readinputport(3);
 
@@ -637,7 +637,7 @@ static READ16_HANDLER( popbounc1_16_r )
 
 static READ16_HANDLER( popbounc2_16_r )
 {
-	data16_t res;
+	UINT16 res;
 
 	res = (readinputport(ts?1:8) << 8);
 
@@ -766,7 +766,7 @@ static READ16_HANDLER ( neogeo_video_r )
 	/* 8-bit reads of the low byte do NOT return the correct value on real hardware */
 	/* they actually seem to return 0xcf in tests, but kof2002 requires 0xff for the
        'how to play' screen to work correctly */
-	data16_t retdata=0xffff;
+	UINT16 retdata=0xffff;
 
 	if (!ACCESSING_MSB)
 	{
@@ -861,7 +861,7 @@ static WRITE16_HANDLER( neogeo_syscontrol2_w )
 
 static READ16_HANDLER(controller1and4_16_r)
 {
-	data16_t retvalue=0;
+	UINT16 retvalue=0;
 
 	switch ((offset<<1)&0x80)
 	{
@@ -6175,10 +6175,10 @@ ROM_END
 
 DRIVER_INIT( kof99 )
 {
-	data16_t *rom;
+	UINT16 *rom;
 	int i,j;
 
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	/* swap data lines on the whole ROMs */
 	for (i = 0;i < 0x800000/2;i++)
 	{
@@ -6188,7 +6188,7 @@ DRIVER_INIT( kof99 )
 	/* swap address lines for the banked part */
 	for (i = 0;i < 0x600000/2;i+=0x800/2)
 	{
-		data16_t buffer[0x800/2];
+		UINT16 buffer[0x800/2];
 		memcpy(buffer,&rom[i],0x800);
 		for (j = 0;j < 0x800/2;j++)
 		{
@@ -6197,7 +6197,7 @@ DRIVER_INIT( kof99 )
 	}
 
 	/* swap address lines & relocate fixed part */
-	rom = (data16_t *)memory_region(REGION_CPU1);
+	rom = (UINT16 *)memory_region(REGION_CPU1);
 	for (i = 0;i < 0x0c0000/2;i++)
 	{
 		rom[i] = rom[0x700000/2 + BITSWAP24(i,23,22,21,20,19,18,11,6,14,17,16,5,8,10,12,0,4,3,2,7,9,15,13,1)];
@@ -6212,11 +6212,11 @@ DRIVER_INIT( kof99 )
 
 DRIVER_INIT( garou )
 {
-	data16_t *rom;
+	UINT16 *rom;
 	int i,j;
 
 	/* thanks to Razoola and Mr K for the info */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	/* swap data lines on the whole ROMs */
 	for (i = 0;i < 0x800000/2;i++)
 	{
@@ -6224,17 +6224,17 @@ DRIVER_INIT( garou )
 	}
 
 	/* swap address lines & relocate fixed part */
-	rom = (data16_t *)memory_region(REGION_CPU1);
+	rom = (UINT16 *)memory_region(REGION_CPU1);
 	for (i = 0;i < 0x0c0000/2;i++)
 	{
 		rom[i] = rom[0x710000/2 + BITSWAP24(i,23,22,21,20,19,18,4,5,16,14,7,9,6,13,17,15,3,1,2,12,11,8,10,0)];
 	}
 
 	/* swap address lines for the banked part */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	for (i = 0;i < 0x800000/2;i+=0x8000/2)
 	{
-		data16_t buffer[0x8000/2];
+		UINT16 buffer[0x8000/2];
 		memcpy(buffer,&rom[i],0x8000);
 		for (j = 0;j < 0x8000/2;j++)
 		{
@@ -6251,11 +6251,11 @@ DRIVER_INIT( garou )
 
 DRIVER_INIT( garouo )
 {
-	data16_t *rom;
+	UINT16 *rom;
 	int i,j;
 
 	/* thanks to Razoola and Mr K for the info */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	/* swap data lines on the whole ROMs */
 	for (i = 0;i < 0x800000/2;i++)
 	{
@@ -6263,17 +6263,17 @@ DRIVER_INIT( garouo )
 	}
 
 	/* swap address lines & relocate fixed part */
-	rom = (data16_t *)memory_region(REGION_CPU1);
+	rom = (UINT16 *)memory_region(REGION_CPU1);
 	for (i = 0;i < 0x0c0000/2;i++)
 	{
 		rom[i] = rom[0x7f8000/2 + BITSWAP24(i,23,22,21,20,19,18,5,16,11,2,6,7,17,3,12,8,14,4,0,9,1,10,15,13)];
 	}
 
 	/* swap address lines for the banked part */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	for (i = 0;i < 0x800000/2;i+=0x8000/2)
 	{
-		data16_t buffer[0x8000/2];
+		UINT16 buffer[0x8000/2];
 		memcpy(buffer,&rom[i],0x8000);
 		for (j = 0;j < 0x8000/2;j++)
 		{
@@ -6290,11 +6290,11 @@ DRIVER_INIT( garouo )
 
 DRIVER_INIT( mslug3 )
 {
-	data16_t *rom;
+	UINT16 *rom;
 	int i,j;
 
 	/* thanks to Razoola and Mr K for the info */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	/* swap data lines on the whole ROMs */
 	for (i = 0;i < 0x800000/2;i++)
 	{
@@ -6302,17 +6302,17 @@ DRIVER_INIT( mslug3 )
 	}
 
 	/* swap address lines & relocate fixed part */
-	rom = (data16_t *)memory_region(REGION_CPU1);
+	rom = (UINT16 *)memory_region(REGION_CPU1);
 	for (i = 0;i < 0x0c0000/2;i++)
 	{
 		rom[i] = rom[0x5d0000/2 + BITSWAP24(i,23,22,21,20,19,18,15,2,1,13,3,0,9,6,16,4,11,5,7,12,17,14,10,8)];
 	}
 
 	/* swap address lines for the banked part */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	for (i = 0;i < 0x800000/2;i+=0x10000/2)
 	{
-		data16_t buffer[0x10000/2];
+		UINT16 buffer[0x10000/2];
 		memcpy(buffer,&rom[i],0x10000);
 		for (j = 0;j < 0x10000/2;j++)
 		{
@@ -6327,11 +6327,11 @@ DRIVER_INIT( mslug3 )
 
 DRIVER_INIT( kof2000 )
 {
-	data16_t *rom;
+	UINT16 *rom;
 	int i,j;
 
 	/* thanks to Razoola and Mr K for the info */
-	rom = (data16_t *)(memory_region(REGION_CPU1) + 0x100000);
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
 	/* swap data lines on the whole ROMs */
 	for (i = 0;i < 0x800000/2;i++)
 	{
@@ -6341,7 +6341,7 @@ DRIVER_INIT( kof2000 )
 	/* swap address lines for the banked part */
 	for (i = 0;i < 0x63a000/2;i+=0x800/2)
 	{
-		data16_t buffer[0x800/2];
+		UINT16 buffer[0x800/2];
 		memcpy(buffer,&rom[i],0x800);
 		for (j = 0;j < 0x800/2;j++)
 		{
@@ -6350,7 +6350,7 @@ DRIVER_INIT( kof2000 )
 	}
 
 	/* swap address lines & relocate fixed part */
-	rom = (data16_t *)memory_region(REGION_CPU1);
+	rom = (UINT16 *)memory_region(REGION_CPU1);
 	for (i = 0;i < 0x0c0000/2;i++)
 	{
 		rom[i] = rom[0x73a000/2 + BITSWAP24(i,23,22,21,20,19,18,8,4,15,13,3,14,16,2,6,17,7,12,10,0,5,11,1,9)];
@@ -6373,13 +6373,13 @@ DRIVER_INIT( kof2001 )
 /* Neo-Pcm2 Drivers for Encrypted V Roms */
 static void neo_pcm2_snk_1999(int value) /* 8=mslug4, 16=rotd */
 {	/* thanks to Elsemi for the NEO-PCM2 info */
-	data16_t *rom = (data16_t *)memory_region(REGION_SOUND1);
+	UINT16 *rom = (UINT16 *)memory_region(REGION_SOUND1);
 	int size = memory_region_length(REGION_SOUND1);
 	int i, j;
 
 	if( rom != NULL )
 	{	/* swap address lines on the whole ROMs */
-		data16_t *buffer = malloc((value / 2) * sizeof(data16_t));
+		UINT16 *buffer = malloc((value / 2) * sizeof(UINT16));
 		if (!buffer)
 			return;
 
@@ -6655,7 +6655,7 @@ DRIVER_INIT( matrim )
 }
 
 
-static data16_t *brza_sram;
+static UINT16 *brza_sram;
 
 READ16_HANDLER( vliner_2c0000_r )
 {
@@ -6664,7 +6664,7 @@ READ16_HANDLER( vliner_2c0000_r )
 
 READ16_HANDLER( vliner_coins_r )
 {
-	data16_t res;
+	UINT16 res;
 	res = readinputport(4);
 
 	if( !Machine->sample_rate )
@@ -6677,7 +6677,7 @@ READ16_HANDLER( vliner_coins_r )
 
 READ16_HANDLER( vliner_timer16_r )
 {
-	data16_t res;
+	UINT16 res;
 	int coinflip = pd4990a_testbit_r(0);
 	int databit = pd4990a_databit_r(0);
 
@@ -6737,7 +6737,7 @@ static UINT32 cpu1_second_bankaddress;
 
 void neogeo_set_cpu1_second_bank(UINT32 bankaddress)
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	cpu1_second_bankaddress = bankaddress;
 	memory_set_bankptr(4,&RAM[bankaddress]);

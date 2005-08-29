@@ -802,13 +802,13 @@ static UINT16 cpua_ctrl = 0xff;
 static int sci_int6 = 0;
 static int dblaxle_int6 = 0;
 static int ioc220_port = 0;
-static data16_t eep_latch = 0;
+static UINT16 eep_latch = 0;
 
-//static data16_t *taitoz_ram;
-//static data16_t *motor_ram;
+//static UINT16 *taitoz_ram;
+//static UINT16 *motor_ram;
 
 static size_t taitoz_sharedram_size;
-data16_t *taitoz_sharedram;	/* read externally to draw Spacegun crosshair */
+UINT16 *taitoz_sharedram;	/* read externally to draw Spacegun crosshair */
 
 static READ16_HANDLER( sharedram_r )
 {
@@ -937,7 +937,7 @@ static INTERRUPT_GEN( dblaxle_cpub_interrupt )
                               EEPROM
 ******************************************************************/
 
-static data8_t default_eeprom[128]=
+static UINT8 default_eeprom[128]=
 {
 	0x00,0x00,0x00,0xff,0x00,0x01,0x41,0x41,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,
 	0x00,0x00,0x00,0xff,0x00,0x01,0x41,0x41,0x00,0x00,0x00,0xff,0x00,0x00,0xf0,0xf0,
@@ -1019,7 +1019,7 @@ static READ16_HANDLER( contcirc_input_bypass_r )
 {
 	/* Bypass TC0220IOC controller for analog input */
 
-	data8_t port = TC0220IOC_port_r(0);	/* read port number */
+	UINT8 port = TC0220IOC_port_r(0);	/* read port number */
 	int steer = 0;
 	int fake = input_port_6_word_r(0,0);
 
@@ -1059,7 +1059,7 @@ static READ16_HANDLER( chasehq_input_bypass_r )
 {
 	/* Bypass TC0220IOC controller for extra inputs */
 
-	data8_t port = TC0220IOC_port_r(0);	/* read port number */
+	UINT8 port = TC0220IOC_port_r(0);	/* read port number */
 	int steer = 0;
 	int fake = input_port_10_word_r(0,0);
 
@@ -1128,7 +1128,7 @@ logerror("CPU #0 PC %06x: warning - read unmapped stick offset %06x\n",activecpu
 	return 0xff;
 }
 
-static data8_t nightstr_stick[128]=
+static UINT8 nightstr_stick[128]=
 {
 	0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0xbe,0xbf,0xc0,0xc1,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7,
 	0xc8,0xc9,0xca,0xcb,0xcc,0xcd,0xce,0xcf,0xd0,0xd1,0xd2,0xd3,0xd4,0xd5,0xd6,0xd7,

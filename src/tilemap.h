@@ -102,7 +102,7 @@ extern tile_data tile_info;
 
 #define TILE_LINE_DISABLED 0x80000000
 
-extern struct mame_bitmap *priority_bitmap;
+extern mame_bitmap *priority_bitmap;
 
 /* don't call these from drivers - they are called from mame.c */
 int tilemap_init( void );
@@ -142,15 +142,15 @@ void tilemap_set_user_data( tilemap *tmap, void *user_data );
 void tilemap_set_flip( tilemap *tmap, int attributes );
 void tilemap_set_enable( tilemap *tmap, int enable );
 
-void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority );
-void tilemap_draw_primask( struct mame_bitmap *dest, const struct rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority, UINT32 priority_mask );
+void tilemap_draw( mame_bitmap *dest, const rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority );
+void tilemap_draw_primask( mame_bitmap *dest, const rectangle *cliprect, tilemap *tmap, UINT32 flags, UINT32 priority, UINT32 priority_mask );
 
-void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,tilemap *tmap,
+void tilemap_draw_roz(mame_bitmap *dest,const rectangle *cliprect,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority );
 
-void tilemap_draw_roz_primask(struct mame_bitmap *dest,const struct rectangle *cliprect,tilemap *tmap,
+void tilemap_draw_roz_primask(mame_bitmap *dest,const rectangle *cliprect,tilemap *tmap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority, UINT32 priority_mask );
@@ -165,8 +165,8 @@ void tilemap_draw_roz_primask(struct mame_bitmap *dest,const struct rectangle *c
 #define TILE_FLAG_FG_OPAQUE		(0x10)
 #define TILE_FLAG_BG_OPAQUE		(0x20)
 
-struct mame_bitmap *tilemap_get_pixmap( tilemap * tmap );
-struct mame_bitmap *tilemap_get_transparency_bitmap( tilemap * tmap );
+mame_bitmap *tilemap_get_pixmap( tilemap * tmap );
+mame_bitmap *tilemap_get_transparency_bitmap( tilemap * tmap );
 UINT8 *tilemap_get_transparency_data( tilemap * tmap );  //*
 
 /*********************************************************************/
@@ -184,6 +184,6 @@ UINT32 tilemap_scan_rows_flip_xy( UINT32 col, UINT32 row, UINT32 num_cols, UINT3
 /* For showcharset()'s sake */
 UINT32 tilemap_count( void );
 void tilemap_nb_size( UINT32 number, UINT32 *width, UINT32 *height );
-void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly );
+void tilemap_nb_draw( mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly );
 
 #endif	/* __TILEMAP_H__ */

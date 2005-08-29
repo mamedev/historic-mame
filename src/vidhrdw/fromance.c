@@ -13,10 +13,10 @@
 
 
 static UINT8 selected_videoram;
-static data8_t *local_videoram[2];
+static UINT8 *local_videoram[2];
 
 static UINT8 selected_paletteram;
-static data8_t *local_paletteram;
+static UINT8 *local_paletteram;
 
 static int scrollx[2], scrolly[2];
 static UINT8 gfxreg;
@@ -298,7 +298,7 @@ WRITE8_HANDLER( fromance_crtc_register_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int draw_priority)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int draw_priority)
 {
 	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 	int offs;

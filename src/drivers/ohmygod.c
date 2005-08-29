@@ -16,7 +16,7 @@ Notes:
 #include "sound/okim6295.h"
 
 
-extern data16_t *ohmygod_videoram;
+extern UINT16 *ohmygod_videoram;
 
 WRITE16_HANDLER( ohmygod_videoram_w );
 WRITE16_HANDLER( ohmygod_spritebank_w );

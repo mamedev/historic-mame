@@ -14,7 +14,7 @@ WRITE16_HANDLER (system24temp_sys16_paletteram1_w);
 //  System24
 int sys24_tile_vh_start(UINT16 tile_mask);
 void sys24_tile_update(void);
-void sys24_tile_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int layer, int pri, int flags);
+void sys24_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect, int layer, int pri, int flags);
 
 READ16_HANDLER(sys24_tile_r);
 READ16_HANDLER(sys24_char_r);
@@ -29,7 +29,7 @@ WRITE32_HANDLER(sys24_char32_w);
 // Sprites
 //  System24
 int sys24_sprite_vh_start(void);
-void sys24_sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const int *spri);
+void sys24_sprite_draw(mame_bitmap *bitmap, const rectangle *cliprect, const int *spri);
 
 WRITE16_HANDLER (sys24_sprite_w);
 READ16_HANDLER (sys24_sprite_r);

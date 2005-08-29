@@ -62,7 +62,7 @@
  *
  *************************************/
 
-static data16_t control_word;
+static UINT16 control_word;
 
 
 

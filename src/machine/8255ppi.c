@@ -117,10 +117,10 @@ typedef struct
 	unsigned int inte_a : 1;
 	unsigned int inte_b : 1;
 
-	data8_t in_mask[3];		/* input mask */
-	data8_t out_mask[3];	/* output mask */
-	data8_t read[3];		/* data read from ports */
-	data8_t latch[3];		/* data written to ports */
+	UINT8 in_mask[3];		/* input mask */
+	UINT8 out_mask[3];	/* output mask */
+	UINT8 read[3];		/* data read from ports */
+	UINT8 latch[3];		/* data written to ports */
 } ppi8255;
 
 static ppi8255 chips[MAX_8255];
@@ -152,10 +152,10 @@ void ppi8255_init( ppi8255_interface *intfce )
 
 
 
-static void ppi8255_get_handshake_signals(ppi8255 *chip, int is_read, data8_t *result)
+static void ppi8255_get_handshake_signals(ppi8255 *chip, int is_read, UINT8 *result)
 {
-	data8_t handshake = 0x00;
-	data8_t mask = 0x00;
+	UINT8 handshake = 0x00;
+	UINT8 mask = 0x00;
 
 	/* group A */
 	if (chip->groupA_mode == 1)
@@ -204,7 +204,7 @@ static void ppi8255_get_handshake_signals(ppi8255 *chip, int is_read, data8_t *r
 
 
 
-static void ppi8255_input(ppi8255 *chip, int port, data8_t data)
+static void ppi8255_input(ppi8255 *chip, int port, UINT8 data)
 {
 	int changed = 0;
 
@@ -243,9 +243,9 @@ static void ppi8255_input(ppi8255 *chip, int port, data8_t data)
 
 
 
-static data8_t ppi8255_read_port(ppi8255 *chip, int port)
+static UINT8 ppi8255_read_port(ppi8255 *chip, int port)
 {
-	data8_t result = 0x00;
+	UINT8 result = 0x00;
 
 	if (chip->in_mask[port])
 				{
@@ -299,7 +299,7 @@ int ppi8255_r(int which, int offset)
 
 static void ppi8255_write_port(ppi8255 *chip, int port)
 {
-	data8_t write_data;
+	UINT8 write_data;
 
 	write_data = chip->latch[port] & chip->out_mask[port];
 	write_data |= 0xFF & ~chip->out_mask[port];
@@ -379,7 +379,7 @@ void ppi8255_w(int which, int offset, int data)
 }
 
 #ifdef MESS
-data8_t ppi8255_peek( int which, offs_t offset )
+UINT8 ppi8255_peek( int which, offs_t offset )
 {
 	ppi8255 *chip;
 

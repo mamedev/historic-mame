@@ -63,7 +63,7 @@ WRITE8_HANDLER( shangkid_videoram_w )
 	}
 }
 
-static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
+static void draw_sprite( const UINT8 *source, mame_bitmap *bitmap, const rectangle *cliprect ){
 	const gfx_element *gfx;
 	int transparent_pen;
 	int bank_index;
@@ -156,7 +156,7 @@ static void draw_sprite( const UINT8 *source, struct mame_bitmap *bitmap, const 
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const UINT8 *source, *finish;
 
@@ -214,7 +214,7 @@ PALETTE_INIT( dynamski )
 }
 
 
-static void dynamski_draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
+static void dynamski_draw_background( mame_bitmap *bitmap, const rectangle *cliprect, int pri )
 {
 	int i;
 	int sx,sy;
@@ -268,7 +268,7 @@ static void dynamski_draw_background( struct mame_bitmap *bitmap, const struct r
 	}
 }
 
-static void dynamski_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void dynamski_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 	int sx,sy;

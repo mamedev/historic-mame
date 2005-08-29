@@ -48,30 +48,30 @@ INT8 hdcpu_dsp32;
 UINT8 hd34010_host_access;
 UINT8 hddsk_pio_access;
 
-data16_t *hdmsp_ram;
-data16_t *hddsk_ram;
-data16_t *hddsk_rom;
-data16_t *hddsk_zram;
-data16_t *hd68k_slapstic_base;
-data16_t *st68k_sloop_alt_base;
+UINT16 *hdmsp_ram;
+UINT16 *hddsk_ram;
+UINT16 *hddsk_rom;
+UINT16 *hddsk_zram;
+UINT16 *hd68k_slapstic_base;
+UINT16 *st68k_sloop_alt_base;
 
-data16_t *hdadsp_data_memory;
-data32_t *hdadsp_pgm_memory;
+UINT16 *hdadsp_data_memory;
+UINT32 *hdadsp_pgm_memory;
 
-data16_t *hdgsp_protection;
-data16_t *stmsp_sync[3];
+UINT16 *hdgsp_protection;
+UINT16 *stmsp_sync[3];
 
-data16_t *hdgsp_speedup_addr[2];
+UINT16 *hdgsp_speedup_addr[2];
 offs_t hdgsp_speedup_pc;
 
-data16_t *hdmsp_speedup_addr;
+UINT16 *hdmsp_speedup_addr;
 offs_t hdmsp_speedup_pc;
 
-data16_t *hdds3_speedup_addr;
+UINT16 *hdds3_speedup_addr;
 offs_t hdds3_speedup_pc;
 offs_t hdds3_transfer_pc;
 
-data32_t *rddsp32_sync[2];
+UINT32 *rddsp32_sync[2];
 
 UINT32 gsp_speedup_count[4];
 UINT32 msp_speedup_count[4];
@@ -117,10 +117,10 @@ static UINT16 adsp_sim_address;
 static UINT16 adsp_som_address;
 static UINT32 adsp_eprom_base;
 
-static data16_t *sim_memory;
-static data16_t *som_memory;
+static UINT16 *sim_memory;
+static UINT16 *som_memory;
 static UINT32 sim_memory_size;
-static data16_t *adsp_pgm_memory_word;
+static UINT16 *adsp_pgm_memory_word;
 
 static UINT8 ds3_gcmd, ds3_gflag, ds3_g68irqs, ds3_gfirqs, ds3_g68flag, ds3_send, ds3_reset;
 static UINT16 ds3_gdata, ds3_g68data;
@@ -142,8 +142,8 @@ static UINT8 st68k_sloop_bank = 0;
 static offs_t st68k_last_alt_sloop_offset;
 
 #define MAX_MSP_SYNC	16
-static data32_t *dataptr[MAX_MSP_SYNC];
-static data32_t dataval[MAX_MSP_SYNC];
+static UINT32 *dataptr[MAX_MSP_SYNC];
+static UINT32 dataval[MAX_MSP_SYNC];
 static int next_msp_sync;
 
 static void hd68k_update_interrupts(void);
@@ -179,10 +179,10 @@ MACHINE_INIT( harddriv )
 		atarijsa_reset();
 
 	/* predetermine memory regions */
-	sim_memory = (data16_t *)memory_region(REGION_USER1);
-	som_memory = (data16_t *)memory_region(REGION_USER2);
+	sim_memory = (UINT16 *)memory_region(REGION_USER1);
+	som_memory = (UINT16 *)memory_region(REGION_USER2);
 	sim_memory_size = memory_region_length(REGION_USER1) / 2;
-	adsp_pgm_memory_word = (data16_t *)((UINT8 *)hdadsp_pgm_memory + 1);
+	adsp_pgm_memory_word = (UINT16 *)((UINT8 *)hdadsp_pgm_memory + 1);
 
 	last_gsp_shiftreg = 0;
 
@@ -272,7 +272,7 @@ void hdmsp_irq_gen(int state)
 
 READ16_HANDLER( hd68k_gsp_io_r )
 {
-	data16_t result;
+	UINT16 result;
 	offset = (offset / 2) ^ 1;
 	hd34010_host_access = 1;
 	result = tms34010_host_r(hdcpu_gsp, offset);
@@ -299,7 +299,7 @@ WRITE16_HANDLER( hd68k_gsp_io_w )
 
 READ16_HANDLER( hd68k_msp_io_r )
 {
-	data16_t result;
+	UINT16 result;
 	offset = (offset / 2) ^ 1;
 	hd34010_host_access = 1;
 	result = (hdcpu_msp != -1) ? tms34010_host_r(hdcpu_msp, offset) : 0xffff;
@@ -353,8 +353,8 @@ READ16_HANDLER( hd68k_port0_r )
 
 READ16_HANDLER( hdc68k_port1_r )
 {
-	data16_t result = readinputport(1);
-	data16_t diff = result ^ hdc68k_last_port1;
+	UINT16 result = readinputport(1);
+	UINT16 diff = result ^ hdc68k_last_port1;
 
 	/* if a new shifter position is selected, use it */
 	/* if it's the same shifter position as last time, go back to neutral */
@@ -381,7 +381,7 @@ READ16_HANDLER( hdc68k_port1_r )
 
 READ16_HANDLER( hda68k_port1_r )
 {
-	data16_t result = readinputport(1);
+	UINT16 result = readinputport(1);
 
 	/* merge in the wheel edge latch bit */
 	if (hdc68k_wheel_edge)
@@ -759,15 +759,15 @@ static void stmsp_sync_update(int param)
 {
 	int which = param >> 28;
 	offs_t offset = (param >> 16) & 0xfff;
-	data16_t data = param;
+	UINT16 data = param;
 	stmsp_sync[which][offset] = data;
 	cpu_triggerint(hdcpu_msp);
 }
 
 
-INLINE void stmsp_sync_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
+INLINE void stmsp_sync_w(int which, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
-	data16_t newdata = stmsp_sync[which][offset];
+	UINT16 newdata = stmsp_sync[which][offset];
 	COMBINE_DATA(&newdata);
 
 	/* if being written from the 68000, synchronize on it */
@@ -821,7 +821,7 @@ WRITE16_HANDLER( hd68k_adsp_program_w )
 {
 	UINT32 *base = &hdadsp_pgm_memory[offset/2];
 	UINT32 oldword = *base;
-	data16_t temp;
+	UINT16 temp;
 
 	if (!(offset & 1))
 	{
@@ -1212,12 +1212,12 @@ READ16_HANDLER( hd68k_ds3_gdata_r )
 	if (cpu_getactivecpu() == 0 && pc == hdds3_transfer_pc &&
 		!(!ds3_g68flag && ds3_g68irqs) && !(ds3_gflag && ds3_gfirqs))
 	{
-		data32_t destaddr = activecpu_get_reg(M68K_A1);
-		data16_t count68k = activecpu_get_reg(M68K_D1);
-		data16_t mstat = cpunum_get_reg(hdcpu_adsp, ADSP2100_MSTAT);
-		data16_t i6 = cpunum_get_reg(hdcpu_adsp, (mstat & 1) ? ADSP2100_MR0 : ADSP2100_MR0_SEC);
-		data16_t l6 = cpunum_get_reg(hdcpu_adsp, ADSP2100_L6) - 1;
-		data16_t m7 = cpunum_get_reg(hdcpu_adsp, ADSP2100_M7);
+		UINT32 destaddr = activecpu_get_reg(M68K_A1);
+		UINT16 count68k = activecpu_get_reg(M68K_D1);
+		UINT16 mstat = cpunum_get_reg(hdcpu_adsp, ADSP2100_MSTAT);
+		UINT16 i6 = cpunum_get_reg(hdcpu_adsp, (mstat & 1) ? ADSP2100_MR0 : ADSP2100_MR0_SEC);
+		UINT16 l6 = cpunum_get_reg(hdcpu_adsp, ADSP2100_L6) - 1;
+		UINT16 m7 = cpunum_get_reg(hdcpu_adsp, ADSP2100_M7);
 
 		logerror("%06X:optimizing 68k transfer, %d words\n", activecpu_get_previouspc(), count68k);
 
@@ -1531,7 +1531,7 @@ WRITE16_HANDLER( hd68k_dsk_dsp32_w )
 
 READ16_HANDLER( hd68k_dsk_dsp32_r )
 {
-	data16_t result;
+	UINT16 result;
 	hddsk_pio_access = 1;
 	result = dsp32c_pio_r(hdcpu_dsp32, offset);
 	hddsk_pio_access = 0;
@@ -1555,8 +1555,8 @@ WRITE32_HANDLER( rddsp32_sync0_w )
 {
 	if (hddsk_pio_access)
 	{
-		data32_t *dptr = &rddsp32_sync[0][offset];
-		data32_t newdata = *dptr;
+		UINT32 *dptr = &rddsp32_sync[0][offset];
+		UINT32 newdata = *dptr;
 		COMBINE_DATA(&newdata);
 		dataptr[next_msp_sync % MAX_MSP_SYNC] = dptr;
 		dataval[next_msp_sync % MAX_MSP_SYNC] = newdata;
@@ -1571,8 +1571,8 @@ WRITE32_HANDLER( rddsp32_sync1_w )
 {
 	if (hddsk_pio_access)
 	{
-		data32_t *dptr = &rddsp32_sync[1][offset];
-		data32_t newdata = *dptr;
+		UINT32 *dptr = &rddsp32_sync[1][offset];
+		UINT32 newdata = *dptr;
 		COMBINE_DATA(&newdata);
 		dataptr[next_msp_sync % MAX_MSP_SYNC] = dptr;
 		dataval[next_msp_sync % MAX_MSP_SYNC] = newdata;

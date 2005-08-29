@@ -205,6 +205,7 @@
  * DISCRETE_RCDISC2(NODE,IN0,RVAL0,IN1,RVAL1,CVAL)
  * DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)
  * DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE)
+ * DISCRETE_RCDISC5(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCFILTER(NODE,ENAB,IN0,RVAL,CVAL)
  * DISCRETE_RCFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  *
@@ -1238,6 +1239,35 @@
  *
  ***********************************************************************
  *
+ * DISCRETE_ASWITCH     - Node switch function, output node is same
+ *                        as input when CTRL is above threshold.
+ *
+ *    CTRL       -0--------------.
+ *                               V
+ *                        .------------.
+ *                        |      |     |
+ *    INPUT0     -1------ |----- . --- |---->   Netlist node
+ *                        |            |
+ *                        |            |
+ *                        '------------'
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_ASWITCH   (name of node,
+ *                         enable node or static value,
+ *                         ctrl node or static value,
+ *                         input node or static value,
+ *                         threshold)
+ *
+ *  Example config line
+ *
+ *     DISCRETE_ASWITCH(NODE_03,1,NODE_10,NODE_90, 2.73)
+ *
+ *  Always enabled, NODE_10 switches output to be either NODE_90 or
+ *  constant value 5.0. Switch==0 inp0=output else inp1=output
+ *
+ ***********************************************************************
+ *
  * DISCRETE_TRANSFORMn - Node arithmatic logic (postfix arithmatic)
  *     (n=2,3,4,5)
  *                        .------------.
@@ -2041,6 +2071,40 @@
  *
  ***********************************************************************
  *
+ * DISCRETE_RCDISC5 - Diode in series with R//C
+ *
+ *                        .---------------.
+ *                        |               |
+ *    ENAB       -0------>|               |
+ *                        |               |
+ *    INPUT1     -1------>| -|>|--+---+-  |
+ *                        |       |   |   |---->   Netlist node
+ *    RVAL       -2------>|      ---  Z   |
+ *                        |     C---  Z R |
+ *    CVAL       -3------>|       |   Z   |
+ *                        |       --+--   |
+ *                        |         |gnd  |
+ *                        '---------------'
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_RCDISC5(name of node,
+ *                      enable,
+ *                      input node (or value),
+ *                      resistor value in OHMS,
+ *                      capacitor value in FARADS)
+ *
+ *  Example config line
+ *
+ *     DISCRETE_RCDISC5(NODE_11,NODE_10,10,100,CAP_U(1))
+ *
+ *  When enabled by NODE_10, C discharges from 10v as indicated by RC
+ *  of 100R & 1uF.
+ *
+ *  EXAMPLES: see Spiders
+ *
+ ***********************************************************************
+ *
  * DISCRETE_RCFILTER - Simple single pole RC filter network (vRef = 0)
  * DISCRETE_RCFILTER_VREF - Same but refrenced to vRef not 0V
  *
@@ -2447,6 +2511,8 @@
 #define DISC_LFSR_NOT_IN0				8
 #define DISC_LFSR_NOT_IN1				9
 #define DISC_LFSR_REPLACE				10
+#define DISC_LFSR_XOR_INV_IN0           11
+#define DISC_LFSR_XOR_INV_IN1           12
 
 /* LFSR Flag Bits */
 #define DISC_LFSR_FLAG_OUT_INVERT		0x01
@@ -2572,7 +2638,7 @@ enum
 #define DISC_OUT_ACTIVE_LOW				0x04
 #define DISC_OUT_ACTIVE_HIGH			0x00
 
-
+#define DISC_CD4066_THRESHOLD           2.75
 /*************************************
  *
  *  The discrete sound blocks as
@@ -2945,6 +3011,7 @@ enum
 	DST_RAMP,			/* Ramp up/down simulation */
 	DST_SAMPHOLD,		/* Sample & hold transform */
 	DST_SWITCH,			/* C = A or B */
+	DST_ASWITCH,        /* Analog switch */
 	DST_TRANSFORM,		/* Muliply math functions based on string */
 	/* Component specific */
 	DST_COMP_ADDER,		/* Selectable Parallel Component Adder */
@@ -2967,6 +3034,7 @@ enum
 	DST_RCDISC2,		/* Switched 2 Input RC discharge */
 	DST_RCDISC3,		/* Charge/discharge with diode */
 	DST_RCDISC4,		/* various Charge/discharge circuits */
+	DST_RCDISC5,        /* Diode in series with R//C */
 	DST_RCFILTER,		/* Simple RC Filter network */
 	/* For testing - seem to be buggered.  Use versions not ending in N. */
 	DST_RCFILTERN,		/* Simple RC Filter network */
@@ -3070,6 +3138,7 @@ enum
 #define DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,START,END,CLAMP)              { NODE, DST_RAMP        , 6, { ENAB,RAMP,GRAD,START,END,CLAMP }, { ENAB,RAMP,GRAD,START,END,CLAMP }, NULL, "Ramp Up/Down" },
 #define DISCRETE_SAMPLHOLD(NODE,ENAB,INP0,CLOCK,CLKTYPE)                { NODE, DST_SAMPHOLD    , 4, { ENAB,INP0,CLOCK,NODE_NC }, { ENAB,INP0,CLOCK,CLKTYPE }, NULL, "Sample & Hold" },
 #define DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)                     { NODE, DST_SWITCH      , 4, { ENAB,SWITCH,INP0,INP1 }, { ENAB,SWITCH,INP0,INP1 }, NULL, "2 Pole Switch" },
+#define DISCRETE_ASWITCH(NODE,ENAB,CTRL,INP,THRESHOLD)                  { NODE, DST_ASWITCH     , 3, { ENAB,CTRL,INP,THRESHOLD }, { ENAB,CTRL,INP, THRESHOLD}, NULL, "Analog Switch" },
 #define DISCRETE_TRANSFORM2(NODE,ENAB,INP0,INP1,FUNCT)                  { NODE, DST_TRANSFORM   , 3, { ENAB,INP0,INP1 }, { ENAB,INP0,INP1 }, FUNCT, "Transform 2 Nodes" },
 #define DISCRETE_TRANSFORM3(NODE,ENAB,INP0,INP1,INP2,FUNCT)             { NODE, DST_TRANSFORM   , 4, { ENAB,INP0,INP1,INP2 }, { ENAB,INP0,INP1,INP2 }, FUNCT, "Transform 3 Nodes" },
 #define DISCRETE_TRANSFORM4(NODE,ENAB,INP0,INP1,INP2,INP3,FUNCT)        { NODE, DST_TRANSFORM   , 5, { ENAB,INP0,INP1,INP2,INP3 }, { ENAB,INP0,INP1,INP2,INP3 }, FUNCT, "Transform 4 Nodes" },
@@ -3103,6 +3172,7 @@ enum
 #define DISCRETE_RCDISC2(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)        { NODE, DST_RCDISC2     , 6, { SWITCH,INP0,NODE_NC,INP1,NODE_NC,NODE_NC }, { SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL }, NULL, "RC Discharge 2" },
 #define DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)               { NODE, DST_RCDISC3     , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL0,RVAL1,CVAL }, NULL, "RC Discharge 3" },
 #define DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE) { NODE, DST_RCDISC4     , 8, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE }, NULL, "RC Discharge 4" },
+#define DISCRETE_RCDISC5(NODE,ENAB,INP0,RVAL,CVAL)                      { NODE, DST_RCDISC5     , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Discharge 5" },
 #define DISCRETE_RCFILTER(NODE,ENAB,INP0,RVAL,CVAL)                     { NODE, DST_RCFILTER    , 4, { ENAB,INP0,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL }, NULL, "RC Filter" },
 #define DISCRETE_RCFILTER_VREF(NODE,ENAB,INP0,RVAL,CVAL,VREF)           { NODE, DST_RCFILTER    , 5, { ENAB,INP0,NODE_NC,NODE_NC,NODE_NC }, { ENAB,INP0,RVAL,CVAL,VREF }, NULL, "RC Filter to VREF" },
 /* For testing - seem to be buggered.  Use versions not ending in N. */

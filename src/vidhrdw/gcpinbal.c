@@ -5,10 +5,10 @@
 
 static tilemap *gcpinbal_tilemap[3];
 
-data16_t *gcpinbal_tilemapram;
-data16_t *gcpinbal_ioc_ram;
+UINT16 *gcpinbal_tilemapram;
+UINT16 *gcpinbal_ioc_ram;
 
-//data16_t *gcpinbal_ctrlram;
+//UINT16 *gcpinbal_ctrlram;
 //static UINT16 gcpinbal_ctrl_reg;
 
 static UINT16 gcpinbal_scrollx[3],gcpinbal_scrolly[3];
@@ -203,7 +203,7 @@ WRITE16_HANDLER( gcpinbal_ctrl_word_w )
 
 ****************************************************************/
 
-static void gcpinbal_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void gcpinbal_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
 	int offs,chain_pos;
 	int x,y,curx,cury;

@@ -137,7 +137,7 @@ VIDEO_START( thunderj )
  *
  *************************************/
 
-void thunderj_mark_high_palette(struct mame_bitmap *bitmap, UINT16 *pf, UINT16 *mo, int x, int y)
+void thunderj_mark_high_palette(mame_bitmap *bitmap, UINT16 *pf, UINT16 *mo, int x, int y)
 {
 	#define START_MARKER	((4 << ATARIMO_PRIORITY_SHIFT) | 2)
 	#define END_MARKER		((4 << ATARIMO_PRIORITY_SHIFT) | 4)
@@ -163,7 +163,7 @@ void thunderj_mark_high_palette(struct mame_bitmap *bitmap, UINT16 *pf, UINT16 *
 VIDEO_UPDATE( thunderj )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

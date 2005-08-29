@@ -166,6 +166,7 @@ $F987 - Addresses table at $f98d containing four structs:
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "machine/6821pia.h"
+#include "spiders.h"
 
 
 /* VIDHRDW */
@@ -338,6 +339,10 @@ static MACHINE_DRIVER_START( spiders )
 	MDRV_VIDEO_UPDATE(spiders)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(spiders_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -402,6 +407,6 @@ ROM_START( spinner )
 ROM_END
 
 /* this is a newer version with just one bug fix */
-GAMEX( 1981, spiders,  0,       spiders, spiders, 0, ROT270, "Sigma Enterprises Inc.", "Spiders (set 1)", GAME_NO_SOUND )
-GAMEX( 1981, spiders2, spiders, spiders, spiders, 0, ROT270, "Sigma Enterprises Inc.", "Spiders (set 2)", GAME_NO_SOUND )
-GAMEX( 1981, spinner,  spiders, spiders, spiders, 0, ROT270, "bootleg",				   "Spinner",		  GAME_NO_SOUND )
+GAME( 1981, spiders,  0,       spiders, spiders, 0, ROT270, "Sigma Enterprises Inc.", "Spiders (set 1)")
+GAME( 1981, spiders2, spiders, spiders, spiders, 0, ROT270, "Sigma Enterprises Inc.", "Spiders (set 2)")
+GAME( 1981, spinner,  spiders, spiders, spiders, 0, ROT270, "bootleg",				  "Spinner")

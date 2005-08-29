@@ -63,17 +63,17 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables that driver has access to: */
 
-data16_t *hyprduel_videoregs;
-data16_t *hyprduel_screenctrl;
-data16_t *hyprduel_tiletable;
+UINT16 *hyprduel_videoregs;
+UINT16 *hyprduel_screenctrl;
+UINT16 *hyprduel_tiletable;
 size_t hyprduel_tiletable_size;
-data16_t *hyprduel_vram_0,*hyprduel_vram_1,*hyprduel_vram_2;
-data16_t *hyprduel_window;
+UINT16 *hyprduel_vram_0,*hyprduel_vram_1,*hyprduel_vram_2;
+UINT16 *hyprduel_window;
 
-data16_t hyprduel_scrollx[3][RASTER_LINES+1];
-data16_t hyprduel_scrolly[3][RASTER_LINES+1];
+UINT16 hyprduel_scrollx[3][RASTER_LINES+1];
+UINT16 hyprduel_scrolly[3][RASTER_LINES+1];
 
-static data16_t *hypr_tiletable_old;
+static UINT16 *hypr_tiletable_old;
 
 
 /***************************************************************************
@@ -133,9 +133,9 @@ static UINT8 *empty_tiles;
 
 
 /* 8x8x4 tiles only */
-INLINE void get_tile_info(int tile_index,int layer,data16_t *vram)
+INLINE void get_tile_info(int tile_index,int layer,UINT16 *vram)
 {
-	data16_t code;
+	UINT16 code;
 	int      table_index;
 	UINT32   tile;
 
@@ -171,9 +171,9 @@ INLINE void get_tile_info(int tile_index,int layer,data16_t *vram)
 
 /* 8x8x4 or 8x8x8 tiles. It's the tile's color that decides: if its low 4
    bits are high ($f,$1f,$2f etc) the tile is 8bpp, otherwise it's 4bpp */
-INLINE void get_tile_info_8bit(int tile_index,int layer,data16_t *vram)
+INLINE void get_tile_info_8bit(int tile_index,int layer,UINT16 *vram)
 {
-	data16_t code;
+	UINT16 code;
 	int      table_index;
 	UINT32   tile;
 
@@ -214,9 +214,9 @@ INLINE void get_tile_info_8bit(int tile_index,int layer,data16_t *vram)
 
 /* 16x16x4 or 16x16x8 tiles. It's the tile's color that decides: if its low 4
    bits are high ($f,$1f,$2f etc) the tile is 8bpp, otherwise it's 4bpp */
-INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,data16_t *vram)
+INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,UINT16 *vram)
 {
-	data16_t code;
+	UINT16 code;
 	int      table_index;
 	UINT32   tile;
 
@@ -256,10 +256,10 @@ INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,data16_t *vram)
 }
 
 
-INLINE void hyprduel_vram_w(offs_t offset,data16_t data,data16_t mem_mask,int layer,data16_t *vram)
+INLINE void hyprduel_vram_w(offs_t offset,UINT16 data,UINT16 mem_mask,int layer,UINT16 *vram)
 {
-	data16_t olddata = vram[offset];
-	data16_t newdata = COMBINE_DATA(&vram[offset]);
+	UINT16 olddata = vram[offset];
+	UINT16 newdata = COMBINE_DATA(&vram[offset]);
 	if ( newdata != olddata )
 	{
 		/* Account for the window */
@@ -289,8 +289,8 @@ WRITE16_HANDLER( hyprduel_vram_2_w ) { hyprduel_vram_w(offset,data,mem_mask,2,hy
 /* Dirty the relevant tilemap when its window changes */
 WRITE16_HANDLER( hyprduel_window_w )
 {
-	data16_t olddata = hyprduel_window[offset];
-	data16_t newdata = COMBINE_DATA( &hyprduel_window[offset] );
+	UINT16 olddata = hyprduel_window[offset];
+	UINT16 newdata = COMBINE_DATA( &hyprduel_window[offset] );
 	if ( newdata != olddata )
 	{
 		offset /= 2;
@@ -408,7 +408,7 @@ VIDEO_START( hyprduel_14220 )
 
 /* Draw sprites */
 
-static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void hypr_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	const int region		=	REGION_GFX1;
 
@@ -428,8 +428,8 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 
 	for (i=0; i<0x20; i++)
 	{
-		data16_t *src			=	spriteram16 + (sprites - 1) * (8/2);
-		data16_t *end			=	spriteram16;
+		UINT16 *src			=	spriteram16 + (sprites - 1) * (8/2);
+		UINT16 *end			=	spriteram16;
 
 		for ( ; src >= end; src -= 8/2 )
 		{
@@ -558,12 +558,12 @@ static void hypr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle
 ***************************************************************************/
 
 /* Draw all the layers that match the given priority */
-static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri, int layers_ctrl)
+static void draw_layers(mame_bitmap *bitmap, const rectangle *cliprect, int pri, int layers_ctrl)
 {
-	data16_t layers_pri = hyprduel_videoregs[0x10/2];
+	UINT16 layers_pri = hyprduel_videoregs[0x10/2];
 	int layer;
 	int offs;
-	struct rectangle clip;
+	rectangle clip;
 
 	clip.min_x = 0;
 	clip.max_x = 319;
@@ -574,8 +574,8 @@ static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *clip
 		if ( pri == ((layers_pri >> (layer*2)) & 3) )
 		{
 			/* Scroll and Window values */
-			data16_t wx = hyprduel_window[layer * 2 + 1];
-			data16_t wy = hyprduel_window[layer * 2 + 0];
+			UINT16 wx = hyprduel_window[layer * 2 + 1];
+			UINT16 wy = hyprduel_window[layer * 2 + 0];
 			wx = wx - (wx & 7);
 			wy = wy - (wy & 7);
 
@@ -597,7 +597,7 @@ static void draw_layers(struct mame_bitmap *bitmap, const struct rectangle *clip
 
 
 /* Dirty tilemaps when the tiles set changes */
-static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
+static void dirty_tiles(int layer,UINT16 *vram,UINT8 *dirtyindex)
 {
 	int col,row;
 
@@ -607,7 +607,7 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 		{
 			int offset = (col + hyprduel_window[layer * 2 + 1] / 8) % BIG_NX +
 						((row + hyprduel_window[layer * 2 + 0] / 8) % BIG_NY) * BIG_NX;
-			data16_t code = vram[offset];
+			UINT16 code = vram[offset];
 
 			if (!(code & 0x8000) && dirtyindex[(code & 0x1ff0) >> 4])
 				tilemap_mark_tile_dirty(bg_tilemap[layer], row * WIN_NX + col );
@@ -619,8 +619,8 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 VIDEO_UPDATE( hyprduel )
 {
 	int i,pri,layers_ctrl = -1;
-	data8_t *dirtyindex;
-	data16_t screenctrl = *hyprduel_screenctrl;
+	UINT8 *dirtyindex;
+	UINT16 screenctrl = *hyprduel_screenctrl;
 
 	dirtyindex = malloc(hyprduel_tiletable_size/4);
 	if (dirtyindex)

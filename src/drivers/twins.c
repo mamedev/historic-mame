@@ -51,8 +51,8 @@ Electronic Devices was printed on rom labels
 #include "driver.h"
 #include "sound/ay8910.h"
 
-static data8_t *twins_videoram;
-static data16_t *twins_pal;
+static UINT8 *twins_videoram;
+static UINT16 *twins_pal;
 static UINT16 paloff = 0;
 
 /* port 4 is eeprom */

@@ -8,7 +8,7 @@
 #include "machine/random.h"
 #include "state.h"
 
-data8_t *st0016_charram,*st0016_spriteram,*st0016_paletteram;
+UINT8 *st0016_charram,*st0016_spriteram,*st0016_paletteram;
 
 #define ISMACS (st0016_game&0x80)
 
@@ -30,7 +30,7 @@ static int st0016_spr_bank,st0016_spr2_bank,st0016_pal_bank,st0016_char_bank;
 static int spr_dx,spr_dy;
 
 int st0016_game;
-static data8_t st0016_vregs[0xc0];
+static UINT8 st0016_vregs[0xc0];
 static int st0016_ramgfx;
 
 static gfx_layout charlayout =
@@ -225,7 +225,7 @@ WRITE8_HANDLER(st0016_vregs_w)
 	}
 }
 
-static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	/*
     object ram :
@@ -337,7 +337,7 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 							int ypos, xpos;
 							int tileno;
 							const gfx_element *gfx = Machine->gfx[0];
-							data8_t *srcgfx;
+							UINT8 *srcgfx;
 							int gfxoffs;
 							ypos = sy+y0*8+spr_dy;
 							xpos = sx+x0*8+spr_dx;
@@ -476,7 +476,7 @@ VIDEO_START( st0016 )
 }
 
 
-static void drawbgmap(struct mame_bitmap *bitmap,const struct rectangle *cliprect, int priority)
+static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priority)
 {
 	int j;
 	for(j=8;j<0x40;j+=8)
@@ -507,7 +507,7 @@ static void drawbgmap(struct mame_bitmap *bitmap,const struct rectangle *cliprec
 							int yloop,xloop;
 							int ypos, xpos;
 							const gfx_element *gfx = Machine->gfx[0];
-							data8_t *srcgfx;
+							UINT8 *srcgfx;
 							int gfxoffs;
 							ypos = y*8+spr_dy+((st0016_vregs[j+2]==0xaf)?0x50:0);//hack for mayjinsen title screen
 							xpos = x*8+spr_dx;

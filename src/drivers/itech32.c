@@ -14,7 +14,7 @@
         * Driver's Edge (1 set)
         * World Class Bowling (6 sets)
         * Street Fighter: The Movie (4 sets)
-        * Shuffleshot (2 sets)
+        * Shuffleshot (3 sets)
         * Golden Tee 3D Golf (11 sets)
         * Golden Tee Golf '97 (6 sets)
         * Golden Tee Golf '98 (4 sets)
@@ -228,22 +228,22 @@ static UINT8 vint_state;
 static UINT8 xint_state;
 static UINT8 qint_state;
 
-static data8_t sound_data;
-static data8_t sound_return;
+static UINT8 sound_data;
+static UINT8 sound_return;
 static UINT8 sound_int_state;
 
-static data16_t *main_rom;
-static data16_t *main_ram;
+static UINT16 *main_rom;
+static UINT16 *main_ram;
 static size_t main_ram_size;
-static data32_t *nvram;
+static UINT32 *nvram;
 static size_t nvram_size;
 
 static offs_t itech020_prot_address;
 
 static UINT8 is_drivedge;
 
-static data32_t *tms1_ram, *tms2_ram;
-static data32_t *tms1_boot;
+static UINT32 *tms1_ram, *tms2_ram;
+static UINT32 *tms1_boot;
 static UINT8 tms_spinning[2];
 
 #define START_TMS_SPINNING(n) do { cpu_spinuntil_trigger(7351 + n); tms_spinning[n] = 1; } while (0)
@@ -493,7 +493,7 @@ static READ16_HANDLER( wcbowl_prot_result_r )
 
 static READ32_HANDLER( itech020_prot_result_r )
 {
-	data32_t result = ((data32_t *)main_ram)[itech020_prot_address >> 2];
+	UINT32 result = ((UINT32 *)main_ram)[itech020_prot_address >> 2];
 	result >>= (~itech020_prot_address & 3) * 8;
 	return (result & 0xff) << 8;
 }
@@ -866,7 +866,7 @@ ADDRESS_MAP_END
 
 /*------ Driver's Edge memory layouts ------*/
 static ADDRESS_MAP_START( drivedge_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x03ffff) AM_MIRROR(0x40000) AM_RAM AM_BASE((data32_t **)&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x000000, 0x03ffff) AM_MIRROR(0x40000) AM_RAM AM_BASE((UINT32 **)&main_ram) AM_SIZE(&main_ram_size)
 	AM_RANGE(0x080000, 0x080003) AM_READ(input_port_3_msw_r)
 	AM_RANGE(0x082000, 0x082003) AM_READ(input_port_4_msw_r)
 	AM_RANGE(0x084000, 0x084003) AM_READWRITE(sound_data32_r, sound_data32_w)
@@ -879,14 +879,14 @@ static ADDRESS_MAP_START( drivedge_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x180000, 0x180003) AM_WRITE(drivedge_color0_w)
 	AM_RANGE(0x1a0000, 0x1bffff) AM_READWRITE(MRA32_RAM, drivedge_paletteram_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x1c0000, 0x1c0003) AM_WRITENOP
-	AM_RANGE(0x1e0000, 0x1e0113) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((data32_t **)&itech32_video)
+	AM_RANGE(0x1e0000, 0x1e0113) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((UINT32 **)&itech32_video)
 	AM_RANGE(0x1e4000, 0x1e4003) AM_WRITE(tms_reset_assert_w)
 	AM_RANGE(0x1ec000, 0x1ec003) AM_WRITE(tms_reset_clear_w)
 	AM_RANGE(0x200000, 0x200003) AM_READ(input_port_2_msw_r)
 	AM_RANGE(0x280000, 0x280fff) AM_READWRITE(MRA32_RAM, tms1_68k_ram_w) AM_SHARE(1)
 	AM_RANGE(0x300000, 0x300fff) AM_READWRITE(MRA32_RAM, tms2_68k_ram_w) AM_SHARE(2)
 	AM_RANGE(0x380000, 0x380003) AM_WRITENOP // AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x600000, 0x607fff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((data32_t **)&main_rom)
+	AM_RANGE(0x600000, 0x607fff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((UINT32 **)&main_rom)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( drivedge_tms1_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -903,7 +903,7 @@ ADDRESS_MAP_END
 
 /*------ 68EC020-based memory layout ------*/
 static ADDRESS_MAP_START( itech020_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x007fff) AM_RAM AM_BASE((data32_t **)&main_ram) AM_SIZE(&main_ram_size)
+	AM_RANGE(0x000000, 0x007fff) AM_RAM AM_BASE((UINT32 **)&main_ram) AM_SIZE(&main_ram_size)
 	AM_RANGE(0x080000, 0x080003) AM_READWRITE(input_port_0_msw_r, int1_ack32_w)
 	AM_RANGE(0x100000, 0x100003) AM_READ(input_port_1_msw_r)
 	AM_RANGE(0x180000, 0x180003) AM_READ(input_port_2_msw_r)
@@ -913,7 +913,7 @@ static ADDRESS_MAP_START( itech020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x380000, 0x380003) AM_WRITE(itech020_color2_w)
 	AM_RANGE(0x400000, 0x400003) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0x480000, 0x480003) AM_WRITE(sound_data32_w)
-	AM_RANGE(0x500000, 0x5000ff) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((data32_t **)&itech32_video)
+	AM_RANGE(0x500000, 0x5000ff) AM_READWRITE(itech020_video_r, itech020_video_w) AM_BASE((UINT32 **)&itech32_video)
 	AM_RANGE(0x578000, 0x57ffff) AM_READNOP				/* touched by protection */
 	AM_RANGE(0x580000, 0x59ffff) AM_READWRITE(MRA32_RAM, itech020_paletteram_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x600000, 0x603fff) AM_RAM AM_BASE(&nvram) AM_SIZE(&nvram_size)
@@ -921,7 +921,7 @@ static ADDRESS_MAP_START( itech020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x680000, 0x680003) AM_READWRITE(itech020_prot_result_r, MWA32_NOP)
 /* ! */	AM_RANGE(0x680800, 0x68083f) AM_READWRITE(MRA32_RAM, MWA32_NOP) /* Serial DUART Channel A/B & Top LED sign - To Do! */
 	AM_RANGE(0x700000, 0x700003) AM_WRITE(itech020_plane_w)
-	AM_RANGE(0x800000, 0xbfffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((data32_t **)&main_rom)
+	AM_RANGE(0x800000, 0xbfffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE((UINT32 **)&main_rom)
 ADDRESS_MAP_END
 
 
@@ -1270,7 +1270,7 @@ INPUT_PORTS_START( sftm )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( shufshot ) /* ShuffleShot version 1.39 supports cocktail mode */
+INPUT_PORTS_START( shufshot ) /* ShuffleShot v1.39 & v1.40 support cocktail mode */
 	PORT_INCLUDE(itech32_base)
 
 	PORT_MODIFY("P1")
@@ -2351,7 +2351,42 @@ ROM_START( sftmj )	/* Version 1.12N (Japan) */
 ROM_END
 
 
-ROM_START( shufshot )	/* Version 1.39 (PCB P/N 1082 Rev 2) */
+ROM_START( shufshot )	/* Version 1.40 (PCB P/N 1082 Rev 2) */
+	ROM_REGION32_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD32_BYTE( "shotprm0.140", 0x00000, 0x20000, CRC(33c0c98b) SHA1(9960a1e8131e5dde33450560665f315e5a97dc05) )
+	ROM_LOAD32_BYTE( "shotprm1.140", 0x00001, 0x20000, CRC(d30a8831) SHA1(3a7937b542f703dfc2ae74b6fdb2ac6a8e22bdbd) )
+	ROM_LOAD32_BYTE( "shotprm2.140", 0x00002, 0x20000, CRC(ea10ada8) SHA1(e8167def9929876f6d2b4771b265114d9b04136e) )
+	ROM_LOAD32_BYTE( "shotprm3.140", 0x00003, 0x20000, CRC(4b28f28b) SHA1(602e230cc69ae872e40d72c85ec66f111826c15e) )
+
+	ROM_REGION( 0x28000, REGION_CPU2, 0 )
+	ROM_LOAD( "shotsnd.u88", 0x10000, 0x18000, CRC(e37d599d) SHA1(105f91e968ecf553d910a97726ddc536289bbb2b) )
+	ROM_CONTINUE(        0x08000, 0x08000 )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )
+	ROM_LOAD32_BYTE( "shf_grom.0_0", 0x000000, 0x80000, CRC(832a3d6a) SHA1(443328fa61b79c93ec6c9d24893b2ec38358a905) )
+	ROM_LOAD32_BYTE( "shf_grom.0_1", 0x000001, 0x80000, CRC(155e48a2) SHA1(187d65423ff9a3d6b6c34c885a1b2397fa5371cf) )
+	ROM_LOAD32_BYTE( "shf_grom.0_2", 0x000002, 0x80000, CRC(9f2b470d) SHA1(012e917856042cbe00d476e3220a7f9c841bd199) )
+	ROM_LOAD32_BYTE( "shf_grom.0_3", 0x000003, 0x80000, CRC(3855a16a) SHA1(f8c03efab87ddcb6940f657ad1f0138ceaa2118e) )
+	ROM_LOAD32_BYTE( "shf_grom.1_0", 0x200000, 0x80000, CRC(ed140389) SHA1(f438a887b44a277f81e954bef73ac478eaff58c8) )
+	ROM_LOAD32_BYTE( "shf_grom.1_1", 0x200001, 0x80000, CRC(bd2ffbca) SHA1(667692ce61a4896ceecf2a2bb37f742f175a6152) )
+	ROM_LOAD32_BYTE( "shf_grom.1_2", 0x200002, 0x80000, CRC(c6de4187) SHA1(4854604330bb14f862abe22d755e08b54e0b1a04) )
+	ROM_LOAD32_BYTE( "shf_grom.1_3", 0x200003, 0x80000, CRC(0c707aa2) SHA1(1da83523e04eeae4dbc8748a31a074331bf975d1) )
+	ROM_LOAD32_BYTE( "shf_grom.2_0", 0x400000, 0x80000, CRC(529b4259) SHA1(4f98f28c83c3f8f822ea45d31be526af4a504cbc) )
+	ROM_LOAD32_BYTE( "shf_grom.2_1", 0x400001, 0x80000, CRC(4b52ab1a) SHA1(5c438df7f2edea8f4d8734408fd94acf9d340755) )
+	ROM_LOAD32_BYTE( "shf_grom.2_2", 0x400002, 0x80000, CRC(f45fad03) SHA1(3ff062928ef5bcdce8748ddd972c5da67207227a) )
+	ROM_LOAD32_BYTE( "shf_grom.2_3", 0x400003, 0x80000, CRC(1bcb26c8) SHA1(49e730c56c4a3171a2962fa65f3b16481590c636) )
+	ROM_LOAD32_BYTE( "shf_grom.3_0", 0x600000, 0x80000, CRC(a29763db) SHA1(e2154fb3e400aba300f1a23d53504588426dfbfe) )
+	ROM_LOAD32_BYTE( "shf_grom.3_1", 0x600001, 0x80000, CRC(c757084c) SHA1(6f78ee13c68afd635aa3871cddf7207a19d4039b) )
+	ROM_LOAD32_BYTE( "shf_grom.3_2", 0x600002, 0x80000, CRC(2971cb25) SHA1(5f0508ebff1bf66ee0f78addfa09a43f8fff9a36) )
+	ROM_LOAD32_BYTE( "shf_grom.3_3", 0x600003, 0x80000, CRC(4fcbee51) SHA1(4e2ec4475986c3916c4566b2bc007f41a8c13609) )
+
+	ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "shf_srom.0", 0x000000, 0x80000, CRC(9a3cb6c9) SHA1(2af3ce3b1cd7688199195a66cf01bb83775d42fa) )
+	ROM_LOAD16_BYTE( "shf_srom.1", 0x200000, 0x80000, CRC(8c89948a) SHA1(1054eca5de352c17f34f31ef16297ba6177a37ba) )
+ROM_END
+
+
+ROM_START( sshot139 )	/* Version 1.39 (PCB P/N 1082 Rev 2) */
 	ROM_REGION32_BE( CODE_SIZE, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "shotprm0.139", 0x00000, 0x20000, CRC(e811fc4a) SHA1(9e1d8f64ac89ac865929f6a23f66d95eeeda3ac9) )
 	ROM_LOAD32_BYTE( "shotprm1.139", 0x00001, 0x20000, CRC(f9d120c5) SHA1(f94216f1fb6d810ddee98479e83f0719b30b768f) )
@@ -3672,7 +3707,8 @@ GAME( 1995, sftm,     0,        sftm,     sftm,     sftm,     ROT0, "Capcom/Incr
 GAME( 1995, sftm111,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.11)" ) /* PIC 16C54 labeled as ITSF-1 */
 GAME( 1995, sftm110,  sftm,     sftm,     sftm,     sftm110,  ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.10)" ) /* PIC 16C54 labeled as ITSF-1 */
 GAME( 1995, sftmj,    sftm,     sftm,     sftm,     sftm,     ROT0, "Capcom/Incredible Technologies", "Street Fighter: The Movie (v1.12N, Japan)" ) /* PIC 16C54 labeled as ITSF-1 */
-GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.39)" ) /* PIC 16C54 labeled as ITSHF-1 */
+GAME( 1997, shufshot, 0,        sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.40)" ) /* PIC 16C54 labeled as ITSHF-1 */
+GAME( 1997, sshot139, shufshot, sftm,     shufshot, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.39)" ) /* PIC 16C54 labeled as ITSHF-1 */
 GAME( 1997, sshot137, shufshot, sftm,     shufbowl, shufshot, ROT0, "Strata/Incredible Technologies", "Shuffleshot (v1.37)" ) /* PIC 16C54 labeled as ITSHF-1 */
 GAME( 1999, wcbowldx, 0,        sftm,     wcbowldx, shufshot, ROT0, "Incredible Technologies",        "World Class Bowling Deluxe (v2.00)" ) /* PIC 16C54 labeled as ITBWL-4 */
 

@@ -54,7 +54,7 @@ extern WRITE8_HANDLER(equites_8910data_w);
 extern WRITE8_HANDLER(equites_dac0_w);
 extern WRITE8_HANDLER(equites_dac1_w);
 
-extern data16_t *equites_8404ram;
+extern UINT16 *equites_8404ram;
 extern struct MSM5232interface equites_5232intf;
 extern struct AY8910interface equites_8910intf;
 
@@ -88,7 +88,7 @@ ADDRESS_MAP_END
 /******************************************************************************/
 // Imports
 
-extern data16_t *equites_workram;
+extern UINT16 *equites_workram;
 
 /******************************************************************************/
 // Locals
@@ -171,7 +171,7 @@ static struct MRULELIST
 /******************************************************************************/
 // Exports
 
-data16_t *equites_8404ram;
+UINT16 *equites_8404ram;
 
 /******************************************************************************/
 // Local Functions

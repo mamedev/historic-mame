@@ -32,9 +32,9 @@ needs more color combination to render its graphics.
 
 
 
-data8_t *rallyx_videoram,*rallyx_radarattr;
+UINT8 *rallyx_videoram,*rallyx_radarattr;
 
-static data8_t *rallyx_radarx,*rallyx_radary;
+static UINT8 *rallyx_radarx,*rallyx_radary;
 static int video_type, spriteram_base;
 
 static tilemap *bg_tilemap,*fg_tilemap;
@@ -384,7 +384,7 @@ WRITE8_HANDLER( tactcian_starson_w )
 
 ***************************************************************************/
 
-static void plot_star(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int x, int y, int color)
+static void plot_star(mame_bitmap *bitmap, const rectangle *cliprect, int x, int y, int color)
 {
 	int bpen = Machine->pens[0];
 
@@ -407,7 +407,7 @@ static void plot_star(struct mame_bitmap *bitmap, const struct rectangle *clipre
 		plot_pixel(bitmap, x, y, Machine->pens[STARS_COLOR_BASE + color]);
 }
 
-static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_stars( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -427,7 +427,7 @@ static void draw_stars( struct mame_bitmap *bitmap, const struct rectangle *clip
 }
 
 
-static void rallyx_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int displacement )
+static void rallyx_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int displacement )
 {
 	int offs;
 
@@ -448,7 +448,7 @@ static void rallyx_draw_sprites( struct mame_bitmap *bitmap, const struct rectan
 	}
 }
 
-static void locomotn_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int displacement )
+static void locomotn_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int displacement )
 {
 	int offs;
 
@@ -470,7 +470,7 @@ static void locomotn_draw_sprites( struct mame_bitmap *bitmap, const struct rect
 	}
 }
 
-static void rallyx_draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int transparency )
+static void rallyx_draw_bullets( mame_bitmap *bitmap, const rectangle *cliprect, int transparency )
 {
 	int offs;
 
@@ -491,7 +491,7 @@ static void rallyx_draw_bullets( struct mame_bitmap *bitmap, const struct rectan
 	}
 }
 
-static void jungler_draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int transparency )
+static void jungler_draw_bullets( mame_bitmap *bitmap, const rectangle *cliprect, int transparency )
 {
 	int offs;
 
@@ -511,7 +511,7 @@ static void jungler_draw_bullets( struct mame_bitmap *bitmap, const struct recta
 	}
 }
 
-static void locomotn_draw_bullets( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int transparency )
+static void locomotn_draw_bullets( mame_bitmap *bitmap, const rectangle *cliprect, int transparency )
 {
 	int offs;
 
@@ -547,8 +547,8 @@ VIDEO_UPDATE( rallyx )
 {
 	/* the radar tilemap is just 8x32. We rely on the tilemap code to repeat it across
        the screen, and clip it to only the position where it is supposed to be shown */
-	struct rectangle fg_clip = *cliprect;
-	struct rectangle bg_clip = *cliprect;
+	rectangle fg_clip = *cliprect;
+	rectangle bg_clip = *cliprect;
 	if (flip_screen)
 	{
 		bg_clip.min_x = 8*8;

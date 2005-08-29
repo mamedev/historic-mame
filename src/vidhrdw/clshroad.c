@@ -39,8 +39,8 @@ static tilemap *tilemap_0a, *tilemap_0b, *tilemap_1;
 
 /* Variables & functions needed by drivers: */
 
-data8_t *clshroad_vram_0, *clshroad_vram_1;
-data8_t *clshroad_vregs;
+UINT8 *clshroad_vram_0, *clshroad_vram_1;
+UINT8 *clshroad_vregs;
 
 WRITE8_HANDLER( clshroad_vram_0_w );
 WRITE8_HANDLER( clshroad_vram_1_w );
@@ -130,7 +130,7 @@ Offset:
 
 static void get_tile_info_0a( int tile_index )
 {
-	data8_t code;
+	UINT8 code;
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x40 ];
 //  color   =   clshroad_vram_0[ tile_index * 2 + 0x41 ];
@@ -143,7 +143,7 @@ static void get_tile_info_0a( int tile_index )
 
 static void get_tile_info_0b( int tile_index )
 {
-	data8_t code;
+	UINT8 code;
 	tile_index = (tile_index & 0x1f) + (tile_index & ~0x1f)*2;
 	code	=	clshroad_vram_0[ tile_index * 2 + 0x00 ];
 //  color   =   clshroad_vram_0[ tile_index * 2 + 0x01 ];
@@ -203,8 +203,8 @@ static UINT32 tilemap_scan_rows_extra( UINT32 col, UINT32 row, UINT32 num_cols, 
 
 static void get_tile_info_fb1( int tile_index )
 {
-	data8_t code	=	clshroad_vram_1[ tile_index + 0x000 ];
-	data8_t color	=	clshroad_vram_1[ tile_index + 0x400 ];
+	UINT8 code	=	clshroad_vram_1[ tile_index + 0x000 ];
+	UINT8 color	=	clshroad_vram_1[ tile_index + 0x400 ];
 	SET_TILE_INFO(
 			2,
 			code,
@@ -214,8 +214,8 @@ static void get_tile_info_fb1( int tile_index )
 
 static void get_tile_info_1( int tile_index )
 {
-	data8_t code	=	clshroad_vram_1[ tile_index + 0x000 ];
-	data8_t color	=	clshroad_vram_1[ tile_index + 0x400 ];
+	UINT8 code	=	clshroad_vram_1[ tile_index + 0x000 ];
+	UINT8 color	=	clshroad_vram_1[ tile_index + 0x400 ];
 	SET_TILE_INFO(
 			2,
 			code + ((color & 0xf0)<<4),
@@ -321,7 +321,7 @@ Offset:     Format:     Value:
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i;
 

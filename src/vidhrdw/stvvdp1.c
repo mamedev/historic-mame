@@ -19,10 +19,10 @@ Framebuffer todo:
 
 #include "driver.h"
 
-data32_t *stv_vdp1_vram;
-data32_t *stv_vdp1_regs;
+UINT32 *stv_vdp1_vram;
+UINT32 *stv_vdp1_regs;
 
-extern data32_t *stv_scu;
+extern UINT32 *stv_scu;
 
 UINT16	 *stv_framebuffer;
 UINT16	 **stv_framebuffer_lines;
@@ -203,7 +203,7 @@ READ32_HANDLER ( stv_vdp1_vram_r )
 
 WRITE32_HANDLER ( stv_vdp1_vram_w )
 {
-	data8_t *vdp1 = memory_region(REGION_GFX2);
+	UINT8 *vdp1 = memory_region(REGION_GFX2);
 
 	COMBINE_DATA (&stv_vdp1_vram[offset]);
 
@@ -460,12 +460,12 @@ to the framebuffer we CAN'T frameskip the vdp1 drawing as the hardware can READ 
 and if we skip the drawing the content could be incorrect when it reads it, although i have no idea
 why they would want to */
 
-extern data32_t* stv_vdp2_cram;
+extern UINT32* stv_vdp2_cram;
 
 INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 {
 	int pix,mode,transmask;
-	data8_t* gfxdata = memory_region(REGION_GFX2);
+	UINT8* gfxdata = memory_region(REGION_GFX2);
 	int pix2;
 
 	if ( stv2_current_sprite.ispoly )
@@ -610,7 +610,7 @@ struct spoint {
 	INT32 u, v;
 };
 
-static void vdp1_fill_slope(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int patterndata, int xsize,
+static void vdp1_fill_slope(mame_bitmap *bitmap, const rectangle *cliprect, int patterndata, int xsize,
 							INT32 x1, INT32 x2, INT32 sl1, INT32 sl2, INT32 *nx1, INT32 *nx2,
 							INT32 u1, INT32 u2, INT32 slu1, INT32 slu2, INT32 *nu1, INT32 *nu2,
 							INT32 v1, INT32 v2, INT32 slv1, INT32 slv2, INT32 *nv1, INT32 *nv2,
@@ -726,7 +726,7 @@ static void vdp1_fill_slope(struct mame_bitmap *bitmap, const struct rectangle *
 	*nv2 = v2;
 }
 
-static void vdp1_fill_line(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int patterndata, int xsize, INT32 y,
+static void vdp1_fill_line(mame_bitmap *bitmap, const rectangle *cliprect, int patterndata, int xsize, INT32 y,
 						   INT32 x1, INT32 x2, INT32 u1, INT32 u2, INT32 v1, INT32 v2)
 {
 	int xx1 = x1>>FRAC_SHIFT;
@@ -764,7 +764,7 @@ static void vdp1_fill_line(struct mame_bitmap *bitmap, const struct rectangle *c
 	}
 }
 
-static void vdp1_fill_quad(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int patterndata, int xsize, const struct spoint *q)
+static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int patterndata, int xsize, const struct spoint *q)
 {
 	INT32 sl1, sl2, slu1, slu2, slv1, slv2, cury, limy, x1, x2, u1, u2, v1, v2, delta;
 	int pmin, pmax, i, ps1, ps2;
@@ -919,7 +919,7 @@ static int y2s(int v)
 	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
-void stv_vdp1_draw_line( struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vdp1_draw_line( mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -938,7 +938,7 @@ void stv_vdp1_draw_line( struct mame_bitmap *bitmap, const struct rectangle *cli
 	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
 }
 
-void stv_vpd1_draw_distorted_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vpd1_draw_distorted_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -995,7 +995,7 @@ void stv_vpd1_draw_distorted_sprite(struct mame_bitmap *bitmap, const struct rec
 	vdp1_fill_quad(bitmap, cliprect, patterndata, xsize, q);
 }
 
-void stv_vpd1_draw_scaled_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1122,7 +1122,7 @@ void stv_vpd1_draw_scaled_sprite(struct mame_bitmap *bitmap, const struct rectan
 }
 
 
-void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_type)
+void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect, int sprite_type)
 {
 	UINT16 *destline;
 
@@ -1210,7 +1210,7 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 	}
 }
 
-void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int position;
 	int spritecount;
@@ -1424,7 +1424,7 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 	if (vdp1_sprite_log) logerror ("End of list processing!\n");
 }
 
-void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 //  int enable;
 //  if (code_pressed (KEYCODE_R)) vdp1_sprite_log = 1;

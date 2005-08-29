@@ -24,10 +24,10 @@ struct amiga_machine_interface
 	void (*cia_1_portA_w)(int data);
 	void (*cia_1_portB_w)(int data);
 
-	data16_t (*read_joy0dat)(void);
-	data16_t (*read_joy1dat)(void);
-	data16_t (*read_dskbytr)(void);
-	void (*write_dsklen)(data16_t data);
+	UINT16 (*read_joy0dat)(void);
+	UINT16 (*read_joy1dat)(void);
+	UINT16 (*read_dskbytr)(void);
+	void (*write_dsklen)(UINT16 data);
 
 	void (*interrupt_callback)(void);
 	void (*reset_callback)(void);
@@ -122,8 +122,8 @@ extern WRITE16_HANDLER(amiga_custom_w);
 extern MACHINE_INIT(amiga);
 extern void amiga_cia_issue_index( void );
 
-extern data16_t *amiga_expansion_ram;
-extern data16_t *amiga_autoconfig_mem;
+extern UINT16 *amiga_expansion_ram;
+extern UINT16 *amiga_autoconfig_mem;
 
 /* vidhrdw */
 extern INTERRUPT_GEN(amiga_vblank_irq);

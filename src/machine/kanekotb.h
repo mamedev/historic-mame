@@ -19,13 +19,13 @@
 200E0E: 7E7F                     moveq   #$7f, D7
 200E10: 4E75                     rts
 */
-static data16_t bonkadv_mcu_4_34[] = {
+static UINT16 bonkadv_mcu_4_34[] = {
 	0x7071,0x7273,0x7475,0x7677,0x7879,0x7a7b,0x7c7d,0x7e7f,
 	0x4e75
 };
 
 // MCU executed command: 0400 0180 0032 - 128 bytes at $200180
-static data16_t bonkadv_mcu_4_32[] = {
+static UINT16 bonkadv_mcu_4_32[] = {
 	0x00cc,0xcc0c,0xc0c0,0xc080,0x0484,0xb6a6,0x0404,0x80c0,
 	0x80b1,0xb1a1,0xa1b2,0xa2b3,0xb3a3,0xa3b1,0xb1b1,0xb1c0,
 	0xc0a1,0xa1a1,0xa1b2,0xb2a2,0xa290,0x9090,0xb9b9,0xa9a9,
@@ -37,7 +37,7 @@ static data16_t bonkadv_mcu_4_32[] = {
 };
 
 // MCU executed command: 0400 0280 0031 - 128 bytes at $200280
-static data16_t bonkadv_mcu_4_31[] = {
+static UINT16 bonkadv_mcu_4_31[] = {
 	0x1013,0x1411,0x1216,0x1519,0x1a17,0x1824,0x2322,0x211f,
 	0x201e,0x1d1c,0x1b27,0x2825,0x2629,0x2a2b,0x2e2f,0x2c2d,
 	0x3130,0x3435,0x3233,0x3f3e,0x3d3c,0x3a3b,0x3938,0x3736,
@@ -49,7 +49,7 @@ static data16_t bonkadv_mcu_4_31[] = {
 };
 
 // MCU executed command: 0400 0E50 0030 - 688 bytes at $200E50
-static data16_t bonkadv_mcu_4_30[] = {
+static UINT16 bonkadv_mcu_4_30[] = {
 	0x8c00,0xa000,0x9700,0xa700,0xb200,0xb700,0xc000,0xcc00,
 	0xd600,0xdf00,0xef00,0xf500,0xfd00,0x0501,0x0b01,0x1801,
 	0x1e01,0x2901,0x3101,0x3701,0x4101,0x4901,0x0b01,0x5d01,
@@ -98,7 +98,7 @@ static data16_t bonkadv_mcu_4_30[] = {
 };
 
 // MCU executed command: 0400 0400 0033 - 2560 bytes at $200400
-static data16_t bonkadv_mcu_4_33[] = {
+static UINT16 bonkadv_mcu_4_33[] = {
 	0x00a4,0x0001,0x00a5,0x005a,0x00a6,0x0074,0x00a7,0x009b,
 	0x00a8,0x00d0,0x00a9,0x00fe,0x00aa,0x015d,0x00ab,0x01b0,
 	0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,0x0000,
@@ -272,40 +272,40 @@ static data16_t bonkadv_mcu_4_33[] = {
 
 // dynamic, per-level (29), in level order
 // PC=078896 : MCU executed command: 0400 0300 00xx - xx = subcmd
-static data16_t bonkadv_mcu_4_00[] = { 0x0000,0x04C0,0x0000,0x0100,0x0600,0x0100 };
-static data16_t bonkadv_mcu_4_02[] = { 0x0000,0x0760,0x0000,0x0100,0x0270,0x0100,0x0320,0x01B0,
+static UINT16 bonkadv_mcu_4_00[] = { 0x0000,0x04C0,0x0000,0x0100,0x0600,0x0100 };
+static UINT16 bonkadv_mcu_4_02[] = { 0x0000,0x0760,0x0000,0x0100,0x0270,0x0100,0x0320,0x01B0,
                                        0x0460,0x01B0,0x0510,0x0100,0x05E0,0x0100,0x0620,0x0120,
                                        0x08A0,0x0120 };
-static data16_t bonkadv_mcu_4_01[] = { 0x0000,0x0670,0x0000,0x0100,0x0200,0x0100,0x02E0,0x0090,
+static UINT16 bonkadv_mcu_4_01[] = { 0x0000,0x0670,0x0000,0x0100,0x0200,0x0100,0x02E0,0x0090,
                                        0x0400,0x0090,0x04E0,0x0100,0x07B0,0x0100 };
-static data16_t bonkadv_mcu_4_05[] = { 0x0000,0x0610,0x0000,0x0100,0x0750,0x0100 };
-static data16_t bonkadv_mcu_4_07[] = { 0x0000,0x03C0,0x0000,0x0100,0x0500,0x0100 };
-static data16_t bonkadv_mcu_4_06[] = { 0x0000,0x05F0,0x0000,0x0100,0x0730,0x0100 };
-static data16_t bonkadv_mcu_4_09[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
-static data16_t bonkadv_mcu_4_0D[] = { 0x0000,0x07A0,0x0000,0x0100,0x08E0,0x0100 };
-static data16_t bonkadv_mcu_4_03[] = { 0x0000,0x0920,0x0000,0x0100,0x0A60,0x0100 };
-static data16_t bonkadv_mcu_4_08[] = { 0x0000,0x0730,0x0000,0x0100,0x0870,0x0100 };
-static data16_t bonkadv_mcu_4_04[] = { 0x0000,0x05C0,0x0000,0x0100,0x0200,0x0100,0x0280,0x00C0,
+static UINT16 bonkadv_mcu_4_05[] = { 0x0000,0x0610,0x0000,0x0100,0x0750,0x0100 };
+static UINT16 bonkadv_mcu_4_07[] = { 0x0000,0x03C0,0x0000,0x0100,0x0500,0x0100 };
+static UINT16 bonkadv_mcu_4_06[] = { 0x0000,0x05F0,0x0000,0x0100,0x0730,0x0100 };
+static UINT16 bonkadv_mcu_4_09[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
+static UINT16 bonkadv_mcu_4_0D[] = { 0x0000,0x07A0,0x0000,0x0100,0x08E0,0x0100 };
+static UINT16 bonkadv_mcu_4_03[] = { 0x0000,0x0920,0x0000,0x0100,0x0A60,0x0100 };
+static UINT16 bonkadv_mcu_4_08[] = { 0x0000,0x0730,0x0000,0x0100,0x0870,0x0100 };
+static UINT16 bonkadv_mcu_4_04[] = { 0x0000,0x05C0,0x0000,0x0100,0x0200,0x0100,0x0280,0x00C0,
                                        0x02E0,0x0060,0x03A0,0x0000,0x0700,0x0000 };
-static data16_t bonkadv_mcu_4_0C[] = { 0x0000,0x06E0,0x0000,0x0100,0x0820,0x0100 };
-static data16_t bonkadv_mcu_4_0A[] = { 0x0000,0x05A0,0x0000,0x0100,0x06E0,0x0100 };
-static data16_t bonkadv_mcu_4_0B[] = { 0x0000,0x0470,0x0000,0x0100,0x05B0,0x0100 };
-static data16_t bonkadv_mcu_4_10[] = { 0x0000,0x06C0,0x0000,0x0100,0x03B0,0x0100,0x0460,0x0050,
+static UINT16 bonkadv_mcu_4_0C[] = { 0x0000,0x06E0,0x0000,0x0100,0x0820,0x0100 };
+static UINT16 bonkadv_mcu_4_0A[] = { 0x0000,0x05A0,0x0000,0x0100,0x06E0,0x0100 };
+static UINT16 bonkadv_mcu_4_0B[] = { 0x0000,0x0470,0x0000,0x0100,0x05B0,0x0100 };
+static UINT16 bonkadv_mcu_4_10[] = { 0x0000,0x06C0,0x0000,0x0100,0x03B0,0x0100,0x0460,0x0050,
                                        0x05E0,0x0050,0x0650,0xFFE0,0x0800,0xFFE0 };
-static data16_t bonkadv_mcu_4_0E[] = { 0x0000,0x0630,0x0000,0x0100,0x0770,0x0100 };
-static data16_t bonkadv_mcu_4_13[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
-static data16_t bonkadv_mcu_4_0F[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
-static data16_t bonkadv_mcu_4_11[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
-static data16_t bonkadv_mcu_4_14[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
-static data16_t bonkadv_mcu_4_12[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
-static data16_t bonkadv_mcu_4_17[] = { 0x0000,0x0520,0x0000,0x0100,0x0660,0x0100 };
-static data16_t bonkadv_mcu_4_1A[] = { 0x0000,0x03C0,0x0000,0x0100,0x0500,0x0100 };
-static data16_t bonkadv_mcu_4_15[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100 };
-static data16_t bonkadv_mcu_4_18[] = { 0x0000,0x03C0,0x0000,0x0100,0x0500,0x0100 };
-static data16_t bonkadv_mcu_4_16[] = { 0x0000,0x02F0,0x0000,0x0100,0x0430,0x0100 };
-static data16_t bonkadv_mcu_4_19[] = { 0x0000,0x03A0,0x0000,0x0100,0x04E0,0x0100 };
-static data16_t bonkadv_mcu_4_1B[] = { 0x0000,0x0460,0x0000,0x0100,0x05A0,0x0100 };
-static data16_t bonkadv_mcu_4_1C[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100 };
+static UINT16 bonkadv_mcu_4_0E[] = { 0x0000,0x0630,0x0000,0x0100,0x0770,0x0100 };
+static UINT16 bonkadv_mcu_4_13[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
+static UINT16 bonkadv_mcu_4_0F[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
+static UINT16 bonkadv_mcu_4_11[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
+static UINT16 bonkadv_mcu_4_14[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
+static UINT16 bonkadv_mcu_4_12[] = { 0x0000,0x05C0,0x0000,0x0100,0x0700,0x0100 };
+static UINT16 bonkadv_mcu_4_17[] = { 0x0000,0x0520,0x0000,0x0100,0x0660,0x0100 };
+static UINT16 bonkadv_mcu_4_1A[] = { 0x0000,0x03C0,0x0000,0x0100,0x0500,0x0100 };
+static UINT16 bonkadv_mcu_4_15[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100 };
+static UINT16 bonkadv_mcu_4_18[] = { 0x0000,0x03C0,0x0000,0x0100,0x0500,0x0100 };
+static UINT16 bonkadv_mcu_4_16[] = { 0x0000,0x02F0,0x0000,0x0100,0x0430,0x0100 };
+static UINT16 bonkadv_mcu_4_19[] = { 0x0000,0x03A0,0x0000,0x0100,0x04E0,0x0100 };
+static UINT16 bonkadv_mcu_4_1B[] = { 0x0000,0x0460,0x0000,0x0100,0x05A0,0x0100 };
+static UINT16 bonkadv_mcu_4_1C[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100 };
 
 
 /***************************************************************************
@@ -315,62 +315,62 @@ static data16_t bonkadv_mcu_4_1C[] = { 0x0000,0x02C0,0x0000,0x0100,0x0400,0x0100
 ***************************************************************************/
 
 // --- unknown data ---
-static data16_t bloodwar_mcu_4_01[] = {0x0000}; // Warrior 1
-static data16_t bloodwar_mcu_4_02[] = {0x0000}; // Warrior 2
-static data16_t bloodwar_mcu_4_03[] = {0x0000}; // Warrior 3
-static data16_t bloodwar_mcu_4_04[] = {0x0000}; // Warrior 4
-static data16_t bloodwar_mcu_4_05[] = {0x0000}; // Warrior 5
-static data16_t bloodwar_mcu_4_06[] = {0x0000}; // Warrior 6
-static data16_t bloodwar_mcu_4_07[] = {0x0000}; // Warrior 7
-static data16_t bloodwar_mcu_4_08[] = {0x0000}; // Warrior 8
-static data16_t bloodwar_mcu_4_09[] = {0x0000}; // Warrior 9
+static UINT16 bloodwar_mcu_4_01[] = {0x0000}; // Warrior 1
+static UINT16 bloodwar_mcu_4_02[] = {0x0000}; // Warrior 2
+static UINT16 bloodwar_mcu_4_03[] = {0x0000}; // Warrior 3
+static UINT16 bloodwar_mcu_4_04[] = {0x0000}; // Warrior 4
+static UINT16 bloodwar_mcu_4_05[] = {0x0000}; // Warrior 5
+static UINT16 bloodwar_mcu_4_06[] = {0x0000}; // Warrior 6
+static UINT16 bloodwar_mcu_4_07[] = {0x0000}; // Warrior 7
+static UINT16 bloodwar_mcu_4_08[] = {0x0000}; // Warrior 8
+static UINT16 bloodwar_mcu_4_09[] = {0x0000}; // Warrior 9
 
 
 // --- palette data ---
 //  number of palettes (>=1)
 //  palette data follows (each palette is 0x200 bytes long)
 //  a negative word will end the palette
-static data16_t bloodwar_mcu_4_0a[] = {0x0001,0x8000}; // Warrior 1 Player 1
-static data16_t bloodwar_mcu_4_0b[] = {0x0001,0x8000}; // Warrior 1 Player 2
-static data16_t bloodwar_mcu_4_0c[] = {0x0001,0x8000}; // Warrior 5 Player 1
-static data16_t bloodwar_mcu_4_0d[] = {0x0001,0x8000}; // Warrior 5 Player 2
-static data16_t bloodwar_mcu_4_0e[] = {0x0001,0x8000}; // Warrior 4 Player 2
-static data16_t bloodwar_mcu_4_0f[] = {0x0001,0x8000}; // Warrior 4 Player 1
-static data16_t bloodwar_mcu_4_10[] = {0x0001,0x8000}; // Warrior 6 Player 1
-static data16_t bloodwar_mcu_4_11[] = {0x0001,0x8000}; // Warrior 6 Player 2
-static data16_t bloodwar_mcu_4_12[] = {0x0001,0x8000}; // Warrior 9 Player 1
-static data16_t bloodwar_mcu_4_13[] = {0x0001,0x8000}; // Warrior 9 Player 2
-static data16_t bloodwar_mcu_4_14[] = {0x0001,0x8000}; // Warrior 7 Player 1
-static data16_t bloodwar_mcu_4_15[] = {0x0001,0x8000}; // Warrior 7 Player 2
-static data16_t bloodwar_mcu_4_16[] = {0x0001,0x8000}; // Warrior 8 Player 1
-static data16_t bloodwar_mcu_4_17[] = {0x0001,0x8000}; // Warrior 8 Player 2
-static data16_t bloodwar_mcu_4_18[] = {0x0001,0x8000}; // Warrior 2 Player 2
-static data16_t bloodwar_mcu_4_19[] = {0x0001,0x8000}; // Warrior 2 Player 1
-static data16_t bloodwar_mcu_4_1a[] = {0x0001,0x8000}; // Warrior 3 Player 1
-static data16_t bloodwar_mcu_4_1b[] = {0x0001,0x8000}; // Warrior 3 Player 2
+static UINT16 bloodwar_mcu_4_0a[] = {0x0001,0x8000}; // Warrior 1 Player 1
+static UINT16 bloodwar_mcu_4_0b[] = {0x0001,0x8000}; // Warrior 1 Player 2
+static UINT16 bloodwar_mcu_4_0c[] = {0x0001,0x8000}; // Warrior 5 Player 1
+static UINT16 bloodwar_mcu_4_0d[] = {0x0001,0x8000}; // Warrior 5 Player 2
+static UINT16 bloodwar_mcu_4_0e[] = {0x0001,0x8000}; // Warrior 4 Player 2
+static UINT16 bloodwar_mcu_4_0f[] = {0x0001,0x8000}; // Warrior 4 Player 1
+static UINT16 bloodwar_mcu_4_10[] = {0x0001,0x8000}; // Warrior 6 Player 1
+static UINT16 bloodwar_mcu_4_11[] = {0x0001,0x8000}; // Warrior 6 Player 2
+static UINT16 bloodwar_mcu_4_12[] = {0x0001,0x8000}; // Warrior 9 Player 1
+static UINT16 bloodwar_mcu_4_13[] = {0x0001,0x8000}; // Warrior 9 Player 2
+static UINT16 bloodwar_mcu_4_14[] = {0x0001,0x8000}; // Warrior 7 Player 1
+static UINT16 bloodwar_mcu_4_15[] = {0x0001,0x8000}; // Warrior 7 Player 2
+static UINT16 bloodwar_mcu_4_16[] = {0x0001,0x8000}; // Warrior 8 Player 1
+static UINT16 bloodwar_mcu_4_17[] = {0x0001,0x8000}; // Warrior 8 Player 2
+static UINT16 bloodwar_mcu_4_18[] = {0x0001,0x8000}; // Warrior 2 Player 2
+static UINT16 bloodwar_mcu_4_19[] = {0x0001,0x8000}; // Warrior 2 Player 1
+static UINT16 bloodwar_mcu_4_1a[] = {0x0001,0x8000}; // Warrior 3 Player 1
+static UINT16 bloodwar_mcu_4_1b[] = {0x0001,0x8000}; // Warrior 3 Player 2
 
 
 // --- tilemap data ---
 //  tile data (ff means no tiles) followed by routine index
-static data16_t bloodwar_mcu_4_1c[] = {0xff00}; // Warrior 8
-static data16_t bloodwar_mcu_4_1d[] = {0xff00}; // Warrior 2
-static data16_t bloodwar_mcu_4_1e[] = {0xff00}; // Warrior 3
-static data16_t bloodwar_mcu_4_1f[] = {0xff00}; // Warrior 5
-static data16_t bloodwar_mcu_4_20[] = {0xff00}; // Warrior 4
-static data16_t bloodwar_mcu_4_21[] = {0xff00}; // Warrior 6
-static data16_t bloodwar_mcu_4_22[] = {0xff00}; // Warrior 1
-static data16_t bloodwar_mcu_4_23[] = {0xff00}; // Warrior 9
-static data16_t bloodwar_mcu_4_24[] = {0xff00}; // Warrior 7
+static UINT16 bloodwar_mcu_4_1c[] = {0xff00}; // Warrior 8
+static UINT16 bloodwar_mcu_4_1d[] = {0xff00}; // Warrior 2
+static UINT16 bloodwar_mcu_4_1e[] = {0xff00}; // Warrior 3
+static UINT16 bloodwar_mcu_4_1f[] = {0xff00}; // Warrior 5
+static UINT16 bloodwar_mcu_4_20[] = {0xff00}; // Warrior 4
+static UINT16 bloodwar_mcu_4_21[] = {0xff00}; // Warrior 6
+static UINT16 bloodwar_mcu_4_22[] = {0xff00}; // Warrior 1
+static UINT16 bloodwar_mcu_4_23[] = {0xff00}; // Warrior 9
+static UINT16 bloodwar_mcu_4_24[] = {0xff00}; // Warrior 7
 
 
 // --- fighter data: pointers to ROM data ---
-static data16_t bloodwar_mcu_4_25[] = {0x0000,0x0000}; // Warrior 1
-static data16_t bloodwar_mcu_4_26[] = {0x0000,0x0000}; // Warrior 2
-static data16_t bloodwar_mcu_4_27[] = {0x0000,0x0000}; // Warrior 3
-static data16_t bloodwar_mcu_4_28[] = {0x0000,0x0000}; // Warrior 4
-static data16_t bloodwar_mcu_4_29[] = {0x0000,0x0000}; // Warrior 5
-static data16_t bloodwar_mcu_4_2a[] = {0x0000,0x0000}; // Warrior 6
-static data16_t bloodwar_mcu_4_2b[] = {0x0000,0x0000}; // Warrior 7
-static data16_t bloodwar_mcu_4_2c[] = {0x0000,0x0000}; // Warrior 8
-static data16_t bloodwar_mcu_4_2d[] = {0x0000,0x0000}; // Warrior 9
+static UINT16 bloodwar_mcu_4_25[] = {0x0000,0x0000}; // Warrior 1
+static UINT16 bloodwar_mcu_4_26[] = {0x0000,0x0000}; // Warrior 2
+static UINT16 bloodwar_mcu_4_27[] = {0x0000,0x0000}; // Warrior 3
+static UINT16 bloodwar_mcu_4_28[] = {0x0000,0x0000}; // Warrior 4
+static UINT16 bloodwar_mcu_4_29[] = {0x0000,0x0000}; // Warrior 5
+static UINT16 bloodwar_mcu_4_2a[] = {0x0000,0x0000}; // Warrior 6
+static UINT16 bloodwar_mcu_4_2b[] = {0x0000,0x0000}; // Warrior 7
+static UINT16 bloodwar_mcu_4_2c[] = {0x0000,0x0000}; // Warrior 8
+static UINT16 bloodwar_mcu_4_2d[] = {0x0000,0x0000}; // Warrior 9
 

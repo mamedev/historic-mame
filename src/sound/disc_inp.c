@@ -36,14 +36,14 @@ READ8_HANDLER(discrete_sound_r)
 {
 	struct discrete_info *info = sndti_token(SOUND_DISCRETE, 0);
 	struct node_description *node = discrete_find_node(info, offset);
-	data8_t data = 0;
+	UINT8 data = 0;
 
 	if (!Machine->sample_rate) return 0;
 
 	/* Read the node input value if allowed */
 	if (node)
 	{
-		data8_t *node_data = node->context;
+		UINT8 *node_data = node->context;
 
 		if ((node->module.type >= DSS_INPUT_DATA) && (node->module.type <= DSS_INPUT_PULSE))
 		{
@@ -66,8 +66,8 @@ WRITE8_HANDLER(discrete_sound_w)
 	/* Update the node input value if it's a proper input node */
 	if (node)
 	{
-		data8_t *node_data = node->context;
-		data8_t last_data = *node_data;
+		UINT8 *node_data = node->context;
+		UINT8 last_data = *node_data;
 
 		switch (node->module.type)
 		{
@@ -197,14 +197,14 @@ void dss_constant_step(struct node_description *node)
  ************************************************************************/
 void dss_input_step(struct node_description *node)
 {
-	data8_t *node_data = node->context;
+	UINT8 *node_data = node->context;
 
 	node->output = *node_data * DSS_INPUT__GAIN + DSS_INPUT__OFFSET;
 }
 
 void dss_input_reset(struct node_description *node)
 {
-	data8_t *node_data = node->context;
+	UINT8 *node_data = node->context;
 
 	switch (node->module.type)
 	{
@@ -224,7 +224,7 @@ void dss_input_reset(struct node_description *node)
 
 void dss_input_pulse_step(struct node_description *node)
 {
-	data8_t *node_data = node->context;
+	UINT8 *node_data = node->context;
 
 	/* Set a valid output */
 	node->output = *node_data;

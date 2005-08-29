@@ -20,7 +20,7 @@
  *
  *************************************/
 
-static data16_t *vram_bg, *vram_fg;
+static UINT16 *vram_bg, *vram_fg;
 static int display_start;
 static UINT8 bitvals[32];
 

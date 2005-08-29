@@ -16,7 +16,7 @@ static int gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
 static int gx_tilemode, gx_rozenable, psac_colorbase, last_psac_colorbase;
 static tilemap *gx_psac_tilemap, *gx_psac_tilemap2;
-extern data32_t *gx_psacram, *gx_subpaletteram32;
+extern UINT32 *gx_psacram, *gx_subpaletteram32;
 
 static void (*game_tile_callback)(int, int *, int *);
 
@@ -24,7 +24,7 @@ static void (*game_tile_callback)(int, int *, int *);
 static void get_gx_psac_tile_info(int tile_index)
 {
 	int tileno, colour, flipx;
-	data16_t *map16 = (data16_t *)gx_psacram;
+	UINT16 *map16 = (UINT16 *)gx_psacram;
 
 	tileno = map16[tile_index*2+1] & 0x3fff;
 	colour = (psac_colorbase << 4);
@@ -532,7 +532,7 @@ WRITE32_HANDLER( konamigx_555_palette_w )
 {
 	COMBINE_DATA(&paletteram32[offset]);
 
-	paletteram16 = (data16_t *)paletteram32;
+	paletteram16 = (UINT16 *)paletteram32;
 	if (ACCESSING_MSW32)
 		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2, data >> 16, mem_mask >> 16);
 	if (ACCESSING_LSW32)
@@ -548,7 +548,7 @@ WRITE32_HANDLER( konamigx_555_palette2_w )
 
 	COMBINE_DATA(&paletteram32[offset]);
 
-	paletteram16 = (data16_t *)paletteram32;
+	paletteram16 = (UINT16 *)paletteram32;
 	if (ACCESSING_MSW32)
 		paletteram16_xRRRRRGGGGGBBBBB_word_w(offset*2, data >> 16, mem_mask >> 16);
 	if (ACCESSING_LSW32)

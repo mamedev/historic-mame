@@ -15,7 +15,7 @@ static tilemap *bg_tilemap;
 /* This is strange; it's unlikely that the sprites actually have a hardware */
 /* clipping region, but I haven't found another way to have them masked by */
 /* the characters at the top and bottom of the screen. */
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	0*8, 32*8-1,
 	4*8, 29*8-1
@@ -134,7 +134,7 @@ VIDEO_START( pingpong )
 	return 0;
 }
 
-static void pingpong_draw_sprites( struct mame_bitmap *bitmap )
+static void pingpong_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

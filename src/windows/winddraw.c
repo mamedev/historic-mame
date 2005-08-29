@@ -70,7 +70,7 @@ static int max_height;
 static int pref_depth;
 static int effect_min_xscale;
 static int effect_min_yscale;
-static struct rectangle last_bounds;
+static rectangle last_bounds;
 
 // mode finding
 static double best_score;
@@ -98,8 +98,8 @@ static int create_clipper(void);
 static void erase_surfaces(void);
 static void release_surfaces(void);
 static void compute_color_masks(const DDSURFACEDESC *desc);
-static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
-static int render_to_primary(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update);
+static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
+static int render_to_primary(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT dst, int update);
 
 
@@ -990,7 +990,7 @@ static void compute_color_masks(const DDSURFACEDESC *desc)
 //  win_ddraw_draw
 //============================================================
 
-int win_ddraw_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+int win_ddraw_draw(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int result;
 
@@ -1027,7 +1027,7 @@ int win_ddraw_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, v
 //  lock_must_succeed
 //============================================================
 
-static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_pixels)
+static int lock_must_succeed(const rectangle *bounds, void *vector_dirty_pixels)
 {
 	// determine up front if this lock must succeed; by default, it depends on
 	// whether or not we're throttling
@@ -1056,7 +1056,7 @@ static int lock_must_succeed(const struct rectangle *bounds, void *vector_dirty_
 //  render_to_blit
 //============================================================
 
-static int render_to_blit(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int dstdepth = blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
@@ -1288,7 +1288,7 @@ surface_lost:
 //  render_to_primary
 //============================================================
 
-static int render_to_primary(struct mame_bitmap *bitmap, const struct rectangle *bounds, void *vector_dirty_pixels, int update)
+static int render_to_primary(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
 	DDSURFACEDESC temp_desc = { sizeof(temp_desc) };

@@ -67,11 +67,11 @@ WRITE16_HANDLER( sshangha_control_0_w );
 WRITE16_HANDLER( sshangha_palette_24bit_w );
 WRITE16_HANDLER (sshangha_video_w);
 
-extern data16_t *sshangha_pf1_data;
-extern data16_t *sshangha_pf2_data;
-extern data16_t *sshangha_pf1_rowscroll, *sshangha_pf2_rowscroll;
+extern UINT16 *sshangha_pf1_data;
+extern UINT16 *sshangha_pf2_data;
+extern UINT16 *sshangha_pf1_rowscroll, *sshangha_pf2_rowscroll;
 
-static data16_t *sshangha_prot_data;
+static UINT16 *sshangha_prot_data;
 
 /******************************************************************************/
 
@@ -428,7 +428,7 @@ static DRIVER_INIT( sshangha )
 #if SSHANGHA_HACK
 	/* This is a hack to allow you to use the extra features
          of the first "Unused" Dip Switch (see notes above). */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU1);
 	RAM[0x000384/2] = 0x4e71;
 	RAM[0x000386/2] = 0x4e71;
 	RAM[0x000388/2] = 0x4e71;

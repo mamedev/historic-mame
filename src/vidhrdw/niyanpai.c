@@ -27,11 +27,11 @@ static int niyanpai_screen_refresh;
 static int nb19010_busyctr;
 static int nb19010_busyflag;
 
-static struct mame_bitmap *niyanpai_tmpbitmap[VRAM_MAX];
-static data16_t *niyanpai_videoram[VRAM_MAX];
-static data16_t *niyanpai_videoworkram[VRAM_MAX];
-static data16_t *niyanpai_palette;
-static data8_t *niyanpai_clut[VRAM_MAX];
+static mame_bitmap *niyanpai_tmpbitmap[VRAM_MAX];
+static UINT16 *niyanpai_videoram[VRAM_MAX];
+static UINT16 *niyanpai_videoworkram[VRAM_MAX];
+static UINT16 *niyanpai_palette;
+static UINT8 *niyanpai_clut[VRAM_MAX];
 
 
 static void niyanpai_vramflip(int vram);
@@ -51,8 +51,8 @@ WRITE16_HANDLER( niyanpai_palette_w )
 {
 	int r, g, b;
 	int offs_h, offs_l;
-	data16_t oldword = niyanpai_palette[offset];
-	data16_t newword;
+	UINT16 oldword = niyanpai_palette[offset];
+	UINT16 newword;
 
 	COMBINE_DATA(&niyanpai_palette[offset]);
 	newword = niyanpai_palette[offset];

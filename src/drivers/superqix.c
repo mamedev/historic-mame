@@ -117,8 +117,8 @@ DSW2 stored @ $f237
 #include "sound/samples.h"
 
 
-extern data8_t *superqix_videoram;
-extern data8_t *superqix_bitmapram,*superqix_bitmapram2;
+extern UINT8 *superqix_videoram;
+extern UINT8 *superqix_bitmapram,*superqix_bitmapram2;
 extern int pbillian_show_power;
 
 
@@ -193,7 +193,7 @@ The MCU acts this way:
 
 **************************************************************************/
 
-static data8_t port1, port3, port3_latch, from_mcu, from_z80, portb;
+static UINT8 port1, port3, port3_latch, from_mcu, from_z80, portb;
 static int from_mcu_pending, from_z80_pending, invert_coin_lockout;
 
 static READ8_HANDLER( in4_mcu_r )
@@ -1111,9 +1111,9 @@ static DRIVER_INIT( sqixa )
 
 static DRIVER_INIT( perestro )
 {
-	data8_t *src;
+	UINT8 *src;
 	int len;
-	data8_t temp[16];
+	UINT8 temp[16];
 	int i,j;
 
 	/* decrypt program code; the address lines are shuffled around in a non-trivial way */

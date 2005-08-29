@@ -241,7 +241,7 @@ VIDEO_START( ssrj )
 }
 
 
-static void draw_objects( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_objects( mame_bitmap *bitmap, const rectangle *cliprect )
 
 {
 	int i,j,k,x,y;

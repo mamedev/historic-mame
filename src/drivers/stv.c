@@ -187,10 +187,10 @@ cpu #0 (PC=060C000A): unmapped program memory dword read from 00400040 & FFFF000
 #include "sound/scsp.h"
 #include <time.h>
 
-extern data32_t* stv_vdp2_regs;
-extern data32_t* stv_vdp2_vram;
-extern data32_t* stv_vdp2_cram;
-extern data32_t* stv_vdp1_vram;
+extern UINT32* stv_vdp2_regs;
+extern UINT32* stv_vdp2_vram;
+extern UINT32* stv_vdp2_cram;
+extern UINT32* stv_vdp1_vram;
 
 #define USE_SLAVE 1
 /*Enable the following to play 'myfairld' without using the -nosound switch.*/
@@ -244,22 +244,22 @@ DRIVER_INIT(sassisu);
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
 
-static data8_t *smpc_ram;
+static UINT8 *smpc_ram;
 //static void stv_dump_ram(void);
 
-static data32_t* stv_workram_l;
-data32_t* stv_workram_h;
-data32_t* stv_backupram;
-data32_t* stv_scu;
-static data32_t* ioga;
-static data16_t* scsp_regs;
-static data16_t* sound_ram;
+static UINT32* stv_workram_l;
+UINT32* stv_workram_h;
+UINT32* stv_backupram;
+UINT32* stv_scu;
+static UINT32* ioga;
+static UINT16* scsp_regs;
+static UINT16* sound_ram;
 
 int stv_vblank,stv_hblank;
 /*SMPC stuff*/
 static UINT8 NMI_reset;
 static void system_reset(void);
-static data8_t en_68k;
+static UINT8 en_68k;
 /*SCU stuff*/
 static int 	  timer_0;			/* Counter for Timer 0 irq*/
 static int    timer_1;          /* Counter for Timer 1 irq*/
@@ -338,7 +338,7 @@ static void CD_refresh_timer(int param)
 	//timer_adjust(CD_refresh, CD_period, 0, CD_period);
 }
 
-data32_t cdregister[0x9ffff];
+UINT32 cdregister[0x9ffff];
 
 int DectoBCD(int num)
 {
@@ -3588,7 +3588,7 @@ static UINT32 vector_prot[] = { 0x0603B1B2,0x234 };
 
 static READ32_HANDLER( a_bus_ctrl_r )
 {
-	data32_t *ROM = (UINT32 *)memory_region(REGION_USER1);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_USER1);
 
 	if(a_bus[0] & 0x00010000)//protection calculation is activated
 	{
@@ -5243,7 +5243,7 @@ ROM_END
 DRIVER_INIT( sfish2 )
 {
 	/* this is WRONG but works for some games */
-	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
 	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
 	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
 	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
@@ -5255,7 +5255,7 @@ DRIVER_INIT( sfish2 )
 DRIVER_INIT( sfish2j )
 {
 	/* this is WRONG but works for some games */
-	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
 	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
 	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
 	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);

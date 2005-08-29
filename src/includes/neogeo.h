@@ -16,8 +16,8 @@ void neogeo_register_main_savestate(void);
 
 /*----------- defined in machine/neogeo.c -----------*/
 
-extern data16_t *neogeo_ram16;
-extern data16_t *neogeo_sram16;
+extern UINT16 *neogeo_ram16;
+extern UINT16 *neogeo_sram16;
 
 extern int mcd_action;
 extern int mcd_number;
@@ -26,7 +26,7 @@ extern int memcard_number;
 extern int memcard_manager;
 extern UINT8 *neogeo_memcard;
 
-extern data8_t *neogeo_game_vectors;
+extern UINT8 *neogeo_game_vectors;
 
 MACHINE_INIT( neogeo );
 DRIVER_INIT( neogeo );
@@ -75,4 +75,4 @@ WRITE16_HANDLER (neogeo_select_game_vectors);
 
 VIDEO_UPDATE( neogeo );
 VIDEO_UPDATE( neogeo_raster );
-void neogeo_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int current_line);
+void neogeo_vh_raster_partial_refresh(mame_bitmap *bitmap,int current_line);

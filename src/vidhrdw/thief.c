@@ -5,8 +5,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-struct mame_bitmap *thief_page0;
-struct mame_bitmap *thief_page1;
+mame_bitmap *thief_page0;
+mame_bitmap *thief_page1;
 
 static UINT8 thief_read_mask, thief_write_mask;
 static UINT8 thief_video_control;
@@ -142,7 +142,7 @@ VIDEO_UPDATE( thief ){
 	const pen_t *pal_data = Machine->pens;
 	UINT8 *dirty = dirtybuffer;
 	const UINT8 *source = videoram;
-	struct mame_bitmap *page;
+	mame_bitmap *page;
 
 	if( thief_video_control&4 ){ /* visible page */
 		dirty += 0x2000;

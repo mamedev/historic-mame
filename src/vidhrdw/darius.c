@@ -5,7 +5,7 @@
 
 
 static tilemap *fg_tilemap;
-data16_t *darius_fg_ram;
+UINT16 *darius_fg_ram;
 
 struct tempsprite
 {
@@ -21,7 +21,7 @@ static struct tempsprite *spritelist;
 
 /***************************************************************************/
 
-static void actual_get_fg_tile_info(data16_t *ram,int gfxnum,int tile_index)
+static void actual_get_fg_tile_info(UINT16 *ram,int gfxnum,int tile_index)
 {
 	UINT16 code = (ram[tile_index + 0x2000] & 0x7ff);
 	UINT16 attr = ram[tile_index];
@@ -93,7 +93,7 @@ WRITE16_HANDLER( darius_fg_layer_w )
 
 /***************************************************************************/
 
-void darius_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int primask, int y_offs)
+void darius_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int primask, int y_offs)
 {
 	int offs,curx,cury;
 	UINT16 code,data,sx,sy;

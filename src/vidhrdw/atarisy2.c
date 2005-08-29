@@ -17,7 +17,7 @@
  *
  *************************************/
 
-data16_t *atarisy2_slapstic;
+UINT16 *atarisy2_slapstic;
 
 
 
@@ -30,7 +30,7 @@ data16_t *atarisy2_slapstic;
 static void *yscroll_reset_timer;
 static UINT32 playfield_tile_bank[2];
 static UINT32 videobank;
-static data16_t *vram;
+static UINT16 *vram;
 
 
 
@@ -155,8 +155,8 @@ VIDEO_START( atarisy2 )
 
 WRITE16_HANDLER( atarisy2_xscroll_w )
 {
-	data16_t oldscroll = *atarigen_xscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_xscroll;
+	UINT16 newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
 
 	/* if anything has changed, force a partial update */
@@ -186,8 +186,8 @@ static void reset_yscroll_callback(int newscroll)
 
 WRITE16_HANDLER( atarisy2_yscroll_w )
 {
-	data16_t oldscroll = *atarigen_yscroll;
-	data16_t newscroll = oldscroll;
+	UINT16 oldscroll = *atarigen_yscroll;
+	UINT16 newscroll = oldscroll;
 	COMBINE_DATA(&newscroll);
 
 	/* if anything has changed, force a partial update */
@@ -333,7 +333,7 @@ WRITE16_HANDLER( atarisy2_videoram_w )
 VIDEO_UPDATE( atarisy2 )
 {
 	struct atarimo_rect_list rectlist;
-	struct mame_bitmap *mobitmap;
+	mame_bitmap *mobitmap;
 	int x, y, r;
 
 	/* draw the playfield */

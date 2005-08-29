@@ -39,7 +39,7 @@
 /* description for an eight-word mask */
 struct atarirle_entry
 {
-	data16_t			data[8];
+	UINT16			data[8];
 };
 
 /* description of the motion objects */
@@ -83,7 +83,7 @@ WRITE16_HANDLER( atarirle_0_spriteram_w );
 WRITE32_HANDLER( atarirle_0_spriteram32_w );
 
 /* render helpers */
-struct mame_bitmap *atarirle_get_vram(int map, int idx);
+mame_bitmap *atarirle_get_vram(int map, int idx);
 
 
 
@@ -91,7 +91,7 @@ struct mame_bitmap *atarirle_get_vram(int map, int idx);
     GLOBAL VARIABLES
 ##########################################################################*/
 
-extern data16_t *atarirle_0_spriteram;
-extern data32_t *atarirle_0_spriteram32;
+extern UINT16 *atarirle_0_spriteram;
+extern UINT32 *atarirle_0_spriteram32;
 
 #endif

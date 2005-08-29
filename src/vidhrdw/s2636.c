@@ -112,7 +112,7 @@ void s2636_w(unsigned char *workram,int offset,int data,unsigned char *dirty)
 /* Check for Collision between 2 sprites */
 /*****************************************/
 
-static int SpriteCheck(int first,int second,unsigned char *workram,int Graphics_Bank,struct mame_bitmap *collision_bitmap)
+static int SpriteCheck(int first,int second,unsigned char *workram,int Graphics_Bank,mame_bitmap *collision_bitmap)
 {
 	int Checksum=0;
 	int x,y;
@@ -205,7 +205,7 @@ static int SpriteCheck(int first,int second,unsigned char *workram,int Graphics_
 	return Checksum;
 }
 
-void Update_Bitmap(struct mame_bitmap *bitmap,unsigned char *workram,unsigned char *dirty,int Graphics_Bank,struct mame_bitmap *collision_bitmap)
+void Update_Bitmap(mame_bitmap *bitmap,unsigned char *workram,unsigned char *dirty,int Graphics_Bank,mame_bitmap *collision_bitmap)
 {
 	int CollisionSprite = 0;
     int spriteno;

@@ -5,10 +5,10 @@
 #include "vidhrdw/generic.h"
 #include "sound/samples.h"
 
-static struct mame_bitmap *ship1_vid;
-static struct mame_bitmap *ship2_vid;
-static struct mame_bitmap *proj1_vid;
-static struct mame_bitmap *proj2_vid;
+static mame_bitmap *ship1_vid;
+static mame_bitmap *ship2_vid;
+static mame_bitmap *proj1_vid;
+static mame_bitmap *proj2_vid;
 
 static int s1_x = 0;
 static int s1_y = 0;
@@ -199,7 +199,7 @@ int starcrus_collision_check_s1s2(void)
 {
 	int org_x, org_y;
 	int sx, sy;
-	struct rectangle clip;
+	rectangle clip;
 
     clip.min_x=0;
     clip.max_x=15;
@@ -257,7 +257,7 @@ int starcrus_collision_check_p1p2(void)
 {
 	int org_x, org_y;
 	int sx, sy;
-	struct rectangle clip;
+	rectangle clip;
 
 	/* if both are scores, return */
 	if ( ((p1_sprite & 0x08) == 0) &&
@@ -328,7 +328,7 @@ int starcrus_collision_check_s1p1p2(void)
 {
 	int org_x, org_y;
 	int sx, sy;
-	struct rectangle clip;
+	rectangle clip;
 
 	/* if both are scores, return */
 	if ( ((p1_sprite & 0x08) == 0) &&
@@ -414,7 +414,7 @@ int starcrus_collision_check_s2p1p2(void)
 {
 	int org_x, org_y;
 	int sx, sy;
-	struct rectangle clip;
+	rectangle clip;
 
 	/* if both are scores, return */
 	if ( ((p1_sprite & 0x08) == 0) &&

@@ -79,13 +79,13 @@ World Cup 90 bootleg.
 
 #define TEST_DIPS false /* enable to test unmapped dip switches */
 
-extern data8_t *wc90b_fgvideoram,*wc90b_bgvideoram,*wc90b_txvideoram;
+extern UINT8 *wc90b_fgvideoram,*wc90b_bgvideoram,*wc90b_txvideoram;
 
-extern data8_t *wc90b_scroll1x;
-extern data8_t *wc90b_scroll2x;
+extern UINT8 *wc90b_scroll1x;
+extern UINT8 *wc90b_scroll2x;
 
-extern data8_t *wc90b_scroll1y;
-extern data8_t *wc90b_scroll2y;
+extern UINT8 *wc90b_scroll1y;
+extern UINT8 *wc90b_scroll2y;
 
 VIDEO_START( wc90b );
 WRITE8_HANDLER( wc90b_bgvideoram_w );
@@ -95,7 +95,7 @@ VIDEO_UPDATE( wc90b );
 
 static int msm5205next;
 
-static data8_t *wc90b_shared;
+static UINT8 *wc90b_shared;
 
 static READ8_HANDLER( wc90b_shared_r )
 {

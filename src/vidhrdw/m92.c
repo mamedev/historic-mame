@@ -457,7 +457,7 @@ VIDEO_START( m92 )
 
 /*****************************************************************************/
 
-static void m92_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void m92_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs=0;
 
@@ -591,7 +591,7 @@ static void m92_update_scroll_positions(void)
 
 /*****************************************************************************/
 
-static void m92_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void m92_screenrefresh(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	fillbitmap(priority_bitmap,0,cliprect);
 

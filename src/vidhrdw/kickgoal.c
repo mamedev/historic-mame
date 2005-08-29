@@ -3,7 +3,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern data16_t *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
+extern UINT16 *kickgoal_fgram, *kickgoal_bgram, *kickgoal_bg2ram, *kickgoal_scrram;
 tilemap *kickgoal_fgtm, *kickgoal_bgtm, *kickgoal_bg2tm;
 
 /* FG */
@@ -95,7 +95,7 @@ WRITE16_HANDLER( kickgoal_bg2ram_w )
 
 
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[1];
 	int offs;
@@ -221,7 +221,7 @@ VIDEO_START( actionhw )
 }
 
 
-static void actionhw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void actionhw_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	const gfx_element *gfx = Machine->gfx[1];
 	int offs;

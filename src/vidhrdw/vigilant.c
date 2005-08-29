@@ -18,7 +18,7 @@
 #include "vidhrdw/generic.h"
 
 
-static struct rectangle bottomvisiblearea =
+static rectangle bottomvisiblearea =
 {
 	16*8, 48*8-1,
 	6*8, 32*8-1
@@ -36,7 +36,7 @@ static int rear_disable=1;
 
 static int rear_refresh=1;
 
-static struct mame_bitmap *bg_bitmap;
+static mame_bitmap *bg_bitmap;
 
 
 VIDEO_START( vigilant )
@@ -175,7 +175,7 @@ WRITE8_HANDLER( vigilant_rear_color_w )
  ???
  **************************************************************************/
 
-static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaque )
+static void draw_foreground( mame_bitmap *bitmap, int priority, int opaque )
 {
 	int offs;
 	int scroll = -(horiz_scroll_low + horiz_scroll_high);
@@ -228,7 +228,7 @@ static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaqu
 
  ???
  **************************************************************************/
-static void draw_background( struct mame_bitmap *bitmap )
+static void draw_background( mame_bitmap *bitmap )
 {
 	int scrollx = 0x17a + 16*8 - (rear_horiz_scroll_low + rear_horiz_scroll_high);
 
@@ -250,7 +250,7 @@ static void draw_background( struct mame_bitmap *bitmap )
 
 ***************************************************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *clip)
 {
 	int offs;
 

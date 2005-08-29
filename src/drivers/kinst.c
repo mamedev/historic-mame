@@ -26,10 +26,10 @@
 
 
 /* local variables */
-static data32_t *rambase, *rambase2;
-static data32_t *video_base;
-static data32_t *kinst_control;
-static data32_t *kinst_speedup;
+static UINT32 *rambase, *rambase2;
+static UINT32 *video_base;
+static UINT32 *kinst_control;
+static UINT32 *kinst_speedup;
 
 static const UINT8 *control_map;
 
@@ -76,15 +76,15 @@ VIDEO_UPDATE( kinst )
 	/* loop over rows and copy to the destination */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		data32_t *src = &video_base[640/4 * y];
-		data16_t *dest = &((data16_t *)bitmap->line[y])[cliprect->min_x];
+		UINT32 *src = &video_base[640/4 * y];
+		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
 		int x;
 
 		/* loop over columns */
 		for (x = cliprect->min_x; x < cliprect->max_x; x += 2)
 		{
 			/* data is BGR; convert to RGB */
-			data32_t data = *src++;
+			UINT32 data = *src++;
 			data = (data & 0x03e003e0) | ((data << 10) & 0x7c007c00) | ((data >> 10) & 0x001f001f);
 
 			/* store two pixels */
@@ -167,7 +167,7 @@ static WRITE32_HANDLER( ide_controller_extra_w )
 
 static READ32_HANDLER( kinst_control_r )
 {
-	data32_t result;
+	UINT32 result;
 
 	/* apply shuffling */
 	offset = control_map[offset / 2];
@@ -201,7 +201,7 @@ static READ32_HANDLER( kinst_control_r )
 
 static WRITE32_HANDLER( kinst_control_w )
 {
-	data32_t olddata;
+	UINT32 olddata;
 
 	/* apply shuffling */
 	offset = control_map[offset / 2];

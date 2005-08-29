@@ -114,7 +114,7 @@ VIDEO_START( sauro )
 	return 0;
 }
 
-static void sauro_draw_sprites( struct mame_bitmap *bitmap )
+static void sauro_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs,code,sx,sy,color,flipx;
 
@@ -185,7 +185,7 @@ VIDEO_START( trckydoc )
 	return 0;
 }
 
-static void trckydoc_draw_sprites( struct mame_bitmap *bitmap )
+static void trckydoc_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs,code,sy,color,flipx,sx;
 

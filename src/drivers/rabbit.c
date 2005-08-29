@@ -86,23 +86,23 @@ Custom: Imagetek 15000 (2ch video & 2ch sound)
 #define VERBOSE_AUDIO_LOG (0)	// enable to show audio writes (very noisy when music is playing)
 
 /* debug */
-static data32_t *rabbit_viewregs0;
-static data32_t *rabbit_viewregs6;
-static data32_t *rabbit_viewregs7;
-static data32_t *rabbit_viewregs9;
-static data32_t *rabbit_viewregs10;
+static UINT32 *rabbit_viewregs0;
+static UINT32 *rabbit_viewregs6;
+static UINT32 *rabbit_viewregs7;
+static UINT32 *rabbit_viewregs9;
+static UINT32 *rabbit_viewregs10;
 
-static data32_t *rabbit_tilemap_regs[4];
-static data32_t *rabbit_spriteregs;
-static data32_t *rabbit_blitterregs;
-static struct mame_bitmap *rabbit_sprite_bitmap;
-struct rectangle rabbit_sprite_clip;
+static UINT32 *rabbit_tilemap_regs[4];
+static UINT32 *rabbit_spriteregs;
+static UINT32 *rabbit_blitterregs;
+static mame_bitmap *rabbit_sprite_bitmap;
+rectangle rabbit_sprite_clip;
 
 static int rabbit_vblirqlevel, rabbit_bltirqlevel, rabbit_banking;
 
-data32_t *rabbit_tilemap_ram[4];
+UINT32 *rabbit_tilemap_ram[4];
 
-data32_t *rabbit_spriteram;
+UINT32 *rabbit_spriteram;
 static tilemap *rabbit_tilemap[4];
 
 /* call with tilesize = 0 for 8x8 or 1 for 16x16 */
@@ -214,14 +214,14 @@ sprites invisible at the end of a round in rabbit, why?
 
 */
 
-static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void rabbit_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int xpos,ypos,tileno,xflip,yflip, colr;
 	const gfx_element *gfx = Machine->gfx[1];
 	int todraw = (rabbit_spriteregs[5]&0x0fff0000)>>16; // how many sprites to draw (start/end reg..) what is the other half?
 
-	data32_t *source = (rabbit_spriteram+ (todraw*2))-2;
-	data32_t *finish = rabbit_spriteram;
+	UINT32 *source = (rabbit_spriteram+ (todraw*2))-2;
+	UINT32 *finish = rabbit_spriteram;
 
 //  fillbitmap(rabbit_sprite_bitmap, 0x0, &rabbit_sprite_clip); // sloooow
 
@@ -253,7 +253,7 @@ static void rabbit_drawsprites( struct mame_bitmap *bitmap, const struct rectang
 }
 
 /* the sprite bitmap can probably be handled better than this ... */
-static void rabbit_clearspritebitmap( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void rabbit_clearspritebitmap( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	UINT32 startx, starty;
 	int y;
@@ -279,7 +279,7 @@ static void rabbit_clearspritebitmap( struct mame_bitmap *bitmap, const struct r
 }
 
 /* todo: fix zoom, its inaccurate and this code is ugly */
-static void rabbit_drawsprite_bitmap( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void rabbit_drawsprite_bitmap( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 
 	UINT32 x,y;
@@ -384,7 +384,7 @@ each line represents the differences on each tilemap for unknown variables
 
 */
 
-static void rabbit_drawtilemap( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int whichtilemap )
+static void rabbit_drawtilemap( mame_bitmap *bitmap, const rectangle *cliprect, int whichtilemap )
 {
 	INT32 startx, starty, incxx, incxy, incyx, incyy, tran;
 

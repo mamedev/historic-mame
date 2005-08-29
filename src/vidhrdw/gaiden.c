@@ -7,12 +7,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
+UINT16 *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 int gaiden_sprite_sizey;
 int raiga_alpha;
 
 static tilemap *text_layer,*foreground,*background;
-static struct mame_bitmap *sprite_bitmap, *tile_bitmap_bg, *tile_bitmap_fg;
+static mame_bitmap *sprite_bitmap, *tile_bitmap_bg, *tile_bitmap_fg;
 
 /***************************************************************************
 
@@ -150,42 +150,42 @@ VIDEO_START( drgnbowl )
 
 WRITE16_HANDLER( gaiden_txscrollx_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(text_layer, 0, scroll);
 }
 
 WRITE16_HANDLER( gaiden_txscrolly_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrolly(text_layer, 0, scroll);
 }
 
 WRITE16_HANDLER( gaiden_fgscrollx_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(foreground, 0, scroll);
 }
 
 WRITE16_HANDLER( gaiden_fgscrolly_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrolly(foreground, 0, scroll);
 }
 
 WRITE16_HANDLER( gaiden_bgscrollx_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrollx(background, 0, scroll);
 }
 
 WRITE16_HANDLER( gaiden_bgscrolly_w )
 {
-	static data16_t scroll;
+	static UINT16 scroll;
 	COMBINE_DATA(&scroll);
 	tilemap_set_scrolly(background, 0, scroll);
 }
@@ -241,8 +241,8 @@ WRITE16_HANDLER( gaiden_videoram_w )
 
 /* mix & blend the paletted 16-bit tile and sprite bitmaps into an RGB 32-bit bitmap */
 static void blendbitmaps(
-		struct mame_bitmap *dest,struct mame_bitmap *src1,struct mame_bitmap *src2,struct mame_bitmap *src3,
-		int sx,int sy,const struct rectangle *clip)
+		mame_bitmap *dest,mame_bitmap *src1,mame_bitmap *src2,mame_bitmap *src3,
+		int sx,int sy,const rectangle *clip)
 {
 	int ox;
 	int oy;
@@ -368,7 +368,7 @@ static void blendbitmaps(
 
 #define NUM_SPRITES 256
 
-static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitmap_fg, struct mame_bitmap *bitmap_sp, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap_bg, mame_bitmap *bitmap_fg, mame_bitmap *bitmap_sp, const rectangle *cliprect)
 {
 	const UINT8 layout[8][8] =
 	{
@@ -383,7 +383,7 @@ static void draw_sprites(struct mame_bitmap *bitmap_bg, struct mame_bitmap *bitm
 	};
 
 	const gfx_element *gfx = Machine->gfx[3];
-	struct mame_bitmap *bitmap = bitmap_bg;
+	mame_bitmap *bitmap = bitmap_bg;
 	const UINT16 *source = (NUM_SPRITES - 1) * 8 + spriteram16;
 	const UINT8 blend_support = (bitmap_fg && bitmap_sp);
 	int count = NUM_SPRITES;
@@ -515,7 +515,7 @@ skip_sprite:
  *         |---------x------- | x position (high bit)
  */
 
-static void drgnbowl_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void drgnbowl_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i, code, color, x, y, flipx, flipy, priority_mask;
 

@@ -592,7 +592,7 @@ WRITE32_HANDLER( video_dma_address_w );
 WRITE32_HANDLER( sprite_dma_start_w );
 
 extern UINT32 *scroll_ram;
-data32_t *spimainram;
+UINT32 *spimainram;
 
 /********************************************************************/
 static int z80_prg_fifo_pos = 0;

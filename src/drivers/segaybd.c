@@ -37,7 +37,7 @@ static UINT8 analog_data[4];
 static UINT8 vblank_irq_state;
 static UINT8 timer_irq_state;
 
-static data16_t *backupram;
+static UINT16 *backupram;
 
 
 

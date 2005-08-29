@@ -178,7 +178,7 @@ int rockola_music0_playing(void);
 
 
 /* binary counter (1.4MHz update) */
-static data8_t sasuke_counter;
+static UINT8 sasuke_counter;
 static void *sasuke_timer;
 
 static void sasuke_update_counter(int param)
@@ -900,7 +900,7 @@ static INTERRUPT_GEN( satansat_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
-		data8_t val = readinputport(3);
+		UINT8 val = readinputport(3);
 
 		coin_counter_w(0, val & 1);
 
@@ -916,7 +916,7 @@ static INTERRUPT_GEN( rockola_interrupt )
 {
 	if (cpu_getiloops() != 0)
 	{
-		data8_t val = readinputport(3);
+		UINT8 val = readinputport(3);
 
 		coin_counter_w(0, val & 1);
 		coin_counter_w(1, val & 2);

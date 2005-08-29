@@ -46,7 +46,7 @@ VIDEO_START( nitedrvr )
 	return 0;
 }
 
-static void nitedrvr_draw_box( struct mame_bitmap *bitmap, int bx, int by, int ex, int ey )
+static void nitedrvr_draw_box( mame_bitmap *bitmap, int bx, int by, int ex, int ey )
 {
 	int x, y;
 
@@ -62,7 +62,7 @@ static void nitedrvr_draw_box( struct mame_bitmap *bitmap, int bx, int by, int e
 	return;
 }
 
-static void nitedrvr_draw_roadway( struct mame_bitmap *bitmap )
+static void nitedrvr_draw_roadway( mame_bitmap *bitmap )
 {
 	int roadway;
 

@@ -7,14 +7,14 @@
 /* is theres a bg colour register? */
 
 static tilemap *fg_tilemap,*fg2_tilemap,*fg3_tilemap;
-extern data32_t *silkroad_vidram,*silkroad_vidram2,*silkroad_vidram3, *silkroad_sprram, *silkroad_regs;
+extern UINT32 *silkroad_vidram,*silkroad_vidram2,*silkroad_vidram3, *silkroad_sprram, *silkroad_regs;
 
-static void silkroad_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
+static void silkroad_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect, int pri )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	data32_t *source = silkroad_sprram;
-	data32_t *finish = source + 0x1000/4;
-	data32_t *maxspr = source;
+	UINT32 *source = silkroad_sprram;
+	UINT32 *finish = source + 0x1000/4;
+	UINT32 *maxspr = source;
 
 	while( maxspr<finish )
 	{

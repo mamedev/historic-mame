@@ -21,7 +21,7 @@ WRITE32_HANDLER( psx_gpu_w );
 extern void psx_lightgun_set( int, int );
 
 /* machine */
-extern data32_t *g_p_n_psxram;
+extern UINT32 *g_p_n_psxram;
 extern size_t g_n_psxramsize;
 typedef void ( *psx_dma_read_handler )( UINT32, INT32 );
 typedef void ( *psx_dma_write_handler )( UINT32, INT32 );

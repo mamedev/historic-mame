@@ -72,15 +72,15 @@ INT16 AU_DATA;
 INT16 AU_LAST_VALUE;
 INT16 *AU_PTR = &AU_DATA;
 
-data8_t *tx1_vram;
-data8_t *tx1_object_ram;
+UINT8 *tx1_vram;
+UINT8 *tx1_object_ram;
 
-data8_t *buggyboy_vram;        /* Tile RAM (three monitor)   */
-data8_t *buggyb1_vram;         /* Tile RAM (single monitor)  */
-data8_t *z80_ram;              /* Main 8086/Z80 shared RAM   */
-data8_t *bb_objram;
-data8_t *sky;                  /* Sky register.              */
-data8_t *bb_rcram;
+UINT8 *buggyboy_vram;        /* Tile RAM (three monitor)   */
+UINT8 *buggyb1_vram;         /* Tile RAM (single monitor)  */
+UINT8 *z80_ram;              /* Main 8086/Z80 shared RAM   */
+UINT8 *bb_objram;
+UINT8 *sky;                  /* Sky register.              */
+UINT8 *bb_rcram;
 
 size_t tx1_objectram_size;
 size_t bb_objectram_size;
@@ -846,7 +846,7 @@ static ppi8255_interface buggyboy_ppi8255_intf =
 
 static MACHINE_INIT( buggyb1 )
 {
-       data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
+       UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
 
 /* The main CPU /TEST line is connected to the /BUSAK output of the Z80. Imagine the fun that causes.
 Hence I've patched out part of the main code. It seems to work fine (phew). */
@@ -859,7 +859,7 @@ Hence I've patched out part of the main code. It seems to work fine (phew). */
 
 static MACHINE_INIT( buggyboy )
 {
-       data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
+       UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
 
        ppi8255_init(&buggyboy_ppi8255_intf);
 
@@ -874,8 +874,8 @@ static MACHINE_INIT( buggyboy )
 
 static MACHINE_INIT( tx1 )
 {
-        data8_t *rom = (data8_t *)memory_region(REGION_CPU1);
-       data8_t *rom_b = (data8_t *)memory_region(REGION_CPU2);
+        UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
+       UINT8 *rom_b = (UINT8 *)memory_region(REGION_CPU2);
 
 	   ppi8255_init(&tx1_ppi8255_intf);
 

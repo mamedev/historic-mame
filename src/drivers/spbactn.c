@@ -129,7 +129,7 @@ cpu #0 (PC=00001A1A): unmapped memory word write to 00090030 = 00F7 & 00FF
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-data16_t *spbactn_bgvideoram, *spbactn_fgvideoram, *spbactn_spvideoram;
+UINT16 *spbactn_bgvideoram, *spbactn_fgvideoram, *spbactn_spvideoram;
 
 VIDEO_START( spbactn );
 VIDEO_UPDATE( spbactn );

@@ -105,7 +105,7 @@ VIDEO_START( funkybee )
 	return 0;
 }
 
-static void funkybee_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void funkybee_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 
@@ -134,7 +134,7 @@ static void funkybee_draw_sprites( struct mame_bitmap *bitmap, const struct rect
 	}
 }
 
-static void funkybee_draw_columns( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void funkybee_draw_columns( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

@@ -6,8 +6,8 @@ static int flipscreen;
 static tilemap *bg_tilemap,  *tx_tilemap;
 static unsigned char fg_color, old_fg_color;
 
-extern data8_t *jcr_sharedram;
-extern data8_t *jcr_textram;
+extern UINT8 *jcr_sharedram;
+extern UINT8 *jcr_textram;
 
 
 int jcross_vregs[5];
@@ -135,7 +135,7 @@ VIDEO_START( jcross )
 **
 ***************************************************************************/
 
-static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_status( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const unsigned char *base =  memory_region(REGION_CPU1)+0xf400;
 	const gfx_element *gfx = Machine->gfx[0];
@@ -162,7 +162,7 @@ static void draw_status( struct mame_bitmap *bitmap, const struct rectangle *cli
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int scrollx, int scrolly )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int scrollx, int scrolly )
 {
 	const gfx_element *gfx = Machine->gfx[3];
 	const unsigned char *source, *finish;

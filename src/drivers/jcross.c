@@ -23,7 +23,7 @@ Could be bad dump ('final' romset is made of two sets marked as 'bad' )
 #include "sound/ay8910.h"
 #include "sound/namco.h"
 
-data8_t *jcr_textram;
+UINT8 *jcr_textram;
 
 WRITE8_HANDLER( snkwave_w );
 
@@ -40,7 +40,7 @@ WRITE8_HANDLER( jcross_palettebank_w );
 
 static int sound_cpu_busy=0;
 
-data8_t *jcr_sharedram;
+UINT8 *jcr_sharedram;
 static READ8_HANDLER(sharedram_r){	return jcr_sharedram[offset];}
 static WRITE8_HANDLER(sharedram_w){	jcr_sharedram[offset]=data;}
 

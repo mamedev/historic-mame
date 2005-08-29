@@ -13,6 +13,6 @@ VIDEO_START( rampart );
 VIDEO_UPDATE( rampart );
 
 int rampart_bitmap_init(int _xdim, int _ydim);
-void rampart_bitmap_render(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+void rampart_bitmap_render(mame_bitmap *bitmap, const rectangle *cliprect);
 
-extern data16_t *rampart_bitmap;
+extern UINT16 *rampart_bitmap;

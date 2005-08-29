@@ -10,10 +10,10 @@
 #define NUM_SPRITES	(0x800 / 16)
 #define NUM_LAYERS	2
 
-data32_t *djmain_obj_ram;
+UINT32 *djmain_obj_ram;
 
 
-static void djmain_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void djmain_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs, pri_code;
 	int sortedlist[NUM_SPRITES];

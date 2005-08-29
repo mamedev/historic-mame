@@ -154,7 +154,7 @@ WRITE8_HANDLER( looping_videoram_w )
 	tilemap_mark_tile_dirty( bg_tilemap, offset );
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source + 0x10*4; /* ? */

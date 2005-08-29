@@ -65,7 +65,7 @@ VIDEO_START( ninjaw )
             SPRITE DRAW ROUTINE
 ************************************************************/
 
-static void ninjaw_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int primask,int y_offs)
+static void ninjaw_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int primask,int y_offs)
 {
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, invis, curx, cury;

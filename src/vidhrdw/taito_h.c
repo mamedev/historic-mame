@@ -51,10 +51,10 @@ sprite RAM
 #include "taitoic.h"
 
 
-extern data16_t	*TC0080VCO_chain_ram_0;
-extern data16_t	*TC0080VCO_chain_ram_1;
-extern data16_t	*TC0080VCO_spriteram;
-extern data16_t	*TC0080VCO_scroll_ram;
+extern UINT16	*TC0080VCO_chain_ram_0;
+extern UINT16	*TC0080VCO_chain_ram_1;
+extern UINT16	*TC0080VCO_spriteram;
+extern UINT16	*TC0080VCO_scroll_ram;
 extern int		TC0080VCO_flipscreen;
 
 /* Needed in the sprite palette color marking */
@@ -110,7 +110,7 @@ VIDEO_START( dleague )
   Screen refresh
 ***************************************************************************/
 
-static void syvalion_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void syvalion_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
        is always 64 pixels. */
@@ -203,7 +203,7 @@ static void syvalion_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 	}
 }
 
-static void recordbr_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void recordbr_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
        is always 64 pixels. */
@@ -315,7 +315,7 @@ static void recordbr_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 	}
 }
 
-static void dleague_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void dleague_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 	/* Y chain size is 16/32?/64/64? pixels. X chain size
        is always 64 pixels. */

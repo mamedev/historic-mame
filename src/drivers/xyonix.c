@@ -23,7 +23,7 @@ TODO:
 #include "cpu/z80/z80.h"
 #include "sound/sn76496.h"
 
-data8_t *xyonix_vidram;
+UINT8 *xyonix_vidram;
 
 /* in vidhrdw/xyonix.c */
 PALETTE_INIT( xyonix );

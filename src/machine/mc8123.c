@@ -2991,7 +2991,7 @@ static int decrypt(int val,int param,int opcode)
 	}
 }
 
-static data8_t mc8123_decrypt(offs_t addr,data8_t val,UINT8 *key,int opcode)
+static UINT8 mc8123_decrypt(offs_t addr,UINT8 val,UINT8 *key,int opcode)
 {
 	int tbl_num;
 

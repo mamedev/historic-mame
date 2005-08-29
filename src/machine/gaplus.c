@@ -12,7 +12,7 @@
 #include "machine/namcoio.h"
 #include "sound/samples.h"
 
-data8_t *gaplus_customio_3;
+UINT8 *gaplus_customio_3;
 
 /************************************************************************************
 *                                                                                   *

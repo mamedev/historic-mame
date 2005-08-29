@@ -1,6 +1,6 @@
 /* Variables defined in vidhrdw: */
 
-extern data8_t *paradise_vram_0,*paradise_vram_1,*paradise_vram_2;
+extern UINT8 *paradise_vram_0,*paradise_vram_1,*paradise_vram_2;
 extern int paradise_sprite_inc;
 
 /* Functions defined in vidhrdw: */

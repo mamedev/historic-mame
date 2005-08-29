@@ -221,7 +221,7 @@ there are 9 PALS on the pcb (not dumped)
 #include "vidhrdw/generic.h"
 #include "sound/ymz280b.h"
 
-extern data32_t* skns_spc_regs;
+extern UINT32* skns_spc_regs;
 
 
 /***************************************************************************
@@ -236,16 +236,16 @@ Provided we found a working PCB, trojan code will help:
 This will benefit galpani3 and other kaneko16 games with TOYBOX MCU.
 
 ***************************************************************************/
-static data16_t *mcu_ram, jchan_mcu_com[4];
+static UINT16 *mcu_ram, jchan_mcu_com[4];
 
 extern const game_driver driver_jchan;
 extern const game_driver driver_jchan2;
 
 void jchan_mcu_run(void)
 {
-	data16_t mcu_command = mcu_ram[0x0010/2];		/* command nb */
-	data16_t mcu_offset  = mcu_ram[0x0012/2] / 2;	/* offset in shared RAM where MCU will write */
-	data16_t mcu_subcmd  = mcu_ram[0x0014/2];		/* sub-command parameter, happens only for command #4 */
+	UINT16 mcu_command = mcu_ram[0x0010/2];		/* command nb */
+	UINT16 mcu_offset  = mcu_ram[0x0012/2] / 2;	/* offset in shared RAM where MCU will write */
+	UINT16 mcu_subcmd  = mcu_ram[0x0014/2];		/* sub-command parameter, happens only for command #4 */
 
 	logerror("CPU #0 (PC=%06X) : MCU executed command: %04X %04X %04X ",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_subcmd);
 
@@ -397,7 +397,7 @@ WRITE16_HANDLER( jchan_mcu_com##_n_##_w ) \
 	if (jchan_mcu_com[2] != 0xFFFF)	return; \
 	if (jchan_mcu_com[3] != 0xFFFF)	return; \
 \
-	memset(jchan_mcu_com, 0, 4 * sizeof( data16_t ) ); \
+	memset(jchan_mcu_com, 0, 4 * sizeof( UINT16 ) ); \
 	jchan_mcu_run(); \
 }
 
@@ -418,7 +418,7 @@ READ16_HANDLER( jchan_mcu_status_r )
 
 ***************************************************************************/
 
-static data16_t *jchan_spriteram;
+static UINT16 *jchan_spriteram;
 
 INTERRUPT_GEN( jchan_vblank )
 {
@@ -440,7 +440,7 @@ VIDEO_START(jchan)
 	return 0;
 }
 
-extern void skns_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
+extern void skns_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect );
 
 
 VIDEO_UPDATE(jchan)
@@ -461,7 +461,7 @@ VIDEO_UPDATE(jchan)
     $f00006 is read and impacts controls 'decoding'
     $f00000 is the only location also written
 */
-static data16_t *jchan_ctrl;
+static UINT16 *jchan_ctrl;
 
 WRITE16_HANDLER( jchan_ctrl_w )
 {
@@ -491,7 +491,7 @@ READ16_HANDLER ( jchan_ctrl_r )
 
 ***************************************************************************/
 
-static data16_t *mainsub_shared_ram;
+static UINT16 *mainsub_shared_ram;
 
 #define main2sub_cmd      mainsub_shared_ram[0x03ffe/2]
 #define main2sub_status   mainsub_shared_ram[0x00002/2]
@@ -546,7 +546,7 @@ READ16_HANDLER ( sub2main_cmd_r )
 
 WRITE16_HANDLER( jchan_suprnova_sprite32_w )
 {
-//  data32_t dat32;
+//  UINT32 dat32;
 
 	COMBINE_DATA(&jchan_spriteram[offset]);
 
@@ -555,11 +555,11 @@ WRITE16_HANDLER( jchan_suprnova_sprite32_w )
 	buffered_spriteram32[offset]=(jchan_spriteram[offset*2+1]<<16) | (jchan_spriteram[offset*2]);
 }
 
-data16_t* jchan_sprregs;
+UINT16* jchan_sprregs;
 
 WRITE16_HANDLER( jchan_suprnova_sprite32regs_w )
 {
-//  data32_t dat32;
+//  UINT32 dat32;
 
 	COMBINE_DATA(&jchan_sprregs[offset]);
 
@@ -893,7 +893,7 @@ ROM_END
 
 DRIVER_INIT( jchan )
 {
-	memset(jchan_mcu_com, 0, 4 * sizeof( data16_t) );
+	memset(jchan_mcu_com, 0, 4 * sizeof( UINT16) );
 }
 
 

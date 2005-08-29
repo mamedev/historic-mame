@@ -2,8 +2,8 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
-data16_t *topspeed_spritemap;
-data16_t *topspeed_raster_ctrl;
+UINT16 *topspeed_spritemap;
+UINT16 *topspeed_raster_ctrl;
 
 /****************************************************************************/
 
@@ -39,10 +39,10 @@ VIDEO_START( topspeed )
 
 ********************************************************************************/
 
-void topspeed_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+void topspeed_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,map_offset,x,y,curx,cury,sprite_chunk;
-	data16_t *spritemap = topspeed_spritemap;
+	UINT16 *spritemap = topspeed_spritemap;
 	UINT16 data,tilenum,code,color;
 	UINT8 flipx,flipy,priority,bad_chunks;
 	UINT8 j,k,px,py,zx,zy,zoomx,zoomy;

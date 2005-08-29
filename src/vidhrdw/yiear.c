@@ -117,7 +117,7 @@ VIDEO_START( yiear )
 	return 0;
 }
 
-static void yiear_draw_sprites( struct mame_bitmap *bitmap )
+static void yiear_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

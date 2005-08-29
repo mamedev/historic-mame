@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 
 int portrait_scroll;
-data8_t *portrait_bgvideoram, *portrait_fgvideoram;
+UINT8 *portrait_bgvideoram, *portrait_fgvideoram;
 static tilemap *foreground, *background;
 
 WRITE8_HANDLER( portrait_bgvideo_write )
@@ -30,7 +30,7 @@ WRITE8_HANDLER( portrait_fgvideo_write )
 	}
 }
 
-static void get_tile_info( const data8_t *source, int tile_index )
+static void get_tile_info( const UINT8 *source, int tile_index )
 {
 	int attr    = source[tile_index*2+0];
 	int tilenum = source[tile_index*2+1];
@@ -101,10 +101,10 @@ PALETTE_INIT( portrait )
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	data8_t *source = spriteram;
-	data8_t *finish = source + 0x200;
+	UINT8 *source = spriteram;
+	UINT8 *finish = source + 0x200;
 
 	while( source < finish )
 	{
@@ -160,7 +160,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 VIDEO_UPDATE( portrait )
 {
-	struct rectangle cliprect_scroll, cliprect_no_scroll;
+	rectangle cliprect_scroll, cliprect_no_scroll;
 
 	cliprect_scroll = cliprect_no_scroll = *cliprect;
 

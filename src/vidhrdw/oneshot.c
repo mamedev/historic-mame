@@ -2,11 +2,11 @@
 
 #include "driver.h"
 
-extern data16_t *oneshot_sprites;
-extern data16_t *oneshot_bg_videoram;
-extern data16_t *oneshot_mid_videoram;
-extern data16_t *oneshot_fg_videoram;
-extern data16_t *oneshot_scroll;
+extern UINT16 *oneshot_sprites;
+extern UINT16 *oneshot_bg_videoram;
+extern UINT16 *oneshot_mid_videoram;
+extern UINT16 *oneshot_fg_videoram;
+extern UINT16 *oneshot_scroll;
 
 extern int gun_x_p1,gun_y_p1,gun_x_p2,gun_y_p2;
 extern int gun_x_shift;
@@ -87,7 +87,7 @@ VIDEO_START( oneshot )
 	return 0;
 }
 
-static void oneshot_drawcrosshairs( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void oneshot_drawcrosshairs( mame_bitmap *bitmap, const rectangle *cliprect )
 {
     int xpos,ypos;
     /* get gun raw coordonates (player 1) */
@@ -123,7 +123,7 @@ static void oneshot_drawcrosshairs( struct mame_bitmap *bitmap, const struct rec
     draw_crosshair( bitmap, xpos, ypos, cliprect, 1 );
 }
 
-static void oneshot_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void oneshot_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const UINT16 *source = oneshot_sprites;
 	const UINT16 *finish = source+(0x1000/2);

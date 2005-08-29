@@ -3,7 +3,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
-static struct mame_bitmap* pixel_layer = 0;
+static mame_bitmap* pixel_layer = 0;
 
 static UINT16* video_ram = NULL;
 

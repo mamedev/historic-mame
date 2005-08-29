@@ -9,9 +9,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data8_t *retofinv_bg_videoram;
-data8_t *retofinv_fg_videoram;
-data8_t *retofinv_sharedram;
+UINT8 *retofinv_bg_videoram;
+UINT8 *retofinv_fg_videoram;
+UINT8 *retofinv_sharedram;
 
 static int fg_bank,bg_bank;
 static tilemap *bg_tilemap,*fg_tilemap;
@@ -204,10 +204,10 @@ WRITE8_HANDLER( retofinv_gfx_ctrl_w )
 
 ***************************************************************************/
 
-void draw_sprites(struct mame_bitmap *bitmap)
+void draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
-	static struct rectangle spritevisiblearea =
+	static rectangle spritevisiblearea =
 	{
 		2*8, 34*8-1,
 		0*8, 28*8-1

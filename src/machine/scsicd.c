@@ -13,10 +13,10 @@
 
 typedef struct
 {
-	data32_t lba, blocks, last_lba, bytes_per_sector, num_subblocks, cur_subblock;
+	UINT32 lba, blocks, last_lba, bytes_per_sector, num_subblocks, cur_subblock;
 	int last_command;
  	cdrom_file *cdrom;
-	data8_t last_packet[16];
+	UINT8 last_packet[16];
 } SCSICd;
 
 
@@ -24,7 +24,7 @@ typedef struct
 //
 // Execute a SCSI command passed in via pCmdBuf.
 
-int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
+int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 {
 	cdrom_file *cdrom = our_this->cdrom;
 	int retval = 12, trk;
@@ -187,14 +187,14 @@ int scsicd_exec_command(SCSICd *our_this, data8_t *pCmdBuf)
 //
 // Read data from the device resulting from the execution of a command
 
-void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
+void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 {
 	int i;
 	UINT32 last_phys_frame;
-	data8_t *fifo = our_this->last_packet;
+	UINT8 *fifo = our_this->last_packet;
 	cdrom_file *cdrom = our_this->cdrom;
-	data32_t temp;
-	data8_t tmp_buffer[2048];
+	UINT32 temp;
+	UINT8 tmp_buffer[2048];
 
 	switch (our_this->last_command)
 	{
@@ -329,9 +329,9 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 			{
 				case 0:		// normal
 					{
-						data8_t start_trk = fifo[6];
+						UINT8 start_trk = fifo[6];
 						int trks, len, in_len, dptr;
-						data32_t tstart;
+						UINT32 tstart;
 
 						in_len = fifo[7]<<8 | fifo[8];
 
@@ -418,7 +418,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, data8_t *pData)
 //
 // Write data to the CD-ROM device as part of the execution of a command
 
-void scsicd_write_data(SCSICd *our_this, int bytes, data8_t *pData)
+void scsicd_write_data(SCSICd *our_this, int bytes, UINT8 *pData)
 {
 	switch (our_this->last_command)
 	{
@@ -454,7 +454,7 @@ void scsicd_write_data(SCSICd *our_this, int bytes, data8_t *pData)
 	}
 }
 
-int scsicd_dispatch(int operation, void *file, INT64 intparm, data8_t *ptrparm)
+int scsicd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm)
 {
 	SCSICd *instance, **result;
 	cdrom_file **devptr;

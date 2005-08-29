@@ -126,16 +126,16 @@
  *
  *************************************/
 
-data16_t *itech32_video;
-data32_t *drivedge_zbuf_control;
+UINT16 *itech32_video;
+UINT32 *drivedge_zbuf_control;
 UINT8 itech32_planes;
 UINT16 itech32_vram_height;
 
-static data16_t xfer_xcount, xfer_ycount;
-static data16_t xfer_xcur, xfer_ycur;
+static UINT16 xfer_xcount, xfer_ycount;
+static UINT16 xfer_xcur, xfer_ycur;
 
-static struct rectangle clip_rect, scaled_clip_rect;
-static struct rectangle clip_save;
+static rectangle clip_rect, scaled_clip_rect;
+static rectangle clip_save;
 
 static void *scanline_timer;
 

@@ -21,10 +21,10 @@ static struct tempsprite *spritelist;
 
 static int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 static int sprites_flipscreen = 0;
-static data16_t *spriteram_buffered,*spriteram_delayed;
+static UINT16 *spriteram_buffered,*spriteram_delayed;
 
 int taito_sprite_type = 0;
-data16_t *taito_sprite_ext;
+UINT16 *taito_sprite_ext;
 size_t taito_spriteext_size;
 static UINT16 spritebank[8];
 
@@ -87,7 +87,7 @@ VIDEO_START( slapshot )
             SPRITE DRAW ROUTINES
 ************************************************************/
 
-static void slapshot_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int y_offset)
+static void slapshot_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int *primasks,int y_offset)
 {
 	/*
         Sprite format:

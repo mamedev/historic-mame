@@ -28,18 +28,18 @@ extern int equites_id, equites_flip;
 // Locals
 
 static tilemap *charmap0, *charmap1, *activecharmap, *inactivecharmap;
-static data16_t *defcharram, *charram0, *charram1, *activecharram, *inactivecharram;
+static UINT16 *defcharram, *charram0, *charram1, *activecharram, *inactivecharram;
 static unsigned char *dirtybuf;
 static int maskwidth, maskheight, maskcolor;
 static int scrollx, scrolly;
 static int bgcolor[4];
-static struct rectangle halfclip;
+static rectangle halfclip;
 static struct PRESTEP_TYPE { unsigned sy, fdx; } *prestep;
 
 /******************************************************************************/
 // Exports
 
-data16_t *splndrbt_scrollx, *splndrbt_scrolly;
+UINT16 *splndrbt_scrollx, *splndrbt_scrolly;
 
 /******************************************************************************/
 // Initializations
@@ -192,7 +192,7 @@ static void splndrbt_video_reset(void)
 
 static void splndrbt_prestep(
 	struct PRESTEP_TYPE *ps,
-	const struct rectangle *dst_clip,
+	const rectangle *dst_clip,
 	int src_w, int src_h,
 	int dst_startw, int dst_endw)
 {
@@ -252,8 +252,8 @@ VIDEO_START( splndrbt )
 	tilemap_set_scrolldy(charmap1, 32, 32);
 
 	if ((buf8ptr = auto_malloc(videoram_size * 2)) == NULL) return(-1);
-	charram0 = (data16_t*)buf8ptr;
-	charram1 = (data16_t*)(buf8ptr + videoram_size);
+	charram0 = (UINT16*)buf8ptr;
+	charram1 = (UINT16*)(buf8ptr + videoram_size);
 
 	if ((dirtybuf = auto_malloc(0x800)) == NULL) return(-1);
 	memset(dirtybuf, 1, 0x800);
@@ -289,7 +289,7 @@ static void equites_update_clut(void)
 	for (i=0x80; i<0x100; i+=0x08) colortable[i] = c;
 }
 
-static void equites_draw_scroll(struct mame_bitmap *bitmap)
+static void equites_draw_scroll(mame_bitmap *bitmap)
 {
 #define TILE_BANKBASE 1
 
@@ -337,14 +337,14 @@ static void equites_draw_scroll(struct mame_bitmap *bitmap)
 #undef TILE_BANKBASE
 }
 
-static void equites_draw_sprites(struct mame_bitmap *bitmap)
+static void equites_draw_sprites(mame_bitmap *bitmap)
 {
 #define SPRITE_BANKBASE 3
 #define SHIFTX -4
 #define SHIFTY 1
 
 	gfx_element *gfx;
-	data16_t *sptr, *eptr;
+	UINT16 *sptr, *eptr;
 	int encode, bank, tile, color, fy, fx, fxy, absx, absy, sx, sy, flipadjx;
 
 	flipadjx = (equites_flip) ? 8 : 0;
@@ -413,7 +413,7 @@ static void splndrbt_update_clut(void)
 	}
 }
 
-static void splndrbt_draw_scroll(struct mame_bitmap *bitmap)
+static void splndrbt_draw_scroll(mame_bitmap *bitmap)
 {
 #define TILE_BANKBASE 1
 
@@ -447,9 +447,9 @@ static void splndrbt_draw_scroll(struct mame_bitmap *bitmap)
 }
 
 static void splndrbt_slantcopy(
-	struct mame_bitmap *src_bitmap,
-	struct mame_bitmap *dst_bitmap,
-	const struct rectangle *dst_clip,
+	mame_bitmap *src_bitmap,
+	mame_bitmap *dst_bitmap,
+	const rectangle *dst_clip,
 	int src_x, int src_y,
 	unsigned src_w, unsigned src_h,
 	unsigned dst_startw, unsigned dst_endw,
@@ -457,11 +457,11 @@ static void splndrbt_slantcopy(
 {
 #define WARP ((1<<BMW_l2)-1)
 
-	data16_t *src_base, *src_ptr, *dst_ptr;
+	UINT16 *src_base, *src_ptr, *dst_ptr;
 	int src_pitch, dst_pitch, dst_wdiff, dst_visw, dst_vish;
 	int dst_curline, dst_xend, src_fsx, src_fdx, eax, ebx, ecx, edx;
 
-	src_base = (data16_t*)src_bitmap->base;
+	src_base = (UINT16*)src_bitmap->base;
 	src_pitch = src_bitmap->rowpixels;
 	ebx = ((src_x + (src_w>>1)) & WARP) << FP_PRECISION;
 
@@ -470,7 +470,7 @@ static void splndrbt_slantcopy(
 	dst_visw = dst_clip->max_x - eax + 1;
 	dst_vish = dst_clip->max_y - edx;
 	dst_pitch = dst_bitmap->rowpixels;
-	dst_ptr = (data16_t*)dst_bitmap->base + edx * dst_pitch + eax + (dst_visw >> 1);
+	dst_ptr = (UINT16*)dst_bitmap->base + edx * dst_pitch + eax + (dst_visw >> 1);
 
 	dst_wdiff = dst_endw - dst_startw;
 	dst_curline = 0;
@@ -509,7 +509,7 @@ static void splndrbt_slantcopy(
 #undef WARP
 }
 
-static void splndrbt_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *clip)
+static void splndrbt_draw_sprites(mame_bitmap *bitmap, const rectangle *clip)
 {
 #define SPRITE_BANKBASE 3
 #define FP_ONE 0x10000
@@ -517,7 +517,7 @@ static void splndrbt_draw_sprites(struct mame_bitmap *bitmap, const struct recta
 #define SHIFTY 0
 
 	gfx_element *gfx;
-	data16_t *data_ptr;
+	UINT16 *data_ptr;
 	int data, sprite, fx, fy, absx, absy, sx, sy, adjy, scalex, scaley, color, i;
 
 	gfx = Machine->gfx[SPRITE_BANKBASE];

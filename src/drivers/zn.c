@@ -1147,9 +1147,9 @@ Notes:
 */
 
 static size_t taitofx1_eeprom_size1 = 0;
-static data8_t *taitofx1_eeprom1 = NULL;
+static UINT8 *taitofx1_eeprom1 = NULL;
 static size_t taitofx1_eeprom_size2 = 0;
-static data8_t *taitofx1_eeprom2 = NULL;
+static UINT8 *taitofx1_eeprom2 = NULL;
 
 static WRITE32_HANDLER( bank_coh1000t_w )
 {
@@ -1374,7 +1374,7 @@ static WRITE32_HANDLER( taitofx1b_sound_w )
 
 static READ32_HANDLER( taitofx1b_sound_r )
 {
-	data32_t data = 0; // bit 0 = busy?
+	UINT32 data = 0; // bit 0 = busy?
 	verboselog( 1, "taitofx1_sound_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
 	return data;
 }
@@ -1589,7 +1589,7 @@ Notes:
 
 */
 
-static data32_t coh3002t_unknown;
+static UINT32 coh3002t_unknown;
 
 static WRITE32_HANDLER( coh3002t_unknown_w )
 {
@@ -2341,7 +2341,7 @@ static WRITE32_HANDLER( jdredd_ide_w )
 }
 
 static size_t nbajamex_eeprom_size;
-static data8_t *nbajamex_eeprom;
+static UINT8 *nbajamex_eeprom;
 
 static WRITE32_HANDLER( acpsx_00_w )
 {
@@ -2361,14 +2361,14 @@ static WRITE32_HANDLER( nbajamex_80_w )
 
 static READ32_HANDLER( nbajamex_08_r )
 {
-	data32_t data = 0xffffffff;
+	UINT32 data = 0xffffffff;
 	verboselog( 0, "nbajamex_08_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
 	return data;
 }
 
 static READ32_HANDLER( nbajamex_80_r )
 {
-	data32_t data = 0xffffffff;
+	UINT32 data = 0xffffffff;
 	verboselog( 0, "nbajamex_80_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
 	return data;
 }

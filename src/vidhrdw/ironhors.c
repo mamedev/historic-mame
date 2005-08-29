@@ -172,7 +172,7 @@ VIDEO_START( ironhors )
 	return 0;
 }
 
-static void ironhors_draw_sprites( struct mame_bitmap *bitmap )
+static void ironhors_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 	UINT8 *sr;

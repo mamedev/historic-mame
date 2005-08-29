@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 #include "tilemap.h"
 
-data8_t *skykid_textram, *skykid_videoram, *skykid_spriteram;
+UINT8 *skykid_textram, *skykid_videoram, *skykid_spriteram;
 
 static tilemap *bg_tilemap,*tx_tilemap;
 static int priority,scroll_x,scroll_y;
@@ -205,7 +205,7 @@ WRITE8_HANDLER( skykid_flipscreen_priority_w )
 ***************************************************************************/
 
 /* the sprite generator IC is the same as Mappy */
-static void skykid_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void skykid_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

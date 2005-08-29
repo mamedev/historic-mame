@@ -254,13 +254,13 @@ static WRITE8_HANDLER( hanamai_keyboard_w )
 
 static WRITE8_HANDLER( dynax_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 	memory_set_bankptr(1,&ROM[0x08000+0x8000*(data & 0x0f)]);
 }
 
 static WRITE8_HANDLER( jantouki_sound_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU2);
+	UINT8 *ROM = memory_region(REGION_CPU2);
 	memory_set_bankptr(2,&ROM[0x08000+0x8000*data]);
 }
 
@@ -269,13 +269,13 @@ static int hnoridur_bank;
 
 static WRITE8_HANDLER( hnoridur_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU1) + 0x10000 + 0x8000*data;
+	UINT8 *ROM = memory_region(REGION_CPU1) + 0x10000 + 0x8000*data;
 //logerror("%04x: rom bank = %02x\n",activecpu_get_pc(),data);
 	memory_set_bankptr(1,ROM);
 	hnoridur_bank = data;
 }
 
-static data8_t palette_ram[16*256*2];
+static UINT8 palette_ram[16*256*2];
 static int palbank;
 
 static WRITE8_HANDLER( hnoridur_palbank_w )
@@ -301,7 +301,7 @@ static WRITE8_HANDLER( hnoridur_palette_w )
 		// hnoridur: R/W RAM
 		case 0x18:
 		{
-			data8_t *RAM = memory_region(REGION_CPU1) + 0x10000 + hnoridur_bank * 0x8000;
+			UINT8 *RAM = memory_region(REGION_CPU1) + 0x10000 + hnoridur_bank * 0x8000;
 			RAM[offset] = data;
 			return;
 		}
@@ -796,7 +796,7 @@ ADDRESS_MAP_END
                     Yarunara / Quiz TV Q&Q / Mahjong Angels
 ***************************************************************************/
 
-static data8_t yarunara_select, yarunara_ip;
+static UINT8 yarunara_select, yarunara_ip;
 static WRITE8_HANDLER( yarunara_input_w )
 {
 	switch (offset)
@@ -910,7 +910,7 @@ ADDRESS_MAP_END
 
 UINT8 dynax_soundlatch_ack;
 UINT8 dynax_soundlatch_full;
-static data8_t latch;
+static UINT8 latch;
 
 READ8_HANDLER( jantouki_soundlatch_ack_r )
 {
@@ -933,7 +933,7 @@ READ8_HANDLER( jantouki_blitter_busy_r )
 
 static WRITE8_HANDLER( jantouki_rombank_w )
 {
-	data8_t *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 	memory_set_bankptr(1,&ROM[0x8000 + 0x8000*(data&0x0f)]);
 	set_led_status(0,data & 0x10);	// maybe
 }
@@ -3175,12 +3175,12 @@ static DRIVER_INIT( maya )
 {
 	/* Address lines scrambling on 1 z80 rom */
 	int i;
-	data8_t	*gfx = (data8_t *)memory_region(REGION_GFX1);
-	data8_t	*rom = memory_region(REGION_CPU1) + 0x28000,
+	UINT8	*gfx = (UINT8 *)memory_region(REGION_GFX1);
+	UINT8	*rom = memory_region(REGION_CPU1) + 0x28000,
 			*end = rom + 0x10000;
 	for (;rom < end; rom+=8)
 	{
-		data8_t temp[8];
+		UINT8 temp[8];
 		temp[0] = rom[0];	temp[1] = rom[1];	temp[2] = rom[2];	temp[3] = rom[3];
 		temp[4] = rom[4];	temp[5] = rom[5];	temp[6] = rom[6];	temp[7] = rom[7];
 
@@ -3693,9 +3693,9 @@ ROM_END
 static DRIVER_INIT( mjelct3 )
 {
 	int i;
-	data8_t	*rom = memory_region(REGION_CPU1);
+	UINT8	*rom = memory_region(REGION_CPU1);
 	size_t  size = memory_region_length(REGION_CPU1);
-	data8_t	*rom1 = malloc(size);
+	UINT8	*rom1 = malloc(size);
 	if (rom1)
 	{
 		memcpy(rom1,rom,size);
@@ -3708,9 +3708,9 @@ static DRIVER_INIT( mjelct3 )
 static DRIVER_INIT( mjelct3a )
 {
 	int i,j;
-	data8_t	*rom = memory_region(REGION_CPU1);
+	UINT8	*rom = memory_region(REGION_CPU1);
 	size_t  size = memory_region_length(REGION_CPU1);
-	data8_t	*rom1 = malloc(size);
+	UINT8	*rom1 = malloc(size);
 	if (rom1)
 	{
 		memcpy(rom1,rom,size);

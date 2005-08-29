@@ -177,9 +177,9 @@ To Do:
 ***************************************************************************/
 
 static UINT8 requested_int;
-static data16_t *ssv_irq_vectors;
-static data16_t irq_enable;
-static data16_t *ssv_mainram;
+static UINT16 *ssv_irq_vectors;
+static UINT16 irq_enable;
+static UINT16 *ssv_mainram;
 
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
@@ -194,7 +194,7 @@ int ssv_irq_callback(int level)
 	{
 		if (requested_int & (1 << i))
 		{
-			data16_t vector = ssv_irq_vectors[i * (16/2)] & 7;
+			UINT16 vector = ssv_irq_vectors[i * (16/2)] & 7;
 			return vector;
 		}
 	}
@@ -333,7 +333,7 @@ MACHINE_INIT( ssv )
 
 ***************************************************************************/
 
-static data16_t *ssv_nvram;
+static UINT16 *ssv_nvram;
 static size_t    ssv_nvram_size;
 
 NVRAM_HANDLER( ssv )
@@ -434,7 +434,7 @@ static READ16_HANDLER( fake_r )   {   return ssv_scroll[offset];  }
 //AM_RANGE(0x990000, 0x99007f) AM_WRITE(ssv_scroll_w)
 
 
-static data16_t *ssv_input_sel;
+static UINT16 *ssv_input_sel;
 
 /***************************************************************************
                                 Drift Out '94
@@ -468,7 +468,7 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 static int gdfs_gfxram_bank, gdfs_lightgun_select;
-static data16_t *gdfs_blitram;
+static UINT16 *gdfs_blitram;
 
 READ16_HANDLER( gdfs_eeprom_r )
 {
@@ -477,7 +477,7 @@ READ16_HANDLER( gdfs_eeprom_r )
 
 WRITE16_HANDLER( gdfs_eeprom_w )
 {
-	static data16_t data_old;
+	static UINT16 data_old;
 
 	if (data & ~0x7b00)
 		logerror("CPU #0 PC: %06X - Unknown EEPROM bit written %04X\n",activecpu_get_pc(),data);
@@ -624,7 +624,7 @@ ADDRESS_MAP_END
 
 static READ16_HANDLER( hypreact_input_r )
 {
-	data16_t input_sel = *ssv_input_sel;
+	UINT16 input_sel = *ssv_input_sel;
 	if (input_sel & 0x0001)	return readinputport(5);
 	if (input_sel & 0x0002)	return readinputport(6);
 	if (input_sel & 0x0004)	return readinputport(7);
@@ -772,7 +772,7 @@ ADDRESS_MAP_END
 
 static READ16_HANDLER( srmp4_input_r )
 {
-	data16_t input_sel = *ssv_input_sel;
+	UINT16 input_sel = *ssv_input_sel;
 	if (input_sel & 0x0002)	return readinputport(5);
 	if (input_sel & 0x0004)	return readinputport(6);
 	if (input_sel & 0x0008)	return readinputport(7);
@@ -821,7 +821,7 @@ static WRITE16_HANDLER( srmp7_sound_bank_w )
 
 static READ16_HANDLER( srmp7_input_r )
 {
-	data16_t input_sel = *ssv_input_sel;
+	UINT16 input_sel = *ssv_input_sel;
 	if (input_sel & 0x0002)	return readinputport(5);
 	if (input_sel & 0x0004)	return readinputport(6);
 	if (input_sel & 0x0008)	return readinputport(7);
@@ -875,7 +875,7 @@ ADDRESS_MAP_END
                             Pachinko Sexy Reaction
 ***************************************************************************/
 
-static data16_t serial;
+static UINT16 serial;
 
 static READ16_HANDLER( sxyreact_ballswitch_r )
 {
@@ -977,7 +977,7 @@ ADDRESS_MAP_END
   Eagle Shot Golf
 ***************************************************************************/
 
-static data8_t trackball_select, gfxrom_select;
+static UINT8 trackball_select, gfxrom_select;
 
 static READ16_HANDLER( eaglshot_gfxrom_r )
 {
@@ -3332,7 +3332,7 @@ DRIVER_INIT( ryorioh )		{	init_ssv();
 DRIVER_INIT( srmp4 )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf0;
-//  ((data16_t *)memory_region(REGION_USER1))[0x2b38/2] = 0x037a;   /* patch to see gal test mode */
+//  ((UINT16 *)memory_region(REGION_USER1))[0x2b38/2] = 0x037a;   /* patch to see gal test mode */
 							}
 DRIVER_INIT( srmp7 )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = -0xf;

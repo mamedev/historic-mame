@@ -8,7 +8,7 @@
 #include "vidhrdw/generic.h"
 #include "cloak.h"
 
-static struct mame_bitmap *tmpbitmap2;
+static mame_bitmap *tmpbitmap2;
 static UINT8 x,y,bmap;
 static UINT8 *tmpvideoram,*tmpvideoram2;
 
@@ -207,7 +207,7 @@ static void refresh_bitmaps(void)
 }
 #endif
 
-static void cloak_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void cloak_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 

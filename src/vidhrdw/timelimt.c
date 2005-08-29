@@ -1,7 +1,7 @@
 #include "vidhrdw/generic.h"
 
 /* globals */
-data8_t *timelimt_bg_videoram;
+UINT8 *timelimt_bg_videoram;
 size_t timelimt_bg_videoram_size;
 
 /* locals */
@@ -131,7 +131,7 @@ WRITE8_HANDLER( timelimt_scroll_y_w )
     Draw the sprites
 
 ***************************************************************************/
-static void drawsprites( struct mame_bitmap *bitmap )
+static void drawsprites( mame_bitmap *bitmap )
 {
 	int offs;
 

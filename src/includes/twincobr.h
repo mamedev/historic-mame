@@ -41,7 +41,7 @@ extern int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
 extern int twincobr_intenable;
 extern int wardner_membank;
 
-extern data8_t *twincobr_sharedram;
+extern UINT8 *twincobr_sharedram;
 
 
 /************* Video stuff ****** vidhrdw/twincobr.c *************/

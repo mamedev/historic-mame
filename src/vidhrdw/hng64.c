@@ -7,23 +7,23 @@
 
 
 // !!! I'm sure this isn't right !!!
-data32_t hng64_dls[2][0x81] ;
+UINT32 hng64_dls[2][0x81] ;
 
 static int flagFlag = 0 ;
 int dataArray[16] ;
 
 static int frameCount = 0 ;
 
-data32_t* hng64_videoram;
+UINT32* hng64_videoram;
 tilemap *hng64_tilemap;
 tilemap *hng64_tilemap2;
 tilemap *hng64_tilemap3;
 tilemap *hng64_tilemap4;
 
-data32_t *hng64_spriteram;
-data32_t *hng64_videoregs;
+UINT32 *hng64_spriteram;
+UINT32 *hng64_videoregs;
 
-data32_t *hng64_fcram ;
+UINT32 *hng64_fcram ;
 
 static void  matmul4( float *product, const float *a, const float *b ) ;
 static void  vecmatmul4( float *product, const float *a, const float *b) ;
@@ -35,8 +35,8 @@ static float uToF(UINT16 input) ;
 void SetIdentity(float *matrix) ;
 
 
-//static void plot(INT32 x, INT32 y, INT32 color, struct mame_bitmap *bitmap) ;
-//static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, struct mame_bitmap *bitmap) ;
+//static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap) ;
+//static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, mame_bitmap *bitmap) ;
 
 static float *depthBuffer ;
 static struct polygon *polys ;
@@ -73,11 +73,11 @@ static struct polygon *polys ;
 /* xxxx---- | I think this part of UINT32 2 is interesting as more than just a list end marker (AJG)
  */
 
-static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void hng64_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx;
-	data32_t *source = hng64_spriteram;
-	data32_t *finish = hng64_spriteram + 0xb000/4;
+	UINT32 *source = hng64_spriteram;
+	UINT32 *finish = hng64_spriteram + 0xb000/4;
 
 	/* find end of list? */
 	while( source<finish)
@@ -220,7 +220,7 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
  *  Or maybe it switches from fading by scaling to fading using absolute addition and subtraction...
  *  Or maybe they set transition type (there seems to be a cute scaling-squares transition in there somewhere)...
  */
-static void hng64_transition_control(struct mame_bitmap *bitmap)
+static void hng64_transition_control(mame_bitmap *bitmap)
 {
 	int i, j ;
 
@@ -354,11 +354,11 @@ struct polygon
 
 static void PerformFrustumClip(struct polygon *p) ;
 
-//static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap) ;
-static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap) ;
+//static void DrawWireframe(struct polygon *p, mame_bitmap *bitmap) ;
+static void DrawShaded(struct polygon *p, mame_bitmap *bitmap) ;
 
 
-static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i,j,k,l,m ;
 
@@ -382,7 +382,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 	// Display list 2 comes after display list 1.  Go figure.
 	for (j = 1; j >= 0; j--)
 	{
-		data32_t *workingList = hng64_dls[j] ;
+		UINT32 *workingList = hng64_dls[j] ;
 
 		for (i = 0; i < 0x80; i += 0x08)
 		{
@@ -977,7 +977,7 @@ static void get_hng64_tile4_info(int tile_index)
 looks like the zoom center can move too..
 not sure how these features are enabled up yet */
 
-static void hng64_drawtilemap3( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void hng64_drawtilemap3( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int scrollbase,xscroll,yscroll,xzoom,yzoom;
 
@@ -1002,7 +1002,7 @@ static void hng64_drawtilemap3( struct mame_bitmap *bitmap, const struct rectang
 			0,0);
 }
 
-static void hng64_drawtilemap2( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void hng64_drawtilemap2( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int scrollbase,xscroll,yscroll,xzoom,yzoom;
 
@@ -1340,13 +1340,13 @@ static void PerformFrustumClip(struct polygon *p)
 /////////////////////////
 #if 0
 
-static void plot(INT32 x, INT32 y, INT32 color, struct mame_bitmap *bitmap)
+static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap)
 {
 	((UINT32 *)(bitmap->line[y]))[x] = MAKE_ARGB((UINT8)255, (UINT8)color, (UINT8)color, (UINT8)color) ;
 }
 
 // Stolen from http://en.wikipedia.org/wiki/Bresenham's_line_algorithm (no copyright denoted) - the non-optimized version
-static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, struct mame_bitmap *bitmap)
+static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, mame_bitmap *bitmap)
 {
 #define SWAP(a,b) tmpswap = a; a = b; b = tmpswap;
 
@@ -1403,7 +1403,7 @@ static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, stru
 }
 
 
-static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap)
+static void DrawWireframe(struct polygon *p, mame_bitmap *bitmap)
 {
 	int j;
 	for (j = 0; j < p->n; j++)
@@ -1429,13 +1429,13 @@ static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap)
 // polygon rendering //
 ///////////////////////
 
-void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
+void RasterizeTriangle_SMOOTH_TEX_PC(mame_bitmap *Color,
                                      float A[4], float B[4], float C[4],
                                      float Ca[3], float Cb[3], float Cc[3], // PER-VERTEX RGB COLORS
                                      float Ta[2], float Tb[2], float Tc[2], // PER-VERTEX (S,T) TEX-COORDS
                                      int Wrapping, int Filtering, int Function) ;
 
-static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
+static void DrawShaded(struct polygon *p, mame_bitmap *bitmap)
 {
 	// The perspective-correct texture divide...
 	// !!! There is a very good chance the HNG64 hardware does not do perspective-correct texture-mapping !!!
@@ -1471,7 +1471,7 @@ static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
 /**                                                                 **/
 /**     Output: none                                                **/
 /*********************************************************************/
-INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
+INLINE void FillSmoothTexPCHorizontalLine(mame_bitmap *Color,
 					  int Wrapping, int Filtering, int Function,
 					  int x_start, int x_end, int y, float z_start, float z_delta,
 					  float w_start, float w_delta, float r_start, float r_delta,
@@ -1562,7 +1562,7 @@ INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 //   nearest and bilinear filtering: Filtering={0,1}
 //   replace and modulate application modes: Function={0,1}
 //---------------------------------------------------------------------------
-void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
+void RasterizeTriangle_SMOOTH_TEX_PC(mame_bitmap *Color,
                                      float A[4], float B[4], float C[4],
                                      float Ca[3], float Cb[3], float Cc[3], // PER-VERTEX RGB COLORS
                                      float Ta[2], float Tb[2], float Tc[2], // PER-VERTEX (S,T) TEX-COORDS

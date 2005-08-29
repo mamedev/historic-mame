@@ -2,15 +2,15 @@
 #include "system16.h"
 #include "sound/upd7759.h"
 
-data16_t *sys16_workingram;
-data16_t *sys16_workingram2;
-data16_t *sys16_extraram;
-data16_t *sys16_extraram2;
-data16_t *sys16_extraram3;
+UINT16 *sys16_workingram;
+UINT16 *sys16_workingram2;
+UINT16 *sys16_extraram;
+UINT16 *sys16_extraram2;
+UINT16 *sys16_extraram3;
 
 static void patch_codeX( int offset, int data, int cpu ){
 	int aligned_offset = offset&0xfffffe;
-	data16_t *mem = (data16_t *)memory_region(REGION_CPU1+cpu);
+	UINT16 *mem = (UINT16 *)memory_region(REGION_CPU1+cpu);
 	int old_word = mem[aligned_offset/2];
 
 	if( offset&1 )

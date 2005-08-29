@@ -34,7 +34,7 @@ pen_t default_colortable_mono[] =
 
 /* our chip state */
 typedef struct {
-	struct mame_bitmap		*bitmap;				/* target bitmap */
+	mame_bitmap		*bitmap;				/* target bitmap */
 	UINT8					*videoram;				/* video ram */
 	UINT8					*spriteram;				/* sprite ram */
 	pen_t					*colortable_mono;		/* monochromatic color table modified at run time */
@@ -278,7 +278,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 static void draw_background( const int num, UINT8 *line_priority )
 {
 	/* cache some values locally */
-	struct mame_bitmap *bitmap = chips[num].bitmap;
+	mame_bitmap *bitmap = chips[num].bitmap;
 	const int *ppu_regs = &chips[num].regs[0];
 	const int scanline = chips[num].scanline;
 	const int refresh_data = chips[num].refresh_data;
@@ -410,7 +410,7 @@ static void draw_background( const int num, UINT8 *line_priority )
 static void draw_sprites( const int num, UINT8 *line_priority )
 {
 	/* cache some values locally */
-	struct mame_bitmap *bitmap = chips[num].bitmap;
+	mame_bitmap *bitmap = chips[num].bitmap;
 	const int scanline = chips[num].scanline;
 	const int gfx_bank = intf->gfx_layout_number[num];
 	const int total_elements = Machine->gfx[gfx_bank]->total_elements;
@@ -1139,7 +1139,7 @@ void ppu2c03b_spriteram_dma( int num, const UINT8 *source )
  *  PPU Rendering
  *
  *************************************/
-void ppu2c03b_render( int num, struct mame_bitmap *bitmap, int flipx, int flipy, int sx, int sy )
+void ppu2c03b_render( int num, mame_bitmap *bitmap, int flipx, int flipy, int sx, int sy )
 {
 	/* check bounds */
 	if ( num >= intf->num )

@@ -44,8 +44,8 @@ so it could be by them instead
 #include "driver.h"
 #include "sound/ay8910.h"
 
-static data8_t *hotblock_ram;
-static data8_t *hotblock_pal;
+static UINT8 *hotblock_ram;
+static UINT8 *hotblock_pal;
 static int hotblock_port0;
 static int hotblock_port4;
 

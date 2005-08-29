@@ -89,7 +89,7 @@ VIDEO_START( alpha68k )
 
 /******************************************************************************/
 //AT
-static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j, int s, int e)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int j, int s, int e)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -225,7 +225,7 @@ WRITE16_HANDLER( alpha68k_V_video_control_w )
 	}
 }
 
-static void draw_sprites_V(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int j, int s, int e, int fx_mask, int fy_mask, int sprite_mask)
+static void draw_sprites_V(mame_bitmap *bitmap, const rectangle *cliprect, int j, int s, int e, int fx_mask, int fy_mask, int sprite_mask)
 {
 	int offs,mx,my,color,tile,fx,fy,i;
 
@@ -330,7 +330,7 @@ VIDEO_UPDATE( alpha68k_V_sb )
 
 /******************************************************************************/
 //AT
-static void draw_sprites2(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int c, int d, int yshift)
+static void draw_sprites2(mame_bitmap *bitmap, const rectangle *cliprect, int c, int d, int yshift)
 {
 	int data, offs, mx, my, tile, color, fy, i;
 	UINT8 *color_prom = memory_region(REGION_USER1);
@@ -451,7 +451,7 @@ void jongbou_video_banking(int *bank, int data)
 	*bank = (data>>11 & 4) | (data>>10 & 3);
 }
 
-static void kyros_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int c,int d)
+static void kyros_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int c,int d)
 {
 	int offs,mx,my,color,tile,i,bank,fy,fx;
 	int data;
@@ -511,7 +511,7 @@ VIDEO_UPDATE( kyros )
 
 /******************************************************************************/
 
-static void sstingry_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int c,int d)
+static void sstingry_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int c,int d)
 {
 //AT
 	int data,offs,mx,my,color,tile,i,bank,fy,fx;

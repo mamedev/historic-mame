@@ -13,7 +13,7 @@
 extern void redclash_set_stars_enable( UINT8 on );
 extern void redclash_update_stars_state(void);
 extern void redclash_set_stars_speed( UINT8 speed );
-extern void redclash_draw_stars( struct mame_bitmap *bitmap, UINT8 palette_offset, UINT8 sraider, UINT8 firstx, UINT8 lastx);
+extern void redclash_draw_stars( mame_bitmap *bitmap, UINT8 palette_offset, UINT8 sraider, UINT8 firstx, UINT8 lastx);
 
 static tilemap *bg_tilemap;
 static tilemap *grid_tilemap;
@@ -368,7 +368,7 @@ VIDEO_START( sraider )
 	return 0;
 }
 
-static void ladybug_draw_sprites( struct mame_bitmap *bitmap )
+static void ladybug_draw_sprites( mame_bitmap *bitmap )
 {
 	int offs;
 

@@ -6492,7 +6492,7 @@ enum
 	FD1089B
 };
 
-static data16_t fd1089_decrypt(offs_t addr,data16_t val,UINT8 *key,int opcode,int cpu_type)
+static UINT16 fd1089_decrypt(offs_t addr,UINT16 val,UINT8 *key,int opcode,int cpu_type)
 {
 	int tbl_num,src;
 

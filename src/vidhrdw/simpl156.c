@@ -37,7 +37,7 @@ x = xpos
 
 /* spriteram is really 16-bit.. this can be changed to use 16-bit ram like the tilemaps
  its the same sprite chip Data East used on many, many 16-bit era titles */
-static void simpl156_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void simpl156_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 

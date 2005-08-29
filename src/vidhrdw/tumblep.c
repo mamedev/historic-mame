@@ -16,17 +16,17 @@ to switch between 8*8 tiles and 16*16 tiles.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static data16_t tumblep_control_0[8];
-data16_t *tumblep_pf1_data,*tumblep_pf2_data;
+static UINT16 tumblep_control_0[8];
+UINT16 *tumblep_pf1_data,*tumblep_pf2_data;
 static tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap,*pf2_alt_tilemap;
 static int flipscreen;
-extern data16_t* jumppop_control;
-static data16_t bcstory_tilebank;
-extern data16_t* suprtrio_control;
+extern UINT16* jumppop_control;
+static UINT16 bcstory_tilebank;
+extern UINT16* suprtrio_control;
 
 /******************************************************************************/
 
-static void tumblep_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void tumblep_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -88,7 +88,7 @@ static void tumblep_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 	}
 }
 
-static void jumpkids_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void jumpkids_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -150,7 +150,7 @@ static void jumpkids_drawsprites(struct mame_bitmap *bitmap,const struct rectang
 	}
 }
 
-static void fncywld_drawsprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void fncywld_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
@@ -245,7 +245,7 @@ WRITE16_HANDLER( suprtrio_tilebank_w )
 
 WRITE16_HANDLER( tumblep_pf1_data_w )
 {
-	data16_t oldword=tumblep_pf1_data[offset];
+	UINT16 oldword=tumblep_pf1_data[offset];
 	COMBINE_DATA(&tumblep_pf1_data[offset]);
 	if (oldword!=tumblep_pf1_data[offset]) {
 		tilemap_mark_tile_dirty(pf1_tilemap,offset);
@@ -256,7 +256,7 @@ WRITE16_HANDLER( tumblep_pf1_data_w )
 
 WRITE16_HANDLER( tumblep_pf2_data_w )
 {
-	data16_t oldword=tumblep_pf2_data[offset];
+	UINT16 oldword=tumblep_pf2_data[offset];
 	COMBINE_DATA(&tumblep_pf2_data[offset]);
 	if (oldword!=tumblep_pf2_data[offset]) {
 		tilemap_mark_tile_dirty(pf2_tilemap,offset);
@@ -269,7 +269,7 @@ WRITE16_HANDLER( tumblep_pf2_data_w )
 
 WRITE16_HANDLER( fncywld_pf1_data_w )
 {
-	data16_t oldword=tumblep_pf1_data[offset];
+	UINT16 oldword=tumblep_pf1_data[offset];
 	COMBINE_DATA(&tumblep_pf1_data[offset]);
 	if (oldword!=tumblep_pf1_data[offset]) {
 		tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
@@ -280,7 +280,7 @@ WRITE16_HANDLER( fncywld_pf1_data_w )
 
 WRITE16_HANDLER( fncywld_pf2_data_w )
 {
-	data16_t oldword=tumblep_pf2_data[offset];
+	UINT16 oldword=tumblep_pf2_data[offset];
 	COMBINE_DATA(&tumblep_pf2_data[offset]);
 	if (oldword!=tumblep_pf2_data[offset]) {
 		tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
@@ -302,7 +302,7 @@ static UINT32 tumblep_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows
 	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
 }
 
-INLINE void get_bg_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
+INLINE void get_bg_tile_info(int tile_index,int gfx_bank,UINT16 *gfx_base)
 {
 	int data = gfx_base[tile_index];
 
@@ -327,7 +327,7 @@ static void get_fg_tile_info(int tile_index)
 			0)
 }
 
-INLINE void get_fncywld_bg_tile_info(int tile_index,int gfx_bank,data16_t *gfx_base)
+INLINE void get_fncywld_bg_tile_info(int tile_index,int gfx_bank,UINT16 *gfx_base)
 {
 	int data = gfx_base[tile_index*2];
 	int attr = gfx_base[tile_index*2+1];

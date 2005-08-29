@@ -55,10 +55,10 @@ register 08 could be screen height / 2 (vblank start?)
 #include "sound/okim6295.h"
 
 
-extern data16_t *aerofgt_rasterram;
-extern data16_t *aerofgt_bg1videoram,*aerofgt_bg2videoram;
-extern data16_t *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
-extern data16_t *wbbc97_bitmapram;
+extern UINT16 *aerofgt_rasterram;
+extern UINT16 *aerofgt_bg1videoram,*aerofgt_bg2videoram;
+extern UINT16 *aerofgt_spriteram1,*aerofgt_spriteram2,*aerofgt_spriteram3;
+extern UINT16 *wbbc97_bitmapram;
 extern size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size,aerofgt_spriteram3_size;
 
 WRITE16_HANDLER( aerofgt_bg1videoram_w );
@@ -133,7 +133,7 @@ static WRITE8_HANDLER( pending_command_clear_w )
 
 static WRITE8_HANDLER( aerofgt_sh_bankswitch_w )
 {
-	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
+	UINT8 *rom = memory_region(REGION_CPU2) + 0x10000;
 
 	memory_set_bankptr(1,rom + (data & 0x03) * 0x8000);
 }

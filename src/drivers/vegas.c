@@ -241,29 +241,29 @@
 
 static size_t ramsize;
 
-static data32_t *nile_regs;
+static UINT32 *nile_regs;
 static UINT16 nile_irq_state;
 static UINT16 ide_irq_state;
 
-static data32_t pci_bridge_regs[0x40];
-static data32_t pci_ide_regs[0x40];
-static data32_t pci_3dfx_regs[0x40];
+static UINT32 pci_bridge_regs[0x40];
+static UINT32 pci_ide_regs[0x40];
+static UINT32 pci_3dfx_regs[0x40];
 
 static void *timer[4];
 
-static data8_t vblank_state;
+static UINT8 vblank_state;
 
-static data8_t sio_data[4];
-static data8_t sio_irq_clear;
-static data8_t sio_irq_enable;
-static data8_t sio_irq_state;
-static data8_t sio_led_state;
+static UINT8 sio_data[4];
+static UINT8 sio_irq_clear;
+static UINT8 sio_irq_enable;
+static UINT8 sio_irq_state;
+static UINT8 sio_led_state;
 
-static data8_t pending_analog_read;
+static UINT8 pending_analog_read;
 
-static data8_t cmos_unlocked;
+static UINT8 cmos_unlocked;
 
-static data32_t *timekeeper_nvram;
+static UINT32 *timekeeper_nvram;
 static size_t timekeeper_nvram_size;
 
 static UINT8 voodoo_type;
@@ -375,7 +375,7 @@ INLINE UINT8 make_bcd(UINT8 data)
 
 static READ32_HANDLER( timekeeper_r )
 {
-	data32_t result = timekeeper_nvram[offset];
+	UINT32 result = timekeeper_nvram[offset];
 
 	/* upper bytes are a realtime clock */
 	if ((offset*4) >= 0x7ff0)
@@ -434,7 +434,7 @@ static NVRAM_HANDLER( timekeeper_save )
 
 static READ32_HANDLER( pci_bridge_r )
 {
-	data32_t result = pci_bridge_regs[offset];
+	UINT32 result = pci_bridge_regs[offset];
 
 	switch (offset)
 	{
@@ -466,7 +466,7 @@ static WRITE32_HANDLER( pci_bridge_w )
 
 static READ32_HANDLER( pci_ide_r )
 {
-	data32_t result = pci_ide_regs[offset];
+	UINT32 result = pci_ide_regs[offset];
 
 	switch (offset)
 	{
@@ -527,7 +527,7 @@ static WRITE32_HANDLER( pci_ide_w )
 
 static READ32_HANDLER( pci_3dfx_r )
 {
-	data32_t result = pci_3dfx_regs[offset];
+	UINT32 result = pci_3dfx_regs[offset];
 
 	switch (offset)
 	{
@@ -702,7 +702,7 @@ static void timer_callback(int which)
 
 static READ32_HANDLER( nile_r )
 {
-	data32_t result = nile_regs[offset];
+	UINT32 result = nile_regs[offset];
 	int logit = 1, which;
 
 	switch (offset)
@@ -1139,7 +1139,7 @@ static WRITE32_HANDLER( sio_w )
 
 static READ32_HANDLER( sio_r )
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 	if (!(mem_mask & 0x000000ff)) offset += 0;
 	if (!(mem_mask & 0x0000ff00)) offset += 1;
 	if (!(mem_mask & 0x00ff0000)) offset += 2;
@@ -1218,7 +1218,7 @@ static WRITE32_HANDLER( ide_alt_w )
 
 static READ32_HANDLER( ethernet_r )
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
 		result |= smc91c94_r(offset * 2 + 0, mem_mask);
 	if ((mem_mask & 0xffff0000) != 0xffff0000)

@@ -23,9 +23,9 @@
 #include "machine/random.h"
 #include "vidhrdw/generic.h"
 
-static data32_t *vram;
+static UINT32 *vram;
 static int vbuffer=0;
-static struct mame_bitmap *bitmaps[2];
+static mame_bitmap *bitmaps[2];
 
 static void plot_pixel_rgb(int x, int y, int color)
 {
@@ -42,11 +42,11 @@ static void plot_pixel_rgb(int x, int y, int color)
 	}
 }
 
-static data32_t flash_cmd = 0;
+static UINT32 flash_cmd = 0;
 
 static READ32_HANDLER( flash_r )
 {
-	data32_t *ROM = (data32_t *)memory_region(REGION_USER2);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_USER2);
 
 	if((offset*4 >= 400000*0 && offset*4 < 0x400000*1) ||
 	   (offset*4 >= 400000*7 && offset*4 < 0x400000*8))

@@ -55,9 +55,9 @@ WRITE8_HANDLER( retofinv_bg_videoram_w );
 WRITE8_HANDLER( retofinv_fg_videoram_w );
 WRITE8_HANDLER( retofinv_gfx_ctrl_w );
 
-extern data8_t *retofinv_fg_videoram;
-extern data8_t *retofinv_bg_videoram;
-extern data8_t *retofinv_sharedram;
+extern UINT8 *retofinv_fg_videoram;
+extern UINT8 *retofinv_bg_videoram;
+extern UINT8 *retofinv_sharedram;
 
 static unsigned char cpu2_m6000=0;
 

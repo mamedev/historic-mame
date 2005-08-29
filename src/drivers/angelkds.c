@@ -137,7 +137,7 @@ static WRITE8_HANDLER( angelkds_main_sound_w );
 static READ8_HANDLER( angelkds_sub_sound_r );
 static WRITE8_HANDLER( angelkds_sub_sound_w );
 
-extern data8_t *angelkds_txvideoram, *angelkds_bgtopvideoram, *angelkds_bgbotvideoram;
+extern UINT8 *angelkds_txvideoram, *angelkds_bgtopvideoram, *angelkds_bgbotvideoram;
 
 WRITE8_HANDLER( angelkds_bgtopvideoram_w );
 WRITE8_HANDLER( angelkds_bgbotvideoram_w );

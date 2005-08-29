@@ -11,35 +11,35 @@
 #include "state.h"
 
 
-data8_t *videoram;
-data16_t *videoram16;
-data32_t *videoram32;
+UINT8 *videoram;
+UINT16 *videoram16;
+UINT32 *videoram32;
 size_t videoram_size;
-data8_t *colorram;
-data16_t *colorram16;
-data32_t *colorram32;
-data8_t *spriteram;			/* not used in this module... */
-data16_t *spriteram16;		/* ... */
-data32_t *spriteram32;		/* ... */
-data8_t *spriteram_2;
-data16_t *spriteram16_2;
-data32_t *spriteram32_2;
-data8_t *spriteram_3;
-data16_t *spriteram16_3;
-data32_t *spriteram32_3;
-data8_t *buffered_spriteram;
-data16_t *buffered_spriteram16;
-data32_t *buffered_spriteram32;
-data8_t *buffered_spriteram_2;
-data16_t *buffered_spriteram16_2;
-data32_t *buffered_spriteram32_2;
+UINT8 *colorram;
+UINT16 *colorram16;
+UINT32 *colorram32;
+UINT8 *spriteram;			/* not used in this module... */
+UINT16 *spriteram16;		/* ... */
+UINT32 *spriteram32;		/* ... */
+UINT8 *spriteram_2;
+UINT16 *spriteram16_2;
+UINT32 *spriteram32_2;
+UINT8 *spriteram_3;
+UINT16 *spriteram16_3;
+UINT32 *spriteram32_3;
+UINT8 *buffered_spriteram;
+UINT16 *buffered_spriteram16;
+UINT32 *buffered_spriteram32;
+UINT8 *buffered_spriteram_2;
+UINT16 *buffered_spriteram16_2;
+UINT32 *buffered_spriteram32_2;
 size_t spriteram_size;		/* ... here just for convenience */
 size_t spriteram_2_size;
 size_t spriteram_3_size;
-data8_t *dirtybuffer;
-data16_t *dirtybuffer16;
-data32_t *dirtybuffer32;
-struct mame_bitmap *tmpbitmap;
+UINT8 *dirtybuffer;
+UINT16 *dirtybuffer16;
+UINT32 *dirtybuffer32;
+mame_bitmap *tmpbitmap;
 
 int flip_screen_x, flip_screen_y;
 static int global_attribute_changed;

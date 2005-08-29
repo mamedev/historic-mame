@@ -277,15 +277,15 @@ GFX:                Custom 145     ( 80 pin PQFP)
 #include "machine/random.h"
 
 #define NB1_NVMEM_SIZE (0x800)
-static data32_t *nvmem32;
+static UINT32 *nvmem32;
 
-data32_t *namconb1_workram32;
-data32_t *namconb1_spritebank32;
-data32_t *namconb1_tilebank32;
+UINT32 *namconb1_workram32;
+UINT32 *namconb1_spritebank32;
+UINT32 *namconb1_tilebank32;
 
 /****************************************************************************/
 
-static data32_t *namconb_cpureg32;
+static UINT32 *namconb_cpureg32;
 
 static int
 GetCPURegister(int which)
@@ -410,12 +410,12 @@ static WRITE32_HANDLER( namconb_cpureg_w )
 static NVRAM_HANDLER( namconb1 )
 {
 	int i;
-	data8_t data[4];
+	UINT8 data[4];
 	if( read_or_write )
 	{
 		for( i=0; i<NB1_NVMEM_SIZE/4; i++ )
 		{
-			data32_t dword = nvmem32[i];
+			UINT32 dword = nvmem32[i];
 			data[0] = dword>>24;
 			data[1] = (dword&0x00ff0000)>>16;
 			data[2] = (dword&0x0000ff00)>>8;
@@ -487,8 +487,8 @@ static void
 ShuffleDataROMs( void )
 {
 	size_t len = memory_region_length(REGION_USER1)/4;
-	data8_t *pMem8 = (data8_t *)memory_region( REGION_USER1 );
-	data32_t *pMem32 = (data32_t *)pMem8;
+	UINT8 *pMem8 = (UINT8 *)memory_region( REGION_USER1 );
+	UINT32 *pMem32 = (UINT32 *)pMem8;
 	int i;
 
 	for( i=0; i<len; i++ )
@@ -513,8 +513,8 @@ static DRIVER_INIT( outfxies )
 
 static READ32_HANDLER( custom_key_r )
 {
-	static data16_t count;
-	data16_t old_count = count;
+	static UINT16 count;
+	UINT16 old_count = count;
 
 	do
 	{ /* pick a random number, but don't pick the same twice in a row */

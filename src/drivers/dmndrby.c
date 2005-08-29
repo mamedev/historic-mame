@@ -39,7 +39,7 @@ DD10 DD14  DD18     H5            DD21
 #include "driver.h"
 #include "machine/random.h"
 
-static data8_t* dderby_vid;
+static UINT8* dderby_vid;
 
 static READ8_HANDLER( dderby_random_reader )
 {

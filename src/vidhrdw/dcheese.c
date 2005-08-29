@@ -27,12 +27,12 @@
  *
  *************************************/
 
-static data16_t blitter_color[2];
-static data16_t blitter_xparam[16];
-static data16_t blitter_yparam[16];
-static data16_t blitter_vidparam[32];
+static UINT16 blitter_color[2];
+static UINT16 blitter_xparam[16];
+static UINT16 blitter_yparam[16];
+static UINT16 blitter_vidparam[32];
 
-static struct mame_bitmap *dstbitmap;
+static mame_bitmap *dstbitmap;
 static mame_timer *blitter_timer;
 
 

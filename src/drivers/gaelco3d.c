@@ -154,18 +154,18 @@ REF. 970429
 #define SOUND_CHANNELS	4
 
 
-static data32_t *adsp_ram_base;
-static data16_t *m68k_ram_base;
-static data16_t *tms_comm_base;
-static data16_t sound_data;
-static data8_t sound_status;
+static UINT32 *adsp_ram_base;
+static UINT16 *m68k_ram_base;
+static UINT16 *tms_comm_base;
+static UINT16 sound_data;
+static UINT8 sound_status;
 static offs_t tms_offset_xor;
-static data8_t analog_ports[4];
-static data8_t framenum;
+static UINT8 analog_ports[4];
+static UINT8 framenum;
 
 static mame_timer *adsp_autobuffer_timer;
-static data16_t *adsp_control_regs;
-static data16_t *adsp_fastram_base;
+static UINT16 *adsp_control_regs;
+static UINT16 *adsp_fastram_base;
 static UINT8 adsp_ireg;
 static offs_t adsp_ireg_base, adsp_incs, adsp_size;
 
@@ -279,7 +279,7 @@ static NVRAM_HANDLER( gaelco3d )
 
 static READ16_HANDLER( eeprom_data_r )
 {
-	data16_t result = 0xffff;
+	UINT16 result = 0xffff;
 	if (EEPROM_read_bit())
 		result ^= 0x0004;
 	logerror("eeprom_data_r(%02X)\n", result);
@@ -382,7 +382,7 @@ static READ32_HANDLER( input_port_1_020_r )
 
 static READ16_HANDLER( analog_port_r )
 {
-	data16_t result = readinputport(2) << 8;
+	UINT16 result = readinputport(2) << 8;
 	result |= ((analog_ports[0] >> 7) & 0x01) << 12;
 	return result;
 }
@@ -792,8 +792,8 @@ static ADDRESS_MAP_START( main020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x510154, 0x510157) AM_WRITE(analog_port_clock_020_w)
 	AM_RANGE(0x510164, 0x510167) AM_WRITE(analog_port_latch_020_w)
 	AM_RANGE(0x510174, 0x510177) AM_WRITE(led_1_020_w)
-	AM_RANGE(0xfe7f80, 0xfe7fff) AM_WRITE(tms_comm_020_w) AM_BASE((data32_t **)&tms_comm_base)
-	AM_RANGE(0xfe0000, 0xfeffff) AM_RAM AM_BASE((data32_t **)&m68k_ram_base)
+	AM_RANGE(0xfe7f80, 0xfe7fff) AM_WRITE(tms_comm_020_w) AM_BASE((UINT32 **)&tms_comm_base)
+	AM_RANGE(0xfe0000, 0xfeffff) AM_RAM AM_BASE((UINT32 **)&m68k_ram_base)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tms_map, ADDRESS_SPACE_PROGRAM, 32 )

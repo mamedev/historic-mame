@@ -55,7 +55,7 @@ static INTERRUPT_GEN( lasso_interrupt )
 
 /* Shared RAM between Main CPU and sub CPU */
 
-static data8_t *lasso_sharedram;
+static UINT8 *lasso_sharedram;
 
 static READ8_HANDLER( lasso_sharedram_r )
 {
@@ -81,7 +81,7 @@ static READ8_HANDLER( sound_status_r )
 	return 0x03;
 }
 
-static data8_t lasso_chip_data;
+static UINT8 lasso_chip_data;
 
 static WRITE8_HANDLER( sound_data_w )
 {

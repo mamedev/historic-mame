@@ -39,12 +39,12 @@ Sound not working on Return of Lady Frog
 #include "sound/msm5205.h"
 
 
-extern data16_t *splash_vregs;
-extern data16_t *splash_videoram;
-extern data16_t *splash_spriteram;
-extern data16_t *splash_pixelram;
-extern data16_t *roldfrog_bitmap_mode;
-data16_t *roldfrog_protdata;
+extern UINT16 *splash_vregs;
+extern UINT16 *splash_videoram;
+extern UINT16 *splash_spriteram;
+extern UINT16 *splash_pixelram;
+extern UINT16 *roldfrog_bitmap_mode;
+UINT16 *roldfrog_protdata;
 
 extern int splash_bitmap_type;
 /* from vidhrdw/gaelco.c */
@@ -777,7 +777,7 @@ ROM_END
 
 void init_protection_data (void)
 {
-	data16_t *PROTDATA = (data16_t*)memory_region(REGION_USER1);
+	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
 
 	for (i = 0;i < 0x8000/2;i++)
@@ -797,7 +797,7 @@ DRIVER_INIT( roldfrog )
 
 DRIVER_INIT( funystrp )
 {
-	data16_t *ROM = (data16_t *)memory_region(REGION_CPU1);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 
 	splash_bitmap_type = 0;
 

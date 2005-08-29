@@ -53,7 +53,7 @@
  *
  *************************************/
 
-static data16_t *workram;
+static UINT16 *workram;
 
 static UINT8 rom_board;
 static UINT8 misc_io_data[0x10];
@@ -148,14 +148,14 @@ static const struct segaic16_memory_map_entry *region_info_list[] =
  *
  *************************************/
 
-static void sound_w(data8_t data)
+static void sound_w(UINT8 data)
 {
 	soundlatch_w(0, data & 0xff);
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
-static data8_t sound_r(void)
+static UINT8 sound_r(void)
 {
 	return mcu_data;
 }
@@ -437,7 +437,7 @@ static READ16_HANDLER( ddcrew_custom_io_r )
 
 static READ16_HANDLER( lghost_custom_io_r )
 {
-	data16_t result;
+	UINT16 result;
 	switch (offset)
 	{
 		case 0x3010/2:

@@ -357,9 +357,9 @@ void f3_68681_reset(void);
 
 static int taitojc_gfx_index;
 
-static data8_t *taitojc_dirty_map;
-static data32_t *taitojc_char_ram;
-static data32_t *taitojc_tile_ram;
+static UINT8 *taitojc_dirty_map;
+static UINT32 *taitojc_char_ram;
+static UINT32 *taitojc_tile_ram;
 static int taitojc_char_dirty = 1;
 static tilemap *taitojc_tilemap;
 
@@ -467,7 +467,7 @@ VIDEO_UPDATE( taitojc )
 	tilemap_draw(bitmap, cliprect, taitojc_tilemap, 0,0);
 }
 
-data32_t jc_unk4_data = 0;
+UINT32 jc_unk4_data = 0;
 READ32_HANDLER ( jc_unknown4_r )
 {
 	return jc_unk4_data | 0x02000000;		/* 0x2000000 enables memory test. Test switch ? */
@@ -487,7 +487,7 @@ READ32_HANDLER(jc_unknown3_r)
 }
 
 static int jc_unk2_regs[4] = { 0xff, 0, 0x1, 0 };
-static data32_t jc_unk2_reg = 0;
+static UINT32 jc_unk2_reg = 0;
 READ32_HANDLER(jc_unknown2_r)
 {
 	jc_unk2_reg++;
@@ -561,7 +561,7 @@ static gfx_decode gfxdecodeinfo[] =
 static MACHINE_INIT( jc )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
+	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
 	memory_set_bankptr(1,&RAM[0x80000]);
 	memory_set_bankptr(2,&RAM[0x90000]);
 	memory_set_bankptr(3,&RAM[0xa0000]);

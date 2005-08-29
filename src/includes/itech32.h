@@ -17,8 +17,8 @@ void drivedge_update_interrupts(int vint, int xint, int qint);
 
 /*----------- defined in vidhrdw/itech32.c -----------*/
 
-extern data16_t *itech32_video;
-extern data32_t *drivedge_zbuf_control;
+extern UINT16 *itech32_video;
+extern UINT32 *drivedge_zbuf_control;
 extern UINT8 itech32_planes;
 extern UINT16 itech32_vram_height;
 

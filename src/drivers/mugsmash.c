@@ -43,8 +43,8 @@ behavior we use .
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
-data16_t *mugsmash_videoram1, *mugsmash_videoram2, *mugs_spriteram;
-data16_t *mugsmash_regs1, *mugsmash_regs2;
+UINT16 *mugsmash_videoram1, *mugsmash_videoram2, *mugs_spriteram;
+UINT16 *mugsmash_regs1, *mugsmash_regs2;
 
 VIDEO_START( mugsmash );
 VIDEO_UPDATE( mugsmash );

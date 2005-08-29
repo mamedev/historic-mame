@@ -5,7 +5,7 @@
 ***************************************************************************/
 
 /* defined in machine/kyugo.c */
-extern data8_t *kyugo_sharedram;
+extern UINT8 *kyugo_sharedram;
 
 MACHINE_INIT( kyugo );
 
@@ -15,11 +15,11 @@ WRITE8_HANDLER( kyugo_sharedram_w );
 WRITE8_HANDLER( kyugo_sub_cpu_control_w );
 
 /* defined in vidhrdw/kyugo.c */
-extern data8_t *kyugo_fgvideoram;
-extern data8_t *kyugo_bgvideoram;
-extern data8_t *kyugo_bgattribram;
-extern data8_t *kyugo_spriteram_1;
-extern data8_t *kyugo_spriteram_2;
+extern UINT8 *kyugo_fgvideoram;
+extern UINT8 *kyugo_bgvideoram;
+extern UINT8 *kyugo_bgattribram;
+extern UINT8 *kyugo_spriteram_1;
+extern UINT8 *kyugo_spriteram_2;
 
 READ8_HANDLER( kyugo_spriteram_2_r );
 

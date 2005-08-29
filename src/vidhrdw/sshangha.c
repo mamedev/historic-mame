@@ -8,9 +8,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-data16_t *sshangha_pf2_data,*sshangha_pf1_data;
-data16_t *sshangha_pf1_rowscroll,*sshangha_pf2_rowscroll;
-static data16_t sshangha_control_0[8];
+UINT16 *sshangha_pf2_data,*sshangha_pf1_data;
+UINT16 *sshangha_pf1_rowscroll,*sshangha_pf2_rowscroll;
+static UINT16 sshangha_control_0[8];
 static tilemap *pf1_8x8_tilemap,*pf1_16x16_tilemap,*pf2_tilemap;
 static int sshangha_pf1_bank,sshangha_pf2_bank,sshangha_video_control;
 
@@ -30,10 +30,10 @@ WRITE16_HANDLER( sshangha_palette_24bit_w )
 	palette_set_color(offset/2,r,g,b);
 }
 
-static void sshangha_tilemap_draw(struct mame_bitmap *bitmap)
+static void sshangha_tilemap_draw(mame_bitmap *bitmap)
 {
-	const struct mame_bitmap *bitmap0 = tilemap_get_pixmap(pf1_16x16_tilemap);
-	const struct mame_bitmap *bitmap1 = tilemap_get_pixmap(pf2_tilemap);
+	const mame_bitmap *bitmap0 = tilemap_get_pixmap(pf1_16x16_tilemap);
+	const mame_bitmap *bitmap1 = tilemap_get_pixmap(pf2_tilemap);
 	int x,y,p;
 
 	for (y=0; y<240; y++) {
@@ -55,7 +55,7 @@ WRITE16_HANDLER (sshangha_video_w)
 
 /******************************************************************************/
 
-static void sshangha_drawsprites(struct mame_bitmap *bitmap, data16_t *spritesrc, data16_t pmask, data16_t pval)
+static void sshangha_drawsprites(mame_bitmap *bitmap, UINT16 *spritesrc, UINT16 pmask, UINT16 pval)
 {
 	int offs;
 
@@ -127,7 +127,7 @@ static void sshangha_drawsprites(struct mame_bitmap *bitmap, data16_t *spritesrc
 
 WRITE16_HANDLER( sshangha_pf2_data_w )
 {
-	data16_t oldword=sshangha_pf2_data[offset];
+	UINT16 oldword=sshangha_pf2_data[offset];
 	COMBINE_DATA(&sshangha_pf2_data[offset]);
 	if (oldword!=sshangha_pf2_data[offset])
 		tilemap_mark_tile_dirty(pf2_tilemap,offset);
@@ -135,7 +135,7 @@ WRITE16_HANDLER( sshangha_pf2_data_w )
 
 WRITE16_HANDLER( sshangha_pf1_data_w )
 {
-	data16_t oldword=sshangha_pf1_data[offset];
+	UINT16 oldword=sshangha_pf1_data[offset];
 	COMBINE_DATA(&sshangha_pf1_data[offset]);
 	if (oldword!=sshangha_pf1_data[offset]) {
 		tilemap_mark_tile_dirty(pf1_8x8_tilemap,offset);
@@ -160,19 +160,19 @@ static UINT32 sshangha_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_row
 
 static void get_pf2_tile_info(int tile_index)
 {
-	data16_t tile=sshangha_pf2_data[tile_index];
+	UINT16 tile=sshangha_pf2_data[tile_index];
 	SET_TILE_INFO(1,(tile&0xfff)|sshangha_pf2_bank,(tile>>12)|32,0)
 }
 
 static void get_pf1_16x16_tile_info(int tile_index)
 {
-	data16_t tile=sshangha_pf1_data[tile_index];
+	UINT16 tile=sshangha_pf1_data[tile_index];
 	SET_TILE_INFO(1,(tile&0xfff)|sshangha_pf1_bank,tile>>12,0)
 }
 
 static void get_pf1_8x8_tile_info(int tile_index)
 {
-	data16_t tile=sshangha_pf1_data[tile_index];
+	UINT16 tile=sshangha_pf1_data[tile_index];
 	SET_TILE_INFO(0,(tile&0xfff)|sshangha_pf1_bank,tile>>12,0)
 }
 

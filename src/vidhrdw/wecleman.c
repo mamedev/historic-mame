@@ -40,8 +40,8 @@ struct sprite
 extern int wecleman_selected_ip, wecleman_irqctrl;
 
 /* Variables that driver has acces to: */
-data16_t *wecleman_videostatus;
-data16_t *wecleman_pageram, *wecleman_txtram, *wecleman_roadram;
+UINT16 *wecleman_videostatus;
+UINT16 *wecleman_pageram, *wecleman_txtram, *wecleman_roadram;
 size_t wecleman_roadram_size;
 int wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
 
@@ -109,7 +109,7 @@ static void get_sprite_info(void)
 	UINT8 *base_gfx = memory_region(REGION_GFX1);
 	int gfx_max     = memory_region_length(REGION_GFX1);
 
-	data16_t *source = spriteram16;
+	UINT16 *source = spriteram16;
 
 	struct sprite *sprite = sprite_list;
 	struct sprite *finish = sprite_list + NUM_SPRITES;
@@ -197,7 +197,7 @@ static void sortsprite(int *idx_array, int *key_array, int size)
 }
 
 // draws a 8bpp palette sprites on a 16bpp direct RGB target (sub-par implementation)
-static void do_blit_zoom16(struct mame_bitmap *bitmap, const struct rectangle *cliprect, struct sprite *sprite)
+static void do_blit_zoom16(mame_bitmap *bitmap, const rectangle *cliprect, struct sprite *sprite)
 {
 #define PRECISION_X 20
 #define PRECISION_Y 20
@@ -331,7 +331,7 @@ static void do_blit_zoom16(struct mame_bitmap *bitmap, const struct rectangle *c
 	}
 }
 
-static void sprite_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void sprite_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int i;
 
@@ -425,8 +425,8 @@ void wecleman_get_txt_tile_info( int tile_index )
 
 WRITE16_HANDLER( wecleman_txtram_w )
 {
-	data16_t old_data = wecleman_txtram[offset];
-	data16_t new_data = COMBINE_DATA(&wecleman_txtram[offset]);
+	UINT16 old_data = wecleman_txtram[offset];
+	UINT16 new_data = COMBINE_DATA(&wecleman_txtram[offset]);
 
 	if ( old_data != new_data )
 	{
@@ -491,8 +491,8 @@ void wecleman_get_fg_tile_info( int tile_index )
 /* Pages that compose both the background and the foreground */
 WRITE16_HANDLER( wecleman_pageram_w )
 {
-	data16_t old_data = wecleman_pageram[offset];
-	data16_t new_data = COMBINE_DATA(&wecleman_pageram[offset]);
+	UINT16 old_data = wecleman_pageram[offset];
+	UINT16 new_data = COMBINE_DATA(&wecleman_pageram[offset]);
 
 	if ( old_data != new_data )
 	{
@@ -536,7 +536,7 @@ WRITE16_HANDLER( wecleman_pageram_w )
 
 ------------------------------------------------------------------------*/
 
-static void wecleman_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+static void wecleman_draw_road(mame_bitmap *bitmap, const rectangle *cliprect, int priority)
 {
 // must be powers of 2
 #define XSIZE 512
@@ -645,9 +645,9 @@ static void wecleman_draw_road(struct mame_bitmap *bitmap, const struct rectangl
 ------------------------------------------------------------------------*/
 
 // blends two 8x8x16bpp direct RGB tilemaps
-static void wecleman_draw_cloud( struct mame_bitmap *bitmap,
+static void wecleman_draw_cloud( mame_bitmap *bitmap,
 				 gfx_element *gfx,
-				 data16_t *tm_base,
+				 UINT16 *tm_base,
 				 int x0, int y0,				// target coordinate
 				 int xcount, int ycount,		// number of tiles to draw in x and y
 				 int scrollx, int scrolly,		// tilemap scroll position
@@ -781,7 +781,7 @@ static void wecleman_draw_cloud( struct mame_bitmap *bitmap,
 
 ------------------------------------------------------------------------*/
 
-void hotchase_draw_road(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void hotchase_draw_road(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 /* Referred to what's in the ROMs */
 #define XSIZE 512

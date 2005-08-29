@@ -27,7 +27,7 @@ Note: it's important that REGION_USER1 is 0xa0000 bytes with empty space filled
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap;
-static data8_t *phrcraze_attr;
+static UINT8 *phrcraze_attr;
 
 static int extra_video_bank_bit;
 
@@ -36,7 +36,7 @@ static int decryption_key;
 
 static READ8_HANDLER( questions_r )
 {
-	data8_t *questions = memory_region(REGION_USER1);
+	UINT8 *questions = memory_region(REGION_USER1);
 	int address;
 
 	switch(question_address >> 16)

@@ -196,7 +196,7 @@ static UINT8 *gx_objzbuf, *gx_shdzbuf;
 // Localized K053936/ROZ+
 #define K053936_MAX_CHIPS 2
 
-static struct rectangle K053936_cliprect[K053936_MAX_CHIPS] = {{0,0,0,0},{0,0,0,0}};
+static rectangle K053936_cliprect[K053936_MAX_CHIPS] = {{0,0,0,0},{0,0,0,0}};
 static int K053936_offset[K053936_MAX_CHIPS][2] = {{0,0},{0,0}};
 static int K053936_clip_enabled[K053936_MAX_CHIPS] = {0,0};
 
@@ -207,7 +207,7 @@ void K053936GP_clip_enable(int chip, int status) { K053936_clip_enabled[chip] = 
 
 void K053936GP_set_cliprect(int chip, int minx, int maxx, int miny, int maxy)
 {
-	struct rectangle *cliprect = &K053936_cliprect[chip];
+	rectangle *cliprect = &K053936_cliprect[chip];
 	cliprect->min_x = minx;
 	cliprect->max_x = maxx;
 	cliprect->min_y = miny;
@@ -245,8 +245,8 @@ void K053936GP_set_cliprect(int chip, int minx, int maxx, int miny, int maxy)
 	edx += eax;          \
 	dst_ptr[ecx] = edx; }
 
-INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame_bitmap *src_bitmap,
-		const struct rectangle *dst_cliprect, const struct rectangle *src_cliprect,
+INLINE void K053936GP_copyroz32clip( mame_bitmap *dst_bitmap, mame_bitmap *src_bitmap,
+		const rectangle *dst_cliprect, const rectangle *src_cliprect,
 		UINT32 _startx,UINT32 _starty,int _incxx,int _incxy,int _incyx,int _incyy,
 		int tilebpp, int blend, int clip )
 {
@@ -398,15 +398,15 @@ INLINE void K053936GP_copyroz32clip( struct mame_bitmap *dst_bitmap, struct mame
 }
 
 // adpoted from generic K053936_zoom_draw()
-static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
-		struct mame_bitmap *bitmap, const struct rectangle *cliprect, tilemap *tmap,
+static void K053936GP_zoom_draw(int chip, UINT16 *ctrl, UINT16 *linectrl,
+		mame_bitmap *bitmap, const rectangle *cliprect, tilemap *tmap,
 		int tilebpp, int blend)
 {
-	struct mame_bitmap *src_bitmap;
-	struct rectangle *src_cliprect;
-	data16_t *lineaddr;
+	mame_bitmap *src_bitmap;
+	rectangle *src_cliprect;
+	UINT16 *lineaddr;
 
-	struct rectangle my_clip;
+	rectangle my_clip;
 	UINT32 startx, starty;
 	int incxx, incxy, incyx, incyy, y, maxy, clip;
 
@@ -467,13 +467,13 @@ static void K053936GP_zoom_draw(int chip, data16_t *ctrl, data16_t *linectrl,
 	}
 }
 
-void K053936GP_0_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+void K053936GP_0_zoom_draw(mame_bitmap *bitmap, const rectangle *cliprect,
 		tilemap *tmap, int tilebpp, int blend)
 {
 	K053936GP_zoom_draw(0,K053936_0_ctrl,K053936_0_linectrl,bitmap,cliprect,tmap,tilebpp,blend);
 }
 
-void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+void K053936GP_1_zoom_draw(mame_bitmap *bitmap, const rectangle *cliprect,
 		tilemap *tmap, int tilebpp, int blend)
 {
 	K053936GP_zoom_draw(1,K053936_1_ctrl,K053936_1_linectrl,bitmap,cliprect,tmap,tilebpp,blend);
@@ -497,7 +497,7 @@ void K053936GP_1_zoom_draw(struct mame_bitmap *bitmap, const struct rectangle *c
     pri     : 0 = topmost, 255 = backmost (pixel priority)
 */
 
-INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const gfx_element *gfx, const struct rectangle *cliprect,
+INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const rectangle *cliprect,
 		unsigned int code, unsigned int color, int flipx, int flipy, int sx, int sy,
 		int scalex, int scaley, int alpha, int drawmode, int zcode, int pri)
 {
@@ -948,8 +948,8 @@ INLINE void zdrawgfxzoom32GP( struct mame_bitmap *bitmap, const gfx_element *gfx
 /***************************************************************************/
 
 // global system ports access
-data8_t  konamigx_wrport1_0, konamigx_wrport1_1;
-data16_t konamigx_wrport2;
+UINT8  konamigx_wrport1_0, konamigx_wrport1_1;
+UINT16 konamigx_wrport2;
 
 // frequently used registers
 static int K053246_objset1;
@@ -1218,11 +1218,11 @@ static void gx_wipezbuf(int noshadow)
 #define GX_MAX_OBJECTS (GX_MAX_SPRITES + GX_MAX_LAYERS)
 
 static struct GX_OBJ { int order, offs, code, color; } *gx_objpool;
-static data16_t *gx_spriteram;
+static UINT16 *gx_spriteram;
 static int gx_objdma, gx_primode;
 
 // mirrored K053247 and K054338 settings
-static data16_t *K053247_ram;
+static UINT16 *K053247_ram;
 static gfx_element *K053247_gfx;
 static void (*K053247_callback)(int *code,int *color,int *priority);
 static int K053247_dx, K053247_dy;
@@ -1272,7 +1272,7 @@ void konamigx_objdma(void)
 	if (gx_objdma && gx_spriteram && K053247_ram) memcpy(gx_spriteram, K053247_ram, 0x1000);
 }
 
-void konamigx_mixer(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+void konamigx_mixer(mame_bitmap *bitmap, const rectangle *cliprect,
 					tilemap *sub1, int sub1flags,
 					tilemap *sub2, int sub2flags,
 					int mixerflags)
@@ -2011,7 +2011,7 @@ WRITE16_HANDLER( K053990_martchmp_word_w )
 	int dst_addr, dst_count, dst_skip;
 	int mod_addr, mod_count, mod_skip, mod_offs;
 	int mode, i, element_size = 1;
-	data16_t mod_val, mod_data;
+	UINT16 mod_val, mod_data;
 
 	COMBINE_DATA(prot_data+offset);
 

@@ -51,7 +51,7 @@ VIDEO_UPDATE( fantland );
 
 ***************************************************************************/
 
-static data8_t fantland_nmi_enable;
+static UINT8 fantland_nmi_enable;
 
 static WRITE8_HANDLER( fantland_nmi_enable_w )
 {
@@ -144,7 +144,7 @@ static READ8_HANDLER( borntofi_inputs_r )
 {
 	int x,y,f;
 	static int old_x[2], old_y[2], old_f[2];
-	static data8_t ret[2];
+	static UINT8 ret[2];
 
 	switch (readinputport(7) & 0x03)
 	{
@@ -293,7 +293,7 @@ static WRITE8_HANDLER( borntofi_msm5205_w )
 
 static void borntofi_adpcm_int(int voice)
 {
-	data8_t *rom;
+	UINT8 *rom;
 	size_t   len;
 	int start, stop;
 

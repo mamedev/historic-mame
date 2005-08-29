@@ -31,8 +31,8 @@ WRITE16_HANDLER(amiga_custom_w);
 
 custom_regs_def custom_regs;
 
-data16_t *amiga_expansion_ram;
-data16_t *amiga_autoconfig_mem;
+UINT16 *amiga_expansion_ram;
+UINT16 *amiga_autoconfig_mem;
 
 static int translate_ints( void ) {
 
@@ -287,7 +287,7 @@ static void blitter_proc( int param ) {
 			temp_ptr3 = ptr[3];
 
 			if ( custom_regs.BLTCON0 & 0x0200 )
-				custom_regs.BLTxDAT[2] = *((data16_t *) &RAM[ptr[2]] );
+				custom_regs.BLTxDAT[2] = *((UINT16 *) &RAM[ptr[2]] );
 
 			dataA = ( custom_regs.BLTxDAT[0] >> start );
 
@@ -361,7 +361,7 @@ static void blitter_proc( int param ) {
 			blt_total |= dst_data;
 
 			if ( custom_regs.BLTCON0 & 0x0100 )
-				*((data16_t *) &RAM[temp_ptr3]) = dst_data;
+				*((UINT16 *) &RAM[temp_ptr3]) = dst_data;
 
 			dataB = ( dataB << 1 ) | ( dataB >> 15 );
 		}
@@ -427,13 +427,13 @@ static void blitter_proc( int param ) {
 
 					/* get new data */
 					if ( ptr[0] != -1 )
-						new_data[0] = *((data16_t *) &RAM[ptr[0]] );
+						new_data[0] = *((UINT16 *) &RAM[ptr[0]] );
 
 					if ( ptr[1] != -1 )
-						new_data[1] = *((data16_t *) &RAM[ptr[1]] );
+						new_data[1] = *((UINT16 *) &RAM[ptr[1]] );
 
 					if ( ptr[2] != -1 )
-						new_data[2] = *((data16_t *) &RAM[ptr[2]] );
+						new_data[2] = *((UINT16 *) &RAM[ptr[2]] );
 
 					for ( i = 0; i < 8; i++ ) {
 						if ( custom_regs.BLTCON0 & ( 1 << i ) ) {
@@ -451,7 +451,7 @@ static void blitter_proc( int param ) {
 							dst_data = blitter_fill( dst_data, custom_regs.BLTCON1 & 0x18, &fc );
 
 						if ( ptr[3] != -1 ) {
-							*((data16_t *) &RAM[ptr[3]]) = dst_data;
+							*((UINT16 *) &RAM[ptr[3]]) = dst_data;
 							ptr[3] -= 2;
 						}
 
@@ -465,7 +465,7 @@ static void blitter_proc( int param ) {
 							ptr[2] -= 2;
 					} else {
 						if ( ptr[3] != -1 ) {
-							*((data16_t *) &RAM[ptr[3]]) = dst_data;
+							*((UINT16 *) &RAM[ptr[3]]) = dst_data;
 							ptr[3] += 2;
 						}
 

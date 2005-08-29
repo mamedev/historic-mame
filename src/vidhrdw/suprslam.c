@@ -4,12 +4,12 @@
 #include "vidhrdw/konamiic.h"
 
 
-data16_t *suprslam_screen_videoram, *suprslam_bg_videoram,*suprslam_sp_videoram, *suprslam_spriteram;
+UINT16 *suprslam_screen_videoram, *suprslam_bg_videoram,*suprslam_sp_videoram, *suprslam_spriteram;
 UINT16 screen_bank, bg_bank;
 static tilemap *suprslam_screen_tilemap, *suprslam_bg_tilemap;
 
 /* todo, fix zooming correctly, its _not_ like aerofgt */
-static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void suprslam_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	/* SPRITE INFO
 
@@ -35,9 +35,9 @@ static void suprslam_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 
 	const gfx_element *gfx = Machine->gfx[1];
-	data16_t *source = suprslam_spriteram;
-	data16_t *source2 = suprslam_spriteram;
-	data16_t *finish = source + 0x2000/2;
+	UINT16 *source = suprslam_spriteram;
+	UINT16 *source2 = suprslam_spriteram;
+	UINT16 *finish = source + 0x2000/2;
 
 	while( source<finish )
 	{

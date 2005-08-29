@@ -13,7 +13,7 @@ driver by Nicola Salmoria
 #include "sound/ay8910.h"
 
 
-static data8_t *sharedram;
+static UINT8 *sharedram;
 
 static READ8_HANDLER( sharedram_r )
 {

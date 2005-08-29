@@ -38,7 +38,7 @@
 void *tia_sound_init(int clock, int sample_rate, int gain);
 void tia_sound_free(void *chip);
 void tia_process (void *chip, stream_sample_t *buffer, int length);
-void tia_write(void *chip, offs_t offset, data8_t data);
+void tia_write(void *chip, offs_t offset, UINT8 data);
 
 #endif	/* TIASOUND_H */
 

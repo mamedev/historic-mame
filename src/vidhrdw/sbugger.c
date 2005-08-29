@@ -2,7 +2,7 @@
 
 #include "driver.h"
 
-extern data8_t* sbugger_videoram, *sbugger_videoram_attr;
+extern UINT8* sbugger_videoram, *sbugger_videoram_attr;
 
 static tilemap *sbugger_tilemap;
 

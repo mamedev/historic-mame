@@ -17,7 +17,7 @@ unsigned char *dday_textvideoram;
 unsigned char *dday_colorram;
 
 static tilemap *fg_tilemap, *bg_tilemap, *text_tilemap, *sl_tilemap;
-struct mame_bitmap *main_bitmap;
+mame_bitmap *main_bitmap;
 static int control;
 static int sl_image;
 static int sl_enable;
@@ -352,7 +352,7 @@ VIDEO_UPDATE( dday )
 	{
 		/* apply shadow */
 
-		struct mame_bitmap *sl_bitmap;
+		mame_bitmap *sl_bitmap;
 		int x, y;
 
 

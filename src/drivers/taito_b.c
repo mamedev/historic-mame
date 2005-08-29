@@ -178,10 +178,10 @@ Notes:
 #include "sound/2610intf.h"
 #include "sound/okim6295.h"
 
-extern data16_t *taitob_scroll;
-extern data16_t *TC0180VCU_ram;
-extern data16_t *taitob_spriteram;
-extern data16_t *taitob_pixelram;
+extern UINT16 *taitob_scroll;
+extern UINT16 *TC0180VCU_ram;
+extern UINT16 *taitob_spriteram;
+extern UINT16 *taitob_pixelram;
 
 
 VIDEO_START( taitob_color_order0 );
@@ -422,7 +422,7 @@ static READ16_HANDLER( eeprom_r )
 	return res;
 }
 
-static data16_t eep_latch = 0;
+static UINT16 eep_latch = 0;
 
 static READ16_HANDLER( eep_latch_r )
 {
@@ -3256,7 +3256,7 @@ MACHINE_DRIVER_END
 #if 0
 static void ryujin_patch(void)
 {
-	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 	rom[ 0x62/2 ] = 1;
 	//0 (already in rom) - Taito Corporation 1993
 	//1 - Taito America corp with blue FBI logo
@@ -3301,7 +3301,7 @@ MACHINE_DRIVER_END
 #if 0
 static void sbm_patch(void)
 {
-	data16_t *rom = (data16_t*)memory_region(REGION_CPU1);
+	UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 	rom[ 0x7ffff/2 ] = 2; //US version
 }
 #endif

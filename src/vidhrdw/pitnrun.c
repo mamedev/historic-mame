@@ -25,7 +25,7 @@ static int pitnrun_ha;
 static int pitnrun_scroll;
 static int pitnrun_char_bank;
 static int pitnrun_color_select;
-static struct mame_bitmap *tmp_bitmap[4];
+static mame_bitmap *tmp_bitmap[4];
 static tilemap *bg, *fg;
 UINT8* videoram2;
 
@@ -189,7 +189,7 @@ VIDEO_START(pitnrun)
 	return video_start_generic();
 }
 
-static void pitnrun_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void pitnrun_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int sx, sy, flipx, flipy, offs,pal;
 
@@ -226,7 +226,7 @@ static void pitnrun_draw_sprites( struct mame_bitmap *bitmap, const struct recta
 VIDEO_UPDATE( pitnrun )
 {
 	int dx=0,dy=0;
-	struct rectangle myclip=*cliprect;
+	rectangle myclip=*cliprect;
 
 #ifdef MAME_DEBUG
 	if (code_pressed_memory(KEYCODE_Q))

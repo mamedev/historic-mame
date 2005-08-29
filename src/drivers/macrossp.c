@@ -216,13 +216,13 @@ u27.bin /
 
 ******************************************************************************/
 
-extern data32_t *macrossp_scra_videoram, *macrossp_scra_videoregs;
-extern data32_t *macrossp_scrb_videoram, *macrossp_scrb_videoregs;
-extern data32_t *macrossp_scrc_videoram, *macrossp_scrc_videoregs;
-extern data32_t *macrossp_text_videoram, *macrossp_text_videoregs;
-extern data32_t *macrossp_spriteram;
+extern UINT32 *macrossp_scra_videoram, *macrossp_scra_videoregs;
+extern UINT32 *macrossp_scrb_videoram, *macrossp_scrb_videoregs;
+extern UINT32 *macrossp_scrc_videoram, *macrossp_scrc_videoregs;
+extern UINT32 *macrossp_text_videoram, *macrossp_text_videoregs;
+extern UINT32 *macrossp_spriteram;
 
-static data32_t *macrossp_mainram;
+static UINT32 *macrossp_mainram;
 
 /* in vidhrdw */
 WRITE32_HANDLER( macrossp_scra_videoram_w );
@@ -917,8 +917,8 @@ PC :00018110 018110: beq     18104
 static DRIVER_INIT( macrossp )
 {
 	/* Expand top half of sound ROM into second banked sound area */
-	const data8_t* src=memory_region(REGION_SOUND1);
-	data8_t* dst=memory_region(REGION_SOUND2);
+	const UINT8* src=memory_region(REGION_SOUND1);
+	UINT8* dst=memory_region(REGION_SOUND2);
 
 	memcpy(dst,src+0x400000,0x400000);
 
@@ -928,8 +928,8 @@ static DRIVER_INIT( macrossp )
 static DRIVER_INIT( quizmoon )
 {
 	/* Expand top half of sound ROM into second banked sound area */
-	const data8_t* src=memory_region(REGION_SOUND1);
-	data8_t* dst=memory_region(REGION_SOUND2);
+	const UINT8* src=memory_region(REGION_SOUND1);
+	UINT8* dst=memory_region(REGION_SOUND2);
 
 	memcpy(dst,src+0x400000,0x400000);
 

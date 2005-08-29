@@ -98,11 +98,11 @@ static int f_offset;
 
 static int palette_select;
 
-static struct mame_bitmap *tmpbitmap2;
-static struct mame_bitmap *bitmap_B;
-static struct mame_bitmap *bitmap_D;
-static struct mame_bitmap *bitmap_E;
-static struct mame_bitmap *bitmap_F;
+static mame_bitmap *tmpbitmap2;
+static mame_bitmap *bitmap_B;
+static mame_bitmap *bitmap_D;
+static mame_bitmap *bitmap_E;
+static mame_bitmap *bitmap_F;
 
 static unsigned char *beamdata;
 static int states_per_frame;
@@ -499,7 +499,7 @@ WRITE8_HANDLER( stactics_chardata_f_w )
 /* Actual area for visible monitor stuff is only 30*8 lines */
 /* The rest is used for the score, etc. */
 
-static const struct rectangle visible_screen_area = {0*8, 32*8, 0*8, 30*8};
+static const rectangle visible_screen_area = {0*8, 32*8, 0*8, 30*8};
 
 /***************************************************************************
 

@@ -13,7 +13,7 @@
 
 /*----------- defined in machine/midyunit.c -----------*/
 
-extern data16_t *midyunit_cmos_ram;
+extern UINT16 *midyunit_cmos_ram;
 extern UINT32 	midyunit_cmos_page;
 
 WRITE16_HANDLER( midyunit_cmos_w );

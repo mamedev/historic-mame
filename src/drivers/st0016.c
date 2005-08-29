@@ -67,7 +67,7 @@ extern int st0016_game;
 void st0016_save_init(void);
 static int mux_port;
 int st0016_rom_bank;
-static data32_t *rom_base;
+static UINT32 *rom_base;
 
 static ADDRESS_MAP_START( st0016_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
@@ -284,7 +284,7 @@ INTERRUPT_GEN(st0016_int)
 			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE );
 }
 
-extern data8_t *st0016_charram;
+extern UINT8 *st0016_charram;
 static struct ST0016interface st0016_interface =
 {
 	&st0016_charram

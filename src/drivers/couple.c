@@ -38,8 +38,8 @@ Provided to you by Thierry (ShinobiZ) & Gerald (COY)
 #include "vidhrdw/crtc6845.h"
 
 static tilemap *bg_tilemap;
-static data8_t *vram_lo,*vram_hi;
-static data8_t *backup_ram;
+static UINT8 *vram_lo,*vram_hi;
+static UINT8 *backup_ram;
 
 //before 53 after 71 then 6b
 /*

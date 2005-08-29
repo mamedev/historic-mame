@@ -369,8 +369,8 @@ struct widget_data
  *
  *************************************/
 
-static data32_t *rambase;
-static data32_t *rombase;
+static UINT32 *rambase;
+static UINT32 *rombase;
 
 static struct galileo_data galileo;
 static struct widget_data widget;
@@ -383,18 +383,18 @@ static UINT8 ethernet_irq_state;
 static UINT8 vblank_irq_num;
 static UINT8 vblank_latch;
 static UINT8 vblank_state;
-static data32_t *interrupt_config;
-static data32_t *interrupt_enable;
+static UINT32 *interrupt_config;
+static UINT32 *interrupt_enable;
 
-static data32_t *asic_reset;
+static UINT32 *asic_reset;
 
-static data8_t pending_analog_read;
-static data8_t status_leds;
+static UINT8 pending_analog_read;
+static UINT8 status_leds;
 
-static data32_t *generic_speedup;
-static data32_t *generic_speedup2;
+static UINT32 *generic_speedup;
+static UINT32 *generic_speedup2;
 
-static data32_t cmos_write_enabled;
+static UINT32 cmos_write_enabled;
 
 
 
@@ -523,7 +523,7 @@ static void ioasic_irq(int state)
 
 static READ32_HANDLER( interrupt_state_r )
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 	result |= ethernet_irq_state << ETHERNET_IRQ_SHIFT;
 	result |= vblank_latch << VBLANK_IRQ_SHIFT;
 	return result;
@@ -532,7 +532,7 @@ static READ32_HANDLER( interrupt_state_r )
 
 static READ32_HANDLER( interrupt_state2_r )
 {
-	data32_t result = interrupt_state_r(offset, mem_mask);
+	UINT32 result = interrupt_state_r(offset, mem_mask);
 	result |= vblank_state << 8;
 	return result;
 }
@@ -583,7 +583,7 @@ static WRITE32_HANDLER( interrupt_config_w )
 
 static WRITE32_HANDLER( seattle_interrupt_enable_w )
 {
-	data32_t old = *interrupt_enable;
+	UINT32 old = *interrupt_enable;
 	COMBINE_DATA(interrupt_enable);
 	if (old != *interrupt_enable)
 	{
@@ -655,9 +655,9 @@ static void vblank_assert(int state)
  *
  *************************************/
 
-static data32_t pci_bridge_r(UINT8 reg, UINT8 type)
+static UINT32 pci_bridge_r(UINT8 reg, UINT8 type)
 {
-	data32_t result = galileo.pci_bridge_regs[reg];
+	UINT32 result = galileo.pci_bridge_regs[reg];
 
 	switch (reg)
 	{
@@ -676,7 +676,7 @@ static data32_t pci_bridge_r(UINT8 reg, UINT8 type)
 }
 
 
-static void pci_bridge_w(UINT8 reg, UINT8 type, data32_t data)
+static void pci_bridge_w(UINT8 reg, UINT8 type, UINT32 data)
 {
 	galileo.pci_bridge_regs[reg] = data;
 	if (LOG_PCI)
@@ -691,9 +691,9 @@ static void pci_bridge_w(UINT8 reg, UINT8 type, data32_t data)
  *
  *************************************/
 
-static data32_t pci_3dfx_r(UINT8 reg, UINT8 type)
+static UINT32 pci_3dfx_r(UINT8 reg, UINT8 type)
 {
-	data32_t result = galileo.pci_3dfx_regs[reg];
+	UINT32 result = galileo.pci_3dfx_regs[reg];
 
 	switch (reg)
 	{
@@ -712,7 +712,7 @@ static data32_t pci_3dfx_r(UINT8 reg, UINT8 type)
 }
 
 
-static void pci_3dfx_w(UINT8 reg, UINT8 type, data32_t data)
+static void pci_3dfx_w(UINT8 reg, UINT8 type, UINT32 data)
 {
 	galileo.pci_3dfx_regs[reg] = data;
 
@@ -740,9 +740,9 @@ static void pci_3dfx_w(UINT8 reg, UINT8 type, data32_t data)
  *
  *************************************/
 
-static data32_t pci_ide_r(UINT8 reg, UINT8 type)
+static UINT32 pci_ide_r(UINT8 reg, UINT8 type)
 {
-	data32_t result = galileo.pci_ide_regs[reg];
+	UINT32 result = galileo.pci_ide_regs[reg];
 
 	switch (reg)
 	{
@@ -761,7 +761,7 @@ static data32_t pci_ide_r(UINT8 reg, UINT8 type)
 }
 
 
-static void pci_ide_w(UINT8 reg, UINT8 type, data32_t data)
+static void pci_ide_w(UINT8 reg, UINT8 type, UINT32 data)
 {
 	galileo.pci_ide_regs[reg] = data;
 	if (LOG_PCI)
@@ -824,7 +824,7 @@ static void galileo_timer_callback(int which)
 static int galileo_dma_fetch_next(int which)
 {
 	offs_t address = 0;
-	data32_t data;
+	UINT32 data;
 
 	/* no-op for unchained mode */
 	if (!(galileo.reg[GREG_DMA0_CONTROL + which] & 0x200))
@@ -867,7 +867,7 @@ static void galileo_perform_dma(int which)
 	{
 		offs_t srcaddr = galileo.reg[GREG_DMA0_SOURCE + which];
 		offs_t dstaddr = galileo.reg[GREG_DMA0_DEST + which];
-		data32_t bytesleft = galileo.reg[GREG_DMA0_COUNT + which] & 0xffff;
+		UINT32 bytesleft = galileo.reg[GREG_DMA0_COUNT + which] & 0xffff;
 		int srcinc, dstinc, i;
 
 		galileo.dma_pending_on_vblank[which] = 0;
@@ -895,7 +895,7 @@ static void galileo_perform_dma(int which)
 		/* special case: transfer ram to voodoo */
 		if (bytesleft % 4 == 0 && srcaddr % 4 == 0 && srcaddr < 0x007fffff && dstaddr >= 0x08000000 && dstaddr < 0x09000000)
 		{
-			data32_t *src = &rambase[srcaddr/4];
+			UINT32 *src = &rambase[srcaddr/4];
 			bytesleft /= 4;
 
 			/* if the voodoo is blocked, stall until the next VBLANK */
@@ -982,7 +982,7 @@ static void galileo_reset(void)
 
 static READ32_HANDLER( galileo_r )
 {
-	data32_t result = galileo.reg[offset];
+	UINT32 result = galileo.reg[offset];
 
 	/* switch off the offset for special cases */
 	switch (offset)
@@ -1248,7 +1248,7 @@ static VIDEO_UPDATE( carnevil )
 
 static READ32_HANDLER( carnevil_gun_r )
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 
 	switch (offset)
 	{
@@ -1353,7 +1353,7 @@ static void update_widget_irq(void)
 
 static READ32_HANDLER( widget_r )
 {
-	data32_t result = ~0;
+	UINT32 result = ~0;
 
 	switch (offset)
 	{

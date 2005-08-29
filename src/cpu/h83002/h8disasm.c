@@ -33,13 +33,13 @@ static UINT8 h8disasm_7(UINT32 address, UINT32 opcode, char *output);
 #define h8_mem_write8(x, y)  program_write_byte_16be(x, y)
 #define h8_mem_write16(x, y) program_write_word_16be(x, y)
 
-INLINE data32_t h8_mem_read32(offs_t address)
+INLINE UINT32 h8_mem_read32(offs_t address)
 {
-	data32_t result = program_read_word_16be(address) << 16;
+	UINT32 result = program_read_word_16be(address) << 16;
 	return result | program_read_word_16be(address + 2);
 }
 
-INLINE void h8_mem_write32(offs_t address, data32_t data)
+INLINE void h8_mem_write32(offs_t address, UINT32 data)
 {
 	program_write_word_16be(address, data >> 16);
 	program_write_word_16be(address + 2, data);

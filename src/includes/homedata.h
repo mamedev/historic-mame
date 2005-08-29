@@ -1,7 +1,7 @@
-extern data8_t *homedata_vreg;
+extern UINT8 *homedata_vreg;
 extern int homedata_visible_page;
 extern int homedata_priority;
-extern data8_t reikaids_which;
+extern UINT8 reikaids_which;
 
 WRITE8_HANDLER( mrokumei_videoram_w );
 WRITE8_HANDLER( reikaids_videoram_w );

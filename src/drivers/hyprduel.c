@@ -30,14 +30,14 @@ sub68k is performing not only processing of sound but assistance of main68k.
 #define LAST_VISIBLE_LINE 223
 
 /* Variables defined in vidhrdw: */
-extern data16_t *hyprduel_videoregs;
-extern data16_t *hyprduel_screenctrl;
-extern data16_t *hyprduel_tiletable;
+extern UINT16 *hyprduel_videoregs;
+extern UINT16 *hyprduel_screenctrl;
+extern UINT16 *hyprduel_tiletable;
 extern size_t hyprduel_tiletable_size;
-extern data16_t *hyprduel_vram_0, *hyprduel_vram_1, *hyprduel_vram_2;
-extern data16_t *hyprduel_window;
-extern data16_t hyprduel_scrollx[3][RASTER_LINES+1];
-extern data16_t hyprduel_scrolly[3][RASTER_LINES+1];
+extern UINT16 *hyprduel_vram_0, *hyprduel_vram_1, *hyprduel_vram_2;
+extern UINT16 *hyprduel_window;
+extern UINT16 hyprduel_scrollx[3][RASTER_LINES+1];
+extern UINT16 hyprduel_scrolly[3][RASTER_LINES+1];
 
 /* Functions defined in vidhrdw: */
 WRITE16_HANDLER( hyprduel_paletteram_w );
@@ -55,17 +55,17 @@ VIDEO_UPDATE( hyprduel );
 
 static int blitter_bit;
 static int requested_int;
-static data16_t *hypr_irq_enable;
+static UINT16 *hypr_irq_enable;
 static int subcpu_resetline;
 
 static int rastersplit;
 
-static data16_t *hypr_sharedram1;
-static data16_t *hypr_sharedram2;
-static data16_t *hypr_sub_sharedram1_1;
-static data16_t *hypr_sub_sharedram1_2;
-static data16_t *hypr_sub_sharedram2_1;
-static data16_t *hypr_sub_sharedram2_2;
+static UINT16 *hypr_sharedram1;
+static UINT16 *hypr_sharedram2;
+static UINT16 *hypr_sub_sharedram1_1;
+static UINT16 *hypr_sub_sharedram1_2;
+static UINT16 *hypr_sub_sharedram2_1;
+static UINT16 *hypr_sub_sharedram2_2;
 
 
 static WRITE16_HANDLER( hypr_sharedram1_w )
@@ -217,13 +217,13 @@ MACHINE_INIT( hyprduel )
     that the blitter can readily use (which is a form of compression)
 */
 
-static data16_t *hyprduel_rombank;
+static UINT16 *hyprduel_rombank;
 
 READ16_HANDLER( hyprduel_bankedrom_r )
 {
 	const int region = REGION_GFX1;
 
-	data8_t *ROM = memory_region( region );
+	UINT8 *ROM = memory_region( region );
 	size_t  len  = memory_region_length( region );
 
 	offset = offset * 2 + 0x10000 * (*hyprduel_rombank);
@@ -276,7 +276,7 @@ READ16_HANDLER( hyprduel_bankedrom_r )
 
 ***************************************************************************/
 
-data16_t *hyprduel_blitter_regs;
+UINT16 *hyprduel_blitter_regs;
 
 void hyprduel_blit_done(int param)
 {
@@ -284,12 +284,12 @@ void hyprduel_blit_done(int param)
 	update_irq_state();
 }
 
-INLINE int blt_read(const data8_t *ROM, const int offs)
+INLINE int blt_read(const UINT8 *ROM, const int offs)
 {
 	return ROM[offs] ^ 0xff;
 }
 
-INLINE void blt_write(const int tmap, const offs_t offs, const data16_t data, const data16_t mask)
+INLINE void blt_write(const int tmap, const offs_t offs, const UINT16 data, const UINT16 mask)
 {
 	switch( tmap )
 	{
@@ -309,7 +309,7 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 	{
 		const int region = REGION_GFX1;
 
-		data8_t *src	=	memory_region(region);
+		UINT8 *src	=	memory_region(region);
 		size_t  src_len	=	memory_region_length(region);
 
 		UINT32 tmap		=	(hyprduel_blitter_regs[ 0x00 / 2 ] << 16 ) +
@@ -320,7 +320,7 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 							 hyprduel_blitter_regs[ 0x0a / 2 ];
 
 		int shift			=	(dst_offs & 0x80) ? 0 : 8;
-		data16_t mask		=	(dst_offs & 0x80) ? 0xff00 : 0x00ff;
+		UINT16 mask		=	(dst_offs & 0x80) ? 0xff00 : 0x00ff;
 
 //      logerror("CPU #0 PC %06X : Blitter regs %08X, %08X, %08X\n",activecpu_get_pc(),tmap,src_offs,dst_offs);
 
@@ -338,7 +338,7 @@ static WRITE16_HANDLER( hyprduel_blitter_w )
 
 		while (1)
 		{
-			data16_t b1,b2,count;
+			UINT16 b1,b2,count;
 
 			src_offs %= src_len;
 			b1 = blt_read(src,src_offs);
@@ -693,7 +693,7 @@ MACHINE_DRIVER_END
 static DRIVER_INIT( hyprduel )
 {
 	int i;
-	data8_t *ROM = memory_region(REGION_GFX1);
+	UINT8 *ROM = memory_region(REGION_GFX1);
 
 	/*
       Tiles can be either 4-bit or 8-bit, and both depths can be used at the same

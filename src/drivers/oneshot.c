@@ -34,11 +34,11 @@ TO DO :
 #include "sound/3812intf.h"
 
 
-data16_t *oneshot_sprites;
-data16_t *oneshot_bg_videoram;
-data16_t *oneshot_mid_videoram;
-data16_t *oneshot_fg_videoram;
-data16_t *oneshot_scroll;
+UINT16 *oneshot_sprites;
+UINT16 *oneshot_bg_videoram;
+UINT16 *oneshot_mid_videoram;
+UINT16 *oneshot_fg_videoram;
+UINT16 *oneshot_scroll;
 
 int gun_x_p1,gun_y_p1,gun_x_p2,gun_y_p2;
 int gun_x_shift;

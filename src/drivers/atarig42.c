@@ -33,13 +33,13 @@
  *************************************/
 
 static UINT8 analog_data;
-static data16_t *mo_command;
+static UINT16 *mo_command;
 
 static int sloop_bank;
 static int sloop_next_bank;
 static int sloop_offset;
 static int sloop_state;
-static data16_t *sloop_base;
+static UINT16 *sloop_base;
 
 
 
@@ -716,7 +716,7 @@ static DRIVER_INIT( guardian )
 
 	/* it looks like they jsr to $80000 as some kind of protection */
 	/* put an RTS there so we don't die */
-	*(data16_t *)&memory_region(REGION_CPU1)[0x80000] = 0x4E75;
+	*(UINT16 *)&memory_region(REGION_CPU1)[0x80000] = 0x4E75;
 
 	sloop_base = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, guardians_sloop_data_r);
 	sloop_base = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, guardians_sloop_data_w);

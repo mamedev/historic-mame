@@ -9,7 +9,7 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *bg_layer,*fg_layer;
-data16_t *crospang_bg_videoram,*crospang_fg_videoram;
+UINT16 *crospang_bg_videoram,*crospang_fg_videoram;
 
 WRITE16_HANDLER ( crospang_fg_scrolly_w )
 {
@@ -82,7 +82,7 @@ static void get_fg_tile_info(int tile_index)
 
 */
 
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs,fx,fy,x,y,color,sprite,attr,dy,ay,flag;
 

@@ -104,7 +104,7 @@ static INTERRUPT_GEN( srmp2_interrupt )
 
 static DRIVER_INIT( srmp2 )
 {
-	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
+	UINT16 *RAM = (UINT16 *) memory_region(REGION_CPU1);
 
 	/* Fix "ERROR BACK UP" and "ERROR IOX" */
 	RAM[0x20c80 / 2] = 0x4e75;								// RTS
@@ -112,7 +112,7 @@ static DRIVER_INIT( srmp2 )
 
 static DRIVER_INIT( srmp3 )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/* BANK ROM (0x08000 - 0x1ffff) Check skip [MAIN ROM side] */
 	RAM[0x00000 + 0x7b69] = 0x00;							// NOP

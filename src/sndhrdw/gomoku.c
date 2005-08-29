@@ -31,8 +31,8 @@ typedef struct
 
 
 /* globals available to everyone */
-data8_t *gomoku_soundregs1;
-data8_t *gomoku_soundregs2;
+UINT8 *gomoku_soundregs1;
+UINT8 *gomoku_soundregs2;
 
 /* data about the sound system */
 static sound_channel channel_list[MAX_VOICES];

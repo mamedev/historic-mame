@@ -8,8 +8,8 @@ to be honest i think some of these cause more problems than they're worth ...
 #include "machine/eeprom.h"
 #include "cpu/sh2/sh2.h"
 
-extern data32_t *stv_workram_h;
-extern data32_t *stv_backupram;
+extern UINT32 *stv_workram_h;
+extern UINT32 *stv_backupram;
 
 DRIVER_INIT ( stv );
 
@@ -17,7 +17,7 @@ DRIVER_INIT ( stv );
 DRIVER_INIT( ic13 )
 {
 	/* this is WRONG but works for some games */
-	data32_t *rom = (data32_t *)memory_region(REGION_USER1);
+	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
 	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
 	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
 	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
@@ -45,7 +45,7 @@ EEPROM write ffff to address 3d
 EEPROM write ffff to address 3e
 EEPROM write ffff to address 3f
 */
-/*static data8_t stv_default_eeprom[128] = {
+/*static UINT8 stv_default_eeprom[128] = {
     0x53,0x45,0xff,0xff,0xff,0xff,0x3b,0xe2,
     0x00,0x00,0x00,0x00,0x00,0x02,0x01,0x00,
     0x01,0x01,0x00,0x00,0x00,0x00,0x00,0x08,
@@ -64,7 +64,7 @@ EEPROM write ffff to address 3f
     0xff,0xff,0xff,0xff
 };*/
 
-static data8_t shienryu_default_eeprom[128] = {
+static UINT8 shienryu_default_eeprom[128] = {
 	0x53,0x45,0x47,0x41,0x3b,0xe2,0x5e,0x09,
 	0x5e,0x09,0x00,0x00,0x00,0x00,0x00,0x02,
 	0x01,0x00,0x01,0x01,0x00,0x00,0x00,0x00,
@@ -83,7 +83,7 @@ static data8_t shienryu_default_eeprom[128] = {
 	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff
 };
 
-static data8_t *stv_default_eeprom;
+static UINT8 *stv_default_eeprom;
 static int stv_default_eeprom_length;
 
 NVRAM_HANDLER( stv )

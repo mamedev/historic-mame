@@ -37,8 +37,8 @@
 
 static UINT8 iochip_regs[2][8];
 static UINT8 iochip_force_input;
-static data8_t (*iochip_custom_io_r[2])(offs_t offset, data8_t portdata);
-static void (*iochip_custom_io_w[2])(offs_t offset, data8_t data);
+static UINT8 (*iochip_custom_io_r[2])(offs_t offset, UINT8 portdata);
+static void (*iochip_custom_io_w[2])(offs_t offset, UINT8 data);
 
 static UINT8 adc_reverse[8];
 
@@ -46,7 +46,7 @@ static UINT8 vblank_irq_state;
 static UINT8 timer_irq_state;
 static UINT8 gprider_hack;
 
-static data16_t *backupram1, *backupram2;
+static UINT16 *backupram1, *backupram2;
 
 
 
@@ -165,7 +165,7 @@ static void timer_ack_callback(void)
  *
  *************************************/
 
-static void sound_data_w(data8_t data)
+static void sound_data_w(UINT8 data)
 {
 	soundlatch_w(0, data);
 	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
@@ -238,9 +238,9 @@ static WRITE16_HANDLER( adc_w )
 }
 
 
-INLINE data16_t iochip_r(int which, int port, int inputval)
+INLINE UINT16 iochip_r(int which, int port, int inputval)
 {
-	data16_t result = iochip_regs[which][port];
+	UINT16 result = iochip_regs[which][port];
 
 	/* if there's custom I/O, do that to get the input value */
 	if (iochip_custom_io_r[which])
@@ -418,7 +418,7 @@ static WRITE16_HANDLER( iocontrol_w )
  *
  *************************************/
 
-static data16_t *loffire_sync;
+static UINT16 *loffire_sync;
 
 static WRITE16_HANDLER( loffire_sync0_w )
 {

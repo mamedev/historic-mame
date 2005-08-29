@@ -435,7 +435,7 @@ static const UINT8 mcu_data2[0x80] =
 
 static WRITE8_HANDLER( undoukai_mcu_w )
 {
-	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 	UINT16 ram_adr = RAM[0xa1b5]*0x100 + RAM[0xa1b4];
 
 	int d;
@@ -626,7 +626,7 @@ static DRIVER_INIT( 40love )
 		/* character ROM hack
             to show a white line on the opponent side */
 
-		data8_t *ROM = memory_region(REGION_GFX2);
+		UINT8 *ROM = memory_region(REGION_GFX2);
 		int adr = 0x10 * 0x022b;
 		ROM[adr+0x000a] = 0x00;
 		ROM[adr+0x000b] = 0x00;

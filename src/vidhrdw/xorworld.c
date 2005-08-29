@@ -99,7 +99,7 @@ VIDEO_START( xorworld )
       1  | xxxx---- -------- | sprite color
 */
 
-static void xorworld_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void xorworld_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 

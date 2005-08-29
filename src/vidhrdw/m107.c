@@ -268,7 +268,7 @@ VIDEO_START( m107 )
 
 /*****************************************************************************/
 
-static void m107_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void m107_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
 {
 	int offs;
 
@@ -408,7 +408,7 @@ static void m107_update_scroll_positions(void)
 
 /*****************************************************************************/
 
-void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+void m107_screenrefresh(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	if (pf4_enable)
 		tilemap_draw(bitmap,cliprect,pf4_layer,0,0);

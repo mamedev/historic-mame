@@ -49,7 +49,7 @@
 #include "driver.h"
 #include "sound/okim6295.h"
 
-extern data16_t *diverboy_spriteram;
+extern UINT16 *diverboy_spriteram;
 extern size_t diverboy_spriteram_size;
 
 VIDEO_START(diverboy);

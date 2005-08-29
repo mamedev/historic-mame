@@ -42,7 +42,7 @@ The PCB is Spanish and manufacured by Gamart.
 */
 
 #include "driver.h"
-static data8_t*peno_vram;
+static UINT8*peno_vram;
 
 
 VIDEO_START(penocup)
@@ -80,10 +80,10 @@ VIDEO_UPDATE(penocup)
 	}
 }
 
-static data8_t paloff_l;
-static data8_t paloff_h;
-static data8_t paldat_l;
-static data8_t paldat_h;
+static UINT8 paloff_l;
+static UINT8 paloff_h;
+static UINT8 paldat_l;
+static UINT8 paldat_h;
 
 
 static WRITE8_HANDLER( paloff_l_w )

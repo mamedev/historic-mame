@@ -203,20 +203,20 @@ extern int debug_key_pressed;
 enum namcos22_gametype namcos22_gametype; /* used for game-specific hacks */
 static int mbSuperSystem22; /* used to dispatch Sys22/SuperSys22 differences */
 
-static data32_t *namcos22_shareram;
-//static data32_t *namcos22_C139_SCI;
-static data32_t *namcos22_system_controller;
-static data32_t *namcos22_nvmem;
+static UINT32 *namcos22_shareram;
+//static UINT32 *namcos22_C139_SCI;
+static UINT32 *namcos22_system_controller;
+static UINT32 *namcos22_nvmem;
 static size_t namcos22_nvmem_size;
-static data8_t namcos22_credits;
-static data16_t mMasterBIOZ;
-static data32_t *mpPointRAM;
+static UINT8 namcos22_credits;
+static UINT16 mMasterBIOZ;
+static UINT32 *mpPointRAM;
 
 /**
  * helper function used to read a byte from a chunk of 32 bit memory
  */
-static data8_t
-nthbyte( const data32_t *pSource, int offs )
+static UINT8
+nthbyte( const UINT32 *pSource, int offs )
 {
 	pSource += offs/4;
 	return (pSource[0]<<((offs&3)*8))>>24;
@@ -234,7 +234,7 @@ nthbyte( const data32_t *pSource, int offs )
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 
 static void
-ReadAnalogDrivingPorts( data16_t *gas, data16_t *brake, data16_t *steer )
+ReadAnalogDrivingPorts( UINT16 *gas, UINT16 *brake, UINT16 *steer )
 {
 	*gas   = readinputport(2)*0xf00/0xff + 0x8000;
 	*brake = readinputport(3)*0xf00/0xff + 0x8000;
@@ -242,21 +242,21 @@ ReadAnalogDrivingPorts( data16_t *gas, data16_t *brake, data16_t *steer )
 }
 
 static void
-ReadAnalogDrivingPortsMCU( data16_t *gas, data16_t *brake, data16_t *steer )
+ReadAnalogDrivingPortsMCU( UINT16 *gas, UINT16 *brake, UINT16 *steer )
 {
 	*gas   = readinputport(2)<<2;
 	*brake = readinputport(3)<<2;
 	*steer = ((readinputport(4)-0x80)*0xf00/0x7f + 0x8000)>>6;
 }
 
-static data16_t
+static UINT16
 AnalogAsDigital( void )
 {
-	data16_t stick = readinputport(1);
-	data16_t gas   = readinputport(2);
-//  data16_t brake = readinputport(3);
-	data16_t steer = readinputport(4);
-	data16_t result = 0xffff;
+	UINT16 stick = readinputport(1);
+	UINT16 gas   = readinputport(2);
+//  UINT16 brake = readinputport(3);
+	UINT16 steer = readinputport(4);
+	UINT16 result = 0xffff;
 
 	switch( namcos22_gametype )
 	{
@@ -305,8 +305,8 @@ HandleDrivingIO( void )
 {
 	if( nthbyte(namcos22_system_controller,0x18)!=0 )
 	{
-		data16_t flags = readinputport(1);
-		data16_t gas,brake,steer;
+		UINT16 flags = readinputport(1);
+		UINT16 gas,brake,steer;
 		ReadAnalogDrivingPorts( &gas, &brake, &steer );
 		namcos22_shareram[0x000/4] = 0x10<<16; /* SUB CPU ready */
 		namcos22_shareram[0x030/4] = (flags<<16)|steer;
@@ -319,12 +319,12 @@ HandleCyberCommandoIO( void )
 {
 	if( nthbyte(namcos22_system_controller,0x18)!=0 )
 	{
-		data16_t flags = readinputport(1);
+		UINT16 flags = readinputport(1);
 
-		data16_t volume0 = readinputport(2)*0x10;
-		data16_t volume1 = readinputport(3)*0x10;
-		data16_t volume2 = readinputport(4)*0x10;
-		data16_t volume3 = readinputport(5)*0x10;
+		UINT16 volume0 = readinputport(2)*0x10;
+		UINT16 volume1 = readinputport(3)*0x10;
+		UINT16 volume2 = readinputport(4)*0x10;
+		UINT16 volume3 = readinputport(5)*0x10;
 
 		namcos22_shareram[0x030/4] = (flags<<16)|volume0;
 		namcos22_shareram[0x034/4] = (volume1<<16)|volume2;
@@ -337,8 +337,8 @@ HandleCyberCommandoIO( void )
 static void
 InitMasterDSP( void )
 {
-	data16_t pc = 0x0000;
-	data16_t *pMem = (data16_t *)memory_region(REGION_CPU2);
+	UINT16 pc = 0x0000;
+	UINT16 *pMem = (UINT16 *)memory_region(REGION_CPU2);
 
 	/* RESET */
 	pc = 0x0000;
@@ -555,8 +555,8 @@ InitMasterDSP( void )
 static void
 InitSlaveDSP( void )
 {
-	data16_t pc = 0x0000;
-	data16_t *pMem = (data16_t *)memory_region(REGION_CPU3);
+	UINT16 pc = 0x0000;
+	UINT16 *pMem = (UINT16 *)memory_region(REGION_CPU3);
 
 	/* INT0 */
 	pc = 0x0002;
@@ -656,7 +656,7 @@ InitDSP( int bSuperSystem22 )
 	}
 }
 
-extern data32_t namcos22_point_rom_r( offs_t offs );
+extern UINT32 namcos22_point_rom_r( offs_t offs );
 
 static READ16_HANDLER( pdp_status_r )
 {
@@ -664,7 +664,7 @@ static READ16_HANDLER( pdp_status_r )
 }
 
 static void
-WriteToPointRAM( offs_t offs, data32_t data )
+WriteToPointRAM( offs_t offs, UINT32 data )
 {
 	offs &= 0xffffff; /* 24 bit addressing */
 	if( mbSuperSystem22 )
@@ -683,7 +683,7 @@ WriteToPointRAM( offs_t offs, data32_t data )
 	}
 }
 
-static data32_t
+static UINT32
 ReadFromPointRAM( offs_t offs )
 {
 	offs &= 0xffffff; /* 24 bit addressing */
@@ -704,14 +704,14 @@ ReadFromPointRAM( offs_t offs )
 	return namcos22_point_rom_r(offs);
 }
 
-static data32_t
+static UINT32
 ReadFromCommRAM( offs_t offs )
 {
 	return namcos22_polygonram[offs&0x7fff];
 }
 
 static void
-WriteToCommRAM( offs_t offs, data32_t data )
+WriteToCommRAM( offs_t offs, UINT32 data )
 {
 	namcos22_polygonram[offs&0x7fff] = data;
 }
@@ -721,16 +721,16 @@ static READ16_HANDLER( pdp_begin_r )
 	/* this feature appears to be only used on Super System22 hardware */
 	if( mbSuperSystem22 )
 	{
-		data16_t offs = namcos22_polygonram[0x7fff];
+		UINT16 offs = namcos22_polygonram[0x7fff];
 		mMasterBIOZ = 1;
 		for(;;)
 		{
-			data16_t start = offs;
-			data16_t cmd = ReadFromCommRAM(offs++);
-			data32_t srcAddr;
-			data32_t dstAddr;
-			data32_t numWords;
-			data32_t data;
+			UINT16 start = offs;
+			UINT16 cmd = ReadFromCommRAM(offs++);
+			UINT32 srcAddr;
+			UINT32 dstAddr;
+			UINT32 numWords;
+			UINT32 data;
 			switch( cmd )
 			{
 			case 0xfff0:
@@ -824,7 +824,7 @@ static READ16_HANDLER( pdp_begin_r )
 } /* pdp_begin_r */
 
 /***************************************************************/
-static data16_t *mpSlaveExternalRAM;
+static UINT16 *mpSlaveExternalRAM;
 
 static READ16_HANDLER( slave_external_ram_r )
 {
@@ -861,16 +861,16 @@ static void EnableSlaveDSP( void )
 }
 
 #if 0
-static data32_t
+static UINT32
 ReadPointROM( offs_t addr )
 {
-	data32_t result = 0;
+	UINT32 result = 0;
 	size_t size = memory_region_length(REGION_GFX4)/3;
 	if( addr<size )
 	{
-		const data8_t *pPolyL = memory_region(REGION_GFX4);
-		const data8_t *pPolyM = pPolyL + size;
-		const data8_t *pPolyH = pPolyM + size;
+		const UINT8 *pPolyL = memory_region(REGION_GFX4);
+		const UINT8 *pPolyM = pPolyL + size;
+		const UINT8 *pPolyH = pPolyM + size;
 		result = (pPolyH[addr]<<16)|(pPolyM[addr]<<8)|pPolyL[addr];
 		if( result&0x00800000 )
 		{
@@ -896,8 +896,8 @@ static WRITE16_HANDLER( dsp_XF_output_w )
 
 /************************************************************/
 
-static data32_t mPointAddr;
-static data32_t mPointData;
+static UINT32 mPointAddr;
+static UINT32 mPointData;
 
 static WRITE16_HANDLER( point_ram_idx_w )
 {
@@ -1034,7 +1034,7 @@ static READ16_HANDLER( dsp_upload_status_r )
 }
 
 /***************************************************************/
-static data16_t *mpMasterExternalRAM;
+static UINT16 *mpMasterExternalRAM;
 
 static READ16_HANDLER( master_external_ram_r )
 {
@@ -1054,8 +1054,8 @@ static WRITE16_HANDLER( master_external_ram_w )
 #define SERIAL_IO_PERIOD 256
 #endif
 
-static data16_t mSerialDataSlaveToMasterNext;
-static data16_t mSerialDataSlaveToMasterCurrent;
+static UINT16 mSerialDataSlaveToMasterNext;
+static UINT16 mSerialDataSlaveToMasterCurrent;
 
 static WRITE16_HANDLER( slave_serial_io_w )
 {
@@ -1138,7 +1138,7 @@ static WRITE16_HANDLER( dsp_led_w )
 
 #define MAX_RENDER_CMD_SEQ 0x1c
 static int mRenderBufSize;
-static data16_t mRenderBufData[MAX_RENDER_CMD_SEQ];
+static UINT16 mRenderBufData[MAX_RENDER_CMD_SEQ];
 
 static WRITE16_HANDLER( dsp_unk8_w )
 {
@@ -1296,12 +1296,12 @@ ADDRESS_MAP_END
 static NVRAM_HANDLER( namcos22 )
 {
 	int i;
-	data8_t data[4];
+	UINT8 data[4];
 	if( read_or_write )
 	{
 		for( i=0; i<namcos22_nvmem_size/4; i++ )
 		{
-			data32_t dword = namcos22_nvmem[i];
+			UINT32 dword = namcos22_nvmem[i];
 			data[0] = dword>>24;
 			data[1] = (dword&0x00ff0000)>>16;
 			data[2] = (dword&0x0000ff00)>>8;
@@ -1445,10 +1445,10 @@ namcos22_UploadCodeToDSP( void )
 	{
 		if( TransferEnabled() )
 		{
-			data32_t comm_ram_addr = 0xc00/4;
-			data32_t point_ram_idc = namcos22_polygonram[0x44/4];
-			data32_t numWords = 1 + namcos22_polygonram[0x48/4];
-			data32_t target = namcos22_polygonram[0x4c/4];
+			UINT32 comm_ram_addr = 0xc00/4;
+			UINT32 point_ram_idc = namcos22_polygonram[0x44/4];
+			UINT32 numWords = 1 + namcos22_polygonram[0x48/4];
+			UINT32 target = namcos22_polygonram[0x4c/4];
 
 			if( target==0xffffffff )
 			{ /* write data to point ram */
@@ -1480,10 +1480,10 @@ namcos22_UploadCodeToDSP( void )
 	{
 		if( TransferEnabled() )
 		{
-			data16_t *pUploadDest = NULL;
+			UINT16 *pUploadDest = NULL;
 			offs_t dstLoc = 0x4000; /* default */
 			offs_t srcLoc = 0xc00/4;
-			data16_t size = namcos22_polygonram[srcLoc++]&0xffff;
+			UINT16 size = namcos22_polygonram[srcLoc++]&0xffff;
 			int uploadType = namcos22_polygonram[srcLoc]&0xffff;
 
 			if( uploadType<0x8000 ) /* HACK */
@@ -1682,11 +1682,11 @@ static READ32_HANDLER( namcos22_keycus_r )
  * Other values seem to be digital versions of analog ports, for example "the gas pedal is
  * pressed" as a boolean flag.  IO RAM supplies it as an analog value.
  */
-static data32_t mSys22PortBits;
+static UINT32 mSys22PortBits;
 extern int debug_key_pressed;
 static READ32_HANDLER( namcos22_portbit_r )
 {
-	data32_t data = mSys22PortBits;
+	UINT32 data = mSys22PortBits;
 	mSys22PortBits>>=1;
 	return data&0x10001;
 }
@@ -1724,9 +1724,9 @@ static WRITE32_HANDLER( namcos22_mcuram_w )
 
 static struct
 {
-	data16_t portR; /* next address for read */
-	data16_t portW; /* next address for write */
-	data16_t RAM[SPOTRAM_SIZE];
+	UINT16 portR; /* next address for read */
+	UINT16 portW; /* next address for write */
+	UINT16 RAM[SPOTRAM_SIZE];
 } mSpotRAM;
 
 static READ32_HANDLER( spotram_r )
@@ -1836,10 +1836,10 @@ SimulateAirCombat22MCU( void )
 {
 	if( nthbyte(namcos22_system_controller,0x16)!=0 )
 	{
-		data16_t flags = readinputport(1);
-		data16_t pedal = readinputport(2);
-		data16_t x     = readinputport(3);
-		data16_t y     = readinputport(4);
+		UINT16 flags = readinputport(1);
+		UINT16 pedal = readinputport(2);
+		UINT16 x     = readinputport(3);
+		UINT16 y     = readinputport(4);
 		namcos22_shareram[0x7d00/4] = flags<<8;
 		namcos22_shareram[0x7d0a/4] = x;
 		namcos22_shareram[0x7d0c/4] = (y<<16)|pedal;
@@ -1852,8 +1852,8 @@ SimulateCyberCyclesMCU( void )
 {
 	if( nthbyte(namcos22_system_controller,0x16)!=0 )
 	{
-//      data16_t flags = readinputport(1)|0x8000;
-		data16_t gas,brake,steer;
+//      UINT16 flags = readinputport(1)|0x8000;
+		UINT16 gas,brake,steer;
 		ReadAnalogDrivingPorts( &gas, &brake, &steer );
 
 		namcos22_shareram[0x7d00/4] = readinputport(1)<<8;
@@ -1914,14 +1914,14 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 
 static READ16_HANDLER( s22mcu_shared_r )
 {
-	data16_t *share16 = (data16_t *)namcos22_shareram;
+	UINT16 *share16 = (UINT16 *)namcos22_shareram;
 
 	return share16[BYTE_XOR_BE(offset)];
 }
 
 static WRITE16_HANDLER( s22mcu_shared_w )
 {
-	data16_t *share16 = (data16_t *)namcos22_shareram;
+	UINT16 *share16 = (UINT16 *)namcos22_shareram;
 
 	/*
        I have no idea what's going on here.  The M37710 has a 10-bit wide
@@ -2116,8 +2116,8 @@ static READ8_HANDLER( propcycle_mcu_adc_r )
 // 0 H+L = swing, 1 H+L = edge
 static READ8_HANDLER( alpineracer_mcu_adc_r )
 {
-	data16_t swing = readinputport(2)*4; /* max 3ff */
-	data16_t edge = readinputport(3)*4;  /* max 3ff */
+	UINT16 swing = readinputport(2)*4; /* max 3ff */
+	UINT16 edge = readinputport(3)*4;  /* max 3ff */
 
 	switch (offset)
 	{
@@ -2145,7 +2145,7 @@ static READ8_HANDLER( alpineracer_mcu_adc_r )
 
 static READ8_HANDLER( cybrcycc_mcu_adc_r )
 {
-	data16_t gas,brake,st2;
+	UINT16 gas,brake,st2;
 	static int steer = 0xc0;
 	ReadAnalogDrivingPorts( &gas, &brake, &st2 );
 
@@ -4272,7 +4272,7 @@ DRIVER_INIT( alpiner )
 
 DRIVER_INIT( airco22 )
 { /* patch DSP RAM test */
-	data32_t *pROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
 	pROM[0x6d74/4] &= 0x0000ffff;
 	pROM[0x6d74/4] |= 0x4e710000;
 
@@ -4289,7 +4289,7 @@ DRIVER_INIT( airco22 )
 
 DRIVER_INIT( propcycl )
 {
-	data32_t *pROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
 
 	/* patch out protection */
 	pROM[0x1992C/4] = 0x4E754E75;
@@ -4344,7 +4344,7 @@ DRIVER_INIT( raveracw )
 
 DRIVER_INIT( cybrcomm )
 {
-	data32_t *pROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
 	pROM[0x18ade8/4] = 0x4e714e71;
 	pROM[0x18ae38/4] = 0x4e714e71;
 	pROM[0x18ae80/4] = 0x4e714e71;
@@ -4357,7 +4357,7 @@ DRIVER_INIT( cybrcomm )
 
 DRIVER_INIT( cybrcyc )
 { /* patch DSP RAM test */
-	data32_t *pROM = (data32_t *)memory_region(REGION_CPU1);
+	UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
 	pROM[0x355C/4] &= 0x0000ffff;
 	pROM[0x355C/4] |= 0x4e710000;
 

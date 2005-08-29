@@ -80,8 +80,8 @@ Multi monitor notes:
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 
-data16_t *gaelco2_vregs;
-static data16_t *gaelco2_videoram;
+UINT16 *gaelco2_vregs;
+static UINT16 *gaelco2_videoram;
 
 /* tilemaps */
 static tilemap *pant[2];
@@ -382,7 +382,7 @@ VIDEO_START( gaelco2_dual )
 
 ***************************************************************************/
 
-static void gaelco2_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int mask, int xoffs)
+static void gaelco2_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int mask, int xoffs)
 {
 	int j, x, y, ex, ey, px, py;
 	const gfx_element *gfx = Machine->gfx[0];
@@ -592,7 +592,7 @@ VIDEO_UPDATE( gaelco2_dual )
 	/* draw screen */
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 	{
-		struct rectangle cliprect1, cliprect2;
+		rectangle cliprect1, cliprect2;
 		cliprect1.min_x = 0;
 		cliprect1.max_x = Machine->visible_area.max_x/2;
 		cliprect1.min_y = 16;

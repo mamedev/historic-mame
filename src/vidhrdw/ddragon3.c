@@ -142,7 +142,7 @@ VIDEO_START( ddragon3 )
  *   6,7| unused
  */
 
-static void ddragon3_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void ddragon3_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	UINT16 *source = spriteram16;
 	UINT16 *finish = source + 0x800;

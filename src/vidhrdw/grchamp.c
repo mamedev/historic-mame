@@ -12,8 +12,8 @@ static UINT8 grchamp_tile_number;
 static UINT8 grchamp_rain_xpos;
 static UINT8 grchamp_rain_ypos;
 static int palette_bank;
-static struct mame_bitmap *headlight_bitmap;
-static struct mame_bitmap *work_bitmap;
+static mame_bitmap *headlight_bitmap;
+static mame_bitmap *work_bitmap;
 
 UINT8 grchamp_vreg1[0x10];	/* background control registers */
 UINT8 *grchamp_videoram;	/* background tilemaps */
@@ -159,7 +159,7 @@ VIDEO_START( grchamp )
 	return 1;
 }
 
-static void draw_text( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_text( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	const gfx_element *gfx = Machine->gfx[0];
 	const UINT8 *source = videoram;
@@ -184,7 +184,7 @@ static void draw_text( struct mame_bitmap *bitmap, const struct rectangle *clipr
 	}
 }
 
-static void draw_background( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_background( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int dx = -48;
 	int dy = 16;
@@ -214,7 +214,7 @@ static void draw_background( struct mame_bitmap *bitmap, const struct rectangle 
 	tilemap_draw(bitmap,cliprect,bg_tilemap[2],0,0);
 }
 
-static void draw_player_car( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_player_car( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	drawgfx( bitmap,
 		Machine->gfx[2],
@@ -227,11 +227,11 @@ static void draw_player_car( struct mame_bitmap *bitmap, const struct rectangle 
 		TRANSPARENCY_PEN, 0 );
 }
 
-static int collision_check( struct mame_bitmap *bitmap, int which )
+static int collision_check( mame_bitmap *bitmap, int which )
 {
 	int bgcolor = Machine->pens[0];
 	int sprite_transp = Machine->pens[0x24];
-	const struct rectangle *clip = &Machine->visible_area;
+	const rectangle *clip = &Machine->visible_area;
 	int y0 = 240-grchamp_player_ypos;
 	int x0 = 256-grchamp_player_xpos;
 	int x,y;
@@ -274,7 +274,7 @@ static int collision_check( struct mame_bitmap *bitmap, int which )
 	return result?(1<<which):0;
 }
 
-static void draw_rain( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
+static void draw_rain( mame_bitmap *bitmap, const rectangle *cliprect ){
 	const gfx_element *gfx = Machine->gfx[4];
 	int tile_number = grchamp_tile_number>>4;
 	if( tile_number ){
@@ -294,7 +294,7 @@ static void draw_rain( struct mame_bitmap *bitmap, const struct rectangle *clipr
 	}
 }
 
-static void draw_fog( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog ){
+static void draw_fog( mame_bitmap *bitmap, const rectangle *cliprect, int bFog ){
 	int x0 = 256-grchamp_player_xpos-64;
 	int y0 = 240-grchamp_player_ypos-64;
 	int color = Machine->pens[bFog?0x40:0x00];
@@ -310,7 +310,7 @@ static void draw_fog( struct mame_bitmap *bitmap, const struct rectangle *clipre
 	fillbitmap( bitmap,color,cliprect );
 }
 
-static void draw_headlights( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog )
+static void draw_headlights( mame_bitmap *bitmap, const rectangle *cliprect, int bFog )
 {
 	int sx, sy, color;
 	int x0 = 256-grchamp_player_xpos-64;
@@ -344,7 +344,7 @@ static void draw_headlights( struct mame_bitmap *bitmap, const struct rectangle 
 	}
 }
 
-static void draw_radar( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
+static void draw_radar( mame_bitmap *bitmap, const rectangle *cliprect ){
 	const UINT8 *source = grchamp_radar;
 	int color = Machine->pens[3];
 	int offs;
@@ -365,7 +365,7 @@ static void draw_radar( struct mame_bitmap *bitmap, const struct rectangle *clip
 	}
 }
 
-static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle *cliprect ){
+static void draw_tachometer( mame_bitmap *bitmap, const rectangle *cliprect ){
 /*
     int value = grchamp_vreg1[0x03]&0xf;
     int i;
@@ -381,7 +381,7 @@ static void draw_tachometer( struct mame_bitmap *bitmap, const struct rectangle 
 */
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int bFog ){
+static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int bFog ){
 	const gfx_element *gfx = Machine->gfx[3];
 	int bank = (grchamp_videoreg0&0x20)?0x40:0x00;
 	const UINT8 *source = spriteram;

@@ -1,5 +1,5 @@
-extern data8_t *news_fgram;
-extern data8_t *news_bgram;
+extern UINT8 *news_fgram;
+extern UINT8 *news_bgram;
 
 WRITE8_HANDLER( news_fgram_w );
 WRITE8_HANDLER( news_bgram_w );

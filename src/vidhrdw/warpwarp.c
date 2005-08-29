@@ -11,7 +11,7 @@
 
 
 
-data8_t *geebee_videoram,*warpwarp_videoram;
+UINT8 *geebee_videoram,*warpwarp_videoram;
 int geebee_handleoverlay;
 int geebee_bgw;
 int warpwarp_ball_on;
@@ -244,13 +244,13 @@ WRITE8_HANDLER( warpwarp_videoram_w )
 
 ***************************************************************************/
 
-INLINE void geebee_plot(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int x, int y, int pen)
+INLINE void geebee_plot(mame_bitmap *bitmap, const rectangle *cliprect, int x, int y, int pen)
 {
 	if (x >= cliprect->min_x && x <= cliprect->max_x && y >= cliprect->min_y && y <= cliprect->max_y)
 		plot_pixel(bitmap,x,y,pen);
 }
 
-static void draw_ball(struct mame_bitmap *bitmap, const struct rectangle *cliprect,int color)
+static void draw_ball(mame_bitmap *bitmap, const rectangle *cliprect,int color)
 {
 	if (warpwarp_ball_on)
 	{

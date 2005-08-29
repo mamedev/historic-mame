@@ -157,13 +157,13 @@ TODO:
 
 
 /* custom IO chips functions */
-extern data8_t *gaplus_customio_3;
+extern UINT8 *gaplus_customio_3;
 WRITE8_HANDLER( gaplus_customio_3_w );
 READ8_HANDLER( gaplus_customio_3_r );
 
 /* vidhrdw */
-extern data8_t *gaplus_videoram;
-extern data8_t *gaplus_spriteram;
+extern UINT8 *gaplus_videoram;
+extern UINT8 *gaplus_spriteram;
 READ8_HANDLER( gaplus_videoram_r );
 WRITE8_HANDLER( gaplus_videoram_w );
 WRITE8_HANDLER( gaplus_starfield_control_w );
@@ -1033,7 +1033,7 @@ ROM_END
 
 static void unpack_gfx(void)
 {
-	data8_t *rom;
+	UINT8 *rom;
 	int i;
 
 	rom = memory_region(REGION_GFX1);

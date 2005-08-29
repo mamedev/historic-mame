@@ -57,7 +57,7 @@ typedef struct
 } HC11_REGS;
 
 static HC11_REGS hc11;
-static data8_t *internal_ram;
+static UINT8 *internal_ram;
 static int internal_ram_size;
 
 #define HC11OP(XX)		hc11_##XX
@@ -65,7 +65,7 @@ static int internal_ram_size;
 /*****************************************************************************/
 /* Internal registers */
 
-static data8_t spi_data2;
+static UINT8 spi_data2;
 
 static UINT8 hc11_regs_r(UINT32 address)
 {

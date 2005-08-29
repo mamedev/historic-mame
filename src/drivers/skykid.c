@@ -20,7 +20,7 @@ Notes:
 #include "cpu/m6800/m6800.h"
 #include "sound/namco.h"
 
-extern data8_t *skykid_textram, *skykid_videoram, *skykid_spriteram;
+extern UINT8 *skykid_textram, *skykid_videoram, *skykid_spriteram;
 
 /* from vidhrdw/skykid.c */
 VIDEO_START( skykid );
@@ -88,7 +88,7 @@ static WRITE8_HANDLER( skykid_subreset_w )
 static WRITE8_HANDLER( skykid_bankswitch_w )
 {
 	int bit = !BIT(offset,11);
-	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
+	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
 
 	memory_set_bankptr(1,rom + 0x2000 * bit);
 }
@@ -531,7 +531,7 @@ ROM_END
 
 static DRIVER_INIT( skykid )
 {
-	data8_t *rom;
+	UINT8 *rom;
 	int i;
 
 	/* unpack the third sprite ROM */

@@ -191,7 +191,7 @@ static void sh2_timer_callback(int data);
 #define Rn	((opcode>>8)&15)
 #define Rm	((opcode>>4)&15)
 
-INLINE data8_t RB(offs_t A)
+INLINE UINT8 RB(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return sh2_internal_r((A & 0x1fc)>>2, ~(0xff << (((~A) & 3)*8))) >> (((~A) & 3)*8);
@@ -205,7 +205,7 @@ INLINE data8_t RB(offs_t A)
 	return program_read_byte_32be(A & AM);
 }
 
-INLINE data16_t RW(offs_t A)
+INLINE UINT16 RW(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return sh2_internal_r((A & 0x1fc)>>2, ~(0xffff << (((~A) & 2)*8))) >> (((~A) & 2)*8);
@@ -219,7 +219,7 @@ INLINE data16_t RW(offs_t A)
 	return program_read_word_32be(A & AM);
 }
 
-INLINE data32_t RL(offs_t A)
+INLINE UINT32 RL(offs_t A)
 {
 	if (A >= 0xe0000000)
 		return sh2_internal_r((A & 0x1fc)>>2, 0);
@@ -233,7 +233,7 @@ INLINE data32_t RL(offs_t A)
   return program_read_dword_32be(A & AM);
 }
 
-INLINE void WB(offs_t A, data8_t V)
+INLINE void WB(offs_t A, UINT8 V)
 {
 
 	if (A >= 0xe0000000)
@@ -254,7 +254,7 @@ INLINE void WB(offs_t A, data8_t V)
 	program_write_byte_32be(A & AM,V);
 }
 
-INLINE void WW(offs_t A, data16_t V)
+INLINE void WW(offs_t A, UINT16 V)
 {
 	if (A >= 0xe0000000)
 	{
@@ -274,7 +274,7 @@ INLINE void WW(offs_t A, data16_t V)
 	program_write_word_32be(A & AM,V);
 }
 
-INLINE void WL(offs_t A, data32_t V)
+INLINE void WL(offs_t A, UINT32 V)
 {
 	if (A >= 0xe0000000)
 	{

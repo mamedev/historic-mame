@@ -105,7 +105,7 @@ int start_megatech_video_normal(void)
 	return 0;
 }
 
-void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+void update_megatech_video_normal(mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 
@@ -118,7 +118,7 @@ void update_megatech_video_normal(struct mame_bitmap *bitmap, const struct recta
 		draw_scanline8(bitmap,0,i,256,&cache_bitmap[i * (16+256+16) +16],&Machine->pens[segasyse_palettebase],-1);
 }
 
-void update_megaplay_video_normal(struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+void update_megaplay_video_normal(mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
 

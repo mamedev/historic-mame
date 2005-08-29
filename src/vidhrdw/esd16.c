@@ -38,14 +38,14 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 /* Variables needed by drivers: */
 
-data16_t *esd16_vram_0, *esd16_scroll_0;
-data16_t *esd16_vram_1, *esd16_scroll_1;
+UINT16 *esd16_vram_0, *esd16_scroll_0;
+UINT16 *esd16_vram_1, *esd16_scroll_1;
 
-//extern data16_t *head_unknown1;
-extern data16_t *head_layersize;
-//extern data16_t *head_unknown3;
-//extern data16_t *head_unknown4;
-//extern data16_t *head_unknown5;
+//extern UINT16 *head_unknown1;
+extern UINT16 *head_layersize;
+//extern UINT16 *head_unknown3;
+//extern UINT16 *head_unknown4;
+//extern UINT16 *head_unknown5;
 
 /* Functions defined in vidhrdw: */
 
@@ -73,7 +73,7 @@ tilemap *esdtilemap_0, *esdtilemap_1, *esdtilemap_1_16x16;
 
 static void get_tile_info_0(int tile_index)
 {
-	data16_t code = esd16_vram_0[tile_index];
+	UINT16 code = esd16_vram_0[tile_index];
 	SET_TILE_INFO(
 			1,
 			code,
@@ -83,7 +83,7 @@ static void get_tile_info_0(int tile_index)
 
 static void get_tile_info_1(int tile_index)
 {
-	data16_t code = esd16_vram_1[tile_index];
+	UINT16 code = esd16_vram_1[tile_index];
 	SET_TILE_INFO(
 			1,
 			code,
@@ -93,7 +93,7 @@ static void get_tile_info_1(int tile_index)
 
 static void get_tile_info_1_16x16(int tile_index)
 {
-	data16_t code = esd16_vram_1[tile_index];
+	UINT16 code = esd16_vram_1[tile_index];
 	SET_TILE_INFO(
 			2,
 			code,
@@ -103,15 +103,15 @@ static void get_tile_info_1_16x16(int tile_index)
 
 WRITE16_HANDLER( esd16_vram_0_w )
 {
-	data16_t old_data	=	esd16_vram_0[offset];
-	data16_t new_data	=	COMBINE_DATA(&esd16_vram_0[offset]);
+	UINT16 old_data	=	esd16_vram_0[offset];
+	UINT16 new_data	=	COMBINE_DATA(&esd16_vram_0[offset]);
 	if (old_data != new_data)	tilemap_mark_tile_dirty(esdtilemap_0,offset);
 }
 
 WRITE16_HANDLER( esd16_vram_1_w )
 {
-	data16_t old_data	=	esd16_vram_1[offset];
-	data16_t new_data	=	COMBINE_DATA(&esd16_vram_1[offset]);
+	UINT16 old_data	=	esd16_vram_1[offset];
+	UINT16 new_data	=	COMBINE_DATA(&esd16_vram_1[offset]);
 	if (old_data != new_data)
 	{
 		tilemap_mark_tile_dirty(esdtilemap_1,offset);
@@ -183,7 +183,7 @@ VIDEO_START( esd16 )
 
 ***************************************************************************/
 
-static void esd16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void esd16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
@@ -232,7 +232,7 @@ static void esd16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangl
 }
 
 /* note, check if i can re-merge this with the other or if its really different */
-static void hedpanic_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 

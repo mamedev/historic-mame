@@ -24,15 +24,15 @@ o Layer mixing
 #include "sound/2203intf.h"
 #include <stdio.h>
 
-static data8_t *lockon_vram0;
-static data8_t *lockon_vram1;
-static data8_t *lockon_vram2;
-static data8_t *object_ram;
-static data8_t *ground_ram;
-static data8_t *z80_ram;
-static data8_t *v30_gnd;
-static data8_t *v30_obj;
-static data8_t *clut_ram;
+static UINT8 *lockon_vram0;
+static UINT8 *lockon_vram1;
+static UINT8 *lockon_vram2;
+static UINT8 *object_ram;
+static UINT8 *ground_ram;
+static UINT8 *z80_ram;
+static UINT8 *v30_gnd;
+static UINT8 *v30_obj;
+static UINT8 *clut_ram;
 
 static int v30_obj_addr=0;
 static int v30_gnd_addr=0;
@@ -64,14 +64,14 @@ A B   Layer                  Colours
 */
 
 /* Very preliminary! */
-static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
         int offs=0;
         int index_x=0, index_y=0;
 
-        data16_t *ROM_LUTA = (data16_t *)memory_region(REGION_USER1);
-        data8_t  *ROM_LUTB = (data8_t *)memory_region(REGION_USER2);
-        data8_t  *ROM_LUTC = (data8_t *)memory_region(REGION_USER2)+0x8000;   // Selected by bit 7...
+        UINT16 *ROM_LUTA = (UINT16 *)memory_region(REGION_USER1);
+        UINT8  *ROM_LUTB = (UINT8 *)memory_region(REGION_USER2);
+        UINT8  *ROM_LUTC = (UINT8 *)memory_region(REGION_USER2)+0x8000;   // Selected by bit 7...
 
        	for (offs = 0x0; offs <= (objectram_size); offs += 8)
 		{
@@ -361,33 +361,33 @@ static WRITE8_HANDLER(z80_shared_w)
 
 static READ8_HANDLER(main_gnd_r)
 {
-       const data8_t* rom=(data8_t*)memory_region(REGION_CPU2);
+       const UINT8* rom=(UINT8*)memory_region(REGION_CPU2);
        return rom[offset | (v30_gnd_addr << 16)];
 }
 
 static WRITE8_HANDLER(main_gnd_w)
 {
-       data8_t* rom=(data8_t*)memory_region(REGION_CPU2);
+       UINT8* rom=(UINT8*)memory_region(REGION_CPU2);
        rom[offset | (v30_gnd_addr << 16)] = data;
 }
 
 static READ8_HANDLER(main_obj_r)
 {
-       const data8_t* rom=(data8_t*)memory_region(REGION_CPU3);
+       const UINT8* rom=(UINT8*)memory_region(REGION_CPU3);
        return rom[offset | (v30_obj_addr << 16)];
 }
 
 static WRITE8_HANDLER(main_obj_w)
 {
-       data8_t* ram=(data8_t*)memory_region(REGION_CPU3);
+       UINT8* ram=(UINT8*)memory_region(REGION_CPU3);
        ram[offset | (v30_obj_addr << 16)] = data;
 }
 
 
 static WRITE8_HANDLER(testcs_w)
 {
-       data8_t* gnd=(data8_t*)memory_region(REGION_CPU2);
-       data8_t* obj=(data8_t*)memory_region(REGION_CPU3);
+       UINT8* gnd=(UINT8*)memory_region(REGION_CPU2);
+       UINT8* obj=(UINT8*)memory_region(REGION_CPU3);
 
        if(offset<0x800)
        {

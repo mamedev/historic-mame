@@ -57,8 +57,8 @@ VIDEO_START( xmen )
 	return 0;
 }
 
-struct mame_bitmap * screen_left;
-struct mame_bitmap * screen_right;
+mame_bitmap * screen_left;
+mame_bitmap * screen_right;
 
 VIDEO_START( xmen6p )
 {
@@ -132,12 +132,12 @@ VIDEO_UPDATE( xmen )
 	K053247_sprites_draw(bitmap,cliprect);
 }
 
-extern data16_t xmen_current_frame;
-extern data16_t *K053247_ram;
-extern data16_t*xmen6p_spriteramleft;
-extern data16_t*xmen6p_spriteramright;
-extern data16_t*xmen6p_tilemapleft;
-extern data16_t*xmen6p_tilemapright;
+extern UINT16 xmen_current_frame;
+extern UINT16 *K053247_ram;
+extern UINT16*xmen6p_spriteramleft;
+extern UINT16*xmen6p_spriteramright;
+extern UINT16*xmen6p_tilemapleft;
+extern UINT16*xmen6p_tilemapright;
 extern WRITE8_HANDLER( K052109_w );
 
 
@@ -172,8 +172,8 @@ VIDEO_UPDATE( xmen6p )
 VIDEO_EOF( xmen6p )
 {
 	int layer[3];
-	struct mame_bitmap * renderbitmap;
-	struct rectangle cliprect;
+	mame_bitmap * renderbitmap;
+	rectangle cliprect;
 	int offset;
 
 	xmen_current_frame ^=0x8000;

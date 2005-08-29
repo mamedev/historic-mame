@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-data16_t *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
+UINT16 *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;
 static int screenscroll;
 
 
@@ -66,7 +66,7 @@ WRITE16_HANDLER( galspnbl_scroll_w )
  *    4    | xxxxxxxxxxxxxxxx | x position
  *    5,6,7|                  | unused
  */
-static void draw_sprites(struct mame_bitmap *bitmap,int priority)
+static void draw_sprites(mame_bitmap *bitmap,int priority)
 {
 	int offs;
 	const UINT8 layout[8][8] =

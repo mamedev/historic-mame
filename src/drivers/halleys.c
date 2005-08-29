@@ -1209,7 +1209,7 @@ static VIDEO_START( halleys )
 }
 
 
-static void copy_scroll_op(struct mame_bitmap *bitmap, WORD *source, int sx, int sy)
+static void copy_scroll_op(mame_bitmap *bitmap, WORD *source, int sx, int sy)
 {
 
 //--------------------------------------------------------------------------
@@ -1247,7 +1247,7 @@ static void copy_scroll_op(struct mame_bitmap *bitmap, WORD *source, int sx, int
 }
 
 
-static void copy_scroll_xp(struct mame_bitmap *bitmap, WORD *source, int sx, int sy)
+static void copy_scroll_xp(mame_bitmap *bitmap, WORD *source, int sx, int sy)
 {
 
 //--------------------------------------------------------------------------
@@ -1303,7 +1303,7 @@ static void copy_scroll_xp(struct mame_bitmap *bitmap, WORD *source, int sx, int
 
 
 
-static void copy_fixed_xp(struct mame_bitmap *bitmap, WORD *source)
+static void copy_fixed_xp(mame_bitmap *bitmap, WORD *source)
 {
 	WORD *esi, *edi;
 	int dst_pitch, ecx, edx;
@@ -1338,7 +1338,7 @@ static void copy_fixed_xp(struct mame_bitmap *bitmap, WORD *source)
 }
 
 
-static void copy_fixed_2b(struct mame_bitmap *bitmap, WORD *source)
+static void copy_fixed_2b(mame_bitmap *bitmap, WORD *source)
 {
 	WORD *esi, *edi;
 	int dst_pitch, ecx, edx;
@@ -1385,7 +1385,7 @@ static void copy_fixed_2b(struct mame_bitmap *bitmap, WORD *source)
 }
 
 
-static void filter_bitmap(struct mame_bitmap *bitmap, int mask)
+static void filter_bitmap(mame_bitmap *bitmap, int mask)
 {
 	int dst_pitch;
 

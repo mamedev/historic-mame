@@ -237,10 +237,10 @@ VIDEO_START( tp84 )
 	return 0;
 }
 
-static void tp84_draw_sprites(struct mame_bitmap *bitmap)
+static void tp84_draw_sprites(mame_bitmap *bitmap)
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	struct rectangle clip = Machine->visible_area;
+	rectangle clip = Machine->visible_area;
 	int offs;
 	int line;
 	int coloffset = ((col0&0x07) << 4);
@@ -282,7 +282,7 @@ static void tp84_draw_sprites(struct mame_bitmap *bitmap)
 
 VIDEO_UPDATE( tp84 )
 {
-	struct rectangle clip;
+	rectangle clip;
 
 	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
 	tp84_draw_sprites(bitmap);

@@ -23,7 +23,7 @@ extern VIDEO_START( goal92 );
 extern VIDEO_UPDATE( goal92 );
 extern VIDEO_EOF( goal92 );
 
-extern data16_t *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
+extern UINT16 *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
 
 static int msm5205next;
 

@@ -18,7 +18,7 @@ TODO:
 #include "sound/msm5205.h"
 
 
-extern data16_t *sf_objectram,*sf_videoram;
+extern UINT16 *sf_objectram,*sf_videoram;
 extern int sf_deltaxb;
 extern int sf_deltaxm;
 extern int sf_active;

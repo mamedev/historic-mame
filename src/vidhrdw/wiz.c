@@ -11,13 +11,13 @@
 #include "state.h"
 
 
-static struct rectangle spritevisiblearea =
+static rectangle spritevisiblearea =
 {
 	2*8, 32*8-1,
 	2*8, 30*8-1
 };
 
-static struct rectangle spritevisibleareaflipx =
+static rectangle spritevisibleareaflipx =
 {
 	0*8, 30*8-1,
 	2*8, 30*8-1
@@ -158,7 +158,7 @@ WRITE8_HANDLER( wiz_flipy_w )
     }
 }
 
-static void draw_background(struct mame_bitmap *bitmap, int bank, int colortype)
+static void draw_background(mame_bitmap *bitmap, int bank, int colortype)
 {
 	int offs;
 
@@ -198,7 +198,7 @@ static void draw_background(struct mame_bitmap *bitmap, int bank, int colortype)
 	}
 }
 
-static void draw_foreground(struct mame_bitmap *bitmap, int colortype)
+static void draw_foreground(mame_bitmap *bitmap, int colortype)
 {
 	int offs;
 
@@ -237,8 +237,8 @@ static void draw_foreground(struct mame_bitmap *bitmap, int colortype)
 	}
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sprite_ram,
-                         int bank, const struct rectangle* visible_area)
+static void draw_sprites(mame_bitmap *bitmap, unsigned char* sprite_ram,
+                         int bank, const rectangle* visible_area)
 {
 	int offs;
 
@@ -284,7 +284,7 @@ VIDEO_UPDATE( kungfut )
 VIDEO_UPDATE( wiz )
 {
 	int bank;
-	const struct rectangle* visible_area;
+	const rectangle* visible_area;
 
 	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area);
 	draw_background(bitmap, 2 + ((char_bank[0] << 1) | char_bank[1]), 0);

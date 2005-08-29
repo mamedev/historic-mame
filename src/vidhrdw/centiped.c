@@ -384,7 +384,7 @@ WRITE8_HANDLER( milliped_paletteram_w )
 
 VIDEO_UPDATE( centiped )
 {
-	struct rectangle spriteclip = *cliprect;
+	rectangle spriteclip = *cliprect;
 	int offs;
 
 	/* draw the background */
@@ -458,7 +458,7 @@ VIDEO_UPDATE( warlords )
 
 VIDEO_UPDATE( bullsdrt )
 {
-	struct rectangle spriteclip = *cliprect;
+	rectangle spriteclip = *cliprect;
 
 	int offs;
 

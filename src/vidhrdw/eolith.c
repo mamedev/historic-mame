@@ -1,8 +1,8 @@
 #include "vidhrdw/generic.h"
 
 int eolith_buffer=0;
-static struct mame_bitmap *bitmaps[2];
-static data32_t *eo_vram;
+static mame_bitmap *bitmaps[2];
+static UINT32 *eo_vram;
 
 READ32_HANDLER(eolith_vram_r)
 {

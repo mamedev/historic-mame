@@ -52,8 +52,8 @@ typedef struct
 
 
 /* globals available to everyone */
-data8_t *namco_soundregs;
-data8_t *namco_wavedata;
+UINT8 *namco_soundregs;
+UINT8 *namco_wavedata;
 
 struct namco_sound
 {
@@ -77,7 +77,7 @@ struct namco_sound
 
 
 /* update the decoded waveform data */
-static void update_namco_waveform(struct namco_sound *chip, int offset, data8_t data)
+static void update_namco_waveform(struct namco_sound *chip, int offset, UINT8 data)
 {
 	if (chip->wave_size == 1)
 	{

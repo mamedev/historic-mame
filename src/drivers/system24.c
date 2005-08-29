@@ -342,7 +342,7 @@ Notes:
 #include "sound/dac.h"
 #include "sound/2151intf.h"
 
-data16_t* s24_mainram1;
+UINT16* s24_mainram1;
 
 extern void s24_fd1094_machine_init(void);
 extern void s24_fd1094_driver_init(void);

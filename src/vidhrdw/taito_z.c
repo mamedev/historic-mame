@@ -7,7 +7,7 @@
 #define TC0480SCP_GFX_NUM 1
 
 static int sci_spriteframe;
-extern data16_t *taitoz_sharedram;
+extern UINT16 *taitoz_sharedram;
 
 static int road_palbank;
 
@@ -178,9 +178,9 @@ confirmed
 ********************************************************/
 
 
-static void contcirc_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void contcirc_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int sprites_flipscreen = 0;
@@ -270,9 +270,9 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void chasehq_draw_sprites_16x16(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void chasehq_draw_sprites_16x16(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int sprites_flipscreen = 0;
@@ -455,9 +455,9 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void bshark_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void bshark_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int sprites_flipscreen = 0;
@@ -548,9 +548,9 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void sci_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void sci_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, start_offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int sprites_flipscreen = 0;
@@ -650,9 +650,9 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void aquajack_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void aquajack_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int sprites_flipscreen = 0;
@@ -742,9 +742,9 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 
 
 
-static void spacegun_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int y_offs)
+static void spacegun_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
+	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	int offs, data, tilenum, color, flipx, flipy;
 	int x, y, priority, curx, cury;
 	int sprites_flipscreen = 0;

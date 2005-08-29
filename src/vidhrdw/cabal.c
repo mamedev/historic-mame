@@ -106,7 +106,7 @@ WRITE16_HANDLER( cabal_text_videoram16_w )
 
 ********************************************************************/
 
-static void cabal_draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void cabal_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs,data0,data1,data2;
 

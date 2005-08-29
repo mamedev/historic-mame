@@ -212,7 +212,7 @@ WRITE8_HANDLER( mhavoc_rom_banksel_w )
 
 READ8_HANDLER( mhavoc_port_0_r )
 {
-	data8_t res;
+	UINT8 res;
 
 	/* Bits 7-6 = selected based on Player 1 */
 	/* Bits 5-4 = common */
@@ -244,7 +244,7 @@ READ8_HANDLER( mhavoc_port_0_r )
 READ8_HANDLER( alphaone_port_0_r )
 {
 	/* Bits 7-2 = common */
-	data8_t res = readinputport(0) & 0xfc;
+	UINT8 res = readinputport(0) & 0xfc;
 
 	/* Bit 1 = 2.4kHz (divide 2.5MHz by 1024) */
 	if (!(activecpu_gettotalcycles() & 0x400))
@@ -261,7 +261,7 @@ READ8_HANDLER( alphaone_port_0_r )
 READ8_HANDLER( mhavoc_port_1_r )
 {
 	/* Bits 7-2 = input switches */
-	data8_t res = readinputport(1) & 0xfc;
+	UINT8 res = readinputport(1) & 0xfc;
 
 	/* Bit 1 = Alpha rcvd flag */
 	if (has_gamma_cpu && alpha_rcvd)

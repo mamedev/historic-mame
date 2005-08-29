@@ -106,7 +106,7 @@ typedef struct
 	int  (*execute)(int cycles);
 
 	// on-board peripheral stuff
-	data8_t m37710_regs[128];
+	UINT8 m37710_regs[128];
 	float reload[8];
 	void *timers[8];
 } m37710i_cpu_struct;
