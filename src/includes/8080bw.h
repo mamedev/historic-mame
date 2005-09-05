@@ -84,6 +84,7 @@ DRIVER_INIT( phantom2 );
 DRIVER_INIT( bowler );
 DRIVER_INIT( gunfight );
 DRIVER_INIT( bandido );
+DRIVER_INIT( indianbt );
 
 void c8080bw_flip_screen_w(int data);
 void c8080bw_screen_red_w(int data);
@@ -102,5 +103,6 @@ VIDEO_UPDATE( 8080bw );
 PALETTE_INIT( invadpt2 );
 PALETTE_INIT( sflush );
 PALETTE_INIT( cosmo );
+PALETTE_INIT( indianbt );
 
 WRITE8_HANDLER( bowler_bonus_display_w );

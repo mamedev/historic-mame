@@ -798,7 +798,7 @@ static void *ay8910_start(int sndindex, int clock, const void *config)
 {
 	static const struct AY8910interface generic_ay8910 = { 0 };
 	const struct AY8910interface *intf = config ? config : &generic_ay8910;
-	return ay8910_start_ym(SOUND_AY8910, sndindex, clock, 3, intf->portAread, intf->portBread, intf->portAwrite, intf->portBwrite);
+	return ay8910_start_ym(SOUND_AY8910, sndindex+16, clock, 3, intf->portAread, intf->portBread, intf->portAwrite, intf->portBwrite);
 }
 
 static void ay8910_stop(void *chip)

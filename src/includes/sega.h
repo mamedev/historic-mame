@@ -22,6 +22,7 @@ WRITE8_HANDLER( sega_switch_w );
 WRITE8_HANDLER( sega_coin_counter_w );
 
 READ8_HANDLER( sega_ports_r );
+READ8_HANDLER( sega_elim4_ports_r );
 READ8_HANDLER( sega_IN4_r );
 READ8_HANDLER( elim4_IN4_r );
 

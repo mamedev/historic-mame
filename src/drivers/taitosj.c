@@ -185,6 +185,7 @@ READ8_HANDLER( taitosj_68705_portC_r );
 WRITE8_HANDLER( taitosj_68705_portA_w );
 WRITE8_HANDLER( taitosj_68705_portB_w );
 
+READ8_HANDLER( spacecr_prot_r );
 WRITE8_HANDLER( alpine_protection_w );
 WRITE8_HANDLER( alpinea_bankswitch_w );
 READ8_HANDLER( alpine_port_2_r );
@@ -2574,6 +2575,11 @@ ROM_START( kikstart )
 ROM_END
 
 
+static DRIVER_INIT( spacecr )
+{
+	/* install protection handler */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd48b, 0xd48b, 0, 0, spacecr_prot_r);
+}
 
 static DRIVER_INIT( alpine )
 {
@@ -2601,7 +2607,7 @@ static DRIVER_INIT( kikstart )
 }
 
 GAME( 1981, spaceskr, 0,        nomcu,    spaceskr,   0,       ROT180, "Taito Corporation", "Space Seeker" )
-GAME( 1981, spacecr,  0,        nomcu,    spacecr,    0,       ROT90,  "Taito Corporation", "Space Cruiser" )
+GAME( 1981, spacecr,  0,        nomcu,    spacecr,    spacecr, ROT90,  "Taito Corporation", "Space Cruiser" )
 GAME( 1982, junglek,  0,        nomcu,    junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan)" )
 GAME( 1982, junglkj2, junglek,  nomcu,    junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
 GAME( 1982, jungleh,  junglek,  nomcu,    junglek,    0,       ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )

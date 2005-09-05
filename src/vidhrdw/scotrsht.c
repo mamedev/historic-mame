@@ -5,6 +5,7 @@ UINT8 *scotrsht_scroll;
 
 static tilemap *bg_tilemap;
 static int scotrsht_charbank = 0;
+static int scotrsht_palette_bank = 0;
 
 /* Similar as Iron Horse */
 PALETTE_INIT( scotrsht )
@@ -43,15 +44,15 @@ PALETTE_INIT( scotrsht )
 	/* color_prom now points to the beginning of the character lookup table */
 
 
-	/* there are eight 32 colors palette banks; sprites use colors 0-15 and */
-	/* characters 16-31 of each bank. */
+	/* there are eight 16 colors palette banks; sprites use colors 0x00-0x7f and */
+	/* characters 0x80-0xff. */
 	for (i = 0;i < TOTAL_COLORS(0)/8;i++)
 	{
 		int j;
 
 
 		for (j = 0;j < 8;j++)
-			COLOR(0,i + j * TOTAL_COLORS(0)/8) = (*color_prom & 0x0f) + 16 * j + 16 + 16;
+			COLOR(0,i + j * TOTAL_COLORS(0)/8) = (*color_prom & 0x0f) + 16 * j + 0x80;
 
 		color_prom++;
 	}
@@ -62,7 +63,7 @@ PALETTE_INIT( scotrsht )
 
 
 		for (j = 0;j < 8;j++)
-			COLOR(1,i + j * TOTAL_COLORS(1)/8) = (*color_prom & 0x0f) + 32 * j;
+			COLOR(1,i + j * TOTAL_COLORS(1)/8) = (*color_prom & 0x0f) + 16 * j;
 
 		color_prom++;
 	}
@@ -97,35 +98,37 @@ WRITE8_HANDLER( scotrsht_charbank_w )
 	/* other bits unknown */
 }
 
+WRITE8_HANDLER( scotrsht_palettebank_w )
+{
+	if(scotrsht_palette_bank != ((data & 0x70) >> 4))
+	{
+		scotrsht_palette_bank = ((data & 0x70) >> 4);
+		tilemap_mark_all_tiles_dirty(bg_tilemap);
+	}
+
+	coin_counter_w(0, data & 1);
+	coin_counter_w(1, data & 2);
+
+	// data & 4 unknown
+}
+
 
 static void scotrsht_get_bg_tile_info(int tile_index)
 {
 	int attr = colorram[tile_index];
 	int code = videoram[tile_index] + (scotrsht_charbank << 9) + ((attr & 0x40) << 2);
-	int color = attr & 0x0f;
+	int color = (attr & 0x0f) + scotrsht_palette_bank * 16;
 	int flag = 0;
 
-	if(attr & 0x10)
-		flag |= TILE_FLIPX;
+	if(attr & 0x10)	flag |= TILE_FLIPX;
+	if(attr & 0x20)	flag |= TILE_FLIPY;
 
-	if(attr & 0x20)
-		flag |= TILE_FLIPY;
-
-	/* wrong! */
-	if((code & 300) == 0x300)
-		color += 0;
-	else if((code & 200) == 0x200)
-		color += 0;
-	else if((code & 0x100) == 0x100)
-		color += 0x60;
-	else
-		color += 0x70;
-
+	// data & 0x80 -> tile priority?
 
 	SET_TILE_INFO(0, code, color, flag)
 }
 
-/* Same as Jailbreak */
+/* Same as Jailbreak + palette bank */
 void scotrsht_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int i;
@@ -134,7 +137,7 @@ void scotrsht_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 	{
 		int attr = spriteram[i + 1];	// attributes = ?tyxcccc
 		int code = spriteram[i] + ((attr & 0x40) << 2);
-		int color = attr & 0x0f;
+		int color = (attr & 0x0f) + scotrsht_palette_bank * 16;
 		int flipx = attr & 0x10;
 		int flipy = attr & 0x20;
 		int sx = spriteram[i + 2] - ((attr & 0x80) << 1);
@@ -149,7 +152,7 @@ void scotrsht_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 		}
 
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy,
-			sx, sy, cliprect, TRANSPARENCY_COLOR, 0);
+			sx, sy, cliprect, TRANSPARENCY_COLOR, scotrsht_palette_bank * 16);
 	}
 }
 
@@ -157,10 +160,10 @@ VIDEO_START( scotrsht )
 {
 	bg_tilemap = tilemap_create(scotrsht_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 64, 32);
 
-	tilemap_set_scroll_cols(bg_tilemap, 64);
-
 	if ( !bg_tilemap )
 		return 1;
+
+	tilemap_set_scroll_cols(bg_tilemap, 64);
 
 	return 0;
 }

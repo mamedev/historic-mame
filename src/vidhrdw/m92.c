@@ -426,21 +426,18 @@ VIDEO_START( m92 )
 	state_save_register_int  ("video", 0, "pf1_shape",               &pf1_shape);
 	state_save_register_int  ("video", 0, "pf1_enable",              &pf1_enable);
 	state_save_register_int  ("video", 0, "pf1_rowscroll",           &pf1_rowscroll);
-	state_save_register_int  ("video", 0, "pf1_vram_ptr",            &pf1_vram_ptr);
 	state_save_register_UINT8("video", 0, "pf1_control",    (UINT8*) pf1_control, sizeof(pf1_control));
 
 	state_save_register_int  ("video", 0, "pf2_vram_ptr",            &pf2_vram_ptr);
 	state_save_register_int  ("video", 0, "pf2_shape",               &pf2_shape);
 	state_save_register_int  ("video", 0, "pf2_enable",              &pf2_enable);
 	state_save_register_int  ("video", 0, "pf2_rowscroll",           &pf2_rowscroll);
-	state_save_register_int  ("video", 0, "pf2_vram_ptr",            &pf2_vram_ptr);
 	state_save_register_UINT8("video", 0, "pf2_control",    (UINT8*) pf2_control, sizeof(pf2_control));
 
 	state_save_register_int  ("video", 0, "pf3_vram_ptr",            &pf3_vram_ptr);
 	state_save_register_int  ("video", 0, "pf3_shape",               &pf3_shape);
 	state_save_register_int  ("video", 0, "pf3_enable",              &pf3_enable);
 	state_save_register_int  ("video", 0, "pf3_rowscroll",           &pf3_rowscroll);
-	state_save_register_int  ("video", 0, "pf3_vram_ptr",            &pf3_vram_ptr);
 	state_save_register_UINT8("video", 0, "pf3_control",    (UINT8*) pf3_control, sizeof(pf3_control));
 
 	state_save_register_UINT8("video", 0, "pf4_control",    (UINT8*) pf4_control, sizeof(pf4_control));
@@ -597,20 +594,21 @@ static void m92_screenrefresh(mame_bitmap *bitmap,const rectangle *cliprect)
 
 	if (pf3_enable) {
 		tilemap_draw(bitmap,cliprect,pf3_wide_layer,TILEMAP_BACK,0);
-		tilemap_draw(bitmap,cliprect,pf3_layer,TILEMAP_BACK,0);
+		tilemap_draw(bitmap,cliprect,pf3_layer,		TILEMAP_BACK,0);
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	tilemap_draw(bitmap,cliprect,pf2_layer,TILEMAP_BACK,0);
-	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_BACK,0);
-	tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_BACK,0);
-
 	tilemap_draw(bitmap,cliprect,pf3_wide_layer,TILEMAP_FRONT,1);
-	tilemap_draw(bitmap,cliprect,pf3_layer,TILEMAP_FRONT,1);
-	tilemap_draw(bitmap,cliprect,pf2_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf3_layer,		TILEMAP_FRONT,1);
+
+	tilemap_draw(bitmap,cliprect,pf2_layer,		TILEMAP_BACK, 0);
+	tilemap_draw(bitmap,cliprect,pf2_layer,		TILEMAP_FRONT,1);
+
+	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_BACK, 0);
+	tilemap_draw(bitmap,cliprect,pf1_layer,		TILEMAP_BACK, 0);
 	tilemap_draw(bitmap,cliprect,pf1_wide_layer,TILEMAP_FRONT,1);
-	tilemap_draw(bitmap,cliprect,pf1_layer,TILEMAP_FRONT,1);
+	tilemap_draw(bitmap,cliprect,pf1_layer,		TILEMAP_FRONT,1);
 
 	m92_drawsprites(bitmap,cliprect);
 }

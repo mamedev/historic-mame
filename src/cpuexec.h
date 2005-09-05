@@ -96,7 +96,7 @@ enum
 void cpu_loadsave_schedule(int type, char id);
 void cpu_loadsave_schedule_file(int type, const char *name);
 void cpu_loadsave_reset(void);
-void cpu_loadsave_disallow(void);
+void cpu_loadsave_warn(const char *msg);
 
 
 

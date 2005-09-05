@@ -1274,15 +1274,19 @@ static int apply_config_to_current(xml_data_node *portnode, int type, int player
 	if (updateport->type == type && updateport->player == player &&
 		updateport->mask == mask && (updateport->default_value & mask) == (defvalue & mask))
 	{
+		const char *revstring;
+
 		/* point to the real port */
 		updateport = Machine->input_ports + (updateport - Machine->input_ports_default);
 
 		/* fill in the data from the attributes */
-		updateport->default_value = xml_get_attribute_int(portnode, "value", defvalue);
-		updateport->analog.delta = xml_get_attribute_int(portnode, "keydelta", 0);
-		updateport->analog.centerdelta = xml_get_attribute_int(portnode, "centerdelta", 0);
-		updateport->analog.sensitivity = xml_get_attribute_int(portnode, "sensitivity", 100);
-		updateport->analog.reverse = (strcmp(xml_get_attribute_string(portnode, "reverse", "no"), "yes") == 0);
+		updateport->default_value = xml_get_attribute_int(portnode, "value", updateport->default_value);
+		updateport->analog.delta = xml_get_attribute_int(portnode, "keydelta", updateport->analog.delta);
+		updateport->analog.centerdelta = xml_get_attribute_int(portnode, "centerdelta", updateport->analog.centerdelta);
+		updateport->analog.sensitivity = xml_get_attribute_int(portnode, "sensitivity", updateport->analog.sensitivity);
+		revstring = xml_get_attribute_string(portnode, "reverse", NULL);
+		if (revstring)
+			updateport->analog.reverse = (strcmp(revstring, "yes") == 0);
 
 		/* copy the sequence(s) that were specified */
 		if (seq_get_1(&newseq[0]) != __code_max)

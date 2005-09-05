@@ -232,8 +232,6 @@ VIDEO_START( poundfor )
 
 	xadjust = -6;
 
-	register_savestate();
-
 	return res;
 }
 

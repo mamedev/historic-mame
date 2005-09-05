@@ -1048,11 +1048,11 @@ int ui_menu_generic_keys(int *selected, int num_items)
 	}
 
 	/* up backs up by one item */
-	if (input_ui_pressed_repeat(IPT_UI_UP, 8))
+	if (input_ui_pressed_repeat(IPT_UI_UP, 6))
 		*selected = (*selected + num_items - 1) % num_items;
 
 	/* down advances by one item */
-	if (input_ui_pressed_repeat(IPT_UI_DOWN, 8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN, 6))
 		*selected = (*selected + 1) % num_items;
 
 	/* home goes to the start */
@@ -1988,9 +1988,9 @@ static UINT32 menu_analog(UINT32 state)
 		return state;
 
 	/* handle left/right arrows */
-	if (input_ui_pressed(IPT_UI_LEFT) && (item_list[state].flags & MENU_FLAG_LEFT_ARROW))
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,6) && (item_list[state].flags & MENU_FLAG_LEFT_ARROW))
 		delta = -1;
-	if (input_ui_pressed(IPT_UI_RIGHT) && (item_list[state].flags & MENU_FLAG_RIGHT_ARROW))
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,6) && (item_list[state].flags & MENU_FLAG_RIGHT_ARROW))
 		delta = 1;
 
 	/* adjust the appropriate value */
@@ -2417,14 +2417,14 @@ void showgfx_render(mame_bitmap *bitmap)
 	artwork_mark_ui_dirty(fullrect.min_x, fullrect.min_y, fullrect.max_x, fullrect.max_y);
 	ui_dirty = 5;
 
-	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,6))
 	{
 		go_to_next_mode;
 		showgfx_xscroll = 0;
 		showgfx_yscroll = 0;
 	}
 
-	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,6))
 
 	if (input_ui_pressed(
 }
@@ -2760,7 +2760,7 @@ static void showcharset(mame_bitmap *bitmap)
 		}
 
 
-		if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
+		if (input_ui_pressed_repeat(IPT_UI_RIGHT,6))
 		{
 			int next_bank, next_mode;
 			int jumped;
@@ -2802,7 +2802,7 @@ static void showcharset(mame_bitmap *bitmap)
 			}
 		}
 
-		if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
+		if (input_ui_pressed_repeat(IPT_UI_LEFT,6))
 		{
 			int next_bank, next_mode;
 
@@ -3622,13 +3622,13 @@ static int on_screen_display(int selected)
 	else sel = selected - 1;
 
 	increment = 0;
-	if (input_ui_pressed_repeat(IPT_UI_LEFT,8))
+	if (input_ui_pressed_repeat(IPT_UI_LEFT,6))
 		increment = -1;
-	if (input_ui_pressed_repeat(IPT_UI_RIGHT,8))
+	if (input_ui_pressed_repeat(IPT_UI_RIGHT,6))
 		increment = 1;
-	if (input_ui_pressed_repeat(IPT_UI_DOWN,8))
+	if (input_ui_pressed_repeat(IPT_UI_DOWN,6))
 		sel = (sel + 1) % onscrd_total_items;
-	if (input_ui_pressed_repeat(IPT_UI_UP,8))
+	if (input_ui_pressed_repeat(IPT_UI_UP,6))
 		sel = (sel + onscrd_total_items - 1) % onscrd_total_items;
 
 	(*onscrd_fnc[sel])(increment,onscrd_arg[sel]);

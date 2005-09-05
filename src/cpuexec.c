@@ -321,10 +321,7 @@ int cpu_init(void)
 
 		/* if no state registered for saving, we can't save */
 		if (num_regs == 0)
-		{
-			logerror("CPU #%d (%s) did not register any state to save!\n", cpunum, cpunum_name(cpunum));
-			cpu_loadsave_disallow();
-		}
+			logerror("CPU #%d (%s) did not register any state to save!\n", cpunum, cputype_name(cputype));
 
 		/* pop the state tag */
 		state_save_pop_tag();

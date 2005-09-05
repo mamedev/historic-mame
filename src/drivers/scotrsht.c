@@ -15,6 +15,7 @@ extern UINT8 *scotrsht_scroll;
 extern WRITE8_HANDLER( scotrsht_videoram_w );
 extern WRITE8_HANDLER( scotrsht_colorram_w );
 extern WRITE8_HANDLER( scotrsht_charbank_w );
+extern WRITE8_HANDLER( scotrsht_palettebank_w );
 
 extern PALETTE_INIT( scotrsht );
 extern VIDEO_START( scotrsht );
@@ -40,13 +41,6 @@ static WRITE8_HANDLER( scotrsht_soundlatch_w )
 	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
-static WRITE8_HANDLER( scotrsht_coin_counters_w )
-{
-	coin_counter_w(0, data & 1);
-	coin_counter_w(1, data & 2);
-
-}
-
 static ADDRESS_MAP_START( scotrsht_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_READWRITE(MRA8_RAM, scotrsht_colorram_w) AM_BASE(&colorram)
     AM_RANGE(0x0800, 0x0fff) AM_READWRITE(MRA8_RAM, scotrsht_videoram_w) AM_BASE(&videoram)
@@ -55,10 +49,10 @@ static ADDRESS_MAP_START( scotrsht_map, ADDRESS_SPACE_PROGRAM, 8 )
     AM_RANGE(0x2000, 0x201f) AM_RAM AM_BASE(&scotrsht_scroll) /* scroll registers */
 	AM_RANGE(0x2040, 0x2040) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x2041, 0x2041) AM_WRITE(MWA8_NOP)
-    AM_RANGE(0x2042, 0x2042) AM_WRITE(MWA8_NOP)
+    AM_RANGE(0x2042, 0x2042) AM_WRITE(MWA8_NOP)  /* it should be -> bit 2 = scroll direction like in jailbrek, but it's not used */
 	AM_RANGE(0x2043, 0x2043) AM_WRITE(scotrsht_charbank_w)
     AM_RANGE(0x2044, 0x2044) AM_WRITE(ctrl_w)
-	AM_RANGE(0x3000, 0x3000) AM_WRITE(scotrsht_coin_counters_w)
+	AM_RANGE(0x3000, 0x3000) AM_WRITE(scotrsht_palettebank_w)
 	AM_RANGE(0x3100, 0x3100) AM_WRITE(scotrsht_soundlatch_w)
 	AM_RANGE(0x3200, 0x3200) AM_WRITE(MWA8_NOP) /* it writes 0, 1 */
 	AM_RANGE(0x3100, 0x3100) AM_READ(input_port_4_r) /* DSW1 */
@@ -294,4 +288,4 @@ ROM_START( scotrsht )
 	ROM_LOAD( "gx545_6301_8f.bin", 0x0400, 0x0100, CRC(c1c7cf58) SHA1(08452228bf13e43ce4a05806f79e9cd1542416f1) ) /* sprites lookup */
 ROM_END
 
-GAMEX( 1985, scotrsht, 0, scotrsht, scotrsht, 0, ROT90,"Konami", "Scooter Shooter", GAME_IMPERFECT_COLORS )
+GAME( 1985, scotrsht, 0, scotrsht, scotrsht, 0, ROT90,"Konami", "Scooter Shooter" )

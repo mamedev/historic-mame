@@ -389,15 +389,21 @@ INLINE UINT64 d2u(double d)
 
 
 /* Some optimizations/warnings cleanups for GCC */
-#if defined(__GNUC__)
+#if defined(__GNUC__) && (__GNUC__ >= 3)
 #define ATTR_UNUSED			__attribute__((__unused__))
 #define ATTR_NORETURN		__attribute__((noreturn))
 #define ATTR_PRINTF(x,y)	__attribute__((format(printf, x, y)))
+#define ATTR_MALLOC			__attribute__((malloc))
+#define ATTR_PURE			__attribute__((pure))
+#define ATTR_CONST			__attribute__((const))
 #define UNEXPECTED(exp)		__builtin_expect((exp), 0)
 #else
 #define ATTR_UNUSED
 #define ATTR_NORETURN
 #define ATTR_PRINTF(x,y)
+#define ATTR_MALLOC
+#define ATTR_PURE
+#define ATTR_CONST
 #define UNEXPECTED(exp)		(exp)
 #endif
 

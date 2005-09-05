@@ -393,6 +393,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/pitnrun.o $(OBJ)/vidhrdw/pitnrun.o $(OBJ)/drivers/pitnrun.o \
 	$(OBJ)/drivers/marinedt.o \
 	$(OBJ)/drivers/changela.o \
+	$(OBJ)/drivers/jollyjgr.o \
 	$(OBJ)/vidhrdw/crbaloon.o $(OBJ)/drivers/crbaloon.o \
 	$(OBJ)/vidhrdw/bking2.o $(OBJ)/drivers/bking2.o \
 	$(OBJ)/vidhrdw/gsword.o $(OBJ)/drivers/gsword.o $(OBJ)/machine/tait8741.o \
@@ -1115,15 +1116,13 @@ $(OBJ)/igs.a: \
 	$(OBJ)/vidhrdw/goldstar.o $(OBJ)/drivers/goldstar.o \
 	$(OBJ)/vidhrdw/csk.o $(OBJ)/drivers/csk.o \
 	$(OBJ)/vidhrdw/iqblock.o $(OBJ)/drivers/iqblock.o \
-	$(OBJ)/drivers/chindrag.o \
-	$(OBJ)/drivers/grtwall.o \
 	$(OBJ)/drivers/tarzan.o \
 	$(OBJ)/drivers/lordgun.o \
 	$(OBJ)/vidhrdw/pgm.o $(OBJ)/drivers/pgm.o \
 	$(OBJ)/machine/pgmprot.o $(OBJ)/machine/pgmcrypt.o \
 	$(OBJ)/machine/pgmy2ks.o \
 	$(OBJ)/drivers/vbowl.o \
-	$(OBJ)/drivers/chmplst2.o \
+	$(OBJ)/drivers/igs_blit.o \
 
 $(OBJ)/ramtek.a: \
 	$(OBJ)/drivers/hitme.o $(OBJ)/sndhrdw/hitme.o \

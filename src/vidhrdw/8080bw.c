@@ -210,7 +210,11 @@ DRIVER_INIT( gunfight )
 	artwork_set_overlay(gunfight_overlay);
 }
 
-
+DRIVER_INIT( indianbt )
+{
+	init_8080bw();
+	videoram_w_p = invadpt2_videoram_w;
+}
 
 void c8080bw_flip_screen_w(int data)
 {
@@ -693,6 +697,20 @@ PALETTE_INIT( sflush )
 		palette_set_color(i,r,g,b);
 	}
 	palette_set_color(0,0x80,0x80,0xff);
+}
+
+PALETTE_INIT( indianbt )
+{
+	int i;
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int r = 0xff * ((i >> 0) & 1);
+		int b = 0xff * ((i >> 2) & 1);
+		int g = 0xff * ((i >> 1) & 1);
+		palette_set_color(i,r,g,b);
+	}
+
 }
 
 

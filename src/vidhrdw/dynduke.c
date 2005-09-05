@@ -3,9 +3,9 @@
 #include "vidhrdw/generic.h"
 
 static tilemap *bg_layer,*fg_layer,*tx_layer;
-unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
+UINT8 *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram;
 
-static int flipscreen,back_bankbase,fore_bankbase,back_palbase;
+static int back_bankbase,fore_bankbase,back_palbase;
 static int back_enable,fore_enable,sprite_enable;
 
 /******************************************************************************/
@@ -34,16 +34,6 @@ WRITE8_HANDLER( dynduke_paletteram_w )
 		palette_set_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048,r,g,b);
 		palette_set_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048 | 16,r,g,b);
 	}
-}
-
-READ8_HANDLER( dynduke_background_r )
-{
-	return dynduke_back_data[offset];
-}
-
-READ8_HANDLER( dynduke_foreground_r )
-{
-	return dynduke_fore_data[offset];
 }
 
 WRITE8_HANDLER( dynduke_background_w )
@@ -138,10 +128,6 @@ WRITE8_HANDLER( dynduke_control_w )
 {
 	static int old_bpal;
 
-	dynduke_control_ram[offset]=data;
-
-	if (offset!=6) return;
-
 	if (data&0x1) back_enable=0; else back_enable=1;
 	if (data&0x2) back_palbase=16; else back_palbase=0;
 	if (data&0x4) fore_enable=0; else fore_enable=1;
@@ -151,8 +137,7 @@ WRITE8_HANDLER( dynduke_control_w )
 		tilemap_mark_all_tiles_dirty(bg_layer);
 
 	old_bpal=back_palbase;
-	flipscreen=data&0x40;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	flip_screen_set(data & 0x40);
 }
 
 static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
@@ -178,7 +163,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int pri)
 		sprite = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
 		sprite &= 0x3fff;
 
-		if (flipscreen) {
+		if (flip_screen) {
 			x=240-x;
 			y=240-y;
 			if (fx) fx=0; else fx=1;
@@ -205,13 +190,18 @@ VIDEO_UPDATE( dynduke )
 	if (back_enable)
 		tilemap_draw(bitmap,cliprect,bg_layer,TILEMAP_BACK,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],cliprect);
+		fillbitmap(bitmap,get_black_pen(),cliprect);
 
-	draw_sprites(bitmap,cliprect,0); /* Untested: does anything use it? Could be behind background */
+	draw_sprites(bitmap,cliprect,0); // Untested: does anything use it? Could be behind background
 	draw_sprites(bitmap,cliprect,1);
 	tilemap_draw(bitmap,cliprect,bg_layer,TILEMAP_FRONT,0);
 	draw_sprites(bitmap,cliprect,2);
 	tilemap_draw(bitmap,cliprect,fg_layer,0,0);
 	draw_sprites(bitmap,cliprect,3);
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
+}
+
+VIDEO_EOF( dynduke )
+{
+	buffer_spriteram_w(0,0); // Could be a memory location instead
 }

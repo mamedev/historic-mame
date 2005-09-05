@@ -1601,8 +1601,8 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #undef OP_PHP
 #define OP_PHP()															\
 			CLK(CLK_OP + CLK_W8 + 1);										\
-			m37710i_push_8(m37710i_get_reg_p());									\
-			m37710i_push_8(m37710i_cpu.ipl)
+			m37710i_push_8(m37710i_cpu.ipl);									\
+			m37710i_push_8(m37710i_get_reg_p())
 
 /* M37710   Pull accumulator from the stack */
 #undef OP_PLA
@@ -1712,10 +1712,10 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #undef OP_RLA
 #if FLAG_SET_M
 #define OP_RLA(MODE)														\
-	{ int cnt = OPER_8_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A<<=1; REG_A |= (tmp>>7); cnt--; } }
+	{ int cnt = OPER_8_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A=(REG_A<<1)&0xff; REG_A |= (tmp>>7); cnt--; } }
 #else
 #define OP_RLA(MODE)														\
-	{ int cnt = OPER_16_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A<<=1; REG_A |= (tmp>>15); cnt--; } }
+	{ int cnt = OPER_16_##MODE(); int tmp; while (cnt > 0) { CLK(6); tmp = REG_A; REG_A=(REG_A<<1)&0xffff; REG_A |= (tmp>>15); cnt--; } }
 #endif
 
 /* M37710   Rotate Left an operand */
@@ -1797,8 +1797,8 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #undef OP_RTI
 #define OP_RTI()															\
 			CLK(8);															\
-			m37710i_set_reg_ipl(m37710i_pull_8());					\
 			m37710i_set_reg_p(m37710i_pull_8());					\
+			m37710i_set_reg_ipl(m37710i_pull_8());					\
 			m37710i_jump_16(m37710i_pull_16());					\
 			REG_PB = m37710i_pull_8() << 16;					\
 			m37710i_jumping(REG_PB | REG_PC)

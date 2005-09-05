@@ -344,7 +344,7 @@ int timer_count_anonymous(void)
 		if (t->temporary)
 		{
 			count++;
-			logerror("  Temp. timer %p, file %s:%d[%s]\n", t, t->file, t->line, t->func);
+			logerror("  Temp. timer %p, file %s:%d[%s]\n", (void *) t, t->file, t->line, t->func);
 		}
 	logerror("%d temporary timers found\n", count);
 
@@ -387,7 +387,7 @@ void mame_timer_set_global_time(mame_time newbase)
 		/* if this is a one-shot timer, disable it now */
 		timer = timer_head;
 		if (compare_mame_times(timer->period, time_zero) == 0 || compare_mame_times(timer->period, time_never) == 0)
-			timer->enabled = 0;
+			timer->enabled = FALSE;
 
 		/* set the global state of which callback we're in */
 		callback_timer_modified = 0;
@@ -491,7 +491,7 @@ INLINE mame_timer *_mame_timer_alloc_common(void (*callback)(int), void (*callba
 	timer->callback_ptr = callback_ptr;
 	timer->callback_param = 0;
 	timer->callback_ptr_param = NULL;
-	timer->enabled = TRUE;
+	timer->enabled = FALSE;
 	timer->temporary = temp;
 	timer->ptr = (callback_ptr != NULL);
 	timer->tag = get_resource_tag();
@@ -550,7 +550,7 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int 
 	/* compute the time of the next firing and insert into the list */
 	which->callback_param = param;
 	which->callback_ptr_param = ptr_param;
-	which->enabled = 1;
+	which->enabled = TRUE;
 
 	/* clamp negative times to 0 */
 	if (duration.seconds < 0)

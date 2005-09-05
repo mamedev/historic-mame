@@ -428,10 +428,15 @@ static gfx_decode gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static INTERRUPT_GEN( f3_interrupt )
+static void f3_interrupt3(int x)
 {
-	if (cpu_getiloops()) cpunum_set_input_line(0, 3, HOLD_LINE);
-	else cpunum_set_input_line(0, 2, HOLD_LINE);
+	cpunum_set_input_line(0, 3, HOLD_LINE);	// some signal from video hardware?
+}
+
+static INTERRUPT_GEN( f3_interrupt2 )
+{
+	cpunum_set_input_line(0, 2, HOLD_LINE);	// vblank
+	mame_timer_set( MAME_TIME_IN_CYCLES(10000,0), 0, f3_interrupt3);
 }
 
 static MACHINE_INIT( f3 )
@@ -488,7 +493,7 @@ static MACHINE_DRIVER_START( f3 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 16000000)
 	MDRV_CPU_PROGRAM_MAP(f3_readmem,f3_writemem)
-	MDRV_CPU_VBLANK_INT(f3_interrupt,2)
+	MDRV_CPU_VBLANK_INT(f3_interrupt2,1)
 
 	MDRV_CPU_ADD(M68000, 16000000)
 	MDRV_CPU_PROGRAM_MAP(sound_map,0) /* audio CPU */
@@ -3198,11 +3203,6 @@ static void tile_decode(int uses_5bpp_tiles)
 		offset++;
 	}
 	state_save_register_UINT32("f3", 0, "coinword", coin_word, 2);
-
-	/* Some games have been verified to be slower in Mame than the real boards
-        because of 68020 timing inaccuracies.  This compensates for that by overlocking
-        the emulated cpu */
-	cpunum_set_clockscale(0, 1.4f);
 }
 
 #define F3_IRQ_SPEEDUP_1_R(GAME, counter, mem_addr, mask) 		\

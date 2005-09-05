@@ -131,8 +131,6 @@ int main(int argc, char **argv)
 							  "\n"
 							  "Usage:\tMAME gamename [options]\n"
 							  "\n"
-							  "\tMAME -list\t\tfor a brief list of supported games\n"
-							  "\tMAME -listfull\t\tfor a full list of supported games\n"
 							  "\tMAME -showusage\t\tfor a brief list of options\n"
 							  "\tMAME -showconfig\t\tfor a list of configuration options\n"
 							  "\tMAME -createconfig\tto create a mame.ini\n"

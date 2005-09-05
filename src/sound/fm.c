@@ -84,7 +84,6 @@
 ** 09-12-98 hiro-shi:
 ** change ADPCM volume. (8->16, 48->64)
 ** replace ym2610 ch0/3 (YM-2610B)
-** init cur_chip (restart bug fix)
 ** change ADPCM_SHIFT (10->8) missing bank change 0x4000-0xffff.
 ** add ADPCM_SHIFT_MASK
 ** change ADPCMA_DECODE_MIN/MAX.
@@ -667,7 +666,6 @@ typedef struct
 
 
 /* current chip state */
-static void		*cur_chip = 0;	/* pointer of current chip struct */
 static FM_ST	*State;			/* basic status */
 static FM_CH	*cch[8];		/* pointer of FM channels */
 
@@ -2027,7 +2025,6 @@ void YM2203UpdateOne(void *chip, FMSAMPLE *buffer, int length)
 	int i;
 	FMSAMPLE *buf = buffer;
 
-	cur_chip = (void *)F2203;
 	State    = &F2203->OPN.ST;
 	cch[0]   = &F2203->CH[0];
 	cch[1]   = &F2203->CH[1];
@@ -2161,7 +2158,6 @@ void YM2203Postload(void *chip)
 		/* channels */
 		/*FM_channel_postload(F2203->CH,3);*/
 	}
-	cur_chip = NULL;
 }
 
 static void YM2203_save_state(YM2203 *F2203, int index)
@@ -2187,8 +2183,6 @@ void * YM2203Init(void *param, int index, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler, const struct ssg_callbacks *ssg)
 {
 	YM2203 *F2203;
-
-	cur_chip = NULL;	/* hiro-shi!! */
 
 	/* allocate ym2203 state space */
 	if( (F2203 = (YM2203 *)malloc(sizeof(YM2203)))==NULL)
@@ -3208,21 +3202,16 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	if( (void *)F2608 != cur_chip ){
-		cur_chip = (void *)F2608;
-
-		State = &OPN->ST;
-		cch[0]   = &F2608->CH[0];
-		cch[1]   = &F2608->CH[1];
-		cch[2]   = &F2608->CH[2];
-		cch[3]   = &F2608->CH[3];
-		cch[4]   = &F2608->CH[4];
-		cch[5]   = &F2608->CH[5];
-		/* setup adpcm rom address */
-		pcmbufA  = F2608->pcmbuf;
-		pcmsizeA = F2608->pcm_size;
-
-	}
+	State = &OPN->ST;
+	cch[0]   = &F2608->CH[0];
+	cch[1]   = &F2608->CH[1];
+	cch[2]   = &F2608->CH[2];
+	cch[3]   = &F2608->CH[3];
+	cch[4]   = &F2608->CH[4];
+	cch[5]   = &F2608->CH[5];
+	/* setup adpcm rom address */
+	pcmbufA  = F2608->pcmbuf;
+	pcmsizeA = F2608->pcm_size;
 
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
@@ -3384,7 +3373,6 @@ void YM2608Postload(void *chip)
 		/* Delta-T ADPCM unit */
 		YM_DELTAT_postload(&F2608->deltaT , &F2608->REGS[0x100] );
 	}
-	cur_chip = NULL;
 }
 
 static void YM2608_save_state(YM2608 *F2608, int index)
@@ -3423,8 +3411,6 @@ void * YM2608Init(void *param, int index, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler, const struct ssg_callbacks *ssg)
 {
 	YM2608 *F2608;
-
-	cur_chip = NULL;
 
 	/* allocate extend state space */
 	if( (F2608 = (YM2608 *)malloc(sizeof(YM2608)))==NULL)
@@ -3762,18 +3748,15 @@ void YM2610UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	if( (void *)F2610 != cur_chip ){
-		cur_chip = (void *)F2610;
-		State = &OPN->ST;
-		cch[0] = &F2610->CH[1];
-		cch[1] = &F2610->CH[2];
-		cch[2] = &F2610->CH[4];
-		cch[3] = &F2610->CH[5];
-		/* setup adpcm rom address */
-		pcmbufA  = F2610->pcmbuf;
-		pcmsizeA = F2610->pcm_size;
+	State = &OPN->ST;
+	cch[0] = &F2610->CH[1];
+	cch[1] = &F2610->CH[2];
+	cch[2] = &F2610->CH[4];
+	cch[3] = &F2610->CH[5];
+	/* setup adpcm rom address */
+	pcmbufA  = F2610->pcmbuf;
+	pcmsizeA = F2610->pcm_size;
 
-	}
 #ifdef YM2610B_WARNING
 #define FM_KEY_IS(SLOT) ((SLOT)->key)
 #define FM_MSG_YM2610B "YM2610-%p.CH%d is playing,Check whether the type of the chip is YM2610B\n"
@@ -3902,20 +3885,16 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	if( (void *)F2610 != cur_chip ){
-		cur_chip = (void *)F2610;
-		State = &OPN->ST;
-		cch[0] = &F2610->CH[0];
-		cch[1] = &F2610->CH[1];
-		cch[2] = &F2610->CH[2];
-		cch[3] = &F2610->CH[3];
-		cch[4] = &F2610->CH[4];
-		cch[5] = &F2610->CH[5];
-		/* setup adpcm rom address */
-		pcmbufA  = F2610->pcmbuf;
-		pcmsizeA = F2610->pcm_size;
-
-	}
+	State = &OPN->ST;
+	cch[0] = &F2610->CH[0];
+	cch[1] = &F2610->CH[1];
+	cch[2] = &F2610->CH[2];
+	cch[3] = &F2610->CH[3];
+	cch[4] = &F2610->CH[4];
+	cch[5] = &F2610->CH[5];
+	/* setup adpcm rom address */
+	pcmbufA  = F2610->pcmbuf;
+	pcmsizeA = F2610->pcm_size;
 
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
@@ -4079,7 +4058,6 @@ void YM2610Postload(void *chip)
 		/* Delta-T ADPCM unit */
 		YM_DELTAT_postload(&F2610->deltaT , &F2610->REGS[0x010] );
 	}
-	cur_chip = NULL;
 }
 
 static void YM2610_save_state(YM2610 *F2610, int index)
@@ -4121,8 +4099,6 @@ void *YM2610Init(void *param, int index, int clock, int rate,
 
 {
 	YM2610 *F2610;
-
-	cur_chip = NULL;	/* hiro-shi!! */
 
 	/* allocate extend state space */
 	if( (F2610 = (YM2610 *)malloc(sizeof(YM2610)))==NULL)
@@ -4431,19 +4407,15 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	if( (void *)F2612 != cur_chip ){
-		cur_chip = (void *)F2612;
-		State = &OPN->ST;
-		cch[0]   = &F2612->CH[0];
-		cch[1]   = &F2612->CH[1];
-		cch[2]   = &F2612->CH[2];
-		cch[3]   = &F2612->CH[3];
-		cch[4]   = &F2612->CH[4];
-		cch[5]   = &F2612->CH[5];
-		/* DAC mode */
-		dacen = F2612->dacen;
-
-	}
+	State = &OPN->ST;
+	cch[0]   = &F2612->CH[0];
+	cch[1]   = &F2612->CH[1];
+	cch[2]   = &F2612->CH[2];
+	cch[3]   = &F2612->CH[3];
+	cch[4]   = &F2612->CH[4];
+	cch[5]   = &F2612->CH[5];
+	/* DAC mode */
+	dacen = F2612->dacen;
 
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
@@ -4571,7 +4543,6 @@ void YM2612Postload(void *chip)
 		/* channels */
 		/*FM_channel_postload(F2612->CH,6);*/
 	}
-	cur_chip = NULL;
 }
 
 static void YM2612_save_state(YM2612 *F2612, int index)
@@ -4595,8 +4566,6 @@ void * YM2612Init(void *param, int index, int clock, int rate,
                FM_TIMERHANDLER TimerHandler,FM_IRQHANDLER IRQHandler)
 {
 	YM2612 *F2612;
-
-	cur_chip = NULL;	/* hiro-shi!! */
 
 	/* allocate extend state space */
 	if( (F2612 = (YM2612 *)malloc(sizeof(YM2612)))==NULL)
@@ -4706,7 +4675,6 @@ int YM2612Write(void *chip, int a, UINT8 v)
 			case 0x2b:	/* DAC Sel  (YM2612) */
 				/* b7 = dac enable */
 				F2612->dacen = v & 0x80;
-				cur_chip = NULL;
 				break;
 			default:	/* OPN section */
 				YM2612UpdateReq(F2612->OPN.ST.param);

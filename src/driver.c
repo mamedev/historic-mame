@@ -1110,6 +1110,7 @@ const game_driver *drivers[] =
 	DRIVER( polaris )	/* PS  (c) 1980 Taito */
 	DRIVER( polarisa )	/* PS  (c) 1980 Taito */
 	DRIVER( ballbomb )	/* TN  (c) 1980 Taito */
+	DRIVER( indianbt )	/* (c) 1980 Taito */
 	DRIVER( m79amb )
 	DRIVER( alieninv )
 	DRIVER( tst_invd )
@@ -1464,6 +1465,7 @@ const game_driver *drivers[] =
 	DRIVER( grchamp )	/* GM  (c) 1981 Taito Corporation */
 	DRIVER( marinedt )	/* ??? (c) 1981 Taito Corporation */
 	DRIVER( changela )	/* ??? (c) 1983 Taito Corporation */
+	DRIVER( jollyjgr )	/* KD  (c) 1982 Taito Corporation */
 	DRIVER( bking )		/* DM  (c) 1982 Taito Corporation */
 	DRIVER( bking2 )	/* AD6 (c) 1983 Taito Corporation */
 	DRIVER( bking3 )	/* A24 (c) 1984 Taito Corporation */
@@ -2406,7 +2408,8 @@ V-V                           TP-027
 	DRIVER( 19xxa )		/* 07/12/1995 (c) 1996 (Asia) */
 	DRIVER( 19xxh )		/* 18/12/1995 (c) 1996 (Hispanic) */
 	DRIVER( ddsom )		/* 19/06/1996 (c) 1996 (Euro) */
-	DRIVER( ddsomr1 )	/* 09/02/1996 (c) 1996 (Euro) */
+	DRIVER( ddsomr1 )	/* 23/02/1996 (c) 1996 (Euro) */
+	DRIVER( ddsomr2 )	/* 09/02/1996 (c) 1996 (Euro) */
 	DRIVER( ddsomu )	/* 19/06/1996 (c) 1996 (US) */
 	DRIVER( ddsomur1 )	/* 09/02/1996 (c) 1996 (US) */
 	DRIVER( ddsomjr1 )	/* 06/02/1996 (c) 1996 (Japan) */
@@ -2448,7 +2451,8 @@ V-V                           TP-027
 	DRIVER( vsavj )		/* 19/05/1997 (c) 1997 (Japan) */
 	DRIVER( vsava )		/* 19/05/1997 (c) 1997 (Asia) */
 	DRIVER( vsavh )		/* 19/05/1997 (c) 1997 (Hispanic) */
-	DRIVER( mshvsf )	/* 27/08/1997 (c) 1997 (US) */
+	DRIVER( mshvsf )	/* 25/06/1997 (c) 1997 (Euro) */
+	DRIVER( mshvsfu )	/* 27/08/1997 (c) 1997 (US) */
 	DRIVER( mshvsfu1 )	/* 25/06/1997 (c) 1997 (US) */
 	DRIVER( mshvsfj )	/* 07/07/1997 (c) 1997 (Japan) */
 	DRIVER( mshvsfj1 )	/* 02/07/1997 (c) 1997 (Japan) */
@@ -2855,7 +2859,9 @@ V-V                           TP-027
 	DRIVER( tacscan )	/* (c) */
 	DRIVER( elim2 )		/* (c) 1981 Gremlin */
 	DRIVER( elim2a )	/* (c) 1981 Gremlin */
+	DRIVER( elim2c )	/* (c) 1981 Gremlin */
 	DRIVER( elim4 )		/* (c) 1981 Gremlin */
+	DRIVER( elim4p )	/* (c) 1981 Gremlin */
 	DRIVER( startrek )	/* (c) 1982 */
 
 	/* Sega G-80 raster games */
@@ -6080,6 +6086,7 @@ Other Sun games
 	DRIVER( sslama )	/* (c) 1993 - hack of Namco's Super World Court */
 	DRIVER( bigtwin )	/* (c) 1995 */
 	DRIVER( wbeachvl )	/* (c) 1995 */
+	DRIVER( wbeachv2 )	/* (c) 1995 */
 	DRIVER( excelsr )	/* (c) 1995 */
 	DRIVER( hotmind )	/* (c) 1995 */
 	DRIVER( drtomy )	/* (c) 1993 no copyright message (1993 on pcb), some code taken from 'Big Karnak' */

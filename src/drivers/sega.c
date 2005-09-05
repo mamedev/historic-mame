@@ -172,7 +172,6 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x3f, 0x3f) AM_READ(sega_sh_r)
 	AM_RANGE(0xbe, 0xbe) AM_READ(sega_mult_r)
-	AM_RANGE(0xf8, 0xfb) AM_READ(sega_ports_r)
 ADDRESS_MAP_END
 
 
@@ -536,14 +535,72 @@ INPUT_PORTS_START( elim2 )
 		COINAGE
 INPUT_PORTS_END
 
+INPUT_PORTS_START( elim2c )
+	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
+	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
+
+	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN2")	/* IN2 - port 0xfa */
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")	/* IN3 - port 0xfb */
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+
+	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_SERVICE_NO_TOGGLE(0x01, IP_ACTIVE_HIGH)
+
+	PORT_START_TAG("DSW1")
+	/* This fake input port is used for DIP Switch 1 */
+   	PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
+	PORT_DIPSETTING(	0x01, "10000" )
+	PORT_DIPSETTING(	0x02, "20000" )
+	PORT_DIPSETTING(	0x00, "30000" )
+	PORT_DIPSETTING(	0x03, DEF_STR( None ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( Very_Hard ) )
+	PORT_DIPNAME( 0x30, 0x20, DEF_STR ( Lives ) )
+	PORT_DIPSETTING(	0x20, "3" )
+	PORT_DIPSETTING(	0x10, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
+	/* 0x30 gives 5 Lives */
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+	PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
+
+	COINAGE
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( elim4 )
 	PORT_START_TAG("IN0")	/* IN0 - port 0xf8 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("IN1")	/* IN1 - port 0xf9 */
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -562,50 +619,74 @@ INPUT_PORTS_START( elim4 )
 	PORT_BIT ( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("IN4")	/* IN4 - port 0xfc - read in machine/sega.c */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1		 ) PORT_PLAYER(3)
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2		 ) PORT_PLAYER(3)
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT	 ) PORT_PLAYER(3)
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1		 ) PORT_PLAYER(4)
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2		 ) PORT_PLAYER(4)
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT	 ) PORT_PLAYER(4)
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
+	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)
+	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
+	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)
 
 	PORT_START_TAG("FAKE1")	/* IN5 - FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ))
 
 	PORT_START_TAG("DSW1")
-		/* This fake input port is used for DIP Switch 1 */
-		PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
-		PORT_DIPSETTING(	0x01, "10000" )
-		PORT_DIPSETTING(	0x02, "20000" )
-		PORT_DIPSETTING(	0x00, "30000" )
-		PORT_DIPSETTING(	0x03, DEF_STR( None ) )
-		PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
-		PORT_DIPSETTING(	0x00, DEF_STR( Easy ) )
-		PORT_DIPSETTING(	0x08, DEF_STR( Normal ) )
-		PORT_DIPSETTING(	0x04, DEF_STR( Hard ) )
-		PORT_DIPSETTING(	0x0c, DEF_STR( Very_Hard ) )
-		PORT_DIPNAME( 0x30, 0x30, DEF_STR ( Lives ) )
-		PORT_DIPSETTING(	0x20, "3" )
-		PORT_DIPSETTING(	0x10, "4" )
-		PORT_DIPSETTING(	0x00, "5" )
-		/* 0x30 gives 5 Lives */
-		PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
-		PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
-		PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
+	/* This fake input port is used for DIP Switch 1 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR ( Bonus_Life ) )
+	PORT_DIPSETTING(	0x01, "10000" )
+	PORT_DIPSETTING(	0x02, "20000" )
+	PORT_DIPSETTING(	0x00, "30000" )
+	PORT_DIPSETTING(	0x03, DEF_STR( None ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR ( Difficulty ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x08, DEF_STR( Normal ) )
+	PORT_DIPSETTING(	0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(	0x0c, DEF_STR( Very_Hard ) )
+	PORT_DIPNAME( 0x30, 0x20, DEF_STR ( Lives ) )
+	PORT_DIPSETTING(	0x20, "3" )
+	PORT_DIPSETTING(	0x10, "4" )
+	PORT_DIPSETTING(	0x00, "5" )
+	/* 0x30 gives 5 Lives */
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR ( Cabinet ) )
+	PORT_DIPSETTING(	0x80, DEF_STR ( Upright ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
-		PORT_START_TAG("IN7") /* That is the coinage port in all the other games */
-		PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR ( Coin_A ) )
+	PORT_DIPSETTING(	0x07, DEF_STR ( 8C_1C ) )
+	PORT_DIPSETTING(	0x03, DEF_STR ( 7C_1C ) )
+	PORT_DIPSETTING(	0x05, DEF_STR ( 6C_1C ) )
+	PORT_DIPSETTING(	0x01, DEF_STR ( 5C_1C ) )
+	PORT_DIPSETTING(	0x06, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(	0x02, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(	0x04, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(	0x00, DEF_STR ( 1C_1C ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-		PORT_START_TAG("FAKE2")		/* IN8 - FAKE - port 0xfc - read in machine/sega.c */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3)
-	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("FAKE2")		/* IN8 - FAKE - port 0xfc - read in machine/sega.c */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 ) PORT_IMPULSE(3)
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -1087,6 +1168,26 @@ ROM_START( elim2a )
 	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, CRC(56484d19) SHA1(61f43126fdcfc230638ed47085ae037a098e6781) )	/* unknown */
 ROM_END
 
+ROM_START( elim2c )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "969t.u25.bin", 0x0000, 0x0800, CRC(896a615c) SHA1(542386196eca9fd822e36508e173201ee8a962ed) )
+	ROM_LOAD( "1200.u1.bin",  0x0800, 0x0800, CRC(590beb6a) SHA1(307c33cbc0b90f290aac302366e3ce4f70e5265e) )
+	ROM_LOAD( "1201.u2.bin",  0x1000, 0x0800, CRC(fed32b30) SHA1(51fba99d3bf543318ebe70ee1aa91e3171767d6f) )
+	ROM_LOAD( "1202.u3.bin",  0x1800, 0x0800, CRC(0a2068d0) SHA1(90acf1e78f5c3266d1fbc31470ad4d6a8cb43fe8) )
+	ROM_LOAD( "1203.u4.bin",  0x2000, 0x0800, CRC(1f593aa2) SHA1(aaad927174fa806d2c602b5672b1396eb9ec50fa) )
+	ROM_LOAD( "1204.u5.bin",  0x2800, 0x0800, CRC(046f1030) SHA1(632ac37b84007f169ce72877d8089538413ba20b) )
+	ROM_LOAD( "1205.u6.bin",  0x3000, 0x0800, CRC(8d10b870) SHA1(cc91a06c6b0e1697c399700bc351384360ecd5a3) )
+	ROM_LOAD( "1206.u7.bin",  0x3800, 0x0800, CRC(7f6c5afa) SHA1(0e684c654cfe2365e7d21e7bccb25f1ddb883770) )
+	ROM_LOAD( "1207.u8.bin",  0x4000, 0x0800, CRC(6cc74d62) SHA1(3392e5cd177885be7391a2699164f39302554d26) )
+	ROM_LOAD( "1208.u9.bin",  0x4800, 0x0800, CRC(cc37a631) SHA1(084ecc6b0179fe4f984131d057d5de5382443911) )
+	ROM_LOAD( "1209.u10.bin", 0x5000, 0x0800, CRC(844922f8) SHA1(0ad201fce2eaa7dde77d8694d226aad8b9a46ea7) )
+	ROM_LOAD( "1210.u11.bin", 0x5800, 0x0800, CRC(7b289783) SHA1(5326ca94b5197ef99db4ea3b28051090f0d7a9ce) )
+	ROM_LOAD( "1211.u12.bin", 0x6000, 0x0800, CRC(17349db7) SHA1(8e7ee1fbf153a36a13f3252ca4c588df531b56ec) )
+	ROM_LOAD( "1212.u13.bin", 0x6800, 0x0800, CRC(152cf376) SHA1(56c3141598b8bac81e85b1fc7052fdd19cd95609) )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",	  0x0000, 0x0400, CRC(56484d19) SHA1(61f43126fdcfc230638ed47085ae037a098e6781) )	/* unknown */
+ROM_END
 
 ROM_START( elim4 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1108,6 +1209,28 @@ ROM_START( elim4 )
 
 	ROM_REGION( 0x0400, REGION_USER1, 0 )
 	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, CRC(56484d19) SHA1(61f43126fdcfc230638ed47085ae037a098e6781) )	/* unknown */
+ROM_END
+
+ROM_START( elim4p )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1390.u25.bin", 0x0000, 0x0800, CRC(97010c3e) SHA1(b07db05abf48461b633bbabe359a973a5bc6da13) )
+	ROM_LOAD( "sw1.bin",		 0x0800, 0x0800, CRC(5350b8eb) SHA1(def9192971d1943e45cea1845b1d8c8e2a01bc38) )
+	ROM_LOAD( "sw2.bin",		 0x1000, 0x0800, CRC(44f45465) SHA1(e3139878602864509803dabc0f9c278e4b856431) )
+	ROM_LOAD( "sw3.bin",		 0x1800, 0x0800, CRC(5b692c3c) SHA1(6cd1361e9f063af1f175baed466cc2667b776a52) )
+	ROM_LOAD( "sw4.bin",		 0x2000, 0x0800, CRC(0b78dd00) SHA1(f48c4bdd5fc2e818107b036aa6eddebf46a0e964) )
+	ROM_LOAD( "sw5.bin",		 0x2800, 0x0800, CRC(8b3795f1) SHA1(1bcd12791e45dd14c7541e6fe3798a8159b6c11b) )
+	ROM_LOAD( "sw6.bin",		 0x3000, 0x0800, CRC(4304b503) SHA1(2bc7a702d43092818ecb713fa0bac476c272e3a0) )
+	ROM_LOAD( "sw7.bin",		 0x3800, 0x0800, CRC(3cb4a604) SHA1(868c3c1bead99c2e6857d1c2eef02d84e0e87f29) )
+	ROM_LOAD( "sw8.bin",		 0x4000, 0x0800, CRC(bdc55223) SHA1(47ca7485c9e2878cbcb92d93a022f7d74a6d13df) )
+	ROM_LOAD( "sw9.bin",		 0x4800, 0x0800, CRC(f6ca1bf1) SHA1(e4dc6bd6486dff2d0e8a93e5c7649093107cde46) )
+	ROM_LOAD( "swa.bin",		 0x5000, 0x0800, CRC(12373f7f) SHA1(685c1202345ae8ef53fa61b7254ce04efd94a12b) )
+	ROM_LOAD( "swb.bin",		 0x5800, 0x0800, CRC(d1effc6b) SHA1(b72cd14642f26ac50fbe6199d121b0278588ca22) )
+	ROM_LOAD( "swc.bin",		 0x6000, 0x0800, CRC(bf361ab3) SHA1(23e3396dc937c0a19d0d312d1de3443b43807d91) )
+	ROM_LOAD( "swd.bin",		 0x6800, 0x0800, CRC(ae2c88e5) SHA1(b0833051f543529502e05fb183effa9f817757fb) )
+	ROM_LOAD( "swe.bin",		 0x7000, 0x0800, CRC(ec4cc343) SHA1(00e107eaf530ce6bec2afffd7d7bedd7763cfb17) )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",	  0x0000, 0x0400, CRC(56484d19) SHA1(61f43126fdcfc230638ed47085ae037a098e6781) )	/* unknown */
 ROM_END
 
 
@@ -1160,6 +1283,7 @@ DRIVER_INIT( spacfury )
 	/* This game uses the 315-0064 security chip */
 	sega_security(64);
 
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xfb, 0, 0, sega_ports_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, input_port_8_r);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
@@ -1174,6 +1298,7 @@ DRIVER_INIT( zektor )
 	/* This game uses the 315-0082 security chip */
 	sega_security(82);
 
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xfb, 0, 0, sega_ports_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, sega_IN4_r);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
@@ -1187,6 +1312,7 @@ DRIVER_INIT( elim2 )
 	/* This game uses the 315-0070 security chip */
 	sega_security(70);
 
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xfb, 0, 0, sega_ports_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, input_port_4_r);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3e, 0, 0, elim1_sh_w);
@@ -1199,6 +1325,7 @@ DRIVER_INIT( elim4 )
 	/* This game uses the 315-0076 security chip */
 	sega_security(76);
 
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xfb, 0, 0, sega_elim4_ports_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, elim4_IN4_r);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3e, 0, 0, elim1_sh_w);
@@ -1211,6 +1338,7 @@ DRIVER_INIT( startrek )
 	/* This game uses the 315-0064 security chip */
 	sega_security(64);
 
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xfb, 0, 0, sega_ports_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, sega_IN4_r);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
@@ -1223,6 +1351,7 @@ DRIVER_INIT( tacscan )
 	/* This game uses the 315-0076 security chip */
 	sega_security(76);
 
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xfb, 0, 0, sega_ports_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, sega_IN4_r);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, tacscan_sh_w);
@@ -1242,6 +1371,8 @@ GAME( 1982, zektor,   0,        zektor,   zektor,   zektor,   ROT0,   "Sega", "Z
 GAME( 1982, tacscan,  0,        tacscan,  tacscan,  tacscan,  ROT270, "Sega", "Tac/Scan" )
 GAME( 1981, elim2,	  0,        elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
 GAME( 1981, elim2a,   elim2,    elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
+GAME( 1981, elim2c,	  elim2,	elim2,	  elim2c,	elim2,	  ROT0,	  "Gremlin", "Eliminator (2 Players, cocktail)" )
 GAME( 1981, elim4,	  elim2,    elim2,    elim4,    elim4,    ROT0,   "Gremlin", "Eliminator (4 Players)" )
+GAME( 1981, elim4p,	  elim2,	elim2,	  elim4,	elim4,	  ROT0,	  "Gremlin", "Eliminator (4 Players, prototype)" )
 GAME( 1982, startrek, 0,        startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
 

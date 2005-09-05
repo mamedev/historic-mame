@@ -858,7 +858,7 @@ void record_movie_frame(mame_bitmap *bitmap)
 	if (movie_file != NULL && bitmap != NULL)
 	{
 		if (movie_frame++ == 0)
-			mng_capture_start(movie_file, bitmap);
+			save_frame_with(movie_file, bitmap, mng_capture_start);
 		save_frame_with(movie_file, bitmap, mng_capture_frame);
 	}
 }

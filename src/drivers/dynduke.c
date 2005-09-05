@@ -28,96 +28,109 @@
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
 
-READ8_HANDLER( dynduke_background_r );
-READ8_HANDLER( dynduke_foreground_r );
 WRITE8_HANDLER( dynduke_background_w );
 WRITE8_HANDLER( dynduke_foreground_w );
 WRITE8_HANDLER( dynduke_text_w );
 WRITE8_HANDLER( dynduke_gfxbank_w );
-VIDEO_START( dynduke );
 WRITE8_HANDLER( dynduke_control_w );
-VIDEO_UPDATE( dynduke );
 WRITE8_HANDLER( dynduke_paletteram_w );
+VIDEO_START( dynduke );
+VIDEO_UPDATE( dynduke );
+VIDEO_EOF( dynduke );
 
-static unsigned char *dynduke_shared_ram;
-extern unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
+extern UINT8 *dynduke_back_data, *dynduke_fore_data, *dynduke_scroll_ram;
 
-/***************************************************************************/
+/* Memory Maps */
 
-static READ8_HANDLER( dynduke_shared_r ) { return dynduke_shared_ram[offset]; }
-static WRITE8_HANDLER( dynduke_shared_w ) { dynduke_shared_ram[offset]=data; }
-
-
-/******************************************************************************/
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x07fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0a000, 0x0afff) AM_READ(dynduke_shared_r)
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x06fff) AM_RAM
+	AM_RANGE(0x07000, 0x07fff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x08000, 0x080ff) AM_RAM AM_BASE(&dynduke_scroll_ram)
+	AM_RANGE(0x0a000, 0x0afff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x0b000, 0x0b000) AM_READ(input_port_1_r)
 	AM_RANGE(0x0b001, 0x0b001) AM_READ(input_port_2_r)
 	AM_RANGE(0x0b002, 0x0b002) AM_READ(input_port_3_r)
 	AM_RANGE(0x0b003, 0x0b003) AM_READ(input_port_4_r)
-	AM_RANGE(0x0d000, 0x0d00d) AM_READ(seibu_main_v30_r)
-	AM_RANGE(0xa0000, 0xfffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0b004, 0x0b004) AM_WRITENOP
+	AM_RANGE(0x0b006, 0x0b006) AM_WRITE(dynduke_control_w)
+	AM_RANGE(0x0c000, 0x0c7ff) AM_RAM AM_WRITE(dynduke_text_w) AM_BASE(&videoram)
+	AM_RANGE(0x0d000, 0x0d00d) AM_READWRITE(seibu_main_v30_r, seibu_main_v30_w)
+	AM_RANGE(0xa0000, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x06fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x07000, 0x07fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x08000, 0x080ff) AM_WRITE(MWA8_RAM) AM_BASE(&dynduke_scroll_ram)
-	AM_RANGE(0x0a000, 0x0afff) AM_WRITE(dynduke_shared_w) AM_BASE(&dynduke_shared_ram)
-	AM_RANGE(0x0b000, 0x0b007) AM_WRITE(dynduke_control_w) AM_BASE(&dynduke_control_ram)
-	AM_RANGE(0x0c000, 0x0c7ff) AM_WRITE(dynduke_text_w) AM_BASE(&videoram)
-	AM_RANGE(0x0d000, 0x0d00d) AM_WRITE(seibu_main_v30_w)
-	AM_RANGE(0xa0000, 0xfffff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x05fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x06000, 0x067ff) AM_READ(dynduke_background_r)
-	AM_RANGE(0x06800, 0x06fff) AM_READ(dynduke_foreground_r)
-	AM_RANGE(0x07000, 0x07fff) AM_READ(paletteram_r)
-	AM_RANGE(0x08000, 0x08fff) AM_READ(dynduke_shared_r)
-	AM_RANGE(0xc0000, 0xfffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x05fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x06000, 0x067ff) AM_WRITE(dynduke_background_w) AM_BASE(&dynduke_back_data)
-	AM_RANGE(0x06800, 0x06fff) AM_WRITE(dynduke_foreground_w) AM_BASE(&dynduke_fore_data)
-	AM_RANGE(0x07000, 0x07fff) AM_WRITE(dynduke_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0x08000, 0x08fff) AM_WRITE(dynduke_shared_w)
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x05fff) AM_RAM
+	AM_RANGE(0x06000, 0x067ff) AM_RAM AM_WRITE(dynduke_background_w) AM_BASE(&dynduke_back_data)
+	AM_RANGE(0x06800, 0x06fff) AM_RAM AM_WRITE(dynduke_foreground_w) AM_BASE(&dynduke_fore_data)
+	AM_RANGE(0x07000, 0x07fff) AM_RAM AM_WRITE(dynduke_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x08000, 0x08fff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x0a000, 0x0a001) AM_WRITE(dynduke_gfxbank_w)
-	AM_RANGE(0x0c000, 0x0c001) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xc0000, 0xfffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0c000, 0x0c001) AM_WRITENOP
+	AM_RANGE(0xc0000, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
-/******************************************************************************/
+/* Input Ports */
 
 INPUT_PORTS_START( dynduke )
-	SEIBU_COIN_INPUTS	/* Must be port 0: coin inputs read through sound cpu */
+	SEIBU_COIN_INPUTS	// Must be port 0: coin inputs read through sound cpu
 
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START	/* Dip switch A */
+	/*
+        SW#1
+        --------------------------------------------------------------------
+        DESCRIPTION                        1   2   3   4   5   6   7   8
+        --------------------------------------------------------------------
+        COIN MODE       MODE 1            OFF
+                        MODE 2            ON
+        --------------------------------------------------------------------
+        COIN/CREDIT*
+        MODE #1         1C/1P                 OFF OFF OFF OFF
+                        2C/1P                 ON  OFF OFF OFF
+                        3C/1P                 OFF ON  OFF OFF
+                        4C/1P                 ON  ON  OFF OFF
+                        FREE PLAY             ON  ON  ON  ON
+        MODE #2
+        COIN A          1C/1P                 OFF OFF
+                        2C/1P                 ON  OFF
+                        3C/1P                 OFF ON
+                        5C/1P                 ON  ON
+        COIN B          1C/2P                         OFF OFF
+                        1C/3P                         ON  OFF
+                        1C/5P                         OFF ON
+                        1C/6P                         ON  ON
+        --------------------------------------------------------------------
+        STARTING COIN   NORMAL                                OFF
+                        X2                                    ON
+        --------------------------------------------------------------------
+        CABINET TYPE    TABLE                                     ON
+                        UPRIGHT                                   OFF
+        --------------------------------------------------------------------
+        VIDEO SCREEN    NORMAL                                        OFF
+                        FLIP                                          ON
+        --------------------------------------------------------------------
+        FACTORY SETTINGS                     OFF OFF OFF OFF OFF OFF OFF OFF
+        --------------------------------------------------------------------
+    */
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x07, 0x06, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
@@ -139,25 +152,19 @@ INPUT_PORTS_START( dynduke )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* Dip switch B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty?" )
+	PORT_START_TAG("DSW2")
+	PORT_BIT( 0x03, 0x03, IPT_UNUSED )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "80K 100K+" )
+	PORT_DIPSETTING(    0x08, "100K 100K+" )
+	PORT_DIPSETTING(    0x04, "120K 100K+" )
+	PORT_DIPSETTING(    0x00, "120K 120K+" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
-	PORT_DIPNAME( 0x40, 0x40, "Continue?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
@@ -165,7 +172,7 @@ INPUT_PORTS_START( dynduke )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-/******************************************************************************/
+/* Graphics Layouts */
 
 static gfx_layout charlayout =
 {
@@ -230,65 +237,64 @@ static gfx_layout fg_layout =
 	512
 };
 
-static gfx_decode dynduke_gfxdecodeinfo[] =
+/* Graphics Decode Information */
+
+static gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   1280, 16 },
-	{ REGION_GFX2, 0, &bg_layout,    2048, 32 }, /* Really 0 */
+	{ REGION_GFX2, 0, &bg_layout,    2048, 32 }, // Really 0
 	{ REGION_GFX3, 0, &fg_layout,     512, 16 },
 	{ REGION_GFX4, 0, &spritelayout,  768, 32 },
-	{ -1 } /* end of array */
+	{ -1 }
 };
 
-/******************************************************************************/
-
 /* Parameters: YM3812 frequency, Oki frequency, Oki memory region */
+
 SEIBU_SOUND_SYSTEM_YM3812_HARDWARE
+
+/* Interrupt Generator */
 
 static INTERRUPT_GEN( dynduke_interrupt )
 {
-	cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
+	cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	// VBL
 }
 
-VIDEO_EOF( dynduke )
-{
-	buffer_spriteram_w(0,0); /* Could be a memory location instead */
-}
+/* Machine Driver */
 
 static MACHINE_DRIVER_START( dynduke )
+	// basic machine hardware
+	MDRV_CPU_ADD(V30, 16000000/2) // NEC V30-8 CPU
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
+	MDRV_CPU_VBLANK_INT(dynduke_interrupt, 1)
 
-	/* basic machine hardware */
-	MDRV_CPU_ADD(V30,16000000/2) /* NEC V30-8 CPU */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
-
-	MDRV_CPU_ADD(V30,16000000/2) /* NEC V30-8 CPU */
-	MDRV_CPU_PROGRAM_MAP(sub_readmem,sub_writemem)
-	MDRV_CPU_VBLANK_INT(dynduke_interrupt,1)
+	MDRV_CPU_ADD(V30, 16000000/2) // NEC V30-8 CPU
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
+	MDRV_CPU_VBLANK_INT(dynduke_interrupt, 1)
 
 	SEIBU_SOUND_SYSTEM_CPU(14318180/4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(60)	/* CPU interleave  */
+	MDRV_INTERLEAVE(60)
 
 	MDRV_MACHINE_INIT(seibu_sound_2)
 
-	/* video hardware */
+	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(dynduke_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(2048+1024)	/* 2048 real palette, 1024 for transparency kludge */
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048+1024)	// 2048 real palette, 1024 for transparency kludge
 
 	MDRV_VIDEO_START(dynduke)
-	MDRV_VIDEO_EOF(dynduke)
 	MDRV_VIDEO_UPDATE(dynduke)
+	MDRV_VIDEO_EOF(dynduke)
 
-	/* sound hardware */
+	// sound hardware
 	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
-/***************************************************************************/
+/* ROMs */
 
 ROM_START( dynduke )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v30 main cpu */
@@ -390,14 +396,14 @@ ROM_START( dbldyn )
 	ROM_LOAD( "dd7.x10", 0x000000, 0x10000, CRC(9cbc7b41) SHA1(107c19d3d71ee6af63d03f7278310c5e3786f91d) )
 ROM_END
 
-/***************************************************************************/
-
+/* Driver Initialization */
 
 static DRIVER_INIT( dynduke )
 {
 	seibu_sound_decrypt(REGION_CPU3,0x20000);
 }
 
+/* Game Drivers */
 
 GAME( 1989, dynduke, 0,       dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "Dynamite Duke" )
 GAME( 1989, dbldyn,  dynduke, dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "The Double Dynamites" )

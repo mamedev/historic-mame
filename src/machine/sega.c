@@ -112,9 +112,9 @@ READ8_HANDLER( sega_mult_r )
   Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
 ***************************************************************************/
 
-READ8_HANDLER( sega_ports_r )
+static UINT8 sega_ports_demangle(offs_t offset)
 {
-	int dip1, dip2;
+	UINT8 dip1, dip2;
 
 	dip1 = input_port_6_r(offset);
 	dip2 = input_port_7_r(offset);
@@ -138,6 +138,20 @@ READ8_HANDLER( sega_ports_r )
 	return 0;
 }
 
+READ8_HANDLER( sega_ports_r )
+{
+	return (sega_ports_demangle(offset));
+}
+
+READ8_HANDLER( sega_elim4_ports_r )
+{
+	/* any coin input pulls MSB down */
+	if (offset==0 && (readinputportbytag ("FAKE2") & 0x0f) != 0x0f)
+		return (sega_ports_demangle(offset) & 0x7f);
+	else
+		return (sega_ports_demangle(offset) | 0x80);
+}
+
 
 READ8_HANDLER( sega_IN4_r ) {
 
@@ -148,9 +162,9 @@ READ8_HANDLER( sega_IN4_r ) {
  * significant bit.
  */
 
-	int delta;
+	INT8 delta;
 	static int sign;
-	static int spinner;
+	static INT8 counter;
 
 	if (ioSwitch & 1) /* ioSwitch = 0x01 or 0xff */
 		return readinputportbytag("IN4");
@@ -161,23 +175,35 @@ READ8_HANDLER( sega_IN4_r ) {
 	delta = readinputportbytag("FAKE2");
 	if (delta != 0)
 	{
-		sign = delta >> 7;
-		if (sign)
-			delta = 0x80-delta;
-		spinner += delta;
+		sign = (delta >> 7) & 1;
+		counter += abs(delta);
 	}
-	return (~((spinner<<1) | sign));
+	return (~((counter << 1) | sign));
 }
 
 READ8_HANDLER( elim4_IN4_r )
 {
-	/* If the ioPort ($f8) is 0x1f, we're reading the 4 coin inputs.    */
-	/* If the ioPort ($f8) is 0x1e, we're reading player 3 & 4 controls.*/
+	UINT8 a;
 
-	if (ioSwitch == 0x1e)
-		return readinputportbytag ("IN4");
-	if (ioSwitch == 0x1f)
-		return readinputportbytag ("FAKE2");
-	return (0);
+	a = 0;
+
+	/* Bit 3 enables demux */
+	if (ioSwitch & 8)
+	{
+		/* Demux bit 0-2. Only 6 and 7 are connected */
+		switch (ioSwitch & 7)
+		{
+		case 6:
+			/* player 3 & 4 controls */
+			a = readinputportbytag ("IN4");
+			break;
+		case 7:
+			/* the 4 coin inputs */
+			a = readinputportbytag ("FAKE2");
+			break;
+		}
+	}
+	/* LS240 has inverting outputs */
+	return (a ^ 0xff);
 }
 

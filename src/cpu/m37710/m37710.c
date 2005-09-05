@@ -830,8 +830,8 @@ void m37710i_update_irqs(void)
 //      logerror("taking IRQ %d: PC = %06x, SP = %04x\n", wantedIRQ, REG_PB | REG_PC, REG_S);
 		m37710i_push_8(REG_PB>>16);
 		m37710i_push_16(REG_PC);
-		m37710i_push_8(m37710i_get_reg_p());
 		m37710i_push_8(m37710i_cpu.ipl);
+		m37710i_push_8(m37710i_get_reg_p());
 
 		// set I to 1, set IPL to the interrupt we're taking
 		FLAG_I = IFLAG_SET;

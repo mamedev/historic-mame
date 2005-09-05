@@ -13,15 +13,62 @@ extern UINT32 *stv_backupram;
 
 DRIVER_INIT ( stv );
 
-/* Hack the boot vectors .. not right but allows several IC13 games (which fail the checksums before hacking) to boot */
-DRIVER_INIT( ic13 )
+/*
+IC-13 rom shifter routine,on 2000000-21fffff the game maps the rom bytes on the
+ODD (in every sense) bytes.This gets the IC-13 rom status to good and ends a emulation
+weird issue once and for all...
+We need to remove this and add the whole thing into the ROM loading structure...
+*/
+static void ic13_shifter(void)
 {
-	/* this is WRONG but works for some games */
 	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
-	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
-	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
-	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
+	UINT32 i;
+	UINT32 tmp[(0x80000*2)/4];
 
+	for(i=(0);i<(0x100000-1);i+=8)
+	{
+		//printf("%08x\n",i);
+		tmp[((i)/4)+0] = rom[(i/2)/4]; /*0.0 -> 2.1 -> 4.2*/
+		tmp[((i)/4)+1] = rom[(i/2)/4]; /*1.0 -> 3.1 -> 5.2*/
+	}
+
+	for(i=(0);i<(0x100000-1);i+=8)
+	{
+		//printf("%08x\n",i);
+		tmp[(i/4)+0] = ((tmp[(i/4)+0] & 0xff000000) >> 8) | ((tmp[(i/4)+0] & 0x00ff0000) >> 16);
+		tmp[(i/4)+1] = ((tmp[(i/4)+1] & 0x0000ff00) << 8) | ((tmp[(i/4)+1] & 0x000000ff) >> 0);
+	}
+
+	for(i=(0);i<(0x100000-1);i+=4)
+	{
+		//printf("%08x\n",i);
+		rom[i/4] = tmp[(i)/4];
+	}
+
+	for(i=(0x300000);i<(0x400000-1);i+=8)
+	{
+		//printf("%08x\n",i);
+		tmp[((i-0x300000)/4)+0] = rom[(i/2)/4]; /*0.0 -> 2.1 -> 4.2*/
+		tmp[((i-0x300000)/4)+1] = rom[(i/2)/4]; /*1.0 -> 3.1 -> 5.2*/
+	}
+
+	for(i=(0);i<(0x100000-1);i+=8)
+	{
+		//printf("%08x\n",i);
+		tmp[(i/4)+0] = ((tmp[(i/4)+0] & 0xff000000) >> 8) | ((tmp[(i/4)+0] & 0x00ff0000) >> 16);
+		tmp[(i/4)+1] = ((tmp[(i/4)+1] & 0x0000ff00) << 8) | ((tmp[(i/4)+1] & 0x000000ff) >> 0);
+	}
+
+	for(i=(0x100000);i<(0x200000-1);i+=4)
+	{
+		//printf("%08x\n",i);
+		rom[i/4] = tmp[(i-0x100000)/4];
+	}
+}
+
+DRIVER_INIT ( ic13 )
+{
+	ic13_shifter();
 	init_stv();
 }
 /*
@@ -832,3 +879,4 @@ DRIVER_INIT(sassisu)
 
 	init_ic13();
 }
+
