@@ -98,7 +98,6 @@ ToDo / Notes:
 -Add the RS232c interface (serial port),needed by fhboxers.
 -(PCB owners) check if the clocks documented in the manuals are really right for ST-V.
 -SCSP to master irq: see if there is a sound cpu mask bit.
--VDP1: Re-add the framebuffer reading,bios checks fails because of that.
 -Does the cpunum_set_clock really works?Investigate.
 -We need to check every game if can be completed or there are any hanging/crash/protection
  issues on them.
@@ -130,10 +129,8 @@ ToDo / Notes:
  the mahjong panel instead.
 -kiwames: the VDP1 sprites refresh is too slow,causing the "Draw by request" mode to
  flicker.Moved back to default ATM...
--pblbeach: Sprites are offset,caused by the stvvdp1_local_x/y command,commenting that will
- give centered sprites.Also this game uses to write to the framebuffer for:
- A)Remain sprites on screen (buffer purpose)
- B)Write some extra graphics (chars in attract/test modes)
+-pblbeach: Sprites are offset, because it doesn't clear vdp1 local coordinates set by bios,
+ I guess that they are cleared when some vdp1 register is written (kludged for now)
 -decathlt: Is currently using a strange protection DMA abus control,and it uses some sort of RLE
  compression/encryption that serves as a gfxdecode.
 -vmahjong: the vdp1 textures are too dark(women).
@@ -141,8 +138,8 @@ ToDo / Notes:
 -Weird design choices:
  introdon: has the working button as BUTTON2 and not BUTTON1
  batmanfr: BUTTON1 isn't used at all.
--seabass/suikoenb/gaxeduel: Player sprite is corrupt/missing during movements,caused
- by unemulated framebuffer switching.
+-seabass/gaxeduel: Player sprite is corrupt/missing during movements,caused
+ by incomplete framebuffer switching.
 -sss: Missing backgrounds during gameplay. <- seems just too dark (night),probably
  just the positioning isn't correct...
 -elandore: Polygons structures/textures aren't right in gameplay,known as protection
@@ -2650,6 +2647,7 @@ static UINT32 scu_add_tmp;
 #define VDP1_REGS(_lv_)  ((scu_##_lv_ & 0x07ffffff) >= 0x05d00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05dfffff)
 #define VDP2(_lv_)       ((scu_##_lv_ & 0x07ffffff) >= 0x05e00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05fdffff)
 #define WORK_RAM_L(_lv_) ((scu_##_lv_ & 0x07ffffff) >= 0x00200000) && ((scu_##_lv_ & 0x07ffffff) <= 0x002fffff)
+#define WORK_RAM_H(_lv_) ((scu_##_lv_ & 0x07ffffff) >= 0x06000000) && ((scu_##_lv_ & 0x07ffffff) <= 0x060fffff)
 #define SOUND_RAM(_lv_)  ((scu_##_lv_ & 0x07ffffff) >= 0x05a00000) && ((scu_##_lv_ & 0x07ffffff) <= 0x05afffff)
 
 READ32_HANDLER( stv_scu_r32 )
@@ -2990,6 +2988,13 @@ static void dma_direct_lv0()
 		scu_add_tmp |= 0x80000000;
 	}
 
+	if (WORK_RAM_H(dst_0) && (scu_dst_add_0 != 4))
+	{
+		scu_add_tmp = (scu_dst_add_0*0x100) | (scu_src_add_0);
+		scu_dst_add_0 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
 	tmp_size = scu_size_0;
 	if(!(DRUP(0))) tmp_src = scu_src_0;
 	if(!(DWUP(0))) tmp_dst = scu_dst_0;
@@ -3093,6 +3098,12 @@ static void dma_direct_lv1()
 		scu_add_tmp |= 0x80000000;
 	}
 
+	if (WORK_RAM_H(dst_1) && (scu_dst_add_1 != 4))
+	{
+		scu_add_tmp = (scu_dst_add_1*0x100) | (scu_src_add_1);
+		scu_src_add_1 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
 
 	tmp_size = scu_size_1;
 	if(!(DRUP(1))) tmp_src = scu_src_1;
@@ -3185,6 +3196,13 @@ static void dma_direct_lv2()
 	if(DRUP(2))
 	{
 		logerror("Data read update = 1,read address add value must be 1 too\n");
+		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
+		scu_src_add_2 = 4;
+		scu_add_tmp |= 0x80000000;
+	}
+
+	if (WORK_RAM_H(dst_2) && (scu_dst_add_2 != 4))
+	{
 		scu_add_tmp = (scu_dst_add_2*0x100) | (scu_src_add_2);
 		scu_src_add_2 = 4;
 		scu_add_tmp |= 0x80000000;
@@ -3777,8 +3795,7 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	/*0x05ca0000-0x05cbffff Frame Buffer 1*/
 	/*0x05d00000-0x05d7ffff VDP1 Regs */
 	AM_RANGE(0x05c00000, 0x05c7ffff) AM_READWRITE(stv_vdp1_vram_r, stv_vdp1_vram_w)
-	AM_RANGE(0x05c80000, 0x05c9ffff) AM_READWRITE(stv_vdp1_framebuffer0_r, stv_vdp1_framebuffer0_w)
-	AM_RANGE(0x05ca0000, 0x05cbffff) AM_READWRITE(stv_vdp1_framebuffer1_r, stv_vdp1_framebuffer1_w)
+	AM_RANGE(0x05c80000, 0x05cbffff) AM_READWRITE(stv_vdp1_framebuffer0_r, stv_vdp1_framebuffer0_w)
 	AM_RANGE(0x05d00000, 0x05d0001f) AM_READWRITE(stv_vdp1_regs_r, stv_vdp1_regs_w)
 	AM_RANGE(0x05e00000, 0x05efffff) AM_READWRITE(stv_vdp2_vram_r, stv_vdp2_vram_w)
 	AM_RANGE(0x05f00000, 0x05f7ffff) AM_READWRITE(stv_vdp2_cram_r, stv_vdp2_cram_w)
@@ -4370,7 +4387,7 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_CPU_PROGRAM_MAP(sound_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(192);	// guess, needed to force video update after V-Blank OUT interrupt
 
 	MDRV_MACHINE_INIT(stv)
 	MDRV_NVRAM_HANDLER(stv) /* Actually 93c45 */
@@ -5328,6 +5345,7 @@ GAMEBX( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron
 GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Ejihon Tantei Jimusyo (J 950613 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  grdforce,  ROT0,   "Success",  				  "Guardian Force (JUET 980318 V0.105)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    				  "Power Instinct 3 - Groove On Fight (J 970416 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				  "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -5336,6 +5354,7 @@ GAMEBX( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena
 GAMEBX( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega / Toyosuisan", 	      "Maru-Chan de Goo! (J 971216 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East",				  "Mausuke no Ojama the World (J 960314 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, othellos,  stvbios, stvbios, stv, stv,  othellos,  ROT0,   "Success",  				  "Othello Shiyouyo (J 980423 V1.002)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "T&E Soft",   				  "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    				  "Princess Clara Daisakusen (J 960910 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  				  "Puyo Puyo Sun (J 961115 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, sassisu,   stvbios, stvbios, stv, stv,  sassisu,   ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -5353,7 +5372,6 @@ GAMEBX( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega",
 GAMEBX( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0,   "Sega", 	 				  "Winter Heat (JUET 971012 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
-GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING )//We need to check this if it works...
 GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong (J 961214 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft",    				  "Astra SuperStars (J 980514 V1.002)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -5365,7 +5383,6 @@ GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega",
 GAMEBX( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
 GAMEBX( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0,   "Treasure",   				  "Radiant Silvergun (JUET 980523 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Virtua Fighter Remix (JUETBKAL 950428 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEBX( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "T&E Soft",   				  "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			  "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEBX( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,  	 ROT0,   "Sega", 	     			  "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 

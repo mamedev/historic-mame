@@ -110,22 +110,6 @@ VIDEO_UPDATE( horizon );
 WRITE8_HANDLER( horizon_scrollram_w );
 extern UINT8 *horizon_scrollram;
 
-static int bankaddress;
-static int bankaddress2;
-
-static void set_m64_bank(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	memory_set_bankptr(1,&RAM[bankaddress]);
-}
-
-static void set_m64_bank2(void)
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	memory_set_bankptr(1,&RAM[bankaddress]);
-	memory_set_bankptr(2,&RAM[bankaddress2]);
-}
-
 
 /* Lode Runner 2 seems to have a simple protection on the bank switching */
 /* circuitry. It writes data to ports 0x80 and 0x81, then reads port 0x80 */
@@ -140,14 +124,11 @@ READ8_HANDLER( ldrun2_bankswitch_r )
 {
 	if (ldrun2_bankswap)
 	{
-		unsigned char *RAM = memory_region(REGION_CPU1);
-
-
 		ldrun2_bankswap--;
 
 		/* swap to bank #1 on second read */
 		if (ldrun2_bankswap == 0)
-			memory_set_bankptr(1,&RAM[0x12000]);
+			memory_set_bank(1, 1);
 	}
 	return 0;
 }
@@ -171,8 +152,7 @@ WRITE8_HANDLER( ldrun2_bankswitch_w )
 logerror("unknown bank select %02x\n",data);
 			return;
 		}
-		bankaddress = 0x10000 + (banks[data-1] * 0x2000);
-		set_m64_bank();
+		memory_set_bank(1, banks[data-1]);
 	}
 	else
 	{
@@ -200,35 +180,30 @@ READ8_HANDLER( ldrun3_prot_7_r )
 
 WRITE8_HANDLER( ldrun4_bankswitch_w )
 {
-	bankaddress = 0x10000 + ((data & 0x01) * 0x4000);
-	set_m64_bank();
+	memory_set_bank(1, data & 0x01);
 }
 
 static WRITE8_HANDLER( kidniki_bankswitch_w )
 {
-	bankaddress = 0x10000 + (data & 0x0f) * 0x2000;
-	set_m64_bank();
+	memory_set_bank(1, data & 0x0f);
 }
 
 #define battroad_bankswitch_w kidniki_bankswitch_w
 
 static WRITE8_HANDLER( spelunkr_bankswitch_w )
 {
-	bankaddress = 0x10000 + (data & 0x03) * 0x2000;
-	set_m64_bank();
+	memory_set_bank(1, data & 0x03);
 }
 
-WRITE8_HANDLER( spelunk2_bankswitch_w )
+static WRITE8_HANDLER( spelunk2_bankswitch_w )
 {
-	bankaddress = 0x20000 + 0x1000 * ((data & 0xc0)>>6);
-	bankaddress2 = 0x10000 + 0x0400 *  (data & 0x3c);
-	set_m64_bank2();
+	memory_set_bank(1, (data & 0xc0)>>6);
+	memory_set_bank(2, (data & 0x3c)>>2);
 }
 
 static WRITE8_HANDLER( youjyudn_bankswitch_w )
 {
-	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
-	set_m64_bank();
+	memory_set_bank(1, data & 0x01);
 }
 
 
@@ -2512,17 +2487,22 @@ ROM_START( horizon )
 ROM_END
 
 
-static DRIVER_INIT( m62 )
+static DRIVER_INIT( battroad )
 {
-	state_save_register_int("main", 0, "bankaddress", &bankaddress);
-	state_save_register_func_postload(set_m64_bank);
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x2000);
 }
 
-static DRIVER_INIT( spelunk2 )
+static DRIVER_INIT( ldrun2 )
 {
-	state_save_register_int("main", 0, "bankaddress", &bankaddress);
-	state_save_register_int("main", 0, "bankaddress2", &bankaddress2);
-	state_save_register_func_postload(set_m64_bank2);
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 2, memory_region(REGION_CPU1) + 0x10000, 0x2000);
+}
+
+static DRIVER_INIT( ldrun4 )
+{
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 2, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
 static DRIVER_INIT( kidniki )
@@ -2532,7 +2512,28 @@ static DRIVER_INIT( kidniki )
 	/* in Kid Niki, bank 0 has code falling from 7fff to 8000, */
 	/* so I have to copy it there because bank switching wouldn't catch it */
 	memcpy(ROM + 0x08000, ROM + 0x10000, 0x2000);
-	init_m62();
+
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x2000);
+}
+
+static DRIVER_INIT( spelunkr )
+{
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 4, memory_region(REGION_CPU1) + 0x10000, 0x2000);
+}
+
+static DRIVER_INIT( spelunk2 )
+{
+	/* configure memory banks */
+	memory_configure_bank(1, 0,  4, memory_region(REGION_CPU1) + 0x20000, 0x1000);
+	memory_configure_bank(2, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x1000);
+}
+
+static DRIVER_INIT( youjyudn )
+{
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 2, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
 GAME( 1984, kungfum,  0,        kungfum,  kungfum,  0,        ROT0,   "Irem", "Kung-Fu Master" )
@@ -2540,19 +2541,19 @@ GAME( 1984, kungfud,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem (Dat
 GAME( 1984, spartanx, kungfum,  kungfum,  kungfum,  0,        ROT0,   "Irem", "Spartan X (Japan)" )
 GAME( 1984, kungfub,  kungfum,  kungfum,  kungfum,  0,        ROT0,   "bootleg", "Kung-Fu Master (bootleg set 1)" )
 GAME( 1984, kungfub2, kungfum,  kungfum,  kungfum,  0,        ROT0,   "bootleg", "Kung-Fu Master (bootleg set 2)" )
-GAME( 1984, battroad, 0,        battroad, battroad, m62,      ROT90,  "Irem", "The Battle-Road" )
+GAME( 1984, battroad, 0,        battroad, battroad, battroad, ROT90,  "Irem", "The Battle-Road" )
 GAME( 1984, ldrun,    0,        ldrun,    ldrun,    0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 1)" )
 GAME( 1984, ldruna,   ldrun,    ldrun,    ldrun,    0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner (set 2)" )
-GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
+GAME( 1984, ldrun2,   0,        ldrun2,   ldrun2,   ldrun2,   ROT0,   "Irem (licensed from Broderbund)", "Lode Runner II - The Bungeling Strikes Back" )	/* Japanese version is called Bangeringu Teikoku No Gyakushuu */
 GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - The Golden Labyrinth" )
 GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu" )
-GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   m62,      ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
+GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   ldrun4,   ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu" )
 GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0,        ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot" )
 GAMEX(1986, kidniki,  0,        kidniki,  kidniki,  kidniki,  ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
 GAMEX(1986, yanchamr, kidniki,  kidniki,  kidniki,  kidniki,  ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
 GAMEX(1987, lithero,  kidniki,  kidniki,  kidniki,  kidniki,  ROT0,   "bootleg", "Little Hero", GAME_IMPERFECT_SOUND )
-GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker" )
-GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, m62,      ROT0,   "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
+GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, spelunkr, ROT0,   "Irem (licensed from Broderbund)", "Spelunker" )
+GAME( 1985, spelnkrj, spelunkr, spelunkr, spelunkr, spelunkr, ROT0,   "Irem (licensed from Broderbund)", "Spelunker (Japan)" )
 GAME( 1986, spelunk2, 0,        spelunk2, spelunk2, spelunk2, ROT0,   "Irem (licensed from Broderbund)", "Spelunker II" )
-GAME( 1986, youjyudn, 0,        youjyudn, youjyudn, m62,      ROT270, "Irem", "Youjyuden (Japan)" )
+GAME( 1986, youjyudn, 0,        youjyudn, youjyudn, youjyudn, ROT270, "Irem", "Youjyuden (Japan)" )
 GAMEX(1985, horizon,  0,        horizon,  horizon,  0,        ROT0,   "Irem", "Horizon", GAME_IMPERFECT_SOUND )

@@ -99,7 +99,6 @@ VIDEO_START( stratgyx );
 VIDEO_START( mimonkey );
 VIDEO_START( turtles );
 VIDEO_START( frogger );
-VIDEO_START( froggrmc );
 VIDEO_START( mariner );
 VIDEO_START( ckongs );
 VIDEO_START( froggers );

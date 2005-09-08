@@ -1822,7 +1822,7 @@ static void cpu_vblankreset(void)
 		cheat_periodic();
 
 	/* read keyboard & update the status of the input ports */
-	inputport_vblank_start();
+	input_port_vblank_start();
 
 	/* check the watchdog */
 	if (watchdog_counter > 0)
@@ -1950,7 +1950,7 @@ static void cpu_updatecallback(int param)
 	vblank = 0;
 
 	/* update IPT_VBLANK input ports */
-	inputport_vblank_end();
+	input_port_vblank_end();
 
 	/* reset partial updating */
 	reset_partial_updates();

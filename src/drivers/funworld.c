@@ -148,6 +148,26 @@ Any fixes for this driver should be forwarded to the AGEMAME forum at (http://ww
     7    10 Points/Pulse    100 Points/Pulse   Remote
     8    Play               Keyboard Test
 
+    -------------------------------------------------
+
+
+    Royal Card
+    ----------
+
+    - CPU 1x R65C02P2 (main)
+    - 1x MC68B45P (CRT controller)
+    - 2x MC68B21CP (Peripheral interface adapter)
+    - 1x oscillator 16.000MHz
+    - ROMs 3x TMS 27C512
+    - 1x PALCE16V8H
+    - 1x prom AM27S29APC
+
+    Note 1x 28x2 connector (maybe NOT jamma)
+    1x 10x2 connector
+    1x 3 legs connector (solder side)
+    1x 8 dipswitches
+    1x trimmer (volume)
+
 */
 
 #include "driver.h"
@@ -583,6 +603,36 @@ ROM_START( bonuscrd )
 	ROM_LOAD( "bonucard.gr3", 0x8000, 0x8000, CRC(c512b103) SHA1(1f4e78e97855afaf0332fb75e1b5571aafd01c29) )
 ROM_END
 
+ROM_START( cuoreuno )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "cuore1a.u2", 0x8000, 0x8000, CRC(6e112184) SHA1(283ac534fc1cb33d11bbdf3447630333f2fc957f) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "cuore1b.u21", 0x0000, 0x8000, CRC(14eca2b8) SHA1(35cba415800c6cd3e6ed9946057f33510ad2bfc9) )
+	ROM_LOAD( "cuore1c.u22", 0x8000, 0x8000, CRC(253fac84) SHA1(1ad104ab8e8d73df6397a840a4b26565b245d7a3) )
+ROM_END
+
+ROM_START( elephfam )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "eleph_a.u2", 0x8000, 0x10000, CRC(8392b842) SHA1(74c850c734ca8174167b2f826b9b1ac902669392) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "eleph_c.u22", 0x0000, 0x10000, CRC(4b909bf3) SHA1(a822b12126bc58af6d3f999ab2117370015a039b) )
+	ROM_LOAD( "eleph_b.u21", 0x10000, 0x10000, CRC(e3612670) SHA1(beb65f7d2bd6d7bc68cfd876af51910cf6417bd0) )
+ROM_END
+
+ROM_START( royalcrd )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "rc.bin", 0x8000, 0x10000, CRC(8a9a6dd6) SHA1(04c3f9f17d5404ac1414c51ef8f930df54530e72) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1.bin", 0x0000, 0x10000, CRC(8a66f22c) SHA1(67d6e8f8f5a0fd979dc498ba2cc67cf707ccdf95) )
+	ROM_LOAD( "2.bin", 0x10000, 0x10000, CRC(3af71cf8) SHA1(3a0ce0d0abebf386573c5936545dada1d3558e55) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "prom-am27s29apc.bin",    0x0000, 0x0200, CRC(8bc86f48) SHA1(4c677ab9314a1f571e35104b22659e6811aeb194) )
+ROM_END
+
 ROM_START( poker4 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "poker4.001", 0x8000, 0x8000, CRC(bb0198c1) SHA1(6e7d42beb5723a4368ae3788f83b448f86e5653d) )
@@ -635,6 +685,9 @@ static DRIVER_INIT( funworld )
 GAMEX( 1985, jollycrd, 0, 		funworld, funworld, funworld, ROT0, "TAB-Austria", "Jolly Card (Austria)", GAME_WRONG_COLORS )
 GAMEX( 1993, jollypkr, 0,		jollypkr, funworld, funworld, ROT0, "Soft Design", "Jolly Poker (Croatia)", GAME_WRONG_COLORS )
 GAMEX( 1986, bonuscrd, 0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Bonus Card? (Austria)", GAME_WRONG_COLORS )
+GAMEX( 1997, cuoreuno, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Cuore Uno (Italia)", GAME_WRONG_COLORS )
+GAMEX( 1997, elephfam, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Elephant Family (Italia)", GAME_WRONG_COLORS )
+GAMEX( 1997, royalcrd, 0, 		funworld, funworld, funworld, ROT0, "TAB-Austria", "Royal Card (Austria)", GAME_WRONG_COLORS )
 GAMEX( 1986, poker4,   0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (Hungary)", GAME_WRONG_COLORS )
 GAMEX( 1986, poker8,   0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (bad dump?) (Hungary)", GAME_WRONG_COLORS )
 GAMEX( 1990, igpoker,  0, 		funworld, funworld, funworld, ROT0, "Inter Games", "Inter Game Poker?", GAME_NOT_WORKING )

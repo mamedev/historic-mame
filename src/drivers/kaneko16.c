@@ -3067,19 +3067,16 @@ ROM_START( gtmr )
 	ROM_LOAD16_BYTE( "u1.bin", 0x000001, 0x080000, CRC(6238790a) SHA1(a137fd581138804534f3193068f117611a982004) )
 
  	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code */
-	ROM_LOAD( "mcu_code.u12",  0x000000, 0x020000, NO_DUMP )
+	ROM_LOAD( "mmd0x2.u124.bin",  0x000000, 0x020000, CRC(3d7cb329) SHA1(053106acde642a414fde0b01105fe6762b6a10f6) ) // from gtmra
 
-	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	/* fill the 0x700000-7fffff range first, with the second of the identical halves */
-//  ROM_LOAD16_BYTE( "gmmu64.bin",  0x600000, 0x100000, CRC(57d77b33) SHA1(f7ae28ae889be4442b7b236705943eaad1f0c84e) )  // HALVES IDENTICAL
-//  ROM_LOAD16_BYTE( "gmmu65.bin",  0x600001, 0x100000, CRC(05b8bdca) SHA1(44471d66787d5b48ae8b13676f42f27af44e5c6a) )  // HALVES IDENTICAL
+	/* VERIFY that these mask roms are the ones present on THIS version of the board */
+	ROM_REGION( 0x840000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, CRC(c0ab3efc) SHA1(e6cd15480977b036234d91e6f3a6e21b7f0a3c3e) )
 	ROM_LOAD( "gmmu28.bin",  0x200000, 0x200000, CRC(cf6b23dc) SHA1(ccfd0b17507e091e55c169361cd6a6b19641b717) )
 	ROM_LOAD( "gmmu29.bin",  0x400000, 0x200000, CRC(8f27f5d3) SHA1(219a86446ce2556682009d8aff837480f040a01e) )
 	ROM_LOAD( "gmmu30.bin",  0x600000, 0x080000, CRC(e9747c8c) SHA1(2507102ec34755c6f110eadb3444e6d3a3474051) )
-	/* codes 6800-7fff are explicitly skipped */
-	/* wrong tiles:     gtmr    77e0 ; gtmralt  81c4 81e0 81c4 */
-	ROM_LOAD( "sprites",     0x700000, 0x100000, NO_DUMP )
+  	ROM_LOAD16_BYTE( "mms1x2.u30.bin",  0x800001, 0x020000, CRC(b42b426f) SHA1(6aee5759b5f0786c5ee074d9df3d2716919ea621) )
+  	ROM_LOAD16_BYTE( "mms0x2.u29.bin",  0x800000, 0x020000, CRC(bd22b7d2) SHA1(ef82d00d72439590c71aed33ecfabc6ee71a6ff9) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, CRC(b15f6b7f) SHA1(5e84919d788add53fc87f4d85f437df413b1dbc5) )
@@ -3094,6 +3091,35 @@ ROM_START( gtmr )
 	ROM_LOAD( "gmmu24.bin",  0x000000, 0x100000, CRC(380cdc7c) SHA1(ba7f51201b0f2bf15e66557e45bb2af5cf797779) )	//  2 x $40000 - HALVES IDENTICAL
 ROM_END
 
+ROM_START( gtmra )
+ 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "mmp0x2.u514.bin", 0x000000, 0x080000, CRC(ba4a77c8) SHA1(efb6ae0e7aa71ab0c5f486f799bf31edcec24e2b) )
+	ROM_LOAD16_BYTE( "mmp1x2.u513.bin", 0x000001, 0x080000, CRC(a2b9034e) SHA1(466bcb1bf7124eb15d23b25c4e1307b9706474ec) )
+
+ 	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code */
+	ROM_LOAD( "mmd0x2.u124.bin",  0x000000, 0x020000, CRC(3d7cb329) SHA1(053106acde642a414fde0b01105fe6762b6a10f6) )
+
+	/* VERIFY that these mask roms are the ones present on THIS version of the board */
+	ROM_REGION( 0x840000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, CRC(c0ab3efc) SHA1(e6cd15480977b036234d91e6f3a6e21b7f0a3c3e) )
+	ROM_LOAD( "gmmu28.bin",  0x200000, 0x200000, CRC(cf6b23dc) SHA1(ccfd0b17507e091e55c169361cd6a6b19641b717) )
+	ROM_LOAD( "gmmu29.bin",  0x400000, 0x200000, CRC(8f27f5d3) SHA1(219a86446ce2556682009d8aff837480f040a01e) )
+	ROM_LOAD( "gmmu30.bin",  0x600000, 0x080000, CRC(e9747c8c) SHA1(2507102ec34755c6f110eadb3444e6d3a3474051) )
+  	ROM_LOAD16_BYTE( "mms1x2.u30.bin",  0x800001, 0x020000, CRC(b42b426f) SHA1(6aee5759b5f0786c5ee074d9df3d2716919ea621) )
+  	ROM_LOAD16_BYTE( "mms0x2.u29.bin",  0x800000, 0x020000, CRC(bd22b7d2) SHA1(ef82d00d72439590c71aed33ecfabc6ee71a6ff9) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, CRC(b15f6b7f) SHA1(5e84919d788add53fc87f4d85f437df413b1dbc5) )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "gmmu52.bin",  0x000000, 0x200000, CRC(b15f6b7f) SHA1(5e84919d788add53fc87f4d85f437df413b1dbc5) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
+	ROM_LOAD( "gmmu23.bin",  0x000000, 0x100000, CRC(b9cbfbee) SHA1(051d48a68477ef9c29bd5cc0bb7955d513a0ab94) )	// 16 x $10000
+
+	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_LOAD( "gmmu24.bin",  0x000000, 0x100000, CRC(380cdc7c) SHA1(ba7f51201b0f2bf15e66557e45bb2af5cf797779) )	//  2 x $40000 - HALVES IDENTICAL
+ROM_END
 
 /*  This version displays:
 
@@ -3896,9 +3922,10 @@ GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko (
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16,   ROT0,  "Atlus",  "Blaze On (Japan)" )
 GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion (set 1)" )
 GAME( 1992, sandscra, sandscrp, sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion (set 2)" )
-GAME( 1994, gtmr,     0,        gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
-GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally (Evolution Model)" )
-GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally (USA)" )
+GAME( 1994, gtmr,     0,        gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "1000 Miglia: Great 1000 Miles Rally (94/07/18)" )
+GAME( 1994, gtmra,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "1000 Miglia: Great 1000 Miles Rally (94/06/13)" )
+GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally: Evolution Model!!! (94/09/06)" )
+GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally: U.S.A Version! (94/09/06)" ) // U.S.A version seems part of the title, rather than region
 GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/05/24)" )
 GAME( 1995, gtmr2a,   gtmr2,    gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/04/04)" )
 GAME( 1995, gtmr2u,   gtmr2,    gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally 2 USA (95/05/18)" )

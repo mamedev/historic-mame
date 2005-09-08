@@ -14,11 +14,11 @@ WRITE16_HANDLER( vertigo_wsot_w );
 READ16_HANDLER( vertigo_8254_r );
 WRITE16_HANDLER( vertigo_8254_w );
 
+INTERRUPT_GEN( vertigo_interrupt );
 MACHINE_INIT( vertigo );
 
 extern UINT16 *vertigo_vectorram;
 
 void vertigo_vproc_init(void);
 void vertigo_vproc(int cycles, int irq4);
-VIDEO_UPDATE( vertigo );
 

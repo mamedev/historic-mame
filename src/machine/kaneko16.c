@@ -465,6 +465,7 @@ extern const game_driver driver_gtmrusa;
 extern const game_driver driver_gtmr2;
 extern const game_driver driver_gtmr2u;
 extern const game_driver driver_gtmr2a;
+extern const game_driver driver_gtmra;
 
 void toybox_mcu_run(void)
 {
@@ -479,6 +480,7 @@ void toybox_mcu_run(void)
 	}
 	else
 	if ( (Machine->gamedrv == &driver_gtmr)    ||
+		 (Machine->gamedrv == &driver_gtmra)   ||
 		 (Machine->gamedrv == &driver_gtmre)   ||
 		 (Machine->gamedrv == &driver_gtmrusa) ||
 		 (Machine->gamedrv == &driver_gtmr2)   ||
@@ -794,7 +796,8 @@ void gtmr_mcu_run(void)
 
 		case 0x04:	// TEST (2 versions)
 		{
-			if (Machine->gamedrv == &driver_gtmr)
+			if ((Machine->gamedrv == &driver_gtmr) ||
+			    (Machine->gamedrv == &driver_gtmra))
 			{
 				/* MCU writes the string "MM0525-TOYBOX199" to shared ram */
 				mcu_ram[mcu_offset+0] = 0x4d4d;

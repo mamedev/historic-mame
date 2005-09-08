@@ -31,7 +31,7 @@
                 - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls uistring_init() [ui_text.c] to initialize the localized strings
                 - calls code_init() [input.c] to initialize the input system
-                - calls inputport_init() [inptport.c] to set up the input ports
+                - calls input_port_init() [inptport.c] to set up the input ports
                 - calls chd_set_interface() [chd.c] to initialize the hard disk system
                 - calls rom_load() [common.c] to load the game's ROMs
                 - calls timer_init() [timer.c] to reset the timer system
@@ -404,9 +404,9 @@ static int init_machine(void)
 	}
 
 	/* initialize the input ports for the game */
-	if (inputport_init(gamedrv->construct_ipt) != 0)
+	if (input_port_init(gamedrv->construct_ipt) != 0)
 	{
-		logerror("inputport_init failed\n");
+		logerror("input_port_init failed\n");
 		goto cant_allocate_input_ports;
 	}
 
@@ -2124,8 +2124,8 @@ int mame_validitychecks(void)
 					/* check for strings that should be DEF_STR */
 					for (j = 0;j < STR_TOTAL;j++)
 					{
-						if (inp->name == inptport_default_strings[j]) break;
-						else if (!my_stricmp(inp->name,inptport_default_strings[j]))
+						if (inp->name == input_port_default_strings[j]) break;
+						else if (!my_stricmp(inp->name,input_port_default_strings[j]))
 						{
 							printf("%s: %s must use DEF_STR( %s )\n",drivers[i]->source_file,drivers[i]->name,inp->name);
 							error = 1;
@@ -2180,7 +2180,7 @@ int mame_validitychecks(void)
 					/* check for unsorted coinage */
 					if (inp->name >= DEF_STR( 9C_1C ) && inp->name <= DEF_STR( Free_Play )
 							&& (inp+1)->name >= DEF_STR( 9C_1C ) && (inp+1)->name <= DEF_STR( Free_Play )
-							&& inp->name >= (inp+1)->name && !memcmp(&inp->dipsetting, &(inp+1)->dipsetting, sizeof(inp->dipsetting)))
+							&& inp->name >= (inp+1)->name && !memcmp(&inp->condition, &(inp+1)->condition, sizeof(inp->condition)))
 					{
 						printf("%s: %s has unsorted coinage %s > %s\n",drivers[i]->source_file,drivers[i]->name,inp->name,(inp+1)->name);
 						error = 1;

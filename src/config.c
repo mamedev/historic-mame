@@ -75,7 +75,7 @@ void config_init(void)
 	typelist = NULL;
 
 	/* load input ports settings (keys, dip switches, and so on) */
-	config_register("input", inptport_load, inptport_save);
+	config_register("input", input_port_load, input_port_save);
 	config_register("counters", counters_load, counters_save);
 	config_register("mixer", sndintrf_load, sndintrf_save);
 }

@@ -41,12 +41,6 @@ Notes:
     after the game has booted. The other Outzone set correctly goes to
     service mode, but this set just loses the plot.
 
-    OutZone sprite priorities are unusual. On level 4, a character with
-    low priority (6) is hidden by a higher priority (8) character, yet it
-    shouldn't be. The character is a shooting enemy hidden by a sliding
-    left to right platform (which he should be standing on).
-    So how does the real hardware deal with this ?
-
     OutZone (set 2) uses different enemies in some stages and has extra
     bonuses compared to set 1. The music sequences are also in different
     orders between the sets. So which is the newest version ?
@@ -1578,7 +1572,7 @@ static MACHINE_DRIVER_START( zerowing )
 
 	MDRV_VIDEO_START(toaplan1)
 	MDRV_VIDEO_EOF(toaplan1)
-	MDRV_VIDEO_UPDATE(zerowing)
+	MDRV_VIDEO_UPDATE(toaplan1)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

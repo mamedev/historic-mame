@@ -22,7 +22,6 @@ extern UINT16 *neogeo_sram16;
 extern int mcd_action;
 extern int mcd_number;
 extern int memcard_status;
-extern int memcard_number;
 extern int memcard_manager;
 extern UINT8 *neogeo_memcard;
 

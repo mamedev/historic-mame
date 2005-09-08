@@ -466,14 +466,15 @@ struct _input_port_entry
 		const char *tag;		/* used to tag PORT_START declarations */
 	} start;
 
-	/* valid if type is IPT_DIPSWITCH_SETTING */
+	/* valid for most types */
 	struct
 	{
-		UINT8	portnum;		/* portnumber to use for condition */
+		const char *tag;		/* port tag to use for condition */
+		UINT8	portnum;		/* port number for condition */
 		UINT8	condition;		/* condition to use */
-		UINT32	mask;			/* mask to apply to the portnum */
+		UINT32	mask;			/* mask to apply to the port */
 		UINT32	value;			/* value to compare against */
-	} dipsetting;
+	} condition;
 
 	/* valid if type is IPT_KEYBOARD */
 #ifdef MESS
@@ -614,11 +615,11 @@ typedef struct _input_port_entry input_port_entry;
 	PORT_BIT(0, default, IPT_DIPSWITCH_SETTING) PORT_NAME(name)		\
 
 /* conditionals for dip switch settings */
-#define PORT_DIPCONDITION(port_,mask_,condition_,value_)			\
-	port->dipsetting.portnum = (port_);								\
-	port->dipsetting.mask = (mask_);								\
-	port->dipsetting.condition = (condition_);						\
-	port->dipsetting.value = (value_);								\
+#define PORT_CONDITION(tag_,mask_,condition_,value_)				\
+	port->condition.tag = (tag_);									\
+	port->condition.mask = (mask_);									\
+	port->condition.condition = (condition_);						\
+	port->condition.value = (value_);								\
 
 /* analog adjuster definition */
 #define PORT_ADJUSTER(default,name)									\
@@ -648,9 +649,9 @@ typedef struct _input_port_entry input_port_entry;
  *
  *************************************/
 
-extern const char *inptport_default_strings[];
+extern const char *input_port_default_strings[];
 
-#define DEF_STR(str_num) (inptport_default_strings[STR_##str_num])
+#define DEF_STR(str_num) (input_port_default_strings[STR_##str_num])
 
 
 
@@ -660,10 +661,10 @@ extern const char *inptport_default_strings[];
  *
  *************************************/
 
-int inputport_init(void (*construct_ipt)(input_port_init_params *));
+int input_port_init(void (*construct_ipt)(input_port_init_params *));
 
-void inptport_load(int config_type, xml_data_node *parentnode);
-void inptport_save(int config_type, xml_data_node *parentnode);
+void input_port_load(int config_type, xml_data_node *parentnode);
+void input_port_save(int config_type, xml_data_node *parentnode);
 
 input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask);
 input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *));
@@ -691,8 +692,9 @@ int input_port_type_pressed(int type, int player);
 int input_ui_pressed(int code);
 int input_ui_pressed_repeat(int code, int speed);
 
-void inputport_vblank_start(void);	/* called by cpuintrf.c - not for external use */
-void inputport_vblank_end(void);	/* called by cpuintrf.c - not for external use */
+void input_port_update_defaults(void);
+void input_port_vblank_start(void);	/* called by cpuintrf.c - not for external use */
+void input_port_vblank_end(void);	/* called by cpuintrf.c - not for external use */
 
 UINT32 readinputport(int port);
 UINT32 readinputportbytag(const char *tag);

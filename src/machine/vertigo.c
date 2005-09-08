@@ -10,28 +10,99 @@
 #include "exidy440.h"
 #include "machine/74148.h"
 
+/*************************************
+ *
+ *  Prototypes
+ *
+ *************************************/
+
+static void v_irq4_w(int level);
+static void v_irq3_w(int level);
+static void update_irq(void);
+
+
+/*************************************
+ *
+ *  Statics
+ *
+ *************************************/
+
+/* Timestamp of last INTL4 change. The vector CPU runs for
+   the delta between this and now.
+*/
 static double irq4_time;
-static int last_irq;
+
+/* State of the priority encoder output */
+static int irq_state;
+
+/* Result of the last ADC channel sampled */
 static int adc_result;
 
-/* IRQ handling. The priority encoder has to be emulated.
-   Otherwise interrupts are lost. */
+/* 8254 timer structs */
 
-static void update_irq(void)
+typedef struct _pit8254_config
 {
-	if (last_irq < 7)
-		cpunum_set_input_line(0, last_irq ^ 7, CLEAR_LINE);
+	struct
+	{
+		double clock;
+		void (*callback)(int state);
+	} timer[3];
+} pit8254_config;
 
-	last_irq = TTL74148_output_r(0);
+typedef struct _pit8254
+{
+	UINT8 cw[3];
+	UINT16 counter[3];
+	int lc[3];
+	mame_timer *pt[3];
+	void (*callback[3])(int state);
+	double clock[3];
+} pit8254;
 
-	if (last_irq < 7)
-		cpunum_set_input_line(0, last_irq ^ 7, ASSERT_LINE);
-}
+static const pit8254_config v_pit8254 =
+{
+	{
+		{
+			240000,
+			v_irq4_w,
+		},
+		{
+			240000,
+			v_irq3_w,
+		},
+		{
+			240000,
+			NULL,
+		}
+	}
+};
+
+static pit8254 pit;
 
 static struct TTL74148_interface irq_encoder =
 {
 	update_irq
 };
+
+
+/*************************************
+ *
+ *  IRQ handling. The priority encoder
+ *  has to be emulated. Otherwise
+ *  interrupts are lost.
+ *
+ *************************************/
+
+static void update_irq(void)
+{
+	if (irq_state < 7)
+		cpunum_set_input_line(0, irq_state ^ 7, CLEAR_LINE);
+
+	irq_state = TTL74148_output_r(0);
+
+	if (irq_state < 7)
+		cpunum_set_input_line(0, irq_state ^ 7, ASSERT_LINE);
+}
 
 static void update_irq_encoder(int line, int state)
 {
@@ -42,7 +113,7 @@ static void update_irq_encoder(int line, int state)
 static void v_irq4_w(int level)
 {
 	update_irq_encoder(INPUT_LINE_IRQ4, level);
-	vertigo_vproc(TIME_TO_CYCLES(0,timer_get_time()-irq4_time), level);
+	vertigo_vproc(TIME_TO_CYCLES(0, timer_get_time() - irq4_time), level);
 	irq4_time = timer_get_time();
 }
 
@@ -54,7 +125,12 @@ static void v_irq3_w(int level)
 	update_irq_encoder(INPUT_LINE_IRQ3, level);
 }
 
-/* ADC and coin handlers */
+
+/*************************************
+ *
+ *  ADC and coin handlers
+ *
+ *************************************/
 
 READ16_HANDLER(vertigo_io_convert)
 {
@@ -79,16 +155,19 @@ READ16_HANDLER(vertigo_coin_r)
 	return (readinputportbytag("COIN"));
 }
 
-VIDEO_UPDATE(vertigo)
+INTERRUPT_GEN(vertigo_interrupt)
 {
-	video_update_vector(screen,bitmap,0);
-
 	/* Coin inputs cause IRQ6 */
 	if ((readinputportbytag("COIN") & 0x7) < 0x7)
 		update_irq_encoder(INPUT_LINE_IRQ6, ASSERT_LINE);
 }
 
-/* Sound board interface */
+
+/*************************************
+ *
+ *  Sound board interface
+ *
+ *************************************/
 
 WRITE16_HANDLER( vertigo_wsot_w )
 {
@@ -104,6 +183,12 @@ static void sound_command_w(int data)
 	exidy440_sound_command = data;
 	exidy440_sound_command_ack = 0;
 	cpunum_set_input_line(1, INPUT_LINE_IRQ1, ASSERT_LINE);
+
+	/* It is important that the sound cpu ACKs the sound command
+       quickly. Otherwise the main CPU gives up with sound. Boosting
+       the interleave for a while helps. */
+
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
 }
 
 WRITE16_HANDLER( vertigo_audio_w )
@@ -114,58 +199,22 @@ WRITE16_HANDLER( vertigo_audio_w )
 
 READ16_HANDLER(vertigo_sio_r)
 {
-	// sync sound CPU
-	timer_set(TIME_NOW, 0, NULL);
 	if (exidy440_sound_command_ack)
 		return 0xfc;
 	else
 		return 0xfd;
 }
 
-/* A 8254 timer is used to generate screen refresh (IRQ4) and
-   a general purpose (IRQ3) interrupt. */
 
-struct pit8254_config
-{
-	struct
-	{
-		double clock;
-		void (*callback)(int state);
-	} timer[3];
-};
-
-static const struct pit8254_config v_pit8254 =
-{
-	{
-		{
-			240000,
-			v_irq4_w,
-		},
-		{
-			240000,
-			v_irq3_w,
-		},
-		{
-			240000,
-			NULL,
-		}
-	}
-};
-
-static struct pit8254
-{
-	UINT8 cw[3];
-	UINT16 counter[3];
-	int lc[3];
-	mame_timer *pt[3];
-	void (*callback[3])(int state);
-	double clock[3];
-} pit;
-
+/*************************************
+ *
+ *  8254 timer
+ *
+ *************************************/
 
 WRITE16_HANDLER( vertigo_8254_w )
 {
-	int sc,rw,m,bcd;
+	int sc, rw, m, bcd;
 	double interval;
 
 	offset &= 3;
@@ -184,7 +233,7 @@ WRITE16_HANDLER( vertigo_8254_w )
 			pit.counter[offset] |= (data << 8);
 			pit.lc[offset] = 1;
 
-			interval = (double)pit.counter[offset]/pit.clock[offset];
+			interval = (double)pit.counter[offset] / pit.clock[offset];
 			m = (pit.cw[offset] >> 1) & 7;
 			switch (m)
 			{
@@ -207,16 +256,16 @@ WRITE16_HANDLER( vertigo_8254_w )
 		break;
 	case 3:
 		sc = data >> 6;
-		pit.cw[sc]=data;
+		pit.cw[sc] = data;
 		rw = (data >> 4) & 3;
 		m  = (data >> 1) & 7;
 		bcd = data & 1;
 		if (sc < 3 && rw==3 && bcd==0)
 		{
-			pit.lc[sc]=1;
+			pit.lc[sc] = 1;
 
 			if (timer_timeleft(pit.pt[sc]))
-				timer_adjust(pit.pt[sc], TIME_NEVER,0,TIME_NEVER);
+				timer_adjust(pit.pt[sc], TIME_NEVER, 0, TIME_NEVER);
 
 			if (pit.callback[sc])
 				pit.callback[sc](0);
@@ -235,10 +284,10 @@ READ16_HANDLER(vertigo_8254_r)
 
 	offset &= 3;
 	/* Get current counter value */
-	c = timer_timeleft(pit.pt[offset])*(double)pit.clock[offset];
+	c = timer_timeleft(pit.pt[offset]) * (double)pit.clock[offset];
 
 	/* If timer isn't running return initial value */
-	c = (c>pit.counter[offset])?pit.counter[offset]:c;
+	c = (c > pit.counter[offset])? pit.counter[offset]: c;
 	pit.lc[offset] = (pit.lc[offset] + 1) & 1;
 
 	/* LSB first */
@@ -247,18 +296,26 @@ READ16_HANDLER(vertigo_8254_r)
 	return (c & 0xff);
 }
 
+/*************************************
+ *
+ *  Machine initialization
+ *
+ *************************************/
+
 MACHINE_INIT(vertigo)
 {
 	int i;
 
 	TTL74148_config(0, &irq_encoder);
 	TTL74148_enable_input_w(0, 0);
-	for (i=0; i<8; i++)
-		TTL74148_input_line_w(0, i, 1);
-	TTL74148_update(0);
-	last_irq = 7;
 
-	for (i=0; i<3; i++)
+	for (i = 0; i < 8; i++)
+		TTL74148_input_line_w(0, i, 1);
+
+	TTL74148_update(0);
+	irq_state = 7;
+
+	for (i = 0; i < 3; i++)
 	{
 		pit.callback[i]=v_pit8254.timer[i].callback;
 		pit.clock[i]=v_pit8254.timer[i].clock;
@@ -268,6 +325,13 @@ MACHINE_INIT(vertigo)
 	vertigo_vproc_init();
 	irq4_time = timer_get_time();
 }
+
+
+/*************************************
+ *
+ *  Motor controller interface
+ *
+ *************************************/
 
 WRITE16_HANDLER( vertigo_motor_w )
 {

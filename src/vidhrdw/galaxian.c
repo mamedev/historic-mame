@@ -720,6 +720,7 @@ VIDEO_START( froggers )
 	int ret = video_start_galaxian_plain();
 
 	draw_background = frogger_draw_background;
+	modify_color = frogger_modify_color;
 
 	return ret;
 }
@@ -728,17 +729,7 @@ VIDEO_START( frogger )
 {
 	int ret = video_start_froggers();
 
-	modify_color = frogger_modify_color;
 	modify_ypos = frogger_modify_ypos;
-
-	return ret;
-}
-
-VIDEO_START( froggrmc )
-{
-	int ret = video_start_froggers();
-
-	modify_color = frogger_modify_color;
 
 	return ret;
 }

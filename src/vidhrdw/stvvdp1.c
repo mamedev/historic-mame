@@ -9,9 +9,8 @@ based on what hanagumi columns needs
 the vdp1 draws to the FRAMEBUFFER which is mapped in memory
 
 Framebuffer todo:
-- map framebuffer into memory
-- implement two framebuffers and swapping
-- add framebuffer erase
+- finish manual erase
+- add proper framebuffer erase
 - 8 bpp support - now we always draw as 16 bpp, but this is not a problem since
   VDP2 interprets framebuffer as 8 bpp in these cases
 */
@@ -19,17 +18,27 @@ Framebuffer todo:
 
 #include "driver.h"
 
+int vdp1_sprite_log = 0;
+
 UINT32 *stv_vdp1_vram;
 UINT32 *stv_vdp1_regs;
 
 extern UINT32 *stv_scu;
+extern int stv_vblank;
 
-UINT16	 *stv_framebuffer;
-UINT16	 **stv_framebuffer_lines;
+UINT16	 *stv_framebuffer[2];
+UINT16	 **stv_framebuffer_draw_lines, **stv_framebuffer_display_lines;
 int		 stv_framebuffer_width;
 int		 stv_framebuffer_height;
 int		 stv_framebuffer_mode;
 int		 stv_framebuffer_double_interlace;
+int		 stv_vdp1_fbcr_accessed;
+int		 stv_vdp1_current_display_framebuffer;
+int		 stv_vdp1_current_draw_framebuffer;
+int		 stv_vdp1_clear_framebuffer_on_next_frame;
+
+int stvvdp1_local_x;
+int stvvdp1_local_y;
 
 /*TV Mode Selection Register */
 /*
@@ -121,6 +130,8 @@ int		 stv_framebuffer_double_interlace;
 
 #include "machine/random.h"
 
+void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect);
+
 READ32_HANDLER( stv_vdp1_regs_r )
 {
 //  static int x;
@@ -133,6 +144,11 @@ READ32_HANDLER( stv_vdp1_regs_r )
 	return stv_vdp1_regs[offset];
 }
 
+static void stv_clear_framebuffer( int which_framebuffer )
+{
+	if ( vdp1_sprite_log ) logerror( "Clearing %d framebuffer\n", stv_vdp1_current_draw_framebuffer );
+	memset( stv_framebuffer[ which_framebuffer ], 0, 1024 * 256 * sizeof(UINT16) * 2 );
+}
 
 int stv_vdp1_start ( void )
 {
@@ -142,21 +158,79 @@ int stv_vdp1_start ( void )
 	memset(stv_vdp1_regs, 0, 0x040000);
 	memset(stv_vdp1_vram, 0, 0x100000);
 
-	stv_framebuffer = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 ); /* *2 is for double interlace */
-	stv_framebuffer_lines = auto_malloc( 512 * sizeof(UINT16*) );
+	stv_framebuffer[0] = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 ); /* *2 is for double interlace */
+	stv_framebuffer[1] = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 );
+
+	stv_framebuffer_display_lines = auto_malloc( 512 * sizeof(UINT16*) );
+	stv_framebuffer_draw_lines = auto_malloc( 512 * sizeof(UINT16*) );
+
 	stv_framebuffer_width = stv_framebuffer_height = 0;
 	stv_framebuffer_mode = -1;
 	stv_framebuffer_double_interlace = -1;
+	stv_vdp1_fbcr_accessed = 0;
+	stv_vdp1_current_display_framebuffer = 0;
+	stv_vdp1_current_draw_framebuffer = 1;
+	stv_clear_framebuffer(stv_vdp1_current_draw_framebuffer);
+	stv_vdp1_clear_framebuffer_on_next_frame = 0;
 	return 0;
+}
+
+static void stv_prepare_framebuffers( void )
+{
+	int i,rowsize;
+
+	rowsize = stv_framebuffer_width;
+	if ( stv_vdp1_current_draw_framebuffer == 0 )
+	{
+		for ( i = 0; i < stv_framebuffer_height; i++ )
+		{
+			stv_framebuffer_draw_lines[i] = &stv_framebuffer[0][ i * rowsize ];
+			stv_framebuffer_display_lines[i] = &stv_framebuffer[1][ i * rowsize ];
+		}
+		for ( ; i < 512; i++ )
+		{
+			stv_framebuffer_draw_lines[i] = &stv_framebuffer[0][0];
+			stv_framebuffer_display_lines[i] = &stv_framebuffer[1][0];
+		}
+
+	}
+	else
+	{
+		for ( i = 0; i < stv_framebuffer_height; i++ )
+		{
+			stv_framebuffer_draw_lines[i] = &stv_framebuffer[1][ i * rowsize ];
+			stv_framebuffer_display_lines[i] = &stv_framebuffer[0][ i * rowsize ];
+		}
+		for ( ; i < 512; i++ )
+		{
+			stv_framebuffer_draw_lines[i] = &stv_framebuffer[1][0];
+			stv_framebuffer_display_lines[i] = &stv_framebuffer[0][0];
+		}
+
+	}
+
+	for ( ; i < 512; i++ )
+	{
+		stv_framebuffer_draw_lines[i] = &stv_framebuffer[0][0];
+		stv_framebuffer_display_lines[i] = &stv_framebuffer[1][0];
+	}
+
+}
+
+static void stv_vdp1_change_framebuffers( void )
+{
+	stv_vdp1_current_display_framebuffer ^= 1;
+	stv_vdp1_current_draw_framebuffer ^= 1;
+	if ( vdp1_sprite_log ) logerror( "Changing framebuffers: %d - draw, %d - display\n", stv_vdp1_current_draw_framebuffer, stv_vdp1_current_display_framebuffer );
+	stv_prepare_framebuffers();
 }
 
 static void stv_set_framebuffer_config( void )
 {
-	int i, rowsize;
-
 	if ( stv_framebuffer_mode == STV_VDP1_TVM &&
 		 stv_framebuffer_double_interlace == STV_VDP1_DIE ) return;
 
+	if ( vdp1_sprite_log ) logerror( "Setting framebuffer config\n" );
 	stv_framebuffer_mode = STV_VDP1_TVM;
 	stv_framebuffer_double_interlace = STV_VDP1_DIE;
 	switch( stv_framebuffer_mode )
@@ -170,20 +244,9 @@ static void stv_set_framebuffer_config( void )
 	}
 	if ( STV_VDP1_DIE ) stv_framebuffer_height *= 2; /* double interlace */
 
-	rowsize = stv_framebuffer_width;
-	for ( i = 0; i < stv_framebuffer_height; i++ )
-	{
-		stv_framebuffer_lines[i] = &stv_framebuffer[ i * rowsize ];
-	}
-	for ( ; i < 512; i++ )
-	{
-		stv_framebuffer_lines[i] = &stv_framebuffer[0];
-	}
-}
-
-static void stv_clear_framebuffer( void )
-{
-	memset( stv_framebuffer, 0, 1024 * 256 * sizeof(UINT16) * 2 );
+	stv_vdp1_current_draw_framebuffer = 0;
+	stv_vdp1_current_display_framebuffer = 1;
+	stv_prepare_framebuffers();
 }
 
 WRITE32_HANDLER( stv_vdp1_regs_w )
@@ -192,7 +255,59 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 	if ( offset == 0 )
 	{
 		stv_set_framebuffer_config();
+		if ( ACCESSING_LSW32 )
+		{
+			if ( vdp1_sprite_log ) logerror( "VDP1: Access to register FBCR = %1X\n", STV_VDP1_FBCR );
+			stv_vdp1_fbcr_accessed = 1;
+		}
+		else
+		{
+			if ( vdp1_sprite_log ) logerror( "VDP1: Access to register TVMR = %1X\n", STV_VDP1_TVMR );
+			if ( STV_VDP1_VBE && stv_vblank )
+			{
+				stv_clear_framebuffer(stv_vdp1_current_display_framebuffer);
+			}
+
+			/* needed by pblbeach, it doesn't clear local coordinates in its sprite list...*/
+			if ( !strcmp(Machine->gamedrv->name, "pblbeach") )
+			{
+				stvvdp1_local_x = stvvdp1_local_y = 0;
+			}
+		}
 	}
+	else if ( offset == 1 )
+	{
+		if ( ACCESSING_MSW32 )
+		{
+			if ( STV_VDP1_PTMR == 1 )
+			{
+				if ( vdp1_sprite_log ) logerror( "VDP1: Access to register PTMR = %1X\n", STV_VDP1_PTMR );
+				stv_vdp1_process_list( NULL, &Machine->visible_area );
+
+				if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
+				{
+					logerror( "Interrupt: Sprite draw end, Vector 0x4d, Level 0x02\n" );
+					cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
+				}
+			}
+		}
+		else if ( ACCESSING_LSW32 )
+		{
+			if ( vdp1_sprite_log ) logerror( "VDP1: Erase data set %08X\n", data );
+		}
+	}
+	else if ( offset == 2 )
+	{
+		if ( ACCESSING_MSW32 )
+		{
+			if ( vdp1_sprite_log ) logerror( "VDP1: Erase upper-left coord set: %08X\n", data );
+		}
+		else if ( ACCESSING_LSW32 )
+		{
+			if ( vdp1_sprite_log ) logerror( "VDP1: Erase lower-right coord set: %08X\n", data );
+		}
+	}
+
 }
 
 READ32_HANDLER ( stv_vdp1_vram_r )
@@ -223,12 +338,47 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 {
 	//ui_popup ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
+	if ( STV_VDP1_TVM & 0 )
+	{
+		/* 8-bit mode */
+	}
+	else
+	{
+		/* 16-bit mode */
+		if ( ACCESSING_MSW32 )
+		{
+			stv_framebuffer[stv_vdp1_current_draw_framebuffer][offset*2] = (data >> 16) & 0xffff;
+		}
+		if ( ACCESSING_LSW32 )
+		{
+			stv_framebuffer[stv_vdp1_current_draw_framebuffer][offset*2+1] = data & 0xffff;
+		}
+	}
 }
 
 READ32_HANDLER ( stv_vdp1_framebuffer0_r )
 {
+	UINT32 result = 0;
 	//ui_popup ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
-	return 0xffff;
+	if ( STV_VDP1_TVM & 0 )
+	{
+		/* 8-bit mode */
+	}
+	else
+	{
+		/* 16-bit mode */
+		if ( ACCESSING_MSW32 )
+		{
+			result |= (stv_framebuffer[stv_vdp1_current_draw_framebuffer][offset*2] << 16);
+		}
+		if ( ACCESSING_LSW32 )
+		{
+			result |= stv_framebuffer[stv_vdp1_current_draw_framebuffer][offset*2+1];
+		}
+
+	}
+
+	return result;
 }
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer1_w )
@@ -308,8 +458,6 @@ the rest are data used by it
 
 */
 
-int vdp1_sprite_log = 0;
-
 static struct stv_vdp2_sprite_list
 {
 
@@ -323,9 +471,6 @@ static struct stv_vdp2_sprite_list
 	int isalpha;
 
 } stv2_current_sprite;
-
-int stvvdp1_local_x;
-int stvvdp1_local_y;
 
 /* Gouraud shading */
 
@@ -464,7 +609,7 @@ extern UINT32* stv_vdp2_cram;
 
 INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 {
-	int pix,mode,transmask;
+	int pix,mode,transmask,spd = stv2_current_sprite.CMDPMOD & 0x40;
 	UINT8* gfxdata = memory_region(REGION_GFX2);
 	int pix2;
 
@@ -565,19 +710,28 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 	pix |= stv2_current_sprite.CMDPMOD & 0x8000;
 	if ( mode != 5 )
 	{
-		if ( pix & transmask )
+		if ( (pix & transmask) || spd )
 		{
 			*dest = pix;
 		}
 	}
 	else
 	{
-		if ( pix & transmask )
+		if ( (pix & transmask) || spd )
 		{
 			switch( stv2_current_sprite.CMDPMOD & 0x7 )
 			{
 				case 0:	/* replace */
 					*dest = pix;
+					break;
+				case 1: /* shadow */
+					if ( *dest & 0x8000 )
+					{
+						*dest = ((*dest & ~0x8421) >> 1) | 0x8000;
+					}
+					break;
+				case 2: /* half luminance */
+					*dest = ((pix & ~0x8421) >> 1) | 0x8000;
 					break;
 				case 3: /* half transparent */
 					if ( *dest & 0x8000 )
@@ -700,7 +854,7 @@ static void vdp1_fill_slope(mame_bitmap *bitmap, const rectangle *cliprect, int 
 					xx2 = cliprect->max_x;
 
 				while(xx1 <= xx2) {
-					drawpixel(stv_framebuffer_lines[_y1]+xx1,
+					drawpixel(stv_framebuffer_draw_lines[_y1]+xx1,
 							  patterndata,
 							  (v>>FRAC_SHIFT)*xsize+(u>>FRAC_SHIFT));
 					xx1++;
@@ -754,7 +908,7 @@ static void vdp1_fill_line(mame_bitmap *bitmap, const rectangle *cliprect, int p
 			xx2 = cliprect->max_x;
 
 		while(xx1 <= xx2) {
-			drawpixel(stv_framebuffer_lines[y]+xx1,
+			drawpixel(stv_framebuffer_draw_lines[y]+xx1,
 					  patterndata,
 					  (v>>FRAC_SHIFT)*xsize+(u>>FRAC_SHIFT));
 			xx1++;
@@ -1173,7 +1327,7 @@ void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect,
 
 		if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y))
 		{
-			destline = stv_framebuffer_lines[drawypos];
+			destline = stv_framebuffer_draw_lines[drawypos];
 
 			for (xcnt = 0; xcnt != xsize; xcnt ++)
 			{
@@ -1426,6 +1580,8 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 
 void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect)
 {
+	int framebufer_changed = 0;
+
 //  int enable;
 //  if (code_pressed (KEYCODE_R)) vdp1_sprite_log = 1;
 //  if (code_pressed (KEYCODE_T)) vdp1_sprite_log = 0;
@@ -1441,15 +1597,54 @@ void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect)
 //          fclose(fp);
 //      }
 //  }
-	stv_clear_framebuffer();
+	if (vdp1_sprite_log) logerror("video_update_vdp1 called\n");
+	if (vdp1_sprite_log) logerror( "FBCR = %0x, accessed = %d\n", STV_VDP1_FBCR, stv_vdp1_fbcr_accessed );
+
+	if ( stv_vdp1_clear_framebuffer_on_next_frame )
+	{
+		stv_clear_framebuffer(stv_vdp1_current_display_framebuffer);
+		stv_vdp1_clear_framebuffer_on_next_frame = 0;
+	}
+
+	switch( STV_VDP1_FBCR & 0x3 )
+	{
+		case 0: /* Automatic mode */
+			stv_vdp1_change_framebuffers();
+			stv_clear_framebuffer(stv_vdp1_current_draw_framebuffer);
+			framebufer_changed = 1;
+			break;
+		case 1: /* Setting prohibited */
+			break;
+		case 2: /* Manual mode - erase */
+			if ( stv_vdp1_fbcr_accessed )
+			{
+				stv_vdp1_clear_framebuffer_on_next_frame = 1;
+			}
+			break;
+		case 3: /* Manual mode - change */
+			if ( stv_vdp1_fbcr_accessed )
+			{
+				stv_vdp1_change_framebuffers();
+				if ( STV_VDP1_VBE )
+				{
+					stv_clear_framebuffer(stv_vdp1_current_draw_framebuffer);
+				}
+				framebufer_changed = 1;
+			}
+			break;
+	}
+	stv_vdp1_fbcr_accessed = 0;
+
+	if (vdp1_sprite_log) logerror( "PTM = %0x, TVM = %x\n", STV_VDP1_PTM, STV_VDP1_TVM );
 	switch(STV_VDP1_PTM & 3)
 	{
 		case 0:/*Idle Mode*/
 			break;
 		case 1:/*Draw by request*/
-			//SET_PTM_FROM_1_TO_0;//kiwames doesn't like this ATM...
+			break;
 		case 2:/*Automatic Draw*/
-			stv_vdp1_process_list(bitmap,cliprect);
+			if ( framebufer_changed )
+				stv_vdp1_process_list(bitmap,cliprect);
 			break;
 		case 3:	/*<invalid>*/
 			logerror("Warning: Invalid PTM mode set for VDP1!\n");

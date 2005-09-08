@@ -23,7 +23,7 @@ static void ic13_shifter(void)
 {
 	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
 	UINT32 i;
-	UINT32 tmp[(0x80000*2)/4];
+	UINT32 *tmp = (UINT32*)malloc(0x80000*2);
 
 	for(i=(0);i<(0x100000-1);i+=8)
 	{
@@ -64,6 +64,7 @@ static void ic13_shifter(void)
 		//printf("%08x\n",i);
 		rom[i/4] = tmp[(i-0x100000)/4];
 	}
+	free(tmp);
 }
 
 DRIVER_INIT ( ic13 )

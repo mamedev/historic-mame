@@ -84,9 +84,6 @@ VIDEO_START( lazercmd )
 	if( video_start_generic() )
 		return 1;
 
-	/* is overlay enabled? */
-	artwork_show(OVERLAY_TAG, (input_port_2_r(0) & 0x80) >> 7);
-
 	return 0;
 }
 
@@ -94,6 +91,9 @@ VIDEO_START( lazercmd )
 VIDEO_UPDATE( lazercmd )
 {
 	int i,x,y;
+
+	/* is overlay enabled? */
+	artwork_show(OVERLAY_TAG, (input_port_2_r(0) & 0x80) >> 7);
 
 	if (video_inverted != (input_port_2_r(0) & 0x20))
 	{

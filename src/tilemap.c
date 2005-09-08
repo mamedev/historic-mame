@@ -69,16 +69,15 @@ struct _tilemap
 	UINT8 (*draw_tile)( tilemap *tmap, UINT32 col, UINT32 row, UINT32 flags );
 
 	int cached_scroll_rows, cached_scroll_cols;
-	int *cached_rowscroll, *cached_colscroll;
+	INT32 *cached_rowscroll, *cached_colscroll;
 
 	int logical_scroll_rows, logical_scroll_cols;
-	int *logical_rowscroll, *logical_colscroll;
+	INT32 *logical_rowscroll, *logical_colscroll;
 
 	int orientation;
 	int palette_offset;
 
 	UINT16 tile_depth, tile_granularity;
-	UINT8 *tile_dirty_map;
 	UINT8 all_tiles_dirty;
 	UINT8 all_tiles_clean;
 
@@ -130,7 +129,6 @@ static void mappings_update( tilemap *tmap );
 static void recalculate_scroll( tilemap *tmap );
 
 static void install_draw_handlers( tilemap *tmap );
-static void tilemap_reset(void);
 
 static void update_tile_info( tilemap *tmap, UINT32 cached_indx, UINT32 cached_col, UINT32 cached_row );
 
@@ -218,16 +216,8 @@ void tilemap_set_transmask( tilemap *tmap, int which, UINT32 fgmask, UINT32 bgma
 
 void tilemap_set_depth( tilemap *tmap, int tile_depth, int tile_granularity )
 {
-	if( tmap->tile_dirty_map )
-	{
-		free( tmap->tile_dirty_map);
-	}
-	tmap->tile_dirty_map = malloc( Machine->drv->total_colors >> tile_granularity );
-	if( tmap->tile_dirty_map )
-	{
-		tmap->tile_depth = tile_depth;
-		tmap->tile_granularity = tile_granularity;
-	}
+	tmap->tile_depth = tile_depth;
+	tmap->tile_granularity = tile_granularity;
 }
 
 /***********************************************************************************/
@@ -743,18 +733,12 @@ INLINE tilemap_draw_func pick_draw_func( mame_bitmap *dest )
 
 /***********************************************************************************/
 
-static void tilemap_reset(void)
-{
-	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-}
-
 int tilemap_init( void )
 {
 	screen_width	= Machine->drv->screen_width;
 	screen_height	= Machine->drv->screen_height;
 	first_tilemap	= NULL;
 
-	state_save_register_func_postload(tilemap_reset);
 	priority_bitmap = bitmap_alloc_depth( screen_width, screen_height, -8 );
 	if( priority_bitmap )
 	{
@@ -780,6 +764,15 @@ void tilemap_exit( void )
 
 /***********************************************************************************/
 
+static void tilemap_postload(void *param)
+{
+	tilemap *tmap = param;
+	mappings_update(tmap);
+	recalculate_scroll(tmap);
+	tilemap_mark_all_tiles_dirty(tmap);
+}
+
+
 tilemap *tilemap_create(
 	void (*tile_get_info)( int memory_offset ),
 	UINT32 (*get_memory_offset)( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows ),
@@ -799,8 +792,8 @@ tilemap *tilemap_create(
 		tmap->num_logical_rows = num_rows;
 		tmap->logical_tile_width = tile_width;
 		tmap->logical_tile_height = tile_height;
-		tmap->logical_colscroll = calloc(num_cols*tile_width,sizeof(int));
-		tmap->logical_rowscroll = calloc(num_rows*tile_height,sizeof(int));
+		tmap->logical_colscroll = calloc(num_cols*tile_width,sizeof(INT32));
+		tmap->logical_rowscroll = calloc(num_rows*tile_height,sizeof(INT32));
 		tmap->num_cached_cols = num_cols;
 		tmap->num_cached_rows = num_rows;
 		tmap->num_tiles = num_tiles;
@@ -821,10 +814,9 @@ tilemap *tilemap_create(
 		tmap->transparent_pen = -1;
 		tmap->tile_depth = 0;
 		tmap->tile_granularity = 0;
-		tmap->tile_dirty_map = 0;
 
-		tmap->cached_rowscroll	= calloc(tmap->cached_height,sizeof(int));
-		tmap->cached_colscroll	= calloc(tmap->cached_width, sizeof(int));
+		tmap->cached_rowscroll	= calloc(tmap->cached_height,sizeof(INT32));
+		tmap->cached_colscroll	= calloc(tmap->cached_width, sizeof(INT32));
 
 		tmap->transparency_data = malloc( num_tiles );
 		tmap->transparency_data_row = malloc( sizeof(UINT8 *)*num_rows );
@@ -857,7 +849,40 @@ tilemap *tilemap_create(
 			first_tilemap = tmap;
 			if( PenToPixel_Init( tmap ) == 0 )
 			{
+				int instance = 0;
+				tilemap *tm;
+
 				recalculate_scroll(tmap);
+
+				/* compute the index of this entry */
+				for (tm = first_tilemap; tm; tm = tm->next)
+					instance++;
+
+				/* save relevant state */
+				state_save_register_int("tilemap", instance, "enable", &tmap->enable);
+				state_save_register_int("tilemap", instance, "attributes", &tmap->attributes);
+				state_save_register_int("tilemap", instance, "transparent_pen", &tmap->transparent_pen);
+				state_save_register_UINT32("tilemap", instance, "fgmask", tmap->fgmask, 4);
+				state_save_register_UINT32("tilemap", instance, "bgmask", tmap->bgmask, 4);
+				state_save_register_int("tilemap", instance, "dx", &tmap->dx);
+				state_save_register_int("tilemap", instance, "dx_if_flipped", &tmap->dx_if_flipped);
+				state_save_register_int("tilemap", instance, "dy", &tmap->dy);
+				state_save_register_int("tilemap", instance, "dy_if_flipped", &tmap->dy_if_flipped);
+				state_save_register_int("tilemap", instance, "cached_scroll_rows", &tmap->cached_scroll_rows);
+				state_save_register_int("tilemap", instance, "cached_scroll_cols", &tmap->cached_scroll_cols);
+				state_save_register_INT32("tilemap", instance, "cached_rowscroll", tmap->cached_rowscroll, tmap->cached_height);
+				state_save_register_INT32("tilemap", instance, "cached_colscroll", tmap->cached_colscroll, tmap->cached_width);
+				state_save_register_int("tilemap", instance, "logical_scroll_rows", &tmap->logical_scroll_rows);
+				state_save_register_int("tilemap", instance, "logical_scroll_cols", &tmap->logical_scroll_cols);
+				state_save_register_INT32("tilemap", instance, "logical_rowscroll", tmap->logical_rowscroll, num_rows*tile_height);
+				state_save_register_INT32("tilemap", instance, "logical_colscroll", tmap->logical_colscroll, num_cols*tile_width);
+				state_save_register_int("tilemap", instance, "orientation", &tmap->orientation);
+				state_save_register_int("tilemap", instance, "palette_offset", &tmap->palette_offset);
+				state_save_register_UINT16("tilemap", instance, "tile_depth", &tmap->tile_depth, 1);
+				state_save_register_UINT16("tilemap", instance, "tile_granularity", &tmap->tile_granularity, 1);
+
+				/* reset everything after a load */
+				state_save_register_func_postload_ptr(tilemap_postload, tmap);
 				return tmap;
 			}
 		}

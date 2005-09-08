@@ -102,7 +102,7 @@ Notes:
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap;
-static int nmi_enable = 0, flip_screen_x = 0, flip_screen_y = 0;
+static int nmi_enable = 0, jullyjgr_flip_screen_x = 0, jullyjgr_flip_screen_y = 0;
 static UINT8 *jollyjgr_bitmap;
 
 static WRITE8_HANDLER( jollyjgr_videoram_w )
@@ -132,10 +132,10 @@ static WRITE8_HANDLER( jollyjgr_attrram_w )
 static WRITE8_HANDLER( jollyjgr_misc_w )
 {
 	// they could be swapped, because it always set "data & 3"
-	flip_screen_x = data & 1;
-	flip_screen_y = data & 2;
+	jullyjgr_flip_screen_x = data & 1;
+	jullyjgr_flip_screen_y = data & 2;
 
-	tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+	tilemap_set_flip(bg_tilemap, (jullyjgr_flip_screen_x ? TILEMAP_FLIPX : 0) | (jullyjgr_flip_screen_y ? TILEMAP_FLIPY : 0));
 
 	nmi_enable = data & 0x80;
 }
@@ -280,11 +280,12 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( jollyjgr )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32);
 
 	if(!bg_tilemap)
 		return 1;
 
+	tilemap_set_transparent_pen(bg_tilemap, 0);
 	tilemap_set_scroll_cols(bg_tilemap, 32);
 
 	return 0;
@@ -310,11 +311,11 @@ static void draw_bitmap(mame_bitmap *bitmap)
 
 				if(color)
 				{
-					if(flip_screen_x && flip_screen_y)
+					if(jullyjgr_flip_screen_x && jullyjgr_flip_screen_y)
 						plot_pixel(bitmap, x*8 + i, y, Machine->pens[color + 32]);
-					else if(flip_screen_x && !flip_screen_y)
+					else if(jullyjgr_flip_screen_x && !jullyjgr_flip_screen_y)
 						plot_pixel(bitmap, x*8 + i, 255 - y, Machine->pens[color + 32]);
-					else if(!flip_screen_x && flip_screen_y)
+					else if(!jullyjgr_flip_screen_x && jullyjgr_flip_screen_y)
 						plot_pixel(bitmap, 255 - x*8 - i, y, Machine->pens[color + 32]);
 					else
 						plot_pixel(bitmap, 255 - x*8 - i, 255 - y, Machine->pens[color + 32]);
@@ -330,6 +331,8 @@ VIDEO_UPDATE( jollyjgr )
 {
 	int offs;
 
+	fillbitmap(bitmap,Machine->pens[32],cliprect);
+
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_bitmap(bitmap);
@@ -344,13 +347,13 @@ VIDEO_UPDATE( jollyjgr )
 		int code = spriteram[offs + 1] & 0x3f;
 		int color = spriteram[offs + 2] & 7;
 
-		if (flip_screen_x)
+		if (jullyjgr_flip_screen_x)
 		{
 			sx = 240 - sx;
 			flipx = !flipx;
 		}
 
-		if (flip_screen_y)
+		if (jullyjgr_flip_screen_y)
 		{
 			flipy = !flipy;
 		}

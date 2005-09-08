@@ -3,7 +3,7 @@
 #include "includes/namcos22.h"
 #include <math.h>
 
-#define MIN_Z (1)
+#define MIN_Z (10)
 
 /*
 Renderer:

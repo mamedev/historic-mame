@@ -16,6 +16,7 @@ Spot
 Magic Johnson's Fast Break
 World Darts
 Xenon
+World Trophy Soccer
 
 Other Arcadia games (not dumped):
 Aaargh!
@@ -23,7 +24,6 @@ Blasta Ball
 N.Y. Warriors
 Pool
 Rockford
-World Trophy Soccer
 
 Hardware description (from targets.mame.net):
 In the late 80s, Arcadia collaborated with Mastertronic to create their own
@@ -42,6 +42,7 @@ the 'INITIALIZATION OK' message. Pressing F2 during game brings service mode als
 pins per coin slot attached to the system. Right now im using a kludge
 that doesnt work all the time.
 - No audio yet.
+- Driver uses Kickstart 1.3 atm, while actual pcb uses Kickstart 1.2
 
 Issues:
 - ar_fast is missing score and time display, this needs non-dma sprite emulation
@@ -503,6 +504,24 @@ ROM_START( ar_sdwr )
 	ROM_LOAD16_BYTE( "sdwr_6l.bin", 0xa0001, 0x10000, CRC(2544ccd7) SHA1(953aa00f2610ecd31db6e36964cbe7c2866050b9) )
 ROM_END
 
+ROM_START( ar_socc )
+	ARCADIA_BIOS
+
+	ROM_REGION16_BE(0x180000, REGION_USER3, 0)
+	ROM_LOAD16_BYTE( "socc30.1hi", 0x00000, 0x10000, CRC(b4df41cf) SHA1(681cecef390f82be420cd9f4d32afddace3da3c8) )
+	ROM_LOAD16_BYTE( "socc30.1lo", 0x00001, 0x10000, CRC(28b5e119) SHA1(3fff3252b855e6ca1aceff89ec0c61688c954d88) )
+	ROM_LOAD16_BYTE( "socc30.2hi", 0x20000, 0x10000, CRC(b3c14026) SHA1(be4e05cbf5b14a1dc77eff70bb44c8cdae57e59a) )
+	ROM_LOAD16_BYTE( "socc30.2lo", 0x20001, 0x10000, CRC(f7f9a734) SHA1(064adbfb919c7422190b5e4146fbc335a2a97091) )
+	ROM_LOAD16_BYTE( "socc30.3hi", 0x40000, 0x10000, CRC(2a2bd2a0) SHA1(9a9a0463ecf99941f88a163dcb111bf8c3508d78) )
+	ROM_LOAD16_BYTE( "socc30.3lo", 0x40001, 0x10000, CRC(f335bb8b) SHA1(a15ee6b27d6e2aab25f3260edd0803fe1fa05f0e) )
+	ROM_LOAD16_BYTE( "socc30.4hi", 0x60000, 0x10000, CRC(4f2f28dc) SHA1(cd419c80e7112163fd182d2cc58148d3674ccd8c) )
+	ROM_LOAD16_BYTE( "socc30.4lo", 0x60001, 0x10000, CRC(b326d36c) SHA1(5ac2df36754c97065f74695a9c46e2a558e8e112) )
+	ROM_LOAD16_BYTE( "socc30.5hi", 0x80000, 0x10000, CRC(4fcaec4a) SHA1(1286c57a81358a69573df6f6cedf44c564476320) )
+	ROM_LOAD16_BYTE( "socc30.5lo", 0x80001, 0x10000, CRC(f131115e) SHA1(a9050878cbc1923bb88d46ecdad8f5bd69d389ea) )
+	ROM_LOAD16_BYTE( "socc30.6hi", 0xa0000, 0x10000, CRC(9380644f) SHA1(01da02f9397c7b8fd44a78a533f09264eb4f3d0c) )
+	ROM_LOAD16_BYTE( "socc30.6lo", 0xa0001, 0x10000, CRC(b93e13ea) SHA1(0fac9cb54099f0d0ad61eb6f5bd3686c27a045b9) )
+ROM_END
+
 ROM_START( ar_spot )
 	ARCADIA_BIOS
 
@@ -693,6 +712,19 @@ static void sdwr_decode(void)
 	}
 }
 
+/* ar_socc: socc30.1lo */
+static void socc_decode(void)
+{
+	UINT16* rom = (UINT16 *)memory_region(REGION_USER3);
+	int i;
+
+	for ( i = 0; i < 0x20000; i += 2 )
+	{
+		*rom = BITSWAP16(*rom, 15,14,13,12,11,10,9,8, 0, 7, 1, 6, 5, 4, 3, 2 );
+		rom ++;
+	}
+}
+
 /* ar_sprg: sprg_1l.bin */
 static void sprg_decode(void)
 {
@@ -877,6 +909,7 @@ static struct
 	{ "ar_ninj",	ninj_decode },
 	{ "ar_rdwr",	rdwr_decode },
 	{ "ar_sdwr",	sdwr_decode },
+	{ "ar_socc",	socc_decode },
 	{ "ar_sprg",	sprg_decode },
 	{ "ar_xeon",	xeon_decode },
 	{ NULL,			NULL }
@@ -968,6 +1001,7 @@ DRIVER_INIT( ar_dart )
 GAMEBX( 1988, ar_bios,	0,		 ar_bios, arcadia, arcadia, 0,		 0, "Arcadia Systems", "Arcadia System BIOS", NOT_A_DRIVER )
 
 /* working */
+GAMEBX( 1988, ar_airh,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEBX( 1988, ar_bowl,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Bowling (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEBX( 1987, ar_dart,	ar_bios, ar_bios, arcadia, arcadia, ar_dart, 0, "Arcadia Systems", "World Darts (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEBX( 1988, ar_fast,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Magic Johnson's Fast Break (Arcadia, V 2.8)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
@@ -975,8 +1009,8 @@ GAMEBX( 1988, ar_ldrb,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia 
 GAMEBX( 1988, ar_ldrba,	ar_ldrb, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Leader Board (Arcadia, V 2.5)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEBX( 1987, ar_ninj,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Ninja Mission (Arcadia, V 2.5)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEBX( 1988, ar_rdwr,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "RoadWars (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEBX( 1990, ar_spot,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Spot (Arcadia)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEBX( 1988, ar_xeon,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEBX( 1987, ar_sprg,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Space Ranger (Arcadia, V 2.0)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEBX( 1988, ar_airh,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEBX( 1988, ar_sdwr,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Sidewinder (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEBX( 1989, ar_socc,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "World Trophy Soccer (Arcadia, V 3.0)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEBX( 1990, ar_spot,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Spot (Arcadia)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEBX( 1987, ar_sprg,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Space Ranger (Arcadia, V 2.0)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEBX( 1988, ar_xeon,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )

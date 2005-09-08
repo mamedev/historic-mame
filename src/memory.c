@@ -183,6 +183,8 @@ struct _bank_data
 	UINT8 					cpunum;					/* the CPU it is used for */
 	UINT8 					spacenum;				/* the address space it is used for */
 	offs_t 					base;					/* the base offset */
+	UINT8					curentry;				/* current entry */
+	void *					entry[MAX_BANK_ENTRIES]; /* array of entries for this bank */
 };
 typedef struct _bank_data bank_data;
 
@@ -216,7 +218,7 @@ struct _table_data
 	UINT8 *					table;					/* pointer to base of table */
 	UINT8 					subtable_alloc;			/* number of subtables allocated */
 	subtable_data			subtable[SUBTABLE_COUNT]; /* info about each subtable */
-	handler_data	handlers[ENTRY_COUNT];	/* array of user-installed handlers */
+	handler_data			handlers[ENTRY_COUNT];	/* array of user-installed handlers */
 };
 typedef struct _table_data table_data;
 
@@ -447,8 +449,7 @@ int memory_init(void)
 
 void memory_exit(void)
 {
-	int cpunum, spacenum, blocknum;
-	memory_block *block;
+	int cpunum, spacenum;
 
 	/* free all the tables */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
@@ -458,15 +459,7 @@ void memory_exit(void)
 				free(cpudata[cpunum].space[spacenum].read.table);
 			if (cpudata[cpunum].space[spacenum].write.table)
 				free(cpudata[cpunum].space[spacenum].write.table);
-			if (cpudata[cpunum].space[spacenum].map)
-				free(cpudata[cpunum].space[spacenum].map);
 		}
-	memset(&cpudata, 0, sizeof(cpudata));
-
-	/* free all the allocated memory */
-	for (blocknum = 0, block = memory_block_list; blocknum < memory_block_count; blocknum++, block++)
-		if (block->isallocated)
-			free(block->data);
 }
 
 
@@ -730,6 +723,60 @@ void *memory_get_op_ptr(int cpunum, offs_t offset)
 		ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
 	}
 	return ptr;
+}
+
+
+
+/*-------------------------------------------------
+    memory_configure_bank - configure the
+    addresses for a bank
+-------------------------------------------------*/
+
+void memory_configure_bank(int banknum, int startentry, int numentries, void *base, offs_t stride)
+{
+	int entrynum;
+
+	/* validation checks */
+	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
+		osd_die("memory_configure_bank called with invalid bank %d\n", banknum);
+	if (bankdata[banknum].dynamic)
+		osd_die("memory_configure_bank called with dynamic bank %d\n", banknum);
+	if (startentry < 0 || startentry + numentries > MAX_BANK_ENTRIES)
+		osd_die("memory_configure_bank called with out-of-range entries %d-%d\n", startentry, startentry + numentries - 1);
+
+	/* fill in the requested bank entries */
+	for (entrynum = startentry; entrynum < startentry + numentries; entrynum++)
+		bankdata[banknum].entry[entrynum] = (UINT8 *)base + (entrynum - startentry) * stride;
+}
+
+
+
+/*-------------------------------------------------
+    memory_set_bank - set the base of a bank
+-------------------------------------------------*/
+
+void memory_set_bank(int banknum, int entrynum)
+{
+	/* validation checks */
+	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
+		osd_die("memory_set_bank called with invalid bank %d\n", banknum);
+	if (bankdata[banknum].dynamic)
+		osd_die("memory_set_bank called with dynamic bank %d\n", banknum);
+	if (entrynum < 0 || entrynum > MAX_BANK_ENTRIES)
+		osd_die("memory_set_bank called with out-of-range entry %d\n", entrynum);
+	if (!bankdata[banknum].entry[entrynum])
+		osd_die("memory_set_bank called for bank %d with invalid bank entry %d\n", banknum, entrynum);
+
+	/* set the base */
+	bankdata[banknum].curentry = entrynum;
+	bank_ptr[banknum] = bankdata[banknum].entry[entrynum];
+
+	/* if we're executing out of this bank, adjust the opbase pointer */
+	if (opcode_entry == banknum && cpu_getactivecpu() >= 0)
+	{
+		opcode_entry = 0xff;
+		memory_set_opbase(activecpu_get_pc_byte());
+	}
 }
 
 
@@ -1025,12 +1072,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	if (internal_map || Machine->drv->cpu[cpunum].construct_map[spacenum][0] || Machine->drv->cpu[cpunum].construct_map[spacenum][1])
 	{
 		/* allocate and clear memory for 2 copies of the map */
-		address_map *map = malloc(sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
-		if (!map)
-		{
-			osd_die("cpu #%d couldn't allocate memory map\n", cpunum);
-			return -1;
-		}
+		address_map *map = auto_malloc(sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 		memset(map, 0, sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 
 		/* make pointers to the standard and adjusted maps */
@@ -1170,6 +1212,7 @@ static int preflight_memory(void)
 							bdata->cpunum = cpunum;
 							bdata->spacenum = spacenum;
 							bdata->base = map->start;
+							bdata->curentry = MAX_BANK_ENTRIES;
 						}
 					}
 				}
@@ -1253,6 +1296,7 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 		bdata->cpunum = space->cpunum;
 		bdata->spacenum = space->spacenum;
 		bdata->base = start;
+		bdata->curentry = MAX_BANK_ENTRIES;
 	}
 
 	/* adjust the incoming addresses */
@@ -1894,12 +1938,7 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 	/* if we weren't passed a memory block, allocate one and clear it to zero */
 	if (allocatemem)
 	{
-		memory = malloc(end - start + 1);
-		if (!memory)
-		{
-			osd_die("Out of memory allocating %d bytes for CPU %d, space %d, range %X-%X\n", end - start + 1, cpunum, spacenum, start, end);
-			return NULL;
-		}
+		memory = auto_malloc(end - start + 1);
 		memset(memory, 0, end - start + 1);
 	}
 
@@ -2005,6 +2044,25 @@ static address_map *assign_intersecting_blocks(addrspace_data *space, offs_t sta
 
 
 /*-------------------------------------------------
+    reattach_banks - reconnect banks after a load
+-------------------------------------------------*/
+
+static void reattach_banks(void)
+{
+	int banknum;
+
+	/* once this is done, find the starting bases for the banks */
+	for (banknum = 1; banknum <= MAX_BANKS; banknum++)
+		if (bankdata[banknum].used && !bankdata[banknum].dynamic)
+		{
+			/* if this entry has a changed entry, set the appropriate pointer */
+			if (bankdata[banknum].curentry != MAX_BANK_ENTRIES)
+				bank_ptr[banknum] = bankdata[banknum].entry[bankdata[banknum].curentry];
+		}
+}
+
+
+/*-------------------------------------------------
     find_memory - find all the requested pointers
     into the final allocated memory
 -------------------------------------------------*/
@@ -2042,6 +2100,8 @@ static int find_memory(void)
 		if (bankdata[banknum].used)
 		{
 			address_map *map;
+
+			/* set the initial bank pointer */
 			for (map = cpudata[bankdata[banknum].cpunum].space[bankdata[banknum].spacenum].adjmap; map && !IS_AMENTRY_END(map); map++)
 				if (!IS_AMENTRY_EXTENDED(map) && map->start == bankdata[banknum].base)
 				{
@@ -2049,7 +2109,20 @@ static int find_memory(void)
 	 				VPRINTF(("assigned bank %d pointer to memory from range %08X-%08X [%08X]\n", banknum, map->start, map->end, (UINT32)map->memory));
 					break;
 				}
+
+			/* if this is a non-dynamic bank, register for save */
+			if (!bankdata[banknum].dynamic)
+			{
+				state_save_register_UINT8("memory", banknum, "bank.entry", &bankdata[banknum].curentry, 1);
+
+				/* if the entry was set ahead of time, override the automatically found pointer */
+				if (bankdata[banknum].curentry != MAX_BANK_ENTRIES)
+					bank_ptr[banknum] = bankdata[banknum].entry[bankdata[banknum].curentry];
+			}
 		}
+
+	/* request a callback to fix up the banks when done */
+	state_save_register_func_postload(reattach_banks);
 
 	return 1;
 }

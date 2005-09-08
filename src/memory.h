@@ -209,8 +209,9 @@ typedef struct _data_accessors data_accessors;
 #define STATIC_COUNT			72						/* total number of static handlers */
 
 /* ----- banking constants ----- */
-#define MAX_BANKS                66                        /* maximum number of banks */
-#define MAX_EXPLICIT_BANKS       32                        /* maximum number of explicitly-defined banks */
+#define MAX_BANKS				66						/* maximum number of banks */
+#define MAX_BANK_ENTRIES		64						/* maximum number of possible bank values */
+#define MAX_EXPLICIT_BANKS		32						/* maximum number of explicitly-defined banks */
 #define STATIC_BANKMAX			(STATIC_RAM - 1)		/* handler constant of last bank */
 
 
@@ -918,26 +919,28 @@ void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
 void *		memory_get_op_ptr(int cpunum, offs_t offset);
 
 /* ----- memory banking ----- */
+void		memory_configure_bank(int banknum, int startentry, int numentries, void *base, offs_t stride);
+void		memory_set_bank(int banknum, int entrynum);
 void		memory_set_bankptr(int banknum, void *base);
 
 /* ----- dynamic address space mapping ----- */
 void		memory_set_debugger_access(int debugger);
 
 /* ----- dynamic address space mapping ----- */
-UINT8 *	memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler);
+UINT8 *		memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler);
 UINT16 *	memory_install_read16_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler);
 UINT32 *	memory_install_read32_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler);
 UINT64 *	memory_install_read64_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler);
-UINT8 *	memory_install_write8_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler);
+UINT8 *		memory_install_write8_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler);
 UINT16 *	memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler);
 UINT32 *	memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler);
 UINT64 *	memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler);
 
-UINT8 *	memory_install_read8_matchmask_handler  (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler);
+UINT8 *		memory_install_read8_matchmask_handler  (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler);
 UINT16 *	memory_install_read16_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler);
 UINT32 *	memory_install_read32_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler);
 UINT64 *	memory_install_read64_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler);
-UINT8 *	memory_install_write8_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler);
+UINT8 *		memory_install_write8_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler);
 UINT16 *	memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler);
 UINT32 *	memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler);
 UINT64 *	memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler);

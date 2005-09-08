@@ -1861,13 +1861,14 @@ static UINT32 menu_switches(UINT32 state)
 	input_port_entry *selected_in = NULL;
 	input_port_entry *in;
 	int menu_items = 0;
+	int changed = FALSE;
 
 	/* reset the menu */
 	memset(item_list, 0, sizeof(item_list));
 
 	/* loop over input ports and set up the current values */
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
-		if (in->type == switch_name && input_port_active(in))
+		if (in->type == switch_name && input_port_active(in) && input_port_condition(in))
 		{
 			if (menu_items == selected)
 				selected_in = in;
@@ -1886,9 +1887,33 @@ static UINT32 menu_switches(UINT32 state)
 
 	/* handle left/right arrows */
 	if (input_ui_pressed(IPT_UI_LEFT) && (item_list[selected].flags & MENU_FLAG_LEFT_ARROW))
+	{
 		switch_menu_pick_previous(selected_in, switch_entry);
+		changed = TRUE;
+	}
 	if (input_ui_pressed(IPT_UI_RIGHT) && (item_list[selected].flags & MENU_FLAG_RIGHT_ARROW))
+	{
 		switch_menu_pick_next(selected_in, switch_entry);
+		changed = TRUE;
+	}
+
+	/* update the selection to match the existing entry in case things got shuffled */
+	/* due to conditional DIPs changing things */
+	if (changed)
+	{
+		int newsel = 0;
+		input_port_update_defaults();
+		for (in = Machine->input_ports; in->type != IPT_END; in++)
+			if (in->type == switch_name && input_port_active(in) && input_port_condition(in))
+			{
+				if (selected_in == in)
+				{
+					selected = newsel;
+					break;
+				}
+				newsel++;
+			}
+	}
 
 	return selected | (switch_name << 16) | (switch_entry << 24);
 }

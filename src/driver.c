@@ -250,6 +250,7 @@ const game_driver *drivers[] =
 	DRIVER( omega )		/* bootleg */
 	DRIVER( ckongs )	/* bootleg */
 	DRIVER( froggers )	/* bootleg */
+	DRIVER( frogf )		/* bootleg */
 	DRIVER( amidars )	/* GX337 (c) 1982 Konami */
 	DRIVER( triplep )	/* (c) 1982 KKI */	/* made by Sanritsu? */
 	DRIVER( knockout )	/* (c) 1982 KKK */
@@ -1941,6 +1942,7 @@ const game_driver *drivers[] =
 	DRIVER( hyperpcb )	/* bootleg */
 	DRIVER( twinkle )	/* (c) 1997 SemiCom */
 	DRIVER( cookbib2 )	/* (c) 1996 SemiCom */
+	DRIVER( cookbib3 )	/* (c) 1997 SemiCom */
 	DRIVER( 3in1semi )	/* (c) 1998 SemiCom */
 	DRIVER( moremore )	/* (c) 1999 SemiCom + Exit */
 	DRIVER( moremorp )	/* (c) 1999 SemiCom + Exit */
@@ -4232,6 +4234,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* GX Type 3 */
 	DRIVER( soccerss )	/* GX427 */
+	DRIVER( soccersj )	/* GX427 */
 	DRIVER( soccersa )	/* GX427 */
 
 	/* GX Type 4 */
@@ -5824,6 +5827,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bloodwar )
 	DRIVER( bonkadv )
 	DRIVER( gtmr )		/* (c) 1994 Kaneko */
+	DRIVER( gtmra )		/* (c) 1994 Kaneko */
 	DRIVER( gtmre )		/* (c) 1994 Kaneko */
 	DRIVER( gtmrusa )	/* (c) 1994 Kaneko (US) */
 	DRIVER( gtmr2 )		/* (c) 1995 Kaneko */
@@ -6433,6 +6437,7 @@ Other Sun games
 	DRIVER( ar_ninj )
 	DRIVER( ar_rdwr )
 	DRIVER( ar_sdwr )
+	DRIVER( ar_socc )
 	DRIVER( ar_spot )
 	DRIVER( ar_sprg )
 	DRIVER( ar_xeon )
@@ -6664,6 +6669,9 @@ Other Sun games
 	DRIVER( jollycrd )	/* (c) 1985 TAB-Austria */
 	DRIVER( jollypkr )	/* (c) 1993 Soft Design */
 	DRIVER( bonuscrd )	/* (c) 1986 Fun World */
+	DRIVER( cuoreuno )	/* (c) 1997 bootleg? */
+	DRIVER( elephfam )	/* (c) 1997 bootleg? */
+	DRIVER( royalcrd )	/* (c) 1997 TAB-Austria */
 	DRIVER( poker4 )	/* (c) 1986 Fun World */
 	DRIVER( poker8 )	/* (c) 1986 Fun World */
 	DRIVER( igpoker )	/* (c) 1990 Inter Games */

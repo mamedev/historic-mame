@@ -666,10 +666,6 @@ typedef struct
 
 
 /* current chip state */
-static FM_ST	*State;			/* basic status */
-static FM_CH	*cch[8];		/* pointer of FM channels */
-
-
 static INT32	m2,c1,c2;		/* Phase Modulation input for operators 2,3,4 */
 static INT32	mem;			/* one sample delay memory */
 
@@ -2024,8 +2020,8 @@ void YM2203UpdateOne(void *chip, FMSAMPLE *buffer, int length)
 	FM_OPN *OPN =   &F2203->OPN;
 	int i;
 	FMSAMPLE *buf = buffer;
+	FM_CH	*cch[3];
 
-	State    = &F2203->OPN.ST;
 	cch[0]   = &F2203->CH[0];
 	cch[1]   = &F2203->CH[1];
 	cch[2]   = &F2203->CH[2];
@@ -2034,7 +2030,7 @@ void YM2203UpdateOne(void *chip, FMSAMPLE *buffer, int length)
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
 	refresh_fc_eg_chan( cch[1] );
-	if( (State->mode & 0xc0) )
+	if( (F2203->OPN.ST.mode & 0xc0) )
 	{
 		/* 3SLOT MODE */
 		if( cch[2]->SLOT[SLOT1].Incr==-1)
@@ -2095,9 +2091,9 @@ void YM2203UpdateOne(void *chip, FMSAMPLE *buffer, int length)
 		}
 
 		/* timer A control */
-		INTERNAL_TIMER_A( State , cch[2] )
+		INTERNAL_TIMER_A( &F2203->OPN.ST , cch[2] )
 	}
-	INTERNAL_TIMER_B(State,length)
+	INTERNAL_TIMER_B(&F2203->OPN.ST,length)
 }
 
 /* ---------- reset one of chip ---------- */
@@ -3197,12 +3193,12 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	YM_DELTAT *DELTAT = &F2608->deltaT;
 	int i,j;
 	FMSAMPLE  *bufL,*bufR;
+	FM_CH	*cch[6];
 
 	/* set bufer */
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	State = &OPN->ST;
 	cch[0]   = &F2608->CH[0];
 	cch[1]   = &F2608->CH[1];
 	cch[2]   = &F2608->CH[2];
@@ -3216,7 +3212,7 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
 	refresh_fc_eg_chan( cch[1] );
-	if( (State->mode & 0xc0) )
+	if( (OPN->ST.mode & 0xc0) )
 	{
 		/* 3SLOT MODE */
 		if( cch[2]->SLOT[SLOT1].Incr==-1)
@@ -3320,13 +3316,13 @@ void YM2608UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 		}
 
 		/* timer A control */
-		INTERNAL_TIMER_A( State , cch[2] )
+		INTERNAL_TIMER_A( &OPN->ST , cch[2] )
 	}
-	INTERNAL_TIMER_B(State,length)
+	INTERNAL_TIMER_B(&OPN->ST,length)
 
 
 	/* check IRQ for DELTA-T EOS */
-	FM_STATUS_SET(State, 0);
+	FM_STATUS_SET(&OPN->ST, 0);
 
 }
 #ifdef __STATE_H__
@@ -3743,12 +3739,12 @@ void YM2610UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	YM_DELTAT *DELTAT = &F2610->deltaT;
 	int i,j;
 	FMSAMPLE  *bufL,*bufR;
+	FM_CH	*cch[4];
 
 	/* buffer setup */
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	State = &OPN->ST;
 	cch[0] = &F2610->CH[1];
 	cch[1] = &F2610->CH[2];
 	cch[2] = &F2610->CH[4];
@@ -3769,7 +3765,7 @@ void YM2610UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
-	if( (State->mode & 0xc0) )
+	if( (OPN->ST.mode & 0xc0) )
 	{
 		/* 3SLOT MODE */
 		if( cch[1]->SLOT[SLOT1].Incr==-1)
@@ -3865,9 +3861,9 @@ void YM2610UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 		}
 
 		/* timer A control */
-		INTERNAL_TIMER_A( State , cch[1] )
+		INTERNAL_TIMER_A( &OPN->ST , cch[1] )
 	}
-	INTERNAL_TIMER_B(State,length)
+	INTERNAL_TIMER_B(&OPN->ST,length)
 
 }
 
@@ -3880,12 +3876,12 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	YM_DELTAT *DELTAT = &F2610->deltaT;
 	int i,j;
 	FMSAMPLE  *bufL,*bufR;
+	FM_CH	*cch[6];
 
 	/* buffer setup */
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	State = &OPN->ST;
 	cch[0] = &F2610->CH[0];
 	cch[1] = &F2610->CH[1];
 	cch[2] = &F2610->CH[2];
@@ -3899,7 +3895,7 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
 	refresh_fc_eg_chan( cch[1] );
-	if( (State->mode & 0xc0) )
+	if( (OPN->ST.mode & 0xc0) )
 	{
 		/* 3SLOT MODE */
 		if( cch[2]->SLOT[SLOT1].Incr==-1)
@@ -4004,9 +4000,9 @@ void YM2610BUpdateOne(void *chip, FMSAMPLE **buffer, int length)
 		}
 
 		/* timer A control */
-		INTERNAL_TIMER_A( State , cch[2] )
+		INTERNAL_TIMER_A( &OPN->ST , cch[2] )
 	}
-	INTERNAL_TIMER_B(State,length)
+	INTERNAL_TIMER_B(&OPN->ST,length)
 
 }
 #endif /* BUILD_YM2610B */
@@ -4402,12 +4398,12 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	int i;
 	FMSAMPLE  *bufL,*bufR;
 	INT32 dacout  = F2612->dacout;
+	FM_CH	*cch[6];
 
 	/* set bufer */
 	bufL = buffer[0];
 	bufR = buffer[1];
 
-	State = &OPN->ST;
 	cch[0]   = &F2612->CH[0];
 	cch[1]   = &F2612->CH[1];
 	cch[2]   = &F2612->CH[2];
@@ -4420,7 +4416,7 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 	/* refresh PG and EG */
 	refresh_fc_eg_chan( cch[0] );
 	refresh_fc_eg_chan( cch[1] );
-	if( (State->mode & 0xc0) )
+	if( (OPN->ST.mode & 0xc0) )
 	{
 		/* 3SLOT MODE */
 		if( cch[2]->SLOT[SLOT1].Incr==-1)
@@ -4508,9 +4504,9 @@ void YM2612UpdateOne(void *chip, FMSAMPLE **buffer, int length)
 		}
 
 		/* timer A control */
-		INTERNAL_TIMER_A( State , cch[2] )
+		INTERNAL_TIMER_A( &OPN->ST , cch[2] )
 	}
-	INTERNAL_TIMER_B(State,length)
+	INTERNAL_TIMER_B(&OPN->ST,length)
 
 }
 

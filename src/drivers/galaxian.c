@@ -3968,6 +3968,19 @@ static MACHINE_DRIVER_START( scorpnmc )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( frogg )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(galaxian)
+
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(32+64+2+1)  /* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
+
+	MDRV_PALETTE_INIT(frogger)
+	MDRV_VIDEO_START(froggers)
+MACHINE_DRIVER_END
+
+
 static MACHINE_DRIVER_START( 4in1 )
 
 	/* basic machine hardware */
@@ -4029,7 +4042,7 @@ static MACHINE_DRIVER_START( froggrmc )
 	MDRV_PALETTE_LENGTH(32+64+2+1)  /* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
 
 	MDRV_PALETTE_INIT(frogger)
-	MDRV_VIDEO_START(froggrmc)
+	MDRV_VIDEO_START(froggers)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
@@ -5596,7 +5609,7 @@ ROM_START( frogg )
 	ROM_LOAD( "h.bin",        0x0800, 0x0800, CRC(658745f8) SHA1(e4e5c3e011c8a7233a36d29e10e08905873500aa) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
+	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, CRC(413703bf) SHA1(66648b2b28d3dcbda5bdb2605d1977428939dd3c) )
 ROM_END
 
 ROM_START( 4in1 )
@@ -6074,7 +6087,7 @@ GAME( 19??, omega,    theend,   galaxian, omega,    0,        ROT270, "bootleg?"
 GAME( 1980, kingball, 0,        kingball, kingball, kingball, ROT90,  "Namco", "King & Balloon (US)" )
 GAME( 1980, kingbalj, kingball, kingball, kingball, kingball, ROT90,  "Namco", "King & Balloon (Japan)" )
 GAME( 19??, scorpnmc, scorpion, scorpnmc, scorpnmc, 0,        ROT90,  "Dorneer", "Scorpion (Moon Cresta hardware)" )
-GAME( 1981, frogg,    frogger,  galaxian, frogg,    0,        ROT90,  "bootleg", "Frog (Galaxian hardware)" )
+GAME( 1981, frogg,    frogger,  frogg,    frogg,    0,        ROT90,  "bootleg", "Frog (Galaxian hardware)" )
 GAMEX(1981, 4in1,     0,        4in1,     4in1,     4in1,     ROT90,  "Armenia / Food and Fun", "4 Fun in 1", GAME_IMPERFECT_SOUND )
 GAMEX(1982, bagmanmc, bagman,   bagmanmc, bagmanmc, 0,        ROT90,  "bootleg", "Bagman (Moon Cresta hardware)", GAME_WRONG_COLORS  )
 GAMEX(1982, dkongjrm, dkongjr,  dkongjrm, dkongjrm, 0,        ROT90,  "bootleg", "Donkey Kong Jr. (Moon Cresta hardware)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
