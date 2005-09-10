@@ -157,14 +157,14 @@ static void yunsun16_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	int max_x		=	Machine->visible_area.max_x+1;
 	int max_y		=	Machine->visible_area.max_y+1;
 
-	int pri			=	*yunsun16_priority & 7;
+	int pri			=	*yunsun16_priority & 3;
 	int pri_mask;
 
-	switch( pri & 7 )
+	switch( pri )
 	{
-		case 5:		pri_mask = (1<<1)|(1<<2)|(1<<3);	break;
-		case 6:		pri_mask = (1<<2)|(1<<3);			break;
-		case 7:
+		case 1:		pri_mask = (1<<1)|(1<<2)|(1<<3);	break;
+		case 2:		pri_mask = (1<<2)|(1<<3);			break;
+		case 3:
 		default:	pri_mask = 0;
 	}
 
@@ -219,12 +219,24 @@ VIDEO_UPDATE( yunsun16 )
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
-	/* The color of the this layer's transparent pen goes below everything */
-	tilemap_draw(bitmap,cliprect,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
+	if((*yunsun16_priority & 0x0c) == 4)
+	{
+		/* The color of the this layer's transparent pen goes below everything */
+		tilemap_draw(bitmap,cliprect,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
 
-	tilemap_draw(bitmap,cliprect,tilemap_0, 0, 1);
+		tilemap_draw(bitmap,cliprect,tilemap_0, 0, 1);
 
-	tilemap_draw(bitmap,cliprect,tilemap_1, 0, 2);
+		tilemap_draw(bitmap,cliprect,tilemap_1, 0, 2);
+	}
+	else if((*yunsun16_priority & 0x0c) == 8)
+	{
+		/* The color of the this layer's transparent pen goes below everything */
+		tilemap_draw(bitmap,cliprect,tilemap_1, TILEMAP_IGNORE_TRANSPARENCY, 0);
+
+		tilemap_draw(bitmap,cliprect,tilemap_1, 0, 1);
+
+		tilemap_draw(bitmap,cliprect,tilemap_0, 0, 2);
+	}
 
 	yunsun16_draw_sprites(bitmap,cliprect);
 

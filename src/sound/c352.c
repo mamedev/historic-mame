@@ -1,6 +1,6 @@
 /*
     c352.c - Namco C352 custom PCM chip emulation
-    v0.2
+    v0.3
     By R. Belmont
 
     Thanks to Cap of VivaNonno for info and The_Author for preliminary reverse-engineering
@@ -9,6 +9,7 @@
     32 voices
     Supports 8-bit linear and 8-bit muLaw samples
     Output: digital, 16 bit, 4 channels
+    Output sample rate is the input clock / 384.
  */
 
 #include <stdlib.h>
@@ -61,6 +62,7 @@ struct c352_info
 	c352_ch_t c352_ch[32];
 	unsigned char *c352_rom_samples;
 	int c352_region;
+	int sample_rate_base;
 
 	INT16 level_table[256];
 
@@ -72,8 +74,6 @@ struct c352_info
 	short	mulaw_table[256];
 	unsigned int mseq_reg;
 };
-
-#define SAMPLE_RATE_BASE    	(42667*2)
 
 // noise generator
 static int get_mseq_bit(struct c352_info *info)
@@ -103,7 +103,7 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 	int i;
 
 	signed short sample;
-	float pbase = (float)SAMPLE_RATE_BASE / (float)Machine->sample_rate;
+	float pbase = (float)info->sample_rate_base / (float)Machine->sample_rate;
 	INT32 frequency, delta, offset, cnt, flag;
 	UINT32 pos;
 
@@ -370,6 +370,8 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 					break;
 			}
 
+//  printf("ch %02d: start: %08x\n", chan, info->c352_ch[chan].current_addr);
+
 /*          printf("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
                 info->c352_ch[chan].current_addr,
                 info->c352_ch[chan].loop_point,
@@ -536,6 +538,8 @@ static void *c352_start(int sndindex, int clock, const void *config)
 	info->c352_region = intf->region;
 
 	info->stream = stream_create(0, 4, Machine->sample_rate, info, c352_update);
+
+	info->sample_rate_base = clock / 192;
 
 	c352_init(info, sndindex);
 

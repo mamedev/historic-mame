@@ -275,6 +275,7 @@ GFX:                Custom 145     ( 80 pin PQFP)
 #include "namcos2.h"
 #include "namcoic.h"
 #include "machine/random.h"
+#include "sndhrdw/namcoc7x.h"
 
 #define NB1_NVMEM_SIZE (0x800)
 static UINT32 *nvmem32;
@@ -451,36 +452,44 @@ static DRIVER_INIT( nebulray )
 	memset( &pMem[0xe6f*8], 0, numBytes );
 
 	namcos2_gametype = NAMCONB1_NEBULRAY;
+
+	namcoc7x_on_driver_init();
 } /* nebulray */
 
 static DRIVER_INIT( gslgr94u )
 {
 	namcos2_gametype = NAMCONB1_GSLGR94U;
+	namcoc7x_on_driver_init();
 } /* gslgr94u */
 
 static DRIVER_INIT( sws95 )
 {
 	namcos2_gametype = NAMCONB1_SWS95;
+	namcoc7x_on_driver_init();
 } /* sws95 */
 
 static DRIVER_INIT( sws96 )
 {
 	namcos2_gametype = NAMCONB1_SWS96;
+	namcoc7x_on_driver_init();
 } /* sws96 */
 
 static DRIVER_INIT( sws97 )
 {
 	namcos2_gametype = NAMCONB1_SWS97;
+	namcoc7x_on_driver_init();
 } /* sws97 */
 
 static DRIVER_INIT( gunbulet )
 {
 	namcos2_gametype = NAMCONB1_GUNBULET;
+	namcoc7x_on_driver_init();
 } /* gunbulet */
 
 static DRIVER_INIT( vshoot )
 {
 	namcos2_gametype = NAMCONB1_VSHOOT;
+	namcoc7x_on_driver_init();
 } /* vshoot */
 
 static void
@@ -503,12 +512,14 @@ static DRIVER_INIT( machbrkr )
 {
 	namcos2_gametype = NAMCONB2_MACH_BREAKERS;
 	ShuffleDataROMs();
+	namcoc7x_on_driver_init();
 }
 
 static DRIVER_INIT( outfxies )
 {
 	namcos2_gametype = NAMCONB2_OUTFOXIES;
 	ShuffleDataROMs();
+	namcoc7x_on_driver_init();
 }
 
 static READ32_HANDLER( custom_key_r )
@@ -684,12 +695,29 @@ WRITE32_HANDLER( srand_w )
      */
 } /* srand_w */
 
+static WRITE32_HANDLER( sharedram_w )
+{
+	if (offset < 0x10)
+	{
+		if (mem_mask == 0x0000ffff)
+		{
+			namcoc7x_sound_write16((data>>16), offset*2);
+		}
+		else if (mem_mask == 0xffff0000)
+		{
+			namcoc7x_sound_write16((data&0xffff), (offset*2)+1);
+		}
+	}
+
+	COMBINE_DATA(&namconb1_workram32[offset]);
+}
+
 static ADDRESS_MAP_START( namconb1_am, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x100000, 0x10001f) AM_READ(gunbulet_gun_r)
 	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x1e4000, 0x1e4003) AM_READWRITE(randgen_r,srand_w)
-	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32) /* shared with MCU) */
+	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) AM_WRITE(sharedram_w) AM_BASE(&namconb1_workram32) /* shared with MCU) */
 	AM_RANGE(0x400000, 0x40001f) AM_READ(MRA32_RAM) AM_WRITE(namconb_cpureg_w) AM_BASE(&namconb_cpureg32)
 	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&nvmem32)
 	AM_RANGE(0x600000, 0x61ffff) AM_READWRITE(namco_obj32_r,namco_obj32_w)
@@ -705,7 +733,7 @@ static ADDRESS_MAP_START( namconb2_am, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x1e4000, 0x1e4003) AM_READWRITE(randgen_r,srand_w)
-	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namconb1_workram32) /* shared with MCU */
+	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) AM_WRITE(sharedram_w) AM_BASE(&namconb1_workram32) /* shared with MCU */
 	AM_RANGE(0x400000, 0x4fffff) AM_READ(MRA32_BANK1)/* data ROMs */
 	AM_RANGE(0x600000, 0x61ffff) AM_READWRITE(namco_obj32_r,namco_obj32_w)
 	AM_RANGE(0x620000, 0x620007) AM_READWRITE(namco_spritepos32_r,namco_spritepos32_w)
@@ -725,10 +753,15 @@ ADDRESS_MAP_END /* namconb2_readmem */
 
 #define MASTER_CLOCK_HZ 48384000
 
+NAMCO_C7X_HARDWARE
+
 static MACHINE_DRIVER_START( namconb1 )
 	MDRV_CPU_ADD(M68EC020,MASTER_CLOCK_HZ/2)
 	MDRV_CPU_PROGRAM_MAP(namconb1_am,0)
 	MDRV_CPU_VBLANK_INT(namconb1_interrupt,1)
+
+	NAMCO_C7X_MCU(MASTER_CLOCK_HZ/3)
+
 	MDRV_FRAMES_PER_SECOND(59.7)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_NVRAM_HANDLER(namconb1)
@@ -739,13 +772,17 @@ static MACHINE_DRIVER_START( namconb1 )
 	MDRV_PALETTE_LENGTH(0x2000)
 	MDRV_VIDEO_START(namconb1)
 	MDRV_VIDEO_UPDATE(namconb1)
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	NAMCO_C7X_SOUND(MASTER_CLOCK_HZ/3)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( namconb2 )
 	MDRV_CPU_ADD(M68EC020,MASTER_CLOCK_HZ/2)
 	MDRV_CPU_PROGRAM_MAP(namconb2_am,0)
 	MDRV_CPU_VBLANK_INT(namconb2_interrupt,1)
+
+	NAMCO_C7X_MCU(MASTER_CLOCK_HZ/3)
+
 	MDRV_FRAMES_PER_SECOND(59.7)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_NVRAM_HANDLER(namconb1)
@@ -756,7 +793,8 @@ static MACHINE_DRIVER_START( namconb2 )
 	MDRV_PALETTE_LENGTH(0x2000)
 	MDRV_VIDEO_START(namconb2)
 	MDRV_VIDEO_UPDATE(namconb2)
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	NAMCO_C7X_SOUND(MASTER_CLOCK_HZ/3)
 MACHINE_DRIVER_END
 
 /***************************************************************/
@@ -767,7 +805,10 @@ ROM_START( ptblank )
 	ROM_LOAD32_WORD( "gn2mprub.13b", 0x00000, 0x80000, CRC(3bf4985a) SHA1(f559e0d5f55d23d886fe61bd7d5ca556acc7f87c) )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gn1-spr0.bin", 0, 0x20000, CRC(6836ba38) SHA1(6ea17ea4bbb59be108e8887acd7871409580732f) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "gn1-voi0.bin", 0, 0x200000, CRC(05477eb7) SHA1(f2eaacb5dbac06c37c56b9b131230c9cf6602221) )
@@ -794,7 +835,10 @@ ROM_START( gunbulet )
 	ROM_LOAD32_WORD( "gn1-mpru.bin", 0x00000, 0x80000, CRC(72a4db07) SHA1(8c5e1e51cd961b311d03f7b21f36a5bd5e8e9104) )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gn1-spr0.bin", 0, 0x20000, CRC(6836ba38) SHA1(6ea17ea4bbb59be108e8887acd7871409580732f) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "gn1-voi0.bin", 0, 0x200000, CRC(05477eb7) SHA1(f2eaacb5dbac06c37c56b9b131230c9cf6602221) )
@@ -821,7 +865,10 @@ ROM_START( nebulray )
 	ROM_LOAD32_WORD( "nr2-mprl.15b", 0x00002, 0x80000, CRC(0431b6d4) SHA1(54c96e8ac9e753956c31bdef79d390f1c20e10ff) )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "nr1-spr0", 0, 0x20000, CRC(1cc2b44b) SHA1(161f4ed39fabe89d7ee1d539f8b9f08cd0ff3111) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "nr1-voi0", 0, 0x200000, CRC(332d5e26) SHA1(9daddac3fbe0709e25ed8e0b456bac15bfae20d7) )
@@ -855,7 +902,10 @@ ROM_START( nebulryj )
 	ROM_LOAD32_WORD( "nr1-mprl", 0x00002, 0x80000, CRC(fae5f62c) SHA1(143d716abbc834aac6270db3bbb89ec71ea3804d) )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "nr1-spr0", 0, 0x20000, CRC(1cc2b44b) SHA1(161f4ed39fabe89d7ee1d539f8b9f08cd0ff3111) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "nr1-voi0", 0, 0x200000, CRC(332d5e26) SHA1(9daddac3fbe0709e25ed8e0b456bac15bfae20d7) )
@@ -889,7 +939,10 @@ ROM_START( gslgr94u )
 	ROM_LOAD32_WORD( "gse2mpru.bin", 0x00000, 0x80000, CRC(b6afd238) SHA1(438a3411ac8ce3d22d5da8c0800738cb8d2994a9) )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gse2spr0.bin", 0, 0x20000, CRC(17e87cfc) SHA1(9cbeadb6dfcb736e8c80eab344f70fc2f58469d6) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "gse-voi0.bin", 0, 0x200000, CRC(d3480574) SHA1(0c468ed060769b36b7e41cf4919cb6d8691d64f6) )
@@ -914,7 +967,10 @@ ROM_START( gslugrsj )
 	ROM_LOAD32_WORD( "gs1mpru.13b", 0x00000, 0x80000, CRC(ef355179) SHA1(0ab0ef4301a318681bb5827d35734a0732b35484) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gs1spr0.5b", 0, 0x80000, CRC(561ea20f) SHA1(adac6b77effc3a82079a9b228bafca0fcef72ba5) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "gs1voi-0.5j", 0, 0x200000, CRC(6f8262aa) SHA1(beea98d9f8b927a572eb0bfcf678e9d6e40fc68d) )
@@ -939,7 +995,10 @@ ROM_START( sws95 )
 	ROM_LOAD32_WORD( "ss51mpru.bin", 0x00000, 0x80000, CRC(0d93d261) SHA1(5edef26e2c86dbc09727d910af92747d022e4fed) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ss51spr0.bin", 0, 0x80000, CRC(71cb12f5) SHA1(6e13bd16a5ba14d6e47a21875db3663ada3c06a5) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "ss51voi0.bin", 0, 0x200000, CRC(2740ec72) SHA1(9694a7378ea72771d2b1d43db6d74ed347ba27d3) )
@@ -965,7 +1024,10 @@ ROM_START( sws96 )
 	ROM_LOAD32_WORD( "ss61mpru.bin", 0x00000, 0x80000, CRC(0abdbb83) SHA1(67e8b712291f9bcf2c3a52fbc451fad54679cab8) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ss61spr0.bin", 0, 0x80000, CRC(71cb12f5) SHA1(6e13bd16a5ba14d6e47a21875db3663ada3c06a5) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "ss61voi0.bin", 0, 0x200000, CRC(2740ec72) SHA1(9694a7378ea72771d2b1d43db6d74ed347ba27d3) )
@@ -990,7 +1052,10 @@ ROM_START( sws97 )
 	ROM_LOAD32_WORD( "ss71mpru.bin", 0x00000, 0x80000, CRC(3444f5a8) SHA1(8d0f35b3ba8f65dbc67c3b2d273833227a8b8b2a) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ss71spr0.bin", 0, 0x80000, CRC(71cb12f5) SHA1(6e13bd16a5ba14d6e47a21875db3663ada3c06a5) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "ss71voi0.bin", 0, 0x200000, CRC(2740ec72) SHA1(9694a7378ea72771d2b1d43db6d74ed347ba27d3) )
@@ -1015,7 +1080,10 @@ ROM_START( vshoot )
 	ROM_LOAD32_WORD( "vsj1mpru.13b", 0x00000, 0x80000, CRC(c63eb92d) SHA1(f93bd4b91daee645677955020dc8df14dc9bfd27) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "vsj1spr0.5b", 0, 0x80000, CRC(b0c71aa6) SHA1(a94fae02b46a645ff728d2f98827c85ff155892b) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "vsjvoi-0.5j", 0, 0x200000, CRC(0528c9ed) SHA1(52b67978fdeb97b77065575774a7ddeb49fe1d81) )
@@ -1042,7 +1110,10 @@ ROM_START( outfxies )
 	ROM_LOAD32_WORD( "ou2mpru.11d", 0x00000, 0x80000, CRC(ab5083fb) SHA1(cb2e7a4838c2b80057edb83ea63116bccb1394d3) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ou1spr0.5b", 0, 0x80000, CRC(60cee566) SHA1(2f3b96793816d90011586e0f9f71c58b636b6d4c) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "ou1voi0.6n", 0, 0x200000, CRC(2d8fb271) SHA1(bde9d45979728f5a2cd8ec89f5f81bf16b694cc2) )
@@ -1084,7 +1155,10 @@ ROM_START( outfxesj )
 	ROM_LOAD32_WORD( "ou1-mpru.11d", 0x00000, 0x80000, CRC(d98308fb) SHA1(fdefeebf56464a20e3aaefd88df4eee9f7b5c4f3) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ou1spr0.5b", 0, 0x80000, CRC(60cee566) SHA1(2f3b96793816d90011586e0f9f71c58b636b6d4c) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "ou1voi0.6n", 0, 0x200000, CRC(2d8fb271) SHA1(bde9d45979728f5a2cd8ec89f5f81bf16b694cc2) )
@@ -1127,11 +1201,16 @@ ROM_START( machbrkr )
 	ROM_LOAD32_WORD( "mb1_mpru.11d", 0x00000, 0x80000, CRC(fb1ff916) SHA1(e0ba96c1f26a60f87d8050e582e164d91e132183) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
-	ROM_LOAD( "mb1_spr0.5b", 0, 0x80000, CRC(d10f6272) SHA1(cb99e06e050dbf86998ea51ef2ca130b2acfb2f6) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "mb1_spr0.5b", 0, 0x80000, CRC(d10f6272) SHA1(cb99e06e050dbf86998ea51ef2ca130b2acfb2f6) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 )
 	ROM_LOAD( "mb1_voi0.6n", 0x000000, 0x200000, CRC(d363ca3b) SHA1(71650b66ca3eb00f6ad7d3f1df0f37210b77b942) )
-	ROM_LOAD( "mb1_voi1.6p", 0x200000, 0x200000, CRC(7e1c2603) SHA1(533098a54fb897931f1d75be9e69a5c047e4c446) )
+	ROM_RELOAD( 0x400000, 0x200000)
+	ROM_LOAD( "mb1_voi1.6p", 0x800000, 0x200000, CRC(7e1c2603) SHA1(533098a54fb897931f1d75be9e69a5c047e4c446) )
+	ROM_RELOAD( 0xc00000, 0x200000)
 
 	ROM_REGION( 0x200000, NAMCONB1_TILEMASKREGION, 0 )
 	ROM_LOAD( "mb1_shas.12s", 0, 0x100000, CRC(c51c614b) SHA1(519ecad2e4543c05ec35a727f4c875ab006291af) )
@@ -1348,18 +1427,18 @@ INPUT_PORTS_START( namconb1 )
 INPUT_PORTS_END
 
 
-GAMEX( 1994, nebulray, 0,        namconb1, namconb1, nebulray, ROT90, "Namco", "Nebulas Ray (World)", GAME_NO_SOUND )
-GAMEX( 1994, nebulryj, nebulray, namconb1, namconb1, nebulray, ROT90, "Namco", "Nebulas Ray (Japan)", GAME_NO_SOUND )
-GAMEX( 1994, ptblank,  0,        namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Point Blank", GAME_NO_SOUND )
-GAMEX( 1994, gunbulet, ptblank,  namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Gun Bullet (Japan)", GAME_NO_SOUND )
-GAMEX( 1993, gslugrsj, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers (Japan)", GAME_NO_SOUND )
-GAMEX( 1994, gslgr94u, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers '94", GAME_NO_SOUND )
-GAMEX( 1995, sws95,    0,        namconb1, namconb1, sws95,    ROT0,  "Namco", "Super World Stadium '95 (Japan)", GAME_NO_SOUND )
-GAMEX( 1996, sws96,    0,        namconb1, namconb1, sws96,    ROT0,  "Namco", "Super World Stadium '96 (Japan)", GAME_NO_SOUND )
-GAMEX( 1997, sws97,    0,        namconb1, namconb1, sws97,    ROT0,  "Namco", "Super World Stadium '97 (Japan)", GAME_NO_SOUND )
-GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "J-League Soccer V-Shoot", GAME_NO_SOUND )
+GAMEX( 1994, nebulray, 0,        namconb1, namconb1, nebulray, ROT90, "Namco", "Nebulas Ray (World)", GAME_IMPERFECT_SOUND )
+GAMEX( 1994, nebulryj, nebulray, namconb1, namconb1, nebulray, ROT90, "Namco", "Nebulas Ray (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1994, ptblank,  0,        namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Point Blank", GAME_IMPERFECT_SOUND )
+GAMEX( 1994, gunbulet, ptblank,  namconb1, gunbulet, gunbulet, ROT0,  "Namco", "Gun Bullet (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1993, gslugrsj, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1994, gslgr94u, 0,        namconb1, namconb1, gslgr94u, ROT0,  "Namco", "Great Sluggers '94", GAME_IMPERFECT_SOUND )
+GAMEX( 1995, sws95,    0,        namconb1, namconb1, sws95,    ROT0,  "Namco", "Super World Stadium '95 (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1996, sws96,    0,        namconb1, namconb1, sws96,    ROT0,  "Namco", "Super World Stadium '96 (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1997, sws97,    0,        namconb1, namconb1, sws97,    ROT0,  "Namco", "Super World Stadium '97 (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1994, vshoot,   0,        namconb1, namconb1, vshoot,   ROT0,  "Namco", "J-League Soccer V-Shoot", GAME_IMPERFECT_SOUND )
 
 /*     YEAR, NAME,     PARENT,   MACHINE,  INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,   FLAGS */
-GAMEX( 1994, outfxies, 0,		 namconb2, outfxies, outfxies, ROT0, "Namco", "Outfoxies", GAME_NO_SOUND )
-GAMEX( 1994, outfxesj, outfxies, namconb2, outfxies, outfxies, ROT0, "Namco", "Outfoxies (Japan)", GAME_NO_SOUND )
-GAMEX( 1995, machbrkr, 0,		 namconb2, namconb1, machbrkr, ROT0, "Namco", "Mach Breakers (Japan)", GAME_NO_SOUND )
+GAMEX( 1994, outfxies, 0,	 namconb2, outfxies, outfxies, ROT0, "Namco", "Outfoxies", GAME_IMPERFECT_SOUND )
+GAMEX( 1994, outfxesj, outfxies, namconb2, outfxies, outfxies, ROT0, "Namco", "Outfoxies (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1995, machbrkr, 0,	 namconb2, namconb1, machbrkr, ROT0, "Namco", "Mach Breakers (Japan)", GAME_IMPERFECT_SOUND )

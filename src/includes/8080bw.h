@@ -47,6 +47,8 @@ MACHINE_INIT( schaser );
 MACHINE_INIT( polaris );
 MACHINE_INIT( clowns );
 
+WRITE8_HANDLER( indianbt_sh_port7_w );
+
 extern struct Samplesinterface boothill_samples_interface;
 extern struct Samplesinterface circus_samples_interface;
 extern struct discrete_sound_block clowns_discrete_interface[];
@@ -55,6 +57,7 @@ extern struct Samplesinterface invaders_samples_interface;
 extern struct SN76477interface invad2ct_sn76477_interface_1;
 extern struct SN76477interface invad2ct_sn76477_interface_2;
 extern struct Samplesinterface invad2ct_samples_interface;
+extern struct discrete_sound_block indianbt_discrete_interface[];
 extern struct discrete_sound_block polaris_discrete_interface[];
 extern struct discrete_sound_block schaser_discrete_interface[];
 void schaser_effect_555_cb(int effect);

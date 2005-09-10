@@ -2146,7 +2146,7 @@ profiler_mark(PROFILER_INPUT);
 
 #ifdef MESS
 	/* less MESS to MESSy things */
-	inputx_update(input_port_value);
+	inputx_update();
 #endif
 
 	/* handle playback/record */
@@ -2509,6 +2509,21 @@ UINT32 readinputportbytag_safe(const char *tag, UINT32 defvalue)
 	if (port != -1)
 		return readinputport(port);
 	return defvalue;
+}
+
+
+
+/*************************************
+ *
+ *  Input port writing
+ *
+ *************************************/
+
+void input_port_set_digital_value(int portnum, UINT32 value, UINT32 mask)
+{
+	input_port_info *portinfo = &port_info[portnum];
+	portinfo->digital &= ~mask;
+	portinfo->digital |= value;
 }
 
 

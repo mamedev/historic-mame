@@ -121,6 +121,7 @@ static struct
 
 /***********************************************************************************/
 
+static void tilemap_dispose( tilemap *tmap );
 static int PenToPixel_Init( tilemap *tmap );
 static void PenToPixel_Term( tilemap *tmap );
 static int mappings_create( tilemap *tmap );
@@ -891,7 +892,7 @@ tilemap *tilemap_create(
 	return 0;
 }
 
-void tilemap_dispose( tilemap *tmap )
+static void tilemap_dispose( tilemap *tmap )
 {
 	tilemap *prev;
 

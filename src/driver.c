@@ -3047,6 +3047,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( cottonu )	/* (protected) */
 	DRIVER( cottonj )	/* (protected) */
 	DRIVER( ddux )		/* (c) 1989 (FD1094, decrypted) */
+	DRIVER( ddux1 )		/* (c) 1989 (8751) */
 	DRIVER( dunkshot )	/* (protected) */
 	DRIVER( eswat )		/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( eswatu )	/* (c) 1989 (FD1094, decrypted) */
@@ -6159,6 +6160,7 @@ Other Sun games
 	DRIVER( cannball )	/* (c) 1995 Yun Sung / Soft Visio */
 	DRIVER( magix )		/* (c) 1995 Yun Sung */
 	DRIVER( magicbub )	/* (c) Yun Sung */
+	DRIVER( magicbua )	/* (c) Yun Sung */
 	DRIVER( shocking )	/* (c) 1997 Yun Sung */
 	DRIVER( nmg5 )		/* (c) 1998 Yun Sung */
 	DRIVER( searchey )	/* (c) 1999 Yun Sung */

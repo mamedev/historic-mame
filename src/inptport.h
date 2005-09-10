@@ -696,6 +696,8 @@ void input_port_update_defaults(void);
 void input_port_vblank_start(void);	/* called by cpuintrf.c - not for external use */
 void input_port_vblank_end(void);	/* called by cpuintrf.c - not for external use */
 
+void input_port_set_digital_value(int port, UINT32 value, UINT32 mask);
+
 UINT32 readinputport(int port);
 UINT32 readinputportbytag(const char *tag);
 UINT32 readinputportbytag_safe(const char *tag, UINT32 defvalue);

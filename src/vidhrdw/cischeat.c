@@ -99,10 +99,6 @@ UINT16 *f1gpstr2_ioready;
 
 #endif
 
-#define MEGASYS1_VREG_FLAG(_n_) \
-		megasys1_scroll_##_n_##_flag_w(new_data); \
-		if (megasys1_tmap[_n_] == 0) SHOW_WRITE_ERROR("vreg %04X <- %04X NO MEMORY FOR SCREEN",offset*2,data);
-
 #define MEGASYS1_VREG_SCROLL(_n_, _dir_)	megasys1_scroll##_dir_[_n_] = new_data;
 
 
@@ -292,15 +288,15 @@ WRITE16_HANDLER( bigrun_vregs_w )
 
 		case 0x2000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
 		case 0x2000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
-		case 0x2000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
+		case 0x2000/2+2 : megasys1_set_vreg_flag(0,new_data);break;
 
 		case 0x2008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
 		case 0x2008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
-		case 0x2008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
+		case 0x2008/2+2 : megasys1_set_vreg_flag(1,new_data);break;
 
 		case 0x2100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
 		case 0x2100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
-		case 0x2100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
+		case 0x2100/2+2 : megasys1_set_vreg_flag(2,new_data);break;
 
 		case 0x2108/2   : break;	// ? written with 0 only
 		case 0x2208/2   : break;	// watchdog reset
@@ -380,15 +376,15 @@ WRITE16_HANDLER( cischeat_vregs_w )
 
 		case 0x2000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
 		case 0x2000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
-		case 0x2000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
+		case 0x2000/2+2 : megasys1_set_vreg_flag(0,new_data);break;
 
 		case 0x2008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
 		case 0x2008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
-		case 0x2008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
+		case 0x2008/2+2 : megasys1_set_vreg_flag(1,new_data);break;
 
 		case 0x2100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
 		case 0x2100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
-		case 0x2100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
+		case 0x2100/2+2 : megasys1_set_vreg_flag(2,new_data);break;
 
 		case 0x2108/2   : break;	// ? written with 0 only
 		case 0x2208/2   : break;	// watchdog reset
@@ -520,15 +516,15 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 		case 0x2000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
 		case 0x2000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
-		case 0x2000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
+		case 0x2000/2+2 : megasys1_set_vreg_flag(0,new_data);break;
 
 		case 0x2008/2+0 : MEGASYS1_VREG_SCROLL(1,x)		break;
 		case 0x2008/2+1 : MEGASYS1_VREG_SCROLL(1,y)		break;
-		case 0x2008/2+2 : MEGASYS1_VREG_FLAG(1)			break;
+		case 0x2008/2+2 : megasys1_set_vreg_flag(1,new_data);break;
 
 		case 0x2100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
 		case 0x2100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
-		case 0x2100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
+		case 0x2100/2+2 : megasys1_set_vreg_flag(2,new_data);break;
 
 		case 0x2108/2   : break;	// ? written with 0 only
 		case 0x2208/2   : break;	// watchdog reset
@@ -579,16 +575,16 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 	{
 		case 0x000/2+0 : MEGASYS1_VREG_SCROLL(0,x)		break;
 		case 0x000/2+1 : MEGASYS1_VREG_SCROLL(0,y)		break;
-		case 0x000/2+2 : MEGASYS1_VREG_FLAG(0)			break;
+		case 0x000/2+2 : megasys1_set_vreg_flag(0,new_data);break;
 
 //      UNUSED LAYER
 //      case 0x008/2+0 : MEGASYS1_VREG_SCROLL(1,x)      break;
 //      case 0x008/2+1 : MEGASYS1_VREG_SCROLL(1,y)      break;
-//      case 0x008/2+2 : MEGASYS1_VREG_FLAG(1)          break;
+//      case 0x008/2+2 : megasys1_set_vreg_flag(1,new_data);break;
 
 		case 0x100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
 		case 0x100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
-		case 0x100/2+2 : MEGASYS1_VREG_FLAG(2)			break;
+		case 0x100/2+2 : megasys1_set_vreg_flag(2,new_data);break;
 
 		case 0x208/2   : watchdog_reset_w(0,0);	break;
 

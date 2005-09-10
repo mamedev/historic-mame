@@ -423,6 +423,55 @@ static WRITE8_HANDLER( ballbomb_sh_port5_w )
 
 /*******************************************************/
 /*                                                     */
+/* Taito "Indian Battle"                               */
+/* Sept 2005, D.R.                                     */
+/*******************************************************/
+const struct discrete_dac_r1_ladder indianbt_music_dac =
+	{3, {0, RES_K(47), RES_K(12)}, 0, 0, 0, CAP_U(0.1)};
+
+#define INDIANBT_MUSIC_CLK		(7680.0*2*2*2)
+
+/* Nodes - Inputs */
+#define INDIANBT_MUSIC_DATA		NODE_01
+/* Nodes - Sounds */
+#define INDIANBT_MUSIC			NODE_11
+
+DISCRETE_SOUND_START(indianbt_discrete_interface)
+
+	DISCRETE_INPUT_DATA (INDIANBT_MUSIC_DATA)
+
+/******************************************************************************
+ *
+ * Music Generator
+ *
+ ******************************************************************************/
+	DISCRETE_NOTE(NODE_20, 1, INDIANBT_MUSIC_CLK, INDIANBT_MUSIC_DATA, 255, 5, DISC_CLK_IS_FREQ)
+
+	// Convert count to 7492 output
+	DISCRETE_TRANSFORM2(NODE_21, 1, NODE_20, 2, "01>0+")
+
+	DISCRETE_DAC_R1(NODE_22, 1, NODE_21, DEFAULT_TTL_V_LOGIC_1, &indianbt_music_dac)
+
+/******************************************************************************
+ *
+ * Final Mixing and Output
+ *
+ ******************************************************************************/
+	DISCRETE_CRFILTER(NODE_90, 1, NODE_22, RES_K(10), CAP_U(0.1))
+	DISCRETE_GAIN(NODE_91, NODE_90, 21000)
+
+	DISCRETE_OUTPUT(NODE_91, 100)
+
+DISCRETE_SOUND_END
+
+WRITE8_HANDLER( indianbt_sh_port7_w )
+{
+	discrete_sound_w(INDIANBT_MUSIC_DATA, data);
+}
+
+
+/*******************************************************/
+/*                                                     */
 /* Taito "Polaris"                                     */
 /* D.R.                                                */
 /*******************************************************/
@@ -590,7 +639,7 @@ DISCRETE_SOUND_START(polaris_discrete_interface)
  *
  ******************************************************************************/
 	DISCRETE_NOTE(NODE_30, 1, 23396, POLARIS_MUSIC_DATA, 255, 3, DISC_CLK_IS_FREQ)
-	DISCRETE_DAC_R1(NODE_31, 1, NODE_30, 3.4, &polaris_music_dac)
+	DISCRETE_DAC_R1(NODE_31, 1, NODE_30, DEFAULT_TTL_V_LOGIC_1, &polaris_music_dac)
 	DISCRETE_OP_AMP_FILTER(NODE_32, 1, NODE_31, 0, DISC_OP_AMP_FILTER_IS_HIGH_PASS_0 | DISC_OP_AMP_IS_NORTON, &polaris_music_op_amp_filt_info)
 	DISCRETE_MULTIPLY(POLARIS_MUSIC, 1, NODE_32, POLARIS_ADJ_VR3)
 

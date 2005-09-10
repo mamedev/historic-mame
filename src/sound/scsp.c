@@ -1046,7 +1046,6 @@ static void SCSP_Update(void *param, stream_sample_t **inputs, stream_sample_t *
 	bufferl = buf[0];
 	bufferr = buf[1];
 	length = samples;
-
 	SCSP_DoMasterSamples(SCSP, samples);
 }
 

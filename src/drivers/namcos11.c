@@ -266,6 +266,7 @@ Notes:
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"
 #include "machine/at28c16.h"
+#include "sndhrdw/namcoc7x.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -520,6 +521,19 @@ static READ32_HANDLER( keycus_c443_r )
 static WRITE32_HANDLER( sharedram_w )
 {
 	verboselog( 1, "sharedram_w( %08x, %08x, %08x )\n", ( offset * 4 ) + 0x4000, data, mem_mask );
+
+	if (offset < 0x10)
+	{
+		if (mem_mask == 0x0000ffff)
+		{
+			namcoc7x_sound_write16((data>>16), (offset*2)+1);
+		}
+		else if (mem_mask == 0xffff0000)
+		{
+			namcoc7x_sound_write16((data&0xffff), (offset*2));
+		}
+	}
+
 	COMBINE_DATA( &namcos11_sharedram[ offset ] );
 }
 
@@ -758,6 +772,7 @@ static DRIVER_INIT( namcos11 )
 	int n_game;
 
 	psx_driver_init();
+	namcoc7x_on_driver_init();
 
 	n_game = 0;
 	while( namcos11_config_table[ n_game ].s_name != NULL )
@@ -816,7 +831,9 @@ MACHINE_INIT( namcos11 )
 	bankswitch_update_all();
 }
 
-static MACHINE_DRIVER_START( coh100 )
+NAMCO_C7X_HARDWARE
+
+static MACHINE_DRIVER_START( coh100ns )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( namcos11_map, 0 )
@@ -838,9 +855,17 @@ static MACHINE_DRIVER_START( coh100 )
 	MDRV_VIDEO_START( psx_type1 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+static MACHINE_DRIVER_START( coh100 )
+	MDRV_IMPORT_FROM( coh100ns )
+	NAMCO_C7X_MCU(16384000)
+	NAMCO_C7X_SOUND(16384000)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( coh110ns )
+	MDRV_IMPORT_FROM( coh100ns )
+	MDRV_VIDEO_START( psx_type2 )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh110 )
@@ -1246,10 +1271,14 @@ ROM_START( danceyes )
 	ROM_LOAD16_BYTE( "dc1rom3u.ic9", 0x0c00001, 0x200000, CRC(1405d123) SHA1(3d7be5558358740f5a0a3a3022543cf5aca4cf24) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "dc1sprog.6d",  0x0000000, 0x040000, CRC(96cd7788) SHA1(68a5a53a5fc50e2b6b684c99d27d81e3a8c56287) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "dc1wave.8k",   0x0000000, 0x400000, CRC(8ba0f6a7) SHA1(e9868debd808e92b196d1baeeeae9c4855356a01) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "dc1sprog.6d",  0x0000000, 0x040000, CRC(96cd7788) SHA1(68a5a53a5fc50e2b6b684c99d27d81e3a8c56287) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "dc1wave.8k",   0x000000, 0x400000, CRC(8ba0f6a7) SHA1(e9868debd808e92b196d1baeeeae9c4855356a01) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( dunkmnia )
@@ -1270,10 +1299,14 @@ ROM_START( dunkmnia )
 	ROM_CONTINUE( 0x0400001, 0x200000 ) /* first & second half identical */
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "dm1sprog.6d",  0x0000000, 0x040000, CRC(de1cbc78) SHA1(855ebece1841f50ae324d7d6b8b18ab6f657d28e) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "dm1wave.8k",   0x0000000, 0x400000, CRC(4891d53e) SHA1(a1fee060e94d3219174b5974517f4fd3be32aaa5) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "dm1sprog.6d",  0x0000000, 0x040000, CRC(de1cbc78) SHA1(855ebece1841f50ae324d7d6b8b18ab6f657d28e) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "dm1wave.8k",   0x000000, 0x400000, CRC(4891d53e) SHA1(a1fee060e94d3219174b5974517f4fd3be32aaa5) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( dunkmnic )
@@ -1294,10 +1327,13 @@ ROM_START( dunkmnic )
 	ROM_CONTINUE( 0x0400001, 0x200000 ) /* first & second half identical */
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "dm1sprog.6d",  0x0000000, 0x040000, CRC(de1cbc78) SHA1(855ebece1841f50ae324d7d6b8b18ab6f657d28e) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "dm1wave.8k",   0x0000000, 0x400000, CRC(4891d53e) SHA1(a1fee060e94d3219174b5974517f4fd3be32aaa5) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "dm1sprog.6d",  0x0000000, 0x040000, CRC(de1cbc78) SHA1(855ebece1841f50ae324d7d6b8b18ab6f657d28e) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "dm1wave.8k",   0x800000, 0x400000, CRC(4891d53e) SHA1(a1fee060e94d3219174b5974517f4fd3be32aaa5) )
 ROM_END
 
 ROM_START( myangel3 )
@@ -1312,10 +1348,14 @@ ROM_START( myangel3 )
 	ROM_LOAD16_BYTE( "kqt1prg1u.ic6", 0x1000001, 0x800000, CRC(911783db) SHA1(1005fc9b38e212844e397150a6f98f43ad88d4b9) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "kqt1sprog.7e", 0x0000000, 0x040000, CRC(bb1888a6) SHA1(4db07738079725413cdba7eb75252ee71ae50a66) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "kqt1wave.8k",  0x0000000, 0x400000, CRC(92ca8e4f) SHA1(48d6bdfcc5de1c280afa36c3f0dd6d4177771355) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "kqt1sprog.7e", 0x0000000, 0x040000, CRC(bb1888a6) SHA1(4db07738079725413cdba7eb75252ee71ae50a66) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "kqt1wave.8k",  0x000000, 0x400000, CRC(92ca8e4f) SHA1(48d6bdfcc5de1c280afa36c3f0dd6d4177771355) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( primglex )
@@ -1334,10 +1374,14 @@ ROM_START( primglex )
 	ROM_CONTINUE( 0x0400001, 0x200000 ) /* first & second half identical */
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "pg1sprog.6d",  0x0000000, 0x040000, CRC(e7c3396d) SHA1(12bbb8ebcaab1b40462a12917dd9b58bd9ab8663) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "pg1sprog.6d",  0x0000000, 0x040000, CRC(e7c3396d) SHA1(12bbb8ebcaab1b40462a12917dd9b58bd9ab8663) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "pg1wave.8k",   0x0000000, 0x400000, CRC(fc9ad9eb) SHA1(ce5bb2288ed8cf1348825c39423cbb99d9324b9c) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( ptblank2 )
@@ -1352,10 +1396,14 @@ ROM_START( ptblank2 )
 	ROM_LOAD16_BYTE( "gnb1prg0u.ic5", 0x000001, 0x800000, CRC(697d3279) SHA1(40302780f7494d9413888b2d1da38bd14a9a444f) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "gnb1vera.6d",  0x0000000, 0x040000, CRC(6461ae77) SHA1(1377b716a69ef9d4d2e48083d23f22bd5c103c00) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "gnb1vera.6d",  0x0000000, 0x040000, CRC(6461ae77) SHA1(1377b716a69ef9d4d2e48083d23f22bd5c103c00) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "gnb3wave.8k",  0x0000000, 0x400000, CRC(4e19d9d6) SHA1(0a92c987536999a789663a30c787950ab6995128) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( souledge )
@@ -1376,10 +1424,14 @@ ROM_START( souledge )
 	ROM_LOAD16_BYTE( "so1rom3l.ic9", 0x0c00001, 0x200000, CRC(84465bcc) SHA1(d8be888d41cfe194c3a1853d9146d3a74ef7bab1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "so1sprogc.6d", 0x0000000, 0x040000, CRC(2bbc118c) SHA1(4168a9aa525f1f0ce6cf6e14cfe4c118c4c0d773) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "so1wave.8k",   0x0000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "so1sprogc.6d", 0x0000000, 0x040000, CRC(2bbc118c) SHA1(4168a9aa525f1f0ce6cf6e14cfe4c118c4c0d773) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "so1wave.8k",   0x000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( souledga )
@@ -1400,10 +1452,14 @@ ROM_START( souledga )
 	ROM_LOAD16_BYTE( "so1rom3l.ic9", 0x0c00001, 0x200000, CRC(84465bcc) SHA1(d8be888d41cfe194c3a1853d9146d3a74ef7bab1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "so1sprogc.6d", 0x0000000, 0x040000, CRC(2bbc118c) SHA1(4168a9aa525f1f0ce6cf6e14cfe4c118c4c0d773) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "so1wave.8k",   0x0000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "so1sprogc.6d", 0x0000000, 0x040000, CRC(2bbc118c) SHA1(4168a9aa525f1f0ce6cf6e14cfe4c118c4c0d773) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "so1wave.8k",   0x000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( souledgb )
@@ -1424,10 +1480,13 @@ ROM_START( souledgb )
 	ROM_LOAD16_BYTE( "so1rom3l.ic9", 0x0c00001, 0x200000, CRC(84465bcc) SHA1(d8be888d41cfe194c3a1853d9146d3a74ef7bab1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "so1sprog.6d",  0x0000000, 0x040000, CRC(f6f682b7) SHA1(a64e19be3f6e630b8c34f34b46b95aadfabd3f63) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "so1wave.8k",   0x0000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "so1sprog.6d",  0x0000000, 0x040000, CRC(f6f682b7) SHA1(a64e19be3f6e630b8c34f34b46b95aadfabd3f63) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "so1wave.8k",   0x800000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
 ROM_END
 
 ROM_START( souledgc )
@@ -1448,10 +1507,14 @@ ROM_START( souledgc )
 	ROM_LOAD16_BYTE( "so1rom3l.ic9", 0x0c00001, 0x200000, CRC(84465bcc) SHA1(d8be888d41cfe194c3a1853d9146d3a74ef7bab1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "so1sprog.6d",  0x0000000, 0x040000, CRC(f6f682b7) SHA1(a64e19be3f6e630b8c34f34b46b95aadfabd3f63) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "so1wave.8k",   0x0000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "so1sprog.6d",  0x0000000, 0x040000, CRC(f6f682b7) SHA1(a64e19be3f6e630b8c34f34b46b95aadfabd3f63) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "so1wave.8k",   0x000000, 0x400000, CRC(0e68836b) SHA1(c392b370a807803c7ab060105861253e1b407f49) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( starswep )
@@ -1462,10 +1525,14 @@ ROM_START( starswep )
 	ROM_REGION32_LE( 0x0100000, REGION_USER2, 0 ) /* main data */
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "stp1sprog.7e", 0x0000000, 0x040000, CRC(08aaaf6a) SHA1(51c913a39ff7c154aef8bb10139cc8b92eb4756a) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "stp1wave.8k",  0x0000000, 0x400000, CRC(18f30e92) SHA1(b3819455856298527a7224495f541145aecf23dd) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "stp1sprog.7e", 0x0000000, 0x040000, CRC(08aaaf6a) SHA1(51c913a39ff7c154aef8bb10139cc8b92eb4756a) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "stp1wave.8k",  0x000000, 0x400000, CRC(18f30e92) SHA1(b3819455856298527a7224495f541145aecf23dd) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
 ROM_START( tekken )
@@ -1484,9 +1551,12 @@ ROM_START( tekken )
 	ROM_LOAD16_BYTE( "te1rom2u.ic7", 0x0800001, 0x200000, CRC(a678987e) SHA1(c62c00ce5cf4d001723c999b2bc3dbb90283def1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "te1wave.8k",   0x0000000, 0x200000, CRC(fce6c57a) SHA1(7fb8c69452c92c59a940a2b69d0d73ef7aefcb82) )
 ROM_END
 
@@ -1506,9 +1576,12 @@ ROM_START( tekkena )
 	ROM_LOAD16_BYTE( "te1rom2u.ic7", 0x0800001, 0x200000, CRC(a678987e) SHA1(c62c00ce5cf4d001723c999b2bc3dbb90283def1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x0200000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "te1wave.8k",   0x0000000, 0x200000, CRC(fce6c57a) SHA1(7fb8c69452c92c59a940a2b69d0d73ef7aefcb82) )
 ROM_END
 
@@ -1528,9 +1601,12 @@ ROM_START( tekkenb )
 	ROM_LOAD16_BYTE( "te1rom2u.ic7", 0x0800001, 0x200000, CRC(a678987e) SHA1(c62c00ce5cf4d001723c999b2bc3dbb90283def1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x0200000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "te1wave.8k",   0x0000000, 0x200000, CRC(fce6c57a) SHA1(7fb8c69452c92c59a940a2b69d0d73ef7aefcb82) )
 ROM_END
 
@@ -1550,9 +1626,12 @@ ROM_START( tekkenc )
 	ROM_LOAD16_BYTE( "te1rom2u.ic7", 0x0800001, 0x200000, CRC(a678987e) SHA1(c62c00ce5cf4d001723c999b2bc3dbb90283def1) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "te1sprog.6d",  0x0000000, 0x040000, CRC(849587e9) SHA1(94c6a757b24758a866a41bd8acd46aa46844f74b) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x0200000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "te1wave.8k",   0x0000000, 0x200000, CRC(fce6c57a) SHA1(7fb8c69452c92c59a940a2b69d0d73ef7aefcb82) )
 ROM_END
 
@@ -1574,10 +1653,13 @@ ROM_START( tekken2 )
 	ROM_LOAD16_BYTE( "tes1rom3u.ic1", 0x0c00001, 0x200000, CRC(44ed509d) SHA1(27e26aaf5ce72ab686f3f05743b1d91b5334b4e0) )
 
 	ROM_REGION( 0x0200000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "tes1sprog.6d", 0x0000000, 0x040000, CRC(af18759f) SHA1(aabd7d1384925781d37f860605a5d4622e0fc2e4) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "tes1wave.8k",  0x0000000, 0x400000, CRC(af5eadb1) SHA1(1cba35b524b5ec1aa0302d0a707e0c7f4b1a1401) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "tes1sprog.6d", 0x0000000, 0x040000, CRC(af18759f) SHA1(aabd7d1384925781d37f860605a5d4622e0fc2e4) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "tes1wave.8k",  0x800000, 0x400000, CRC(af5eadb1) SHA1(1cba35b524b5ec1aa0302d0a707e0c7f4b1a1401) )
 ROM_END
 
 ROM_START( tekken2a )
@@ -1598,10 +1680,13 @@ ROM_START( tekken2a )
 	ROM_LOAD16_BYTE( "tes1rom3u.ic1", 0x0c00001, 0x200000, CRC(44ed509d) SHA1(27e26aaf5ce72ab686f3f05743b1d91b5334b4e0) )
 
 	ROM_REGION( 0x0200000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "tes1sprog.6d", 0x0000000, 0x040000, CRC(af18759f) SHA1(aabd7d1384925781d37f860605a5d4622e0fc2e4) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "tes1wave.8k",  0x0000000, 0x400000, CRC(af5eadb1) SHA1(1cba35b524b5ec1aa0302d0a707e0c7f4b1a1401) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "tes1sprog.6d", 0x0000000, 0x040000, CRC(af18759f) SHA1(aabd7d1384925781d37f860605a5d4622e0fc2e4) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "tes1wave.8k",  0x800000, 0x400000, CRC(af5eadb1) SHA1(1cba35b524b5ec1aa0302d0a707e0c7f4b1a1401) )
 ROM_END
 
 ROM_START( tekken2b )
@@ -1622,10 +1707,13 @@ ROM_START( tekken2b )
 	ROM_LOAD16_BYTE( "tes1rom3u.ic1", 0x0c00001, 0x200000, CRC(44ed509d) SHA1(27e26aaf5ce72ab686f3f05743b1d91b5334b4e0) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "tes1sprog.6d", 0x0000000, 0x040000, CRC(af18759f) SHA1(aabd7d1384925781d37f860605a5d4622e0fc2e4) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "tes1wave.8k",  0x0000000, 0x400000, CRC(af5eadb1) SHA1(1cba35b524b5ec1aa0302d0a707e0c7f4b1a1401) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "tes1sprog.6d", 0x0000000, 0x040000, CRC(af18759f) SHA1(aabd7d1384925781d37f860605a5d4622e0fc2e4) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "tes1wave.8k",  0x800000, 0x400000, CRC(af5eadb1) SHA1(1cba35b524b5ec1aa0302d0a707e0c7f4b1a1401) )
 ROM_END
 
 ROM_START( xevi3dg )
@@ -1644,28 +1732,32 @@ ROM_START( xevi3dg )
 	ROM_LOAD16_BYTE( "xv31rom2u.ic7", 0x0800001, 0x200000, CRC(ecf70432) SHA1(bec128a215e0aef66e9a8707bb0d1eb7b098a356) )
 
 	ROM_REGION( 0x0040000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD( "xv31sprog.6d", 0x0000000, 0x040000, CRC(e50b856a) SHA1(631da4f60c9ce08387fca26a70481a2fdacf9765) )
 
-	ROM_REGION( 0x0400000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "xv31wave.8k",  0x0000000, 0x400000, CRC(14f25ddd) SHA1(4981cf1017432ff85b768ec88c36f535df30b783) )
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "xv31sprog.6d", 0x0000000, 0x040000, CRC(e50b856a) SHA1(631da4f60c9ce08387fca26a70481a2fdacf9765) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "xv31wave.8k",  0x000000, 0x400000, CRC(14f25ddd) SHA1(4981cf1017432ff85b768ec88c36f535df30b783) )
+	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
-GAMEX( 1994, tekken,    0,        coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE4/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, tekkena,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, tekkenb,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1994, tekkenc,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE1/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, tekken2,   0,        coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES3/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, tekken2a,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, tekken2b,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 (TES2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, souledge,  0,        coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO4/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO3/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, souledgc,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1995, dunkmnia,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, dunkmnic,  dunkmnia, coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, xevi3dg,   0,        coh110, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, primglex,  0,        coh110, tekken,   namcos11, ROT0, "Namco", "Prime Goal EX (PG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1996, danceyes,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1997, starswep,  0,        coh110, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, myangel3,  0,        coh110, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, ptblank2,  0,        coh110g, ptblank2, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1994, tekken,    0,        coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE4/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, tekkena,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, tekkenb,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1994, tekkenc,   tekken,   coh100, tekken,   namcos11, ROT0, "Namco", "Tekken (TE1/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, tekken2,   0,        coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES3/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, tekken2a,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 Ver.B (TES2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, tekken2b,  tekken2,  coh100, tekken,   namcos11, ROT0, "Namco", "Tekken 2 (TES2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, souledge,  0,        coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO4/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, souledga,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge Ver. II (SO3/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, souledgb,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO3/VER.A)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, souledgc,  souledge, coh110, souledge, namcos11, ROT0, "Namco", "Soul Edge (SO1/VER.A)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, dunkmnia,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM2/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, dunkmnic,  dunkmnia, coh110, namcos11, namcos11, ROT0, "Namco", "Dunk Mania (DM1/VER.C)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, xevi3dg,   0,        coh110, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, primglex,  0,        coh110, tekken,   namcos11, ROT0, "Namco", "Prime Goal EX (PG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, danceyes,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, starswep,  0,        coh110, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, myangel3,  0,        coh110, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, ptblank2,  0,        coh110g, ptblank2, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

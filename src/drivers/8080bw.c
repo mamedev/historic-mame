@@ -3282,7 +3282,8 @@ static ADDRESS_MAP_START( indianbt_port, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_READ(input_port_1_r) AM_WRITE(c8080bw_shift_amount_w)
 	AM_RANGE(0x03, 0x03) AM_READ(c8080bw_shift_data_r)
 	AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_data_w)
-	AM_RANGE(0x06, 0x07) AM_WRITENOP /* sound ? */
+	AM_RANGE(0x06, 0x06) AM_WRITENOP /* sound ? */
+	AM_RANGE(0x07, 0x07) AM_WRITE(indianbt_sh_port7_w)
 
 ADDRESS_MAP_END
 
@@ -3295,6 +3296,11 @@ static MACHINE_DRIVER_START( indianbt )
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(indianbt)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(indianbt_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
 MACHINE_DRIVER_END
 
@@ -4186,7 +4192,7 @@ ROM_END
 	  GAME( 1980, polaris,  0,        polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 1)" )
 	  GAME( 1980, polarisa, polaris,  polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 2)" )
 	  GAMEX(1980, ballbomb, 0,        ballbomb, ballbomb, invadpt2, ROT270, "Taito", "Balloon Bomber", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )	/* missing clouds and blue background */
-	  GAMEX(1980, indianbt, 0,        indianbt, indianbt, indianbt, ROT270, "Taito", "Indian Battle", GAME_IMPERFECT_SOUND)
+	  GAME( 1980, indianbt, 0,        indianbt, indianbt, indianbt, ROT270, "Taito", "Indian Battle" )
 
 /* Misc. manufacturers */
 

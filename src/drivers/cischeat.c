@@ -268,9 +268,9 @@ static ADDRESS_MAP_START( bigrun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	/* Only writes to the first 0x40000 bytes affect the tilemaps:             */
 	/* either these games support larger tilemaps or have more ram than needed */
-	AM_RANGE(0x090000, 0x093fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram_0	)	// Scroll ram 0
-	AM_RANGE(0x094000, 0x097fff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram_1	)	// Scroll ram 1
-	AM_RANGE(0x098000, 0x09bfff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram_2	)	// Scroll ram 2
+	AM_RANGE(0x090000, 0x093fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram[0]	)	// Scroll ram 0
+	AM_RANGE(0x094000, 0x097fff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram[1]	)	// Scroll ram 1
+	AM_RANGE(0x098000, 0x09bfff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram[2]	)	// Scroll ram 2
 
 	AM_RANGE(0x09c000, 0x09ffff) AM_WRITE(bigrun_paletteram16_w) AM_BASE(&paletteram16	)	// Palettes
 ADDRESS_MAP_END
@@ -345,9 +345,9 @@ static ADDRESS_MAP_START( cischeat_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	/* Only writes to the first 0x40000 bytes affect the tilemaps:             */
 	/* either these games support larger tilemaps or have more ram than needed */
-	AM_RANGE(0x0a0000, 0x0a7fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram_0	)	// Scroll ram 0
-	AM_RANGE(0x0a8000, 0x0affff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram_1	)	// Scroll ram 1
-	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram_2	)	// Scroll ram 2
+	AM_RANGE(0x0a0000, 0x0a7fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram[0]	)	// Scroll ram 0
+	AM_RANGE(0x0a8000, 0x0affff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram[1]	)	// Scroll ram 1
+	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram[2]	)	// Scroll ram 2
 
 	AM_RANGE(0x0b8000, 0x0bffff) AM_WRITE(cischeat_paletteram16_w) AM_BASE(&paletteram16	)	// Palettes
 ADDRESS_MAP_END
@@ -415,9 +415,9 @@ static ADDRESS_MAP_START( f1gpstar_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	/* Only writes to the first 0x40000 bytes affect the tilemaps:             */
 	/* either these games support larger tilemaps or have more ram than needed */
-	AM_RANGE(0x0a0000, 0x0a7fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram_0	)	// Scroll ram 0
-	AM_RANGE(0x0a8000, 0x0affff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram_1	)	// Scroll ram 1
-	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram_2	)	// Scroll ram 2
+	AM_RANGE(0x0a0000, 0x0a7fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram[0]	)	// Scroll ram 0
+	AM_RANGE(0x0a8000, 0x0affff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram[1]	)	// Scroll ram 1
+	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram[2]	)	// Scroll ram 2
 
 	AM_RANGE(0x0b8000, 0x0bffff) AM_WRITE(f1gpstar_paletteram16_w) AM_BASE(&paletteram16	)	// Palettes
 ADDRESS_MAP_END
@@ -457,9 +457,9 @@ static ADDRESS_MAP_START( f1gpstr2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	/* Only writes to the first 0x40000 bytes affect the tilemaps:             */
 	/* either these games support larger tilemaps or have more ram than needed */
-	AM_RANGE(0x0a0000, 0x0a7fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram_0	)	// Scroll ram 0
-	AM_RANGE(0x0a8000, 0x0affff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram_1	)	// Scroll ram 1
-	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram_2	)	// Scroll ram 2
+	AM_RANGE(0x0a0000, 0x0a7fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(&megasys1_scrollram[0]	)	// Scroll ram 0
+	AM_RANGE(0x0a8000, 0x0affff) AM_WRITE(megasys1_scrollram_1_w) AM_BASE(&megasys1_scrollram[1]	)	// Scroll ram 1
+	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(&megasys1_scrollram[2]	)	// Scroll ram 2
 
 	AM_RANGE(0x0b8000, 0x0bffff) AM_WRITE(f1gpstar_paletteram16_w) AM_BASE(&paletteram16	)	// Palettes
 ADDRESS_MAP_END
@@ -588,9 +588,9 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem_scudhamm, ADDRESS_SPACE_PROGRAM, 16 )
  	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM					)	// ROM
 	AM_RANGE(0x0f0000, 0x0fffff) AM_WRITE(MWA16_RAM) AM_BASE(				&megasys1_ram			)	// Work RAM + Spriteram
-	AM_RANGE(0x082000, 0x082fff) AM_WRITE(scudhamm_vregs_w) AM_BASE(			&megasys1_vregs			)	// Video Registers + RAM
-	AM_RANGE(0x0a0000, 0x0a3fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(	&megasys1_scrollram_0	)	// Scroll RAM 0
-	AM_RANGE(0x0b0000, 0x0b3fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(	&megasys1_scrollram_2	)	// Scroll RAM 2
+	AM_RANGE(0x082000, 0x082fff) AM_WRITE(scudhamm_vregs_w) AM_BASE(		&megasys1_vregs			)	// Video Registers + RAM
+	AM_RANGE(0x0a0000, 0x0a3fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(	&megasys1_scrollram[0]	)	// Scroll RAM 0
+	AM_RANGE(0x0b0000, 0x0b3fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(	&megasys1_scrollram[2]	)	// Scroll RAM 2
 	AM_RANGE(0x0b8000, 0x0bffff) AM_WRITE(scudhamm_paletteram16_w) AM_BASE(	&paletteram16			)	// Palette
  	AM_RANGE(0x100000, 0x100001) AM_WRITE(scudhamm_oki_bank_w		)	// Sound
  	AM_RANGE(0x100008, 0x100009) AM_WRITE(scudhamm_leds_w			)	// Leds

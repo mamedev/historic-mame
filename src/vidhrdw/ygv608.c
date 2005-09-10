@@ -44,6 +44,10 @@
 
 static YGV608 ygv608;
 
+static tilemap *tilemap_A_cache_8[3];
+static tilemap *tilemap_A_cache_16[3];
+static tilemap *tilemap_B_cache_8[3];
+static tilemap *tilemap_B_cache_16[3];
 static tilemap *tilemap_A = NULL;
 static tilemap *tilemap_B = NULL;
 static mame_bitmap *work_bitmap = NULL;
@@ -476,6 +480,23 @@ VIDEO_START( ygv608 )
 	ygv608.tilemap_resize = 1;
 	namcond1_gfxbank = 0;
 
+	/* create tilemaps of all sizes and combinations */
+	tilemap_A_cache_8[0] = tilemap_create(get_tile_info_A_8, get_tile_offset, TILEMAP_TRANSPARENT, 8,8, 32,32);
+	tilemap_A_cache_8[1] = tilemap_create(get_tile_info_A_8, get_tile_offset, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	tilemap_A_cache_8[2] = tilemap_create(get_tile_info_A_8, get_tile_offset, TILEMAP_TRANSPARENT, 8,8, 32,64);
+
+	tilemap_A_cache_16[0] = tilemap_create(get_tile_info_A_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 32,32);
+	tilemap_A_cache_16[1] = tilemap_create(get_tile_info_A_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 64,32);
+	tilemap_A_cache_16[2] = tilemap_create(get_tile_info_A_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 32,64);
+
+	tilemap_B_cache_8[0] = tilemap_create(get_tile_info_B_8, get_tile_offset, TILEMAP_TRANSPARENT, 8,8, 32,32);
+	tilemap_B_cache_8[1] = tilemap_create(get_tile_info_B_8, get_tile_offset, TILEMAP_TRANSPARENT, 8,8, 64,32);
+	tilemap_B_cache_8[2] = tilemap_create(get_tile_info_B_8, get_tile_offset, TILEMAP_TRANSPARENT, 8,8, 32,64);
+
+	tilemap_B_cache_16[0] = tilemap_create(get_tile_info_B_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 32,32);
+	tilemap_B_cache_16[1] = tilemap_create(get_tile_info_B_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 64,32);
+	tilemap_B_cache_16[2] = tilemap_create(get_tile_info_B_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 32,64);
+
 	return 0;
 }
 
@@ -731,47 +752,31 @@ VIDEO_UPDATE( ygv608 )
 
 	if( ygv608.tilemap_resize )
 	{
-		if (tilemap_A)
-		{
-			tilemap_dispose( tilemap_A );
-			tilemap_A = NULL;
-		}
+		int index;
+
+		/* based on the page sizes, pick an index */
+		if (ygv608.page_x == 64)
+			index = 1;
+		else if (ygv608.page_y == 64)
+			index = 2;
+		else
+			index = 0;
 
 		if ((ygv608.regs.s.r9 & r9_pts) == PTS_8X8 )
-			tilemap_A = tilemap_create( get_tile_info_A_8,
-										get_tile_offset,
-										TILEMAP_TRANSPARENT,
-										8, 8,
-										ygv608.page_x, ygv608.page_y );
+			tilemap_A = tilemap_A_cache_8[index];
 		else
-			tilemap_A = tilemap_create( get_tile_info_A_16,
-										get_tile_offset,
-										TILEMAP_TRANSPARENT,
-										16, 16,
-										ygv608.page_x, ygv608.page_y );
+			tilemap_A = tilemap_A_cache_16[index];
+		tilemap_mark_all_tiles_dirty(tilemap_A);
 
 		tilemap_set_transparent_pen( tilemap_A, 0 );
 		// for NCV1 it's sufficient to scroll only columns
 		tilemap_set_scroll_cols( tilemap_A, ygv608.page_x );
 
-		if( tilemap_B )
-		{
-			tilemap_dispose( tilemap_B );
-			tilemap_B = NULL;
-		}
-
 		if ((ygv608.regs.s.r9 & r9_pts) == PTS_8X8 )
-			tilemap_B = tilemap_create( get_tile_info_B_8,
-										get_tile_offset,
-										TILEMAP_OPAQUE,
-										8, 8,
-										ygv608.page_x, ygv608.page_y );
+			tilemap_B = tilemap_B_cache_8[index];
 		else
-			tilemap_B = tilemap_create( get_tile_info_B_16,
-										get_tile_offset,
-										TILEMAP_OPAQUE,
-										16, 16,
-										ygv608.page_x, ygv608.page_y );
+			tilemap_B = tilemap_B_cache_16[index];
+		tilemap_mark_all_tiles_dirty(tilemap_B);
 
 		// for NCV1 it's sufficient to scroll only columns
 		tilemap_set_scroll_cols( tilemap_B, ygv608.page_x );

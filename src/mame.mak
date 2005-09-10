@@ -306,6 +306,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/namcos21.o $(OBJ)/drivers/namcos21.o \
 	$(OBJ)/vidhrdw/namcos22.o $(OBJ)/drivers/namcos22.o \
 	$(OBJ)/drivers/namcos23.o \
+	$(OBJ)/sndhrdw/namcoc7x.o \
 
 $(OBJ)/univers.a: \
 	$(OBJ)/vidhrdw/cosmic.o $(OBJ)/drivers/cosmic.o \

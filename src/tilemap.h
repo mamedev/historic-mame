@@ -107,7 +107,6 @@ extern mame_bitmap *priority_bitmap;
 /* don't call these from drivers - they are called from mame.c */
 int tilemap_init( void );
 void tilemap_exit( void );
-void tilemap_dispose( tilemap *tmap );
 
 tilemap *tilemap_create(
 	void (*tile_get_info)( int memory_offset ),

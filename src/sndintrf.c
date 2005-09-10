@@ -1149,51 +1149,55 @@ void sound_frame_update(void)
 	memset(leftmix, 0, samples_this_frame * sizeof(*leftmix));
 	memset(rightmix, 0, samples_this_frame * sizeof(*rightmix));
 
-	/* force all the speaker streams to generate the proper number of samples */
-	for (spknum = 0; spknum < totalspeakers; spknum++)
+	/* if we're not paused, keep the sounds going */
+	if (!mame_is_paused())
 	{
-		speaker_info *spk = &speaker[spknum];
-		stream_sample_t *stream_buf;
-
-		/* get the output buffer */
-		if (spk->mixer_stream)
+		/* force all the speaker streams to generate the proper number of samples */
+		for (spknum = 0; spknum < totalspeakers; spknum++)
 		{
-			stream_buf = stream_consume_output(spk->mixer_stream, 0, samples_this_frame);
+			speaker_info *spk = &speaker[spknum];
+			stream_sample_t *stream_buf;
+
+			/* get the output buffer */
+			if (spk->mixer_stream)
+			{
+				stream_buf = stream_consume_output(spk->mixer_stream, 0, samples_this_frame);
 
 #ifdef MAME_DEBUG
-			/* debug version: keep track of the maximum sample */
-			for (sample = 0; sample < samples_this_frame; sample++)
-			{
-				if (stream_buf[sample] > spk->max_sample)
-					spk->max_sample = stream_buf[sample];
-				else if (-stream_buf[sample] > spk->max_sample)
-					spk->max_sample = -stream_buf[sample];
-				if (stream_buf[sample] > 32767 || stream_buf[sample] < -32768)
-					spk->clipped_samples++;
-				spk->total_samples++;
-			}
+				/* debug version: keep track of the maximum sample */
+				for (sample = 0; sample < samples_this_frame; sample++)
+				{
+					if (stream_buf[sample] > spk->max_sample)
+						spk->max_sample = stream_buf[sample];
+					else if (-stream_buf[sample] > spk->max_sample)
+						spk->max_sample = -stream_buf[sample];
+					if (stream_buf[sample] > 32767 || stream_buf[sample] < -32768)
+						spk->clipped_samples++;
+					spk->total_samples++;
+				}
 #endif
 
-			/* mix if sound is enabled */
-			if (global_sound_enabled && !nosound_mode)
-			{
-				/* if the speaker is centered, send to both left and right */
-				if (spk->speaker->x == 0)
-					for (sample = 0; sample < samples_this_frame; sample++)
-					{
-						leftmix[sample] += stream_buf[sample];
-						rightmix[sample] += stream_buf[sample];
-					}
+				/* mix if sound is enabled */
+				if (global_sound_enabled && !nosound_mode)
+				{
+					/* if the speaker is centered, send to both left and right */
+					if (spk->speaker->x == 0)
+						for (sample = 0; sample < samples_this_frame; sample++)
+						{
+							leftmix[sample] += stream_buf[sample];
+							rightmix[sample] += stream_buf[sample];
+						}
 
-				/* if the speaker is to the left, send only to the left */
-				else if (spk->speaker->x < 0)
-					for (sample = 0; sample < samples_this_frame; sample++)
-						leftmix[sample] += stream_buf[sample];
+					/* if the speaker is to the left, send only to the left */
+					else if (spk->speaker->x < 0)
+						for (sample = 0; sample < samples_this_frame; sample++)
+							leftmix[sample] += stream_buf[sample];
 
-				/* if the speaker is to the right, send only to the right */
-				else
-					for (sample = 0; sample < samples_this_frame; sample++)
-						rightmix[sample] += stream_buf[sample];
+					/* if the speaker is to the right, send only to the right */
+					else
+						for (sample = 0; sample < samples_this_frame; sample++)
+							rightmix[sample] += stream_buf[sample];
+				}
 			}
 		}
 	}
@@ -1220,7 +1224,7 @@ void sound_frame_update(void)
 		finalmix[sample*2+1] = samp;
 	}
 
-	if (wavfile)
+	if (wavfile && !mame_is_paused())
 		wav_add_data_16(wavfile, finalmix, samples_this_frame * 2);
 
 	/* play the result */
