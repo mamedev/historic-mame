@@ -115,50 +115,36 @@ int
 namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM )
 {
 	namco_zbuffer = auto_malloc( width*height*sizeof(*namco_zbuffer) );
-	if( namco_zbuffer )
-	{
-		if( pTilemapROM && pTextureROM )
-		{ /* following setup is Namco System 22 specific */
-			int i;
-			const UINT8 *pPackedTileAttr = 0x200000 + (UINT8 *)pTilemapROM;
-			UINT8 *pUnpackedTileAttr = auto_malloc(0x080000*2);
-			if( pUnpackedTileAttr )
-			{
-				InitXYAttrToPixel();
-				mpTextureTileMapAttr = pUnpackedTileAttr;
-				for( i=0; i<0x80000; i++ )
-				{
-					*pUnpackedTileAttr++ = (*pPackedTileAttr)>>4;
-					*pUnpackedTileAttr++ = (*pPackedTileAttr)&0xf;
-					pPackedTileAttr++;
-				}
 
-				mpTextureTileMap16 = pTilemapROM;
+	if( pTilemapROM && pTextureROM )
+	{ /* following setup is Namco System 22 specific */
+		int i;
+		const UINT8 *pPackedTileAttr = 0x200000 + (UINT8 *)pTilemapROM;
+		UINT8 *pUnpackedTileAttr = auto_malloc(0x080000*2);
 
-				#ifndef LSB_FIRST
-				/* if not little endian, byteswap each word */
-				{
-					unsigned i;
-					for( i=0; i<0x200000/2; i++ )
-					{
-						UINT16 data = mpTextureTileMap16[i];
-						mpTextureTileMap16[i] = (data>>8)|(data<<8);
-					}
-				}
-				#endif
-
-				mpTextureTileData = pTextureROM;
-				PatchTexture(); /* HACK! */
-			} /* pUnpackedTileAttr */
+		InitXYAttrToPixel();
+		mpTextureTileMapAttr = pUnpackedTileAttr;
+		for( i=0; i<0x80000; i++ )
+		{
+			*pUnpackedTileAttr++ = (*pPackedTileAttr)>>4;
+			*pUnpackedTileAttr++ = (*pPackedTileAttr)&0xf;
+			pPackedTileAttr++;
 		}
-		return 0;
+
+		mpTextureTileMap16 = pTilemapROM;
+
+		mpTextureTileData = pTextureROM;
+		PatchTexture(); /* HACK! */
 	}
-	return -1;
+	return 0;
 }
 
+static int bucket[4];
 void
 namcos3d_Start( mame_bitmap *pBitmap )
 {
+/*  ui_popup("%d %d %d %d", bucket[0], bucket[1], bucket[2], bucket[3]);*/
+	bucket[0] = bucket[1] = bucket[2] = bucket[3] = 0;
 	memset( namco_zbuffer, 0x7f, pBitmap->width*pBitmap->height*sizeof(*namco_zbuffer) );
 }
 
@@ -166,14 +152,14 @@ namcos3d_Start( mame_bitmap *pBitmap )
 
 typedef struct
 {
-	double x,y;
-	double u,v,i,z;
+	float x,y;
+	float u,v,i,z;
 } vertex;
 
 typedef struct
 {
-	double x;
-	double u,v,i,z;
+	float x;
+	float u,v,i,z;
 } edge;
 
 #define SWAP(A,B) { const void *temp = A; A = B; B = temp; }
@@ -181,7 +167,7 @@ typedef struct
 static unsigned mColor;
 static INT32 mZSort;
 
-static unsigned texel( unsigned x, unsigned y )
+INLINE unsigned texel( unsigned x, unsigned y )
 {
 	unsigned offs = ((y&0xfff0)<<4)|((x&0xff0)>>4);
 	unsigned tile = mpTextureTileMap16[offs];
@@ -196,7 +182,7 @@ typedef void drawscanline_t(
 	int sy );
 
 static void
-renderscanline_uvi( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy )
+renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy )
 {
 	if( e1->x > e2->x )
 	{
@@ -212,16 +198,18 @@ renderscanline_uvi( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, 
 		int w = x1-x0;
 		if( w )
 		{
-			double u = e1->u; /* u/z */
-			double v = e1->v; /* v/z */
-			double i = e1->i; /* i/z */
-			double z = e1->z; /* 1/z */
-			double du = (e2->u - e1->u)/w;
-			double dv = (e2->v - e1->v)/w;
-			double dz = (e2->z - e1->z)/w;
-			double di = (e2->i - e1->i)/w;
+			float u = e1->u; /* u/z */
+			float v = e1->v; /* v/z */
+			float i = e1->i; /* i/z */
+			float z = e1->z; /* 1/z */
+			float oow = 1.0f / w;
+			float du = (e2->u - e1->u)*oow;
+			float dv = (e2->v - e1->v)*oow;
+			float dz = (e2->z - e1->z)*oow;
+			float di = (e2->i - e1->i)*oow;
 			int x, crop;
 			int baseColor = mColor&0x7f00;
+			pen_t *pens = &Machine->pens[baseColor];
 
 			crop = clip->min_x - x0;
 			if( crop>0 )
@@ -241,11 +229,12 @@ renderscanline_uvi( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, 
 			{
 				if( mZSort<pZBuf[x] )
 				{
-					UINT32 color = Machine->pens[texel(u/z,v/z)|baseColor];
+					float ooz = 1.0f/z;
+					UINT32 color = pens[texel(u * ooz,v * ooz)];
+					int shade = i * ooz;
 					int r = color>>16;
 					int g = (color>>8)&0xff;
 					int b = color&0xff;
-					int shade = i/z;
 					r+=shade; if( r<0 ) r = 0; else if( r>0xff ) r = 0xff;
 					g+=shade; if( g<0 ) g = 0; else if( g>0xff ) g = 0xff;
 					b+=shade; if( b<0 ) b = 0; else if( b>0xff ) b = 0xff;
@@ -261,9 +250,206 @@ renderscanline_uvi( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, 
 	}
 }
 
+static void
+renderscanline_uvi_noshade( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy )
+{
+	if( e1->x > e2->x )
+	{
+		SWAP(e1,e2);
+	}
+
+	{
+		UINT32 *pDest = (UINT32 *)bitmap->line[sy];
+		INT32 *pZBuf = namco_zbuffer + bitmap->width*sy;
+
+		int x0 = (int)e1->x;
+		int x1 = (int)e2->x;
+		int w = x1-x0;
+		if( w )
+		{
+			float u = e1->u; /* u/z */
+			float v = e1->v; /* v/z */
+			float z = e1->z; /* 1/z */
+			float oow = 1.0f / w;
+			float du = (e2->u - e1->u)*oow;
+			float dv = (e2->v - e1->v)*oow;
+			float dz = (e2->z - e1->z)*oow;
+			int x, crop;
+			int baseColor = mColor&0x7f00;
+			pen_t *pens = &Machine->pens[baseColor];
+
+			crop = clip->min_x - x0;
+			if( crop>0 )
+			{
+				u += crop*du;
+				v += crop*dv;
+				z += crop*dz;
+				x0 = clip->min_x;
+			}
+			if( x1>clip->max_x )
+			{
+				x1 = clip->max_x;
+			}
+
+			for( x=x0; x<x1; x++ )
+			{
+				if( mZSort<pZBuf[x] )
+				{
+					float ooz = 1.0f/z;
+					pDest[x] = pens[texel(u * ooz,v * ooz)];
+					pZBuf[x] = mZSort;
+				}
+				u += du;
+				v += dv;
+				z += dz;
+			}
+		}
+	}
+}
+
+static void
+renderscanline_uvi_nopersp( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy )
+{
+	if( e1->x > e2->x )
+	{
+		SWAP(e1,e2);
+	}
+
+	{
+		UINT32 *pDest = (UINT32 *)bitmap->line[sy];
+		INT32 *pZBuf = namco_zbuffer + bitmap->width*sy;
+
+		int x0 = (int)e1->x;
+		int x1 = (int)e2->x;
+		int w = x1-x0;
+		if( w )
+		{
+			float ooz = 1.0f / e1->z;
+			UINT32 u = (UINT32)(e1->u * ooz * 4096.0f); /* u/z */
+			UINT32 v = (UINT32)(e1->v * ooz * 4096.0f); /* v/z */
+			INT32 i = (INT32)(e1->i * ooz * 4096.0f); /* i/z */
+			float oow = 1.0f / w;
+			INT32 du = (INT32)((e2->u - e1->u)*oow * ooz * 4096.0f);
+			INT32 dv = (INT32)((e2->v - e1->v)*oow * ooz * 4096.0f);
+			INT32 di = (INT32)((e2->i - e1->i)*oow * ooz * 4096.0f);
+			int x, crop;
+			int baseColor = mColor&0x7f00;
+			pen_t *pens = &Machine->pens[baseColor];
+
+			crop = clip->min_x - x0;
+			if( crop>0 )
+			{
+				u += crop*du;
+				v += crop*dv;
+				i += crop*di;
+				x0 = clip->min_x;
+			}
+			if( x1>clip->max_x )
+			{
+				x1 = clip->max_x;
+			}
+
+			for( x=x0; x<x1; x++ )
+			{
+				if( mZSort<pZBuf[x] )
+				{
+					UINT32 color = pens[texel(u >> 12,v >> 12)];
+					int r = color>>16;
+					int g = (color>>8)&0xff;
+					int b = color&0xff;
+					int shade = i>>12;
+					r+=shade; if( r<0 ) r = 0; else if( r>0xff ) r = 0xff;
+					g+=shade; if( g<0 ) g = 0; else if( g>0xff ) g = 0xff;
+					b+=shade; if( b<0 ) b = 0; else if( b>0xff ) b = 0xff;
+					pDest[x] = (r<<16)|(g<<8)|b;
+					pZBuf[x] = mZSort;
+				}
+				u += du;
+				v += dv;
+				i += di;
+			}
+		}
+	}
+}
+
+#if 0
+static void
+renderscanline_uvi_rand( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy )
+{
+	if( e1->x > e2->x )
+	{
+		SWAP(e1,e2);
+	}
+
+	{
+		UINT32 *pDest = (UINT32 *)bitmap->line[sy];
+		INT32 *pZBuf = namco_zbuffer + bitmap->width*sy;
+
+		int x0 = (int)e1->x;
+		int x1 = (int)e2->x;
+		int w = x1-x0;
+		if( w )
+		{
+			float u = e1->u; /* u/z */
+			float v = e1->v; /* v/z */
+			float i = e1->i; /* i/z */
+			float z = e1->z; /* 1/z */
+			float oow = 1.0f / w;
+			float du = (e2->u - e1->u)*oow;
+			float dv = (e2->v - e1->v)*oow;
+			float dz = (e2->z - e1->z)*oow;
+			float di = (e2->i - e1->i)*oow;
+			float ooz;//, uoz, voz, ioz;
+			int x, crop;
+			int baseColor = mColor&0x7f00;
+			pen_t *pens = &Machine->pens[baseColor];
+			UINT32 color;
+
+			crop = clip->min_x - x0;
+			if( crop>0 )
+			{
+				u += crop*du;
+				v += crop*dv;
+				i += crop*di;
+				z += crop*dz;
+				x0 = clip->min_x;
+			}
+			if( x1>clip->max_x )
+			{
+				x1 = clip->max_x;
+			}
+
+			for( x=x0; x<x1; x++ )
+			{
+				if( mZSort<pZBuf[x] )
+				{
+					int shade, r, g, b;
+
+					ooz = 1.0f/z;
+					color = pens[rand()];
+					shade = i * ooz;
+					r = color>>16;
+					g = (color>>8)&0xff;
+					b = color&0xff;
+					r+=shade; if( r<0 ) r = 0; else if( r>0xff ) r = 0xff;
+					g+=shade; if( g<0 ) g = 0; else if( g>0xff ) g = 0xff;
+					b+=shade; if( b<0 ) b = 0; else if( b>0xff ) b = 0xff;
+					pDest[x] = (r<<16)|(g<<8)|b;
+					pZBuf[x] = mZSort;
+				}
+				u += du;
+				v += dv;
+				i += di;
+				z += dz;
+			}
+		}
+	}
+}
+#endif
+
 /**
  * rendertri is a (temporary?) replacement for the scanline conversion that used to be done in poly.c
- * rendertri uses floating point arithmetic
+ * rendertri uses doubleing point arithmetic
  */
 static void
 rendertri(
@@ -271,10 +457,10 @@ rendertri(
 		const rectangle *clip,
 		const vertex *v0,
 		const vertex *v1,
-		const vertex *v2,
-		drawscanline_t pdraw )
+		const vertex *v2 )
 {
 	int dy,ystart,yend,crop;
+	drawscanline_t *pdraw;
 
 	/* first, sort so that v0->y <= v1->y <= v2->y */
 	for(;;)
@@ -302,17 +488,21 @@ rendertri(
 		edge e1; /* short edge (top and bottom) */
 		edge e2; /* long (common) edge */
 
-		double dx2dy = (v2->x - v0->x)/dy;
-		double du2dy = (v2->u - v0->u)/dy;
-		double dv2dy = (v2->v - v0->v)/dy;
-		double di2dy = (v2->i - v0->i)/dy;
-		double dz2dy = (v2->z - v0->z)/dy;
+		float oody = 1.0f / (float)dy;
 
-		double dx1dy;
-		double du1dy;
-		double dv1dy;
-		double di1dy;
-		double dz1dy;
+		float dx2dy = (v2->x - v0->x)*oody;
+		float du2dy = (v2->u - v0->u)*oody;
+		float dv2dy = (v2->v - v0->v)*oody;
+		float di2dy = (v2->i - v0->i)*oody;
+		float dz2dy = (v2->z - v0->z)*oody;
+
+		float dx1dy;
+		float du1dy;
+		float dv1dy;
+		float di1dy;
+		float dz1dy;
+
+		int temp;
 
 		e2.x = v0->x;
 		e2.u = v0->u;
@@ -332,6 +522,28 @@ rendertri(
 		ystart = v0->y;
 		yend = v1->y;
 		dy = yend-ystart;
+
+		/* skip shading if we don't need it */
+		/* to determine this, we compute the final shade value at each vertex; if they are all */
+		/* within the range -1..+1, we don't need to shade at all */
+		pdraw = renderscanline_uvi_full;
+		temp = (int)(v0->i / v0->z);
+		if (temp >= -1 && temp <= 1)
+		{
+			temp = (int)(v1->i / v1->z);
+			if (temp >= -1 && temp <= 1)
+			{
+				temp = (int)(v2->i / v2->z);
+				if (temp >= -1 && temp <= 1)
+				{
+					pdraw = renderscanline_uvi_noshade;
+					bucket[1]++;
+				}
+			}
+		}
+		if (pdraw == renderscanline_uvi_full)
+			bucket[0]++;
+
 		if( dy )
 		{
 			e1.x = v0->x;
@@ -340,11 +552,12 @@ rendertri(
 			e1.i = v0->i;
 			e1.z = v0->z;
 
-			dx1dy = (v1->x - v0->x)/dy;
-			du1dy = (v1->u - v0->u)/dy;
-			dv1dy = (v1->v - v0->v)/dy;
-			di1dy = (v1->i - v0->i)/dy;
-			dz1dy = (v1->z - v0->z)/dy;
+			oody = 1.0f / (float)dy;
+			dx1dy = (v1->x - v0->x)*oody;
+			du1dy = (v1->u - v0->u)*oody;
+			dv1dy = (v1->v - v0->v)*oody;
+			di1dy = (v1->i - v0->i)*oody;
+			dz1dy = (v1->z - v0->z)*oody;
 
 			crop = clip->min_y - ystart;
 			if( crop>0 )
@@ -357,6 +570,13 @@ rendertri(
 				ystart = clip->min_y;
 			}
 			if( yend>clip->max_y ) yend = clip->max_y;
+
+			/* optimization: look for cases where there is no effective perspective correction */
+			if (dz1dy == dz2dy && e1.z == e2.z)
+			{
+				pdraw = renderscanline_uvi_nopersp;
+				bucket[2]++;
+			}
 
 			for( y=ystart; y<yend; y++ )
 			{
@@ -387,11 +607,12 @@ rendertri(
 			e1.i = v1->i;
 			e1.z = v1->z;
 
-			dx1dy = (v2->x - v1->x)/dy;
-			du1dy = (v2->u - v1->u)/dy;
-			dv1dy = (v2->v - v1->v)/dy;
-			di1dy = (v2->i - v1->i)/dy;
-			dz1dy = (v2->z - v1->z)/dy;
+			oody = 1.0f / (float)dy;
+			dx1dy = (v2->x - v1->x)*oody;
+			du1dy = (v2->u - v1->u)*oody;
+			dv1dy = (v2->v - v1->v)*oody;
+			di1dy = (v2->i - v1->i)*oody;
+			dz1dy = (v2->z - v1->z)*oody;
 
 			crop = clip->min_y - ystart;
 			if( crop>0 )
@@ -404,6 +625,13 @@ rendertri(
 				ystart = clip->min_y;
 			}
 			if( yend>clip->max_y ) yend = clip->max_y;
+
+			/* optimization: look for cases where there is no effective perspective correction */
+			if (dz1dy == dz2dy && e1.z == e2.z)
+			{
+				pdraw = renderscanline_uvi_nopersp;
+				bucket[2]++;
+			}
 
 			for( y=ystart; y<yend; y++ )
 			{
@@ -451,14 +679,14 @@ BlitTriHelper(
 	ProjectPoint( v1,&b,camera );
 	ProjectPoint( v2,&c,camera );
 	mColor = color;
-	rendertri( pBitmap, &camera->clip, &a, &b, &c, renderscanline_uvi );
+	rendertri( pBitmap, &camera->clip, &a, &b, &c );
 }
 
-static double
-interp( double x0, double ns3d_y0, double x1, double ns3d_y1 )
+static float
+interp( float x0, float ns3d_y0, float x1, float ns3d_y1 )
 {
-	double m = (ns3d_y1-ns3d_y0)/(x1-x0);
-	double b = ns3d_y0 - m*x0;
+	float m = (ns3d_y1-ns3d_y0)/(x1-x0);
+	float b = ns3d_y0 - m*x0;
 	return m*MIN_Z+b;
 }
 

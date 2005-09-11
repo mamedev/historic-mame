@@ -36,7 +36,7 @@ static READ16_HANDLER( speedup_r )
 {
 	if ((activecpu_get_pc() == 0xc12d) && (!(su_82 & 0xff00)))
 	{
-		cpu_yielduntil_int();
+		cpu_spinuntil_int();
 	}
 
 	return su_82;

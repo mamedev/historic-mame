@@ -51,31 +51,6 @@ TCH-SS8.u39     "     |               A9B5h
 TCH-SS9.u34     "     /               AB2Bh
 
 
-*******************************************************************************
-
-Monters World, from TCH (Spain)
-
-Main CPU = Toshiba TMPZ84C00AP-6
-Sound CPU = GS Z8400A PS - Z80A
-OSC 12.000 MHz
-
-Sound chip = Oki M6295
-
-Graphics = TI 32005BWBL - TPC1020AFN-084C
-OSC 10.000 MHz
-
-ROMS
-
-mw-1.rom = ST M27C4001    = Main CPU program
-mw-2.rom = Intel D27256-1 = Sound CPU Program
-mw-3.rom = AMD AM27C040   = Oki samples
-mw-4.rom = ST M27C1001   \
-mw-5.rom = TI TMS27C010A  |
-mw-6.rom = ST M27C1001    | GFX
-mw-7.rom = ST M27C1001   /
-mw-8.rom = ST M27C1001 \
-mw-9.rom = ST M27C1001 / GFX
-
 ******************************************************************************/
 
 /* in vidhrdw */
@@ -121,14 +96,6 @@ static WRITE8_HANDLER(speedspn_banked_rom_change)
 	}
 
 	memory_set_bankptr(1,&rom[addr + 0x8000]);
-}
-
-static WRITE8_HANDLER(mstworld_banked_rom_change)
-{
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int addr = 0x10000 + ((data >> 2) & 0x1f) * 0x4000;
-
-	memory_set_bankptr(1,&rom[addr]);
 }
 
 /*** SOUND RELATED ***********************************************************/
@@ -188,20 +155,6 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x16, 0x16) AM_READ(speedspn_irq_ack_r) // @@@ could be watchdog, value is discarded
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( mstworld_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_ROM
-	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
-
-	AM_RANGE(0xc000, 0xc7ff) AM_RAM //AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)
-
-	AM_RANGE(0xf000, 0xffff) AM_RAM
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( mstworld_io_map, ADDRESS_SPACE_IO, 8 )
-ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) | AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(mstworld_banked_rom_change) // ?
-ADDRESS_MAP_END
 
 /* sound cpu */
 
@@ -381,27 +334,6 @@ static MACHINE_DRIVER_START( speedspn )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
-VIDEO_START( mstworld )
-{
-	return 0;
-}
-
-VIDEO_UPDATE( mstworld )
-{
-
-}
-static MACHINE_DRIVER_START( mstworld )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(speedspn)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(mstworld_map,0)
-	MDRV_CPU_IO_MAP(mstworld_io_map,0)
-
-	MDRV_VIDEO_START(mstworld)
-	MDRV_VIDEO_UPDATE(mstworld)
-MACHINE_DRIVER_END
-
 /*** ROM LOADING *************************************************************/
 
 ROM_START( speedspn )
@@ -439,44 +371,8 @@ ROM_START( speedspn )
 	ROM_LOAD( "tch-ss9.u34", 0x20000, 0x020000, CRC(c372f8ec) SHA1(514bef0859c0adfd9cdd22864230fc83e9b1962d) )
 ROM_END
 
-/* seems to be the same basic hardware, but the memory map and io map are different at least.. */
-ROM_START( mstworld )
-	ROM_REGION( 0x090000, REGION_CPU1, 0 )	/* CPU1 code */
-	/* mostly banked */
-	ROM_LOAD( "mw-1.rom", 0x00000, 0x008000, CRC(c4e51fb4) SHA1(60ad4ff2cec3a4d13b4aa0319dfcdab941404b1a) ) /* fixed code */
-	ROM_CONTINUE(         0x10000, 0x078000 ) /* banked data */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU2 code */
-	ROM_LOAD( "mw-2.rom", 0x00000, 0x08000, CRC(12c4fea9) SHA1(4616f2d70022abcf89f244f3f365b39b96973368) )
-
-	ROM_REGION( 0x080000, REGION_USER1, 0 )	/* Samples */
-	ROM_LOAD( "mw-3.rom", 0x00000, 0x080000, CRC(110c6a68) SHA1(915758cd467fbcdfa18ca99df036dca40dfc4649) )
-
-	/* $00000-$20000 stays the same in all sound banks, */
-	/* the second half of the bank is what gets switched */
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
-	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
-
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* GFX */
-	ROM_LOAD( "mw-4.rom", 0x00000, 0x020000, CRC(28a3af15) SHA1(99547966b2b5e06e097c55bbbb86a1c2809fa98c) )
-	ROM_LOAD( "mw-5.rom", 0x20000, 0x020000, CRC(ffdf7e9f) SHA1(b7732837cc5606d4a868eeaaff438b1a86bd72d7) )
-	ROM_LOAD( "mw-6.rom", 0x40000, 0x020000, CRC(1ed773a3) SHA1(0e8517a5c9bed57ecf3bb850152b8c1e1bd3faaa) )
-	ROM_LOAD( "mw-7.rom", 0x60000, 0x020000, CRC(8eb7525c) SHA1(9c3fa9373803e9534c1ad7063d660abe130f7b49) )
-
-	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* GFX */
-	ROM_LOAD( "mw-8.rom", 0x00000, 0x020000, CRC(b9b92a3c) SHA1(97191958a539c6f2eacb3956e8371acbaaa43795) )
-	ROM_LOAD( "mw-9.rom", 0x20000, 0x020000, CRC(75fc3375) SHA1(b2e7551bdbe2b0f1c28f6e912a8efaa5645b2ff5))
-ROM_END
 
 
 /*** GAME DRIVERS ************************************************************/
 
 GAMEX( 1994, speedspn, 0, speedspn, speedspn, 0, ROT180, "TCH", "Speed Spin", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 199?, mstworld, 0, mstworld, speedspn, 0, ROT180, "TCH", "Monster World", GAME_NOT_WORKING )

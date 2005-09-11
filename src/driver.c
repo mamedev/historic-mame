@@ -2030,6 +2030,7 @@ V-V                           TP-027
 	/* Cave games */
 	/* Cave was formed in 1994 from the ruins of Toaplan, like Raizing was. */
 	DRIVER( pwrinst2 )	/* (c) 1994 Atlus */
+	DRIVER( pwrins2j )	/* (c) 1994 Atlus */
 	DRIVER( mazinger )	/* (c) 1994 Banpresto (country is in EEPROM) */
 	DRIVER( donpachi )	/* (c) 1995 Atlus/Cave */
 	DRIVER( donpachj )	/* (c) 1995 Atlus/Cave */
@@ -4049,6 +4050,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( aliensj )	/* GX875 (c) 1990 (Japan) */
 	DRIVER( aliensj2 )	/* GX875 (c) 1990 (Japan) */
 	DRIVER( suratk )	/* GX911 (c) 1990 (World) */
+	DRIVER( suratka )	/* GX911 (c) 1990 (Asia) */
 	DRIVER( suratkj )	/* GX911 (c) 1990 (Japan) */
 	DRIVER( parodius )	/* GX955 (c) 1990 (World) */
 	DRIVER( parodisj )	/* GX955 (c) 1990 (Japan) */
@@ -6290,6 +6292,7 @@ Other Sun games
 	DRIVER( orld105k )	/* (c) 1997 */
 	DRIVER( drgw2 )		/* (c) 1997 */
 	DRIVER( drgw2c )	/* (c) 1997 */
+	DRIVER( drgw2j )	/* (c) 1997 */
 	DRIVER( drgw3 )		/* (c) 1998 */
 	DRIVER( drgw3k )	/* (c) 1998 */
 	DRIVER( kov )		/* (c) 1999 */
@@ -6647,7 +6650,7 @@ Other Sun games
 	DRIVER( suprgolf )	/* (c) 19?? Nasco */
 	DRIVER( hotblock )	/* (c) 1993 Nics? / Nix? */
 	DRIVER( pntnpuzl )	/* Century? */
-	DRIVER( trucocl )	/* (c) 1991 Caloi Miky SRL */
+	DRIVER( trucocl )	/* (c) 1991 Miky SRL */
 	DRIVER( ertictac )	/* (c) 1992 Sisteme */
 	DRIVER( ssfindo )	/* (c) 1999 Icarus */
 	DRIVER( monzagp )

@@ -2700,7 +2700,7 @@ ROM_START( airco22b )
 	ROM_LOAD( "acs1cg6.18d", 0x200000*0x6, 0x200000,CRC(ec71c8a3) SHA1(86892a91883d483ca0d422b78fa36042e02f3ad3) )
 	ROM_LOAD( "acs1cg7.19d", 0x200000*0x7, 0x200000,CRC(82271757) SHA1(023c935e78b14da310e4c29da8785b82aa3241ac) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "acs1ccrl.3d",	 0x000000, 0x200000,CRC(07088ba1) SHA1(a962c0821d5af28ed508cfdbd613675454e306e3) )
 	ROM_LOAD( "acs1ccrh.1d",	 0x200000, 0x080000,CRC(62936af6) SHA1(ca80b68415aa2cd2ce4e90404f10640d0ae38be9) )
 
@@ -2755,7 +2755,7 @@ ROM_START( alpinerc )
 	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,CRC(ca0b6d23) SHA1(df969e0eeec557a95584b06995b0d55f2c6ec70a) ) /* identical to "ar1cg6.18d" */
 	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ffb9f9f9) SHA1(2b8c75b580f77e887df7d50909a3a95cda570e20) ) /* identical to "ar1cg7.19d" */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,CRC(17387b2c) SHA1(dfd7cadaf97917347c0fa98f395364a543e49612) ) /* identical to "ar1ccrl.7b" */
 	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,CRC(ee7a4803) SHA1(8383c9a8ef5ed94df13446ca5cefa5f9e518f175) ) /* identical to "pr1ccrh.5b" */
 
@@ -2915,7 +2915,7 @@ ROM_START( alpinerd )
 	ROM_LOAD( "ar1cg6.18a",  0x200000*0x6, 0x200000,CRC(ca0b6d23) SHA1(df969e0eeec557a95584b06995b0d55f2c6ec70a) ) /* identical to "ar1cg6.18d" */
 	ROM_LOAD( "ar1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ffb9f9f9) SHA1(2b8c75b580f77e887df7d50909a3a95cda570e20) ) /* identical to "ar1cg7.19d" */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "ar1ccrl.3d",	 0x000000, 0x200000,CRC(17387b2c) SHA1(dfd7cadaf97917347c0fa98f395364a543e49612) ) /* identical to "ar1ccrl.7b" */
 	ROM_LOAD( "ar1ccrh.1d",	 0x200000, 0x080000,CRC(ee7a4803) SHA1(8383c9a8ef5ed94df13446ca5cefa5f9e518f175) ) /* identical to "pr1ccrh.5b" */
 
@@ -2964,7 +2964,7 @@ ROM_START( cybrcomm )
 	ROM_LOAD( "cyc1cg2.3a", 0x200000*0x6, 0x200000,CRC(7c464566) SHA1(69817ac3a7c6e43b960e8a904962b58b23417163) ) /* cyc1cg2.8a */
 	ROM_LOAD( "cyc1cg3.5a", 0x200000*0x7, 0x200000,CRC(2222e16f) SHA1(562bcd4d43b1543303d8fd66d9f0d9a8e3702492) ) /* cyc1cg3.9a */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 
 	//cyc1ccrl.1c FIXED BITS (xxxxxxxx11xxxxxx)
 	ROM_LOAD( "cyc1ccrl.1c",	 0x000000, 0x100000,CRC(1a0dc5f0) SHA1(bf0093d9cbdcb45a82705e966c48a1f408fa344e) ) /* cyc1ccrl.8c */
@@ -3021,7 +3021,7 @@ ROM_START( cybrcycc )
 	ROM_LOAD( "cb1cg5.16d",  0x200000*0x5, 0x200000,CRC(9ee610a1) SHA1(ebc7892b6a66461ca6b6b912a264da1594340b2d) ) /* identical to "cb1cg5.19b" */
 	ROM_LOAD( "cb1cg6.18a",  0x200000*0x6, 0x200000,CRC(ddc3b5cc) SHA1(34edffee9eb6fbf4a00fce0da34d9354b1a1155f) ) /* identical to "cb1cg6.18d" */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "cb1ccrl.3d",	 0x000000, 0x200000,CRC(2f171c48) SHA1(52b76213e37379b4a5cea7de40cf5396dc2998d8) ) /* identical to "cb1ccrl.7b" */
 	ROM_LOAD( "cb1ccrh.1d",	 0x200000, 0x080000,CRC(86124b93) SHA1(f2cfd726313cbeff162d402a15de2360377630e7) ) /* identical to "cb1ccrh.5b" */
 
@@ -3074,7 +3074,7 @@ ROM_START( propcycl )
 	ROM_LOAD( "pr1cg6.18a",  0x200000*0x6, 0x200000,CRC(3e081c03) SHA1(6ccb162952f6076359b2785b5d800b39a9a3c5ce) ) /* identical to "pr1cg6.18d" */
 	ROM_LOAD( "pr1cg7.15a",	 0x200000*0x7, 0x200000,CRC(ec9fc5c8) SHA1(16de614b26f06bbddae3ab56cebba45efd6fe81b) ) /* identical to "pr1cg7.19d" */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "pr1ccrl.3d",	 0x000000, 0x200000,CRC(e01321fd) SHA1(5938c6eff8e1b3642728c3be733f567a97cb5aad) ) /* identical to "pr1ccrl.7b" */
 	ROM_LOAD( "pr1ccrh.1d",	 0x200000, 0x080000,CRC(1d68bc31) SHA1(d534d0daebe7018e83b57cc7919c294ab89bddc8) ) /* identical to "pr1ccrh.5b" */
 	/* These two ROMs define a huge texture tilemap using the tiles from REGION_GFX2.
@@ -3131,7 +3131,7 @@ ROM_START( acedrvrw )
 	ROM_LOAD( "ad1cg2.3a", 0x200000*0x6, 0x200000,CRC(cdcd1874) SHA1(5a7a4a0d897cca4956b0a4f178f39f618c921861) )
 	ROM_LOAD( "ad1cg3.5a", 0x200000*0x7, 0x200000,CRC(effdd2cd) SHA1(9ff156e7e38c103b8fa6f3c29776dd38482d9cf2) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "ad1ccrl.1c", 0x000000, 0x200000,CRC(bc3c9b12) SHA1(088e861e5c4b37c54b7f72963113a10870bf7927) )
 	ROM_LOAD( "ad1ccrh.2c", 0x200000, 0x080000,CRC(71f44526) SHA1(bb4811fc5de626380ce6a17bee73e5e47926d850) )
 
@@ -3182,7 +3182,7 @@ ROM_START( victlapw )
 	ROM_LOAD( "adv1cg6.2k",  0x200000*0x6, 0x200000,CRC(94bdafba) SHA1(41e64fa99b342edd8b0ed95ae9869c23e03399e6) )
 	ROM_LOAD( "adv1cg7.1n",	 0x200000*0x7, 0x200000,CRC(18823475) SHA1(a3244d665b59c352593de21f5cb8d55ddf8cee5c) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "adv1ccrl.5a",	 0x000000, 0x200000,CRC(dd2b96ae) SHA1(6337ce17e617234c27ebad578ba82451649aad9c) ) /* ident to adv1ccrl.5l */
 	ROM_LOAD( "adv1ccrh.5c",	 0x200000, 0x080000,CRC(5719844a) SHA1(a17d7bc239235e9f566931ba4fee1d6ad7964d83) ) /* ident to adv1ccrh.5j */
 
@@ -3236,7 +3236,7 @@ ROM_START( raveracw )
 	ROM_LOAD( "rv1cg6.1k", 0x200000*0x6, 0x200000,CRC(8cddedc2) SHA1(e3993f5505bc7e61bec7be5b48c873572e1220f7) ) /* rv1cg6.2k */
 	ROM_LOAD( "rv1cg7.1n", 0x200000*0x7, 0x200000,CRC(b39147ca) SHA1(50ca6691fc809c95e6999dd52e39f2b8c2d22f3b) ) /* rv1cg7.2n */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rv1ccrl.5a",	 0x000000, 0x200000,CRC(bc634f72) SHA1(b5c504ed92bca7682614fc4c51f38cff607e6f2a) ) /* rv1ccrl.5l */
 	ROM_LOAD( "rv1ccrh.5c",	 0x200000, 0x080000,CRC(a741b262) SHA1(363076220a0eacc67befda05f8253963e8ffbcaa) ) /* rv1ccrh.5j */
 
@@ -3294,7 +3294,7 @@ ROM_START( raveracj )
 	ROM_LOAD( "rv1cg6.1k", 0x200000*0x6, 0x200000,CRC(8cddedc2) SHA1(e3993f5505bc7e61bec7be5b48c873572e1220f7) ) /* rv1cg6.2k */
 	ROM_LOAD( "rv1cg7.1n", 0x200000*0x7, 0x200000,CRC(b39147ca) SHA1(50ca6691fc809c95e6999dd52e39f2b8c2d22f3b) ) /* rv1cg7.2n */
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rv1ccrl.5a",	 0x000000, 0x200000,CRC(bc634f72) SHA1(b5c504ed92bca7682614fc4c51f38cff607e6f2a) ) /* rv1ccrl.5l */
 	ROM_LOAD( "rv1ccrh.5c",	 0x200000, 0x080000,CRC(a741b262) SHA1(363076220a0eacc67befda05f8253963e8ffbcaa) ) /* rv1ccrh.5j */
 
@@ -3348,7 +3348,7 @@ ROM_START( ridgera2 )
 	ROM_LOAD( "rrs1cg2.3a", 0x200000*0x6, 0x200000,CRC(00e9799d) SHA1(280184451138420f64080efe13e5e2795f7b61d4) )
 	ROM_LOAD( "rrs1cg3.5a", 0x200000*0x7, 0x200000,CRC(3858983f) SHA1(feda270b71f1310ecf4c17823bc8827ca2951b40) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rrs1ccrl.5a", 0x000000, 0x200000,CRC(304a8b57) SHA1(f4f3e7c194697d754375f36a0e41d0941fa5d225) )
 	ROM_LOAD( "rrs1ccrh.5c", 0x200000, 0x080000,CRC(bd3c86ab) SHA1(cd3a8774843c5864e651fa8989c80e2d975a13e8) )
 
@@ -3392,7 +3392,7 @@ ROM_START( ridger2a )
 	ROM_LOAD( "rrs1cg2.3a", 0x200000*0x6, 0x200000,CRC(00e9799d) SHA1(280184451138420f64080efe13e5e2795f7b61d4) )
 	ROM_LOAD( "rrs1cg3.5a", 0x200000*0x7, 0x200000,CRC(3858983f) SHA1(feda270b71f1310ecf4c17823bc8827ca2951b40) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rrs1ccrl.5a", 0x000000, 0x200000,CRC(304a8b57) SHA1(f4f3e7c194697d754375f36a0e41d0941fa5d225) )
 	ROM_LOAD( "rrs1ccrh.5c", 0x200000, 0x080000,CRC(bd3c86ab) SHA1(cd3a8774843c5864e651fa8989c80e2d975a13e8) )
 
@@ -3436,7 +3436,7 @@ ROM_START( ridger2b )
 	ROM_LOAD( "rrs1cg2.3a", 0x200000*0x6, 0x200000,CRC(00e9799d) SHA1(280184451138420f64080efe13e5e2795f7b61d4) )
 	ROM_LOAD( "rrs1cg3.5a", 0x200000*0x7, 0x200000,CRC(3858983f) SHA1(feda270b71f1310ecf4c17823bc8827ca2951b40) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rrs1ccrl.5a", 0x000000, 0x200000,CRC(304a8b57) SHA1(f4f3e7c194697d754375f36a0e41d0941fa5d225) )
 	ROM_LOAD( "rrs1ccrh.5c", 0x200000, 0x080000,CRC(bd3c86ab) SHA1(cd3a8774843c5864e651fa8989c80e2d975a13e8) )
 
@@ -3479,7 +3479,7 @@ ROM_START( ridgerac )
 	ROM_LOAD( "rr1cg2.bin", 0x200000*0x6, 0x200000, CRC(18e2d2bd) SHA1(69c2ea62eeb255f27d3c69373f6716b0a34683cc) )//,CRC(8f374c0a) SHA1(94ff8581de11a03ef86525155f8433bf5858b980) )
 	ROM_LOAD( "rr1cg3.bin", 0x200000*0x7, 0x200000, CRC(9564488b) SHA1(6b27d1aea75d6be747c62e165cfa49ecc5d9e767) )//,CRC(072a5c47) SHA1(86b8e973ae6b78197d685fe6d14722d8e2d0dfec) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rr1ccrl.bin",0x000000, 0x200000, CRC(6092d181) SHA1(52c0e3ac20aa23059a87d1a985d24ae641577310) )//,CRC(c15cb257) SHA1(0cb8f231c62ea37955be5d452a436a6e815af8e8) )
 	ROM_LOAD( "rr1ccrh.bin",0x200000, 0x080000, CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )//,CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )
 
@@ -3522,7 +3522,7 @@ ROM_START( ridgeraj )
 	ROM_LOAD( "rr1cg2.bin", 0x200000*0x6, 0x200000, CRC(18e2d2bd) SHA1(69c2ea62eeb255f27d3c69373f6716b0a34683cc) )//,CRC(8f374c0a) SHA1(94ff8581de11a03ef86525155f8433bf5858b980) )
 	ROM_LOAD( "rr1cg3.bin", 0x200000*0x7, 0x200000, CRC(9564488b) SHA1(6b27d1aea75d6be747c62e165cfa49ecc5d9e767) )//,CRC(072a5c47) SHA1(86b8e973ae6b78197d685fe6d14722d8e2d0dfec) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "rr1ccrl.bin",0x000000, 0x200000, CRC(6092d181) SHA1(52c0e3ac20aa23059a87d1a985d24ae641577310) )//,CRC(c15cb257) SHA1(0cb8f231c62ea37955be5d452a436a6e815af8e8) )
 	ROM_LOAD( "rr1ccrh.bin",0x200000, 0x080000, CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )//,CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )
 
@@ -3574,7 +3574,7 @@ ROM_START( timecris )
 	ROM_LOAD( "ts1cg5.16d",  0x200000*0x5, 0x200000,CRC(4cd9fd79) SHA1(0d2018ec914683a75bdec8655d678fd562eb6d15) )
 	ROM_LOAD( "ts1cg6.18d",  0x200000*0x6, 0x200000,CRC(f17f2ec9) SHA1(ed88ec524626e5bbe2e1ea6838412d3ac85671dd) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "ts1ccrl.3d",	 0x000000, 0x200000,CRC(56cad2df) SHA1(49c0e57d5cf5d5fc4c75da6969bec01d6d443259) )
 	ROM_LOAD( "ts1ccrh.1d",	 0x200000, 0x080000,CRC(a1cc3741) SHA1(7fe57924c42e287b134e5d7ad00cffdff1f18084) )
 
@@ -3625,7 +3625,7 @@ ROM_START( timecrsa )
 	ROM_LOAD( "ts1cg5.16d",  0x200000*0x5, 0x200000,CRC(4cd9fd79) SHA1(0d2018ec914683a75bdec8655d678fd562eb6d15) )
 	ROM_LOAD( "ts1cg6.18d",  0x200000*0x6, 0x200000,CRC(f17f2ec9) SHA1(ed88ec524626e5bbe2e1ea6838412d3ac85671dd) )
 
-	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
 	ROM_LOAD( "ts1ccrl.3d",	 0x000000, 0x200000,CRC(56cad2df) SHA1(49c0e57d5cf5d5fc4c75da6969bec01d6d443259) )
 	ROM_LOAD( "ts1ccrh.1d",	 0x200000, 0x080000,CRC(a1cc3741) SHA1(7fe57924c42e287b134e5d7ad00cffdff1f18084) )
 

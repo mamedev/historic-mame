@@ -3653,6 +3653,49 @@ ROM_START( pwrinst2 )
 	ROM_LOAD( "g02.u56", 0x240000, 0x200000, CRC(9ff50dda) SHA1(1121685e387c20e228032f2b0f5cbb606376fc15) )
 ROM_END
 
+ROM_START( pwrins2j )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "g02j.u45", 0x000000, 0x80000, CRC(42d0abd7) SHA1(c58861d43c4539ccc8b2f93eabc56aab37d3aa34))
+	ROM_LOAD16_BYTE( "g02j.u44", 0x000001, 0x80000, CRC(362b7af3) SHA1(2d15611530cef76f0f9c82ee0411966079ae19c3))
+	ROM_LOAD16_BYTE( "g02j.u43", 0x100000, 0x80000, CRC(c94c596b) SHA1(ee755a344f769e3ed05d8ca57f517b9e8c02f22e) )
+	ROM_LOAD16_BYTE( "g02j.u42", 0x100001, 0x80000, CRC(4f4c8270) SHA1(1fa964f5646bd1d078e3661c21e191b0789c05c9) )
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Z80 code */
+	ROM_LOAD( "g02j.u3a", 0x00000, 0x0c000, CRC(eead01f1) SHA1(0ced6755e471e0303fe397b3d54a5c799762ebd8) )
+	ROM_CONTINUE(        0x10000, 0x14000             )
+
+	ROM_REGION( 0xe00000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "g02.u61", 0x000000, 0x200000, CRC(91e30398) SHA1(2b59a5e40bed2a988382054fe30d92808dad3348) )
+	ROM_LOAD( "g02.u62", 0x200000, 0x200000, CRC(d9455dd7) SHA1(afa69fe9a540cd78b8cfecf09cffa1401c01141a) )
+	ROM_LOAD( "g02.u63", 0x400000, 0x200000, CRC(4d20560b) SHA1(ceaee8cf0b69cc366b95ddcb689a5594d79e5114) )
+	ROM_LOAD( "g02.u64", 0x600000, 0x200000, CRC(b17b9b6e) SHA1(fc6213d8322cda4c7f653e2d7d6d314ce84c97b7) )
+	ROM_LOAD( "g02.u65", 0x800000, 0x200000, CRC(08541878) SHA1(138cf077a49a26440a3da1bdc2c399a208359e57) )
+	ROM_LOAD( "g02.u66", 0xa00000, 0x200000, CRC(becf2a36) SHA1(f8b386d0292b1dc745b7253a3df51d1aa8d5e9db) )
+	ROM_LOAD( "g02.u67", 0xc00000, 0x200000, CRC(52fe2b8b) SHA1(dd50aa62f7db995e28f47de9b3fb749aeeaaa5b0) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "g02.u78", 0x000000, 0x200000, CRC(1eca63d2) SHA1(538942b43301f950e3d5139461331c54dc90129d) )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "g02.u81", 0x000000, 0x100000, CRC(8a3ff685) SHA1(4a59ec50ec4470453374fe10f76d3e894494b49f) )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "g02.u89", 0x000000, 0x100000, CRC(373e1f73) SHA1(ec1ae9fab37eee41be8e1bc6dad03809b62fdbce) )
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
+	ROM_LOAD( "g02j.82a", 0x000000, 0x080000, CRC(3be86fe1) SHA1(313bfe5fb8dc5fee4462db259738e079759f9390) )
+
+	ROM_REGION( 0x440000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u53", 0x040000, 0x200000, CRC(c4bdd9e0) SHA1(a938a831e789ddf6f3cc5f3e5f3877ec7bd62d4e) )
+	ROM_LOAD( "g02.u54", 0x240000, 0x200000, CRC(1357d50e) SHA1(433766177ce9d6933f90de85ba91bfc6d8d5d664) )
+
+	ROM_REGION( 0x440000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u55", 0x040000, 0x200000, CRC(2d102898) SHA1(bd81f4cd2ba100707db0c5bb1419f0b23c998574) )
+	ROM_LOAD( "g02.u56", 0x240000, 0x200000, CRC(9ff50dda) SHA1(1121685e387c20e228032f2b0f5cbb606376fc15) )
+ROM_END
+
 
 /***************************************************************************
 
@@ -4025,7 +4068,7 @@ DRIVER_INIT( metmqstr )
 }
 
 
-DRIVER_INIT( pwrinst2 )
+DRIVER_INIT( pwrins2j )
 {
 	unsigned char *buffer;
 	UINT8 *src = memory_region(REGION_GFX1);
@@ -4052,13 +4095,24 @@ DRIVER_INIT( pwrinst2 )
 	cave_kludge = 4;
 	time_vblank_irq = 2000;	/**/
 
+
+}
+
+DRIVER_INIT( pwrinst2 )
+{
+	/* this patch fixes on of the moves, why is it needed? is the rom bad or is there another
+       problem? does the Japan set need it or not? */
+	init_pwrins2j();
+
 #if 1		//ROM PATCH
 	{
 		UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 		rom[0xD46C/2] = 0xD482;			// kurara dash fix  0xd400 -> 0xd482
 	}
 #endif
+
 }
+
 
 DRIVER_INIT( sailormn )
 {
@@ -4122,6 +4176,7 @@ DRIVER_INIT( korokoro )
 ***************************************************************************/
 
 GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)" )
+GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (Japan)" )
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                               ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (US)"                            )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                         )

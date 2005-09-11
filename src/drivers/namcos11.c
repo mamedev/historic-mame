@@ -522,7 +522,7 @@ static WRITE32_HANDLER( sharedram_w )
 {
 	verboselog( 1, "sharedram_w( %08x, %08x, %08x )\n", ( offset * 4 ) + 0x4000, data, mem_mask );
 
-	if (offset < 0x10)
+	if (offset < 0xb0)
 	{
 		if (mem_mask == 0x0000ffff)
 		{

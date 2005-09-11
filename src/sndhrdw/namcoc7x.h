@@ -41,8 +41,8 @@ static struct C352interface namcoc7x_c352_interface =	\
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")	\
 	MDRV_SOUND_ADD(C352, clock)	\
 	MDRV_SOUND_CONFIG(namcoc7x_c352_interface)	\
-	MDRV_SOUND_ROUTE(0, "left", 1.00)	\
-	MDRV_SOUND_ROUTE(1, "right", 1.00)	\
-	MDRV_SOUND_ROUTE(2, "left", 1.00)	\
-	MDRV_SOUND_ROUTE(3, "right", 1.00)
+	MDRV_SOUND_ROUTE(0, "right", 1.00)	\
+	MDRV_SOUND_ROUTE(1, "left", 1.00)	\
+	MDRV_SOUND_ROUTE(2, "right", 1.00)	\
+	MDRV_SOUND_ROUTE(3, "left", 1.00)
 

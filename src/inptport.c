@@ -1971,7 +1971,7 @@ profiler_mark(PROFILER_END);
  *
  *************************************/
 
-static void update_playback_record(int portnum)
+static void update_playback_record(int portnum, UINT32 portvalue)
 {
 	/* handle playback */
 	if (playback != NULL)
@@ -1980,7 +1980,7 @@ static void update_playback_record(int portnum)
 
 		/* a successful read goes into the playback field which overrides everything else */
 		if (mame_fread(playback, &result, sizeof(result)) == sizeof(result))
-			port_info[portnum].playback = BIG_ENDIANIZE_INT32(result);
+			portvalue = port_info[portnum].playback = BIG_ENDIANIZE_INT32(result);
 
 		/* a failure causes us to close the playback file and stop playback */
 		else
@@ -1993,8 +1993,7 @@ static void update_playback_record(int portnum)
 	/* handle recording */
 	if (record != NULL)
 	{
-		UINT32 result = readinputport(portnum);
-		result = BIG_ENDIANIZE_INT32(result);
+		UINT32 result = BIG_ENDIANIZE_INT32(portvalue);
 
 		/* a successful write just works */
 		if (mame_fwrite(record, &result, sizeof(result)) == sizeof(result))
@@ -2151,7 +2150,15 @@ profiler_mark(PROFILER_INPUT);
 
 	/* handle playback/record */
 	for (portnum = 0; portnum < MAX_INPUT_PORTS; portnum++)
-		update_playback_record(portnum);
+	{
+		/* analog ports automatically update on every read */
+		if (port_info[portnum].analoginfo)
+			readinputport(portnum);
+
+		/* non-analog ports must be manually updated */
+		else
+			update_playback_record(portnum, readinputport(portnum));
+	}
 
 profiler_mark(PROFILER_END);
 }
@@ -2447,9 +2454,6 @@ profiler_mark(PROFILER_INPUT);
 			port_info[port].analog = (port_info[port].analog & ~info->port->mask) | ((value << info->shift) & info->port->mask);
 		}
 
-	/* handle playback/record scenarios */
-	update_playback_record(port);
-
 profiler_mark(PROFILER_END);
 }
 
@@ -2469,13 +2473,16 @@ UINT32 readinputport(int port)
 	/* interpolate analog values */
 	interpolate_analog_port(port);
 
-	/* if we're playing back, use the recorded value for inputs */
+	/* compute the current result: default value XOR the digital, merged with the analog */
+	result = ((portinfo->defvalue ^ portinfo->digital) & ~portinfo->analogmask) | portinfo->analog;
+
+	/* if we have analog data, update the recording state */
+	if (port_info[port].analoginfo)
+		update_playback_record(port, result);
+
+	/* if we're playing back, use the recorded value for inputs instead */
 	if (playback != NULL)
 		result = portinfo->playback;
-
-	/* otherwise, use the default value XOR the digital, merged with the analog */
-	else
-		result = ((portinfo->defvalue ^ portinfo->digital) & ~portinfo->analogmask) | portinfo->analog;
 
 	/* handle VBLANK bits after inputs */
 	if (portinfo->vblank)
