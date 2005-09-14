@@ -1,3 +1,60 @@
+0.100
+-----
+
+
+Source Changes
+--------------
+Fixed crash in some games when using a low sample rate or -nosound.
+[Aaron Giles]
+
+Fixes crashes in the following drivers: [Aaron Giles]
+ * Beat Head (video update)
+ * Hit Me (graphics decode)
+ * Imago (palette setup)
+ * Legend of Kage bootlegs (accessing invalid CPU)
+ * Rock Climber
+ * Speed Attack (palette out of range)
+
+TumblePop driver updates: [David Haywood]
+ * split driver into tumblep.c and tumbleb.c
+ * tumblep.c runs the original tumble pop sets and use now using 
+    deco16ic.c for the gfx.
+ * tumbleb.c runs the bootlegs and games which use hardware which works 
+    in a similar way to tumble pop (semicom titles etc.)
+
+Kludged around glitches in Monster World. [David Haywood]
+
+Cross Pang is now using the sprite draw copied from tumbleb.c instead as 
+the game also seems to be based around Tumble Pop designs, as a result the 
+'Alpha Blend' bit has been removed and replaced with a flicker sprite bit 
+like Tumble Pop which looks more correct to me.  Also changed some default 
+settings. [David Haywood]
+
+Corrected Indian Battle DIP switches. [ShimaPong]
+
+Updated D-Day DIP switches to use conditionals. [James Wallace]
+
+More Namco sound/MCU updates: [R. Belmont]
+ * Fixed analog controls for Ridge Racer and Rage Racer
+ * Fixed sound/music to play in System 22 games
+ * Fully share the sound part of the MCU RAM for System 11. This allows 
+    games to read back the song names and fixes the sound test menu in 
+    Tekken and Tekken 2.
+
+
+
+New clones added
+----------------
+G-LOC R360 [Craig Walker]
+
+
+
+New games marked as GAME_NOT_WORKING
+------------------------------------
+Rebus [David Haywood]
+
+
+
 0.99u10
 -------
 
@@ -231,11 +288,6 @@ New clones added
 Eliminator (2 Players, cocktail) [Mathis Rosenhauer]
 Eliminator (4 Players, prototype) [Mathis Rosenhauer]
 World Beach Volley (set 2) [Corrado Tomaselli]
-
-
-
-New games marked as GAME_NOT_WORKING
-------------------------------------
 
 
 
@@ -667,9 +719,9 @@ Champion Skill [Mirko Buffoni]
 Pontoon (Tehkan) [Zsolt Vasvari]
 Lovely Poker [Uki/El Condor]
 Golden Star [Mirko Buffoni]
-Jolly Card/Jolly Poker [Curt Coder, Peter Trauner]
-Inter Game Poker [Curt Coder, Peter Trauner]
-Magic Card II [Curt Coder, Peter Trauner]
+Jolly Card/Jolly Poker [Curt Coder, PeT]
+Inter Game Poker [Curt Coder, PeT]
+Magic Card II [Curt Coder, PeT]
 Zeroize (casette) [Juergen Buchmueller]
 Lucky Today [Curt Coder]
 Chewing Gum [Curt Coder]
@@ -773,8 +825,3 @@ Top Gunner [Mathis Rosenhauer]
 New clones added
 ----------------
 Omni [Pierpaolo Prazzoli]
-
-
-
-New games marked as GAME_NOT_WORKING
-------------------------------------

@@ -4058,7 +4058,7 @@ static MACHINE_DRIVER_START( rockclim )
 	MDRV_GFXDECODE(rockclim_gfxdecodeinfo)
 	/* video hardware */
 	MDRV_VIDEO_START(rockclim)
-	MDRV_PALETTE_LENGTH(64)
+	MDRV_PALETTE_LENGTH(64+64+2)	/* 64 colors only, but still uses bullets so we need to keep the palette big */
 	MDRV_COLORTABLE_LENGTH(64)
 	MDRV_PALETTE_INIT(rockclim)
 	MDRV_SCREEN_SIZE(64*8, 32*8)

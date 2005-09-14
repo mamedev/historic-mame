@@ -258,7 +258,7 @@ ADDRESS_MAP_END
 static gfx_layout hitme_charlayout =
 {
 	8,10,
-	RGN_FRAC(1,1),
+	RGN_FRAC(1,2),
 	1,
 	{ 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },

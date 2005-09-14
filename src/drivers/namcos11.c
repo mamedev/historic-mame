@@ -521,19 +521,6 @@ static READ32_HANDLER( keycus_c443_r )
 static WRITE32_HANDLER( sharedram_w )
 {
 	verboselog( 1, "sharedram_w( %08x, %08x, %08x )\n", ( offset * 4 ) + 0x4000, data, mem_mask );
-
-	if (offset < 0xb0)
-	{
-		if (mem_mask == 0x0000ffff)
-		{
-			namcoc7x_sound_write16((data>>16), (offset*2)+1);
-		}
-		else if (mem_mask == 0xffff0000)
-		{
-			namcoc7x_sound_write16((data&0xffff), (offset*2));
-		}
-	}
-
 	COMBINE_DATA( &namcos11_sharedram[ offset ] );
 }
 
@@ -773,6 +760,7 @@ static DRIVER_INIT( namcos11 )
 
 	psx_driver_init();
 	namcoc7x_on_driver_init();
+	namcoc7x_set_host_ram(namcos11_sharedram);
 
 	n_game = 0;
 	while( namcos11_config_table[ n_game ].s_name != NULL )
@@ -859,7 +847,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh100 )
 	MDRV_IMPORT_FROM( coh100ns )
-	NAMCO_C7X_MCU(16384000)
+	NAMCO_C7X_MCU_SHARED(16384000)
 	NAMCO_C7X_SOUND(16384000)
 MACHINE_DRIVER_END
 

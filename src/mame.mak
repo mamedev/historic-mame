@@ -586,6 +586,8 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/dassault.o $(OBJ)/drivers/dassault.o \
 	$(OBJ)/vidhrdw/rohga.o $(OBJ)/drivers/rohga.o \
 	$(OBJ)/vidhrdw/tumblep.o $(OBJ)/drivers/tumblep.o \
+	$(OBJ)/vidhrdw/tumbleb.o $(OBJ)/drivers/tumbleb.o \
+	$(OBJ)/vidhrdw/tumbleb.o $(OBJ)/drivers/tumbleb.o \
 	$(OBJ)/vidhrdw/lemmings.o $(OBJ)/drivers/lemmings.o \
 	$(OBJ)/vidhrdw/funkyjet.o $(OBJ)/drivers/funkyjet.o \
 	$(OBJ)/vidhrdw/deco32.o $(OBJ)/drivers/deco32.o \

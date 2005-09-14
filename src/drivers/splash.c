@@ -3,6 +3,7 @@
 Splash! (c) 1992 Gaelco
 Return of Ladyfrog (c) 1993 Microhard   (hack/bootleg of splash)
 Funny Strip (c)199? Microhard / MagicGames
+Rebus (c)1995 Microhard
 
 Driver by Manuel Abadia <manu@teleline.es>
 
@@ -27,6 +28,11 @@ BIOS-D
 
 note:
 Sound not working on Return of Lady Frog
+
+----
+
+Rebus seems to have some pretty nasty protection, I haven't yet managed to
+figure out what it involves
 
 ***************************************************************************/
 
@@ -635,6 +641,62 @@ ROM_START( roldfrga )
 	ROM_LOAD( "roldfrog.013",       0x60000, 0x20000, CRC(fad3e8be) SHA1(eccd7b1440d3a0d433c92ff33213326e0d57422a) )
 ROM_END
 
+/*
+Game    Rebus
+Anno    1995
+Produttore  Microhard
+
+CPU
+
+1x MC68000P12-2C91E-QQYS9247 (main)(u1)
+1x STZ8400BB1-Z80BCPU (sound)(u162)
+1x YAMAHA YM3812-9030EALB (sound)(u165)
+1x oscillator 24.000000MHz (osc1)
+1x oscillator 30.000MHz (osc2)
+
+ROMs
+
+1x S27C512 (sound)(1)
+6x M27C4001 (main)(2,3,4,5,6,7)
+1x M27C040Q (main)(8)
+1x AM27C040 (main)(9)
+2x D27C010 (gfx)(10,11)
+1x STM27C1001 (gfx)(12)
+1x AM27C010 (gfx)(13)
+
+Note
+
+6x MCM2018AN45 (ram)
+5x KM681000ALP (ram)
+1x HY18CV8S (PEEL)
+5x GAL16V8
+2x GAL16V8H
+1x PALCE20V8H
+001-937
+*/
+
+ROM_START( rebus )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "2.u16",	0x000000, 0x080000, CRC(7c8a717f) SHA1(00b1e7986046a7705fc65a5c7d4701a002b2ea6f) )
+	ROM_LOAD16_BYTE( "6.u12",	0x000001, 0x080000, CRC(8f73d548) SHA1(210d95dc0db41da3252a09e598719d98bca41983) )
+	ROM_LOAD16_BYTE( "3.u17",	0x100000, 0x080000, CRC(7495409b) SHA1(b4d75713d31c0b01d7cb7d50a2a89fb3ea4ea42b) )
+	ROM_LOAD16_BYTE( "7.u13",	0x100001, 0x080000, CRC(615bc4dc) SHA1(f1c8ee3eb8a48721f1f2e4f35fdc9bb0bb9d167b) )
+	ROM_LOAD16_BYTE( "4.u18",	0x200000, 0x080000, CRC(c27674fc) SHA1(06f3f1543331bd00f08cde51beb73934f2f1e6c8) )
+	ROM_LOAD16_BYTE( "8.u14",	0x200001, 0x080000, CRC(f0c04b7e) SHA1(92117b05666afa42d7669e5aa630e5143fac1d74) )
+	ROM_LOAD16_BYTE( "5.u19",	0x300000, 0x080000, CRC(2702f341) SHA1(de862cacbb3e8e322128315d87a22c7cdfe4fcb9) )
+	ROM_LOAD16_BYTE( "9.u15",	0x300001, 0x080000, CRC(f5ae3d73) SHA1(6a9d955023c704023b722cf863ba19ccb9b34ee1) )
+
+	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
+	ROM_LOAD( "1.u163", 0x00000, 0x10000,  CRC(88a7b1f8) SHA1(b34fa26dbc613bf3b525d19df90fa3ba4efb6e5d) )
+	ROM_RELOAD(               0x20000, 0x10000 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "10.u102",       0x00000, 0x20000, CRC(6f75a28b) SHA1(75f0bd6bd8c04ea9f832c22fbe1d17b0351f1102) )
+	ROM_LOAD( "11.u103",       0x20000, 0x20000, CRC(0af65b78) SHA1(9522ad17d26d866e5b11b4fec47781a00a297977) )
+	ROM_LOAD( "12.u104",       0x40000, 0x20000, CRC(3ed6ce19) SHA1(0d574071053157e4ef973a844795e48ec69dc7c4) )
+	ROM_LOAD( "13.u105",       0x60000, 0x20000, CRC(8b54553d) SHA1(5cb776e551527b0e717fe0d76296f5f895523de5) )
+ROM_END
+
 
 ROM_START( splash )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code + gfx */
@@ -795,6 +857,13 @@ DRIVER_INIT( roldfrog )
 	init_protection_data();
 }
 
+DRIVER_INIT( rebus )
+{
+	splash_bitmap_type = 1;
+//  init_protection_data();
+}
+
+
 DRIVER_INIT( funystrp )
 {
 	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
@@ -811,5 +880,7 @@ GAME( 1992, paintlad, splash,   splash, splash, splash, ROT0, "Gaelco",    "Pain
 
 GAMEX(1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
 GAMEX(1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )
+
+GAMEX(1995, rebus, 0,        roldfrog, splash, rebus, ROT0, "Microhard", "Rebus", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
 
 GAMEX(199?, funystrp, 0,        funystrp, funystrp, funystrp, ROT0, "Microhard / MagicGames",    "Funny Strip",GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )

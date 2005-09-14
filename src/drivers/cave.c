@@ -4176,7 +4176,7 @@ DRIVER_INIT( korokoro )
 ***************************************************************************/
 
 GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)" )
-GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (Japan)" )
+GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku 2 (Japan)" )
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                               ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (US)"                            )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                         )

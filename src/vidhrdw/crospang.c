@@ -3,6 +3,12 @@
   Cross Pang
   video hardware emulation
 
+ -- this seems to be the same as the tumblepop bootleg based hardware
+    in tumbleb.c
+
+ previously the driver used alpha, now we do a flicker effect like
+ tumblep.c instead..  I think the flicker effect is more correct
+
 */
 
 #include "driver.h"
@@ -82,56 +88,66 @@ static void get_fg_tile_info(int tile_index)
 
 */
 
-static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
+/* jumpkids / tumbleb.c! */
+static void crospang_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
-	int offs,fx,fy,x,y,color,sprite,attr,dy,ay,flag;
+	int offs;
+	int flipscreen = 0;
 
-	for (offs = 0; offs < spriteram_size/2; offs += 4)
+	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
-		y = spriteram16[offs+0];
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
+
+		sprite = spriteram16[offs+1] & 0x7fff;
+		if (!sprite) continue;
+
+		y = spriteram16[offs];
+		flash=y&0x1000;
+		if (flash && (cpu_getcurrentframe() & 1)) continue;
+
 		x = spriteram16[offs+2];
-		sprite = spriteram16[offs+1];
-		attr = spriteram16[offs+3];
+		colour = (x >>9) & 0xf;
 
-		fy = 0;
+		fx = y & 0x2000;
+		fy = y & 0x4000;
+		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
 
-		dy = 1 << ((y & 0x0600) >> 9);
+		x = x & 0x01ff;
+		y = y & 0x01ff;
+		if (x >= 320) x -= 512;
+		if (y >= 256) y -= 512;
+		y = 240 - y;
+        x = 304 - x;
 
-		color = (x & 0x1e00) >> 9;
-		fx = (y & 0x8000) >> 15;
-
-		if (y & 0x1000)
-			flag = TRANSPARENCY_ALPHA;
+	//  sprite &= ~multi; /* Todo:  I bet TumblePop bootleg doesn't do this either */
+		if (fy)
+			inc = -1;
 		else
-			flag = TRANSPARENCY_PEN;
-
-		x &= 0x1ff;
-		y &= 0x1ff;
-
-		if (x & 0x100)
 		{
-			x -= 0x200;
-
-			if(x < -32)
-				x += 512;
+			sprite += multi;
+			inc = 1;
 		}
 
-		if (y & 0x100)
-			y -= 0x200;
+		if (flipscreen)
+		{
+			y=240-y;
+			x=304-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
 
-		x -= 44;
-		y += 8;
-
-		sprite &= 0x3fff;
-
-		y += dy*16;
-
-		for (ay=0; ay<dy; ay++)
+		while (multi >= 0)
 		{
 			drawgfx(bitmap,Machine->gfx[0],
-				sprite++,
-				color,(1-fx),fy,0x100-x, (0x100-(y - ay * 16)),
-				cliprect,flag,0);
+					sprite - multi * inc,
+					colour,
+					fx,fy,
+					x-4,y-7 + mult * multi,
+					cliprect,TRANSPARENCY_PEN,0);
+
+			multi--;
 		}
 	}
 }
@@ -146,7 +162,7 @@ VIDEO_START( crospang )
 
 	tilemap_set_transparent_pen(fg_layer,0);
 
-	alpha_set_level(0x80);
+//  alpha_set_level(0x80);
 
 	return 0;
 }
@@ -155,5 +171,5 @@ VIDEO_UPDATE( crospang )
 {
 	tilemap_draw(bitmap,cliprect,bg_layer,0,0);
 	tilemap_draw(bitmap,cliprect,fg_layer,0,0);
-	draw_sprites(bitmap,cliprect);
+	crospang_drawsprites(bitmap,cliprect);
 }

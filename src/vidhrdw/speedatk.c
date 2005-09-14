@@ -98,6 +98,8 @@ static void get_tile_info(int tile_index)
 	color += 2;
 	if(region)
 		color += 0x10;
+	if (region == 1)
+		color &= 0x1f;
 
 	SET_TILE_INFO(region, code, color, 0)
 }

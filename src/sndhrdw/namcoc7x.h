@@ -14,12 +14,14 @@
 #include "cpu/m37710/m37710.h"
 
 ADDRESS_MAP_EXTERN(namcoc7x_mcu_map);
+ADDRESS_MAP_EXTERN(namcoc7x_mcu_share_map);
 ADDRESS_MAP_EXTERN(namcoc7x_mcu_io);
 
 INTERRUPT_GEN( namcoc7x_interrupt );
 
 void namcoc7x_sound_write16(UINT16 command, UINT32 offset);
 void namcoc7x_on_driver_init(void);
+void namcoc7x_set_host_ram(UINT32 *hostram);
 
 #define NAMCO_C7X_HARDWARE	\
 static struct C352interface namcoc7x_c352_interface =	\
@@ -34,6 +36,12 @@ static struct C352interface namcoc7x_c352_interface =	\
 #define NAMCO_C7X_MCU(clock)	\
 	MDRV_CPU_ADD_TAG("mcu", M37710, clock)	\
 	MDRV_CPU_PROGRAM_MAP(namcoc7x_mcu_map, 0)	\
+	MDRV_CPU_IO_MAP(namcoc7x_mcu_io, 0)	\
+	MDRV_CPU_VBLANK_INT(namcoc7x_interrupt, 2)
+
+#define NAMCO_C7X_MCU_SHARED(clock)	\
+	MDRV_CPU_ADD_TAG("mcu", M37710, clock)	\
+	MDRV_CPU_PROGRAM_MAP(namcoc7x_mcu_share_map, 0)	\
 	MDRV_CPU_IO_MAP(namcoc7x_mcu_io, 0)	\
 	MDRV_CPU_VBLANK_INT(namcoc7x_interrupt, 2)
 

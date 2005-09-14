@@ -34,6 +34,10 @@
  *      - text layer row placement may be incorrect (emulated Prop Cycle differs from real game)
  *      - text layer can be scrolled (not yet hooked up)
  *
+ * Steer center values: Ridge Racer = 0x960
+ *                      Rave Racer  = 0x20;
+ *
+ *
  * Output Devices
  *      - Prop Cycle fan
  *      - lamps/LEDs on some cabinets
@@ -238,6 +242,14 @@ nthbyte( const UINT32 *pSource, int offs )
 static void
 ReadAnalogDrivingPorts( UINT16 *gas, UINT16 *brake, UINT16 *steer )
 {
+	*gas   = readinputport(2);
+	*brake = readinputport(3);
+	*steer = readinputport(4);
+}
+
+static void
+ReadAnalogDrivingPorts2( UINT16 *gas, UINT16 *brake, UINT16 *steer )
+{
 	*gas   = readinputport(2)*0xf00/0xff + 0x8000;
 	*brake = readinputport(3)*0xf00/0xff + 0x8000;
 	*steer = (readinputport(4)-0x80)*0xf00/0x7f + 0x8000;
@@ -310,6 +322,39 @@ HandleDrivingIO( void )
 		UINT16 flags = readinputport(1);
 		UINT16 gas,brake,steer;
 		ReadAnalogDrivingPorts( &gas, &brake, &steer );
+
+		switch (namcos22_gametype)
+		{
+			case NAMCOS22_RIDGE_RACER:
+			case NAMCOS22_RIDGE_RACER2:
+				gas <<= 3;
+				gas += 884;
+				brake <<= 3;
+				brake += 809;
+				steer <<= 4;
+				steer += 0x160;
+				break;
+
+			case NAMCOS22_RAVE_RACER:
+			case NAMCOS22_ACE_DRIVER:
+			case NAMCOS22_CYBER_COMMANDO:
+			case NAMCOS22_VICTORY_LAP:
+				gas <<= 3;
+				gas += 992;
+				brake <<= 3;
+				brake += 3008;
+				steer <<= 4;
+				steer += 32;
+				break;
+
+			default:
+				gas <<= 3;
+				brake <<= 3;
+				steer <<= 4;
+				break;
+		}
+
+
 		namcos22_shareram[0x000/4] = 0x10<<16; /* SUB CPU ready */
 		namcos22_shareram[0x030/4] = (flags<<16)|steer;
 		namcos22_shareram[0x034/4] = (gas<<16)|brake;
@@ -1711,8 +1756,9 @@ static READ32_HANDLER( namcos22_mcuram_r )
 
 static WRITE32_HANDLER( namcos22_mcuram_w )
 {
-	if ((namcos22_usec7x) && (offset < 0x10))
+	if ((namcos22_usec7x) && (offset >= 0x400) && (offset < 0x4c0))
 	{
+		offset -= 0x400;
 		if (mem_mask == 0x0000ffff)
 		{
 			namcoc7x_sound_write16((data>>16), offset*2);
@@ -2163,7 +2209,7 @@ static READ8_HANDLER( cybrcycc_mcu_adc_r )
 {
 	UINT16 gas,brake,st2;
 	static int steer = 0xc0;
-	ReadAnalogDrivingPorts( &gas, &brake, &st2 );
+	ReadAnalogDrivingPorts2( &gas, &brake, &st2 );
 
 	gas = readinputport(2)<<2;
 	brake = readinputport(3)<<2;
@@ -4488,16 +4534,16 @@ DRIVER_INIT( timecris )
 
 /*     YEAR, NAME,    PARENT,    MACHINE,   INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,                                    FLAGS */
 /* System22 games */
-GAMEX( 1995, cybrcomm, 0,        namcos22,  cybrcomm, cybrcomm, ROT0, "Namco", "Cyber Commando (Rev. CY1, Japan)"          , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1995, raveracw, 0,        namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV2, World)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, raveracj, raveracw, namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV1, Japan)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, ridgerac, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR2, World)"             , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
-GAMEX( 1993, ridgeraj, ridgerac, namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
-GAMEX( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, cybrcomm, 0,        namcos22,  cybrcomm, cybrcomm, ROT0, "Namco", "Cyber Commando (Rev. CY1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAMEX( 1995, raveracw, 0,        namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV2, World)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1995, raveracj, raveracw, namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV1, Japan)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, ridgerac, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR2, World)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
+GAMEX( 1993, ridgeraj, ridgerac, namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
+GAMEX( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1994, acedrvrw, 0,        namcos22ns,acedrvr,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
 
 /* Super System22 games */
 GAMEX( 1995, airco22b, 0,        namcos22s, airco22,  airco22,  ROT0, "Namco", "Air Combat 22 (Rev. ACS1 Ver.B)"           , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* reboots itself */

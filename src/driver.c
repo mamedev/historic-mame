@@ -3182,6 +3182,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( gforce2 )
 	DRIVER( gforce2j )
 	DRIVER( gloc )
+	DRIVER( r360 )
 	DRIVER( strkfgtr )
 	DRIVER( pdrift )
 	DRIVER( pdriftj )
@@ -3772,8 +3773,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* MAO ?? */
 	DRIVER( tumblep )	/* MAP (c) 1991 Data East Corporation (World) */
 	DRIVER( tumblepj )	/* MAP (c) 1991 Data East Corporation (Japan) */
-	DRIVER( tumblepb )	/* bootleg */
-	DRIVER( tumblep2 )	/* bootleg */
+	DRIVER( tumbleb )	/* bootleg */
+	DRIVER( tumbleb2 )	/* bootleg */
 	DRIVER( jumpkids )	/* (c) 1993 Comad */
 	DRIVER( jumppop )	/* (c) 2001 ESD */
 	DRIVER( fncywld )	/* (c) 1996 Unico */
@@ -5767,6 +5768,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( paintlad )	/* (c) 1992 - ver 1.3 */
 	DRIVER( roldfrog )	/* not a gaelco game but based on splash code */
 	DRIVER( roldfrga )	/* not a gaelco game but based on splash code */
+	DRIVER( rebus )		/* not a gaelco game but on similar hw to splash */
 	DRIVER( funystrp )	/* not a gaelco game but on similar hw to splash */
 	DRIVER( thoop )		/* (c) 1992 - Ref 922804/1 */
 	DRIVER( squash )	/* (c) 1992 - Ref 922804/2 */

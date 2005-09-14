@@ -651,10 +651,11 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
+/* this layout is bad and reads way beyond the end of the array */
 static gfx_layout cntsteer_charlayout =
 {
 	8,8,	/* 8*8 characters */
-	RGN_FRAC(1,1),
+	RGN_FRAC(1,2),
 	2,	/* 2 bits per pixel */
 	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0, 1, 2, 3, 0x800*8+0, 0x800*8+1, 0x800*8+2, 0x800*8+3 },
@@ -662,10 +663,11 @@ static gfx_layout cntsteer_charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
+/* this layout is bad and reads way beyond the end of the array */
 static gfx_layout zerotrgt_charlayout =
 {
 	8,8,
-	RGN_FRAC(1,1),
+	RGN_FRAC(1,2),
 	2,
 	{ 4,0 },
 	{ 0, 1, 2, 3, 1024*8*8+0, 1024*8*8+1, 1024*8*8+2, 1024*8*8+3 },
@@ -688,7 +690,7 @@ static gfx_layout sprites =
 static gfx_layout tilelayout =
 {
 	16,16,
-	0x400,
+	0x200,
 	3,	/* 3 bits per pixel */
 	{ RGN_FRAC(4,8)+4, 0, 4 },
 	{ 3, 2, 1, 0, 11, 10, 9 , 8, 19, 18, 17,16, 27, 26, 25, 24 },

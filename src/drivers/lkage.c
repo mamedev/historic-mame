@@ -559,5 +559,5 @@ DRIVER_INIT( lkageb )
 
 GAME( 1984, lkage,   0,     lkage,  lkage, 0,       ROT0, "Taito Corporation", "The Legend of Kage" )
 GAME( 1984, lkageb,  lkage, lkageb, lkage, lkageb,  ROT0, "bootleg", "The Legend of Kage (bootleg set 1)" )
-GAME( 1984, lkageb2, lkage, lkageb, lkage, 0,       ROT0, "bootleg", "The Legend of Kage (bootleg set 2)" )
-GAME( 1984, lkageb3, lkage, lkageb, lkage, 0,       ROT0, "bootleg", "The Legend of Kage (bootleg set 3)" )
+GAME( 1984, lkageb2, lkage, lkageb, lkage, lkageb,  ROT0, "bootleg", "The Legend of Kage (bootleg set 2)" )
+GAME( 1984, lkageb3, lkage, lkageb, lkage, lkageb,  ROT0, "bootleg", "The Legend of Kage (bootleg set 3)" )
