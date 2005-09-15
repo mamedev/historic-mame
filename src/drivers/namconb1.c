@@ -697,7 +697,7 @@ WRITE32_HANDLER( srand_w )
 
 static WRITE32_HANDLER( sharedram_w )
 {
-	if (offset < 0x10)
+	if (offset < 0xb0)
 	{
 		if (mem_mask == 0x0000ffff)
 		{

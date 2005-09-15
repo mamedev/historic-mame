@@ -48,12 +48,13 @@ Stephh's notes (hyperpac):
 
 todo:
 
-make the originals work.
-they're probably all this hardware or a varation on it, they don't work
-(most point the interrupt vectors directly at a small area of ram which I'd
-guess is shared with the Philips 87c52 mcu, more more plus doesn't point the
-vectors there but does have a jump there in the code). See hyperpac for an
-example, the protection data for that game was extracted from the bootleg.
+Notes:
+
+Cookie & Bibi 3
+This game is quite buggy.  The test mode is incomplete and displays garbage
+on the 'Dipswitch settings' screens, and during some of the attract mode
+scenes the credit counter is not updated when you insert coins until the next
+scene.  Both these bugs are verified as occuring on the original hardware.
 
 ***************************************************************************/
 
@@ -1478,10 +1479,11 @@ ROM_START( cookbib3 )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
-	ROM_REGION( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
-	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , NO_DUMP )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(c819b9a8) SHA1(1d425e8c9940c0e691149e5406dd71808bd73832) )
+	/* the 'empty' pattern continued after 0x200 but the game doesn't use it or attempt to decrypt it */
 
 	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "u14.bin", 0x00000, 0x20000, CRC(e5bf9288) SHA1(12fb9542f9105fe1a21a74a08cda4d6372b984ee) )
@@ -2005,6 +2007,17 @@ static DRIVER_INIT( 3in1semi )
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200001, 0, 0, _3in1_read );
 }
 
+static READ16_HANDLER( cookbib3_read )
+{
+	return 0x2a2a;
+}
+
+static DRIVER_INIT( cookbib3 )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200001, 0, 0, cookbib3_read );
+}
+
+
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
@@ -2014,8 +2027,8 @@ GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Win
 
 GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
 GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
-GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 2" )
-GAMEX(1997, cookbib3, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie and Bibi 3",GAME_NOT_WORKING )
+GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie & Bibi 2" )
+GAME( 1997, cookbib3, 0,        semiprot, cookbib2, cookbib3, ROT0, "SemiCom", "Cookie & Bibi 3" )
 GAME( 1997, 3in1semi, 0,        semiprot, moremore, 3in1semi, ROT0, "SemiCom", "XESS - The New Revolution (SemiCom 3-in-1)" )
 GAME( 1997, twinkle,  0,        semiprot, moremore, 0,        ROT0, "SemiCom", "Twinkle" )
 GAME( 1999, moremore, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More" )

@@ -1261,6 +1261,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/pipeline.o \
 	$(OBJ)/drivers/wink.o \
 	$(OBJ)/drivers/fortecar.o \
+	$(OBJ)/drivers/coinmstr.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

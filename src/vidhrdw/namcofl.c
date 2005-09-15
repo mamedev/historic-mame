@@ -10,6 +10,8 @@ UINT32 *namcofl_spritebank32;
 //UINT32 *namcofl_tilebank32;
 UINT32 *namcofl_mcuram;
 
+static UINT32 namcofl_sprbank;
+
 /* nth_word32 is a general-purpose utility function, which allows us to
  * read from 32-bit aligned memory as if it were an array of 16 bit words.
  */
@@ -78,93 +80,55 @@ namcofl_install_palette( void )
 /**
  * MCU simulation.  It manages coinage and input ports.
  */
+
+static UINT8 credits1, credits2;
+	static int old_coin_state;
+
 static void
 handle_mcu( void )
-{
-#if 0	// phil's mcu simulation from NB-1/2
-	static int toggle;
-	static UINT16 credits;
-	static int old_coin_state;
-	static int old_p1;
-	static int old_p2;
-	static int old_p3;
-	static int old_p4;
-	int new_coin_state = readinputport(0)&0x3; /* coin1,2 */
-	unsigned dsw = readinputport(1)<<16;
-	unsigned p1 = readinputport(2);
-	unsigned p2 = readinputport(3);
-	unsigned p3;
-	unsigned p4;
-	toggle = !toggle;
-	if( toggle ) dsw &= ~(0x80<<16);
-	p3 = 0;
-	p4 = 0;
-
-	p1 = (p1&(~old_p1))|(p1<<8);
-	p2 = (p2&(~old_p2))|(p2<<8);
-	p3 = (p3&(~old_p3))|(p3<<8);
-	p4 = (p4&(~old_p4))|(p4<<8);
-
-	old_p1 = p1;
-	old_p2 = p2;
-	old_p3 = p3;
-	old_p4 = p4;
-
-	namcofl_mcuram[0xa000/4] = dsw|p1;
-	namcofl_mcuram[0xa004/4] = (p2<<16)|p3;
-	namcofl_mcuram[0xa008/4] = p4<<16;
-
-	if( new_coin_state && !old_coin_state )
 	{
-		credits++;
-	}
-	old_coin_state = new_coin_state;
-	namcofl_mcuram[0xa01e/4] &= 0xffff0000;
-	namcofl_mcuram[0xa01e/4] |= credits;
-#else	// ElSemi's MCU simulation
 	UINT8 *IORAM = (UINT8 *)namcofl_mcuram;
 	static int toggle;
-	static int old_p1;
-	static int old_p2;
-	static int old_p3;
-	static int old_p4;
+	int new_coin_state = readinputport(3)&0x30;
 	unsigned p1 = readinputport(0);
 	unsigned p2 = readinputport(2);
 	unsigned p3 = readinputport(1);
 	unsigned p4 = readinputport(3);
 
-	// debounce the inputs for the test menu
-	p1 = (p1&(~old_p1))|(p1<<8);
-	p2 = (p2&(~old_p2))|(p2<<8);
-	p3 = (p3&(~old_p3))|(p3<<8);
-	p4 = (p4&(~old_p4))|(p4<<8);
+	IORAM[BYTE4_XOR_LE(0x6000)] = p1;
+	IORAM[BYTE4_XOR_LE(0x6003)] = p2;
+	IORAM[BYTE4_XOR_LE(0x6005)] = p3;
+	IORAM[BYTE4_XOR_LE(0x60b8)] = p4;
 
-	old_p1 = p1;
-	old_p2 = p2;
-	old_p3 = p3;
-	old_p4 = p4;
+	IORAM[BYTE4_XOR_LE(0x6014)] = readinputport(6)-1;	// handle
+	IORAM[BYTE4_XOR_LE(0x6016)] = readinputport(5);	// brake
+	IORAM[BYTE4_XOR_LE(0x6018)] = readinputport(4);	// accelerator
 
-	IORAM[BYTE4_XOR_LE(0xA000)] = p1;
-	IORAM[BYTE4_XOR_LE(0xA003)] = p2;
-	IORAM[BYTE4_XOR_LE(0xA005)] = p3;
-	IORAM[BYTE4_XOR_LE(0xA0b8)] = p4;
+	if (!(new_coin_state & 0x20) && (old_coin_state & 0x20))
+	{
+		credits1++;
+	}
 
-	IORAM[BYTE4_XOR_LE(0xA014)] = 0;	// analog
-	IORAM[BYTE4_XOR_LE(0xA016)] = 0;	// analog
-	IORAM[BYTE4_XOR_LE(0xA018)] = 0;	// analog
+	if (!(new_coin_state & 0x10) && (old_coin_state & 0x10))
+	{
+		credits2++;
+	}
 
-	IORAM[BYTE4_XOR_LE(0xA009)] = 0;
+	old_coin_state = new_coin_state;
+	IORAM[BYTE4_XOR_LE(0x601e)] = credits1;
+	IORAM[BYTE4_XOR_LE(0x6020)] = credits2;
+
+	IORAM[BYTE4_XOR_LE(0x6009)] = 0;
 
 	toggle ^= 1;
 	if (toggle)
 	{	// final lap
-		IORAM[BYTE4_XOR_LE(0xA000)]|=0x80;
+		IORAM[BYTE4_XOR_LE(0x6000)]|=0x80;
 	}
 	else
 	{	// speed racer
-		IORAM[BYTE4_XOR_LE(0xA000)]&=0x7f;
+		IORAM[BYTE4_XOR_LE(0x6000)]&=0x7f;
 	}
-#endif
 } /* handle_mcu */
 
 INLINE void
@@ -187,19 +151,34 @@ VIDEO_UPDATE( namcofl )
 	for( pri=0; pri<16; pri++ )
 	{
 		namco_roz_draw( bitmap,cliprect,pri );
-		namco_tilemap_draw( bitmap, cliprect, pri );
+		if((pri&1)==0)
+			namco_tilemap_draw( bitmap, cliprect, pri>>1 );
 		namco_obj_draw( bitmap, cliprect, pri );
 	}
 
 } /* namcofl_vh_screenrefresh */
 
+// NOTE : The two low bits toggle banks (code + 0x4000) for two
+//        groups of sprites.  I am unsure how to differentiate those groups
+//        at this time however.
+
+WRITE32_HANDLER(namcofl_spritebank_w)
+{
+	COMBINE_DATA(&namcofl_sprbank);
+}
+
 static int FLobjcode2tile( int code )
 {
+	if ((code & 0x2000) && (namcofl_sprbank & 2)) { code += 0x4000; }
+
 	return code;
 }
 
 VIDEO_START( namcofl )
 {
+	credits1 = credits2 = 0;
+	old_coin_state = readinputport(3)&0x30;
+
 	if( namco_tilemap_init( NAMCONB1_TILEGFX, memory_region(NAMCONB1_TILEMASKREGION), TilemapCB ) == 0 )
 	{
 		namco_obj_init(NAMCONB1_SPRITEGFX,0x0,FLobjcode2tile);

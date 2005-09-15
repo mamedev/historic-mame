@@ -3,6 +3,18 @@
     Preliminary driver by R. Belmont
     Thanks to ElSemi for some hardware info
 
+    IMPORTANT
+    ---------
+    To calibrate the steering, do the following:
+    1) Delete the .nv file
+    2) Start the game.  Speed Racer will guide you through the calibration
+       (the "jump button" is the same as player 1 start).
+       For Final Lap R, hold down service (9) and tap test (F2).  If you do
+       not get an "initializing" message followed by the input test, keep doing
+       it until you do.
+    3) Exit MAME and restart the game, it's now calibrated.
+
+
 PCB Layout
 ----------
 
@@ -118,15 +130,14 @@ OSC3: 48.384MHz
 #include "namcos2.h"
 #include "namcoic.h"
 #include "cpu/i960/i960.h"
+#include "sndhrdw/namcoc7x.h"
 
 VIDEO_START( namcofl );
 VIDEO_UPDATE( namcofl );
-//WRITE32_HANDLER( namcofl_videoram_w );
 
 extern UINT32 *namcofl_spritebank32;
-//extern UINT32 *namcofl_tilebank32;
-//extern UINT32 *namcofl_scrollram32;
 extern UINT32 *namcofl_mcuram;
+extern WRITE32_HANDLER(namcofl_spritebank_w);
 
 static UINT32 *namcofl_workram;
 
@@ -167,8 +178,8 @@ static ADDRESS_MAP_START( sysfl_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x10000000, 0x100fffff) AM_READWRITE(MRA32_BANK2, MWA32_BANK2)
 	AM_RANGE(0x20000000, 0x201fffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* data */
 	AM_RANGE(0x30000000, 0x30001fff) AM_RAM	AM_BASE((UINT32 **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* nvram */
-	AM_RANGE(0x30100000, 0x30100003) AM_WRITENOP	/* watchdog? */
-	AM_RANGE(0x30280000, 0x3028ffff) AM_RAM	AM_BASE(&namcofl_mcuram) /* shared RAM with C75 MCU */
+	AM_RANGE(0x30100000, 0x30100003) AM_WRITE(namcofl_spritebank_w)
+	AM_RANGE(0x30284000, 0x3028bfff) AM_RAM	AM_BASE(&namcofl_mcuram) /* shared RAM with C75 MCU */
 	AM_RANGE(0x30300000, 0x30303fff) AM_RAM /* COMRAM */
 	AM_RANGE(0x30380000, 0x303800ff) AM_READ( fl_network_r )	/* network registers */
 	AM_RANGE(0x30400000, 0x3040ffff) AM_RAM AM_BASE(&paletteram32)
@@ -186,7 +197,7 @@ INPUT_PORTS_START( sysfl )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -198,9 +209,9 @@ INPUT_PORTS_START( sysfl )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )	// button C
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )	// button A
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 )	// button B
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 
 	PORT_START
@@ -208,7 +219,7 @@ INPUT_PORTS_START( sysfl )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 )	// shift
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_TOGGLE	// shifter
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -218,10 +229,19 @@ INPUT_PORTS_START( sysfl )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL2 ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 INPUT_PORTS_END
 
 static gfx_layout obj_layout =
@@ -295,23 +315,23 @@ static INTERRUPT_GEN(namcofl_interrupt)
 	}
 }
 
+NAMCO_C7X_HARDWARE
+
 static MACHINE_DRIVER_START( sysfl )
 	MDRV_CPU_ADD(I960, 20000000)	// i80960KA-20 == 20 MHz part
 	MDRV_CPU_PROGRAM_MAP(sysfl_mem, 0)
 	MDRV_CPU_VBLANK_INT(namcofl_interrupt,3)
+
+	NAMCO_C7X_MCU_SHARED( 16384000 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
-// correct size
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK/* | VIDEO_RGB_DIRECT*/)
 	MDRV_SCREEN_SIZE(NAMCONB1_COLS*8, NAMCONB1_ROWS*8) /* 288x224 pixels */
 	MDRV_VISIBLE_AREA(0*8, NAMCONB1_COLS*8-1, 0*8, NAMCONB1_ROWS*8-1)
-// for debugger
-//  MDRV_SCREEN_SIZE(96*8, 64*8)
-//  MDRV_VISIBLE_AREA(0, 96*8-1, 0, 64*8-1)
 	MDRV_PALETTE_LENGTH(8192)
 
 	MDRV_GFXDECODE(gfxdecodeinfo2)
@@ -319,6 +339,7 @@ static MACHINE_DRIVER_START( sysfl )
 	MDRV_VIDEO_START(namcofl)
 	MDRV_VIDEO_UPDATE(namcofl)
 
+	NAMCO_C7X_SOUND( 16384000 )
 MACHINE_DRIVER_END
 
 ROM_START( speedrcr )
@@ -343,10 +364,10 @@ ROM_START( speedrcr )
 	ROM_LOAD("se1_sch3.18p",   0x300000, 0x100000, CRC(f817027a) SHA1(71745476f496c60d89c8563b3e46bc85eebc79ce) )
 
 	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, 0 )	// OBJ
-	ROM_LOAD16_BYTE("se1obj0l.ic1", 0x400001, 0x200000, CRC(17585218) SHA1(3332afa9bd194ac37b8d6f352507c523a0f2e2b3) )
-	ROM_LOAD16_BYTE("se1obj0u.ic2", 0x400000, 0x200000, CRC(d14b1236) SHA1(e5447732ef3acec88fb7a00e0deca3e71a40ae65) )
-	ROM_LOAD16_BYTE("se1obj1l.ic3", 0x000001, 0x200000, CRC(c4809fd5) SHA1(e0b80fccc17c83fb9d08f7f1cf2cd2f0f3a510b4) )
-	ROM_LOAD16_BYTE("se1obj1u.ic4", 0x000000, 0x200000, CRC(0beefa56) SHA1(012fb7b330dbf851ab2217da0a0e7136ddc3d23f) )
+	ROM_LOAD16_BYTE("se1obj0l.ic1", 0x000001, 0x200000, CRC(17585218) SHA1(3332afa9bd194ac37b8d6f352507c523a0f2e2b3) )
+	ROM_LOAD16_BYTE("se1obj0u.ic2", 0x000000, 0x200000, CRC(d14b1236) SHA1(e5447732ef3acec88fb7a00e0deca3e71a40ae65) )
+	ROM_LOAD16_BYTE("se1obj1l.ic3", 0x400001, 0x200000, CRC(c4809fd5) SHA1(e0b80fccc17c83fb9d08f7f1cf2cd2f0f3a510b4) )
+	ROM_LOAD16_BYTE("se1obj1u.ic4", 0x400000, 0x200000, CRC(0beefa56) SHA1(012fb7b330dbf851ab2217da0a0e7136ddc3d23f) )
 
 	ROM_REGION( 0x100000, NAMCONB1_ROTMASKREGION, 0 ) // "RSHAPE" (roz mask like NB-1?)
 	ROM_LOAD("se1_rsh.14k",    0x000000, 0x100000, CRC(7aa5a962) SHA1(ff936dfcfcc4ee1f5f2232df62def76ff99e671e) )
@@ -355,7 +376,10 @@ ROM_START( speedrcr )
 	ROM_LOAD("se1_ssh.18u",    0x000000, 0x100000, CRC(7a8e0bda) SHA1(f6a508d90274d0205fec0c46f5f783a2715c0c6e) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) // Sound data for M37702 MCU
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD("se1_spr.21l",   0x000000,  0x80000, CRC(850a27ac) SHA1(7d5db840ec67659a1f2e69a62cdb03ce6ee0b47b) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) // Samples
 	ROM_LOAD("se1_voi.23s",   0x000000, 0x400000, CRC(b95e2ffb) SHA1(7669232d772caa9afa4c7593d018e8b6e534114a) )
@@ -379,10 +403,10 @@ ROM_START( finalapr )
 	ROM_LOAD("flr1sch3.18p",   0x300000, 0x100000, CRC(50a14f54) SHA1(ab9c2f2e11f006a9dc7e5aedd5788d7d67166d36) )
 
 	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, 0 )	// OBJ
-	ROM_LOAD16_BYTE("flr1obj0l.ic1", 0x400001, 0x200000, CRC(364a902c) SHA1(4a1ea48eee86d410e36096cc100b4c9a5a645034) )
-	ROM_LOAD16_BYTE("flr1obj0u.ic2", 0x400000, 0x200000, CRC(a5c7b80e) SHA1(4e0e863cfdd8c051c3c4594bb21e11fb93c28f0c) )
-	ROM_LOAD16_BYTE("flr1obj1l.ic3", 0x000001, 0x200000, CRC(51fd8de7) SHA1(b1571c45e8c33d746716fd790c704a3361d02bdc) )
-	ROM_LOAD16_BYTE("flr1obj1u.ic4", 0x000000, 0x200000, CRC(1737aa3c) SHA1(8eaf0dc5d60a270d2c1626f54f5edbddbb0a59c8) )
+	ROM_LOAD16_BYTE("flr1obj0l.ic1", 0x000001, 0x200000, CRC(364a902c) SHA1(4a1ea48eee86d410e36096cc100b4c9a5a645034) )
+	ROM_LOAD16_BYTE("flr1obj0u.ic2", 0x000000, 0x200000, CRC(a5c7b80e) SHA1(4e0e863cfdd8c051c3c4594bb21e11fb93c28f0c) )
+	ROM_LOAD16_BYTE("flr1obj1l.ic3", 0x400001, 0x200000, CRC(51fd8de7) SHA1(b1571c45e8c33d746716fd790c704a3361d02bdc) )
+	ROM_LOAD16_BYTE("flr1obj1u.ic4", 0x400000, 0x200000, CRC(1737aa3c) SHA1(8eaf0dc5d60a270d2c1626f54f5edbddbb0a59c8) )
 
 	ROM_REGION( 0x80000, NAMCONB1_ROTMASKREGION, 0 ) // "RSHAPE" (roz mask like NB-1?)
 	ROM_LOAD("flr1rsh.14k",    0x000000, 0x080000, CRC(037c0983) SHA1(c48574a8ad125cedfaf2538c5ff824e121204629) )
@@ -391,7 +415,10 @@ ROM_START( finalapr )
 	ROM_LOAD("flr1ssh.18u",    0x000000, 0x080000, CRC(f70cb2bf) SHA1(dbddda822287783a43415172b81d0382a8ac43d8) )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) // Sound data for M37702 MCU
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD("flr1spr.21l",   0x000000,  0x20000, CRC(69bb0f5e) SHA1(6831d618de42a165e508ad37db594d3aa290c530) )
+	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) // Samples
 	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
@@ -403,6 +430,9 @@ static void namcofl_common_init(void)
 
 	memory_set_bankptr( 1, memory_region(REGION_CPU1) );
 	memory_set_bankptr( 2, namcofl_workram );
+
+	namcoc7x_on_driver_init();
+	namcoc7x_set_host_ram(namcofl_mcuram);
 }
 
 static DRIVER_INIT(speedrcr)
@@ -417,5 +447,5 @@ static DRIVER_INIT(finalapr)
 	namcos2_gametype = NAMCOFL_FINAL_LAP_R;
 }
 
-GAMEX( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

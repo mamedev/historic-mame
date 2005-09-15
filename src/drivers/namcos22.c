@@ -15,6 +15,8 @@
  *
  *      - Ridge Racer - bad initialization; splash screen missing without patch
  *
+ *      - Ridge Racer 2 - passes POST but doesn't seem to want to go on
+ *
  *      - Cyber Commando - crashes after title screen in attract mode due to humongous invalid polygon.
  *                                 gameplay appears OK whoever.
  *
@@ -26,20 +28,14 @@
  *      - sprite problems in Alpine Racer, Cyber Cycles. Air Combat22
  *
  * Input
- *      - coinage handling (through MCU) doesn't work in all games [use service key to add credits]
- *      - input ports are not yet mapped correctly for all games
  *      - input ports require manual calibration through built-in diagnostics (or canned EEPROM)
  *      - new input port type needed for bicycle pedal speed
  *      - new input port needed for multi-value stick shift
  *      - text layer row placement may be incorrect (emulated Prop Cycle differs from real game)
  *      - text layer can be scrolled (not yet hooked up)
  *
- * Steer center values: Ridge Racer = 0x960
- *                      Rave Racer  = 0x20;
- *
- *
  * Output Devices
- *      - Prop Cycle fan
+ *      - Prop Cycle fan (outputs noted at the right MCU port)
  *      - lamps/LEDs on some cabinets
  *      - time crisis has force feedback for the guns
  *
@@ -63,8 +59,7 @@
  *          The master contrast fader at 0x90020000 also can be fed such a strong power used for white-out.
  *
  * Sound:
- *      - Communications between the MCU and 68020 are now partially implemented, but mysteries
- *        remain, especially w.r.t. the analog input ports.
+ *      - We don't yet have the proper BIOS for System 22.
  *
  * Link
  *      - SCI (link) feature is not yet hooked up
@@ -200,9 +195,6 @@
 
 #define SS22_MASTER_CLOCK (49152000)	/* info from Guru */
 
-// enables HLE of M37710 subcpu (37710 still runs)
-#define FAKE_SUBCPU (1)
-
 extern int debug_key_pressed;
 
 enum namcos22_gametype namcos22_gametype; /* used for game-specific hacks */
@@ -213,10 +205,10 @@ static UINT32 *namcos22_shareram;
 static UINT32 *namcos22_system_controller;
 static UINT32 *namcos22_nvmem;
 static size_t namcos22_nvmem_size;
-static UINT8 namcos22_credits;
 static UINT16 mMasterBIOZ;
 static UINT32 *mpPointRAM;
 static UINT32 namcos22_usec7x = 0;
+static UINT32 old_coin_state, credits1, credits2;
 
 /**
  * helper function used to read a byte from a chunk of 32 bit memory
@@ -245,22 +237,6 @@ ReadAnalogDrivingPorts( UINT16 *gas, UINT16 *brake, UINT16 *steer )
 	*gas   = readinputport(2);
 	*brake = readinputport(3);
 	*steer = readinputport(4);
-}
-
-static void
-ReadAnalogDrivingPorts2( UINT16 *gas, UINT16 *brake, UINT16 *steer )
-{
-	*gas   = readinputport(2)*0xf00/0xff + 0x8000;
-	*brake = readinputport(3)*0xf00/0xff + 0x8000;
-	*steer = (readinputport(4)-0x80)*0xf00/0x7f + 0x8000;
-}
-
-static void
-ReadAnalogDrivingPortsMCU( UINT16 *gas, UINT16 *brake, UINT16 *steer )
-{
-	*gas   = readinputport(2)<<2;
-	*brake = readinputport(3)<<2;
-	*steer = ((readinputport(4)-0x80)*0xf00/0x7f + 0x8000)>>6;
 }
 
 static UINT16
@@ -293,7 +269,7 @@ AnalogAsDigital( void )
 
 	case NAMCOS22_VICTORY_LAP:
 	case NAMCOS22_ACE_DRIVER:
-		if( gas==0xff )
+		if( gas > 0xf0 )
 		{
 			result ^= 0x0001; /* CHOOSE */
 		}
@@ -314,6 +290,33 @@ AnalogAsDigital( void )
 	return result;
 } /* AnalogAsDigital */
 
+static void HandleCoinage(int slots)
+{
+	UINT16 *share16 = (UINT16 *)namcos22_shareram;
+	UINT32 coin_state;
+
+	coin_state = readinputport(1) & 0x1200;
+
+	if (!(coin_state & 0x1000) && (old_coin_state & 0x1000))
+	{
+		credits1++;
+	}
+
+	if (!(coin_state & 0x0200) && (old_coin_state & 0x0200))
+	{
+		credits2++;
+	}
+
+	old_coin_state = coin_state;
+
+	share16[BYTE_XOR_LE(0x38/2)] = credits1;
+
+	if (slots == 2)
+	{
+		share16[BYTE_XOR_LE(0x3e/2)] = credits2;
+	}
+}
+
 static void
 HandleDrivingIO( void )
 {
@@ -322,6 +325,8 @@ HandleDrivingIO( void )
 		UINT16 flags = readinputport(1);
 		UINT16 gas,brake,steer;
 		ReadAnalogDrivingPorts( &gas, &brake, &steer );
+
+		HandleCoinage(2);
 
 		switch (namcos22_gametype)
 		{
@@ -336,9 +341,6 @@ HandleDrivingIO( void )
 				break;
 
 			case NAMCOS22_RAVE_RACER:
-			case NAMCOS22_ACE_DRIVER:
-			case NAMCOS22_CYBER_COMMANDO:
-			case NAMCOS22_VICTORY_LAP:
 				gas <<= 3;
 				gas += 992;
 				brake <<= 3;
@@ -347,13 +349,22 @@ HandleDrivingIO( void )
 				steer += 32;
 				break;
 
+			case NAMCOS22_ACE_DRIVER:
+			case NAMCOS22_VICTORY_LAP:
+				gas <<= 3;
+				gas += 992;
+				brake <<= 3;
+				brake += 3008;
+				steer <<= 4;
+				steer += 2048;
+				break;
+
 			default:
 				gas <<= 3;
 				brake <<= 3;
 				steer <<= 4;
 				break;
 		}
-
 
 		namcos22_shareram[0x000/4] = 0x10<<16; /* SUB CPU ready */
 		namcos22_shareram[0x030/4] = (flags<<16)|steer;
@@ -376,6 +387,8 @@ HandleCyberCommandoIO( void )
 		namcos22_shareram[0x030/4] = (flags<<16)|volume0;
 		namcos22_shareram[0x034/4] = (volume1<<16)|volume2;
 		namcos22_shareram[0x038/4] = volume3<<16;
+
+		HandleCoinage(1);
 	}
 }
 
@@ -1758,14 +1771,13 @@ static WRITE32_HANDLER( namcos22_mcuram_w )
 {
 	if ((namcos22_usec7x) && (offset >= 0x400) && (offset < 0x4c0))
 	{
-		offset -= 0x400;
 		if (mem_mask == 0x0000ffff)
 		{
-			namcoc7x_sound_write16((data>>16), offset*2);
+			namcoc7x_sound_write16((data>>16), (offset-0x400)*2);
 		}
 		else if (mem_mask == 0xffff0000)
 		{
-			namcoc7x_sound_write16((data&0xffff), (offset*2)+1);
+			namcoc7x_sound_write16((data&0xffff), ((offset-0x400)*2)+1);
 		}
 	}
 
@@ -1891,67 +1903,8 @@ ADDRESS_MAP_END
 
 static int mFrameCount;
 
-static void
-SimulateAirCombat22MCU( void )
-{
-	if( nthbyte(namcos22_system_controller,0x16)!=0 )
-	{
-		UINT16 flags = readinputport(1);
-		UINT16 pedal = readinputport(2);
-		UINT16 x     = readinputport(3);
-		UINT16 y     = readinputport(4);
-		namcos22_shareram[0x7d00/4] = flags<<8;
-		namcos22_shareram[0x7d0a/4] = x;
-		namcos22_shareram[0x7d0c/4] = (y<<16)|pedal;
-	}
-}
-
-#if 0
-static void
-SimulateCyberCyclesMCU( void )
-{
-	if( nthbyte(namcos22_system_controller,0x16)!=0 )
-	{
-//      UINT16 flags = readinputport(1)|0x8000;
-		UINT16 gas,brake,steer;
-		ReadAnalogDrivingPorts( &gas, &brake, &steer );
-
-		namcos22_shareram[0x7d00/4] = readinputport(1)<<8;
-		namcos22_shareram[0x7d0a/4] = readinputport(4)*8; /* steer */
-		namcos22_shareram[0x7d0c/4] = (gas<<16)|brake;
-	}
-}
-#endif
-
-static void
-SimulateTimeCrisisMCU( void )
-{
-	static int oldPort;
-	int newPort = readinputport(4)&1;
-	if( newPort && !oldPort )
-	{
-		namcos22_credits++;
-	}
-	oldPort = newPort;
-}
-
 static INTERRUPT_GEN( namcos22s_interrupt )
 {
-#if FAKE_SUBCPU
-	switch( namcos22_gametype )
-	{
-	case NAMCOS22_AIR_COMBAT22:
-		SimulateAirCombat22MCU();
-		break;
-
-	case NAMCOS22_TIME_CRISIS:
-		SimulateTimeCrisisMCU();
-		break;
-
-	default:
-		break;
-	}
-#endif
 	switch( cpu_getiloops() )
 	{
 	case 0:
@@ -1997,11 +1950,6 @@ static WRITE16_HANDLER( s22mcu_shared_w )
 			if (data == 0x200) data = 0x8001;
 			else if (data == 0x1ff) data = 0x7fff;
 		}
-	}
-
-	if (namcos22_gametype == NAMCOS22_CYBER_CYCLES)
-	{
-		if (offset == 0x7d0a/2) data <<= 2;
 	}
 
 	COMBINE_DATA(&share16[BYTE_XOR_BE(offset)]);
@@ -2178,8 +2126,8 @@ static READ8_HANDLER( propcycle_mcu_adc_r )
 // 0 H+L = swing, 1 H+L = edge
 static READ8_HANDLER( alpineracer_mcu_adc_r )
 {
-	UINT16 swing = readinputport(2)*4; /* max 3ff */
-	UINT16 edge = readinputport(3)*4;  /* max 3ff */
+	UINT16 swing = readinputport(2)<<2; /* max 3ff */
+	UINT16 edge = readinputport(3)<<2;  /* max 3ff */
 
 	switch (offset)
 	{
@@ -2207,12 +2155,12 @@ static READ8_HANDLER( alpineracer_mcu_adc_r )
 
 static READ8_HANDLER( cybrcycc_mcu_adc_r )
 {
-	UINT16 gas,brake,st2;
-	static int steer = 0xc0;
-	ReadAnalogDrivingPorts2( &gas, &brake, &st2 );
+	UINT16 gas,brake,steer;
+	ReadAnalogDrivingPorts( &gas, &brake, &steer );
 
-	gas = readinputport(2)<<2;
-	brake = readinputport(3)<<2;
+	gas <<= 2;
+	brake <<= 2;
+	steer <<= 2;
 
 	switch (offset)
 	{
@@ -2238,6 +2186,47 @@ static READ8_HANDLER( cybrcycc_mcu_adc_r )
 
 		case 5:
 			return (brake>>8);
+			break;
+
+		default:
+			return 0;
+			break;
+	}
+}
+
+static READ8_HANDLER( airco22_mcu_adc_r )
+{
+	UINT16 pedal, x, y;
+
+	pedal = readinputport(1)<<2;
+	x = readinputport(2)<<2;
+	y = readinputport(3)<<2;
+
+
+	switch (offset)
+	{
+		case 0:
+			return x & 0xff;
+			break;
+
+		case 1:
+			return (x>>8);
+			break;
+
+		case 2:
+			return y & 0xff;
+			break;
+
+		case 3:
+			return (y>>8);
+			break;
+
+		case 4:
+			return pedal & 0xff;
+			break;
+
+		case 5:
+			return (pedal>>8);
 			break;
 
 		default:
@@ -2306,10 +2295,10 @@ static MACHINE_DRIVER_START( namcos22s )
 
 	MDRV_SOUND_ADD(C352, SS22_MASTER_CLOCK/3)
 	MDRV_SOUND_CONFIG(c352_interface)
-	MDRV_SOUND_ROUTE(0, "left", 0.60)
-	MDRV_SOUND_ROUTE(1, "right", 0.60)
-	MDRV_SOUND_ROUTE(2, "left", 0.60)
-	MDRV_SOUND_ROUTE(3, "right", 0.60)
+	MDRV_SOUND_ROUTE(0, "right", 0.60)
+	MDRV_SOUND_ROUTE(1, "left", 0.60)
+	MDRV_SOUND_ROUTE(2, "right", 0.60)
+	MDRV_SOUND_ROUTE(3, "left", 0.60)
 MACHINE_DRIVER_END
 
 /*********************************************************************************/
@@ -3792,16 +3781,6 @@ INPUT_PORTS_START( airco22 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* missle */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* gun */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
 	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 
 	PORT_START
@@ -3809,6 +3788,16 @@ INPUT_PORTS_START( airco22 )
 
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
+
+	PORT_START_TAG( "MCUP5A" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* DECISION */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* L SELECTION */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) /* R SELECTION */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END /* Air Combat22 */
 
 INPUT_PORTS_START( cybrcycc )
@@ -4038,18 +4027,18 @@ INPUT_PORTS_START( timecris )
 	PORT_START
 	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(50) PORT_KEYDELTA(4)
 
-	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START /* 4 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+  	PORT_START_TAG( "MCUP5A" )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* gun trigger */
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) /* foot pedal */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* shot */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* pedal */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG( "MCUP5B" )
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END /* Time Crisis */
 
 /*****************************************************************************************************/
@@ -4405,6 +4394,8 @@ DRIVER_INIT( airco22 )
 	pROM[0x6d74/4] &= 0x0000ffff;
 	pROM[0x6d74/4] |= 0x4e710000;
 
+	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, airco22_mcu_adc_r);
+
 	namcos22_gametype = NAMCOS22_AIR_COMBAT22;
 	namcos22_usec7x = 0;
 	/* int1 writes 0x700005 */
@@ -4451,17 +4442,23 @@ DRIVER_INIT( propcycl )
 DRIVER_INIT( ridgeraj )
 {
 	namcos22_gametype = NAMCOS22_RIDGE_RACER;
-	InitDSP(0);
 	namcoc7x_on_driver_init();
 	namcos22_usec7x = 1;
+	InitDSP(0);
+
+	old_coin_state = readinputport(1) & 0x1200;
+	credits1 = credits2 = 0;
 }
 
 DRIVER_INIT( ridger2j )
 {
 	namcos22_gametype = NAMCOS22_RIDGE_RACER2;
-	InitDSP(0);
 	namcoc7x_on_driver_init();
 	namcos22_usec7x = 1;
+	InitDSP(0);
+
+	old_coin_state = readinputport(1) & 0x1200;
+	credits1 = credits2 = 0;
 }
 
 DRIVER_INIT( acedrvr )
@@ -4469,22 +4466,31 @@ DRIVER_INIT( acedrvr )
 	namcos22_gametype = NAMCOS22_ACE_DRIVER;
 	namcos22_usec7x = 0;
 	InitDSP(0);
+
+	old_coin_state = readinputport(1) & 0x1200;
+	credits1 = credits2 = 0;
 }
 
 DRIVER_INIT( victlap )
 {
 	namcos22_gametype = NAMCOS22_VICTORY_LAP;
-	InitDSP(0);
 	namcoc7x_on_driver_init();
 	namcos22_usec7x = 1;
+	InitDSP(0);
+
+	old_coin_state = readinputport(1) & 0x1200;
+	credits1 = credits2 = 0;
 }
 
 DRIVER_INIT( raveracw )
 {
 	namcos22_gametype = NAMCOS22_RAVE_RACER;
-	InitDSP(0);
 	namcoc7x_on_driver_init();
 	namcos22_usec7x = 1;
+	InitDSP(0);
+
+	old_coin_state = readinputport(1) & 0x1200;
+	credits1 = credits2 = 0;
 }
 
 DRIVER_INIT( cybrcomm )
@@ -4497,8 +4503,12 @@ DRIVER_INIT( cybrcomm )
 	pROM[0x18aefc/4] = 0x4e714e71;
 
 	namcos22_gametype = NAMCOS22_CYBER_COMMANDO;
+	namcos22_usec7x = 1;
 	InitDSP(0);
 	namcoc7x_on_driver_init();
+
+	old_coin_state = readinputport(1) & 0x1200;
+	credits1 = credits2 = 0;
 }
 
 DRIVER_INIT( cybrcyc )
@@ -4508,9 +4518,9 @@ DRIVER_INIT( cybrcyc )
 	pROM[0x355C/4] |= 0x4e710000;
 
 	namcos22_gametype = NAMCOS22_CYBER_CYCLES;
-	InitDSP(1);
 
 	namcos22_usec7x = 0;
+	InitDSP(1);
 
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, cybrcycc_mcu_adc_r);
 
@@ -4522,8 +4532,8 @@ DRIVER_INIT( cybrcyc )
 DRIVER_INIT( timecris )
 {
 	namcos22_gametype = NAMCOS22_TIME_CRISIS;
-	InitDSP(1);
 	namcos22_usec7x = 0;
+	InitDSP(1);
 
 	// install speedup cheat for 1.30 MCU BIOS
 	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu130_speedup_r);
@@ -4539,14 +4549,14 @@ GAMEX( 1995, raveracw, 0,        namcos22,  raveracw, raveracw, ROT0, "Namco", "
 GAMEX( 1995, raveracj, raveracw, namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV1, Japan)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1993, ridgerac, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR2, World)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
 GAMEX( 1993, ridgeraj, ridgerac, namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
-GAMEX( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) /* POSTs but doesn's start */
+GAMEX( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAMEX( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
 GAMEX( 1994, acedrvrw, 0,        namcos22ns,acedrvr,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
+GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )	/* runs but no 3D */
 
 /* Super System22 games */
-GAMEX( 1995, airco22b, 0,        namcos22s, airco22,  airco22,  ROT0, "Namco", "Air Combat 22 (Rev. ACS1 Ver.B)"           , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* reboots itself */
+GAMEX( 1995, airco22b, 0,        namcos22s, airco22,  airco22,  ROT0, "Namco", "Air Combat 22 (Rev. ACS1 Ver.B)"           , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* fails DSP RAM test */
 GAMEX( 1995, alpinerd, 0,        namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.D)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, alpinerc, alpinerd, namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.C)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles (Rev. CB2 Ver.C)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )

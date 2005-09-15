@@ -5,8 +5,8 @@ Truco Clemente (c) 1991 Miky SRL
 driver by Ernesto Corvi
 
 Notes:
-- Wrong colors.
 - Audio is almost there.
+- After one game you can't play anymore.
 - I think this runs on a heavily modified PacMan type of board.
 
 ----------------------------------
@@ -27,7 +27,6 @@ Daughterboard: Custom made, plugged in the 2 roms and Z80 mainboard sockets.
 
 - Added 2 "hidden" color proms (am27s19)
 - One GAL is connected to the color proms inputs.
-- Hooked color decode routines, but still wrong due to the GAL issue.
 - The name of the company is "Miky SRL" instead of "Caloi Miky SRL".
   Caloi (Carlos Loiseau), is the Clemente's creator.
 
@@ -42,32 +41,17 @@ PALETTE_INIT( trucocl )
 {
 	int i;
 
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2,bit3,r,g,b;
+		int r,g,b;
 
-		/* red component */
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		bit3 = (color_prom[i] >> 3) & 0x01;
-		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* green component */
-		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
-		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* blue component */
-		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
-		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = (color_prom[i] & 0x0f);
+		g = color_prom[i+32] & 0x0f;
+		b = (color_prom[i+32] & 0xf0)>>4;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i,r<<4,g<<4,b<<4);
 	}
+
 }
 
 WRITE8_HANDLER( trucocl_videoram_w )
@@ -93,17 +77,18 @@ static void get_bg_tile_info(int tile_index)
 	int gfxsel = colorram[tile_index] & 1;
 	int bank = ( ( colorram[tile_index] >> 2 ) & 0x07 );
 	int code = videoram[tile_index];
+	int colour = (colorram[tile_index] & 2) >> 1;
 
 	code |= ( bank & 1 ) << 10;
 	code |= ( bank & 2 ) << 8;
 	code += ( bank & 4 ) << 6;
 
-	SET_TILE_INFO(gfxsel,code,0,0)
+	SET_TILE_INFO(gfxsel,code,colour,0)
 }
 
 VIDEO_START( trucocl )
 {
-	bg_tilemap = tilemap_create( get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16, 8, 32, 32 );
+	bg_tilemap = tilemap_create( get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32 );
 
 	if ( !bg_tilemap )
 		return 1;

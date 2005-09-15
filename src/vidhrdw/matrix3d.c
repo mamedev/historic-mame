@@ -2,16 +2,16 @@
 #include <string.h> /* for memcpy */
 
 void
-matrix3d_Multiply( double A[4][4], double B[4][4] )
+matrix3d_Multiply( float A[4][4], float B[4][4] )
 {
-	double temp[4][4];
+	float temp[4][4];
 	int row,col;
 
 	for( row=0;row<4;row++ )
 	{
 		for(col=0;col<4;col++)
 		{
-			double sum = 0.0;
+			float sum = 0.0;
 			int i;
 			for( i=0; i<4; i++ )
 			{
@@ -24,7 +24,7 @@ matrix3d_Multiply( double A[4][4], double B[4][4] )
 } /* matrix3d_Multiply */
 
 void
-matrix3d_Identity( double M[4][4] )
+matrix3d_Identity( float M[4][4] )
 {
 	int r,c;
 
@@ -32,48 +32,48 @@ matrix3d_Identity( double M[4][4] )
 	{
 		for( c=0; c<4; c++ )
 		{
-			M[r][c] = (r==c)?1.0:0.0;
+			M[r][c] = (r==c)?1.0f:0.0f;
 		}
 	}
 } /* matrix3d_Identity */
 
 void
-matrix3d_Translate( double M[4][4], double x, double y, double z )
+matrix3d_Translate( float M[4][4], float x, float y, float z )
 {
-	double m[4][4];
-	m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-	m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;
-	m[3][0] = x;			m[3][1] = y;			m[3][2] = z;			m[3][3] = 1.0;
+	float m[4][4];
+	m[0][0] = 1.0f;			m[0][1] = 0.0f;			m[0][2] = 0.0f;			m[0][3] = 0.0f;
+	m[1][0] = 0.0f;			m[1][1] = 1.0f;			m[1][2] = 0.0f;			m[1][3] = 0.0f;
+	m[2][0] = 0.0f;			m[2][1] = 0.0f;			m[2][2] = 1.0f;			m[2][3] = 0.0f;
+	m[3][0] = x;			m[3][1] = y;			m[3][2] = z;			m[3][3] = 1.0f;
 	matrix3d_Multiply( M, m );
 } /* matrix3d_Translate*/
 
 void
-matrix3d_RotX( double M[4][4], double thx_sin, double thx_cos )
+matrix3d_RotX( float M[4][4], float thx_sin, float thx_cos )
 {
-	double m[4][4];
-	m[0][0] = 1.0;			m[0][1] = 0.0;			m[0][2] = 0.0;			m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] =  thx_cos;		m[1][2] = thx_sin;		m[1][3] = 0.0;
-	m[2][0] = 0.0;			m[2][1] = -thx_sin;		m[2][2] = thx_cos;		m[2][3] = 0.0;
-	m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
+	float m[4][4];
+	m[0][0] = 1.0f;			m[0][1] = 0.0f;			m[0][2] = 0.0f;			m[0][3] = 0.0f;
+	m[1][0] = 0.0f;			m[1][1] =  thx_cos;		m[1][2] = thx_sin;		m[1][3] = 0.0f;
+	m[2][0] = 0.0f;			m[2][1] = -thx_sin;		m[2][2] = thx_cos;		m[2][3] = 0.0f;
+	m[3][0] = 0.0f;			m[3][1] = 0.0f;			m[3][2] = 0.0f;			m[3][3] = 1.0f;
 	matrix3d_Multiply( M, m );
 } /* matrix3d_RotX */
 
 void
-matrix3d_RotY( double M[4][4], double thy_sin, double thy_cos )
+matrix3d_RotY( float M[4][4], float thy_sin, float thy_cos )
 {
-	double m[4][4];
-	m[0][0] = thy_cos;		m[0][1] = 0.0;			m[0][2] = -thy_sin;		m[0][3] = 0.0;
-	m[1][0] = 0.0;			m[1][1] = 1.0;			m[1][2] = 0.0;			m[1][3] = 0.0;
-	m[2][0] = thy_sin;		m[2][1] = 0.0;			m[2][2] = thy_cos;		m[2][3] = 0.0;
-	m[3][0] = 0.0;			m[3][1] = 0.0;			m[3][2] = 0.0;			m[3][3] = 1.0;
+	float m[4][4];
+	m[0][0] = thy_cos;		m[0][1] = 0.0f;			m[0][2] = -thy_sin;		m[0][3] = 0.0f;
+	m[1][0] = 0.0f;			m[1][1] = 1.0f;			m[1][2] = 0.0f;			m[1][3] = 0.0f;
+	m[2][0] = thy_sin;		m[2][1] = 0.0f;			m[2][2] = thy_cos;		m[2][3] = 0.0f;
+	m[3][0] = 0.0f;			m[3][1] = 0.0f;			m[3][2] = 0.0f;			m[3][3] = 1.0f;
 	matrix3d_Multiply( M, m );
 } /* matrix3d_RotY */
 
 void
-matrix3d_RotZ( double M[4][4], double thz_sin, double thz_cos )
+matrix3d_RotZ( float M[4][4], float thz_sin, float thz_cos )
 {
-	double m[4][4];
+	float m[4][4];
 	m[0][0] = thz_cos;		m[0][1] = thz_sin;		m[0][2] = 0.0;			m[0][3] = 0.0;
 	m[1][0] = -thz_sin;		m[1][1] = thz_cos;		m[1][2] = 0.0;			m[1][3] = 0.0;
 	m[2][0] = 0.0;			m[2][1] = 0.0;			m[2][2] = 1.0;			m[2][3] = 0.0;

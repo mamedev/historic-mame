@@ -3182,7 +3182,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( gforce2 )
 	DRIVER( gforce2j )
 	DRIVER( gloc )
-	DRIVER( r360 )
+	DRIVER( glocr360 )
 	DRIVER( strkfgtr )
 	DRIVER( pdrift )
 	DRIVER( pdriftj )
@@ -3205,30 +3205,29 @@ May.1993 Quiz Mekurumeku Story
 May.1994 Tokorosan no MahMahjan 2
 Sep.1994 Quiz Ghost Hunter
 */
-	/* playable */
+	/* disk based */
 	DRIVER( hotrod )	/* (c) 1988 */
 	DRIVER( hotroda )	/* (c) 1988 */
 	DRIVER( hotrodj )	/* (c) 1988 */
+	DRIVER( sspirits ) 	/* (c) 1988 */
+	DRIVER( sspirtfc )	/* (c) 1988 */
+	DRIVER( gground )	/* (c) 1988 */
+	DRIVER( crkdown )	/* (c) 1989 */
+	DRIVER( crkdownj )	/* (c) 1989 */
+	DRIVER( sgmast )	/* (c) 1989 */
+	DRIVER( sgmastc )	/* (c) 1989 */
+	DRIVER( roughrac )	/* (c) 1990 */
 	DRIVER( bnzabros )	/* (c) 1990 */
-	DRIVER( dcclub )	/* (c) 1991 */
+	DRIVER( qsww )		/* (c) 1991 */
 	DRIVER( dcclubfd )	/* (c) 1991 */
+
+	/* ROM based */
+	DRIVER( dcclub )	/* (c) 1991 */
 	DRIVER( mahmajn )	/* (c) 1992 */
 	DRIVER( qgh )		/* (c) 1994 */
 	DRIVER( quizmeku )	/* (c) 1994 */
 	DRIVER( qrouka )	/* (c) 1994 */
 	DRIVER( mahmajn2 )	/* (c) 1994 */
-	DRIVER( sspirits ) 	/* (c) 1988 */
-	DRIVER( gground )	/* (c) 1988 */
-
-	/* not working */
-	DRIVER( sgmast )
-	DRIVER( sgmastc )
-
-	DRIVER( sspirtfc )
-
-	DRIVER( qsww )
-	DRIVER( roughrac )
-	DRIVER( crkdown )
 
 	/* Sega System 32 games */
 	DRIVER( holo )		/* (c) 1992 (US) */
@@ -4267,6 +4266,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bm6thmix )	/* GXA21 (c) 2001 (Japan) */
 
 	/* PowerPC based Konami games */
+	DRIVER( thunderh )	/* GX680 (c)1996 */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
 	DRIVER( gticlubj )	/* GX688 (c)1996 */
 	DRIVER( gradius4 )	/* GX837 (c)1999 */
@@ -6699,5 +6699,8 @@ Other Sun games
 	DRIVER( fortecar )
 	DRIVER( jackpool )	/* (c) 1997 Electronic Projects */
 	DRIVER( murogem )	/* ??? */
+	DRIVER( quizmstr )	/* (c) 1985 Coinmaster */
+	DRIVER( trailblz )	/* (c) 1987 Coinmaster */
+	DRIVER( supnudg2 )	/* (c) 1989 Coinmaster */
 
 #endif	/* DRIVER_RECURSIVE */

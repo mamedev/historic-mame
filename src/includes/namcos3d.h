@@ -7,33 +7,33 @@ extern INT32 *namco_zbuffer;
 
 struct VerTex
 {
-	double x,y,z;
-	double u,v,i;
+	float x,y,z;
+	float u,v,i;
 };
 
 typedef struct
 {
 	rectangle clip;
-	double zoom, cx, cy;
-	double x,y,z; /* unit vector for light direction */
-	double ambient; /* 0.0..1.0 */
-	double power;	/* 0.0..1.0 */
+	float zoom, cx, cy;
+	float x,y,z; /* unit vector for light direction */
+	float ambient; /* 0.0..1.0 */
+	float power;	/* 0.0..1.0 */
 } namcos22_camera;
 
 typedef struct
 {
-	double zoomx, zoomy, cx, cy;
+	float zoomx, zoomy, cx, cy;
 } namcos21_camera;
 
 struct RotParam
 {
-	double thx_sin, thx_cos;
-	double thy_sin, thy_cos;
-	double thz_sin, thz_cos;
+	float thx_sin, thx_cos;
+	float thy_sin, thy_cos;
+	float thz_sin, thz_cos;
 	int rolt; /* rotation type: 0,1,2,3,4,5 */
 };
 
-void namcos3d_Rotate( double M[4][4], const struct RotParam *pParam );
+void namcos3d_Rotate( float M[4][4], const struct RotParam *pParam );
 
 int namcos3d_Init( int width, int height, void *pTilemapROM, void *pTextureROM );
 

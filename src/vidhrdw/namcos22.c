@@ -18,18 +18,18 @@ static INT32 mMasterBias;
 static UINT16 mCode; /* 3d primitive to render */
 static namcos22_camera mCamera;
 
-static double mViewMatrix[4][4];
+static float mViewMatrix[4][4];
 
-#define DSP_FIXED_TO_FLOAT( X ) (((INT16)(X))/(double)0x7fff)
+#define DSP_FIXED_TO_FLOAT( X ) (((INT16)(X))*(1.0f/(float)0x7fff))
 
 #define MAX_LIT_SURFACES 16
 static struct LitSurfaceInfo
 {
 	struct
 	{
-		double x;
-		double y;
-		double z;
+		float x;
+		float y;
+		float z;
 	} normal[4];
 } mLitSurfaceInfo[MAX_LIT_SURFACES];
 static unsigned mLitSurfaceCount;
@@ -50,14 +50,14 @@ static const UINT8 *mpPolyL;
 static int mDirectPolyCount;
 static UINT16 mDirectPolyBuf[MAX_DIRECT_POLY][DIRECT_POLY_SIZE];
 
-static double
+static float
 DspFloatToNativeFloat( UINT32 iVal )
 {
-	double mantissa = (iVal&0xffff);
+	float mantissa = (iVal&0xffff);
 	int exponent = (iVal>>16)&0xff;
 	while( exponent<0x2e )
 	{
-		mantissa /= 2.0;
+		mantissa *= 0.5f;
 		exponent++;
 	}
 	return mantissa;
@@ -704,22 +704,22 @@ DrawTextLayer( mame_bitmap *bitmap, const rectangle *cliprect )
 /*********************************************************************************************/
 
 static void
-TransformPoint( double *vx, double *vy, double *vz, double m[4][4] )
+TransformPoint( float *vx, float *vy, float *vz, float m[4][4] )
 {
-	double x = *vx;
-	double y = *vy;
-	double z = *vz;
+	float x = *vx;
+	float y = *vy;
+	float z = *vz;
 	*vx = m[0][0]*x + m[1][0]*y + m[2][0]*z + m[3][0];
 	*vy = m[0][1]*x + m[1][1]*y + m[2][1]*z + m[3][1];
 	*vz = m[0][2]*x + m[1][2]*y + m[2][2]*z + m[3][2];
 }
 
 static void
-TransformNormal( double *nx, double *ny, double *nz, double m[4][4] )
+TransformNormal( float *nx, float *ny, float *nz, float m[4][4] )
 {
-	double x = *nx;
-	double y = *ny;
-	double z = *nz;
+	float x = *nx;
+	float y = *ny;
+	float z = *nz;
 	*nx = m[0][0]*x + m[1][0]*y + m[2][0]*z;
 	*ny = m[0][1]*x + m[1][1]*y + m[2][1]*z;
 	*nz = m[0][2]*x + m[1][2]*y + m[2][2]*z;
@@ -753,14 +753,16 @@ BlitQuadHelper(
 		mame_bitmap *pBitmap,
 		unsigned color,
 		unsigned addr,
-		double m[4][4],
+		float m[4][4],
 		INT32 zcode,
 		INT32 flags )
 {
 	struct LitSurfaceInfo *pLitSurfaceInfo = NULL;
-	double zmin, zmax, zrep;
+	float zmin, zmax, zrep;
 	struct VerTex v[5];
 	int i;
+
+profiler_mark(PROFILER_USER2);
 
 //  if( (flags&0x0400) && code_pressed(KEYCODE_W) ) color = (rand()&0x7f)<<8;
 //  if( (flags&0x0200) && code_pressed(KEYCODE_E) ) color = (rand()&0x7f)<<8;
@@ -801,15 +803,15 @@ BlitQuadHelper(
 		if( pLitSurfaceInfo )
 		{
 			/* extract normal vector */
-			double nx = pLitSurfaceInfo->normal[i].x;
-			double ny = pLitSurfaceInfo->normal[i].y;
-			double nz = pLitSurfaceInfo->normal[i].z;
+			float nx = pLitSurfaceInfo->normal[i].x;
+			float ny = pLitSurfaceInfo->normal[i].y;
+			float nz = pLitSurfaceInfo->normal[i].z;
 
-			double lx = mCamera.x;
-			double ly = mCamera.y;
-			double lz = mCamera.z;
+			float lx = mCamera.x;
+			float ly = mCamera.y;
+			float lz = mCamera.z;
 
-			double dotproduct;
+			float dotproduct;
 
 			/* transform normal vector */
 			TransformNormal( &nx, &ny, &nz, m );
@@ -833,7 +835,7 @@ BlitQuadHelper(
      * - average value: (zmin+zmax)/2
      * - average of all four z coordinates
      */
-	zrep = (zmin+zmax)/2.0; /* for now just always use the simpler average */
+	zrep = (zmin+zmax)*0.5f; /* for now just always use the simpler average */
 
 	/**
      * hardware supports two types priority modes:
@@ -893,11 +895,13 @@ BlitQuadHelper(
 	namcos22_BlitTri( pBitmap, &v[0], color, zcode, flags, &mCamera ); /* 0,1,2 */
 	v[4] = v[0]; /* wrap */
 	namcos22_BlitTri( pBitmap, &v[2], color, zcode, flags, &mCamera ); /* 2,3,0 */
+
+profiler_mark(PROFILER_END);
 } /* BlitQuadHelper */
 
 
 static void
-BlitQuads( mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
+BlitQuads( mame_bitmap *pBitmap, INT32 addr, float m[4][4], INT32 base )
 {
 	INT32 size = GetPolyData(addr++);
 	INT32 finish = addr + (size&0xff);
@@ -989,7 +993,7 @@ BlitQuads( mame_bitmap *pBitmap, INT32 addr, double m[4][4], INT32 base )
 } /* BlitQuads */
 
 static void
-BlitPolyObject( mame_bitmap *pBitmap, int code, double M[4][4] )
+BlitPolyObject( mame_bitmap *pBitmap, int code, float M[4][4] )
 {
 	unsigned addr1 = GetPolyData(code);
 	for(;;)
@@ -1122,7 +1126,7 @@ Handle200002( mame_bitmap *bitmap, const INT32 *pSource )
 {
 	if( mCode>=0x45 )
 	{
-		double m[4][4]; /* row major */
+		float m[4][4]; /* row major */
 
 		matrix3d_Identity( m );
 
@@ -1524,7 +1528,9 @@ VIDEO_UPDATE( namcos22s )
 	}
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 	namcos3d_Start( bitmap );
+profiler_mark(PROFILER_USER1);
 	DrawPolygons( bitmap );
+profiler_mark(PROFILER_END);
 	DrawSprites( bitmap, cliprect );
 	DrawTextLayer( bitmap, cliprect );
 

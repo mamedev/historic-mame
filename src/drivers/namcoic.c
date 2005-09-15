@@ -1144,7 +1144,14 @@ UnpackRozParam( const UINT16 *pSource, struct RozParam *pRozParam )
      */
 	UINT16 temp = pSource[1];
 	pRozParam->size     = 512<<((temp&0x0300)>>8);
+	if ((namcos2_gametype == NAMCOFL_SPEED_RACER) || (namcos2_gametype == NAMCOFL_FINAL_LAP_R))
+	{
+		pRozParam->color    = (temp&0x0007)*256;
+	}
+	else
+	{
 	pRozParam->color    = (temp&0x000f)*256;
+	}
 	pRozParam->priority = (temp&0x00f0)>>4;
 
 	temp = pSource[2];
@@ -1157,8 +1164,14 @@ UnpackRozParam( const UINT16 *pSource, struct RozParam *pRozParam )
 	if( temp&0x8000 ) temp |= 0xf000; else temp&=0x0fff; /* sign extend */
 	pRozParam->incxy =  (INT16)temp;
 
-	pRozParam->incyx =  (INT16)pSource[4];
-	pRozParam->incyy =  (INT16)pSource[5];
+	temp = pSource[4];
+	if( temp&0x8000 ) temp |= 0xf000; else temp&=0x0fff; /* sign extend */
+	pRozParam->incyx =  (INT16)temp;
+
+	temp = pSource[5];
+	if( temp&0x8000 ) temp |= 0xf000; else temp&=0x0fff; /* sign extend */
+	pRozParam->incyy =  (INT16)temp;
+
 	pRozParam->startx = (INT16)pSource[6];
 	pRozParam->starty = (INT16)pSource[7];
 	pRozParam->startx <<= 4;
@@ -1183,6 +1196,7 @@ DrawRozHelper(
 	const rectangle *clip,
 	const struct RozParam *rozInfo )
 {
+
 	if( bitmap->depth == 15 || bitmap->depth == 16 )
 	{
 		UINT32 size_mask = rozInfo->size-1;
@@ -1217,6 +1231,7 @@ DrawRozHelper(
 		} /* next y */
 	}
 	else
+
 	{
 		tilemap_set_palette_offset( tmap, rozInfo->color );
 
@@ -1265,14 +1280,20 @@ void
 namco_roz_draw( mame_bitmap *bitmap, const rectangle *cliprect, int pri )
 {
 	int mode = rozcontrol16[0]; /* 0x8000 or 0x1000 */
-	int which;
+	int which, special = 1;
+
+	if ((namcos2_gametype == NAMCOFL_SPEED_RACER) || (namcos2_gametype == NAMCOFL_FINAL_LAP_R))
+	{
+		special = 0;
+	}
+
 	for( which=1; which>=0; which-- )
 	{
 		const UINT16 *pSource = &rozcontrol16[which*8];
 		UINT16 attrs = pSource[1];
 		if( (attrs&0x8000)==0 )
 		{ /* layer is enabled */
-			if( which==1 && mode==0x8000 )
+			if( which==special && mode==0x8000 )
 			{ /* second ROZ layer is configured to use per-scanline registers */
 				int line;
 				for( line=0; line<224; line++ )

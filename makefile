@@ -12,6 +12,7 @@ endif
 # I686 = 1
 # P4 = 1
 # PM = 1
+# AMD64 = 1
 
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
@@ -88,6 +89,11 @@ endif
 ifdef P4
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)p4
 ARCH = -march=pentium4
+endif
+
+ifdef AMD64
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)64
+ARCH = -march=athlon64
 endif
 
 ifdef PM

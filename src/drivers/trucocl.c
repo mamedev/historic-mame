@@ -5,8 +5,8 @@ Truco Clemente (c) 1991 Miky SRL
 driver by Ernesto Corvi
 
 Notes:
-- Wrong colors.
 - Audio is almost there.
+- After one game you can't play anymore.
 - I think this runs on a heavily modified PacMan type of board.
 
 ----------------------------------
@@ -27,7 +27,6 @@ Daughterboard: Custom made, plugged in the 2 roms and Z80 mainboard sockets.
 
 - Added 2 "hidden" color proms (am27s19)
 - One GAL is connected to the color proms inputs.
-- Hooked color decode routines, but still wrong due to the GAL issue.
 - The name of the company is "Miky SRL" instead of "Caloi Miky SRL".
   Caloi (Carlos Loiseau), is the Clemente's creator.
 
@@ -122,19 +121,21 @@ INPUT_PORTS_END
 
 static gfx_layout tilelayout =
 {
-	16,8,		/* 16*16 characters */
+	8,8,		/* 8*8 characters */
 	0x10000/32,	/* 2048 characters */
-	2,			/* 2 bits per pixel */
-	{ 0, 1 },
-	{ 0, 2, 4, 6, 0x8000*8+0, 0x8000*8+2, 0x8000*8+4, 0x8000*8+6, 8*8+0, 8*8+2, 8*8+4, 8*8+6, 0x8008*8+0, 0x8008*8+2, 0x8008*8+4, 0x8008*8+6 },
+	4,			/* 4 bits per pixel */
+	{ 0, 1,2,3 },
+	{ 0, 4, 0x8000*8+0,0x8000*8+4, 8*8+0, 8*8+4, 0x8000*8+8*8+0,0x8000*8+8*8+4 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8		/* every char takes 16 consecutive bytes */
 };
 
+
+
 static gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, 		&tilelayout,      0, 4 },
-	{ REGION_GFX1, 0x10000, &tilelayout,      0, 4 },
+	{ REGION_GFX1, 0, 		&tilelayout,      0, 2 },
+	{ REGION_GFX1, 0x10000, &tilelayout,      0, 2 },
 	{ -1 } /* end of array */
 };
 
@@ -154,11 +155,11 @@ static MACHINE_DRIVER_START( trucocl )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*16, 32*8)
-	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*8, 32*8-1)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(16)
-	MDRV_COLORTABLE_LENGTH(16)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
 
 	MDRV_PALETTE_INIT(trucocl)
 	MDRV_VIDEO_START(trucocl)
@@ -200,4 +201,4 @@ ROM_END
 
 /*    YEAR   NAME     PARENT  MACHINE  INPUT    INIT  MONITOR  */
 
-GAMEX( 1991, trucocl,  0,     trucocl, trucocl, 0,    ROT0, "Miky SRL", "Truco Clemente", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1991, trucocl,  0,     trucocl, trucocl, 0,    ROT0, "Miky SRL", "Truco Clemente", GAME_IMPERFECT_SOUND )

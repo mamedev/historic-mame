@@ -656,13 +656,14 @@ rendertri(
 static void
 ProjectPoint( const struct VerTex *v, vertex *pv, const namcos22_camera *camera )
 {
-	pv->x = camera->cx + v->x*camera->zoom/v->z;
-	pv->y = camera->cy - v->y*camera->zoom/v->z;
-	pv->u = (v->u+0.5)/v->z;
-	pv->v = (v->v+0.5)/v->z;
-	pv->i = (v->i+0.5 - 0x40)/v->z;
-//  pv->i = (v->i+0.5)/v->z;
-	pv->z = 1/v->z;
+	float ooz = 1.0f/v->z;
+	pv->x = camera->cx + v->x*camera->zoom*ooz;
+	pv->y = camera->cy - v->y*camera->zoom*ooz;
+	pv->u = (v->u+0.5f)*ooz;
+	pv->v = (v->v+0.5f)*ooz;
+	pv->i = (v->i+0.5f - 0x40)*ooz;
+//  pv->i = (v->i+0.5f)*ooz;
+	pv->z = 1.0f*ooz;
 }
 
 static void

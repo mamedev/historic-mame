@@ -259,15 +259,12 @@ READ16_HANDLER( darkedge_protection_r )
 
 WRITE16_HANDLER( dbzvrvs_protection_w )
 {
-	logerror("%06x:dbzvrvs_prot_w(%06X) = %04X & %04X\n",
-		activecpu_get_pc(), 0xa00000 + 2*offset, data, mem_mask ^ 0xffff);
+	program_write_word( 0x2080c8, program_read_word( 0x200044 ) );
 }
 
 
 READ16_HANDLER( dbzvrvs_protection_r )
 {
-	logerror("%06x:dbzvrvs_prot_r(%06X) & %04X\n",
-		activecpu_get_pc(), 0xa00000 + 2*offset, mem_mask ^ 0xffff);
 	return 0xffff;
 }
 
