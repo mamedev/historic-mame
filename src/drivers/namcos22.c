@@ -7,6 +7,7 @@
  * - pstroffo@yahoo.com (Phil Stroffolino)
  * - trackmaster@gmx.net (Bjorn Sunder)
  * - team vivanonno
+ * - R. Belmont
  *
  * Status:
  *      All games working, with following exceptions:
@@ -244,7 +245,6 @@ AnalogAsDigital( void )
 {
 	UINT16 stick = readinputport(1);
 	UINT16 gas   = readinputport(2);
-//  UINT16 brake = readinputport(3);
 	UINT16 steer = readinputport(4);
 	UINT16 result = 0xffff;
 
@@ -987,13 +987,6 @@ static READ16_HANDLER( point_ram_hiword_ir )
 }
 
 /************************************************************/
-
-#if 0
-static READ16_HANDLER( dsp_unk2_r )
-{
-	return 0;
-}
-#endif
 
 static WRITE16_HANDLER( dsp_unk2_w )
 {
@@ -1936,22 +1929,6 @@ static WRITE16_HANDLER( s22mcu_shared_w )
 {
 	UINT16 *share16 = (UINT16 *)namcos22_shareram;
 
-	/*
-       I have no idea what's going on here.  The M37710 has a 10-bit wide
-       ADC, and the MCU BIOS explicitly does an AND #$03ff on the value
-       that it stores to shared RAM.  But Prop Cycle's 68000 code insists on
-       full 16-bit signed values being there.
-     */
-
-	if (namcos22_gametype == NAMCOS22_PROP_CYCLE)
-	{
-		if ((offset == 0x7d0a/2) || (offset == 0x7d0c/2))
-		{
-			if (data == 0x200) data = 0x8001;
-			else if (data == 0x1ff) data = 0x7fff;
-		}
-	}
-
 	COMBINE_DATA(&share16[BYTE_XOR_BE(offset)]);
 }
 
@@ -2072,23 +2049,14 @@ static READ8_HANDLER( mcu_port7_r )
 // H+L = horizontal, 1 H+L = vertical
 static READ8_HANDLER( propcycle_mcu_adc_r )
 {
-	static int dx, dy;
 	static UINT16 ddx, ddy;
+
+	ddx = ((readinputport(2)^0xff)-1)<<2;
+	ddy = (readinputport(3)-1)<<2;
 
 	switch (offset)
 	{
 		case 0:
-			dx = dy = 0;
-			if( readinputport( 2 ) & 0x04 ) dx++;
-			if( readinputport( 2 ) & 0x08 ) dx--;
-			if( readinputport( 2 ) & 0x01 ) dy--;
-			if( readinputport( 2 ) & 0x02 ) dy++;
-
-			ddx = (UINT16)(dx*0x7fff);
-			ddy = (UINT16)(dy*0x7fff);
-			ddx >>= 6;
-			ddy >>= 6;
-
 			// also update the pedal here
 			//
 			// this is a wee bit hackish: the way it actually works is like so:
@@ -2097,7 +2065,7 @@ static READ8_HANDLER( propcycle_mcu_adc_r )
 			// and timer A3 is configured by the MCU program to cause an interrupt each time
 			// it's clocked.  by counting the number of interrupts in a frame, we can determine
 			// how fast the user is pedaling.
-			if( readinputport( 2 ) & 0x10 )
+			if( readinputport(1) & 0x10 )
 			{
 				int i;
 				for (i = 0; i < 16; i++)
@@ -3878,22 +3846,18 @@ INPUT_PORTS_START( propcycl )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode ) ) PORT_TOGGLE PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 
 	PORT_START_TAG( "MCUP5A" )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -4565,8 +4529,6 @@ GAMEX( 1995, timecris, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "
 GAMEX( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev PR2 Ver.A)"                , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 //GAMEX( 1996, tokyowrx, "Tokyo Wars")
-//GAMEX( 1996, alpinr2x, "Alpine Racer 2")
-//GAMEX( 1996, alpinesx, "Alpine Surfer")
 //GAMEX( 1996, aquajetx, "Aqua Jet")
 //GAMEX( 1997, armdilox, "Armidillo Racing")
 //GAMEX( 199?, downhbkx, "Downhill Bikers")

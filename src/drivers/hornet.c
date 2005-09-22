@@ -453,7 +453,7 @@ static WRITE32_HANDLER( sysreg_w )
 			}
 		}
 		return;
-}
+	}
 }
 
 static UINT8 sndto68k[16], sndtoppc[2];	/* read/write split mapping */
@@ -566,38 +566,49 @@ static ADDRESS_MAP_START( hornet_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x7d048000, 0x7d048003) AM_WRITE(comm1_w)
 	AM_RANGE(0x7d04a000, 0x7d04a003) AM_WRITE(comm_rombank_w)
 	AM_RANGE(0x7d050000, 0x7d05ffff) AM_ROMBANK(1)		/* COMM BOARD 1 */
-	AM_RANGE(0x7e000000, 0x7e3fffff) AM_ROM AM_SHARE(4) /* Data ROM */
+	AM_RANGE(0x7e000000, 0x7e7fffff) AM_ROM AM_SHARE(4) /* Data ROM */
 	AM_RANGE(0x7f000000, 0x7f1fffff) AM_ROM AM_SHARE(2)
 	AM_RANGE(0x80000000, 0x803fffff) AM_RAM	AM_SHARE(3)	/* Work RAM */
-	AM_RANGE(0xfe000000, 0xfe3fffff) AM_ROM AM_REGION(REGION_USER2, 0) AM_SHARE(4) /* Data ROM */
+	AM_RANGE(0xfe000000, 0xfe7fffff) AM_ROM AM_REGION(REGION_USER2, 0) AM_SHARE(4) /* Data ROM */
 	AM_RANGE(0xff000000, 0xff1fffff) AM_ROM AM_SHARE(2)
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
 
+static void *m68k_timer;
+
+static void m68k_timer_tick(void *param)
+{
+	//cpunum_set_input_line(1, INPUT_LINE_IRQ1, HOLD_LINE);
+}
+
 static READ16_HANDLER( sndcomm68k_r )
 {
-	printf("sndcomm68k_r: %08X, %08X\n", offset, mem_mask);
 	return sndto68k[offset];
 }
 
 static WRITE16_HANDLER( sndcomm68k_w )
 {
-	if (offset == 4 && (data & 0x1))
-	{
-		cpunum_set_input_line(1, 1, HOLD_LINE);
-	}
-
-	printf("sndcomm68k_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+/*  if (offset == 4)
+    {
+        if (data & 0x1)
+        {
+            cpunum_set_input_line(1, INPUT_LINE_IRQ2, ASSERT_LINE);
+        }
+        else
+        {
+            cpunum_set_input_line(1, INPUT_LINE_IRQ2, CLEAR_LINE);
+        }
+    }
+*/
+	logerror("sndcomm68k_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
 	sndtoppc[offset] = data;
 }
 
 static UINT16 rf5c400_status = 0;
 static READ16_HANDLER( rf5c400_r )
 {
-	printf("rf5c400_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
-
 	switch(offset)
 	{
 		case 0x00:
@@ -633,7 +644,7 @@ static WRITE16_HANDLER( rf5c400_w )
 
 	if (offset < 0x400)
 	{
-		printf("rf5c400_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+		logerror("rf5c400_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
 	}
 }
 
@@ -823,7 +834,7 @@ static INTERRUPT_GEN( hornet_vblank )
 	}
 	else
 	{
-		cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
+//      cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
 	}
 	vblank++;
 	vblank &= 1;
@@ -874,14 +885,13 @@ static void jamma_r(int length)
 	int i;
 	for (i=0; i < length; i++)
 	{
-		jamma_rdata[i] = rand();
+		jamma_rdata[i] = 0;
 	}
 }
 
 static UINT8 jamma_wdata[1024];
 static void jamma_w(int length)
 {
-
 }
 
 static UINT8 backup_ram[0x2000];
@@ -889,6 +899,9 @@ static DRIVER_INIT( hornet )
 {
 	init_konami_cgboard(0);
 	sharc_dataram = auto_malloc(0x100000);
+
+	m68k_timer = timer_alloc_ptr(m68k_timer_tick);
+	timer_adjust_ptr(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
 
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
 
@@ -915,6 +928,39 @@ static DRIVER_INIT(gradius4)
 	backup_ram[0x0d] = 0x00;	//
 	backup_ram[0x0e] = 0x02;	// checksum
 	backup_ram[0x0f] = 0xd7;	// checksum
+
+	voodoo_version = 0;
+	init_hornet();
+}
+
+static DRIVER_INIT(nbapbp)
+{
+	/* RTC data */
+	backup_ram[0x00] = 0x47;	// 'G'
+	backup_ram[0x01] = 0x58;	// 'X'
+	backup_ram[0x02] = 0x37;	// '7'
+	backup_ram[0x03] = 0x37;	// '7'
+	backup_ram[0x04] = 0x38;	// '8'
+	backup_ram[0x05] = 0x00;	//
+	backup_ram[0x06] = 0x00;	//
+	backup_ram[0x07] = 0x00;	//
+	backup_ram[0x08] = 0x19;	//
+	backup_ram[0x09] = 0x98;	// 1998
+	backup_ram[0x0a] = 0x43;	// 'C'
+	backup_ram[0x0b] = 0x4c;	// 'L'
+	backup_ram[0x0c] = 0x53;	// 'S'
+	backup_ram[0x0d] = 0x00;	//
+	backup_ram[0x0e] = 0x02;	// checksum
+	backup_ram[0x0f] = 0xd8;	// checksum
+
+	backup_ram[0x10] = 0x41;
+	backup_ram[0x11] = 0x6d;
+	backup_ram[0x12] = 0x36;
+	backup_ram[0x13] = 0x34;
+	backup_ram[0x14] = 0x65;
+	backup_ram[0x15] = 0x76;
+	backup_ram[0x16] = 0x65;
+	backup_ram[0x17] = 0x52;
 
 	voodoo_version = 0;
 	init_hornet();
@@ -1078,8 +1124,33 @@ ROM_START(gradius4)
         ROM_LOAD( "837a10.14p",   0x400000, 0x400000, CRC(1419cad2) SHA1(a6369a5c29813fa51e8246d0c091736f32994f3d) )
 ROM_END
 
+ROM_START(nbapbp)
+	ROM_REGION32_BE(0x200000, REGION_USER1, 0)	/* PowerPC program */
+        ROM_LOAD16_WORD_SWAP( "778a01.27p",   0x000000, 0x200000, CRC(e70019ce) SHA1(8b187b6e670fdc88771da08a56685cd621b139dc) )
+
+	ROM_REGION32_BE(0x800000, REGION_USER2, 0)	/* Data roms */
+        ROM_LOAD32_WORD_SWAP( "778a04.16t",   0x000000, 0x400000, CRC(62c70132) SHA1(405aed149fc51e0adfa3ace3c644e47d53cf1ee3) )
+        ROM_LOAD32_WORD_SWAP( "778a05.14t",   0x000002, 0x400000, CRC(03249803) SHA1(f632a5f1dfa0a8500407214df0ec8d98ce09bc2b) )
+
+	ROM_REGION32_BE(0x1000000, REGION_USER5, 0)	/* CG Board texture roms */
+        ROM_LOAD32_WORD_SWAP( "778a14.32u",   0x000000, 0x400000, CRC(db0c278d) SHA1(bb9884b6cdcdb707fff7e56e92e2ede062abcfd3) )
+        ROM_LOAD32_WORD_SWAP( "778a13.24u",   0x000002, 0x400000, CRC(47fda9cc) SHA1(4aae01c1f1861b4b12a3f9de6b39eb4d11a9736b) )
+        ROM_LOAD32_WORD_SWAP( "778a16.32v",   0x800000, 0x400000, CRC(6c0f46ea) SHA1(c6b9fbe14e13114a91a5925a0b46496260539687) )
+        ROM_LOAD32_WORD_SWAP( "778a15.24v",   0x800002, 0x400000, CRC(d176ad0d) SHA1(2be755dfa3f60379d396734809bbaaaad49e0db5) )
+
+	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
+        ROM_LOAD16_WORD_SWAP( "778a08.7s",    0x000000, 0x080000, CRC(6259b4bf) SHA1(d0c38870495c9a07984b4b85e736d6477dd44832) )
+
+	ROM_REGION(0x1000000, REGION_USER4, 0)		/* PCM sample roms */
+        ROM_LOAD( "778a09.16p",   0x000000, 0x400000, CRC(e8c6fd93) SHA1(dd378b67b3b7dd932e4b39fbf4321e706522247f) )
+        ROM_LOAD( "778a10.14p",   0x400000, 0x400000, CRC(c6a0857b) SHA1(976734ba56460fcc090619fbba043a3d888c4f4e) )
+        ROM_LOAD( "778a11.12p",   0x800000, 0x400000, CRC(40199382) SHA1(bee268adf9b6634a4f6bb39278ecd02f2bdcb1f4) )
+        ROM_LOAD( "778a12.9p",    0xc00000, 0x400000, CRC(27d0c724) SHA1(48e48cbaea6db0de8c3471a2eda6faaa16eed46e) )
+ROM_END
+
 /*************************************************************************/
 
 GAMEX( 1999, gradius4,	0,		hornet, hornet,	gradius4,	ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAMEX( 1998, nbapbp,	0,		hornet, hornet,	nbapbp,		ROT0,	"Konami",	"NBA Play By Play", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 1999, sscope,	0,		hornet,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAMEX( 2000, sscope2,	0,		hornet,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_NOT_WORKING|GAME_NO_SOUND )

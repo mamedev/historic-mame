@@ -107,7 +107,6 @@ WRITE8_HANDLER( rtype2_port02_w );
 WRITE8_HANDLER( majtitle_gfx_ctrl_w );
 VIDEO_UPDATE( m72 );
 VIDEO_UPDATE( majtitle );
-VIDEO_EOF( m72 );
 
 
 static unsigned char *protection_ram;
@@ -2029,7 +2028,6 @@ static MACHINE_DRIVER_START( rtype )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(m72)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2069,7 +2067,6 @@ static MACHINE_DRIVER_START( m72 )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(m72)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2113,7 +2110,6 @@ static MACHINE_DRIVER_START( dkgenm72 )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(m72)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2157,7 +2153,6 @@ static MACHINE_DRIVER_START( xmultipl )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(m72)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2200,7 +2195,6 @@ static MACHINE_DRIVER_START( dbreed )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(m72)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2244,7 +2238,6 @@ static MACHINE_DRIVER_START( rtype2 )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(rtype2)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2287,7 +2280,6 @@ static MACHINE_DRIVER_START( majtitle )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(majtitle)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(majtitle)
 
 	/* sound hardware */
@@ -2330,7 +2322,6 @@ static MACHINE_DRIVER_START( hharry )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(hharry)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2374,7 +2365,6 @@ static MACHINE_DRIVER_START( hharryu )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(rtype2)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2417,7 +2407,6 @@ static MACHINE_DRIVER_START( poundfor )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(poundfor)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */
@@ -2460,7 +2449,6 @@ static MACHINE_DRIVER_START( kengo )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_START(poundfor)
-	MDRV_VIDEO_EOF(m72)
 	MDRV_VIDEO_UPDATE(m72)
 
 	/* sound hardware */

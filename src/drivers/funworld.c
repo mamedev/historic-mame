@@ -583,13 +583,22 @@ ROM_START( jollycrd )
 	ROM_LOAD( "jolycard.ch2", 0x8000, 0x8000, CRC(c512b103) SHA1(1f4e78e97855afaf0332fb75e1b5571aafd01c29) )
 ROM_END
 
-ROM_START( jollypkr )
+ROM_START( jollycdb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "jollypkr.003", 0x8000, 0x8000, CRC(ea7340b4) SHA1(7dd468f28a488a4781521809d06db1d7917048ad) )
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "jollypkr.001", 0x0000, 0x8000, CRC(0f24f39d) SHA1(ac1f6a8a4a2a37cbc0d45c15187b33c25371bffb) )
 	ROM_LOAD( "jollypkr.002", 0x8000, 0x8000, CRC(c512b103) SHA1(1f4e78e97855afaf0332fb75e1b5571aafd01c29) )
+ROM_END
+
+ROM_START( jollycdc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "jn.bin", 0x8000, 0x8000, CRC(6ae00ed0) SHA1(5921c2882aeb5eadd0e04a477fa505ad35e9d98c) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1.bin", 0x0000, 0x8000, CRC(43bcb2df) SHA1(5022bc3a0b852a7cd433e25c3c90a720e6328261) )
+	ROM_LOAD( "2.bin", 0x8000, 0x8000, CRC(46805150) SHA1(63687ac44f6ace6d8924b2629536bcc7d3979ed2) )
 ROM_END
 
 ROM_START( bonuscrd )
@@ -622,6 +631,18 @@ ROM_START( elephfam )
 ROM_END
 
 ROM_START( royalcrd )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "r2.bin", 0x8000, 0x8000, CRC(25dfe0dc) SHA1(1a857a910d0c34b6b5bfc2b6ea2e08ed8ed0cae0) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1.bin", 0x0000, 0x8000, CRC(41f7a0b3) SHA1(9aff2b8832d2a4f868daa9849a0bfe5e44f88fc0) )
+	ROM_LOAD( "2.bin", 0x8000, 0x8000, CRC(85e77661) SHA1(7d7a765c1bfcfeb9eb91d2519b22d734f20eab24) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "n82s147.bin",    0x0000, 0x0200, CRC(8bc86f48) SHA1(4c677ab9314a1f571e35104b22659e6811aeb194) )
+ROM_END
+
+ROM_START( royalcdb )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "rc.bin", 0x8000, 0x10000, CRC(8a9a6dd6) SHA1(04c3f9f17d5404ac1414c51ef8f930df54530e72) )
 
@@ -630,7 +651,7 @@ ROM_START( royalcrd )
 	ROM_LOAD( "2.bin", 0x10000, 0x10000, CRC(3af71cf8) SHA1(3a0ce0d0abebf386573c5936545dada1d3558e55) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "prom-am27s29apc.bin",    0x0000, 0x0200, CRC(8bc86f48) SHA1(4c677ab9314a1f571e35104b22659e6811aeb194) )
+	ROM_LOAD( "n82s147.bin",    0x0000, 0x0200, CRC(8bc86f48) SHA1(4c677ab9314a1f571e35104b22659e6811aeb194) )
 ROM_END
 
 ROM_START( poker4 )
@@ -683,12 +704,14 @@ static DRIVER_INIT( funworld )
 
 //    YEAR  NAME      PARENT    MACHINE   INPUT     INIT            COMPANY        FULLNAME
 GAMEX( 1985, jollycrd, 0, 		funworld, funworld, funworld, ROT0, "TAB-Austria", "Jolly Card (Austria)", GAME_WRONG_COLORS )
-GAMEX( 1993, jollypkr, 0,		jollypkr, funworld, funworld, ROT0, "Soft Design", "Jolly Poker (Croatia)", GAME_WRONG_COLORS )
+GAMEX( 1993, jollycdb, jollycrd,	jollypkr, funworld, funworld, ROT0, "Soft Design", "Jolly Card (Croatia)", GAME_WRONG_COLORS )
+GAMEX( 199?, jollycdc, jollycrd,	funworld, funworld, funworld, ROT0, "bootleg?",    "Jolly Card (Italia, bad dump?)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
 GAMEX( 1986, bonuscrd, 0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Bonus Card? (Austria)", GAME_WRONG_COLORS )
-GAMEX( 1997, cuoreuno, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Cuore Uno (Italia)", GAME_WRONG_COLORS )
-GAMEX( 1997, elephfam, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Elephant Family (Italia)", GAME_WRONG_COLORS )
-GAMEX( 1997, royalcrd, 0, 		funworld, funworld, funworld, ROT0, "TAB-Austria", "Royal Card (Austria)", GAME_WRONG_COLORS )
+GAMEX( 1997, cuoreuno, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Cuore Uno (Italia)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAMEX( 1997, elephfam, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Elephant Family (Italia)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAMEX( 1991, royalcrd, 0, 		funworld, funworld, funworld, ROT0, "TAB-Austria", "Royal Card (Austria, set 1)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAMEX( 1991, royalcdb, royalcrd, 	funworld, funworld, funworld, ROT0, "TAB-Austria", "Royal Card (Austria, set 2)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
 GAMEX( 1986, poker4,   0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (Hungary)", GAME_WRONG_COLORS )
 GAMEX( 1986, poker8,   0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (bad dump?) (Hungary)", GAME_WRONG_COLORS )
-GAMEX( 1990, igpoker,  0, 		funworld, funworld, funworld, ROT0, "Inter Games", "Inter Game Poker?", GAME_NOT_WORKING )
+GAMEX( 1990, igpoker,  0, 		funworld, funworld, funworld, ROT0, "Inter Games", "Inter Game Poker?", GAME_WRONG_COLORS | GAME_NOT_WORKING )
 GAMEX( 1996, magiccrd, 0, 		magiccrd, magiccrd, funworld, ROT0, "Impera", 	   "Magic Card II (Bulgaria)", GAME_WRONG_COLORS )

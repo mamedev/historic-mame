@@ -149,12 +149,12 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 		ui_popup("PLAYER-%01X SIDE", fromanc2_playerside + 1);
 
 		if (!fromanc2_playerside) {
-//          mixer_set_stereo_volume(3, 75, 75); // 1P (LEFT)
-//          mixer_set_stereo_volume(4,  0,  0); // 2P (RIGHT)
+		sound_set_user_gain(1, 0.75); // 1P (LEFT)
+		sound_set_user_gain(2, 0.00); // 2P (RIGHT)
 		}
 		else {
-//          mixer_set_stereo_volume(3,  0,  0); // 1P (LEFT)
-//          mixer_set_stereo_volume(4, 75, 75); // 2P (RIGHT)
+		sound_set_user_gain(1, 0.00); // 1P (LEFT)
+		sound_set_user_gain(2, 0.75); // 2P (RIGHT)
 		}
 
 		fromanc2_set_dispvram_w(fromanc2_playerside);

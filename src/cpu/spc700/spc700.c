@@ -142,7 +142,8 @@ int spc700_ICount = 0;
 /* Temporary Variables */
 static uint spc700i_source;
 static uint spc700i_destination;
-
+static short spc_int16;
+static int spc_int32;
 
 /* Layout of the registers in the MAME debugger */
 static unsigned char spc700_register_layout[] =
@@ -820,31 +821,28 @@ INLINE void SET_FLAG_I(uint value)
 			FLAG_P  = PFLAG_CLEAR
 
 /* Compare operand to register */
-/* Unusual behavior: C is inverted */
 #define OP_CMPR(BCLK, REG, MODE)											\
 			CLK(BCLK);														\
 			SRC     = OPER_8_##MODE();										\
-			FLAG_C  = REG - SRC;											\
-			FLAG_NZ = MAKE_UINT_8(FLAG_C);									\
-			FLAG_C  ^= FLAG_C
+			spc_int16 = (short)REG - (short)SRC;	\
+			FLAG_C  = (spc_int16 >= 0) ? 0x100 : 0;											\
+			FLAG_NZ = MAKE_UINT_8(spc_int16);
 
 /* Compare memory */
-/* Unusual behavior: C is inverted */
 #define OP_CMPM(BCLK, SMODE, DMODE)											\
 			CLK(BCLK);														\
 			SRC     = OPER_8_##SMODE();										\
-			FLAG_C  = OPER_8_##DMODE() - SRC;								\
-			FLAG_NZ = MAKE_UINT_8(FLAG_C);									\
-			FLAG_C ^= FLAG_C
+			spc_int16 = (short)OPER_8_##DMODE() - (short)SRC;	\
+			FLAG_C  = (spc_int16 >= 0) ? 0x100 : 0;											\
+			FLAG_NZ = MAKE_UINT_8(spc_int16);
 
 /* Compare word */
-/* Unusual behavior: C is inverted */
 #define OP_CMPW(BCLK, MODE)													\
 			CLK(BCLK);														\
 			SRC     = OPER_16_##MODE();										\
-			FLAG_C  = GET_REG_YA() - SRC;									\
-			FLAG_NZ = NZFLAG_16(FLAG_C);									\
-			FLAG_C  = ~CFLAG_16(FLAG_C)
+			spc_int32 = (int)GET_REG_YA() - (int)SRC;								\
+			FLAG_C  = (spc_int32 >= 0) ? 0x100 : 0;									\
+			FLAG_NZ = NZFLAG_16(spc_int32);
 
 /* Decimal adjust for addition */
 #define OP_DAA(BCLK)														\

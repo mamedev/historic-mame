@@ -728,7 +728,7 @@ static MACHINE_DRIVER_START( elecyoyo )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcu)
 
-	MDRV_INTERLEAVE(20)	// fixes hang in attract mode
+	MDRV_INTERLEAVE(100)	// fixes hang in attract mode
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( zookeep )

@@ -1,7 +1,6 @@
 /*
     Namco System FL
-    Preliminary driver by R. Belmont
-    Thanks to ElSemi for some hardware info
+    Driver by R. Belmont and ElSemi
 
     IMPORTANT
     ---------
@@ -301,26 +300,33 @@ static gfx_decode gfxdecodeinfo2[] =
 
 static INTERRUPT_GEN(namcofl_interrupt)
 {
+	int currentscanline=224-cpu_getiloops();
+	int v=(paletteram32[0x1808/4]>>16)&0xffff;
+	int triggerscanline=(((v>>8)&0xff)|((v&0xff)<<8))-(32+1);
+
+	if (triggerscanline==currentscanline)
+	{
+		force_partial_update(currentscanline);
+		cpunum_set_input_line(0, I960_IRQ1, ASSERT_LINE);
+	}
+
+
 	switch (cpu_getiloops())
 	{
 		case 0:
-			cpunum_set_input_line(0, I960_IRQ2, ASSERT_LINE);
-			break;
-		case 1:
-			cpunum_set_input_line(0, I960_IRQ1, ASSERT_LINE);
+			cpunum_set_input_line(0, I960_IRQ2, ASSERT_LINE); //VSYNC
 			break;
 		case 2:
-			cpunum_set_input_line(0, I960_IRQ0, ASSERT_LINE);
+			cpunum_set_input_line(0, I960_IRQ0, ASSERT_LINE); //Network
 			break;
 	}
 }
-
 NAMCO_C7X_HARDWARE
 
 static MACHINE_DRIVER_START( sysfl )
 	MDRV_CPU_ADD(I960, 20000000)	// i80960KA-20 == 20 MHz part
 	MDRV_CPU_PROGRAM_MAP(sysfl_mem, 0)
-	MDRV_CPU_VBLANK_INT(namcofl_interrupt,3)
+	MDRV_CPU_VBLANK_INT(namcofl_interrupt, 224)
 
 	NAMCO_C7X_MCU_SHARED( 16384000 )
 
@@ -448,4 +454,4 @@ static DRIVER_INIT(finalapr)
 }
 
 GAMEX( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_SOUND )

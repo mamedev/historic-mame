@@ -2319,6 +2319,8 @@ V-V                           TP-027
 	DRIVER( megaman )	/* 06/10/1995 (c) 1995 (Asia)  */
 	DRIVER( rockmanj )	/* 22/09/1995 (c) 1995 (Japan) */
 
+	DRIVER( fcrash )	/* bootleg of Final Fight */
+
 	/* Capcom CPS2 games */
 	/* list completed by CPS2Shock */
 	/* http://cps2shock.retrogames.com */
@@ -2772,6 +2774,7 @@ V-V                           TP-027
 	DRIVER( gt2k )		/* (c) 2000 Incredible Technologies */
 	DRIVER( gt2ks100 )	/* (c) 2000 Incredible Technologies */
 	DRIVER( gt2kt500 )	/* (c) 2000 Incredible Technologies */
+	DRIVER( gtsuprem )	/* (c) 2000 Incredible Technologies */
 	DRIVER( gtclassc )	/* (c) 2001 Incredible Technologies */
 	DRIVER( gtclassp )	/* (c) 2001 Incredible Technologies */
 	DRIVER( gtcls100 )	/* (c) 2001 Incredible Technologies */
@@ -3471,6 +3474,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Genie Hardware (uses Genesis VDP) also has 'Sun Mixing Co' put into tile ram */
 	DRIVER( puckpkmn )	/* (c) 2000 Genie */
+	DRIVER( topshoot )	/* (c) 1995 Sun Mixing */
 
 	/* Sega MegaTech, the number shown is on the label of the instruction rom */
 	DRIVER( mt_beast )	/* 01 */
@@ -3549,6 +3553,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 						/* 09 */
 						/* 10 */
 	DRIVER( mp_mazin )	/* 11 */
+	DRIVER( mp_col3 )	/* ?? */
 
 	/* Data East "Burger Time hardware" games */
 	DRIVER( lnc )		/* (c) 1981 */
@@ -4269,6 +4274,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( thunderh )	/* GX680 (c)1996 */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
 	DRIVER( gticlubj )	/* GX688 (c)1996 */
+	DRIVER( nbapbp )	/* GX778 (c)1998 */
 	DRIVER( gradius4 )	/* GX837 (c)1999 */
 	DRIVER( sscope )	/* GX830 (c)1999 */
 	DRIVER( sscope2 )	/* GX931 (c)2000 */
@@ -6271,6 +6277,7 @@ Other Sun games
 	/* IGS games ( www.igs.com.tw ) */
 	DRIVER( goldstar )	/* (c) 198? IGS */
 	DRIVER( goldstbl )	/* (c) 198? IGS */
+	DRIVER( moonlght )	/* bootleg */
 	DRIVER( csk227it )	/* (c) 198? IGS */
 	DRIVER( csk234it )	/* (c) 198? IGS */
 	DRIVER( iqblock )	/* (c) 1993 */
@@ -6674,11 +6681,13 @@ Other Sun games
 	DRIVER( cybertnk )	/* (c) 1990 Coreland */
 	DRIVER( pkscram )	/* (c) 1993 Cosmo Electronics Corporation */
 	DRIVER( jollycrd )	/* (c) 1985 TAB-Austria */
-	DRIVER( jollypkr )	/* (c) 1993 Soft Design */
+	DRIVER( jollycdb )	/* (c) 1993 Soft Design */
+	DRIVER( jollycdc )	/* 199? bootleg? */
 	DRIVER( bonuscrd )	/* (c) 1986 Fun World */
 	DRIVER( cuoreuno )	/* (c) 1997 bootleg? */
 	DRIVER( elephfam )	/* (c) 1997 bootleg? */
-	DRIVER( royalcrd )	/* (c) 1997 TAB-Austria */
+	DRIVER( royalcrd )	/* (c) 1991 TAB-Austria */
+	DRIVER( royalcdb )	/* (c) 1991 TAB-Austria */
 	DRIVER( poker4 )	/* (c) 1986 Fun World */
 	DRIVER( poker8 )	/* (c) 1986 Fun World */
 	DRIVER( igpoker )	/* (c) 1990 Inter Games */

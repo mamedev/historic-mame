@@ -275,6 +275,12 @@ static gfx_decode gfxdecodeinfobl[] =
 	{ REGION_GFX2, 0, &tilelayoutbl, 128,  8 },
 	{ -1 } /* end of array */
 };
+static gfx_decode gfxdecodeinfoml[] =
+{
+	{ REGION_GFX1, 0, &charlayout,   0, 16 },
+	{ REGION_GFX2, 0x18000, &tilelayout, 128,  8 },
+	{ -1 } /* end of array */
+};
 
 
 
@@ -357,6 +363,41 @@ static MACHINE_DRIVER_START( goldstbl )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( moonlght )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3579545)//(4000000?)
+	MDRV_CPU_PROGRAM_MAP(map,0)
+	MDRV_CPU_IO_MAP(readport,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+//  MDRV_VBLANK_DURATION(0)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfoml)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(256)
+	MDRV_NVRAM_HANDLER(goldstar)
+
+	MDRV_VIDEO_START(goldstar)
+	MDRV_VIDEO_UPDATE(goldstar)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")//set up a standard mono speaker called 'mono'
+	MDRV_SOUND_ADD(AY8910,1500000)//1 AY8910, at clock 150000Hz
+	MDRV_SOUND_CONFIG(ay8910_interface)//read extra data from interface
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)//all sound goes to the 'mono' speaker, at 0.50 X maximum
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)//clock
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)//REGION_SOUND1
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)//all sound goes to the 'mono' speaker, at 1.0 X maximum
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -394,6 +435,21 @@ ROM_START( goldstbl )
 ROM_END
 
 
+ROM_START( moonlght )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "4.bin",  0x0000, 0x20000, CRC(ecb06cfb) SHA1(e32613cac5583a0fecf04fca98796b91698e530c) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "28.bin",      0x00000, 0x20000, CRC(76915c0f) SHA1(3f6d1c0dd3d9bf29538181a0e930291b822dad8c) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "29.bin",      0x00000, 0x20000, CRC(8a5f274d) SHA1(0f2ad61b00e220fc509c01c11c1a8f4e47b54f2a) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* Audio ADPCM */
+	ROM_LOAD( "gs1-snd.bin",  0x0000, 0x20000, CRC(9d58960f) SHA1(c68edf95743e146398aabf6b9617d18e1f9bf25b) )
+ROM_END
+
+
 static void init_goldstar(void)
 {
 	int A;
@@ -411,5 +467,6 @@ static void init_goldstar(void)
 
 
 
-GAME( 198?, goldstar, 0,        goldstar, goldstar, goldstar, ROT0, "IGS", "Golden Star" )
-GAME( 198?, goldstbl, goldstar, goldstbl, goldstar, 0,        ROT0, "IGS", "Golden Star (Blue version)" )
+GAME( 199?, goldstar, 0,        goldstar, goldstar, goldstar, ROT0, "IGS", "Golden Star" )
+GAME( 199?, goldstbl, goldstar, goldstbl, goldstar, 0,        ROT0, "IGS", "Golden Star (Blue version)" )
+GAME( 199?, moonlght, goldstar, moonlght, goldstar, 0,        ROT0, "unknown", "Moon Light" )

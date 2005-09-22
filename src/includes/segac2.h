@@ -4,12 +4,17 @@
 
 **************************************************************************/
 
+/******************************************************************************
+    Constants
+******************************************************************************/
+
+#define MASTER_CLOCK		53693100
+
 /*----------- defined in vidhrdw/segac2.c -----------*/
 
 extern UINT8		segac2_vdp_regs[];
-extern int			segac2_bg_palbase;
-extern int			segac2_sp_palbase;
-extern int			segac2_palbank;
+extern UINT16		segac2_bg_pal_lookup[];
+extern UINT16		segac2_sp_pal_lookup[];
 extern UINT16		scanbase;
 
 VIDEO_START( puckpkmn );
@@ -17,8 +22,6 @@ VIDEO_START( megatech );
 VIDEO_START( megaplay );
 
 VIDEO_START( segac2 );
-
-VIDEO_EOF( segac2 );
 
 VIDEO_UPDATE( segac2 );
 VIDEO_UPDATE( megatech );

@@ -220,6 +220,7 @@ DRIVER_INIT(diehard);
 DRIVER_INIT(sss);
 DRIVER_INIT(othellos);
 DRIVER_INIT(sassisu);
+DRIVER_INIT(gaxeduel);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -227,7 +228,7 @@ DRIVER_INIT(sassisu);
 static UINT8 *smpc_ram;
 //static void stv_dump_ram(void);
 
-static UINT32* stv_workram_l;
+UINT32* stv_workram_l;
 UINT32* stv_workram_h;
 UINT32* stv_backupram;
 UINT32* stv_scu;
@@ -5346,6 +5347,7 @@ GAMEBX( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega",
 GAMEBX( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEBX( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Ejihon Tantei Jimusyo (J 950613 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  gaxeduel,	 ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, grdforce,  stvbios, stvbios, stv, stv,  grdforce,  ROT0,   "Success",  				  "Guardian Force (JUET 980318 V0.105)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    				  "Power Instinct 3 - Groove On Fight (J 970416 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEBX( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				  "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -5376,7 +5378,6 @@ GAMEBX( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micron
 GAMEBX( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEBX( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft",    				  "Astra SuperStars (J 980514 V1.002)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEBX( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,		 ROT0,   "Tecmo",      				  "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) // player movement
-GAMEBX( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  ic13,		 ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) // missing gfx..
 GAMEBX( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Doing Something.. but not enough yet */

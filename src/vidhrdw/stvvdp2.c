@@ -3289,6 +3289,8 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 
 			if (stv2_current_tilemap.colour_depth == 1)
 			{
+				UINT8 gfx_mem_offset = (tilecode & 0x1) ? 0x20 : 0x0;
+
 				tilecode = tilecode >> 1;
 				gfx = 2;
 				pal = pal >>4;
@@ -3297,14 +3299,14 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 				tilecode &=0x3fff;
 				if (stv2_current_tilemap.tile_size==1)
 				{ /* we're treating 16x16 tiles as 4 8x8's atm */
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode+1] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+1] = 0; decodechar(Machine->gfx[2], tilecode+1,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode+2] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+2] = 0; decodechar(Machine->gfx[2], tilecode+2,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode+3] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+3] = 0; decodechar(Machine->gfx[2], tilecode+3,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1) + gfx_mem_offset, Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode+1] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+1] = 0; decodechar(Machine->gfx[2], tilecode+1,  (UINT8*)memory_region(REGION_GFX1) + gfx_mem_offset, Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode+2] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+2] = 0; decodechar(Machine->gfx[2], tilecode+2,  (UINT8*)memory_region(REGION_GFX1) + gfx_mem_offset, Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode+3] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode+3] = 0; decodechar(Machine->gfx[2], tilecode+3,  (UINT8*)memory_region(REGION_GFX1) + gfx_mem_offset, Machine->drv->gfxdecodeinfo[2].gfxlayout); };
 				}
 				else
 				{
-					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1), Machine->drv->gfxdecodeinfo[2].gfxlayout); };
+					if (stv_vdp2_vram_dirty_8x8x8[tilecode] == 1) { stv_vdp2_vram_dirty_8x8x8[tilecode] = 0; decodechar(Machine->gfx[2], tilecode,  (UINT8*)memory_region(REGION_GFX1) + gfx_mem_offset, Machine->drv->gfxdecodeinfo[2].gfxlayout); };
 				}
 
 			}

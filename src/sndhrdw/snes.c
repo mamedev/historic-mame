@@ -423,13 +423,13 @@ WRITE8_HANDLER( spc_io_w )
 			timer_enable( timers[2].timer, timers[2].enabled );
 			if( data & 0x10 )
 			{
-				spc_port_in[0] = spc_port_out[0] = 0;
-				spc_port_in[1] = spc_port_out[1] = 0;
+				spc_port_in[0] = 0;
+				spc_port_in[1] = 0;
 			}
 			if( data & 0x20 )
 			{
-				spc_port_in[2] = spc_port_out[2] = 0;
-				spc_port_in[3] = spc_port_out[3] = 0;
+				spc_port_in[2] = 0;
+				spc_port_in[3] = 0;
 			}
 			spc_showrom = (data & 0x80) >> 7;
 			break;

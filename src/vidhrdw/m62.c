@@ -462,7 +462,7 @@ static void get_ldrun_bg_tile_info( int offs )
 		flags |= TILE_FLIPX;
 	}
 	SET_TILE_INFO( 0, code | ( ( color & 0xc0 ) << 2 ), color & 0x1f, flags );
-	if( ( ( color & 0x1f ) >> 1 ) >= 0x04 )
+	if( ( ( color & 0x0f ) >> 1 ) >= 0x04 )
 	{
 		tile_info.priority = 1;
 	}

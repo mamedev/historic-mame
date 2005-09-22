@@ -265,7 +265,7 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 			if ( vdp1_sprite_log ) logerror( "VDP1: Access to register TVMR = %1X\n", STV_VDP1_TVMR );
 			if ( STV_VDP1_VBE && stv_vblank )
 			{
-				stv_clear_framebuffer(stv_vdp1_current_display_framebuffer);
+				stv_vdp1_clear_framebuffer_on_next_frame = 1;
 			}
 
 			/* needed by pblbeach, it doesn't clear local coordinates in its sprite list...*/
@@ -1176,8 +1176,19 @@ void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 	x = stv2_current_sprite.CMDXA;
 	y = stv2_current_sprite.CMDYA;
 
-	screen_width = stv2_current_sprite.CMDXB;
-	screen_height = stv2_current_sprite.CMDYB;
+	screen_width = (INT16)stv2_current_sprite.CMDXB;
+	if ( screen_width < 0 )
+	{
+		screen_width = -screen_width;
+		direction |= 1;
+	}
+
+	screen_height = (INT16)stv2_current_sprite.CMDYB;
+	if ( screen_height < 0 )
+	{
+		screen_height = -screen_height;
+		direction |= 2;
+	}
 
 	x2 = stv2_current_sprite.CMDXC; // second co-ordinate set x
 	y2 = stv2_current_sprite.CMDYC; // second co-ordinate set y
@@ -1602,8 +1613,12 @@ void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect)
 
 	if ( stv_vdp1_clear_framebuffer_on_next_frame )
 	{
-		stv_clear_framebuffer(stv_vdp1_current_display_framebuffer);
-		stv_vdp1_clear_framebuffer_on_next_frame = 0;
+		if ( ((STV_VDP1_FBCR & 0x3) == 3) &&
+			stv_vdp1_fbcr_accessed )
+		{
+			stv_clear_framebuffer(stv_vdp1_current_display_framebuffer);
+			stv_vdp1_clear_framebuffer_on_next_frame = 0;
+		}
 	}
 
 	switch( STV_VDP1_FBCR & 0x3 )

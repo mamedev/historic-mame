@@ -7,12 +7,11 @@
 
 unsigned char *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
 static unsigned char *m72_spriteram;
-static int rastersplit;
 static int splitline;
 static tilemap *fg_tilemap,*bg_tilemap;
 static int xadjust;
 static int bgadjust;
-static int scrollx1[256],scrolly1[256],scrollx2[256],scrolly2[256];
+static int scrollx1,scrolly1,scrollx2,scrolly2;
 static int video_off;
 extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;
@@ -43,7 +42,6 @@ INTERRUPT_GEN( m72_interrupt )
 
 	if (line == 255)	/* vblank */
 	{
-		rastersplit = 0;
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irqbase+0);
 	}
 	else
@@ -51,7 +49,7 @@ INTERRUPT_GEN( m72_interrupt )
 		if (line != splitline - 128)
 			return;
 
-		rastersplit = line + 1;
+		force_partial_update(line + 128);
 
 		/* this is used to do a raster effect and show the score display at
            the bottom of the screen or other things. The line where the
@@ -159,13 +157,12 @@ static UINT32 majtitle_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT3
 
 static void register_savestate(void)
 {
-	state_save_register_int  ("video", 0, "rastersplit",      &rastersplit);
 	state_save_register_int  ("video", 0, "splitline",        &splitline);
 	state_save_register_int  ("video", 0, "video_off",        &video_off);
-	state_save_register_UINT8("video", 0, "scrollx1",(UINT8*) scrollx1, sizeof(scrollx1));
-	state_save_register_UINT8("video", 0, "scrolly1",(UINT8*) scrolly1, sizeof(scrolly1));
-	state_save_register_UINT8("video", 0, "scrollx2",(UINT8*) scrollx2, sizeof(scrollx2));
-	state_save_register_UINT8("video", 0, "scrolly2",(UINT8*) scrolly2, sizeof(scrolly2));
+	state_save_register_int  ("video", 0, "scrollx1",         &scrollx1);
+	state_save_register_int  ("video", 0, "scrolly1",         &scrolly1);
+	state_save_register_int  ("video", 0, "scrollx2",         &scrollx2);
+	state_save_register_int  ("video", 0, "scrolly2",         &scrolly2);
 	state_save_register_UINT8("video", 0, "m72_spriteram",    m72_spriteram, spriteram_size);
 }
 
@@ -402,46 +399,26 @@ WRITE8_HANDLER( m72_irq_line_w )
 
 WRITE8_HANDLER( m72_scrollx1_w )
 {
-	int i;
-
 	offset *= 8;
-	scrollx1[rastersplit] = (scrollx1[rastersplit] & (0xff00 >> offset)) | (data << offset);
-
-	for (i = rastersplit+1;i < 256;i++)
-		scrollx1[i] = scrollx1[rastersplit];
+	scrollx1 = (scrollx1 & (0xff00 >> offset)) | (data << offset);
 }
 
 WRITE8_HANDLER( m72_scrollx2_w )
 {
-	int i;
-
 	offset *= 8;
-	scrollx2[rastersplit] = (scrollx2[rastersplit] & (0xff00 >> offset)) | (data << offset);
-
-	for (i = rastersplit+1;i < 256;i++)
-		scrollx2[i] = scrollx2[rastersplit];
+	scrollx2 = (scrollx2 & (0xff00 >> offset)) | (data << offset);
 }
 
 WRITE8_HANDLER( m72_scrolly1_w )
 {
-	int i;
-
 	offset *= 8;
-	scrolly1[rastersplit] = (scrolly1[rastersplit] & (0xff00 >> offset)) | (data << offset);
-
-	for (i = rastersplit+1;i < 256;i++)
-		scrolly1[i] = scrolly1[rastersplit];
+	scrolly1 = (scrolly1 & (0xff00 >> offset)) | (data << offset);
 }
 
 WRITE8_HANDLER( m72_scrolly2_w )
 {
-	int i;
-
 	offset *= 8;
-	scrolly2[rastersplit] = (scrolly2[rastersplit] & (0xff00 >> offset)) | (data << offset);
-
-	for (i = rastersplit+1;i < 256;i++)
-		scrolly2[i] = scrolly2[rastersplit];
+	scrolly2 = (scrolly2 & (0xff00 >> offset)) | (data << offset);
 }
 
 WRITE8_HANDLER( m72_dmaon_w )
@@ -626,58 +603,25 @@ static void majtitle_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	}
 }
 
-static void draw_layer(mame_bitmap *bitmap,const rectangle *cliprect,
-		tilemap *tmap,int *scrollx,int *scrolly,int priority,int adjust_xpos)
-{
-	int start,i;
-	/* use clip regions to split the screen */
-	rectangle clip;
-
-	clip.min_x = cliprect->min_x;
-	clip.max_x = cliprect->max_x;
-	start = cliprect->min_y - 128;
-	do
-	{
-		i = start;
-		while (scrollx[i+1] == scrollx[start] && scrolly[i+1] == scrolly[start]
-				&& i < Machine->visible_area.max_y - 128)
-			i++;
-
-		clip.min_y = start + 128;
-		clip.max_y = i + 128;
-		sect_rect(&clip,cliprect);
-		tilemap_set_scrollx(tmap,0,scrollx[start] + adjust_xpos);
-		tilemap_set_scrolly(tmap,0,scrolly[start]);
-		tilemap_draw(bitmap,&clip,tmap,priority,0);
-
-		start = i+1;
-	} while (start < cliprect->max_y - 128);
-}
-
-static void draw_bg(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
-{
-	draw_layer(bitmap,cliprect,bg_tilemap,scrollx2,scrolly2,priority,xadjust + bgadjust);
-}
-
-static void draw_fg(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
-{
-	draw_layer(bitmap,cliprect,fg_tilemap,scrollx1,scrolly1,priority,xadjust);
-}
-
-
 VIDEO_UPDATE( m72 )
 {
 	if (video_off)
 	{
-		fillbitmap(bitmap,Machine->pens[0],cliprect);
+		fillbitmap(bitmap,get_black_pen(),cliprect);
 		return;
 	}
 
-	draw_bg(bitmap,cliprect,TILEMAP_BACK);
-	draw_fg(bitmap,cliprect,TILEMAP_BACK);
+	tilemap_set_scrollx(fg_tilemap,0,scrollx1 + xadjust);
+	tilemap_set_scrolly(fg_tilemap,0,scrolly1);
+
+	tilemap_set_scrollx(bg_tilemap,0,scrollx2 + xadjust + bgadjust);
+	tilemap_set_scrolly(bg_tilemap,0,scrolly2);
+
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap,cliprect);
-	draw_bg(bitmap,cliprect,TILEMAP_FRONT);
-	draw_fg(bitmap,cliprect,TILEMAP_FRONT);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_FRONT,0);
 }
 
 VIDEO_UPDATE( majtitle )
@@ -687,42 +631,31 @@ VIDEO_UPDATE( majtitle )
 
 	if (video_off)
 	{
-		fillbitmap(bitmap,Machine->pens[0],cliprect);
+		fillbitmap(bitmap,get_black_pen(),cliprect);
 		return;
 	}
+
+	tilemap_set_scrollx(fg_tilemap,0,scrollx1 + xadjust);
+	tilemap_set_scrolly(fg_tilemap,0,scrolly1);
 
 	if (majtitle_rowscroll)
 	{
 		tilemap_set_scroll_rows(bg_tilemap,512);
 		for (i = 0;i < 512;i++)
-			tilemap_set_scrollx(bg_tilemap,(i+scrolly2[0])&0x1ff,
+			tilemap_set_scrollx(bg_tilemap,(i+scrolly2)&0x1ff,
 					256 + majtitle_rowscrollram[2*i] + (majtitle_rowscrollram[2*i+1] << 8) + xadjust);
 	}
 	else
 	{
 		tilemap_set_scroll_rows(bg_tilemap,1);
-		tilemap_set_scrollx(bg_tilemap,0,256 + scrollx2[0] + xadjust);
+		tilemap_set_scrollx(bg_tilemap,0,256 + scrollx2 + xadjust);
 	}
-	tilemap_set_scrolly(bg_tilemap,0,scrolly2[0]);
+	tilemap_set_scrolly(bg_tilemap,0,scrolly2);
 
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
-	draw_fg(bitmap,cliprect,TILEMAP_BACK);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_BACK,0);
 	majtitle_draw_sprites(bitmap,cliprect);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
-	draw_fg(bitmap,cliprect,TILEMAP_FRONT);
-}
-
-
-VIDEO_EOF( m72 )
-{
-	int i;
-
-	for (i = 0;i < 255;i++)
-	{
-		scrollx1[i] = scrollx1[255];
-		scrolly1[i] = scrolly1[255];
-		scrollx2[i] = scrollx2[255];
-		scrolly2[i] = scrolly2[255];
-	}
+	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_FRONT,0);
 }

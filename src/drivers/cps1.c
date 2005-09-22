@@ -29,19 +29,19 @@ void slammast_decode(void);
 
 
 
-static READ16_HANDLER( cps1_input_r )
+READ16_HANDLER( cps1_input_r )
 {
 	int control=readinputport(offset);
 	return (control<<8) | control;
 }
 
-static READ16_HANDLER( cps1_input2_r )
+READ16_HANDLER( cps1_input2_r )
 {
 	int buttons=readinputport(5);
 	return buttons << 8 | buttons;
 }
 
-static READ16_HANDLER( cps1_input3_r )
+READ16_HANDLER( cps1_input3_r )
 {
     int buttons=readinputport(6);
 	return buttons << 8 | buttons;
@@ -102,7 +102,7 @@ static WRITE16_HANDLER( cps1_sound_command_w )
 		soundlatch_w(0,data & 0xff);
 }
 
-static WRITE16_HANDLER( cps1_coinctrl_w )
+WRITE16_HANDLER( cps1_coinctrl_w )
 {
 //  ui_popup("coinctrl %04x",data);
 
@@ -123,7 +123,7 @@ static WRITE16_HANDLER( cps1_coinctrl_w )
 	}
 }
 
-static WRITE16_HANDLER( cpsq_coinctrl2_w )
+WRITE16_HANDLER( cpsq_coinctrl2_w )
 {
 	if (ACCESSING_LSB)
 	{
@@ -141,7 +141,7 @@ static WRITE16_HANDLER( cpsq_coinctrl2_w )
     }
 }
 
-static INTERRUPT_GEN( cps1_interrupt )
+INTERRUPT_GEN( cps1_interrupt )
 {
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
 	/* works without it (maybe it's used to multiplex controls). It is the */
@@ -3623,7 +3623,7 @@ static gfx_layout layout32x32 =
 	512*8		/* char modulo */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+gfx_decode cps1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout8x8,   0, 0x100 },
 	{ REGION_GFX1, 0, &layout16x16, 0, 0x100 },
@@ -3672,7 +3672,7 @@ static MACHINE_DRIVER_START( cps1 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
-	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_GFXDECODE(cps1_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
 
 	MDRV_VIDEO_START(cps1)

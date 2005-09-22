@@ -1614,7 +1614,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 }
 
 
-input_port_entry *input_port_allocate(void construct_ipt(input_port_init_params *param))
+input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *param))
 {
 	input_port_init_params iip;
 

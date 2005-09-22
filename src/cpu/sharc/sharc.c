@@ -483,7 +483,9 @@ static void sharc_set_flag_input(int flag_num, int state)
 
 static offs_t sharc_dasm(char *buffer, offs_t pc)
 {
-	UINT64 op = ROPCODE(pc);
+	UINT64 op = 0;
+	if (pc >= 0x20000 && pc < 0x30000)
+	 	op = ROPCODE(pc);
 #ifdef MAME_DEBUG
 	sharc_dasm_one(buffer, pc, op);
 #else
@@ -759,6 +761,14 @@ void adsp21062_set_info(UINT32 state, union cpuinfo *info)
 }
 #endif
 
+static int sharc_debug_readop(UINT32 offset, int size, UINT64 *value)
+{
+	if (offset >= 0x20000 && offset < 0x30000)
+		*value = ROPCODE(offset);
+
+	return 1;
+}
+
 
 
 void sharc_get_info(UINT32 state, union cpuinfo *info)
@@ -771,8 +781,8 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
-		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 8;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 8;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
 
@@ -865,6 +875,7 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sharc_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sharc_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sharc_win_layout;				break;
+		case CPUINFO_PTR_READOP:						info->readop = sharc_debug_readop;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "SHARC"); break;

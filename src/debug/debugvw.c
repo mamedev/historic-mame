@@ -30,9 +30,6 @@
 **  CONSTANTS
 **#################################################################################################*/
 
-#define MAX_VIEW_WIDTH		(256)
-#define MAX_VIEW_HEIGHT		(256)
-
 #define DASM_LINES			(1000)
 #define DASM_WIDTH			(50)
 #define DASM_MAX_BYTES		(16)
@@ -61,6 +58,7 @@ struct debug_view
 	UINT8			type;						/* type of view */
 	void *			extra_data;					/* extra view-specific data */
 	struct debug_view_callbacks cb;				/* callback for this view */
+	void *			osd_private_data;			/* OSD-managed private data */
 
 	/* visibility info */
 	UINT32			visible_rows;				/* number of currently visible rows */
@@ -79,6 +77,7 @@ struct debug_view
 	UINT8			update_pending;				/* true if there is a pending update */
 	void			(*update_func)(struct debug_view *);/* callback for the update */
 	struct debug_view_char *viewdata;			/* current array of view data */
+	int				viewdata_size;				/* number of elements of the viewdata array */
 
 	/* common info */
 	UINT8			cpunum;						/* target CPU number */
@@ -233,14 +232,6 @@ struct debug_view *debug_view_alloc(int type)
 		return NULL;
 	memset(view, 0, sizeof(*view));
 
-	/* allocate memory for the buffer */
-	view->viewdata = malloc(sizeof(view->viewdata[0]) * MAX_VIEW_WIDTH * MAX_VIEW_HEIGHT);
-	if (!view->viewdata)
-	{
-		free(view);
-		return NULL;
-	}
-
 	/* set the view type information */
 	view->type = type;
 	view->cb = callback_table[type];
@@ -250,6 +241,15 @@ struct debug_view *debug_view_alloc(int type)
 	view->visible_cols = 10;
 	view->total_rows = 10;
 	view->total_cols = 10;
+
+	/* allocate memory for the buffer */
+	view->viewdata_size = view->visible_rows*view->visible_cols;
+	view->viewdata = malloc(sizeof(view->viewdata[0]) * view->viewdata_size);
+	if (!view->viewdata)
+	{
+		free(view);
+		return NULL;
+	}
 
 	/* allocate extra memory */
 	if (view->cb.alloc && !(*view->cb.alloc)(view))
@@ -360,6 +360,10 @@ void debug_view_get_property(struct debug_view *view, int property, void *value)
 
 		case DVP_CURSOR_COL:
 			*(UINT32 *)value = view->cursor_col;
+			break;
+
+		case DVP_OSD_PRIVATE:
+			*(void **)value = view->osd_private_data;
 			break;
 
 		default:
@@ -496,6 +500,10 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 			}
 			break;
 
+		case DVP_OSD_PRIVATE:
+			view->osd_private_data = *(void **)value;
+			break;
+
 		default:
 			if (view->cb.setprop)
 				(*view->cb.setprop)(view, property, value);
@@ -535,8 +543,18 @@ void debug_view_end_update(struct debug_view *view)
 	{
 		while (view->update_pending)
 		{
+			int size;
+
 			/* no longer pending */
 			view->update_pending = 0;
+
+			/* resize the viewdata if needed */
+			size = view->visible_rows*view->visible_cols;
+			if (size > view->viewdata_size)
+			{
+				view->viewdata_size = size;
+				view->viewdata = realloc(view->viewdata, sizeof(view->viewdata[0]) * view->viewdata_size);
+			}
 
 			/* update the view */
 			if (view->cb.update)

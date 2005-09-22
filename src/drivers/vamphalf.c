@@ -7,11 +7,11 @@
 
  Games Supported:
 
-    Vamp 1/2                (c) 1999 Danbi & F2 System
-    Mission Craft           (c) 2000 Sun                (version 2.4)
-    Coolmini                (c) 199? Semicom
-    Super Lup Lup Puzzle    (c) 1999 Omega System       (version 4.0)
-    Lup Lup Puzzle          (c) 1999 Omega System       (version 3.0 and 2.9)
+    Vamp 1/2                 (c) 1999 Danbi & F2 System  (Korea version)
+    Mission Craft            (c) 2000 Sun                (version 2.4)
+    Minigame Cool Collection (c) 1999 Semicom
+    Super Lup Lup Puzzle     (c) 1999 Omega System       (version 4.0)
+    Lup Lup Puzzle           (c) 1999 Omega System       (version 3.0 and 2.9)
 
  Games Needed:
 
@@ -188,7 +188,7 @@ static void draw_sprites(mame_bitmap *bitmap)
 			offs = (block + cnt) / 2;
 			if(tiles[offs] & 0x0100) continue;
 
-			code  = tiles[offs+1] & 0xffff;
+			code  = tiles[offs+1];
 			color = (tiles[offs+2] >> (palshift)) & 0x7f;
 
 			x = tiles[offs+3] & 0x01ff;
@@ -519,22 +519,54 @@ ROM_START( misncrft )
 	ROM_LOAD( "qs1001a.u17", 0x00000, 0x80000, CRC(d13c6407) SHA1(57b14f97c7d4f9b5d9745d3571a0b7115fbe3176) )
 ROM_END
 
+/*
+
+Cool Minigame Collection
+Semicom, 1999
+
+PCB Layout
+----------
+
+F-E1-16-008
+|-------------------------------------------------------|
+|UPC1241            YM3012   VROM1                      |
+|      LM324  LM324 YM2151                              |
+|               MCM6206       M6295   ROML00    ROMU00  |
+|                                                       |
+|               MCM6206               ROML01    ROMU01  |
+|                                                       |
+|J              MCM6206               ROML02    ROMU02  |
+|A                                                      |
+|M              MCM6206               ROML03    ROMU03  |
+|M                                                      |
+|A              MCM6206                                 |
+|                                                       |
+|               MCM6206       QL2003    QL2003          |
+|                                                28MHz  |
+|               MCM6206                                 |
+|                                                       |
+|               MCM6206  E1-16T   GM71C1816     ROM1    |
+|                                                       |
+|              93C46                            ROM2    |
+|RESET  TEST          50MHz              PAL            |
+|-------------------------------------------------------|
+
+*/
 
 ROM_START( coolmini )
 	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	ROM_LOAD( "cm-rom1.040", 0x00000, 0x80000, CRC(9688fa98) SHA1(d5ebeb1407980072f689c3b3a5161263c7082e9a) )
 	ROM_LOAD( "cm-rom2.040", 0x80000, 0x80000, CRC(9d588fef) SHA1(7b6b0ba074c7fa0aecda2b55f411557b015522b6) )
 
-	/* 8 flash roms missing */
-	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "coolmini.gfx1", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx2", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx3", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx4", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx5", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx6", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx7", 0x000000, 0x100000, NO_DUMP )
-	ROM_LOAD( "coolmini.gfx8", 0x000000, 0x100000, NO_DUMP )
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )  /* 16x16x8 Sprites */
+	ROM_LOAD32_WORD( "roml00", 0x000000, 0x200000, CRC(4b141f31) SHA1(cf4885789b0df67d00f9f3659c445248c4e72446) )
+	ROM_LOAD32_WORD( "romu00", 0x000002, 0x200000, CRC(9b2fb12a) SHA1(8dce367c4c2cab6e84f586bd8dfea3ea0b6d7225) )
+	ROM_LOAD32_WORD( "roml01", 0x400000, 0x200000, CRC(1e3a04bb) SHA1(9eb84b6a0172a8868f440065c30b4519e0c3fe33) )
+	ROM_LOAD32_WORD( "romu01", 0x400002, 0x200000, CRC(06dd1a6c) SHA1(8c707d388848bc5826fbfc48c3035fdaf5018515) )
+	ROM_LOAD32_WORD( "roml02", 0x800000, 0x200000, CRC(1e8c12cb) SHA1(f57489e81eb1e476939148cfc8d03f3df03b2a84) )
+	ROM_LOAD32_WORD( "romu02", 0x800002, 0x200000, CRC(4551d4fc) SHA1(4ec102120ab99e324d9574bfce93837d8334da06) )
+	ROM_LOAD32_WORD( "roml03", 0xc00000, 0x200000, CRC(231650bf) SHA1(065f742a37d5476ec6f72f0bd8ba2cfbe626b872) )
+	ROM_LOAD32_WORD( "romu03", 0xc00002, 0x200000, CRC(273d5654) SHA1(0ae3d1c4c4862a8642dbebd7c955b29df29c4938) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
 	ROM_LOAD( "cm-vrom1.020", 0x00000, 0x40000, CRC(fcc28081) SHA1(44031df0ee28ca49df12bcb73c83299fac205e21) )
@@ -542,8 +574,8 @@ ROM_END
 
 /*
 
-Super Lup Lup Puzzle
-?, ?
+Super Lup Lup Puzzle / Lup Lup Puzzle
+Omega System, 1999
 
 PCB Layout
 ----------
@@ -591,10 +623,10 @@ ROM_START( luplup ) /* version 3.0 / 990128 */
 	ROM_LOAD( "luplup-rom2.v30", 0x80000, 0x80000, CRC(99840155) SHA1(e208f8731c06b634e84fb73e04f6cdbb8b504b94) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
-	ROM_LOAD32_WORD( "luplup-roml00.bin", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD32_WORD( "luplup-romu00.bin", 0x000002, 0x200000, NO_DUMP )
-	ROM_LOAD32_WORD( "luplup-roml01.bin", 0x400000, 0x200000, NO_DUMP )
-	ROM_LOAD32_WORD( "luplup-romu01.bin", 0x400002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup-roml00", 0x000000, 0x200000, CRC(8e2c4453) SHA1(fbf7d72263beda2ef90bccf0369d6e93e76d45b2) )
+	ROM_LOAD32_WORD( "luplup-romu00", 0x000002, 0x200000, CRC(b57f4ca5) SHA1(b968c44a0ceb3274e066fa1d057fb6b017bb3fd3) )
+	ROM_LOAD32_WORD( "luplup-roml01", 0x400000, 0x200000, CRC(40e85f94) SHA1(531e67eb4eedf47b0dded52ba2f4942b12cbbe2f) )
+	ROM_LOAD32_WORD( "luplup-romu01", 0x400002, 0x200000, CRC(f2645b78) SHA1(b54c3047346c0f40dba0ba23b0d607cc53384edb) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
 	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
@@ -607,10 +639,10 @@ ROM_START( luplup29 ) /* version 2.9 / 990108 */
 	ROM_LOAD( "luplup-rom2.v29", 0x80000, 0x80000, CRC(50dac70f) SHA1(0e313114a988cb633a89508fda17eb09023827a2) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
-	ROM_LOAD32_WORD( "luplup-roml00.bin", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD32_WORD( "luplup-romu00.bin", 0x000002, 0x200000, NO_DUMP )
-	ROM_LOAD32_WORD( "luplup-roml01.bin", 0x400000, 0x200000, NO_DUMP )
-	ROM_LOAD32_WORD( "luplup-romu01.bin", 0x400002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup29-roml00", 0x000000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup29-romu00", 0x000002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup29-roml01", 0x400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "luplup29-romu01", 0x400002, 0x200000, NO_DUMP )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
 	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
@@ -691,7 +723,32 @@ static READ16_HANDLER( suplup_speedup_r )
 	}
 
 	return wram[(0x11605c/2)+offset];
+}
 
+static READ16_HANDLER( luplup_speedup_r )
+{
+	if(activecpu_get_pc() == 0xaefac )
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+	}
+
+	return wram[(0x115e84/2)+offset];
+}
+
+static READ16_HANDLER( luplup29_speedup_r )
+{
+	if(activecpu_get_pc() == 0xae6c0 )
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+	}
+
+	return wram[(0x113f08/2)+offset];
 }
 
 DRIVER_INIT( vamphalf )
@@ -726,9 +783,25 @@ DRIVER_INIT( suplup )
 	/* no flipscreen */
 }
 
+DRIVER_INIT( luplup )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00115e84, 0x00115e87, 0, 0, luplup_speedup_r );
+
+	palshift = 8;
+	/* no flipscreen */
+}
+
+DRIVER_INIT( luplup29 )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00113f08, 0x00113f0b, 0, 0, luplup29_speedup_r );
+
+	palshift = 8;
+	/* no flipscreen */
+}
+
 GAME( 1999, suplup,   0,      suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" ) // also has 'Puzzle Bang Bang' title but it can't be selected
-GAMEX(1999, luplup,   suplup, suplup,   common, suplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 3.0 / 990128)", GAME_NOT_WORKING )
-GAMEX(1999, luplup29, suplup, suplup,   common, suplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 2.9 / 990108)", GAME_NOT_WORKING )
-GAME( 1999, vamphalf, 0,      vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea)" )
-GAMEX(2000, misncrft, 0,      misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)",	GAME_NO_SOUND )
-GAMEX(19??, coolmini, 0,      coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Mini",					GAME_NOT_WORKING )
+GAME( 1999, luplup,   suplup, suplup,   common, luplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 3.0 / 990128)" )
+GAMEX(1999, luplup29, suplup, suplup,   common, luplup29, ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 2.9 / 990108)", GAME_NOT_WORKING )
+GAME( 1999, vamphalf, 0,      vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea version)" )
+GAMEX(2000, misncrft, 0,      misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)", GAME_NO_SOUND )
+GAME( 1999, coolmini, 0,      coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Minigame Collection" )

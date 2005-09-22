@@ -1388,7 +1388,7 @@ int updatescreen(void)
 	update_video_and_audio();
 
 	/* call the end-of-frame callback */
-	if (Machine->drv->video_eof)
+	if (Machine->drv->video_eof && !mame_is_paused())
 	{
 		profiler_mark(PROFILER_VIDEO);
 		(*Machine->drv->video_eof)();

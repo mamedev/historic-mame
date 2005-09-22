@@ -49,7 +49,7 @@ static int  vdp_data_r(void);
 static void vdp_data_w(int data);
 static int  vdp_control_r(void);
 static void vdp_control_w(int data);
-static void vdp_register_w(int data);
+static void vdp_register_w(int data, int vblank);
 static void vdp_control_dma(int data);
 static void vdp_dma_68k(void);
 static void vdp_dma_fill(int);
@@ -68,20 +68,18 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 ******************************************************************************/
 
 /* EXTERNALLY ACCESSIBLE */
-       int			segac2_bg_palbase;			/* base of background palette */
-       int			segac2_sp_palbase;			/* base of sprite palette */
+       UINT16		segac2_bg_pal_lookup[4];	/* lookup table for background tiles */
+       UINT16		segac2_sp_pal_lookup[4];	/* lookup table for sprites */
        int			segac2_pal_offs;			/* offset to use when doing palette writes */
-       int			segac2_palbank;				/* global palette bank */
        UINT8		segac2_vdp_regs[32];		/* VDP registers */
 	   UINT16		scanbase;
 
 /* LOCAL */
 static UINT8 *		vdp_vram;					/* VDP video RAM */
 static UINT8 *		vdp_vsram;					/* VDP vertical scroll RAM */
-static UINT8		display_enable;				/* is the display enabled? */
+static UINT8		c2_display_enable;			/* is the display enabled? */
 
 /* updates */
-static UINT8		internal_vblank;			/* state of the VBLANK line */
 static UINT16 *		transparent_lookup;			/* fast transparent mapping table */
 
 /* vram bases */
@@ -163,17 +161,21 @@ VIDEO_START( segac2 )
 
 	/* reset the palettes */
 	memset(paletteram16, 0, 0x800 * sizeof(UINT16));
-	segac2_bg_palbase = 0x000;
-	segac2_sp_palbase = 0x100;
-	segac2_palbank    = 0x000;
+	segac2_bg_pal_lookup[0] = 0x000;
+	segac2_bg_pal_lookup[1] = 0x010;
+	segac2_bg_pal_lookup[2] = 0x020;
+	segac2_bg_pal_lookup[3] = 0x030;
+	segac2_sp_pal_lookup[0] = 0x100;
+	segac2_sp_pal_lookup[1] = 0x110;
+	segac2_sp_pal_lookup[2] = 0x120;
+	segac2_sp_pal_lookup[3] = 0x130;
 	segac2_pal_offs   = 0;
 
 	scanbase = 0;
 
 	/* reset VDP */
-	internal_vblank = 1;
     for (i = 0; i < 24; i++)
-        vdp_register_w(0x8000 | (i << 8) | vdp_init[i]);
+        vdp_register_w(0x8000 | (i << 8) | vdp_init[i], 1);
 	vdp_cmdpart = 0;
 	vdp_code    = 0;
 	vdp_address = 0;
@@ -183,10 +185,9 @@ VIDEO_START( segac2 )
 	state_save_register_UINT8 ("C2_VDP", 0, "VDP Registers", segac2_vdp_regs, 32);
 	state_save_register_UINT8 ("C2_VDP", 0, "VDP VRam", vdp_vram, 0x10000);
 	state_save_register_UINT8 ("C2_VDP", 0, "VDP VSRam", vdp_vsram, 0x80);
-	state_save_register_int("C2_Video", 0, "Palette Bank", &segac2_palbank);
-	state_save_register_int("C2_Video", 0, "Background Pal Base",  &segac2_bg_palbase);
-	state_save_register_int("C2_Video", 0, "Sprite Pal Base",  &segac2_sp_palbase);
-	state_save_register_UINT8("C2_Video", 0, "Display Enabled",  &display_enable, 1);
+	state_save_register_UINT16("C2_Video", 0, "Background Pal Lookup",  segac2_bg_pal_lookup, 4);
+	state_save_register_UINT16("C2_Video", 0, "Sprite Pal Base",  segac2_sp_pal_lookup, 4);
+	state_save_register_UINT8("C2_Video", 0, "Display Enabled",  &c2_display_enable, 1);
 	state_save_register_UINT32("C2_Video", 0, "Scroll A Base in VRAM",  &vdp_scrollabase, 1);
 	state_save_register_UINT32("C2_Video", 0, "Scroll B Base in VRAM",  &vdp_scrollbbase, 1);
 	state_save_register_UINT32("C2_Video", 0, "Window Base in VRAM",  &vdp_windowbase, 1);
@@ -217,8 +218,11 @@ VIDEO_START( puckpkmn )
 	if (video_start_segac2())
 		return 1;
 
-	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
-	display_enable = 1;
+	// same palettes for sprites and bg
+	segac2_sp_pal_lookup[0] = 0x000;
+	segac2_sp_pal_lookup[1] = 0x010;
+	segac2_sp_pal_lookup[2] = 0x020;
+	segac2_sp_pal_lookup[3] = 0x030;
 
 	scanbase = 0;
 
@@ -234,8 +238,11 @@ VIDEO_START( megatech )
 	if (video_start_segac2())
 		return 1;
 
-	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
-	display_enable = 1;
+	// same palettes for sprites and bg
+	segac2_sp_pal_lookup[0] = 0x000;
+	segac2_sp_pal_lookup[1] = 0x010;
+	segac2_sp_pal_lookup[2] = 0x020;
+	segac2_sp_pal_lookup[3] = 0x030;
 
 	if (start_megatech_video_normal())
 		return 1;
@@ -251,8 +258,11 @@ VIDEO_START( megaplay )
 	if (video_start_segac2())
 		return 1;
 
-	segac2_sp_palbase = 0x000;	// same palettes for sprites and bg
-	display_enable = 1;
+	// same palettes for sprites and bg
+	segac2_sp_pal_lookup[0] = 0x000;
+	segac2_sp_pal_lookup[1] = 0x010;
+	segac2_sp_pal_lookup[2] = 0x020;
+	segac2_sp_pal_lookup[3] = 0x030;
 
 	scanbase = 0;
 
@@ -267,46 +277,18 @@ int start_system18_vdp(void)
 	if (video_start_segac2())
 		return 1;
 
-	segac2_sp_palbase = 0x1800;
-	segac2_bg_palbase = 0x1800;
+	segac2_bg_pal_lookup[0] = 0x1800;
+	segac2_bg_pal_lookup[1] = 0x1810;
+	segac2_bg_pal_lookup[2] = 0x1820;
+	segac2_bg_pal_lookup[3] = 0x1830;
+	segac2_sp_pal_lookup[0] = 0x1800;
+	segac2_sp_pal_lookup[1] = 0x1810;
+	segac2_sp_pal_lookup[2] = 0x1820;
+	segac2_sp_pal_lookup[3] = 0x1830;
 	segac2_pal_offs = 0x1800;
 
-	display_enable = 1;
-
-//  scanbase = 0;
-	scanbase = 256*2;
+	scanbase = 0;
 	return 0;
-}
-
-
-
-/******************************************************************************
-    VBLANK routines
-*******************************************************************************
-
-    These callbacks are used to track the state of VBLANK. At the end of
-    VBLANK, all the palette information is reset and updates to the cache
-    bitmap are enabled.
-
-******************************************************************************/
-
-/* timer callback for the end of VBLANK */
-static void vblank_end(int param)
-{
-	/* reset VBLANK flag */
-	internal_vblank = 0;
-}
-
-
-/* end-of-frame callback to mark the start of VBLANK */
-VIDEO_EOF( segac2 )
-{
-	/* set VBLANK flag */
-	internal_vblank = 1;
-
-	/* set a timer for VBLANK off */
-	timer_set(cpu_getscanlinetime(0), 0, vblank_end);
-
 }
 
 
@@ -327,35 +309,25 @@ VIDEO_EOF( segac2 )
 /* set the display enable bit */
 void segac2_enable_display(int enable)
 {
-	if (!internal_vblank)
-		force_partial_update((cpu_getscanline()) + scanbase);
-	display_enable = enable;
+	if (!cpu_getvblank())
+		force_partial_update(cpu_getscanline() + scanbase);
+	c2_display_enable = enable;
 }
 
 
 /* core refresh: computes the final screen */
 VIDEO_UPDATE( segac2 )
 {
-	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
 	int y;
 
-#ifdef MAME_DEBUG
-if (code_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
-if (code_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
-if (code_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+	/* if display is blanked, then blank it */
+	if (!c2_display_enable)
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 
-if (code_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
-if (code_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
-if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
-#endif
-
-
-	/* generate the final screen */
-	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y, 0);
-
-	segac2_bg_palbase = old_bg;
-	segac2_sp_palbase = old_sp;
+	/* else generate the final screen */
+	else
+		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+			drawline((UINT16 *)bitmap->line[y], y, 0);
 }
 
 /* megatech, same but drawing the sms display too */
@@ -363,26 +335,11 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 /* core refresh: computes the final screen */
 VIDEO_UPDATE( megatech )
 {
-	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
 	int y;
-
-#if 0
-if (code_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
-if (code_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
-if (code_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
-
-if (code_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
-if (code_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
-if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
-#endif
-
 
 	/* generate the final screen */
 	for (y = cliprect->min_y+192; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y-192, 0);
-
-	segac2_bg_palbase = old_bg;
-	segac2_sp_palbase = old_sp;
 
 	/* sms display should be on second monitor, for now we control it with a fake dipswitch while
        the driver is in development */
@@ -396,19 +353,7 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 /* core refresh: computes the final screen */
 VIDEO_UPDATE( megaplay )
 {
-	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase;
 	int y;
-
-#if 0
-if (code_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
-if (code_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
-if (code_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
-
-if (code_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
-if (code_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
-if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
-#endif
-
 
 	/* generate the final screen - control which screen is
        shown by a keystroke for now */
@@ -417,24 +362,15 @@ if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 
 	update_megaplay_video_normal(bitmap, cliprect);
 
-	segac2_bg_palbase = old_bg;
-	segac2_sp_palbase = old_sp;
-
 }
 
 void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	int old_bg = segac2_bg_palbase, old_sp = segac2_sp_palbase, old_bgcol = bgcol;
 	int y;
 
 	/* generate the final screen */
-	bgcol = 0xffff - segac2_palbank;
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y, 0xffff);
-
-	segac2_bg_palbase = old_bg;
-	segac2_sp_palbase = old_sp;
-	bgcol = old_bgcol;
 }
 
 /******************************************************************************
@@ -593,10 +529,10 @@ static void vdp_data_w(int data)
 		case 0x01:		/* VRAM write */
 
 			/* if the hscroll RAM is changing during screen refresh, force an update */
-			if (!internal_vblank &&
+			if (!cpu_getvblank() &&
 				vdp_address >= vdp_hscrollbase &&
 				vdp_address < vdp_hscrollbase + vdp_hscrollsize)
-				force_partial_update((cpu_getscanline()) + scanbase);
+				force_partial_update(cpu_getscanline() + scanbase);
 
 			/* write to VRAM */
 			if (vdp_address & 1)
@@ -614,8 +550,8 @@ static void vdp_data_w(int data)
 		case 0x05:		/* VSRAM write */
 
 			/* if the vscroll RAM is changing during screen refresh, force an update */
-			if (!internal_vblank)
-				force_partial_update((cpu_getscanline()) + scanbase);
+			if (!cpu_getvblank())
+				force_partial_update(cpu_getscanline() + scanbase);
 
 			/* write to VSRAM */
 			if (vdp_address & 1)
@@ -678,7 +614,7 @@ static int vdp_control_r(void)
 	vdp_cmdpart = 0;
 
 	/* set the VBLANK bit */
-	if (internal_vblank)
+	if (cpu_getvblank())
 		status |= 0x0008;
 
 	/* set the HBLANK bit */
@@ -696,7 +632,7 @@ static void vdp_control_w(int data)
 	{
 		/* if 10xxxxxx xxxxxxxx this is a register setting command */
 		if ((data & 0xc000) == 0x8000)
-			vdp_register_w(data);
+			vdp_register_w(data, cpu_getvblank());
 
 		/* otherwise this is the First part of a mode setting command */
 		else
@@ -718,7 +654,7 @@ static void vdp_control_w(int data)
 }
 
 
-static void vdp_register_w(int data)
+static void vdp_register_w(int data, int vblank)
 {
 	int scrwidth = 0;
 	static const UINT8 is_important[32] = { 0,0,1,1,1,1,0,1,0,0,0,1,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0 };
@@ -730,8 +666,8 @@ static void vdp_register_w(int data)
 
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
-	if (!internal_vblank && is_important[regnum])
-		force_partial_update((cpu_getscanline())+ scanbase);
+	if (!vblank && is_important[regnum])
+		force_partial_update(cpu_getscanline() + scanbase);
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
        upon the writes here */
@@ -979,7 +915,7 @@ static void drawline(UINT16 *bitmap, int line, int bgfill)
 	UINT32 scrolla_tiles[41], scrollb_tiles[41], window_tiles[41];
 	int scrolla_offset, scrollb_offset;
 	UINT8 *lowlist[81], *highlist[81];
-	int bgcolor = bgfill ? bgfill : (bgcol + segac2_palbank);
+	int bgcolor = bgfill ? bgfill : segac2_bg_pal_lookup[0];
 	int window_lclip, window_rclip;
 	int scrolla_lclip, scrolla_rclip;
 	int column, sprite;
@@ -989,7 +925,7 @@ static void drawline(UINT16 *bitmap, int line, int bgfill)
 		bitmap[column] = bgcolor;
 
 	/* if display is disabled, stop */
-	if (!(segac2_vdp_regs[1] & 0x40) || !display_enable)
+	if (!(segac2_vdp_regs[1] & 0x40))
 		return;
 
 	/* Sprites need to be Drawn in Reverse order .. may as well sort them here */
@@ -1090,7 +1026,7 @@ static void get_scroll_tiles(int line, int scrollnum, UINT32 scrollbase, UINT32 
 	/* loop over columns */
 	for (column = 0; column < 41; column++)
 	{
-		int columnvscroll = vdp_getvscroll(scrollnum, column) + line;
+		int columnvscroll = vdp_getvscroll(scrollnum, (column - (linehscroll & 1)) & 0x3f) + line;
 
 		/* determine the base of the tilemap row */
 		int temp = ((columnvscroll / 8) & (scrollheight - 1)) * scrollwidth;
@@ -1140,7 +1076,7 @@ static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri, int offset, int
 		/* if the tile is the correct priority, draw it */
 		if (((tile >> 15) & 1) == pri && offset < BITMAP_WIDTH)
 		{
-			int colbase = 16 * ((tile & 0x6000) >> 13) + segac2_bg_palbase + segac2_palbank;
+			int colbase = segac2_bg_pal_lookup[(tile & 0x6000) >> 13];
 			UINT32 *tp = (UINT32 *)&VDP_VRAM_BYTE((tile & 0x7ff) * 32);
 			UINT32 mytile;
 			int col;
@@ -1405,7 +1341,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 	patline    = line - spriteypos;
 
 	/* determine the color base */
-	colbase = 16 * ((spriteattr & 0x6000) >> 13) + segac2_sp_palbase + segac2_palbank;
+	colbase = segac2_sp_pal_lookup[(spriteattr & 0x6000) >> 13];
 
 	/* adjust for the X position */
 	spritewidth >>= 3;

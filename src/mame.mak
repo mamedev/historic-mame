@@ -493,6 +493,7 @@ $(OBJ)/capcom.a: \
 	$(OBJ)/vidhrdw/mitchell.o $(OBJ)/drivers/mitchell.o \
 	$(OBJ)/vidhrdw/cbasebal.o $(OBJ)/drivers/cbasebal.o \
 	$(OBJ)/vidhrdw/cps1.o $(OBJ)/drivers/cps1.o $(OBJ)/drivers/cps2.o \
+	$(OBJ)/drivers/fcrash.o \
 	$(OBJ)/drivers/cps3.o \
 	$(OBJ)/machine/znsec.o $(OBJ)/machine/at28c16.o $(OBJ)/machine/mb3773.o $(OBJ)/drivers/zn.o \
 
@@ -546,6 +547,11 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o $(OBJ)/drivers/model3.o \
 	$(OBJ)/machine/53c810.o \
 	$(OBJ)/vidhrdw/segac2.o $(OBJ)/drivers/segac2.o \
+	$(OBJ)/drivers/megatech.o \
+	$(OBJ)/drivers/megaplay.o \
+	$(OBJ)/drivers/puckpkmn.o \
+	$(OBJ)/drivers/topshoot.o \
+	$(OBJ)/drivers/genesis.o \
 	$(OBJ)/drivers/coolridr.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \
 	$(OBJ)/machine/scudsp.o \

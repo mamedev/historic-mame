@@ -39,6 +39,7 @@
 #define DVP_CURSOR_ROW						(12)	/* r/w - UINT32 */
 #define DVP_CURSOR_COL						(13)	/* r/w - UINT32 */
 #define DVP_CHARACTER						(14)	/* w/o - UINT32 */
+#define DVP_OSD_PRIVATE						(15)	/* r/w - void * */
 
 /* properties available for memory/disassembly views */
 #define DVP_EXPRESSION						(100)	/* const char * */

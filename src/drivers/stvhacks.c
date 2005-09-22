@@ -9,6 +9,7 @@ to be honest i think some of these cause more problems than they're worth ...
 #include "cpu/sh2/sh2.h"
 
 extern UINT32 *stv_workram_h;
+extern UINT32 *stv_workram_l;
 extern UINT32 *stv_backupram;
 
 DRIVER_INIT ( stv );
@@ -881,3 +882,14 @@ DRIVER_INIT(sassisu)
 	init_ic13();
 }
 
+static READ32_HANDLER(gaxeduel_speedup_r)
+{
+	if ( activecpu_get_pc() == 0x06012ee6 ) cpu_spinuntil_int();
+	return stv_workram_l[0x000f4068 / 4];
+}
+
+DRIVER_INIT(gaxeduel)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002f4068, 0x002f406b, 0, 0, gaxeduel_speedup_r);
+	init_ic13();
+}
