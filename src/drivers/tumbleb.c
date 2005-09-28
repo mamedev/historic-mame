@@ -1717,6 +1717,59 @@ ROM_START( chokchok )
 	ROM_LOAD16_BYTE( "uor4.bin",  0x100001, 0x80000, CRC(6f377530) SHA1(1367987e3af0baa8e22f09d1b40ad838f33371bc) )
 ROM_END
 
+/*
+
+Metal Saver By First Amusement (1994)
+
+The pcb is identical to Final Tetris pcb
+ (strange, final tetris is based on snowbros logic)
+
+1x 68k
+1x z80
+1x CA101 (probably an Ym2151)
+1x Oki 6295
+1x OSC 14mhz (near 68k)
+1x OSC 3.579545 (near z80)
+1x FPGA Actel 1020A PL84C
+1x unknown MCU (very similar to tyical Semicom mcu)
+2x banks of Dipswitch
+
+First Amusement logo is almost identical to Semicom logo.
+
+*/
+
+
+ROM_START( metlsavr )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "first-3.ub18",     0x00001, 0x40000, CRC(87bf4ed2) SHA1(ee1a23232bc37d95dca6d612b4e22ed2b723bd01) )
+	ROM_LOAD16_BYTE( "first-4.ub17",     0x00000, 0x40000, CRC(667a494d) SHA1(282391ed7fa994ec51d39c6b086a808ee43e8af1) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "first-2.ua7",    0x00000, 0x10000, CRC(49505edf) SHA1(ea3007f1adbe8e2597ee6201bbd5d07fa9f7c733) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* this is not a real rom but instead the data extracted from
+       shared ram, the MCU puts it there */
+//  ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , NO_DUMP )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "first-1.uc1",    0x00000, 0x40000, CRC(e943dacb) SHA1(65a786467fc9efe503aad4e183df352e52143fc2) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* tiles */
+	ROM_LOAD16_BYTE( "first-5.rom5",     0x00001, 0x20000, CRC(dd4af746) SHA1(185a8080173b3c05fcc5f5ee2f71606987826e79) )
+	ROM_CONTINUE ( 0x100001,0x20000)
+	ROM_LOAD16_BYTE( "first-6.rom6",     0x00000, 0x20000, CRC(808b0e0b) SHA1(f4913e135986b28b4e56bdcc4fd7dd5aad9aa467) )
+	ROM_CONTINUE ( 0x100000,0x20000)
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD16_BYTE( "first-7.uor1",     0x000000, 0x80000, CRC(a6816747) SHA1(0ec288a1e23bb78de0e284b759a5e83304744960) )
+	ROM_LOAD16_BYTE( "first-8.uor2",     0x000001, 0x80000, CRC(377020e5) SHA1(490dd2383a49554f2c5d65df798a3933f5c5a62e) )
+	ROM_LOAD16_BYTE( "first-9.uor3",     0x100000, 0x80000, CRC(fccf1bb7) SHA1(12cb397fd6438068558ec4d64298cfbe4f9e0e7e) )
+	ROM_LOAD16_BYTE( "first-10.uor4",    0x100001, 0x80000, CRC(a22b587b) SHA1(e2f6785eb17f66a8b4fc102524b5013e72f1a0f3) )
+ROM_END
 
 /* BC Story */
 
@@ -2335,6 +2388,7 @@ GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fa
 GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" ) // not 100% sure about gfx offsets
 GAME (1995, cookbib,  0,       cookbib,   cookbib,  htchctch, ROT0, "SemiCom", "Cookie & Bibi" ) // not 100% sure about gfx offsets
 GAMEX(1995, chokchok, 0,       cookbib,   chokchok, chokchok, ROT0, "SemiCom", "Choky! Choky!", GAME_IMPERFECT_GRAPHICS ) // corruption during attract mode (tmap disable?)
+GAMEX(1994, metlsavr, 0,       cookbib,   chokchok, chokchok, ROT0, "First Amusement", "Metal Saver", GAME_NOT_WORKING ) // missing protection data
 GAMEX(1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAMEX(1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )

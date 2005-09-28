@@ -392,6 +392,7 @@ extern UINT16 *generic_nvram16;
 extern UINT32 *generic_nvram32;
 void nvram_handler_generic_0fill(mame_file *file, int read_or_write);
 void nvram_handler_generic_1fill(mame_file *file, int read_or_write);
+void nvram_handler_generic_randfill(mame_file *file, int read_or_write);
 
 /* bitmap allocation */
 mame_bitmap *bitmap_alloc(int width,int height);

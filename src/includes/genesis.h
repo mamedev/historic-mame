@@ -5,9 +5,6 @@
 #include "sound/2612intf.h"
 #include "sound/upd7759.h"
 
-/* In src/drivers/segac2.c */
-extern void vdp_reload_counter(int scanline);
-
 /* In src/drivers/megaplay.c */
 extern UINT16 *ic36_ram;
 extern unsigned char bios_6204;
@@ -21,10 +18,6 @@ extern INTERRUPT_GEN (megatech_irq);
 
 /* In src/drivers/segac2.c */
 extern WRITE16_HANDLER( sn76489_w );
-extern INTERRUPT_GEN( vblank_interrupt );
-extern DRIVER_INIT( segac2 );
-extern MACHINE_INIT( segac2 );
-extern struct YM3438interface segac2_ym3438_intf;
 
 /* In src/drivers/genesis.c */
 extern unsigned char *genesis_z80_ram;
@@ -42,6 +35,30 @@ extern WRITE16_HANDLER(genesis_ctrl_w);
 extern WRITE16_HANDLER ( megaplay_68k_to_z80_w );
 extern READ16_HANDLER ( genesis_io_r );
 extern READ16_HANDLER ( genesis_68k_to_z80_r );
+extern DRIVER_INIT( genesis );
+extern INTERRUPT_GEN( genesis_vblank_interrupt );
+extern void genesis_irq2_interrupt(int state);
+
+/* In src/vidhrdw/genesis.c */
+extern UINT8		genesis_vdp_regs[];
+extern UINT16		genesis_bg_pal_lookup[];
+extern UINT16		genesis_sp_pal_lookup[];
+extern UINT16		scanbase;
+
+VIDEO_START( genesis );
+VIDEO_START( megatech );
+VIDEO_START( megaplay );
+VIDEO_START( segac2 );
+
+VIDEO_UPDATE( genesis );
+VIDEO_UPDATE( segac2 );
+VIDEO_UPDATE( megatech );
+VIDEO_UPDATE( megaplay );
+
+void	segac2_enable_display(int enable);
+
+READ16_HANDLER ( genesis_vdp_r );
+WRITE16_HANDLER( genesis_vdp_w );
 
 /* Generic Input Ports */
 #define GENESIS_PORTS \

@@ -368,6 +368,7 @@ void *nvram_select(void)
 	return 0;
 }
 
+
 /*-------------------------------------------------
     nvram_handler_generic_0fill - generic NVRAM
     with a 0 fill
@@ -397,6 +398,28 @@ void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
 		mame_fread(file, nvram_select(), generic_nvram_size);
 	else
 		memset(nvram_select(), 0xff, generic_nvram_size);
+}
+
+
+/*-------------------------------------------------
+    nvram_handler_generic_randfill - generic NVRAM
+    with a random fill
+-------------------------------------------------*/
+
+void nvram_handler_generic_randfill(mame_file *file, int read_or_write)
+{
+	int i;
+
+	if (read_or_write)
+		mame_fwrite(file, nvram_select(), generic_nvram_size);
+	else if (file)
+		mame_fread(file, nvram_select(), generic_nvram_size);
+	else
+	{
+		UINT8 *nvram = nvram_select();
+		for (i = 0; i < generic_nvram_size; i++)
+			nvram[i] = rand();
+	}
 }
 
 

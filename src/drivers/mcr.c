@@ -17,6 +17,7 @@
         * Tapper
         * Timber
         * Discs of Tron (Squawk n' Talk)
+        * NFL Football (Squawk n' Talk + laserdisk)
         * Demolition Derby (Turbo Chip Squeak)
 
     Known bugs:
@@ -66,11 +67,11 @@
         Wacko            90010  91399  90913
         Two Tigers
         Journey          91475  91464  90913
-        NFL Football                   91657
 
         Tapper           91490  91464  90913
         Timber
         Discs of Tron    91490  91464  91657
+        NFL Football     91490  91464  91657
         Demolition Derby 91490  91464  90913
 
         Spy Hunter       91442  91433  91657/90913  91671
@@ -1207,6 +1208,55 @@ INPUT_PORTS_START( dotron )
 INPUT_PORTS_END
 
 
+/* verified from wiring diagram, plus DIP switches from manual */
+INPUT_PORTS_START( nflfoot )
+	PORT_START_TAG("SSIO.IP0")	/* J4 1-8 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START_TAG("SSIO.IP1")	/* J4 10-13,15-18 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
+
+	PORT_START_TAG("SSIO.IP2")	/* J5 1-8 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* code at 105 waits for this to toggle */
+
+	PORT_START_TAG("SSIO.IP3")	/* DIPSW @ B3 */
+	PORT_DIPNAME( 0x01, 0x01, "Coin Meters" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("SSIO.IP4")	/* J6 1-8 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("SSIO.DIP")
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("FAKE")	/* fake port to make aiming up & down easier */
+	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
+INPUT_PORTS_END
+
+
 /* "wiring diagram was not available at time of publication" according to the manual */
 /* DIPs verified from the manual */
 INPUT_PORTS_START( demoderb )
@@ -2011,11 +2061,6 @@ ROM_START( dotron )
 	ROM_LOAD( "sound2.a9",    0x02000, 0x1000, CRC(e8ef6519) SHA1(261b0463a73b403bc46df3e04f3d12173787d6e7) )
 	ROM_LOAD( "sound3.a10",   0x03000, 0x1000, CRC(6b5aeb02) SHA1(039d8d664f067bc0d085ad7730ef63dbd6dc387e) )
 
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "pre.u3",       0x09000, 0x1000, CRC(c3d0f762) SHA1(a1857641c35b5bcb33f29fe79a1a581c4cbf129b) )
-	ROM_LOAD( "pre.u4",       0x0a000, 0x1000, CRC(7ca79b43) SHA1(c995e1e67d70706a090eb777e9fec0f1ba03f82d) )
-	ROM_LOAD( "pre.u5",       0x0b000, 0x1000, CRC(24e9618e) SHA1(eb245ff381a76b314a0ed3519e140444afae341c) )
-
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, CRC(40167124) SHA1(782c8192dd58a3f23ff2338452dd03206d79030a) )
 	ROM_LOAD( "loc-bg1.5f",   0x02000, 0x2000, CRC(bb2d7a5d) SHA1(8044be9ffca9520fd77e0da492147e553f9f7da3) )
@@ -2046,11 +2091,6 @@ ROM_START( dotrona )
 	ROM_LOAD( "asound1.a8",   0x01000, 0x1000, CRC(edef7326) SHA1(5c9a64604252eea0628bf9d6221e8add82f66abe) )
 	ROM_LOAD( "sound2.a9",    0x02000, 0x1000, CRC(e8ef6519) SHA1(261b0463a73b403bc46df3e04f3d12173787d6e7) )
 	ROM_LOAD( "sound3.a10",   0x03000, 0x1000, CRC(6b5aeb02) SHA1(039d8d664f067bc0d085ad7730ef63dbd6dc387e) )
-
-	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "pre.u3",       0x09000, 0x1000, CRC(c3d0f762) SHA1(a1857641c35b5bcb33f29fe79a1a581c4cbf129b) )
-	ROM_LOAD( "pre.u4",       0x0a000, 0x1000, CRC(7ca79b43) SHA1(c995e1e67d70706a090eb777e9fec0f1ba03f82d) )
-	ROM_LOAD( "pre.u5",       0x0b000, 0x1000, CRC(24e9618e) SHA1(eb245ff381a76b314a0ed3519e140444afae341c) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, CRC(40167124) SHA1(782c8192dd58a3f23ff2338452dd03206d79030a) )
@@ -2104,6 +2144,41 @@ ROM_START( dotrone )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, CRC(e1281ee9) SHA1(9ac9b01d24affc0ee9227a4364c4fd8f8290343a) )	/* from shollow, assuming it's the same */
+ROM_END
+
+
+ROM_START( nflfoot )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "nflcpupg.1c",  0x00000, 0x4000, CRC(d76a7a41) SHA1(591c1f530469ac2131f2c0fb4c3350546f44c358) )
+	ROM_LOAD( "nflcpupg.2c",  0x04000, 0x4000, CRC(2aa76168) SHA1(608df883f5e960153a963404d5cc4b4ce4ec435d) )
+	ROM_LOAD( "nflcpupg.3c",  0x08000, 0x4000, CRC(5ec01e09) SHA1(2bf60ab7d47f53583b677195976d6f6a9e90c55c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "nflsnd.a7",    0x0000, 0x1000, CRC(1339be2e) SHA1(5c1743f4d20f94053eb306d3749057608df4a6a2) )
+	ROM_LOAD( "nflsnd.a8",    0x1000, 0x1000, CRC(8630b560) SHA1(0c537f48184d3a7a9ee51c30d7c33dc39c46e823) )
+	ROM_LOAD( "nflsnd.a9",    0x2000, 0x1000, CRC(1e0fe4c8) SHA1(718dfaced2d8d84dab4c32265bed422e07af0f9e) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "pre.u3",       0x09000, 0x1000, NO_DUMP )
+	ROM_LOAD( "pre.u4",       0x0a000, 0x1000, NO_DUMP )
+	ROM_LOAD( "pre.u5",       0x0b000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "nflcpubg.6f",  0x00000, 0x2000, CRC(6d116cd9) SHA1(72acbb593e011b7732915c05fd2376eb5a9c5078) )
+	ROM_LOAD( "nflcpubg.5f",  0x02000, 0x2000, CRC(5f1b0b67) SHA1(90b223ce65f814de26507d45a6db257ceaa932b1) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "nflvidfg.cp4", 0x00000, 0x2000, CRC(eb6b808d) SHA1(e81580959710ecfd2f56a661c61b681ac22887cf) )
+	ROM_LOAD( "nflvidfg.cp3", 0x02000, 0x2000, CRC(be21580a) SHA1(f057635a0a4d7fd99d50e0496fe0af8c6ed27ed9) )
+	ROM_LOAD( "nflvidfg.cp6", 0x04000, 0x2000, CRC(54a0bff8) SHA1(1a4de884a1a43b97d402d068d3281696c7b48904) )
+	ROM_LOAD( "nflvidfg.cp5", 0x06000, 0x2000, CRC(6aeba0ab) SHA1(2d99a28bc8bd8289ac12824258b16118c808d6c7) )
+	ROM_LOAD( "nflvidfg.cp8", 0x08000, 0x2000, CRC(112ee67b) SHA1(fc9ca6cd87f84f7f033729ca0a06978ec0bb7c32) )
+	ROM_LOAD( "nflvidfg.cp7", 0x0a000, 0x2000, CRC(73f62392) SHA1(18f28be7264f8edff38f8a6aa067eeb1970f544c) )
+	ROM_LOAD( "nflvidfg.c10", 0x0c000, 0x2000, CRC(1766dcc7) SHA1(df499e3c66ae702d2d56e6cd095a754665569fcd) )
+	ROM_LOAD( "nflvidfg.cp9", 0x0e000, 0x2000, CRC(46558146) SHA1(4bedfae8cf0fcb9d837706ee13fbe3944ab47216) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "5784",         0x0000, 0x0020, CRC(e1281ee9) SHA1(9ac9b01d24affc0ee9227a4364c4fd8f8290343a) )
 ROM_END
 
 
@@ -2244,6 +2319,24 @@ static DRIVER_INIT( dotrone )
 }
 
 
+static READ8_HANDLER( nflfoot_ip2_r )
+{
+	static int val;
+	val ^= 0xff;
+	return val;
+}
+static DRIVER_INIT( nflfoot )
+{
+	mcr_init(91490, 91464, 91657);
+	mcr_sound_init(MCR_SSIO | MCR_SQUAWK_N_TALK);
+
+	ssio_set_custom_input(2, 0x80, nflfoot_ip2_r);
+
+	/* no program ROMs for the Squawk 'n' Talk yet */
+	cpunum_suspend(2, SUSPEND_REASON_DISABLE, 1);
+}
+
+
 static DRIVER_INIT( demoderb )
 {
 	mcr_init(91490, 91464, 90913);
@@ -2301,6 +2394,9 @@ GAME( 1983, dotrona,  dotron,   mcr_91490,     dotron,   mcr_91490, ORIENTATION_
 
 /* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk */
 GAME( 1983, dotrone,  dotron,   mcr_91490_snt, dotron,   dotrone,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)" )
+
+/* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk + laserdisk interface */
+GAMEX(1983, nflfoot,  0,        mcr_91490_snt, nflfoot,  nflfoot,   ROT0,  "Bally Midway", "NFL Football", GAME_NOT_WORKING )
 
 /* 91490 CPU board + 91464 video gen + 90913 sound I/O + Turbo Chip Squeak */
 GAME( 1984, demoderb, 0,        mcr_91490_tcs, demoderb, demoderb,  ROT0,  "Bally Midway", "Demolition Derby" )

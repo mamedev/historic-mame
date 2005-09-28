@@ -202,7 +202,6 @@ struct _global_options
 	int 	skip_disclaimer;	/* 1 to skip the disclaimer screen at startup */
 	int 	skip_gameinfo;		/* 1 to skip the game info screen at startup */
 	int 	skip_warnings;		/* 1 to skip the warnings screen at startup */
-	int 	skip_validitychecks;		/* 1 to skip the validity checks at startup */
 
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */
@@ -390,8 +389,8 @@ const performance_info *mame_get_performance_info(void);
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(const char *tag);
 
-/* runs validity checks */
-int mame_validitychecks(void);
+/* runs validity checks, -1 for all */
+int mame_validitychecks(int game);
 
 #ifdef MESS
 #include "mess.h"

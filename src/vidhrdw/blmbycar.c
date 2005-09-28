@@ -240,8 +240,8 @@ VIDEO_UPDATE( blmbycar )
 	tilemap_set_scrolly( tilemap_0, 0, blmbycar_scroll_0[ 0 ]);
 	tilemap_set_scrollx( tilemap_0, 0, blmbycar_scroll_0[ 1 ]);
 
-	tilemap_set_scrolly( tilemap_1, 0, blmbycar_scroll_1[ 0 ]);
-	tilemap_set_scrollx( tilemap_1, 0, blmbycar_scroll_1[ 1 ]);
+	tilemap_set_scrolly( tilemap_1, 0, blmbycar_scroll_1[ 0 ]+1);
+	tilemap_set_scrollx( tilemap_1, 0, blmbycar_scroll_1[ 1 ]+5);
 
 #ifdef MAME_DEBUG
 if (code_pressed(KEYCODE_Z))

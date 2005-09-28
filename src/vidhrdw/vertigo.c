@@ -50,103 +50,15 @@
 
 /*************************************
  *
- *  Global variables
- *
- *************************************/
-
-UINT16 *vertigo_vectorram;
-
-
-/*************************************
- *
- *  Typedefs
- *
- *************************************/
-
-typedef struct _am2901
-{
-	int ram[16]; /* internal ram */
-	int i;		 /* instruction */
-	int a;		 /* A address to int. ram */
-	int b;		 /* B address to int. ram */
-	int d;		 /* direct data D input */
-	int q;		 /* Q register */
-	int f;		 /* F ALU result */
-	int y;		 /* Y output */
-	int c;		 /* carry bit */
-} am2901;
-
-typedef struct _vgen
-{
-	int sreg;		 /* Vector Generator shift register */
-	int l1;			 /* VG latch 1 adder operand only */
-	int l2;			 /* VG latch 2 adder operand only */
-	int c_v;		 /* VG vertical position counter */
-	int c_h;		 /* VG horizontal position counter */
-	int c_l;		 /* VG length counter */
-	int adder_s;	 /* VG slope generator result and B input */
-	int adder_a;	 /* VG slope generator A input */
-	int color;		 /* VG color */
-	int intensity;	 /* VG intensity */
-	int brez;		 /* VG h/v-counters enable */
-	int vfin;		 /* VG drawing yes/no */
-	int hud1;		 /* VG h-counter up or down (stored in L1) */
-	int hud2;		 /* VG h-counter up or down (stored in L2) */
-	int vud1;		 /* VG v-counter up or down (stored in L1) */
-	int vud2;		 /* VG v-counter up or down (stored in L2) */
-	int hc1;		 /* VG use h- or v-counter in L1 mode */
-	int ven;		 /* VG state of transistor which controls intensity output */
-} vgen;
-
-typedef struct _vertigo_vproc_state
-{
-	am2901 bs;		 /* 2901 state */
-	vgen vg;		 /* vertigo's vector generator */
-	UINT16 sram[64]; /* external sram */
-	UINT16 ramlatch; /* latch between 2901 and sram */
-	UINT16 rom_adr;	 /* vector ROM/RAM address latch */
-	int pc;			 /* program counter */
-	int ret;		 /* return address */
-
-} vertigo_vproc_state;
-
-
-/*************************************
- *
- *  Statics
- *
- *************************************/
-
-static vertigo_vproc_state vs;
-static UINT16 *vertigo_vectorrom;
-static UINT64 *mcode;
-
-
-/*************************************
- *
  *  Macros and enums
  *
  *************************************/
 
+#define VEN_JMPR 0x10
+#define MC_LENGTH 512
+
 #define V_ADDPOINT(h,v,c,i) \
 	vector_add_point (((h) & 0x7ff) << 14, (0x6ff - ((v) & 0x7ff)) << 14, VECTOR_COLOR444(c), (i))
-
-#define MC_X	  ((mcode[vs.pc] >> 44) & 0x3f)
-#define MC_A	  ((mcode[vs.pc] >> 40) & 0xf)
-#define MC_B	  ((mcode[vs.pc] >> 36) & 0xf)
-#define MC_INST	  ((mcode[vs.pc] >> 27) & 0777)
-#define MC_CN	  ((mcode[vs.pc] >> 26) & 0x1)
-#define MC_MREQ	  ((mcode[vs.pc] >> 25) & 0x1)
-#define MC_RSEL	  (MC_RWRITE & ((mcode[vs.pc] >> 24) & 0x1))
-#define MC_RWRITE ((mcode[vs.pc] >> 23) & 0x1)
-#define MC_RAMACC (MC_RWRITE+MC_RSEL)
-#define MC_OF	  ((mcode[vs.pc] >> 20) & 0x7)
-#define MC_IF	  ((mcode[vs.pc] >> 18) & 0x3)
-#define MC_OA	  ((mcode[vs.pc] >> 16) & 0x3)
-#define MC_JPOS	  ((mcode[vs.pc] >> 14) & 0x1)
-#define MC_JMP	  ((mcode[vs.pc] >> 12) & 0x3)
-#define MC_JCON	  ((mcode[vs.pc] >> 9) & 0x7)
-#define MC_MA	  ( mcode[vs.pc] & 0x1ff)
 
 #define ADD(r,s,c)	(((r)  + (s) + (c)) & 0xffff)
 #define SUBR(r,s,c) ((~(r) + (s) + (c)) & 0xffff)
@@ -167,13 +79,6 @@ enum {
 	RAMD,
 	RAMQU,
 	RAMU
-};
-
-/* possible values for MC_RAMACC */
-enum {
-	S_RAMW = 0,
-	S_RAMR,
-	S_RAM0
 };
 
 /* possible values for MC_IF */
@@ -199,13 +104,146 @@ enum {
 
 /* possible values for MC_JCON */
 enum {
-	S_MSB = 1,
+	S_ALWAYS = 0,
+	S_MSB,
 	S_FEQ0,
 	S_Y10,
 	S_VFIN,
 	S_FPOS,
 	S_INTL4
 };
+
+
+/*************************************
+ *
+ *  Global variables
+ *
+ *************************************/
+
+UINT16 *vertigo_vectorram;
+
+
+/*************************************
+ *
+ *  Typedefs
+ *
+ *************************************/
+
+typedef struct _am2901
+{
+	int ram[16]; /* internal ram */
+	int d;		 /* direct data D input */
+	int q;		 /* Q register */
+	int f;		 /* F ALU result */
+	int y;		 /* Y output */
+} am2901;
+
+typedef struct _vector_generator
+{
+	int sreg;		 /* Vector Generator shift register */
+	int l1;			 /* VG latch 1 adder operand only */
+	int l2;			 /* VG latch 2 adder operand only */
+	int c_v;		 /* VG vertical position counter */
+	int c_h;		 /* VG horizontal position counter */
+	int c_l;		 /* VG length counter */
+	int adder_s;	 /* VG slope generator result and B input */
+	int adder_a;	 /* VG slope generator A input */
+	int color;		 /* VG color */
+	int intensity;	 /* VG intensity */
+	int brez;		 /* VG h/v-counters enable */
+	int vfin;		 /* VG drawing yes/no */
+	int hud1;		 /* VG h-counter up or down (stored in L1) */
+	int hud2;		 /* VG h-counter up or down (stored in L2) */
+	int vud1;		 /* VG v-counter up or down (stored in L1) */
+	int vud2;		 /* VG v-counter up or down (stored in L2) */
+	int hc1;		 /* VG use h- or v-counter in L1 mode */
+	int ven;		 /* VG state of transistor which controls intensity output */
+	int venshift;
+} vector_generator;
+
+typedef struct _microcode
+{
+	int x;
+	int a;
+	int b;
+	int inst;
+	int dest;
+	int cn;
+	int mreq;
+	int rsel;
+	int rwrite;
+	int of;
+	int iif;
+	int oa;
+	int jpos;
+	int jmp;
+	int jcon;
+	int ma;
+} microcode;
+
+typedef struct _vproc
+{
+	UINT16 sram[64]; /* external sram */
+	UINT16 ramlatch; /* latch between 2901 and sram */
+	UINT16 rom_adr;	 /* vector ROM/RAM address latch */
+	int pc;			 /* program counter */
+	int ret;		 /* return address */
+
+} vproc;
+
+
+/*************************************
+ *
+ *  Statics
+ *
+ *************************************/
+
+static vproc vs;
+static am2901 bsp;
+static vector_generator vgen;
+static UINT16 *vertigo_vectorrom;
+static microcode mc[MC_LENGTH];
+
+
+/*************************************
+ *
+ *  Vector processor initialization
+ *
+ *************************************/
+
+void vertigo_vproc_init(void)
+{
+	int i;
+	UINT64 *mcode;
+
+	vertigo_vectorrom = (UINT16 *)memory_region(REGION_USER1);
+	mcode = (UINT64 *)memory_region(REGION_PROMS);
+
+	/* Decode microcode */
+	for (i = 0; i < MC_LENGTH; i++)
+	{
+		mc[i].x = (mcode[i] >> 44) & 0x3f;
+		mc[i].a = (mcode[i] >> 40) & 0xf;
+		mc[i].b = (mcode[i] >> 36) & 0xf;
+		mc[i].inst = (mcode[i] >> 27) & 077;
+		mc[i].dest = (mcode[i] >> 33) & 07;
+		mc[i].cn = (mcode[i] >> 26) & 0x1;
+		mc[i].mreq = (mcode[i] >> 25) & 0x1;
+		mc[i].rwrite = (mcode[i] >> 23) & 0x1;
+		mc[i].rsel = mc[i].rwrite & ((mcode[i] >> 24) & 0x1);
+		mc[i].of =  (mcode[i] >> 20) & 0x7;
+		mc[i].iif = (mcode[i] >> 18) & 0x3;
+		mc[i].oa = (mcode[i] >> 16) & 0x3;
+		mc[i].jpos = (mcode[i] >> 14) & 0x1;
+		mc[i].jmp = (mcode[i] >> 12) & 0x3;
+		mc[i].jcon = (mcode[i] >> 9) & 0x7;
+		mc[i].ma = mcode[i] & 0x1ff;
+	}
+
+	memset(&vs, 0, sizeof(vs));
+	memset(&bsp, 0, sizeof(bsp));
+	memset(&vgen, 0, sizeof(vgen));
+}
 
 
 /********************************************
@@ -215,117 +253,117 @@ enum {
  *
  ********************************************/
 
-static void am2901x4 (am2901 *bs)
+static void am2901x4 (am2901 *bsp, microcode *mc)
 {
-	switch (bs->i & 077)
+	switch (mc->inst)
 	{
-	case 000: bs->f = ADD(bs->ram[bs->a], bs->q, bs->c); break;
-	case 001: bs->f = ADD(bs->ram[bs->a], bs->ram[bs->b], bs->c); break;
-	case 002: bs->f = ADD(0, bs->q, bs->c); break;
-	case 003: bs->f = ADD(0, bs->ram[bs->b], bs->c); break;
-	case 004: bs->f = ADD(0, bs->ram[bs->a], bs->c); break;
-	case 005: bs->f = ADD(bs->d, bs->ram[bs->a], bs->c); break;
-	case 006: bs->f = ADD(bs->d, bs->q, bs->c); break;
-	case 007: bs->f = ADD(bs->d, 0, bs->c); break;
+	case 000: bsp->f = ADD(bsp->ram[mc->a], bsp->q, mc->cn); break;
+	case 001: bsp->f = ADD(bsp->ram[mc->a], bsp->ram[mc->b], mc->cn); break;
+	case 002: bsp->f = ADD(0, bsp->q, mc->cn); break;
+	case 003: bsp->f = ADD(0, bsp->ram[mc->b], mc->cn); break;
+	case 004: bsp->f = ADD(0, bsp->ram[mc->a], mc->cn); break;
+	case 005: bsp->f = ADD(bsp->d, bsp->ram[mc->a], mc->cn); break;
+	case 006: bsp->f = ADD(bsp->d, bsp->q, mc->cn); break;
+	case 007: bsp->f = ADD(bsp->d, 0, mc->cn); break;
 
-	case 010: bs->f = SUBR(bs->ram[bs->a], bs->q, bs->c); break;
-	case 011: bs->f = SUBR(bs->ram[bs->a], bs->ram[bs->b], bs->c); break;
-	case 012: bs->f = SUBR(0, bs->q, bs->c); break;
-	case 013: bs->f = SUBR(0, bs->ram[bs->b], bs->c); break;
-	case 014: bs->f = SUBR(0, bs->ram[bs->a], bs->c); break;
-	case 015: bs->f = SUBR(bs->d, bs->ram[bs->a], bs->c); break;
-	case 016: bs->f = SUBR(bs->d, bs->q, bs->c); break;
-	case 017: bs->f = SUBR(bs->d, 0, bs->c); break;
+	case 010: bsp->f = SUBR(bsp->ram[mc->a], bsp->q, mc->cn); break;
+	case 011: bsp->f = SUBR(bsp->ram[mc->a], bsp->ram[mc->b], mc->cn); break;
+	case 012: bsp->f = SUBR(0, bsp->q, mc->cn); break;
+	case 013: bsp->f = SUBR(0, bsp->ram[mc->b], mc->cn); break;
+	case 014: bsp->f = SUBR(0, bsp->ram[mc->a], mc->cn); break;
+	case 015: bsp->f = SUBR(bsp->d, bsp->ram[mc->a], mc->cn); break;
+	case 016: bsp->f = SUBR(bsp->d, bsp->q, mc->cn); break;
+	case 017: bsp->f = SUBR(bsp->d, 0, mc->cn); break;
 
-	case 020: bs->f = SUBS(bs->ram[bs->a], bs->q, bs->c); break;
-	case 021: bs->f = SUBS(bs->ram[bs->a], bs->ram[bs->b], bs->c); break;
-	case 022: bs->f = SUBS(0, bs->q, bs->c); break;
-	case 023: bs->f = SUBS(0, bs->ram[bs->b], bs->c); break;
-	case 024: bs->f = SUBS(0, bs->ram[bs->a], bs->c); break;
-	case 025: bs->f = SUBS(bs->d, bs->ram[bs->a], bs->c); break;
-	case 026: bs->f = SUBS(bs->d, bs->q, bs->c); break;
-	case 027: bs->f = SUBS(bs->d, 0, bs->c); break;
+	case 020: bsp->f = SUBS(bsp->ram[mc->a], bsp->q, mc->cn); break;
+	case 021: bsp->f = SUBS(bsp->ram[mc->a], bsp->ram[mc->b], mc->cn); break;
+	case 022: bsp->f = SUBS(0, bsp->q, mc->cn); break;
+	case 023: bsp->f = SUBS(0, bsp->ram[mc->b], mc->cn); break;
+	case 024: bsp->f = SUBS(0, bsp->ram[mc->a], mc->cn); break;
+	case 025: bsp->f = SUBS(bsp->d, bsp->ram[mc->a], mc->cn); break;
+	case 026: bsp->f = SUBS(bsp->d, bsp->q, mc->cn); break;
+	case 027: bsp->f = SUBS(bsp->d, 0, mc->cn); break;
 
-	case 030: bs->f = OR(bs->ram[bs->a], bs->q); break;
-	case 031: bs->f = OR(bs->ram[bs->a], bs->ram[bs->b]); break;
-	case 032: bs->f = OR(0, bs->q); break;
-	case 033: bs->f = OR(0, bs->ram[bs->b]); break;
-	case 034: bs->f = OR(0, bs->ram[bs->a]); break;
-	case 035: bs->f = OR(bs->d, bs->ram[bs->a]); break;
-	case 036: bs->f = OR(bs->d, bs->q); break;
-	case 037: bs->f = OR(bs->d, 0); break;
+	case 030: bsp->f = OR(bsp->ram[mc->a], bsp->q); break;
+	case 031: bsp->f = OR(bsp->ram[mc->a], bsp->ram[mc->b]); break;
+	case 032: bsp->f = OR(0, bsp->q); break;
+	case 033: bsp->f = OR(0, bsp->ram[mc->b]); break;
+	case 034: bsp->f = OR(0, bsp->ram[mc->a]); break;
+	case 035: bsp->f = OR(bsp->d, bsp->ram[mc->a]); break;
+	case 036: bsp->f = OR(bsp->d, bsp->q); break;
+	case 037: bsp->f = OR(bsp->d, 0); break;
 
-	case 040: bs->f = AND(bs->ram[bs->a], bs->q); break;
-	case 041: bs->f = AND(bs->ram[bs->a], bs->ram[bs->b]); break;
-	case 042: bs->f = AND(0, bs->q); break;
-	case 043: bs->f = AND(0, bs->ram[bs->b]); break;
-	case 044: bs->f = AND(0, bs->ram[bs->a]); break;
-	case 045: bs->f = AND(bs->d, bs->ram[bs->a]); break;
-	case 046: bs->f = AND(bs->d, bs->q); break;
-	case 047: bs->f = AND(bs->d, 0); break;
+	case 040: bsp->f = AND(bsp->ram[mc->a], bsp->q); break;
+	case 041: bsp->f = AND(bsp->ram[mc->a], bsp->ram[mc->b]); break;
+	case 042: bsp->f = AND(0, bsp->q); break;
+	case 043: bsp->f = AND(0, bsp->ram[mc->b]); break;
+	case 044: bsp->f = AND(0, bsp->ram[mc->a]); break;
+	case 045: bsp->f = AND(bsp->d, bsp->ram[mc->a]); break;
+	case 046: bsp->f = AND(bsp->d, bsp->q); break;
+	case 047: bsp->f = AND(bsp->d, 0); break;
 
-	case 050: bs->f = NOTRS(bs->ram[bs->a], bs->q); break;
-	case 051: bs->f = NOTRS(bs->ram[bs->a], bs->ram[bs->b]); break;
-	case 052: bs->f = NOTRS(0, bs->q); break;
-	case 053: bs->f = NOTRS(0, bs->ram[bs->b]); break;
-	case 054: bs->f = NOTRS(0, bs->ram[bs->a]); break;
-	case 055: bs->f = NOTRS(bs->d, bs->ram[bs->a]); break;
-	case 056: bs->f = NOTRS(bs->d, bs->q); break;
-	case 057: bs->f = NOTRS(bs->d, 0); break;
+	case 050: bsp->f = NOTRS(bsp->ram[mc->a], bsp->q); break;
+	case 051: bsp->f = NOTRS(bsp->ram[mc->a], bsp->ram[mc->b]); break;
+	case 052: bsp->f = NOTRS(0, bsp->q); break;
+	case 053: bsp->f = NOTRS(0, bsp->ram[mc->b]); break;
+	case 054: bsp->f = NOTRS(0, bsp->ram[mc->a]); break;
+	case 055: bsp->f = NOTRS(bsp->d, bsp->ram[mc->a]); break;
+	case 056: bsp->f = NOTRS(bsp->d, bsp->q); break;
+	case 057: bsp->f = NOTRS(bsp->d, 0); break;
 
-	case 060: bs->f = EXOR(bs->ram[bs->a], bs->q); break;
-	case 061: bs->f = EXOR(bs->ram[bs->a], bs->ram[bs->b]); break;
-	case 062: bs->f = EXOR(0, bs->q); break;
-	case 063: bs->f = EXOR(0, bs->ram[bs->b]); break;
-	case 064: bs->f = EXOR(0, bs->ram[bs->a]); break;
-	case 065: bs->f = EXOR(bs->d, bs->ram[bs->a]); break;
-	case 066: bs->f = EXOR(bs->d, bs->q); break;
-	case 067: bs->f = EXOR(bs->d, 0); break;
+	case 060: bsp->f = EXOR(bsp->ram[mc->a], bsp->q); break;
+	case 061: bsp->f = EXOR(bsp->ram[mc->a], bsp->ram[mc->b]); break;
+	case 062: bsp->f = EXOR(0, bsp->q); break;
+	case 063: bsp->f = EXOR(0, bsp->ram[mc->b]); break;
+	case 064: bsp->f = EXOR(0, bsp->ram[mc->a]); break;
+	case 065: bsp->f = EXOR(bsp->d, bsp->ram[mc->a]); break;
+	case 066: bsp->f = EXOR(bsp->d, bsp->q); break;
+	case 067: bsp->f = EXOR(bsp->d, 0); break;
 
-	case 070: bs->f = EXNOR(bs->ram[bs->a], bs->q); break;
-	case 071: bs->f = EXNOR(bs->ram[bs->a], bs->ram[bs->b]); break;
-	case 072: bs->f = EXNOR(0, bs->q); break;
-	case 073: bs->f = EXNOR(0, bs->ram[bs->b]); break;
-	case 074: bs->f = EXNOR(0, bs->ram[bs->a]); break;
-	case 075: bs->f = EXNOR(bs->d, bs->ram[bs->a]); break;
-	case 076: bs->f = EXNOR(bs->d, bs->q); break;
-	case 077: bs->f = EXNOR(bs->d, 0); break;
+	case 070: bsp->f = EXNOR(bsp->ram[mc->a], bsp->q); break;
+	case 071: bsp->f = EXNOR(bsp->ram[mc->a], bsp->ram[mc->b]); break;
+	case 072: bsp->f = EXNOR(0, bsp->q); break;
+	case 073: bsp->f = EXNOR(0, bsp->ram[mc->b]); break;
+	case 074: bsp->f = EXNOR(0, bsp->ram[mc->a]); break;
+	case 075: bsp->f = EXNOR(bsp->d, bsp->ram[mc->a]); break;
+	case 076: bsp->f = EXNOR(bsp->d, bsp->q); break;
+	case 077: bsp->f = EXNOR(bsp->d, 0); break;
 	}
 
-	switch (bs->i >> 6)
+	switch (mc->dest)
 	{
 	case QREG:
-		bs->q = bs->f;
-		bs->y = bs->f;
+		bsp->q = bsp->f;
+		bsp->y = bsp->f;
 		break;
 	case NOP:
-		bs->y = bs->f;
+		bsp->y = bsp->f;
 		break;
 	case RAMA:
-		bs->y = bs->ram[bs->a];
-		bs->ram[bs->b] = bs->f;
+		bsp->y = bsp->ram[mc->a];
+		bsp->ram[mc->b] = bsp->f;
 		break;
 	case RAMF:
-		bs->y = bs->f;
-		bs->ram[bs->b] = bs->f;
+		bsp->y = bsp->f;
+		bsp->ram[mc->b] = bsp->f;
 		break;
 	case RAMQD:
-		bs->y = bs->f;
-		bs->q = (bs->q >> 1) & 0x7fff;			/* Q3 is low */
-		bs->ram[bs->b] = (bs->f >> 1) | 0x8000; /* IN3 is high! */
+		bsp->y = bsp->f;
+		bsp->q = (bsp->q >> 1) & 0x7fff;		  /* Q3 is low */
+		bsp->ram[mc->b] = (bsp->f >> 1) | 0x8000; /* IN3 is high! */
 		break;
 	case RAMD:
-		bs->y = bs->f;
-		bs->ram[bs->b] = (bs->f >> 1) | 0x8000; /* IN3 is high! */
+		bsp->y = bsp->f;
+		bsp->ram[mc->b] = (bsp->f >> 1) | 0x8000; /* IN3 is high! */
 		break;
 	case RAMQU:
-		bs->y = bs->f;
-		bs->ram[bs->b] = (bs->f << 1) & 0xffff;
-		bs->q = (bs->q << 1) & 0xffff;
+		bsp->y = bsp->f;
+		bsp->ram[mc->b] = (bsp->f << 1) & 0xffff;
+		bsp->q = (bsp->q << 1) & 0xffff;
 		break;
 	case RAMU:
-		bs->y = bs->f;
-		bs->ram[bs->b] = (bs->f << 1) & 0xffff;
+		bsp->y = bsp->f;
+		bsp->ram[mc->b] = (bsp->f << 1) & 0xffff;
 		break;
 	}
 }
@@ -342,7 +380,7 @@ static void am2901x4 (am2901 *bs)
  *
  ********************************************/
 
-static void vertigo_vgen (vgen *vg)
+static void vertigo_vgen (vector_generator *vg)
 {
 	if (vg->c_l & 0x800)
 	{
@@ -351,6 +389,21 @@ static void vertigo_vgen (vgen *vg)
 
 		if ((vg->c_l & 0x800) == 0)
 		{
+			if (vg->brez)
+			{
+				/* Counters finished so draw vector */
+				if (vg->venshift & VEN_JMPR)
+				{
+					V_ADDPOINT (vg->c_h, vg->c_v, vg->color, vg->intensity);
+				}
+				else
+				{
+					/* It's over before the signal left the shift register.
+                       Draw a dot.*/
+					V_ADDPOINT (vg->c_h, vg->c_v, 0, 0);
+					V_ADDPOINT (vg->c_h, vg->c_v, vg->color, vg->intensity);
+				}
+			}
 			vg->brez = 0;
 			vg->vfin = 0;
 		}
@@ -385,40 +438,22 @@ static void vertigo_vgen (vgen *vg)
 		vg->adder_s = (vg->adder_s + vg->adder_a) & 0xfff;
 	}
 
-	/* BREZ also controls the a transistor which modulates the
-       intensity DAC output. There is a shift register in between
-       which may be used to introduce some delay. The schematics
-       don't show to which output VEN is connected, so I left the
-       SR out. At least in Top Gunner any additional delay
-       produces garbled output */
+	/* BREZ also controls a transistor which modulates the
+       intensity DAC of output. There is a shift register in between
+       which could be used to introduce some delay. I.e. chopping
+       a bit from the start of the vector. I think this produces
+       the LCD-like look of the score that is visible on real
+       screenshots.
+    */
 
-	if (vg->brez ^ vg->ven)
+	vg->venshift = (vg->venshift << 1) | vg->brez;
+
+	if (((vg->venshift & VEN_JMPR) == 0) && ((vg->venshift << 1) & VEN_JMPR))
 	{
-		if (vg->ven)
-		{
-			V_ADDPOINT (vg->c_h, vg->c_v, vg->color, vg->intensity);
-		}
-		else
-		{
-			V_ADDPOINT (vg->c_h, vg->c_v, 0, 0);
-		}
-		vg->ven = vg->brez;
+		/* Signal left the shift register. Start vector from here. */
+		V_ADDPOINT (vg->c_h, vg->c_v, 0, 0);
 	}
 }
-
-/*************************************
- *
- *  Vector processor initialization
- *
- *************************************/
-
-void vertigo_vproc_init(void)
-{
-	vertigo_vectorrom = (UINT16 *)memory_region(REGION_USER1);
-	mcode = (UINT64 *)memory_region(REGION_PROMS);
-	memset(&vs, 0, sizeof(vs));
-}
-
 
 /*************************************
  *
@@ -429,6 +464,7 @@ void vertigo_vproc_init(void)
 void vertigo_vproc(int cycles, int irq4)
 {
 	int jcond;
+	microcode *cmc;
 
 	if (irq4) vector_clear_list();
 
@@ -436,160 +472,155 @@ void vertigo_vproc(int cycles, int irq4)
 
 	while (cycles--)
 	{
+		/* Microcode at current PC */
+		cmc = &mc[vs.pc];
+
 		/* Load data */
-		switch (MC_IF)
+		if (cmc->iif == S_RAMDE)
 		{
-		case S_RAMDE:
-			vs.bs.d = vs.ramlatch;
-			break;
-		case S_ROMDE:
+			bsp.d = vs.ramlatch;
+		}
+		else if (cmc->iif == S_ROMDE)
+		{
 			if (vs.rom_adr < 0x2000)
-				vs.bs.d = vertigo_vectorram[vs.rom_adr & 0xfff];
+			{
+				bsp.d = vertigo_vectorram[vs.rom_adr & 0xfff];
+			}
 			else
-				vs.bs.d = vertigo_vectorrom[vs.rom_adr & 0x7fff];
-			break;
+			{
+				bsp.d = vertigo_vectorrom[vs.rom_adr & 0x7fff];
+			}
 		}
 
-		switch(MC_RAMACC)
+		/* SRAM selected ? */
+		if (cmc->rsel == 0)
 		{
-		case S_RAMR:
-			vs.bs.d = vs.sram[MC_X];
-			break;
-		case S_RAMW:
-			/* Data can be transferred between vector ROM/RAM
-               and SRAM without going through the 2901 */
-			vs.sram[MC_X] = vs.bs.d;
-			break;
+			if (cmc->rwrite)
+			{
+				bsp.d = vs.sram[cmc->x];
+			}
+			else
+			{
+				/* Data can be transferred between vector ROM/RAM
+                   and SRAM without going through the 2901 */
+				vs.sram[cmc->x] = bsp.d;
+			}
 		}
 
-		/* Setup and call 2901 */
-		vs.bs.i = MC_INST;
-		vs.bs.a = MC_A;
-		vs.bs.b = MC_B;
-		vs.bs.c = MC_CN;
-
-		am2901x4 (&vs.bs);
+		am2901x4 (&bsp, cmc);
 
 		/* Store data */
-		switch (MC_OA)
+		switch (cmc->oa)
 		{
 		case S_RAMD:
-			vs.ramlatch = vs.bs.y;
-			if (MC_RAMACC==S_RAMW && MC_IF==S_RAMDE)
-				vs.sram[MC_X] = vs.ramlatch;
+			vs.ramlatch = bsp.y;
+			if (cmc->iif==S_RAMDE && (cmc->rsel == 0) && (cmc->rwrite == 0))
+				vs.sram[cmc->x] = vs.ramlatch;
 			break;
 		case S_ROMA:
-			vs.rom_adr = vs.bs.y;
+			vs.rom_adr = bsp.y;
 			break;
 		case S_SREG:
 			/* FPOS is shifted into sreg */
-			vs.vg.sreg = (vs.vg.sreg >> 1) | ((vs.bs.f >> 9) & 4);
+			vgen.sreg = (vgen.sreg >> 1) | ((bsp.f >> 9) & 4);
 			break;
 		default:
 			break;
 		}
 
 		/* Vector generator setup */
-		switch (MC_OF)
+		switch (cmc->of)
 		{
 		case 0:
-			vs.vg.color = vs.bs.y & 0xfff;
+			vgen.color = bsp.y & 0xfff;
 			break;
 		case 1:
-			vs.vg.intensity = vs.bs.y & 0xff;
+			vgen.intensity = bsp.y & 0xff;
 			break;
 		case 2:
-			vs.vg.l1 = vs.bs.y & 0xfff;
-			vs.vg.adder_s = 0;
-			vs.vg.adder_a = vs.vg.l2;
-			vs.vg.hud1 = vs.vg.sreg & 1;
-			vs.vg.vud1 = vs.vg.sreg & 2;
-			vs.vg.hc1  = vs.vg.sreg & 4;
-			vs.vg.brez = 1;
+			vgen.l1 = bsp.y & 0xfff;
+			vgen.adder_s = 0;
+			vgen.adder_a = vgen.l2;
+			vgen.hud1 = vgen.sreg & 1;
+			vgen.vud1 = vgen.sreg & 2;
+			vgen.hc1  = vgen.sreg & 4;
+			vgen.brez = 1;
 			break;
 		case 3:
-			vs.vg.l2 = vs.bs.y & 0xfff;
-			vs.vg.adder_s = (vs.vg.adder_s + vs.vg.adder_a) & 0xfff;
-			if (vs.vg.adder_s & 0x800)
-				vs.vg.adder_a = vs.vg.l1;
+			vgen.l2 = bsp.y & 0xfff;
+			vgen.adder_s = (vgen.adder_s + vgen.adder_a) & 0xfff;
+			if (vgen.adder_s & 0x800)
+				vgen.adder_a = vgen.l1;
 			else
-				vs.vg.adder_a = vs.vg.l2;
-			vs.vg.hud2 = vs.vg.sreg & 1;
-			vs.vg.vud2 = vs.vg.sreg & 2;
+				vgen.adder_a = vgen.l2;
+			vgen.hud2 = vgen.sreg & 1;
+			vgen.vud2 = vgen.sreg & 2;
 			break;
 		case 4:
-			vs.vg.c_v = vs.bs.y & 0xfff;
+			vgen.c_v = bsp.y & 0xfff;
 			break;
 		case 5:
-			vs.vg.c_h = vs.bs.y & 0xfff;
+			vgen.c_h = bsp.y & 0xfff;
 			break;
 		case 6:
 			/* Loading the c_l counter starts
              * the vector counters if MSB is set
              */
-			vs.vg.c_l = vs.bs.y & 0xfff;
+			vgen.c_l = bsp.y & 0xfff;
 			break;
 		}
 
-		vertigo_vgen (&vs.vg);
+		vertigo_vgen (&vgen);
 
 		/* Microcode program flow */
-		switch (MC_JCON)
+		switch (cmc->jcon)
 		{
-		case 0:
-			jcond = 1;
-			break;
 		case S_MSB:
 			/* ALU most significant bit */
-			jcond = (vs.bs.f >> 15) & 1;
+			jcond = (bsp.f >> 15) & 1;
 			break;
 		case S_FEQ0:
 			/* ALU is 0 */
-			jcond = (vs.bs.f==0)? 1 : 0;
+			jcond = (bsp.f==0)? 1 : 0;
 			break;
 		case S_Y10:
-			jcond = (vs.bs.y >> 10) & 1;
+			jcond = (bsp.y >> 10) & 1;
 			break;
 		case S_VFIN:
-			jcond = vs.vg.vfin;
+			jcond = vgen.vfin;
 			break;
 		case S_FPOS:
 			/* FPOS is bit 11 */
-			jcond = (vs.bs.f >> 11) & 1;
+			jcond = (bsp.f >> 11) & 1;
 			break;
 		case S_INTL4:
 			jcond = irq4;
-			break;
-		case 7:
-			jcond = 1;
 			break;
 		default:
 			jcond = 1;
 			break;
 		}
 
-		jcond ^= MC_JPOS;
-
-		if (jcond)
+		if (jcond ^ cmc->jpos)
 		{
 			/* Except for JBK, address bit 8 isn't changed
                in program flow. */
-			switch (MC_JMP)
+			switch (cmc->jmp)
 			{
 			case S_JBK:
 				/* JBK is the only jump where MA8 is used */
-				vs.pc = MC_MA;
+				vs.pc = cmc->ma;
 				break;
 			case S_CALL:
 				/* call and store return address */
 				vs.ret = (vs.pc + 1) & 0xff;
-				vs.pc = (vs.pc & 0x100) | (MC_MA & 0xff);
+				vs.pc = (vs.pc & 0x100) | (cmc->ma & 0xff);
 				break;
 			case S_OPT:
 				/* OPT is used for microcode jump tables. The first
                    four address bits are defined by bits 12-15
                    of 2901 input (D) */
-				vs.pc = (vs.pc & 0x100) | (MC_MA & 0xf0) | ((vs.bs.d >> 12) & 0xf);
+				vs.pc = (vs.pc & 0x100) | (cmc->ma & 0xf0) | ((bsp.d >> 12) & 0xf);
 				break;
 			case S_RETURN:
 				/* return from call */

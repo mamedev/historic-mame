@@ -94,7 +94,7 @@ VIDEO_UPDATE( segae )
 /* starts vdp for bios screen only */
 int start_megatech_video_normal(void)
 {
-	segasyse_palettebase = 0x800;
+	segasyse_palettebase = 0x40;
 
 	if (segae_vdp_start(0)) return 1;
 

@@ -14,6 +14,13 @@ To Do:
 - Flip screen unused ?
 - Better driving wheel(s) support
 
+Blomby Car is said to be a bootleg of Gaelco's World Rally and uses many
+of the same fonts
+
+Waterball
+
+Check game speed, it depends on a bit we toggle..
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -118,7 +125,7 @@ static ADDRESS_MAP_START( blmbycar_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x106000, 0x107fff) AM_READ(MRA16_RAM					)	// Layer 0
 	AM_RANGE(0x440000, 0x441fff) AM_READ(MRA16_RAM					)	//
 	AM_RANGE(0x444000, 0x445fff) AM_READ(MRA16_RAM					)	// Sprites (size?)
-	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_0_word_r		)	// 2 x DSW
+	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_0_word_r		)	// 2 x DSW0
 	AM_RANGE(0x700002, 0x700003) AM_READ(input_port_1_word_r		)	// Joystick + Buttons
 	AM_RANGE(0x700004, 0x700005) AM_READ(blmbycar_opt_wheel_r		)	// Wheel (optical)
 	AM_RANGE(0x700006, 0x700007) AM_READ(input_port_3_word_r		)	//
@@ -148,6 +155,52 @@ static ADDRESS_MAP_START( blmbycar_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x70007a, 0x70007b) AM_WRITE(blmbycar_pot_wheel_shift_w			)	//
 ADDRESS_MAP_END
 
+READ16_HANDLER( waterball_unk_r )
+{
+	static int retvalue = 0;
+
+	retvalue ^= 0x0008; // must toggle.. but not vblank?
+
+	return retvalue;
+}
+
+static ADDRESS_MAP_START( watrball_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0xfec000, 0xfeffff) AM_READ(MRA16_RAM					)	// RAM
+	AM_RANGE(0x200000, 0x2005ff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x200600, 0x203fff) AM_READ(MRA16_RAM					)	//
+	AM_RANGE(0x204000, 0x2045ff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x204600, 0x207fff) AM_READ(MRA16_RAM					)	//
+	AM_RANGE(0x104000, 0x105fff) AM_READ(MRA16_RAM					)	// Layer 1
+	AM_RANGE(0x106000, 0x107fff) AM_READ(MRA16_RAM					)	// Layer 0
+	AM_RANGE(0x440000, 0x441fff) AM_READ(MRA16_RAM					)	//
+	AM_RANGE(0x444000, 0x445fff) AM_READ(MRA16_RAM					)	// Sprites (size?)
+	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_0_word_r		)
+	AM_RANGE(0x700002, 0x700003) AM_READ(input_port_1_word_r		)
+	AM_RANGE(0x700006, 0x700007) AM_READ(MRA16_NOP	            	)   // read
+	AM_RANGE(0x700008, 0x700009) AM_READ(waterball_unk_r	     	)   // 0x0008 must toggle
+	AM_RANGE(0x70000e, 0x70000f) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( watrball_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM								)	// ROM
+	AM_RANGE(0xfec000, 0xfeffff) AM_WRITE(MWA16_RAM								)	// RAM
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM								)	//
+	AM_RANGE(0x104000, 0x105fff) AM_WRITE(blmbycar_vram_1_w) AM_BASE(&blmbycar_vram_1	)	// Layer 1
+	AM_RANGE(0x106000, 0x107fff) AM_WRITE(blmbycar_vram_0_w) AM_BASE(&blmbycar_vram_0	)	// Layer 0
+	AM_RANGE(0x108000, 0x10bfff) AM_WRITE(MWA16_RAM								)	//
+	AM_RANGE(0x10c000, 0x10c003) AM_WRITE(MWA16_RAM) AM_BASE(&blmbycar_scroll_1			)	// Scroll 1
+	AM_RANGE(0x10c004, 0x10c007) AM_WRITE(MWA16_RAM) AM_BASE(&blmbycar_scroll_0			)	// Scroll 0
+	AM_RANGE(0x200000, 0x2005ff) AM_WRITE(blmbycar_palette_w					)	// Palette
+	AM_RANGE(0x200600, 0x203fff) AM_WRITE(MWA16_RAM								)	//
+	AM_RANGE(0x204000, 0x2045ff) AM_WRITE(blmbycar_palette_w) AM_BASE(&paletteram16		)	// Palette
+	AM_RANGE(0x204600, 0x207fff) AM_WRITE(MWA16_RAM								)	//
+	AM_RANGE(0x440000, 0x441fff) AM_WRITE(MWA16_RAM								)	//
+	AM_RANGE(0x444000, 0x445fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites (size?)
+	AM_RANGE(0x70000a, 0x70000b) AM_WRITE(MWA16_NOP								)	// ?? busy
+	AM_RANGE(0x70000c, 0x70000d) AM_WRITE(blmbycar_okibank_w					)	// Sound
+	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(OKIM6295_data_0_lsb_w					)	//
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -234,6 +287,76 @@ INPUT_PORTS_START( blmbycar )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( watrball )
+	PORT_START	/* dips */
+	PORT_DIPNAME( 0x0001, 0x0001, "1" )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	/* 16bit */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN1  )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN2  )
+
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_START1  )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2  )
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -301,7 +424,34 @@ static MACHINE_DRIVER_START( blmbycar )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( watrball )
 
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 10000000)	/* ? */
+	MDRV_CPU_PROGRAM_MAP(watrball_readmem,watrball_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(0x180, 0x100)
+	MDRV_VISIBLE_AREA(0, 0x180-1, 16, 0x100-1)
+	MDRV_GFXDECODE(blmbycar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x300)
+
+	MDRV_VIDEO_START(blmbycar)
+	MDRV_VIDEO_UPDATE(blmbycar)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -359,6 +509,39 @@ ROM_START( blmbycau )
 	ROM_COPY( REGION_SOUND1, 0x040000, 0x000000,   0x040000 )
 ROM_END
 
+/*
+
+Waterball by ABM (sticker on the pcb 12-3-96)
+The pcb has some empty sockets, maybe it was used for other games since it has no markings.
+
+The game has fonts identical to World rally and obiviously Blomby car ;)
+
+1x 68k
+1x oki 6295
+1x OSC 30mhz
+1x OSC 24mhz
+1x FPGA
+1x dispswitch
+
+*/
+
+ROM_START( watrball )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom4.bin", 0x000000, 0x020000, CRC(bfbfa720) SHA1(d6d14c0ba545eb7adee7190da2d3db1c6dd00d75) )
+	ROM_LOAD16_BYTE( "rom6.bin", 0x000001, 0x020000, CRC(acff9b01) SHA1(b85671bcc4f03fdf05eb1c9b5d4143e33ec1d7db) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "rom7.bin",   0x000000, 0x080000, CRC(e7e5c311) SHA1(5af1a666bf23c5505d120d81fb942f5c49341861) )
+	ROM_LOAD( "rom8.bin",   0x080000, 0x080000, CRC(fd27ce6e) SHA1(a472a8cc25818427d2870518649780146e51835b) )
+	ROM_LOAD( "rom9.bin",   0x100000, 0x080000, CRC(122cc0ad) SHA1(27cdb19fa082089e47c5cdb44742cfd93aa23a00) )
+	ROM_LOAD( "rom10.bin",  0x180000, 0x080000, CRC(22a2a706) SHA1(c7350a94a857e0007d7fc0076b44a3d62693cb6c) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* 8 bit adpcm (banked) */
+	ROM_LOAD( "rom1.bin",     0x040000, 0x080000, CRC(7f88dee7) SHA1(d493b961fa4631185a33faee7f61786430707209))
+//  ROM_LOAD( "rom2.bin",     0x0c0000, 0x080000, /* not populated for this game */ )
+	ROM_COPY( REGION_SOUND1, 0x040000, 0x000000,   0x040000 )
+ROM_END
+
 
 DRIVER_INIT( blmbycar )
 {
@@ -384,3 +567,4 @@ DRIVER_INIT( blmbycar )
 
 GAME( 1994, blmbycar, 0,        blmbycar, blmbycar, blmbycar, ROT0, "ABM & Gecas", "Blomby Car" )
 GAME( 1994, blmbycau, blmbycar, blmbycar, blmbycar, 0,        ROT0, "ABM & Gecas", "Blomby Car (not encrypted)" )
+GAME( 1996, watrball, 0,        watrball, watrball, 0,        ROT0, "ABM", "Water Balls" )

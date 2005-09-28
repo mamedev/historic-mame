@@ -3,8 +3,6 @@
 
 Seems to be based around genesis hardware, despite containing no original Sega chips
 
--- uses functions in segac2.c
-
 Supported:
 
 Puckman Pockimon - (c)2000 Genie? (there should be a way to show Sun Mixing copyright, roms are the same
@@ -14,7 +12,8 @@ Puckman Pockimon - (c)2000 Genie? (there should be a way to show Sun Mixing copy
 
 #include "driver.h"
 #include "genesis.h"
-#include "segac2.h"
+
+#define MASTER_CLOCK		53693100
 
 static UINT16* main_ram;
 
@@ -121,7 +120,7 @@ static ADDRESS_MAP_START( puckpkmn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700018, 0x700019) AM_READ(input_port_4_word_r)		/* Input (DSW2) */
 	AM_RANGE(0x700022, 0x700023) AM_READ(OKIM6295_status_0_lsb_r)	/* M6295 Sound Chip Status Register */
 	AM_RANGE(0xa04000, 0xa04001) AM_READ(puckpkmn_YM3438_r)			/* Ym3438 Sound Chip Status Register */
-	AM_RANGE(0xc00000, 0xc0001f) AM_READ(segac2_vdp_r)				/* VDP Access */
+	AM_RANGE(0xc00000, 0xc0001f) AM_READ(genesis_vdp_r)				/* VDP Access */
 	AM_RANGE(0xe00000, 0xe1ffff) AM_READ(MRA16_BANK1)				/* VDP sees the roms here */
 	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_BANK2)				/* VDP sees the ram here */
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM	)					/* Main Ram */
@@ -136,8 +135,7 @@ static ADDRESS_MAP_START( puckpkmn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)					/* Main 68k Program Roms */
 	AM_RANGE(0x700022, 0x700023) AM_WRITE(OKIM6295_data_0_lsb_w)		/* M6295 Sound Chip Writes */
 	AM_RANGE(0xa04000, 0xa04003) AM_WRITE(puckpkmn_YM3438_w)			/* Ym3438 Sound Chip Writes */
-	AM_RANGE(0xc00000, 0xc0000f) AM_WRITE(segac2_vdp_w)				/* VDP Access */
-	AM_RANGE(0xc00010, 0xc00017) AM_WRITE(sn76489_w)					/* SN76489 Access */
+	AM_RANGE(0xc00000, 0xc0001f) AM_WRITE(genesis_vdp_w)				/* VDP Access */
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&main_ram)		/* Main Ram */
 
 	/* Unknown writes: */
@@ -150,32 +148,37 @@ static ADDRESS_MAP_START( puckpkmn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
+static struct YM3438interface ym3438_intf =
+{
+	genesis_irq2_interrupt		/* IRQ handler */
+};
+
 static MACHINE_DRIVER_START( puckpkmn )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main",M68000, MASTER_CLOCK/7) 		/*???*/
 	MDRV_CPU_PROGRAM_MAP(puckpkmn_readmem,puckpkmn_writemem)
-	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
+	MDRV_CPU_VBLANK_INT(genesis_vblank_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
 
-	MDRV_MACHINE_INIT(segac2)
+	MDRV_MACHINE_INIT(genesis)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
 	MDRV_SCREEN_SIZE(320,224)
 	MDRV_VISIBLE_AREA(0, 319, 0, 223)
-	MDRV_PALETTE_LENGTH(2048)
+	MDRV_PALETTE_LENGTH(64)
 
-	MDRV_VIDEO_START(puckpkmn)
-	MDRV_VIDEO_UPDATE(segac2)
+	MDRV_VIDEO_START(genesis)
+	MDRV_VIDEO_UPDATE(genesis)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM3438, MASTER_CLOCK/7)
-	MDRV_SOUND_CONFIG(segac2_ym3438_intf)
+	MDRV_SOUND_CONFIG(ym3438_intf)
 	MDRV_SOUND_ROUTE(0, "mono", 0.50)
 	MDRV_SOUND_ROUTE(1, "mono", 0.50)
 
@@ -267,6 +270,9 @@ DRIVER_INIT( puckpkmn )
 	UINT8 *rom	=	memory_region(REGION_CPU1);
 	size_t len		=	memory_region_length(REGION_CPU1);
 	int i;
+
+	init_genesis();
+
 	for (i = 0; i < len; i++)
 		rom[i] = BITSWAP8(rom[i],1,4,2,0,7,5,3,6);
 

@@ -9,12 +9,14 @@
 
 #include "driver.h"
 #include "state.h"
-#include "segac2.h"
+#include "genesis.h"
 
 /* in vidhrdw/segasyse.c */
 int start_megatech_video_normal(void);
 void update_megatech_video_normal(mame_bitmap *bitmap, const rectangle *cliprect );
 void update_megaplay_video_normal(mame_bitmap *bitmap, const rectangle *cliprect );
+
+
 
 /******************************************************************************
     Macros
@@ -27,6 +29,8 @@ void update_megaplay_video_normal(mame_bitmap *bitmap, const rectangle *cliprect
 #define VRAM_MASK			(VRAM_SIZE - 1)
 #define VSRAM_SIZE			0x80
 #define VSRAM_MASK			(VSRAM_SIZE - 1)
+#define CRAM_SIZE			0x40
+#define CRAM_MASK			(CRAM_SIZE - 1)
 
 #define VDP_VRAM_BYTE(x)	(vdp_vram[(x) & VRAM_MASK])
 #define VDP_VSRAM_BYTE(x)	(vdp_vsram[(x) & VSRAM_MASK])
@@ -68,16 +72,16 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 ******************************************************************************/
 
 /* EXTERNALLY ACCESSIBLE */
-       UINT16		segac2_bg_pal_lookup[4];	/* lookup table for background tiles */
-       UINT16		segac2_sp_pal_lookup[4];	/* lookup table for sprites */
-       int			segac2_pal_offs;			/* offset to use when doing palette writes */
-       UINT8		segac2_vdp_regs[32];		/* VDP registers */
-	   UINT16		scanbase;
+       UINT16		genesis_bg_pal_lookup[4];	/* lookup table for background tiles */
+       UINT16		genesis_sp_pal_lookup[4];	/* lookup table for sprites */
+       UINT8		genesis_vdp_regs[32];		/* VDP registers */
+static UINT16		scanbase;
 
 /* LOCAL */
 static UINT8 *		vdp_vram;					/* VDP video RAM */
 static UINT8 *		vdp_vsram;					/* VDP vertical scroll RAM */
-static UINT8		c2_display_enable;			/* is the display enabled? */
+static UINT8		display_enable;				/* is the display enabled? */
+static int			genesis_palette_base;		/* offset to use when doing palette writes */
 
 /* updates */
 static UINT16 *		transparent_lookup;			/* fast transparent mapping table */
@@ -122,7 +126,7 @@ static UINT8		window_width;				/* window width */
 
 ******************************************************************************/
 
-VIDEO_START( segac2 )
+VIDEO_START( genesis )
 {
 	static const UINT8 vdp_init[24] =
 	{
@@ -136,10 +140,6 @@ VIDEO_START( segac2 )
 	vdp_vram			= auto_malloc(VRAM_SIZE);
 	vdp_vsram			= auto_malloc(VSRAM_SIZE);
 	transparent_lookup	= auto_malloc(0x1000 * sizeof(UINT16));
-
-	/* check for errors */
-	if (!vdp_vram || !vdp_vsram || !transparent_lookup)
-		return 1;
 
 	/* clear the VDP memory, prevents corrupt tile in Puyo Puyo 2 */
 	memset(vdp_vram, 0, VRAM_SIZE);
@@ -160,16 +160,11 @@ VIDEO_START( segac2 )
 	}
 
 	/* reset the palettes */
-	memset(paletteram16, 0, 0x800 * sizeof(UINT16));
-	segac2_bg_pal_lookup[0] = 0x000;
-	segac2_bg_pal_lookup[1] = 0x010;
-	segac2_bg_pal_lookup[2] = 0x020;
-	segac2_bg_pal_lookup[3] = 0x030;
-	segac2_sp_pal_lookup[0] = 0x100;
-	segac2_sp_pal_lookup[1] = 0x110;
-	segac2_sp_pal_lookup[2] = 0x120;
-	segac2_sp_pal_lookup[3] = 0x130;
-	segac2_pal_offs   = 0;
+	genesis_palette_base = 0;
+	genesis_bg_pal_lookup[0] = genesis_sp_pal_lookup[0] = 0x00;
+	genesis_bg_pal_lookup[1] = genesis_sp_pal_lookup[1] = 0x10;
+	genesis_bg_pal_lookup[2] = genesis_sp_pal_lookup[2] = 0x20;
+	genesis_bg_pal_lookup[3] = genesis_sp_pal_lookup[3] = 0x30;
 
 	scanbase = 0;
 
@@ -180,91 +175,67 @@ VIDEO_START( segac2 )
 	vdp_code    = 0;
 	vdp_address = 0;
 
-	/* Save State Stuff we could probably do with an init values from vdp registers function or something (todo) */
-
-	state_save_register_UINT8 ("C2_VDP", 0, "VDP Registers", segac2_vdp_regs, 32);
-	state_save_register_UINT8 ("C2_VDP", 0, "VDP VRam", vdp_vram, 0x10000);
-	state_save_register_UINT8 ("C2_VDP", 0, "VDP VSRam", vdp_vsram, 0x80);
-	state_save_register_UINT16("C2_Video", 0, "Background Pal Lookup",  segac2_bg_pal_lookup, 4);
-	state_save_register_UINT16("C2_Video", 0, "Sprite Pal Base",  segac2_sp_pal_lookup, 4);
-	state_save_register_UINT8("C2_Video", 0, "Display Enabled",  &c2_display_enable, 1);
-	state_save_register_UINT32("C2_Video", 0, "Scroll A Base in VRAM",  &vdp_scrollabase, 1);
-	state_save_register_UINT32("C2_Video", 0, "Scroll B Base in VRAM",  &vdp_scrollbbase, 1);
-	state_save_register_UINT32("C2_Video", 0, "Window Base in VRAM",  &vdp_windowbase, 1);
-	state_save_register_UINT32("C2_Video", 0, "Sprite Table Base in VRAM",  &vdp_spritebase, 1);
-	state_save_register_UINT32("C2_Video", 0, "HScroll Data Base in VRAM",  &vdp_hscrollbase, 1);
-	state_save_register_int("C2_Video", 0, "vdp_hscrollmask",  &vdp_hscrollmask);
-	state_save_register_UINT32("C2_Video", 0, "vdp_hscrollsize",  &vdp_hscrollsize, 1);
-	state_save_register_UINT8("C2_Video", 0, "vdp_vscrollmode",  &vdp_vscrollmode, 1);
-	state_save_register_UINT8("C2_VDP", 0, "VDP Command Part",  &vdp_cmdpart, 1);
-	state_save_register_UINT8("C2_VDP", 0, "VDP Current Code",  &vdp_code, 1);
-	state_save_register_UINT32("C2_VDP", 0, "VDP Address",  &vdp_address, 1);
-	state_save_register_UINT8("C2_VDP", 0, "VDP DMA Mode",  &vdp_dmafill, 1);
-	state_save_register_UINT8("C2_Video", 0, "scrollheight",  &scrollheight, 1);
-	state_save_register_UINT8("C2_Video", 0, "scrollwidth",  &scrollwidth, 1);
-	state_save_register_UINT8("C2_Video", 0, "Background Colour",  &bgcol, 1);
-	state_save_register_UINT8("C2_Video", 0, "Window Horz",  &window_down, 1);
-	state_save_register_UINT32("C2_Video", 0, "Window Vert",  &window_vpos, 1);
-
+	/* Save State Stuff */
+	state_save_register_UINT8 ("Genesis_VDP", 0, "VDP Registers", genesis_vdp_regs, 32);
+	state_save_register_UINT8 ("Genesis_VDP", 0, "VDP VRam", vdp_vram, 0x10000);
+	state_save_register_UINT8 ("Genesis_VDP", 0, "VDP VSRam", vdp_vsram, 0x80);
+	state_save_register_UINT16("Genesis_Video", 0, "Background Pal Lookup",  genesis_bg_pal_lookup, 4);
+	state_save_register_UINT16("Genesis_Video", 0, "Sprite Pal Base",  genesis_sp_pal_lookup, 4);
+	state_save_register_UINT8("Genesis_Video", 0, "Display Enabled",  &display_enable, 1);
+	state_save_register_UINT32("Genesis_Video", 0, "Scroll A Base in VRAM",  &vdp_scrollabase, 1);
+	state_save_register_UINT32("Genesis_Video", 0, "Scroll B Base in VRAM",  &vdp_scrollbbase, 1);
+	state_save_register_UINT32("Genesis_Video", 0, "Window Base in VRAM",  &vdp_windowbase, 1);
+	state_save_register_UINT32("Genesis_Video", 0, "Sprite Table Base in VRAM",  &vdp_spritebase, 1);
+	state_save_register_UINT32("Genesis_Video", 0, "HScroll Data Base in VRAM",  &vdp_hscrollbase, 1);
+	state_save_register_int("Genesis_Video", 0, "vdp_hscrollmask",  &vdp_hscrollmask);
+	state_save_register_UINT32("Genesis_Video", 0, "vdp_hscrollsize",  &vdp_hscrollsize, 1);
+	state_save_register_UINT8("Genesis_Video", 0, "vdp_vscrollmode",  &vdp_vscrollmode, 1);
+	state_save_register_UINT8("Genesis_VDP", 0, "VDP Command Part",  &vdp_cmdpart, 1);
+	state_save_register_UINT8("Genesis_VDP", 0, "VDP Current Code",  &vdp_code, 1);
+	state_save_register_UINT32("Genesis_VDP", 0, "VDP Address",  &vdp_address, 1);
+	state_save_register_UINT8("Genesis_VDP", 0, "VDP DMA Mode",  &vdp_dmafill, 1);
+	state_save_register_UINT8("Genesis_Video", 0, "scrollheight",  &scrollheight, 1);
+	state_save_register_UINT8("Genesis_Video", 0, "scrollwidth",  &scrollwidth, 1);
+	state_save_register_UINT8("Genesis_Video", 0, "Background Colour",  &bgcol, 1);
+	state_save_register_UINT8("Genesis_Video", 0, "Window Horz",  &window_down, 1);
+	state_save_register_UINT32("Genesis_Video", 0, "Window Vert",  &window_vpos, 1);
 
 	return 0;
-
 }
 
-VIDEO_START( puckpkmn )
-{
-	paletteram16 = auto_malloc(0x800 * sizeof(UINT16));
 
-	if (video_start_segac2())
+VIDEO_START( segac2 )
+{
+	if (video_start_genesis())
 		return 1;
 
-	// same palettes for sprites and bg
-	segac2_sp_pal_lookup[0] = 0x000;
-	segac2_sp_pal_lookup[1] = 0x010;
-	segac2_sp_pal_lookup[2] = 0x020;
-	segac2_sp_pal_lookup[3] = 0x030;
-
-	scanbase = 0;
+	/* C2 has separate sprite/background palettes */
+	genesis_sp_pal_lookup[0] = 0x100;
+	genesis_sp_pal_lookup[1] = 0x110;
+	genesis_sp_pal_lookup[2] = 0x120;
+	genesis_sp_pal_lookup[3] = 0x130;
 
 	return 0;
 }
-
 
 
 VIDEO_START( megatech )
 {
-	paletteram16 = auto_malloc(0x800 * sizeof(UINT16));
-
-	if (video_start_segac2())
+	if (video_start_genesis())
 		return 1;
-
-	// same palettes for sprites and bg
-	segac2_sp_pal_lookup[0] = 0x000;
-	segac2_sp_pal_lookup[1] = 0x010;
-	segac2_sp_pal_lookup[2] = 0x020;
-	segac2_sp_pal_lookup[3] = 0x030;
 
 	if (start_megatech_video_normal())
 		return 1;
-	scanbase = 256*2;
 
+	scanbase = 256;
 	return 0;
 }
+
 
 VIDEO_START( megaplay )
 {
-	paletteram16 = auto_malloc(0x800 * sizeof(UINT16));
-
-	if (video_start_segac2())
+	if (video_start_genesis())
 		return 1;
-
-	// same palettes for sprites and bg
-	segac2_sp_pal_lookup[0] = 0x000;
-	segac2_sp_pal_lookup[1] = 0x010;
-	segac2_sp_pal_lookup[2] = 0x020;
-	segac2_sp_pal_lookup[3] = 0x030;
-
-	scanbase = 0;
 
 	if (start_megatech_video_normal())
 		return 1;
@@ -272,22 +243,18 @@ VIDEO_START( megaplay )
 	return 0;
 }
 
+
 int start_system18_vdp(void)
 {
-	if (video_start_segac2())
+	if (video_start_genesis())
 		return 1;
 
-	segac2_bg_pal_lookup[0] = 0x1800;
-	segac2_bg_pal_lookup[1] = 0x1810;
-	segac2_bg_pal_lookup[2] = 0x1820;
-	segac2_bg_pal_lookup[3] = 0x1830;
-	segac2_sp_pal_lookup[0] = 0x1800;
-	segac2_sp_pal_lookup[1] = 0x1810;
-	segac2_sp_pal_lookup[2] = 0x1820;
-	segac2_sp_pal_lookup[3] = 0x1830;
-	segac2_pal_offs = 0x1800;
+	genesis_palette_base = 0x1800;
+	genesis_bg_pal_lookup[0] = genesis_sp_pal_lookup[0] = 0x1800;
+	genesis_bg_pal_lookup[1] = genesis_sp_pal_lookup[1] = 0x1810;
+	genesis_bg_pal_lookup[2] = genesis_sp_pal_lookup[2] = 0x1820;
+	genesis_bg_pal_lookup[3] = genesis_sp_pal_lookup[3] = 0x1830;
 
-	scanbase = 0;
 	return 0;
 }
 
@@ -311,28 +278,28 @@ void segac2_enable_display(int enable)
 {
 	if (!cpu_getvblank())
 		force_partial_update(cpu_getscanline() + scanbase);
-	c2_display_enable = enable;
+	display_enable = enable;
 }
 
 
-/* core refresh: computes the final screen */
-VIDEO_UPDATE( segac2 )
+VIDEO_UPDATE( genesis )
 {
 	int y;
 
-	/* if display is blanked, then blank it */
-	if (!c2_display_enable)
-		fillbitmap(bitmap, get_black_pen(), cliprect);
-
-	/* else generate the final screen */
-	else
-		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
-			drawline((UINT16 *)bitmap->line[y], y, 0);
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		drawline((UINT16 *)bitmap->line[y], y, 0);
 }
 
-/* megatech, same but drawing the sms display too */
 
-/* core refresh: computes the final screen */
+VIDEO_UPDATE( segac2 )
+{
+	if (!display_enable)
+		fillbitmap(bitmap, get_black_pen(), cliprect);
+	else
+		video_update_genesis(screen, bitmap, cliprect);
+}
+
+
 VIDEO_UPDATE( megatech )
 {
 	int y;
@@ -399,7 +366,7 @@ void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect )
 
 ******************************************************************************/
 
-READ16_HANDLER( segac2_vdp_r )
+READ16_HANDLER( genesis_vdp_r )
 {
 	switch (offset)
 	{
@@ -433,7 +400,7 @@ READ16_HANDLER( segac2_vdp_r )
 }
 
 
-WRITE16_HANDLER( segac2_vdp_w )
+WRITE16_HANDLER( genesis_vdp_w )
 {
 	switch (offset)
 	{
@@ -461,6 +428,14 @@ WRITE16_HANDLER( segac2_vdp_w )
 				 	data |= data << 8;
 			}
 			vdp_control_w(data);
+			break;
+
+		case 0x08:	/* SN76489 Write */
+		case 0x09:
+		case 0x0a:
+		case 0x0b:
+			if (ACCESSING_LSB && sndti_to_sndnum(SOUND_SN76496, 0) != -1)
+				SN76496_0_w(0, data & 0xff);
 			break;
 	}
 }
@@ -505,7 +480,7 @@ static int vdp_data_r(void)
 	}
 
 	/* advance the address */
-	vdp_address += segac2_vdp_regs[15];
+	vdp_address += genesis_vdp_regs[15];
 	return read;
 }
 
@@ -541,11 +516,20 @@ static void vdp_data_w(int data)
 			VDP_VRAM_BYTE(vdp_address |  1) = data;
 			break;
 
+		case 0x03:		/* Palette write */
+			{
+				int offset = (vdp_address/2) % CRAM_SIZE;
+				int r = (data >> 1) & 0x07;
+				int g = (data >> 5) & 0x07;
+				int b = (data >> 9) & 0x07;
 
-		case 0x03:		/* Palette write - puckpkmn */
-			paletteram16_xxxxBBBBGGGGRRRR_word_w(vdp_address/2+segac2_pal_offs, data, 0);
+				r = (r << 5) | (r << 2) | (r >> 1);
+				g = (g << 5) | (g << 2) | (g >> 1);
+				b = (b << 5) | (b << 2) | (b >> 1);
+
+				palette_set_color(offset + genesis_palette_base, r, g, b);
+			}
 			break;
-
 
 		case 0x05:		/* VSRAM write */
 
@@ -566,7 +550,7 @@ static void vdp_data_w(int data)
 	}
 
 	/* advance the address */
-	vdp_address += segac2_vdp_regs[15];
+	vdp_address += genesis_vdp_regs[15];
 }
 
 
@@ -662,7 +646,7 @@ static void vdp_register_w(int data, int vblank)
 	UINT8 regnum = (data & 0x1f00) >> 8; /* ---R RRRR ---- ---- */
 	UINT8 regdat = (data & 0x00ff);      /* ---- ---- DDDD DDDD */
 
-	segac2_vdp_regs[regnum] = regdat;
+	genesis_vdp_regs[regnum] = regdat;
 
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
@@ -761,9 +745,9 @@ static void vdp_register_w(int data, int vblank)
 
 static void vdp_control_dma(int data)
 {
-	if ((vdp_code & 0x20) && (segac2_vdp_regs[1] & 0x10))
+	if ((vdp_code & 0x20) && (genesis_vdp_regs[1] & 0x10))
 	{
-		switch(segac2_vdp_regs[23] & 0xc0)
+		switch(genesis_vdp_regs[23] & 0xc0)
 		{
 			case 0x00:
 			case 0x40:		/* 68k -> VRAM Tranfser */
@@ -793,8 +777,8 @@ static void vdp_control_dma(int data)
 
 static void vdp_dma_68k(void)
 {
-	int length = segac2_vdp_regs[19] | (segac2_vdp_regs[20] << 8);
-	int source = (segac2_vdp_regs[21] << 1) | (segac2_vdp_regs[22] << 9) | ((segac2_vdp_regs[23] & 0x7f) << 17);
+	int length = genesis_vdp_regs[19] | (genesis_vdp_regs[20] << 8);
+	int source = (genesis_vdp_regs[21] << 1) | (genesis_vdp_regs[22] << 9) | ((genesis_vdp_regs[23] & 0x7f) << 17);
 	int count;
 
 	/* length of 0 means 64k likely */
@@ -812,8 +796,8 @@ static void vdp_dma_68k(void)
 
 static void vdp_dma_copy(void)
 {
-	int length = segac2_vdp_regs[19] | (segac2_vdp_regs[20] << 8);
-	int source = segac2_vdp_regs[21] | (segac2_vdp_regs[22] << 8);
+	int length = genesis_vdp_regs[19] | (genesis_vdp_regs[20] << 8);
+	int source = genesis_vdp_regs[21] | (genesis_vdp_regs[22] << 8);
 	int count;
 
 	/* length of 0 means 64k likely */
@@ -824,14 +808,14 @@ static void vdp_dma_copy(void)
 	for (count = 0; count < length; count++)
 	{
 		VDP_VRAM_BYTE(vdp_address) = VDP_VRAM_BYTE(source++);
-		vdp_address += segac2_vdp_regs[15];
+		vdp_address += genesis_vdp_regs[15];
 	}
 }
 
 
 static void vdp_dma_fill(int data)
 {
-	int length = segac2_vdp_regs[19] | (segac2_vdp_regs[20] << 8);
+	int length = genesis_vdp_regs[19] | (genesis_vdp_regs[20] << 8);
 	int count;
 
 	/* length of 0 means 64k likely */
@@ -844,7 +828,7 @@ static void vdp_dma_fill(int data)
 	for(count = 0; count < length; count++)
 	{
 		VDP_VRAM_BYTE(vdp_address ^ 1) = data;
-		vdp_address += segac2_vdp_regs[15];
+		vdp_address += genesis_vdp_regs[15];
 	}
 }
 
@@ -915,7 +899,7 @@ static void drawline(UINT16 *bitmap, int line, int bgfill)
 	UINT32 scrolla_tiles[41], scrollb_tiles[41], window_tiles[41];
 	int scrolla_offset, scrollb_offset;
 	UINT8 *lowlist[81], *highlist[81];
-	int bgcolor = bgfill ? bgfill : segac2_bg_pal_lookup[0];
+	int bgcolor = bgfill ? bgfill : genesis_bg_pal_lookup[0];
 	int window_lclip, window_rclip;
 	int scrolla_lclip, scrolla_rclip;
 	int column, sprite;
@@ -925,7 +909,7 @@ static void drawline(UINT16 *bitmap, int line, int bgfill)
 		bitmap[column] = bgcolor;
 
 	/* if display is disabled, stop */
-	if (!(segac2_vdp_regs[1] & 0x40))
+	if (!(genesis_vdp_regs[1] & 0x40))
 		return;
 
 	/* Sprites need to be Drawn in Reverse order .. may as well sort them here */
@@ -1076,7 +1060,7 @@ static void drawline_tiles(UINT32 *tiles, UINT16 *bmap, int pri, int offset, int
 		/* if the tile is the correct priority, draw it */
 		if (((tile >> 15) & 1) == pri && offset < BITMAP_WIDTH)
 		{
-			int colbase = segac2_bg_pal_lookup[(tile & 0x6000) >> 13];
+			int colbase = genesis_bg_pal_lookup[(tile & 0x6000) >> 13];
 			UINT32 *tp = (UINT32 *)&VDP_VRAM_BYTE((tile & 0x7ff) * 32);
 			UINT32 mytile;
 			int col;
@@ -1175,7 +1159,7 @@ INLINE void draw8pixs(UINT16 *bmap, int patno, int priority, int colbase, int pa
 		return;
 
 	/* non-transparent */
-	if ((colbase & 0x30) != 0x30 || !(segac2_vdp_regs[12] & 0x08))
+	if ((colbase & 0x30) != 0x30 || !(genesis_vdp_regs[12] & 0x08))
 	{
 		col = EXTRACT_PIXEL(tile, 0); if (col) bmap[0] = colbase + col;
 		col = EXTRACT_PIXEL(tile, 1); if (col) bmap[1] = colbase + col;
@@ -1253,7 +1237,7 @@ INLINE void draw8pixs_hflip(UINT16 *bmap, int patno, int priority, int colbase, 
 		return;
 
 	/* non-transparent */
-	if ((colbase & 0x30) != 0x30 || !(segac2_vdp_regs[12] & 0x08))
+	if ((colbase & 0x30) != 0x30 || !(genesis_vdp_regs[12] & 0x08))
 	{
 		col = EXTRACT_PIXEL(tile, 7); if (col) bmap[0] = colbase + col;
 		col = EXTRACT_PIXEL(tile, 6); if (col) bmap[1] = colbase + col;
@@ -1341,7 +1325,7 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
 	patline    = line - spriteypos;
 
 	/* determine the color base */
-	colbase = segac2_sp_pal_lookup[(spriteattr & 0x6000) >> 13];
+	colbase = genesis_sp_pal_lookup[(spriteattr & 0x6000) >> 13];
 
 	/* adjust for the X position */
 	spritewidth >>= 3;

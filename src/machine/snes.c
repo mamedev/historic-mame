@@ -68,10 +68,6 @@ static void snes_init_ram(void)
 	snes_ppu.mode = 0;
 	cgram_address = 0;
 	vram_read_offset = 2;
-	/* Force the use of the SPCSkipper for now.
-     * Once the two CPU's are running in sync. we should check that sound is
-     * enabled here and only use the SPCSkipper if it is. */
-	spc_usefakeapu = 1;
 }
 
 /* should we treat this as nvram in MAME? */
@@ -435,9 +431,6 @@ READ8_HANDLER( snes_r_io )
 		case APU01:		/* Audio port register */
 		case APU02:		/* Audio port register */
 		case APU03:		/* Audio port register */
-			if( spc_usefakeapu )
-				return fakespc_port_r( offset & 0x3 );
-			else
 			return spc_port_out[offset & 0x3];
 		case WMDATA:	/* Data to read from WRAM */
 			{
@@ -919,13 +912,9 @@ WRITE8_HANDLER( snes_w_io )
 		case APU01:		/* Audio port register */
 		case APU02:		/* Audio port register */
 		case APU03:		/* Audio port register */
-			if( spc_usefakeapu )
-				fakespc_port_w( offset & 0x3, data );
-			else
-			{
-				cpu_boost_interleave(0, TIME_IN_USEC(20));
-			spc_port_in[offset & 0x3] = data;
-			}
+//          printf("816: %02x to APU @ %d\n", data, offset&3);
+	     		spc_port_in[offset & 0x3] = data;
+			cpu_boost_interleave(0, TIME_IN_USEC(20));
 			return;
 		case WMDATA:	/* Data to write to WRAM */
 			{

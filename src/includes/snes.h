@@ -416,16 +416,14 @@ extern struct SNES_PPU_STRUCT snes_ppu;
 extern UINT8 *spc_ram;			/* SPC main memory */
 extern UINT8 spc_port_in[4];	/* SPC input ports */
 extern UINT8 spc_port_out[4];	/* SPC output ports */
-extern UINT8 spc_usefakeapu;	/* Fake the APU behaviour */
 extern READ8_HANDLER( spc_io_r );
 extern WRITE8_HANDLER( spc_io_w );
 extern READ8_HANDLER( spc_bank_r );
 extern WRITE8_HANDLER( spc_bank_w );
+extern READ8_HANDLER( spc_ram_r );
+extern WRITE8_HANDLER( spc_ram_w );
 extern void *snes_sh_start(int clock, const struct CustomSound_interface *config);
 extern void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length );
-/* Fake APU functions for when sound is disabled */
-extern READ8_HANDLER( fakespc_port_r );
-extern WRITE8_HANDLER( fakespc_port_w );
 extern int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset );
 
 struct snes_cart_info
@@ -436,5 +434,83 @@ struct snes_cart_info
 };
 
 extern struct snes_cart_info snes_cart;
+
+/* Stuff from OpenSPC 0.3.99 by Brad Martin */
+
+/*========== TYPES ==========*/
+
+typedef enum                        /* ADSR state type              */
+    {
+    ATTACK,
+    DECAY,
+    SUSTAIN,
+    RELEASE
+    } env_state_t32;
+
+typedef struct                      /* Voice state type             */
+    {
+    unsigned short  mem_ptr;        /* Sample data memory pointer   */
+    int             end;            /* End or loop after block      */
+    int             envcnt;         /* Counts to envelope update    */
+    env_state_t32   envstate;       /* Current envelope state       */
+    int             envx;           /* Last env height (0-0x7FFF)   */
+    int             filter;         /* Last header's filter         */
+    int             half;           /* Active nybble of BRR         */
+    int             header_cnt;     /* Bytes before new header (0-8)*/
+    int             mixfrac;        /* Fractional part of smpl pstn */
+    int             on_cnt;         /* Is it time to turn on yet?   */
+    int             pitch;          /* Sample pitch (4096->32000Hz) */
+    int             range;          /* Last header's range          */
+    unsigned long   samp_id;        /* Sample ID#                   */
+    int             sampptr;        /* Where in sampbuf we are      */
+    signed long     smp1;           /* Last sample (for BRR filter) */
+    signed long     smp2;           /* Second-to-last sample decoded*/
+    short           sampbuf[ 4 ];   /* Buffer for Gaussian interp   */
+    } voice_state_type;
+
+typedef struct                      /* Source directory entry       */
+    {
+    unsigned short  vptr;           /* Ptr to start of sample data  */
+    unsigned short  lptr;           /* Loop pointer in sample data  */
+    } src_dir_type;
+
+/*========== CONSTANTS ==========*/
+
+extern const int    TS_CYC;
+
+/*========== VARIABLES ==========*/
+
+extern int          keyed_on;
+extern int          keys;           /* 8-bits for 8 voices          */
+extern voice_state_type
+                    voice_state[ 8 ];
+
+/*========== MACROS ==========*/
+
+/* The functions to actually read and write to the DSP registers must be
+   implemented by the specific SPC core implementation, as this is too
+   specific to generalize.  However, by defining these macros, we can
+   generalize the DSP's behavior while staying out of the SPC's internals,
+   by requiring that the SPC core must use these macros at the appropriate
+   times. */
+
+/* All reads simply return the contents of the addressed register. */
+
+/* This macro must be used INSTEAD OF a normal write to register 0x7C
+   (ENDX) */
+#define DSP_WRITE_7C( x )   ( DSPregs[ 0x7C ] = 0 )
+
+/* All other writes should store the value in the addressed register as
+   expected. */
+
+/*========== PROCEDURES ==========*/
+
+void DSP_Reset                      /* Reset emulated DSP           */
+    ( void );
+
+void DSP_Update                     /* Mix one sample of audio      */
+    (
+    short *             sound_ptr   /* Pointer to mix audio into    */
+    );
 
 #endif /* _SNES_H_ */

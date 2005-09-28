@@ -145,6 +145,7 @@
 #include "palette.h"
 #include "harddisk.h"
 #include "config.h"
+#include "zlib.h"
 
 
 /***************************************************************************
@@ -200,6 +201,9 @@ static performance_info performance;
 static int leds_status;
 static int mame_paused;
 
+/* validity checks */
+static UINT32 *coin_quarks = NULL;
+
 /* artwork callbacks */
 #ifndef MESS
 static artwork_callbacks mame_artwork_callbacks =
@@ -254,6 +258,9 @@ static int decode_graphics(const gfx_decode *gfxdecodeinfo);
 static void compute_aspect_ratio(const machine_config *drv, int *aspect_x, int *aspect_y);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
+static UINT32 mame_string_quark(const char *string);
+static int input_is_coin(const char *name);
+static void input_is_coin_free(void);
 
 #ifdef MESS
 #include "mesintrf.h"
@@ -302,10 +309,14 @@ int run_game(int game)
 	begin_resource_tracking();
 
 	/* validity checks -- the default is to perform these in all builds now
-     * due to the number of incorrect submissions */
-	if (!options.skip_validitychecks)
-		if (mame_validitychecks())
-			return 1;
+     * due to the number of incorrect submissions, however for non-debug only
+     * do them for same driver source file */
+#if defined(MAME_DEBUG)
+	if (mame_validitychecks(-1))
+#else
+	if (mame_validitychecks(game))
+#endif
+		return 1;
 
 	/* first give the machine a good cleaning */
 	memset(Machine, 0, sizeof(Machine));
@@ -1754,7 +1765,67 @@ UINT64 mame_chd_length(chd_interface_file *file)
 
 ***************************************************************************/
 
-int mame_validitychecks(void)
+/*-------------------------------------------------
+    mame_string_quark - returns a hash of the
+    given string used for faster comparisons
+-------------------------------------------------*/
+
+static UINT32 mame_string_quark(const char *string)
+{
+	return crc32(0, (UINT8 *)string, strlen(string));
+}
+
+
+
+/*-------------------------------------------------
+    input_is_coin - does the given string match
+    any of the coinage options, if so return the offset
+-------------------------------------------------*/
+
+static int input_is_coin(const char *name)
+{
+	UINT32 this_coin;
+	int num_coins = (STR_Free_Play - STR_9C_1C) + 1;
+	int start_coin = STR_9C_1C;
+	int i;
+
+	/* pre-calc hashes */
+	if (!coin_quarks)
+	{
+		coin_quarks = malloc(num_coins * sizeof(UINT32));
+
+		for (i = 0; i < num_coins; i++)
+			coin_quarks[i] = mame_string_quark(input_port_default_strings[i+start_coin]);
+	}
+
+	if (!name)
+		return 0;
+	this_coin = mame_string_quark(name);
+
+	for (i = 0; i < num_coins; i++)
+	{
+		if (this_coin == coin_quarks[i] && !strcmp(name, input_port_default_strings[i+start_coin]))
+			return i+1; /* can be used to see which coinage is greater */
+	}
+
+	return 0;
+}
+
+
+static void input_is_coin_free(void)
+{
+	free(coin_quarks);
+	coin_quarks = NULL;
+}
+
+
+
+/*-------------------------------------------------
+    mame_validitychecks - run a huge bunch of
+    validity checks, game == -1 for all
+-------------------------------------------------*/
+
+int mame_validitychecks(int game)
 {
 	int i,j,cpu;
 	UINT8 a,b;
@@ -1762,6 +1833,13 @@ int mame_validitychecks(void)
 	const input_port_entry *inp;
 	const char *s;
 
+	/* used to hold hashes of all of the info about a game that we care about */
+	struct _game_driver_quark
+	{
+		UINT32 source_file;
+		UINT32 name;
+		UINT32 description;
+	} *quarks;
 
 	a = 0xff;
 	b = a + 1;
@@ -1776,19 +1854,39 @@ int mame_validitychecks(void)
 	if (sizeof(INT64)  != 8)	{ printf("INT64 must be 64 bits\n"); error = 1; }
 	if (sizeof(UINT64) != 8)	{ printf("UINT64 must be 64 bits\n"); error = 1; }
 
+	/* prepare hashes of strings for comparisons */
+	for (i = 0;drivers[i];i++) {};
+	quarks = malloc(i * sizeof(quarks[0]));
+	if (!quarks)
+		osd_die("Out of memory in validity checks!");
+
+	for (i = 0;drivers[i];i++)
+	{
+		/* these are all const strings, we can do this without expanding the machine driver */
+		quarks[i].source_file = mame_string_quark(drivers[i]->source_file);
+		quarks[i].name = mame_string_quark(drivers[i]->name);
+		quarks[i].description = mame_string_quark(drivers[i]->description);
+	}
+
 	for (i = 0;drivers[i];i++)
 	{
 		machine_config drv;
 		const rom_entry *romp;
 
+		/* only games in the same source_file get the treatment */
+		if (game != -1 && quarks[i].source_file != quarks[game].source_file)
+			continue;
+
 		expand_machine_driver(drivers[i]->drv, &drv);
 
+		/* look for recursive cloning */
 		if (drivers[i]->clone_of == drivers[i])
 		{
 			printf("%s: %s is set as a clone of itself\n",drivers[i]->source_file,drivers[i]->name);
 			error = 1;
 		}
 
+		/* look for clones that are too deep */
 		if (drivers[i]->clone_of && drivers[i]->clone_of->clone_of)
 		{
 			if ((drivers[i]->clone_of->clone_of->flags & NOT_A_DRIVER) == 0)
@@ -1798,16 +1896,7 @@ int mame_validitychecks(void)
 			}
 		}
 
-#if 0
-//      if (drivers[i]->drv->color_table_len == drivers[i]->drv->total_colors &&
-		if (drivers[i]->drv->color_table_len && drivers[i]->drv->total_colors &&
-				drivers[i]->drv->vh_init_palette == 0)
-		{
-			printf("%s: %s could use color_table_len = 0\n",drivers[i]->source_file,drivers[i]->name);
-			error = 1;
-		}
-#endif
-
+		/* make sure the year is only digits, '?' or '+' */
 		s = drivers[i]->year;
 		for (j = 0; s[j]; j++)
 		{
@@ -1819,14 +1908,26 @@ int mame_validitychecks(void)
 			}
 		}
 
-		for (j = i+1;drivers[j];j++)
+		for (j = 0;drivers[j];j++)
 		{
-			if (!strcmp(drivers[i]->name,drivers[j]->name))
+			if (i == j)
+				continue;
+			if (game == -1 && j < i)
+			{
+				/* optimise for n^2/2 in this case */
+				j = i;
+				continue;
+			}
+			if (game != -1 && j < i && quarks[i].source_file == quarks[j].source_file && !strcmp(drivers[i]->source_file, drivers[j]->source_file))
+				continue; /* prevent dupes */
+
+			if (quarks[i].name == quarks[j].name && !strcmp(drivers[i]->name, drivers[i]->name))
 			{
 				printf("%s: %s is a duplicate name (%s, %s)\n",drivers[i]->source_file,drivers[i]->name,drivers[i]->source_file,drivers[j]->source_file);
 				error = 1;
 			}
-			if (!strcmp(drivers[i]->description,drivers[j]->description))
+
+			if (quarks[i].description == quarks[j].description && !strcmp(drivers[i]->description, drivers[j]->description))
 			{
 				printf("%s: %s is a duplicate description (%s, %s)\n",drivers[i]->description,drivers[i]->source_file,drivers[i]->name,drivers[j]->name);
 				error = 1;
@@ -2063,7 +2164,7 @@ int mame_validitychecks(void)
 			}
 
 
-			/* consistency chekcs on GfxDecodeInfo */
+			/* consistency checks on GfxDecodeInfo */
 			if (drv.gfxdecodeinfo)
 			{
 				for (j = 0;j < MAX_GFX_ELEMENTS && drv.gfxdecodeinfo[j].memory_region != -1;j++)
@@ -2170,7 +2271,7 @@ int mame_validitychecks(void)
 						error = 1;
 					}
 
-					/* check for inverted upright/concktail order */
+					/* check for inverted upright/cocktail order */
 					if (inp->name == DEF_STR( Cocktail ) && (inp+1)->name == DEF_STR( Upright ))
 					{
 						printf("%s: %s has inverted Upright/Cocktail dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
@@ -2178,9 +2279,9 @@ int mame_validitychecks(void)
 					}
 
 					/* check for unsorted coinage */
-					if (inp->name >= DEF_STR( 9C_1C ) && inp->name <= DEF_STR( Free_Play )
-							&& (inp+1)->name >= DEF_STR( 9C_1C ) && (inp+1)->name <= DEF_STR( Free_Play )
-							&& inp->name >= (inp+1)->name && !memcmp(&inp->condition, &(inp+1)->condition, sizeof(inp->condition)))
+					if (input_is_coin(inp->name) && input_is_coin((inp+1)->name)
+							&& input_is_coin(inp->name) >= input_is_coin((inp+1)->name)
+							&& !memcmp(&inp->condition, &(inp+1)->condition, sizeof(inp->condition)))
 					{
 						printf("%s: %s has unsorted coinage %s > %s\n",drivers[i]->source_file,drivers[i]->name,inp->name,(inp+1)->name);
 						error = 1;
@@ -2277,6 +2378,8 @@ int mame_validitychecks(void)
 		error = 1;
 #endif /* MESS */
 
+	free(quarks);
+	input_is_coin_free();
 	return error;
 }
 

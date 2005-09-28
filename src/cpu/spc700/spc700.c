@@ -3,28 +3,26 @@
 /* ======================================================================== */
 /*
 
+  Sony/Nintendo SPC700 CPU Emulator
+
+  The SPC700 is 6502-based at heart but contains a lot of the extended
+  opcodes of the Mitsubishi 770 and 7700 series 65xxx-based MCUs,  plus
+  a few special twists borrowed from the 68000.
+
+  It was designed by Sony's Ken Kutaragi, later the "father of the PlayStation".
+
+  Original emulation by Anthony Kruize and Lee Hammerton.
+  Substantially revised September 2005 by R. Belmont.
+
+  Thanks to Anonymous, TRAC, Brad Martin, anomie, Blargg, and everyone
+  else on ZSNES Technical for probing the darker corners of the SNES
+  with test programs so we have a chance at getting things accurate.
 
 */
 /* ======================================================================== */
 /* ================================= NOTES ================================ */
 /* ======================================================================== */
 /*
-Questions:
-    - How is H handled for ADDW and SUBW?
-    - How is TCall handled?
-    - What are the vectors?
-    - Are there interrupts? how do they work?
-    - Does I=1 mean interrupts enabled or disabled?
-    - How are N and Z handled in DIV on divide by zero?
-    - How is H handled in DIV and MUL?
-    - What's the difference between SLEEP and STOP?
-
-Memory:
-0000-01ff: RAM (zero pages)
-0200-1fff: RAM (max addressable for bit instructions)
-2000-7fff: RAM
-8000-ffbf: RAM (not connected in snes - only 32k of ram connected to SPC)
-ffc0-ffff: initial program loader ROM
 
 snes mapped ports: f0-ff
 Address  Function Register  R/W  When Reset          Remarks
@@ -49,14 +47,6 @@ Address  Function Register  R/W  When Reset          Remarks
 00FDH    Counter-0           W   Indeterminate      Installed in sound-CPU
 00FEH    Counter-1           W   Indeterminate      Installed in sound-CPU
 00FFH    Counter-2           W   Indeterminate      Installed in sound-CPU
-
-
-SR bits B and I may not be present in snes version of spc...
-instruction summary shows B and I being affected by BRK, EI, and DI
-on reset SR is set to 000-0-00
-spctodo mentions that V and H are linked???
-IPL located in mask rom at fffc-ffff in SPC
-spctodo says sleep and standby modes cannot be used.
 
 */
 /* ======================================================================== */
@@ -107,13 +97,14 @@ INLINE int MAKE_INT_8(int A) {return (A & 0x80) ? A | ~0xff : A & 0xff;}
 /* CPU Structure */
 typedef struct
 {
-	uint a;			/* Accumulator */
-	uint x;			/* Index Register X */
-	uint y;			/* Index Register Y */
-	uint s;			/* Stack Pointer */
-	uint pc;		/* Program Counter */
-	uint ppc;		/* Previous Program Counter */
-	uint flag_nz;	/* Negative Flag and inverted Zero flag */
+	uint a;		/* Accumulator */
+	uint x;		/* Index Register X */
+	uint y;		/* Index Register Y */
+	uint s;		/* Stack Pointer */
+	uint pc;	/* Program Counter */
+	uint ppc;	/* Previous Program Counter */
+	uint flag_n;	/* Negative Flag */
+	uint flag_z;	/* Zero flag */
 	uint flag_v;	/* Overflow Flag */
 	uint flag_p;	/* Direct Page Flag */
 	uint flag_b;	/* BRK Instruction Flag */
@@ -142,6 +133,7 @@ int spc700_ICount = 0;
 /* Temporary Variables */
 static uint spc700i_source;
 static uint spc700i_destination;
+static uint spc700i_temp1, spc700i_temp2, spc700i_temp3;
 static short spc_int16;
 static int spc_int32;
 
@@ -159,78 +151,6 @@ static unsigned char spc700_window_layout[] = {
 	25,13,55, 9, /* memory #2 window (right, lower middle) */
 	 0,23,80, 1, /* command line window (bottom rows) */
 };
-
-
-
-unsigned char daa_table[1024] =
-{
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x60,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,
-	0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x06,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66
-};
-
-
 
 /* ======================================================================== */
 /* ============================ GENERAL DEFINES =========================== */
@@ -261,7 +181,7 @@ unsigned char daa_table[1024] =
 #define VFLAG_SET		BIT_7
 #define PFLAG_SET		BIT_8
 #define BFLAG_SET		FLAGPOS_B
-#define HFLAG_SET		0x10
+#define HFLAG_SET		BIT_3
 #define IFLAG_SET		FLAGPOS_I
 #define ZFLAG_SET		0
 #define CFLAG_SET		BIT_8
@@ -281,7 +201,7 @@ unsigned char daa_table[1024] =
 #define STACK_PAGE	0x100				/* Stack Page Offset */
 
 #define VECTOR_RST	0xfffe				/* Reset */
-#define VECTOR_BRK	0xfffc				/* Break Instruction ??? what is real vector? */
+#define VECTOR_BRK	0xffde				/* Break Instruction */
 #define VECTOR_IRQ	0xfffc				/* IRQ ??? what is real vector? */
 #define VECTOR_NMI	0xfffa				/* NMI ??? what is real vector? */
 
@@ -292,7 +212,9 @@ unsigned char daa_table[1024] =
 #define REG_PC		spc700i_cpu.pc		/* Program Counter */
 #define REG_PPC		spc700i_cpu.ppc		/* Previous Program Counter */
 #define REG_P		spc700i_cpu.p		/* Processor Status Register */
-#define FLAG_NZ		spc700i_cpu.flag_nz	/* Negative Flag and inverted Zero flag */
+#define FLAG_NZ		spc700i_cpu.flag_n = spc700i_cpu.flag_z	/* Negative Flag and inverted Zero flag */
+#define FLAG_N		spc700i_cpu.flag_n	/* Negative flag */
+#define FLAG_Z		spc700i_cpu.flag_z	/* Inverted Zero flag */
 #define FLAG_V		spc700i_cpu.flag_v	/* Overflow Flag */
 #define FLAG_P		spc700i_cpu.flag_p	/* Direct Page Flag */
 #define FLAG_B		spc700i_cpu.flag_b	/* BRK Instruction Flag */
@@ -308,6 +230,9 @@ unsigned char daa_table[1024] =
 
 #define SRC			spc700i_source		/* Source Operand */
 #define DST			spc700i_destination	/* Destination Operand */
+#define TMP1			spc700i_temp1		/* temporary result 1 */
+#define TMP2			spc700i_temp2		/* temporary result 2 */
+#define TMP3			spc700i_temp3		/* temporary result 3 */
 
 #define STOP_LEVEL_STOP		1
 #define STOP_LEVEL_SLEEP	2
@@ -320,10 +245,10 @@ unsigned char daa_table[1024] =
 /* Codition code tests */
 #define COND_CC()	(!(FLAG_C&0x100))	/* Carry Clear */
 #define COND_CS()	(FLAG_C&0x100)		/* Carry Set */
-#define COND_EQ()	(!FLAG_NZ)			/* Equal */
-#define COND_NE()	FLAG_NZ				/* Not Equal */
-#define COND_MI()	(FLAG_NZ&0x80)		/* Minus */
-#define COND_PL()	(!(FLAG_NZ&0x80))	/* Plus */
+#define COND_EQ()	(!FLAG_Z)      		/* Equal */
+#define COND_NE()	(FLAG_Z)       		/* Not Equal */
+#define COND_MI()	(FLAG_N&0x80)		/* Minus */
+#define COND_PL()	(!(FLAG_N&0x80))	/* Plus */
 #define COND_VC()	(!(FLAG_V&0x80))	/* Overflow Clear */
 #define COND_VS()	(FLAG_V&0x80)		/* Overflow Set */
 
@@ -548,34 +473,34 @@ INLINE void SET_REG_YA(uint value)
 
 /* Get the Processor Status Register */
 #define GET_REG_P()				\
-	((FLAG_NZ & 0x80)		|	\
+	((FLAG_N & 0x80)		|	\
 	((FLAG_V & 0x80) >> 1)	|	\
 	(FLAG_P>>3)				|	\
 	FLAG_B					|	\
-	((FLAG_H&0x10)>>1)		|	\
+	(FLAG_H& HFLAG_SET)		|	\
 	FLAG_I					|	\
-	((!FLAG_NZ) << 1)		|	\
+	((!FLAG_Z) << 1)		|	\
 	CFLAG_AS_1())
 
 /* Get Processor Status Register with B flag set (when executing BRK instruction) */
 #define GET_REG_P_BRK()			\
-	((FLAG_NZ & 0x80)		|	\
+	((FLAG_N & 0x80)		|	\
 	((FLAG_V & 0x80) >> 1)	|	\
 	(FLAG_P>>3)				|	\
 	FLAGPOS_B				|	\
-	((FLAG_H&0x10)>>1)		|	\
+	(FLAG_H & HFLAG_SET)		|	\
 	FLAG_I					|	\
-	((!FLAG_NZ) << 1)		|	\
+	((!FLAG_Z) << 1)		|	\
 	CFLAG_AS_1())
 
 /* Get Processor Status Register with B flag cleared (when servicing an interrupt) */
 #define GET_REG_P_INT()			\
-	((FLAG_NZ & 0x80)		|	\
+	((FLAG_N & 0x80)		|	\
 	((FLAG_V & 0x80) >> 1)	|	\
 	(FLAG_P>>3)				|	\
-	((FLAG_H&0x10)>>1)		|	\
+	(FLAG_H & HFLAG_SET)		|	\
 	FLAG_I					|	\
-	((!FLAG_NZ) << 1)		|	\
+	((!FLAG_Z) << 1)		|	\
 	CFLAG_AS_1())
 
 INLINE void SET_FLAG_I(uint value);
@@ -583,11 +508,12 @@ INLINE void SET_FLAG_I(uint value);
 /* Set the Process Status Register */
 INLINE void SET_REG_P(uint value)
 {
-	FLAG_NZ = (value & 0x80) | !(value & 2);
+	FLAG_N = (value & 0x80);
+	FLAG_Z = !(value & 2);
 	FLAG_V = value<<1;
 	FLAG_P = (value & FLAGPOS_P) << 3;
 	FLAG_B = value & FLAGPOS_B;
-	FLAG_H = value << 1;
+	FLAG_H = value & HFLAG_SET;
 	FLAG_C = value << 8;
 	SET_FLAG_I(value);
 }
@@ -648,37 +574,47 @@ INLINE void SET_FLAG_I(uint value)
 /* =========================== OPERATION MACROS =========================== */
 /* ======================================================================== */
 
+#define SUBOP_ADC(A, B)						\
+	spc_int16 = (A) + (B) + CFLAG_AS_1();			\
+	FLAG_C  = (spc_int16 > 0xff) ? CFLAG_SET : 0;		\
+	FLAG_V =  (~((A) ^ (B))) & (((A) ^ spc_int16) & 0x80); \
+	TMP1 = ((A) & 0x0f) + (CFLAG_AS_1());			\
+	FLAG_H = (((spc_int16 & 0x0f) - TMP1) & 0x10) >> 1; 	\
+	FLAG_NZ = (UINT8)spc_int16
+
+
 /* Add With Carry */
-#define OP_ADC(BCLK, MODE)													\
-			CLK(BCLK);														\
-			SRC     = OPER_8_##MODE();										\
-			FLAG_C  = REG_A + SRC + CFLAG_AS_1();							\
-			FLAG_H  = (REG_A&15) + (SRC&15) + CFLAG_AS_1();					\
-			FLAG_V  = VFLAG_ADD_8(SRC, REG_A, FLAG_C);						\
-			REG_A   = FLAG_NZ = MAKE_UINT_8(FLAG_C)
+#define OP_ADC(BCLK, MODE)					\
+			CLK(BCLK);				\
+			SRC     = OPER_8_##MODE();		\
+			SUBOP_ADC(SRC, REG_A);			\
+			REG_A = (UINT8)spc_int16;
+
 
 /* Add With Carry to memory */
-#define OP_ADCM(BCLK, SMODE, DMODE)											\
-			CLK(BCLK);														\
-			SRC     = OPER_8_##SMODE();										\
-			DST     = EA_##DMODE();											\
-			FLAG_NZ = read_8_##DMODE(DST);	/* used as a temp val */		\
-			FLAG_C  = FLAG_NZ + SRC + CFLAG_AS_1();							\
-			FLAG_V  = VFLAG_ADD_8(SRC, FLAG_NZ, FLAG_C);					\
-			FLAG_NZ = MAKE_UINT_8(FLAG_C);									\
-			write_8_##DMODE(DST, FLAG_NZ)
+#define OP_ADCM(BCLK, SMODE, DMODE)				\
+			CLK(BCLK);				\
+			SRC     = OPER_8_##SMODE();		\
+			DST     = EA_##DMODE();			\
+			SUBOP_ADC(SRC, read_8_##DMODE(DST));	\
+			write_8_##DMODE(DST, (UINT8)spc_int16)
 
 /* Add word */
-#define OP_ADDW(BCLK)														\
-			CLK(BCLK);														\
-			SRC     = OPER_16_DP();											\
-			DST     = GET_REG_YA();											\
-			FLAG_C  = DST + SRC;											\
-			FLAG_H  = (DST&0xff) + (SRC&0xff);								\
-			FLAG_V  = VFLAG_ADD_16(SRC, DST, FLAG_C);						\
-			SET_REG_YA(MAKE_UINT_16(FLAG_C));								\
-			FLAG_NZ = NZFLAG_16(FLAG_C);									\
-			FLAG_C  = CFLAG_16(FLAG_C);										\
+#define OP_ADDW(BCLK)						\
+			CLK(BCLK);				\
+			SRC = OPER_16_DP();			\
+			DST = GET_REG_YA();			\
+			TMP1 = ((SRC) & 0xff) + ((DST) & 0xff);	\
+			TMP2 = (TMP1 > 0xff) ? 1 : 0;		\
+			TMP3 = ((SRC) >> 8) + ((DST) >> 8) + TMP2;	\
+			spc_int16 = ((TMP1 & 0xff) + (TMP3 << 8)) & 0xffff;	\
+			FLAG_C = (TMP3 > 0xff) ? CFLAG_SET : 0;	\
+			FLAG_H = ((unsigned) ((((DST) >> 8) & 0x0F) + \
+				(((SRC) >> 8) & 0x0F) + TMP2)) > 0x0F ? HFLAG_SET : 0; \
+			FLAG_V = (~((DST) ^ (SRC)) & ((SRC) ^ (UINT16) spc_int32) & 0x8000) ? VFLAG_SET : 0; \
+			FLAG_Z = (spc_int16 != 0);		\
+			FLAG_N = (spc_int16>>8);		\
+			SET_REG_YA(spc_int16);
 
 /* Logical AND with accumulator */
 #define OP_AND(BCLK, MODE)													\
@@ -810,10 +746,11 @@ INLINE void SET_FLAG_I(uint value)
 			SRC     = read_8_DP(DST) & ~BIT;								\
 			write_8_DP(DST, SRC)
 
-/* Clear oVerflow flag */
+/* Clear Overflow flag (also clears half-carry) */
 #define OP_CLRV(BCLK)														\
-			CLK(BCLK);														\
-			FLAG_V  = VFLAG_CLEAR
+			CLK(BCLK);		\
+			FLAG_V = VFLAG_CLEAR;	\
+			FLAG_H = 0;
 
 /* Clear the Page flag */
 #define OP_CLRP(BCLK)														\
@@ -822,18 +759,18 @@ INLINE void SET_FLAG_I(uint value)
 
 /* Compare operand to register */
 #define OP_CMPR(BCLK, REG, MODE)											\
-			CLK(BCLK);														\
-			SRC     = OPER_8_##MODE();										\
+			CLK(BCLK);				\
+			SRC     = OPER_8_##MODE();		\
 			spc_int16 = (short)REG - (short)SRC;	\
-			FLAG_C  = (spc_int16 >= 0) ? 0x100 : 0;											\
+			FLAG_C  = (spc_int16 >= 0) ? CFLAG_SET : 0;	\
 			FLAG_NZ = MAKE_UINT_8(spc_int16);
 
 /* Compare memory */
 #define OP_CMPM(BCLK, SMODE, DMODE)											\
-			CLK(BCLK);														\
-			SRC     = OPER_8_##SMODE();										\
+			CLK(BCLK);				\
+			SRC     = OPER_8_##SMODE();		\
 			spc_int16 = (short)OPER_8_##DMODE() - (short)SRC;	\
-			FLAG_C  = (spc_int16 >= 0) ? 0x100 : 0;											\
+			FLAG_C  = (spc_int16 >= 0) ? CFLAG_SET : 0;	 \
 			FLAG_NZ = MAKE_UINT_8(spc_int16);
 
 /* Compare word */
@@ -841,26 +778,42 @@ INLINE void SET_FLAG_I(uint value)
 			CLK(BCLK);														\
 			SRC     = OPER_16_##MODE();										\
 			spc_int32 = (int)GET_REG_YA() - (int)SRC;								\
-			FLAG_C  = (spc_int32 >= 0) ? 0x100 : 0;									\
+			FLAG_C  = (spc_int32 >= 0) ? CFLAG_SET : 0;									\
 			FLAG_NZ = NZFLAG_16(spc_int32);
 
 /* Decimal adjust for addition */
-#define OP_DAA(BCLK)														\
-			CLK(BCLK);														\
-			DST     = REG_A;												\
-			SRC     = daa_table[REG_A | (FLAG_C&0x100) | ((FLAG_H<<5)&0x200)];	\
-			FLAG_NZ = MAKE_UINT_8(REG_A) + SRC;								\
-			FLAG_C  |= FLAG_NZ;												\
-			FLAG_NZ = REG_A = MAKE_UINT_8(FLAG_NZ)
+#define OP_DAA(BCLK)					\
+			CLK(BCLK);  			\
+			SRC = REG_A;			\
+			if (((SRC & 0x0f) > 9) || (FLAG_H & HFLAG_SET))	\
+			{				\
+				REG_A += 6;		\
+				if (REG_A < 6) 		\
+				{			\
+					FLAG_C = CFLAG_SET;	\
+				}			\
+			}				\
+			if ((SRC > 0x99) || (FLAG_C & CFLAG_SET))	\
+			{				\
+				REG_A += 0x60;		\
+				FLAG_C = CFLAG_SET;	\
+			}				\
+			FLAG_NZ = REG_A;
 
 /* Decimal adjust for subtraction */
 #define OP_DAS(BCLK)														\
-			CLK(BCLK);														\
-			DST     = REG_A;												\
-			SRC     = daa_table[REG_A | (FLAG_C&0x100) | ((FLAG_H<<5)&0x200)];	\
-			FLAG_NZ = MAKE_UINT_8(REG_A) - SRC;								\
-			FLAG_C |= FLAG_NZ;												\
-			FLAG_NZ = REG_A = MAKE_UINT_8(FLAG_NZ)
+			CLK(BCLK);			\
+			SRC = REG_A;			\
+			if (!(FLAG_H & HFLAG_SET) || ((SRC & 0xf) > 9))	\
+			{				\
+				REG_A -= 6;		\
+			}				\
+			if (!(FLAG_C & CFLAG_SET) || (SRC > 0x99)) 	\
+			{				\
+				REG_A -= 0x60;		\
+				FLAG_C = 0;		\
+			}				\
+			FLAG_NZ = REG_A
 
 /* Decrement register and branch if not zero */
 /* speed up busy loops */
@@ -872,15 +825,6 @@ INLINE void SET_FLAG_I(uint value)
 			{																\
 				CLK(1);														\
 				BRANCH(read_8_IMM(DST));									\
-/* \
-                if(REG_PC == REG_PPC)                                       \
-                {                                                           \
-                    CLK((BCLK+1)*(REG_Y+1));                                \
-                    REG_Y = 0;                                              \
-                    if(CLOCKS < 0)                                          \
-                        CLOCKS = 0;                                         \
-                }                                                           \
-*/ \
 			}
 
 /* Decrement operand and branch if not zero */
@@ -895,19 +839,6 @@ INLINE void SET_FLAG_I(uint value)
 			{																\
 				CLK(1);														\
 				BRANCH(read_8_IMM(DST));									\
-/* \
-                if(REG_PC == REG_PPC)                                       \
-                {                                                           \
-                    do                                                      \
-                    {                                                       \
-                        SRC = MAKE_UINT_8(read_8_DP(DST) - 1);              \
-                        write_8_DP(DST, SRC);                               \
-                        CLK(BCLK+1);                                        \
-                    } while(SRC != 0 && CLOCKS > 0);                        \
-                    if(CLOCKS > 0)                                          \
-                        BRANCH(3);                                          \
-                }                                                           \
-*/ \
 			}
 
 /* Decrement register */
@@ -935,22 +866,23 @@ INLINE void SET_FLAG_I(uint value)
 			CLK(BCLK);														\
 			FLAG_I  = IFLAG_CLEAR
 
-/* Divide */
+/* Divide - should be almost exactly how the hardware works */
 #define OP_DIV(BCLK)														\
-			CLK(BCLK);														\
-			if(REG_X != 0)													\
-			{																\
-				SRC     = GET_REG_YA();										\
-				REG_A   = MAKE_UINT_8(SRC / REG_X);							\
-				REG_Y   = SRC % REG_X;										\
-				FLAG_NZ = REG_A;											\
-				/* What about H flag? */									\
-				FLAG_V  = VFLAG_CLEAR;										\
-				BREAKOUT;													\
-			}																\
-			FLAG_NZ = REG_A = REG_Y = 0xff;									\
-			/* What about N Z and H? */										\
-			FLAG_V = VFLAG_SET												\
+			CLK(BCLK);		\
+			TMP1 = SRC = GET_REG_YA();	\
+			TMP2 = (REG_X << 9);	\
+			FLAG_H = 0;	\
+			if ((REG_Y & 0xf) >= (REG_X & 0xf)) FLAG_H = HFLAG_SET;	\
+			for (TMP3 = 0; TMP3 < 9; TMP3++)	\
+			{			\
+				TMP1 <<= 1;	\
+				if (TMP1 & 0x20000) TMP1 = (TMP1 & 0x1ffff) | 1;	\
+				if (TMP1 >= TMP2) TMP1 ^= 1;	\
+				if (TMP1 & 1) TMP1 = ((TMP1 - TMP2) & 0x1ffff);	\
+			}			\
+			FLAG_V = (TMP1 & 0x100) ? VFLAG_SET : 0;	\
+			SET_REG_YA((((TMP1 >> 9) & 0xff) << 8) + (TMP1 & 0xff));	\
+			FLAG_NZ = MAKE_UINT_8(GET_REG_YA());
 
 /* Enable interrupts */
 #define OP_EI(BCLK)															\
@@ -1094,10 +1026,10 @@ INLINE void SET_FLAG_I(uint value)
 
 /* Multiply A and Y and store result in YA */
 #define OP_MUL(BCLK)														\
-			CLK(BCLK);														\
-			FLAG_NZ = REG_Y * REG_A;										\
-			SET_REG_YA(FLAG_NZ);											\
-			FLAG_NZ = NZFLAG_16(FLAG_NZ)
+			CLK(BCLK);			\
+			SRC = REG_Y * REG_A;		\
+			REG_A = MAKE_UINT_8(SRC);	\
+			FLAG_NZ = REG_Y = SRC >> 8;
 
 /* No Operation */
 #define OP_NOP(BCLK)														\
@@ -1224,29 +1156,24 @@ INLINE void SET_FLAG_I(uint value)
 			write_8_##MODE(DST, FLAG_NZ)
 
 /* Subtract with Carry */
-/* Unusual behavior: C is inverted */
-#define OP_SBC(BCLK, MODE)													\
-			CLK(BCLK);														\
-			SRC     = OPER_8_##MODE();										\
-			FLAG_C  = REG_A - SRC - CFLAG_AS_NOT_1();						\
-			FLAG_H  = (REG_A&15) - (SRC&15) - CFLAG_AS_NOT_1();				\
-			FLAG_V  = VFLAG_SUB_8(SRC, REG_A, FLAG_C);						\
-			FLAG_NZ = REG_A = MAKE_UINT_8(FLAG_C);							\
-			FLAG_C ^= FLAG_C
+#define OP_SBC(BCLK, MODE)					\
+			CLK(BCLK);				\
+			SRC     = OPER_8_##MODE();		\
+			TMP2 = REG_A - SRC - (CFLAG_AS_1() ^ 1); \
+			SUBOP_ADC(REG_A, ~SRC);			\
+			FLAG_C = (TMP2 <= 0xff) ? CFLAG_SET : 0; \
+			REG_A = (UINT8)spc_int16;
 
-/* Add With Carry to memory */
-/* Unusual behavior: C is inverted */
-#define OP_SBCM(BCLK, SMODE, DMODE)											\
-			CLK(BCLK);														\
-			SRC     = OPER_8_##SMODE();										\
-			DST     = EA_##DMODE();											\
-			FLAG_NZ = read_8_##DMODE(DST);	/* used as a temp val */		\
-			FLAG_C  = FLAG_NZ - SRC - CFLAG_AS_NOT_1();						\
-			FLAG_H  = (FLAG_NZ&15) - (SRC&15) - CFLAG_AS_NOT_1();			\
-			FLAG_V  = VFLAG_SUB_8(SRC, FLAG_NZ, FLAG_C);					\
-			FLAG_NZ = MAKE_UINT_8(FLAG_C);									\
-			write_8_##DMODE(DST, FLAG_NZ);									\
-			FLAG_C  ^= FLAG_C
+/* Subtract With Carry to memory */
+#define OP_SBCM(BCLK, SMODE, DMODE)				\
+			CLK(BCLK);				\
+			SRC     = OPER_8_##SMODE();		\
+			DST     = EA_##DMODE();			\
+			TMP3 = read_8_##DMODE(DST);		\
+			TMP2 = SRC - TMP3 - (CFLAG_AS_1() ^ 1);	\
+			SUBOP_ADC(SRC, ~TMP3);			\
+			FLAG_C = (TMP2 <= 0xff) ? CFLAG_SET : 0; \
+			write_8_##DMODE(DST, (UINT8)spc_int16)
 
 /* Set Carry flag */
 #define OP_SETC(BCLK)														\
@@ -1278,16 +1205,21 @@ INLINE void SET_FLAG_I(uint value)
 			CLK_ALL()
 
 /* Subtract word */
-#define OP_SUBW(BCLK)														\
-			CLK(BCLK);														\
-			SRC     = OPER_16_DP();											\
-			DST     = GET_REG_YA();											\
-			FLAG_C  = DST - SRC;											\
-			FLAG_H  = (DST&0xff) - (SRC&0xff);								\
-			FLAG_V  = VFLAG_SUB_16(SRC, DST, FLAG_C);						\
-			SET_REG_YA(FLAG_C);												\
-			FLAG_NZ = NZFLAG_16(FLAG_C);									\
-			FLAG_C  = ~CFLAG_16(FLAG_C)
+#define OP_SUBW(BCLK)						\
+			CLK(BCLK);				\
+			SRC = OPER_16_DP();			\
+			DST = GET_REG_YA();			\
+			TMP1 = ((DST) & 0xff) - ((SRC) & 0xff);	\
+			TMP2 = (TMP1 > 0xff) ? 1 : 0;		\
+			TMP3 = ((DST) >> 8) - ((SRC) >> 8) - TMP2;	\
+			spc_int16 = ((TMP1 & 0xff) + (TMP3 << 8)) & 0xffff;	\
+			FLAG_C = (TMP3 <= 0xff) ? CFLAG_SET : 0;	\
+			FLAG_H = ((unsigned) ((((DST) >> 8) & 0x0F) - \
+				(((SRC) >> 8) & 0x0F) - TMP2)) > 0x0F ? HFLAG_SET : 0; \
+			FLAG_V = (((DST) ^ (SRC)) & ((DST) ^ (UINT16) spc_int32) & 0x8000) ? VFLAG_SET : 0; \
+			FLAG_Z = (spc_int16 != 0);		\
+			FLAG_N = (spc_int16>>8);		\
+			SET_REG_YA(spc_int16);
 
 /* Table Call */
 #define OP_TCALL(BCLK, NUM)													\
@@ -1495,7 +1427,7 @@ static offs_t mame_spc700_dasm(char *buffer, offs_t pc)
 #endif
 }
 
-
+//static int dump_flag = 0;
 
 /* Execute instructions for <clocks> cycles */
 int spc700_execute(int clocks)
@@ -1507,6 +1439,31 @@ int spc700_execute(int clocks)
 		CALL_MAME_DEBUG;
 		REG_PC++;
 
+#if 0
+		if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; printf("Dump started\n"); }
+
+		if (dump_flag && 0)
+		{
+			uint p = ((spc700i_cpu.flag_n & 0x80)			|
+						((spc700i_cpu.flag_v & 0x80) >> 1)	|
+						spc700i_cpu.flag_p>>3				|
+						spc700i_cpu.flag_b					|
+						(spc700i_cpu.flag_h & HFLAG_SET)		|
+						spc700i_cpu.flag_i					|
+						((!spc700i_cpu.flag_z) << 1)		|
+						((spc700i_cpu.flag_c >> 8)&1));
+
+		printf("[%04x]: A%02x X%02x Y%02x P%02x SP%02x - %c%c%c%c%c%c%c%c\n", REG_PPC, REG_A, REG_X, REG_Y, p, REG_S,
+				p & 0x80 ? 'N':'.',
+				p & 0x40 ? 'V':'.',
+				p & 0x20 ? 'P':'.',
+				p & 0x10 ? 'B':'.',
+				p & 0x08 ? 'H':'.',
+				p & 0x04 ? 'I':'.',
+				p & 0x02 ? 'Z':'.',
+				p & 0x01 ? 'C':'.');
+		}
+#endif
 		switch(REG_IR = read_8_immediate(REG_PPC))
 		{
 			case 0x00: OP_NOP   ( 2               ); break; /* NOP           */
@@ -1727,7 +1684,7 @@ int spc700_execute(int clocks)
 			case 0xd7: OP_MOVRM ( 7, REG_A, DIY   ); break; /* MOV diy, A    */
 			case 0xd8: OP_MOVRM ( 4, REG_X, DP    ); break; /* MOV dp, X     */
 			case 0xd9: OP_MOVRM ( 5, REG_X, DPY   ); break; /* MOV dpy, X    */
-			case 0xda: OP_MOVWRM( 4               ); break; /* MOVW dp, YA   */
+			case 0xda: OP_MOVWRM( 5               ); break; /* MOVW dp, YA   */
 			case 0xdb: OP_MOVRM ( 5, REG_Y, DPX   ); break; /* MOV dpx, Y    */
 			case 0xdc: OP_DECR  ( 2, REG_Y        ); break; /* DEC Y         */
 			case 0xdd: OP_MOVRR ( 2, REG_Y, REG_A ); break; /* MOV A, Y      */
@@ -1805,13 +1762,13 @@ static void spc700_set_info(UINT32 state, union cpuinfo *info)
 
 void spc700_get_info(UINT32 state, union cpuinfo *info)
 {
-	uint p = ((spc700i_cpu.flag_nz & 0x80)			|
+	uint p = ((spc700i_cpu.flag_n & 0x80)			|
 				((spc700i_cpu.flag_v & 0x80) >> 1)	|
 				spc700i_cpu.flag_p>>3				|
 				spc700i_cpu.flag_b					|
-				((spc700i_cpu.flag_h&0x10) >> 1)		|
+				(spc700i_cpu.flag_h & HFLAG_SET)		|
 				spc700i_cpu.flag_i					|
-				((!spc700i_cpu.flag_nz) << 1)		|
+				((!spc700i_cpu.flag_z) << 1)		|
 				((spc700i_cpu.flag_c >> 8)&1));
 
 	switch (state)

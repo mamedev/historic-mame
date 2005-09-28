@@ -7,11 +7,13 @@ static tilemap *sslam_bg_tilemap, *sslam_tx_tilemap, *sslam_md_tilemap;
 extern UINT16 *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
 extern UINT16 *sslam_spriteram, *sslam_regs;
 
+static int sprites_x_offset;
+
 static void sslam_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	const gfx_element *gfx = Machine->gfx[3];
+	const gfx_element *gfx = Machine->gfx[0];
 	UINT16 *source = sslam_spriteram;
-	UINT16 *finish = source + 0x20000/2;
+	UINT16 *finish = source + 0x1000/2;
 
 	source += 3; // strange
 
@@ -28,7 +30,7 @@ static void sslam_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 		flipx = source[0] & 0x4000;
 		number = source[3];
 
-		xpos -=16; xpos -=7;
+		xpos -=16; xpos -=7; xpos += sprites_x_offset;
 		ypos = 0xff - ypos;
 		ypos -=16; ypos -=7;
 
@@ -80,7 +82,7 @@ static void get_sslam_tx_tile_info(int tile_index)
 	int code = sslam_tx_tileram[tile_index] & 0x0fff;
 	int colr = sslam_tx_tileram[tile_index] & 0xf000;
 
-	SET_TILE_INFO(2,code+0xc000 ,colr >> 12,0)
+	SET_TILE_INFO(3,code+0xc000 ,colr >> 12,0)
 }
 
 WRITE16_HANDLER( sslam_tx_tileram_w )
@@ -96,7 +98,7 @@ static void get_sslam_md_tile_info(int tile_index)
 	int code = sslam_md_tileram[tile_index] & 0x0fff;
 	int colr = sslam_md_tileram[tile_index] & 0xf000;
 
-	SET_TILE_INFO(1,code+0x2000 ,colr >> 12,0)
+	SET_TILE_INFO(2,code+0x2000 ,colr >> 12,0)
 }
 
 WRITE16_HANDLER( sslam_md_tileram_w )
@@ -112,7 +114,7 @@ static void get_sslam_bg_tile_info(int tile_index)
 	int code = sslam_bg_tileram[tile_index] & 0x1fff;
 	int colr = sslam_bg_tileram[tile_index] & 0xe000;
 
-	SET_TILE_INFO(0,code ,colr >> 13,0)
+	SET_TILE_INFO(1,code ,colr >> 13,0)
 }
 
 WRITE16_HANDLER( sslam_bg_tileram_w )
@@ -121,24 +123,60 @@ WRITE16_HANDLER( sslam_bg_tileram_w )
 	tilemap_mark_tile_dirty(sslam_bg_tilemap,offset);
 }
 
+static void get_powerbal_bg_tile_info(int tile_index)
+{
+	int code = sslam_bg_tileram[tile_index*2+1] & 0x0fff;
+	int colr = (sslam_bg_tileram[tile_index*2+1] & 0xf000) >> 12;
+	code |= (sslam_bg_tileram[tile_index*2] & 0x0f00) << 4;
+
+	//(sslam_bg_tileram[tile_index*2] & 0x0f00) == 0xf000 ???
+
+	SET_TILE_INFO(1,code,colr,0)
+}
+
+WRITE16_HANDLER( powerbal_bg_tileram_w )
+{
+	COMBINE_DATA(&sslam_bg_tileram[offset]);
+	tilemap_mark_tile_dirty(sslam_bg_tilemap,offset>>1);
+}
+
 VIDEO_START(sslam)
 {
+	sslam_bg_tilemap = tilemap_create(get_sslam_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
+	sslam_md_tilemap = tilemap_create(get_sslam_md_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	sslam_tx_tilemap = tilemap_create(get_sslam_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
-	if (!sslam_tx_tilemap) return 1;
+
+	if (!sslam_bg_tilemap || !sslam_md_tilemap || !sslam_tx_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(sslam_md_tilemap,0);
 	tilemap_set_transparent_pen(sslam_tx_tilemap,0);
 
-	sslam_md_tilemap = tilemap_create(get_sslam_md_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	if (!sslam_md_tilemap) return 1;
-	tilemap_set_transparent_pen(sslam_md_tilemap,0);
+	sprites_x_offset = 0;
 
-	sslam_bg_tilemap = tilemap_create(get_sslam_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,32,32);
-	if (!sslam_bg_tilemap) return 1;
+	return 0;
+}
+
+VIDEO_START(powerbal)
+{
+	sslam_bg_tilemap = tilemap_create(get_powerbal_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
+
+	if (!sslam_bg_tilemap)
+		return 1;
+
+	sprites_x_offset = -21;
 
 	return 0;
 }
 
 VIDEO_UPDATE(sslam)
 {
+	if(!(sslam_regs[6] & 1))
+	{
+		fillbitmap(bitmap,get_black_pen(),cliprect);
+		return;
+	}
+
 	tilemap_set_scrollx(sslam_tx_tilemap,0, sslam_regs[0]+2);
 	tilemap_set_scrolly(sslam_tx_tilemap,0, (sslam_regs[1] & 0xff)+8);
 	tilemap_set_scrollx(sslam_md_tilemap,0, sslam_regs[2]+2);
@@ -166,4 +204,19 @@ VIDEO_UPDATE(sslam)
 
 	sslam_drawsprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,sslam_tx_tilemap,0,0);
+}
+
+VIDEO_UPDATE(powerbal)
+{
+	if(!(sslam_regs[6] & 1))
+	{
+		fillbitmap(bitmap,get_black_pen(),cliprect);
+		return;
+	}
+
+	tilemap_set_scrollx(sslam_bg_tilemap,0, sslam_regs[0]+21);
+	tilemap_set_scrolly(sslam_bg_tilemap,0, sslam_regs[1]-240);
+
+	tilemap_draw(bitmap,cliprect,sslam_bg_tilemap,0,0);
+	sslam_drawsprites(bitmap,cliprect);
 }

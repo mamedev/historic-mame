@@ -5,7 +5,6 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/vector.h"
 #include "vertigo.h"
 #include "exidy440.h"
 #include "machine/74148.h"
@@ -132,7 +131,7 @@ static void v_irq3_w(int level)
  *
  *************************************/
 
-READ16_HANDLER(vertigo_io_convert)
+READ16_HANDLER( vertigo_io_convert )
 {
 	if (offset > 2)
 		adc_result = 0;
@@ -143,19 +142,19 @@ READ16_HANDLER(vertigo_io_convert)
 	return 0;
 }
 
-READ16_HANDLER(vertigo_io_adc)
+READ16_HANDLER( vertigo_io_adc )
 {
 	update_irq_encoder(INPUT_LINE_IRQ2, CLEAR_LINE);
 	return adc_result;
 }
 
-READ16_HANDLER(vertigo_coin_r)
+READ16_HANDLER( vertigo_coin_r )
 {
 	update_irq_encoder(INPUT_LINE_IRQ6, CLEAR_LINE);
 	return (readinputportbytag("COIN"));
 }
 
-INTERRUPT_GEN(vertigo_interrupt)
+INTERRUPT_GEN( vertigo_interrupt )
 {
 	/* Coin inputs cause IRQ6 */
 	if ((readinputportbytag("COIN") & 0x7) < 0x7)
@@ -197,7 +196,7 @@ WRITE16_HANDLER( vertigo_audio_w )
 		timer_set(TIME_NOW, data & 0xff, sound_command_w);
 }
 
-READ16_HANDLER(vertigo_sio_r)
+READ16_HANDLER( vertigo_sio_r )
 {
 	if (exidy440_sound_command_ack)
 		return 0xfc;
@@ -278,7 +277,7 @@ WRITE16_HANDLER( vertigo_8254_w )
 	}
 }
 
-READ16_HANDLER(vertigo_8254_r)
+READ16_HANDLER( vertigo_8254_r )
 {
 	int c;
 
@@ -288,7 +287,7 @@ READ16_HANDLER(vertigo_8254_r)
 
 	/* If timer isn't running return initial value */
 	c = (c > pit.counter[offset])? pit.counter[offset]: c;
-	pit.lc[offset] = (pit.lc[offset] + 1) & 1;
+	pit.lc[offset] ^= 1;
 
 	/* LSB first */
 	if (pit.lc[offset])
@@ -302,7 +301,7 @@ READ16_HANDLER(vertigo_8254_r)
  *
  *************************************/
 
-MACHINE_INIT(vertigo)
+MACHINE_INIT( vertigo )
 {
 	int i;
 

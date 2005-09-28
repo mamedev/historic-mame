@@ -1206,6 +1206,7 @@ const game_driver *drivers[] =
 	DRIVER( dotron )	/* (c) 1983 */
 	DRIVER( dotrona )	/* (c) 1983 */
 	DRIVER( dotrone )	/* (c) 1983 */
+	DRIVER( nflfoot )	/* (c) 1983 + laserdisk */
 	DRIVER( demoderb )	/* (c) 1984 */
 	DRIVER( demoderm )	/* (c) 1984 */
 	DRIVER( sarge )		/* (c) 1985 */
@@ -1621,6 +1622,7 @@ const game_driver *drivers[] =
 	DRIVER( twinhwku )	/* B87 (c) 1989 Taito America Corporation (US) */
 	DRIVER( daisenpu )	/* B87 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( gigandes )	/* (c) 1989 East Technology */
+	DRIVER( gigandsj )	/* (c) 1989 East Technology */
 	DRIVER( kyustrkr )	/* (c) 1989 East Technology */
 	DRIVER( ballbros )	/* no copyright notice */
 
@@ -3785,6 +3787,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( htchctch )	/* (c) 1995 SemiCom */
 	DRIVER( cookbib )	/* (c) 1995 SemiCom */
 	DRIVER( chokchok )	/* (c) 1995 SemiCom */
+	DRIVER( metlsavr )	/* (c) 1994 */
 	DRIVER( bcstry )	/* (c) 199? SemiCom */
 	DRIVER( bcstrya )	/* (c) 199? SemiCom */
 	DRIVER( suprtrio )	/* (c) 1994 GameAce */
@@ -4066,7 +4069,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( simpsn2p )	/* GX072 (c) 1991 */
 	DRIVER( simps2pa )	/* GX072 (c) 1991 */
 	DRIVER( simps2pj )	/* GX072 (c) 1991 (Japan) */
-	DRIVER( esckids )	/* GX975 (c) 1991 (Japan) */
+	DRIVER( esckids )	/* GX975 (c) 1991 (Asia) */
+	DRIVER( esckidsj )	/* GX975 (c) 1991 (Japan) */
 	DRIVER( vendetta )	/* GX081 (c) 1991 (World) */
 	DRIVER( vendetao )	/* GX081 (c) 1991 (World) */
 	DRIVER( vendet2p )	/* GX081 (c) 1991 (World) */
@@ -5191,6 +5195,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sia2650 )	/* (c) 1978 */
 	DRIVER( tinv2650 )	/* (c) 1978 */
 	DRIVER( dodgem )	/* (c) 1979 */
+	DRIVER( laserbat )	/* (c) 1981 */
+	DRIVER( lazarian )	/* (c) 1981 */
+	DRIVER( catnmous )	/* (c) 1982 */
+	DRIVER( catmousa )	/* (c) 1982 */
 	DRIVER( monymony )	/* (c) 1983 */
 	DRIVER( jackrabt )	/* (c) 1984 */
 	DRIVER( jackrab2 )	/* (c) 1984 */
@@ -5935,7 +5943,6 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( survartu )	/* (c) 1993 Sammy (American) */
 	DRIVER( dynagear )	/* (c) 1993 Sammy */
 	DRIVER( eaglshot )
-	DRIVER( eaglshta )
 	DRIVER( hypreact )	/* (c) 1995 Sammy */
 	DRIVER( koikois2 )  /* (c) 1997 Visco */
 	DRIVER( meosism )	/* (c) Sammy */
@@ -5983,6 +5990,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( naname )	/* (c) 1994 Atlus (Japan) */
 	DRIVER( blmbycar )	/* (c) 1994 ABM & Gecas - uses same gfx chip as powerins? */
 	DRIVER( blmbycau )	/* (c) 1994 ABM & Gecas - uses same gfx chip as powerins? */
+	DRIVER( watrball )	/* (c) 1996 ABM */
 
 	/* Sun Electronics / SunSoft games */
 	DRIVER( speakres )	/* [Sun Electronics] */
@@ -6095,10 +6103,12 @@ Other Sun games
 	DRIVER( missmw96 )	/* (c) 1996 Comad */
 	DRIVER( fantsia2 )	/* (c) 1997 Comad */
 	DRIVER( galhustl )	/* (c) 1997 ACE International */
+	DRIVER( zipzap )	/* (c) 1995 */
 
 	/* Playmark games */
 	DRIVER( sslam )		/* (c) 1993 - hack of Namco's Super World Court */
 	DRIVER( sslama )	/* (c) 1993 - hack of Namco's Super World Court */
+	DRIVER( powerbal )	/* (c) 1994 */
 	DRIVER( bigtwin )	/* (c) 1995 */
 	DRIVER( wbeachvl )	/* (c) 1995 */
 	DRIVER( wbeachv2 )	/* (c) 1995 */
@@ -6205,6 +6215,7 @@ Other Sun games
 	DRIVER( grdnstrm )	/* (c) 1998 */
 	DRIVER( bubl2000 )	/* (c) 1998 Tuning */
 	DRIVER( hotbubl )	/* (c) Pandora */
+	DRIVER( popspops )	/* (c) 1999 */
 	DRIVER( firehawk )	/* (c) 2001 ESD */
 
 	/* ESD games */
@@ -6711,5 +6722,6 @@ Other Sun games
 	DRIVER( quizmstr )	/* (c) 1985 Coinmaster */
 	DRIVER( trailblz )	/* (c) 1987 Coinmaster */
 	DRIVER( supnudg2 )	/* (c) 1989 Coinmaster */
+	DRIVER( egghunt )	/* (c) 1995 Invi Image */
 
 #endif	/* DRIVER_RECURSIVE */

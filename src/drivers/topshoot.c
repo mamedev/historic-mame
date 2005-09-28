@@ -10,6 +10,8 @@ Top Shooter - (c)1995  - older board, look more like an actual hacked cart syste
 
 */
 
+#define MASTER_CLOCK		53693100
+
 
 /* Not Dumped
 
@@ -133,7 +135,6 @@ connector, but of course, I can be wrong.
 
 #include "driver.h"
 #include "genesis.h"
-#include "segac2.h"
 
 
 INPUT_PORTS_START( topshoot ) /* Top Shooter Input Ports */
@@ -200,7 +201,7 @@ static ADDRESS_MAP_START( topshoot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 
 
 	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(genesis_68k_to_z80_r)
-	AM_RANGE(0xc00000, 0xc0001f) AM_READ(segac2_vdp_r)				/* VDP Access */
+	AM_RANGE(0xc00000, 0xc0001f) AM_READ(genesis_vdp_r)				/* VDP Access */
 	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_BANK3)				/* Main Ram */
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)					/* Main Ram */
 ADDRESS_MAP_END
@@ -213,8 +214,7 @@ static ADDRESS_MAP_START( topshoot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa10000, 0xa1001f) AM_WRITE(genesis_io_w) AM_BASE(&genesis_io_ram)				/* Genesis Input */
 	AM_RANGE(0xa11000, 0xa11203) AM_WRITE(genesis_ctrl_w)
 	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(megaplay_68k_to_z80_w)
-	AM_RANGE(0xc00000, 0xc0000f) AM_WRITE(segac2_vdp_w)				/* VDP Access */
-	AM_RANGE(0xc00010, 0xc00017) AM_WRITE(sn76489_w)					/* SN76489 Access */
+	AM_RANGE(0xc00000, 0xc0001f) AM_WRITE(genesis_vdp_w)				/* VDP Access */
 	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_BANK3)				/* Main Ram */
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&genesis_68k_ram)/* Main Ram */
 ADDRESS_MAP_END
@@ -236,10 +236,10 @@ ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( genesis_base )
 	/*basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 53693100 / 7)
-	MDRV_CPU_VBLANK_INT(vblank_interrupt,1)
+	MDRV_CPU_ADD_TAG("main", M68000, MASTER_CLOCK / 7)
+	MDRV_CPU_VBLANK_INT(genesis_vblank_interrupt,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 53693100 / 15)
+	MDRV_CPU_ADD_TAG("sound", Z80, MASTER_CLOCK / 15)
 	MDRV_CPU_PROGRAM_MAP(genesis_z80_readmem, genesis_z80_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1) /* from vdp at scanline 0xe0 */
 
@@ -254,10 +254,10 @@ static MACHINE_DRIVER_START( genesis_base )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
 	MDRV_SCREEN_SIZE(320,224)
 	MDRV_VISIBLE_AREA(0, 319, 0, 223)
-	MDRV_PALETTE_LENGTH(2048)
+	MDRV_PALETTE_LENGTH(64)
 
-	MDRV_VIDEO_START(puckpkmn)
-	MDRV_VIDEO_UPDATE(segac2)
+	MDRV_VIDEO_START(genesis)
+	MDRV_VIDEO_UPDATE(genesis)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -275,13 +275,10 @@ static MACHINE_DRIVER_START( topshoot )
 	MDRV_CPU_PROGRAM_MAP(topshoot_readmem,topshoot_writemem)
 
 	/* video hardware */
-	MDRV_VIDEO_START(puckpkmn)
+	MDRV_VIDEO_START(genesis)
 	MDRV_VISIBLE_AREA(0, 319, 0, 223)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
 	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -300,6 +297,7 @@ static READ16_HANDLER( vdp_fake_r )
 DRIVER_INIT(topshoot)
 {
 	/* hack -- fix vdp emulation instead */
+	init_genesis();
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC00004, 0xC00005, 0, 0, vdp_fake_r);
 }
 

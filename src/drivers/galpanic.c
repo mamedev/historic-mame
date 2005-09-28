@@ -103,6 +103,17 @@ There's probably a third tilemap at 0x580000 - 0x583fff used for the title logo.
 
 The roms are piggy-backed in the same way.
 
+
+-- Zip Zap notes ---
+
+Bg for select screens seems to be corrupt
+
+-- General Notes --
+
+Fantasia etc. games are locking up when the girl 'changes' due to not liking
+the way we handle OKI status reads.. however these reads are correct according to
+tests done with a real chip so there must be something odd going on on this hardware
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -226,6 +237,17 @@ static READ16_HANDLER( kludge )
 	return mame_rand() & 0x0700;
 }
 
+/* a kludge! */
+READ16_HANDLER( comad_OKIM6295_status_0_msb_r )
+{
+	UINT16 retvalue;
+
+//  retvalue = OKIM6295_status_0_msb_r(offset,mem_mask); // doesn't work, causes lockups when girls change..
+	retvalue = mame_rand();
+
+	return retvalue;
+}
+
 static ADDRESS_MAP_START( comad_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x4fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
@@ -240,8 +262,8 @@ static ADDRESS_MAP_START( comad_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x80000c, 0x80000d) AM_READ(kludge)	/* missw96 bits 8-a = timer? palette update code waits for them to be 111 */
 	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(MRA16_RAM)	/* missw96 */
 	AM_RANGE(0xc80000, 0xc8ffff) AM_READ(MRA16_RAM)	/* fantasia, newfant */
-	AM_RANGE(0xf00000, 0xf00001) AM_READ(OKIM6295_status_0_msb_r)	/* fantasia, missw96 */
-	AM_RANGE(0xf80000, 0xf80001) AM_READ(OKIM6295_status_0_msb_r)	/* newfant */
+	AM_RANGE(0xf00000, 0xf00001) AM_READ(comad_OKIM6295_status_0_msb_r)	/* fantasia, missw96 */
+	AM_RANGE(0xf80000, 0xf80001) AM_READ(comad_OKIM6295_status_0_msb_r)	/* newfant */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( comad_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -269,7 +291,7 @@ static ADDRESS_MAP_START( fantsia2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 //  AM_RANGE(0x800006, 0x800007)    ??
 	AM_RANGE(0x800008, 0x800009) AM_READ(kludge)	/* bits 8-a = timer? palette update code waits for them to be 111 */
 	AM_RANGE(0xf80000, 0xf8ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0xc80000, 0xc80001) AM_READ(OKIM6295_status_0_msb_r)
+	AM_RANGE(0xc80000, 0xc80001) AM_READ(comad_OKIM6295_status_0_msb_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fantsia2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -315,6 +337,45 @@ static ADDRESS_MAP_START( galhustl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(OKIM6295_data_0_msb_w)
 	AM_RANGE(0xe80000, 0xe8ffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
+/*
+READ16_HANDLER( zipzap_random_read )
+{
+    return mame_rand();
+}
+*/
+static ADDRESS_MAP_START( zipzap_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x580000, 0x583fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x600fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x680000, 0x68001f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x71ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x780000, 0x78001f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+
+	AM_RANGE(0xc00000, 0xc00001) AM_READ(comad_OKIM6295_status_0_msb_r)
+
+	AM_RANGE(0xc80000, 0xc8ffff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( zipzap_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)
+	AM_RANGE(0x580000, 0x583fff) AM_WRITE(galpanic_bgvideoram_mirror_w)
+	AM_RANGE(0x600000, 0x600fff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x680000, 0x68001f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x701000, 0x71ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(OKIM6295_data_0_msb_w)
+	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM) // main ram
 ADDRESS_MAP_END
 
 #define COMMON_COIN0\
@@ -728,6 +789,86 @@ INPUT_PORTS_START( galhustl )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( zipzap )
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 static gfx_layout spritelayout =
 {
@@ -845,6 +986,24 @@ static MACHINE_DRIVER_START( galhustl )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( zipzap )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(comad)
+	MDRV_CPU_REPLACE("main", M68000, 12000000)	/* ? */
+	MDRV_CPU_PROGRAM_MAP(zipzap_readmem,zipzap_writemem)
+	MDRV_CPU_VBLANK_INT(galhustl_interrupt,3)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(comad)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("oki", OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -1080,6 +1239,49 @@ ROM_START( galhustl )
 	ROM_LOAD( "galhstl5.u5", 0x00000, 0x80000, CRC(44a18f15) SHA1(1217cf7fbbb442358b15016099efeface5dcbd22) )
 ROM_END
 
+/*
+
+Zip & Zap
+
+Zip Zap (pcb marked Barko Corp 950509)
+
+1x 68k
+1x Oki m6295
+1x osc 12mhz
+1x osc 16mhz
+1x fpga
+2x dipswitch banks
+
+*/
+
+ROM_START( zipzap )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "ud17.bin", 0x000001, 0x40000, CRC(2901fae1) SHA1(0d6ca6d48c5586c05f3c02aee51a95da38b3751f) )
+	ROM_LOAD16_BYTE( "ue17.bin", 0x000000, 0x40000, CRC(da6c3fc8) SHA1(4bc01bc6f62553f6ac4f7252f7d9bf0d639f6935) )
+	/* gfx bitmaps */
+	ROM_LOAD16_BYTE( "938.bin",  0x400000, 0x80000, CRC(61c06b60) SHA1(b3abae020009a48b99862766e0981e1118159a47) ) // good title backgruond
+	ROM_LOAD16_BYTE( "942.bin",  0x400001, 0x80000, CRC(282413b8) SHA1(e2ecaaa3c5b2355eadc016b73d7d658f25e1e0db) ) // (and corrupt gfx on select mode screen)
+
+	ROM_LOAD16_BYTE( "934.bin",  0x300000, 0x80000, CRC(1e65988a) SHA1(64d6f8cbdb28755515d9bbf52f589ce1176fed58) ) // good, girls
+	ROM_LOAD16_BYTE( "939.bin",  0x300001, 0x80000, CRC(8790a6a3) SHA1(94f39e48b75144cab191e2de4284c28d18b8f1c7))
+
+	ROM_LOAD16_BYTE( "936.bin",  0x200000, 0x80000, CRC(596543cc) SHA1(10a0eab4ca4a8749f1703ff6fcc80d731d07d087) ) // good, girls
+	ROM_LOAD16_BYTE( "940.bin",  0x200001, 0x80000, CRC(0c9dfb53) SHA1(541bd8c79408b7415713b517eacdd565d0ac5cb8) )
+
+	ROM_LOAD16_BYTE( "937.bin",  0x100000, 0x80000, CRC(61dd653f) SHA1(68b5ae3423363cc64d933836bf6881431dad021a) ) // good, girls
+	ROM_LOAD16_BYTE( "941.bin",  0x100001, 0x80000, CRC(320321ed) SHA1(00b52cd34cd86c105ff6dbd0248ff239de31c851) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) // sprites
+	ROM_LOAD( "u5.bin",  0x000000, 0x80000,  CRC(c274d8b5) SHA1(2c45961aaf8311f027a734df7e33fe085dfdd099) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "snd.bin", 0x00000, 0x80000,  CRC(bc20423e) SHA1(1f4bd52ec4f9b3b3e6b10ac2b3afaadf76a2c7c9) )
+	ROM_RELOAD(               0x40000, 0x80000 )
+ROM_END
+
+
+
+
 GAMEX( 1990, galpanic, 0,        galpanic, galpanic, 0, ROT90, "Kaneko", "Gals Panic (set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1990, galpanib, galpanic, galpanib, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 2)", GAME_NO_COCKTAIL )
 GAMEX( 1990, galpania, galpanic, galpania, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 3)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
@@ -1090,3 +1292,4 @@ GAMEX( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss Wo
 GAMEX( 1996, missmw96, missw96,  comad,    missw96,  0, ROT0,  "Comad", "Miss Mister World '96 Nude", GAME_NO_COCKTAIL )
 GAMEX( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II", GAME_NO_COCKTAIL )
 GAME(  1997, galhustl, 0,        galhustl, galhustl, 0, ROT0,  "ACE International", "Gals Hustler" )
+GAMEX( 1995, zipzap,   0,        zipzap,   zipzap,   0, ROT90,  "Barko Corp", "Zip & Zip",GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

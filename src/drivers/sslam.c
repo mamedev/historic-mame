@@ -41,6 +41,7 @@ a small kid and even with a dog! And remember, Winners don't use Drugs ;)
 */
 
 #include "driver.h"
+#include "cpu/i8051/i8051.h"
 #include "sound/okim6295.h"
 
 
@@ -52,6 +53,8 @@ static int sslam_melody_loop;
 static int sslam_snd_bank;
 UINT16 *sslam_bg_tileram, *sslam_tx_tileram, *sslam_md_tileram;
 UINT16 *sslam_spriteram, *sslam_regs;
+
+static UINT8 playmark_oki_control = 0, playmark_oki_command = 0;
 
 
 
@@ -202,8 +205,11 @@ WRITE16_HANDLER( bigtwin_paletteram_w );
 WRITE16_HANDLER( sslam_tx_tileram_w );
 WRITE16_HANDLER( sslam_md_tileram_w );
 WRITE16_HANDLER( sslam_bg_tileram_w );
+WRITE16_HANDLER( powerbal_bg_tileram_w );
 VIDEO_START(sslam);
+VIDEO_START(powerbal);
 VIDEO_UPDATE(sslam);
+VIDEO_UPDATE(powerbal);
 
 
 static void sslam_play(int melody, int data)
@@ -329,7 +335,11 @@ static INTERRUPT_GEN( sslam_interrupt )
 	}
 }
 
-
+static WRITE16_HANDLER( powerbal_sound_w )
+{
+	soundlatch_w(0,data & 0xff);
+	cpunum_set_input_line(1,I8051_INT1_LINE,PULSE_LINE);
+}
 
 /* Memory Maps */
 
@@ -340,30 +350,103 @@ static ADDRESS_MAP_START( sslam_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, sslam_bg_tileram_w) AM_BASE(&sslam_bg_tileram)
 	AM_RANGE(0x104000, 0x107fff) AM_READWRITE(MRA16_RAM, sslam_md_tileram_w) AM_BASE(&sslam_md_tileram)
 	AM_RANGE(0x108000, 0x10ffff) AM_READWRITE(MRA16_RAM, sslam_tx_tileram_w) AM_BASE(&sslam_tx_tileram)
-	AM_RANGE(0x110000, 0x11000b) AM_RAM AM_BASE(&sslam_regs)
-	AM_RANGE(0x11000c, 0x11000d) AM_WRITENOP
+	AM_RANGE(0x110000, 0x11000d) AM_RAM AM_BASE(&sslam_regs)
 	AM_RANGE(0x200000, 0x200001) AM_WRITENOP
 	AM_RANGE(0x280000, 0x280fff) AM_READWRITE(MRA16_RAM, bigtwin_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x201000, 0x220fff) AM_RAM AM_BASE(&sslam_spriteram) /* probably not all of it .. */
+	AM_RANGE(0x201000, 0x201fff) AM_RAM AM_BASE(&sslam_spriteram)
 	AM_RANGE(0x304000, 0x304001) AM_WRITENOP
-	AM_RANGE(0x300010, 0x300011) AM_READ(input_port_0_word_r)
-	AM_RANGE(0x300012, 0x300013) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x300014, 0x300015) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x300016, 0x300017) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x300018, 0x300019) AM_READ(input_port_4_word_r)
-	AM_RANGE(0x30001a, 0x30001b) AM_READ(input_port_5_word_r)
-	AM_RANGE(0x30001c, 0x30001d) AM_READ(input_port_6_word_r)
+	AM_RANGE(0x300010, 0x300011) AM_READ(port_tag_to_handler16("IN0"))
+	AM_RANGE(0x300012, 0x300013) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x300014, 0x300015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x300016, 0x300017) AM_READ(port_tag_to_handler16("IN3"))
+	AM_RANGE(0x300018, 0x300019) AM_READ(port_tag_to_handler16("IN4"))
+	AM_RANGE(0x30001a, 0x30001b) AM_READ(port_tag_to_handler16("DSW1"))
+	AM_RANGE(0x30001c, 0x30001d) AM_READ(port_tag_to_handler16("DSW2"))
 	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(sslam_snd_w)
 	AM_RANGE(0xf00000, 0xffffff) AM_RAM	  /* Main RAM */
 
 	AM_RANGE(0x000000, 0xffffff) AM_ROM   /* I don't honestly know where the rom is mirrored .. so all unmapped reads / writes go to rom */
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( powerbal_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, powerbal_bg_tileram_w) AM_BASE(&sslam_bg_tileram)
+	AM_RANGE(0x104000, 0x107fff) AM_RAM // not used
+	AM_RANGE(0x110000, 0x11000d) AM_RAM AM_BASE(&sslam_regs)
+	AM_RANGE(0x200000, 0x200001) AM_WRITENOP
+	AM_RANGE(0x201000, 0x201fff) AM_RAM AM_BASE(&sslam_spriteram)
+	AM_RANGE(0x280000, 0x2803ff) AM_READWRITE(MRA16_RAM, bigtwin_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x300010, 0x300011) AM_READ(port_tag_to_handler16("IN0"))
+	AM_RANGE(0x300012, 0x300013) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x300014, 0x300015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x30001a, 0x30001b) AM_READ(port_tag_to_handler16("DSW1"))
+	AM_RANGE(0x30001c, 0x30001d) AM_READ(port_tag_to_handler16("DSW2"))
+	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(powerbal_sound_w)
+	AM_RANGE(0x304000, 0x304001) AM_WRITENOP
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM	  /* Main RAM */
+ADDRESS_MAP_END
+
+
+/*
+    Sound MCU mapping
+*/
+
+static READ8_HANDLER( playmark_snd_command_r )
+{
+	UINT8 data = 0;
+
+	if ((playmark_oki_control & 0x38) == 0x30) {
+		data = soundlatch_r(0);
+	}
+	else if ((playmark_oki_control & 0x38) == 0x28) {
+		data = (OKIM6295_status_0_r(0) & 0x0f);
+	}
+
+	return data;
+}
+
+static WRITE8_HANDLER( playmark_oki_w )
+{
+	playmark_oki_command = data;
+}
+
+static WRITE8_HANDLER( playmark_snd_control_w )
+{
+	static int oki_old_bank = -1;
+
+	playmark_oki_control = data;
+
+	if(data & 3)
+	{
+		if(oki_old_bank != (data & 3))
+		{
+			oki_old_bank = data & 3;
+			OKIM6295_set_bank_base(0, 0x40000 * (oki_old_bank - 1));
+		}
+	}
+
+	if ((data & 0x38) == 0x18)
+	{
+		OKIM6295_data_0_w(0, playmark_oki_command);
+	}
+
+//  !(data & 0x80) -> sound enable
+//  data & 0x40 -> always set
+}
+
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_io_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(playmark_snd_control_w)
+	AM_RANGE(0x0003, 0x0003) AM_READWRITE(playmark_snd_command_r, playmark_oki_w)
+ADDRESS_MAP_END
 
 /* Input Ports */
 
 INPUT_PORTS_START( sslam )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -373,7 +456,7 @@ INPUT_PORTS_START( sslam )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN4 )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
@@ -383,7 +466,7 @@ INPUT_PORTS_START( sslam )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
@@ -393,7 +476,7 @@ INPUT_PORTS_START( sslam )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-	PORT_START
+	PORT_START_TAG("IN3")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
@@ -403,7 +486,7 @@ INPUT_PORTS_START( sslam )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
 
-	PORT_START
+	PORT_START_TAG("IN4")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
@@ -413,7 +496,7 @@ INPUT_PORTS_START( sslam )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 
-	PORT_START
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )		// 0x000522 = 0x00400e
 	PORT_DIPSETTING(    0x03, "0" )
 	PORT_DIPSETTING(    0x02, "1" )
@@ -437,7 +520,7 @@ INPUT_PORTS_START( sslam )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x07, 0x07, "Coin(s) per Player" )
 	PORT_DIPSETTING(    0x07, "1" )
 	PORT_DIPSETTING(    0x06, "2" )
@@ -462,6 +545,88 @@ INPUT_PORTS_START( sslam )
 	PORT_DIPNAME( 0x80, 0x80, "Coin Slots" )
 	PORT_DIPSETTING(    0x80, "Common" )
 	PORT_DIPSETTING(    0x00, "Individual" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( powerbal )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x0c, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Language ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( English ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Italian ) )
+	PORT_DIPNAME( 0x20, 0x00, "Weapon" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* GFX Decodes */
@@ -490,12 +655,19 @@ static gfx_layout tiles16x16_layout =
 	16*16
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static gfx_decode sslam_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles16x16_layout, 0    , 16 }, /* bg */
+	{ REGION_GFX2, 0, &tiles8x8_layout,   0x300, 16 }, /* spr */
+	{ REGION_GFX1, 0, &tiles16x16_layout,     0, 16 }, /* bg */
 	{ REGION_GFX1, 0, &tiles16x16_layout, 0x100, 16 }, /* mid */
 	{ REGION_GFX1, 0, &tiles8x8_layout,   0x200, 16 }, /* tx */
-	{ REGION_GFX2, 0, &tiles8x8_layout,   0x300, 16 }, /* spr */
+	{ -1 }
+};
+
+static gfx_decode powerbal_gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0, &tiles8x8_layout,   0x100, 16 }, /* spr */
+	{ REGION_GFX1, 0, &tiles8x8_layout,       0, 16 }, /* bg */
 	{ -1 }
 };
 
@@ -517,7 +689,7 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 39*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_GFXDECODE(sslam_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x800)
 
 	MDRV_VIDEO_START(sslam)
@@ -531,10 +703,42 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( powerbal )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(powerbal_map, 0)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(I8051, 12000000)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_io_map,0)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(powerbal_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x200)
+
+	MDRV_VIDEO_START(powerbal)
+	MDRV_VIDEO_UPDATE(powerbal)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 26000000/16/165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+MACHINE_DRIVER_END
+
 /* maybe one dump is bad .. which? -> 2nd set was verified good from 2 pcbs */
 
 ROM_START( sslam )
-	ROM_REGION( 0x1000000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x1000000, REGION_CPU1, ROMREGION_ERASE00 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "2.u67", 0x00000, 0x80000, CRC(1ce52917) SHA1(b9b1d14ea44c248ce6e615c5c553c0d485c1302b) )
 	ROM_RELOAD ( 0x100000, 0x80000 )
 	ROM_RELOAD ( 0x200000, 0x80000 )
@@ -568,6 +772,9 @@ ROM_START( sslam )
 	ROM_RELOAD ( 0xe00001, 0x80000 )
 	ROM_RELOAD ( 0xf00001, 0x80000 )
 
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )
+	ROM_LOAD( "s87c751.bin",  0x0000, 0x0800, NO_DUMP )
+
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE  ) /* Bg */
 	ROM_LOAD( "7.u45",     0x000000, 0x80000, CRC(64ecdde9) SHA1(576ba1169d90970622249e532baa4209bf12de5a) )
 	ROM_LOAD( "6.u39",     0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
@@ -591,7 +798,7 @@ ROM_START( sslam )
 ROM_END
 
 ROM_START( sslama )
-	ROM_REGION( 0x1000000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_REGION( 0x1000000, REGION_CPU1, ROMREGION_ERASE00 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "2.u67", 0x00000, 0x80000, CRC(1ce52917) SHA1(b9b1d14ea44c248ce6e615c5c553c0d485c1302b) )
 	ROM_RELOAD ( 0x100000, 0x80000 )
 	ROM_RELOAD ( 0x200000, 0x80000 )
@@ -625,6 +832,9 @@ ROM_START( sslama )
 	ROM_RELOAD ( 0xe00001, 0x80000 )
 	ROM_RELOAD ( 0xf00001, 0x80000 )
 
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )
+	ROM_LOAD( "s87c751.bin",  0x0000, 0x0800, NO_DUMP )
+
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE  ) /* Bg */
 	ROM_LOAD( "7.u45",     0x000000, 0x80000, CRC(64ecdde9) SHA1(576ba1169d90970622249e532baa4209bf12de5a) )
 	ROM_LOAD( "6.u39",     0x080000, 0x80000, CRC(6928065c) SHA1(ad5b1889bebf0358df0295d6041b798ac53ac625) )
@@ -647,5 +857,38 @@ ROM_START( sslama )
 	ROM_COPY( REGION_SOUND1, 0x00000, 0x80000, 0x20000)
 ROM_END
 
-GAMEX(1993, sslam, 0,      sslam, sslam, 0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1993, sslama, sslam, sslam, sslam, 0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
+// it's a conversion for a sslam pcb
+ROM_START( powerbal )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "21.u67", 0x00000, 0x40000, CRC(4e302381) SHA1(5685d15fd3137866093ff13b95a7df2265a8bc64) )
+	ROM_LOAD16_BYTE( "22.u66", 0x00001, 0x40000, CRC(89b70599) SHA1(57a5d71e4d8ca62fffe2e81116c5236d2194ae11) )
+
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )
+	ROM_LOAD( "s87c751.bin",  0x0000, 0x0800, CRC(5b8b2d3a) SHA1(c3409243dfc0ca959a80f6890c87b4ce9eb0741d) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE  ) /* Bg */
+	ROM_LOAD( "26.u45",    0x000000, 0x80000, CRC(fc9d25c7) SHA1(057702753eddffb9e7bff76311c5e8891343174b) )
+	ROM_LOAD( "25.u39",    0x080000, 0x80000, CRC(f20ea774) SHA1(fd284a5ee2cd9d1b5db53225bdfb31dc5bd3f581) )
+	ROM_LOAD( "24.u42",    0x100000, 0x80000, CRC(e1829809) SHA1(2fdf0b5580609bff0040c909d2e1ff9fae7dcc9c) )
+	ROM_LOAD( "23.u36",    0x180000, 0x80000, CRC(7805275e) SHA1(f0499cf4c84704a6de93a2a1a229af6068ad8771) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE  ) /* Sprites */
+	ROM_LOAD( "27.u83",    0x000000, 0x80000, CRC(92d7d40a) SHA1(81879945790feb9aeb45750e9b5ded3356571503) )
+	ROM_LOAD( "28.u84",    0x080000, 0x80000, CRC(90412135) SHA1(499619c72613a1dd63a6504e39b159a18a71f4fa) )
+	ROM_LOAD( "29.u85",    0x100000, 0x80000, CRC(e7bcd2e7) SHA1(01a5e5ac5da2fd79a0c9088f775096b9915bae92) )
+	ROM_LOAD( "30.u86",    0x180000, 0x80000, CRC(4130694c) SHA1(581d0035ce1624568f635bd79290be6c587a2533) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is the area that gets switched */
+	ROM_REGION( 0xc0000, REGION_SOUND1, 0 ) /* OKI Samples */
+	ROM_LOAD( "20.i013",     0x00000, 0x40000, CRC(12776dbc) SHA1(9ab9930fd581296642834d2cb4ba65264a588af3) )
+	ROM_CONTINUE(            0x60000, 0x20000 )
+	ROM_CONTINUE(            0xa0000, 0x20000 )
+	ROM_COPY( REGION_SOUND1, 0x00000, 0x40000, 0x20000)
+	ROM_COPY( REGION_SOUND1, 0x00000, 0x80000, 0x20000)
+ROM_END
+
+
+GAMEX(1993, sslam,    0,      sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
+GAMEX(1993, sslama,   sslam,  sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1994, powerbal, 0,      powerbal, powerbal, 0, ROT0, "Playmark", "Power Balls" )
