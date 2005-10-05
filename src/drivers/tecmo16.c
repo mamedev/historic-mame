@@ -704,6 +704,6 @@ ROM_END
 
 /******************************************************************************/
 
-GAME( 1992, fstarfrc, 0, fstarfrc, fstarfrc, 0, ROT90, "Tecmo", "Final Star Force (US)" )
-GAME( 1992, riot,     0, riot,     riot,     0, ROT0,  "NMK",   "Riot" )
-GAME( 1995, ginkun,   0, ginkun,   ginkun,   0, ROT0,  "Tecmo", "Ganbare Ginkun" )
+GAME( 1992, fstarfrc, 0, fstarfrc, fstarfrc, 0, ROT90, "Tecmo", "Final Star Force (US)", 0 )
+GAME( 1992, riot,     0, riot,     riot,     0, ROT0,  "NMK",   "Riot", 0 )
+GAME( 1995, ginkun,   0, ginkun,   ginkun,   0, ROT0,  "Tecmo", "Ganbare Ginkun", 0 )

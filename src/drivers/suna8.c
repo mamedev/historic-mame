@@ -2424,17 +2424,17 @@ ROM_END
 ***************************************************************************/
 
 /* Working Games */
-GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
-GAME ( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA",                       "Hard Head"									)
-GAME ( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Hard Head (bootleg)"						)
-GAME ( 1988, pop_hh,   hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Popper (Hard Head bootleg)"				)
-GAME ( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA",                       "Hard Head 2 (v2.0)"                        )
+GAME( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
+GAME( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA",                       "Hard Head"									, 0)
+GAME( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Hard Head (bootleg)"						, 0)
+GAME( 1988, pop_hh,   hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Popper (Hard Head bootleg)"				, 0)
+GAME( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA",                       "Hard Head 2 (v2.0)"                       , 0 )
 
 /* Non Working Games */
-GAMEX( 1988, sranger,  rranger, rranger,  rranger,	0,        ROT0,  "SunA",    "Super Ranger (v2.0)",           GAME_NOT_WORKING )
-GAMEX( 1988, srangerb, rranger, rranger,  rranger,	0,        ROT0,  "bootleg", "Super Ranger (bootleg)",        GAME_NOT_WORKING )
-GAMEX( 1988, srangerw, rranger, rranger,  rranger,	0,        ROT0,  "SunA (WDK license)", "Super Ranger (WDK)", GAME_NOT_WORKING )
-GAMEX( 1989, sparkman, 0,       sparkman, sparkman, sparkman, ROT0,  "SunA",    "Spark Man (v 2.0)",             GAME_NOT_WORKING )
-GAMEX( 1990, starfigh, 0,       starfigh, hardhea2, starfigh, ROT90, "SunA",    "Star Fighter (v1)",             GAME_NOT_WORKING )
-GAMEX( 1992, brickzn,  0,       brickzn,  brickzn,  brickzn,  ROT90, "SunA",    "Brick Zone (v5.0)",             GAME_NOT_WORKING )
-GAMEX( 1992, brickzn3, brickzn, brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v4.0)",             GAME_NOT_WORKING )
+GAME( 1988, sranger,  rranger, rranger,  rranger,	0,        ROT0,  "SunA",    "Super Ranger (v2.0)",           GAME_NOT_WORKING )
+GAME( 1988, srangerb, rranger, rranger,  rranger,	0,        ROT0,  "bootleg", "Super Ranger (bootleg)",        GAME_NOT_WORKING )
+GAME( 1988, srangerw, rranger, rranger,  rranger,	0,        ROT0,  "SunA (WDK license)", "Super Ranger (WDK)", GAME_NOT_WORKING )
+GAME( 1989, sparkman, 0,       sparkman, sparkman, sparkman, ROT0,  "SunA",    "Spark Man (v 2.0)",             GAME_NOT_WORKING )
+GAME( 1990, starfigh, 0,       starfigh, hardhea2, starfigh, ROT90, "SunA",    "Star Fighter (v1)",             GAME_NOT_WORKING )
+GAME( 1992, brickzn,  0,       brickzn,  brickzn,  brickzn,  ROT90, "SunA",    "Brick Zone (v5.0)",             GAME_NOT_WORKING )
+GAME( 1992, brickzn3, brickzn, brickzn,  brickzn,  brickzn3, ROT90, "SunA",    "Brick Zone (v4.0)",             GAME_NOT_WORKING )

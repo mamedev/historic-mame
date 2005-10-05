@@ -1320,9 +1320,9 @@ ROM_START( ponchina )
 ROM_END
 
 
-GAME( 1987, srmp2,     0,        srmp2,    srmp2,    srmp2,   ROT0, "Seta", "Super Real Mahjong Part 2 (Japan)" )
-GAME( 1988, srmp3,     0,        srmp3,    srmp3,    srmp3,   ROT0, "Seta", "Super Real Mahjong Part 3 (Japan)" )
-GAME( 1990, mjyuugi,   0,        mjyuugi,  mjyuugi,  0,       ROT0, "Visco", "Mahjong Yuugi (Japan set 1)" )
-GAME( 1990, mjyuugia,  mjyuugi,  mjyuugi,  mjyuugi,  0,       ROT0, "Visco", "Mahjong Yuugi (Japan set 2)" )
-GAME( 1991, ponchin,   0,        mjyuugi,  ponchin,  0,       ROT0, "Visco", "Mahjong Pon Chin Kan (Japan set 1)" )
-GAME( 1991, ponchina,  ponchin,  mjyuugi,  ponchin,  0,       ROT0, "Visco", "Mahjong Pon Chin Kan (Japan set 2)" )
+GAME( 1987, srmp2,     0,        srmp2,    srmp2,    srmp2,   ROT0, "Seta", "Super Real Mahjong Part 2 (Japan)", 0 )
+GAME( 1988, srmp3,     0,        srmp3,    srmp3,    srmp3,   ROT0, "Seta", "Super Real Mahjong Part 3 (Japan)", 0 )
+GAME( 1990, mjyuugi,   0,        mjyuugi,  mjyuugi,  0,       ROT0, "Visco", "Mahjong Yuugi (Japan set 1)", 0 )
+GAME( 1990, mjyuugia,  mjyuugi,  mjyuugi,  mjyuugi,  0,       ROT0, "Visco", "Mahjong Yuugi (Japan set 2)", 0 )
+GAME( 1991, ponchin,   0,        mjyuugi,  ponchin,  0,       ROT0, "Visco", "Mahjong Pon Chin Kan (Japan set 1)", 0 )
+GAME( 1991, ponchina,  ponchin,  mjyuugi,  ponchin,  0,       ROT0, "Visco", "Mahjong Pon Chin Kan (Japan set 2)", 0 )

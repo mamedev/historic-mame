@@ -759,6 +759,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1995, gogomile, 0,        fuuki16, gogomile, 0, ROT0, "Fuuki", "Go Go! Mile Smile" )
-GAME( 1995, gogomilj, gogomile, fuuki16, gogomilj, 0, ROT0, "Fuuki", "Susume! Mile Smile (Japan)" )
-GAME( 1996, pbancho,  0,        fuuki16, pbancho,  0, ROT0, "Fuuki", "Gyakuten!! Puzzle Bancho (Japan)")
+GAME( 1995, gogomile, 0,        fuuki16, gogomile, 0, ROT0, "Fuuki", "Go Go! Mile Smile", 0 )
+GAME( 1995, gogomilj, gogomile, fuuki16, gogomilj, 0, ROT0, "Fuuki", "Susume! Mile Smile (Japan)", 0 )
+GAME( 1996, pbancho,  0,        fuuki16, pbancho,  0, ROT0, "Fuuki", "Gyakuten!! Puzzle Bancho (Japan)", 0)

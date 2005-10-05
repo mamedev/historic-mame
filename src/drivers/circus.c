@@ -520,7 +520,7 @@ static DRIVER_INIT( ripcord )
 }
 
 
-GAME ( 1977, circus,   0, circus,   circus,   circus,   ROT0, "Exidy", "Circus" )
-GAMEX( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
-GAMEX( 1979, crash,    0, crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
-GAMEX( 1979, ripcord,  0, ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )
+GAME( 1977, circus,   0, circus,   circus,   circus,   ROT0, "Exidy", "Circus", 0 )
+GAME( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
+GAME( 1979, crash,    0, crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
+GAME( 1979, ripcord,  0, ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

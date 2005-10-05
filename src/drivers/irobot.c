@@ -394,4 +394,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot" )
+GAME( 1983, irobot, 0, irobot, irobot, irobot, ROT0, "Atari", "I, Robot", 0 )

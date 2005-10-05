@@ -2114,9 +2114,9 @@ ROM_END
 
 ***************************************************************************/
 
-GAME ( 199?, lhb,      0,        lhb,      lhb,      lhb,      ROT0, "IGS",        "Long Hu Bang"                 )
-GAME ( 1995, chindrag, 0,        chindrag, chindrag, chindrag, ROT0, "IGS / ALTA", "Chuugokuryuu (Japan, V021J)"  )
-GAME ( 1995, chugokur, chindrag, chindrag, chindrag, chugokur, ROT0, "IGS / ALTA", "Chuugokuryuu (Japan, V020J)"  )
-GAMEX( 1996, chmplst2, 0,        chmplst2, chmplst2, chmplst2, ROT0, "IGS",        "Champion List II",            GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, xymg,     0,        xymg,     xymg,     xymg,     ROT0, "IGS",        "Xing Yen Man Guan (V651C)",   GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAMEX( 199?, grtwall,  xymg,     grtwall,  grtwall,  grtwall,  ROT0, "IGS",        "Xing Yen Man Guan (V638C)?",  GAME_IMPERFECT_GRAPHICS )
+GAME( 199?, lhb,      0,        lhb,      lhb,      lhb,      ROT0, "IGS",        "Long Hu Bang"                , 0 )
+GAME( 1995, chindrag, 0,        chindrag, chindrag, chindrag, ROT0, "IGS / ALTA", "Chuugokuryuu (Japan, V021J)" , 0 )
+GAME( 1995, chugokur, chindrag, chindrag, chindrag, chugokur, ROT0, "IGS / ALTA", "Chuugokuryuu (Japan, V020J)" , 0 )
+GAME( 1996, chmplst2, 0,        chmplst2, chmplst2, chmplst2, ROT0, "IGS",        "Champion List II",            GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, xymg,     0,        xymg,     xymg,     xymg,     ROT0, "IGS",        "Xing Yen Man Guan (V651C)",   GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 199?, grtwall,  xymg,     grtwall,  grtwall,  grtwall,  ROT0, "IGS",        "Xing Yen Man Guan (V638C)?",  GAME_IMPERFECT_GRAPHICS )

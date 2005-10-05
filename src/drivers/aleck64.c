@@ -240,5 +240,5 @@ ROM_START( mtetrisc )
 ROM_END
 
 
-GAMEX( 1998, 11beat,   0,  aleck64, aleck64, aleck64, ROT0, "Hudson", "Eleven Beat", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1998, mtetrisc,   0,  aleck64, aleck64, aleck64, ROT0, "Capcom", "Magical Tetris Challenge (981009 Japan)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1998, 11beat,   0,  aleck64, aleck64, aleck64, ROT0, "Hudson", "Eleven Beat", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1998, mtetrisc,   0,  aleck64, aleck64, aleck64, ROT0, "Capcom", "Magical Tetris Challenge (981009 Japan)", GAME_NOT_WORKING|GAME_NO_SOUND )

@@ -504,4 +504,4 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1983, gridlee, 0,        gridlee, gridlee, 0,     ROT0, "Videa", "Gridlee", GAME_IMPERFECT_SOUND )
+GAME( 1983, gridlee, 0,        gridlee, gridlee, 0,     ROT0, "Videa", "Gridlee", GAME_IMPERFECT_SOUND )

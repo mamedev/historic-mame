@@ -541,5 +541,5 @@ ROM_START( buggycht )
 ROM_END
 
 
-GAMEX( 1984, buggychl, 0,        buggychl, buggychl, 0, ROT270, "Taito Corporation", "Buggy Challenge", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1984, buggycht, buggychl, buggychl, buggychl, 0, ROT270, "Taito Corporation (Tecfri license)", "Buggy Challenge (Tecfri)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 1984, buggychl, 0,        buggychl, buggychl, 0, ROT270, "Taito Corporation", "Buggy Challenge", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 1984, buggycht, buggychl, buggychl, buggychl, 0, ROT270, "Taito Corporation (Tecfri license)", "Buggy Challenge (Tecfri)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

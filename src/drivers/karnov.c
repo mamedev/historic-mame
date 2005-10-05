@@ -1024,9 +1024,9 @@ static DRIVER_INIT( chelnovj )
 
 /******************************************************************************/
 
-GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA",         "Karnov (US)" )
-GAME( 1987, karnovj,  karnov,  karnov,   karnov,  karnovj,  ROT0,   "Data East Corporation", "Karnov (Japan)" )
-GAME( 1987, wndrplnt, 0,       wndrplnt, wndrplnt,wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)" )
-GAME( 1988, chelnov,  0,       karnov,   chelnov, chelnovw, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (World)" )
-GAME( 1988, chelnovu, chelnov, karnov,   chelnov, chelnov,  ROT0,   "Data East USA",         "Chelnov - Atomic Runner (US)" )
-GAME( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)" )
+GAME( 1987, karnov,   0,       karnov,   karnov,  karnov,   ROT0,   "Data East USA",         "Karnov (US)", 0 )
+GAME( 1987, karnovj,  karnov,  karnov,   karnov,  karnovj,  ROT0,   "Data East Corporation", "Karnov (Japan)", 0 )
+GAME( 1987, wndrplnt, 0,       wndrplnt, wndrplnt,wndrplnt, ROT270, "Data East Corporation", "Wonder Planet (Japan)", 0 )
+GAME( 1988, chelnov,  0,       karnov,   chelnov, chelnovw, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (World)", 0 )
+GAME( 1988, chelnovu, chelnov, karnov,   chelnov, chelnov,  ROT0,   "Data East USA",         "Chelnov - Atomic Runner (US)", 0 )
+GAME( 1988, chelnovj, chelnov, karnov,   chelnov, chelnovj, ROT0,   "Data East Corporation", "Chelnov - Atomic Runner (Japan)", 0 )

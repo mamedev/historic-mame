@@ -778,5 +778,5 @@ static DRIVER_INIT( taitoair )
 
 
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR  COMPANY  FULLNAME */
-GAMEX( 1988, topland,  0,        airsys,   topland,  taitoair, ROT0,    "Taito Corporation Japan", "Top Landing (World)", GAME_NOT_WORKING )
-GAMEX( 1990, ainferno, 0,        airsys,   ainferno, taitoair, ROT0,    "Taito America Corporation", "Air Inferno (US)", GAME_NOT_WORKING )
+GAME( 1988, topland,  0,        airsys,   topland,  taitoair, ROT0,    "Taito Corporation Japan", "Top Landing (World)", GAME_NOT_WORKING )
+GAME( 1990, ainferno, 0,        airsys,   ainferno, taitoair, ROT0,    "Taito America Corporation", "Air Inferno (US)", GAME_NOT_WORKING )

@@ -1277,13 +1277,13 @@ static DRIVER_INIT(gigas)
 	memory_set_opcode_base(0,rom+diff);
 }
 
-GAMEX(1986, gigasb,   0,        gigas,    gigas,    gigas, ROT270, "bootleg", "Gigas (bootleg)", GAME_NO_COCKTAIL )
-GAMEX(1986, oigas,    gigasb,   oigas,    gigas,    gigas, ROT270, "bootleg", "Oigas (bootleg)", GAME_NO_COCKTAIL )
-GAMEX(1986, gigasm2b, 0,        gigas,    gigasm2,  gigas, ROT270, "bootleg", "Gigas Mark II (bootleg)", GAME_NO_COCKTAIL )
-GAME( 1987, pbillrd,  0,        pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard" )
-GAMEX(1987, pbillrds, pbillrd,  pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard (Sega)", GAME_UNEMULATED_PROTECTION )	// encrypted
-GAMEX(1987, freekick, 0,        freekckb, freekckb, 0,     ROT270, "Nihon System (Sega license)", "Free Kick", GAME_NOT_WORKING )
-GAME( 1987, freekckb, freekick, freekckb, freekckb, 0,     ROT270, "bootleg", "Free Kick (bootleg)" )
-GAMEX(1988, countrun, 0,        freekckb, countrun, 0,     ROT0,   "Nihon System (Sega license)", "Counter Run", GAME_NOT_WORKING )
-GAME( 1988, countrnb, countrun, freekckb, countrun, 0,     ROT0,   "bootleg", "Counter Run (bootleg set 1)" )
-GAMEX(1988, countrb2, countrun, freekckb, countrun, 0,     ROT0,   "bootleg", "Counter Run (bootleg set 2)", GAME_NOT_WORKING )
+GAME( 1986, gigasb,   0,        gigas,    gigas,    gigas, ROT270, "bootleg", "Gigas (bootleg)", GAME_NO_COCKTAIL )
+GAME( 1986, oigas,    gigasb,   oigas,    gigas,    gigas, ROT270, "bootleg", "Oigas (bootleg)", GAME_NO_COCKTAIL )
+GAME( 1986, gigasm2b, 0,        gigas,    gigasm2,  gigas, ROT270, "bootleg", "Gigas Mark II (bootleg)", GAME_NO_COCKTAIL )
+GAME( 1987, pbillrd,  0,        pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard", 0 )
+GAME( 1987, pbillrds, pbillrd,  pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard (Sega)", GAME_UNEMULATED_PROTECTION )	// encrypted
+GAME( 1987, freekick, 0,        freekckb, freekckb, 0,     ROT270, "Nihon System (Sega license)", "Free Kick", GAME_NOT_WORKING )
+GAME( 1987, freekckb, freekick, freekckb, freekckb, 0,     ROT270, "bootleg", "Free Kick (bootleg)", 0 )
+GAME( 1988, countrun, 0,        freekckb, countrun, 0,     ROT0,   "Nihon System (Sega license)", "Counter Run", GAME_NOT_WORKING )
+GAME( 1988, countrnb, countrun, freekckb, countrun, 0,     ROT0,   "bootleg", "Counter Run (bootleg set 1)", 0 )
+GAME( 1988, countrb2, countrun, freekckb, countrun, 0,     ROT0,   "bootleg", "Counter Run (bootleg set 2)", GAME_NOT_WORKING )

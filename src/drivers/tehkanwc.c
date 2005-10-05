@@ -979,6 +979,6 @@ ROM_END
 
 
 
-GAME( 1985, tehkanwc, 0, tehkanwc, tehkanwc, 0,        ROT0,  "Tehkan", "Tehkan World Cup" )
-GAME( 1985, gridiron, 0, gridiron, gridiron, 0,        ROT0,  "Tehkan", "Gridiron Fight" )
-GAME( 1986, teedoff,  0, teedoff,  teedoff,  teedoff,  ROT90, "Tecmo", "Tee'd Off (Japan)" )
+GAME( 1985, tehkanwc, 0, tehkanwc, tehkanwc, 0,        ROT0,  "Tehkan", "Tehkan World Cup", 0 )
+GAME( 1985, gridiron, 0, gridiron, gridiron, 0,        ROT0,  "Tehkan", "Gridiron Fight", 0 )
+GAME( 1986, teedoff,  0, teedoff,  teedoff,  teedoff,  ROT90, "Tecmo", "Tee'd Off (Japan)", 0 )

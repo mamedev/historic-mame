@@ -446,4 +446,4 @@ ROM_END
 
 
 
-GAMEX( 1984, taxidrvr, 0, taxidrvr, taxidrvr, 0, ROT90, "Graphic Techno", "Taxi Driver", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1984, taxidrvr, 0, taxidrvr, taxidrvr, 0, ROT90, "Graphic Techno", "Taxi Driver", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )

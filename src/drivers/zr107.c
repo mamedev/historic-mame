@@ -488,5 +488,5 @@ ROM_END
 
 /*****************************************************************************/
 
-GAMEX( 1995, midnrun,	0,		zr107,	zr107,	midnrun,	ROT0,	"Konami",	"Midnight Run", GAME_NOT_WORKING )
-GAMEX( 1996, windheat,	0,		zr107,	zr107,	zr107,		ROT0,	"Konami",	"Winding Heat", GAME_NOT_WORKING )
+GAME( 1995, midnrun,	0,		zr107,	zr107,	midnrun,	ROT0,	"Konami",	"Midnight Run", GAME_NOT_WORKING )
+GAME( 1996, windheat,	0,		zr107,	zr107,	zr107,		ROT0,	"Konami",	"Winding Heat", GAME_NOT_WORKING )

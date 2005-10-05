@@ -153,5 +153,5 @@ static DRIVER_INIT(dambustr)
 	}
 }
 
-GAMEX( 19??, dambustr,  0,       dambustr,  dambustr,  dambustr, ROT90, "GAT", "Dambusters (set 1)",GAME_NOT_WORKING )
-GAMEX( 19??, dambust ,  dambustr,       dambustr,  dambustr,  dambustr, ROT90, "GAT", "Dambusters (set 2)",GAME_NOT_WORKING )
+GAME( 19??, dambustr,  0,       dambustr,  dambustr,  dambustr, ROT90, "GAT", "Dambusters (set 1)",GAME_NOT_WORKING )
+GAME( 19??, dambust ,  dambustr,       dambustr,  dambustr,  dambustr, ROT90, "GAT", "Dambusters (set 2)",GAME_NOT_WORKING )

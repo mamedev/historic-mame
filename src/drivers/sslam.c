@@ -889,6 +889,6 @@ ROM_START( powerbal )
 ROM_END
 
 
-GAMEX(1993, sslam,    0,      sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1993, sslama,   sslam,  sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
-GAME( 1994, powerbal, 0,      powerbal, powerbal, 0, ROT0, "Playmark", "Power Balls" )
+GAME( 1993, sslam,    0,      sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
+GAME( 1993, sslama,   sslam,  sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1994, powerbal, 0,      powerbal, powerbal, 0, ROT0, "Playmark", "Power Balls", 0 )

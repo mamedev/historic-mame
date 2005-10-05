@@ -1240,7 +1240,7 @@ MACHINE_INIT( darius )
 }
 
 
-GAME( 1986, darius,   0,        darius,   darius,   darius,   ROT0, "Taito Corporation Japan", "Darius (World)" )
-GAME( 1986, dariusj,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Japan)" )
-GAME( 1986, dariuso,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Japan old version)" )
-GAME( 1986, dariuse,  darius,   darius,   dariuse,  darius,   ROT0, "Taito Corporation", "Darius (Extra) (Japan)" )
+GAME( 1986, darius,   0,        darius,   darius,   darius,   ROT0, "Taito Corporation Japan", "Darius (World)", 0 )
+GAME( 1986, dariusj,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Japan)", 0 )
+GAME( 1986, dariuso,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Japan old version)", 0 )
+GAME( 1986, dariuse,  darius,   darius,   dariuse,  darius,   ROT0, "Taito Corporation", "Darius (Extra) (Japan)", 0 )

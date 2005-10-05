@@ -375,4 +375,4 @@ ROM_START( destroyr )
 ROM_END
 
 
-GAMEX( 1977, destroyr, 0, destroyr, destroyr, 0, ORIENTATION_FLIP_X, "Atari", "Destroyer", GAME_NO_SOUND )
+GAME( 1977, destroyr, 0, destroyr, destroyr, 0, ORIENTATION_FLIP_X, "Atari", "Destroyer", GAME_NO_SOUND )

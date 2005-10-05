@@ -1529,10 +1529,10 @@ static DRIVER_INIT( endurob2 )
  *
  *************************************/
 
-GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0, "Sega",    "Hang-On" )
-GAME( 1992, shangupb, shangon,  shangupb, shangupb, hangon,   ROT0, "bootleg", "Super Hang-On (Hang-On upgrade, bootleg)" )
-GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier" )
-GAME( 1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2151, FD1089B 317-0013A)" )
-GAME( 1986, enduror1, enduror,  enduror1, enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2203, FD1089B 317-0013A)" )
-GAME( 1986, endurobl, enduror,  enduror1, enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)" )
-GAMEX(1986, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)", GAME_NOT_WORKING )
+GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0, "Sega",    "Hang-On", 0 )
+GAME( 1992, shangupb, shangon,  shangupb, shangupb, hangon,   ROT0, "bootleg", "Super Hang-On (Hang-On upgrade, bootleg)", 0 )
+GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier", 0 )
+GAME( 1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2151, FD1089B 317-0013A)", 0 )
+GAME( 1986, enduror1, enduror,  enduror1, enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2203, FD1089B 317-0013A)", 0 )
+GAME( 1986, endurobl, enduror,  enduror1, enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)", 0 )
+GAME( 1986, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)", GAME_NOT_WORKING )

@@ -748,6 +748,6 @@ static DRIVER_INIT( cabal )
 }
 
 
-GAME( 1988, cabal,   0,     cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)" )
-GAME( 1988, cabal2,  cabal, cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)" )
-GAMEX( 1988, cabalbl, cabal, cabalbl, cabalbl, 0,     ROT0, "bootleg", "Cabal (bootleg)", GAME_IMPERFECT_SOUND )
+GAME( 1988, cabal,   0,     cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 1)", 0 )
+GAME( 1988, cabal2,  cabal, cabal,   cabal,   cabal, ROT0, "Tad (Fabtek license)", "Cabal (US set 2)", 0 )
+GAME( 1988, cabalbl, cabal, cabalbl, cabalbl, 0,     ROT0, "bootleg", "Cabal (bootleg)", GAME_IMPERFECT_SOUND )

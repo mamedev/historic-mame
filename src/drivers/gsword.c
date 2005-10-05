@@ -836,6 +836,6 @@ static DRIVER_INIT( gsword2 )
 	ROM2[0x727] = 0;
 }
 
-GAMEX(1983, josvolly, 0,      josvolly, gsword, 0,       ROT90, "Taito Corporation", "Joshi Volleyball", GAME_NOT_WORKING )
-GAME( 1984, gsword,   0,      gsword,   gsword, gsword,  ROT0,  "Taito Corporation", "Great Swordsman (World?)" )
-GAME( 1984, gsword2,  gsword, gsword,   gsword, gsword2, ROT0,  "Taito Corporation", "Great Swordsman (Japan?)" )
+GAME( 1983, josvolly, 0,      josvolly, gsword, 0,       ROT90, "Taito Corporation", "Joshi Volleyball", GAME_NOT_WORKING )
+GAME( 1984, gsword,   0,      gsword,   gsword, gsword,  ROT0,  "Taito Corporation", "Great Swordsman (World?)", 0 )
+GAME( 1984, gsword2,  gsword, gsword,   gsword, gsword2, ROT0,  "Taito Corporation", "Great Swordsman (Japan?)", 0 )

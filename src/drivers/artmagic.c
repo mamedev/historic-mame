@@ -907,7 +907,7 @@ static DRIVER_INIT( stonebal )
  *
  *************************************/
 
-GAME( 1993, ultennis, 0,        artmagic, ultennis, ultennis, ROT0, "Art & Magic", "Ultimate Tennis" )
-GAME( 1994, cheesech, 0,        artmagic, cheesech, cheesech, ROT0, "Art & Magic", "Cheese Chase" )
-GAME( 1994, stonebal, 0,        stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (4 Players)" )
-GAME( 1994, stoneba2, stonebal, stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (2 Players)" )
+GAME( 1993, ultennis, 0,        artmagic, ultennis, ultennis, ROT0, "Art & Magic", "Ultimate Tennis", 0 )
+GAME( 1994, cheesech, 0,        artmagic, cheesech, cheesech, ROT0, "Art & Magic", "Cheese Chase", 0 )
+GAME( 1994, stonebal, 0,        stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (4 Players)", 0 )
+GAME( 1994, stoneba2, stonebal, stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (2 Players)", 0 )

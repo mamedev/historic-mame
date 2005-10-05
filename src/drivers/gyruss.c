@@ -571,6 +571,6 @@ static DRIVER_INIT( gyruss )
 }
 
 
-GAME( 1983, gyruss,   0,      gyruss, gyruss,   gyruss, ROT90, "Konami", "Gyruss (Konami)" )
-GAME( 1983, gyrussce, gyruss, gyruss, gyrussce, gyruss, ROT90, "Konami (Centuri license)", "Gyruss (Centuri)" )
-GAME( 1983, venus,    gyruss, gyruss, gyrussce, gyruss, ROT90, "bootleg", "Venus" )
+GAME( 1983, gyruss,   0,      gyruss, gyruss,   gyruss, ROT90, "Konami", "Gyruss (Konami)", 0 )
+GAME( 1983, gyrussce, gyruss, gyruss, gyrussce, gyruss, ROT90, "Konami (Centuri license)", "Gyruss (Centuri)", 0 )
+GAME( 1983, venus,    gyruss, gyruss, gyrussce, gyruss, ROT90, "bootleg", "Venus", 0 )

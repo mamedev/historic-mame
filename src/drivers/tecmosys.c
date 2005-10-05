@@ -689,6 +689,6 @@ static DRIVER_INIT( tkdensho )
 
 }
 
-GAMEX( 1996, deroon,      0, deroon, deroon, deroon,     ROT0, "Tecmo", "Deroon DeroDero", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1996, tkdensho,    0, deroon, deroon, tkdensho,   ROT0, "Tecmo", "Touki Denshou -Angel Eyes-", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1996, deroon,      0, deroon, deroon, deroon,     ROT0, "Tecmo", "Deroon DeroDero", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1996, tkdensho,    0, deroon, deroon, tkdensho,   ROT0, "Tecmo", "Touki Denshou -Angel Eyes-", GAME_NOT_WORKING | GAME_NO_SOUND )
 

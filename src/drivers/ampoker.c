@@ -366,7 +366,7 @@ static DRIVER_INIT( ampoker2 )
     ROM[0x0096] = 0x00;*/
 }
 
-GAMEX( 198?, ampoker2, 0,        ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 1)", GAME_NOT_WORKING )
-GAMEX( 198?, ampokr2a, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 2)", GAME_NOT_WORKING )
-GAMEX( 198?, ampokr2b, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 3)", GAME_NOT_WORKING )
-GAMEX( 198?, ampokr2c, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 4)", GAME_NOT_WORKING )
+GAME( 198?, ampoker2, 0,        ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 1)", GAME_NOT_WORKING )
+GAME( 198?, ampokr2a, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 2)", GAME_NOT_WORKING )
+GAME( 198?, ampokr2b, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 3)", GAME_NOT_WORKING )
+GAME( 198?, ampokr2c, ampoker2, ampoker2, ampoker2, ampoker2, ROT0, "Novomatic", "American Poker II (set 4)", GAME_NOT_WORKING )

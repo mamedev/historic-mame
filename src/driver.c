@@ -821,6 +821,7 @@ const game_driver *drivers[] =
 	DRIVER( cybrcycc )
 	DRIVER( timecris )
 	DRIVER( timecrsa )
+	DRIVER( alpinr2b )
 	DRIVER( propcycl )	/* (c) 1996 */
 
 	/* Namco System 23 */
@@ -1776,6 +1777,7 @@ const game_driver *drivers[] =
 	DRIVER( yuyugogo )	/* C83 (c) 1990 Taito Corporation (Japan) */
 	DRIVER( ninjak )	/* C85 (c) 1990 Taito Corporation Japan (World) */
 	DRIVER( ninjakj )	/* C85 (c) 1990 Taito Corporation (Japan) */
+	DRIVER( ninjaku )	/* C85 (c) 1990 Taito Corporation (Japan) */
 	DRIVER( solfigtr )	/* C91 (c) 1991 Taito Corporation Japan (World) */
 	DRIVER( qzquest )	/* C92 (c) 1991 Taito Corporation (Japan) */
 	DRIVER( pulirula )	/* C98 (c) 1991 Taito Corporation Japan (World) */
@@ -3215,6 +3217,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( hotroda )	/* (c) 1988 */
 	DRIVER( hotrodj )	/* (c) 1988 */
 	DRIVER( sspirits ) 	/* (c) 1988 */
+	DRIVER( sspiritj ) 	/* (c) 1988 */
 	DRIVER( sspirtfc )	/* (c) 1988 */
 	DRIVER( gground )	/* (c) 1988 */
 	DRIVER( crkdown )	/* (c) 1989 */
@@ -3223,6 +3226,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sgmastc )	/* (c) 1989 */
 	DRIVER( roughrac )	/* (c) 1990 */
 	DRIVER( bnzabros )	/* (c) 1990 */
+	DRIVER( bnzabrsj )	/* (c) 1990 */
 	DRIVER( qsww )		/* (c) 1991 */
 	DRIVER( dcclubfd )	/* (c) 1991 */
 
@@ -6694,14 +6698,14 @@ Other Sun games
 	DRIVER( jollycrd )	/* (c) 1985 TAB-Austria */
 	DRIVER( jollycdb )	/* (c) 1993 Soft Design */
 	DRIVER( jollycdc )	/* 199? bootleg? */
-	DRIVER( bonuscrd )	/* (c) 1986 Fun World */
+	DRIVER( jollycdd )	/* (c) 1986 Fun World */
+	DRIVER( jollycde )	/* (c) 1990 Inter Games */
+	DRIVER( bigdeal )	/* (c) 1986 Fun World */
+	DRIVER( bigdealb )	/* (c) 1986 Fun World */
 	DRIVER( cuoreuno )	/* (c) 1997 bootleg? */
 	DRIVER( elephfam )	/* (c) 1997 bootleg? */
 	DRIVER( royalcrd )	/* (c) 1991 TAB-Austria */
 	DRIVER( royalcdb )	/* (c) 1991 TAB-Austria */
-	DRIVER( poker4 )	/* (c) 1986 Fun World */
-	DRIVER( poker8 )	/* (c) 1986 Fun World */
-	DRIVER( igpoker )	/* (c) 1990 Inter Games */
 	DRIVER( magiccrd )	/* (c) 1996 Impera */
 	DRIVER( vroulet )	/* (c) 1989 World Game */
 	DRIVER( rcasino )	/* (c) 1984 Dyna Electronics */
@@ -6723,5 +6727,8 @@ Other Sun games
 	DRIVER( trailblz )	/* (c) 1987 Coinmaster */
 	DRIVER( supnudg2 )	/* (c) 1989 Coinmaster */
 	DRIVER( egghunt )	/* (c) 1995 Invi Image */
+	DRIVER( magic10 )	/* (c) 1995 A.W.P. Games */
+	DRIVER( magic10a )	/* (c) 1995 A.W.P. Games */
+	DRIVER( magic10_2 )	/* (c) 1997 ABM Games */
 
 #endif	/* DRIVER_RECURSIVE */

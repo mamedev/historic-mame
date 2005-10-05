@@ -799,9 +799,9 @@ ROM_END
 
 /******************************************************************************/
 
-GAME( 1988, lastduel, 0,        lastduel, lastduel, 0, ROT270, "Capcom", "Last Duel (US set 1)" )
-GAME( 1988, lstduela, lastduel, lastduel, lastduel, 0, ROT270, "Capcom", "Last Duel (US set 2)" )
-GAME( 1988, lstduelb, lastduel, lastduel, lastduel, 0, ROT270, "bootleg", "Last Duel (bootleg)" )
-GAME( 1989, madgear,  0,        madgear,  madgear,  0, ROT270, "Capcom", "Mad Gear (US)" )
-GAME( 1989, madgearj, madgear,  madgear,  madgear,  0, ROT270, "Capcom", "Mad Gear (Japan)" )
-GAME( 1988, ledstorm, madgear,  madgear,  madgear,  0, ROT270, "Capcom", "Led Storm (US)" )
+GAME( 1988, lastduel, 0,        lastduel, lastduel, 0, ROT270, "Capcom", "Last Duel (US set 1)", 0 )
+GAME( 1988, lstduela, lastduel, lastduel, lastduel, 0, ROT270, "Capcom", "Last Duel (US set 2)", 0 )
+GAME( 1988, lstduelb, lastduel, lastduel, lastduel, 0, ROT270, "bootleg", "Last Duel (bootleg)", 0 )
+GAME( 1989, madgear,  0,        madgear,  madgear,  0, ROT270, "Capcom", "Mad Gear (US)", 0 )
+GAME( 1989, madgearj, madgear,  madgear,  madgear,  0, ROT270, "Capcom", "Mad Gear (Japan)", 0 )
+GAME( 1988, ledstorm, madgear,  madgear,  madgear,  0, ROT270, "Capcom", "Led Storm (US)", 0 )

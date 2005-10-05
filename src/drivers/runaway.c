@@ -435,5 +435,5 @@ ROM_START( qwak )
 ROM_END
 
 
-GAME( 1982, qwak,    0, qwak,    qwak,    0, ROT270, "Atari", "Qwak (prototype)" )
-GAME( 1982, runaway, 0, runaway, runaway, 0, ROT0,   "Atari", "Runaway (prototype)" )
+GAME( 1982, qwak,    0, qwak,    qwak,    0, ROT270, "Atari", "Qwak (prototype)", 0 )
+GAME( 1982, runaway, 0, runaway, runaway, 0, ROT0,   "Atari", "Runaway (prototype)", 0 )

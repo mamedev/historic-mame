@@ -460,4 +460,4 @@ ROM_END
 
 
 
-GAMEX( 1981, olibochu, 0, olibochu, olibochu, 0, ROT270, "Irem + GDI", "Oli-Boo-Chu", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1981, olibochu, 0, olibochu, olibochu, 0, ROT270, "Irem + GDI", "Oli-Boo-Chu", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

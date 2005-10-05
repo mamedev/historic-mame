@@ -942,6 +942,6 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 
 
 
-GAME( 1976, lazercmd, 0, lazercmd, lazercmd, lazercmd, ROT0, "Meadows Games, Inc.", "Lazer Command" )
-GAMEX(1977, medlanes, 0, medlanes, medlanes, medlanes, ROT0, "Meadows Games, Inc.", "Meadows Lanes", GAME_IMPERFECT_SOUND )
-GAME( 1976, bbonk,	  0, bbonk,    bbonk,	 bbonk,    ROT0, "Meadows Games, Inc.", "Bigfoot Bonkers" )
+GAME( 1976, lazercmd, 0, lazercmd, lazercmd, lazercmd, ROT0, "Meadows Games, Inc.", "Lazer Command", 0 )
+GAME( 1977, medlanes, 0, medlanes, medlanes, medlanes, ROT0, "Meadows Games, Inc.", "Meadows Lanes", GAME_IMPERFECT_SOUND )
+GAME( 1976, bbonk,	  0, bbonk,    bbonk,	 bbonk,    ROT0, "Meadows Games, Inc.", "Bigfoot Bonkers", 0 )

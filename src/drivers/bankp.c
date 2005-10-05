@@ -231,4 +231,4 @@ ROM_START( bankp )
 ROM_END
 
 
-GAME( 1984, bankp, 0, bankp, bankp, 0, ROT0, "[Sanritsu] Sega", "Bank Panic" )
+GAME( 1984, bankp, 0, bankp, bankp, 0, ROT0, "[Sanritsu] Sega", "Bank Panic", 0 )

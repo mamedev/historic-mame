@@ -780,8 +780,8 @@ ROM_END
 ***************************************************************************/
 
 /* ESD 11-09-98 */
-GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0, "ESD", "Multi Champ (Korea)" )
+GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0, "ESD", "Multi Champ (Korea)", 0 )
 
 /* ESD 08-26-1999 */
-GAME( 1999, mchampdx, 0, mchampdx, hedpanic, 0, ROT0, "ESD", "Multi Champ Deluxe" )
-GAME( 2000, hedpanic, 0, hedpanic, hedpanic, 0, ROT0, "ESD / Fuuki", "Head Panic (Korea?)" )
+GAME( 1999, mchampdx, 0, mchampdx, hedpanic, 0, ROT0, "ESD", "Multi Champ Deluxe", 0 )
+GAME( 2000, hedpanic, 0, hedpanic, hedpanic, 0, ROT0, "ESD / Fuuki", "Head Panic (Korea?)", 0 )

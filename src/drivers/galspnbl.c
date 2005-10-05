@@ -418,5 +418,5 @@ ROM_END
 
 
 
-GAMEX( 1995, hotpinbl, 0, hotpinbl, hotpinbl, 0, ROT90, "Comad & New Japan System", "Hot Pinball", GAME_NO_COCKTAIL )
-GAMEX( 1996, galspnbl, 0, hotpinbl, galspnbl, 0, ROT90, "Comad", "Gals Pinball", GAME_NO_COCKTAIL )
+GAME( 1995, hotpinbl, 0, hotpinbl, hotpinbl, 0, ROT90, "Comad & New Japan System", "Hot Pinball", GAME_NO_COCKTAIL )
+GAME( 1996, galspnbl, 0, hotpinbl, galspnbl, 0, ROT90, "Comad", "Gals Pinball", GAME_NO_COCKTAIL )

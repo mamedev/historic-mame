@@ -345,4 +345,4 @@ ROM_END
 
 /******************************************************************************/
 
-GAME( 1991, lemmings, 0, lemmings, lemmings, 0, ROT0, "Data East USA", "Lemmings (US Prototype)" )
+GAME( 1991, lemmings, 0, lemmings, lemmings, 0, ROT0, "Data East USA", "Lemmings (US Prototype)", 0 )

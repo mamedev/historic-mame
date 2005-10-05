@@ -602,5 +602,5 @@ static DRIVER_INIT( omegrace )
  *
  *************************************/
 
-GAMEX( 1981, omegrace, 0,        omegrace, omegrace, omegrace, ROT0, "Midway",         "Omega Race", GAME_NO_COCKTAIL )
-GAMEX( 1981, deltrace, omegrace, omegrace, omegrace, omegrace, ROT0, "Allied Leisure", "Delta Race", GAME_NO_COCKTAIL )
+GAME( 1981, omegrace, 0,        omegrace, omegrace, omegrace, ROT0, "Midway",         "Omega Race", GAME_NO_COCKTAIL )
+GAME( 1981, deltrace, omegrace, omegrace, omegrace, omegrace, ROT0, "Allied Leisure", "Delta Race", GAME_NO_COCKTAIL )

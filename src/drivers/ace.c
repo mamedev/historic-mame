@@ -360,4 +360,4 @@ ROM_START( ace )
 
 ROM_END
 
-GAMEX( 1976, ace, 0, ace, ace, 0, ROT0, "Allied Leisure", "Ace", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAME( 1976, ace, 0, ace, ace, 0, ROT0, "Allied Leisure", "Ace", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )

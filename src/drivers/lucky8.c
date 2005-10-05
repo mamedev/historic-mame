@@ -435,4 +435,4 @@ static DRIVER_INIT( lucky8 )
 	ROM[0x0010] = 0xc9;
 }
 
-GAMEX( 1989, lucky8, 0, lucky8, lucky8, lucky8, ROT0, "Falcon", "Lucky 8 Lines", GAME_NOT_WORKING )
+GAME( 1989, lucky8, 0, lucky8, lucky8, lucky8, ROT0, "Falcon", "Lucky 8 Lines", GAME_NOT_WORKING )

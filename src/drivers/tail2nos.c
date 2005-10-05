@@ -376,5 +376,5 @@ ROM_END
 
 
 
-GAMEX( 1989, tail2nos, 0,        tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Tail to Nose - Great Championship", GAME_NO_COCKTAIL )
-GAMEX( 1989, sformula, tail2nos, tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Super Formula (Japan)", GAME_NO_COCKTAIL )
+GAME( 1989, tail2nos, 0,        tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Tail to Nose - Great Championship", GAME_NO_COCKTAIL )
+GAME( 1989, sformula, tail2nos, tail2nos, tail2nos, 0, ROT90, "V-System Co.", "Super Formula (Japan)", GAME_NO_COCKTAIL )

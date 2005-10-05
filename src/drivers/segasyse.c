@@ -934,12 +934,12 @@ ROM_END
    AS SOON AS POSSIBLE, the batteries on these are dying at an ever increasing rate */
 
 ROM_START( fantzn2 )
-	ROM_REGION( 0x50000, REGION_CPU1, 0 )
-	ROM_LOAD( "fz2_ic7.rom",	0x00000, 0x08000, CRC(76db7b7b) SHA1(d60e2961fc893dcb4445aed5f67515cbd25b610f) )
-	ROM_LOAD( "fz2_ic5.rom",	0x10000, 0x10000, CRC(57b45681) SHA1(1ae6d0d58352e246a4ec4e1ce02b0417257d5d20) )
-	ROM_LOAD( "fz2_ic4.rom",	0x20000, 0x10000, CRC(6f7a9f5f) SHA1(b53aa2eded781c80466a79b7d81383b9a875d0be) )
-	ROM_LOAD( "fz2_ic3.rom",	0x30000, 0x10000, CRC(a231dc85) SHA1(45b94fdbde28c02e88546178ef3e8f9f3a96ab86) )
-	ROM_LOAD( "fz2_ic2.rom",	0x40000, 0x10000, CRC(b14db5af) SHA1(04c7fb659385438b3d8f9fb66800eb7b6373bda9) )
+	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "epr-11416.ic7",	0x00000, 0x08000, CRC(76db7b7b) SHA1(d60e2961fc893dcb4445aed5f67515cbd25b610f) )
+	ROM_LOAD( "epr-11415.ic5",	0x10000, 0x10000, CRC(57b45681) SHA1(1ae6d0d58352e246a4ec4e1ce02b0417257d5d20) )
+	ROM_LOAD( "epr-11414.ic4",	0x20000, 0x10000, CRC(6f7a9f5f) SHA1(b53aa2eded781c80466a79b7d81383b9a875d0be) )
+	ROM_LOAD( "epr-11413.ic3",	0x30000, 0x10000, CRC(a231dc85) SHA1(45b94fdbde28c02e88546178ef3e8f9f3a96ab86) )
+	ROM_LOAD( "epr-11412.ic2",	0x40000, 0x10000, CRC(b14db5af) SHA1(04c7fb659385438b3d8f9fb66800eb7b6373bda9) )
 ROM_END
 
 ROM_START( opaopa )
@@ -955,10 +955,10 @@ ROM_END
 
 /*-- Game Drivers --*/
 
-GAME( 1985, hangonjr, 0,        segae, hangonjr, hangonjr, ROT0,  "Sega", "Hang-On Jr." )
-GAME( 1986, transfrm, 0,        segae, transfrm, segasyse, ROT0,  "Sega", "Transformer" )
-GAMEX(1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro Flash (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1986, ridleofp, 0,        segae, ridleofp, ridleofp, ROT90, "Sega / Nasco", "Riddle of Pythagoras (Japan)" )
-GAMEX(198?, fantzn2,  0,        segae, dummy,    segasyse, ROT0,  "Sega", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
-GAMEX(198?, opaopa,   0,        segae, dummy,    segasyse, ROT0,  "Sega", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */
-GAME( 1988, tetrisse, 0,        segae, tetrisse, segasyse, ROT0,  "Sega", "Tetris (Japan, System E)" )
+GAME( 1985, hangonjr, 0,        segae, hangonjr, hangonjr, ROT0,  "Sega", "Hang-On Jr.", 0 )
+GAME( 1986, transfrm, 0,        segae, transfrm, segasyse, ROT0,  "Sega", "Transformer", 0 )
+GAME( 1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro Flash (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1986, ridleofp, 0,        segae, ridleofp, ridleofp, ROT90, "Sega / Nasco", "Riddle of Pythagoras (Japan)", 0 )
+GAME( 1988, fantzn2,  0,        segae, dummy,    segasyse, ROT0,  "Sega", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
+GAME( 198?, opaopa,   0,        segae, dummy,    segasyse, ROT0,  "Sega", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */
+GAME( 1988, tetrisse, 0,        segae, tetrisse, segasyse, ROT0,  "Sega", "Tetris (Japan, System E)", 0 )

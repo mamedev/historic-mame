@@ -465,8 +465,8 @@ ROM_END
 
 
 
-GAME( 1982, timeplt,  0,       timeplt, timeplt, 0, ROT90,  "Konami", "Time Pilot" )
-GAME( 1982, timepltc, timeplt, timeplt, timeplt, 0, ROT90,  "Konami (Centuri license)", "Time Pilot (Centuri)" )
-GAME( 1982, timeplta, timeplt, timeplt, timeplt, 0, ROT90,  "Konami (Atari license)", "Time Pilot (Atari)" )
-GAME( 1982, spaceplt, timeplt, timeplt, timeplt, 0, ROT90,  "bootleg", "Space Pilot" )
-GAME( 1988, psurge,   0,       timeplt, psurge,  0, ROT270, "<unknown>", "Power Surge" )
+GAME( 1982, timeplt,  0,       timeplt, timeplt, 0, ROT90,  "Konami", "Time Pilot", 0 )
+GAME( 1982, timepltc, timeplt, timeplt, timeplt, 0, ROT90,  "Konami (Centuri license)", "Time Pilot (Centuri)", 0 )
+GAME( 1982, timeplta, timeplt, timeplt, timeplt, 0, ROT90,  "Konami (Atari license)", "Time Pilot (Atari)", 0 )
+GAME( 1982, spaceplt, timeplt, timeplt, timeplt, 0, ROT90,  "bootleg", "Space Pilot", 0 )
+GAME( 1988, psurge,   0,       timeplt, psurge,  0, ROT270, "<unknown>", "Power Surge", 0 )

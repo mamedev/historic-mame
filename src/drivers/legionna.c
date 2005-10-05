@@ -2191,17 +2191,17 @@ static DRIVER_INIT( legionna )
 
 
 
-GAMEX( 1992, legionna, 0,        legionna, legionna, legionna, ROT0, "Tad", "Legionnaire (World)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1992, legionnu, legionna, legionna, legionna, legionna, ROT0, "Tad (Fabtek license)", "Legionnaire (US)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, legionna, 0,        legionna, legionna, legionna, ROT0, "Tad", "Legionnaire (World)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, legionnu, legionna, legionna, legionna, legionna, ROT0, "Tad (Fabtek license)", "Legionnaire (US)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
-GAMEX( 1992, heatbrl,  0,        heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (World)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1992, heatbrlo, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (World old version)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1992, heatbrlu, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (US)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, heatbrl,  0,        heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (World)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, heatbrlo, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (World old version)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, heatbrlu, heatbrl,  heatbrl,  heatbrl,  0,        ROT0, "Tad", "Heated Barrel (US)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
-GAMEX( 1993, godzilla, 0,        godzilla, godzilla, 0,        ROT0, "Banpresto", "Godzilla", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1993, denjinmk, 0,        godzilla, godzilla, 0,        ROT0, "Banpresto", "Denjin Makai", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1993, sdgndmrb, 0,        sdgndmrb, sdgndmrb, 0,	       ROT0, "Banpresto", "SD Gundam Sangokushi Rainbow Tairiku Senki", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1993, godzilla, 0,        godzilla, godzilla, 0,        ROT0, "Banpresto", "Godzilla", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1993, denjinmk, 0,        godzilla, godzilla, 0,        ROT0, "Banpresto", "Denjin Makai", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1993, sdgndmrb, 0,        sdgndmrb, sdgndmrb, 0,	       ROT0, "Banpresto", "SD Gundam Sangokushi Rainbow Tairiku Senki", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
-GAMEX( 1992, cupsoc,   0,        cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Seibu Cup Soccer", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1992, cupsoc2,  cupsoc,   cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Seibu Cup Soccer (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1992, olysoc92, cupsoc,   cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Olympic Soccer '92", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, cupsoc,   0,        cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Seibu Cup Soccer", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, cupsoc2,  cupsoc,   cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Seibu Cup Soccer (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1992, olysoc92, cupsoc,   cupsoc,  cupsoc,    0,        ROT0, "Seibu", "Olympic Soccer '92", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

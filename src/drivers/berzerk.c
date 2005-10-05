@@ -392,6 +392,6 @@ ROM_END
 
 
 
-GAME( 1980, berzerk,  0,       berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 1)" )
-GAME( 1980, berzerk1, berzerk, berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 2)" )
-GAME( 1982, frenzy,   0,       frenzy,  frenzy,  0, ROT0, "Stern", "Frenzy" )
+GAME( 1980, berzerk,  0,       berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 1)", 0 )
+GAME( 1980, berzerk1, berzerk, berzerk, berzerk, 0, ROT0, "Stern", "Berzerk (set 2)", 0 )
+GAME( 1982, frenzy,   0,       frenzy,  frenzy,  0, ROT0, "Stern", "Frenzy", 0 )

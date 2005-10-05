@@ -428,7 +428,7 @@ static DRIVER_INIT( fireone )
  *
  *************************************/
 
-GAMEX( 1979, starfire, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 1)", GAME_NO_SOUND )
-GAMEX( 1979, starfira, starfire, starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 2)", GAME_NO_SOUND )
-GAMEX( 1979, fireone,  0,        starfire, fireone,  fireone,  ROT0, "Exidy", "Fire One", GAME_NO_SOUND )
-GAMEX( 1979, starfir2, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire 2", GAME_NO_SOUND )
+GAME( 1979, starfire, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 1)", GAME_NO_SOUND )
+GAME( 1979, starfira, starfire, starfire, starfire, starfire, ROT0, "Exidy", "Star Fire (set 2)", GAME_NO_SOUND )
+GAME( 1979, fireone,  0,        starfire, fireone,  fireone,  ROT0, "Exidy", "Fire One", GAME_NO_SOUND )
+GAME( 1979, starfir2, 0,        starfire, starfire, starfire, ROT0, "Exidy", "Star Fire 2", GAME_NO_SOUND )

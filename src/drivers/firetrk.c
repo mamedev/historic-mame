@@ -1208,6 +1208,6 @@ ROM_START( montecar )
 ROM_END
 
 
-GAME( 1977, superbug, 0, superbug, superbug, superbug, ROT270, "Atari", "Super Bug" )
-GAME( 1978, firetrk,  0, firetrk,  firetrk,  firetrk,  ROT270, "Atari", "Fire Truck" )
-GAME( 1979, montecar, 0, montecar, montecar, montecar, ROT270, "Atari", "Monte Carlo" )
+GAME( 1977, superbug, 0, superbug, superbug, superbug, ROT270, "Atari", "Super Bug", 0 )
+GAME( 1978, firetrk,  0, firetrk,  firetrk,  firetrk,  ROT270, "Atari", "Fire Truck", 0 )
+GAME( 1979, montecar, 0, montecar, montecar, montecar, ROT270, "Atari", "Monte Carlo", 0 )

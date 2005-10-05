@@ -433,5 +433,5 @@ ROM_START( sprint4a )
 ROM_END
 
 
-GAMEX( 1977, sprint4,  0,       sprint4, sprint4, 0, ROT0, "Atari", "Sprint 4 (set 1)", GAME_NO_SOUND )
-GAMEX( 1977, sprint4a, sprint4, sprint4, sprint4, 0, ROT0, "Atari", "Sprint 4 (set 2)", GAME_NO_SOUND )
+GAME( 1977, sprint4,  0,       sprint4, sprint4, 0, ROT0, "Atari", "Sprint 4 (set 1)", GAME_NO_SOUND )
+GAME( 1977, sprint4a, sprint4, sprint4, sprint4, 0, ROT0, "Atari", "Sprint 4 (set 2)", GAME_NO_SOUND )

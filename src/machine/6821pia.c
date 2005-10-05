@@ -93,48 +93,6 @@ static const UINT8 swizzle_address[4] = { 0, 2, 1, 3 };
 
 
 
-/******************* stave state *******************/
-
-static void update_6821_interrupts(struct pia6821 *p);
-
-static void pia_postload(int which)
-{
-	struct pia6821 *p = pia + which;
-	update_6821_interrupts(p);
-	if (p->intf->out_a_func && p->ddr_a) p->intf->out_a_func(0, p->out_a & p->ddr_a);
-	if (p->intf->out_b_func && p->ddr_b) p->intf->out_b_func(0, p->out_b & p->ddr_b);
-	if (p->intf->out_ca2_func) p->intf->out_ca2_func(0, p->out_ca2);
-	if (p->intf->out_cb2_func) p->intf->out_cb2_func(0, p->out_cb2);
-}
-
-void pia_init(int count)
-{
-	int i;
-	for (i = 0; i < count; i++)
-	{
-		state_save_register_UINT8("6821pia", i, "in_a",		&pia[i].in_a, 1);
-		state_save_register_UINT8("6821pia", i, "in_ca1",	&pia[i].in_ca1, 1);
-		state_save_register_UINT8("6821pia", i, "in_ca2",	&pia[i].in_ca2, 1);
-		state_save_register_UINT8("6821pia", i, "out_a",	&pia[i].out_a, 1);
-		state_save_register_UINT8("6821pia", i, "out_ca2",	&pia[i].out_ca2, 1);
-		state_save_register_UINT8("6821pia", i, "ddr_a",	&pia[i].ddr_a, 1);
-		state_save_register_UINT8("6821pia", i, "ctl_a",	&pia[i].ctl_a, 1);
-		state_save_register_UINT8("6821pia", i, "irq_a1",	&pia[i].irq_a1, 1);
-		state_save_register_UINT8("6821pia", i, "irq_a2",	&pia[i].irq_a2, 1);
-		state_save_register_UINT8("6821pia", i, "in_b",		&pia[i].in_b, 1);
-		state_save_register_UINT8("6821pia", i, "in_cb1",	&pia[i].in_cb1, 1);
-		state_save_register_UINT8("6821pia", i, "in_cb2",	&pia[i].in_cb2, 1);
-		state_save_register_UINT8("6821pia", i, "out_b",	&pia[i].out_b, 1);
-		state_save_register_UINT8("6821pia", i, "out_cb2",	&pia[i].out_cb2, 1);
-		state_save_register_UINT8("6821pia", i, "ddr_b",	&pia[i].ddr_b, 1);
-		state_save_register_UINT8("6821pia", i, "ctl_b",	&pia[i].ctl_b, 1);
-		state_save_register_UINT8("6821pia", i, "irq_b1",	&pia[i].irq_b1, 1);
-		state_save_register_UINT8("6821pia", i, "irq_b2",	&pia[i].irq_b2, 1);
-		state_save_register_UINT8("6821pia", i, "in_set",	&pia[i].in_set, 1);
-		state_save_register_func_postload_int(pia_postload, i);
-	}
-}
-
 /******************* un-configuration *******************/
 
 void pia_unconfig(void)
@@ -147,27 +105,37 @@ void pia_unconfig(void)
 
 void pia_config(int which, int addressing, const struct pia6821_interface *intf)
 {
-	if (which >= MAX_PIA) return;
+	if (which >= MAX_PIA)
+		osd_die("pia_config called on an invalid PIA!");
+	if (!intf)
+		osd_die("pia_config called with an invalid interface!");
+
 	memset(&pia[which], 0, sizeof(pia[0]));
-	if (!intf) return;
+
 	pia[which].intf = intf;
 	pia[which].addr = addressing;
-	// set default read values.
-	// Ports A,CA1,CA2 default to 1
-	// Ports B,CB1,CB2 are three-state and undefined (set to 0)
-	pia[which].in_a = pia[which].in_ca1 = pia[which].in_ca2 = 0xff;
-	if ((intf->in_a_func) && ((FPTR)(intf->in_a_func) <= 0x100))
-		{ pia[which].in_a = ((FPTR)(intf->in_a_func) - 1); pia[which].in_set |= PIA_IN_SET_A; }
-	if ((intf->in_b_func) && ((FPTR)(intf->in_b_func) <= 0x100))
-		{ pia[which].in_b = ((FPTR)(intf->in_b_func) - 1); pia[which].in_set |= PIA_IN_SET_B; }
-	if ((intf->in_ca1_func) && ((FPTR)(intf->in_ca1_func) <= 0x100))
-		{ pia[which].in_ca1 = ((FPTR)(intf->in_ca1_func) - 1); pia[which].in_set |= PIA_IN_SET_CA1; }
-	if ((intf->in_ca2_func) && ((FPTR)(intf->in_ca2_func) <= 0x100))
-		{ pia[which].in_ca2 = ((FPTR)(intf->in_ca2_func) - 1); pia[which].in_set |= PIA_IN_SET_CA2; }
-	if ((intf->in_cb1_func) && ((FPTR)(intf->in_cb1_func) <= 0x100))
-		{ pia[which].in_cb1 = ((FPTR)(intf->in_cb1_func) - 1); pia[which].in_set |= PIA_IN_SET_CB1; }
-	if ((intf->in_cb2_func) && ((FPTR)(intf->in_cb2_func) <= 0x100))
-		{ pia[which].in_cb2 = ((FPTR)(intf->in_cb2_func) - 1); pia[which].in_set |= PIA_IN_SET_CB2; }
+
+	state_save_register_UINT8("6821pia", which, "in_a",			&pia[which].in_a, 1);
+	state_save_register_UINT8("6821pia", which, "in_ca1",		&pia[which].in_ca1, 1);
+	state_save_register_UINT8("6821pia", which, "in_ca2",		&pia[which].in_ca2, 1);
+	state_save_register_UINT8("6821pia", which, "out_a",		&pia[which].out_a, 1);
+	state_save_register_UINT8("6821pia", which, "out_ca2",		&pia[which].out_ca2, 1);
+	state_save_register_UINT8("6821pia", which, "ddr_a",		&pia[which].ddr_a, 1);
+	state_save_register_UINT8("6821pia", which, "ctl_a",		&pia[which].ctl_a, 1);
+	state_save_register_UINT8("6821pia", which, "irq_a1",		&pia[which].irq_a1, 1);
+	state_save_register_UINT8("6821pia", which, "irq_a2",		&pia[which].irq_a2, 1);
+	state_save_register_UINT8("6821pia", which, "irq_a_state", 	&pia[which].irq_a_state, 1);
+	state_save_register_UINT8("6821pia", which, "in_b",			&pia[which].in_b, 1);
+	state_save_register_UINT8("6821pia", which, "in_cb1",		&pia[which].in_cb1, 1);
+	state_save_register_UINT8("6821pia", which, "in_cb2",		&pia[which].in_cb2, 1);
+	state_save_register_UINT8("6821pia", which, "out_b",		&pia[which].out_b, 1);
+	state_save_register_UINT8("6821pia", which, "out_cb2",		&pia[which].out_cb2, 1);
+	state_save_register_UINT8("6821pia", which, "ddr_b",		&pia[which].ddr_b, 1);
+	state_save_register_UINT8("6821pia", which, "ctl_b",		&pia[which].ctl_b, 1);
+	state_save_register_UINT8("6821pia", which, "irq_b1",		&pia[which].irq_b1, 1);
+	state_save_register_UINT8("6821pia", which, "irq_b2",		&pia[which].irq_b2, 1);
+	state_save_register_UINT8("6821pia", which, "irq_b_state",	&pia[which].irq_b_state, 1);
+	state_save_register_UINT8("6821pia", which, "in_set",		&pia[which].in_set, 1);
 }
 
 
@@ -178,7 +146,54 @@ void pia_reset(void)
 	int i;
 
 	/* zap each structure, preserving the interface and swizzle */
-	for (i = 0; i < MAX_PIA; i++) pia_config(i, pia[i].addr, pia[i].intf);
+	for (i = 0; i < MAX_PIA; i++)
+	{
+		const struct pia6821_interface *intf = pia[i].intf;
+		int addressing = pia[i].addr;
+
+		memset(&pia[i], 0, sizeof(pia[i]));
+
+		pia[i].intf = intf;
+		pia[i].addr = addressing;
+
+		// set default read values.
+		// Ports A,CA1,CA2 default to 1
+		// Ports B,CB1,CB2 are three-state and undefined (set to 0)
+		pia[i].in_a = pia[i].in_ca1 = pia[i].in_ca2 = 0xff;
+		if (intf)
+		{
+			if ((intf->in_a_func) && ((FPTR)(intf->in_a_func) <= 0x100))
+			{
+				pia[i].in_a = ((FPTR)(intf->in_a_func) - 1);
+				pia[i].in_set |= PIA_IN_SET_A;
+			}
+			if ((intf->in_b_func) && ((FPTR)(intf->in_b_func) <= 0x100))
+			{
+				pia[i].in_b = ((FPTR)(intf->in_b_func) - 1);
+				pia[i].in_set |= PIA_IN_SET_B;
+			}
+			if ((intf->in_ca1_func) && ((FPTR)(intf->in_ca1_func) <= 0x100))
+			{
+				pia[i].in_ca1 = ((FPTR)(intf->in_ca1_func) - 1);
+				pia[i].in_set |= PIA_IN_SET_CA1;
+			}
+			if ((intf->in_ca2_func) && ((FPTR)(intf->in_ca2_func) <= 0x100))
+			{
+				pia[i].in_ca2 = ((FPTR)(intf->in_ca2_func) - 1);
+				pia[i].in_set |= PIA_IN_SET_CA2;
+			}
+			if ((intf->in_cb1_func) && ((FPTR)(intf->in_cb1_func) <= 0x100))
+			{
+				pia[i].in_cb1 = ((FPTR)(intf->in_cb1_func) - 1);
+				pia[i].in_set |= PIA_IN_SET_CB1;
+			}
+			if ((intf->in_cb2_func) && ((FPTR)(intf->in_cb2_func) <= 0x100))
+			{
+				pia[i].in_cb2 = ((FPTR)(intf->in_cb2_func) - 1);
+				pia[i].in_set |= PIA_IN_SET_CB2;
+			}
+		}
+	}
 }
 
 

@@ -236,6 +236,6 @@ ROM_START( futflash )
 	ROM_LOAD( "ff.8",         0xf000, 0x0800, CRC(623f558f) SHA1(be6c6565df658555f21c43a8c2459cf399794a84) )
 ROM_END
 
-GAMEX( 1981, laserbas, 0,        laserbas, laserbas, 0, ROT270, "Amstar/HOEI", "Laser Base (set 1)", GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX( 1981, laserbsa, laserbas, laserbas, laserbas, 0, ROT270, "Amstar/HOEI", "Laser Base (set 2)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 19??, futflash, laserbas, laserbas, laserbas, 0, ROT270, "HOEI",        "Future Flash",       GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1981, laserbas, 0,        laserbas, laserbas, 0, ROT270, "Amstar/HOEI", "Laser Base (set 1)", GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1981, laserbsa, laserbas, laserbas, laserbas, 0, ROT270, "Amstar/HOEI", "Laser Base (set 2)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 19??, futflash, laserbas, laserbas, laserbas, 0, ROT270, "HOEI",        "Future Flash",       GAME_NO_SOUND | GAME_NOT_WORKING)

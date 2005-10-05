@@ -558,6 +558,6 @@ ROM_END
 
 
 
-GAME( 1983, mario,   0,     mario, mario,   mario, ROT180, "Nintendo of America", "Mario Bros. (US)" )
-GAME( 1983, mariojp, mario, mario, mariojp, mario, ROT180, "Nintendo", "Mario Bros. (Japan)" )
-GAME( 1983, masao,   mario, masao, mario,   mario, ROT180, "bootleg", "Masao" )
+GAME( 1983, mario,   0,     mario, mario,   mario, ROT180, "Nintendo of America", "Mario Bros. (US)", 0 )
+GAME( 1983, mariojp, mario, mario, mariojp, mario, ROT180, "Nintendo", "Mario Bros. (Japan)", 0 )
+GAME( 1983, masao,   mario, masao, mario,   mario, ROT180, "bootleg", "Masao", 0 )

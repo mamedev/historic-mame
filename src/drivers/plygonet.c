@@ -735,4 +735,4 @@ ROM_START( plygonet )
 ROM_END
 
 /*          ROM        parent   machine    inp        init */
-GAMEX( 1993, plygonet, 0,       plygonet, polygonet, polygonet, ROT90, "Konami", "Polygonet Commanders (ver UAA)", GAME_NOT_WORKING )
+GAME( 1993, plygonet, 0,       plygonet, polygonet, polygonet, ROT90, "Konami", "Polygonet Commanders (ver UAA)", GAME_NOT_WORKING )

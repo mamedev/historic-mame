@@ -474,4 +474,4 @@ ROM_END
 
 ******************************************************************************/
 
-GAMEX( 1998, inufuku, 0, inufuku, inufuku, inufuku, ROT0, "Video System Co.", "Quiz & Variety Sukusuku Inufuku (Japan)", GAME_NO_COCKTAIL )
+GAME( 1998, inufuku, 0, inufuku, inufuku, inufuku, ROT0, "Video System Co.", "Quiz & Variety Sukusuku Inufuku (Japan)", GAME_NO_COCKTAIL )

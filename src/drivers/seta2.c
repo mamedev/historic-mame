@@ -1646,11 +1646,11 @@ ROM_START( penbros )
 	ROM_LOAD( "u18.bin", 0x100000, 0x200000, CRC(de4e65e2) SHA1(82d4e590c714b3e9bf0ffaf1500deb24fd315595) )
 ROM_END
 
-GAME(  1994, gundamex, 0, gundamex, gundamex, 0, 		ROT0, "Banpresto",           "Mobile Suit Gundam EX Revue" )
-GAMEX( 1995, grdians,  0, grdians,  grdians,  0,  		ROT0, "Banpresto",           "Guardians / Denjin Makai II",                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )	// Displays (c) Winky Soft at game's end.
-GAMEX( 1996, mj4simai, 0, mj4simai, mj4simai, 0,        ROT0, "Maboroshi Ware",      "Wakakusamonogatari Mahjong Yonshimai (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, myangel2, 0, myangel2, myangel2, 0,        ROT0, "Namco",               "Kosodate Quiz My Angel 2 (Japan)",             GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  0,		ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",                    GAME_NO_COCKTAIL )
-GAMEX( 2000, penbros,  0, penbros,  penbros,  0,  		ROT0, "Subsino",             "Penguin Brothers (Japan)",                     GAME_NO_COCKTAIL )
+GAME(  1994, gundamex, 0, gundamex, gundamex, 0, 		ROT0, "Banpresto",           "Mobile Suit Gundam EX Revue", 0 )
+GAME( 1995, grdians,  0, grdians,  grdians,  0,  		ROT0, "Banpresto",           "Guardians / Denjin Makai II",                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )	// Displays (c) Winky Soft at game's end.
+GAME( 1996, mj4simai, 0, mj4simai, mj4simai, 0,        ROT0, "Maboroshi Ware",      "Wakakusamonogatari Mahjong Yonshimai (Japan)", GAME_NO_COCKTAIL )
+GAME( 1996, myangel,  0, myangel,  myangel,  0,        ROT0, "Namco",               "Kosodate Quiz My Angel (Japan)",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1997, myangel2, 0, myangel2, myangel2, 0,        ROT0, "Namco",               "Kosodate Quiz My Angel 2 (Japan)",             GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1999, pzlbowl,  0, pzlbowl,  pzlbowl,  0,		ROT0, "Nihon System / Moss", "Puzzle De Bowling (Japan)",                    GAME_NO_COCKTAIL )
+GAME( 2000, penbros,  0, penbros,  penbros,  0,  		ROT0, "Subsino",             "Penguin Brothers (Japan)",                     GAME_NO_COCKTAIL )
 

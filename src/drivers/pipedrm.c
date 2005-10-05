@@ -789,6 +789,6 @@ static DRIVER_INIT( hatris )
  *
  *************************************/
 
-GAME( 1990, pipedrm,  0,       pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (US)" )
-GAME( 1990, pipedrmj, pipedrm, pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (Japan)" )
-GAME( 1990, hatris,   0,       hatris,  hatris,  hatris,  ROT0, "Video System Co.", "Hatris (Japan)" )
+GAME( 1990, pipedrm,  0,       pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (US)", 0 )
+GAME( 1990, pipedrmj, pipedrm, pipedrm, pipedrm, pipedrm, ROT0, "Video System Co.", "Pipe Dream (Japan)", 0 )
+GAME( 1990, hatris,   0,       hatris,  hatris,  hatris,  ROT0, "Video System Co.", "Hatris (Japan)", 0 )

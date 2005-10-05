@@ -336,4 +336,4 @@ DRIVER_INIT( cbasebal )
 }
 
 
-GAME( 1989, cbasebal, 0, cbasebal, cbasebal, cbasebal, ROT0, "Capcom", "Capcom Baseball (Japan)" )
+GAME( 1989, cbasebal, 0, cbasebal, cbasebal, cbasebal, ROT0, "Capcom", "Capcom Baseball (Japan)", 0 )

@@ -354,4 +354,4 @@ ROM_START( orbit )
 ROM_END
 
 
-GAME( 1978, orbit, 0, orbit, orbit, 0, 0, "Atari", "Orbit" )
+GAME( 1978, orbit, 0, orbit, orbit, 0, 0, "Atari", "Orbit", 0 )

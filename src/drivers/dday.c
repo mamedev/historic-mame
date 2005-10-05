@@ -361,5 +361,5 @@ ROM_START( ddayc )
 ROM_END
 
 
-GAMEX( 1982, dday,  0,    dday, dday,  0, ROT0, "Olympia", "D-Day", GAME_IMPERFECT_COLORS )
-GAMEX( 1982, ddayc, dday, dday, ddayc, 0, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", GAME_IMPERFECT_COLORS )
+GAME( 1982, dday,  0,    dday, dday,  0, ROT0, "Olympia", "D-Day", GAME_IMPERFECT_COLORS )
+GAME( 1982, ddayc, dday, dday, ddayc, 0, ROT0, "Olympia (Centuri license)", "D-Day (Centuri)", GAME_IMPERFECT_COLORS )

@@ -524,5 +524,5 @@ ROM_START( ssfindo )
 
 ROM_END
 
-GAMEX(1999, ssfindo, 0,        ssfindo,  ssfindo,  0, ROT0, "Icarus", "See See Find Out", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAME( 1999, ssfindo, 0,        ssfindo,  ssfindo,  0, ROT0, "Icarus", "See See Find Out", GAME_NO_SOUND|GAME_NOT_WORKING )
 

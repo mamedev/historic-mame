@@ -669,10 +669,6 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline )
 
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
-		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= SNES_VRAM_SIZE )
-			continue;
-
 		/* Have we scrolled into the next map? */
 		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
 		{
@@ -680,6 +676,7 @@ static void snes_update_line_2( UINT8 screen, UINT8 layer, UINT16 curline )
 			tilemap -= ii;
 			hscroll = 0;	/* Make sure we don't do this again */
 		}
+		if (tilemap > 0x10000) tilemap %= 0x10000;
 		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
 		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
@@ -800,10 +797,6 @@ static void snes_update_line_2_hi( UINT8 screen, UINT8 layer, UINT16 curline )
 
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
-		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= SNES_VRAM_SIZE )
-			continue;
-
 		/* Have we scrolled into the next map? */
 		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
 		{
@@ -811,6 +804,7 @@ static void snes_update_line_2_hi( UINT8 screen, UINT8 layer, UINT16 curline )
 			tilemap -= ii;
 			hscroll = 0;	/* Make sure we don't do this again */
 		}
+		if (tilemap > 0x10000) tilemap %= 0x10000;
 		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
 		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
@@ -935,10 +929,6 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
-		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= SNES_VRAM_SIZE )
-			continue;
-
 		/* Have we scrolled into the next map? */
 		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
 		{
@@ -946,6 +936,7 @@ static void snes_update_line_4( UINT8 screen, UINT8 layer, UINT16 curline )
 			tilemap -= ii;
 			hscroll = 0;	/* Make sure we don't do this again */
 		}
+		if (tilemap > 0x10000) tilemap %= 0x10000;
 		vflip = snes_vram[tilemap + ii + 1] & 0x80;
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
 		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];		/* is this even right??? */
@@ -1051,10 +1042,6 @@ static void snes_update_line_4_hi( UINT8 screen, UINT8 layer, UINT16 curline )
 
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
-		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= SNES_VRAM_SIZE )
-			continue;
-
 		/* Have we scrolled into the next map? */
 		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
 		{
@@ -1062,6 +1049,8 @@ static void snes_update_line_4_hi( UINT8 screen, UINT8 layer, UINT16 curline )
 			tilemap -= ii;
 			hscroll = 0;	/* Make sure we don't do this again */
 		}
+		if (tilemap > 0x10000) tilemap %= 0x10000;
+
 		vflip = snes_vram[tilemap + ii + 1] & 0x80;
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
 		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];		/* is this even right??? */
@@ -1176,10 +1165,6 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 
 	for( ii = 0; ii < (66 >> tile_size); ii += 2 )
 	{
-		/* FIXME: A quick hack to stop memory overwrite.... */
-		if( tilemap >= SNES_VRAM_SIZE )
-			continue;
-
 		/* Have we scrolled into the next map? */
 		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
 		{
@@ -1187,6 +1172,7 @@ static void snes_update_line_8( UINT8 screen, UINT8 layer, UINT16 curline )
 			tilemap -= ii;
 			hscroll = 0;	/* Make sure we don't do this again */
 		}
+		if (tilemap > 0x10000) tilemap %= 0x10000;
 		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
 		hflip = snes_vram[tilemap + ii + 1] & 0x40;
 		priority = table_bgd_pty[snes_ppu.mode > 1][layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];

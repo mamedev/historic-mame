@@ -392,5 +392,5 @@ DRIVER_INIT( merlinmm )
 		ROM[i] = BITSWAP8(ROM[i],0,1,2,3,4,5,6,7);
 }
 
-GAME( 1985, pingpong, 0, pingpong, pingpong, 0,		   ROT0, "Konami", "Ping Pong" )
-GAME( 1986, merlinmm, 0, merlinmm, merlinmm, merlinmm, ROT90,"Zilec - Zenitone", "Merlins Money Maze" )
+GAME( 1985, pingpong, 0, pingpong, pingpong, 0,		   ROT0, "Konami", "Ping Pong", 0 )
+GAME( 1986, merlinmm, 0, merlinmm, merlinmm, merlinmm, ROT90,"Zilec - Zenitone", "Merlins Money Maze", 0 )

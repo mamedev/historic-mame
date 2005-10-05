@@ -328,5 +328,5 @@ static DRIVER_INIT( jailbrek )
 }
 
 
-GAME( 1986, jailbrek, 0,        jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Jail Break" )
-GAME( 1986, manhatan, jailbrek, jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Manhattan 24 Bunsyo (Japan)" )
+GAME( 1986, jailbrek, 0,        jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Jail Break", 0 )
+GAME( 1986, manhatan, jailbrek, jailbrek, jailbrek, jailbrek, ROT0, "Konami", "Manhattan 24 Bunsyo (Japan)", 0 )

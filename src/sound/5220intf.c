@@ -59,7 +59,7 @@ static void *tms5220_start(int sndindex, int clock, const void *config)
 	info->intf = config ? config : &dummy;
 	info->clock = clock;
 
-	info->chip = tms5220_create();
+	info->chip = tms5220_create(sndindex);
 	if (!info->chip)
 		return NULL;
 	sound_register_token(info);

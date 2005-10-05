@@ -121,4 +121,4 @@ ROM_START( tarzan )
 ROM_END
 
 
-GAMEX( 199?, tarzan, 0, tarzan, tarzan, 0, ROT0, "IGS", "Tarzan",GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, tarzan, 0, tarzan, tarzan, 0, ROT0, "IGS", "Tarzan",GAME_NOT_WORKING|GAME_NO_SOUND )

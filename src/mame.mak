@@ -1225,6 +1225,7 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/pkscram.o \
 	$(OBJ)/drivers/jackpool.o \
 	$(OBJ)/drivers/egghunt.o \
+	$(OBJ)/drivers/magic10.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \

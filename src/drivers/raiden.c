@@ -596,7 +596,7 @@ static DRIVER_INIT( raidena )
 
 /***************************************************************************/
 
-GAME( 1990, raiden,  0,      raiden,  raiden, raiden,  ROT270, "Seibu Kaihatsu", "Raiden" )
-GAME( 1990, raidena, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu", "Raiden (Alternate Hardware)" )
-GAME( 1990, raidenk, raiden, raidena, raiden, raidenk, ROT270, "Seibu Kaihatsu (IBL Corporation license)", "Raiden (Korea)" )
-GAME( 1990, raident, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu (Liang HWA Electronics license)", "Raiden (Taiwan)" )
+GAME( 1990, raiden,  0,      raiden,  raiden, raiden,  ROT270, "Seibu Kaihatsu", "Raiden", 0 )
+GAME( 1990, raidena, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu", "Raiden (Alternate Hardware)", 0 )
+GAME( 1990, raidenk, raiden, raidena, raiden, raidenk, ROT270, "Seibu Kaihatsu (IBL Corporation license)", "Raiden (Korea)", 0 )
+GAME( 1990, raident, raiden, raidena, raiden, raidena, ROT270, "Seibu Kaihatsu (Liang HWA Electronics license)", "Raiden (Taiwan)", 0 )

@@ -542,6 +542,6 @@ static DRIVER_INIT( crimfght )
 
 
 
-GAME( 1989, crimfght, 0,        crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US 4 players)" )
-GAME( 1989, crimfgt2, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (World 2 Players)" )
-GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan 2 Players)" )
+GAME( 1989, crimfght, 0,        crimfght, crimfght, crimfght, ROT0, "Konami", "Crime Fighters (US 4 players)", 0 )
+GAME( 1989, crimfgt2, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (World 2 Players)", 0 )
+GAME( 1989, crimfgtj, crimfght, crimfght, crimfgtj, crimfght, ROT0, "Konami", "Crime Fighters (Japan 2 Players)", 0 )

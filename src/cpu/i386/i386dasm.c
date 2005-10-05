@@ -11,6 +11,7 @@ enum {
 	PARAM_REG = 1,		/* 16 or 32-bit register */
 	PARAM_REG8,			/* 8-bit register */
 	PARAM_REG16,		/* 16-bit register */
+	PARAM_REG2_32,		/* 32-bit register */
 	PARAM_RM,			/* 16 or 32-bit memory or register */
 	PARAM_RM8,			/* 8-bit memory or register */
 	PARAM_RM16,			/* 16-bit memory or register */
@@ -49,6 +50,7 @@ enum {
 enum {
 	MODRM = 1,
 	GROUP,
+	FPU,
 	VAR_NAME,
 	OP_SIZE,
 	ADDR_SIZE,
@@ -311,14 +313,14 @@ static I386_OPCODE i386_opcode_table1[256] =
 	{"aad",				0,				PARAM_I8,			0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"xlat",			0,				0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
-	{"escape",			GROUP,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
+	{"escape",			FPU,			0,					0,					0				},
 	// 0xe0
 	{"loopne",			0,				PARAM_REL8,			0,					0				},
 	{"loopz",			0,				PARAM_REL8,			0,					0				},
@@ -366,8 +368,8 @@ static I386_OPCODE i386_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"clts",			0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"invd",			0,				0,					0,					0				},
+	{"wbinvd",			0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"ud2",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
@@ -392,13 +394,13 @@ static I386_OPCODE i386_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	// 0x20
-	{"mov",				MODRM,			PARAM_REG,			PARAM_CREG,			0				},
-	{"mov",				MODRM,			PARAM_REG,			PARAM_DREG,			0				},
-	{"mov",				MODRM,			PARAM_CREG,			PARAM_REG,			0				},
-	{"mov",				MODRM,			PARAM_DREG,			PARAM_REG,			0				},
-	{"mov",				MODRM,			PARAM_REG,			PARAM_TREG,			0				},
+	{"mov",				MODRM,			PARAM_REG2_32,		PARAM_CREG,			0				},
+	{"mov",				MODRM,			PARAM_REG2_32,		PARAM_DREG,			0				},
+	{"mov",				MODRM,			PARAM_CREG,			PARAM_REG2_32,		0				},
+	{"mov",				MODRM,			PARAM_DREG,			PARAM_REG2_32,		0				},
+	{"mov",				MODRM,			PARAM_REG2_32,		PARAM_TREG,			0				},
 	{"???",				0,				0,					0,					0				},
-	{"mov",				MODRM,			PARAM_TREG,			PARAM_REG,			0				},
+	{"mov",				MODRM,			PARAM_TREG,			PARAM_REG2_32,		0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
@@ -409,9 +411,9 @@ static I386_OPCODE i386_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	// 0x30
+	{"wrmsr",			0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"rdmsr",			0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
@@ -530,7 +532,7 @@ static I386_OPCODE i386_opcode_table2[256] =
 	// 0xa0
 	{"push fs",			0,				0,					0,					0				},
 	{"pop fs",			0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"cpuid",			0,				0,					0,					0				},
 	{"bt",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
 	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_CL		},
@@ -1334,6 +1336,10 @@ static char* handle_param(char* s, UINT32 param)
 			s += sprintf( s, "%s", i386_reg[0][MODRM_REG1] );
 			break;
 
+		case PARAM_REG2_32:
+			s += sprintf( s, "%s", i386_reg[1][MODRM_REG2] );
+			break;
+
 		case PARAM_RM:
 			if( modrm >= 0xc0 ) {
 				s += sprintf( s, "%s", i386_reg[operand_size][MODRM_REG2] );
@@ -1434,6 +1440,10 @@ static char* handle_param(char* s, UINT32 param)
 			s += sprintf( s, "cr%d", MODRM_REG1 );
 			break;
 
+		case PARAM_TREG:
+			s += sprintf( s, "tr%d", MODRM_REG1 );
+			break;
+
 		case PARAM_1:
 			s += sprintf( s, "1" );
 			break;
@@ -1463,7 +1473,374 @@ static char* handle_param(char* s, UINT32 param)
 	return s;
 }
 
-static void decode_opcode(char *s, I386_OPCODE *op)
+static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
+{
+	switch (op1 & 0x7)
+	{
+		case 0:		// Group D8
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fadd float %s", modrm_string); break;
+					case 1: sprintf(s, "fmul float %s", modrm_string); break;
+					case 2: sprintf(s, "fcom float %s", modrm_string); break;
+					case 3: sprintf(s, "fcomp float %s", modrm_string); break;
+					case 4: sprintf(s, "fsub float %s", modrm_string); break;
+					case 5: sprintf(s, "fsubr float %s", modrm_string); break;
+					case 6: sprintf(s, "fdiv float %s", modrm_string); break;
+					case 7: sprintf(s, "fdivr float %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fadd st(0), st(%d)", op2 & 0x7); break;
+					case 1: sprintf(s, "fcom st(0), st(%d)", op2 & 0x7); break;
+					case 2: sprintf(s, "fsub st(0), st(%d)", op2 & 0x7); break;
+					case 3: sprintf(s, "fdiv st(0), st(%d)", op2 & 0x7); break;
+					case 4: sprintf(s, "fmul st(0), st(%d)", op2 & 0x7); break;
+					case 5: sprintf(s, "fcomp st(0), st(%d)", op2 & 0x7); break;
+					case 6: sprintf(s, "fsubr st(0), st(%d)", op2 & 0x7); break;
+					case 7: sprintf(s, "fdivr st(0), st(%d)", op2 & 0x7); break;
+				}
+			}
+			break;
+		}
+
+		case 1:		// Group D9
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fld float %s", modrm_string); break;
+					case 1: sprintf(s, "??? (FPU)"); break;
+					case 2: sprintf(s, "fst float %s", modrm_string); break;
+					case 3: sprintf(s, "fstp float %s", modrm_string); break;
+					case 4: sprintf(s, "fldenv word %s", modrm_string); break;
+					case 5: sprintf(s, "fldcw word %s", modrm_string); break;
+					case 6: sprintf(s, "fstenv word %s", modrm_string); break;
+					case 7: sprintf(s, "fstcw word %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
+						sprintf(s, "fld st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
+						sprintf(s, "fxch st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x10: sprintf(s, "fnop"); break;
+					case 0x20: sprintf(s, "fchs"); break;
+					case 0x21: sprintf(s, "fabs"); break;
+					case 0x24: sprintf(s, "ftst"); break;
+					case 0x25: sprintf(s, "fxam"); break;
+					case 0x28: sprintf(s, "fld1"); break;
+					case 0x29: sprintf(s, "fldl2t"); break;
+					case 0x2a: sprintf(s, "fldl2e"); break;
+					case 0x2b: sprintf(s, "fldpi"); break;
+					case 0x2c: sprintf(s, "fldlg2"); break;
+					case 0x2d: sprintf(s, "fldln2"); break;
+					case 0x2e: sprintf(s, "fldz"); break;
+					case 0x30: sprintf(s, "f2xm1"); break;
+					case 0x31: sprintf(s, "fyl2x"); break;
+					case 0x32: sprintf(s, "fptan"); break;
+					case 0x33: sprintf(s, "fpatan"); break;
+					case 0x34: sprintf(s, "fxtract"); break;
+					case 0x35: sprintf(s, "fprem1"); break;
+					case 0x36: sprintf(s, "fdecstp"); break;
+					case 0x37: sprintf(s, "fincstp"); break;
+					case 0x38: sprintf(s, "fprem"); break;
+					case 0x39: sprintf(s, "fyl2xp1"); break;
+					case 0x3a: sprintf(s, "fsqrt"); break;
+					case 0x3b: sprintf(s, "fsincos"); break;
+					case 0x3c: sprintf(s, "frndint"); break;
+					case 0x3d: sprintf(s, "fscale"); break;
+					case 0x3e: sprintf(s, "fsin"); break;
+					case 0x3f: sprintf(s, "fcos"); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+				}
+			}
+			break;
+		}
+
+		case 2:		// Group DA
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fiadd dword %s", modrm_string); break;
+					case 1: sprintf(s, "fimul dword %s", modrm_string); break;
+					case 2: sprintf(s, "ficom dword %s", modrm_string); break;
+					case 3: sprintf(s, "ficomp dword %s", modrm_string); break;
+					case 4: sprintf(s, "fisub dword %s", modrm_string); break;
+					case 5: sprintf(s, "fisubr dword %s", modrm_string); break;
+					case 6: sprintf(s, "fidiv dword %s", modrm_string); break;
+					case 7: sprintf(s, "fidivr dword %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
+						sprintf(s, "fcmovb st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
+						sprintf(s, "fcmove st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+						sprintf(s, "fcmovbe st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+						sprintf(s, "fcmovu st(0), st(%d)", op2 & 0x7); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+
+				}
+			}
+			break;
+		}
+
+		case 3:		// Group DB
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fild dword %s", modrm_string); break;
+					case 1: sprintf(s, "??? (FPU)"); break;
+					case 2: sprintf(s, "fist dword %s", modrm_string); break;
+					case 3: sprintf(s, "fistp dword %s", modrm_string); break;
+					case 4: sprintf(s, "??? (FPU)"); break;
+					case 5: sprintf(s, "fld long double %s", modrm_string); break;
+					case 6: sprintf(s, "??? (FPU)"); break;
+					case 7: sprintf(s, "fstp long double %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
+						sprintf(s, "fcmovnb st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
+						sprintf(s, "fcmovne st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+						sprintf(s, "fcmovnbe st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+						sprintf(s, "fcmovnu st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x22: sprintf(s, "fclex"); break;
+					case 0x23: sprintf(s, "finit"); break;
+
+					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+						sprintf(s, "fucomi st(0), st(%d)", op2 & 0x7); break;
+
+					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+						sprintf(s, "fcomi st(0), st(%d)", op2 & 0x7); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+				}
+			}
+			break;
+		}
+
+		case 4:		// Group DC
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fadd double %s", modrm_string); break;
+					case 1: sprintf(s, "fmul double %s", modrm_string); break;
+					case 2: sprintf(s, "fcom double %s", modrm_string); break;
+					case 3: sprintf(s, "fcomp double %s", modrm_string); break;
+					case 4: sprintf(s, "fsub double %s", modrm_string); break;
+					case 5: sprintf(s, "fsubr double %s", modrm_string); break;
+					case 6: sprintf(s, "fdiv double %s", modrm_string); break;
+					case 7: sprintf(s, "fdivr double %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
+						sprintf(s, "fadd st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
+						sprintf(s, "fmul st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+						sprintf(s, "fsubr st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+						sprintf(s, "fsub st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+						sprintf(s, "fdivr st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+						sprintf(s, "fdiv st(%d), st(0)", op2 & 0x7); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+				}
+			}
+			break;
+		}
+
+		case 5:		// Group DD
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fld double %s", modrm_string); break;
+					case 1: sprintf(s, "??? (FPU)"); break;
+					case 2: sprintf(s, "fst double %s", modrm_string); break;
+					case 3: sprintf(s, "fstp double %s", modrm_string); break;
+					case 4: sprintf(s, "frstor %s", modrm_string); break;
+					case 5: sprintf(s, "??? (FPU)"); break;
+					case 6: sprintf(s, "fsave %s", modrm_string); break;
+					case 7: sprintf(s, "fstsw word %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
+						sprintf(s, "ffree st(%d)", op2 & 0x7); break;
+
+					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+						sprintf(s, "fst st(%d)", op2 & 0x7); break;
+
+					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+						sprintf(s, "fstp st(%d)", op2 & 0x7); break;
+
+					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+						sprintf(s, "fucom st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+						sprintf(s, "fucomp st(%d)", op2 & 0x7); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+				}
+			}
+			break;
+		}
+
+		case 6:		// Group DE
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fiadd word %s", modrm_string); break;
+					case 1: sprintf(s, "fimul word %s", modrm_string); break;
+					case 2: sprintf(s, "ficom word %s", modrm_string); break;
+					case 3: sprintf(s, "ficomp word %s", modrm_string); break;
+					case 4: sprintf(s, "fisub word %s", modrm_string); break;
+					case 5: sprintf(s, "fisubr word %s", modrm_string); break;
+					case 6: sprintf(s, "fidiv word %s", modrm_string); break;
+					case 7: sprintf(s, "fidivr word %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
+						sprintf(s, "faddp st(%d)", op2 & 0x7); break;
+
+					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
+						sprintf(s, "fmulp st(%d)", op2 & 0x7); break;
+
+					case 0x19: sprintf(s, "fcompp"); break;
+
+					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+						sprintf(s, "fsubrp st(%d)", op2 & 0x7); break;
+
+					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+						sprintf(s, "fsubp st(%d)", op2 & 0x7); break;
+
+					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+						sprintf(s, "fdivrp st(%d), st(0)", op2 & 0x7); break;
+
+					case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+						sprintf(s, "fdivp st(%d)", op2 & 0x7); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+				}
+			}
+			break;
+		}
+
+		case 7:		// Group DF
+		{
+			if (op2 < 0xc0)
+			{
+				pc--;		// adjust fetch pointer, so modrm byte read again
+				handle_modrm( modrm_string );
+				switch ((op2 >> 3) & 0x7)
+				{
+					case 0: sprintf(s, "fild word %s", modrm_string); break;
+					case 1: sprintf(s, "??? (FPU)"); break;
+					case 2: sprintf(s, "fist word %s", modrm_string); break;
+					case 3: sprintf(s, "fistp word %s", modrm_string); break;
+					case 4: sprintf(s, "fbld %s", modrm_string); break;
+					case 5: sprintf(s, "fild qword %s", modrm_string); break;
+					case 6: sprintf(s, "fbstp %s", modrm_string); break;
+					case 7: sprintf(s, "fistp qword %s", modrm_string); break;
+				}
+			}
+			else
+			{
+				switch (op2 & 0x3f)
+				{
+					case 0x20: sprintf(s, "fstsw ax"); break;
+
+					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+						sprintf(s, "fucomip st(%d)", op2 & 0x7); break;
+
+					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+						sprintf(s, "fcomip st(%d), st(0)", op2 & 0x7); break;
+
+					default: sprintf(s, "??? (FPU)"); break;
+				}
+			}
+			break;
+		}
+	}
+}
+
+static void decode_opcode(char *s, I386_OPCODE *op, UINT8 op1)
 {
 	int i;
 	UINT8 op2;
@@ -1473,18 +1850,18 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 		case OP_SIZE:
 			operand_size ^= 1;
 			op2 = FETCH();
-			decode_opcode( s, &opcode_table1[op2] );
+			decode_opcode( s, &opcode_table1[op2], op1 );
 			return;
 
 		case ADDR_SIZE:
 			address_size ^= 1;
 			op2 = FETCH();
-			decode_opcode( s, &opcode_table1[op2] );
+			decode_opcode( s, &opcode_table1[op2], op1 );
 			return;
 
 		case TWO_BYTE:
 			op2 = FETCHD();
-			decode_opcode( s, &opcode_table2[op2] );
+			decode_opcode( s, &opcode_table2[op2], op1 );
 			return;
 
 		case SEG_CS:
@@ -1495,13 +1872,13 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 		case SEG_SS:
 			segment = op->flags;
 			op2 = FETCH();
-			decode_opcode( s, &opcode_table1[op2] );
+			decode_opcode( s, &opcode_table1[op2], op1 );
 			return;
 
 		case PREFIX:
 			s += sprintf( s, "%s ", op->mnemonic );
 			op2 = FETCH();
-			decode_opcode( s, &opcode_table1[op2] );
+			decode_opcode( s, &opcode_table1[op2], op1 );
 			return;
 
 		case VAR_NAME:
@@ -1521,11 +1898,16 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 			handle_modrm( modrm_string );
 			for( i=0; i < (sizeof(group_op_table) / sizeof(GROUP_OP)); i++ ) {
 				if( stricmp(op->mnemonic, group_op_table[i].mnemonic) == 0 ) {
-					decode_opcode( s, &group_op_table[i].opcode[MODRM_REG1] );
+					decode_opcode( s, &group_op_table[i].opcode[MODRM_REG1], op1 );
 					return;
 				}
 			}
 			goto handle_unknown;
+
+		case FPU:
+			op2 = FETCHD();
+			handle_fpu( s, op1, op2);
+			return;
 
 		case MODRM:
 			handle_modrm( modrm_string );
@@ -1569,7 +1951,7 @@ int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 
 	op = FETCH();
 
-	decode_opcode( buffer, &opcode_table1[op] );
+	decode_opcode( buffer, &opcode_table1[op], op );
 	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
 }
 
@@ -1587,6 +1969,6 @@ int necv_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 
 	op = FETCH();
 
-	decode_opcode( buffer, &opcode_table1[op] );
+	decode_opcode( buffer, &opcode_table1[op], op );
 	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
 }

@@ -405,5 +405,5 @@ static DRIVER_INIT( dynduke )
 
 /* Game Drivers */
 
-GAME( 1989, dynduke, 0,       dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "Dynamite Duke" )
-GAME( 1989, dbldyn,  dynduke, dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "The Double Dynamites" )
+GAME( 1989, dynduke, 0,       dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "Dynamite Duke", 0 )
+GAME( 1989, dbldyn,  dynduke, dynduke, dynduke, dynduke, ROT0, "Seibu Kaihatsu (Fabtek license)", "The Double Dynamites", 0 )

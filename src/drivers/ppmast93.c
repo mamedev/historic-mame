@@ -387,4 +387,4 @@ ROM_START( ppmast93 )
 	ROM_LOAD( "prom1.ug26", 0x200, 0x100, CRC(d979c64e) SHA1(172c9579013d58e35a5b4f732e360811ac36295e) )
 ROM_END
 
-GAMEX( 1993, ppmast93, 0, ppmast93, ppmast93, 0, ROT0, "Electronic Devices S.R.L.", "Ping Pong Masters '93", GAME_NO_SOUND )
+GAME( 1993, ppmast93, 0, ppmast93, ppmast93, 0, ROT0, "Electronic Devices S.R.L.", "Ping Pong Masters '93", GAME_NO_SOUND )

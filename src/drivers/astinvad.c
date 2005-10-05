@@ -374,7 +374,7 @@ ROM_START( spaceint )
 ROM_END
 
 
-GAME ( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern",  "Astro Invader" )
-GAME ( 1979, kamikaze, astinvad, astinvad, kamikaze, 0, ROT270, "Leijac", "Kamikaze" )
-GAME ( 1979, spcking2, 0,        spcking2, spcking2, 0, ROT270, "Konami", "Space King 2" )
-GAMEX( 1980, spaceint, 0,        spaceint, spaceint, 0, ROT90,  "Shoei",  "Space Intruder", GAME_WRONG_COLORS )
+GAME( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern",  "Astro Invader", 0 )
+GAME( 1979, kamikaze, astinvad, astinvad, kamikaze, 0, ROT270, "Leijac", "Kamikaze", 0 )
+GAME( 1979, spcking2, 0,        spcking2, spcking2, 0, ROT270, "Konami", "Space King 2", 0 )
+GAME( 1980, spaceint, 0,        spaceint, spaceint, 0, ROT90,  "Shoei",  "Space Intruder", GAME_WRONG_COLORS )

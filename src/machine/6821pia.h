@@ -47,7 +47,6 @@ struct pia6821_interface
 	void (*irq_b_func)(int state);
 };
 
-void pia_init(int count);
 void pia_unconfig(void);
 void pia_config(int which, int addressing, const struct pia6821_interface *intf);
 void pia_reset(void);

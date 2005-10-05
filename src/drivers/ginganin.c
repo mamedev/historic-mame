@@ -480,5 +480,5 @@ DRIVER_INIT( ginganin )
 }
 
 
-GAME( 1987, ginganin, 0,        ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen (set 1)" )
-GAME( 1987, gingania, ginganin, ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen (set 2)" )
+GAME( 1987, ginganin, 0,        ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen (set 1)", 0 )
+GAME( 1987, gingania, ginganin, ginganin, ginganin, ginganin, ROT0, "Jaleco", "Ginga NinkyouDen (set 2)", 0 )

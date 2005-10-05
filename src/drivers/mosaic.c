@@ -378,6 +378,6 @@ ROM_END
 
 
 
-GAME( 1990, mosaic,  0,      mosaic, mosaic, 0, ROT0, "Space", "Mosaic" )
-GAME( 1990, mosaica, mosaic, mosaic, mosaic, 0, ROT0, "Space (Fuuki license)", "Mosaic (Fuuki)" )
-GAME( 1992, gfire2,  0,      gfire2, gfire2, 0, ROT0, "Topis Corp", "Golden Fire II" )
+GAME( 1990, mosaic,  0,      mosaic, mosaic, 0, ROT0, "Space", "Mosaic", 0 )
+GAME( 1990, mosaica, mosaic, mosaic, mosaic, 0, ROT0, "Space (Fuuki license)", "Mosaic (Fuuki)", 0 )
+GAME( 1992, gfire2,  0,      gfire2, gfire2, 0, ROT0, "Topis Corp", "Golden Fire II", 0 )

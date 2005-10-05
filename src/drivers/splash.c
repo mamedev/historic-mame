@@ -875,12 +875,12 @@ DRIVER_INIT( funystrp )
 	ROM[0x04772/2] = 0x4e71;
 }
 
-GAME( 1992, splash,   0,        splash, splash, splash, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)" )
-GAME( 1992, paintlad, splash,   splash, splash, splash, ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)" )
+GAME( 1992, splash,   0,        splash, splash, splash, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)", 0 )
+GAME( 1992, paintlad, splash,   splash, splash, splash, ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)", 0 )
 
-GAMEX(1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
-GAMEX(1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )
+GAME( 1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
+GAME( 1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )
 
-GAMEX(1995, rebus, 0,        roldfrog, splash, rebus, ROT0, "Microhard", "Rebus", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
+GAME( 1995, rebus, 0,        roldfrog, splash, rebus, ROT0, "Microhard", "Rebus", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
 
-GAMEX(199?, funystrp, 0,        funystrp, funystrp, funystrp, ROT0, "Microhard / MagicGames",    "Funny Strip",GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
+GAME( 199?, funystrp, 0,        funystrp, funystrp, funystrp, ROT0, "Microhard / MagicGames",    "Funny Strip",GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )

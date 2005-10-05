@@ -609,4 +609,4 @@ ROM_START( msisaac )
 
 ROM_END
 
-GAMEX( 1985, msisaac, 0,        msisaac, msisaac, 0, ROT270, "Taito Corporation", "Metal Soldier Isaac II", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL)
+GAME( 1985, msisaac, 0,        msisaac, msisaac, 0, ROT270, "Taito Corporation", "Metal Soldier Isaac II", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL)

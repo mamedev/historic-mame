@@ -1083,7 +1083,7 @@ ROM_START( borntofi )
 	ROMX_LOAD( "63.bin",  0x1b0000, 0x10000, CRC(5f530559) SHA1(d1d3edc2082985ccec9fe8ca0b27810623cb5b89), ROM_SKIP(2) )
 ROM_END
 
-GAME( 19??, borntofi, 0,        borntofi, borntofi, 0, ROT0,  "International Games",      "Born To Fight"        )
-GAME( 19??, fantland, 0,        fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 1)" )
-GAME( 19??, fantlnda, fantland, fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 2)" )
-GAME( 1989, galaxygn, 0,        galaxygn, galaxygn, 0, ROT90, "Electronic Devices Italy", "Galaxy Gunners"       )
+GAME( 19??, borntofi, 0,        borntofi, borntofi, 0, ROT0,  "International Games",      "Born To Fight"       , 0 )
+GAME( 19??, fantland, 0,        fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 1)", 0 )
+GAME( 19??, fantlnda, fantland, fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 2)", 0 )
+GAME( 1989, galaxygn, 0,        galaxygn, galaxygn, 0, ROT90, "Electronic Devices Italy", "Galaxy Gunners"      , 0 )

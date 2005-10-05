@@ -1018,8 +1018,8 @@ static DRIVER_INIT( scontra )
 
 
 
-GAME( 1988, scontra,  0,        scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra" )
-GAME( 1988, scontraj, scontra,  scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra (Japan)" )
-GAME( 1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross" )
-GAME( 1988, thnderxa, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Set 2)" )
-GAME( 1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Japan)" )
+GAME( 1988, scontra,  0,        scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra", 0 )
+GAME( 1988, scontraj, scontra,  scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra (Japan)", 0 )
+GAME( 1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross", 0 )
+GAME( 1988, thnderxa, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Set 2)", 0 )
+GAME( 1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Japan)", 0 )

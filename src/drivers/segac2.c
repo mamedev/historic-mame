@@ -1729,6 +1729,7 @@ static DRIVER_INIT( columns2 )
 
 static DRIVER_INIT( borench )
 {
+	/* 317-0173 */
 	static const UINT32 table[256/8] =
 	{
 		0x12fe56ba, 0x56ba56ba, 0x00aa44ee, 0xcceeccee,
@@ -1805,6 +1806,7 @@ static DRIVER_INIT( ribbit )
 
 static DRIVER_INIT( tantr )
 {
+	/* 317-0211 */
 	static const UINT32 table[256/8] =
 	{
 		0x91ddd19d, 0x91ddd19d, 0xd4dc949c, 0xf6feb6be,
@@ -1839,6 +1841,7 @@ static DRIVER_INIT( tantrkor )
 
 static DRIVER_INIT( puyo )
 {
+	/* 317-0203 */
 	static const UINT32 table[256/8] =
 	{
 		0x33aa55cc, 0x33aa55cc, 0xba22fe66, 0xba22fe66,
@@ -2061,38 +2064,38 @@ static DRIVER_INIT( pclubjv5 )
 ******************************************************************************/
 
 /* System C Games */
-GAME ( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)" )
-GAME ( 1989, bloxeedu, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (US, C System)" )
-GAME ( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)" )
-GAME ( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)" )
-GAME ( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time" )
-GAME ( 1990, column2j, columns2, segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)" )
+GAME( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)", 0 )
+GAME( 1989, bloxeedu, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (US, C System)", 0 )
+GAME( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)", 0 )
+GAME( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)", 0 )
+GAME( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time", 0 )
+GAME( 1990, column2j, columns2, segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)", 0 )
 
 /* System C-2 Games */
-GAME ( 1990, borench,  0,        segac2,   borench,  borench,  ROT0, "Sega",                   "Borench" )
-GAME ( 1990, tfrceac,  0,        segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC" )
-GAME ( 1990, tfrceacj, tfrceac,  segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)" )
-GAME ( 1990, tfrceacb, tfrceac,  segac2,   tfrceac,  tfrceacb, ROT0, "bootleg",                "ThunderForce AC (bootleg)" )
-GAME ( 1991, twinsqua, 0,        segac2,   twinsqua, twinsqua, ROT0, "Sega",                   "Twin Squash" )
-GAME ( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!" )
-GAME ( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)" )
-GAME ( 1993, tantrkor, tantr,    segac2,   ichidant, tantrkor, ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Korea)" )
-GAME ( 1992, tantrbl,  tantr,    segac2,   ichidant, c2boot,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)" )
-GAME ( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)" )
-GAME ( 1992, puyo,     0,        segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (World)" )
-GAME ( 1992, puyobl,   puyo,     segac2,   puyo,     puyo,     ROT0, "bootleg",                "Puyo Puyo (World, bootleg)" )
-GAME ( 1992, puyoj,    puyo,     segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (Japan)" )
-GAME ( 1992, puyoja,   puyo,     segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (Japan, Rev A)" )
-GAME ( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)" )
-GAME ( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)" )
-GAME ( 1994, ichidntb, ichidant, segac,    ichidant, c2boot,   ROT0, "bootleg",                "Ichidant-R (Puzzle & Action 2) (Japan) (bootleg)" )
-GAME ( 1994, stkclmns, 0,        segac2,   stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)" )
-GAME ( 1994, puyopuy2, 0,        segac2,   puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)" )
-GAME ( 1994, potopoto, 0,        segac2,   potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)" )
-GAME ( 1994, zunkyou,  0,        segac2,   zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)" )
+GAME( 1990, borench,  0,        segac2,   borench,  borench,  ROT0, "Sega",                   "Borench", 0 )
+GAME( 1990, tfrceac,  0,        segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC", 0 )
+GAME( 1990, tfrceacj, tfrceac,  segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Technosoft",      "ThunderForce AC (Japan)", 0 )
+GAME( 1990, tfrceacb, tfrceac,  segac2,   tfrceac,  tfrceacb, ROT0, "bootleg",                "ThunderForce AC (bootleg)", 0 )
+GAME( 1991, twinsqua, 0,        segac2,   twinsqua, twinsqua, ROT0, "Sega",                   "Twin Squash", 0 )
+GAME( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!", 0 )
+GAME( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)", 0 )
+GAME( 1993, tantrkor, tantr,    segac2,   ichidant, tantrkor, ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Korea)", 0 )
+GAME( 1992, tantrbl,  tantr,    segac2,   ichidant, c2boot,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)", 0 )
+GAME( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)", 0 )
+GAME( 1992, puyo,     0,        segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (World)", 0 )
+GAME( 1992, puyobl,   puyo,     segac2,   puyo,     puyo,     ROT0, "bootleg",                "Puyo Puyo (World, bootleg)", 0 )
+GAME( 1992, puyoj,    puyo,     segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (Japan)", 0 )
+GAME( 1992, puyoja,   puyo,     segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (Japan, Rev A)", 0 )
+GAME( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)", 0 )
+GAME( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)", 0 )
+GAME( 1994, ichidntb, ichidant, segac,    ichidant, c2boot,   ROT0, "bootleg",                "Ichidant-R (Puzzle & Action 2) (Japan) (bootleg)", 0 )
+GAME( 1994, stkclmns, 0,        segac2,   stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)", 0 )
+GAME( 1994, puyopuy2, 0,        segac2,   puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)", 0 )
+GAME( 1994, potopoto, 0,        segac2,   potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)", 0 )
+GAME( 1994, zunkyou,  0,        segac2,   zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)", 0 )
 
 /* Atlus Print Club 'Games' (C-2 Hardware, might not be possible to support them because they use camera + printer, really just put here for reference) */
-GAMEX( 1995, pclubj,   0,        segac2,   pclub,    pclub,    ROT0, "Atlus",                  "Print Club (Japan Vol.1)", GAME_NOT_WORKING )
-GAMEX( 1995, pclubjv2, pclubj,   segac2,   pclub,    pclubjv2, ROT0, "Atlus",                  "Print Club (Japan Vol.2)", GAME_NOT_WORKING )
-GAMEX( 1996, pclubjv4, pclubj,   segac2,   pclub,    pclubjv4, ROT0, "Atlus",                  "Print Club (Japan Vol.4)", GAME_NOT_WORKING )
-GAMEX( 1996, pclubjv5, pclubj,   segac2,   pclub,    pclubjv5, ROT0, "Atlus",                  "Print Club (Japan Vol.5)", GAME_NOT_WORKING )
+GAME( 1995, pclubj,   0,        segac2,   pclub,    pclub,    ROT0, "Atlus",                  "Print Club (Japan Vol.1)", GAME_NOT_WORKING )
+GAME( 1995, pclubjv2, pclubj,   segac2,   pclub,    pclubjv2, ROT0, "Atlus",                  "Print Club (Japan Vol.2)", GAME_NOT_WORKING )
+GAME( 1996, pclubjv4, pclubj,   segac2,   pclub,    pclubjv4, ROT0, "Atlus",                  "Print Club (Japan Vol.4)", GAME_NOT_WORKING )
+GAME( 1996, pclubjv5, pclubj,   segac2,   pclub,    pclubjv5, ROT0, "Atlus",                  "Print Club (Japan Vol.5)", GAME_NOT_WORKING )

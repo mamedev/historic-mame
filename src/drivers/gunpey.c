@@ -169,4 +169,4 @@ ROM_START( gunpey )
 
 ROM_END
 
-GAMEX( 2000, gunpey, 0, gunpey, gunpey, 0,	ROT0, "Banpresto", "Gunpey",GAME_NO_SOUND|GAME_NOT_WORKING)
+GAME( 2000, gunpey, 0, gunpey, gunpey, 0,	ROT0, "Banpresto", "Gunpey",GAME_NO_SOUND|GAME_NOT_WORKING)

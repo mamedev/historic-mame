@@ -487,6 +487,7 @@ struct _game_driver
 #define GAME_NO_COCKTAIL			0x0100	/* screen flip support is missing */
 #define GAME_NO_SOUND				0x0200	/* sound is missing */
 #define GAME_IMPERFECT_SOUND		0x0400	/* sound is known to be wrong */
+#define GAME_SUPPORTS_SAVE			0x0800	/* game supports save states */
 #define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_0 and by "containers" */
 											/* e.g. driver_neogeo. */
 #ifdef MESS
@@ -502,27 +503,9 @@ struct _game_driver
 
 ***************************************************************************/
 
-#define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
+#define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
 extern const game_driver driver_##PARENT;	\
-const game_driver driver_##NAME =		\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	system_bios_0,							\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	MONITOR									\
-};
-
-#define GAMEX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern const game_driver driver_##PARENT;	\
-const game_driver driver_##NAME =		\
+const game_driver driver_##NAME =			\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -538,27 +521,9 @@ const game_driver driver_##NAME =		\
 	(MONITOR)|(FLAGS)						\
 };
 
-#define GAMEB(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME)	\
+#define GAMEB(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
 extern const game_driver driver_##PARENT;	\
-const game_driver driver_##NAME =		\
-{											\
-	__FILE__,								\
-	&driver_##PARENT,						\
-	#NAME,									\
-	system_bios_##BIOS,						\
-	FULLNAME,								\
-	#YEAR,									\
-	COMPANY,								\
-	construct_##MACHINE,					\
-	construct_ipt_##INPUT,					\
-	init_##INIT,							\
-	rom_##NAME,								\
-	MONITOR									\
-};
-
-#define GAMEBX(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern const game_driver driver_##PARENT;	\
-const game_driver driver_##NAME =		\
+const game_driver driver_##NAME =			\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\

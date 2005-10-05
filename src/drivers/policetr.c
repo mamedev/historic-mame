@@ -670,9 +670,9 @@ static DRIVER_INIT( sshoot12 )
  *
  *************************************/
 
-GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3)" )
-GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)" )
-GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)" )
-GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)" )
-GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)" )
-GAME( 1998, sshoot11, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.1)" )
+GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3)", 0 )
+GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)", 0 )
+GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)", 0 )
+GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)", 0 )
+GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)", 0 )
+GAME( 1998, sshoot11, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.1)", 0 )

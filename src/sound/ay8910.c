@@ -638,7 +638,7 @@ static void AY8910_init(struct AY8910 *PSG, int streams,
 static void AY8910_statesave(struct AY8910 *PSG, int sndindex)
 {
 	state_save_register_INT32("AY8910",  sndindex, "register_latch", &PSG->register_latch, 1);
-	state_save_register_UINT8("AY8910",  sndindex, "Regs",           PSG->Regs,            8);
+	state_save_register_UINT8("AY8910",  sndindex, "Regs",           PSG->Regs,            16);
 	state_save_register_INT32("AY8910",  sndindex, "lastEnable",     &PSG->lastEnable,     1);
 	state_save_register_UINT32("AY8910", sndindex, "UpdateStep",     &PSG->UpdateStep,     1);
 

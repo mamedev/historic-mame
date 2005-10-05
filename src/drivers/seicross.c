@@ -638,8 +638,8 @@ static DRIVER_INIT( friskyt )
 
 
 
-GAMEX( 1981, friskyt,  0,        nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1981, friskyta, friskyt,  nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1982, radrad,   0,        no_nvram, radrad,   friskyt, ROT0,  "Nichibutsu USA", "Radical Radial", GAME_NO_COCKTAIL )
-GAMEX( 1984, seicross, 0,        no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Seicross", GAME_NO_COCKTAIL )
-GAMEX( 1984, sectrzon, seicross, no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Sector Zone", GAME_NO_COCKTAIL )
+GAME( 1981, friskyt,  0,        nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 1)", GAME_NO_COCKTAIL )
+GAME( 1981, friskyta, friskyt,  nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 2)", GAME_NO_COCKTAIL )
+GAME( 1982, radrad,   0,        no_nvram, radrad,   friskyt, ROT0,  "Nichibutsu USA", "Radical Radial", GAME_NO_COCKTAIL )
+GAME( 1984, seicross, 0,        no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Seicross", GAME_NO_COCKTAIL )
+GAME( 1984, sectrzon, seicross, no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Sector Zone", GAME_NO_COCKTAIL )

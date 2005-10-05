@@ -162,4 +162,4 @@ ROM_END
  *
  *************************************/
 
-GAMEX(19??, beaminv, 0, beaminv, beaminv, 0, ROT0, "Tekunon Kougyou", "Beam Invader", GAME_NO_SOUND)
+GAME( 19??, beaminv, 0, beaminv, beaminv, 0, ROT0, "Tekunon Kougyou", "Beam Invader", GAME_NO_SOUND)

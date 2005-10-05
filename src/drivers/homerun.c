@@ -213,5 +213,5 @@ ROM_START( homerun )
 
 ROM_END
 
-GAMEX( 1988, homerun, 0, homerun, homerun, 0, ROT0, "Jaleco", "Moero Pro Yakyuu Homerun",GAME_IMPERFECT_GRAPHICS)
+GAME( 1988, homerun, 0, homerun, homerun, 0, ROT0, "Jaleco", "Moero Pro Yakyuu Homerun",GAME_IMPERFECT_GRAPHICS)
 

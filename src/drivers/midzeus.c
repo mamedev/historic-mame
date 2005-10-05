@@ -1575,7 +1575,7 @@ static DRIVER_INIT( thegrid )
  *
  *************************************/
 
-GAMEX( 1997, mk4,      0,     midzeus, mk4,      mk4,      ROT0, "Midway", "Mortal Kombat 4 (rev L3)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, invasn,   0,     midzeus, invasn,   invasn,   ROT0, "Midway", "Invasion (Midway)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, crusnexo, 0,     midzeus, crusnexo, crusnexo, ROT0, "Midway", "Cruis'n Exotica", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 2001, thegrid,  0,     midzeus, thegrid,  thegrid,  ROT0, "Midway", "The Grid", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1997, mk4,      0,     midzeus, mk4,      mk4,      ROT0, "Midway", "Mortal Kombat 4 (rev L3)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1999, invasn,   0,     midzeus, invasn,   invasn,   ROT0, "Midway", "Invasion (Midway)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1999, crusnexo, 0,     midzeus, crusnexo, crusnexo, ROT0, "Midway", "Cruis'n Exotica", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 2001, thegrid,  0,     midzeus, thegrid,  thegrid,  ROT0, "Midway", "The Grid", GAME_NOT_WORKING | GAME_NO_SOUND )

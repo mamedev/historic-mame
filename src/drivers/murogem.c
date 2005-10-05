@@ -210,4 +210,4 @@ ROM_START( murogem )
 ROM_END
 
 
-GAMEX( 198?, murogem, 0, murogem, murogem, 0, ROT0, "unknown", "Muroge Monaco",GAME_NO_SOUND|GAME_WRONG_COLORS )
+GAME( 198?, murogem, 0, murogem, murogem, 0, ROT0, "unknown", "Muroge Monaco",GAME_NO_SOUND|GAME_WRONG_COLORS )

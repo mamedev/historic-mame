@@ -490,7 +490,7 @@ ROM_START( agress )
 	ROM_LOAD( "82s129pr.25",   0x0000, 0x0100, CRC(b25bbda7) SHA1(840f1470886bd0019db3cd29e3d1d80205a65f48) )	/* unknown */
 ROM_END
 
-GAME( 1989, blockout, 0,        blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 1)" )
-GAME( 1989, blckout2, blockout, blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 2)" )
-GAME( 1989, blckoutj, blockout, blockout, blckoutj, 0, ROT0, "Technos + California Dreams", "Block Out (Japan)" )
-GAMEX(1991, agress,   0,        blockout, agress,   0, ROT0, "Palco", "Agress", GAME_IMPERFECT_GRAPHICS )
+GAME( 1989, blockout, 0,        blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 1)", 0 )
+GAME( 1989, blckout2, blockout, blockout, blockout, 0, ROT0, "Technos + California Dreams", "Block Out (set 2)", 0 )
+GAME( 1989, blckoutj, blockout, blockout, blckoutj, 0, ROT0, "Technos + California Dreams", "Block Out (Japan)", 0 )
+GAME( 1991, agress,   0,        blockout, agress,   0, ROT0, "Palco", "Agress", GAME_IMPERFECT_GRAPHICS )

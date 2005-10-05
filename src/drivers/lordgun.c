@@ -303,4 +303,4 @@ ROM_START( lordgun )
 	ROM_LOAD( "igsb003.97", 0x400000, 0x200000, CRC(6cbf21ac) SHA1(ad25090a00f291aa48929ffa01347cc53e0051f8) )
 ROM_END
 
-GAMEX( 1994, lordgun, 0, lordgun, lordgun, lordgun, ROT0, "IGS", "Lord of Gun", GAME_NOT_WORKING | GAME_NO_SOUND  )
+GAME( 1994, lordgun, 0, lordgun, lordgun, lordgun, ROT0, "IGS", "Lord of Gun", GAME_NOT_WORKING | GAME_NO_SOUND  )

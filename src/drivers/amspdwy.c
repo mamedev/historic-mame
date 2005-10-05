@@ -381,5 +381,5 @@ ROM_END
 
 /* (C) 1987 ETI 8402 MAGNOLIA ST. #C SANTEE, CA 92071 */
 
-GAME( 1987, amspdwy,  0,       amspdwy, amspdwy, 0, ROT0, "Enerdyne Technologies, Inc.", "American Speedway (set 1)" )
-GAME( 1987, amspdwya, amspdwy, amspdwy, amspdwy, 0, ROT0, "Enerdyne Technologies, Inc.", "American Speedway (set 2)" )
+GAME( 1987, amspdwy,  0,       amspdwy, amspdwy, 0, ROT0, "Enerdyne Technologies, Inc.", "American Speedway (set 1)", 0 )
+GAME( 1987, amspdwya, amspdwy, amspdwy, amspdwy, 0, ROT0, "Enerdyne Technologies, Inc.", "American Speedway (set 2)", 0 )

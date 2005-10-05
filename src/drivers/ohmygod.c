@@ -441,5 +441,5 @@ static DRIVER_INIT( naname )
 }
 
 
-GAMEX( 1993, ohmygod, 0, ohmygod, ohmygod, ohmygod, ROT0, "Atlus", "Oh My God! (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1994, naname,  0, ohmygod, naname,  naname,  ROT0, "Atlus", "Naname de Magic! (Japan)", GAME_NO_COCKTAIL )
+GAME( 1993, ohmygod, 0, ohmygod, ohmygod, ohmygod, ROT0, "Atlus", "Oh My God! (Japan)", GAME_NO_COCKTAIL )
+GAME( 1994, naname,  0, ohmygod, naname,  naname,  ROT0, "Atlus", "Naname de Magic! (Japan)", GAME_NO_COCKTAIL )

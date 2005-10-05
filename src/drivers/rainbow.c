@@ -797,7 +797,7 @@ static DRIVER_INIT( jumping )
 }
 
 
-GAME( 1987, rainbow,  0,       rainbow, rainbow, rainbow,  ROT0, "Taito Corporation", "Rainbow Islands (new version)" )
-GAME( 1987, rainbowo, rainbow, rainbow, rainbow, rainbow,  ROT0, "Taito Corporation", "Rainbow Islands (old version)" )
-GAME( 1988, rainbowe, rainbow, rainbow, rainbow, rainbowe, ROT0, "Taito Corporation", "Rainbow Islands (Extra)" )
-GAME( 1989, jumping,  rainbow, jumping, jumping, jumping,  ROT0, "bootleg", "Jumping" )
+GAME( 1987, rainbow,  0,       rainbow, rainbow, rainbow,  ROT0, "Taito Corporation", "Rainbow Islands (new version)", 0 )
+GAME( 1987, rainbowo, rainbow, rainbow, rainbow, rainbow,  ROT0, "Taito Corporation", "Rainbow Islands (old version)", 0 )
+GAME( 1988, rainbowe, rainbow, rainbow, rainbow, rainbowe, ROT0, "Taito Corporation", "Rainbow Islands (Extra)", 0 )
+GAME( 1989, jumping,  rainbow, jumping, jumping, jumping,  ROT0, "bootleg", "Jumping", 0 )

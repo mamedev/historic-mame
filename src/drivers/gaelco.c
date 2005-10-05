@@ -623,8 +623,8 @@ ROM_START( thoop )
 	ROM_LOAD( "sound", 0x000000, 0x100000, CRC(99f80961) SHA1(de3a514a8f46dffd5f762e52aac1f4c3b08e2e18) )
 ROM_END
 
-GAME( 1991, bigkarnk, 0,        bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak" )
-GAME( 1995, biomtoy,  0,        maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)" )
-GAME( 1996, maniacsp, maniacsq, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)" )
-GAMEX(1992, squash,   0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX(1992, thoop,    0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Thunder Hoop",      GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1991, bigkarnk, 0,        bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak", 0 )
+GAME( 1995, biomtoy,  0,        maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)", 0 )
+GAME( 1996, maniacsp, maniacsq, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)", 0 )
+GAME( 1992, squash,   0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1992, thoop,    0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Thunder Hoop",      GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )

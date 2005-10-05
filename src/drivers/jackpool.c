@@ -217,4 +217,4 @@ ROM_START( jackpool )
 	ROM_LOAD( "jpc7", 0xc0000, 0x40000,  CRC(b1d40623) SHA1(fb76ae6b53474bd4bee19dbce9537da0f2b63ff4) )
 ROM_END
 
-GAMEX( 1997, jackpool, 0, jackpool, jackpool, 0, ROT0, "Electronic Projects", "Jackpot Pool (Italy, bootleg)",GAME_NOT_WORKING )
+GAME( 1997, jackpool, 0, jackpool, jackpool, 0, ROT0, "Electronic Projects", "Jackpot Pool (Italy, bootleg)",GAME_NOT_WORKING )

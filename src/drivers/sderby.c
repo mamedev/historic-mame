@@ -318,6 +318,6 @@ ROM_START( pmroulet )
 	ROM_LOAD( "8.bin", 0x200000, 0x80000, CRC(d4c2b7da) SHA1(515be861443acc5b911241dbaafa42e02f79985a))
 ROM_END
 
-GAME( 1996, sderby, 0, sderby, sderby, 0, ROT0, "Playmark", "Super Derby" )
-GAMEX( 1997, pmroulet, 0, pmroulet, sderby, pmroulet, ROT0, "Playmark", "Roulette (Playmark)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1996, sderby, 0, sderby, sderby, 0, ROT0, "Playmark", "Super Derby", 0 )
+GAME( 1997, pmroulet, 0, pmroulet, sderby, pmroulet, ROT0, "Playmark", "Roulette (Playmark)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 

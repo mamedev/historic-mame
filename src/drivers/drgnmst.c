@@ -523,4 +523,4 @@ static DRIVER_INIT( drgnmst )
 }
 
 
-GAME( 1994, drgnmst, 0, drgnmst,  drgnmst, drgnmst, ROT0, "Unico", "Dragon Master" )
+GAME( 1994, drgnmst, 0, drgnmst,  drgnmst, drgnmst, ROT0, "Unico", "Dragon Master", 0 )

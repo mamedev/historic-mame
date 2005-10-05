@@ -46,8 +46,6 @@ static UINT8 coin_last_reset;
 
 static UINT8 mux_select;
 
-static UINT8 qb3_ram_bank;
-
 
 
 /*************************************
@@ -66,13 +64,11 @@ MACHINE_INIT( cinemat )
 	/* reset mux select */
 	mux_select = 0;
 
-        /* register state saves */
-        state_save_register_UINT8("cinemat", 0, "coin_detected", &coin_detected,1);
-        state_save_register_UINT8("cinemat", 0, "coin_last_input", &coin_last_input,1);
-        state_save_register_UINT8("cinemat", 0, "coin_last_reset", &coin_last_reset,1);
-        state_save_register_UINT8("cinemat", 0, "mux_select", &mux_select,1);
-        state_save_register_UINT8("cinemat", 0, "qb3_ram_bank", &qb3_ram_bank,1);
-
+	/* register state saves */
+	state_save_register_UINT8("cinemat", 0, "coin_detected", &coin_detected,1);
+	state_save_register_UINT8("cinemat", 0, "coin_last_input", &coin_last_input,1);
+	state_save_register_UINT8("cinemat", 0, "coin_last_reset", &coin_last_reset,1);
+	state_save_register_UINT8("cinemat", 0, "mux_select", &mux_select,1);
 }
 
 
@@ -277,8 +273,7 @@ static READ8_HANDLER( qb3_frame_r )
 
 static WRITE8_HANDLER( qb3_ram_bank_w )
 {
-	qb3_ram_bank = cpunum_get_reg(0, CCPU_P) & 3;
-	memory_set_bankptr(1, &rambase[0x100 * qb3_ram_bank]);
+	memory_set_bank(1, cpunum_get_reg(0, CCPU_P) & 3);
 }
 
 
@@ -1509,6 +1504,8 @@ static DRIVER_INIT( qb3 )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0f, 0x0f, 0, 0, qb3_frame_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, qb3_ram_bank_w);
+
+	memory_configure_bank(1, 0, 4, rambase, 0x100*2);
 }
 
 
@@ -1519,26 +1516,26 @@ static DRIVER_INIT( qb3 )
  *
  *************************************/
 
-GAME( 1977, spacewar, 0,       spacewar, spacewar, 0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Space Wars" )
-GAME( 1979, barrier,  0,       barrier,  barrier,  0,        ORIENTATION_FLIP_X ^ ROT270, "Vectorbeam", "Barrier" )
-GAMEX(1979, speedfrk, 0,       speedfrk, speedfrk, speedfrk, ORIENTATION_FLIP_Y,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
-GAME( 1979, starhawk, 0,       starhawk, starhawk, 0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Star Hawk" )
-GAME( 1979, sundance, 0,       sundance, sundance, sundance, ORIENTATION_FLIP_X ^ ROT270, "Cinematronics", "Sundance" )
-GAME( 1979, tailg,    0,       tailg,    tailg,    tailg,    ORIENTATION_FLIP_Y,   "Cinematronics", "Tailgunner" )
-GAME( 1979, warrior,  0,       warrior,  warrior,  0,        ORIENTATION_FLIP_Y,   "Vectorbeam", "Warrior" )
-GAME( 1980, armora,   0,       armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Armor Attack")
-GAME( 1980, armorap,  armora,  armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Armor Attack (prototype)")
-GAME( 1980, armorar,  armora,  armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)" )
-GAME( 1980, ripoff,   0,       ripoff,   ripoff,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Rip Off" )
-GAME( 1980, starcas,  0,       starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (version 3)" )
-GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (older)" )
-GAME( 1980, starcasp, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (prototype)" )
-GAME( 1980, starcase, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics (Mottoeis license)", "Star Castle (Mottoeis)" )
-GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "bootleg", "Stellar Castle (Elettronolo)" )
-GAME( 1981, spaceftr, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Zaccaria", "Space Fortress (Zaccaria)" )
-GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_Y ^ ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest" )
-GAME( 1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ORIENTATION_FLIP_Y,   "Cinematronics", "Boxing Bugs" )
-GAME( 1981, wotw,     0,       wotw,     wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds" )
-GAME( 1981, wotwc,    wotw,    wotwc,    wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds (color)" )
-GAME( 1982, demon,    0,       demon,    demon,    0,        ORIENTATION_FLIP_Y,   "Rock-ola", "Demon" )
-GAMEX(1982, qb3,      0,       qb3,      qb3,      qb3,      ORIENTATION_FLIP_Y,   "Rock-ola", "QB-3 (prototype)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1977, spacewar, 0,       spacewar, spacewar, 0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Space Wars", GAME_SUPPORTS_SAVE )
+GAME( 1979, barrier,  0,       barrier,  barrier,  0,        ORIENTATION_FLIP_X ^ ROT270, "Vectorbeam", "Barrier", GAME_SUPPORTS_SAVE )
+GAME( 1979, speedfrk, 0,       speedfrk, speedfrk, speedfrk, ORIENTATION_FLIP_Y,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
+GAME( 1979, starhawk, 0,       starhawk, starhawk, 0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Star Hawk", GAME_SUPPORTS_SAVE )
+GAME( 1979, sundance, 0,       sundance, sundance, sundance, ORIENTATION_FLIP_X ^ ROT270, "Cinematronics", "Sundance", GAME_SUPPORTS_SAVE )
+GAME( 1979, tailg,    0,       tailg,    tailg,    tailg,    ORIENTATION_FLIP_Y,   "Cinematronics", "Tailgunner", GAME_SUPPORTS_SAVE )
+GAME( 1979, warrior,  0,       warrior,  warrior,  0,        ORIENTATION_FLIP_Y,   "Vectorbeam", "Warrior", GAME_SUPPORTS_SAVE )
+GAME( 1980, armora,   0,       armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Armor Attack", GAME_SUPPORTS_SAVE )
+GAME( 1980, armorap,  armora,  armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Armor Attack (prototype)", GAME_SUPPORTS_SAVE )
+GAME( 1980, armorar,  armora,  armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)", GAME_SUPPORTS_SAVE )
+GAME( 1980, ripoff,   0,       ripoff,   ripoff,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Rip Off", GAME_SUPPORTS_SAVE )
+GAME( 1980, starcas,  0,       starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (version 3)", GAME_SUPPORTS_SAVE )
+GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (older)", GAME_SUPPORTS_SAVE )
+GAME( 1980, starcasp, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (prototype)", GAME_SUPPORTS_SAVE )
+GAME( 1980, starcase, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics (Mottoeis license)", "Star Castle (Mottoeis)", GAME_SUPPORTS_SAVE )
+GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "bootleg", "Stellar Castle (Elettronolo)", GAME_SUPPORTS_SAVE )
+GAME( 1981, spaceftr, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Zaccaria", "Space Fortress (Zaccaria)", GAME_SUPPORTS_SAVE )
+GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_Y ^ ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest", GAME_SUPPORTS_SAVE )
+GAME( 1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ORIENTATION_FLIP_Y,   "Cinematronics", "Boxing Bugs", GAME_SUPPORTS_SAVE )
+GAME( 1981, wotw,     0,       wotw,     wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds", GAME_SUPPORTS_SAVE )
+GAME( 1981, wotwc,    wotw,    wotwc,    wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds (color)", GAME_SUPPORTS_SAVE )
+GAME( 1982, demon,    0,       demon,    demon,    0,        ORIENTATION_FLIP_Y,   "Rock-ola", "Demon", GAME_SUPPORTS_SAVE )
+GAME( 1982, qb3,      0,       qb3,      qb3,      qb3,      ORIENTATION_FLIP_Y,   "Rock-ola", "QB-3 (prototype)", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE )

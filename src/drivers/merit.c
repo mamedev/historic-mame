@@ -725,9 +725,9 @@ DRIVER_INIT( phrcraze )
 	decryption_key = 7;
 }
 
-GAMEX( 1983, pitboss,  0,       pitboss,  pitboss,  0,        ROT0,  "Merit", "Pit Boss",                       GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAMEX( 1985, trvwhiz,  0,       trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Question set 1)", GAME_WRONG_COLORS )
-GAMEX( 1985, trvwhza,  trvwhiz, trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Question set 2)", GAME_WRONG_COLORS )
-GAMEX( 1985, trvwhzii, 0,       trvwhiz,  tictac,   trvwhzii, ROT90, "Merit", "Trivia ? Whiz (Edition 2)",      GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1985, tictac,   0,       tictac,   tictac,   tictac,   ROT0,  "Merit", "Tic Tac Trivia",                 GAME_WRONG_COLORS )
-GAMEX( 1986, phrcraze, 0,       phrcraze, phrcraze, phrcraze, ROT0,  "Merit", "Phraze Craze",                   GAME_WRONG_COLORS )
+GAME( 1983, pitboss,  0,       pitboss,  pitboss,  0,        ROT0,  "Merit", "Pit Boss",                       GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1985, trvwhiz,  0,       trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Question set 1)", GAME_WRONG_COLORS )
+GAME( 1985, trvwhza,  trvwhiz, trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Question set 2)", GAME_WRONG_COLORS )
+GAME( 1985, trvwhzii, 0,       trvwhiz,  tictac,   trvwhzii, ROT90, "Merit", "Trivia ? Whiz (Edition 2)",      GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, tictac,   0,       tictac,   tictac,   tictac,   ROT0,  "Merit", "Tic Tac Trivia",                 GAME_WRONG_COLORS )
+GAME( 1986, phrcraze, 0,       phrcraze, phrcraze, phrcraze, ROT0,  "Merit", "Phraze Craze",                   GAME_WRONG_COLORS )

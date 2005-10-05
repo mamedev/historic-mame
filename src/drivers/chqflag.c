@@ -480,5 +480,5 @@ static DRIVER_INIT( chqflag )
 	paletteram = &RAM[0x58000];
 }
 
-GAMEX( 1988, chqflag,        0, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
-GAMEX( 1988, chqflagj, chqflag, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAME( 1988, chqflag,        0, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAME( 1988, chqflagj, chqflag, chqflag, chqflag, chqflag, ROT90, "Konami", "Chequered Flag (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )

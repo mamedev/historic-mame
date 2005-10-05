@@ -413,4 +413,4 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1983, suprridr, 0, suprridr, suprridr, 0, ROT90, "Venture Line (Taito Corporation license)", "Super Rider", GAME_IMPERFECT_SOUND )
+GAME( 1983, suprridr, 0, suprridr, suprridr, 0, ROT90, "Venture Line (Taito Corporation license)", "Super Rider", GAME_IMPERFECT_SOUND )

@@ -759,6 +759,6 @@ MACHINE_INIT( taito_dualscreen )
 
 /* Working Games */
 
-GAME( 1989, darius2d, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)" )
-GAME( 1989, drius2do, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)" )
-GAME( 1991, warriorb, 0,        warriorb, warriorb, warriorb, ROT0, "Taito Corporation", "Warrior Blade - Rastan Saga Episode III (Japan)" )
+GAME( 1989, darius2d, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)", 0 )
+GAME( 1989, drius2do, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)", 0 )
+GAME( 1991, warriorb, 0,        warriorb, warriorb, warriorb, ROT0, "Taito Corporation", "Warrior Blade - Rastan Saga Episode III (Japan)", 0 )

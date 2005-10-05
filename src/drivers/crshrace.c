@@ -753,5 +753,5 @@ DRIVER_INIT( crshrac2 )
 }
 
 
-GAMEX( 1993, crshrace, 0,        crshrace, crshrace, crshrace, ROT270, "Video System Co.", "Lethal Crash Race (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1993, crshrac2, crshrace, crshrace, crshrac2, crshrac2, ROT270, "Video System Co.", "Lethal Crash Race (set 2)", GAME_NO_COCKTAIL )
+GAME( 1993, crshrace, 0,        crshrace, crshrace, crshrace, ROT270, "Video System Co.", "Lethal Crash Race (set 1)", GAME_NO_COCKTAIL )
+GAME( 1993, crshrac2, crshrace, crshrace, crshrac2, crshrac2, ROT270, "Video System Co.", "Lethal Crash Race (set 2)", GAME_NO_COCKTAIL )

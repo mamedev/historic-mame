@@ -309,8 +309,6 @@ static WRITE8_HANDLER( fortyl_mcu_w )
 	buggychl_mcu_w(offset,data);
 }
 
-static int banknum = -1;
-
 static WRITE8_HANDLER( bank_select_w )
 {
 
@@ -320,8 +318,7 @@ static WRITE8_HANDLER( bank_select_w )
 //      ui_popup("WRONG BANK SELECT = %x !!!!\n",data);
 	}
 
-	banknum = data&1;
-	memory_set_bankptr( 1, memory_region(REGION_CPU1) + (banknum * 0x2000) + 0x10000 );
+	memory_set_bank( 1, data&1 );
 }
 
 
@@ -611,6 +608,9 @@ static READ8_HANDLER( undoukai_mcu_status_r )
 
 static DRIVER_INIT( undoukai )
 {
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	memory_configure_bank(1, 0, 2, &ROM[0x10000], 0x2000);
+
 	from_mcu = 0xff;
 	mcu_cmd = -1;
 
@@ -622,6 +622,9 @@ static DRIVER_INIT( undoukai )
 
 static DRIVER_INIT( 40love )
 {
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	memory_configure_bank(1, 0, 2, &ROM[0x10000], 0x2000);
+
 	#if 0
 		/* character ROM hack
             to show a white line on the opponent side */
@@ -1380,6 +1383,6 @@ ROM_START( undoukai )
 	ROM_LOAD( "a17-18.23v", 0x0c00, 0x0400, CRC(3023a1da) SHA1(08ce4c6e99d04b358d66f0588852311d07183619) )	/* ??? */
 ROM_END
 
-GAMEX( 1984, 40love,   0,        40love,   40love,   40love,   ROT0, "Taito Corporation", "Forty-Love", GAME_IMPERFECT_GRAPHICS )
-GAME ( 1984, fieldday, 0,        undoukai, undoukai, undoukai, ROT0, "Taito Corporation", "Field Day" )
-GAME ( 1984, undoukai, fieldday, undoukai, undoukai, undoukai, ROT0, "Taito Corporation", "The Undoukai (Japan)" )
+GAME( 1984, 40love,   0,        40love,   40love,   40love,   ROT0, "Taito Corporation", "Forty-Love", GAME_IMPERFECT_GRAPHICS )
+GAME( 1984, fieldday, 0,        undoukai, undoukai, undoukai, ROT0, "Taito Corporation", "Field Day", 0 )
+GAME( 1984, undoukai, fieldday, undoukai, undoukai, undoukai, ROT0, "Taito Corporation", "The Undoukai (Japan)", 0 )

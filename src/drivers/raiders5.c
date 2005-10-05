@@ -326,5 +326,5 @@ ROM_START( raidrs5t )
 ROM_END
 
 
-GAME( 1985, raiders5, 0,        raiders5, raiders5, 0, ROT0, "UPL", "Raiders5" )
-GAME( 1985, raidrs5t, raiders5, raiders5, raiders5, 0, ROT0, "UPL (Taito license)", "Raiders5 (Japan)" )
+GAME( 1985, raiders5, 0,        raiders5, raiders5, 0, ROT0, "UPL", "Raiders5", 0 )
+GAME( 1985, raidrs5t, raiders5, raiders5, raiders5, 0, ROT0, "UPL (Taito license)", "Raiders5 (Japan)", 0 )

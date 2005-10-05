@@ -591,6 +591,6 @@ ROM_START( gekiretu )
 
 ROM_END
 
-GAME( 1991, gakupara, 0, gakupara, gakupara, 0, ROT0, "NMK",  "Quiz Gakuen Paradise (Japan)" )
-GAME( 1992, quizdna,  0, quizdna,  quizdna,  0, ROT0, "Face", "Quiz DNA no Hanran (Japan)" )
-GAME( 1992, gekiretu, 0, gekiretu, gekiretu, 0, ROT0, "Face", "Quiz Gekiretsu Scramble (Japan)" )
+GAME( 1991, gakupara, 0, gakupara, gakupara, 0, ROT0, "NMK",  "Quiz Gakuen Paradise (Japan)", 0 )
+GAME( 1992, quizdna,  0, quizdna,  quizdna,  0, ROT0, "Face", "Quiz DNA no Hanran (Japan)", 0 )
+GAME( 1992, gekiretu, 0, gekiretu, gekiretu, 0, ROT0, "Face", "Quiz Gekiretsu Scramble (Japan)", 0 )

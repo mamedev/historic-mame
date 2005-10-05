@@ -413,5 +413,5 @@ static DRIVER_INIT( bombjack )
 }
 
 
-GAME( 1984, bombjack, 0,        bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 1)" )
-GAME( 1984, bombjac2, bombjack, bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 2)" )
+GAME( 1984, bombjack, 0,        bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 1)", 0 )
+GAME( 1984, bombjac2, bombjack, bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 2)", 0 )

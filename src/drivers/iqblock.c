@@ -473,7 +473,7 @@ static DRIVER_INIT( cabaret )
 
 
 
-GAME( 1993, iqblock, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "IQ-Block" )
-GAME( 1993, grndtour, 0, iqblock, iqblock, grndtour, ROT0, "IGS", "Grand Tour" )
+GAME( 1993, iqblock, 0, iqblock, iqblock, iqblock, ROT0, "IGS", "IQ-Block", 0 )
+GAME( 1993, grndtour, 0, iqblock, iqblock, grndtour, ROT0, "IGS", "Grand Tour", 0 )
 
-GAMEX( 19??, cabaret, 0, cabaret, iqblock, cabaret, ROT0, "IGS", "Cabaret", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 19??, cabaret, 0, cabaret, iqblock, cabaret, ROT0, "IGS", "Cabaret", GAME_NOT_WORKING | GAME_NO_SOUND )

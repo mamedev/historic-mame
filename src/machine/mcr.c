@@ -47,12 +47,12 @@ static UINT8 m6840_msb_buffer;
 static UINT8 m6840_lsb_buffer;
 static struct counter_state
 {
-	UINT8	control;
-	UINT16	latch;
-	UINT16	count;
-	void *	timer;
-	UINT8	timer_active;
-	double	period;
+	UINT8			control;
+	UINT16			latch;
+	UINT16			count;
+	mame_timer *	timer;
+	UINT8			timer_active;
+	double			period;
 } m6840_state[3];
 
 /* MCR/68k interrupt states */

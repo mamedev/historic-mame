@@ -1846,23 +1846,23 @@ static DRIVER_INIT( battlcry )
 	homedata_priority=1; /* priority and initial value for bank write */
 }
 
-GAMEX(1987, hourouki, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Hourouki Part 1 - Seisyun Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1987, mhgaiden, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Hourouki Gaiden (Japan)" )
-GAME( 1988, mjhokite, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Hourouki Okite (Japan)" )
-GAME( 1988, mjclinic, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Clinic (Japan)" )
-GAMEX(1988, mrokumei, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Rokumeikan (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1987, hourouki, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Hourouki Part 1 - Seisyun Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1987, mhgaiden, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Hourouki Gaiden (Japan)", 0 )
+GAME( 1988, mjhokite, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Hourouki Okite (Japan)", 0 )
+GAME( 1988, mjclinic, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Clinic (Japan)", 0 )
+GAME( 1988, mrokumei, 0, mrokumei, mjhokite, 0,          ROT0, "Home Data", "Mahjong Rokumeikan (Japan)", GAME_IMPERFECT_GRAPHICS )
 
-GAME( 1988, reikaids, 0, reikaids, reikaids, reikaids,   ROT0, "Home Data", "Reikai Doushi (Japan)" )
-GAMEX(1991, battlcry, 0, reikaids, battlcry, battlcry,   ROT0, "Home Data", "Battlecry", GAME_IMPERFECT_GRAPHICS  )
-GAME( 1989, mjkojink, 0, pteacher, pteacher, 0,          ROT0, "Home Data", "Mahjong Kojinkyouju (Private Teacher) (Japan)" )
-GAME( 1989, vitaminc, 0, pteacher, pteacher, 0,          ROT0, "Home Data", "Mahjong Vitamin C (Japan)" )
-GAME( 1989, mjyougo,  0, pteacher, pteacher, 0,          ROT0, "Home Data", "Mahjong-yougo no Kisotairyoku (Japan)" )
-GAME( 1991, mjkinjas, 0, mjkinjas, pteacher, 0,          ROT0, "Home Data", "Mahjong Kinjirareta Asobi (Japan)" )
-GAME( 1992?,jogakuen, 0, pteacher, jogakuen, jogakuen,   ROT0, "Windom",    "Mahjong Jogakuen (Japan)" )
+GAME( 1988, reikaids, 0, reikaids, reikaids, reikaids,   ROT0, "Home Data", "Reikai Doushi (Japan)", 0 )
+GAME( 1991, battlcry, 0, reikaids, battlcry, battlcry,   ROT0, "Home Data", "Battlecry", GAME_IMPERFECT_GRAPHICS  )
+GAME( 1989, mjkojink, 0, pteacher, pteacher, 0,          ROT0, "Home Data", "Mahjong Kojinkyouju (Private Teacher) (Japan)", 0 )
+GAME( 1989, vitaminc, 0, pteacher, pteacher, 0,          ROT0, "Home Data", "Mahjong Vitamin C (Japan)", 0 )
+GAME( 1989, mjyougo,  0, pteacher, pteacher, 0,          ROT0, "Home Data", "Mahjong-yougo no Kisotairyoku (Japan)", 0 )
+GAME( 1991, mjkinjas, 0, mjkinjas, pteacher, 0,          ROT0, "Home Data", "Mahjong Kinjirareta Asobi (Japan)", 0 )
+GAME( 1992?,jogakuen, 0, pteacher, jogakuen, jogakuen,   ROT0, "Windom",    "Mahjong Jogakuen (Japan)", 0 )
 
-GAME( 1990, lemnangl, 0, lemnangl, pteacher, 0,          ROT0, "Home Data", "Mahjong Lemon Angel (Japan)" )
+GAME( 1990, lemnangl, 0, lemnangl, pteacher, 0,          ROT0, "Home Data", "Mahjong Lemon Angel (Japan)", 0 )
 
-GAMEX(1991?,mjikaga,  0, lemnangl, mjikaga,  mjikaga,    ROT0, "Mitchell",  "Mahjong Ikaga Desu ka (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1991?,mjikaga,  0, lemnangl, mjikaga,  mjikaga,    ROT0, "Mitchell",  "Mahjong Ikaga Desu ka (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND )
 
 
 

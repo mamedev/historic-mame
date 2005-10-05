@@ -2225,7 +2225,7 @@ static DRIVER_INIT( halleys )
 //**************************************************************************
 // Game Definitions
 
-GAMEX( 1984, benberob, 0,       benberob, benberob, benberob, ROT0, "Taito", "Ben Bero Beh (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
-GAMEX( 1986, halleys,  0,       halleys, halleys, halleys,  ROT90, "Taito America Corporation (Coin-It license)", "Halley's Comet (US)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1986, halleysc, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet (Japan set 1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAMEX( 1986, halleycj, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet (Japan set 2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1984, benberob, 0,       benberob, benberob, benberob, ROT0, "Taito", "Ben Bero Beh (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
+GAME( 1986, halleys,  0,       halleys, halleys, halleys,  ROT90, "Taito America Corporation (Coin-It license)", "Halley's Comet (US)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1986, halleysc, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet (Japan set 1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1986, halleycj, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet (Japan set 2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )

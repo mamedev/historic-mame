@@ -400,10 +400,10 @@ ROM_END
 
 
 
-GAME( 1982, mrdo,     0,    mrdo, mrdo, 0, ROT270, "Universal", "Mr. Do!" )
-GAME( 1982, mrdoy,    mrdo, mrdo, mrdo, 0, ROT270, "Universal", "Mr. Do! (prototype)" )	/* aka "Yukidaruma" */
-GAME( 1982, mrdot,    mrdo, mrdo, mrdo, 0, ROT270, "Universal (Taito license)", "Mr. Do! (Taito)" )
-GAME( 1982, mrdofix,  mrdo, mrdo, mrdo, 0, ROT270, "Universal (Taito license)", "Mr. Do! (bugfixed)" )
-GAME( 1982, mrlo,     mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Lo!" )
-GAME( 1982, mrdu,     mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Du!" )
-GAME( 1982, yankeedo, mrdo, mrdo, mrdo, 0, ROT270, "hack", "Yankee DO!" )
+GAME( 1982, mrdo,     0,    mrdo, mrdo, 0, ROT270, "Universal", "Mr. Do!", 0 )
+GAME( 1982, mrdoy,    mrdo, mrdo, mrdo, 0, ROT270, "Universal", "Mr. Do! (prototype)" , 0)	/* aka "Yukidaruma" */
+GAME( 1982, mrdot,    mrdo, mrdo, mrdo, 0, ROT270, "Universal (Taito license)", "Mr. Do! (Taito)", 0 )
+GAME( 1982, mrdofix,  mrdo, mrdo, mrdo, 0, ROT270, "Universal (Taito license)", "Mr. Do! (bugfixed)", 0 )
+GAME( 1982, mrlo,     mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Lo!", 0 )
+GAME( 1982, mrdu,     mrdo, mrdo, mrdo, 0, ROT270, "bootleg", "Mr. Du!", 0 )
+GAME( 1982, yankeedo, mrdo, mrdo, mrdo, 0, ROT270, "hack", "Yankee DO!", 0 )

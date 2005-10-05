@@ -51,7 +51,7 @@ static ADDRESS_MAP_START( snes_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(snes_w_bank2)	/* I/O and ROM (repeats for each bank) */
 	AM_RANGE(0x400000, 0x5fffff) AM_WRITE(MWA8_ROM)		/* ROM (and reserved in Mode 20) */
 	AM_RANGE(0x600000, 0x6fffff) AM_WRITE(MWA8_NOP)		/* Reserved */
-	AM_RANGE(0x700000, 0x77ffff) AM_WRITE(MWA8_RAM)		/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
+	AM_RANGE(0x700000, 0x77ffff) AM_WRITE(snes_w_sram) 	/* 256KB Mode 20 save ram + reserved from 0x8000 - 0xffff */
 	AM_RANGE(0x780000, 0x7dffff) AM_WRITE(MWA8_NOP)		/* Reserved */
 	AM_RANGE(0x7e0000, 0x7fffff) AM_WRITE(MWA8_RAM)		/* 8KB Low RAM, 24KB High RAM, 96KB Expanded RAM */
 	AM_RANGE(0x800000, 0xffffff) AM_WRITE(snes_w_bank4)	/* Mirror and ROM */
@@ -70,8 +70,9 @@ static WRITE8_HANDLER( spc_ram_100_w )
 static ADDRESS_MAP_START( spc_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x00ef) AM_READWRITE(spc_ram_r, spc_ram_w)   	/* lower 32k ram */
 	AM_RANGE(0x00f0, 0x00ff) AM_READWRITE(spc_io_r, spc_io_w)   	/* spc io */
-	AM_RANGE(0x0100, 0xffbf) AM_READWRITE(spc_ram_100_r, spc_ram_100_w) /* ram continued */
-	AM_RANGE(0xffc0, 0xffff) AM_READWRITE(spc_bank_r, spc_bank_w)  	/* upper 32k ram continued or Initial Program Loader ROM */
+	AM_RANGE(0x0100, 0xffff) AM_WRITE(spc_ram_100_w)
+	AM_RANGE(0x0100, 0xffbf) AM_READ(spc_ram_100_r)
+	AM_RANGE(0xffc0, 0xffff) AM_READ(spc_ipl_r)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( snes )
@@ -229,7 +230,7 @@ static MACHINE_DRIVER_START( snes )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)
+	MDRV_INTERLEAVE(400)
 
 	MDRV_MACHINE_INIT( snes )
 
@@ -239,7 +240,7 @@ static MACHINE_DRIVER_START( snes )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(SNES_SCR_WIDTH * 2, SNES_SCR_HEIGHT * 2)
-	MDRV_VISIBLE_AREA(0, SNES_SCR_WIDTH-1, 0, SNES_SCR_HEIGHT-1 )
+	MDRV_VISIBLE_AREA(0, SNES_SCR_WIDTH*2-1, 0, SNES_SCR_HEIGHT*2-1 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32768)
 	MDRV_COLORTABLE_LENGTH(257)
@@ -266,7 +267,8 @@ MACHINE_DRIVER_END
 	ROM_REGION(SNES_CGRAM_SIZE, REGION_USER1, 0)		/* CGRAM */ \
 	ROM_REGION(SNES_OAM_SIZE,   REGION_USER2, 0)		/* OAM */ \
 	ROM_REGION(0x10000,         REGION_CPU2,  0)		/* SPC700 */ \
-	ROM_LOAD("spc700.rom", 0xffc0, 0x40, CRC(44bb3a40) SHA1(97e352553e94242ae823547cd853eecda55c20f0) ) \
+	ROM_REGION(0x100,           REGION_USER5, 0)		/* IPL ROM */ \
+	ROM_LOAD("spc700.rom", 0, 0x40, CRC(44bb3a40) SHA1(97e352553e94242ae823547cd853eecda55c20f0) ) \
 	ROM_REGION(0x10000,         REGION_CPU3,  0)		/* Bios CPU (what is it?) */ \
 	ROM_LOAD("nss-c.dat"  , 0, 0x8000, CRC(a8e202b3) SHA1(b7afcfe4f5cf15df53452dc04be81929ced1efb2) )	/* bios */ \
 	ROM_LOAD("nss-ic14.02", 0, 0x8000, CRC(e06cb58f) SHA1(62f507e91a2797919a78d627af53f029c7d81477) )	/* bios */ \
@@ -406,16 +408,16 @@ ROM_START( nss_sten )
 	ROM_LOAD( "st.ic3", 0x0000, 0x8000, CRC(8880596e) SHA1(ec6d68fc2f51f7d94f496cd72cf898db65324542) )
 ROM_END
 
-GAMEX( 199?, nss,       0,		  snes,	     snes,    snes,		ROT0, "Nintendo",				"Nintendo Super System BIOS", NOT_A_DRIVER )
-GAMEX( 1992, nss_actr,  nss,	  snes,	     snes,    snes,		ROT0, "Enix",						"Act Raiser (Nintendo Super System)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) // time broken
-GAMEX( 1992, nss_adam,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"The Addams Family (Nintendo Super System)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) // crashes mame
-GAMEX( 1992, nss_aten,  nss,	  snes,	     snes,    snes,		ROT0, "Absolute Entertainment Inc.","David Crane's Amazing Tennis (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // gfx problems with net
-GAMEX( 1992, nss_con3,  nss,	  snes,	     snes,    snes,		ROT0, "Konami",						"Contra 3: The Alien Wars (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, nss_lwep,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Lethal Weapon (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1992, nss_ncaa,  nss,	  snes,	     snes,    snes,		ROT0, "Sculptured Software Inc.",	"NCAA Basketball (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // severe gfx problems, no inputs
-GAMEX( 1992, nss_rob3,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Robocop 3 (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // invisible enemy? gameplay prob?
-GAMEX( 1992, nss_skin,  nss,	  snes,	     snes,    snes,		ROT0, "Irem",						"Skins Game (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // uses some gfx modes not implemented
-GAMEX( 1992, nss_ssoc,  nss,	  snes,	     snes,    snes,		ROT0, "Human Inc.",					"Super Soccer (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // lots of gfx problems
-GAMEX( 199?, nss_smw,   nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Super Mario World (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // bad rom
-GAMEX( 199?, nss_fzer,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"F-Zero (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // bad rom
-GAMEX( 199?, nss_sten,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Super Tennis (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // bad rom
+GAME( 199?, nss,       0,     snes,	     snes,    snes,		ROT0, "Nintendo",					"Nintendo Super System BIOS", NOT_A_DRIVER )
+GAME( 1992, nss_actr,  nss,	  snes,	     snes,    snes,		ROT0, "Enix",						"Act Raiser (Nintendo Super System)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) // time broken (?)
+GAME( 1992, nss_adam,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"The Addams Family (Nintendo Super System)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAME( 1992, nss_aten,  nss,	  snes,	     snes,    snes,		ROT0, "Absolute Entertainment Inc.","David Crane's Amazing Tennis (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // gfx problems with net
+GAME( 1992, nss_con3,  nss,	  snes,	     snes,    snes,		ROT0, "Konami",						"Contra 3: The Alien Wars (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1992, nss_lwep,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Lethal Weapon (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1992, nss_ncaa,  nss,	  snes,	     snes,    snes,		ROT0, "Sculptured Software Inc.",	"NCAA Basketball (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1992, nss_rob3,  nss,	  snes,	     snes,    snes,		ROT0, "Ocean",						"Robocop 3 (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // invisible enemy? gameplay prob?
+GAME( 1992, nss_skin,  nss,	  snes,	     snes,    snes,		ROT0, "Irem",						"Skins Game (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // no controls
+GAME( 1992, nss_ssoc,  nss,	  snes,	     snes,    snes,		ROT0, "Human Inc.",					"Super Soccer (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // some gfx issues
+GAME( 199?, nss_smw,   nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Super Mario World (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // bad rom
+GAME( 199?, nss_fzer,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"F-Zero (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // bad rom
+GAME( 199?, nss_sten,  nss,	  snes,	     snes,    snes,		ROT0, "Nintendo",					"Super Tennis (Nintendo Super System)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING ) // bad rom

@@ -733,6 +733,6 @@ DRIVER_INIT( coinmstr )
 }
 
 
-GAMEX( 1985, quizmstr, 0, quizmstr, quizmstr, coinmstr, ROT0, "Coinmaster", "Quizmaster",                     GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1987, trailblz, 0, trailblz, trailblz, coinmstr, ROT0, "Coinmaster", "Trail Blazer",                   GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) // or Trail Blazer 2 ?
-GAMEX( 1989, supnudg2, 0, supnudg2, quizmstr, coinmstr, ROT0, "Coinmaster", "Super Nudger II (Version 5.21)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1985, quizmstr, 0, quizmstr, quizmstr, coinmstr, ROT0, "Coinmaster", "Quizmaster",                     GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1987, trailblz, 0, trailblz, trailblz, coinmstr, ROT0, "Coinmaster", "Trail Blazer",                   GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) // or Trail Blazer 2 ?
+GAME( 1989, supnudg2, 0, supnudg2, quizmstr, coinmstr, ROT0, "Coinmaster", "Super Nudger II (Version 5.21)", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

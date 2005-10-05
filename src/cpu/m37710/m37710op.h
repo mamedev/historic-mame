@@ -1415,6 +1415,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REG_DB = DST;	\
 			REG_A |= REG_B;													\
 			CLK((REG_A+1)<<3);												\
 			for(;(int)REG_A >= 0;REG_A--)									\
@@ -1434,6 +1435,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REG_DB = DST;	\
 			REG_A |= REG_B;													\
 			CLK((REG_A+1)<<3);												\
 			for(;(int)REG_A >= 0;REG_A--)									\
@@ -1457,6 +1459,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REG_DB = DST;	\
 			REG_A |= REG_B;													\
 			CLK((REG_A+1)<<3);												\
 			for(;(int)REG_A >= 0;REG_A--)									\
@@ -1476,6 +1479,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REG_DB = DST;	\
 			REG_A |= REG_B;													\
 			CLK((REG_A+1)<<3);												\
 			for(;(int)REG_A >= 0;REG_A--)									\

@@ -360,4 +360,4 @@ static DRIVER_INIT(xfiles)
 	memory_region(REGION_USER1)[0x3aa933]=3;
 }
 
-GAMEX( 1999, xfiles, 0, dgpix, dgpix, xfiles, ROT0, "dgPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1999, xfiles, 0, dgpix, dgpix, xfiles, ROT0, "dgPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )

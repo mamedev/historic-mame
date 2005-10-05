@@ -109,4 +109,4 @@ ROM_START( wink )
 ROM_END
 
 
-GAMEX( 1985, wink, 0, wink, wink, wink, ROT0, "Midcoin", "Wink", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
+GAME( 1985, wink, 0, wink, wink, wink, ROT0, "Midcoin", "Wink", GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)

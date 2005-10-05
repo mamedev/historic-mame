@@ -497,8 +497,8 @@ static DRIVER_INIT( simpsons )
 	konami_rom_deinterleave_4(REGION_GFX2);
 }
 
-GAME( 1991, simpsons, 0,        simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (4 Players)" )
-GAME( 1991, simps4pa, simpsons, simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (4 Players alt)" )
-GAME( 1991, simpsn2p, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players)" )
-GAME( 1991, simps2pa, simpsons, simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (2 Players alt)" )
-GAME( 1991, simps2pj, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players Japan)" )
+GAME( 1991, simpsons, 0,        simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (4 Players)", 0 )
+GAME( 1991, simps4pa, simpsons, simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (4 Players alt)", 0 )
+GAME( 1991, simpsn2p, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players)", 0 )
+GAME( 1991, simps2pa, simpsons, simpsons, simpsons, simpsons, ROT0, "Konami", "The Simpsons (2 Players alt)", 0 )
+GAME( 1991, simps2pj, simpsons, simpsons, simpsn2p, simpsons, ROT0, "Konami", "The Simpsons (2 Players Japan)", 0 )

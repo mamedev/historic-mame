@@ -738,7 +738,7 @@ DRIVER_INIT( nmg5 )
 }
 
 
-GAME( 1998, nmg5,     0,       nmg5,    nmg5,      nmg5, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5" )
-GAME( 1999, searchey, 0,       nmg5,    searchey,  0,    ROT0, "Yun Sung", "Search Eye" )
-GAME( 2000, pclubys,  0,       pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 1)" )
-GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 2)" )
+GAME( 1998, nmg5,     0,       nmg5,    nmg5,      nmg5, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5", 0 )
+GAME( 1999, searchey, 0,       nmg5,    searchey,  0,    ROT0, "Yun Sung", "Search Eye", 0 )
+GAME( 2000, pclubys,  0,       pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 1)", 0 )
+GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 2)", 0 )

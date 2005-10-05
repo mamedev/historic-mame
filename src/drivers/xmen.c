@@ -869,9 +869,9 @@ static DRIVER_INIT( xmen )
 	state_save_register_func_postload(sound_reset_bank);
 }
 
-GAME ( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (4 Players ver UBB)" )
-GAME ( 1992, xmen2p,  xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players ver AAA)" )
-GAME ( 1992, xmen2pj, xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players ver JAA)" )
+GAME( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (4 Players ver UBB)", 0 )
+GAME( 1992, xmen2p,  xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players ver AAA)", 0 )
+GAME( 1992, xmen2pj, xmen, xmen, xmen2p, xmen,   ROT0, "Konami", "X-Men (2 Players ver JAA)", 0 )
 
-GAMEX( 1992, xmen6p,  xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (6 Players ver ECB)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1992, xmen6pu, xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (6 Players ver UCB)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1992, xmen6p,  xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (6 Players ver ECB)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1992, xmen6pu, xmen, xmen6p,xmen6p,   xmen, ROT0, "Konami", "X-Men (6 Players ver UCB)", GAME_IMPERFECT_GRAPHICS )

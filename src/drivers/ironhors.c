@@ -533,6 +533,6 @@ ROM_END
 
 
 
-GAME( 1986, ironhors, 0,        ironhors, ironhors, 0, ROT0, "Konami", "Iron Horse" )
-GAME( 1986, dairesya, ironhors, ironhors, dairesya, 0, ROT0, "[Konami] (Kawakusu license)", "Dai Ressya Goutou (Japan)" )
-GAMEX(1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING )
+GAME( 1986, ironhors, 0,        ironhors, ironhors, 0, ROT0, "Konami", "Iron Horse", 0 )
+GAME( 1986, dairesya, ironhors, ironhors, dairesya, 0, ROT0, "[Konami] (Kawakusu license)", "Dai Ressya Goutou (Japan)", 0 )
+GAME( 1986, farwest,  ironhors, farwest,  ironhors, 0, ROT0, "bootleg?", "Far West", GAME_NOT_WORKING )

@@ -342,4 +342,4 @@ static DRIVER_INIT( sbrkout )
  *
  *************************************/
 
-GAME( 1978, sbrkout, 0, sbrkout, sbrkout, sbrkout, ROT270, "Atari", "Super Breakout" )
+GAME( 1978, sbrkout, 0, sbrkout, sbrkout, sbrkout, ROT270, "Atari", "Super Breakout", 0 )

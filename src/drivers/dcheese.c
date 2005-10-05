@@ -474,5 +474,5 @@ static DRIVER_INIT( dcheese )
  *
  *************************************/
 
-GAME( 1993, dcheese, 0, dcheese, dcheese, dcheese, ROT90, "HAR", "Double Cheese" )
-GAME( 1993, lottof2, 0, dcheese, lottof2, dcheese, ROT0,  "HAR", "Lotto Fun 2" )
+GAME( 1993, dcheese, 0, dcheese, dcheese, dcheese, ROT90, "HAR", "Double Cheese", 0 )
+GAME( 1993, lottof2, 0, dcheese, lottof2, dcheese, ROT0,  "HAR", "Lotto Fun 2", 0 )

@@ -422,4 +422,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1979, videopin, 0, videopin, videopin, 0, ROT270, "Atari", "Video Pinball" )
+GAME( 1979, videopin, 0, videopin, videopin, 0, ROT270, "Atari", "Video Pinball", 0 )

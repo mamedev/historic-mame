@@ -21,6 +21,7 @@ pending:
 #include "z80fmly.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
+#include "state.h"
 
 #define VERBOSE		0
 
@@ -33,21 +34,19 @@ pending:
 
 typedef struct
 {
-	int vector;                 /* interrupt vector */
-	int clock;                  /* system clock */
-	double invclock16;          /* 16/system clock */
-	double invclock256;         /* 256/system clock */
-	void (*intr)(int which);    /* interrupt callback */
-	write8_handler zc[4];    /* zero crossing callbacks */
-	int notimer;                /* no timer masks */
-	int mask[4];                /* masked channel flags */
-	int mode[4];                /* current mode */
-	int tconst[4];              /* time constant */
-	int down[4];                /* down counter (clock mode only) */
-	int extclk[4];              /* current signal from the external clock */
-	void *timer[4];             /* array of active timers */
-
-	int int_state[4];           /* interrupt status (for daisy chain) */
+	UINT8 vector;				/* interrupt vector */
+	UINT32 clock;				/* system clock */
+	double invclock16;			/* 16/system clock */
+	double invclock256;			/* 256/system clock */
+	void (*intr)(int which);	/* interrupt callback */
+	write8_handler zc[4];		/* zero crossing callbacks */
+	UINT8 notimer;				/* no timer masks */
+	UINT8 mode[4];				/* current mode */
+	UINT16 tconst[4];			/* time constant */
+	UINT16 down[4];				/* down counter (clock mode only) */
+	UINT8 extclk[4];			/* current signal from the external clock */
+	void *timer[4];				/* array of active timers */
+	UINT8 int_state[4];			/* interrupt status (for daisy chain) */
 } z80ctc;
 
 static z80ctc ctcs[MAX_CTC];
@@ -115,6 +114,13 @@ void z80ctc_init (z80ctc_interface *intf)
 		ctcs[i].zc[2] = intf->zc2[i];
 		ctcs[i].zc[3] = 0;
 		z80ctc_reset (i);
+
+	    state_save_register_UINT8 ("z80ctc", i, "vector", &ctcs[i].vector, 1);
+	    state_save_register_UINT8 ("z80ctc", i, "mode", &ctcs[i].mode[0], 4);
+	    state_save_register_UINT16("z80ctc", i, "tconst", &ctcs[i].tconst[0], 4);
+	    state_save_register_UINT16("z80ctc", i, "down", &ctcs[i].down[0], 4);
+	    state_save_register_UINT8 ("z80ctc", i, "extclk", &ctcs[i].extclk[0], 4);
+	    state_save_register_UINT8 ("z80ctc", i, "int_state", &ctcs[i].int_state[0], 4);
 	}
 }
 

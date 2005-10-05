@@ -48,7 +48,7 @@ void nec_v25_cpu_decrypt(void)
 
 	for(i = 0; i < 0x10000; i++)
 	{
-	        int j = BITSWAP16(i, 14, 11, 15, 12, 13, 4, 3, 7, 5, 10, 2, 8, 9, 6, 1, 0);
+		int j = BITSWAP16(i, 14, 11, 15, 12, 13, 4, 3, 7, 5, 10, 2, 8, 9, 6, 1, 0);
 
 		// normal ROM data with address swap undone
 		rom[i] = temp[j];
@@ -226,19 +226,25 @@ WRITE16_HANDLER(brival_protection_w)
  ******************************************************************************
  ******************************************************************************/
 
-static void darkedge_protection_update(int param)
+void darkedge_fd1149_vblank(void)
 {
-	cpuintrf_push_context(0);
 	program_write_word(0x20f072, 0);
-	cpuintrf_pop_context();
+	program_write_word(0x20f082, 0);
+
+	if( program_read_byte(0x20a12c) != 0 )
+	{
+		program_write_byte(0x20a12c, program_read_byte(0x20a12c)-1 );
+
+		if( program_read_byte(0x20a12c) == 0 )
+			program_write_byte(0x20a12e, 1);
+	}
 }
+
 
 WRITE16_HANDLER( darkedge_protection_w )
 {
 	logerror("%06x:darkedge_prot_w(%06X) = %04X & %04X\n",
 		activecpu_get_pc(), 0xa00000 + 2*offset, data, mem_mask ^ 0xffff);
-	if (offset == 0 && data == 0)
-		timer_set(TIME_IN_USEC(50), 0, darkedge_protection_update);
 }
 
 

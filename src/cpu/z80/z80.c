@@ -3832,14 +3832,15 @@ static void z80_init(void)
 		if( (i & 0x0f) == 0x0f ) SZHV_dec[i] |= HF;
 	}
 
+	state_save_register_UINT16("z80", cpu, "PPC", &Z80.prvpc.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "PC", &Z80.pc.w.l, 1);
+	state_save_register_UINT16("z80", cpu, "SP", &Z80.sp.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "AF", &Z80.af.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "BC", &Z80.bc.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "DE", &Z80.de.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "HL", &Z80.hl.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "IX", &Z80.ix.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "IY", &Z80.iy.w.l, 1);
-	state_save_register_UINT16("z80", cpu, "PC", &Z80.pc.w.l, 1);
-	state_save_register_UINT16("z80", cpu, "SP", &Z80.sp.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "AF2", &Z80.af2.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "BC2", &Z80.bc2.w.l, 1);
 	state_save_register_UINT16("z80", cpu, "DE2", &Z80.de2.w.l, 1);

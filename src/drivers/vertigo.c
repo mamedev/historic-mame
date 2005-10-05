@@ -228,4 +228,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1986, topgunnr, 0, vertigo, vertigo, 0, ROT0, "Exidy", "Top Gunner" )
+GAME( 1986, topgunnr, 0, vertigo, vertigo, 0, ROT0, "Exidy", "Top Gunner", 0 )

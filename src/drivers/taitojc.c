@@ -950,10 +950,10 @@ ROM_END
 
 
 
-GAMEX( 1997, dendeg,  0,      taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1997, dendegx, dendeg, taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1997, dendeg2, 0,      taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go 2", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1997, dendeg2x,dendeg2,taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go 2 Ex", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1997, sidebs,  0,      taitojc, taitojc, 0, ROT0, "Taito", "Side By Side", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1997, sidebs2, 0,      taitojc, taitojc, 0, ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1997, landgear,0,      taitojc, taitojc, 0, ROT0, "Taito", "Landing Gear", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, dendeg,  0,      taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, dendegx, dendeg, taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, dendeg2, 0,      taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, dendeg2x,dendeg2,taitojc, taitojc, 0, ROT0, "Taito", "Densya De Go 2 Ex", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, sidebs,  0,      taitojc, taitojc, 0, ROT0, "Taito", "Side By Side", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, sidebs2, 0,      taitojc, taitojc, 0, ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, landgear,0,      taitojc, taitojc, 0, ROT0, "Taito", "Landing Gear", GAME_NOT_WORKING|GAME_NO_SOUND )

@@ -508,6 +508,6 @@ static DRIVER_INIT( tickee )
  *
  *************************************/
 
-GAME( 1994, tickee,   0, tickee,   tickee,   tickee, ROT0, "Raster Elite",  "Tickee Tickats" )
-GAME( 1996, ghoshunt, 0, ghoshunt, ghoshunt, tickee, ROT0, "Hanaho Games",  "Ghost Hunter" )
-GAME( 1996, tutstomb, 0, ghoshunt, ghoshunt, tickee, ROT0, "Island Design", "Tut's Tomb" )
+GAME( 1994, tickee,   0, tickee,   tickee,   tickee, ROT0, "Raster Elite",  "Tickee Tickats", 0 )
+GAME( 1996, ghoshunt, 0, ghoshunt, ghoshunt, tickee, ROT0, "Hanaho Games",  "Ghost Hunter", 0 )
+GAME( 1996, tutstomb, 0, ghoshunt, ghoshunt, tickee, ROT0, "Island Design", "Tut's Tomb", 0 )

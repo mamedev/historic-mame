@@ -1608,19 +1608,19 @@ ROM_START( tenkomor )
 	ROM_LOAD( "tkm1wave1.1",  0x0800000, 0x800000, CRC(7567796b) SHA1(99e4b867477da2ccddfa9bebc4be84adc5cba53c) )
 ROM_END
 
-GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, tekken3a,  tekken3,  coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1997, lbgrande,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Libero Grande (LG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, ehrgeiza,  ehrgeiz,  coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, tenkomor,  0,        coh700, namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM2/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
-GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
-GAMEX( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, golgo13,   0,        golgo13,golgo13,  namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAME( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1996, tekken3a,  tekken3,  coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1997, lbgrande,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Libero Grande (LG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAME( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAME( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1998, ehrgeiza,  ehrgeiz,  coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1998, tenkomor,  0,        coh700, namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM2/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAME( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAME( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAME( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, golgo13,   0,        golgo13,golgo13,  namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */

@@ -369,8 +369,8 @@ static DRIVER_INIT( klax )
  *
  *************************************/
 
-GAME( 1989, klax,  0,    klax, klax, klax, ROT0, "Atari Games", "Klax (set 1)" )
-GAME( 1989, klax2, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 2)" )
-GAME( 1989, klax3, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 3)" )
-GAME( 1989, klaxj, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Japan)" )
-GAME( 1989, klaxd, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Germany)" )
+GAME( 1989, klax,  0,    klax, klax, klax, ROT0, "Atari Games", "Klax (set 1)", 0 )
+GAME( 1989, klax2, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 2)", 0 )
+GAME( 1989, klax3, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (set 3)", 0 )
+GAME( 1989, klaxj, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Japan)", 0 )
+GAME( 1989, klaxd, klax, klax, klax, klax, ROT0, "Atari Games", "Klax (Germany)", 0 )

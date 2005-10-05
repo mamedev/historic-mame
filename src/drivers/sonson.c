@@ -341,5 +341,5 @@ ROM_START( sonsonj )
 ROM_END
 
 
-GAME( 1984, sonson,  0,      sonson, sonson, 0, ROT0, "Capcom", "Son Son" )
-GAME( 1984, sonsonj, sonson, sonson, sonson, 0, ROT0, "Capcom", "Son Son (Japan)" )
+GAME( 1984, sonson,  0,      sonson, sonson, 0, ROT0, "Capcom", "Son Son", 0 )
+GAME( 1984, sonsonj, sonson, sonson, sonson, 0, ROT0, "Capcom", "Son Son (Japan)", 0 )

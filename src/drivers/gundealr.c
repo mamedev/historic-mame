@@ -583,8 +583,8 @@ static DRIVER_INIT( yamyam )
 
 
 
-GAME( 1990, gundealr, 0,        gundealr, gundealr, gundealr, ROT270, "Dooyong", "Gun Dealer (set 1)" )
-GAME( 19??, gundeala, gundealr, gundealr, gundealr, gundealr, ROT270, "Dooyong", "Gun Dealer (set 2)" )
-GAME( 1990, gundealt, gundealr, gundealr, gundealt, gundealr, ROT270, "Tecmo", "Gun Dealer (Tecmo)" )
-GAME( 1990, yamyam,   0,        gundealr, yamyam,   yamyam,   ROT0,   "Dooyong", "Yam! Yam!?" )
-GAME( 1990, wiseguy,  yamyam,   gundealr, yamyam,   yamyam,   ROT0,   "Dooyong", "Wise Guy" )
+GAME( 1990, gundealr, 0,        gundealr, gundealr, gundealr, ROT270, "Dooyong", "Gun Dealer (set 1)", 0 )
+GAME( 19??, gundeala, gundealr, gundealr, gundealr, gundealr, ROT270, "Dooyong", "Gun Dealer (set 2)", 0 )
+GAME( 1990, gundealt, gundealr, gundealr, gundealt, gundealr, ROT270, "Tecmo", "Gun Dealer (Tecmo)", 0 )
+GAME( 1990, yamyam,   0,        gundealr, yamyam,   yamyam,   ROT0,   "Dooyong", "Yam! Yam!?", 0 )
+GAME( 1990, wiseguy,  yamyam,   gundealr, yamyam,   yamyam,   ROT0,   "Dooyong", "Wise Guy", 0 )

@@ -302,5 +302,5 @@ ROM_END
 
 
 
-GAME( 1985, kicker,   0,      shaolins, shaolins, 0, ROT90, "Konami", "Kicker" )
-GAME( 1985, shaolins, kicker, shaolins, shaolins, 0, ROT90, "Konami", "Shao-Lin's Road" )
+GAME( 1985, kicker,   0,      shaolins, shaolins, 0, ROT90, "Konami", "Kicker", 0 )
+GAME( 1985, shaolins, kicker, shaolins, shaolins, 0, ROT90, "Konami", "Shao-Lin's Road", 0 )

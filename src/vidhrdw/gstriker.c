@@ -5,6 +5,7 @@
 /* imports from driver file */
 extern UINT16 *gs_videoram3;
 extern UINT16 *gs_mixer_regs;
+extern UINT16 *gstriker_lineram;
 
 
 /*** VS920A (score tilemap) **********************************************/
@@ -66,7 +67,7 @@ static void VS920A_init(int numchips)
 
 	for (i=0;i<numchips;i++)
 	{
-		VS920A[i].tmap = tilemap_create(VS920A_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
+		VS920A[i].tmap = tilemap_create(VS920A_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
 		tilemap_set_transparent_pen(VS920A[i].tmap, 0);
 	}
@@ -174,6 +175,14 @@ static void MB60553_reg_written(int numchip, int num_reg)
 		tilemap_set_scrolly(cur->tmap, 0, cur->regs[1]>>4);
 		break;
 
+	case 2:
+		printf("MB60553_reg chip %d, reg 2 %04x\n",numchip, cur->regs[2]);
+		break;
+
+	case 3:
+		printf("MB60553_reg chip %d, reg 3 %04x\n",numchip, cur->regs[3]);
+		break;
+
 	case 4:
 		cur->bank[0] = (cur->regs[4] >> 8) & 0x1F;
 		cur->bank[1] = (cur->regs[4] >> 0) & 0x1F;
@@ -200,6 +209,13 @@ static void MB60553_reg_written(int numchip, int num_reg)
 	}
 }
 
+/* twc94 has the tilemap made of 2 pages .. it needs this */
+UINT32 twc94_scan( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return (row*64) + (col&63) + ((col&64)<<6);
+}
+
 void MB60553_init(int numchips)
 {
 	int i;
@@ -209,7 +225,7 @@ void MB60553_init(int numchips)
 
 	for (i=0;i<numchips;i++)
 	{
-		MB60553[i].tmap = tilemap_create(MB60553_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16,16,64,64);
+		MB60553[i].tmap = tilemap_create(MB60553_get_tile_info,twc94_scan,TILEMAP_TRANSPARENT, 16,16,128,64);
 
 		tilemap_set_transparent_pen(MB60553[i].tmap, 0);
 	}
@@ -225,11 +241,51 @@ void MB60553_set_gfx_region(int numchip, int gfx_region)
 	MB60553[numchip].gfx_region = gfx_region;
 }
 
+/* THIS IS STILL WRONG! */
 void MB60553_draw(int numchip, mame_bitmap* screen, const rectangle* cliprect, int priority)
 {
+	int line;
+	rectangle clip;
 	MB60553_cur_chip = &MB60553[numchip];
 
-	tilemap_draw(screen, cliprect, MB60553_cur_chip->tmap, 0, priority);
+
+
+
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
+	clip.min_y = Machine->visible_area.min_y;
+	clip.max_y = Machine->visible_area.max_y;
+
+	for (line = 0; line < 224;line++)
+	{
+//      int scrollx;
+//      int scrolly;
+
+	 	UINT32 startx,starty;
+
+		UINT32 incxx,incyy;
+
+		startx = MB60553_cur_chip->regs[0];
+		starty = MB60553_cur_chip->regs[1];
+
+		startx += (24<<4); // maybe not..
+
+		startx -=  gstriker_lineram[(line)*8+7]/2;
+
+		incxx = gstriker_lineram[(line)*8+0]<<4;
+		incyy = gstriker_lineram[(line)*8+3]<<4;
+
+		clip.min_y = clip.max_y = line;
+
+		tilemap_draw_roz(screen,&clip,MB60553_cur_chip->tmap,startx<<12,starty<<12,
+				incxx,0,0,incyy,
+				1,
+				0,priority);
+
+	}
+
+
+
 }
 
 tilemap* MB60553_get_tilemap(int numchip)

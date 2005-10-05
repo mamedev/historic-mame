@@ -19,7 +19,6 @@
     TODO:
 
     - coin counters/lockouts
-    - convert MACHINE_DRIVER_START( ctribe ) to use MDRV_IMPORT_FROM(ddragon3)
 
 */
 
@@ -549,40 +548,17 @@ static MACHINE_DRIVER_START( ddrago3b )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ctribe )
-	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
-	MDRV_CPU_PROGRAM_MAP(ctribe_readmem,ctribe_writemem)
-	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+	MDRV_IMPORT_FROM(ddragon3)
 
-	MDRV_CPU_ADD(Z80, 3579545)
-	/* audio CPU */	/* Guess */
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(ctribe_readmem,ctribe_writemem)
+
+	MDRV_CPU_MODIFY("audio")
 	MDRV_CPU_PROGRAM_MAP(ctribe_readmem_sound,ctribe_writemem_sound)
 
-	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(40*8, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(768)
-
-	MDRV_VIDEO_START(ddragon3)
 	MDRV_VIDEO_UPDATE(ctribe)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-
-	MDRV_SOUND_ADD(YM2151, 3579545)
-	MDRV_SOUND_CONFIG(ym2151_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.00)	/* music */
-	MDRV_SOUND_ROUTE(1, "right", 1.00)
-
-	MDRV_SOUND_ADD(OKIM6295, 8500)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)	/* sound fx */
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
 /* ROMs */
@@ -750,7 +726,7 @@ ROM_END
 
 /* Game Drivers */
 
-GAME( 1990, ddragon3, 0,		ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone (US)" )
-GAME( 1990, ddrago3b, ddragon3, ddrago3b, ddrago3b, 0, ROT0, "bootleg", "Double Dragon 3 - The Rosetta Stone (bootleg)" )
-GAME( 1990, ctribe,   0,		ctribe,   ctribe,	0, ROT0, "Technos", "The Combatribes (US)" )
-GAME( 1990, ctribeb,  ctribe,	ctribe,   ctribe,	0, ROT0, "bootleg", "The Combatribes (bootleg)" )
+GAME( 1990, ddragon3, 0,		ddragon3, ddragon3, 0, ROT0, "Technos", "Double Dragon 3 - The Rosetta Stone (US)", 0 )
+GAME( 1990, ddrago3b, ddragon3, ddrago3b, ddrago3b, 0, ROT0, "bootleg", "Double Dragon 3 - The Rosetta Stone (bootleg)", 0 )
+GAME( 1990, ctribe,   0,		ctribe,   ctribe,	0, ROT0, "Technos", "The Combatribes (US)", 0 )
+GAME( 1990, ctribeb,  ctribe,	ctribe,   ctribe,	0, ROT0, "bootleg", "The Combatribes (bootleg)", 0 )

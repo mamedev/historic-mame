@@ -344,4 +344,4 @@ static DRIVER_INIT( ertictac )
 	((UINT32 *)memory_region(REGION_USER1))[0x55]=0;// patched TSTS r11,r15,lsl #32  @ $3800154
 }
 
-GAMEX( 1990, ertictac, 0, ertictac, ertictac, ertictac, ROT0, "Sisteme", "Erotictac/Tactic" ,GAME_NO_SOUND)
+GAME( 1990, ertictac, 0, ertictac, ertictac, ertictac, ROT0, "Sisteme", "Erotictac/Tactic" ,GAME_NO_SOUND)

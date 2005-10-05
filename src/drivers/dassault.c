@@ -869,6 +869,6 @@ static void init_thndzone(void)
 
 /**********************************************************************************/
 
-GAME(1991, thndzone, 0,        dassault, thndzone, thndzone, ROT0, "Data East Corporation", "Thunder Zone (World)" )
-GAME(1991, dassault, thndzone, dassault, dassault, dassault, ROT0, "Data East Corporation", "Desert Assault (US)" )
-GAME(1991, dassaul4, thndzone, dassault, dassaul4, dassault, ROT0, "Data East Corporation", "Desert Assault (US 4 Players)" )
+GAME( 1991, thndzone, 0,        dassault, thndzone, thndzone, ROT0, "Data East Corporation", "Thunder Zone (World)", 0 )
+GAME( 1991, dassault, thndzone, dassault, dassault, dassault, ROT0, "Data East Corporation", "Desert Assault (US)", 0 )
+GAME( 1991, dassaul4, thndzone, dassault, dassaul4, dassault, ROT0, "Data East Corporation", "Desert Assault (US 4 Players)", 0 )

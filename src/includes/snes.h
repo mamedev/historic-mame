@@ -341,6 +341,7 @@ extern WRITE8_HANDLER( snes_w_bank1 );
 extern WRITE8_HANDLER( snes_w_bank2 );
 extern WRITE8_HANDLER( snes_w_bank4 );
 extern WRITE8_HANDLER( snes_w_io );
+extern WRITE8_HANDLER( snes_w_sram );
 
 extern INTERRUPT_GEN(snes_scanline_interrupt);
 extern void snes_gdma( UINT8 channels );
@@ -418,10 +419,9 @@ extern UINT8 spc_port_in[4];	/* SPC input ports */
 extern UINT8 spc_port_out[4];	/* SPC output ports */
 extern READ8_HANDLER( spc_io_r );
 extern WRITE8_HANDLER( spc_io_w );
-extern READ8_HANDLER( spc_bank_r );
-extern WRITE8_HANDLER( spc_bank_w );
 extern READ8_HANDLER( spc_ram_r );
 extern WRITE8_HANDLER( spc_ram_w );
+extern READ8_HANDLER( spc_ipl_r );
 extern void *snes_sh_start(int clock, const struct CustomSound_interface *config);
 extern void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length );
 extern int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset );

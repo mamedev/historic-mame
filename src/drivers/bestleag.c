@@ -378,4 +378,4 @@ ROM_END
 
 /* GAME drivers */
 
-GAME( 1993, bestleag, bigstrik, bestleag, bestleag, 0, ROT0, "bootleg", "Best League" )
+GAME( 1993, bestleag, bigstrik, bestleag, bestleag, 0, ROT0, "bootleg", "Best League", 0 )

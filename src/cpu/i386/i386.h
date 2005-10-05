@@ -2,6 +2,11 @@
 #define __I386_H_
 
 #define I386OP(XX)		i386_##XX
+#define I486OP(XX)		i486_##XX
+#define PENTIUMOP(XX)	pentium_##XX
+#define MMXOP(XX)		mmx_##XX
+
+#define INPUT_LINE_A20		1
 
 #ifdef MAME_DEBUG
 extern int i386_dasm_one(char *buffer, UINT32 pc, int addr_size, int op_size);
@@ -91,7 +96,17 @@ enum
 	I386_DR6,
 	I386_DR7,
 	I386_TR6,
-	I386_TR7
+	I386_TR7,
+	X87_CTRL,
+	X87_STATUS,
+	X87_ST0,
+	X87_ST1,
+	X87_ST2,
+	X87_ST3,
+	X87_ST4,
+	X87_ST5,
+	X87_ST6,
+	X87_ST7,
 };
 
 typedef struct {
@@ -117,6 +132,11 @@ typedef union {
 	UINT16 w[16];
 	UINT8 b[32];
 } I386_GPR;
+
+typedef union {
+	UINT64 i;
+	double f;
+} X87_REG;
 
 typedef struct {
 	I386_GPR reg;
@@ -146,8 +166,11 @@ typedef struct {
 	I386_SEG_DESC task;		// Task register
 	I386_SEG_DESC ldtr;		// Local Descriptor Table Register
 
+	int halted;
+
 	int operand_size;
 	int address_size;
+	int icount;
 
 	int segment_prefix;
 	int segment_override;
@@ -157,6 +180,31 @@ typedef struct {
 
 	int irq_line;
 	int (*irq_callback)(int);
+	UINT32 a20_mask;
+
+	int cpuid_max_input_value_eax;
+	UINT32 cpuid_id0, cpuid_id1, cpuid_id2;
+	UINT32 cpu_version;
+	UINT32 feature_flags;
+	UINT64 tsc;
+
+	// FPU
+	X87_REG fpu_reg[8];
+	UINT16 fpu_control_word;
+	UINT16 fpu_status_word;
+	UINT16 fpu_tag_word;
+	UINT64 fpu_data_ptr;
+	UINT64 fpu_inst_ptr;
+	UINT16 fpu_opcode;
+	int fpu_top;
+
+	void (*opcode_table1_16[256])(void);
+	void (*opcode_table1_32[256])(void);
+	void (*opcode_table2_16[256])(void);
+	void (*opcode_table2_32[256])(void);
+
+	UINT8 *cycle_table_pm;
+	UINT8 *cycle_table_rm;
 } I386_REGS;
 
 
@@ -166,7 +214,7 @@ static I386_REGS I;
 /* Forward declarations */
 static void I386OP(decode_opcode)(void);
 static void I386OP(decode_two_byte)(void);
-static UINT32 i386_translate(int, UINT32);
+INLINE UINT32 i386_translate(int, UINT32);
 
 int parity_table[256];
 
@@ -232,23 +280,65 @@ MODRM_TABLE MODRM_table[256];
 
 /***********************************************************************************/
 
+INLINE int translate_address(UINT32 *address)
+{
+	UINT32 a = *address;
+	UINT32 pdbr = I.cr[3] & 0xfffff000;
+	UINT32 directory = (a >> 22) & 0x3ff;
+	UINT32 table = (a >> 12) & 0x3ff;
+	UINT32 offset = a & 0xfff;
+
+	// TODO: 4MB pages
+	UINT32 page_dir = program_read_dword_32le(pdbr + directory * 4);
+	UINT32 page_entry = program_read_dword_32le((page_dir & 0xfffff000) + (table * 4));
+
+	*address = (page_entry & 0xfffff000) | offset;
+	return 1;
+}
+
 INLINE void CHANGE_PC(UINT32 pc)
 {
+	UINT32 address;
 	I.pc = i386_translate( CS, pc );
-	change_pc(I.pc);
+
+	address = I.pc;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	change_pc(address & I.a20_mask);
 }
 
 INLINE void NEAR_BRANCH(INT32 offs)
 {
+	UINT32 address;
 	/* TODO: limit */
 	I.eip += offs;
 	I.pc += offs;
-	change_pc(I.pc);
+
+	address = I.pc;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	change_pc(address & I.a20_mask);
 }
 
 INLINE UINT8 FETCH(void)
 {
-	UINT8 value = program_read_byte_32le( I.pc );
+	UINT8 value;
+	UINT32 address = I.pc;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	value = cpu_readop(address & I.a20_mask);
 	I.eip++;
 	I.pc++;
 	return value;
@@ -256,11 +346,20 @@ INLINE UINT8 FETCH(void)
 INLINE UINT16 FETCH16(void)
 {
 	UINT16 value;
-	if( I.pc & 0x1 ) {		/* Unaligned read */
-		value = (program_read_byte_32le( I.pc+0 ) << 0) |
-				(program_read_byte_32le( I.pc+1 ) << 8);
+	UINT32 address = I.pc;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	if( address & 0x1 ) {		/* Unaligned read */
+		address &= I.a20_mask;
+		value = (cpu_readop(address+0) << 0) |
+				(cpu_readop(address+1) << 8);
 	} else {
-		value = program_read_word_32le( I.pc );
+		address &= I.a20_mask;
+		value = cpu_readop16(address);
 	}
 	I.eip += 2;
 	I.pc += 2;
@@ -269,13 +368,22 @@ INLINE UINT16 FETCH16(void)
 INLINE UINT32 FETCH32(void)
 {
 	UINT32 value;
+	UINT32 address = I.pc;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
 	if( I.pc & 0x3 ) {		/* Unaligned read */
-		value = (program_read_byte_32le( I.pc+0 ) << 0) |
-				(program_read_byte_32le( I.pc+1 ) << 8) |
-				(program_read_byte_32le( I.pc+2 ) << 16) |
-				(program_read_byte_32le( I.pc+3 ) << 24);
+		address &= I.a20_mask;
+		value = (cpu_readop(address+0) << 0) |
+				(cpu_readop(address+1) << 8) |
+				(cpu_readop(address+2) << 16) |
+				(cpu_readop(address+3) << 24);
 	} else {
-		value = program_read_dword_32le( I.pc );
+		address &= I.a20_mask;
+		value = cpu_readop32(address);
 	}
 	I.eip += 4;
 	I.pc += 4;
@@ -284,55 +392,103 @@ INLINE UINT32 FETCH32(void)
 
 INLINE UINT8 READ8(UINT32 ea)
 {
-	return program_read_byte_32le(ea);
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	address &= I.a20_mask;
+	return program_read_byte_32le(address);
 }
 INLINE UINT16 READ16(UINT32 ea)
 {
 	UINT16 value;
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	address &= I.a20_mask;
 	if( ea & 0x1 ) {		/* Unaligned read */
-		value = (program_read_byte_32le( ea+0 ) << 0) |
-				(program_read_byte_32le( ea+1 ) << 8);
+		value = (program_read_byte_32le( address+0 ) << 0) |
+				(program_read_byte_32le( address+1 ) << 8);
 	} else {
-		value = program_read_word_32le( ea );
+		value = program_read_word_32le( address );
 	}
 	return value;
 }
 INLINE UINT32 READ32(UINT32 ea)
 {
 	UINT32 value;
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	address &= I.a20_mask;
 	if( ea & 0x3 ) {		/* Unaligned read */
-		value = (program_read_byte_32le( ea+0 ) << 0) |
-				(program_read_byte_32le( ea+1 ) << 8) |
-				(program_read_byte_32le( ea+2 ) << 16) |
-				(program_read_byte_32le( ea+3 ) << 24);
+		value = (program_read_byte_32le( address+0 ) << 0) |
+				(program_read_byte_32le( address+1 ) << 8) |
+				(program_read_byte_32le( address+2 ) << 16) |
+				(program_read_byte_32le( address+3 ) << 24);
 	} else {
-		value = program_read_dword_32le( ea );
+		value = program_read_dword_32le( address );
 	}
 	return value;
 }
 
 INLINE void WRITE8(UINT32 ea, UINT8 value)
 {
-	program_write_byte_32le(ea, value);
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	address &= I.a20_mask;
+	program_write_byte_32le(address, value);
 }
 INLINE void WRITE16(UINT32 ea, UINT16 value)
 {
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	address &= I.a20_mask;
 	if( ea & 0x1 ) {		/* Unaligned write */
-		program_write_byte_32le( ea+0, value & 0xff );
-		program_write_byte_32le( ea+1, (value >> 8) & 0xff );
+		program_write_byte_32le( address+0, value & 0xff );
+		program_write_byte_32le( address+1, (value >> 8) & 0xff );
 	} else {
-		program_write_word_32le(ea, value);
+		program_write_word_32le(address, value);
 	}
 }
 INLINE void WRITE32(UINT32 ea, UINT32 value)
 {
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	ea &= I.a20_mask;
 	if( ea & 0x3 ) {		/* Unaligned write */
-		program_write_byte_32le( ea+0, value & 0xff );
-		program_write_byte_32le( ea+1, (value >> 8) & 0xff );
-		program_write_byte_32le( ea+2, (value >> 16) & 0xff );
-		program_write_byte_32le( ea+3, (value >> 24) & 0xff );
+		program_write_byte_32le( address+0, value & 0xff );
+		program_write_byte_32le( address+1, (value >> 8) & 0xff );
+		program_write_byte_32le( address+2, (value >> 16) & 0xff );
+		program_write_byte_32le( address+3, (value >> 24) & 0xff );
 	} else {
-		program_write_dword_32le(ea, value);
+		program_write_dword_32le(address, value);
 	}
 }
 
@@ -595,7 +751,7 @@ INLINE UINT32 POP32(void)
 
 INLINE void BUMP_SI(int adjustment)
 {
-	if ( I.sreg[CS].d )
+	if ( I.address_size )
 		REG32(ESI) += ((I.DF) ? -adjustment : +adjustment);
 	else
 		REG16(SI) += ((I.DF) ? -adjustment : +adjustment);
@@ -603,7 +759,7 @@ INLINE void BUMP_SI(int adjustment)
 
 INLINE void BUMP_DI(int adjustment)
 {
-	if ( I.sreg[CS].d )
+	if ( I.address_size )
 		REG32(EDI) += ((I.DF) ? -adjustment : +adjustment);
 	else
 		REG16(DI) += ((I.DF) ? -adjustment : +adjustment);
@@ -613,8 +769,9 @@ INLINE void BUMP_DI(int adjustment)
 
 /***********************************************************************************/
 
-#define CYCLES(x)			(I.cycles -= x)
-#define CYCLES_RM(modrm, r, m)		(I.cycles -= ((modrm >= 0xc0) ? r : m))
+//#define CYCLES(x)         (I.cycles -= (PROTECTED_MODE ? cycle_table_pm[x] : cycle_table_rm[x]))
+//#define CYCLES_RM(modrm, r, m)        (I.cycles -= ((modrm >= 0xc0) ? (PROTECTED_MODE ? cycle_table_pm[r] : cycle_table_rm[r]) : (PROTECTED_MODE ? cycle_table_pm[m] : cycle_table_rm[m])))
+
 #define C_ALU_REG_REG		2
 #define C_ALU_REG_MEM		7
 #define C_ALU_MEM_REG		6

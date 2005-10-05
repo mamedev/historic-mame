@@ -367,6 +367,6 @@ ROM_START( meteor )
 ROM_END
 
 
-GAMEX( 1980, spcforce, 0,        spcforce, spcforce, 0, ROT270, "Venture Line", "Space Force", GAME_IMPERFECT_COLORS )
-GAMEX( 19??, spcforc2, spcforce, spcforce, spcforc2, 0, ROT270, "Elcon (bootleg?)", "Space Force (set 2)", GAME_IMPERFECT_COLORS )
-GAMEX( 1981, meteor,   spcforce, spcforce, spcforc2, 0, ROT270, "Venture Line", "Meteoroids", GAME_IMPERFECT_COLORS )
+GAME( 1980, spcforce, 0,        spcforce, spcforce, 0, ROT270, "Venture Line", "Space Force", GAME_IMPERFECT_COLORS )
+GAME( 19??, spcforc2, spcforce, spcforce, spcforc2, 0, ROT270, "Elcon (bootleg?)", "Space Force (set 2)", GAME_IMPERFECT_COLORS )
+GAME( 1981, meteor,   spcforce, spcforce, spcforc2, 0, ROT270, "Venture Line", "Meteoroids", GAME_IMPERFECT_COLORS )

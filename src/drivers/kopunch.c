@@ -240,4 +240,4 @@ static DRIVER_INIT( kopunch )
 }
 
 
-GAMEX( 1981, kopunch, 0, kopunch, kopunch, kopunch, ROT270, "Sega", "KO Punch", GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1981, kopunch, 0, kopunch, kopunch, kopunch, ROT270, "Sega", "KO Punch", GAME_NO_SOUND | GAME_NOT_WORKING)

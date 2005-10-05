@@ -720,7 +720,6 @@ address_map *construct_map_##_name(address_map *map)	\
 #define SUBTABLE_ALLOC			8						/* number of subtables to allocate at a time */
 
 /* ----- bit counts ----- */
-#define SPARSE_THRESH			20						/* number of address bits above which we use sparse memory */
 #define LEVEL1_BITS				18						/* number of address bits in the level 1 table */
 #define LEVEL2_BITS				(32 - LEVEL1_BITS)		/* number of address bits in the level 2 table */
 

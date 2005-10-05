@@ -79,47 +79,9 @@ static MACHINE_INIT( vindictr )
  *
  *************************************/
 
-static int fake_inputs(int real_port, int fake_port)
-{
-	int result = readinputport(real_port);
-	int fake = readinputport(fake_port);
-
-	if (fake & 0x01)			/* up */
-	{
-		if (fake & 0x04)		/* up and left */
-			result &= ~0x2000;
-		else if (fake & 0x08)	/* up and right */
-			result &= ~0x1000;
-		else					/* up only */
-			result &= ~0x3000;
-	}
-	else if (fake & 0x02)		/* down */
-	{
-		if (fake & 0x04)		/* down and left */
-			result &= ~0x8000;
-		else if (fake & 0x08)	/* down and right */
-			result &= ~0x4000;
-		else					/* down only */
-			result &= ~0xc000;
-	}
-	else if (fake & 0x04)		/* left only */
-		result &= ~0x6000;
-	else if (fake & 0x08)		/* right only */
-		result &= ~0x9000;
-
-	return result;
-}
-
-
-static READ16_HANDLER( port0_r )
-{
-	return fake_inputs(0, 3);
-}
-
-
 static READ16_HANDLER( port1_r )
 {
-	int result = fake_inputs(1, 4);
+	int result = readinputport(1);
 	if (atarigen_sound_to_cpu_ready) result ^= 0x0004;
 	if (atarigen_cpu_to_sound_ready) result ^= 0x0008;
 	result ^= 0x0010;
@@ -137,7 +99,7 @@ static READ16_HANDLER( port1_r )
 static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x05ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x0e0000, 0x0e0fff) AM_READ(atarigen_eeprom_r)
-	AM_RANGE(0x260000, 0x26000f) AM_READ(port0_r)
+	AM_RANGE(0x260000, 0x26000f) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x260010, 0x26001f) AM_READ(port1_r)
 	AM_RANGE(0x260020, 0x26002f) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x260030, 0x260031) AM_READ(atarigen_sound_r)
@@ -216,18 +178,6 @@ INPUT_PORTS_START( vindictr )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START_TAG("FAKE")		/* single joystick */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1) PORT_NAME ("P1 Up (1 Joy Cheat)")
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1) PORT_NAME ("P1 Down (1 Joy Cheat)")
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1) PORT_NAME ("P1 Left (1 Joy Cheat)")
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1) PORT_NAME ("P1 Right (1 Joy Cheat)")
-
-	PORT_START		/* single joystick */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2) PORT_NAME ("P2 Up (1 Joy Cheat)")
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2) PORT_NAME ("P2 Down (1 Joy Cheat)")
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2) PORT_NAME ("P2 Left (1 Joy Cheat)")
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2) PORT_NAME ("P2 Right (1 Joy Cheat)")
 
 	JSA_I_PORT		/* audio port */
 INPUT_PORTS_END
@@ -590,11 +540,11 @@ static DRIVER_INIT( vindictr )
  *
  *************************************/
 
-GAME( 1988, vindictr, 0,        vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 5)" )
-GAME( 1988, vindicte, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (Europe, rev 5)" )
-GAME( 1988, vindictg, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (German, rev 1)" )
-GAME( 1988, vindice4, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (Europe, rev 4)" )
-GAME( 1988, vindict4, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 4)" )
-GAME( 1988, vindice3, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (Europe, rev 3)" )
-GAME( 1988, vindict2, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 2)" )
-GAME( 1988, vindict1, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 1)" )
+GAME( 1988, vindictr, 0,        vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 5)", 0 )
+GAME( 1988, vindicte, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (Europe, rev 5)", 0 )
+GAME( 1988, vindictg, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (German, rev 1)", 0 )
+GAME( 1988, vindice4, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (Europe, rev 4)", 0 )
+GAME( 1988, vindict4, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 4)", 0 )
+GAME( 1988, vindice3, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (Europe, rev 3)", 0 )
+GAME( 1988, vindict2, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 2)", 0 )
+GAME( 1988, vindict1, vindictr, vindictr, vindictr, vindictr, ROT0, "Atari Games", "Vindicators (rev 1)", 0 )

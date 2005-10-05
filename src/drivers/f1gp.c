@@ -628,5 +628,5 @@ ROM_END
 
 
 
-GAMEX( 1991, f1gp,  0, f1gp,  f1gp,  0, ROT90, "Video System Co.", "F-1 Grand Prix",         GAME_NO_COCKTAIL )
-GAMEX( 1992, f1gp2, 0, f1gp2, f1gp2, 0, ROT90, "Video System Co.", "F-1 Grand Prix Part II", GAME_NO_COCKTAIL )
+GAME( 1991, f1gp,  0, f1gp,  f1gp,  0, ROT90, "Video System Co.", "F-1 Grand Prix",         GAME_NO_COCKTAIL )
+GAME( 1992, f1gp2, 0, f1gp2, f1gp2, 0, ROT90, "Video System Co.", "F-1 Grand Prix Part II", GAME_NO_COCKTAIL )

@@ -1020,7 +1020,7 @@ void debug_check_breakpoints(int cpunum, offs_t pc)
 
 				/* print a notification, unless the action made us go again */
 				if (execution_state == EXECUTION_STATE_STOPPED)
-					debug_console_printf("Stopped at breakpoint %d", bp->index);
+					debug_console_printf("Stopped at breakpoint %X", bp->index);
 				break;
 			}
 }
@@ -1191,14 +1191,14 @@ void debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address,
 				{
 					if (type & WATCHPOINT_WRITE)
 					{
-						sprintf(buffer, "Stopped at watchpoint %d writing %s to %08X", wp->index, sizes[size], address);
+						sprintf(buffer, "Stopped at watchpoint %X writing %s to %08X", wp->index, sizes[size], address);
 						if (value_to_write >> 32)
 							sprintf(&buffer[strlen(buffer)], " (data=%X%08X)", (UINT32)(value_to_write >> 32), (UINT32)value_to_write);
 						else
 							sprintf(&buffer[strlen(buffer)], " (data=%X)", (UINT32)value_to_write);
 					}
 					else
-						sprintf(buffer, "Stopped at watchpoint %d reading %s from %08X", wp->index, sizes[size], address);
+						sprintf(buffer, "Stopped at watchpoint %X reading %s from %08X", wp->index, sizes[size], address);
 					debug_console_write_line(buffer);
 				}
 				break;

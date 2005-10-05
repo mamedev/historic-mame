@@ -144,4 +144,4 @@ ROM_START( mrdrilr2 )
 	ROM_LOAD( "dr21vera.1a",  0x000000, 0x800000, CRC(f93532a2) SHA1(8b72f2868978be1f0e0abd11425a3c8b2b0c4e99) )
 ROM_END
 
-GAMEX( 2000, mrdrilr2,  0,        namcos10, namcos10, namcos10, ROT0, "Namco", "Mr Driller 2", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 2000, mrdrilr2,  0,        namcos10, namcos10, namcos10, ROT0, "Namco", "Mr Driller 2", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -403,4 +403,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1994, btoads, 0, btoads, btoads, 0,  ROT0, "Rare", "Battle Toads" )
+GAME( 1994, btoads, 0, btoads, btoads, 0,  ROT0, "Rare", "Battle Toads", 0 )

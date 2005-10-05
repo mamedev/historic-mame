@@ -2417,17 +2417,17 @@ static DRIVER_INIT( sfru2049 )
  *************************************/
 
 // Voodoo 2 games
-GAME ( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.6)" )
-GAMEX( 1998, gauntl12, gauntleg, vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.2)", GAME_NO_SOUND )
-GAMEX( 1999, gauntdl,  0,        vegas,    gauntdl , gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, warfa,    0,        vegas250, warfa,    warfa,    ROT0, "Atari Games", "War: The Final Assault", GAME_NOT_WORKING )
-GAMEX( 1998, tenthdeg, 0,        vegas,    tenthdeg, tenthdeg, ROT0, "Atari Games", "Tenth Degree", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1999, roadburn, 0,        vegas32m, roadburn, roadburn, ROT0, "Atari Games", "Road Burners", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.6)", 0 )
+GAME( 1998, gauntl12, gauntleg, vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.2)", GAME_NO_SOUND )
+GAME( 1999, gauntdl,  0,        vegas,    gauntdl , gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy", GAME_IMPERFECT_GRAPHICS )
+GAME( 1999, warfa,    0,        vegas250, warfa,    warfa,    ROT0, "Atari Games", "War: The Final Assault", GAME_NOT_WORKING )
+GAME( 1998, tenthdeg, 0,        vegas,    tenthdeg, tenthdeg, ROT0, "Atari Games", "Tenth Degree", GAME_IMPERFECT_GRAPHICS )
+GAME( 1999, roadburn, 0,        vegas32m, roadburn, roadburn, ROT0, "Atari Games", "Road Burners", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 // Voodoo banshee games
-GAMEX( 1998, nbashowt, 0,        vegasban, nbashowt, nbashowt, ROT0, "Midway Games", "NBA Showtime: NBA on NBC", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1999, nbanfl,   0,        vegasban, nbashowt, nbanfl,   ROT0, "Midway Games", "NBA Showtime / NFL Blitz 2000", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, nbashowt, 0,        vegasban, nbashowt, nbashowt, ROT0, "Midway Games", "NBA Showtime: NBA on NBC", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1999, nbanfl,   0,        vegasban, nbashowt, nbanfl,   ROT0, "Midway Games", "NBA Showtime / NFL Blitz 2000", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 // Voodoo 3 games
-GAMEX( 1998, sfru2049, 0,        vegasv3,  vegas,    sfru2049, ROT0, "Atari Games", "San Francisco Rush 2049", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 2000, cartfury, 0,        vegasv3,  roadburn, cartfury, ROT0, "Midway Games", "Cart Fury", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, sfru2049, 0,        vegasv3,  vegas,    sfru2049, ROT0, "Atari Games", "San Francisco Rush 2049", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 2000, cartfury, 0,        vegasv3,  roadburn, cartfury, ROT0, "Midway Games", "Cart Fury", GAME_NO_SOUND | GAME_NOT_WORKING )

@@ -81,11 +81,7 @@ extern VIDEO_UPDATE( 1942 );
 
 static WRITE8_HANDLER( c1942_bankswitch_w )
 {
-	int bankaddress;
-	UINT8 *ROM = memory_region(REGION_CPU1);
-
-	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
-	memory_set_bankptr(1, &ROM[bankaddress]);
+	memory_set_bank(1, data & 0x03);
 }
 
 
@@ -423,7 +419,13 @@ ROM_START( 1942b )
 ROM_END
 
 
+DRIVER_INIT( 1942 )
+{
+	UINT8 *ROM = memory_region(REGION_CPU1);
+	memory_configure_bank(1, 0, 3, &ROM[0x10000], 0x4000);
+}
 
-GAME( 1984, 1942,  0,    1942, 1942, 0, ROT270, "Capcom", "1942 (set 1)" )
-GAME( 1984, 1942a, 1942, 1942, 1942, 0, ROT270, "Capcom", "1942 (set 2)" )
-GAME( 1984, 1942b, 1942, 1942, 1942, 0, ROT270, "Capcom", "1942 (set 3)" )
+
+GAME( 1984, 1942,  0,    1942, 1942, 1942, ROT270, "Capcom", "1942 (set 1)", 0 )
+GAME( 1984, 1942a, 1942, 1942, 1942, 1942, ROT270, "Capcom", "1942 (set 2)", 0 )
+GAME( 1984, 1942b, 1942, 1942, 1942, 1942, ROT270, "Capcom", "1942 (set 3)", 0 )

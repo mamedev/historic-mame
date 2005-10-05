@@ -1044,7 +1044,7 @@ static DRIVER_INIT(ppking)
 
 
 
-GAMEX(1985, ppking,   0,        ppking,   ppking,   ppking,   ROT90, "Taito America Corporation", "Ping-Pong King", GAME_NOT_WORKING)
-GAME( 1986, gladiatr, 0,        gladiatr, gladiatr, gladiatr, ROT0,  "Taito America Corporation", "Gladiator (US)" )
-GAME( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, gladiatr, ROT0,  "Taito Corporation", "Ohgon no Siro (Japan)" )
-GAME( 1986, greatgur, gladiatr, gladiatr, gladiatr, gladiatr, ROT0,  "Taito Corporation", "Great Gurianos (Japan?)" )
+GAME( 1985, ppking,   0,        ppking,   ppking,   ppking,   ROT90, "Taito America Corporation", "Ping-Pong King", GAME_NOT_WORKING)
+GAME( 1986, gladiatr, 0,        gladiatr, gladiatr, gladiatr, ROT0,  "Taito America Corporation", "Gladiator (US)", 0 )
+GAME( 1986, ogonsiro, gladiatr, gladiatr, gladiatr, gladiatr, ROT0,  "Taito Corporation", "Ohgon no Siro (Japan)", 0 )
+GAME( 1986, greatgur, gladiatr, gladiatr, gladiatr, gladiatr, ROT0,  "Taito Corporation", "Great Gurianos (Japan?)", 0 )

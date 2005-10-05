@@ -358,4 +358,4 @@ ROM_END
 
 /* Game Driver */
 
-GAMEX( 1982?, starspnr, 0, starspnr, starspnr, 0, ROT270, "ACE", "Starspinner (Dutch/Nederlands)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1982?, starspnr, 0, starspnr, starspnr, 0, ROT270, "ACE", "Starspinner (Dutch/Nederlands)", GAME_NOT_WORKING | GAME_NO_SOUND )

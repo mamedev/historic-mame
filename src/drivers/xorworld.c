@@ -276,4 +276,4 @@ static DRIVER_INIT( xorworld )
 }
 
 
-GAME( 1990, xorworld, 0, xorworld, xorworld, xorworld, ROT0, "Gaelco", "Xor World (prototype)" )
+GAME( 1990, xorworld, 0, xorworld, xorworld, xorworld, ROT0, "Gaelco", "Xor World (prototype)", 0 )

@@ -418,7 +418,7 @@ ROM_START( dblpoint )
 	ROM_LOAD( "d15.bin", 0x40000, 0x40000, CRC(6b899a51) SHA1(04114ec9695caaac722800ac1a4ffb563ec433c9) )
 ROM_END
 
-GAME( 1994, gumbo,    0, gumbo,    gumbo,    0, ROT0,  "Min Corp.", "Gumbo" )
-GAME( 1994, msbingo,  0, mspuzzle, msbingo,  0, ROT0,  "Min Corp.", "Miss Bingo" )
-GAME( 1994, mspuzzle, 0, mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle" )
-GAME( 1995, dblpoint, 0, dblpoint, dblpoint, 0, ROT0,  "Dong Bang Electron", "Double Point" )
+GAME( 1994, gumbo,    0, gumbo,    gumbo,    0, ROT0,  "Min Corp.", "Gumbo", 0 )
+GAME( 1994, msbingo,  0, mspuzzle, msbingo,  0, ROT0,  "Min Corp.", "Miss Bingo", 0 )
+GAME( 1994, mspuzzle, 0, mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle", 0 )
+GAME( 1995, dblpoint, 0, dblpoint, dblpoint, 0, ROT0,  "Dong Bang Electron", "Double Point", 0 )

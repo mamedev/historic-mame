@@ -377,4 +377,4 @@ ROM_START( talbot )
 	ROM_LOAD( "mb7052.5e", 0x0020, 0x0100, CRC(a3189986) SHA1(f113c1253ba2f8f213c600e93a39c0957a933306) )
 ROM_END
 
-GAMEX( 1982, talbot, 0, talbot, talbot, 0, ROT90, "Volt Electronics (Alpha license)", "Talbot", GAME_NOT_WORKING )
+GAME( 1982, talbot, 0, talbot, talbot, 0, ROT90, "Volt Electronics (Alpha license)", "Talbot", GAME_NOT_WORKING )

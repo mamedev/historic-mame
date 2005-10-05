@@ -473,8 +473,15 @@ void cpu_run(void)
 			/* otherwise, just pump video updates through */
 			else
 			{
-				time_to_quit = updatescreen();
+				time_to_quit |= updatescreen();
 				reset_partial_updates();
+			}
+
+			/* if we're autosaving on exit, and it's time to quit, schedule the save */
+			if (time_to_quit && options.auto_save && (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+			{
+				cpu_loadsave_schedule_file(LOADSAVE_SAVE_AND_EXIT, Machine->gamedrv->name);
+				time_to_quit = FALSE;
 			}
 
 			profiler_mark(PROFILER_END);
@@ -603,6 +610,10 @@ static void handle_save(void)
 		/* finish and close */
 		state_save_save_finish();
 		mame_fclose(file);
+
+		/* pop a warning if the game doesn't support saves */
+		if (!(Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+			ui_popup("State successfully saved.\nWarning: Save states are not officially supported for this game.");
 	}
 	else
 		ui_popup("Error: Failed to save state");
@@ -689,6 +700,15 @@ static void handle_loadsave(void)
 	{
 		case LOADSAVE_SAVE:
 			handle_save();
+			break;
+
+		case LOADSAVE_SAVE_AND_EXIT:
+			handle_save();
+			if (loadsave_schedule == LOADSAVE_NONE)
+			{
+				time_to_quit = TRUE;
+				options.auto_save = FALSE;
+			}
 			break;
 
 		case LOADSAVE_LOAD:
@@ -1916,7 +1936,7 @@ static void cpu_vblankcallback(int param)
 	{
 		/* do we update the screen now? */
 		if (!(Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK))
-			time_to_quit = updatescreen();
+			time_to_quit |= updatescreen();
 
 		/* Set the timer to update the screen */
 		mame_timer_adjust(update_timer, double_to_mame_time(TIME_IN_USEC(Machine->drv->vblank_duration)), 0, time_zero);
@@ -1946,7 +1966,7 @@ static void cpu_updatecallback(int param)
 {
 	/* update the screen if we didn't before */
 	if (Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK)
-		time_to_quit = updatescreen();
+		time_to_quit |= updatescreen();
 	vblank = 0;
 
 	/* update IPT_VBLANK input ports */

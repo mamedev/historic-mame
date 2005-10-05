@@ -1146,7 +1146,7 @@ ROM_END
 
 
 
-GAME( 1987, sf,   0,   sf,   sf,   0, ROT0, "Capcom", "Street Fighter (World)" )
-GAME( 1987, sfus, sf, sfus, sfus, 0, ROT0, "Capcom", "Street Fighter (US)" )
-GAME( 1987, sfjp, sf, sfjp, sfjp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )
-GAME( 1987, sfp,  sf, sfp,  sf,   0, ROT0, "Capcom", "Street Fighter (prototype)" )
+GAME( 1987, sf,   0,   sf,   sf,   0, ROT0, "Capcom", "Street Fighter (World)", 0 )
+GAME( 1987, sfus, sf, sfus, sfus, 0, ROT0, "Capcom", "Street Fighter (US)", 0 )
+GAME( 1987, sfjp, sf, sfjp, sfjp, 0, ROT0, "Capcom", "Street Fighter (Japan)", 0 )
+GAME( 1987, sfp,  sf, sfp,  sf,   0, ROT0, "Capcom", "Street Fighter (prototype)", 0 )

@@ -494,9 +494,9 @@ ROM_START( backfira )
 ROM_END
 
 /* similar but different? */
-GAMEX(1993, hvysmsh, 0,        deco156_1,      deco156, deco156_1,      ROT0, "Data East", "Heavy Smash", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1993, wcvol95, 0,        deco156_1,      deco156, deco156_1,      ROT0, "Data East", "World Cup Volley '95", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1993, hvysmsh, 0,        deco156_1,      deco156, deco156_1,      ROT0, "Data East", "Heavy Smash", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1993, wcvol95, 0,        deco156_1,      deco156, deco156_1,      ROT0, "Data East", "World Cup Volley '95", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
 
 /* more gfx chips */
-GAMEX(1995, backfire, 0,        deco156_2,      deco156, deco156_2,      ROT0, "Data East", "Backfire!", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX(1995, backfira, backfire, deco156_2,      deco156, deco156_2,      ROT0, "Data East", "Backfire! (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1995, backfire, 0,        deco156_2,      deco156, deco156_2,      ROT0, "Data East", "Backfire!", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1995, backfira, backfire, deco156_2,      deco156, deco156_2,      ROT0, "Data East", "Backfire! (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)

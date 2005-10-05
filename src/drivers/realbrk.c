@@ -969,7 +969,7 @@ ROM_END
 
 
 
-GAMEX( 1998, realbrk,  0, realbrk, realbrk, 0, ROT0, "Nakanihon", "Billiard Academy Real Break (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, pkgnsh,   0, pkgnsh,  pkgnsh, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, pkgnshdx, 0, pkgnshdx,pkgnshdx, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu DX (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1998, realbrk,  0, realbrk, realbrk, 0, ROT0, "Nakanihon", "Billiard Academy Real Break (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1998, pkgnsh,   0, pkgnsh,  pkgnsh, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1998, pkgnshdx, 0, pkgnshdx,pkgnshdx, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu DX (Japan)", GAME_IMPERFECT_GRAPHICS )
 

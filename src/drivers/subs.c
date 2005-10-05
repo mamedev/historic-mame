@@ -283,4 +283,4 @@ static DRIVER_INIT( subs )
  *
  *************************************/
 
-GAMEX( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs", GAME_IMPERFECT_SOUND )
+GAME( 1977, subs, 0, subs, subs, subs, ROT0, "Atari", "Subs", GAME_IMPERFECT_SOUND )

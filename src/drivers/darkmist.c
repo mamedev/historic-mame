@@ -258,4 +258,4 @@ static DRIVER_INIT(darkmist)
 
 }
 
-GAMEX( 1986, darkmist, 0, darkmist, darkmist, darkmist, ROT270, "Taito", "The Lost Castle In Darkmist", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1986, darkmist, 0, darkmist, darkmist, darkmist, ROT270, "Taito", "The Lost Castle In Darkmist", GAME_NOT_WORKING|GAME_NO_SOUND )

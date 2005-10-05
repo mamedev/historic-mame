@@ -264,4 +264,4 @@ ROM_START( poolshrk )
 ROM_END
 
 
-GAME( 1977, poolshrk, 0, poolshrk, poolshrk, poolshrk, 0, "Atari", "Poolshark" )
+GAME( 1977, poolshrk, 0, poolshrk, poolshrk, poolshrk, 0, "Atari", "Poolshark", 0 )

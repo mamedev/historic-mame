@@ -440,5 +440,5 @@ ROM_END
  *
  *************************************/
 
-GAME( 1982, victory,  0,        victory, victory, 0,     ROT0, "Exidy", "Victory" )
-GAME( 1982, victorba, victory,  victory, victory, 0,     ROT0, "Exidy", "Victor Banana" )
+GAME( 1982, victory,  0,        victory, victory, 0,     ROT0, "Exidy", "Victory", 0 )
+GAME( 1982, victorba, victory,  victory, victory, 0,     ROT0, "Exidy", "Victor Banana", 0 )

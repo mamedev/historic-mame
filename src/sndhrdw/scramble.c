@@ -16,7 +16,7 @@
 #include "cpu/z80/z80.h"
 #include "machine/7474.h"
 #include "sound/ay8910.h"
-
+#include "sound/flt_rc.h"
 
 
 /* The timer clock in Scramble which feeds the upper 4 bits of          */
@@ -194,9 +194,11 @@ static void filter_w(int chip, int channel, int data)
 
 
 	C = 0;
-	if (data & 1) C += 220000;	/* 220000pF = 0.220uF */
-	if (data & 2) C +=  47000;	/*  47000pF = 0.047uF */
-/* ASG:fixme    set_RC_filter(3*chip + channel,1000,5100,0,C); */
+	if (data & 1)
+		C += 220000;	/* 220000pF = 0.220uF */
+	if (data & 2)
+		C +=  47000;	/*  47000pF = 0.047uF */
+	filter_rc_set_RC(3*chip + channel,1000,5100,0,C);
 }
 
 WRITE8_HANDLER( scramble_filter_w )

@@ -654,7 +654,7 @@ static DRIVER_INIT(gticlub)
 
 /*************************************************************************/
 
-GAMEX( 1996, gticlub,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"GTI Club (ver AAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1996, gticlubj,	gticlub, gticlub, gticlub, gticlub,	ROT0,	"Konami",	"GTI Club (ver JAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAMEX( 1996, thunderh,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"Thunder Hurricane (ver UAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1996, gticlub,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"GTI Club (ver AAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1996, gticlubj,	gticlub, gticlub, gticlub, gticlub,	ROT0,	"Konami",	"GTI Club (ver JAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1996, thunderh,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"Thunder Hurricane (ver UAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
 

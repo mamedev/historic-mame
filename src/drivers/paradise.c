@@ -687,7 +687,7 @@ DRIVER_INIT (torus)
 
 ***************************************************************************/
 
-GAME( 1994+, paradise, 0,       paradise, paradise, paradise, ROT90, "Yun Sung", "Paradise" )
-GAME( 1995,  tgtball,  0,       tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball (Nude)" )
-GAME( 1995,  tgtballa, tgtball, tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball" )
-GAME( 1996,  torus,    0,       torus,    torus,    torus,    ROT90, "Yun Sung", "Torus" )
+GAME( 1994+, paradise, 0,       paradise, paradise, paradise, ROT90, "Yun Sung", "Paradise", 0 )
+GAME( 1995,  tgtball,  0,       tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball (Nude)", 0 )
+GAME( 1995,  tgtballa, tgtball, tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball", 0 )
+GAME( 1996,  torus,    0,       torus,    torus,    torus,    ROT90, "Yun Sung", "Torus", 0 )

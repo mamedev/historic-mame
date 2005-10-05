@@ -695,5 +695,5 @@ ROM_END
 
 
 /*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR   COMPANY FULLNAME ) */
-GAME( 1986, tceptor,  0,        tceptor,  tceptor,  tceptor,  ROT0,     "Namco",  "Thunder Ceptor")
-GAME( 1986, tceptor2, tceptor,  tceptor,  tceptor2, tceptor,  ROT0,     "Namco",  "Thunder Ceptor II")
+GAME( 1986, tceptor,  0,        tceptor,  tceptor,  tceptor,  ROT0,     "Namco",  "Thunder Ceptor", 0)
+GAME( 1986, tceptor2, tceptor,  tceptor,  tceptor2, tceptor,  ROT0,     "Namco",  "Thunder Ceptor II", 0)

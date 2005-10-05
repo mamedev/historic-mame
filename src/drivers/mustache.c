@@ -322,4 +322,4 @@ static DRIVER_INIT( mustache )
 }
 
 
-GAMEX( 1987, mustache, 0, mustache, mustache, mustache, ROT90, "[Seibu Kaihatsu] (March license)", "Mustache Boy", GAME_NO_SOUND )
+GAME( 1987, mustache, 0, mustache, mustache, mustache, ROT90, "[Seibu Kaihatsu] (March license)", "Mustache Boy", GAME_NO_SOUND )

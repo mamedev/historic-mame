@@ -321,4 +321,4 @@ DRIVER_INIT( monzagp )
 }
 
 /*    YEAR, NAME,    PARENT,   MACHINE, INPUT,   INIT,    MONITOR, COMPANY,                   FULLNAME */
-GAMEX( 1981,monzagp, 0,        monzagp, monzagp, monzagp, ROT0,   "Leante Games (Olympia?)", "Monza GP", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1981,monzagp, 0,        monzagp, monzagp, monzagp, ROT0,   "Leante Games (Olympia?)", "Monza GP", GAME_NOT_WORKING|GAME_NO_SOUND )

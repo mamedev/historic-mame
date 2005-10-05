@@ -435,5 +435,5 @@ static DRIVER_INIT( parodius )
 
 
 
-GAME( 1990, parodius, 0,        parodius, parodius, parodius, ROT0, "Konami", "Parodius DA! (World)" )
-GAME( 1990, parodisj, parodius, parodius, parodius, parodius, ROT0, "Konami", "Parodius DA! (Japan)" )
+GAME( 1990, parodius, 0,        parodius, parodius, parodius, ROT0, "Konami", "Parodius DA! (World)", 0 )
+GAME( 1990, parodisj, parodius, parodius, parodius, parodius, ROT0, "Konami", "Parodius DA! (Japan)", 0 )

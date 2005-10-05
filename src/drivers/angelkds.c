@@ -764,5 +764,5 @@ ROM_END
 static DRIVER_INIT( spcpostn )	{ spcpostn_decode(); }
 
 
-GAME( 1988, angelkds, 0, angelkds, angelkds,        0,  ROT90,  "Sega / Nasco?", "Angel Kids (Japan)" ) /* Nasco not displayed but 'Exa Planning' is */
-GAME( 1986, spcpostn, 0, angelkds, spcpostn, spcpostn,  ROT90,  "Sega / Nasco", "Space Position (Japan)" ) /* encrypted */
+GAME( 1988, angelkds, 0, angelkds, angelkds,        0,  ROT90,  "Sega / Nasco?", "Angel Kids (Japan)" , 0) /* Nasco not displayed but 'Exa Planning' is */
+GAME( 1986, spcpostn, 0, angelkds, spcpostn, spcpostn,  ROT90,  "Sega / Nasco", "Space Position (Japan)" , 0) /* encrypted */

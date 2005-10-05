@@ -1088,6 +1088,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
 			REGISTER_A |= REGISTER_B;													\
 			CLK((REGISTER_A+1)<<3);												\
 			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
@@ -1107,6 +1108,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
 			REGISTER_A |= REGISTER_B;													\
 			CLK((REGISTER_A+1)<<3);												\
 			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
@@ -1130,6 +1132,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
 			REGISTER_A |= REGISTER_B;													\
 			CLK((REGISTER_A+1)<<3);												\
 			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
@@ -1149,6 +1152,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
+			REGISTER_DB = DST;								\
 			REGISTER_A |= REGISTER_B;													\
 			CLK((REGISTER_A+1)<<3);												\
 			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
@@ -2252,6 +2256,7 @@ TABLE_FUNCTION(int, execute, (int clocks))
 
 			REGISTER_PPC = REGISTER_PC;
 			G65816_CALL_DEBUGGER;
+
 			REGISTER_PC++;
 			REGISTER_IR = read_8_IMM(REGISTER_PB | REGISTER_PPC);
 			FTABLE_OPCODES[REGISTER_IR]();

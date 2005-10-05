@@ -501,4 +501,4 @@ static DRIVER_INIT( overdriv )
 
 
 
-GAMEX( 1990, overdriv, 0, overdriv, overdriv, overdriv, ROT90, "Konami", "Over Drive", GAME_IMPERFECT_GRAPHICS )
+GAME( 1990, overdriv, 0, overdriv, overdriv, overdriv, ROT90, "Konami", "Over Drive", GAME_IMPERFECT_GRAPHICS )

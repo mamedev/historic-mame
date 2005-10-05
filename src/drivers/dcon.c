@@ -418,5 +418,5 @@ static DRIVER_INIT( sdgndmps )
 }
 
 
-GAMEX( 1991, sdgndmps, 0, sdgndmps, sdgndmps, sdgndmps, ROT0, "Banpresto / Bandai", "SD Gundam Psycho Salamander no Kyoui", GAME_NO_COCKTAIL )
-GAMEX( 1992, dcon,     0, dcon,     dcon,     0, ROT0, "Success",            "D-Con", GAME_NO_COCKTAIL )
+GAME( 1991, sdgndmps, 0, sdgndmps, sdgndmps, sdgndmps, ROT0, "Banpresto / Bandai", "SD Gundam Psycho Salamander no Kyoui", GAME_NO_COCKTAIL )
+GAME( 1992, dcon,     0, dcon,     dcon,     0, ROT0, "Success",            "D-Con", GAME_NO_COCKTAIL )

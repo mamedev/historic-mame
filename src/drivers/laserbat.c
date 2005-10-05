@@ -717,7 +717,7 @@ DRIVER_INIT( catmousa )
 	//3800: ld   r0,r0
 }
 
-GAMEX( 1981, laserbat, 0,        laserbat, laserbat, 0,        ROT0,  "Zaccaria", "Laser Battle",                    GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1981, lazarian, laserbat, laserbat, laserbat, lazarian, ROT0,  "Bally Midway (Zaccaria License)", "Lazarian", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1982, catnmous, 0,        catnmous, laserbat, 0,        ROT90, "Zaccaria", "Cat'N Mouse (set 1)",             GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1982, catmousa, catnmous, catnmous, laserbat, catmousa, ROT90, "Zaccaria", "Cat'N Mouse (set 2)",             GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1981, laserbat, 0,        laserbat, laserbat, 0,        ROT0,  "Zaccaria", "Laser Battle",                    GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME( 1981, lazarian, laserbat, laserbat, laserbat, lazarian, ROT0,  "Bally Midway (Zaccaria License)", "Lazarian", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1982, catnmous, 0,        catnmous, laserbat, 0,        ROT90, "Zaccaria", "Cat'N Mouse (set 1)",             GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1982, catmousa, catnmous, catnmous, laserbat, catmousa, ROT90, "Zaccaria", "Cat'N Mouse (set 2)",             GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

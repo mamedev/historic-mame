@@ -91,6 +91,13 @@ int g65816_ICount = 0;
 uint g65816i_source;
 uint g65816i_destination;
 
+static int g65816_readop(UINT32 offset, int size, UINT64 *value)
+{
+	*value = g65816_read_8_immediate(offset);
+
+	return 1;
+}
+
 /* Layout of the registers in the MAME debugger */
 static unsigned char g65816i_register_layout[] =
 {
@@ -100,9 +107,9 @@ static unsigned char g65816i_register_layout[] =
 
 /* Layout of the MAME debugger windows x,y,w,h */
 static unsigned char g65816i_window_layout[] = {
-	25, 0,55, 2, /* register window (top, right rows) */
+	25, 0,55, 3, /* register window (top, right rows) */
 	 0, 0,24,22, /* disassembler window (left colums) */
-	25, 3,55, 9, /* memory #1 window (right, upper middle) */
+	25, 4,55, 9, /* memory #1 window (right, upper middle) */
 	25,13,55, 9, /* memory #2 window (right, lower middle) */
 	 0,23,80, 1, /* command line window (bottom rows) */
 };
@@ -441,6 +448,8 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = g65816i_register_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = g65816i_window_layout;		break;
 		case CPUINFO_PTR_G65816_READVECTOR_CALLBACK:	info->f = (genf *) READ_VECTOR;			break;
+
+		case CPUINFO_PTR_READOP:						info->readop = g65816_readop;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "G65C816"); break;

@@ -153,8 +153,8 @@
  *************************************/
 
 #define SHOW_CLIPS				0
-#define QWERTY_LAYER_ENABLE		1
-#define PRINTF_MIXER_DATA		1
+#define QWERTY_LAYER_ENABLE		0
+#define PRINTF_MIXER_DATA		0
 #define SHOW_ALPHA				0
 #define LOG_SPRITES				0
 

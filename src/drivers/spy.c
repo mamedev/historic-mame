@@ -652,5 +652,5 @@ static DRIVER_INIT( spy )
 
 
 
-GAME( 1989, spy,  0,   spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (World ver. N)")
-GAME( 1989, spyu, spy, spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (US ver. M)")
+GAME( 1989, spy,  0,   spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (World ver. N)", 0)
+GAME( 1989, spyu, spy, spy, spy, spy, ROT0, "Konami", "S.P.Y. - Special Project Y (US ver. M)", 0)

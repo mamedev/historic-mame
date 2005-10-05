@@ -518,7 +518,7 @@ DRIVER_INIT( exctscc2 )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa006, 0xa006, 0, 0, exctscc2_mcu_control_w);
 }
 
-GAME( 1983, exctsccr, 0,        exctsccr, exctsccr, exctsccr, ROT90, "Alpha Denshi Co.", "Exciting Soccer" )
-GAME( 1983, exctscca, exctsccr, exctsccr, exctsccr, exctsccr, ROT90, "Alpha Denshi Co.", "Exciting Soccer (alternate music)" )
-GAME( 1983, exctsccb, exctsccr, exctsccb, exctsccr, 0,        ROT90, "bootleg",          "Exciting Soccer (bootleg)" )
-GAMEX(1984, exctscc2, 0,		exctsccr, exctsccr, exctscc2, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_NOT_WORKING )
+GAME( 1983, exctsccr, 0,        exctsccr, exctsccr, exctsccr, ROT90, "Alpha Denshi Co.", "Exciting Soccer", 0 )
+GAME( 1983, exctscca, exctsccr, exctsccr, exctsccr, exctsccr, ROT90, "Alpha Denshi Co.", "Exciting Soccer (alternate music)", 0 )
+GAME( 1983, exctsccb, exctsccr, exctsccb, exctsccr, 0,        ROT90, "bootleg",          "Exciting Soccer (bootleg)", 0 )
+GAME( 1984, exctscc2, 0,		exctsccr, exctsccr, exctscc2, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_NOT_WORKING )

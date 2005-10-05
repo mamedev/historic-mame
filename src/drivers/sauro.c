@@ -455,5 +455,5 @@ static DRIVER_INIT( tecfri )
 	RAM[0xe000] = 1;
 }
 
-GAMEX( 1987, sauro,    0, sauro,    tecfri, tecfri, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_SOUND )
-GAME ( 1987, trckydoc, 0, trckydoc, tecfri, tecfri, ROT0, "Tecfri", "Tricky Doc" )
+GAME( 1987, sauro,    0, sauro,    tecfri, tecfri, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_SOUND )
+GAME( 1987, trckydoc, 0, trckydoc, tecfri, tecfri, ROT0, "Tecfri", "Tricky Doc", 0 )

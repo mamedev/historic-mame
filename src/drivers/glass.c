@@ -296,4 +296,4 @@ static DRIVER_INIT( glass )
 	glass_ROM16_split(REGION_GFX2, REGION_GFX1, 0x0200000, 0x0200000, 0x0200000, 0x0300000);
 }
 
-GAMEX( 1993, glass, 0, glass,glass, glass, ROT0, "Gaelco", "Glass", GAME_UNEMULATED_PROTECTION )
+GAME( 1993, glass, 0, glass,glass, glass, ROT0, "Gaelco", "Glass", GAME_UNEMULATED_PROTECTION )

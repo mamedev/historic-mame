@@ -293,4 +293,4 @@ ROM_START( othldrby )
 ROM_END
 
 
-GAME( 1995, othldrby, 0, othldrby, othldrby, 0, ROT0, "Sunwise", "Othello Derby (Japan)" )
+GAME( 1995, othldrby, 0, othldrby, othldrby, 0, ROT0, "Sunwise", "Othello Derby (Japan)", 0 )

@@ -350,4 +350,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1979, bsktball, 0, bsktball, bsktball, 0, ROT0, "Atari", "Basketball" )
+GAME( 1979, bsktball, 0, bsktball, bsktball, 0, ROT0, "Atari", "Basketball", 0 )

@@ -544,5 +544,5 @@ ROM_START( vball2pj )
 ROM_END
 
 
-GAME( 1988, vball,    0,     vball,    vball,    0, ROT0, "Technos", "U.S. Championship V'ball (set 1)" )
-GAME( 1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan)" )
+GAME( 1988, vball,    0,     vball,    vball,    0, ROT0, "Technos", "U.S. Championship V'ball (set 1)", 0 )
+GAME( 1988, vball2pj, vball, vball2pj, vball2pj, 0, ROT0, "Technos", "U.S. Championship V'ball (Japan)", 0 )

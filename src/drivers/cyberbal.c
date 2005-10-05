@@ -1030,15 +1030,15 @@ static DRIVER_INIT( cyberb2p )
  *
  *************************************/
 
-GAME( 1988, cyberbal, 0,        cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (rev 4)" )
-GAME( 1988, cyberba2, cyberbal, cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (rev 2)" )
-GAME( 1988, cyberbap, cyberbal, cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (prototype)" )
+GAME( 1988, cyberbal, 0,        cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (rev 4)", 0 )
+GAME( 1988, cyberba2, cyberbal, cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (rev 2)", 0 )
+GAME( 1988, cyberbap, cyberbal, cyberbal, cyberbal, cyberbal, ROT0, "Atari Games", "Cyberball (prototype)", 0 )
 
-GAME( 1989, cyberb2p, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 4)" )
-GAME( 1989, cyberb23, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 3)" )
-GAME( 1989, cyberb22, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 2)" )
-GAME( 1989, cyberb21, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 1)" )
+GAME( 1989, cyberb2p, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 4)", 0 )
+GAME( 1989, cyberb23, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 3)", 0 )
+GAME( 1989, cyberb22, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 2)", 0 )
+GAME( 1989, cyberb21, cyberbal, cyberb2p, cyberb2p, cyberb2p, ROT0, "Atari Games", "Cyberball 2072 (2 player, rev 1)", 0 )
 
-GAME( 1989, cyberbt,  cyberbal, cyberbal, cyberbal, cyberbt,  ROT0, "Atari Games", "Tournament Cyberball 2072 (rev 2)" )
-GAME( 1989, cyberbt1, cyberbal, cyberbal, cyberbal, cyberbt,  ROT0, "Atari Games", "Tournament Cyberball 2072 (rev 1)" )
+GAME( 1989, cyberbt,  cyberbal, cyberbal, cyberbal, cyberbt,  ROT0, "Atari Games", "Tournament Cyberball 2072 (rev 2)", 0 )
+GAME( 1989, cyberbt1, cyberbal, cyberbal, cyberbal, cyberbt,  ROT0, "Atari Games", "Tournament Cyberball 2072 (rev 1)", 0 )
 

@@ -1305,6 +1305,6 @@ ROM_START( buggyboy )
 ROM_END
 
 
-GAMEX( 1983, tx1,   0,  tx1, tx1, 0, ROT0, "Tatsumi", "TX-1", GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1985, buggyboy, buggyb1,  buggyboy, buggyboy, 0, ROT0, "Tatsumi", "Buggy Boy", GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1986, buggyb1,  0,  buggyb1,  buggyb1,  0, ROT0, "Tatsumi", "Buggy Boy (Single Monitor)", GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAME( 1983, tx1,   0,  tx1, tx1, 0, ROT0, "Tatsumi", "TX-1", GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAME( 1985, buggyboy, buggyb1,  buggyboy, buggyboy, 0, ROT0, "Tatsumi", "Buggy Boy", GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAME( 1986, buggyb1,  0,  buggyb1,  buggyb1,  0, ROT0, "Tatsumi", "Buggy Boy (Single Monitor)", GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )

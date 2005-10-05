@@ -18,6 +18,7 @@
 #include "sound/dac.h"
 #include "includes/mcr.h"
 #include "sndhrdw/mcr.h"
+#include "state.h"
 
 
 
@@ -122,6 +123,12 @@ void mcr_sound_init(UINT8 config)
 	{
 		ssio_sound_cpu = sound_cpu++;
 		ssio_compute_ay8910_modulation();
+		state_save_register_UINT8 ("ssio", 0, "ssio_data", &ssio_data[0], 4);
+		state_save_register_UINT8 ("ssio", 0, "ssio_status", &ssio_status, 1);
+		state_save_register_UINT8 ("ssio", 0, "ssio_14024_count", &ssio_14024_count, 1);
+		state_save_register_UINT8 ("ssio", 0, "ssio_mute", &ssio_mute, 1);
+		state_save_register_UINT8 ("ssio", 0, "ssio_overall", &ssio_overall[0], 2);
+		state_save_register_UINT8 ("ssio", 0, "ssio_duty_cycle", &ssio_duty_cycle[0][0], 2*3);
 	}
 
 	/* Turbo Chip Squeak */
@@ -130,6 +137,7 @@ void mcr_sound_init(UINT8 config)
 		pia_config(0, PIA_ALTERNATE_ORDERING, &turbocs_pia_intf);
 		turbocs_dac_index = dac_index++;
 		turbocs_sound_cpu = sound_cpu++;
+		state_save_register_UINT8 ("turbocs", 0, "status", &turbocs_status, 1);
 	}
 
 	/* Chip Squeak Deluxe */
@@ -138,6 +146,7 @@ void mcr_sound_init(UINT8 config)
 		pia_config(0, PIA_ALTERNATE_ORDERING, &csdeluxe_pia_intf);
 		csdeluxe_dac_index = dac_index++;
 		csdeluxe_sound_cpu = sound_cpu++;
+		state_save_register_UINT8 ("csdeluxe", 0, "status", &csdeluxe_status, 1);
 	}
 
 	/* Sounds Good */
@@ -147,6 +156,7 @@ void mcr_sound_init(UINT8 config)
 		pia_config(1, PIA_ALTERNATE_ORDERING, &soundsgood_pia_intf);
 		soundsgood_dac_index = dac_index++;
 		soundsgood_sound_cpu = sound_cpu++;
+		state_save_register_UINT8 ("soundsgood", 0, "status", &soundsgood_status, 1);
 	}
 
 	/* Squawk n Talk */
@@ -155,6 +165,8 @@ void mcr_sound_init(UINT8 config)
 		pia_config(0, PIA_STANDARD_ORDERING, &squawkntalk_pia0_intf);
 		pia_config(1, PIA_STANDARD_ORDERING, &squawkntalk_pia1_intf);
 		squawkntalk_sound_cpu = sound_cpu++;
+		state_save_register_UINT8 ("squawkntalk", 0, "tms_command", &squawkntalk_tms_command, 1);
+		state_save_register_UINT8 ("squawkntalk", 0, "tms_strobes", &squawkntalk_tms_strobes, 1);
 	}
 
 	/* Advanced Audio */
@@ -327,7 +339,6 @@ static void ssio_update_volumes(void)
 	AY8910_set_volume(1, 0, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][0]]);
 	AY8910_set_volume(1, 1, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][1]]);
 	AY8910_set_volume(1, 2, ssio_mute ? 0 : ssio_ayvolume_lookup[ssio_duty_cycle[1][2]]);
-//printf("overall: %d/%d\n", ssio_overall[0], ssio_overall[1]);
 }
 
 static WRITE8_HANDLER( ssio_porta0_w )

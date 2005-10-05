@@ -450,7 +450,7 @@ ROM_START( aquarium )
 ROM_END
 
 #if !AQUARIUS_HACK
-GAMEX( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 #else
-GAMEX( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
 #endif

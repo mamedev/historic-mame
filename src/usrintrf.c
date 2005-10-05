@@ -473,6 +473,11 @@ int ui_update_and_render(mame_bitmap *bitmap)
 	if (options.cheat)
 		cheat_display_watches();
 
+#ifdef MESS
+	/* let MESS display its stuff */
+	mess_ui_update();
+#endif
+
 	/* finally, display any popup messages */
 	ui_display_popup();
 
@@ -614,11 +619,13 @@ int ui_get_show_profiler(void)
 
 void CLIB_DECL ui_popup(const char *text,...)
 {
+	int seconds;
 	va_list arg;
 	va_start(arg,text);
 	vsprintf(popup_text,text,arg);
 	va_end(arg);
-	popup_text_counter = 2 * Machine->refresh_rate;
+	seconds = strlen(popup_text) / 40 + 2;
+	popup_text_counter = seconds * Machine->refresh_rate;
 }
 
 
@@ -1204,6 +1211,13 @@ static void create_font(void)
 
 static int handle_keys(mame_bitmap *bitmap)
 {
+#ifdef MESS
+	if (osd_trying_to_quit())
+		return 1;
+	if (options.disable_normal_ui)
+		return 0;
+#endif
+
 	/* if the user pressed ESC, stop the emulation as long as menus aren't up */
 	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CANCEL))
 		return 1;
@@ -2092,6 +2106,14 @@ static UINT32 menu_bookkeeping(UINT32 state)
 	char *bufptr = buf;
 	int selected = 0;
 	int ctrnum;
+	mame_time total_time;
+
+	/* show total time first */
+	total_time = mame_timer_get_time();
+	if (total_time.seconds >= 60 * 60)
+		bufptr += sprintf(bufptr, "%s: %d:%02d:%02d\n\n", ui_getstring(UI_totaltime), total_time.seconds / (60*60), (total_time.seconds / 60) % 60, total_time.seconds % 60);
+	else
+		bufptr += sprintf(bufptr, "%s: %d:%02d\n\n", ui_getstring(UI_totaltime), (total_time.seconds / 60) % 60, total_time.seconds % 60);
 
 	/* show tickets at the top */
 	if (dispensed_tickets)

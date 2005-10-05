@@ -180,7 +180,6 @@ UINT16 *gs_videoram3;
 UINT16 *gs_mixer_regs;
 
 /* in vidhrdw */
-WRITE16_HANDLER( gsx_videoram3_w );
 VIDEO_UPDATE( gstriker );
 VIDEO_START( gstriker );
 VIDEO_START( twrldc94 );
@@ -289,6 +288,8 @@ static struct YM2610interface ym2610_interface =
 /*** MEMORY LAYOUTS **********************************************************/
 
 static UINT16 *work_ram;
+UINT16 *gstriker_lineram;
+
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
@@ -298,7 +299,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x1c0000, 0x1c0fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xffc000, 0xffffff) AM_READ(MRA16_RAM)
 
-//  AM_RANGE(0x200060, 0x200061) AM_READ(dmmy)
+  	AM_RANGE(0x200000, 0x20007f) AM_READ(MRA16_RAM)
 	AM_RANGE(0x200080, 0x200081) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x200082, 0x200083) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x200084, 0x200085) AM_READ(input_port_0_word_r)
@@ -309,10 +310,10 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x101fff) AM_WRITE(MB60553_0_vram_w) AM_BASE(&MB60553_0_vram)
-	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gsx_videoram3_w) AM_BASE(&gs_videoram3)/*used in twrldc94 (right field)*/
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MB60553_0_vram_w) AM_BASE(&MB60553_0_vram)
 	AM_RANGE(0x140000, 0x141fff) AM_WRITE(MWA16_RAM) AM_BASE(&CG10103_0_vram)
-	AM_RANGE(0x180000, 0x181fff) AM_WRITE(VS920A_0_vram_w) AM_BASE(&VS920A_0_vram)
+	AM_RANGE(0x180000, 0x180fff) AM_WRITE(VS920A_0_vram_w) AM_BASE(&VS920A_0_vram)
+	AM_RANGE(0x181000, 0x181fff) AM_WRITE(MWA16_RAM) AM_BASE(&gstriker_lineram)
 	AM_RANGE(0x1c0000, 0x1c0fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x200000, 0x20000f) AM_WRITE(MB60553_0_regs_w)
 	AM_RANGE(0x200040, 0x20005f) AM_WRITE(MWA16_RAM) AM_BASE(&gs_mixer_regs)
@@ -451,7 +452,7 @@ static MACHINE_DRIVER_START( gstriker )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 29*8-1)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x800)
 
@@ -651,12 +652,12 @@ static DRIVER_INIT( twrldc94 )
 
 /*** GAME DRIVERS ************************************************************/
 
-GAMEX(1993, gstriker, 0,        gstriker, gstriker, 0,        ROT0, "Human", "Grand Striker", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, gstriker, 0,        gstriker, gstriker, 0,        ROT0, "Human", "Grand Striker", GAME_IMPERFECT_GRAPHICS )
 
 /* Similar, but not identical hardware, appear to be protected by an MCU :-( */
-GAMEX(199?, vgoalsoc, 0,        gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer", GAME_NOT_WORKING )
-GAMEX(199?, vgoalsca, vgoalsoc, gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer (alt)", GAME_NOT_WORKING )
-GAMEX(1994, twrldc94, 0,        twrldc94, gstriker, twrldc94,        ROT0, "Tecmo", "Tecmo World Cup '94", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
-GAMEX(1994, twrdc94a, twrldc94,        twrldc94, gstriker, twrldc94,        ROT0, "Tecmo", "Tecmo World Cup '94 (set 2)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAME( 199?, vgoalsoc, 0,        gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer", GAME_NOT_WORKING )
+GAME( 199?, vgoalsca, vgoalsoc, gstriker, gstriker, 0,        ROT0, "Tecmo", "V Goal Soccer (alt)", GAME_NOT_WORKING )
+GAME( 1994, twrldc94, 0,        twrldc94, gstriker, twrldc94,        ROT0, "Tecmo", "Tecmo World Cup '94", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, twrdc94a, twrldc94,        twrldc94, gstriker, twrldc94,        ROT0, "Tecmo", "Tecmo World Cup '94 (set 2)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 
 

@@ -1647,15 +1647,15 @@ static DRIVER_INIT( bullsdrt )
  *
  *************************************/
 
-GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 3)" )
-GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 2)" )
-GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari",   "Centipede (1 player, timed)" )
-GAME( 1980, centipdb, centiped, centipdb, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg)" )
-GAME( 1980, caterplr, centiped, caterplr, caterplr, caterplr, ROT270, "bootleg", "Caterpillar" )
-GAME( 1980, millpac,  centiped, centipdb, centiped, 0, 	      ROT270, "Valadon Automation", "Millpac" )
-GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)" )
-GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede" )
+GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 3)", 0 )
+GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 2)", 0 )
+GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari",   "Centipede (1 player, timed)", 0 )
+GAME( 1980, centipdb, centiped, centipdb, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg)", 0 )
+GAME( 1980, caterplr, centiped, caterplr, caterplr, caterplr, ROT270, "bootleg", "Caterpillar", 0 )
+GAME( 1980, millpac,  centiped, centipdb, centiped, 0, 	      ROT270, "Valadon Automation", "Millpac", 0 )
+GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)", 0 )
+GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede", 0 )
 
-GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari",   "Warlords" )
+GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari",   "Warlords", 0 )
 
-GAMEX(1985, bullsdrt, 0,        bullsdrt, bullsdrt, bullsdrt, ROT270, "Shinkai Inc. (Magic Eletronics Inc. licence)", "Bulls Eye Darts", GAME_IMPERFECT_COLORS )
+GAME( 1985, bullsdrt, 0,        bullsdrt, bullsdrt, bullsdrt, ROT270, "Shinkai Inc. (Magic Eletronics Inc. licence)", "Bulls Eye Darts", GAME_IMPERFECT_COLORS )

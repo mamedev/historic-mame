@@ -1177,14 +1177,14 @@ static DRIVER_INIT( turtship ) { sidearms_gameid = 1; }
 static DRIVER_INIT( dyger    ) { sidearms_gameid = 2; }
 static DRIVER_INIT( whizz    ) { sidearms_gameid = 3; }
 
-GAMEX(1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1986, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_IMPERFECT_GRAPHICS )
-GAMEX(1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko (Pacific Games license)", "Turtle Ship (Japan)" )
-GAME( 1988, turtshik, turtship, turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship (Korea)" )
-GAME( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)" )
-GAME( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)" )
-GAME( 1989, twinfalc, 0,        whizz, 	  whizz,    whizz,    ROT0,   "Philko (Poara Enterprises license)", "Twin Falcons" )
-GAME( 1989, whizz,    twinfalc, whizz, 	  whizz,    whizz,    ROT0,   "Philko", "Whizz" )
+GAME( 1986, sidearms, 0,        sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (World)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1986, sidearmr, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom (Romstar license)", "Side Arms - Hyper Dyne (US)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1986, sidearjp, sidearms, sidearms, sidearms, sidearms, ROT0,   "Capcom", "Side Arms - Hyper Dyne (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, turtship, 0,        turtship, turtship, turtship, ROT0,   "Philko (Pacific Games license)", "Turtle Ship (Japan)", 0 )
+GAME( 1988, turtshik, turtship, turtship, turtship, turtship, ROT0,   "Philko", "Turtle Ship (Korea)", 0 )
+GAME( 1989, dyger,    0,        turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 1)", 0 )
+GAME( 1989, dygera,   dyger,    turtship, dyger,    dyger,    ROT270, "Philko", "Dyger (Korea set 2)", 0 )
+GAME( 1989, twinfalc, 0,        whizz, 	  whizz,    whizz,    ROT0,   "Philko (Poara Enterprises license)", "Twin Falcons", 0 )
+GAME( 1989, whizz,    twinfalc, whizz, 	  whizz,    whizz,    ROT0,   "Philko", "Whizz", 0 )
 
 

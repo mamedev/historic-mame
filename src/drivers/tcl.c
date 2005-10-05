@@ -200,4 +200,4 @@ DRIVER_INIT(tcl)
 	memory_set_opcode_base(0,dest+0x10000);
 }
 
-GAMEX( 1995, tcl,  0,       tcl,  tcl,  tcl, ROT0, "Uniwang", "Taiwan Chess Legend", GAME_NOT_WORKING )
+GAME( 1995, tcl,  0,       tcl,  tcl,  tcl, ROT0, "Uniwang", "Taiwan Chess Legend", GAME_NOT_WORKING )

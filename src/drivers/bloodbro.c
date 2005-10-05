@@ -722,7 +722,7 @@ static DRIVER_INIT( weststry )
 
 /* Game Drivers */
 
-GAMEX(1990, bloodbro, 0,        bloodbro, bloodbro, 0,        ROT0,   "Tad", "Blood Bros. (set 1)", GAME_NO_COCKTAIL )
-GAMEX(1990, bloodbra, bloodbro, bloodbro, bloodbro, 0,        ROT0,   "Tad", "Blood Bros. (set 2)", GAME_NO_COCKTAIL )
-GAMEX(1990, weststry, bloodbro, weststry, weststry, weststry, ROT0,   "bootleg", "West Story", GAME_NO_COCKTAIL | GAME_NO_SOUND )
-GAME( 1990, skysmash, 0,        skysmash, skysmash, 0,        ROT270, "Nihon System", "Sky Smasher" )
+GAME( 1990, bloodbro, 0,        bloodbro, bloodbro, 0,        ROT0,   "Tad", "Blood Bros. (set 1)", GAME_NO_COCKTAIL )
+GAME( 1990, bloodbra, bloodbro, bloodbro, bloodbro, 0,        ROT0,   "Tad", "Blood Bros. (set 2)", GAME_NO_COCKTAIL )
+GAME( 1990, weststry, bloodbro, weststry, weststry, weststry, ROT0,   "bootleg", "West Story", GAME_NO_COCKTAIL | GAME_NO_SOUND )
+GAME( 1990, skysmash, 0,        skysmash, skysmash, 0,        ROT270, "Nihon System", "Sky Smasher", 0 )

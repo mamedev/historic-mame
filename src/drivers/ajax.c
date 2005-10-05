@@ -433,6 +433,6 @@ static DRIVER_INIT( ajax )
 
 
 
-GAME( 1987, ajax,    0,    ajax, ajax, ajax, ROT90, "Konami", "Ajax" )
-GAME( 1987, typhoon, ajax, ajax, ajax, ajax, ROT90, "Konami", "Typhoon" )
-GAME( 1987, ajaxj,   ajax, ajax, ajax, ajax, ROT90, "Konami", "Ajax (Japan)" )
+GAME( 1987, ajax,    0,    ajax, ajax, ajax, ROT90, "Konami", "Ajax", 0 )
+GAME( 1987, typhoon, ajax, ajax, ajax, ajax, ROT90, "Konami", "Typhoon", 0 )
+GAME( 1987, ajaxj,   ajax, ajax, ajax, ajax, ROT90, "Konami", "Ajax (Japan)", 0 )

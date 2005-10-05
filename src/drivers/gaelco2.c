@@ -1349,12 +1349,12 @@ ROM_END
 
 
 
-GAMEX(1994, aligator, 0,        alighunt, alighunt, alighunt, ROT0, "Gaelco", "Alligator Hunt", GAME_UNEMULATED_PROTECTION )
-GAME( 1994, aligatun, aligator, alighunt, alighunt, alighunt, ROT0, "Gaelco", "Alligator Hunt (unprotected)" )
-GAMEX(1995, touchgo,  0,        touchgo,  touchgo,  touchgo,  ROT0, "Gaelco", "Touch & Go", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1995, wrally2,  0,        wrally2,  wrally2,  0,        ROT0, "Gaelco", "World Rally 2: Twin Racing", GAME_UNEMULATED_PROTECTION )
-GAME( 1996, maniacsq, 0,        maniacsq, maniacsq, 0,        ROT0, "Gaelco", "Maniac Square (unprotected)" )
-GAMEX(1996, snowboar, 0,        snowboar, snowboar, snowboar, ROT0, "Gaelco", "Snow Board Championship (set 1)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1996, snowbalt, snowboar, snowboar, snowboar, 0,        ROT0, "Gaelco", "Snow Board Championship (set 2)", GAME_UNEMULATED_PROTECTION )
-GAME( 1998, bang,     0,        bang,     bang,     bang,     ROT0, "Gaelco", "Bang!" )
-GAME( 1998, bangj,    bang,     bang,     bang,     bang,     ROT0, "Gaelco", "Gun Gabacho (Japan)" )
+GAME( 1994, aligator, 0,        alighunt, alighunt, alighunt, ROT0, "Gaelco", "Alligator Hunt", GAME_UNEMULATED_PROTECTION )
+GAME( 1994, aligatun, aligator, alighunt, alighunt, alighunt, ROT0, "Gaelco", "Alligator Hunt (unprotected)", 0 )
+GAME( 1995, touchgo,  0,        touchgo,  touchgo,  touchgo,  ROT0, "Gaelco", "Touch & Go", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1995, wrally2,  0,        wrally2,  wrally2,  0,        ROT0, "Gaelco", "World Rally 2: Twin Racing", GAME_UNEMULATED_PROTECTION )
+GAME( 1996, maniacsq, 0,        maniacsq, maniacsq, 0,        ROT0, "Gaelco", "Maniac Square (unprotected)", 0 )
+GAME( 1996, snowboar, 0,        snowboar, snowboar, snowboar, ROT0, "Gaelco", "Snow Board Championship (set 1)", GAME_UNEMULATED_PROTECTION )
+GAME( 1996, snowbalt, snowboar, snowboar, snowboar, 0,        ROT0, "Gaelco", "Snow Board Championship (set 2)", GAME_UNEMULATED_PROTECTION )
+GAME( 1998, bang,     0,        bang,     bang,     bang,     ROT0, "Gaelco", "Bang!", 0 )
+GAME( 1998, bangj,    bang,     bang,     bang,     bang,     ROT0, "Gaelco", "Gun Gabacho (Japan)", 0 )

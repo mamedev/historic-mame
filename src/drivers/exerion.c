@@ -517,6 +517,6 @@ static DRIVER_INIT( exerionb )
  *
  *************************************/
 
-GAME( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion" )
-GAME( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)" )
-GAME( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)" )
+GAME( 1983, exerion,  0,       exerion, exerion, exerion,  ROT90, "Jaleco", "Exerion", 0 )
+GAME( 1983, exeriont, exerion, exerion, exerion, exerion,  ROT90, "Jaleco (Taito America license)", "Exerion (Taito)", 0 )
+GAME( 1983, exerionb, exerion, exerion, exerion, exerionb, ROT90, "Jaleco", "Exerion (bootleg)", 0 )

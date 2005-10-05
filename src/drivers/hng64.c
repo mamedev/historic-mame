@@ -1750,13 +1750,13 @@ ROM_START( buriki )
 ROM_END
 
 /* Bios */
-GAMEX( 1997, hng64,  0,        hng64, hng64, 0,     ROT0, "SNK", "Hyper NeoGeo 64 Bios", GAME_NOT_WORKING|GAME_NO_SOUND|NOT_A_DRIVER )
+GAME( 1997, hng64,  0,        hng64, hng64, 0,     ROT0, "SNK", "Hyper NeoGeo 64 Bios", GAME_NOT_WORKING|GAME_NO_SOUND|NOT_A_DRIVER )
 
 /* Games */
-GAMEX( 1997, roadedge, hng64,  hng64, hng64, hng64_race, ROT0, "SNK", "Roads Edge / Round Trip (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 001 */
+GAME( 1997, roadedge, hng64,  hng64, hng64, hng64_race, ROT0, "SNK", "Roads Edge / Round Trip (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 001 */
 /* 002 Samurai Shodown 64 */
 /* 003 Xtreme Rally / Offbeat Racer */
 /* 004 Beast Busters 2nd Nightmare */
-GAMEX( 1998, sams64_2, hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Samurai Shodown: Warrior's Rage", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 005 */
-GAMEX( 1998, fatfurwa, hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Fatal Fury: Wild Ambition (rev.A)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 006 */
-GAMEX( 1999, buriki,   hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Buriki One (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 007 */
+GAME( 1998, sams64_2, hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Samurai Shodown: Warrior's Rage", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 005 */
+GAME( 1998, fatfurwa, hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Fatal Fury: Wild Ambition (rev.A)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 006 */
+GAME( 1999, buriki,   hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Buriki One (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 007 */

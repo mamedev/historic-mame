@@ -743,6 +743,6 @@ static DRIVER_INIT( slapshot )
 	state_save_register_func_postload(reset_sound_region);
 }
 
-GAME( 1994, slapshot, 0,       slapshot, slapshot, slapshot, ROT0, "Taito Corporation",         "Slap Shot (Japan)" )
-GAME( 1994, opwolf3,  0,       opwolf3,  opwolf3,  slapshot, ROT0, "Taito Corporation Japan",   "Operation Wolf 3 (World)" )
-GAME( 1994, opwolf3u, opwolf3, opwolf3,  opwolf3,  slapshot, ROT0, "Taito America Corporation", "Operation Wolf 3 (US)" )
+GAME( 1994, slapshot, 0,       slapshot, slapshot, slapshot, ROT0, "Taito Corporation",         "Slap Shot (Japan)", 0 )
+GAME( 1994, opwolf3,  0,       opwolf3,  opwolf3,  slapshot, ROT0, "Taito Corporation Japan",   "Operation Wolf 3 (World)", 0 )
+GAME( 1994, opwolf3u, opwolf3, opwolf3,  opwolf3,  slapshot, ROT0, "Taito America Corporation", "Operation Wolf 3 (US)", 0 )

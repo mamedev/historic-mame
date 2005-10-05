@@ -47,6 +47,9 @@ void filter_rc_set_RC(int num, int R1, int R2, int R3, int C)
 	float f_R1,f_R2,f_R3,f_C;
 	float Req;
 
+	if(!info)
+		return;
+
 	stream_update(info->stream, 0);
 
 	if (C == 0)

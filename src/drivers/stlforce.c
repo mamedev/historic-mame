@@ -386,5 +386,5 @@ DRIVER_INIT(twinbrat)
 }
 
 
-GAME( 1994, stlforce, 0, stlforce, stlforce, stlforce, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force" )
-GAME( 1995, twinbrat, 0, twinbrat, stlforce, twinbrat, ROT0, "Elettronica Video-Games S.R.L.", "Twin Brats" )
+GAME( 1994, stlforce, 0, stlforce, stlforce, stlforce, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force", 0 )
+GAME( 1995, twinbrat, 0, twinbrat, stlforce, twinbrat, ROT0, "Elettronica Video-Games S.R.L.", "Twin Brats", 0 )

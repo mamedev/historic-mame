@@ -755,6 +755,6 @@ ROM_START( hyprdelj )
 ROM_END
 
 
-GAME( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 1)" )
-GAME( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 2)" )
+GAME( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 1)", 0 )
+GAME( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 2)", 0 )
 

@@ -941,13 +941,13 @@ DRIVER_INIT( mechatt )
 /******************************************************************************/
 
 #if !MECHATT_HACK
-GAME( 1989, bbusters, 0, bbusters, bbusters, bbusters, ROT0,  "SNK", "Beast Busters (World ?)" )
+GAME( 1989, bbusters, 0, bbusters, bbusters, bbusters, ROT0,  "SNK", "Beast Busters (World ?)", 0 )
 #else
-GAME( 1989, bbusters, 0, bbusters, bbusters, bbusters, ROT0,  "SNK", "Beast Busters" )
+GAME( 1989, bbusters, 0, bbusters, bbusters, bbusters, ROT0,  "SNK", "Beast Busters", 0 )
 #endif
 #if !MECHATT_HACK
-GAME( 1989, mechatt,  0, mechatt,  mechatt,  mechatt,  ROT0,  "SNK", "Mechanized Attack (World)" )
+GAME( 1989, mechatt,  0, mechatt,  mechatt,  mechatt,  ROT0,  "SNK", "Mechanized Attack (World)", 0 )
 #else
-GAME( 1989, mechatt,  0, mechatt,  mechatt,  mechatt,  ROT0,  "SNK", "Mechanized Attack" )
+GAME( 1989, mechatt,  0, mechatt,  mechatt,  mechatt,  ROT0,  "SNK", "Mechanized Attack", 0 )
 #endif
-GAME( 1989, mechattu, mechatt, mechatt,  mechatt,  mechatt,  ROT0,  "SNK", "Mechanized Attack (US)" )
+GAME( 1989, mechattu, mechatt, mechatt,  mechatt,  mechatt,  ROT0,  "SNK", "Mechanized Attack (US)", 0 )

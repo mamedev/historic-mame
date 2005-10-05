@@ -114,6 +114,7 @@ static const char *mame_default_text[] =
 	"Return to Groups",
 
 	/* stats */
+	"Uptime",
 	"Tickets dispensed",
 	"Coin",
 	"(locked)",

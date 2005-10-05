@@ -645,4 +645,4 @@ INPUT_PORTS_START( djboy )
 INPUT_PORTS_END
 
 /*     YEAR, NAME,  PARENT, MACHINE, INPUT, INIT, MNTR,  COMPANY, FULLNAME, FLAGS */
-GAMEX( 1989, djboy, 0,      djboy,   djboy, 0,    ROT0, "Kaneko", "DJ Boy", GAME_NOT_WORKING )
+GAME( 1989, djboy, 0,      djboy,   djboy, 0,    ROT0, "Kaneko", "DJ Boy", GAME_NOT_WORKING )

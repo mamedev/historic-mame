@@ -257,4 +257,4 @@ ROM_START( lvcards )
 ROM_END
 
 
-GAME( 1985, lvcards, 0, lvcards, lvcards, 0, ROT0, "Tehkan", "Lovely Cards" )
+GAME( 1985, lvcards, 0, lvcards, lvcards, 0, ROT0, "Tehkan", "Lovely Cards", 0 )

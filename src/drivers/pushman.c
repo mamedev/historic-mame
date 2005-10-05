@@ -644,7 +644,7 @@ ROM_START( bballs )
 	ROM_LOAD( "bb_prom.e9",   0x0000, 0x0100, CRC(ec80ae36) SHA1(397ec8fc1b106c8b8d4bf6798aa429e8768a101a) )	/* priority (not used) */
 ROM_END
 
-GAME( 1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea, set 1)" )
-GAME( 1990, pushmana, pushman, pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea, set 2)" )
-GAME( 1990, pushmans, pushman, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman (American Sammy license)" )
-GAME( 1991, bballs,   0,       bballs,  bballs,  0, ROT0, "Comad", "Bouncing Balls" )
+GAME( 1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea, set 1)", 0 )
+GAME( 1990, pushmana, pushman, pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea, set 2)", 0 )
+GAME( 1990, pushmans, pushman, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman (American Sammy license)", 0 )
+GAME( 1991, bballs,   0,       bballs,  bballs,  0, ROT0, "Comad", "Bouncing Balls", 0 )

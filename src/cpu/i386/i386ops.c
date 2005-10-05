@@ -13,25 +13,25 @@ static UINT8 I386OP(shift_rotate8)(UINT8 modrm, UINT32 value, UINT8 shift)
 				I.CF = (src & 0x80) ? 1 : 0;
 				dst = (src << 1) + I.CF;
 				I.OF = ((src ^ dst) & 0x80) ? 1 : 0;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 1:			/* ROR rm8, 1 */
 				I.CF = (src & 0x1) ? 1 : 0;
 				dst = (I.CF << 7) | (src >> 1);
 				I.OF = ((src ^ dst) & 0x80) ? 1 : 0;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 2:			/* RCL rm8, 1 */
 				dst = (src << 1) + I.CF;
 				I.CF = (src & 0x80) ? 1 : 0;
 				I.OF = ((src ^ dst) & 0x80) ? 1 : 0;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 3:			/* RCR rm8, 1 */
 				dst = (I.CF << 7) | (src >> 1);
 				I.CF = src & 0x1;
 				I.OF = ((src ^ dst) & 0x80) ? 1 : 0;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 4:			/* SHL/SAL rm8, 1 */
 			case 6:
@@ -39,21 +39,21 @@ static UINT8 I386OP(shift_rotate8)(UINT8 modrm, UINT32 value, UINT8 shift)
 				I.CF = (src & 0x80) ? 1 : 0;
 				I.OF = (((I.CF << 7) ^ dst) & 0x80) ? 1 : 0;
 				SetSZPF8(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 5:			/* SHR rm8, 1 */
 				dst = src >> 1;
 				I.CF = src & 0x1;
 				I.OF = (dst & 0x80) ? 1 : 0;
 				SetSZPF8(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 7:			/* SAR rm8, 1 */
 				dst = (INT8)(src) >> 1;
 				I.CF = src & 0x1;
 				I.OF = 0;
 				SetSZPF8(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 		}
 
@@ -65,46 +65,46 @@ static UINT8 I386OP(shift_rotate8)(UINT8 modrm, UINT32 value, UINT8 shift)
 				dst = ((src & ((UINT8)0xff >> shift)) << shift) |
 					  ((src & ((UINT8)0xff << (8-shift))) >> (8-shift));
 				I.CF = (src >> (8-shift)) & 0x1;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 1:			/* ROR rm8, i8 */
 				dst = ((src & ((UINT8)0xff << shift)) >> shift) |
 					  ((src & ((UINT8)0xff >> (8-shift))) << (8-shift));
 				I.CF = (src >> (shift-1)) & 0x1;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 2:			/* RCL rm8, i8 */
 				dst = ((src & ((UINT8)0xff >> shift)) << shift) |
 					  ((src & ((UINT8)0xff << (9-shift))) >> (9-shift)) |
 					  (I.CF << (shift-1));
 				I.CF = (src >> (8-shift)) & 0x1;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 3:			/* RCR rm8, i8 */
 				dst = ((src & ((UINT8)0xff << shift)) >> shift) |
 					  ((src & ((UINT8)0xff >> (8-shift))) << (9-shift)) |
 					  (I.CF << (8-shift));
 				I.CF = (src >> (shift-1)) & 0x1;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 4:			/* SHL/SAL rm8, i8 */
 			case 6:
 				dst = src << shift;
 				I.CF = (src & (1 << (8-shift))) ? 1 : 0;
 				SetSZPF8(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 5:			/* SHR rm8, i8 */
 				dst = src >> shift;
 				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF8(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 7:			/* SAR rm8, i8 */
 				dst = (INT8)src >> shift;
 				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF8(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 		}
 	}
@@ -124,7 +124,7 @@ static void I386OP(adc_rm8_r8)(void)		// Opcode 0x10
 		src = ADD8(src, I.CF);
 		dst = ADD8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
@@ -132,7 +132,7 @@ static void I386OP(adc_rm8_r8)(void)		// Opcode 0x10
 		src = ADD8(src, I.CF);
 		dst = ADD8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -146,7 +146,7 @@ static void I386OP(adc_r8_rm8)(void)		// Opcode 0x12
 		src = ADD8(src, I.CF);
 		dst = ADD8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
@@ -154,7 +154,7 @@ static void I386OP(adc_r8_rm8)(void)		// Opcode 0x12
 		src = ADD8(src, I.CF);
 		dst = ADD8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -166,7 +166,7 @@ static void I386OP(adc_al_i8)(void)		// Opcode 0x14
 	src = ADD8(src, I.CF);
 	dst = ADD8(dst, src);
 	REG8(AL) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(add_rm8_r8)(void)		// Opcode 0x00
@@ -178,14 +178,14 @@ static void I386OP(add_rm8_r8)(void)		// Opcode 0x00
 		dst = LOAD_RM8(modrm);
 		dst = ADD8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		dst = READ8(ea);
 		dst = ADD8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -198,14 +198,14 @@ static void I386OP(add_r8_rm8)(void)		// Opcode 0x02
 		dst = LOAD_REG8(modrm);
 		dst = ADD8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		dst = LOAD_REG8(modrm);
 		dst = ADD8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -216,7 +216,7 @@ static void I386OP(add_al_i8)(void)		// Opcode 0x04
 	dst = REG8(AL);
 	dst = ADD8(dst, src);
 	REG8(AL) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(and_rm8_r8)(void)		// Opcode 0x20
@@ -228,14 +228,14 @@ static void I386OP(and_rm8_r8)(void)		// Opcode 0x20
 		dst = LOAD_RM8(modrm);
 		dst = AND8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		dst = READ8(ea);
 		dst = AND8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -248,14 +248,14 @@ static void I386OP(and_r8_rm8)(void)		// Opcode 0x22
 		dst = LOAD_REG8(modrm);
 		dst = AND8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		dst = LOAD_REG8(modrm);
 		dst = AND8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -266,31 +266,31 @@ static void I386OP(and_al_i8)(void)			// Opcode 0x24
 	dst = REG8(AL);
 	dst = AND8(dst, src);
 	REG8(AL) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(clc)(void)				// Opcode 0xf8
 {
 	I.CF = 0;
-	CYCLES(2);
+	CYCLES(CYCLES_CLC);
 }
 
 static void I386OP(cld)(void)				// Opcode 0xfc
 {
 	I.DF = 0;
-	CYCLES(2);
+	CYCLES(CYCLES_CLD);
 }
 
 static void I386OP(cli)(void)				// Opcode 0xfa
 {
 	I.IF = 0;
-	CYCLES(8);
+	CYCLES(CYCLES_CLI);
 }
 
 static void I386OP(cmc)(void)				// Opcode 0xf5
 {
 	I.CF ^= 1;
-	CYCLES(2);
+	CYCLES(CYCLES_CMC);
 }
 
 static void I386OP(cmp_rm8_r8)(void)		// Opcode 0x38
@@ -301,13 +301,13 @@ static void I386OP(cmp_rm8_r8)(void)		// Opcode 0x38
 		src = LOAD_REG8(modrm);
 		dst = LOAD_RM8(modrm);
 		SUB8(dst, src);
-		CYCLES(C_CMP_REG_REG);
+		CYCLES(CYCLES_CMP_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		dst = READ8(ea);
 		SUB8(dst, src);
-		CYCLES(C_CMP_REG_MEM);
+		CYCLES(CYCLES_CMP_REG_MEM);
 	}
 }
 
@@ -319,13 +319,13 @@ static void I386OP(cmp_r8_rm8)(void)		// Opcode 0x3a
 		src = LOAD_RM8(modrm);
 		dst = LOAD_REG8(modrm);
 		SUB8(dst, src);
-		CYCLES(C_CMP_REG_REG);
+		CYCLES(CYCLES_CMP_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		dst = LOAD_REG8(modrm);
 		SUB8(dst, src);
-		CYCLES(C_CMP_MEM_REG);
+		CYCLES(CYCLES_CMP_MEM_REG);
 	}
 }
 
@@ -335,7 +335,7 @@ static void I386OP(cmp_al_i8)(void)			// Opcode 0x3c
 	src = FETCH();
 	dst = REG8(AL);
 	SUB8(dst, src);
-	CYCLES(C_CMP_I_ACC);
+	CYCLES(CYCLES_CMP_IMM_ACC);
 }
 
 static void I386OP(cmpsb)(void)				// Opcode 0xa6
@@ -343,17 +343,17 @@ static void I386OP(cmpsb)(void)				// Opcode 0xa6
 	UINT32 eas, ead;
 	UINT8 src, dst;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( I.segment_override, I.address_size ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( DS, I.address_size ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	src = READ8(eas);
 	dst = READ8(ead);
 	SUB8(dst, src);
 	BUMP_SI(1);
 	BUMP_DI(1);
-	CYCLES(10);
+	CYCLES(CYCLES_CMPS);
 }
 
 static void I386OP(in_al_i8)(void)			// Opcode 0xe4
@@ -361,6 +361,7 @@ static void I386OP(in_al_i8)(void)			// Opcode 0xe4
 	UINT16 port = FETCH();
 	UINT8 data = READPORT8(port);
 	REG8(AL) = data;
+	CYCLES(CYCLES_IN_VAR);
 }
 
 static void I386OP(in_al_dx)(void)			// Opcode 0xec
@@ -368,6 +369,7 @@ static void I386OP(in_al_dx)(void)			// Opcode 0xec
 	UINT16 port = REG16(DX);
 	UINT8 data = READPORT8(port);
 	REG8(AL) = data;
+	CYCLES(CYCLES_IN);
 }
 
 static void I386OP(ja_rel8)(void)			// Opcode 0x77
@@ -375,9 +377,9 @@ static void I386OP(ja_rel8)(void)			// Opcode 0x77
 	INT8 disp = FETCH();
 	if( I.CF == 0 && I.ZF == 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -386,9 +388,9 @@ static void I386OP(jbe_rel8)(void)			// Opcode 0x76
 	INT8 disp = FETCH();
 	if( I.CF != 0 || I.ZF != 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -397,9 +399,9 @@ static void I386OP(jc_rel8)(void)			// Opcode 0x72
 	INT8 disp = FETCH();
 	if( I.CF != 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -408,9 +410,9 @@ static void I386OP(jg_rel8)(void)			// Opcode 0x7f
 	INT8 disp = FETCH();
 	if( I.ZF == 0 && (I.SF == I.OF) ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -419,9 +421,9 @@ static void I386OP(jge_rel8)(void)			// Opcode 0x7d
 	INT8 disp = FETCH();
 	if( (I.SF == I.OF) ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -430,9 +432,9 @@ static void I386OP(jl_rel8)(void)			// Opcode 0x7c
 	INT8 disp = FETCH();
 	if( (I.SF != I.OF) ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -441,9 +443,9 @@ static void I386OP(jle_rel8)(void)		// Opcode 0x7e
 	INT8 disp = FETCH();
 	if( I.ZF != 0 || (I.SF != I.OF) ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -452,9 +454,9 @@ static void I386OP(jnc_rel8)(void)			// Opcode 0x73
 	INT8 disp = FETCH();
 	if( I.CF == 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -463,9 +465,9 @@ static void I386OP(jno_rel8)(void)			// Opcode 0x71
 	INT8 disp = FETCH();
 	if( I.OF == 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -474,9 +476,9 @@ static void I386OP(jnp_rel8)(void)			// Opcode 0x7b
 	INT8 disp = FETCH();
 	if( I.PF == 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -485,9 +487,9 @@ static void I386OP(jns_rel8)(void)			// Opcode 0x79
 	INT8 disp = FETCH();
 	if( I.SF == 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -496,9 +498,9 @@ static void I386OP(jnz_rel8)(void)			// Opcode 0x75
 	INT8 disp = FETCH();
 	if( I.ZF == 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -507,9 +509,9 @@ static void I386OP(jo_rel8)(void)			// Opcode 0x70
 	INT8 disp = FETCH();
 	if( I.OF != 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -518,9 +520,9 @@ static void I386OP(jp_rel8)(void)			// Opcode 0x7a
 	INT8 disp = FETCH();
 	if( I.PF != 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -529,9 +531,9 @@ static void I386OP(js_rel8)(void)			// Opcode 0x78
 	INT8 disp = FETCH();
 	if( I.SF != 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -540,9 +542,9 @@ static void I386OP(jz_rel8)(void)			// Opcode 0x74
 	INT8 disp = FETCH();
 	if( I.ZF != 0 ) {
 		NEAR_BRANCH(disp);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_DISP8);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_DISP8_NOBRANCH);
 	}
 }
 
@@ -550,26 +552,26 @@ static void I386OP(jmp_rel8)(void)			// Opcode 0xeb
 {
 	INT8 disp = FETCH();
 	NEAR_BRANCH(disp);
-	CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+	CYCLES(CYCLES_JMP_SHORT);		/* TODO: Timing = 7 + m */
 }
 
 static void I386OP(lahf)(void)				// Opcode 0x9f
 {
 	REG8(AH) = get_flags() & 0xd7;
-	CYCLES(2);
+	CYCLES(CYCLES_LAHF);
 }
 
 static void I386OP(lodsb)(void)				// Opcode 0xac
 {
 	UINT32 eas;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( I.segment_override, I.address_size ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( DS, I.address_size ? REG32(ESI) : REG16(SI) );
 	}
 	REG8(AL) = READ8(eas);
 	BUMP_SI(1);
-	CYCLES(5);
+	CYCLES(CYCLES_LODS);
 }
 
 static void I386OP(mov_rm8_r8)(void)		// Opcode 0x88
@@ -579,12 +581,12 @@ static void I386OP(mov_rm8_r8)(void)		// Opcode 0x88
 	if( modrm >= 0xc0 ) {
 		src = LOAD_REG8(modrm);
 		STORE_RM8(modrm, src);
-		CYCLES(C_MOV_REG_REG);
+		CYCLES(CYCLES_MOV_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		WRITE8(ea, src);
-		CYCLES(C_MOV_REG_MEM);
+		CYCLES(CYCLES_MOV_REG_MEM);
 	}
 }
 
@@ -595,12 +597,12 @@ static void I386OP(mov_r8_rm8)(void)		// Opcode 0x8a
 	if( modrm >= 0xc0 ) {
 		src = LOAD_RM8(modrm);
 		STORE_REG8(modrm, src);
-		CYCLES(C_MOV_REG_REG);
+		CYCLES(CYCLES_MOV_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		STORE_REG8(modrm, src);
-		CYCLES(C_MOV_MEM_REG);
+		CYCLES(CYCLES_MOV_MEM_REG);
 	}
 }
 
@@ -610,12 +612,13 @@ static void I386OP(mov_rm8_i8)(void)		// Opcode 0xc6
 	if( modrm >= 0xc0 ) {
 		UINT8 value = FETCH();
 		STORE_RM8(modrm, value);
+		CYCLES(CYCLES_MOV_IMM_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT8 value = FETCH();
 		WRITE8(ea, value);
+		CYCLES(CYCLES_MOV_IMM_MEM);
 	}
-	CYCLES(2);
 }
 
 static void I386OP(mov_r32_cr)(void)		// Opcode 0x0f 20
@@ -623,8 +626,8 @@ static void I386OP(mov_r32_cr)(void)		// Opcode 0x0f 20
 	UINT8 modrm = FETCH();
 	UINT8 cr = (modrm >> 3) & 0x7;
 
-	STORE_REG32(modrm, I.cr[cr]);
-	CYCLES(6);
+	STORE_RM32(modrm, I.cr[cr]);
+	CYCLES(CYCLES_MOV_CR_REG);
 }
 
 static void I386OP(mov_r32_dr)(void)		// Opcode 0x0f 21
@@ -632,8 +635,20 @@ static void I386OP(mov_r32_dr)(void)		// Opcode 0x0f 21
 	UINT8 modrm = FETCH();
 	UINT8 dr = (modrm >> 3) & 0x7;
 
-	STORE_REG32(modrm, I.dr[dr]);
-	CYCLES(6);
+	STORE_RM32(modrm, I.dr[dr]);
+	switch(dr)
+	{
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			CYCLES(CYCLES_MOV_REG_DR0_3);
+			break;
+		case 6:
+		case 7:
+			CYCLES(CYCLES_MOV_REG_DR6_7);
+			break;
+	}
 }
 
 static void I386OP(mov_cr_r32)(void)		// Opcode 0x0f 22
@@ -641,12 +656,12 @@ static void I386OP(mov_cr_r32)(void)		// Opcode 0x0f 22
 	UINT8 modrm = FETCH();
 	UINT8 cr = (modrm >> 3) & 0x7;
 
-	I.cr[cr] = LOAD_REG32(modrm);
+	I.cr[cr] = LOAD_RM32(modrm);
 	switch(cr)
 	{
-		case 0: CYCLES(11); break;
-		case 2: CYCLES(4); break;
-		case 3: CYCLES(5); break;
+		case 0: CYCLES(CYCLES_MOV_REG_CR0); break;
+		case 2: CYCLES(CYCLES_MOV_REG_CR2); break;
+		case 3: CYCLES(CYCLES_MOV_REG_CR3); break;
 		default:
 			osd_die("i386: mov_cr_r32 CR%d !\n", cr);
 			break;
@@ -658,11 +673,19 @@ static void I386OP(mov_dr_r32)(void)		// Opcode 0x0f 23
 	UINT8 modrm = FETCH();
 	UINT8 dr = (modrm >> 3) & 0x7;
 
-	I.dr[dr] = LOAD_REG32(modrm);
+	I.dr[dr] = LOAD_RM32(modrm);
 	switch(dr)
 	{
-		case 0: case 1: case 2: case 3: CYCLES(22); break;
-		case 6: case 7: CYCLES(14); break;
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+			CYCLES(CYCLES_MOV_DR0_3_REG);
+			break;
+		case 6:
+		case 7:
+			CYCLES(CYCLES_MOV_DR6_7_REG);
+			break;
 		default:
 			osd_die("i386: mov_dr_r32 DR%d !\n", dr);
 			break;
@@ -684,7 +707,7 @@ static void I386OP(mov_al_m8)(void)			// Opcode 0xa0
 		ea = i386_translate( DS, offset );
 	}
 	REG8(AL) = READ8(ea);
-	CYCLES(4);
+	CYCLES(CYCLES_MOV_IMM_MEM);
 }
 
 static void I386OP(mov_m8_al)(void)			// Opcode 0xa2
@@ -702,7 +725,7 @@ static void I386OP(mov_m8_al)(void)			// Opcode 0xa2
 		ea = i386_translate( DS, offset );
 	}
 	WRITE8( ea, REG8(AL) );
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_MEM_ACC);
 }
 
 static void I386OP(mov_rm16_sreg)(void)		// Opcode 0x8c
@@ -712,11 +735,12 @@ static void I386OP(mov_rm16_sreg)(void)		// Opcode 0x8c
 
 	if( modrm >= 0xc0 ) {
 		STORE_RM16(modrm, I.sreg[s].selector);
+		CYCLES(CYCLES_MOV_SREG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE16(ea, I.sreg[s].selector);
+		CYCLES(CYCLES_MOV_SREG_MEM);
 	}
-	CYCLES(2);
 }
 
 static void I386OP(mov_sreg_rm16)(void)		// Opcode 0x8e
@@ -727,19 +751,11 @@ static void I386OP(mov_sreg_rm16)(void)		// Opcode 0x8e
 
 	if( modrm >= 0xc0 ) {
 		selector = LOAD_RM16(modrm);
-		if( PROTECTED_MODE ) {
-			CYCLES(18);
-		} else {
-			CYCLES(2);
-		}
+		CYCLES(CYCLES_MOV_REG_SREG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		selector = READ16(ea);
-		if( PROTECTED_MODE ) {
-			CYCLES(19);
-		} else {
-			CYCLES(5);
-		}
+		CYCLES(CYCLES_MOV_MEM_SREG);
 	}
 	I.sreg[s].selector = selector;
 	i386_load_segment_descriptor( s );
@@ -748,49 +764,49 @@ static void I386OP(mov_sreg_rm16)(void)		// Opcode 0x8e
 static void I386OP(mov_al_i8)(void)			// Opcode 0xb0
 {
 	REG8(AL) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_cl_i8)(void)			// Opcode 0xb1
 {
 	REG8(CL) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_dl_i8)(void)			// Opcode 0xb2
 {
 	REG8(DL) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_bl_i8)(void)			// Opcode 0xb3
 {
 	REG8(BL) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_ah_i8)(void)			// Opcode 0xb4
 {
 	REG8(AH) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_ch_i8)(void)			// Opcode 0xb5
 {
 	REG8(CH) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_dh_i8)(void)			// Opcode 0xb6
 {
 	REG8(DH) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_bh_i8)(void)			// Opcode 0xb7
 {
 	REG8(BH) = FETCH();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(movsb)(void)				// Opcode 0xa4
@@ -798,16 +814,16 @@ static void I386OP(movsb)(void)				// Opcode 0xa4
 	UINT32 eas, ead;
 	UINT8 v;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( I.segment_override, I.address_size ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( DS, I.address_size ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	v = READ8(eas);
 	WRITE8(ead, v);
 	BUMP_SI(1);
 	BUMP_DI(1);
-	CYCLES(8);
+	CYCLES(CYCLES_MOVS);
 }
 
 static void I386OP(or_rm8_r8)(void)			// Opcode 0x08
@@ -819,14 +835,14 @@ static void I386OP(or_rm8_r8)(void)			// Opcode 0x08
 		dst = LOAD_RM8(modrm);
 		dst = OR8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		dst = READ8(ea);
 		dst = OR8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -839,14 +855,14 @@ static void I386OP(or_r8_rm8)(void)			// Opcode 0x0a
 		dst = LOAD_REG8(modrm);
 		dst = OR8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		dst = LOAD_REG8(modrm);
 		dst = OR8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -857,7 +873,7 @@ static void I386OP(or_al_i8)(void)			// Opcode 0x0c
 	dst = REG8(AL);
 	dst = OR8(dst, src);
 	REG8(EAX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(out_al_i8)(void)			// Opcode 0xe6
@@ -865,6 +881,7 @@ static void I386OP(out_al_i8)(void)			// Opcode 0xe6
 	UINT16 port = FETCH();
 	UINT8 data = REG8(AL);
 	WRITEPORT8(port, data);
+	CYCLES(CYCLES_OUT_VAR);
 }
 
 static void I386OP(out_al_dx)(void)			// Opcode 0xee
@@ -872,13 +889,14 @@ static void I386OP(out_al_dx)(void)			// Opcode 0xee
 	UINT16 port = REG16(DX);
 	UINT8 data = REG8(AL);
 	WRITEPORT8(port, data);
+	CYCLES(CYCLES_OUT);
 }
 
 static void I386OP(push_i8)(void)			// Opcode 0x6a
 {
 	UINT8 value = FETCH();
 	PUSH8(value);
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_IMM);
 }
 
 static void I386OP(ins_generic)(int size)
@@ -888,11 +906,7 @@ static void I386OP(ins_generic)(int size)
 	UINT16 vw;
 	UINT32 vd;
 
-	if( I.segment_prefix ) {
-		ead = i386_translate( I.segment_override, REG32(EDI) );
-	} else {
-		ead = i386_translate( ES, REG32(EDI) );
-	}
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 
 	switch(size) {
 	case 1:
@@ -910,7 +924,7 @@ static void I386OP(ins_generic)(int size)
 	}
 
 	REG32(EDI) += ((I.DF) ? -1 : 1) * size;
-	CYCLES(8);	// TODO: Confirm this value
+	CYCLES(CYCLES_INS);	// TODO: Confirm this value
 }
 
 static void I386OP(insb)(void)				// Opcode 0x6c
@@ -957,7 +971,7 @@ static void I386OP(outs_generic)(int size)
 	}
 
 	REG32(ESI) += ((I.DF) ? -1 : 1) * size;
-	CYCLES(8);	// TODO: Confirm this value
+	CYCLES(CYCLES_OUTS);	// TODO: Confirm this value
 }
 
 static void I386OP(outsb)(void)				// Opcode 0x6e
@@ -977,7 +991,6 @@ static void I386OP(outsd)(void)				// Opcode 0x6f
 
 static void I386OP(repeat)(int invert_flag)
 {
-	UINT32 old_eip = I.eip - 1;
 	UINT32 repeated_eip = I.eip;
 	UINT32 repeated_pc = I.pc;
 	UINT8 opcode = FETCH();
@@ -999,9 +1012,33 @@ static void I386OP(repeat)(int invert_flag)
 		repeated_pc = I.pc;
 		opcode = FETCH();
 	}
+	if( opcode == 0x67 ) {
+		I.address_size ^= 1;
+		repeated_eip = I.eip;
+		repeated_pc = I.pc;
+		opcode = FETCH();
+	}
 
 	switch(opcode)
 	{
+		case 0x6c:
+		case 0x6d:
+			/* INSB, INSW, INSD */
+			// TODO: cycle count
+			cycle_base = 8;
+			cycle_adjustment = -4;
+			flag = NULL;
+			break;
+
+		case 0x6e:
+		case 0x6f:
+			/* OUTSB, OUTSW, OUTSD */
+			// TODO: cycle count
+			cycle_base = 8;
+			cycle_adjustment = -4;
+			flag = NULL;
+			break;
+
 		case 0xa4:
 		case 0xa5:
 			/* MOVSB, MOVSW, MOVSD */
@@ -1056,13 +1093,13 @@ static void I386OP(repeat)(int invert_flag)
 	}
 
 	/* now actually perform the repeat */
-	CYCLES(cycle_base);
+	CYCLES_NUM(cycle_base);
 	do
 	{
 		I.eip = repeated_eip;
 		I.pc = repeated_pc;
 		I386OP(decode_opcode)();
-		CYCLES(cycle_adjustment);
+		CYCLES_NUM(cycle_adjustment);
 
 		if (I.sreg[CS].d)
 			count = --REG32(ECX);
@@ -1078,9 +1115,9 @@ outofcycles:
 	/* if we run out of cycles to execute, and we are still in the repeat, we need
      * to exit this instruction in such a way to go right back into it when we have
      * time to execute cycles */
-	I.eip = old_eip;
+	I.eip = I.prev_eip;
 	CHANGE_PC(I.eip);
-	CYCLES(-cycle_base);
+	CYCLES_NUM(-cycle_base);
 }
 
 static void I386OP(rep)(void)				// Opcode 0xf3
@@ -1096,7 +1133,7 @@ static void I386OP(repne)(void)				// Opcode 0xf2
 static void I386OP(sahf)(void)				// Opcode 0x9e
 {
 	set_flags( (get_flags() & 0xffffff00) | (REG8(AH) & 0xd7) );
-	CYCLES(3);
+	CYCLES(CYCLES_SAHF);
 }
 
 static void I386OP(sbb_rm8_r8)(void)		// Opcode 0x18
@@ -1108,14 +1145,14 @@ static void I386OP(sbb_rm8_r8)(void)		// Opcode 0x18
 		dst = LOAD_RM8(modrm);
 		dst = SUB8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm) + I.CF;
 		dst = READ8(ea);
 		dst = SUB8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1128,14 +1165,14 @@ static void I386OP(sbb_r8_rm8)(void)		// Opcode 0x1a
 		dst = LOAD_REG8(modrm);
 		dst = SUB8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea) + I.CF;
 		dst = LOAD_REG8(modrm);
 		dst = SUB8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -1146,19 +1183,19 @@ static void I386OP(sbb_al_i8)(void)			// Opcode 0x1c
 	dst = REG8(AL);
 	dst = SUB8(dst, src);
 	REG8(EAX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(scasb)(void)				// Opcode 0xae
 {
 	UINT32 eas;
 	UINT8 src, dst;
-	eas = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	eas = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	src = READ8(eas);
 	dst = REG8(AL);
 	SUB8(dst, src);
 	BUMP_DI(1);
-	CYCLES(8);
+	CYCLES(CYCLES_SCAS);
 }
 
 static void I386OP(setalc)(void)			// Opcode 0xd6 (undocumented)
@@ -1180,11 +1217,11 @@ static void I386OP(seta_rm8)(void)			// Opcode 0x0f 97
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1197,11 +1234,11 @@ static void I386OP(setbe_rm8)(void)			// Opcode 0x0f 96
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1214,11 +1251,11 @@ static void I386OP(setc_rm8)(void)			// Opcode 0x0f 92
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1231,11 +1268,11 @@ static void I386OP(setg_rm8)(void)			// Opcode 0x0f 9f
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1248,11 +1285,11 @@ static void I386OP(setge_rm8)(void)			// Opcode 0x0f 9d
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1265,11 +1302,11 @@ static void I386OP(setl_rm8)(void)			// Opcode 0x0f 9c
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1282,11 +1319,11 @@ static void I386OP(setle_rm8)(void)			// Opcode 0x0f 9e
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1299,11 +1336,11 @@ static void I386OP(setnc_rm8)(void)			// Opcode 0x0f 93
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1316,11 +1353,11 @@ static void I386OP(setno_rm8)(void)			// Opcode 0x0f 91
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1333,11 +1370,11 @@ static void I386OP(setnp_rm8)(void)			// Opcode 0x0f 9b
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1350,11 +1387,11 @@ static void I386OP(setns_rm8)(void)			// Opcode 0x0f 99
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1367,11 +1404,11 @@ static void I386OP(setnz_rm8)(void)			// Opcode 0x0f 95
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1384,11 +1421,11 @@ static void I386OP(seto_rm8)(void)			// Opcode 0x0f 90
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1401,11 +1438,11 @@ static void I386OP(setp_rm8)(void)			// Opcode 0x0f 9a
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1418,11 +1455,11 @@ static void I386OP(sets_rm8)(void)			// Opcode 0x0f 98
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
@@ -1435,40 +1472,40 @@ static void I386OP(setz_rm8)(void)			// Opcode 0x0f 94
 	}
 	if( modrm >= 0xc0 ) {
 		STORE_RM8(modrm, value);
-		CYCLES(4);
+		CYCLES(CYCLES_SETCC_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		WRITE8(ea, value);
-		CYCLES(5);
+		CYCLES(CYCLES_SETCC_MEM);
 	}
 }
 
 static void I386OP(stc)(void)				// Opcode 0xf9
 {
 	I.CF = 1;
-	CYCLES(2);
+	CYCLES(CYCLES_STC);
 }
 
 static void I386OP(std)(void)				// Opcode 0xfd
 {
 	I.DF = 1;
-	CYCLES(2);
+	CYCLES(CYCLES_STD);
 }
 
 static void I386OP(sti)(void)				// Opcode 0xfb
 {
 	I.IF = 1;
 	i386_check_irq_line();
-	CYCLES(8);
+	CYCLES(CYCLES_STI);
 }
 
 static void I386OP(stosb)(void)				// Opcode 0xaa
 {
 	UINT32 ead;
-	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	WRITE8(ead, REG8(AL));
 	BUMP_DI(1);
-	CYCLES(5);
+	CYCLES(CYCLES_STOS);
 }
 
 static void I386OP(sub_rm8_r8)(void)		// Opcode 0x28
@@ -1480,14 +1517,14 @@ static void I386OP(sub_rm8_r8)(void)		// Opcode 0x28
 		dst = LOAD_RM8(modrm);
 		dst = SUB8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		dst = READ8(ea);
 		dst = SUB8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1500,14 +1537,14 @@ static void I386OP(sub_r8_rm8)(void)		// Opcode 0x2a
 		dst = LOAD_REG8(modrm);
 		dst = SUB8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		dst = LOAD_REG8(modrm);
 		dst = SUB8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -1518,7 +1555,7 @@ static void I386OP(sub_al_i8)(void)			// Opcode 0x2c
 	dst = REG8(EAX);
 	dst = SUB8(dst, src);
 	REG8(EAX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(test_al_i8)(void)		// Opcode 0xa8
@@ -1529,7 +1566,7 @@ static void I386OP(test_al_i8)(void)		// Opcode 0xa8
 	SetSZPF8(dst);
 	I.CF = 0;
 	I.OF = 0;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(test_rm8_r8)(void)		// Opcode 0x84
@@ -1543,7 +1580,7 @@ static void I386OP(test_rm8_r8)(void)		// Opcode 0x84
 		SetSZPF8(dst);
 		I.CF = 0;
 		I.OF = 0;
-		CYCLES(2);
+		CYCLES(CYCLES_TEST_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
@@ -1552,7 +1589,7 @@ static void I386OP(test_rm8_r8)(void)		// Opcode 0x84
 		SetSZPF8(dst);
 		I.CF = 0;
 		I.OF = 0;
-		CYCLES(5);
+		CYCLES(CYCLES_TEST_REG_MEM);
 	}
 }
 
@@ -1564,14 +1601,14 @@ static void I386OP(xchg_r8_rm8)(void)		// Opcode 0x86
 		UINT8 dst = LOAD_REG8(modrm);
 		STORE_REG8(modrm, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(3);
+		CYCLES(CYCLES_XCHG_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT8 src = READ8(ea);
 		UINT8 dst = LOAD_REG8(modrm);
 		STORE_REG8(modrm, src);
 		WRITE8(ea, dst);
-		CYCLES(5);
+		CYCLES(CYCLES_XCHG_REG_MEM);
 	}
 }
 
@@ -1584,14 +1621,14 @@ static void I386OP(xor_rm8_r8)(void)		// Opcode 0x30
 		dst = LOAD_RM8(modrm);
 		dst = XOR8(dst, src);
 		STORE_RM8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG8(modrm);
 		dst = READ8(ea);
 		dst = XOR8(dst, src);
 		WRITE8(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1604,14 +1641,14 @@ static void I386OP(xor_r8_rm8)(void)		// Opcode 0x32
 		dst = LOAD_REG8(modrm);
 		dst = XOR8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ8(ea);
 		dst = LOAD_REG8(modrm);
 		dst = XOR8(dst, src);
 		STORE_REG8(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -1622,7 +1659,7 @@ static void I386OP(xor_al_i8)(void)			// Opcode 0x34
 	dst = REG8(AL);
 	dst = XOR8(dst, src);
 	REG8(AL) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 
@@ -1641,14 +1678,14 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = FETCH();
 				dst = ADD8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH();
 				dst = ADD8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 1:		// OR Rm8, i8
@@ -1657,14 +1694,14 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = FETCH();
 				dst = OR8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH();
 				dst = OR8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 2:		// ADC Rm8, i8
@@ -1674,7 +1711,7 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = ADD8(src, I.CF);
 				dst = ADD8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
@@ -1682,7 +1719,7 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = ADD8(src, I.CF);
 				dst = ADD8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 3:		// SBB Rm8, i8
@@ -1691,14 +1728,14 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = FETCH() + I.CF;
 				dst = SUB8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH() + I.CF;
 				dst = SUB8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 4:		// AND Rm8, i8
@@ -1707,14 +1744,14 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = FETCH();
 				dst = AND8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH();
 				dst = AND8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 5:		// SUB Rm8, i8
@@ -1723,14 +1760,14 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = FETCH();
 				dst = SUB8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH();
 				dst = SUB8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 6:		// XOR Rm8, i8
@@ -1739,14 +1776,14 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				src = FETCH();
 				dst = XOR8(dst, src);
 				STORE_RM8(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH();
 				dst = XOR8(dst, src);
 				WRITE8(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 7:		// CMP Rm8, i8
@@ -1754,13 +1791,13 @@ static void I386OP(group80_8)(void)			// Opcode 0x80
 				dst = LOAD_RM8(modrm);
 				src = FETCH();
 				SUB8(dst, src);
-				CYCLES(C_CMP_REG_REG);
+				CYCLES(CYCLES_CMP_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ8(ea);
 				src = FETCH();
 				SUB8(dst, src);
-				CYCLES(C_CMP_REG_MEM);
+				CYCLES(CYCLES_CMP_REG_MEM);
 			}
 			break;
 	}
@@ -1833,7 +1870,7 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				dst &= src;
 				I.CF = I.OF = I.AF = 0;
 				SetSZPF8(dst);
-				CYCLES(2);
+				CYCLES(CYCLES_TEST_IMM_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT8 dst = READ8(ea);
@@ -1841,7 +1878,7 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				dst &= src;
 				I.CF = I.OF = I.AF = 0;
 				SetSZPF8(dst);
-				CYCLES(5);
+				CYCLES(CYCLES_TEST_IMM_MEM);
 			}
 			break;
 		case 2:			/* NOT Rm8 */
@@ -1849,13 +1886,13 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				UINT8 dst = LOAD_RM8(modrm);
 				dst = ~dst;
 				STORE_RM8(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_NOT_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT8 dst = READ8(ea);
 				dst = ~dst;
 				WRITE8(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_NOT_MEM);
 			}
 			break;
 		case 3:			/* NEG Rm8 */
@@ -1863,13 +1900,13 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				UINT8 dst = LOAD_RM8(modrm);
 				dst = SUB8( 0, dst );
 				STORE_RM8(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_NEG_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT8 dst = READ8(ea);
 				dst = SUB8( 0, dst );
 				WRITE8(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_NEG_MEM);
 			}
 			break;
 		case 4:			/* MUL AL, Rm8 */
@@ -1878,11 +1915,11 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				UINT8 src, dst;
 				if( modrm >= 0xc0 ) {
 					src = LOAD_RM8(modrm);
-					CYCLES(12);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_MUL8_ACC_REG);		/* TODO: Correct multiply timing */
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = READ8(ea);
-					CYCLES(15);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_MUL8_ACC_MEM);		/* TODO: Correct multiply timing */
 				}
 
 				dst = REG8(AL);
@@ -1898,11 +1935,11 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				INT16 src, dst;
 				if( modrm >= 0xc0 ) {
 					src = (INT16)(INT8)LOAD_RM8(modrm);
-					CYCLES(12);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_IMUL8_ACC_REG);		/* TODO: Correct multiply timing */
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = (INT16)(INT8)READ8(ea);
-					CYCLES(15);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_IMUL8_ACC_MEM);		/* TODO: Correct multiply timing */
 				}
 
 				dst = (INT16)(INT8)REG8(AL);
@@ -1919,11 +1956,11 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				UINT8 src;
 				if( modrm >= 0xc0 ) {
 					src = LOAD_RM8(modrm);
-					CYCLES(14);
+					CYCLES(CYCLES_DIV8_ACC_REG);
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = READ8(ea);
-					CYCLES(17);
+					CYCLES(CYCLES_DIV8_ACC_MEM);
 				}
 
 				quotient = (UINT16)REG16(AX);
@@ -1947,11 +1984,11 @@ static void I386OP(groupF6_8)(void)			// Opcode 0xf6
 				UINT8 src;
 				if( modrm >= 0xc0 ) {
 					src = LOAD_RM8(modrm);
-					CYCLES(19);
+					CYCLES(CYCLES_IDIV8_ACC_REG);
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = READ8(ea);
-					CYCLES(22);
+					CYCLES(CYCLES_IDIV8_ACC_MEM);
 				}
 
 				quotient = (INT16)REG16(AX);
@@ -1983,13 +2020,13 @@ static void I386OP(groupFE_8)(void)			// Opcode 0xfe
 				UINT8 dst = LOAD_RM8(modrm);
 				dst = INC8(dst);
 				STORE_RM8(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_INC_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT8 dst = READ8(ea);
 				dst = INC8(dst);
 				WRITE8(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_INC_MEM);
 			}
 			break;
 		case 1:			/* DEC Rm8 */
@@ -1997,13 +2034,13 @@ static void I386OP(groupFE_8)(void)			// Opcode 0xfe
 				UINT8 dst = LOAD_RM8(modrm);
 				dst = DEC8(dst);
 				STORE_RM8(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_DEC_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT8 dst = READ8(ea);
 				dst = DEC8(dst);
 				WRITE8(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_DEC_MEM);
 			}
 			break;
 		case 6:			/* PUSH Rm8 */
@@ -2020,7 +2057,7 @@ static void I386OP(groupFE_8)(void)			// Opcode 0xfe
 				} else {
 					PUSH16(value);
 				}
-				CYCLES(5);
+				CYCLES(CYCLES_PUSH_RM);
 			}
 			break;
 		default:
@@ -2093,34 +2130,31 @@ static void I386OP(address_size)(void)		// Opcode 0x67
 
 static void I386OP(nop)(void)				// Opcode 0x90
 {
-	CYCLES(3);
+	CYCLES(CYCLES_NOP);
 }
 
 static void I386OP(int3)(void)				// Opcode 0xcc
 {
-	CYCLES(0);	// TODO: deduct proper cycle count
-	i386_trap(3);
+	CYCLES(CYCLES_INT3);
+	i386_trap(3, 1);
 }
 
 static void I386OP(int)(void)				// Opcode 0xcd
 {
 	int interrupt = FETCH();
-	CYCLES(0);	// TODO: deduct proper cycle count
-	i386_trap(interrupt);
+	CYCLES(CYCLES_INT);
+	i386_trap(interrupt, 1);
 }
 
 static void I386OP(into)(void)				// Opcode 0xce
 {
 	if( I.OF ) {
-		i386_trap(4);
-		if( PROTECTED_MODE ) {
-			/* TODO: correct cycle count */
-			CYCLES(59);
-		} else {
-			CYCLES(35);
-		}
-	} else {
-		CYCLES(3);
+		i386_trap(4, 1);
+		CYCLES(CYCLES_INTO_OF1);
+	}
+	else
+	{
+		CYCLES(CYCLES_INTO_OF0);
 	}
 }
 
@@ -2135,10 +2169,9 @@ static void I386OP(hlt)(void)				// Opcode 0xf4
 {
 	// TODO: We need to raise an exception in protected mode and when
 	// the current privilege level is not zero
-	I.pc--;
-	I.eip--;
- 	CHANGE_PC(I.pc);
-	CYCLES(1);
+	I.halted = 1;
+	I.icount = 0;
+	CYCLES(CYCLES_HLT);
 }
 
 static void I386OP(decimal_adjust)(int direction)
@@ -2162,17 +2195,18 @@ static void I386OP(decimal_adjust)(int direction)
 	}
 
 	SetSZPF8(REG8(AL));
-	CYCLES(1);	// TODO: Figure out exact cycle count
 }
 
 static void I386OP(daa)(void)				// Opcode 0x27
 {
 	I386OP(decimal_adjust)(+1);
+	CYCLES(CYCLES_DAA);
 }
 
 static void I386OP(das)(void)				// Opcode 0x2f
 {
 	I386OP(decimal_adjust)(-1);
+	CYCLES(CYCLES_DAS);
 }
 
 static void I386OP(aaa)(void)				// Opcode 0x37
@@ -2187,7 +2221,7 @@ static void I386OP(aaa)(void)				// Opcode 0x37
 		I.CF = 0;
 	}
 	REG8(AL) = REG8(AL) & 0x0f;
-	CYCLES(4);
+	CYCLES(CYCLES_AAA);
 }
 
 static void I386OP(aas)(void)				// Opcode 0x3f
@@ -2205,7 +2239,7 @@ static void I386OP(aas)(void)				// Opcode 0x3f
 		I.CF = 0;
     }
 	REG8(AL) &= 0x0f;
-	CYCLES(4);
+	CYCLES(CYCLES_AAS);
 }
 
 static void I386OP(aad)(void)				// Opcode 0xd5
@@ -2217,7 +2251,7 @@ static void I386OP(aad)(void)				// Opcode 0xd5
 	REG8(AL) = (tempAL + (tempAH * i)) & 0xff;
 	REG8(AH) = 0;
 	SetSZPF8( REG8(AL) );
-	CYCLES(19);
+	CYCLES(CYCLES_AAD);
 }
 
 static void I386OP(aam)(void)				// Opcode 0xd4
@@ -2228,14 +2262,14 @@ static void I386OP(aam)(void)				// Opcode 0xd4
 	REG8(AH) = tempAL / i;
 	REG8(AL) = tempAL % i;
 	SetSZPF8( REG8(AL) );
-	CYCLES(17);
+	CYCLES(CYCLES_AAM);
 }
 
 static void I386OP(clts)(void)				// Opcode 0x0f 0x06
 {
 	// TODO: #GP(0) is executed
 	I.cr[0] &= ~0x08;	/* clear TS bit */
-	CYCLES(5);
+	CYCLES(CYCLES_CLTS);
 }
 
 static void I386OP(wait)(void)				// Opcode 0x9B
@@ -2245,11 +2279,21 @@ static void I386OP(wait)(void)				// Opcode 0x9B
 
 static void I386OP(lock)(void)				// Opcode 0xf0
 {
-	CYCLES(1);		// TODO: Determine correct cycle count
+	CYCLES(CYCLES_LOCK);		// TODO: Determine correct cycle count
 	I386OP(decode_opcode)();
 }
 
+static void I386OP(mov_r32_tr)(void)		// Opcode 0x0f 24
+{
+	FETCH();
+	CYCLES(1);		// TODO: correct cycle count
+}
 
+static void I386OP(mov_tr_r32)(void)		// Opcode 0x0f 26
+{
+	FETCH();
+	CYCLES(1);		// TODO: correct cycle count
+}
 
 static void I386OP(unimplemented)(void)
 {
@@ -2258,5 +2302,6 @@ static void I386OP(unimplemented)(void)
 
 static void I386OP(invalid)(void)
 {
-	i386_trap(6);
+	//i386_trap(6);
+	osd_die("i386: Invalid opcode %02X at %08X\n", I.opcode, I.pc - 1);
 }

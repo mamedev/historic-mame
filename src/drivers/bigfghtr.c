@@ -579,5 +579,5 @@ ROM_START( bigfghtr )
 
 ROM_END
 
-GAMEX( 1989, bigfghtr,   0,     bigfghtr,   bigfghtr,   bigfghtr,   ROT0, "Nichibutsu", "Tatakae! Big Fighter",GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
+GAME( 1989, bigfghtr,   0,     bigfghtr,   bigfghtr,   bigfghtr,   ROT0, "Nichibutsu", "Tatakae! Big Fighter",GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
 

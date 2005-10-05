@@ -443,13 +443,13 @@ ROM_START( gs4002 )
 	ROM_LOAD( "slot.5",       0x16000, 0x2000, CRC(cd7cfa4c) SHA1(aa3de086e5a1018b9e5a18403a6144a6b0ed1036) )
 ROM_END
 
-GAMEX( 1982, gs4002,   0,      gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1982, gs4002,   0,      gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAMEX( 1984, gt102c,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt102b,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1985, gt102c1,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1985, gt102c2,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1985, gt102c3,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102c,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102b,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, gt102c1,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, gt102c2,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, gt102c3,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAMEX( 1985, sextriv1, 0,        getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1985, sextriv2, sextriv1, getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, sextriv1, 0,        getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, sextriv2, sextriv1, getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

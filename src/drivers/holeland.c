@@ -444,6 +444,6 @@ ROM_START( crzrallg )
 ROM_END
 
 
-GAMEX( 1984, holeland, 0,        holeland, holeland, 0, ROT0,   "Tecfri", "Hole Land", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1985, crzrally, 0,        crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1985, crzrallg, crzrally, crzrally, crzrally, 0, ROT270, "Tecfri (Gecas license)", "Crazy Rally (Gecas license)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1984, holeland, 0,        holeland, holeland, 0, ROT0,   "Tecfri", "Hole Land", GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, crzrally, 0,        crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally", GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, crzrallg, crzrally, crzrally, crzrally, 0, ROT270, "Tecfri (Gecas license)", "Crazy Rally (Gecas license)", GAME_IMPERFECT_GRAPHICS )

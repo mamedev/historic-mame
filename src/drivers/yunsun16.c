@@ -614,6 +614,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAMEX( 19??, magicbub, 0,        magicbub, magicbub, magicbub, ROT0, "Yun Sung", "Magic Bubble", GAME_NO_COCKTAIL )
-GAMEX( 19??, magicbua, magicbub, magicbub, magicbub, magicbub, ROT0, "Yun Sung", "Magic Bubble (Adult version)", GAME_NO_COCKTAIL )
-GAMEX( 1997, shocking, 0,        shocking, shocking, 0,        ROT0, "Yun Sung", "Shocking",     GAME_NO_COCKTAIL )
+GAME( 19??, magicbub, 0,        magicbub, magicbub, magicbub, ROT0, "Yun Sung", "Magic Bubble", GAME_NO_COCKTAIL )
+GAME( 19??, magicbua, magicbub, magicbub, magicbub, magicbub, ROT0, "Yun Sung", "Magic Bubble (Adult version)", GAME_NO_COCKTAIL )
+GAME( 1997, shocking, 0,        shocking, shocking, 0,        ROT0, "Yun Sung", "Shocking",     GAME_NO_COCKTAIL )

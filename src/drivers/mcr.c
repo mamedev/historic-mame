@@ -282,6 +282,7 @@
 #include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "mcr.h"
+#include "state.h"
 
 
 static UINT8 input_mux;
@@ -2227,6 +2228,9 @@ static void mcr_init(int cpuboard, int vidboard, int ssioboard)
 
 	mcr12_sprite_xoffs = 0;
 	mcr12_sprite_xoffs_flip = 0;
+
+	state_save_register_UINT8 ("mcr", 0, "input_mux", &input_mux, 1);
+	state_save_register_UINT8 ("mcr", 0, "last_op4", &last_op4, 1);
 }
 
 
@@ -2359,44 +2363,44 @@ static DRIVER_INIT( demoderb )
  *************************************/
 
 /* 90009 CPU board + 91399 video gen + 90908 sound I/O */
-GAME( 1981, solarfox, 0,        mcr_90009,     solarfox, solarfox,  ROT90 ^ ORIENTATION_FLIP_Y, "Bally Midway", "Solar Fox (upright)" )
-GAME( 1981, kick,     0,        mcr_90009,     kick,     kick,      ORIENTATION_SWAP_XY,        "Midway", "Kick (upright)" )
-GAME( 1981, kicka,    kick,     mcr_90009,     kicka,    kick,      ROT90,                      "Midway", "Kick (cocktail)" )
+GAME( 1981, solarfox, 0,        mcr_90009,     solarfox, solarfox,  ROT90 ^ ORIENTATION_FLIP_Y, "Bally Midway", "Solar Fox (upright)", GAME_SUPPORTS_SAVE )
+GAME( 1981, kick,     0,        mcr_90009,     kick,     kick,      ORIENTATION_SWAP_XY,        "Midway", "Kick (upright)", GAME_SUPPORTS_SAVE )
+GAME( 1981, kicka,    kick,     mcr_90009,     kicka,    kick,      ROT90,                      "Midway", "Kick (cocktail)", GAME_SUPPORTS_SAVE )
 
 /* 90010 CPU board + 91399 video gen + 90913 sound I/O */
-GAME( 1981, shollow,  0,        mcr_90010,     shollow,  mcr_90010, ROT90, "Bally Midway", "Satan's Hollow (set 1)" )
-GAME( 1981, shollow2, shollow,  mcr_90010,     shollow,  mcr_90010, ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
-GAME( 1982, tron,     0,        mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 1)" )
-GAME( 1982, tron2,    tron,     mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 2)" )
-GAME( 1982, tron3,    tron,     mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 3)" )
-GAME( 1982, tron4,    tron,     mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 4)" )
-GAME( 1982, domino,   0,        mcr_90010,     domino,   mcr_90010, ROT0,  "Bally Midway", "Domino Man" )
-GAME( 1982, wacko,    0,        mcr_90010,     wacko,    wacko,     ROT0,  "Bally Midway", "Wacko" )
-GAME( 1984, twotigrc, twotiger, mcr_90010,     twotigrc, mcr_90010, ROT0,  "Bally Midway", "Two Tigers (Tron conversion)" )
+GAME( 1981, shollow,  0,        mcr_90010,     shollow,  mcr_90010, ROT90, "Bally Midway", "Satan's Hollow (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, shollow2, shollow,  mcr_90010,     shollow,  mcr_90010, ROT90, "Bally Midway", "Satan's Hollow (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1982, tron,     0,        mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1982, tron2,    tron,     mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1982, tron3,    tron,     mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 3)", GAME_SUPPORTS_SAVE )
+GAME( 1982, tron4,    tron,     mcr_90010,     tron,     mcr_90010, ROT90, "Bally Midway", "Tron (set 4)", GAME_SUPPORTS_SAVE )
+GAME( 1982, domino,   0,        mcr_90010,     domino,   mcr_90010, ROT0,  "Bally Midway", "Domino Man", GAME_SUPPORTS_SAVE )
+GAME( 1982, wacko,    0,        mcr_90010,     wacko,    wacko,     ROT0,  "Bally Midway", "Wacko", GAME_SUPPORTS_SAVE )
+GAME( 1984, twotigrc, twotiger, mcr_90010,     twotigrc, mcr_90010, ROT0,  "Bally Midway", "Two Tigers (Tron conversion)", GAME_SUPPORTS_SAVE )
 
 /* hacked 90010 CPU board + 91399 video gen + 90913 sound I/O + 8-track interface */
-GAMEX(1984, twotiger, 0,        mcr_90010,     twotiger, twotiger,  ROT0,  "Bally Midway", "Two Tigers (dedicated)", GAME_IMPERFECT_SOUND )
+GAME( 1984, twotiger, 0,        mcr_90010,     twotiger, twotiger,  ROT0,  "Bally Midway", "Two Tigers (dedicated)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
 
 /* 90010 CPU board + 91399 video gen + 91483 sound I/O */
-GAME( 1982, kroozr,   0,        mcr_90010,     kroozr,   kroozr,    ROT0,  "Bally Midway", "Kozmik Kroozr" )
+GAME( 1982, kroozr,   0,        mcr_90010,     kroozr,   kroozr,    ROT0,  "Bally Midway", "Kozmik Kroozr", GAME_SUPPORTS_SAVE )
 
 /* 91475 CPU board + 91464 video gen + 90913 sound I/O + cassette interface */
-GAME( 1983, journey,  0,        mcr_91475,     journey,  journey,   ROT90, "Bally Midway", "Journey" )
+GAME( 1983, journey,  0,        mcr_91475,     journey,  journey,   ROT90, "Bally Midway", "Journey", GAME_SUPPORTS_SAVE )
 
 /* 91490 CPU board + 91464 video gen + 90913 sound I/O */
-GAME( 1983, tapper,   0,        mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (Budweiser)" )
-GAME( 1983, tappera,  tapper,   mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (alternate)" )
-GAME( 1983, sutapper, tapper,   mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (Suntory)" )
-GAME( 1984, rbtapper, tapper,   mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (Root Beer)" )
-GAME( 1984, timber,   0,        mcr_91490,     timber,   mcr_91490, ROT0,  "Bally Midway", "Timber" )
-GAME( 1983, dotron,   0,        mcr_91490,     dotron,   mcr_91490, ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright)" )
-GAME( 1983, dotrona,  dotron,   mcr_91490,     dotron,   mcr_91490, ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright alternate)" )
+GAME( 1983, tapper,   0,        mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (Budweiser)", GAME_SUPPORTS_SAVE )
+GAME( 1983, tappera,  tapper,   mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (alternate)", GAME_SUPPORTS_SAVE )
+GAME( 1983, sutapper, tapper,   mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (Suntory)", GAME_SUPPORTS_SAVE )
+GAME( 1984, rbtapper, tapper,   mcr_91490,     tapper,   mcr_91490, ROT0,  "Bally Midway", "Tapper (Root Beer)", GAME_SUPPORTS_SAVE )
+GAME( 1984, timber,   0,        mcr_91490,     timber,   mcr_91490, ROT0,  "Bally Midway", "Timber", GAME_SUPPORTS_SAVE )
+GAME( 1983, dotron,   0,        mcr_91490,     dotron,   mcr_91490, ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright)", GAME_SUPPORTS_SAVE )
+GAME( 1983, dotrona,  dotron,   mcr_91490,     dotron,   mcr_91490, ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright alternate)", GAME_SUPPORTS_SAVE )
 
 /* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk */
-GAME( 1983, dotrone,  dotron,   mcr_91490_snt, dotron,   dotrone,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)" )
+GAME( 1983, dotrone,  dotron,   mcr_91490_snt, dotron,   dotrone,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)", GAME_SUPPORTS_SAVE )
 
 /* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk + laserdisk interface */
-GAMEX(1983, nflfoot,  0,        mcr_91490_snt, nflfoot,  nflfoot,   ROT0,  "Bally Midway", "NFL Football", GAME_NOT_WORKING )
+GAME( 1983, nflfoot,  0,        mcr_91490_snt, nflfoot,  nflfoot,   ROT0,  "Bally Midway", "NFL Football", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
 
 /* 91490 CPU board + 91464 video gen + 90913 sound I/O + Turbo Chip Squeak */
-GAME( 1984, demoderb, 0,        mcr_91490_tcs, demoderb, demoderb,  ROT0,  "Bally Midway", "Demolition Derby" )
+GAME( 1984, demoderb, 0,        mcr_91490_tcs, demoderb, demoderb,  ROT0,  "Bally Midway", "Demolition Derby", GAME_SUPPORTS_SAVE )

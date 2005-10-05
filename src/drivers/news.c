@@ -141,4 +141,4 @@ ROM_START( news )
 ROM_END
 
 
-GAME( 1993, news, 0, news, news, 0, ROT0, "Poby / Virus", "News" )
+GAME( 1993, news, 0, news, news, 0, ROT0, "Poby / Virus", "News", 0 )

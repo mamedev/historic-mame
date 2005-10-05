@@ -600,5 +600,5 @@ static DRIVER_INIT(dbz)
 	ROM[0x990/2] = 0x4e71;
 }
 
-GAMEX( 1993, dbz,  0, dbz,  dbz, dbz, ROT0, "Banpresto", "Dragonball Z" , GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, dbz2, 0, dbz2, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 Super Battle" , GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, dbz,  0, dbz,  dbz, dbz, ROT0, "Banpresto", "Dragonball Z" , GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, dbz2, 0, dbz2, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 Super Battle" , GAME_IMPERFECT_GRAPHICS )

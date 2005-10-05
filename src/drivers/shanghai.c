@@ -1220,7 +1220,7 @@ ROM_END
 
 
 
-GAMEX(1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sunsoft", "Shanghai (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1989, shangha2, 0, shangha2, shangha2, 0, ROT0, "Sunsoft", "Shanghai II (Japan)" )
-GAMEX(1990, kothello, 0, kothello, kothello, 0, ROT0, "Success", "Kyuukyoku no Othello", GAME_NOT_WORKING )
+GAME( 1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sunsoft", "Shanghai (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1989, shangha2, 0, shangha2, shangha2, 0, ROT0, "Sunsoft", "Shanghai II (Japan)", 0 )
+GAME( 1990, kothello, 0, kothello, kothello, 0, ROT0, "Success", "Kyuukyoku no Othello", GAME_NOT_WORKING )
 

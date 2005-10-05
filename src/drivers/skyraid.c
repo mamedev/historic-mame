@@ -330,4 +330,4 @@ ROM_START( skyraid )
 ROM_END
 
 
-GAMEX( 1978, skyraid, 0, skyraid, skyraid, 0, ORIENTATION_FLIP_Y, "Atari", "Sky Raider", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAME( 1978, skyraid, 0, skyraid, skyraid, 0, ORIENTATION_FLIP_Y, "Atari", "Sky Raider", GAME_NO_SOUND | GAME_IMPERFECT_COLORS )

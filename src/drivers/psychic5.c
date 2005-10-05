@@ -621,4 +621,4 @@ ROM_END
 
 
 
-GAME( 1987, psychic5, 0, psychic5, psychic5, 0, ROT270, "Jaleco", "Psychic 5" )
+GAME( 1987, psychic5, 0, psychic5, psychic5, 0, ROT270, "Jaleco", "Psychic 5", 0 )

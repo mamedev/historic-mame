@@ -343,4 +343,4 @@ static DRIVER_INIT (penocup)
 
 }
 
-GAMEX(199?, penocup, 0,        penocup, penocup, penocup, ROT0,  "Gamart?", "Table Tennis Championships / Peno Cup?", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, penocup, 0,        penocup, penocup, penocup, ROT0,  "Gamart?", "Table Tennis Championships / Peno Cup?", GAME_NOT_WORKING|GAME_NO_SOUND )

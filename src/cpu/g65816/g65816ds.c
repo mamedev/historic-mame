@@ -146,10 +146,8 @@ static const opcode_struct g_opcodes[256] =
 
 INLINE unsigned int read_8(unsigned int address)
 {
-	const UINT8 *ptr;
 	address = ADDRESS_65816(address);
-	ptr = (const UINT8 *) memory_get_op_ptr(cpu_getactivecpu(), address);
-	return ptr ? *ptr : 0;
+	return program_read_byte_8(address);
 }
 
 INLINE unsigned int read_16(unsigned int address)

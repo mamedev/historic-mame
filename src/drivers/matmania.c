@@ -651,7 +651,7 @@ ROM_END
 
 
 
-GAME( 1985, matmania, 0,        matmania, matmania, 0, ROT270, "Technos (Taito America license)", "Mat Mania" )
-GAME( 1985, excthour, matmania, matmania, matmania, 0, ROT270, "Technos (Taito license)", "Exciting Hour" )
-GAME( 1986, maniach,  0,        maniach,  matmania, 0, ROT270, "Technos (Taito America license)", "Mania Challenge (set 1)" )
-GAME( 1986, maniach2, maniach,  maniach,  matmania, 0, ROT270, "Technos (Taito America license)", "Mania Challenge (set 2)" )	/* earlier version? */
+GAME( 1985, matmania, 0,        matmania, matmania, 0, ROT270, "Technos (Taito America license)", "Mat Mania", 0 )
+GAME( 1985, excthour, matmania, matmania, matmania, 0, ROT270, "Technos (Taito license)", "Exciting Hour", 0 )
+GAME( 1986, maniach,  0,        maniach,  matmania, 0, ROT270, "Technos (Taito America license)", "Mania Challenge (set 1)", 0 )
+GAME( 1986, maniach2, maniach,  maniach,  matmania, 0, ROT270, "Technos (Taito America license)", "Mania Challenge (set 2)" , 0)	/* earlier version? */

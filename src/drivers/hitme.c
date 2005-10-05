@@ -568,7 +568,7 @@ ROM_END
  *
  *************************************/
 
-GAME ( 1976, hitme,    0,        hitme,    hitme,    0, ROT0, "RamTek", "Hit Me" )
-GAME ( 197?, mblkjack, hitme,    hitme,    hitme,    0, ROT0, "Mirco", "Black Jack (Mirco)" )
-GAMEX( 1976, barricad, 0,        barricad, barricad, 0, ROT0, "RamTek", "Barricade", GAME_IMPERFECT_SOUND  )
-GAMEX( 1976, brickyrd, barricad, barricad, barricad, 0, ROT0, "RamTek", "Brickyard", GAME_IMPERFECT_SOUND  )
+GAME( 1976, hitme,    0,        hitme,    hitme,    0, ROT0, "RamTek", "Hit Me", 0 )
+GAME( 197?, mblkjack, hitme,    hitme,    hitme,    0, ROT0, "Mirco", "Black Jack (Mirco)", 0 )
+GAME( 1976, barricad, 0,        barricad, barricad, 0, ROT0, "RamTek", "Barricade", GAME_IMPERFECT_SOUND  )
+GAME( 1976, brickyrd, barricad, barricad, barricad, 0, ROT0, "RamTek", "Brickyard", GAME_IMPERFECT_SOUND  )

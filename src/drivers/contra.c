@@ -426,8 +426,8 @@ ROM_END
 
 
 
-GAME( 1987, contra,   0,      contra, contra, 0, ROT90, "Konami", "Contra (US)" )
-GAME( 1987, contrab,  contra, contra, contra, 0, ROT90, "bootleg", "Contra (US bootleg)" )
-GAME( 1987, contraj,  contra, contra, contra, 0, ROT90, "Konami", "Contra (Japan)" )
-GAME( 1987, contrajb, contra, contra, contra, 0, ROT90, "bootleg", "Contra (Japan bootleg)" )
-GAME( 1987, gryzor,   contra, contra, contra, 0, ROT90, "Konami", "Gryzor" )
+GAME( 1987, contra,   0,      contra, contra, 0, ROT90, "Konami", "Contra (US)", 0 )
+GAME( 1987, contrab,  contra, contra, contra, 0, ROT90, "bootleg", "Contra (US bootleg)", 0 )
+GAME( 1987, contraj,  contra, contra, contra, 0, ROT90, "Konami", "Contra (Japan)", 0 )
+GAME( 1987, contrajb, contra, contra, contra, 0, ROT90, "bootleg", "Contra (Japan bootleg)", 0 )
+GAME( 1987, gryzor,   contra, contra, contra, 0, ROT90, "Konami", "Gryzor", 0 )

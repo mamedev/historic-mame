@@ -1508,5 +1508,5 @@ DRIVER_INIT( hotchase )
                                 Game driver(s)
 ***************************************************************************/
 
-GAME( 1986, wecleman, 0, wecleman, wecleman, wecleman, ROT0, "Konami", "WEC Le Mans 24" )
-GAME( 1988, hotchase, 0, hotchase, hotchase, hotchase, ROT0, "Konami", "Hot Chase" )
+GAME( 1986, wecleman, 0, wecleman, wecleman, wecleman, ROT0, "Konami", "WEC Le Mans 24", 0 )
+GAME( 1988, hotchase, 0, hotchase, hotchase, hotchase, ROT0, "Konami", "Hot Chase", 0 )

@@ -206,4 +206,4 @@ ROM_START( embargo )
 ROM_END
 
 
-GAMEX( 1977, embargo, 0, embargo, embargo, 0, ROT0, "Cinematronics", "Embargo", GAME_NO_SOUND )
+GAME( 1977, embargo, 0, embargo, embargo, 0, ROT0, "Cinematronics", "Embargo", GAME_NO_SOUND )

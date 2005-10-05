@@ -1088,9 +1088,9 @@ static DRIVER_INIT( 9ballsht )
  *
  *************************************/
 
-GAMEX(1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts (set 1)", GAME_NO_SOUND )
-GAMEX(1989, amerdar2, amerdart, amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts (set 2)", GAME_NO_SOUND )
-GAME( 1992, coolpool, 0,        coolpool, coolpool, coolpool, ROT0, "Catalina", "Cool Pool" )
-GAME( 1993, 9ballsht, 0,        9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)" )
-GAME( 1993, 9ballsh2, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)" )
-GAME( 1993, 9ballsh3, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)" )
+GAME( 1989, amerdart, 0,        amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts (set 1)", GAME_NO_SOUND )
+GAME( 1989, amerdar2, amerdart, amerdart, amerdart, 0,        ROT0, "Ameri",   "AmeriDarts (set 2)", GAME_NO_SOUND )
+GAME( 1992, coolpool, 0,        coolpool, coolpool, coolpool, ROT0, "Catalina", "Cool Pool", 0 )
+GAME( 1993, 9ballsht, 0,        9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 1)", 0 )
+GAME( 1993, 9ballsh2, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 2)", 0 )
+GAME( 1993, 9ballsh3, 9ballsht, 9ballsht, 9ballsht, 9ballsht, ROT0, "E-Scape EnterMedia (Bundra license)", "9-Ball Shootout (set 3)", 0 )

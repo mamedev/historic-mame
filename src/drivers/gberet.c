@@ -693,7 +693,7 @@ ROM_END
 
 /* Game Drivers */
 
-GAME( 1985, gberet,   0,      gberet,   gberet,   0, ROT0, "Konami",  "Green Beret" )
-GAME( 1985, rushatck, gberet, gberet,   gberet,   0, ROT0, "Konami",  "Rush'n Attack (US)" )
-GAME( 1985, gberetb,  gberet, gberetb,  gberetb,  0, ROT0, "bootleg", "Green Beret (bootleg)" )
-GAME( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, 0, ROT0, "Konami",  "Mr. Goemon (Japan)" )
+GAME( 1985, gberet,   0,      gberet,   gberet,   0, ROT0, "Konami",  "Green Beret", 0 )
+GAME( 1985, rushatck, gberet, gberet,   gberet,   0, ROT0, "Konami",  "Rush'n Attack (US)", 0 )
+GAME( 1985, gberetb,  gberet, gberetb,  gberetb,  0, ROT0, "bootleg", "Green Beret (bootleg)", 0 )
+GAME( 1986, mrgoemon, 0,      mrgoemon, mrgoemon, 0, ROT0, "Konami",  "Mr. Goemon (Japan)", 0 )

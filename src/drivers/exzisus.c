@@ -451,4 +451,4 @@ ROM_START( exzisus )
 ROM_END
 
 
-GAME( 1987,  exzisus,      0, exzisus, exzisus, 0,    ROT0, "Taito Corporation", "Exzisus (Japan)" )
+GAME( 1987,  exzisus,      0, exzisus, exzisus, 0,    ROT0, "Taito Corporation", "Exzisus (Japan)", 0 )

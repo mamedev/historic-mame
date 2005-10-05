@@ -371,8 +371,8 @@ static DRIVER_INIT(landbrka)
 	rombase[0x14f00/4] = (rombase[0x14f00/4] & 0xffff) | 0x03000000; /* Change BR to NOP */
 }
 
-GAMEX( 1998, raccoon,  0, eolith, eolith, 0, ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
-GAMEX( 1999, landbrk,  0, eolith, eolith, 0, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.03)",  GAME_NO_SOUND  ) // or Miss Ttang Jjareugi
-GAMEX( 1999, landbrka,  landbrk, eolith, eolith, landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
+GAME( 1998, raccoon,  0, eolith, eolith, 0, ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
+GAME( 1999, landbrk,  0, eolith, eolith, 0, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.03)",  GAME_NO_SOUND  ) // or Miss Ttang Jjareugi
+GAME( 1999, landbrka,  landbrk, eolith, eolith, landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
 
-GAMEX( 1998, hidnctch, 0, eolith, eolith, 0, ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea)",  GAME_NO_SOUND | GAME_NOT_WORKING ) // or Teurrin Geurim Chajgi '98
+GAME( 1998, hidnctch, 0, eolith, eolith, 0, ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea)",  GAME_NO_SOUND | GAME_NOT_WORKING ) // or Teurrin Geurim Chajgi '98

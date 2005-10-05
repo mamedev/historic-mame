@@ -1170,8 +1170,8 @@ INLINE void SET_FLAG_I(uint value)
 			SRC     = OPER_8_##SMODE();		\
 			DST     = EA_##DMODE();			\
 			TMP3 = read_8_##DMODE(DST);		\
-			TMP2 = SRC - TMP3 - (CFLAG_AS_1() ^ 1);	\
-			SUBOP_ADC(SRC, ~TMP3);			\
+			TMP2 = TMP3 - SRC - (CFLAG_AS_1() ^ 1);	\
+			SUBOP_ADC(~SRC, TMP3);			\
 			FLAG_C = (TMP2 <= 0xff) ? CFLAG_SET : 0; \
 			write_8_##DMODE(DST, (UINT8)spc_int16)
 
@@ -1427,7 +1427,7 @@ static offs_t mame_spc700_dasm(char *buffer, offs_t pc)
 #endif
 }
 
-//static int dump_flag = 0;
+//int dump_flag = 0;
 
 /* Execute instructions for <clocks> cycles */
 int spc700_execute(int clocks)
@@ -1440,7 +1440,7 @@ int spc700_execute(int clocks)
 		REG_PC++;
 
 #if 0
-		if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; printf("Dump started\n"); }
+//      if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; printf("Dump started\n"); }
 
 		if (dump_flag && 0)
 		{
@@ -1462,6 +1462,8 @@ int spc700_execute(int clocks)
 				p & 0x04 ? 'I':'.',
 				p & 0x02 ? 'Z':'.',
 				p & 0x01 ? 'C':'.');
+
+			dump_flag--;
 		}
 #endif
 		switch(REG_IR = read_8_immediate(REG_PPC))

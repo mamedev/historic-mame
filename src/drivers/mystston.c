@@ -318,5 +318,5 @@ ROM_START( myststno )
 ROM_END
 
 
-GAME( 1984, mystston, 0,        mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones - Dr. John's Adventure" )
-GAME( 1984, myststno, mystston, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones - Dr. Kick in Adventure" )
+GAME( 1984, mystston, 0,        mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones - Dr. John's Adventure", 0 )
+GAME( 1984, myststno, mystston, mystston, mystston, 0, ROT270, "Technos", "Mysterious Stones - Dr. Kick in Adventure", 0 )

@@ -240,4 +240,4 @@ ROM_START( mole ) // ALL ROMS ARE 2732
 ROM_END
 
 
-GAME(1982, mole, 0, mole, mole, 0, ROT0, "Yachiyo Electronics, Ltd.", "Mole Attack" )
+GAME( 1982, mole, 0, mole, mole, 0, ROT0, "Yachiyo Electronics, Ltd.", "Mole Attack", 0 )

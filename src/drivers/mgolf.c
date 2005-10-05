@@ -348,4 +348,4 @@ ROM_START( mgolf )
 ROM_END
 
 
-GAMEX( 1978, mgolf, 0, mgolf, mgolf, 0, ROT270, "Atari", "Atari Mini Golf (prototype)", GAME_NO_SOUND )
+GAME( 1978, mgolf, 0, mgolf, mgolf, 0, ROT270, "Atari", "Atari Mini Golf (prototype)", GAME_NO_SOUND )

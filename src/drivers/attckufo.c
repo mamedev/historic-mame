@@ -189,5 +189,5 @@ ROM_START( attckufo )
 
 ROM_END
 
-GAME( 1980, attckufo,  0,     attckufo, attckufo, 0, ROT270, "Ryoto Electric Co.", "Attack Ufo")
+GAME( 1980, attckufo,  0,     attckufo, attckufo, 0, ROT270, "Ryoto Electric Co.", "Attack Ufo", 0)
 

@@ -347,4 +347,4 @@ static DRIVER_INIT( ultraman )
 }
 
 
-GAME( 1991, ultraman, 0, ultraman, ultraman, ultraman, ROT0, "Banpresto/Bandai", "Ultraman (Japan)" )
+GAME( 1991, ultraman, 0, ultraman, ultraman, ultraman, ROT0, "Banpresto/Bandai", "Ultraman (Japan)", 0 )

@@ -781,5 +781,5 @@ ROM_END
 
 
 
-GAME( 1986, firetrap, 0,        firetrap, firetrap, 0, ROT90, "Data East USA", "Fire Trap (US)" )
-GAME( 1986, firetpbl, firetrap, firetpbl, firetpbl, 0, ROT90, "bootleg", "Fire Trap (Japan bootleg)" )
+GAME( 1986, firetrap, 0,        firetrap, firetrap, 0, ROT90, "Data East USA", "Fire Trap (US)", 0 )
+GAME( 1986, firetpbl, firetrap, firetpbl, firetpbl, 0, ROT90, "bootleg", "Fire Trap (Japan bootleg)", 0 )

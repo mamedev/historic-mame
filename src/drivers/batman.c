@@ -331,4 +331,4 @@ static DRIVER_INIT( batman )
  *
  *************************************/
 
-GAME( 1991, batman, 0, batman, batman, batman, ROT0, "Atari Games", "Batman" )
+GAME( 1991, batman, 0, batman, batman, batman, ROT0, "Atari Games", "Batman", 0 )

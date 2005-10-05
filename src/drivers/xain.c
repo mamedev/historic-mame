@@ -713,6 +713,6 @@ DRIVER_INIT( solarwar )
 
 
 
-GAME( 1986, xsleena,  0,       xsleena, xsleena, xsleena,  ROT0, "Technos", "Xain'd Sleena" )
-GAME( 1986, xsleenab, xsleena, xsleena, xsleena, 0,        ROT0, "bootleg", "Xain'd Sleena (bootleg)" )
-GAME( 1986, solarwar, xsleena, xsleena, xsleena, solarwar, ROT0, "[Technos] Taito (Memetron license)", "Solar-Warrior" )
+GAME( 1986, xsleena,  0,       xsleena, xsleena, xsleena,  ROT0, "Technos", "Xain'd Sleena", 0 )
+GAME( 1986, xsleenab, xsleena, xsleena, xsleena, 0,        ROT0, "bootleg", "Xain'd Sleena (bootleg)", 0 )
+GAME( 1986, solarwar, xsleena, xsleena, xsleena, solarwar, ROT0, "[Technos] Taito (Memetron license)", "Solar-Warrior", 0 )

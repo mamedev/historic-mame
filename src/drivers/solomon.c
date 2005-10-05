@@ -289,4 +289,4 @@ ROM_END
 
 
 
-GAME( 1986, solomon, 0, solomon, solomon, 0, ROT0, "Tecmo", "Solomon's Key (Japan)" )
+GAME( 1986, solomon, 0, solomon, solomon, 0, ROT0, "Tecmo", "Solomon's Key (Japan)", 0 )

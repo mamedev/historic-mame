@@ -905,6 +905,6 @@ DRIVER_INIT(evosocc)
 	Rom[0x974ED2/2]=0x9001;	//PUSH R0
 }
 
-GAMEX( 2001, crysbios,		   0,  crystal, crystal,        0, ROT0, "Brezzasoft", "Crystal System BIOS", NOT_A_DRIVER )
-GAMEX( 2001, crysking,	crysbios,  crystal, crystal, crysking, ROT0, "Brezzasoft", "The Crystal of Kings", 0 )
-GAMEX( 2001, evosocc,   crysbios,  crystal, crystal,  evosocc, ROT0, "Evoga", "Evolution Soccer", 0 )
+GAME( 2001, crysbios,		   0,  crystal, crystal,        0, ROT0, "Brezzasoft", "Crystal System BIOS", NOT_A_DRIVER )
+GAME( 2001, crysking,	crysbios,  crystal, crystal, crysking, ROT0, "Brezzasoft", "The Crystal of Kings", 0 )
+GAME( 2001, evosocc,   crysbios,  crystal, crystal,  evosocc, ROT0, "Evoga", "Evolution Soccer", 0 )

@@ -5190,32 +5190,32 @@ ROM_END
 
 //     year   rom       clone     machine   inputs    init      monitor manufacturer          title                                               flags
 
-GAMEX( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy",              "Dyna Gear",                                        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
-GAMEX( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
-GAMEX( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
-GAMEX( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",              "Survival Arts (World)",                            GAME_NO_COCKTAIL )
-GAMEX( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
-GAMEX( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
-GAMEX( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",              "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL )
-GAMEX( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995,  gdfs,     0,        gdfs,     gdfs,     gdfs,     ROT0,   "Banpresto",          "Mobil Suit Gundam Final Shooting (Japan)",         GAME_NO_COCKTAIL )
-GAMEX( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270, "Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",      GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                             GAME_NO_COCKTAIL )
-GAMEX( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                                 GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
-GAMEX( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasyo 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
-GAMEX( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
-GAMEX( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
-GAMEX( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
-GAMEX( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
-GAMEX( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
-GAMEX( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                           GAME_NO_COCKTAIL )
-GAMEX( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
-GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )
+GAME( 1993,  dynagear, 0,        dynagear, dynagear, dynagear, ROT0,   "Sammy",              "Dyna Gear",                                        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1993,  keithlcy, 0,        keithlcy, keithlcy, keithlcy, ROT0,   "Visco",              "Dramatic Adventure Quiz Keith & Lucy (Japan)",     GAME_NO_COCKTAIL )
+GAME( 1993,  srmp4,    0,        srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan)",                   GAME_NO_COCKTAIL )
+GAME( 1993,  srmp4o,   srmp4,    srmp4,    srmp4,    srmp4,    ROT0,   "Seta",               "Super Real Mahjong PIV (Japan, older set)",        GAME_NO_COCKTAIL ) // by the numbering of the program roms this should be older
+GAME( 1993,  survarts, 0,        survarts, survarts, survarts, ROT0,   "Sammy",              "Survival Arts (World)",                            GAME_NO_COCKTAIL )
+GAME( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American Sammy",     "Survival Arts (USA)",                              GAME_NO_COCKTAIL )
+GAME( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
+GAME( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",              "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL )
+GAME( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1995,  gdfs,     0,        gdfs,     gdfs,     gdfs,     ROT0,   "Banpresto",          "Mobil Suit Gundam Final Shooting (Japan)",         GAME_NO_COCKTAIL )
+GAME( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270, "Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",      GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                             GAME_NO_COCKTAIL )
+GAME( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                                 GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
+GAME( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasyo 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
+GAME( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
+GAME( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
+GAME( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
+GAME( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
+GAME( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
+GAME( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
+GAME( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                           GAME_NO_COCKTAIL )
+GAME( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
+GAME( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )
 
 
 //  Games not working properly:
@@ -5223,4 +5223,4 @@ GAMEX( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",
 
 //  Games not working at all:
 
-GAMEX( 1997,  jsk,      0,        jsk,      janjans1, jsk,      ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )
+GAME( 1997,  jsk,      0,        jsk,      janjans1, jsk,      ROT0,   "Visco",              "Joryuu Syougi Kyoushitsu (Japan)",                 GAME_NO_COCKTAIL | GAME_NOT_WORKING )

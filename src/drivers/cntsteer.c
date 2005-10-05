@@ -969,6 +969,6 @@ DRIVER_INIT( zerotrgt )
 
 /***************************************************************************/
 
-GAMEX( 1985, cntsteer, 0,        cntsteer,  cntsteer, zerotrgt, ROT270, "Data East Corporation", "Counter Steer", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1985, zerotrgt, 0,        zerotrgt,  cntsteer, zerotrgt, ROT0,   "Data East Corporation", "Zero Target (World)", GAME_NO_SOUND|GAME_NOT_WORKING )
-GAMEX( 1985, gekitsui, zerotrgt, zerotrgt,  cntsteer, zerotrgt, ROT0,   "Data East Corporation", "Gekitsui Oh (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAME( 1985, cntsteer, 0,        cntsteer,  cntsteer, zerotrgt, ROT270, "Data East Corporation", "Counter Steer", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAME( 1985, zerotrgt, 0,        zerotrgt,  cntsteer, zerotrgt, ROT0,   "Data East Corporation", "Zero Target (World)", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAME( 1985, gekitsui, zerotrgt, zerotrgt,  cntsteer, zerotrgt, ROT0,   "Data East Corporation", "Gekitsui Oh (Japan)", GAME_NO_SOUND|GAME_NOT_WORKING )

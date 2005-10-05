@@ -726,6 +726,6 @@ static DRIVER_INIT( opwolfb )
 
 
 /*    year  rom       parent    machine   inp       init */
-GAMEX( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito Corporation Japan", "Operation Wolf (World)", GAME_IMPERFECT_SOUND )
-GAMEX( 1987, opwolfu,  opwolf,   opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)", GAME_IMPERFECT_SOUND )
-GAMEX( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear", GAME_IMPERFECT_SOUND )
+GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito Corporation Japan", "Operation Wolf (World)", GAME_IMPERFECT_SOUND )
+GAME( 1987, opwolfu,  opwolf,   opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)", GAME_IMPERFECT_SOUND )
+GAME( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear", GAME_IMPERFECT_SOUND )

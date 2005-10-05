@@ -163,4 +163,4 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1979, clayshoo, 0, clayshoo, clayshoo, 0, ROT0, "Allied Leisure", "Clay Shoot", GAME_NO_SOUND )
+GAME( 1979, clayshoo, 0, clayshoo, clayshoo, 0, ROT0, "Allied Leisure", "Clay Shoot", GAME_NO_SOUND )

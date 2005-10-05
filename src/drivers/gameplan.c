@@ -1044,7 +1044,7 @@ ROM_END
 
 
 
-GAME( 1980, killcom,  0, gameplan, killcom,  0, ROT0,   "GamePlan (Centuri license)", "Killer Comet" )
-GAME( 1980, megatack, 0, gameplan, megatack, 0, ROT0,   "GamePlan (Centuri license)", "Megatack" )
-GAME( 1981, challeng, 0, gameplan, challeng, 0, ROT0,   "GamePlan (Centuri license)", "Challenger" )
-GAME( 1981, kaos,     0, gameplan, kaos,     0, ROT270, "GamePlan", "Kaos" )
+GAME( 1980, killcom,  0, gameplan, killcom,  0, ROT0,   "GamePlan (Centuri license)", "Killer Comet", 0 )
+GAME( 1980, megatack, 0, gameplan, megatack, 0, ROT0,   "GamePlan (Centuri license)", "Megatack", 0 )
+GAME( 1981, challeng, 0, gameplan, challeng, 0, ROT0,   "GamePlan (Centuri license)", "Challenger", 0 )
+GAME( 1981, kaos,     0, gameplan, kaos,     0, ROT270, "GamePlan", "Kaos", 0 )

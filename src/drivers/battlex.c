@@ -297,4 +297,4 @@ static DRIVER_INIT( battlex )
 
 /*** GAME DRIVERS ************************************************************/
 
-GAMEX( 1982, battlex, 0, battlex, battlex, battlex, ROT180, "Omori Electric", "Battle Cross", GAME_IMPERFECT_GRAPHICS )
+GAME( 1982, battlex, 0, battlex, battlex, battlex, ROT180, "Omori Electric", "Battle Cross", GAME_IMPERFECT_GRAPHICS )

@@ -519,6 +519,6 @@ static DRIVER_INIT( rampart )
  *
  *************************************/
 
-GAME( 1990, rampart,  0,       rampart, rampart,  rampart, ROT0, "Atari Games", "Rampart (Trackball)" )
-GAME( 1990, ramprt2p, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (Joystick)" )
-GAME( 1990, rampartj, rampart, rampart, rampartj, rampart, ROT0, "Atari Games", "Rampart (Japan, Joystick)" )
+GAME( 1990, rampart,  0,       rampart, rampart,  rampart, ROT0, "Atari Games", "Rampart (Trackball)", 0 )
+GAME( 1990, ramprt2p, rampart, rampart, ramprt2p, rampart, ROT0, "Atari Games", "Rampart (Joystick)", 0 )
+GAME( 1990, rampartj, rampart, rampart, rampartj, rampart, ROT0, "Atari Games", "Rampart (Japan, Joystick)", 0 )

@@ -195,4 +195,4 @@ ROM_END
 
 
 
-GAMEX( 1980?, cheekyms, 0, cheekyms, cheekyms, 0, ROT270, "Universal", "Cheeky Mouse", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1980?, cheekyms, 0, cheekyms, cheekyms, 0, ROT270, "Universal", "Cheeky Mouse", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

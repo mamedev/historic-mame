@@ -334,4 +334,4 @@ static DRIVER_INIT( ninjakid )
  Game Drivers
 *******************************************************************************/
 
-GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken" )
+GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken", 0 )

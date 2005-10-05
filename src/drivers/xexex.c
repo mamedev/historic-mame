@@ -619,5 +619,5 @@ static DRIVER_INIT( xexex )
 }
 
 
-GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (ver EAA)" )
-GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (ver JAA)" )
+GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (ver EAA)", 0 )
+GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (ver JAA)", 0 )

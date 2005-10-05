@@ -438,7 +438,7 @@ ROM_END
 
 
 
-GAME( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (version M)" )
-GAME( 1988, hcastleo, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (version K)" )
-GAME( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan version P)" )
-GAME( 1988, hcastljo, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan version N)" )
+GAME( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (version M)", 0 )
+GAME( 1988, hcastleo, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (version K)", 0 )
+GAME( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan version P)", 0 )
+GAME( 1988, hcastljo, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan version N)", 0 )

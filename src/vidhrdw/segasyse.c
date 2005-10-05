@@ -107,28 +107,31 @@ int start_megatech_video_normal(void)
 
 void update_megatech_video_normal(mame_bitmap *bitmap, const rectangle *cliprect )
 {
+	int maxy = (cliprect->max_y > 192-1) ? 192-1 : cliprect->max_y;
 	int i;
 
 	/*- Draw from cache_bitmap to screen -*/
 
-	for (i = 0; i < 192;i++)
+	for (i = cliprect->min_y; i <= maxy;i++)
 		segae_drawscanline(i,0,0);
 
-	for (i = 0;i < 192;i++)
+	for (i = cliprect->min_y; i <= maxy;i++)
 		draw_scanline8(bitmap,0,i,256,&cache_bitmap[i * (16+256+16) +16],&Machine->pens[segasyse_palettebase],-1);
 }
 
 void update_megaplay_video_normal(mame_bitmap *bitmap, const rectangle *cliprect )
 {
+	int miny = (cliprect->min_y < 16) ? 16 : cliprect->min_y;
+	int maxy = (cliprect->max_y > 16+192-1) ? 16+192-1 : cliprect->max_y;
 	int i;
 
 	/*- Draw from cache_bitmap to screen -*/
 
-	for (i = 0; i < 192;i++)
-		segae_drawscanline(i,0,0);
+	for (i = miny; i <= maxy;i++)
+		segae_drawscanline(i-16,0,0);
 
-	for (i = 0;i < 192;i++)
-		draw_scanline8(bitmap,32,i+16,256,&cache_bitmap[i * (16+256+16) +24],&Machine->pens[segasyse_palettebase],0);
+	for (i = miny;i <= maxy;i++)
+		draw_scanline8(bitmap,32,i,256,&cache_bitmap[(i-16) * (16+256+16) +24],&Machine->pens[segasyse_palettebase],0);
 
 }
 

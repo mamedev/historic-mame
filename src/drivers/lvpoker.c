@@ -465,5 +465,5 @@ ROM_END
 
 /* Game Drivers */
 
-GAME( 1985, ponttehk, 0, ponttehk, ponttehk, 0, ROT0, "Tehkan", "Pontoon (Tehkan)" )
-GAME( 1985, lvpoker,  0, lvpoker,  lvpoker,  0, ROT0, "Tehkan", "Lovely Poker [BET]" )
+GAME( 1985, ponttehk, 0, ponttehk, ponttehk, 0, ROT0, "Tehkan", "Pontoon (Tehkan)", 0 )
+GAME( 1985, lvpoker,  0, lvpoker,  lvpoker,  0, ROT0, "Tehkan", "Lovely Poker [BET]", 0 )

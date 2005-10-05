@@ -223,4 +223,4 @@ ROM_START( ssrj )
 
 ROM_END
 
-GAMEX( 1985, ssrj,  0,       ssrj,  ssrj,  0, ORIENTATION_FLIP_X, "Taito Corporation", "Super Speed Race Junior (Japan)",GAME_WRONG_COLORS|GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, ssrj,  0,       ssrj,  ssrj,  0, ORIENTATION_FLIP_X, "Taito Corporation", "Super Speed Race Junior (Japan)",GAME_WRONG_COLORS|GAME_IMPERFECT_GRAPHICS )

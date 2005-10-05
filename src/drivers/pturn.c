@@ -323,4 +323,4 @@ static DRIVER_INIT(pturn)
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0dd, 0xc0dd, 0, 0, pturn_hack_r); /* initial protection check */
 }
 
-GAMEX( 1984, pturn,  0, pturn,  pturn,  pturn, ROT90,   "Jaleco", "Parallel Turn",GAME_NOT_WORKING )
+GAME( 1984, pturn,  0, pturn,  pturn,  pturn, ROT90,   "Jaleco", "Parallel Turn",GAME_NOT_WORKING )

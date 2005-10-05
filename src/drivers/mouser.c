@@ -303,5 +303,5 @@ DRIVER_INIT( mouser )
 }
 
 
-GAME( 1983, mouser,   0,      mouser, mouser, mouser, ROT90, "UPL", "Mouser" )
-GAME( 1983, mouserc,  mouser, mouser, mouser, mouser, ROT90, "[UPL] (Cosmos license)", "Mouser (Cosmos)" )
+GAME( 1983, mouser,   0,      mouser, mouser, mouser, ROT90, "UPL", "Mouser", 0 )
+GAME( 1983, mouserc,  mouser, mouser, mouser, mouser, ROT90, "[UPL] (Cosmos license)", "Mouser (Cosmos)", 0 )

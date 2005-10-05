@@ -233,4 +233,4 @@ ROM_START( higemaru )
 ROM_END
 
 
-GAME( 1984, higemaru, 0, higemaru, higemaru, 0, ROT0, "Capcom", "Pirate Ship Higemaru" )
+GAME( 1984, higemaru, 0, higemaru, higemaru, 0, ROT0, "Capcom", "Pirate Ship Higemaru", 0 )

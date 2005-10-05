@@ -283,5 +283,5 @@ DRIVER_INIT( wldarrow )
 	}
 }
 
-GAMEX( 1982, wldarrow,  0,		wldarrow, wldarrow, wldarrow, ROT0, "Meyco Games", "Wild Arrow", GAME_NO_SOUND | GAME_NOT_WORKING)
-GAMEX( 198?, unkmeyco,  0,		wldarrow, wldarrow, wldarrow, ROT0, "Meyco Games", "<unknown> Meyco game", GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1982, wldarrow,  0,		wldarrow, wldarrow, wldarrow, ROT0, "Meyco Games", "Wild Arrow", GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 198?, unkmeyco,  0,		wldarrow, wldarrow, wldarrow, ROT0, "Meyco Games", "<unknown> Meyco game", GAME_NO_SOUND | GAME_NOT_WORKING)

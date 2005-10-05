@@ -1134,6 +1134,15 @@ static DRIVER_INIT(sspirits)
 
 }
 
+static DRIVER_INIT(sspiritj)
+{
+	system24temp_sys16_io_set_callbacks(hotrod_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
+	mlatch_table = 0;
+	track_size = 0x2f00;
+	s24_fd1094_driver_init();
+
+}
+
 static DRIVER_INIT(dcclubfd)
 {
 	system24temp_sys16_io_set_callbacks(dcclub_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
@@ -2028,6 +2037,23 @@ ROM_START( bnzabros )
 	ROM_LOAD( "bb-disk.bin",        0x000000, 0x1c2000, CRC(ea7a3302) SHA1(5f92efb2e1135c1f3eeca38ba5789739a22dbd11) )
 ROM_END
 
+ROM_START( bnzabrsj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
+	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
+
+	ROM_REGION16_BE( 0x200000, REGION_USER1, 0)
+	ROM_LOAD16_BYTE( "mpr13188.h2",  0x000000, 0x80000, CRC(d3802294) SHA1(7608e71e8ef398ac24dbf851994253bca5ace625) )
+	ROM_LOAD16_BYTE( "mpr13187.h1",  0x000001, 0x80000, CRC(e3d8c5f7) SHA1(5b1e8646debee2f2ef272ddd3320b0a17192fbbe) )
+	ROM_LOAD16_BYTE( "mpr13190.4",   0x100000, 0x40000, CRC(0b4df388) SHA1(340478bba82069ab745d6d8703e6801411fd2fc4) )
+	ROM_RELOAD ( 0x180000, 0x40000)
+	ROM_LOAD16_BYTE( "mpr13189.3",   0x100001, 0x40000, CRC(5ea5a2f3) SHA1(514b5446303c50aeb1d6d10d0a3f210da2577e16) )
+	ROM_RELOAD ( 0x180001, 0x40000)
+
+	ROM_REGION( 0x1c2000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-07b.img",        0x000000, 0x1c2000, CRC(eb901696) SHA1(50d626d7aa74fe026f2aa18714ca6b8a3df94f27) )
+ROM_END
+
 ROM_START( quizmeku ) // Quiz Mekuromeku Story
 	 ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
 	 ROM_LOAD16_BYTE( "epr15343.ic2", 0x000000, 0x20000, CRC(c72399a7) SHA1(bfbf0079ea63f89bca4ce9081aed5d5c1d9d169a) )
@@ -2051,6 +2077,16 @@ ROM_START( sspirits )
 	/* this image was repaired using other images, a dump of a known good disk would be preferable */
 	ROM_LOAD( "ss-repaired.bin",         0x000000, 0x1c2000, BAD_DUMP CRC(cefbda69) SHA1(5b47ae0f1584ce1eb697246273ba761bd9e981c1)  )
 ROM_END
+
+ROM_START( sspiritj )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr11339.ic2", 0x000000, 0x20000, CRC(75130e73) SHA1(e079739f4a3da3807aac570442c5afef1a7d7b0e) )
+	ROM_LOAD16_BYTE( "epr11338.ic1", 0x000001, 0x20000, CRC(7d4a7ff3) SHA1(3d3af04d990d232ba0a8fe155de59bc632a0a461) )
+
+	ROM_REGION( 0x1d6000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-02-rev-a.img",         0x000000, 0x1d6000, CRC(81917423) SHA1(ba1504be5d3162d2c8c792311cd6f97bb0bc5cf9)  )
+ROM_END
+
 
 
 ROM_START( sspirtfc )
@@ -2225,25 +2261,27 @@ MACHINE_DRIVER_END
 */
 
 /* Disk Based Games */
-/* 01 */GAME (1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 1)")
-/* 01 */GAMEX(1988, hotroda,  hotrod,   system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 2)", GAME_NO_SOUND)
-/* 01 */GAMEX(1988, hotrodj,  hotrod,   system24, hotrodj,  hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)", GAME_NO_SOUND)
-/* 02 */GAME (1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits" )
-/* 02 */GAMEX(1988, sspirtfc, sspirits, system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits (FD1094 317-0058-02c)",GAME_NOT_WORKING ) /* MISSING disk image */
-/* 03 */GAME (1988, gground,  0,        system24, gground,  gground,  ROT270, "Sega", "Gain Ground (FD1094 317-0058-03?)")
-/* 04 */GAMEX(1989, crkdown,  0,        system24, crkdown,  crkdown,  ROT0,   "Sega", "Crack Down (US, FD1094 317-0058-04d)", GAME_IMPERFECT_GRAPHICS)
-/* 04 */GAMEX(1989, crkdownj, crkdown,  system24, crkdown,  crkdown,  ROT0,   "Sega", "Crack Down (Japan, FD1094 317-0058-04b)", GAME_IMPERFECT_GRAPHICS)
-/* 05 */GAMEX(1989, sgmast,   0,        system24, bnzabros, sgmast,   ROT0,	  "Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION) // NOT decrypted
-/* 05 */GAMEX(1989, sgmastc,  sgmast,   system24, bnzabros, sgmast,   ROT0,   "Sega", "Jumbo Ozaki Super Masters Golf (FD1094 317-0058-05c)", GAME_NOT_WORKING)
-/* 06 */GAME (1990, roughrac, 0,        system24, roughrac, roughrac, ROT0,   "Sega", "Rough Racer (Japan, FD1094 317-0058-06b)" )
-/* 07 */GAME (1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros")
-/* 08 */GAMEX(1991, qsww,     0,        system24, bnzabros, qsww,     ROT0,   "Sega", "Quiz Syukudai wo Wasuremashita", GAME_IMPERFECT_GRAPHICS) // wrong bg colour on title
-/* 09 */GAME (1991, dcclubfd, 0,        system24, dcclub,   dcclubfd, ROT0,   "Sega", "Dynamic Country Club (Floppy DS3-5000-09d, FD1094 317-0058-09d)")
+/* 01 */GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 1)", 0 )
+/* 01 */GAME( 1988, hotroda,  hotrod,   system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 2)", GAME_NO_SOUND )
+/* 01 */GAME( 1988, hotrodj,  hotrod,   system24, hotrodj,  hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)", GAME_NO_SOUND )
+/* 02 */GAME( 1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits", 0 )
+/* 02 */GAME( 1988, sspiritj, sspirits, system24, sspirits, sspiritj, ROT270, "Sega", "Scramble Spirits (Japan, Floppy DS3-5000-02-REV-A)", 0 )
+/* 02 */GAME( 1988, sspirtfc, sspirits, system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits (FD1094 317-0058-02c)",GAME_NOT_WORKING ) /* MISSING disk image */
+/* 03 */GAME( 1988, gground,  0,        system24, gground,  gground,  ROT270, "Sega", "Gain Ground (FD1094 317-0058-03?)", 0 )
+/* 04 */GAME( 1989, crkdown,  0,        system24, crkdown,  crkdown,  ROT0,   "Sega", "Crack Down (US, FD1094 317-0058-04d)", GAME_IMPERFECT_GRAPHICS )
+/* 04 */GAME( 1989, crkdownj, crkdown,  system24, crkdown,  crkdown,  ROT0,   "Sega", "Crack Down (Japan, FD1094 317-0058-04b)", GAME_IMPERFECT_GRAPHICS )
+/* 05 */GAME( 1989, sgmast,   0,        system24, bnzabros, sgmast,   ROT0,	  "Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION ) // NOT decrypted
+/* 05 */GAME( 1989, sgmastc,  sgmast,   system24, bnzabros, sgmast,   ROT0,   "Sega", "Jumbo Ozaki Super Masters Golf (FD1094 317-0058-05c)", GAME_NOT_WORKING )
+/* 06 */GAME( 1990, roughrac, 0,        system24, roughrac, roughrac, ROT0,   "Sega", "Rough Racer (Japan, FD1094 317-0058-06b)", 0 )
+/* 07 */GAME( 1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros (US, Floppy DS3-5000-07d?)", 0 )
+/* 07 */GAME( 1990, bnzabrsj, bnzabros, system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros (Japan, Floppy DS3-5000-07b)", 0 )
+/* 08 */GAME( 1991, qsww,     0,        system24, bnzabros, qsww,     ROT0,   "Sega", "Quiz Syukudai wo Wasuremashita", GAME_IMPERFECT_GRAPHICS ) // wrong bg colour on title
+/* 09 */GAME( 1991, dcclubfd, 0,        system24, dcclub,   dcclubfd, ROT0,   "Sega", "Dynamic Country Club (Floppy DS3-5000-09d, FD1094 317-0058-09d)", 0 )
 
 /* ROM Based */
-GAME (1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club")
-GAME (1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan")
-GAME (1994, qgh,      0,        system24, qgh,      qgh,      ROT0,   "Sega", "Quiz Ghost Hunter")
-GAME (1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Quiz Mekurumeku Story")
-GAME (1994, qrouka,   0,        system24, qgh,      qrouka,   ROT0,   "Sega", "Quiz Rouka Ni Tattenasai")
-GAME (1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "Tokoro San no MahMahjan 2")
+GAME( 1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club", 0 )
+GAME( 1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan", 0 )
+GAME( 1994, qgh,      0,        system24, qgh,      qgh,      ROT0,   "Sega", "Quiz Ghost Hunter", 0 )
+GAME( 1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Quiz Mekurumeku Story", 0 )
+GAME( 1994, qrouka,   0,        system24, qgh,      qrouka,   ROT0,   "Sega", "Quiz Rouka Ni Tattenasai", 0 )
+GAME( 1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "Tokoro San no MahMahjan 2", 0 )

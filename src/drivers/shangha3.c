@@ -674,6 +674,6 @@ static DRIVER_INIT( heberpop )
 	shangha3_do_shadows = 0;
 }
 
-GAME( 1993, shangha3, 0, shangha3, shangha3, shangha3, ROT0, "Sunsoft", "Shanghai III (Japan)" )
-GAME( 1994, heberpop, 0, heberpop, heberpop, heberpop, ROT0, "Sunsoft / Atlus", "Hebereke no Popoon (Japan)" )
-GAME( 1994, blocken,  0, blocken,  blocken,  heberpop, ROT0, "KID / Visco", "Blocken (Japan)" )
+GAME( 1993, shangha3, 0, shangha3, shangha3, shangha3, ROT0, "Sunsoft", "Shanghai III (Japan)", 0 )
+GAME( 1994, heberpop, 0, heberpop, heberpop, heberpop, ROT0, "Sunsoft / Atlus", "Hebereke no Popoon (Japan)", 0 )
+GAME( 1994, blocken,  0, blocken,  blocken,  heberpop, ROT0, "KID / Visco", "Blocken (Japan)", 0 )

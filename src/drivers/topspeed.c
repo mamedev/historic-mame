@@ -1009,7 +1009,7 @@ DRIVER_INIT( topspeed )
 }
 
 
-GAME( 1987, topspeed, 0,        topspeed, topspeed, topspeed, ROT0, "Taito Corporation Japan", "Top Speed (World)" )
-GAME( 1987, topspedu, topspeed, topspeed, topspedu, topspeed, ROT0, "Taito America Corporation (Romstar license)", "Top Speed (US)" )
-GAME( 1987, fullthrl, topspeed, topspeed, fullthrl, topspeed, ROT0, "Taito Corporation", "Full Throttle (Japan)" )
+GAME( 1987, topspeed, 0,        topspeed, topspeed, topspeed, ROT0, "Taito Corporation Japan", "Top Speed (World)", 0 )
+GAME( 1987, topspedu, topspeed, topspeed, topspedu, topspeed, ROT0, "Taito America Corporation (Romstar license)", "Top Speed (US)", 0 )
+GAME( 1987, fullthrl, topspeed, topspeed, fullthrl, topspeed, ROT0, "Taito Corporation", "Full Throttle (Japan)", 0 )
 

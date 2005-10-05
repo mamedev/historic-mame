@@ -704,5 +704,5 @@ ROM_START( gpan2qiz )
 	ROM_COPY( REGION_SOUND2, 0x100000, 0x300000, 0x100000 )
 ROM_END
 
-GAMEX( 1993, galpani2, 0, galpani2, galpani2, 0, ROT90, "Kaneko", "Gals Panic II (Japan?)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1993, gpan2qiz, 0, galpani2, galpani2, 0, ROT90, "Kaneko", "Gals Panic II - Quiz Version (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1993, galpani2, 0, galpani2, galpani2, 0, ROT90, "Kaneko", "Gals Panic II (Japan?)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1993, gpan2qiz, 0, galpani2, galpani2, 0, ROT90, "Kaneko", "Gals Panic II - Quiz Version (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )

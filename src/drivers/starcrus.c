@@ -241,4 +241,4 @@ ROM_START( starcrus )
 ROM_END
 
 
-GAME( 1977, starcrus, 0, starcrus, starcrus, 0, ROT0, "RamTek", "Star Cruiser" )
+GAME( 1977, starcrus, 0, starcrus, starcrus, 0, ROT0, "RamTek", "Star Cruiser", 0 )

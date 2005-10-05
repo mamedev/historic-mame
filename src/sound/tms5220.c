@@ -14,6 +14,7 @@
 
 #include "driver.h"
 #include "tms5220.h"
+#include "state.h"
 
 
 /* Pull in the ROM tables */
@@ -73,28 +74,28 @@ struct tms5220
 	/* these contain data describing the current and previous voice frames */
 	UINT16 old_energy;
 	UINT16 old_pitch;
-	int old_k[10];
+	INT32 old_k[10];
 
 	UINT16 new_energy;
 	UINT16 new_pitch;
-	int new_k[10];
+	INT32 new_k[10];
 
 
 	/* these are all used to contain the current state of the sound generation */
 	UINT16 current_energy;
 	UINT16 current_pitch;
-	int current_k[10];
+	INT32 current_k[10];
 
 	UINT16 target_energy;
 	UINT16 target_pitch;
-	int target_k[10];
+	INT32 target_k[10];
 
 	UINT8 interp_count;		/* number of interp periods (0-7) */
 	UINT8 sample_count;		/* sample number within interp (0-24) */
-	int pitch_count;
+	UINT16 pitch_count;
 
-	int u[11];
-	int x[10];
+	INT32 u[11];
+	INT32 x[10];
 
 	INT8 randbit;
 
@@ -103,11 +104,11 @@ struct tms5220
 	int (*read_callback)(int count);
 	void (*load_address_callback)(int data);
 	void (*read_and_branch_callback)(void);
-	int schedule_dummy_read;			/* set after each load address, so that next read operation
+	UINT8 schedule_dummy_read;			/* set after each load address, so that next read operation
                                               is preceded by a dummy read */
 
 	UINT8 data_register;				/* data register, used by read command */
-	int RDB_flag;					/* whether we should read data register or status register */
+	UINT8 RDB_flag;					/* whether we should read data register or status register */
 
 	/* flag for tms0285 emulation */
 	/* The tms0285 is an early variant of the tms5220 used in the ti-99/4(a)
@@ -128,12 +129,57 @@ static void set_interrupt_state(struct tms5220 *tms, int state);
 #define DEBUG_5220	0
 
 
-void *tms5220_create(void)
+void *tms5220_create(int index)
 {
 	struct tms5220 *tms;
 
 	tms = malloc(sizeof(*tms));
 	memset(tms, 0, sizeof(*tms));
+
+	state_save_register_UINT8 ("tms5220", index, "fifo", &tms->fifo[0], FIFO_SIZE);
+	state_save_register_UINT8 ("tms5220", index, "fifo_head", &tms->fifo_head, 1);
+	state_save_register_UINT8 ("tms5220", index, "fifo_tail", &tms->fifo_tail, 1);
+	state_save_register_UINT8 ("tms5220", index, "fifo_count", &tms->fifo_count, 1);
+	state_save_register_UINT8 ("tms5220", index, "fifo_bits_taken", &tms->fifo_bits_taken, 1);
+
+	state_save_register_UINT8 ("tms5220", index, "speaking", &tms->tms5220_speaking, 1);
+	state_save_register_UINT8 ("tms5220", index, "speak_external", &tms->speak_external, 1);
+	state_save_register_UINT8 ("tms5220", index, "talk_status", &tms->talk_status, 1);
+	state_save_register_UINT8 ("tms5220", index, "first_frame", &tms->first_frame, 1);
+	state_save_register_UINT8 ("tms5220", index, "last_frame", &tms->last_frame, 1);
+	state_save_register_UINT8 ("tms5220", index, "buffer_low", &tms->buffer_low, 1);
+	state_save_register_UINT8 ("tms5220", index, "buffer_empty", &tms->buffer_empty, 1);
+	state_save_register_UINT8 ("tms5220", index, "irq_pin", &tms->irq_pin, 1);
+
+	state_save_register_UINT16("tms5220", index, "old_energy", &tms->old_energy, 1);
+	state_save_register_UINT16("tms5220", index, "old_pitch", &tms->old_pitch, 1);
+	state_save_register_INT32 ("tms5220", index, "old_k", &tms->old_k[0], 10);
+
+	state_save_register_UINT16("tms5220", index, "new_energy", &tms->new_energy, 1);
+	state_save_register_UINT16("tms5220", index, "new_pitch", &tms->new_pitch, 1);
+	state_save_register_INT32 ("tms5220", index, "new_k", &tms->new_k[0], 10);
+
+	state_save_register_UINT16("tms5220", index, "current_energy", &tms->current_energy, 1);
+	state_save_register_UINT16("tms5220", index, "current_pitch", &tms->current_pitch, 1);
+	state_save_register_INT32 ("tms5220", index, "current_k", &tms->current_k[0], 10);
+
+	state_save_register_UINT16("tms5220", index, "target_energy", &tms->target_energy, 1);
+	state_save_register_UINT16("tms5220", index, "target_pitch", &tms->target_pitch, 1);
+	state_save_register_INT32 ("tms5220", index, "target_k", &tms->target_k[0], 10);
+
+	state_save_register_UINT8 ("tms5220", index, "interp_count", &tms->interp_count, 1);
+	state_save_register_UINT8 ("tms5220", index, "sample_count", &tms->sample_count, 1);
+	state_save_register_UINT16("tms5220", index, "pitch_count", &tms->pitch_count, 1);
+
+	state_save_register_INT32 ("tms5220", index, "u", &tms->u[0], 11);
+	state_save_register_INT32 ("tms5220", index, "x", &tms->x[0], 10);
+
+	state_save_register_INT8  ("tms5220", index, "randbit", &tms->randbit, 1);
+
+	state_save_register_UINT8 ("tms5220", index, "schedule_dummy_read", &tms->schedule_dummy_read, 1);
+	state_save_register_UINT8 ("tms5220", index, "data_register", &tms->data_register, 1);
+	state_save_register_UINT8 ("tms5220", index, "RDB_flag", &tms->RDB_flag, 1);
+
 	return tms;
 }
 

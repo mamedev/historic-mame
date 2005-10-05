@@ -532,4 +532,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1978, ultratnk, 0, ultratnk, ultratnk, 0, 0, "Atari", "Ultra Tank" )
+GAME( 1978, ultratnk, 0, ultratnk, ultratnk, 0, 0, "Atari", "Ultra Tank", 0 )

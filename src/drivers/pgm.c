@@ -2510,32 +2510,32 @@ ROM_END
 
 /*** GAME ********************************************************************/
 
-GAMEX( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
+GAME( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
 
-GAMEX( 1997, orlegend, pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1997, orlegnde, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1997, orlegndc, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1997, orld111c, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1997, orld105k, orlegend,   pgm, orld105k,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1997, drgw2,    pgm,        pgm, pgm,   drgw2,      ROT0, "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, drgw2c,   drgw2,      pgm, pgm,   drgw2c,     ROT0, "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1997, drgw2j,   drgw2,      pgm, pgm,   drgw2j,     ROT0, "IGS", "Chuugokuryuu II (ver. 100J, Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, kov,      pgm,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAMEX( 1999, kov115,   kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAMEX( 1999, kovj,     kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 100, Japanese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAMEX( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, kovplusa, kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, photoy2k, pgm,        pgm, sango, djlzz, 	   ROT0, "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
-GAMEX( 1999, raf102j,  photoy2k,   pgm, sango, djlzz, 	   ROT0, "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+GAME( 1997, orlegend, pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orlegnde, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orlegndc, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orld111c, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orld105k, orlegend,   pgm, orld105k,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, drgw2,    pgm,        pgm, pgm,   drgw2,      ROT0, "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1997, drgw2c,   drgw2,      pgm, pgm,   drgw2c,     ROT0, "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1997, drgw2j,   drgw2,      pgm, pgm,   drgw2j,     ROT0, "IGS", "Chuugokuryuu II (ver. 100J, Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, kov,      pgm,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kov115,   kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kovj,     kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 100, Japanese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, kovplusa, kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, photoy2k, pgm,        pgm, sango, djlzz, 	   ROT0, "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+GAME( 1999, raf102j,  photoy2k,   pgm, sango, djlzz, 	   ROT0, "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
 
 /* not working */
-GAMEX( 1998, drgw3,    pgm,        pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, drgw3k,   drgw3,      pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, killbld,  pgm,        pgm, sango, killbld,	   ROT0, "IGS", "The Killing Blade", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, puzlstar, pgm,        pgm, sango, pstar,	   ROT0, "IGS", "Puzzle Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, olds,     pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend Super (Korea 101)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1999, olds100,  olds,       pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend Super (100)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 1999, olds100a, olds,       pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend Super (100 alt)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAMEX( 2001, ddp2,     pgm,        pgm, ddp2,  ddp2, 	   ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 2001, puzzli2,  pgm,        pgm, sango, puzzli2,    ROT0, "IGS", "Puzzli 2 Super", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, drgw3,    pgm,        pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, drgw3k,   drgw3,      pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, killbld,  pgm,        pgm, sango, killbld,	   ROT0, "IGS", "The Killing Blade", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, puzlstar, pgm,        pgm, sango, pstar,	   ROT0, "IGS", "Puzzle Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, olds,     pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend Super (Korea 101)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1999, olds100,  olds,       pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend Super (100)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1999, olds100a, olds,       pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend Super (100 alt)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 2001, ddp2,     pgm,        pgm, ddp2,  ddp2, 	   ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, puzzli2,  pgm,        pgm, sango, puzzli2,    ROT0, "IGS", "Puzzli 2 Super", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

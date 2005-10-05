@@ -891,6 +891,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)" )
-GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)" )
-GAMEX(1999, rockn,    0,        rockn,   rockn,   rockn,  ROT270, "Jaleco", "Rock'n Tread (Japan)", GAME_NO_SOUND )
+GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", 0 )
+GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)", 0 )
+GAME( 1999, rockn,    0,        rockn,   rockn,   rockn,  ROT270, "Jaleco", "Rock'n Tread (Japan)", GAME_NO_SOUND )

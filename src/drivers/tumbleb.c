@@ -898,6 +898,133 @@ INPUT_PORTS_START( chokchok )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( metlsavr )
+	PORT_START	/* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* Credits */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+    PORT_START
+    PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) ) /* These 2 are likely Difficulty */
+    PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x000c, "3" )
+	PORT_DIPSETTING(      0x0008, "4" )
+	PORT_DIPSETTING(      0x0004, "5" )
+	PORT_DIPNAME( 0x70, 0x70, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0070, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0050, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) ) /* Not sure 0x0100-0x8000 are actually dip switches */
+    PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_SERVICE( 0x0001, IP_ACTIVE_HIGH )
+    PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )	/* Connected to Languange */
+    PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )	/* dips 2,3 & 4 all on =          English */
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )	/* dips 2 & 3 = off, with 4 = on  Korean  */
+    PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )	/* dips 2 & 3 = on, with 4 = off  Korean  */
+    PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )	/* dips 2,3 & 4 all off           English */
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Language ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( English ) )
+	PORT_DIPSETTING(      0x0000, "Korean" )
+	PORT_DIPNAME( 0x0030, 0x0030, "Life Meter" )
+	PORT_DIPSETTING(      0x0000, "66%" )
+	PORT_DIPSETTING(      0x0030, "100%" )
+	PORT_DIPSETTING(      0x0020, "133%" )
+	PORT_DIPSETTING(      0x0010, "166%" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, "Time" )
+	PORT_DIPSETTING(      0x0040, "30 Seconds" )
+	PORT_DIPSETTING(      0x0080, "40 Seconds" )
+	PORT_DIPSETTING(      0x00c0, "60 Seconds" )
+	PORT_DIPSETTING(      0x0000, "80 Seconds" )
+    PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) ) /* Not sure 0x0100-0x8000 are actually dip switches */
+    PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( jumppop )
 	PORT_START	/* Controls */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
@@ -1753,16 +1880,14 @@ ROM_START( metlsavr )
 	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
 	/* this is not a real rom but instead the data extracted from
        shared ram, the MCU puts it there */
-//  ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , NO_DUMP )
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(17aa17a9) SHA1(5b83159c62473f79e7fced0d86acfaf697ad5537) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "first-1.uc1",    0x00000, 0x40000, CRC(e943dacb) SHA1(65a786467fc9efe503aad4e183df352e52143fc2) )
 
-	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* tiles */
-	ROM_LOAD16_BYTE( "first-5.rom5",     0x00001, 0x20000, CRC(dd4af746) SHA1(185a8080173b3c05fcc5f5ee2f71606987826e79) )
-	ROM_CONTINUE ( 0x100001,0x20000)
-	ROM_LOAD16_BYTE( "first-6.rom6",     0x00000, 0x20000, CRC(808b0e0b) SHA1(f4913e135986b28b4e56bdcc4fd7dd5aad9aa467) )
-	ROM_CONTINUE ( 0x100000,0x20000)
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* tiles */
+	ROM_LOAD16_BYTE( "first-5.rom5",     0x00001, 0x40000, CRC(dd4af746) SHA1(185a8080173b3c05fcc5f5ee2f71606987826e79) )
+	ROM_LOAD16_BYTE( "first-6.rom6",     0x00000, 0x40000, CRC(808b0e0b) SHA1(f4913e135986b28b4e56bdcc4fd7dd5aad9aa467) )
 
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* sprites */
 	ROM_LOAD16_BYTE( "first-7.uor1",     0x000000, 0x80000, CRC(a6816747) SHA1(0ec288a1e23bb78de0e284b759a5e83304744960) )
@@ -2372,7 +2497,7 @@ DRIVER_INIT( chokchok )
 {
 	init_htchctch();
 
-	/* different palette format, closer to tumblep */
+	/* different palette format, closer to tumblep -- is this controlled by a register? the palette was right with the hatch catch trojan */
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x140000, 0x140fff, 0, 0, paletteram16_xxxxBBBBGGGGRRRR_word_w);
 
 	/* slightly different banking */
@@ -2381,15 +2506,15 @@ DRIVER_INIT( chokchok )
 
 /******************************************************************************/
 
-GAMEX(1991, tumbleb,  tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
-GAMEX(1991, tumbleb2, tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
-GAMEX(1993, jumpkids, 0,       jumpkids,  tumblepb, jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
-GAME (1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" ) // game says 1996, testmode 1995?
-GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" ) // not 100% sure about gfx offsets
-GAME (1995, cookbib,  0,       cookbib,   cookbib,  htchctch, ROT0, "SemiCom", "Cookie & Bibi" ) // not 100% sure about gfx offsets
-GAMEX(1995, chokchok, 0,       cookbib,   chokchok, chokchok, ROT0, "SemiCom", "Choky! Choky!", GAME_IMPERFECT_GRAPHICS ) // corruption during attract mode (tmap disable?)
-GAMEX(1994, metlsavr, 0,       cookbib,   chokchok, chokchok, ROT0, "First Amusement", "Metal Saver", GAME_NOT_WORKING ) // missing protection data
-GAMEX(1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
-GAMEX(1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
-GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )
-GAME (1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio" )
+GAME( 1991, tumbleb,  tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
+GAME( 1991, tumbleb2, tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1993, jumpkids, 0,       jumpkids,  tumblepb, jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
+GAME( 1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" , 0 ) // game says 1996, testmode 1995?
+GAME( 1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" , 0 ) // not 100% sure about gfx offsets
+GAME( 1995, cookbib,  0,       cookbib,   cookbib,  htchctch, ROT0, "SemiCom", "Cookie & Bibi" , 0 ) // not 100% sure about gfx offsets
+GAME( 1995, chokchok, 0,       cookbib,   chokchok, chokchok, ROT0, "SemiCom", "Choky! Choky!", GAME_IMPERFECT_GRAPHICS ) // corruption during attract mode (tmap disable?)
+GAME( 1994, metlsavr, 0,       cookbib,   metlsavr, chokchok, ROT0, "First Amusement", "Metal Saver", 0 )
+GAME( 1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
+GAME( 1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
+GAME( 2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop", 0 )
+GAME( 1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio", 0 )

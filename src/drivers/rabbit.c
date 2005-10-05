@@ -1297,5 +1297,5 @@ ROM_START( tmmjprd )
 ROM_END
 
 
-GAMEX( 1997, rabbit,  0, rabbit,  rabbit,  rabbit,  ROT0, "Electronic Arts / Aorn", "Rabbit", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) // somewhat playable
-GAMEX( 1997, tmmjprd, 0, tmmjprd, tmmjprd, tmmjprd, ROT0, "Media / Sonnet", "Tokimeki Mahjong Paradise - Dear My Love", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1997, rabbit,  0, rabbit,  rabbit,  rabbit,  ROT0, "Electronic Arts / Aorn", "Rabbit", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) // somewhat playable
+GAME( 1997, tmmjprd, 0, tmmjprd, tmmjprd, tmmjprd, ROT0, "Media / Sonnet", "Tokimeki Mahjong Paradise - Dear My Love", GAME_NOT_WORKING | GAME_NO_SOUND )

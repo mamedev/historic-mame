@@ -581,9 +581,9 @@ static DRIVER_INIT(macs)
 
 
 
-GAMEX( 1995, macsbios, 0,        macs, macs, macs, ROT0, "I'Max", "Multi Amenity Cassette System BIOS", NOT_A_DRIVER | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1995, kisekaem, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Mahjong",  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
-GAMEX( 1995, kisekaeh, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Hanafuda",  GAME_NOT_WORKING |GAME_IMPERFECT_SOUND)
-GAMEX( 1996, cultname, macsbios, macs, macs, macs, ROT0, "I'Max", "Seimei-Kantei-Meimei-Ki Cult Name",  GAME_NOT_WORKING |GAME_IMPERFECT_SOUND)
-GAMEX( 1999, yuka,     macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Ka",  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
-GAMEX( 1999, yujan,    macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Jan",  GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) // shows *something* with hack
+GAME( 1995, macsbios, 0,        macs, macs, macs, ROT0, "I'Max", "Multi Amenity Cassette System BIOS", NOT_A_DRIVER | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1995, kisekaem, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Mahjong",  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+GAME( 1995, kisekaeh, macsbios, macs, macs, macs, ROT0, "I'Max", "Kisekae Hanafuda",  GAME_NOT_WORKING |GAME_IMPERFECT_SOUND)
+GAME( 1996, cultname, macsbios, macs, macs, macs, ROT0, "I'Max", "Seimei-Kantei-Meimei-Ki Cult Name",  GAME_NOT_WORKING |GAME_IMPERFECT_SOUND)
+GAME( 1999, yuka,     macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Ka",  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+GAME( 1999, yujan,    macsbios, macs, macs, macs, ROT0, "Yubis / T.System", "Yu-Jan",  GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) // shows *something* with hack

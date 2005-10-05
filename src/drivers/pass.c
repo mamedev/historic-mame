@@ -331,4 +331,4 @@ ROM_START( pass )
 ROM_END
 
 
-GAME( 1992, pass, 0, pass, pass, 0, ROT0, "Oksan", "Pass")
+GAME( 1992, pass, 0, pass, pass, 0, ROT0, "Oksan", "Pass", 0)

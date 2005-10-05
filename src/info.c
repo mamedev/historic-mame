@@ -128,113 +128,167 @@ static void print_game_input(FILE* out, const game_driver* game)
 	input = input_port_allocate(game->construct_ipt);
 
 	while (input->type != IPT_END)
-			{
+	{
 		if (nplayer < input->player+1)
 			nplayer = input->player+1;
 
 		switch (input->type)
-			{
-				case IPT_JOYSTICK_UP:
-				case IPT_JOYSTICK_DOWN:
-				case IPT_JOYSTICK_LEFT:
-				case IPT_JOYSTICK_RIGHT:
-				if (input->four_way)
+		{
+			case IPT_JOYSTICK_LEFT:
+			case IPT_JOYSTICK_RIGHT:
+
+				/* if control not defined, start it off as horizontal 2-way */
+				if (!control)
+					control = "joy2way";
+				else if (strcmp(control,"joy2way") == 0)
+					;
+				/* if already defined as vertical, make it 4 or 8 way */
+				else if (strcmp(control,"vjoy2way") == 0)
+				{
+					if (input->four_way)
 						control = "joy4way";
 					else
 						control = "joy8way";
-					break;
-				case IPT_JOYSTICKRIGHT_UP:
-				case IPT_JOYSTICKRIGHT_DOWN:
-				case IPT_JOYSTICKRIGHT_LEFT:
-				case IPT_JOYSTICKRIGHT_RIGHT:
-				case IPT_JOYSTICKLEFT_UP:
-				case IPT_JOYSTICKLEFT_DOWN:
-				case IPT_JOYSTICKLEFT_LEFT:
-				case IPT_JOYSTICKLEFT_RIGHT:
-				if (input->four_way)
+				}
+				break;
+
+			case IPT_JOYSTICK_UP:
+			case IPT_JOYSTICK_DOWN:
+
+				/* if control not defined, start it off as vertical 2-way */
+				if (!control)
+					control= "vjoy2way";
+				else if (strcmp(control,"vjoy2way") == 0)
+					;
+				/* if already defined as horiz, make it 4 or 8way */
+				else if (strcmp(control,"joy2way")==0)
+				{
+					if (input->four_way)
+						control = "joy4way";
+					else
+						control = "joy8way";
+				}
+				break;
+
+			case IPT_JOYSTICKRIGHT_UP:
+			case IPT_JOYSTICKRIGHT_DOWN:
+			case IPT_JOYSTICKLEFT_UP:
+			case IPT_JOYSTICKLEFT_DOWN:
+
+				/* if control not defined, start it off as vertical 2way */
+				if (!control)
+					control= "vdoublejoy2way";
+				else if (strcmp(control,"vdoublejoy2way") == 0)
+					;
+				/* if already defined as horiz, make it 4 or 8 way */
+				else if (strcmp(control,"doublejoy2way") == 0)
+				{
+					if (input->four_way)
 						control = "doublejoy4way";
 					else
 						control = "doublejoy8way";
-					break;
-				case IPT_BUTTON1:
-					if (nbutton<1) nbutton = 1;
-					break;
-				case IPT_BUTTON2:
-					if (nbutton<2) nbutton = 2;
-					break;
-				case IPT_BUTTON3:
-					if (nbutton<3) nbutton = 3;
-					break;
-				case IPT_BUTTON4:
-					if (nbutton<4) nbutton = 4;
-					break;
-				case IPT_BUTTON5:
-					if (nbutton<5) nbutton = 5;
-					break;
-				case IPT_BUTTON6:
-					if (nbutton<6) nbutton = 6;
-					break;
-				case IPT_BUTTON7:
-					if (nbutton<7) nbutton = 7;
-					break;
-				case IPT_BUTTON8:
-					if (nbutton<8) nbutton = 8;
-					break;
-				case IPT_BUTTON9:
-					if (nbutton<9) nbutton = 9;
-					break;
-				case IPT_BUTTON10:
-					if (nbutton<10) nbutton = 10;
-					break;
-				case IPT_PADDLE:
-					control = "paddle";
-					break;
-				case IPT_DIAL:
-					control = "dial";
-					break;
-				case IPT_TRACKBALL_X:
-				case IPT_TRACKBALL_Y:
-					control = "trackball";
-					break;
-				case IPT_AD_STICK_X:
-				case IPT_AD_STICK_Y:
-					control = "stick";
-					break;
-				case IPT_LIGHTGUN_X:
-				case IPT_LIGHTGUN_Y:
-					control = "lightgun";
-					break;
-				case IPT_COIN1:
-					if (ncoin < 1) ncoin = 1;
-					break;
-				case IPT_COIN2:
-					if (ncoin < 2) ncoin = 2;
-					break;
-				case IPT_COIN3:
-					if (ncoin < 3) ncoin = 3;
-					break;
-				case IPT_COIN4:
-					if (ncoin < 4) ncoin = 4;
-					break;
-				case IPT_COIN5:
-					if (ncoin < 5) ncoin = 5;
-					break;
-				case IPT_COIN6:
-					if (ncoin < 6) ncoin = 6;
-					break;
-				case IPT_COIN7:
-					if (ncoin < 7) ncoin = 7;
-					break;
-				case IPT_COIN8:
-					if (ncoin < 8) ncoin = 8;
-					break;
-				case IPT_SERVICE :
-					service = "yes";
-					break;
-				case IPT_TILT :
-					tilt = "yes";
-					break;
-			}
+				}
+				break;
+
+			case IPT_JOYSTICKRIGHT_LEFT:
+			case IPT_JOYSTICKRIGHT_RIGHT:
+			case IPT_JOYSTICKLEFT_LEFT:
+			case IPT_JOYSTICKLEFT_RIGHT:
+
+				/* if control not defined, start it off as horiz 2-way */
+				if (!control)
+					control="doublejoy2way";
+				else if (strcmp(control,"doublejoy2way") == 0)
+					;
+				/* if already defined as vertical, make it 4 or 8 way */
+				else if (strcmp(control,"vdoublejoy2way") == 0)
+				{
+					if (input->four_way)
+						control = "doublejoy4way";
+					else
+						control = "doublejoy8way";
+				}
+				break;
+
+			case IPT_BUTTON1:
+				if (nbutton<1) nbutton = 1;
+				break;
+			case IPT_BUTTON2:
+				if (nbutton<2) nbutton = 2;
+				break;
+			case IPT_BUTTON3:
+				if (nbutton<3) nbutton = 3;
+				break;
+			case IPT_BUTTON4:
+				if (nbutton<4) nbutton = 4;
+				break;
+			case IPT_BUTTON5:
+				if (nbutton<5) nbutton = 5;
+				break;
+			case IPT_BUTTON6:
+				if (nbutton<6) nbutton = 6;
+				break;
+			case IPT_BUTTON7:
+				if (nbutton<7) nbutton = 7;
+				break;
+			case IPT_BUTTON8:
+				if (nbutton<8) nbutton = 8;
+				break;
+			case IPT_BUTTON9:
+				if (nbutton<9) nbutton = 9;
+				break;
+			case IPT_BUTTON10:
+				if (nbutton<10) nbutton = 10;
+				break;
+			case IPT_PADDLE:
+				control = "paddle";
+				break;
+			case IPT_DIAL:
+				control = "dial";
+				break;
+			case IPT_TRACKBALL_X:
+			case IPT_TRACKBALL_Y:
+				control = "trackball";
+				break;
+			case IPT_AD_STICK_X:
+			case IPT_AD_STICK_Y:
+				control = "stick";
+				break;
+			case IPT_LIGHTGUN_X:
+			case IPT_LIGHTGUN_Y:
+				control = "lightgun";
+				break;
+			case IPT_COIN1:
+				if (ncoin < 1) ncoin = 1;
+				break;
+			case IPT_COIN2:
+				if (ncoin < 2) ncoin = 2;
+				break;
+			case IPT_COIN3:
+				if (ncoin < 3) ncoin = 3;
+				break;
+			case IPT_COIN4:
+				if (ncoin < 4) ncoin = 4;
+				break;
+			case IPT_COIN5:
+				if (ncoin < 5) ncoin = 5;
+				break;
+			case IPT_COIN6:
+				if (ncoin < 6) ncoin = 6;
+				break;
+			case IPT_COIN7:
+				if (ncoin < 7) ncoin = 7;
+				break;
+			case IPT_COIN8:
+				if (ncoin < 8) ncoin = 8;
+				break;
+			case IPT_SERVICE :
+				service = "yes";
+				break;
+			case IPT_TILT :
+				tilt = "yes";
+				break;
+		}
 		++input;
 	}
 
@@ -687,6 +741,11 @@ static void print_game_driver(FILE* out, const game_driver* game)
 
 	if (game->flags & GAME_UNEMULATED_PROTECTION)
 		fprintf(out, " protection=\"preliminary\"");
+
+	if (game->flags & GAME_SUPPORTS_SAVE)
+		fprintf(out, " savestate=\"supported\"");
+	else
+		fprintf(out, " savestate=\"unsupported\"");
 
 	fprintf(out, " palettesize=\"%d\"", driver.total_colors);
 

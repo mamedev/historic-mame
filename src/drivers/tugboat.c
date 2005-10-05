@@ -363,4 +363,4 @@ ROM_END
 
 
 
-GAMEX( 1982, tugboat, 0, tugboat, tugboat, 0, ROT90, "ETM", "Tugboat", GAME_IMPERFECT_GRAPHICS )
+GAME( 1982, tugboat, 0, tugboat, tugboat, 0, ROT90, "ETM", "Tugboat", GAME_IMPERFECT_GRAPHICS )

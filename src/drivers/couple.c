@@ -533,5 +533,5 @@ static DRIVER_INIT( couple )
 }
 
 /*Year is bogus,Service Mode says 1986 and title screen says 1988?*/
-GAMEX( 1986, couple,  0,      couple, couple, couple, ROT0, "The Couples", "The Couples (Set 1)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
-GAMEX( 1986, couplep, couple, couple, couplep, couple, ROT0, "The Couples", "The Couples (Set 2)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
+GAME( 1986, couple,  0,      couple, couple, couple, ROT0, "The Couples", "The Couples (Set 1)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
+GAME( 1986, couplep, couple, couple, couplep, couple, ROT0, "The Couples", "The Couples (Set 2)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)

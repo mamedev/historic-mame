@@ -25,11 +25,11 @@
 
 ***************************************************************************/
 
+extern int dump_flag;
+
 #include <math.h>
 #include "driver.h"
 #include "includes/snes.h"
-
-#define IPLROM_SIZE 64
 
 static struct
 {
@@ -38,9 +38,8 @@ static struct
 	void *timer;
 } timers[3];
 static sound_stream *channel;
-static UINT8 spc_showrom = 1;		/* Is the IPL ROM visible or not */
-static UINT8 spc_iplrom[IPLROM_SIZE];	/* Storage for the IPL rom */
 static UINT8 DSPregs[256];		/* DSP registers */
+static UINT8 ipl_region[64];	/* SPC top 64 bytes */
 
 static const int gauss[]=
 {
@@ -1137,9 +1136,14 @@ void *snes_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	UINT8 ii;
 
-	/* Copy the IPL ROM into storage */
+	/* Set up the SPC RAM pointer */
 	spc_ram = (UINT8 *)memory_region( REGION_CPU2 );
-	memcpy( spc_iplrom, &spc_ram[0xffc0], sizeof(spc_iplrom) );
+
+	/* put IPL image at the top of RAM */
+	memcpy(ipl_region, memory_region(REGION_USER5), 64);
+
+	/* default to ROM visible */
+	spc_ram[0xf1] = 0x80;
 
 	/* Sort out the ports */
 	for( ii = 0; ii < 4; ii++ )
@@ -1229,6 +1233,7 @@ READ8_HANDLER( spc_io_r )
 		case 0x5:		/* Port 1 */
 		case 0x6:		/* Port 2 */
 		case 0x7:		/* Port 3 */
+//          printf("SPC: rd %02x @ %d, PC=%x\n", spc_port_in[offset-4], offset-4, activecpu_get_pc());
 			return spc_port_in[offset - 4];
 		case 0xA:		/* Timer 0 */
 		case 0xB:		/* Timer 1 */
@@ -1282,7 +1287,18 @@ WRITE8_HANDLER( spc_io_w )
 				spc_port_in[2] = 0;
 				spc_port_in[3] = 0;
 			}
-			spc_showrom = (data & 0x80) >> 7;
+
+			if ((data & 0x80) != (spc_ram[0xf1] & 0x80))
+			{
+				if (data & 0x80)
+				{
+					memcpy(ipl_region, memory_region(REGION_USER5), 64);
+				}
+				else
+				{
+					memcpy(ipl_region, &spc_ram[0xffc0], 64);
+				}
+			}
 			break;
 		case 0x2:		/* Register address */
 			break;
@@ -1311,23 +1327,6 @@ WRITE8_HANDLER( spc_io_w )
 	spc_ram[0xf0 + offset] = data;
 }
 
-READ8_HANDLER( spc_bank_r )
-{
-	if( spc_showrom )
-	{
-		return spc_iplrom[offset];
-	}
-	else
-	{
-		return spc_ram[0xffc0 + offset];
-	}
-}
-
-WRITE8_HANDLER( spc_bank_w )
-{
-	spc_ram[0xffc0 + offset] = data;
-}
-
 READ8_HANDLER( spc_ram_r )
 {
 	return spc_ram[offset];
@@ -1336,4 +1335,16 @@ READ8_HANDLER( spc_ram_r )
 WRITE8_HANDLER( spc_ram_w )
 {
 	spc_ram[offset] = data;
+
+	// if RAM is mapped in, mirror accordingly
+	if ((!(spc_ram[0xf1] & 0x80)) && (offset >= 0xffc0))
+	{
+		ipl_region[offset-0xffc0] = data;
+	}
 }
+
+READ8_HANDLER( spc_ipl_r )
+{
+	return ipl_region[offset];
+}
+

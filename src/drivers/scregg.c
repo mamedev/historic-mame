@@ -316,6 +316,6 @@ ROM_START( eggs )
 ROM_END
 
 
-GAME( 198?, dommy,  0,      dommy,  scregg, 0, ROT270, "Technos", "Dommy" )
-GAME( 1983, scregg, 0,      scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg" )
-GAME( 1983, eggs,   scregg, scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs" )
+GAME( 198?, dommy,  0,      dommy,  scregg, 0, ROT270, "Technos", "Dommy", 0 )
+GAME( 1983, scregg, 0,      scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg", 0 )
+GAME( 1983, eggs,   scregg, scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs", 0 )

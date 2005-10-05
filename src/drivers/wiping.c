@@ -410,5 +410,5 @@ ROM_END
 
 
 
-GAME( 1982, wiping,  0,      wiping, wiping,  0, ROT90, "Nichibutsu", "Wiping" )
-GAME( 1983, rugrats, wiping, wiping, rugrats, 0, ROT90, "Nichibutsu", "Rug Rats" )
+GAME( 1982, wiping,  0,      wiping, wiping,  0, ROT90, "Nichibutsu", "Wiping", 0 )
+GAME( 1983, rugrats, wiping, wiping, rugrats, 0, ROT90, "Nichibutsu", "Rug Rats", 0 )

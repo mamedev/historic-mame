@@ -13,25 +13,25 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 				I.CF = (src & 0x8000) ? 1 : 0;
 				dst = (src << 1) + I.CF;
 				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 1:			/* ROR rm16, 1 */
 				I.CF = (src & 0x1) ? 1 : 0;
 				dst = (I.CF << 15) | (src >> 1);
 				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 2:			/* RCL rm16, 1 */
 				dst = (src << 1) + I.CF;
 				I.CF = (src & 0x8000) ? 1 : 0;
 				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 3:			/* RCR rm16, 1 */
 				dst = (I.CF << 15) | (src >> 1);
 				I.CF = src & 0x1;
 				I.OF = ((src ^ dst) & 0x8000) ? 1 : 0;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 4:			/* SHL/SAL rm16, 1 */
 			case 6:
@@ -39,21 +39,21 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 				I.CF = (src & 0x8000) ? 1 : 0;
 				I.OF = (((I.CF << 15) ^ dst) & 0x8000) ? 1 : 0;
 				SetSZPF16(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 5:			/* SHR rm16, 1 */
 				dst = src >> 1;
 				I.CF = src & 0x1;
 				I.OF = (dst & 0x8000) ? 1 : 0;
 				SetSZPF16(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 7:			/* SAR rm16, 1 */
 				dst = (INT16)(src) >> 1;
 				I.CF = src & 0x1;
 				I.OF = 0;
 				SetSZPF16(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 		}
 	} else {
@@ -64,46 +64,46 @@ static UINT16 I386OP(shift_rotate16)(UINT8 modrm, UINT32 value, UINT8 shift)
 				dst = ((src & ((UINT16)0xffff >> shift)) << shift) |
 					  ((src & ((UINT16)0xffff << (16-shift))) >> (16-shift));
 				I.CF = (src >> (16-shift)) & 0x1;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 1:			/* ROR rm16, i8 */
 				dst = ((src & ((UINT16)0xffff << shift)) >> shift) |
 					  ((src & ((UINT16)0xffff >> (16-shift))) << (16-shift));
 				I.CF = (src >> (shift-1)) & 0x1;
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 2:			/* RCL rm16, i8 */
 				dst = ((src & ((UINT16)0xffff >> shift)) << shift) |
 					  ((src & ((UINT16)0xffff << (17-shift))) >> (17-shift)) |
 					  (I.CF << (shift-1));
 				I.CF = (src >> (16-shift)) & 0x1;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 3:			/* RCR rm16, i8 */
 				dst = ((src & ((UINT16)0xffff << shift)) >> shift) |
 					  ((src & ((UINT16)0xffff >> (16-shift))) << (17-shift)) |
 					  (I.CF << (16-shift));
 				I.CF = (src >> (shift-1)) & 0x1;
-				CYCLES_RM(modrm, 9, 10);
+				CYCLES_RM(modrm, CYCLES_ROTATE_CARRY_REG, CYCLES_ROTATE_CARRY_MEM);
 				break;
 			case 4:			/* SHL/SAL rm16, i8 */
 			case 6:
 				dst = src << shift;
 				I.CF = (src & (1 << (16-shift))) ? 1 : 0;
 				SetSZPF16(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 5:			/* SHR rm16, i8 */
 				dst = src >> shift;
 				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF16(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 			case 7:			/* SAR rm16, i8 */
 				dst = (INT16)src >> shift;
 				I.CF = (src & (1 << (shift-1))) ? 1 : 0;
 				SetSZPF16(dst);
-				CYCLES_RM(modrm, 3, 7);
+				CYCLES_RM(modrm, CYCLES_ROTATE_REG, CYCLES_ROTATE_MEM);
 				break;
 		}
 
@@ -123,7 +123,7 @@ static void I386OP(adc_rm16_r16)(void)		// Opcode 0x11
 		src = ADD16(src, I.CF);
 		dst = ADD16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
@@ -131,7 +131,7 @@ static void I386OP(adc_rm16_r16)(void)		// Opcode 0x11
 		src = ADD16(src, I.CF);
 		dst = ADD16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -145,7 +145,7 @@ static void I386OP(adc_r16_rm16)(void)		// Opcode 0x13
 		src = ADD16(src, I.CF);
 		dst = ADD16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
@@ -153,7 +153,7 @@ static void I386OP(adc_r16_rm16)(void)		// Opcode 0x13
 		src = ADD16(src, I.CF);
 		dst = ADD16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -165,7 +165,7 @@ static void I386OP(adc_ax_i16)(void)		// Opcode 0x15
 	src = ADD16(src, I.CF);
 	dst = ADD16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(add_rm16_r16)(void)		// Opcode 0x01
@@ -177,14 +177,14 @@ static void I386OP(add_rm16_r16)(void)		// Opcode 0x01
 		dst = LOAD_RM16(modrm);
 		dst = ADD16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		dst = READ16(ea);
 		dst = ADD16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -197,14 +197,14 @@ static void I386OP(add_r16_rm16)(void)		// Opcode 0x03
 		dst = LOAD_REG16(modrm);
 		dst = ADD16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		dst = LOAD_REG16(modrm);
 		dst = ADD16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -215,7 +215,7 @@ static void I386OP(add_ax_i16)(void)		// Opcode 0x05
 	dst = REG16(AX);
 	dst = ADD16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(and_rm16_r16)(void)		// Opcode 0x21
@@ -227,14 +227,14 @@ static void I386OP(and_rm16_r16)(void)		// Opcode 0x21
 		dst = LOAD_RM16(modrm);
 		dst = AND16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		dst = READ16(ea);
 		dst = AND16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -247,14 +247,14 @@ static void I386OP(and_r16_rm16)(void)		// Opcode 0x23
 		dst = LOAD_REG16(modrm);
 		dst = AND16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		dst = LOAD_REG16(modrm);
 		dst = AND16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -265,7 +265,7 @@ static void I386OP(and_ax_i16)(void)		// Opcode 0x25
 	dst = REG16(AX);
 	dst = AND16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(bsf_r16_rm16)(void)		// Opcode 0x0f bc
@@ -290,10 +290,10 @@ static void I386OP(bsf_r16_rm16)(void)		// Opcode 0x0f bc
 		while( (src & (1 << temp)) == 0 ) {
 			temp++;
 			dst = temp;
-			CYCLES(3);
+			CYCLES(CYCLES_BSF);
 		}
 	}
-	CYCLES(11);
+	CYCLES(CYCLES_BSF_BASE);
 	STORE_REG16(modrm, dst);
 }
 
@@ -319,10 +319,10 @@ static void I386OP(bsr_r16_rm16)(void)		// Opcode 0x0f bd
 		while( (src & (1 << temp)) == 0 ) {
 			temp--;
 			dst = temp;
-			CYCLES(3);
+			CYCLES(CYCLES_BSR);
 		}
 	}
-	CYCLES(9);
+	CYCLES(CYCLES_BSR_BASE);
 	STORE_REG16(modrm, dst);
 }
 
@@ -339,7 +339,7 @@ static void I386OP(bt_rm16_r16)(void)		// Opcode 0x0f a3
 		else
 			I.CF = 0;
 
-		CYCLES(3);
+		CYCLES(CYCLES_BT_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -350,7 +350,7 @@ static void I386OP(bt_rm16_r16)(void)		// Opcode 0x0f a3
 		else
 			I.CF = 0;
 
-		CYCLES(12);
+		CYCLES(CYCLES_BT_REG_MEM);
 	}
 }
 
@@ -368,7 +368,7 @@ static void I386OP(btc_rm16_r16)(void)		// Opcode 0x0f bb
 		dst ^= (1 << bit);
 
 		STORE_RM16(modrm, dst);
-		CYCLES(6);
+		CYCLES(CYCLES_BTC_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -381,7 +381,7 @@ static void I386OP(btc_rm16_r16)(void)		// Opcode 0x0f bb
 		dst ^= (1 << bit);
 
 		WRITE16(ea, dst);
-		CYCLES(13);
+		CYCLES(CYCLES_BTC_REG_MEM);
 	}
 }
 
@@ -399,7 +399,7 @@ static void I386OP(btr_rm16_r16)(void)		// Opcode 0x0f b3
 		dst &= ~(1 << bit);
 
 		STORE_RM16(modrm, dst);
-		CYCLES(6);
+		CYCLES(CYCLES_BTR_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -412,7 +412,7 @@ static void I386OP(btr_rm16_r16)(void)		// Opcode 0x0f b3
 		dst &= ~(1 << bit);
 
 		WRITE16(ea, dst);
-		CYCLES(13);
+		CYCLES(CYCLES_BTR_REG_MEM);
 	}
 }
 
@@ -430,7 +430,7 @@ static void I386OP(bts_rm16_r16)(void)		// Opcode 0x0f ab
 		dst |= (1 << bit);
 
 		STORE_RM16(modrm, dst);
-		CYCLES(6);
+		CYCLES(CYCLES_BTS_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -443,7 +443,7 @@ static void I386OP(bts_rm16_r16)(void)		// Opcode 0x0f ab
 		dst |= (1 << bit);
 
 		WRITE16(ea, dst);
-		CYCLES(13);
+		CYCLES(CYCLES_BTS_REG_MEM);
 	}
 }
 
@@ -468,8 +468,9 @@ static void I386OP(call_abs16)(void)		// Opcode 0x9a
 		}
 		I.sreg[CS].selector = ptr;
 		I.eip = offset;
-		CYCLES(17 + 1);		/* TODO: Timing = 17 + m */
+		i386_load_segment_descriptor(CS);
 	}
+	CYCLES(CYCLES_CALL_INTERSEG);		/* TODO: Timing = 17 + m */
 	CHANGE_PC(I.eip);
 }
 
@@ -479,17 +480,21 @@ static void I386OP(call_rel16)(void)		// Opcode 0xe8
 
 	PUSH16( I.eip );
 	if (I.sreg[CS].d)
+	{
 		I.eip += disp;
+	}
 	else
-		I.eip = (I.eip & 0xFFFF0000) | (UINT16) (I.eip + disp);
+	{
+		I.eip = (I.eip + disp) & 0xffff;
+	}
 	CHANGE_PC(I.eip);
-	CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+	CYCLES(CYCLES_CALL);		/* TODO: Timing = 7 + m */
 }
 
 static void I386OP(cbw)(void)				// Opcode 0x98
 {
 	REG16(AX) = (INT16)((INT8)REG8(AL));
-	CYCLES(3);
+	CYCLES(CYCLES_CBW);
 }
 
 static void I386OP(cmp_rm16_r16)(void)		// Opcode 0x39
@@ -500,13 +505,13 @@ static void I386OP(cmp_rm16_r16)(void)		// Opcode 0x39
 		src = LOAD_REG16(modrm);
 		dst = LOAD_RM16(modrm);
 		SUB16(dst, src);
-		CYCLES(C_CMP_REG_REG);
+		CYCLES(CYCLES_CMP_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		dst = READ16(ea);
 		SUB16(dst, src);
-		CYCLES(C_CMP_REG_MEM);
+		CYCLES(CYCLES_CMP_REG_MEM);
 	}
 }
 
@@ -518,13 +523,13 @@ static void I386OP(cmp_r16_rm16)(void)		// Opcode 0x3b
 		src = LOAD_RM16(modrm);
 		dst = LOAD_REG16(modrm);
 		SUB16(dst, src);
-		CYCLES(C_CMP_REG_REG);
+		CYCLES(CYCLES_CMP_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		dst = LOAD_REG16(modrm);
 		SUB16(dst, src);
-		CYCLES(C_CMP_MEM_REG);
+		CYCLES(CYCLES_CMP_MEM_REG);
 	}
 }
 
@@ -534,7 +539,7 @@ static void I386OP(cmp_ax_i16)(void)		// Opcode 0x3d
 	src = FETCH16();
 	dst = REG16(AX);
 	SUB16(dst, src);
-	CYCLES(C_CMP_I_ACC);
+	CYCLES(CYCLES_CMP_IMM_ACC);
 }
 
 static void I386OP(cmpsw)(void)				// Opcode 0xa7
@@ -542,17 +547,17 @@ static void I386OP(cmpsw)(void)				// Opcode 0xa7
 	UINT32 eas, ead;
 	UINT16 src, dst;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( I.segment_override, I.address_size ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( DS, I.address_size ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	src = READ16(eas);
 	dst = READ16(ead);
 	SUB16(dst, src);
 	BUMP_SI(2);
 	BUMP_DI(2);
-	CYCLES(10);
+	CYCLES(CYCLES_CMPS);
 }
 
 static void I386OP(cwd)(void)				// Opcode 0x99
@@ -562,55 +567,55 @@ static void I386OP(cwd)(void)				// Opcode 0x99
 	} else {
 		REG16(DX) = 0x0000;
 	}
-	CYCLES(2);
+	CYCLES(CYCLES_CWD);
 }
 
 static void I386OP(dec_ax)(void)			// Opcode 0x48
 {
 	REG16(AX) = DEC16( REG16(AX) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_cx)(void)			// Opcode 0x49
 {
 	REG16(CX) = DEC16( REG16(CX) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_dx)(void)			// Opcode 0x4a
 {
 	REG16(DX) = DEC16( REG16(DX) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_bx)(void)			// Opcode 0x4b
 {
 	REG16(BX) = DEC16( REG16(BX) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_sp)(void)			// Opcode 0x4c
 {
 	REG16(SP) = DEC16( REG16(SP) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_bp)(void)			// Opcode 0x4d
 {
 	REG16(BP) = DEC16( REG16(BP) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_si)(void)			// Opcode 0x4e
 {
 	REG16(SI) = DEC16( REG16(SI) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(dec_di)(void)			// Opcode 0x4f
 {
 	REG16(DI) = DEC16( REG16(DI) );
-	CYCLES(2);
+	CYCLES(CYCLES_DEC_REG);
 }
 
 static void I386OP(imul_r16_rm16)(void)		// Opcode 0x0f af
@@ -620,11 +625,11 @@ static void I386OP(imul_r16_rm16)(void)		// Opcode 0x0f af
 	INT32 src, dst;
 	if( modrm >= 0xc0 ) {
 		src = (INT32)(INT16)LOAD_RM16(modrm);
-		CYCLES(12);		/* TODO: Correct multiply timing */
+		CYCLES(CYCLES_IMUL16_REG_REG);		/* TODO: Correct multiply timing */
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = (INT32)(INT16)READ16(ea);
-		CYCLES(15);		/* TODO: Correct multiply timing */
+		CYCLES(CYCLES_IMUL16_REG_MEM);		/* TODO: Correct multiply timing */
 	}
 
 	dst = (INT32)(INT16)LOAD_REG16(modrm);
@@ -642,11 +647,11 @@ static void I386OP(imul_r16_rm16_i16)(void)	// Opcode 0x69
 	INT32 src, dst;
 	if( modrm >= 0xc0 ) {
 		dst = (INT32)(INT16)LOAD_RM16(modrm);
-		CYCLES(12);		/* TODO: Correct multiply timing */
+		CYCLES(CYCLES_IMUL16_REG_IMM_REG);		/* TODO: Correct multiply timing */
 	} else {
 		UINT32 ea = GetEA(modrm);
 		dst = (INT32)(INT16)READ16(ea);
-		CYCLES(15);		/* TODO: Correct multiply timing */
+		CYCLES(CYCLES_IMUL16_MEM_IMM_REG);		/* TODO: Correct multiply timing */
 	}
 
 	src = (INT32)(INT16)FETCH16();
@@ -664,11 +669,11 @@ static void I386OP(imul_r16_rm16_i8)(void)	// Opcode 0x6b
 	INT32 src, dst;
 	if( modrm >= 0xc0 ) {
 		dst = (INT32)(INT16)LOAD_RM16(modrm);
-		CYCLES(12);		/* TODO: Correct multiply timing */
+		CYCLES(CYCLES_IMUL16_REG_IMM_REG);		/* TODO: Correct multiply timing */
 	} else {
 		UINT32 ea = GetEA(modrm);
 		dst = (INT32)(INT16)READ16(ea);
-		CYCLES(15);		/* TODO: Correct multiply timing */
+		CYCLES(CYCLES_IMUL16_MEM_IMM_REG);		/* TODO: Correct multiply timing */
 	}
 
 	src = (INT32)(INT8)FETCH();
@@ -684,6 +689,7 @@ static void I386OP(in_ax_i8)(void)			// Opcode 0xe5
 	UINT16 port = FETCH();
 	UINT16 data = READPORT16(port);
 	REG16(AX) = data;
+	CYCLES(CYCLES_IN_VAR);
 }
 
 static void I386OP(in_ax_dx)(void)			// Opcode 0xed
@@ -691,54 +697,55 @@ static void I386OP(in_ax_dx)(void)			// Opcode 0xed
 	UINT16 port = REG16(DX);
 	UINT16 data = READPORT16(port);
 	REG16(AX) = data;
+	CYCLES(CYCLES_IN);
 }
 
 static void I386OP(inc_ax)(void)			// Opcode 0x40
 {
 	REG16(AX) = INC16( REG16(AX) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_cx)(void)			// Opcode 0x41
 {
 	REG16(CX) = INC16( REG16(CX) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_dx)(void)			// Opcode 0x42
 {
 	REG16(DX) = INC16( REG16(DX) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_bx)(void)			// Opcode 0x43
 {
 	REG16(BX) = INC16( REG16(BX) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_sp)(void)			// Opcode 0x44
 {
 	REG16(SP) = INC16( REG16(SP) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_bp)(void)			// Opcode 0x45
 {
 	REG16(BP) = INC16( REG16(BP) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_si)(void)			// Opcode 0x46
 {
 	REG16(SI) = INC16( REG16(SI) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(inc_di)(void)			// Opcode 0x47
 {
 	REG16(DI) = INC16( REG16(DI) );
-	CYCLES(2);
+	CYCLES(CYCLES_INC_REG);
 }
 
 static void I386OP(iret16)(void)			// Opcode 0xcf
@@ -751,30 +758,36 @@ static void I386OP(iret16)(void)			// Opcode 0xcf
 		I.eip = POP16();
 		I.sreg[CS].selector = POP16();
 		set_flags( POP16() );
-		CHANGE_PC(I.eip);
 		i386_load_segment_descriptor(CS);
-		CYCLES(38);		/* TODO: Correct timing */
+		CHANGE_PC(I.eip);
 	} else {
 		/* TODO: #SS(0) exception */
 		/* TODO: #GP(0) exception */
 		I.eip = POP16();
 		I.sreg[CS].selector = POP16();
 		set_flags( POP16() );
-		CHANGE_PC(I.eip);
 		i386_load_segment_descriptor(CS);
-		CYCLES(22);
+		CHANGE_PC(I.eip);
 	}
+	CYCLES(CYCLES_IRET);
 }
 
 static void I386OP(ja_rel16)(void)			// Opcode 0x0f 87
 {
 	INT16 disp = FETCH16();
 	if( I.CF == 0 && I.ZF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -782,11 +795,18 @@ static void I386OP(jbe_rel16)(void)			// Opcode 0x0f 86
 {
 	INT16 disp = FETCH16();
 	if( I.CF != 0 || I.ZF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -794,11 +814,18 @@ static void I386OP(jc_rel16)(void)			// Opcode 0x0f 82
 {
 	INT16 disp = FETCH16();
 	if( I.CF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -806,11 +833,18 @@ static void I386OP(jg_rel16)(void)			// Opcode 0x0f 8f
 {
 	INT16 disp = FETCH16();
 	if( I.ZF == 0 && (I.SF == I.OF) ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -818,11 +852,18 @@ static void I386OP(jge_rel16)(void)			// Opcode 0x0f 8d
 {
 	INT16 disp = FETCH16();
 	if( (I.SF == I.OF) ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -830,11 +871,18 @@ static void I386OP(jl_rel16)(void)			// Opcode 0x0f 8c
 {
 	INT16 disp = FETCH16();
 	if( (I.SF != I.OF) ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -842,11 +890,18 @@ static void I386OP(jle_rel16)(void)			// Opcode 0x0f 8e
 {
 	INT16 disp = FETCH16();
 	if( I.ZF != 0 || (I.SF != I.OF) ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -854,11 +909,18 @@ static void I386OP(jnc_rel16)(void)			// Opcode 0x0f 83
 {
 	INT16 disp = FETCH16();
 	if( I.CF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -866,11 +928,18 @@ static void I386OP(jno_rel16)(void)			// Opcode 0x0f 81
 {
 	INT16 disp = FETCH16();
 	if( I.OF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -878,11 +947,18 @@ static void I386OP(jnp_rel16)(void)			// Opcode 0x0f 8b
 {
 	INT16 disp = FETCH16();
 	if( I.PF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -890,11 +966,18 @@ static void I386OP(jns_rel16)(void)			// Opcode 0x0f 89
 {
 	INT16 disp = FETCH16();
 	if( I.SF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -902,11 +985,18 @@ static void I386OP(jnz_rel16)(void)			// Opcode 0x0f 85
 {
 	INT16 disp = FETCH16();
 	if( I.ZF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -914,11 +1004,18 @@ static void I386OP(jo_rel16)(void)			// Opcode 0x0f 80
 {
 	INT16 disp = FETCH16();
 	if( I.OF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -926,11 +1023,18 @@ static void I386OP(jp_rel16)(void)			// Opcode 0x0f 8a
 {
 	INT16 disp = FETCH16();
 	if( I.PF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -938,11 +1042,18 @@ static void I386OP(js_rel16)(void)			// Opcode 0x0f 88
 {
 	INT16 disp = FETCH16();
 	if( I.SF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -950,11 +1061,18 @@ static void I386OP(jz_rel16)(void)			// Opcode 0x0f 84
 {
 	INT16 disp = FETCH16();
 	if( I.ZF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+		CYCLES(CYCLES_JCC_FULL_DISP);		/* TODO: Timing = 7 + m */
 	} else {
-		CYCLES(3);
+		CYCLES(CYCLES_JCC_FULL_DISP_NOBRANCH);
 	}
 }
 
@@ -962,21 +1080,35 @@ static void I386OP(jcxz16)(void)			// Opcode 0xe3
 {
 	INT8 disp = FETCH();
 	if( REG16(CX) == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
-		CYCLES(9 + 1);		/* TODO: Timing = 9 + m */
+		CYCLES(CYCLES_JCXZ);		/* TODO: Timing = 9 + m */
 	} else {
-		CYCLES(5);
+		CYCLES(CYCLES_JCXZ_NOBRANCH);
 	}
 }
 
 static void I386OP(jmp_rel16)(void)			// Opcode 0xe9
 {
 	INT16 disp = FETCH16();
-	/* TODO: Segment limit */
-	I.eip += disp;
+
+	if (I.sreg[CS].d)
+	{
+		I.eip += disp;
+	}
+	else
+	{
+		I.eip = (I.eip + disp) & 0xffff;
+	}
 	CHANGE_PC(I.eip);
-	CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+	CYCLES(CYCLES_JMP);		/* TODO: Timing = 7 + m */
 }
 
 static void I386OP(jmp_abs16)(void)			// Opcode 0xea
@@ -989,16 +1121,17 @@ static void I386OP(jmp_abs16)(void)			// Opcode 0xea
 		/* TODO: access rights, etc. */
 		I.eip = address;
 		I.sreg[CS].selector = segment;
+		I.performed_intersegment_jump = 1;
 		i386_load_segment_descriptor(CS);
 		CHANGE_PC(I.eip);
-		CYCLES(27 + 1);		/* TODO: correct timing */
 	} else {
 		I.eip = address;
 		I.sreg[CS].selector = segment;
+		I.performed_intersegment_jump = 1;
 		i386_load_segment_descriptor(CS);
 		CHANGE_PC(I.eip);
-		CYCLES(12 + 1);		/* TODO: Timing = 12 + m */
 	}
+	CYCLES(CYCLES_JMP_INTERSEG);
 }
 
 static void I386OP(lea16)(void)				// Opcode 0x8d
@@ -1006,27 +1139,27 @@ static void I386OP(lea16)(void)				// Opcode 0x8d
 	UINT8 modrm = FETCH();
 	UINT32 ea = GetNonTranslatedEA(modrm);
 	STORE_REG16(modrm, ea);
-	CYCLES(2);
+	CYCLES(CYCLES_LEA);
 }
 
 static void I386OP(leave16)(void)			// Opcode 0xc9
 {
 	REG16(SP) = REG16(BP);
 	REG16(BP) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_LEAVE);
 }
 
 static void I386OP(lodsw)(void)				// Opcode 0xad
 {
 	UINT32 eas;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( I.segment_override, I.address_size ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( DS, I.address_size ? REG32(ESI) : REG16(SI) );
 	}
 	REG16(AX) = READ16(eas);
 	BUMP_SI(2);
-	CYCLES(5);
+	CYCLES(CYCLES_LODS);
 }
 
 static void I386OP(loop16)(void)			// Opcode 0xe2
@@ -1034,10 +1167,17 @@ static void I386OP(loop16)(void)			// Opcode 0xe2
 	INT8 disp = FETCH();
 	REG16(CX)--;
 	if( REG16(CX) != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
 	}
-	CYCLES(11 + 1);		/* TODO: Timing = 11 + m */
+	CYCLES(CYCLES_LOOP);		/* TODO: Timing = 11 + m */
 }
 
 static void I386OP(loopne16)(void)			// Opcode 0xe0
@@ -1045,10 +1185,17 @@ static void I386OP(loopne16)(void)			// Opcode 0xe0
 	INT8 disp = FETCH();
 	REG16(CX)--;
 	if( REG16(CX) != 0 && I.ZF == 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
 	}
-	CYCLES(11 + 1);		/* TODO: Timing = 11 + m */
+	CYCLES(CYCLES_LOOPNZ);		/* TODO: Timing = 11 + m */
 }
 
 static void I386OP(loopz16)(void)			// Opcode 0xe1
@@ -1056,10 +1203,17 @@ static void I386OP(loopz16)(void)			// Opcode 0xe1
 	INT8 disp = FETCH();
 	REG16(CX)--;
 	if( REG16(CX) != 0 && I.ZF != 0 ) {
-		I.eip += disp;
+		if (I.sreg[CS].d)
+		{
+			I.eip += disp;
+		}
+		else
+		{
+			I.eip = (I.eip + disp) & 0xffff;
+		}
 		CHANGE_PC(I.eip);
 	}
-	CYCLES(11 + 1);		/* TODO: Timing = 11 + m */
+	CYCLES(CYCLES_LOOPZ);		/* TODO: Timing = 11 + m */
 }
 
 static void I386OP(mov_rm16_r16)(void)		// Opcode 0x89
@@ -1069,12 +1223,12 @@ static void I386OP(mov_rm16_r16)(void)		// Opcode 0x89
 	if( modrm >= 0xc0 ) {
 		src = LOAD_REG16(modrm);
 		STORE_RM16(modrm, src);
-		CYCLES(C_MOV_REG_REG);
+		CYCLES(CYCLES_MOV_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		WRITE16(ea, src);
-		CYCLES(C_MOV_REG_MEM);
+		CYCLES(CYCLES_MOV_REG_MEM);
 	}
 }
 
@@ -1085,12 +1239,12 @@ static void I386OP(mov_r16_rm16)(void)		// Opcode 0x8b
 	if( modrm >= 0xc0 ) {
 		src = LOAD_RM16(modrm);
 		STORE_REG16(modrm, src);
-		CYCLES(C_MOV_REG_REG);
+		CYCLES(CYCLES_MOV_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		STORE_REG16(modrm, src);
-		CYCLES(C_MOV_MEM_REG);
+		CYCLES(CYCLES_MOV_MEM_REG);
 	}
 }
 
@@ -1100,12 +1254,13 @@ static void I386OP(mov_rm16_i16)(void)		// Opcode 0xc7
 	if( modrm >= 0xc0 ) {
 		UINT16 value = FETCH16();
 		STORE_RM16(modrm, value);
+		CYCLES(CYCLES_MOV_IMM_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 value = FETCH16();
 		WRITE16(ea, value);
+		CYCLES(CYCLES_MOV_IMM_MEM);
 	}
-	CYCLES(2);
 }
 
 static void I386OP(mov_ax_m16)(void)		// Opcode 0xa1
@@ -1123,7 +1278,7 @@ static void I386OP(mov_ax_m16)(void)		// Opcode 0xa1
 		ea = i386_translate( DS, offset );
 	}
 	REG16(AX) = READ16(ea);
-	CYCLES(4);
+	CYCLES(CYCLES_MOV_MEM_ACC);
 }
 
 static void I386OP(mov_m16_ax)(void)		// Opcode 0xa3
@@ -1141,55 +1296,55 @@ static void I386OP(mov_m16_ax)(void)		// Opcode 0xa3
 		ea = i386_translate( DS, offset );
 	}
 	WRITE16( ea, REG16(AX) );
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_ACC_MEM);
 }
 
 static void I386OP(mov_ax_i16)(void)		// Opcode 0xb8
 {
 	REG16(AX) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_cx_i16)(void)		// Opcode 0xb9
 {
 	REG16(CX) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_dx_i16)(void)		// Opcode 0xba
 {
 	REG16(DX) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_bx_i16)(void)		// Opcode 0xbb
 {
 	REG16(BX) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_sp_i16)(void)		// Opcode 0xbc
 {
 	REG16(SP) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_bp_i16)(void)		// Opcode 0xbd
 {
 	REG16(BP) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_si_i16)(void)		// Opcode 0xbe
 {
 	REG16(SI) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(mov_di_i16)(void)		// Opcode 0xbf
 {
 	REG16(DI) = FETCH16();
-	CYCLES(2);
+	CYCLES(CYCLES_MOV_IMM_REG);
 }
 
 static void I386OP(movsw)(void)				// Opcode 0xa5
@@ -1197,16 +1352,16 @@ static void I386OP(movsw)(void)				// Opcode 0xa5
 	UINT32 eas, ead;
 	UINT16 v;
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( I.segment_override, I.address_size ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
+		eas = i386_translate( DS, I.address_size ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	v = READ16(eas);
 	WRITE16(ead, v);
 	BUMP_SI(2);
 	BUMP_DI(2);
-	CYCLES(8);
+	CYCLES(CYCLES_MOVS);
 }
 
 static void I386OP(movsx_r16_rm8)(void)		// Opcode 0x0f be
@@ -1215,12 +1370,12 @@ static void I386OP(movsx_r16_rm8)(void)		// Opcode 0x0f be
 	if( modrm >= 0xc0 ) {
 		INT16 src = (INT8)LOAD_RM8(modrm);
 		STORE_REG16(modrm, src);
-		CYCLES(3);
+		CYCLES(CYCLES_MOVSX_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		INT16 src = (INT8)READ8(ea);
 		STORE_REG16(modrm, src);
-		CYCLES(6);
+		CYCLES(CYCLES_MOVSX_MEM_REG);
 	}
 }
 
@@ -1230,12 +1385,12 @@ static void I386OP(movzx_r16_rm8)(void)		// Opcode 0x0f b6
 	if( modrm >= 0xc0 ) {
 		UINT16 src = (UINT8)LOAD_RM8(modrm);
 		STORE_REG16(modrm, src);
-		CYCLES(3);
+		CYCLES(CYCLES_MOVZX_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 src = (UINT8)READ8(ea);
 		STORE_REG16(modrm, src);
-		CYCLES(6);
+		CYCLES(CYCLES_MOVZX_MEM_REG);
 	}
 }
 
@@ -1248,14 +1403,14 @@ static void I386OP(or_rm16_r16)(void)		// Opcode 0x09
 		dst = LOAD_RM16(modrm);
 		dst = OR16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		dst = READ16(ea);
 		dst = OR16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1268,14 +1423,14 @@ static void I386OP(or_r16_rm16)(void)		// Opcode 0x0b
 		dst = LOAD_REG16(modrm);
 		dst = OR16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		dst = LOAD_REG16(modrm);
 		dst = OR16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -1286,7 +1441,7 @@ static void I386OP(or_ax_i16)(void)			// Opcode 0x0d
 	dst = REG16(AX);
 	dst = OR16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(out_ax_i8)(void)			// Opcode 0xe7
@@ -1294,6 +1449,7 @@ static void I386OP(out_ax_i8)(void)			// Opcode 0xe7
 	UINT16 port = FETCH();
 	UINT16 data = REG16(AX);
 	WRITEPORT16(port, data);
+	CYCLES(CYCLES_OUT_VAR);
 }
 
 static void I386OP(out_ax_dx)(void)			// Opcode 0xef
@@ -1301,54 +1457,55 @@ static void I386OP(out_ax_dx)(void)			// Opcode 0xef
 	UINT16 port = REG16(DX);
 	UINT16 data = REG16(AX);
 	WRITEPORT16(port, data);
+	CYCLES(CYCLES_OUT);
 }
 
 static void I386OP(pop_ax)(void)			// Opcode 0x58
 {
 	REG16(AX) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_cx)(void)			// Opcode 0x59
 {
 	REG16(CX) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_dx)(void)			// Opcode 0x5a
 {
 	REG16(DX) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_bx)(void)			// Opcode 0x5b
 {
 	REG16(BX) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_sp)(void)			// Opcode 0x5c
 {
 	REG16(SP) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_bp)(void)			// Opcode 0x5d
 {
 	REG16(BP) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_si)(void)			// Opcode 0x5e
 {
 	REG16(SI) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_di)(void)			// Opcode 0x5f
 {
 	REG16(DI) = POP16();
-	CYCLES(4);
+	CYCLES(CYCLES_POP_REG_SHORT);
 }
 
 static void I386OP(pop_ds16)(void)			// Opcode 0x1f
@@ -1356,10 +1513,10 @@ static void I386OP(pop_ds16)(void)			// Opcode 0x1f
 	I.sreg[DS].selector = POP16();
 	if( PROTECTED_MODE ) {
 		i386_load_segment_descriptor(DS);
-		CYCLES(21);
 	} else {
-		CYCLES(7);
+		i386_load_segment_descriptor(DS);
 	}
+	CYCLES(CYCLES_POP_SREG);
 }
 
 static void I386OP(pop_es16)(void)			// Opcode 0x07
@@ -1367,10 +1524,10 @@ static void I386OP(pop_es16)(void)			// Opcode 0x07
 	I.sreg[ES].selector = POP16();
 	if( PROTECTED_MODE ) {
 		i386_load_segment_descriptor(ES);
-		CYCLES(21);
 	} else {
-		CYCLES(7);
+		i386_load_segment_descriptor(ES);
 	}
+	CYCLES(CYCLES_POP_SREG);
 }
 
 static void I386OP(pop_fs16)(void)			// Opcode 0x0f a1
@@ -1378,10 +1535,10 @@ static void I386OP(pop_fs16)(void)			// Opcode 0x0f a1
 	I.sreg[FS].selector = POP16();
 	if( PROTECTED_MODE ) {
 		i386_load_segment_descriptor(FS);
-		CYCLES(21);
 	} else {
-		CYCLES(7);
+		i386_load_segment_descriptor(FS);
 	}
+	CYCLES(CYCLES_POP_SREG);
 }
 
 static void I386OP(pop_gs16)(void)			// Opcode 0x0f a9
@@ -1389,10 +1546,10 @@ static void I386OP(pop_gs16)(void)			// Opcode 0x0f a9
 	I.sreg[GS].selector = POP16();
 	if( PROTECTED_MODE ) {
 		i386_load_segment_descriptor(GS);
-		CYCLES(21);
 	} else {
-		CYCLES(7);
+		i386_load_segment_descriptor(GS);
 	}
+	CYCLES(CYCLES_POP_SREG);
 }
 
 static void I386OP(pop_ss16)(void)			// Opcode 0x17
@@ -1400,10 +1557,10 @@ static void I386OP(pop_ss16)(void)			// Opcode 0x17
 	I.sreg[SS].selector = POP16();
 	if( PROTECTED_MODE ) {
 		i386_load_segment_descriptor(SS);
-		CYCLES(21);
 	} else {
-		CYCLES(7);
+		i386_load_segment_descriptor(SS);
 	}
+	CYCLES(CYCLES_POP_SREG);
 }
 
 static void I386OP(pop_rm16)(void)			// Opcode 0x8f
@@ -1417,7 +1574,7 @@ static void I386OP(pop_rm16)(void)			// Opcode 0x8f
 		UINT32 ea = GetEA(modrm);
 		WRITE16(ea, value);
 	}
-	CYCLES(5);
+	CYCLES(CYCLES_POP_RM);
 }
 
 static void I386OP(popa)(void)				// Opcode 0x61
@@ -1430,105 +1587,105 @@ static void I386OP(popa)(void)				// Opcode 0x61
 	REG16(DX) = POP16();
 	REG16(CX) = POP16();
 	REG16(AX) = POP16();
-	CYCLES(24);
+	CYCLES(CYCLES_POPA);
 }
 
 static void I386OP(popf)(void)				// Opcode 0x9d
 {
 	UINT16 value = POP16();
 	set_flags(value);
-	CYCLES(5);
+	CYCLES(CYCLES_POPF);
 }
 
 static void I386OP(push_ax)(void)			// Opcode 0x50
 {
 	PUSH16( REG16(AX) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_cx)(void)			// Opcode 0x51
 {
 	PUSH16( REG16(CX) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_dx)(void)			// Opcode 0x52
 {
 	PUSH16( REG16(DX) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_bx)(void)			// Opcode 0x53
 {
 	PUSH16( REG16(BX) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_sp)(void)			// Opcode 0x54
 {
 	PUSH16( REG16(SP) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_bp)(void)			// Opcode 0x55
 {
 	PUSH16( REG16(BP) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_si)(void)			// Opcode 0x56
 {
 	PUSH16( REG16(SI) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_di)(void)			// Opcode 0x57
 {
 	PUSH16( REG16(DI) );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_REG_SHORT);
 }
 
 static void I386OP(push_cs16)(void)			// Opcode 0x0e
 {
 	PUSH16( I.sreg[CS].selector );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_SREG);
 }
 
 static void I386OP(push_ds16)(void)			// Opcode 0x1e
 {
 	PUSH16( I.sreg[DS].selector );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_SREG);
 }
 
 static void I386OP(push_es16)(void)			// Opcode 0x06
 {
 	PUSH16( I.sreg[ES].selector );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_SREG);
 }
 
 static void I386OP(push_fs16)(void)			// Opcode 0x0f a0
 {
 	PUSH16( I.sreg[FS].selector );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_SREG);
 }
 
 static void I386OP(push_gs16)(void)			// Opcode 0x0f a8
 {
 	PUSH16( I.sreg[GS].selector );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_SREG);
 }
 
 static void I386OP(push_ss16)(void)			// Opcode 0x16
 {
 	PUSH16( I.sreg[SS].selector );
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_SREG);
 }
 
 static void I386OP(push_i16)(void)			// Opcode 0x68
 {
 	UINT16 value = FETCH16();
 	PUSH16(value);
-	CYCLES(2);
+	CYCLES(CYCLES_PUSH_IMM);
 }
 
 static void I386OP(pusha)(void)				// Opcode 0x60
@@ -1542,13 +1699,13 @@ static void I386OP(pusha)(void)				// Opcode 0x60
 	PUSH16( REG16(BP) );
 	PUSH16( REG16(SI) );
 	PUSH16( REG16(DI) );
-	CYCLES(18);
+	CYCLES(CYCLES_PUSHA);
 }
 
 static void I386OP(pushf)(void)				// Opcode 0x9c
 {
 	PUSH16( get_flags() & 0xffff );
-	CYCLES(4);
+	CYCLES(CYCLES_PUSHF);
 }
 
 static void I386OP(ret_near16_i16)(void)	// Opcode 0xc2
@@ -1557,14 +1714,14 @@ static void I386OP(ret_near16_i16)(void)	// Opcode 0xc2
 	I.eip = POP16();
 	REG16(SP) += disp;
 	CHANGE_PC(I.eip);
-	CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+	CYCLES(CYCLES_RET_IMM);		/* TODO: Timing = 10 + m */
 }
 
 static void I386OP(ret_near16)(void)		// Opcode 0xc3
 {
 	I.eip = POP16();
 	CHANGE_PC(I.eip);
-	CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+	CYCLES(CYCLES_RET);		/* TODO: Timing = 10 + m */
 }
 
 static void I386OP(sbb_rm16_r16)(void)		// Opcode 0x19
@@ -1576,14 +1733,14 @@ static void I386OP(sbb_rm16_r16)(void)		// Opcode 0x19
 		dst = LOAD_RM16(modrm);
 		dst = SUB16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm) + I.CF;
 		dst = READ16(ea);
 		dst = SUB16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1596,14 +1753,14 @@ static void I386OP(sbb_r16_rm16)(void)		// Opcode 0x1b
 		dst = LOAD_REG16(modrm);
 		dst = SUB16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea) + I.CF;
 		dst = LOAD_REG16(modrm);
 		dst = SUB16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -1614,19 +1771,19 @@ static void I386OP(sbb_ax_i16)(void)		// Opcode 0x1d
 	dst = REG16(AX);
 	dst = SUB16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(scasw)(void)				// Opcode 0xaf
 {
 	UINT32 eas;
 	UINT16 src, dst;
-	eas = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	eas = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	src = READ16(eas);
 	dst = REG16(AX);
 	SUB16(dst, src);
 	BUMP_DI(2);
-	CYCLES(8);
+	CYCLES(CYCLES_SCAS);
 }
 
 static void I386OP(shld16_i8)(void)			// Opcode 0x0f a4
@@ -1649,7 +1806,7 @@ static void I386OP(shld16_i8)(void)			// Opcode 0x0f a4
 			SetSZPF16(dst);
 		}
 		STORE_RM16(modrm, dst);
-		CYCLES(3);
+		CYCLES(CYCLES_SHLD_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -1667,7 +1824,7 @@ static void I386OP(shld16_i8)(void)			// Opcode 0x0f a4
 			SetSZPF16(dst);
 		}
 		WRITE16(ea, dst);
-		CYCLES(7);
+		CYCLES(CYCLES_SHLD_MEM);
 	}
 }
 
@@ -1691,7 +1848,7 @@ static void I386OP(shld16_cl)(void)			// Opcode 0x0f a5
 			SetSZPF16(dst);
 		}
 		STORE_RM16(modrm, dst);
-		CYCLES(3);
+		CYCLES(CYCLES_SHLD_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -1709,7 +1866,7 @@ static void I386OP(shld16_cl)(void)			// Opcode 0x0f a5
 			SetSZPF16(dst);
 		}
 		WRITE16(ea, dst);
-		CYCLES(7);
+		CYCLES(CYCLES_SHLD_MEM);
 	}
 }
 
@@ -1729,7 +1886,7 @@ static void I386OP(shrd16_i8)(void)			// Opcode 0x0f ac
 			SetSZPF16(dst);
 		}
 		STORE_RM16(modrm, dst);
-		CYCLES(3);
+		CYCLES(CYCLES_SHRD_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -1743,7 +1900,7 @@ static void I386OP(shrd16_i8)(void)			// Opcode 0x0f ac
 			SetSZPF16(dst);
 		}
 		WRITE16(ea, dst);
-		CYCLES(7);
+		CYCLES(CYCLES_SHRD_MEM);
 	}
 }
 
@@ -1763,7 +1920,7 @@ static void I386OP(shrd16_cl)(void)			// Opcode 0x0f ad
 			SetSZPF16(dst);
 		}
 		STORE_RM16(modrm, dst);
-		CYCLES(3);
+		CYCLES(CYCLES_SHRD_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 dst = READ16(ea);
@@ -1777,17 +1934,17 @@ static void I386OP(shrd16_cl)(void)			// Opcode 0x0f ad
 			SetSZPF16(dst);
 		}
 		WRITE16(ea, dst);
-		CYCLES(7);
+		CYCLES(CYCLES_SHRD_MEM);
 	}
 }
 
 static void I386OP(stosw)(void)				// Opcode 0xab
 {
 	UINT32 ead;
-	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
+	ead = i386_translate( ES, I.address_size ? REG32(EDI) : REG16(DI) );
 	WRITE16(ead, REG16(AX));
 	BUMP_DI(2);
-	CYCLES(5);
+	CYCLES(CYCLES_STOS);
 }
 
 static void I386OP(sub_rm16_r16)(void)		// Opcode 0x29
@@ -1799,14 +1956,14 @@ static void I386OP(sub_rm16_r16)(void)		// Opcode 0x29
 		dst = LOAD_RM16(modrm);
 		dst = SUB16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		dst = READ16(ea);
 		dst = SUB16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1819,14 +1976,14 @@ static void I386OP(sub_r16_rm16)(void)		// Opcode 0x2b
 		dst = LOAD_REG16(modrm);
 		dst = SUB16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		dst = LOAD_REG16(modrm);
 		dst = SUB16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -1837,7 +1994,7 @@ static void I386OP(sub_ax_i16)(void)		// Opcode 0x2d
 	dst = REG16(AX);
 	dst = SUB16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 static void I386OP(test_ax_i16)(void)		// Opcode 0xa9
@@ -1848,7 +2005,7 @@ static void I386OP(test_ax_i16)(void)		// Opcode 0xa9
 	SetSZPF16(dst);
 	I.CF = 0;
 	I.OF = 0;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_TEST_IMM_ACC);
 }
 
 static void I386OP(test_rm16_r16)(void)		// Opcode 0x85
@@ -1862,7 +2019,7 @@ static void I386OP(test_rm16_r16)(void)		// Opcode 0x85
 		SetSZPF16(dst);
 		I.CF = 0;
 		I.OF = 0;
-		CYCLES(2);
+		CYCLES(CYCLES_TEST_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
@@ -1871,7 +2028,7 @@ static void I386OP(test_rm16_r16)(void)		// Opcode 0x85
 		SetSZPF16(dst);
 		I.CF = 0;
 		I.OF = 0;
-		CYCLES(5);
+		CYCLES(CYCLES_TEST_REG_MEM);
 	}
 }
 
@@ -1881,7 +2038,7 @@ static void I386OP(xchg_ax_cx)(void)		// Opcode 0x91
 	temp = REG16(AX);
 	REG16(AX) = REG16(CX);
 	REG16(CX) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_ax_dx)(void)		// Opcode 0x92
@@ -1890,7 +2047,7 @@ static void I386OP(xchg_ax_dx)(void)		// Opcode 0x92
 	temp = REG16(AX);
 	REG16(AX) = REG16(DX);
 	REG16(DX) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_ax_bx)(void)		// Opcode 0x93
@@ -1899,7 +2056,7 @@ static void I386OP(xchg_ax_bx)(void)		// Opcode 0x93
 	temp = REG16(AX);
 	REG16(AX) = REG16(BX);
 	REG16(BX) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_ax_sp)(void)		// Opcode 0x94
@@ -1908,7 +2065,7 @@ static void I386OP(xchg_ax_sp)(void)		// Opcode 0x94
 	temp = REG16(AX);
 	REG16(AX) = REG16(SP);
 	REG16(SP) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_ax_bp)(void)		// Opcode 0x95
@@ -1917,7 +2074,7 @@ static void I386OP(xchg_ax_bp)(void)		// Opcode 0x95
 	temp = REG16(AX);
 	REG16(AX) = REG16(BP);
 	REG16(BP) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_ax_si)(void)		// Opcode 0x96
@@ -1926,7 +2083,7 @@ static void I386OP(xchg_ax_si)(void)		// Opcode 0x96
 	temp = REG16(AX);
 	REG16(AX) = REG16(SI);
 	REG16(SI) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_ax_di)(void)		// Opcode 0x97
@@ -1935,7 +2092,7 @@ static void I386OP(xchg_ax_di)(void)		// Opcode 0x97
 	temp = REG16(AX);
 	REG16(AX) = REG16(DI);
 	REG16(DI) = temp;
-	CYCLES(3);
+	CYCLES(CYCLES_XCHG_REG_REG);
 }
 
 static void I386OP(xchg_r16_rm16)(void)		// Opcode 0x87
@@ -1946,14 +2103,14 @@ static void I386OP(xchg_r16_rm16)(void)		// Opcode 0x87
 		UINT16 dst = LOAD_REG16(modrm);
 		STORE_REG16(modrm, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(3);
+		CYCLES(CYCLES_XCHG_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT16 src = READ16(ea);
 		UINT16 dst = LOAD_REG16(modrm);
 		STORE_REG16(modrm, src);
 		WRITE16(ea, dst);
-		CYCLES(5);
+		CYCLES(CYCLES_XCHG_REG_MEM);
 	}
 }
 
@@ -1966,14 +2123,14 @@ static void I386OP(xor_rm16_r16)(void)		// Opcode 0x31
 		dst = LOAD_RM16(modrm);
 		dst = XOR16(dst, src);
 		STORE_RM16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = LOAD_REG16(modrm);
 		dst = READ16(ea);
 		dst = XOR16(dst, src);
 		WRITE16(ea, dst);
-		CYCLES(C_ALU_REG_MEM);
+		CYCLES(CYCLES_ALU_REG_MEM);
 	}
 }
 
@@ -1986,14 +2143,14 @@ static void I386OP(xor_r16_rm16)(void)		// Opcode 0x33
 		dst = LOAD_REG16(modrm);
 		dst = XOR16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_REG_REG);
+		CYCLES(CYCLES_ALU_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		src = READ16(ea);
 		dst = LOAD_REG16(modrm);
 		dst = XOR16(dst, src);
 		STORE_REG16(modrm, dst);
-		CYCLES(C_ALU_MEM_REG);
+		CYCLES(CYCLES_ALU_MEM_REG);
 	}
 }
 
@@ -2004,7 +2161,7 @@ static void I386OP(xor_ax_i16)(void)		// Opcode 0x35
 	dst = REG16(AX);
 	dst = XOR16(dst, src);
 	REG16(AX) = dst;
-	CYCLES(C_ALU_I_ACC);
+	CYCLES(CYCLES_ALU_IMM_ACC);
 }
 
 
@@ -2023,14 +2180,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = FETCH16();
 				dst = ADD16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16();
 				dst = ADD16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 1:		// OR Rm16, i16
@@ -2039,14 +2196,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = FETCH16();
 				dst = OR16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16();
 				dst = OR16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 2:		// ADC Rm16, i16
@@ -2056,7 +2213,7 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = ADD16(src, I.CF);
 				dst = ADD16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
@@ -2064,7 +2221,7 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = ADD16(src, I.CF);
 				dst = ADD16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 3:		// SBB Rm16, i16
@@ -2073,14 +2230,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = FETCH16() + I.CF;
 				dst = SUB16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16() + I.CF;
 				dst = SUB16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 4:		// AND Rm16, i16
@@ -2089,14 +2246,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = FETCH16();
 				dst = AND16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16();
 				dst = AND16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 5:		// SUB Rm16, i16
@@ -2105,14 +2262,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = FETCH16();
 				dst = SUB16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16();
 				dst = SUB16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 6:		// XOR Rm16, i16
@@ -2121,14 +2278,14 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				src = FETCH16();
 				dst = XOR16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16();
 				dst = XOR16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 7:		// CMP Rm16, i16
@@ -2136,13 +2293,13 @@ static void I386OP(group81_16)(void)		// Opcode 0x81
 				dst = LOAD_RM16(modrm);
 				src = FETCH16();
 				SUB16(dst, src);
-				CYCLES(C_CMP_REG_REG);
+				CYCLES(CYCLES_CMP_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = FETCH16();
 				SUB16(dst, src);
-				CYCLES(C_CMP_REG_MEM);
+				CYCLES(CYCLES_CMP_REG_MEM);
 			}
 			break;
 	}
@@ -2162,14 +2319,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = ADD16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = ADD16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 1:		// OR Rm16, i16
@@ -2178,14 +2335,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = OR16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = OR16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 2:		// ADC Rm16, i16
@@ -2195,7 +2352,7 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = ADD16(src, I.CF);
 				dst = ADD16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
@@ -2203,7 +2360,7 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = ADD16(src, I.CF);
 				dst = ADD16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 3:		// SBB Rm16, i16
@@ -2212,14 +2369,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = ((UINT16)(INT16)(INT8)FETCH()) + I.CF;
 				dst = SUB16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = ((UINT16)(INT16)(INT8)FETCH()) + I.CF;
 				dst = SUB16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 4:		// AND Rm16, i16
@@ -2228,14 +2385,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = AND16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = AND16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 5:		// SUB Rm16, i16
@@ -2244,14 +2401,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = SUB16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = SUB16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 6:		// XOR Rm16, i16
@@ -2260,14 +2417,14 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = XOR16(dst, src);
 				STORE_RM16(modrm, dst);
-				CYCLES(C_ALU_REG_REG);
+				CYCLES(CYCLES_ALU_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				dst = XOR16(dst, src);
 				WRITE16(ea, dst);
-				CYCLES(C_ALU_REG_MEM);
+				CYCLES(CYCLES_ALU_REG_MEM);
 			}
 			break;
 		case 7:		// CMP Rm16, i16
@@ -2275,13 +2432,13 @@ static void I386OP(group83_16)(void)		// Opcode 0x83
 				dst = LOAD_RM16(modrm);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				SUB16(dst, src);
-				CYCLES(C_CMP_REG_REG);
+				CYCLES(CYCLES_CMP_REG_REG);
 			} else {
 				ea = GetEA(modrm);
 				dst = READ16(ea);
 				src = (UINT16)(INT16)(INT8)FETCH();
 				SUB16(dst, src);
-				CYCLES(C_CMP_REG_MEM);
+				CYCLES(CYCLES_CMP_REG_MEM);
 			}
 			break;
 	}
@@ -2354,7 +2511,7 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				dst &= src;
 				I.CF = I.OF = I.AF = 0;
 				SetSZPF16(dst);
-				CYCLES(2);
+				CYCLES(CYCLES_TEST_IMM_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
@@ -2362,7 +2519,7 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				dst &= src;
 				I.CF = I.OF = I.AF = 0;
 				SetSZPF16(dst);
-				CYCLES(5);
+				CYCLES(CYCLES_TEST_IMM_MEM);
 			}
 			break;
 		case 2:			/* NOT Rm16 */
@@ -2370,13 +2527,13 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				UINT16 dst = LOAD_RM16(modrm);
 				dst = ~dst;
 				STORE_RM16(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_NOT_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
 				dst = ~dst;
 				WRITE16(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_NOT_MEM);
 			}
 			break;
 		case 3:			/* NEG Rm16 */
@@ -2384,13 +2541,13 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				UINT16 dst = LOAD_RM16(modrm);
 				dst = SUB16( 0, dst );
 				STORE_RM16(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_NEG_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
 				dst = SUB16( 0, dst );
 				WRITE16(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_NEG_MEM);
 			}
 			break;
 		case 4:			/* MUL AX, Rm16 */
@@ -2399,11 +2556,11 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				UINT16 src, dst;
 				if( modrm >= 0xc0 ) {
 					src = LOAD_RM16(modrm);
-					CYCLES(12);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_MUL16_ACC_REG);		/* TODO: Correct multiply timing */
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = READ16(ea);
-					CYCLES(15);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_MUL16_ACC_MEM);		/* TODO: Correct multiply timing */
 				}
 
 				dst = REG16(AX);
@@ -2420,11 +2577,11 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				INT32 src, dst;
 				if( modrm >= 0xc0 ) {
 					src = (INT32)(INT16)LOAD_RM16(modrm);
-					CYCLES(12);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_IMUL16_ACC_REG);		/* TODO: Correct multiply timing */
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = (INT32)(INT16)READ16(ea);
-					CYCLES(15);		/* TODO: Correct multiply timing */
+					CYCLES(CYCLES_IMUL16_ACC_MEM);		/* TODO: Correct multiply timing */
 				}
 
 				dst = (INT32)(INT16)REG16(AX);
@@ -2442,11 +2599,11 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				UINT16 src;
 				if( modrm >= 0xc0 ) {
 					src = LOAD_RM16(modrm);
-					CYCLES(22);
+					CYCLES(CYCLES_DIV16_ACC_REG);
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = READ16(ea);
-					CYCLES(25);
+					CYCLES(CYCLES_DIV16_ACC_MEM);
 				}
 
 				quotient = ((UINT32)(REG16(DX)) << 16) | (UINT32)(REG16(AX));
@@ -2464,17 +2621,17 @@ static void I386OP(groupF7_16)(void)		// Opcode 0xf7
 				}
 			}
 			break;
-		case 7:			/* IDIV EAX, Rm32 */
+		case 7:			/* IDIV AX, Rm16 */
 			{
 				INT32 quotient, remainder, result;
 				UINT16 src;
 				if( modrm >= 0xc0 ) {
 					src = LOAD_RM16(modrm);
-					CYCLES(27);
+					CYCLES(CYCLES_IDIV16_ACC_REG);
 				} else {
 					UINT32 ea = GetEA(modrm);
 					src = READ16(ea);
-					CYCLES(30);
+					CYCLES(CYCLES_IDIV16_ACC_MEM);
 				}
 
 				quotient = (((INT32)REG16(DX)) << 16) | ((UINT32)REG16(AX));
@@ -2506,13 +2663,13 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				UINT16 dst = LOAD_RM16(modrm);
 				dst = INC16(dst);
 				STORE_RM16(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_INC_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
 				dst = INC16(dst);
 				WRITE16(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_INC_MEM);
 			}
 			break;
 		case 1:			/* DEC Rm16 */
@@ -2520,13 +2677,13 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				UINT16 dst = LOAD_RM16(modrm);
 				dst = DEC16(dst);
 				STORE_RM16(modrm, dst);
-				CYCLES(2);
+				CYCLES(CYCLES_DEC_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
 				dst = DEC16(dst);
 				WRITE16(ea, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_DEC_MEM);
 			}
 			break;
 		case 2:			/* CALL Rm16 */
@@ -2534,11 +2691,11 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				UINT16 address;
 				if( modrm >= 0xc0 ) {
 					address = LOAD_RM16(modrm);
-					CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+					CYCLES(CYCLES_CALL_REG);		/* TODO: Timing = 7 + m */
 				} else {
 					UINT32 ea = GetEA(modrm);
 					address = READ16(ea);
-					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+					CYCLES(CYCLES_CALL_MEM);		/* TODO: Timing = 10 + m */
 				}
 				PUSH16( I.eip );
 				I.eip = address;
@@ -2554,14 +2711,14 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 					UINT32 ea = GetEA(modrm);
 					address = READ16(ea + 0);
 					selector = READ16(ea + 2);
-					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+					CYCLES(CYCLES_CALL_MEM_INTERSEG);		/* TODO: Timing = 10 + m */
 				}
 				PUSH16( I.sreg[CS].selector );
 				PUSH16( I.eip );
 				I.sreg[CS].selector = selector;
+				I.performed_intersegment_jump = 1;
 				i386_load_segment_descriptor( CS );
 				I.eip = address;
-				I.performed_intersegment_jump = 1;
 				CHANGE_PC(I.eip);
 			}
 			break;
@@ -2570,11 +2727,11 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 				UINT16 address;
 				if( modrm >= 0xc0 ) {
 					address = LOAD_RM16(modrm);
-					CYCLES(7 + 1);		/* TODO: Timing = 7 + m */
+					CYCLES(CYCLES_JMP_REG);		/* TODO: Timing = 7 + m */
 				} else {
 					UINT32 ea = GetEA(modrm);
 					address = READ16(ea);
-					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+					CYCLES(CYCLES_JMP_MEM);		/* TODO: Timing = 10 + m */
 				}
 				I.eip = address;
 				CHANGE_PC(I.eip);
@@ -2589,12 +2746,12 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 					UINT32 ea = GetEA(modrm);
 					address = READ16(ea + 0);
 					selector = READ16(ea + 2);
-					CYCLES(10 + 1);		/* TODO: Timing = 10 + m */
+					CYCLES(CYCLES_JMP_MEM_INTERSEG);		/* TODO: Timing = 10 + m */
 				}
 				I.sreg[CS].selector = selector;
+				I.performed_intersegment_jump = 1;
 				i386_load_segment_descriptor( CS );
 				I.eip = address;
-				I.performed_intersegment_jump = 1;
 				CHANGE_PC(I.eip);
 			}
 			break;
@@ -2608,7 +2765,7 @@ static void I386OP(groupFF_16)(void)		// Opcode 0xff
 					value = READ16(ea);
 				}
 				PUSH16(value);
-				CYCLES(5);
+				CYCLES(CYCLES_PUSH_RM);
 			}
 			break;
 		case 7:
@@ -2633,14 +2790,16 @@ static void I386OP(group0F00_16)(void)			// Opcode 0x0f 00
 				if( modrm >= 0xc0 ) {
 					address = LOAD_RM16(modrm);
 					ea = i386_translate( CS, address );
+					CYCLES(CYCLES_LLDT_REG);
 				} else {
 					ea = GetEA(modrm);
+					CYCLES(CYCLES_LLDT_MEM);
 				}
 				I.ldtr.segment = READ16(ea);
 			}
 			else
 			{
-				i386_trap(6);
+				i386_trap(6, 0);
 			}
 			break;
 
@@ -2650,14 +2809,16 @@ static void I386OP(group0F00_16)(void)			// Opcode 0x0f 00
 				if( modrm >= 0xc0 ) {
 					address = LOAD_RM16(modrm);
 					ea = i386_translate( CS, address );
+					CYCLES(CYCLES_LTR_REG);
 				} else {
 					ea = GetEA(modrm);
+					CYCLES(CYCLES_LTR_MEM);
 				}
 				I.task.segment = READ16(ea);
 			}
 			else
 			{
-				i386_trap(6);
+				i386_trap(6, 0);
 			}
 			break;
 
@@ -2685,7 +2846,23 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				}
 				WRITE16(ea, I.gdtr.limit);
 				WRITE32(ea + 2, I.gdtr.base & 0xffffff);
-				CYCLES(9);
+				CYCLES(CYCLES_SGDT);
+				break;
+			}
+		case 1:			/* SIDT */
+			{
+				if (modrm >= 0xc0)
+				{
+					address = LOAD_RM16(modrm);
+					ea = i386_translate( CS, address );
+				}
+				else
+				{
+					ea = GetEA(modrm);
+				}
+				WRITE16(ea, I.idtr.limit);
+				WRITE32(ea + 2, I.idtr.base & 0xffffff);
+				CYCLES(CYCLES_SIDT);
 				break;
 			}
 		case 2:			/* LGDT */
@@ -2698,7 +2875,7 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				}
 				I.gdtr.limit = READ16(ea);
 				I.gdtr.base = READ32(ea + 2) & 0xffffff;
-				CYCLES(11);
+				CYCLES(CYCLES_LGDT);
 				break;
 			}
 		case 3:			/* LIDT */
@@ -2711,18 +2888,19 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				}
 				I.idtr.limit = READ16(ea);
 				I.idtr.base = READ32(ea + 2) & 0xffffff;
-				CYCLES(11);
+				CYCLES(CYCLES_LIDT);
 				break;
 			}
 		case 4:			/* SMSW */
 			{
 				if( modrm >= 0xc0 ) {
 					STORE_RM16(modrm, I.cr[0]);
+					CYCLES(CYCLES_SMSW_REG);
 				} else {
 					UINT32 ea = GetEA(modrm);
 					WRITE16(ea, I.cr[0]);
+					CYCLES(CYCLES_SMSW_MEM);
 				}
-				CYCLES(0);	// TODO: Specify cycle count
 				break;
 			}
 		case 6:			/* LMSW */
@@ -2731,8 +2909,10 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				UINT8 b;
 				if( modrm >= 0xc0 ) {
 					b = LOAD_RM8(modrm);
+					CYCLES(CYCLES_LMSW_REG);
 				} else {
 					ea = GetEA(modrm);
+					CYCLES(CYCLES_LMSW_MEM);
 				b = READ8(ea);
 				}
 				I.cr[0] &= ~0x03;
@@ -2761,7 +2941,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				else
 					I.CF = 0;
 
-				CYCLES(3);
+				CYCLES(CYCLES_BT_IMM_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
@@ -2772,7 +2952,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				else
 					I.CF = 0;
 
-				CYCLES(6);
+				CYCLES(CYCLES_BT_IMM_MEM);
 			}
 			break;
 		case 5:			/* BTS Rm16, i8 */
@@ -2787,7 +2967,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				dst |= (1 << bit);
 
 				STORE_RM16(modrm, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_BTS_IMM_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
@@ -2800,7 +2980,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				dst |= (1 << bit);
 
 				WRITE16(ea, dst);
-				CYCLES(8);
+				CYCLES(CYCLES_BTS_IMM_MEM);
 			}
 			break;
 		case 6:			/* BTR Rm16, i8 */
@@ -2815,7 +2995,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				dst &= ~(1 << bit);
 
 				STORE_RM16(modrm, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_BTR_IMM_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
@@ -2828,7 +3008,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				dst &= ~(1 << bit);
 
 				WRITE16(ea, dst);
-				CYCLES(8);
+				CYCLES(CYCLES_BTR_IMM_MEM);
 			}
 			break;
 		case 7:			/* BTC Rm16, i8 */
@@ -2843,7 +3023,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				dst ^= (1 << bit);
 
 				STORE_RM16(modrm, dst);
-				CYCLES(6);
+				CYCLES(CYCLES_BTC_IMM_REG);
 			} else {
 				UINT32 ea = GetEA(modrm);
 				UINT16 dst = READ16(ea);
@@ -2856,7 +3036,7 @@ static void I386OP(group0FBA_16)(void)		// Opcode 0x0f ba
 				dst ^= (1 << bit);
 
 				WRITE16(ea, dst);
-				CYCLES(8);
+				CYCLES(CYCLES_BTC_IMM_MEM);
 			}
 			break;
 		default:
@@ -2885,9 +3065,14 @@ static void I386OP(bound_r16_m16_m16)(void)	// Opcode 0x62
 	val = LOAD_REG16(modrm);
 
 	if ((val < low) || (val > high))
-		i386_trap(5);
-
-	CYCLES(1);	// TODO: Find out correct cycle count
+	{
+		CYCLES(CYCLES_BOUND_OUT_RANGE);
+		i386_trap(5, 0);
+	}
+	else
+	{
+		CYCLES(CYCLES_BOUND_IN_RANGE);
+	}
 }
 
 static void I386OP(retf16)(void)			// Opcode 0xcb
@@ -2897,7 +3082,7 @@ static void I386OP(retf16)(void)			// Opcode 0xcb
 	i386_load_segment_descriptor( CS );
 	CHANGE_PC(I.eip);
 
-	CYCLES(1);	// TODO: deduct proper cycle count
+	CYCLES(CYCLES_RET_INTERSEG);
 }
 
 static void I386OP(retf_i16)(void)			// Opcode 0xca
@@ -2906,11 +3091,11 @@ static void I386OP(retf_i16)(void)			// Opcode 0xca
 
 	I.eip = POP16();
 	I.sreg[CS].selector = POP16();
-	CHANGE_PC(I.eip);
 	i386_load_segment_descriptor( CS );
+	CHANGE_PC(I.eip);
 
 	REG16(SP) += count;
-	CYCLES(1);	// TODO: deduct proper cycle count
+	CYCLES(CYCLES_RET_IMM_INTERSEG);
 }
 
 static void I386OP(xlat16)(void)			// Opcode 0xd7
@@ -2922,6 +3107,7 @@ static void I386OP(xlat16)(void)			// Opcode 0xd7
 		ea = i386_translate( DS, REG16(BX) + REG8(AL) );
 	}
 	REG8(AL) = READ8(ea);
+	CYCLES(CYCLES_XLAT);
 }
 
 static void I386OP(load_far_pointer16)(int s)
@@ -2936,32 +3122,35 @@ static void I386OP(load_far_pointer16)(int s)
 		I.sreg[s].selector = READ16(ea + 2);
 		i386_load_segment_descriptor( s );
 	}
-
-	CYCLES(1);	// TODO: Figure out exact cycle count
 }
 
 static void I386OP(lds16)(void)				// Opcode 0xc5
 {
 	I386OP(load_far_pointer16)(DS);
+	CYCLES(CYCLES_LDS);
 }
 
 static void I386OP(lss16)(void)				// Opcode 0x0f 0xb2
 {
 	I386OP(load_far_pointer16)(SS);
+	CYCLES(CYCLES_LSS);
 }
 
 static void I386OP(les16)(void)				// Opcode 0xc4
 {
 	I386OP(load_far_pointer16)(ES);
+	CYCLES(CYCLES_LES);
 }
 
 static void I386OP(lfs16)(void)				// Opcode 0x0f 0xb4
 {
 	I386OP(load_far_pointer16)(FS);
+	CYCLES(CYCLES_LFS);
 }
 
 static void I386OP(lgs16)(void)				// Opcode 0x0f 0xb5
 {
 	I386OP(load_far_pointer16)(GS);
+	CYCLES(CYCLES_LGS);
 }
 

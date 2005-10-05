@@ -130,4 +130,4 @@ ROM_START( vbowl )
 	ROM_LOAD( "vrbowlng.u69",  0x200000, 0x100000, BAD_DUMP CRC(19172e3b) SHA1(da9297621a98835c0d27b4d4a90d295a284c7ef6) ) // FIXED BITS (xxxxxxxx11111111)  maybe bad
 ROM_END
 
-GAMEX( 1996, vbowl, 0, vbowl, vbowl, vbowl, ROT0, "Alta / IGS", "Virtua Bowling", GAME_NOT_WORKING | GAME_NO_SOUND  )
+GAME( 1996, vbowl, 0, vbowl, vbowl, vbowl, ROT0, "Alta / IGS", "Virtua Bowling", GAME_NOT_WORKING | GAME_NO_SOUND  )

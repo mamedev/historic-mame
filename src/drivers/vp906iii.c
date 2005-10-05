@@ -323,4 +323,4 @@ ROM_START( vp906iii )
 	ROM_LOAD( "82s129n.u28", 0x0000, 0x0100, CRC(6db5a344) SHA1(5f1a81ac02a2a74252decd3bb95a5436cc943930) )
 ROM_END
 
-GAMEX( 1985, vp906iii, 0, vp906iii, vp906iii, 0, ROT0, "Casino Electronics Inc.", "906III Video Poker", GAME_NOT_WORKING )
+GAME( 1985, vp906iii, 0, vp906iii, vp906iii, 0, ROT0, "Casino Electronics Inc.", "906III Video Poker", GAME_NOT_WORKING )

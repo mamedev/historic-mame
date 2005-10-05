@@ -688,8 +688,8 @@ static DRIVER_INIT( actfancj )
 
 
 
-GAME( 1989, actfancr, 0,        actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World revision 2)" )
-GAME( 1989, actfanc1, actfancr, actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World revision 1)" )
-GAME( 1989, actfancj, actfancr, actfancr, actfancr, actfancj, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (Japan revision 1)" )
-GAME( 1989, triothep, 0,        triothep, triothep, 0,        ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (World)" )
-GAME( 1989, triothej, triothep, triothep, triothep, 0,        ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (Japan)" )
+GAME( 1989, actfancr, 0,        actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World revision 2)", 0 )
+GAME( 1989, actfanc1, actfancr, actfancr, actfancr, actfancr, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (World revision 1)", 0 )
+GAME( 1989, actfancj, actfancr, actfancr, actfancr, actfancj, ROT0, "Data East Corporation", "Act-Fancer Cybernetick Hyper Weapon (Japan revision 1)", 0 )
+GAME( 1989, triothep, 0,        triothep, triothep, 0,        ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (World)", 0 )
+GAME( 1989, triothej, triothep, triothep, triothep, 0,        ROT0, "Data East Corporation", "Trio The Punch - Never Forget Me... (Japan)", 0 )

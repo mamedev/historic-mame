@@ -1699,13 +1699,13 @@ static DRIVER_INIT( polepos2 )
  * Game drivers
  *********************************************************************/
 
-GAME( 1982, polepos,  0,		polepos, polepos,  polepos,	 ROT0, "Namco", "Pole Position" )
-GAME( 1982, poleposa, polepos,	polepos, poleposa, polepos,	 ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)" )
-GAME( 1982, polepos1, polepos,	polepos, poleposa, polepos,	 ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)" )
-GAME( 1982, topracer, polepos,	polepos, polepos,  polepos,	 ROT0, "bootleg", "Top Racer (set 1)" )
-GAME( 1982, topracra, polepos,	polepos, topracra, topracra, ROT0, "bootleg", "Top Racer (set 2)" )
-GAME( 1983, topracrb, polepos,	polepos, polepos,  polepos,	 ROT0, "bootleg", "Top Racer (set 3)" )
-GAME( 1983, polepos2, 0,		polepos, polepos2, polepos2, ROT0, "Namco", "Pole Position II" )
-GAME( 1983, poleps2a, polepos2, polepos, polepos2, polepos2, ROT0, "Namco (Atari license)", "Pole Position II (Atari)" )
-GAME( 1983, poleps2b, polepos2, polepos, polepos2, polepos,	 ROT0, "bootleg", "Pole Position II (bootleg)" )
+GAME( 1982, polepos,  0,		polepos, polepos,  polepos,	 ROT0, "Namco", "Pole Position", 0 )
+GAME( 1982, poleposa, polepos,	polepos, poleposa, polepos,	 ROT0, "Namco (Atari license)", "Pole Position (Atari version 2)", 0 )
+GAME( 1982, polepos1, polepos,	polepos, poleposa, polepos,	 ROT0, "[Namco] (Atari license)", "Pole Position (Atari version 1)", 0 )
+GAME( 1982, topracer, polepos,	polepos, polepos,  polepos,	 ROT0, "bootleg", "Top Racer (set 1)", 0 )
+GAME( 1982, topracra, polepos,	polepos, topracra, topracra, ROT0, "bootleg", "Top Racer (set 2)", 0 )
+GAME( 1983, topracrb, polepos,	polepos, polepos,  polepos,	 ROT0, "bootleg", "Top Racer (set 3)", 0 )
+GAME( 1983, polepos2, 0,		polepos, polepos2, polepos2, ROT0, "Namco", "Pole Position II", 0 )
+GAME( 1983, poleps2a, polepos2, polepos, polepos2, polepos2, ROT0, "Namco (Atari license)", "Pole Position II (Atari)", 0 )
+GAME( 1983, poleps2b, polepos2, polepos, polepos2, polepos,	 ROT0, "bootleg", "Pole Position II (bootleg)", 0 )
 

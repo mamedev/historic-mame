@@ -1131,6 +1131,6 @@ static DRIVER_INIT( gaelco3d )
  *
  *************************************/
 
-GAMEX( 1996, speedup,  0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Speed Up", GAME_NOT_WORKING )
-GAMEX( 1997, surfplnt, 0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Surf Planet", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1998, radikalb, 0,        gaelco3d2, radikalb, gaelco3d, ROT0, "Gaelco", "Radikal Bikers", GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, speedup,  0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Speed Up", GAME_NOT_WORKING )
+GAME( 1997, surfplnt, 0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Surf Planet", GAME_IMPERFECT_GRAPHICS )
+GAME( 1998, radikalb, 0,        gaelco3d2, radikalb, gaelco3d, ROT0, "Gaelco", "Radikal Bikers", GAME_IMPERFECT_GRAPHICS )

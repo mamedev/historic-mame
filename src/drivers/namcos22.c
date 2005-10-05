@@ -28,6 +28,9 @@
  *
  *      - sprite problems in Alpine Racer, Cyber Cycles. Air Combat22
  *
+ *      - Alpine Racer 2: missing gfx in the select screen (sprite problems?)
+ *      - Alpine Racer 2: flickery in attract mode
+ *
  * Input
  *      - input ports require manual calibration through built-in diagnostics (or canned EEPROM)
  *      - new input port type needed for bicycle pedal speed
@@ -1704,6 +1707,7 @@ static READ32_HANDLER( namcos22_keycus_r )
 		return 0x0185;
 
 	case NAMCOS22_ALPINE_RACER:
+	case NAMCOS22_ALPINE_RACER_2:
 		return 0x0187;
 
 	case NAMCOS22_VICTORY_LAP:
@@ -1906,7 +1910,7 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 		break;
 
 	case 1:
-		if( namcos22_gametype == NAMCOS22_CYBER_CYCLES )
+		if ((namcos22_gametype == NAMCOS22_CYBER_CYCLES) || (namcos22_gametype == NAMCOS22_ALPINE_RACER_2))
 		{
 			cpunum_set_input_line(0, 2, HOLD_LINE);
 		}
@@ -1981,7 +1985,7 @@ static int p4;
 static READ8_HANDLER( mcu_port5_r )
 {
 	// hack for motor status
-	if (namcos22_gametype == NAMCOS22_ALPINE_RACER)
+	if ((namcos22_gametype == NAMCOS22_ALPINE_RACER) || (namcos22_gametype == NAMCOS22_ALPINE_RACER_2))
 	{
 		if (p4 & 8)
 		{
@@ -2094,8 +2098,12 @@ static READ8_HANDLER( propcycle_mcu_adc_r )
 // 0 H+L = swing, 1 H+L = edge
 static READ8_HANDLER( alpineracer_mcu_adc_r )
 {
-	UINT16 swing = readinputport(2)<<2; /* max 3ff */
-	UINT16 edge = readinputport(3)<<2;  /* max 3ff */
+	UINT16 swing = (0xff-readinputport(2))<<2;
+	UINT16 edge = (0xff-readinputport(3))<<2;
+
+	// fake out the centering a bit
+	if (readinputport(2) == 0x80) swing = 0x200;
+	if (readinputport(3) == 0x80) edge = 0x200;
 
 	switch (offset)
 	{
@@ -2942,6 +2950,59 @@ ROM_START( alpinerd )
 	ROM_LOAD( "ar1wavea.2l", 0, 0x200000, CRC(dbf64562) SHA1(454fd7d5b860f0e5557d8900393be95d6c992ad1) )
 ROM_END
 
+ROM_START( alpinr2b )
+	ROM_REGION( 0x800000, REGION_CPU1, 0 ) /* main program */
+        ROM_LOAD32_BYTE( "ars2ver-b.2",  0x000003, 0x200000, CRC(ed977f83) SHA1(26c57cdfc15f799a999ee22f141e1c0cabfc91dc) )
+        ROM_LOAD32_BYTE( "ars2ver-b.3",  0x000001, 0x200000, CRC(8e7a9983) SHA1(34c82e5f080efe04d6b77a77a8391cb48b69c1af) )
+        ROM_LOAD32_BYTE( "ars2ver-b.4",  0x000002, 0x200000, CRC(610e49c2) SHA1(433c6d2216551bac31584306f748af1c912c3b07) )
+        ROM_LOAD32_BYTE( "ars2ver-b.5",  0x000000, 0x200000, CRC(7f3517b0) SHA1(3e6ba1a51bf235f40f933aae1f00638b88bba522) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
+
+	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
+        ROM_LOAD( "ars2data.8k",  0x000000, 0x080000, CRC(29b36dcb) SHA1(70fde130c11789c822829493a70ecefb077c0c15) )
+
+	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
+        ROM_LOAD( "ars1scg0.12f", 0x000000, 0x200000, CRC(bc49ed86) SHA1(289b39f2cb21c723dbe4ddd64ee4b2c5fa65c368) )
+
+	ROM_REGION( 0xc00000, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
+        ROM_LOAD( "ars1cg0.8d",   0x000000, 0x200000, CRC(74f4515c) SHA1(1e3a96281d543213d10c962b4d387c414d76e0c3) )
+        ROM_LOAD( "ars1cg1.10d",  0x200000, 0x200000, CRC(329a95c1) SHA1(2cad7fd9e5ca7c64729ca2548ef4f873a0b8de64) )
+        ROM_LOAD( "ars1cg2.12d",  0x400000, 0x200000, CRC(5648345a) SHA1(0dc7aedba65b7d97687a9e38a63597f16cee6179) )
+        ROM_LOAD( "ars1cg3.13d",  0x600000, 0x200000, CRC(a752f205) SHA1(373b5a69e4488bc30763568ceae512ab7039f5f8) )
+        ROM_LOAD( "ars1cg4.14d",  0x800000, 0x200000, CRC(54bf35b6) SHA1(aec43b66e7597ad7d113ae785417bf26164c1bca) )
+        ROM_LOAD( "ars1cg5.16d",  0xa00000, 0x200000, CRC(e24a19a2) SHA1(34c1b51eea954ae3000602e550eb1cef0a10e651) )
+
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+        ROM_LOAD( "ars1ccrl.3d",  0x000000, 0x200000, CRC(fc8c9161) SHA1(ad0fcfae27e02d68a6f8d1d03c514dc2f12d9ee8) )
+        ROM_LOAD( "ars1ccrh.1d",  0x200000, 0x080000, CRC(a17660bb) SHA1(bae2c3f20772c6cea99f271ee3f39b1f999038c6) )
+
+	ROM_REGION( 0x80000*12, REGION_GFX4, 0 ) /* 3d model data */
+        ROM_LOAD( "ars1ptrl0.18k", 0x000000, 0x080000, CRC(f04e0e61) SHA1(d58a1d3ca1d0922e134db21a04feaee7dc97b020) )
+        ROM_LOAD( "ars1ptrl1.16k", 0x080000, 0x080000, CRC(8bdb4970) SHA1(a504cd4beca4bedd1a7a228c83dd6b844ca3a1e0) )
+        ROM_LOAD( "ars1ptrl2.15k", 0x100000, 0x080000, CRC(ec993a4f) SHA1(883f64e3e8d951415e9cef589c354eba9406c0aa) )
+        ROM_LOAD( "ars1ptrl3.14k", 0x180000, 0x080000, CRC(4d453f3c) SHA1(7a82e5d8f974d9e56d0031b35e73647fe6aeec2e) )
+
+        ROM_LOAD( "ars1ptrm0.18j", 0x200000, 0x080000, CRC(d1bdc524) SHA1(b898bb38de397551ada4da4677dd733bf8fa5010) )
+        ROM_LOAD( "ars1ptrm1.16j", 0x280000, 0x080000, CRC(86b81c81) SHA1(45096abf46794f06a4b647f5e4222798d8467632) )
+        ROM_LOAD( "ars1ptrm2.15j", 0x300000, 0x080000, CRC(24116b83) SHA1(41c6a880abce7b543c409fda767682b2537b0d99) )
+        ROM_LOAD( "ars1ptrm3.14j", 0x380000, 0x080000, CRC(772bede3) SHA1(f9565b7a40f0bbf11081d619fe5a46feafce2e56) )
+
+        ROM_LOAD( "ars1ptru0.18f", 0x400000, 0x080000, CRC(a4cf197a) SHA1(ee78cc259e87395df75179bbe5b6e521e762b582) )
+        ROM_LOAD( "ars1ptru1.16f", 0x480000, 0x080000, CRC(1deb1fc0) SHA1(bfd1dfcaccf5a0f851b6757995fa7195452a3965) )
+        ROM_LOAD( "ars1ptru2.15f", 0x500000, 0x080000, CRC(bcfad0ba) SHA1(bee7f2f9ecd2b289c6706e19fa86863913b286b5) )
+        ROM_LOAD( "ars1ptru3.14f", 0x580000, 0x080000, CRC(73ce6958) SHA1(918b0fb0fca33dbe3be3ac679b8b28f58213f75b) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* sound samples */
+        ROM_LOAD( "ars1wavea.2l", 0x000000, 0x400000, CRC(f8d107e9) SHA1(5c418691f0b35403553f21f5570eda8bbb66890f) )
+        ROM_LOAD( "ars2waveb.1l", 0x800000, 0x400000, CRC(deab4ad1) SHA1(580ad88d516280baaf6cc92b2e07cdc0cfc486f3) )
+ROM_END
+
+
 ROM_START( cybrcomm )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD32_BYTE( "cy1prgll.4d", 0x00003, 0x80000, CRC(b3eab156) SHA1(2a5c4e0360c3b9500687a4d70f7110a0c30da2a5) )
@@ -3688,10 +3749,10 @@ INPUT_PORTS_START( alpiner )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START /* SWING */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(1) PORT_KEYDELTA(1)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 
 	PORT_START /* EDGE */
-	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(1) PORT_KEYDELTA(1)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(50) PORT_KEYDELTA(10)
 
 	PORT_START_TAG( "MCUP5B" )
 	PORT_DIPNAME( 0x01, 0x01, "DIP5-1" )
@@ -4352,6 +4413,19 @@ DRIVER_INIT( alpiner )
 	memory_install_write16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu_speedup_w);
 }
 
+DRIVER_INIT( alpiner2 )
+{
+	namcos22_gametype = NAMCOS22_ALPINE_RACER_2;
+	namcos22_usec7x = 0;
+	InitDSP(1);
+
+	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, alpineracer_mcu_adc_r);
+
+	// install speedup cheat for 1.30 MCU BIOS
+	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu130_speedup_r);
+	memory_install_write16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu_speedup_w);
+}
+
 DRIVER_INIT( airco22 )
 { /* patch DSP RAM test */
 	UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
@@ -4508,27 +4582,28 @@ DRIVER_INIT( timecris )
 
 /*     YEAR, NAME,    PARENT,    MACHINE,   INPUT,    INIT,     MNTR,  COMPANY, FULLNAME,                                    FLAGS */
 /* System22 games */
-GAMEX( 1995, cybrcomm, 0,        namcos22,  cybrcomm, cybrcomm, ROT0, "Namco", "Cyber Commando (Rev. CY1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1995, raveracw, 0,        namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV2, World)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, raveracj, raveracw, namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV1, Japan)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, ridgerac, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR2, World)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
-GAMEX( 1993, ridgeraj, ridgerac, namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
-GAMEX( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) /* POSTs but doesn's start */
-GAMEX( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAMEX( 1994, acedrvrw, 0,        namcos22ns,acedrvr,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )	/* runs but no 3D */
+GAME( 1995, cybrcomm, 0,        namcos22,  cybrcomm, cybrcomm, ROT0, "Namco", "Cyber Commando (Rev. CY1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAME( 1995, raveracw, 0,        namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV2, World)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1995, raveracj, raveracw, namcos22,  raveracw, raveracw, ROT0, "Namco", "Rave Racer (Rev. RV1, Japan)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, ridgerac, 0,        namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR2, World)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
+GAME( 1993, ridgeraj, ridgerac, namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "Ridge Racer (Rev. RR1, Japan)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS ) /* 1993-10-07 */
+GAME( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) /* POSTs but doesn's start */
+GAME( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAME( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+GAME( 1994, acedrvrw, 0,        namcos22ns,acedrvr,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )	/* runs but no 3D */
 
 /* Super System22 games */
-GAMEX( 1995, airco22b, 0,        namcos22s, airco22,  airco22,  ROT0, "Namco", "Air Combat 22 (Rev. ACS1 Ver.B)"           , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* fails DSP RAM test */
-GAMEX( 1995, alpinerd, 0,        namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.D)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, alpinerc, alpinerd, namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.C)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles (Rev. CB2 Ver.C)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-//GAMEX( 1995, dirtdshx, "Dirt Dash")
-GAMEX( 1995, timecris, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* locks up */
-GAMEX( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev PR2 Ver.A)"                , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-//GAMEX( 1996, tokyowrx, "Tokyo Wars")
-//GAMEX( 1996, aquajetx, "Aqua Jet")
-//GAMEX( 1997, armdilox, "Armidillo Racing")
-//GAMEX( 199?, downhbkx, "Downhill Bikers")
+GAME( 1995, airco22b, 0,        namcos22s, airco22,  airco22,  ROT0, "Namco", "Air Combat 22 (Rev. ACS1 Ver.B)"           , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* fails DSP RAM test */
+GAME( 1995, alpinerd, 0,        namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.D)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1995, alpinerc, alpinerd, namcos22s, alpiner,  alpiner,  ROT0, "Namco", "Alpine Racer (Rev. AR2 Ver.C)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "Cyber Cycles (Rev. CB2 Ver.C)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+//GAME( 1995, dirtdshx, "Dirt Dash")
+GAME( 1995, timecris, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* locks up */
+GAME( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, alpinr2b, 0,        namcos22s, alpiner,  alpiner2, ROT0, "Namco", "Alpine Racer 2 (Ver. 97/01/10 17:10:59)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev PR2 Ver.A)"                , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+//GAME( 1996, tokyowrx, "Tokyo Wars")
+//GAME( 1996, aquajetx, "Aqua Jet")
+//GAME( 1997, armdilox, "Armidillo Racing")
+//GAME( 199?, downhbkx, "Downhill Bikers")

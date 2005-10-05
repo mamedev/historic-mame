@@ -333,4 +333,4 @@ ROM_END
 
 
 
-GAME( 1980, tankbatt, 0, tankbatt, tankbatt, 0, ROT90, "Namco", "Tank Battalion" )
+GAME( 1980, tankbatt, 0, tankbatt, tankbatt, 0, ROT90, "Namco", "Tank Battalion", 0 )

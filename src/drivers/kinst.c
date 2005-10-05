@@ -799,13 +799,13 @@ static DRIVER_INIT( kinst2 )
  *
  *************************************/
 
-GAME( 1994, kinst,    0,      kinst, kinst,  kinst,   ROT0, "Rare", "Killer Instinct (v1.5d)" )
-GAME( 1994, kinst14,  kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (v1.4)" )
-GAME( 1994, kinst13,  kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (v1.3)" )
-GAME( 1994, kinstp,   kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (proto v4.7)" )
+GAME( 1994, kinst,    0,      kinst, kinst,  kinst,   ROT0, "Rare", "Killer Instinct (v1.5d)", 0 )
+GAME( 1994, kinst14,  kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (v1.4)", 0 )
+GAME( 1994, kinst13,  kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (v1.3)", 0 )
+GAME( 1994, kinstp,   kinst,  kinst, kinst2, kinst,   ROT0, "Rare", "Killer Instinct (proto v4.7)", 0 )
 
-GAME( 1995, kinst2,   0,      kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.4)" )
-GAMEX(1995, kinst2k,  kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.4k, upgrade kit)", GAME_NOT_WORKING )
-GAME( 1995, kinst213, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.3)" )
-GAME( 1995, kinst211, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.1)" )
-GAME( 1995, kinst210, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.0)" )
+GAME( 1995, kinst2,   0,      kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.4)", 0 )
+GAME( 1995, kinst2k,  kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.4k, upgrade kit)", GAME_NOT_WORKING )
+GAME( 1995, kinst213, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.3)", 0 )
+GAME( 1995, kinst211, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.1)", 0 )
+GAME( 1995, kinst210, kinst2, kinst, kinst2, kinst2,  ROT0, "Rare", "Killer Instinct 2 (v1.0)", 0 )

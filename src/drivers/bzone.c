@@ -764,8 +764,8 @@ static DRIVER_INIT( redbaron )
  *
  *************************************/
 
-GAME( 1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)" )
-GAME( 1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)" )
-GAMEX(1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL )
-GAME( 1980, bradley,  0,     bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer" )
-GAME( 1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron" )
+GAME( 1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)", 0 )
+GAME( 1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)", 0 )
+GAME( 1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL )
+GAME( 1980, bradley,  0,     bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer", 0 )
+GAME( 1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron", 0 )

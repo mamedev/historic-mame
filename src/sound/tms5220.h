@@ -1,7 +1,7 @@
 #ifndef tms5220_h
 #define tms5220_h
 
-void *tms5220_create(void);
+void *tms5220_create(int index);
 void tms5220_destroy(void *chip);
 
 void tms5220_reset_chip(void *chip);

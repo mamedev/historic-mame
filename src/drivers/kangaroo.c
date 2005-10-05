@@ -524,7 +524,7 @@ ROM_END
  *
  *************************************/
 
-GAME( 1981, fnkyfish, 0,        kangaroo, fnkyfish, 0, ROT90, "Sun Electronics", "Funky Fish" )
-GAME( 1982, kangaroo, 0,        kangaroo, kangaroo, 0, ROT90, "Sun Electronics", "Kangaroo" )
-GAME( 1982, kangaroa, kangaroo, kangaroo, kangaroo, 0, ROT90, "[Sun Electronics] (Atari license)", "Kangaroo (Atari)" )
-GAME( 1982, kangarob, kangaroo, kangaroo, kangaroo, 0, ROT90, "bootleg", "Kangaroo (bootleg)" )
+GAME( 1981, fnkyfish, 0,        kangaroo, fnkyfish, 0, ROT90, "Sun Electronics", "Funky Fish", 0 )
+GAME( 1982, kangaroo, 0,        kangaroo, kangaroo, 0, ROT90, "Sun Electronics", "Kangaroo", 0 )
+GAME( 1982, kangaroa, kangaroo, kangaroo, kangaroo, 0, ROT90, "[Sun Electronics] (Atari license)", "Kangaroo (Atari)", 0 )
+GAME( 1982, kangarob, kangaroo, kangaroo, kangaroo, 0, ROT90, "bootleg", "Kangaroo (bootleg)", 0 )

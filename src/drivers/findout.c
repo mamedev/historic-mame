@@ -408,17 +408,17 @@ gt103a - When ERROR appears, press F2, then F3 to reset, then F2 again and the g
 
 */
 
-GAMEX( 1986, gt507uk,  0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (UK Version 5.07)",               GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1986, gt103,    0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (Version 1.03)",                  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt5,      0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (Version 5)",                     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1986, gt507uk,  0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (UK Version 5.07)",               GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1986, gt103,    0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (Version 1.03)",                  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt5,      0,        findout, findout, 0, ROT0, "Grayhound Electronics", "Trivia (Version 5)",                     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
-GAMEX( 1984, gt103a,   0,      findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt103a1,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 1)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt103a2,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 2)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt103a3,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 3)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt103aa,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt103ab,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1984, gt103asx, gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Sex questions)",   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a,   0,      findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a1,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 1)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a2,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 2)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a3,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 3)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103aa,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103ab,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103asx, gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Sex questions)",   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAMEX( 1987, findout,  0,        findout, findout, 0, ROT0, "Elettronolo",           "Find Out (Version 4.04)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1987, findout,  0,        findout, findout, 0, ROT0, "Elettronolo",           "Find Out (Version 4.04)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 

@@ -561,5 +561,5 @@ ROM_START( malzak2 )
 ROM_END
 
 
-GAMEX( 19??, malzak,   0,       malzak,  malzak,  0,        ROT0, "Kitronix", "Malzak", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 19??, malzak2, malzak,   malzak2, malzak2, 0,        ROT0, "Kitronix", "Malzak II", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 19??, malzak,   0,       malzak,  malzak,  0,        ROT0, "Kitronix", "Malzak", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 19??, malzak2, malzak,   malzak2, malzak2, 0,        ROT0, "Kitronix", "Malzak II", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -318,4 +318,4 @@ ROM_END
 
 
 
-GAME( 1997, gotcha, 0, gotcha, gotcha, 0, ROT0, "Dongsung", "Got-cha" )
+GAME( 1997, gotcha, 0, gotcha, gotcha, 0, ROT0, "Dongsung", "Got-cha", 0 )

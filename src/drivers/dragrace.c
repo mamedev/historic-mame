@@ -380,4 +380,4 @@ ROM_START( dragrace )
 ROM_END
 
 
-GAME( 1977, dragrace, 0, dragrace, dragrace, 0, 0, "Atari", "Drag Race" )
+GAME( 1977, dragrace, 0, dragrace, dragrace, 0, 0, "Atari", "Drag Race", 0 )

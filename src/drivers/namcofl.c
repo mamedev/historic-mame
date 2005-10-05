@@ -453,5 +453,5 @@ static DRIVER_INIT(finalapr)
 	namcos2_gametype = NAMCOFL_FINAL_LAP_R;
 }
 
-GAMEX( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_SOUND )
+GAME( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_SOUND )

@@ -353,5 +353,5 @@ ROM_END
 
 
 
-GAMEX( 1984, formatz,  0,       formatz, formatz, 0, ROT0, "Jaleco", "Formation Z", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1984, aeroboto, formatz, formatz, formatz, 0, ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_IMPERFECT_GRAPHICS )
+GAME( 1984, formatz,  0,       formatz, formatz, 0, ROT0, "Jaleco", "Formation Z", GAME_IMPERFECT_GRAPHICS )
+GAME( 1984, aeroboto, formatz, formatz, formatz, 0, ROT0, "[Jaleco] (Williams license)", "Aeroboto", GAME_IMPERFECT_GRAPHICS )

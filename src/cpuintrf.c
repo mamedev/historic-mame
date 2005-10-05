@@ -149,6 +149,8 @@ void gms30c2132_get_info(UINT32 state, union cpuinfo *info);
 void gms30c2216_get_info(UINT32 state, union cpuinfo *info);
 void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
 void i386_get_info(UINT32 state, union cpuinfo *info);
+void pentium_get_info(UINT32 state, union cpuinfo *info);
+void mediagx_get_info(UINT32 state, union cpuinfo *info);
 void i960_get_info(UINT32 state, union cpuinfo *info);
 void h8_3002_get_info(UINT32 state, union cpuinfo *info);
 void v810_get_info(UINT32 state, union cpuinfo *info);
@@ -653,6 +655,12 @@ const struct
 #endif
 #if (HAS_I386)
 	{ CPU_I386, i386_get_info },
+#endif
+#if (HAS_PENTIUM)
+	{ CPU_PENTIUM, pentium_get_info },
+#endif
+#if (HAS_MEDIAGX)
+	{ CPU_MEDIAGX, mediagx_get_info },
 #endif
 #if (HAS_I960)
 	{ CPU_I960, i960_get_info },

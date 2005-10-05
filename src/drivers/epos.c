@@ -615,12 +615,12 @@ DRIVER_INIT( dealer )
  *
  *************************************/
 
-GAME ( 1982, megadon,  0,        epos,   megadon,  0,	     ROT270, "Epos Corporation (Photar Industries license)", "Megadon" )
-GAMEX( 1982, catapult, 0,        epos,   igmo,     0,	     ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
-GAME ( 1983, suprglob, 0,        epos,   suprglob, 0,	     ROT270, "Epos Corporation", "Super Glob" )
-GAME ( 1983, theglob,  suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob" )
-GAME ( 1983, theglob2, suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob (earlier)" )
-GAME ( 1983, theglob3, suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob (set 3)" )
-GAMEX( 1984, igmo,     0,        epos,   igmo,     0,	     ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )
-GAMEX( 19??, dealer,   0,        dealer, dealer,   dealer,   ROT270, "Epos Corporation", "The Dealer", GAME_NOT_WORKING)
-GAMEX( 1984, revenger, 0,        dealer, dealer,   dealer,   ROT270, "Epos Corporation", "Revenger", GAME_NOT_WORKING)
+GAME( 1982, megadon,  0,        epos,   megadon,  0,	     ROT270, "Epos Corporation (Photar Industries license)", "Megadon", 0 )
+GAME( 1982, catapult, 0,        epos,   igmo,     0,	     ROT270, "Epos Corporation", "Catapult", GAME_NOT_WORKING) /* bad rom, hold f2 for test mode */
+GAME( 1983, suprglob, 0,        epos,   suprglob, 0,	     ROT270, "Epos Corporation", "Super Glob", 0 )
+GAME( 1983, theglob,  suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob", 0 )
+GAME( 1983, theglob2, suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob (earlier)", 0 )
+GAME( 1983, theglob3, suprglob, epos,   suprglob, 0,	     ROT270, "Epos Corporation", "The Glob (set 3)", 0 )
+GAME( 1984, igmo,     0,        epos,   igmo,     0,	     ROT270, "Epos Corporation", "IGMO", GAME_WRONG_COLORS )
+GAME( 19??, dealer,   0,        dealer, dealer,   dealer,   ROT270, "Epos Corporation", "The Dealer", GAME_NOT_WORKING)
+GAME( 1984, revenger, 0,        dealer, dealer,   dealer,   ROT270, "Epos Corporation", "Revenger", GAME_NOT_WORKING)

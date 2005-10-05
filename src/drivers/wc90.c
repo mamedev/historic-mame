@@ -492,6 +492,6 @@ ROM_END
 
 
 
-GAMEX( 1989, wc90,  0,    wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (set 1)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1989, wc90a, wc90, wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (set 2)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1989, wc90t, wc90, wc90t,wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (trackball)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAME( 1989, wc90,  0,    wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (set 1)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAME( 1989, wc90a, wc90, wc90, wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (set 2)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAME( 1989, wc90t, wc90, wc90t,wc90, 0, ROT0, "Tecmo", "Tecmo World Cup '90 (trackball)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )

@@ -460,4 +460,4 @@ static DRIVER_INIT( missb2 )
 
 /* Game Drivers */
 
-GAMEX( 1996, missb2, bublbobl, missb2, missb2, missb2, ROT0,  "Alpha Co", "Miss Bubble 2", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1996, missb2, bublbobl, missb2, missb2, missb2, ROT0,  "Alpha Co", "Miss Bubble 2", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

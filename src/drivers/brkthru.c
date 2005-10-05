@@ -675,7 +675,7 @@ ROM_END
 
 
 
-GAME( 1986, brkthru,  0,       brkthru, brkthru,  0, ROT0,   "Data East USA", "Break Thru (US)" )
-GAME( 1986, brkthruj, brkthru, brkthru, brkthruj, 0, ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)" )
-GAME( 1986, forcebrk, brkthru, brkthru, brkthruj, 0, ROT0,   "bootleg", "Force Break (bootleg)" )
-GAME( 1986, darwin,   0,       darwin,  darwin,   0, ROT270, "Data East Corporation", "Darwin 4078 (Japan)" )
+GAME( 1986, brkthru,  0,       brkthru, brkthru,  0, ROT0,   "Data East USA", "Break Thru (US)", 0 )
+GAME( 1986, brkthruj, brkthru, brkthru, brkthruj, 0, ROT0,   "Data East Corporation", "Kyohkoh-Toppa (Japan)", 0 )
+GAME( 1986, forcebrk, brkthru, brkthru, brkthruj, 0, ROT0,   "bootleg", "Force Break (bootleg)", 0 )
+GAME( 1986, darwin,   0,       darwin,  darwin,   0, ROT270, "Data East Corporation", "Darwin 4078 (Japan)", 0 )

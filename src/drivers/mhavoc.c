@@ -785,9 +785,9 @@ ROM_END
  *
  *************************************/
 
-GAME( 1983, mhavoc,   0,      mhavoc,   mhavoc,   0, ROT0, "Atari", "Major Havoc (rev 3)" )
-GAME( 1983, mhavoc2,  mhavoc, mhavoc,   mhavoc,   0, ROT0, "Atari", "Major Havoc (rev 2)" )
-GAME( 1983, mhavocrv, mhavoc, mhavoc,   mhavoc,   0, ROT0, "hack",  "Major Havoc (Return to Vax)" )
-GAME( 1983, mhavocp,  mhavoc, mhavoc,   mhavocp,  0, ROT0, "Atari", "Major Havoc (prototype)" )
-GAME( 1983, alphaone, mhavoc, alphaone, alphaone, 0, ROT0, "Atari", "Alpha One (prototype, 3 lives)" )
-GAME( 1983, alphaona, mhavoc, alphaone, alphaone, 0, ROT0, "Atari", "Alpha One (prototype, 5 lives)" )
+GAME( 1983, mhavoc,   0,      mhavoc,   mhavoc,   0, ROT0, "Atari", "Major Havoc (rev 3)", 0 )
+GAME( 1983, mhavoc2,  mhavoc, mhavoc,   mhavoc,   0, ROT0, "Atari", "Major Havoc (rev 2)", 0 )
+GAME( 1983, mhavocrv, mhavoc, mhavoc,   mhavoc,   0, ROT0, "hack",  "Major Havoc (Return to Vax)", 0 )
+GAME( 1983, mhavocp,  mhavoc, mhavoc,   mhavocp,  0, ROT0, "Atari", "Major Havoc (prototype)", 0 )
+GAME( 1983, alphaone, mhavoc, alphaone, alphaone, 0, ROT0, "Atari", "Alpha One (prototype, 3 lives)", 0 )
+GAME( 1983, alphaona, mhavoc, alphaone, alphaone, 0, ROT0, "Atari", "Alpha One (prototype, 5 lives)", 0 )

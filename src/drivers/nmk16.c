@@ -1657,7 +1657,7 @@ INPUT_PORTS_START( acrobatm )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) /* used by secret code */
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -4646,32 +4646,32 @@ static DRIVER_INIT( bjtwin )
 //  rom[0x08f74/2] = 0x4e71);
 }
 
-GAMEX( 1989, tharrier, 0,       tharrier, tharrier, 0, 		  ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1989, tharierj, tharrier,tharrier, tharrier, 0, 		  ROT270, "UPL",	                        "Task Force Harrier (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND) // Playable but there are Still Protection Problems
-GAMEX( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
-GAMEX( 1990, mustangb, mustang, mustangb, mustang,  mustang,  ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION ) // Playable but there are Still Protection Problems
-GAMEX( 1990, bioship,  0,       bioship,  bioship,  0,        ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_IMPERFECT_SOUND )
-GAMEX( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_IMPERFECT_SOUND )
-GAMEX( 1990, vandyjal, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco)",  GAME_IMPERFECT_SOUND )
-GAMEX( 1991, manybloc, 0,       manybloc, manybloc, 0,        ROT270, "Bee-Oh",                         "Many Block", GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
-GAMEX( 1991, blkheart, 0,       macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND  ) // Playable but there are Still Protection Problems
-GAMEX( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
-GAMEX( 1991, acrobatm, 0,       acrobatm, acrobatm, 0,        ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_IMPERFECT_SOUND )
-GAMEX( 1992, strahl,   0,       strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_IMPERFECT_SOUND )
-GAMEX( 1992, strahla,  strahl,  strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_IMPERFECT_SOUND )
-GAMEX( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK (Tecmo license)",			"Thunder Dragon", GAME_IMPERFECT_SOUND )
-GAME(  1991, tdragonb, tdragon, tdragonb, tdragonb, tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)" )
-GAMEX( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
-GAMEX( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_IMPERFECT_SOUND )
-GAMEX( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_IMPERFECT_SOUND )
-GAMEX( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )
-GAMEX( 1993, tdragon2, 0,       tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
-GAMEX( 1993, bigbang,  tdragon2,tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Big Bang", GAME_NO_COCKTAIL )
-GAMEX( 1994, raphero,  0,       raphero,  tdragon2, 0,        ROT270, "Media Trading Corp",             "Rapid Hero (Japan?)", GAME_NO_SOUND ) // 23rd July 1993 in test mode, (c)1994 on title screen
+GAME( 1989, tharrier, 0,       tharrier, tharrier, 0, 		  ROT270, "UPL (American Sammy license)",	"Task Force Harrier", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1989, tharierj, tharrier,tharrier, tharrier, 0, 		  ROT270, "UPL",	                        "Task Force Harrier (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1990, mustang,  0,       mustang,  mustang,  mustang,  ROT0,   "UPL",							"US AAF Mustang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND) // Playable but there are Still Protection Problems
+GAME( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul Trading license)",	"US AAF Mustang (Seoul Trading)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
+GAME( 1990, mustangb, mustang, mustangb, mustang,  mustang,  ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION ) // Playable but there are Still Protection Problems
+GAME( 1990, bioship,  0,       bioship,  bioship,  0,        ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_IMPERFECT_SOUND )
+GAME( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_IMPERFECT_SOUND )
+GAME( 1990, vandyjal, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco)",  GAME_IMPERFECT_SOUND )
+GAME( 1991, manybloc, 0,       manybloc, manybloc, 0,        ROT270, "Bee-Oh",                         "Many Block", GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
+GAME( 1991, blkheart, 0,       macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND  ) // Playable but there are Still Protection Problems
+GAME( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
+GAME( 1991, acrobatm, 0,       acrobatm, acrobatm, 0,        ROT270, "UPL (Taito license)",			"Acrobat Mission", GAME_IMPERFECT_SOUND )
+GAME( 1992, strahl,   0,       strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_IMPERFECT_SOUND )
+GAME( 1992, strahla,  strahl,  strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK (Tecmo license)",			"Thunder Dragon", GAME_IMPERFECT_SOUND )
+GAME(  1991, tdragonb, tdragon, tdragonb, tdragonb, tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)", 0 )
+GAME( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
+GAME( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_IMPERFECT_SOUND )
+GAME( 1993, gunnail,  0,       gunnail,  gunnail,  nmk,      ROT270, "NMK / Tecmo",					"GunNail", GAME_IMPERFECT_SOUND )
+GAME( 1993, macross2, 0,       macross2, macross2, 0,        ROT0,   "Banpresto",						"Super Spacefortress Macross II / Chou-Jikuu Yousai Macross II", GAME_NO_COCKTAIL )
+GAME( 1993, tdragon2, 0,       tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Thunder Dragon 2", GAME_NO_COCKTAIL )
+GAME( 1993, bigbang,  tdragon2,tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Big Bang", GAME_NO_COCKTAIL )
+GAME( 1994, raphero,  0,       raphero,  tdragon2, 0,        ROT270, "Media Trading Corp",             "Rapid Hero (Japan?)", GAME_NO_SOUND ) // 23rd July 1993 in test mode, (c)1994 on title screen
 
-GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1992, sabotnba, sabotenb,bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
-GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo",							"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )
+GAME( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 1)", GAME_NO_COCKTAIL )
+GAME( 1992, sabotnba, sabotenb,bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 2)", GAME_NO_COCKTAIL )
+GAME( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
+GAME( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo",							"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )

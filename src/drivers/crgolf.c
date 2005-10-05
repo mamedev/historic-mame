@@ -446,7 +446,7 @@ ROM_END
  *
  *************************************/
 
-GAME( 1984, crgolf,  0,      crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Crowns Golf (set 1)" ) // 834-5419-03
-GAME( 1984, crgolfa, crgolf, crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Crowns Golf (set 2)" )
-GAME( 1984, crgolfc, crgolf, crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Champion Golf" )
-GAME( 1984, crgolfb, crgolf, crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Champion Golf (bootleg Set 1)" )
+GAME( 1984, crgolf,  0,      crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Crowns Golf (set 1)" , 0) // 834-5419-03
+GAME( 1984, crgolfa, crgolf, crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Crowns Golf (set 2)", 0 )
+GAME( 1984, crgolfc, crgolf, crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Champion Golf", 0 )
+GAME( 1984, crgolfb, crgolf, crgolf,  crgolf,  0, ROT0, "Nasco Japan", "Champion Golf (bootleg Set 1)", 0 )

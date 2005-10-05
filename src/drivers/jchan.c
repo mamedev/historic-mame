@@ -898,6 +898,6 @@ DRIVER_INIT( jchan )
 
 
 /* game drivers */
-GAMEX( 1995, jchan,      0, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan - The Kung-Fu Master", GAME_NOT_WORKING )
-GAMEX( 1995, jchan2, jchan, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan in Fists of Fire", GAME_NOT_WORKING )
+GAME( 1995, jchan,      0, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan - The Kung-Fu Master", GAME_NOT_WORKING )
+GAME( 1995, jchan2, jchan, jchan, jchan, jchan, ROT0, "Kaneko", "Jackie Chan in Fists of Fire", GAME_NOT_WORKING )
 

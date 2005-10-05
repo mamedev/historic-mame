@@ -1031,6 +1031,6 @@ ROM_START( rjammer )
 ROM_END
 
 /*     year  rom      parent  machine  inp   init */
-GAME( 1984, tubep,   0,      tubep,   tubep,   0, ROT0, "Nichibutsu + Fujitek", "Tube Panic" )
-GAME( 1984, rjammer, 0,      rjammer, rjammer, 0, ROT0, "Nichibutsu + Alice", "Roller Jammer" )
+GAME( 1984, tubep,   0,      tubep,   tubep,   0, ROT0, "Nichibutsu + Fujitek", "Tube Panic", 0 )
+GAME( 1984, rjammer, 0,      rjammer, rjammer, 0, ROT0, "Nichibutsu + Alice", "Roller Jammer", 0 )
 

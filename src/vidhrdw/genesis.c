@@ -302,10 +302,12 @@ VIDEO_UPDATE( segac2 )
 
 VIDEO_UPDATE( megatech )
 {
+	int starty;
 	int y;
 
 	/* generate the final screen */
-	for (y = cliprect->min_y+192; y <= cliprect->max_y; y++)
+	starty = (cliprect->min_y < 192) ? 192 : cliprect->min_y;
+	for (y = starty; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y-192, 0);
 
 	/* sms display should be on second monitor, for now we control it with a fake dipswitch while

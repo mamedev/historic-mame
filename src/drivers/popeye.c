@@ -704,8 +704,8 @@ DRIVER_INIT( popeye )
 }
 
 
-GAME( 1981, skyskipr, 0,      skyskipr, skyskipr, skyskipr, ROT0, "Nintendo", "Sky Skipper" )
-GAME( 1982, popeye,   0,      popeye,   popeye,   popeye,   ROT0, "Nintendo", "Popeye (revision D)" )
-GAME( 1982, popeyeu,  popeye, popeye,   popeye,   popeye,   ROT0, "Nintendo", "Popeye (revision D not protected)" )
-GAME( 1982, popeyef,  popeye, popeye,   popeyef,  popeye,   ROT0, "Nintendo", "Popeye (revision F)" )
-GAME( 1982, popeyebl, popeye, popeyebl, popeye,   0,        ROT0, "bootleg",  "Popeye (bootleg)" )
+GAME( 1981, skyskipr, 0,      skyskipr, skyskipr, skyskipr, ROT0, "Nintendo", "Sky Skipper", 0 )
+GAME( 1982, popeye,   0,      popeye,   popeye,   popeye,   ROT0, "Nintendo", "Popeye (revision D)", 0 )
+GAME( 1982, popeyeu,  popeye, popeye,   popeye,   popeye,   ROT0, "Nintendo", "Popeye (revision D not protected)", 0 )
+GAME( 1982, popeyef,  popeye, popeye,   popeyef,  popeye,   ROT0, "Nintendo", "Popeye (revision F)", 0 )
+GAME( 1982, popeyebl, popeye, popeyebl, popeye,   0,        ROT0, "bootleg",  "Popeye (bootleg)", 0 )

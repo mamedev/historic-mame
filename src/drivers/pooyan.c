@@ -357,6 +357,6 @@ ROM_END
 
 
 
-GAME( 1982, pooyan,  0,      pooyan, pooyan, 0, ROT270, "Konami", "Pooyan" )
-GAME( 1982, pooyans, pooyan, pooyan, pooyan, 0, ROT270, "[Konami] (Stern license)", "Pooyan (Stern)" )
-GAME( 1982, pootan,  pooyan, pooyan, pooyan, 0, ROT270, "bootleg", "Pootan" )
+GAME( 1982, pooyan,  0,      pooyan, pooyan, 0, ROT270, "Konami", "Pooyan", 0 )
+GAME( 1982, pooyans, pooyan, pooyan, pooyan, 0, ROT270, "[Konami] (Stern license)", "Pooyan (Stern)", 0 )
+GAME( 1982, pootan,  pooyan, pooyan, pooyan, 0, ROT270, "bootleg", "Pootan", 0 )

@@ -5363,33 +5363,33 @@ ROM_END
 /* Whoopee  init   to be changed to T2_Z180   when (if) HD647180 is dumped */
 
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR COMPANY    FULLNAME     FLAGS ) */
-GAMEX( 1991, tekipaki, 0,        tekipaki, tekipaki, T2_Z180,  ROT0,   "Toaplan", "Teki Paki", GAME_NO_SOUND )
-GAMEX( 1991, ghox,     0,        ghox,     ghox,     T2_Z180,  ROT270, "Toaplan", "Ghox", GAME_NO_SOUND )
-GAMEX( 1992, dogyuun,  0,        dogyuun,  dogyuun,  T2_V25,   ROT270, "Toaplan", "Dogyuun", GAME_NO_SOUND )
-GAMEX( 1993, kbash,    0,        kbash,    kbash,    T2_V25,   ROT0,   "Toaplan", "Knuckle Bash", GAME_IMPERFECT_SOUND )
-GAME ( 1992, truxton2, 0,        truxton2, truxton2, T2_noZ80, ROT270, "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
-GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, T2_Z80,   ROT0,   "Toaplan", "Pipi & Bibis / Whoopee!!" )
-GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  T2_Z80,   ROT0,   "Toaplan", "Whoopee!! / Pipi & Bibis" )
-GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,   "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee!! (bootleg ?)" )
-GAMEX( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270, "Toaplan", "FixEight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAME ( 1992, fixeighb, fixeight, fixeighb, fixeighb, fixeighb, ROT270, "bootleg", "FixEight (bootleg)" )
-GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, T2_V25,   ROT270, "Toaplan", "Grind Stormer", GAME_NO_SOUND )
-GAMEX( 1992, grindsta, vfive,    vfive,    grindstm, T2_V25,   ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
-GAMEX( 1993, vfive,    0,        vfive,    vfive,    T2_V25,   ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
-GAMEX( 1993, batsugun, 0,        batsugun, batsugun, T2_V25,   ROT270, "Toaplan", "Batsugun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, T2_V25,   ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves / Otenki Paradise" )
-GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
-GAME ( 1993, sstriker, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World)" ) // from korean board
-GAME ( 1993, sstrikra, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World, alt)" ) // from korean board
-GAME ( 1994, shippumd, 0,        shippumd, shippumd, T2_Z80,   ROT270, "Raizing / Eighting", "Shippu Mahou Daisakusen (Japan)" )
-GAME ( 1994, kingdmgp, shippumd, shippumd, kingdmgp, T2_Z80,   ROT270, "Raizing / Eighting", "Kingdom Grandprix (World)" ) // from korean board, missing letters on credits screen but this is correct
-GAME ( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing / Eighting", "Battle Garegga - Type 2 (Denmark / China) (Tue Apr 2 1996)" )
-GAME ( 1996, battlega, battleg,  battleg,  battlega, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Europe / USA / Japan / Asia) (Sat Feb 3 1996)" )
-GAME ( 1996, battlegb, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Mar 2 1996)" ) // displays New Version when set to HK
-GAME ( 1996, battlegc, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Feb 3 1996)" )
-GAME ( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version B)" )
-GAME ( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version A)" )
-GAME ( 1998, batridrk, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Korea, version B)" )
-GAME ( 1999, bbakraid, 0,        bbakraid, bbakraid, bbakraid, ROT270, "Eighting", "Battle Bakraid (Japan) (Wed Apr 7 1999)")
-GAME ( 1999, bbakradu, bbakraid, bbakraid, bbakraid, bbakradu, ROT270, "Eighting", "Battle Bakraid - Unlimited version (Japan) (Tue Jun 8 1999)")
+GAME( 1991, tekipaki, 0,        tekipaki, tekipaki, T2_Z180,  ROT0,   "Toaplan", "Teki Paki", GAME_NO_SOUND )
+GAME( 1991, ghox,     0,        ghox,     ghox,     T2_Z180,  ROT270, "Toaplan", "Ghox", GAME_NO_SOUND )
+GAME( 1992, dogyuun,  0,        dogyuun,  dogyuun,  T2_V25,   ROT270, "Toaplan", "Dogyuun", GAME_NO_SOUND )
+GAME( 1993, kbash,    0,        kbash,    kbash,    T2_V25,   ROT0,   "Toaplan", "Knuckle Bash", GAME_IMPERFECT_SOUND )
+GAME( 1992, truxton2, 0,        truxton2, truxton2, T2_noZ80, ROT270, "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)", 0 )
+GAME( 1991, pipibibs, 0,        pipibibs, pipibibs, T2_Z80,   ROT0,   "Toaplan", "Pipi & Bibis / Whoopee!!", 0 )
+GAME( 1991, whoopee,  pipibibs, whoopee,  whoopee,  T2_Z80,   ROT0,   "Toaplan", "Whoopee!! / Pipi & Bibis", 0 )
+GAME( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,   "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee!! (bootleg ?)", 0 )
+GAME( 1992, fixeight, 0,        fixeight, fixeight, fixeight, ROT270, "Toaplan", "FixEight", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1992, fixeighb, fixeight, fixeighb, fixeighb, fixeighb, ROT270, "bootleg", "FixEight (bootleg)", 0 )
+GAME( 1992, grindstm, vfive,    vfive,    grindstm, T2_V25,   ROT270, "Toaplan", "Grind Stormer", GAME_NO_SOUND )
+GAME( 1992, grindsta, vfive,    vfive,    grindstm, T2_V25,   ROT270, "Toaplan", "Grind Stormer (older set)", GAME_NO_SOUND )
+GAME( 1993, vfive,    0,        vfive,    vfive,    T2_V25,   ROT270, "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
+GAME( 1993, batsugun, 0,        batsugun, batsugun, T2_V25,   ROT270, "Toaplan", "Batsugun", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, batugnsp, batsugun, batsugun, batsugun, T2_V25,   ROT270, "Toaplan", "Batsugun (Special Ver.)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, snowbro2, 0,        snowbro2, snowbro2, T2_noZ80, ROT0,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves / Otenki Paradise", 0 )
+GAME( 1993, mahoudai, 0,        mahoudai, mahoudai, T2_Z80,   ROT270, "Raizing (Able license)", "Mahou Daisakusen (Japan)", 0 )
+GAME( 1993, sstriker, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World)" , 0) // from korean board
+GAME( 1993, sstrikra, mahoudai, mahoudai, sstriker, T2_Z80,   ROT270, "Raizing", "Sorcer Striker (World, alt)" , 0) // from korean board
+GAME( 1994, shippumd, 0,        shippumd, shippumd, T2_Z80,   ROT270, "Raizing / Eighting", "Shippu Mahou Daisakusen (Japan)", 0 )
+GAME( 1994, kingdmgp, shippumd, shippumd, kingdmgp, T2_Z80,   ROT270, "Raizing / Eighting", "Kingdom Grandprix (World)" , 0) // from korean board, missing letters on credits screen but this is correct
+GAME( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270, "Raizing / Eighting", "Battle Garegga - Type 2 (Denmark / China) (Tue Apr 2 1996)", 0 )
+GAME( 1996, battlega, battleg,  battleg,  battlega, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Europe / USA / Japan / Asia) (Sat Feb 3 1996)", 0 )
+GAME( 1996, battlegb, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Mar 2 1996)" , 0) // displays New Version when set to HK
+GAME( 1996, battlegc, battleg,  battleg,  battlegb, battleg,  ROT270, "Raizing / Eighting", "Battle Garegga (Austria / Hong Kong) (Sat Feb 3 1996)", 0 )
+GAME( 1998, batrider, 0,        batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version B)", 0 )
+GAME( 1998, batridra, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Japan, version A)", 0 )
+GAME( 1998, batridrk, batrider, batrider, batrider, battleg,  ROT270, "Raizing / Eighting", "Armed Police Batrider (Korea, version B)", 0 )
+GAME( 1999, bbakraid, 0,        bbakraid, bbakraid, bbakraid, ROT270, "Eighting", "Battle Bakraid (Japan) (Wed Apr 7 1999)", 0)
+GAME( 1999, bbakradu, bbakraid, bbakraid, bbakraid, bbakradu, ROT270, "Eighting", "Battle Bakraid - Unlimited version (Japan) (Tue Jun 8 1999)", 0)

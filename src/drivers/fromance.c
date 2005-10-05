@@ -1383,11 +1383,11 @@ ROM_END
  *
  *************************************/
 
-GAMEX(1988, nekkyoku,        0, nekkyoku, nekkyoku, 0, ROT0, "Video System Co.", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1988, idolmj,          0, idolmj,   idolmj,   0, ROT0, "System Service", "Idol-Mahjong Housoukyoku (Japan)" )
-GAME( 1989, mjnatsu,         0, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Mahjong Natsu Monogatari (Japan)" )
-GAME( 1989, natsuiro,  mjnatsu, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Natsuiro Mahjong (Japan)" )
-GAME( 1989, mfunclub,        0, fromance, mfunclub, 0, ROT0, "Video System Co.", "Mahjong Fun Club - Idol Saizensen (Japan)" )
-GAME( 1990, daiyogen,        0, fromance, daiyogen, 0, ROT0, "Video System Co.", "Mahjong Daiyogen (Japan)" )
-GAME( 1991, nmsengen,        0, fromance, nmsengen, 0, ROT0, "Video System Co.", "Nekketsu Mahjong Sengen! AFTER 5 (Japan)" )
-GAME( 1991, fromance,        0, fromance, fromance, 0, ROT0, "Video System Co.", "Idol-Mahjong Final Romance (Japan)" )
+GAME( 1988, nekkyoku,        0, nekkyoku, nekkyoku, 0, ROT0, "Video System Co.", "Rettou Juudan Nekkyoku Janshi - Higashi Nippon Hen (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, idolmj,          0, idolmj,   idolmj,   0, ROT0, "System Service", "Idol-Mahjong Housoukyoku (Japan)", 0 )
+GAME( 1989, mjnatsu,         0, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Mahjong Natsu Monogatari (Japan)", 0 )
+GAME( 1989, natsuiro,  mjnatsu, fromance, mjnatsu,  0, ROT0, "Video System Co.", "Natsuiro Mahjong (Japan)", 0 )
+GAME( 1989, mfunclub,        0, fromance, mfunclub, 0, ROT0, "Video System Co.", "Mahjong Fun Club - Idol Saizensen (Japan)", 0 )
+GAME( 1990, daiyogen,        0, fromance, daiyogen, 0, ROT0, "Video System Co.", "Mahjong Daiyogen (Japan)", 0 )
+GAME( 1991, nmsengen,        0, fromance, nmsengen, 0, ROT0, "Video System Co.", "Nekketsu Mahjong Sengen! AFTER 5 (Japan)", 0 )
+GAME( 1991, fromance,        0, fromance, fromance, 0, ROT0, "Video System Co.", "Idol-Mahjong Final Romance (Japan)", 0 )

@@ -201,4 +201,4 @@ ROM_END
 
 /*    YEAR   NAME     PARENT  MACHINE  INPUT    INIT  MONITOR  */
 
-GAMEX( 1991, trucocl,  0,     trucocl, trucocl, 0,    ROT0, "Miky SRL", "Truco Clemente", GAME_IMPERFECT_SOUND )
+GAME( 1991, trucocl,  0,     trucocl, trucocl, 0,    ROT0, "Miky SRL", "Truco Clemente", GAME_IMPERFECT_SOUND )

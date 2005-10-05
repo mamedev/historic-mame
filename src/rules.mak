@@ -247,9 +247,42 @@ OBJDIRS += $(OBJ)/cpu/i386
 CPUDEFS += -DHAS_I386=1
 CPUOBJS += $(OBJ)/cpu/i386/i386.o
 DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
-$(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op16.h i386op32.c i386op32.h i386ops.c
+$(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op32.c i386ops.c i386ops.h cycles.h
 else
 CPUDEFS += -DHAS_I386=0
+endif
+
+CPU=$(strip $(findstring I486@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i386
+CPUDEFS += -DHAS_I486=1
+CPUOBJS += $(OBJ)/cpu/i386/i386.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
+$(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op32.c i386ops.c i486ops.c x87ops.c i386ops.h cycles.h
+else
+CPUDEFS += -DHAS_I486=0
+endif
+
+CPU=$(strip $(findstring PENTIUM@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i386
+CPUDEFS += -DHAS_PENTIUM=1
+CPUOBJS += $(OBJ)/cpu/i386/i386.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
+$(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op32.c i386ops.c i486ops.c pentops.c x87ops.c i386ops.h cycles.h
+else
+CPUDEFS += -DHAS_PENTIUM=0
+endif
+
+CPU=$(strip $(findstring MEDIAGX@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/i386
+CPUDEFS += -DHAS_MEDIAGX=1
+CPUOBJS += $(OBJ)/cpu/i386/i386.o
+DBGOBJS += $(OBJ)/cpu/i386/i386dasm.o
+$(OBJ)/cpu/i386/i386.o: i386.c i386.h i386intf.h i386op16.c i386op32.c i386ops.c i486ops.c pentops.c x87ops.c i386ops.h cycles.h
+else
+CPUDEFS += -DHAS_MEDIAGX=0
 endif
 
 CPU=$(strip $(findstring V20@,$(CPUS)))

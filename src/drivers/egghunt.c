@@ -230,7 +230,7 @@ INPUT_PORTS_START( egghunt )
 	PORT_START	/* 8bit */
 	/* turning these on can break the game.. */
 	PORT_DIPNAME( 0x01, 0x01, "0" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )	/* Disables COIN 1 */
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
@@ -244,13 +244,12 @@ INPUT_PORTS_START( egghunt )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x60, 0x60, "Credits to Start Game" )
+	PORT_DIPSETTING(    0x60, "1" )
+//  PORT_DIPSETTING(    0x20, "2" ) /* One of these maybe 2 to start 1 to continue */
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -426,4 +425,4 @@ ROM_START( egghunt )
 	ROM_LOAD( "rom1.bin", 0x00000, 0x80000, CRC(f03589bc) SHA1(4d9c8422ac3c4c3ecba3bcf0ed47b8c7d5903f8c) )
 ROM_END
 
-GAMEX( 1995, egghunt, 0, egghunt, egghunt, 0, ROT0, "Invi Image", "Egg Hunt", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAME( 1995, egghunt, 0, egghunt, egghunt, 0, ROT0, "Invi Image", "Egg Hunt", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

@@ -938,5 +938,5 @@ static DRIVER_INIT( quizmoon )
 	memcpy(dst,src+0x400000,0x400000);
 }
 
-GAMEX( 1996, macrossp, 0, macrossp, macrossp, macrossp, ROT270, "Banpresto", "Macross Plus", GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1997, quizmoon, 0, quizmoon, quizmoon, quizmoon, ROT0,   "Banpresto", "Quiz Bisyoujo Senshi Sailor Moon - Chiryoku Tairyoku Toki no Un", GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, macrossp, 0, macrossp, macrossp, macrossp, ROT270, "Banpresto", "Macross Plus", GAME_IMPERFECT_GRAPHICS )
+GAME( 1997, quizmoon, 0, quizmoon, quizmoon, quizmoon, ROT0,   "Banpresto", "Quiz Bisyoujo Senshi Sailor Moon - Chiryoku Tairyoku Toki no Un", GAME_IMPERFECT_GRAPHICS )

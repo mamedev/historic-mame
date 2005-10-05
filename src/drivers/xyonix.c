@@ -291,4 +291,4 @@ ROM_END
 
 /* GAME drivers **************************************************************/
 
-GAME( 1989, xyonix, 0, xyonix, xyonix, 0, ROT0, "Philko", "Xyonix" )
+GAME( 1989, xyonix, 0, xyonix, xyonix, 0, ROT0, "Philko", "Xyonix", 0 )

@@ -441,5 +441,5 @@ ROM_END
 
 
 
-GAME( 1983, vastar,  0,      vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 1)" )
-GAME( 1983, vastar2, vastar, vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 2)" )
+GAME( 1983, vastar,  0,      vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 1)", 0 )
+GAME( 1983, vastar2, vastar, vastar, vastar, 0, ROT90, "Sesame Japan", "Vastar (set 2)", 0 )

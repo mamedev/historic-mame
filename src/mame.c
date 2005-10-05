@@ -262,11 +262,6 @@ static UINT32 mame_string_quark(const char *string);
 static int input_is_coin(const char *name);
 static void input_is_coin_free(void);
 
-#ifdef MESS
-#include "mesintrf.h"
-#define ui_update_and_render	handle_mess_user_interface
-#endif
-
 
 /***************************************************************************
 
@@ -346,6 +341,8 @@ int run_game(int game)
 		else
 			cpu_loadsave_schedule_file(LOADSAVE_LOAD, options.savegame);
 	}
+	else if (options.auto_save && (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+		cpu_loadsave_schedule_file(LOADSAVE_LOAD, Machine->gamedrv->name);
 	else
 		cpu_loadsave_reset();
 

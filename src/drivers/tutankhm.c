@@ -445,5 +445,5 @@ ROM_END
 
 
 
-GAME( 1982, tutankhm, 0,        tutankhm, tutankhm, 0, ROT90, "Konami", "Tutankham" )
-GAME( 1982, tutankst, tutankhm, tutankhm, tutankhm, 0, ROT90, "[Konami] (Stern license)", "Tutankham (Stern)" )
+GAME( 1982, tutankhm, 0,        tutankhm, tutankhm, 0, ROT90, "Konami", "Tutankham", 0 )
+GAME( 1982, tutankst, tutankhm, tutankhm, tutankhm, 0, ROT90, "[Konami] (Stern license)", "Tutankham (Stern)", 0 )

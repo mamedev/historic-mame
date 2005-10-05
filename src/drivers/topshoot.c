@@ -303,4 +303,4 @@ DRIVER_INIT(topshoot)
 
 
 /* Sun Mixing Hardware, very close to actual Genesis */
-GAMEX( 1995, topshoot,  0,        topshoot, topshoot, topshoot, ROT0, "Sun Mixing",                  "Top Shooter",GAME_NOT_WORKING )
+GAME( 1995, topshoot,  0,        topshoot, topshoot, topshoot, ROT0, "Sun Mixing",                  "Top Shooter",GAME_NOT_WORKING )

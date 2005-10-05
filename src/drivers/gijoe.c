@@ -458,6 +458,6 @@ static DRIVER_INIT( gijoe )
 	dmadelay_timer = timer_alloc(dmaend_callback);
 }
 
-GAME( 1992, gijoe,  0,     gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (World)")
-GAME( 1992, gijoeu, gijoe, gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (US)")
-GAME( 1992, gijoej, gijoe, gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (Japan)")
+GAME( 1992, gijoe,  0,     gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (World)", 0)
+GAME( 1992, gijoeu, gijoe, gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (US)", 0)
+GAME( 1992, gijoej, gijoe, gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (Japan)", 0)

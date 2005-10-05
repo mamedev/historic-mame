@@ -607,9 +607,9 @@ static DRIVER_INIT( mlc )
 
 /***************************************************************************/
 
-GAMEX(1995, avengrgs, 0,        avengrgs, avengrgs, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", GAME_NOT_WORKING )
-GAMEX(1996, stadhr96, 0,        mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAD)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1996, stadh96a, stadhr96, mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAJ)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX(1996, skullfng, 0,        mlc,      avengrgs, mlc,      ROT270, "Data East Corporation", "Skull Fang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
-GAMEX(1996, hoops96,  0,        mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Hoops '96", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
-GAMEX(1996, ddream95, hoops96,  mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Dunk Dream '95", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
+GAME( 1995, avengrgs, 0,        avengrgs, avengrgs, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", GAME_NOT_WORKING )
+GAME( 1996, stadhr96, 0,        mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAD)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1996, stadh96a, stadhr96, mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAJ)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1996, skullfng, 0,        mlc,      avengrgs, mlc,      ROT270, "Data East Corporation", "Skull Fang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
+GAME( 1996, hoops96,  0,        mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Hoops '96", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
+GAME( 1996, ddream95, hoops96,  mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Dunk Dream '95", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
