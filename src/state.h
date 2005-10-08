@@ -17,6 +17,7 @@
 /* Initializes the save state registrations */
 void state_save_free(void);
 void state_save_allow_registration(int allowed);
+int state_save_registration_allowed(void);
 
 /* Registering functions */
 int state_save_get_reg_count(void);
@@ -72,5 +73,34 @@ void state_save_dump_registry(void);
 
 /* Verification function; can be called from front ends */
 int state_save_check_file(mame_file *file, const char *gamename, int validate_signature, void (CLIB_DECL *errormsg)(const char *fmt, ...));
+
+/* Macros */
+#define state_save_register_generic(_mod, _inst, _name, _val, _valsize, _count) 	\
+	if (sizeof(_valsize) == 1)														\
+		state_save_register_UINT8(_mod, _inst, _name, (UINT8 *)(_val), _count);		\
+	else if (sizeof(_valsize) == 2)													\
+		state_save_register_UINT16(_mod, _inst, _name, (UINT16 *)(_val), _count);	\
+	else if (sizeof(_valsize) == 4)													\
+		state_save_register_UINT32(_mod, _inst, _name, (UINT32 *)(_val), _count);	\
+	else if (sizeof(_valsize) == 8)													\
+		state_save_register_UINT64(_mod, _inst, _name, (UINT64 *)(_val), _count);
+
+#define state_save_register_item(_mod, _inst, _val)	\
+	state_save_register_generic(_mod, _inst, #_val, &_val, _val, 1);
+
+#define state_save_register_item_array(_mod, _inst, _val) \
+	state_save_register_generic(_mod, _inst, #_val, &_val[0], _val[0], sizeof(_val)/sizeof(_val[0]))
+
+#define state_save_register_item_2d_array(_mod, _inst, _val) \
+	state_save_register_generic(_mod, _inst, #_val, &_val[0][0], _val[0][0], sizeof(_val)/sizeof(_val[0][0]))
+
+#define state_save_register_global(_val) \
+	state_save_register_item("globals", 0, _val)
+
+#define state_save_register_global_array(_val) \
+	state_save_register_item_array("globals", 0, _val)
+
+#define state_save_register_global_2d_array(_val) \
+	state_save_register_item_2d_array("globals", 0, _val)
 
 #endif	/* __STATE_H__ */

@@ -11,6 +11,7 @@
 #include "machine/7474.h"
 #include "machine/8255ppi.h"
 #include "galaxian.h"
+#include "state.h"
 
 
 void cclimber_decode(const unsigned char xortable[8][16]);
@@ -19,6 +20,18 @@ void cclimber_decode(const unsigned char xortable[8][16]);
 
 static int irq_line;
 static mame_timer *int_timer;
+
+static UINT8 moonwar_port_select;
+static UINT8 kingball_speech_dip;
+static UINT8 kingball_sound;
+
+static UINT8 cavelon_bank;
+static UINT8 _4in1_bank;
+static UINT8 gmgalax_selected_game;
+
+
+
+
 
 
 static void galaxian_7474_9M_2_callback(void)
@@ -177,8 +190,6 @@ static READ8_HANDLER( ckongs_input_port_2_r )
 }
 
 
-static UINT8 moonwar_port_select;
-
 static WRITE8_HANDLER( moonwar_port_select_w )
 {
 	moonwar_port_select = data & 0x10;
@@ -212,7 +223,7 @@ static READ8_HANDLER( stratgyx_input_port_3_r )
 
 static READ8_HANDLER( darkplnt_input_port_1_r )
 {
-	static UINT8 remap[] = {0x03, 0x02, 0x00, 0x01, 0x21, 0x20, 0x22, 0x23,
+	static const UINT8 remap[] = {0x03, 0x02, 0x00, 0x01, 0x21, 0x20, 0x22, 0x23,
 							  0x33, 0x32, 0x30, 0x31, 0x11, 0x10, 0x12, 0x13,
 							  0x17, 0x16, 0x14, 0x15, 0x35, 0x34, 0x36, 0x37,
 							  0x3f, 0x3e, 0x3c, 0x3d, 0x1d, 0x1c, 0x1e, 0x1f,
@@ -355,21 +366,26 @@ static READ8_HANDLER( checkmaj_protection_r )
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
 WRITE8_HANDLER( zigzag_sillyprotection_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
-
-
 	if (data)
 	{
 		/* swap ROM 2 and 3! */
-		memory_set_bankptr(1,&RAM[0x3000]);
-		memory_set_bankptr(2,&RAM[0x2000]);
+		memory_set_bank(1, 1);
+		memory_set_bank(2, 0);
 	}
 	else
 	{
-		memory_set_bankptr(1,&RAM[0x2000]);
-		memory_set_bankptr(2,&RAM[0x3000]);
+		memory_set_bank(1, 0);
+		memory_set_bank(2, 1);
 	}
 }
+
+DRIVER_INIT( zigzag )
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	memory_configure_bank(1, 0, 2, &RAM[0x2000], 0x1000);
+	memory_configure_bank(2, 0, 2, &RAM[0x2000], 0x1000);
+}
+
 
 
 static READ8_HANDLER( dingo_3000_r )
@@ -420,8 +436,6 @@ DRIVER_INIT( dingoe )
 
 
 
-static int kingball_speech_dip;
-
 /* Hack? If $b003 is high, we'll check our "fake" speech dipswitch (marked as SLAM) */
 static READ8_HANDLER( kingball_IN0_r )
 {
@@ -444,8 +458,6 @@ WRITE8_HANDLER( kingball_speech_dip_w )
 {
 	kingball_speech_dip = data;
 }
-
-static int kingball_sound;
 
 WRITE8_HANDLER( kingball_sound1_w )
 {
@@ -471,20 +483,11 @@ static READ8_HANDLER( azurian_IN2_r )
 }
 
 
-static int _4in1_bank;
-
 WRITE8_HANDLER( _4in1_bank_w )
 {
-	/* games are banked at 0x0000 - 0x3fff */
-	offs_t bankaddress;
-	UINT8 *RAM=memory_region(REGION_CPU1);
-
 	_4in1_bank = data & 0x03;
-
-	bankaddress = (_4in1_bank * 0x4000) + 0x10000;
-	memory_set_bankptr(1, &RAM[bankaddress]);
-
 	galaxian_gfxbank_w(0, _4in1_bank);
+	memory_set_bank(1, _4in1_bank);
 }
 
 READ8_HANDLER( _4in1_input_port_1_r )
@@ -498,18 +501,11 @@ READ8_HANDLER( _4in1_input_port_2_r )
 }
 
 
-static int gmgalax_selected_game;
-
 static void gmgalax_select_game(int game)
 {
-	/* games are banked at 0x0000 - 0x3fff */
-	offs_t bankaddress;
-	UINT8 *RAM=memory_region(REGION_CPU1);
-
 	gmgalax_selected_game = game;
 
-	bankaddress = (gmgalax_selected_game * 0x4000) + 0x10000;
-	memory_set_bankptr(1, &RAM[bankaddress]);
+	memory_set_bank(1, game);
 
 	galaxian_gfxbank_w(0, gmgalax_selected_game);
 }
@@ -536,20 +532,8 @@ static void cavelon_banksw(void)
        Only the lower 0x2000 is switched but we switch the whole region
        to keep the CPU core happy at the boundaries */
 
-	static int cavelon_bank;
-
-	UINT8 *ROM = memory_region(REGION_CPU1);
-
-	if (cavelon_bank)
-	{
-		cavelon_bank = 0;
-		memory_set_bankptr(1, &ROM[0x0000]);
-	}
-	else
-	{
-		cavelon_bank = 1;
-		memory_set_bankptr(1, &ROM[0x10000]);
-	}
+	cavelon_bank = !cavelon_bank;
+	memory_set_bank(1, cavelon_bank);
 }
 
 static READ8_HANDLER( cavelon_banksw_r )
@@ -737,6 +721,9 @@ DRIVER_INIT( kingball )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xa000, 0, 0, kingball_IN0_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xa800, 0, 0, kingball_IN1_r);
+
+	state_save_register_global(kingball_speech_dip);
+	state_save_register_global(kingball_sound);
 }
 
 
@@ -877,7 +864,12 @@ DRIVER_INIT( 4in1 )
 	for (i = 0; i < memory_region_length(REGION_CPU1); i++)
 		RAM[i] = RAM[i] ^ (i & 0xff);
 
+	/* games are banked at 0x0000 - 0x3fff */
+	memory_configure_bank(1, 0, 4, &RAM[0x10000], 0x4000);
+
 	_4in1_bank_w(0, 0); /* set the initial CPU bank */
+
+	state_save_register_global(_4in1_bank);
 }
 
 DRIVER_INIT( mshuttle )
@@ -1075,10 +1067,13 @@ DRIVER_INIT( hotshock )
 
 DRIVER_INIT( cavelon )
 {
+	UINT8 *ROM = memory_region(REGION_CPU1);
+
 	init_scramble_ppi();
 
 	/* banked ROM */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MRA8_BANK1);
+	memory_configure_bank(1, 0, 2, &ROM[0x00000], 0x10000);
 	cavelon_banksw();
 
 	/* A15 switches memory banks */
@@ -1088,6 +1083,7 @@ DRIVER_INIT( cavelon )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2000, 0, 0, MWA8_NOP);	/* ??? */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3800, 0x3801, 0, 0, MWA8_NOP);  /* looks suspicously like
                                                                an AY8910, but not sure */
+	state_save_register_global(cavelon_bank);
 }
 
 DRIVER_INIT( moonwar )
@@ -1097,6 +1093,8 @@ DRIVER_INIT( moonwar )
 	/* special handler for the spinner */
 	ppi8255_set_portAread (0, moonwar_input_port_0_r);
 	ppi8255_set_portCwrite(0, moonwar_port_select_w);
+
+	state_save_register_global(moonwar_port_select);
 }
 
 DRIVER_INIT( darkplnt )
@@ -1481,6 +1479,12 @@ DRIVER_INIT( sfx )
 
 DRIVER_INIT( gmgalax )
 {
+	/* games are banked at 0x0000 - 0x3fff */
+	UINT8 *RAM=memory_region(REGION_CPU1);
+	memory_configure_bank(1, 0, 2, &RAM[0x10000], 0x4000);
+
+	state_save_register_global(gmgalax_selected_game);
+
 	gmgalax_select_game(input_port_6_r(0) & 0x01);
 }
 

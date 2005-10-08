@@ -65,10 +65,10 @@ MACHINE_INIT( cinemat )
 	mux_select = 0;
 
 	/* register state saves */
-	state_save_register_UINT8("cinemat", 0, "coin_detected", &coin_detected,1);
-	state_save_register_UINT8("cinemat", 0, "coin_last_input", &coin_last_input,1);
-	state_save_register_UINT8("cinemat", 0, "coin_last_reset", &coin_last_reset,1);
-	state_save_register_UINT8("cinemat", 0, "mux_select", &mux_select,1);
+	state_save_register_global(coin_detected);
+	state_save_register_global(coin_last_input);
+	state_save_register_global(coin_last_reset);
+	state_save_register_global(mux_select);
 }
 
 

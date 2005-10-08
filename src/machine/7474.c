@@ -39,6 +39,7 @@
 
 #include "driver.h"
 #include "machine/7474.h"
+#include "state.h"
 
 
 #define MAX_TTL7474  12
@@ -49,19 +50,19 @@ struct TTL7474
 	void (*output_cb)(void);
 
 	/* inputs */
-	int clear;			/* pin 1/13 */
-	int preset;			/* pin 4/10 */
-	int clock;			/* pin 3/11 */
-	int d;				/* pin 2/12 */
+	UINT8 clear;			/* pin 1/13 */
+	UINT8 preset;			/* pin 4/10 */
+	UINT8 clock;			/* pin 3/11 */
+	UINT8 d;				/* pin 2/12 */
 
 	/* outputs */
-	int output;			/* pin 5/9 */
-	int output_comp;	/* pin 6/8 */
+	UINT8 output;			/* pin 5/9 */
+	UINT8 output_comp;	/* pin 6/8 */
 
 	/* internal */
-	int last_clock;
-	int last_output;
-	int last_output_comp;
+	UINT8 last_clock;
+	UINT8 last_output;
+	UINT8 last_output_comp;
 };
 
 static struct TTL7474 chips[MAX_TTL7474];
@@ -140,6 +141,8 @@ int TTL7474_output_comp_r(int which)
 
 void TTL7474_config(int which, const struct TTL7474_interface *intf)
 {
+	struct TTL7474 *chip = &chips[which];
+
 	if (which >= MAX_TTL7474)
 	{
 		logerror("Only %d 7474's are supported at this time.\n", MAX_TTL7474);
@@ -147,15 +150,25 @@ void TTL7474_config(int which, const struct TTL7474_interface *intf)
 	}
 
 
-	chips[which].output_cb = (intf ? intf->output_cb : 0);
+	chip->output_cb = (intf ? intf->output_cb : 0);
 
 	/* all inputs are open first */
-    chips[which].clear = 1;
-    chips[which].preset = 1;
-    chips[which].clock = 1;
-    chips[which].d = 1;
+    chip->clear = 1;
+    chip->preset = 1;
+    chip->clock = 1;
+    chip->d = 1;
 
-    chips[which].last_clock = 1;
-    chips[which].last_output = -1;
-    chips[which].last_output_comp = -1;
+    chip->last_clock = 1;
+    chip->last_output = -1;
+    chip->last_output_comp = -1;
+
+    state_save_register_item("ttl7474", which, chip->clear);
+    state_save_register_item("ttl7474", which, chip->preset);
+    state_save_register_item("ttl7474", which, chip->clock);
+    state_save_register_item("ttl7474", which, chip->d);
+    state_save_register_item("ttl7474", which, chip->output);
+    state_save_register_item("ttl7474", which, chip->output_comp);
+    state_save_register_item("ttl7474", which, chip->last_clock);
+    state_save_register_item("ttl7474", which, chip->last_output);
+    state_save_register_item("ttl7474", which, chip->last_output_comp);
 }

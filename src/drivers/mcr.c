@@ -2229,8 +2229,8 @@ static void mcr_init(int cpuboard, int vidboard, int ssioboard)
 	mcr12_sprite_xoffs = 0;
 	mcr12_sprite_xoffs_flip = 0;
 
-	state_save_register_UINT8 ("mcr", 0, "input_mux", &input_mux, 1);
-	state_save_register_UINT8 ("mcr", 0, "last_op4", &last_op4, 1);
+	state_save_register_global(input_mux);
+	state_save_register_global(last_op4);
 }
 
 

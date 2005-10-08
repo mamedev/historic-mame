@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "fastfred.h"
 
-extern int galaxian_stars_on;
+extern UINT8 galaxian_stars_on;
 extern void galaxian_init_stars(int colors_offset);
 extern void galaxian_draw_stars(mame_bitmap *bitmap);
 

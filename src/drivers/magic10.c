@@ -74,7 +74,7 @@ static WRITE16_HANDLER( magic10_misc_w )
 	coin_counter_w(0, data & 0x400);
 }
 
-static READ16_HANDLER( magic10_2_r )
+static READ16_HANDLER( magic102_r )
 {
 	static UINT16 ret = 0;
 	ret ^= 0x20;
@@ -113,14 +113,14 @@ static ADDRESS_MAP_START( magic10a_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x603fff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( magic10_2_map, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( magic102_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x100000, 0x100fff) AM_RAM AM_WRITE(layer1_videoram_w) AM_BASE(&layer1_videoram)
 	AM_RANGE(0x101000, 0x101fff) AM_RAM AM_WRITE(layer0_videoram_w) AM_BASE(&layer0_videoram)
 	AM_RANGE(0x102000, 0x103fff) AM_RAM AM_WRITE(layer2_videoram_w) AM_BASE(&layer2_videoram)
 	AM_RANGE(0x200000, 0x2007ff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x400000, 0x4001ff) AM_RAM AM_WRITE(paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x500000, 0x500001) AM_READ(magic10_2_r)
+	AM_RANGE(0x500000, 0x500001) AM_READ(magic102_r)
 	AM_RANGE(0x500004, 0x500005) AM_READNOP // gives credits
 	AM_RANGE(0x500006, 0x500007) AM_READNOP // gives credits
 	AM_RANGE(0x50001a, 0x50001b) AM_READ(input_port_0_word_r)
@@ -199,7 +199,7 @@ INPUT_PORTS_START( magic10 )
 	PORT_DIPSETTING(      0xc000, "Lots Dispenser" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( magic10_2 )
+INPUT_PORTS_START( magic102 )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_NAME("Note A")
@@ -387,12 +387,12 @@ static MACHINE_DRIVER_START( magic10a )
 	MDRV_CPU_PROGRAM_MAP(magic10a_map,0)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( magic10_2 )
+static MACHINE_DRIVER_START( magic102 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(magic10)
 	MDRV_CPU_MODIFY("cpu")
-	MDRV_CPU_PROGRAM_MAP(magic10_2_map,0)
+	MDRV_CPU_PROGRAM_MAP(magic102_map,0)
 
 	MDRV_VISIBLE_AREA(0*8, 48*8-1, 0*8, 30*8-1)
 MACHINE_DRIVER_END
@@ -456,7 +456,7 @@ pcb is marked: Copyright ABM - 9605 Rev.02
 
 */
 
-ROM_START( magic10_2 )
+ROM_START( magic102 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "2.u3",  0x00000, 0x20000, CRC(6fc55fe4) SHA1(392ad92e55aeac9bf5235cceb6b0b415942105a4) )
 	ROM_LOAD16_BYTE( "1.u2",  0x00001, 0x20000, CRC(501507af) SHA1(ceed50c9380a9838cd3d171d2387334edfeff77f) )
@@ -477,7 +477,7 @@ DRIVER_INIT( magic10 )
 	layer2_offset[1] = 2;
 }
 
-DRIVER_INIT( magic10_2 )
+DRIVER_INIT( magic102 )
 {
 	layer2_offset[0] = 8;
 	layer2_offset[1] = 20;
@@ -485,4 +485,4 @@ DRIVER_INIT( magic10_2 )
 
 GAME( 1995, magic10,   0,       magic10,   magic10,   magic10,   ROT0, "A.W.P. Games", "Magic's 10 (ver. 16.55)", 0 )
 GAME( 1995, magic10a,  magic10, magic10a,  magic10,   magic10,   ROT0, "A.W.P. Games", "Magic's 10 (ver. 16.45)", 0 )
-GAME( 1997, magic10_2, 0,       magic10_2, magic10_2, magic10_2, ROT0, "ABM Games",    "Magic's 10 2 (ver 1.1)", GAME_NOT_WORKING )
+GAME( 1997, magic102,  0,       magic102,  magic102,  magic102,  ROT0, "ABM Games",    "Magic's 10 2 (ver 1.1)", GAME_NOT_WORKING )

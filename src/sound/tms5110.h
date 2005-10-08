@@ -14,7 +14,7 @@
 #define TMS5110_CMD_TEST_TALK   (14) /*    1     1     1     x  |     3    */
 
 
-void *tms5110_create(void);
+void *tms5110_create(int index);
 void tms5110_destroy(void *chip);
 
 void tms5110_reset_chip(void *chip);

@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "sound/samples.h"
 #include "sound/streams.h"
+#include "state.h"
 #include <math.h>
 
 #define VERBOSE 0
@@ -39,23 +40,26 @@
 #endif
 
 static void *lfotimer = 0;
-static int freq = MAXFREQ;
+static INT32 freq = MAXFREQ;
 
 #define STEP 1
 
 static void *noisetimer = 0;
-static int noisevolume;
+static INT32 noisevolume;
 static INT16 *noisewave;
 static INT16 *shootwave;
 #if NEW_SHOOT
-static int shoot_length;
-static int shoot_rate;
+static INT32 shoot_length;
+static INT32 shoot_rate;
 #endif
 
-static int last_port2=0;
+static UINT8 last_port2=0;
 
 static INT16 tonewave[4][TOOTHSAW_LENGTH];
-static int pitch,vol;
+static INT32 pitch,vol;
+
+static INT32 counter, countdown;
+static INT32 lfobit[4];
 
 static INT16 backgroundwave[32] =
 {
@@ -78,7 +82,6 @@ static void tone_update(void *param, stream_sample_t **input, stream_sample_t **
 	stream_sample_t *buffer = output[0];
 	int i,j;
 	INT16 *w = tonewave[vol];
-	static int counter, countdown;
 
 	/* only update if we have non-zero volume and frequency */
 	if( pitch != 0xff )
@@ -314,7 +317,7 @@ static void galaxian_sh_start(void)
 	for( i = 0, j = 0; i < SHOOT_LENGTH; i++ )
 	{
 		#define AMP(n)	(n)*0x8000/100-0x8000
-		static int charge_discharge[10] = {
+		static const int charge_discharge[10] = {
 			AMP( 0), AMP(25), AMP(45), AMP(60), AMP(70), AMP(85),
 			AMP(70), AMP(50), AMP(25), AMP( 0)
 		};
@@ -425,6 +428,15 @@ static void galaxian_sh_start(void)
 	lfotimer = timer_alloc(lfo_timer_cb);
 
 	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, galaxian_sh_update);
+
+	state_save_register_global(freq);
+	state_save_register_global(noisevolume);
+	state_save_register_global(last_port2);
+	state_save_register_global(pitch);
+	state_save_register_global(vol);
+	state_save_register_global(counter);
+	state_save_register_global(countdown);
+	state_save_register_global_array(lfobit);
 }
 
 
@@ -445,8 +457,6 @@ static void lfo_timer_cb(int param)
 WRITE8_HANDLER( galaxian_lfo_freq_w )
 {
 #if NEW_LFO
-	static int lfobit[4];
-
 	/* R18 1M,R17 470K,R16 220K,R15 100K */
 	const int rv[4] = { 1000000,470000,220000,100000};
 	double r1,r2,Re,td;
@@ -496,7 +506,6 @@ WRITE8_HANDLER( galaxian_lfo_freq_w )
 	logerror("lfo timer bits:%d%d%d%d r1:%d, r2:%d, re: %d, td: %9.2fsec\n", lfobit[0], lfobit[1], lfobit[2], lfobit[3], (int)r1, (int)r2, (int)Re, td);
 	timer_adjust(lfotimer, TIME_IN_SEC(td / (MAXFREQ-MINFREQ)), 0, TIME_IN_SEC(td / (MAXFREQ-MINFREQ)));
 #else
-	static int lfobit[4];
 	double r0, r1, rx = 100000.0;
 
 	if( (data & 1) == lfobit[offset] )

@@ -1893,6 +1893,14 @@ int mame_validitychecks(int game)
 			}
 		}
 
+		/* make sure the driver name is 8 chars or less */
+		if (strlen(drivers[i]->name) > 8)
+		{
+			printf("%s: driver name must be 8 characters or less\n", drivers[i]->name);
+			error = 1;
+			break;
+		}
+
 		/* make sure the year is only digits, '?' or '+' */
 		s = drivers[i]->year;
 		for (j = 0; s[j]; j++)

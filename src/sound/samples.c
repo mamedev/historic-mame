@@ -455,7 +455,7 @@ static void samples_postload(void *param)
 		}
 
 		/* validate the position against the length in case the sample is smaller */
-		if (chan->source && chan->pos > chan->source_length)
+		if (chan->source && chan->pos >= chan->source_length)
 		{
 			if (chan->loop)
 				chan->pos %= chan->source_length;

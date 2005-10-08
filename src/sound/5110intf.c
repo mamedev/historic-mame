@@ -58,7 +58,7 @@ static void *tms5110_start(int sndindex, int clock, const void *config)
 	memset(info, 0, sizeof(*info));
 	info->intf = config ? config : &dummy;
 
-	info->chip = tms5110_create();
+	info->chip = tms5110_create(sndindex);
 	if (!info->chip)
 		return NULL;
 	sound_register_token(info);

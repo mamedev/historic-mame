@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 
 static rectangle _spritevisiblearea =
 {
@@ -42,11 +43,11 @@ static void rockclim_get_tile_info(int tile_index);
 static tilemap *bg_tilemap;
 static tilemap *rockclim_tilemap;
 static int mooncrst_gfxextend;
-static int gfxbank[5];
 static int spriteram2_present;
-static int flip_screen_x;
-static int flip_screen_y;
-static int color_mask;
+static UINT8 gfxbank[5];
+static UINT8 flip_screen_x;
+static UINT8 flip_screen_y;
+static UINT8 color_mask;
 static void (*modify_charcode)(UINT16 *code,UINT8 x);		/* function to call to do character banking */
 static void  gmgalax_modify_charcode(UINT16 *code,UINT8 x);
 static void mooncrst_modify_charcode(UINT16 *code,UINT8 x);
@@ -94,12 +95,12 @@ struct star
 };
 static struct star stars[STAR_COUNT];
 static int stars_colors_start;
-       int galaxian_stars_on;
-static int stars_scrollpos;
-static int stars_blink_state;
+       UINT8 galaxian_stars_on;
+static INT32 stars_scrollpos;
+static UINT8 stars_blink_state;
 static void *stars_blink_timer;
 static void *stars_scroll_timer;
-static int timer_adjusted;
+static UINT8 timer_adjusted;
        void galaxian_init_stars(int colors_offset);
 static void (*draw_stars)(mame_bitmap *);		/* function to call to draw the star layer */
 static void     noop_draw_stars(mame_bitmap *bitmap);
@@ -112,7 +113,7 @@ static void start_stars_blink_timer(double ra, double rb, double c);
 static void start_stars_scroll_timer(void);
 
 /* bullets circuit */
-static int darkplnt_bullet_color;
+static UINT8 darkplnt_bullet_color;
 static void (*draw_bullets)(mame_bitmap *,int,int,int);	/* function to call to draw a bullet */
 static void galaxian_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 static void gteikob2_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
@@ -121,8 +122,8 @@ static void   theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 static void darkplnt_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 
 /* background circuit */
-static int background_enable;
-static int background_red, background_green, background_blue;
+static UINT8 background_enable;
+static UINT8 background_red, background_green, background_blue;
 static void (*draw_background)(mame_bitmap *);	/* function to call to draw the background */
 static void galaxian_draw_background(mame_bitmap *bitmap);
 static void scramble_draw_background(mame_bitmap *bitmap);
@@ -132,6 +133,10 @@ static void  frogger_draw_background(mame_bitmap *bitmap);
 static void stratgyx_draw_background(mame_bitmap *bitmap);
 static void  minefld_draw_background(mame_bitmap *bitmap);
 static void   rescue_draw_background(mame_bitmap *bitmap);
+
+static UINT16 rockclim_v;
+static UINT16 rockclim_h;
+
 
 
 /***************************************************************************
@@ -450,6 +455,24 @@ PALETTE_INIT( mariner )
 
 ***************************************************************************/
 
+static void state_save_register(void)
+{
+	state_save_register_global_array(gfxbank);
+	state_save_register_global(flip_screen_x);
+	state_save_register_global(flip_screen_y);
+
+	state_save_register_global(galaxian_stars_on);
+	state_save_register_global(stars_scrollpos);
+	state_save_register_global(stars_blink_state);
+
+	state_save_register_global(darkplnt_bullet_color);
+
+	state_save_register_global(background_enable);
+	state_save_register_global(background_red);
+	state_save_register_global(background_green);
+	state_save_register_global(background_blue);
+}
+
 static int video_start_common(UINT32 (*get_memory_offset)(UINT32,UINT32,UINT32,UINT32))
 {
 	bg_tilemap = tilemap_create(get_tile_info,get_memory_offset,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -487,6 +510,7 @@ static int video_start_common(UINT32 (*get_memory_offset)(UINT32,UINT32,UINT32,U
 
 	color_mask = (Machine->gfx[0]->color_granularity == 4) ? 7 : 3;
 
+	state_save_register();
 	return 0;
 }
 
@@ -814,6 +838,9 @@ VIDEO_START( rockclim )
 	draw_background = rockclim_draw_background;
 	modify_charcode = mooncrst_modify_charcode;
 	modify_spritecode = rockclim_modify_spritecode;
+	rockclim_v = rockclim_h = 0;
+	state_save_register_global(rockclim_v);
+	state_save_register_global(rockclim_h);
 	return ret;
 }
 
@@ -868,6 +895,7 @@ VIDEO_START( drivfrcg )
 
 	color_mask = 0xff;
 
+	state_save_register();
 	return 0;
 }
 
@@ -909,6 +937,7 @@ VIDEO_START( ad2083 )
 
 	color_mask = 7;
 
+	state_save_register();
 	return 0;
 }
 
@@ -970,6 +999,7 @@ VIDEO_START( racknrol )
 
 	color_mask = 0xff;
 
+	state_save_register();
 	return 0;
 }
 
@@ -1122,13 +1152,8 @@ WRITE8_HANDLER( rockclim_videoram_w )
 	}
 }
 
-static int rockclim_v=0;
-static int rockclim_h=0;
-
 WRITE8_HANDLER( rockclim_scroll_w )
 {
-
-
 	switch(offset&3)
 	{
 		case 0: rockclim_h=(rockclim_h&0xff00)|data;tilemap_set_scrollx(rockclim_tilemap , 0, rockclim_h );break;

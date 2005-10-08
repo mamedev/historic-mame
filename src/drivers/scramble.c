@@ -30,15 +30,16 @@ Notes:
 #include "sound/5110intf.h"
 #include "sound/tms5110.h"
 #include "galaxian.h"
+#include "state.h"
 
 
 /***************************************************************************
     AD2083 TMS5110 implementation (still wrong!)
 ***************************************************************************/
 
-static int speech_rom_address = 0;
-static int speech_rom_address_hi = 0;
-static int speech_rom_bit = 0;
+static INT32 speech_rom_address = 0;
+static INT32 speech_rom_address_hi = 0;
+static INT32 speech_rom_bit = 0;
 
 static void start_talking (void)
 {
@@ -112,6 +113,15 @@ static WRITE8_HANDLER( ad2083_soundlatch_w )
 static WRITE8_HANDLER( ad2083_tms5110_ctrl_w )
 {
 	speech_rom_address = speech_rom_address_hi | (data * 0x40);
+}
+
+static MACHINE_INIT( ad2083 )
+{
+	state_save_register_global(speech_rom_address);
+	state_save_register_global(speech_rom_address_hi);
+	state_save_register_global(speech_rom_bit);
+
+	machine_init_galaxian();
 }
 
 
@@ -2156,7 +2166,7 @@ static MACHINE_DRIVER_START( ad2083 )
 	MDRV_CPU_PROGRAM_MAP(ad2083_sound_map,0)
 	MDRV_CPU_IO_MAP(ad2083_sound_io_map,0)
 
-	MDRV_MACHINE_INIT(galaxian)
+	MDRV_MACHINE_INIT(ad2083)
 
 	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -2962,37 +2972,37 @@ ROM_START( ad2083 )
 ROM_END
 
 
-GAME( 1981, scramble, 0,        fscramble,scramble, scramble,     ROT90, "Konami", "Scramble", 0 )
-GAME( 1981, scrambls, scramble, fscramble,scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)", 0 )
-GAME( 1981, explorer, scramble, explorer, explorer, 0,		      ROT90, "bootleg", "Explorer", 0 )
-GAME( 1981, strfbomb, scramble, scramble, strfbomb, scramble,     ROT90, "Omni", "Strafe Bomb", 0 )
-GAME( 1981, atlantis, 0,        scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 1)", 0 )
-GAME( 1981, atlants2, atlantis, scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 2)", 0 )
-GAME( 1980, theend,   0,        theend,   theend,   theend,       ROT90, "Konami", "The End", 0 )
-GAME( 1980, theends,  theend,   theend,   theend,   theend,       ROT90, "[Konami] (Stern license)", "The End (Stern)", 0 )
-GAME( 1981, froggers, frogger,  froggers, froggers, froggers,     ROT90, "bootleg", "Frog", 0 )
-GAME( 1981, frogf,    frogger,  frogf,    froggers, froggers,     ROT90, "Falcon", "Frogger (Falcon bootleg)", 0 )
-GAME( 1982, amidars,  amidar,   scramble, amidars,  atlantis,     ROT90, "Konami", "Amidar (Scramble hardware)", 0 )
-GAME( 1982, triplep,  0,        triplep,  triplep,  scramble_ppi, ROT90, "KKI", "Triple Punch", 0 )
-GAME( 1982, knockout, triplep,  triplep,  triplep,  scramble_ppi, ROT90, "KKK", "Knock Out!!", 0 )
-GAME( 1981, mariner,  0,        mariner,  scramble, mariner,      ROT90, "Amenip", "Mariner", GAME_IMPERFECT_SOUND )
-GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,      ROT90, "Amenip (US Billiards Inc. license)", "800 Fathoms", 0 )
-GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,       ROT90, "bootleg", "Crazy Kong (Scramble hardware)", 0 )
-GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic", "Mars", 0 )
-GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, devilfsh,     ROT90, "Artic", "Devil Fish", 0 )
-GAME( 1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", 0 )
-GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar", 0 )
-GAME( 1983, mrkougr2, mrkougar, mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar (earlier)", 0 )
-GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)", 0 )
-GAME( 1983, mrkougb2, mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg Set 2)", 0 )
-GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker", 0 )
-GAME( 1982, conquer,  0,        hotshock, hotshock, 0,            ROT90, "<unknown>", "Conquer", GAME_NOT_WORKING )
-GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century Electronics", "Hunchback (Scramble hardware)", 0 )
-GAME( 1984, hncholms, huncholy, hncholms, hncholms, scramble_ppi, ROT90, "Century Electronics", "Hunchback Olympic (Scramble hardware)", 0 )
-GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon", 0 )
-GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X", 0 )
-GAME( 1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu USA", "Skelagon", GAME_NOT_WORKING )
-GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)", 0 )
-GAME( 1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 1)", GAME_IMPERFECT_SOUND )
-GAME( 1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
-GAME( 1983, ad2083,   0,        ad2083,   ad2083,   ad2083,       ROT90, "Midcoin", "A. D. 2083", GAME_IMPERFECT_SOUND )
+GAME( 1981, scramble, 0,        fscramble,scramble, scramble,     ROT90, "Konami", "Scramble", GAME_SUPPORTS_SAVE )
+GAME( 1981, scrambls, scramble, fscramble,scramble, scrambls,     ROT90, "[Konami] (Stern license)", "Scramble (Stern)", GAME_SUPPORTS_SAVE )
+GAME( 1981, explorer, scramble, explorer, explorer, 0,		      ROT90, "bootleg", "Explorer", GAME_SUPPORTS_SAVE )
+GAME( 1981, strfbomb, scramble, scramble, strfbomb, scramble,     ROT90, "Omni", "Strafe Bomb", GAME_SUPPORTS_SAVE )
+GAME( 1981, atlantis, 0,        scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, atlants2, atlantis, scramble, atlantis, atlantis,     ROT90, "Comsoft", "Battle of Atlantis (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1980, theend,   0,        theend,   theend,   theend,       ROT90, "Konami", "The End", GAME_SUPPORTS_SAVE )
+GAME( 1980, theends,  theend,   theend,   theend,   theend,       ROT90, "[Konami] (Stern license)", "The End (Stern)", GAME_SUPPORTS_SAVE )
+GAME( 1981, froggers, frogger,  froggers, froggers, froggers,     ROT90, "bootleg", "Frog", GAME_SUPPORTS_SAVE )
+GAME( 1981, frogf,    frogger,  frogf,    froggers, froggers,     ROT90, "Falcon", "Frogger (Falcon bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1982, amidars,  amidar,   scramble, amidars,  atlantis,     ROT90, "Konami", "Amidar (Scramble hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1982, triplep,  0,        triplep,  triplep,  scramble_ppi, ROT90, "KKI", "Triple Punch", GAME_SUPPORTS_SAVE )
+GAME( 1982, knockout, triplep,  triplep,  triplep,  scramble_ppi, ROT90, "KKK", "Knock Out!!", GAME_SUPPORTS_SAVE )
+GAME( 1981, mariner,  0,        mariner,  scramble, mariner,      ROT90, "Amenip", "Mariner", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE)
+GAME( 1981, 800fath,  mariner,  mariner,  scramble, mariner,      ROT90, "Amenip (US Billiards Inc. license)", "800 Fathoms", GAME_SUPPORTS_SAVE )
+GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   ckongs,       ROT90, "bootleg", "Crazy Kong (Scramble hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1981, mars,     0,        mars,     mars,     mars,         ROT90, "Artic", "Mars", GAME_SUPPORTS_SAVE )
+GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, devilfsh,     ROT90, "Artic", "Devil Fish", GAME_SUPPORTS_SAVE )
+GAME( 1983, newsin7,  0,        newsin7,  newsin7,  mars,         ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_SUPPORTS_SAVE )
+GAME( 1984, mrkougar, 0,        mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar", GAME_SUPPORTS_SAVE )
+GAME( 1983, mrkougr2, mrkougar, mrkougar, mrkougar, mrkougar,     ROT90, "ATW", "Mr. Kougar (earlier)", GAME_SUPPORTS_SAVE )
+GAME( 1983, mrkougb,  mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1983, mrkougb2, mrkougar, mrkougb,  mrkougar, mrkougb,      ROT90, "bootleg", "Mr. Kougar (bootleg Set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock,     ROT90, "E.G. Felaco", "Hot Shocker", GAME_SUPPORTS_SAVE )
+GAME( 1982, conquer,  0,        hotshock, hotshock, 0,            ROT90, "<unknown>", "Conquer", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE)
+GAME( 1983, hunchbks, hunchbak, hunchbks, hunchbks, scramble_ppi, ROT90, "Century Electronics", "Hunchback (Scramble hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1984, hncholms, huncholy, hncholms, hncholms, scramble_ppi, ROT90, "Century Electronics", "Hunchback Olympic (Scramble hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1983, cavelon,  0,        cavelon,  cavelon,  cavelon,      ROT90, "Jetsoft", "Cavelon", GAME_SUPPORTS_SAVE )
+GAME( 1983, sfx,      0,        sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu", "SF-X", GAME_SUPPORTS_SAVE )
+GAME( 1983, skelagon, sfx,      sfx,      sfx,      sfx,          ORIENTATION_FLIP_X, "Nichibutsu USA", "Skelagon", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE)
+GAME( 198?, mimonscr, mimonkey, mimonscr, mimonscr, mimonscr,     ROT90, "bootleg", "Mighty Monkey (bootleg on Scramble hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1982, scorpion, 0,		scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 1)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE)
+GAME( 1982, scrpiona, scorpion, scorpion, scorpion, scorpion,	  ROT90, "Zaccaria", "Scorpion (set 2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE)
+GAME( 1983, ad2083,   0,        ad2083,   ad2083,   ad2083,       ROT90, "Midcoin", "A. D. 2083", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE)

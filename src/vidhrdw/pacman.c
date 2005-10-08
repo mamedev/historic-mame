@@ -18,14 +18,15 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 static tilemap *bg_tilemap;
-static int charbank;
-static int spritebank;
-static int palettebank;
-static int colortablebank;
-static int flipscreen;
-static int bgpriority;
+static UINT8 charbank;
+static UINT8 spritebank;
+static UINT8 palettebank;
+static UINT8 colortablebank;
+static UINT8 flipscreen;
+static UINT8 bgpriority;
 
 static int xoffsethack;
 UINT8 *sprite_bank;
@@ -153,8 +154,21 @@ static void pacman_get_tile_info(int tile_index)
 
 ***************************************************************************/
 
+static void init_save_state(void)
+{
+	state_save_register_global(charbank);
+	state_save_register_global(spritebank);
+	state_save_register_global(palettebank);
+	state_save_register_global(colortablebank);
+	state_save_register_global(flipscreen);
+	state_save_register_global(bgpriority);
+}
+
+
 VIDEO_START( pacman )
 {
+	init_save_state();
+
 	charbank = 0;
 	spritebank = 0;
 	palettebank = 0;
@@ -176,29 +190,20 @@ VIDEO_START( pacman )
 
 WRITE8_HANDLER( pacman_videoram_w )
 {
-	if (videoram[offset] != data)
-	{
-		videoram[offset] = data;
-		tilemap_mark_tile_dirty( bg_tilemap, offset );
-	}
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty( bg_tilemap, offset );
 }
 
 WRITE8_HANDLER( pacman_colorram_w )
 {
-	if (colorram[offset] != data)
-	{
-		colorram[offset] = data;
-		tilemap_mark_tile_dirty( bg_tilemap, offset );
-	}
+	colorram[offset] = data;
+	tilemap_mark_tile_dirty( bg_tilemap, offset );
 }
 
 WRITE8_HANDLER( pacman_flipscreen_w )
 {
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		tilemap_set_flip( bg_tilemap, flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
-	}
+	flipscreen = data & 1;
+	tilemap_set_flip( bg_tilemap, flipscreen * ( TILEMAP_FLIPX + TILEMAP_FLIPY ) );
 }
 
 
@@ -286,6 +291,8 @@ VIDEO_UPDATE( pacman )
 
 VIDEO_START( pengo )
 {
+	init_save_state();
+
 	charbank = 0;
 	spritebank = 0;
 	palettebank = 0;
@@ -365,6 +372,15 @@ static void s2650_get_tile_info(int tile_index)
 
 VIDEO_START( s2650games )
 {
+	init_save_state();
+
+	charbank = 0;
+	spritebank = 0;
+	palettebank = 0;
+	colortablebank = 0;
+	flipscreen = 0;
+	bgpriority = 0;
+
 	xoffsethack = 1;
 
 	bg_tilemap = tilemap_create( s2650_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
@@ -527,6 +543,8 @@ static void jrpacman_mark_tile_dirty( int offset )
 ***************************************************************************/
 VIDEO_START( jrpacman )
 {
+	init_save_state();
+
 	charbank = 0;
 	spritebank = 0;
 	palettebank = 0;

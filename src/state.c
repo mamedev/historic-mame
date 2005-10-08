@@ -673,6 +673,13 @@ void state_save_allow_registration(int allowed)
 }
 
 
+int state_save_registration_allowed(void)
+{
+	return ss_registration_allowed;
+}
+
+
+
 
 /*************************************
  *

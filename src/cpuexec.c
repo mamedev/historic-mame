@@ -662,6 +662,9 @@ static void handle_load(void)
 				state_save_load_continue();
 				state_save_pop_tag();
 
+				/* make sure banking is set */
+				activecpu_reset_banking();
+
 				cpuintrf_pop_context();
 			}
 

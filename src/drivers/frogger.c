@@ -203,6 +203,6 @@ ROM_END
 
 
 
-GAME( 1981, frogger,  0,	   frogger,  frogger,  frogger,  ROT90, "Konami", "Frogger", 0 )
-GAME( 1981, frogseg1, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 1)", 0 )
-GAME( 1981, frogseg2, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 2)", 0 )
+GAME( 1981, frogger,  0,	   frogger,  frogger,  frogger,  ROT90, "Konami", "Frogger", GAME_SUPPORTS_SAVE )
+GAME( 1981, frogseg1, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, frogseg2, frogger, frogger,  frogger,  frogger,  ROT90, "[Konami] (Sega license)", "Frogger (Sega set 2)", GAME_SUPPORTS_SAVE )

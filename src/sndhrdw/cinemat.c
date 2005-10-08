@@ -117,16 +117,16 @@ static void generic_init(void (*callback)(UINT8, UINT8))
     current_pitch = 0x20000;
 
     /* register for save states */
-    state_save_register_UINT8 ("cinemat", 0, "sound_control", &sound_control, 1);
-    state_save_register_UINT32("cinemat", 0, "current_shift", &current_shift, 1);
-    state_save_register_UINT32("cinemat", 0, "last_shift", &last_shift, 1);
-    state_save_register_UINT32("cinemat", 0, "last_shift2", &last_shift2, 1);
-    state_save_register_UINT32("cinemat", 0, "current_pitch", &current_pitch, 1);
-    state_save_register_UINT32("cinemat", 0, "last_frame", &last_frame, 1);
-    state_save_register_UINT8 ("cinemat", 0, "sound_fifo", &sound_fifo[0], 16);
-    state_save_register_UINT8 ("cinemat", 0, "sound_fifo_in", &sound_fifo_in, 1);
-    state_save_register_UINT8 ("cinemat", 0, "sound_fifo_out", &sound_fifo_out, 1);
-    state_save_register_UINT8 ("cinemat", 0, "last_portb_write", &last_portb_write, 1);
+    state_save_register_global(sound_control);
+    state_save_register_global(current_shift);
+    state_save_register_global(last_shift);
+    state_save_register_global(last_shift2);
+    state_save_register_global(current_pitch);
+    state_save_register_global(last_frame);
+    state_save_register_global_array(sound_fifo);
+    state_save_register_global(sound_fifo_in);
+    state_save_register_global(sound_fifo_out);
+    state_save_register_global(last_portb_write);
 }
 
 

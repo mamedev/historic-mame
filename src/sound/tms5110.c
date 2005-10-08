@@ -14,6 +14,7 @@
 
 #include "driver.h"
 #include "tms5110.h"
+#include "state.h"
 
 
 /* Pull in the ROM tables */
@@ -42,30 +43,30 @@ struct tms5110
 	/* these contain data describing the current and previous voice frames */
 	UINT16 old_energy;
 	UINT16 old_pitch;
-	int old_k[10];
+	INT32 old_k[10];
 
 	UINT16 new_energy;
 	UINT16 new_pitch;
-	int new_k[10];
+	INT32 new_k[10];
 
 
 	/* these are all used to contain the current state of the sound generation */
 	UINT16 current_energy;
 	UINT16 current_pitch;
-	int current_k[10];
+	INT32 current_k[10];
 
 	UINT16 target_energy;
 	UINT16 target_pitch;
-	int target_k[10];
+	INT32 target_k[10];
 
 	UINT8 interp_count;       /* number of interp periods (0-7) */
 	UINT8 sample_count;       /* sample number within interp (0-24) */
-	int pitch_count;
+	INT32 pitch_count;
 
-	int u[11];
-	int x[10];
+	INT32 u[11];
+	INT32 x[10];
 
-	int RNG;	/* the random noise generator configuration is: 1 + x + x^3 + x^4 + x^13 */
+	INT32 RNG;	/* the random noise generator configuration is: 1 + x + x^3 + x^4 + x^13 */
 };
 
 
@@ -76,12 +77,49 @@ static void parse_frame(struct tms5110 *tms);
 #define DEBUG_5110	0
 
 
-void *tms5110_create(void)
+void *tms5110_create(int index)
 {
 	struct tms5110 *tms;
 
 	tms = malloc(sizeof(*tms));
 	memset(tms, 0, sizeof(*tms));
+
+	state_save_register_item_array("tms5110", index, tms->fifo);
+	state_save_register_item("tms5110", index, tms->fifo_head);
+	state_save_register_item("tms5110", index, tms->fifo_tail);
+	state_save_register_item("tms5110", index, tms->fifo_count);
+
+	state_save_register_item("tms5110", index, tms->PDC);
+	state_save_register_item("tms5110", index, tms->CTL_pins);
+	state_save_register_item("tms5110", index, tms->speaking_now);
+	state_save_register_item("tms5110", index, tms->speak_delay_frames);
+	state_save_register_item("tms5110", index, tms->talk_status);
+
+	state_save_register_item("tms5110", index, tms->old_energy);
+	state_save_register_item("tms5110", index, tms->old_pitch);
+	state_save_register_item_array("tms5110", index, tms->old_k);
+
+	state_save_register_item("tms5110", index, tms->new_energy);
+	state_save_register_item("tms5110", index, tms->new_pitch);
+	state_save_register_item_array("tms5110", index, tms->new_k);
+
+	state_save_register_item("tms5110", index, tms->current_energy);
+	state_save_register_item("tms5110", index, tms->current_pitch);
+	state_save_register_item_array("tms5110", index, tms->current_k);
+
+	state_save_register_item("tms5110", index, tms->target_energy);
+	state_save_register_item("tms5110", index, tms->target_pitch);
+	state_save_register_item_array("tms5110", index, tms->target_k);
+
+	state_save_register_item("tms5110", index, tms->interp_count);
+	state_save_register_item("tms5110", index, tms->sample_count);
+	state_save_register_item("tms5110", index, tms->pitch_count);
+
+	state_save_register_item_array("tms5110", index, tms->u);
+	state_save_register_item_array("tms5110", index, tms->x);
+
+	state_save_register_item("tms5110", index, tms->RNG);
+
 	return tms;
 }
 

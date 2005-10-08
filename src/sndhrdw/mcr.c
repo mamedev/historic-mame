@@ -123,12 +123,12 @@ void mcr_sound_init(UINT8 config)
 	{
 		ssio_sound_cpu = sound_cpu++;
 		ssio_compute_ay8910_modulation();
-		state_save_register_UINT8 ("ssio", 0, "ssio_data", &ssio_data[0], 4);
-		state_save_register_UINT8 ("ssio", 0, "ssio_status", &ssio_status, 1);
-		state_save_register_UINT8 ("ssio", 0, "ssio_14024_count", &ssio_14024_count, 1);
-		state_save_register_UINT8 ("ssio", 0, "ssio_mute", &ssio_mute, 1);
-		state_save_register_UINT8 ("ssio", 0, "ssio_overall", &ssio_overall[0], 2);
-		state_save_register_UINT8 ("ssio", 0, "ssio_duty_cycle", &ssio_duty_cycle[0][0], 2*3);
+		state_save_register_global_array(ssio_data);
+		state_save_register_global(ssio_status);
+		state_save_register_global(ssio_14024_count);
+		state_save_register_global(ssio_mute);
+		state_save_register_global_array(ssio_overall);
+		state_save_register_global_2d_array(ssio_duty_cycle);
 	}
 
 	/* Turbo Chip Squeak */
@@ -137,7 +137,7 @@ void mcr_sound_init(UINT8 config)
 		pia_config(0, PIA_ALTERNATE_ORDERING, &turbocs_pia_intf);
 		turbocs_dac_index = dac_index++;
 		turbocs_sound_cpu = sound_cpu++;
-		state_save_register_UINT8 ("turbocs", 0, "status", &turbocs_status, 1);
+		state_save_register_global(turbocs_status);
 	}
 
 	/* Chip Squeak Deluxe */
@@ -146,7 +146,7 @@ void mcr_sound_init(UINT8 config)
 		pia_config(0, PIA_ALTERNATE_ORDERING, &csdeluxe_pia_intf);
 		csdeluxe_dac_index = dac_index++;
 		csdeluxe_sound_cpu = sound_cpu++;
-		state_save_register_UINT8 ("csdeluxe", 0, "status", &csdeluxe_status, 1);
+		state_save_register_global(csdeluxe_status);
 	}
 
 	/* Sounds Good */
@@ -156,7 +156,7 @@ void mcr_sound_init(UINT8 config)
 		pia_config(1, PIA_ALTERNATE_ORDERING, &soundsgood_pia_intf);
 		soundsgood_dac_index = dac_index++;
 		soundsgood_sound_cpu = sound_cpu++;
-		state_save_register_UINT8 ("soundsgood", 0, "status", &soundsgood_status, 1);
+		state_save_register_global(soundsgood_status);
 	}
 
 	/* Squawk n Talk */
@@ -165,8 +165,8 @@ void mcr_sound_init(UINT8 config)
 		pia_config(0, PIA_STANDARD_ORDERING, &squawkntalk_pia0_intf);
 		pia_config(1, PIA_STANDARD_ORDERING, &squawkntalk_pia1_intf);
 		squawkntalk_sound_cpu = sound_cpu++;
-		state_save_register_UINT8 ("squawkntalk", 0, "tms_command", &squawkntalk_tms_command, 1);
-		state_save_register_UINT8 ("squawkntalk", 0, "tms_strobes", &squawkntalk_tms_strobes, 1);
+		state_save_register_global(squawkntalk_tms_command);
+		state_save_register_global(squawkntalk_tms_strobes);
 	}
 
 	/* Advanced Audio */

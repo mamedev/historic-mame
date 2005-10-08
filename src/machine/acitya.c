@@ -13,8 +13,9 @@ David Widel d_widel@hotmail.com
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 
-static int counter=0;
+static INT8 counter=0;
 
 
 static void acitya_decrypt_rom_8(void)
@@ -157,8 +158,6 @@ static void acitya_decrypt_rom_B(void)
 
 READ8_HANDLER( acitya_decrypt_rom )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	if (offset & 0x01)
 	{
 		counter = counter - 1;
@@ -172,10 +171,10 @@ READ8_HANDLER( acitya_decrypt_rom )
 
 	switch(counter)
 	{
-		case 0x08:	memory_set_bankptr (1, &RAM[0x10000]);		break;
-		case 0x09:	memory_set_bankptr (1, &RAM[0x14000]);		break;
-		case 0x0A:	memory_set_bankptr (1, &RAM[0x18000]);		break;
-		case 0x0B:	memory_set_bankptr (1, &RAM[0x1C000]);		break;
+		case 0x08:	memory_set_bank (1, 0);		break;
+		case 0x09:	memory_set_bank (1, 1);		break;
+		case 0x0A:	memory_set_bank (1, 2);		break;
+		case 0x0B:	memory_set_bank (1, 3);		break;
 		default:
 			logerror("Invalid counter = %02X\n",counter);
 			break;
@@ -199,5 +198,8 @@ MACHINE_INIT( acitya )
 
 	/* The initial state of the counter is 0x0B */
 	counter = 0x0B;
-	memory_set_bankptr (1, &RAM[0x1c000]);
+	memory_configure_bank(1, 0, 4, &RAM[0x10000], 0x4000);
+	memory_set_bank(1, 3);
+
+	state_save_register_global(counter);
 }

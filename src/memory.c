@@ -1207,6 +1207,11 @@ static int preflight_memory(void)
 						if (bank >= 1 && bank <= MAX_EXPLICIT_BANKS)
 						{
 							bank_data *bdata = &bankdata[bank];
+
+							/* wire up state saving for the entry the first time we see it */
+							if (!bdata->used)
+								state_save_register_UINT8("memory", bank, "bank.entry", &bdata->curentry, 1);
+
 							bdata->used = 1;
 							bdata->dynamic = 0;
 							bdata->cpunum = cpunum;
@@ -1224,6 +1229,7 @@ static int preflight_memory(void)
 					space->write.handlers[entrynum].mask &= space->mask;
 				}
 			}
+
 	return 1;
 }
 
@@ -1297,6 +1303,10 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 		bdata->spacenum = space->spacenum;
 		bdata->base = start;
 		bdata->curentry = MAX_BANK_ENTRIES;
+
+		/* if we're allowed to, wire up state saving for the entry */
+		if (state_save_registration_allowed())
+			state_save_register_UINT8("memory", HANDLER_TO_BANK(handler), "bank.entry", &bdata->curentry, 1);
 	}
 
 	/* adjust the incoming addresses */
@@ -2110,15 +2120,9 @@ static int find_memory(void)
 					break;
 				}
 
-			/* if this is a non-dynamic bank, register for save */
-			if (!bankdata[banknum].dynamic)
-			{
-				state_save_register_UINT8("memory", banknum, "bank.entry", &bankdata[banknum].curentry, 1);
-
-				/* if the entry was set ahead of time, override the automatically found pointer */
-				if (bankdata[banknum].curentry != MAX_BANK_ENTRIES)
-					bank_ptr[banknum] = bankdata[banknum].entry[bankdata[banknum].curentry];
-			}
+			/* if the entry was set ahead of time, override the automatically found pointer */
+			if (!bankdata[banknum].dynamic && bankdata[banknum].curentry != MAX_BANK_ENTRIES)
+				bank_ptr[banknum] = bankdata[banknum].entry[bankdata[banknum].curentry];
 		}
 
 	/* request a callback to fix up the banks when done */

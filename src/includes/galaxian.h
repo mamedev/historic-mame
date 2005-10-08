@@ -172,6 +172,7 @@ DRIVER_INIT( gmgalax );
 DRIVER_INIT( ladybugg );
 DRIVER_INIT( scorpion );
 DRIVER_INIT( ad2083 );
+DRIVER_INIT( zigzag );
 
 MACHINE_INIT( scramble );
 MACHINE_INIT( sfx );
