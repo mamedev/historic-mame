@@ -3661,7 +3661,7 @@ static MACHINE_DRIVER_START( cps1 )
 	MDRV_CPU_PROGRAM_MAP(cps1_readmem,cps1_writemem)
 	MDRV_CPU_VBLANK_INT(cps1_interrupt,1)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* 4 MHz ??? TODO: find real FRQ */
+	MDRV_CPU_ADD_TAG("sound", Z80, 3579545)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
@@ -3682,7 +3682,7 @@ static MACHINE_DRIVER_START( cps1 )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD_TAG("2151", YM2151, 3579580)
+	MDRV_SOUND_ADD_TAG("2151", YM2151, 3579545)
 	MDRV_SOUND_CONFIG(ym2151_interface)
 	MDRV_SOUND_ROUTE(0, "mono", 0.35)
 	MDRV_SOUND_ROUTE(1, "mono", 0.35)
@@ -3725,10 +3725,10 @@ static MACHINE_DRIVER_START( qsound )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(cps1)
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_REPLACE("main", M68000, 12000000)
 	MDRV_CPU_VBLANK_INT(cps1_qsound_interrupt,1)  /* ??? interrupts per frame */
 
-	MDRV_CPU_REPLACE("sound", Z80, 6000000)
+	MDRV_CPU_REPLACE("sound", Z80, 8000000)
 	MDRV_CPU_PROGRAM_MAP(qsound_readmem,qsound_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(250))	/* ?? */
 

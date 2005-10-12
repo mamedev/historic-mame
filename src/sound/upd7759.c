@@ -541,7 +541,7 @@ static void upd7759_slave_update(void *param)
 
 	/* set a timer to go off when that is done */
 	if (chip->state != STATE_IDLE)
-		timer_adjust_ptr(chip->timer, chip->clocks_left * chip->clock_period, chip, 0);
+		timer_adjust_ptr(chip->timer, chip->clocks_left * chip->clock_period, 0);
 }
 
 
@@ -576,7 +576,7 @@ static void upd7759_reset(struct upd7759_chip *chip)
 
 	/* turn off any timer */
 	if (chip->timer)
-		timer_adjust_ptr(chip->timer, TIME_NEVER, chip, 0);
+		timer_adjust_ptr(chip->timer, TIME_NEVER, 0);
 }
 
 
@@ -605,7 +605,7 @@ static void *upd7759_start(int sndindex, int clock, const void *config)
 	if (intf->region != 0)
 		chip->rom = chip->rombase = memory_region(intf->region);
 	else
-		chip->timer = timer_alloc_ptr(upd7759_slave_update);
+		chip->timer = timer_alloc_ptr(upd7759_slave_update, chip);
 
 	/* set the DRQ callback */
 	chip->drqcallback = intf->drqcallback;
@@ -662,7 +662,7 @@ void upd7759_start_w(int which, UINT8 data)
 
 		/* for slave mode, start the timer going */
 		if (chip->timer)
-			timer_adjust_ptr(chip->timer, TIME_NOW, chip, 0);
+			timer_adjust_ptr(chip->timer, TIME_NOW, 0);
 	}
 }
 

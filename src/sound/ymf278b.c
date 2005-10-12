@@ -345,10 +345,10 @@ static void ymf278b_timer_a_reset(YMF278BChip *chip)
 	if(chip->enable & 1)
 	{
 		double period = (256-chip->timer_a_count) * 80.8 * chip->clock_ratio;
-		timer_adjust_ptr(chip->timer_a, TIME_IN_USEC(period), chip, TIME_IN_USEC(period));
+		timer_adjust_ptr(chip->timer_a, TIME_IN_USEC(period), TIME_IN_USEC(period));
 	}
 	else
-		timer_adjust_ptr(chip->timer_a, TIME_NEVER, chip, 0);
+		timer_adjust_ptr(chip->timer_a, TIME_NEVER, 0);
 }
 
 static void ymf278b_timer_b_reset(YMF278BChip *chip)
@@ -356,10 +356,10 @@ static void ymf278b_timer_b_reset(YMF278BChip *chip)
 	if(chip->enable & 2)
 	{
 		double period = (256-chip->timer_b_count) * 323.1 * chip->clock_ratio;
-		timer_adjust_ptr(chip->timer_b, TIME_IN_USEC(period), chip, TIME_IN_USEC(period));
+		timer_adjust_ptr(chip->timer_b, TIME_IN_USEC(period), TIME_IN_USEC(period));
 	}
 	else
-		timer_adjust_ptr(chip->timer_b, TIME_NEVER, chip, 0);
+		timer_adjust_ptr(chip->timer_b, TIME_NEVER, 0);
 }
 
 static void ymf278b_A_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
@@ -636,8 +636,8 @@ static void ymf278b_init(YMF278BChip *chip, UINT8 *rom, void (*cb)(int), int clo
 {
 	chip->rom = rom;
 	chip->irq_callback = cb;
-	chip->timer_a = timer_alloc_ptr(ymf278b_timer_a_tick);
-	chip->timer_b = timer_alloc_ptr(ymf278b_timer_b_tick);
+	chip->timer_a = timer_alloc_ptr(ymf278b_timer_a_tick, chip);
+	chip->timer_b = timer_alloc_ptr(ymf278b_timer_b_tick, chip);
 	chip->irq_line = CLEAR_LINE;
 	chip->clock_ratio = (float)clock / (float)YMF278B_STD_CLOCK;
 }

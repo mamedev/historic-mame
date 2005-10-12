@@ -16,7 +16,7 @@ Year + Game                         System      Protection
     P-47  (Japan)                   A
     Kick Off (Japan)                A
     Takeda Shingen (Japan)          A                 Encryption (key 1)
-    Iga Ninjyutsuden (Japan)        A       *   Yes + Encryption (key 1)
+    Iga Ninjyutsuden (Japan)        A           Yes + Encryption (key 1)
 89  Astyanax          (World) /     A           Yes + Encryption (key 2)
     The Lord of King  (Japan)       A           Yes + Encryption (key 2)
     Hachoo!                         A           Yes + Encryption (key 2)
@@ -1855,6 +1855,8 @@ f000c.l     *** score (BCD) ***
 f002a.w     *** lives ***
 f010c.w     credits
 
+English version called "Kazan" not dumped yet.
+
 ***************************************************************************/
 
 
@@ -1888,7 +1890,7 @@ ROM_START( iganinju )
 	ROM_LOAD( "iga_08.bin", 0x000000, 0x040000, CRC(857dbf60) SHA1(e700b307aa481a57180a4529e2ce4326574e128e) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "prom",         0x0000, 0x0200, NO_DUMP )
+	ROM_LOAD( "kazan.131",    0x0000, 0x0200, CRC(1d877538) SHA1(a5be0dc65dcfc36fbba10d1fddbe155e24b6122f) )
 ROM_END
 
 

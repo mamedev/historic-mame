@@ -792,7 +792,7 @@ INLINE void envelope_KONKOFF(YM2151Operator * op, int v)
 static void timer_callback_a (void *param)
 {
 	YM2151 *chip = param;
-	timer_adjust_ptr(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], chip, 0);
+	timer_adjust_ptr(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], 0);
 	chip->timer_A_index_old = chip->timer_A_index;
 	if (chip->irq_enable & 0x04)
 	{
@@ -806,7 +806,7 @@ static void timer_callback_a (void *param)
 static void timer_callback_b (void *param)
 {
 	YM2151 *chip = param;
-	timer_adjust_ptr(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], chip, 0);
+	timer_adjust_ptr(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], 0);
 	chip->timer_B_index_old = chip->timer_B_index;
 	if (chip->irq_enable & 0x08)
 	{
@@ -1092,7 +1092,7 @@ void YM2151WriteReg(void *_chip, int r, int v)
 				/* start timer _only_ if it wasn't already started (it will reload time value next round) */
 					if (!timer_enable(chip->timer_B, 1))
 					{
-						timer_adjust_ptr(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], chip, 0);
+						timer_adjust_ptr(chip->timer_B, chip->timer_B_time[ chip->timer_B_index ], 0);
 						chip->timer_B_index_old = chip->timer_B_index;
 					}
 				#else
@@ -1117,7 +1117,7 @@ void YM2151WriteReg(void *_chip, int r, int v)
 				/* start timer _only_ if it wasn't already started (it will reload time value next round) */
 					if (!timer_enable(chip->timer_A, 1))
 					{
-						timer_adjust_ptr(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], chip, 0);
+						timer_adjust_ptr(chip->timer_A, chip->timer_A_time[ chip->timer_A_index ], 0);
 						chip->timer_A_index_old = chip->timer_A_index;
 					}
 				#else
@@ -1346,15 +1346,11 @@ int YM2151ReadStatus( void *_chip )
 */
 void YM2151Postload(void *chip)
 {
+	YM2151 *YM2151_chip = (YM2151 *)chip;
 	int j;
 
-	if (chip)
-	{
-		YM2151 *YM2151_chip = (YM2151 *)chip;
-
-		for (j=0; j<8; j++)
-			set_connect(&YM2151_chip->oper[j*4], j, YM2151_chip->connect[j]);
-	}
+	for (j=0; j<8; j++)
+		set_connect(&YM2151_chip->oper[j*4], j, YM2151_chip->connect[j]);
 }
 
 static void ym2151_state_save_register( YM2151 *chip, int sndindex )
@@ -1451,6 +1447,8 @@ static void ym2151_state_save_register( YM2151 *chip, int sndindex )
 	state_save_register_UINT32 (buf1, sndindex, "TimBold" , &chip->timer_B_index_old, 1);
 
 	state_save_register_UINT8  (buf1, sndindex, "connect" , &chip->connect[0], 8);
+
+	state_save_register_func_postload_ptr(YM2151Postload, chip);
 }
 #else
 void YM2151Postload(void *chip)
@@ -1499,8 +1497,8 @@ void * YM2151Init(int index, int clock, int rate)
 
 #ifdef USE_MAME_TIMERS
 /* this must be done _before_ a call to YM2151ResetChip() */
-	PSG->timer_A = timer_alloc_ptr(timer_callback_a);
-	PSG->timer_B = timer_alloc_ptr(timer_callback_b);
+	PSG->timer_A = timer_alloc_ptr(timer_callback_a, PSG);
+	PSG->timer_B = timer_alloc_ptr(timer_callback_b, PSG);
 #else
 	PSG->tim_A      = 0;
 	PSG->tim_B      = 0;

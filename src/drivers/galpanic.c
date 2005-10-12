@@ -125,10 +125,12 @@ tests done with a real chip so there must be something odd going on on this hard
 
 extern UINT16 *galpanic_bgvideoram,*galpanic_fgvideoram;
 extern size_t galpanic_fgvideoram_size;
+extern int galpanic_clear_sprites;
 
 PALETTE_INIT( galpanic );
 WRITE16_HANDLER( galpanic_bgvideoram_w );
 WRITE16_HANDLER( galpanic_paletteram_w );
+VIDEO_START( galpanic );
 VIDEO_UPDATE( galpanic );
 VIDEO_UPDATE( comad );
 
@@ -162,9 +164,42 @@ static WRITE16_HANDLER( galpanic_6295_bankswitch_w )
 		UINT8 *rom = memory_region(REGION_SOUND1);
 
 		memcpy(&rom[0x30000],&rom[0x40000 + ((data >> 8) & 0x0f) * 0x10000],0x10000);
+
+		galpanic_clear_sprites = data & 0x8000;
 	}
 }
 
+static WRITE16_HANDLER( galpania_6295_bankswitch_w )
+{
+	if (ACCESSING_MSB)
+	{
+		UINT8 *rom = memory_region(REGION_SOUND1);
+
+		memcpy(&rom[0x30000],&rom[0x40000 + ((data >> 8) & 0x0f) * 0x10000],0x10000);
+	}
+}
+
+static WRITE16_HANDLER( galpania_misc_w )
+{
+	if (ACCESSING_LSB)
+	{
+		galpanic_clear_sprites = data & 0x0004;
+	}
+
+	// other bits unknown !
+}
+
+static WRITE16_HANDLER( galpanic_coin_w )
+{
+	if (ACCESSING_MSB)
+	{
+		coin_counter_w(0, data & 0x100);
+		coin_counter_w(1, data & 0x200);
+
+		coin_lockout_w(0, ~data & 0x400);
+		coin_lockout_w(1, ~data & 0x800);
+	}
+}
 
 static WRITE16_HANDLER( galpanic_bgvideoram_mirror_w )
 {
@@ -187,7 +222,7 @@ static ADDRESS_MAP_START( galpanic, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
-	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(galpanic_coin_w)	/* coin counters */
 	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)	/* ??? */
@@ -204,7 +239,7 @@ static ADDRESS_MAP_START( galpanib, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
-	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(galpanic_coin_w)	/* coin counters */
 	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(MWA16_NOP)	/* ??? */
@@ -220,12 +255,13 @@ static ADDRESS_MAP_START( galpania, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x600000, 0x600fff) AM_READWRITE(MRA16_RAM,galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
 	AM_RANGE(0x680000, 0x68001f) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0x700000, 0x700fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x780000, 0x780001) AM_WRITE(galpania_misc_w)
+	AM_RANGE(0x780002, 0x78001f) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
-	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpania_6295_bankswitch_w)
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(galpanic_coin_w)	/* coin counters */
 	AM_RANGE(0xc80000, 0xc8ffff) AM_RAM	/* work RAM */
 	AM_RANGE(0xd80000, 0xd80001) AM_WRITE(MWA16_NOP)	/* ??? */
 	AM_RANGE(0xe00000, 0xe00015) AM_READWRITE(galpanib_calc_r,galpanib_calc_w)
@@ -272,7 +308,7 @@ static ADDRESS_MAP_START( comad_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
 	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
 	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)	/* not sure */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpania_6295_bankswitch_w)	/* not sure */
 	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(MWA16_RAM)	/* missw96 */
 	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM)	/* fantasia, newfant */
 	AM_RANGE(0xf00000, 0xf00001) AM_WRITE(OKIM6295_data_0_msb_w)	/* fantasia, missw96 */
@@ -300,7 +336,7 @@ static ADDRESS_MAP_START( fantsia2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)	/* + work RAM */
 	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
 	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)	/* not sure */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpania_6295_bankswitch_w)	/* not sure */
 	AM_RANGE(0xf80000, 0xf8ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* coin counters, + ? */
 	AM_RANGE(0xc80000, 0xc80001) AM_WRITE(OKIM6295_data_0_msb_w)
@@ -334,7 +370,7 @@ static ADDRESS_MAP_START( galhustl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_RAM) // regs?
 	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP) // ?
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpania_6295_bankswitch_w)
 	AM_RANGE(0xd00000, 0xd00001) AM_WRITE(OKIM6295_data_0_msb_w)
 	AM_RANGE(0xe80000, 0xe8ffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
@@ -373,7 +409,7 @@ static ADDRESS_MAP_START( zipzap_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x701000, 0x71ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpanic_6295_bankswitch_w)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpania_6295_bankswitch_w)
 	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(OKIM6295_data_0_msb_w)
 	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM) // main ram
 ADDRESS_MAP_END
@@ -868,6 +904,7 @@ INPUT_PORTS_START( zipzap )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 static gfx_layout spritelayout =
 {
 	16,16,
@@ -908,7 +945,7 @@ static MACHINE_DRIVER_START( galpanic )
 	MDRV_COLORTABLE_LENGTH(1024)
 
 	MDRV_PALETTE_INIT(galpanic)
-	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_START(galpanic)
 	MDRV_VIDEO_UPDATE(galpanic)
 
 	/* sound hardware */
@@ -1274,11 +1311,9 @@ ROM_START( zipzap )
 
 	ROM_REGION( 0x140000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "snd.bin", 0x00000, 0x80000,  CRC(bc20423e) SHA1(1f4bd52ec4f9b3b3e6b10ac2b3afaadf76a2c7c9) )
-	ROM_RELOAD(               0x40000, 0x80000 )
+	ROM_RELOAD(          0x40000, 0x80000 )
+	ROM_RELOAD(          0xc0000, 0x80000 )
 ROM_END
-
-
-
 
 GAME( 1990, galpanic, 0,        galpanic, galpanic, 0, ROT90, "Kaneko", "Gals Panic (set 1)", GAME_NO_COCKTAIL )
 GAME( 1990, galpanib, galpanic, galpanib, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 2)", GAME_NO_COCKTAIL )
@@ -1289,5 +1324,5 @@ GAME( 1995, fantsy95, 0,        comad,    fantasia, 0, ROT90, "Hi-max Technology
 GAME( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )
 GAME( 1996, missmw96, missw96,  comad,    missw96,  0, ROT0,  "Comad", "Miss Mister World '96 Nude", GAME_NO_COCKTAIL )
 GAME( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II", GAME_NO_COCKTAIL )
-GAME(  1997, galhustl, 0,        galhustl, galhustl, 0, ROT0,  "ACE International", "Gals Hustler", 0 )
-GAME( 1995, zipzap,   0,        zipzap,   zipzap,   0, ROT90,  "Barko Corp", "Zip & Zip",GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAME( 1997, galhustl, 0,        galhustl, galhustl, 0, ROT0,  "ACE International", "Gals Hustler", 0 )
+GAME( 1995, zipzap,   0,        zipzap,   zipzap,   0, ROT90, "Barko Corp", "Zip & Zap",GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

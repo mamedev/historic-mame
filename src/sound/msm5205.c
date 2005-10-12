@@ -189,7 +189,7 @@ static void *msm5205_start(int sndindex, int clock, const void *config)
 
 	/* stream system initialize */
 	voice->stream = stream_create(0,1,Machine->sample_rate,voice,MSM5205_update);
-	voice->timer = timer_alloc_ptr(MSM5205_vclk_callback);
+	voice->timer = timer_alloc_ptr(MSM5205_vclk_callback, voice);
 
 	/* initialize */
 	msm5205_reset(voice);
@@ -263,10 +263,10 @@ void MSM5205_playmode_w(int num,int select)
 		if( prescaler )
 		{
 			double period = TIME_IN_HZ(voice->clock / prescaler);
-			timer_adjust_ptr(voice->timer, period, voice, period);
+			timer_adjust_ptr(voice->timer, period, period);
 		}
 		else
-			timer_adjust_ptr(voice->timer, TIME_NEVER, voice, 0);
+			timer_adjust_ptr(voice->timer, TIME_NEVER, 0);
 	}
 
 	if( voice->bitwidth != bitwidth )

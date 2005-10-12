@@ -95,6 +95,7 @@
 #include "vidhrdw/generic.h"
 #include "res_net.h"
 #include "williams.h"
+#include "state.h"
 
 
 
@@ -138,6 +139,7 @@ static rgb_t *palette_lookup;
 /* blitter variables */
 static UINT8 blitterram[8];
 static UINT8 blitter_xor;
+static UINT8 blitter_remap_index;
 static const UINT8 *blitter_remap;
 static UINT8 *blitter_remap_lookup;
 
@@ -171,10 +173,24 @@ static int blitter_core(int sstart, int dstart, int w, int h, int data);
  *
  *************************************/
 
+static void state_save_register(void)
+{
+	state_save_register_global(williams_blitter_window_enable);
+	state_save_register_global(williams_cocktail);
+	state_save_register_global_array(blitterram);
+	state_save_register_global(blitter_remap_index);
+	state_save_register_global(blaster_color0);
+	state_save_register_global(blaster_video_control);
+	state_save_register_global(tilemap_xscroll);
+	state_save_register_global(williams2_fg_color);
+}
+
+
 VIDEO_START( williams )
 {
 	blitter_init(williams_blitter_config, NULL);
 	create_palette_lookup();
+	state_save_register();
 	return 0;
 }
 
@@ -183,6 +199,7 @@ VIDEO_START( blaster )
 {
 	blitter_init(williams_blitter_config, memory_region(REGION_PROMS));
 	create_palette_lookup();
+	state_save_register();
 	return 0;
 }
 
@@ -193,6 +210,7 @@ VIDEO_START( williams2 )
 
 	/* allocate paletteram */
 	williams2_paletteram = auto_malloc(0x400 * 2);
+	state_save_register_UINT8("global", 0, "williams2_paletteram", williams2_paletteram, 0x400 * 2);
 
 	/* create the tilemap */
 	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 24,16, 128,16);
@@ -200,6 +218,7 @@ VIDEO_START( williams2 )
 		return 1;
 	tilemap_set_scrolldx(bg_tilemap, 2, 0);
 
+	state_save_register();
 	return 0;
 }
 
@@ -514,6 +533,7 @@ WRITE8_HANDLER( williams2_xscroll_high_w )
 WRITE8_HANDLER( blaster_remap_select_w )
 {
 	force_partial_update(cpu_getscanline());
+	blitter_remap_index = data;
 	blitter_remap = blitter_remap_lookup + data * 256;
 }
 
@@ -562,6 +582,7 @@ static void blitter_init(int blitter_config, const UINT8 *remap_prom)
 
 	/* create the remap table; if no PROM, make an identity remap table */
 	blitter_remap_lookup = auto_malloc(256 * 256);
+	blitter_remap_index = 0;
 	blitter_remap = blitter_remap_lookup;
 	for (i = 0; i < 256; i++)
 	{

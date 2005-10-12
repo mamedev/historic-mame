@@ -607,11 +607,11 @@ typedef address_map *(*construct_map_t)(address_map *map);
 
 /* use this to declare external references to a machine driver */
 #define ADDRESS_MAP_EXTERN(_name)										\
-address_map *construct_map_##_name(address_map *map)	\
+address_map *construct_map_##_name(address_map *map)					\
 
 /* ----- macros for starting, ending, and setting map flags ----- */
 #define ADDRESS_MAP_START(_name,_space,_bits)							\
-address_map *construct_map_##_name(address_map *map)	\
+address_map *construct_map_##_name(address_map *map)					\
 {																		\
 	typedef read##_bits##_handler _rh_t;								\
 	typedef write##_bits##_handler _wh_t;								\

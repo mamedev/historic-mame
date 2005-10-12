@@ -656,6 +656,9 @@ const struct
 #if (HAS_I386)
 	{ CPU_I386, i386_get_info },
 #endif
+#if (HAS_I486)
+	{ CPU_I486, i486_get_info },
+#endif
 #if (HAS_PENTIUM)
 	{ CPU_PENTIUM, pentium_get_info },
 #endif

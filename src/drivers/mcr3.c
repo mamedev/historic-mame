@@ -88,6 +88,7 @@
 #include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "mcr.h"
+#include "state.h"
 
 
 
@@ -1441,9 +1442,19 @@ ROM_END
  *
  *************************************/
 
+static void common_init(int sound_board)
+{
+	mcr_sound_init(sound_board);
+
+	state_save_register_global(input_mux);
+	state_save_register_global(latched_input);
+	state_save_register_global(last_op4);
+}
+
+
 static DRIVER_INIT( demoderm )
 {
-	mcr_sound_init(MCR_TURBO_CHIP_SQUEAK);
+	common_init(MCR_TURBO_CHIP_SQUEAK);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, demoderm_ip1_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, demoderm_ip2_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, demoderm_op6_w);
@@ -1452,24 +1463,30 @@ static DRIVER_INIT( demoderm )
 
 static DRIVER_INIT( sarge )
 {
-	mcr_sound_init(MCR_TURBO_CHIP_SQUEAK);
+	common_init(MCR_TURBO_CHIP_SQUEAK);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, turbocs_data_w);
 }
 
 
 static DRIVER_INIT( maxrpm )
 {
-	mcr_sound_init(MCR_TURBO_CHIP_SQUEAK);
+	common_init(MCR_TURBO_CHIP_SQUEAK);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, maxrpm_ip1_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, maxrpm_ip2_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, maxrpm_op5_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, maxrpm_op6_w);
+
+	state_save_register_global(maxrpm_adc_control);
+	state_save_register_global(maxrpm_adc_select);
+	state_save_register_global(maxrpm_last_shift);
+	state_save_register_global(maxrpm_p1_shift);
+	state_save_register_global(maxrpm_p2_shift);
 }
 
 
 static DRIVER_INIT( rampage )
 {
-	mcr_sound_init(MCR_SOUNDS_GOOD);
+	common_init(MCR_SOUNDS_GOOD);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, rampage_ip4_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, rampage_op6_w);
 }
@@ -1477,7 +1494,7 @@ static DRIVER_INIT( rampage )
 
 static DRIVER_INIT( powerdrv )
 {
-	mcr_sound_init(MCR_SOUNDS_GOOD);
+	common_init(MCR_SOUNDS_GOOD);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, powerdrv_ip2_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, powerdrv_op5_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, powerdrv_op6_w);
@@ -1486,7 +1503,7 @@ static DRIVER_INIT( powerdrv )
 
 static DRIVER_INIT( stargrds )
 {
-	mcr_sound_init(MCR_SOUNDS_GOOD);
+	common_init(MCR_SOUNDS_GOOD);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, stargrds_ip0_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, stargrds_op5_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, stargrds_op6_w);
@@ -1495,7 +1512,7 @@ static DRIVER_INIT( stargrds )
 
 static DRIVER_INIT( spyhunt )
 {
-	mcr_sound_init(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
+	common_init(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
 	ssio_set_custom_input(1, 0x60, spyhunt_ip1_r);
 	ssio_set_custom_input(2, 0xff, spyhunt_ip2_r);
 	ssio_set_custom_output(4, 0xff, spyhunt_op4_w);
@@ -1507,7 +1524,7 @@ static DRIVER_INIT( spyhunt )
 
 static DRIVER_INIT( crater )
 {
-	mcr_sound_init(MCR_SSIO);
+	common_init(MCR_SSIO);
 
 	spyhunt_sprite_color_mask = 0x03;
 	spyhunt_scroll_offset = 96;
@@ -1516,7 +1533,7 @@ static DRIVER_INIT( crater )
 
 static DRIVER_INIT( turbotag )
 {
-	mcr_sound_init(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
+	common_init(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
 	ssio_set_custom_input(1, 0x60, spyhunt_ip1_r);
 	ssio_set_custom_input(2, 0xff, turbotag_ip2_r);
 	ssio_set_custom_output(4, 0xff, spyhunt_op4_w);
@@ -1540,15 +1557,15 @@ static DRIVER_INIT( turbotag )
  *************************************/
 
 /* MCR monoboard games */
-GAME( 1984, demoderm, demoderb, mono_tcs,  demoderm, demoderm, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)", 0 )
-GAME( 1985, sarge,    0,        mono_tcs,  sarge,    sarge,    ROT0,  "Bally Midway", "Sarge", 0 )
-GAME( 1986, maxrpm,   0,        mono_tcs,  maxrpm,   maxrpm,   ROT0,  "Bally Midway", "Max RPM", 0 )
-GAME( 1986, rampage,  0,        mono_sg,   rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 3)", 0 )
-GAME( 1986, rampage2, rampage,  mono_sg,   rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 2)", 0 )
-GAME( 1986, powerdrv, 0,        mono_sg,   powerdrv, powerdrv, ROT0,  "Bally Midway", "Power Drive", 0 )
-GAME( 1987, stargrds, 0,        mono_sg,   stargrds, stargrds, ROT0,  "Bally Midway", "Star Guards", 0 )
+GAME( 1984, demoderm, demoderb, mono_tcs,  demoderm, demoderm, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)", GAME_SUPPORTS_SAVE )
+GAME( 1985, sarge,    0,        mono_tcs,  sarge,    sarge,    ROT0,  "Bally Midway", "Sarge", GAME_SUPPORTS_SAVE )
+GAME( 1986, maxrpm,   0,        mono_tcs,  maxrpm,   maxrpm,   ROT0,  "Bally Midway", "Max RPM", GAME_SUPPORTS_SAVE )
+GAME( 1986, rampage,  0,        mono_sg,   rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 3)", GAME_SUPPORTS_SAVE )
+GAME( 1986, rampage2, rampage,  mono_sg,   rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 2)", GAME_SUPPORTS_SAVE )
+GAME( 1986, powerdrv, 0,        mono_sg,   powerdrv, powerdrv, ROT0,  "Bally Midway", "Power Drive", GAME_SUPPORTS_SAVE )
+GAME( 1987, stargrds, 0,        mono_sg,   stargrds, stargrds, ROT0,  "Bally Midway", "Star Guards", GAME_SUPPORTS_SAVE )
 
 /* MCR scrolling games */
-GAME( 1983, spyhunt,  0,        mcrsc_csd, spyhunt,  spyhunt,  ROT90, "Bally Midway", "Spy Hunter", 0 )
-GAME( 1984, crater,   0,        mcrscroll, crater,   crater,   ORIENTATION_FLIP_X, "Bally Midway", "Crater Raider", 0 )
-GAME( 1985, turbotag, 0,        mcrsc_csd, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (prototype)", 0 )
+GAME( 1983, spyhunt,  0,        mcrsc_csd, spyhunt,  spyhunt,  ROT90, "Bally Midway", "Spy Hunter", GAME_SUPPORTS_SAVE )
+GAME( 1984, crater,   0,        mcrscroll, crater,   crater,   ORIENTATION_FLIP_X, "Bally Midway", "Crater Raider", GAME_SUPPORTS_SAVE )
+GAME( 1985, turbotag, 0,        mcrsc_csd, turbotag, turbotag, ROT90, "Bally Midway", "Turbo Tag (prototype)", GAME_SUPPORTS_SAVE )

@@ -392,29 +392,8 @@ static void init_tunit_generic(int sound)
 	switch (sound)
 	{
 		case SOUND_ADPCM:
-			base = memory_region(REGION_SOUND1);
-			memcpy(base + 0xa0000, base + 0x20000, 0x20000);
-			memcpy(base + 0x80000, base + 0x60000, 0x20000);
-			memcpy(base + 0x60000, base + 0x20000, 0x20000);
-			break;
-
 		case SOUND_ADPCM_LARGE:
-			base = memory_region(REGION_SOUND1);
-			memcpy(base + 0x1a0000, base + 0x060000, 0x20000);	/* save common bank */
-
-			memcpy(base + 0x180000, base + 0x080000, 0x20000);	/* expand individual banks */
-			memcpy(base + 0x140000, base + 0x0a0000, 0x20000);
-			memcpy(base + 0x100000, base + 0x0c0000, 0x20000);
-			memcpy(base + 0x0c0000, base + 0x0e0000, 0x20000);
-			memcpy(base + 0x080000, base + 0x000000, 0x20000);
-			memcpy(base + 0x000000, base + 0x040000, 0x20000);
-			memcpy(base + 0x040000, base + 0x020000, 0x20000);
-
-			memcpy(base + 0x160000, base + 0x1a0000, 0x20000);	/* copy common bank */
-			memcpy(base + 0x120000, base + 0x1a0000, 0x20000);
-			memcpy(base + 0x0e0000, base + 0x1a0000, 0x20000);
-			memcpy(base + 0x0a0000, base + 0x1a0000, 0x20000);
-			memcpy(base + 0x020000, base + 0x1a0000, 0x20000);
+			williams_adpcm_init();
 			break;
 
 		case SOUND_DCS:
@@ -549,7 +528,8 @@ MACHINE_INIT( midtunit )
 	{
 		case SOUND_ADPCM:
 		case SOUND_ADPCM_LARGE:
-			williams_adpcm_init(1);
+			williams_adpcm_reset_w(1);
+			williams_adpcm_reset_w(0);
 			break;
 
 		case SOUND_DCS:

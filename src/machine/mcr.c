@@ -14,6 +14,7 @@
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
 #include "mcr.h"
+#include "state.h"
 
 
 #define LOG(x)
@@ -225,6 +226,7 @@ MACHINE_INIT( mcr )
 
 	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
+	state_save_register_global(mcr_cocktail_flip);
 
 	/* initialize the sound */
 	mcr_sound_reset();
@@ -248,19 +250,35 @@ static void mcr68_common_init(void)
 	m6840_msb_buffer = m6840_lsb_buffer = 0;
 	for (i = 0; i < 3; i++)
 	{
-		m6840_state[i].control = 0x00;
-		m6840_state[i].latch = 0xffff;
-		m6840_state[i].count = 0xffff;
-		m6840_state[i].timer = timer_alloc(counter_fired_callback);
-		m6840_state[i].timer_active = 0;
-		m6840_state[i].period = m6840_counter_periods[i];
+		struct counter_state *m6840 = &m6840_state[i];
+
+		m6840->control = 0x00;
+		m6840->latch = 0xffff;
+		m6840->count = 0xffff;
+		m6840->timer = timer_alloc(counter_fired_callback);
+		m6840->timer_active = 0;
+		m6840->period = m6840_counter_periods[i];
+
+		state_save_register_item("m6840", i, m6840->control);
+		state_save_register_item("m6840", i, m6840->latch);
+		state_save_register_item("m6840", i, m6840->count);
+		state_save_register_item("m6840", i, m6840->timer_active);
+		state_save_register_item("m6840", i, m6840->period);
 	}
+	state_save_register_global(m6840_status);
+	state_save_register_global(m6840_status_read_since_int);
+	state_save_register_global(m6840_msb_buffer);
+	state_save_register_global(m6840_lsb_buffer);
+	state_save_register_global(m6840_irq_state);
+	state_save_register_global(v493_irq_state);
+	state_save_register_global(zwackery_sound_data);
 
 	/* initialize the clock */
 	m6840_internal_counter_period = TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock / 10);
 
 	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
+	state_save_register_global(mcr_cocktail_flip);
 
 	/* initialize the sound */
 	mcr_sound_reset();

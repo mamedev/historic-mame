@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "dac.h"
 #include <math.h>
+#include "state.h"
 
 
 struct dac_info
@@ -104,6 +105,8 @@ static void *dac_start(int sndindex, int clock, const void *config)
 
 	info->channel = stream_create(0,1,Machine->sample_rate,info,DAC_update);
 	info->output = 0;
+
+	state_save_register_item("dac", sndindex, info->output);
 
 	return info;
 }

@@ -477,7 +477,7 @@ static void timer_register_save(mame_timer *timer)
     isn't primed yet
 -------------------------------------------------*/
 
-INLINE mame_timer *_mame_timer_alloc_common(void (*callback)(int), void (*callback_ptr)(void *), const char *file, int line, const char *func, int temp)
+INLINE mame_timer *_mame_timer_alloc_common(void (*callback)(int), void (*callback_ptr)(void *), void *param, const char *file, int line, const char *func, int temp)
 {
 	mame_time time = get_current_time();
 	mame_timer *timer = timer_new();
@@ -490,7 +490,7 @@ INLINE mame_timer *_mame_timer_alloc_common(void (*callback)(int), void (*callba
 	timer->callback = callback;
 	timer->callback_ptr = callback_ptr;
 	timer->callback_param = 0;
-	timer->callback_ptr_param = NULL;
+	timer->callback_ptr_param = param;
 	timer->enabled = FALSE;
 	timer->temporary = temp;
 	timer->ptr = (callback_ptr != NULL);
@@ -515,12 +515,12 @@ INLINE mame_timer *_mame_timer_alloc_common(void (*callback)(int), void (*callba
 
 mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line, const char *func)
 {
-	return _mame_timer_alloc_common(callback, NULL, file, line, func, FALSE);
+	return _mame_timer_alloc_common(callback, NULL, NULL, file, line, func, FALSE);
 }
 
-mame_timer *_mame_timer_alloc_ptr(void (*callback_ptr)(void *), const char *file, int line, const char *func)
+mame_timer *_mame_timer_alloc_ptr(void (*callback_ptr)(void *), void *param, const char *file, int line, const char *func)
 {
-	return _mame_timer_alloc_common(NULL, callback_ptr, file, line, func, FALSE);
+	return _mame_timer_alloc_common(NULL, callback_ptr, param, file, line, func, FALSE);
 }
 
 
@@ -531,7 +531,7 @@ mame_timer *_mame_timer_alloc_ptr(void (*callback_ptr)(void *), const char *file
     fire periodically
 -------------------------------------------------*/
 
-INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int param, void *ptr_param, mame_time period)
+INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int param, mame_time period)
 {
 	mame_time time = get_current_time();
 
@@ -549,7 +549,6 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int 
 
 	/* compute the time of the next firing and insert into the list */
 	which->callback_param = param;
-	which->callback_ptr_param = ptr_param;
 	which->enabled = TRUE;
 
 	/* clamp negative times to 0 */
@@ -575,14 +574,14 @@ void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_ti
 {
 	if (which->ptr)
 		osd_die("mame_timer_adjust called on a ptr timer!\n");
-	mame_timer_adjust_common(which, duration, param, NULL, period);
+	mame_timer_adjust_common(which, duration, param, period);
 }
 
-void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, void *param, mame_time period)
+void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, mame_time period)
 {
 	if (!which->ptr)
 		osd_die("mame_timer_adjust_ptr called on a non-ptr timer!\n");
-	mame_timer_adjust_common(which, duration, 0, param, period);
+	mame_timer_adjust_common(which, duration, 0, period);
 }
 
 
@@ -595,7 +594,7 @@ void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, void *param, m
 
 void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line, const char *func)
 {
-	mame_timer *timer = _mame_timer_alloc_common(callback, NULL, file, line, func, FALSE);
+	mame_timer *timer = _mame_timer_alloc_common(callback, NULL, NULL, file, line, func, FALSE);
 
 	/* fail if we can't allocate */
 	if (!timer)
@@ -607,14 +606,14 @@ void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const
 
 void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void *), const char *file, int line, const char *func)
 {
-	mame_timer *timer = _mame_timer_alloc_common(NULL, callback, file, line, func, FALSE);
+	mame_timer *timer = _mame_timer_alloc_common(NULL, callback, param, file, line, func, FALSE);
 
 	/* fail if we can't allocate */
 	if (!timer)
 		return;
 
 	/* adjust to our liking */
-	mame_timer_adjust_ptr(timer, period, param, period);
+	mame_timer_adjust_ptr(timer, period, period);
 }
 
 
@@ -626,7 +625,7 @@ void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void 
 
 void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line, const char *func)
 {
-	mame_timer *timer = _mame_timer_alloc_common(callback, NULL, file, line, func, TRUE);
+	mame_timer *timer = _mame_timer_alloc_common(callback, NULL, NULL, file, line, func, TRUE);
 
 	/* fail if we can't allocate */
 	if (!timer)
@@ -638,14 +637,14 @@ void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const
 
 void _mame_timer_set_ptr(mame_time duration, void *param, void (*callback)(void *), const char *file, int line, const char *func)
 {
-	mame_timer *timer = _mame_timer_alloc_common(NULL, callback, file, line, func, TRUE);
+	mame_timer *timer = _mame_timer_alloc_common(NULL, callback, param, file, line, func, TRUE);
 
 	/* fail if we can't allocate */
 	if (!timer)
 		return;
 
 	/* adjust to our liking */
-	mame_timer_adjust_ptr(timer, duration, param, time_zero);
+	mame_timer_adjust_ptr(timer, duration, time_zero);
 }
 
 
@@ -668,7 +667,7 @@ void mame_timer_reset(mame_timer *which, mame_time duration)
 	if (!which->ptr)
 		mame_timer_adjust(which, duration, which->callback_param, which->period);
 	else
-		mame_timer_adjust_ptr(which, duration, which->callback_ptr_param, which->period);
+		mame_timer_adjust_ptr(which, duration, which->period);
 }
 
 

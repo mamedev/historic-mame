@@ -95,7 +95,7 @@ static void TimerHandler(void *param,int c,int count,double stepTime)
 	{	/* Start FM Timer */
 		double timeSec = (double)count * stepTime;
 		if (!timer_enable(info->timer[c], 1))
-			timer_adjust_ptr(info->timer[c], timeSec, info, 0);
+			timer_adjust_ptr(info->timer[c], timeSec, 0);
 	}
 }
 
@@ -139,8 +139,8 @@ static void *ym2610_start(int sndindex, int clock, const void *config)
 	if (!info->psg) return NULL;
 
 	/* Timer Handler set */
-	info->timer[0] =timer_alloc_ptr(timer_callback_0);
-	info->timer[1] =timer_alloc_ptr(timer_callback_1);
+	info->timer[0] =timer_alloc_ptr(timer_callback_0, info);
+	info->timer[1] =timer_alloc_ptr(timer_callback_1, info);
 
 	/* stream system initialize */
 	info->stream = stream_create(0,2,rate,info,ym2610_stream_update);
@@ -190,8 +190,8 @@ static void *ym2610b_start(int sndindex, int clock, const void *config)
 	if (!info->psg) return NULL;
 
 	/* Timer Handler set */
-	info->timer[0] =timer_alloc_ptr(timer_callback_0);
-	info->timer[1] =timer_alloc_ptr(timer_callback_1);
+	info->timer[0] =timer_alloc_ptr(timer_callback_0, info);
+	info->timer[1] =timer_alloc_ptr(timer_callback_1, info);
 
 	/* stream system initialize */
 	info->stream = stream_create(0,2,rate,info,ym2610b_stream_update);

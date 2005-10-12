@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "hc55516.h"
 #include <math.h>
+#include "state.h"
 
 
 #define	INTEGRATOR_LEAK_TC		0.001
@@ -50,6 +51,15 @@ static void *hc55516_start(int sndindex, int clock, const void *config)
 
 	/* create the stream */
 	chip->channel = stream_create(0, 1, Machine->sample_rate, chip, hc55516_update);
+
+	state_save_register_item("hc55516", sndindex, chip->last_clock);
+	state_save_register_item("hc55516", sndindex, chip->databit);
+	state_save_register_item("hc55516", sndindex, chip->shiftreg);
+	state_save_register_item("hc55516", sndindex, chip->curr_value);
+	state_save_register_item("hc55516", sndindex, chip->next_value);
+	state_save_register_item("hc55516", sndindex, chip->update_count);
+	state_save_register_item("hc55516", sndindex, chip->filter);
+	state_save_register_item("hc55516", sndindex, chip->integrator);
 
 	/* success */
 	return chip;

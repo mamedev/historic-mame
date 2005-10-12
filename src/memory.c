@@ -1089,6 +1089,21 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 		if (Machine->drv->cpu[cpunum].construct_map[spacenum][1])
 			map = (*Machine->drv->cpu[cpunum].construct_map[spacenum][1])(map);
 
+		/* convert implicit ROM entries to map to the memory region */
+		if (spacenum == ADDRESS_SPACE_PROGRAM)
+		{
+			offs_t region_top = memory_region_length(REGION_CPU1 + cpunum);
+			UINT8 *region_base = memory_region(REGION_CPU1 + cpunum);
+
+			for (map = space->map; !IS_AMENTRY_END(map); map++)
+				if (!IS_AMENTRY_EXTENDED(map) && HANDLER_IS_ROM(map->read.handler) && !map->memory)
+				{
+					if (map->start >= region_top || map->end >= region_top)
+						osd_die("Error: implicit ROM entry %X-%X extends beyond region size (%X)", map->start, map->end, region_top);
+					map->memory = region_base + map->start;
+				}
+		}
+
 		/* make the adjusted map */
 		memcpy(space->adjmap, space->map, sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 2);
 		for (map = space->adjmap; !IS_AMENTRY_END(map); map++)
@@ -1111,15 +1126,9 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	space->read.table = malloc(1 << LEVEL1_BITS);
 	space->write.table = malloc(1 << LEVEL1_BITS);
 	if (!space->read.table)
-	{
 		osd_die("cpu #%d couldn't allocate read table\n", cpunum);
-		return -1;
-	}
 	if (!space->write.table)
-	{
 		osd_die("cpu #%d couldn't allocate write table\n", cpunum);
-		return -1;
-	}
 
 	/* initialize everything to unmapped */
 	memset(space->read.table, STATIC_UNMAP, 1 << LEVEL1_BITS);
@@ -1212,8 +1221,8 @@ static int preflight_memory(void)
 							if (!bdata->used)
 								state_save_register_UINT8("memory", bank, "bank.entry", &bdata->curentry, 1);
 
-							bdata->used = 1;
-							bdata->dynamic = 0;
+							bdata->used = TRUE;
+							bdata->dynamic = FALSE;
 							bdata->cpunum = cpunum;
 							bdata->spacenum = spacenum;
 							bdata->base = map->start;
@@ -1297,8 +1306,8 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 	if (HANDLER_IS_BANK(handler) && !bankdata[HANDLER_TO_BANK(handler)].used)
 	{
 		bank_data *bdata = &bankdata[HANDLER_TO_BANK(handler)];
-		bdata->used = 1;
-		bdata->dynamic = 0;
+		bdata->used = TRUE;
+		bdata->dynamic = FALSE;
 		bdata->cpunum = space->cpunum;
 		bdata->spacenum = space->spacenum;
 		bdata->base = start;
@@ -1307,6 +1316,8 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 		/* if we're allowed to, wire up state saving for the entry */
 		if (state_save_registration_allowed())
 			state_save_register_UINT8("memory", HANDLER_TO_BANK(handler), "bank.entry", &bdata->curentry, 1);
+
+		VPRINTF(("Allocated new bank %d\n", HANDLER_TO_BANK(handler)));
 	}
 
 	/* adjust the incoming addresses */
@@ -1327,7 +1338,7 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 	}
 
 	/* assign banks for RAM/ROM areas */
-	if (HANDLER_IS_RAM(handler) || HANDLER_IS_ROM(handler))
+	if (HANDLER_IS_RAM(handler))
 	{
 		handler = (genf *)assign_dynamic_bank(space->cpunum, space->spacenum, start, mirror, isfixed, original_mask != 0);
 		if (!bank_ptr[HANDLER_TO_BANK(handler)])
@@ -1413,23 +1424,12 @@ static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 {
 	int bank;
 
-	/* special case: never assign a dynamic bank to an offset that */
-	/* intersects the CPU's region; always use RAM for that */
-	if (spacenum == ADDRESS_SPACE_PROGRAM && start < memory_region_length(REGION_CPU1 + cpunum))
-	{
-		/* ...unless it's mirrored, in which case, we need to use a bank anyway */
-		/* ...or unless we have a fixed pointer, in which case, we also need to use a bank */
-		/* ...or unless we have an explicit mask, in which case, we are effectively mirrored */
-		if (mirror == 0 && !isfixed && !ismasked)
-			return (genf *)STATIC_RAM;
-	}
-
 	/* loop over banks, searching for an exact match or an empty */
 	for (bank = MAX_BANKS; bank >= 1; bank--)
 		if (!bankdata[bank].used || (bankdata[bank].dynamic && bankdata[bank].cpunum == cpunum && bankdata[bank].spacenum == spacenum && bankdata[bank].base == start))
 		{
-			bankdata[bank].used = 1;
-			bankdata[bank].dynamic = 1;
+			bankdata[bank].used = TRUE;
+			bankdata[bank].dynamic = TRUE;
 			bankdata[bank].cpunum = cpunum;
 			bankdata[bank].spacenum = spacenum;
 			bankdata[bank].base = start;
@@ -1863,10 +1863,6 @@ static int allocate_memory(void)
 						else
 							allocate_memory_block(cpunum, spacenum, map->start, map->start + map->mask, map->memory);
 					}
-
-				/* if this is a program space, we also throw in the memory_region for the CPU */
-				if (spacenum == ADDRESS_SPACE_PROGRAM && memory_region(REGION_CPU1 + cpunum))
-					allocate_memory_block(cpunum, spacenum, 0, memory_region_length(REGION_CPU1 + cpunum) - 1, memory_region(REGION_CPU1 + cpunum));
 
 				/* loop over all blocks just allocated and assign pointers from them */
 				for (i = start_count; i < memory_block_count; i++)

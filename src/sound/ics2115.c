@@ -189,9 +189,9 @@ static void recalc_timer(struct ics2115 *chip, int timer)
 	if(chip->timer[timer].period != period) {
 		chip->timer[timer].period = period;
 		if(period)
-			timer_adjust_ptr(chip->timer[timer].timer, TIME_IN_SEC(period), chip, TIME_IN_SEC(period));
+			timer_adjust_ptr(chip->timer[timer].timer, TIME_IN_SEC(period), TIME_IN_SEC(period));
 		else
-			timer_adjust_ptr(chip->timer[timer].timer, TIME_NEVER, chip, 0);
+			timer_adjust_ptr(chip->timer[timer].timer, TIME_NEVER, 0);
 	}
 }
 
@@ -452,8 +452,8 @@ static void *ics2115_start(int sndindex, int clock, const void *config)
 	chip->intf = config;
 	chip->index = sndindex;
 	chip->rom = memory_region(chip->intf->region);
-	chip->timer[0].timer = timer_alloc_ptr(timer_cb_0);
-	chip->timer[1].timer = timer_alloc_ptr(timer_cb_1);
+	chip->timer[0].timer = timer_alloc_ptr(timer_cb_0, chip);
+	chip->timer[1].timer = timer_alloc_ptr(timer_cb_1, chip);
 	chip->ulaw = auto_malloc(256*sizeof(INT16));
 	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, update);
 
@@ -529,8 +529,8 @@ void ics2115_reset(void *_chip)
 	chip->irq_en = 0;
 	chip->irq_pend = 0;
 	memset(chip->voice, 0, sizeof(chip->voice));
-	timer_adjust_ptr(chip->timer[0].timer, TIME_NEVER, chip, 0);
-	timer_adjust_ptr(chip->timer[1].timer, TIME_NEVER, chip, 0);
+	timer_adjust_ptr(chip->timer[0].timer, TIME_NEVER, 0);
+	timer_adjust_ptr(chip->timer[1].timer, TIME_NEVER, 0);
 	chip->timer[0].period = 0;
 	chip->timer[1].period = 0;
 	recalc_irq(chip);

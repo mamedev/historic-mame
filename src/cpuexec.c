@@ -305,6 +305,8 @@ int cpu_init(void)
 		state_save_register_UINT8 ("cpu", 0, "nexteatcycles", &cpu[cpunum].nexteatcycles, 1);
 		state_save_register_int   ("cpu", 0, "trigger", &cpu[cpunum].trigger);
 
+		state_save_register_int   ("cpu", 0, "iloops", &cpu[cpunum].iloops);
+
 		state_save_register_UINT64("cpu", 0, "totalcycles", &cpu[cpunum].totalcycles, 1);
 		state_save_register_INT32 ("cpu", 0, "localtime.sec", &cpu[cpunum].localtime.seconds, 1);
 		state_save_register_INT64 ("cpu", 0, "localtime.sub", &cpu[cpunum].localtime.subseconds, 1);
@@ -321,7 +323,11 @@ int cpu_init(void)
 
 		/* if no state registered for saving, we can't save */
 		if (num_regs == 0)
+		{
 			logerror("CPU #%d (%s) did not register any state to save!\n", cpunum, cputype_name(cputype));
+			if (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE)
+				osd_die("CPU #%d (%s) did not register any state to save!\n", cpunum, cputype_name(cputype));
+		}
 
 		/* pop the state tag */
 		state_save_pop_tag();
@@ -634,6 +640,19 @@ static void handle_load(void)
 {
 	mame_file *file;
 	int cpunum;
+
+	/* if there are anonymous timers, we can't load just yet because the timers might */
+	/* overwrite data we have loaded */
+	if (timer_count_anonymous() > 0)
+	{
+		/* if more than a second has passed, we're probably screwed */
+		if (sub_mame_times(mame_timer_get_time(), loadsave_schedule_time).seconds > 0)
+		{
+			ui_popup("Unable to load due to pending anonymous timers. See error.log for details.");
+			cpu_loadsave_reset();
+		}
+		return;
+	}
 
 	/* open the file */
 	file = mame_fopen(Machine->gamedrv->name, loadsave_schedule_name, FILETYPE_STATE, 0);

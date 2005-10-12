@@ -691,7 +691,6 @@ int megasys1_layers_order[16];
 
 extern game_driver driver_64street;
 extern game_driver driver_chimerab;
-extern game_driver driver_iganinju;
 
 /*
     Layers order encoded as an int like: 0x01234, where
@@ -721,10 +720,6 @@ static struct priority priorities[] =
 	{	&driver_chimerab,
 		{ 0x14032,0x04132,0x14032,0x04132,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0x01324,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
-	},
-	{	&driver_iganinju,
-		{ 0x04132,0xfffff,0xfffff,0x01423,0xfffff,0xfffff,0xfffff,0xfffff,
-		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
 	{	0	}	// end of list: use the prom's data
 };

@@ -24,6 +24,7 @@
 
 // flags
 
+#define C352_FLG_REVPHASE	0x20000
 #define C352_FLG_LONGPHASE	0x10000 // first phase of "long sample mode" complete
 #define C352_FLG_CONTINUE	0x8000	// second phase of "long sample mode"
 #define	C352_FLG_ACTIVE		0x4000	// channel is active
@@ -129,36 +130,34 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 		}
 
 		// apply the whole sample part of the fraction to the current pointer and check if we're at the end
-		if (flag & C352_FLG_REVERSE)
+		if ((flag & C352_FLG_REVLOOP) == C352_FLG_REVLOOP)
 		{
-			pos -= cnt;
-
-			if (pos <= info->c352_ch[ch].loop_point)
+			if (flag & C352_FLG_REVPHASE)
 			{
-				if (flag & C352_FLG_LONG)
-				{
-//                  printf("ch %02d: end chain part 1\n", ch);
-					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
-					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
-					return;
-				}
+				pos -= cnt;
 
-				if (flag & C352_FLG_LOOP)
+				if (pos < info->c352_ch[ch].loop_point)
+				{
+					pos = info->c352_ch[ch].loop_point;
+					info->c352_ch[ch].flag &= ~C352_FLG_REVPHASE;
+				}
+			}
+			else
+			{
+				pos += cnt;
+
+				if (pos > info->c352_ch[ch].stop_addr)
 				{
 					pos = info->c352_ch[ch].stop_addr;
-				}
-				else
-				{
-					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
-					return;
+					info->c352_ch[ch].flag |= C352_FLG_REVPHASE;
 				}
 			}
 		}
-		else
+		else if (flag & C352_FLG_REVERSE)
 		{
-			pos += cnt;
+			pos -= cnt;
 
-			if (pos >= info->c352_ch[ch].stop_addr)
+			if (pos < info->c352_ch[ch].stop_addr)
 			{
 				if (flag & C352_FLG_LONG)
 				{
@@ -176,6 +175,39 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 				{
 					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
 					return;
+				}
+			}
+		}
+		else
+		{
+			pos += cnt;
+
+			if (flag & C352_FLG_LONG)
+			{
+				if ((pos+256) > info->c352_ch[ch].stop_addr)
+				{
+//                  printf("ch %02d: end chain part 1\n", ch);
+					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
+				}
+				if (pos > info->c352_ch[ch].stop_addr)
+				{
+					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+					return;
+				}
+			}
+			else
+			{
+				if (pos > info->c352_ch[ch].stop_addr)
+				{
+					if (flag & C352_FLG_LOOP)
+					{
+						pos = info->c352_ch[ch].loop_point;
+					}
+					else
+					{
+						info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
+						return;
+					}
 				}
 			}
 		}
@@ -275,7 +307,7 @@ static unsigned short c352_read_reg16(struct c352_info *info, unsigned long addr
 		{
 			int bits = (info->c352_ch[chan].flag & 0x0020) ? 0x8800 : 0x8000;
 			val = info->c352_ch[chan].flag;
-			val = (val & ~0x8800) | ((val & C352_FLG_LONGPHASE) ? bits : 0x0000);
+			val = (val & ~0x8800) | ((info->c352_ch[chan].flag & C352_FLG_LONGPHASE) ? bits : 0x0000);
 		}
 		else
 		{
@@ -396,25 +428,25 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 		{
 			int bank = (info->c352_ch[chan].start_addr & 0xff)<<16;
 
-			info->c352_ch[chan].loop_point = info->c352_ch[chan].end_addr + bank;
+			info->c352_ch[chan].loop_point = info->c352_ch[chan].loop_addr + bank;
 			info->c352_ch[chan].stop_addr = info->c352_ch[chan].end_addr + bank;
-			info->c352_ch[chan].flag &= ~(C352_FLG_LONGPHASE|C352_FLG_LONG);
+			info->c352_ch[chan].flag &= ~C352_FLG_LONGPHASE;
 			info->c352_ch[chan].flag |= C352_FLG_ACTIVE;
-			info->c352_ch[chan].current_addr = info->c352_ch[chan].loop_point;
-			info->c352_ch[chan].pos = 0;
+			//info->c352_ch[chan].current_addr = info->c352_ch[chan].loop_point;
+			//info->c352_ch[chan].pos = 0;
 
 			switch (val & 3)
 			{
 				case 0:	// normal
 				case 2:	// loop
 				case 3:	// reverse loop
-					if (info->c352_ch[chan].current_addr >= info->c352_ch[chan].stop_addr)
+					if (info->c352_ch[chan].loop_point >= info->c352_ch[chan].stop_addr)
 					{
 						info->c352_ch[chan].stop_addr += 0x10000;
 					}
 					break;
 				case 1:	// reverse
-					if (info->c352_ch[chan].current_addr <= info->c352_ch[chan].stop_addr)
+					if (info->c352_ch[chan].loop_point <= info->c352_ch[chan].stop_addr)
 					{
 						info->c352_ch[chan].stop_addr -= 0x10000;
 					}

@@ -3393,10 +3393,12 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( vf3 )
 	DRIVER( vf3tb )
 	DRIVER( bass )
+	DRIVER( getbass )
 
 	/* Step 1.5 */
 	DRIVER( scud )
 	DRIVER( scuda )
+	DRIVER( scudp )
 	DRIVER( lostwsga )
 	DRIVER( vs215 )
 	DRIVER( lemans24 )
@@ -5871,6 +5873,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gutsn )		/* (c) 2000 Kaneko / Kouyousha (Japan) */
 	DRIVER( puzzloop )	/* (c) 1998 Mitchell (Europe) */
 	DRIVER( puzloopj )	/* (c) 1998 Mitchell (Japan) */
+	DRIVER( puzloopk )	/* (c) 1998 Mitchell (Japan) */
 	DRIVER( puzloopu )	/* (c) 1998 Mitchell (USA) */
 	DRIVER( jjparads )	/* (c) 1996 Electro Design Co. (Japan) */
 	DRIVER( jjparad2 )	/* (c) 1997 Electro Design Co. (Japan) */

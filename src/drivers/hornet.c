@@ -578,7 +578,7 @@ ADDRESS_MAP_END
 
 static void *m68k_timer;
 
-static void m68k_timer_tick(void *param)
+static void m68k_timer_tick(int param)
 {
 	//cpunum_set_input_line(1, INPUT_LINE_IRQ1, HOLD_LINE);
 }
@@ -900,8 +900,8 @@ static DRIVER_INIT( hornet )
 	init_konami_cgboard(0);
 	sharc_dataram = auto_malloc(0x100000);
 
-	m68k_timer = timer_alloc_ptr(m68k_timer_tick);
-	timer_adjust_ptr(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
+	m68k_timer = timer_alloc(m68k_timer_tick);
+	timer_adjust(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
 
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
 

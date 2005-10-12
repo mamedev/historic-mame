@@ -83,9 +83,9 @@ int timer_count_anonymous(void);
 mame_time mame_timer_next_fire_time(void);
 void mame_timer_set_global_time(mame_time newbase);
 mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line, const char *func);
-mame_timer *_mame_timer_alloc_ptr(void (*callback)(void *), const char *file, int line, const char *func);
+mame_timer *_mame_timer_alloc_ptr(void (*callback)(void *), void *param, const char *file, int line, const char *func);
 void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period);
-void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, void *param, mame_time period);
+void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, mame_time period);
 void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line, const char *func);
 void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void *), const char *file, int line, const char *func);
 void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line, const char *func);
@@ -105,7 +105,7 @@ mame_time mame_timer_firetime(mame_timer *which);
 -------------------------------------------------*/
 
 #define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__, #c)
-#define mame_timer_alloc_ptr(c)			_mame_timer_alloc_ptr(c, __FILE__, __LINE__, #c)
+#define mame_timer_alloc_ptr(c,p)		_mame_timer_alloc_ptr(c, p, __FILE__, __LINE__, #c)
 #define mame_timer_pulse(e,p,c)			_mame_timer_pulse(e, p, c, __FILE__, __LINE__, #c)
 #define mame_timer_pulse_ptr(e,p,c)		_mame_timer_pulse_ptr(e, p, c, __FILE__, __LINE__, #c)
 #define mame_timer_set(d,p,c)			_mame_timer_set(d, p, c, __FILE__, __LINE__, #c)
@@ -118,9 +118,9 @@ mame_time mame_timer_firetime(mame_timer *which);
 -------------------------------------------------*/
 
 #define timer_alloc(c)					mame_timer_alloc(c)
-#define timer_alloc_ptr(c)				mame_timer_alloc_ptr(c)
+#define timer_alloc_ptr(c,p)			mame_timer_alloc_ptr(c,p)
 #define timer_adjust(w,d,p,e)			mame_timer_adjust(w, double_to_mame_time(d), p, double_to_mame_time(e))
-#define timer_adjust_ptr(w,d,p,e)		mame_timer_adjust_ptr(w, double_to_mame_time(d), p, double_to_mame_time(e))
+#define timer_adjust_ptr(w,d,e)			mame_timer_adjust_ptr(w, double_to_mame_time(d), double_to_mame_time(e))
 #define timer_pulse(e,p,c)				mame_timer_pulse(double_to_mame_time(e), p, c)
 #define timer_pulse_ptr(e,p,c)			mame_timer_pulse_ptr(double_to_mame_time(e), p, c)
 #define timer_set(d,p,c)				mame_timer_set(double_to_mame_time(d), p, c)

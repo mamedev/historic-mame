@@ -724,7 +724,11 @@ static int start_sound_chips(void)
 		/* if no state registered for saving, we can't save */
 		num_regs = state_save_get_reg_count() - num_regs;
 		if (num_regs == 0)
+		{
 			logerror("Sound chip #%d (%s) did not register any state to save!\n", sndnum, sndnum_name(sndnum));
+			if (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE)
+				osd_die("Sound chip #%d (%s) did not register any state to save!\n", sndnum, sndnum_name(sndnum));
+		}
 
 		/* if that failed, die */
 		if (!info->token)

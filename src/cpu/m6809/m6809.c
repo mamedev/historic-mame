@@ -137,7 +137,6 @@ typedef struct
 
 /* 6809 registers */
 static m6809_Regs m6809;
-int m6809_slapstic = 0;
 
 #define pPPC    m6809.ppc
 #define pPC 	m6809.pc
@@ -170,14 +169,6 @@ static PAIR ea;         /* effective address */
 #define EAD ea.d
 
 #define CHANGE_PC change_pc(PCD)
-#if 0
-#define CHANGE_PC	{			\
-	if( m6809_slapstic )		\
-		cpu_setOPbase16(PCD);	\
-	else						\
-		change_pc(PCD);		\
-	}
-#endif
 
 #define M6809_CWAI		8	/* set when CWAI is waiting for an interrupt */
 #define M6809_SYNC		16	/* set when SYNC is waiting for an interrupt */
@@ -446,16 +437,17 @@ static void m6809_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	state_save_register_UINT16("m6809", cpu, "PC", &PC, 1);
+	state_save_register_UINT16("m6809", cpu, "PPC", &PPC, 1);
+	state_save_register_UINT16("m6809", cpu, "D", &D, 1);
+	state_save_register_UINT8("m6809", cpu, "DP", &DP, 1);
 	state_save_register_UINT16("m6809", cpu, "U", &U, 1);
 	state_save_register_UINT16("m6809", cpu, "S", &S, 1);
 	state_save_register_UINT16("m6809", cpu, "X", &X, 1);
 	state_save_register_UINT16("m6809", cpu, "Y", &Y, 1);
-	state_save_register_UINT8("m6809", cpu, "DP", &DP, 1);
 	state_save_register_UINT8("m6809", cpu, "CC", &CC, 1);
+	state_save_register_UINT8("m6809", cpu, "IRQ", &m6809.irq_state[0], 2);
 	state_save_register_UINT8("m6809", cpu, "INT", &m6809.int_state, 1);
 	state_save_register_UINT8("m6809", cpu, "NMI", &m6809.nmi_state, 1);
-	state_save_register_UINT8("m6809", cpu, "IRQ", &m6809.irq_state[0], 1);
-	state_save_register_UINT8("m6809", cpu, "FIRQ", &m6809.irq_state[1], 1);
 }
 
 static void m6809_reset(void *param)

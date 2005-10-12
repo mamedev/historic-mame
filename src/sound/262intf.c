@@ -50,7 +50,7 @@ static void TimerHandler_262(void *param,int timer,double period)
 	}
 	else
 	{	/* Start FM Timer */
-		timer_adjust_ptr(info->timer[timer], period, info, 0);
+		timer_adjust_ptr(info->timer[timer], period, 0);
 	}
 }
 
@@ -92,8 +92,8 @@ static void *ymf262_start(int sndindex, int clock, const void *config)
 	YMF262SetIRQHandler   (info->chip, IRQHandler_262, info);
 	YMF262SetUpdateHandler(info->chip, _stream_update, info);
 
-	info->timer[0] = timer_alloc_ptr(timer_callback_262_0);
-	info->timer[1] = timer_alloc_ptr(timer_callback_262_1);
+	info->timer[0] = timer_alloc_ptr(timer_callback_262_0, info);
+	info->timer[1] = timer_alloc_ptr(timer_callback_262_1, info);
 
 	return info;
 }

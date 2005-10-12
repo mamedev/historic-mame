@@ -5,8 +5,22 @@
 
 UINT16 *galpanic_bgvideoram,*galpanic_fgvideoram;
 size_t galpanic_fgvideoram_size;
+int galpanic_clear_sprites;
 
+static mame_bitmap *sprites_bitmap;
 
+VIDEO_START( galpanic )
+{
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
+	if ((sprites_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
+	galpanic_clear_sprites = 1;
+
+	return 0;
+}
 
 PALETTE_INIT( galpanic )
 {
@@ -175,7 +189,17 @@ VIDEO_UPDATE( galpanic )
 
 	draw_fgbitmap(bitmap);
 
-	galpanic_draw_sprites(bitmap);
+	if(galpanic_clear_sprites)
+	{
+		fillbitmap(sprites_bitmap,0,cliprect);
+		galpanic_draw_sprites(bitmap);
+	}
+	else
+	{
+		/* keep sprites on the bitmap without clearing them */
+		galpanic_draw_sprites(sprites_bitmap);
+		copybitmap(bitmap,sprites_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
 }
 
 VIDEO_UPDATE( comad )
@@ -185,5 +209,15 @@ VIDEO_UPDATE( comad )
 
 	draw_fgbitmap(bitmap);
 
-	comad_draw_sprites(bitmap);
+	if(galpanic_clear_sprites)
+	{
+		fillbitmap(sprites_bitmap,0,cliprect);
+		comad_draw_sprites(bitmap);
+	}
+	else
+	{
+		/* keep sprites on the bitmap without clearing them */
+		comad_draw_sprites(sprites_bitmap);
+		copybitmap(bitmap,sprites_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
 }

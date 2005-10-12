@@ -287,23 +287,22 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 	switch (sound)
 	{
 		case SOUND_CVSD_SMALL:
-			base = memory_region(REGION_CPU2);
-			memcpy(&base[0x20000], &base[0x10000], 0x10000);
-			memcpy(&base[0x40000], &base[0x30000], 0x10000);
-			memcpy(&base[0x60000], &base[0x50000], 0x10000);
+			williams_cvsd_init(0);
 			cvsd_protection_base = memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, cvsd_protection_w);
 			break;
 
-		case SOUND_ADPCM:
-			base = memory_region(REGION_SOUND1);
-			memcpy(base + 0xa0000, base + 0x20000, 0x20000);
-			memcpy(base + 0x80000, base + 0x60000, 0x20000);
-			memcpy(base + 0x60000, base + 0x20000, 0x20000);
+		case SOUND_CVSD:
+			williams_cvsd_init(0);
 			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
 			break;
 
-		case SOUND_CVSD:
+		case SOUND_ADPCM:
+			williams_adpcm_init();
+			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
+			break;
+
 		case SOUND_NARC:
+			williams_narc_init();
 			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
 			break;
 
@@ -516,18 +515,19 @@ MACHINE_INIT( midyunit )
 	switch (sound_type)
 	{
 		case SOUND_NARC:
-			williams_narc_init(1);
+			williams_narc_reset_w(1);
+			williams_narc_reset_w(0);
 			break;
 
 		case SOUND_CVSD:
 		case SOUND_CVSD_SMALL:
-			pia_unconfig();
-			williams_cvsd_init(1, 0);
-			pia_reset();
+			williams_cvsd_reset_w(1);
+			williams_cvsd_reset_w(0);
 			break;
 
 		case SOUND_ADPCM:
-			williams_adpcm_init(1);
+			williams_adpcm_reset_w(1);
+			williams_adpcm_reset_w(0);
 			break;
 
 		case SOUND_YAWDIM:

@@ -70,7 +70,7 @@ static void TimerHandler(void *param,int c,int count,double stepTime)
 		if (slack < 0.000050) slack = 0;
 
 		if (!timer_enable(info->timer[c], 1))
-			timer_adjust_ptr(info->timer[c], timeSec - slack, info, 0);
+			timer_adjust_ptr(info->timer[c], timeSec - slack, 0);
 	}
 }
 
@@ -112,8 +112,8 @@ static void *ym2612_start(int sndindex, int clock, const void *config)
 
 	/* FM init */
 	/* Timer Handler set */
-	info->timer[0] =timer_alloc_ptr(timer_callback_2612_0);
-	info->timer[1] =timer_alloc_ptr(timer_callback_2612_1);
+	info->timer[0] =timer_alloc_ptr(timer_callback_2612_0, info);
+	info->timer[1] =timer_alloc_ptr(timer_callback_2612_1, info);
 
 	/* stream system initialize */
 	info->stream = stream_create(0,2,rate,info,ym2612_stream_update);

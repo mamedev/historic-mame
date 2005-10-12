@@ -58,7 +58,7 @@ static void TimerHandler_3812(void *param,int c,double period)
 	}
 	else
 	{	/* Start FM Timer */
-		timer_adjust_ptr(info->timer[c], period, info, 0);
+		timer_adjust_ptr(info->timer[c], period, 0);
 	}
 }
 
@@ -101,8 +101,8 @@ static void *ym3812_start(int sndindex, int clock, const void *config)
 	YM3812SetIRQHandler   (info->chip, IRQHandler_3812, info);
 	YM3812SetUpdateHandler(info->chip, _stream_update_3812, info);
 
-	info->timer[0] = timer_alloc_ptr(timer_callback_3812_0);
-	info->timer[1] = timer_alloc_ptr(timer_callback_3812_1);
+	info->timer[0] = timer_alloc_ptr(timer_callback_3812_0, info);
+	info->timer[1] = timer_alloc_ptr(timer_callback_3812_1, info);
 
 	return info;
 }
@@ -229,7 +229,7 @@ static void TimerHandler_3526(void *param,int c,double period)
 	}
 	else
 	{	/* Start FM Timer */
-		timer_adjust_ptr(info->timer[c], period, info, 0);
+		timer_adjust_ptr(info->timer[c], period, 0);
 	}
 }
 
@@ -271,8 +271,8 @@ static void *ym3526_start(int sndindex, int clock, const void *config)
 	YM3526SetIRQHandler   (info->chip, IRQHandler_3526, info);
 	YM3526SetUpdateHandler(info->chip, _stream_update_3526, info);
 
-	info->timer[0] = timer_alloc_ptr(timer_callback_3526_0);
-	info->timer[1] = timer_alloc_ptr(timer_callback_3526_1);
+	info->timer[0] = timer_alloc_ptr(timer_callback_3526_0, info);
+	info->timer[1] = timer_alloc_ptr(timer_callback_3526_1, info);
 
 	return info;
 }
@@ -396,7 +396,7 @@ static void TimerHandler_8950(void *param,int c,double period)
 	}
 	else
 	{	/* Start FM Timer */
-		timer_adjust_ptr(info->timer[c], period, info, 0);
+		timer_adjust_ptr(info->timer[c], period, 0);
 	}
 }
 
@@ -479,8 +479,8 @@ static void *y8950_start(int sndindex, int clock, const void *config)
 	Y8950SetIRQHandler   (info->chip, IRQHandler_8950, info);
 	Y8950SetUpdateHandler(info->chip, _stream_update_8950, info);
 
-	info->timer[0] = timer_alloc_ptr(timer_callback_8950_0);
-	info->timer[1] = timer_alloc_ptr(timer_callback_8950_1);
+	info->timer[0] = timer_alloc_ptr(timer_callback_8950_0, info);
+	info->timer[1] = timer_alloc_ptr(timer_callback_8950_1, info);
 
 	return info;
 }

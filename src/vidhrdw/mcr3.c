@@ -8,6 +8,7 @@
 #include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "mcr.h"
+#include "state.h"
 
 
 
@@ -140,6 +141,11 @@ VIDEO_START( spyhunt )
 		return 1;
 	tilemap_set_transparent_pen(alpha_tilemap, 0);
 	tilemap_set_scrollx(alpha_tilemap, 0, 16);
+
+	state_save_register_global(spyhunt_sprite_color_mask);
+	state_save_register_global(spyhunt_scrollx);
+	state_save_register_global(spyhunt_scrolly);
+	state_save_register_global(spyhunt_scroll_offset);
 	return 0;
 }
 

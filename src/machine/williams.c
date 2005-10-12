@@ -14,7 +14,13 @@
 #include "williams.h"
 #include "sound/dac.h"
 #include "sound/hc55516.h"
+#include "state.h"
 
+
+/* timers */
+static mame_timer *scanline_timer;
+static mame_timer *scan240_timer;
+static mame_timer *scan254_timer;
 
 /* banking addresses set by the drivers */
 UINT8 *mayday_protection;
@@ -251,7 +257,7 @@ static void williams_va11_callback(int scanline)
 	/* set a timer for the next update */
 	scanline += 8;
 	if (scanline >= 256) scanline = 0;
-	timer_set(cpu_getscanlinetime(scanline), scanline, williams_va11_callback);
+	timer_adjust(scanline_timer, cpu_getscanlinetime(scanline), scanline, 0);
 }
 
 
@@ -271,7 +277,7 @@ static void williams_count240_callback(int param)
 	timer_set(cpu_getscanlinetime(0), 0, williams_count240_off_callback);
 
 	/* set a timer for next frame */
-	timer_set(cpu_getscanlinetime(240), 0, williams_count240_callback);
+	timer_adjust(scan240_timer, cpu_getscanlinetime(240), 0, 0);
 }
 
 
@@ -303,7 +309,7 @@ static void williams_snd_irq(int state)
  *
  *************************************/
 
-MACHINE_INIT( williams )
+static void common_init(void)
 {
 	/* reset the PIAs */
 	pia_reset();
@@ -312,10 +318,24 @@ MACHINE_INIT( williams )
 	ticket_dispenser_init(70, TICKET_MOTOR_ACTIVE_LOW, TICKET_STATUS_ACTIVE_HIGH);
 
 	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
-	timer_set(cpu_getscanlinetime(0), 0, williams_va11_callback);
+	scanline_timer = timer_alloc(williams_va11_callback);
+	timer_adjust(scanline_timer, cpu_getscanlinetime(0), 0, 0);
 
 	/* also set a timer to go off on scanline 240 */
-	timer_set(cpu_getscanlinetime(240), 0, williams_count240_callback);
+	scan240_timer = timer_alloc(williams_count240_callback);
+	timer_adjust(scan240_timer, cpu_getscanlinetime(240), 0, 0);
+
+	state_save_register_global(vram_bank);
+}
+
+
+MACHINE_INIT( williams )
+{
+	common_init();
+
+	/* configure the memory bank */
+	memory_configure_bank(1, 0, 1, williams_videoram, 0);
+	memory_configure_bank(1, 1, 1, memory_region(REGION_CPU1) + 0x10000, 0);
 }
 
 
@@ -338,7 +358,7 @@ static void williams2_va11_callback(int scanline)
 	/* set a timer for the next update */
 	scanline += 8;
 	if (scanline >= 256) scanline = 0;
-	timer_set(cpu_getscanlinetime(scanline), scanline, williams2_va11_callback);
+	timer_adjust(scanline_timer, cpu_getscanlinetime(scanline), scanline, 0);
 }
 
 
@@ -358,7 +378,7 @@ static void williams2_endscreen_callback(int param)
 	timer_set(cpu_getscanlinetime(8), 0, williams2_endscreen_off_callback);
 
 	/* set a timer for next frame */
-	timer_set(cpu_getscanlinetime(254), 0, williams2_endscreen_callback);
+	timer_adjust(scan254_timer, cpu_getscanlinetime(254), 0, 0);
 }
 
 
@@ -369,19 +389,34 @@ static void williams2_endscreen_callback(int param)
  *
  *************************************/
 
+static void williams2_postload(void)
+{
+	williams2_bank_select_w(0, vram_bank);
+}
+
+
 MACHINE_INIT( williams2 )
 {
 	/* reset the PIAs */
 	pia_reset();
 
+	/* configure memory banks */
+	memory_configure_bank(1, 0, 1, williams_videoram, 0);
+	memory_configure_bank(1, 1, 4, memory_region(REGION_CPU1) + 0x10000, 0x10000);
+
 	/* make sure our banking is reset */
 	williams2_bank_select_w(0, 0);
 
 	/* set a timer to go off every 16 scanlines, to toggle the VA11 line and update the screen */
-	timer_set(cpu_getscanlinetime(0), 0, williams2_va11_callback);
+	scanline_timer = timer_alloc(williams2_va11_callback);
+	timer_adjust(scanline_timer, cpu_getscanlinetime(0), 0, 0);
 
 	/* also set a timer to go off on scanline 254 */
-	timer_set(cpu_getscanlinetime(254), 0, williams2_endscreen_callback);
+	scan254_timer = timer_alloc(williams2_endscreen_callback);
+	timer_adjust(scan254_timer, cpu_getscanlinetime(254), 0, 0);
+
+	state_save_register_global(vram_bank);
+	state_save_register_func_postload(williams2_postload);
 }
 
 
@@ -396,7 +431,7 @@ WRITE8_HANDLER( williams_vram_select_w )
 {
 	/* VRAM/ROM banking from bit 0 */
 	vram_bank = data & 0x01;
-	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x10000 * vram_bank);
+	memory_set_bank(1, vram_bank);
 
 	/* cocktail flip from bit 1 */
 	williams_cocktail = data & 0x02;
@@ -405,14 +440,16 @@ WRITE8_HANDLER( williams_vram_select_w )
 
 WRITE8_HANDLER( williams2_bank_select_w )
 {
+	vram_bank = data & 0x07;
+
 	/* the low two bits control the paging */
-	switch (data & 0x03)
+	switch (vram_bank & 0x03)
 	{
 		/* page 0 is video ram */
 		case 0:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x8fff, 0, 0, MRA8_BANK1);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
-			memory_set_bankptr(1, williams_videoram);
+			memory_set_bank(1, 0);
 			break;
 
 		/* pages 1 and 2 are ROM */
@@ -420,14 +457,14 @@ WRITE8_HANDLER( williams2_bank_select_w )
 		case 2:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x8fff, 0, 0, MRA8_BANK1);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
-			memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x10000 + 0x10000 * ((data & 6) >> 1));
+			memory_set_bank(1, 1 + ((vram_bank & 6) >> 1));
 			break;
 
 		/* page 3 accesses palette RAM; the remaining areas are as if page 1 ROM was selected */
 		case 3:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, williams2_paletteram_r);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, williams2_paletteram_w);
-			memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x10000 + 0x10000 * ((data & 4) >> 1));
+			memory_set_bank(1, 1 + ((vram_bank & 4) >> 1));
 			break;
 	}
 }
@@ -627,13 +664,21 @@ WRITE8_HANDLER( williams2_7segment_w )
  *
  *************************************/
 
+static void defender_postload(void)
+{
+	defender_bank_select_w(0, vram_bank);
+}
+
+
 MACHINE_INIT( defender )
 {
-	/* standard init */
-	machine_init_williams();
+	common_init();
 
-	/* make sure the banking is reset to 0 */
+	/* configure the banking and make sure it is reset to 0 */
+	memory_configure_bank(1, 0, 9, &memory_region(REGION_CPU1)[0x10000], 0x1000);
 	defender_bank_select_w(0, 0);
+
+	state_save_register_func_postload(defender_postload);
 }
 
 
@@ -645,7 +690,7 @@ WRITE8_HANDLER( defender_video_control_w )
 
 WRITE8_HANDLER( defender_bank_select_w )
 {
-	data &= 0x0f;
+	vram_bank = data & 0x0f;
 
 	/* set bank address */
 	switch (data)
@@ -667,7 +712,7 @@ WRITE8_HANDLER( defender_bank_select_w )
 		case 9:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK1);
 			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_ROM);
-			memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + (data - 1) * 0x1000]);
+			memory_set_bank(1, vram_bank - 1);
 			break;
 
 		/* pages A-F are not connected */
@@ -721,23 +766,25 @@ WRITE8_HANDLER( sinistar_vram_select_w )
  *
  *************************************/
 
+MACHINE_INIT( blaster )
+{
+	common_init();
+
+	/* banking is different for blaster */
+	memory_configure_bank(1, 0, 1, williams_videoram, 0);
+	memory_configure_bank(1, 1, 16, memory_region(REGION_CPU1) + 0x18000, 0x4000);
+
+	memory_configure_bank(2, 0, 1, williams_videoram + 0x4000, 0);
+	memory_configure_bank(2, 1, 16, memory_region(REGION_CPU1) + 0x10000, 0x0000);
+
+	state_save_register_global(blaster_bank);
+}
+
+
 INLINE void update_blaster_banking(void)
 {
-	UINT8 *base = memory_region(REGION_CPU1);
-
-	/* if vram_bank is 1, we map in ROM areas based on the current bank select */
-	if (vram_bank)
-	{
-		memory_set_bankptr(1, base + 0x18000 + 0x4000 * blaster_bank);
-		memory_set_bankptr(2, base + 0x10000);
-	}
-
-	/* otherwise, we map standard video RAM */
-	else
-	{
-		memory_set_bankptr(1, base + 0x00000);
-		memory_set_bankptr(2, base + 0x04000);
-	}
+	memory_set_bank(1, vram_bank * (blaster_bank + 1));
+	memory_set_bank(2, vram_bank * (blaster_bank + 1));
 }
 
 
@@ -838,8 +885,10 @@ MACHINE_INIT( joust2 )
 	machine_init_williams2();
 
 	/* make sure sound board starts out in the reset state */
-	williams_cvsd_init(2, 3);
+	williams_cvsd_init(3);
 	pia_reset();
+
+	state_save_register_global(joust2_current_sound_data);
 }
 
 

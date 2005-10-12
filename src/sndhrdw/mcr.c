@@ -172,7 +172,8 @@ void mcr_sound_init(UINT8 config)
 	/* Advanced Audio */
 	if (mcr_sound_config & MCR_WILLIAMS_SOUND)
 	{
-		williams_cvsd_init(sound_cpu++, 0);
+		williams_cvsd_init(0);
+		sound_cpu++;
 		dac_index++;
 	}
 }

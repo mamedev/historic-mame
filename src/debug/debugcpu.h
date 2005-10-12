@@ -176,9 +176,9 @@ const int *			debug_watchpoint_count_ptr(int cpunum);
 
 /* memory accessors */
 UINT8				debug_read_byte(int spacenum, offs_t address);
-UINT16			debug_read_word(int spacenum, offs_t address);
-UINT32			debug_read_dword(int spacenum, offs_t address);
-UINT64			debug_read_qword(int spacenum, offs_t address);
+UINT16				debug_read_word(int spacenum, offs_t address);
+UINT32				debug_read_dword(int spacenum, offs_t address);
+UINT64				debug_read_qword(int spacenum, offs_t address);
 void				debug_write_byte(int spacenum, offs_t address, UINT8 data);
 void				debug_write_word(int spacenum, offs_t address, UINT16 data);
 void				debug_write_dword(int spacenum, offs_t address, UINT32 data);

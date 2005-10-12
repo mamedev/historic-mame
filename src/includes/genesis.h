@@ -43,7 +43,6 @@ extern void genesis_irq2_interrupt(int state);
 extern UINT8		genesis_vdp_regs[];
 extern UINT16		genesis_bg_pal_lookup[];
 extern UINT16		genesis_sp_pal_lookup[];
-extern UINT16		scanbase;
 
 VIDEO_START( genesis );
 VIDEO_START( megatech );

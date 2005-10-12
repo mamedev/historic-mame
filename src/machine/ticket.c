@@ -13,6 +13,7 @@
 
 #include "driver.h"
 #include "machine/ticket.h"
+#include "state.h"
 
 /*#define DEBUG_TICKET*/
 
@@ -20,8 +21,8 @@
 
 struct ticket_state
 {
-	int status;
-	int power;
+	UINT8 status;
+	UINT8 power;
 	void *timer;
 };
 
@@ -56,6 +57,9 @@ void ticket_dispenser_init(int msec, int motoronhigh, int statusactivehigh)
 		dispenser[i].status	= ticketnotdispensed;
 		dispenser[i].power 	= 0x00;
 		dispenser[i].timer 	= timer_alloc(ticket_dispenser_toggle);
+
+		state_save_register_item("ticket", i, dispenser[i].status);
+		state_save_register_item("ticket", i, dispenser[i].power);
 	}
 }
 

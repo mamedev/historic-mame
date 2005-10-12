@@ -18,6 +18,8 @@ static int spritebank;
 static tilemap *bg_tilemap;
 static int swap_bg_ramrom;
 
+static UINT8 last_video_outputs;
+
 /***************************************************************************
 
   Gottlieb games dosn't have a color PROM. They use 32 bytes of RAM to
@@ -91,7 +93,6 @@ WRITE8_HANDLER( gottlieb_paletteram_w )
 WRITE8_HANDLER( gottlieb_video_outputs_w )
 {
 	extern void gottlieb_knocker(void);
-	int last = 0;
 
 	background_priority = data & 0x01;
 
@@ -110,9 +111,9 @@ WRITE8_HANDLER( gottlieb_video_outputs_w )
 	/* in Q*Bert Qubes only, bit 4 controls the sprite bank */
 	spritebank = (data & 0x10) >> 4;
 
-	if ((last&0x20) && !(data&0x20)) gottlieb_knocker();
+	if (!(last_video_outputs&0x20) && (data&0x20)) gottlieb_knocker();
 
-	last = data;
+	last_video_outputs = data;
 }
 
 WRITE8_HANDLER( usvsthem_video_outputs_w )

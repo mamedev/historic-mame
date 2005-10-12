@@ -40,6 +40,7 @@
 #define MAX_VOICE 16
 #define MAX_SEQUENCE  0x40
 #define MAX_SEQUENCE_RECURSION 4 /* ? */
+#define SAMPLE_RATE_BASE (42667*2)
 
 struct voice
 {
@@ -57,6 +58,8 @@ struct voice
 	INT32 volume;
 	INT32 masterVolume; /* copied from pSequence->volume each time a note is played */
 	INT32 pan;
+	INT32 leftVolume;
+	INT32 rightVolume;
 	INT32 dnote;
 	INT32 detune;
 };
@@ -345,6 +348,36 @@ PlayNote(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data 
 } /* PlayNote */
 
 static void
+SelectWaveAndPlayNote(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
+{
+	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
+	int bank = 0x20000 + pVoice->bank*0x20000;
+	int addr = ReadMetaDataWord(chip,4)+10*data;
+	float pbase = (float)SAMPLE_RATE_BASE / (float)Machine->sample_rate;
+	INT32 frequency;
+
+	pVoice->flags    = ReadMetaDataWord(chip,addr+0*2);
+	pVoice->start    = ReadMetaDataWord(chip,addr+3*2)*2+bank;
+	pVoice->end      = ReadMetaDataWord(chip,addr+4*2)*2+bank;
+	pVoice->loop     = pVoice->start;
+
+	pVoice->start <<= FIXED_POINT_SHIFT;
+	pVoice->end   <<= FIXED_POINT_SHIFT;
+	pVoice->loop  <<= FIXED_POINT_SHIFT;
+
+	pVoice->leftVolume  = ReadMetaDataByte(chip,addr+1*2);
+	pVoice->rightVolume = ReadMetaDataByte(chip,addr+1*2+1);
+
+	frequency = ReadMetaDataWord(chip,addr+2*2);
+	pVoice->delta = (long)((float)frequency * pbase);
+	pVoice->delta >>= 16-FIXED_POINT_SHIFT;
+
+	pVoice->bActive = 1;
+	pVoice->pos = pVoice->start;
+	pVoice->masterVolume = 0xff;
+} /* SelectWaveAndPlayNote */
+
+static void
 Detune(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
@@ -364,6 +397,8 @@ Pan(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	pVoice->pan = data;
+	pVoice->leftVolume  = (0x100-pVoice->pan)*pVoice->volume/0x100;
+	pVoice->rightVolume = pVoice->pan*pVoice->volume/0x100;
 } /* Pan */
 
 static void
@@ -371,6 +406,8 @@ Volume(struct namcona *chip, struct sequence *pSequence, int chan, UINT8 data )
 {
 	struct voice *pVoice = &chip->mVoice[pSequence->channel[chan]];
 	pVoice->volume = data;
+	pVoice->leftVolume  = (0x100-pVoice->pan)*pVoice->volume/0x100;
+	pVoice->rightVolume = pVoice->pan*pVoice->volume/0x100;
 } /* Volume */
 
 static void
@@ -400,7 +437,7 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 			int code = ReadMetaDataByte(chip,pSequence->addr++);
 			if( code&0x80 )
 			{
-				pSequence->pause = pSequence->tempo*((code&0x3f)+1);
+				pSequence->pause = pSequence->tempo*((code&0x7f)+1);
 			}
 			else
 			{
@@ -416,7 +453,7 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 					break;
 
 				case 0x03: /* tempo */
-					pSequence->tempo = ReadMetaDataByte(chip,pSequence->addr++)/2;
+					pSequence->tempo = ReadMetaDataByte(chip,pSequence->addr++);
 					if (pSequence->tempo == 0) pSequence->tempo = 1;
 					break;
 
@@ -492,8 +529,9 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 					}
 					break;
 
-				case 0x1b: // ?
-					pSequence->addr += 2;
+				case 0x1b:
+					MapArgs(chip, pSequence, bCommon, SelectWaveAndPlayNote );
+					pSequence->pause = pSequence->tempo;
 					break;
 
 				case 0x1c: // ?
@@ -533,6 +571,7 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
                                     2 = Ch. 8-11 PCM Bank select
                                     3 = Ch.12-15 PCM Bank select
                         */
+						if( reg23_0 == 5 ) reg23_0 = 3; /* xday2,bkrtmaq */
 						if( reg23_0 < 4 )
 						{
 							chip->mVoice[reg23_0*4 + 0].bank = reg23_1;
@@ -566,6 +605,7 @@ UpdateSound( void *param, stream_sample_t **inputs, stream_sample_t **buffer, in
 	for( i=0; i<MAX_SEQUENCE; i++ )
 	{
 		UpdateSequence(chip, &chip->mSequence[i] );
+		UpdateSequence(chip, &chip->mSequence[i] );
 	}
 
 	if( length>chip->mSampleRate ) length = chip->mSampleRate;
@@ -578,8 +618,9 @@ UpdateSound( void *param, stream_sample_t **inputs, stream_sample_t **buffer, in
 			INT32 delta  = pVoice->delta;
 			INT32 end    = pVoice->end;
 			INT32 pos    = pVoice->pos;
-			INT32 vol    = pVoice->volume*pVoice->masterVolume/8;
-			INT32 pan    = pVoice->pan;
+			INT32 vol    = pVoice->masterVolume;
+			INT32 lvol   = pVoice->leftVolume;
+			INT32 rvol   = pVoice->rightVolume;
 			INT16 *pDest = chip->mpMixerBuffer;
 			INT16 dat;
 			int j;
@@ -597,9 +638,9 @@ UpdateSound( void *param, stream_sample_t **inputs, stream_sample_t **buffer, in
 						break;
 					}
 				}
-				dat = ReadPCMSample(chip,pos>>FIXED_POINT_SHIFT, pVoice->flags)*vol/256;
-				*pDest++ += dat*(0x100-pan)/256;
-				*pDest++ += dat*pan/256;
+				dat = ReadPCMSample(chip,pos>>FIXED_POINT_SHIFT, pVoice->flags)*vol/8;
+				*pDest++ += dat*lvol/256;
+				*pDest++ += dat*rvol/256;
 				pos += delta;
 			}
 			pVoice->pos = pos;

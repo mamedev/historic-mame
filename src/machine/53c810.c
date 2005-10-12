@@ -1,9 +1,19 @@
 /* LSI Logic LSI53C810A PCI to SCSI I/O Processor */
 
 #include "driver.h"
-#include "scsidev.h"
+#include "53c810.h"
 
 #define DMA_MAX_ICOUNT	512		/* Maximum number of DMA Scripts opcodes to run */
+
+typedef struct
+{
+	void *data;		/* device's "this" pointer */
+	pSCSIDispatch handler;	/* device's handler routine */
+} SCSIDev;
+
+static SCSIDev devices[8];	/* SCSI IDs 0-7 */
+static struct LSI53C810interface *intf;
+static UINT8 last_id;
 
 static struct {
 	UINT8 scntl0;
@@ -29,16 +39,6 @@ static struct {
 	UINT8 scratch_b[4];
 	int dma_icount;
 	int halted;
-
-	struct
-	{
-		void *data;		// device's "this" pointer
-		pSCSIDispatch handler;	// device's handler routine
-	} devices[8];
-
-	UINT32 (* fetch)(UINT32 dsp);
-	void (* irq_callback)(void);
-	void (* dma_callback)(UINT32, UINT32, int, int);
 } lsi810;
 
 static void (* dma_opcode[256])(void);
@@ -46,7 +46,7 @@ static void (* dma_opcode[256])(void);
 
 INLINE UINT32 FETCH(void)
 {
-	UINT32 r = lsi810.fetch(lsi810.dsp);
+	UINT32 r = intf->fetch(lsi810.dsp);
 	lsi810.dsp += 4;
 	return r;
 }
@@ -63,8 +63,8 @@ static void dmaop_move_memory(void)
 	int count;
 
 	count = lsi810.dcmd & 0xffffff;
-	if(lsi810.dma_callback != NULL) {
-		lsi810.dma_callback(src, dst, count, 1);
+	if(intf->dma_callback != NULL) {
+		intf->dma_callback(src, dst, count, 1);
 	}
 }
 
@@ -78,8 +78,8 @@ static void dmaop_interrupt(void)
 	lsi810.istat |= 0x1;	/* DMA interrupt pending */
 	lsi810.dstat |= 0x4;	/* SIR (SCRIPTS Interrupt Instruction Received) */
 
-	if(lsi810.irq_callback != NULL) {
-		lsi810.irq_callback();
+	if(intf->irq_callback != NULL) {
+		intf->irq_callback();
 	}
 	lsi810.dma_icount = 0;
 	lsi810.halted = 1;
@@ -92,7 +92,7 @@ static void dmaop_block_move(void)
 
 	address = FETCH();
 	if (lsi810.dcmd & 0x20000000)
-		address = lsi810.fetch(address);
+		address = intf->fetch(address);
 
 	if (lsi810.dcmd & 0x10000000)
 		osd_die("LSI53C810: Table indirect not implemented\n");
@@ -437,8 +437,8 @@ void lsi53c810_reg_w(int reg, UINT8 value)
 
 				lsi810.istat |= 0x3;	/* DMA interrupt pending */
 				lsi810.dstat |= 0x8;	/* SSI (Single Step Interrupt) */
-				if(lsi810.irq_callback != NULL) {
-					lsi810.irq_callback();
+				if(intf->irq_callback != NULL) {
+					intf->irq_callback();
 				}
 			}
 			else if(lsi810.dcntl & 0x04 && !lsi810.halted)	/* manual start DMA */
@@ -483,18 +483,18 @@ static void add_opcode(UINT8 op, UINT8 mask, void (* handler)(void))
 	}
 }
 
-void lsi53c810_init(UINT32 (*fetch)(UINT32 dsp), void (*irq_callback)(void), void (*dma_callback)(UINT32,UINT32,int,int))
+extern void lsi53c810_init(struct LSI53C810interface *interface)
 {
 	int i;
+
+	// save interface pointer for later
+	intf = interface;
+
 	memset(&lsi810, 0, sizeof(lsi810));
 	for(i = 0; i < 256; i++)
 	{
 		dma_opcode[i] = dmaop_invalid;
 	}
-
-	lsi810.fetch = fetch;
-	lsi810.irq_callback = irq_callback;
-	lsi810.dma_callback = dma_callback;
 
 	add_opcode(0x00, 0xc0, dmaop_block_move);
 	add_opcode(0x40, 0xf8, dmaop_select);
@@ -512,4 +512,52 @@ void lsi53c810_init(UINT32 (*fetch)(UINT32 dsp), void (*irq_callback)(void), voi
 	add_opcode(0xc0, 0xfe, dmaop_move_memory);
 	add_opcode(0xe0, 0xed, dmaop_store);
 	add_opcode(0xe1, 0xed, dmaop_load);
+
+	memset(devices, 0, sizeof(devices));
+
+	// try to open the devices
+	for (i = 0; i < interface->scsidevs->devs_present; i++)
+	{
+		devices[interface->scsidevs->devices[i].scsiID].handler = interface->scsidevs->devices[i].handler;
+		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
+	}
+}
+
+void lsi53c810_read_data(int bytes, UINT8 *pData)
+{
+	if (devices[last_id].handler)
+	{
+		devices[last_id].handler(SCSIOP_READ_DATA, devices[last_id].data, bytes, pData);
+	}
+	else
+	{
+		logerror("lsi53c810: read unknown device SCSI ID %d\n", last_id);
+	}
+}
+
+void lsi53c810_write_data(int bytes, UINT8 *pData)
+{
+	if (devices[last_id].handler)
+	{
+		devices[last_id].handler(SCSIOP_WRITE_DATA, devices[last_id].data, bytes, pData);
+	}
+	else
+	{
+		logerror("lsi53c810: write to unknown device SCSI ID %d\n", last_id);
+	}
+}
+
+void *lsi53c810_get_device(int id)
+{
+	void *ret;
+
+	if (devices[id].handler)
+	{
+		logerror("lsi53c810: fetching dev pointer for SCSI ID %d\n", id);
+		devices[id].handler(SCSIOP_GET_DEVICE, devices[id].data, 0, (UINT8 *)&ret);
+
+		return ret;
+	}
+
+	return NULL;
 }

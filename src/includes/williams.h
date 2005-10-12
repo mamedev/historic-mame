@@ -41,6 +41,7 @@ extern struct pia6821_interface joust2_pia_1_intf;
 /* initialization */
 MACHINE_INIT( defender );
 MACHINE_INIT( williams );
+MACHINE_INIT( blaster );
 MACHINE_INIT( williams2 );
 MACHINE_INIT( joust2 );
 

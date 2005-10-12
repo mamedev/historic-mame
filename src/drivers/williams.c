@@ -515,6 +515,7 @@ static ADDRESS_MAP_START( defender_map, ADDRESS_SPACE_PROGRAM, 8 )
 	/* range from 0xc000-0xcfff is mapped programmatically below */
 	AM_RANGE(0xc000, 0xc00f) AM_BASE(&paletteram)
 	AM_RANGE(0xc400, 0xc4ff) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xc000, 0xcfff) AM_ROMBANK(1)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(defender_bank_select_w)
 	AM_RANGE(0xd000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -1415,6 +1416,8 @@ static MACHINE_DRIVER_START( blaster )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(blaster_map,0)
 
+	MDRV_MACHINE_INIT(blaster)
+
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(16+256)
 
@@ -1461,6 +1464,7 @@ static MACHINE_DRIVER_START( joust2 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(williams2)
+	MDRV_SPEAKER_REMOVE("mono")
 	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
 	MDRV_MACHINE_INIT(joust2)
@@ -2361,10 +2365,19 @@ ROM_START( joust2 )
 	ROM_LOAD( "ic08_r1.cpu", 0x0E000, 0x2000, CRC(84517c3c) SHA1(de0b6473953783c091ddcc7aaa89fc1ec3b9d378) )	/* IC08 ROM08 */
 
 	/* sound board */
-	ROM_REGION( 0x70000, REGION_CPU3, 0 )
+	ROM_REGION( 0x90000, REGION_CPU3, 0 )
 	ROM_LOAD( "u04_r1.snd", 0x10000, 0x8000, CRC(3af6b47d) SHA1(aff19d65a4d9c249dec6a9e04a4066fada0f8fa1) )	/* IC04 ROM23 */
+	ROM_RELOAD(             0x18000, 0x8000 )
+	ROM_RELOAD(             0x20000, 0x8000 )
+	ROM_RELOAD(             0x28000, 0x8000 )
 	ROM_LOAD( "u19_r1.snd", 0x30000, 0x8000, CRC(e7f9ed2e) SHA1(6b9ef5189650f0b6b2866da7f532cdf851f02ead) )	/* IC19 ROM24 */
+	ROM_RELOAD(             0x38000, 0x8000 )
+	ROM_RELOAD(             0x40000, 0x8000 )
+	ROM_RELOAD(             0x48000, 0x8000 )
 	ROM_LOAD( "u20_r1.snd", 0x50000, 0x8000, CRC(c85b29f7) SHA1(b37e1890bd0dfa0c7db19fc878450718b60c1ca0) )	/* IC20 ROM25 */
+	ROM_RELOAD(             0x58000, 0x8000 )
+	ROM_RELOAD(             0x60000, 0x8000 )
+	ROM_RELOAD(             0x68000, 0x8000 )
 
 	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ic57_r1.vid", 0x00000, 0x4000, CRC(572c6b01) SHA1(651df3223c1dc42543f57a7204ae492eb15a4999) )	/* IC57 ROM20 */
@@ -2585,14 +2598,6 @@ static DRIVER_INIT( joust2 )
 	CONFIGURE_BLITTER(WILLIAMS_BLITTER_SC02, 0x9000);
 	CONFIGURE_TILEMAP(WILLIAMS_TILEMAP_JOUST2);
 	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, joust2_pia_1_intf, williams2_snd_pia_intf);
-
-	/* expand the sound ROMs */
-	memcpy(&memory_region(REGION_CPU3)[0x18000], &memory_region(REGION_CPU3)[0x10000], 0x08000);
-	memcpy(&memory_region(REGION_CPU3)[0x20000], &memory_region(REGION_CPU3)[0x10000], 0x10000);
-	memcpy(&memory_region(REGION_CPU3)[0x38000], &memory_region(REGION_CPU3)[0x30000], 0x08000);
-	memcpy(&memory_region(REGION_CPU3)[0x40000], &memory_region(REGION_CPU3)[0x30000], 0x10000);
-	memcpy(&memory_region(REGION_CPU3)[0x58000], &memory_region(REGION_CPU3)[0x50000], 0x08000);
-	memcpy(&memory_region(REGION_CPU3)[0x60000], &memory_region(REGION_CPU3)[0x50000], 0x10000);
 }
 
 
@@ -2604,47 +2609,46 @@ static DRIVER_INIT( joust2 )
  *************************************/
 
 /* Defender hardware games */
-GAME( 1980, defender, 0,        defender, defender, defender, ROT0,   "Williams", "Defender (Red label)", 0 )
-GAME( 1980, defendg,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (Green label)", 0 )
-GAME( 1980, defendw,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (White label)", 0 )
-GAME( 1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender (bootleg)", GAME_NOT_WORKING )
-GAME( 1980, tornado1, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado (bootleg set 1)", 0 )
-GAME( 1980, tornado2, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado (bootleg set 2)", GAME_NOT_WORKING ) // bad dump?
-GAME( 1980, zero,     defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Zero", 0 )
-GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)", 0 )
-GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command", 0 )
-GAME( 1981, startrkd, defender, defender, defender, defender, ROT0,   "bootleg", "Star Trek (Defender bootleg)", 0 )
-GAME( 1980, mayday,   0,        defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 1)", 0 )
-GAME( 1980, maydaya,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 2)", 0 )
-GAME( 1980, maydayb,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 3)", 0 )
-GAME( 1981, colony7,  0,        defender, colony7,  defender, ROT270, "Taito", "Colony 7 (set 1)", 0 )
-GAME( 1981, colony7a, colony7,  defender, colony7,  defender, ROT270, "Taito", "Colony 7 (set 2)", 0 )
-GAME( 1982, jin,      0,        jin,      jin,      defender, ROT90,  "Falcon", "Jin", 0 )
+GAME( 1980, defender, 0,        defender, defender, defender, ROT0,   "Williams", "Defender (Red label)", GAME_SUPPORTS_SAVE )
+GAME( 1980, defendg,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (Green label)", GAME_SUPPORTS_SAVE )
+GAME( 1980, defendw,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (White label)", GAME_SUPPORTS_SAVE )
+GAME( 1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender (bootleg)", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
+GAME( 1980, tornado1, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado (bootleg set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1980, tornado2, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado (bootleg set 2)", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE ) // bad dump?
+GAME( 1980, zero,     defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Zero", GAME_SUPPORTS_SAVE )
+GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command", GAME_SUPPORTS_SAVE )
+GAME( 1981, startrkd, defender, defender, defender, defender, ROT0,   "bootleg", "Star Trek (Defender bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1980, mayday,   0,        defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1980, maydaya,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1980, maydayb,  mayday,   defender, mayday,   mayday,   ROT0,   "<unknown>", "Mayday (set 3)", GAME_SUPPORTS_SAVE )
+GAME( 1981, colony7,  0,        defender, colony7,  defender, ROT270, "Taito", "Colony 7 (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, colony7a, colony7,  defender, colony7,  defender, ROT270, "Taito", "Colony 7 (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1982, jin,      0,        jin,      jin,      defender, ROT90,  "Falcon", "Jin", GAME_SUPPORTS_SAVE )
 
 /* Standard Williams hardware */
-GAME( 1981, stargate, 0,        williams, stargate, stargate, ROT0,   "Williams", "Stargate", 0 )
-GAME( 1982, robotron, 0,        williams, robotron, robotron, ROT0,   "Williams", "Robotron (Solid Blue label)", 0 )
-GAME( 1982, robotryo, robotron, williams, robotron, robotron, ROT0,   "Williams", "Robotron (Yellow/Orange label)", 0 )
-GAME( 1982, joust,    0,        williams, joust,    joust,    ROT0,   "Williams", "Joust (White/Green label)", 0 )
-GAME( 1982, joustr,   joust,    williams, joust,    joust,    ROT0,   "Williams", "Joust (Solid Red label)", 0 )
-GAME( 1982, joustwr,  joust,    williams, joust,    joust,    ROT0,   "Williams", "Joust (White/Red label)", 0 )
-GAME( 1982, bubbles,  0,        williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles", 0 )
-GAME( 1982, bubblesr, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (Solid Red label)", 0 )
-GAME( 1982, bubblesp, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (prototype version)", 0 )
-GAME( 1982, splat,    0,        williams, splat,    splat,    ROT0,   "Williams", "Splat!", 0 )
-GAME( 1982, sinistar, 0,        sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 3)", 0 )
-GAME( 1982, sinista1, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (prototype version)", 0 )
-GAME( 1982, sinista2, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 2)", 0 )
-GAME( 1983, playball, 0,        playball, playball, playball, ROT270, "Williams", "PlayBall! (prototype)", 0 )
-GAME( 1983, blaster,  0,        blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster", 0 )
-GAME( 1983, blast30,  blaster,  blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster (early 30 wave version)", 0 )
-GAME( 1983, blastkit, blaster,  blaster,  blastkit, blastkit, ROT0,   "Williams", "Blaster (kit)", 0 )
-GAME( 1985, spdball,  0,        williams, spdball,  spdball,  ROT0,   "Williams", "Speed Ball (prototype)", 0 )
-GAME( 1987, lottofun, 0,        williams, lottofun, lottofun, ROT0,   "H.A.R. Management", "Lotto Fun", 0 )
+GAME( 1981, stargate, 0,        williams, stargate, stargate, ROT0,   "Williams", "Stargate", GAME_SUPPORTS_SAVE )
+GAME( 1982, robotron, 0,        williams, robotron, robotron, ROT0,   "Williams", "Robotron (Solid Blue label)", GAME_SUPPORTS_SAVE )
+GAME( 1982, robotryo, robotron, williams, robotron, robotron, ROT0,   "Williams", "Robotron (Yellow/Orange label)", GAME_SUPPORTS_SAVE )
+GAME( 1982, joust,    0,        williams, joust,    joust,    ROT0,   "Williams", "Joust (White/Green label)", GAME_SUPPORTS_SAVE )
+GAME( 1982, joustr,   joust,    williams, joust,    joust,    ROT0,   "Williams", "Joust (Solid Red label)", GAME_SUPPORTS_SAVE )
+GAME( 1982, joustwr,  joust,    williams, joust,    joust,    ROT0,   "Williams", "Joust (White/Red label)", GAME_SUPPORTS_SAVE )
+GAME( 1982, bubbles,  0,        williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles", GAME_SUPPORTS_SAVE )
+GAME( 1982, bubblesr, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (Solid Red label)", GAME_SUPPORTS_SAVE )
+GAME( 1982, bubblesp, bubbles,  williams, bubbles,  bubbles,  ROT0,   "Williams", "Bubbles (prototype version)", GAME_SUPPORTS_SAVE )
+GAME( 1982, splat,    0,        williams, splat,    splat,    ROT0,   "Williams", "Splat!", GAME_SUPPORTS_SAVE )
+GAME( 1982, sinistar, 0,        sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 3)", GAME_SUPPORTS_SAVE )
+GAME( 1982, sinista1, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (prototype version)", GAME_SUPPORTS_SAVE )
+GAME( 1982, sinista2, sinistar, sinistar, sinistar, sinistar, ROT270, "Williams", "Sinistar (revision 2)", GAME_SUPPORTS_SAVE )
+GAME( 1983, playball, 0,        playball, playball, playball, ROT270, "Williams", "PlayBall! (prototype)", GAME_SUPPORTS_SAVE )
+GAME( 1983, blaster,  0,        blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster", GAME_SUPPORTS_SAVE )
+GAME( 1983, blast30,  blaster,  blaster,  blaster,  blaster,  ROT0,   "Williams", "Blaster (early 30 wave version)", GAME_SUPPORTS_SAVE )
+GAME( 1983, blastkit, blaster,  blaster,  blastkit, blastkit, ROT0,   "Williams", "Blaster (kit)", GAME_SUPPORTS_SAVE )
+GAME( 1985, spdball,  0,        williams, spdball,  spdball,  ROT0,   "Williams", "Speed Ball (prototype)", GAME_SUPPORTS_SAVE )
+GAME( 1987, lottofun, 0,        williams, lottofun, lottofun, ROT0,   "H.A.R. Management", "Lotto Fun", GAME_SUPPORTS_SAVE )
 
 /* 2nd Generation Williams hardware with tilemaps */
-GAME( 1983, mysticm,  0,        williams2,mysticm,  mysticm,  ROT0,   "Williams", "Mystic Marathon", 0 )
-GAME( 1984, tshoot,   0,        williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot", 0 )
-GAME( 1984, inferno,  0,        williams2,inferno,  inferno,  ROT0,   "Williams", "Inferno", GAME_IMPERFECT_SOUND )
-GAME( 1986, joust2,   0,        joust2,   joust2,   joust2,   ROT270, "Williams", "Joust 2 - Survival of the Fittest (set 1)", 0 )
-
+GAME( 1983, mysticm,  0,        williams2,mysticm,  mysticm,  ROT0,   "Williams", "Mystic Marathon", GAME_SUPPORTS_SAVE )
+GAME( 1984, tshoot,   0,        williams2,tshoot,   tshoot,   ROT0,   "Williams", "Turkey Shoot", GAME_SUPPORTS_SAVE )
+GAME( 1984, inferno,  0,        williams2,inferno,  inferno,  ROT0,   "Williams", "Inferno", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1986, joust2,   0,        joust2,   joust2,   joust2,   ROT270, "Williams", "Joust 2 - Survival of the Fittest (set 1)", GAME_SUPPORTS_SAVE )

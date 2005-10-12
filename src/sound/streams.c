@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include <math.h>
+#include "state.h"
 
 #define VERBOSE			(0)
 
@@ -66,9 +67,10 @@ struct _sound_stream
 	/* linking information */
 	struct _sound_stream *next;					/* next stream in the chain */
 	void *			tag;						/* tag (used for identification) */
+	int				index;						/* index for save states */
 
 	/* general information */
-	int				sample_rate;				/* sample rate of this stream */
+	INT32			sample_rate;				/* sample rate of this stream */
 	UINT32			samples_per_frame_frac;		/* fractional samples per frame */
 
 	/* input information */
@@ -96,6 +98,7 @@ struct _sound_stream
 
 static sound_stream *stream_head;
 static void *stream_current_tag;
+static int stream_index;
 
 
 
@@ -121,6 +124,7 @@ int streams_init(void)
 	/* reset globals */
 	stream_head = NULL;
 	stream_current_tag = NULL;
+	stream_index = 0;
 
 	return 0;
 }
@@ -242,6 +246,7 @@ sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *para
 {
 	int inputnum, outputnum;
 	sound_stream *stream;
+	char statetag[30];
 
 	/* allocate memory */
 	stream = auto_malloc(sizeof(*stream));
@@ -269,6 +274,7 @@ sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *para
 
 	/* fill in the data */
 	stream->tag         = stream_current_tag;
+	stream->index		= stream_index++;
 	stream->sample_rate = sample_rate;
 	stream->samples_per_frame_frac = (UINT32)((double)sample_rate * (double)(1 << FRAC_BITS) / Machine->drv->frames_per_second);
 	stream->inputs      = inputs;
@@ -276,11 +282,16 @@ sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *para
 	stream->param       = param;
 	stream->callback    = callback;
 
+	/* create a unique tag for saving */
+	sprintf(statetag, "stream.%d", stream->index);
+	state_save_register_item(statetag, 0, stream->sample_rate);
+
 	/* allocate resample buffers */
 	for (inputnum = 0; inputnum < inputs; inputnum++)
 	{
 		stream->input[inputnum].resample = auto_malloc(RESAMPLE_BUFFER_SAMPLES * sizeof(*stream->input[inputnum].resample));
 		stream->input[inputnum].gain = 0x100;
+		state_save_register_item(statetag, inputnum, stream->input[inputnum].gain);
 	}
 
 	/* allocate output buffers */
@@ -288,6 +299,7 @@ sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *para
 	{
 		stream->output[outputnum].buffer = auto_malloc(OUTPUT_BUFFER_SAMPLES * sizeof(*stream->output[outputnum].buffer));
 		stream->output[outputnum].gain = 0x100;
+		state_save_register_item(statetag, outputnum, stream->output[outputnum].gain);
 	}
 
 	/* hook us in */
@@ -299,6 +311,7 @@ sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *para
 		for (temp = stream_head; temp->next; temp = temp->next) ;
 		temp->next = stream;
 	}
+
 	return stream;
 }
 

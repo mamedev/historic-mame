@@ -1450,7 +1450,7 @@ static void ymf271_write_timer(YMF271Chip *chip, int data)
 					//period = (double)(256.0 - chip->timerAVal ) * ( 384.0 * 4.0 / (double)CLOCK);
 					period = (384.0 * (1024.0 - chip->timerAVal)) / (double)CLOCK;
 
-					timer_adjust_ptr(chip->timA, TIME_IN_SEC(period), chip, TIME_IN_SEC(period));
+					timer_adjust_ptr(chip->timA, TIME_IN_SEC(period), TIME_IN_SEC(period));
 				}
 				if (data & 0x20)
 				{	// timer B reset
@@ -1461,7 +1461,7 @@ static void ymf271_write_timer(YMF271Chip *chip, int data)
 
 					period = 6144.0 * (256.0 - (double)chip->timerBVal) / (double)CLOCK;
 
-					timer_adjust_ptr(chip->timB, TIME_IN_SEC(period), chip, TIME_IN_SEC(period));
+					timer_adjust_ptr(chip->timB, TIME_IN_SEC(period), TIME_IN_SEC(period));
 				}
 
 				break;
@@ -1638,8 +1638,8 @@ static void init_tables(void)
 
 static void ymf271_init(YMF271Chip *chip, UINT8 *rom, void (*cb)(int), read8_handler ext_read, write8_handler ext_write)
 {
-	chip->timA = timer_alloc_ptr(ymf271_timer_a_tick);
-	chip->timB = timer_alloc_ptr(ymf271_timer_b_tick);
+	chip->timA = timer_alloc_ptr(ymf271_timer_a_tick, chip);
+	chip->timB = timer_alloc_ptr(ymf271_timer_b_tick, chip);
 
 	chip->rom = rom;
 	chip->irq_callback = cb;
