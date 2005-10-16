@@ -3854,16 +3854,22 @@ static void z80_init(void)
 	state_save_register_UINT8("z80", cpu, "I", &Z80.i, 1);
 	state_save_register_UINT8("z80", cpu, "nmi_state", &Z80.nmi_state, 1);
 	state_save_register_UINT8("z80", cpu, "irq_state", &Z80.irq_state, 1);
-}
 
-/****************************************************************************
- * Reset registers to their initial values
- ****************************************************************************/
-static void z80_reset(void *param)
-{
+	/* Reset registers to their initial values */
 	memset(&Z80, 0, sizeof(Z80));
 	IX = IY = 0xffff; /* IX and IY are FFFF after a reset! */
 	F = ZF;			/* Zero flag is set */
+}
+
+/****************************************************************************
+ * Do a reset
+ ****************************************************************************/
+static void z80_reset(void *param)
+{
+	PC = 0x0000;
+	I = 0;
+	R = 0;
+	R2 = 0;
 	Z80.nmi_state = CLEAR_LINE;
 	Z80.irq_state = CLEAR_LINE;
 	Z80.daisy = param;

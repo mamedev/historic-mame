@@ -7,9 +7,7 @@
 #include "osd_cpu.h"
 
 enum {
-	T11_R0=1, T11_R1, T11_R2, T11_R3, T11_R4, T11_R5, T11_SP, T11_PC, T11_PSW,
-	T11_BANK0, T11_BANK1, T11_BANK2, T11_BANK3,
-	T11_BANK4, T11_BANK5, T11_BANK6, T11_BANK7 };
+	T11_R0=1, T11_R1, T11_R2, T11_R3, T11_R4, T11_R5, T11_SP, T11_PC, T11_PSW };
 
 #define T11_IRQ0        0      /* IRQ0 */
 #define T11_IRQ1		1	   /* IRQ1 */

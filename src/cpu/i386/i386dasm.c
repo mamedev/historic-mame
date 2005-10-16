@@ -78,6 +78,7 @@ typedef struct {
 	I386_OPCODE *opcode;
 } GROUP_OP;
 
+static UINT8 *opcode_ptr;
 static I386_OPCODE *opcode_table1 = 0;
 static I386_OPCODE *opcode_table2 = 0;
 
@@ -90,15 +91,15 @@ static I386_OPCODE i386_opcode_table1[256] =
 	{"add",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"add",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"add",				0,				PARAM_EAX,			PARAM_IMM,			0				},
-	{"push es",			0,				0,					0,					0				},
-	{"pop es",			0,				0,					0,					0				},
+	{"push    es",		0,				0,					0,					0				},
+	{"pop     es",		0,				0,					0,					0				},
 	{"or",				MODRM,			PARAM_RM8,			PARAM_REG8,			0				},
 	{"or",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"or",				MODRM,			PARAM_REG8,			PARAM_RM8,			0				},
 	{"or",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"or",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"or",				0,				PARAM_EAX,			PARAM_IMM,			0				},
-	{"push cs",			0,				0,					0,					0				},
+	{"push    cs",		0,				0,					0,					0				},
 	{"two_byte",		TWO_BYTE,		0,					0,					0				},
 	// 0x10
 	{"adc",				MODRM,			PARAM_RM8,			PARAM_REG8,			0				},
@@ -107,16 +108,16 @@ static I386_OPCODE i386_opcode_table1[256] =
 	{"adc",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"adc",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"adc",				0,				PARAM_EAX,			PARAM_IMM,			0				},
-	{"push ss",			0,				0,					0,					0				},
-	{"pop ss",			0,				0,					0,					0				},
+	{"push    ss",		0,				0,					0,					0				},
+	{"pop     ss",		0,				0,					0,					0				},
 	{"sbb",				MODRM,			PARAM_RM8,			PARAM_REG8,			0				},
 	{"sbb",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"sbb",				MODRM,			PARAM_REG8,			PARAM_RM8,			0				},
 	{"sbb",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"sbb",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"sbb",				0,				PARAM_EAX,			PARAM_IMM,			0				},
-	{"push ds",			0,				0,					0,					0				},
-	{"pop ds",			0,				0,					0,					0				},
+	{"push    ds",		0,				0,					0,					0				},
+	{"pop     ds",		0,				0,					0,					0				},
 	// 0x20
 	{"and",				MODRM,			PARAM_RM8,			PARAM_REG8,			0				},
 	{"and",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
@@ -530,16 +531,16 @@ static I386_OPCODE i386_opcode_table2[256] =
 	{"setle",			MODRM,			PARAM_RM8,			0,					0				},
 	{"setg",			MODRM,			PARAM_RM8,			0,					0				},
 	// 0xa0
-	{"push fs",			0,				0,					0,					0				},
-	{"pop fs",			0,				0,					0,					0				},
+	{"push    fs",		0,				0,					0,					0				},
+	{"pop     fs",		0,				0,					0,					0				},
 	{"cpuid",			0,				0,					0,					0				},
 	{"bt",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
 	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_CL		},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
-	{"push gs",			0,				0,					0,					0				},
-	{"pop gs",			0,				0,					0,					0				},
+	{"push    gs",		0,				0,					0,					0				},
+	{"pop     gs",		0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"bts",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"shrd",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
@@ -806,16 +807,16 @@ static I386_OPCODE necv_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	// 0xa0
-	{"push fs",			0,				0,					0,					0				},
-	{"pop fs",			0,				0,					0,					0				},
+	{"push   fs",		0,				0,					0,					0				},
+	{"pop    fs",		0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"bt",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
 	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_CL		},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
-	{"push gs",			0,				0,					0,					0				},
-	{"pop gs",			0,				0,					0,					0				},
+	{"push   gs",		0,				0,					0,					0				},
+	{"pop    gs",		0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"bts",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"shrd",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
@@ -1146,13 +1147,14 @@ static char modrm_string[256];
 INLINE UINT8 FETCH(void)
 {
 	pc++;
-	return cpu_readop(pc-1);
+	return *opcode_ptr++;
 }
 
 INLINE UINT16 FETCH16(void)
 {
 	UINT16 d;
-	d = cpu_readop(pc) | (cpu_readop(pc+1) << 8);
+	d = opcode_ptr[0] | (opcode_ptr[1] << 8);
+	opcode_ptr += 2;
 	pc += 2;
 	return d;
 }
@@ -1160,7 +1162,8 @@ INLINE UINT16 FETCH16(void)
 INLINE UINT32 FETCH32(void)
 {
 	UINT32 d;
-	d = cpu_readop(pc) | (cpu_readop(pc+1) << 8) | (cpu_readop(pc+2) << 16) | (cpu_readop(pc+3) << 24);
+	d = opcode_ptr[0] | (opcode_ptr[1] << 8) | (opcode_ptr[2] << 16) | (opcode_ptr[3] << 24);
+	opcode_ptr += 4;
 	pc += 4;
 	return d;
 }
@@ -1168,13 +1171,14 @@ INLINE UINT32 FETCH32(void)
 INLINE UINT8 FETCHD(void)
 {
 	pc++;
-	return cpu_readop_arg(pc-1);
+	return *opcode_ptr++;
 }
 
 INLINE UINT16 FETCHD16(void)
 {
 	UINT16 d;
-	d = cpu_readop_arg(pc) | (cpu_readop_arg(pc+1) << 8);
+	d = opcode_ptr[0] | (opcode_ptr[1] << 8);
+	opcode_ptr += 2;
 	pc += 2;
 	return d;
 }
@@ -1182,9 +1186,33 @@ INLINE UINT16 FETCHD16(void)
 INLINE UINT32 FETCHD32(void)
 {
 	UINT32 d;
-	d = cpu_readop_arg(pc) | (cpu_readop_arg(pc+1) << 8) | (cpu_readop_arg(pc+2) << 16) | (cpu_readop_arg(pc+3) << 24);
+	d = opcode_ptr[0] | (opcode_ptr[1] << 8) | (opcode_ptr[2] << 16) | (opcode_ptr[3] << 24);
+	opcode_ptr += 4;
 	pc += 4;
 	return d;
+}
+
+static char *hexstring(UINT32 value, int digits)
+{
+	static char buffer[20];
+	buffer[0] = '0';
+	if (digits)
+		sprintf(&buffer[1], "%0*Xh", digits, value);
+	else
+		sprintf(&buffer[1], "%Xh", value);
+	return (buffer[1] >= '0' && buffer[1] <= '9') ? &buffer[1] : &buffer[0];
+}
+
+static char *shexstring(UINT32 value, int digits, int always)
+{
+	static char buffer[20];
+	if (value >= 0x80000000)
+		sprintf(buffer, "-%s", hexstring(-value, digits));
+	else if (always)
+		sprintf(buffer, "+%s", hexstring(value, digits));
+	else
+		return hexstring(value, digits);
+	return buffer;
 }
 
 static char* handle_sib_byte( char* s, UINT8 mod )
@@ -1206,7 +1234,7 @@ static char* handle_sib_byte( char* s, UINT8 mod )
 		case 5:
 			if( mod == 0 ) {
 				i32 = FETCH32();
-				s += sprintf( s, "$%08X", i32 );
+				s += sprintf( s, "%s", hexstring(i32, 0) );
 			} else if( mod == 1 ) {
 				s += sprintf( s, "ebp" );
 			} else if( mod == 2 ) {
@@ -1266,7 +1294,7 @@ static void handle_modrm(char* s)
 			case 5:
 				if( mod == 0 ) {
 					disp32 = FETCHD32();
-					s += sprintf( s, "$%08X", disp32 );
+					s += sprintf( s, "%s", hexstring(disp32, 0) );
 				} else {
 					s += sprintf( s, "ebp" );
 				}
@@ -1276,10 +1304,10 @@ static void handle_modrm(char* s)
 		}
 		if( mod == 1 ) {
 			disp8 = FETCHD();
-			s += sprintf( s, "+$%08X", (INT32)disp8 );
+			s += sprintf( s, "%s", shexstring((INT32)disp8, 0, TRUE) );
 		} else if( mod == 2 ) {
 			disp32 = FETCHD32();
-			s += sprintf( s, "+$%08X", disp32 );
+			s += sprintf( s, "+%s", shexstring(disp32, 0, TRUE) );
 		}
 	} else {
 		switch( rm )
@@ -1293,7 +1321,7 @@ static void handle_modrm(char* s)
 			case 6:
 				if( mod == 0 ) {
 					disp16 = FETCHD16();
-					s += sprintf( s, "$%04X", (unsigned) (UINT16) disp16 );
+					s += sprintf( s, "%s", hexstring((unsigned) (UINT16) disp16, 0) );
 				} else {
 					s += sprintf( s, "bp" );
 				}
@@ -1302,10 +1330,10 @@ static void handle_modrm(char* s)
 		}
 		if( mod == 1 ) {
 			disp8 = FETCHD();
-			s += sprintf( s, "+$%08X", (INT32)disp8 );
+			s += sprintf( s, "%s", shexstring((INT32)disp8, 0, TRUE) );
 		} else if( mod == 2 ) {
 			disp16 = FETCHD16();
-			s += sprintf( s, "+$%08X", (INT32)disp16 );
+			s += sprintf( s, "%s", shexstring((INT32)disp16, 0, TRUE) );
 		}
 	}
 	s += sprintf( s, "]" );
@@ -1345,9 +1373,9 @@ static char* handle_param(char* s, UINT32 param)
 				s += sprintf( s, "%s", i386_reg[operand_size][MODRM_REG2] );
 			} else {
 				if( operand_size )
-					s += sprintf( s, "dword " );
+					s += sprintf( s, "dword ptr " );
 				else
-					s += sprintf( s, "word " );
+					s += sprintf( s, "word ptr " );
 				s += sprintf( s, "%s", modrm_string );
 			}
 			break;
@@ -1356,7 +1384,7 @@ static char* handle_param(char* s, UINT32 param)
 			if( modrm >= 0xc0 ) {
 				s += sprintf( s, "%s", i386_reg8[MODRM_REG2] );
 			} else {
-				s += sprintf( s, "byte " );
+				s += sprintf( s, "byte ptr " );
 				s += sprintf( s, "%s", modrm_string );
 			}
 			break;
@@ -1365,28 +1393,28 @@ static char* handle_param(char* s, UINT32 param)
 			if( modrm >= 0xc0 ) {
 				s += sprintf( s, "%s", i386_reg[0][MODRM_REG2] );
 			} else {
-				s += sprintf( s, "word " );
+				s += sprintf( s, "word ptr " );
 				s += sprintf( s, "%s", modrm_string );
 			}
 			break;
 
 		case PARAM_I8:
 			i8 = FETCHD();
-			s += sprintf( s, "$%02X", i8 );
+			s += sprintf( s, "%s", shexstring(i8, 0, FALSE) );
 			break;
 
 		case PARAM_I16:
 			i16 = FETCHD16();
-			s += sprintf( s, "$%04X", i16 );
+			s += sprintf( s, "%s", shexstring(i16, 0, FALSE) );
 			break;
 
 		case PARAM_IMM:
 			if( operand_size ) {
 				i32 = FETCHD32();
-				s += sprintf( s, "$%08X", i32 );
+				s += sprintf( s, "%s", hexstring(i32, 0) );
 			} else {
 				i16 = FETCHD16();
-				s += sprintf( s, "$%04X", i16 );
+				s += sprintf( s, "%s", hexstring(i16, 0) );
 			}
 			break;
 
@@ -1394,41 +1422,43 @@ static char* handle_param(char* s, UINT32 param)
 			if( operand_size ) {
 				addr = FETCHD32();
 				ptr = FETCHD16();
-				s += sprintf( s, "[$%04X:%08X]",ptr,addr );
+				s += sprintf( s, "%s:", hexstring(ptr, 4) );
+				s += sprintf( s, "%s", hexstring(addr, 0) );
 			} else {
 				addr = FETCHD16();
 				ptr = FETCHD16();
-				s += sprintf( s, "[$%04X:%04X]",ptr,addr );
+				s += sprintf( s, "%s:", hexstring(ptr, 4) );
+				s += sprintf( s, "%s", hexstring(addr, 0) );
 			}
 			break;
 
 		case PARAM_REL:
 			if( operand_size ) {
 				d32 = FETCHD32();
-				s += sprintf( s, "[$%08X]", pc + d32 );
+				s += sprintf( s, "%s", hexstring(pc + d32, 0) );
 			} else {
 				d16 = FETCHD16();
-				s += sprintf( s, "[$%08X]", pc + d16 );
+				s += sprintf( s, "%s", hexstring(pc + d16, 0) );
 			}
 			break;
 
 		case PARAM_REL8:
 			d8 = FETCHD();
-			s += sprintf( s, "[$%08X]", pc + d8 );
+			s += sprintf( s, "%s", hexstring(pc + d8, 0) );
 			break;
 
 		case PARAM_MEM_OFFS_B:
 			d8 = FETCHD();
-			s += sprintf( s, "[$%08X]", d8 );
+			s += sprintf( s, "[%s]", hexstring(d8, 0) );
 			break;
 
 		case PARAM_MEM_OFFS_V:
 			if( address_size ) {
 				d32 = FETCHD32();
-				s += sprintf( s, "[$%08X]", d32 );
+				s += sprintf( s, "[%s]", hexstring(d32, 0) );
 			} else {
 				d32 = FETCHD16();
-				s += sprintf( s, "[$%08X]", d32 );
+				s += sprintf( s, "[%s]", hexstring(d32, 0) );
 			}
 			break;
 
@@ -1485,28 +1515,28 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fadd float %s", modrm_string); break;
-					case 1: sprintf(s, "fmul float %s", modrm_string); break;
-					case 2: sprintf(s, "fcom float %s", modrm_string); break;
-					case 3: sprintf(s, "fcomp float %s", modrm_string); break;
-					case 4: sprintf(s, "fsub float %s", modrm_string); break;
-					case 5: sprintf(s, "fsubr float %s", modrm_string); break;
-					case 6: sprintf(s, "fdiv float %s", modrm_string); break;
-					case 7: sprintf(s, "fdivr float %s", modrm_string); break;
+					case 0: sprintf(s, "fadd    dword ptr %s", modrm_string); break;
+					case 1: sprintf(s, "fmul    dword ptr %s", modrm_string); break;
+					case 2: sprintf(s, "fcom    dword ptr %s", modrm_string); break;
+					case 3: sprintf(s, "fcomp   dword ptr %s", modrm_string); break;
+					case 4: sprintf(s, "fsub    dword ptr %s", modrm_string); break;
+					case 5: sprintf(s, "fsubr   dword ptr %s", modrm_string); break;
+					case 6: sprintf(s, "fdiv    dword ptr %s", modrm_string); break;
+					case 7: sprintf(s, "fdivr   dword ptr %s", modrm_string); break;
 				}
 			}
 			else
 			{
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fadd st(0), st(%d)", op2 & 0x7); break;
-					case 1: sprintf(s, "fcom st(0), st(%d)", op2 & 0x7); break;
-					case 2: sprintf(s, "fsub st(0), st(%d)", op2 & 0x7); break;
-					case 3: sprintf(s, "fdiv st(0), st(%d)", op2 & 0x7); break;
-					case 4: sprintf(s, "fmul st(0), st(%d)", op2 & 0x7); break;
-					case 5: sprintf(s, "fcomp st(0), st(%d)", op2 & 0x7); break;
-					case 6: sprintf(s, "fsubr st(0), st(%d)", op2 & 0x7); break;
-					case 7: sprintf(s, "fdivr st(0), st(%d)", op2 & 0x7); break;
+					case 0: sprintf(s, "fadd    st(0),st(%d)", op2 & 0x7); break;
+					case 1: sprintf(s, "fcom    st(0),st(%d)", op2 & 0x7); break;
+					case 2: sprintf(s, "fsub    st(0),st(%d)", op2 & 0x7); break;
+					case 3: sprintf(s, "fdiv    st(0),st(%d)", op2 & 0x7); break;
+					case 4: sprintf(s, "fmul    st(0),st(%d)", op2 & 0x7); break;
+					case 5: sprintf(s, "fcomp   st(0),st(%d)", op2 & 0x7); break;
+					case 6: sprintf(s, "fsubr   st(0),st(%d)", op2 & 0x7); break;
+					case 7: sprintf(s, "fdivr   st(0),st(%d)", op2 & 0x7); break;
 				}
 			}
 			break;
@@ -1520,14 +1550,14 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fld float %s", modrm_string); break;
+					case 0: sprintf(s, "fld     dword ptr %s", modrm_string); break;
 					case 1: sprintf(s, "??? (FPU)"); break;
-					case 2: sprintf(s, "fst float %s", modrm_string); break;
-					case 3: sprintf(s, "fstp float %s", modrm_string); break;
-					case 4: sprintf(s, "fldenv word %s", modrm_string); break;
-					case 5: sprintf(s, "fldcw word %s", modrm_string); break;
-					case 6: sprintf(s, "fstenv word %s", modrm_string); break;
-					case 7: sprintf(s, "fstcw word %s", modrm_string); break;
+					case 2: sprintf(s, "fst     dword ptr %s", modrm_string); break;
+					case 3: sprintf(s, "fstp    dword ptr %s", modrm_string); break;
+					case 4: sprintf(s, "fldenv  word ptr %s", modrm_string); break;
+					case 5: sprintf(s, "fldcw   word ptr %s", modrm_string); break;
+					case 6: sprintf(s, "fstenv  word ptr %s", modrm_string); break;
+					case 7: sprintf(s, "fstcw   word ptr %s", modrm_string); break;
 				}
 			}
 			else
@@ -1535,10 +1565,10 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-						sprintf(s, "fld st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fld     st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-						sprintf(s, "fxch st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fxch    st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x10: sprintf(s, "fnop"); break;
 					case 0x20: sprintf(s, "fchs"); break;
@@ -1583,14 +1613,14 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fiadd dword %s", modrm_string); break;
-					case 1: sprintf(s, "fimul dword %s", modrm_string); break;
-					case 2: sprintf(s, "ficom dword %s", modrm_string); break;
-					case 3: sprintf(s, "ficomp dword %s", modrm_string); break;
-					case 4: sprintf(s, "fisub dword %s", modrm_string); break;
-					case 5: sprintf(s, "fisubr dword %s", modrm_string); break;
-					case 6: sprintf(s, "fidiv dword %s", modrm_string); break;
-					case 7: sprintf(s, "fidivr dword %s", modrm_string); break;
+					case 0: sprintf(s, "fiadd   dword ptr %s", modrm_string); break;
+					case 1: sprintf(s, "fimul   dword ptr %s", modrm_string); break;
+					case 2: sprintf(s, "ficom   dword ptr %s", modrm_string); break;
+					case 3: sprintf(s, "ficomp  dword ptr %s", modrm_string); break;
+					case 4: sprintf(s, "fisub   dword ptr %s", modrm_string); break;
+					case 5: sprintf(s, "fisubr  dword ptr %s", modrm_string); break;
+					case 6: sprintf(s, "fidiv   dword ptr %s", modrm_string); break;
+					case 7: sprintf(s, "fidivr  dword ptr %s", modrm_string); break;
 				}
 			}
 			else
@@ -1598,16 +1628,16 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-						sprintf(s, "fcmovb st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovb  st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-						sprintf(s, "fcmove st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmove  st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
-						sprintf(s, "fcmovbe st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovbe st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-						sprintf(s, "fcmovu st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovu  st(0),st(%d)", op2 & 0x7); break;
 
 					default: sprintf(s, "??? (FPU)"); break;
 
@@ -1624,14 +1654,14 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fild dword %s", modrm_string); break;
+					case 0: sprintf(s, "fild    dword ptr %s", modrm_string); break;
 					case 1: sprintf(s, "??? (FPU)"); break;
-					case 2: sprintf(s, "fist dword %s", modrm_string); break;
-					case 3: sprintf(s, "fistp dword %s", modrm_string); break;
+					case 2: sprintf(s, "fist    dword ptr %s", modrm_string); break;
+					case 3: sprintf(s, "fistp   dword ptr %s", modrm_string); break;
 					case 4: sprintf(s, "??? (FPU)"); break;
-					case 5: sprintf(s, "fld long double %s", modrm_string); break;
+					case 5: sprintf(s, "fld     tword ptr %s", modrm_string); break;
 					case 6: sprintf(s, "??? (FPU)"); break;
-					case 7: sprintf(s, "fstp long double %s", modrm_string); break;
+					case 7: sprintf(s, "fstp    tword ptr %s", modrm_string); break;
 				}
 			}
 			else
@@ -1639,25 +1669,25 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-						sprintf(s, "fcmovnb st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovnb st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-						sprintf(s, "fcmovne st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovne st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
-						sprintf(s, "fcmovnbe st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovnbe st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-						sprintf(s, "fcmovnu st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcmovnu st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x22: sprintf(s, "fclex"); break;
 					case 0x23: sprintf(s, "finit"); break;
 
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-						sprintf(s, "fucomi st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fucomi  st(0),st(%d)", op2 & 0x7); break;
 
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-						sprintf(s, "fcomi st(0), st(%d)", op2 & 0x7); break;
+						sprintf(s, "fcomi   st(0),st(%d)", op2 & 0x7); break;
 
 					default: sprintf(s, "??? (FPU)"); break;
 				}
@@ -1673,14 +1703,14 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fadd double %s", modrm_string); break;
-					case 1: sprintf(s, "fmul double %s", modrm_string); break;
-					case 2: sprintf(s, "fcom double %s", modrm_string); break;
-					case 3: sprintf(s, "fcomp double %s", modrm_string); break;
-					case 4: sprintf(s, "fsub double %s", modrm_string); break;
-					case 5: sprintf(s, "fsubr double %s", modrm_string); break;
-					case 6: sprintf(s, "fdiv double %s", modrm_string); break;
-					case 7: sprintf(s, "fdivr double %s", modrm_string); break;
+					case 0: sprintf(s, "fadd    qword ptr %s", modrm_string); break;
+					case 1: sprintf(s, "fmul    qword ptr %s", modrm_string); break;
+					case 2: sprintf(s, "fcom    qword ptr %s", modrm_string); break;
+					case 3: sprintf(s, "fcomp   qword ptr %s", modrm_string); break;
+					case 4: sprintf(s, "fsub    qword ptr %s", modrm_string); break;
+					case 5: sprintf(s, "fsubr   qword ptr %s", modrm_string); break;
+					case 6: sprintf(s, "fdiv    qword ptr %s", modrm_string); break;
+					case 7: sprintf(s, "fdivr   qword ptr %s", modrm_string); break;
 				}
 			}
 			else
@@ -1688,22 +1718,22 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-						sprintf(s, "fadd st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fadd    st(%d),st(0)", op2 & 0x7); break;
 
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-						sprintf(s, "fmul st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fmul    st(%d),st(0)", op2 & 0x7); break;
 
 					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-						sprintf(s, "fsubr st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fsubr   st(%d),st(0)", op2 & 0x7); break;
 
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-						sprintf(s, "fsub st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fsub    st(%d),st(0)", op2 & 0x7); break;
 
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-						sprintf(s, "fdivr st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fdivr   st(%d),st(0)", op2 & 0x7); break;
 
 					case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-						sprintf(s, "fdiv st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fdiv    st(%d),st(0)", op2 & 0x7); break;
 
 					default: sprintf(s, "??? (FPU)"); break;
 				}
@@ -1719,14 +1749,14 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fld double %s", modrm_string); break;
+					case 0: sprintf(s, "fld     qword ptr %s", modrm_string); break;
 					case 1: sprintf(s, "??? (FPU)"); break;
-					case 2: sprintf(s, "fst double %s", modrm_string); break;
-					case 3: sprintf(s, "fstp double %s", modrm_string); break;
-					case 4: sprintf(s, "frstor %s", modrm_string); break;
+					case 2: sprintf(s, "fst     qword ptr %s", modrm_string); break;
+					case 3: sprintf(s, "fstp    qword ptr %s", modrm_string); break;
+					case 4: sprintf(s, "frstor  %s", modrm_string); break;
 					case 5: sprintf(s, "??? (FPU)"); break;
-					case 6: sprintf(s, "fsave %s", modrm_string); break;
-					case 7: sprintf(s, "fstsw word %s", modrm_string); break;
+					case 6: sprintf(s, "fsave   %s", modrm_string); break;
+					case 7: sprintf(s, "fstsw   word ptr %s", modrm_string); break;
 				}
 			}
 			else
@@ -1734,19 +1764,19 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-						sprintf(s, "ffree st(%d)", op2 & 0x7); break;
+						sprintf(s, "ffree   st(%d)", op2 & 0x7); break;
 
 					case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
-						sprintf(s, "fst st(%d)", op2 & 0x7); break;
+						sprintf(s, "fst     st(%d)", op2 & 0x7); break;
 
 					case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
-						sprintf(s, "fstp st(%d)", op2 & 0x7); break;
+						sprintf(s, "fstp    st(%d)", op2 & 0x7); break;
 
 					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-						sprintf(s, "fucom st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fucom   st(%d), st(0)", op2 & 0x7); break;
 
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-						sprintf(s, "fucomp st(%d)", op2 & 0x7); break;
+						sprintf(s, "fucomp  st(%d)", op2 & 0x7); break;
 
 					default: sprintf(s, "??? (FPU)"); break;
 				}
@@ -1762,14 +1792,14 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fiadd word %s", modrm_string); break;
-					case 1: sprintf(s, "fimul word %s", modrm_string); break;
-					case 2: sprintf(s, "ficom word %s", modrm_string); break;
-					case 3: sprintf(s, "ficomp word %s", modrm_string); break;
-					case 4: sprintf(s, "fisub word %s", modrm_string); break;
-					case 5: sprintf(s, "fisubr word %s", modrm_string); break;
-					case 6: sprintf(s, "fidiv word %s", modrm_string); break;
-					case 7: sprintf(s, "fidivr word %s", modrm_string); break;
+					case 0: sprintf(s, "fiadd   word ptr %s", modrm_string); break;
+					case 1: sprintf(s, "fimul   word ptr %s", modrm_string); break;
+					case 2: sprintf(s, "ficom   word ptr %s", modrm_string); break;
+					case 3: sprintf(s, "ficomp  word ptr %s", modrm_string); break;
+					case 4: sprintf(s, "fisub   word ptr %s", modrm_string); break;
+					case 5: sprintf(s, "fisubr  word ptr %s", modrm_string); break;
+					case 6: sprintf(s, "fidiv   word ptr %s", modrm_string); break;
+					case 7: sprintf(s, "fidivr  word ptr %s", modrm_string); break;
 				}
 			}
 			else
@@ -1777,24 +1807,24 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				switch (op2 & 0x3f)
 				{
 					case 0x00: case 0x01: case 0x02: case 0x03: case 0x04: case 0x05: case 0x06: case 0x07:
-						sprintf(s, "faddp st(%d)", op2 & 0x7); break;
+						sprintf(s, "faddp   st(%d)", op2 & 0x7); break;
 
 					case 0x08: case 0x09: case 0x0a: case 0x0b: case 0x0c: case 0x0d: case 0x0e: case 0x0f:
-						sprintf(s, "fmulp st(%d)", op2 & 0x7); break;
+						sprintf(s, "fmulp   st(%d)", op2 & 0x7); break;
 
 					case 0x19: sprintf(s, "fcompp"); break;
 
 					case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
-						sprintf(s, "fsubrp st(%d)", op2 & 0x7); break;
+						sprintf(s, "fsubrp  st(%d)", op2 & 0x7); break;
 
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
-						sprintf(s, "fsubp st(%d)", op2 & 0x7); break;
+						sprintf(s, "fsubp   st(%d)", op2 & 0x7); break;
 
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-						sprintf(s, "fdivrp st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fdivrp  st(%d), st(0)", op2 & 0x7); break;
 
 					case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
-						sprintf(s, "fdivp st(%d)", op2 & 0x7); break;
+						sprintf(s, "fdivp   st(%d)", op2 & 0x7); break;
 
 					default: sprintf(s, "??? (FPU)"); break;
 				}
@@ -1810,27 +1840,27 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
-					case 0: sprintf(s, "fild word %s", modrm_string); break;
+					case 0: sprintf(s, "fild    word ptr %s", modrm_string); break;
 					case 1: sprintf(s, "??? (FPU)"); break;
-					case 2: sprintf(s, "fist word %s", modrm_string); break;
-					case 3: sprintf(s, "fistp word %s", modrm_string); break;
-					case 4: sprintf(s, "fbld %s", modrm_string); break;
-					case 5: sprintf(s, "fild qword %s", modrm_string); break;
-					case 6: sprintf(s, "fbstp %s", modrm_string); break;
-					case 7: sprintf(s, "fistp qword %s", modrm_string); break;
+					case 2: sprintf(s, "fist    word ptr %s", modrm_string); break;
+					case 3: sprintf(s, "fistp   word ptr %s", modrm_string); break;
+					case 4: sprintf(s, "fbld    %s", modrm_string); break;
+					case 5: sprintf(s, "fild    qword ptr %s", modrm_string); break;
+					case 6: sprintf(s, "fbstp   %s", modrm_string); break;
+					case 7: sprintf(s, "fistp   qword ptr %s", modrm_string); break;
 				}
 			}
 			else
 			{
 				switch (op2 & 0x3f)
 				{
-					case 0x20: sprintf(s, "fstsw ax"); break;
+					case 0x20: sprintf(s, "fstsw   ax"); break;
 
 					case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
 						sprintf(s, "fucomip st(%d)", op2 & 0x7); break;
 
 					case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
-						sprintf(s, "fcomip st(%d), st(0)", op2 & 0x7); break;
+						sprintf(s, "fcomip  st(%d),st(0)", op2 & 0x7); break;
 
 					default: sprintf(s, "??? (FPU)"); break;
 				}
@@ -1876,7 +1906,7 @@ static void decode_opcode(char *s, I386_OPCODE *op, UINT8 op1)
 			return;
 
 		case PREFIX:
-			s += sprintf( s, "%s ", op->mnemonic );
+			s += sprintf( s, "%-8s", op->mnemonic );
 			op2 = FETCH();
 			decode_opcode( s, &opcode_table1[op2], op1 );
 			return;
@@ -1914,7 +1944,7 @@ static void decode_opcode(char *s, I386_OPCODE *op, UINT8 op1)
 			break;
 	}
 
-	s += sprintf( s, "%s ", op->mnemonic );
+	s += sprintf( s, "%-8s", op->mnemonic );
 	dasm_flags = op->dasm_flags;
 
 handle_params:
@@ -1923,12 +1953,12 @@ handle_params:
 	}
 
 	if( op->param2 != 0 ) {
-		s += sprintf( s, ", " );
+		s += sprintf( s, "," );
 		s = handle_param( s, op->param2 );
 	}
 
 	if( op->param3 != 0 ) {
-		s += sprintf( s, ", " );
+		s += sprintf( s, "," );
 		s = handle_param( s, op->param3 );
 	}
 	return;
@@ -1937,10 +1967,11 @@ handle_unknown:
 	sprintf(s, "???");
 }
 
-int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
+int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size)
 {
 	UINT8 op;
 
+	opcode_ptr = oprom;
 	opcode_table1 = i386_opcode_table1;
 	opcode_table2 = i386_opcode_table2;
 	address_size = addr_size;
@@ -1955,10 +1986,11 @@ int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
 }
 
-int necv_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
+int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, UINT8 *opram, int addr_size, int op_size)
 {
 	UINT8 op;
 
+	opcode_ptr = oprom;
 	opcode_table1 = i386_opcode_table1;
 	opcode_table2 = necv_opcode_table2;
 	address_size = addr_size;

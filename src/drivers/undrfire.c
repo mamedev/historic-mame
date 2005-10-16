@@ -144,6 +144,7 @@ static UINT16 coin_word;
 static UINT16 port_sel = 0;
 extern UINT16 undrfire_rotate_ctrl[8];
 static int frame_counter=0;
+static UINT16 *sound_ram;
 
 UINT32 *undrfire_ram;	/* will be read in vidhrdw for gun target calcs */
 
@@ -432,7 +433,7 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM) AM_BASE(&sound_ram)
 	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
 	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
 	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
@@ -571,13 +572,13 @@ static gfx_decode undrfire_gfxdecodeinfo[] =
 static MACHINE_INIT( undrfire )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&RAM[0x80000]);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
+	memory_set_bankptr(1,&ROM[0x80000]);
 
-	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
-	RAM[1]=RAM[0x80001];
-	RAM[2]=RAM[0x80002];
-	RAM[3]=RAM[0x80003];
+	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
+	sound_ram[1]=ROM[0x80001];
+	sound_ram[2]=ROM[0x80002];
+	sound_ram[3]=ROM[0x80003];
 
 	f3_68681_reset();
 }

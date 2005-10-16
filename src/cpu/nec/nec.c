@@ -57,7 +57,7 @@ typedef UINT32 DWORD;
 #include "driver.h"
 #include "state.h"
 
-extern int necv_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size);
+extern int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
 
 static UINT8 nec_reg_layout[] = {
 	NEC_IP,NEC_SP,NEC_FLAGS,NEC_AW,NEC_CW,NEC_DW,NEC_BW,NEC_BP,NEC_IX,NEC_IY, -1,
@@ -932,12 +932,12 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t nec_dasm(char *buffer, offs_t pc)
+static offs_t nec_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 #ifdef MAME_DEBUG
-	return necv_dasm_one(buffer, pc, 0, 0);
+	return necv_dasm_one(buffer, pc, oprom, 0, 0);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", *oprom );
 	return 1;
 #endif
 }
@@ -1184,7 +1184,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = nec_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						/* set per-CPU */						break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = nec_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = nec_dasm;			break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &nec_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = nec_reg_layout;				break;

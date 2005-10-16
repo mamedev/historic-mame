@@ -65,6 +65,7 @@ struct debug_trace_info
 struct debug_space_info
 {
 	UINT8			databytes;					/* width of the data bus, in bytes */
+	UINT8			pageshift;					/* page shift */
 	UINT8			addr2byte_lshift;			/* left shift to convert CPU address to a byte value */
 	UINT8			addr2byte_rshift;			/* right shift to convert CPU address to a byte value */
 	UINT8			addrchars;					/* number of characters to use for addresses */
@@ -85,6 +86,7 @@ struct debug_cpu_info
 	struct debug_trace_info trace;				/* trace info */
 	struct breakpoint *first_bp;				/* first breakpoint */
 	struct debug_space_info space[ADDRESS_SPACES];/* per-address space info */
+	int				(*translate)(int space, offs_t *address);/* address translation routine */
 	int 			(*read)(int space, UINT32 offset, int size, UINT64 *value); /* memory read routine */
 	int				(*write)(int space, UINT32 offset, int size, UINT64 value); /* memory write routine */
 	int				(*readop)(UINT32 offset, int size, UINT64 *value);	/* opcode read routine */
@@ -183,6 +185,6 @@ void				debug_write_byte(int spacenum, offs_t address, UINT8 data);
 void				debug_write_word(int spacenum, offs_t address, UINT16 data);
 void				debug_write_dword(int spacenum, offs_t address, UINT32 data);
 void				debug_write_qword(int spacenum, offs_t address, UINT64 data);
-UINT64				debug_read_opcode(UINT32 offset, int size);
+UINT64				debug_read_opcode(UINT32 offset, int size, int arg);
 
 #endif

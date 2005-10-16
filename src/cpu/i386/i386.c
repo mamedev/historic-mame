@@ -667,6 +667,7 @@ static void i386_set_a20_line(int state)
 int i386_execute(int num_cycles)
 {
 	I.cycles = num_cycles;
+	I.base_cycles = num_cycles;
 	CHANGE_PC(I.eip);
 
 	if (I.halted)
@@ -723,34 +724,22 @@ static UINT8 i386_win_layout[] =
 
 /*************************************************************************/
 
-unsigned i386_dasm(char *buffer, unsigned pc)
+static int translate_address_cb(int space, offs_t *addr)
 {
-	UINT32 address = pc;
-	if (I.cr[0] & 0x80000000)		// page translation enabled
-	{
-		translate_address(&address);
-	}
+	if (space == ADDRESS_SPACE_PROGRAM && (I.cr[0] & 0x80000000))
+		return translate_address(addr);
+	return 1;
+}
 
+static offs_t i386_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, address, I.sreg[CS].d, I.sreg[CS].d);
+	return i386_dasm_one(buffer, pc, oprom, I.sreg[CS].d, I.sreg[CS].d);
 #else
-	sprintf( buffer, "$%02X", READ8(address) );
+	sprintf( buffer, "$%02X", *oprom );
 	return 1;
 #endif
 }
-
-static int i386_debug_readop(UINT32 offset, int size, UINT64 *value)
-{
-	switch (size)
-	{
-		case 1: *value = READ8(offset); break;
-		case 2: *value = READ16(offset); break;
-		case 4: *value = READ32(offset); break;
-	}
-
-	return 1;
-}
-
 
 static void i386_set_info(UINT32 state, union cpuinfo *info)
 {
@@ -825,6 +814,8 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 12;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
@@ -878,12 +869,12 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:		      				info->exit = i386_exit;			break;
 		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;		break;
 		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i386_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i386_dasm;		break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i386_reg_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i386_win_layout;		break;
-		case CPUINFO_PTR_READOP:						info->readop = i386_debug_readop;	break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I386"); break;

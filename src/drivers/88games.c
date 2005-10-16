@@ -17,6 +17,8 @@ static MACHINE_INIT( 88games );
 static void k88games_banking( int lines );
 
 static unsigned char *ram;
+static UINT8 *banked_rom;
+static UINT8 *paletteram_1000;
 static int videobank;
 
 extern int k88games_priority;
@@ -119,7 +121,7 @@ static WRITE8_HANDLER( speech_msg_w )
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)	/* banked ROM + palette RAM */
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM) AM_BASE(&banked_rom)	/* banked ROM + palette RAM */
 	AM_RANGE(0x2000, 0x37ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(bankedram_r)
 	AM_RANGE(0x5f94, 0x5f94) AM_READ(input_port_0_r)
@@ -135,7 +137,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)	/* banked ROM */
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)	/* banked ROM + palette RAM */
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram_1000)	/* banked ROM + palette RAM */
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(bankedram_w) AM_BASE(&ram)
@@ -512,13 +514,13 @@ logerror("%04x: bank select %02x\n",activecpu_get_pc(),lines);
 	/* bit 3: when 1, palette RAM at 1000-1fff */
 	/* bit 4: when 0, 051316 RAM at 3800-3fff; when 1, work RAM at 2000-3fff (NVRAM 3370-37ff) */
 	offs = 0x10000 + (lines & 0x07) * 0x2000;
-	memcpy(RAM,&RAM[offs],0x1000);
+	memcpy(banked_rom,&RAM[offs],0x1000);
 	if (lines & 0x08)
 	{
-		if (paletteram != &RAM[0x1000])
+		if (paletteram != paletteram_1000)
 		{
-			memcpy(&RAM[0x1000],paletteram,0x1000);
-			paletteram = &RAM[0x1000];
+			memcpy(paletteram_1000,paletteram,0x1000);
+			paletteram = paletteram_1000;
 		}
 	}
 	else
@@ -528,7 +530,7 @@ logerror("%04x: bank select %02x\n",activecpu_get_pc(),lines);
 			memcpy(&RAM[0x20000],paletteram,0x1000);
 			paletteram = &RAM[0x20000];
 		}
-		memcpy(&RAM[0x1000],&RAM[offs+0x1000],0x1000);
+		memcpy(paletteram_1000,&RAM[offs+0x1000],0x1000);
 	}
 	videobank = lines & 0x10;
 

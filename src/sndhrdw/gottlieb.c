@@ -91,7 +91,7 @@ void gottlieb_knocker(void)
 	if (!strcmp(Machine->gamedrv->name,"reactor"))	/* reactor */
 	{
 	}
-	else	/* qbert */
+	else if (sndti_to_sndnum(SOUND_SAMPLES, 0) != -1)	/* qbert */
 		sample_start(0,44,0);
 }
 

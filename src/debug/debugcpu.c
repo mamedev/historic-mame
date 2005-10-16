@@ -280,6 +280,7 @@ void debug_cpu_init(void)
 		debug_cpuinfo[cpunum].temp_breakpoint_pc = ~0;
 
 		/* fetch the memory accessors */
+		debug_cpuinfo[cpunum].translate = (int (*)(int, offs_t *))cpunum_get_info_fct(cpunum, CPUINFO_PTR_TRANSLATE);
 		debug_cpuinfo[cpunum].read = (int (*)(int, UINT32, int, UINT64 *))cpunum_get_info_fct(cpunum, CPUINFO_PTR_READ);
 		debug_cpuinfo[cpunum].write = (int (*)(int, UINT32, int, UINT64))cpunum_get_info_fct(cpunum, CPUINFO_PTR_WRITE);
 		debug_cpuinfo[cpunum].readop = (int (*)(UINT32, int, UINT64 *))cpunum_get_info_fct(cpunum, CPUINFO_PTR_READOP);
@@ -316,10 +317,13 @@ void debug_cpu_init(void)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 		{
 			int datawidth = cpunum_databus_width(cpunum, spacenum);
-			int addrwidth = cpunum_addrbus_width(cpunum, spacenum);
+			int logwidth = cpunum_logaddr_width(cpunum, spacenum);
+			int addrwidth = logwidth ? logwidth : cpunum_addrbus_width(cpunum, spacenum);
 			int addrshift = cpunum_addrbus_shift(cpunum, spacenum);
+			int pageshift = cpunum_page_shift(cpunum, spacenum);
 
 			debug_cpuinfo[cpunum].space[spacenum].databytes = datawidth / 8;
+			debug_cpuinfo[cpunum].space[spacenum].pageshift = pageshift;
 			debug_cpuinfo[cpunum].space[spacenum].addr2byte_lshift = (addrshift < 0) ? -addrshift : 0;
 			debug_cpuinfo[cpunum].space[spacenum].addr2byte_rshift = (addrshift > 0) ?  addrshift : 0;
 			debug_cpuinfo[cpunum].space[spacenum].addrchars = (addrwidth + 3) / 4;
@@ -818,6 +822,29 @@ void MAME_Debug(void)
     data for a given instruction
 -------------------------------------------------*/
 
+static UINT32 dasm_wrapped(char *buffer, offs_t pc)
+{
+	if (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL)
+	{
+		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
+		int maxbytes = activecpu_max_instruction_bytes();
+		UINT8 opbuf[64], argbuf[64];
+		offs_t pcbyte;
+		int numbytes;
+
+		/* fetch the bytes up to the maximum */
+		pcbyte = ADDR2BYTE(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+		for (numbytes = 0; numbytes < maxbytes; numbytes++)
+		{
+			opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+			argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
+		}
+
+		return activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
+	}
+	return activecpu_dasm(buffer, pc);
+}
+
 static void perform_trace(struct debug_cpu_info *info)
 {
 	offs_t pc = activecpu_get_pc();
@@ -854,7 +881,7 @@ static void perform_trace(struct debug_cpu_info *info)
 		offset = sprintf(buffer, "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, pc);
 
 		/* print the disassembly */
-		dasmresult = activecpu_dasm(&buffer[offset], pc);
+		dasmresult = dasm_wrapped(&buffer[offset], pc);
 
 		/* output the result */
 		fprintf(info->trace.file, "%s\n", buffer);
@@ -868,7 +895,7 @@ static void perform_trace(struct debug_cpu_info *info)
 
 			/* if we need to skip additional instructions, advance as requested */
 			while (extraskip-- > 0)
-				trace_over_target += activecpu_dasm(buffer, trace_over_target) & DASMFLAG_LENGTHMASK;
+				trace_over_target += dasm_wrapped(buffer, trace_over_target) & DASMFLAG_LENGTHMASK;
 
 			info->trace.trace_over_target = trace_over_target;
 		}
@@ -896,7 +923,7 @@ static void prepare_for_step_overout(void)
 	offs_t dasmresult;
 
 	/* disassemble the current instruction and get the flags */
-	dasmresult = activecpu_dasm(dasmbuffer, pc);
+	dasmresult = dasm_wrapped(dasmbuffer, pc);
 
 	/* if flags are supported and it's a call-style opcode, set a temp breakpoint after that instruction */
 	if ((dasmresult & DASMFLAG_SUPPORTED) && (dasmresult & DASMFLAG_STEP_OVER))
@@ -906,7 +933,7 @@ static void prepare_for_step_overout(void)
 
 		/* if we need to skip additional instructions, advance as requested */
 		while (extraskip-- > 0)
-			pc += activecpu_dasm(dasmbuffer, pc) & DASMFLAG_LENGTHMASK;
+			pc += dasm_wrapped(dasmbuffer, pc) & DASMFLAG_LENGTHMASK;
 		step_overout_breakpoint = pc;
 	}
 
@@ -1357,7 +1384,9 @@ UINT8 debug_read_byte(int spacenum, offs_t address)
 	UINT64 custom;
 
 	memory_set_debugger_access(1);
-	if (info->read && (*info->read)(spacenum, address, 1, &custom))
+	if (info->translate && !(*info->translate)(spacenum, &address))
+		result = 0xff;
+	else if (info->read && (*info->read)(spacenum, address, 1, &custom))
 		result = custom;
 	else
 		result = (*active_address_space[spacenum].accessors->read_byte)(address);
@@ -1389,7 +1418,10 @@ UINT16 debug_read_word(int spacenum, offs_t address)
 	if (active_address_space[spacenum].accessors->read_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
-		result = (*active_address_space[spacenum].accessors->read_word)(address);
+		if (info->translate && !(*info->translate)(spacenum, &address))
+			result = 0xffff;
+		else
+			result = (*active_address_space[spacenum].accessors->read_word)(address);
 		memory_set_debugger_access(0);
 	}
 	else
@@ -1428,7 +1460,10 @@ UINT32 debug_read_dword(int spacenum, offs_t address)
 	if (active_address_space[spacenum].accessors->read_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
-		result = (*active_address_space[spacenum].accessors->read_dword)(address);
+		if (info->translate && !(*info->translate)(spacenum, &address))
+			result = 0xffffffff;
+		else
+			result = (*active_address_space[spacenum].accessors->read_dword)(address);
 		memory_set_debugger_access(0);
 	}
 	else
@@ -1467,7 +1502,10 @@ UINT64 debug_read_qword(int spacenum, offs_t address)
 	if (active_address_space[spacenum].accessors->read_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
-		result = (*active_address_space[spacenum].accessors->read_qword)(address);
+		if (info->translate && !(*info->translate)(spacenum, &address))
+			result = ~(UINT64)0;
+		else
+			result = (*active_address_space[spacenum].accessors->read_qword)(address);
 		memory_set_debugger_access(0);
 	}
 	else
@@ -1496,7 +1534,10 @@ void debug_write_byte(int spacenum, offs_t address, UINT8 data)
 	if (info->write && (*info->write)(spacenum, address, 1, data))
 		;
 	else
-		(*active_address_space[spacenum].accessors->write_byte)(address, data);
+	{
+		if (!info->translate || (*info->translate)(spacenum, &address))
+			(*active_address_space[spacenum].accessors->write_byte)(address, data);
+	}
 	memory_set_debugger_access(0);
 }
 
@@ -1522,7 +1563,8 @@ void debug_write_word(int spacenum, offs_t address, UINT16 data)
 	if (active_address_space[spacenum].accessors->write_word && !(address & 1))
 	{
 		memory_set_debugger_access(1);
-		(*active_address_space[spacenum].accessors->write_word)(address, data);
+		if (!info->translate || (*info->translate)(spacenum, &address))
+			(*active_address_space[spacenum].accessors->write_word)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1559,7 +1601,8 @@ void debug_write_dword(int spacenum, offs_t address, UINT32 data)
 	if (active_address_space[spacenum].accessors->write_dword && !(address & 3))
 	{
 		memory_set_debugger_access(1);
-		(*active_address_space[spacenum].accessors->write_dword)(address, data);
+		if (!info->translate || (*info->translate)(spacenum, &address))
+			(*active_address_space[spacenum].accessors->write_dword)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1596,7 +1639,8 @@ void debug_write_qword(int spacenum, offs_t address, UINT64 data)
 	if (active_address_space[spacenum].accessors->write_qword && !(address & 7))
 	{
 		memory_set_debugger_access(1);
-		(*active_address_space[spacenum].accessors->write_qword)(address, data);
+		if (!info->translate || (*info->translate)(spacenum, &address))
+			(*active_address_space[spacenum].accessors->write_qword)(address, data);
 		memory_set_debugger_access(0);
 	}
 	else if (debug_cpuinfo[cpu_getactivecpu()].endianness == CPU_IS_LE)
@@ -1617,22 +1661,25 @@ void debug_write_qword(int spacenum, offs_t address, UINT64 data)
     the given offset from opcode space
 -------------------------------------------------*/
 
-UINT64 debug_read_opcode(UINT32 offset, int size)
+UINT64 debug_read_opcode(offs_t address, int size, int arg)
 {
 	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
-	static const UINT64 dummy_data = ~0;
 	const void *ptr;
-
-	/* adjust the offset */
-	memory_set_opbase(offset);
 
 	/* shortcut if we have a custom routine */
 	if (info->readop)
 	{
 		UINT64 result;
-		if ((*info->readop)(offset, size, &result))
+		if ((*info->readop)(address, size, &result))
 			return result;
 	}
+
+	/* translate to physical first */
+	if (info->translate && !(*info->translate)(ADDRESS_SPACE_PROGRAM, &address))
+		return ~(UINT64)0;
+
+	/* adjust the address */
+	memory_set_opbase(address);
 
 	switch (info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size)
 	{
@@ -1642,7 +1689,7 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 
 		/* dump opcodes in bytes from a word-sized bus */
 		case 21:
-			offset ^= (info->endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);
+			address ^= (info->endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);
 			break;
 
 		/* dump opcodes in words from a word-sized bus */
@@ -1651,12 +1698,12 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 
 		/* dump opcodes in bytes from a dword-sized bus */
 		case 41:
-			offset ^= (info->endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);
+			address ^= (info->endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);
 			break;
 
 		/* dump opcodes in words from a dword-sized bus */
 		case 42:
-			offset ^= (info->endianness == CPU_IS_LE) ? WORD_XOR_LE(0) : WORD_XOR_BE(0);
+			address ^= (info->endianness == CPU_IS_LE) ? WORD_XOR_LE(0) : WORD_XOR_BE(0);
 			break;
 
 		/* dump opcodes in dwords from a dword-sized bus */
@@ -1665,17 +1712,17 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 
 		/* dump opcodes in bytes from a qword-sized bus */
 		case 81:
-			offset ^= (info->endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);
+			address ^= (info->endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);
 			break;
 
 		/* dump opcodes in words from a qword-sized bus */
 		case 82:
-			offset ^= (info->endianness == CPU_IS_LE) ? WORD2_XOR_LE(0) : WORD2_XOR_BE(0);
+			address ^= (info->endianness == CPU_IS_LE) ? WORD2_XOR_LE(0) : WORD2_XOR_BE(0);
 			break;
 
 		/* dump opcodes in dwords from a qword-sized bus */
 		case 84:
-			offset ^= (info->endianness == CPU_IS_LE) ? DWORD_XOR_LE(0) : DWORD_XOR_BE(0);
+			address ^= (info->endianness == CPU_IS_LE) ? DWORD_XOR_LE(0) : DWORD_XOR_BE(0);
 			break;
 
 		/* dump opcodes in qwords from a qword-sized bus */
@@ -1688,18 +1735,25 @@ UINT64 debug_read_opcode(UINT32 offset, int size)
 	}
 
 	/* get pointer to data */
-	ptr = memory_get_op_ptr(cpu_getactivecpu(), offset);
+	ptr = memory_get_op_ptr(cpu_getactivecpu(), address);
 	if (!ptr)
-		ptr = &dummy_data;	/* if we're not mapped, just return all F's */
-	else if (osd_is_bad_read_ptr(ptr, size))
-		osd_die("debug_read_opcode: offset %x mapped to invalid memory %p\n", offset, ptr);
+		return ~(UINT64)0;
 
-	switch(size)
+	/* adjust if argument */
+	if (arg)
+		ptr = (UINT8 *)ptr + (opcode_arg_base - opcode_base);
+
+	/* gross! */
+	if (osd_is_bad_read_ptr(ptr, size))
+		osd_die("debug_read_opcode: address %x mapped to invalid memory %p\n", address, ptr);
+
+	/* return based on the size */
+	switch (size)
 	{
-		case 1:	return *((UINT8 *) ptr);
-		case 2:	return *((UINT16 *) ptr);
-		case 4:	return *((UINT32 *) ptr);
-		case 8:	return *((UINT64 *) ptr);
+		case 1:	return *(UINT8 *) ptr;
+		case 2:	return *(UINT16 *)ptr;
+		case 4:	return *(UINT32 *)ptr;
+		case 8:	return *(UINT64 *)ptr;
 	}
 
 	return 0;	/* appease compiler */

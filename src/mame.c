@@ -2103,6 +2103,14 @@ int mame_validitychecks(int game)
 					}
 
 					for (space = 0;space < ADDRESS_SPACES;space++)
+					{
+						/* checks to see that the same map is not used twice */
+						if (drv.cpu[cpu].construct_map[space][0] && (drv.cpu[cpu].construct_map[space][0] != construct_map_0) && (drv.cpu[cpu].construct_map[space][0] == drv.cpu[cpu].construct_map[space][1]))
+						{
+							printf("%s: %s uses identical memory maps for CPU #%d space %d\n",drivers[i]->source_file,drivers[i]->name,cpu,space);
+							error = 1;
+						}
+
 						for (mapnum = 0;mapnum < 2;mapnum++)
 						{
 							int alignunit,databus_width,addr_shift;
@@ -2165,6 +2173,7 @@ int mame_validitychecks(int game)
 								}
 							}
 						}
+					}
 				}
 			}
 

@@ -10,6 +10,8 @@ extern void simpsons_video_banking( int select );
 extern unsigned char *simpsons_xtraram;
 
 int simpsons_firq_enabled;
+UINT8 *simpsons_speedup1;
+UINT8 *simpsons_speedup2;
 
 /***************************************************************************
 
@@ -125,10 +127,10 @@ READ8_HANDLER( simpsons_sound_r )
   Speed up memory handlers
 
 ***************************************************************************/
-
+#if 0
 READ8_HANDLER( simpsons_speedup1_r )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *RAM = simpsons_speedup1 memory_region(REGION_CPU1);
 
 	int data1 = RAM[0x486a];
 
@@ -164,6 +166,7 @@ READ8_HANDLER( simpsons_speedup2_r )
 
 	return data;
 }
+#endif
 
 /***************************************************************************
 

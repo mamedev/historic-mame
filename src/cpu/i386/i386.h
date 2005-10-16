@@ -9,7 +9,7 @@
 #define INPUT_LINE_A20		1
 
 #ifdef MAME_DEBUG
-extern int i386_dasm_one(char *buffer, UINT32 pc, int addr_size, int op_size);
+extern int i386_dasm_one(char *buffer, UINT32 pc, UINT8 *oprom, int addr_size, int op_size);
 #endif
 
 typedef enum { ES, CS, SS, DS, FS, GS } SREGS;
@@ -170,12 +170,12 @@ typedef struct {
 
 	int operand_size;
 	int address_size;
-	int icount;
 
 	int segment_prefix;
 	int segment_override;
 
 	int cycles;
+	int base_cycles;
 	UINT8 opcode;
 
 	int irq_line;
@@ -768,21 +768,6 @@ INLINE void BUMP_DI(int adjustment)
 
 
 /***********************************************************************************/
-
-//#define CYCLES(x)         (I.cycles -= (PROTECTED_MODE ? cycle_table_pm[x] : cycle_table_rm[x]))
-//#define CYCLES_RM(modrm, r, m)        (I.cycles -= ((modrm >= 0xc0) ? (PROTECTED_MODE ? cycle_table_pm[r] : cycle_table_rm[r]) : (PROTECTED_MODE ? cycle_table_pm[m] : cycle_table_rm[m])))
-
-#define C_ALU_REG_REG		2
-#define C_ALU_REG_MEM		7
-#define C_ALU_MEM_REG		6
-#define C_ALU_I_ACC			2
-#define C_CMP_REG_REG		2
-#define C_CMP_REG_MEM		5
-#define C_CMP_MEM_REG		6
-#define C_CMP_I_ACC			2
-#define C_MOV_REG_REG		2
-#define C_MOV_REG_MEM		2
-#define C_MOV_MEM_REG		4
 
 #define READPORT8(port)		       	(io_read_byte_32le(port))
 #define READPORT16(port)	       	(io_read_word_32le(port))

@@ -1480,12 +1480,12 @@ INLINE void FillSmoothTexPCHorizontalLine(mame_bitmap *Color,
 {
 	float *dp = &(depthBuffer[y*Machine->visible_area.max_x+x_start]);
 
-	const gfx_element *gfx = Machine->gfx[6] ;
+	const UINT8 *gfx = memory_region(REGION_GFX3);
 	const UINT8 *textureOffset ;
 	UINT8 paletteEntry ;
 	float t_coord, s_coord ;
 
-	if (Function >= 0) textureOffset = &gfx->gfxdata[Function * 1024 * 1024] ;
+	if (Function >= 0) textureOffset = &gfx[Function * 1024 * 1024] ;
 	else               textureOffset = 0x00 ;
 
 

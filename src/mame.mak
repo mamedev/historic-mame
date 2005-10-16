@@ -116,8 +116,8 @@ CPUS+=GMS30C2116@
 #CPUS+=GMS30C2232@
 CPUS+=I386@
 #CPUS+=I486@
-#CPUS+=PENTIUM@
-#CPUS+=MEDIAGX@
+CPUS+=PENTIUM@
+CPUS+=MEDIAGX@
 CPUS+=I960@
 CPUS+=H83002@
 CPUS+=V810@
@@ -455,6 +455,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/taitojc.o \
 	$(OBJ)/drivers/fgoal.o $(OBJ)/vidhrdw/fgoal.o \
 	$(OBJ)/drivers/darkmist.o \
+	$(OBJ)/drivers/taitowlf.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
@@ -827,6 +828,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/vidhrdw/atarigt.o $(OBJ)/drivers/atarigt.o \
 	$(OBJ)/vidhrdw/jaguar.o $(OBJ)/sndhrdw/jaguar.o $(OBJ)/drivers/cojag.o \
 	$(OBJ)/sndhrdw/cage.o \
+	$(OBJ)/drivers/mediagx.o \
 
 $(OBJ)/snk.a: \
 	$(OBJ)/vidhrdw/rockola.o $(OBJ)/sndhrdw/rockola.o $(OBJ)/drivers/rockola.o \
@@ -1340,6 +1342,14 @@ OBJS += \
 	$(OBJ)/machine/random.o \
 	$(OBJ)/machine/nmk112.o \
 	$(OBJ)/machine/adc083x.o \
+	$(OBJ)/machine/8042kbdc.o \
+	$(OBJ)/machine/8237dma.o \
+	$(OBJ)/machine/mc146818.o \
+	$(OBJ)/machine/pci.o \
+	$(OBJ)/machine/pckeybrd.o \
+	$(OBJ)/machine/pcshare.o \
+	$(OBJ)/machine/pic8259.o \
+	$(OBJ)/machine/pit8253.o \
 	$(OBJ)/vidhrdw/crtc6845.o \
 	$(OBJ)/vidhrdw/avgdvg.o \
 	$(OBJ)/vidhrdw/poly.o \

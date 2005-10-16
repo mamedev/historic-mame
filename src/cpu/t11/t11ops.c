@@ -192,9 +192,9 @@
 #define INCB_R(d)   int dreg, dest, result;     GET_DB_##d; CLR_NZV; result = dest + 1; SETB_NZ; if (dest == 0x7f)   SET_V; PUT_DB_DREG(result)
 #define INCB_M(d)   int dreg, dest, result, ea; GET_DB_##d; CLR_NZV; result = dest + 1; SETB_NZ; if (dest == 0x7f)   SET_V; PUT_DB_EA(result)
 /* JMP: PC = ea */
-#define JMP(d)      int dreg, ea; GET_DREG; MAKE_EAW_##d(dreg); PC = ea
+#define JMP(d)      int dreg, ea; GET_DREG; MAKE_EAW_##d(dreg); PC = ea; change_pc(PC)
 /* JSR: PUSH src, src = PC, PC = ea */
-#define JSR(d)      int sreg, dreg, ea; GET_SREG; GET_DREG; MAKE_EAW_##d(dreg); PUSH(REGW(sreg)); REGW(sreg) = PC; PC = ea
+#define JSR(d)      int sreg, dreg, ea; GET_SREG; GET_DREG; MAKE_EAW_##d(dreg); PUSH(REGW(sreg)); REGW(sreg) = PC; PC = ea; change_pc(PC)
 /* MFPS: dst = flags */
 #define MFPS_R(d)   int dreg, result;     result = PSW; CLR_NZV; SETB_NZ; PUT_DW_##d((signed char)result)
 #define MFPS_M(d)   int dreg, result, ea; result = PSW; CLR_NZV; SETB_NZ; PUT_DB_##d(result)
@@ -257,11 +257,11 @@ static void op_0000(void)
 	{
 		case 0x00:	/* HALT  */ t11_ICount = 0; break;
 		case 0x01:	/* WAIT  */ t11_ICount = 0; t11.wait_state = 1; break;
-		case 0x02:	/* RTI   */ t11_ICount -= 24; PC = POP(); PSW = POP(); t11_check_irqs(); break;
-		case 0x03:	/* BPT   */ t11_ICount -= 48; PUSH(PSW); PUSH(PC); PC = RWORD(0x0c); PSW = RWORD(0x0e); t11_check_irqs(); break;
-		case 0x04:	/* IOT   */ t11_ICount -= 48; PUSH(PSW); PUSH(PC); PC = RWORD(0x10); PSW = RWORD(0x12); t11_check_irqs(); break;
+		case 0x02:	/* RTI   */ t11_ICount -= 24; PC = POP(); PSW = POP(); change_pc(PC); t11_check_irqs(); break;
+		case 0x03:	/* BPT   */ t11_ICount -= 48; PUSH(PSW); PUSH(PC); PC = RWORD(0x0c); PSW = RWORD(0x0e); change_pc(PC); t11_check_irqs(); break;
+		case 0x04:	/* IOT   */ t11_ICount -= 48; PUSH(PSW); PUSH(PC); PC = RWORD(0x10); PSW = RWORD(0x12); change_pc(PC); t11_check_irqs(); break;
 		case 0x05:	/* RESET */ t11_ICount -= 110; break;
-		case 0x06:	/* RTT   */ t11_ICount -= 33; PC = POP(); PSW = POP(); t11_check_irqs(); break;
+		case 0x06:	/* RTT   */ t11_ICount -= 33; PC = POP(); PSW = POP(); change_pc(PC); t11_check_irqs(); break;
 		default: 	illegal(); break;
 	}
 }
@@ -273,6 +273,7 @@ static void illegal(void)
 	PUSH(PC);
 	PC = RWORD(0x08);
 	PSW = RWORD(0x0a);
+	change_pc(PC);
 	t11_check_irqs();
 PC = 0;
 }
@@ -292,6 +293,7 @@ static void rts(void)
 	GET_DREG;
 	PC = REGD(dreg);
 	REGW(dreg) = POP();
+	change_pc(PC);
 }
 
 static void ccc(void)			{ t11_ICount -= 18; { PSW &= ~(t11.op & 15); } }
@@ -866,6 +868,7 @@ static void emt(void)
 	PUSH(PC);
 	PC = RWORD(0x18);
 	PSW = RWORD(0x1a);
+	change_pc(PC);
 	t11_check_irqs();
 }
 
@@ -876,6 +879,7 @@ static void trap(void)
 	PUSH(PC);
 	PC = RWORD(0x1c);
 	PSW = RWORD(0x1e);
+	change_pc(PC);
 	t11_check_irqs();
 }
 

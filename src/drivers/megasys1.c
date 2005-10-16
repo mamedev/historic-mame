@@ -1304,7 +1304,7 @@ $885c/e.w   *** time (BCD) ***
 ***************************************************************************/
 
 ROM_START( bigstrik )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "91105v11.3", 0x000000, 0x020000, CRC(5d6e08ec) SHA1(4b80a5073cd0b0142cad094816b935d750ac11fb) )
 	ROM_LOAD16_BYTE( "91105v11.2", 0x000001, 0x020000, CRC(2120f05b) SHA1(a769cf8c3a4fa6a3f604edf45ce6db35979826cb) )
 
@@ -1755,7 +1755,7 @@ INPUT_PORTS_END
 
 
 ROM_START( hachoo )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "hacho02.rom", 0x000000, 0x020000, CRC(49489c27) SHA1(21c31e1b41ca6c7e78803e5a2e7c49f7b885d0e3) )
 	ROM_LOAD16_BYTE( "hacho01.rom", 0x000001, 0x020000, CRC(97fc9515) SHA1(192660061af6a5bddccf7cfffcbfa368c4030de9) )
 
@@ -1966,7 +1966,7 @@ BS.BPR       [85b30ac4] (82S131)
 ***************************************************************************/
 
 ROM_START( jitsupro )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "jp_2.bin", 0x000000, 0x020000, CRC(5d842ff2) SHA1(69032601c0e67c5c78fad1cb2bb4f1b59014fe5a) )
 	ROM_LOAD16_BYTE( "jp_1.bin", 0x000001, 0x020000, CRC(0056edec) SHA1(529a5181f7d791930e238bc115daeae1ab9a63ad) )
 
@@ -2079,7 +2079,7 @@ Notes:
 ***************************************************************************/
 
 ROM_START( kickoff )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "kioff03.rom", 0x000000, 0x010000, CRC(3b01be65) SHA1(110b4e02053073c0315aba1eca8c19afe5fafb33) )
 	ROM_LOAD16_BYTE( "kioff01.rom", 0x000001, 0x010000, CRC(ae6e68a1) SHA1(aac54e13dd33420712a869e6f46fb9b94fde9e34) )
 
@@ -2188,7 +2188,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 ROM_START( lomakai )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "lom_30.rom", 0x000000, 0x020000, CRC(ba6d65b8) SHA1(4c83e57c977b2be82a99a4a61ab8fd5f7099ae38) )
 	ROM_LOAD16_BYTE( "lom_20.rom", 0x000001, 0x020000, CRC(56a00dc2) SHA1(5d97f89d384e12d70cbb5aabd6ce309e5cfb5497) )
 
@@ -2210,7 +2210,7 @@ ROM_START( lomakai )
 ROM_END
 
 ROM_START( makaiden )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "makaiden.3a", 0x000000, 0x020000, CRC(87cf81d1) SHA1(c4410a86a01c683368dbc3daca61e21931885650) )
 	ROM_LOAD16_BYTE( "makaiden.2a", 0x000001, 0x020000, CRC(d40e0fea) SHA1(0f8a0440f63f52508ab44c3a8eb5b7f03ccca49d) )
 
@@ -2333,7 +2333,7 @@ f0018.w     *** level ***
 ***************************************************************************/
 
 ROM_START( p47 )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "p47us3.bin", 0x000000, 0x020000, CRC(022e58b8) SHA1(87db59e409977358d9a7b689f2d69bef056328d9) )
 	ROM_LOAD16_BYTE( "p47us1.bin", 0x000001, 0x020000, CRC(ed926bd8) SHA1(5cf3e7b9b23667eaa8ebcff0803a7b881c7b83cf) )
 
@@ -2374,7 +2374,7 @@ ROM_END
 
 
 ROM_START( p47j )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "p47j_3.bin", 0x000000, 0x020000, CRC(11c655e5) SHA1(a2bfd6538ac81a5f20fa77460ba045584313413a) )
 	ROM_LOAD16_BYTE( "p47j_1.bin", 0x000001, 0x020000, CRC(0a5998de) SHA1(9f474c6c9b125fc7c41a44dbaacf3ba3800df8b5) )
 
@@ -2963,7 +2963,7 @@ interrupts: 1] rte  2] 620  3] 5e6
 ***************************************************************************/
 
 ROM_START( stdragon )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "jsd-02.bin", 0x000000, 0x020000, CRC(cc29ab19) SHA1(e145eeb01fad313e300f0c614c0e7a5c1d75d7d9) )
 	ROM_LOAD16_BYTE( "jsd-01.bin", 0x000001, 0x020000, CRC(67429a57) SHA1(f3c20fabed97ac5c2fe3e891f9c8c86478453a6c) )
 
@@ -3157,7 +3157,7 @@ WRITE16_HANDLER( soldamj_spriteram16_w )
 ***************************************************************************/
 
 ROM_START( tshingen )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "takeda2.bin", 0x000000, 0x020000, CRC(6ddfc9f3) SHA1(0ce1b8eae31453db0b2081717d7dbda9ea7d5a60) )
 	ROM_LOAD16_BYTE( "takeda1.bin", 0x000001, 0x020000, CRC(1afc6b7d) SHA1(b56da1b8c5b417a88a2952491c2d5472bb783945) )
 
@@ -3196,7 +3196,7 @@ ROM_START( tshingen )
 ROM_END
 
 ROM_START( tshingna )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "shing_02.rom", 0x000000, 0x020000, CRC(d9ab5b78) SHA1(c7622ec11a636dc7a6bcad02556a98aa0a9fb043) )
 	ROM_LOAD16_BYTE( "shing_01.rom", 0x000001, 0x020000, CRC(a9d2de20) SHA1(b53205722ae19305a1c373abbbac4fbcbcb0b0f0) )
 

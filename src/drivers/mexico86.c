@@ -429,7 +429,7 @@ static MACHINE_DRIVER_START( mexico86 )
 	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 	MDRV_CPU_VBLANK_INT(mexico86_m68705_interrupt,2)
 
-	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
+	MDRV_CPU_ADD_TAG("sub", Z80, 6000000)      /* 6 MHz??? */
 	MDRV_CPU_PROGRAM_MAP(sub_cpu_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -461,6 +461,7 @@ static MACHINE_DRIVER_START( kikikai )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mexico86)
+	MDRV_CPU_REMOVE("sub")
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(kikikai)

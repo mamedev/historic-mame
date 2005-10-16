@@ -86,7 +86,7 @@
 #define LOG_TIMERS			(0)
 #define LOG_TIMEKEEPER		(0)
 #define LOG_SIO				(0)
-#define LOG_DYNAMIC			(0)
+#define LOG_DYNAMIC			(1)
 #define PRINTF_SERIAL		(0)
 
 
@@ -1281,8 +1281,8 @@ static void remap_dynamic_addresses(void)
 	/* unmap everything we know about */
 	for (addr = 0; addr < dynamic_count; addr++)
 	{
-		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0xa0000000, MRA32_NOP);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0xa0000000, MWA32_NOP);
+		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, MRA32_NOP);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, MWA32_NOP);
 	}
 
 	/* the build the list of stuff */
@@ -1405,9 +1405,9 @@ static void remap_dynamic_addresses(void)
 	{
 		if (LOG_DYNAMIC) logerror("  installing: %08X-%08X %s,%s\n", 0xa0000000+dynamic[addr].start, 0xa0000000+dynamic[addr].end, dynamic[addr].rdname, dynamic[addr].wrname);
 		if (dynamic[addr].read)
-			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0xa0000000, dynamic[addr].read);
+			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].read);
 		if (dynamic[addr].write)
-			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0xa0000000, dynamic[addr].write);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].write);
 	}
 
 	if (LOG_DYNAMIC)
@@ -1428,17 +1428,17 @@ static void remap_dynamic_addresses(void)
 
 static ADDRESS_MAP_START( vegas_map_8mb, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x007fffff) AM_MIRROR(0xa0000000) AM_RAM AM_SIZE(&ramsize)
-	AM_RANGE(0xbfa00000, 0xbfa00fff) AM_READWRITE(nile_r, nile_w) AM_BASE(&nile_regs)
-	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_MIRROR(0x20000000) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x00000000, 0x007fffff) AM_RAM AM_SIZE(&ramsize)
+	AM_RANGE(0x1fa00000, 0x1fa00fff) AM_READWRITE(nile_r, nile_w) AM_BASE(&nile_regs)
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( vegas_map_32mb, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x01ffffff) AM_MIRROR(0xa0000000) AM_RAM AM_SIZE(&ramsize)
-	AM_RANGE(0xbfa00000, 0xbfa00fff) AM_READWRITE(nile_r, nile_w) AM_BASE(&nile_regs)
-	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_MIRROR(0x20000000) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x00000000, 0x01ffffff) AM_RAM AM_SIZE(&ramsize)
+	AM_RANGE(0x1fa00000, 0x1fa00fff) AM_READWRITE(nile_r, nile_w) AM_BASE(&nile_regs)
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 

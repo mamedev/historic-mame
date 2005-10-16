@@ -574,7 +574,9 @@ struct _address_map
 	offs_t				mirror;				/* mirror bits */
 	offs_t				mask;				/* mask bits */
 	read_handlers 		read;				/* read handler callback */
+	const char *		read_name;			/* read handler callback name */
 	write_handlers 		write;				/* write handler callback */
+	const char *		write_name;			/* write handler callback name */
 	void *				memory;				/* pointer to memory backing this entry */
 	UINT32				share;				/* index of a shared memory block */
 	void **				base;				/* receives pointer to memory (optional) */
@@ -656,9 +658,11 @@ address_map *construct_map_##_name(address_map *map)					\
 
 #define AM_READ(_handler)												\
 	map->read.handler = (genf *)(read = _handler);						\
+	map->read_name = #_handler;											\
 
 #define AM_WRITE(_handler)												\
 	map->write.handler = (genf *)(write = _handler);					\
+	map->write_name = #_handler;										\
 
 #define AM_REGION(_region, _offs)										\
 	map->memory = memory_region(_region) + _offs;						\
@@ -922,30 +926,31 @@ void		memory_configure_bank(int banknum, int startentry, int numentries, void *b
 void		memory_set_bank(int banknum, int entrynum);
 void		memory_set_bankptr(int banknum, void *base);
 
-/* ----- dynamic address space mapping ----- */
+/* ----- debugging ----- */
 void		memory_set_debugger_access(int debugger);
 
 /* ----- dynamic address space mapping ----- */
-UINT8 *		memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler);
-UINT16 *	memory_install_read16_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler);
-UINT32 *	memory_install_read32_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler);
-UINT64 *	memory_install_read64_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler);
-UINT8 *		memory_install_write8_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler);
-UINT16 *	memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler);
-UINT32 *	memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler);
-UINT64 *	memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler);
+UINT8 *		_memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler, const char *handler_name);
+UINT16 *	_memory_install_read16_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler, const char *handler_name);
+UINT32 *	_memory_install_read32_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler, const char *handler_name);
+UINT64 *	_memory_install_read64_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler, const char *handler_name);
+UINT8 *		_memory_install_write8_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler, const char *handler_name);
+UINT16 *	_memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler, const char *handler_name);
+UINT32 *	_memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler, const char *handler_name);
+UINT64 *	_memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler, const char *handler_name);
 
-UINT8 *		memory_install_read8_matchmask_handler  (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler);
-UINT16 *	memory_install_read16_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler);
-UINT32 *	memory_install_read32_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler);
-UINT64 *	memory_install_read64_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler);
-UINT8 *		memory_install_write8_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler);
-UINT16 *	memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler);
-UINT32 *	memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler);
-UINT64 *	memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler);
+UINT8 *		_memory_install_read8_matchmask_handler  (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler, const char *handler_name);
+UINT16 *	_memory_install_read16_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read16_handler handler, const char *handler_name);
+UINT32 *	_memory_install_read32_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read32_handler handler, const char *handler_name);
+UINT64 *	_memory_install_read64_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read64_handler handler, const char *handler_name);
+UINT8 *		_memory_install_write8_matchmask_handler (int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler, const char *handler_name);
+UINT16 *	_memory_install_write16_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write16_handler handler, const char *handler_name);
+UINT32 *	_memory_install_write32_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write32_handler handler, const char *handler_name);
+UINT64 *	_memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler, const char *handler_name);
 
 /* ----- memory debugging ----- */
 void memory_dump(FILE *file);
+
 
 
 /***************************************************************************
@@ -996,6 +1001,43 @@ extern address_map *	construct_map_0(address_map *map);
 #else
 #error Must set either CPUREADOP_SAFETY_NONE, CPUREADOP_SAFETY_PARTIAL or CPUREADOP_SAFETY_FULL
 #endif
+
+/* ----- dynamic memory installation ----- */
+#define memory_install_read8_handler(cpu, space, start, end, mask, mirror, handler)				\
+	_memory_install_read8_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_read16_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read16_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_read32_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read32_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_read64_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read64_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+
+#define memory_install_write8_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write8_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_write16_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write16_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_write32_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write32_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_write64_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write64_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+
+#define memory_install_read8_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read8_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_read16_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read16_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_read32_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read32_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_read64_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_read64_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+
+#define memory_install_write8_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write8_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_write16_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write16_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_write32_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write32_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
+#define memory_install_write64_matchmask_handler(cpu, space, start, end, mask, mirror, handler)			\
+	_memory_install_write64_matchmask_handler(cpu, space, start, end, mask, mirror, handler, #handler)
 
 /* ----- generic memory access ----- */
 INLINE UINT8  program_read_byte (offs_t offset) { return (*active_address_space[ADDRESS_SPACE_PROGRAM].accessors->read_byte)(offset); }
@@ -1050,7 +1092,7 @@ UINT64	cpu_readop_arg64_safe(offs_t offset);
 #define cpu_readop_arg64_unsafe(A)	(*(UINT64 *)&opcode_arg_base[(A) & opcode_mask])
 
 /* ----- opcode and opcode argument reading ----- */
-INLINE void *   cpu_opptr(offs_t A)			{ if (address_is_unsafe(A)) { memory_set_opbase(A); } return cpu_opptr_unsafe(A); }
+INLINE void * cpu_opptr(offs_t A)			{ if (address_is_unsafe(A)) { memory_set_opbase(A); } return cpu_opptr_unsafe(A); }
 INLINE UINT8  cpu_readop(offs_t A)			{ if (address_is_unsafe(A)) { memory_set_opbase(A); } return cpu_readop_unsafe(A); }
 INLINE UINT16 cpu_readop16(offs_t A)		{ if (address_is_unsafe(A)) { memory_set_opbase(A); } return cpu_readop16_unsafe(A); }
 INLINE UINT32 cpu_readop32(offs_t A)		{ if (address_is_unsafe(A)) { memory_set_opbase(A); } return cpu_readop32_unsafe(A); }

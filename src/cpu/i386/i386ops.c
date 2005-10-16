@@ -2170,7 +2170,7 @@ static void I386OP(hlt)(void)				// Opcode 0xf4
 	// TODO: We need to raise an exception in protected mode and when
 	// the current privilege level is not zero
 	I.halted = 1;
-	I.icount = 0;
+	I.cycles = 0;
 	CYCLES(CYCLES_HLT);
 }
 

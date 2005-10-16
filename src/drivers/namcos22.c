@@ -1716,6 +1716,9 @@ static READ32_HANDLER( namcos22_keycus_r )
 	case NAMCOS22_CYBER_CYCLES:
 		return 0x0387;
 
+	case NAMCOS22_ALPINE_SURFER:
+		return 0x01a9;
+
 	default:
 		/* unknown/unused */
 		return 0;
@@ -1900,6 +1903,26 @@ ADDRESS_MAP_END
 
 static int mFrameCount;
 
+static INTERRUPT_GEN( namcos22s_as_interrupt )
+{
+	switch( cpu_getiloops() )
+	{
+	case 0:
+		cpunum_set_input_line(0, 3, HOLD_LINE);
+		mFrameCount++;
+		break;
+	case 1:
+		cpunum_set_input_line(0, 2, HOLD_LINE);
+		break;
+	case 2:
+		cpunum_set_input_line(0, 1, HOLD_LINE);
+		break;
+	case 3:
+		cpunum_set_input_line(0, 0, HOLD_LINE);
+		break;
+	}
+}
+
 static INTERRUPT_GEN( namcos22s_interrupt )
 {
 	switch( cpu_getiloops() )
@@ -1985,7 +2008,7 @@ static int p4;
 static READ8_HANDLER( mcu_port5_r )
 {
 	// hack for motor status
-	if ((namcos22_gametype == NAMCOS22_ALPINE_RACER) || (namcos22_gametype == NAMCOS22_ALPINE_RACER_2))
+	if ((namcos22_gametype == NAMCOS22_ALPINE_RACER) || (namcos22_gametype == NAMCOS22_ALPINE_RACER_2) || (namcos22_gametype == NAMCOS22_ALPINE_SURFER))
 	{
 		if (p4 & 8)
 		{
@@ -2234,7 +2257,7 @@ static struct C352interface c352_interface =
 };
 
 static MACHINE_DRIVER_START( namcos22s )
-	MDRV_CPU_ADD(M68EC020,SS22_MASTER_CLOCK/2)
+	MDRV_CPU_ADD_TAG("main", M68EC020,SS22_MASTER_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(namcos22s_am,0)
 	MDRV_CPU_VBLANK_INT(namcos22s_interrupt,2)
 
@@ -2275,6 +2298,13 @@ static MACHINE_DRIVER_START( namcos22s )
 	MDRV_SOUND_ROUTE(1, "left", 0.60)
 	MDRV_SOUND_ROUTE(2, "right", 0.60)
 	MDRV_SOUND_ROUTE(3, "left", 0.60)
+MACHINE_DRIVER_END
+
+/* Alpine Surfer has IRQs 0-3 looking valid, 4-7 go to nothing */
+static MACHINE_DRIVER_START( namcos22s_as )
+	MDRV_IMPORT_FROM( namcos22s )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(namcos22s_as_interrupt,4)
 MACHINE_DRIVER_END
 
 /*********************************************************************************/
@@ -3002,6 +3032,47 @@ ROM_START( alpinr2b )
         ROM_LOAD( "ars2waveb.1l", 0x800000, 0x400000, CRC(deab4ad1) SHA1(580ad88d516280baaf6cc92b2e07cdc0cfc486f3) )
 ROM_END
 
+ROM_START( alpinesa )
+	ROM_REGION( 0x800000, REGION_CPU1, 0 ) /* main program */
+        ROM_LOAD32_BYTE( "af2ver-a_ll.ic2", 0x000003, 0x200000, CRC(e776159d) SHA1(5110364afb7ec606074d58a1d216d7d687b9df62) )
+        ROM_LOAD32_BYTE( "af2ver-a_lm.ic3", 0x000002, 0x200000, CRC(c5333d38) SHA1(9486cead964f95f8e56dac2f88486f3b98561aa6) )
+        ROM_LOAD32_BYTE( "af2ver-a_um.ic4", 0x000001, 0x200000, CRC(5977fc6e) SHA1(19b8041789f8987934fa461972976a3570b1b87b) )
+        ROM_LOAD32_BYTE( "af2ver-a_uu.ic5", 0x000000, 0x200000, CRC(54ee33a1) SHA1(0eaa8707ab13a0a66551f61a08986c98f5c9e446) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* Master DSP */
+
+	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
+
+	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.41 */
+
+	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
+        ROM_LOAD( "af1data.8k",   0x000000, 0x080000, CRC(ef13ebe8) SHA1(5d3f697994d4b5b19ee7fea1e2aef8e39449b68e) )
+
+	ROM_REGION( 0x200000*2, REGION_GFX1, ROMREGION_DISPOSE ) /* 32x32x8bpp sprite tiles */
+        ROM_LOAD( "af1scg0b.12f", 0x000000, 0x200000, CRC(46a6222a) SHA1(5322ef60690625b9b8dbe1cfe0c49dcd9c8b1a4c) )
+
+	ROM_REGION( 0xa00000, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
+        ROM_LOAD( "af1cg0.8d",    0x000000, 0x200000, CRC(7423f3ff) SHA1(6a2fd44823ef46111deb57d328b1b75cc355d413) )
+        ROM_LOAD( "af1cg1.10d",   0x200000, 0x200000, CRC(ea76689a) SHA1(73dd3af737a3e9903abe5ed9c9ae7eded51d8350) )
+        ROM_LOAD( "af1cg2.12d",   0x400000, 0x200000, CRC(2a38943a) SHA1(15d737996f49bf6374ef6191bbfbe0298d398378) )
+        ROM_LOAD( "af1cg3.13d",   0x600000, 0x200000, CRC(7f5a3e0f) SHA1(241f9995323b28df23d20a75e1f43ce6e05434cd) )
+        ROM_LOAD( "af1cg4.14d",   0x800000, 0x200000, CRC(a5ee13e2) SHA1(48fd3c912690f21cbbc2a39bed0a82be41a0d011) )
+
+	ROM_REGION16_LE( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
+        ROM_LOAD( "af1ccrl.3d",   0x000000, 0x200000, CRC(6c054698) SHA1(8537607646b183883c5aa4060fb0af640da4af87) )
+        ROM_LOAD( "af1ccrh.1d",   0x200000, 0x080000, CRC(95a02a27) SHA1(32ee87b76ae9fcec6d825e3cf4d5cbb97db39544) )
+
+	ROM_REGION( 0x80000*8, REGION_GFX4, 0 ) /* 3d model data */
+        ROM_LOAD( "af1ptrl0.18k", 0x000000, 0x080000, CRC(31ce46d3) SHA1(568fb9ee9ac14e613a4fd7668cb38315c10be62b) )
+        ROM_LOAD( "af1ptrl1.16k", 0x080000, 0x080000, CRC(e869bf00) SHA1(b3c3026891ae3958d1774c905e97c3b57a414ea7) )
+        ROM_LOAD( "af1ptrm0.18j", 0x100000, 0x080000, CRC(ef7f4d8a) SHA1(02f77c68004b7dccc99b61126e7d07960eb15028) )
+        ROM_LOAD( "af1ptrm1.16j", 0x180000, 0x080000, CRC(7dd01d52) SHA1(adc1087435d31ed6163ad046466955f01517450f) )
+        ROM_LOAD( "af1ptru0.18f", 0x200000, 0x080000, CRC(177f1591) SHA1(3969e780e5603eca0a65f65c1ad14d1cef918b39) )
+        ROM_LOAD( "af1ptru1.16f", 0x280000, 0x080000, CRC(7521d18e) SHA1(dc03ef369db16f59c138ff4e22260d1c04782d1f) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* sound samples */
+        ROM_LOAD( "af1wavea.2l",  0x000000, 0x400000, CRC(28cca494) SHA1(4ff87ab85fd17bf8dbee5b03d99cc5c31dd6349a) )
+ROM_END
 
 ROM_START( cybrcomm )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* main program */
@@ -4373,8 +4444,8 @@ INPUT_PORTS_END /* Rave Racer */
 // MCU speed cheats (every bit helps with these games)
 static UINT16 su_82;
 
-// for MCU BIOS v1.31
-static READ16_HANDLER( mcu131_speedup_r )
+// for MCU BIOS v1.41
+static READ16_HANDLER( mcu141_speedup_r )
 {
 	if ((activecpu_get_pc() == 0xc12d) && (!(su_82 & 0xff00)))
 	{
@@ -4426,6 +4497,19 @@ DRIVER_INIT( alpiner2 )
 	memory_install_write16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu_speedup_w);
 }
 
+DRIVER_INIT( alpinesa )
+{
+	namcos22_gametype = NAMCOS22_ALPINE_SURFER;
+	namcos22_usec7x = 0;
+	InitDSP(1);
+
+	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, alpineracer_mcu_adc_r);
+
+	// install speedup cheat for 1.41 MCU BIOS
+	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu141_speedup_r);
+	memory_install_write16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu_speedup_w);
+}
+
 DRIVER_INIT( airco22 )
 { /* patch DSP RAM test */
 	UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
@@ -4473,7 +4557,7 @@ DRIVER_INIT( propcycl )
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, propcycle_mcu_adc_r);
 
 	// install speedup cheat for 1.31 MCU BIOS
-	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu131_speedup_r);
+	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu141_speedup_r);
 	memory_install_write16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu_speedup_w);
 }
 
@@ -4601,7 +4685,8 @@ GAME( 1995, cybrcycc, 0,        namcos22s, cybrcycc, cybrcyc,  ROT0, "Namco", "C
 //GAME( 1995, dirtdshx, "Dirt Dash")
 GAME( 1995, timecris, 0,        namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.B)"              , GAME_IMPERFECT_SOUND|GAME_NOT_WORKING ) /* locks up */
 GAME( 1995, timecrsa, timecris, namcos22s, timecris, timecris, ROT0, "Namco", "Time Crisis (Rev. TS2 Ver.A)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
-GAME( 1996, alpinr2b, 0,        namcos22s, alpiner,  alpiner2, ROT0, "Namco", "Alpine Racer 2 (Ver. 97/01/10 17:10:59)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, alpinr2b, 0,        namcos22s, alpiner,  alpiner2, ROT0, "Namco", "Alpine Racer 2 (Rev. ARS2 Ver.B)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, alpinesa, 0,        namcos22s_as, alpiner,  alpinesa, ROT0, "Namco", "Alpine Surfer (Rev. AF2 Ver.A)"        , GAME_NOT_WORKING|GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, propcycl, 0,        namcos22s, propcycl, propcycl, ROT0, "Namco", "Prop Cycle (Rev PR2 Ver.A)"                , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 //GAME( 1996, tokyowrx, "Tokyo Wars")
 //GAME( 1996, aquajetx, "Aqua Jet")

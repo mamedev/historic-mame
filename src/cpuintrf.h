@@ -263,6 +263,10 @@ enum
 	CPUINFO_INT_ADDRBUS_WIDTH_LAST = CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACES - 1,
 	CPUINFO_INT_ADDRBUS_SHIFT,							/* R/O: shift applied to addresses each address space (+3 means >>3, -1 means <<1) */
 	CPUINFO_INT_ADDRBUS_SHIFT_LAST = CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACES - 1,
+	CPUINFO_INT_LOGADDR_WIDTH,							/* R/O: address bus size for logical accesses in each space (0=same as physical) */
+	CPUINFO_INT_LOGADDR_WIDTH_LAST = CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACES - 1,
+	CPUINFO_INT_PAGE_SHIFT,								/* R/O: size of a page log 2 (i.e., 12=4096), or 0 if paging not supported */
+	CPUINFO_INT_PAGE_SHIFT_LAST = CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACES - 1,
 
 	CPUINFO_INT_SP,										/* R/W: the current stack pointer value */
 	CPUINFO_INT_PC,										/* R/W: the current PC value */
@@ -287,7 +291,9 @@ enum
 	CPUINFO_PTR_EXIT,									/* R/O: void (*exit)(void) */
 	CPUINFO_PTR_EXECUTE,								/* R/O: int (*execute)(int cycles) */
 	CPUINFO_PTR_BURN,									/* R/O: void (*burn)(int cycles) */
-	CPUINFO_PTR_DISASSEMBLE,							/* R/O: void (*disassemble)(char *buffer, offs_t pc) */
+	CPUINFO_PTR_DISASSEMBLE,							/* R/O: offs_t (*disassemble)(char *buffer, offs_t pc) */
+	CPUINFO_PTR_DISASSEMBLE_NEW,						/* R/O: offs_t (*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes) */
+	CPUINFO_PTR_TRANSLATE,								/* R/O: int (*translate)(int space, offs_t *address) */
 	CPUINFO_PTR_READ,									/* R/O: int (*read)(int space, UINT32 offset, int size, UINT64 *value) */
 	CPUINFO_PTR_WRITE,									/* R/O: int (*write)(int space, UINT32 offset, int size, UINT64 value) */
 	CPUINFO_PTR_READOP,									/* R/O: int (*readop)(UINT32 offset, int size, UINT64 *value) */
@@ -333,7 +339,9 @@ union cpuinfo
 	int		(*execute)(int cycles);						/* CPUINFO_PTR_EXECUTE */
 	void	(*burn)(int cycles);						/* CPUINFO_PTR_BURN */
 	offs_t	(*disassemble)(char *buffer, offs_t pc);	/* CPUINFO_PTR_DISASSEMBLE */
+	offs_t	(*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);/* CPUINFO_PTR_DISASSEMBLE_NEW */
 	int		(*irqcallback)(int state);					/* CPUINFO_PTR_IRQ_CALLBACK */
+	int 	(*translate)(int space, offs_t *address);	/* CPUINFO_PTR_TRANSLATE */
 	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
 	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
 	int		(*readop)(UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READOP */
@@ -398,10 +406,12 @@ struct _cpu_interface
 	int			(*execute)(int cycles);
 	void		(*burn)(int cycles);
 	offs_t		(*disassemble)(char *buffer, offs_t pc);
+	offs_t		(*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+	int			(*translate)(int space, offs_t *address);
 
 	/* other info */
 	size_t		context_size;
-	int			address_shift;
+	UINT8		address_shift;
 	int *		icount;
 };
 typedef struct _cpu_interface cpu_interface;
@@ -467,13 +477,14 @@ void activecpu_reset_banking(void);
 void activecpu_set_input_line(int irqline, int state);
 
 /* return the PC, corrected to a byte offset, on the active CPU */
-offs_t activecpu_get_pc_byte(void);
+offs_t activecpu_get_physical_pc_byte(void);
 
 /* update the banking on the active CPU */
 void activecpu_set_opbase(offs_t val);
 
 /* disassemble a line at a given PC on the active CPU */
 offs_t activecpu_dasm(char *buffer, offs_t pc);
+offs_t activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
 /* return a string containing the state of the flags on the active CPU */
 const char *activecpu_flags(void);
@@ -494,6 +505,8 @@ const char *activecpu_dump_state(void);
 #define activecpu_databus_width(space)			activecpu_get_info_int(CPUINFO_INT_DATABUS_WIDTH + (space))
 #define activecpu_addrbus_width(space)			activecpu_get_info_int(CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define activecpu_addrbus_shift(space)			activecpu_get_info_int(CPUINFO_INT_ADDRBUS_SHIFT + (space))
+#define activecpu_logaddr_width(space)			activecpu_get_info_int(CPUINFO_INT_LOGADDR_WIDTH + (space))
+#define activecpu_page_shift(space)				activecpu_get_info_int(CPUINFO_INT_PAGE_SHIFT + (space))
 #define activecpu_get_reg(reg)					activecpu_get_info_int(CPUINFO_INT_REGISTER + (reg))
 #define activecpu_irq_callback()				activecpu_get_info_fct(CPUINFO_PTR_IRQ_CALLBACK)
 #define activecpu_register_layout()				activecpu_get_info_ptr(CPUINFO_PTR_REGISTER_LAYOUT)
@@ -547,13 +560,14 @@ void cpunum_write_byte(int cpunum, offs_t address, UINT8 data);
 void *cpunum_get_context_ptr(int cpunum);
 
 /* return the PC, corrected to a byte offset, on a given CPU */
-offs_t cpunum_get_pc_byte(int cpunum);
+offs_t cpunum_get_physical_pc_byte(int cpunum);
 
 /* update the banking on a given CPU */
 void cpunum_set_opbase(int cpunum, offs_t val);
 
 /* disassemble a line at a given PC on a given CPU */
 offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc);
+offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
 /* return a string containing the state of a given CPU */
 const char *cpunum_dump_state(int cpunum);
@@ -571,6 +585,8 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_databus_width(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_DATABUS_WIDTH + (space))
 #define cpunum_addrbus_width(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define cpunum_addrbus_shift(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_ADDRBUS_SHIFT + (space))
+#define cpunum_logaddr_width(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_LOGADDR_WIDTH + (space))
+#define cpunum_page_shift(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_PAGE_SHIFT + (space))
 #define cpunum_get_reg(cpunum, reg)				cpunum_get_info_int(cpunum, CPUINFO_INT_REGISTER + (reg))
 #define cpunum_irq_callback(cpunum)				cpunum_get_info_fct(cpunum, CPUINFO_PTR_IRQ_CALLBACK)
 #define cpunum_register_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_REGISTER_LAYOUT)
@@ -615,6 +631,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 #define cputype_databus_width(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_DATABUS_WIDTH + (space))
 #define cputype_addrbus_width(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define cputype_addrbus_shift(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_SHIFT + (space))
+#define cputype_page_shift(cputype, space)		cputype_get_info_int(cputype, CPUINFO_INT_PAGE_SHIFT + (space))
 #define cputype_irq_callback(cputype)			cputype_get_info_fct(cputype, CPUINFO_PTR_IRQ_CALLBACK)
 #define cputype_register_layout(cputype)		cputype_get_info_ptr(cputype, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cputype_window_layout(cputype)			cputype_get_info_ptr(cputype, CPUINFO_PTR_WINDOW_LAYOUT)

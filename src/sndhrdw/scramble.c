@@ -242,8 +242,6 @@ void scramble_sh_init(void)
 
 void sfx_sh_init(void)
 {
-	scramble_sh_init();
-
 	cpu_set_irq_callback(2, sfx_sh_irq_callback);
 
 	TTL7474_config(3, &sfx_sh_7474_intf);

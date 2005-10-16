@@ -3,7 +3,7 @@
 #define _NAMCONA_
 
 struct NAMCONAinterface {
-    int region;
+    void *memory_base;
     int metadata_offset;
 };
 

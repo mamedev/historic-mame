@@ -2156,6 +2156,7 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:             info->execute     = i960_execute;       break;
 	case CPUINFO_PTR_BURN:                info->burn        = 0;                  break;
 	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = i960_disasm;        break;
+	case CPUINFO_PTR_DISASSEMBLE_NEW:     info->disassemble_new = NULL;           break;
 	case CPUINFO_PTR_IRQ_CALLBACK:        info->irqcallback = i960.irq_cb;        break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &i960_icount;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(i960_state); break;
@@ -2168,12 +2169,15 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32; break;
 	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32; break;
 	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;  break;
+	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 0;  break;
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;  break;
 	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;  break;
 	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA:    info->i = 0;  break;
+	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_DATA:    info->i = 0;  break;
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;  break;
 	case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;  break;
 	case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO:      info->i = 0;  break;
+	case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_IO:      info->i = 0;  break;
 
 		// Internal maps
 	case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0; break;
@@ -2242,8 +2246,8 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_STR_REGISTER + I960_G14:	sprintf(info->s = cpuintrf_temp_str(), "g14  :%08x", i960.r[30]); break;
 	case CPUINFO_STR_REGISTER + I960_G15:	sprintf(info->s = cpuintrf_temp_str(), "fp   :%08x", i960.r[31]); break;
 
-	default:
-		osd_die("i960_get_info %x          \n", state);
+//  default:
+//      osd_die("i960_get_info %x          \n", state);
 	}
 }
 

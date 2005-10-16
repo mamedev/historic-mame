@@ -35,7 +35,9 @@ Note:   if MAME_DEBUG is defined, pressing:
     [ 1024 Sprites ]
 
         Sprites are 16 x 16 x 4 in the older games, 16 x 16 x 8 in
-        gtmr & gtmr2
+        gtmr & gtmr2.
+        Sprites types 0 and 2 can also have a simple effect keeping
+        sprites on the screen
 
 
 **************************************************************************/
@@ -56,6 +58,7 @@ UINT16 *kaneko16_vscroll_2, *kaneko16_vscroll_3;
 
 
 int kaneko16_sprite_type;
+int kaneko16_keep_sprites = 0; // default disabled for games not using it
 UINT16 kaneko16_sprite_xoffs, kaneko16_sprite_flipx;
 UINT16 kaneko16_sprite_yoffs, kaneko16_sprite_flipy;
 UINT16 *kaneko16_sprites_regs;
@@ -63,6 +66,7 @@ UINT16 *kaneko16_sprites_regs;
 
 UINT16 *kaneko16_bg15_select, *kaneko16_bg15_reg;
 static mame_bitmap *kaneko16_bg15_bitmap;
+static mame_bitmap *sprites_bitmap; /* bitmap used for to keep sprites on screen (mgcrystl 1st boss)*/
 
 struct tempsprite
 {
@@ -153,6 +157,9 @@ VIDEO_START( kaneko16_1xVIEW2 )
 	kaneko16_tmap_2 = 0;
 
 	kaneko16_tmap_3 = 0;
+
+	if ((sprites_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
 
 	if (	!kaneko16_tmap_0 || !kaneko16_tmap_1	)
 		return 1;
@@ -612,7 +619,8 @@ if (code_pressed(KEYCODE_Z))
     Offset:         Format:                     Value:
 
     0000.w          f--- ---- ---- ----         Sprites Disable?? (see blazeon)
-                    -edc ba98 7654 32--
+                    -edc ba98 7654 3---
+                    ---- ---- ---- -2--         Keep sprites on screen (only sprites types 0 and 2)
                     ---- ---- ---- --1-         Flip X
                     ---- ---- ---- ---0         Flip Y
 
@@ -690,6 +698,9 @@ WRITE16_HANDLER( kaneko16_sprites_regs_w )
 			{
 				kaneko16_sprite_flipx = new_data & 2;
 				kaneko16_sprite_flipy = new_data & 1;
+
+				if(kaneko16_sprite_type == 0 || kaneko16_sprite_type == 2)
+					kaneko16_keep_sprites = ~new_data & 4;
 			}
 
 			break;
@@ -964,5 +975,17 @@ if ( code_pressed(KEYCODE_Z) ||
        in between the layers) */
 
 	if (layers_ctrl & (0xf<<16))
-		kaneko16_draw_sprites(bitmap,cliprect, (layers_ctrl >> 16) & 0xf);
+	{
+		if(kaneko16_keep_sprites)
+		{
+			/* keep sprites on screen */
+			kaneko16_draw_sprites(sprites_bitmap,cliprect, (layers_ctrl >> 16) & 0xf);
+			copybitmap(bitmap,sprites_bitmap,0,0,0,0,cliprect,TRANSPARENCY_PEN,0);
+		}
+		else
+		{
+			fillbitmap(sprites_bitmap,Machine->pens[0],cliprect);
+			kaneko16_draw_sprites(bitmap,cliprect, (layers_ctrl >> 16) & 0xf);
+		}
+	}
 }

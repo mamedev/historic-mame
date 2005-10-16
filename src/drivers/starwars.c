@@ -178,7 +178,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0)
 	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_ROM)								/* vector_rom */
 	AM_RANGE(0x4400, 0x4400) AM_WRITE(starwars_main_wr_w)
 	AM_RANGE(0x4500, 0x45ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)

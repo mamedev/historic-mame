@@ -348,9 +348,8 @@ static UINT32 dasm_cop2(UINT32 pc, UINT32 op, char *buffer)
 	return flags;
 }
 
-unsigned dasmmips3(char *buffer, unsigned pc)
+unsigned dasmmips3(char *buffer, unsigned pc, UINT32 op)
 {
-	UINT32 op = ROPCODE(pc);
 	int rs = (op >> 21) & 31;
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;

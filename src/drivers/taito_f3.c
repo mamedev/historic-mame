@@ -73,6 +73,8 @@ WRITE16_HANDLER(f3_volume_w);
 WRITE16_HANDLER(f3_es5505_bank_w);
 void f3_68681_reset(void);
 
+static UINT16 *sound_ram;
+
 /******************************************************************************/
 
 static READ32_HANDLER( f3_control_r )
@@ -213,7 +215,7 @@ ADDRESS_MAP_END
 /******************************************************************************/
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00ffff) AM_RAM AM_MIRROR(0x30000) AM_SHARE(1)
+	AM_RANGE(0x000000, 0x00ffff) AM_RAM AM_MIRROR(0x30000) AM_SHARE(1) AM_BASE(&sound_ram)
 	AM_RANGE(0x140000, 0x140fff) AM_READWRITE(f3_68000_share_r, f3_68000_share_w)
 	AM_RANGE(0x200000, 0x20001f) AM_READWRITE(ES5505_data_0_r, ES5505_data_0_w)
 	AM_RANGE(0x260000, 0x2601ff) AM_READWRITE(es5510_dsp_r, es5510_dsp_w)
@@ -442,15 +444,15 @@ static INTERRUPT_GEN( f3_interrupt2 )
 static MACHINE_INIT( f3 )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&RAM[0x80000]);
-	memory_set_bankptr(2,&RAM[0x90000]);
-	memory_set_bankptr(3,&RAM[0xa0000]);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
+	memory_set_bankptr(1,&ROM[0x80000]);
+	memory_set_bankptr(2,&ROM[0x90000]);
+	memory_set_bankptr(3,&ROM[0xa0000]);
 
-	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
-	RAM[1]=RAM[0x80001];
-	RAM[2]=RAM[0x80002];
-	RAM[3]=RAM[0x80003];
+	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
+	sound_ram[1]=ROM[0x80001];
+	sound_ram[2]=ROM[0x80002];
+	sound_ram[3]=ROM[0x80003];
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	f3_68681_reset();

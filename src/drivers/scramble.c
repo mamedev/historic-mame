@@ -2726,7 +2726,7 @@ Contained two 20-pin DIP chips with no markings. Could be PROMs, PLDs or TTL
 
 ROM_START( conquer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "conquer3.l10",       0x0000, 0x1000, CRC(a33a824f) SHA1(787ac1f1942ba97c64317b9455d6788281c02f60) )
+	ROM_LOAD( "conquer3.l10",       0x0000, 0x1000, BAD_DUMP CRC(a33a824f) SHA1(787ac1f1942ba97c64317b9455d6788281c02f60) )
 	ROM_LOAD( "conquer2.l9",        0x1000, 0x1000, CRC(3ffa8285) SHA1(a110e52fe5f637606c1be3a9e290fc6625b9aa48) )
 	ROM_LOAD( "conquer1.l8",        0x2000, 0x1000, CRC(9ded2dff) SHA1(9364195d3f86e55df5ecf90d53041517c3658388) )
 

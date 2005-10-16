@@ -1043,8 +1043,10 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 {
 	int minlen = BYTE2ADDR(activecpu_min_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
 	int maxlen = BYTE2ADDR(activecpu_max_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
+	int use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 	UINT32 addrmask = BYTE2ADDR(0xffffffff, cpuinfo, ADDRESS_SPACE_PROGRAM);
-	offs_t curpc, lastgoodpc = startpc;
+	offs_t curpc, lastgoodpc = startpc, temppc;
+	UINT8 opbuf[1024], argbuf[1024];
 	char dasmbuffer[100];
 
 	/* compute the increment */
@@ -1056,10 +1058,18 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 	if (curpc > startpc)
 		curpc = 0;
 
+	/* if using the new disassembler, prefetch the opcode bytes */
+	if (use_new_dasm)
+		for (temppc = curpc; temppc < startpc; temppc++)
+		{
+			opbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, FALSE);
+			argbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, TRUE);
+		}
+
 	/* loop until we hit it */
 	while (1)
 	{
-		offs_t testpc, instlen, instcount = 0;
+		offs_t testpc, nextcurpc, instlen, instcount = 0;
 
 		/* loop until we get past the target instruction */
 		for (testpc = curpc; testpc < startpc; testpc += instlen)
@@ -1068,13 +1078,16 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 			offs_t pcbyte = ADDR2BYTE(testpc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 			/* get the disassembly, but only if mapped */
-			if (memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, pcbyte) != NULL)
-			{
-				memory_set_opbase(pcbyte);
-				instlen = activecpu_dasm(dasmbuffer, testpc & addrmask) & DASMFLAG_LENGTHMASK;
-			}
-			else
-				instlen = 1;
+			instlen = 1;
+			if (!cpuinfo->translate || (*cpuinfo->translate)(ADDRESS_SPACE_PROGRAM, &pcbyte))
+				if (memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, pcbyte) != NULL)
+				{
+					memory_set_opbase(pcbyte);
+					if (use_new_dasm)
+						instlen = activecpu_dasm_new(dasmbuffer, testpc & addrmask, &opbuf[1000 + testpc - startpc], &argbuf[1000 + testpc - startpc], startpc - testpc) & DASMFLAG_LENGTHMASK;
+					else
+						instlen = activecpu_dasm(dasmbuffer, testpc & addrmask) & DASMFLAG_LENGTHMASK;
+				}
 
 			/* count this one */
 			instcount++;
@@ -1093,9 +1106,20 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 			break;
 
 		/* back up one more and try again */
-		curpc -= minlen;
-		if (curpc > startpc)
-			curpc = 0;
+		nextcurpc = curpc - minlen;
+		if (nextcurpc > startpc)
+			nextcurpc = 0;
+
+		/* if using the new disassembler, prefetch the opcode bytes */
+		if (use_new_dasm)
+			for (temppc = nextcurpc; temppc < curpc; temppc++)
+			{
+				opbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, FALSE);
+				argbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, TRUE);
+			}
+
+		/* update curpc once we're done fetching */
+		curpc = nextcurpc;
 	}
 
 	return lastgoodpc;
@@ -1116,32 +1140,32 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debu
 	{
 		case 1:
 			if (maxchars >= 2)
-				offset = sprintf(string, "%02X", (UINT32)debug_read_opcode(pcbyte, 1));
+				offset = sprintf(string, "%02X", (UINT32)debug_read_opcode(pcbyte, 1, FALSE));
 			for (byte = 1; byte < numbytes && offset + 3 < maxchars; byte++)
-				offset += sprintf(&string[offset], " %02X", (UINT32)debug_read_opcode(pcbyte + byte, 1));
+				offset += sprintf(&string[offset], " %02X", (UINT32)debug_read_opcode(pcbyte + byte, 1, FALSE));
 			break;
 
 		case 2:
 			if (maxchars >= 4)
-				offset = sprintf(string, "%04X", (UINT32)debug_read_opcode(pcbyte, 2));
+				offset = sprintf(string, "%04X", (UINT32)debug_read_opcode(pcbyte, 2, FALSE));
 			for (byte = 2; byte < numbytes && offset + 5 < maxchars; byte += 2)
-				offset += sprintf(&string[offset], " %04X", (UINT32)debug_read_opcode(pcbyte + byte, 2));
+				offset += sprintf(&string[offset], " %04X", (UINT32)debug_read_opcode(pcbyte + byte, 2, FALSE));
 			break;
 
 		case 4:
 			if (maxchars >= 8)
-				offset = sprintf(string, "%08X", (UINT32)debug_read_opcode(pcbyte, 4));
+				offset = sprintf(string, "%08X", (UINT32)debug_read_opcode(pcbyte, 4, FALSE));
 			for (byte = 4; byte < numbytes && offset + 9 < maxchars; byte += 4)
-				offset += sprintf(&string[offset], " %08X", (UINT32)debug_read_opcode(pcbyte + byte, 4));
+				offset += sprintf(&string[offset], " %08X", (UINT32)debug_read_opcode(pcbyte + byte, 4, FALSE));
 			break;
 
 		case 8:
-			val = debug_read_opcode(pcbyte, 8);
+			val = debug_read_opcode(pcbyte, 8, FALSE);
 			if (maxchars >= 16)
 				offset = sprintf(string, "%08X%08X", (UINT32)(val >> 32), (UINT32)val);
 			for (byte = 8; byte < numbytes && offset + 17 < maxchars; byte += 8)
 			{
-				val = debug_read_opcode(pcbyte + byte, 8);
+				val = debug_read_opcode(pcbyte + byte, 8, FALSE);
 				offset += sprintf(&string[offset], " %08X%08X", (UINT32)(val >> 32), (UINT32)val);
 			}
 			break;
@@ -1167,7 +1191,8 @@ static void disasm_recompute(struct debug_view *view)
 {
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	struct debug_view_disasm *dasmdata = view->extra_data;
-	int chunksize, minbytes, maxbytes;
+	int chunksize, minbytes, maxbytes, maxbytes_clamped;
+	int use_new_dasm;
 	UINT32 addrmask;
 	int instr;
 	offs_t pc;
@@ -1175,6 +1200,7 @@ static void disasm_recompute(struct debug_view *view)
 	/* switch to the context of the CPU in question */
 	cpuintrf_push_context(view->cpunum);
 	addrmask = BYTE2ADDR(0xffffffff, cpuinfo, ADDRESS_SPACE_PROGRAM);
+	use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 
 	/* determine how many characters we need for an address and set the divider */
 	dasmdata->divider1 = 1 + cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars + 1;
@@ -1186,9 +1212,10 @@ static void disasm_recompute(struct debug_view *view)
 	chunksize = activecpu_databus_width(ADDRESS_SPACE_PROGRAM) / 8;
 	minbytes = activecpu_min_instruction_bytes();
 	maxbytes = activecpu_max_instruction_bytes();
-	if (maxbytes > DASM_MAX_BYTES)
-		maxbytes = DASM_MAX_BYTES;
-	view->total_cols = dasmdata->divider2 + 1 + 2 * maxbytes + (maxbytes / minbytes - 1) + 1;
+	maxbytes_clamped = maxbytes;
+	if (maxbytes_clamped > DASM_MAX_BYTES)
+		maxbytes_clamped = DASM_MAX_BYTES;
+	view->total_cols = dasmdata->divider2 + 1 + 2 * maxbytes_clamped + (maxbytes_clamped / minbytes - 1) + 1;
 	view->total_rows = DASM_LINES;
 	view->top_row = 0;
 	view->left_col = 0;
@@ -1198,9 +1225,9 @@ static void disasm_recompute(struct debug_view *view)
 	pc = disasm_back_up(view->cpunum, cpuinfo, pc, 3);
 	for (instr = 0; instr < DASM_LINES; instr++)
 	{
+		offs_t pcbyte, tempaddr;
 		UINT64 dummyreadop;
 		char buffer[100];
-		offs_t pcbyte;
 		int numbytes;
 
 		/* convert PC to a byte offset */
@@ -1208,19 +1235,46 @@ static void disasm_recompute(struct debug_view *view)
 
 		/* convert back and set the address of this instruction */
 		dasmdata->address[instr] = pcbyte;
-		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars, pc);
+		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars, BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM));
 
-		/* get the disassembly, but only if mapped */
-		if (memory_get_op_ptr(view->cpunum, pcbyte) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
+		/* make sure we can translate the address */
+		tempaddr = pcbyte;
+		if (!cpuinfo->translate || (*cpuinfo->translate)(ADDRESS_SPACE_PROGRAM, &tempaddr))
 		{
-			memory_set_opbase(pcbyte);
-			pc += numbytes = activecpu_dasm(buffer, pc & addrmask) & DASMFLAG_LENGTHMASK;
+			/* if we can use new disassembly, do it */
+			if (use_new_dasm)
+			{
+				UINT8 opbuf[64], argbuf[64];
+
+				/* fetch the bytes up to the maximum */
+				for (numbytes = 0; numbytes < maxbytes; numbytes++)
+				{
+					opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+					argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
+				}
+
+				/* disassemble the result */
+				pc += numbytes = activecpu_dasm_new(buffer, pc & addrmask, opbuf, argbuf, maxbytes) & DASMFLAG_LENGTHMASK;
+			}
+
+			/* otherwise, we need to use the old, risky way */
+			else
+			{
+				/* get the disassembly, but only if mapped */
+				if (memory_get_op_ptr(view->cpunum, pcbyte) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
+				{
+					memory_set_opbase(pcbyte);
+					pc += numbytes = activecpu_dasm(buffer, pc & addrmask) & DASMFLAG_LENGTHMASK;
+				}
+				else
+				{
+					sprintf(buffer, "<unmapped>");
+					pc += numbytes = 1;
+				}
+			}
 		}
 		else
-		{
 			sprintf(buffer, "<unmapped>");
-			pc += numbytes = 1;
-		}
 		sprintf(&dasmdata->dasm[instr][dasmdata->divider1 + 1], "%-*s  ", DASM_WIDTH, buffer);
 
 		/* get the bytes */
@@ -1238,7 +1292,7 @@ static void disasm_recompute(struct debug_view *view)
 
 	/* reset the opcode base */
 	if (view->cpunum == cpu_getactivecpu())
-		memory_set_opbase(activecpu_get_pc_byte());
+		memory_set_opbase(activecpu_get_physical_pc_byte());
 }
 
 
@@ -1840,17 +1894,35 @@ static void memory_update(struct debug_view *view)
 					default:
 					case 1:
 						for (i = 0; i < 16; i++)
-							len += sprintf(&data[len], "%02X ", debug_read_byte(memdata->spacenum, addrbyte + i));
+						{
+							offs_t curaddr = addrbyte + i;
+							if (!cpuinfo->translate || (*cpuinfo->translate)(memdata->spacenum, &curaddr))
+								len += sprintf(&data[len], "%02X ", debug_read_byte(memdata->spacenum, addrbyte + i));
+							else
+								len += sprintf(&data[len], "** ");
+						}
 						break;
 
 					case 2:
 						for (i = 0; i < 8; i++)
-							len += sprintf(&data[len], " %04X ", debug_read_word(memdata->spacenum, addrbyte + 2 * i));
+						{
+							offs_t curaddr = addrbyte + 2 * i;
+							if (!cpuinfo->translate || (*cpuinfo->translate)(memdata->spacenum, &curaddr))
+								len += sprintf(&data[len], " %04X ", debug_read_word(memdata->spacenum, addrbyte + 2 * i));
+							else
+								len += sprintf(&data[len], " **** ");
+						}
 						break;
 
 					case 4:
 						for (i = 0; i < 4; i++)
-							len += sprintf(&data[len], "  %08X  ", debug_read_dword(memdata->spacenum, addrbyte + 4 * i));
+						{
+							offs_t curaddr = addrbyte + 4 * i;
+							if (!cpuinfo->translate || (*cpuinfo->translate)(memdata->spacenum, &curaddr))
+								len += sprintf(&data[len], "  %08X  ", debug_read_dword(memdata->spacenum, addrbyte + 4 * i));
+							else
+								len += sprintf(&data[len], "  ********  ");
+						}
 						break;
 				}
 				len += sprintf(&data[len], " ");
@@ -1875,17 +1947,35 @@ static void memory_update(struct debug_view *view)
 					default:
 					case 1:
 						for (i = 15; i >= 0; i--)
-							len += sprintf(&data[len], "%02X ", debug_read_byte(memdata->spacenum, addrbyte + i));
+						{
+							offs_t curaddr = addrbyte + i;
+							if (!cpuinfo->translate || (*cpuinfo->translate)(memdata->spacenum, &curaddr))
+								len += sprintf(&data[len], "%02X ", debug_read_byte(memdata->spacenum, addrbyte + i));
+							else
+								len += sprintf(&data[len], "** ");
+						}
 						break;
 
 					case 2:
 						for (i = 7; i >= 0; i--)
-							len += sprintf(&data[len], " %04X ", debug_read_word(memdata->spacenum, addrbyte + 2 * i));
+						{
+							offs_t curaddr = addrbyte + 2 * i;
+							if (!cpuinfo->translate || (*cpuinfo->translate)(memdata->spacenum, &curaddr))
+								len += sprintf(&data[len], " %04X ", debug_read_word(memdata->spacenum, addrbyte + 2 * i));
+							else
+								len += sprintf(&data[len], " **** ");
+						}
 						break;
 
 					case 4:
 						for (i = 3; i >= 0; i--)
-							len += sprintf(&data[len], "  %08X  ", debug_read_dword(memdata->spacenum, addrbyte + 4 * i));
+						{
+							offs_t curaddr = addrbyte + 4 * i;
+							if (!cpuinfo->translate || (*cpuinfo->translate)(memdata->spacenum, &curaddr))
+								len += sprintf(&data[len], "  %08X  ", debug_read_dword(memdata->spacenum, addrbyte + 4 * i));
+							else
+								len += sprintf(&data[len], "  ********  ");
+						}
 						break;
 				}
 				len += sprintf(&data[len], addrformat, BYTE2ADDR(addrbyte, cpuinfo, memdata->spacenum));

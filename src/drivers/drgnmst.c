@@ -168,7 +168,7 @@ static READ8_HANDLER( PIC16C5X_T0_clk_r )
 /***************************** 68000 Memory Map *****************************/
 
 static ADDRESS_MAP_START( drgnmst_main_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_RAM
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
 	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x800018, 0x800019) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x80001a, 0x80001b) AM_READ(input_port_2_word_r)

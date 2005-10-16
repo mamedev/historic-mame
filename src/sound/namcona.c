@@ -657,7 +657,7 @@ static void *namcona_start(int sndindex, int clock, const void *config)
 	memset(chip, 0, sizeof(*chip));
 	chip->mSampleRate = clock;
 	chip->mStream = stream_create(0, 2, chip->mSampleRate, chip, UpdateSound);
-	chip->mpROM = (UINT16 *)memory_region(REGION_CPU1);
+	chip->mpROM = (UINT16 *)intf->memory_base;
 	chip->mpMetaData = chip->mpROM+intf->metadata_offset;
 
 	memset( chip->mVoice, 0x00, sizeof(chip->mVoice) );

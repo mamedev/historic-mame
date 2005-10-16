@@ -147,7 +147,7 @@
 #define LOG_GALILEO			(0)
 #define LOG_TIMERS			(0)
 #define LOG_DMA				(0)
-#define LOG_PCI				(0)
+#define LOG_PCI				(1)
 #define LOG_WIDGET			(0)
 
 
@@ -1518,28 +1518,28 @@ static READ32_HANDLER( generic_speedup2_r )
 
 static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x007fffff) AM_MIRROR(0xa0000000) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
-	AM_RANGE(0x88000000, 0x883fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
-	AM_RANGE(0x88400000, 0x887fffff) AM_MIRROR(0x20000000) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
-	AM_RANGE(0x88800000, 0x88ffffff) AM_MIRROR(0x20000000) AM_WRITE(voodoo_textureram_w)
-	AM_RANGE(0xaa000000, 0xaa0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
-	AM_RANGE(0xaa00040c, 0xaa00040f) AM_NOP						// IDE-related, but annoying
-	AM_RANGE(0xaa000f00, 0xaa000f07) AM_READWRITE(ide_bus_master32_0_r, ide_bus_master32_0_w)
-	AM_RANGE(0xac000000, 0xac000fff) AM_READWRITE(galileo_r, galileo_w)
-	AM_RANGE(0xb3000000, 0xb3000003) AM_WRITE(asic_fifo_w)
-	AM_RANGE(0xb6000000, 0xb600003f) AM_READWRITE(midway_ioasic_r, midway_ioasic_w)
-	AM_RANGE(0xb6100000, 0xb611ffff) AM_READWRITE(cmos_r, cmos_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xb7000000, 0xb7000003) AM_READWRITE(cmos_protect_r, cmos_protect_w)
-	AM_RANGE(0xb7100000, 0xb7100003) AM_WRITE(seattle_watchdog_w)
-	AM_RANGE(0xb7300000, 0xb7300003) AM_READWRITE(MRA32_RAM, seattle_interrupt_enable_w) AM_BASE(&interrupt_enable)
-	AM_RANGE(0xb7400000, 0xb7400003) AM_READWRITE(MRA32_RAM, interrupt_config_w) AM_BASE(&interrupt_config)
-	AM_RANGE(0xb7500000, 0xb7500003) AM_READ(interrupt_state_r)
-	AM_RANGE(0xb7600000, 0xb7600003) AM_READ(interrupt_state2_r)
-	AM_RANGE(0xb7700000, 0xb7700003) AM_WRITE(vblank_clear_w)
-	AM_RANGE(0xb7800000, 0xb7800003) AM_NOP
-	AM_RANGE(0xb7900000, 0xb7900003) AM_READWRITE(status_leds_r, status_leds_w)
-	AM_RANGE(0xb7f00000, 0xb7f00003) AM_READWRITE(MRA32_RAM, asic_reset_w) AM_BASE(&asic_reset)
-	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_MIRROR(0x20000000) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rombase)
+	AM_RANGE(0x00000000, 0x007fffff) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
+	AM_RANGE(0x08000000, 0x083fffff) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
+	AM_RANGE(0x08400000, 0x087fffff) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
+	AM_RANGE(0x08800000, 0x08ffffff) AM_WRITE(voodoo_textureram_w)
+	AM_RANGE(0x0a000000, 0x0a0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
+	AM_RANGE(0x0a00040c, 0x0a00040f) AM_NOP						// IDE-related, but annoying
+	AM_RANGE(0x0a000f00, 0x0a000f07) AM_READWRITE(ide_bus_master32_0_r, ide_bus_master32_0_w)
+	AM_RANGE(0x0c000000, 0x0c000fff) AM_READWRITE(galileo_r, galileo_w)
+	AM_RANGE(0x13000000, 0x13000003) AM_WRITE(asic_fifo_w)
+	AM_RANGE(0x16000000, 0x1600003f) AM_READWRITE(midway_ioasic_r, midway_ioasic_w)
+	AM_RANGE(0x16100000, 0x1611ffff) AM_READWRITE(cmos_r, cmos_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x17000000, 0x17000003) AM_READWRITE(cmos_protect_r, cmos_protect_w)
+	AM_RANGE(0x17100000, 0x17100003) AM_WRITE(seattle_watchdog_w)
+	AM_RANGE(0x17300000, 0x17300003) AM_READWRITE(MRA32_RAM, seattle_interrupt_enable_w) AM_BASE(&interrupt_enable)
+	AM_RANGE(0x17400000, 0x17400003) AM_READWRITE(MRA32_RAM, interrupt_config_w) AM_BASE(&interrupt_config)
+	AM_RANGE(0x17500000, 0x17500003) AM_READ(interrupt_state_r)
+	AM_RANGE(0x17600000, 0x17600003) AM_READ(interrupt_state2_r)
+	AM_RANGE(0x17700000, 0x17700003) AM_WRITE(vblank_clear_w)
+	AM_RANGE(0x17800000, 0x17800003) AM_NOP
+	AM_RANGE(0x17900000, 0x17900003) AM_READWRITE(status_leds_r, status_leds_w)
+	AM_RANGE(0x17f00000, 0x17f00003) AM_READWRITE(MRA32_RAM, asic_reset_w) AM_BASE(&asic_reset)
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rombase)
 ADDRESS_MAP_END
 
 
@@ -3024,25 +3024,25 @@ static void init_common(int ioasic, int serialnum, int yearoffs, int config)
 	{
 		case PHOENIX_CONFIG:
 			/* original Phoenix board only has 4MB of RAM */
-			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0xa0000000, MRA32_NOP);
-			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0xa0000000, MWA32_NOP);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0, MRA32_NOP);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0, MWA32_NOP);
 			break;
 
 		case SEATTLE_WIDGET_CONFIG:
 			/* set up the widget board */
-			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0001f, 0, 0, widget_r);
-			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0001f, 0, 0, widget_w);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x16c00000, 0x16c0001f, 0, 0, widget_r);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x16c00000, 0x16c0001f, 0, 0, widget_w);
 			smc91c94_init(&ethernet_intf);
 			break;
 
 		case FLAGSTAFF_CONFIG:
 			/* set up the analog inputs */
-			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb4000000, 0xb4000003, 0, 0, analog_port_r);
-			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb4000000, 0xb4000003, 0, 0, analog_port_w);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x14000000, 0x14000003, 0, 0, analog_port_r);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x14000000, 0x14000003, 0, 0, analog_port_w);
 
 			/* set up the ethernet controller */
-			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0003f, 0, 0, ethernet_r);
-			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0003f, 0, 0, ethernet_w);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x16c00000, 0x16c0003f, 0, 0, ethernet_r);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x16c00000, 0x16c0003f, 0, 0, ethernet_w);
 			smc91c94_init(&ethernet_intf);
 			break;
 	}
@@ -3055,7 +3055,7 @@ static DRIVER_INIT( wg3dh )
 	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80, PHOENIX_CONFIG);
 
 	/* speedups */
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80115e00, 0x80115e03, 0, 0, generic_speedup_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00115e00, 0x00115e03, 0, 0, generic_speedup_r);
 	generic_speedup = &rambase[0x115e00/4];
 }
 
@@ -3075,9 +3075,9 @@ static DRIVER_INIT( sfrush )
 	init_common(MIDWAY_IOASIC_STANDARD, 315/* no alternates */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8012498c, 0x8012498f, 0, 0, generic_speedup_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0012498c, 0x0012498f, 0, 0, generic_speedup_r);
 	generic_speedup = &rambase[0x12498c/4];
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80120000, 0x80120003, 0, 0, generic_speedup2_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00120000, 0x00120003, 0, 0, generic_speedup2_r);
 	generic_speedup2 = &rambase[0x120000/4];
 }
 
@@ -3088,9 +3088,9 @@ static DRIVER_INIT( sfrushrk )
 	init_common(MIDWAY_IOASIC_SFRUSHRK, 331/* unknown */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
-//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8012498c, 0x8012498f, 0, 0, generic_speedup_r);
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0012498c, 0x0012498f, 0, 0, generic_speedup_r);
 //  generic_speedup = &rambase[0x12498c/4];
-//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80120000, 0x80120003, 0, 0, generic_speedup2_r);
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00120000, 0x00120003, 0, 0, generic_speedup2_r);
 //  generic_speedup2 = &rambase[0x120000/4];
 }
 
@@ -3102,7 +3102,7 @@ static DRIVER_INIT( calspeed )
 	midway_ioasic_set_auto_ack(1);
 
 	/* speedups */
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802e6480, 0x802e6483, 0, 0, generic_speedup_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002e6480, 0x002e6483, 0, 0, generic_speedup_r);
 	generic_speedup = &rambase[0x2e6480/4];
 }
 
@@ -3122,7 +3122,7 @@ static DRIVER_INIT( biofreak )
 	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-//  memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802502bc, 0x802502bf, 0, 0, generic_speedup_w);
+//  memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002502bc, 0x002502bf, 0, 0, generic_speedup_w);
 //  generic_speedup = &rambase[0x2502bc/4];
 }
 
@@ -3136,7 +3136,7 @@ static DRIVER_INIT( blitz )
 	rombase[0x934/4] += 4;
 
 	/* speedups */
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80243d58, 0x80243d5b, 0, 0, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00243d58, 0x00243d5b, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x243d58/4];
 }
 
@@ -3147,7 +3147,7 @@ static DRIVER_INIT( blitz99 )
 	init_common(MIDWAY_IOASIC_BLITZ99, 481/* or 484 or 520 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802502bc, 0x802502bf, 0, 0, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002502bc, 0x002502bf, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x2502bc/4];
 }
 
@@ -3158,7 +3158,7 @@ static DRIVER_INIT( blitz2k )
 	init_common(MIDWAY_IOASIC_BLITZ99, 494/* or 498 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8024e8d8, 0x8024e8db, 0, 0, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0024e8d8, 0x0024e8db, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x24e8d8/4];
 }
 
@@ -3169,11 +3169,11 @@ static DRIVER_INIT( carnevil )
 	init_common(MIDWAY_IOASIC_CARNEVIL, 469/* 469 or 486 or 528 */, 80, SEATTLE_CONFIG);
 
 	/* set up the gun */
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6800000, 0xb680001f, 0, 0, carnevil_gun_r);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6800000, 0xb680001f, 0, 0, carnevil_gun_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x16800000, 0x1680001f, 0, 0, carnevil_gun_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x16800000, 0x1680001f, 0, 0, carnevil_gun_w);
 
 	/* speedups */
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x801a2bac, 0x801a2baf, 0, 0, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001a2bac, 0x001a2baf, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x1a2bac/4];
 }
 

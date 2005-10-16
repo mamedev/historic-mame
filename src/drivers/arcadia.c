@@ -129,7 +129,7 @@ static void autoconfig_init( UINT32 rom_boot_vector )
 
 
 static ADDRESS_MAP_START(readmem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK1 ) /* Chip Ram - 512k or System ROM mirror*/
+	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK1 ) AM_REGION(REGION_CPU1, 0) /* Chip Ram - 512k or System ROM mirror*/
 	AM_RANGE( 0x200000, 0x201fff) AM_READ( MRA16_RAM ) AM_BASE(&amiga_expansion_ram)
 	AM_RANGE( 0x800000, 0x97ffff) AM_READ( MRA16_BANK2 )
 	AM_RANGE( 0x980000, 0x9fbfff) AM_READ( MRA16_ROM ) AM_REGION(REGION_USER2, 0)

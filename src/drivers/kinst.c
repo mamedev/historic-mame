@@ -47,9 +47,9 @@ static MACHINE_INIT( kinst )
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS);
 
 	/* both games map one logical 4k page at address 0 to physical address 0x8090000 */
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MRA32_BANK1);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MWA32_BANK1);
-	memory_set_bankptr(1, &rambase2[0x90000/4]);
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MRA32_BANK1);
+//  memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MWA32_BANK1);
+//  memory_set_bankptr(1, &rambase2[0x90000/4]);
 
 	/* keep the DCS held in reset at startup */
 	dcs_reset_w(1);
@@ -272,12 +272,13 @@ static READ32_HANDLER( kinst_speedup_r )
 
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_MIRROR(0xa0000000) AM_RAM AM_BASE(&rambase)
-	AM_RANGE(0x88000000, 0x887fffff) AM_MIRROR(0x20800000) AM_RAM AM_BASE(&rambase2)
-	AM_RANGE(0xb0000080, 0xb00000ff) AM_READWRITE(kinst_control_r, kinst_control_w) AM_BASE(&kinst_control)
-	AM_RANGE(0xb0000100, 0xb000013f) AM_READWRITE(ide_controller_r, ide_controller_w)
-	AM_RANGE(0xb0000170, 0xb0000173) AM_READWRITE(ide_controller_extra_r, ide_controller_extra_w)
-	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_MIRROR(0x20000000) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x00000000, 0x0007ffff) AM_RAM AM_BASE(&rambase)
+	AM_RANGE(0x08000000, 0x087fffff) AM_RAM AM_BASE(&rambase2)
+	AM_RANGE(0x10000080, 0x100000ff) AM_READWRITE(kinst_control_r, kinst_control_w) AM_BASE(&kinst_control)
+	AM_RANGE(0x10000100, 0x1000013f) AM_READWRITE(ide_controller_r, ide_controller_w)
+	AM_RANGE(0x10000170, 0x10000173) AM_READWRITE(ide_controller_extra_r, ide_controller_extra_w)
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0)
+
 ADDRESS_MAP_END
 
 

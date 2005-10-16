@@ -406,103 +406,38 @@ logerror("current frame : %d\n",current_frame);
 }
 
 
-static ADDRESS_MAP_START( reactor_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( reactor_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(16) )
-	AM_RANGE(0x00000, 0x01fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x03000, 0x033ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x04000, 0x04fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x07000, 0x07000) AM_READ(input_port_0_r)	/* DSW */
-	AM_RANGE(0x07001, 0x07001) AM_READ(input_port_1_r)	/* buttons */
-	AM_RANGE(0x07002, 0x07002) AM_READ(gottlieb_track_0_r)	/* trackball H */
-	AM_RANGE(0x07003, 0x07003) AM_READ(gottlieb_track_1_r)	/* trackball V */
-	AM_RANGE(0x07004, 0x07004) AM_READ(input_port_4_r)	/* joystick */
-	AM_RANGE(0x08000, 0x0ffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( reactor_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(16) )
-	AM_RANGE(0x00000, 0x01fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x00000, 0x01fff) AM_RAM
 	AM_RANGE(0x02000, 0x020ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x03000, 0x033ff) AM_WRITE(gottlieb_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x03400, 0x037ff) AM_WRITE(gottlieb_videoram_w)	/* mirror address, some games write to it */
-	AM_RANGE(0x04000, 0x04fff) AM_WRITE(gottlieb_charram_w) AM_BASE(&gottlieb_charram)
+	AM_RANGE(0x03000, 0x033ff) AM_MIRROR(0x0400) AM_READWRITE(MRA8_RAM, gottlieb_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x04000, 0x04fff) AM_READWRITE(MRA8_RAM, gottlieb_charram_w) AM_BASE(&gottlieb_charram)
 	AM_RANGE(0x06000, 0x0601f) AM_WRITE(gottlieb_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0x07000, 0x07000) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x07001, 0x07001) AM_WRITE(gottlieb_track_reset_w)
-	AM_RANGE(0x07002, 0x07002) AM_WRITE(gottlieb_sh_w) /* sound/speech command */
-	AM_RANGE(0x07003, 0x07003) AM_WRITE(reactor_output_w)       /* OUT1 */
-	AM_RANGE(0x08000, 0x0ffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x07000, 0x07000) AM_READWRITE(input_port_0_r, watchdog_reset_w)	/* DSW */
+	AM_RANGE(0x07001, 0x07001) AM_READWRITE(input_port_1_r, gottlieb_track_reset_w)	/* buttons */
+	AM_RANGE(0x07002, 0x07002) AM_READWRITE(gottlieb_track_0_r, gottlieb_sh_w)	/* trackball H */
+	AM_RANGE(0x07003, 0x07003) AM_READWRITE(gottlieb_track_1_r, reactor_output_w)	/* trackball V */
+	AM_RANGE(0x07004, 0x07004) AM_READ(input_port_4_r)	/* joystick */
+	AM_RANGE(0x08000, 0x0ffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( gottlieb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+
+static ADDRESS_MAP_START( gottlieb_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(16) )
-	AM_RANGE(0x00000, 0x00fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x01000, 0x01fff) AM_READ(MRA8_RAM)	/* or ROM */
-	AM_RANGE(0x02000, 0x02fff) AM_READ(MRA8_RAM)	/* or ROM */
-	AM_RANGE(0x03000, 0x037ff) AM_READ(MRA8_RAM)	// argusg wants to check this
-	AM_RANGE(0x03800, 0x03bff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x04000, 0x04fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x05800, 0x05800) AM_READ(input_port_0_r)	/* DSW */
-	AM_RANGE(0x05801, 0x05801) AM_READ(input_port_1_r)	/* buttons */
-	AM_RANGE(0x05802, 0x05802) AM_READ(gottlieb_track_0_r)	/* trackball H */
-	AM_RANGE(0x05803, 0x05803) AM_READ(gottlieb_track_1_r)	/* trackball V */
+	AM_RANGE(0x00000, 0x00fff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x01000, 0x01fff) AM_RAM AM_REGION(REGION_CPU1, 0x1000)	/* or ROM */
+	AM_RANGE(0x02000, 0x02fff) AM_RAM AM_REGION(REGION_CPU1, 0x2000) 	/* or ROM */
+	AM_RANGE(0x03000, 0x037ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	// argusg wants to check this
+	AM_RANGE(0x03800, 0x03bff) AM_MIRROR(0x0400) AM_READWRITE(MRA8_RAM, gottlieb_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x04000, 0x04fff) AM_READWRITE(MRA8_RAM, gottlieb_charram_w) AM_BASE(&gottlieb_charram)
+	AM_RANGE(0x05800, 0x05800) AM_READWRITE(input_port_0_r, watchdog_reset_w)	/* DSW */
+	AM_RANGE(0x05801, 0x05801) AM_READWRITE(input_port_1_r, gottlieb_track_reset_w)	/* buttons */
+	AM_RANGE(0x05802, 0x05802) AM_READWRITE(gottlieb_track_0_r, gottlieb_sh_w)	/* trackball H */
+	AM_RANGE(0x05803, 0x05803) AM_READWRITE(gottlieb_track_1_r, gottlieb_video_outputs_w)	/* trackball V */
 	AM_RANGE(0x05804, 0x05804) AM_READ(input_port_4_r)	/* joystick */
 	AM_RANGE(0x05805, 0x05807) AM_READ(gottlieb_laserdisc_status_r)
-	AM_RANGE(0x06000, 0x0ffff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x06000, 0x0ffff) AM_ROM
 ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( gottlieb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(16) )
-	AM_RANGE(0x00000, 0x00fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x01000, 0x01fff) AM_WRITE(MWA8_RAM)	/* ROM in Krull */
-	AM_RANGE(0x02000, 0x02fff) AM_WRITE(MWA8_RAM)	/* ROM in Krull and 3 Stooges */
-	AM_RANGE(0x03000, 0x037ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size) // argusg wants to check this
-	AM_RANGE(0x03800, 0x03bff) AM_WRITE(gottlieb_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x03c00, 0x03fff) AM_WRITE(gottlieb_videoram_w)	/* mirror address, some games write to it */
-	AM_RANGE(0x04000, 0x04fff) AM_WRITE(gottlieb_charram_w) AM_BASE(&gottlieb_charram)
-	AM_RANGE(0x05000, 0x0501f) AM_WRITE(gottlieb_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0x05800, 0x05800) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x05801, 0x05801) AM_WRITE(gottlieb_track_reset_w)
-	AM_RANGE(0x05802, 0x05802) AM_WRITE(gottlieb_sh_w) /* sound/speech command */
-	AM_RANGE(0x05803, 0x05803) AM_WRITE(gottlieb_video_outputs_w)       /* OUT1 */
-	AM_RANGE(0x06000, 0x0ffff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
-
-
-/* same as above, different IN4 */
-static ADDRESS_MAP_START( stooges_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(16) )
-	AM_RANGE(0x00000, 0x00fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x01000, 0x01fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x02000, 0x02fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x03800, 0x03bff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x04000, 0x04fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x05800, 0x05800) AM_READ(input_port_0_r)	/* DSW */
-	AM_RANGE(0x05801, 0x05801) AM_READ(input_port_1_r)	/* buttons */
-	AM_RANGE(0x05802, 0x05802) AM_READ(gottlieb_track_0_r)	/* trackball H */
-	AM_RANGE(0x05803, 0x05803) AM_READ(gottlieb_track_1_r)	/* trackball V */
-	AM_RANGE(0x05804, 0x05804) AM_READ(stooges_IN4_r)	/* joystick */
-	AM_RANGE(0x06000, 0x0ffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-/* same as above, different video_outputs */
-static ADDRESS_MAP_START( stooges_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(16) )
-	AM_RANGE(0x00000, 0x00fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x01000, 0x01fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x02000, 0x02fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x03000, 0x030ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x03800, 0x03bff) AM_WRITE(gottlieb_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x03c00, 0x03fff) AM_WRITE(gottlieb_videoram_w)	/* mirror address, some games write to it */
-	AM_RANGE(0x04000, 0x04fff) AM_WRITE(gottlieb_charram_w) AM_BASE(&gottlieb_charram)
-	AM_RANGE(0x05000, 0x0501f) AM_WRITE(gottlieb_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0x05800, 0x05800) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x05801, 0x05801) AM_WRITE(gottlieb_track_reset_w)
-	AM_RANGE(0x05802, 0x05802) AM_WRITE(gottlieb_sh_w) /* sound/speech command */
-	AM_RANGE(0x05803, 0x05803) AM_WRITE(stooges_output_w)       /* OUT1 */
-	AM_RANGE(0x06000, 0x0ffff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
-
 
 
 ADDRESS_MAP_START( gottlieb_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1607,7 +1542,7 @@ static MACHINE_DRIVER_START( gottlieb )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", I86, 5000000)	/* 5 MHz */
-	MDRV_CPU_PROGRAM_MAP(gottlieb_readmem,gottlieb_writemem)
+	MDRV_CPU_PROGRAM_MAP(gottlieb_map,0)
 	MDRV_CPU_VBLANK_INT(gottlieb_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", M6502, 3579545/4)	/* the board can be set to /2 as well */
@@ -1643,7 +1578,7 @@ static MACHINE_DRIVER_START( reactor )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gottlieb)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(reactor_readmem, reactor_writemem)
+	MDRV_CPU_PROGRAM_MAP(reactor_map,0)
 
 	MDRV_NVRAM_HANDLER(NULL)
 
@@ -1683,7 +1618,7 @@ static MACHINE_DRIVER_START( gottlieb2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", I86, 5000000)	/* 5 MHz */
-	MDRV_CPU_PROGRAM_MAP(gottlieb_readmem,gottlieb_writemem)
+	MDRV_CPU_PROGRAM_MAP(gottlieb_map,0)
 	MDRV_CPU_VBLANK_INT(gottlieb_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", M6502, 1000000)	/* 1 MHz */
@@ -1731,10 +1666,6 @@ static MACHINE_DRIVER_START( stooges )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(gottlieb2)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(stooges_readmem,stooges_writemem)
-
-	/* video hardware */
 	MDRV_GFXDECODE(charRAM_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
@@ -2316,6 +2247,13 @@ static DRIVER_INIT( gottlieb )
 	gottlieb_sound_init();
 }
 
+static DRIVER_INIT( stooges )
+{
+	gottlieb_sound_init();
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05804, 0x05804, 0, 0, stooges_IN4_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05803, 0x05803, 0, 0, stooges_output_w);
+}
+
 static DRIVER_INIT( laserdsc )
 {
 	gottlieb_sound_init();
@@ -2345,6 +2283,6 @@ GAME( 1983, qbertqub, 0,        qbert,    qbertqub, 0,        ROT270, "Mylstar",
 GAME( 1983, screwloo, 0,        gottlieb2,screwloo, gottlieb, ROT0,   "Mylstar", "Screw Loose (prototype)", 0 )
 GAME( 1984, curvebal, 0,        gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball", 0 )
 GAME( 1984, usvsthem, 0,        gottlieb2,usvsthem, laserdsc, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
-GAME( 1984, 3stooges, 0,        stooges,  3stooges, gottlieb, ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", GAME_IMPERFECT_SOUND )
+GAME( 1984, 3stooges, 0,        stooges,  3stooges, stooges,  ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", GAME_IMPERFECT_SOUND )
 GAME( 1984, vidvince, 0,        vidvince, vidvince, gottlieb, ROT0,   "Mylstar", "Video Vince and the Game Factory (prototype)", GAME_IMPERFECT_GRAPHICS ) // sprite wrapping issues
 GAME( 1984, wizwarz,  0,        gottlieb2,wizwarz,  gottlieb, ROT0,   "Mylstar", "Wiz Warz (prototype)", 0 )

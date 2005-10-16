@@ -33,6 +33,7 @@ MACHINE_INIT( simpsons );
 NVRAM_HANDLER( simpsons );
 extern int simpsons_firq_enabled;
 
+
 /***************************************************************************
 
   Memory Maps
@@ -40,7 +41,7 @@ extern int simpsons_firq_enabled;
 ***************************************************************************/
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_BANK3)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1f80, 0x1f80) AM_READ(input_port_4_r)
 	AM_RANGE(0x1f81, 0x1f81) AM_READ(simpsons_eeprom_r)
 	AM_RANGE(0x1f90, 0x1f90) AM_READ(input_port_0_r)
@@ -53,8 +54,6 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1fca, 0x1fca) AM_READ(watchdog_reset_r)
 	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK4)
 	AM_RANGE(0x0000, 0x3fff) AM_READ(K052109_r)
-	AM_RANGE(0x4856, 0x4856) AM_READ(simpsons_speedup2_r)
-	AM_RANGE(0x4942, 0x4942) AM_READ(simpsons_speedup1_r)
 	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)

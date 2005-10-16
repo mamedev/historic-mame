@@ -14,7 +14,7 @@ static void PENTIUMOP(wrmsr)(void)			// Opcode 0x0f 30
 
 static void PENTIUMOP(rdtsc)(void)			// Opcode 0x0f 31
 {
-	UINT64 ts = I.tsc + I.cycles;
+	UINT64 ts = I.tsc + (I.base_cycles - I.cycles);
 	REG32(EAX) = (UINT32)(ts);
 	REG32(EDX) = (UINT32)(ts >> 32);
 

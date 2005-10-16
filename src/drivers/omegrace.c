@@ -356,7 +356,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) /* Omega Race tries to write there! */
 	AM_RANGE(0x4000, 0x4bff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x5c00, 0x5cff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* NVRAM */
-	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) /* vector ram */
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x8000) /* vector ram */
 	AM_RANGE(0x9000, 0x9fff) AM_WRITE(MWA8_ROM) /* vector rom */
 ADDRESS_MAP_END
 

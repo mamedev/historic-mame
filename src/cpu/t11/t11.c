@@ -29,8 +29,7 @@
 static UINT8 t11_reg_layout[] =
 {
 	T11_PC, T11_SP, T11_PSW, -1,
-	T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, -1,
-	T11_BANK0,T11_BANK1,T11_BANK2,T11_BANK3, T11_BANK4,T11_BANK5,T11_BANK6,T11_BANK7, 0
+	T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, 0
 };
 
 
@@ -58,7 +57,6 @@ typedef struct
     PAIR	psw;
     UINT16	op;
     UINT8	wait_state;
-    UINT8 *	bank[8];
     UINT8	irq_state;
     int		interrupt_cycles;
     int		(*irq_callback)(int irqline);
@@ -106,9 +104,9 @@ static int	t11_ICount;
 
 INLINE int ROPCODE(void)
 {
-	int pc = PCD;
+	int val = cpu_readop16(PC);
 	PC += 2;
-	return *(UINT16 *)(&t11.bank[pc >> 13][pc & 0x1fff]);
+	return val;
 }
 
 
@@ -255,6 +253,7 @@ static void t11_check_irqs(void)
 		PUSH(PC);
 		PCD = new_pc;
 		PSW = new_psw;
+		change_pc(PC);
 		t11_check_irqs();
 
 		/* count cycles and clear the WAIT flag */
@@ -303,6 +302,7 @@ static void t11_set_context(void *src)
 {
 	if (src)
 		t11 = *(t11_Regs *)src;
+	change_pc(PC);
 	t11_check_irqs();
 }
 
@@ -340,7 +340,6 @@ static void t11_reset(void *param)
 		0x1000, 0x0000, 0xf600, 0xf400
 	};
 	struct t11_setup *setup = param;
-	int i;
 
 	/* reset the state */
 	memset(&t11, 0, sizeof(t11));
@@ -350,13 +349,10 @@ static void t11_reset(void *param)
 
 	/* initial PC comes from the setup word */
 	PC = initial_pc[setup->mode >> 13];
+	change_pc(PC);
 
 	/* PSW starts off at highest priority */
 	PSW = 0xe0;
-
-	/* initialize the banking */
-	for (i = 0; i < 8; i++)
-		t11.bank[i] = &opcode_arg_base[i * 0x2000];
 
 	/* initialize the IRQ state */
 	t11.irq_state = 0;
@@ -456,7 +452,7 @@ static void t11_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + T11_IRQ3:		set_irq_line(T11_IRQ3, info->i);		break;
 
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + T11_PC:				PC = info->i; /* change_pc not needed */ break;
+		case CPUINFO_INT_REGISTER + T11_PC:				PC = info->i; change_pc(PC); 			break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + T11_SP:				SP = info->i;							break;
 		case CPUINFO_INT_REGISTER + T11_PSW:			PSW = info->i;							break;
@@ -466,14 +462,6 @@ static void t11_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + T11_R3:				REGW(3) = info->i;						break;
 		case CPUINFO_INT_REGISTER + T11_R4:				REGW(4) = info->i;						break;
 		case CPUINFO_INT_REGISTER + T11_R5:				REGW(5) = info->i;						break;
-		case CPUINFO_INT_REGISTER + T11_BANK0:			t11.bank[0] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK1:			t11.bank[1] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK2:			t11.bank[2] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK3:			t11.bank[3] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK4:			t11.bank[4] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK5:			t11.bank[5] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK6:			t11.bank[6] = &opcode_arg_base[info->i];			break;
-		case CPUINFO_INT_REGISTER + T11_BANK7:			t11.bank[7] = &opcode_arg_base[info->i];			break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					t11.irq_callback = info->irqcallback;	break;
@@ -529,14 +517,6 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + T11_R3:				info->i = REGD(3);						break;
 		case CPUINFO_INT_REGISTER + T11_R4:				info->i = REGD(4);						break;
 		case CPUINFO_INT_REGISTER + T11_R5:				info->i = REGD(5);						break;
-		case CPUINFO_INT_REGISTER + T11_BANK0:			info->i = (unsigned)(t11.bank[0] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK1:			info->i = (unsigned)(t11.bank[1] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK2:			info->i = (unsigned)(t11.bank[2] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK3:			info->i = (unsigned)(t11.bank[3] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK4:			info->i = (unsigned)(t11.bank[4] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK5:			info->i = (unsigned)(t11.bank[5] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK6:			info->i = (unsigned)(t11.bank[6] - opcode_arg_base); break;
-		case CPUINFO_INT_REGISTER + T11_BANK7:			info->i = (unsigned)(t11.bank[7] - opcode_arg_base); break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = t11_set_info;			break;
@@ -581,13 +561,5 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + T11_R3:				sprintf(info->s = cpuintrf_temp_str(), "R3:%04X", t11.reg[3].w.l); break;
 		case CPUINFO_STR_REGISTER + T11_R4:				sprintf(info->s = cpuintrf_temp_str(), "R4:%04X", t11.reg[4].w.l); break;
 		case CPUINFO_STR_REGISTER + T11_R5:				sprintf(info->s = cpuintrf_temp_str(), "R5:%04X", t11.reg[5].w.l); break;
-		case CPUINFO_STR_REGISTER + T11_BANK0:			sprintf(info->s = cpuintrf_temp_str(), "B0:%06X", (unsigned)(t11.bank[0] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK1:			sprintf(info->s = cpuintrf_temp_str(), "B1:%06X", (unsigned)(t11.bank[1] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK2:			sprintf(info->s = cpuintrf_temp_str(), "B2:%06X", (unsigned)(t11.bank[2] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK3:			sprintf(info->s = cpuintrf_temp_str(), "B3:%06X", (unsigned)(t11.bank[3] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK4:			sprintf(info->s = cpuintrf_temp_str(), "B4:%06X", (unsigned)(t11.bank[4] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK5:			sprintf(info->s = cpuintrf_temp_str(), "B5:%06X", (unsigned)(t11.bank[5] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK6:			sprintf(info->s = cpuintrf_temp_str(), "B6:%06X", (unsigned)(t11.bank[6] - opcode_arg_base)); break;
-		case CPUINFO_STR_REGISTER + T11_BANK7:			sprintf(info->s = cpuintrf_temp_str(), "B7:%06X", (unsigned)(t11.bank[7] - opcode_arg_base)); break;
 	}
 }

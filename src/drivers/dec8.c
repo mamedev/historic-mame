@@ -306,17 +306,20 @@ static WRITE8_HANDLER( lastmiss_i8751_w )
 		break;
 	}
 
-	/* Coins are controlled by the i8751 */
- 	if ((readinputport(2)&3)==3 && !latch) latch=1;
- 	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x400;i8751_return=0x400;return;}
-	if (i8751_value==0x007a) i8751_return=0x0185; /* Japan ID code */
-	if (i8751_value==0x007b) i8751_return=0x0184; /* USA ID code */
-	if (i8751_value==0x0001) {coin=snd=0;}//???
-	if (i8751_value==0x0000) {i8751_return=0x0184;}//???
-	if (i8751_value==0x0401) i8751_return=0x0184; //???
-	if ((i8751_value>>8)==0x01) i8751_return=0x0184; /* Coinage setup */
-	if ((i8751_value>>8)==0x02) {i8751_return=snd | ((coin / 10) << 4) | (coin % 10); snd=0;} /* Coin return */
-	if ((i8751_value>>8)==0x03) {i8751_return=0; coin--; } /* Coin clear */
+	if(offset==0)
+	{
+		/* Coins are controlled by the i8751 */
+ 		if ((readinputport(2)&3)==3 && !latch) latch=1;
+ 		if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x400;i8751_return=0x400;return;}
+		if (i8751_value==0x007a) i8751_return=0x0185; /* Japan ID code */
+		if (i8751_value==0x007b) i8751_return=0x0184; /* USA ID code */
+		if (i8751_value==0x0001) {coin=snd=0;}//???
+		if (i8751_value==0x0000) {i8751_return=0x0184;}//???
+		if (i8751_value==0x0401) i8751_return=0x0184; //???
+		if ((i8751_value>>8)==0x01) i8751_return=0x0184; /* Coinage setup */
+		if ((i8751_value>>8)==0x02) {i8751_return=snd | ((coin / 10) << 4) | (coin % 10); snd=0;} /* Coin return */
+		if ((i8751_value>>8)==0x03 && coin) {i8751_return=0; coin--; } /* Coin clear */
+	}
 }
 
 static WRITE8_HANDLER( csilver_i8751_w )
@@ -334,14 +337,17 @@ static WRITE8_HANDLER( csilver_i8751_w )
 		break;
 	}
 
-	/* Coins are controlled by the i8751 */
- 	if ((readinputport(2)&3)==3 && !latch) latch=1;
- 	if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x1200; i8751_return=0x1200;return;}
+	if(offset==0)
+	{
+		/* Coins are controlled by the i8751 */
+ 		if ((readinputport(2)&3)==3 && !latch) latch=1;
+ 		if ((readinputport(2)&3)!=3 && latch) {coin++; latch=0;snd=0x1200; i8751_return=0x1200;return;}
 
-	if (i8751_value==0x054a) {i8751_return=~(0x4a); coin=0; snd=0;} /* Captain Silver ID */
-	if ((i8751_value>>8)==0x01) i8751_return=0; /* Coinage - Not Supported */
-	if ((i8751_value>>8)==0x02) {i8751_return=snd | coin; snd=0; } /* Coin Return */
-	if (i8751_value==0x0003 && coin) {i8751_return=0; coin--;} /* Coin Clear */
+		if (i8751_value==0x054a) {i8751_return=~(0x4a); coin=0; snd=0;} /* Captain Silver ID */
+		if ((i8751_value>>8)==0x01) i8751_return=0; /* Coinage - Not Supported */
+		if ((i8751_value>>8)==0x02) {i8751_return=snd | coin; snd=0; } /* Coin Return */
+		if ((i8751_value>>8)==0x03 && coin) {i8751_return=0; coin--;} /* Coin Clear */
+	}
 }
 
 static WRITE8_HANDLER( garyoret_i8751_w )

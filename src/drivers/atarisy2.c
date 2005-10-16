@@ -155,6 +155,8 @@ static UINT8 which_adc;
 static UINT8 p2portwr_state;
 static UINT8 p2portrd_state;
 
+static UINT16 *rombank1, *rombank2;
+
 
 
 /*************************************
@@ -213,6 +215,15 @@ static void scanline_update(int scanline)
  *
  *************************************/
 
+static offs_t atarisy2_opbase_handler(offs_t pc)
+{
+	/* make sure slapstic area looks like ROM */
+	if (pc >= 0x8000 && pc < 0x8200)
+		return 0x8200;
+	return pc;
+}
+
+
 static MACHINE_INIT( atarisy2 )
 {
 	atarigen_eeprom_reset();
@@ -220,6 +231,7 @@ static MACHINE_INIT( atarisy2 )
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_sound_io_reset(1);
 	atarigen_scanline_timer_reset(scanline_update, 64);
+	memory_set_opbase_handler(0, atarisy2_opbase_handler);
 
 	tms5220_data_strobe = 1;
 
@@ -310,9 +322,7 @@ static WRITE16_HANDLER( bankselect_w )
 	bankselect[offset] = newword;
 
 	base = &memory_region(REGION_CPU1)[bankoffset[(newword >> 10) & 0x3f]];
-
-	memory_set_bankptr(1 + offset, base);
-	activecpu_set_reg(T11_BANK2 + offset, base - opcode_arg_base);
+	memcpy(offset ? rombank2 : rombank1, base, 0x2000);
 }
 
 
@@ -659,10 +669,10 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x1800, 0x1801) AM_READWRITE(switch_r, watchdog_reset16_w)
 	AM_RANGE(0x1c00, 0x1c01) AM_READ(sound_r)
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(atarisy2_videoram_r, atarisy2_videoram_w)
-	AM_RANGE(0x4000, 0x5fff) AM_ROMBANK(1)
-	AM_RANGE(0x6000, 0x7fff) AM_ROMBANK(2)
+	AM_RANGE(0x4000, 0x5fff) AM_ROM AM_BASE(&rombank1)
+	AM_RANGE(0x6000, 0x7fff) AM_ROM AM_BASE(&rombank2)
 	AM_RANGE(0x8000, 0x81ff) AM_READWRITE(atarisy2_slapstic_r, atarisy2_slapstic_w) AM_BASE(&atarisy2_slapstic)
-	AM_RANGE(0x8200, 0xffff) AM_ROM
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 

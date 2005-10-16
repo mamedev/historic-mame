@@ -88,6 +88,10 @@
 #define IDE_COMMAND_SET_FEATURES		0xef
 #define IDE_COMMAND_SECURITY_UNLOCK		0xf2
 #define IDE_COMMAND_UNKNOWN_F9			0xf9
+#define IDE_COMMAND_VERIFY_MULTIPLE		0x40
+#define IDE_COMMAND_ATAPI_IDENTIFY		0xa1
+#define IDE_COMMAND_RECALIBRATE			0x10
+#define IDE_COMMAND_IDLE_IMMEDIATE		0xe1
 
 #define IDE_ERROR_NONE					0x00
 #define IDE_ERROR_DEFAULT				0x01
@@ -123,6 +127,7 @@ struct ide_state
 
 	UINT16	block_count;
 	UINT16	sectors_until_int;
+	UINT8	verify_only;
 
 	UINT8	dma_active;
 	UINT8	dma_cpu;
@@ -739,8 +744,9 @@ static void continue_read(struct ide_state *ide)
 	/* reset the totals */
 	ide->buffer_offset = 0;
 
-	/* clear the buffer ready flag */
+	/* clear the buffer ready and busy flag */
 	ide->status &= ~IDE_STATUS_BUFFER_READY;
+	ide->status &= ~IDE_STATUS_BUSY;
 
 	if (ide->master_password_enable || ide->user_password_enable)
 	{
@@ -823,10 +829,11 @@ static void read_sector_done(int which)
 		count = hard_disk_read(ide->disk, lba, 1, ide->buffer);
 
 	/* by default, mark the buffer ready and the seek complete */
-	ide->status |= IDE_STATUS_BUFFER_READY;
+	if (!ide->verify_only)
+		ide->status |= IDE_STATUS_BUFFER_READY;
 	ide->status |= IDE_STATUS_SEEK_COMPLETE;
 
-	/* and clear the busy adn error flags */
+	/* and clear the busy and error flags */
 	ide->status &= ~IDE_STATUS_ERROR;
 	ide->status &= ~IDE_STATUS_BUSY;
 
@@ -842,18 +849,21 @@ static void read_sector_done(int which)
 		ide->error = IDE_ERROR_NONE;
 
 		/* signal an interrupt */
-		if (--ide->sectors_until_int == 0 || ide->sector_count == 1)
+		if (!ide->verify_only)
+			ide->sectors_until_int--;
+		if (ide->sectors_until_int == 0 || ide->sector_count == 1)
 		{
 			ide->sectors_until_int = ((ide->command == IDE_COMMAND_READ_MULTIPLE_BLOCK) ? ide->block_count : 1);
 			signal_interrupt(ide);
 		}
 
-		/* keep going for DMA */
+		/* handle DMA */
 		if (ide->dma_active)
-		{
 			write_buffer_to_dma(ide);
+
+		/* if we're just verifying or if we DMA'ed the data, we can read the next sector */
+		if (ide->verify_only || ide->dma_active)
 			continue_read(ide);
-		}
 	}
 
 	/* if we got an error, we need to report it */
@@ -1091,6 +1101,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			ide->buffer_offset = 0;
 			ide->sectors_until_int = 1;
 			ide->dma_active = 0;
+			ide->verify_only = 0;
 
 			/* start the read going */
 			read_first_sector(ide);
@@ -1104,6 +1115,21 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			ide->buffer_offset = 0;
 			ide->sectors_until_int = 1;
 			ide->dma_active = 0;
+			ide->verify_only = 0;
+
+			/* start the read going */
+			read_first_sector(ide);
+			break;
+
+		case IDE_COMMAND_VERIFY_MULTIPLE:
+			LOGPRINT(("IDE Read verify multiple with retries: C=%d H=%d S=%d LBA=%d count=%d\n",
+				ide->cur_cylinder, ide->cur_head, ide->cur_sector, lba_address(ide), ide->sector_count));
+
+			/* reset the buffer */
+			ide->buffer_offset = 0;
+			ide->sectors_until_int = 1;
+			ide->dma_active = 0;
+			ide->verify_only = 1;
 
 			/* start the read going */
 			read_first_sector(ide);
@@ -1117,6 +1143,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			ide->buffer_offset = 0;
 			ide->sectors_until_int = ide->sector_count;
 			ide->dma_active = 1;
+			ide->verify_only = 0;
 
 			/* start the read going */
 			if (ide->bus_master_command & 1)
@@ -1192,6 +1219,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 			/* indicate everything is ready */
 			ide->status |= IDE_STATUS_BUFFER_READY;
 			ide->status |= IDE_STATUS_SEEK_COMPLETE;
+			ide->status |= IDE_STATUS_DRIVE_READY;
 
 			/* and clear the busy adn error flags */
 			ide->status &= ~IDE_STATUS_ERROR;
@@ -1300,7 +1328,10 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 
 				/* if we're at the end of the buffer, handle it */
 				if (ide->buffer_offset >= IDE_DISK_SECTOR_SIZE)
+				{
+					LOG(("%08X:IDE completed PIO read\n", activecpu_get_previouspc()));
 					continue_read(ide);
+				}
 			}
 			break;
 
@@ -1409,6 +1440,7 @@ static void ide_controller_write(struct ide_state *ide, offs_t offset, int size,
 				/* if we're at the end of the buffer, handle it */
 				if (ide->buffer_offset >= IDE_DISK_SECTOR_SIZE)
 				{
+					LOG(("%08X:IDE completed PIO write\n", activecpu_get_previouspc()));
 					if (ide->command != IDE_COMMAND_SECURITY_UNLOCK)
 						continue_write(ide);
 					else

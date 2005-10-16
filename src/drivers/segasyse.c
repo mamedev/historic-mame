@@ -943,7 +943,7 @@ ROM_START( fantzn2 )
 ROM_END
 
 ROM_START( opaopa )
-	ROM_REGION( 0x30000, REGION_USER1, 0 )
+	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "epr11224.ic7",	0x00000, 0x08000, CRC(024b1244) SHA1(59a522ac3d98982cc4ddb1c81f9584d3da453649) ) /* Fixed Code */
 
 	/* The following are 8 0x4000 banks that get mapped to reads from 0x8000 - 0xbfff */

@@ -1205,9 +1205,17 @@ static void execute_dump(int ref, int params, const char *param[])
 			case 1:
 				for (j = 0; j < 16; j++)
 				{
-					UINT8 byte = debug_read_byte(ref, i + j);
 					if (i + j <= endoffset)
-						outdex += sprintf(&output[outdex], " %02X", byte);
+					{
+						offs_t curaddr = i + j;
+						if (!info->translate || (*info->translate)(spacenum, &curaddr))
+						{
+							UINT8 byte = debug_read_byte(ref, i + j);
+							outdex += sprintf(&output[outdex], " %02X", byte);
+						}
+						else
+							outdex += sprintf(&output[outdex], " **");
+					}
 					else
 						outdex += sprintf(&output[outdex], "   ");
 				}
@@ -1216,9 +1224,17 @@ static void execute_dump(int ref, int params, const char *param[])
 			case 2:
 				for (j = 0; j < 16; j += 2)
 				{
-					UINT16 word = debug_read_word(ref, i + j);
 					if (i + j <= endoffset)
-						outdex += sprintf(&output[outdex], " %04X", word);
+					{
+						offs_t curaddr = i + j;
+						if (!info->translate || (*info->translate)(spacenum, &curaddr))
+						{
+							UINT16 word = debug_read_word(ref, i + j);
+							outdex += sprintf(&output[outdex], " %04X", word);
+						}
+						else
+							outdex += sprintf(&output[outdex], " ****");
+					}
 					else
 						outdex += sprintf(&output[outdex], "     ");
 				}
@@ -1227,9 +1243,17 @@ static void execute_dump(int ref, int params, const char *param[])
 			case 4:
 				for (j = 0; j < 16; j += 4)
 				{
-					UINT32 dword = debug_read_dword(ref, i + j);
 					if (i + j <= endoffset)
-						outdex += sprintf(&output[outdex], " %08X", dword);
+					{
+						offs_t curaddr = i + j;
+						if (!info->translate || (*info->translate)(spacenum, &curaddr))
+						{
+							UINT32 dword = debug_read_dword(ref, i + j);
+							outdex += sprintf(&output[outdex], " %08X", dword);
+						}
+						else
+							outdex += sprintf(&output[outdex], " ********");
+					}
 					else
 						outdex += sprintf(&output[outdex], "         ");
 				}
@@ -1238,9 +1262,17 @@ static void execute_dump(int ref, int params, const char *param[])
 			case 8:
 				for (j = 0; j < 16; j += 8)
 				{
-					UINT64 qword = debug_read_qword(ref, i + j);
 					if (i + j <= endoffset)
-						outdex += sprintf(&output[outdex], " %08X%08X", (UINT32)(qword >> 32), (UINT32)qword);
+					{
+						offs_t curaddr = i + j;
+						if (!info->translate || (*info->translate)(spacenum, &curaddr))
+						{
+							UINT64 qword = debug_read_qword(ref, i + j);
+							outdex += sprintf(&output[outdex], " %08X%08X", (UINT32)(qword >> 32), (UINT32)qword);
+						}
+						else
+							outdex += sprintf(&output[outdex], " ****************");
+					}
 					else
 						outdex += sprintf(&output[outdex], "                 ");
 				}
@@ -1253,8 +1285,14 @@ static void execute_dump(int ref, int params, const char *param[])
 			outdex += sprintf(&output[outdex], "  ");
 			for (j = 0; j < 16 && (i + j) <= endoffset; j++)
 			{
-				UINT8 byte = debug_read_byte(ref, i + j);
-				outdex += sprintf(&output[outdex], "%c", (byte >= 32 && byte < 128) ? byte : '.');
+				offs_t curaddr = i + j;
+				if (!info->translate || (*info->translate)(spacenum, &curaddr))
+				{
+					UINT8 byte = debug_read_byte(ref, i + j);
+					outdex += sprintf(&output[outdex], "%c", (byte >= 32 && byte < 128) ? byte : '.');
+				}
+				else
+					outdex += sprintf(&output[outdex], " ");
 			}
 		}
 
@@ -1384,6 +1422,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 	UINT64 offset, length, bytes = 1, cpunum = cpu_getactivecpu();
 	const struct debug_cpu_info *info;
 	int minbytes, maxbytes, byteswidth;
+	int use_new_dasm;
 	FILE *f = NULL;
 	int i, j;
 
@@ -1425,27 +1464,54 @@ static void execute_dasm(int ref, int params, const char *param[])
 
 	/* now write the data out */
 	cpuintrf_push_context(cpunum);
+	use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 	for (i = 0; i < length; )
 	{
 		int pcbyte = ADDR2BYTE(offset + i, info, ADDRESS_SPACE_PROGRAM);
 		char output[200], disasm[200];
 		UINT64 dummyreadop;
+		offs_t tempaddr;
 		int outdex = 0;
 		int numbytes;
 
 		/* print the address */
 		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
 
-		/* get the disassembly up front, but only if mapped */
-		if (memory_get_op_ptr(cpunum, pcbyte) != NULL || (info->readop && (*info->readop)(pcbyte, 1, &dummyreadop)))
+		/* make sure we can translate the address */
+		tempaddr = pcbyte;
+		if (!info->translate || (*info->translate)(ADDRESS_SPACE_PROGRAM, &tempaddr))
 		{
-			memory_set_opbase(pcbyte);
-			i += numbytes = activecpu_dasm(disasm, offset + i) & DASMFLAG_LENGTHMASK;
-		}
-		else
-		{
-			sprintf(disasm, "<unmapped>");
-			i += numbytes = 1;
+			/* if we can use new disassembly, do it */
+			if (use_new_dasm)
+			{
+				UINT8 opbuf[64], argbuf[64];
+
+				/* fetch the bytes up to the maximum */
+				for (numbytes = 0; numbytes < maxbytes; numbytes++)
+				{
+					opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+					argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
+				}
+
+				/* disassemble the result */
+				i += numbytes = activecpu_dasm_new(disasm, offset + i, opbuf, argbuf, maxbytes) & DASMFLAG_LENGTHMASK;
+			}
+
+			/* otherwise, we need to use the old, risky way */
+			else
+			{
+				/* get the disassembly up front, but only if mapped */
+				if (memory_get_op_ptr(cpunum, pcbyte) != NULL || (info->readop && (*info->readop)(pcbyte, 1, &dummyreadop)))
+				{
+					memory_set_opbase(pcbyte);
+					i += numbytes = activecpu_dasm(disasm, offset + i) & DASMFLAG_LENGTHMASK;
+				}
+				else
+				{
+					sprintf(disasm, "<unmapped>");
+					i += numbytes = 1;
+				}
+			}
 		}
 
 		/* print the bytes */
@@ -1457,23 +1523,23 @@ static void execute_dasm(int ref, int params, const char *param[])
 			{
 				case 1:
 					for (j = 0; j < numbytes; j++)
-						outdex += sprintf(&output[outdex], "%02X ", (UINT32)debug_read_opcode(pcbyte + j, 1));
+						outdex += sprintf(&output[outdex], "%02X ", (UINT32)debug_read_opcode(pcbyte + j, 1, FALSE));
 					break;
 
 				case 2:
 					for (j = 0; j < numbytes; j += 2)
-						outdex += sprintf(&output[outdex], "%04X ", (UINT32)debug_read_opcode(pcbyte + j, 2));
+						outdex += sprintf(&output[outdex], "%04X ", (UINT32)debug_read_opcode(pcbyte + j, 2, FALSE));
 					break;
 
 				case 4:
 					for (j = 0; j < numbytes; j += 4)
-						outdex += sprintf(&output[outdex], "%08X ", (UINT32)debug_read_opcode(pcbyte + j, 4));
+						outdex += sprintf(&output[outdex], "%08X ", (UINT32)debug_read_opcode(pcbyte + j, 4, FALSE));
 					break;
 
 				case 8:
 					for (j = 0; j < numbytes; j += 8)
 					{
-						UINT64 val = debug_read_opcode(pcbyte + j, 8);
+						UINT64 val = debug_read_opcode(pcbyte + j, 8, FALSE);
 						outdex += sprintf(&output[outdex], "%08X%08X ", (UINT32)(val >> 32), (UINT32)val);
 					}
 					break;

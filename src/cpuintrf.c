@@ -149,6 +149,7 @@ void gms30c2132_get_info(UINT32 state, union cpuinfo *info);
 void gms30c2216_get_info(UINT32 state, union cpuinfo *info);
 void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
 void i386_get_info(UINT32 state, union cpuinfo *info);
+void i486_get_info(UINT32 state, union cpuinfo *info);
 void pentium_get_info(UINT32 state, union cpuinfo *info);
 void mediagx_get_info(UINT32 state, union cpuinfo *info);
 void i960_get_info(UINT32 state, union cpuinfo *info);
@@ -889,15 +890,49 @@ int cpuintrf_init(void)
 		intf->get_info = cpuintrf_map[mapindex].get_info;
 
 		/* bootstrap the rest of the function pointers */
-		(*intf->get_info)(CPUINFO_PTR_SET_INFO,    &info);	intf->set_info = info.setinfo;
-		(*intf->get_info)(CPUINFO_PTR_GET_CONTEXT, &info);	intf->get_context = info.getcontext;
-		(*intf->get_info)(CPUINFO_PTR_SET_CONTEXT, &info);	intf->set_context = info.setcontext;
-		(*intf->get_info)(CPUINFO_PTR_INIT,        &info);	intf->init = info.init;
-		(*intf->get_info)(CPUINFO_PTR_RESET,       &info);	intf->reset = info.reset;
-		(*intf->get_info)(CPUINFO_PTR_EXIT,        &info);	intf->exit = info.exit;
-		(*intf->get_info)(CPUINFO_PTR_EXECUTE,     &info);	intf->execute = info.execute;
-		(*intf->get_info)(CPUINFO_PTR_BURN,        &info);	intf->burn = info.burn;
-		(*intf->get_info)(CPUINFO_PTR_DISASSEMBLE, &info);	intf->disassemble = info.disassemble;
+		info.setinfo = NULL;
+		(*intf->get_info)(CPUINFO_PTR_SET_INFO, &info);
+		intf->set_info = info.setinfo;
+
+		info.getcontext = NULL;
+		(*intf->get_info)(CPUINFO_PTR_GET_CONTEXT, &info);
+		intf->get_context = info.getcontext;
+
+		info.setcontext = NULL;
+		(*intf->get_info)(CPUINFO_PTR_SET_CONTEXT, &info);
+		intf->set_context = info.setcontext;
+
+		info.init = NULL;
+		(*intf->get_info)(CPUINFO_PTR_INIT, &info);
+		intf->init = info.init;
+
+		info.reset = NULL;
+		(*intf->get_info)(CPUINFO_PTR_RESET, &info);
+		intf->reset = info.reset;
+
+		info.exit = NULL;
+		(*intf->get_info)(CPUINFO_PTR_EXIT, &info);
+		intf->exit = info.exit;
+
+		info.execute = NULL;
+		(*intf->get_info)(CPUINFO_PTR_EXECUTE, &info);
+		intf->execute = info.execute;
+
+		info.burn = NULL;
+		(*intf->get_info)(CPUINFO_PTR_BURN, &info);
+		intf->burn = info.burn;
+
+		info.disassemble = NULL;
+		(*intf->get_info)(CPUINFO_PTR_DISASSEMBLE, &info);
+		intf->disassemble = info.disassemble;
+
+		info.disassemble_new = NULL;
+		(*intf->get_info)(CPUINFO_PTR_DISASSEMBLE_NEW, &info);
+		intf->disassemble_new = info.disassemble_new;
+
+		info.translate = NULL;
+		(*intf->get_info)(CPUINFO_PTR_TRANSLATE, &info);
+		intf->translate = info.translate;
 
 		/* get the instruction count pointer */
 		(*intf->get_info)(CPUINFO_PTR_INSTRUCTION_COUNTER, &info);	intf->icount = info.icount;
@@ -1129,7 +1164,7 @@ int activecpu_get_icount(void)
 void activecpu_reset_banking(void)
 {
 	VERIFY_ACTIVECPU_VOID(activecpu_reset_banking);
-	memory_set_opbase(activecpu_get_pc_byte());
+	memory_set_opbase(activecpu_get_physical_pc_byte());
 }
 
 
@@ -1153,15 +1188,21 @@ void activecpu_set_input_line(int irqline, int state)
     Get/set PC
 --------------------------*/
 
-offs_t activecpu_get_pc_byte(void)
+offs_t activecpu_get_physical_pc_byte(void)
 {
 	offs_t pc;
 	int shift;
 
-	VERIFY_ACTIVECPU(0, activecpu_get_pc_byte);
+	VERIFY_ACTIVECPU(0, activecpu_get_physical_pc_byte);
 	shift = cpu[activecpu].intf.address_shift;
 	pc = activecpu_get_reg(REG_PC);
-	return ((shift < 0) ? (pc << -shift) : (pc >> shift));
+	if (shift < 0)
+		pc <<= -shift;
+	else
+		pc >>= shift;
+	if (cpu[activecpu].intf.translate)
+		(*cpu[activecpu].intf.translate)(ADDRESS_SPACE_PROGRAM, &pc);
+	return pc;
 }
 
 
@@ -1176,6 +1217,7 @@ void activecpu_set_opbase(unsigned val)
     Disassembly
 --------------------------*/
 
+/* ack - make this horrorshow go away */
 static unsigned internal_dasm(int cpunum, char *buffer, unsigned pc)
 {
 	unsigned result;
@@ -1189,12 +1231,19 @@ static unsigned internal_dasm(int cpunum, char *buffer, unsigned pc)
 }
 
 
-
 unsigned activecpu_dasm(char *buffer, unsigned pc)
 {
 	VERIFY_ACTIVECPU(1, activecpu_dasm);
 	return internal_dasm(activecpu, buffer, pc);
 }
+
+
+unsigned activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
+	VERIFY_ACTIVECPU(1, activecpu_dasm_new);
+	return (*cpu[activecpu].intf.disassemble_new)(buffer, pc, oprom, opram, bytes);
+}
+
 
 
 /*--------------------------
@@ -1351,7 +1400,7 @@ int cpunum_execute(int cpunum, int cycles)
 	VERIFY_CPUNUM(0, cpunum_execute);
 	cpuintrf_push_context(cpunum);
 	executingcpu = cpunum;
-	memory_set_opbase(activecpu_get_pc_byte());
+	memory_set_opbase(activecpu_get_physical_pc_byte());
 	ran = (*cpu[cpunum].intf.execute)(cycles);
 	executingcpu = -1;
 	cpuintrf_pop_context();
@@ -1418,17 +1467,23 @@ void *cpunum_get_context_ptr(int cpunum)
     Get/set PC
 --------------------------*/
 
-offs_t cpunum_get_pc_byte(int cpunum)
+offs_t cpunum_get_physical_pc_byte(int cpunum)
 {
 	offs_t pc;
 	int shift;
 
-	VERIFY_CPUNUM(0, cpunum_get_pc_byte);
+	VERIFY_CPUNUM(0, cpunum_get_physical_pc_byte);
 	shift = cpu[cpunum].intf.address_shift;
 	cpuintrf_push_context(cpunum);
 	pc = activecpu_get_info_int(CPUINFO_INT_PC);
+	if (shift < 0)
+		pc <<= -shift;
+	else
+		pc >>= shift;
+	if (cpu[activecpu].intf.translate)
+		(*cpu[activecpu].intf.translate)(ADDRESS_SPACE_PROGRAM, &pc);
 	cpuintrf_pop_context();
-	return ((shift < 0) ? (pc << -shift) : (pc >> shift));
+	return pc;
 }
 
 
@@ -1445,7 +1500,7 @@ void cpunum_set_opbase(int cpunum, unsigned val)
     Disassembly
 --------------------------*/
 
-unsigned cpunum_dasm(int cpunum, char *buffer, unsigned pc)
+offs_t cpunum_dasm(int cpunum, char *buffer, unsigned pc)
 {
 	unsigned result;
 	VERIFY_CPUNUM(1, cpunum_dasm);
@@ -1454,6 +1509,18 @@ unsigned cpunum_dasm(int cpunum, char *buffer, unsigned pc)
 	cpuintrf_pop_context();
 	return result;
 }
+
+
+offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
+	unsigned result;
+	VERIFY_CPUNUM(1, cpunum_dasm_new);
+	cpuintrf_push_context(cpunum);
+	result = (*cpu[cpunum].intf.disassemble_new)(buffer, pc, oprom, opram, bytes);
+	cpuintrf_pop_context();
+	return result;
+}
+
 
 
 /*--------------------------

@@ -785,6 +785,19 @@ static void BRA_EA(void) _BRA_EA()
 
 static void s2650_init(void)
 {
+	int cpu = cpu_getactivecpu();
+	state_save_register_UINT16("s2650", cpu, "PPC",  &S.ppc, 1);
+	state_save_register_UINT16("s2650", cpu, "PAGE", &S.page, 1);
+	state_save_register_UINT16("s2650", cpu, "IAR",  &S.iar, 1);
+	state_save_register_UINT16("s2650", cpu, "EA",   &S.ea, 1);
+	state_save_register_UINT8 ("s2650", cpu, "PSL",  &S.psl, 1);
+	state_save_register_UINT8 ("s2650", cpu, "PSU",  &S.psu, 1);
+	state_save_register_UINT8 ("s2650", cpu, "R",    &S.r, 1);
+	state_save_register_UINT8 ("s2650", cpu, "REG",  S.reg, 7);
+	state_save_register_UINT8 ("s2650", cpu, "HALT", &S.halt, 1);
+	state_save_register_UINT8 ("s2650", cpu, "IR",   &S.ir, 1);
+	state_save_register_UINT16("s2650", cpu, "RAS",  S.ras, 8);
+	state_save_register_UINT8 ("s2650", cpu, "IRQ_STATE",&S.irq_state, 1);
 }
 
 static void s2650_reset(void *param)
@@ -1470,33 +1483,6 @@ static int s2650_execute(int cycles)
 
 	return cycles - s2650_ICount;
 }
-#if 0
-void s2650_state_save(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file,"s2650",cpu,"PAGE",&S.page,1);
-	state_save_UINT16(file,"s2650",cpu,"IAR",&S.iar,1);
-	state_save_UINT8(file,"s2650",cpu,"PSL",&S.psl,1);
-	state_save_UINT8(file,"s2650",cpu,"PSU",&S.psu,1);
-	state_save_UINT8(file,"s2650",cpu,"REG",S.reg,7);
-	state_save_UINT8(file,"s2650",cpu,"HALT",&S.halt,1);
-	state_save_UINT16(file,"s2650",cpu,"RAS",S.ras,8);
-	state_save_UINT8(file,"s2650",cpu,"IRQ_STATE",&S.irq_state,1);
-}
-
-void s2650_state_load(void *file)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file,"s2650",cpu,"PAGE",&S.page,1);
-	state_load_UINT16(file,"s2650",cpu,"IAR",&S.iar,1);
-	state_load_UINT8(file,"s2650",cpu,"PSL",&S.psl,1);
-	state_load_UINT8(file,"s2650",cpu,"PSU",&S.psu,1);
-	state_load_UINT8(file,"s2650",cpu,"REG",S.reg,7);
-	state_load_UINT8(file,"s2650",cpu,"HALT",&S.halt,1);
-	state_load_UINT16(file,"s2650",cpu,"RAS",S.ras,8);
-	state_load_UINT8(file,"s2650",cpu,"IRQ_STATE",&S.irq_state,1);
-}
-#endif
 
 
 static offs_t s2650_dasm(char *buffer, offs_t pc)

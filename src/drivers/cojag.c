@@ -88,7 +88,6 @@ static UINT32 misc_control_data;
 static UINT8 eeprom_enable;
 
 static UINT32 *rom_base;
-static size_t rom_size;
 
 static struct ide_interface ide_intf =
 {
@@ -109,6 +108,7 @@ static MACHINE_INIT( cojag )
 	if (!cojag_is_r3000)
 		memcpy(jaguar_shared_ram, rom_base, 0x10);
 
+#if 0
 	/* set up main CPU RAM/ROM banks */
 	memory_set_bankptr(3, jaguar_gpu_ram);
 
@@ -117,7 +117,7 @@ static MACHINE_INIT( cojag )
 	memory_set_bankptr(11, jaguar_gpu_clut);
 	memory_set_bankptr(12, jaguar_gpu_ram);
 	memory_set_bankptr(13, jaguar_dsp_ram);
-
+#endif
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();
 	jaguar_dsp_resume();
@@ -508,100 +508,56 @@ static WRITE32_HANDLER( area51mx_main_speedup_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( r3000_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-AM_RANGE(0x00000000, 0x0000ffff) AM_READ(MRA32_NOP)		// just to shut up the logging
-
-	AM_RANGE(0x04000000, 0x047fffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x04e00000, 0x04e003ff) AM_READ(ide_controller32_0_r)
-	AM_RANGE(0x04f00000, 0x04f003ff) AM_READ(jaguar_tom_regs32_r)
-	AM_RANGE(0x04f00400, 0x04f007ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x04f02100, 0x04f021ff) AM_READ(gpuctrl_r)
-	AM_RANGE(0x04f02200, 0x04f022ff) AM_READ(jaguar_blitter_r)
-	AM_RANGE(0x04f03000, 0x04f03fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x04f10000, 0x04f103ff) AM_READ(jaguar_jerry_regs32_r)
+static ADDRESS_MAP_START( r3000_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x04000000, 0x047fffff) AM_RAM AM_BASE(&jaguar_shared_ram) AM_SHARE(1)
+	AM_RANGE(0x04e00000, 0x04e003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
+	AM_RANGE(0x04f00000, 0x04f003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
+	AM_RANGE(0x04f00400, 0x04f007ff) AM_RAM AM_BASE(&jaguar_gpu_clut) AM_SHARE(2)
+	AM_RANGE(0x04f02100, 0x04f021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
+	AM_RANGE(0x04f02200, 0x04f022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
+	AM_RANGE(0x04f03000, 0x04f03fff) AM_MIRROR(0x00008000) AM_RAM AM_BASE(&jaguar_gpu_ram) AM_SHARE(3)
+	AM_RANGE(0x04f10000, 0x04f103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 	AM_RANGE(0x04f16000, 0x04f1600b) AM_READ(cojag_gun_input_r)	// GPI02
 	AM_RANGE(0x04f17000, 0x04f17003) AM_READ(status_r)			// GPI03
-	AM_RANGE(0x04f17c00, 0x04f17c03) AM_READ(jamma_r)			// GPI05
-	AM_RANGE(0x04f1a100, 0x04f1a13f) AM_READ(dspctrl_r)
-	AM_RANGE(0x04f1a140, 0x04f1a17f) AM_READ(jaguar_serial_r)
-	AM_RANGE(0x04f1b000, 0x04f1cfff) AM_READ(MRA32_RAM)
-
-	AM_RANGE(0x06000000, 0x06000003) AM_READ(misc_control_r)
-	AM_RANGE(0x10000000, 0x1007ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x12000000, 0x120fffff) AM_READ(MRA32_RAM)	// tested in self-test only?
-	AM_RANGE(0x18000000, 0x18001fff) AM_READ(eeprom_data_r)
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( r3000_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x04000000, 0x047fffff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_shared_ram)
-	AM_RANGE(0x04e00000, 0x04e003ff) AM_WRITE(ide_controller32_0_w)
-	AM_RANGE(0x04f00000, 0x04f003ff) AM_WRITE(jaguar_tom_regs32_w)
-	AM_RANGE(0x04f00400, 0x04f007ff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_gpu_clut)
-	AM_RANGE(0x04f02100, 0x04f021ff) AM_WRITE(gpuctrl_w)
-	AM_RANGE(0x04f02200, 0x04f022ff) AM_WRITE(jaguar_blitter_w)
-	AM_RANGE(0x04f03000, 0x04f03fff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_gpu_ram)
-	AM_RANGE(0x04f0b000, 0x04f0bfff) AM_WRITE(MWA32_BANK3)
-	AM_RANGE(0x04f10000, 0x04f103ff) AM_WRITE(jaguar_jerry_regs32_w)
 	AM_RANGE(0x04f17800, 0x04f17803) AM_WRITE(latch_w)	// GPI04
-	AM_RANGE(0x04f1a100, 0x04f1a13f) AM_WRITE(dspctrl_w)
-	AM_RANGE(0x04f1a140, 0x04f1a17f) AM_WRITE(jaguar_serial_w)
-	AM_RANGE(0x04f1b000, 0x04f1cfff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_dsp_ram)
+	AM_RANGE(0x04f17c00, 0x04f17c03) AM_READ(jamma_r)			// GPI05
+	AM_RANGE(0x04f1a100, 0x04f1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
+	AM_RANGE(0x04f1a140, 0x04f1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
+	AM_RANGE(0x04f1b000, 0x04f1cfff) AM_RAM AM_BASE(&jaguar_dsp_ram) AM_SHARE(4)
 
-	AM_RANGE(0x06000000, 0x06000003) AM_WRITE(misc_control_w)
-	AM_RANGE(0x10000000, 0x1007ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x12000000, 0x120fffff) AM_WRITE(MWA32_RAM)	// tested in self-test only?
+	AM_RANGE(0x06000000, 0x06000003) AM_READWRITE(misc_control_r, misc_control_w)
+	AM_RANGE(0x10000000, 0x1007ffff) AM_RAM
+	AM_RANGE(0x12000000, 0x120fffff) AM_RAM		// tested in self-test only?
 	AM_RANGE(0x14000004, 0x14000007) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0x16000000, 0x16000003) AM_WRITE(eeprom_enable_w)
-	AM_RANGE(0x18000000, 0x18001fff) AM_WRITE(eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base) AM_SIZE(&rom_size)
+	AM_RANGE(0x18000000, 0x18001fff) AM_READWRITE(eeprom_data_r, eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rom_base)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( m68020_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x7fffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x800000, 0x9fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0xa00000, 0xa1ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xa20000, 0xa21fff) AM_READ(eeprom_data_r)
-	AM_RANGE(0xb70000, 0xb70003) AM_READ(misc_control_r)
-	AM_RANGE(0xc00000, 0xdfffff) AM_READ(MRA32_BANK2)
-	AM_RANGE(0xe00000, 0xe003ff) AM_READ(ide_controller32_0_r)
-	AM_RANGE(0xf00000, 0xf003ff) AM_READ(jaguar_tom_regs32_r)
-	AM_RANGE(0xf00400, 0xf007ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xf02100, 0xf021ff) AM_READ(gpuctrl_r)
-	AM_RANGE(0xf02200, 0xf022ff) AM_READ(jaguar_blitter_r)
-	AM_RANGE(0xf03000, 0xf03fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0xf10000, 0xf103ff) AM_READ(jaguar_jerry_regs32_r)
-	AM_RANGE(0xf16000, 0xf1600b) AM_READ(cojag_gun_input_r)	// GPI02
-	AM_RANGE(0xf17000, 0xf17003) AM_READ(status_r)			// GPI03
-	AM_RANGE(0xf17c00, 0xf17c03) AM_READ(jamma_r)			// GPI05
-	AM_RANGE(0xf1a100, 0xf1a13f) AM_READ(dspctrl_r)
-	AM_RANGE(0xf1a140, 0xf1a17f) AM_READ(jaguar_serial_r)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( m68020_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x7fffff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_shared_ram)
-	AM_RANGE(0x800000, 0x9fffff) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base) AM_SIZE(&rom_size)
-	AM_RANGE(0xa00000, 0xa1ffff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0xa20000, 0xa21fff) AM_WRITE(eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
+static ADDRESS_MAP_START( m68020_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x7fffff) AM_RAM AM_BASE(&jaguar_shared_ram) AM_SHARE(1)
+	AM_RANGE(0x800000, 0x9fffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rom_base)
+	AM_RANGE(0xa00000, 0xa1ffff) AM_RAM
+	AM_RANGE(0xa20000, 0xa21fff) AM_READWRITE(eeprom_data_r, eeprom_data_w) AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0xa30000, 0xa30003) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0xa40000, 0xa40003) AM_WRITE(eeprom_enable_w)
-	AM_RANGE(0xb70000, 0xb70003) AM_WRITE(misc_control_w)
-	AM_RANGE(0xe00000, 0xe003ff) AM_WRITE(ide_controller32_0_w)
-	AM_RANGE(0xf00000, 0xf003ff) AM_WRITE(jaguar_tom_regs32_w)
-	AM_RANGE(0xf00400, 0xf007ff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_gpu_clut)
-	AM_RANGE(0xf02100, 0xf021ff) AM_WRITE(gpuctrl_w)
-	AM_RANGE(0xf02200, 0xf022ff) AM_WRITE(jaguar_blitter_w)
-	AM_RANGE(0xf03000, 0xf03fff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_gpu_ram)
-	AM_RANGE(0xf0b000, 0xf0bfff) AM_WRITE(MWA32_BANK3)
-	AM_RANGE(0xf10000, 0xf103ff) AM_WRITE(jaguar_jerry_regs32_w)
+	AM_RANGE(0xb70000, 0xb70003) AM_READWRITE(misc_control_r, misc_control_w)
+	AM_RANGE(0xc00000, 0xdfffff) AM_READ(MRA32_BANK2)
+	AM_RANGE(0xe00000, 0xe003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
+	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
+	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_BASE(&jaguar_gpu_clut) AM_SHARE(2)
+	AM_RANGE(0xf02100, 0xf021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
+	AM_RANGE(0xf02200, 0xf022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
+	AM_RANGE(0xf03000, 0xf03fff) AM_MIRROR(0x008000) AM_RAM AM_BASE(&jaguar_gpu_ram) AM_SHARE(3)
+	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
+	AM_RANGE(0xf16000, 0xf1600b) AM_READ(cojag_gun_input_r)	// GPI02
+	AM_RANGE(0xf17000, 0xf17003) AM_READ(status_r)			// GPI03
 //  AM_RANGE(0xf17800, 0xf17803) AM_WRITE(latch_w)  // GPI04
-	AM_RANGE(0xf1a100, 0xf1a13f) AM_WRITE(dspctrl_w)
-	AM_RANGE(0xf1a140, 0xf1a17f) AM_WRITE(jaguar_serial_w)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_WRITE(MWA32_RAM) AM_BASE(&jaguar_dsp_ram)
+	AM_RANGE(0xf17c00, 0xf17c03) AM_READ(jamma_r)			// GPI05
+	AM_RANGE(0xf1a100, 0xf1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
+	AM_RANGE(0xf1a140, 0xf1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
+	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAM AM_BASE(&jaguar_dsp_ram) AM_SHARE(4)
 ADDRESS_MAP_END
 
 
@@ -612,27 +568,15 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( gpu_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x7fffff) AM_READ(MRA32_BANK10)
-	AM_RANGE(0xe00000, 0xe003ff) AM_READ(ide_controller32_0_r)
-	AM_RANGE(0xf00000, 0xf003ff) AM_READ(jaguar_tom_regs32_r)
-	AM_RANGE(0xf00400, 0xf007ff) AM_READ(MRA32_BANK11)
-	AM_RANGE(0xf02100, 0xf021ff) AM_READ(gpuctrl_r)
-	AM_RANGE(0xf02200, 0xf022ff) AM_READ(jaguar_blitter_r)
-	AM_RANGE(0xf03000, 0xf03fff) AM_READ(MRA32_BANK12)
-	AM_RANGE(0xf10000, 0xf103ff) AM_READ(jaguar_jerry_regs32_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( gpu_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x7fffff) AM_WRITE(MWA32_BANK10)
-	AM_RANGE(0xe00000, 0xe003ff) AM_WRITE(ide_controller32_0_w)
-	AM_RANGE(0xf00000, 0xf003ff) AM_WRITE(jaguar_tom_regs32_w)
-	AM_RANGE(0xf00400, 0xf007ff) AM_WRITE(MWA32_BANK11)
-	AM_RANGE(0xf02100, 0xf021ff) AM_WRITE(gpuctrl_w)
-	AM_RANGE(0xf02200, 0xf022ff) AM_WRITE(jaguar_blitter_w)
-	AM_RANGE(0xf03000, 0xf03fff) AM_WRITE(MWA32_BANK12)
-	AM_RANGE(0xf10000, 0xf103ff) AM_WRITE(jaguar_jerry_regs32_w)
+static ADDRESS_MAP_START( gpu_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x7fffff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xe00000, 0xe003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
+	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
+	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_SHARE(2)
+	AM_RANGE(0xf02100, 0xf021ff) AM_READWRITE(gpuctrl_r, gpuctrl_w)
+	AM_RANGE(0xf02200, 0xf022ff) AM_READWRITE(jaguar_blitter_r, jaguar_blitter_w)
+	AM_RANGE(0xf03000, 0xf03fff) AM_RAM AM_SHARE(3)
+	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 ADDRESS_MAP_END
 
 
@@ -643,23 +587,13 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( dsp_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x7fffff) AM_READ(MRA32_BANK10)
-	AM_RANGE(0xf10000, 0xf103ff) AM_READ(jaguar_jerry_regs32_r)
-	AM_RANGE(0xf1a100, 0xf1a13f) AM_READ(dspctrl_r)
-	AM_RANGE(0xf1a140, 0xf1a17f) AM_READ(jaguar_serial_r)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_READ(MRA32_BANK13)
-	AM_RANGE(0xf1d000, 0xf1dfff) AM_READ(MRA32_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( dsp_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x7fffff) AM_WRITE(MWA32_BANK10)
-	AM_RANGE(0xf10000, 0xf103ff) AM_WRITE(jaguar_jerry_regs32_w)
-	AM_RANGE(0xf1a100, 0xf1a13f) AM_WRITE(dspctrl_w)
-	AM_RANGE(0xf1a140, 0xf1a17f) AM_WRITE(jaguar_serial_w)
-	AM_RANGE(0xf1b000, 0xf1cfff) AM_WRITE(MWA32_BANK13)
-	AM_RANGE(0xf1d000, 0xf1dfff) AM_WRITE(MWA32_ROM) AM_BASE(&jaguar_wave_rom)
+static ADDRESS_MAP_START( dsp_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x7fffff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
+	AM_RANGE(0xf1a100, 0xf1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
+	AM_RANGE(0xf1a140, 0xf1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
+	AM_RANGE(0xf1b000, 0xf1cfff) AM_RAM AM_SHARE(4)
+	AM_RANGE(0xf1d000, 0xf1dfff) AM_ROM AM_BASE(&jaguar_wave_rom)
 ADDRESS_MAP_END
 
 
@@ -792,16 +726,15 @@ MACHINE_DRIVER_START( cojagr3k )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(R3000BE, 66000000/2)
 	MDRV_CPU_CONFIG(config)
-	MDRV_CPU_PROGRAM_MAP(r3000_readmem,r3000_writemem)
+	MDRV_CPU_PROGRAM_MAP(r3000_map,0)
 
 	MDRV_CPU_ADD(JAGUARGPU, 52000000/2)
 	MDRV_CPU_CONFIG(gpu_config)
-	MDRV_CPU_PROGRAM_MAP(gpu_readmem,gpu_writemem)
+	MDRV_CPU_PROGRAM_MAP(gpu_map,0)
 
 	MDRV_CPU_ADD(JAGUARDSP, 52000000/2)
 	MDRV_CPU_CONFIG(dsp_config)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(dsp_readmem,dsp_writemem)
+	MDRV_CPU_PROGRAM_MAP(dsp_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -841,16 +774,15 @@ MACHINE_DRIVER_START( cojag68k )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68EC020, 50000000/2)
-	MDRV_CPU_PROGRAM_MAP(m68020_readmem,m68020_writemem)
+	MDRV_CPU_PROGRAM_MAP(m68020_map,0)
 
 	MDRV_CPU_ADD(JAGUARGPU, 52000000/2)
 	MDRV_CPU_CONFIG(gpu_config)
-	MDRV_CPU_PROGRAM_MAP(gpu_readmem,gpu_writemem)
+	MDRV_CPU_PROGRAM_MAP(gpu_map,0)
 
 	MDRV_CPU_ADD(JAGUARDSP, 52000000/2)
 	MDRV_CPU_CONFIG(dsp_config)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(dsp_readmem,dsp_writemem)
+	MDRV_CPU_PROGRAM_MAP(dsp_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -892,7 +824,7 @@ MACHINE_DRIVER_END
 ROM_START( area51t ) /* 68020 based, Area51 Time Warner License  Date: Nov 15, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for 68020 code */
 	ROM_LOAD32_BYTE( "3h.bin", 0x00000, 0x80000, CRC(e70a97c4) SHA1(39dabf6bf3dc6f717a587f362d040bfb332be9e1) )
 	ROM_LOAD32_BYTE( "3p.bin", 0x00001, 0x80000, CRC(e9c9f4bd) SHA1(7c6c50372d45dca8929767241b092339f3bab4d2) )
 	ROM_LOAD32_BYTE( "3m.bin", 0x00002, 0x80000, CRC(6f135a81) SHA1(2d9660f240b14481e8c46bc98713e9dc12035063) )
@@ -905,7 +837,7 @@ ROM_END
 ROM_START( area51a ) /* 68020 based, Area51 Atari Games License  Date: Oct 25, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for 68020 code */
 	ROM_LOAD32_BYTE( "3h", 0x00000, 0x80000, CRC(116d37e6) SHA1(5d36cae792dd349faa77cd2d8018722a28ee55c1) )
 	ROM_LOAD32_BYTE( "3p", 0x00001, 0x80000, CRC(eb10f539) SHA1(dadc4be5a442dd4bd17385033056555e528ed994) )
 	ROM_LOAD32_BYTE( "3m", 0x00002, 0x80000, CRC(c6d8322b) SHA1(90cf848a4195c51b505653cc2c74a3b9e3c851b8) )
@@ -918,7 +850,7 @@ ROM_END
 ROM_START( area51 ) /* R3000 based, labeled as "Area51 2-C"  Date: Nov 11 1996 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for IDT 79R3041 code */
 	ROM_LOAD32_BYTE( "a51_2-c.hh", 0x00000, 0x80000, CRC(13af6a1e) SHA1(69da54ed6886e825156bbcc256e8d7abd4dc1ff8) )
 	ROM_LOAD32_BYTE( "a51_2-c.hl", 0x00001, 0x80000, CRC(8ab6649b) SHA1(9b4945bc04f8a73161638a2c5fa2fd84c6fd31b4) )
 	ROM_LOAD32_BYTE( "a51_2-c.lh", 0x00002, 0x80000, CRC(a6524f73) SHA1(ae377a6803a4f7d1bbcc111725af121a3e82317d) )
@@ -931,7 +863,7 @@ ROM_END
 ROM_START( maxforce ) /* R3000 based, labeled as "Maximum Force 5-23-97 v1.05" */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for IDT 79R3041 code */
 	ROM_LOAD32_BYTE( "maxf_105.hh", 0x00000, 0x80000, CRC(ec7f8167) SHA1(0cf057bfb1f30c2c9621d3ed25021e7ba7bdd46e) )
 	ROM_LOAD32_BYTE( "maxf_105.hl", 0x00001, 0x80000, CRC(3172611c) SHA1(00f14f871b737c66c20f95743740d964d0be3f24) )
 	ROM_LOAD32_BYTE( "maxf_105.lh", 0x00002, 0x80000, CRC(84d49423) SHA1(88d9a6724f1118f2bbef5dfa27accc2b65c5ba1d) )
@@ -945,7 +877,7 @@ ROM_END
 ROM_START( maxf_102 ) /* R3000 based, labeled as "Maximum Force 2-27-97 v1.02" */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for IDT 79R3041 code */
 	ROM_LOAD32_BYTE( "maxf_102.hh", 0x00000, 0x80000, CRC(8ff7009d) SHA1(da22eae298a6e0e36f503fa091ac3913423dcd0f) )
 	ROM_LOAD32_BYTE( "maxf_102.hl", 0x00001, 0x80000, CRC(96c2cc1d) SHA1(b332b8c042b92c736131c478cefac1c3c2d2673b) )
 	ROM_LOAD32_BYTE( "maxf_102.lh", 0x00002, 0x80000, CRC(459ffba5) SHA1(adb40db6904e84c17f32ac6518fd2e994da7883f) )
@@ -959,7 +891,7 @@ ROM_END
 ROM_START( area51mx )	/* 68020 based, Labeled as "68020 MAX/A51 KIT 2.0" Date: Apr 22, 1998 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )  /* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE ) /* 2MB for 68020 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* 2MB for 68020 code */
 	ROM_LOAD32_BYTE( "area51mx.3h", 0x00000, 0x80000, CRC(47cbf30b) SHA1(23377bcc65c0fc330d5bc7e76e233bae043ac364) )
 	ROM_LOAD32_BYTE( "area51mx.3p", 0x00001, 0x80000, CRC(a3c93684) SHA1(f6b3357bb69900a176fd6bc6b819b2f57b7d0f59) )
 	ROM_LOAD32_BYTE( "area51mx.3m", 0x00002, 0x80000, CRC(d800ac17) SHA1(3d515c8608d8101ee9227116175b3c3f1fe22e0c) )
@@ -973,7 +905,7 @@ ROM_END
 ROM_START( a51mxr3k ) /* R3000 based, Labeled as "R3K Max/A51 Kit Ver 1.0" */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for IDT 79R3041 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for IDT 79R3041 code */
 	ROM_LOAD32_BYTE( "a51mxr3k.hh", 0x00000, 0x80000, CRC(a984dab2) SHA1(debb3bc11ff49e87a52e89a69533a1bab7db700e) )
 	ROM_LOAD32_BYTE( "a51mxr3k.hl", 0x00001, 0x80000, CRC(0af49d74) SHA1(c19f26056a823fd32293e9a7b3ea868640eabf49) )
 	ROM_LOAD32_BYTE( "a51mxr3k.lh", 0x00002, 0x80000, CRC(d7d94dac) SHA1(2060a74715f36a0d7f5dd0855eda48ad1f20f095) )
@@ -987,7 +919,7 @@ ROM_END
 ROM_START( vcircle )
 	ROM_REGION( 0x10, REGION_CPU1, 0 )		/* dummy region for R3000 */
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for R3000 code */
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for R3000 code */
 	ROM_LOAD32_BYTE( "hh", 0x00000, 0x80000, CRC(7276f5f5) SHA1(716287e370a4f300b1743103f8031afc82de38ca) )
 	ROM_LOAD32_BYTE( "hl", 0x00001, 0x80000, CRC(146060a1) SHA1(f291989f1f0ef228757f1990fb14da5ff8f3cf8d) )
 	ROM_LOAD32_BYTE( "lh", 0x00002, 0x80000, CRC(be4b2ef6) SHA1(4332b3036e9cb12685e914d085d9a63aa856f0be) )
@@ -1008,7 +940,6 @@ ROM_END
 static void common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
 {
 	/* copy over the ROM */
-	memcpy(rom_base, memory_region(REGION_USER1), rom_size);
 	cojag_is_r3000 = (Machine->drv->cpu[0].cpu_type == CPU_R3000BE);
 	cojag_draw_crosshair = crosshair;
 
