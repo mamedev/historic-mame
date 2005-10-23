@@ -8041,7 +8041,6 @@ static void SetSearchRegionDefaultName(SearchRegion * region)
 						case (UINT32)MWA8_NOP:		strcpy(desc, "NOP   ");	break;
 						case (UINT32)MWA8_RAM:		strcpy(desc, "RAM   ");	break;
 						case (UINT32)MWA8_ROM:		strcpy(desc, "ROM   ");	break;
-						case (UINT32)MWA8_RAMROM:	strcpy(desc, "RAMROM");	break;
 						default:					strcpy(desc, "CUSTOM");	break;
 					}
 				}

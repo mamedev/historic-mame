@@ -6520,15 +6520,16 @@ static UINT16 fd1089_decrypt(offs_t addr,UINT16 val,UINT8 *key,int opcode,int cp
 	return (val & ~0xfc48) | src;
 }
 
+static UINT16 *decrypted;
+
 static void sys16_decrypt(UINT8 *key,int cpu_type)
 {
-	UINT16 *decrypted;
 	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 	int size = memory_region_length(REGION_CPU1);
 	int A;
 	decrypted = (UINT16 *)auto_malloc(size);
 
-	memory_set_opcode_base(0,decrypted);
+	memory_set_decrypted_region(0, 0x000000, size - 1, decrypted);
 
 	for (A = 0;A < size;A+=2)
 	{
@@ -6540,6 +6541,11 @@ static void sys16_decrypt(UINT8 *key,int cpu_type)
 		/* decode the data */
 		rom[A/2] = fd1089_decrypt(A,src,key,0,cpu_type);
 	}
+}
+
+void *fd1089_get_decrypted_base(void)
+{
+	return decrypted;
 }
 
 

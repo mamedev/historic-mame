@@ -155,6 +155,8 @@
 #include "sound/pokey.h"
 
 
+UINT8 *missile_ram;
+
 /*************************************
  *
  *  Main CPU memory handlers
@@ -169,7 +171,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM) AM_BASE(&missile_ram)
 	AM_RANGE(0x0400, 0x05ff) AM_WRITE(missile_video_3rd_bit_w)
 	AM_RANGE(0x0600, 0x063f) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x0640, 0x4fff) AM_WRITE(missile_w) /* shared region */

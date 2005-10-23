@@ -922,7 +922,7 @@ ROM_START( jack3 )
 ROM_END
 
 ROM_START( treahunt )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "thunt-1.f2",   0x0000, 0x1000, CRC(0b35858c) SHA1(b8f80c69fcbce71e1b85c8f39599f8bebfeb2585) )
 	ROM_LOAD( "thunt-2.f3",   0x1000, 0x1000, CRC(67305a51) SHA1(c00b9592c4e146892313e8d32261338957a6a04a) )
 	ROM_LOAD( "thunt-3.4f",   0x2000, 0x1000, CRC(d7a969c3) SHA1(7edcbc90836e32aff4a26b0c55a76bbc9bb488fe) )
@@ -1222,12 +1222,11 @@ ROM_END
 static void treahunt_decode(void)
 {
 	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1);
+	UINT8 *decrypt = auto_malloc(0x4000);
 	int data;
 
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x3fff, decrypt);
 
 	/* Thanks to Mike Balfour for helping out with the decryption */
 	for (A = 0; A < 0x4000; A++)
@@ -1237,7 +1236,7 @@ static void treahunt_decode(void)
 		if (A & 0x1000)
 		{
 			/* unencrypted = D0 D2 D5 D1 D3 D6 D4 D7 */
-			rom[A+diff] =
+			decrypt[A] =
 				 ((data & 0x01) << 7) |
 				 ((data & 0x02) << 3) |
 				 ((data & 0x04) << 4) |
@@ -1248,12 +1247,12 @@ static void treahunt_decode(void)
 
 			if ((A & 0x04) == 0)
 			/* unencrypted = !D0 D2 D5 D1 D3 D6 D4 !D7 */
-				rom[A+diff] ^= 0x81;
+				decrypt[A] ^= 0x81;
 		}
 		else
 		{
 			/* unencrypted = !D7 D2 D5 D1 D3 D6 D4 !D0 */
-			rom[A+diff] =
+			decrypt[A] =
 					(~data & 0x81) |
 					((data & 0x02) << 3) |
 					((data & 0x04) << 4) |

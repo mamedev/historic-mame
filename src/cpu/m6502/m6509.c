@@ -299,16 +299,6 @@ static void m6509_set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t m6509_dasm(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	return Dasm6509( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
-}
-
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -401,7 +391,9 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m6509_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m6509_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6509_dasm;			break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6510_dasm;			break;
+#endif
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6509.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6509_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6509_reg_layout;				break;

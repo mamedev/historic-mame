@@ -874,7 +874,7 @@ ROM_START( cavenger )
 ROM_END
 
 ROM_START( dorodon )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64K for data, 64K for encrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64K for data, 64K for encrypted opcodes */
 	ROM_LOAD( "dorodon.0",   0x0000, 0x2000, CRC(460aaf26) SHA1(c4ea41cba4ac2d93fedec3c117a4470fee2a910f) )
 	ROM_LOAD( "dorodon.1",   0x2000, 0x2000, CRC(d2451eb6) SHA1(4154bfe50b7f75444d3f0c9be6bd2475fdba1938) )
 	ROM_LOAD( "dorodon.2",   0x4000, 0x2000, CRC(d3c6ee6c) SHA1(6971ecdc968810c19f8601efc3d389450156bb22) )
@@ -901,7 +901,7 @@ ROM_START( dorodon )
 ROM_END
 
 ROM_START( dorodon2 )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 64K for data, 64K for encrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64K for data, 64K for encrypted opcodes */
 	ROM_LOAD( "1.3fg",        0x0000, 0x2000, CRC(4d05d6f8) SHA1(db12ad04295f0ce112b6e90fde94a53ed1d6c3b9) )
 	ROM_LOAD( "2.3h",         0x2000, 0x2000, CRC(27b43b09) SHA1(12a8a6b8665bb9d1967ec631a794aab564a50570) )
 	ROM_LOAD( "3.3k",         0x4000, 0x2000, CRC(38d2f295) SHA1(b4d2cfd6e9f03c3ef18dcf67326f4106749b62b1) )
@@ -963,15 +963,15 @@ DRIVER_INIT( dorodon )
 	/* Decode the opcodes */
 
 	offs_t i;
+	UINT8 *decrypted = auto_malloc(0x6000);
 	UINT8 *rom = memory_region(REGION_CPU1);
-	offs_t diff = memory_region_length(REGION_CPU1) / 2;
 	UINT8 *table = memory_region(REGION_USER1);
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x5fff, decrypted);
 
-	for (i = 0;i < diff;i++)
+	for (i = 0;i < 0x6000;i++)
 	{
-		rom[i + diff] = table[rom[i]];
+		decrypted[i] = table[rom[i]];
 	}
 }
 

@@ -78,6 +78,7 @@ static void execute_wpset(int ref, int params, const char **param);
 static void execute_wpclear(int ref, int params, const char **param);
 static void execute_wpdisenable(int ref, int params, const char **param);
 static void execute_wplist(int ref, int params, const char **param);
+static void execute_hotspot(int ref, int params, const char **param);
 static void execute_save(int ref, int params, const char **param);
 static void execute_dump(int ref, int params, const char **param);
 static void execute_dasm(int ref, int params, const char **param);
@@ -147,6 +148,8 @@ void debug_command_init(void)
 	debug_console_register_command("wpdisable", CMDFLAG_NONE, 0, 0, 1, execute_wpdisenable);
 	debug_console_register_command("wpenable",  CMDFLAG_NONE, 1, 0, 1, execute_wpdisenable);
 	debug_console_register_command("wplist",    CMDFLAG_NONE, 0, 0, 0, execute_wplist);
+
+	debug_console_register_command("hotspot",   CMDFLAG_NONE, 0, 0, 3, execute_hotspot);
 
 	debug_console_register_command("save",      CMDFLAG_NONE, ADDRESS_SPACE_PROGRAM, 3, 4, execute_save);
 	debug_console_register_command("saved",     CMDFLAG_NONE, ADDRESS_SPACE_DATA, 3, 4, execute_save);
@@ -1087,6 +1090,59 @@ static void execute_wplist(int ref, int params, const char *param[])
 
 	if (!printed)
 		debug_console_write_line("No watchpoints currently installed");
+}
+
+
+/*-------------------------------------------------
+    execute_hotspot - execute the hotspot
+    command
+-------------------------------------------------*/
+
+static void execute_hotspot(int ref, int params, const char *param[])
+{
+	UINT64 threshhold;
+	UINT64 cpunum;
+	UINT64 count;
+
+	/* if no params, and there are live hotspots, clear them */
+	if (params == 0)
+	{
+		int cleared = FALSE;
+
+		/* loop over CPUs and find live spots */
+		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+		{
+			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+
+			if (cpuinfo->valid && cpuinfo->hotspots)
+			{
+				debug_hotspot_track(cpunum, 0, 0);
+				debug_console_printf("Cleared hotspot tracking on CPU %d\n", (int)cpunum);
+				cleared = TRUE;
+			}
+		}
+
+		/* if we cleared, we're done */
+		if (cleared)
+			return;
+	}
+
+	/* extract parameters */
+	cpunum = cpu_getactivecpu();
+	count = 64;
+	threshhold = 250;
+	if (params > 0 && !validate_parameter_number(param[0], &cpunum))
+		return;
+	if (params > 1 && !validate_parameter_number(param[1], &count))
+		return;
+	if (params > 2 && !validate_parameter_number(param[2], &threshhold))
+		return;
+
+	/* attempt to install */
+	if (debug_hotspot_track(cpunum, count, threshhold))
+		debug_console_printf("Now tracking hotspots on CPU %d using %d slots with a threshhold of %d\n", (int)cpunum, (int)count, (int)threshhold);
+	else
+		debug_console_printf("Error setting up the hotspot tracking\n");
 }
 
 

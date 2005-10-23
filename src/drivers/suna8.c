@@ -99,15 +99,15 @@ DRIVER_INIT( hardhead )
 		if (swaptable[table])
 			rom[i] = BITSWAP8(rom[i], 7,6,5,3,4,2,1,0) ^ 0x58;
 	}
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
 /* Non encrypted bootleg */
 static DRIVER_INIT( hardhedb )
 {
-	UINT8 *rom = memory_region(REGION_CPU1);
-	offs_t diff = memory_region_length(REGION_CPU1) / 2;
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, memory_region(REGION_CPU1) + 0x48000);
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
 /***************************************************************************
@@ -116,14 +116,14 @@ static DRIVER_INIT( hardhedb )
 
 /* !! BRICKZN3 !! */
 
-static void brickzn_decrypt(void)
+static UINT8 *brickzn_decrypt(void)
 {
 	UINT8	*RAM	=	memory_region(REGION_CPU1);
-	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	size_t	size	=	memory_region_length(REGION_CPU1);
+	UINT8   *decrypt = auto_malloc(size);
 	int i;
 
-	memory_set_opcode_base(0,RAM + size);
-
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
 	/* Opcodes and data */
 	for (i = 0; i < 0x50000; i++)
@@ -152,17 +152,17 @@ static void brickzn_decrypt(void)
 		if (opcode_swap || data_swap)
 			x = BITSWAP8(x, 7,2,3,4,5,6,1,0) ^ 0x10;
 
-		RAM[i + size] = x;
+		decrypt[i] = x;
 	}
+
+	return decrypt;
 }
 
 DRIVER_INIT( brickzn )
 {
 	UINT8	*RAM	=	memory_region(REGION_CPU1);
-	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	UINT8   *decrypt = brickzn_decrypt();
 	int i;
-
-	brickzn_decrypt();
 
 	// restore opcodes which for some reason shouldn't be decrypted... */
 	for (i = 0; i < 0x8000; i++)
@@ -172,27 +172,28 @@ DRIVER_INIT( brickzn )
 				((i >= 0x7393) && (i <= 0x73ba)) ||
 				((i >= 0x7a79) && (i <= 0x7aa9)) )
 		{
-			RAM[i+size] = RAM[i];
+			decrypt[i] = RAM[i];
 		}
 	}
 
 
 	/* !!!!!! PATCHES !!!!!! */
 
-	RAM[0x3349+size] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
+	decrypt[0x3349] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
 
-	RAM[0x1431+size] = 0x00;	// HALT -> NOP (NMI source??)
-	RAM[0x24b5+size] = 0x00;	// HALT -> NOP
-	RAM[0x2583+size] = 0x00;	// HALT -> NOP
+	decrypt[0x1431] = 0x00;	// HALT -> NOP (NMI source??)
+	decrypt[0x24b5] = 0x00;	// HALT -> NOP
+	decrypt[0x2583] = 0x00;	// HALT -> NOP
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	memory_configure_bank_decrypted(1, 0, 16, decrypt + 0x10000, 0x4000);
 }
 
 DRIVER_INIT( brickzn3 )
 {
 	UINT8	*RAM	=	memory_region(REGION_CPU1);
-	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	UINT8   *decrypt = brickzn_decrypt();
 	int i;
-
-	brickzn_decrypt();
 
 	// restore opcodes which for some reason shouldn't be decrypted... */
 	for (i = 0; i < 0x8000; i++)
@@ -202,18 +203,21 @@ DRIVER_INIT( brickzn3 )
 				((i >= 0x72f3) && (i <= 0x731a)) ||
 				((i >= 0x79d9) && (i <= 0x7a09)) )
 		{
-			RAM[i+size] = RAM[i];
+			decrypt[i] = RAM[i];
 		}
 	}
 
 
 	/* !!!!!! PATCHES !!!!!! */
 
-	RAM[0x3337+size] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
+	decrypt[0x3337] = 0xc9;	// RET Z -> RET (to avoid: jp $C800)
 
-	RAM[0x1406+size] = 0x00;	// HALT -> NOP (NMI source??)
-	RAM[0x2487+size] = 0x00;	// HALT -> NOP
-	RAM[0x256c+size] = 0x00;	// HALT -> NOP
+	decrypt[0x1406] = 0x00;	// HALT -> NOP (NMI source??)
+	decrypt[0x2487] = 0x00;	// HALT -> NOP
+	decrypt[0x256c] = 0x00;	// HALT -> NOP
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	memory_configure_bank_decrypted(1, 0, 16, decrypt + 0x10000, 0x4000);
 }
 
 
@@ -224,15 +228,15 @@ DRIVER_INIT( brickzn3 )
 DRIVER_INIT( hardhea2 )
 {
 	UINT8	*RAM	=	memory_region(REGION_CPU1);
-	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	size_t	size	=	memory_region_length(REGION_CPU1);
+	UINT8   *decrypt = 	auto_malloc(size);
 	UINT8 x;
 	int i;
 
-	memory_set_opcode_base(0,RAM + size);
-
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
 	/* Address lines scrambling */
-	memcpy(RAM + size, RAM, size);
+	memcpy(decrypt, RAM, size);
 	for (i = 0x00000; i < 0x50000; i++)
 	{
 /*
@@ -262,7 +266,7 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
 		if (swaptable[(i & 0xff000) >> 12])
 			addr = (addr & 0xf0000) | BITSWAP16(addr, 15,14,13,12,11,10,9,8,6,7,5,4,3,2,1,0);
 
-		RAM[i] = RAM[addr + size];
+		RAM[i] = decrypt[addr];
 	}
 
 	/* Opcodes */
@@ -286,7 +290,7 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
 		if (swaptable[table])
 			x = BITSWAP8(x, 5,6,7,4,3,2,1,0);
 
-		RAM[i + size] = x;
+		decrypt[i] = x;
 	}
 
 	/* Data */
@@ -297,6 +301,9 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
 		if (swaptable[(i & 0x7000) >> 12])
 			RAM[i] = BITSWAP8(RAM[i], 5,6,7,4,3,2,1,0) ^ 0x41;
 	}
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	memory_configure_bank(2, 0, 2, memory_region(REGION_USER3), 0x2000);
 }
 
 
@@ -307,14 +314,15 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
 DRIVER_INIT( starfigh )
 {
 	UINT8	*RAM	=	memory_region(REGION_CPU1);
-	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	size_t	size	=	memory_region_length(REGION_CPU1);
+	UINT8   *decrypt = 	auto_malloc(size);
 	UINT8 x;
 	int i;
 
-	memory_set_opcode_base(0,RAM + size);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
 	/* Address lines scrambling */
-	memcpy(RAM + size, RAM, size);
+	memcpy(decrypt, RAM, size);
 	for (i = 0; i < 0x8000; i++)
 	{
 		static const UINT8 swaptable[8] =
@@ -326,7 +334,7 @@ DRIVER_INIT( starfigh )
 		if (swaptable[(i & 0x7000) >> 12])
 			addr = BITSWAP16(addr, 15,14,13,12,11,10,9,8,6,7,5,4,3,2,1,0);
 
-		RAM[i] = RAM[addr + size];
+		RAM[i] = decrypt[addr];
 	}
 
 	/* Opcodes */
@@ -350,7 +358,7 @@ DRIVER_INIT( starfigh )
 		if (swaptable[table])
 			x = BITSWAP8(x, 5,6,7,4,3,2,1,0) ^ 0x04;
 
-		RAM[i + size] = x;
+		decrypt[i] = x;
 	}
 
 	/* Data */
@@ -361,6 +369,8 @@ DRIVER_INIT( starfigh )
 		if (swaptable[(i & 0x7000) >> 12])
 			RAM[i] = BITSWAP8(RAM[i], 5,6,7,4,3,2,1,0) ^ 0x45;
 	}
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
 
@@ -371,14 +381,15 @@ DRIVER_INIT( starfigh )
 static DRIVER_INIT( sparkman )
 {
 	UINT8	*RAM	=	memory_region(REGION_CPU1);
-	size_t	size	=	memory_region_length(REGION_CPU1)/2;
+	size_t	size	=	memory_region_length(REGION_CPU1);
+	UINT8   *decrypt = 	auto_malloc(size);
 	UINT8 x;
 	int i;
 
-	memory_set_opcode_base(0,RAM + size);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
 	/* Address lines scrambling */
-	memcpy(RAM + size, RAM, size);
+	memcpy(decrypt, RAM, size);
 	for (i = 0; i < 0x8000; i++)
 	{
 		static const UINT8 swaptable[8] =
@@ -390,7 +401,7 @@ static DRIVER_INIT( sparkman )
 		if (swaptable[(i & 0x7000) >> 12])
 			addr = BITSWAP16(addr, 15,14,13,12,11,10,9,7,8,6,5,4,3,2,1,0);
 
-		RAM[i] = RAM[addr + size];
+		RAM[i] = decrypt[addr];
 	}
 
 	/* Opcodes */
@@ -414,7 +425,7 @@ static DRIVER_INIT( sparkman )
 		if (swaptable[table])
 			x = BITSWAP8(x, 5,6,7,4,3,2,1,0) ^ 0x04;
 
-		RAM[i + size] = x;
+		decrypt[i] = x;
 	}
 
 	/* Data */
@@ -425,6 +436,8 @@ static DRIVER_INIT( sparkman )
 		if (swaptable[(i & 0x7000) >> 12])
 			RAM[i] = BITSWAP8(RAM[i], 5,6,7,4,3,2,1,0) ^ 0x44;
 	}
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
 /***************************************************************************
@@ -494,13 +507,10 @@ static READ8_HANDLER( hardhead_ip_r )
 */
 static WRITE8_HANDLER( hardhead_bankswitch_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0xef) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
-
-	RAM = &RAM[0x4000 * bank + 0x10000];
-	memory_set_bankptr(1, RAM);
+	memory_set_bank(1, bank);
 }
 
 
@@ -567,15 +577,12 @@ ADDRESS_MAP_END
 */
 static WRITE8_HANDLER( rranger_bankswitch_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x07;
 	if ((~data & 0x10) && (bank >= 4))	bank += 4;
 
 	if (data & ~0xf7) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 
-	RAM = &RAM[0x4000 * bank + 0x10000];
-
-	memory_set_bankptr(1, RAM);
+	memory_set_bank(1, bank);
 
 	flip_screen_set(    data & 0x20);
 	coin_lockout_w ( 0,	data & 0x40);
@@ -678,14 +685,11 @@ static WRITE8_HANDLER( brickzn_unknown_w )
 */
 static WRITE8_HANDLER( brickzn_rombank_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
 
-	RAM = &RAM[0x4000 * bank + 0x10000];
-
-	memory_set_bankptr(1, RAM);
+	memory_set_bank(1, bank);
 	suna8_rombank = data;
 }
 
@@ -773,12 +777,11 @@ static WRITE8_HANDLER( hardhea2_spritebank_w )
 */
 static WRITE8_HANDLER( hardhea2_rombank_w )
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
 
-	memory_set_bankptr(1,&ROM[0x4000 * bank + 0x10000]);
+	memory_set_bank(1, bank);
 	suna8_rombank = data;
 }
 
@@ -793,13 +796,11 @@ static WRITE8_HANDLER( hardhea2_spritebank_1_w )
 
 static WRITE8_HANDLER( hardhea2_rambank_0_w )
 {
-	UINT8 *RAM = memory_region(REGION_USER3);
-	memory_set_bankptr(2,&RAM[0x2000 * 0]);
+	memory_set_bank(2, 0);
 }
 static WRITE8_HANDLER( hardhea2_rambank_1_w )
 {
-	UINT8 *RAM = memory_region(REGION_USER3);
-	memory_set_bankptr(2,&RAM[0x2000 * 1]);
+	memory_set_bank(2, 1);
 }
 
 
@@ -949,14 +950,11 @@ static WRITE8_HANDLER( sparkman_spritebank_w )
 */
 static WRITE8_HANDLER( sparkman_rombank_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
 	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
 
-	RAM = &RAM[0x4000 * bank + 0x10000];
-
-	memory_set_bankptr(1, RAM);
+	memory_set_bank(1, bank);
 	suna8_rombank = data;
 }
 
@@ -1940,23 +1938,16 @@ ROM_START( hardhead )
 ROM_END
 
 ROM_START( hardhedb )
-	ROM_REGION( 0x50000*2, REGION_CPU1, 0 ) /* Main Z80 Code */
-	ROM_LOAD( "1_27512.l6",  0x50000, 0x8000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // 1988,9,14 (already decrypted)
+	ROM_REGION( 0x48000+0x8000, REGION_CPU1, 0 ) /* Main Z80 Code */
+	ROM_LOAD( "1_27512.l6",  0x48000, 0x8000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // 1988,9,14 (already decrypted)
 	ROM_CONTINUE(			 0x00000, 0x8000 )
 	ROM_LOAD( "p2",			 0x10000, 0x8000, CRC(faa2cf9a) SHA1(5987f146b58fcbc3aaa9c010d86022b5172bcfb4) )
-	ROM_RELOAD(			     0x60000, 0x8000 )
 	ROM_LOAD( "p3",			 0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) )
-	ROM_RELOAD(			     0x68000, 0x8000 )
 	ROM_LOAD( "p4",			 0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) )
-	ROM_RELOAD(			     0x70000, 0x8000 )
 	ROM_LOAD( "p7",			 0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) )
-	ROM_RELOAD(			     0x78000, 0x8000 )
 	ROM_LOAD( "p8",			 0x30000, 0x8000, CRC(211a9342) SHA1(85bdafe1a2c683eea391cc663caabd958fdf5197) )
-	ROM_RELOAD(			     0x80000, 0x8000 )
 	ROM_LOAD( "p9",			 0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) )
-	ROM_RELOAD(			     0x88000, 0x8000 )
 	ROM_LOAD( "p10",		 0x40000, 0x8000, CRC(b6894517) SHA1(e114a5f92b83d98215aab6e2cd943a110d118f56) )
-	ROM_RELOAD(			     0x90000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "p13", 0x0000, 0x8000, CRC(493c0b41) SHA1(994a334253e905c39ec912765e8b0f4b1be900bc) )
@@ -1977,23 +1968,16 @@ ROM_START( hardhedb )
 ROM_END
 
 ROM_START( pop_hh )
-	ROM_REGION( 0x50000*2, REGION_CPU1, 0 ) /* Main Z80 Code */
-	ROM_LOAD( "1_27512.l6",  0x50000, 0x8000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // 1988,9,14 (already decrypted)
+	ROM_REGION( 0x48000+0x8000, REGION_CPU1, 0 ) /* Main Z80 Code */
+	ROM_LOAD( "1_27512.l6",  0x48000, 0x8000, CRC(bb4aa9ac) SHA1(da6310a1034cf610139d74fc30dd13e5fbd1d8dd) ) // 1988,9,14 (already decrypted)
 	ROM_CONTINUE(			 0x00000, 0x8000 )
 	ROM_LOAD( "2_27256.k6",  0x10000, 0x8000, CRC(8fcc1248) SHA1(5da0b7dc63f7bc00e81e9e5bac02ee6b0076ffaa) )
-	ROM_RELOAD(			     0x60000, 0x8000 )
 	ROM_LOAD( "p3",          0x18000, 0x8000, CRC(3d24755e) SHA1(519a179594956f7c3ddfaca362c42b453c928e25) ) // 3_27256.j6
-	ROM_RELOAD(			     0x68000, 0x8000 )
 	ROM_LOAD( "p4",          0x20000, 0x8000, CRC(0241ac79) SHA1(b3c3b98fb29836cbc9fd35ac49e02bfefd3b0c79) ) // 4_27256.i6
-	ROM_RELOAD(			     0x70000, 0x8000 )
 	ROM_LOAD( "p7",          0x28000, 0x8000, CRC(beba8313) SHA1(20aa4e07ec560a89d07ec73cc93311ceaed899a3) ) // 7_27256.l8
-	ROM_RELOAD(			     0x78000, 0x8000 )
 	ROM_LOAD( "8_27256.k8",  0x30000, 0x8000, CRC(87a8b4b4) SHA1(83d30cf184c5dccdf2666c0ef9e078541d6a146e) )
-	ROM_RELOAD(			     0x80000, 0x8000 )
 	ROM_LOAD( "p9",          0x38000, 0x8000, CRC(2ad430c4) SHA1(286a5b1042e077c3ae741d01311d4c91f8f87054) ) // 9_27256.j8
-	ROM_RELOAD(			     0x88000, 0x8000 )
 	ROM_LOAD( "10_27256.i8", 0x40000, 0x8000, CRC(84fc6574) SHA1(ab33e6c656f25e65bb08d0a2689693df83cab43d) )
-	ROM_RELOAD(			     0x90000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Sound Z80 Code */
 	ROM_LOAD( "p13", 0x0000, 0x8000, CRC(493c0b41) SHA1(994a334253e905c39ec912765e8b0f4b1be900bc) ) // 13_27256.i10
@@ -2210,7 +2194,7 @@ Large epoxy(?) module near the cpu's.
 ***************************************************************************/
 
 ROM_START( brickzn )
-	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "brickzon.009", 0x00000, 0x08000, CRC(1ea68dea) SHA1(427152a26b062c5e77089de49c1da69369d4d557) )	// V5.0 1992,3,3
 	ROM_LOAD( "brickzon.008", 0x10000, 0x20000, CRC(c61540ba) SHA1(08c0ede591b229427b910ca6bb904a6146110be8) )
 	ROM_LOAD( "brickzon.007", 0x30000, 0x20000, CRC(ceed12f1) SHA1(9006726b75a65455afb1194298bade8fa2207b4a) )
@@ -2234,7 +2218,7 @@ ROM_START( brickzn )
 ROM_END
 
 ROM_START( brickzn3 )
-	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "39",           0x00000, 0x08000, CRC(043380bd) SHA1(7eea7cc7d754815df233879b4a9d3d88eac5b28d) )	// V3.0 1992,1,23
 	ROM_LOAD( "38",           0x10000, 0x20000, CRC(e16216e8) SHA1(e88ae97e8a632823d5f1fe500954b6f6542407d5) )
 	ROM_LOAD( "brickzon.007", 0x30000, 0x20000, CRC(ceed12f1) SHA1(9006726b75a65455afb1194298bade8fa2207b4a) )
@@ -2296,7 +2280,7 @@ Sound is a Yamaha YM3812 and a  AY-3-8910A
 ***************************************************************************/
 
 ROM_START( hardhea2 )
-	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "hrd-hd9",  0x00000, 0x08000, CRC(69c4c307) SHA1(0dfde1dcda51b5b1740aff9e96cb877a428a3e04) )	// V 2.0 1991,2,12
 	ROM_LOAD( "hrd-hd10", 0x10000, 0x10000, CRC(77ec5b0a) SHA1(2d3e24c208904a7884e585e08e5818fd9f8b5391) )
 	ROM_LOAD( "hrd-hd11", 0x20000, 0x10000, CRC(12af8f8e) SHA1(1b33a060b70900042fdae00f7dec325228d566f5) )
@@ -2332,7 +2316,7 @@ ROM_END
 ***************************************************************************/
 
 ROM_START( starfigh )
-	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "starfgtr.l1", 0x00000, 0x08000, CRC(f93802c6) SHA1(4005b06b69dd440dfb6385766386a1168e73288f) )	// V.1
 	ROM_LOAD( "starfgtr.j1", 0x10000, 0x10000, CRC(fcfcf08a) SHA1(65fe1666aa5092f820b337bcbcbed7accdec440d) )
 	ROM_LOAD( "starfgtr.i1", 0x20000, 0x10000, CRC(6935fcdb) SHA1(f47812f6716ccf52dd7ab8522c29e059f1e38f31) )
@@ -2383,7 +2367,7 @@ Sound is a Yamaha YM3812 and a  AY-3-8910A
 ***************************************************************************/
 
 ROM_START( sparkman )
-	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )		/* Main Z80 Code */
 	ROM_LOAD( "sparkman.e7", 0x00000, 0x08000, CRC(d89c5780) SHA1(177f0ae21c00575a7eb078e86f3a790fc95211e4) )	/* "SPARK MAN MAIN PROGRAM 1989,8,12 K.H.T (SUNA ELECTRPNICS) V 2.0 SOULE KOREA" */
 	ROM_LOAD( "sparkman.g7", 0x10000, 0x10000, CRC(48b4a31e) SHA1(771d1f1a2ce950ce2b661a4081471e98a7a7d53e) )
 	ROM_LOAD( "sparkman.g8", 0x20000, 0x10000, CRC(b8a4a557) SHA1(10251b49fb44fb1e7c71fde8fe9544df29d27346) )
@@ -2423,17 +2407,22 @@ ROM_END
 
 ***************************************************************************/
 
+static DRIVER_INIT( suna8 )
+{
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+}
+
 /* Working Games */
-GAME( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
+GAME( 1988, rranger,  0,        rranger,  rranger,  suna8,    ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
 GAME( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA",                       "Hard Head"									, 0)
 GAME( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Hard Head (bootleg)"						, 0)
 GAME( 1988, pop_hh,   hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg",                    "Popper (Hard Head bootleg)"				, 0)
 GAME( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA",                       "Hard Head 2 (v2.0)"                       , 0 )
 
 /* Non Working Games */
-GAME( 1988, sranger,  rranger, rranger,  rranger,	0,        ROT0,  "SunA",    "Super Ranger (v2.0)",           GAME_NOT_WORKING )
-GAME( 1988, srangerb, rranger, rranger,  rranger,	0,        ROT0,  "bootleg", "Super Ranger (bootleg)",        GAME_NOT_WORKING )
-GAME( 1988, srangerw, rranger, rranger,  rranger,	0,        ROT0,  "SunA (WDK license)", "Super Ranger (WDK)", GAME_NOT_WORKING )
+GAME( 1988, sranger,  rranger, rranger,  rranger,	suna8,        ROT0,  "SunA",    "Super Ranger (v2.0)",           GAME_NOT_WORKING )
+GAME( 1988, srangerb, rranger, rranger,  rranger,	suna8,        ROT0,  "bootleg", "Super Ranger (bootleg)",        GAME_NOT_WORKING )
+GAME( 1988, srangerw, rranger, rranger,  rranger,	suna8,        ROT0,  "SunA (WDK license)", "Super Ranger (WDK)", GAME_NOT_WORKING )
 GAME( 1989, sparkman, 0,       sparkman, sparkman, sparkman, ROT0,  "SunA",    "Spark Man (v 2.0)",             GAME_NOT_WORKING )
 GAME( 1990, starfigh, 0,       starfigh, hardhea2, starfigh, ROT90, "SunA",    "Star Fighter (v1)",             GAME_NOT_WORKING )
 GAME( 1992, brickzn,  0,       brickzn,  brickzn,  brickzn,  ROT90, "SunA",    "Brick Zone (v5.0)",             GAME_NOT_WORKING )

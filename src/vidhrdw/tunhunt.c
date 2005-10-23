@@ -8,6 +8,7 @@
 #include "vidhrdw/generic.h"
 
 extern UINT8 tunhunt_control;
+extern UINT8 *tunhunt_ram;
 
 /****************************************************************************************/
 
@@ -226,10 +227,9 @@ static void draw_motion_object( mame_bitmap *bitmap )
  *      MOBSC1  0x1081
  *          always 0x00?
  */
-	const UINT8 *pMem = memory_region( REGION_CPU1 );
-//  int skip = pMem[MOBST];
-	int x0 = 255-pMem[MOBJV];
-	int y0 = 255-pMem[MOBJH];
+//  int skip = tunhunt_ram[MOBST];
+	int x0 = 255-tunhunt_ram[MOBJV];
+	int y0 = 255-tunhunt_ram[MOBJH];
 	int scalex,scaley;
 	int line,span;
 	int x,span_data;
@@ -265,7 +265,7 @@ static void draw_motion_object( mame_bitmap *bitmap )
 		} /* dirty line */
 	} /* next line */
 
-	switch( pMem[VSTRLO] )
+	switch( tunhunt_ram[VSTRLO] )
 	{
 	case 0x01:
 		scaley = (1<<16)*0.33; /* seems correct */
@@ -276,7 +276,7 @@ static void draw_motion_object( mame_bitmap *bitmap )
 		break;
 
 	default:
-		scaley = (1<<16)*pMem[VSTRLO]/4; /* ??? */
+		scaley = (1<<16)*tunhunt_ram[VSTRLO]/4; /* ??? */
 		break;
 	}
 	scalex = (1<<16);
@@ -316,13 +316,11 @@ static void draw_box( mame_bitmap *bitmap )
         ->hue 06 02 ff      60  06 05 03 04 01 06 02 ff     d2 00   c2 ff
 */
 	int span,x,y;
-	UINT8 *pMem;
 	int color;
 	int pen;
 //  rectangle bbox;
 	int z;
 	int x0,y0,y1;
-	pMem = memory_region( REGION_CPU1 );
 
 	for( y=0; y<256; y++ )
 	{
@@ -332,13 +330,13 @@ static void draw_box( mame_bitmap *bitmap )
 			z = 0;
 			for( span=3; span<16; span++ )
 			{
-				x0 = pMem[span+0x1080];
-				y0 = pMem[span+0x1480];
-				y1 = pMem[span+0x1400];
+				x0 = tunhunt_ram[span+0x1080];
+				y0 = tunhunt_ram[span+0x1480];
+				y1 = tunhunt_ram[span+0x1400];
 
 				if( y>=y0 && y<=y1 && x>=x0 && x0>=z )
 				{
-					pen = pMem[span+0x1280]&0xf;
+					pen = tunhunt_ram[span+0x1280]&0xf;
 					z = x0; /* give priority to rightmost spans */
 				}
 			}
@@ -403,8 +401,6 @@ static void draw_shell(
 
 VIDEO_UPDATE( tunhunt )
 {
-	const UINT8 *pMem = memory_region( REGION_CPU1 );
-
 	update_palette();
 
 	draw_box( bitmap );
@@ -412,19 +408,19 @@ VIDEO_UPDATE( tunhunt )
 	draw_motion_object( bitmap );
 
 	draw_shell( bitmap,
-		pMem[SHL0PC],	/* picture code */
-		pMem[SHEL0H],	/* hposition */
-		pMem[SHL0V],	/* vstart */
-		pMem[SHL0VS],	/* vstop */
-		pMem[SHL0ST],	/* vstretch */
+		tunhunt_ram[SHL0PC],	/* picture code */
+		tunhunt_ram[SHEL0H],	/* hposition */
+		tunhunt_ram[SHL0V],	/* vstart */
+		tunhunt_ram[SHL0VS],	/* vstop */
+		tunhunt_ram[SHL0ST],	/* vstretch */
 		tunhunt_control&0x08 ); /* hstretch */
 
 	draw_shell( bitmap,
-		pMem[SHL1PC],	/* picture code */
-		pMem[SHEL1H],	/* hposition */
-		pMem[SHL1V],	/* vstart */
-		pMem[SHL1VS],	/* vstop */
-		pMem[SHL1ST],	/* vstretch */
+		tunhunt_ram[SHL1PC],	/* picture code */
+		tunhunt_ram[SHEL1H],	/* hposition */
+		tunhunt_ram[SHL1V],	/* vstart */
+		tunhunt_ram[SHL1VS],	/* vstop */
+		tunhunt_ram[SHL1ST],	/* vstretch */
 		tunhunt_control&0x10 ); /* hstretch */
 
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);

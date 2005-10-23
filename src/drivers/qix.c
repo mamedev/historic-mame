@@ -1000,7 +1000,7 @@ ROM_END
 
 
 ROM_START( kram3 )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* encrypted */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* encrypted */
     ROM_LOAD( "kr-u14", 0xa000, 0x1000, CRC(02c1bd1e) SHA1(5f13f32ca2da0e93ed43b052c8c33af9ac67cb6c) )
     ROM_LOAD( "kr-u15", 0xb000, 0x1000, CRC(46b3ff33) SHA1(7db45971972df144a21fee4cc015b0190b502e12) )
     ROM_LOAD( "kr-u16", 0xc000, 0x1000, CRC(f202b9cf) SHA1(baf27507611c3029e2dfb1a4ff86e6fe17171246) )
@@ -3183,8 +3183,7 @@ static DRIVER_INIT( kram3 )
 		0xffe1,0x59,0x7e, -1
 	};
 
-	UINT8 *rom;
-	int diff;
+	UINT8 *rom, *decrypted;
 	int i;
 
 	/********************************
@@ -3206,36 +3205,36 @@ static DRIVER_INIT( kram3 )
 
 	i = 0;
 	rom = memory_region(REGION_CPU1);
-	diff = memory_region_length(REGION_CPU1) / 2;
+	decrypted = auto_malloc(0x6000);
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0xa000, 0xffff, decrypted);
 
-	memcpy(rom + diff,rom,diff);
+	memcpy(decrypted,&rom[0xa000],0x6000);
 	while (cpu0_patch[i] != -1)
 	{
 		int a = cpu0_patch[i];
 		if (rom[a] != cpu0_patch[i+1])
 			logerror("error in patch data at address %04x\n",a);
 		else
-			rom[a + diff] = cpu0_patch[i+2];
+			decrypted[a-0xa000] = cpu0_patch[i+2];
 
 		i += 3;
 	}
 
 	i = 0;
 	rom = memory_region(REGION_CPU2);
-	diff = memory_region_length(REGION_CPU2) / 2;
+	decrypted = auto_malloc(0x6000);
 
-	memory_set_opcode_base(1,rom+diff);
+	memory_set_decrypted_region(1, 0xa000, 0xffff, decrypted);
 
-	memcpy(rom + diff,rom,diff);
+	memcpy(decrypted,&rom[0xa000],0x6000);
 	while (cpu1_patch[i] != -1)
 	{
 		int a = cpu1_patch[i];
 		if (rom[a] != cpu1_patch[i+1])
 			logerror("error in patch data at address %04x\n",a);
 		else
-			rom[a + diff] = cpu1_patch[i+2];
+			decrypted[a-0xa000] = cpu1_patch[i+2];
 
 		i += 3;
 	}

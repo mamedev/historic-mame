@@ -336,7 +336,8 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( snd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_READ(soundlatch_r)
 	AM_RANGE(0xefee, 0xefee) AM_READ(MRA8_NOP)
@@ -544,7 +545,7 @@ ROM_START( ninjakd2 )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
 	ROM_LOAD( "nk2_05.rom",   0x28000, 0x8000, CRC(5dac9426) SHA1(0916cddbbe1e93c32b96fe28e145d34b2a892e80) )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, CRC(d3a18a79) SHA1(e4df713f89d8a8b43ef831b14864c50ec9b53f0b) )  // sound z80 code encrypted
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -669,7 +670,7 @@ ROM_START( rdaction )
 	ROM_LOAD( "nk2_04.rom",   0x20000, 0x8000, CRC(e7692a77) SHA1(84beb8b02c564bffa9cc00313214e8f109bd40f9) )
 	ROM_LOAD( "nk2_05.bin",   0x28000, 0x8000, CRC(960725fb) SHA1(160c8bfaf089cbeeef2023f12379793079bff93b) )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "nk2_06.rom",   0x0000, 0x10000, CRC(d3a18a79) SHA1(e4df713f89d8a8b43ef831b14864c50ec9b53f0b) )  // sound z80 code encrypted
 
 	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -706,17 +707,14 @@ ROM_END
 
 void mc8123_decrypt_ninjakid2(void);
 
-DRIVER_INIT( ninjakd2 )
+static DRIVER_INIT( ninjakd2 )
 {
 	mc8123_decrypt_ninjakid2();
 }
 
-DRIVER_INIT( bootleg )
+static DRIVER_INIT( bootleg )
 {
-	UINT8 *rom = memory_region(REGION_CPU2);
-	int diff = memory_region_length(REGION_CPU2) / 2;
-
-	memory_set_opcode_base(1,rom+diff);
+	memory_set_decrypted_region(1, 0x0000, 0x7fff, memory_region(REGION_CPU2) + 0x10000);
 }
 
 

@@ -754,14 +754,15 @@ DRIVER_INIT( cps2 )
 {
 	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 	UINT16 *xor = (UINT16 *)memory_region(REGION_USER1);
+	int length = memory_region_length(REGION_CPU1);
 	int i;
 
 
-	for (i = 0;i < memory_region_length(REGION_CPU1)/2;i++)
+	for (i = 0;i < length/2;i++)
 		xor[i] ^= rom[i];
 
-	memory_set_opcode_base(0,xor);
-	m68k_set_encrypted_opcode_range(0,0,memory_region_length(REGION_CPU1));
+	memory_set_decrypted_region(0, 0x000000, length - 1, xor);
+	m68k_set_encrypted_opcode_range(0,0,length);
 
 	cps2_gfx_decode();
 

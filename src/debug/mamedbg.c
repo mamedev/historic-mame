@@ -2035,10 +2035,6 @@ static const char *name_wrmem( unsigned base )
 					name = name_rom("ROM", REGION_CPU1+active_cpu, &base, map->start );
 					sprintf(dst, "%s+%04X", name, lshift(base) );
 					break;
-				case (FPTR)MWA8_RAMROM:
-					name = name_rom("RAMROM", REGION_CPU1+active_cpu, &base, map->start);
-					sprintf(dst, "%s+%04X", name, lshift(base) );
-					break;
 				case (FPTR)MWA8_BANK1: case (FPTR)MWA8_BANK2:
 				case (FPTR)MWA8_BANK3: case (FPTR)MWA8_BANK4:
 				case (FPTR)MWA8_BANK5: case (FPTR)MWA8_BANK6:

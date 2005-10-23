@@ -7,8 +7,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "missile.h"
+#include "state.h"
 
-unsigned char *missile_videoram;
+UINT8 *missile_videoram;
+extern UINT8 *missile_ram;
 
 
 /***************************************************************************
@@ -27,6 +29,8 @@ VIDEO_START( missile )
 		return 1;
 
 	memset (missile_videoram, 0, 256 * 256);
+
+        state_save_register_UINT8("missile",0,"missile_videoram",missile_videoram,256*256);
 	return 0;
 }
 
@@ -71,7 +75,6 @@ WRITE8_HANDLER( missile_video_w )
 {
 	/* $0640 - $4fff */
 	int wbyte, wbit;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 
 
 	if (offset < 0xf800)
@@ -86,9 +89,9 @@ WRITE8_HANDLER( missile_video_w )
 		wbyte = ((offset - 0xf800) >> 2) & 0xfffe;
 		wbit = (offset - 0xf800) % 8;
 		if(data & 0x20)
-			RAM[0x401 + wbyte] |= (1 << wbit);
+			missile_ram[0x401 + wbyte] |= (1 << wbit);
 		else
-			RAM[0x401 + wbyte] &= ((1 << wbit) ^ 0xff);
+			missile_ram[0x401 + wbyte] &= ((1 << wbit) ^ 0xff);
 	}
 }
 
@@ -133,11 +136,10 @@ WRITE8_HANDLER( missile_video_mult_w )
 WRITE8_HANDLER( missile_video_3rd_bit_w )
 {
 	int i;
-	unsigned char *RAM = memory_region(REGION_CPU1);
 	offset = offset + 0x400;
 
 	/* This is needed to make the scrolling text work properly */
-	RAM[offset] = data;
+	missile_ram[offset] = data;
 
 	offset = ((offset - 0x401) << 2) + 0xf800;
 	for (i=0; i<8; i++)

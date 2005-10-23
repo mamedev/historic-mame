@@ -307,6 +307,9 @@ do { OP1(0x68); OP4(imm); } while (0)
 #define _push_m32abs(addr) \
 do { OP1(0xff); MODRM_MABS(6, addr); } while (0)
 
+#define _push_m32bd(base, disp) \
+do { OP1(0xff); MODRM_MBD(6, base, disp); } while (0)
+
 #define _popad() \
 do { OP1(0x61); } while (0)
 
@@ -494,6 +497,17 @@ do { _mov_m32abs_imm(LO(addr), imm); _mov_m32abs_imm(HI(addr), ((INT32)(imm) >> 
 
 
 
+#define _mov_r64_m64bd(reghi, reglo, base, disp) \
+do { _mov_r32_m32bd(reglo, base, disp); _mov_r32_m32bd(reghi, base, (UINT8 *)(disp) + 4); } while (0)
+
+#define _mov_m64bd_r64(base, disp, reghi, reglo) \
+do { _mov_m32bd_r32(base, disp, reglo); _mov_m32bd_r32(base, (UINT8 *)(disp) + 4, reghi); } while (0)
+
+#define _mov_m64bd_imm32(base, disp, imm) \
+do { _mov_m32bd_imm(base, disp, imm); _mov_m32bd_imm(base, (UINT8 *)(disp) + 4, ((INT32)(imm) >> 31)); } while (0)
+
+
+
 #define _movsx_r32_r8(dreg, sreg) \
 do { OP1(0x0f); OP1(0xbe); MODRM_REG(dreg, sreg); } while (0)
 
@@ -505,6 +519,12 @@ do { OP1(0x0f); OP1(0xbe); MODRM_MABS(dreg, addr); } while (0)
 
 #define _movsx_r32_m16abs(dreg, addr) \
 do { OP1(0x0f); OP1(0xbf); MODRM_MABS(dreg, addr); } while (0)
+
+#define _movsx_r32_m8bd(dreg, base, disp) \
+do { OP1(0x0f); OP1(0xbe); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _movsx_r32_m16bd(dreg, base, disp) \
+do { OP1(0x0f); OP1(0xbf); MODRM_MBD(dreg, base, disp); } while (0)
 
 #define _movzx_r32_r8(dreg, sreg) \
 do { OP1(0x0f); OP1(0xb6); MODRM_REG(dreg, sreg); } while (0)
@@ -699,6 +719,32 @@ do { OP1(0x33); MODRM_MABS(dreg, addr); } while (0)
 
 
 
+#define _add_r32_m32bd(dreg, base, disp) \
+do { OP1(0x03); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _adc_r32_m32bd(dreg, base, disp) \
+do { OP1(0x13); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _and_r32_m32bd(dreg, base, disp) \
+do { OP1(0x23); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _cmp_r32_m32bd(dreg, base, disp) \
+do { OP1(0x3b); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _or_r32_m32bd(dreg, base, disp) \
+do { OP1(0x0b); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _sub_r32_m32bd(dreg, base, disp) \
+do { OP1(0x2b); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _sbb_r32_m32bd(dreg, base, disp) \
+do { OP1(0x1b); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _xor_r32_m32bd(dreg, base, disp) \
+do { OP1(0x33); MODRM_MBD(dreg, base, disp); } while (0)
+
+
+
 #define _add_m32abs_r32(addr, sreg) \
 do { OP1(0x01); MODRM_MABS(sreg, addr); } while (0)
 
@@ -719,7 +765,7 @@ do {												\
 } while (0)
 
 #define _add_r32_imm(dreg, imm) \
-do { _arith_r32_imm_common(0, dreg, imm); } while (0)
+do { if ((imm) == 1) OP1(0x40 + dreg); else _arith_r32_imm_common(0, dreg, imm); } while (0)
 
 #define _adc_r32_imm(dreg, imm) \
 do { _arith_r32_imm_common(2, dreg, imm); } while (0)
@@ -734,7 +780,7 @@ do { _arith_r32_imm_common(3, dreg, imm); } while (0)
 do { _arith_r32_imm_common(4, dreg, imm); } while (0)
 
 #define _sub_r32_imm(dreg, imm) \
-do { _arith_r32_imm_common(5, dreg, imm); } while (0)
+do { if ((imm) == 1) OP1(0x48 + dreg); else _arith_r32_imm_common(5, dreg, imm); } while (0)
 
 #define _xor_r32_imm(dreg, imm) \
 do { _arith_r32_imm_common(6, dreg, imm); } while (0)
@@ -809,6 +855,30 @@ do {												\
 #define _add_m32bd_imm(base, disp, imm) \
 do { _arith_m32bd_imm_common(0, base, disp, imm); } while (0)
 
+#define _adc_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(2, base, disp, imm); } while (0)
+
+#define _or_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(1, base, disp, imm); } while (0)
+
+#define _sbb_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(3, base, disp, imm); } while (0)
+
+#define _and_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(4, base, disp, imm); } while (0)
+
+#define _sub_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(5, base, disp, imm); } while (0)
+
+#define _xor_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(6, base, disp, imm); } while (0)
+
+#define _cmp_m32bd_imm(base, disp, imm) \
+do { _arith_m32bd_imm_common(7, base, disp, imm); } while (0)
+
+#define _test_m32bd_imm(base, disp, imm) \
+do { OP1(0xf7); MODRM_MBD(0, base, disp); OP4(imm); } while (0)
+
 
 
 #define _and_r32_m32bd(dreg, base, disp) \
@@ -827,6 +897,9 @@ do { OP1(0xf7); MODRM_REG(4, reg); } while (0)
 
 #define _mul_m32abs(addr) \
 do { OP1(0xf7); MODRM_MABS(4, addr); } while (0)
+
+#define _mul_m32bd(base, disp) \
+do { OP1(0xf7); MODRM_MBD(4, base, disp); } while (0)
 
 #define _idiv_r32(reg) \
 do { OP1(0xf7); MODRM_REG(7, reg); } while (0)
@@ -1236,11 +1309,17 @@ do { OP1(0xf3); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
 #define _movsd_r128_m64abs(reg, addr) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x10); MODRM_MABS(reg, addr); } while (0)
 
+#define _movsd_r128_m64bd(reg, base, disp) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x10); MODRM_MBD(reg, base, disp); } while (0)
+
 #define _movsd_r128_r128(r1, r2) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x10); MODRM_REG(r1, r2); } while (0)
 
 #define _movsd_m64abs_r128(addr, reg) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
+
+#define _movsd_m64bd_r128(base, disp, reg) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x11); MODRM_MBD(reg, base, disp); } while (0)
 
 
 

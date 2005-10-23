@@ -16,6 +16,8 @@ int tape_speed;
 double tape_time0;
 void *tape_timer;
 
+extern UINT8 *decocass_rambase;
+
 static int firsttime = 1;
 static int tape_present;
 static int tape_blocks;
@@ -1474,6 +1476,7 @@ WRITE8_HANDLER( decocass_e5xx_w )
 WRITE8_HANDLER( decocass_e900_w )
 {
 	de0091_enable = data & 1;
+	memory_set_bank(1, data & 1);
 	/* Perhaps the second row of ROMs is enabled by another bit.
      * There is no way to verify this yet, so for now just look
      * at bit 0 to enable the daughter board at reads between
@@ -1481,20 +1484,11 @@ WRITE8_HANDLER( decocass_e900_w )
      */
 }
 
-READ8_HANDLER( decocass_de0091_r )
+WRITE8_HANDLER( decocass_de0091_w )
 {
-	UINT8 data = 0xff;
-	if (de0091_enable)
-	{
-		UINT8 *mem = memory_region(REGION_USER3);
-		data = mem[offset];
-	}
-	else
-	{
-		UINT8 *mem = memory_region(REGION_CPU1);
-		data = mem[0x6000 + offset];
-	}
-	return data;
+	/* don't allow writes to the ROMs */
+	if (!de0091_enable)
+		decocass_charram_w(offset, data);
 }
 
 /***************************************************************************
@@ -1504,6 +1498,8 @@ READ8_HANDLER( decocass_de0091_r )
  ***************************************************************************/
 static void decocass_state_save_postload(void)
 {
+#if 0
+	/* fix me - this won't work anymore */
 	int A;
 	unsigned char *mem = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -1515,6 +1511,7 @@ static void decocass_state_save_postload(void)
 	/* restart the timer if the tape was playing */
 	if (0 != tape_dir)
 		timer_adjust(tape_timer, TIME_NEVER, 0, 0);
+#endif
 }
 
 /* To be called once from driver_init, i.e. decocass_init */

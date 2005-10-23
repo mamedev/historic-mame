@@ -51,11 +51,11 @@ can take. Should the game reset????
 #include "cpu/m6502/m6502.h"
 #include "sound/ay8910.h"
 
-extern unsigned char *lnc_charbank;
-extern unsigned char *bnj_backgroundram;
+extern UINT8 *lnc_charbank;
+extern UINT8 *bnj_backgroundram;
 extern size_t bnj_backgroundram_size;
-extern unsigned char *zoar_scrollram;
-extern unsigned char *deco_charram;
+extern UINT8 *zoar_scrollram;
+extern UINT8 *deco_charram;
 
 PALETTE_INIT( btime );
 PALETTE_INIT( lnc );
@@ -100,6 +100,12 @@ READ8_HANDLER( mmonkey_protection_r );
 WRITE8_HANDLER( mmonkey_protection_w );
 
 
+static UINT8 *decrypted;
+static UINT8 *rambase;
+static UINT8 *sound_rambase;
+
+
+
 INLINE int swap_bits_5_6(int data)
 {
 	return (data & 0x9f) | ((data & 0x20) << 1) | ((data & 0x40) >> 1);
@@ -108,9 +114,8 @@ INLINE int swap_bits_5_6(int data)
 
 static void btime_decrypt(void)
 {
+	UINT8 *src, *src1;
 	int A,A1;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 
 
 	/* the encryption is a simple bit rotation: 76543210 -> 65342710, but */
@@ -124,23 +129,22 @@ static void btime_decrypt(void)
 	/* however if the previous instruction was JSR (which caused a write to */
 	/* the stack), fetch the address of the next instruction. */
 	A1 = activecpu_get_previouspc();
-	if (rom[A1 + diff] == 0x20)	/* JSR $xxxx */
-		A = cpu_readop_arg(A1+1) + 256 * cpu_readop_arg(A1+2);
+	src1 = (A1 < 0x9000) ? rambase : memory_region(REGION_CPU1);
+	if (decrypted[A1] == 0x20)	/* JSR $xxxx */
+		A = src1[A1+1] + 256 * src1[A1+2];
 
 	/* If the address of the next instruction is xxxx xxx1 xxxx x1xx, decode it. */
+	src = (A < 0x9000) ? rambase : memory_region(REGION_CPU1);
 	if ((A & 0x0104) == 0x0104)
 	{
 		/* 76543210 -> 65342710 bit rotation */
-		rom[A + diff] = (rom[A] & 0x13) | ((rom[A] & 0x80) >> 5) | ((rom[A] & 0x64) << 1)
-			   | ((rom[A] & 0x08) << 2);
+		decrypted[A] = (src[A] & 0x13) | ((src[A] & 0x80) >> 5) | ((src[A] & 0x64) << 1)
+			   | ((src[A] & 0x08) << 2);
 	}
 }
 
 static WRITE8_HANDLER( lnc_w )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
 	if      (offset <= 0x3bff)                       ;
 	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
 	else if (offset >= 0x7c00 && offset <= 0x7fff) { lnc_mirrorvideoram_w(offset - 0x7c00,data); return; }
@@ -152,17 +156,14 @@ static WRITE8_HANDLER( lnc_w )
 	else if (offset >= 0xb000 && offset <= 0xb1ff)   ;
 	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
-	rom[offset] = data;
+	rambase[offset] = data;
 
 	/* Swap bits 5 & 6 for opcodes */
-	rom[offset+diff] = swap_bits_5_6(data);
+	decrypted[offset] = swap_bits_5_6(data);
 }
 
 static WRITE8_HANDLER( mmonkey_w )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
 	if      (offset <= 0x3bff)                       ;
 	else if (offset >= 0x3c00 && offset <= 0x3fff) { lnc_videoram_w(offset - 0x3c00,data); return; }
 	else if (offset >= 0x7c00 && offset <= 0x7fff) { lnc_mirrorvideoram_w(offset - 0x7c00,data); return; }
@@ -173,17 +174,15 @@ static WRITE8_HANDLER( mmonkey_w )
 	else if (offset >= 0xb000 && offset <= 0xbfff) { mmonkey_protection_w(offset - 0xb000, data); return; }
 	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
-	rom[offset] = data;
+	rambase[offset] = data;
 
 	/* Swap bits 5 & 6 for opcodes */
-	rom[offset+diff] = swap_bits_5_6(data);
+	decrypted[offset] = swap_bits_5_6(data);
 }
 
 static WRITE8_HANDLER( btime_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if      (offset <= 0x07ff)                     RAM[offset] = data;
+	if      (offset <= 0x07ff)                     rambase[offset] = data;
 	else if (offset >= 0x0c00 && offset <= 0x0c0f) btime_paletteram_w(offset - 0x0c00,data);
 	else if (offset >= 0x1000 && offset <= 0x13ff) videoram_w(offset - 0x1000,data);
 	else if (offset >= 0x1400 && offset <= 0x17ff) colorram_w(offset - 0x1400,data);
@@ -199,33 +198,28 @@ static WRITE8_HANDLER( btime_w )
 
 static WRITE8_HANDLER( zoar_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if      (offset <= 0x07ff) 					   RAM[offset] = data;
+	if      (offset <= 0x07ff) 					   rambase[offset] = data;
 	else if (offset >= 0x8000 && offset <= 0x83ff) videoram_w(offset - 0x8000,data);
 	else if (offset >= 0x8400 && offset <= 0x87ff) colorram_w(offset - 0x8400,data);
 	else if (offset >= 0x8800 && offset <= 0x8bff) btime_mirrorvideoram_w(offset - 0x8800,data);
 	else if (offset >= 0x8c00 && offset <= 0x8fff) btime_mirrorcolorram_w(offset - 0x8c00,data);
 	else if (offset == 0x9000)					   zoar_video_control_w(0, data);
-	else if (offset >= 0x9800 && offset <= 0x9803) RAM[offset] = data;
+	else if (offset >= 0x9800 && offset <= 0x9803) rambase[offset] = data;
 	else if (offset == 0x9804)                     bnj_scroll2_w(0,data);
 	else if (offset == 0x9805)                     bnj_scroll1_w(0,data);
 	else if (offset == 0x9806)                     sound_command_w(0,data);
 	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 
 	btime_decrypt();
-
 }
 
 static WRITE8_HANDLER( disco_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	if      (offset <= 0x04ff)                     RAM[offset] = data;
+	if      (offset <= 0x04ff)                     rambase[offset] = data;
 	else if (offset >= 0x2000 && offset <= 0x7fff) deco_charram_w(offset - 0x2000,data);
 	else if (offset >= 0x8000 && offset <= 0x83ff) videoram_w(offset - 0x8000,data);
 	else if (offset >= 0x8400 && offset <= 0x87ff) colorram_w(offset - 0x8400,data);
-	else if (offset >= 0x8800 && offset <= 0x881f) RAM[offset] = data;
+	else if (offset >= 0x8800 && offset <= 0x881f) rambase[offset] = data;
 	else if (offset == 0x9a00)                     sound_command_w(0,data);
 	else if (offset == 0x9c00)                     disco_video_control_w(0,data);
 	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
@@ -249,8 +243,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( btime_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(btime_w)	    /* override the following entries to */
-										/* support ROM decryption */
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+													/* support ROM decryption */
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x0c00, 0x0c0f) AM_WRITE(btime_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
@@ -282,7 +276,7 @@ static ADDRESS_MAP_START( cookrace_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cookrace_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x0500, 0x3fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
@@ -311,8 +305,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( zoar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(zoar_w)	    /* override the following entries to */
-									/* support ROM decryption */
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+													/* support ROM decryption */
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x8400, 0x87ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0x8800, 0x8bff) AM_WRITE(btime_mirrorvideoram_w)
@@ -338,9 +332,9 @@ static ADDRESS_MAP_START( lnc_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lnc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(lnc_w)      /* override the following entries to */
-									/* support ROM decryption */
-	AM_RANGE(0x0000, 0x3bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(lnc_w)      	/* override the following entries to */
+													/* support ROM decryption */
+	AM_RANGE(0x0000, 0x3bff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x3c00, 0x3fff) AM_WRITE(lnc_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x7800, 0x7bff) AM_WRITE(colorram_w) AM_BASE(&colorram)  /* this is just here to initialize the pointer */
 	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(lnc_mirrorvideoram_w)
@@ -368,7 +362,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mmonkey_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(mmonkey_w)  /* override the following entries to */
 									/* support ROM decryption */
-	AM_RANGE(0x0000, 0x3bff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0x3bff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x3c00, 0x3fff) AM_WRITE(lnc_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x7800, 0x7bff) AM_WRITE(colorram_w) AM_BASE(&colorram)  /* this is just here to initialize the pointer */
 	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(lnc_mirrorvideoram_w)
@@ -394,7 +388,7 @@ static ADDRESS_MAP_START( bnj_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( bnj_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x1001, 0x1001) AM_WRITE(bnj_video_control_w)
 	AM_RANGE(0x1002, 0x1002) AM_WRITE(sound_command_w)
 	AM_RANGE(0x4000, 0x43ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
@@ -421,7 +415,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( disco_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(disco_w)    /* override the following entries to */
-									/* support ROM decryption */
+												/* support ROM decryption */
+	AM_RANGE(0x0000, 0x04ff) AM_WRITE(MWA8_RAM) AM_BASE(&rambase)
 	AM_RANGE(0x2000, 0x7fff) AM_WRITE(deco_charram_w) AM_BASE(&deco_charram)
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x8400, 0x87ff) AM_WRITE(colorram_w) AM_BASE(&colorram)
@@ -431,22 +426,16 @@ static ADDRESS_MAP_START( disco_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0200, 0x0fff) AM_READ(MRA8_ROM)	/* Cook Race */
-	AM_RANGE(0xa000, 0xafff) AM_READ(soundlatch_r)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0200, 0x0fff) AM_WRITE(MWA8_ROM)	/* Cook Race */
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_BASE(&sound_rambase)
+	AM_RANGE(0x0400, 0x0fff) AM_ROM AM_REGION(REGION_CPU2, 0xf400)
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x4000, 0x4fff) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(AY8910_write_port_1_w)
 	AM_RANGE(0x8000, 0x8fff) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xa000, 0xafff) AM_READ(soundlatch_r)
 	AM_RANGE(0xc000, 0xcfff) AM_WRITE(interrupt_enable_w)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -1318,7 +1307,7 @@ static MACHINE_DRIVER_START( btime )
 
 	MDRV_CPU_ADD_TAG("sound", M6502, 500000)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,16)
 
 	MDRV_FRAMES_PER_SECOND(57)
@@ -1355,7 +1344,7 @@ static MACHINE_DRIVER_START( cookrace )
 	MDRV_CPU_VBLANK_INT(btime_nmi_interrupt,1)
 
 	MDRV_CPU_MODIFY("sound")
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(cookrace_gfxdecodeinfo)
@@ -1465,7 +1454,7 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( btime )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "aa04.9b",      0xc000, 0x1000, CRC(368a25b5) SHA1(ed3f3712423979dcb351941fa85dce6a0a7bb16b) )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, CRC(b4ba400d) SHA1(8c77397e934907bc47a739f263196a0f2f81ba3d) )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, CRC(8005bffa) SHA1(d0da4e360039f6a8d8142a4e8e05c1f90c0af68a) )
@@ -1492,7 +1481,7 @@ ROM_START( btime )
 ROM_END
 
 ROM_START( btime2 )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "aa04.9b2",     0xc000, 0x1000, CRC(a041e25b) SHA1(caaab3ae46619d0a87a8985d316411f23be0b696) )
 	ROM_LOAD( "aa06.13b",     0xd000, 0x1000, CRC(b4ba400d) SHA1(8c77397e934907bc47a739f263196a0f2f81ba3d) )
 	ROM_LOAD( "aa05.10b",     0xe000, 0x1000, CRC(8005bffa) SHA1(d0da4e360039f6a8d8142a4e8e05c1f90c0af68a) )
@@ -1519,7 +1508,7 @@ ROM_START( btime2 )
 ROM_END
 
 ROM_START( btimem )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ab05a1.12b",   0xb000, 0x1000, CRC(0a98b230) SHA1(aeee4f6f0aaa27575b80261d03c5453cc6ebd646) )
 	ROM_LOAD( "ab04.9b",      0xc000, 0x1000, CRC(797e5f75) SHA1(35ea5fa4b8f3494adf7774b3946ed2540ac826ff) )
 	ROM_LOAD( "ab06.13b",     0xd000, 0x1000, CRC(c77f3f64) SHA1(f283087fad0a102fe92be7ce80ed18e64dc93b67) )
@@ -1547,15 +1536,14 @@ ROM_START( btimem )
 ROM_END
 
 ROM_START( cookrace )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* code is in the range 0500-3fff, encrypted */
 	ROM_LOAD( "1f.1",         0x0000, 0x2000, CRC(68759d32) SHA1(2112a6f17b871aefdb39739e47d4a9f368a2eb3c) )
 	ROM_LOAD( "2f.2",         0x2000, 0x2000, CRC(be7d72d1) SHA1(232d108098cb490e7c828aa4524ad09d3866ae18) )
 	ROM_LOAD( "2k",           0xffe0, 0x0020, CRC(e2553b3d) SHA1(0a38929cdb3f37c6e4bacc5c3f94c049b4352858) )	/* reset/interrupt vectors */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
-	ROM_LOAD( "6f.6",         0x0000, 0x1000, CRC(6b8e0272) SHA1(372a891b7b357aea0297ba9bcae752c3c9d8c1be) ) /* starts at 0000, not f000; 0000-01ff is RAM */
-	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
+	ROM_LOAD( "6f.6",         0xf000, 0x1000, CRC(6b8e0272) SHA1(372a891b7b357aea0297ba9bcae752c3c9d8c1be) ) /* starts at 0000, not f000; 0000-01ff is RAM */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "m8.7",         0x0000, 0x2000, CRC(a1a0d5a6) SHA1(e9583320e9c303407abfe02988b95403e5209c52) )  /* charset #1 */
@@ -1579,7 +1567,7 @@ ROM_END
    http://www.gamearchive.com/flyers/video/taito/locknchase_f.jpg  */
 
 ROM_START( lnc )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "s3-3d",        0xc000, 0x1000, CRC(1ab4f2c2) SHA1(c5890b768172cd2e3912b84db5f71546969ad7e2) )
 	ROM_LOAD( "s2-3c",        0xd000, 0x1000, CRC(5e46b789) SHA1(00b2510e07eb565cb373db798dd537191b0b7cc8) )
 	ROM_LOAD( "s1-3b",        0xe000, 0x1000, CRC(1308a32e) SHA1(da64fe7b76f5ac8ac35460e6c789ab1e986c78ef) )
@@ -1602,15 +1590,14 @@ ROM_START( lnc )
 ROM_END
 
 ROM_START( wtennis )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tx",           0xc000, 0x0800, CRC(fd343474) SHA1(1e1fd3f20ce1c7533767344f924029c8c62139a1) )
 	ROM_LOAD( "t4",           0xd000, 0x1000, CRC(e465d82c) SHA1(c357dcf17539150425574985afa559db2e6ab834) )
 	ROM_LOAD( "t3",           0xe000, 0x1000, CRC(8f090eab) SHA1(baeef8ee05010bf44cf8865a22911f3d458df1b0) )
 	ROM_LOAD( "t2",           0xf000, 0x1000, CRC(d2f9dd30) SHA1(1faa088806e8627b5e561d8b99054d295045dcfb) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
-	ROM_LOAD( "t1",           0x0000, 0x1000, CRC(40737ea7) SHA1(27e8474028385574035d3982f9c576bb9bb3facd) ) /* starts at 0000, not f000; 0000-01ff is RAM */
-	ROM_RELOAD(               0xf000, 0x1000 )     /* for the reset/interrupt vectors */
+	ROM_LOAD( "t1",           0xf000, 0x1000, CRC(40737ea7) SHA1(27e8474028385574035d3982f9c576bb9bb3facd) ) /* starts at 0000, not f000; 0000-01ff is RAM */
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "t7",           0x0000, 0x1000, CRC(aa935169) SHA1(965f41a9fcf35ac7c899e79acd0a85ab588d5831) )
@@ -1626,7 +1613,7 @@ ROM_START( wtennis )
 ROM_END
 
 ROM_START( mmonkey )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "mmonkey.e4",   0xc000, 0x1000, CRC(8d31bf6a) SHA1(77b44d8e2b4db148727e7bfc5162c7e9e9cfc662) )
 	ROM_LOAD( "mmonkey.d4",   0xd000, 0x1000, CRC(e54f584a) SHA1(a03fef09f6a0bb6802b33b28c45548efb85cda5c) )
 	ROM_LOAD( "mmonkey.b4",   0xe000, 0x1000, CRC(399a161e) SHA1(0eb3c5031a7d8c7b14019e215b18dac24a9e70dd) )
@@ -1649,7 +1636,7 @@ ROM_START( mmonkey )
 ROM_END
 
 ROM_START( brubber )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, CRC(b5279c70) SHA1(5fb1c50040dc4e9444aed440e2c3cf4c79b72311) )
 	ROM_LOAD( "brubber.12d",  0xe000, 0x2000, CRC(b2ce51f5) SHA1(5e38ea24bcafef1faba023def96532abd6f97d38) )
@@ -1668,7 +1655,7 @@ ROM_START( brubber )
 ROM_END
 
 ROM_START( bnj )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "bnj12b.bin",   0xa000, 0x2000, CRC(ba3e3801) SHA1(56284076d938c33c1492a07281b936681eb09808) )
 	ROM_LOAD( "bnj12c.bin",   0xc000, 0x2000, CRC(fb3a2cdd) SHA1(4a964389cc8035b9264d4cb133eb6d3826e74b95) )
 	ROM_LOAD( "bnj12d.bin",   0xe000, 0x2000, CRC(b88bc99e) SHA1(08a4ddea4037f9e14d0d9f4262a1746b0a3a140c) )
@@ -1687,7 +1674,7 @@ ROM_START( bnj )
 ROM_END
 
 ROM_START( caractn )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	/* a000-bfff space for the service ROM */
 	ROM_LOAD( "brubber.12c",  0xc000, 0x2000, CRC(b5279c70) SHA1(5fb1c50040dc4e9444aed440e2c3cf4c79b72311) )
 	ROM_LOAD( "caractn.a6",   0xe000, 0x2000, CRC(1d6957c4) SHA1(bd30f00187e56eef9adcc167dd752a3bb616454c) )
@@ -1706,7 +1693,7 @@ ROM_START( caractn )
 ROM_END
 
 ROM_START( zoar )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "zoar15",       0xd000, 0x1000, CRC(1f0cfdb7) SHA1(ce7e871f17c52b6eaf99cfb721e702e4f0e6bb25) )
 	ROM_LOAD( "zoar16",       0xe000, 0x1000, CRC(7685999c) SHA1(fabe38d71e797ae0b04b5d3aba228b4c85d96185) )
 	ROM_LOAD( "zoar17",       0xf000, 0x1000, CRC(619ea867) SHA1(0a3735384f03a1052d54ab799b5e37038d8ece2a) )
@@ -1741,7 +1728,7 @@ ROM_START( zoar )
 ROM_END
 
 ROM_START( disco )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "disco.w5",     0xa000, 0x1000, CRC(b2c87b78) SHA1(4095f0052ff0ac35ecd2ec1c1e99d21283d336e1) )
 	ROM_LOAD( "disco.w4",     0xb000, 0x1000, CRC(ad7040ee) SHA1(287a4ff06edda4c66e2351e49a94212728aacb4e) )
 	ROM_LOAD( "disco.w3",     0xc000, 0x1000, CRC(12fb4f08) SHA1(d6095f20d8676df89b1459134b5521ac311ddded) )
@@ -1759,7 +1746,7 @@ ROM_START( disco )
 ROM_END
 
 ROM_START( discof )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "w5-f",     0xa000, 0x1000, CRC(9d53c71c) SHA1(53c410cfa4fbbfd08e1c3cf7aeba1c9627171a71) )
 	ROM_LOAD( "w4-f",     0xb000, 0x1000, CRC(c1f8d747) SHA1(33f5fe73d1851ef4da670075d1aec1550e0417ce) )
 	ROM_LOAD( "w3-f",     0xc000, 0x1000, CRC(9aadd252) SHA1(c6da7ef46333d525e676c59f03ccc908108b41ba) )
@@ -1777,12 +1764,12 @@ ROM_START( discof )
 ROM_END
 
 ROM_START( sdtennis )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ao_08.12b",  0xa000, 0x2000, CRC(6193724c) SHA1(97239c5aa8c8cd1812fba1b15be4d9a48eb0651a) )
 	ROM_LOAD( "ao_07.12c",  0xc000, 0x2000, CRC(064888db) SHA1(f7bb728ab3408bb553191d9e131a441db1b39666) )
 	ROM_LOAD( "ao_06.12d",  0xe000, 0x2000, CRC(413c984c) SHA1(1431df4db52d621ba39fd47dbd49da103b5c0bcf) )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
 	ROM_LOAD( "ao_05.6c",    0xf000, 0x1000, CRC(46833e38) SHA1(420831149a566199d6a3c74ef3df0687b4ddcbe4) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1797,20 +1784,23 @@ ROM_END
 
 static void decrypt_C10707_cpu(int cpu, int region)
 {
-	int A;
-	unsigned char *rom = memory_region(region);
-	int diff = memory_region_length(region) / 2;
+	UINT8 *decrypt = auto_malloc(0x10000);
+	UINT8 *rom = memory_region(region);
+	offs_t A;
 
-	memory_set_opcode_base(cpu,rom+diff);
+	memory_set_decrypted_region(cpu, 0x0000, 0xffff, decrypt);
 
 	/* Swap bits 5 & 6 for opcodes */
 	for (A = 0;A < 0x10000;A++)
-		rom[A+diff] = swap_bits_5_6(rom[A]);
+		decrypt[A] = swap_bits_5_6(rom[A]);
+
+	if (cpu == 0)
+		decrypted = decrypt;
 }
 
 static READ8_HANDLER( wtennis_reset_hack_r )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/* Otherwise the game goes into test mode and there is no way out that I
        can see.  I'm not sure how it can work, it probably somehow has to do
@@ -1823,21 +1813,20 @@ static READ8_HANDLER( wtennis_reset_hack_r )
 
 static DRIVER_INIT( btime )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1);
 
-	memory_set_opcode_base(0,rom+diff);
+	decrypted = auto_malloc(0x10000);
+	memory_set_decrypted_region(0, 0x0000, 0xffff, decrypted);
 
 	/* For now, just copy the RAM array over to ROM. Decryption will happen */
 	/* at run time, since the CPU applies the decryption only if the previous */
 	/* instruction did a memory write. */
-	memcpy(rom+diff,rom,0x10000);
+	memcpy(decrypted,rom,0x10000);
 }
 
 static DRIVER_INIT( zoar )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 	/* At location 0xD50A is what looks like an undocumented opcode. I tried
        implementing it given what opcode 0x23 should do, but it still didn't
@@ -1853,8 +1842,15 @@ static DRIVER_INIT( lnc )
 	decrypt_C10707_cpu(0, REGION_CPU1);
 }
 
+static DRIVER_INIT( cookrace )
+{
+	memcpy(&sound_rambase[0x200], memory_region(REGION_CPU2) + 0xf200, 0x200);
+	init_lnc();
+}
+
 static DRIVER_INIT( wtennis )
 {
+	memcpy(&sound_rambase[0x200], memory_region(REGION_CPU2) + 0xf200, 0x200);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc15f, 0xc15f, 0, 0, wtennis_reset_hack_r);
 	init_lnc();
 }
@@ -1869,7 +1865,7 @@ static DRIVER_INIT( sdtennis )
 GAME( 1982, btime,    0,       btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 1)", 0 )
 GAME( 1982, btime2,   btime,   btime,    btime,    btime,   ROT270, "Data East Corporation", "Burger Time (Data East set 2)", 0 )
 GAME( 1982, btimem,   btime,   btime,    btime,    btime,   ROT270, "Data East (Bally Midway license)", "Burger Time (Midway)", 0 )
-GAME( 1982, cookrace, btime,   cookrace, cookrace, lnc,     ROT270, "bootleg", "Cook Race", 0 )
+GAME( 1982, cookrace, btime,   cookrace, cookrace, cookrace,ROT270, "bootleg", "Cook Race", 0 )
 GAME( 1981, lnc,      0,       lnc,      lnc,      lnc,     ROT270, "Data East Corporation", "Lock'n'Chase", 0 )
 GAME( 1982, wtennis,  0,       wtennis,  wtennis,  wtennis, ROT270, "bootleg", "World Tennis", 0 )
 GAME( 1982, mmonkey,  0,       mmonkey,  mmonkey,  lnc,     ROT270, "Technos + Roller Tron", "Minky Monkey", 0 )

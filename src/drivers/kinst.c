@@ -26,7 +26,7 @@
 
 
 /* local variables */
-static UINT32 *rambase, *rambase2;
+static UINT32 *rambase, *rambase2, *rombase;
 static UINT32 *video_base;
 static UINT32 *kinst_control;
 static UINT32 *kinst_speedup;
@@ -46,10 +46,24 @@ static MACHINE_INIT( kinst )
 	/* set the fastest DRC options */
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS);
 
-	/* both games map one logical 4k page at address 0 to physical address 0x8090000 */
-//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MRA32_BANK1);
-//  memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MWA32_BANK1);
-//  memory_set_bankptr(1, &rambase2[0x90000/4]);
+	/* configure fast RAM regions for DRC */
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_SELECT, 0);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_START, 0x08000000);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_END, 0x087fffff);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, rambase2);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 0);
+
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_SELECT, 1);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_START, 0x00000000);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_END, 0x0007ffff);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, rambase);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 0);
+
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_SELECT, 2);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_START, 0x1fc00000);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_END, 0x1fc7ffff);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, rombase);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 1);
 
 	/* keep the DCS held in reset at startup */
 	dcs_reset_w(1);
@@ -277,7 +291,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x10000080, 0x100000ff) AM_READWRITE(kinst_control_r, kinst_control_w) AM_BASE(&kinst_control)
 	AM_RANGE(0x10000100, 0x1000013f) AM_READWRITE(ide_controller_r, ide_controller_w)
 	AM_RANGE(0x10000170, 0x10000173) AM_READWRITE(ide_controller_extra_r, ide_controller_extra_w)
-	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rombase)
 
 ADDRESS_MAP_END
 

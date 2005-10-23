@@ -197,12 +197,12 @@ ADDRESS_MAP_END
 /* Sound CPU */
 
 static ADDRESS_MAP_START( s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(MWA8_NOP) // YM2203_control_port_0_w ?
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(MWA8_NOP) // YM2203_write_port_0_w
 	AM_RANGE(0xc800, 0xc800) AM_WRITE(MWA8_NOP) // YM2203_control_port_1_w ?
@@ -476,10 +476,10 @@ Note, all ROMs have official sticker, "(C) SEIBU KAIHATSU INC." and a number.
 */
 
 ROM_START( cshootre )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	// Main CPU?
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	// Main CPU?
 	ROM_LOAD( "1.k19",  0x00000, 0x08000, CRC(71418952) SHA1(9745ca006576381c9e9595d8e42ab276bab80a41) )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
 	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) SHA1(6c61200ee8888d6270c8cec50423b3b5602c2027) )	// 5.g6
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
@@ -515,10 +515,10 @@ SEI0030BU          SEI0060BU                             sw1 xx xxxxx
 */
 
 ROM_START( airraid )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	// Main CPU?
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	// Main CPU?
 	ROM_LOAD( "1.16j",  0x00000, 0x08000, CRC(7ac2cedf) SHA1(272831f51a2731e067b5aec6dba6bddd3c5350c9) )
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	// Sub/Sound CPU?
 	ROM_LOAD( "5.6f",  0x00000, 0x02000, CRC(30be398c) SHA1(6c61200ee8888d6270c8cec50423b3b5602c2027) )
 
 	ROM_REGION( 0x02000, REGION_GFX1, 0 )	// TX Layer
@@ -546,27 +546,27 @@ DRIVER_INIT( cshooter )
 DRIVER_INIT( cshootre )
 {
 	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1);
+	UINT8 *decrypt = auto_malloc(0x8000);
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
 		/* decode the opcodes */
-		rom[A+diff] = rom[A];
+		decrypt[A] = rom[A];
 
 		if (BIT(A,5) && !BIT(A,3))
-			rom[A+diff] ^= 0x40;
+			decrypt[A] ^= 0x40;
 
 		if (BIT(A,10) && !BIT(A,9) && BIT(A,3))
-			rom[A+diff] ^= 0x20;
+			decrypt[A] ^= 0x20;
 
 		if ((BIT(A,10) ^ BIT(A,9)) && BIT(A,1))
-			rom[A+diff] ^= 0x02;
+			decrypt[A] ^= 0x02;
 
 		if (BIT(A,9) || !BIT(A,5) || BIT(A,3))
-			rom[A+diff] = BITSWAP8(rom[A+diff],7,6,1,4,3,2,5,0);
+			decrypt[A] = BITSWAP8(decrypt[A],7,6,1,4,3,2,5,0);
 
 		/* decode the data */
 		if (BIT(A,5))

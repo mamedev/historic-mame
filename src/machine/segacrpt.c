@@ -244,11 +244,11 @@ static void read_table_from_disk(unsigned char *xortable)
 static void sega_decode(const unsigned char convtable[32][4])
 {
 	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 
+	UINT8 *rom = memory_region(REGION_CPU1);
+	UINT8 *decrypted = auto_malloc(0x8000);
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -269,20 +269,16 @@ static void sega_decode(const unsigned char convtable[32][4])
 		}
 
 		/* decode the opcodes */
-		rom[A + diff] = (src & ~0xa8) | (convtable[2*row][col] ^ xor);
+		decrypted[A] = (src & ~0xa8) | (convtable[2*row][col] ^ xor);
 
 		/* decode the data */
 		rom[A] = (src & ~0xa8) | (convtable[2*row+1][col] ^ xor);
 
 		if (convtable[2*row][col] == 0xff)	/* table incomplete! (for development) */
-			rom[A + diff] = 0x00;
+			decrypted[A] = 0x00;
 		if (convtable[2*row+1][col] == 0xff)	/* table incomplete! (for development) */
 			rom[A] = 0xee;
 	}
-
-	/* copy the opcodes from the not encrypted part of the ROMs */
-	for (A = 0x8000;A < diff;A++)
-		rom[A + diff] = rom[A];
 }
 
 
@@ -970,8 +966,6 @@ static void sega_decode_2(const unsigned char opcode_xor[64],const int opcode_sw
 		const unsigned char data_xor[64],const int data_swap_select[64])
 {
 	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 	static const unsigned char swaptable[24][4] =
 	{
 		{ 6,4,2,0 }, { 4,6,2,0 }, { 2,4,6,0 }, { 0,4,2,6 },
@@ -983,7 +977,11 @@ static void sega_decode_2(const unsigned char opcode_xor[64],const int opcode_sw
 	};
 
 
-	memory_set_opcode_base(0,rom+diff);
+	UINT8 *rom = memory_region(REGION_CPU1);
+	UINT8 *decrypted = auto_malloc(0x8000);
+
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted);
+
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -1000,16 +998,12 @@ static void sega_decode_2(const unsigned char opcode_xor[64],const int opcode_sw
 
 		/* decode the opcodes */
 		tbl = swaptable[opcode_swap_select[row]];
-		rom[A + diff] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ opcode_xor[row];
+		decrypted[A] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ opcode_xor[row];
 
 		/* decode the data */
 		tbl = swaptable[data_swap_select[row]];
 		rom[A] = BITSWAP8(src,7,tbl[0],5,tbl[1],3,tbl[2],1,tbl[3]) ^ data_xor[row];
 	}
-
-	/* copy the opcodes from the not encrypted part of the ROMs */
-	for (A = 0x8000;A < diff;A++)
-		rom[A + diff] = rom[A];
 }
 
 

@@ -898,11 +898,7 @@ ROM_START( touchgo )
 
 	ROM_REGION( 0x1400000, REGION_GFX1, 0 ) /* GFX + Sound */
 	/* 0x0000000-0x0ffffff filled in in the DRIVER_INIT */
-	ROM_LOAD( "ic69",		0x1000000, 0x0200000, BAD_DUMP CRC(bba9aed5) SHA1(5ae1d082dafd82c406e0979f2884093deea17f86) )	/* GFX only */
-	/*  the first 3/4 of this ROM contain gfx data for tiles 0x0000-0xbfff
-         the last 1/4 of this ROM contain gfx data for tiles 0x8000-0xbfff
-         it's a bad dump??? For now, we fill that area with 0 */
-	ROM_FILL(				0x1180000, 0x0280000, 0x0 )
+	ROM_LOAD( "ic69",       0x1000000, 0x0200000, CRC(18bb12d4) SHA1(ee6e7a63b86c56d71e62db0ae5892ab3ab94b0a0) )	/* GFX only */
 
 	ROM_REGION( 0x0c00000, REGION_GFX2, ROMREGION_DISPOSE ) /* Temporary storage */
 	ROM_LOAD( "ic65",		0x0000000, 0x0400000, CRC(91b89c7c) SHA1(1c24b494b56845b0f21be40ab737f251d7683c7d) )	/* GFX only */

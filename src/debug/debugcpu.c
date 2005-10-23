@@ -51,6 +51,8 @@ int debug_key_pressed;
 FILE *debug_source_file;
 struct symbol_table *global_symtable;
 
+static const char *address_space_name[] = { "program", "data", "I/O" };
+
 static UINT64 wpdata;
 static UINT64 wpaddr;
 
@@ -70,6 +72,7 @@ static int break_on_interrupt;
 static int break_on_interrupt_cpunum;
 static int break_on_interrupt_irqline;
 static int memory_modified;
+static int memory_hook_cpunum;
 
 static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
 
@@ -92,6 +95,8 @@ static UINT64 get_tempvar(UINT32 ref);
 static void set_tempvar(UINT32 ref, UINT64 value);
 static UINT64 get_cpu_reg(UINT32 ref);
 static void set_cpu_reg(UINT32 ref, UINT64 value);
+static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
+static void check_hotspots(int cpunum, int spacenum, offs_t address);
 
 
 
@@ -749,7 +754,7 @@ void MAME_Debug(void)
 				/* if we hit 0, stop; otherwise, we might want to update everything */
 				if (steps_until_stop == 0)
 					execution_state = EXECUTION_STATE_STOPPED;
-				else if (execution_state != EXECUTION_STATE_STEP_OUT)
+				else if (execution_state != EXECUTION_STATE_STEP_OUT && (steps_until_stop < 200 || steps_until_stop % 100 == 0))
 				{
 					debug_view_update_all();
 					debug_refresh_display();
@@ -1016,6 +1021,59 @@ void debug_interrupt_hook(int cpunum, int irqline)
 }
 
 
+/*-------------------------------------------------
+    standard_debug_hook_read - standard read hook
+-------------------------------------------------*/
+
+static void standard_debug_hook_read(int spacenum, int size, offs_t address)
+{
+	struct debug_cpu_info *info = &debug_cpuinfo[memory_hook_cpunum];
+
+	/* check watchpoints */
+	if (info->read_watchpoints)
+		check_watchpoints(memory_hook_cpunum, spacenum, WATCHPOINT_READ, address, size, 0);
+
+	/* check hotspots */
+	if (info->hotspots)
+		check_hotspots(memory_hook_cpunum, spacenum, address);
+}
+
+
+/*-------------------------------------------------
+    standard_debug_hook_write - standard write hook
+-------------------------------------------------*/
+
+static void standard_debug_hook_write(int spacenum, int size, offs_t address, UINT64 data)
+{
+	struct debug_cpu_info *info = &debug_cpuinfo[memory_hook_cpunum];
+
+	/* check watchpoints */
+	if (info->write_watchpoints)
+		check_watchpoints(memory_hook_cpunum, spacenum, WATCHPOINT_WRITE, address, size, data);
+}
+
+
+/*-------------------------------------------------
+    debug_get_memory_hooks - get memory hooks
+    for the specified CPU
+-------------------------------------------------*/
+
+void debug_get_memory_hooks(int cpunum, debug_hook_read_ptr *read, debug_hook_write_ptr *write)
+{
+	memory_hook_cpunum = cpunum;
+
+	if (debug_cpuinfo[cpunum].read_watchpoints || debug_cpuinfo[cpunum].hotspots)
+		*read = standard_debug_hook_read;
+	else
+		*read = NULL;
+
+	if (debug_cpuinfo[cpunum].write_watchpoints)
+		*write = standard_debug_hook_write;
+	else
+		*write = NULL;
+}
+
+
 
 /*###################################################################################################
 **  BREAKPOINTS
@@ -1175,11 +1233,11 @@ int debug_breakpoint_enable(int bpnum, int enable)
 **#################################################################################################*/
 
 /*-------------------------------------------------
-    debug_check_watchpoints - check the
+    check_watchpoints - check the
     breakpoints for a given CPU and address space
 -------------------------------------------------*/
 
-void debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write)
+static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write)
 {
 	struct watchpoint *wp;
 	UINT64 result;
@@ -1295,7 +1353,10 @@ int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, off
 	/* hook us in */
 	wp->next = debug_cpuinfo[cpunum].space[spacenum].first_wp;
 	debug_cpuinfo[cpunum].space[spacenum].first_wp = wp;
-	debug_cpuinfo[cpunum].total_watchpoints++;
+	if (wp->type & WATCHPOINT_READ)
+		debug_cpuinfo[cpunum].read_watchpoints++;
+	if (wp->type & WATCHPOINT_WRITE)
+		debug_cpuinfo[cpunum].write_watchpoints++;
 	return wp->index;
 }
 
@@ -1326,8 +1387,11 @@ int debug_watchpoint_clear(int wpnum)
 						expression_free(wp->condition);
 					if (wp->action)
 						free(wp->action);
+					if (wp->type & WATCHPOINT_READ)
+						debug_cpuinfo[cpunum].read_watchpoints--;
+					if (wp->type & WATCHPOINT_WRITE)
+						debug_cpuinfo[cpunum].write_watchpoints--;
 					free(wp);
-					debug_cpuinfo[cpunum].total_watchpoints--;
 					return 1;
 				}
 
@@ -1355,17 +1419,87 @@ int debug_watchpoint_enable(int wpnum, int enable)
 }
 
 
+
+/*###################################################################################################
+**  HOTSPOTS
+**#################################################################################################*/
+
 /*-------------------------------------------------
-    debug_watchpoint_count_ptr - return a pointer
-    to the count of live watchpoints
+    debug_hotspot_track - enable/disable tracking
+    of hotspots
 -------------------------------------------------*/
 
-const int *debug_watchpoint_count_ptr(int cpunum)
+int debug_hotspot_track(int cpunum, int numspots, int threshhold)
 {
-	return &debug_cpuinfo[cpunum].total_watchpoints;
+	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+
+	/* if we already have tracking info, kill it */
+	if (info->hotspots)
+		free(info->hotspots);
+	info->hotspots = NULL;
+
+	/* only start tracking if we have a non-zero count */
+	if (numspots > 0)
+	{
+		/* allocate memory for hotspots */
+		info->hotspots = malloc(sizeof(*info->hotspots) * numspots);
+		if (!info->hotspots)
+			osd_die("Out of memory allocating hotspot info");
+		memset(info->hotspots, 0xff, sizeof(*info->hotspots) * numspots);
+
+		/* fill in the info */
+		info->hotspot_count = numspots;
+		info->hotspot_threshhold = threshhold;
+	}
+
+	return 1;
 }
 
 
+/*-------------------------------------------------
+    check_hotspots - check for
+    hotspots on a memory read access
+-------------------------------------------------*/
+
+static void check_hotspots(int cpunum, int spacenum, offs_t address)
+{
+	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+	offs_t pc = activecpu_get_pc();
+	int hotindex;
+
+	/* see if we have a match in our list */
+	for (hotindex = 0; hotindex < info->hotspot_count; hotindex++)
+		if (info->hotspots[hotindex].access == address && info->hotspots[hotindex].pc == pc && info->hotspots[hotindex].spacenum == spacenum)
+			break;
+
+	/* if we didn't find any, make a new entry */
+	if (hotindex == info->hotspot_count)
+	{
+		/* if the bottom of the list is over the threshhold, print it */
+		debug_hotspot_entry *spot = &info->hotspots[info->hotspot_count - 1];
+		if (spot->count > info->hotspot_threshhold)
+			debug_console_printf("Hotspot @ %s %08X (PC=%08X) hit %d times (fell off bottom)\n", address_space_name[spot->spacenum], spot->access, spot->pc, spot->count);
+
+		/* move everything else down and insert this one at the top */
+		memmove(&info->hotspots[1], &info->hotspots[0], sizeof(info->hotspots[0]) * (info->hotspot_count - 1));
+		info->hotspots[0].access = address;
+		info->hotspots[0].pc = pc;
+		info->hotspots[0].spacenum = spacenum;
+		info->hotspots[0].count = 1;
+	}
+
+	/* if we did find one, increase the count and move it to the top */
+	else
+	{
+		info->hotspots[hotindex].count++;
+		if (hotindex != 0)
+		{
+			debug_hotspot_entry temp = info->hotspots[hotindex];
+			memmove(&info->hotspots[1], &info->hotspots[0], sizeof(info->hotspots[0]) * hotindex);
+			info->hotspots[0] = temp;
+		}
+	}
+}
 
 
 /*###################################################################################################

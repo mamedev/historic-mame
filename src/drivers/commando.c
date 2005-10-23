@@ -461,30 +461,30 @@ ROM_END
 
 static DRIVER_INIT( commando )
 {
-	int A;
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *decrypt = auto_malloc(0xc000);
+	int A;
 
-	memory_set_opcode_base(0, rom + diff);
+	memory_set_decrypted_region(0, 0x0000, 0xbfff, decrypt);
 
 	// the first opcode is *not* encrypted
-	rom[0 + diff] = rom[0];
+	decrypt[0] = rom[0];
 	for (A = 1; A < 0xc000; A++)
 	{
 		int src;
 
 		src = rom[A];
-		rom[A + diff] = (src & 0x11) | ((src & 0xe0) >> 4) | ((src & 0x0e) << 4);
+		decrypt[A] = (src & 0x11) | ((src & 0xe0) >> 4) | ((src & 0x0e) << 4);
 	}
 }
 
 static DRIVER_INIT( spaceinv )
 {
-	int A;
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *decrypt = auto_malloc(0xc000);
+	int A;
 
-	memory_set_opcode_base(0, rom + diff);
+	memory_set_decrypted_region(0, 0x0000, 0xbfff, decrypt);
 
 	// the first opcode *is* encrypted
 	for (A = 0; A < 0xc000; A++)
@@ -492,7 +492,7 @@ static DRIVER_INIT( spaceinv )
 		int src;
 
 		src = rom[A];
-		rom[A + diff] = (src & 0x11) | ((src & 0xe0) >> 4) | ((src & 0x0e) << 4);
+		decrypt[A] = (src & 0x11) | ((src & 0xe0) >> 4) | ((src & 0x0e) << 4);
 	}
 }
 

@@ -22,15 +22,6 @@ SOUND DIRECTOR  LEE-S.O
 
 the screen says VH-K October 1995, are VH-K another company involved?
 
-notes:
-
-sprite problems, why? sprite system is simple
-also seems to draw some broken tilemaps (or are they meant to be?)
-
-todo:
-
-check problems above
-
 ---------------------
 
 Egghunt by Invi Image
@@ -53,12 +44,14 @@ I dumped it with this configuration. In case I'll redump it desoldering pin 16 f
 #include "driver.h"
 #include "sound/okim6295.h"
 
-UINT8 *egghunt_fgram;
+UINT8 *egghunt_bgram;
 UINT8 *egghunt_atram;
 UINT8 *egghunt_spram;
 UINT8 egghunt_vidram_bank;
 
-static tilemap *fg_tilemap;
+static tilemap *bg_tilemap;
+static UINT8 egghunt_okibanking;
+static UINT8 egghunt_gfx_banking;
 
 static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
@@ -73,6 +66,18 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		sx = egghunt_spram[offs+3] + ((attr & 0x10) << 4);
 		sy = ((egghunt_spram[offs+2] + 8) & 0xff) - 8;
 		code += (attr & 0xe0) << 3;
+
+		if(attr & 0xe0)
+		{
+			switch(egghunt_gfx_banking & 0x30)
+			{
+	//          case 0x00:
+	//          case 0x10: code += 0; break;
+				case 0x20: code += 0x400; break;
+				case 0x30: code += 0x800; break;
+			}
+		}
+
 		if (flipscreen)
 		{
 			sx = 496 - sx;
@@ -87,17 +92,25 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	}
 }
 
-static void get_fg_tile_info(int tile_index)
+static void get_bg_tile_info(int tile_index)
 {
-	int code = (egghunt_fgram[tile_index*2+1] << 8) | egghunt_fgram[tile_index*2];
+	int code = ((egghunt_bgram[tile_index*2+1] << 8) | egghunt_bgram[tile_index*2]) & 0x3fff;
 	int colour = egghunt_atram[tile_index];
-	SET_TILE_INFO(
-			0,
-			code, colour,
-			0)
+
+	if(code & 0x2000)
+	{
+		if((egghunt_gfx_banking & 3) == 2)
+			code += 0x2000;
+		else if((egghunt_gfx_banking & 3) == 3)
+			code += 0x4000;
+//      else if((egghunt_gfx_banking & 3) == 1)
+//          code += 0;
+	}
+
+	SET_TILE_INFO(0, code, colour, 0)
 }
 
-READ8_HANDLER( egghunt_fgram_r )
+READ8_HANDLER( egghunt_bgram_r )
 {
 	if (egghunt_vidram_bank)
 	{
@@ -105,12 +118,11 @@ READ8_HANDLER( egghunt_fgram_r )
 	}
 	else
 	{
-		return egghunt_fgram[offset];
+		return egghunt_bgram[offset];
 	}
-
 }
 
-WRITE8_HANDLER( egghunt_fgram_w )
+WRITE8_HANDLER( egghunt_bgram_w )
 {
 	if (egghunt_vidram_bank)
 	{
@@ -118,69 +130,68 @@ WRITE8_HANDLER( egghunt_fgram_w )
 	}
 	else
 	{
-		egghunt_fgram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset/2);
-
+		egghunt_bgram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 	}
 }
-
-
 
 WRITE8_HANDLER( egghunt_atram_w )
 {
 	egghunt_atram[offset] = data;
-	tilemap_mark_tile_dirty(fg_tilemap,offset);
+	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
 
 VIDEO_START(egghunt)
 {
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64, 32);
-	egghunt_fgram = auto_malloc(0x1000);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64, 32);
+	egghunt_bgram = auto_malloc(0x1000);
 	egghunt_spram = auto_malloc(0x1000);
-
 
 	return 0;
 }
 
 VIDEO_UPDATE(egghunt)
 {
-	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
 }
 
-WRITE8_HANDLER( egghunt_port07_w )
+WRITE8_HANDLER( egghunt_gfx_banking_w )
 {
-//  printf("port 0x07 %2x\n",data);
+	// data & 0x03 is used for tile banking
+	// data & 0x30 is used for sprites banking
+	egghunt_gfx_banking = data & 0x33;
 
-}
-
-WRITE8_HANDLER( egghunt_port06_w )
-{
-//  printf("port 0x06 %2x\n",data);
-
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
 WRITE8_HANDLER( egghunt_vidram_bank_w )
 {
-//  printf("port 0x00 %2x\n",data);
-	egghunt_vidram_bank = data;
-
+	egghunt_vidram_bank = data & 1;
 }
 
-WRITE8_HANDLER( egghunt_port03_w )
+WRITE8_HANDLER( egghunt_soundlatch_w )
 {
-//  printf("port 0x03 %2x\n",data);
 	soundlatch_w(0,data);
 	cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
+READ8_HANDLER( egghunt_okibanking_r )
+{
+	return egghunt_okibanking;
+}
 
+WRITE8_HANDLER( egghunt_okibanking_w )
+{
+	egghunt_okibanking = data;
+	OKIM6295_set_bank_base(0, (data & 0x10) ? 0x40000 : 0);
+}
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(egghunt_fgram_r)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(egghunt_bgram_r)
 	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
 
@@ -188,7 +199,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(egghunt_atram_w) AM_BASE(&egghunt_atram)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(egghunt_fgram_w)
+	AM_RANGE(0xd000, 0xdfff) AM_WRITE(egghunt_bgram_w)
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
@@ -205,9 +216,10 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(egghunt_vidram_bank_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(egghunt_port03_w)
-	AM_RANGE(0x06, 0x06) AM_WRITE(egghunt_port06_w)
-	AM_RANGE(0x07, 0x07) AM_WRITE(egghunt_port07_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(egghunt_gfx_banking_w)
+	AM_RANGE(0x03, 0x03) AM_WRITE(egghunt_soundlatch_w)
+	AM_RANGE(0x06, 0x06) AM_WRITENOP
+	AM_RANGE(0x07, 0x07) AM_WRITENOP
 ADDRESS_MAP_END
 
 
@@ -220,7 +232,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	/* e001 = sound bank? */
+	AM_RANGE(0xe001, 0xe001) AM_READWRITE(egghunt_okibanking_r, egghunt_okibanking_w)
 	AM_RANGE(0xe004, 0xe004) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
@@ -228,9 +240,8 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( egghunt )
 	PORT_START	/* 8bit */
-	/* turning these on can break the game.. */
-	PORT_DIPNAME( 0x01, 0x01, "0" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )	/* Disables COIN 1 */
+	PORT_DIPNAME( 0x01, 0x01, "Debug Mode" ) // Run all the animations
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
@@ -244,7 +255,7 @@ INPUT_PORTS_START( egghunt )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x60, "Credits to Start Game" )
+	PORT_DIPNAME( 0x60, 0x60, "Credits per Player" )
 	PORT_DIPSETTING(    0x60, "1" )
 //  PORT_DIPSETTING(    0x20, "2" ) /* One of these maybe 2 to start 1 to continue */
 	PORT_DIPSETTING(    0x40, "2" )
@@ -261,7 +272,7 @@ INPUT_PORTS_START( egghunt )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START      /* IN1 */
@@ -285,7 +296,7 @@ INPUT_PORTS_START( egghunt )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 
 	PORT_START	/* 8bit */
-	PORT_DIPNAME( 0x01, 0x01, "4" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -306,12 +317,12 @@ INPUT_PORTS_START( egghunt )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Censor Pictures" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 
 	PORT_START	/* 8bit */
-	PORT_DIPNAME( 0x01, 0x01, "6" )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -369,6 +380,11 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 
+static MACHINE_INIT( egghunt )
+{
+	egghunt_gfx_banking = 0;
+	egghunt_okibanking = 0;
+}
 
 static MACHINE_DRIVER_START( egghunt )
 	/* basic machine hardware */
@@ -382,6 +398,8 @@ static MACHINE_DRIVER_START( egghunt )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(egghunt)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
@@ -408,21 +426,20 @@ ROM_START( egghunt )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
 	ROM_LOAD( "rom2.bin", 0x00000, 0x10000, CRC(88a71bc3) SHA1(cf5acccfda9fda0d55af91a415a54391d0d0b7a2) )
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_INVERT )
-	ROM_LOAD( "rom3.bin", 0x000000, 0x40000, CRC(9d51ac49) SHA1(b0785d746fb2872a04386016ffdee80e6174dfc0) )
-	ROM_LOAD( "rom4.bin", 0x100000, 0x40000, CRC(41c63041) SHA1(24e9a21d448c144db2356329cf87dc99598c96dc) )
-	ROM_LOAD( "rom5.bin", 0x200000, 0x40000, CRC(6f96cb97) SHA1(7dde7d2aec6b5f9929b98d06c07bb07bf7bd59dd) )
-	ROM_LOAD( "rom6.bin", 0x300000, 0x40000, CRC(b5a41d4b) SHA1(1b4cf9c944e3eb7dc2d26d8a73bf5efb7b53253a) )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_INVERT )
+	ROM_LOAD( "rom3.bin", 0x00000, 0x40000, CRC(9d51ac49) SHA1(b0785d746fb2872a04386016ffdee80e6174dfc0) )
+	ROM_LOAD( "rom4.bin", 0x40000, 0x40000, CRC(41c63041) SHA1(24e9a21d448c144db2356329cf87dc99598c96dc) )
+	ROM_LOAD( "rom5.bin", 0x80000, 0x40000, CRC(6f96cb97) SHA1(7dde7d2aec6b5f9929b98d06c07bb07bf7bd59dd) )
+	ROM_LOAD( "rom6.bin", 0xc0000, 0x40000, CRC(b5a41d4b) SHA1(1b4cf9c944e3eb7dc2d26d8a73bf5efb7b53253a) )
 
-	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_INVERT )
-	/* do these need shuffling around a bit with ROM_CONTINUE? several sprites are broken in the attract mode chase scenes */
-	ROM_LOAD( "rom7.bin", 0x000000, 0x20000, CRC(1b43fb57) SHA1(f06e186bf514f2ad655df23636eab72e6fafd815) )
-	ROM_LOAD( "rom8.bin", 0x100000, 0x20000, CRC(f8122d0d) SHA1(78551c689b9e4eeed5e1ae97d8c7a907a388a9ff) )
-	ROM_LOAD( "rom9.bin", 0x200000, 0x20000, CRC(dbfa0ffe) SHA1(2aa759c0bd3945473a6d8fa48226ce6c6c94d740) )
-	ROM_LOAD( "rom10.bin",0x300000, 0x20000, CRC(14f5fc74) SHA1(769bccf9c1b42c35c3aee3866ed015de7c83b710) )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_INVERT )
+	ROM_LOAD( "rom7.bin", 0x00000, 0x20000, CRC(1b43fb57) SHA1(f06e186bf514f2ad655df23636eab72e6fafd815) )
+	ROM_LOAD( "rom8.bin", 0x20000, 0x20000, CRC(f8122d0d) SHA1(78551c689b9e4eeed5e1ae97d8c7a907a388a9ff) )
+	ROM_LOAD( "rom9.bin", 0x40000, 0x20000, CRC(dbfa0ffe) SHA1(2aa759c0bd3945473a6d8fa48226ce6c6c94d740) )
+	ROM_LOAD( "rom10.bin",0x60000, 0x20000, CRC(14f5fc74) SHA1(769bccf9c1b42c35c3aee3866ed015de7c83b710) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "rom1.bin", 0x00000, 0x80000, CRC(f03589bc) SHA1(4d9c8422ac3c4c3ecba3bcf0ed47b8c7d5903f8c) )
 ROM_END
 
-GAME( 1995, egghunt, 0, egghunt, egghunt, 0, ROT0, "Invi Image", "Egg Hunt", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAME( 1995, egghunt, 0, egghunt, egghunt, 0, ROT0, "Invi Image", "Egg Hunt", 0 )

@@ -11,10 +11,6 @@
 **      but for now, we keep it strictly to NOP stripping and LUI optimizations.
 **
 **
-**      Still not implemented:
-**          * MMU (it is logged, however)
-**
-**
 **#################################################################################################*/
 
 #include <stdio.h>
@@ -26,6 +22,7 @@
 #include "mamedbg.h"
 #include "mips3.h"
 #include "x86drc.h"
+#include "debugcpu.h"
 
 
 //In GCC, ECX/EDX are volatile
@@ -38,6 +35,7 @@
 **#################################################################################################*/
 
 #define LOG_CODE			(0)
+#define PRINTF_TLB			(0)
 
 #define CACHE_SIZE			(16 * 1024 * 1024)
 #define MAX_INSTRUCTIONS	512
@@ -147,12 +145,22 @@
 typedef struct
 {
 	UINT8		(*readbyte)(offs_t);
-	UINT16	(*readword)(offs_t);
-	UINT32	(*readlong)(offs_t);
+	UINT16		(*readword)(offs_t);
+	UINT32		(*readlong)(offs_t);
 	void		(*writebyte)(offs_t, UINT8);
 	void		(*writeword)(offs_t, UINT16);
 	void		(*writelong)(offs_t, UINT32);
 } memory_handlers;
+
+
+/* code logging info */
+struct _code_log_entry
+{
+	UINT32		pc;
+	UINT32		op;
+	void *		base;
+};
+typedef struct _code_log_entry code_log_entry;
 
 
 /* MIPS3 Registers */
@@ -170,7 +178,7 @@ typedef struct
 	UINT8		cf[4][8];
 
 	/* internal stuff */
-	drc_core *drc;
+	drc_core *	drc;
 	UINT32		drcoptions;
 	UINT32		nextpc;
 	int 		(*irq_callback)(int irqline);
@@ -188,6 +196,34 @@ typedef struct
 	size_t		icache_size;
 	size_t		dcache_size;
 
+	/* MMU */
+	struct
+	{
+		UINT64	page_mask;
+		UINT64	entry_hi;
+		UINT64	entry_lo[2];
+	} tlb[48];
+	UINT32 *	tlb_table;
+
+	/* fast RAM */
+	UINT32		fastram_select;
+	struct
+	{
+		offs_t	start;
+		offs_t	end;
+		int		readonly;
+		void *	base;
+	} fastram[MIPS3_MAX_FASTRAM];
+
+	/* hotspots */
+	UINT32		hotspot_select;
+	struct
+	{
+		offs_t		pc;
+		UINT32		opcode;
+		UINT32		cycles;
+	} hotspot[MIPS3_MAX_HOTSPOTS];
+
 	/* callbacks */
 	void *		generate_interrupt_exception;
 	void *		generate_cop_exception;
@@ -196,6 +232,21 @@ typedef struct
 	void *		generate_syscall_exception;
 	void *		generate_break_exception;
 	void *		generate_trap_exception;
+	void *		generate_tlbload_exception;
+	void *		generate_tlbstore_exception;
+	void *		handle_pc_tlb_mismatch;
+	void *		read_and_translate_byte_signed;
+	void *		read_and_translate_byte_unsigned;
+	void *		read_and_translate_word_signed;
+	void *		read_and_translate_word_unsigned;
+	void *		read_and_translate_long;
+	void *		read_and_translate_double;
+	void *		write_and_translate_byte;
+	void *		write_and_translate_word;
+	void *		write_and_translate_long;
+	void *		write_and_translate_double;
+	void *		write_back_long;
+	void *		write_back_double;
 } mips3_regs;
 
 
@@ -209,9 +260,10 @@ static void mips3drc_reset(drc_core *drc);
 static void mips3drc_recompile(drc_core *drc);
 static void mips3drc_entrygen(drc_core *drc);
 
+static void recompute_tlb_table(void);
 static void update_cycle_counting(void);
 
-static offs_t mips3_dasm(char *buffer, offs_t pc);
+static offs_t mips3_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
 
 
@@ -229,9 +281,6 @@ static int	mips3_icount;
 
 static mips3_regs mips3;
 
-#if LOG_CODE
-static FILE *symfile;
-#endif
 
 static const memory_handlers be_memory =
 {
@@ -295,32 +344,7 @@ static void compare_int_callback(int cpu)
 static void mips3_init(void)
 {
 	mips3drc_init();
-
-	/* allocate a timer */
 	mips3.compare_int_timer = timer_alloc(compare_int_callback);
-
-#if LOG_CODE
-{
-	FILE *munge_file = fopen("codemunge.bat", "w");
-	if (munge_file)
-	{
-		int regnum;
-		for (regnum = 0; regnum < 32; regnum++)
-		{
-			fprintf(munge_file, "@gsar -s%08Xh -rr%d.lo -o code.asm\n", (UINT32)(LO(&mips3.r[regnum])), regnum);
-			fprintf(munge_file, "@gsar -s%08Xh -rr%d.hi -o code.asm\n", (UINT32)(HI(&mips3.r[regnum])), regnum);
-			fprintf(munge_file, "@gsar -s%08Xh -rcp0.%d -o code.asm\n", (UINT32)(&mips3.cpr[0][regnum]), regnum);
-			fprintf(munge_file, "@gsar -s%08Xh -rcp1.%d -o code.asm\n", (UINT32)(&mips3.cpr[1][regnum]), regnum);
-			fprintf(munge_file, "@gsar -s%08Xh -rcc1.%d -o code.asm\n", (UINT32)(&mips3.ccr[1][regnum]), regnum);
-		}
-		for (regnum = 0; regnum < 8; regnum++)
-			fprintf(munge_file, "@gsar -s%08Xh -rcf1.%d -o code.asm\n", (UINT32)(&mips3.cf[1][regnum]), regnum);
-		fprintf(munge_file, "@gsar -s%08Xh -rpc -o code.asm\n", (UINT32)&mips3.pc);
-		fprintf(munge_file, "@gsar -s%08Xh -ricount -o code.asm\n", (UINT32)&mips3_icount);
-		fclose(munge_file);
-	}
-}
-#endif
 }
 
 
@@ -333,7 +357,8 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	/* allocate memory */
 	mips3.icache = malloc(config->icache);
 	mips3.dcache = malloc(config->dcache);
-	if (!mips3.icache || !mips3.dcache)
+	mips3.tlb_table = malloc(sizeof(mips3.tlb_table[0]) * (1 << (32 - 12)));
+	if (!mips3.icache || !mips3.dcache || !mips3.tlb_table)
 		osd_die("error: couldn't allocate cache for mips3!\n");
 
 	/* set up the endianness */
@@ -401,6 +426,9 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	mips3.is_mips4 = mips4;
 	mips3.cpr[0][COP0_PRId] = prid;
 	mips3.cpr[0][COP0_Config] = configreg;
+
+	/* recompute the TLB table */
+	recompute_tlb_table();
 }
 
 
@@ -484,6 +512,25 @@ static void rm7000le_reset(void *param)
 #endif
 
 
+static void mips3_exit(void)
+{
+	/* free cache memory */
+	if (mips3.icache)
+		free(mips3.icache);
+	mips3.icache = NULL;
+
+	if (mips3.dcache)
+		free(mips3.dcache);
+	mips3.dcache = NULL;
+
+	if (mips3.tlb_table)
+		free(mips3.tlb_table);
+	mips3.tlb_table = NULL;
+
+	drc_exit(mips3.drc);
+}
+
+
 static int mips3_execute(int cycles)
 {
 	/* update the cycle timing */
@@ -496,21 +543,230 @@ static int mips3_execute(int cycles)
 }
 
 
-static void mips3_exit(void)
+
+/*###################################################################################################
+**  TLB HANDLING
+**#################################################################################################*/
+
+static void map_tlb_entries(void)
 {
-	/* free cache memory */
-	if (mips3.icache)
-		free(mips3.icache);
-	mips3.icache = NULL;
+	int valid_asid = mips3.cpr[0][COP0_EntryHi] & 0xff;
+	int index;
 
-	if (mips3.dcache)
-		free(mips3.dcache);
-	mips3.dcache = NULL;
+	/* iterate over all TLB entries */
+	for (index = 0; index < 48; index++)
+	{
+		UINT64 hi = mips3.tlb[index].entry_hi;
 
-#if LOG_CODE
-	if (symfile) fclose(symfile);
+		/* only process if the ASID matches or if BOTH entries are marked global */
+		if (valid_asid == (hi & 0xff) || ((mips3.tlb[index].entry_lo[0] & 1) && (mips3.tlb[index].entry_lo[1] & 1)))
+		{
+			UINT32 count = (mips3.tlb[index].page_mask >> 13) & 0x00fff;
+			UINT32 vpn = ((hi >> 13) & 0x07ffffff) << 1;
+			int which, i;
+
+			/* ignore if the virtual address is beyond 32 bits */
+			if (vpn < (1 << (32 - 12)))
+
+				/* loop over both the even and odd pages */
+				for (which = 0; which < 2; which++)
+				{
+					UINT64 lo = mips3.tlb[index].entry_lo[which];
+
+					/* only map if the TLB entry is valid */
+					if (lo & 2)
+					{
+						UINT32 pfn = (lo >> 6) & 0x00ffffff;
+						UINT32 wp = (~lo >> 2) & 1;
+
+						for (i = 0; i <= count; i++, vpn++)
+							if (vpn < 0x80000 || vpn >= 0xc0000)
+								mips3.tlb_table[vpn] = (pfn++ << 12) | wp;
+					}
+				}
+		}
+	}
+}
+
+
+static void unmap_tlb_entries(void)
+{
+	int index;
+
+	/* iterate over all TLB entries */
+	for (index = 0; index < 48; index++)
+	{
+		UINT64 hi = mips3.tlb[index].entry_hi;
+		UINT32 count = (mips3.tlb[index].page_mask >> 13) & 0x00fff;
+		UINT32 vpn = ((hi >> 13) & 0x07ffffff) << 1;
+		int which, i;
+
+		/* ignore if the virtual address is beyond 32 bits */
+		if (vpn < (1 << (32 - 12)))
+
+			/* loop over both the even and odd pages */
+			for (which = 0; which < 2; which++)
+				for (i = 0; i <= count; i++, vpn++)
+					if (vpn < 0x80000 || vpn >= 0xc0000)
+						mips3.tlb_table[vpn] = 0xffffffff;
+	}
+}
+
+
+static void recompute_tlb_table(void)
+{
+	UINT32 addr;
+
+	/* map in the hard-coded spaces */
+	for (addr = 0x80000000; addr < 0xc0000000; addr += 1 << 12)
+		mips3.tlb_table[addr >> 12] = addr & 0x1ffff000;
+
+	/* reset everything else to unmapped */
+	memset(&mips3.tlb_table[0x00000000 >> 12], 0xff, sizeof(mips3.tlb_table[0]) * (0x80000000 >> 12));
+	memset(&mips3.tlb_table[0xc0000000 >> 12], 0xff, sizeof(mips3.tlb_table[0]) * (0x40000000 >> 12));
+
+	/* remap all the entries in the TLB */
+	map_tlb_entries();
+}
+
+
+static int translate_address(int space, offs_t *address)
+{
+	if (space == ADDRESS_SPACE_PROGRAM)
+	{
+		UINT32 result = mips3.tlb_table[*address >> 12];
+		if (result == 0xffffffff)
+			return 0;
+		*address = (result & ~0xfff) | (*address & 0xfff);
+	}
+	return 1;
+}
+
+
+INLINE void logonetlbentry(int index, int which)
+{
+#if PRINTF_TLB
+	UINT64 hi = mips3.cpr[0][COP0_EntryHi];
+	UINT64 lo = mips3.cpr[0][COP0_EntryLo0 + which];
+	UINT32 vpn = (((hi >> 13) & 0x07ffffff) << 1);
+	UINT32 asid = hi & 0xff;
+	UINT32 r = (hi >> 62) & 3;
+	UINT32 pfn = (lo >> 6) & 0x00ffffff;
+	UINT32 c = (lo >> 3) & 7;
+	UINT32 pagesize = (((mips3.cpr[0][COP0_PageMask] >> 13) & 0xfff) + 1) << 12;
+	UINT64 vaddr = (UINT64)vpn * 0x1000;
+	UINT64 paddr = (UINT64)pfn * 0x1000;
+
+	vaddr += pagesize * which;
+
+	printf("index=%08X  pagesize=%08X  vaddr=%08X%08X  paddr=%08X%08X  asid=%02X  r=%X  c=%X  dvg=%c%c%c\n",
+			index, pagesize, (UINT32)(vaddr >> 32), (UINT32)vaddr, (UINT32)(paddr >> 32), (UINT32)paddr,
+			asid, r, c, (lo & 4) ? 'd' : '.', (lo & 2) ? 'v' : '.', (lo & 1) ? 'g' : '.');
 #endif
-	drc_exit(mips3.drc);
+}
+
+
+static void logtlbentry(int index)
+{
+	logonetlbentry(index, 0);
+	logonetlbentry(index, 1);
+}
+
+
+static void tlbr(void)
+{
+	UINT32 index = mips3.cpr[0][COP0_Index] & 0x3f;
+	if (index < 48)
+	{
+		mips3.cpr[0][COP0_PageMask] = mips3.tlb[index].page_mask;
+		mips3.cpr[0][COP0_EntryHi] = mips3.tlb[index].entry_hi;
+		mips3.cpr[0][COP0_EntryLo0] = mips3.tlb[index].entry_lo[0];
+		mips3.cpr[0][COP0_EntryLo1] = mips3.tlb[index].entry_lo[1];
+	}
+}
+
+
+static void tlbwi(void)
+{
+	UINT32 index = mips3.cpr[0][COP0_Index] & 0x3f;
+	logtlbentry(index);
+	if (index < 48)
+	{
+		unmap_tlb_entries();
+		mips3.tlb[index].page_mask = mips3.cpr[0][COP0_PageMask];
+		mips3.tlb[index].entry_hi = mips3.cpr[0][COP0_EntryHi] & ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000));
+		mips3.tlb[index].entry_lo[0] = mips3.cpr[0][COP0_EntryLo0];
+		mips3.tlb[index].entry_lo[1] = mips3.cpr[0][COP0_EntryLo1];
+		map_tlb_entries();
+	}
+}
+
+
+static void tlbwr(void)
+{
+	UINT32 wired = mips3.cpr[0][COP0_Wired] & 0x3f;
+	UINT32 index = 48 - wired;
+	if (index > 0)
+		index = ((activecpu_gettotalcycles64() - mips3.count_zero_time) % index + wired) & 0x3f;
+	else
+		index = 47;
+	logtlbentry(index);
+	{
+		unmap_tlb_entries();
+		mips3.tlb[index].page_mask = mips3.cpr[0][COP0_PageMask];
+		mips3.tlb[index].entry_hi = mips3.cpr[0][COP0_EntryHi] & ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000));
+		mips3.tlb[index].entry_lo[0] = mips3.cpr[0][COP0_EntryLo0];
+		mips3.tlb[index].entry_lo[1] = mips3.cpr[0][COP0_EntryLo1];
+		map_tlb_entries();
+	}
+}
+
+
+static void tlbp(void)
+{
+	UINT32 index;
+	UINT64 vpn;
+
+	debug_halt_on_next_instruction();
+	for (index = 0; index < 48; index++)
+	{
+		UINT64 mask = ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000)) & ~U64(0x1fff);
+#if PRINTF_TLB
+printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
+	(UINT32)(mask >> 32), (UINT32)mask,
+	(UINT32)(mips3.tlb[index].entry_hi >> 32), (UINT32)mips3.tlb[index].entry_hi,
+	(UINT32)(mips3.cpr[0][COP0_EntryHi] >> 32), (UINT32)mips3.cpr[0][COP0_EntryHi]);
+#endif
+		if ((mips3.tlb[index].entry_hi & mask) == (mips3.cpr[0][COP0_EntryHi] & mask))
+		{
+			if (((mips3.tlb[index].entry_lo[0] & 1) && (mips3.tlb[index].entry_lo[1] & 1)) ||
+				(mips3.tlb[index].entry_hi & 0xff) == (mips3.cpr[0][COP0_EntryHi] & 0xff))
+				break;
+		}
+	}
+	vpn = ((mips3.cpr[0][COP0_EntryHi] >> 13) & 0x07ffffff) << 1;
+	if (index != 48)
+	{
+		if (mips3.tlb_table[vpn & 0xfffff] == 0xffffffff)
+		{
+#if PRINTF_TLB
+			printf("TLBP: Should have not found an entry\n");
+			debug_halt_on_next_instruction();
+#endif
+		}
+		mips3.cpr[0][COP0_Index] = index;
+	}
+	else
+	{
+		if (mips3.tlb_table[vpn & 0xfffff] != 0xffffffff)
+		{
+#if PRINTF_TLB
+			printf("TLBP: Should havefound an entry\n");
+			debug_halt_on_next_instruction();
+#endif
+		}
+		mips3.cpr[0][COP0_Index] = 0x80000000;
+	}
 }
 
 
@@ -543,92 +799,92 @@ static void update_cycle_counting(void)
 
 
 
-/*------------------------------------------------------------------
-    logtlbentry
-------------------------------------------------------------------*/
 
-INLINE void logonetlbentry(int which)
-{
-	UINT64 hi = mips3.cpr[0][COP0_EntryHi];
-	UINT64 lo = mips3.cpr[0][COP0_EntryLo0 + which];
-	UINT32 vpn = (((hi >> 13) & 0x07ffffff) << 1) + which;
-	UINT32 asid = hi & 0xff;
-	UINT32 r = (hi >> 62) & 3;
-	UINT32 pfn = (lo >> 6) & 0x00ffffff;
-	UINT32 c = (lo >> 3) & 7;
-	UINT32 pagesize = ((mips3.cpr[0][COP0_PageMask] >> 1) | 0xfff) + 1;
-	UINT64 vaddr = (UINT64)vpn * (UINT64)pagesize;
-	UINT64 paddr = (UINT64)pfn * (UINT64)pagesize;
+/*###################################################################################################
+**  CODE LOGGING
+**#################################################################################################*/
 
-	logerror("index = %08X  pagesize = %08X  vaddr = %08X%08X  paddr = %08X%08X  asid = %02X  r = %X  c = %X  dvg=%c%c%c\n",
-			(UINT32)mips3.cpr[0][COP0_Index], pagesize, (UINT32)(vaddr >> 32), (UINT32)vaddr, (UINT32)(paddr >> 32), (UINT32)paddr,
-			asid, r, c, (lo & 4) ? 'd' : '.', (lo & 2) ? 'v' : '.', (lo & 1) ? 'g' : '.');
-}
-
-static void logtlbentry(void)
-{
-	logonetlbentry(0);
-	logonetlbentry(1);
-}
-
-
-
-/*------------------------------------------------------------------
-    log_code
-------------------------------------------------------------------*/
-
-static void log_code(drc_core *drc)
-{
 #if LOG_CODE
-	FILE *temp;
-	temp = fopen("code.bin", "wb");
-	fwrite(drc->cache_base, 1, drc->cache_top - drc->cache_base, temp);
-	fclose(temp);
-#endif
-}
 
+static code_log_entry code_log_buffer[MAX_INSTRUCTIONS*2];
+static int code_log_index;
 
-
-/*------------------------------------------------------------------
-    log_symbol
-------------------------------------------------------------------*/
-
-static void log_symbol(drc_core *drc, UINT32 pc)
+INLINE void code_log_reset(void)
 {
-#if LOG_CODE
-	static int first = 1;
-	char temp[256];
-	if (pc == ~0)
-	{
-		if (symfile) fclose(symfile);
-		symfile = NULL;
-		return;
-	}
-	if (!symfile) symfile = fopen("code.sym", first ? "w" : "a");
-	first = 0;
-	if (pc == ~1)
-	{
-		fprintf(symfile, "%08X   ===============================================================\n", drc->cache_top - drc->cache_base);
-		return;
-	}
-	else if (pc == ~2)
-	{
-		fprintf(symfile, "%08X   ~--------------------------------------------\n", drc->cache_top - drc->cache_base);
-		return;
-	}
-	else
-	{
-		mips3_dasm(temp, pc);
-		fprintf(symfile, "%08X   %08X: %s\n", drc->cache_top - drc->cache_base, pc, temp);
-	}
-#endif
+	code_log_index = 0;
 }
+
+INLINE void code_log_add_entry(UINT32 pc, UINT32 op, void *base)
+{
+	code_log_buffer[code_log_index].pc = pc;
+	code_log_buffer[code_log_index].op = op;
+	code_log_buffer[code_log_index].base = base;
+	code_log_index++;
+}
+
+static void code_log(drc_core *drc, const char *label, void *start)
+{
+	extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
+	extern unsigned dasmmips3(char *buffer, unsigned pc, UINT32 op);
+	UINT8 *cur = start;
+	static FILE *f;
+
+	/* open the file, creating it if necessary */
+	if (!f)
+		f = fopen("mips3drc.asm", "w");
+	if (!f)
+		return;
+	fprintf(f, "\n%s\n", label);
+
+	/* loop from the start until the cache top */
+	while (cur < drc->cache_top)
+	{
+		char buffer[100];
+		int bytes;
+		int op;
+
+		/* disassemble this instruction */
+		bytes = i386_dasm_one(buffer, (UINT32)cur, cur, 1, 1) & DASMFLAG_LENGTHMASK;
+
+		/* look for a match in the registered opcodes */
+		for (op = 0; op < code_log_index; op++)
+			if (code_log_buffer[op].base == (void *)cur)
+				break;
+
+		/* if no match, just output the current instruction */
+		if (op == code_log_index)
+			fprintf(f, "%08X: %s\n", (UINT32)cur, buffer);
+
+		/* otherwise, output with the original instruction to the right */
+		else
+		{
+			char buffer2[100];
+			dasmmips3(buffer2, code_log_buffer[op].pc, code_log_buffer[op].op);
+			fprintf(f, "%08X: %-50s %08X: %s\n", (UINT32)cur, buffer, code_log_buffer[op].pc, buffer2);
+		}
+
+		/* advance past this instruction */
+		cur += bytes;
+	}
+
+	/* flush the file */
+	fflush(f);
+}
+
+#else
+
+#define code_log_reset()
+#define code_log_add_entry(a,b,c)
+#define code_log(a,b,c)
+
+#endif
 
 
 
 /*###################################################################################################
 **  RECOMPILER CORE
 **#################################################################################################*/
+
 
 #include "mdrcold.c"
 //#include "mdrc32.c"
@@ -678,17 +934,18 @@ static UINT8 mips3_win_layout[] =
 **  DISASSEMBLY HOOK
 **#################################################################################################*/
 
-static offs_t mips3_dasm(char *buffer, offs_t pc)
+static offs_t mips3_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-#if defined(MAME_DEBUG) || (LOG_CODE)
-	extern unsigned dasmmips3(char *, unsigned);
-	unsigned result;
-	change_pc(pc);
-    result = dasmmips3(buffer, pc);
-	change_pc(mips3.pc);
-    return result;
+#ifdef MAME_DEBUG
+	extern unsigned dasmmips3(char *, unsigned, UINT32);
+	UINT32 op = *(UINT32 *)opram;
+	if (mips3.bigendian)
+		op = BIG_ENDIANIZE_INT32(op);
+	else
+		op = LITTLE_ENDIANIZE_INT32(op);
+	return dasmmips3(buffer, pc, op);
 #else
-	sprintf(buffer, "$%04X", cpu_readop32(pc));
+	sprintf(buffer, "$%08X", *(UINT32 *)opram);
 	return 4;
 #endif
 }
@@ -717,6 +974,14 @@ static void mips3_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + MIPS3_CAUSE:		mips3.cpr[0][COP0_Cause] = info->i;		break;
 		case CPUINFO_INT_REGISTER + MIPS3_COUNT:		mips3.cpr[0][COP0_Count] = info->i; 	break;
 		case CPUINFO_INT_REGISTER + MIPS3_COMPARE:		mips3.cpr[0][COP0_Compare] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_INDEX:		mips3.cpr[0][COP0_Index] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_RANDOM:		mips3.cpr[0][COP0_Random] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_ENTRYHI:		mips3.cpr[0][COP0_EntryHi] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_ENTRYLO0:		mips3.cpr[0][COP0_EntryLo0] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_ENTRYLO1:		mips3.cpr[0][COP0_EntryLo1] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_PAGEMASK:		mips3.cpr[0][COP0_PageMask] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_WIRED:		mips3.cpr[0][COP0_Wired] = info->i; 	break;
+		case CPUINFO_INT_REGISTER + MIPS3_BADVADDR:		mips3.cpr[0][COP0_BadVAddr] = info->i; 	break;
 
 		case CPUINFO_INT_REGISTER + MIPS3_R0:			mips3.r[0] = info->i;					break;
 		case CPUINFO_INT_REGISTER + MIPS3_R1:			mips3.r[1] = info->i;					break;
@@ -756,8 +1021,20 @@ static void mips3_set_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_MIPS3_DRC_OPTIONS:				mips3.drcoptions = info->i;				break;
 
+		case CPUINFO_INT_MIPS3_FASTRAM_SELECT:			if (info->i >= 0 && info->i < MIPS3_MAX_FASTRAM) mips3.fastram_select = info->i; break;
+		case CPUINFO_INT_MIPS3_FASTRAM_START:			mips3.fastram[mips3.fastram_select].start = info->i; break;
+		case CPUINFO_INT_MIPS3_FASTRAM_END:				mips3.fastram[mips3.fastram_select].end = info->i; break;
+		case CPUINFO_INT_MIPS3_FASTRAM_READONLY:		mips3.fastram[mips3.fastram_select].readonly = info->i; break;
+
+		case CPUINFO_INT_MIPS3_HOTSPOT_SELECT:			if (info->i >= 0 && info->i < MIPS3_MAX_HOTSPOTS) mips3.hotspot_select = info->i; break;
+		case CPUINFO_INT_MIPS3_HOTSPOT_PC:				mips3.hotspot[mips3.hotspot_select].pc = info->i; break;
+		case CPUINFO_INT_MIPS3_HOTSPOT_OPCODE:			mips3.hotspot[mips3.hotspot_select].opcode = info->i; break;
+		case CPUINFO_INT_MIPS3_HOTSPOT_CYCLES:			mips3.hotspot[mips3.hotspot_select].cycles = info->i; break;
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					mips3.irq_callback = info->irqcallback;	break;
+
+		case CPUINFO_PTR_MIPS3_FASTRAM_BASE:			mips3.fastram[mips3.fastram_select].base = info->p;	break;
 	}
 }
 
@@ -785,12 +1062,8 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 12;					break;
 
 		case CPUINFO_INT_INPUT_STATE + MIPS3_IRQ0:		info->i = (mips3.cpr[0][COP0_Cause] & 0x400) ? ASSERT_LINE : CLEAR_LINE;	break;
 		case CPUINFO_INT_INPUT_STATE + MIPS3_IRQ1:		info->i = (mips3.cpr[0][COP0_Cause] & 0x800) ? ASSERT_LINE : CLEAR_LINE;	break;
@@ -808,6 +1081,14 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + MIPS3_CAUSE:		info->i = mips3.cpr[0][COP0_Cause];		break;
 		case CPUINFO_INT_REGISTER + MIPS3_COUNT:		info->i = ((activecpu_gettotalcycles64() - mips3.count_zero_time) / 2); break;
 		case CPUINFO_INT_REGISTER + MIPS3_COMPARE:		info->i = mips3.cpr[0][COP0_Compare];	break;
+		case CPUINFO_INT_REGISTER + MIPS3_INDEX:		info->i = mips3.cpr[0][COP0_Index];		break;
+		case CPUINFO_INT_REGISTER + MIPS3_RANDOM:		info->i = mips3.cpr[0][COP0_Random];	break;
+		case CPUINFO_INT_REGISTER + MIPS3_ENTRYHI:		info->i = mips3.cpr[0][COP0_EntryHi];	break;
+		case CPUINFO_INT_REGISTER + MIPS3_ENTRYLO0:		info->i = mips3.cpr[0][COP0_EntryLo0];	break;
+		case CPUINFO_INT_REGISTER + MIPS3_ENTRYLO1:		info->i = mips3.cpr[0][COP0_EntryLo1];	break;
+		case CPUINFO_INT_REGISTER + MIPS3_PAGEMASK:		info->i = mips3.cpr[0][COP0_PageMask];	break;
+		case CPUINFO_INT_REGISTER + MIPS3_WIRED:		info->i = mips3.cpr[0][COP0_Wired];		break;
+		case CPUINFO_INT_REGISTER + MIPS3_BADVADDR:		info->i = mips3.cpr[0][COP0_BadVAddr];	break;
 
 		case CPUINFO_INT_REGISTER + MIPS3_R0:			info->i = mips3.r[0];					break;
 		case CPUINFO_INT_REGISTER + MIPS3_R1:			info->i = mips3.r[1];					break;
@@ -854,11 +1135,12 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = mips3_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = mips3_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mips3_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = mips3_dasm;		break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = mips3.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips3_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = mips3_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = mips3_win_layout;				break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "MIPS III"); break;
@@ -875,6 +1157,14 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + MIPS3_CAUSE: 		sprintf(info->s = cpuintrf_temp_str(), "Cause:%08X", (UINT32)mips3.cpr[0][COP0_Cause]); break;
 		case CPUINFO_STR_REGISTER + MIPS3_COUNT: 		sprintf(info->s = cpuintrf_temp_str(), "Count:%08X", (UINT32)((activecpu_gettotalcycles64() - mips3.count_zero_time) / 2)); break;
 		case CPUINFO_STR_REGISTER + MIPS3_COMPARE:		sprintf(info->s = cpuintrf_temp_str(), "Compare:%08X", (UINT32)mips3.cpr[0][COP0_Compare]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_INDEX:		sprintf(info->s = cpuintrf_temp_str(), "Index:%08X", (UINT32)mips3.cpr[0][COP0_Index]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_RANDOM:		sprintf(info->s = cpuintrf_temp_str(), "Random:%08X", (UINT32)mips3.cpr[0][COP0_Random]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_ENTRYHI:		sprintf(info->s = cpuintrf_temp_str(), "EntryHi:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryHi] >> 32), (UINT32)mips3.cpr[0][COP0_EntryHi]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_ENTRYLO0:		sprintf(info->s = cpuintrf_temp_str(), "EntryLo0:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryLo0] >> 32), (UINT32)mips3.cpr[0][COP0_EntryLo0]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_ENTRYLO1:		sprintf(info->s = cpuintrf_temp_str(), "EntryLo1:%08X%08X", (UINT32)(mips3.cpr[0][COP0_EntryLo1] >> 32), (UINT32)mips3.cpr[0][COP0_EntryLo1]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_PAGEMASK:		sprintf(info->s = cpuintrf_temp_str(), "PageMask:%08X%08X", (UINT32)(mips3.cpr[0][COP0_PageMask] >> 32), (UINT32)mips3.cpr[0][COP0_PageMask]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_WIRED:		sprintf(info->s = cpuintrf_temp_str(), "Wired:%08X", (UINT32)mips3.cpr[0][COP0_Wired]); break;
+		case CPUINFO_STR_REGISTER + MIPS3_BADVADDR:		sprintf(info->s = cpuintrf_temp_str(), "BadVAddr:%08X", (UINT32)mips3.cpr[0][COP0_BadVAddr]); break;
 
 		case CPUINFO_STR_REGISTER + MIPS3_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X%08X", (UINT32)(mips3.r[0] >> 32), (UINT32)mips3.r[0]); break;
 		case CPUINFO_STR_REGISTER + MIPS3_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X%08X", (UINT32)(mips3.r[1] >> 32), (UINT32)mips3.r[1]); break;
@@ -1148,4 +1438,5 @@ void rm7000le_get_info(UINT32 state, union cpuinfo *info)
 
 #if !defined(MAME_DEBUG) && (LOG_CODE)
 #include "mips3dsm.c"
+#include "cpu/i386/i386dasm.c"
 #endif

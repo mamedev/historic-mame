@@ -8,8 +8,9 @@
 #include "driver.h"
 
 
+UINT8 *konami1_decrypted;
 
-unsigned char konami1_decodebyte( unsigned char opcode, unsigned short address )
+UINT8 konami1_decodebyte( UINT8 opcode, unsigned short address )
 {
 /*
 >
@@ -26,7 +27,7 @@ unsigned char konami1_decodebyte( unsigned char opcode, unsigned short address )
 > CPU_D0 = EPROM_D0
 >
 */
-	unsigned char xormask;
+	UINT8 xormask;
 
 
 	xormask = 0;
@@ -42,16 +43,16 @@ unsigned char konami1_decodebyte( unsigned char opcode, unsigned short address )
 
 static void decode(int cpu)
 {
-	unsigned char *rom = memory_region(REGION_CPU1+cpu);
-	int diff = memory_region_length(REGION_CPU1+cpu) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1+cpu);
+	int size = memory_region_length(REGION_CPU1+cpu);
 	int A;
 
+	konami1_decrypted = auto_malloc(size);
+	memory_set_decrypted_region(cpu, 0x0000, 0xffff, konami1_decrypted);
 
-	memory_set_opcode_base(cpu,rom+diff);
-
-	for (A = 0;A < diff;A++)
+	for (A = 0;A < size;A++)
 	{
-		rom[A+diff] = konami1_decodebyte(rom[A],A);
+		konami1_decrypted[A] = konami1_decodebyte(rom[A],A);
 	}
 }
 

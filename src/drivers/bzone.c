@@ -205,6 +205,7 @@
 #include "sound/custom.h"
 #include "artwork.h"
 #include "bzone.h"
+#include "state.h"
 
 #define IN0_3KHZ (1<<7)
 #define IN0_VG_HALT (1<<6)
@@ -732,6 +733,7 @@ static WRITE8_HANDLER( analog_select_w )
 static DRIVER_INIT( bzone )
 {
 	artwork_set_overlay(bzone_overlay);
+	state_save_register_global(analog_data);
 }
 
 
@@ -744,6 +746,7 @@ static DRIVER_INIT( bradley )
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1809, 0x1809, 0, 0, input_port_5_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x180a, 0x180a, 0, 0, analog_data_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1848, 0x1850, 0, 0, analog_select_w);
+	state_save_register_global(analog_data);
 }
 
 
@@ -754,6 +757,8 @@ static DRIVER_INIT( redbaron )
 	OVERLAY_END
 
 	artwork_set_overlay(redbaron_overlay);
+	state_save_register_global(analog_data);
+	state_save_register_global(rb_input_select);
 }
 
 

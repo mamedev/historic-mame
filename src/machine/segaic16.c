@@ -8,7 +8,9 @@
 #include "segaic16.h"
 #include "vidhrdw/res_net.h"
 
+extern void *fd1089_get_decrypted_base(void);
 extern void fd1094_machine_init(void);
+extern void *fd1094_get_decrypted_base(void);
 
 
 /*************************************
@@ -134,6 +136,9 @@ void segaic16_memory_mapper_init(int cpunum, const struct segaic16_memory_map_en
 	chip->map = entrylist;
 	chip->sound_w = sound_w_callback;
 	chip->sound_r = sound_r_callback;
+
+	/* create the initial regions */
+	segaic16_memory_mapper_reset();
 }
 
 
@@ -332,9 +337,22 @@ static void update_memory_mapping(struct memory_mapper_chip *chip)
 		if (banknum && read)
 		{
 			if (rgn->base)
-				memory_set_bankptr(banknum, *rgn->base);
+			{
+				memory_configure_bank(banknum, 0, 1, *rgn->base, 0);
+				memory_set_bank(banknum, 0);
+			}
 			else if (rgn->romoffset != ~0)
-				memory_set_bankptr(banknum, memory_region(REGION_CPU1 + chip->cpunum) + region_start);
+			{
+				UINT8 *decrypted;
+
+				decrypted = fd1094_get_decrypted_base();
+				if (!decrypted)
+					decrypted = fd1089_get_decrypted_base();
+
+				memory_configure_bank(banknum, 0, 1, memory_region(REGION_CPU1 + chip->cpunum) + region_start, 0);
+				memory_configure_bank_decrypted(banknum, 0, 1, decrypted + region_start, 0);
+				memory_set_bank(banknum, 0);
+			}
 		}
 
 		if (LOG_MEMORY_MAP) printf("  %06X-%06X (%06X) = %s\n", region_start, region_end, region_mirror, rgn->name);

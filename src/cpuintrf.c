@@ -1217,24 +1217,64 @@ void activecpu_set_opbase(unsigned val)
     Disassembly
 --------------------------*/
 
-/* ack - make this horrorshow go away */
-static unsigned internal_dasm(int cpunum, char *buffer, unsigned pc)
+offs_t activecpu_dasm(char *buffer, offs_t pc)
 {
-	unsigned result;
+	VERIFY_ACTIVECPU(1, activecpu_dasm);
+
+	/* allow overrides */
 	if (cpu_dasm_override)
 	{
-		result = cpu_dasm_override(cpunum, buffer, pc);
+		offs_t result = cpu_dasm_override(activecpu, buffer, pc);
 		if (result)
 			return result;
 	}
-	return (*cpu[cpunum].intf.disassemble)(buffer, pc);
-}
 
+	/* if there's no old-style assembler, do some work to make this call work with the new one */
+	if (!cpu[activecpu].intf.disassemble)
+	{
+		int dbwidth = activecpu_databus_width(ADDRESS_SPACE_PROGRAM);
+		int maxbytes = activecpu_max_instruction_bytes();
+		int endianness = activecpu_endianness();
+		UINT8 opbuf[64], argbuf[64];
+		int xorval = 0;
+		int numbytes;
 
-unsigned activecpu_dasm(char *buffer, unsigned pc)
-{
-	VERIFY_ACTIVECPU(1, activecpu_dasm);
-	return internal_dasm(activecpu, buffer, pc);
+		/* determine the XOR to get the bytes in order */
+		switch (dbwidth)
+		{
+			case 8:		xorval = 0;																break;
+			case 16:	xorval = (endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);	break;
+			case 32:	xorval = (endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);	break;
+			case 64:	xorval = (endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);	break;
+		}
+
+		/* fetch the bytes up to the maximum */
+		memset(opbuf, 0xff, sizeof(opbuf));
+		memset(argbuf, 0xff, sizeof(argbuf));
+		for (numbytes = 0; numbytes < maxbytes; numbytes++)
+		{
+			offs_t physpc = pc + numbytes;
+			const UINT8 *ptr;
+
+			/* translate the address, set the opcode base, and apply the byte xor */
+			if (!cpu[activecpu].intf.translate || (*cpu[activecpu].intf.translate)(ADDRESS_SPACE_PROGRAM, &physpc))
+			{
+				memory_set_opbase(physpc);
+				physpc ^= xorval;
+
+				/* get pointer to data */
+				ptr = memory_get_op_ptr(cpu_getactivecpu(), physpc);
+				if (ptr)
+				{
+					opbuf[numbytes] = *ptr;
+					argbuf[numbytes] = *(ptr + (opcode_arg_base - opcode_base));
+				}
+			}
+		}
+
+		return (*cpu[activecpu].intf.disassemble_new)(buffer, pc, opbuf, argbuf, maxbytes);
+	}
+	return (*cpu[activecpu].intf.disassemble)(buffer, pc);
 }
 
 
@@ -1505,7 +1545,7 @@ offs_t cpunum_dasm(int cpunum, char *buffer, unsigned pc)
 	unsigned result;
 	VERIFY_CPUNUM(1, cpunum_dasm);
 	cpuintrf_push_context(cpunum);
-	result = internal_dasm(cpunum, buffer, pc);
+	result = activecpu_dasm(buffer, pc);
 	cpuintrf_pop_context();
 	return result;
 }
@@ -1516,7 +1556,7 @@ offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 
 	unsigned result;
 	VERIFY_CPUNUM(1, cpunum_dasm_new);
 	cpuintrf_push_context(cpunum);
-	result = (*cpu[cpunum].intf.disassemble_new)(buffer, pc, oprom, opram, bytes);
+	result = activecpu_dasm_new(buffer, pc, oprom, opram, bytes);
 	cpuintrf_pop_context();
 	return result;
 }

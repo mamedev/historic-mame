@@ -49,6 +49,11 @@ enum
 **  TYPE DEFINITIONS
 **#################################################################################################*/
 
+typedef void (*debug_hook_read_ptr)(int spacenum, int size, offs_t address);
+typedef void (*debug_hook_write_ptr)(int spacenum, int size, offs_t address, UINT64 data);
+
+
+
 struct debug_trace_info
 {
 	FILE *			file;						/* tracing file for this CPU */
@@ -74,6 +79,16 @@ struct debug_space_info
 };
 
 
+struct _debug_hotspot_entry
+{
+	offs_t			access;						/* access address */
+	offs_t			pc;							/* PC of the access */
+	int				spacenum;					/* space where the access occurred */
+	UINT32			count;						/* number of hits */
+};
+typedef struct _debug_hotspot_entry debug_hotspot_entry;
+
+
 struct debug_cpu_info
 {
 	UINT8			valid;						/* are we valid? */
@@ -81,11 +96,15 @@ struct debug_cpu_info
 	UINT8			opwidth;					/* width of an opcode */
 	UINT8			ignoring;					/* are we ignoring this CPU's execution? */
 	offs_t			temp_breakpoint_pc;			/* temporary breakpoint PC */
-	int				total_watchpoints;			/* total watchpoints on this CPU */
+	int				read_watchpoints;			/* total read watchpoints on this CPU */
+	int				write_watchpoints;			/* total write watchpoints on this CPU */
 	struct symbol_table *symtable;				/* symbol table for expression evaluation */
 	struct debug_trace_info trace;				/* trace info */
 	struct breakpoint *first_bp;				/* first breakpoint */
 	struct debug_space_info space[ADDRESS_SPACES];/* per-address space info */
+	debug_hotspot_entry *hotspots;				/* hotspot list */
+	int				hotspot_count;				/* number of hotspots */
+	int				hotspot_threshhold;			/* threshhold for the number of hits to print */
 	int				(*translate)(int space, offs_t *address);/* address translation routine */
 	int 			(*read)(int space, UINT32 offset, int size, UINT64 *value); /* memory read routine */
 	int				(*write)(int space, UINT32 offset, int size, UINT64 value); /* memory write routine */
@@ -144,9 +163,10 @@ UINT32				debug_get_execution_counter(void);
 void				debug_trace_printf(int cpunum, const char *fmt, ...);
 void				debug_source_script(const char *file);
 
-/* CPU execution hooks */
+/* debugging hooks */
 void				debug_vblank_hook(void);
 void				debug_interrupt_hook(int cpunum, int irqline);
+void				debug_get_memory_hooks(int cpunum, debug_hook_read_ptr *read, debug_hook_write_ptr *write);
 
 /* execution control */
 void				debug_cpu_single_step(int numsteps);
@@ -169,12 +189,13 @@ int					debug_breakpoint_clear(int bpnum);
 int					debug_breakpoint_enable(int bpnum, int enable);
 
 /* watchpoints */
-void				debug_check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
 struct watchpoint *	debug_watchpoint_first(int cpunum, int spacenum);
 int					debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, offs_t length, struct parsed_expression *condition, const char *action);
 int					debug_watchpoint_clear(int wpnum);
 int					debug_watchpoint_enable(int wpnum, int enable);
-const int *			debug_watchpoint_count_ptr(int cpunum);
+
+/* hotspots */
+int					debug_hotspot_track(int cpunum, int numspots, int threshhold);
 
 /* memory accessors */
 UINT8				debug_read_byte(int spacenum, offs_t address);

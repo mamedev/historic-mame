@@ -567,8 +567,14 @@ void bitmap_free(mame_bitmap *bitmap)
 
 void *auto_malloc(size_t size)
 {
-	void *result = malloc(size);
+	void *result;
 	malloc_info *info;
+
+	/* malloc-ing zero bytes is inherently unportable; hence this check */
+	if (size == 0)
+		osd_die("Attempted to auto_malloc zero bytes");
+
+	result = malloc(size);
 
 	/* fail horribly if it doesn't work */
 	if (!result)

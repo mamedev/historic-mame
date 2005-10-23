@@ -765,13 +765,12 @@ DRIVER_INIT( moonqsr )
 {
 	offs_t i;
 	UINT8 *rom = memory_region(REGION_CPU1);
-	offs_t diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *decrypt = auto_malloc(0x8000);
 
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
-	memory_set_opcode_base(0,rom+diff);
-
-	for (i = 0;i < diff;i++)
-		rom[i + diff] = decode_mooncrst(rom[i],i);
+	for (i = 0;i < 0x8000;i++)
+		decrypt[i] = decode_mooncrst(rom[i],i);
 }
 
 DRIVER_INIT( checkman )

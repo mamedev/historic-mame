@@ -3,31 +3,30 @@
 
 #include <math.h>
 
-#define ENABLE_TRANSITIONS 1
-
 
 // !!! I'm sure this isn't right !!!
 UINT32 hng64_dls[2][0x81] ;
 
-static int flagFlag = 0 ;
-int dataArray[16] ;
-
 static int frameCount = 0 ;
 
 UINT32* hng64_videoram;
-tilemap *hng64_tilemap;
+tilemap *hng64_tilemap0;
+tilemap *hng64_tilemap1;
 tilemap *hng64_tilemap2;
 tilemap *hng64_tilemap3;
-tilemap *hng64_tilemap4;
 
 UINT32 *hng64_spriteram;
 UINT32 *hng64_videoregs;
 
-UINT32 *hng64_fcram ;
+UINT32 *hng64_tcram ;
+
+/* HAAAACK to make the floor 'work' */
+UINT32 hackTilemap3, hackTm3Count, rowScrollOffset ;
+
 
 static void  matmul4( float *product, const float *a, const float *b ) ;
 static void  vecmatmul4( float *product, const float *a, const float *b) ;
-//static float vecDotProduct( const float *a, const float *b) ;
+static float vecDotProduct( const float *a, const float *b) ;
 void normalize(float* x) ;
 
 // 3d helpers
@@ -35,14 +34,17 @@ static float uToF(UINT16 input) ;
 void SetIdentity(float *matrix) ;
 
 
-//static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap) ;
-//static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, mame_bitmap *bitmap) ;
+static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap) ;
+static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, mame_bitmap *bitmap) ;
 
 static float *depthBuffer ;
 static struct polygon *polys ;
 
+//static int tilemap2Offset = 0x10000 ;
+
 
 #define WORD_AT(BUFFER,OFFSET) ( (BUFFER[OFFSET] << 8) | BUFFER[OFFSET+1] )
+
 
 /*
  * Sprite Format
@@ -123,8 +125,8 @@ static void hng64_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 
 
 //      if (!(source[4] == 0x00000000 || source[4] == 0x000000aa))
-//          printf("unknown : %.8x %.8x %.8x %.8x %.8x \n", source[0], source[1], source[2], source[3],
-//                                                          source[4]) ;
+//          printf("unknown : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x \n", source[0], source[1], source[2], source[3],
+//                                                                         source[4], source[5], source[6], source[7]) ;
 
 		/* Calculate the zoom */
 		/* First, prevent any possible divide by zero errors */
@@ -149,7 +151,11 @@ static void hng64_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 		{
 			gfx= Machine->gfx[5];
 			tileno>>=1;
-		//  pal >>=4;
+
+			// Just a big hack to make the top and bottom tiles in the intro not crash (a pal value of 0x70 is bad)
+			// Is there a problem with drawsprites?  Doubtful...
+			if (source[2] == 0x00080000)
+				pal >>=4;
 		}
 
 		// Accomodate for chaining and flipping
@@ -176,8 +182,8 @@ static void hng64_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 
 //      if (((source[2] & 0xffff0000) >> 16) == 0x0001)
 //      {
-//          ui_popup("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
-//          // ui_popup("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
+//          usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
+//          // usrintf_showmessage("T %.8x %.8x %.8x %.8x %.8x", source[0], source[1], source[2], source[3], source[4]) ;
 //      }
 
 		for(ydrw=0;ydrw<=chainy;ydrw++)
@@ -232,15 +238,15 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 	INT32 brigR, brigG, brigB ;
 
 	// If either of the fading memory regions is non-zero...
-	if (hng64_fcram[0x00000007] != 0x00000000 || hng64_fcram[0x0000000a] != 0x00000000)
+	if (hng64_tcram[0x00000007] != 0x00000000 || hng64_tcram[0x0000000a] != 0x00000000)
 	{
-		darkR = (INT32)( hng64_fcram[0x00000007]        & 0xff) ;
-		darkG = (INT32)((hng64_fcram[0x00000007] >> 8)  & 0xff) ;
-		darkB = (INT32)((hng64_fcram[0x00000007] >> 16) & 0xff) ;
+		darkR = (INT32)( hng64_tcram[0x00000007]        & 0xff) ;
+		darkG = (INT32)((hng64_tcram[0x00000007] >> 8)  & 0xff) ;
+		darkB = (INT32)((hng64_tcram[0x00000007] >> 16) & 0xff) ;
 
-		brigR = (INT32)( hng64_fcram[0x0000000a]        & 0xff) ;
-		brigG = (INT32)((hng64_fcram[0x0000000a] >> 8)  & 0xff) ;
-		brigB = (INT32)((hng64_fcram[0x0000000a] >> 16) & 0xff) ;
+		brigR = (INT32)( hng64_tcram[0x0000000a]        & 0xff) ;
+		brigG = (INT32)((hng64_tcram[0x0000000a] >> 8)  & 0xff) ;
+		brigB = (INT32)((hng64_tcram[0x0000000a] >> 16) & 0xff) ;
 
 		for (i = Machine->visible_area.min_x; i < Machine->visible_area.max_x; i++)
 		{
@@ -254,9 +260,9 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 
 				/*
                 // Apply the darkening pass (0x07)...
-                colorScaleR = 1.0f - (float)( hng64_fcram[0x00000007] & 0xff)        / 255.0f ;
-                colorScaleG = 1.0f - (float)((hng64_fcram[0x00000007] >> 8)  & 0xff) / 255.0f ;
-                colorScaleB = 1.0f - (float)((hng64_fcram[0x00000007] >> 16) & 0xff) / 255.0f ;
+                colorScaleR = 1.0f - (float)( hng64_tcram[0x00000007] & 0xff)        / 255.0f ;
+                colorScaleG = 1.0f - (float)((hng64_tcram[0x00000007] >> 8)  & 0xff) / 255.0f ;
+                colorScaleB = 1.0f - (float)((hng64_tcram[0x00000007] >> 16) & 0xff) / 255.0f ;
 
                 finR = ((float)RGB_RED(*thePixel)   * colorScaleR) ;
                 finG = ((float)RGB_GREEN(*thePixel) * colorScaleG) ;
@@ -264,9 +270,9 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 
 
                 // Apply the lightening pass (0x0a)...
-                colorScaleR = 1.0f + (float)( hng64_fcram[0x0000000a] & 0xff)        / 255.0f ;
-                colorScaleG = 1.0f + (float)((hng64_fcram[0x0000000a] >> 8)  & 0xff) / 255.0f ;
-                colorScaleB = 1.0f + (float)((hng64_fcram[0x0000000a] >> 16) & 0xff) / 255.0f ;
+                colorScaleR = 1.0f + (float)( hng64_tcram[0x0000000a] & 0xff)        / 255.0f ;
+                colorScaleG = 1.0f + (float)((hng64_tcram[0x0000000a] >> 8)  & 0xff) / 255.0f ;
+                colorScaleB = 1.0f + (float)((hng64_tcram[0x0000000a] >> 16) & 0xff) / 255.0f ;
 
                 finR *= colorScaleR ;
                 finG *= colorScaleG ;
@@ -281,7 +287,7 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 
 
 				// Subtractive fading
-				if (hng64_fcram[0x00000007] != 0x00000000)
+				if (hng64_tcram[0x00000007] != 0x00000000)
 				{
 					finR -= darkR ;
 					finG -= darkG ;
@@ -289,7 +295,7 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 				}
 
 				// Additive fading
-				if (hng64_fcram[0x0000000a] != 0x00000000)
+				if (hng64_tcram[0x0000000a] != 0x00000000)
 				{
 					finR += brigR ;
 					finG += brigG ;
@@ -317,11 +323,8 @@ static void hng64_transition_control(mame_bitmap *bitmap)
  * 3d 'Sprite' Format
  * ------------------
  *
- * UINT32 | Bytes    | Use
- * -------+-76543210-+----------------
- *   0    | xxxx---- | Activation/display list type flag.
+ * (documented below)
  *
- *    (see below)
  */
 
 #define MAX_ONSCREEN_POLYS (10000)
@@ -354,7 +357,7 @@ struct polygon
 
 static void PerformFrustumClip(struct polygon *p) ;
 
-//static void DrawWireframe(struct polygon *p, mame_bitmap *bitmap) ;
+static void DrawWireframe(struct polygon *p, mame_bitmap *bitmap) ;
 static void DrawShaded(struct polygon *p, mame_bitmap *bitmap) ;
 
 
@@ -918,12 +921,12 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 	{
 		if (polys[i].visible)
 		{
-			// DrawWireframe(&polys[i], bitmap) ;
+			//DrawWireframe(&polys[i], bitmap) ;
 			DrawShaded(&polys[i], bitmap) ;
 		}
 	}
 
-	// ui_popup("%d", numPolys) ;
+	// usrintf_showmessage("%d", numPolys) ;
 
 	// Clear each of the display list buffers after drawing...
 	for (i = 0; i < 0x81; i++)
@@ -935,7 +938,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 
 
 /* 8x8 tiles, 4bpp layer */
-static void get_hng64_tile_info(int tile_index)
+static void get_hng64_tile0_info(int tile_index)
 {
 	int tileno,pal;
 	tileno = hng64_videoram[tile_index];
@@ -944,7 +947,7 @@ static void get_hng64_tile_info(int tile_index)
 }
 
 /* 16x16 tiles, 8bpp layer */
-static void get_hng64_tile2_info(int tile_index)
+static void get_hng64_tile1_info(int tile_index)
 {
 	int tileno,pal;
 	tileno = hng64_videoram[tile_index+(0x10000/4)];
@@ -954,7 +957,7 @@ static void get_hng64_tile2_info(int tile_index)
 }
 
 /* 16x16 tiles, 8bpp layer */
-static void get_hng64_tile3_info(int tile_index)
+static void get_hng64_tile2_info(int tile_index)
 {
 	int tileno,pal;
 	tileno = hng64_videoram[tile_index+(0x20000/4)];
@@ -963,7 +966,7 @@ static void get_hng64_tile3_info(int tile_index)
 }
 
 /* 16x16 tiles, 8bpp layer */
-static void get_hng64_tile4_info(int tile_index)
+static void get_hng64_tile3_info(int tile_index)
 {
 	int tileno,pal;
 	tileno = hng64_videoram[tile_index+(0x30000/4)];
@@ -977,40 +980,187 @@ static void get_hng64_tile4_info(int tile_index)
 looks like the zoom center can move too..
 not sure how these features are enabled up yet */
 
+static int gatherPixelsForLine(mame_bitmap *tilemapBitmap,
+							   INT32 startX, INT32 startY, INT32 endX, INT32 endY,
+							   UINT16 *penList)
+{
+	int retVal = 0 ;
+
+	// !! BRESENHAM'S AGAIN - I REALLY SHOULD GENERALIZE THIS !!
+
+#define SWAP(a,b) tmpswap = a; a = b; b = tmpswap;
+
+	INT32 i;
+	INT32 steep = 1;
+	INT32 sx, sy;  /* step positive or negative (1 or -1) */
+	INT32 dx, dy;  /* delta (difference in X and Y between points) */
+	INT32 e;
+
+	/*
+    * inline swap. On some architectures, the XOR trick may be faster
+    */
+	INT32 tmpswap;
+
+	/*
+    * optimize for vertical and horizontal lines here
+    */
+
+	dx = abs(endX - startX);
+	sx = ((endX - startX) > 0) ? 1 : -1;
+	dy = abs(endY - startY);
+	sy = ((endY - startY) > 0) ? 1 : -1;
+
+	if (dy > dx)
+	{
+		steep = 0;
+		SWAP(startX, startY);
+		SWAP(dx, dy);
+		SWAP(sx, sy);
+	}
+
+	e = (dy << 1) - dx;
+
+	for (i = 0; i < dx; i++)
+	{
+		if (steep)
+		{
+			penList[retVal] = ((UINT16*)tilemapBitmap->line[startY])[startX] ;
+			retVal++ ;
+		}
+		else
+		{
+			penList[retVal] = ((UINT16*)tilemapBitmap->line[startX])[startY] ;
+			retVal++ ;
+		}
+		while (e >= 0)
+		{
+			startY += sy;
+			e -= (dx << 1);
+		}
+
+		startX += sx;
+		e += (dy << 1);
+	}
+#undef SWAP
+
+
+	return retVal ;
+}
+
+static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
+							 INT32 startX, INT32 startY, INT32 endX, INT32 endY,
+							 INT32 screenY, mame_bitmap *bitmap)
+{
+	int i ;
+	UINT8 r, g, b ;
+
+	int numPix ;
+	UINT16 penList[0x1000] ;			// 4k of pixels to be safe
+
+	float pixStride, pixOffset ;
+
+//  printf("(%d,%d) (%d,%d)\n", startX, startY, endX, endY) ;
+
+	// CLAMP - BUT I'M PRETTY SURE THIS ISN'T QUITE RIGHT !!! ???
+	startX += 1024 ; if (startX < 0) startX = 0 ; else if (startX > 2048) startX = 2048 ;
+	startY += 1024 ; if (startY < 0) startY = 0 ; else if (startY > 2048) startY = 2048 ;
+	endX += 1024 ; if (endX < 0) endX = 0 ; else if (endX > 2048) endX = 2048 ;
+	endY += 1024 ; if (endY < 0) endY = 0 ; else if (endY > 2048) endY = 2048 ;
+
+	numPix = gatherPixelsForLine(tilemapBitmap, startX, startY, endX, endY, penList) ;
+
+	pixStride = (float)numPix / (float)(Machine->visible_area.max_x-1) ;
+	pixOffset = 0 ;
+
+	if (numPix == 0)
+		penList[0] = ((UINT16*)tilemapBitmap->line[1024])[1024] ;
+
+//  printf("numpix %d ps %f po %f s(%d,%d) e(%d,%d)\n", numPix, pixStride, pixOffset, startX, startY, endX, endY) ;
+
+	// Draw out the screen's line...
+	for (i = Machine->visible_area.min_x; i < Machine->visible_area.max_x; i++)
+	{
+		// Nearest-neighbor interpolation for now (but i doubt it does linear)
+		UINT16 tmPen = penList[(int)pixOffset] ;
+		palette_get_color(tmPen, &r, &g, &b);
+
+		((UINT32 *)(bitmap->line[screenY]))[i] = MAKE_ARGB((UINT8)255, (UINT8)r, (UINT8)g, (UINT8)b) ;
+
+		pixOffset += pixStride ;
+	}
+}
+
 static void hng64_drawtilemap3( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	int scrollbase,xscroll,yscroll,xzoom,yzoom;
+	int i ;
 
-	scrollbase = (hng64_videoregs[0x05]&0x3fff0000)>>16;
-	xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
-	yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
-	xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
-	yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
-	xzoom   = xzoom-xscroll;
-	yzoom   = yzoom-yscroll;
-	xzoom &=0xffff;
-	yzoom &=0xffff;
+	mame_bitmap *srcbitmap = tilemap_get_pixmap( hng64_tilemap3 );
 
-	xscroll <<=16;
-	yscroll <<=16;
-	xzoom <<=8;
-	yzoom <<=8;
+//  usrintf_showmessage("%d", hackTm3Count) ;
 
-	tilemap_draw_roz(bitmap,cliprect,hng64_tilemap3,xscroll,yscroll,
-			xzoom,0,0,yzoom,
-			1,
-			0,0);
+	if (hackTm3Count/4 < Machine->visible_area.max_y)
+	{
+		for (i = 0; i < hackTm3Count/4; i++)
+		{
+			UINT32 address = rowScrollOffset + 0xbf0 ;
+			address -= (i * 0x10) ;
+			address /= 4 ;
+			//printf("nums : %.4x %.4x %.4x %.4x\n", (INT16)((hng64_videoram[address+0x0]&0xffff0000) >> 16),
+			//                                     (INT16)((hng64_videoram[address+0x1]&0xffff0000) >> 16),
+			//                                     (INT16)((hng64_videoram[address+0x2]&0xffff0000) >> 16),
+			//                                     (INT16)((hng64_videoram[address+0x3]&0xffff0000) >> 16)) ;
+
+			plotTilemap3Line(srcbitmap,
+							 (INT16)((hng64_videoram[address+0x0]&0xffff0000) >> 16),
+							 (INT16)((hng64_videoram[address+0x2]&0xffff0000) >> 16),
+							 (INT16)((hng64_videoram[address+0x1]&0xffff0000) >> 16),
+							 (INT16)((hng64_videoram[address+0x3]&0xffff0000) >> 16),
+							 (Machine->visible_area.max_y-1)-i,
+							 bitmap) ;
+		}
+	}
+
+	// Maybe the scrollbase should be used instead of my hacky rowScrollOffset :)?
+//  scrollbase = (hng64_videoregs[0x05]&0x00003fff)>>0;
+
+//  xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
+//  yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
+//  xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
+//  yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
+//  xzoom   = xzoom-xscroll;
+//  yzoom   = yzoom-yscroll;
+//  xzoom &=0xffff;
+//  yzoom &=0xffff;
+
+//  xscroll <<=16;
+//  yscroll <<=16;
+//  xzoom <<=8;
+//  yzoom <<=8;
+
+//  tilemap_set_scrollx(hng64_tilemap3,0, xscroll);
+//  tilemap_set_scrolly(hng64_tilemap3,0, yscroll);
+
+//  tilemap_draw(bitmap,cliprect,hng64_tilemap3,0,0);
+
+//  tilemap_draw_roz(bitmap,cliprect,hng64_tilemap3,xscroll,yscroll,
+//          xzoom,0,0,yzoom,
+//          1,
+//          0,0);
 }
 
 static void hng64_drawtilemap2( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int scrollbase,xscroll,yscroll,xzoom,yzoom;
 
-	scrollbase = (hng64_videoregs[0x04]&0x00003fff)>>0;
-	xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
-	yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
-	xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
-	yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
+	scrollbase = (hng64_videoregs[0x05]&0x3fff0000)>>16;
+	xscroll = (INT16)(hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x40004+(scrollbase<<4))/4]>>16);
+	yscroll = (INT16)(hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
+	yzoom   = (INT16)(hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16);
+	xzoom   = (INT16)(hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x40014+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x40018+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x4001c+(scrollbase<<4))/4]>>16);
 	xzoom   = xzoom-xscroll;
 	yzoom   = yzoom-yscroll;
 	xzoom &=0xffff;
@@ -1027,24 +1177,104 @@ static void hng64_drawtilemap2( mame_bitmap *bitmap, const rectangle *cliprect )
 			0,0);
 }
 
+static void hng64_drawtilemap1( mame_bitmap *bitmap, const rectangle *cliprect )
+{
+	int scrollbase,xscroll,yscroll,xzoom,yzoom;
+
+	scrollbase = (hng64_videoregs[0x04]&0x00003fff)>>0;
+	xscroll = (INT16)(hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x40004+(scrollbase<<4))/4]>>16);
+	yscroll = (INT16)(hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
+	xzoom   = (INT16)(hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16);
+	yzoom   = (INT16)(hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x40014+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x40018+(scrollbase<<4))/4]>>16);
+	// ???  = (INT16)(hng64_videoram[(0x4001c+(scrollbase<<4))/4]>>16);
+	xzoom   = xzoom-xscroll;
+	yzoom   = yzoom-yscroll;
+	xzoom &=0xffff;
+	yzoom &=0xffff;
+
+	xscroll <<=16;
+	yscroll <<=16;
+	xzoom <<=8;
+	yzoom <<=8;
+
+	tilemap_draw_roz(bitmap,cliprect,hng64_tilemap1,xscroll,yscroll,
+			xzoom,0,0,yzoom,
+			1,
+			0,0);
+}
+
+
+
+/*
+ * Video Regs Format
+ * ------------------
+ *
+ * UINT32 | Bytes    | Use
+ * -------+-76543210-+----------------
+ *   0    | oooooooo | unknown - always seems to be 04060000 (fatfurwa) and 00060000 (buriki)
+ *   1    | xxxx---- | looks like it's 0001 most (all) of the time - turns off in buriki intro
+ *   1    | ----oooo | unknown - always seems to be 0000 (fatfurwa)
+ *   2    | oooooooo | unknown - likes to change sometimes though... (looks like bit-flags)
+ *   3    | oooooooo | unknown - change a lot - maybe mixer flags?
+ *   4    | xxxx---- | tilemap0 offset into tilemap RAM?
+ *   4    | ----xxxx | tilemap1 offset into tilemap RAM
+ *   5    | xxxx---- | tilemap3 offset into tilemap RAM
+ *   5    | ----xxxx | tilemap4 offset into tilemap RAM?
+ *   6    | oooooooo | unknown - always seems to be 000001ff (fatfurwa)
+ *   7    | oooooooo | unknown - always seems to be 000001ff (fatfurwa)
+ *   8    | oooooooo | unknown - always seems to be 80008000 (fatfurwa)
+ *   9    | oooooooo | unknown - always seems to be 00000000 (fatfurwa)
+ *   a    | oooooooo | unknown - always seems to be 00000000 (fatfurwa)
+ *   b    | oooooooo | unknown - 00000000 in intro - 00007ff8 when fight is going on (looks like &'ing it with 0x3fff is a good thing to do - tilemap stuff?)
+ *   c    | xxxxxxxx | I'm almost positive this is some form of offset to produce animations in Tilemap1 - or maybe all tilemaps?
+ *                     - 00xxx000 are used in fatfurwa during fights
+ *                     - 00000?xx are used in buriki during the intro
+ *   d    | oooooooo | not used ??
+ *   e    | oooooooo | not used ??
+ */
+
+
 VIDEO_UPDATE( hng64 )
 {
-	int scrollbase;
-
 	fillbitmap(bitmap, get_black_pen(), 0);
 
-	scrollbase = (hng64_videoregs[0x05]&0x00003fff)>>0;
-	tilemap_set_scrollx(hng64_tilemap4,0, hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
-	tilemap_set_scrolly(hng64_tilemap4,0, hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
-	tilemap_draw(bitmap,cliprect,hng64_tilemap4,0,0);
+	// Debug
+//  for (int iii = 0; iii < 0x0f; iii++)
+//      printf("%.8x ", hng64_videoregs[iii]) ;
+//  printf("\n") ;
+//  usrintf_showmessage("%.8x %.8x %.8x %.8x", hng64_videoregs[0x1], hng64_videoregs[0x3], hng64_videoregs[0xb], hng64_videoregs[0xc]) ;
 
-	hng64_drawtilemap3(bitmap,cliprect);
+	// I think there's something to this, but I'm not doing it right...
+	// Interestingly enough, this turns the bootup screen blue :)
+	/*
+    if (hng64_videoregs[0xc] != tilemap2Offset)
+    {
+        tilemap2Offset = hng64_videoregs[0xc] ;
+
+        tilemap_dispose(hng64_tilemap1) ;
+        hng64_tilemap1 = tilemap_create(get_hng64_tile2_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); // 128x128x4 = 0x10000
+    }
+    */
+
+	// Rowscroll variables...
+	// usrintf_showmessage("%.8x %.8x x %.8x %.8x", hng64_videoram[0x00057bf0/4], hng64_videoram[0x00057bf4/4], hng64_videoram[0x00057bf8/4], hng64_videoram[0x00057bfc/4]) ;
+
+	// All of this priority stuff is probably done with some funky layer mixing chip -
+	//   (there are neato alpha effects on a real board, etc)
 	hng64_drawtilemap2(bitmap,cliprect);
+	hng64_drawtilemap1(bitmap,cliprect);
+	hng64_drawtilemap3(bitmap,cliprect);						// Draw the ground last...
 
-	tilemap_draw(bitmap,cliprect,hng64_tilemap,0,0);
+	// !!! This tilemap has the same flags as the 'previous' three, but they're not used in fatfurwa !!!
+	//     (in other words, we should make a similar hng64_drawtilemap0() function for this tilemap)
+	tilemap_draw(bitmap,cliprect,hng64_tilemap0,0,0);
 
 	hng64_drawsprites(bitmap,cliprect);
 
+	// 3d really shouldn't be last, but you don't see some cool stuff right now if it's put before sprites :)...
 	hng64_draw3d(bitmap, cliprect);
 
 	/* hack to enable 2nd cpu when key is pressed */
@@ -1057,27 +1287,26 @@ VIDEO_UPDATE( hng64 )
 	/* AJG */
 	// if(code_pressed(KEYCODE_D))
 
-#if ENABLE_TRANSITIONS
 	hng64_transition_control(bitmap) ;
-#endif
 
-	// printf("FRAME DONE %d\n", frameCount) ;
+//  printf("FRAME DONE %d\n", frameCount) ;
 	frameCount++ ;
-	flagFlag = 0 ;
+
+	hackTilemap3 = rowScrollOffset = hackTm3Count = 0 ;
 }
 
 VIDEO_START( hng64 )
 {
-	hng64_tilemap = tilemap_create(get_hng64_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8, 128,128);     /* 128x128x4 = 0x10000 */
-	hng64_tilemap2 = tilemap_create(get_hng64_tile2_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
-	hng64_tilemap3 = tilemap_create(get_hng64_tile3_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
-	hng64_tilemap4 = tilemap_create(get_hng64_tile4_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
-	tilemap_set_transparent_pen(hng64_tilemap,0);
+	hng64_tilemap0 = tilemap_create(get_hng64_tile0_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,   8, 128,128); /* 128x128x4 = 0x10000 */
+	hng64_tilemap1 = tilemap_create(get_hng64_tile1_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
+	hng64_tilemap2 = tilemap_create(get_hng64_tile2_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
+	hng64_tilemap3 = tilemap_create(get_hng64_tile3_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16, 16, 128,128); /* 128x128x4 = 0x10000 */
+	tilemap_set_transparent_pen(hng64_tilemap0,0);
+	tilemap_set_transparent_pen(hng64_tilemap1,0);
 	tilemap_set_transparent_pen(hng64_tilemap2,0);
 	tilemap_set_transparent_pen(hng64_tilemap3,0);
-	tilemap_set_transparent_pen(hng64_tilemap4,0);
 
-	// Buffer Allocation
+	// 3d Buffer Allocation
 	depthBuffer = (float*)auto_malloc((Machine->visible_area.max_x)*(Machine->visible_area.max_y)*sizeof(float)) ;
 
 	// The general display list of polygons in the scene...
@@ -1085,6 +1314,12 @@ VIDEO_START( hng64 )
 	polys = auto_malloc(MAX_ONSCREEN_POLYS * sizeof(struct polygon))  ;
 
 	return 0;
+}
+
+VIDEO_STOP( hng64 )
+{
+	free(polys) ;
+	free(depthBuffer) ;
 }
 
 
@@ -1123,12 +1358,12 @@ static void vecmatmul4( float *product, const float *a, const float *b)
 	product[2] = bi0 * a[2] + bi1 * a[6] + bi2 * a[10] + bi3 * a[14];
 	product[3] = bi0 * a[3] + bi1 * a[7] + bi2 * a[11] + bi3 * a[15];
 }
-#if 0
+
 static float vecDotProduct( const float *a, const float *b)
 {
 	return ((a[0]*b[0]) + (a[1]*b[1]) + (a[2]*b[2])) ;
 }
-#endif
+
 void SetIdentity(float *matrix)
 {
 	int i ;
@@ -1338,7 +1573,6 @@ static void PerformFrustumClip(struct polygon *p)
 /////////////////////////
 // wireframe rendering //
 /////////////////////////
-#if 0
 
 static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap)
 {
@@ -1423,7 +1657,7 @@ static void DrawWireframe(struct polygon *p, mame_bitmap *bitmap)
     }
     */
 }
-#endif
+
 
 ///////////////////////
 // polygon rendering //

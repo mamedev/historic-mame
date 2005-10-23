@@ -200,10 +200,9 @@ typedef struct _data_accessors data_accessors;
 #define STATIC_BANK30			30						/* banked memory #30 */
 #define STATIC_BANK31			31						/* banked memory #31 */
 #define STATIC_BANK32			32						/* banked memory #32 */
-/* entries 33-66 are reserved for dynamically allocated internal banks */
-#define STATIC_RAM				67						/* RAM - standard reads/writes */
-#define STATIC_ROM				68						/* ROM - standard reads, no writes */
-#define STATIC_RAMROM			69						/* RAMROM - use for access in encrypted 8-bit systems */
+/* entries 33-67 are reserved for dynamically allocated internal banks */
+#define STATIC_RAM				68						/* RAM - standard reads/writes */
+#define STATIC_ROM				69						/* ROM - standard reads, no writes */
 #define STATIC_NOP				70						/* unmapped - all unmapped memory goes here */
 #define STATIC_UNMAP			71						/* unmapped - all unmapped memory goes here */
 #define STATIC_COUNT			72						/* total number of static handlers */
@@ -300,7 +299,6 @@ typedef struct _data_accessors data_accessors;
 #define MWA8_NOP				((write8_handler)STATIC_NOP)
 #define MWA8_RAM				((write8_handler)STATIC_RAM)
 #define MWA8_ROM				((write8_handler)STATIC_ROM)
-#define MWA8_RAMROM				((write8_handler)STATIC_RAMROM)
 
 /* 16-bit reads */
 #define MRA16_BANK1				((read16_handler)STATIC_BANK1)
@@ -913,8 +911,8 @@ const address_map *memory_get_map(int cpunum, int spacenum);
 opbase_handler memory_set_opbase_handler(int cpunum, opbase_handler function);
 void		memory_set_opbase(offs_t offset);
 
-/* ----- separate opcode/data encryption helpers ---- */
-void		memory_set_opcode_base(int cpunum, void *base);
+/* ----- separate opcode/data encryption helper ---- */
+void 		memory_set_decrypted_region(int cpunum, offs_t start, offs_t end, void *base);
 
 /* ----- return a base pointer to memory ---- */
 void *		memory_get_read_ptr(int cpunum, int spacenum, offs_t offset);
@@ -923,6 +921,7 @@ void *		memory_get_op_ptr(int cpunum, offs_t offset);
 
 /* ----- memory banking ----- */
 void		memory_configure_bank(int banknum, int startentry, int numentries, void *base, offs_t stride);
+void		memory_configure_bank_decrypted(int banknum, int startentry, int numentries, void *base, offs_t stride);
 void		memory_set_bank(int banknum, int entrynum);
 void		memory_set_bankptr(int banknum, void *base);
 

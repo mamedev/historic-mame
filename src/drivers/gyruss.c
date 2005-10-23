@@ -472,7 +472,7 @@ ROM_START( gyruss )
 	ROM_LOAD( "gyrussk.3",    0x4000, 0x2000, CRC(27454a98) SHA1(030c7df225652ee20d5ef64d005eb011dc89a27d) )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, CRC(822bf27e) SHA1(36d5bea2392a7d3476dd797dc05602705cfa23ef) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
@@ -505,7 +505,7 @@ ROM_START( gyrussce )
 	ROM_LOAD( "gya-3.bin",    0x4000, 0x2000, CRC(f6dbb33b) SHA1(19cab8e7f2f2358b6271ab402f132654e8be95d4) )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, CRC(822bf27e) SHA1(36d5bea2392a7d3476dd797dc05602705cfa23ef) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
@@ -538,7 +538,7 @@ ROM_START( venus )
 	ROM_LOAD( "r3",           0x4000, 0x2000, CRC(db246fcd) SHA1(c0228b35591c9e1c778370a2abd3739c441f14aa) )
 	/* the diagnostics ROM would go here */
 
-	ROM_REGION( 2*0x10000, REGION_CPU2, 0 )	/* 64k for code + 64k for the decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
 	ROM_LOAD( "gyrussk.9",    0xe000, 0x2000, CRC(822bf27e) SHA1(36d5bea2392a7d3476dd797dc05602705cfa23ef) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */

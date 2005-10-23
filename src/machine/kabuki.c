@@ -138,7 +138,7 @@ static int bytedecode(int src,int swap_key1,int swap_key2,int xor_key,int select
 	return src;
 }
 
-void kabuki_decode(unsigned char *src,unsigned char *dest_op,unsigned char *dest_data,
+void kabuki_decode(UINT8 *src,UINT8 *dest_op,UINT8 *dest_data,
 		int base_addr,int length,int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	int A;
@@ -160,14 +160,19 @@ void kabuki_decode(unsigned char *src,unsigned char *dest_op,unsigned char *dest
 
 static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
+	UINT8 *rom = memory_region(REGION_CPU1);
+	UINT8 *decrypt = auto_malloc(memory_region_length(REGION_CPU1));
 	int i;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 
-	memory_set_opcode_base(0,rom+diff);
-	kabuki_decode(rom,rom+diff,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
-	for (i = 0x10000;i < diff;i += 0x4000)
-		kabuki_decode(rom+i,rom+i+diff,rom+i,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
+	kabuki_decode(rom,decrypt,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
+
+	rom += 0x10000;
+	decrypt += 0x10000;
+	for (i = 0; i < 16; i++)
+		kabuki_decode(rom+i*0x4000,decrypt+i*0x4000,rom+i*0x4000,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
+
+	memory_configure_bank_decrypted(1, 0, 16, decrypt, 0x4000);
 /*
     {
         FILE *f;
@@ -194,16 +199,16 @@ void block_decode(void)    { mitchell_decode(0x02461357,0x64207531,0x0002,0x01);
 
 static void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
-	unsigned char *rom = memory_region(REGION_CPU2);
-	unsigned char *backup = memory_region(REGION_USER1);
-	int diff = memory_region_length(REGION_CPU2) / 2;
+	UINT8 *decrypt = auto_malloc(0x8000);
+	UINT8 *rom = memory_region(REGION_CPU2);
+	UINT8 *backup = memory_region(REGION_USER1);
 
 	/* the main CPU can read the ROM and checksum it to verify that it hasn't been */
 	/* replaced with a decrypted one. */
 	if (backup) memcpy(backup,rom,0x8000);
 
-	memory_set_opcode_base(1,rom+diff);
-	kabuki_decode(rom,rom+diff,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
+	memory_set_decrypted_region(1, 0x0000, 0x7fff, decrypt);
+	kabuki_decode(rom,decrypt,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);
 }
 
 void wof_decode(void)      { cps1_decode(0x01234567,0x54163072,0x5151,0x51); }

@@ -169,7 +169,12 @@ typedef struct {
 	UINT32	mem[8];
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
 	read8_handler rdmem_id;					/* readmem callback for indexed instructions */
-	write8_handler wrmem_id;				/* readmem callback for indexed instructions */
+	write8_handler wrmem_id;				/* writemem callback for indexed instructions */
+
+	UINT8    ddr;
+	UINT8    port;
+	UINT8 (*port_read)(void);
+	void (*port_write)(UINT8 data);
 }	m4510_Regs;
 
 static int m4510_ICount = 0;
@@ -225,6 +230,9 @@ static void m4510_reset (void *param)
 	m4510.mem[7]=0x20000;
 
 	CHANGE_PC;
+
+	m4510.port = 0xff;
+	m4510.ddr = 0x00;
 }
 
 static void m4510_exit(void)
@@ -344,14 +352,54 @@ static void m4510_set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t m4510_dasm(char *buffer, offs_t pc)
+static UINT8 m4510_get_port(void)
 {
-#ifdef MAME_DEBUG
-	return Dasm4510( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	return (m4510.port & m4510.ddr) | (m4510.ddr ^ 0xff);
+}
+
+static READ8_HANDLER( m4510_read_0000 )
+{
+	UINT8 result = 0x00;
+
+	switch(offset)
+	{
+		case 0x0000:	/* DDR */
+			result = m4510.ddr;
+			break;
+		case 0x0001:	/* Data Port */
+			if (m4510.port_read)
+				result = m4510.port_read();
+			result = (m4510.ddr & m4510.port) | (~m4510.ddr & result);
+			break;
+	}
+	return result;
+}
+
+static WRITE8_HANDLER( m4510_write_0000 )
+{
+	switch(offset)
+	{
+		case 0x0000:	/* DDR */
+			m4510.ddr = data;
+			break;
+		case 0x0001:	/* Data Port */
+			m4510.port = data;
+			break;
+	}
+
+	if (m4510.port_write)
+		m4510.port_write(m4510_get_port());
+}
+
+static ADDRESS_MAP_START(m4510_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READWRITE(m4510_read_0000, m4510_write_0000)
+ADDRESS_MAP_END
+
+static int m4510_translate(int space, offs_t *addr)
+{
+	if (space == ADDRESS_SPACE_PROGRAM)
+		*addr = M4510_MEM(*addr);
 	return 1;
-#endif
 }
 
 /**************************************************************************
@@ -380,11 +428,21 @@ static void m4510_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M4510_MEM_HIGH:		m4510.high = info->i;					break;
 		case CPUINFO_INT_REGISTER + M4510_EA:			m4510.ea.w.l = info->i;					break;
 		case CPUINFO_INT_REGISTER + M4510_ZP:			m4510.zp.w.l = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM0:			m4510.mem[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM1:			m4510.mem[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM2:			m4510.mem[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM3:			m4510.mem[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM4:			m4510.mem[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM5:			m4510.mem[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM6:			m4510.mem[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM7:			m4510.mem[7] = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					m4510.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m4510.rdmem_id = (read8_handler) info->f;	break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m4510.wrmem_id = (write8_handler) info->f;	break;
+		case CPUINFO_PTR_M6510_PORTREAD:	m4510.port_read = (UINT8 (*)(void)) info->f;	break;
+		case CPUINFO_PTR_M6510_PORTWRITE:	m4510.port_write = (void (*)(UINT8)) info->f;	break;
 	}
 }
 
@@ -412,6 +470,8 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 20;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 13;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
@@ -438,6 +498,15 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M4510_MEM_HIGH:		info->i = m4510.high;					break;
 		case CPUINFO_INT_REGISTER + M4510_EA:			info->i = m4510.ea.w.l;					break;
 		case CPUINFO_INT_REGISTER + M4510_ZP:			info->i = m4510.zp.w.l;					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM0:			info->i = m4510.mem[0];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM1:			info->i = m4510.mem[1];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM2:			info->i = m4510.mem[2];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM3:			info->i = m4510.mem[3];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM4:			info->i = m4510.mem[4];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM5:			info->i = m4510.mem[5];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM6:			info->i = m4510.mem[6];					break;
+		case CPUINFO_INT_REGISTER + M4510_MEM7:			info->i = m4510.mem[7];					break;
+		case CPUINFO_INT_M6510_PORT:					info->i = m4510_get_port();	break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m4510_set_info;			break;
@@ -448,14 +517,19 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m4510_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m4510_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m4510_dasm;			break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m4510_dasm;			break;
+#endif
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m4510.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m4510_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m4510_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m4510_win_layout;				break;
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->p = NULL;							break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m4510_mem; break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = m4510_translate;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m4510.rdmem_id;		break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m4510.wrmem_id;		break;
+		case CPUINFO_PTR_M6510_PORTREAD:				info->f = (genf *) m4510.port_read;		break;
+		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m4510.port_write;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M4510"); break;

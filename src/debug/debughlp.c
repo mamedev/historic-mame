@@ -153,6 +153,7 @@ static struct help_item static_help_list[] =
 		"  wpdisable [<wpnum>] -- disables a given watchpoint or all if no <wpnum> specified\n"
 		"  wpenable [<wpnum>] -- enables a given watchpoint or all if no <wpnum> specified\n"
 		"  wplist -- lists all the watchpoints\n"
+		"  hotspot [<cpunum>,[<depth>[,<hits>]]] -- attempt to find hotspots\n"
 		"\n"
 	},
 	{
@@ -867,6 +868,36 @@ static struct help_item static_help_list[] =
 		"The wplist command lists all the current watchpoints, along with their index and any\n"
 		"conditions or actions attached to them.\n"
 		"\n"
+	},
+	{
+		"hotspot",
+		"\n"
+		"  hotspot [<cpunum>,[<depth>[,<hits>]]]\n"
+		"\n"
+		"The hotspot command attempts to help locate hotspots in the code where speedup opportunities\n"
+		"might be present. <cpunum>, which defaults to the currently active CPU, specified which\n"
+		"processor's memory to track. <depth>, which defaults to 64, controls the depth of the search\n"
+		"buffer. The search buffer tracks the last <depth> memory reads from unique PCs. The <hits>\n"
+		"parameter, which defaults to 250, specifies the minimum number of hits to report.\n"
+		"\n"
+		"The basic theory of operation is like this: each memory read is trapped by the debugger and\n"
+		"logged in the search buffer according to the address which was read and the PC that executed\n"
+		"the opcode. If the search buffer already contains a matching entry, that entry's count is\n"
+		"incremented and the entry is moved to the top of the list. If the search buffer does not\n"
+		"contain a matching entry, the entry from the bottom of the list is removed, and a new entry\n"
+		"is created at the top with an initial count of 1. Entries which fall off the bottom are\n"
+		"examined and if their count is larger than <hits>, they are reported to the debugger\n"
+		"console.\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"hotspot 0,10\n"
+		"  Looks for hotspots on CPU 0 using a search buffer of 16 entries, reporting any entries which\n"
+		"  end up with 250 or more hits.\n"
+		"\n"
+		"hotspot 1,40,#1000\n"
+		"  Looks for hotspots on CPU 1 using a search buffer of 64 entries, reporting any entries which\n"
+		"  end up with 1000 or more hits.\n"
 	},
 	{
 		"memdump",

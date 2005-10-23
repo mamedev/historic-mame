@@ -35,21 +35,22 @@ Encryption PAL 16R4 on CPU board
 
 */
 
+static UINT8 *decrypt;
+
 DRIVER_INIT( empcity )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int A;
 
-
-	memory_set_opcode_base(0,rom+diff);
+	decrypt = auto_malloc(0x8000);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 
 	for (A = 0;A < 0x8000;A++)
 	{
-		unsigned char src = rom[A];
+		UINT8 src = rom[A];
 
 		// decode opcode
-		rom[A+diff] =
+		decrypt[A] =
 				( src & 0xA6 ) |
 				( ( ( ( src << 2 ) ^ src ) << 3 ) & 0x40 ) |
 				( ~( ( src ^ ( A >> 1 ) ) >> 2 ) & 0x10 ) |
@@ -68,19 +69,15 @@ DRIVER_INIT( empcity )
 
 DRIVER_INIT( stfight )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
-
 	init_empcity();
 
 	/* patch out a tight loop during startup - is the code waiting */
 	/* for NMI to wake it up? */
-	rom[0xb1 + diff] = 0x00;
-	rom[0xb2 + diff] = 0x00;
-	rom[0xb3 + diff] = 0x00;
-	rom[0xb4 + diff] = 0x00;
-	rom[0xb5 + diff] = 0x00;
+	decrypt[0xb1] = 0x00;
+	decrypt[0xb2] = 0x00;
+	decrypt[0xb3] = 0x00;
+	decrypt[0xb4] = 0x00;
+	decrypt[0xb5] = 0x00;
 }
 
 MACHINE_INIT( stfight )
@@ -93,7 +90,7 @@ MACHINE_INIT( stfight )
 // - in fact I don't even know how/where it's switched in!
 WRITE8_HANDLER( stfight_bank_w )
 {
-	unsigned char   *ROM2 = memory_region(REGION_CPU1) + 0x10000;
+	UINT8   *ROM2 = memory_region(REGION_CPU1) + 0x10000;
 
 	memory_set_bankptr( 1, &ROM2[data<<14] );
 }
@@ -188,7 +185,7 @@ static int adpcm_data_end;
 void stfight_adpcm_int( int data )
 {
 	static int toggle;
-	unsigned char *SAMPLES = memory_region(REGION_SOUND1);
+	UINT8 *SAMPLES = memory_region(REGION_SOUND1);
 	int adpcm_data = SAMPLES[adpcm_data_offs & 0x7fff];
 
     // finished playing sample?
@@ -228,7 +225,7 @@ WRITE8_HANDLER( stfight_e800_w )
  *      Machine hardware for YM2303 fm sound control
  */
 
-static unsigned char fm_data;
+static UINT8 fm_data;
 
 WRITE8_HANDLER( stfight_fm_w )
 {

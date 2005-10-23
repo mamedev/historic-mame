@@ -22,12 +22,12 @@ static int part_v_shift;
 static int center_h_shift_space;
 static int center_v_shift;
 
-unsigned char *decocass_charram;
-unsigned char *decocass_fgvideoram;
-unsigned char *decocass_colorram;
-unsigned char *decocass_bgvideoram; /* shares bits D0-3 with tileram! */
-unsigned char *decocass_tileram;
-unsigned char *decocass_objectram;
+UINT8 *decocass_charram;
+UINT8 *decocass_fgvideoram;
+UINT8 *decocass_colorram;
+UINT8 *decocass_bgvideoram; /* shares bits D0-3 with tileram! */
+UINT8 *decocass_tileram;
+UINT8 *decocass_objectram;
 
 size_t decocass_fgvideoram_size;
 size_t decocass_colorram_size;
@@ -137,8 +137,8 @@ static void get_bg_r_tile_info(int tile_index)
 
 static void get_fg_tile_info(int tile_index)
 {
-	unsigned char code = decocass_fgvideoram[tile_index];
-	unsigned char attr = decocass_colorram[tile_index];
+	UINT8 code = decocass_fgvideoram[tile_index];
+	UINT8 attr = decocass_colorram[tile_index];
 	SET_TILE_INFO(
 			0,
 			256 * (attr & 3) + code,
@@ -278,54 +278,6 @@ WRITE8_HANDLER( decocass_bgvideoram_w )
 	mark_bg_tile_dirty( offset );
 }
 
-READ8_HANDLER( decocass_mirrorvideoram_r )
-{
-	int x,y;
-
-	/* swap x and y coordinates */
-	x = offset / 32;
-	y = offset % 32;
-	offset = 32 * y + x;
-
-	return decocass_fgvideoram[offset];
-}
-
-READ8_HANDLER( decocass_mirrorcolorram_r )
-{
-	int x,y;
-
-	/* swap x and y coordinates */
-	x = offset / 32;
-	y = offset % 32;
-	offset = 32 * y + x;
-
-	return decocass_colorram[offset];
-}
-
-WRITE8_HANDLER( decocass_mirrorvideoram_w )
-{
-	int x,y;
-
-	/* swap x and y coordinates */
-	x = offset / 32;
-	y = offset % 32;
-	offset = 32 * y + x;
-
-	decocass_fgvideoram_w(offset,data);
-}
-
-WRITE8_HANDLER( decocass_mirrorcolorram_w )
-{
-	int x,y;
-
-	/* swap x and y coordinates */
-	x = offset / 32;
-	y = offset % 32;
-	offset = 32 * y + x;
-
-	decocass_colorram_w(offset,data);
-}
-
 /* The watchdog is a 4bit counter counting down every frame */
 WRITE8_HANDLER( decocass_watchdog_count_w )
 {
@@ -455,7 +407,7 @@ WRITE8_HANDLER( decocass_center_v_shift_w )
 
 static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int color,
 						int sprite_y_adjust, int sprite_y_adjust_flip_screen,
-						unsigned char *sprite_ram, int interleave)
+						UINT8 *sprite_ram, int interleave)
 {
 	int i,offs;
 
@@ -506,7 +458,7 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int col
 
 static void draw_missiles(mame_bitmap *bitmap, const rectangle *cliprect,
 						int missile_y_adjust, int missile_y_adjust_flip_screen,
-						unsigned char *missile_ram, int interleave)
+						UINT8 *missile_ram, int interleave)
 {
 	int i,offs;
 
@@ -543,7 +495,7 @@ static void draw_missiles(mame_bitmap *bitmap, const rectangle *cliprect,
 }
 
 
-static void decode_modified(unsigned char *sprite_ram, int interleave)
+static void decode_modified(UINT8 *sprite_ram, int interleave)
 {
 	int i,offs;
 

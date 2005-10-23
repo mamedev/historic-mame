@@ -56,13 +56,7 @@ extern VIDEO_UPDATE( shootouj );
 
 static WRITE8_HANDLER( shootout_bankswitch_w )
 {
-	int bankaddress;
-	UINT8 *RAM;
-
-	RAM = memory_region(REGION_CPU1);
-	bankaddress = 0x10000 + ( 0x4000 * (data & 0x0f) );
-
-	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bank(1, data & 0x0f);
 }
 
 static WRITE8_HANDLER( sound_cpu_command_w )
@@ -458,14 +452,18 @@ ROM_END
 
 static DRIVER_INIT( shootout )
 {
+	int length = memory_region_length(REGION_CPU1);
+	UINT8 *decrypt = auto_malloc(length - 0x8000);
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x8000, 0xffff, decrypt);
 
-	for (A = 0;A < diff;A++)
-		rom[A+diff] = (rom[A] & 0x9f) | ((rom[A] & 0x40) >> 1) | ((rom[A] & 0x20) << 1);
+	for (A = 0x8000;A < length;A++)
+		decrypt[A-0x8000] = (rom[A] & 0x9f) | ((rom[A] & 0x40) >> 1) | ((rom[A] & 0x20) << 1);
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	memory_configure_bank_decrypted(1, 0, 16, decrypt + 0x8000, 0x4000);
 }
 
 

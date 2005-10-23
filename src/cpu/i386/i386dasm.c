@@ -1244,16 +1244,33 @@ static char* handle_sib_byte( char* s, UINT8 mod )
 		case 6: s += sprintf( s, "esi"); break;
 		case 7: s += sprintf( s, "edi"); break;
 	}
-	switch( i )
+	if (scale)
 	{
-		case 0: s += sprintf( s, "+eax*%d", (1 << scale)); break;
-		case 1: s += sprintf( s, "+ecx*%d", (1 << scale)); break;
-		case 2: s += sprintf( s, "+edx*%d", (1 << scale)); break;
-		case 3: s += sprintf( s, "+ebx*%d", (1 << scale)); break;
-		case 4: break;
-		case 5: s += sprintf( s, "+ebp*%d", (1 << scale)); break;
-		case 6: s += sprintf( s, "+esi*%d", (1 << scale)); break;
-		case 7: s += sprintf( s, "+edi*%d", (1 << scale)); break;
+		switch( i )
+		{
+			case 0: s += sprintf( s, "+eax*%d", (1 << scale)); break;
+			case 1: s += sprintf( s, "+ecx*%d", (1 << scale)); break;
+			case 2: s += sprintf( s, "+edx*%d", (1 << scale)); break;
+			case 3: s += sprintf( s, "+ebx*%d", (1 << scale)); break;
+			case 4: break;
+			case 5: s += sprintf( s, "+ebp*%d", (1 << scale)); break;
+			case 6: s += sprintf( s, "+esi*%d", (1 << scale)); break;
+			case 7: s += sprintf( s, "+edi*%d", (1 << scale)); break;
+		}
+	}
+	else
+	{
+		switch( i )
+		{
+			case 0: s += sprintf( s, "+eax"); break;
+			case 1: s += sprintf( s, "+ecx"); break;
+			case 2: s += sprintf( s, "+edx"); break;
+			case 3: s += sprintf( s, "+ebx"); break;
+			case 4: break;
+			case 5: s += sprintf( s, "+ebp"); break;
+			case 6: s += sprintf( s, "+esi"); break;
+			case 7: s += sprintf( s, "+edi"); break;
+		}
 	}
 	return s;
 }
@@ -1307,7 +1324,7 @@ static void handle_modrm(char* s)
 			s += sprintf( s, "%s", shexstring((INT32)disp8, 0, TRUE) );
 		} else if( mod == 2 ) {
 			disp32 = FETCHD32();
-			s += sprintf( s, "+%s", shexstring(disp32, 0, TRUE) );
+			s += sprintf( s, "%s", shexstring(disp32, 0, TRUE) );
 		}
 	} else {
 		switch( rm )
@@ -1400,12 +1417,12 @@ static char* handle_param(char* s, UINT32 param)
 
 		case PARAM_I8:
 			i8 = FETCHD();
-			s += sprintf( s, "%s", shexstring(i8, 0, FALSE) );
+			s += sprintf( s, "%s", shexstring((INT8)i8, 0, FALSE) );
 			break;
 
 		case PARAM_I16:
 			i16 = FETCHD16();
-			s += sprintf( s, "%s", shexstring(i16, 0, FALSE) );
+			s += sprintf( s, "%s", shexstring((INT16)i16, 0, FALSE) );
 			break;
 
 		case PARAM_IMM:
@@ -1512,6 +1529,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1547,6 +1565,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1610,6 +1629,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1651,6 +1671,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1700,6 +1721,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1746,6 +1768,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1789,6 +1812,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{
@@ -1837,6 +1861,7 @@ static void handle_fpu(char *s, UINT8 op1, UINT8 op2)
 			if (op2 < 0xc0)
 			{
 				pc--;		// adjust fetch pointer, so modrm byte read again
+				opcode_ptr--;
 				handle_modrm( modrm_string );
 				switch ((op2 >> 3) & 0x7)
 				{

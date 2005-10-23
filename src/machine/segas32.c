@@ -41,7 +41,7 @@ void nec_v25_cpu_decrypt(void)
 	UINT8* temp = malloc(0x100000);
 
 	// set CPU3 opcode base
-	memory_set_opcode_base(2,decrypted);
+	memory_set_decrypted_region(2, 0x00000, 0xfffff, decrypted);
 
 	// make copy of ROM so original can be overwritten
 	memcpy(temp, rom, 0x10000);

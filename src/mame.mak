@@ -495,6 +495,7 @@ $(OBJ)/capcom.a: \
 	$(OBJ)/vidhrdw/sf.o $(OBJ)/drivers/sf.o \
 	$(OBJ)/machine/kabuki.o \
 	$(OBJ)/vidhrdw/mitchell.o $(OBJ)/drivers/mitchell.o \
+	$(OBJ)/drivers/egghunt.o \
 	$(OBJ)/vidhrdw/cbasebal.o $(OBJ)/drivers/cbasebal.o \
 	$(OBJ)/vidhrdw/cps1.o $(OBJ)/drivers/cps1.o $(OBJ)/drivers/cps2.o \
 	$(OBJ)/drivers/fcrash.o \
@@ -989,7 +990,7 @@ $(OBJ)/psikyo.a: \
 	$(OBJ)/vidhrdw/psikyo4.o $(OBJ)/drivers/psikyo4.o \
 
 $(OBJ)/leland.a: \
-	$(OBJ)/machine/8254pit.o $(OBJ)/drivers/leland.o $(OBJ)/vidhrdw/leland.o $(OBJ)/machine/leland.o $(OBJ)/sndhrdw/leland.o \
+	$(OBJ)/drivers/leland.o $(OBJ)/vidhrdw/leland.o $(OBJ)/machine/leland.o $(OBJ)/sndhrdw/leland.o \
 	$(OBJ)/drivers/ataxx.o \
 
 $(OBJ)/orca.a: \
@@ -1229,7 +1230,6 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/vidhrdw/afega.o $(OBJ)/drivers/afega.o \
 	$(OBJ)/drivers/pkscram.o \
 	$(OBJ)/drivers/jackpool.o \
-	$(OBJ)/drivers/egghunt.o \
 	$(OBJ)/drivers/magic10.o \
 
 $(OBJ)/otherz80.a: \

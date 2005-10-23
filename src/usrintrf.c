@@ -1214,7 +1214,7 @@ static int handle_keys(mame_bitmap *bitmap)
 #ifdef MESS
 	if (osd_trying_to_quit())
 		return 1;
-	if (options.disable_normal_ui)
+	if (options.disable_normal_ui || !mess_ui_active())
 		return 0;
 #endif
 

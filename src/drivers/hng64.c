@@ -8,8 +8,10 @@ ToDo  12th Oct 2004:
 * find where the remainder of the display list information is 'hiding'
     - complete display lists are not currently found in the dl_w memory handler.
       (this manifests itself as 'flickering' 3d in fatfurwa and missing bodies in buriki.
+    - it's been thought the display list may be FIFO - this may tie into the BufferA and BufferB thing -
+      look into it!
 * The effect of numerous (dozens of) 3d flags needs to be figured out by examining real hardware
-* Populate the display buffers with the data based on Elsemi's notes below
+* Populate the display buffers (A&B) with the data based on Elsemi's notes below
     - maybe there are some frame-buffer effects which will then work
 * Determine wether or not the hardware does perspective-correct texture mapping - if not,
     disable it in the rasterizer.
@@ -17,29 +19,28 @@ ToDo  12th Oct 2004:
 
 ToDo  2nd Sept 2004:
 
-fix / add MMU to Mips core to get rid of the ugly hack thats needed
-clean up I/O implementation, currently it only 'works' with Fatal Fury WA, it has
-issues with the coins and causes the startup checks to fail
-work out the purpose of the interrupts and how many are needed
-correct game speed (seems too fast)
-figure out what 'network' Road Edge needs to boot, it should run as a standalone
-make ss64 boot (io return 3 then 4 not just 4) then work out where the palette is (mmu?)
+* clean up I/O implementation, currently it only 'works' with Fatal Fury WA, it has
+  issues with the coins and causes the startup checks to fail.  This most likely relies on the z80-like cpu
+* work out the purpose of the interrupts and how many are needed
+* correct game speed (seems too fast)
+* figure out what 'network' Road Edge needs to boot, it should run as a standalone
+* make ss64 boot (io return 3 then 4 not just 4) then work out where the palette is (mmu?)
+
 fix remaining 2d graphic glitches
  -- scroll (base registers?)
- -- roz (4th tilemap in fatal fury should be floor, background should zoom)
+ -- roz (4th tilemap in fatal fury should be floor [in progress], background should zoom)
  -- find registers to control tilemap mode (4bpp/8bpp, 8x8, 16x16)
- -- fix zooming sprites (zoom registers not understood, differ between games?)
+ -- fix zooming sprites (zoom registers not understood, definatley differs between games - center versus edge pivot)
  -- priorities
- -- still some bad sprites (waterfall level 'splash')
- -- 3d ram isn't populated at the moment?
+ -- still some bad sprites (waterfall level 'splash' - health bar at 50% - intro top and bottom)
 
-hook up communications CPU (z80 based, we have bios rom)
-hook up CPU2 (v30 based?) no rom? (maybe its the 'sound driver' the game uploads?)
-add sound
-backup ram etc. (why does ff have a corrupt 'easy' string in test mode?)
-correct cpu speed and find idle skips
-work out what other unknown areas of ram are for and emulate...
-cleanups!
+* fix communications CPU (z80 based, we have bios rom)
+* hook up CPU2 (v30 based?) no rom? (maybe its the 'sound driver' the game uploads?)
+* add sound
+* backup ram etc. (why does ff have a corrupt 'easy' string in test mode?)
+* correct cpu speed and find idle skips
+* work out what other unknown areas of ram are for and emulate...
+* cleanups!
 
 -----
 
@@ -446,22 +447,25 @@ or fatal fury for example)
 #include "cpu/mips/mips3.h"
 #include "machine/random.h"
 
+static UINT32 *rombase;
 static UINT32 *hng_mainram;
 static UINT32 *hng_cart;
 static UINT32 *hng64_dualport;
 static UINT32 *hng64_soundram;
 
+static UINT8  com_cpu_rom[0x8000] ;
 
 // Stuff from over in vidhrdw...
-extern tilemap *hng64_tilemap, *hng64_tilemap2, *hng64_tilemap3, *hng64_tilemap4 ;
+extern tilemap *hng64_tilemap0, *hng64_tilemap1, *hng64_tilemap2, *hng64_tilemap3 ;
 extern UINT32 *hng64_spriteram, *hng64_videoregs ;
 extern UINT32 *hng64_videoram ;
-extern UINT32 *hng64_fcram ;
+extern UINT32 *hng64_tcram ;
 
 extern UINT32 hng64_dls[2][0x81] ;
 
 VIDEO_START( hng64 ) ;
 VIDEO_UPDATE( hng64 ) ;
+VIDEO_STOP( hng64 ) ;
 
 static UINT32 activeBuffer ;
 
@@ -479,6 +483,10 @@ static UINT32 *hng64_q2 ;
 
 
 char writeString[1024] ;
+
+
+extern UINT32 hackTilemap3, hackTm3Count, rowScrollOffset ;
+
 
 /*
 
@@ -554,22 +562,41 @@ WRITE32_HANDLER( hng64_videoram_w )
 
 	if ((realoff>=0) && (realoff<0x10000))
 	{
-		tilemap_mark_tile_dirty(hng64_tilemap,offset&0x3fff);
+		tilemap_mark_tile_dirty(hng64_tilemap0,offset&0x3fff);
 	}
 	else if ((realoff>=0x10000) && (realoff<0x20000))
 	{
-		tilemap_mark_tile_dirty(hng64_tilemap2,offset&0x3fff);
+		tilemap_mark_tile_dirty(hng64_tilemap1,offset&0x3fff);
 	}
 	else if ((realoff>=0x20000) && (realoff<0x30000))
 	{
-		tilemap_mark_tile_dirty(hng64_tilemap3,offset&0x3fff);
+		tilemap_mark_tile_dirty(hng64_tilemap2,offset&0x3fff);
 	}
 	else if ((realoff>=0x30000) && (realoff<0x40000))
 	{
-		tilemap_mark_tile_dirty(hng64_tilemap4,offset&0x3fff);
+		tilemap_mark_tile_dirty(hng64_tilemap3,offset&0x3fff);
 	}
 
-//  if ((realoff>=0x40000) && (realoff<=0x48000)) printf("offsw %08x %08x\n",realoff,data);
+//  if ((realoff>=0x40000)) printf("offsw %08x %08x\n",realoff,data);
+
+
+	///////////////////////////////////
+	// For the scrolling ground, yo  //
+	///////////////////////////////////
+
+	// First, get the offset we're working with
+	if ( (realoff&0x00000bf0) == 0xbf0)
+	{
+		hackTilemap3 = 1 ;
+		rowScrollOffset = realoff & 0x000ff000 ;
+	}
+
+	// Next count the number of lines to be drawn to the screen.
+	if (rowScrollOffset)
+	{
+		if ((realoff & rowScrollOffset) == rowScrollOffset)
+			hackTm3Count++ ;
+	}
 
 	/* 400000 - 7fffff is scroll regs etc. */
 }
@@ -577,7 +604,7 @@ WRITE32_HANDLER( hng64_videoram_w )
 
 READ32_HANDLER( hng64_random_reader )
 {
-	return mame_rand()&0xffffffff;
+	return 0 ; // return mame_rand()&0xffffffff;
 }
 
 
@@ -624,7 +651,7 @@ static READ32_HANDLER( hng64_port_read )
  	if(offset==0x441)
  		return hng64_interrupt_level_request;
 
-	return mame_rand();
+	return 0 ; // return mame_rand();
 }
 
 
@@ -632,8 +659,6 @@ static READ32_HANDLER( hng64_port_read )
 int hng_dma_start,hng_dma_dst,hng_dma_len;
 void hng64_do_dma (void)
 {
-
-
 	printf("Performing DMA Start %08x Len %08x Dst %08x\n",hng_dma_start, hng_dma_len, hng_dma_dst);
 
 	while (hng_dma_len>0)
@@ -694,26 +719,38 @@ READ32_HANDLER( no_machine_error )
 
 WRITE32_HANDLER( hng64_dualport_w )
 {
-//  printf("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
-
 	COMBINE_DATA (&hng64_dualport[offset]);
+//  printf("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
 }
 
 READ32_HANDLER( hng64_dualport_r )
 {
 //  printf("dualport R %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
-//  return mame_rand();
+
+	// !! These hacks make the boot-up sequence fail !!
+	switch (offset*4)
+	{
+		// HACK - This takes care of inputs
+//      case 0x00:  toggi^=1; if (toggi==1) {return 0x00000400;} else {return 0x00000300;};//otherwise it won't read inputs ..
+		case 0x00:  return 0x00000400;
+		case 0x04:  return readinputport(0)|(readinputport(1)<<16);
+		case 0x08:  return readinputport(3)|(readinputport(2)<<16);
+
+		// HACK - This takes care of the 'machine' error code
+		case 0x600: return no_machine_error_code;
+	}
 
 	return hng64_dualport[offset];
 }
 
-/* AJG */
+// These 4 '3d' buffer reads and writes are only used during the startup checks -
+//   the software never addresses them directly anywhere else.  Also, apparently, 3d bank 1 is never written to.
+//   They're probably video and z-buffer memory, and someday maybe I'll write the rasterized 3d to these regions
+//   and then comp it into the final image...
 WRITE32_HANDLER( hng64_3d_1_w )
 {
-	// !!! Never does a write to 1 in the tests !!!
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
-//  printf("1w : %d %d\n", offset, hng64_3d_1[offset]) ;
 
 	exit(1) ;
 }
@@ -722,18 +759,18 @@ WRITE32_HANDLER( hng64_3d_2_w )
 {
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
-//  printf("2w : %d %d\n", offset, hng64_3d_2[offset]) ;
+//  printf("2w : %08x %08x\n", offset, hng64_3d_2[offset]) ;
 }
 
 READ32_HANDLER( hng64_3d_1_r )
 {
-//  printf("1r : %d %d\n", offset, hng64_3d_1[offset]) ;
+//  printf("1r : %08x %08x\n", offset, hng64_3d_1[offset]) ;
 	return hng64_3d_1[offset] ;
 }
 
 READ32_HANDLER( hng64_3d_2_r )
 {
-//  printf("2r : %d %d\n", offset, hng64_3d_2[offset]) ;
+//  printf("2r : %08x %08x\n", offset, hng64_3d_2[offset]) ;
 	return hng64_3d_2[offset] ;
 }
 
@@ -760,30 +797,25 @@ WRITE32_HANDLER( dl_w )
 	if (offset <= 0x80)
 		hng64_dls[activeBuffer][offset] = hng64_dl[offset] ;
 
-//  printf("dl W : %.8x %.8x\n", offset, hng64_dl[offset]) ;
+	// For some reason, if the value at 0x86 and'ed with 0x02 is non-zero, the software just keeps
+	//   checking 0x86 until and'ing it with 2 returns 0...  What could change 0x86 if cpu0 is in this infinite loop?
+	//   Why 0x2?  And why (see below) does a read of 0x86 only happen when there is data 'hiding'
+	//   in the display list?
 
-	// Write out some interesting parts of the 3d display list ...
-	/*
-    if (!flagFlag)
-    {
-        if (offset >= 0x00000007)
-        {
-            dataArray[offset-0x00000007] = hng64_dl[offset] ;
-        }
-    }
+	// Sends the program into an infinite loop...
+//  if (offset == 0x85 && hng64_dl[offset] == 0x1)      // Just before the second half of the writes
+//      hng64_dl[0x86] = 0x2 ;                          // set 0x86 to 2 (so it drops into the loop)
 
-    if (offset == 0x00000017)
-    {
-        flagFlag = 1 ;
-        // a test out of curiosity
-        hng64_dl[offset] = 1 ;
-    }
-    */
+//  printf("dl W (%08x) : %.8x %.8x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
 }
 
 READ32_HANDLER( dl_r )
 {
-//  printf("dl R : %x %x\n", offset, hng64_dl[offset]) ;
+	// A read of 0x86 ONLY happens if there are more display lists than what are readily available...
+	// See above for more compelling detail...  (PC = 8006fe1c)
+
+//  printf("dl R (%08x) : %x %x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
+//  usrintf_showmessage("dl R (%08x) : %x %x", activecpu_get_pc(), offset, hng64_dl[offset]) ;
 	return hng64_dl[offset] ;
 }
 
@@ -796,34 +828,54 @@ WRITE32_HANDLER( activate_3d_buffer )
 */
 
 // Transition Control memory...
-WRITE32_HANDLER( fcram_w )
+WRITE32_HANDLER( tcram_w )
 {
-	COMBINE_DATA (&hng64_fcram[offset]) ;
-//  printf("Q1 W : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
+	COMBINE_DATA (&hng64_tcram[offset]) ;
+//  printf("Q1 W : %.8x %.8x\n", offset, hng64_tcram[offset]) ;
 
-	if (offset == 0x00000007)
-	{
-		sprintf(writeString, "%.8x ", hng64_fcram[offset]) ;
-	}
+/*
+    if (offset == 0x00000007)
+    {
+        sprintf(writeString, "%.8x ", hng64_tcram[offset]) ;
+    }
 
-	if (offset == 0x0000000a)
-	{
-		sprintf(writeString, "%s %.8x ", writeString, hng64_fcram[offset]) ;
-	}
+    if (offset == 0x0000000a)
+    {
+        sprintf(writeString, "%s %.8x ", writeString, hng64_tcram[offset]) ;
+    }
 
-	if (offset == 0x0000000b)
-	{
-		sprintf(writeString, "%s %.8x ", writeString, hng64_fcram[offset]) ;
+    if (offset == 0x0000000b)
+    {
+        sprintf(writeString, "%s %.8x ", writeString, hng64_tcram[offset]) ;
 //      ui_popup("%s", writeString) ;
-	}
+    }
+*/
 }
 
-READ32_HANDLER( fcram_r )
+READ32_HANDLER( tcram_r )
 {
-//  printf("Q1 R : %.8x %.8x\n", offset, hng64_fcram[offset]) ;
-	return hng64_fcram[offset] ;
+//  printf("Q1 R : %.8x %.8x\n", offset, hng64_tcram[offset]) ;
+	return hng64_tcram[offset] ;
 }
 
+
+/* READ32_HANDLER( q1_r )
+{
+//  printf("Q1 (%08x) : %08x %08x\n", activecpu_get_pc(), offset, hng64_q1[offset]) ;
+
+    return hng64_q1[offset] ;
+}
+
+WRITE32_HANDLER( q1_w )
+{
+    COMBINE_DATA (&hng64_q1[offset]) ;
+
+//  if (offset == 0x00)
+//      usrintf_showmessage("Q1 %08x", hng64_q1[offset]) ;
+
+//  printf("Q1 (%08x) : %08x %08x\n", activecpu_get_pc(), offset, hng64_q1[offset]) ;
+}
+*/
 
 // Q2 handler (just after display list in memory)
 // Seems to read and write the same thing for every frame in fatfurwa
@@ -872,29 +924,6 @@ READ32_HANDLER( q2_r )
 <ElSemi> d0140000-d015ffff is ZBuffer A
 */
 
-READ32_HANDLER( hng64_inputs_r )
-{
-//  printf("hng read %08x %08x\n",offset,mem_mask);
-
-//  static int toggi=0;
-
-
-	switch (offset*4)
-	{
-//      case 0x00: toggi^=1; if (toggi==1) {return 0x00000400;} else {return 0x00000300;};//otherwise it won't read inputs ..
-		case 0x00: return 0x00000400;
-		case 0x04: return readinputport(0)|(readinputport(1)<<16);
-		case 0x08: return readinputport(3)|(readinputport(2)<<16);
-	}
-	return 0;
-
-}
-
-READ32_HANDLER ( random_read )
-{
-	return mame_rand();
-}
-
 WRITE32_HANDLER( hng64_soundram_w )
 {
 	/* swap data around.. keep the v30 happy ;-) */
@@ -941,43 +970,43 @@ static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0x1F700000, 0x1F702fff) AM_READ(hng64_port_read)
 
-	AM_RANGE(0x1F70100C, 0x1F70100F) AM_WRITE(MWA32_NOP)//?? often
-	AM_RANGE(0x1F70101C, 0x1F70101F) AM_WRITE(MWA32_NOP)//?? often
-	AM_RANGE(0x1F70106C, 0x1F70106F) AM_WRITE(MWA32_NOP)//fatfur,strange
-	AM_RANGE(0x1F70111C, 0x1F70111F) AM_WRITE(MWA32_NOP)//irq ack
+	AM_RANGE(0x1F70100C, 0x1F70100F) AM_WRITE(MWA32_NOP)		// ?? often
+	AM_RANGE(0x1F70101C, 0x1F70101F) AM_WRITE(MWA32_NOP)		// ?? often
+	AM_RANGE(0x1F70106C, 0x1F70106F) AM_WRITE(MWA32_NOP)		// fatfur,strange
+	AM_RANGE(0x1F70111C, 0x1F70111F) AM_WRITE(MWA32_NOP)		// irq ack
 	AM_RANGE(0x1F701204, 0x1F701207) AM_WRITE(hng_dma_start_w);
 	AM_RANGE(0x1F701214, 0x1F701217) AM_WRITE(hng_dma_dst_w);
 	AM_RANGE(0x1F701224, 0x1F701227) AM_WRITE(hng_dma_len_w);
-	AM_RANGE(0x1F70124C, 0x1F70124F) AM_WRITE(MWA32_NOP)//dma related?
-	AM_RANGE(0x1F70125C, 0x1F70125F) AM_WRITE(MWA32_NOP)//dma related?
+	AM_RANGE(0x1F70124C, 0x1F70124F) AM_WRITE(MWA32_NOP)		// dma related?
+	AM_RANGE(0x1F70125C, 0x1F70125F) AM_WRITE(MWA32_NOP)		// dma related?
 
-	AM_RANGE(0x1F7021C4, 0x1F7021C7) AM_WRITE(MWA32_NOP)//?? often
+	AM_RANGE(0x1F7021C4, 0x1F7021C7) AM_WRITE(MWA32_NOP)		// ?? often
 
-	/* SRAM? -- reads times etc.?  Shared? System Log? */
+	// SRAM? -- reads times etc.?  Shared? System Log?
+	// Looks an awful lot like fight statistics - writes upon startup, initial coin insertion, and before every match.
+	//   As matches go on, it writes more data each time (ajg)...
 	AM_RANGE(0x1F800000, 0x1F803fff) AM_RAM
-	AM_RANGE(0x1F808000, 0x1F80800b) AM_READ(hng64_inputs_r) /* HACK .. proper method unknown */
-	AM_RANGE(0x1F808600, 0x1F808603) AM_READ(no_machine_error) /* HACK .. prevent machine error (02 driving game, 01 fighting game) */
-	AM_RANGE(0x1F808000, 0x1F8087ff) AM_RAM AM_READWRITE(hng64_dualport_r, hng64_dualport_w) AM_BASE (&hng64_dualport) /* Dualport RAM */
+	AM_RANGE(0x1F808000, 0x1F8087ff) AM_READWRITE(hng64_dualport_r, hng64_dualport_w) AM_BASE (&hng64_dualport) // Dualport RAM
 
-	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0) AM_BASE(&rombase)	// BIOS
 
-	AM_RANGE(0x20000000, 0x2000bfff) AM_RAM AM_BASE(&hng64_spriteram)/* Sprites */
+	AM_RANGE(0x20000000, 0x2000bfff) AM_RAM AM_BASE(&hng64_spriteram)									// Sprites
 	AM_RANGE(0x20010000, 0x20010013) AM_RAM
-	AM_RANGE(0x20100000, 0x2017ffff) AM_READWRITE(MRA32_RAM, hng64_videoram_w) AM_BASE(&hng64_videoram) // tilemap
-	AM_RANGE(0x20190000, 0x20190037) AM_RAM AM_BASE(&hng64_videoregs)
-	AM_RANGE(0x20200000, 0x20203fff) AM_READWRITE(MRA32_RAM,hng64_pal_w) AM_BASE(&paletteram32)// palette
-	AM_RANGE(0x20208000, 0x2020805f) AM_READWRITE(fcram_r, fcram_w) AM_BASE(&hng64_fcram)
-	AM_RANGE(0x20300000, 0x2030ffff) AM_READWRITE(dl_r, dl_w) AM_BASE(&hng64_dl)
+	AM_RANGE(0x20100000, 0x2017ffff) AM_READWRITE(MRA32_RAM, hng64_videoram_w) AM_BASE(&hng64_videoram)	// Tilemap
+	AM_RANGE(0x20190000, 0x20190037) AM_RAM AM_BASE(&hng64_videoregs)									// Video Registers
+	AM_RANGE(0x20200000, 0x20203fff) AM_READWRITE(MRA32_RAM,hng64_pal_w) AM_BASE(&paletteram32)			// Palette
+	AM_RANGE(0x20208000, 0x2020805f) AM_READWRITE(tcram_r, tcram_w) AM_BASE(&hng64_tcram)				// Transition Control
+	AM_RANGE(0x20300000, 0x2030ffff) AM_READWRITE(dl_r, dl_w) AM_BASE(&hng64_dl)						// 3d Display List
 
-	AM_RANGE(0x30000000, 0x3000002f) AM_READWRITE(q2_r, q2_w) AM_BASE(&hng64_q2)
-	AM_RANGE(0x30100000, 0x3015ffff) AM_READWRITE(hng64_3d_1_r,hng64_3d_2_w) AM_BASE(&hng64_3d_1) /* 3D Bank A */
-	AM_RANGE(0x30200000, 0x3025ffff) AM_READWRITE(hng64_3d_2_r,hng64_3d_2_w) AM_BASE(&hng64_3d_2) /* 3D Bank B */
+	AM_RANGE(0x30000000, 0x3000002f) AM_READWRITE(q2_r, q2_w) AM_BASE(&hng64_q2)						// ? See Above ?
+	AM_RANGE(0x30100000, 0x3015ffff) AM_READWRITE(hng64_3d_1_r,hng64_3d_2_w) AM_BASE(&hng64_3d_1)		// 3D Display Buffer A
+	AM_RANGE(0x30200000, 0x3025ffff) AM_READWRITE(hng64_3d_2_r,hng64_3d_2_w) AM_BASE(&hng64_3d_2)		// 3D Display Buffer B
 
-	AM_RANGE(0x60000000, 0x601fffff) AM_RAM /* Sound ?? */
-	AM_RANGE(0x60200000, 0x603fffff) AM_READWRITE(hng64_soundram_r, hng64_soundram_w) /* uploads the v53 sound program here, elsewhere on ss64-2 */
+	AM_RANGE(0x60000000, 0x601fffff) AM_RAM																// Sound ??
+	AM_RANGE(0x60200000, 0x603fffff) AM_READWRITE(hng64_soundram_r, hng64_soundram_w)					// uploads the v53 sound program here, elsewhere on ss64-2 */
 
-	AM_RANGE(0x68000000, 0x68000003) AM_WRITE(MWA32_NOP)//??
-	AM_RANGE(0x68000004, 0x68000007) AM_READ(MRA32_NOP)//??
+	AM_RANGE(0x68000000, 0x68000003) AM_WRITE(MWA32_NOP)												// ??
+	AM_RANGE(0x68000004, 0x68000007) AM_READ(MRA32_NOP)													// ??
 
 	/* 6e000000-6fffffff */
 	/* 80000000-81ffffff */
@@ -986,8 +1015,22 @@ static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 	/* 98000000-9bffffff */
 	/* a0000000-a3ffffff */
 
-	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM /* Dualp */
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM
 	AM_RANGE(0xc0001000, 0xc000ffff) AM_READ(hng64_comm_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hng_comm_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_BANK3)		// bios rom
+	AM_RANGE(0x8000, 0x8fff) AM_RAM			// BIOS from1.bin does test writes and reads here (see program @ 0x6016)
+	AM_RANGE(0x9000, 0x9fff) AM_RAM			// Probably not really here - 0x246d2 writes from 0x8000-0xbff0 (+ memmanager)
+											//   and it just so happens to overlap this region...
+	AM_RANGE(0xa000, 0xcfff) AM_RAM			// BIOS from1.bin does test writes and reads here (see program @ 0x608b)
+	AM_RANGE(0xd000, 0xefff) AM_RAM			// BIOS from1.bin does test writes and reads here (see program @ 0x6106)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hng_comm_io_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0xff) AM_RAM
 ADDRESS_MAP_END
 
 /*
@@ -1244,7 +1287,6 @@ static gfx_decode gfxdecodeinfo[] =
 
 DRIVER_INIT( hng64 )
 {
-
 	hng64_soundram=auto_malloc(0x200000);
 }
 
@@ -1298,36 +1340,72 @@ static INTERRUPT_GEN( irq_start )
 
 MACHINE_INIT(hyperneo)
 {
-	FILE *fp;
+	int i ;
+
+	// Sound CPU
 	UINT8 *RAM = (UINT8*)hng64_soundram;
 	memory_set_bankptr(1,&RAM[0x1e0000]);
 	memory_set_bankptr(2,&RAM[0x001000]); // where..
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
+	// Communications CPU
+
+	// Hack to fake the MMU for the z80'esque CPU - copy all of the higher address memory to empty spaces in
+	//   the lower-address memory - this might actually work?
+	for (i = 0x0000; i < 0x8000; i++) com_cpu_rom[       i] = memory_region(REGION_USER2)[        i] ;
+	// These two pieces of code (0x20000 and 0x40000) are identical save for a single byte in the beginning and a port check
+	//   towards the end.  Odd?
+	for (i = 0x0000; i < 0x1000; i++) com_cpu_rom[0x4000+i] = memory_region(REGION_USER2)[0x20000+i] ;
+//  for (i = 0x0000; i < 0x1000; i++) com_cpu_rom[0x4000+i] = memory_region(REGION_USER2)[0x40000+i] ;
+
+	memory_set_bankptr(3,&com_cpu_rom[0x0000]);
+//  cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);     // reset the CPU and let 'er rip
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);		// hold on there pardner...
+
 	/* HACK .. put ram here on reset .. we end up replacing it with the MMU hack later so the game doesn't clear its own ram with thecode in it!!..... */
 //  memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x0ffffff, 0, 0, hng64_mainram_w);
 
-	// Aaaaaugh !!! AJG ugliness
+	// "Display List" init - ugly
 	activeBuffer = 0 ;
 
-	fp = fopen("dump.bin", "wb") ;
+	/* set the fastest DRC options */
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
 
-	// fwrite(memory_region(REGION_GFX4), sizeof(UINT8), 0x400000*3, fp) ;
+	/* configure fast RAM regions for DRC */
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_SELECT, 0);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_START, 0x00000000);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_END, 0x00ffffff);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, hng_mainram);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 0);
 
-	fclose(fp) ;
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_SELECT, 1);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_START, 0x04000000);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_END, 0x05ffffff);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, hng_cart);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 1);
+
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_SELECT, 2);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_START, 0x1fc00000);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_END, 0x1fc7ffff);
+	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, rombase);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 1);
 }
+
 
 MACHINE_DRIVER_START( hng64 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(R4600BE, MASTER_CLOCK/4)  /* actually R4300 ? */
+	MDRV_CPU_ADD(R4600BE, MASTER_CLOCK)  	// actually R4300 ?
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(hng_map, 0)
 	MDRV_CPU_VBLANK_INT(irq_start,3)
 
-	MDRV_CPU_ADD(V30,8000000)		 /* v53, 16? mhz! */
+	MDRV_CPU_ADD(V30,8000000)		 		// v53, 16? mhz!
 	MDRV_CPU_PROGRAM_MAP(hng_sound_map,0)
 
+	MDRV_CPU_ADD(Z80,MASTER_CLOCK/4)			// KL5C80A12CFP - binary compatible with Z80, ??? mhz!
+	MDRV_CPU_PROGRAM_MAP(hng_comm_map,0)		//   this chip uses the early I/O memory space for virtual memory mapping
+	MDRV_CPU_IO_MAP(hng_comm_io_map, 0)			//   docs have been found, but they're japanese-only :(!
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1342,7 +1420,10 @@ MACHINE_DRIVER_START( hng64 )
 
 	MDRV_VIDEO_START(hng64)
 	MDRV_VIDEO_UPDATE(hng64)
+	MDRV_VIDEO_STOP(hng64)
 MACHINE_DRIVER_END
+
+
 
 ROM_START( hng64 )
 	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
@@ -1354,7 +1435,6 @@ ROM_END
 
 /* roads edge might need a different bios (driving board bios?) */
 ROM_START( roadedge )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
 
 	/* BIOS */
 	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
@@ -1403,10 +1483,10 @@ ROM_START( roadedge )
 	ROM_LOAD( "001tx04a.16",0x0c00000, 0x400000, CRC(288a5bd5) SHA1(24e05db681894eb31cdc049cf42c1f9d7347bd0c) )
 
 	/* X,Y,Z Vertex ROMs */
-	ROM_REGION( 0x0c00000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "001vt01a.17", 0x0000000, 0x400000, CRC(1a748e1b) SHA1(376d40baa3b94890d4740045d053faf208fe43db) )
-	ROM_LOAD( "001vt02a.18", 0x0400000, 0x400000, CRC(449f94d0) SHA1(2228690532d82d2661285aeb4260689b027597cb) )
-	ROM_LOAD( "001vt03a.19", 0x0800000, 0x400000, CRC(50ac8639) SHA1(dd2d3689466990a7c479bb8f11bd930ea45e47b5) )
+	ROM_REGION( 0x0c00000, REGION_GFX4, ROMREGION_NODISPOSE )
+	ROMX_LOAD( "001vt01a.17", 0x0000000, 0x400000, CRC(1a748e1b) SHA1(376d40baa3b94890d4740045d053faf208fe43db), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "001vt02a.18", 0x0000002, 0x400000, CRC(449f94d0) SHA1(2228690532d82d2661285aeb4260689b027597cb), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "001vt03a.19", 0x0000004, 0x400000, CRC(50ac8639) SHA1(dd2d3689466990a7c479bb8f11bd930ea45e47b5), ROM_GROUPWORD | ROM_SKIP(4) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_DISPOSE ) /* Sound Samples? */
 	ROM_LOAD( "001sd01a.77", 0x0000000, 0x400000, CRC(a851da99) SHA1(2ba24feddafc5fadec155cdb7af305fdffcf6690) )
@@ -1415,12 +1495,11 @@ ROM_END
 
 
 ROM_START( sams64_2 )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
 
 	/* BIOS */
 	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
 	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
-	ROM_REGION( 0x0100000, REGION_USER2, ROMREGION_DISPOSE ) /* unknown / unused bios roms */
+	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
 	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
 	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
 	/* END BIOS */
@@ -1478,13 +1557,13 @@ ROM_START( sams64_2 )
 	ROM_LOAD( "005tx04a.16",0x0c00000, 0x400000, CRC(6be50882) SHA1(1f99717cfa69076b258a0c52d66be007fd820374) )
 
 	/* X,Y,Z Vertex ROMs */
-	ROM_REGION( 0x1800000, REGION_GFX4, ROMREGION_DISPOSE )
-	ROM_LOAD( "005vt01a.17", 0x0000000, 0x400000, CRC(48a61479) SHA1(ef982b1ecc6dfca2ad989391afcc1b3d1e7fe652) )
-	ROM_LOAD( "005vt02a.18", 0x0400000, 0x400000, CRC(ba9100c8) SHA1(f7704fb8e5310ea7d0e6ae6b8935717ec9119b6d) )
-	ROM_LOAD( "005vt03a.19", 0x0800000, 0x400000, CRC(f54a28de) SHA1(c445cf7fee71a516065cf37e05b898208f48b17e) )
-	ROM_LOAD( "005vt04a.20", 0x0c00000, 0x400000, CRC(57ad79c7) SHA1(bc382317323c1f8a31b69ae3100d3bba6b5d0838) )
-	ROM_LOAD( "005vt05a.21", 0x1000000, 0x400000, CRC(49c82bec) SHA1(09255279edb9a204bbe1cce8cef58d5c81e86d1f) )
-	ROM_LOAD( "005vt06a.22", 0x1400000, 0x400000, CRC(7ba05b6c) SHA1(729c1d182d74998dd904b587a2405f55af9825e0) )
+	ROM_REGION( 0x1800000, REGION_GFX4, ROMREGION_NODISPOSE )
+	ROMX_LOAD( "005vt01a.17", 0x0000000, 0x400000, CRC(48a61479) SHA1(ef982b1ecc6dfca2ad989391afcc1b3d1e7fe652), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "005vt02a.18", 0x0000002, 0x400000, CRC(ba9100c8) SHA1(f7704fb8e5310ea7d0e6ae6b8935717ec9119b6d), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "005vt03a.19", 0x0000004, 0x400000, CRC(f54a28de) SHA1(c445cf7fee71a516065cf37e05b898208f48b17e), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "005vt04a.20", 0x0400000, 0x400000, CRC(57ad79c7) SHA1(bc382317323c1f8a31b69ae3100d3bba6b5d0838), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "005vt05a.21", 0x0400002, 0x400000, CRC(49c82bec) SHA1(09255279edb9a204bbe1cce8cef58d5c81e86d1f), ROM_GROUPWORD | ROM_SKIP(4) )
+	ROMX_LOAD( "005vt06a.22", 0x0400004, 0x400000, CRC(7ba05b6c) SHA1(729c1d182d74998dd904b587a2405f55af9825e0), ROM_GROUPWORD | ROM_SKIP(4) )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_DISPOSE ) /* Sound Samples? */
 	ROM_LOAD( "005sd01a.77", 0x0000000, 0x400000, CRC(8f68150f) SHA1(a1e5efdfd1ed29f81e25c8da669851ddb7b0c826) )
@@ -1495,12 +1574,11 @@ ROM_END
 
 
 ROM_START( fatfurwa )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
 
 	/* BIOS */
 	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
 	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
-	ROM_REGION( 0x0100000, REGION_USER2, ROMREGION_DISPOSE ) /* unknown / unused bios roms */
+	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
 	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
 	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
 	/* END BIOS */
@@ -1567,12 +1645,11 @@ ROM_START( fatfurwa )
 ROM_END
 
 ROM_START( buriki )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* dummy region for R4300 */
 
 	/* BIOS */
 	ROM_REGION32_BE( 0x0100000, REGION_USER1, 0 ) /* 512k for R4300 BIOS code */
 	ROM_LOAD ( "brom1.bin", 0x000000, 0x080000,  CRC(a30dd3de) SHA1(3e2fd0a56214e6f5dcb93687e409af13d065ea30) )
-	ROM_REGION( 0x0100000, REGION_USER2, ROMREGION_DISPOSE ) /* unknown / unused bios roms */
+	ROM_REGION( 0x0100000, REGION_USER2, 0 ) /* unknown / unused bios roms */
 	ROM_LOAD ( "from1.bin", 0x000000, 0x080000,  CRC(6b933005) SHA1(e992747f46c48b66e5509fe0adf19c91250b00c7) )
 	ROM_LOAD ( "rom1.bin",  0x000000, 0x01ff32,  CRC(4a6832dc) SHA1(ae504f7733c2f40450157cd1d3b85bc83fac8569) )
 	/* END BIOS */

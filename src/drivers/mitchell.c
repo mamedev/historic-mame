@@ -126,12 +126,7 @@ extern size_t pang_videoram_size;
 
 static WRITE8_HANDLER( pang_bankswitch_w )
 {
-	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-
-	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bank(1, data & 0x0f);
 }
 
 
@@ -369,7 +364,7 @@ static ADDRESS_MAP_START( mgakuen_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(mgakuen_paletteram_w)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(pang_colorram_w) AM_BASE(&pang_colorram)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(mgakuen_videoram_w) AM_BASE(&pang_videoram) AM_SIZE(&pang_videoram_size)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(mgakuen_objram_w)	/* OBJ RAM */
 ADDRESS_MAP_END
 
@@ -387,7 +382,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(pang_paletteram_w)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(pang_colorram_w) AM_BASE(&pang_colorram)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(pang_videoram_w) AM_BASE(&pang_videoram) AM_SIZE(&pang_videoram_size)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAMROM)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
@@ -1395,7 +1390,7 @@ MACHINE_DRIVER_END
 
 
 ROM_START( mgakuen )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 192k for code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "mg-1.1j",      0x00000, 0x08000, CRC(bf02ea6b) SHA1(bb1f5fbb211a5ed181f1afbba6b39737639d3ee7) )
 	ROM_LOAD( "mg-2.1l",      0x10000, 0x20000, CRC(64141b0c) SHA1(2de6bcd5cf2c042e5bf5c294dd7625393e99682b) )
 
@@ -1414,7 +1409,7 @@ ROM_START( mgakuen )
 ROM_END
 
 ROM_START( 7toitsu )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 192k for code */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "mc01.1j",      0x00000, 0x08000, CRC(0bebe45f) SHA1(24fadffd0033565441a75f36e2cb085a37e0f0e5) )
 	ROM_LOAD( "mc02.1l",      0x10000, 0x20000, CRC(375378b0) SHA1(cbb5db5fda1d87902b22130243d579cb28803707) )
 
@@ -1433,7 +1428,7 @@ ROM_START( 7toitsu )
 ROM_END
 
 ROM_START( mgakuen2 )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "mg2-xf.1j",    0x00000, 0x08000, CRC(c8165d2d) SHA1(95146e293b2e005c4015590811119a4070dda65b) )
 	ROM_LOAD( "mg2-y.1l",     0x10000, 0x20000, CRC(75bbcc14) SHA1(52ec279fda131c8de06d8c940df12d61ec6881cc) )
 	ROM_LOAD( "mg2-z.3l",     0x30000, 0x20000, CRC(bfdba961) SHA1(75045562edbdef1eb599d6a6bfc4247c33c11258) )
@@ -1453,7 +1448,7 @@ ROM_START( mgakuen2 )
 ROM_END
 
 ROM_START( pkladies )
-	ROM_REGION( 2*0x20000, REGION_CPU1, 0 )	/* 128k for code + 128k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "pko-prg1.14f", 0x00000, 0x08000, CRC(86585a94) SHA1(067791da20556e6c47de26fbf85389d92f9709db) )
 	ROM_LOAD( "pko-prg2.15f", 0x10000, 0x10000, CRC(86cbe82d) SHA1(3997a642004d1226cfce0f590123d4e407edf094) )
 
@@ -1473,7 +1468,7 @@ ROM_START( pkladies )
 ROM_END
 
 ROM_START( pkladiel )
-	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 128k for code + 128k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "pk05.14f",     0x00000, 0x08000, CRC(ea1740a6) SHA1(eafd3fb0056a648dfc67b5d0a1dc93c4262e2a8b) )
 	ROM_LOAD( "pk06.15f",     0x10000, 0x20000, CRC(3078ff5e) SHA1(5d91d68a07a968ee59f693841da165833a9fcf08) )	/* larger than pkladies - 2nd half unused? */
 
@@ -1493,7 +1488,7 @@ ROM_START( pkladiel )
 ROM_END
 
 ROM_START( pkladila )
-	ROM_REGION( 2*0x20000, REGION_CPU1, 0 )	/* 128k for code + 128k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "05.14f",       0x00000, 0x08000, CRC(fa18e16a) SHA1(05fff3335a55b9ebf13a0bc89216f00fba6b6b6d) )
 	ROM_LOAD( "06.15f",       0x10000, 0x10000, CRC(a2fb7646) SHA1(778d3c1348efe6e46aed4ce968826ce73e320187) )
 
@@ -1513,7 +1508,7 @@ ROM_START( pkladila )
 ROM_END
 
 ROM_START( dokaben )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "db06.11h",     0x00000, 0x08000, CRC(413e0886) SHA1(e9e6117fbbd980bc0f5448ada6c1856919bf92b5) )
 	ROM_LOAD( "db07.13h",     0x10000, 0x20000, CRC(8bdcf49e) SHA1(7d845ae2e640ec7d8d642e3aeef741d9f7b0a57c) )
 	ROM_LOAD( "db08.14h",     0x30000, 0x20000, CRC(1643bdd9) SHA1(5805e749713dbffacbb1238b1b4d42e8473d3656) )
@@ -1535,7 +1530,7 @@ ROM_START( dokaben )
 ROM_END
 
 ROM_START( pang )
-	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 192k for code + 192k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "pang6.bin",    0x00000, 0x08000, CRC(68be52cd) SHA1(67b9ac15f4cbd3959c417f979beae36ae17334c1) )
 	ROM_LOAD( "pang7.bin",    0x10000, 0x20000, CRC(4a2e70f6) SHA1(039db1b51374e5637b5c2ba8e18ccd08816613a7) )
 
@@ -1556,10 +1551,10 @@ ROM_START( pang )
 ROM_END
 
 ROM_START( pangb )
-	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 192k for code + 192k for decrypted opcodes */
-	ROM_LOAD( "pang_04.bin",  0x30000, 0x08000, CRC(f68f88a5) SHA1(6f57891d399a46d8d5a531771129552ed420d10a) )   /* Decrypted opcode + data */
+	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code */
+	ROM_LOAD( "pang_04.bin",  0x50000, 0x08000, CRC(f68f88a5) SHA1(6f57891d399a46d8d5a531771129552ed420d10a) )   /* Decrypted opcode + data */
 	ROM_CONTINUE(             0x00000, 0x08000 )
-	ROM_LOAD( "pang_02.bin",  0x40000, 0x20000, CRC(3f15bb61) SHA1(4f74ee25f32a201482840158b4d4c7aca1cda684) )   /* Decrypted op codes */
+	ROM_LOAD( "pang_02.bin",  0x60000, 0x20000, CRC(3f15bb61) SHA1(4f74ee25f32a201482840158b4d4c7aca1cda684) )   /* Decrypted op codes */
 	ROM_LOAD( "pang_03.bin",  0x10000, 0x20000, CRC(0c8477ae) SHA1(a31a8c00407dfc3017d56e29fac6114b73248030) )   /* Decrypted data */
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1579,7 +1574,7 @@ ROM_START( pangb )
 ROM_END
 
 ROM_START( bbros )
-	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 192k for code + 192k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "bb6.bin",      0x00000, 0x08000, CRC(a3041ca4) SHA1(2accb2151f621e4802211efe986969ebd3acb6d4) )
 	ROM_LOAD( "bb7.bin",      0x10000, 0x20000, CRC(09231c68) SHA1(9e735487a99a5eb89a6abb81d5d9a20414ad75bf) )
 
@@ -1600,7 +1595,7 @@ ROM_START( bbros )
 ROM_END
 
 ROM_START( pompingw )
-	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 192k for code + 192k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "pwj_06.11h",   0x00000, 0x08000, CRC(4a0a6426) SHA1(c61346c5f80507bdf543e9ea32ee3f814be8e27f) )
 	ROM_LOAD( "pwj_07.13h",   0x10000, 0x20000, CRC(a9402420) SHA1(2ca3aa59d561826477e3509fcaeeec753d64d419) )
 
@@ -1621,7 +1616,7 @@ ROM_START( pompingw )
 ROM_END
 
 ROM_START( cworld )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "cw05.bin",     0x00000, 0x08000, CRC(d3c1723d) SHA1(b67f63e39f4301909c967555222820b54e98a205) )
 	ROM_LOAD( "cw06.bin",     0x10000, 0x20000, CRC(d71ed4a3) SHA1(5b6d498810e6fc8041f4326087f3be56863e91d9) )
 	ROM_LOAD( "cw07.bin",     0x30000, 0x20000, CRC(d419ce08) SHA1(f0a8265e839f6bdab2926f48aba88b6f9aaa3b29) )
@@ -1645,7 +1640,7 @@ ROM_START( cworld )
 ROM_END
 
 ROM_START( hatena )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "q2-05.rom",    0x00000, 0x08000, CRC(66c9e1da) SHA1(7ddbc4acf9d9d5b69f0bb60af65a171f3ba185b1) )
 	ROM_LOAD( "q2-06.rom",    0x10000, 0x20000, CRC(5fc39916) SHA1(84ead43d8bad3f9c88fcb02171500298613646dc) )
 	ROM_LOAD( "q2-07.rom",    0x30000, 0x20000, CRC(ec6d5e5e) SHA1(6269f5a5a3af91193afe85d34a764499877c2a24) )
@@ -1672,10 +1667,10 @@ ROM_END
 
 /* seems to be the same basic hardware, but the memory map and io map are different at least.. */
 ROM_START( mstworld )
-	ROM_REGION( 0x80000*2, REGION_CPU1, 0 )	/* CPU1 code */
+	ROM_REGION( 0x50000*2, REGION_CPU1, 0 )	/* CPU1 code */
 	/* we descramble code to here */
 
-	ROM_REGION( 0x80000, REGION_USER1, 0 )	/* CPU1 code - scrambled */
+	ROM_REGION( 0x80000, REGION_USER1, ROMREGION_DISPOSE )	/* CPU1 code - scrambled */
 	ROM_LOAD( "mw-1.rom", 0x00000, 0x080000, CRC(c4e51fb4) SHA1(60ad4ff2cec3a4d13b4aa0319dfcdab941404b1a) ) /* fixed code */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU2 code */
@@ -1710,7 +1705,7 @@ ROM_END
 
 
 ROM_START( spang )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "spe_06.rom",   0x00000, 0x08000, CRC(1af106fb) SHA1(476ba5c95e090663a47d3f98451bf3b79bac7748) )
 	ROM_LOAD( "spe_07.rom",   0x10000, 0x20000, CRC(208b5f54) SHA1(9d44f7240b56756dcb69d110036b1cb13b1bbc02) )
 	ROM_LOAD( "spe_08.rom",   0x30000, 0x20000, CRC(2bc03ade) SHA1(3a8ee342b0556a8f6d5a417c98e5c3c43422713d) )
@@ -1732,7 +1727,7 @@ ROM_START( spang )
 ROM_END
 
 ROM_START( spangj )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "spj_11h.bin",    0x00000, 0x08000, CRC(1a548b0b) SHA1(3aa65028876ab6e176f5b227366e65212c944888) )
 	ROM_LOAD( "spj7_13h.bin",   0x10000, 0x20000, CRC(14c2b765) SHA1(af0f965dd13d878bae7850cf8419b26511090579) )
 	ROM_LOAD( "spj8_14h.bin",   0x30000, 0x20000, CRC(4be4e5b7) SHA1(6273e8bf5d9f5b100ecda20001808dcf86411d83) )
@@ -1754,7 +1749,7 @@ ROM_START( spangj )
 ROM_END
 
 ROM_START( sbbros )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "06.j12",       0x00000, 0x08000, CRC(292eee6a) SHA1(d33368d2373a1ee9e24ada6aa045e0675c8e8160) )
 	ROM_LOAD( "07.j13",       0x10000, 0x20000, CRC(f46b698d) SHA1(6a1867f591aa0fb9e02dd472699df93f9d018793) )
 	ROM_LOAD( "08.j14",       0x30000, 0x20000, CRC(a75e7fbe) SHA1(0331d1a3e888678909f3e6d21f97896a5350e585) )
@@ -1776,7 +1771,7 @@ ROM_START( sbbros )
 ROM_END
 
 ROM_START( marukin )
-	ROM_REGION( 2*0x30000, REGION_CPU1, 0 )	/* 192k for code + 192k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "mg3-01.9d",    0x00000, 0x08000, CRC(04357973) SHA1(61b0b347479126213c90ef6833c09537fab03093) )
 	ROM_LOAD( "mg3-02.10d",   0x10000, 0x20000, CRC(50d08da0) SHA1(5d115eb646f34827d02219be3d5346f05c0c27b6) )
 
@@ -1795,7 +1790,7 @@ ROM_START( marukin )
 ROM_END
 
 ROM_START( qtono1 )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "q3-05.rom",    0x00000, 0x08000, CRC(1dd0a344) SHA1(814049bf957b78ff2d1c8da316dfe5303abee4df) )
 	ROM_LOAD( "q3-06.rom",    0x10000, 0x20000, CRC(bd6a2110) SHA1(8c4d7a10dfaee0fcd18be21c80fc3d2ff9615eae) )
 	ROM_LOAD( "q3-07.rom",    0x30000, 0x20000, CRC(61e53c4f) SHA1(bcde0029a217994561ae0a6fb0482bf1e3517913) )
@@ -1819,7 +1814,7 @@ ROM_START( qtono1 )
 ROM_END
 
 ROM_START( qsangoku )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "q4-05c.rom",   0x00000, 0x08000, CRC(e1d010b4) SHA1(7fca1ee45054331320abb6a99f10fa98dd4be994) )
 	ROM_LOAD( "q4-06.rom",    0x10000, 0x20000, CRC(a0301849) SHA1(60910d84f869fd5735cd5500a93b761d8b8dbacb) )
 	ROM_LOAD( "q4-07.rom",    0x30000, 0x20000, CRC(2941ef5b) SHA1(a86f5365edd315fcbb2a50489d63b4be9587ae29) )
@@ -1843,7 +1838,7 @@ ROM_START( qsangoku )
 ROM_END
 
 ROM_START( block )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "ble_05.bin",   0x00000, 0x08000, CRC(fa2a4536) SHA1(8f584745116bd0ced4d66719cd80c0372b797134) )
 	ROM_LOAD( "ble_06.bin",   0x10000, 0x20000, CRC(58a77402) SHA1(cb24b1edd53a0965c3a9a34fe764b5c1f8dd9733) )
 	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, CRC(1d114f13) SHA1(ee3588e1752b3432fd611e2d7d4fb43f942de580) )
@@ -1867,7 +1862,7 @@ ROM_START( block )
 ROM_END
 
 ROM_START( blocka )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, CRC(c12e7f4c) SHA1(335f4eab2323b942d5feeb3bab6f7286fabfffb4) )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, CRC(cdb13d55) SHA1(2e4489d12a603b4c7dfb90d246ebff9176e88a0b) )
 	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, CRC(1d114f13) SHA1(ee3588e1752b3432fd611e2d7d4fb43f942de580) )
@@ -1891,7 +1886,7 @@ ROM_START( blocka )
 ROM_END
 
 ROM_START( blockj )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "blj_05.rom",   0x00000, 0x08000, CRC(3b55969a) SHA1(86de2f1f5878de380a8b1e3935cffa146863f07f) )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, CRC(cdb13d55) SHA1(2e4489d12a603b4c7dfb90d246ebff9176e88a0b) )
 	ROM_LOAD( "blj_07.rom",   0x30000, 0x20000, CRC(1723883c) SHA1(e6b7575a55c045b90fb41290a60306713121acfb) )
@@ -1915,7 +1910,7 @@ ROM_START( blockj )
 ROM_END
 
 ROM_START( blockbl )
-	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
+	ROM_REGION( 0x50000*2, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "m7.l6",        0x50000, 0x08000, CRC(3b576fd9) SHA1(99cf14eba089ed9c7d9f287277dab4a8a997a9a4) )   /* Decrypted opcode + data */
 	ROM_CONTINUE(             0x00000, 0x08000 )
 	ROM_LOAD( "m5.l3",        0x60000, 0x20000, CRC(7c988bb7) SHA1(138ffe62ef9186849c3db73b048132ad0349ccf7) )   /* Decrypted opcode + data */
@@ -1945,12 +1940,15 @@ ROM_END
 
 static void bootleg_decode(void)
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, memory_region(REGION_CPU1) + 0x50000);
+	memory_configure_bank_decrypted(1, 0, 16, memory_region(REGION_CPU1) + 0x60000, 0x4000);
 }
 
+
+static void configure_banks(void)
+{
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+}
 
 
 static DRIVER_INIT( dokaben )
@@ -1958,30 +1956,35 @@ static DRIVER_INIT( dokaben )
 	input_type = 0;
 	nvram_size = 0;
 	mgakuen2_decode();
+	configure_banks();
 }
 static DRIVER_INIT( pang )
 {
 	input_type = 0;
 	nvram_size = 0;
 	pang_decode();
+	configure_banks();
 }
 static DRIVER_INIT( pangb )
 {
 	input_type = 0;
 	nvram_size = 0;
 	bootleg_decode();
+	configure_banks();
 }
 static DRIVER_INIT( cworld )
 {
 	input_type = 0;
 	nvram_size = 0;
 	cworld_decode();
+	configure_banks();
 }
 static DRIVER_INIT( hatena )
 {
 	input_type = 0;
 	nvram_size = 0;
 	hatena_decode();
+	configure_banks();
 }
 static DRIVER_INIT( spang )
 {
@@ -1989,6 +1992,7 @@ static DRIVER_INIT( spang )
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
 	spang_decode();
+	configure_banks();
 }
 static DRIVER_INIT( spangj )
 {
@@ -1996,6 +2000,7 @@ static DRIVER_INIT( spangj )
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
 	spangj_decode();
+	configure_banks();
 
 	/* fix data that will be written to nvram */
 	{
@@ -2011,34 +2016,40 @@ static DRIVER_INIT( sbbros )
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xe000];	/* NVRAM */
 	sbbros_decode();
+	configure_banks();
 }
 static DRIVER_INIT( qtono1 )
 {
 	input_type = 0;
 	nvram_size = 0;
 	qtono1_decode();
+	configure_banks();
 }
 static DRIVER_INIT( qsangoku )
 {
 	input_type = 0;
 	nvram_size = 0;
 	qsangoku_decode();
+	configure_banks();
 }
 static DRIVER_INIT( mgakuen )
 {
 	input_type = 1;
+	configure_banks();
 }
 static DRIVER_INIT( mgakuen2 )
 {
 	input_type = 1;
 	nvram_size = 0;
 	mgakuen2_decode();
+	configure_banks();
 }
 static DRIVER_INIT( marukin )
 {
 	input_type = 1;
 	nvram_size = 0;
 	marukin_decode();
+	configure_banks();
 }
 static DRIVER_INIT( block )
 {
@@ -2046,6 +2057,7 @@ static DRIVER_INIT( block )
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xff80];	/* NVRAM */
 	block_decode();
+	configure_banks();
 }
 static DRIVER_INIT( blockbl )
 {
@@ -2053,6 +2065,7 @@ static DRIVER_INIT( blockbl )
 	nvram_size = 0x80;
 	nvram = &memory_region(REGION_CPU1)[0xff80];	/* NVRAM */
 	bootleg_decode();
+	configure_banks();
 }
 
 static DRIVER_INIT( mstworld )
@@ -2091,11 +2104,12 @@ static DRIVER_INIT( mstworld )
 		if (tablebank[x]!=-1)
 		{
 			memcpy(&dst[(x/2)*0x4000],&source[tablebank[x]*0x4000],0x4000);
-			memcpy(&dst[((x/2)*0x4000)+0x80000],&source[tablebank[x+1]*0x4000],0x4000);
+			memcpy(&dst[((x/2)*0x4000)+0x50000],&source[tablebank[x+1]*0x4000],0x4000);
 		}
 	}
 
-	memory_set_opcode_base(0,memory_region(REGION_CPU1)+0x80000);
+	bootleg_decode();
+	configure_banks();
 }
 
 

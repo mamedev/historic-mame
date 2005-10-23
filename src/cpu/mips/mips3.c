@@ -636,7 +636,7 @@ static void mips3drc_set_options(UINT8 cpunum, UINT32 opts)
 **  TLB HANDLING
 **#################################################################################################*/
 
-INLINE void map_tlb_entries(void)
+static void map_tlb_entries(void)
 {
 	int valid_asid = mips3.cpr[0][COP0_EntryHi] & 0xff;
 	int index;
@@ -665,10 +665,11 @@ INLINE void map_tlb_entries(void)
 					if (lo & 2)
 					{
 						UINT32 pfn = (lo >> 6) & 0x00ffffff;
+						UINT32 wp = (~lo >> 2) & 1;
 
 						for (i = 0; i <= count; i++, vpn++)
 							if (vpn < 0x80000 || vpn >= 0xc0000)
-								mips3.tlb_table[vpn] = pfn++ << 12;
+								mips3.tlb_table[vpn] = (pfn++ << 12) | wp;
 					}
 				}
 		}
@@ -676,7 +677,7 @@ INLINE void map_tlb_entries(void)
 }
 
 
-INLINE void unmap_tlb_entries(void)
+static void unmap_tlb_entries(void)
 {
 	int index;
 
@@ -724,7 +725,7 @@ static int translate_address(int space, offs_t *address)
 		UINT32 result = mips3.tlb_table[*address >> 12];
 		if (result == 0xffffffff)
 			return 0;
-		*address = result | (*address & 0xfff);
+		*address = (result & ~0xfff) | (*address & 0xfff);
 	}
 	return 1;
 }
@@ -738,7 +739,7 @@ static int update_pcbase(void)
 		generate_tlb_exception(EXCEPTION_TLBLOAD, mips3.pc);
 		return 0;
 	}
-	mips3.pcbase = entry;
+	mips3.pcbase = entry & ~0xfff;
 	change_pc(mips3.pcbase);
 	return 1;
 }
@@ -752,7 +753,7 @@ INLINE int RBYTE(offs_t address, UINT32 *result)
 		generate_tlb_exception(EXCEPTION_TLBLOAD, address);
 		return 0;
 	}
-	*result = (*mips3.memory.readbyte)(tlbval | (address & 0xfff));
+	*result = (*mips3.memory.readbyte)((tlbval & ~0xfff) | (address & 0xfff));
 	return 1;
 }
 
@@ -765,7 +766,7 @@ INLINE int RWORD(offs_t address, UINT32 *result)
 		generate_tlb_exception(EXCEPTION_TLBLOAD, address);
 		return 0;
 	}
-	*result = (*mips3.memory.readword)(tlbval | (address & 0xfff));
+	*result = (*mips3.memory.readword)((tlbval & ~0xfff) | (address & 0xfff));
 	return 1;
 }
 
@@ -778,7 +779,7 @@ INLINE int RLONG(offs_t address, UINT32 *result)
 		generate_tlb_exception(EXCEPTION_TLBLOAD, address);
 		return 0;
 	}
-	*result = (*mips3.memory.readlong)(tlbval | (address & 0xfff));
+	*result = (*mips3.memory.readlong)((tlbval & ~0xfff) | (address & 0xfff));
 	return 1;
 }
 
@@ -791,7 +792,7 @@ INLINE int RDOUBLE(offs_t address, UINT64 *result)
 		generate_tlb_exception(EXCEPTION_TLBLOAD, address);
 		return 0;
 	}
-	*result = (*mips3.memory.readdouble)(tlbval | (address & 0xfff));
+	*result = (*mips3.memory.readdouble)((tlbval & ~0xfff) | (address & 0xfff));
 	return 1;
 }
 
@@ -799,7 +800,7 @@ INLINE int RDOUBLE(offs_t address, UINT64 *result)
 INLINE void WBYTE(offs_t address, UINT8 data)
 {
 	UINT32 tlbval = mips3.tlb_table[address >> 12];
-	if (tlbval == 0xffffffff)
+	if (tlbval & 1)
 		generate_tlb_exception(EXCEPTION_TLBSTORE, address);
 	else
 		(*mips3.memory.writebyte)(tlbval | (address & 0xfff), data);
@@ -809,7 +810,7 @@ INLINE void WBYTE(offs_t address, UINT8 data)
 INLINE void WWORD(offs_t address, UINT16 data)
 {
 	UINT32 tlbval = mips3.tlb_table[address >> 12];
-	if (tlbval == 0xffffffff)
+	if (tlbval & 1)
 		generate_tlb_exception(EXCEPTION_TLBSTORE, address);
 	else
 		(*mips3.memory.writeword)(tlbval | (address & 0xfff), data);
@@ -819,7 +820,7 @@ INLINE void WWORD(offs_t address, UINT16 data)
 INLINE void WLONG(offs_t address, UINT32 data)
 {
 	UINT32 tlbval = mips3.tlb_table[address >> 12];
-	if (tlbval == 0xffffffff)
+	if (tlbval & 1)
 		generate_tlb_exception(EXCEPTION_TLBSTORE, address);
 	else
 		(*mips3.memory.writelong)(tlbval | (address & 0xfff), data);
@@ -829,7 +830,7 @@ INLINE void WLONG(offs_t address, UINT32 data)
 INLINE void WDOUBLE(offs_t address, UINT64 data)
 {
 	UINT32 tlbval = mips3.tlb_table[address >> 12];
-	if (tlbval == 0xffffffff)
+	if (tlbval & 1)
 		generate_tlb_exception(EXCEPTION_TLBSTORE, address);
 	else
 		(*mips3.memory.writedouble)(tlbval | (address & 0xfff), data);
@@ -1081,7 +1082,7 @@ INLINE void handle_cop0(UINT32 op)
 					break;
 
 				case 0x08:	/* TLBP */
-					debug_halt_on_next_instruction();
+//                  debug_halt_on_next_instruction();
 					for (index = 0; index < 48; index++)
 					{
 						UINT64 mask = ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000)) & ~U64(0x1fff);
@@ -1105,7 +1106,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 						{
 #if PRINTF_TLB
 							printf("TLBP: Should have not found an entry\n");
-							debug_halt_on_next_instruction();
+//                          debug_halt_on_next_instruction();
 #endif
 						}
 						mips3.cpr[0][COP0_Index] = index;
@@ -1116,7 +1117,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 						{
 #if PRINTF_TLB
 							printf("TLBP: Should havefound an entry\n");
-							debug_halt_on_next_instruction();
+//                          debug_halt_on_next_instruction();
 #endif
 						}
 						mips3.cpr[0][COP0_Index] = 0x80000000;
@@ -1687,7 +1688,7 @@ int mips3_execute(int cycles)
 	{
 		UINT32 op;
 		UINT64 temp64;
-		int temp;
+		UINT32 temp;
 
 		/* see if we crossed a page boundary */
 		if ((mips3.pc ^ mips3.ppc) & 0xfffff000)

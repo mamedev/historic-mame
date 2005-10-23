@@ -40,12 +40,6 @@
 #include "m4510.h"
 #endif
 
-#define OPCODE(A)  cpu_readop(A)
-#define ARGBYTE(A) cpu_readop_arg(A)
-#define ARGWORD(A) cpu_readop_arg(A)+(cpu_readop_arg((A+1) & 0xffff) << 8)
-
-#define RDMEM(A)   program_read_byte_8(A)
-
 enum addr_mode {
 	non,   /* no additional arguments */
 	imp,   /* implicit */
@@ -642,71 +636,45 @@ static const struct op6502_info opdeco16[256] =
  };
 #endif
 
-#if (HAS_M6502)
-static unsigned m6502_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+static unsigned m6502_get_reg(const struct op6502_info *opinfo, int reg)
+{
+	union cpuinfo info;
+	void (*get_info)(UINT32 state, union cpuinfo *info) = m6502_get_info;
+
+#if HAS_M65CE02
+	if (opinfo == op65CE02)
+		get_info = m65ce02_get_info;
 #endif
-#if (HAS_M6509)
-static unsigned m6509_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+#if HAS_M4510
+	if (opinfo == op4510)
+		get_info = m4510_get_info;
 #endif
-#if (HAS_M65CE02)
-static unsigned m65ce02_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-#endif
-#if (HAS_M4510)
-static unsigned m4510_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-#endif
+
+	get_info(CPUINFO_INT_REGISTER + (reg), &info);
+	return info.i;
+}
 
 /*****************************************************************************
  * Disassemble a single opcode starting at pc
  *****************************************************************************/
-unsigned Dasm6502(char *buffer, unsigned pc)
+static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	char *dst = buffer;
 	const char *symbol;
 	INT8 offset;
 	INT16 offset16;
 	unsigned PC = pc;
-	UINT16 addr, ea;
+	UINT16 addr;
 	UINT8 op, opc, arg, access, value;
 	UINT32 flags;
+	int pos = 0;
 
-	op = OPCODE(pc++);
+	op = oprom[pos++];
+	pc++;
 
-	switch ( m6502_get_reg(M6502_SUBTYPE) )
-	{
-#if (HAS_M65C02)
-		case SUBTYPE_65C02:
-			opc = op65c02[op].opc;
-			arg = op65c02[op].arg;
-			access = op65c02[op].access;
-			break;
-#endif
-#if (HAS_M65SC02)
-		case SUBTYPE_65SC02:
-			opc = op65sc02[op].opc;
-			arg = op65sc02[op].arg;
-			access = op65sc02[op].access;
-			break;
-#endif
-#if (HAS_M6510)
-		case SUBTYPE_6510:
-			opc = op6510[op].opc;
-			arg = op6510[op].arg;
-			access = op6510[op].access;
-			break;
-#endif
-#if (HAS_DECO16)
-		case SUBTYPE_DECO16:
-			opc = opdeco16[op].opc;
-			arg = opdeco16[op].arg;
-			access = opdeco16[op].access;
-			break;
-#endif
-		default:
-			opc = op6502[op].opc;
-			arg = op6502[op].arg;
-			access = op6502[op].access;
-			break;
-	}
+	opc = opinfo[op].opc;
+	arg = opinfo[op].arg;
+	access = opinfo[op].access;
 
 	/* determine dasmflags */
 	switch(opc)
@@ -741,433 +709,199 @@ unsigned Dasm6502(char *buffer, unsigned pc)
 		break;
 
 	case rel:
-		offset = (INT8)ARGBYTE(pc++);
-		symbol = set_ea_info( 0, pc, offset, access );
-		dst += sprintf(dst,"%s", symbol);
+		offset = (INT8) opram[pos++];
+		pc++;
+		dst += sprintf(dst, "$%04X", (pc + offset) & 0xFFFF);
 		break;
 
 	case rw2:
-		offset16 = ARGWORD(pc)-1;
+		offset16 = (opram[pos] | (opram[pos+1] << 8)) -1;
+		pos += 2;
 		pc += 2;
-		symbol = set_ea_info( 0, pc, offset16, access );
-		dst += sprintf(dst,"%s", symbol);
+		dst += sprintf(dst, "$%04X", (pc + offset16) & 0xFFFF);
 		break;
 
 	case imm:
-		value = ARGBYTE(pc++);
+		value = opram[pos++];
+		pc++;
 		symbol = set_ea_info( 0, value, EA_UINT8, access );
 		dst += sprintf(dst,"#%s", symbol);
 		break;
 
 	case zpg:
-		addr = ARGBYTE(pc++);
+		addr = opram[pos++];
+		pc++;
 		symbol = set_ea_info( 0, addr, EA_UINT8, access );
 		dst += sprintf(dst,"$%02X", addr);
 		break;
 
 	case zpx:
-		addr = ARGBYTE(pc++);
-		ea = (addr + m6502_get_reg(M6502_X)) & 0xff;
-		symbol = set_ea_info( 0, ea, EA_UINT8, access );
+		addr = opram[pos++];
+		pc++;
 		dst += sprintf(dst,"$%02X,x", addr);
 		break;
 
 	case zpy:
-		addr = ARGBYTE(pc++);
-		ea = (addr + m6502_get_reg(M6502_Y)) & 0xff;
-		symbol = set_ea_info( 0, ea, EA_UINT8, access );
+		addr = opram[pos++];
+		pc++;
 		dst += sprintf(dst,"$%02X,y", addr);
 		break;
 
 	case idx:
-		addr = ARGBYTE(pc++);
-		ea = (addr + m6502_get_reg(M6502_X)) & 0xff;
-		ea = RDMEM(ea) + (RDMEM((ea+1) & 0xff) << 8);
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+		addr = opram[pos++];
+		pc++;
 		dst += sprintf(dst,"($%02X,x)", addr);
 		break;
 
 	case idy:
-		addr = ARGBYTE(pc++);
-		ea = (RDMEM(addr) + (RDMEM((addr+1) & 0xff) << 8) + m6502_get_reg(M6502_Y)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+		addr = opram[pos++];
+		pc++;
 		dst += sprintf(dst,"($%02X),y", addr);
 		break;
 
 	case zpi:
-		addr = ARGBYTE(pc++);
-		ea = RDMEM(addr) + (RDMEM((addr+1) & 0xff) << 8);
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+		addr = opram[pos++];
+		pc++;
 		dst += sprintf(dst,"($%02X)", addr);
 		break;
 
 	case zpb:
-		addr = ARGBYTE(pc++);
+		addr = opram[pos++];
+		pc++;
 		symbol = set_ea_info( 0, addr, EA_UINT8, access );
 		dst += sprintf(dst,"$%02X", addr);
-		offset = (INT8)ARGBYTE(pc++);
+		offset = (INT8) opram[pos++];
+		pc++;
 		symbol = set_ea_info( 1, pc, offset, BRA );
 		dst += sprintf(dst,",%s", symbol);
 		break;
 
 	case adr:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		symbol = set_ea_info( 0, addr, EA_UINT16, access );
-		dst += sprintf(dst,"%s", symbol);
+		dst += sprintf(dst, "$%04X", addr);
 		break;
 
 	case aba:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		symbol = set_ea_info( 0, addr, EA_UINT16, access );
-		dst += sprintf(dst,"%s", symbol);
+		dst += sprintf(dst, "$%04X", addr);
 		break;
 
 	case abx:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		ea = (addr + m6502_get_reg(M6502_X)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
 		dst += sprintf(dst,"$%04X,x", addr);
 		break;
 
 	case aby:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		ea = (addr + m6502_get_reg(M6502_Y)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
 		dst += sprintf(dst,"$%04X,y", addr);
 		break;
 
 	case ind:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		ea = ARGWORD(addr);
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
 		dst += sprintf(dst,"($%04X)", addr);
 		break;
 
 	case iax:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		ea = (ARGWORD(addr) + m6502_get_reg(M6502_X)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+		pos += 2;
+		pc += 2;
 		dst += sprintf(dst,"($%04X),X", addr);
 		break;
 
-	default:
-		dst += sprintf(dst,"$%02X", op);
-	}
-	return (pc - PC) | flags;
-}
-
-
-#if (HAS_M65CE02 || HAS_M6509 || HAS_M6510 || HAS_M4510)
-
-#if (HAS_M65CE02 || HAS_M6510)
-static int m6502_get_argword(int addr)
-{
-	return cpu_readop_arg(addr)+(cpu_readop_arg((addr+1)&0xffff) << 8);
-}
-#endif
-
-#if (HAS_M6509 || HAS_M4510)
-static int m6509_get_argword(int addr)
-{
-	if ((addr&0xffff)==0xffff)
-		return cpu_readop_arg(addr)+(cpu_readop_arg(addr&~0xffff) << 8);
-	else
-		return cpu_readop_arg(addr)+(cpu_readop_arg(addr+1) << 8);
-}
-#endif
-
-typedef struct {
-	const UINT8 *opcode;
-	unsigned(*get_reg)(int regnum);
-	read8_handler readmem;
-	int(*argword)(int addr);
-} CPU_TYPE;
-
-#if 0
-static CPU_TYPE type_m6502 = {
-	(const UINT8*)op6502, m6502_get_reg, program_read_byte_8, m6502_get_argword
-};
-#endif
-#ifdef HAS_M6510
-static CPU_TYPE type_m6510 = {
-	(const UINT8*)op6510, m6502_get_reg, program_read_byte_8, m6502_get_argword
-};
-#endif
-#if (HAS_M6509)
-static CPU_TYPE type_m6509 = {
-	(const UINT8*)op6510, m6509_get_reg, program_read_byte_8, m6509_get_argword
-};
-#endif
-#if 0
-static CPU_TYPE type_m65c02 = {
-	(const UINT8*)op65c02, m6502_get_reg, program_read_byte_8, m6502_get_argword
-};
-static CPU_TYPE type_m65sc02 = {
-	(const UINT8*)op65sc02, m6502_get_reg, program_read_byte_8, m6502_get_argword
-};
-#endif
-#if (HAS_M65CE02)
-static CPU_TYPE type_m65ce02 = {
-	(const UINT8*)op65ce02, m65ce02_get_reg, program_read_byte_8, m6502_get_argword
-};
-#endif
-#if (HAS_M4510)
-static READ8_HANDLER(m4510_readmem)
-{
-	return program_read_byte_8( m4510_get_reg(M4510_MEM0+(offset>>13))+offset );
-}
-
-static CPU_TYPE type_m4510 = {
-	(const UINT8*)op4510, m4510_get_reg, m4510_readmem, m6509_get_argword
-};
-#endif
-
-/*****************************************************************************
- * Disassemble a single opcode starting at pc
- *****************************************************************************/
-unsigned int Dasm6502Helper(CPU_TYPE *this, char *buffer, unsigned pc)
-{
-	char *dst = buffer;
-	const char *symbol;
-	INT8 offset;
-	INT16 offset16;
-	unsigned PC = pc;
-	UINT16 addr, ea;
-	UINT8 op, opc, arg, access, value;
-
-	op = OPCODE(pc++);
-
-	opc = this->opcode[op*3];
-	arg = this->opcode[op*3+1];
-	access = this->opcode[op*3+2];
-
-	dst += sprintf(dst, "%-5s", token[opc]);
-	if( opc == bbr || opc == bbs || opc == rmb || opc == smb )
-		dst += sprintf(dst, "%d,", (op >> 3) & 7);
-
-	switch(arg)
-	{
-	case imp:
-		break;
-
-	case acc:
-		dst += sprintf(dst,"a");
-		break;
-
-	case rel:
-		offset = (INT8)ARGBYTE(pc++);
-		symbol = set_ea_info( 0, pc, offset, access );
-#if 0
-		dst += sprintf(dst,"%s", symbol);
-#else
-		dst += sprintf(dst,"$%04X", (pc+offset)&0xffff);
-#endif
-		break;
-
-	case rw2:
-		offset16 = this->argword(pc)-1;
-		pc += 2;
-		symbol = set_ea_info( 0, pc, offset16, access );
-#if 0
-		dst += sprintf(dst,"%s", symbol);
-#else
-		dst += sprintf(dst,"$%04X", (pc+offset16)&0xffff );
-#endif
-		break;
-
-	case imm:
-		value = ARGBYTE(pc++);
-		symbol = set_ea_info( 0, value, EA_UINT8, access );
-		dst += sprintf(dst,"#%s", symbol);
-		break;
-
 	case iw2:
-		addr = ARGWORD(pc);
+		addr = (opram[pos] | (opram[pos+1] << 8));
+		pos += 2;
 		pc += 2;
-		symbol = set_ea_info( 0, addr, EA_UINT16, access );
-		dst += sprintf(dst,"#%s", symbol);
+		dst += sprintf(dst,"#%04X", addr);
 		break;
+
 	case iw3:
-		addr = ARGWORD(pc);
-		pc += 2;
-		addr |= ARGBYTE(pc++)<<16;
-//      symbol = set_ea_info( 0, addr, EA_UINT16, access );
-		dst += sprintf(dst,"#%.6x", addr);
-		break;
-
-	case zpg:
-		addr = ARGBYTE(pc++);
-		symbol = set_ea_info( 0, addr, EA_UINT8, access );
-		dst += sprintf(dst,"$%02X", addr);
-		break;
-
-	case zpx:
-		addr = ARGBYTE(pc++);
-		ea = (addr + this->get_reg(M6502_X)) & 0xff;
-		symbol = set_ea_info( 0, ea, EA_UINT8, access );
-		dst += sprintf(dst,"$%02X,x", addr);
-		break;
-
-	case zpy:
-		addr = ARGBYTE(pc++);
-		ea = (addr + this->get_reg(M6502_Y)) & 0xff;
-		symbol = set_ea_info( 0, ea, EA_UINT8, access );
-		dst += sprintf(dst,"$%02X,y", addr);
-		break;
-
-	case idx:
-		addr = ARGBYTE(pc++);
-		ea = (addr + this->get_reg(M6502_X)) & 0xff;
-		ea = this->readmem(ea) + (this->readmem((ea+1) & 0xff) << 8);
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"($%02X,x)", addr);
-		break;
-
-	case idy:
-		addr = ARGBYTE(pc++);
-		ea = (this->readmem(addr) + (this->readmem((addr+1) & 0xff) << 8)
-			  + this->get_reg(M6502_Y)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"($%02X),y", addr);
+		addr = (opram[pos] | (opram[pos+1] << 8) | (opram[pos+2] << 16));
+		pos += 3;
+		pc += 3;
+		dst += sprintf(dst,"#%06x", addr);
 		break;
 
 	case idz:
-		addr = ARGBYTE(pc++);
-		ea = (this->readmem(addr) + (this->readmem((addr+1) & 0xff) << 8)
-			  + this->get_reg(M6502_Y)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+		addr = (INT8) opram[pos++];
+		pc++;
 		dst += sprintf(dst,"($%02X),z", addr);
 		break;
 
 	case isy:
-		op = ARGBYTE(pc++);
-		addr = op+this->get_reg(M6502_S);
-		ea = (this->readmem(addr)+(this->readmem(addr+1) << 8)+
-			   this->get_reg(M6502_Y)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
+		op = opram[pos++];
+		pc++;
+		addr = op + m6502_get_reg(opinfo, M6502_S);
+		pos += 2;
+		pc += 2;
 		dst += sprintf(dst,"(s,$%02X),y", addr);
-		break;
-
-	case zpi:
-		addr = ARGBYTE(pc++);
-		ea = this->readmem(addr) + (this->readmem((addr+1) & 0xff) << 8);
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"($%02X)", addr);
-		break;
-
-	case zpb:
-		addr = ARGBYTE(pc++);
-		symbol = set_ea_info( 0, addr, EA_UINT8, access );
-		dst += sprintf(dst,"$%02X", addr);
-		offset = (INT8)ARGBYTE(pc++);
-		symbol = set_ea_info( 1, pc, offset, BRA );
-		dst += sprintf(dst,",%s", symbol);
-		break;
-
-	case adr:
-		addr = this->argword(pc);
-		pc += 2;
-		symbol = set_ea_info( 0, addr, EA_UINT16, access );
-#if 0
-		dst += sprintf(dst,"%s", symbol);
-#else
-		dst += sprintf(dst, "$%04X", addr);
-#endif
-		break;
-
-	case aba:
-		addr = this->argword(pc);
-		pc += 2;
-		symbol = set_ea_info( 0, addr, EA_UINT16, access );
-#if 0
-		dst += sprintf(dst,"%s", symbol);
-#else
-		dst += sprintf(dst, "$%04X", addr);
-#endif
-		break;
-
-	case abx:
-		addr = this->argword(pc);
-		pc += 2;
-		ea = (addr + this->get_reg(M6502_X)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"$%04X,x", addr);
-		break;
-
-	case aby:
-		addr = this->argword(pc);
-		pc += 2;
-		ea = (addr + this->get_reg(M6502_Y)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"$%04X,y", addr);
-		break;
-
-	case ind:
-		addr = this->argword(pc);
-		pc += 2;
-		ea = this->argword(addr);
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"($%04X)", addr);
-		break;
-
-	case iax:
-		addr = this->argword(pc);
-		pc += 2;
-		ea = (this->argword(addr) + this->get_reg(M6502_X)) & 0xffff;
-		symbol = set_ea_info( 0, ea, EA_UINT16, access );
-		dst += sprintf(dst,"($%04X),X", addr);
 		break;
 
 	default:
 		dst += sprintf(dst,"$%02X", op);
+		break;
 	}
-	return pc - PC;
+	return (pc - PC) | flags;
+}
+
+#if (HAS_M6502)
+unsigned m6502_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
+	return internal_m6502_dasm(op6502, buffer, pc, oprom, opram, bytes);
+}
+#endif
+
+#if (HAS_M65SC02)
+unsigned m65sc02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
+	return internal_m6502_dasm(op65sc02, buffer, pc, oprom, opram, bytes);
+}
+#endif
+
+#if (HAS_M65C02)
+unsigned m65c02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
+	return internal_m6502_dasm(op65c02, buffer, pc, oprom, opram, bytes);
 }
 #endif
 
 #if (HAS_M65CE02)
-/*****************************************************************************
- * Disassemble a single opcode starting at pc
- *****************************************************************************/
-unsigned int Dasm65ce02(char *buffer, unsigned pc)
+unsigned m65ce02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-	return Dasm6502Helper(&type_m65ce02, buffer, pc);
-}
-#endif
-
-#if (HAS_M6509)
-/*****************************************************************************
- * Disassemble a single opcode starting at pc
- *****************************************************************************/
-unsigned int Dasm6509(char *buffer, unsigned pc)
-{
-	return Dasm6502Helper(&type_m6509, buffer, pc);
+	return internal_m6502_dasm(op65ce02, buffer, pc, oprom, opram, bytes);
 }
 #endif
 
 #if (HAS_M6510)
-/*****************************************************************************
- * Disassemble a single opcode starting at pc
- *****************************************************************************/
-unsigned int Dasm6510(char *buffer, unsigned pc)
+unsigned m6510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-	return Dasm6502Helper(&type_m6510, buffer, pc);
+	return internal_m6502_dasm(op6510, buffer, pc, oprom, opram, bytes);
+}
+#endif
+
+#if (HAS_DECO16)
+unsigned deco16_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
+	return internal_m6502_dasm(opdeco16, buffer, pc, oprom, opram, bytes);
 }
 #endif
 
 #if (HAS_M4510)
-/*****************************************************************************
- * Disassemble a single opcode starting at pc
- *****************************************************************************/
-unsigned int Dasm4510(char *buffer, unsigned pc)
+unsigned m4510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-	return Dasm6502Helper(&type_m4510, buffer, pc);
+	return internal_m6502_dasm(op4510, buffer, pc, oprom, opram, bytes);
 }
 #endif
 

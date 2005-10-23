@@ -30,7 +30,7 @@ extern VIDEO_UPDATE( pcktgal );
 
 static WRITE8_HANDLER( pcktgal_bank_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	if (data & 1) { memory_set_bankptr(1,&RAM[0x4000]); }
 	else { memory_set_bankptr(1,&RAM[0x10000]); }
@@ -41,10 +41,7 @@ static WRITE8_HANDLER( pcktgal_bank_w )
 
 static WRITE8_HANDLER( pcktgal_sound_bank_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
-
-	if (data & 4) { memory_set_bankptr(3,&RAM[0x14000]); }
-	else { memory_set_bankptr(3,&RAM[0x10000]); }
+	memory_set_bank(3, (data >> 2) & 1);
 }
 
 static WRITE8_HANDLER( pcktgal_sound_w )
@@ -296,7 +293,7 @@ ROM_START( pcktgal )
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 2*0x18000, REGION_CPU2, 0 )	 /* 96k for code + 96k for decrypted opcodes */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	 /* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "eb03.rom",	   0x10000, 0x8000, CRC(cb029b02) SHA1(fbb3da08ed05ae73fbeeb13e0e2ff735aaf83db8) )
 	ROM_CONTINUE(			   0x08000, 0x8000 )
 
@@ -319,7 +316,7 @@ ROM_START( pcktgalb )
 	/* 4000-7fff is banked but code falls through from 7fff to 8000, so */
 	/* I have to load the bank directly at 4000. */
 
-	ROM_REGION( 2*0x18000, REGION_CPU2, 0 )	 /* 96k for code + 96k for decrypted opcodes */
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	 /* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "eb03.rom",	  0x10000, 0x8000, CRC(cb029b02) SHA1(fbb3da08ed05ae73fbeeb13e0e2ff735aaf83db8) )
 	ROM_CONTINUE(			  0x08000, 0x8000 )
 
@@ -410,22 +407,26 @@ ROM_END
 static DRIVER_INIT( deco222 )
 {
 	int A;
-	unsigned char *rom = memory_region(REGION_CPU2);
-	int diff = memory_region_length(REGION_CPU2) / 2;
+	UINT8 *decrypted = auto_malloc(0x10000);
+	UINT8 *rom = memory_region(REGION_CPU2);
 
-
-	memory_set_opcode_base(1,rom+diff);
+	memory_set_decrypted_region(1, 0x8000, 0xffff, decrypted);
 
 	/* bits 5 and 6 of the opcodes are swapped */
-	for (A = 0;A < diff;A++)
-		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
+	for (A = 0x8000;A < 0x18000;A++)
+		decrypted[A-0x8000] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
+
+	memory_configure_bank(3, 0, 2, memory_region(REGION_CPU2) + 0x10000, 0x4000);
+	memory_configure_bank_decrypted(3, 0, 2, &decrypted[0x8000], 0x4000);
 }
 
 static DRIVER_INIT( graphics )
 {
-	unsigned char *rom = memory_region(REGION_GFX1);
+	UINT8 *rom = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 	int i,j,temp[16];
+
+	memory_configure_bank(3, 0, 2, memory_region(REGION_CPU2) + 0x10000, 0x4000);
 
 	/* Tile graphics roms have some swapped lines, original version only */
 	for (i = 0x00000;i < len;i += 32)

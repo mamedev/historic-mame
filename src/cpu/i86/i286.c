@@ -300,12 +300,12 @@ static int i286_execute(int num_cycles)
 	return num_cycles - i286_ICount;
 }
 
-extern int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size);
+extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
 
-static offs_t i286_dasm(char *buffer, offs_t pc)
+static offs_t i286_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 #ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, 0, 0);
+	return i386_dasm_one(buffer, pc, oprom, 0, 0);
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -499,7 +499,7 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = NULL;						break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = i286_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i286_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i286_dasm;		break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i286_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i286_reg_layout;				break;

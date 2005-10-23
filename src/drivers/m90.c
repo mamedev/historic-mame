@@ -35,7 +35,7 @@ Notes:
 
 static int bankaddress;
 
-extern unsigned char *m90_video_data;
+extern UINT8 *m90_video_data;
 
 VIDEO_UPDATE( m90 );
 VIDEO_UPDATE( m90_bootleg );
@@ -884,7 +884,7 @@ MACHINE_DRIVER_END
 #define CODE_SIZE 0x100000
 
 ROM_START( hasamu )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "hasc-p1.bin",  0x00001, 0x20000, CRC(53df9834) SHA1(2e7e38157a497e3def69c4abcae5803f71a098da) )
 	ROM_LOAD16_BYTE( "hasc-p0.bin",  0x00000, 0x20000, CRC(dff0ba6e) SHA1(83e20b3ae10b57c1e58d3d44bfca2ffd5f142056) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
@@ -903,7 +903,7 @@ ROM_START( hasamu )
 ROM_END
 
 ROM_START( dynablst )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "bbm-cp1e.62",   0x00001, 0x20000, CRC(27667681) SHA1(7d5f762026ea01817a65ea13b4b5793640e3e8fd) )
 	ROM_LOAD16_BYTE( "bbm-cp0e.65",   0x00000, 0x20000, CRC(95db7a67) SHA1(1a224d73615a60530cbcc54fdbb526e8d5a6c555) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
@@ -922,7 +922,7 @@ ROM_START( dynablst )
 ROM_END
 
 ROM_START( bombrman )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "bbm-p1.62",   0x00001, 0x20000, CRC(982bd166) SHA1(ed67393ec319127616bff5fa3b7f84e8ac8e1d93) )
 	ROM_LOAD16_BYTE( "bbm-p0.65",   0x00000, 0x20000, CRC(0a20afcc) SHA1(a42b7458938300b0c84c820c1ea627aed9080f1b) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
@@ -941,7 +941,7 @@ ROM_START( bombrman )
 ROM_END
 
 ROM_START( atompunk )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "bbm-cp0d.65",   0x00001, 0x20000, CRC(860c0479) SHA1(7556d62955d0d7a7100fbd9d9cb7356b96a4df78) )
 	ROM_LOAD16_BYTE( "bbm-cp1d.62",   0x00000, 0x20000, CRC(be57bf74) SHA1(cd3f887f7ec8a5721551477ec2d4a7336f422c6f) )
 	ROM_COPY( REGION_CPU1, 0x3fff0,  0xffff0, 0x10 )	/* start vector */
@@ -979,7 +979,7 @@ ROM_START( dynablsb )
 ROM_END
 
 ROM_START( bbmanw )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "bbm2-h0-b.77",  0x00001, 0x40000, CRC(567d3709) SHA1(1447fc68798589a8757ee2d133d053b80f052113) )
 	ROM_LOAD16_BYTE( "bbm2-l0-b.79",  0x00000, 0x40000, CRC(e762c22b) SHA1(b389a65adf1348e6529a992d9b68178d7503238e) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -998,7 +998,7 @@ ROM_START( bbmanw )
 ROM_END
 
 ROM_START( bbmanwj )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "bbm2-h0.77",  0x00001, 0x40000, CRC(e1407b91) SHA1(6c94afc6b1d2a469295890ee5dd9d9d5a02ae5c4) )
 	ROM_LOAD16_BYTE( "bbm2-l0.79",  0x00000, 0x40000, CRC(20873b49) SHA1(30ae595f7961cd56f2506608ae76973b2d0e73ca) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -1017,7 +1017,7 @@ ROM_START( bbmanwj )
 ROM_END
 
 ROM_START( newapunk )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "bbm2-h0-a.77",  0x00001, 0x40000, CRC(7d858682) SHA1(03580e2903becb69766023585c6ecffbb8e0b9c5) )
 	ROM_LOAD16_BYTE( "bbm2-l0-a.79",  0x00000, 0x40000, CRC(c7568031) SHA1(ff4d0809260a088f530098a0173eec16fa6396f1) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -1055,7 +1055,7 @@ ROM_START( bomblord )
 ROM_END
 
 ROM_START( quizf1 )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "qf1-h0-.77",   0x000001, 0x40000, CRC(280e3049) SHA1(3b1f303d803f844fd260ed93e4d12a72876e4dbe) )
 	ROM_LOAD16_BYTE( "qf1-l0-.79",   0x000000, 0x40000, CRC(94588a6f) SHA1(ee912739c7719fc2b099da0c63f7473eedcfc718) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -1078,7 +1078,7 @@ ROM_START( quizf1 )
 ROM_END
 
 ROM_START( riskchal )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "rc_h0.rom",    0x00001, 0x40000, CRC(4c9b5344) SHA1(61e26950a672c6404e2386acdd098536b61b9933) )
 	ROM_LOAD16_BYTE( "rc_l0.rom",    0x00000, 0x40000, CRC(0455895a) SHA1(1072b8d280f7ccc48cd8fbd81323e1f8c8d0db95) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -1097,7 +1097,7 @@ ROM_START( riskchal )
 ROM_END
 
 ROM_START( gussun )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "l4_h0.rom",    0x00001, 0x40000, CRC(9d585e61) SHA1(e108a9dc2dc1b75c1439271a2391f943c3a53fe1) )
 	ROM_LOAD16_BYTE( "l4_l0.rom",    0x00000, 0x40000, CRC(c7b4c519) SHA1(44887ccf54f5e507d2db4f09a7c2b7b9ea217058) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -1116,7 +1116,7 @@ ROM_START( gussun )
 ROM_END
 
 ROM_START( shisen2 )
-	ROM_REGION( CODE_SIZE * 2, REGION_CPU1, 0 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "sis2-ho-.rom", 0x00001, 0x40000, CRC(6fae0aea) SHA1(7ebecbfdb17e15b8c0ebd293cd42a618c596782e) )
 	ROM_LOAD16_BYTE( "sis2-lo-.rom", 0x00000, 0x40000, CRC(2af25182) SHA1(ec6dcc3913e1b7e7a3958b78610e83f51c404e07) )
 	ROM_COPY( REGION_CPU1, 0x7fff0,  0xffff0, 0x10 )	/* start vector */
@@ -1147,18 +1147,20 @@ static DRIVER_INIT( bombrman )
 }
 
 /* Bomberman World executes encrypted code from RAM! */
+static UINT8 *bbmanw_ram_base;
+extern UINT8 *irem_cpu_decrypted;
+
 static WRITE8_HANDLER (bbmanw_ram_write)
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	RAM[0x0a0c00+offset]=data;
-	RAM[0x1a0c00+offset]=dynablaster_decryption_table[data];
+	bbmanw_ram_base[offset]=data;
+	irem_cpu_decrypted[0x1a0c00+offset]=dynablaster_decryption_table[data];
 }
 
 static DRIVER_INIT( bbmanw )
 {
 	irem_cpu_decrypt(0,dynablaster_decryption_table);
 
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0c00, 0xa0cff, 0, 0, bbmanw_ram_write);
+	bbmanw_ram_base = memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0c00, 0xa0cff, 0, 0, bbmanw_ram_write);
 }
 
 static DRIVER_INIT( quizf1 )
@@ -1184,7 +1186,7 @@ static DRIVER_INIT( shisen2 )
 
 static DRIVER_INIT( bomblord )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	int i;
 	for (i=0; i<0x100000; i+=8)

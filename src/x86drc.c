@@ -347,11 +347,14 @@ void drc_append_verify_code(drc_core *drc, void *code, UINT8 length)
 void drc_append_call_debugger(drc_core *drc)
 {
 #ifdef MAME_DEBUG
-	link_info link;
-	_cmp_m32abs_imm(&mame_debug, 0);								// cmp  [mame_debug],0
-	_jcc_short_link(COND_E, &link);									// je   skip
-	drc_append_save_call_restore(drc, (genf *)MAME_Debug, 0);		// save volatiles
-	_resolve_link(&link);
+	if (mame_debug)
+	{
+		link_info link;
+		_cmp_m32abs_imm(&mame_debug, 0);								// cmp  [mame_debug],0
+		_jcc_short_link(COND_E, &link);									// je   skip
+		drc_append_save_call_restore(drc, (genf *)MAME_Debug, 0);		// save volatiles
+		_resolve_link(&link);
+	}
 #endif
 }
 
@@ -554,17 +557,13 @@ void drc_append_restore_sse_rounding(drc_core *drc)
 void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
 {
 #if 0
-	unsigned DasmI386(char* buffer, unsigned _pc);
+	extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
 
 	char buffer[256];
 	char buffer2[256];
-	unsigned addr = (unsigned) begin;
-	unsigned addr_end = (unsigned) end;
+	UINT8 *addr = begin;
+	UINT8 *addr_end = end;
 	unsigned offset;
-	UINT8 *saved_op_rom;
-	UINT8 *saved_op_ram;
-	size_t saved_op_mem_min;
-	size_t saved_op_mem_max;
 
 	activecpu_dasm(buffer, pc);
 	if (addr == addr_end)
@@ -573,30 +572,17 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
 	}
 	else
 	{
-		logerror("%08x: %s\t(%08x-%08x)\n", pc, buffer, addr, addr_end - 1);
-
-		saved_op_rom		= opcode_base;
-		saved_op_ram		= opcode_arg_base;
-		saved_op_mem_min	= opcode_memory_min;
-		saved_op_mem_max	= opcode_memory_max;
-		opcode_base = opcode_arg_base = (UINT8 *) 0;
-		opcode_memory_min = (size_t) 0;
-		opcode_memory_max = (size_t) -1;
+		logerror("%08x: %s\t(%08x-%08x)\n", pc, buffer, (UINT32)addr, (UINT32)addr_end - 1);
 
 		while(addr < addr_end)
 		{
-			offset = DasmI386(buffer, addr);
-			sprintf(buffer2, "\t%08x: %s\n", addr, buffer);
+			offset = i386_dasm_one(buffer, (UINT32)addr, addr, 1, 1);
+			sprintf(buffer2, "\t%08x: %s\n", (UINT32)addr, buffer);
 			logerror("%s", buffer2);
 			if (f)
 				fputs(buffer2, f);
-			addr += offset;
+			addr += offset & DASMFLAG_LENGTHMASK;
 		}
-
-		opcode_base = saved_op_rom;
-		opcode_arg_base = saved_op_ram;
-		opcode_memory_min = saved_op_mem_min;
-		opcode_memory_max = saved_op_mem_max;
 	}
 #endif
 }

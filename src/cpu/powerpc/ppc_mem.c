@@ -119,6 +119,18 @@ static int ppc_translate_address(offs_t *addr_ptr, int flags)
 	return 1;
 }
 
+static int ppc_translate_address_cb(int space, offs_t *addr)
+{
+	int success = 1;
+
+	if (space == ADDRESS_SPACE_PROGRAM)
+	{
+		if (MSR & MSR_DR)
+			success = ppc_translate_address(addr, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION);
+	}
+	return success;
+}
+
 static UINT8 ppc_read8_translated(offs_t address)
 {
 	ppc_translate_address(&address, PPC_TRANSLATE_DATA | PPC_TRANSLATE_READ);
@@ -176,50 +188,14 @@ static UINT32 ppc_readop_translated(offs_t address)
 /***********************************************************************/
 
 
-static offs_t ppc_dasm(char *buffer, offs_t pc)
+static offs_t ppc_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 #ifdef MAME_DEBUG
-	UINT32 op, translated_pc;
-
-	if (MSR & MSR_IR)
-	{
-		translated_pc = pc;
-		if (!ppc_translate_address(&translated_pc, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
-		{
-			sprintf(buffer, "<not executable>");
-			return 4;
-		}
-		op = program_read_dword_32be(translated_pc);
-	}
-	else
-		op = ROPCODE(pc);
+	UINT32 op;
+	op = BIG_ENDIANIZE_INT32(*((UINT32 *) oprom));
 	return ppc_dasm_one(buffer, pc, op);
 #else
 	sprintf(buffer, "$%08X", ROPCODE(pc));
-	return 4;
-#endif
-}
-
-static offs_t ppc_dasm64(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	UINT32 op, translated_pc;
-
-	if (MSR & MSR_IR)
-	{
-		translated_pc = pc;
-		if (!ppc_translate_address(&translated_pc, PPC_TRANSLATE_CODE | PPC_TRANSLATE_READ | PPC_TRANSLATE_NOEXCEPTION))
-		{
-			sprintf(buffer, "<not executable>");
-			return 4;
-		}
-		op = program_read_dword_64be(translated_pc);
-	}
-	else
-		op = ROPCODE64(pc);
-	return ppc_dasm_one(buffer, pc, op);
-#else
-	sprintf(buffer, "$%08X", (UINT32)ROPCODE64(pc));
 	return 4;
 #endif
 }

@@ -138,7 +138,8 @@ static INTERRUPT_GEN( freekick_irqgen )
 }
 
 static ADDRESS_MAP_START( gigas_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_2_r)
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_3_r)
@@ -1189,7 +1190,7 @@ ROM_START( countrnb )
 ROM_END
 
 ROM_START( gigasm2b )
-	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "8.rom", 0x10000, 0x4000, CRC(c00a4a6c) SHA1(0d1bb849c9bfe4e92ad70e4ef19da494c0bd7ba8) )
 	ROM_CONTINUE(      0x00000, 0x4000 )
 	ROM_LOAD( "7.rom", 0x14000, 0x4000, CRC(92bd9045) SHA1(e4d8a94deeb795bb284ca0bd211ed40ed498b172) )
@@ -1217,7 +1218,7 @@ ROM_START( gigasm2b )
 ROM_END
 
 ROM_START( gigasb )
-	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "g-7",   0x10000, 0x4000, CRC(daf4e88d) SHA1(391dff914ce8e9b7975fc8827c066d7db16c4171) )
 	ROM_CONTINUE(      0x00000, 0x4000 )
 	ROM_LOAD( "g-8",   0x14000, 0x8000, CRC(4ab4c1f1) SHA1(63d8f489c7a8271e99a66d97e6eb0eb252cb2b67) )
@@ -1243,7 +1244,7 @@ ROM_START( gigasb )
 ROM_END
 
 ROM_START( oigas )
-	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "rom.7",   0x10000, 0x4000, CRC(e5bc04cc) SHA1(ffbd416313a9e49d2f9a7268d5ef48a8b641e480) )
 	ROM_CONTINUE(        0x00000, 0x4000)
 	ROM_LOAD( "rom.8",   0x04000, 0x8000, CRC(c199060d) SHA1(de8f1e0f941533abbbed25b595b1d51fadbb428d) )
@@ -1272,9 +1273,7 @@ ROM_END
 
 static DRIVER_INIT(gigas)
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, memory_region(REGION_CPU1) + 0x10000);
 }
 
 GAME( 1986, gigasb,   0,        gigas,    gigas,    gigas, ROT270, "bootleg", "Gigas (bootleg)", GAME_NO_COCKTAIL )

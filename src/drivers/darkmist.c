@@ -145,7 +145,7 @@ static MACHINE_DRIVER_START( darkmist )
 MACHINE_DRIVER_END
 
 ROM_START( darkmist )
-	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "dm_15.rom", 0x00000, 0x08000, CRC(21e6503c) SHA1(09174fb424b76f7f2a381297e3420ddd2e76b008)  )
 	/* banked data (at least 16 is..)  */
 	ROM_LOAD( "dm_16.rom", 0x10000, 0x08000, CRC(094579d9) SHA1(2449bc9ba38396912ee9b72dd870ea9fcff95776)  )
@@ -198,6 +198,7 @@ static DRIVER_INIT(darkmist)
 	int i;
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	UINT8 *buffer=auto_malloc(0x10000);
+	UINT8 *decrypt = auto_malloc(0x8000);
 
 
 	/* is this complete? */
@@ -223,10 +224,10 @@ static DRIVER_INIT(darkmist)
 		}
 
 		memory_region(REGION_CPU1)[i] = d;
-		memory_region(REGION_CPU1)[i|0x20000] = p;
+		decrypt[i] = p;
 	}
 
-	memory_set_opcode_base(0,memory_region(REGION_CPU1)+0x20000);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 	memory_set_bankptr(1,&ROM[0x010000]);
 
 	//adr line swaps

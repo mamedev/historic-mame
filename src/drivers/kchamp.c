@@ -622,7 +622,7 @@ ROM_START( karatedo )
 ROM_END
 
 ROM_START( kchampvs )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "bs24", 0x0000, 0x2000, CRC(829da69b) SHA1(3266e7686e537f34ee5ce4cccc349eb12fc65038) )
 	ROM_LOAD( "bs23", 0x2000, 0x2000, CRC(091f810e) SHA1(283edb08ce106835185a1c2d6b88f7544d75f3b4) )
 	ROM_LOAD( "bs22", 0x4000, 0x2000, CRC(d4df2a52) SHA1(60d6cb1cb51c6f80a0f88913d4152ab8bda752d6) )
@@ -663,7 +663,7 @@ ROM_START( kchampvs )
 ROM_END
 
 ROM_START( karatevs )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "br24", 0x0000, 0x2000, CRC(ea9cda49) SHA1(7d753a8d391418d0fe5231eb88b3627f7d3fd99e) )
 	ROM_LOAD( "br23", 0x2000, 0x2000, CRC(46074489) SHA1(5593f819b6893820ef0c0fece13cf3ca83e1ab85) )
 	ROM_LOAD( "br22", 0x4000, 0x2000, CRC(294f67ba) SHA1(45f13a7deb75bb167176c5405128de3ca76e22f0) )
@@ -707,15 +707,14 @@ ROM_END
 
 static DRIVER_INIT( kchampvs )
 {
+	UINT8 *decrypted = auto_malloc(0x10000);
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 	int A;
 
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0xffff, decrypted);
 
 	for (A = 0;A < 0x10000;A++)
-		rom[A+diff] = (rom[A] & 0x55) | ((rom[A] & 0x88) >> 2) | ((rom[A] & 0x22) << 2);
+		decrypted[A] = (rom[A] & 0x55) | ((rom[A] & 0x88) >> 2) | ((rom[A] & 0x22) << 2);
 
 	/*
         Note that the first 4 opcodes that the program
@@ -726,14 +725,14 @@ static DRIVER_INIT( kchampvs )
         turns the encryption on, but this doesn't explain the
         encrypted address for the jump.
      */
-	rom[0+diff] = rom[0];	/* this is a jump */
+	decrypted[0] = rom[0];	/* this is a jump */
 	A = rom[1] + 256 * rom[2];
-	rom[A+diff] = rom[A];	/* fix opcode on first jump address (again, a jump) */
+	decrypted[A] = rom[A];	/* fix opcode on first jump address (again, a jump) */
 	rom[A+1] ^= 0xee;		/* fix address of the second jump */
 	A = rom[A+1] + 256 * rom[A+2];
-	rom[A+diff] = rom[A];	/* fix third opcode (ld a,$xx) */
+	decrypted[A] = rom[A];	/* fix third opcode (ld a,$xx) */
 	A += 2;
-	rom[A+diff] = rom[A];	/* fix fourth opcode (ld ($xxxx),a */
+	decrypted[A] = rom[A];	/* fix fourth opcode (ld ($xxxx),a */
 	/* and from here on, opcodes are encrypted */
 }
 

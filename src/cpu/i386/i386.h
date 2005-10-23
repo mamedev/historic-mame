@@ -216,7 +216,7 @@ static void I386OP(decode_opcode)(void);
 static void I386OP(decode_two_byte)(void);
 INLINE UINT32 i386_translate(int, UINT32);
 
-int parity_table[256];
+extern int parity_table[256];
 
 #define PROTECTED_MODE		(I.cr[0] & 0x1)
 #define STACK_32BIT			(I.sreg[SS].d)
@@ -258,7 +258,7 @@ typedef struct {
 	} rm;
 } MODRM_TABLE;
 
-MODRM_TABLE MODRM_table[256];
+extern MODRM_TABLE MODRM_table[256];
 
 #define REG8(x)			(I.reg.b[x])
 #define REG16(x)		(I.reg.w[x])

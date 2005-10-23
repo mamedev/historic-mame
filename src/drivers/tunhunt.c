@@ -53,6 +53,8 @@
 #include "sound/pokey.h"
 
 
+UINT8 *tunhunt_ram;
+
 extern WRITE8_HANDLER( tunhunt_videoram_w );
 extern WRITE8_HANDLER( tunhunt_mott_w );
 
@@ -155,7 +157,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM) /* Work RAM */
+	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM) AM_BASE(&tunhunt_ram) /* Work RAM */
 	AM_RANGE(0x1080, 0x10ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x1200, 0x12ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x1400, 0x14ff) AM_WRITE(MWA8_RAM)

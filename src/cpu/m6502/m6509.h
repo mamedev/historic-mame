@@ -40,10 +40,6 @@ enum {
 
 void m6509_get_info(UINT32 state, union cpuinfo *info);
 
-#ifdef MAME_DEBUG
-extern unsigned int Dasm6509( char *dst, unsigned pc );
-#endif
-
 #endif /* _M6509_H */
 
 

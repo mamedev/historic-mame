@@ -40,7 +40,7 @@ extern WRITE8_HANDLER( type3_w );
 
 extern READ8_HANDLER( decocass_e5xx_r );
 extern WRITE8_HANDLER( decocass_e5xx_w );
-extern READ8_HANDLER( decocass_de0091_r );
+extern WRITE8_HANDLER( decocass_de0091_w );
 extern WRITE8_HANDLER( decocass_e900_w );
 
 extern MACHINE_INIT( decocass );
@@ -89,10 +89,6 @@ extern WRITE8_HANDLER( decocass_colorram_w );
 extern WRITE8_HANDLER( decocass_bgvideoram_w );
 extern WRITE8_HANDLER( decocass_tileram_w );
 extern WRITE8_HANDLER( decocass_objectram_w );
-extern READ8_HANDLER( decocass_mirrorvideoram_r );
-extern READ8_HANDLER( decocass_mirrorcolorram_r );
-extern WRITE8_HANDLER( decocass_mirrorvideoram_w );
-extern WRITE8_HANDLER( decocass_mirrorcolorram_w );
 
 extern WRITE8_HANDLER( decocass_watchdog_count_w );
 extern WRITE8_HANDLER( decocass_watchdog_flip_w );
@@ -110,12 +106,12 @@ extern WRITE8_HANDLER( decocass_center_v_shift_w );
 extern VIDEO_START( decocass );
 extern VIDEO_UPDATE( decocass );
 
-extern unsigned char *decocass_charram;
-extern unsigned char *decocass_fgvideoram;
-extern unsigned char *decocass_colorram;
-extern unsigned char *decocass_bgvideoram;
-extern unsigned char *decocass_tileram;
-extern unsigned char *decocass_objectram;
+extern UINT8 *decocass_charram;
+extern UINT8 *decocass_fgvideoram;
+extern UINT8 *decocass_colorram;
+extern UINT8 *decocass_bgvideoram;
+extern UINT8 *decocass_tileram;
+extern UINT8 *decocass_objectram;
 extern size_t decocass_fgvideoram_size;
 extern size_t decocass_colorram_size;
 extern size_t decocass_bgvideoram_size;

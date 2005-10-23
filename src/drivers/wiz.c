@@ -162,11 +162,11 @@ Stephh's notes (based on the games Z80 code and some tests) :
 #include "sound/ay8910.h"
 #include "sound/discrete.h"
 
-extern unsigned char *wiz_videoram2;
-extern unsigned char *wiz_colorram2;
-extern unsigned char *wiz_attributesram;
-extern unsigned char *wiz_attributesram2;
-extern unsigned char *wiz_sprite_bank;
+extern UINT8 *wiz_videoram2;
+extern UINT8 *wiz_colorram2;
+extern UINT8 *wiz_attributesram;
+extern UINT8 *wiz_attributesram2;
+extern UINT8 *wiz_sprite_bank;
 
 WRITE8_HANDLER( wiz_char_bank_select_w );
 WRITE8_HANDLER( wiz_attributes_w );
@@ -908,7 +908,7 @@ ROM_START( wizt )
 ROM_END
 
 ROM_START( stinger )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "1-5j.bin",     0x0000, 0x2000, CRC(1a2ca600) SHA1(473e89f2c49f6e6f38df5d6fc2267ffecf84c6c8) )	/* encrypted */
 	ROM_LOAD( "2-6j.bin",     0x2000, 0x2000, CRC(957cd39c) SHA1(38bb589b3bfd962415b31d1151adf4bdb661122f) )	/* encrypted */
 	ROM_LOAD( "3-8j.bin",     0x4000, 0x2000, CRC(404c932e) SHA1(c23eac49e06ff38564062c0e8c8cdadf877f1d6a) )	/* encrypted */
@@ -935,7 +935,7 @@ ROM_START( stinger )
 ROM_END
 
 ROM_START( stinger2 )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "n1.bin",       0x0000, 0x2000, CRC(f2d2790c) SHA1(0e5e92ef45b5bc27b0818f83c89b3bda0e701403) )	/* encrypted */
 	ROM_LOAD( "n2.bin",       0x2000, 0x2000, CRC(8fd2d8d8) SHA1(d3318a81fddeb3fa50d01569c1e1145e26ce7277) )	/* encrypted */
 	ROM_LOAD( "n3.bin",       0x4000, 0x2000, CRC(f1794d36) SHA1(7954500f489c0bc58cda8e7ffc2e4474759fdc33) )	/* encrypted */
@@ -1020,31 +1020,31 @@ ROM_END
 
 static DRIVER_INIT( stinger )
 {
-	static const unsigned char swap_xor_table[4][4] =
+	static const UINT8 swap_xor_table[4][4] =
 	{
 		{ 7,3,5, 0xa0 },
 		{ 3,7,5, 0x88 },
 		{ 5,3,7, 0x80 },
 		{ 5,7,3, 0x28 }
 	};
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1);
+	int size = memory_region_length(REGION_CPU1);
+	UINT8 *decrypt = auto_malloc(size);
 	int A;
-	const unsigned char *tbl;
+	const UINT8 *tbl;
 
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0xffff, decrypt);
 
 	for (A = 0x0000;A < 0x10000;A++)
 	{
 		int row;
-		unsigned char src;
+		UINT8 src;
 
 
 		if (A & 0x2040)
 		{
 			/* not encrypted */
-			rom[A+diff] = rom[A];
+			decrypt[A] = rom[A];
 		}
 		else
 		{
@@ -1055,7 +1055,7 @@ static DRIVER_INIT( stinger )
 
 			/* decode the opcodes */
 			tbl = swap_xor_table[row];
-			rom[A+diff] = BITSWAP8(src,tbl[0],6,tbl[1],4,tbl[2],2,1,0) ^ tbl[3];
+			decrypt[A] = BITSWAP8(src,tbl[0],6,tbl[1],4,tbl[2],2,1,0) ^ tbl[3];
 		}
 	}
 }

@@ -83,8 +83,7 @@ WRITE8_HANDLER( dec8_videoram_w );
 
 /******************************************************************************/
 
-static unsigned char *dec8_shared_ram,*dec8_shared2_ram;
-extern unsigned char *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
+extern UINT8 *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
 
 static int nmi_enable,int_enable;
 static int i8751_return, i8751_value;
@@ -382,7 +381,7 @@ static WRITE8_HANDLER( garyoret_i8751_w )
 static WRITE8_HANDLER( dec8_bank_w )
 {
  	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
 	memory_set_bankptr(1,&RAM[bankaddress]);
@@ -392,7 +391,7 @@ static WRITE8_HANDLER( dec8_bank_w )
 static WRITE8_HANDLER( ghostb_bank_w )
 {
  	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/* Bit 0: Interrupt enable/disable (I think..)
        Bit 1: NMI enable/disable
@@ -411,7 +410,7 @@ static WRITE8_HANDLER( ghostb_bank_w )
 
 WRITE8_HANDLER( csilver_control_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	/*
         Bit 0x0f - ROM bank switch.
@@ -460,7 +459,7 @@ static WRITE8_HANDLER( csilver_adpcm_data_w )
 
 static WRITE8_HANDLER( csilver_sound_bank_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU3);
+	UINT8 *RAM = memory_region(REGION_CPU3);
 
 	if (data&8) { memory_set_bankptr(3,&RAM[0x14000]); }
 	else { memory_set_bankptr(3,&RAM[0x10000]); }
@@ -530,10 +529,6 @@ static WRITE8_HANDLER( shackled_int_w )
 
 /******************************************************************************/
 
-static READ8_HANDLER( dec8_share_r ) { return dec8_shared_ram[offset]; }
-static READ8_HANDLER( dec8_share2_r ) { return dec8_shared2_ram[offset]; }
-static WRITE8_HANDLER( dec8_share_w ) { dec8_shared_ram[offset]=data; }
-static WRITE8_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
 static READ8_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
 static WRITE8_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
 static WRITE8_HANDLER( flip_screen_w ) {	flip_screen_set(data); }
@@ -670,9 +665,9 @@ static ADDRESS_MAP_START( gondo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( oscar_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0eff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0eff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x0f00, 0x0fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
 	AM_RANGE(0x2800, 0x2fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) /* Sprites */
@@ -687,9 +682,9 @@ static ADDRESS_MAP_START( oscar_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( oscar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0eff) AM_WRITE(dec8_share_w) AM_BASE(&dec8_shared_ram)
+	AM_RANGE(0x0000, 0x0eff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x0f00, 0x0fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(dec8_share2_w) AM_BASE(&dec8_shared2_ram)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(dec8_pf0_data_w) AM_BASE(&dec8_pf0_data)
 	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
@@ -704,22 +699,22 @@ static ADDRESS_MAP_START( oscar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( oscar_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0eff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0eff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x0f00, 0x0fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( oscar_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0eff) AM_WRITE(dec8_share_w)
+	AM_RANGE(0x0000, 0x0eff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x0f00, 0x0fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(dec8_share2_w)
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3e80, 0x3e83) AM_WRITE(oscar_int_w)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lastmiss_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_READ(paletteram_r)
 	AM_RANGE(0x1400, 0x17ff) AM_READ(paletteram_2_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_0_r)
@@ -731,14 +726,14 @@ static ADDRESS_MAP_START( lastmiss_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1807, 0x1807) AM_READ(i8751_l_r)
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
 	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x37ff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lastmiss_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(dec8_share_w) AM_BASE(&dec8_shared_ram)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
 	AM_RANGE(0x1800, 0x1804) AM_WRITE(shackled_int_w)
@@ -751,13 +746,13 @@ static ADDRESS_MAP_START( lastmiss_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x180e, 0x180f) AM_WRITE(lastmiss_i8751_w)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE(dec8_share2_w) AM_BASE(&dec8_shared2_ram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(dec8_pf0_data_w) AM_BASE(&dec8_pf0_data)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lastmiss_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_READ(paletteram_r)
 	AM_RANGE(0x1400, 0x17ff) AM_READ(paletteram_2_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_0_r)
@@ -766,13 +761,13 @@ static ADDRESS_MAP_START( lastmiss_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1803, 0x1803) AM_READ(input_port_3_r) /* Dip 1 */
 	AM_RANGE(0x1804, 0x1804) AM_READ(input_port_4_r) /* Dip 2 */
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
-	AM_RANGE(0x3000, 0x37ff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( lastmiss_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(dec8_share_w)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w)
 	AM_RANGE(0x1800, 0x1804) AM_WRITE(shackled_int_w)
@@ -781,13 +776,13 @@ static ADDRESS_MAP_START( lastmiss_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x180c, 0x180c) AM_WRITE(oscar_sound_w)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(shackled_sprite_w)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE(dec8_share2_w)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(dec8_pf0_data_w)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( shackled_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_READ(paletteram_r)
 	AM_RANGE(0x1400, 0x17ff) AM_READ(paletteram_2_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_0_r)
@@ -797,14 +792,14 @@ static ADDRESS_MAP_START( shackled_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1804, 0x1804) AM_READ(input_port_4_r)
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
 	AM_RANGE(0x2800, 0x2fff) AM_READ(shackled_sprite_r)
-	AM_RANGE(0x3000, 0x37ff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( shackled_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(dec8_share_w) AM_BASE(&dec8_shared_ram)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
 	AM_RANGE(0x1800, 0x1804) AM_WRITE(shackled_int_w)
@@ -816,13 +811,13 @@ static ADDRESS_MAP_START( shackled_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x180d, 0x180d) AM_WRITE(shackled_control_w) /* Bank switch + Scroll MSB */
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(shackled_sprite_w)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE(dec8_share2_w) AM_BASE(&dec8_shared2_ram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(dec8_pf0_data_w) AM_BASE(&dec8_pf0_data)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( shackled_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_READ(paletteram_r)
 	AM_RANGE(0x1400, 0x17ff) AM_READ(paletteram_2_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_0_r)
@@ -834,13 +829,13 @@ static ADDRESS_MAP_START( shackled_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1807, 0x1807) AM_READ(i8751_l_r)
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
 	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x37ff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( shackled_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(dec8_share_w)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w)
 	AM_RANGE(0x1800, 0x1804) AM_WRITE(shackled_int_w)
@@ -853,13 +848,13 @@ static ADDRESS_MAP_START( shackled_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x180e, 0x180f) AM_WRITE(shackled_i8751_w)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE(dec8_share2_w)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(dec8_pf0_data_w)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( csilver_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_READ(paletteram_r)
 	AM_RANGE(0x1400, 0x17ff) AM_READ(paletteram_2_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_1_r)
@@ -871,14 +866,14 @@ static ADDRESS_MAP_START( csilver_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1e00, 0x1e00) AM_READ(i8751_l_r)
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
 	AM_RANGE(0x2800, 0x2fff) AM_READ(shackled_sprite_r)
-	AM_RANGE(0x3000, 0x37ff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( csilver_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(dec8_share_w) AM_BASE(&dec8_shared_ram)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w) AM_BASE(&paletteram_2)
 	AM_RANGE(0x1800, 0x1804) AM_WRITE(shackled_int_w)
@@ -890,13 +885,13 @@ static ADDRESS_MAP_START( csilver_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x180e, 0x180f) AM_WRITE(csilver_i8751_w)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(shackled_sprite_w)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE(dec8_share2_w) AM_BASE(&dec8_shared2_ram)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(dec8_pf0_data_w) AM_BASE(&dec8_pf0_data)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( csilver_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(dec8_share_r)
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_READ(paletteram_r)
 	AM_RANGE(0x1400, 0x17ff) AM_READ(paletteram_2_r)
 	AM_RANGE(0x1803, 0x1803) AM_READ(input_port_2_r)
@@ -904,13 +899,13 @@ static ADDRESS_MAP_START( csilver_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1805, 0x1805) AM_READ(input_port_3_r)
 	AM_RANGE(0x2000, 0x27ff) AM_READ(videoram_r)
 	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x37ff) AM_READ(dec8_share2_r)
+	AM_RANGE(0x3000, 0x37ff) AM_READ(MRA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_READ(dec8_pf0_data_r)
 	AM_RANGE(0x4000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( csilver_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(dec8_share_w)
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM) AM_SHARE(1)
 	AM_RANGE(0x1000, 0x13ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split1_w)
 	AM_RANGE(0x1400, 0x17ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_split2_w)
 	AM_RANGE(0x1800, 0x1804) AM_WRITE(shackled_int_w)
@@ -918,7 +913,7 @@ static ADDRESS_MAP_START( csilver_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x180c, 0x180c) AM_WRITE(oscar_sound_w)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3000, 0x37ff) AM_WRITE(dec8_share2_w)
+	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_SHARE(2)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(dec8_pf0_data_w)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
@@ -3039,36 +3034,36 @@ ROM_END
 
 ROM_START( csilver )
 	ROM_REGION( 0x48000, REGION_CPU1, 0 )
-	ROM_LOAD( "a4", 0x08000, 0x08000, CRC(02dd8cfc) SHA1(f29c0d9dd03e8c52672c0f3dbee44a93c5b4261d) )
-	ROM_LOAD( "a2", 0x10000, 0x10000, CRC(570fb50c) SHA1(3002f53182834a060fc282be1bc5767906e19ba2) )
-	ROM_LOAD( "a3", 0x20000, 0x10000, CRC(58625890) SHA1(503a969085f6dcb16687217c48136ea22d07c89f) )
+	ROM_LOAD( "dx03-3.a4", 0x08000, 0x08000, CRC(02dd8cfc) SHA1(f29c0d9dd03e8c52672c0f3dbee44a93c5b4261d) )
+	ROM_LOAD( "dx01.a2", 0x10000, 0x10000, CRC(570fb50c) SHA1(3002f53182834a060fc282be1bc5767906e19ba2) )
+	ROM_LOAD( "dx02.a3", 0x20000, 0x10000, CRC(58625890) SHA1(503a969085f6dcb16687217c48136ea22d07c89f) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU 2, 1st 16k is empty */
-	ROM_LOAD( "a5", 0x0000, 0x10000,  CRC(29432691) SHA1(a76ecd27d217c66a0e43f93e29efe83c657925c3) )
+	ROM_LOAD( "dx04-1.a5", 0x0000, 0x10000,  CRC(29432691) SHA1(a76ecd27d217c66a0e43f93e29efe83c657925c3) )
 
 	ROM_REGION( 0x18000, REGION_CPU3, 0 )	/* 64K for sound CPU */
-	ROM_LOAD( "a6", 0x10000, 0x08000,  CRC(eb32cf25) SHA1(9390c88033259c65eb15320e31f5d696970987cc) )
+	ROM_LOAD( "dx05.a6", 0x10000, 0x08000,  CRC(eb32cf25) SHA1(9390c88033259c65eb15320e31f5d696970987cc) )
 	ROM_CONTINUE(   0x08000, 0x08000 )
 
 	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )	/* characters */
-	ROM_LOAD( "a1",  0x00000, 0x08000, CRC(f01ef985) SHA1(d5b823bd7c0efcf3137f8643c5d99a260bed5675) )
+	ROM_LOAD( "dx00.a1",  0x00000, 0x08000, CRC(f01ef985) SHA1(d5b823bd7c0efcf3137f8643c5d99a260bed5675) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites (3bpp) */
-	ROM_LOAD( "b5",  0x00000, 0x10000, CRC(80f07915) SHA1(ea100f12ef3a68110af911fa9beeb73b388f069d) )
+	ROM_LOAD( "dx14.b5",  0x00000, 0x10000, CRC(80f07915) SHA1(ea100f12ef3a68110af911fa9beeb73b388f069d) )
 	/* 0x10000-0x1ffff empy */
-	ROM_LOAD( "b4",  0x20000, 0x10000, CRC(d32c02e7) SHA1(d0518ec31e9e3f7b4e76fba5d7c05c33c61a9c72) )
+	ROM_LOAD( "dx13.b4",  0x20000, 0x10000, CRC(d32c02e7) SHA1(d0518ec31e9e3f7b4e76fba5d7c05c33c61a9c72) )
 	/* 0x30000-0x3ffff empy */
-	ROM_LOAD( "b3",  0x40000, 0x10000, CRC(ac78b76b) SHA1(c2be347fd950894401123ada8b27bfcfce53e66b) )
+	ROM_LOAD( "dx12.b3",  0x40000, 0x10000, CRC(ac78b76b) SHA1(c2be347fd950894401123ada8b27bfcfce53e66b) )
 	/* 0x50000-0x5ffff empy */
 	/* 0x60000-0x7ffff empy (no 4th plane) */
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )	/* tiles (3bpp) */
-	ROM_LOAD( "a7",  0x00000, 0x10000, CRC(b6fb208c) SHA1(027d33f0b5feb6f0433134213cfcef96790eaace) )
-	ROM_LOAD( "a8",  0x10000, 0x10000, CRC(ee3e1817) SHA1(013496976a9ffacf1587b3a6fc0f548becb1ab0e) )
-	ROM_LOAD( "a9",  0x20000, 0x10000, CRC(705900fe) SHA1(53b9d09f9780a3bf3545bc27a2855ebee3884124) )
-	ROM_LOAD( "a10", 0x30000, 0x10000, CRC(3192571d) SHA1(240c6c099f1e6edbf0be7d5a4ec396b056c9f70f) )
-	ROM_LOAD( "b1",  0x40000, 0x10000, CRC(3ef77a32) SHA1(97b97c35a6ca994d2e7a6e7a63101eda9709bcb1) )
-	ROM_LOAD( "b2",  0x50000, 0x10000, CRC(9cf3d5b8) SHA1(df4974f8412ab1cf65871b8e4e3dbee478bf4d21) )
+	ROM_LOAD( "dx06.a7",  0x00000, 0x10000, CRC(b6fb208c) SHA1(027d33f0b5feb6f0433134213cfcef96790eaace) )
+	ROM_LOAD( "dx07.a8",  0x10000, 0x10000, CRC(ee3e1817) SHA1(013496976a9ffacf1587b3a6fc0f548becb1ab0e) )
+	ROM_LOAD( "dx08.a9",  0x20000, 0x10000, CRC(705900fe) SHA1(53b9d09f9780a3bf3545bc27a2855ebee3884124) )
+	ROM_LOAD( "dx09.a10", 0x30000, 0x10000, CRC(3192571d) SHA1(240c6c099f1e6edbf0be7d5a4ec396b056c9f70f) )
+	ROM_LOAD( "dx10.b1",  0x40000, 0x10000, CRC(3ef77a32) SHA1(97b97c35a6ca994d2e7a6e7a63101eda9709bcb1) )
+	ROM_LOAD( "dx11.b2",  0x50000, 0x10000, CRC(9cf3d5b8) SHA1(df4974f8412ab1cf65871b8e4e3dbee478bf4d21) )
 ROM_END
 
 ROM_START( garyoret )
@@ -3122,8 +3117,9 @@ ROM_END
 /* Ghostbusters, Darwin, Oscar use a "Deco 222" custom 6502 for sound. */
 static DRIVER_INIT( deco222 )
 {
-	int A,sound_cpu,diff;
-	unsigned char *rom;
+	int A,sound_cpu;
+	UINT8 *decrypt;
+	UINT8 *rom;
 
 	sound_cpu = 1;
 	/* Oscar has three CPUs */
@@ -3131,18 +3127,18 @@ static DRIVER_INIT( deco222 )
 
 	/* bits 5 and 6 of the opcodes are swapped */
 	rom = memory_region(REGION_CPU1+sound_cpu);
-	diff = memory_region_length(REGION_CPU1+sound_cpu) / 2;
+	decrypt = auto_malloc(0x8000);
 
-	memory_set_opcode_base(sound_cpu,rom+diff);
+	memory_set_decrypted_region(sound_cpu, 0x8000, 0xffff, decrypt);
 
-	for (A = 0;A < 0x10000;A++)
-		rom[A + diff] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
+	for (A = 0x8000;A < 0x10000;A++)
+		decrypt[A-0x8000] = (rom[A] & 0x9f) | ((rom[A] & 0x20) << 1) | ((rom[A] & 0x40) >> 1);
 }
 
 static DRIVER_INIT( meikyuh )
 {
 	/* Blank out unused garbage in colour prom to avoid colour overflow */
-	unsigned char *RAM = memory_region(REGION_PROMS);
+	UINT8 *RAM = memory_region(REGION_PROMS);
 	memset(RAM+0x20,0,0xe0);
 }
 

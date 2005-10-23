@@ -2438,6 +2438,53 @@ INPUT_PORTS_START( nmouse )
 
 INPUT_PORTS_END
 
+INPUT_PORTS_START( woodpek )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_BIT(    0x10, 0x10, IPT_DIPSWITCH_NAME ) PORT_NAME("Rack Test (Cheat)") PORT_CODE(KEYCODE_F1)
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+
+	PORT_START_TAG("DSW 1")
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "5000" )
+	PORT_DIPSETTING(    0x10, "10000" )
+	PORT_DIPSETTING(    0x20, "15000" )
+	PORT_DIPSETTING(    0x30, DEF_STR( None ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START_TAG("DSW 2")
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( bigbucks )
 	PORT_START_TAG("IN0")
@@ -4642,25 +4689,24 @@ ROM_END
 
 static void maketrax_rom_decode(void)
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
+	UINT8 *decrypted = auto_malloc(0x4000);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 	/* patch protection using a copy of the opcodes so ROM checksum */
 	/* tests will not fail */
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x3fff, decrypted);
 
-	memcpy(rom+diff,rom,diff);
+	memcpy(decrypted,rom,0x4000);
 
-	rom[0x0415 + diff] = 0xc9;
-	rom[0x1978 + diff] = 0x18;
-	rom[0x238e + diff] = 0xc9;
-	rom[0x3ae5 + diff] = 0xe6;
-	rom[0x3ae7 + diff] = 0x00;
-	rom[0x3ae8 + diff] = 0xc9;
-	rom[0x3aed + diff] = 0x86;
-	rom[0x3aee + diff] = 0xc0;
-	rom[0x3aef + diff] = 0xb0;
+	decrypted[0x0415] = 0xc9;
+	decrypted[0x1978] = 0x18;
+	decrypted[0x238e] = 0xc9;
+	decrypted[0x3ae5] = 0xe6;
+	decrypted[0x3ae7] = 0x00;
+	decrypted[0x3ae8] = 0xc9;
+	decrypted[0x3aed] = 0x86;
+	decrypted[0x3aee] = 0xc0;
+	decrypted[0x3aef] = 0xb0;
 }
 
 static DRIVER_INIT( maketrax )
@@ -4674,25 +4720,24 @@ static DRIVER_INIT( maketrax )
 
 static void korosuke_rom_decode(void)
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-
+	UINT8 *decrypted = auto_malloc(0x4000);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 	/* patch protection using a copy of the opcodes so ROM checksum */
 	/* tests will not fail */
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x3fff, decrypted);
 
-	memcpy(rom+diff,rom,diff);
+	memcpy(decrypted,rom,0x4000);
 
-	rom[0x044c + diff] = 0xc9;
-	rom[0x1973 + diff] = 0x18;
-	rom[0x238c + diff] = 0xc9;
-	rom[0x3ae9 + diff] = 0xe6;	/* not changed */
-	rom[0x3aeb + diff] = 0x00;
-	rom[0x3aec + diff] = 0xc9;
-	rom[0x3af1 + diff] = 0x86;
-	rom[0x3af2 + diff] = 0xc0;
-	rom[0x3af3 + diff] = 0xb0;
+	decrypted[0x044c] = 0xc9;
+	decrypted[0x1973] = 0x18;
+	decrypted[0x238c] = 0xc9;
+	decrypted[0x3ae9] = 0xe6;	/* not changed */
+	decrypted[0x3aeb] = 0x00;
+	decrypted[0x3aec] = 0xc9;
+	decrypted[0x3af1] = 0x86;
+	decrypted[0x3af2] = 0xc0;
+	decrypted[0x3af3] = 0xb0;
 }
 
 static DRIVER_INIT( korosuke )
@@ -4710,7 +4755,7 @@ static DRIVER_INIT( ponpoko )
 	/* Here we revert it to the usual format. */
 
 	int i, j;
-	unsigned char *RAM, temp;
+	UINT8 *RAM, temp;
 	int length = memory_region_length(REGION_GFX1)/2;
 
 	/* Characters */
@@ -4740,10 +4785,10 @@ static DRIVER_INIT( ponpoko )
 	}
 }
 
-static void eyes_decode(unsigned char *data)
+static void eyes_decode(UINT8 *data)
 {
 	int j;
-	unsigned char swapbuffer[8];
+	UINT8 swapbuffer[8];
 
 	for (j = 0; j < 8; j++)
 	{
@@ -4759,7 +4804,7 @@ static void eyes_decode(unsigned char *data)
 static DRIVER_INIT( eyes )
 {
 	int i;
-	unsigned char *RAM;
+	UINT8 *RAM;
 
 	/* CPU ROMs */
 
@@ -4782,7 +4827,7 @@ static DRIVER_INIT( eyes )
 static DRIVER_INIT( woodpek )
 {
 	int i;
-	unsigned char *RAM;
+	UINT8 *RAM;
 
 	/* Graphics ROMs */
 
@@ -4887,8 +4932,8 @@ GAME( 1981, nmouseb,  nmouse ,  nmouse ,  nmouse,   eyes,     ROT90,  "Amenip No
 GAME( 1981, mspacman, 0,        mspacman, mspacman, 0,        ROT90,  "Midway", "Ms. Pac-Man", GAME_SUPPORTS_SAVE )
 GAME( 1981, mspacmnf, mspacman, mspacman, mspacman, 0,        ROT90,  "Midway", "Ms. Pac-Man (with speedup hack)", GAME_SUPPORTS_SAVE )
 GAME( 1981, mspacmat, mspacman, mspacman, mspacman, 0,        ROT90,  "hack", "Ms. Pac Attack", GAME_SUPPORTS_SAVE )
-GAME( 1981, woodpek,  0,        woodpek,  nmouse,   woodpek,  ROT90,  "Amenip (Palcom Queen River)", "Woodpecker (set 1)", GAME_SUPPORTS_SAVE )
-GAME( 1981, woodpeka, woodpek,  woodpek,  nmouse,   woodpek,  ROT90,  "Amenip", "Woodpecker (set 2)", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
+GAME( 1981, woodpek,  0,        woodpek,  woodpek,  woodpek,  ROT90,  "Amenip (Palcom Queen River)", "Woodpecker (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, woodpeka, woodpek,  woodpek,  woodpek,  woodpek,  ROT90,  "Amenip", "Woodpecker (set 2)", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
 GAME( 1981, mspacmab, mspacman, woodpek,  mspacman, 0,        ROT90,  "bootleg", "Ms. Pac-Man (bootleg)", GAME_SUPPORTS_SAVE )
 GAME( 1981, pacgal,   mspacman, woodpek,  mspacman, 0,        ROT90,  "hack", "Pac-Gal", GAME_SUPPORTS_SAVE )
 GAME( 1981, mspacpls, mspacman, woodpek,  mspacpls, 0,        ROT90,  "hack", "Ms. Pac-Man Plus", GAME_SUPPORTS_SAVE )

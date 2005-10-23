@@ -89,7 +89,15 @@ typedef struct
 	UINT8   so_state;
 	int 	(*irq_callback)(int irqline);	/* IRQ callback */
 	read8_handler rdmem_id;					/* readmem callback for indexed instructions */
-	write8_handler wrmem_id;				/* readmem callback for indexed instructions */
+	write8_handler wrmem_id;				/* writemem callback for indexed instructions */
+
+#if (HAS_M6510) || (HAS_M6510T) || (HAS_M8502) || (HAS_M7501)
+	UINT8    ddr;
+	UINT8    port;
+	UINT8 (*port_read)(void);
+	void (*port_write)(UINT8 data);
+#endif
+
 }	m6502_Regs;
 
 int m6502_ICount = 0;
@@ -151,6 +159,14 @@ static void m6502_common_init(UINT8 subtype, void (**insn)(void), const char *ty
 	state_save_register_UINT8 (type, cpu, "nmi_state", &m6502.nmi_state, 1);
 	state_save_register_UINT8 (type, cpu, "irq_state", &m6502.irq_state, 1);
 	state_save_register_UINT8 (type, cpu, "so_state", &m6502.so_state, 1);
+
+#if (HAS_M6510) || (HAS_M6510T) || (HAS_M8502) || (HAS_M7501)
+	if (subtype == SUBTYPE_6510)
+	{
+		state_save_register_UINT8 (type, cpu, "port", &m6502.port, 1);
+		state_save_register_UINT8 (type, cpu, "ddr", &m6502.ddr, 1);
+	}
+#endif
 }
 
 static void m6502_init(void)
@@ -314,19 +330,6 @@ static void m6502_set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t m6502_dasm(char *buffer, offs_t pc)
-{
-	offs_t ret;
-	change_pc( pc );
-#ifdef MAME_DEBUG
-	ret = Dasm6502( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	ret = 1;
-#endif
-	change_pc( m6502.pc.w.l );
-	return ret;
-}
 
 
 /****************************************************************************
@@ -370,15 +373,56 @@ static void m6510_init (void)
 	m6502_common_init(SUBTYPE_6510, insn6510, "m6510");
 }
 
-static offs_t m6510_dasm(char *buffer, offs_t pc)
+static void m6510_reset (void *param)
 {
-#ifdef MAME_DEBUG
-	return Dasm6510( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
+	m6502_reset(param);
+	m6502.port = 0xff;
+	m6502.ddr = 0x00;
 }
+
+static UINT8 m6510_get_port(void)
+{
+	return (m6502.port & m6502.ddr) | (m6502.ddr ^ 0xff);
+}
+
+static READ8_HANDLER( m6510_read_0000 )
+{
+	UINT8 result = 0x00;
+
+	switch(offset)
+	{
+		case 0x0000:	/* DDR */
+			result = m6502.ddr;
+			break;
+		case 0x0001:	/* Data Port */
+			if (m6502.port_read)
+				result = m6502.port_read();
+			result = (m6502.ddr & m6502.port) | (~m6502.ddr & result);
+			break;
+	}
+	return result;
+}
+
+static WRITE8_HANDLER( m6510_write_0000 )
+{
+	switch(offset)
+	{
+		case 0x0000:	/* DDR */
+			m6502.ddr = data;
+			break;
+		case 0x0001:	/* Data Port */
+			m6502.port = data;
+			break;
+	}
+
+	if (m6502.port_write)
+		m6502.port_write(m6510_get_port());
+}
+
+static ADDRESS_MAP_START(m6510_mem, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x0001) AM_READWRITE(m6510_read_0000, m6510_write_0000)
+ADDRESS_MAP_END
+
 #endif
 
 
@@ -739,7 +783,9 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m6502_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m6502_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6502_dasm;			break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6502_dasm;			break;
+#endif
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6502.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6502_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6502_reg_layout;				break;
@@ -802,22 +848,46 @@ void n2a03_get_info(UINT32 state, union cpuinfo *info)
 #endif
 
 
-#if (HAS_M6510)
+#if (HAS_M6510) || (HAS_M6510T) || (HAS_M8502) || (HAS_M7501)
 /**************************************************************************
  * CPU-specific set_info
  **************************************************************************/
+
+static void m6510_set_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are set as pointers to data or functions --- */
+		case CPUINFO_PTR_M6510_PORTREAD:	m6502.port_read = (UINT8 (*)(void)) info->f;	break;
+		case CPUINFO_PTR_M6510_PORTWRITE:	m6502.port_write = (void (*)(UINT8)) info->f;	break;
+
+		default:
+			m6502_set_info(state, info);
+			break;
+	}
+}
 
 void m6510_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = m6510_set_info;			break;
 		case CPUINFO_PTR_INIT:							info->init = m6510_init;				break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6510_dasm;			break;
+		case CPUINFO_PTR_RESET:							info->reset = m6510_reset;				break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6510_dasm;			break;
+#endif
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6510_reg_layout;				break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6510_mem; break;
+		case CPUINFO_PTR_M6510_PORTREAD:				info->f = (genf *) m6502.port_read;		break;
+		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m6502.port_write;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6510"); break;
+
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_M6510_PORT:					info->i = m6510_get_port();	break;
 
 		default:
 			m6502_get_info(state, info);
@@ -836,16 +906,11 @@ void m6510t_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
 	{
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = m6510_init;				break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6510_dasm;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6510_reg_layout;				break;
-
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6510T"); break;
 
 		default:
-			m6502_get_info(state, info);
+			m6510_get_info(state, info);
 			break;
 	}
 }
@@ -861,16 +926,11 @@ void m7501_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
 	{
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = m6510_init;				break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6510_dasm;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6510_reg_layout;				break;
-
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M7501"); break;
 
 		default:
-			m6502_get_info(state, info);
+			m6510_get_info(state, info);
 			break;
 	}
 }
@@ -886,16 +946,11 @@ void m8502_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
 	{
-		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case CPUINFO_PTR_INIT:							info->init = m6510_init;				break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6510_dasm;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6510_reg_layout;				break;
-
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M8502"); break;
 
 		default:
-			m6502_get_info(state, info);
+			m6510_get_info(state, info);
 			break;
 	}
 }
@@ -932,6 +987,9 @@ void m65c02_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = m65c02_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m65c02_execute;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m65c02_reg_layout;			break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m65c02_dasm;			break;
+#endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M65C02"); break;
@@ -955,6 +1013,9 @@ void m65sc02_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_INIT:							info->init = m65sc02_init;				break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m65sc02_dasm;			break;
+#endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M65SC02"); break;
@@ -1007,6 +1068,9 @@ void deco16_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = deco16_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = deco16_execute;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = deco16_reg_layout;			break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = deco16_dasm;			break;
+#endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "DECO CPU16"); break;

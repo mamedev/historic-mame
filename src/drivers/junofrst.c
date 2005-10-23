@@ -103,11 +103,7 @@ WRITE8_HANDLER( tutankhm_sh_irqtrigger_w );
 
 WRITE8_HANDLER( junofrst_bankselect_w )
 {
-	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	bankaddress = 0x10000 + (data & 0x0f) * 0x1000;
-	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bank(1, data & 0x0f);
 }
 
 static READ8_HANDLER( junofrst_portA_r )
@@ -401,7 +397,7 @@ MACHINE_DRIVER_END
 
 
 ROM_START( junofrst )
-	ROM_REGION( 2*0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
 	ROM_LOAD( "jfa_b9.bin",   0x0a000, 0x2000, CRC(f5a7ab9d) SHA1(9603e797839290f8e1f93ccff9cc820604cc49ab) ) /* program ROMs */
 	ROM_LOAD( "jfb_b10.bin",  0x0c000, 0x2000, CRC(f20626e0) SHA1(46f58bdc1a613124e2c148b61f774fcc6c232868) )
 	ROM_LOAD( "jfc_a10.bin",  0x0e000, 0x2000, CRC(1e7744a7) SHA1(bee69833af886436016560295cddf0c8b4c5e771) )
@@ -426,7 +422,7 @@ ROM_START( junofrst )
 ROM_END
 
 ROM_START( junofstg )
-	ROM_REGION( 2*0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )	/* code + space for decrypted opcodes */
 	ROM_LOAD( "jfg_a.9b",     0x0a000, 0x2000, CRC(8f77d1c5) SHA1(d47fcdbc47673c228661a3528fff0c691c76df9e) ) /* program ROMs */
 	ROM_LOAD( "jfg_b.10b",    0x0c000, 0x2000, CRC(cd645673) SHA1(25994210a8a424bdf2eca3efa19e7eeffc097cec) )
 	ROM_LOAD( "jfg_c.10a",    0x0e000, 0x2000, CRC(47852761) SHA1(eeef814b6ad681d4c2274f0a69d1ed9c5c1b9118) )
@@ -454,7 +450,12 @@ ROM_END
 
 static DRIVER_INIT( junofrst )
 {
+	extern UINT8 *konami1_decrypted;
+
 	konami1_decode();
+
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x1000);
+	memory_configure_bank_decrypted(1, 0, 16, konami1_decrypted + 0x10000, 0x1000);
 }
 
 

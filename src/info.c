@@ -1018,7 +1018,8 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"\t\t\t<!ATTLIST driver graphic (good|imperfect|preliminary) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST driver cocktail (good|imperfect|preliminary) #IMPLIED>\n"
 		"\t\t\t<!ATTLIST driver protection (good|imperfect|preliminary) #IMPLIED>\n"
-		"\t\t\t<!ATTLIST driver palettesize CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST driver savestate (supported|unsupported) #REQUIRED>\n"
+ 		"\t\t\t<!ATTLIST driver palettesize CDATA #REQUIRED>\n"
 #ifdef MESS
 		"\t\t<!ELEMENT device (extension*)>\n"
 		"\t\t\t<!ATTLIST device name CDATA #REQUIRED>\n"

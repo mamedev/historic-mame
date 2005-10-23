@@ -14,8 +14,6 @@ UINT16 *gaelco_vregs;
 UINT16 *gaelco_videoram;
 UINT16 *gaelco_spriteram;
 
-int sprite_count[5];
-int *sprite_table[5];
 static tilemap *pant[2];
 
 
@@ -87,8 +85,6 @@ WRITE16_HANDLER( gaelco_vram_w )
 
 VIDEO_START( bigkarnk )
 {
-	int i;
-
 	pant[0] = tilemap_create(get_tile_info_gaelco_screen0,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
 	pant[1] = tilemap_create(get_tile_info_gaelco_screen1,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
 
@@ -98,20 +94,11 @@ VIDEO_START( bigkarnk )
 	tilemap_set_transmask(pant[0],0,0xff01,0x00ff); /* pens 1-7 opaque, pens 0, 8-15 transparent */
 	tilemap_set_transmask(pant[1],0,0xff01,0x00ff); /* pens 1-7 opaque, pens 0, 8-15 transparent */
 
-	for (i = 0; i < 5; i++){
-		sprite_table[i] = auto_malloc(512*sizeof(int));
-		if (!sprite_table[i]){
-			return 1;
-		}
-	}
-
 	return 0;
 }
 
 VIDEO_START( maniacsq )
 {
-	int i;
-
 	pant[0] = tilemap_create(get_tile_info_gaelco_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	pant[1] = tilemap_create(get_tile_info_gaelco_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 
@@ -120,13 +107,6 @@ VIDEO_START( maniacsq )
 
 	tilemap_set_transparent_pen(pant[0],0);
 	tilemap_set_transparent_pen(pant[1],0);
-
-	for (i = 0; i < 5; i++){
-		sprite_table[i] = auto_malloc(512*sizeof(int));
-		if (!sprite_table[i]){
-			return 1;
-		}
-	}
 
 	return 0;
 }
@@ -137,32 +117,6 @@ VIDEO_START( maniacsq )
     Sprites
 
 ***************************************************************************/
-
-static void gaelco_sort_sprites(void)
-{
-	int i;
-
-	sprite_count[0] = 0;
-	sprite_count[1] = 0;
-	sprite_count[2] = 0;
-	sprite_count[3] = 0;
-	sprite_count[4] = 0;
-
-	for (i = 3; i < (0x1000 - 6)/2; i += 4){
-		int color = (gaelco_spriteram[i+2] & 0x7e00) >> 9;
-		int priority = (gaelco_spriteram[i] & 0x3000) >> 12;
-
-		/* palettes 0x38-0x3f are used for high priority sprites in Big Karnak */
-		if (color >= 0x38){
-			sprite_table[4][sprite_count[4]] = i;
-			sprite_count[4]++;
-		}
-
-		/* save sprite number in the proper array for later */
-		sprite_table[priority][sprite_count[priority]] = i;
-		sprite_count[priority]++;
-	}
-}
 
 /*
     Sprite Format
@@ -183,25 +137,40 @@ static void gaelco_sort_sprites(void)
       3  | xxxxxxxx xxxxxx-- | sprite code
 */
 
-static void gaelco_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
+static void gaelco_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	int j, x, y, ex, ey;
+	int i, x, y, ex, ey;
 	const gfx_element *gfx = Machine->gfx[0];
 
 	static int x_offset[2] = {0x0,0x2};
 	static int y_offset[2] = {0x0,0x1};
 
-	for (j = 0; j < sprite_count[pri]; j++){
-		int i = sprite_table[pri][j];
+	for (i = 0x800 - 4 - 1; i >= 3; i -= 4){
 		int sx = gaelco_spriteram[i+2] & 0x01ff;
 		int sy = (240 - (gaelco_spriteram[i] & 0x00ff)) & 0x00ff;
 		int number = gaelco_spriteram[i+3];
 		int color = (gaelco_spriteram[i+2] & 0x7e00) >> 9;
 		int attr = (gaelco_spriteram[i] & 0xfe00) >> 9;
+		int priority = (gaelco_spriteram[i] & 0x3000) >> 12;
 
 		int xflip = attr & 0x20;
 		int yflip = attr & 0x40;
-		int spr_size;
+		int spr_size, pri_mask;
+
+		/* palettes 0x38-0x3f are used for high priority sprites in Big Karnak */
+		if (color >= 0x38){
+			priority = 4;
+		}
+
+		switch( priority )
+		{
+			case 0: pri_mask = 0xff00; break;
+			case 1: pri_mask = 0xff00|0xf0f0; break;
+			case 2: pri_mask = 0xff00|0xf0f0|0xcccc; break;
+			case 3: pri_mask = 0xff00|0xf0f0|0xcccc|0xaaaa; break;
+			default:
+			case 4: pri_mask = 0; break;
+		}
 
 		if (attr & 0x04){
 			spr_size = 1;
@@ -217,10 +186,10 @@ static void gaelco_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, 
 				ex = xflip ? (spr_size-1-x) : x;
 				ey = yflip ? (spr_size-1-y) : y;
 
-				drawgfx(bitmap,gfx,number + x_offset[ex] + y_offset[ey],
+				pdrawgfx(bitmap,gfx,number + x_offset[ex] + y_offset[ey],
 						color,xflip,yflip,
 						sx-0x0f+x*8,sy+y*8,
-						cliprect,TRANSPARENCY_PEN,0);
+						cliprect,TRANSPARENCY_PEN,0,pri_mask);
 			}
 		}
 	}
@@ -240,26 +209,22 @@ VIDEO_UPDATE( maniacsq )
 	tilemap_set_scrolly(pant[1], 0, gaelco_vregs[2]);
 	tilemap_set_scrollx(pant[1], 0, gaelco_vregs[3]);
 
-	gaelco_sort_sprites();
-
-
+	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap( bitmap, Machine->pens[0], cliprect );
 
 	tilemap_draw(bitmap,cliprect,pant[1],3,0);
 	tilemap_draw(bitmap,cliprect,pant[0],3,0);
-	gaelco_draw_sprites(bitmap,cliprect,3);
 
-	tilemap_draw(bitmap,cliprect,pant[1],2,0);
-	tilemap_draw(bitmap,cliprect,pant[0],2,0);
-	gaelco_draw_sprites(bitmap,cliprect,2);
+	tilemap_draw(bitmap,cliprect,pant[1],2,1);
+	tilemap_draw(bitmap,cliprect,pant[0],2,1);
 
-	tilemap_draw(bitmap,cliprect,pant[1],1,0);
-	tilemap_draw(bitmap,cliprect,pant[0],1,0);
-	gaelco_draw_sprites(bitmap,cliprect,1);
+	tilemap_draw(bitmap,cliprect,pant[1],1,2);
+	tilemap_draw(bitmap,cliprect,pant[0],1,2);
 
-	tilemap_draw(bitmap,cliprect,pant[1],0,0);
-	tilemap_draw(bitmap,cliprect,pant[0],0,0);
-	gaelco_draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,pant[1],0,4);
+	tilemap_draw(bitmap,cliprect,pant[0],0,4);
+
+	gaelco_draw_sprites(bitmap,cliprect);
 }
 
 VIDEO_UPDATE( bigkarnk )
@@ -270,34 +235,32 @@ VIDEO_UPDATE( bigkarnk )
 	tilemap_set_scrolly(pant[1], 0, gaelco_vregs[2]);
 	tilemap_set_scrollx(pant[1], 0, gaelco_vregs[3]);
 
-	gaelco_sort_sprites();
-
-
+	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap( bitmap, Machine->pens[0], cliprect );
 
 	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 3,0);
 	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 3,0);
-	gaelco_draw_sprites(bitmap,cliprect,3);
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 3,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 3,0);
 
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 2,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 2,0);
-	gaelco_draw_sprites(bitmap,cliprect,2);
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 2,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 2,0);
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 3,1);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 3,1);
 
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 1,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 1,0);
-	gaelco_draw_sprites(bitmap,cliprect,1);
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 1,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 1,0);
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 2,1);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 2,1);
 
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 0,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 0,0);
-	gaelco_draw_sprites(bitmap,cliprect,0);
-	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 0,0);
-	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 0,0);
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 2,2);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 2,2);
 
-	gaelco_draw_sprites(bitmap,cliprect,4);
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 1,2);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 1,2);
+
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 1,4);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 1,4);
+
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_BACK | 0,4);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_BACK | 0,4);
+
+	tilemap_draw(bitmap,cliprect,pant[1],TILEMAP_FRONT | 0,8);
+	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 0,8);
+
+	gaelco_draw_sprites(bitmap,cliprect);
 }

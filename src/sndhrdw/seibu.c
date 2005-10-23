@@ -103,19 +103,22 @@ static UINT8 decrypt_opcode(int a,int src)
 
 void seibu_sound_decrypt(int cpu_region,int length)
 {
+	UINT8 *decrypt = auto_malloc(length);
 	UINT8 *rom = memory_region(cpu_region);
-	int diff =  memory_region_length(cpu_region)/2;
 	int i;
 
-	memory_set_opcode_base(cpu_region-REGION_CPU1,rom+diff);
+	memory_set_decrypted_region(cpu_region - REGION_CPU1, 0x0000, (length < 0x10000) ? (length - 1) : 0x1fff, decrypt);
 
 	for (i = 0;i < length;i++)
 	{
 		UINT8 src = rom[i];
 
 		rom[i]      = decrypt_data(i,src);
-		rom[i+diff] = decrypt_opcode(i,src);
+		decrypt[i]  = decrypt_opcode(i,src);
 	}
+
+	if (length > 0x10000)
+		memory_configure_bank_decrypted(1, 0, (length - 0x10000) / 0x8000, decrypt + 0x10000, 0x8000);
 }
 
 
@@ -351,15 +354,25 @@ void seibu_ym2203_irqhandler(int linestate)
 /* Use this if the sound cpu is cpu 1 */
 MACHINE_INIT( seibu_sound_1 )
 {
+	int romlength = memory_region_length(REGION_CPU2);
+	UINT8 *rom = memory_region(REGION_CPU2);
+
 	sound_cpu=1;
 	update_irq_lines(VECTOR_INIT);
+	if (romlength > 0x10000)
+		memory_configure_bank(1, 0, (romlength - 0x10000) / 0x8000, rom + 0x10000, 0x8000);
 }
 
 /* Use this if the sound cpu is cpu 2 */
 MACHINE_INIT( seibu_sound_2 )
 {
+	int romlength = memory_region_length(REGION_CPU3);
+	UINT8 *rom = memory_region(REGION_CPU3);
+
 	sound_cpu=2;
 	update_irq_lines(VECTOR_INIT);
+	if (romlength > 0x10000)
+		memory_configure_bank(1, 0, (romlength - 0x10000) / 0x8000, rom + 0x10000, 0x8000);
 }
 
 /***************************************************************************/
@@ -369,9 +382,7 @@ static int main2sub_pending,sub2main_pending;
 
 WRITE8_HANDLER( seibu_bank_w )
 {
-	UINT8 *rom = memory_region(REGION_CPU1+sound_cpu);
-
-	memory_set_bankptr(1,rom + 0x10000 + 0x8000 * (data & 1));
+	memory_set_bank(1, data & 1);
 }
 
 WRITE8_HANDLER( seibu_coin_w )

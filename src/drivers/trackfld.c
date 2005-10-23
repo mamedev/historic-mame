@@ -27,7 +27,7 @@ MAIN BOARD:
 
 
 extern void konami1_decode(void);
-extern unsigned char konami1_decodebyte( unsigned char opcode, unsigned short address );
+extern UINT8 konami1_decodebyte( UINT8 opcode, unsigned short address );
 
 
 extern UINT8 *trackfld_scroll;
@@ -846,7 +846,7 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( trackfld )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "a01_e01.bin",  0x6000, 0x2000, CRC(2882f6d4) SHA1(f7ddae2c5412a2849efd7f9629e92a5b0328e7cb) )
 	ROM_LOAD( "a02_e02.bin",  0x8000, 0x2000, CRC(1743b5ee) SHA1(31301031a525f893c31461f634350f01a9492ef4) )
 	ROM_LOAD( "a03_k03.bin",  0xa000, 0x2000, CRC(6c0d1ee9) SHA1(380ab2162153a61910a6fe5b6d091ca9451ad4fd) )
@@ -877,7 +877,7 @@ ROM_START( trackfld )
 ROM_END
 
 ROM_START( trackflc )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "f01.1a",       0x6000, 0x2000, CRC(4e32b360) SHA1(cafd4b9ef5548d31d894610dfd2288425d29ed58) )
 	ROM_LOAD( "f02.2a",       0x8000, 0x2000, CRC(4e7ebf07) SHA1(266110e5195ab1e374724536b82ec4da35123dc7) )
 	ROM_LOAD( "l03.3a",       0xa000, 0x2000, CRC(fef4c0ea) SHA1(c34a0f001de8c06fdb617e20dc335ad99e15df05) )
@@ -908,7 +908,7 @@ ROM_START( trackflc )
 ROM_END
 
 ROM_START( hyprolym ) /* GX361 */
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "361-d01.a01", 0x6000, 0x2000, CRC(82257fb7) SHA1(4a5038292e582d5c3b5f2d82b01c57ccb24f3095) )
 	ROM_LOAD( "361-d02.a02", 0x8000, 0x2000, CRC(15b83099) SHA1(79827590d74f20c9a95723e06b05af2b15c34f5f) )
 	ROM_LOAD( "361-d03.a03", 0xa000, 0x2000, CRC(e54cc960) SHA1(7c448c174675271d548ffcf0297ec7a2ae646985) )
@@ -939,7 +939,7 @@ ROM_START( hyprolym ) /* GX361 */
 ROM_END
 
 ROM_START( hyprolyb )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "a1.1",         0x6000, 0x2000, CRC(9aee2d5a) SHA1(81f151459f1113b5f2f76ddc140bf86676f778e4) )
 	ROM_LOAD( "361-d02.a02",  0x8000, 0x2000, CRC(15b83099) SHA1(79827590d74f20c9a95723e06b05af2b15c34f5f) )
 	ROM_LOAD( "a3.3",         0xa000, 0x2000, CRC(2d6fc308) SHA1(1ff95384670e40d560703f2238998a8e154aa4cf) )
@@ -975,7 +975,7 @@ ROM_START( hyprolyb )
 ROM_END
 
 ROM_START( atlantol )
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "atl37", 0x00000, 0x10000, CRC(aca8da51) SHA1(50e96fd8496ed32e11eb43bcbfd468ce566caa47) )
 	ROM_CONTINUE(      0x00000, 0x10000 )
 
@@ -1125,22 +1125,23 @@ static DRIVER_INIT( trackfld )
 
 static DRIVER_INIT( atlantol )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+	UINT8 *rom = memory_region(REGION_CPU1);
+	int size = memory_region_length(REGION_CPU1);
+	UINT8 *decrypt = auto_malloc(size);
 	int A;
 
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0xffff, decrypt);
 
 	/* not encrypted opcodes */
 	for (A = 0;A < 0x6000;A++)
 	{
-		rom[A+diff] = rom[A];
+		decrypt[A] = rom[A];
 	}
 
 	/* "konami1" encrypted opcodes */
-	for (A = 0x6000;A < diff;A++)
+	for (A = 0x6000;A < size;A++)
 	{
-		rom[A+diff] = konami1_decodebyte(rom[A],A);
+		decrypt[A] = konami1_decodebyte(rom[A],A);
 	}
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1000, 0, 0, MWA8_NOP );

@@ -18,6 +18,9 @@
 #include "i386intf.h"
 #include "state.h"
 
+int parity_table[256];
+MODRM_TABLE MODRM_table[256];
+
 /*************************************************************************/
 
 #define INT_DEBUG	1

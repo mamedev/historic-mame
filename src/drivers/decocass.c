@@ -58,6 +58,9 @@
 #include "machine/decocass.h"
 #include "sound/ay8910.h"
 
+static UINT8 *decrypted;
+static UINT8 *rambase;
+
 /***************************************************************************
  *
  *  write decrypted opcodes
@@ -69,58 +72,28 @@ INLINE int swap_bits_5_6(int data)
 	return (data & 0x9f) | ((data & 0x20) << 1) | ((data & 0x40) >> 1);
 }
 
-WRITE8_HANDLER( decocass_w )
-{
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
+static WRITE8_HANDLER( ram1_w )       { decrypted[0x0000 + offset] = swap_bits_5_6(data); rambase[0x0000 + offset] = data;  }
+static WRITE8_HANDLER( ram2_w )       { decrypted[0x2000 + offset] = swap_bits_5_6(data); rambase[0x2000 + offset] = data;  }
+static WRITE8_HANDLER( charram_w )    { decrypted[0x6000 + offset] = swap_bits_5_6(data); decocass_charram_w(offset, data); }
+static WRITE8_HANDLER( fgvideoram_w ) { decrypted[0xc000 + offset] = swap_bits_5_6(data); decocass_fgvideoram_w(offset, data); }
+static WRITE8_HANDLER( fgcolorram_w ) { decrypted[0xc400 + offset] = swap_bits_5_6(data); decocass_colorram_w(offset, data); }
+static WRITE8_HANDLER( tileram_w )    { decrypted[0xd000 + offset] = swap_bits_5_6(data); decocass_tileram_w(offset, data); }
+static WRITE8_HANDLER( objectram_w )  { decrypted[0xd800 + offset] = swap_bits_5_6(data); decocass_objectram_w(offset, data); }
 
-	if		(offset <= 0x5fff)					   ;
-	else if (offset >= 0x6000 && offset <= 0xbfff) { decocass_charram_w(offset - 0x6000,data); return; }
-	else if (offset >= 0xc000 && offset <= 0xc3ff) { decocass_fgvideoram_w(offset - 0xc000,data); return; }
-	else if (offset >= 0xc400 && offset <= 0xc7ff) { decocass_colorram_w(offset - 0xc400,data); return; }
-	else if (offset >= 0xc800 && offset <= 0xcbff) { decocass_mirrorvideoram_w(offset - 0xc800,data); return; }
-	else if (offset >= 0xcc00 && offset <= 0xcfff) { decocass_mirrorcolorram_w(offset - 0xcc00,data); return; }
-	else if (offset >= 0xd000 && offset <= 0xd7ff) { decocass_tileram_w(offset - 0xd000,data); return; }
-	else if (offset >= 0xd800 && offset <= 0xdbff) { decocass_objectram_w(offset - 0xd800,data); return; }
-	else if (offset >= 0xe000 && offset <= 0xe0ff) { decocass_paletteram_w(offset, data); return; }
-	else if (offset == 0xe300 ) 				   { decocass_watchdog_count_w(offset - 0xe300,data); return; }
-	else if (offset == 0xe301 ) 				   { decocass_watchdog_flip_w(offset - 0xe301,data); return; }
-	else if (offset == 0xe302 ) 				   { decocass_color_missiles_w(offset - 0xe302,data); return; }
-	else if (offset == 0xe400 ) 				   { decocass_reset_w(offset - 0xe400,data); return; }
-	else if (offset == 0xe402 ) 				   { decocass_mode_set_w(offset - 0xe402,data); return; }
-	else if (offset == 0xe403 ) 				   { decocass_back_h_shift_w(offset - 0xe403,data); return; }
-	else if (offset == 0xe404 ) 				   { decocass_back_vl_shift_w(offset - 0xe404,data); return; }
-	else if (offset == 0xe405 ) 				   { decocass_back_vr_shift_w(offset - 0xe405,data); return; }
-	else if (offset == 0xe406 ) 				   { decocass_part_h_shift_w(offset - 0xe406,data); return; }
-	else if (offset == 0xe407 ) 				   { decocass_part_v_shift_w(offset - 0xe407,data); return; }
-	else if (offset == 0xe410 ) 				   { decocass_color_center_bot_w(offset - 0xe410,data); return; }
-	else if (offset == 0xe411 ) 				   { decocass_center_h_shift_space_w(offset - 0xe411,data); return; }
-	else if (offset == 0xe412 ) 				   { decocass_center_v_shift_w(offset - 0xe412,data); return; }
-	else if (offset == 0xe413 ) 				   { decocass_coin_counter_w(offset - 0xe413,data); return; }
-	else if (offset == 0xe414 ) 				   { decocass_sound_command_w(offset - 0xe414,data); return; }
-	else if (offset >= 0xe415 && offset <= 0xe416) { decocass_quadrature_decoder_reset_w(offset - 0xe415,data); return; }
-	else if (offset == 0xe417 ) 				   { decocass_nmi_reset_w(offset - 0xe417,data); return; }
-	else if (offset >= 0xe420 && offset <= 0xe42f) { decocass_adc_w(offset - 0xe420,data); return; }
-	else if (offset >= 0xe500 && offset <= 0xe5ff) { decocass_e5xx_w(offset - 0xe500,data); return; }
-	else if (offset >= 0xe900 && offset <= 0xe900) { decocass_e900_w(offset - 0xe900,data); return; }
-	else if (offset >= 0xf000 && offset <= 0xffff) { return; }
+static WRITE8_HANDLER( mirrorvideoram_w ) { offset = ((offset >> 5) & 0x1f) | ((offset & 0x1f) << 5); fgvideoram_w(offset, data); }
+static WRITE8_HANDLER( mirrorcolorram_w ) { offset = ((offset >> 5) & 0x1f) | ((offset & 0x1f) << 5); fgcolorram_w(offset, data); }
+static READ8_HANDLER( mirrorvideoram_r ) { offset = ((offset >> 5) & 0x1f) | ((offset & 0x1f) << 5); return decocass_fgvideoram[offset]; }
+static READ8_HANDLER( mirrorcolorram_r ) { offset = ((offset >> 5) & 0x1f) | ((offset & 0x1f) << 5); return decocass_colorram[offset]; }
 
-	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
-
-	rom[offset] = data;
-
-	/* Swap bits 5 & 6 for opcodes */
-	rom[offset+diff] = swap_bits_5_6(data);
-}
 
 static ADDRESS_MAP_START( decocass_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2000, 0x5fff) AM_READ(MRA8_RAM)				/* RMS3 RAM */
-	AM_RANGE(0x6000, 0xafff) AM_READ(decocass_de0091_r)		/* RMS3 RAM or DE-0091xx board */
+	AM_RANGE(0x6000, 0xafff) AM_READ(MRA8_RAM)				/* RMS3 RAM or DE-0091xx board */
 	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM)				/* RMS3 RAM */
 	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)				/* DSP3 videoram + colorram */
-	AM_RANGE(0xc800, 0xcbff) AM_READ(decocass_mirrorvideoram_r)
-	AM_RANGE(0xcc00, 0xcfff) AM_READ(decocass_mirrorcolorram_r)
+	AM_RANGE(0xc800, 0xcbff) AM_READ(mirrorvideoram_r)
+	AM_RANGE(0xcc00, 0xcfff) AM_READ(mirrorcolorram_r)
 	AM_RANGE(0xd000, 0xdbff) AM_READ(MRA8_RAM)				/* B103 RAM */
 	AM_RANGE(0xe300, 0xe300) AM_READ(input_port_7_r) 		/* DSW1 */
 	AM_RANGE(0xe301, 0xe301) AM_READ(input_port_8_r) 		/* DSW2 */
@@ -132,17 +105,15 @@ static ADDRESS_MAP_START( decocass_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( decocass_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(decocass_w)
-
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x5fff) AM_WRITE(MWA8_RAM)	/* RMS3 RAM */
-	AM_RANGE(0x6000, 0xbfff) AM_WRITE(decocass_charram_w) AM_BASE(&decocass_charram) /* still RMS3 RAM */
-	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(decocass_fgvideoram_w) AM_BASE(&decocass_fgvideoram) AM_SIZE(&decocass_fgvideoram_size)  /* DSP3 RAM */
-	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(decocass_colorram_w) AM_BASE(&decocass_colorram) AM_SIZE(&decocass_colorram_size)
-	AM_RANGE(0xc800, 0xcbff) AM_WRITE(decocass_mirrorvideoram_w)
-	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(decocass_mirrorcolorram_w)
-	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(decocass_tileram_w) AM_BASE(&decocass_tileram) AM_SIZE(&decocass_tileram_size)
-	AM_RANGE(0xd800, 0xdbff) AM_WRITE(decocass_objectram_w) AM_BASE(&decocass_objectram) AM_SIZE(&decocass_objectram_size)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(ram1_w) AM_BASE(&rambase)
+	AM_RANGE(0x2000, 0x5fff) AM_WRITE(ram2_w)	/* RMS3 RAM */
+	AM_RANGE(0x6000, 0xbfff) AM_WRITE(charram_w) AM_BASE(&decocass_charram) /* still RMS3 RAM */
+	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(fgvideoram_w) AM_BASE(&decocass_fgvideoram) AM_SIZE(&decocass_fgvideoram_size)  /* DSP3 RAM */
+	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(fgcolorram_w) AM_BASE(&decocass_colorram) AM_SIZE(&decocass_colorram_size)
+	AM_RANGE(0xc800, 0xcbff) AM_WRITE(mirrorvideoram_w)
+	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(mirrorcolorram_w)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(tileram_w) AM_BASE(&decocass_tileram) AM_SIZE(&decocass_tileram_size)
+	AM_RANGE(0xd800, 0xdbff) AM_WRITE(objectram_w) AM_BASE(&decocass_objectram) AM_SIZE(&decocass_objectram_size)
 	AM_RANGE(0xe000, 0xe0ff) AM_WRITE(decocass_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0xe300, 0xe300) AM_WRITE(decocass_watchdog_count_w)
 	AM_RANGE(0xe301, 0xe301) AM_WRITE(decocass_watchdog_flip_w)
@@ -167,7 +138,6 @@ static ADDRESS_MAP_START( decocass_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe420, 0xe42f) AM_WRITE(decocass_adc_w)
 
 	AM_RANGE(0xe500, 0xe5ff) AM_WRITE(decocass_e5xx_w)
-	AM_RANGE(0xe900, 0xe900) AM_WRITE(decocass_e900_w)	/* DE-0091xx board enable */
 
 	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
@@ -719,7 +689,7 @@ MACHINE_DRIVER_END
 
 
 #define DECOCASS_BIOS \
-	ROM_REGION( 2*0x10000, REGION_CPU1, 0 ) /* 64k for code + 64k for decrypted opcodes */ \
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */ \
 	ROM_LOAD_BIOS( 0, "rms8.cpu",     0xf000, 0x1000, CRC(23d929b7) SHA1(063f83020ba3d6f43ab8471f95ca919767b93aa4) ) \
 	ROM_LOAD_BIOS( 1, "dsp3.p0b",     0xf000, 0x0800, CRC(b67a91d9) SHA1(681c040be0f0ed1ba0a50161b36d0ad8e1c8c5cb) ) \
 	ROM_LOAD_BIOS( 1, "dsp3.p1b",     0xf800, 0x0800, CRC(3bfff5f3) SHA1(4e9437cb1b76d64da6b37f01bd6e879fb399e8ce) ) \
@@ -904,13 +874,13 @@ ROM_START( cdiscon1 )
 ROM_END
 
 ROM_START( csweetht )
- DECOCASS_COMMON_ROMS
+	DECOCASS_COMMON_ROMS
 
- ROM_REGION( 0x00800, REGION_USER1, 0 )   /* dongle data */
- ROM_LOAD( "cdiscon1.pro", 0x0000, 0x0800, CRC(0f793fab) SHA1(331f1b1b482fcd10f42c388a503f9af62d705401) )
+	ROM_REGION( 0x00800, REGION_USER1, 0 )   /* dongle data */
+	ROM_LOAD( "cdiscon1.pro", 0x0000, 0x0800, CRC(0f793fab) SHA1(331f1b1b482fcd10f42c388a503f9af62d705401) )
 
- ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
- ROM_LOAD( "csweetht.cas", 0x0000, 0x8000, CRC(175ef706) SHA1(49b86233f69d0daf54a6e59b86e69b8159e8f6cc) )
+	ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+	ROM_LOAD( "csweetht.cas", 0x0000, 0x8000, CRC(175ef706) SHA1(49b86233f69d0daf54a6e59b86e69b8159e8f6cc) )
 ROM_END
 
 ROM_START( cptennis )
@@ -1007,13 +977,13 @@ ROM_START( clapapa )
 ROM_END
 
 ROM_START( clapapa2 )
- DECOCASS_COMMON_ROMS
+	DECOCASS_COMMON_ROMS
 
- ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
- ROM_LOAD( "clapapa.pro",  0x0000, 0x1000, CRC(e172819a) SHA1(3492775f4f0a0b31ce5a1a998076829b3f264e98) )
+	ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
+	ROM_LOAD( "clapapa.pro",  0x0000, 0x1000, CRC(e172819a) SHA1(3492775f4f0a0b31ce5a1a998076829b3f264e98) )
 
- ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
- ROM_LOAD( "clapapa2.cas",  0x0000, 0x8000, CRC(069dd3c4) SHA1(5a19392c7ac5aea979187c96267e73bf5126307e) )
+	ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+	ROM_LOAD( "clapapa2.cas",  0x0000, 0x8000, CRC(069dd3c4) SHA1(5a19392c7ac5aea979187c96267e73bf5126307e) )
 ROM_END
 
 ROM_START( cfghtice )
@@ -1047,13 +1017,13 @@ ROM_START( cnightst )
 ROM_END
 
 ROM_START( cnights2 )
- DECOCASS_COMMON_ROMS
+	DECOCASS_COMMON_ROMS
 
- ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
- ROM_LOAD( "cnightst.pro", 0x0000, 0x1000, CRC(553b0fbc) SHA1(2cdf4560992b62e59b6de760d7996be4ed25f505) )
+	ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
+	ROM_LOAD( "cnightst.pro", 0x0000, 0x1000, CRC(553b0fbc) SHA1(2cdf4560992b62e59b6de760d7996be4ed25f505) )
 
- ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
- ROM_LOAD( "cnights2.cas", 0x0000, 0x8000, CRC(1a28128c) SHA1(4b620a1919d02814f734aba995115c09dc2db930) )
+	ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+	ROM_LOAD( "cnights2.cas", 0x0000, 0x8000, CRC(1a28128c) SHA1(4b620a1919d02814f734aba995115c09dc2db930) )
 ROM_END
 
 ROM_START( cprosocc )
@@ -1077,13 +1047,13 @@ ROM_START( cppicf )
 ROM_END
 
 ROM_START( cppicf2 )
- DECOCASS_COMMON_ROMS
+	DECOCASS_COMMON_ROMS
 
- ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
- ROM_LOAD( "cppicf.pro",   0x0000, 0x1000, CRC(0b1a1ecb) SHA1(2106da6837c78812c102b0eaaa1127fcc21ea780) )
+	ROM_REGION( 0x01000, REGION_USER1, 0 )   /* dongle data */
+	ROM_LOAD( "cppicf.pro",   0x0000, 0x1000, CRC(0b1a1ecb) SHA1(2106da6837c78812c102b0eaaa1127fcc21ea780) )
 
- ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
- ROM_LOAD( "cppicf2.cas",   0x0000, 0x8000, CRC(78ffa1bc) SHA1(d15f2a240ae7b45885d32b5f507243f82e820d4b) )
+	ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+	ROM_LOAD( "cppicf2.cas",   0x0000, 0x8000, CRC(78ffa1bc) SHA1(d15f2a240ae7b45885d32b5f507243f82e820d4b) )
 ROM_END
 
 /* The Following use Dongle Type 4 (unknown part number?)
@@ -1100,13 +1070,13 @@ ROM_START( cscrtry )
 ROM_END
 
 ROM_START( cscrtry2 )
- DECOCASS_COMMON_ROMS
+	DECOCASS_COMMON_ROMS
 
- ROM_REGION( 0x08000, REGION_USER1, 0 )   /* dongle data */
- ROM_LOAD( "cscrtry.pro",  0x0000, 0x8000, CRC(7bc3460b) SHA1(7c5668ff9a5073e27f4a83b02d79892eb4df6b92) )
+	ROM_REGION( 0x08000, REGION_USER1, 0 )   /* dongle data */
+	ROM_LOAD( "cscrtry.pro",  0x0000, 0x8000, CRC(7bc3460b) SHA1(7c5668ff9a5073e27f4a83b02d79892eb4df6b92) )
 
- ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
- ROM_LOAD( "cscrtry2.cas",  0x0000, 0x8000, CRC(04597842) SHA1(7f1fc3e06b61df880debe9056bdfbbb8600af739) )
+	ROM_REGION( 0x10000, REGION_USER2, 0 )   /* (max) 64k for cassette image */
+	ROM_LOAD( "cscrtry2.cas",  0x0000, 0x8000, CRC(04597842) SHA1(7f1fc3e06b61df880debe9056bdfbbb8600af739) )
 ROM_END
 
 /* The Following use Dongle Type 5 (unknown part number?)
@@ -1158,15 +1128,18 @@ ROM_END
 
 static DRIVER_INIT( decocass )
 {
+	UINT8 *rom = memory_region(REGION_CPU1);
 	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
 
-	memory_set_opcode_base(0,rom+diff);
+	/* allocate memory and mark all RAM regions with their decrypted pointers */
+	decrypted = auto_malloc(0x10000);
+	memory_set_decrypted_region(0, 0x0000, 0xc7ff, &decrypted[0x0000]);
+	memory_set_decrypted_region(0, 0xd000, 0xdbff, &decrypted[0xd000]);
+	memory_set_decrypted_region(0, 0xf000, 0xffff, &decrypted[0xf000]);
 
 	/* Swap bits 5 & 6 for opcodes */
-	for (A = 0;A < diff;A++)
-		rom[A+diff] = swap_bits_5_6(rom[A]);
+	for (A = 0xf000;A < 0x10000;A++)
+		decrypted[A] = swap_bits_5_6(rom[A]);
 
 	/* Call the state save setup code in machine/decocass.c */
 	decocass_machine_state_save_init();
@@ -1174,12 +1147,40 @@ static DRIVER_INIT( decocass )
 	decocass_video_state_save_init();
 }
 
+static DRIVER_INIT( decocrom )
+{
+	int romlength = memory_region_length(REGION_USER3);
+	UINT8 *rom = memory_region(REGION_USER3);
+	UINT8 *decrypted2 = auto_malloc(romlength);
+	int i;
+
+	/* standard init */
+	init_decocass();
+
+	/* decrypt the ROMs */
+	for (i = 0; i < romlength; i++)
+		decrypted2[i] = swap_bits_5_6(rom[i]);
+
+	/* convert charram to a banked ROM */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0xafff, 0, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0xafff, 0, 0, decocass_de0091_w);
+	memory_configure_bank(1, 0, 1, decocass_charram, 0);
+	memory_configure_bank(1, 1, 1, memory_region(REGION_USER3), 0);
+	memory_configure_bank_decrypted(1, 0, 1, &decrypted[0x6000], 0);
+	memory_configure_bank_decrypted(1, 1, 1, decrypted2, 0);
+	memory_set_bank(1, 0);
+
+	/* install the bank selector */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe900, 0xe900, 0, 0, decocass_e900_w);
+}
+
+
 GAMEB( 1981, decocass, 0,        decocass, decocass, decocass, decocass, ROT270, "Data East Corporation", "Cassette System", NOT_A_DRIVER )
 GAMEB( 1981, ctsttape, decocass, decocass, ctsttape, decocass, decocass, ROT270, "Data East Corporation", "Test Tape (Cassette)", 0 )
 GAMEB( 1981, clocknch, decocass, decocass, clocknch, decocass, decocass, ROT270, "Data East Corporation", "Lock'n'Chase (Cassette)", 0 )
-GAMEB( 1981, ctisland, decocass, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 1)", 0 )
-GAMEB( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 2)", 0 )
-GAMEB( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocass, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 3)", GAME_NOT_WORKING ) /* Different Bitswap? */
+GAMEB( 1981, ctisland, decocass, decocass, ctisland, decocass, decocrom, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 1)", 0 )
+GAMEB( 1981, ctislnd2, ctisland, decocass, ctisland, decocass, decocrom, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 2)", 0 )
+GAMEB( 1981, ctislnd3, ctisland, decocass, ctisland, decocass, decocrom, ROT270, "Data East Corporation", "Treasure Island (Cassette, set 3)", GAME_NOT_WORKING ) /* Different Bitswap? */
 GAMEB( 1981, csuperas, decocass, decocass, csuperas, decocass, decocass, ROT270, "Data East Corporation", "Super Astro Fighter (Cassette)", 0 )
 GAMEB( 1981, castfant, decocass, decocass, castfant, decocass, decocass, ROT270, "Data East Corporation", "Astro Fantasia (Cassette)", 0 )
 GAMEB( 1981, cluckypo, decocass, decocass, cluckypo, decocass, decocass, ROT270, "Data East Corporation", "Lucky Poker (Cassette)", 0 )
@@ -1209,7 +1210,7 @@ GAMEB( 1984, cppicf,   decocass, decocass, cppicf,   decocass, decocass, ROT270,
 GAMEB( 1984, cppicf2,  cppicf,   decocass, cppicf,   decocass, decocass, ROT270, "Data East Corporation", "Peter Pepper's Ice Cream Factory (Cassette, set 2)", 0 )
 GAMEB( 1984, cscrtry,  decocass, decocass, cscrtry,  decocass, decocass, ROT270, "Data East Corporation", "Scrum Try (Cassette, set 1)", 0 )
 GAMEB( 1984, cscrtry2, cscrtry,  decocass, cscrtry,  decocass, decocass, ROT270, "Data East Corporation", "Scrum Try (Cassette, set 2)", 0 )
-GAMEB( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270, "Data East Corporation", "Flying Ball? (Cassette)", 0 )
+GAMEB( 1985, cflyball, decocass, decocass, cflyball, decocass, decocass, ROT270, "Data East Corporation", "Flying Ball (Cassette)", GAME_NO_SOUND )
 GAMEB( 1985, cbdash,   decocass, decocass, cbdash,   decocass, decocass, ROT270, "Data East Corporation", "Boulder Dash (Cassette)", 0 )
 
 /* The following may be missing dongle data if they're not Type 1 */

@@ -77,7 +77,7 @@ static void pc_timer0_w(int state)
  * timer1   DRAM refresh (ignored)
  * timer2   PIO port C pin 4 and speaker polling
  */
-static struct pit8253_config pc_pit8253_config =
+static const struct pit8253_config pc_pit8253_config =
 {
 	TYPE8253,
 	{
@@ -97,7 +97,7 @@ static struct pit8253_config pc_pit8253_config =
 	}
 };
 
-static struct pit8253_config pc_pit8254_config =
+static const struct pit8253_config pc_pit8254_config =
 {
 	TYPE8254,
 	{
@@ -180,10 +180,8 @@ WRITE8_HANDLER(at_page8_w)
 {
 	at_pages[offset % 0x10] = data;
 
-#if LOG_PORT80
-	if (offset == 0)
-		logerror(" at_page8_w(): Port 80h <== 0x%02x (PC=0x%08x)\n", data, activecpu_get_pc());
-#endif /* LOG_PORT80 */
+	if (LOG_PORT80 && (offset == 0))
+		logerror(" at_page8_w(): Port 80h <== 0x%02x (PC=0x%08x)\n", data, (unsigned) activecpu_get_reg(REG_PC));
 
 	switch(offset % 8) {
 	case 1:
@@ -255,10 +253,23 @@ static struct dma8237_interface pc_dma =
 
 /* ----------------------------------------------------------------------- */
 
-static void pc_pic_set_int_line(int interrupt)
+static void pc_pic_set_int_line(int which, int interrupt)
 {
+	switch(which)
+	{
+		case 0:
+			/* Master */
 	cpunum_set_input_line(0, 0, interrupt ? HOLD_LINE : CLEAR_LINE);
+			break;
+
+		case 1:
+			/* Slave */
+			pic8259_set_irq_line(0, 2, interrupt);
+			break;
+	}
 }
+
+
 
 void init_pc_common(UINT32 flags)
 {

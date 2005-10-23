@@ -130,7 +130,7 @@ READ8_HANDLER( missile_r )
 	}
 
 	if (offset >= 0x5000)
-		return missile_video2ram[offset - 0x5000];
+		return memory_region(REGION_CPU1)[offset];
 
 	if (offset == 0x4800)
 		return (missile_IN0_r(0));

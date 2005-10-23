@@ -141,7 +141,7 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( tcl )
-	ROM_REGION( 0x10000*4, REGION_CPU1, 0 )
+	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
 
 	ROM_REGION( 0x8000*3, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tcl.1e",   0x00000, 0x8000, CRC(37edf9b8) SHA1(9225728116d6edfe8476e565a12e1f1e59766d26) )
@@ -175,8 +175,8 @@ DRIVER_INIT(tcl)
 {
 	/* only the first part is decrypted (and verified)*/
 
-	unsigned char *dest = memory_region(REGION_CPU1);
-	unsigned char *src = memory_region(REGION_USER1);
+	UINT8 *dest = memory_region(REGION_CPU1);
+	UINT8 *src = memory_region(REGION_USER1);
 
 	int i,idx=0;
 	for(i=0;i<64*1024;i+=4)
@@ -197,7 +197,7 @@ DRIVER_INIT(tcl)
 		}
 	}
 
-	memory_set_opcode_base(0,dest+0x10000);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, dest+0x10000);
 }
 
 GAME( 1995, tcl,  0,       tcl,  tcl,  tcl, ROT0, "Uniwang", "Taiwan Chess Legend", GAME_NOT_WORKING )

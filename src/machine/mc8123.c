@@ -39,7 +39,6 @@ CPU #  Status   Game                     Notes
 
 #include "driver.h"
 
-
 static UINT8 key_0043[0x2000] =
 {
 	/* data */
@@ -3003,12 +3002,9 @@ static UINT8 mc8123_decrypt(offs_t addr,UINT8 val,UINT8 *key,int opcode)
 
 static void sys16_decrypt(UINT8 *key)
 {
-	UINT8 *decrypted;
+	UINT8 *decrypted = auto_malloc(0x8000);
 	UINT8 *rom = memory_region(REGION_CPU2);
 	int A;
-	decrypted = auto_malloc(0x50000);
-
-	memory_set_opcode_base(1,decrypted);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
@@ -3021,9 +3017,7 @@ static void sys16_decrypt(UINT8 *key)
 		rom[A] = mc8123_decrypt(A,src,key,0);
 	}
 
-	/* copy the opcodes from the not encrypted part of the ROMs */
-	for (A = 0x8000;A < 0x50000;A++)
-		decrypted[A] = rom[A];
+	memory_set_decrypted_region(1, 0x0000, 0x7fff, decrypted);
 }
 
 
@@ -3039,84 +3033,89 @@ void mc8123_decrypt_0066(void)
 
 void mc8123_decrypt_0043(void)
 {
+	UINT8 *decrypted1 = auto_malloc(0x8000);
+	UINT8 *decrypted2 = auto_malloc(0x4000 * 4);
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-	int A;
+	int A, bank;
 	UINT8 *key = key_0043;
 
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted1);
+	memory_configure_bank_decrypted(1, 0, 4, decrypted2, 0x4000);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
 		UINT8 src = rom[A];
 
 		/* decode the opcodes */
-		rom[A+diff] = mc8123_decrypt(A,src,key,1);
+		decrypted1[A] = mc8123_decrypt(A,src,key,1);
 
 		/* decode the data */
 		rom[A] = mc8123_decrypt(A,src,key,0);
 	}
-	for (A = 0x10000;A < 0x20000;A++)
-	{
-		UINT8 src = rom[A];
 
-		/* decode the opcodes */
-		rom[A+diff] = mc8123_decrypt((A & 0x3fff) + 0x8000,src,key,1);
+	for (bank = 0; bank < 4; bank++)
+		for (A = 0x8000;A < 0xc000;A++)
+		{
+			UINT8 src = rom[0x8000 + 0x4000*bank + A];
 
-		/* decode the data */
-		rom[A] = mc8123_decrypt((A & 0x3fff) + 0x8000,src,key,0);
-	}
+			/* decode the opcodes */
+			decrypted2[0x4000 * bank + (A-0x8000)] = mc8123_decrypt(A,src,key,1);
+
+			/* decode the data */
+			rom[0x8000 + 0x4000*bank + A] = mc8123_decrypt(A,src,key,0);
+		}
 }
 
 void mc8123_decrypt_0064(void)
 {
+	UINT8 *decrypted1 = auto_malloc(0x8000);
+	UINT8 *decrypted2 = auto_malloc(0x4000 * 4);
 	UINT8 *rom = memory_region(REGION_CPU1);
-	int diff = memory_region_length(REGION_CPU1) / 2;
-	int A;
+	int A, bank;
 	UINT8 *key = key_0064;
 
-
-	memory_set_opcode_base(0,rom+diff);
+	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted1);
+	memory_configure_bank_decrypted(1, 0, 4, decrypted2, 0x4000);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
 		UINT8 src = rom[A];
 
 		/* decode the opcodes */
-		rom[A+diff] = mc8123_decrypt(A,src,key,1);
+		decrypted1[A] = mc8123_decrypt(A,src,key,1);
 
 		/* decode the data */
 		rom[A] = mc8123_decrypt(A,src,key,0);
 	}
-	for (A = 0x10000;A < 0x20000;A++)
-	{
-		UINT8 src = rom[A];
 
-		/* decode the opcodes */
-		rom[A+diff] = mc8123_decrypt((A & 0x3fff) + 0x8000,src,key,1);
+	for (bank = 0; bank < 4; bank++)
+		for (A = 0x8000;A < 0xc000;A++)
+		{
+			UINT8 src = rom[0x8000 + 0x4000*bank + A];
 
-		/* decode the data */
-		rom[A] = mc8123_decrypt((A & 0x3fff) + 0x8000,src,key,0);
-	}
+			/* decode the opcodes */
+			decrypted2[0x4000 * bank + (A-0x8000)] = mc8123_decrypt(A,src,key,1);
+
+			/* decode the data */
+			rom[0x8000 + 0x4000*bank + A] = mc8123_decrypt(A,src,key,0);
+		}
 }
 
 void mc8123_decrypt_ninjakid2(void)
 {
 	UINT8 *rom = memory_region(REGION_CPU2);
-	int diff = memory_region_length(REGION_CPU2) / 2;
+	UINT8 *decrypted = auto_malloc(0x8000);
 	int A;
 	UINT8 *key = key_ninjakid2;
 
-
-	memory_set_opcode_base(1,rom+diff);
+	memory_set_decrypted_region(1, 0x0000, 0x7fff, decrypted);
 
 	for (A = 0x0000;A < 0x8000;A++)
 	{
 		UINT8 src = rom[A];
 
 		/* decode the opcodes */
-		rom[A+diff] = mc8123_decrypt(A,src,key,1);
+		decrypted[A] = mc8123_decrypt(A,src,key,1);
 
 		/* decode the data */
 		rom[A] = mc8123_decrypt(A,src,key,0);

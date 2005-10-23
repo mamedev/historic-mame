@@ -894,15 +894,15 @@ ALL RIGHTS RESERVED
 VER 0.1 4.SEP,1986 SUMMER
 
 Name          Size    CRC32       Chip Type
-------------------------------------------
-a78-05-1.52   65536   0x9f8ee242  27C512
-a78-06-1.51   65536   0x36256bdc  27C512
+-------------------------------------------
+a78-05-1.52    65536  0x9f8ee242  Fujitsu MBM27C512
+a78-06-1.51    32768  0x567934b6  Intel D27256
 
 */
 
 ROM_START( bublbobl )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "a78-06-1.51",    0x00000, 0x10000, CRC(36256bdc) SHA1(e3a414291d77fc674f6c9476d1307d1c8206dfd7) )
+	ROM_LOAD( "a78-06-1.51",    0x00000, 0x08000, CRC(567934b6) SHA1(b0c4d49fd551f465d148c25c3e80b278835e2f0d) )
     /* ROMs banked at 8000-bfff */
 	ROM_LOAD( "a78-05-1.52",    0x10000, 0x10000, CRC(9f8ee242) SHA1(924150d4e7e087a9b2b0a294c2d0e9903a266c6c) )
 	/* 20000-2ffff empty */

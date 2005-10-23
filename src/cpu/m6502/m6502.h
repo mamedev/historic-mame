@@ -64,10 +64,18 @@ enum {
 enum
 {
 	CPUINFO_PTR_M6502_READINDEXED_CALLBACK = CPUINFO_PTR_CPU_SPECIFIC,
-	CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK
+	CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK,
+	CPUINFO_PTR_M6510_PORTREAD,
+	CPUINFO_PTR_M6510_PORTWRITE,
+
+	CPUINFO_INT_M6510_PORT = CPUINFO_INT_CPU_SPECIFIC
 };
 
 extern void m6502_get_info(UINT32 state, union cpuinfo *info);
+
+#ifdef MAME_DEBUG
+extern unsigned m6502_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+#endif
 
 /****************************************************************************
  * The 6510
@@ -89,7 +97,7 @@ extern void m6502_get_info(UINT32 state, union cpuinfo *info);
 extern void m6510_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned int Dasm6510( char *dst, unsigned pc );
+extern unsigned m6510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
 
 #endif
@@ -109,6 +117,11 @@ extern unsigned int Dasm6510( char *dst, unsigned pc );
 #define M6510T_IRQ_LINE					M6502_IRQ_LINE
 
 extern void m6510t_get_info(UINT32 state, union cpuinfo *info);
+
+#ifdef MAME_DEBUG
+extern unsigned m6510t_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+#endif
+
 #endif
 
 #ifdef HAS_M7501
@@ -193,6 +206,11 @@ extern void n2a03_irq(void);
 #define M65C02_IRQ_LINE					M6502_IRQ_LINE
 
 extern void m65c02_get_info(UINT32 state, union cpuinfo *info);
+
+#ifdef MAME_DEBUG
+extern unsigned m65c02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+#endif
+
 #endif
 
 /****************************************************************************
@@ -213,6 +231,10 @@ extern void m65c02_get_info(UINT32 state, union cpuinfo *info);
 #define M65SC02_IRQ_LINE				M6502_IRQ_LINE
 
 extern void m65sc02_get_info(UINT32 state, union cpuinfo *info);
+
+#ifdef MAME_DEBUG
+extern unsigned m65sc02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+#endif
 #endif
 
 /****************************************************************************
@@ -236,7 +258,7 @@ extern void deco16_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm6502( char *dst, unsigned pc );
+extern unsigned deco16_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
 
 #endif /* _M6502_H */

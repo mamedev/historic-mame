@@ -172,8 +172,8 @@ typedef struct {
 	UINT8 sptc;
 	UINT8 sprb;
 	UINT8 sptb;
-	void *rx_timer;
-	void *tx_timer;
+	mame_timer *rx_timer;
+	mame_timer *tx_timer;
 } SPU_REGS;
 
 typedef union {
@@ -1570,7 +1570,7 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = ppc_get_context;		break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = ppc_dasm;		break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = ppc.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ppc_icount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc_reg_layout;				break;
@@ -1696,6 +1696,8 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 17;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
@@ -1703,11 +1705,11 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:						info->reset = ppcdrc603_reset;				break;
 		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc603_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc603_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc603_reg_layout;				break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = ppc_translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC603"); break;
@@ -1750,7 +1752,6 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:						info->reset = ppcdrc602_reset;				break;
 		case CPUINFO_PTR_EXIT:						info->exit = ppcdrc602_exit;				break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = ppcdrc602_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ppc_dasm64;			break;
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;

@@ -24,6 +24,13 @@ static UINT16* fd1094_cacheregion[S16_NUMCACHE]; // a cache region where S16_NUM
 static int fd1094_cached_states[S16_NUMCACHE]; // array of cached state numbers
 static int fd1094_current_cacheposition; // current position in cache array
 
+void *fd1094_get_decrypted_base(void)
+{
+	if (!fd1094_key)
+		return NULL;
+	return fd1094_userregion;
+}
+
 /* this function checks the cache to see if the current state is cached,
    if it is then it copies the cached data to the user region where code is
    executed from, if its not cached then it gets decrypted to the current
@@ -45,7 +52,7 @@ void fd1094_setstate_and_decrypt(int state)
 		{
 			/* copy cached state */
 			fd1094_userregion=fd1094_cacheregion[i];
-			memory_set_opcode_base(0,fd1094_userregion);
+			memory_set_decrypted_region(0, 0, fd1094_cpuregionsize - 1, fd1094_userregion);
 			m68k_set_encrypted_opcode_range(0,0,fd1094_cpuregionsize);
 
 			return;
@@ -66,7 +73,7 @@ void fd1094_setstate_and_decrypt(int state)
 
 	/* copy newly decrypted data to user region */
 	fd1094_userregion=fd1094_cacheregion[fd1094_current_cacheposition];
-	memory_set_opcode_base(0,fd1094_userregion);
+	memory_set_decrypted_region(0, 0, fd1094_cpuregionsize - 1, fd1094_userregion);
 	m68k_set_encrypted_opcode_range(0,0,fd1094_cpuregionsize);
 
 	fd1094_current_cacheposition++;
