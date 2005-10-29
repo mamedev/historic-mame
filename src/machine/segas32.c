@@ -314,3 +314,39 @@ READ16_HANDLER(arf_wakeup_protection_r)
 		"wake up! ARF!                                   ";
 	return prot[offset];
 }
+
+/******************************************************************************
+ ******************************************************************************
+  The J.League 1994 (Japan)
+ ******************************************************************************
+ ******************************************************************************/
+void jleague_fd1149_vblank( void )
+{
+	if( program_read_byte( 0x31ff4c ) == 0 )
+	{
+		// move on to team browser
+		if( program_read_word( 0x31ff48 ) == 0x5050 && program_read_word( 0x31ff4a ) == 0x5050 )
+		{
+			program_write_byte( 0x200016, 8 );
+			program_write_byte( 0x31ff4c, 1 );
+		}
+
+		// default to "Antlers" instead of "Goal"
+		else if( program_read_word( 0x31ff48 ) == 0x2222 && program_read_word( 0x31ff4a ) == 0x2222 )
+		{
+			program_write_byte( 0x20f708, 2 );
+			program_write_byte( 0x31ff4c, 1 );
+		}
+
+		// Map team browser selection to opponent browser selection
+		// using same lookup table that V60 uses for sound sample mapping.
+		else if( program_read_word( 0x31ff40 ) == 0x2222 && program_read_word( 0x31ff42 ) == 0x2222 )
+		{
+			UINT8  index = program_read_byte( 0x20f700 );
+			UINT16 value = program_read_word( 0x7bbc0 + index*2 );
+			program_write_byte( 0x20107c, value );
+			program_write_byte( 0x31ff4c, 1 );
+		}
+	}
+}
+

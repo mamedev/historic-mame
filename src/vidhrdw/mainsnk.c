@@ -1,6 +1,7 @@
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
-static unsigned char bg_color,  old_bg_color;
+static UINT8 bg_color,  old_bg_color;
 #define mainsnk_offset 8
 static tilemap *me_fg_tilemap;
 static tilemap *me_bg_tilemap;
@@ -30,7 +31,7 @@ static void stuff_palette( int source_index, int dest_index, int num_colors )
 
 
 
-	unsigned char *color_prom = memory_region(REGION_PROMS) + source_index;
+	UINT8 *color_prom = memory_region(REGION_PROMS) + source_index;
 	int i;
 	for( i=0; i<num_colors; i++ )
 	{
@@ -71,12 +72,6 @@ static void update_palette( int type )
 }
 
 
-READ8_HANDLER( me_fgram_r )
-{
-	return me_fgram[offset];
-}
-
-
 WRITE8_HANDLER( me_fgram_w )
 {
 	me_fgram[offset] = data;
@@ -95,12 +90,6 @@ static void get_me_bg_tile_info(int tile_index)
 			0)
 }
 
-
-READ8_HANDLER( me_bgram_r )
-{
-	return me_bgram[offset];
-
-}
 
 WRITE8_HANDLER( me_bgram_w )
 {
@@ -125,8 +114,8 @@ VIDEO_START(mainsnk)
 static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int scrollx, int scrolly )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	const unsigned char *source, *finish;
-	source =  memory_region(REGION_CPU1)+0xe800;
+	const UINT8 *source, *finish;
+	source =  spriteram;
 	finish =  source + 0x64;
 
 	while( source<finish )
@@ -154,13 +143,13 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int sc
 
 static void draw_status( mame_bitmap *bitmap, const rectangle *cliprect,int dx,int off )
 {
-	const unsigned char *base = memory_region(REGION_CPU1)+0xf000+off;
+	const UINT8 *base = me_fgram+off;
 	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
 	{
 		int sy,sx = (row&1)*8;
-		const unsigned char *source = base + (row&1)*32;
+		const UINT8 *source = base + (row&1)*32;
 		if( row>1 )
 		{
 			sx+=256+16;

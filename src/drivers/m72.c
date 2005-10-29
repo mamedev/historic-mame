@@ -78,7 +78,7 @@ kengo       0x18   --------------
 
 
 /* in vidhrdw/m72.c */
-extern unsigned char *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
+extern UINT8 *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
 MACHINE_INIT( m72 );
 MACHINE_INIT( xmultipl );
 MACHINE_INIT( kengo );
@@ -109,7 +109,7 @@ VIDEO_UPDATE( m72 );
 VIDEO_UPDATE( majtitle );
 
 
-static unsigned char *protection_ram;
+static UINT8 *protection_ram;
 
 
 
@@ -259,7 +259,7 @@ running, but they have not been derived from the real 8751 code.
 #define CRC_LEN 18
 
 /* Battle Chopper / Mr. Heli */
-static unsigned char bchopper_code[CODE_LEN] =
+static UINT8 bchopper_code[CODE_LEN] =
 {
 	0x68,0x00,0xa0,				// push 0a000h
 	0x1f,						// pop ds
@@ -283,13 +283,13 @@ static unsigned char bchopper_code[CODE_LEN] =
 	0xc6,0x06,0x70,0x16,0x77,	// mov [1670h], byte 077h
 	0xea,0x68,0x01,0x40,0x00	// jmp  0040:$0168
 };
-static unsigned char bchopper_crc[CRC_LEN] =  {	0x1a,0x12,0x5c,0x08, 0x84,0xb6,0x73,0xd1,
+static UINT8 bchopper_crc[CRC_LEN] =  {	0x1a,0x12,0x5c,0x08, 0x84,0xb6,0x73,0xd1,
 												0x54,0x91,0x94,0xeb, 0x00,0x00 };
-static unsigned char mrheli_crc[CRC_LEN] =	  {	0x24,0x21,0x1f,0x14, 0xf9,0x28,0xfb,0x47,
+static UINT8 mrheli_crc[CRC_LEN] =	  {	0x24,0x21,0x1f,0x14, 0xf9,0x28,0xfb,0x47,
 												0x4c,0x77,0x9e,0xc2, 0x00,0x00 };
 
 /* Ninja Spirit */
-static unsigned char nspirit_code[CODE_LEN] =
+static UINT8 nspirit_code[CODE_LEN] =
 {
 	0x68,0x00,0xa0,				// push 0a000h
 	0x1f,						// pop ds
@@ -313,13 +313,13 @@ static unsigned char nspirit_code[CODE_LEN] =
 	0xc6,0x06,0x71,0x16,0x00,	// mov [1671h], byte 000h
 	0xea,0x00,0x00,0x40,0x00	// jmp  0040:$0000
 };
-static unsigned char nspirit_crc[CRC_LEN] =   {	0xfe,0x94,0x6e,0x4e, 0xc8,0x33,0xa7,0x2d,
+static UINT8 nspirit_crc[CRC_LEN] =   {	0xfe,0x94,0x6e,0x4e, 0xc8,0x33,0xa7,0x2d,
 												0xf2,0xa3,0xf9,0xe1, 0xa9,0x6c,0x02,0x95, 0x00,0x00 };
-static unsigned char nspiritj_crc[CRC_LEN] =  {	0x26,0xa3,0xa5,0xe9, 0xc8,0x33,0xa7,0x2d,
+static UINT8 nspiritj_crc[CRC_LEN] =  {	0x26,0xa3,0xa5,0xe9, 0xc8,0x33,0xa7,0x2d,
 												0xf2,0xa3,0xf9,0xe1, 0xbc,0x6c,0x01,0x95, 0x00,0x00 };
 
 /* Image Fight */
-static unsigned char imgfight_code[CODE_LEN] =
+static UINT8 imgfight_code[CODE_LEN] =
 {
 	0x68,0x00,0xa0,				// push 0a000h
 	0x1f,						// pop ds
@@ -346,11 +346,11 @@ static unsigned char imgfight_code[CODE_LEN] =
 	0xc6,0x06,0xb0,0x1c,0x57,	// mov [1cb0h], byte 057h
 	0xea,0x00,0x00,0x40,0x00	// jmp  0040:$0000
 };
-static unsigned char imgfight_crc[CRC_LEN] =  {	0x7e,0xcc,0xec,0x03, 0x04,0x33,0xb6,0xc5,
+static UINT8 imgfight_crc[CRC_LEN] =  {	0x7e,0xcc,0xec,0x03, 0x04,0x33,0xb6,0xc5,
 												0xbf,0x37,0x92,0x94, 0x00,0x00 };
 
 /* Legend of Hero Tonma */
-static unsigned char loht_code[CODE_LEN] =
+static UINT8 loht_code[CODE_LEN] =
 {
 	0x68,0x00,0xa0,				// push 0a000h
 	0x1f,						// pop ds
@@ -365,27 +365,27 @@ static unsigned char loht_code[CODE_LEN] =
 	0xc6,0x06,0x00,0x0b,0x49^0xff,	// mov [0b00h], byte 049h
 	0xea,0x5d,0x01,0x40,0x00	// jmp  0040:$015d
 };
-static unsigned char loht_crc[CRC_LEN] =	  {	0x39,0x00,0x82,0xae, 0x2c,0x9d,0x4b,0x73,
+static UINT8 loht_crc[CRC_LEN] =	  {	0x39,0x00,0x82,0xae, 0x2c,0x9d,0x4b,0x73,
 												0xfb,0xac,0xd4,0x6d, 0x6d,0x5b,0x77,0xc0, 0x00,0x00 };
 
 /* X Multiply */
-static unsigned char xmultipl_code[CODE_LEN] =
+static UINT8 xmultipl_code[CODE_LEN] =
 {
 	0xea,0x30,0x02,0x00,0x0e	// jmp  0e00:$0230
 };
-static unsigned char xmultipl_crc[CRC_LEN] =  {	0x73,0x82,0x4e,0x3f, 0xfc,0x56,0x59,0x06,
+static UINT8 xmultipl_crc[CRC_LEN] =  {	0x73,0x82,0x4e,0x3f, 0xfc,0x56,0x59,0x06,
 												0x05,0x48,0xa8,0xf4, 0x00,0x00 };
 
 /* Dragon Breed */
-static unsigned char dbreed_code[CODE_LEN] =
+static UINT8 dbreed_code[CODE_LEN] =
 {
 	0xea,0x6c,0x00,0x00,0x00	// jmp  0000:$006c
 };
-static unsigned char dbreed_crc[CRC_LEN] =	  {	0xa4,0x96,0x5f,0xc0, 0xab,0x49,0x9f,0x19,
+static UINT8 dbreed_crc[CRC_LEN] =	  {	0xa4,0x96,0x5f,0xc0, 0xab,0x49,0x9f,0x19,
 												0x84,0xe6,0xd6,0xca, 0x00,0x00 };
 
 /* Air Duel */
-static unsigned char airduel_code[CODE_LEN] =
+static UINT8 airduel_code[CODE_LEN] =
 {
 	0x68,0x00,0xd0,				// push 0d000h
 	0x1f,						// pop ds
@@ -395,26 +395,24 @@ static unsigned char airduel_code[CODE_LEN] =
 	0xc6,0x06,0xc0,0x1c,0x57,	// mov [1cc0h], byte 057h
 	0xea,0x69,0x0b,0x00,0x00	// jmp  0000:$0b69
 };
-static unsigned char airduel_crc[CRC_LEN] =	  {	0x72,0x9c,0xca,0x85, 0xc9,0x12,0xcc,0xea,
+static UINT8 airduel_crc[CRC_LEN] =	  {	0x72,0x9c,0xca,0x85, 0xc9,0x12,0xcc,0xea,
 												0x00,0x00 };
 
 /* Daiku no Gensan */
-static unsigned char dkgenm72_code[CODE_LEN] =
+static UINT8 dkgenm72_code[CODE_LEN] =
 {
 	0xea,0x3d,0x00,0x00,0x10	// jmp  1000:$003d
 };
-static unsigned char dkgenm72_crc[CRC_LEN] =  {	0xc8,0xb4,0xdc,0xf8, 0xd3,0xba,0x48,0xed,
+static UINT8 dkgenm72_crc[CRC_LEN] =  {	0xc8,0xb4,0xdc,0xf8, 0xd3,0xba,0x48,0xed,
 												0x79,0x08,0x1c,0xb3, 0x00,0x00 };
 
 
-unsigned char *protection_code,*protection_crc;
+UINT8 *protection_code,*protection_crc;
 
 static READ8_HANDLER( protection_r )
 {
-	if (offset == 0xffb)
-		memcpy(protection_ram,protection_code,CODE_LEN);
-
-	return protection_ram[offset];
+	memcpy(protection_ram,protection_code,CODE_LEN);
+	return protection_ram[0xffb+offset];
 }
 
 static WRITE8_HANDLER( protection_w )
@@ -425,13 +423,15 @@ static WRITE8_HANDLER( protection_w )
 		memcpy(&protection_ram[0x0fe0],protection_crc,CRC_LEN);
 }
 
-static void install_protection_handler(unsigned char *code,unsigned char *crc)
+static void install_protection_handler(UINT8 *code,UINT8 *crc)
 {
+	protection_ram = auto_malloc(0x1000);
 	protection_code = code;
 	protection_crc =  crc;
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb0fff, 0, 0, protection_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb0fff, 0, 0, MRA8_BANK1);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0ffb, 0xb0ffb, 0, 0, protection_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb0fff, 0, 0, protection_w);
-	protection_ram = &memory_region(REGION_CPU1)[0xb0000];
+	memory_set_bankptr(1, protection_ram);
 }
 
 static DRIVER_INIT( bchopper )
@@ -515,7 +515,7 @@ static DRIVER_INIT( gallop )
 
 
 
-static unsigned char *soundram;
+static UINT8 *soundram;
 
 
 static READ8_HANDLER( soundram_r )
@@ -578,6 +578,7 @@ static ADDRESS_MAP_START( NAME##_readmem, ADDRESS_SPACE_PROGRAM, 8 )						\
 	AM_RANGE(0xd0000, 0xd3fff) AM_READ(m72_videoram1_r)						\
 	AM_RANGE(0xd8000, 0xdbfff) AM_READ(m72_videoram2_r)						\
 	AM_RANGE(0xe0000, 0xeffff) AM_READ(soundram_r)							\
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM										\
 ADDRESS_MAP_END														\
 																\
 static ADDRESS_MAP_START( NAME##_writemem, ADDRESS_SPACE_PROGRAM, 8 )					\
@@ -607,6 +608,7 @@ static ADDRESS_MAP_START( rtype2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd4000, 0xd7fff) AM_READ(m72_videoram2_r)
 	AM_RANGE(0xd8000, 0xd8bff) AM_READ(m72_palette2_r)
 	AM_RANGE(0xe0000, 0xe3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rtype2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -631,6 +633,7 @@ static ADDRESS_MAP_START( majtitle_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc8000, 0xc83ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xcc000, 0xccbff) AM_READ(m72_palette1_r)
 	AM_RANGE(0xd0000, 0xd3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( majtitle_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -656,6 +659,7 @@ static ADDRESS_MAP_START( hharry_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xcc000, 0xccbff) AM_READ(m72_palette2_r)
 	AM_RANGE(0xd0000, 0xd3fff) AM_READ(m72_videoram1_r)
 	AM_RANGE(0xd8000, 0xdbfff) AM_READ(m72_videoram2_r)
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hharry_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -677,6 +681,7 @@ static ADDRESS_MAP_START( hharryu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd0000, 0xd3fff) AM_READ(m72_videoram1_r)
 	AM_RANGE(0xd4000, 0xd7fff) AM_READ(m72_videoram2_r)
 	AM_RANGE(0xe0000, 0xe3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hharryu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -700,6 +705,7 @@ static ADDRESS_MAP_START( kengo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x80000, 0x83fff) AM_READ(m72_videoram1_r)
 	AM_RANGE(0x84000, 0x87fff) AM_READ(m72_videoram2_r)
 	AM_RANGE(0xe0000, 0xe3fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xffff0, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kengo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -803,12 +809,8 @@ static ADDRESS_MAP_START( kengo_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&soundram)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_RAM AM_REGION(REGION_CPU2, 0) AM_BASE(&soundram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
@@ -2012,7 +2014,7 @@ static MACHINE_DRIVER_START( rtype )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 								/* IRQs are generated by main Z80 and YM2151 */
 	MDRV_FRAMES_PER_SECOND(55)
@@ -2050,7 +2052,7 @@ static MACHINE_DRIVER_START( m72 )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(fake_nmi,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2093,7 +2095,7 @@ static MACHINE_DRIVER_START( dkgenm72 )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(fake_nmi,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2136,7 +2138,7 @@ static MACHINE_DRIVER_START( xmultipl )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2179,7 +2181,7 @@ static MACHINE_DRIVER_START( dbreed )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2221,7 +2223,7 @@ static MACHINE_DRIVER_START( rtype2 )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(rtype2_sound_readport,rtype2_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2263,7 +2265,7 @@ static MACHINE_DRIVER_START( majtitle )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(rtype2_sound_readport,rtype2_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2305,7 +2307,7 @@ static MACHINE_DRIVER_START( hharry )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(rtype2_sound_readport,rtype2_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2348,7 +2350,7 @@ static MACHINE_DRIVER_START( hharryu )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(rtype2_sound_readport,rtype2_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2391,7 +2393,7 @@ static MACHINE_DRIVER_START( poundfor )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(poundfor_sound_readport,poundfor_sound_writeport)
 	MDRV_CPU_VBLANK_INT(fake_nmi,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */
@@ -2432,7 +2434,7 @@ static MACHINE_DRIVER_START( kengo )
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* 3.579545 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 	MDRV_CPU_IO_MAP(rtype2_sound_readport,rtype2_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,128)	/* clocked by V1? (Vigilante) */
 								/* IRQs are generated by main Z80 and YM2151 */

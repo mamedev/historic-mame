@@ -3,7 +3,6 @@
 /* defined in machine/astrocde.c */
 
 extern UINT8 *wow_protected_ram;
-extern size_t wow_protected_ram_size;
 
 READ8_HANDLER( seawolf2_controller1_r );
 READ8_HANDLER( seawolf2_controller2_r );
@@ -38,7 +37,6 @@ extern read8_handler astrocde_videoram_r;
 PALETTE_INIT( astrocde );
 VIDEO_UPDATE( seawolf2 );
 READ8_HANDLER( wow_intercept_r );
-WRITE8_HANDLER( wow_videoram_w );
 WRITE8_HANDLER( astrocde_magic_expand_color_w );
 WRITE8_HANDLER( astrocde_magic_control_w );
 WRITE8_HANDLER( wow_magicram_w );

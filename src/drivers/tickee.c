@@ -25,8 +25,6 @@
 UINT16 *tickee_control;
 
 
-static UINT16 *code_rom;
-
 
 /*************************************
  *
@@ -36,9 +34,6 @@ static UINT16 *code_rom;
 
 static MACHINE_INIT( tickee )
 {
-	/* mirror the ROM into bank 1 */
-	memory_set_bankptr(1, code_rom);
-
 	ticket_dispenser_init(100, 0, 1);
 
 	tlc34076_reset(6);
@@ -101,59 +96,40 @@ static WRITE16_HANDLER( tickee_control_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x02000000, 0x02ffffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0x04000000, 0x04003fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x04100000, 0x041000ff) AM_READ(tlc34076_lsb_r)
-	AM_RANGE(0x04200000, 0x0420000f) AM_READ(AY8910_read_port_0_lsb_r)
-	AM_RANGE(0x04200100, 0x0420010f) AM_READ(AY8910_read_port_1_lsb_r)
-	AM_RANGE(0x04400040, 0x0440004f) AM_READ(input_port_3_word_r)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM) AM_BASE(&tickee_vram)
-	AM_RANGE(0x04000000, 0x04003fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x04100000, 0x041000ff) AM_WRITE(tlc34076_lsb_w)
-	AM_RANGE(0x04200000, 0x0420000f) AM_WRITE(AY8910_control_port_0_lsb_w)
+static ADDRESS_MAP_START( tickee_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_BASE(&tickee_vram)
+	AM_RANGE(0x02000000, 0x02ffffff) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x04000000, 0x04003fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x04100000, 0x041000ff) AM_READWRITE(tlc34076_lsb_r, tlc34076_lsb_w)
+	AM_RANGE(0x04200000, 0x0420000f) AM_READWRITE(AY8910_read_port_0_lsb_r, AY8910_control_port_0_lsb_w)
 	AM_RANGE(0x04200010, 0x0420001f) AM_WRITE(AY8910_write_port_0_lsb_w)
-	AM_RANGE(0x04200100, 0x0420010f) AM_WRITE(AY8910_control_port_1_lsb_w)
+	AM_RANGE(0x04200100, 0x0420010f) AM_READWRITE(AY8910_read_port_1_lsb_r, AY8910_control_port_1_lsb_w)
 	AM_RANGE(0x04200110, 0x0420011f) AM_WRITE(AY8910_write_port_1_lsb_w)
 	AM_RANGE(0x04400000, 0x0440007f) AM_WRITE(tickee_control_w) AM_BASE(&tickee_control)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITE(MWA16_NOP)		/* seems to be a bug in their code */
-	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+	AM_RANGE(0x04400040, 0x0440004f) AM_READ(input_port_3_word_r)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITENOP		/* seems to be a bug in their code */
+	AM_RANGE(0xff000000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
+
 
 /* addreses in the 04x range shifted slightly...*/
-static ADDRESS_MAP_START( ghoshunt_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x02000000, 0x02ffffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0x04100000, 0x04103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x04200000, 0x042000ff) AM_READ(tlc34076_lsb_r)
-	AM_RANGE(0x04300000, 0x0430000f) AM_READ(AY8910_read_port_0_lsb_r)
-	AM_RANGE(0x04300100, 0x0430010f) AM_READ(AY8910_read_port_1_lsb_r)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_READ(tms34010_io_register_r)
-	AM_RANGE(0xff000000, 0xffffffff) AM_READ(MRA16_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( ghoshunt_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_WRITE(MWA16_RAM) AM_BASE(&tickee_vram)
-	AM_RANGE(0x04100000, 0x04103fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x04200000, 0x042000ff) AM_WRITE(tlc34076_lsb_w)
-	AM_RANGE(0x04300000, 0x0430000f) AM_WRITE(AY8910_control_port_0_lsb_w)
+static ADDRESS_MAP_START( ghoshunt_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_BASE(&tickee_vram)
+	AM_RANGE(0x02000000, 0x02ffffff) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x04100000, 0x04103fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x04200000, 0x042000ff) AM_READWRITE(tlc34076_lsb_r, tlc34076_lsb_w)
+	AM_RANGE(0x04300000, 0x0430000f) AM_READWRITE(AY8910_read_port_0_lsb_r, AY8910_control_port_0_lsb_w)
 	AM_RANGE(0x04300010, 0x0430001f) AM_WRITE(AY8910_write_port_0_lsb_w)
-	AM_RANGE(0x04300100, 0x0430010f) AM_WRITE(AY8910_control_port_1_lsb_w)
+	AM_RANGE(0x04300100, 0x0430010f) AM_READWRITE(AY8910_read_port_1_lsb_r, AY8910_control_port_1_lsb_w)
 	AM_RANGE(0x04300110, 0x0430011f) AM_WRITE(AY8910_write_port_1_lsb_w)
 	AM_RANGE(0x04500000, 0x0450007f) AM_WRITE(tickee_control_w) AM_BASE(&tickee_control)
-	AM_RANGE(0xc0000000, 0xc00001ff) AM_WRITE(tms34010_io_register_w)
-	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITE(MWA16_NOP)		/* seems to be a bug in their code */
-	AM_RANGE(0xff000000, 0xffffffff) AM_WRITE(MWA16_ROM) AM_BASE(&code_rom)
+	AM_RANGE(0xc0000000, 0xc00001ff) AM_READWRITE(tms34010_io_register_r, tms34010_io_register_w)
+	AM_RANGE(0xc0000240, 0xc000025f) AM_WRITENOP		/* seems to be a bug in their code */
+	AM_RANGE(0xff000000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
+
+
 
 /*************************************
  *
@@ -329,7 +305,7 @@ MACHINE_DRIVER_START( tickee )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(tms_config)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(tickee_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (232 - 200)) / (60 * 232))
@@ -420,7 +396,7 @@ MACHINE_DRIVER_START( ghoshunt )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(tms_config)
-	MDRV_CPU_PROGRAM_MAP(ghoshunt_readmem,ghoshunt_writemem)
+	MDRV_CPU_PROGRAM_MAP(ghoshunt_map,0)
 
 	MDRV_FRAMES_PER_SECOND(69)
 	MDRV_VBLANK_DURATION((1000000 * (232 - 200)) / (60 * 232))
@@ -451,6 +427,7 @@ MACHINE_DRIVER_START( ghoshunt )
 MACHINE_DRIVER_END
 
 
+
 /*************************************
  *
  *  ROM definitions
@@ -458,19 +435,16 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( tickee )
-	ROM_REGION( TOBYTE(0x800000), REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "3.ic4",  0x000000, 0x80000, CRC(5b1e399c) SHA1(681608f06bbaf3d258e9f4768a8a6c5047ad08ec) )
 	ROM_LOAD16_BYTE( "2.ic3",  0x000001, 0x80000, CRC(1b26d4bb) SHA1(40266ec0fe5897eba85072e5bb39973d34f97546) )
 	ROM_LOAD16_BYTE( "1.ic2",  0x100000, 0x80000, CRC(f7f0309e) SHA1(4a93e0e203f5a340a56b770a40b9ab00e131644d) )
 	ROM_LOAD16_BYTE( "4.ic5",  0x100001, 0x80000, CRC(ceb0f559) SHA1(61923fe09e1dfde1eaae297ccbc672bc74a70397) )
 ROM_END
 
-ROM_START( ghoshunt )
-	ROM_REGION( TOBYTE(0x800000), REGION_CPU1, 0 )		/* 34010 dummy region */
 
-	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+ROM_START( ghoshunt )
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "ghosthun.7g",  0x000001, 0x80000, CRC(d59716c2) SHA1(717a1a1c5c559569f9e7bc4ae4356d112f0cf4eb) )
 	ROM_LOAD16_BYTE( "ghosthun.7h",  0x000000, 0x80000, CRC(ef38bfc8) SHA1(12b8f29f4da120f14126cbcdf4019bedd97063c3) )
 	ROM_LOAD16_BYTE( "ghosthun.7j",  0x100001, 0x80000, CRC(763d7c79) SHA1(f0dec99feeeefeddda6a88276dc306a30a58f4e4) )
@@ -479,26 +453,12 @@ ROM_END
 
 
 ROM_START( tutstomb )
-	ROM_REGION( TOBYTE(0x800000), REGION_CPU1, 0 )		/* 34010 dummy region */
-
-	ROM_REGION16_LE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 34010 code */
+	ROM_REGION16_LE( 0x200000, REGION_USER1, 0 )	/* 34010 code */
 	ROM_LOAD16_BYTE( "tutstomb.7g",  0x000001, 0x80000, CRC(b74d3cf2) SHA1(2221b565362183a97a959389e8a0a026ca89e0ce) )
 	ROM_LOAD16_BYTE( "tutstomb.7h",  0x000000, 0x80000, CRC(177f3afb) SHA1(845f982a66a8b69b0ea0045399102e8bb33f7fbf) )
 	ROM_LOAD16_BYTE( "tutstomb.7j",  0x100001, 0x80000, CRC(69094f31) SHA1(eadae8847d0ff1568e63f71bf09a84dc443fdc1c))
 	ROM_LOAD16_BYTE( "tutstomb.7k",  0x100000, 0x80000, CRC(bc362df8) SHA1(7b15c646e99c916d850629e4e758b1dbb329639a) )
 ROM_END
-
-/*************************************
- *
- *  Driver init
- *
- *************************************/
-
-static DRIVER_INIT( tickee )
-{
-	/* set up code ROMs */
-	memcpy(code_rom, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
-}
 
 
 
@@ -508,6 +468,6 @@ static DRIVER_INIT( tickee )
  *
  *************************************/
 
-GAME( 1994, tickee,   0, tickee,   tickee,   tickee, ROT0, "Raster Elite",  "Tickee Tickats", 0 )
-GAME( 1996, ghoshunt, 0, ghoshunt, ghoshunt, tickee, ROT0, "Hanaho Games",  "Ghost Hunter", 0 )
-GAME( 1996, tutstomb, 0, ghoshunt, ghoshunt, tickee, ROT0, "Island Design", "Tut's Tomb", 0 )
+GAME( 1994, tickee,   0, tickee,   tickee,   0, ROT0, "Raster Elite",  "Tickee Tickats", 0 )
+GAME( 1996, ghoshunt, 0, ghoshunt, ghoshunt, 0, ROT0, "Hanaho Games",  "Ghost Hunter", 0 )
+GAME( 1996, tutstomb, 0, ghoshunt, ghoshunt, 0, ROT0, "Island Design", "Tut's Tomb", 0 )

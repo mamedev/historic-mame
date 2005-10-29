@@ -618,6 +618,7 @@ struct conversion_t {
 	{ 3, { "mame", "game", "driver", "cocktail", 0 }, process_item3 },
 	{ 3, { "mame", "game", "driver", "protection", 0 }, process_item3 },
 	{ 3, { "mame", "game", "driver", "palettesize", 0 }, process_num3 },
+	{ 3, { "mame", "game", "driver", "savestate", 0 }, process_item3 },
 	{ 0, { 0, 0, 0, 0, 0 }, 0 }
 };
 

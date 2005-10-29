@@ -3691,6 +3691,13 @@ static DRIVER_INIT( svf )
 }
 
 
+static DRIVER_INIT( jleague )
+{
+	common_init(NULL, NULL, NULL);
+	system32_prot_vblank = jleague_fd1149_vblank;
+}
+
+
 static DRIVER_INIT( titlef )
 {
 	common_init(NULL, NULL, NULL);
@@ -3731,7 +3738,7 @@ GAME( 1991, spidman,  0,        system32,     spidman,  spidman,  ROT0, "Sega", 
 GAME( 1991, spidmanu, spidman,  system32,     spidmanu, spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (US)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, svf,      0,        system32,     svf,      svf,      ROT0, "Sega",   "Super Visual Football: European Sega Cup", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, svs,	  svf,		system32,     svf,	    svf,      ROT0, "Sega",   "Super Visual Soccer: Sega Cup (US)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1994, jleague,  svf,      system32,     svf,      svf,      ROT0, "Sega",   "The J.League 1994 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1994, jleague,  svf,		system32,     svf,      jleague,  ROT0, "Sega",   "The J.League 1994 (Japan)", GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1994, harddunk, 0,        multi32,      harddunk, harddunk, ROT0, "Sega",   "Hard Dunk (World)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, harddunj, harddunk, multi32,      harddunk, harddunk, ROT0, "Sega",   "Hard Dunk (Japan)", GAME_IMPERFECT_GRAPHICS )

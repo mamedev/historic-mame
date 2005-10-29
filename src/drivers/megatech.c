@@ -38,18 +38,6 @@ unsigned int bios_ctrl_inputs;
 #define MASTER_CLOCK		53693100
 
 
-static MACHINE_INIT( megatech )
-{
-//  unsigned char* ram = memory_region(REGION_CPU3);
-
-	/* mirroring of ram etc. */
-	memory_set_bankptr(1, &genesis_z80_ram[0]);
-	memory_set_bankptr(2, &genesis_z80_ram[0]);
-	memory_set_bankptr(3, &genesis_68k_ram[0]);
-
-	machine_init_genesis();
-}
-
 static INPUT_PORTS_START( genesis ) /* Genesis Input Ports */
 GENESIS_PORTS
 INPUT_PORTS_END
@@ -243,34 +231,20 @@ static WRITE8_HANDLER( bios_ctrl_w )
 }
 
 
-static ADDRESS_MAP_START( megatech_bios_readmem, ADDRESS_SPACE_PROGRAM, 8 )
- 	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x6000, 0x63ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( megatech_bios_map, ADDRESS_SPACE_PROGRAM, 8 )
+ 	AM_RANGE(0x0000, 0x2fff) AM_ROM
+ 	AM_RANGE(0x3000, 0x5fff) AM_RAM
 	AM_RANGE(0x6400, 0x6400) AM_READ(input_port_10_r)
 	AM_RANGE(0x6401, 0x6401) AM_READ(input_port_11_r)
+	AM_RANGE(0x6404, 0x6404) AM_WRITE(megatech_instr_w)
 	AM_RANGE(0x6800, 0x6800) AM_READ(input_port_6_r)
 	AM_RANGE(0x6801, 0x6801) AM_READ(input_port_7_r)
-	AM_RANGE(0x6802, 0x6807) AM_READ(bios_ctrl_r)
+	AM_RANGE(0x6802, 0x6807) AM_READWRITE(bios_ctrl_r, bios_ctrl_w)
 //  AM_RANGE(0x6805, 0x6805) AM_READ(input_port_8_r)
-	AM_RANGE(0x6808, 0x6fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x7000, 0x77ff) AM_READ(MRA8_RAM)
+ 	AM_RANGE(0x7000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0xffff) AM_READ(megatech_instr_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( megatech_bios_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x5000, 0x5fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x6000, 0x63ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x6404, 0x6404) AM_WRITE(megatech_instr_w)
-	AM_RANGE(0x6802, 0x6807) AM_WRITE(bios_ctrl_w)
-	AM_RANGE(0x6808, 0x6fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x7000, 0x7fff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
 
 /* basically from src/drivers/segasyse.c */
 unsigned char segae_vdp_ctrl_r ( UINT8 chip );
@@ -330,19 +304,17 @@ static WRITE8_HANDLER (megatech_bios_port_7f_w)
 }
 
 
-static ADDRESS_MAP_START( megatech_bios_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( megatech_bios_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x3f, 0x3f) AM_WRITE(megatech_bios_port_ctrl_w)
+	AM_RANGE(0x7f, 0x7f) AM_WRITE(megatech_bios_port_7f_w)
+	AM_RANGE(0xbe, 0xbf) AM_WRITE(megatech_bios_port_be_bf_w)			/* VDP */
 	AM_RANGE(0xdc, 0xdc) AM_READ(megatech_bios_port_dc_r)  // player inputs
 	AM_RANGE(0xdd, 0xdd) AM_READ(megatech_bios_port_dd_r)  // other player 2 inputs
 	AM_RANGE(0xbe, 0xbf) AM_READ(megatech_bios_port_be_bf_r)			/* VDP */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( megatech_bios_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x3f, 0x3f) AM_WRITE(megatech_bios_port_ctrl_w)
-	AM_RANGE(0x7f, 0x7f) AM_WRITE(megatech_bios_port_7f_w)
-	AM_RANGE(0xbe, 0xbf) AM_WRITE(megatech_bios_port_be_bf_w)			/* VDP */
-ADDRESS_MAP_END
+
 
 static UINT8 hintcount;			/* line interrupt counter, decreased each scanline */
 extern UINT8 vintpending;
@@ -390,49 +362,31 @@ INTERRUPT_GEN (megatech_irq)
 
 }
 
-static ADDRESS_MAP_START( genesis_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)					/* Cartridge Program Rom */
-	AM_RANGE(0xa10000, 0xa1001f) AM_READ(genesis_io_r)				/* Genesis Input */
-	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(genesis_68k_to_z80_r)
-	AM_RANGE(0xc00000, 0xc0001f) AM_READ(genesis_vdp_r)				/* VDP Access */
-	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_BANK3)				/* Main Ram */
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)					/* Main Ram */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( genesis_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)					/* Cartridge Program Rom */
-	AM_RANGE(0xa10000, 0xa1001f) AM_WRITE(genesis_io_w) AM_BASE(&genesis_io_ram)				/* Genesis Input */
+static ADDRESS_MAP_START( genesis_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x3fffff) AM_ROM								/* Cartridge Program Rom */
+	AM_RANGE(0xa10000, 0xa1001f) AM_READWRITE(genesis_io_r, genesis_io_w) AM_BASE(&genesis_io_ram) /* Genesis Input */
 	AM_RANGE(0xa11000, 0xa11203) AM_WRITE(genesis_ctrl_w)
-	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(megaplay_68k_to_z80_w)
-	AM_RANGE(0xc00000, 0xc0001f) AM_WRITE(genesis_vdp_w)				/* VDP Access */
-	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_BANK3)				/* Main Ram */
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&genesis_68k_ram)/* Main Ram */
+	AM_RANGE(0xa00000, 0xa0ffff) AM_READWRITE(genesis_68k_to_z80_r, megaplay_68k_to_z80_w)
+	AM_RANGE(0xc00000, 0xc0001f) AM_READWRITE(genesis_vdp_r, genesis_vdp_w)				/* VDP Access */
+	AM_RANGE(0xe00000, 0xe0ffff) AM_MIRROR(0x1f0000) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( genesis_z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
- 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1)
- 	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2) /* mirror */
-	AM_RANGE(0x4000, 0x7fff) AM_READ(genesis_z80_r)
+static ADDRESS_MAP_START( genesis_z80_map, ADDRESS_SPACE_PROGRAM, 8 )
+ 	AM_RANGE(0x0000, 0x1fff) AM_MIRROR(0x2000) AM_RAM AM_BASE(&genesis_z80_ram)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(genesis_z80_r, genesis_z80_w)
 	AM_RANGE(0x8000, 0xffff) AM_READ(genesis_z80_bank_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( genesis_z80_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_BANK1) AM_BASE(&genesis_z80_ram)
- 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_BANK2) /* mirror */
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(genesis_z80_w)
- // AM_RANGE(0x8000, 0xffff) AM_WRITE(genesis_z80_bank_w)
-ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( genesis_base )
 	/*basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, MASTER_CLOCK / 7)
-	MDRV_CPU_PROGRAM_MAP(genesis_readmem, genesis_writemem)
+	MDRV_CPU_PROGRAM_MAP(genesis_map, 0)
 	MDRV_CPU_VBLANK_INT(genesis_vblank_interrupt,1)
 
 	MDRV_CPU_ADD_TAG("sound", Z80, MASTER_CLOCK / 15)
-	MDRV_CPU_PROGRAM_MAP(genesis_z80_readmem, genesis_z80_writemem)
+	MDRV_CPU_PROGRAM_MAP(genesis_z80_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1) /* from vdp at scanline 0xe0 */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -464,21 +418,23 @@ static MACHINE_DRIVER_START( megatech )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM( genesis_base )
+
+	MDRV_CPU_ADD_TAG("megatech_bios", Z80, MASTER_CLOCK / 15) /* ?? */
+	MDRV_CPU_PROGRAM_MAP(megatech_bios_map, 0)
+	MDRV_CPU_IO_MAP(megatech_bios_portmap,0)
+	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
+
+	MDRV_MACHINE_INIT(genesis)
+
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_DUAL_MONITOR)
 
 	MDRV_VIDEO_START(megatech)
 	MDRV_VIDEO_UPDATE(megatech)
-	MDRV_MACHINE_INIT(megatech)
 
 	MDRV_ASPECT_RATIO(4,6)
 	MDRV_SCREEN_SIZE(320,224+192) /* +192 for megatech BIOS screen/menu */
 	MDRV_VISIBLE_AREA(0, 319, 0, 223+192)
 	MDRV_PALETTE_LENGTH(64+32) /* +32 for megatech bios vdp part */
-
-	MDRV_CPU_ADD_TAG("megatech_bios", Z80, MASTER_CLOCK / 15) /* ?? */
-	MDRV_CPU_PROGRAM_MAP(megatech_bios_readmem, megatech_bios_writemem)
-	MDRV_CPU_IO_MAP(megatech_bios_readport,megatech_bios_writeport)
-	MDRV_CPU_VBLANK_INT(megatech_irq, 262)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)

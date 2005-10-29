@@ -18,6 +18,9 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/dac.h"
+#include "vidhrdw/generic.h"
+
+static UINT8 *battery_ram;
 
 /* from vidhrdw */
 VIDEO_UPDATE( truco );
@@ -40,8 +43,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x17ff) AM_WRITE(MWA8_RAM)		/* general purpose ram */
-	AM_RANGE(0x1800, 0x7bff) AM_WRITE(MWA8_RAM)		/* video ram */
-	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(MWA8_RAM)		/* battery backed ram */
+	AM_RANGE(0x1800, 0x7bff) AM_WRITE(MWA8_RAM)	AM_BASE(&videoram)	/* video ram */
+	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&battery_ram)		/* battery backed ram */
 	AM_RANGE(0x8000, 0x8001) AM_WRITE(MWA8_NOP)		/* unknown */
 	AM_RANGE(0x8002, 0x8002) AM_WRITE(DAC_0_data_w)
 	AM_RANGE(0x8003, 0x8007) AM_WRITE(MWA8_NOP)		/* unknown */
@@ -99,32 +102,31 @@ INPUT_PORTS_END
 static MACHINE_INIT( truco )
 {
 	int a;
-	UINT8 *	mem = memory_region( REGION_CPU1 );
 
 	/* Setup the data on the battery backed RAM */
 
 	/* IRQ check */
-	mem[0x7c02] = 0x51;
-	mem[0x7c24] = 0x49;
-	mem[0x7c89] = 0x04;
-	mem[0x7d70] = 0x12;
-	mem[0x7da8] = 0xd5;
+	battery_ram[0x002] = 0x51;
+	battery_ram[0x024] = 0x49;
+	battery_ram[0x089] = 0x04;
+	battery_ram[0x170] = 0x12;
+	battery_ram[0x1a8] = 0xd5;
 
 	/* Mainloop check */
-	mem[0x7c05] = 0x04;
-	mem[0x7e2B] = 0x46;
-	mem[0x7e36] = 0xfb;
-	mem[0x7efe] = 0x1D;
-	mem[0x7f59] = 0x5A;
+	battery_ram[0x005] = 0x04;
+	battery_ram[0x22B] = 0x46;
+	battery_ram[0x236] = 0xfb;
+	battery_ram[0x2fe] = 0x1D;
+	battery_ram[0x359] = 0x5A;
 
 	/* Boot check */
-	a = ( mem[0x7c00] << 8 ) | mem[0x7c01];
+	a = ( battery_ram[0x000] << 8 ) | battery_ram[0x001];
 
 	a += 0x4d2;
 
-	mem[0x7c1d] = ( a >> 8 ) & 0xff;
-	mem[0x7c1e] = a & 0xff;
-	mem[0x7c20] = mem[0x7c11];
+	battery_ram[0x01d] = ( a >> 8 ) & 0xff;
+	battery_ram[0x01e] = a & 0xff;
+	battery_ram[0x020] = battery_ram[0x011];
 }
 
 static INTERRUPT_GEN( truco_interrupt )

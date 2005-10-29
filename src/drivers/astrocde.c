@@ -128,97 +128,78 @@ static WRITE8_HANDLER( seawolf2_sound_2_w )  // Port 41
 }
 
 
-static ADDRESS_MAP_START( seawolf2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc000, 0xc3ff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( seawolf2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+/*************************************
+ *
+ *  Memory maps
+ *
+ *************************************/
+
+static ADDRESS_MAP_START( seawolf2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&wow_videoram)
+	AM_RANGE(0xc000, 0xc3ff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8000, 0xcfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( astrocde_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)	/* ASG */
-	AM_RANGE(0x8000, 0xcfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&wow_videoram)
+	AM_RANGE(0x8000, 0xcfff) AM_ROM
+	AM_RANGE(0xd000, 0xdfff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( wow_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8000, 0xcfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(wow_protected_ram_r)
-	AM_RANGE(0xd400, 0xdfff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( wow_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( wow_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)	/* ASG */
-	AM_RANGE(0x8000, 0xcfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(wow_protected_ram_w) AM_BASE(&wow_protected_ram) AM_SIZE(&wow_protected_ram_size)
-	AM_RANGE(0xd400, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&wow_videoram)
+	AM_RANGE(0x8000, 0xcfff) AM_ROM
+	AM_RANGE(0xd000, 0xd3ff) AM_RAM //AM_READWRITE(wow_protected_ram_r, wow_protected_ram_w) AM_BASE(&wow_protected_ram)
+	AM_RANGE(0xd400, 0xdfff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( robby_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xe000, 0xe7ff) AM_READ(robby_nvram_r)
-	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( robby_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( robby_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(wow_videoram_w) AM_BASE(&wow_videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
-  	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(robby_nvram_w)
-  	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_RAM AM_BASE(&wow_videoram)
+	AM_RANGE(0x8000, 0xdfff) AM_ROM
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(robby_nvram_r, robby_nvram_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xe800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( demndrgn_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_ROM)
-  	AM_RANGE(0xe000, 0xe7ff) AM_READ(demndrgn_nvram_r)
-	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( demndrgn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( demndrgn_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(profpac_videoram_w)
-	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
-  	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(demndrgn_nvram_w)
-  	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK1, profpac_videoram_w)
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(2)
+	AM_RANGE(0xc000, 0xdfff) AM_ROM
+  	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(demndrgn_nvram_r, demndrgn_nvram_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xe800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( profpac_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_ROM)
-  	AM_RANGE(0xe000, 0xe7ff) AM_READ(profpac_nvram_r)
-	AM_RANGE(0xe800, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( profpac_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( profpac_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
 	AM_RANGE(0x0000, 0x3fff) AM_WRITE(wow_magicram_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(profpac_videoram_w)
-	AM_RANGE(0x8000, 0xdfff) AM_WRITE(MWA8_ROM)
-  	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(profpac_nvram_w)
-  	AM_RANGE(0xe800, 0xffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK1, profpac_videoram_w)
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(2)
+	AM_RANGE(0xc000, 0xdfff) AM_ROM
+  	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(profpac_nvram_r, profpac_nvram_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xe800, 0xffff) AM_RAM
 ADDRESS_MAP_END
+
+
+
+/*************************************
+ *
+ *  Port maps
+ *
+ *************************************/
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x08, 0x08) AM_MIRROR(0xff00) AM_READ(wow_intercept_r)
@@ -277,6 +258,12 @@ ADDRESS_MAP_END
 
 
 
+/*************************************
+ *
+ *  Input ports
+ *
+ *************************************/
+
 INPUT_PORTS_START( seawolf2 )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x3f, 0x20, IPT_PADDLE ) PORT_MINMAX(0,0x3f) PORT_SENSITIVITY(20) PORT_KEYDELTA(5) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(1)
@@ -324,6 +311,7 @@ INPUT_PORTS_START( seawolf2 )
 	PORT_DIPSETTING(    0x00, "B/W" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( spacezap )
 	PORT_START_TAG("IN0")
@@ -379,6 +367,7 @@ INPUT_PORTS_START( spacezap )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( ebases )
 	PORT_START_TAG("IN0")
@@ -448,6 +437,7 @@ INPUT_PORTS_START( ebases )
 	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_RESET	\
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( wow )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -506,6 +496,7 @@ INPUT_PORTS_START( wow )
 	PORT_DIPSETTING(    0x00, "On only when controls are touched" )
 	PORT_DIPSETTING(    0x80, "Always On"  )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( gorf )
 	PORT_START_TAG("IN0")
@@ -566,6 +557,7 @@ INPUT_PORTS_START( gorf )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( robby )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -622,6 +614,7 @@ INPUT_PORTS_START( robby )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( demndrgn )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -648,8 +641,8 @@ INPUT_PORTS_START( demndrgn )
 
 	PORT_START_TAG("IN3")
 	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(50) PORT_KEYDELTA(10) PORT_RESET
-
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( profpac )
 	PORT_START_TAG("IN0")
@@ -702,6 +695,13 @@ INPUT_PORTS_START( profpac )
 INPUT_PORTS_END
 
 
+
+/*************************************
+ *
+ *  Sound definitions
+ *
+ *************************************/
+
 static const char *seawolf_sample_names[] =
 {
 	"*seawolf",
@@ -745,12 +745,17 @@ static struct CustomSound_interface wow_custom_interface =
 
 
 
+/*************************************
+ *
+ *  Machine drivers
+ *
+ *************************************/
 
 static MACHINE_DRIVER_START( seawolf2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(seawolf2_readmem,seawolf2_writemem)
+	MDRV_CPU_PROGRAM_MAP(seawolf2_map,0)
 	MDRV_CPU_IO_MAP(readport,seawolf2_writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
@@ -779,7 +784,7 @@ static MACHINE_DRIVER_START( spacezap )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
+	MDRV_CPU_PROGRAM_MAP(wow_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
@@ -807,7 +812,7 @@ static MACHINE_DRIVER_START( ebases )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(astrocde_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
@@ -835,7 +840,7 @@ static MACHINE_DRIVER_START( wow )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
+	MDRV_CPU_PROGRAM_MAP(wow_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
@@ -877,7 +882,7 @@ static MACHINE_DRIVER_START( gorf )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(wow_readmem,wow_writemem)
+	MDRV_CPU_PROGRAM_MAP(wow_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(gorf_interrupt,256)
 
@@ -920,14 +925,14 @@ static MACHINE_DRIVER_START( robby )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(robby_readmem,robby_writemem)
+	MDRV_CPU_PROGRAM_MAP(robby_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(robby_nvram)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -953,14 +958,14 @@ static MACHINE_DRIVER_START( demndrgn )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(demndrgn_readmem,demndrgn_writemem)
+	MDRV_CPU_PROGRAM_MAP(demndrgn_map,0)
 	MDRV_CPU_IO_MAP(demndrgn_readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(robby_nvram)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -977,14 +982,14 @@ static MACHINE_DRIVER_START( profpac )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 1789773)	/* 1.789 MHz */
-	MDRV_CPU_PROGRAM_MAP(profpac_readmem,profpac_writemem)
+	MDRV_CPU_PROGRAM_MAP(profpac_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(wow_interrupt,256)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(robby_nvram)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1008,6 +1013,12 @@ MACHINE_DRIVER_END
 
 
 
+/*************************************
+ *
+ *  ROM definition(s)
+ *
+ *************************************/
+
 ROM_START( seawolf2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "sw2x1.bin",    0x0000, 0x0800, CRC(ad0103f6) SHA1(c6e411444a824ce54b0eee10f7dc15e4229ec070) )
@@ -1015,6 +1026,7 @@ ROM_START( seawolf2 )
 	ROM_LOAD( "sw2x3.bin",    0x1000, 0x0800, CRC(05ad1619) SHA1(c9dbeaa4540dc95f98970f501a420b18b9898c91) )
 	ROM_LOAD( "sw2x4.bin",    0x1800, 0x0800, CRC(1a1a14a2) SHA1(57d0ddea9f8bf082f50d0468a726fd91aaabf4e4) )
 ROM_END
+
 
 ROM_START( spacezap )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -1024,6 +1036,7 @@ ROM_START( spacezap )
 	ROM_LOAD( "0665.xx",      0x3000, 0x1000, CRC(3784228d) SHA1(5aabd720a106158a892368c4920d9cd0f5235e34) )
 ROM_END
 
+
 ROM_START( ebases )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "m761a",        0x0000, 0x1000, CRC(34422147) SHA1(6483ca1359b675b0dd739605db2a1dbd4b7fb8cb) )
@@ -1031,6 +1044,7 @@ ROM_START( ebases )
 	ROM_LOAD( "m761c",        0x2000, 0x1000, CRC(bff6c97e) SHA1(e41fb9db919039c8a48b4caebf80821a066d7ccf) )
 	ROM_LOAD( "m761d",        0x3000, 0x1000, CRC(5173781a) SHA1(e60c3f4b075f8b811ff6a8637c4aa0b089847a82) )
 ROM_END
+
 
 ROM_START( wow )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -1044,6 +1058,7 @@ ROM_START( wow )
 /*  ROM_LOAD( "wow.x8",       0xc000, CRC(00001000) , ? )   here would go the foreign language ROM */
 ROM_END
 
+
 ROM_START( gorf )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "gorf-a.bin",   0x0000, 0x1000, CRC(5b348321) SHA1(76e2e3ad1a66755f1a369167fdb157690fd44a52) )
@@ -1056,6 +1071,7 @@ ROM_START( gorf )
 	ROM_LOAD( "gorf-h.bin",   0xb000, 0x1000, CRC(fe7b863d) SHA1(5aa8d824814ee1c30eaf0044da78d3aa8220dcaa) )
 ROM_END
 
+
 ROM_START( gorfpgm1 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "873a",         0x0000, 0x1000, CRC(97cb4a6a) SHA1(efdae9a437c665fb861665a38c6cb13fd848ad91) )
@@ -1067,6 +1083,7 @@ ROM_START( gorfpgm1 )
 	ROM_LOAD( "873g",         0xa000, 0x1000, CRC(8a066456) SHA1(f64bcdadbc62566b55573039b03baf5358e24a36) )
 	ROM_LOAD( "873h",         0xb000, 0x1000, CRC(56d40c7c) SHA1(c7c9a618d9438a76121972ac029ad7036bcf8c6f) )
 ROM_END
+
 
 ROM_START( robby )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
@@ -1081,6 +1098,7 @@ ROM_START( robby )
   	ROM_LOAD( "rotox9.bin",   0xc000, 0x1000, CRC(370352bf) SHA1(72cd35b4306b46de3d2a3e4e46fa4917ed9d18cb) )
 	ROM_LOAD( "rotox10.bin",  0xd000, 0x1000, CRC(e762cbda) SHA1(48c274a859963097a90f80c48366250301eddb5f) )
 ROM_END
+
 
 ROM_START( demndrgn )
 	ROM_REGION( 0x2a000, REGION_CPU1, 0 )
@@ -1098,6 +1116,7 @@ ROM_START( demndrgn )
 	ROM_LOAD( "dd-x15.bin",    0x26000, 0x2000, CRC(6e6bc1b6) SHA1(b8c5ed8df6a709a6502dac47be88271ad22b9203) )
 	ROM_LOAD( "dd-x16.bin",    0x28000, 0x2000, CRC(7a4a343b) SHA1(4eb82ae38ce1b14778fb29d8549c61a46bc3ee66) )
 ROM_END
+
 
 ROM_START( profpac )
 	ROM_REGION( 0x2c000, REGION_CPU1, 0 )
@@ -1131,17 +1150,26 @@ ROM_START( profpac )
 ROM_END
 
 
+
+/*************************************
+ *
+ *  Game-specific driver inits
+ *
+ *************************************/
+
 static DRIVER_INIT( seawolf2 )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x10, 0x10, 0, 0xff00, seawolf2_controller2_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x11, 0x11, 0, 0xff00, seawolf2_controller1_r);
 }
+
 static DRIVER_INIT( ebases )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x13, 0x13, 0, 0xff00, ebases_trackball_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x20, 0x20, 0, 0xff00, ebases_io_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x28, 0x28, 0, 0xff00, ebases_trackball_select_w);
 }
+
 static DRIVER_INIT( wow )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0xff00, wow_port_2_r);
@@ -1150,14 +1178,17 @@ static DRIVER_INIT( wow )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
 	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
 }
+
 static DRIVER_INIT( spacezap )
 {
 	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x13, 0xff, 0, 0, spacezap_io_r);
 }
+
 static DRIVER_INIT( gorf )
 {
 	/* This is part of the timing/interrupt hack stuff */
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd0a5, 0xd0a5, 0, 0, gorf_timer_r);
+//  extern UINT8 *gorf_timer_ram;
+//  gorf_timer_ram = memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd0a5, 0xd0a5, 0, 0, gorf_timer_r);
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0xff00, gorf_port_2_r);
 	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, gorf_io_1_r);
@@ -1166,12 +1197,14 @@ static DRIVER_INIT( gorf )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
 	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
 }
+
 static DRIVER_INIT( robby )
 {
 	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x15, 0xff, 0, 0, robby_io_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x50, 0x57, 0, 0xff00, astrocade_sound2_w);
 	memory_install_write8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x58, 0xff, 0, 0, astrocade_soundblock2_w);
 }
+
 static DRIVER_INIT( demndrgn )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x10, 0x10, 0, 0xff00, input_port_0_r );
@@ -1193,6 +1226,7 @@ static DRIVER_INIT( demndrgn )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc5, 0, 0xff00, profpac_screenram_ctrl_w );
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xf3, 0xf3, 0, 0xff00, profpac_banksw_w);
 }
+
 static DRIVER_INIT( profpac )
 {
 	memory_install_read8_matchmask_handler(0, ADDRESS_SPACE_IO, 0x14, 0xff, 0, 0, profpac_io_1_r);
@@ -1207,7 +1241,13 @@ static DRIVER_INIT( profpac )
 }
 
 
-/* GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME) */
+
+/*************************************
+ *
+ *  Game driver(s)
+ *
+ *************************************/
+
 GAME( 1978, seawolf2, 0,    seawolf2, seawolf2, seawolf2, ROT0,   "Midway", "Sea Wolf II", GAME_IMPERFECT_SOUND )
 GAME( 1980, spacezap, 0,    spacezap, spacezap, spacezap, ROT0,   "Midway", "Space Zap", 0 )
 GAME( 1980, ebases,   0,    ebases,   ebases,   ebases,   ROT0,   "Midway", "Extra Bases", 0 )

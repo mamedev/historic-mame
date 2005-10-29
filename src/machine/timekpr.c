@@ -12,7 +12,6 @@
 
 struct timekeeper_chip
 {
-	void *timer;
 	UINT8 control;
 	UINT8 seconds;
 	UINT8 minutes;
@@ -216,16 +215,11 @@ static void timekeeper_tick( int chip )
 	}
 }
 
-static void start_timer( int chip )
-{
-	struct timekeeper_chip *c = &timekeeper[ chip ];
-
-	timer_adjust( c->timer, TIME_IN_SEC( 1 ), chip, TIME_IN_SEC( 1 ) );
-}
-
 void timekeeper_init( int chip, int type, UINT8 *data )
 {
 	time_t currenttime;
+	mame_timer *timer;
+	mame_time duration;
 	struct tm *mytime;
 	struct timekeeper_chip *c;
 
@@ -301,19 +295,20 @@ void timekeeper_init( int chip, int type, UINT8 *data )
 	c->year = make_bcd( ( 1900 + mytime->tm_year ) % 100 );
 	c->century = make_bcd( ( 1900 + mytime->tm_year ) / 100 );
 
-	state_save_register_UINT8( "timekeeper", chip, "control", &c->control, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "seconds", &c->seconds, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "minutes", &c->minutes, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "hours", &c->hours, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "day", &c->day, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "date", &c->date, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "month", &c->month, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "year", &c->year, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "century", &c->century, 1 );
-	state_save_register_UINT8( "timekeeper", chip, "data", c->data, c->size );
+	state_save_register_item( "timekeeper", chip, c->control );
+	state_save_register_item( "timekeeper", chip, c->seconds );
+	state_save_register_item( "timekeeper", chip, c->minutes );
+	state_save_register_item( "timekeeper", chip, c->hours );
+	state_save_register_item( "timekeeper", chip, c->day );
+	state_save_register_item( "timekeeper", chip, c->date );
+	state_save_register_item( "timekeeper", chip, c->month );
+	state_save_register_item( "timekeeper", chip, c->year );
+	state_save_register_item( "timekeeper", chip, c->century );
+	state_save_register_item_pointer( "timekeeper", chip, c->data, c->size );
 
-	c->timer = timer_alloc( timekeeper_tick );
-	start_timer( chip );
+	timer = mame_timer_alloc( timekeeper_tick );
+	duration = make_mame_time( 1, 0 );
+	mame_timer_adjust( timer, duration, chip, duration );
 }
 
 static void timekeeper_nvram( int chip, mame_file *file, int read_or_write )
@@ -370,12 +365,6 @@ static void timekeeper_write( UINT32 chip, offs_t offset, UINT8 data )
 
 	if( offset == c->offset_control )
 	{
-		if( c->type == TIMEKEEPER_MK48T08 &&
-			( ( ( c->control & CONTROL_W ) != 0 && ( data & CONTROL_W ) == 0 ) ||
-			( ( c->control & CONTROL_R ) != 0 && ( data & CONTROL_R ) == 0 ) ) )
-		{
-			start_timer( chip );
-		}
 		if( ( c->control & CONTROL_W ) != 0 &&
 			( data & CONTROL_W ) == 0 )
 		{

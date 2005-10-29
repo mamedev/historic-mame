@@ -50,23 +50,20 @@ Stephh's notes :
 #include "iqblock.h"
 #include "sound/2413intf.h"
 
+static UINT8 *rambase;
 
 static WRITE8_HANDLER( iqblock_prot_w )
 {
-    UINT8 *mem = memory_region( REGION_CPU1 );
-
-    mem[0xfe26] = data;
-    mem[0xfe27] = data;
-    mem[0xfe1c] = data;
+    rambase[0xe26] = data;
+    rambase[0xe27] = data;
+    rambase[0xe1c] = data;
 }
 
 static WRITE8_HANDLER( grndtour_prot_w )
 {
-    UINT8 *mem = memory_region( REGION_CPU1 );
-
-	mem[0xfe39] = data;
-    mem[0xfe3a] = data;
-    mem[0xfe2f] = data;
+	rambase[0xe39] = data;
+    rambase[0xe3a] = data;
+    rambase[0xe2f] = data;
 
 }
 
@@ -121,35 +118,27 @@ MACHINE_INIT( iqblock )
 
 
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xefff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xefff) AM_ROM
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_BASE(&rambase)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x5080, 0x5083) AM_READ(ppi8255_0_r)
-	AM_RANGE(0x5090, 0x5090) AM_READ(input_port_3_r)
-	AM_RANGE(0x50a0, 0x50a0) AM_READ(input_port_4_r)
-	AM_RANGE(0x7000, 0x7fff) AM_READ(iqblock_bgvideoram_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(extrarom_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x2000, 0x23ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_split1_w)
 	AM_RANGE(0x2800, 0x2bff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_split2_w)
 	AM_RANGE(0x6000, 0x603f) AM_WRITE(iqblock_fgscroll_w)
 	AM_RANGE(0x6800, 0x69ff) AM_WRITE(iqblock_fgvideoram_w)	/* initialized up to 6fff... bug or larger tilemap? */
 	AM_RANGE(0x7000, 0x7fff) AM_WRITE(iqblock_bgvideoram_w)
 	AM_RANGE(0x5080, 0x5083) AM_WRITE(ppi8255_0_w)
+	AM_RANGE(0x5080, 0x5083) AM_READ(ppi8255_0_r)
+	AM_RANGE(0x5090, 0x5090) AM_READ(input_port_3_r)
+	AM_RANGE(0x50a0, 0x50a0) AM_READ(input_port_4_r)
 	AM_RANGE(0x50b0, 0x50b0) AM_WRITE(YM2413_register_port_0_w) // UM3567_register_port_0_w
 	AM_RANGE(0x50b1, 0x50b1) AM_WRITE(YM2413_data_port_0_w) // UM3567_data_port_0_w
 	AM_RANGE(0x50c0, 0x50c0) AM_WRITE(iqblock_irqack_w)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(iqblock_bgvideoram_r)
+	AM_RANGE(0x8000, 0xffff) AM_READ(extrarom_r)
 ADDRESS_MAP_END
 
 
@@ -291,8 +280,8 @@ static MACHINE_DRIVER_START( iqblock )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)	/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(iqblock_interrupt,16)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -320,8 +309,8 @@ static MACHINE_DRIVER_START( cabaret )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z180,12000000/2)	/* 6 MHz , appears to use Z180 instructions */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(iqblock_interrupt,16)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -86,7 +86,7 @@
 #define LOG_TIMERS			(0)
 #define LOG_TIMEKEEPER		(0)
 #define LOG_SIO				(0)
-#define LOG_DYNAMIC			(1)
+#define LOG_DYNAMIC			(0)
 #define PRINTF_SERIAL		(0)
 
 

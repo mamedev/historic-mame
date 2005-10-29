@@ -40,16 +40,9 @@ AT08XX03:
 **
 ***************************************************************************/
 
-extern READ8_HANDLER( marvins_background_ram_r );
 extern WRITE8_HANDLER( marvins_background_ram_w );
-
-extern READ8_HANDLER( marvins_foreground_ram_r );
 extern WRITE8_HANDLER( marvins_foreground_ram_w );
-
-extern READ8_HANDLER( marvins_text_ram_r );
 extern WRITE8_HANDLER( marvins_text_ram_w );
-
-extern READ8_HANDLER( marvins_spriteram_r );
 extern WRITE8_HANDLER( marvins_spriteram_w );
 
 
@@ -139,26 +132,21 @@ static READ8_HANDLER( marvins_port_0_r )
 	return(input_port_0_r(0) | sound_cpu_busy);
 }
 
-static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_BASE(&namco_wavedata)	/* silly hack - this shouldn't be here */
 	AM_RANGE(0x4000, 0x4000) AM_READ(sound_command_r)
-	AM_RANGE(0xa000, 0xa000) AM_READ(sound_nmi_ack_r)
-	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) AM_BASE(&namco_wavedata)	/* silly hack - this shouldn't be here */
 	AM_RANGE(0x8000, 0x8000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x8001, 0x8001) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x8002, 0x8007) AM_WRITE(snkwave_w)
 	AM_RANGE(0x8008, 0x8008) AM_WRITE(AY8910_control_port_1_w)
 	AM_RANGE(0x8009, 0x8009) AM_WRITE(AY8910_write_port_1_w)
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(sound_nmi_ack_r)
+	AM_RANGE(0xe000, 0xe7ff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP)
+	AM_RANGE(0x00, 0x00) AM_READNOP
 ADDRESS_MAP_END
 
 
@@ -173,89 +161,59 @@ ADDRESS_MAP_END
 **
 ***************************************************************************/
 
-static ADDRESS_MAP_START( marvins_readmem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x8000) AM_READ(marvins_port_0_r)	/* coin input, start, sound CPU status */
-	AM_RANGE(0x8100, 0x8100) AM_READ(input_port_1_r)		/* player #1 controls */
-	AM_RANGE(0x8200, 0x8200) AM_READ(input_port_2_r)		/* player #2 controls */
-	AM_RANGE(0x8400, 0x8400) AM_READ(input_port_3_r)		/* dipswitch#1 */
-	AM_RANGE(0x8500, 0x8500) AM_READ(input_port_4_r)		/* dipswitch#2 */
-	AM_RANGE(0x8700, 0x8700) AM_READ(snk_cpuB_nmi_trigger_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( marvins_writemem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( marvins_cpuA_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(marvins_palette_bank_w)
-	AM_RANGE(0x8300, 0x8300) AM_WRITE(sound_command_w)
-	AM_RANGE(0x8600, 0x8600) AM_WRITE(MWA8_RAM)	// video attribute
-	AM_RANGE(0x8700, 0x8700) AM_WRITE(snk_cpuA_nmi_ack_w)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(marvins_background_ram_w) AM_BASE(&spriteram_3)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(marvins_foreground_ram_w) AM_BASE(&spriteram_2)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(marvins_text_ram_w) AM_BASE(&videoram)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( marvins_readmem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8700, 0x8700) AM_READ(snk_cpuA_nmi_trigger_r)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(marvins_spriteram_r)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(marvins_background_ram_r)
-	AM_RANGE(0xe000, 0xefff) AM_READ(marvins_foreground_ram_r)
-	AM_RANGE(0xf000, 0xffff) AM_READ(marvins_text_ram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( marvins_writemem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8700, 0x8700) AM_WRITE(snk_cpuB_nmi_ack_w)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(marvins_spriteram_w)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(marvins_background_ram_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(marvins_foreground_ram_w)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(marvins_text_ram_w)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( madcrash_readmem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x8000) AM_READ(marvins_port_0_r)	/* coin input, start, sound CPU status */
 	AM_RANGE(0x8100, 0x8100) AM_READ(input_port_1_r)		/* player #1 controls */
 	AM_RANGE(0x8200, 0x8200) AM_READ(input_port_2_r)		/* player #2 controls */
+	AM_RANGE(0x8300, 0x8300) AM_WRITE(sound_command_w)
 	AM_RANGE(0x8400, 0x8400) AM_READ(input_port_3_r)		/* dipswitch#1 */
 	AM_RANGE(0x8500, 0x8500) AM_READ(input_port_4_r)		/* dipswitch#2 */
-	AM_RANGE(0x8700, 0x8700) AM_READ(snk_cpuB_nmi_trigger_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x8600, 0x8600) AM_WRITE(MWA8_RAM)	// video attribute
+	AM_RANGE(0x8700, 0x8700) AM_READWRITE(snk_cpuB_nmi_trigger_r, snk_cpuA_nmi_ack_w)
+	AM_RANGE(0xc000, 0xcfff) AM_RAM AM_BASE(&spriteram) AM_SHARE(1)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, marvins_background_ram_w) AM_SHARE(2) AM_BASE(&spriteram_3)
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(MRA8_RAM, marvins_foreground_ram_w) AM_SHARE(3) AM_BASE(&spriteram_2)
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_RAM, marvins_text_ram_w) AM_SHARE(4) AM_BASE(&videoram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( madcrash_writemem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( marvins_cpuB_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0x8700, 0x8700) AM_READWRITE(snk_cpuA_nmi_trigger_r, snk_cpuB_nmi_ack_w)
+	AM_RANGE(0xc000, 0xcfff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, marvins_background_ram_w) AM_SHARE(2)
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(MRA8_RAM, marvins_foreground_ram_w) AM_SHARE(3)
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_RAM, marvins_text_ram_w) AM_SHARE(4)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( madcrash_cpuA_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x8000) AM_READ(marvins_port_0_r)	/* coin input, start, sound CPU status */
+	AM_RANGE(0x8100, 0x8100) AM_READ(input_port_1_r)		/* player #1 controls */
+	AM_RANGE(0x8200, 0x8200) AM_READ(input_port_2_r)		/* player #2 controls */
 	AM_RANGE(0x8300, 0x8300) AM_WRITE(sound_command_w)
+	AM_RANGE(0x8400, 0x8400) AM_READ(input_port_3_r)		/* dipswitch#1 */
+	AM_RANGE(0x8500, 0x8500) AM_READ(input_port_4_r)		/* dipswitch#2 */
 	AM_RANGE(0x8600, 0x86ff) AM_WRITE(MWA8_RAM)	// video attribute
-	AM_RANGE(0x8700, 0x8700) AM_WRITE(snk_cpuA_nmi_ack_w)
+	AM_RANGE(0x8700, 0x8700) AM_READWRITE(snk_cpuB_nmi_trigger_r, snk_cpuA_nmi_ack_w)
 //  AM_RANGE(0xc800, 0xc800) AM_WRITE(marvins_palette_bank_w)   // palette bank switch (c8f1 for Vanguard)
-	AM_RANGE(0xc800, 0xc8ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(marvins_background_ram_w) AM_BASE(&spriteram_3)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(marvins_foreground_ram_w) AM_BASE(&spriteram_2)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(marvins_text_ram_w) AM_BASE(&videoram)
+	AM_RANGE(0xc800, 0xc8ff) AM_RAM
+	AM_RANGE(0xc000, 0xcfff) AM_RAM AM_BASE(&spriteram) AM_SHARE(1)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, marvins_background_ram_w) AM_SHARE(2) AM_BASE(&spriteram_3)
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(MRA8_RAM, marvins_foreground_ram_w) AM_SHARE(3) AM_BASE(&spriteram_2)
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_RAM, marvins_text_ram_w) AM_SHARE(4) AM_BASE(&videoram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( madcrash_readmem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(marvins_foreground_ram_r)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(marvins_text_ram_r)
-	AM_RANGE(0xe000, 0xefff) AM_READ(marvins_spriteram_r)
-	AM_RANGE(0xf000, 0xffff) AM_READ(marvins_background_ram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( madcrash_writemem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( madcrash_cpuB_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8700, 0x8700) AM_WRITE(snk_cpuB_nmi_ack_w)	/* Vangaurd II */
-	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_ROM)			/* extra ROM for Mad Crasher */
+	AM_RANGE(0x0000, 0x9fff) AM_ROM
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(snk_cpuB_nmi_ack_w)	/* Mad Crasher */
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(marvins_foreground_ram_w)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(marvins_text_ram_w)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(marvins_spriteram_w)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(marvins_background_ram_w)
+	AM_RANGE(0xc000, 0xcfff) AM_READWRITE(MRA8_RAM, marvins_foreground_ram_w) AM_SHARE(3)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, marvins_text_ram_w) AM_SHARE(4)
+	AM_RANGE(0xe000, 0xefff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_RAM, marvins_background_ram_w) AM_SHARE(2)
 ADDRESS_MAP_END
 
 
@@ -556,17 +514,17 @@ static MACHINE_DRIVER_START( marvins )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3360000)	/* 3.36 MHz */
-	MDRV_CPU_PROGRAM_MAP(marvins_readmem_CPUA,marvins_writemem_CPUA)
+	MDRV_CPU_PROGRAM_MAP(marvins_cpuA_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3360000)	/* 3.36 MHz */
-	MDRV_CPU_PROGRAM_MAP(marvins_readmem_CPUB,marvins_writemem_CPUB)
+	MDRV_CPU_PROGRAM_MAP(marvins_cpuB_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz */
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
-	MDRV_CPU_IO_MAP(readport_sound,0)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_portmap,0)
 	MDRV_CPU_PERIODIC_INT(nmi_line_assert, TIME_IN_HZ(244))	// schematics show a separate 244Hz timer
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -602,17 +560,17 @@ static MACHINE_DRIVER_START( vangrd2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 3360000)	/* 3.36 MHz */
-	MDRV_CPU_PROGRAM_MAP(madcrash_readmem_CPUA,madcrash_writemem_CPUA)
+	MDRV_CPU_PROGRAM_MAP(madcrash_cpuA_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("sub", Z80, 3360000)	/* 3.36 MHz */
-	MDRV_CPU_PROGRAM_MAP(madcrash_readmem_CPUB,madcrash_writemem_CPUB)
+	MDRV_CPU_PROGRAM_MAP(madcrash_cpuB_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz */
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
-	MDRV_CPU_IO_MAP(readport_sound,0)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_portmap,0)
 	MDRV_CPU_PERIODIC_INT(nmi_line_assert, TIME_IN_HZ(244))
 
 	MDRV_FRAMES_PER_SECOND(60.606060)
@@ -794,7 +752,7 @@ static DRIVER_INIT( madcrash )
     because of bit rot, so the rest of the test mode (what little there
     is) can be explored.
 
-    unsigned char *mem = memory_region(REGION_CPU1);
+    UINT8 *mem = memory_region(REGION_CPU1);
     mem[0x3a5d] = 0; mem[0x3a5e] = 0; mem[0x3a5f] = 0;
 */
 	init_sound( 0x20 );

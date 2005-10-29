@@ -14,6 +14,7 @@
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/namco.h"
+#include "vidhrdw/generic.h"
 
 WRITE8_HANDLER( snkwave_w );
 
@@ -22,8 +23,6 @@ extern UINT8 *me_bgram;
 WRITE8_HANDLER(me_c600_w);
 WRITE8_HANDLER(me_fgram_w);
 WRITE8_HANDLER(me_bgram_w);
-READ8_HANDLER(me_fgram_r);
-READ8_HANDLER(me_bgram_r);
 VIDEO_START(mainsnk);
 VIDEO_UPDATE(mainsnk);
 
@@ -63,50 +62,27 @@ static READ8_HANDLER( mainsnk_port_0_r )
 	return result;
 }
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
 	AM_RANGE(0xc000, 0xc000) AM_READ(mainsnk_port_0_r)
-	AM_RANGE(0xC100, 0xC100) AM_READ(input_port_1_r)
-	AM_RANGE(0xC200, 0xC200) AM_READ(input_port_2_r)
-	AM_RANGE(0xC300, 0xC300) AM_READ(input_port_3_r)
-	AM_RANGE(0xC500, 0xC500) AM_READ(input_port_4_r)
-	AM_RANGE(0xd800, 0xdbff) AM_READ(me_bgram_r)
-	AM_RANGE(0xdc00, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe400, 0xe7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe800, 0xebff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xec00, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xf3ff) AM_READ(me_fgram_r)
-	AM_RANGE(0xf400, 0xf7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf800, 0xfbff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xC600, 0xC600) AM_WRITE(me_c600_w)
+	AM_RANGE(0xc100, 0xc100) AM_READ(input_port_1_r)
+	AM_RANGE(0xc200, 0xc200) AM_READ(input_port_2_r)
+	AM_RANGE(0xc300, 0xc300) AM_READ(input_port_3_r)
+	AM_RANGE(0xc500, 0xc500) AM_READ(input_port_4_r)
+	AM_RANGE(0xc600, 0xc600) AM_WRITE(me_c600_w)
 	AM_RANGE(0xc700, 0xc700) AM_WRITE(sound_command_w)
-	AM_RANGE(0xd800, 0xdbff) AM_WRITE(me_bgram_w) AM_BASE(&me_bgram)
-	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe800, 0xebff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xec00, 0xefff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(me_fgram_w) AM_BASE(&me_fgram)
-	AM_RANGE(0xf400, 0xf7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd800, 0xdbff) AM_READWRITE(MRA8_RAM, me_bgram_w) AM_BASE(&me_bgram)
+	AM_RANGE(0xdc00, 0xe7ff) AM_RAM
+	AM_RANGE(0xe800, 0xefff) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0xf000, 0xf3ff) AM_READWRITE(MRA8_RAM, me_fgram_w) AM_BASE(&me_fgram)
+	AM_RANGE(0xf400, 0xf7ff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_BASE(&namco_wavedata)
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
 	AM_RANGE(0xa000, 0xa000) AM_READ(sound_command_r)
 	AM_RANGE(0xc000, 0xc000) AM_READ(sound_ack_r)
-
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) AM_BASE(&namco_wavedata)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0xe002, 0xe007) AM_WRITE(snkwave_w)
@@ -114,9 +90,9 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe009, 0xe009) AM_WRITE(AY8910_write_port_1_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP)
+	AM_RANGE(0x00, 0x00) AM_READNOP
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( mainsnk )
@@ -210,13 +186,13 @@ static gfx_decode gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( mainsnk)
 	MDRV_CPU_ADD(Z80, 3360000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,4000000)
 	/* audio CPU */
- 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
- 	MDRV_CPU_IO_MAP(readport_sound,0)
+ 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+ 	MDRV_CPU_IO_MAP(sound_portmap,0)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(244))
 
 	MDRV_FRAMES_PER_SECOND(60.606060)

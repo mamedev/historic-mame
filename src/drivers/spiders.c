@@ -168,6 +168,8 @@ $F987 - Addresses table at $f98d containing four structs:
 #include "machine/6821pia.h"
 #include "spiders.h"
 
+UINT8 *spiders_ram;
+
 
 /* VIDHRDW */
 
@@ -184,7 +186,7 @@ INTERRUPT_GEN( spiders_timed_irq );
 /* Driver structure definition */
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_RAM) AM_BASE(&spiders_ram)
 	AM_RANGE(0xc001, 0xc001) AM_READ(crtc6845_register_r)
 	AM_RANGE(0xc020, 0xc027) AM_READ(MRA8_RAM)
 	AM_RANGE(0xc044, 0xc047) AM_READ(pia_0_r)

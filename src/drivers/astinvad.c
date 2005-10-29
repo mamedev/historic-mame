@@ -3,6 +3,7 @@
 Misc early Z80 games with simple color bitmap graphics
 
     - Space King 2    (c) Konami
+    - Kosmo Killer    bootleg
     - Kamikaze        (c) Leijac
     - Astro Invader   (c) Stern
     - Space Intruder  (c) Shoei
@@ -336,6 +337,21 @@ ROM_START( astinvad )
 	ROM_LOAD( "ai_vid_c.rom", 0x0000, 0x0400, CRC(b45287ff) SHA1(7e558eaf402641d7ff60171f854030219fbf9a59) )
 ROM_END
 
+ROM_START( kosmokil )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "1.bin",     0x0000, 0x0400, CRC(8d851fb2) SHA1(06b3816ecb45c5d034447a875669a96f443339f5) )
+	ROM_LOAD( "us1-2.bin", 0x0400, 0x0400, CRC(786599d2) SHA1(70db8dae052c3556948d75b741ef4346aa947479) )
+	ROM_LOAD( "si1-3.bin", 0x0800, 0x0400, CRC(12621222) SHA1(062b1dff3e129dff23e55bef0d29c72ac5f212c4) )
+	ROM_LOAD( "ib1-4.bin", 0x0c00, 0x0400, CRC(a5c56156) SHA1(557f5fbb5e9fe4d7450f3cf97ed3c935b9dd5c1a) )
+	ROM_LOAD( "bi1-5.bin", 0x1000, 0x0400, CRC(5e8b2b6f) SHA1(ec8499325d5a3dcb0d10e9f12b9d3a03f629bbfd) )
+	ROM_LOAD( "il1-6.bin", 0x1400, 0x0400, CRC(a076de05) SHA1(bdb076b89795d69824c99a27473089f203690055) )
+	ROM_LOAD( "li1-7.bin", 0x1800, 0x0400, CRC(ee9adb63) SHA1(038e6cadfdfe05c45a79ed9a54cff428de33d24c) )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "40.bin", 0x0000, 0x0400,  CRC(d62a3e62) SHA1(00d42988203fbf167791cf5b887f06d1d015e942) )
+ROM_END
+
+
 ROM_START( kamikaze )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "km01",         0x0000, 0x0800, CRC(8aae7414) SHA1(91cb5c268a03960d50401000903d70dc29f904fb) )
@@ -374,7 +390,8 @@ ROM_START( spaceint )
 ROM_END
 
 
-GAME( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern",  "Astro Invader", 0 )
-GAME( 1979, kamikaze, astinvad, astinvad, kamikaze, 0, ROT270, "Leijac", "Kamikaze", 0 )
-GAME( 1979, spcking2, 0,        spcking2, spcking2, 0, ROT270, "Konami", "Space King 2", 0 )
-GAME( 1980, spaceint, 0,        spaceint, spaceint, 0, ROT90,  "Shoei",  "Space Intruder", GAME_WRONG_COLORS )
+GAME( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern",   "Astro Invader", 0 )
+GAME( 19??, kosmokil, astinvad, astinvad, kamikaze, 0, ROT270, "bootleg", "Kosmo Killer", 0 ) // says >BEM< Mi Italy but it looks hacked in, dif revision of game tho.
+GAME( 1979, kamikaze, astinvad, astinvad, kamikaze, 0, ROT270, "Leijac",  "Kamikaze", 0 )
+GAME( 1979, spcking2, 0,        spcking2, spcking2, 0, ROT270, "Konami",  "Space King 2", 0 )
+GAME( 1980, spaceint, 0,        spaceint, spaceint, 0, ROT90,  "Shoei",   "Space Intruder", GAME_WRONG_COLORS )

@@ -1183,19 +1183,18 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debu
 
 
 /*-------------------------------------------------
-    disasm_recompute - recompute all info
+    disasm_recompute - recompute selected info
     for the disassembly view
 -------------------------------------------------*/
 
-static void disasm_recompute(struct debug_view *view)
+static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, int lines)
 {
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	struct debug_view_disasm *dasmdata = view->extra_data;
 	int chunksize, minbytes, maxbytes, maxbytes_clamped;
 	int use_new_dasm;
 	UINT32 addrmask;
-	int instr;
-	offs_t pc;
+	int line;
 
 	/* switch to the context of the CPU in question */
 	cpuintrf_push_context(view->cpunum);
@@ -1217,18 +1216,14 @@ static void disasm_recompute(struct debug_view *view)
 		maxbytes_clamped = DASM_MAX_BYTES;
 	view->total_cols = dasmdata->divider2 + 1 + 2 * maxbytes_clamped + (maxbytes_clamped / minbytes - 1) + 1;
 	view->total_rows = DASM_LINES;
-	view->top_row = 0;
-	view->left_col = 0;
 
-	/* determine the addresses of what we will display */
-	pc = (UINT32)dasmdata->last_result;
-	pc = disasm_back_up(view->cpunum, cpuinfo, pc, 3);
-	for (instr = 0; instr < DASM_LINES; instr++)
+	for (line = 0; line < lines; line++)
 	{
 		offs_t pcbyte, tempaddr;
 		UINT64 dummyreadop;
 		char buffer[100];
 		int numbytes;
+		int instr = startline + line;
 
 		/* convert PC to a byte offset */
 		pcbyte = ADDR2BYTE(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
@@ -1304,7 +1299,8 @@ static void disasm_recompute(struct debug_view *view)
 static void disasm_update(struct debug_view *view)
 {
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
-	offs_t pcbyte = ADDR2BYTE(cpunum_get_reg(view->cpunum, REG_PC), cpuinfo, ADDRESS_SPACE_PROGRAM);
+	offs_t pc = cpunum_get_reg(view->cpunum, REG_PC);
+	offs_t pcbyte = ADDR2BYTE(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 	struct debug_view_disasm *dasmdata = view->extra_data;
 	struct debug_view_char *dest = view->viewdata;
 	UINT8 need_to_recompute = 0;
@@ -1370,7 +1366,16 @@ static void disasm_update(struct debug_view *view)
 
 	/* if we need to recompute, do it */
 	if (need_to_recompute)
-		disasm_recompute(view);
+	{
+		/* determine the addresses of what we will display */
+		pc = (UINT32)dasmdata->last_result;
+		pc = disasm_back_up(view->cpunum, cpuinfo, pc, 3);
+
+		view->top_row = 0;
+		view->left_col = 0;
+
+		disasm_recompute(view, pc, 0, DASM_LINES);
+	}
 
 	/* loop over visible rows */
 	for (row = 0; row < view->visible_rows; row++)
@@ -1384,7 +1389,11 @@ static void disasm_update(struct debug_view *view)
 		if (effrow < view->total_rows)
 		{
 			if (pcbyte == dasmdata->address[effrow])
+			{
 				attrib = DCA_CURRENT;
+				if (!need_to_recompute)
+					disasm_recompute(view, pc, effrow, 1);
+			}
 			else
 				for (bp = cpuinfo->first_bp; bp; bp = bp->next)
 					if (dasmdata->address[effrow] == ADDR2BYTE(bp->address, cpuinfo, ADDRESS_SPACE_PROGRAM))

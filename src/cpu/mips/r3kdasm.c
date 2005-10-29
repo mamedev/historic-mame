@@ -1,7 +1,7 @@
 /*###################################################################################################
 **
 **
-**      jagdasm.c
+**      r3kdasm.c
 **      Disassembler for the portable R3000 emulator.
 **      Written by Aaron Giles
 **
@@ -11,7 +11,6 @@
 #include <stdio.h>
 
 #include "driver.h"
-#include "r3000.h"
 
 
 static const char *reg[32] =
@@ -22,15 +21,6 @@ static const char *reg[32] =
 	"r24",	"r25",	"r26",	"r27",	"r28",	"r29",	"r30",	"r31"
 };
 
-#define COP0_Index			0
-#define COP0_Random			1
-#define COP0_EntryLo		2
-#define COP0_Context		4
-#define COP0_BadVAddr		8
-#define COP0_Status			12
-#define COP0_Cause			13
-#define COP0_EPC			14
-#define COP0_PRId			15
 
 static const char *cpreg[4][32] =
 {
@@ -111,17 +101,18 @@ INLINE char *signed_16bit(INT16 val)
 	return temp;
 }
 
-static void dasm_cop(UINT32 pc, int cop, UINT32 op, char *buffer)
+static UINT32 dasm_cop(UINT32 pc, int cop, UINT32 op, char *buffer)
 {
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
+	UINT32 flags = 0;
 
 	switch ((op >> 21) & 31)
 	{
 		case 0x00:	sprintf(buffer, "mfc%d   %s,%s", cop, reg[rt], cpreg[cop][rd]);					break;
 		case 0x02:	sprintf(buffer, "cfc%d   %s,%s", cop, reg[rt], ccreg[cop][rd]);					break;
-		case 0x04:	sprintf(buffer, "mtc%d   %s,%s", cop, reg[rt], cpreg[cop][rd]);				break;
-		case 0x06:	sprintf(buffer, "ctc%d   %s,%s", cop, reg[rt], ccreg[cop][rd]);						break;
+		case 0x04:	sprintf(buffer, "mtc%d   %s,%s", cop, reg[rt], cpreg[cop][rd]);					break;
+		case 0x06:	sprintf(buffer, "ctc%d   %s,%s", cop, reg[rt], ccreg[cop][rd]);					break;
 		case 0x08:	/* BC */
 			switch (rt)
 			{
@@ -165,15 +156,17 @@ static void dasm_cop(UINT32 pc, int cop, UINT32 op, char *buffer)
 				sprintf(buffer, "cop%d  $%07x", cop, op & 0x01ffffff);								break;
 		default:	sprintf(buffer, "dc.l  $%08x [invalid]", op);									break;
 	}
+
+	return flags;
 }
 
-unsigned dasmr3k(char *buffer, unsigned pc)
+unsigned dasmr3k(char *buffer, unsigned pc, UINT32 op)
 {
-	UINT32 op = ROPCODE(pc);
 	int rs = (op >> 21) & 31;
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
 	int shift = (op >> 6) & 31;
+	UINT32 flags = 0;
 
 	switch (op >> 26)
 	{
@@ -189,13 +182,13 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 				case 0x04:	sprintf(buffer, "sllv   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
 				case 0x06:	sprintf(buffer, "srlv   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
 				case 0x07:	sprintf(buffer, "srav   %s,%s,%s", reg[rd], reg[rt], reg[rs]);			break;
-				case 0x08:	sprintf(buffer, "jr     %s", reg[rs]);									break;
+				case 0x08:	sprintf(buffer, "jr     %s", reg[rs]); if (rs == 31) flags = DASMFLAG_STEP_OUT; break;
 				case 0x09:	if (rd == 31)
 							sprintf(buffer, "jalr   %s", reg[rs]);
 							else
-							sprintf(buffer, "jalr   %s,%s", reg[rs], reg[rd]);						break;
-				case 0x0c:	sprintf(buffer, "syscall");												break;
-				case 0x0d:	sprintf(buffer, "break");												break;
+							sprintf(buffer, "jalr   %s,%s", reg[rs], reg[rd]); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
+				case 0x0c:	sprintf(buffer, "syscall");	flags = DASMFLAG_STEP_OVER; 				break;
+				case 0x0d:	sprintf(buffer, "break"); flags = DASMFLAG_STEP_OVER; 					break;
 				case 0x0f:	sprintf(buffer, "sync [invalid]");										break;
 				case 0x10:	sprintf(buffer, "mfhi   %s", reg[rd]);									break;
 				case 0x11:	sprintf(buffer, "mthi   %s", reg[rs]);									break;
@@ -238,8 +231,8 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 				case 0x0b:	sprintf(buffer, "tltiu [invalid]");										break;
 				case 0x0c:	sprintf(buffer, "teqi [invalid]");										break;
 				case 0x0e:	sprintf(buffer, "tnei [invalid]");										break;
-				case 0x10:	sprintf(buffer, "bltzal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
-				case 0x11:	sprintf(buffer, "bgezal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	break;
+				case 0x10:	sprintf(buffer, "bltzal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
+				case 0x11:	sprintf(buffer, "bgezal %s,$%08x", reg[rs], pc + 4 + ((INT16)op << 2));	flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
 				case 0x12:	sprintf(buffer, "bltzall [invalid]");									break;
 				case 0x13:	sprintf(buffer, "bgezall [invalid]");									break;
 				default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);							break;
@@ -247,7 +240,7 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 			break;
 
 		case 0x02:	sprintf(buffer, "j      $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2));	break;
-		case 0x03:	sprintf(buffer, "jal    $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2));	break;
+		case 0x03:	sprintf(buffer, "jal    $%08x", (pc & 0xf0000000) | ((op & 0x0fffffff) << 2)); flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1); break;
 		case 0x04:	if (rs == 0 && rt == 0)
 					sprintf(buffer, "b      $%08x", pc + 4 + ((INT16)op << 2));
 					else
@@ -263,10 +256,10 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 		case 0x0d:	sprintf(buffer, "ori    %s,%s,$%04x", reg[rt], reg[rs], (UINT16)op);			break;
 		case 0x0e:	sprintf(buffer, "xori   %s,%s,$%04x", reg[rt], reg[rs], (UINT16)op);			break;
 		case 0x0f:	sprintf(buffer, "lui    %s,$%04x", reg[rt], (UINT16)op);						break;
-		case 0x10:	dasm_cop(pc, 0, op, buffer);													break;
-		case 0x11:	dasm_cop(pc, 1, op, buffer);													break;
-		case 0x12:	dasm_cop(pc, 2, op, buffer);													break;
-		case 0x13:	dasm_cop(pc, 3, op, buffer);													break;
+		case 0x10:	flags = dasm_cop(pc, 0, op, buffer);											break;
+		case 0x11:	flags = dasm_cop(pc, 1, op, buffer);											break;
+		case 0x12:	flags = dasm_cop(pc, 2, op, buffer);											break;
+		case 0x13:	flags = dasm_cop(pc, 3, op, buffer);											break;
 		case 0x14:	sprintf(buffer, "beql [invalid]");												break;
 		case 0x15:	sprintf(buffer, "bnel [invalid]");												break;
 		case 0x16:	sprintf(buffer, "blezl [invalid]");												break;
@@ -302,5 +295,5 @@ unsigned dasmr3k(char *buffer, unsigned pc)
 		case 0x3f:	sprintf(buffer, "sdc3 [invalid]");												break;
 		default:	sprintf(buffer, "dc.l   $%08x [invalid]", op);									break;
 	}
-	return 4;
+	return 4 | flags | DASMFLAG_SUPPORTED;
 }

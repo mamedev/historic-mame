@@ -751,7 +751,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 		{
 #if PRINTF_TLB
 			printf("TLBP: Should have not found an entry\n");
-			debug_halt_on_next_instruction();
+//          debug_halt_on_next_instruction();
 #endif
 		}
 		mips3.cpr[0][COP0_Index] = index;
@@ -762,7 +762,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 		{
 #if PRINTF_TLB
 			printf("TLBP: Should havefound an entry\n");
-			debug_halt_on_next_instruction();
+//          debug_halt_on_next_instruction();
 #endif
 		}
 		mips3.cpr[0][COP0_Index] = 0x80000000;

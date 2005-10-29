@@ -6,6 +6,8 @@
 
 #include "sound/discrete.h"
 
+extern UINT8 *spiders_ram;
+
 /* Discrete Sound Input Nodes */
 #define SPIDERS_WEB_SOUND_DATA      NODE_01
 #define SPIDER_WEB_SOUND_MOD_DATA   NODE_02

@@ -129,21 +129,10 @@ static WRITE8_HANDLER( sound_arm_nmi_w )
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
 
-static READ8_HANDLER( speedup_r )
-{
-	int data = memory_region(REGION_CPU1)[0x1837];
-
-	if ( activecpu_get_pc() == 0xa400 && data == 0 )
-		cpu_spinuntil_int();
-
-	return data;
-}
-
 /********************************************/
 
 static ADDRESS_MAP_START( parodius_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_READ(bankedram_r)
-	AM_RANGE(0x1837, 0x1837) AM_READ(speedup_r)
 	AM_RANGE(0x0800, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x3f8c, 0x3f8c) AM_READ(input_port_0_r)
 	AM_RANGE(0x3f8d, 0x3f8d) AM_READ(input_port_1_r)

@@ -294,9 +294,12 @@ Two bytes are copied at a time and x get incremented twice for each access.
 
 static unsigned byte_count;
 static unsigned local_pc;
+static unsigned flags;
+
+static unsigned char *opram_ptr;
 
 static unsigned char get_next_byte( void ) {
-	return cpu_readop_arg( local_pc + ( byte_count++ ) );
+	return opram_ptr[byte_count++];
 }
 
 /* Table for indexed operations */
@@ -562,202 +565,202 @@ static void illegal( char *buf ) {
 }
 
 static void leax( char *buf ) {
-	sprintf( buf, "leax " );
+	sprintf( buf, "leax  " );
 	do_addressing( buf );
 }
 
 static void leay( char *buf ) {
-	sprintf( buf, "leay " );
+	sprintf( buf, "leay  " );
 	do_addressing( buf );
 }
 
 static void leau( char *buf ) {
-	sprintf( buf, "leau " );
+	sprintf( buf, "leau  " );
 	do_addressing( buf );
 }
 
 static void leas( char *buf ) {
-	sprintf( buf, "leas " );
+	sprintf( buf, "leas  " );
 	do_addressing( buf );
 }
 
 static void lda( char *buf ) {
-	sprintf( buf, "lda #$%02x", get_next_byte() );
+	sprintf( buf, "lda   #$%02x", get_next_byte() );
 }
 
 static void ldb( char *buf ) {
-	sprintf( buf, "ldb #$%02x", get_next_byte() );
+	sprintf( buf, "ldb   #$%02x", get_next_byte() );
 }
 
 static void lda2( char *buf ) {
-	sprintf( buf, "lda " );
+	sprintf( buf, "lda   " );
 	do_addressing( buf );
 }
 
 static void ldb2( char *buf ) {
-	sprintf( buf, "ldb " );
+	sprintf( buf, "ldb   " );
 	do_addressing( buf );
 }
 
 static void adda( char *buf ) {
-	sprintf( buf, "adda #$%02x", get_next_byte() );
+	sprintf( buf, "adda  #$%02x", get_next_byte() );
 }
 
 static void addb( char *buf ) {
-	sprintf( buf, "addb #$%02x", get_next_byte() );
+	sprintf( buf, "addb  #$%02x", get_next_byte() );
 }
 
 static void adda2( char *buf ) {
-	sprintf( buf, "adda " );
+	sprintf( buf, "adda  " );
 	do_addressing( buf );
 }
 
 static void addb2( char *buf ) {
-	sprintf( buf, "addb " );
+	sprintf( buf, "addb  " );
 	do_addressing( buf );
 }
 
 static void suba( char *buf ) {
-	sprintf( buf, "suba #$%02x", get_next_byte() );
+	sprintf( buf, "suba  #$%02x", get_next_byte() );
 }
 
 static void subb( char *buf ) {
-	sprintf( buf, "subb #$%02x", get_next_byte() );
+	sprintf( buf, "subb  #$%02x", get_next_byte() );
 }
 
 static void suba2( char *buf ) {
-	sprintf( buf, "suba " );
+	sprintf( buf, "suba  " );
 	do_addressing( buf );
 }
 
 static void subb2( char *buf ) {
-	sprintf( buf, "subb " );
+	sprintf( buf, "subb  " );
 	do_addressing( buf );
 }
 
 static void sbca( char *buf ) {
-	sprintf( buf, "sbca #$%02x", get_next_byte() );
+	sprintf( buf, "sbca  #$%02x", get_next_byte() );
 }
 
 static void sbcb( char *buf ) {
-	sprintf( buf, "sbcb #$%02x", get_next_byte() );
+	sprintf( buf, "sbcb  #$%02x", get_next_byte() );
 }
 
 static void sbca2( char *buf ) {
-	sprintf( buf, "sbca " );
+	sprintf( buf, "sbca  " );
 	do_addressing( buf );
 }
 
 static void sbcb2( char *buf ) {
-	sprintf( buf, "sbcb " );
+	sprintf( buf, "sbcb  " );
 	do_addressing( buf );
 }
 
 static void adca( char *buf ) {
-	sprintf( buf, "adca #$%02x", get_next_byte() );
+	sprintf( buf, "adca  #$%02x", get_next_byte() );
 }
 
 static void adca2( char *buf ) {
-	sprintf( buf, "adca " );
+	sprintf( buf, "adca  " );
 	do_addressing( buf );
 }
 
 static void adcb2( char *buf ) {
-	sprintf( buf, "adcb " );
+	sprintf( buf, "adcb  " );
 	do_addressing( buf );
 }
 
 static void adcb( char *buf ) {
-	sprintf( buf, "adcb #$%02x", get_next_byte() );
+	sprintf( buf, "adcb  #$%02x", get_next_byte() );
 }
 
 static void anda( char *buf ) {
-	sprintf( buf, "anda #$%02x", get_next_byte() );
+	sprintf( buf, "anda  #$%02x", get_next_byte() );
 }
 
 static void andb( char *buf ) {
-	sprintf( buf, "andb #$%02x", get_next_byte() );
+	sprintf( buf, "andb  #$%02x", get_next_byte() );
 }
 
 static void anda2( char *buf ) {
-	sprintf( buf, "anda " );
+	sprintf( buf, "anda  " );
 	do_addressing( buf );
 }
 
 static void andb2( char *buf ) {
-	sprintf( buf, "andb " );
+	sprintf( buf, "andb  " );
 	do_addressing( buf );
 }
 
 static void bita( char *buf ) {
-	sprintf( buf, "bita #$%02x", get_next_byte() );
+	sprintf( buf, "bita  #$%02x", get_next_byte() );
 }
 
 static void bitb( char *buf ) {
-	sprintf( buf, "bitb #$%02x", get_next_byte() );
+	sprintf( buf, "bitb  #$%02x", get_next_byte() );
 }
 
 static void bita2( char *buf ) {
-	sprintf( buf, "bita " );
+	sprintf( buf, "bita  " );
 	do_addressing( buf );
 }
 
 static void bitb2( char *buf ) {
-	sprintf( buf, "bitb " );
+	sprintf( buf, "bitb  " );
 	do_addressing( buf );
 }
 
 static void eora( char *buf ) {
-	sprintf( buf, "eora #$%02x", get_next_byte() );
+	sprintf( buf, "eora  #$%02x", get_next_byte() );
 }
 
 static void eorb( char *buf ) {
-	sprintf( buf, "eorb #$%02x", get_next_byte() );
+	sprintf( buf, "eorb  #$%02x", get_next_byte() );
 }
 
 static void eora2( char *buf ) {
-	sprintf( buf, "eora " );
+	sprintf( buf, "eora  " );
 	do_addressing( buf );
 }
 
 static void eorb2( char *buf ) {
-	sprintf( buf, "eorb " );
+	sprintf( buf, "eorb  " );
 	do_addressing( buf );
 }
 
 static void ora( char *buf ) {
-	sprintf( buf, "ora #$%02x", get_next_byte() );
+	sprintf( buf, "ora   #$%02x", get_next_byte() );
 }
 
 static void orb( char *buf ) {
-	sprintf( buf, "orb #$%02x", get_next_byte() );
+	sprintf( buf, "orb   #$%02x", get_next_byte() );
 }
 
 static void ora2( char *buf ) {
-	sprintf( buf, "ora " );
+	sprintf( buf, "ora   " );
 	do_addressing( buf );
 }
 
 static void orb2( char *buf ) {
-	sprintf( buf, "orb " );
+	sprintf( buf, "orb   " );
 	do_addressing( buf );
 }
 
 static void cmpa( char *buf ) {
-	sprintf( buf, "cmpa #$%02x", get_next_byte() );
+	sprintf( buf, "cmpa  #$%02x", get_next_byte() );
 }
 
 static void cmpb( char *buf ) {
-	sprintf( buf, "cmpb #$%02x", get_next_byte() );
+	sprintf( buf, "cmpb  #$%02x", get_next_byte() );
 }
 
 static void cmpa2( char *buf ) {
-	sprintf( buf, "cmpa " );
+	sprintf( buf, "cmpa  " );
 	do_addressing( buf );
 }
 
 static void cmpb2( char *buf ) {
-	sprintf( buf, "cmpb " );
+	sprintf( buf, "cmpb  " );
 	do_addressing( buf );
 }
 
@@ -771,12 +774,12 @@ static void setlines2( char *buf ) {
 }
 
 static void sta2( char *buf ) {
-	sprintf( buf, "sta " );
+	sprintf( buf, "sta   " );
 	do_addressing( buf );
 }
 
 static void stb2( char *buf ) {
-	sprintf( buf, "stb " );
+	sprintf( buf, "stb   " );
 	do_addressing( buf );
 }
 
@@ -785,11 +788,11 @@ static void ldd( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "ldd #$%04x", val );
+	sprintf( buf, "ldd   #$%04x", val );
 }
 
 static void ldd2( char *buf ) {
-	sprintf( buf, "ldd " );
+	sprintf( buf, "ldd   " );
 	do_addressing( buf );
 }
 
@@ -798,11 +801,11 @@ static void ldx( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "ldx #$%04x", val );
+	sprintf( buf, "ldx   #$%04x", val );
 }
 
 static void ldx2( char *buf ) {
-	sprintf( buf, "ldx " );
+	sprintf( buf, "ldx   " );
 	do_addressing( buf );
 }
 
@@ -811,11 +814,11 @@ static void ldy( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "ldy #$%04x", val );
+	sprintf( buf, "ldy   #$%04x", val );
 }
 
 static void ldy2( char *buf ) {
-	sprintf( buf, "ldy " );
+	sprintf( buf, "ldy   " );
 	do_addressing( buf );
 }
 
@@ -824,11 +827,11 @@ static void ldu( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "ldu #$%04x", val );
+	sprintf( buf, "ldu   #$%04x", val );
 }
 
 static void ldu2( char *buf ) {
-	sprintf( buf, "ldu " );
+	sprintf( buf, "ldu   " );
 	do_addressing( buf );
 }
 
@@ -837,11 +840,11 @@ static void lds( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "lds #$%04x", val );
+	sprintf( buf, "lds   #$%04x", val );
 }
 
 static void lds2( char *buf ) {
-	sprintf( buf, "lds " );
+	sprintf( buf, "lds   " );
 	do_addressing( buf );
 }
 
@@ -850,11 +853,11 @@ static void cmpd( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "cmpd #$%04x", val );
+	sprintf( buf, "cmpd  #$%04x", val );
 }
 
 static void cmpd2( char *buf ) {
-	sprintf( buf, "cmpd " );
+	sprintf( buf, "cmpd  " );
 	do_addressing( buf );
 }
 
@@ -863,11 +866,11 @@ static void cmpx( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "cmpx #$%04x", val );
+	sprintf( buf, "cmpx  #$%04x", val );
 }
 
 static void cmpx2( char *buf ) {
-	sprintf( buf, "cmpx " );
+	sprintf( buf, "cmpx  " );
 	do_addressing( buf );
 }
 
@@ -876,11 +879,11 @@ static void cmpy( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "cmpy #$%04x", val );
+	sprintf( buf, "cmpy  #$%04x", val );
 }
 
 static void cmpy2( char *buf ) {
-	sprintf( buf, "cmpy " );
+	sprintf( buf, "cmpy  " );
 	do_addressing( buf );
 }
 
@@ -889,11 +892,11 @@ static void cmpu( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "cmpu #$%04x", val );
+	sprintf( buf, "cmpu  #$%04x", val );
 }
 
 static void cmpu2( char *buf ) {
-	sprintf( buf, "cmpu " );
+	sprintf( buf, "cmpu  " );
 	do_addressing( buf );
 }
 
@@ -902,206 +905,206 @@ static void cmps( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "cmps #$%04x", val );
+	sprintf( buf, "cmps  #$%04x", val );
 }
 
 static void cmps2( char *buf ) {
-	sprintf( buf, "cmps " );
+	sprintf( buf, "cmps  " );
 	do_addressing( buf );
 }
 
 static void addd2( char *buf ) {
-	sprintf( buf, "addd " );
+	sprintf( buf, "addd  " );
 	do_addressing( buf );
 }
 
 static void subd2( char *buf ) {
-	sprintf( buf, "subd " );
+	sprintf( buf, "subd  " );
 	do_addressing( buf );
 }
 
 static void std2( char *buf ) {
-	sprintf( buf, "std " );
+	sprintf( buf, "std   " );
 	do_addressing( buf );
 }
 
 static void stx2( char *buf ) {
-	sprintf( buf, "stx " );
+	sprintf( buf, "stx   " );
 	do_addressing( buf );
 }
 
 static void sty2( char *buf ) {
-	sprintf( buf, "sty " );
+	sprintf( buf, "sty   " );
 	do_addressing( buf );
 }
 
 static void stu2( char *buf ) {
-	sprintf( buf, "stu " );
+	sprintf( buf, "stu   " );
 	do_addressing( buf );
 }
 
 static void sts2( char *buf ) {
-	sprintf( buf, "sts " );
+	sprintf( buf, "sts   " );
 	do_addressing( buf );
 }
 
 static void bra( char *buf ) {
-	sprintf( buf, "bra " );
+	sprintf( buf, "bra   " );
 	do_relative( buf );
 }
 
 static void lbra( char *buf ) {
-	sprintf( buf, "lbra " );
+	sprintf( buf, "lbra  " );
 	do_relative_word( buf );
 }
 
 static void brn( char *buf ) {
-	sprintf( buf, "brn " );
+	sprintf( buf, "brn   " );
 	do_relative( buf );
 }
 
 static void lbrn( char *buf ) {
-	sprintf( buf, "lbrn " );
+	sprintf( buf, "lbrn  " );
 	do_relative_word( buf );
 }
 
 static void bhi( char *buf ) {
-	sprintf( buf, "bhi " );
+	sprintf( buf, "bhi   " );
 	do_relative( buf );
 }
 
 static void lbhi( char *buf ) {
-	sprintf( buf, "lbhi " );
+	sprintf( buf, "lbhi  " );
 	do_relative_word( buf );
 }
 
 static void bls( char *buf ) {
-	sprintf( buf, "bls " );
+	sprintf( buf, "bls   " );
 	do_relative( buf );
 }
 
 static void lbls( char *buf ) {
-	sprintf( buf, "lbls " );
+	sprintf( buf, "lbls  " );
 	do_relative_word( buf );
 }
 
 static void bcc( char *buf ) {
-	sprintf( buf, "bcc " );
+	sprintf( buf, "bcc   " );
 	do_relative( buf );
 }
 
 static void lbcc( char *buf ) {
-	sprintf( buf, "lbcc " );
+	sprintf( buf, "lbcc  " );
 	do_relative_word( buf );
 }
 
 static void bcs( char *buf ) {
-	sprintf( buf, "bcs " );
+	sprintf( buf, "bcs   " );
 	do_relative( buf );
 }
 
 static void lbcs( char *buf ) {
-	sprintf( buf, "lbcs " );
+	sprintf( buf, "lbcs  " );
 	do_relative_word( buf );
 }
 
 static void bne( char *buf ) {
-	sprintf( buf, "bne " );
+	sprintf( buf, "bne   " );
 	do_relative( buf );
 }
 
 static void lbne( char *buf ) {
-	sprintf( buf, "lbne " );
+	sprintf( buf, "lbne  " );
 	do_relative_word( buf );
 }
 
 static void beq( char *buf ) {
-	sprintf( buf, "beq " );
+	sprintf( buf, "beq   " );
 	do_relative( buf );
 }
 
 static void lbeq( char *buf ) {
-	sprintf( buf, "lbeq " );
+	sprintf( buf, "lbeq  " );
 	do_relative_word( buf );
 }
 
 static void bvc( char *buf ) {
-	sprintf( buf, "bvc " );
+	sprintf( buf, "bvc   " );
 	do_relative( buf );
 }
 
 static void lbvc( char *buf ) {
-	sprintf( buf, "lbvc " );
+	sprintf( buf, "lbvc  " );
 	do_relative_word( buf );
 }
 
 static void bvs( char *buf ) {
-	sprintf( buf, "bvs " );
+	sprintf( buf, "bvs   " );
 	do_relative( buf );
 }
 
 static void lbvs( char *buf ) {
-	sprintf( buf, "lbvs " );
+	sprintf( buf, "lbvs  " );
 	do_relative_word( buf );
 }
 
 static void bpl( char *buf ) {
-	sprintf( buf, "bpl " );
+	sprintf( buf, "bpl   " );
 	do_relative( buf );
 }
 
 static void lbpl( char *buf ) {
-	sprintf( buf, "lbpl " );
+	sprintf( buf, "lbpl  " );
 	do_relative_word( buf );
 }
 
 static void bmi( char *buf ) {
-	sprintf( buf, "bmi " );
+	sprintf( buf, "bmi   " );
 	do_relative( buf );
 }
 
 static void lbmi( char *buf ) {
-	sprintf( buf, "lbmi " );
+	sprintf( buf, "lbmi  " );
 	do_relative_word( buf );
 }
 
 static void bge( char *buf ) {
-	sprintf( buf, "bge " );
+	sprintf( buf, "bge   " );
 	do_relative( buf );
 }
 
 static void lbge( char *buf ) {
-	sprintf( buf, "lbge " );
+	sprintf( buf, "lbge  " );
 	do_relative_word( buf );
 }
 
 static void blt( char *buf ) {
-	sprintf( buf, "blt " );
+	sprintf( buf, "blt   " );
 	do_relative( buf );
 }
 
 static void lblt( char *buf ) {
-	sprintf( buf, "lblt " );
+	sprintf( buf, "lblt  " );
 	do_relative_word( buf );
 }
 
 static void bgt( char *buf ) {
-	sprintf( buf, "bgt " );
+	sprintf( buf, "bgt   " );
 	do_relative( buf );
 }
 
 static void lbgt( char *buf ) {
-	sprintf( buf, "lbgt " );
+	sprintf( buf, "lbgt  " );
 	do_relative_word( buf );
 }
 
 static void ble( char *buf ) {
-	sprintf( buf, "ble " );
+	sprintf( buf, "ble   " );
 	do_relative( buf );
 }
 
 static void lble( char *buf ) {
-	sprintf( buf, "lble " );
+	sprintf( buf, "lble  " );
 	do_relative_word( buf );
 }
 
@@ -1118,7 +1121,7 @@ static void clrd( char *buf ) {
 }
 
 static void clrw( char *buf ) {
-	sprintf( buf, "clrw " );
+	sprintf( buf, "clrw  " );
 	do_addressing( buf );
 }
 
@@ -1136,7 +1139,7 @@ static void incd( char *buf ) {
 }
 
 static void incw( char *buf ) {
-	sprintf( buf, "incw " );
+	sprintf( buf, "incw  " );
 	do_addressing( buf );
 }
 
@@ -1145,21 +1148,21 @@ static void decd( char *buf ) {
 }
 
 static void decw( char *buf ) {
-	sprintf( buf, "decw " );
+	sprintf( buf, "decw  " );
 	do_addressing( buf );
 }
 
 static void tstd( char *buf ) {
-	sprintf( buf, "tstd " );
+	sprintf( buf, "tstd  " );
 }
 
 static void tstw( char *buf ) {
-	sprintf( buf, "tstw " );
+	sprintf( buf, "tstw  " );
 	do_addressing( buf );
 }
 
 static void clr2( char *buf ) {
-	sprintf( buf, "clr " );
+	sprintf( buf, "clr   " );
 	do_addressing( buf );
 }
 
@@ -1172,7 +1175,7 @@ static void comb( char *buf ) {
 }
 
 static void com2( char *buf ) {
-	sprintf( buf, "com " );
+	sprintf( buf, "com   " );
 	do_addressing( buf );
 }
 
@@ -1185,7 +1188,7 @@ static void negb( char *buf ) {
 }
 
 static void neg2( char *buf ) {
-	sprintf( buf, "neg " );
+	sprintf( buf, "neg   " );
 	do_addressing( buf );
 }
 
@@ -1198,7 +1201,7 @@ static void incb( char *buf ) {
 }
 
 static void inc2( char *buf ) {
-	sprintf( buf, "inc " );
+	sprintf( buf, "inc   " );
 	do_addressing( buf );
 }
 
@@ -1211,12 +1214,13 @@ static void decb( char *buf ) {
 }
 
 static void dec2( char *buf ) {
-	sprintf( buf, "dec " );
+	sprintf( buf, "dec   " );
 	do_addressing( buf );
 }
 
 static void rts( char *buf ) {
-	sprintf( buf, "rts" );
+	sprintf( buf, "rts"  );
+	flags = DASMFLAG_STEP_OUT;
 }
 
 static void asla( char *buf ) {
@@ -1228,7 +1232,7 @@ static void aslb( char *buf ) {
 }
 
 static void asl2( char *buf ) {
-	sprintf( buf, "asl " );
+	sprintf( buf, "asl   " );
 	do_addressing( buf );
 }
 
@@ -1241,42 +1245,48 @@ static void rorb( char *buf ) {
 }
 
 static void ror2( char *buf ) {
-	sprintf( buf, "ror " );
+	sprintf( buf, "ror   " );
 	do_addressing( buf );
 }
 
 static void rti( char *buf ) {
-	sprintf( buf, "rti" );
+	sprintf( buf, "rti"  );
+	flags = DASMFLAG_STEP_OUT;
 }
 
 static void jsr2( char *buf ) {
-	sprintf( buf, "jsr " );
+	sprintf( buf, "jsr   " );
 	do_addressing( buf );
+	flags = DASMFLAG_STEP_OVER;
 }
 
 static void jmp2( char *buf ) {
-	sprintf( buf, "jmp " );
+	sprintf( buf, "jmp   " );
 	do_addressing( buf );
 }
 
 static void bsr( char *buf ) {
-	sprintf( buf, "bsr " );
+	sprintf( buf, "bsr   " );
 	do_relative( buf );
+	flags = DASMFLAG_STEP_OVER;
 }
 
 static void lbsr( char *buf ) {
-	sprintf( buf, "lbsr " );
+	sprintf( buf, "lbsr  " );
 	do_relative_word( buf );
+	flags = DASMFLAG_STEP_OVER;
 }
 
 static void decbjnz( char *buf ) {
 	sprintf( buf, "decb,jnz " );
 	do_relative( buf );
+	flags = DASMFLAG_STEP_OVER;
 }
 
 static void decxjnz( char *buf ) {
 	sprintf( buf, "decx,jnz " );
 	do_relative( buf );
+	flags = DASMFLAG_STEP_OVER;
 }
 
 static void addd( char *buf ) {
@@ -1284,7 +1294,7 @@ static void addd( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "addd #$%04x", val );
+	sprintf( buf, "addd  #$%04x", val );
 }
 
 static void subd( char *buf ) {
@@ -1292,7 +1302,7 @@ static void subd( char *buf ) {
 
 	val |= get_next_byte();
 
-	sprintf( buf, "subd #$%04x", val );
+	sprintf( buf, "subd  #$%04x", val );
 }
 
 static void tsta( char *buf ) {
@@ -1304,7 +1314,7 @@ static void tstb( char *buf ) {
 }
 
 static void tst2( char *buf ) {
-	sprintf( buf, "tst " );
+	sprintf( buf, "tst   " );
 	do_addressing( buf );
 }
 
@@ -1317,7 +1327,7 @@ static void lsrb( char *buf ) {
 }
 
 static void lsr2( char *buf ) {
-	sprintf( buf, "lsr " );
+	sprintf( buf, "lsr   " );
 	do_addressing( buf );
 }
 
@@ -1330,7 +1340,7 @@ static void asrb( char *buf ) {
 }
 
 static void asr2( char *buf ) {
-	sprintf( buf, "asr " );
+	sprintf( buf, "asr   " );
 	do_addressing( buf );
 }
 
@@ -1355,7 +1365,7 @@ static void lmul( char *buf ) {
 }
 
 static void divx( char *buf ) {
-	sprintf( buf, "div x,b" );
+	sprintf( buf, "div   x,b" );
 }
 
 static void andcc( char *buf ) {
@@ -1363,7 +1373,7 @@ static void andcc( char *buf ) {
 }
 
 static void orcc( char *buf ) {
-	sprintf( buf, "orcc #$%02x", get_next_byte() );
+	sprintf( buf, "orcc  #$%02x", get_next_byte() );
 }
 
 static void pushs( char *buf ) {
@@ -1408,6 +1418,8 @@ static void pulls( char *buf ) {
 	for ( i = 0; i < 8; i++ ) {
 		if ( ( mask >> i ) & 1 ) {
 			strcat( buf, stack_reg_s[i] );
+			if (i == 7)
+				flags = DASMFLAG_STEP_OUT;
 			mask &= ~( 1 << i );
 			if ( mask )
 				strcat( buf, "," );
@@ -1443,7 +1455,7 @@ static void rolb( char *buf ) {
 }
 
 static void rol2( char *buf ) {
-	sprintf( buf, "rol " );
+	sprintf( buf, "rol   " );
 	do_addressing( buf );
 }
 
@@ -1452,15 +1464,15 @@ static void bmove( char *buf ) {
 }
 
 static void move( char *buf ) {
-	sprintf( buf, "move y,x,u" );
+	sprintf( buf, "move  y,x,u" );
 }
 
 static void bset( char *buf ) {
-	sprintf( buf, "bset a,x,u" );
+	sprintf( buf, "bset  a,x,u" );
 }
 
 static void bset2( char *buf ) {
-	sprintf( buf, "bset d,x,u" );
+	sprintf( buf, "bset  d,x,u" );
 }
 
 static void nop( char *buf ) {
@@ -1470,7 +1482,7 @@ static void nop( char *buf ) {
 static void tfr( char *buf ) {
 	int mask = get_next_byte();
 
-	sprintf( buf, "tfr " );
+	sprintf( buf, "tfr   " );
 
 	strcat( buf, tfrexg_reg[ mask & 0x07 ] );
 	strcat( buf, "," );
@@ -1480,7 +1492,7 @@ static void tfr( char *buf ) {
 static void exg( char *buf ) {
 	int mask = get_next_byte();
 
-	sprintf( buf, "exg " );
+	sprintf( buf, "exg   " );
 
 	strcat( buf, tfrexg_reg[ mask & 0x07 ] );
 	strcat( buf, "," );
@@ -1488,72 +1500,72 @@ static void exg( char *buf ) {
 }
 
 static void lsrd( char *buf ) {
-	sprintf( buf, "lsrd #$%02x", get_next_byte() );
+	sprintf( buf, "lsrd  #$%02x", get_next_byte() );
 }
 
 static void lsrd2( char *buf ) {
-	sprintf( buf, "lsrd " );
+	sprintf( buf, "lsrd  " );
 	do_addressing( buf );
 }
 
 static void rord( char *buf ) {
-	sprintf( buf, "rord #$%02x", get_next_byte() );
+	sprintf( buf, "rord  #$%02x", get_next_byte() );
 }
 
 static void rord2( char *buf ) {
-	sprintf( buf, "rord " );
+	sprintf( buf, "rord  " );
 	do_addressing( buf );
 }
 
 static void asrd( char *buf ) {
-	sprintf( buf, "asrd #$%02x", get_next_byte() );
+	sprintf( buf, "asrd  #$%02x", get_next_byte() );
 }
 
 static void asrd2( char *buf ) {
-	sprintf( buf, "asrd " );
+	sprintf( buf, "asrd  " );
 	do_addressing( buf );
 }
 
 static void asld( char *buf ) {
-	sprintf( buf, "asld #$%02x", get_next_byte() );
+	sprintf( buf, "asld  #$%02x", get_next_byte() );
 }
 
 static void asld2( char *buf ) {
-	sprintf( buf, "asld " );
+	sprintf( buf, "asld  " );
 	do_addressing( buf );
 }
 
 static void rold( char *buf ) {
-	sprintf( buf, "rold #$%02x", get_next_byte() );
+	sprintf( buf, "rold  #$%02x", get_next_byte() );
 }
 
 static void rold2( char *buf ) {
-	sprintf( buf, "rold " );
+	sprintf( buf, "rold  " );
 	do_addressing( buf );
 }
 
 static void lsrw( char *buf ) {
-	sprintf( buf, "lsrw " );
+	sprintf( buf, "lsrw  " );
 	do_addressing( buf );
 }
 
 static void rorw( char *buf ) {
-	sprintf( buf, "lsrw " );
+	sprintf( buf, "lsrw  " );
 	do_addressing( buf );
 }
 
 static void asrw( char *buf ) {
-	sprintf( buf, "asrw " );
+	sprintf( buf, "asrw  " );
 	do_addressing( buf );
 }
 
 static void aslw( char *buf ) {
-	sprintf( buf, "aslw " );
+	sprintf( buf, "aslw  " );
 	do_addressing( buf );
 }
 
 static void rolw( char *buf ) {
-	sprintf( buf, "rolw " );
+	sprintf( buf, "rolw  " );
 	do_addressing( buf );
 }
 
@@ -1854,20 +1866,18 @@ static konami_opcode_def op_table[256] = {
 	/* ff */	{ illegal, 0 }
 };
 
-unsigned Dasmknmi( char *buffer, unsigned pc ) {
-	unsigned char op;
-
+offs_t Dasmknmi(char *buffer, UINT32 pc, UINT8 *oprom, UINT8 *opram, int bytes)
+{
 	buffer[0] = '\0';
 
 	local_pc = pc;
-	byte_count = 0;
+	byte_count = 1;
+	opram_ptr = opram;
+	flags = 0;
 
-	op = cpu_readop( pc );
-	byte_count++;
+	(op_table[*oprom].decode)( buffer );
 
-	(op_table[op].decode)( buffer );
-
-	return byte_count;
+	return byte_count | flags | DASMFLAG_SUPPORTED;
 }
 
 #endif

@@ -53,7 +53,8 @@ extern UINT16 *roldfrog_bitmap_mode;
 UINT16 *roldfrog_protdata;
 
 extern int splash_bitmap_type;
-/* from vidhrdw/gaelco.c */
+extern int splash_sprite_attr2_shift;
+
 READ16_HANDLER( splash_vram_r );
 WRITE16_HANDLER( splash_vram_w );
 VIDEO_START( splash );
@@ -719,6 +720,27 @@ ROM_START( splash )
 	ROM_LOAD( "13i",	0x060000, 0x020000, CRC(febb9893) SHA1(bb607a608c6c1658748a17a62431e8c30323c7ec) )
 ROM_END
 
+ROM_START( splash10 )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code + gfx */
+	ROM_LOAD16_BYTE(	"splash10.g4",	0x000000, 0x020000, CRC(38ba6632) SHA1(ca1425120fcb427e1b2c83eb3bf104363d9571be) )
+	ROM_LOAD16_BYTE(	"splash10.i4",	0x000001, 0x020000, CRC(0edc3373) SHA1(edf28baa6ef2442a37eb81a51ab66485d89f802e) )
+	ROM_LOAD16_BYTE(	"5g",	0x100000, 0x080000, CRC(a4e8ed18) SHA1(64ce47193ee4bb3a8014d7c14c559b4ebb3af083) )
+	ROM_LOAD16_BYTE(	"5i",	0x100001, 0x080000, CRC(73e1154d) SHA1(2c055ad29a32c6c1e712cc35b5972f1e69cdebb7) )
+	ROM_LOAD16_BYTE(	"6g",	0x200000, 0x080000, CRC(ffd56771) SHA1(35ad9874b6ea5aa3ba38a31d723093b4dd2cfdb8) )
+	ROM_LOAD16_BYTE(	"6i",	0x200001, 0x080000, CRC(16e9170c) SHA1(96fc237cb172039df153dc70d15ed7d9ee750363) )
+	ROM_LOAD16_BYTE(	"8g",	0x300000, 0x080000, CRC(dc3a3172) SHA1(2b322b52e3e8da00f26dd276cb72bd2d48c2deaa) )
+	ROM_LOAD16_BYTE(	"8i",	0x300001, 0x080000, CRC(2e23e6c3) SHA1(baf9ab4c3261c3f06f5e43c1e50aba9222acb71d) )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 )	/* Z80 code + sound data */
+	ROM_LOAD( "5c",	0x00000, 0x10000, CRC(0ed7ebc9) SHA1(28ef16e20d754deef49be6a5c9f63311e9ec94a3) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "18i",	0x000000, 0x020000, CRC(028a4a68) SHA1(19384988e3690886ed55886ecdc4e4c566dbe4ba) )
+	ROM_LOAD( "15i",	0x020000, 0x020000, CRC(2a8cb830) SHA1(bc54dfb03fade154085aa2f66784e07664a7a3d8) )
+	ROM_LOAD( "16i",	0x040000, 0x020000, CRC(21aeff2c) SHA1(0c307e94f4a814c674ba0ab471a6bdd57e43c265) )
+	ROM_LOAD( "13i",	0x060000, 0x020000, CRC(febb9893) SHA1(bb607a608c6c1658748a17a62431e8c30323c7ec) )
+ROM_END
+
 /***************************************************************************
 
 Painted Lady (US, version 1.3)
@@ -849,17 +871,26 @@ void init_protection_data (void)
 DRIVER_INIT( splash )
 {
 	splash_bitmap_type = 0;
+	splash_sprite_attr2_shift = 8;
+}
+
+DRIVER_INIT( splash10 )
+{
+	splash_bitmap_type = 0;
+	splash_sprite_attr2_shift = 0;
 }
 
 DRIVER_INIT( roldfrog )
 {
 	splash_bitmap_type = 1;
 	init_protection_data();
+	splash_sprite_attr2_shift = 0;
 }
 
 DRIVER_INIT( rebus )
 {
 	splash_bitmap_type = 1;
+	splash_sprite_attr2_shift = 0;
 //  init_protection_data();
 }
 
@@ -869,14 +900,16 @@ DRIVER_INIT( funystrp )
 	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU1);
 
 	splash_bitmap_type = 0;
+	splash_sprite_attr2_shift = 0;
 
 	/* part of the protection? */
 	ROM[0x04770/2] = 0x4e71;
 	ROM[0x04772/2] = 0x4e71;
 }
 
-GAME( 1992, splash,   0,        splash, splash, splash, ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)", 0 )
-GAME( 1992, paintlad, splash,   splash, splash, splash, ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)", 0 )
+GAME( 1992, splash,   0,        splash, splash, splash,     ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)", 0 )
+GAME( 1992, splash10, splash,   splash, splash, splash10,   ROT0, "Gaelco",    "Splash! (Ver. 1.0 World)", 0 )
+GAME( 1992, paintlad, splash,   splash, splash, splash,     ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)", 0 )
 
 GAME( 1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
 GAME( 1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )

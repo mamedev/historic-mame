@@ -27,7 +27,6 @@
 *******************************************************************************/
 
 
-int snk_bg_tilemap_baseaddr = 0;
 int snk_blink_parity = 0;
 
 #define MAX_VRAM_SIZE (64*64*2) /* 0x2000 */
@@ -92,8 +91,6 @@ static void tnk3_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly,
 	int offs, x, y;
 
 	/* to be moved to memmap */
-	videoram = &memory_region(REGION_CPU1)[snk_bg_tilemap_baseaddr];
-
 	for(x=0; x<x_size; x++) for(y=0; y<y_size; y++)
 	{
 		offs = (x*y_size + y) << 1;
@@ -127,7 +124,7 @@ static void tnk3_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly,
 	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,clip,TRANSPARENCY_NONE,0);
 }
 
-void tnk3_draw_text( mame_bitmap *bitmap, int bank, unsigned char *source )
+void tnk3_draw_text( mame_bitmap *bitmap, int bank, UINT8 *source )
 {
 	const gfx_element *gfx = Machine->gfx[0];
 	rectangle *clip = &Machine->visible_area;
@@ -154,7 +151,7 @@ void tnk3_draw_text( mame_bitmap *bitmap, int bank, unsigned char *source )
 	}
 }
 
-void tnk3_draw_status_main( mame_bitmap *bitmap, int bank, unsigned char *source, int start )
+void tnk3_draw_status_main( mame_bitmap *bitmap, int bank, UINT8 *source, int start )
 {
 	const gfx_element *gfx = Machine->gfx[0];
 	rectangle *clip = &Machine->visible_area;
@@ -179,7 +176,7 @@ void tnk3_draw_status_main( mame_bitmap *bitmap, int bank, unsigned char *source
 	}
 }
 
-void tnk3_draw_status( mame_bitmap *bitmap, int bank, unsigned char *source )
+void tnk3_draw_status( mame_bitmap *bitmap, int bank, UINT8 *source )
 {
 
 	tnk3_draw_status_main(bitmap,bank,source, 0);
@@ -219,7 +216,7 @@ void tnk3_draw_sprites( mame_bitmap *bitmap, int xscroll, int yscroll )
 
 VIDEO_UPDATE( tnk3 )
 {
-	unsigned char *ram = memory_region(REGION_CPU1);
+	UINT8 *ram = snk_rambase - 0xd000;
 	int attributes = ram[0xc800];
 	/*
         X-------
@@ -300,7 +297,7 @@ static void sgladiat_draw_background( mame_bitmap *bitmap, int scrollx, int scro
 
 VIDEO_UPDATE( sgladiat )
 {
-	unsigned char *pMem = memory_region(REGION_CPU1);
+	UINT8 *pMem = snk_rambase - 0xd000;
 	int attributes, scrollx, scrolly;
 
 	attributes = pMem[0xd300];
@@ -323,7 +320,7 @@ VIDEO_UPDATE( sgladiat )
 /**************************************************************************************/
 
 static void ikari_draw_sprites( mame_bitmap *bitmap, int start, int xscroll, int yscroll,
-				unsigned char *source, int mode )
+				UINT8 *source, int mode )
 {
 	rectangle *clip = &Machine->visible_area;
 	gfx_element *gfx = Machine->gfx[mode];
@@ -363,7 +360,7 @@ static void ikari_draw_sprites( mame_bitmap *bitmap, int start, int xscroll, int
 
 VIDEO_UPDATE( ikari )
 {
-	unsigned char *ram = memory_region(REGION_CPU1);
+	UINT8 *ram = snk_rambase - 0xd000;
 
 	{
 		int attributes = ram[0xc900];
@@ -394,7 +391,7 @@ VIDEO_UPDATE( ikari )
 
 static void tdfever_draw_bg( mame_bitmap *bitmap, int xscroll, int yscroll )
 {
-	const unsigned char *source = &memory_region(REGION_CPU1)[0xd000];
+	const UINT8 *source = snk_rambase + 0x000;
 	const gfx_element *gfx = Machine->gfx[1];
 	rectangle *clip = &Machine->visible_area;
 
@@ -453,7 +450,7 @@ byte3: attributes
 */
 static void tdfever_draw_sp( mame_bitmap *bitmap, int xscroll, int yscroll, int mode )
 {
-	const unsigned char *source = &memory_region(REGION_CPU1)[(mode==2)?0xe800:0xe000];
+	const UINT8 *source = snk_rambase + ((mode==2)?0x1800:0x1000);
 	const gfx_element *gfx = Machine->gfx[(mode==1)?3:2];
 	rectangle *clip = &Machine->visible_area;
 	int tile_number, attributes, sx, sy, color, pen_mode;
@@ -508,7 +505,7 @@ static void tdfever_draw_sp( mame_bitmap *bitmap, int xscroll, int yscroll, int 
 
 static void tdfever_draw_tx( mame_bitmap *bitmap, int attributes, int dx, int dy, int base )
 {
-	const unsigned char *source = &memory_region(REGION_CPU1)[base];
+	const UINT8 *source = snk_rambase - 0xd000 + base;
 	const gfx_element *gfx = Machine->gfx[0];
 	rectangle *clip = &Machine->visible_area;
 
@@ -534,12 +531,12 @@ static void tdfever_draw_tx( mame_bitmap *bitmap, int attributes, int dx, int dy
 
 VIDEO_UPDATE( tdfever )
 {
-	const unsigned char *ram = memory_region(REGION_CPU1);
+	const UINT8 *ram = snk_rambase - 0xd000;
 	int i;
 
-	unsigned char bg_attributes = ram[0xc880];
-	unsigned char sp_attributes = ram[0xc900];
-	unsigned char tx_attributes = ram[0xc8c0];
+	UINT8 bg_attributes = ram[0xc880];
+	UINT8 sp_attributes = ram[0xc900];
+	UINT8 tx_attributes = ram[0xc8c0];
 	int bg_scroll_x = -ram[0xc840] + ((bg_attributes & 0x02) ? 256:0);
 	int bg_scroll_y = -ram[0xc800] + ((bg_attributes & 0x01) ? 256:0);
 	int sp_scroll_x = -ram[0xc9c0] + ((sp_attributes & 0x40) ? 0:256);
@@ -576,9 +573,9 @@ VIDEO_UPDATE( tdfever )
 
 VIDEO_UPDATE( gwar )
 {
-	const unsigned char *ram = memory_region(REGION_CPU1);
+	const UINT8 *ram = snk_rambase - 0xd000;
 	int gwar_sp_baseaddr, gwar_tx_baseaddr;
-	unsigned char bg_attribute;
+	UINT8 bg_attribute;
 
 	if(snk_gamegroup == 4) // gwara
 	{
@@ -606,7 +603,7 @@ VIDEO_UPDATE( gwar )
 	}
 
 	{
-		unsigned char sp_attribute = ram[gwar_sp_baseaddr+0xac0];
+		UINT8 sp_attribute = ram[gwar_sp_baseaddr+0xac0];
 		int sp16_x = -ram[gwar_sp_baseaddr+0x940] - 9;
 		int sp16_y = -ram[gwar_sp_baseaddr+0x900] - 15;
 		int sp32_x = -ram[gwar_sp_baseaddr+0x9c0] - 9;
@@ -621,7 +618,7 @@ VIDEO_UPDATE( gwar )
 		}
 		else
 		{
-			unsigned char spp_attribute = ram[gwar_sp_baseaddr+0xa80];
+			UINT8 spp_attribute = ram[gwar_sp_baseaddr+0xa80];
 			sp16_x += (spp_attribute & 0x10) ? 256:0;
 			sp16_y += (spp_attribute & 0x04) ? 256:0;
 			sp32_x += (spp_attribute & 0x20) ? 256:0;
@@ -641,7 +638,7 @@ VIDEO_UPDATE( gwar )
 	}
 
 	{
-		unsigned char text_attribute = ram[gwar_sp_baseaddr+0x8c0];
+		UINT8 text_attribute = ram[gwar_sp_baseaddr+0x8c0];
 		tdfever_draw_tx( bitmap, text_attribute, 0, 0, gwar_tx_baseaddr );
 	}
 }

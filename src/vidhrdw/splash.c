@@ -16,6 +16,7 @@ UINT16 *splash_spriteram;
 UINT16 *splash_pixelram;
 UINT16 *roldfrog_bitmap_mode;
 int splash_bitmap_type;
+int splash_sprite_attr2_shift;
 static tilemap *bg_tilemap[2];
 
 /***************************************************************************
@@ -233,7 +234,7 @@ static void splash_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		int sx = splash_spriteram[i+2] & 0xff;
 		int sy = (240 - (splash_spriteram[i+1] & 0xff)) & 0xff;
 		int attr = splash_spriteram[i+3] & 0xff;
-		int attr2 = splash_spriteram[i+0x400] >> 8;
+		int attr2 = splash_spriteram[i+0x400] >> splash_sprite_attr2_shift;
 		int number = (splash_spriteram[i] & 0xff) + (attr & 0xf)*256;
 
 		if (attr2 & 0x80) sx += 256;
@@ -254,7 +255,7 @@ static void funystrp_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		int sx = splash_spriteram[i+2] & 0x1ff;
 		int sy = (240 - (splash_spriteram[i+1] & 0xff)) & 0xff;
 		int attr = splash_spriteram[i+3] & 0xff;
-		int attr2 = splash_spriteram[i+0x400];
+		int attr2 = splash_spriteram[i+0x400] >> splash_sprite_attr2_shift;
 		int number = (splash_spriteram[i] & 0xff) + (attr & 0xf)*256;
 
 		drawgfx(bitmap,gfx,number,

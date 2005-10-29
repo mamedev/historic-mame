@@ -844,6 +844,7 @@ INLINE void rti( void )
 	PULLBYTE(A);
 	PULLBYTE(X);
 	PULLWORD(pPC);
+	change_pc(PC);
 #if IRQ_LEVEL_DETECT
 	if( m6805.irq_state != CLEAR_LINE && (CC & IFLAG) == 0 )
 		m6805.pending_interrupts |= M6805_INT_IRQ;
@@ -854,6 +855,7 @@ INLINE void rti( void )
 INLINE void rts( void )
 {
 	PULLWORD(pPC);
+	change_pc(PC);
 }
 
 /* $82 ILLEGAL */
@@ -867,6 +869,7 @@ INLINE void swi( void )
 	PUSHBYTE(m6805.cc);
 	SEI;
 	if(SUBTYPE==SUBTYPE_HD63705) RM16( 0x1ffa, &pPC ); else RM16( 0xfffc, &pPC );
+	change_pc(PC);
 }
 
 /* $84 ILLEGAL */
@@ -1220,6 +1223,7 @@ INLINE void jmp_di( void )
 {
 	DIRECT;
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $bd JSR direct ---- */
@@ -1228,6 +1232,7 @@ INLINE void jsr_di( void )
 	DIRECT;
 	PUSHWORD(m6805.pc);
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $be LDX direct -**- */
@@ -1380,6 +1385,7 @@ INLINE void jmp_ex( void )
 {
 	EXTENDED;
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $cd JSR extended ---- */
@@ -1388,6 +1394,7 @@ INLINE void jsr_ex( void )
 	EXTENDED;
 	PUSHWORD(m6805.pc);
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $ce LDX extended -**- */
@@ -1540,6 +1547,7 @@ INLINE void jmp_ix2( void )
 {
 	INDEXED2;
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $dd JSR indexed, 2 byte offset ---- */
@@ -1548,6 +1556,7 @@ INLINE void jsr_ix2( void )
 	INDEXED2;
 	PUSHWORD(m6805.pc);
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $de LDX indexed, 2 byte offset -**- */
@@ -1700,6 +1709,7 @@ INLINE void jmp_ix1( void )
 {
 	INDEXED1;
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $ed JSR indexed, 1 byte offset ---- */
@@ -1708,6 +1718,7 @@ INLINE void jsr_ix1( void )
 	INDEXED1;
 	PUSHWORD(m6805.pc);
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $ee LDX indexed, 1 byte offset -**- */
@@ -1860,6 +1871,7 @@ INLINE void jmp_ix( void )
 {
 	INDEXED;
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $fd JSR indexed ---- */
@@ -1868,6 +1880,7 @@ INLINE void jsr_ix( void )
 	INDEXED;
 	PUSHWORD(m6805.pc);
 	PC = EA;
+	change_pc(PC);
 }
 
 /* $fe LDX indexed -**- */

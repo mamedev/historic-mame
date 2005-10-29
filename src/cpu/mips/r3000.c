@@ -983,11 +983,16 @@ static UINT8 r3000_win_layout[] =
 **  DISASSEMBLY HOOK
 **#################################################################################################*/
 
-static offs_t r3000_dasm(char *buffer, offs_t pc)
+static offs_t r3000_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasmr3k(char *, unsigned);
-    return dasmr3k(buffer, pc);
+	extern unsigned dasmr3k(char *, unsigned, UINT32);
+	UINT32 op = *(UINT32 *)opram;
+	if (r3000.bigendian)
+		op = BIG_ENDIANIZE_INT32(op);
+	else
+		op = LITTLE_ENDIANIZE_INT32(op);
+	return dasmr3k(buffer, pc, op);
 #else
 	sprintf(buffer, "$%04X", ROPCODE(pc));
 	return 2;
@@ -1337,7 +1342,7 @@ static void r3000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = r3000_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = r3000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = r3000_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = r3000_dasm;		break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = r3000.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &r3000_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = r3000_reg_layout;				break;

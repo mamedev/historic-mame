@@ -297,11 +297,6 @@ READ8_HANDLER( wow_videoram_r )
 	return wow_videoram[offset];
 }
 
-WRITE8_HANDLER( wow_videoram_w )
-{
-	wow_videoram[offset] = data;
-}
-
 static UINT16 profpac_color_mapping[4];
 
 UINT16 profpac_map_colors(UINT8 data)
@@ -1028,7 +1023,7 @@ VIDEO_UPDATE( profpac )
 VIDEO_UPDATE( seawolf2 )
 {
 	int centre;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	int player = program_read_byte(0xc1fb);
 
 
 	video_update_astrocde(screen,bitmap,cliprect);
@@ -1036,7 +1031,7 @@ VIDEO_UPDATE( seawolf2 )
 
 	/* Draw a sight */
 
-	if(RAM[0xc1fb] != 0)	/* Number of Players */
+	if(player != 0)	/* Number of Players */
 	{
 		/* Player 1 */
 
@@ -1049,7 +1044,7 @@ VIDEO_UPDATE( seawolf2 )
 
 		/* Player 2 */
 
-		if(RAM[0xc1fb] == 2)
+		if(player == 2)
 		{
 			centre = 316 - ((input_port_1_r(0) & 0x3f)-18) * 10;
 

@@ -139,6 +139,8 @@ Table 3-2.  TMS32025/26 Memory Blocks
 UINT16 *tms32025_pgmmap[0x200];
 UINT16 *tms32025_datamap[0x200];
 
+#define SET_PC(x)	do { R.PC = (x); change_pc(R.PC<<1); } while (0)
+
 INLINE UINT16 M_RDROM(offs_t addr)
 {
 	UINT16 *ram;
@@ -640,52 +642,52 @@ static void apac(void)
 }
 static void br(void)
 {
-		R.PC = M_RDOP_ARG(R.PC);
+		SET_PC(M_RDOP_ARG(R.PC));
 		MODIFY_AR_ARP();
 }
 static void bacc(void)
 {
-		R.PC = R.ACC.w.l;
+		SET_PC(R.ACC.w.l);
 }
 static void banz(void)
 {
-		if (R.AR[ARP]) R.PC = M_RDOP_ARG(R.PC);
+		if (R.AR[ARP]) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bbnz(void)
 {
-		if (TC) R.PC = M_RDOP_ARG(R.PC);
+		if (TC) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bbz(void)
 {
-		if (TC == 0) R.PC = M_RDOP_ARG(R.PC);
+		if (TC == 0) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bc(void)
 {
-		if (CARRY) R.PC = M_RDOP_ARG(R.PC);
+		if (CARRY) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bgez(void)
 {
-		if ( (INT32)(R.ACC.d) >= 0 ) R.PC = M_RDOP_ARG(R.PC);
+		if ( (INT32)(R.ACC.d) >= 0 ) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bgz(void)
 {
-		if ( (INT32)(R.ACC.d) > 0 ) R.PC = M_RDOP_ARG(R.PC);
+		if ( (INT32)(R.ACC.d) > 0 ) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bioz(void)
 {
-		if (S_IN(TMS32025_BIO) != CLEAR_LINE) R.PC = M_RDOP_ARG(R.PC);
+		if (S_IN(TMS32025_BIO) != CLEAR_LINE) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
@@ -703,7 +705,7 @@ static void bitt(void)
 }
 static void blez(void)
 {
-		if ( (INT32)(R.ACC.d) <= 0 ) R.PC = M_RDOP_ARG(R.PC);
+		if ( (INT32)(R.ACC.d) <= 0 ) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
@@ -731,19 +733,19 @@ static void blkp(void)
 }
 static void blz(void)
 {
-		if ( (INT32)(R.ACC.d) <  0 ) R.PC = M_RDOP_ARG(R.PC);
+		if ( (INT32)(R.ACC.d) <  0 ) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bnc(void)
 {
-		if (CARRY == 0) R.PC = M_RDOP_ARG(R.PC);
+		if (CARRY == 0) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bnv(void)
 {
-		if (OV == 0) R.PC = M_RDOP_ARG(R.PC);
+		if (OV == 0) SET_PC(M_RDOP_ARG(R.PC));
 		else {
 			R.PC++ ;
 			CLR0(OV_FLAG);
@@ -752,14 +754,14 @@ static void bnv(void)
 }
 static void bnz(void)
 {
-		if (R.ACC.d != 0) R.PC = M_RDOP_ARG(R.PC);
+		if (R.ACC.d != 0) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void bv(void)
 {
 		if (OV) {
-			R.PC = M_RDOP_ARG(R.PC);
+			SET_PC(M_RDOP_ARG(R.PC));
 			CLR0(OV_FLAG);
 		}
 		else R.PC++ ;
@@ -767,20 +769,20 @@ static void bv(void)
 }
 static void bz(void)
 {
-		if (R.ACC.d == 0) R.PC = M_RDOP_ARG(R.PC);
+		if (R.ACC.d == 0) SET_PC(M_RDOP_ARG(R.PC));
 		else R.PC++ ;
 		MODIFY_AR_ARP();
 }
 static void cala(void)
 {
 		PUSH_STACK(R.PC);
-		R.PC = R.ACC.w.l;
+		SET_PC(R.ACC.w.l);
 }
 static void call(void)
 {
 		R.PC++ ;
 		PUSH_STACK(R.PC);
-		R.PC = M_RDOP_ARG((R.PC - 1));
+		SET_PC(M_RDOP_ARG((R.PC - 1)));
 		MODIFY_AR_ARP();
 }
 static void cmpl(void)
@@ -1231,7 +1233,7 @@ static void rc(void)
 }
 static void ret(void)
 {
-		R.PC = POP_STACK();
+		SET_PC(POP_STACK());
 }
 static void rfsm(void)				/** serial port mode */
 {
@@ -1542,7 +1544,7 @@ static void tblw(void)
 static void trap(void)
 {
 		PUSH_STACK(R.PC);
-		R.PC = 0x001E;		/* Trap vector */
+		SET_PC(0x001E);		/* Trap vector */
 }
 static void xor(void)
 {
@@ -1791,7 +1793,7 @@ static void tms32025_init (void)
  ****************************************************************************/
 static void tms32025_reset (void *param)
 {
-	R.PC = 0;			/* Starting address on a reset */
+	SET_PC(0);			/* Starting address on a reset */
 	R.STR0 |= 0x0600;	/* INTM and unused bit set to 1 */
 	R.STR0 &= 0xefff;	/* OV cleared to 0. Remaining bits undefined */
 	R.STR1 |= 0x07f0;	/* SXM, C, HM, FSM, XF and unused bits set to 1 */
@@ -1877,7 +1879,7 @@ static int process_IRQs(void)
 
 		if ((R.IFR & 0x01) && (IMR & 0x01)) {		/* IRQ line 0 */
 			//logerror("TMS32025:  Active INT0\n");
-			R.PC = 0x0002;
+			SET_PC(0x0002);
 			(*R.irq_callback)(0);
 			R.idle = 0;
 			R.IFR &= (~0x01);
@@ -1886,7 +1888,7 @@ static int process_IRQs(void)
 		}
 		if ((R.IFR & 0x02) && (IMR & 0x02)) {		/* IRQ line 1 */
 			//logerror("TMS32025:  Active INT1\n");
-			R.PC = 0x0004;
+			SET_PC(0x0004);
 			(*R.irq_callback)(1);
 			R.idle = 0;
 			R.IFR &= (~0x02);
@@ -1895,7 +1897,7 @@ static int process_IRQs(void)
 		}
 		if ((R.IFR & 0x04) && (IMR & 0x04)) {		/* IRQ line 2 */
 			//logerror("TMS32025:  Active INT2\n");
-			R.PC = 0x0006;
+			SET_PC(0x0006);
 			(*R.irq_callback)(2);
 			R.idle = 0;
 			R.IFR &= (~0x04);
@@ -1904,7 +1906,7 @@ static int process_IRQs(void)
 		}
 		if ((R.IFR & 0x08) && (IMR & 0x08)) {		/* Timer IRQ (internal) */
 //          logerror("TMS32025:  Active TINT (Timer)\n");
-			R.PC = 0x0018;
+			SET_PC(0x0018);
 			R.idle = 0;
 			R.IFR &= (~0x08);
 			SET0(INTM_FLAG);
@@ -1913,7 +1915,7 @@ static int process_IRQs(void)
 		if ((R.IFR & 0x10) && (IMR & 0x10)) {		/* Serial port receive IRQ (internal) */
 //          logerror("TMS32025:  Active RINT (Serial recieve)\n");
 			DRR = S_IN(TMS32025_DR);
-			R.PC = 0x001A;
+			SET_PC(0x001A);
 			R.idle = 0;
 			R.IFR &= (~0x10);
 			SET0(INTM_FLAG);
@@ -1922,7 +1924,7 @@ static int process_IRQs(void)
 		if ((R.IFR & 0x20) && (IMR & 0x20)) {		/* Serial port transmit IRQ (internal) */
 //          logerror("TMS32025:  Active XINT (Serial transmit)\n");
 			S_OUT(TMS32025_DX,DXR);
-			R.PC = 0x001C;
+			SET_PC(0x001C);
 			R.idle = 0;
 			R.IFR &= (~0x20);
 			SET0(INTM_FLAG);

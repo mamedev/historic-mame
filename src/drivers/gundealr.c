@@ -50,7 +50,9 @@ Runs in interrupt mode 0, the interrupt vectors are 0xcf (RST 08h) and
 #include "sound/2203intf.h"
 
 
-extern unsigned char *gundealr_bg_videoram,*gundealr_fg_videoram;
+extern UINT8 *gundealr_bg_videoram,*gundealr_fg_videoram;
+
+static UINT8 *rambase;
 
 WRITE8_HANDLER( gundealr_paletteram_w );
 WRITE8_HANDLER( gundealr_bg_videoram_w );
@@ -70,10 +72,9 @@ static INTERRUPT_GEN( yamyam_interrupt )
 	{
 		if (input_ports_hack)
 		{
-			unsigned char *RAM = memory_region(REGION_CPU1);
-			RAM[0xe004] = readinputport(4);	/* COIN */
-			RAM[0xe005] = readinputport(3);	/* IN1 */
-			RAM[0xe006] = readinputport(2);	/* IN0 */
+			rambase[0x004] = readinputport(4);	/* COIN */
+			rambase[0x005] = readinputport(3);	/* IN1 */
+			rambase[0x006] = readinputport(2);	/* IN0 */
 		}
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h vblank */
 	}
@@ -84,7 +85,7 @@ static INTERRUPT_GEN( yamyam_interrupt )
 static WRITE8_HANDLER( yamyam_bankswitch_w )
 {
  	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	bankaddress = 0x10000 + (data & 0x07) * 0x4000;
 	memory_set_bankptr(1,&RAM[bankaddress]);
@@ -92,15 +93,13 @@ static WRITE8_HANDLER( yamyam_bankswitch_w )
 
 static WRITE8_HANDLER( yamyam_protection_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-logerror("e000 = %02x\n",RAM[0xe000]);
-	RAM[0xe000] = data;
-	if (data == 0x03) RAM[0xe001] = 0x03;
-	if (data == 0x04) RAM[0xe001] = 0x04;
-	if (data == 0x05) RAM[0xe001] = 0x05;
-	if (data == 0x0a) RAM[0xe001] = 0x08;
-	if (data == 0x0d) RAM[0xe001] = 0x07;
+logerror("e000 = %02x\n",rambase[0x000]);
+	rambase[0x000] = data;
+	if (data == 0x03) rambase[0x001] = 0x03;
+	if (data == 0x04) rambase[0x001] = 0x04;
+	if (data == 0x05) rambase[0x001] = 0x05;
+	if (data == 0x0a) rambase[0x001] = 0x08;
+	if (data == 0x0d) rambase[0x001] = 0x07;
 
 	if (data == 0x03)
 	{
@@ -111,14 +110,14 @@ logerror("e000 = %02x\n",RAM[0xe000]);
         3a 01 c0  ld   a,($c001)
         c9        ret
         */
-		RAM[0xe010] = 0x3a;
-		RAM[0xe011] = 0x00;
-		RAM[0xe012] = 0xc0;
-		RAM[0xe013] = 0x47;
-		RAM[0xe014] = 0x3a;
-		RAM[0xe015] = 0x01;
-		RAM[0xe016] = 0xc0;
-		RAM[0xe017] = 0xc9;
+		rambase[0x010] = 0x3a;
+		rambase[0x011] = 0x00;
+		rambase[0x012] = 0xc0;
+		rambase[0x013] = 0x47;
+		rambase[0x014] = 0x3a;
+		rambase[0x015] = 0x01;
+		rambase[0x016] = 0xc0;
+		rambase[0x017] = 0xc9;
 	}
 	if (data == 0x05)
 	{
@@ -131,62 +130,52 @@ logerror("e000 = %02x\n",RAM[0xe000]);
         c1        pop     bc
         c9        ret
         */
-		RAM[0xe020] = 0xc5;
-		RAM[0xe021] = 0x01;
-		RAM[0xe022] = 0x00;
-		RAM[0xe023] = 0x00;
-		RAM[0xe024] = 0x4f;
-		RAM[0xe025] = 0x09;
-		RAM[0xe026] = 0xc1;
-		RAM[0xe027] = 0xc9;
+		rambase[0x020] = 0xc5;
+		rambase[0x021] = 0x01;
+		rambase[0x022] = 0x00;
+		rambase[0x023] = 0x00;
+		rambase[0x024] = 0x4f;
+		rambase[0x025] = 0x09;
+		rambase[0x026] = 0xc1;
+		rambase[0x027] = 0xc9;
 		/*
         lookup data in table
         cd20e0    call    #e020
         7e        ld      a,(hl)
         c9        ret
         */
-		RAM[0xe010] = 0xcd;
-		RAM[0xe011] = 0x20;
-		RAM[0xe012] = 0xe0;
-		RAM[0xe013] = 0x7e;
-		RAM[0xe014] = 0xc9;
+		rambase[0x010] = 0xcd;
+		rambase[0x011] = 0x20;
+		rambase[0x012] = 0xe0;
+		rambase[0x013] = 0x7e;
+		rambase[0x014] = 0xc9;
 	}
 }
 
 
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_0_r)	/* DSW0 */
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_1_r)	/* DSW1 */
 	AM_RANGE(0xc004, 0xc004) AM_READ(input_port_2_r)	/* COIN (Gun Dealer only) */
 	AM_RANGE(0xc005, 0xc005) AM_READ(input_port_3_r)	/* IN1 (Gun Dealer only) */
 	AM_RANGE(0xc006, 0xc006) AM_READ(input_port_4_r)	/* IN0 (Gun Dealer only) */
-	AM_RANGE(0xc400, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc010, 0xc013) AM_WRITE(yamyam_fg_scroll_w)		/* Yam Yam only */
 	AM_RANGE(0xc014, 0xc014) AM_WRITE(gundealr_flipscreen_w)
 	AM_RANGE(0xc016, 0xc016) AM_WRITE(yamyam_bankswitch_w)
 	AM_RANGE(0xc020, 0xc023) AM_WRITE(gundealr_fg_scroll_w)	/* Gun Dealer only */
-	AM_RANGE(0xc400, 0xc7ff) AM_WRITE(gundealr_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0xc800, 0xcfff) AM_WRITE(gundealr_bg_videoram_w) AM_BASE(&gundealr_bg_videoram)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(gundealr_fg_videoram_w) AM_BASE(&gundealr_fg_videoram)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xc400, 0xc7ff) AM_READWRITE(MRA8_RAM, gundealr_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc800, 0xcfff) AM_READWRITE(MRA8_RAM, gundealr_bg_videoram_w) AM_BASE(&gundealr_bg_videoram)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, gundealr_fg_videoram_w) AM_BASE(&gundealr_fg_videoram)
+	AM_RANGE(0xe000, 0xffff) AM_RAM AM_BASE(&rambase)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
 ADDRESS_MAP_END
 
 
@@ -475,8 +464,8 @@ static MACHINE_DRIVER_START( gundealr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 8000000)	/* 8 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(yamyam_interrupt,4)	/* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -3,11 +3,10 @@
  *
  */
 
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "psx.h"
-#include "memory.h"
 
 static char *make_signed_hex_str_16( UINT32 value )
 {
@@ -98,25 +97,29 @@ static const char *s_gtelm[] =
 	"0", "1"
 };
 
-static char *make_address( UINT32 op )
+static char *make_address( UINT32 pc, UINT32 op )
 {
 	static char s_address[ 20 ];
 #ifndef STANDALONE
-	sprintf( s_address, "%s(%s) ; 0x%08x", make_signed_hex_str_16( INS_IMMEDIATE( op ) ), s_cpugenreg[ INS_RS( op ) ],
-		(UINT32)( activecpu_get_reg( MIPS_R0 + INS_RS( op ) ) + (INT16)INS_IMMEDIATE( op ) ) );
-#else
-	sprintf( s_address, "%s(%s)", make_signed_hex_str_16( INS_IMMEDIATE( op ) ), s_cpugenreg[ INS_RS( op ) ] );
+	if( pc == activecpu_get_pc() )
+	{
+		sprintf( s_address, "%s(%s) ; 0x%08x", make_signed_hex_str_16( INS_IMMEDIATE( op ) ), s_cpugenreg[ INS_RS( op ) ],
+			(UINT32)( activecpu_get_reg( MIPS_R0 + INS_RS( op ) ) + (INT16)INS_IMMEDIATE( op ) ) );
+		return s_address;
+	}
 #endif
+	sprintf( s_address, "%s(%s)", make_signed_hex_str_16( INS_IMMEDIATE( op ) ), s_cpugenreg[ INS_RS( op ) ] );
 	return s_address;
 }
 
-unsigned DasmMIPS( char *buffer, UINT32 oldpc )
+unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram )
 {
-	UINT32 pc, op;
+	UINT32 op;
+	UINT8 *oldopram;
 
-	pc = oldpc;
-	op = cpu_readop32( pc );
-	pc += 4;
+	oldopram = opram;
+	op = ( opram[ 3 ] << 24 ) | ( opram[ 2 ] << 16 ) | ( opram[ 1 ] << 8 ) | ( opram[ 0 ] << 0 );
+	opram += 4;
 
 	sprintf( buffer, "dw      $%08x", op );
 
@@ -568,53 +571,53 @@ unsigned DasmMIPS( char *buffer, UINT32 oldpc )
 		}
 		break;
 	case OP_LB:
-		sprintf( buffer, "lb      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lb      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LH:
-		sprintf( buffer, "lh      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lh      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LWL:
-		sprintf( buffer, "lwl     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lwl     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LW:
-		sprintf( buffer, "lw      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lw      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LBU:
-		sprintf( buffer, "lbu     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lbu     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LHU:
-		sprintf( buffer, "lhu     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lhu     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LWR:
-		sprintf( buffer, "lwr     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lwr     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SB:
-		sprintf( buffer, "sb      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "sb      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SH:
-		sprintf( buffer, "sh      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "sh      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SWL:
-		sprintf( buffer, "swl     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "swl     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SW:
-		sprintf( buffer, "sw      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "sw      %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SWR:
-		sprintf( buffer, "swr     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "swr     %s,%s", s_cpugenreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LWC1:
-		sprintf( buffer, "lwc1    %s,%s", s_cp1genreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lwc1    %s,%s", s_cp1genreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_LWC2:
-		sprintf( buffer, "lwc2    %s,%s", s_cp2genreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "lwc2    %s,%s", s_cp2genreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SWC1:
-		sprintf( buffer, "swc1    %s,%s", s_cp1genreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "swc1    %s,%s", s_cp1genreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	case OP_SWC2:
-		sprintf( buffer, "swc2    %s,%s", s_cp2genreg[ INS_RT( op ) ], make_address( op ) );
+		sprintf( buffer, "swc2    %s,%s", s_cp2genreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	}
-	return pc - oldpc;
+	return opram - oldopram;
 }

@@ -4,9 +4,8 @@
 
 static int flipscreen;
 static tilemap *bg_tilemap,  *tx_tilemap;
-static unsigned char fg_color, old_fg_color;
+static UINT8 fg_color, old_fg_color;
 
-extern UINT8 *jcr_sharedram;
 extern UINT8 *jcr_textram;
 
 
@@ -20,7 +19,7 @@ WRITE8_HANDLER( jcross_palettebank_w )
 
 static void stuff_palette( int source_index, int dest_index, int num_colors )
 {
-	unsigned char *color_prom = memory_region(REGION_PROMS) + source_index;
+	UINT8 *color_prom = memory_region(REGION_PROMS) + source_index;
 	int i;
 	for( i=0; i<num_colors; i++ )
 	{
@@ -59,28 +58,10 @@ static void update_palette( int type )
 	}
 }
 
-WRITE8_HANDLER( jcross_spriteram_w )
-{
-	spriteram[offset] = data;
-}
-READ8_HANDLER( jcross_spriteram_r )
-{
-	return spriteram[offset];
-}
-
-READ8_HANDLER( jcross_background_ram_r )
-{
-	return videoram[offset];
-}
 WRITE8_HANDLER( jcross_background_ram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset);
-}
-
-READ8_HANDLER( jcross_text_ram_r )
-{
-	return jcr_textram[offset];
 }
 
 WRITE8_HANDLER( jcross_text_ram_w )
@@ -137,13 +118,13 @@ VIDEO_START( jcross )
 
 static void draw_status( mame_bitmap *bitmap, const rectangle *cliprect )
 {
-	const unsigned char *base =  memory_region(REGION_CPU1)+0xf400;
+	const UINT8 *base =  jcr_textram + 0x400;
 	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
 	{
 		int sy,sx = (row&1)*8;
-		const unsigned char *source = base + (row&1)*32;
+		const UINT8 *source = base + (row&1)*32;
 		if( row>1 )
 			sx+=256+16;
 		else
@@ -165,9 +146,9 @@ static void draw_status( mame_bitmap *bitmap, const rectangle *cliprect )
 static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int scrollx, int scrolly )
 {
 	const gfx_element *gfx = Machine->gfx[3];
-	const unsigned char *source, *finish;
-	source = jcr_sharedram;
-	finish = jcr_sharedram + 0x64;
+	const UINT8 *source, *finish;
+	source = spriteram;
+	finish = spriteram + 0x64;
 
 	while( source<finish )
 	{

@@ -13,9 +13,9 @@
 /* in sndhrdw/pleiads.c */
 WRITE8_HANDLER( pleiads_sound_control_c_w );
 
-static unsigned char *videoram_pg1;
-static unsigned char *videoram_pg2;
-static unsigned char *current_videoram_pg;
+static UINT8 *videoram_pg1;
+static UINT8 *videoram_pg2;
+static UINT8 *current_videoram_pg;
 static int current_videoram_pg_index;
 static int palette_bank;
 static int cocktail_mode;
@@ -170,6 +170,10 @@ VIDEO_START( phoenix )
 	if ((videoram_pg2 = auto_malloc(0x1000)) == 0)
 		return 1;
 
+	memory_configure_bank(1, 0, 1, videoram_pg1, 0);
+	memory_configure_bank(1, 1, 1, videoram_pg2, 0);
+	memory_set_bank(1, 0);
+
     current_videoram_pg_index = -1;
 	current_videoram_pg = videoram_pg1;		/* otherwise, hiscore loading crashes */
 
@@ -196,14 +200,9 @@ VIDEO_START( phoenix )
 
 ***************************************************************************/
 
-READ8_HANDLER( phoenix_videoram_r )
-{
-	return current_videoram_pg[offset];
-}
-
 WRITE8_HANDLER( phoenix_videoram_w )
 {
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 	current_videoram_pg[offset] = data;
 
@@ -226,6 +225,7 @@ WRITE8_HANDLER( phoenix_videoreg_w )
 	{
 		/* set memory bank */
 		current_videoram_pg_index = data & 1;
+		memory_set_bank(1, current_videoram_pg_index);
 		current_videoram_pg = current_videoram_pg_index ? videoram_pg2 : videoram_pg1;
 
 		cocktail_mode = current_videoram_pg_index && (input_port_3_r(0) & 0x01);

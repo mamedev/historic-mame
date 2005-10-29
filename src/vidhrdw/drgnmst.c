@@ -151,7 +151,7 @@ VIDEO_START(drgnmst)
 
 VIDEO_UPDATE(drgnmst)
 {
-	int y;
+	int y, rowscroll_bank;
 
 	tilemap_set_scrollx(drgnmst_bg_tilemap,0, drgnmst_vidregs[10]-18); // verify
 	tilemap_set_scrolly(drgnmst_bg_tilemap,0, drgnmst_vidregs[11]); // verify
@@ -162,8 +162,10 @@ VIDEO_UPDATE(drgnmst)
 	tilemap_set_scrollx(drgnmst_fg_tilemap,0, drgnmst_vidregs[6]-18); // verify (test mode colour test needs it)
 	tilemap_set_scrolly(drgnmst_fg_tilemap,0, drgnmst_vidregs[7]); // verify
 
+	rowscroll_bank = (drgnmst_vidregs[4] & 0x30) >> 4;
+
 	for (y = 0; y < 1024; y++)
-		tilemap_set_scrollx(drgnmst_md_tilemap,y, drgnmst_vidregs[8]-16+drgnmst_rowscrollram[y]);
+		tilemap_set_scrollx(drgnmst_md_tilemap,y, drgnmst_vidregs[8]-16+drgnmst_rowscrollram[y+0x800*rowscroll_bank]);
 
 	// todo: figure out which bits relate to the order
 	switch (drgnmst_vidregs2[0])

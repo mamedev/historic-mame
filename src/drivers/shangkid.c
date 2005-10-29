@@ -70,7 +70,6 @@ VIDEO_UPDATE( dynamski );
 static UINT8 bbx_sound_enable;
 static UINT8 bbx_AY8910_control;
 static UINT8 sound_latch;
-static UINT8 *shareram;
 
 /***************************************************************************************/
 
@@ -88,7 +87,7 @@ static DRIVER_INIT( shangkid )
 
 static WRITE8_HANDLER( shangkid_maincpu_bank_w )
 {
-	memory_set_bankptr( 1,&memory_region(REGION_CPU1)[(data&1)?0x10000:0x8000] );
+	memory_set_bank(1, data & 1);
 }
 
 static WRITE8_HANDLER( shangkid_bbx_enable_w )
@@ -134,7 +133,7 @@ WRITE8_HANDLER( shangkid_bbx_AY8910_write_w )
 		}
 		else
 		{
-			memory_set_bankptr( 2,&memory_region( REGION_CPU3 )[data?0x0000:0x10000] );
+			memory_set_bank(2, data ? 0 : 1);
 		}
 		break;
 
@@ -157,14 +156,13 @@ READ8_HANDLER( shangkid_soundlatch_r )
 
 /***************************************************************************************/
 
-static WRITE8_HANDLER( shareram_w )
+static MACHINE_INIT( chinhero )
 {
-	shareram[offset] = data;
-}
+	memory_configure_bank(1, 0, 2, memory_region(REGION_CPU1) + 0x8000, 0x8000);
+	memory_set_bank(1, 0);
 
-static READ8_HANDLER( shareram_r )
-{
-	return shareram[offset];
+	memory_configure_bank(2, 0, 2, memory_region(REGION_CPU3) + 0x0000, 0x10000);
+	memory_set_bank(2, 0);
 }
 
 /***************************************************************************************/
@@ -250,18 +248,9 @@ static gfx_decode dynamski_gfxdecodeinfo[] = {
 
 /***************************************************************************************/
 
-static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_0_r) /* SW1 */
-	AM_RANGE(0xb801, 0xb801) AM_READ(input_port_1_r) /* coin/start */
-	AM_RANGE(0xb802, 0xb802) AM_READ(input_port_2_r) /* player#2 */
-	AM_RANGE(0xb803, 0xb803) AM_READ(input_port_3_r) /* player#1 */
-	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x9fff) AM_ROMBANK(1)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) /* ? */
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(shangkid_bbx_enable_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(shangkid_sound_enable_w)
@@ -270,26 +259,20 @@ static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb004, 0xb004) AM_WRITE(shangkid_cpu_reset_w)
 	AM_RANGE(0xb006, 0xb006) AM_WRITE(MWA8_NOP)		/* coin counter */
 	AM_RANGE(0xb007, 0xb007) AM_WRITE(shangkid_maincpu_bank_w)
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_0_r) /* SW1 */
+	AM_RANGE(0xb801, 0xb801) AM_READ(input_port_1_r) /* coin/start */
+	AM_RANGE(0xb802, 0xb802) AM_READ(input_port_2_r) /* player#2 */
+	AM_RANGE(0xb803, 0xb803) AM_READ(input_port_3_r) /* player#1 */
 	AM_RANGE(0xc000, 0xc002) AM_WRITE(MWA8_RAM) AM_BASE(&shangkid_videoreg)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(shangkid_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xe000, 0xfdff) AM_WRITE(MWA8_RAM) AM_BASE(&shareram)
-	AM_RANGE(0xfe00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, shangkid_videoram_w) AM_BASE(&videoram) AM_SHARE(1)
+	AM_RANGE(0xe000, 0xfdff) AM_RAM AM_SHARE(2)
+	AM_RANGE(0xfe00, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SHARE(3)
 ADDRESS_MAP_END
 
 /***************************************************************************************/
 
-static ADDRESS_MAP_START( bbx_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_0_r) /* SW1 */
-	AM_RANGE(0xb801, 0xb801) AM_READ(input_port_1_r) /* coin/start */
-	AM_RANGE(0xb802, 0xb802) AM_READ(input_port_2_r) /* player#2 */
-	AM_RANGE(0xb803, 0xb803) AM_READ(input_port_3_r) /* player#1 */
-	AM_RANGE(0xd000, 0xdfff) AM_READ(videoram_r)
-	AM_RANGE(0xe000, 0xffff) AM_READ(shareram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bbx_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( bbx_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_ROM
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) /* ? */
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(shangkid_bbx_enable_w)
 	AM_RANGE(0xb001, 0xb001) AM_WRITE(shangkid_sound_enable_w)
@@ -298,11 +281,16 @@ static ADDRESS_MAP_START( bbx_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb004, 0xb004) AM_WRITE(shangkid_cpu_reset_w)
 	AM_RANGE(0xb006, 0xb006) AM_WRITE(MWA8_NOP)		/* coin counter */
 	AM_RANGE(0xb007, 0xb007) AM_WRITE(shangkid_maincpu_bank_w)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(shangkid_videoram_w)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(shareram_w)
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_0_r) /* SW1 */
+	AM_RANGE(0xb801, 0xb801) AM_READ(input_port_1_r) /* coin/start */
+	AM_RANGE(0xb802, 0xb802) AM_READ(input_port_2_r) /* player#2 */
+	AM_RANGE(0xb803, 0xb803) AM_READ(input_port_3_r) /* player#1 */
+	AM_RANGE(0xd000, 0xdfff) AM_READWRITE(MRA8_RAM, shangkid_videoram_w) AM_SHARE(1)
+	AM_RANGE(0xe000, 0xfdff) AM_RAM AM_SHARE(2)
+	AM_RANGE(0xfe00, 0xffff) AM_RAM AM_SHARE(3)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbx_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( bbx_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(shangkid_bbx_AY8910_control_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(shangkid_bbx_AY8910_write_w)
@@ -310,24 +298,14 @@ ADDRESS_MAP_END
 
 /***************************************************************************************/
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xdfff) AM_ROMBANK(2) /* sample player writes to ROM area */
+	AM_RANGE(0xe000, 0xefff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_NOP) /* sample player writes to ROM area */
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(shangkid_soundlatch_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport_sound, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x00, 0x00) AM_READWRITE(shangkid_soundlatch_r, DAC_0_data_w)
 ADDRESS_MAP_END
 
 /***************************************************************************************/
@@ -336,18 +314,20 @@ static MACHINE_DRIVER_START( chinhero )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000) /* ? */
-	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000) /* ? */
-	MDRV_CPU_PROGRAM_MAP(bbx_readmem,bbx_writemem)
-	MDRV_CPU_IO_MAP(0,bbx_writeport)
+	MDRV_CPU_PROGRAM_MAP(bbx_map,0)
+	MDRV_CPU_IO_MAP(bbx_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3000000) /* ? */
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_portmap,0)
+
+	MDRV_MACHINE_INIT(chinhero)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -386,32 +366,22 @@ MACHINE_DRIVER_END
 
 
 
-static ADDRESS_MAP_START( dynamski_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc800, 0xcbff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd800, 0xdbff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe002) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( dynamski_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_BASE(&videoram) /* tilemap */
+	AM_RANGE(0xc800, 0xcbff) AM_RAM
+	AM_RANGE(0xd000, 0xd3ff) AM_RAM
+	AM_RANGE(0xd800, 0xdbff) AM_RAM
+	AM_RANGE(0xe000, 0xe000) AM_WRITENOP /* IRQ disable */
+	AM_RANGE(0xe001, 0xe002) AM_RAM /* screen flip */
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_0_r)
 	AM_RANGE(0xe801, 0xe801) AM_READ(input_port_1_r)
 	AM_RANGE(0xe802, 0xe802) AM_READ(input_port_2_r)
 	AM_RANGE(0xe803, 0xe803) AM_READ(input_port_3_r)
-	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM) /* work ram */
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM /* work ram */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dynamski_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) /* tilemap */
-	AM_RANGE(0xc800, 0xcbff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd800, 0xdbff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP) /* IRQ disable */
-	AM_RANGE(0xe001, 0xe002) AM_WRITE(MWA8_RAM) /* screen flip */
-	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( dynamski_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( dynamski_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	/* ports are reversed */
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
@@ -422,8 +392,8 @@ static MACHINE_DRIVER_START( dynamski )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3000000) /* ? */
-	MDRV_CPU_PROGRAM_MAP(dynamski_readmem,dynamski_writemem)
-	MDRV_CPU_IO_MAP(0,dynamski_writeport)
+	MDRV_CPU_PROGRAM_MAP(dynamski_map,0)
+	MDRV_CPU_IO_MAP(dynamski_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

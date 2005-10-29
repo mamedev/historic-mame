@@ -529,7 +529,7 @@ ROM_END
 static DRIVER_INIT( vindictr )
 {
 	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 5, 1, 0x0002);
+	atarijsa_init(1, 3, 1, 0x0002);
 }
 
 

@@ -81,71 +81,49 @@ static WRITE8_HANDLER(jcross_vregs3_w){jcross_vregs[3]=data;}
 static WRITE8_HANDLER(jcross_vregs4_w){jcross_vregs[4]=data;}
 
 
-static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_BASE(&namco_wavedata)
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
 	AM_RANGE(0xa000, 0xa000) AM_READ(sound_command_r)
 	AM_RANGE(0xc000, 0xc000) AM_READ(sound_nmi_ack_r)
-	ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM) AM_BASE(&namco_wavedata)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0xe002, 0xe007) AM_WRITE(snkwave_w)
 	AM_RANGE(0xe008, 0xe008) AM_WRITE(AY8910_control_port_1_w)
 	AM_RANGE(0xe009, 0xe009) AM_WRITE(AY8910_write_port_1_w)
-
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READNOP
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( cpuA_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x9fff) AM_ROM
 	AM_RANGE(0xa000, 0xa000) AM_READ(jcross_port_0_r)
 	AM_RANGE(0xa100, 0xa100) AM_READ(input_port_1_r)
 	AM_RANGE(0xa200, 0xa200) AM_READ(input_port_2_r)
+	AM_RANGE(0xa300, 0xa300) AM_WRITE(sound_command_w)
 	AM_RANGE(0xa400, 0xa400) AM_READ(input_port_3_r)
 	AM_RANGE(0xa500, 0xa500) AM_READ(input_port_4_r)
-	AM_RANGE(0xa700, 0xa700) AM_READ(snk_cpuB_nmi_trigger_r)
-	AM_RANGE(0xd800, 0xdfff) AM_READ(sharedram_r)
-	AM_RANGE(0xf000, 0xf3ff) AM_READ(jcross_text_ram_r)
-  	AM_RANGE(0xe000, 0xefff) AM_READ(jcross_background_ram_r)
-	AM_RANGE(0xf400, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_CPUA, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa300, 0xa300) AM_WRITE(sound_command_w)
 	AM_RANGE(0xa600, 0xa600) AM_WRITE(jcross_palettebank_w)
-	AM_RANGE(0xa700, 0xa700) AM_WRITE(snk_cpuA_nmi_ack_w)
+	AM_RANGE(0xa700, 0xa700) AM_READWRITE(snk_cpuB_nmi_trigger_r, snk_cpuA_nmi_ack_w)
 	AM_RANGE(0xd300, 0xd300) AM_WRITE(jcross_vregs0_w)
 	AM_RANGE(0xd400, 0xd400) AM_WRITE(jcross_vregs1_w)
 	AM_RANGE(0xd500, 0xd500) AM_WRITE(jcross_vregs2_w)
 	AM_RANGE(0xd600, 0xd600) AM_WRITE(jcross_vregs3_w)
 	AM_RANGE(0xd700, 0xd700) AM_WRITE(jcross_vregs4_w)
- 	AM_RANGE(0xd800, 0xdfff) AM_WRITE(sharedram_w) AM_BASE(&jcr_sharedram)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(jcross_background_ram_w) AM_BASE(&videoram)
-	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(jcross_text_ram_w) AM_BASE(&jcr_textram)
-	AM_RANGE(0xf400, 0xffff) AM_WRITE(MWA8_RAM)
-
+ 	AM_RANGE(0xd800, 0xdfff) AM_RAM AM_SHARE(1) AM_BASE(&spriteram)
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(MRA8_RAM, jcross_background_ram_w) AM_SHARE(2) AM_BASE(&videoram)
+	AM_RANGE(0xf000, 0xf3ff) AM_READWRITE(MRA8_RAM, jcross_text_ram_w) AM_BASE(&jcr_textram)
+	AM_RANGE(0xf400, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xa700, 0xa700) AM_READ(snk_cpuA_nmi_trigger_r)
-  	AM_RANGE(0xc000, 0xc7ff) AM_READ(sharedram_r)
-	AM_RANGE(0xc800, 0xd7ff) AM_READ(jcross_background_ram_r) /* unknown ??? */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_CPUB, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa700, 0xa700) AM_WRITE(snk_cpuB_nmi_ack_w)
-  	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(sharedram_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readport_sound, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(MRA8_NOP)
+static ADDRESS_MAP_START( cpuB_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xa700, 0xa700) AM_READWRITE(snk_cpuA_nmi_trigger_r, snk_cpuB_nmi_ack_w)
+  	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xc800, 0xd7ff) AM_RAM AM_SHARE(2) /* unknown ??? */
 ADDRESS_MAP_END
 
 
@@ -283,17 +261,17 @@ static gfx_decode jcross_gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( jcross )
 
 	MDRV_CPU_ADD(Z80, 3360000)
-	MDRV_CPU_PROGRAM_MAP(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_PROGRAM_MAP(cpuA_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 3360000)
-	MDRV_CPU_PROGRAM_MAP(readmem_CPUB,writemem_CPUB)
+	MDRV_CPU_PROGRAM_MAP(cpuB_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4000000)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
-	MDRV_CPU_IO_MAP(readport_sound,0)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_portmap,0)
 	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(244))
 
 	MDRV_FRAMES_PER_SECOND(61)

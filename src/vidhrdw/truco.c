@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/generic.h"
 
 PALETTE_INIT( truco )
 {
@@ -32,7 +33,7 @@ PALETTE_INIT( truco )
 
 VIDEO_UPDATE( truco )
 {
-	UINT8		*vid = memory_region( REGION_CPU1 ) + 0x1800;
+	UINT8		*vid = videoram;
 	int x, y;
 
 	for( y = 0; y < 192; y++ ) {

@@ -60,10 +60,8 @@ extern WRITE8_HANDLER( nbmj8991_clut_w );
 
 static WRITE8_HANDLER( nbmj8991_soundbank_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
-
 	if (!(data & 0x80)) soundlatch_clear_w(0, 0);
-	memory_set_bankptr(1, &RAM[0x08000 + (0x8000 * (data & 0x03))]);
+	memory_set_bank(1, data & 0x03);
 }
 
 static WRITE8_HANDLER( nbmj8991_sound_w )
@@ -77,6 +75,16 @@ static READ8_HANDLER( nbmj8991_sound_r )
 
 	data = soundlatch_r(0);
 	return data;
+}
+
+static MACHINE_INIT( nbmj8991 )
+{
+	if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
+	{
+		memory_configure_bank(1, 0, 4, memory_region(REGION_CPU2) + 0x8000, 0x8000);
+		memory_set_bank(1, 0);
+	}
+	machine_init_nb1413m3();
 }
 
 static DRIVER_INIT( pstadium )
@@ -420,14 +428,14 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sound_readmem_nbmj8991, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK1)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem_nbmj8991, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
 
@@ -1773,7 +1781,7 @@ static MACHINE_DRIVER_START( nbmjdrv1 )	// galkoku
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nb1413m3)
+	MDRV_MACHINE_INIT(nbmj8991)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -1810,7 +1818,7 @@ static MACHINE_DRIVER_START( nbmjdrv2 )	// pstadium
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nb1413m3)
+	MDRV_MACHINE_INIT(nbmj8991)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)

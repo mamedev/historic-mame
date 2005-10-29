@@ -58,15 +58,10 @@ extern UINT16 *nemesis_characterram;
 extern UINT16 *nemesis_xscroll1,*nemesis_xscroll2, *nemesis_yscroll;
 extern size_t nemesis_characterram_size;
 
-READ16_HANDLER( nemesis_videoram1b_word_r );
-READ16_HANDLER( nemesis_videoram1f_word_r );
 WRITE16_HANDLER( nemesis_videoram1b_word_w );
 WRITE16_HANDLER( nemesis_videoram1f_word_w );
-READ16_HANDLER( nemesis_videoram2b_word_r );
-READ16_HANDLER( nemesis_videoram2f_word_r );
 WRITE16_HANDLER( nemesis_videoram2b_word_w );
 WRITE16_HANDLER( nemesis_videoram2f_word_w );
-READ16_HANDLER( nemesis_characterram_word_r );
 WRITE16_HANDLER( nemesis_characterram_word_w );
 VIDEO_UPDATE( nemesis );
 VIDEO_START( nemesis );
@@ -76,17 +71,6 @@ MACHINE_INIT( nemesis );
 WRITE16_HANDLER( nemesis_gfx_flipx_w );
 WRITE16_HANDLER( nemesis_gfx_flipy_w );
 WRITE16_HANDLER( salamander_palette_word_w );
-
-WRITE16_HANDLER( gx400_xscroll1_word_w );
-WRITE16_HANDLER( gx400_xscroll2_word_w );
-WRITE16_HANDLER( gx400_yscroll_word_w );
-WRITE16_HANDLER( gx400_yscroll1_word_w );
-WRITE16_HANDLER( gx400_yscroll2_word_w );
-READ16_HANDLER( gx400_xscroll1_word_r );
-READ16_HANDLER( gx400_xscroll2_word_r );
-READ16_HANDLER( gx400_yscroll_word_r );
-READ16_HANDLER( gx400_yscroll1_word_r );
-READ16_HANDLER( gx400_yscroll2_word_r );
 
 extern UINT16 *nemesis_yscroll1, *nemesis_yscroll2;
 
@@ -183,7 +167,7 @@ WRITE16_HANDLER( gx400_irq4_enable_word_w )
 logerror("irq4en = %08x\n",data);*/
 }
 
-static unsigned char *gx400_shared_ram;
+static UINT8 *gx400_shared_ram;
 
 READ16_HANDLER( gx400_sharedram_word_r )
 {
@@ -286,16 +270,16 @@ WRITE16_HANDLER( nemesis_soundlatch_word_w )
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x04ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x040000, 0x04ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050000, 0x0503ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050400, 0x0507ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050800, 0x050bff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050c00, 0x050fff) AM_READ(MRA16_RAM)
 
-	AM_RANGE(0x052000, 0x052fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x053000, 0x053fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x054000, 0x054fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x055000, 0x055fff) AM_READ(nemesis_videoram2f_word_r)
+	AM_RANGE(0x052000, 0x052fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x053000, 0x053fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x054000, 0x054fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x055000, 0x055fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x056000, 0x056fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x05a000, 0x05afff) AM_READ(MRA16_RAM)
 
@@ -394,16 +378,16 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( konamigt_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x04ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x040000, 0x04ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050000, 0x0503ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050400, 0x0507ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050800, 0x050bff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050c00, 0x050fff) AM_READ(MRA16_RAM)
 
-	AM_RANGE(0x052000, 0x052fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x053000, 0x053fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x054000, 0x054fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x055000, 0x055fff) AM_READ(nemesis_videoram2f_word_r)
+	AM_RANGE(0x052000, 0x052fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x053000, 0x053fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x054000, 0x054fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x055000, 0x055fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x056000, 0x056fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x05a000, 0x05afff) AM_READ(MRA16_RAM)
 
@@ -452,15 +436,15 @@ static ADDRESS_MAP_START( gx400_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x010000, 0x01ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x020000, 0x0287ff) AM_READ(gx400_sharedram_word_r)
-	AM_RANGE(0x030000, 0x03ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x030000, 0x03ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050000, 0x0503ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050400, 0x0507ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050800, 0x050bff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050c00, 0x050fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x052000, 0x052fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x053000, 0x053fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x054000, 0x054fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x055000, 0x055fff) AM_READ(nemesis_videoram2f_word_r)
+	AM_RANGE(0x052000, 0x052fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x053000, 0x053fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x054000, 0x054fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x055000, 0x055fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x056000, 0x056fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x057000, 0x057fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x05a000, 0x05afff) AM_READ(MRA16_RAM)
@@ -471,7 +455,7 @@ static ADDRESS_MAP_START( gx400_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x05cc02, 0x05cc03) AM_READ(input_port_1_word_r)	/* IN1 */
 	AM_RANGE(0x05cc04, 0x05cc05) AM_READ(input_port_2_word_r)	/* IN2 */
 	AM_RANGE(0x060000, 0x07ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x080000, 0x0cffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x0bffff) AM_READ(MRA16_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gx400_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -500,22 +484,22 @@ static ADDRESS_MAP_START( gx400_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x05e008, 0x05e009) AM_WRITE(MWA16_NOP)	/* IRQ acknowledge??? */
 	AM_RANGE(0x05e00e, 0x05e00f) AM_WRITE(&gx400_irq4_enable_word_w)	/* ?? */
 	AM_RANGE(0x060000, 0x07ffff) AM_WRITE(MWA16_RAM) AM_BASE(&ram2)
-	AM_RANGE(0x080000, 0x0cffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x0bffff) AM_WRITE(MWA16_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rf2_gx400_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x010000, 0x01ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x020000, 0x0287ff) AM_READ(gx400_sharedram_word_r)
-	AM_RANGE(0x030000, 0x03ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x030000, 0x03ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050000, 0x0503ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050400, 0x0507ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050800, 0x050bff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x050c00, 0x050fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x052000, 0x052fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x053000, 0x053fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x054000, 0x054fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x055000, 0x055fff) AM_READ(nemesis_videoram2f_word_r)
+	AM_RANGE(0x052000, 0x052fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x053000, 0x053fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x054000, 0x054fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x055000, 0x055fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x056000, 0x056fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x05a000, 0x05afff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x05c402, 0x05c403) AM_READ(input_port_4_word_r)	/* DSW0 */
@@ -526,7 +510,7 @@ static ADDRESS_MAP_START( rf2_gx400_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x05cc04, 0x05cc05) AM_READ(input_port_2_word_r)	/* IN2 */
 	AM_RANGE(0x060000, 0x067fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x070000, 0x070001) AM_READ(konamigt_input_word_r)
-	AM_RANGE(0x080000, 0x0cffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x0bffff) AM_READ(MRA16_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( rf2_gx400_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -554,7 +538,7 @@ static ADDRESS_MAP_START( rf2_gx400_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x05e008, 0x05e009) AM_WRITE(MWA16_NOP)	/* IRQ acknowledge??? */
 	AM_RANGE(0x05e00e, 0x05e00f) AM_WRITE(&gx400_irq4_enable_word_w)	/* ?? */
 	AM_RANGE(0x060000, 0x067fff) AM_WRITE(MWA16_RAM) AM_BASE(&ram)	/* WORK RAM */
-	AM_RANGE(0x080000, 0x0cffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x080000, 0x0bffff) AM_WRITE(MWA16_ROM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gx400_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -591,17 +575,17 @@ static ADDRESS_MAP_START( salamand_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c2002, 0x0c2003) AM_READ(input_port_1_word_r)	/* IN1 */
 	AM_RANGE(0x0c2004, 0x0c2005) AM_READ(input_port_2_word_r)	/* IN2 */
 	AM_RANGE(0x0c2006, 0x0c2007) AM_READ(input_port_4_word_r)	/* DSW1 */
-	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r)
-	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x180000, 0x180fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r)
-	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r)
+	AM_RANGE(0x190000, 0x1903ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x190400, 0x1907ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x190800, 0x190eff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r)
-	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r)
+	AM_RANGE(0x190f00, 0x190f7f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x190f80, 0x190fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x191000, 0x191fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
@@ -618,11 +602,11 @@ static ADDRESS_MAP_START( salamand_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x103000, 0x103fff) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
 	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
 	AM_RANGE(0x180000, 0x180fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
-	AM_RANGE(0x190000, 0x1903ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
-	AM_RANGE(0x190400, 0x1907ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x190000, 0x1903ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x190400, 0x1907ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
 	AM_RANGE(0x190800, 0x190eff) AM_WRITE(MWA16_RAM)			/* not used */
-	AM_RANGE(0x190f00, 0x190f7f) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
-	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x190f00, 0x190f7f) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x190f80, 0x190fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll2)
 	AM_RANGE(0x191000, 0x191fff) AM_WRITE(MWA16_RAM)			/* not used */
 ADDRESS_MAP_END
 
@@ -635,16 +619,16 @@ static ADDRESS_MAP_START( blkpnthr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c2002, 0x0c2003) AM_READ(input_port_1_word_r)	/* IN1 */
 	AM_RANGE(0x0c2004, 0x0c2005) AM_READ(input_port_2_word_r)	/* IN2 */
 	AM_RANGE(0x0c2006, 0x0c2007) AM_READ(input_port_4_word_r)	/* DSW1 */
-	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram2f_word_r)
-	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r)
-	AM_RANGE(0x180000, 0x1803ff) AM_READ(gx400_xscroll2_word_r)
-	AM_RANGE(0x180400, 0x1807ff) AM_READ(gx400_xscroll1_word_r)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x1803ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180400, 0x1807ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x180800, 0x180eff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x180f00, 0x180f7f) AM_READ(gx400_yscroll2_word_r)
-	AM_RANGE(0x180f80, 0x180fff) AM_READ(gx400_yscroll1_word_r)
+	AM_RANGE(0x180f00, 0x180f7f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180f80, 0x180fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x181000, 0x181fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x190000, 0x190fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
@@ -661,11 +645,11 @@ static ADDRESS_MAP_START( blkpnthr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x102000, 0x102fff) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
 	AM_RANGE(0x103000, 0x103fff) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
 	AM_RANGE(0x120000, 0x12ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
-	AM_RANGE(0x180000, 0x1803ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x180400, 0x1807ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x180000, 0x1803ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x180400, 0x1807ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
 	AM_RANGE(0x180800, 0x180eff) AM_WRITE(MWA16_RAM)			/* not used */
-	AM_RANGE(0x180f00, 0x180f7f) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
-	AM_RANGE(0x180f80, 0x180fff) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x180f00, 0x180f7f) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x180f80, 0x180fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll1)
 	AM_RANGE(0x181000, 0x181fff) AM_WRITE(MWA16_RAM)			/* not used */
 	AM_RANGE(0x190000, 0x190fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
 ADDRESS_MAP_END
@@ -681,16 +665,16 @@ static ADDRESS_MAP_START( citybomb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0f0008, 0x0f0009) AM_READ(input_port_3_word_r)	/* DSW0 */
 	AM_RANGE(0x0f0020, 0x0f0021) AM_READ(MRA16_NOP)				/* Analog device */
 	AM_RANGE(0x100000, 0x1bffff) AM_READ(MRA16_ROM)  /* ROM BIOS */
-	AM_RANGE(0x200000, 0x20ffff) AM_READ(nemesis_characterram_word_r)
-	AM_RANGE(0x210000, 0x210fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x211000, 0x211fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x212000, 0x212fff) AM_READ(nemesis_videoram2f_word_r)
-	AM_RANGE(0x213000, 0x213fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x300000, 0x3003ff) AM_READ(gx400_xscroll2_word_r)
-	AM_RANGE(0x300400, 0x3007ff) AM_READ(gx400_xscroll1_word_r)
+	AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x210000, 0x210fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x211000, 0x211fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x212000, 0x212fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x213000, 0x213fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x3003ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300400, 0x3007ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x300800, 0x300eff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x300f00, 0x300f7f) AM_READ(gx400_yscroll2_word_r)
-	AM_RANGE(0x300f80, 0x300fff) AM_READ(gx400_yscroll1_word_r)
+	AM_RANGE(0x300f00, 0x300f7f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300f80, 0x300fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x301000, 0x301fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x310000, 0x310fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
@@ -709,11 +693,11 @@ static ADDRESS_MAP_START( citybomb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x211000, 0x211fff) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
 	AM_RANGE(0x212000, 0x212fff) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
 	AM_RANGE(0x213000, 0x213fff) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
-	AM_RANGE(0x300000, 0x3003ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x300400, 0x3007ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x300000, 0x3003ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x300400, 0x3007ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
 	AM_RANGE(0x300800, 0x300eff) AM_WRITE(MWA16_RAM)			/* not used */
-	AM_RANGE(0x300f00, 0x300f7f) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
-	AM_RANGE(0x300f80, 0x300fff) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x300f00, 0x300f7f) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x300f80, 0x300fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll1)
 	AM_RANGE(0x301000, 0x301fff) AM_WRITE(MWA16_RAM)			/* not used */
 	AM_RANGE(0x310000, 0x310fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
 ADDRESS_MAP_END
@@ -728,17 +712,17 @@ static ADDRESS_MAP_START( nyanpani_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x070004, 0x070005) AM_READ(input_port_1_word_r)	/* IN1 */
 	AM_RANGE(0x070006, 0x070007) AM_READ(input_port_0_word_r)	/* Coins, start buttons, test mode */
 	AM_RANGE(0x070008, 0x070009) AM_READ(input_port_3_word_r)	/* DSW0 */
-	AM_RANGE(0x200000, 0x200fff) AM_READ(nemesis_videoram1f_word_r)
-	AM_RANGE(0x201000, 0x201fff) AM_READ(nemesis_videoram1b_word_r)
-	AM_RANGE(0x202000, 0x202fff) AM_READ(nemesis_videoram2f_word_r)
-	AM_RANGE(0x203000, 0x203fff) AM_READ(nemesis_videoram2b_word_r)
-	AM_RANGE(0x210000, 0x21ffff) AM_READ(nemesis_characterram_word_r)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x201000, 0x201fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x202000, 0x202fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x203000, 0x203fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x210000, 0x21ffff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x300000, 0x300fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x310000, 0x3103ff) AM_READ(gx400_xscroll2_word_r)
-	AM_RANGE(0x310400, 0x3107ff) AM_READ(gx400_xscroll1_word_r)
+	AM_RANGE(0x310000, 0x3103ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x310400, 0x3107ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x310800, 0x310eff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x310f00, 0x310f7f) AM_READ(gx400_yscroll2_word_r)
-	AM_RANGE(0x310f80, 0x310fff) AM_READ(gx400_yscroll1_word_r)
+	AM_RANGE(0x310f00, 0x310f7f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x310f80, 0x310fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x311000, 0x311fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
@@ -756,11 +740,11 @@ static ADDRESS_MAP_START( nyanpani_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x203000, 0x203fff) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
 	AM_RANGE(0x210000, 0x21ffff) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
 	AM_RANGE(0x300000, 0x300fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)		/* more sprite ram ??? */
-	AM_RANGE(0x310000, 0x3103ff) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
-	AM_RANGE(0x310400, 0x3107ff) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x310000, 0x3103ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x310400, 0x3107ff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
 	AM_RANGE(0x310800, 0x310eff) AM_WRITE(MWA16_RAM)			/* not used */
-	AM_RANGE(0x310f00, 0x310f7f) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
-	AM_RANGE(0x310f80, 0x310fff) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x310f00, 0x310f7f) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x310f80, 0x310fff) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll1)
 	AM_RANGE(0x311000, 0x311fff) AM_WRITE(MWA16_RAM)			/* not used */
 ADDRESS_MAP_END
 
@@ -838,17 +822,17 @@ static ADDRESS_MAP_START( hcrash_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c2804, 0x0c2805) AM_WRITENOP
 	AM_RANGE(0x0c4000, 0x0c4001) AM_WRITE(selected_ip_w) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x0c4002, 0x0c4003) AM_READ(selected_ip_r)	/* WEC Le Mans 24 control */ AM_WRITENOP /* latches the value read previously */
-	AM_RANGE(0x100000, 0x100fff) AM_READ(nemesis_videoram1b_word_r) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
-	AM_RANGE(0x101000, 0x101fff) AM_READ(nemesis_videoram1f_word_r) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
-	AM_RANGE(0x102000, 0x102fff) AM_READ(nemesis_videoram2b_word_r) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
-	AM_RANGE(0x103000, 0x103fff) AM_READ(nemesis_videoram2f_word_r) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
-	AM_RANGE(0x120000, 0x12ffff) AM_READ(nemesis_characterram_word_r) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM) AM_WRITE(nemesis_videoram1b_word_w) AM_BASE(&nemesis_videoram1b)	/* VRAM 1 */
+	AM_RANGE(0x101000, 0x101fff) AM_READ(MRA16_RAM) AM_WRITE(nemesis_videoram1f_word_w) AM_BASE(&nemesis_videoram1f)	/* VRAM 1 */
+	AM_RANGE(0x102000, 0x102fff) AM_READ(MRA16_RAM) AM_WRITE(nemesis_videoram2b_word_w) AM_BASE(&nemesis_videoram2b)	/* VRAM 2 */
+	AM_RANGE(0x103000, 0x103fff) AM_READ(MRA16_RAM) AM_WRITE(nemesis_videoram2f_word_w) AM_BASE(&nemesis_videoram2f)	/* VRAM 2 */
+	AM_RANGE(0x120000, 0x12ffff) AM_READ(MRA16_RAM) AM_WRITE(nemesis_characterram_word_w) AM_BASE(&nemesis_characterram) AM_SIZE(&nemesis_characterram_size)
 	AM_RANGE(0x180000, 0x180fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x190000, 0x1903ff) AM_READ(gx400_xscroll1_word_r) AM_WRITE(gx400_xscroll1_word_w) AM_BASE(&nemesis_xscroll1)
-	AM_RANGE(0x190400, 0x1907ff) AM_READ(gx400_xscroll2_word_r) AM_WRITE(gx400_xscroll2_word_w) AM_BASE(&nemesis_xscroll2)
+	AM_RANGE(0x190000, 0x1903ff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll1)
+	AM_RANGE(0x190400, 0x1907ff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_xscroll2)
 	AM_RANGE(0x190800, 0x190eff) AM_RAM			/* not used */
-	AM_RANGE(0x190f00, 0x190f7f) AM_READ(gx400_yscroll1_word_r) AM_WRITE(gx400_yscroll1_word_w) AM_BASE(&nemesis_yscroll1)
-	AM_RANGE(0x190f80, 0x190fff) AM_READ(gx400_yscroll2_word_r) AM_WRITE(gx400_yscroll2_word_w) AM_BASE(&nemesis_yscroll2)
+	AM_RANGE(0x190f00, 0x190f7f) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll1)
+	AM_RANGE(0x190f80, 0x190fff) AM_READ(MRA16_RAM) AM_WRITE(MWA16_RAM) AM_BASE(&nemesis_yscroll2)
 	AM_RANGE(0x191000, 0x191fff) AM_RAM			/* not used */
 ADDRESS_MAP_END
 

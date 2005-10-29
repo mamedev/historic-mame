@@ -14,6 +14,8 @@ extern UINT8 starwars_is_esb;
 
 /*----------- defined in machine/starwars.c -----------*/
 
+extern UINT8 *starwars_mathram;
+
 WRITE8_HANDLER( starwars_out_w );
 READ8_HANDLER( starwars_input_1_r );
 

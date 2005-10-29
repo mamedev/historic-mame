@@ -323,9 +323,9 @@ static I386_OPCODE i386_opcode_table1[256] =
 	{"escape",			FPU,			0,					0,					0				},
 	{"escape",			FPU,			0,					0,					0				},
 	// 0xe0
-	{"loopne",			0,				PARAM_REL8,			0,					0				},
-	{"loopz",			0,				PARAM_REL8,			0,					0				},
-	{"loop",			0,				PARAM_REL8,			0,					0				},
+	{"loopne",			0,				PARAM_REL8,			0,					0,				DASMFLAG_STEP_OVER},
+	{"loopz",			0,				PARAM_REL8,			0,					0,				DASMFLAG_STEP_OVER},
+	{"loop",			0,				PARAM_REL8,			0,					0,				DASMFLAG_STEP_OVER},
 	{"jcxz\0jecxz",		VAR_NAME,		PARAM_REL8,			0,					0				},
 	{"in",				0,				PARAM_AL,			PARAM_I8,			0				},
 	{"in",				0,				PARAM_EAX,			PARAM_I8,			0				},
@@ -2011,7 +2011,7 @@ int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_
 	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
 }
 
-int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, UINT8 *opram, int addr_size, int op_size)
+int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size)
 {
 	UINT8 op;
 

@@ -214,7 +214,7 @@ static UINT8 flags8d[256]= /* decrement */
 #define IDX1BYTE(b) {INDEXED1;b=RM(EAD);}
 #define IDX2BYTE(b) {INDEXED2;b=RM(EAD);}
 /* Macros for branch instructions */
-#define BRANCH(f) { UINT8 t; IMMBYTE(t); if(f) { PC+=SIGNED(t); if (t==0xfe) { /* speed up busy loops */ if(m6805_ICount > 0) m6805_ICount = 0; } } }
+#define BRANCH(f) { UINT8 t; IMMBYTE(t); if(f) { PC+=SIGNED(t); change_pc(PC); if (t==0xfe) { /* speed up busy loops */ if(m6805_ICount > 0) m6805_ICount = 0; } } }
 
 /* what they say it is ... */
 static unsigned char cycles1[] =
@@ -309,11 +309,13 @@ static void m68705_Interrupt(void)
 			{
 				m6805.pending_interrupts &= ~(1<<M68705_IRQ_LINE);
 				RM16( 0xfffa, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<M68705_INT_TIMER))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<M68705_INT_TIMER);
 				RM16( 0xfff8, &pPC);
+				change_pc(PC);
 			}
 		}
 		m6805_ICount -= 11;
@@ -341,6 +343,7 @@ static void Interrupt(void)
 			(*m6805.irq_callback)(0);
 
 		RM16( 0x1ffc, &pPC);
+		change_pc(PC);
 		m6805.pending_interrupts &= ~(1<<HD63705_INT_NMI);
 
 		m6805_ICount -= 11;
@@ -378,47 +381,56 @@ static void Interrupt(void)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_IRQ1);
 				RM16( 0x1ff8, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_IRQ2))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_IRQ2);
 				RM16( 0x1fec, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_ADCONV))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_ADCONV);
 				RM16( 0x1fea, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_TIMER1))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_TIMER1);
 				RM16( 0x1ff6, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_TIMER2))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_TIMER2);
 				RM16( 0x1ff4, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_TIMER3))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_TIMER3);
 				RM16( 0x1ff2, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_PCI))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_PCI);
 				RM16( 0x1ff0, &pPC);
+				change_pc(PC);
 			}
 			else if((m6805.pending_interrupts&(1<<HD63705_INT_SCI))!=0)
 			{
 				m6805.pending_interrupts &= ~(1<<HD63705_INT_SCI);
 				RM16( 0x1fee, &pPC);
+				change_pc(PC);
 			}
 		}
 		else
 #endif
 		{
 			RM16( 0xffff - 5, &pPC );
+			change_pc(PC);
 		}
 
 		}	// CC & IFLAG
@@ -457,6 +469,7 @@ static void m6805_reset(void *param)
 	/* IRQ disabled */
     SEI;
 	RM16( 0xfffe , &pPC );
+	change_pc(PC);
 }
 
 static void m6805_exit(void)
@@ -896,7 +909,7 @@ static void m6805_set_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_REGISTER + M6805_A:			A = info->i;							break;
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + M6805_PC:			PC = info->i;							break;
+		case CPUINFO_INT_REGISTER + M6805_PC:			PC = info->i; change_pc(PC); 			break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + M6805_S:			S = SP_ADJUST(info->i);					break;
 		case CPUINFO_INT_REGISTER + M6805_X:			X = info->i;							break;

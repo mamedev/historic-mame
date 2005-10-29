@@ -6,6 +6,8 @@
 
 /*----------- defined in drivers/snk.c -----------*/
 
+extern UINT8 *snk_rambase;
+
 extern INTERRUPT_GEN( snk_irq_AB );
 extern INTERRUPT_GEN( snk_irq_BA );
 
@@ -37,7 +39,7 @@ extern VIDEO_UPDATE( sgladiat );
 extern void tnk3_draw_text( mame_bitmap *bitmap, int bank, unsigned char *source );
 extern void tnk3_draw_status( mame_bitmap *bitmap, int bank, unsigned char *source );
 
-extern int snk_bg_tilemap_baseaddr;
+extern UINT8 *snk_bg_tilemap_base;
 
 // note: compare tdfever which does blinking in software with tdfeverj which does it in hardware
 extern int snk_blink_parity;

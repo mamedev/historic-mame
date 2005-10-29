@@ -7,7 +7,6 @@
 **
 **
 **      Still not implemented:
-**          * MMU (it is logged, however)
 **          * DMULT needs to be fixed properly
 **
 **
@@ -199,6 +198,8 @@ typedef struct
 	UINT64		count_zero_time;
 	void *		compare_int_timer;
 	UINT8		is_mips4;
+	UINT32		ll_value;
+	UINT64		lld_value;
 
 	/* endian-dependent load/store */
 	void		(*lwl)(UINT32 op);
@@ -1125,7 +1126,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 					break;
 
 				case 0x10:	/* RFE */	invalid_instruction(op);							break;
-				case 0x18:	/* ERET */	logerror("ERET\n"); mips3.pc = mips3.cpr[0][COP0_EPC]; SR &= ~SR_EXL; check_irqs();	break;
+				case 0x18:	/* ERET */	logerror("ERET\n"); mips3.pc = mips3.cpr[0][COP0_EPC]; SR &= ~SR_EXL; check_irqs(); mips3.lld_value ^= 0xffffffff; mips3.ll_value ^= 0xffffffff;	break;
 				default:	invalid_instruction(op);										break;
 			}
 			break;
@@ -1905,19 +1906,43 @@ int mips3_execute(int cycles)
 			case 0x2d:	/* SDR */		(*mips3.sdr)(op);														break;
 			case 0x2e:	/* SWR */		(*mips3.swr)(op);														break;
 			case 0x2f:	/* CACHE */		/* effective no-op */													break;
-			case 0x30:	/* LL */		logerror("mips3 Unhandled op: LL\n");									break;
+			case 0x30:	/* LL */		if (RLONG(SIMMVAL+RSVAL32, &temp) && RTREG) RTVAL64 = (UINT32)temp; mips3.ll_value = RTVAL32;		break;
 			case 0x31:	/* LWC1 */		if (RLONG(SIMMVAL+RSVAL32, &temp)) set_cop1_reg(RTREG, temp);			break;
 			case 0x32:	/* LWC2 */		if (RLONG(SIMMVAL+RSVAL32, &temp)) set_cop2_reg(RTREG, temp);			break;
 			case 0x33:	/* PREF */		/* effective no-op */													break;
-			case 0x34:	/* LLD */		logerror("mips3 Unhandled op: LLD\n");									break;
+			case 0x34:	/* LLD */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64) && RTREG) RTVAL64 = temp64; mips3.lld_value = temp64;		break;
 			case 0x35:	/* LDC1 */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64)) set_cop1_reg(RTREG, temp64);		break;
 			case 0x36:	/* LDC2 */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64)) set_cop2_reg(RTREG, temp64);		break;
 			case 0x37:	/* LD */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64) && RTREG) RTVAL64 = temp64;		break;
-			case 0x38:	/* SC */		logerror("mips3 Unhandled op: SC\n");									break;
+			case 0x38:	/* SC */		if (RLONG(SIMMVAL+RSVAL32, &temp) && RTREG)
+								{
+									if (temp == mips3.ll_value)
+									{
+										WLONG(SIMMVAL+RSVAL32, RTVAL32);
+										RTVAL64 = (UINT32)1;
+									}
+									else
+									{
+										RTVAL64 = (UINT32)0;
+									}
+								}
+								break;
 			case 0x39:	/* SWC1 */		WLONG(SIMMVAL+RSVAL32, get_cop1_reg(RTREG));							break;
 			case 0x3a:	/* SWC2 */		WLONG(SIMMVAL+RSVAL32, get_cop2_reg(RTREG));							break;
 			case 0x3b:	/* SWC3 */		invalid_instruction(op);												break;
-			case 0x3c:	/* SCD */		logerror("mips3 Unhandled op: SCD\n");									break;
+			case 0x3c:	/* SCD */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64) && RTREG)
+								{
+									if (temp64 == mips3.lld_value)
+									{
+										WDOUBLE(SIMMVAL+RSVAL32, RTVAL64);
+										RTVAL64 = 1;
+									}
+									else
+									{
+										RTVAL64 = 0;
+									}
+								}
+								break;
 			case 0x3d:	/* SDC1 */		WDOUBLE(SIMMVAL+RSVAL32, get_cop1_reg(RTREG));							break;
 			case 0x3e:	/* SDC2 */		WDOUBLE(SIMMVAL+RSVAL32, get_cop2_reg(RTREG));							break;
 			case 0x3f:	/* SD */		WDOUBLE(SIMMVAL+RSVAL32, RTVAL64);										break;

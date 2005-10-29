@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 
-static unsigned char *cbasebal_textram,*cbasebal_scrollram;
+static UINT8 *cbasebal_textram,*cbasebal_scrollram;
 static tilemap *fg_tilemap,*bg_tilemap;
 static int tilebank,spritebank;
 static int text_on,bg_on,obj_on;
@@ -18,7 +18,7 @@ static int flipscreen;
 
 static void get_bg_tile_info(int tile_index)
 {
-	unsigned char attr = cbasebal_scrollram[2*tile_index+1];
+	UINT8 attr = cbasebal_scrollram[2*tile_index+1];
 	SET_TILE_INFO(
 			1,
 			cbasebal_scrollram[2*tile_index] + ((attr & 0x07) << 8) + 0x800 * tilebank,
@@ -28,7 +28,7 @@ static void get_bg_tile_info(int tile_index)
 
 static void get_fg_tile_info(int tile_index)
 {
-	unsigned char attr = cbasebal_textram[tile_index+0x800];
+	UINT8 attr = cbasebal_textram[tile_index+0x800];
 	SET_TILE_INFO(
 			0,
 			cbasebal_textram[tile_index] + ((attr & 0xf0) << 4),
@@ -56,12 +56,6 @@ VIDEO_START( cbasebal )
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,3);
-
-#define COLORTABLE_START(gfxn,color_code) Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + \
-				color_code * Machine->gfx[gfxn]->color_granularity
-#define GFX_COLOR_CODES(gfxn) Machine->gfx[gfxn]->total_colors
-#define GFX_ELEM_COLORS(gfxn) Machine->gfx[gfxn]->color_granularity
-
 	return 0;
 }
 
@@ -75,11 +69,8 @@ VIDEO_START( cbasebal )
 
 WRITE8_HANDLER( cbasebal_textram_w )
 {
-	if (cbasebal_textram[offset] != data)
-	{
-		cbasebal_textram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset & 0x7ff);
-	}
+	cbasebal_textram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x7ff);
 }
 
 READ8_HANDLER( cbasebal_textram_r )
@@ -89,11 +80,8 @@ READ8_HANDLER( cbasebal_textram_r )
 
 WRITE8_HANDLER( cbasebal_scrollram_w )
 {
-	if (cbasebal_scrollram[offset] != data)
-	{
-		cbasebal_scrollram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset/2);
-	}
+	cbasebal_scrollram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 }
 
 READ8_HANDLER( cbasebal_scrollram_r )
@@ -133,7 +121,7 @@ WRITE8_HANDLER( cbasebal_gfxctrl_w )
 
 WRITE8_HANDLER( cbasebal_scrollx_w )
 {
-	static unsigned char scroll[2];
+	static UINT8 scroll[2];
 
 	scroll[offset] = data;
 	tilemap_set_scrollx(bg_tilemap,0,scroll[0] + 256 * scroll[1]);
@@ -141,7 +129,7 @@ WRITE8_HANDLER( cbasebal_scrollx_w )
 
 WRITE8_HANDLER( cbasebal_scrolly_w )
 {
-	static unsigned char scroll[2];
+	static UINT8 scroll[2];
 
 	scroll[offset] = data;
 	tilemap_set_scrolly(bg_tilemap,0,scroll[0] + 256 * scroll[1]);

@@ -1013,12 +1013,6 @@ static void pgm_basic_init(void)
 
 /* Oriental Legend INIT */
 
-READ16_HANDLER ( orlegend_speedup )
-{
-	if (activecpu_get_pc()==0x104DD2) cpu_spinuntil_int();
-	return pgm_mainram[0x00a70e/2];
-}
-
 static DRIVER_INIT( orlegend )
 {
 	pgm_basic_init();
@@ -1026,7 +1020,6 @@ static DRIVER_INIT( orlegend )
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC0400e, 0xC0400f, 0, 0, pgm_asic3_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC04000, 0xC04001, 0, 0, pgm_asic3_reg_w);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC0400e, 0xC0400f, 0, 0, pgm_asic3_w);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80a70e, 0x80a70f, 0, 0, orlegend_speedup);
 }
 
 static void drgwld2_common_init(void)

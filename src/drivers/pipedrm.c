@@ -125,15 +125,13 @@ static UINT8 sound_command;
 
 MACHINE_INIT( pipedrm )
 {
-	UINT8 *ram;
-
 	/* initialize main Z80 bank */
-	ram = memory_region(REGION_CPU1);
-	memory_set_bankptr(1, &ram[0x10000]);
+	memory_configure_bank(1, 0, 8, memory_region(REGION_CPU1) + 0x10000, 0x2000);
+	memory_set_bank(1, 0);
 
 	/* initialize sound bank */
-	ram = memory_region(REGION_CPU2);
-	memory_set_bankptr(2, &ram[0x10000]);
+	memory_configure_bank(2, 0, 2, memory_region(REGION_CPU2) + 0x10000, 0x8000);
+	memory_set_bank(2, 0);
 }
 
 
@@ -151,8 +149,7 @@ static WRITE8_HANDLER( pipedrm_bankswitch_w )
     */
 
 	/* set the memory bank on the Z80 using the low 3 bits */
-	UINT8 *ram = memory_region(REGION_CPU1);
-	memory_set_bankptr(1, &ram[0x10000 + (data & 0x7) * 0x2000]);
+	memory_set_bank(1, data & 0x7);
 
 	/* map to the fromance gfx register */
 	fromance_gfxreg_w(offset, ((data >> 6) & 0x01) | 	/* flipscreen */
@@ -162,8 +159,7 @@ static WRITE8_HANDLER( pipedrm_bankswitch_w )
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
-	UINT8 *ram = memory_region(REGION_CPU2);
-	memory_set_bankptr(2, &ram[0x10000 + (data & 0x01) * 0x8000]);
+	memory_set_bank(2, data & 0x01);
 }
 
 
@@ -225,40 +221,24 @@ static READ8_HANDLER( sound_command_r )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xa000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xffff) AM_READ(fromance_videoram_r)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x9fff) AM_RAM
+	AM_RANGE(0xa000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xcfff) AM_READWRITE(MRA8_RAM, paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd000, 0xffff) AM_READWRITE(fromance_videoram_r, fromance_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xa000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
-	AM_RANGE(0xd000, 0xffff) AM_WRITE(fromance_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
-	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
+	AM_RANGE(0x20, 0x20) AM_READWRITE(input_port_0_r, sound_command_w)
+	AM_RANGE(0x21, 0x21) AM_READWRITE(input_port_1_r, pipedrm_bankswitch_w)
+	AM_RANGE(0x22, 0x25) AM_WRITE(fromance_scroll_w)
 	AM_RANGE(0x22, 0x22) AM_READ(input_port_2_r)
 	AM_RANGE(0x23, 0x23) AM_READ(input_port_3_r)
 	AM_RANGE(0x24, 0x24) AM_READ(input_port_4_r)
 	AM_RANGE(0x25, 0x25) AM_READ(pending_command_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x20, 0x20) AM_WRITE(sound_command_w)
-	AM_RANGE(0x21, 0x21) AM_WRITE(pipedrm_bankswitch_w)
-	AM_RANGE(0x22, 0x25) AM_WRITE(fromance_scroll_w)
 ADDRESS_MAP_END
 
 
@@ -269,56 +249,34 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK2)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_ROM
+	AM_RANGE(0x7800, 0x7fff) AM_RAM
+	AM_RANGE(0x8000, 0xffff) AM_ROMBANK(2)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x16, 0x16) AM_READ(sound_command_r)
-	AM_RANGE(0x18, 0x18) AM_READ(YM2610_status_port_0_A_r)
-	AM_RANGE(0x1a, 0x1a) AM_READ(YM2610_status_port_0_B_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_WRITE(sound_bankswitch_w)
+	AM_RANGE(0x16, 0x16) AM_READ(sound_command_r)
 	AM_RANGE(0x17, 0x17) AM_WRITE(pending_command_clear_w)
-	AM_RANGE(0x18, 0x18) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0x18, 0x18) AM_READWRITE(YM2610_status_port_0_A_r, YM2610_control_port_0_A_w)
 	AM_RANGE(0x19, 0x19) AM_WRITE(YM2610_data_port_0_A_w)
-	AM_RANGE(0x1a, 0x1a) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0x1a, 0x1a) AM_READWRITE(YM2610_status_port_0_B_r, YM2610_control_port_0_B_w)
 	AM_RANGE(0x1b, 0x1b) AM_WRITE(YM2610_data_port_0_B_w)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( hatris_sound_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x04, 0x04) AM_READ(sound_command_r)
-	AM_RANGE(0x05, 0x05) AM_READ(pending_command_r)
-	AM_RANGE(0x08, 0x08) AM_READ(YM2608_status_port_0_A_r)
-	AM_RANGE(0x0a, 0x0a) AM_READ(YM2608_status_port_0_B_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( hatris_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( hatris_sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM2608_control_port_0_B_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(YM2608_data_port_0_B_w)
-	AM_RANGE(0x05, 0x05) AM_WRITE(pending_command_clear_w)
-	AM_RANGE(0x08, 0x08) AM_WRITE(YM2608_control_port_0_A_w)
+	AM_RANGE(0x04, 0x04) AM_READ(sound_command_r)
+	AM_RANGE(0x05, 0x05) AM_READWRITE(pending_command_r, pending_command_clear_w)
+	AM_RANGE(0x08, 0x08) AM_READWRITE(YM2608_status_port_0_A_r, YM2608_control_port_0_A_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(YM2608_data_port_0_A_w)
-	AM_RANGE(0x0a, 0x0a) AM_WRITE(YM2608_control_port_0_B_w)
+	AM_RANGE(0x0a, 0x0a) AM_READWRITE(YM2608_status_port_0_B_r, YM2608_control_port_0_B_w)
 	AM_RANGE(0x0b, 0x0b) AM_WRITE(YM2608_data_port_0_B_w)
 ADDRESS_MAP_END
 
@@ -598,14 +556,14 @@ static MACHINE_DRIVER_START( pipedrm )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318000/4)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(sound_readport,sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_portmap,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -637,14 +595,14 @@ static MACHINE_DRIVER_START( hatris )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80,12000000/2)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,14318000/4)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(hatris_sound_readport,hatris_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(hatris_sound_portmap,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -769,9 +727,11 @@ ROM_END
 static DRIVER_INIT( pipedrm )
 {
 	/* sprite RAM lives at the end of palette RAM */
-	spriteram = memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc00, 0xcfff, 0, 0, MRA8_RAM);
-	spriteram = memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc00, 0xcfff, 0, 0, MWA8_RAM);
+	spriteram = &paletteram[0xc00];
 	spriteram_size = 0x400;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc00, 0xcfff, 0, 0, MRA8_BANK3);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc00, 0xcfff, 0, 0, MWA8_BANK3);
+	memory_set_bankptr(3, spriteram);
 }
 
 

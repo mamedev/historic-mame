@@ -246,8 +246,9 @@ static WRITE8_HANDLER( sindbadm_SN76496_1_w )
  *************************************/
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xc7ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)	/* Misc RAM */
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xc7ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)  /* Misc RAM */
 	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe400, 0xe7ff) AM_READ(MRA8_RAM)	/* Used by at least Monster Bash? */
 	AM_RANGE(0xe800, 0xefff) AM_READ(MRA8_RAM)
@@ -259,17 +260,21 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(segar_w) AM_BASE(&segar_mem)
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(segar_w)
+	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&segar_miscram1)
 	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)	/* handled by */
+	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&segar_monsterbram)
 	AM_RANGE(0xe800, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&segar_characterram)    	/* the above, */
 	AM_RANGE(0xf000, 0xf03f) AM_WRITE(MWA8_RAM) AM_BASE(&segar_mem_colortable)     /* here only */
 	AM_RANGE(0xf040, 0xf07f) AM_WRITE(MWA8_RAM) AM_BASE(&segar_mem_bcolortable)    /* to initialize */
+	AM_RANGE(0xf080, 0xf7ff) AM_WRITE(MWA8_RAM) AM_BASE(&segar_miscram2)
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&segar_characterram2)    	/* the pointers */
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( sindbadm_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xc7ff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xc7ff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xe400, 0xe7ff) AM_WRITE(MWA8_RAM)

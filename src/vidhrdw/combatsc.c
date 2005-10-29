@@ -12,19 +12,19 @@
 
 static tilemap *bg_tilemap[2];
 static tilemap *textlayer;
-static unsigned char *private_spriteram[2];
+static UINT8 *private_spriteram[2];
 static int priority;
 
-unsigned char *combasc_io_ram;
+UINT8 *combasc_io_ram;
 static int combasc_vreg;
-unsigned char* banked_area;
+UINT8* banked_area;
 
 static int combasc_bank_select; /* 0x00..0x1f */
 static int combasc_video_circuit; /* 0 or 1 */
-static unsigned char *combasc_page[2];
-static unsigned char combasc_scrollram0[0x40];
-static unsigned char combasc_scrollram1[0x40];
-static unsigned char *combasc_scrollram;
+static UINT8 *combasc_page[2];
+static UINT8 combasc_scrollram0[0x40];
+static UINT8 combasc_scrollram1[0x40];
+static UINT8 *combasc_scrollram;
 
 
 PALETTE_INIT( combasc )
@@ -93,7 +93,7 @@ PALETTE_INIT( combascb )
 
 static void get_tile_info0(int tile_index)
 {
-	unsigned char attributes = combasc_page[0][tile_index];
+	UINT8 attributes = combasc_page[0][tile_index];
 	int bank = 4*((combasc_vreg & 0x0f) - 1);
 	int number,color;
 
@@ -118,7 +118,7 @@ static void get_tile_info0(int tile_index)
 
 static void get_tile_info1(int tile_index)
 {
-	unsigned char attributes = combasc_page[1][tile_index];
+	UINT8 attributes = combasc_page[1][tile_index];
 	int bank = 4*((combasc_vreg >> 4) - 1);
 	int number, color;
 
@@ -143,7 +143,7 @@ static void get_tile_info1(int tile_index)
 
 static void get_text_info(int tile_index)
 {
-	unsigned char attributes = combasc_page[0][tile_index + 0x800];
+	UINT8 attributes = combasc_page[0][tile_index + 0x800];
 	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16 + (attributes & 0x0f);
 
@@ -157,7 +157,7 @@ static void get_text_info(int tile_index)
 
 static void get_tile_info0_bootleg(int tile_index)
 {
-	unsigned char attributes = combasc_page[0][tile_index];
+	UINT8 attributes = combasc_page[0][tile_index];
 	int bank = 4*((combasc_vreg & 0x0f) - 1);
 	int number, pal, color;
 
@@ -181,7 +181,7 @@ static void get_tile_info0_bootleg(int tile_index)
 
 static void get_tile_info1_bootleg(int tile_index)
 {
-	unsigned char attributes = combasc_page[1][tile_index];
+	UINT8 attributes = combasc_page[1][tile_index];
 	int bank = 4*((combasc_vreg >> 4) - 1);
 	int number, pal, color;
 
@@ -205,7 +205,7 @@ static void get_tile_info1_bootleg(int tile_index)
 
 static void get_text_info_bootleg(int tile_index)
 {
-//  unsigned char attributes = combasc_page[0][tile_index + 0x800];
+//  UINT8 attributes = combasc_page[0][tile_index + 0x800];
 	int number = combasc_page[0][tile_index + 0xc00];
 	int color = 16;// + (attributes & 0x0f);
 
@@ -339,7 +339,7 @@ WRITE8_HANDLER( combascb_priority_w )
 
 WRITE8_HANDLER( combasc_bankselect_w )
 {
-	unsigned char *page = memory_region(REGION_CPU1) + 0x10000;
+	UINT8 *page = memory_region(REGION_CPU1) + 0x10000;
 
 	if (data & 0x40)
 	{
@@ -382,7 +382,7 @@ WRITE8_HANDLER( combascb_bankselect_w )
 	data = data & 0x1f;
 	if( data != combasc_bank_select )
 	{
-		unsigned char *page = memory_region(REGION_CPU1) + 0x10000;
+		UINT8 *page = memory_region(REGION_CPU1) + 0x10000;
 		combasc_bank_select = data;
 
 		if (data & 0x10)
@@ -412,7 +412,7 @@ WRITE8_HANDLER( combascb_bankselect_w )
 
 MACHINE_INIT( combasc )
 {
-	unsigned char *MEM = memory_region(REGION_CPU1) + 0x38000;
+	UINT8 *MEM = memory_region(REGION_CPU1) + 0x38000;
 
 
 	combasc_io_ram  = MEM + 0x0000;
@@ -461,7 +461,7 @@ WRITE8_HANDLER( combasc_scrollram_w )
 
 ***************************************************************************/
 
-static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, const unsigned char *source,int circuit,UINT32 pri_mask)
+static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *source,int circuit,UINT32 pri_mask)
 {
 	int base_color = (circuit*4)*16+(K007121_ctrlram[circuit][6]&0x10)*2;
 
@@ -582,13 +582,12 @@ byte #4:
 
 ***************************************************************************/
 
-static void bootleg_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, const unsigned char *source, int circuit )
+static void bootleg_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, const UINT8 *source, int circuit )
 {
 	const gfx_element *gfx = Machine->gfx[circuit+2];
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	int limit = ( circuit) ? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);
-	const unsigned char *finish;
+	int limit = ( circuit) ? (program_read_byte(0xc2)*256 + program_read_byte(0xc3)) : (program_read_byte(0xc0)*256 + program_read_byte(0xc1));
+	const UINT8 *finish;
 
 	source+=0x1000;
 	finish = source;
@@ -599,12 +598,12 @@ static void bootleg_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect
 
 	while( source>finish )
 	{
-		unsigned char attributes = source[3]; /* PBxF ?xxX */
+		UINT8 attributes = source[3]; /* PBxF ?xxX */
 		{
 			int number = source[0];
 			int x = source[2] - 71 + (attributes & 0x01)*256;
 			int y = 242 - source[1];
-			unsigned char color = source[4]; /* CCCC xxBB */
+			UINT8 color = source[4]; /* CCCC xxBB */
 
 			int bank = (color & 0x03) | ((attributes & 0x40) >> 4);
 

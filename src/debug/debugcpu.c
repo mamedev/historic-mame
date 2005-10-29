@@ -1246,6 +1246,8 @@ static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address
 	if (within_debugger_code)
 		return;
 
+	within_debugger_code = 1;
+
 	/* if we are a write watchpoint, stash the value that will be written */
 	wpaddr = address;
 	if (type & WATCHPOINT_WRITE)
@@ -1288,6 +1290,8 @@ static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address
 				}
 				break;
 			}
+
+	within_debugger_code = 0;
 }
 
 

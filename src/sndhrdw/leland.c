@@ -184,7 +184,6 @@ void leland_dac_update(int dacnum, UINT8 sample)
 #define LOG_DAC				0
 #define LOG_EXTERN			0
 #define LOG_PIT				0
-#define LOG_OPTIMIZATION	0
 
 
 /* according to the Intel manual, external interrupts are not latched */
@@ -192,7 +191,6 @@ void leland_dac_update(int dacnum, UINT8 sample)
 #define LATCH_INTS	1
 
 #define DAC_VOLUME_SCALE	4
-#define CPU_RESUME_TRIGGER	7123
 
 
 static sound_stream * dma_stream;
@@ -214,9 +212,6 @@ static UINT32 ext_start;
 static UINT32 ext_stop;
 static UINT8 ext_active;
 static UINT8 *ext_base;
-
-static UINT8 *active_mask;
-static int total_reads;
 
 struct mem_state
 {
@@ -361,11 +356,7 @@ static void leland_i186_dac_update(void *param, stream_sample_t **inputs, stream
 
 		/* update the clock status */
 		if (count < d->buftarget)
-		{
-			if (LOG_OPTIMIZATION) logerror("  - trigger due to clock active in update\n");
-			cpu_trigger(CPU_RESUME_TRIGGER);
 			clock_active |= 1 << i;
-		}
 	}
 }
 
@@ -386,6 +377,7 @@ static void leland_i186_dma_update(void *param, stream_sample_t **inputs, stream
 	memset(buffer, 0, length * sizeof(*buffer));
 
 	/* loop over DMA buffers */
+	cpuintrf_push_context(2);
 	for (i = 0; i < 2; i++)
 	{
 		struct dma_state *d = &i186.dma[i];
@@ -410,7 +402,6 @@ static void leland_i186_dma_update(void *param, stream_sample_t **inputs, stream
 			/* otherwise, we're ready for liftoff */
 			else
 			{
-				UINT8 *base = memory_region(REGION_CPU3);
 				int source = d->source;
 				int count = d->count;
 				int which, frac, step, volume;
@@ -428,7 +419,7 @@ static void leland_i186_dma_update(void *param, stream_sample_t **inputs, stream
 				/* sample-rate convert to the output frequency */
 				for (j = 0; j < length && count > 0; j++)
 				{
-					buffer[j] += ((int)base[source] - 0x80) * volume;
+					buffer[j] += ((int)program_read_byte(source) - 0x80) * volume;
 					frac += step;
 					source += frac >> 24;
 					count -= frac >> 24;
@@ -456,6 +447,7 @@ static void leland_i186_dma_update(void *param, stream_sample_t **inputs, stream
 			}
 		}
 	}
+	cpuintrf_pop_context();
 }
 
 
@@ -597,11 +589,6 @@ static void leland_i186_reset(void)
 	memset(&counter, 0, sizeof(counter));
 	for (i = 0; i < 9; i++)
 		counter[i].timer = counter_timer[i];
-
-	/* send a trigger in case we're suspended */
-	if (LOG_OPTIMIZATION) logerror("  - trigger due to reset\n");
-	cpu_trigger(CPU_RESUME_TRIGGER);
-	total_reads = 0;
 }
 
 
@@ -743,8 +730,6 @@ generate_int:
 	if (!i186.intr.pending)
 		cpunum_set_input_line(2, 0, ASSERT_LINE);
 	i186.intr.pending = 1;
-	cpu_trigger(CPU_RESUME_TRIGGER);
-	if (LOG_OPTIMIZATION) logerror("  - trigger due to interrupt pending\n");
 	if (LOG_INTERRUPTS) logerror("(%f) **** Requesting interrupt vector %02X\n", timer_get_time(), new_vector);
 }
 
@@ -1849,11 +1834,7 @@ static void set_dac_frequency(int which, int frequency)
 	if (count > d->buftarget)
 		clock_active &= ~(1 << which);
 	else if (count < d->buftarget)
-	{
-		if (LOG_OPTIMIZATION) logerror("  - trigger due to clock active in set_dac_frequency\n");
-		cpu_trigger(CPU_RESUME_TRIGGER);
 		clock_active |= 1 << which;
-	}
 
 	if (LOG_DAC) logerror("DAC %d frequency = %d, step = %08X\n", which, d->frequency, d->step);
 }
@@ -2066,17 +2047,6 @@ static READ8_HANDLER( peripheral_r )
 				else
 					result = ((clock_active << 1) & 0x7e);
 
-				if (!i186.intr.pending && active_mask && (*active_mask & result) == 0 && ++total_reads > 100)
-				{
-					if (LOG_OPTIMIZATION) logerror("Suspended CPU: active_mask = %02X, result = %02X\n", *active_mask, result);
-					cpu_spinuntil_trigger(CPU_RESUME_TRIGGER);
-				}
-				else if (LOG_OPTIMIZATION)
-				{
-					if (i186.intr.pending) logerror("(can't suspend - interrupt pending)\n");
-					else if (active_mask && (*active_mask & result) != 0) logerror("(can't suspend: mask=%02X result=%02X\n", *active_mask, result);
-				}
-
 				return result;
 			}
 
@@ -2146,22 +2116,6 @@ static WRITE8_HANDLER( peripheral_w )
 			logerror("%05X:Unexpected peripheral write %d/%02X = %02X\n", activecpu_get_pc(), select, offset, data);
 			break;
 	}
-}
-
-
-
-/*************************************
- *
- *  Optimizations
- *
- *************************************/
-
-void leland_i86_optimize_address(offs_t offset)
-{
-	if (offset)
-		active_mask = memory_region(REGION_CPU3) + offset;
-	else
-		active_mask = NULL;
 }
 
 

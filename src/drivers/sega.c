@@ -148,16 +148,14 @@
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)			/* sound ram */
+	AM_RANGE(0xc800, 0xcfff) AM_READ(MRA8_RAM) AM_BASE(&sega_mainram)
+	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM) AM_BASE(&sega_soundram)    /* sound ram */
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)
 ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xffff) AM_WRITE(sega_w) AM_BASE(&sega_mem)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size)	/* handled by the above, */
-												/* here only to initialize the pointer */
+	AM_RANGE(0x0000, 0xffff) AM_WRITE(sega_w)
 ADDRESS_MAP_END
 
 static READ8_HANDLER( sega_sh_r )

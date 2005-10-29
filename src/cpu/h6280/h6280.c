@@ -156,6 +156,7 @@ static void h6280_reset(void *param)
     /* read the reset vector into PC */
 	PCL = RDMEM(H6280_RESET_VEC);
 	PCH = RDMEM((H6280_RESET_VEC+1));
+	CHANGE_PC;
 
 	/* timer off by default */
 	h6280.timer_status=0;
@@ -184,6 +185,8 @@ static int h6280_execute(int cycles)
 	/* Execute instructions */
 	do
     {
+    	if ((h6280.ppc.w.l ^ h6280.pc.w.l) & 0xe000)
+    		CHANGE_PC;
 		h6280.ppc = h6280.pc;
 
 #ifdef  MAME_DEBUG
@@ -245,6 +248,7 @@ static void h6280_set_context (void *src)
 {
 	if( src )
 		h6280 = *(h6280_Regs*)src;
+	CHANGE_PC;
 }
 
 
@@ -352,6 +356,14 @@ WRITE8_HANDLER( H6280_timer_w )
 	}
 }
 
+static int h6280_translate(int space, offs_t *addr)
+{
+	if (space == ADDRESS_SPACE_PROGRAM)
+		*addr = TRANSLATED(*addr);
+	return 1;
+}
+
+
 /*****************************************************************************/
 
 /**************************************************************************
@@ -421,6 +433,7 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 21;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
@@ -474,6 +487,7 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &h6280_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = reg_layout;					break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = win_layout;					break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = h6280_translate;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HuC6280"); break;

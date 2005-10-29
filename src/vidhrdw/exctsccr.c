@@ -188,7 +188,7 @@ static void exctsccr_draw_sprites( mame_bitmap *bitmap ) {
 				TRANSPARENCY_PEN,0);
 	}
 
-	OBJ1 = &(memory_region(REGION_CPU1)[0x8800]);
+	OBJ1 = spriteram_2;
 	OBJ2 = spriteram;
 
 	for ( offs = 0x0e; offs >= 0; offs -= 2 ) {

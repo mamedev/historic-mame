@@ -430,6 +430,7 @@ static ADDRESS_MAP_START( gottlieb_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x03000, 0x037ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)	// argusg wants to check this
 	AM_RANGE(0x03800, 0x03bff) AM_MIRROR(0x0400) AM_READWRITE(MRA8_RAM, gottlieb_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x04000, 0x04fff) AM_READWRITE(MRA8_RAM, gottlieb_charram_w) AM_BASE(&gottlieb_charram)
+	AM_RANGE(0x05000, 0x0501f) AM_WRITE(gottlieb_paletteram_w) AM_BASE(&paletteram)
 	AM_RANGE(0x05800, 0x05800) AM_READWRITE(input_port_0_r, watchdog_reset_w)	/* DSW */
 	AM_RANGE(0x05801, 0x05801) AM_READWRITE(input_port_1_r, gottlieb_track_reset_w)	/* buttons */
 	AM_RANGE(0x05802, 0x05802) AM_READWRITE(gottlieb_track_0_r, gottlieb_sh_w)	/* trackball H */

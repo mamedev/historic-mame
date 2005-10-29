@@ -523,12 +523,12 @@ void konami_state_save(void *file) { state_save(file, "konami"); }
 void konami_state_load(void *file) { state_load(file, "konami"); }
 #endif
 
-static offs_t konami_dasm(char *buffer, offs_t pc)
+static offs_t konami_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 #ifdef MAME_DEBUG
-    return Dasmknmi(buffer,pc);
+    return Dasmknmi(buffer, pc, oprom, opram, bytes);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", *oprom );
 	return 1;
 #endif
 }
@@ -663,7 +663,7 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = konami_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = konami_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = konami_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = konami_dasm;	break;
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = konami.irq_callback; break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &konami_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = konami_reg_layout;			break;

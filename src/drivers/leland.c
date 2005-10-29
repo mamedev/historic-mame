@@ -2014,6 +2014,8 @@ static DRIVER_INIT( cerberus )
 
 	/* master CPU bankswitching */
 	leland_update_master_bank = cerberus_bankswitch;
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x2000);
+	memory_set_bankptr(2, memory_region(REGION_CPU1) + 0xa000);
 
 	/* set up the master CPU I/O ports */
 	init_master_ports(0x40, 0x80);
@@ -2289,9 +2291,6 @@ static DRIVER_INIT( redlin2p )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xd0, 0xd0, 0, 0, redline_pedal_2_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, redline_wheel_2_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfb, 0xfb, 0, 0, redline_wheel_1_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x828);
 }
 
 
@@ -2317,9 +2316,6 @@ static DRIVER_INIT( quarterb )
 
 	/* set up the master CPU I/O ports */
 	init_master_ports(0x40, 0x80);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x9bc);
 }
 
 
@@ -2352,9 +2348,6 @@ static DRIVER_INIT( viper )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xa4, 0xa4, 0, 0, dangerz_input_upper_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xb8, 0xb8, 0, 0, dangerz_input_y_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xbc, 0xbc, 0, 0, dangerz_input_x_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2385,9 +2378,6 @@ static DRIVER_INIT( teamqb )
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2418,9 +2408,6 @@ static DRIVER_INIT( aafb )
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2451,9 +2438,6 @@ static DRIVER_INIT( aafbb )
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2484,9 +2468,6 @@ static DRIVER_INIT( aafbd2p )
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2524,9 +2505,6 @@ static DRIVER_INIT( offroad )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, offroad_wheel_3_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf9, 0xf9, 0, 0, offroad_wheel_1_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfb, 0xfb, 0, 0, offroad_wheel_2_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2563,9 +2541,6 @@ static DRIVER_INIT( offroadt )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, offroad_wheel_3_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf9, 0xf9, 0, 0, offroad_wheel_1_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfb, 0xfb, 0, 0, offroad_wheel_2_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 
@@ -2598,9 +2573,6 @@ static DRIVER_INIT( pigout )
 
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_4_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x788);
 }
 
 

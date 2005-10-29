@@ -7,12 +7,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "spiders.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 
 extern int spiders_video_flip;
 
-static int bitflip[256];
+static UINT8 bitflip[256];
 static int *screenbuffer;
 
 #define SCREENBUFFER_SIZE	0x2000
@@ -60,8 +61,6 @@ VIDEO_UPDATE( spiders )
 	size_t crtc6845_mem_size;
 	int video_addr,increment;
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	crtc6845_mem_size=crtc6845_horiz_disp*crtc6845_vert_disp*8;
 
 	video_addr=crtc6845_start_addr & 0x7f;
@@ -86,15 +85,15 @@ VIDEO_UPDATE( spiders )
 
 		if(spiders_video_flip)
 		{
-			data0=bitflip[RAM[0x0000+video_addr]];
-			data1=bitflip[RAM[0x4000+video_addr]];
-			data2=bitflip[RAM[0x8000+video_addr]];
+			data0=bitflip[spiders_ram[0x0000+video_addr]];
+			data1=bitflip[spiders_ram[0x4000+video_addr]];
+			data2=bitflip[spiders_ram[0x8000+video_addr]];
 		}
 		else
 		{
-			data0=RAM[0x0000+video_addr];
-			data1=RAM[0x4000+video_addr];
-			data2=RAM[0x8000+video_addr];
+			data0=spiders_ram[0x0000+video_addr];
+			data1=spiders_ram[0x4000+video_addr];
+			data2=spiders_ram[0x8000+video_addr];
 		}
 		combo=data0|(data1<<8)|(data2<<16);
 

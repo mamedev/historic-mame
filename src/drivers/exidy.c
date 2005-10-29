@@ -1279,7 +1279,8 @@ DRIVER_INIT( phantoma )
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5301, 0x5301, 0, 0, exidy_sprite2_ypos_w);
 
 	/* the ROM is actually mapped high */
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, 0, MRA8_ROM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf800, 0xffff, 0, 0, MRA8_BANK1);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0xf800);
 }
 
 

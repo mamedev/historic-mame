@@ -713,9 +713,6 @@ static DRIVER_INIT( ataxx )
 
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x03, 0, 0, ataxx_trackball_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x612);
 }
 
 
@@ -739,9 +736,6 @@ static DRIVER_INIT( ataxxj )
 
 	/* set up additional input ports */
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x03, 0, 0, ataxx_trackball_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x612);
 }
 
 
@@ -767,9 +761,6 @@ static DRIVER_INIT( wsf )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0d, 0x0d, 0, 0, input_port_3_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0e, 0x0e, 0, 0, input_port_4_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0f, 0x0f, 0, 0, input_port_5_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x612);
 }
 
 
@@ -800,9 +791,6 @@ static DRIVER_INIT( indyheat )
 
 	/* set up additional output ports */
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x08, 0x0b, 0, 0, indyheat_analog_w);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x613);
 }
 
 
@@ -828,9 +816,6 @@ static DRIVER_INIT( brutforc )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0d, 0x0d, 0, 0, input_port_3_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0e, 0x0e, 0, 0, input_port_4_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0f, 0x0f, 0, 0, input_port_5_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x613);
 }
 
 
@@ -860,9 +845,6 @@ static DRIVER_INIT( asylum )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0d, 0x0d, 0, 0, input_port_3_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0e, 0x0e, 0, 0, input_port_4_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0f, 0x0f, 0, 0, input_port_5_r);
-
-	/* optimize the sound */
-	leland_i86_optimize_address(0x613);
 }
 
 

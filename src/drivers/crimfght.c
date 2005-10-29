@@ -48,26 +48,8 @@ static WRITE8_HANDLER( crimfght_snd_bankswitch_w )
 
 /********************************************/
 
-static READ8_HANDLER( speedup_r )
-{
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-	int data = ( RAM[0x0414] << 8 ) | RAM[0x0415];
-
-	if ( data < memory_region_length(REGION_CPU1) )
-	{
-		data = ( RAM[data] << 8 ) | RAM[data + 1];
-
-		if ( data == 0xffff )
-			cpu_spinuntil_int();
-	}
-
-	return RAM[0x0414];
-}
-
 static ADDRESS_MAP_START( crimfght_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x03ff) AM_READ(MRA8_BANK1)			/* banked RAM */
-	AM_RANGE(0x0414, 0x0414) AM_READ(speedup_r)
 	AM_RANGE(0x0400, 0x1fff) AM_READ(MRA8_RAM)			/* RAM */
 	AM_RANGE(0x3f80, 0x3f80) AM_READ(input_port_7_r)		/* Coinsw */
 	AM_RANGE(0x3f81, 0x3f81) AM_READ(input_port_3_r)		/* 1P controls */

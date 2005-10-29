@@ -10,7 +10,9 @@
 
 void (*sega_decrypt)(int,unsigned int *);
 
-UINT8 *segar_mem;
+UINT8 *segar_miscram1;
+UINT8 *segar_miscram2;
+UINT8 *segar_monsterbram;
 
 WRITE8_HANDLER( segar_characterram_w );
 WRITE8_HANDLER( segar_characterram2_w );
@@ -28,7 +30,7 @@ WRITE8_HANDLER( segar_w )
 	pc=activecpu_get_previouspc();
 	if (pc != -1)
 	{
-		op=segar_mem[pc] & 0xFF;
+		op=program_read_byte(pc) & 0xFF;
 
 		if (op==0x32)
 		{
@@ -48,7 +50,7 @@ WRITE8_HANDLER( segar_w )
 	/* MWA8_RAM */
 	else if ((off>=0xC800) && (off<=0xCFFF))
 	{
-		segar_mem[off]=data;
+		segar_miscram1[off - 0xc800]=data;
 	}
 	else if ((off>=0xE000) && (off<=0xE3FF))
 	{
@@ -57,7 +59,7 @@ WRITE8_HANDLER( segar_w )
 	/* MWA8_RAM */
 	else if ((off>=0xE400) && (off<=0xE7FF))
 	{
-		segar_mem[off]=data;
+		segar_monsterbram[off - 0xe400]=data;
 	}
 	else if ((off>=0xE800) && (off<=0xEFFF))
 	{
@@ -74,7 +76,7 @@ WRITE8_HANDLER( segar_w )
 	/* MWA8_RAM */
 	else if ((off>=0xF080) && (off<=0xF7FF))
 	{
-		segar_mem[off]=data;
+		segar_miscram2[off - 0xf080]=data;
 	}
 	else if ((off>=0xF800) && (off<=0xFFFF))
 	{

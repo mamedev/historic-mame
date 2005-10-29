@@ -1304,7 +1304,7 @@ $885c/e.w   *** time (BCD) ***
 ***************************************************************************/
 
 ROM_START( bigstrik )
-	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* Main CPU Code */
 	ROM_LOAD16_BYTE( "91105v11.3", 0x000000, 0x020000, CRC(5d6e08ec) SHA1(4b80a5073cd0b0142cad094816b935d750ac11fb) )
 	ROM_LOAD16_BYTE( "91105v11.2", 0x000001, 0x020000, CRC(2120f05b) SHA1(a769cf8c3a4fa6a3f604edf45ce6db35979826cb) )
 

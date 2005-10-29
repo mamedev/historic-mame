@@ -57,10 +57,8 @@ VIDEO_START( shangkid )
 
 WRITE8_HANDLER( shangkid_videoram_w )
 {
-	if( videoram[offset]!=data ){
-		videoram[offset] = data;
-		tilemap_mark_tile_dirty( background, offset&0x7ff );
-	}
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty( background, offset&0x7ff );
 }
 
 static void draw_sprite( const UINT8 *source, mame_bitmap *bitmap, const rectangle *cliprect ){

@@ -941,6 +941,7 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"<?xml version=\"1.0\"?>\n"
 		"<!DOCTYPE " XML_ROOT " [\n"
 		"<!ELEMENT " XML_ROOT " (" XML_TOP "+)>\n"
+		"\t<!ATTLIST " XML_ROOT " build CDATA #IMPLIED>\n"
 #ifdef MESS
 		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*)>\n"
 #else
@@ -1027,7 +1028,8 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"\t\t\t\t<!ATTLIST extension name CDATA #REQUIRED>\n"
 #endif
 		"]>\n\n"
-		"<" XML_ROOT ">\n"
+		"<" XML_ROOT " build=\"%s\">\n",
+		normalize_string(build_version)
 	);
 
 	print_mame_data(out, games);

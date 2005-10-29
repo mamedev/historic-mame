@@ -8,7 +8,8 @@
 
 /*----------- defined in machine/sega.c -----------*/
 
-extern UINT8 *sega_mem;
+extern UINT8 *sega_mainram;
+extern UINT8 *sega_soundram;
 extern void sega_security(int chip);
 
 WRITE8_HANDLER( sega_w );

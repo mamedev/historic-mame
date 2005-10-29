@@ -573,8 +573,8 @@ void memory_set_opbase(offs_t pc)
 {
 	address_space *space = &active_address_space[ADDRESS_SPACE_PROGRAM];
 
+	UINT8 *base = NULL, *based = NULL;
 	handler_data *handlers;
-	UINT8 *base, *based;
 	UINT8 entry;
 
 	/* allow overrides */
@@ -592,26 +592,32 @@ void memory_set_opbase(offs_t pc)
 		entry = space->readlookup[LEVEL2_INDEX(entry,pc)];
 	opcode_entry = entry;
 
-	/* RAM/ROM/RAMROM */
-	if (entry == STATIC_RAM || entry == STATIC_ROM)
-		osd_die("Should not be any STATIC_RAM entries anymore!\n");
-
-	/* banked memory */
-	else if (entry >= STATIC_BANK1 && entry <= STATIC_RAM)
+	/* if we don't map to a bank, see if there are any banks we can map to */
+	if (entry < STATIC_BANK1 || entry >= STATIC_RAM)
 	{
-		base = bank_ptr[entry];
-		based = bankd_ptr[entry];
-		if (!based)
-			based = base;
+		/* loop over banks and find a match */
+		for (entry = 1; entry < STATIC_COUNT; entry++)
+		{
+			bank_data *bdata = &bankdata[entry];
+			if (bdata->used && bdata->cpunum == cur_context && bdata->spacenum == ADDRESS_SPACE_PROGRAM &&
+				bdata->base < pc && bdata->end > pc)
+				break;
+		}
+
+		/* if nothing was found, leave everything alone */
+		if (entry == STATIC_COUNT)
+		{
+			logerror("cpu #%d (PC=%08X): warning - op-code execute on mapped I/O\n",
+						cpu_getactivecpu(), activecpu_get_pc());
+			return;
+		}
 	}
 
-	/* other memory -- could be very slow! */
-	else
-	{
-		logerror("cpu #%d (PC=%08X): warning - op-code execute on mapped I/O\n",
-					cpu_getactivecpu(), activecpu_get_pc());
-		return;
-	}
+	/* if no decrypted opcodes, point to the same base */
+	base = bank_ptr[entry];
+	based = bankd_ptr[entry];
+	if (!based)
+		based = base;
 
 	/* compute the adjusted base */
 	handlers = &active_address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry];
@@ -675,7 +681,7 @@ void *memory_get_read_ptr(int cpunum, int spacenum, offs_t offset)
 		entry = space->read.table[LEVEL2_INDEX(entry, offset)];
 
 	/* 8-bit case: RAM/ROM */
-	if (entry > STATIC_RAM)
+	if (entry >= STATIC_RAM)
 		return NULL;
 	offset = (offset - space->read.handlers[entry].offset) & space->read.handlers[entry].mask;
 	return &bank_ptr[entry][offset];
@@ -700,7 +706,7 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 		entry = space->write.table[LEVEL2_INDEX(entry, offset)];
 
 	/* 8-bit case: RAM/ROM */
-	if (entry > STATIC_RAM)
+	if (entry >= STATIC_RAM)
 		return NULL;
 	offset = (offset - space->write.handlers[entry].offset) & space->write.handlers[entry].mask;
 	return &bank_ptr[entry][offset];
@@ -1054,7 +1060,7 @@ static int init_cpudata(void)
 		cpudata[cpunum].op_ram = cpudata[cpunum].op_rom = memory_region(REGION_CPU1 + cpunum);
 		cpudata[cpunum].op_mem_max = memory_region_length(REGION_CPU1 + cpunum);
 		cpudata[cpunum].op_mem_min = 0;
-		cpudata[cpunum].opcode_entry = STATIC_ROM;
+		cpudata[cpunum].opcode_entry = STATIC_UNMAP;
 		cpudata[cpunum].opbase = NULL;
 
 		/* TODO: make this dynamic */
@@ -2280,7 +2286,7 @@ UINT8 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM) 															\
 		MEMREADEND(bank_ptr[entry][address]);											\
 																						\
 	/* fall back to the handler */														\
@@ -2299,7 +2305,7 @@ UINT8 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMREADEND(bank_ptr[entry][xormacro(address)]);									\
 																						\
 	/* fall back to the handler */														\
@@ -2334,7 +2340,7 @@ UINT16 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMREADEND(*(UINT16 *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
@@ -2353,7 +2359,7 @@ UINT16 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMREADEND(*(UINT16 *)&bank_ptr[entry][xormacro(address)]);						\
 																						\
 	/* fall back to the handler */														\
@@ -2386,7 +2392,7 @@ UINT32 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMREADEND(*(UINT32 *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
@@ -2405,7 +2411,7 @@ UINT32 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMREADEND(*(UINT32 *)&bank_ptr[entry][xormacro(address)]);						\
 																						\
 	/* fall back to the handler */														\
@@ -2436,7 +2442,7 @@ UINT64 name(offs_t address)																\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].readhandlers[entry].offset) & active_address_space[spacenum].readhandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMREADEND(*(UINT64 *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
@@ -2460,7 +2466,7 @@ void name(offs_t address, UINT8 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(bank_ptr[entry][address] = data);									\
 																						\
 	/* fall back to the handler */														\
@@ -2478,7 +2484,7 @@ void name(offs_t address, UINT8 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(bank_ptr[entry][xormacro(address)] = data);							\
 																						\
 	/* fall back to the handler */														\
@@ -2512,7 +2518,7 @@ void name(offs_t address, UINT16 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(*(UINT16 *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
@@ -2530,7 +2536,7 @@ void name(offs_t address, UINT16 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(*(UINT16 *)&bank_ptr[entry][xormacro(address)] = data);				\
 																						\
 	/* fall back to the handler */														\
@@ -2562,7 +2568,7 @@ void name(offs_t address, UINT32 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(*(UINT32 *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
@@ -2580,7 +2586,7 @@ void name(offs_t address, UINT32 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(*(UINT32 *)&bank_ptr[entry][xormacro(address)] = data);				\
 																						\
 	/* fall back to the handler */														\
@@ -2610,7 +2616,7 @@ void name(offs_t address, UINT64 data)													\
 																						\
 	/* handle banks inline */															\
 	address = (address - active_address_space[spacenum].writehandlers[entry].offset) & active_address_space[spacenum].writehandlers[entry].mask;\
-	if (entry <= STATIC_RAM)															\
+	if (entry < STATIC_RAM)																\
 		MEMWRITEEND(*(UINT64 *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\

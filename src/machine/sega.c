@@ -12,10 +12,12 @@
  */
 
 #include "driver.h"
+#include "vidhrdw/vector.h"
 #include "sega.h"
 #include "segar.h"
 
-UINT8 *sega_mem;
+UINT8 *sega_mainram;
+UINT8 *sega_soundram;
 
 static UINT8 mult1;
 static UINT16 result;
@@ -34,26 +36,29 @@ WRITE8_HANDLER( sega_w )
 		int op, page;
 		unsigned int bad;
 
-		op = sega_mem[pc] & 0xFF;
+		op = program_read_byte(pc) & 0xFF;
 		if (op == 0x32)
 		{
-			bad = sega_mem[pc+1] & 0xFF;
-			page = (sega_mem[pc+2] & 0xFF) << 8;
+			bad = program_read_byte(pc+1) & 0xFF;
+			page = (program_read_byte(pc+2) & 0xFF) << 8;
 			(*sega_decrypt)(pc,&bad);
 			off = (page & 0xFF00) | (bad & 0x00FF);
 		}
 	}
 
 
-	/* MWA8_ROM */
-	if		((off>=0x0000) && (off<=0xbfff))
+	/* RAM */
+	if ((off >= 0xc800) && (off <= 0xcfff))
 	{
-		;
+		sega_mainram[off - 0xc800] = data;
 	}
-	/* MWA8_RAM */
-	else if ((off>=0xc800) && (off<=0xefff))
+	else if ((off >= 0xd000) && (off <= 0xdfff))
 	{
-		sega_mem[off]=data;
+		sega_soundram[off - 0xd000] = data;
+	}
+	else if ((off >= 0xe000) && (off <= 0xefff))
+	{
+		vectorram[off - 0xe000] = data;
 	}
 }
 

@@ -37,7 +37,12 @@ VIDEO_START(drgnmst);
 VIDEO_UPDATE(drgnmst);
 
 
-
+static WRITE16_HANDLER( drgnmst_coin_w )
+{
+	coin_counter_w(0,data & 0x100);
+	coin_lockout_w(0,~data & 0x400);
+	coin_lockout_w(1,~data & 0x800);
+}
 
 static WRITE16_HANDLER( drgnmst_snd_command_w )
 {
@@ -173,15 +178,15 @@ static ADDRESS_MAP_START( drgnmst_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800018, 0x800019) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x80001a, 0x80001b) AM_READ(input_port_2_word_r)
 	AM_RANGE(0x80001c, 0x80001d) AM_READ(input_port_3_word_r)
-//  AM_RANGE(0x800030, 0x800031) AM_NOP
+	AM_RANGE(0x800030, 0x800031) AM_WRITE(drgnmst_coin_w)
 	AM_RANGE(0x800100, 0x80011f) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_vidregs)
-//  AM_RANGE(0x800120, 0x800121) AM_NOP
-//  AM_RANGE(0x80014a, 0x80014b) AM_NOP
+	AM_RANGE(0x800120, 0x800121) AM_WRITENOP
+	AM_RANGE(0x80014a, 0x80014b) AM_WRITENOP
 	AM_RANGE(0x800154, 0x800155) AM_WRITE(MWA16_RAM) AM_BASE(&drgnmst_vidregs2) // seems to be priority control
 	AM_RANGE(0x800176, 0x800177) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x800180, 0x800181) AM_WRITE(drgnmst_snd_command_w)
 	AM_RANGE(0x800188, 0x800189) AM_WRITE(drgnmst_snd_flag_w)
-//  AM_RANGE(0x8001e0, 0x8001e1) AM_NOP
+	AM_RANGE(0x8001e0, 0x8001e1) AM_WRITENOP
 	AM_RANGE(0x900000, 0x903fff) AM_READWRITE(MRA16_RAM, paletteram16_xxxxRRRRGGGGBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x904000, 0x907fff) AM_READWRITE(MRA16_RAM, drgnmst_md_videoram_w) AM_BASE(&drgnmst_md_videoram)
 	AM_RANGE(0x908000, 0x90bfff) AM_READWRITE(MRA16_RAM, drgnmst_bg_videoram_w) AM_BASE(&drgnmst_bg_videoram)

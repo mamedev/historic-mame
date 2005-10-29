@@ -10,8 +10,6 @@ extern void simpsons_video_banking( int select );
 extern unsigned char *simpsons_xtraram;
 
 int simpsons_firq_enabled;
-UINT8 *simpsons_speedup1;
-UINT8 *simpsons_speedup2;
 
 /***************************************************************************
 
@@ -122,51 +120,6 @@ READ8_HANDLER( simpsons_sound_r )
 	}
 }
 
-/***************************************************************************
-
-  Speed up memory handlers
-
-***************************************************************************/
-#if 0
-READ8_HANDLER( simpsons_speedup1_r )
-{
-	unsigned char *RAM = simpsons_speedup1 memory_region(REGION_CPU1);
-
-	int data1 = RAM[0x486a];
-
-	if ( data1 == 0 )
-	{
-		int data2 = ( RAM[0x4942] << 8 ) | RAM[0x4943];
-
-		if ( data2 < memory_region_length(REGION_CPU1) )
-		{
-			data2 = ( RAM[data2] << 8 ) | RAM[data2 + 1];
-
-			if ( data2 == 0xffff )
-				cpu_spinuntil_int();
-
-			return RAM[0x4942];
-		}
-
-		return RAM[0x4942];
-	}
-
-	if ( data1 == 1 )
-		RAM[0x486a]--;
-
-	return RAM[0x4942];
-}
-
-READ8_HANDLER( simpsons_speedup2_r )
-{
-	int data = memory_region(REGION_CPU1)[0x4856];
-
-	if ( data == 1 )
-		cpu_spinuntil_int();
-
-	return data;
-}
-#endif
 
 /***************************************************************************
 
@@ -176,33 +129,7 @@ READ8_HANDLER( simpsons_speedup2_r )
 
 static void simpsons_banking( int lines )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	int offs = 0;
-
-	switch ( lines & 0xf0 )
-	{
-		case 0x00: /* simp_g02.rom */
-			offs = 0x10000 + ( ( lines & 0x0f ) * 0x2000 );
-		break;
-
-		case 0x10: /* simp_p01.rom */
-			offs = 0x30000 + ( ( lines & 0x0f ) * 0x2000 );
-		break;
-
-		case 0x20: /* simp_013.rom */
-			offs = 0x50000 + ( ( lines & 0x0f ) * 0x2000 );
-		break;
-
-		case 0x30: /* simp_012.rom ( lines goes from 0x00 to 0x0c ) */
-			offs = 0x70000 + ( ( lines & 0x0f ) * 0x2000 );
-		break;
-
-		default:
-			logerror("PC = %04x : Unknown bank selected (%02x)\n", activecpu_get_pc(), lines );
-		break;
-	}
-
-	memory_set_bankptr( 1, &RAM[offs] );
+	memory_set_bank(1, lines & 0x3f);
 }
 
 MACHINE_INIT( simpsons )
@@ -218,11 +145,12 @@ MACHINE_INIT( simpsons )
 	simpsons_firq_enabled = 0;
 
 	/* init the default banks */
-	memory_set_bankptr( 1, &RAM[0x10000] );
+	memory_configure_bank(1, 0, 64, memory_region(REGION_CPU1) + 0x10000, 0x2000);
+	memory_set_bank(1, 0);
 
-	RAM = memory_region(REGION_CPU2);
-
-	memory_set_bankptr( 2, &RAM[0x10000] );
+	memory_configure_bank(2, 0, 2, memory_region(REGION_CPU2) + 0x10000, 0);
+	memory_configure_bank(2, 2, 6, memory_region(REGION_CPU2) + 0x10000, 0x4000);
+	memory_set_bank(2, 0);
 
 	simpsons_video_banking( 0 );
 }

@@ -153,9 +153,178 @@
 #include "driver.h"
 #include "missile.h"
 #include "sound/pokey.h"
+#include "vidhrdw/generic.h"
 
 
 UINT8 *missile_ram;
+UINT8 *missile_video2ram;
+
+
+static int ctrld;
+static int h_pos, v_pos;
+
+
+
+/*************************************
+ *
+ *  Core initialization
+ *
+ *************************************/
+
+static offs_t missile_opbase_handler(offs_t address)
+{
+	if (address >= 0x5000 && address < 0x8000)
+	{
+		opcode_base = opcode_arg_base = memory_region(REGION_CPU1);
+		return ~0;
+	}
+	return address;
+}
+
+
+MACHINE_INIT( missile )
+{
+	h_pos = v_pos = 0;
+	memory_set_opbase_handler(0, missile_opbase_handler);
+}
+
+
+
+/*************************************
+ *
+ *  Input handlers
+ *
+ *************************************/
+
+READ8_HANDLER( missile_IN0_r )
+{
+	if (ctrld)	/* trackball */
+	{
+		if (!flip_screen)
+	  	    return ((readinputport(5) << 4) & 0xf0) | (readinputport(4) & 0x0f);
+		else
+	  	    return ((readinputport(7) << 4) & 0xf0) | (readinputport(6) & 0x0f);
+	}
+	else	/* buttons */
+		return readinputport(0);
+}
+
+
+
+/*************************************
+ *
+ *  Generic write handler
+ *
+ *************************************/
+
+WRITE8_HANDLER( missile_w )
+{
+	int pc, opcode;
+	offset = offset + 0x640;
+
+	pc = activecpu_get_previouspc();
+	opcode = cpu_readop(pc);
+
+	/* 3 different ways to write to video ram - the third is caught by the core memory handler */
+	if (opcode == 0x81)
+	{
+		/*  STA ($00,X) */
+		missile_video_w (offset, data);
+		return;
+	}
+	if (offset <= 0x3fff)
+	{
+		missile_video_mult_w (offset, data);
+		return;
+	}
+
+	/* $4c00 - watchdog */
+	if (offset == 0x4c00)
+	{
+		watchdog_reset_w (offset, data);
+		return;
+	}
+
+	/* $4800 - various IO */
+	if (offset == 0x4800)
+	{
+		flip_screen_set(~data & 0x40);
+		coin_counter_w(0,data & 0x20);
+		coin_counter_w(1,data & 0x10);
+		coin_counter_w(2,data & 0x08);
+		set_led_status(0,~data & 0x02);
+		set_led_status(1,~data & 0x04);
+		ctrld = data & 1;
+		return;
+	}
+
+	/* $4d00 - IRQ acknowledge */
+	if (offset == 0x4d00)
+	{
+		return;
+	}
+
+	/* $4000 - $400f - Pokey */
+	if (offset >= 0x4000 && offset <= 0x400f)
+	{
+		pokey1_w(offset & 0x0f, data);
+		return;
+	}
+
+	/* $4b00 - $4b07 - color RAM */
+	if (offset >= 0x4b00 && offset <= 0x4b07)
+	{
+		UINT8 r = 0xff * ((~data >> 3) & 1);
+		UINT8 g = 0xff * ((~data >> 2) & 1);
+		UINT8 b = 0xff * ((~data >> 1) & 1);
+
+		palette_set_color(offset - 0x4b00,r,g,b);
+		return;
+	}
+
+	logerror("possible unmapped write, offset: %04x, data: %02x\n", offset, data);
+}
+
+
+
+/*************************************
+ *
+ *  Generic read handler
+ *
+ *************************************/
+
+READ8_HANDLER( missile_r )
+{
+	int pc, opcode;
+	offset = offset + 0x1900;
+
+	pc = activecpu_get_previouspc();
+	opcode = cpu_readop(pc);
+
+	if (opcode == 0xa1)
+	{
+		/*  LDA ($00,X)  */
+		return missile_video_r(offset);
+	}
+
+	if (offset >= 0x5000)
+		return memory_region(REGION_CPU1)[offset];
+
+	if (offset == 0x4800)
+		return missile_IN0_r(0);
+	if (offset == 0x4900)
+		return readinputport(1);
+	if (offset == 0x4a00)
+		return readinputport(2);
+
+	if (offset >= 0x4000 && offset <= 0x400f)
+		return pokey1_r(offset & 0x0f);
+
+	logerror("possible unmapped read, offset: %04x\n", offset);
+	return 0;
+}
+
+
 
 /*************************************
  *
@@ -163,19 +332,16 @@ UINT8 *missile_ram;
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x18ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1900, 0xfff9) AM_READ(missile_r) /* shared region */
-	AM_RANGE(0xfffa, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM) AM_BASE(&missile_ram)
-	AM_RANGE(0x0400, 0x05ff) AM_WRITE(missile_video_3rd_bit_w)
-	AM_RANGE(0x0600, 0x063f) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0640, 0x4fff) AM_WRITE(missile_w) /* shared region */
 	AM_RANGE(0x5000, 0xffff) AM_WRITE(missile_video2_w) AM_BASE(&missile_video2ram)
+	AM_RANGE(0x1900, 0xfff9) AM_READ(missile_r) /* shared region */
+
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_BASE(&missile_ram)
+	AM_RANGE(0x0400, 0x05ff) AM_READWRITE(MRA8_RAM, missile_video_3rd_bit_w)
+	AM_RANGE(0x0600, 0x18ff) AM_RAM
+	AM_RANGE(0x5000, 0x7fff) AM_ROM
+	AM_RANGE(0xfffa, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -375,7 +541,7 @@ static MACHINE_DRIVER_START( missile )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,1000000)		/* 1 MHz ???? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -478,7 +644,7 @@ ROM_END
 static DRIVER_INIT( suprmatk )
 {
 	int i;
-	unsigned char *rom = memory_region(REGION_CPU1);
+	UINT8 *rom = memory_region(REGION_CPU1);
 
 	for (i = 0; i < 0x40; i++)
 	{

@@ -411,7 +411,7 @@ struct _cpu_interface
 
 	/* other info */
 	size_t		context_size;
-	UINT8		address_shift;
+	INT8		address_shift;
 	int *		icount;
 };
 typedef struct _cpu_interface cpu_interface;

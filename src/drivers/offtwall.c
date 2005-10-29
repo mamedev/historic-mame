@@ -150,7 +150,7 @@ static READ16_HANDLER( bankrom_r )
         ROM bank area, we need to return the correct value to give the proper checksum */
 	if ((offset == 0x3000 || offset == 0x3001) && activecpu_get_previouspc() > 0x37000)
 	{
-		unsigned int checksum = (program_read_word(0x3fd210)<<16)|program_read_word(0x3fd212);
+		unsigned int checksum = (program_read_word(0x3fd210) << 16) | program_read_word(0x3fd212);
 		unsigned int us = 0xaaaa5555 - checksum;
 		if (offset == 0x3001)
 			return us & 0xffff;
@@ -255,10 +255,10 @@ static READ16_HANDLER( unknown_verify_r )
  *
  *************************************/
 
-static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x037fff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x038000, 0x03ffff) AM_READ(bankrom_r)
-	AM_RANGE(0x120000, 0x120fff) AM_READ(atarigen_eeprom_r)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x037fff) AM_ROM
+	AM_RANGE(0x038000, 0x03ffff) AM_READ(bankrom_r) AM_REGION(REGION_CPU1, 0x38000) AM_BASE(&bankrom_base)
+	AM_RANGE(0x120000, 0x120fff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0x260000, 0x260001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x260002, 0x260003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x260010, 0x260011) AM_READ(special_port3_r)
@@ -267,29 +267,19 @@ static ADDRESS_MAP_START( main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x260022, 0x260023) AM_READ(input_port_6_word_r)
 	AM_RANGE(0x260024, 0x260025) AM_READ(input_port_7_word_r)
 	AM_RANGE(0x260030, 0x260031) AM_READ(atarigen_sound_r)
-	AM_RANGE(0x3e0000, 0x3e0fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x3effc0, 0x3effff) AM_READ(atarivc_r)
-	AM_RANGE(0x3f4000, 0x3fffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x037fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x038000, 0x03ffff) AM_WRITE(MWA16_ROM) AM_BASE(&bankrom_base)
-	AM_RANGE(0x120000, 0x120fff) AM_WRITE(atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 	AM_RANGE(0x260040, 0x260041) AM_WRITE(atarigen_sound_w)
 	AM_RANGE(0x260050, 0x260051) AM_WRITE(io_latch_w)
 	AM_RANGE(0x260060, 0x260061) AM_WRITE(atarigen_eeprom_enable_w)
 	AM_RANGE(0x2a0000, 0x2a0001) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x3e0000, 0x3e0fff) AM_WRITE(atarigen_666_paletteram_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x3effc0, 0x3effff) AM_WRITE(atarivc_w) AM_BASE(&atarivc_data)
-	AM_RANGE(0x3f4000, 0x3f5eff) AM_WRITE(atarigen_playfield_latched_msb_w) AM_BASE(&atarigen_playfield)
-	AM_RANGE(0x3f5f00, 0x3f5f7f) AM_WRITE(MWA16_RAM) AM_BASE(&atarivc_eof_data)
-	AM_RANGE(0x3f5f80, 0x3f5fff) AM_WRITE(atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
-	AM_RANGE(0x3f6000, 0x3f7fff) AM_WRITE(atarigen_playfield_upper_w) AM_BASE(&atarigen_playfield_upper)
-	AM_RANGE(0x3f8000, 0x3fcfff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x3fd000, 0x3fd7ff) AM_WRITE(atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
-	AM_RANGE(0x3fd800, 0x3fffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x3e0000, 0x3e0fff) AM_READWRITE(MRA16_RAM, atarigen_666_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x3effc0, 0x3effff) AM_READWRITE(atarivc_r, atarivc_w) AM_BASE(&atarivc_data)
+	AM_RANGE(0x3f4000, 0x3f5eff) AM_READWRITE(MRA16_RAM, atarigen_playfield_latched_msb_w) AM_BASE(&atarigen_playfield)
+	AM_RANGE(0x3f5f00, 0x3f5f7f) AM_RAM AM_BASE(&atarivc_eof_data)
+	AM_RANGE(0x3f5f80, 0x3f5fff) AM_READWRITE(MRA16_RAM, atarimo_0_slipram_w) AM_BASE(&atarimo_0_slipram)
+	AM_RANGE(0x3f6000, 0x3f7fff) AM_READWRITE(MRA16_RAM, atarigen_playfield_upper_w) AM_BASE(&atarigen_playfield_upper)
+	AM_RANGE(0x3f8000, 0x3fcfff) AM_RAM
+	AM_RANGE(0x3fd000, 0x3fd7ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w) AM_BASE(&atarimo_0_spriteram)
+	AM_RANGE(0x3fd800, 0x3fffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -402,7 +392,7 @@ static MACHINE_DRIVER_START( offtwall )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
-	MDRV_CPU_PROGRAM_MAP(main_readmem,main_writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

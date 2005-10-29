@@ -9,13 +9,14 @@
 #include "driver.h"
 #include "includes/astrocde.h"
 
+UINT8 *gorf_timer_ram;
+
 READ8_HANDLER( gorf_timer_r )
 {
 	static int Skip=0;
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	int stage = program_read_byte(0x5a93);
 
-
-	if ((RAM[0x5A93]==160) || (RAM[0x5A93]==4)) 	/* INVADERS AND    */
+	if ((stage==160) || (stage==4)) 				/* INVADERS AND    */
 	{												/* GALAXIAN SCREEN */
 		if (activecpu_get_pc()==0x3086)
 		{
@@ -29,7 +30,7 @@ READ8_HANDLER( gorf_timer_r )
 	}
 	else
 	{
-		return RAM[0xD0A5];
+		return gorf_timer_ram[0];
 	}
 
 }
@@ -88,7 +89,6 @@ READ8_HANDLER( ebases_trackball_r )
 
 static UINT8 ram_write_enable = 0;
 UINT8 *wow_protected_ram;
-size_t wow_protected_ram_size;
 
 WRITE8_HANDLER( wow_ramwrite_enable_w )
 {
@@ -120,28 +120,16 @@ WRITE8_HANDLER( wow_protected_ram_w )
 	ram_write_enable = 0;
 }
 
-#define NVRAM_SIZE 0x800
-static UINT8 nvram[NVRAM_SIZE];
-
 READ8_HANDLER( robby_nvram_r )
 {
 	ram_write_enable = 0;
-	return nvram[offset];
+	return generic_nvram[offset];
 }
 
 WRITE8_HANDLER( robby_nvram_w )
 {
-	if (offset < 0x400)
-	{
-		if (ram_write_enable)
-		{
-			nvram[offset] = data;
-		}
-	}
-	else
-	{
-		nvram[offset] = data;
-	}
+	if (offset >= 0x400 || ram_write_enable)
+		generic_nvram[offset] = data;
 
 	ram_write_enable = 0;
 }
@@ -149,58 +137,32 @@ WRITE8_HANDLER( robby_nvram_w )
 /* Simple for demndrgn */
 READ8_HANDLER( demndrgn_nvram_r )
 {
-	return nvram[offset];
+	return generic_nvram[offset];
 }
 
 WRITE8_HANDLER( demndrgn_nvram_w )
 {
-	if (offset < 0x200)
-	{
-		/* I can't seem to find the enable for now */
+	/* I can't seem to find the enable for now */
+	if (offset >= 0x200 || 1/*ram_write_enable*/)
+		generic_nvram[offset] = data;
 
-		/*if (ram_write_enable) */
-		{
-			nvram[offset] = data;
-		}
-	}
-	else
-	{
-		nvram[offset] = data;
-	}
 	ram_write_enable = 0;
 }
 
 READ8_HANDLER( profpac_nvram_r )
 {
 	ram_write_enable = 0;
-	return nvram[offset];
+	return generic_nvram[offset];
 }
 
 WRITE8_HANDLER( profpac_nvram_w )
 {
-	if (offset < 0x200)
-	{
-		if (ram_write_enable)
-		{
-			nvram[offset] = data;
-		}
-	}
-	else
-	{
-		nvram[offset] = data;
-	}
+	if (offset >= 0x200 || ram_write_enable)
+		generic_nvram[offset] = data;
+
 	ram_write_enable = 0;
 }
 
-NVRAM_HANDLER( robby_nvram )
-{
-	if (read_or_write)
-		mame_fwrite(file,nvram,NVRAM_SIZE);
-	else if (file)
-		mame_fread(file,nvram,NVRAM_SIZE);
-	else
-		memset(nvram,0,NVRAM_SIZE);
-}
 
 READ8_HANDLER( profpac_blank_r )
 {

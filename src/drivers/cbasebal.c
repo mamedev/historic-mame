@@ -34,17 +34,13 @@ WRITE8_HANDLER( cbasebal_scrolly_w );
 VIDEO_UPDATE( cbasebal );
 
 
-static int rambank;
+static UINT8 rambank;
 
 static WRITE8_HANDLER( cbasebal_bankswitch_w )
 {
-	int bankaddress;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	/* bits 0-4 select ROM bank */
 //logerror("%04x: bankswitch %02x\n",activecpu_get_pc(),data);
-	bankaddress = 0x10000 + (data & 0x1f) * 0x4000;
-	memory_set_bankptr(1,&RAM[bankaddress]);
+	memory_set_bank(1, data & 0x1f);
 
 	/* bit 5 used but unknown */
 
@@ -147,28 +143,15 @@ static WRITE8_HANDLER( eeprom_serial_w )
 
 
 
-static ADDRESS_MAP_START( cbasebal_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(bankedram_r)
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( cbasebal_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xcfff) AM_READWRITE(bankedram_r, bankedram_w) AM_BASE(&paletteram)	/* palette + vram + scrollram */
+	AM_RANGE(0xe000, 0xfdff) AM_RAM		/* work RAM */
+	AM_RANGE(0xfe00, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( cbasebal_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(bankedram_w) AM_BASE(&paletteram)	/* palette + vram + scrollram */
-	AM_RANGE(0xe000, 0xfdff) AM_WRITE(MWA8_RAM)			/* work RAM */
-	AM_RANGE(0xfe00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cbasebal_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
-	AM_RANGE(0x11, 0x11) AM_READ(input_port_1_r)
-	AM_RANGE(0x12, 0x12) AM_READ(eeprom_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cbasebal_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( cbasebal_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(cbasebal_bankswitch_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(eeprom_cs_w)
@@ -179,6 +162,9 @@ static ADDRESS_MAP_START( cbasebal_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x07, 0x07) AM_WRITE(YM2413_data_port_0_w)
 	AM_RANGE(0x08, 0x09) AM_WRITE(cbasebal_scrollx_w)
 	AM_RANGE(0x0a, 0x0b) AM_WRITE(cbasebal_scrolly_w)
+	AM_RANGE(0x10, 0x10) AM_READ(input_port_0_r)
+	AM_RANGE(0x11, 0x11) AM_READ(input_port_1_r)
+	AM_RANGE(0x12, 0x12) AM_READ(eeprom_r)
 	AM_RANGE(0x13, 0x13) AM_WRITE(cbasebal_gfxctrl_w)
 	AM_RANGE(0x14, 0x14) AM_WRITE(cbasebal_coinctrl_w)
 ADDRESS_MAP_END
@@ -270,8 +256,8 @@ static MACHINE_DRIVER_START( cbasebal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 6000000)	/* ??? */
-	MDRV_CPU_PROGRAM_MAP(cbasebal_readmem,cbasebal_writemem)
-	MDRV_CPU_IO_MAP(cbasebal_readport,cbasebal_writeport)
+	MDRV_CPU_PROGRAM_MAP(cbasebal_map,0)
+	MDRV_CPU_IO_MAP(cbasebal_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* ??? */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -303,7 +289,7 @@ MACHINE_DRIVER_END
 
 
 ROM_START( cbasebal )
-	ROM_REGION( 2*0x90000, REGION_CPU1, 0 )	/* 576k for code + 576k for decrypted opcodes */
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* 576k for code */
 	ROM_LOAD( "cbj10.11j",    0x00000, 0x08000, CRC(bbff0acc) SHA1(db9e2c89e030255851789caaf85f24dc73609d9b) )
 	ROM_LOAD( "cbj07.16f",    0x10000, 0x20000, CRC(8111d13f) SHA1(264e21e824c87f55da326440c6ed71e1c287a63e) )
 	ROM_LOAD( "cbj06.14f",    0x30000, 0x20000, CRC(9aaa0e37) SHA1(1a7b96b44c66b58f06707aafb1806520747b8c76) )
@@ -332,6 +318,7 @@ ROM_END
 
 DRIVER_INIT( cbasebal )
 {
+	memory_configure_bank(1, 0, 32, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 	pang_decode();
 }
 

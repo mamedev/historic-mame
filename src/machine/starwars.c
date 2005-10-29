@@ -34,6 +34,8 @@
 
 
 /* Local variables */
+UINT8 *starwars_mathram;
+
 static UINT8 control_num = kPitch;
 
 static int MPA; /* PROM address counter */
@@ -44,9 +46,9 @@ static int div_result;
 static int divisor, dividend;
 
 /* Store decoded PROM elements */
-static UINT8 PROM_STR[1024]; /* Storage for instruction strobe only */
-static UINT8 PROM_MAS[1024]; /* Storage for direct address only */
-static UINT8 PROM_AM[1024]; /* Storage for address mode select only */
+static UINT8 *PROM_STR; /* Storage for instruction strobe only */
+static UINT8 *PROM_MAS; /* Storage for direct address only */
+static UINT8 *PROM_AM; /* Storage for address mode select only */
 
 
 /* Local function prototypes */
@@ -62,8 +64,6 @@ static void run_mbox(void);
 
 WRITE8_HANDLER( starwars_out_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	switch (offset)
 	{
 		case 0:		/* Coin counter 1 */
@@ -83,16 +83,9 @@ WRITE8_HANDLER( starwars_out_w )
 			break;
 
 		case 4:		/* bank switch */
-			if (data & 0x80)
-			{
-				memory_set_bankptr(1, &RAM[0x10000]);
-				if (starwars_is_esb) memory_set_bankptr(2, &RAM[0x1c000]);
-			}
-			else
-			{
-				memory_set_bankptr(1, &RAM[0x06000]);
-				if (starwars_is_esb) memory_set_bankptr(2, &RAM[0x0a000]);
-			}
+			memory_set_bank(1, (data >> 7) & 1);
+			if (starwars_is_esb)
+				memory_set_bank(2, (data >> 7) & 1);
 			break;
 
 		case 5:		/* reset PRNG */
@@ -177,6 +170,10 @@ void swmathbox_init(void)
 	UINT8 *src = memory_region(REGION_PROMS);
 	int cnt, val;
 
+	PROM_STR = auto_malloc(1024 * sizeof(PROM_STR[0]));
+	PROM_MAS = auto_malloc(1024 * sizeof(PROM_MAS[0]));
+	PROM_AM = auto_malloc(1024 * sizeof(PROM_AM[0]));
+
 	for (cnt = 0; cnt < 1024; cnt++)
 	{
 		/* translate PROMS into 16 bit code */
@@ -218,7 +215,6 @@ void run_mbox(void)
 {
 	static short ACC, A, B, C;
 
-	UINT8 *RAM = memory_region(REGION_CPU1);
 	int RAMWORD = 0;
 	int MA_byte;
 	int tmp;
@@ -251,8 +247,8 @@ void run_mbox(void)
 		/* convert RAM offset to eight bit addressing (2kx8 rather than 1k*16)
             and apply base address offset */
 
-		MA_byte = 0x5000 + (MA << 1);
-		RAMWORD = (RAM[MA_byte + 1] & 0x00ff) | ((RAM[MA_byte] & 0x00ff) << 8);
+		MA_byte = MA << 1;
+		RAMWORD = (starwars_mathram[MA_byte + 1] & 0x00ff) | ((starwars_mathram[MA_byte] & 0x00ff) << 8);
 
 		logerror("MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
 
@@ -271,8 +267,8 @@ void run_mbox(void)
 		/* 0x02 - READ_ACC */
 		if (IP15_8 & READ_ACC)
 		{
-			RAM[MA_byte+1] = (ACC & 0x00ff);
-			RAM[MA_byte  ] = (ACC & 0xff00) >> 8;
+			starwars_mathram[MA_byte+1] = (ACC & 0x00ff);
+			starwars_mathram[MA_byte  ] = (ACC & 0xff00) >> 8;
 		}
 
 		/* 0x04 - M_HALT */

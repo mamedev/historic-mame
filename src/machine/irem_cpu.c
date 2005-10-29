@@ -24,7 +24,7 @@
     Fire Barrel                     ?       ? (same as R-Type Leo)
     In The Hunt                     Irem    D8000011A1 020
     Risky Challenge/Gussun Oyoyo            D8000019A1
-    Shisensho II                            D8000020A1 023 9320NK700
+    Match It II/Shisensho II        Irem    D8000020A1 023 9320NK700
     World PK Soccer                 Irem    D8000021A1
     Ninja Baseball Batman           ?       ?  (same as World PK Soccer)
     Perfect Soldiers                Irem    D8000022A1
@@ -580,13 +580,13 @@ const UINT8 dsoccr94_decryption_table[256] = {
 
 
 /* preliminary table by Pierpaolo Prazzoli */
-const UINT8 shisen2_decryption_table[256] = {
+const UINT8 matchit2_decryption_table[256] = {
 	xxxx,0x86,0x0a,xxxx,0x32,0x01,0x81,0xbe, 0xea,xxxx,0xbb,xxxx,xxxx,xxxx,0xa5,0xf6, /* 00 */
-//       new  new       new  new  new  new             new                 new  new
+//  new  new       new  new  new  new             new                 new  new
 	0x5d,0x8c,0xf3,0xc4,0x42,0x5a,0x1c,0x26, xxxx,0x58,xxxx,xxxx,0x59,0x53,0x80,0x09, /* 10 */
 //  new  new  new  new  !!!! new  ????            new            new  new  new  ????
 	xxxx,0x1e,0x48,0xe2,0x50,xxxx,0xc3,0x23, xxxx,xxxx,0xe9,xxxx,0x40,0x83,0xa3,0x46, /* 20 */
-//       new  new  new  new       new  new             new       new  new  new
+//  new  new  new  new       new  new             new       new  new  new
 	0x49,0xb4,0xa9,xxxx,0xd3,0x8b,0xe8,0xb8, 0xa0,xxxx,xxxx,xxxx,0x84,xxxx,xxxx,xxxx, /* 30 */
 //  !!!! ???? new       !!!! new  new        new                 new
 	xxxx,xxxx,xxxx,xxxx,0x14,xxxx,0x25,xxxx, xxxx,0x5e,xxxx,0x87,0x56,0xb9,xxxx,0x39, /* 40 */

@@ -122,7 +122,7 @@ e000-e001   YM2203
 #include "sound/2203intf.h"
 #include "sound/upd7759.h"
 
-extern unsigned char* banked_area;
+extern UINT8* banked_area;
 
 /* from vidhrdw/combasc.c */
 PALETTE_INIT( combasc );

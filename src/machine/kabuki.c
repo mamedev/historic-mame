@@ -162,6 +162,7 @@ static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	UINT8 *decrypt = auto_malloc(memory_region_length(REGION_CPU1));
+	int numbanks = (memory_region_length(REGION_CPU1) - 0x10000) / 0x4000;
 	int i;
 
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
@@ -169,10 +170,10 @@ static void mitchell_decode(int swap_key1,int swap_key2,int addr_key,int xor_key
 
 	rom += 0x10000;
 	decrypt += 0x10000;
-	for (i = 0; i < 16; i++)
+	for (i = 0; i < numbanks; i++)
 		kabuki_decode(rom+i*0x4000,decrypt+i*0x4000,rom+i*0x4000,0x8000,0x4000, swap_key1,swap_key2,addr_key,xor_key);
 
-	memory_configure_bank_decrypted(1, 0, 16, decrypt, 0x4000);
+	memory_configure_bank_decrypted(1, 0, numbanks, decrypt, 0x4000);
 /*
     {
         FILE *f;

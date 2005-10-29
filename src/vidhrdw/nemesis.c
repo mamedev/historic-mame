@@ -24,19 +24,19 @@ static int flipscreen;
 
 static tilemap *background, *foreground;
 
-static unsigned char *blank_characterdata; /* pseudo character */
+static UINT8 *blank_characterdata; /* pseudo character */
 
 /* gfxram dirty flags */
-static unsigned char *char_dirty;	/* 2048 chars */
+static UINT8 *char_dirty;	/* 2048 chars */
 
 /* we should be able to draw sprite gfx directly without caching to GfxElements */
-static unsigned char *sprite_dirty;	/* 512 sprites */
-static unsigned char *sprite3216_dirty;	/* 256 sprites */
-static unsigned char *sprite816_dirty;	/* 1024 sprites */
-static unsigned char *sprite1632_dirty;	/* 256 sprites */
-static unsigned char *sprite3232_dirty;	/* 128 sprites */
-static unsigned char *sprite168_dirty;	/* 1024 sprites */
-static unsigned char *sprite6464_dirty;	/* 32 sprites */
+static UINT8 *sprite_dirty;	/* 512 sprites */
+static UINT8 *sprite3216_dirty;	/* 256 sprites */
+static UINT8 *sprite816_dirty;	/* 1024 sprites */
+static UINT8 *sprite1632_dirty;	/* 256 sprites */
+static UINT8 *sprite3232_dirty;	/* 128 sprites */
+static UINT8 *sprite168_dirty;	/* 1024 sprites */
+static UINT8 *sprite6464_dirty;	/* 32 sprites */
 
 static void get_bg_tile_info( int offs )
 {
@@ -165,15 +165,6 @@ WRITE16_HANDLER( salamander_palette_word_w )
 	palette_set_color(offset / 2,r,g,b);
 }
 
-READ16_HANDLER( nemesis_videoram1b_word_r )
-{
-	return nemesis_videoram1b[offset];
-}
-READ16_HANDLER( nemesis_videoram1f_word_r )
-{
-	return nemesis_videoram1f[offset];
-}
-
 WRITE16_HANDLER( nemesis_videoram1b_word_w )
 {
 	COMBINE_DATA(nemesis_videoram1b + offset);
@@ -183,15 +174,6 @@ WRITE16_HANDLER( nemesis_videoram1f_word_w )
 {
 	COMBINE_DATA(nemesis_videoram1f + offset);
 	tilemap_mark_tile_dirty( background,offset );
-}
-
-READ16_HANDLER( nemesis_videoram2b_word_r )
-{
-	return nemesis_videoram2b[offset];
-}
-READ16_HANDLER( nemesis_videoram2f_word_r )
-{
-	return nemesis_videoram2f[offset];
 }
 
 WRITE16_HANDLER( nemesis_videoram2b_word_w )
@@ -206,25 +188,7 @@ WRITE16_HANDLER( nemesis_videoram2f_word_w )
 }
 
 
-READ16_HANDLER( gx400_xscroll1_word_r ) { return nemesis_xscroll1[offset];}
-READ16_HANDLER( gx400_xscroll2_word_r ) { return nemesis_xscroll2[offset];}
-READ16_HANDLER( gx400_yscroll_word_r ) { return nemesis_yscroll[offset];}
-READ16_HANDLER( gx400_yscroll1_word_r ) { return nemesis_yscroll1[offset];}
-READ16_HANDLER( gx400_yscroll2_word_r ) { return nemesis_yscroll2[offset];}
-
-WRITE16_HANDLER( gx400_xscroll1_word_w ) { COMBINE_DATA(nemesis_xscroll1 + offset);}
-WRITE16_HANDLER( gx400_xscroll2_word_w ) { COMBINE_DATA(nemesis_xscroll2 + offset);}
-WRITE16_HANDLER( gx400_yscroll_word_w ) { COMBINE_DATA(nemesis_yscroll + offset);}
-WRITE16_HANDLER( gx400_yscroll1_word_w ) { COMBINE_DATA(nemesis_yscroll1 + offset);}
-WRITE16_HANDLER( gx400_yscroll2_word_w ) { COMBINE_DATA(nemesis_yscroll2 + offset);}
-
-
 /* we have to straighten out the 16-bit word into bytes for gfxdecode() to work */
-READ16_HANDLER( nemesis_characterram_word_r )
-{
-	return nemesis_characterram[offset];
-}
-
 WRITE16_HANDLER( nemesis_characterram_word_w )
 {
 	UINT16 oldword = nemesis_characterram[offset];
@@ -325,7 +289,7 @@ VIDEO_START( nemesis )
 	if (!blank_characterdata)
 		return 1;
 	memset(blank_characterdata,0x00,32*8/8*(2048+1));
-	decodechar(Machine->gfx[0],0x800,(unsigned char *)blank_characterdata,
+	decodechar(Machine->gfx[0],0x800,(UINT8 *)blank_characterdata,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
 	flipscreen = 0;
@@ -475,7 +439,7 @@ static void update_gfx(void)
 	{
 		if (char_dirty[offs] )
 		{
-			decodechar(Machine->gfx[0],offs,(unsigned char *)nemesis_characterram,
+			decodechar(Machine->gfx[0],offs,(UINT8 *)nemesis_characterram,
 					Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			bAnyDirty = 1;
 			char_dirty[offs] = 0;
@@ -509,7 +473,7 @@ static void update_gfx(void)
 					code/=8;
 					if (sprite3232_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite3232_dirty[code] = 0;
 					}
@@ -520,7 +484,7 @@ static void update_gfx(void)
 					code/=4;
 					if (sprite1632_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite1632_dirty[code] = 0;
 
@@ -532,7 +496,7 @@ static void update_gfx(void)
 					code/=4;
 					if (sprite3216_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite3216_dirty[code] = 0;
 					}
@@ -543,7 +507,7 @@ static void update_gfx(void)
 					code/=32;
 					if (sprite6464_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite6464_dirty[code] = 0;
 					}
@@ -554,7 +518,7 @@ static void update_gfx(void)
 					code*=2;
 					if (char_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 						Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						char_dirty[code] = 0;
 					}
@@ -564,7 +528,7 @@ static void update_gfx(void)
 					char_type=6;
 					if (sprite168_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite168_dirty[code] = 0;
 					}
@@ -574,7 +538,7 @@ static void update_gfx(void)
 					char_type=3;
 					if (sprite816_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite816_dirty[code] = 0;
 					}
@@ -587,7 +551,7 @@ static void update_gfx(void)
 					code/=2;
 					if (sprite_dirty[code] == 1)
 					{
-						decodechar(Machine->gfx[char_type],code,(unsigned char *)nemesis_characterram,
+						decodechar(Machine->gfx[char_type],code,(UINT8 *)nemesis_characterram,
 								Machine->drv->gfxdecodeinfo[char_type].gfxlayout);
 						sprite_dirty[code] = 2;
 

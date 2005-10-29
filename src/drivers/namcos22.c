@@ -1862,33 +1862,33 @@ static READ32_HANDLER( namcos22_gun_r )
 /* Namco Super System 22 */
 
 static ADDRESS_MAP_START( namcos22s_am, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x000000, 0x3fffff) AM_ROM
 	AM_RANGE(0x400000, 0x40001f) AM_READ(namcos22_keycus_r) AM_WRITE(MWA32_NOP)
-	AM_RANGE(0x410000, 0x413fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* C139 SCI buffer */
+	AM_RANGE(0x410000, 0x413fff) AM_RAM /* C139 SCI buffer */
 	AM_RANGE(0x420000, 0x42000f) AM_READ(MRA32_NOP) AM_WRITE(MWA32_NOP) /* C139 SCI registers */
 	AM_RANGE(0x430000, 0x43000f) AM_READ(namcos22_gun_r) AM_WRITE(MWA32_NOP)
 	AM_RANGE(0x440000, 0x440003) AM_READ(namcos22_dipswitch_r)
 	AM_RANGE(0x450008, 0x45000b) AM_READ(namcos22_portbit_r) AM_WRITE(namcos22_portbit_w)
-	AM_RANGE(0x460000, 0x463fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_nvmem) AM_SIZE(&namcos22_nvmem_size)
+	AM_RANGE(0x460000, 0x463fff) AM_RAM AM_BASE(&namcos22_nvmem) AM_SIZE(&namcos22_nvmem_size)
 	AM_RANGE(0x700000, 0x70001f) AM_READ(namcos22_system_controller_r) AM_WRITE(namcos22_system_controller_w) AM_BASE(&namcos22_system_controller)
-	AM_RANGE(0x800000, 0x800003) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x810000, 0x81000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* ? */
-	AM_RANGE(0x810200, 0x8103ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* CZ RAM */
+	AM_RANGE(0x800000, 0x800003) AM_RAM
+	AM_RANGE(0x810000, 0x81000f) AM_RAM /* ? */
+	AM_RANGE(0x810200, 0x8103ff) AM_RAM /* CZ RAM */
 		/* depth cueing; fog density, near to far */
-	AM_RANGE(0x810400, 0x810403) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* ? air combat22 */
-	AM_RANGE(0x820000, 0x8202ff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x810400, 0x810403) AM_RAM /* ? air combat22 */
+	AM_RANGE(0x820000, 0x8202ff) AM_RAM
 	AM_RANGE(0x824000, 0x8243ff) AM_READ(namcos22_gamma_r) AM_WRITE(namcos22_gamma_w) AM_BASE(&namcos22_gamma)
 	AM_RANGE(0x828000, 0x83ffff) AM_READ(namcos22_paletteram_r) AM_WRITE(namcos22_paletteram_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x860000, 0x860007) AM_READ(spotram_r) AM_WRITE(spotram_w)
 	AM_RANGE(0x880000, 0x89dfff) AM_READ(namcos22_cgram_r) AM_WRITE(namcos22_cgram_w) AM_BASE(&namcos22_cgram)
 	AM_RANGE(0x89e000, 0x89ffff) AM_READ(namcos22_textram_r) AM_WRITE(namcos22_textram_w) AM_BASE(&namcos22_textram)
-	AM_RANGE(0x8a0000, 0x8a000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* tilemap attributes */
+	AM_RANGE(0x8a0000, 0x8a000f) AM_RAM /* tilemap attributes */
 		/* +0x0000          BG Position X
          * +0x0002          BG Position Y
          */
-	AM_RANGE(0x900000, 0x90ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_vics_data) /* VICS */
-	AM_RANGE(0x940000, 0x94007f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_vics_control)
-	AM_RANGE(0x980000, 0x9affff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) /* C374 */
+	AM_RANGE(0x900000, 0x90ffff) AM_RAM AM_BASE(&namcos22_vics_data) /* VICS */
+	AM_RANGE(0x940000, 0x94007f) AM_RAM AM_BASE(&namcos22_vics_control)
+	AM_RANGE(0x980000, 0x9affff) AM_RAM AM_BASE(&spriteram32) /* C374 */
 		/* 980000: SPRITE RAM
          * 9a0000: ATTRIBUTE RAM
          */
@@ -1896,9 +1896,9 @@ static ADDRESS_MAP_START( namcos22s_am, ADDRESS_SPACE_PROGRAM, 32 )
 		/* 0xa0bd2f: 0x02 Prop Cycle: MOTOR ON */
 		/* 0xa0bd2f: 0x04 Prop Cycle: LAMP ON */
 	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(namcos22_dspram_r) AM_WRITE(namcos22_dspram_w) AM_BASE(&namcos22_polygonram)
-	AM_RANGE(0xc20000, 0xc3ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* extra ram used by Air Combat22 */
+	AM_RANGE(0xc20000, 0xc3ffff) AM_RAM /* extra ram used by Air Combat22 */
 
-	AM_RANGE(0xe00000, 0xe3ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0xe00000, 0xe3ffff) AM_RAM
 ADDRESS_MAP_END
 
 static int mFrameCount;
@@ -2317,20 +2317,20 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      * Mounted position: LLB: CPU 4D, LMB: CPU 2D, UMB: CPU 8D, UUB: CPU 6D
      * Known ROM chip type: TI TMS27C040-10, ST M27C4001-10, M27C4001-12Z
      */
-	AM_RANGE(0x00000000, 0x001fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x00000000, 0x001fffff) AM_ROM
 
 	/**
      * Main RAM (128K bytes)
      * Mounted position: CPU 3D, 5D, 7D, 9D
      * Known DRAM chip type: TC55328P-25, N3441256P-15
      */
-	AM_RANGE(0x10000000, 0x1001ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x10000000, 0x1001ffff) AM_RAM
 
 	/**
      * Main RAM (Mirror or Another Bank)
      * Mounted position: unknown
      */
-	AM_RANGE(0x18000000, 0x1801ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x18000000, 0x1801ffff) AM_RAM
 
 	/**
      * KEYCUS
@@ -2353,7 +2353,7 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      *     20010000 - 20011fff  TX Buffer
      *     20012000 - 20013fff  RX FIFO Buffer (also used for TX Buffer)
      */
-	AM_RANGE(0x20010000, 0x20013fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x20010000, 0x20013fff) AM_RAM
 
 	/**
      * C139 SCI Register
@@ -2445,7 +2445,7 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      * Mounted position: CPU 9E
      * Known chip type: HN58C65P-25 (8k x 8bit EEPROM)
      */
-	AM_RANGE(0x58000000, 0x58001fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&namcos22_nvmem) AM_SIZE(&namcos22_nvmem_size)
+	AM_RANGE(0x58000000, 0x58001fff) AM_RAM AM_BASE(&namcos22_nvmem) AM_SIZE(&namcos22_nvmem_size)
 
 	/**
      * C74 (Mitsubishi M37702 MCU) Shared RAM (0x60004000 - 0x6000bfff)
@@ -2509,7 +2509,7 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      * Mounted position: VIDEO 8P
      * Known chip type: TC55328P-25
      */
-	AM_RANGE(0x90010000, 0x90017fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* depth-cueing */
+	AM_RANGE(0x90010000, 0x90017fff) AM_RAM /* depth-cueing */
 
 	/**
      * C305 (Display Controller)
@@ -2529,7 +2529,7 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      *
      * Notes: Boot time check: 0x90020100 - 0x9002027f
      */
-	AM_RANGE(0x90020000, 0x90027fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x90020000, 0x90027fff) AM_RAM
 
 	/**
      * 0x90028000 - 0x9002ffff  Palette (R)
@@ -2545,7 +2545,7 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      * unknown (option)
      * Note: This device may be optional. This may relate to device at 0x40000000
      */
-	AM_RANGE(0x90040000, 0x9007ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) /* diagnostic ROM? */
+	AM_RANGE(0x90040000, 0x9007ffff) AM_RAM /* diagnostic ROM? */
 
 	/**
      * Tilemap PCG Memory
@@ -2566,7 +2566,7 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      * +0x0000 Position X
      * +0x0002 Position Y
      */
-	AM_RANGE(0x900a0000, 0x900a000f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x900a0000, 0x900a000f) AM_RAM
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( namcos22_interrupt )

@@ -8,10 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "osd_cpu.h"
 #include "psx.h"
-extern unsigned dasmr3k(char *,unsigned);
-extern unsigned dasmmips3(char *,unsigned);
+extern unsigned dasmr3k(char *,unsigned, UINT32);
+extern unsigned dasmmips3(char *,unsigned, UINT32);
 
 struct
 {
@@ -45,16 +44,7 @@ struct
 
 static UINT8 *filebuf;
 static UINT32 offset;
-static UINT8 order[] = { 3, 2, 1, 0 };
-
-offs_t			opcode_memory_min;			/* opcode memory minimum */
-offs_t			opcode_memory_max;			/* opcode memory maximum */
-offs_t			opcode_mask;				/* mask to apply to the opcode address */
-UINT8 *			opcode_base;				/* opcode ROM base */
-
-void memory_set_opbase(offs_t pc)
-{
-}
+static UINT8 order[] = { 0, 1, 2, 3 };
 
 static char *Options[]=
 {
@@ -69,7 +59,7 @@ static void usage (void)
 		" -begin  - Specify begin offset in file to disassemble in bytes [0]\n"
 		" -end    - Specify end offset in file to disassemble in bytes [none]\n"
 		" -offset - Specify address to load program in bytes [0]\n"
-		" -order  - Specify byte order [3210]\n"
+		" -order  - Specify byte order [0123]\n"
 		" -format - Specify file format bin|psx [bin]\n"
 		" -cpu    - Specify cpu psx|r3000|r4000 [psx]\n\n"
 		"All values should be entered in hexadecimal\n" );
@@ -284,19 +274,17 @@ int main( int argc, char *argv[] )
 	pc = 0;
 	while( pc < len )
 	{
-		UINT32 op;
-		op = ( filebuf[ pc + order[ 0 ] ] << 24 ) |
-			( filebuf[ pc + order[ 1 ] ] << 16 ) |
-			( filebuf[ pc + order[ 2 ] ] << 8 ) |
-			( filebuf[ pc + order[ 3 ] ] );
-		*( (UINT32 *)&filebuf[ pc ] ) = op;
+		UINT8 op0 = filebuf[ pc + order[ 0 ] ];
+		UINT8 op1 = filebuf[ pc + order[ 1 ] ];
+		UINT8 op2 = filebuf[ pc + order[ 2 ] ];
+		UINT8 op3 = filebuf[ pc + order[ 3 ] ];
+		filebuf[ pc + 0 ] = op0;
+		filebuf[ pc + 1 ] = op1;
+		filebuf[ pc + 2 ] = op2;
+		filebuf[ pc + 3 ] = op3;
+
 		pc += 4;
 	}
-
-	opcode_mask = 0xffffffff;
-	opcode_base = filebuf - offset;
-	opcode_memory_min = 0;
-	opcode_memory_max = 0xffffffff;
 
 	pc = 0;
 	while( pc < len )
@@ -304,20 +292,28 @@ int main( int argc, char *argv[] )
 		switch( cpu )
 		{
 		case CPU_PSX:
-			i = DasmMIPS( buf, pc + offset );
+			i = DasmMIPS( buf, pc + offset, filebuf + pc );
 			break;
 		case CPU_R3000:
-			i = dasmr3k( buf, pc + offset );
+			{
+				UINT8 *opram = filebuf + pc;
+				UINT32 op = ( opram[ 3 ] << 24 ) | ( opram[ 2 ] << 16 ) | ( opram[ 1 ] << 8 ) | ( opram[ 0 ] << 0 );
+				i = dasmr3k( buf, pc + offset, op );
+			}
 			break;
 		case CPU_R4000:
-			i = dasmmips3( buf, pc + offset );
+			{
+				UINT8 *opram = filebuf + pc;
+				UINT32 op = ( opram[ 3 ] << 24 ) | ( opram[ 2 ] << 16 ) | ( opram[ 1 ] << 8 ) | ( opram[ 0 ] << 0 );
+				i = dasmmips3( buf, pc + offset, op );
+			}
 			break;
 		}
 
 		printf( "%08x: ", pc + offset );
 		for( j = 0; j < i; j++ )
 		{
-			printf( "%02x ", filebuf[ BYTE4_XOR_BE( pc ) ] );
+			printf( "%02x ", filebuf[ pc ] );
 			pc++;
 		}
 		while( j < 10 )

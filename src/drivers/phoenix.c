@@ -67,21 +67,21 @@ void *pleiads_sh_start(int clock, const struct CustomSound_interface *config);
 
 static ADDRESS_MAP_START( phoenix_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x4fff) AM_READ(phoenix_videoram_r)		/* 2 pages selected by bit 0 of the video register */
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK1)			/* 2 pages selected by bit 0 of the video register */
 	AM_RANGE(0x7000, 0x73ff) AM_READ(phoenix_input_port_0_r) /* IN0 or IN1 */
 	AM_RANGE(0x7800, 0x7bff) AM_READ(input_port_2_r) 		/* DSW */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( pleiads_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x4fff) AM_READ(phoenix_videoram_r)		/* 2 pages selected by bit 0 of the video register */
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK1)		/* 2 pages selected by bit 0 of the video register */
 	AM_RANGE(0x7000, 0x73ff) AM_READ(pleiads_input_port_0_r) /* IN0 or IN1 + protection */
 	AM_RANGE(0x7800, 0x7bff) AM_READ(input_port_2_r) 		/* DSW */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( survival_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x4fff) AM_READ(phoenix_videoram_r)		/* 2 pages selected by bit 0 of the video register */
+	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK1)		/* 2 pages selected by bit 0 of the video register */
 	AM_RANGE(0x6900, 0x69ff) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x7000, 0x73ff) AM_READ(survival_input_port_0_r)/* IN0 or IN1 */
 	AM_RANGE(0x7800, 0x7bff) AM_READ(input_port_2_r)			/* DSW */

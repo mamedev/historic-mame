@@ -384,6 +384,8 @@ DRIVER_INIT( zigzag )
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	memory_configure_bank(1, 0, 2, &RAM[0x2000], 0x1000);
 	memory_configure_bank(2, 0, 2, &RAM[0x2000], 0x1000);
+	memory_set_bank(1, 0);
+	memory_set_bank(2, 1);
 }
 
 
@@ -972,8 +974,9 @@ DRIVER_INIT( mariner )
 	init_scramble_ppi();
 
 	/* extra ROM */
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_ROM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_BANK1);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MWA8_ROM);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x5800);
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9008, 0x9008, 0, 0, mariner_protection_2_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb401, 0xb401, 0, 0, mariner_protection_1_r);

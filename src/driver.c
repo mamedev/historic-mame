@@ -1359,6 +1359,7 @@ const game_driver *drivers[] =
 	DRIVER( quizf1 )	/* (c) 1992 Irem (Japan) */
 	DRIVER( riskchal )
 	DRIVER( gussun )
+	DRIVER( matchit2 )
 	DRIVER( shisen2 )
 	/* M92 */
 	DRIVER( gunforce )	/* (c) 1991 Irem (World) */
@@ -5792,6 +5793,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bigkarnk )	/* (c) 1991 - Ref 901112-1 */
 	/* Master Boy 2 */	/* (c) 1991 - Ref ??? */
 	DRIVER( splash )	/* (c) 1992 - Ref 922804 */
+	DRIVER( splash10 )	/* (c) 1992 - Ref 922804 */
 	DRIVER( paintlad )	/* (c) 1992 - ver 1.3 */
 	DRIVER( roldfrog )	/* not a gaelco game but based on splash code */
 	DRIVER( roldfrga )	/* not a gaelco game but based on splash code */
@@ -5802,7 +5804,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( wrally )	/* (c) 1993 - Ref 930705 */
 	DRIVER( wrallya )	/* (c) 1993 - Ref 930705 */
 	DRIVER( glass )		/* (c) 1993 - Ref 931021 */
-	DRIVER( glassa )	/* (c) 1993 - Ref 931021 */
+	DRIVER( glass10 )	/* (c) 1993 - Ref 931021 */
+	DRIVER( glass10a )	/* (c) 1993 - Ref 931021 */
 	DRIVER( targeth )	/* (c) 1994 - Ref 940531 */
 	DRIVER( thoop2 )	/* (c) 1994 - Ref ??? */
 	DRIVER( aligator )	/* (c) 1994 - Ref 940411 */
@@ -6492,6 +6495,7 @@ Other Sun games
 
 	/* Other Games */
 	DRIVER( astinvad )	/* (c) 1980 Stern */
+	DRIVER( kosmokil )	/* bootleg */
 	DRIVER( kamikaze )	/* Leijac Corporation */
 	DRIVER( spcking2 )
 	DRIVER( spaceint )	/* [1980] Shoei */
@@ -6742,5 +6746,8 @@ Other Sun games
 	DRIVER( magic10 )	/* (c) 1995 A.W.P. Games */
 	DRIVER( magic10a )	/* (c) 1995 A.W.P. Games */
 	DRIVER( magic102 )	/* (c) 1997 ABM Games */
+	DRIVER( dwarfd )	/* (c) 198? Electro-Sports */
+	DRIVER( trvquest )	/* (c) 1984 Sunn / Techstar */
+	DRIVER( wheelfir )	/* (c) 199? TCH */
 
 #endif	/* DRIVER_RECURSIVE */

@@ -27,6 +27,9 @@
 #define P	h6280.p
 #define S	h6280.sp.b.l
 
+#define TRANSLATED(addr)	((h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff))
+#define CHANGE_PC			do { offs_t temp = TRANSLATED(PCW); change_pc(temp); } while (0)
+
 #if LAZY_FLAGS
 
 #define NZ	h6280.NZ
@@ -68,6 +71,7 @@
 	P = (P & ~_fD) | _fI;	/* knock out D and set I flag */	\
 	PCL = RDMEM(vector);										\
 	PCH = RDMEM((vector+1));									\
+	CHANGE_PC;													\
 }
 
 #define CHECK_IRQ_LINES 										\
@@ -99,13 +103,13 @@
  *  RDMEM   read memory
  ***************************************************************/
 #define RDMEM(addr) 											\
-	program_read_byte_8( (h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff))
+	program_read_byte_8(TRANSLATED(addr))
 
 /***************************************************************
  *  WRMEM   write memory
  ***************************************************************/
 #define WRMEM(addr,data)										\
-	program_write_byte_8( (h6280.mmr[(addr)>>13] << 13) | ((addr)&0x1fff),data);
+	program_write_byte_8(TRANSLATED(addr),data);
 
 /***************************************************************
  *  RDMEMZ   read memory - zero page
@@ -123,8 +127,8 @@
  *  RDMEMW   read word from memory
  ***************************************************************/
 #define RDMEMW(addr)											\
-	program_read_byte_8( (h6280.mmr[(addr)  >>13] << 13) | ((addr  )&0x1fff)) \
-| ( program_read_byte_8( (h6280.mmr[(addr+1)>>13] << 13) | ((addr+1)&0x1fff)) << 8 )
+	program_read_byte_8(TRANSLATED(addr)) \
+| ( program_read_byte_8(TRANSLATED(addr+1)) << 8 )
 
 /***************************************************************
  *  RDZPWORD    read a word from a zero page address
@@ -151,13 +155,13 @@
  *  RDOP    read an opcode
  ***************************************************************/
 #define RDOP()													\
-	cpu_readop((h6280.mmr[PCW>>13] << 13) | (PCW&0x1fff))
+	cpu_readop(TRANSLATED(PCW))
 
 /***************************************************************
  *  RDOPARG read an opcode argument
  ***************************************************************/
 #define RDOPARG()												\
-	cpu_readop_arg((h6280.mmr[PCW>>13] << 13) | (PCW&0x1fff))
+	cpu_readop_arg(TRANSLATED(PCW))
 
 /***************************************************************
  *  BRA  branch relative
@@ -170,6 +174,7 @@
 		PCW++;													\
 		EAW = PCW + (signed char)tmp;							\
 		PCD = EAD;												\
+		CHANGE_PC;												\
 	}															\
 	else														\
 	{															\
@@ -464,7 +469,8 @@
 	PUSH(P | _fB);												\
 	P = (P & ~_fD) | _fI;										\
 	PCL = RDMEM(H6280_IRQ2_VEC); 								\
-	PCH = RDMEM(H6280_IRQ2_VEC+1)
+	PCH = RDMEM(H6280_IRQ2_VEC+1);								\
+	CHANGE_PC
 
 /* 6280 ********************************************************
  *  BSR Branch to subroutine
@@ -634,7 +640,8 @@
  *  set PC to the effective address
  ***************************************************************/
 #define JMP 													\
-	PCD = EAD
+	PCD = EAD;													\
+	CHANGE_PC
 
 /* 6280 ********************************************************
  *  JSR Jump to subroutine
@@ -645,7 +652,8 @@
 	PCW--;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
-	PCD = EAD
+	PCD = EAD;													\
+	CHANGE_PC
 
 /* 6280 ********************************************************
  *  LDA Load accumulator
@@ -789,6 +797,7 @@
 		 ((P & _fZ) ^ _fZ); 									\
 	PULL(PCL);													\
 	PULL(PCH);													\
+	CHANGE_PC;													\
 	CHECK_IRQ_LINES
 #else
 
@@ -796,6 +805,7 @@
 	PULL(P);													\
 	PULL(PCL);													\
 	PULL(PCH);													\
+	CHANGE_PC;													\
 	CHECK_IRQ_LINES
 #endif
 
@@ -807,6 +817,7 @@
 	PULL(PCL);													\
 	PULL(PCH);													\
 	PCW++;														\
+	CHANGE_PC
 
 /* 6280 ********************************************************
  *  SAX Swap accumulator and index X
@@ -968,7 +979,8 @@
     if (tmp&0x10) h6280.mmr[4] = A;                             \
     if (tmp&0x20) h6280.mmr[5] = A;                             \
     if (tmp&0x40) h6280.mmr[6] = A;                             \
-    if (tmp&0x80) h6280.mmr[7] = A
+    if (tmp&0x80) h6280.mmr[7] = A;								\
+    CHANGE_PC
 
 /* 6280 ********************************************************
  *  TAX Transfer accumulator to index X

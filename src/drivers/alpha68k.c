@@ -712,32 +712,23 @@ static ADDRESS_MAP_START( alpha68k_I_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x380000, 0x380001) AM_WRITE(paddlema_soundlatch_w) // LSB: sound latch write and RST38 trigger
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( alpha68k_II_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x040000, 0x040fff) AM_READ(MRA16_RAM)
+static ADDRESS_MAP_START( alpha68k_II_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x040000, 0x040fff) AM_RAM AM_BASE(&shared_ram)
 	AM_RANGE(0x080000, 0x080001) AM_READ(control_1_r) /* Joysticks */
+	AM_RANGE(0x080000, 0x080001) AM_WRITE(alpha68k_II_sound_w)
 	AM_RANGE(0x0c0000, 0x0c0001) AM_READ(control_2_r) /* CN1 & Dip 1 */
+	AM_RANGE(0x0c0000, 0x0c00ff) AM_WRITE(alpha68k_II_video_bank_w)
 	AM_RANGE(0x0c8000, 0x0c8001) AM_READ(control_3_r) /* Bottom of CN2 */
 	AM_RANGE(0x0d0000, 0x0d0001) AM_READ(control_4_r) /* Top of CN1 & CN2 */
 	AM_RANGE(0x0d8000, 0x0d8001) AM_READ(MRA16_NOP) /* IRQ ack? */
 	AM_RANGE(0x0e0000, 0x0e0001) AM_READ(MRA16_NOP) /* IRQ ack? */
 	AM_RANGE(0x0e8000, 0x0e8001) AM_READ(MRA16_NOP) /* watchdog? */
-	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200000, 0x207fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x300000, 0x3001ff) AM_READ(alpha_II_trigger_r)
-	AM_RANGE(0x400000, 0x400fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x800000, 0x83ffff) AM_READ(MRA16_BANK8) /* Extra code bank */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( alpha68k_II_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x040000, 0x040fff) AM_WRITE(MWA16_RAM) AM_BASE(&shared_ram)
-	AM_RANGE(0x080000, 0x080001) AM_WRITE(alpha68k_II_sound_w)
-	AM_RANGE(0x0c0000, 0x0c00ff) AM_WRITE(alpha68k_II_video_bank_w)
-	AM_RANGE(0x100000, 0x100fff) AM_WRITE(alpha68k_videoram_w) AM_BASE(&videoram16)
-	AM_RANGE(0x200000, 0x207fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
-	AM_RANGE(0x300000, 0x3001ff) AM_WRITE(alpha_microcontroller_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(alpha68k_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x100000, 0x100fff) AM_READWRITE(MRA16_RAM, alpha68k_videoram_w) AM_BASE(&videoram16)
+	AM_RANGE(0x200000, 0x207fff) AM_RAM AM_BASE(&spriteram16)
+	AM_RANGE(0x300000, 0x3001ff) AM_READWRITE(alpha_II_trigger_r, alpha_microcontroller_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(MRA16_RAM, alpha68k_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x800000, 0x83ffff) AM_ROMBANK(8)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( alpha68k_V_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -2245,7 +2236,7 @@ static MACHINE_DRIVER_START( alpha68k_II )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 8000000) /* Correct */
-	MDRV_CPU_PROGRAM_MAP(alpha68k_II_readmem,alpha68k_II_writemem)
+	MDRV_CPU_PROGRAM_MAP(alpha68k_II_map,0)
 	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)/* VBL */
 
 	MDRV_CPU_ADD(Z80, /*3579545*/3579545*2) /* Unlikely but needed to stop nested NMI's */
@@ -2294,7 +2285,7 @@ static MACHINE_DRIVER_START( alpha68k_II_gm )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 8000000)
-	MDRV_CPU_PROGRAM_MAP(alpha68k_II_readmem, alpha68k_II_writemem)
+	MDRV_CPU_PROGRAM_MAP(alpha68k_II_map, 0)
 	MDRV_CPU_VBLANK_INT(alpha68k_interrupt, 4)
 
 	MDRV_CPU_ADD(Z80, 4000000*2)
@@ -2457,7 +2448,7 @@ MACHINE_DRIVER_END
 /******************************************************************************/
 
 ROM_START( sstingry )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 68000 code */
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )     /* 68000 code */
 	ROM_LOAD16_BYTE( "ss_05.rom",  0x0000,  0x4000, CRC(bfb28d53) SHA1(64a1b8627529ed13074bb949cb104077eb3eac1f) )
 	ROM_LOAD16_BYTE( "ss_07.rom",  0x0001,  0x4000, CRC(eb1b65c5) SHA1(cffc4df82b7950358dd28f6a492e0aefaff73048) )
 	ROM_LOAD16_BYTE( "ss_04.rom",  0x8000,  0x4000, CRC(2e477a79) SHA1(0af9238979c8a740ba49776cd65ffbc024339621) )

@@ -12,7 +12,7 @@ extern const unsigned char gussun_decryption_table[];
 extern const unsigned char leagueman_decryption_table[];
 extern const unsigned char psoldier_decryption_table[];
 extern const unsigned char dsoccr94_decryption_table[];
-extern const unsigned char shisen2_decryption_table[];
+extern const unsigned char matchit2_decryption_table[];
 
 extern const unsigned char test_decryption_table[];
 

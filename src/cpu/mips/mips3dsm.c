@@ -1,8 +1,8 @@
 /*###################################################################################################
 **
 **
-**      4600dasm.c
-**      Disassembler for the portable R4600 emulator.
+**      mips3dsm.c
+**      Disassembler for the portable MIPS 3 emulator.
 **      Written by Aaron Giles
 **
 **
@@ -11,7 +11,6 @@
 #include <stdio.h>
 
 #include "driver.h"
-#include "r3000.h"
 
 
 static const char *reg[32] =
@@ -79,13 +78,6 @@ static const char *ccreg[4][32] =
 		"ccr24","ccr25","ccr26","ccr27","ccr28","ccr29","ccr30","ccr31"
 	}
 };
-
-
-/*###################################################################################################
-**  MEMORY ACCESSORS
-**#################################################################################################*/
-
-#define ROPCODE(pc)		cpu_readop32(pc)
 
 
 /*###################################################################################################
@@ -380,7 +372,7 @@ unsigned dasmmips3(char *buffer, unsigned pc, UINT32 op)
 				case 0x0b:	sprintf(buffer, "movn   %s,%s,%s", reg[rd], reg[rs], reg[rt]);			break;
 				case 0x0c:	sprintf(buffer, "syscall");	flags = DASMFLAG_STEP_OVER;					break;
 				case 0x0d:	sprintf(buffer, "break"); flags = DASMFLAG_STEP_OVER;					break;
-				case 0x0f:	sprintf(buffer, "sync"); flags = DASMFLAG_STEP_OVER;					break;
+				case 0x0f:	sprintf(buffer, "sync"); 												break;
 				case 0x10:	sprintf(buffer, "mfhi   %s", reg[rd]);									break;
 				case 0x11:	sprintf(buffer, "mthi   %s", reg[rs]);									break;
 				case 0x12:	sprintf(buffer, "mflo   %s", reg[rd]);									break;
