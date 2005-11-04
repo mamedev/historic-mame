@@ -1670,6 +1670,13 @@ do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_REG(r1, r2); } while (0)
 do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_MABS(reg, addr); } while (0)
 
 
+#define _prefetch_m8abs(type, addr) \
+do { OP1(0x0f); OP1(0x18); MODRM_MABS(type, addr); } while (0)
+
+#define _prefetch_m8bd(type, base, disp) \
+do { OP1(0x0f); OP1(0x18); MODRM_MBD(type, base, disp); } while (0)
+
+
 
 /*###################################################################################################
 **  FUNCTION PROTOTYPES

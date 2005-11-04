@@ -21,6 +21,25 @@ typedef struct {
 	float x,y,z,d;
 } PLANE;
 
+typedef struct
+{
+	VERTEX v[3];
+	unsigned char texture_x, texture_y;
+	unsigned char texture_width, texture_height;
+	unsigned char transparency, texture_coord_shift;
+	unsigned char texture_format, param;
+	int intensity;
+	UINT32 color;
+	int viewport_priority;
+} TRIANGLE;
+
+#define TRI_PARAM_TEXTURE_PAGE			0x1
+#define TRI_PARAM_TEXTURE_MIRROR_U		0x2
+#define TRI_PARAM_TEXTURE_MIRROR_V		0x4
+#define TRI_PARAM_TEXTURE_ENABLE		0x8
+
+#define MAX_TRIANGLES		65536
+
 #ifdef max
 #undef max
 #endif
@@ -84,6 +103,22 @@ static mame_bitmap *zbuffer;
 static rectangle clip3d;
 static rectangle *screen_clip;
 
+
+static TRIANGLE* triangle_buffer;
+static TRIANGLE* alpha_triangle_buffer;
+static int triangle_buffer_ptr;
+static int alpha_triangle_buffer_ptr;
+
+
+static int* texture_wrap_table[5];
+static int* texture_mirror_table[5];
+
+
+static VECTOR3 parallel_light;
+static float parallel_light_intensity;
+static float ambient_light_intensity;
+
+
 #define BYTE_REVERSE32(x)		(((x >> 24) & 0xff) | \
 								((x >> 8) & 0xff00) | \
 								((x << 8) & 0xff0000) | \
@@ -95,6 +130,7 @@ static rectangle *screen_clip;
 
 VIDEO_START( model3 )
 {
+	int j,t;
 	vrom = (UINT32*)memory_region(REGION_USER2);
 
 	bitmap3d = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
@@ -136,6 +172,29 @@ VIDEO_START( model3 )
 	polygon_ram = auto_malloc(0x400000);
 
 	init_matrix_stack();
+
+
+	// triangle buffers
+	triangle_buffer = auto_malloc(sizeof(TRIANGLE) * MAX_TRIANGLES);
+	alpha_triangle_buffer = auto_malloc(sizeof(TRIANGLE) * MAX_TRIANGLES);
+
+	// mirror / wrap tables
+	for (j=0; j < 5; j++)
+	{
+		int size = 32 << j;
+		texture_mirror_table[j] = auto_malloc(size * sizeof(int) * 2);
+		texture_wrap_table[j] = auto_malloc(size * sizeof(int) * 2);
+
+		for (t=0; t < size * 2; t++)
+		{
+			// wrapping
+			texture_wrap_table[j][t] = t & (size-1);
+
+			// mirroring
+			texture_mirror_table[j][t] = (t < size) ? t & (size-1) : size - (t & (size-1)) - 1;
+		}
+	}
+
 	return 0;
 }
 
@@ -333,8 +392,13 @@ VIDEO_UPDATE( model3 )
 	layer_scroll_x[3] = (layer_data[3] & 0x8000) ? (layer_data[3] & 0x1ff) : -(layer_data[3] & 0x1ff);
 	layer_scroll_y[3] = (layer_data[3] & 0x8000) ? (layer_data[3] & 0x1ff) : -(layer_data[3] & 0x1ff);
 
-	//bitmap3d = bitmap;
+	bitmap3d = bitmap;
 	screen_clip = (rectangle*)cliprect;
+
+	clip3d.min_x = cliprect->min_x;
+	clip3d.max_x = cliprect->max_x;
+	clip3d.min_y = cliprect->min_y;
+	clip3d.max_y = cliprect->max_y;
 
 	/* layer disable debug keys */
 	tick++;
@@ -353,33 +417,30 @@ VIDEO_UPDATE( model3 )
 			debug_layer_disable ^= 0x10;
 	}
 
-	fillbitmap(bitmap, 0, cliprect);
+	fillbitmap(bitmap3d, 0, cliprect);
 
 	if(!(debug_layer_disable & 0x8)) {
-		draw_layer(bitmap, cliprect, 3, (model3_layer_enable >> 3) & 0x1);
+		draw_layer(bitmap3d, cliprect, 3, (model3_layer_enable >> 3) & 0x1);
 	}
 	if(!(debug_layer_disable & 0x4)) {
-		draw_layer(bitmap, cliprect, 2, (model3_layer_enable >> 2) & 0x1);
+		draw_layer(bitmap3d, cliprect, 2, (model3_layer_enable >> 2) & 0x1);
 	}
 
 	if( !(debug_layer_disable & 0x10) )
 	{
 		if(real3d_display_list) {
-			fillbitmap(bitmap3d, 0x8000, cliprect);
 			fillbitmap(zbuffer, 0, cliprect);
 			real3d_traverse_display_list();
-			copy_screen(bitmap, cliprect);
-		} else {
-			copy_screen(bitmap, cliprect);
 		}
 	}
 
 	if(!(debug_layer_disable & 0x2)) {
-		draw_layer(bitmap, cliprect, 1, (model3_layer_enable >> 1) & 0x1);
+		draw_layer(bitmap3d, cliprect, 1, (model3_layer_enable >> 1) & 0x1);
 	}
 	if(!(debug_layer_disable & 0x1)) {
-		draw_layer(bitmap, cliprect, 0, (model3_layer_enable >> 0) & 0x1);
+		draw_layer(bitmap3d, cliprect, 0, (model3_layer_enable >> 0) & 0x1);
 	}
+	//copy_screen(bitmap, cliprect);
 
 	if(model3_draw_crosshair) {
 		int gun1_x, gun1_y, gun2_x, gun2_y;
@@ -814,6 +875,30 @@ void translate_matrix_stack(float x, float y, float z)
 /*****************************************************************************/
 /* transformation and rasterizing */
 
+INLINE void push_triangle(int alpha, TRIANGLE *tri)
+{
+	if (alpha)
+	{
+		memcpy(&alpha_triangle_buffer[alpha_triangle_buffer_ptr], tri, sizeof(TRIANGLE));
+		alpha_triangle_buffer_ptr++;
+
+		if (alpha_triangle_buffer_ptr >= MAX_TRIANGLES)
+		{
+			osd_die("push_triangle: triangle buffer overflow!\n");
+		}
+	}
+	else
+	{
+		memcpy(&triangle_buffer[triangle_buffer_ptr], tri, sizeof(TRIANGLE));
+		triangle_buffer_ptr++;
+
+		if (triangle_buffer_ptr >= MAX_TRIANGLES)
+		{
+			osd_die("push_triangle: triangle buffer overflow!\n");
+		}
+	}
+}
+
 static int texture_x;
 static int texture_y;
 static int texture_width;
@@ -822,317 +907,18 @@ static UINT32 texture_width_mask;
 static UINT32 texture_height_mask;
 static int texture_page;
 static int texture_coord_shift = 16;
+static int polygon_transparency = 0;
+static int polygon_intensity = 0;
+
+static int* texture_u_table;
+static int* texture_v_table;
 
 static UINT32 viewport_priority;
 
 #define ZBUFFER_SCALE		16777216.0
 #define ZDIVIDE_SHIFT		16
 
-/* TODO: make the render functions with macros instead of copy-pasting */
-
-static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
-{
-	int x, y;
-	struct poly_vertex vert[3];
-	const struct poly_scanline_data *scans;
-
-	v1.z = (1.0 / v1.z) * ZBUFFER_SCALE;
-	v2.z = (1.0 / v2.z) * ZBUFFER_SCALE;
-	v3.z = (1.0 / v3.z) * ZBUFFER_SCALE;
-	v1.u = (UINT32)((UINT64)(v1.u * v1.z) >> ZDIVIDE_SHIFT);
-	v1.v = (UINT32)((UINT64)(v1.v * v1.z) >> ZDIVIDE_SHIFT);
-	v2.u = (UINT32)((UINT64)(v2.u * v2.z) >> ZDIVIDE_SHIFT);
-	v2.v = (UINT32)((UINT64)(v2.v * v2.z) >> ZDIVIDE_SHIFT);
-	v3.u = (UINT32)((UINT64)(v3.u * v3.z) >> ZDIVIDE_SHIFT);
-	v3.v = (UINT32)((UINT64)(v3.v * v3.z) >> ZDIVIDE_SHIFT);
-
-	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z;	vert[0].p[1] = v1.u;	vert[0].p[2] = v1.v;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z;	vert[1].p[1] = v2.u;	vert[1].p[2] = v2.v;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z;	vert[2].p[1] = v3.u;	vert[2].p[2] = v3.v;
-
-	scans = setup_triangle_3(&vert[0], &vert[1], &vert[2], &clip3d);
-
-	if(scans)
-	{
-		INT64 du, dv, dz;
-		dz = scans->dp[0];
-		du = scans->dp[1];
-		dv = scans->dp[2];
-		for(y = scans->sy; y <= scans->ey; y++) {
-			int x1, x2;
-			INT64 u, v, z;
-			INT64 u2, v2;
-			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
-
-			x1 = scan->sx;
-			x2 = scan->ex;
-			if(x1 < clip3d.min_x)
-				x1 = clip3d.min_x;
-			if(x2 > clip3d.max_x)
-				x2 = clip3d.max_x;
-
-			z = scans->scanline[y - scans->sy].p[0];
-			u = scans->scanline[y - scans->sy].p[1];
-			v = scans->scanline[y - scans->sy].p[2];
-
-			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
-				for(x = x1; x <= x2; x++) {
-//                  UINT16 pix;
-					int iu, iv;
-
-					UINT32 iz = z >> 16;
-
-					if (iz) {
-						u2 = (u << ZDIVIDE_SHIFT) / iz;
-						v2 = (v << ZDIVIDE_SHIFT) / iz;
-					} else {
-						u2 = 0;
-						v2 = 0;
-					}
-
-					iz |= viewport_priority;
-
-					if(iz > d[x]) {
-						iu = (u2 >> texture_coord_shift) & texture_width_mask;
-						iv = (v2 >> texture_coord_shift) & texture_height_mask;
-#if BILINEAR
-						{
-							int iu2 = ((u2 >> texture_coord_shift) + 1) & texture_width_mask;
-							int iv2 = ((v2 >> texture_coord_shift) + 1) & texture_height_mask;
-							UINT32 sr[4], sg[4], sb[4];
-							UINT32 ur[2], ug[2], ub[2];
-							UINT32 fr, fg, fb;
-							UINT16 pix0 = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu)];
-							UINT16 pix1 = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu2)];
-							UINT16 pix2 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu)];
-							UINT16 pix3 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu2)];
-							int u_sub1 = (u2 >> (texture_coord_shift-16)) & 0xffff;
-							int v_sub1 = (v2 >> (texture_coord_shift-16)) & 0xffff;
-							int u_sub0 = 0xffff - u_sub1;
-							int v_sub0 = 0xffff - v_sub1;
-							sr[0] = (pix0 & 0x7c00);
-							sg[0] = (pix0 & 0x03e0);
-							sb[0] = (pix0 & 0x001f);
-							sr[1] = (pix1 & 0x7c00);
-							sg[1] = (pix1 & 0x03e0);
-							sb[1] = (pix1 & 0x001f);
-							sr[2] = (pix2 & 0x7c00);
-							sg[2] = (pix2 & 0x03e0);
-							sb[2] = (pix2 & 0x001f);
-							sr[3] = (pix3 & 0x7c00);
-							sg[3] = (pix3 & 0x03e0);
-							sb[3] = (pix3 & 0x001f);
-
-							/* Calculate weighted U-samples */
-							ur[0] = (((sr[0] * u_sub0) >> 16) + ((sr[1] * u_sub1) >> 16));
-							ug[0] = (((sg[0] * u_sub0) >> 16) + ((sg[1] * u_sub1) >> 16));
-							ub[0] = (((sb[0] * u_sub0) >> 16) + ((sb[1] * u_sub1) >> 16));
-							ur[1] = (((sr[2] * u_sub0) >> 16) + ((sr[3] * u_sub1) >> 16));
-							ug[1] = (((sg[2] * u_sub0) >> 16) + ((sg[3] * u_sub1) >> 16));
-							ub[1] = (((sb[2] * u_sub0) >> 16) + ((sb[3] * u_sub1) >> 16));
-							/* Calculate the final sample */
-							fr = (((ur[0] * v_sub0) >> 16) + ((ur[1] * v_sub1) >> 16));
-							fg = (((ug[0] * v_sub0) >> 16) + ((ug[1] * v_sub1) >> 16));
-							fb = (((ub[0] * v_sub0) >> 16) + ((ub[1] * v_sub1) >> 16));
-							p[x] = (fr & 0x7c00) | (fg & 0x3e0) | (fb & 0x1f);
-						}
-#else
-						pix = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu)];
-						p[x] = pix & 0x7fff;
-#endif
-						d[x] = iz;		/* write new zbuffer value */
-					}
-
-					z += dz;
-					u += du;
-					v += dv;
-				}
-			}
-		}
-	}
-}
-
-static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
-{
-	int x, y;
-	struct poly_vertex vert[3];
-	const struct poly_scanline_data *scans;
-
-	v1.z = (1.0 / v1.z) * ZBUFFER_SCALE;
-	v2.z = (1.0 / v2.z) * ZBUFFER_SCALE;
-	v3.z = (1.0 / v3.z) * ZBUFFER_SCALE;
-	v1.u = (UINT32)((UINT64)(v1.u * v1.z) >> ZDIVIDE_SHIFT);
-	v1.v = (UINT32)((UINT64)(v1.v * v1.z) >> ZDIVIDE_SHIFT);
-	v2.u = (UINT32)((UINT64)(v2.u * v2.z) >> ZDIVIDE_SHIFT);
-	v2.v = (UINT32)((UINT64)(v2.v * v2.z) >> ZDIVIDE_SHIFT);
-	v3.u = (UINT32)((UINT64)(v3.u * v3.z) >> ZDIVIDE_SHIFT);
-	v3.v = (UINT32)((UINT64)(v3.v * v3.z) >> ZDIVIDE_SHIFT);
-
-	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z;	vert[0].p[1] = v1.u;	vert[0].p[2] = v1.v;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z;	vert[1].p[1] = v2.u;	vert[1].p[2] = v2.v;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z;	vert[2].p[1] = v3.u;	vert[2].p[2] = v3.v;
-	scans = setup_triangle_3(&vert[0], &vert[1], &vert[2], &clip3d);
-
-	if(scans)
-	{
-		INT64 du, dv, dz;
-		dz = scans->dp[0];
-		du = scans->dp[1];
-		dv = scans->dp[2];
-		for(y = scans->sy; y <= scans->ey; y++) {
-			int x1, x2;
-			INT64 u, v, z;
-			INT64 u2, v2;
-			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
-
-			x1 = scan->sx;
-			x2 = scan->ex;
-			if(x1 < clip3d.min_x)
-				x1 = clip3d.min_x;
-			if(x2 > clip3d.max_x)
-				x2 = clip3d.max_x;
-
-			z = scans->scanline[y - scans->sy].p[0];
-			u = scans->scanline[y - scans->sy].p[1];
-			v = scans->scanline[y - scans->sy].p[2];
-
-			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
-				for(x = x1; x <= x2; x++) {
-//                  UINT16 pix;
-//                  UINT16 r,g,b;
-					int iu, iv;
-
-					UINT32 iz = z >> 16;
-
-					if (iz) {
-						u2 = (u << ZDIVIDE_SHIFT) / iz;
-						v2 = (v << ZDIVIDE_SHIFT) / iz;
-					} else {
-						u2 = 0;
-						v2 = 0;
-					}
-
-					iz |= viewport_priority;
-
-					if(iz > d[x]) {
-						iu = (u2 >> texture_coord_shift) & texture_width_mask;
-						iv = (v2 >> texture_coord_shift) & texture_height_mask;
-#if BILINEAR
-						{
-							int iu2 = ((u2 >> texture_coord_shift) + 1) & texture_width_mask;
-							int iv2 = ((v2 >> texture_coord_shift) + 1) & texture_height_mask;
-							UINT32 sr[4], sg[4], sb[4];
-							UINT32 ur[2], ug[2], ub[2];
-							UINT32 fr, fg, fb;
-							UINT16 pix0 = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu)];
-							UINT16 pix1 = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu2)];
-							UINT16 pix2 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu)];
-							UINT16 pix3 = texture_ram[texture_page][(texture_y+iv2) * 2048 + (texture_x+iu2)];
-							int u_sub1 = (u2 >> (texture_coord_shift-16)) & 0xffff;
-							int v_sub1 = (v2 >> (texture_coord_shift-16)) & 0xffff;
-							int u_sub0 = 0xffff - u_sub1;
-							int v_sub0 = 0xffff - v_sub1;
-							sr[0] = (pix0 & 0xf000);
-							sg[0] = (pix0 & 0x0f00);
-							sb[0] = (pix0 & 0x00f0);
-							sr[1] = (pix1 & 0xf000);
-							sg[1] = (pix1 & 0x0f00);
-							sb[1] = (pix1 & 0x00f0);
-							sr[2] = (pix2 & 0xf000);
-							sg[2] = (pix2 & 0x0f00);
-							sb[2] = (pix2 & 0x00f0);
-							sr[3] = (pix3 & 0xf000);
-							sg[3] = (pix3 & 0x0f00);
-							sb[3] = (pix3 & 0x00f0);
-
-							/* Calculate weighted U-samples */
-							ur[0] = (((sr[0] * u_sub0) >> 16) + ((sr[1] * u_sub1) >> 16));
-							ug[0] = (((sg[0] * u_sub0) >> 16) + ((sg[1] * u_sub1) >> 16));
-							ub[0] = (((sb[0] * u_sub0) >> 16) + ((sb[1] * u_sub1) >> 16));
-							ur[1] = (((sr[2] * u_sub0) >> 16) + ((sr[3] * u_sub1) >> 16));
-							ug[1] = (((sg[2] * u_sub0) >> 16) + ((sg[3] * u_sub1) >> 16));
-							ub[1] = (((sb[2] * u_sub0) >> 16) + ((sb[3] * u_sub1) >> 16));
-							/* Calculate the final sample */
-							fr = (((ur[0] * v_sub0) >> 16) + ((ur[1] * v_sub1) >> 16));
-							fg = (((ug[0] * v_sub0) >> 16) + ((ug[1] * v_sub1) >> 16));
-							fb = (((ub[0] * v_sub0) >> 16) + ((ub[1] * v_sub1) >> 16));
-							p[x] = ((fr & 0xf800) >> 1) | ((fg & 0x0f80) >> 2) | ((fb & 0x00f8) >> 3);
-						}
-#else
-						pix = texture_ram[texture_page][(texture_y+iv) * 2048 + (texture_x+iu)];
-						r = (pix & 0xf000) >> 1;
-						g = (pix & 0x0f00) >> 2;
-						b = (pix & 0x00f0) >> 3;
-						p[x] = r | g | b;
-#endif
-						d[x] = iz;		/* write new zbuffer value */
-					}
-
-					z += dz;
-					u += du;
-					v += dv;
-				}
-			}
-		}
-	}
-}
-
-
-static void draw_triangle_color(VERTEX v1, VERTEX v2, VERTEX v3, UINT16 color)
-{
-	int x, y;
-	struct poly_vertex vert[3];
-	const struct poly_scanline_data *scans;
-
-	v1.z = (1.0 / v1.z) * ZBUFFER_SCALE;
-	v2.z = (1.0 / v2.z) * ZBUFFER_SCALE;
-	v3.z = (1.0 / v3.z) * ZBUFFER_SCALE;
-
-	vert[0].x = v1.x;	vert[0].y = v1.y;	vert[0].p[0] = (UINT32)v1.z;
-	vert[1].x = v2.x;	vert[1].y = v2.y;	vert[1].p[0] = (UINT32)v2.z;
-	vert[2].x = v3.x;	vert[2].y = v3.y;	vert[2].p[0] = (UINT32)v3.z;
-
-	scans = setup_triangle_1(&vert[0], &vert[1], &vert[2], &clip3d);
-
-	if(scans)
-	{
-		INT64 dz = scans->dp[0];
-		for(y = scans->sy; y <= scans->ey; y++) {
-			int x1, x2;
-			INT64 z;
-			const struct poly_scanline *scan = &scans->scanline[y - scans->sy];
-			UINT16 *p = (UINT16*)bitmap3d->line[y];
-			UINT32 *d = (UINT32*)zbuffer->line[y];
-
-			x1 = scan->sx;
-			x2 = scan->ex;
-			if(x1 < clip3d.min_x)
-				x1 = clip3d.min_x;
-			if(x2 > clip3d.max_x)
-				x2 = clip3d.max_x;
-
-			z = scans->scanline[y - scans->sy].p[0];
-
-			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
-				for(x = x1; x <= x2; x++) {
-					UINT32 iz = z >> 16;
-
-					iz |= viewport_priority;
-
-					if(iz > d[x]) {
-						p[x] = color;
-						d[x] = iz;		/* write new zbuffer value */
-					}
-					z += dz;
-				}
-			}
-		}
-	}
-}
+#include "m3raster.c"
 
 INLINE int is_point_inside(float x, float y, float z, PLANE cp)
 {
@@ -1229,7 +1015,6 @@ static void draw_model(UINT32 *model)
 
 	int polynum = 0;
 	MATRIX transform_matrix;
-	int texture_format;
 	float center_x, center_y;
 
 	if(model3_step < 0x15) {	/* position coordinates are 17.15 fixed-point in Step 1.0 */
@@ -1250,6 +1035,9 @@ static void draw_model(UINT32 *model)
 		VECTOR3 normal;
 		VECTOR3 sn;
 		VECTOR p[4];
+		TRIANGLE tri;
+		float dot;
+		int intensity;
 
 		for(i=0; i < 7; i++) {
 			header[i] = model[index++];
@@ -1309,6 +1097,11 @@ static void draw_model(UINT32 *model)
 		memcpy(prev_vertex, vertex, sizeof(VERTEX) * 4);
 
 		color = (((header[4] >> 27) & 0x1f) << 10) | (((header[4] >> 19) & 0x1f) << 5) | ((header[4] >> 11) & 0x1f);
+		if(header[6] & 0x800000) {
+			polygon_transparency = 32;
+		} else {
+			polygon_transparency = (header[6] >> 18) & 0x1f;
+		}
 
 		/* transform polygon normal to view-space */
 		sn[0] = (normal[0] * transform_matrix[0][0]) +
@@ -1320,6 +1113,10 @@ static void draw_model(UINT32 *model)
 		sn[2] = (normal[0] * transform_matrix[0][2]) +
 				(normal[1] * transform_matrix[1][2]) +
 				(normal[2] * transform_matrix[2][2]);
+
+		sn[0] *= coordinate_system[0][1];
+		sn[1] *= coordinate_system[1][2];
+		sn[2] *= coordinate_system[2][0];
 
 		/* TODO: backface culling */
 		/* transform vertices */
@@ -1356,44 +1153,188 @@ static void draw_model(UINT32 *model)
 			clip_vert[i].y = ((clip_vert[i].y * ooz) * viewport_focal_length) + center_y;
 		}
 
-		/* TODO: setup rest of the surface parameters */
-		texture_page = (header[4] & 0x40) ? 1 : 0;
-		texture_x = 32 * ((header[4] & 0x1f) << 1) | ((header[5] >> 7) & 0x1);
-		texture_y = 32 * (header[5] & 0x1f);
-		texture_width = 32 << ((header[3] >> 3) & 0x7);
-		texture_height = 32 << (header[3] & 0x7);
-		texture_width_mask = texture_width - 1;
-		texture_height_mask = texture_height - 1;
-		texture_format = (header[6] >> 7) & 0x7;
-
-		/* TODO: lighting */
-
-		if( (header[6] & 0x4000000) != 0 )		/* textured */
+		// lighting
+		if ((header[6] & 0x10000) == 0)
 		{
-			for (i=2; i < num_vertices; i++) {
-				switch(texture_format)
-				{
-					case 0: draw_triangle_tex1555(clip_vert[0], clip_vert[i-1], clip_vert[i]); break;			/* ARGB1555 */
-					case 1: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
-					case 2: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
-					case 3: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
-					case 4: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: A4L4 */
-					case 5: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: A8 */
-					case 6: draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color); break;		/* TODO: 4-bit */
-					case 7: draw_triangle_tex4444(clip_vert[0], clip_vert[i-1], clip_vert[i]); break;			/* ARGB4444 */
-				}
+			dot = dot_product3(sn, parallel_light);
+			intensity = ((dot * parallel_light_intensity) + ambient_light_intensity) * 256.0f;
+			if (intensity > 256)
+			{
+				intensity = 256;
+			}
+			if (intensity < 0)
+			{
+				intensity = 0;
 			}
 		}
-		else									/* non-textured */
+		else
 		{
-			for (i=2; i < num_vertices; i++) {
-				draw_triangle_color(clip_vert[0], clip_vert[i-1], clip_vert[i], color);
+			// apply luminosity
+			intensity = 256;
+		}
+
+		for (i=2; i < num_vertices; i++)
+		{
+			memcpy(&tri.v[0], &clip_vert[0], sizeof(VERTEX));
+			memcpy(&tri.v[1], &clip_vert[i-1], sizeof(VERTEX));
+			memcpy(&tri.v[2], &clip_vert[i], sizeof(VERTEX));
+			tri.texture_x 				= ((header[4] & 0x1f) << 1) | ((header[5] >> 7) & 0x1);
+			tri.texture_y 				= (header[5] & 0x1f);
+			tri.texture_width			= ((header[3] >> 3) & 0x7);
+			tri.texture_height			= (header[3] & 0x7);
+			tri.texture_format			= (header[6] >> 7) & 0x7;
+			tri.transparency			= polygon_transparency;
+			tri.intensity 				= intensity;
+			tri.color = color;
+			tri.viewport_priority		= viewport_priority;
+			tri.texture_coord_shift		= texture_coord_shift;
+
+			tri.param	= 0;
+			tri.param 	|= (header[4] & 0x40) ? TRI_PARAM_TEXTURE_PAGE : 0;
+			tri.param	|= (header[6] & 0x4000000) ? TRI_PARAM_TEXTURE_ENABLE : 0;
+			tri.param	|= (header[2] & 0x2) ? TRI_PARAM_TEXTURE_MIRROR_U : 0;
+			tri.param	|= (header[2] & 0x1) ? TRI_PARAM_TEXTURE_MIRROR_V : 0;
+
+			if (((header[4] & 0x4000000) && (header[6] & 0x80000000 || header[6] & 0x1))
+				|| (polygon_transparency < 32) || (tri.texture_format == 7))
+			{
+				push_triangle(1, &tri);
+			}
+			else
+			{
+				push_triangle(0, &tri);
 			}
 		}
+
 		++polynum;
 	};
 }
 
+static void render_triangles(void)
+{
+	int i;
+
+	for (i=0; i < triangle_buffer_ptr; i++)
+	{
+		TRIANGLE *tri = &triangle_buffer[i];
+
+		if (tri->param & TRI_PARAM_TEXTURE_ENABLE)
+		{
+			texture_x			= tri->texture_x * 32;
+			texture_y 			= tri->texture_y * 32;
+			texture_page		= (tri->param & TRI_PARAM_TEXTURE_PAGE) ? 1 : 0;
+			texture_width		= 32 << tri->texture_width;
+			texture_height		= 32 << tri->texture_height;
+			texture_width_mask	= (texture_width << 1) - 1;
+			texture_height_mask	= (texture_height << 1) - 1;
+			polygon_intensity	= tri->intensity;
+			viewport_priority	= tri->viewport_priority;
+			texture_coord_shift	= tri->texture_coord_shift;
+
+			if (tri->param & TRI_PARAM_TEXTURE_MIRROR_U)
+			{
+				texture_u_table = texture_mirror_table[tri->texture_width];
+			}
+			else
+			{
+				texture_u_table = texture_wrap_table[tri->texture_width];
+			}
+
+			if (tri->param & TRI_PARAM_TEXTURE_MIRROR_V)
+			{
+				texture_v_table = texture_mirror_table[tri->texture_height];
+			}
+			else
+			{
+				texture_v_table = texture_wrap_table[tri->texture_height];
+			}
+
+			switch (tri->texture_format)
+			{
+				case 0:	draw_triangle_tex1555(tri->v[0], tri->v[1], tri->v[2]); break;	/* ARGB1555 */
+				case 7:	draw_triangle_tex4444(tri->v[0], tri->v[1], tri->v[2]); break;	/* ARGB4444 */
+			}
+		}
+		else
+		{
+			polygon_intensity	= tri->intensity;
+			viewport_priority	= tri->viewport_priority;
+			texture_coord_shift	= tri->texture_coord_shift;
+
+			draw_triangle_color(tri->v[0], tri->v[1], tri->v[2], tri->color);
+		}
+	}
+
+	//for (i=0; i < alpha_triangle_buffer_ptr; i++)
+	for (i=alpha_triangle_buffer_ptr-1; i >= 0; i--)
+	{
+		TRIANGLE *tri = &alpha_triangle_buffer[i];
+
+		if (tri->param & TRI_PARAM_TEXTURE_ENABLE)
+		{
+			texture_x			= tri->texture_x * 32;
+			texture_y 			= tri->texture_y * 32;
+			texture_page		= (tri->param & TRI_PARAM_TEXTURE_PAGE) ? 1 : 0;
+			texture_width		= 32 << tri->texture_width;
+			texture_height		= 32 << tri->texture_height;
+			texture_width_mask	= (texture_width << 1) - 1;
+			texture_height_mask	= (texture_height << 1) - 1;
+			polygon_transparency = tri->transparency;
+			polygon_intensity	= tri->intensity;
+			viewport_priority	= tri->viewport_priority;
+			texture_coord_shift	= tri->texture_coord_shift;
+
+			if (tri->param & TRI_PARAM_TEXTURE_MIRROR_U)
+			{
+				texture_u_table = texture_mirror_table[tri->texture_width];
+			}
+			else
+			{
+				texture_u_table = texture_wrap_table[tri->texture_width];
+			}
+
+			if (tri->param & TRI_PARAM_TEXTURE_MIRROR_V)
+			{
+				texture_v_table = texture_mirror_table[tri->texture_height];
+			}
+			else
+			{
+				texture_v_table = texture_wrap_table[tri->texture_height];
+			}
+
+			switch (tri->texture_format)
+			{
+				case 0:		/* ARGB1555 */
+				{
+					if (tri->transparency < 32)
+					{
+						draw_triangle_tex1555_trans(tri->v[0], tri->v[1], tri->v[2]);
+					}
+					else
+					{
+						draw_triangle_tex1555_alpha(tri->v[0], tri->v[1], tri->v[2]);
+					}
+					break;
+				}
+
+				case 7:		/* ARGB4444 */
+				{
+					draw_triangle_tex4444_alpha(tri->v[0], tri->v[1], tri->v[2]);
+					break;
+				}
+			}
+		}
+		else
+		{
+			polygon_transparency = tri->transparency;
+			polygon_intensity	= tri->intensity;
+			viewport_priority	= tri->viewport_priority;
+			texture_coord_shift	= tri->texture_coord_shift;
+
+			draw_triangle_color_trans(tri->v[0], tri->v[1], tri->v[2], tri->color);
+		}
+	}
+}
 
 /*****************************************************************************/
 /* display list parser */
@@ -1600,11 +1541,6 @@ static void traverse_root_node(UINT32 address)
 
 	viewport_priority = (((node[0] >> 3) & 0x3)) << 29;			/* we use priority as 2 top bits of depth buffer value */
 
-	clip3d.min_x = max(viewport_region_x, screen_clip->min_x);
-	clip3d.max_x = min(viewport_region_x+viewport_region_width, screen_clip->max_x);
-	clip3d.min_y = max(viewport_region_y, screen_clip->min_y);
-	clip3d.max_y = min(viewport_region_y+viewport_region_height, screen_clip->max_y);
-
 	/* frustum plane angles */
 	viewport_left		= RADIAN_TO_DEGREE(asin(*(float*)&node[12]));
 	viewport_right		= RADIAN_TO_DEGREE(asin(*(float*)&node[16]));
@@ -1624,7 +1560,13 @@ static void traverse_root_node(UINT32 address)
 	matrix_base_address = node[22];
 	/* TODO: where does node[23] point to ? LOD table ? */
 
-	/* TODO: set lighting parameters */
+	/* set lighting parameters */
+	parallel_light[0] = -*(float*)&node[5];
+	parallel_light[1] = *(float*)&node[6];
+	parallel_light[2] = *(float*)&node[4];
+	parallel_light_intensity = *(float*)&node[7];
+
+	ambient_light_intensity = (UINT8)((node[0x24] >> 8) & 0xff) / 256.0f;
 
 	/* set coordinate system matrix */
 	load_matrix(0, &coordinate_system);
@@ -1645,6 +1587,12 @@ static void traverse_root_node(UINT32 address)
 static void real3d_traverse_display_list(void)
 {
 	init_matrix_stack();
+
+	triangle_buffer_ptr = 0;
+	alpha_triangle_buffer_ptr = 0;
+
 	traverse_root_node(0x800000);
+
+	render_triangles();
 }
 

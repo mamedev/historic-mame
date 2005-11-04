@@ -39,7 +39,7 @@ CPU #  Status   Game                     Notes
 
 #include "driver.h"
 
-static UINT8 key_0043[0x2000] =
+static const UINT8 key_0043[0x2000] =
 {
 	/* data */
 	0x24,0xa5,0x78,0x04,0x01,0xcc,0x10,0x06,0x48,0xc3,0x0c,0x70,0xce,0xb2,0x82,0x4b,
@@ -561,7 +561,7 @@ static UINT8 key_0043[0x2000] =
 };
 
 
-static UINT8 key_0054[0x2000] =
+static const UINT8 key_0054[0x2000] =
 {
 	/* data */
 	0x15,0x3c,0xc1,0x0f,0x3f,0x9b,0x91,0x9b,0xc5,0xa2,0x1e,0xae,0x46,0x27,0xc7,0x73,
@@ -1081,7 +1081,7 @@ static UINT8 key_0054[0x2000] =
 };
 
 
-static UINT8 key_0066[0x2000] =
+static const UINT8 key_0066[0x2000] =
 {
 	/* data */
 	0xc3,0x18,0x2d,0xa8,0xc2,0x56,0x5d,0x11,0x5f,0x0b,0x09,0x81,0x53,0xc9,0x48,0x27,
@@ -1601,7 +1601,7 @@ static UINT8 key_0066[0x2000] =
 };
 
 
-static UINT8 key_0064[0x2000] =
+static const UINT8 key_0064[0x2000] =
 {
 	/* data */
 	0x15,0x9d,0x34,0x3b,0x75,0x07,0xcd,/*0xdd,*/0x5f,0x69,0x1e,0x1f,0x05,0x93,0x1b,0xc5,/*0xd5,*/0x1f,
@@ -2122,7 +2122,7 @@ static UINT8 key_0064[0x2000] =
 	 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  ,
 };
 
-static UINT8 key_ninjakid2[0x2000] =
+static const UINT8 key_ninjakid2[0x2000] =
 {
 	/* data */
 	0x0e,0x38,0x11,0x10,0x40,0x02,0x27,0x06,0xc6,0x8d,0x16,0x15,0xbd,0xc4,0x0a,0x77,
@@ -2990,7 +2990,7 @@ static int decrypt(int val,int param,int opcode)
 	}
 }
 
-static UINT8 mc8123_decrypt(offs_t addr,UINT8 val,UINT8 *key,int opcode)
+static UINT8 mc8123_decrypt(offs_t addr,UINT8 val,const UINT8 *key,int opcode)
 {
 	int tbl_num;
 
@@ -3000,7 +3000,7 @@ static UINT8 mc8123_decrypt(offs_t addr,UINT8 val,UINT8 *key,int opcode)
 	return decrypt(val,key[tbl_num + opcode * 0x1000],opcode);
 }
 
-static void sys16_decrypt(UINT8 *key)
+static void sys16_decrypt(const UINT8 *key)
 {
 	UINT8 *decrypted = auto_malloc(0x8000);
 	UINT8 *rom = memory_region(REGION_CPU2);
@@ -3037,7 +3037,7 @@ void mc8123_decrypt_0043(void)
 	UINT8 *decrypted2 = auto_malloc(0x4000 * 4);
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int A, bank;
-	UINT8 *key = key_0043;
+	const UINT8 *key = key_0043;
 
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted1);
 	memory_configure_bank_decrypted(1, 0, 4, decrypted2, 0x4000);
@@ -3072,7 +3072,7 @@ void mc8123_decrypt_0064(void)
 	UINT8 *decrypted2 = auto_malloc(0x4000 * 4);
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int A, bank;
-	UINT8 *key = key_0064;
+	const UINT8 *key = key_0064;
 
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted1);
 	memory_configure_bank_decrypted(1, 0, 4, decrypted2, 0x4000);
@@ -3106,7 +3106,7 @@ void mc8123_decrypt_ninjakid2(void)
 	UINT8 *rom = memory_region(REGION_CPU2);
 	UINT8 *decrypted = auto_malloc(0x8000);
 	int A;
-	UINT8 *key = key_ninjakid2;
+	const UINT8 *key = key_ninjakid2;
 
 	memory_set_decrypted_region(1, 0x0000, 0x7fff, decrypted);
 

@@ -1151,29 +1151,38 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 			map = (*Machine->drv->cpu[cpunum].construct_map[spacenum][1])(map);
 
 		/* convert implicit ROM entries to map to the memory region */
-		if (spacenum == ADDRESS_SPACE_PROGRAM)
-		{
-			offs_t region_top = memory_region_length(REGION_CPU1 + cpunum);
-			UINT8 *region_base = memory_region(REGION_CPU1 + cpunum);
-
+		if (spacenum == ADDRESS_SPACE_PROGRAM && memory_region(REGION_CPU1 + cpunum))
 			for (map = space->map; !IS_AMENTRY_END(map); map++)
-				if (!IS_AMENTRY_EXTENDED(map) && HANDLER_IS_ROM(map->read.handler) && !map->memory)
+				if (!IS_AMENTRY_EXTENDED(map) && HANDLER_IS_ROM(map->read.handler) && !map->region)
 				{
-					if (map->start >= region_top || map->end >= region_top)
-					{
-						if (map->share == 0 && !map->base)
-							osd_die("Error: implicit ROM entry %X-%X extends beyond region size (%X)", map->start, map->end, region_top);
-					}
-					else
-						map->memory = region_base + map->start;
+					map->region = REGION_CPU1 + cpunum;
+					map->region_offs = map->start;
 				}
-		}
+
+		/* convert region-relative entries to their memory pointers */
+		for (map = space->map; !IS_AMENTRY_END(map); map++)
+			if (map->region)
+				map->memory = memory_region(map->region) + map->region_offs;
 
 		/* make the adjusted map */
 		memcpy(space->adjmap, space->map, sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 2);
 		for (map = space->adjmap; !IS_AMENTRY_END(map); map++)
 			if (!IS_AMENTRY_EXTENDED(map))
 				adjust_addresses(space, IS_AMENTRY_MATCH_MASK(map), &map->start, &map->end, &map->mask, &map->mirror);
+
+		/* validate adjusted addresses against implicit regions */
+		for (map = space->adjmap; !IS_AMENTRY_END(map); map++)
+			if (map->region && map->share == 0 && !map->base)
+			{
+				UINT8 *base = memory_region(map->region);
+				offs_t length = memory_region_length(map->region);
+
+				/* validate the region */
+				if (!base)
+					osd_die("Error: CPU %d space %d memory map entry %X-%X references non-existant region %d", cpunum, spacenum, map->start, map->end, map->region);
+				if (map->region_offs + (map->end - map->start + 1) > length)
+					osd_die("Error: CPU %d space %d memory map entry %X-%X extends beyond region %d size (%X)", cpunum, spacenum, map->start, map->end, map->region, length);
+			}
 	}
 
 	/* init the static handlers */

@@ -2482,7 +2482,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( sci )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Manual states "MUST REMAIN OFF" */
@@ -2549,7 +2549,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( sciu )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Manual states "MUST REMAIN OFF" */
@@ -2616,7 +2616,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( nightstr )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Shown only as "OFF" in the manual */
@@ -2684,7 +2684,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( aquajack )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
@@ -2754,7 +2754,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( aquajckj )
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )

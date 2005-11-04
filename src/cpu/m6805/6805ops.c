@@ -452,7 +452,7 @@ INLINE void tsta( void )
 INLINE void clra( void )
 {
 	A = 0;
-	CLR_NZC;
+	CLR_NZ;
 	SEZ;
 }
 

@@ -1027,7 +1027,7 @@ static ADDRESS_MAP_START( system32_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x41ffff) AM_MIRROR(0x0e0000) AM_READWRITE(system32_spriteram_r, system32_spriteram_w) AM_BASE(&system32_spriteram)
 	AM_RANGE(0x500000, 0x50000f) AM_MIRROR(0x0ffff0) AM_READWRITE(system32_sprite_control_r, system32_sprite_control_w)
 	AM_RANGE(0x600000, 0x60ffff) AM_MIRROR(0x0e0000) AM_READWRITE(system32_paletteram_r, system32_paletteram_w) AM_BASE(&system32_paletteram[0])
-	AM_RANGE(0x610000, 0x61007f) AM_MIRROR(0x0eff80) AM_WRITE(system32_mixer_w)
+	AM_RANGE(0x610000, 0x61007f) AM_MIRROR(0x0eff80) AM_READWRITE(system32_mixer_r, system32_mixer_w)
 	AM_RANGE(0x700000, 0x701fff) AM_MIRROR(0x0fe000) AM_READWRITE(shared_ram_16_r, shared_ram_16_w)
 	AM_RANGE(0xc00000, 0xc0001f) AM_MIRROR(0x0fff80) AM_READWRITE(io_chip_r, io_chip_w)
 	AM_RANGE(0xc00040, 0xc0007f) AM_MIRROR(0x0fff80) AM_READWRITE(io_expansion_r, io_expansion_w)
@@ -3694,7 +3694,7 @@ static DRIVER_INIT( svf )
 static DRIVER_INIT( jleague )
 {
 	common_init(NULL, NULL, NULL);
-	system32_prot_vblank = jleague_fd1149_vblank;
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20F700, 0x20F705, 0, 0, jleague_protection_w);
 }
 
 
@@ -3732,7 +3732,7 @@ GAME( 1991, radmu,    radm,     system32,     radm,     radm,     ROT0, "Sega", 
 GAME( 1991, radr,     0,        system32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (World)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1991, radru,    radr,     system32,     radr,     radr,     ROT0, "Sega",   "Rad Rally (US)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, slipstrm, 0,        system32,     slipstrm, slipstrm, ROT0, "Capcom", "Slipstream", GAME_IMPERFECT_GRAPHICS )
-GAME( 1992, sonic,    0,        system32,     sonic,    sonic,    ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1992, sonic,    0,        system32,     sonic,    sonic,    ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, rev. C)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, sonicp,   sonic,    system32,     sonic,    sonicp,   ROT0, "Sega",   "SegaSonic The Hedgehog (Japan, prototype)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1991, spidman,  0,        system32,     spidman,  spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (World)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1991, spidmanu, spidman,  system32,     spidmanu, spidman,  ROT0, "Sega",   "Spider-Man: The Videogame (US)", GAME_IMPERFECT_GRAPHICS )

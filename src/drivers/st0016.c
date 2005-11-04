@@ -67,7 +67,6 @@ extern int st0016_game;
 void st0016_save_init(void);
 static int mux_port;
 int st0016_rom_bank;
-static UINT32 *rom_base;
 
 static ADDRESS_MAP_START( st0016_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
@@ -371,7 +370,7 @@ static ADDRESS_MAP_START( srmp5_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x0a180000, 0x0a1801ff) AM_RAM
 	AM_RANGE(0x0a200000, 0x0a3fffff) AM_RAM
 	AM_RANGE(0x1eff0000, 0x1eff0013) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base)
+	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM) AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( srmp5 )
@@ -455,7 +454,7 @@ static ADDRESS_MAP_START( speglsht_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01ca5000, 0x01ca6fff) AM_RAM /* i/o ?? */
 	AM_RANGE(0x0a000000, 0x0a003fff) AM_RAM /* shared with st-0016 ! */
 	AM_RANGE(0x1eff0000, 0x1eff001f) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM) AM_BASE(&rom_base)
+	AM_RANGE(0x1fc00000, 0x1fdfffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM) AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( speglsht )
@@ -902,13 +901,11 @@ static DRIVER_INIT(nratechu)
 static DRIVER_INIT(srmp5)
 {
 	st0016_game=2;
-	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 }
 
 static DRIVER_INIT(speglsht)
 {
 	st0016_game=3;
-	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
 }
 
 static DRIVER_INIT(mayjinsn)

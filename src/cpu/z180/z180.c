@@ -50,7 +50,7 @@
 #include "state.h"
 #include "mamedbg.h"
 #include "z180.h"
-#include "../z80/z80daisy.h"
+#include "cpu/z80/z80daisy.h"
 
 #define VERBOSE 0
 

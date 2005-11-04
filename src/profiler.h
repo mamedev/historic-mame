@@ -12,7 +12,8 @@
 #define __PROFILER_H__
 
 /* profiling */
-enum {
+enum
+{
 	PROFILER_END = -1,
 	PROFILER_CPU1 = 0,
 	PROFILER_CPU2,

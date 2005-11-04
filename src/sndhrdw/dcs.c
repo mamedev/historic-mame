@@ -1062,7 +1062,7 @@ static void sound_tx_callback(int port, INT32 data)
 
 static READ16_HANDLER( dcs_polling_r )
 {
-	activecpu_eat_cycles(100);
+	activecpu_eat_cycles(1000);
 	return *dcs_polling_base;
 }
 

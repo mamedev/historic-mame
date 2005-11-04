@@ -831,9 +831,59 @@ ROM_START( robokidj )
 	ROM_LOAD( "robokid.b9",   0x00000, 0x08000, CRC(fac59c3f) SHA1(1b202ad5c12982512129d9e097267dd31b984ae8) )
 ROM_END
 
+ROM_START( robokdj2 )
+	ROM_REGION( 0x48000, REGION_CPU1, 0 )						/* main CPU */
+	ROM_LOAD( "1_rom29.18j",  0x00000, 0x08000, CRC(969fb951) SHA1(aa32f0cb33ba2ccbb933dab5444a7e0dbbb84b3d) )
+	ROM_CONTINUE(             0x10000, 0x08000 )
+	ROM_LOAD( "2_rom30.18k",  0x18000, 0x10000, CRC(c0228b63) SHA1(8f7e3a29a35723abc8b10bf511fc8611e31a2961) )
+	ROM_LOAD( "robokid3.15k", 0x28000, 0x10000, CRC(05295ec3) SHA1(33dd0853a2064cb4301cfbdc7856def81f6e1223) )
+	ROM_LOAD( "robokid4.12k", 0x38000, 0x10000, CRC(3bc3977f) SHA1(da394e12d197b0e109b03c854da06b1267bd9d59) )
+	ROM_COPY( REGION_CPU1 ,   0x10000, 0x8000, 0x4000 ) /* to avoid crash */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )						/* sound CPU */
+	ROM_LOAD( "robokid.k7",   0x00000, 0x10000, CRC(f490a2e9) SHA1(861d1256c090ce3d1f45f95cc894affbbc3f1466) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )		/* BG0 */
+	ROM_LOAD( "robokid.19c",  0x00000, 0x10000, CRC(02220421) SHA1(f533e9c6cea1dccbb60e0528c470f3cb5e8fc44e) )
+	ROM_LOAD( "robokid.20c",  0x10000, 0x10000, CRC(02d59bc2) SHA1(031acbb14145f9f4623de8868c6207fb9f8e8207) )
+	ROM_LOAD( "robokid.17d",  0x20000, 0x10000, CRC(2fa29b99) SHA1(13dce7932e2e9c03a139a4293584838aa3d9f1c3) )
+	ROM_LOAD( "robokid.18d",  0x30000, 0x10000, CRC(ae15ce02) SHA1(175e4eebdf12f1f373e01a4b1c933053ddd09abf) )
+	ROM_LOAD( "robokid.19d",  0x40000, 0x10000, CRC(784b089e) SHA1(1ae3346b4afa3da9484ebc59c8a530cb95f7d277) )
+	ROM_LOAD( "robokid.20d",  0x50000, 0x10000, CRC(b0b395ed) SHA1(31ec07634053793a701bbfd601b029f7da66e9d7) )
+	ROM_LOAD( "robokid.19f",  0x60000, 0x10000, CRC(0f9071c6) SHA1(8bf0c35189eda98a9bc150788890e136870cb5b2) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )		/* BG1 */
+	ROM_LOAD( "robokid.12c",  0x00000, 0x10000, CRC(0ab45f94) SHA1(d8274263068d998c89a1b247dde7f814037cc15b) )
+	ROM_LOAD( "robokid.14c",  0x10000, 0x10000, CRC(029bbd4a) SHA1(8e078cdafe608fc6cde827be85c5267ade4ecca6) )
+	ROM_LOAD( "robokid.15c",  0x20000, 0x10000, CRC(7de67ebb) SHA1(2fe92e50e2894dd363e69b053db96bdb66a273eb) )
+	ROM_LOAD( "robokid.16c",  0x30000, 0x10000, CRC(53c0e582) SHA1(763e6127532d022a707bf9ddf1a832413745f248) )
+	ROM_LOAD( "robokid.17c",  0x40000, 0x10000, CRC(0cae5a1e) SHA1(a183a33516c81ea2c029b72ee6261c4519e095ab) )
+	ROM_LOAD( "robokid.18c",  0x50000, 0x10000, CRC(56ac7c8a) SHA1(66ed5646a2e8563caeb4ff96fa7d34fde27e9899) )
+	ROM_LOAD( "robokid.15d",  0x60000, 0x10000, CRC(cd632a4d) SHA1(a537d9ced45fdac490097e9162ac4d09a470be79) )
+	ROM_LOAD( "robokid.16d",  0x70000, 0x10000, CRC(18d92b2b) SHA1(e6d20ea8f0fac8bd4824a3b279a0fd8a1d6c26f5) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )		/* BG2 */
+	ROM_LOAD( "robokid.12a",  0x00000, 0x10000, CRC(e64d1c10) SHA1(d1073c80c9788aba65410f88691747a37b2a9d4a) )
+	ROM_LOAD( "robokid.14a",  0x10000, 0x10000, CRC(8f9371e4) SHA1(0ea06d62bf4673ebda49a849cead832a24e5b886) )
+	ROM_LOAD( "robokid.15a",  0x20000, 0x10000, CRC(469204e7) SHA1(8c2e94635b2b304e7dfa2e6ad58ba526dcf02453) )
+	ROM_LOAD( "robokid.16a",  0x30000, 0x10000, CRC(4e340815) SHA1(d204b830c5809f25f7dfa451bbcbeda8b81ced54) )
+	ROM_LOAD( "robokid.17a",  0x40000, 0x10000, CRC(f0863106) SHA1(ff7e44d0aa5a07ec9a7eddef1a55181bd2e867b1) )
+	ROM_LOAD( "robokid.18a",  0x50000, 0x10000, CRC(fdff7441) SHA1(843b2c92bbc6f7319568677d50cbd9b03475b34a) )
+
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE )		/* sprite */
+	ROM_LOAD( "robokid.15f",  0x00000, 0x10000, CRC(ba61f5ab) SHA1(8433ddd55f0184cd5e8bb4a94a1c2336b2f8ff05) )
+	ROM_LOAD( "robokid.16f",  0x10000, 0x10000, CRC(d9b399ce) SHA1(70755c9cae27187f183ae6d61bedb95c420756f4) )
+	ROM_LOAD( "robokid.17f",  0x20000, 0x10000, CRC(afe432b9) SHA1(1ec7954ccf112eddf0ffcb8b5aec6cbc5cba7a7a) )
+	ROM_LOAD( "robokid.18f",  0x30000, 0x10000, CRC(a0aa2a84) SHA1(4d46c169429cd285644336c7d47e393b33bd8770) )
+
+	ROM_REGION( 0x08000, REGION_GFX5, ROMREGION_DISPOSE )		/* FG */
+	ROM_LOAD( "robokid.b9",   0x00000, 0x08000, CRC(fac59c3f) SHA1(1b202ad5c12982512129d9e097267dd31b984ae8) )
+ROM_END
+
 
 /*   ( YEAR  NAME      PARENT   MACHINE  INPUT    INIT      MONITOR COMPANY  FULLNAME                 FLAGS ) */
-GAME( 1988, robokid,  0,       robokid, robokid, 0,        ROT0,   "UPL",  "Atomic Robo-kid",         GAME_NO_COCKTAIL )
-GAME( 1988, robokidj, robokid, robokid, robokidj,0,        ROT0,   "UPL",  "Atomic Robo-kid (Japan)", GAME_NO_COCKTAIL )
+GAME( 1988, robokid,  0,       robokid, robokid, 0,        ROT0,   "UPL",  "Atomic Robo-kid",                GAME_NO_COCKTAIL )
+GAME( 1988, robokidj, robokid, robokid, robokidj,0,        ROT0,   "UPL",  "Atomic Robo-kid (Japan, Set 1)", GAME_NO_COCKTAIL )
+GAME( 1988, robokdj2, robokid, robokid, robokidj,0,        ROT0,   "UPL",  "Atomic Robo-kid (Japan, Set 2)", GAME_NO_COCKTAIL )
 GAME( 1989, omegaf,   0,       omegaf,  omegaf,  omegaf,   ROT270, "UPL",  "Omega Fighter",          GAME_NO_COCKTAIL )
 GAME( 1989, omegafs,  omegaf,  omegaf,  omegaf,  omegaf,   ROT270, "UPL",  "Omega Fighter Special",  GAME_NO_COCKTAIL )

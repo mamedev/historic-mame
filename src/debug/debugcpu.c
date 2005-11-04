@@ -323,10 +323,12 @@ void debug_cpu_init(void)
 		{
 			int datawidth = cpunum_databus_width(cpunum, spacenum);
 			int logwidth = cpunum_logaddr_width(cpunum, spacenum);
-			int addrwidth = logwidth ? logwidth : cpunum_addrbus_width(cpunum, spacenum);
 			int addrshift = cpunum_addrbus_shift(cpunum, spacenum);
 			int pageshift = cpunum_page_shift(cpunum, spacenum);
+			int addrwidth = logwidth;
 
+			if (addrwidth == 0)
+				addrwidth = cpunum_addrbus_width(cpunum, spacenum);
 			debug_cpuinfo[cpunum].space[spacenum].databytes = datawidth / 8;
 			debug_cpuinfo[cpunum].space[spacenum].pageshift = pageshift;
 			debug_cpuinfo[cpunum].space[spacenum].addr2byte_lshift = (addrshift < 0) ? -addrshift : 0;

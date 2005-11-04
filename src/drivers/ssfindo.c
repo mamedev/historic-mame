@@ -1,5 +1,6 @@
 /************************************************************************
  See See Find Out [Icarus 1999]
+ Ping Pong Car [Icarus 1999]
 
  driver by
   Tomasz Slanina  analog[at]op.pl
@@ -58,6 +59,63 @@ Notes:
          DU2, DU3,: Samsung KM29W32000AT 32MBit NAND Flash 3.3V Serial EEPROM (TSOP44)
          DU5, DU6   These ROMs are mounted on a small plug-in daughterboard. There are additional
                     mounting pads for 4 more of these ROMs but they're not populated.
+
+----
+
+Pong Pong Car
+Icarus, 1999
+
+This game runs on hardware that is similar to that used on 'See See Find Out'
+The game is a rip-off of RallyX
+
+PCB Layout
+----------
+
+|--------------------------------------|
+|    KM416C1204                        |
+|    KM416C1204    U24  U25  U26*  U27*|
+|  DA1311A                             |
+|  DA1311A        |---------|54MHz     |
+|  4558           |CL-PS7500| LED      |
+|J                |         | |--------|
+|A                |         | |DU2  DU3|
+|M                |         | |        |
+|M EL2386       @ |---------| |DU5  DU6|
+|A       &                    |--------|
+|                                      |
+|  7660             |------|           |
+|                   |PRIME |14.31818MHz|
+|                   |------|           |
+| NASN9289  XILINX                     |
+| QS1000    XCS10    MAX232    DIPSW(8)|
+|  24MHz     #   7705                  |
+|--------------------|DB9|-------------|
+                     |---|
+Notes:
+      Chips:
+         QS1000: QDSP QS1000 AdMOS 9638R, Wavetable Audio chip, clock input of 24.000MHz (QFP100)
+                 see http://www.hwass.co.kr/product.htm for more info on QS100x chips.
+          PRIME: LGS Prime 3C 9849R, clock input of 14.31818MHz (QFP100)
+   XILINX XCS10: Xilinx Spartan XCS10 FPGA (QFP144)
+      CL-PS7500: Cirrus Logic CL-PS7500FE-56QC-A 84877-951BD ARM 9843J
+                 clock input of 54.000MHz, ARM710C; ARM7-core CPU (QFP240)
+     KM416C1204: Samsung KM416C1204CJ-5 2M x8 DRAM (SOJ42)
+           7705: Reset/Watchdog IC (SOIC8)
+           7660: DC-DC Voltage Convertor (SOIC8)
+         EL2386: Elantec Semiconductor 250MHz Triple Current Feedback Op Amp with Disable (SOIC16)
+              *: Unpopulated DIP32 sockets
+              &: Unpopulated location for QFP100 IC
+              #: Unpopulated location for SOJ42 RAM
+              @: Unpopulated location for OSC1
+
+      ROMs:
+          U24, U25: AMD 29F040B 512k x8 FlashROM (DIP32)
+          NASN9289: Re-badged SOP32 ROM. Should be compatible with existing QS100x Wavetable Audio Sample ROMs,
+                    Dumped as 1M x8 SOP32 MaskROM
+         DU2, DU3,: Samsung KM29N32000TS 32MBit NAND Flash 3.3V Serial EEPROM (TSOP44)
+         DU5, DU6   These ROMs are mounted on a small plug-in daughterboard. There are additional
+                    mounting pads for 4 more of these ROMs but they're not populated.
+
 
 */
 
@@ -409,6 +467,25 @@ static ADDRESS_MAP_START( ssfindo_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x10000000, 0x11ffffff) AM_RAM AM_BASE (&vram)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( ppcar_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x000fffff) AM_ROM AM_REGION(REGION_USER1, 0)
+//  AM_RANGE(0x03200000, 0x032001ff) AM_READWRITE(PS7500_IO_r,PS7500_IO_w)  // same?
+//  AM_RANGE(0x03012e60, 0x03012e67) AM_NOP
+//  AM_RANGE(0x03012fe0, 0x03012fe3) AM_WRITE(debug_w)
+//  AM_RANGE(0x03012ff0, 0x03012ff3) AM_NOP
+//  AM_RANGE(0x03012ff4, 0x03012ff7) AM_WRITENOP AM_READ(ff4_r) //status flag ?
+//  AM_RANGE(0x03012ff8, 0x03012fff) AM_NOP
+//  AM_RANGE(0x03240000, 0x03240003) AM_WRITENOP AM_READ(input_port_1_dword_r)
+//  AM_RANGE(0x03241000, 0x03241003) AM_WRITENOP AM_READ(input_port_2_dword_r)
+//  AM_RANGE(0x03242000, 0x03242003) AM_READ(io_r) AM_WRITE(io_w)
+//  AM_RANGE(0x03243000, 0x03243003) AM_WRITENOP AM_READ(input_port_3_dword_r)
+//  AM_RANGE(0x0324f000, 0x0324f003) AM_READ(SIMPLEIO_r)
+//  AM_RANGE(0x03245000, 0x03245003) AM_WRITENOP /* sound ? */
+//  AM_RANGE(0x03400000, 0x03400003) AM_WRITE(FIFO_w)
+	AM_RANGE(0x08000000, 0x08ffffff) AM_RAM AM_BASE (&vram)
+ADDRESS_MAP_END
+
+
 static MACHINE_INIT( ssfindo )
 {
 	PS7500_reset();
@@ -441,37 +518,29 @@ INPUT_PORTS_START( ssfindo )
 	PORT_START_TAG("DSW")
 
 	PORT_DIPNAME( 0x01, 0x01, "Test Mode" )
-		PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Free_Play ) )
-		PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Service_Mode ) )
-		PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "DSW 2" )
-		PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "DSW 3" )
-		PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x010, "DSW 4" )
-		PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "DSW 5" )
-		PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x040, "DSW 6" )
-		PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-		PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -497,6 +566,28 @@ static MACHINE_DRIVER_START( ssfindo )
 
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( ppcar )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(ARM7, 54000000) // guess...
+	MDRV_CPU_PROGRAM_MAP(ppcar_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_CPU_VBLANK_INT(ssfindo_interrupt,1)
+	MDRV_MACHINE_INIT(ssfindo)
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(ssfindo)
+MACHINE_DRIVER_END
+
+
 ROM_START( ssfindo )
 	ROM_REGION(0x100000, REGION_USER1, 0 ) /* ARM 32 bit code */
 	ROM_LOAD16_BYTE( "a.u28",	0x000000, 0x80000, CRC(c93edbd3) SHA1(9c703cfef49b59ccd5d68bab9bd59344bd18d67e) )
@@ -521,8 +612,30 @@ ROM_START( ssfindo )
 	ROM_REGION(0x100000, REGION_USER6, 0 ) /* samples - same internal structure as qdsp samples  */
 	ROM_LOAD( "c.u12",		0x000000, 0x80000, CRC(d24b5e56) SHA1(d89983cf4b0a6e0e4137f3799bdbcfd72c7bebe4) )
 	ROM_LOAD( "d.u11",		0x080000, 0x80000, CRC(c0fdd82a) SHA1(a633045e0f5c144b4e24e04fb9446522fdb222f4) )
+ROM_END
 
+ROM_START( ppcar )
+	ROM_REGION(0x100000, REGION_USER1, 0 ) /* ARM 32 bit code */
+	ROM_LOAD16_BYTE( "0.u24",	0x000000, 0x80000, CRC(1940a483) SHA1(9456361fd25bf037b53bd2d04764a33b299d96dd) )
+	ROM_LOAD16_BYTE( "1.u25",	0x000001, 0x80000, CRC(75ad8679) SHA1(392288e56350e3cc49aaca82edf26f2a9e346f21) )
+
+	ROM_REGION(0x1000000, REGION_USER2, 0 ) /* flash roms */
+	ROM_LOAD16_BYTE( "du5",		0x000000, 0x400000, CRC(d4b7374a) SHA1(54c93a4235f495ba3794aea511b19db821a8acb1) )
+	ROM_LOAD16_BYTE( "du6",		0x000001, 0x400000, CRC(e95a3a62) SHA1(2b1c889d208a749e3d7e4c75588c9c1f979e88d9) )
+
+	ROM_LOAD16_BYTE( "du3",		0x800000, 0x400000, CRC(73882474) SHA1(191b64e662542b5322160c99af8e00079420d473) )
+	ROM_LOAD16_BYTE( "du2",		0x800001, 0x400000, CRC(9250124a) SHA1(650f4b89c92fe4fb63fc89d4e08c4c4c611bebbc) )
+
+	ROM_REGION(0x10000, REGION_USER4, 0 ) /* qdsp code */
+	/* none */
+
+	ROM_REGION(0x100000, REGION_USER5, 0 ) /* HWASS 1008S-1  qdsp samples */
+	ROM_LOAD( "nasn9289.u9",	0x000000, 0x100000, CRC(9aef9545) SHA1(f23ef72c3e3667923768dfdd0c5b4951b23dcbcf) )
+
+	ROM_REGION(0x100000, REGION_USER6, 0 ) /* samples - same internal structure as qdsp samples  */
+	/* none */
 ROM_END
 
 GAME( 1999, ssfindo, 0,        ssfindo,  ssfindo,  0, ROT0, "Icarus", "See See Find Out", GAME_NO_SOUND|GAME_NOT_WORKING )
+GAME( 1999, ppcar,   0,        ppcar,    ssfindo,  0, ROT0, "Icarus", "Ping Pong Car", GAME_NO_SOUND|GAME_NOT_WORKING )
 

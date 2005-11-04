@@ -410,7 +410,7 @@ INLINE UINT64 d2u(double d)
 
 
 /* And some MSVC optimizations/warnings */
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && (_MSC_VER >= 1200)
 #define DECL_NORETURN		__declspec(noreturn)
 #else
 #define DECL_NORETURN

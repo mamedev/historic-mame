@@ -391,7 +391,7 @@ const performance_info *mame_get_performance_info(void);
 int mame_find_cpu_index(const char *tag);
 
 /* runs validity checks, -1 for all */
-int mame_validitychecks(int game);
+int mame_validitychecks(void);
 
 #ifdef MESS
 #include "mess.h"

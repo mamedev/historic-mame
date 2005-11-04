@@ -579,6 +579,8 @@ struct _address_map
 	UINT32				share;				/* index of a shared memory block */
 	void **				base;				/* receives pointer to memory (optional) */
 	size_t *			size;				/* receives size of area in bytes (optional) */
+	UINT32				region;				/* region containing the memory backing this entry */
+	offs_t				region_offs;		/* offset within the region */
 };
 typedef struct _address_map address_map;
 
@@ -663,7 +665,8 @@ address_map *construct_map_##_name(address_map *map)					\
 	map->write_name = #_handler;										\
 
 #define AM_REGION(_region, _offs)										\
-	map->memory = memory_region(_region) + _offs;						\
+	map->region = (_region);											\
+	map->region_offs = (_offs);											\
 
 #define AM_SHARE(_index)												\
 	map->share = _index;												\

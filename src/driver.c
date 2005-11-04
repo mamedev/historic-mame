@@ -1653,6 +1653,7 @@ const game_driver *drivers[] =
 
 	/* Taito L-System games */
 	DRIVER( raimais )	/* B36 (c) 1988 Taito Corporation (Japan) */
+	DRIVER( raimaisj )	/* B36 (c) 1988 Taito Corporation */
 	DRIVER( kurikint )	/* B42 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( kurikinu )	/* B42 (c) 1988 Taito America Corporation (US) */
 	DRIVER( kurikinj )	/* B42 (c) 1988 Taito Corporation (Japan) */
@@ -3423,6 +3424,7 @@ Sep.1994 Quiz Ghost Hunter
 
 	/* Step 2.1 */
 	DRIVER( daytona2 )
+	DRIVER( dayto2pe )
 	DRIVER( dirtdvls )
 	DRIVER( swtrilgy )
 
@@ -5237,6 +5239,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( arkarea )	/* UPL-87007 (c) [1988?] */
 	DRIVER( robokid )	/* UPL-88013 (c) 1988 */
 	DRIVER( robokidj )	/* UPL-88013 (c) 1988 */
+	DRIVER( robokdj2 )	/* UPL-88013 (c) 1988 */
 	DRIVER( omegaf )	/* UPL-89016 (c) 1989 */
 	DRIVER( omegafs )	/* UPL-89016 (c) 1989 */
 
@@ -6205,6 +6208,7 @@ Other Sun games
 	DRIVER( searchey )	/* (c) 1999 Yun Sung */
 	DRIVER( pclubys )	/* (c) 2000 Yun Sung */
 	DRIVER( pclubysa )	/* (c) 2000 Yun Sung */
+	DRIVER( wondstck )	/* (c) ???? Yun Sung */
 
 	/* Zilec games */
 	DRIVER( blueprnt )	/* (c) 1982 Bally Midway (Zilec in ROM 3U, and the programmer names) */
@@ -6693,6 +6697,7 @@ Other Sun games
 	DRIVER( trucocl )	/* (c) 1991 Miky SRL */
 	DRIVER( ertictac )	/* (c) 1992 Sisteme */
 	DRIVER( ssfindo )	/* (c) 1999 Icarus */
+	DRIVER( ppcar )		/* (c) 1999 Icarus */
 	DRIVER( monzagp )
 	DRIVER( couple )
 	DRIVER( couplep )

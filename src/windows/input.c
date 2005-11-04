@@ -1013,7 +1013,7 @@ int win_init_input(void)
 	if (Machine != NULL && Machine->gamedrv != NULL)
 	{
 		begin_resource_tracking();
-		inp = input_port_allocate(Machine->gamedrv->construct_ipt);
+		inp = input_port_allocate(Machine->gamedrv->construct_ipt, NULL);
 		autoselect_analog_devices(inp, IPT_PADDLE,     IPT_PADDLE_V,   0,             ANALOG_TYPE_PADDLE,   "paddle");
 		autoselect_analog_devices(inp, IPT_AD_STICK_X, IPT_AD_STICK_Y, IPT_AD_STICK_Z,ANALOG_TYPE_ADSTICK,  "analog joystick");
 		autoselect_analog_devices(inp, IPT_LIGHTGUN_X, IPT_LIGHTGUN_Y, 0,             ANALOG_TYPE_LIGHTGUN, "lightgun");

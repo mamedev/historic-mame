@@ -90,35 +90,15 @@ WRITE8_HANDLER( orbit_misc_w )
 }
 
 
-WRITE8_HANDLER( orbit_zeropage_w )
-{
-	memory_region(REGION_CPU1)[offset & 0xff] = data;
-}
-
-
-READ8_HANDLER( orbit_zeropage_r )
-{
-	return memory_region(REGION_CPU1)[offset & 0xff];
-}
-
-
-static ADDRESS_MAP_START( orbit_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x07ff) AM_READ(orbit_zeropage_r)
+static ADDRESS_MAP_START( orbit_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x00ff) AM_RAM AM_MIRROR(0x700)
 	AM_RANGE(0x0800, 0x0800) AM_READ(input_port_0_r)
 	AM_RANGE(0x1000, 0x1000) AM_READ(input_port_1_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(input_port_2_r)
 	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_3_r)
 	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_4_r)
-	AM_RANGE(0x3000, 0x33ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x6800, 0x7fff) AM_READ(MRA8_ROM) /* program */
-	AM_RANGE(0xfc00, 0xffff) AM_READ(MRA8_ROM) /* program mirror */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( orbit_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(orbit_zeropage_w)
-	AM_RANGE(0x3000, 0x33bf) AM_WRITE(orbit_playfield_w) AM_BASE(&orbit_playfield_ram)
-	AM_RANGE(0x33c0, 0x33ff) AM_WRITE(orbit_sprite_w) AM_BASE(&orbit_sprite_ram)
+	AM_RANGE(0x3000, 0x33bf) AM_READWRITE(MRA8_RAM, orbit_playfield_w) AM_BASE(&orbit_playfield_ram)
+	AM_RANGE(0x33c0, 0x33ff) AM_READWRITE(MRA8_RAM, orbit_sprite_w) AM_BASE(&orbit_sprite_ram)
 	AM_RANGE(0x3400, 0x37bf) AM_WRITE(orbit_playfield_w)
 	AM_RANGE(0x37c0, 0x37ff) AM_WRITE(orbit_sprite_w)
 	AM_RANGE(0x3800, 0x3800) AM_WRITE(orbit_note_w)
@@ -127,8 +107,7 @@ static ADDRESS_MAP_START( orbit_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3c00, 0x3c0f) AM_WRITE(orbit_misc_w)
 	AM_RANGE(0x3e00, 0x3e00) AM_WRITE(orbit_noise_rst_w)
 	AM_RANGE(0x3f00, 0x3f00) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x6800, 0x7fff) AM_WRITE(MWA8_ROM) /* program */
-	AM_RANGE(0xfc00, 0xffff) AM_WRITE(MWA8_ROM) /* program mirror */
+	AM_RANGE(0x6800, 0x7fff) AM_ROM AM_MIRROR(0x8000)		/* program */
 ADDRESS_MAP_END
 
 
@@ -297,7 +276,7 @@ static MACHINE_DRIVER_START( orbit )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6800, 12096000 / 16)
-	MDRV_CPU_PROGRAM_MAP(orbit_readmem, orbit_writemem)
+	MDRV_CPU_PROGRAM_MAP(orbit_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse, 1)
 	MDRV_CPU_PERIODIC_INT(orbit_interrupt, TIME_IN_HZ(240))
 

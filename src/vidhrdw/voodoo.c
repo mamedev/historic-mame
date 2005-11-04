@@ -41,7 +41,7 @@
 #define PER_PIXEL_LOD			(1)
 #define ALPHA_BLENDING			(1)
 #define FOGGING					(1)
-#define RESOLUTION_DIVIDE_SHIFT	(0)
+#define OPTIMIZATIONS_ENABLED	(1)
 
 
 
@@ -61,6 +61,7 @@
 #define LOG_MEMFIFO				(0)
 #define LOG_TEXTURERAM			(0)
 #define LOG_FRAMEBUFFER			(0)
+#define LOG_RASTERIZERS			(1)
 #define DEBUG_LOD				(0)
 
 
@@ -72,7 +73,7 @@
  *************************************/
 
 #define MAX_TMUS				(2)
-#define MAX_RASTERIZERS			(256)
+#define RASTER_HASH_SIZE		(97)
 
 #define FRAMEBUF_WIDTH			(1024)
 #define FRAMEBUF_HEIGHT			(1024)
@@ -84,7 +85,7 @@
 #define FBZCOLORPATH_MASK		(0x0fffffff)
 #define ALPHAMODE_MASK			(0xffffffff)
 #define FOGMODE_MASK			(0x0000001f)
-#define FBZMODE_MASK			(0x001fffff)
+#define FBZMODE_MASK			(0x003fffff)
 #define TEXTUREMODE0_MASK		(0xfffff8df)
 #define TEXTUREMODE1_MASK		(0x00000000)
 
@@ -123,8 +124,9 @@ struct rasterizer_info
 {
 	struct rasterizer_info *next;
 	void	(*callback)(void);
-	UINT8	needs_texMode0;
-	UINT8	needs_texMode1;
+	UINT8	is_generic;
+	UINT32	hits;
+	UINT32	polys;
 	UINT32	val_fbzColorPath;
 	UINT32	val_alphaMode;
 	UINT32	val_fogMode;
@@ -276,9 +278,12 @@ static struct setup_vert setup_verts[3];
 static struct setup_vert setup_pending;
 
 /* rasterizers */
-//static struct rasterizer_info raster[MAX_RASTERIZERS];
-static int num_rasters;
-//static struct rasterizer_info *raster_head;
+static struct rasterizer_info *raster_hash[RASTER_HASH_SIZE];
+
+/* optimization flags */
+static int skip_count;
+static int skip_interval;
+static int resolution_mask;
 
 /* debugging/stats */
 static UINT32 polycount, wpolycount, pixelcount, lastfps, framecount, totalframes;
@@ -289,6 +294,12 @@ static int status_lastpc_count;
 static UINT8 loglod = 0;
 static int total_swaps;
 static UINT8 cheating_allowed;
+static int reg_writes;
+static int reg_reads;
+static int tex_writes;
+static int fb_writes;
+static int fb_reads;
+static int generic_polys;
 
 
 
@@ -368,7 +379,7 @@ static void cmdfifo_process_pending(UINT32 old_depth);
 static void fastfill(void);
 static void draw_triangle(void);
 static void setup_and_draw_triangle(void);
-//static int init_generator(void);
+static int init_generator(void);
 
 
 
@@ -744,9 +755,13 @@ int voodoo_start_common(void)
 	/* allocate a vblank timer */
 	vblank_timer = timer_alloc(vblank_callback);
 
+	/* reset optimizations */
+	skip_count = 0;
+	skip_interval = 1;
+	resolution_mask = 0;
+
 	voodoo_reset();
-	num_rasters = 0;
-//init_generator();
+	init_generator();
 	return 0;
 }
 
@@ -908,13 +923,13 @@ VIDEO_UPDATE( voodoo )
 		logerror("--- video update (%d-%d) ---\n", cliprect->min_y, cliprect->max_y);
 
 	/* draw the screen */
-#if (RESOLUTION_DIVIDE_SHIFT != 0)
+#if (OPTIMIZATIONS_ENABLED)
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
-		UINT16 *source = &frontbuf[1024 * ((y >> RESOLUTION_DIVIDE_SHIFT) << RESOLUTION_DIVIDE_SHIFT)];
+		UINT16 *source = &frontbuf[1024 * (y & ~resolution_mask)];
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
-			dest[x] = pen_lookup[source[(x >> RESOLUTION_DIVIDE_SHIFT) << RESOLUTION_DIVIDE_SHIFT]];
+			dest[x] = pen_lookup[source[x & ~resolution_mask]];
 	}
 #else
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
@@ -935,6 +950,65 @@ VIDEO_UPDATE( voodoo )
 			UINT16 *source = &depthbuf[1024 * y];
 			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 				*dest++ = pen_lookup[~*source++ & 0xf800];
+		}
+	}
+
+	/* update options */
+	if (OPTIMIZATIONS_ENABLED && code_pressed(KEYCODE_LCONTROL))
+	{
+		if (code_pressed(KEYCODE_1))
+		{
+			while (code_pressed(KEYCODE_1)) ;
+			ui_popup("Running at full frame rate");
+			skip_interval = 1;
+		}
+		if (code_pressed(KEYCODE_2))
+		{
+			while (code_pressed(KEYCODE_2)) ;
+			ui_popup("Running at 1/2 frame rate");
+			skip_interval = 2;
+		}
+		if (code_pressed(KEYCODE_3))
+		{
+			while (code_pressed(KEYCODE_3)) ;
+			ui_popup("Running at 1/3 frame rate");
+			skip_interval = 3;
+		}
+		if (code_pressed(KEYCODE_4))
+		{
+			while (code_pressed(KEYCODE_4)) ;
+			ui_popup("Running at 1/4 frame rate");
+			skip_interval = 4;
+		}
+		if (code_pressed(KEYCODE_5))
+		{
+			while (code_pressed(KEYCODE_5)) ;
+			ui_popup("Running at 1/5 frame rate");
+			skip_interval = 5;
+		}
+		if (code_pressed(KEYCODE_6))
+		{
+			while (code_pressed(KEYCODE_6)) ;
+			ui_popup("Running at 1/6 frame rate");
+			skip_interval = 6;
+		}
+		if (code_pressed(KEYCODE_F))
+		{
+			while (code_pressed(KEYCODE_F)) ;
+			ui_popup("Full resolution");
+			resolution_mask = 0;
+		}
+		if (code_pressed(KEYCODE_H))
+		{
+			while (code_pressed(KEYCODE_H)) ;
+			ui_popup("Half resolution");
+			resolution_mask = 1;
+		}
+		if (code_pressed(KEYCODE_Q))
+		{
+			while (code_pressed(KEYCODE_Q)) ;
+			ui_popup("Quarter resolution");
+			resolution_mask = 3;
 		}
 	}
 
@@ -970,6 +1044,41 @@ VIDEO_UPDATE( voodoo )
 		if (code_pressed(KEYCODE_7_PAD)) loglod = 7;
 		if (code_pressed(KEYCODE_8_PAD)) loglod = 8;
 	}
+
+#if (LOG_RASTERIZERS)
+	if (cpu_getcurrentframe() % 300 == 0)
+	{
+		printf("----\nFrame = %d, fps = %f\n", cpu_getcurrentframe(), mame_get_performance_info()->frames_per_second);
+		while (TRUE)
+		{
+			struct rasterizer_info *info, *top = NULL;
+			int tophits = 0, hash;
+
+			for (hash = 0; hash < RASTER_HASH_SIZE; hash++)
+				for (info = raster_hash[hash]; info; info = info->next)
+					if (info->hits > tophits)
+					{
+						top = info;
+						tophits = info->hits;
+					}
+
+			if (!top)
+				break;
+
+			printf("%c%10d %5d: %08X %08X %08X %08X %08X %08X (%d)\n",
+				top->is_generic ? '*' : ' ',
+				top->hits,
+				top->polys,
+				top->val_fbzColorPath,
+				top->val_alphaMode,
+				top->val_fogMode,
+				top->val_fbzMode,
+				top->val_textureMode0,
+				top->val_textureMode1, hash);
+			top->hits = top->polys = 0;
+		}
+	}
+#endif
 }
 
 
@@ -1103,9 +1212,16 @@ static void swap_buffers(void)
 	/* swap -- but only if we're actually swapping */
 	if (!swap_dont_swap)
 	{
-		temp = frontbuf;
-		frontbuf = backbuf;
-		backbuf = temp;
+		if (skip_count == 0)
+		{
+			temp = frontbuf;
+			frontbuf = backbuf;
+			backbuf = temp;
+		}
+
+		/* update skip info */
+		if (++skip_count >= skip_interval)
+			skip_count = 0;
 	}
 
 	/* no longer blocked */
@@ -1127,17 +1243,24 @@ static void swap_buffers(void)
 
 		statsptr += sprintf(statsptr, "Poly:%5d\n", polycount);
 		statsptr += sprintf(statsptr, "WPol:%5d\n", wpolycount);
+		statsptr += sprintf(statsptr, "GPol:%5d\n", generic_polys);
 		statsptr += sprintf(statsptr, "Rend:%5d%%\n", pixelcount * 100 / screen_area);
 		statsptr += sprintf(statsptr, " FPS:%5d\n", lastfps);
 		statsptr += sprintf(statsptr, "Swap:%5d\n", total_swaps);
 		statsptr += sprintf(statsptr, "Pend:%5d\n", num_pending_swaps);
 		statsptr += sprintf(statsptr, "FIFO:%5d\n", memory_fifo_count);
+		statsptr += sprintf(statsptr, "RegW:%5d\n", reg_writes);
+		statsptr += sprintf(statsptr, "RegR:%5d\n", reg_reads);
+		statsptr += sprintf(statsptr, "LFBW:%5d\n", fb_writes);
+		statsptr += sprintf(statsptr, "LFBR:%5d\n", fb_reads);
+		statsptr += sprintf(statsptr, "TexW:%5d\n", tex_writes);
 		statsptr += sprintf(statsptr, "TexM:");
 		for (i = 0; i < 16; i++)
 			*statsptr++ = (modes_used & (1 << i)) ? "0123456789ABCDEF"[i] : ' ';
 		*statsptr = 0;
 
-		polycount = wpolycount = pixelcount = 0;
+		polycount = wpolycount = generic_polys = pixelcount = 0;
+		reg_reads = reg_writes = fb_reads = fb_writes = tex_writes = 0;
 		modes_used = 0;
 		framecount++;
 	}
@@ -1317,6 +1440,8 @@ WRITE32_HANDLER( voodoo_textureram_w )
 	int twidth = trex_width[trex];
 	int theight = trex_height[trex];
 
+	tex_writes++;
+
 	/* if we're blocked on a swap, all writes must go into the FIFO */
 	if (blocked_on_swap && memory_fifo_texture)
 	{
@@ -1437,6 +1562,8 @@ WRITE32_HANDLER( voodoo_regs_w )
 	offs_t regnum;
 	int chips;
 
+	reg_writes++;
+
 	/* if we're blocked on a swap, all writes must go into the FIFO */
 	if (blocked_on_swap)
 	{
@@ -1493,6 +1620,8 @@ READ32_HANDLER( voodoo_regs_r )
 {
 	UINT32 result;
 
+	reg_reads++;
+
 	if ((offset & 0x800c0) == 0x80000 && (voodoo_regs[fbiInit3] & 1))
 		offset = register_alias_map[offset & 0x3f];
 	else
@@ -1536,7 +1665,7 @@ READ32_HANDLER( voodoo_regs_r )
 			/* swap buffers pending */
 			result |= num_pending_swaps << 28;
 
-			activecpu_eat_cycles(100);
+			activecpu_eat_cycles(1000);
 
 			if (LOG_REGISTERS)
 			{
@@ -1922,6 +2051,8 @@ WRITE32_HANDLER( voodoo2_regs_w )
 {
 	UINT32 old_depth;
 	offs_t addr;
+
+	reg_writes++;
 
 	/* if we're blocked on a swap, all writes must go into the FIFO */
 	if (blocked_on_swap)

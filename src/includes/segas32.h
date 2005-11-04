@@ -24,7 +24,7 @@ WRITE16_HANDLER( brival_protection_w );
 READ16_HANDLER( darkedge_protection_r );
 WRITE16_HANDLER( darkedge_protection_w );
 void darkedge_fd1149_vblank(void);
-void jleague_fd1149_vblank(void);
+WRITE16_HANDLER( jleague_protection_w );
 
 READ16_HANDLER( dbzvrvs_protection_r );
 WRITE16_HANDLER( dbzvrvs_protection_w );
@@ -73,5 +73,6 @@ READ32_HANDLER( multi32_sprite_control_r );
 WRITE32_HANDLER( multi32_sprite_control_w );
 
 WRITE16_HANDLER( system32_mixer_w );
+READ16_HANDLER( system32_mixer_r );
 WRITE32_HANDLER( multi32_mixer_0_w );
 WRITE32_HANDLER( multi32_mixer_1_w );

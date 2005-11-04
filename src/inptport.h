@@ -667,7 +667,7 @@ void input_port_load(int config_type, xml_data_node *parentnode);
 void input_port_save(int config_type, xml_data_node *parentnode);
 
 input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask);
-input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *));
+input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *), input_port_entry *memory);
 
 input_port_default_entry *get_input_port_list(void);
 const input_port_default_entry *get_input_port_list_defaults(void);

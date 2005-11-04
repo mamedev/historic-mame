@@ -1,7 +1,8 @@
 /*
     c352.c - Namco C352 custom PCM chip emulation
-    v0.3
+    v1.0.1
     By R. Belmont
+    Additional code by cync and the hoot development team
 
     Thanks to Cap of VivaNonno for info and The_Author for preliminary reverse-engineering
 
@@ -28,11 +29,13 @@
 #define C352_FLG_LONGPHASE	0x10000 // first phase of "long sample mode" complete
 #define C352_FLG_CONTINUE	0x8000	// second phase of "long sample mode"
 #define	C352_FLG_ACTIVE		0x4000	// channel is active
-#define C352_FLG_PHASE		0x0080	// invert phase 180 degrees (e.g. flip sign of sample)
+#define C352_FLG_PHASERL	0x0200	// REAR LEFT invert phase 180 degrees (e.g. flip sign of sample)
+#define C352_FLG_PHASEFL	0x0100	// FRONT LEFT invert phase 180 degrees (e.g. flip sign of sample)
+#define C352_FLG_PHASEFR	0x0080	// FRONT RIGHT invert phase 180 degrees (e.g. flip sign of sample)
 #define C352_FLG_LONG		0x0020	// "long-format" sample (can't loop, not sure what else it means)
 #define C352_FLG_NOISE		0x0010	// play noise instead of sample
 #define C352_FLG_MULAW		0x0008	// sample is mulaw instead of linear 8-bit PCM
-#define C352_FLG_FILTER		0x0004	// apply filter
+#define C352_FLG_FILTER		0x0004	// don't apply filter (linear interpolation)
 #define C352_FLG_REVLOOP   	0x0003	// loop backwards
 #define C352_FLG_LOOP		0x0002	// loop forward
 #define C352_FLG_REVERSE	0x0001	// play sample backwards
@@ -46,6 +49,8 @@ typedef struct
 	UINT8	unk9;
 	UINT8	bank;
 	INT16	noise;
+	INT16   noisebuf;
+	UINT16  noisecnt;
 	UINT16	pitch;
 	UINT16	start_addr;
 	UINT16	end_addr;
@@ -102,8 +107,9 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 {
 
 	int i;
-
-	signed short sample;
+	signed short sample, nextsample;
+	signed short noisebuf;
+	UINT16 noisecnt;
 	float pbase = (float)info->sample_rate_base / (float)Machine->sample_rate;
 	INT32 frequency, delta, offset, cnt, flag;
 	UINT32 pos;
@@ -114,6 +120,8 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 	pos = info->c352_ch[ch].current_addr;	// sample pointer
 	offset = info->c352_ch[ch].pos;	// 16.16 fixed-point offset into the sample
 	flag = info->c352_ch[ch].flag;
+	noisecnt = info->c352_ch[ch].noisecnt;
+	noisebuf = info->c352_ch[ch].noisebuf;
 
 	if ((flag & C352_FLG_ACTIVE) == 0)
 	{
@@ -214,48 +222,94 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 
 		if ((int)pos > memory_region_length(info->c352_region)) pos %= memory_region_length(info->c352_region);
 		sample = (char)info->c352_rom_samples[pos];
+		nextsample = (char)info->c352_rom_samples[pos+cnt];
 
 		// sample is muLaw, not 8-bit linear (Fighting Layer uses this extensively)
 		if (flag & C352_FLG_MULAW)
 		{
 			sample = info->mulaw_table[(unsigned char)sample];
+			nextsample = info->mulaw_table[(unsigned char)nextsample];
 		}
 		else
 		{
 			sample <<= 8;
-		}
-
-		// invert phase 180 degrees for surround effects
-		if (flag & C352_FLG_PHASE)
-		{
-			sample = -sample;
+			nextsample <<= 8;
 		}
 
 		// play noise instead of sample data
 		if (flag & C352_FLG_NOISE)
 		{
 			int noise_level = 0x8000;
-
 			sample = info->c352_ch[ch].noise = (info->c352_ch[ch].noise << 1) | get_mseq_bit(info);
 			sample = (sample & (noise_level - 1)) - (noise_level >> 1);
-			if (sample > 0xff)
+			if (sample > 0x7f)
 			{
-				sample = 0xff;
+				sample = 0x7f;
 			}
 			else if (sample < 0)
 			{
-				sample = 0;
+				sample = 0xff;
 			}
-
 			sample = info->mulaw_table[(unsigned char)sample];
+
+			if ( (pos+cnt) == pos )
+			{
+				noisebuf += sample;
+				noisecnt++;
+				sample = noisebuf / noisecnt;
+			}
+			else
+			{
+				if ( noisecnt )
+				{
+					sample = noisebuf / noisecnt;
+				}
+				else
+				{
+					sample = info->mulaw_table[0x7f];		// Nearest sound(s) is here.
+				}
+				noisebuf = 0;
+				noisecnt = ( flag & C352_FLG_FILTER ) ? 0 : 1;
+			}
 		}
 
+		// apply linear interpolation
+		if ( (flag & (C352_FLG_FILTER | C352_FLG_NOISE)) == 0 )
+		{
+			sample = (short)(sample + ((nextsample-sample) * (((double)(0x0000ffff&offset) )/0x10000)));
+		}
+
+		if ( flag & C352_FLG_PHASEFL )
+		{
+			info->channel_l[i]  += ((-sample * info->c352_ch[ch].vol_l)>>8);
+		}
+		else
+		{
 		info->channel_l[i] += ((sample * info->c352_ch[ch].vol_l)>>8);
+		}
+
+		if ( flag & C352_FLG_PHASEFR )
+		{
+			info->channel_r[i]  += ((-sample * info->c352_ch[ch].vol_r)>>8);
+		}
+		else
+		{
 		info->channel_r[i] += ((sample * info->c352_ch[ch].vol_r)>>8);
+		}
+
+		if ( flag & C352_FLG_PHASERL )
+		{
+			info->channel_l2[i] += ((-sample * info->c352_ch[ch].vol_l2)>>8);
+		}
+		else
+		{
 		info->channel_l2[i] += ((sample * info->c352_ch[ch].vol_l2)>>8);
+		}
 		info->channel_r2[i] += ((sample * info->c352_ch[ch].vol_r2)>>8);
 	}
 
+	info->c352_ch[ch].noisecnt = noisecnt;
+	info->c352_ch[ch].noisebuf = noisebuf;
 	info->c352_ch[ch].pos = offset;
 	info->c352_ch[ch].current_addr = pos;
 }
@@ -381,6 +435,9 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 			temp = info->c352_ch[chan].bank<<16;
 			temp += info->c352_ch[chan].loop_addr;
 			info->c352_ch[chan].loop_point = temp;
+
+			info->c352_ch[chan].noisebuf = 0;
+			info->c352_ch[chan].noisecnt = 0;
 
 			switch (val & 3)
 			{

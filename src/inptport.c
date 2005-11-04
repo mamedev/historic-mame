@@ -969,12 +969,12 @@ int input_port_init(void (*construct_ipt)(input_port_init_params *))
 		int portnum;
 
 		/* allocate input ports */
-		Machine->input_ports = input_port_allocate(construct_ipt);
+		Machine->input_ports = input_port_allocate(construct_ipt, NULL);
 		if (!Machine->input_ports)
 			return 1;
 
 		/* allocate default input ports */
-		Machine->input_ports_default = input_port_allocate(construct_ipt);
+		Machine->input_ports_default = input_port_allocate(construct_ipt, NULL);
 		if (!Machine->input_ports_default)
 			return 1;
 
@@ -1614,7 +1614,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 }
 
 
-input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *param))
+input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *param), input_port_entry *memory)
 {
 	input_port_init_params iip;
 
@@ -1623,9 +1623,10 @@ input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_para
  	iip.current_port = 0;
 
 	/* allocate memory for the input ports */
-	iip.ports = (input_port_entry *)auto_malloc(iip.max_ports * sizeof(*iip.ports));
-	if (!iip.ports)
-		return NULL;
+	if (!memory)
+		iip.ports = (input_port_entry *)auto_malloc(iip.max_ports * sizeof(*iip.ports));
+	else
+		iip.ports = memory;
 	memset(iip.ports, 0, iip.max_ports * sizeof(*iip.ports));
 
 	/* construct the ports */

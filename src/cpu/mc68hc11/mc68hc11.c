@@ -32,7 +32,7 @@ typedef struct
 {
 	union {
 		struct {
-#if LSB_FIRST
+#ifdef LSB_FIRST
 			UINT8 b;
 			UINT8 a;
 #else

@@ -24,7 +24,7 @@ static READ16_HANDLER(unknown_r)
 }
 
 static ADDRESS_MAP_START(readmem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK1 ) /* Chip Ram - 512k or System ROM mirror*/
+	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK1 ) AM_REGION(REGION_CPU1, 0) /* Chip Ram - 512k or System ROM mirror*/
 	AM_RANGE( 0x200000, 0x203fff) AM_READ(MRA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE( &generic_nvram_size )
 	AM_RANGE( 0x204000, 0x2041ff) AM_READ(MRA16_RAM) AM_BASE(&qchip_ram)
 	AM_RANGE( 0x2100c0, 0x2100c1) AM_READ( unknown_r )

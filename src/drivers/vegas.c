@@ -2363,6 +2363,17 @@ static DRIVER_INIT( gauntleg )
 {
 	dcs2_init(0);
 	init_common(MIDWAY_IOASIC_CALSPEED, 340/* 322, others? */);
+
+	/* speedups */
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 0);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x80015438);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x1462fffd);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
+
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 1);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x80015478);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x1440fffa);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
 }
 
 

@@ -189,8 +189,8 @@ static gfx_layout tile_layout =
 
 
 static gfx_decode gfxdecode[] = {
-	{ 1, 0x0000, &tile_layout, 0x00, 1 },
-	{ 1, 0x3000, &tile_layout, 0x00, 1 },
+	{ REGION_GFX1, 0x0000, &tile_layout, 0x00, 1 },
+	{ REGION_GFX1, 0x3000, &tile_layout, 0x00, 1 },
 	{ -1 }
 };
 

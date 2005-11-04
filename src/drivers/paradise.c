@@ -9,6 +9,14 @@ CPU          :  Z8400B
 Video Chips  :  TPC1024AFN-084C
 Sound Chips  :  2 x AR17961 (OKI M6295) (only 1 in Torus)
 
+---------------------------------------------------------------------------
+Year + Game          Board#
+---------------------------------------------------------------------------
+94+ Paradise         YS-1600
+95  Target Ball      YS-2002
+96  Torus            ?
+---------------------------------------------------------------------------
+
 Notes:
 
 paradise: I'm not sure it's working correctly:

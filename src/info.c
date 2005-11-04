@@ -77,7 +77,7 @@ static void print_game_switch(FILE* out, const game_driver* game)
 
 	begin_resource_tracking();
 
-	input = input_port_allocate(game->construct_ipt);
+	input = input_port_allocate(game->construct_ipt, NULL);
 
 	while (input->type != IPT_END)
 	{
@@ -125,7 +125,7 @@ static void print_game_input(FILE* out, const game_driver* game)
 
 	begin_resource_tracking();
 
-	input = input_port_allocate(game->construct_ipt);
+	input = input_port_allocate(game->construct_ipt, NULL);
 
 	while (input->type != IPT_END)
 	{

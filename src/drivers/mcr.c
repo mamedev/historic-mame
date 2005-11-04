@@ -1188,7 +1188,7 @@ INPUT_PORTS_START( dotron )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Aim Up")
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	/* we default to Environmental otherwise speech is disabled */
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, "Environmental" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 

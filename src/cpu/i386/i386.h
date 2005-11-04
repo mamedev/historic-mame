@@ -214,7 +214,7 @@ static I386_REGS I;
 /* Forward declarations */
 static void I386OP(decode_opcode)(void);
 static void I386OP(decode_two_byte)(void);
-INLINE UINT32 i386_translate(int, UINT32);
+
 
 extern int parity_table[256];
 
@@ -279,6 +279,12 @@ extern MODRM_TABLE MODRM_table[256];
 #define STORE_RM32(x, value)	(REG32(MODRM_table[x].rm.d) = value)
 
 /***********************************************************************************/
+
+INLINE UINT32 i386_translate(int segment, UINT32 ip)
+{
+	// TODO: segment limit
+	return I.sreg[segment].base + ip;
+}
 
 INLINE int translate_address(UINT32 *address)
 {

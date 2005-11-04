@@ -112,6 +112,8 @@ static void (*lfbwrite[16*4])(offs_t offset, UINT32 data, UINT32 mem_mask) =
 
 WRITE32_HANDLER( voodoo_framebuf_w )
 {
+	fb_writes++;
+
 	/* if we're blocked on a swap, all writes must go into the FIFO */
 	if (blocked_on_swap && memory_fifo_lfb)
 	{
@@ -138,6 +140,8 @@ READ32_HANDLER( voodoo_framebuf_r )
 	int y = offset / (FRAMEBUF_WIDTH/2);
 	int x = (offset % (FRAMEBUF_WIDTH/2)) * 2;
 	UINT32 result;
+
+	fb_reads++;
 
 	if (lfb_flipy)
 		y = inverted_yorigin - y;

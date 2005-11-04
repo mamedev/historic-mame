@@ -391,6 +391,7 @@ static UINT32 *asic_reset;
 static UINT8 pending_analog_read;
 static UINT8 status_leds;
 
+static int speedup_index;
 static UINT32 *generic_speedup;
 static UINT32 *generic_speedup2;
 
@@ -3059,6 +3060,17 @@ static void init_common(int ioasic, int serialnum, int yearoffs, int config)
 			smc91c94_init(&ethernet_intf);
 			break;
 	}
+
+	/* reset speedups */
+	speedup_index = 0;
+}
+
+static void add_speedup(offs_t pc, UINT32 op)
+{
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, speedup_index++);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, pc);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, op);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
 }
 
 
@@ -3068,15 +3080,8 @@ static DRIVER_INIT( wg3dh )
 	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80, PHOENIX_CONFIG);
 
 	/* speedups */
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 0);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x80044178);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x0230102b);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
-
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 1);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x8009494c);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x94820000);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
+	add_speedup(0x80044178, 0x0230102b);
+	add_speedup(0x8009494c, 0x94820000);
 }
 
 
@@ -3086,10 +3091,7 @@ static DRIVER_INIT( mace )
 	init_common(MIDWAY_IOASIC_MACE, 319/* others? */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 0);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x800108f8);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x8c420000);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
+	add_speedup(0x800108f8, 0x8c420000);
 }
 
 
@@ -3159,16 +3161,9 @@ static DRIVER_INIT( blitz )
 	/* for some reason, the code in the ROM appears buggy; this is a small patch to fix it */
 	rombase[0x934/4] += 4;
 
-	/* speedups */
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 0);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x8013ddbc);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x1452fff8);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
-
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 1);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x80135520);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0x0043102a);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
+	/* main CPU speedups */
+	add_speedup(0x8013ddbc, 0x1452fff8);
+	add_speedup(0x80135520, 0x0043102a);
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00243d58, 0x00243d5b, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x243d58/4];
@@ -3207,10 +3202,7 @@ static DRIVER_INIT( carnevil )
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x16800000, 0x1680001f, 0, 0, carnevil_gun_w);
 
 	/* speedups */
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_SELECT, 0);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_PC, 0x80151780);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_OPCODE, 0xac232bac);
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_HOTSPOT_CYCLES, 1000);
+	add_speedup(0x80151780, 0xac232bac);
 }
 
 
@@ -3220,6 +3212,8 @@ static DRIVER_INIT( hyprdriv )
 	init_common(MIDWAY_IOASIC_HYPRDRIV, 469/* unknown */, 80, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */
+	add_speedup(0x80164424, 0x080590ef);
+	add_speedup(0x801646fc, 0xc7bfff38);
 }
 
 

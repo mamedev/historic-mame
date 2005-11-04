@@ -29,6 +29,9 @@ WRITE16_HANDLER( model1_tgp_copro_ram_w );
 
 static int model1_sound_irq;
 
+#define FIFO_SIZE	(8)
+static int to_68k[FIFO_SIZE], fifo_wptr, fifo_rptr;
+
 void model1_tgp_reset(int swa);
 
 static READ16_HANDLER( io_r )
@@ -113,6 +116,12 @@ static INTERRUPT_GEN(model1_interrupt)
 	else
 	{
 		irq_raise(model1_sound_irq);
+
+		// if the FIFO has something in it, signal the 68k too
+		if (fifo_rptr != fifo_wptr)
+		{
+			cpunum_set_input_line(1, 2, HOLD_LINE);
+		}
 	}
 }
 
@@ -129,6 +138,10 @@ static MACHINE_INIT(model1)
 	{
 		model1_sound_irq = 3;
 	}
+
+	// init the sound FIFO
+	fifo_rptr = fifo_wptr = 0;
+	memset(to_68k, 0, sizeof(to_68k));
 }
 
 static READ16_HANDLER( network_ctl_r )
@@ -204,8 +217,6 @@ static WRITE16_HANDLER(mr2_w)
 		logerror("MW 10[r10], %f (%x)\n", *(float *)(mr2+0x1f10/2), activecpu_get_pc());
 }
 
-static int to_68k;
-
 static READ16_HANDLER( snd_68k_ready_r )
 {
 	int sr = cpunum_get_reg(1, M68K_REG_SR);
@@ -221,13 +232,11 @@ static READ16_HANDLER( snd_68k_ready_r )
 
 static WRITE16_HANDLER( snd_latch_to_68k_w )
 {
-	while (!snd_68k_ready_r(0, 0))
-	{
-		cpu_spinuntil_time(TIME_IN_USEC(40));
-	}
+	to_68k[fifo_wptr] = data;
+	fifo_wptr++;
+	if (fifo_wptr >= FIFO_SIZE) fifo_wptr = 0;
 
-	to_68k = data;
-
+	// signal the 68000 that there's data waiting
 	cpunum_set_input_line(1, 2, HOLD_LINE);
 	// give the 68k time to reply
 	cpu_spinuntil_time(TIME_IN_USEC(40));
@@ -283,7 +292,14 @@ ADDRESS_MAP_END
 
 static READ16_HANDLER( m1_snd_68k_latch_r )
 {
-	return to_68k;
+	UINT16 retval;
+
+	retval = to_68k[fifo_rptr];
+
+	fifo_rptr++;
+	if (fifo_rptr >= FIFO_SIZE) fifo_rptr = 0;
+
+	return retval;
 }
 
 static READ16_HANDLER( m1_snd_v60_ready_r )
@@ -819,7 +835,7 @@ static MACHINE_DRIVER_START( model1 )
 	MDRV_CPU_IO_MAP(model1_io, 0)
 	MDRV_CPU_VBLANK_INT(model1_interrupt, 2)
 
-	MDRV_CPU_ADD(M68000, 12000000)	// Confirmed 10 MHz on real PCB, run slightly faster here to prevent sync trouble
+	MDRV_CPU_ADD(M68000, 10000000)	// verified on real h/w
 	MDRV_CPU_PROGRAM_MAP(model1_snd, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -857,6 +873,6 @@ MACHINE_DRIVER_END
 GAME( 1993, vf,      0, model1, vf,      0, ROT0, "Sega", "Virtua Fighter", GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, vr,       0, model1, vr,       0, ROT0, "Sega", "Virtua Racing", GAME_NOT_WORKING )
 GAME( 1993, vformula, vr, model1, vr,       0, ROT0, "Sega", "Virtua Formula", GAME_NOT_WORKING )
-GAME( 1993, swa,      0, model1, swa,      0, ROT0, "Sega", "Star Wars Arcade", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1993, swa,      0, model1, swa,      0, ROT0, "Sega", "Star Wars Arcade", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 GAME( 1994, wingwar,  0, model1, wingwar,  0, ROT0, "Sega", "Wing War (US)", GAME_NOT_WORKING )
 GAME( 1994, wingwara, wingwar, model1, wingwar,  0, ROT0, "Sega", "Wing War", GAME_NOT_WORKING )

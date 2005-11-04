@@ -354,10 +354,10 @@ static gfx_layout CGA_charlayout =
 static gfx_decode CGA_gfxdecodeinfo[] =
 {
 /* Support up to four CGA fonts */
-	{ 1, 0x0000, &CGA_charlayout,              0, 256 },   /* Font 0 */
-	{ 1, 0x0800, &CGA_charlayout,              0, 256 },   /* Font 1 */
-	{ 1, 0x1000, &CGA_charlayout,              0, 256 },   /* Font 2 */
-	{ 1, 0x1800, &CGA_charlayout,              0, 256 },   /* Font 3*/
+	{ REGION_GFX1, 0x0000, &CGA_charlayout,              0, 256 },   /* Font 0 */
+	{ REGION_GFX1, 0x0800, &CGA_charlayout,              0, 256 },   /* Font 1 */
+	{ REGION_GFX1, 0x1000, &CGA_charlayout,              0, 256 },   /* Font 2 */
+	{ REGION_GFX1, 0x1800, &CGA_charlayout,              0, 256 },   /* Font 3*/
     { -1 } /* end of array */
 };
 

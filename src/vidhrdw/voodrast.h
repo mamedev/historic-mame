@@ -161,7 +161,7 @@ void RENDERFUNC(void)
 	if (starty < fbz_cliprect->min_y)
 		starty = fbz_cliprect->min_y;
 	if (stopy > fbz_cliprect->max_y)
-		starty = fbz_cliprect->max_y;
+		stopy = fbz_cliprect->max_y;
 	if (starty >= stopy)
 		return;
 
@@ -233,8 +233,8 @@ void RENDERFUNC(void)
 			int startx, stopx;
 			float fpy;
 
-#if (RESOLUTION_DIVIDE_SHIFT != 0)
-			if (cheating_allowed && (effy & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1)))
+#if (OPTIMIZATIONS_ENABLED)
+			if (cheating_allowed && (effy & resolution_mask))
 				continue;
 #endif
 
@@ -279,8 +279,8 @@ void RENDERFUNC(void)
 				INT32 r = 0, g = 0, b = 0, a = 0, depthval;
 				UINT32 texel = 0, c_local = 0;
 
-#if (RESOLUTION_DIVIDE_SHIFT != 0)
-				if (cheating_allowed && (x & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1)))
+#if (OPTIMIZATIONS_ENABLED)
+				if (cheating_allowed && (x & resolution_mask))
 					goto skipdrawdepth;
 #endif
 				/* rotate stipple pattern */
@@ -384,7 +384,10 @@ void RENDERFUNC(void)
 					UINT32 c_other = 0;
 					INT32 tr, tg, tb, ta;
 					UINT8 *texturebase;
-					float fs, ft, flod;
+					float fs, ft;
+#if (PER_PIXEL_LOD)
+					float flod;
+#endif
 					UINT8 lodshift;
 					INT32 lod;
 

@@ -1,8 +1,12 @@
 /*
 
- Multi 5 / New Multi Game 5     (c) 1998 Yun Sung
- Search Eye                     (c) 1999 Yun Sung
- Puzzle Club                    (c) 2000 Yun Sung
+ Title                          Copyright            PCB - ID
+ ----------------------------------------------------------------------------
+ Multi 5 / New Multi Game 5     (c) 1998 Yun Sung    YS-1301
+ Search Eye                     (c) 1999 Yun Sung    YS-1905
+ Puzzle Club (set 1)            (c) 2000 Yun Sung    YS-2113
+ Puzzle Club (set 2)            (c) 2000 Yun Sung    YS-2111
+ Wonder Stick                   (c) ???? Yun Sung    YS-2320
 
  driver by Pierpaolo Prazzoli
 
@@ -50,6 +54,11 @@ static WRITE16_HANDLER( nmg5_soundlatch_w )
 static READ16_HANDLER( prot_r )
 {
 	return 0x10 | input_data;
+}
+
+static READ16_HANDLER( wondstck_prot_r )
+{
+	return input_data;
 }
 
 static WRITE16_HANDLER( prot_w )
@@ -306,7 +315,7 @@ INPUT_PORTS_START( pclubys )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Normal ) )
 	PORT_DIPSETTING(      0x0010, DEF_STR( Medium ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
-	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
@@ -337,6 +346,77 @@ INPUT_PORTS_START( pclubys )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
 	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )  PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( wondstck )
+	PORT_START_TAG("DSW")
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Number of Helps" )
+	PORT_DIPSETTING(      0x0010, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0020, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
+	PORT_SERVICE( 0x0100, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0200, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START	/* Coins */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW,  IPT_UNUSED )  // tested in service mode
 
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )    PORT_PLAYER(1) PORT_8WAY
@@ -639,7 +719,7 @@ ROM_START( searchey )
 	ROM_LOAD( "u96.bin", 0x060000, 0x20000, CRC(8c40818a) SHA1(fe2c0da42154261ae1734ddb6cb9ddf33dd58510) )
 	ROM_LOAD( "u97.bin", 0x080000, 0x20000, CRC(5dc7f231) SHA1(5e57e436a24dfa14228bac7b8ae5f000393926b9) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	ROM_LOAD( "u137.bin", 0x00000, 0x40000,  CRC(49105e23) SHA1(99543fbbccf5df5b15a0470eac641b4158024c6a) )
 ROM_END
 
@@ -731,14 +811,52 @@ ROM_START( pclubysa )
 	ROM_LOAD( "rom2.137", 0x00000, 0x80000, CRC(4ff97ad1) SHA1(d472c8298e428cb9659ce90a8ce9402c119bdb0f) )
 ROM_END
 
+ROM_START( wondstck )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "u2.bin", 0x000001, 0x20000, CRC(9995b743) SHA1(178afd9c54758dd4fb4fb7debe4da2af5c10410a) )
+	ROM_LOAD16_BYTE( "u4.bin", 0x000000, 0x20000, CRC(46a3e9f6) SHA1(f39b6457b2c5772db16a5ba29d9114671e3d9749) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "u128.bin", 0x00000, 0x10000, CRC(86dba085) SHA1(6dedfb4bcf890490848409b6d9bce69e72bf1bba) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* 8x8x8 */
+	ROM_LOAD( "u63.bin", 0x000000, 0x80000, CRC(c6cf09b4) SHA1(d3341c1effa7874b0554e5c79985b32198571767) )
+	ROM_LOAD( "u68.bin", 0x080000, 0x80000, CRC(2e9e9a5e) SHA1(27bae2d913ad4c569f4c476d954c47665456e818) )
+	ROM_LOAD( "u73.bin", 0x100000, 0x80000, CRC(3a828604) SHA1(562ecfc1b485218b861512c62225e7d0e148a6df) )
+	ROM_LOAD( "u79.bin", 0x180000, 0x80000, CRC(0cca46af) SHA1(a22dcc9f59953cc0c75048b0fa3d7834eea76432) )
+	ROM_LOAD( "u64.bin", 0x200000, 0x80000, CRC(dcec9ac5) SHA1(3619d7643932264eac2fbbf95581f6ff3e2829b1) )
+	ROM_LOAD( "u69.bin", 0x280000, 0x80000, CRC(27b9d708) SHA1(930f6b742b45b09c5cba80c78bf64eb2b01243e0) )
+	ROM_LOAD( "u74.bin", 0x300000, 0x80000, CRC(7eff8e2f) SHA1(a08d188fc1a549ba684e69adb277ef684c6d875c) )
+	ROM_LOAD( "u80.bin", 0x380000, 0x80000, CRC(1160a0c2) SHA1(b23f6fb256b927a5606a1aacf004727b984807de) )
+
+	ROM_REGION( 0x280000, REGION_GFX2, ROMREGION_DISPOSE )	/* 16x16x5 */
+	ROM_LOAD( "u83.bin", 0x000000, 0x80000, CRC(f51cf9c6) SHA1(6d0fc749bab918ff6a9d7fae8be7c65823349283) )
+	ROM_LOAD( "u82.bin", 0x080000, 0x80000, CRC(ddd3c60c) SHA1(19b68a44c877d0bf630d07b18541ef9636f5adac) )
+	ROM_LOAD( "u105.bin",0x100000, 0x80000, CRC(a7fc624d) SHA1(b336ab6e16555db30f9366bf5b797b5ba3ea767c) )
+	ROM_LOAD( "u96.bin", 0x180000, 0x80000, CRC(2369d8a3) SHA1(4224f50c9c31624dfcac6215d60a2acdd39bb477) )
+	ROM_LOAD( "u97.bin", 0x200000, 0x80000, CRC(aba1bd94) SHA1(28dce35ad92547a54912c5645e9979c0876d6fe8) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_LOAD( "u137.bin", 0x000000, 0x40000, CRC(294b6cbd) SHA1(1498a3298c53d62f56f9c85c82035d09a5bb8b4a) )
+ROM_END
+
 DRIVER_INIT( nmg5 )
 {
 	/* hardcoded sprites priority */
 	*sprite_pri = 7;
 }
 
+DRIVER_INIT( wondstck )
+{
+	/* hardcoded sprites priority */
+	*sprite_pri = 7;
 
-GAME( 1998, nmg5,     0,       nmg5,    nmg5,      nmg5, ROT0, "Yun Sung", "Multi 5 / New Multi Game 5", 0 )
-GAME( 1999, searchey, 0,       nmg5,    searchey,  0,    ROT0, "Yun Sung", "Search Eye", 0 )
-GAME( 2000, pclubys,  0,       pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 1)", 0 )
-GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   0,    ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 2)", 0 )
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x180004, 0x180005, 0, 0, wondstck_prot_r );
+}
+
+
+GAME( 1998, nmg5,     0,       nmg5,    nmg5,      nmg5,     ROT0, "Yun Sung", "Multi 5 / New Multi Game 5", 0 )
+GAME( 1999, searchey, 0,       nmg5,    searchey,  0,        ROT0, "Yun Sung", "Search Eye", 0 )
+GAME( 2000, pclubys,  0,       pclubys, pclubys,   0,        ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 1)", 0 )
+GAME( 2000, pclubysa, pclubys, pclubys, pclubys,   0,        ROT0, "Yun Sung", "Puzzle Club (Yun Sung - set 2)", 0 )
+GAME( ????, wondstck, 0,       nmg5,    wondstck,  wondstck, ROT0, "Yun Sung", "Wonder Stick", 0 )

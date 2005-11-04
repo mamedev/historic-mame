@@ -8,26 +8,7 @@
 static void generic_render_1tmu(void);
 static void generic_render_2tmu(void);
 
-static void render_0c000035_00045119_000b4779_0824101f(void);
-static void render_0c000035_00045119_000b4779_0824109f(void);
-static void render_0c000035_00045119_000b4779_082410df(void);
-static void render_0c000035_00045119_000b4779_082418df(void);
-
-static void render_0c600c09_00045119_000b4779_0824100f(void);
-static void render_0c600c09_00045119_000b4779_0824180f(void);
-static void render_0c600c09_00045119_000b4779_082418cf(void);
-static void render_0c480035_00045119_000b4779_082418df(void);
-static void render_0c480035_00045119_000b4379_082418df(void);
-
-static void render_0c000035_00040400_000b4739_0c26180f(void);
-static void render_0c582c35_00515110_000b4739_0c26180f(void);
-static void render_0c000035_64040409_000b4739_0c26180f(void);
-static void render_0c002c35_64515119_000b4799_0c26180f(void);
-static void render_0c582c35_00515110_000b4739_0c2618cf(void);
-static void render_0c002c35_40515119_000b4739_0c26180f(void);
-
-
-//static int generate_rasterizer(void);
+static struct rasterizer_info *generate_rasterizer(void);
 
 
 /*************************************
@@ -84,7 +65,7 @@ static void fastfill(void)
 			dither_to_matrix(voodoo_regs[color1], dither);
 
 		/* loop over y */
-#if (RESOLUTION_DIVIDE_SHIFT != 0)
+#if (OPTIMIZATIONS_ENABLED)
 		if (cheating_allowed)
 		{
 			for (y = sy; y < ey; y++)
@@ -92,14 +73,14 @@ static void fastfill(void)
 				int effy = (fbz_invert_y ? (inverted_yorigin - y) : y) & (FRAMEBUF_HEIGHT-1);
 				UINT16 *dest = &buffer[effy * FRAMEBUF_WIDTH];
 
-				if (effy & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1))
+				if (effy & resolution_mask)
 					continue;
 
 				/* if not dithered, it's easy */
 				if (!fbz_dithering)
 				{
 					UINT16 color = dither[0];
-					for (x = (sx >> RESOLUTION_DIVIDE_SHIFT) << RESOLUTION_DIVIDE_SHIFT; x < ex; x += (1 << RESOLUTION_DIVIDE_SHIFT))
+					for (x = sx & ~resolution_mask; x < ex; x += resolution_mask + 1)
 						dest[x] = color;
 				}
 
@@ -107,7 +88,7 @@ static void fastfill(void)
 				else
 				{
 					UINT16 *dbase = dither + 4 * (y & 3);
-					for (x = (sx >> RESOLUTION_DIVIDE_SHIFT) << RESOLUTION_DIVIDE_SHIFT; x < ex; x += (1 << RESOLUTION_DIVIDE_SHIFT))
+					for (x = sx & ~resolution_mask; x < ex; x += resolution_mask + 1)
 						dest[x] = dbase[x & 3];
 				}
 			}
@@ -145,16 +126,16 @@ static void fastfill(void)
 			logerror("FASTFILL depth = %04X\n", color);
 
 		/* loop over y */
-#if (RESOLUTION_DIVIDE_SHIFT != 0)
+#if (OPTIMIZATIONS_ENABLED)
 		if (cheating_allowed)
 		{
 			for (y = sy; y < ey; y++)
 			{
 				int effy = (fbz_invert_y ? (inverted_yorigin - y) : y) & (FRAMEBUF_HEIGHT-1);
 				UINT16 *dest = &depthbuf[effy * FRAMEBUF_WIDTH];
-				if (effy & ((1 << RESOLUTION_DIVIDE_SHIFT) - 1))
+				if (effy & resolution_mask)
 					continue;
-				for (x = (sx >> RESOLUTION_DIVIDE_SHIFT) << RESOLUTION_DIVIDE_SHIFT; x < ex; x += (1 << RESOLUTION_DIVIDE_SHIFT))
+				for (x = sx & ~resolution_mask; x < ex; x += resolution_mask + 1)
 					dest[x] = color;
 			}
 		}
@@ -174,52 +155,162 @@ static void fastfill(void)
 
 /*************************************
  *
- *  Triangle renderer
+ *  TMU helpers
  *
  *************************************/
 
-#if 0
-static int add_rasterizer(genf *callback)
+INLINE int needs_tmu0(void)
 {
-	struct rasterizer_info *info = &raster[num_rasters++];
-	if (num_rasters > MAX_RASTERIZERS)
-		return 0;
+	return ((voodoo_regs[fbzColorPath] >> 27) & 1);
+}
 
-	info->next = raster_head;
-	raster_head = info;
 
+INLINE int needs_tmu1(void)
+{
+	return tmus > 1 &&
+			(((voodoo_regs[0x100 + textureMode] >> 12) & 1) == 0 ||
+			 ((voodoo_regs[0x100 + textureMode] >> 14) & 3) == 2 ||
+			 ((voodoo_regs[0x100 + textureMode] >> 21) & 1) == 0 ||
+			 ((voodoo_regs[0x100 + textureMode] >> 23) & 3) == 2);
+}
+
+
+
+/*************************************
+ *
+ *  Rasterizer management
+ *
+ *************************************/
+
+INLINE UINT32 compute_raster_hash(void)
+{
+	int needs_texMode0 = needs_tmu0();
+	int needs_texMode1 = needs_texMode0 && needs_tmu1();
+	UINT32 hash;
+
+	hash = voodoo_regs[fbzColorPath];
+	hash = (hash << 1) | (hash >> 31);
+	hash ^= voodoo_regs[alphaMode];
+	hash = (hash << 1) | (hash >> 31);
+	hash ^= voodoo_regs[fogMode];
+	hash = (hash << 1) | (hash >> 31);
+	hash ^= voodoo_regs[fbzMode];
+	if (needs_texMode0)
+	{
+		hash = (hash << 1) | (hash >> 31);
+		hash ^= voodoo_regs[0x100 + textureMode];
+		hash = (hash << 1) | (hash >> 31);
+		hash ^= voodoo_regs[0x100 + tLOD];
+	}
+	if (needs_texMode1)
+	{
+		hash = (hash << 1) | (hash >> 31);
+		hash ^= voodoo_regs[0x200 + textureMode];
+		hash = (hash << 1) | (hash >> 31);
+		hash ^= voodoo_regs[0x200 + tLOD];
+	}
+	return hash % RASTER_HASH_SIZE;
+}
+
+
+static struct rasterizer_info *add_rasterizer(genf *callback)
+{
+	struct rasterizer_info *info = auto_malloc(sizeof(*info));
+	int needs_texMode0 = needs_tmu0();
+	int needs_texMode1 = needs_texMode0 && needs_tmu1();
+	int hash = compute_raster_hash();
+
+	/* hook us into the hash table */
+	info->next = raster_hash[hash];
+	raster_hash[hash] = info;
+
+	/* fill in the data */
+	info->is_generic = FALSE;
+	info->hits = 0;
+	info->polys = 0;
 	info->callback = callback;
-	info->needs_texMode0 = ((voodoo_regs[fbzColorPath] >> 27) & 1);
-	info->needs_texMode1 = info->needs_texMode0 &&
-				(((voodoo_regs[0x100 + textureMode] >> 12) & 1) == 0 ||
-				 ((voodoo_regs[0x100 + textureMode] >> 14) & 3) == 2 ||
-				 ((voodoo_regs[0x100 + textureMode] >> 21) & 1) == 0 ||
-				 ((voodoo_regs[0x100 + textureMode] >> 23) & 3) == 2);
 	info->val_fbzColorPath = voodoo_regs[fbzColorPath];
 	info->val_alphaMode = voodoo_regs[alphaMode];
 	info->val_fogMode = voodoo_regs[fogMode];
 	info->val_fbzMode = voodoo_regs[fbzMode];
-	info->val_textureMode0 = voodoo_regs[0x100 + textureMode];
-	info->val_tlod0 = voodoo_regs[0x100 + tLOD];
-	info->val_textureMode1 = voodoo_regs[0x200 + textureMode];
-	info->val_tlod1 = voodoo_regs[0x200 + tLOD];
+	info->val_textureMode0 = needs_texMode0 ? voodoo_regs[0x100 + textureMode] : 0;
+	info->val_tlod0 = needs_texMode0 ? voodoo_regs[0x100 + tLOD] : 0;
+	info->val_textureMode1 = needs_texMode1 ? voodoo_regs[0x200 + textureMode] : 0;
+	info->val_tlod1 = needs_texMode1 ? voodoo_regs[0x200 + tLOD] : 0;
 
-	printf("Adding rasterizer @ %08X : %08X %08X %08X %08X %08X %08X %08X %08X\n",
+#if (LOG_RASTERIZERS)
+	printf("Adding rasterizer @ %08X : %08X %08X %08X %08X %08X %08X %08X %08X (hash=%d)\n",
 			(UINT32)callback,
 			info->val_fbzColorPath, info->val_alphaMode, info->val_fogMode, info->val_fbzMode,
-			info->needs_texMode0 ? info->val_textureMode0 : 0,
-			info->needs_texMode0 ? info->val_tlod0 : 0,
-			info->needs_texMode1 ? info->val_textureMode1 : 0,
-			info->needs_texMode1 ? info->val_tlod1 : 0);
-
-	return 1;
-}
+			needs_texMode0 ? info->val_textureMode0 : 0,
+			needs_texMode0 ? info->val_tlod0 : 0,
+			needs_texMode1 ? info->val_textureMode1 : 0,
+			needs_texMode1 ? info->val_tlod1 : 0,
+			hash);
 #endif
+
+	return info;
+}
+
+
+static struct rasterizer_info *find_rasterizer(void)
+{
+	struct rasterizer_info *info, *prev = NULL;
+	int needs_texMode0 = needs_tmu0();
+	int needs_texMode1 = needs_texMode0 && needs_tmu1();
+	int hash = compute_raster_hash();
+
+	/* find the appropriate hash entry */
+	for (info = raster_hash[hash]; info; prev = info, info = info->next)
+	{
+		if (info->val_fbzColorPath != voodoo_regs[fbzColorPath])
+			continue;
+		if (info->val_alphaMode != voodoo_regs[alphaMode])
+			continue;
+		if (info->val_fogMode != voodoo_regs[fogMode])
+			continue;
+		if (info->val_fbzMode != voodoo_regs[fbzMode])
+			continue;
+		if (needs_texMode0 && info->val_textureMode0 != voodoo_regs[0x100 + textureMode])
+			continue;
+//      if (needs_texMode0 && info->val_tlod0 != voodoo_regs[0x100 + tLOD])
+//          continue;
+		if (needs_texMode1 && info->val_textureMode1 != voodoo_regs[0x200 + textureMode])
+			continue;
+//      if (needs_texMode1 && info->val_tlod1 != voodoo_regs[0x200 + tLOD])
+//          continue;
+
+		/* got it, move us to the head of the list */
+		if (prev)
+		{
+			prev->next = info->next;
+			info->next = raster_hash[hash];
+			raster_hash[hash] = info;
+		}
+
+		/* return the result */
+		return info;
+	}
+
+	/* attempt to generate one */
+	return generate_rasterizer();
+}
+
+
+
+/*************************************
+ *
+ *  Rasterizers
+ *
+ *************************************/
 
 static void draw_triangle(void)
 {
 	int totalpix = voodoo_regs[fbiPixelsIn];
-	UINT32 temp;
+	struct rasterizer_info *info;
+
+	if (cheating_allowed && skip_count != 0)
+		return;
 
 	profiler_mark(PROFILER_USER1);
 
@@ -237,187 +328,22 @@ static void draw_triangle(void)
 		trex_dirty[1] = 0;
 	}
 
- if (code_pressed(KEYCODE_Y))
- {
- 	logerror("fbzColorPath=%08X alphaMode=%08X fogMode=%08X fbzMode=%08X texMode0=%08X tLOD0=%08X texMode1=%08X tLOD1=%08X\n",
- 			voodoo_regs[fbzColorPath], voodoo_regs[alphaMode], voodoo_regs[fogMode], voodoo_regs[fbzMode],
- 			voodoo_regs[0x100 + textureMode], voodoo_regs[0x100 + tLOD], voodoo_regs[0x200 + textureMode], voodoo_regs[0x200 + tLOD]);
- }
-
-#if 0
-{
-	struct rasterizer_info *info, *prev = NULL;
-	/* find an entry in the rasterizer table */
-	for (info = raster_head; info; prev = info, info = info->next)
-	{
-		if (info->val_fbzColorPath != voodoo_regs[fbzColorPath])
-			continue;
-		if (info->val_alphaMode != voodoo_regs[alphaMode])
-			continue;
-		if (info->val_fogMode != voodoo_regs[fogMode])
-			continue;
-		if (info->val_fbzMode != voodoo_regs[fbzMode])
-			continue;
-		if (info->needs_texMode0 && info->val_textureMode0 != voodoo_regs[0x100 + textureMode])
-			continue;
-//      if (info->needs_texMode0 && info->val_tlod0 != voodoo_regs[0x100 + tLOD])
-//          continue;
-		if (info->needs_texMode1 && info->val_textureMode1 != voodoo_regs[0x200 + textureMode])
-			continue;
-//      if (info->needs_texMode1 && info->val_tlod1 != voodoo_regs[0x200 + tLOD])
-//          continue;
-
-		/* call the rasterizer */
-		(*info->callback)();
-
-		/* if we weren't the head, become the head */
-		if (prev)
-		{
-			prev->next = info->next;
-			info->next = raster_head;
-			raster_head = info;
-		}
-		goto done;
-	}
-
-	/* didn't find one; better generate one */
-	if (generate_rasterizer())
-	{
-		(*raster_head->callback)();
-		goto done;
-	}
-}
-#endif
+	/* find a rasterizer */
+	info = find_rasterizer();
 
 	SETUP_FPU();
-	temp = voodoo_regs[fbzColorPath] & FBZCOLORPATH_MASK;
-	if (temp == 0x0c000035)
+	if (info)
 	{
-		temp = voodoo_regs[alphaMode] & ALPHAMODE_MASK;
-		if (temp == 0x00045119)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4779)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0824101f)
-					{ render_0c000035_00045119_000b4779_0824101f();	goto done; }	/* wg3dh */
-				else if (temp == 0x0824109f)
-					{ render_0c000035_00045119_000b4779_0824109f();	goto done; }	/* wg3dh */
-				else if (temp == 0x082410df)
-					{ render_0c000035_00045119_000b4779_082410df();	goto done; }	/* wg3dh */
-				else if (temp == 0x082418df)
-					{ render_0c000035_00045119_000b4779_082418df();	goto done; }	/* wg3dh */
-			}
-		}
-		else if (temp == 0x00040400)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4739)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0c26180f)
-					{ render_0c000035_00040400_000b4739_0c26180f();	goto done; }	/* blitz99 */
-			}
-		}
-		else if (temp == 0x64040409)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4739)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0c26180f)
-					{ render_0c000035_64040409_000b4739_0c26180f();	goto done; }	/* blitz99 */
-			}
-		}
-	}
-	else if (temp == 0x0c002c35)
-	{
-		temp = voodoo_regs[alphaMode] & ALPHAMODE_MASK;
-		if (temp == 0x64515119)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4799)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0c26180f)
-					{ render_0c002c35_64515119_000b4799_0c26180f();	goto done; }	/* blitz99 */
-			}
-		}
-		else if (temp == 0x40515119)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4739)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0c26180f)
-					{ render_0c002c35_40515119_000b4739_0c26180f();	goto done; }	/* blitz99 */
-			}
-		}
-	}
-	else if (temp == 0x0c582c35)
-	{
-		temp = voodoo_regs[alphaMode] & ALPHAMODE_MASK;
-		if (temp == 0x00515110)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4739)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0c26180f)
-					{ render_0c582c35_00515110_000b4739_0c26180f();	goto done; }	/* blitz99 */
-				else if (temp == 0x0c2618cf)
-					{ render_0c582c35_00515110_000b4739_0c2618cf();	goto done; }	/* blitz99 */
-			}
-		}
-	}
-	else if (temp == 0x0c600c09)
-	{
-		temp = voodoo_regs[alphaMode] & ALPHAMODE_MASK;
-		if (temp == 0x00045119)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4779)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x0824100f)
-					{ render_0c600c09_00045119_000b4779_0824100f();	goto done; }	/* mace */
-				else if (temp == 0x0824180f)
-					{ render_0c600c09_00045119_000b4779_0824180f();	goto done; }	/* mace */
-				else if (temp == 0x082418cf)
-					{ render_0c600c09_00045119_000b4779_082418cf();	goto done; }	/* mace */
-			}
-		}
-	}
-	else if (temp == 0x0c480035)
-	{
-		temp = voodoo_regs[alphaMode] & ALPHAMODE_MASK;
-		if (temp == 0x00045119)
-		{
-			temp = voodoo_regs[fbzMode] & FBZMODE_MASK;
-			if (temp == 0x000b4779)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x082418df)
-					{ render_0c480035_00045119_000b4779_082418df();	goto done; }	/* mace */
-			}
-			else if (temp == 0x000b4379)
-			{
-				temp = voodoo_regs[0x100 + textureMode] & TEXTUREMODE0_MASK;
-				if (temp == 0x082418df)
-					{ render_0c480035_00045119_000b4379_082418df();	goto done; }	/* mace */
-			}
-		}
-	}
-	if (tmus == 1)
-		generic_render_1tmu();
-	else
-		generic_render_2tmu();
+		if (info->is_generic)
+			generic_polys++;
+		(*info->callback)();
 
-done:
+		totalpix = voodoo_regs[fbiPixelsIn] - totalpix;
+		if (totalpix < 0) totalpix += 0x1000000;
+		info->hits += totalpix;
+		info->polys++;
+	}
 	RESTORE_FPU();
-	totalpix = voodoo_regs[fbiPixelsIn] - totalpix;
-	if (totalpix < 0) totalpix += 0x1000000;
 
 	profiler_mark(PROFILER_END);
 
@@ -425,6 +351,7 @@ done:
 	if (voodoo_regs[fbzMode] & 8)
 		wpolycount++;
 }
+
 
 
 static void setup_and_draw_triangle(void)
@@ -820,347 +747,17 @@ static void (*update_texel_lookup[16])(int which) =
  *
  *************************************/
 
-#if 0
+#ifdef VOODOO_DRC
 #include "voodrx86.h"
+#else
+#include "voodrgen.h"
 #endif
 
-/*
-    WG3dh:
-
-    816782: 0C000035 00000000 00045119 000B4779 082410DF
-    629976: 0C000035 00000000 00045119 000B4779 0824109F
-    497958: 0C000035 00000000 00045119 000B4779 0824101F
-    141069: 0C000035 00000000 00045119 000B4779 082418DF
-*/
-
-#define NUM_TMUS			1
-
-#define FBZCOLORPATH		0x0c000035
-#define ALPHAMODE			0x00045119
-#define FBZMODE				0x000b4779
-#define TEXTUREMODE1		0x00000000
-
-#define RENDERFUNC			render_0c000035_00045119_000b4779_0824101f
-#define TEXTUREMODE0		0x0824101f
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c000035_00045119_000b4779_0824109f
-#define TEXTUREMODE0		0x0824109f
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c000035_00045119_000b4779_082410df
-#define TEXTUREMODE0		0x082410df
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c000035_00045119_000b4779_082418df
-#define TEXTUREMODE0		0x082418df
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef TEXTUREMODE1
-
-#undef NUM_TMUS
-
-
-/*
-
-    mace:
-
-000000001173E00C: 0C000035 00000000 00045119 000B4779 082418DF (done)
-000000000D3EB6D7: 0C600C09 00000000 00045119 000B4779 0824100F
-0000000003E4A1D5: 0C600C09 00000000 00045119 000B4779 0824180F
-0000000003AAEA07: 0C600C09 00000000 00045119 000B4779 082418CF
-000000000389D5A8: 0C480035 00000000 00045119 000B4779 082418DF
-000000000168ED9C: 0C480035 00000000 00045119 000B4379 082418DF
-000000000142E146: 08602401 00000000 00045119 000B4779 082418DF
-
-*/
-
-#define NUM_TMUS			1
-
-#define FBZCOLORPATH		0x0c600c09
-#define ALPHAMODE			0x00045119
-#define FBZMODE				0x000b4779
-#define TEXTUREMODE1		0x00000000
-
-#define RENDERFUNC			render_0c600c09_00045119_000b4779_0824100f
-#define TEXTUREMODE0		0x0824100f
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c600c09_00045119_000b4779_0824180f
-#define TEXTUREMODE0		0x0824180f
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c600c09_00045119_000b4779_082418cf
-#define TEXTUREMODE0		0x082418cf
-#include "voodrast.h"
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-
-#undef FBZCOLORPATH
-#undef FBZMODE
-#define FBZCOLORPATH		0x0c480035
-#define TEXTUREMODE0		0x082418df
-
-#define FBZMODE				0x000b4779
-#define RENDERFUNC			render_0c480035_00045119_000b4779_082418df
-#include "voodrast.h"
-#undef FBZMODE
-#undef RENDERFUNC
-
-#define FBZMODE				0x000b4379
-#define RENDERFUNC			render_0c480035_00045119_000b4379_082418df
-#include "voodrast.h"
-#undef FBZMODE
-#undef RENDERFUNC
-
-#undef TEXTUREMODE0
-#undef RENDERFUNC
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef TEXTUREMODE1
-
-#undef NUM_TMUS
-
-
-/*
-    blitz99:
-
-389BA0CA: 0C000035 00000000 00040400 000B4739 0C26180F 00000000 00000000
-0667BB5A: 0C582C35 00000000 00515110 000B4739 0C26180F 00000000 00000000
-0661E0A1: 0C000035 00000000 64040409 000B4739 0C26180F 00000000 00000000
-048488C4: 0C002C35 00000000 64515119 000B4799 0C26180F 00000000 00000000
-044A750D: 0C582C35 00000000 00515110 000B4739 0C2618CF 00000000 00000000
-04351781: 0C002C35 00000000 40515119 000B4739 0C26180F 00000000 00000000
-02A984D0: 0C002C35 00000000 40515119 000B47F9 0C26180F 00000000 00000000
-0121D0A8: 0D422439 00000000 00040400 000B473B 0C2610C9 00000000 00000000
-
-0000000039CEEE06: 0C000035 00000001 00040400 000B4739 0C26180F
-0000000011F145DD: 0C582C35 00000000 00515110 000B4739 0C2618CF
-000000000DEAA542: 0C582C35 00000000 00515110 000B4739 0C26180F
-000000000C8D034E: 0C002C35 00000000 00515110 000B47F9 0C26180F
-0000000005599D25: 0C000035 00000001 64040409 000B4739 0C26180F
-00000000043FA611: 0C000035 00000000 00040400 000B4739 0C26180F
-000000000422A43F: 0C002C35 00000001 40515119 000B4739 0C26180F
-0000000003959E1E: 0C002C35 00000001 64515119 000B4799 0C26180F
-000000000347D228: 0C000035 00000001 00040400 000B47F9 0C26180F
-00000000033A5BC8: 0C002C35 00000001 40515119 000B47F9 0C26180F
-0000000002F8A88F: 0D422439 00000000 00040400 000B473B 0C2610C9
-*/
-
-#define NUM_TMUS			1
-
-#define RENDERFUNC			render_0c000035_00040400_000b4739_0c26180f
-#define FBZCOLORPATH		0x0c000035
-#define ALPHAMODE			0x00040400
-#define FBZMODE				0x000b4739
-#define TEXTUREMODE0		0x0c26180f
-#define TEXTUREMODE1		0x00000000
-#include "voodrast.h"
-#undef TEXTUREMODE1
-#undef TEXTUREMODE0
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c582c35_00515110_000b4739_0c26180f
-#define FBZCOLORPATH		0x0c582c35
-#define ALPHAMODE			0x00515110
-#define FBZMODE				0x000b4739
-#define TEXTUREMODE0		0x0c26180f
-#define TEXTUREMODE1		0x00000000
-#include "voodrast.h"
-#undef TEXTUREMODE1
-#undef TEXTUREMODE0
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c000035_64040409_000b4739_0c26180f
-#define FBZCOLORPATH		0x0c000035
-#define ALPHAMODE			0x64040409
-#define FBZMODE				0x000b4739
-#define TEXTUREMODE0		0x0c26180f
-#define TEXTUREMODE1		0x00000000
-#include "voodrast.h"
-#undef TEXTUREMODE1
-#undef TEXTUREMODE0
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c002c35_64515119_000b4799_0c26180f
-#define FBZCOLORPATH		0x0c002c35
-#define ALPHAMODE			0x64515119
-#define FBZMODE				0x000b4799
-#define TEXTUREMODE0		0x0c26180f
-#define TEXTUREMODE1		0x00000000
-#include "voodrast.h"
-#undef TEXTUREMODE1
-#undef TEXTUREMODE0
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c582c35_00515110_000b4739_0c2618cf
-#define FBZCOLORPATH		0x0c582c35
-#define ALPHAMODE			0x00515110
-#define FBZMODE				0x000b4739
-#define TEXTUREMODE0		0x0c2618cf
-#define TEXTUREMODE1		0x00000000
-#include "voodrast.h"
-#undef TEXTUREMODE1
-#undef TEXTUREMODE0
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef RENDERFUNC
-
-#define RENDERFUNC			render_0c002c35_40515119_000b4739_0c26180f
-#define FBZCOLORPATH		0x0c002c35
-#define ALPHAMODE			0x40515119
-#define FBZMODE				0x000b4739
-#define TEXTUREMODE0		0x0c26180f
-#define TEXTUREMODE1		0x00000000
-#include "voodrast.h"
-#undef TEXTUREMODE1
-#undef TEXTUREMODE0
-#undef FBZMODE
-#undef ALPHAMODE
-#undef FBZCOLORPATH
-#undef RENDERFUNC
-
-#undef NUM_TMUS
-
-
-/*
-    Sfrush:
-
-One of these is bad:
-       175: 0C000035 00000000 00045119 000B4779 082418DF 00000000 00000000
-       175: 0C480035 00000000 00045119 000B4779 082418DF 00000000 00000000
-       703: 0C000035 00000000 00045119 000B477B 082410DB 00000000 00000000
-
-       108: 0C600C09 00000001 00045119 000B4779 0824101F 0824101F 00000000
-       688: 0C600C09 00000001 00045119 000B4779 00000000 00000000 00000000
-         1: 0C600C09 00000001 00045119 000B4779 0824101F 082410DF 00000000
-        47: 0C600C09 00000001 00045119 000B4779 082410DF 0824101F 00000000
-        53: 0C600C09 00000001 00045119 000B4779 082418DF 0824101F 00000000
-OK      41: 0C482435 00000001 00045119 000B4379 0824101F 0824101F 00000000
-       225: 0C600C09 00000001 00045119 000B4779 0824101F 0824181F 00000000
-        18: 0C600C09 00000001 00045119 000B4779 0824181F 0824181F 00000000
-        13: 0C600C09 00000001 00045119 000B4779 082418DF 0824181F 00000000
-        23: 0C000035 00000001 00045119 000B4779 082418DF 0824181F 00000000
-         9: 0C000035 00000001 00045119 000B477B 082410DB 0824181F 00000000
-       463: 0C000035 00000001 00045119 000B4779 082410DF 0824181F 00000000
-         1: 0C480035 00000001 00045119 000B4779 082418DF 0824181F 00000000
-
-       127: 0C000035 00000000 00045119 000B4779 082410DF 0824181F 00000000
-        31: 0C480035 00000000 00045119 000B4779 082418DF 0824181F 00000000
-       127: 0C000035 00000000 00045119 000B477B 082410DB 0824181F 00000000
-
------------------------------------------------------------
-
-       511: 00000002 00000000 00000000 00000300 00000000
-         1: 08000001 00000000 00000000 00000300 00000800
-         1: 08000001 00000000 00000000 00000200 08241800
-     32353: 0C000035 00000000 00045119 000B4779 082418DF
-      5437: 0C480035 00000000 00045119 000B4779 082418DF
-     23867: 0C000035 00000000 00045119 000B477B 082410DB
-     10655: 0C600C09 00000001 00045119 000B4779 0824101F
-     13057: 0C600C09 00000001 00045119 000B4779 00000000
-       949: 0C600C09 00000001 00045119 000B4779 082410DF
-      2723: 0C600C09 00000001 00045119 000B4779 082418DF
-       240: 0C482435 00000001 00045119 000B4379 0824101F
-      4166: 0C600C09 00000001 00045119 000B4779 0824181F
-       747: 0C000035 00000001 00045119 000B4779 082418DF
-       427: 0C000035 00000001 00045119 000B477B 082410DB
-     12063: 0C000035 00000001 00045119 000B4779 082410DF
-        93: 0C480035 00000001 00045119 000B4779 082418DF
-      3949: 0C000035 00000000 00045119 000B4779 082410DF
-    470768: 0C600C09 00000000 00045119 000B4779 00000000
-    418032: 0C600C09 00000000 00045119 000B4779 0824101F
-    130673: 0C600C09 00000000 00045119 000B4779 0824181F
-      1857: 0C480035 00000000 00045119 000B477B 00000000
-      1891: 0C480035 00000000 00045119 000B4779 082410DF
-     92962: 0C482435 00000000 00045119 000B4379 0824101F
-    119123: 0C600C09 00000000 00045119 000B4779 082708DF
-     33176: 0C600C09 00000000 00045119 000B4779 082418DF
-     44448: 0C600C09 00000000 00045119 000B4779 082700DF
-      1937: 0C600C09 00000000 00045119 000B4779 0827001F
-     36352: 0C600C09 00000000 00045119 000B4779 082410DF
-       328: 0C600C09 00000001 00045119 000B4779 082700DF
-       659: 0C600C09 00000001 00045119 000B4779 082708DF
-        67: 0C480035 00000000 00045119 000B4779 00000000
-
-*/
-
-
-/*
-
-Carnevil:
-0000000002B4E96A: 0C002425 00000000 00045119 00034679 0C26180F 00000000 00000000
-0000000002885479: 0C002435 00000000 04045119 00034279 0C26180F 00000000 00000000
-0000000001EE2400: 0C480015 00000000 0F045119 000346F9 0C2618C9 00000000 00000000
-0000000001B92D31: 0D422439 00000000 00040400 000B4739 243210C9 00000000 00000000
-000000000186F400: 0C000035 00000000 0A045119 000346F9 0C2618C9 00000000 00000000
-00000000013C93EE: 0C482415 00000000 0A045119 000346F9 0C26180F 00000000 00000000
-000000000139CF3C: 0C482415 00000000 40045119 00034679 0C2618C9 00000000 00000000
-00000000013697FC: 0C486116 00000000 01045119 00034279 0C26180F 00000000 00000000
-0000000000E4DE5A: 0C482415 00000000 0F045119 000346F9 0C2618C9 00000000 00000000
-0000000000DF385B: 0C482415 00000000 04045119 00034279 0C26180F 00000000 00000000
-0000000000D02EB3: 0D422409 00000000 00045119 00034679 0C26180F 00000000 00000000
-
-00000000004F8328: 0C002435 00000000 40045119 000B4779 0C26180F 00000000 00000000
-000000000000EDA8: 0C002435 00000000 40045119 000B43F9 0C26180F 00000000 00000000
-000000000005B736: 0C002435 00000000 40045119 000342F9 0C26180F 00000000 00000000
-0000000000A7E85E: 0D422439 00000000 00040400 000B473B 0C2610C9 00000000 00000000
-000000000010DCC4: 0D420039 00000000 00040400 000B473B 0C2610C9 00000000 00000000
-00000000006525EC: 0C002435 00000000 08045119 000346F9 0C26180F 00000000 00000000
-00000000003EFE00: 0C000035 00000000 08045119 000346F9 0C2618C9 00000000 00000000
-0000000000086AE4: 0C482415 00000000 05045119 00034679 0C26180F 00000000 00000000
-000000000000B1EE: 0C482405 00000000 00045119 00034679 0C26180F 00000000 00000000
-00000000003D9446: 0C482415 00000000 04045119 00034279 0C2618C9 00000000 00000000
-0000000000BD3AB0: 0C480015 00000000 04045119 000346F9 0C2618C9 00000000 00000000
-0000000000001027: 0542611A 00000000 00515119 00034679 0C26180F 00000000 00000000
-00000000002C1360: 0C000035 00000000 04045119 00034679 0C2618C9 00000000 00000000
-000000000007BAB0: 0C002435 00000000 04045119 00034679 0C2618C9 00000000 00000000
-0000000000005360: 0C002425 00000000 04045119 00034679 0C26180F 00000000 00000000
-00000000000190D8: 0C482415 00000000 10045119 00034679 0C2618C9 00000000 00000000
-0000000000470C50: 0C482415 00000000 05045119 00034279 0C2618C9 00000000 00000000
-00000000000A2800: 0C000035 00000000 04040409 00034679 0C2618C9 00000000 00000000
-000000000001E814: 0C002435 00000000 04045119 00034279 0C2618C9 00000000 00000000
-0000000000146C20: 0C000035 00000000 00045119 00034679 0C2618C9 00000000 00000000
-00000000000B6B00: 0C002435 00000000 00045119 00034679 0C2618C9 00000000 00000000
-000000000002A05E: 0C482415 00000000 05045119 000346F9 0C26180F 00000000 00000000
-00000000001E1C98: 0C002435 00000000 40045119 00034679 0C26180F 00000000 00000000
-00000000000198CA: 0C002435 00000000 40045119 000346F9 0C26180F 00000000 00000000
-
-*/
-
+#undef FBZCOLORPATH_MASK
+#undef ALPHAMODE_MASK
+#undef FBZMODE_MASK
 #undef TEXTUREMODE0_MASK
 #undef TEXTUREMODE1_MASK
-#undef FBZMODE_MASK
-#undef ALPHAMODE_MASK
-#undef FBZCOLORPATH_MASK
 
 #define FBZCOLORPATH_MASK	0x00000000
 #define FBZCOLORPATH		0x00000000
@@ -1198,3 +795,5 @@ Carnevil:
 #undef ALPHAMODE_MASK
 #undef FBZCOLORPATH
 #undef FBZCOLORPATH_MASK
+
+

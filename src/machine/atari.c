@@ -21,14 +21,6 @@
 #define VERBOSE_TIMERS	0
 #define VERBOSE_CHKSUM	0
 
-#ifndef TRUE
-#define TRUE    1
-#endif
-
-#ifndef FALSE
-#define FALSE   0
-#endif
-
 //#define LOG(x) if (errorlog) fprintf x
 
 ATARI_PIA atari_pia;
@@ -1609,8 +1601,18 @@ DRIVER_INIT( atari )
 	offs_t ram_top;
 	offs_t ram_size;
 
-	ram_size = !strcmp(Machine->gamedrv->name, "a400") || !strcmp(Machine->gamedrv->name, "a800")
-		? 0xA000 : 0x8000;
+	if (!strcmp(Machine->gamedrv->name, "a400")
+		|| !strcmp(Machine->gamedrv->name, "a400pal")
+		|| !strcmp(Machine->gamedrv->name, "a800")
+		|| !strcmp(Machine->gamedrv->name, "a800pal")
+		|| !strcmp(Machine->gamedrv->name, "a800xl"))
+	{
+		ram_size = 0xA000;
+	}
+	else
+	{
+		ram_size = 0x8000;
+	}
 
 	/* install RAM */
 	ram_top = MIN(mess_ram_size, ram_size) - 1;

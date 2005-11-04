@@ -15,7 +15,7 @@ Sound Chips  :  OKI M6295 + YM3812 [Optional]
 Year + Game         Board#
 ---------------------------------------------------------------------------
 97 Shocking         ?
-?? Magic Bubble     YS102
+?? Magic Bubble     YS-1302
 ---------------------------------------------------------------------------
 
 - In shocking, service mode just shows the menu, with mangled graphics

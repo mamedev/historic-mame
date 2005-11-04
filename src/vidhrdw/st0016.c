@@ -360,6 +360,9 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 
 									if (!flipx) { drawxpos = xpos+xloop; } else { drawxpos = (xpos+8-1)-xloop; }
 
+									if (drawxpos > cliprect->max_x)
+										drawxpos -= 512; // wrap around
+
 									if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) )
 									{
 										/*Quick and dirty kludge to get past the booting tests in yuka*/

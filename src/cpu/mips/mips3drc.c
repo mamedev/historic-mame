@@ -727,7 +727,7 @@ static void tlbp(void)
 	UINT32 index;
 	UINT64 vpn;
 
-	debug_halt_on_next_instruction();
+//  debug_halt_on_next_instruction();
 	for (index = 0; index < 48; index++)
 	{
 		UINT64 mask = ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000)) & ~U64(0x1fff);

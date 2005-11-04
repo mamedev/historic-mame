@@ -167,7 +167,7 @@ static READ16_HANDLER( roldfrog_bombs_r )
 
 static ADDRESS_MAP_START( roldfrog_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)			/* ROM */
-	AM_RANGE(0x400000, 0x407fff) AM_READ(MRA16_ROM)			/* Protection Data */
+	AM_RANGE(0x400000, 0x407fff) AM_ROM						/* Protection Data */
 	AM_RANGE(0x408000, 0x4087ff) AM_READ(MRA16_RAM)			/* Extra Ram */
 	AM_RANGE(0x800000, 0x83ffff) AM_READ(MRA16_RAM)			/* Pixel Layer */
 	AM_RANGE(0x840000, 0x840001) AM_READ(input_port_0_word_r)/* DIPSW #1 */
@@ -185,7 +185,6 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( roldfrog_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x3fffff) AM_WRITE(MWA16_ROM)										/* ROM */
-	AM_RANGE(0x400000, 0x407fff) AM_WRITE(MWA16_ROM) AM_BASE(&roldfrog_protdata)			/* Protection Data */
 	AM_RANGE(0x408000, 0x4087ff) AM_WRITE(MWA16_RAM) 										/* Extra Ram */
 	AM_RANGE(0x800000, 0x83ffff) AM_WRITE(MWA16_RAM) AM_BASE(&splash_pixelram)			/* Pixel Layer */
 	AM_RANGE(0x84000e, 0x84000f) AM_WRITE(roldf_sh_irqtrigger_w)							/* Sound command */
@@ -593,7 +592,7 @@ The z80 rom (used for sound) is a hack of the main program from dynax's
 ***************************************************************************/
 
 ROM_START( roldfrog )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_REGION( 0x408000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) SHA1(f8cddfb785ae7900cb95b854811ec3fb250fa7fe) )
 	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) SHA1(5c6ecbc2711376afdd7b8da11f84d36ffc464c8a) )
 	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) SHA1(54d73c1db1090b7d5109906525ce95ee8c00ad1f) )
@@ -602,9 +601,8 @@ ROM_START( roldfrog )
 	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
-
-	ROM_REGION16_BE( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	/* 68000 code - supplied by protection device? */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x40000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -618,7 +616,7 @@ ROM_START( roldfrog )
 ROM_END
 
 ROM_START( roldfrga )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_REGION( 0x408000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "roldfrog.002",	0x000000, 0x080000, CRC(724cf022) SHA1(f8cddfb785ae7900cb95b854811ec3fb250fa7fe) )
 	ROM_LOAD16_BYTE( "roldfrog.006",	0x000001, 0x080000, CRC(e52a7ae2) SHA1(5c6ecbc2711376afdd7b8da11f84d36ffc464c8a) )
 	ROM_LOAD16_BYTE( "roldfrog.003",	0x100000, 0x080000, CRC(a1d49967) SHA1(54d73c1db1090b7d5109906525ce95ee8c00ad1f) )
@@ -627,9 +625,8 @@ ROM_START( roldfrga )
 	ROM_LOAD16_BYTE( "roldfrog.008",	0x200001, 0x080000, CRC(39adcba4) SHA1(6c8c945b6383fa2549e6654b427a7ce4c7ff46b5) )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
-
-	ROM_REGION16_BE( 0x8000, REGION_USER1, 0 )	/* 68000 code - supplied by protection device? */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x00000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	/* 68000 code - supplied by protection device? */
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x40000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -677,7 +674,7 @@ Note
 */
 
 ROM_START( rebus )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_REGION( 0x408000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "2.u16",	0x000000, 0x080000, CRC(7c8a717f) SHA1(00b1e7986046a7705fc65a5c7d4701a002b2ea6f) )
 	ROM_LOAD16_BYTE( "6.u12",	0x000001, 0x080000, CRC(8f73d548) SHA1(210d95dc0db41da3252a09e598719d98bca41983) )
 	ROM_LOAD16_BYTE( "3.u17",	0x100000, 0x080000, CRC(7495409b) SHA1(b4d75713d31c0b01d7cb7d50a2a89fb3ea4ea42b) )
@@ -859,15 +856,6 @@ ROM_END
 
 /* DRIVER INITs */
 
-void init_protection_data (void)
-{
-	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
-	int i;
-
-	for (i = 0;i < 0x8000/2;i++)
-	roldfrog_protdata[i] = PROTDATA[i];
-}
-
 DRIVER_INIT( splash )
 {
 	splash_bitmap_type = 0;
@@ -883,15 +871,13 @@ DRIVER_INIT( splash10 )
 DRIVER_INIT( roldfrog )
 {
 	splash_bitmap_type = 1;
-	init_protection_data();
-	splash_sprite_attr2_shift = 0;
+	splash_sprite_attr2_shift = 8;
 }
 
 DRIVER_INIT( rebus )
 {
 	splash_bitmap_type = 1;
 	splash_sprite_attr2_shift = 0;
-//  init_protection_data();
 }
 
 
@@ -907,13 +893,11 @@ DRIVER_INIT( funystrp )
 	ROM[0x04772/2] = 0x4e71;
 }
 
-GAME( 1992, splash,   0,        splash, splash, splash,     ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)", 0 )
-GAME( 1992, splash10, splash,   splash, splash, splash10,   ROT0, "Gaelco",    "Splash! (Ver. 1.0 World)", 0 )
-GAME( 1992, paintlad, splash,   splash, splash, splash,     ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)", 0 )
+GAME( 1992, splash,   0,        splash,   splash,   splash,   ROT0, "Gaelco",    "Splash! (Ver. 1.2 World)", 0 )
+GAME( 1992, splash10, splash,   splash,   splash,   splash10, ROT0, "Gaelco",    "Splash! (Ver. 1.0 World)", 0 )
+GAME( 1992, paintlad, splash,   splash,   splash,   splash,   ROT0, "Gaelco",    "Painted Lady (Splash) (Ver. 1.3 US)", 0 )
 
-GAME( 1993, roldfrog, 0,        roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
-GAME( 1993, roldfrga, roldfrog, roldfrog, splash, roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )
-
-GAME( 1995, rebus, 0,        roldfrog, splash, rebus, ROT0, "Microhard", "Rebus", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
-
+GAME( 1993, roldfrog, 0,        roldfrog, splash,   roldfrog, ROT0, "Microhard", "The Return of Lady Frog", GAME_NO_SOUND )
+GAME( 1993, roldfrga, roldfrog, roldfrog, splash,   roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )
+GAME( 1995, rebus,    0,        roldfrog, splash,   rebus,    ROT0, "Microhard", "Rebus", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
 GAME( 199?, funystrp, 0,        funystrp, funystrp, funystrp, ROT0, "Microhard / MagicGames",    "Funny Strip",GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )

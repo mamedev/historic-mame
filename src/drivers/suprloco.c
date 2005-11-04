@@ -39,7 +39,8 @@ static WRITE8_HANDLER( suprloco_soundport_w )
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xc000, 0xc1ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xc800, 0xc800) AM_READ(input_port_0_r)
 	AM_RANGE(0xd000, 0xd000) AM_READ(input_port_1_r)
@@ -53,7 +54,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc1ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xe800, 0xe800) AM_WRITE(suprloco_soundport_w)
 	AM_RANGE(0xe801, 0xe801) AM_WRITE(suprloco_control_w)

@@ -133,7 +133,7 @@ static ADDRESS_MAP_START( bl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7001, 0x7001) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(exctsccr_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x8400, 0x87ff) AM_WRITE(exctsccr_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x8800, 0x8fff) AM_WRITE(MWA8_RAM) /* ??? */
+	AM_RANGE(0x8800, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) /* ??? */
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) /* ??? */
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP) /* ??? */
 	AM_RANGE(0xa002, 0xa002) AM_WRITE(exctsccr_gfx_bank_w) /* ??? */
