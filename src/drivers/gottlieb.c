@@ -1383,7 +1383,7 @@ INPUT_PORTS_END
 
 /* the games can store char gfx data in either a 4k RAM area (128 chars), or */
 /* a 8k ROM area (256 chars). */
-static gfx_layout charRAMlayout =
+static const gfx_layout charRAMlayout =
 {
 	8,8,    /* 8*8 characters */
 	128,    /* 128 characters */
@@ -1394,7 +1394,7 @@ static gfx_layout charRAMlayout =
 	32*8    /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout charROMlayout =
+static const gfx_layout charROMlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
@@ -1405,7 +1405,7 @@ static gfx_layout charROMlayout =
 	32*8    /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1417,14 +1417,14 @@ static gfx_layout spritelayout =
 	32*8
 };
 
-static gfx_decode charRAM_gfxdecodeinfo[] =
+static const gfx_decode charRAM_gfxdecodeinfo[] =
 {
 	{ 0,           0x4000, &charRAMlayout, 0, 1 },	/* the game dynamically modifies this */
 	{ REGION_GFX2, 0x0000, &spritelayout,  0, 1 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode charROM_gfxdecodeinfo[] =
+static const gfx_decode charROM_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charROMlayout, 0, 1 },
 	{ REGION_GFX2, 0x0000, &spritelayout,  0, 1 },

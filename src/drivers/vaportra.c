@@ -231,7 +231,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
 	4096,
@@ -242,7 +242,7 @@ static gfx_layout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout seallayout =
+static const gfx_layout seallayout =
 {
 	16,16,
 	4096,
@@ -255,7 +255,7 @@ static gfx_layout seallayout =
 	64*8
 };
 
-static gfx_layout seallayout3 =
+static const gfx_layout seallayout3 =
 {
 	16,16,
 	4096,
@@ -268,7 +268,7 @@ static gfx_layout seallayout3 =
 	64*8
 };
 
-static gfx_layout seallayout2 =
+static const gfx_layout seallayout2 =
 {
 	16,16,
 	4096*2,
@@ -281,7 +281,7 @@ static gfx_layout seallayout2 =
 	64*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
 	{ REGION_GFX2, 0x000000, &seallayout,  768, 16 },	/* Tiles 16x16 */

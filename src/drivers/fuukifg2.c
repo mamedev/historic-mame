@@ -436,7 +436,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 */
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -448,7 +448,7 @@ static gfx_layout layout_8x8x4 =
 };
 
 /* 16x16x4 */
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -461,7 +461,7 @@ static gfx_layout layout_16x16x4 =
 };
 
 /* 16x16x8 */
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -473,7 +473,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*4
 };
 
-static gfx_decode fuuki16_gfxdecodeinfo[] =
+static const gfx_decode fuuki16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x400*2, 0x40 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x400*0, 0x40 }, // [1] Layer 0
@@ -655,7 +655,7 @@ ROM_START( gogomile )
 	ROM_LOAD( "lh5370hb.19", 0x000000, 0x200000, CRC(bd1e896f) SHA1(075f7600cbced1d285cf32fc196844720eb12671) )	// FIRST AND SECOND HALF IDENTICAL
 
 	/* 0x40000 * 4: sounds+speech (japanese),sounds+speech (english) */
-	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "lh538n1d.25", 0x000000, 0x100000, CRC(01622a95) SHA1(8d414bfc6dcfab1cf9cfe5738eb5c2ff31b77df6) )	// 0x40000 * 4
 ROM_END
 
@@ -684,7 +684,7 @@ ROM_START( gogomilj )
 	ROM_LOAD( "lh5370hb.19", 0x000000, 0x200000, CRC(bd1e896f) SHA1(075f7600cbced1d285cf32fc196844720eb12671) )	// FIRST AND SECOND HALF IDENTICAL
 
 	/* 0x40000 * 4: sounds+speech (japanese),sounds+speech (english) */
-	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "lh538n1d.25", 0x000000, 0x100000, CRC(01622a95) SHA1(8d414bfc6dcfab1cf9cfe5738eb5c2ff31b77df6) )	// 0x40000 * 4
 ROM_END
 
@@ -745,7 +745,7 @@ ROM_START( pbancho )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* 16x16x4 Tiles */
 	ROM_LOAD( "rom3.60",  0x000000, 0x200000, CRC(a50a3c1b) SHA1(a2b30f9f83f5dc2e069d7559aefbda9929fc640c) )	// ?maybe?
 
-	ROM_REGION( 0x040000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "rom25.no3", 0x000000, 0x040000, CRC(a7bfb5ea) SHA1(61937eae4f8855bc09c494aff52d76d41dc3b76a) )
 
 ROM_END

@@ -581,7 +581,7 @@ all the 8x8 tiles are in one format, the 16x16 sprites in another
 
 */
 
-static gfx_layout angelkds_charlayout =
+static const gfx_layout angelkds_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -593,7 +593,7 @@ static gfx_layout angelkds_charlayout =
 };
 
 
-static gfx_layout angelkds_spritelayout =
+static const gfx_layout angelkds_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -604,7 +604,7 @@ static gfx_layout angelkds_spritelayout =
 	16*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &angelkds_charlayout,   0x30, 1  },
 	{ REGION_GFX3, 0, &angelkds_charlayout,   0, 16 },

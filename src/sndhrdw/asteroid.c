@@ -27,19 +27,37 @@ const struct discrete_lfsr_desc asteroid_lfsr={
 	16			/* Output bit is feedback bit */
 };
 
-#define	ASTEROID_SAUCER_SND_EN		NODE_01
-#define	ASTEROID_SAUCER_FIRE_EN		NODE_02
-#define	ASTEROID_SAUCER_SEL			NODE_03
-#define	ASTEROID_THRUST_EN			NODE_04
-#define	ASTEROID_SHIP_FIRE_EN		NODE_05
-#define	ASTEROID_LIFE_EN			NODE_06
+const struct discrete_dac_r1_ladder asteroid_thump_dac1 =
+{
+	4,			// size of ladder
+	{RES_K(220), RES_K(100), RES_K(47), RES_K(22)}, //R44-R47
+	4.3,        // 5v - diode junction
+	RES_K(6.8), // R49
+	RES_K(47),	// R44
+	CAP_U(0.01)	// C27
+};
+
+const struct discrete_555_cc_desc asteroid_thump_555cc =
+{
+	DISC_555_OUT_SQW | DISC_555_OUT_AC | DISCRETE_555_CC_TO_CAP,
+	5,		// B+ voltage of 555
+	DEFAULT_555_VALUES,
+	5,		// B+ voltage of the Constant Current source
+	0.8		// VBE 2N3906 (Si)
+};
+
+#define ASTEROID_SAUCER_SND_EN		NODE_01
+#define ASTEROID_SAUCER_FIRE_EN		NODE_02
+#define ASTEROID_SAUCER_SEL			NODE_03
+#define ASTEROID_THRUST_EN			NODE_04
+#define ASTEROID_SHIP_FIRE_EN		NODE_05
+#define ASTEROID_LIFE_EN			NODE_06
 #define ASTEROID_NOISE_RESET		NODE_07
 
-#define	ASTEROID_THUMP_EN			NODE_08
-#define	ASTEROID_THUMP_FREQ			NODE_09
-#define ASTEROID_THUMP_DUTY			NODE_10
-#define ASTEROID_EXPLODE_DATA		NODE_11
-#define ASTEROID_EXPLODE_PITCH		NODE_12
+#define ASTEROID_THUMP_EN			NODE_08
+#define ASTEROID_THUMP_DATA			NODE_09
+#define ASTEROID_EXPLODE_DATA		NODE_10
+#define ASTEROID_EXPLODE_PITCH		NODE_11
 
 #define ASTEROID_NOISE				NODE_20
 #define ASTEROID_THUMP_SND			NODE_21
@@ -66,13 +84,6 @@ DISCRETE_SOUND_START(asteroid_discrete_interface)
 	/*        the filter stage.                     */
 	/************************************************/
 
-	/************************************************/
-	/* Input register mapping for asteroids ,the    */
-	/* registers are lumped in three groups for no  */
-	/* other reason than they are controlled by 3   */
-	/* registers on the schematics                  */
-	/* Address values are also arbitary in here.    */
-	/************************************************/
 	/*                        NODE                 GAIN        OFFSET  INIT */
 	DISCRETE_INPUT_LOGIC (ASTEROID_SAUCER_SND_EN)
 	DISCRETE_INPUT_LOGIC (ASTEROID_SAUCER_FIRE_EN)
@@ -83,8 +94,7 @@ DISCRETE_SOUND_START(asteroid_discrete_interface)
 	DISCRETE_INPUT_PULSE (ASTEROID_NOISE_RESET, 1)
 
 	DISCRETE_INPUT_LOGIC (ASTEROID_THUMP_EN)
-	DISCRETE_INPUTX_DATA (ASTEROID_THUMP_FREQ,     70.0/15.0,  20.0,   0)
-	DISCRETE_INPUTX_DATA (ASTEROID_THUMP_DUTY,     55.0/15.0,  33.0,   0)
+	DISCRETE_INPUT_DATA  (ASTEROID_THUMP_DATA)
 
 	DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_DATA, 1000.0/15.0,   0.0,   0)
 	DISCRETE_INPUTX_DATA (ASTEROID_EXPLODE_PITCH, 1,            0,     12)
@@ -99,12 +109,11 @@ DISCRETE_SOUND_START(asteroid_discrete_interface)
 	/* The VCO is implemented with a 555 timer and  */
 	/* an RC filter to perform smoothing on the     */
 	/* output                                       */
-	/*                                              */
-	/* The sound can be tweaked with the gain and   */
-	/* adder constants in the 2 lines below         */
 	/************************************************/
-	DISCRETE_SQUAREWFIX(NODE_30, ASTEROID_THUMP_EN, ASTEROID_THUMP_FREQ, 106.4, ASTEROID_THUMP_DUTY, 0, 0)
-	DISCRETE_RCFILTER(ASTEROID_THUMP_SND, 1, NODE_30, 3300, 0.1e-6)
+	DISCRETE_DAC_R1(NODE_30, 1, ASTEROID_THUMP_DATA, 3.5, &asteroid_thump_dac1) // CMOS
+	DISCRETE_555_CC(NODE_31, ASTEROID_THUMP_EN, NODE_30, RES_K(22), CAP_U(0.22), 0, 0, RES_K(18), &asteroid_thump_555cc)
+	DISCRETE_RCFILTER(NODE_32, 1, NODE_31, RES_K(3.3), CAP_U(0.1))
+	DISCRETE_GAIN(ASTEROID_THUMP_SND, NODE_32, 30)
 
 	/************************************************/
 	/* The SAUCER sound is based on two VCOs, a     */
@@ -293,9 +302,8 @@ WRITE8_HANDLER( asteroid_explode_w )
 
 WRITE8_HANDLER( asteroid_thump_w )
 {
-	discrete_sound_w(ASTEROID_THUMP_EN, data & 0x10);			//Thump enable
-	discrete_sound_w(ASTEROID_THUMP_FREQ, (data&0x0f)^0x0f);	//Thump frequency
-	discrete_sound_w(ASTEROID_THUMP_DUTY, data&0x0f);			//Thump duty
+	discrete_sound_w(ASTEROID_THUMP_EN,   data & 0x10);
+	discrete_sound_w(ASTEROID_THUMP_DATA, data & 0x0f);
 }
 
 WRITE8_HANDLER( asteroid_sounds_w )

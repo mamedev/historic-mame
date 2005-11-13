@@ -45,12 +45,12 @@ The PCB is Spanish and manufacured by Gamart.
 static UINT8*peno_vram;
 
 
-VIDEO_START(penocup)
+VIDEO_START(ttchamp)
 {
 	return 0;
 }
 
-VIDEO_UPDATE(penocup)
+VIDEO_UPDATE(ttchamp)
 {
 	int y,x,count;
 //  int i;
@@ -141,14 +141,14 @@ static READ8_HANDLER( peno_rand2 )
 	return rand();
 }
 
-static ADDRESS_MAP_START( penocup_map, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( ttchamp_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x0ffff) AM_RAM
 	AM_RANGE(0x10000, 0x1ffff) AM_RAM AM_BASE(&peno_vram)
 	AM_RANGE(0x20000, 0x7ffff) AM_READ(MRA8_BANK1) // ?
 	AM_RANGE(0x80000, 0xfffff) AM_READ(MRA8_BANK2) // ?
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( penocup_io, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( ttchamp_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0x0000) AM_WRITE(MWA8_NOP)
 
 	AM_RANGE(0x0002, 0x0002) AM_READ(input_port_0_r)
@@ -180,7 +180,7 @@ ADDRESS_MAP_END
 
 
 
-INPUT_PORTS_START(penocup)
+INPUT_PORTS_START(ttchamp)
 	PORT_START	/* 8bit */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -252,17 +252,17 @@ INPUT_PORTS_START(penocup)
 INPUT_PORTS_END
 
 
-static INTERRUPT_GEN( penocup_irq ) /* right? */
+static INTERRUPT_GEN( ttchamp_irq ) /* right? */
 {
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static MACHINE_DRIVER_START( penocup )
+static MACHINE_DRIVER_START( ttchamp )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(V30, 8000000)
-	MDRV_CPU_PROGRAM_MAP(penocup_map, 0)
-	MDRV_CPU_IO_MAP(penocup_io,0)
-	MDRV_CPU_VBLANK_INT(penocup_irq,1)
+	MDRV_CPU_PROGRAM_MAP(ttchamp_map, 0)
+	MDRV_CPU_IO_MAP(ttchamp_io,0)
+	MDRV_CPU_VBLANK_INT(ttchamp_irq,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -273,11 +273,11 @@ static MACHINE_DRIVER_START( penocup )
 	MDRV_VISIBLE_AREA(0, 320-1, 0, 200-1)
 	MDRV_PALETTE_LENGTH(0x8000)
 
-	MDRV_VIDEO_START(penocup)
-	MDRV_VIDEO_UPDATE(penocup)
+	MDRV_VIDEO_START(ttchamp)
+	MDRV_VIDEO_UPDATE(ttchamp)
 MACHINE_DRIVER_END
 
-ROM_START( penocup )
+ROM_START( ttchamp )
 
 	/* hopefully this is a good dump */
 
@@ -318,29 +318,49 @@ ROM_START( penocup )
 	ROM_LOAD( "27c020.1", 0x000000, 0x040000,  CRC(e2c4fe95) SHA1(da349035cc348db220a1e12b4c2a6021e2168425) )
 ROM_END
 
-static DRIVER_INIT (penocup)
-{
-
-	unsigned char *ROM1 = memory_region(REGION_USER1);
 /*
-    unsigned char *ROM2 = memory_region(REGION_USER2);
-    unsigned char *ROM3 = memory_region(REGION_USER3);
 
-    UINT32 count;
+Table tennis Championships by Gamart 1995
 
-    for (count = 0;count <0x200000;count++)
-    {
-        if ((ROM1[count] != ROM2[count]) || (ROM2[count] != ROM3[count]))
-        {
-            printf("Non-Matching addr: 0x%06x DumpA: %02x  DumpB: %02x  DumpC: %02x\n", count, ROM1[count],ROM2[count],ROM3[count]);
-        }
-    }
+This game come from Gamart,an obscure spanish software house.
+Hardware info:
+main cpu: V30
+sound chip: oki6295
+custom chip: tpc1020bfn x2
+osc: 16 mhz
+Rom files definition:
+ttennis2/3 main program
+ttennis1 adpcm data
+ttennis4/5 graphics
+*there is a pic16c84 that i cannot dump because my programmer doesn't support it.
+
+Dumped by tirino73 >isolani (at) interfree.it<
+
 */
+
+ROM_START( ttchampa )
+	/* this is from a different board */
+
+	ROM_REGION( 0x200000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "ttennis2.bin", 0x000000, 0x080000,  CRC(b060e72c) SHA1(376e71bb4b1687fec4b719cbc5a7b25b64d159ac) )
+	ROM_LOAD16_BYTE( "ttennis3.bin", 0x000001, 0x080000,  CRC(33e085a8) SHA1(ea6af05690b4b0803c303a3c858df10e4d907fb1) )
+	ROM_LOAD16_BYTE( "4.bin", 0x100000, 0x080000,  CRC(4388dead) SHA1(1965e4b84452b244e32c8d218aace8d287c67ec2) )
+	ROM_LOAD16_BYTE( "5.bin", 0x100001, 0x080000,  CRC(fdbf9b28) SHA1(2d260555586097c8a396f65111f55ace801c7a5d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* not verified if this is correct yet, seems very empty, maybe protected */
+	ROM_LOAD( "pic16c84.rom", 0x000000, 0x4280,  CRC(900f2ef8) SHA1(08f206fe52f413437436e4b0d2b4ec310767446c) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "27c020.1", 0x000000, 0x040000,  CRC(e2c4fe95) SHA1(da349035cc348db220a1e12b4c2a6021e2168425) )
+ROM_END
+
+static DRIVER_INIT (ttchamp)
+{
+	unsigned char *ROM1 = memory_region(REGION_USER1);
 	memory_set_bankptr(1,&ROM1[0x120000]);
 	memory_set_bankptr(2,&ROM1[0x180000]);
-
-
-
 }
 
-GAME( 199?, penocup, 0,        penocup, penocup, penocup, ROT0,  "Gamart?", "Table Tennis Championships / Peno Cup?", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, ttchamp, 0,        ttchamp, ttchamp, ttchamp, ROT0,  "Gamart?", "Table Tennis Champions (set 1)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, ttchampa,ttchamp,  ttchamp, ttchamp, ttchamp, ROT0,  "Gamart?", "Table Tennis Champions (set 2)", GAME_NOT_WORKING|GAME_NO_SOUND )
+

@@ -1325,7 +1325,7 @@ static ADDRESS_MAP_START( writemem_mcu, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),	/* number of tiles */
@@ -1348,7 +1348,7 @@ static gfx_layout tile_layout =
 	8*64 /* sprite offset */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &tile_layout,  0x1000, 0x10 },
 	{ -1 }

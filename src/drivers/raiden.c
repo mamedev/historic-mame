@@ -226,7 +226,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout raiden_charlayout =
+static const gfx_layout raiden_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	2048,		/* 512 characters */
@@ -237,7 +237,7 @@ static gfx_layout raiden_charlayout =
 	128
 };
 
-static gfx_layout raiden_spritelayout =
+static const gfx_layout raiden_spritelayout =
 {
   16,16,	/* 16*16 tiles */
   4096,		/* 2048*4 tiles */
@@ -255,7 +255,7 @@ static gfx_layout raiden_spritelayout =
   1024
 };
 
-static gfx_decode raiden_gfxdecodeinfo[] =
+static const gfx_decode raiden_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &raiden_charlayout,   768, 16 },
 	{ REGION_GFX2, 0, &raiden_spritelayout,   0, 16 },

@@ -577,7 +577,7 @@ ADDRESS_MAP_END
 
 /*********************************************************************/
 
-static gfx_layout char512 =
+static const gfx_layout char512 =
 {
 	8,8,
 	512,
@@ -588,7 +588,7 @@ static gfx_layout char512 =
 	256
 };
 
-static gfx_layout char1024 =
+static const gfx_layout char1024 =
 {
 	8,8,
 	1024,
@@ -599,7 +599,7 @@ static gfx_layout char1024 =
 	256
 };
 
-static gfx_layout tile1024 =
+static const gfx_layout tile1024 =
 {
 	16,16,
 	1024,
@@ -612,7 +612,7 @@ static gfx_layout tile1024 =
 	128*8
 };
 
-static gfx_layout tile2048 =
+static const gfx_layout tile2048 =
 {
 	16,16,
 	2048,
@@ -625,7 +625,7 @@ static gfx_layout tile2048 =
 	128*8
 };
 
-static gfx_layout tdfever_tiles =
+static const gfx_layout tdfever_tiles =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -638,7 +638,7 @@ static gfx_layout tdfever_tiles =
 	128*8
 };
 
-static gfx_layout tdfever2_tiles =
+static const gfx_layout tdfever2_tiles =
 {
 	16,16,
 	512*6,
@@ -651,7 +651,7 @@ static gfx_layout tdfever2_tiles =
 	128*8
 };
 
-static gfx_layout sprite512 =
+static const gfx_layout sprite512 =
 {
 	16,16,
 	512,
@@ -663,7 +663,7 @@ static gfx_layout sprite512 =
 	256
 };
 
-static gfx_layout sprite1024 =
+static const gfx_layout sprite1024 =
 {
 	16,16,
 	1024,
@@ -675,7 +675,7 @@ static gfx_layout sprite1024 =
 	256
 };
 
-static gfx_layout big_sprite512 =
+static const gfx_layout big_sprite512 =
 {
 	32,32,
 	512,
@@ -698,7 +698,7 @@ static gfx_layout big_sprite512 =
 	16*32*2
 };
 
-static gfx_layout gwar_sprite1024 =
+static const gfx_layout gwar_sprite1024 =
 {
 	16,16,
 	1024,
@@ -713,7 +713,7 @@ static gfx_layout gwar_sprite1024 =
 	256
 };
 
-static gfx_layout gwar_sprite2048 =
+static const gfx_layout gwar_sprite2048 =
 {
 	16,16,
 	2048,
@@ -725,7 +725,7 @@ static gfx_layout gwar_sprite2048 =
 	256
 };
 
-static gfx_layout gwar_big_sprite1024 =
+static const gfx_layout gwar_big_sprite1024 =
 {
 	32,32,
 	1024,
@@ -748,7 +748,7 @@ static gfx_layout gwar_big_sprite1024 =
 	1024
 };
 
-static gfx_layout tdfever_big_sprite1024 =
+static const gfx_layout tdfever_big_sprite1024 =
 {
 	32,32,
 	1024,
@@ -773,7 +773,7 @@ static gfx_layout tdfever_big_sprite1024 =
 
 /*********************************************************************/
 
-static gfx_decode tnk3_gfxdecodeinfo[] =
+static const gfx_decode tnk3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char512,	128*3,  8 },
 	{ REGION_GFX2, 0x0, &char1024,	128*1, 16 },
@@ -781,7 +781,7 @@ static gfx_decode tnk3_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode athena_gfxdecodeinfo[] =
+static const gfx_decode athena_gfxdecodeinfo[] =
 {
 	/* colors 512-1023 are currently unused, I think they are a second bank */
 	{ REGION_GFX1, 0x0, &char512,	128*3,  8 },	/* colors 384..511 */
@@ -790,7 +790,7 @@ static gfx_decode athena_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode ikari_gfxdecodeinfo[] =
+static const gfx_decode ikari_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char512,             256, 16 },
 	{ REGION_GFX2, 0x0, &tile1024,            256, 16 },
@@ -799,7 +799,7 @@ static gfx_decode ikari_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode gwar_gfxdecodeinfo[] =
+static const gfx_decode gwar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -808,7 +808,7 @@ static gfx_decode gwar_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode bermudat_gfxdecodeinfo[] =
+static const gfx_decode bermudat_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -817,7 +817,7 @@ static gfx_decode bermudat_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode psychos_gfxdecodeinfo[] =
+static const gfx_decode psychos_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,             256*0, 16 },
 	{ REGION_GFX2, 0x0, &tile2048,             256*3, 16 },
@@ -826,7 +826,7 @@ static gfx_decode psychos_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode tdfever_gfxdecodeinfo[] =
+static const gfx_decode tdfever_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
 	{ REGION_GFX2, 0x0, &tdfever_tiles,				256*2, 16 },
@@ -834,7 +834,7 @@ static gfx_decode tdfever_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode tdfever2_gfxdecodeinfo[] =
+static const gfx_decode tdfever2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &char1024,					256*0, 16 },
 	{ REGION_GFX2, 0x0, &tdfever2_tiles,				256*2, 16 },
@@ -858,7 +858,7 @@ static MACHINE_DRIVER_START( tnk3 )
 	MDRV_CPU_ADD(Z80, 4000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(YM3526_sound_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

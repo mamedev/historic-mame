@@ -207,7 +207,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout ccastles_spritelayout =
+static const gfx_layout ccastles_spritelayout =
 {
 	8,16,
 	256,
@@ -220,7 +220,7 @@ static gfx_layout ccastles_spritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &ccastles_spritelayout,  0, 1 },
 	{ -1 }

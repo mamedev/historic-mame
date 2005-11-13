@@ -27,9 +27,9 @@ INLINE void dither_to_matrix(UINT32 color, UINT16 *matrix)
 	for (i = 0; i < 16; i++)
 	{
 		UINT8 dither = fbz_dither_matrix[i];
-		UINT32 newr = DITHER_VAL(rawr,dither);
-		UINT32 newg = DITHER_VAL(rawg,dither);
-		UINT32 newb = DITHER_VAL(rawb,dither);
+		UINT32 newr = DITHER_RB(rawr, dither);
+		UINT32 newg = DITHER_G (rawg, dither);
+		UINT32 newb = DITHER_RB(rawb, dither);
 		matrix[i] = ((newr >> 4) << 11) | ((newg >> 3) << 5) | (newb >> 4);
 	}
 }

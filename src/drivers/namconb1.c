@@ -603,7 +603,7 @@ static READ32_HANDLER( custom_key_r )
 
 /***************************************************************/
 
-static gfx_layout obj_layout =
+static const gfx_layout obj_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -625,7 +625,7 @@ static gfx_layout obj_layout =
 	16*128
 }; /* obj_layout */
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -636,7 +636,7 @@ static gfx_layout tile_layout =
 	8*64
 }; /* tile_layout */
 
-static gfx_layout roz_layout =
+static const gfx_layout roz_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -649,14 +649,14 @@ static gfx_layout roz_layout =
 	16*128
 }; /* roz_layout */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x10 },
 	{ NAMCONB1_SPRITEGFXREGION,	0, &obj_layout,		0x0000, 0x10 },
 	{ -1 }
 }; /* gfxdecodeinfo */
 
-static gfx_decode gfxdecodeinfo2[] =
+static const gfx_decode gfxdecodeinfo2[] =
 {
 	{ NAMCONB1_TILEGFXREGION,	0, &tile_layout,	0x1000, 0x08 },
 	{ NAMCONB1_SPRITEGFXREGION,	0, &obj_layout,		0x0000, 0x10 },

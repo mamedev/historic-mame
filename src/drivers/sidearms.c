@@ -617,7 +617,7 @@ INPUT_PORTS_START( whizz )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	RGN_FRAC(1,1),   /* 1024 characters */
@@ -628,7 +628,7 @@ static gfx_layout charlayout =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	RGN_FRAC(1,2),   /* 2048 sprites */
@@ -641,7 +641,7 @@ static gfx_layout spritelayout =
 	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	32,32,  /* 32*32 tiles */
 	RGN_FRAC(1,2),    /* 512 tiles */
@@ -662,7 +662,7 @@ static gfx_layout tilelayout =
 	256*8   /* every tile takes 256 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   768, 64 }, /* colors 768-1023 */
 	{ REGION_GFX2, 0, &tilelayout,     0, 32 }, /* colors   0-511 */
@@ -672,7 +672,7 @@ static gfx_decode gfxdecodeinfo[] =
 
 
 
-static gfx_layout turtship_tilelayout =
+static const gfx_layout turtship_tilelayout =
 {
 	32,32,  /* 32*32 tiles */
 	RGN_FRAC(1,2),    /* 768 tiles */
@@ -693,7 +693,7 @@ static gfx_layout turtship_tilelayout =
 	256*8   /* every tile takes 256 consecutive bytes */
 };
 
-static gfx_decode turtship_gfxdecodeinfo[] =
+static const gfx_decode turtship_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          768, 64 },	/* colors 768-1023 */
 	{ REGION_GFX2, 0, &turtship_tilelayout,   0, 32 },	/* colors   0-511 */

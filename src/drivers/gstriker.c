@@ -231,7 +231,7 @@ static WRITE8_HANDLER( gs_sh_bankswitch_w )
 
 /*** GFX DECODE **************************************************************/
 
-static gfx_layout gs_8x8x4_layout =
+static const gfx_layout gs_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -243,7 +243,7 @@ static gfx_layout gs_8x8x4_layout =
 };
 
 
-static gfx_layout gs_16x16x4_layout =
+static const gfx_layout gs_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -259,7 +259,7 @@ static gfx_layout gs_16x16x4_layout =
 	16*64
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gs_8x8x4_layout,     0, 256 },
 	{ REGION_GFX2, 0, &gs_16x16x4_layout,   0, 256 },

@@ -246,7 +246,7 @@ static void sega_decode(const unsigned char convtable[32][4])
 	int A;
 
 	UINT8 *rom = memory_region(REGION_CPU1);
-	UINT8 *decrypted = auto_malloc(0x8000);
+	UINT8 *decrypted = auto_malloc(0xc000);
 
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypted);
 
@@ -279,6 +279,10 @@ static void sega_decode(const unsigned char convtable[32][4])
 		if (convtable[2*row+1][col] == 0xff)	/* table incomplete! (for development) */
 			rom[A] = 0xee;
 	}
+
+	/* this is a kludge to catch anyone who has code that crosses the encrypted/ */
+	/* decrypted boundary. ssanchan does it */
+	memcpy(&decrypted[0x8000], &rom[0x8000], 0x4000);
 }
 
 

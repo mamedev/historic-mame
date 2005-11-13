@@ -252,7 +252,7 @@ INPUT_PORTS_START( runaway )
 INPUT_PORTS_END
 
 
-static gfx_layout runaway_tile_layout =
+static const gfx_layout runaway_tile_layout =
 {
 	8, 8,
 	256,
@@ -270,7 +270,7 @@ static gfx_layout runaway_tile_layout =
 };
 
 
-static gfx_layout qwak_tile_layout =
+static const gfx_layout qwak_tile_layout =
 {
 	8, 8,
 	256,
@@ -288,7 +288,7 @@ static gfx_layout qwak_tile_layout =
 };
 
 
-static gfx_layout runaway_sprite_layout =
+static const gfx_layout runaway_sprite_layout =
 {
 	8, 16,
 	384,
@@ -307,7 +307,7 @@ static gfx_layout runaway_sprite_layout =
 };
 
 
-static gfx_layout qwak_sprite_layout =
+static const gfx_layout qwak_sprite_layout =
 {
 	8, 16,
 	128,
@@ -326,7 +326,7 @@ static gfx_layout qwak_sprite_layout =
 };
 
 
-static gfx_decode runaway_gfxdecodeinfo[] =
+static const gfx_decode runaway_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000, &runaway_tile_layout,   0, 1 },
 	{ REGION_GFX1, 0x800, &runaway_sprite_layout, 8, 1 },
@@ -334,7 +334,7 @@ static gfx_decode runaway_gfxdecodeinfo[] =
 };
 
 
-static gfx_decode qwak_gfxdecodeinfo[] =
+static const gfx_decode qwak_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x800, &qwak_tile_layout,   0, 1 },
 	{ REGION_GFX1, 0x000, &qwak_sprite_layout, 0, 1 },

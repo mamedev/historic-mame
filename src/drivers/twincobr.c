@@ -590,7 +590,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,			/* 8*8 characters */
 	RGN_FRAC(1,3),	/* 2048 characters */
@@ -601,7 +601,7 @@ static gfx_layout charlayout =
 	8*8				/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,8,			/* 8*8 tiles */
 	RGN_FRAC(1,4),	/* 4096/8192 tiles */
@@ -612,7 +612,7 @@ static gfx_layout tilelayout =
 	8*8				/* every tile takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,			/* 16*16 sprites */
 	RGN_FRAC(1,4),	/* 2048 sprites */
@@ -624,7 +624,7 @@ static gfx_layout spritelayout =
 	32*8			/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,	1536, 32 },	/* colors 1536-1791 */
 	{ REGION_GFX2, 0x00000, &tilelayout,	1280, 16 },	/* colors 1280-1535 */

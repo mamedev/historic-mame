@@ -1104,11 +1104,13 @@ void a600xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		else
 		{
 			logerror("%s MMU SELFTEST ROM\n", Machine->gamedrv->name);
-			rbank2 = MRA8_ROM;
+			rbank2 = MRA8_BANK2;
 			wbank2 = MWA8_ROM;
 		}
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, rbank2);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, wbank2);
+		if (rbank2 == MRA8_BANK2)
+			memory_set_bankptr(2, memory_region(REGION_CPU1)+0x5000);
 	}
 }
 
@@ -1117,6 +1119,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 	UINT8 changes = new_mmu ^ old_mmu;
 	read8_handler rbank1, rbank2, rbank3, rbank4;
 	write8_handler wbank1, wbank2, wbank3, wbank4;
+	UINT8 *base1, *base2, *base3, *base4;
 
 	if( changes == 0 )
 		return;
@@ -1131,25 +1134,27 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 			logerror("%s MMU BIOS ROM\n", Machine->gamedrv->name);
 			rbank3 = MRA8_BANK3;
 			wbank3 = MWA8_ROM;
-			memory_set_bankptr(3, memory_region(REGION_CPU1)+0x14000);  /* 8K lo BIOS */
+			base3 = memory_region(REGION_CPU1)+0x14000;  /* 8K lo BIOS */
 			rbank4 = MRA8_BANK4;
 			wbank4 = MWA8_ROM;
-			memory_set_bankptr(4, memory_region(REGION_CPU1)+0x15800);  /* 4K FP ROM + 8K hi BIOS */
+			base4 = memory_region(REGION_CPU1)+0x15800;  /* 4K FP ROM + 8K hi BIOS */
 		}
 		else
 		{
 			logerror("%s MMU BIOS RAM\n", Machine->gamedrv->name);
-			rbank3 = MRA8_RAM;
-			wbank3 = MWA8_RAM;
-			memory_set_bankptr(3, memory_region(REGION_CPU1)+0x0c000);  /* 8K RAM */
-			rbank4 = MRA8_RAM;
-			wbank4 = MWA8_RAM;
-			memory_set_bankptr(4, memory_region(REGION_CPU1)+0x0d800);  /* 4K RAM + 8K RAM */
+			rbank3 = MRA8_BANK3;
+			wbank3 = MWA8_BANK3;
+			base3 = memory_region(REGION_CPU1)+0x0c000;  /* 8K RAM */
+			rbank4 = MRA8_BANK4;
+			wbank4 = MWA8_BANK4;
+			base4 = memory_region(REGION_CPU1)+0x0d800;  /* 4K RAM + 8K RAM */
 		}
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, rbank3);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, wbank3);
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xffff, 0, 0, rbank4);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd800, 0xffff, 0, 0, wbank4);
+		memory_set_bankptr(3, base3);
+		memory_set_bankptr(4, base4);
 	}
 	/* check if BASIC changed */
 	if( changes & 0x02 )
@@ -1157,19 +1162,20 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x02 )
 		{
 			logerror("%s MMU BASIC RAM\n", Machine->gamedrv->name);
-			rbank1 = MRA8_RAM;
-			wbank1 = MWA8_RAM;
-			memory_set_bankptr(1, memory_region(REGION_CPU1)+0x0a000);  /* 8K RAM */
+			rbank1 = MRA8_BANK1;
+			wbank1 = MWA8_BANK1;
+			base1 = memory_region(REGION_CPU1)+0x0a000;  /* 8K RAM */
 		}
 		else
 		{
 			logerror("%s MMU BASIC ROM\n", Machine->gamedrv->name);
-			rbank1 = MRA8_BANK2;
+			rbank1 = MRA8_BANK1;
 			wbank1 = MWA8_ROM;
-			memory_set_bankptr(1, memory_region(REGION_CPU1)+0x10000);  /* 8K BASIC */
+			base1 = memory_region(REGION_CPU1)+0x10000;  /* 8K BASIC */
 		}
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, rbank1);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xbfff, 0, 0, wbank1);
+		memory_set_bankptr(1, base1);
 	}
 	/* check if self-test ROM changed */
 	if( changes & 0x80 )
@@ -1177,19 +1183,20 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x80 )
 		{
 			logerror("%s MMU SELFTEST RAM\n", Machine->gamedrv->name);
-			rbank2 = MRA8_RAM;
-			wbank2 = MWA8_RAM;
-			memory_set_bankptr(2, memory_region(REGION_CPU1)+0x05000);  /* 0x0800 bytes */
+			rbank2 = MRA8_BANK2;
+			wbank2 = MWA8_BANK2;
+			base2 = memory_region(REGION_CPU1)+0x05000;  /* 0x0800 bytes */
 		}
 		else
 		{
 			logerror("%s MMU SELFTEST ROM\n", Machine->gamedrv->name);
-			rbank2 = MRA8_BANK1;
+			rbank2 = MRA8_BANK2;
 			wbank2 = MWA8_ROM;
-			memory_set_bankptr(2, memory_region(REGION_CPU1)+0x15000);  /* 0x0800 bytes */
+			base2 = memory_region(REGION_CPU1)+0x15000;  /* 0x0800 bytes */
 		}
 		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, rbank2);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x57ff, 0, 0, wbank2);
+		memory_set_bankptr(2, base2);
 	}
 }
 

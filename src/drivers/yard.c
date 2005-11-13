@@ -160,7 +160,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8, 8,
 	RGN_FRAC(1,3),
@@ -171,7 +171,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16, 16,
 	RGN_FRAC(1,3),
@@ -186,7 +186,7 @@ static gfx_layout spritelayout =
 
 /* Graphics Decode Information */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,      0, 32 },	// use colors 0-255
 	{ REGION_GFX2, 0, &spritelayout, 32*8, 32 },	// use colors 256-271 with lookup table

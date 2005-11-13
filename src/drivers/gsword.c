@@ -518,7 +518,7 @@ INPUT_PORTS_START( gsword )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout gsword_text =
+static const gfx_layout gsword_text =
 {
 	8,8,    /* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -529,7 +529,7 @@ static gfx_layout gsword_text =
 	16*8    /* every char takes 16 bytes */
 };
 
-static gfx_layout gsword_sprites1 =
+static const gfx_layout gsword_sprites1 =
 {
 	16,16,   /* 16x16 sprites */
 	64*2,    /* 128 sprites */
@@ -542,7 +542,7 @@ static gfx_layout gsword_sprites1 =
 	64*8     /* every sprite takes 64 bytes */
 };
 
-static gfx_layout gsword_sprites2 =
+static const gfx_layout gsword_sprites2 =
 {
 	32,32,    /* 32x32 sprites */
 	64,       /* 64 sprites */
@@ -559,7 +559,7 @@ static gfx_layout gsword_sprites2 =
 	64*8*4    /* every sprite takes (64*8=16x6)*4) bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gsword_text,         0, 64 },
 	{ REGION_GFX2, 0, &gsword_sprites1,  64*4, 64 },

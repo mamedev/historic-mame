@@ -782,7 +782,7 @@ INPUT_PORTS_END
                            GFX DECODING
 **************************************************************/
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -796,7 +796,7 @@ static gfx_layout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -807,7 +807,7 @@ static gfx_layout charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout char2layout =
+static const gfx_layout char2layout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -818,7 +818,7 @@ static gfx_layout char2layout =
 	16*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode darius_gfxdecodeinfo[] =
+static const gfx_decode darius_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,   0, 256 },	/* sprites */
 	{ REGION_GFX1, 0, &charlayout,   0, 256 },	/* scr tiles */
@@ -1224,6 +1224,7 @@ MACHINE_INIT( darius )
 		memcpy( RAM + 0x8000*i + 0x10000, RAM,            0x4000 );
 		memcpy( RAM + 0x8000*i + 0x14000, RAM + 0x4000*i, 0x4000 );
 	}
+	memory_set_bankptr(1, RAM);
 
 	sound_global_enable( 1 );	/* mixer enabled */
 

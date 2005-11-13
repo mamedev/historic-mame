@@ -560,7 +560,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	512,    /* 512 characters (256 in Crazy Climber) */
@@ -570,7 +570,7 @@ static gfx_layout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
-static gfx_layout bscharlayout =
+static const gfx_layout bscharlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
@@ -580,7 +580,7 @@ static gfx_layout bscharlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	128,    /* 128 sprites (64 in Crazy Climber) */
@@ -593,7 +593,7 @@ static gfx_layout spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,      0, 16 }, /* char set #1 */
 	{ REGION_GFX1, 0x2000, &charlayout,      0, 16 }, /* char set #2 */
@@ -1453,7 +1453,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout swimmer_charlayout =
+static const gfx_layout swimmer_charlayout =
 {
 	8,8,    /* 8*8 characters */
 	512,    /* 512 characters */
@@ -1464,7 +1464,7 @@ static gfx_layout swimmer_charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout swimmer_spritelayout =
+static const gfx_layout swimmer_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	128,    /* 128 sprites */
@@ -1477,7 +1477,7 @@ static gfx_layout swimmer_spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode swimmer_gfxdecodeinfo[] =
+static const gfx_decode swimmer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &swimmer_charlayout,      0, 64 }, /* characters */
 	{ REGION_GFX1, 0, &swimmer_spritelayout,    0, 32 }, /* sprite set #1 */
@@ -1734,7 +1734,7 @@ GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg",
 GAME( 1982?,rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)", 0 )
 GAME( 1982?,silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land", 0 )
 GAME( 1985, cannonb,  0,        cannonb,  cannonb,  cannonb,  ROT90,  "Soft", "Cannon Ball (Crazy Climber hardware)" , GAME_IMPERFECT_GRAPHICS )
-GAME( 1985, cannonb2,  cannonb, cannonb,  cannonb,  0,        ROT90, "TV Game Gruenberg", "Cannonball set 2", 0 )
+GAME( 1985, cannonb2,  cannonb, cannonb,  cannonb,  0,        ROT90, "TV Game Gruenberg", "Cannonball (set 2)", 0 )
 GAME( 198?, ckongb  , ckong,    cclimber, ckongb,    ckongb,   ROT270, "bootleg", "Crazy Kong (Alternative levels)", 0 )
 
 GAME( 1982, swimmer,  0,        swimmer,  swimmer,  0,        ROT0,   "Tehkan", "Swimmer (set 1)", 0 )

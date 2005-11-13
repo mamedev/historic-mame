@@ -180,7 +180,7 @@ INPUT_PORTS_START( rollrace )
 	PORT_DIPSETTING( 0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 		256,	/* 256 characters */
@@ -192,7 +192,7 @@ static gfx_layout charlayout =
 
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout charlayout2 =
+static const gfx_layout charlayout2 =
 {
 	8,8,	/* 8*8 characters */
 		1024,	/* 1024 characters */
@@ -206,7 +206,7 @@ static gfx_layout charlayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 		32,32,  /* 32*32 sprites */
 		64,	/* 64 sprites */
@@ -222,7 +222,7 @@ static gfx_layout spritelayout =
 		32*32	 /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 		{ REGION_GFX1, 0x0000, &charlayout,	0,	32 }, /* foreground */
 		{ REGION_GFX1, 0x0800, &charlayout,	0,	32 },

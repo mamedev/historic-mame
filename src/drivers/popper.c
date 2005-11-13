@@ -279,7 +279,7 @@ INPUT_PORTS_START( popper )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout popper_charlayout =
+static const gfx_layout popper_charlayout =
 {
 	8,8,
 	RGN_FRAC(2,2),
@@ -290,7 +290,7 @@ static gfx_layout popper_charlayout =
 	16*8
 };
 
-static gfx_layout popper_spritelayout =
+static const gfx_layout popper_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -301,7 +301,7 @@ static gfx_layout popper_spritelayout =
 	16*2*8
 };
 
-static gfx_decode popper_gfxdecodeinfo[] =
+static const gfx_decode popper_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &popper_charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &popper_spritelayout, 0, 16 },

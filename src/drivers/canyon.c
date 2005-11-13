@@ -193,7 +193,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8, 8,
     64,
@@ -209,7 +209,7 @@ static gfx_layout tile_layout =
 };
 
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	32, 16,
 	4,
@@ -229,7 +229,7 @@ static gfx_layout sprite_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,   0, 2 },
 	{ REGION_GFX2, 0, &sprite_layout, 0, 2 },

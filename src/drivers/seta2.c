@@ -1268,7 +1268,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout layout_4bpp_lo =
+static const gfx_layout layout_4bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1280,7 +1280,7 @@ static gfx_layout layout_4bpp_lo =
 	8*8*2
 };
 
-static gfx_layout layout_4bpp_hi =
+static const gfx_layout layout_4bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1292,7 +1292,7 @@ static gfx_layout layout_4bpp_hi =
 	8*8*2
 };
 
-static gfx_layout layout_6bpp =
+static const gfx_layout layout_6bpp =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1306,7 +1306,7 @@ static gfx_layout layout_6bpp =
 	8*8*2
 };
 
-static gfx_layout layout_8bpp =
+static const gfx_layout layout_8bpp =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1320,7 +1320,7 @@ static gfx_layout layout_8bpp =
 	8*8*2
 };
 
-static gfx_layout layout_3bpp_lo =
+static const gfx_layout layout_3bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1332,7 +1332,7 @@ static gfx_layout layout_3bpp_lo =
 	8*8*2
 };
 
-static gfx_layout layout_2bpp_hi =
+static const gfx_layout layout_2bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1345,7 +1345,7 @@ static gfx_layout layout_2bpp_hi =
 
 /*  Tiles are 8bpp, but the hardware is additionally able to discard
     some bitplanes and use the low 4 bits only, or the high 4 bits only */
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_4bpp_lo, 0, 0x8000/16 },
 	{ REGION_GFX1, 0, &layout_4bpp_hi, 0, 0x8000/16 },
@@ -1515,7 +1515,7 @@ ROM_START( gundamex )
 	ROM_LOAD( "ka001008.u23",  0x1400000, 0x200000, CRC(db55a60a) SHA1(03d118c7284ca86219891c473e2a89489710ea27) )
 	ROM_FILL(                  0x1800000, 0x600000, 0 )	/* 6bpp instead of 8bpp */
 
-	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x300000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "ka001015.u28", 0x100000, 0x200000, CRC(ada2843b) SHA1(09d06026031bc7558da511c3c0e29187ea0a0099) )
 ROM_END
@@ -1544,7 +1544,7 @@ ROM_START( grdians )
 	ROM_LOAD( "u21.bin",  0x1e00000, 0x200000, CRC(6f95e466) SHA1(28482fad16a3ac9302f152d81552e6f84a44f3e4) )
 	ROM_CONTINUE(         0x1c00000, 0x200000 )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "u32.bin", 0x100000, 0x100000, CRC(cf0f3017) SHA1(8376d3a674f71aec72f52c72758fbc53d9feb1a1) )
 ROM_END
@@ -1565,7 +1565,7 @@ ROM_START( mj4simai )
 	ROM_LOAD( "cha-02.u22",  0x1400000, 0x400000, CRC(f6346860) SHA1(4eebd3fa315b97964fa39b88224f9de7622ba881) )
 	ROM_FILL(                0x1800000, 0x800000, 0 )	/* 6bpp instead of 8bpp */
 
-	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x500000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "cha-07.u32",  0x100000, 0x400000, CRC(817519ee) SHA1(ed09740cdbf61a328f7b50eb569cf498fb749416) )
 ROM_END
@@ -1587,7 +1587,7 @@ ROM_START( myangel )
 	ROM_LOAD( "kq1-cg7.u21", 0xc00000, 0x200000, CRC(9f48382c) SHA1(80dfc33a55123b5d3cdb3ed97b43a527f0254d61) )
 	ROM_LOAD( "kq1-cg5.u17", 0xe00000, 0x200000, CRC(a4bc4516) SHA1(0eb11fa54d16bba1b96f9dd943a68949a3bb9a2f) )
 
-	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x300000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "kq1-snd.u32", 0x100000, 0x200000, CRC(8ca1b449) SHA1(f54096fb5400843af4879135c96760485b6cb319) )
 ROM_END
@@ -1609,7 +1609,7 @@ ROM_START( myangel2 )
 	ROM_LOAD( "kqs1-cg7.u21", 0x1200000, 0x200000, CRC(2c977904) SHA1(2589447f2471cdc414266b34aff552044c680d93) )
 	ROM_LOAD( "kqs1-cg3.u17", 0x1400000, 0x400000, CRC(de3b2191) SHA1(d7d6ea07b665cfd834747d3c0776b968ce03bc6a) )
 
-	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x500000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "kqs1-snd.u32", 0x100000, 0x400000, CRC(792a6b49) SHA1(341b4e8f248b5032217733bada32e353c67e3888) )
 ROM_END
@@ -1625,7 +1625,7 @@ ROM_START( pzlbowl )
 	ROM_LOAD( "kuc-u40.i00", 0x800000, 0x400000, CRC(7e49a2cf) SHA1(d24683addbc54515c33fb620ac500e6702bd9e17) )
 	ROM_LOAD( "kuc-u41.i00", 0xc00000, 0x400000, CRC(2febf19b) SHA1(8081ac590c0463529777b5e4817305a1a6f6ea41) )
 
-	ROM_REGION( 0x500000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x500000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "kus-u18.i00", 0x100000, 0x400000, CRC(e2b1dfcf) SHA1(fb0b8be119531a1a27efa46ed7b86b05a37ed585) )
 ROM_END
@@ -1641,7 +1641,7 @@ ROM_START( penbros )
 	ROM_LOAD( "u40.bin", 0x800000, 0x400000, CRC(dc9e0a96) SHA1(c2c8ccf9039ee0e179b08fdd2d37f29899349cda) )
 	ROM_FILL(            0xc00000, 0x400000, 0 )	/* 6bpp instead of 8bpp */
 
-	ROM_REGION( 0x300000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x300000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave 1MB empty (addressable by the chip) */
 	ROM_LOAD( "u18.bin", 0x100000, 0x200000, CRC(de4e65e2) SHA1(82d4e590c714b3e9bf0ffaf1500deb24fd315595) )
 ROM_END

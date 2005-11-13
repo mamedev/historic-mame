@@ -216,7 +216,7 @@ INPUT_PORTS_START( ripcord )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
@@ -227,7 +227,7 @@ static gfx_layout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout clownlayout =
+static const gfx_layout clownlayout =
 {
 	16,16,  /* 16*16 characters */
 	16,             /* 16 characters */
@@ -240,7 +240,7 @@ static gfx_layout clownlayout =
 	16*16   /* every char takes 64 consecutive bytes */
 };
 
-static gfx_layout robotlayout =
+static const gfx_layout robotlayout =
 {
 	8,8,  /* 16*16 characters */
 	1,      /* 1 character */
@@ -251,14 +251,14 @@ static gfx_layout robotlayout =
 	8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0, 1 },
 	{ REGION_GFX2, 0, &clownlayout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode robotbwl_gfxdecodeinfo[] =
+static const gfx_decode robotbwl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0, 1 },
 	{ REGION_GFX2, 0, &robotlayout, 0, 1 },

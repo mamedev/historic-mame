@@ -3881,7 +3881,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,	/* 16x16 */
 	RGN_FRAC(1,2),	/* Number of tiles */
@@ -3894,7 +3894,7 @@ static gfx_layout tilelayout =
 	8*4*16
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	8,8,	/* 8x8 */
 	RGN_FRAC(1,2),	/* Number of 8x8 sprites */
@@ -3905,7 +3905,7 @@ static gfx_layout spritelayout =
 	8*16
 };
 
-static gfx_layout raizing_textlayout =
+static const gfx_layout raizing_textlayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3917,7 +3917,7 @@ static gfx_layout raizing_textlayout =
 };
 
 #ifdef LSB_FIRST
-static gfx_layout truxton2_tx_tilelayout =
+static const gfx_layout truxton2_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3928,7 +3928,7 @@ static gfx_layout truxton2_tx_tilelayout =
 	8*64
 };
 #else
-static gfx_layout truxton2_tx_tilelayout =
+static const gfx_layout truxton2_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3941,7 +3941,7 @@ static gfx_layout truxton2_tx_tilelayout =
 #endif
 
 #ifdef LSB_FIRST
-static gfx_layout batrider_tx_tilelayout =
+static const gfx_layout batrider_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3952,7 +3952,7 @@ static gfx_layout batrider_tx_tilelayout =
 	8*32
 };
 #else
-static gfx_layout batrider_tx_tilelayout =
+static const gfx_layout batrider_tx_tilelayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -3965,7 +3965,7 @@ static gfx_layout batrider_tx_tilelayout =
 #endif
 
 
-static gfx_layout fixeighblayout =
+static const gfx_layout fixeighblayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -3976,14 +3976,14 @@ static gfx_layout fixeighblayout =
    8*8*4
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_2[] =
+static const gfx_decode gfxdecodeinfo_2[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
@@ -3992,7 +3992,7 @@ static gfx_decode gfxdecodeinfo_2[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode truxton2_gfxdecodeinfo[] =
+static const gfx_decode truxton2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,       &tilelayout            , 0, 128 },
 	{ REGION_GFX1, 0,       &spritelayout          , 0,  64 },
@@ -4002,7 +4002,7 @@ static gfx_decode truxton2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode raizing_gfxdecodeinfo[] =
+static const gfx_decode raizing_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,         0, 128 },
 	{ REGION_GFX1, 0, &spritelayout,       0,  64 },
@@ -4011,7 +4011,7 @@ static gfx_decode raizing_gfxdecodeinfo[] =
 };
 
 /* This is wrong a bit. Text layer is dynamically changed. */
-static gfx_decode batrider_gfxdecodeinfo[] =
+static const gfx_decode batrider_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,             0, 128 },
 	{ REGION_GFX1, 0, &spritelayout,           0,  64 },
@@ -4019,7 +4019,7 @@ static gfx_decode batrider_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode fixeighb_gfxdecodeinfo[] =
+static const gfx_decode fixeighb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout     , 0, 128 },
 	{ REGION_GFX1, 0, &spritelayout   , 0,  64 },

@@ -682,7 +682,7 @@ ADDRESS_MAP_END
 
 
 /* Common to TX-1 and Buggy Boy */
-static gfx_layout char_layout =
+static const gfx_layout char_layout =
 {
 	8,8,
 	2048,
@@ -693,7 +693,7 @@ static gfx_layout char_layout =
 	8*8
 };
 
-static gfx_layout bb_object_layout =
+static const gfx_layout bb_object_layout =
 {
 	8,8,
 	4096,
@@ -704,7 +704,7 @@ static gfx_layout bb_object_layout =
 	8*8
 };
 
-static gfx_layout tx1_object_layout =
+static const gfx_layout tx1_object_layout =
 {
 	8,8,
 	2048,
@@ -715,7 +715,7 @@ static gfx_layout tx1_object_layout =
 	8*8
 };
 
-static gfx_decode bb_gfxdecodeinfo[] =
+static const gfx_decode bb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 256 },
 	{ REGION_GFX2, 0, &bb_object_layout, 256, 2048  },
@@ -724,7 +724,7 @@ static gfx_decode bb_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode tx1_gfxdecodeinfo[] =
+static const gfx_decode tx1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0, 16 },
 	{ REGION_GFX2, 0, &tx1_object_layout, 0, 16 },

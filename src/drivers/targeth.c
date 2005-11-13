@@ -23,7 +23,7 @@ VIDEO_START( targeth );
 VIDEO_UPDATE( targeth );
 
 
-static gfx_layout tilelayout16_0x080000 =
+static const gfx_layout tilelayout16_0x080000 =
 {
 	16,16,														/* 16x16 tiles */
 	0x080000/32,												/* number of tiles */
@@ -34,7 +34,7 @@ static gfx_layout tilelayout16_0x080000 =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo_0x080000[] =
+static const gfx_decode gfxdecodeinfo_0x080000[] =
 {
 	{ REGION_GFX1, 0x000000, &tilelayout16_0x080000, 0, 64 },
 	{ -1 }

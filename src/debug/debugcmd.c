@@ -1640,7 +1640,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 		return;
 
 	/* further validation */
-	if (!stricmp(filename, "off"))
+	if (!mame_stricmp(filename, "off"))
 		filename = NULL;
 	if (cpunum >= cpu_gettotalcpu())
 	{

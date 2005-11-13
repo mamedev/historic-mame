@@ -213,7 +213,7 @@ VIDEO_UPDATE( pkscramble )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }
 
-static gfx_layout tiles8x8_layout =
+static const gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -225,7 +225,7 @@ static gfx_layout tiles8x8_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout, 0, 0x80 },
 	{ -1 }

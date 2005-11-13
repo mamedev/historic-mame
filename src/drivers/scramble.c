@@ -1586,7 +1586,7 @@ INPUT_PORTS_START( ad2083 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout devilfsh_charlayout =
+static const gfx_layout devilfsh_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -1596,7 +1596,7 @@ static gfx_layout devilfsh_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout devilfsh_spritelayout =
+static const gfx_layout devilfsh_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
@@ -1608,7 +1608,7 @@ static gfx_layout devilfsh_spritelayout =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-static gfx_layout newsin7_charlayout =
+static const gfx_layout newsin7_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -1618,7 +1618,7 @@ static gfx_layout newsin7_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout newsin7_spritelayout =
+static const gfx_layout newsin7_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
@@ -1631,7 +1631,7 @@ static gfx_layout newsin7_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout mrkougar_charlayout =
+static const gfx_layout mrkougar_charlayout =
 {
 	8,8,
 	256,
@@ -1641,7 +1641,7 @@ static gfx_layout mrkougar_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8
 };
-static gfx_layout mrkougar_spritelayout =
+static const gfx_layout mrkougar_spritelayout =
 {
 	16,16,
 	64,
@@ -1654,7 +1654,7 @@ static gfx_layout mrkougar_spritelayout =
 	64*8
 };
 
-static gfx_layout sfx_charlayout =
+static const gfx_layout sfx_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,4),
@@ -1664,7 +1664,7 @@ static gfx_layout sfx_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout sfx_spritelayout =
+static const gfx_layout sfx_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,4),
@@ -1677,7 +1677,7 @@ static gfx_layout sfx_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout ad2083_charlayout =
+static const gfx_layout ad2083_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,2),
@@ -1687,7 +1687,7 @@ static gfx_layout ad2083_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout ad2083_spritelayout =
+static const gfx_layout ad2083_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,2),
@@ -1701,21 +1701,21 @@ static gfx_layout ad2083_spritelayout =
 };
 
 
-static gfx_decode devilfsh_gfxdecodeinfo[] =
+static const gfx_decode devilfsh_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &devilfsh_charlayout,   0, 8 },
 	{ REGION_GFX1, 0x0800, &devilfsh_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode newsin7_gfxdecodeinfo[] =
+static const gfx_decode newsin7_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &newsin7_charlayout,   0, 4 },
 	{ REGION_GFX1, 0x0800, &newsin7_spritelayout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode mrkougar_gfxdecodeinfo[] =
+static const gfx_decode mrkougar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &mrkougar_charlayout,   0, 8 },
 	{ REGION_GFX1, 0x0000, &mrkougar_spritelayout, 0, 8 },

@@ -257,7 +257,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles */
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -270,7 +270,7 @@ static gfx_layout layout_8x8x4 =
 
 
 /* 16x16x4 tiles (made of four 8x8 tiles) */
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -285,7 +285,7 @@ static gfx_layout layout_16x16x4 =
 
 
 /* 16x16x4 tiles (made of four 8x8 tiles). The bytes are swapped */
-static gfx_layout layout_16x16x4_swap =
+static const gfx_layout layout_16x16x4_swap =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -299,7 +299,7 @@ static gfx_layout layout_16x16x4_swap =
 };
 
 
-static gfx_decode powerins_gfxdecodeinfo[] =
+static const gfx_decode powerins_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,      0x000, 0x20 }, // [0] Tiles
 	{ REGION_GFX2, 0, &layout_8x8x4,        0x200, 0x10 }, // [1] Tiles

@@ -222,7 +222,7 @@ INPUT_PORTS_START( goldstar )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	4096,    /* 4096 characters */
@@ -233,7 +233,7 @@ static gfx_layout charlayout =
 	32*8   /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,32,    /* 8*32 characters */
 	256,    /* 256 tiles */
@@ -248,7 +248,7 @@ static gfx_layout tilelayout =
 };
 
 
-static gfx_layout tilelayoutbl =
+static const gfx_layout tilelayoutbl =
 {
 	8,32,    /* 8*32 characters */
 	256,    /* 256 tiles */
@@ -263,19 +263,19 @@ static gfx_layout tilelayoutbl =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &tilelayout, 128,  8 },
 	{ -1 } /* end of array */
 };
-static gfx_decode gfxdecodeinfobl[] =
+static const gfx_decode gfxdecodeinfobl[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &tilelayoutbl, 128,  8 },
 	{ -1 } /* end of array */
 };
-static gfx_decode gfxdecodeinfoml[] =
+static const gfx_decode gfxdecodeinfoml[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0x18000, &tilelayout, 128,  8 },

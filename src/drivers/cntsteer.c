@@ -652,7 +652,7 @@ INPUT_PORTS_END
 /***************************************************************************/
 
 /* this layout is bad and reads way beyond the end of the array */
-static gfx_layout cntsteer_charlayout =
+static const gfx_layout cntsteer_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,2),
@@ -664,7 +664,7 @@ static gfx_layout cntsteer_charlayout =
 };
 
 /* this layout is bad and reads way beyond the end of the array */
-static gfx_layout zerotrgt_charlayout =
+static const gfx_layout zerotrgt_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -675,7 +675,7 @@ static gfx_layout zerotrgt_charlayout =
 	8*8	/* every tile takes 32 consecutive bytes */
 };
 
-static gfx_layout sprites =
+static const gfx_layout sprites =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -687,7 +687,7 @@ static gfx_layout sprites =
 	16*16
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	0x200,
@@ -703,7 +703,7 @@ static gfx_layout tilelayout =
 	8*16
 };
 
-static gfx_decode cntsteer_gfxdecodeinfo[] =
+static const gfx_decode cntsteer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &cntsteer_charlayout, 0, 256 }, /* Only 1 used so far :/ */
 	{ REGION_GFX2, 0x00000, &sprites,			  0, 256 },
@@ -712,7 +712,7 @@ static gfx_decode cntsteer_gfxdecodeinfo[] =
 };
 
 
-static gfx_decode zerotrgt_gfxdecodeinfo[] =
+static const gfx_decode zerotrgt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &zerotrgt_charlayout, 0, 256 }, /* Only 1 used so far :/ */
 	{ REGION_GFX2, 0x00000, &sprites,			  0, 256 },

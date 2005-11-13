@@ -3735,7 +3735,7 @@ INPUT_PORTS_END
                         GFX DECODING
 ***********************************************************/
 
-static gfx_layout finalb_tilelayout =
+static const gfx_layout finalb_tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,2),
@@ -3748,7 +3748,7 @@ static gfx_layout finalb_tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -3759,7 +3759,7 @@ static gfx_layout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -3770,7 +3770,7 @@ static gfx_layout charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout yuyugogo_charlayout =
+static const gfx_layout yuyugogo_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -3781,7 +3781,7 @@ static gfx_layout yuyugogo_charlayout =
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
-static gfx_layout pivotlayout =
+static const gfx_layout pivotlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -3792,21 +3792,21 @@ static gfx_layout pivotlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode finalb_gfxdecodeinfo[] =
+static const gfx_decode finalb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &finalb_tilelayout,  0, 64 },	/* sprites & playfield, 6-bit deep */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode taitof2_gfxdecodeinfo[] =
+static const gfx_decode taitof2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode pivot_gfxdecodeinfo[] =
+static const gfx_decode pivot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* sprites & playfield */
@@ -3814,14 +3814,14 @@ static gfx_decode pivot_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode yuyugogo_gfxdecodeinfo[] =
+static const gfx_decode yuyugogo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &yuyugogo_charlayout,  0, 256 },	/* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode thundfox_gfxdecodeinfo[] =
+static const gfx_decode thundfox_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* TC0100SCN #1 */
@@ -3829,7 +3829,7 @@ static gfx_decode thundfox_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_layout deadconx_charlayout =
+static const gfx_layout deadconx_charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -3840,7 +3840,7 @@ static gfx_layout deadconx_charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode deadconx_gfxdecodeinfo[] =
+static const gfx_decode deadconx_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites & playfield */
 	{ REGION_GFX1, 0, &deadconx_charlayout,  0, 256 },	/* sprites & playfield */

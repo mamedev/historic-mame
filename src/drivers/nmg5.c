@@ -132,7 +132,7 @@ ADDRESS_MAP_END
 ********************************************************************/
 
 static ADDRESS_MAP_START( nmg5_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xcfff) AM_ROM
+	AM_RANGE(0x0000, 0xdfff) AM_ROM
 	AM_RANGE(0xe000, 0xe7ff) AM_RAM
 ADDRESS_MAP_END
 
@@ -555,7 +555,7 @@ VIDEO_UPDATE( nmg5 )
 }
 
 
-static gfx_layout nmg5_layout_8x8x8 =
+static const gfx_layout nmg5_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -566,7 +566,7 @@ static gfx_layout nmg5_layout_8x8x8 =
 	8*8
 };
 
-static gfx_layout pclubys_layout_8x8x8 =
+static const gfx_layout pclubys_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -577,7 +577,7 @@ static gfx_layout pclubys_layout_8x8x8 =
 	8*16
 };
 
-static gfx_layout layout_16x16x5 =
+static const gfx_layout layout_16x16x5 =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -588,14 +588,14 @@ static gfx_layout layout_16x16x5 =
 	32*8
 };
 
-static gfx_decode nmg5_gfxdecodeinfo[] =
+static const gfx_decode nmg5_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &nmg5_layout_8x8x8, 0x000,  2 },
 	{ REGION_GFX2, 0, &layout_16x16x5,	  0x200, 16 },
 	{ -1 }
 };
 
-static gfx_decode pclubys_gfxdecodeinfo[] =
+static const gfx_decode pclubys_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pclubys_layout_8x8x8, 0x000,  2 },
 	{ REGION_GFX2, 0, &layout_16x16x5,		 0x200, 16 },
@@ -690,7 +690,7 @@ ROM_START( nmg5 )
 	ROM_LOAD( "uh1.bin", 0x0c0000, 0x40000, CRC(f7726e8e) SHA1(f28669725609ffab7c6c3bfddbe293c55ddd0155) )
 	ROM_LOAD( "uj1.bin", 0x100000, 0x40000, CRC(54f7486e) SHA1(88a237a1005b1fd70b6d8544ef60a0d16cb38e6f) )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "xra1.bin", 0x00000, 0x20000, CRC(c74a4f3e) SHA1(2f6165c1d5bdd3e816b95ffd9303dd4bd07f7ac8) )
 ROM_END
 
@@ -719,7 +719,7 @@ ROM_START( searchey )
 	ROM_LOAD( "u96.bin", 0x060000, 0x20000, CRC(8c40818a) SHA1(fe2c0da42154261ae1734ddb6cb9ddf33dd58510) )
 	ROM_LOAD( "u97.bin", 0x080000, 0x20000, CRC(5dc7f231) SHA1(5e57e436a24dfa14228bac7b8ae5f000393926b9) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u137.bin", 0x00000, 0x40000,  CRC(49105e23) SHA1(99543fbbccf5df5b15a0470eac641b4158024c6a) )
 ROM_END
 
@@ -782,7 +782,7 @@ ROM_START( pclubys )
 	ROM_LOAD( "rom6.95", 0x180000, 0x80000, CRC(3c078a52) SHA1(be8936bcafbfd77e491c81a3d215a53dad78d652) )
 	ROM_LOAD( "rom5.97", 0x200000, 0x80000, CRC(20eae2f8) SHA1(ad9ac6e5e0331fb19652f6578dbb2f532bb22b3d) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "rom2.137", 0x00000, 0x80000, CRC(4ff97ad1) SHA1(d472c8298e428cb9659ce90a8ce9402c119bdb0f) )
 ROM_END
 
@@ -807,7 +807,7 @@ ROM_START( pclubysa )
 	ROM_LOAD( "rom6.95", 0x180000, 0x80000, CRC(3c078a52) SHA1(be8936bcafbfd77e491c81a3d215a53dad78d652) )
 	ROM_LOAD( "rom5.97", 0x200000, 0x80000, CRC(20eae2f8) SHA1(ad9ac6e5e0331fb19652f6578dbb2f532bb22b3d) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "rom2.137", 0x00000, 0x80000, CRC(4ff97ad1) SHA1(d472c8298e428cb9659ce90a8ce9402c119bdb0f) )
 ROM_END
 
@@ -836,7 +836,7 @@ ROM_START( wondstck )
 	ROM_LOAD( "u96.bin", 0x180000, 0x80000, CRC(2369d8a3) SHA1(4224f50c9c31624dfcac6215d60a2acdd39bb477) )
 	ROM_LOAD( "u97.bin", 0x200000, 0x80000, CRC(aba1bd94) SHA1(28dce35ad92547a54912c5645e9979c0876d6fe8) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u137.bin", 0x000000, 0x40000, CRC(294b6cbd) SHA1(1498a3298c53d62f56f9c85c82035d09a5bb8b4a) )
 ROM_END
 

@@ -432,7 +432,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout textlayout =
+static const gfx_layout textlayout =
 {
 	8,8,	/* 8*8 characters */
 	4096,	/* 4096 characters */
@@ -443,7 +443,7 @@ static gfx_layout textlayout =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout backlayout =
+static const gfx_layout backlayout =
 {
 	16,16,	/* 16*16 sprites  */
 	4096,	/* 4096 sprites */
@@ -456,7 +456,7 @@ static gfx_layout backlayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites  */
 	RGN_FRAC(1,1),
@@ -469,7 +469,7 @@ static gfx_layout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout weststry_textlayout =
+static const gfx_layout weststry_textlayout =
 {
 	8,8,	/* 8*8 sprites */
 	4096,	/* 4096 sprites */
@@ -480,7 +480,7 @@ static gfx_layout weststry_textlayout =
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
-static gfx_layout weststry_backlayout =
+static const gfx_layout weststry_backlayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096,	/* 4096 sprites */
@@ -493,7 +493,7 @@ static gfx_layout weststry_backlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout weststry_spritelayout =
+static const gfx_layout weststry_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	8192,	/* 8192 sprites */
@@ -508,7 +508,7 @@ static gfx_layout weststry_spritelayout =
 
 /* Graphics Decode Info */
 
-static gfx_decode bloodbro_gfxdecodeinfo[] =
+static const gfx_decode bloodbro_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &textlayout,   0x70*16,  0x10 }, /* Text */
 	{ REGION_GFX2, 0x00000, &backlayout,   0x40*16,  0x10 }, /* Background */
@@ -517,7 +517,7 @@ static gfx_decode bloodbro_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode weststry_gfxdecodeinfo[] =
+static const gfx_decode weststry_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &weststry_textlayout,     16*16,  0x10 },
 	{ REGION_GFX2, 0x00000, &weststry_backlayout,     48*16,  0x10 },

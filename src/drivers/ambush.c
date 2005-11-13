@@ -140,7 +140,7 @@ INPUT_PORTS_START( ambush )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 chars */
 	1024,   /* 2048 characters */
@@ -151,7 +151,7 @@ static gfx_layout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 8*8 chars */
 	256,    /* 2048 characters */
@@ -164,7 +164,7 @@ static gfx_layout spritelayout =
 	32*8     /* every char takes 32 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,   0, 64 },
 	{ REGION_GFX1, 0x0000, &spritelayout, 0, 64 },

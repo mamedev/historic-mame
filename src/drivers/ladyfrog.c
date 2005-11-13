@@ -247,7 +247,7 @@ INPUT_PORTS_START( ladyfrog )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -258,7 +258,7 @@ static gfx_layout charlayout =
 	16*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -273,7 +273,7 @@ static gfx_layout spritelayout =
 
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 16 },
 	{ REGION_GFX1, 0, &spritelayout, 256, 16 },

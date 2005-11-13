@@ -553,6 +553,11 @@ void dsd_555_cc_step(struct node_description *node)
 	i = (info->vCCsource - viLimit) / DSD_555_CC__R;
 	if ( i < 0) i = 0;
 
+	if (info->options & DISCRETE_555_CC_TO_CAP)
+	{
+		vi = i * DSD_555_CC__RDIS;
+	}
+	else
 	switch (context->type)	// see dsd_555_cc_reset for descriptions
 	{
 		case 1:
@@ -638,9 +643,22 @@ void dsd_555_cc_step(struct node_description *node)
 			{
 				/* Discharging */
 				tRC = DSD_555_CC__RDIS * DSD_555_CC__C;
-				vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
-				dt = 0;
 
+				if (info->options & DISCRETE_555_CC_TO_CAP)
+				{
+					/* Asteroids - Special Case */
+					/* Charging in discharge mode */
+					/* If the cap voltage is past the current source charging limit
+                     * then only the bias voltage will charge the cap. */
+					v = (vC < viLimit) ? vi : viLimit;
+					vCnext = vC + ((v - vC) * (1.0 - exp(-(dt / tRC))));
+				}
+				else
+				{
+					vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
+				}
+
+				dt = 0;
 				/* has it discharged past lower limit? */
 				if (vCnext <= context->trigger)
 				{
@@ -697,9 +715,9 @@ void dsd_555_cc_step(struct node_description *node)
 					}
 				}
 			}
-			else if (rD)
+			else /* Discharging */
+			if (rD)
 			{
-				/* Discharging */
 				tRC = rD * DSD_555_CC__C;
 				vCnext = vC - (vC * (1.0 - exp(-(dt / tRC))));
 				dt = 0;
@@ -737,10 +755,10 @@ void dsd_555_cc_step(struct node_description *node)
 			else
 				node->output = context->flip_flop * context->vHigh;
 			/* Fake it to AC if needed */
-			node->output -= context->ac_shift;
+			node->output += context->ac_shift;
 			break;
 		case DISC_555_OUT_CAP:
-			node->output = vCnext - context->ac_shift;
+			node->output = vCnext + context->ac_shift;
 			break;
 		case DISC_555_OUT_ENERGY:
 			node->output = context->vHigh * (context->flip_flop ? xTime : (1 - xTime));
@@ -800,6 +818,11 @@ void dsd_555_cc_reset(struct node_description *node)
      * TYPES:
      * Note: These are equivalent circuits shown without the 555 circuitry.
      *       See the schematic in src\sound\discrete.h for full hookup info.
+     *
+     * DISCRETE_555_CC_TO_DISCHARGE_PIN
+     * When the CC source is connected to the discharge pin, it allows the
+     * circuit to charge when the 555 is in charge mode.  But when in discharge
+     * mode, the CC source is grounded, disabling it's effect.
      *
      * [0]
      * No resistors.  Straight constant current charge of capacitor.
@@ -905,6 +928,23 @@ void dsd_555_cc_reset(struct node_description *node)
      * '-------'   '---'          |      |
      *     |         |            |      |                  DISCHARGING:
      *    gnd       gnd          gnd    gnd                   thru rDischarge || rGnd
+     */
+
+    /*
+     * DISCRETE_555_CC_TO_CAP
+     *
+     * When the CC source is connected to the capacitor, it allows the
+     * current to charge the cap while it is in discharge mode, slowing the
+     * discharge.  So in charge mode it charges linearly from the constant
+     * current cource.  But when in discharge mode it behaves like circuit
+     * type 2 above.
+     *   .-------+------+------> vCap         CHARGING:
+     *   |       |      |                       dv = i * dt / C
+     * .---.    ---     Z                       vCap = vCap + dv
+     * | i |    --- C   Z rDischarge
+     * '---'     |      |                     DISCHARGING:
+     *   |       |      |                       v = vi = i * rGnd
+     *  gnd     gnd   discharge                 Rc = rDischarge
      */
 
 	/* Step to set the output */

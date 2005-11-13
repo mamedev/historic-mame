@@ -225,7 +225,7 @@ static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xf0, 0xf0) AM_READ(st0016_dma_r)
 ADDRESS_MAP_END
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 //  { 0, 0, &charlayout,      0, 16*4  },
 	{ -1 }	/* end of array */

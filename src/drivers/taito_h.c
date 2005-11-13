@@ -528,7 +528,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,	/* 16x16 pixels */
 	32768,	/* 32768 tiles */
@@ -541,7 +541,7 @@ static gfx_layout tilelayout =
 	16*16
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8, 8,	/* 8x8 pixels */
 	256,	/* 256 chars */
@@ -553,19 +553,19 @@ static gfx_layout charlayout =
 };
 
 
-static gfx_decode syvalion_gfxdecodeinfo[] =
+static const gfx_decode syvalion_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0,     32*16 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode recordbr_gfxdecodeinfo[] =
+static const gfx_decode recordbr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0,     32*16 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode dleague_gfxdecodeinfo[] =
+static const gfx_decode dleague_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 0,     32*16 },
 	{ REGION_GFX2, 0, &charlayout, 32*16, 16    },	// seems to be bogus...?

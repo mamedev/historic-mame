@@ -373,7 +373,7 @@ VIDEO_UPDATE( jollyjgr )
 	}
 }
 
-static gfx_layout jollyjgr_charlayout =
+static const gfx_layout jollyjgr_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -384,7 +384,7 @@ static gfx_layout jollyjgr_charlayout =
 	8*8
 };
 
-static gfx_layout jollyjgr_spritelayout =
+static const gfx_layout jollyjgr_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -397,7 +397,7 @@ static gfx_layout jollyjgr_spritelayout =
 	32*8
 };
 
-static gfx_decode jollyjgr_gfxdecodeinfo[] =
+static const gfx_decode jollyjgr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &jollyjgr_charlayout,   0, 8 },
 	{ REGION_GFX2, 0, &jollyjgr_spritelayout, 0, 8 },

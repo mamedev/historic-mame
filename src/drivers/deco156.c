@@ -120,7 +120,7 @@ static MACHINE_INIT (deco156)
 }
 
 
-static gfx_layout tile_8x8_layout =
+static const gfx_layout tile_8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -131,7 +131,7 @@ static gfx_layout tile_8x8_layout =
 	8*16
 };
 
-static gfx_layout tile_16x16_layout =
+static const gfx_layout tile_16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -142,7 +142,7 @@ static gfx_layout tile_16x16_layout =
 	32*16
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -154,7 +154,7 @@ static gfx_layout spritelayout =
 	32*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_8x8_layout,     0, 16 },	/* Tiles (8x8) */
 	{ REGION_GFX1, 0, &tile_16x16_layout,     0, 16 },	/* Tiles (16x16) */
@@ -163,7 +163,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_2[] =
+static const gfx_decode gfxdecodeinfo_2[] =
 {
 	{ REGION_GFX1, 0, &tile_8x8_layout,     0, 16 },	/* Tiles (8x8) */
 	{ REGION_GFX1, 0, &tile_16x16_layout,     0, 16 },	/* Tiles (16x16) */

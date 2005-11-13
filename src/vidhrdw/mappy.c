@@ -304,42 +304,16 @@ VIDEO_START( mappy )
 
 ***************************************************************************/
 
-READ8_HANDLER( superpac_videoram_r )
-{
-	return mappy_videoram[offset];
-}
-
 WRITE8_HANDLER( superpac_videoram_w )
 {
-	if (mappy_videoram[offset] != data)
-	{
-		mappy_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
-	}
-}
-
-READ8_HANDLER( mappy_videoram_r )
-{
-	return mappy_videoram[offset];
+	mappy_videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
 WRITE8_HANDLER( mappy_videoram_w )
 {
-	if (mappy_videoram[offset] != data)
-	{
-		mappy_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset & 0x7ff);
-	}
-}
-
-READ8_HANDLER( mappy_spriteram_r )
-{
-    return mappy_spriteram[offset];
-}
-
-WRITE8_HANDLER( mappy_spriteram_w )
-{
-	mappy_spriteram[offset] = data;
+	mappy_videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x7ff);
 }
 
 WRITE8_HANDLER( superpac_flipscreen_w )

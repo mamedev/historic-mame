@@ -905,7 +905,7 @@ INPUT_PORTS_START( zipzap )
 INPUT_PORTS_END
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -918,7 +918,7 @@ static gfx_layout spritelayout =
 	128*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,  256, 16 },
 	{ -1 } /* end of array */

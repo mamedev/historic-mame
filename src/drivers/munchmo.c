@@ -212,7 +212,7 @@ INPUT_PORTS_START( mnchmobl )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout char_layout =
+static const gfx_layout char_layout =
 {
 	8,8,
 	256,
@@ -223,7 +223,7 @@ static gfx_layout char_layout =
 	128
 };
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	0x100,
@@ -234,7 +234,7 @@ static gfx_layout tile_layout =
 	128
 };
 
-static gfx_layout sprite_layout1 =
+static const gfx_layout sprite_layout1 =
 {
 	32,32,
 	128,
@@ -254,7 +254,7 @@ static gfx_layout sprite_layout1 =
 	256
 };
 
-static gfx_layout sprite_layout2 =
+static const gfx_layout sprite_layout2 =
 {
 	32,32,
 	128,
@@ -274,7 +274,7 @@ static gfx_layout sprite_layout2 =
 	256
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,      &char_layout,      0,  4 },	/* colors   0- 63 */
 	{ REGION_GFX2, 0x1000, &tile_layout,     64,  4 },	/* colors  64-127 */

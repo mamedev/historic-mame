@@ -710,7 +710,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout lastday_charlayout =
+static const gfx_layout lastday_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -721,7 +721,7 @@ static gfx_layout lastday_charlayout =
 	16*8
 };
 
-static gfx_layout bluehawk_charlayout =
+static const gfx_layout bluehawk_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -732,7 +732,7 @@ static gfx_layout bluehawk_charlayout =
 	32*8
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -749,7 +749,7 @@ static gfx_layout tilelayout =
 	512*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -762,7 +762,7 @@ static gfx_layout spritelayout =
 	128*8
 };
 
-static gfx_layout rshark_spritelayout =
+static const gfx_layout rshark_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -775,7 +775,7 @@ static gfx_layout rshark_spritelayout =
 	128*8
 };
 
-static gfx_layout popbingo_tilelayout =
+static const gfx_layout popbingo_tilelayout =
 {
 	32,32,
 	RGN_FRAC(1,2),
@@ -793,7 +793,7 @@ static gfx_layout popbingo_tilelayout =
 	512*8
 };
 
-static gfx_decode lastday_gfxdecodeinfo[] =
+static const gfx_decode lastday_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lastday_charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
@@ -802,7 +802,7 @@ static gfx_decode lastday_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode flytiger_gfxdecodeinfo[] =
+static const gfx_decode flytiger_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lastday_charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
@@ -811,7 +811,7 @@ static gfx_decode flytiger_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode bluehawk_gfxdecodeinfo[] =
+static const gfx_decode bluehawk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bluehawk_charlayout,  0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,       256, 16 },
@@ -821,7 +821,7 @@ static gfx_decode bluehawk_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode primella_gfxdecodeinfo[] =
+static const gfx_decode primella_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bluehawk_charlayout,  0, 16 },
 	/* no sprites */
@@ -830,7 +830,7 @@ static gfx_decode primella_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode rshark_gfxdecodeinfo[] =
+static const gfx_decode rshark_gfxdecodeinfo[] =
 {
 	/* no chars */
 	{ REGION_GFX1, 0, &rshark_spritelayout,  0, 16 },
@@ -841,7 +841,7 @@ static gfx_decode rshark_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode popbingo_gfxdecodeinfo[] =
+static const gfx_decode popbingo_gfxdecodeinfo[] =
 {
 	/* no chars */
 	{ REGION_GFX1, 0, &rshark_spritelayout,   0, 16 },

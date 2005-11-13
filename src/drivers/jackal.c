@@ -197,7 +197,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8, 8,
 	RGN_FRAC(1,4),
@@ -208,7 +208,7 @@ static gfx_layout charlayout =
 	32*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16, 16,
 	RGN_FRAC(1,4),
@@ -221,7 +221,7 @@ static gfx_layout spritelayout =
 	32*32
 };
 
-static gfx_layout spritelayout8 =
+static const gfx_layout spritelayout8 =
 {
 	8, 8,
 	RGN_FRAC(1,4),
@@ -234,7 +234,7 @@ static gfx_layout spritelayout8 =
 
 /* Graphics Decode Information */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,               0, 16 },	// colors 256-511 with lookup
 	{ REGION_GFX1, 0x20000, &spritelayout,        256*16, 16 },	// colors   0- 15 with lookup

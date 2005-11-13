@@ -51,7 +51,7 @@ MACHINE_INIT( homerun )
 	ppi8255_init(&ppi8255_intf);
 }
 
-static gfx_layout gfxlayout =
+static const gfx_layout gfxlayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -64,7 +64,7 @@ static gfx_layout gfxlayout =
 
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
    16,16,
    RGN_FRAC(1,1),
@@ -75,7 +75,7 @@ static gfx_layout spritelayout =
    8*8*2*4
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout,   0, 16 },
 	{ REGION_GFX2, 0, &spritelayout,   0, 16 },

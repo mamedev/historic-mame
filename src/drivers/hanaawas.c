@@ -174,7 +174,7 @@ INPUT_PORTS_END
 
 
 #define GFX(name, offs1, offs2, offs3)				\
-static gfx_layout name =						\
+static const gfx_layout name =						\
 {													\
 	8,8,    /* 8*8 chars */							\
 	512,    /* 512 characters */					\
@@ -188,7 +188,7 @@ static gfx_layout name =						\
 GFX( charlayout_1bpp, 0x2000*8+4, 0x2000*8+4, 0x2000*8+4 )
 GFX( charlayout_3bpp, 0x2000*8,   0,          4          )
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_1bpp, 0, 32 },
 	{ REGION_GFX1, 0, &charlayout_3bpp, 0, 32 },

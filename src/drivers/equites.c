@@ -599,7 +599,7 @@ INPUT_PORTS_END
 // Graphics Layouts
 
 // Equites Hardware
-static gfx_layout eq_charlayout =
+static const gfx_layout eq_charlayout =
 {
 	8, 8,
 	256,
@@ -610,7 +610,7 @@ static gfx_layout eq_charlayout =
 	16*8
 };
 
-static gfx_layout eq_tilelayout =
+static const gfx_layout eq_tilelayout =
 {
 	16, 16,
 	256,
@@ -626,7 +626,7 @@ static gfx_layout eq_tilelayout =
 	64*8
 };
 
-static gfx_layout eq_spritelayout =
+static const gfx_layout eq_spritelayout =
 {
 	16, 14,
 	256,
@@ -642,7 +642,7 @@ static gfx_layout eq_spritelayout =
 	64*8
 };
 
-static gfx_decode equites_gfxdecodeinfo[] =
+static const gfx_decode equites_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &eq_charlayout,     0, 32 }, // chars
 	{ REGION_GFX2, 0, &eq_tilelayout,   128, 16 }, // tile set0
@@ -653,7 +653,7 @@ static gfx_decode equites_gfxdecodeinfo[] =
 };
 
 // Splendor Blast Hardware
-static gfx_layout sp_charlayout =
+static const gfx_layout sp_charlayout =
 {
 	8, 8,
 	512,
@@ -664,7 +664,7 @@ static gfx_layout sp_charlayout =
 	16*8
 };
 
-static gfx_layout sp_tilelayout =
+static const gfx_layout sp_tilelayout =
 {
 	16,16,
 	256,
@@ -680,7 +680,7 @@ static gfx_layout sp_tilelayout =
 	64*8
 };
 
-static gfx_layout sp_spritelayout =
+static const gfx_layout sp_spritelayout =
 {
 	32,32,
 	128,
@@ -701,7 +701,7 @@ static gfx_layout sp_spritelayout =
 	8*32*8
 };
 
-static gfx_decode splndrbt_gfxdecodeinfo[] =
+static const gfx_decode splndrbt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &sp_charlayout,     0, 256/4 }, // 512 4-color chars
 	{ REGION_GFX2, 0, &sp_tilelayout,   256, 256/4 }, // 256 4-color tiles

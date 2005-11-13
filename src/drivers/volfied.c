@@ -276,7 +276,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **************************************************************/
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16, 16,
 	0x1800,
@@ -287,7 +287,7 @@ static gfx_layout tilelayout =
 	128*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout, 4096, 256 },
 	{ -1 } /* end of array */

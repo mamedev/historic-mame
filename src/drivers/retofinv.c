@@ -62,16 +62,6 @@ extern UINT8 *retofinv_sharedram;
 static unsigned char cpu2_m6000=0;
 
 
-static READ8_HANDLER( retofinv_shared_ram_r )
-{
-	return retofinv_sharedram[offset];
-}
-
-static WRITE8_HANDLER( retofinv_shared_ram_w )
-{
-	retofinv_sharedram[offset] = data;
-}
-
 static WRITE8_HANDLER( cpu1_reset_w )
 {
 	cpunum_set_input_line(1, INPUT_LINE_RESET, data ? CLEAR_LINE : ASSERT_LINE);
@@ -139,9 +129,9 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7fff, 0x7fff) AM_WRITE(coincounter_w)
 	AM_RANGE(0x7b00, 0x7bff) AM_ROM	/* space for diagnostic ROM? The code looks */
 									/* for a string here, and jumps if it's present */
-	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(retofinv_fg_videoram_r, retofinv_fg_videoram_w) AM_BASE(&retofinv_fg_videoram)
-	AM_RANGE(0x8800, 0x9fff) AM_READWRITE(retofinv_shared_ram_r, retofinv_shared_ram_w) AM_BASE(&retofinv_sharedram)
-	AM_RANGE(0xa000, 0xa7ff) AM_READWRITE(retofinv_bg_videoram_r, retofinv_bg_videoram_w) AM_BASE(&retofinv_bg_videoram)
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, retofinv_fg_videoram_w) AM_SHARE(2) AM_BASE(&retofinv_fg_videoram)
+	AM_RANGE(0x8800, 0x9fff) AM_RAM AM_SHARE(1) AM_BASE(&retofinv_sharedram)
+	AM_RANGE(0xa000, 0xa7ff) AM_READWRITE(MRA8_RAM, retofinv_bg_videoram_w) AM_SHARE(3) AM_BASE(&retofinv_bg_videoram)
 	AM_RANGE(0xb800, 0xb802) AM_WRITE(retofinv_gfx_ctrl_w)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_1_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_2_r)
@@ -166,9 +156,9 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_ROM
-	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(retofinv_fg_videoram_r, retofinv_fg_videoram_w)
-	AM_RANGE(0x8800, 0x9fff) AM_READWRITE(retofinv_shared_ram_r, retofinv_shared_ram_w)
-	AM_RANGE(0xa000, 0xa7ff) AM_READWRITE(retofinv_bg_videoram_r, retofinv_bg_videoram_w)
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM, retofinv_fg_videoram_w) AM_SHARE(2)
+	AM_RANGE(0x8800, 0x9fff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0xa000, 0xa7ff) AM_READWRITE(MRA8_RAM, retofinv_bg_videoram_w) AM_SHARE(3)
 	AM_RANGE(0xc804, 0xc804) AM_WRITE(irq1_ack_w)
 ADDRESS_MAP_END
 
@@ -327,7 +317,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),	/* bottom half of ROM is empty */
@@ -338,7 +328,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout bglayout =
+static const gfx_layout bglayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -349,7 +339,7 @@ static gfx_layout bglayout =
 	16*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -362,7 +352,7 @@ static gfx_layout spritelayout =
   	64*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,             0, 256 },
 	{ REGION_GFX2, 0, &bglayout,     64*16+256*2,  64 },

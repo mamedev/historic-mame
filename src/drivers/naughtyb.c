@@ -349,7 +349,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -362,7 +362,7 @@ static gfx_layout charlayout =
 
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 32 },
 	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },

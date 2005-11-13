@@ -455,7 +455,7 @@ static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription
 	if (verbose)
 		fprintf(stderr, "Enumerating video device %s\n",lpDriverName);
 
-	if (screen_name != NULL && stricmp(lpDriverName,screen_name) == 0)
+	if (screen_name != NULL && mame_stricmp(lpDriverName,screen_name) == 0)
 	{
 		if (lpGUID != NULL)
 		{

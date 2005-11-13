@@ -86,7 +86,7 @@ struct _gfx_decode
 	int memory_region;	/* memory region where the data resides (usually 1) */
 						/* -1 marks the end of the array */
 	UINT32 start;	/* beginning of data to decode */
-	gfx_layout *gfxlayout;
+	const gfx_layout *gfxlayout;
 	UINT16 color_codes_start;	/* offset in the color lookup table where color codes start */
 	UINT16 total_color_codes;	/* total number of color codes */
 };

@@ -330,7 +330,7 @@ INPUT_PORTS_START( maddonna )
 INPUT_PORTS_END
 
 
-static gfx_layout oneshot16x16_layout =
+static const gfx_layout oneshot16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,8),
@@ -343,7 +343,7 @@ static gfx_layout oneshot16x16_layout =
 	16*16
 };
 
-static gfx_layout oneshot8x8_layout =
+static const gfx_layout oneshot8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -355,7 +355,7 @@ static gfx_layout oneshot8x8_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &oneshot16x16_layout,   0x00, 4  }, /* sprites */
 	{ REGION_GFX1, 0, &oneshot8x8_layout,     0x00, 4  }, /* sprites */

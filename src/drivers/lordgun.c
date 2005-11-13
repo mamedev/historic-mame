@@ -178,7 +178,7 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( lordgun )
 INPUT_PORTS_END
 
-static gfx_layout lordgun_16x16x6_layout =
+static const gfx_layout lordgun_16x16x6_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -189,7 +189,7 @@ static gfx_layout lordgun_16x16x6_layout =
 	16*32
 };
 
-static gfx_layout lordgun_8x8x6_layout =
+static const gfx_layout lordgun_8x8x6_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -199,7 +199,7 @@ static gfx_layout lordgun_8x8x6_layout =
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	8*16
 };
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &lordgun_8x8x6_layout,    0x0, 0x80  },
 	{ REGION_GFX2, 0, &lordgun_16x16x6_layout,  0x0, 0x80  },

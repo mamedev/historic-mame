@@ -452,7 +452,7 @@ ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -469,7 +469,7 @@ static gfx_layout tile_layout =
 	4*8*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0x000, 16 }, /* foreground tiles? */
 	{ REGION_GFX2, 0, &tile_layout, 0x100, 16 }, /* sprite */

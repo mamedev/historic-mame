@@ -352,7 +352,7 @@ INPUT_PORTS_START( fgoal )
 INPUT_PORTS_END
 
 
-static gfx_layout gfxlayout =
+static const gfx_layout gfxlayout =
 {
 	64, 64,
 	1,
@@ -382,7 +382,7 @@ static gfx_layout gfxlayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout, 0x00, 8 }, /* foreground */
 	{ REGION_GFX1, 0, &gfxlayout, 0x80, 1 }, /* background */

@@ -354,7 +354,7 @@ INPUT_PORTS_END
 
 
 /* 16x16x4 */
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -366,7 +366,7 @@ static gfx_layout layout_16x16x4 =
 };
 
 /* 16x16x8 */
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -378,7 +378,7 @@ static gfx_layout layout_16x16x8 =
 };
 
 
-static gfx_decode yunsun16_gfxdecodeinfo[] =
+static const gfx_decode yunsun16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8, 0x1000, 0x10 }, // [0] Layers
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x0000, 0x20 }, // [1] Sprites
@@ -539,7 +539,7 @@ ROM_START( magicbub )
 	ROM_LOAD( "magbuble.u22", 0x040000, 0x020000, CRC(7c68df7a) SHA1(88acf9dd43892a790415b418f77d88c747aa84f5) )
 	ROM_LOAD( "magbuble.u23", 0x060000, 0x020000, CRC(c7763fc1) SHA1(ed68b3c3c5155073afb7b55d6d92d3057e40df6c) )
 
-	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "magbuble.131", 0x000000, 0x020000, CRC(03e04e89) SHA1(7d80e6a7be2322e32e40acae72bedd8d7e90ad33) )
 
 ROM_END
@@ -569,7 +569,7 @@ ROM_START( magicbua )
 	ROM_LOAD( "magbuble.u22", 0x040000, 0x020000, CRC(7c68df7a) SHA1(88acf9dd43892a790415b418f77d88c747aa84f5) )
 	ROM_LOAD( "magbuble.u23", 0x060000, 0x020000, CRC(c7763fc1) SHA1(ed68b3c3c5155073afb7b55d6d92d3057e40df6c) )
 
-	ROM_REGION( 0x020000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "magbuble.131", 0x000000, 0x020000, CRC(03e04e89) SHA1(7d80e6a7be2322e32e40acae72bedd8d7e90ad33) )
 
 ROM_END
@@ -599,7 +599,7 @@ ROM_START( shocking )
 	ROM_LOAD( "yunsun16.u22", 0x080000, 0x040000, CRC(d6db0388) SHA1(f5d8f7740b602c402a8dd6c4ebd357cf15a0dfac) )
 	ROM_LOAD( "yunsun16.u23", 0x0c0000, 0x040000, CRC(1fa33b2e) SHA1(4aa0dee8d34aac19cf6b7ba3f79ca022ad8d7760) )
 
-	ROM_REGION( 0x080000 * 2, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x080000 * 2, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "yunsun16.131", 0x000000, 0x080000, CRC(d0a1bb8c) SHA1(10f33521bd6031ed73ee5c7be1382165925aa8f8) )
 	ROM_RELOAD(               0x080000, 0x080000             )
 

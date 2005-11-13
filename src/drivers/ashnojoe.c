@@ -269,7 +269,7 @@ INPUT_PORTS_START( ashnojoe )
 	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout tiles8x8_layout =
+static const gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -280,7 +280,7 @@ static gfx_layout tiles8x8_layout =
 	32*8
 };
 
-static gfx_layout tiles16x16_layout =
+static const gfx_layout tiles16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -293,7 +293,7 @@ static gfx_layout tiles16x16_layout =
 	16*64
 };
 
-static gfx_decode ashnojoe_gfxdecodeinfo[] =
+static const gfx_decode ashnojoe_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout, 0, 0x100 },
 	{ REGION_GFX2, 0, &tiles8x8_layout, 0, 0x100 },

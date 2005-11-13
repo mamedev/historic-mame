@@ -908,7 +908,7 @@ INPUT_PORTS_START( ojankoc )
 INPUT_PORTS_END
 
 
-static gfx_layout ojankohs_bglayout =
+static const gfx_layout ojankohs_bglayout =
 {
 	8, 4,
 	RGN_FRAC(1, 1),
@@ -919,7 +919,7 @@ static gfx_layout ojankohs_bglayout =
 	16*8
 };
 
-static gfx_decode ojankohs_gfxdecodeinfo[] =
+static const gfx_decode ojankohs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &ojankohs_bglayout,   0, 64 },
 	{ -1 } 						/* end of array */

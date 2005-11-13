@@ -320,7 +320,7 @@ INPUT_PORTS_START( deroon )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-static gfx_layout gfxlayout =
+static const gfx_layout gfxlayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -331,7 +331,7 @@ static gfx_layout gfxlayout =
    8*8*4
 };
 
-static gfx_layout gfxlayout2 =
+static const gfx_layout gfxlayout2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -345,7 +345,7 @@ static gfx_layout gfxlayout2 =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &gfxlayout,   0x40*16, 16 },
 	{ REGION_GFX3, 0, &gfxlayout2,   0, 16 },

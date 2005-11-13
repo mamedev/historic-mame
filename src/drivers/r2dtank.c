@@ -43,6 +43,8 @@ Should be very similar to Sigma's Spiders hardware.
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 
+static UINT8 *main_ram;
+
 static int dipsw_bank;
 static WRITE8_HANDLER( dipsw_bank_w )
 {
@@ -127,7 +129,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_RAM) AM_BASE(&main_ram)
 	AM_RANGE(0x8000, 0x8003) AM_WRITE(r2dtank_pia_0_w)
 //  AM_RANGE(0x8004, 0x8007) AM_WRITE(r2dtank_pia_1_w)
 	AM_RANGE(0x8004, 0x8004) AM_WRITE(dipsw_bank_w)
@@ -274,14 +276,12 @@ VIDEO_UPDATE( r2dtank )
 {
 	int loop, data0, data1;
 
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	for(loop = 0; loop < 0x1e00; loop++)
 	{
 		int i,x,y;
 
-		data0 = RAM[0x0200+loop];
-		data1 = RAM[0x4200+loop];
+		data0 = main_ram[0x0200+loop];
+		data1 = main_ram[0x4200+loop];
 
 		y = loop / 0x20;
 

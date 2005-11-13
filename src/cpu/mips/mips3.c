@@ -74,6 +74,8 @@
 #define SR_TS				0x00200000
 #define SR_BEV				0x00400000
 #define SR_RE				0x02000000
+#define SR_FR				0x04000000
+#define SR_RP				0x08000000
 #define SR_COP0				0x10000000
 #define SR_COP1				0x20000000
 #define SR_COP2				0x40000000
@@ -119,15 +121,33 @@
 #define FSREG		((op >> 11) & 31)
 #define FDREG		((op >> 6) & 31)
 
-#define FRVALS		(((float *)&mips3.cpr[1][FRREG])[BYTE_XOR_LE(0)])
-#define FTVALS		(((float *)&mips3.cpr[1][FTREG])[BYTE_XOR_LE(0)])
-#define FSVALS		(((float *)&mips3.cpr[1][FSREG])[BYTE_XOR_LE(0)])
-#define FDVALS		(((float *)&mips3.cpr[1][FDREG])[BYTE_XOR_LE(0)])
+#define FRVALS_FR0	(((float *)&mips3.cpr[1][0])[FRREG])
+#define FTVALS_FR0	(((float *)&mips3.cpr[1][0])[FTREG])
+#define FSVALS_FR0	(((float *)&mips3.cpr[1][0])[FSREG])
+#define FDVALS_FR0	(((float *)&mips3.cpr[1][0])[FDREG])
+#define FSVALW_FR0	(((UINT32 *)&mips3.cpr[1][0])[FSREG])
+#define FDVALW_FR0	(((UINT32 *)&mips3.cpr[1][0])[FDREG])
 
-#define FRVALD		(*(double *)&mips3.cpr[1][FRREG])
-#define FTVALD		(*(double *)&mips3.cpr[1][FTREG])
-#define FSVALD		(*(double *)&mips3.cpr[1][FSREG])
-#define FDVALD		(*(double *)&mips3.cpr[1][FDREG])
+#define FRVALD_FR0	(*(double *)&mips3.cpr[1][FRREG/2])
+#define FTVALD_FR0	(*(double *)&mips3.cpr[1][FTREG/2])
+#define FSVALD_FR0	(*(double *)&mips3.cpr[1][FSREG/2])
+#define FDVALD_FR0	(*(double *)&mips3.cpr[1][FDREG/2])
+#define FSVALL_FR0	(((UINT64 *)&mips3.cpr[1][0])[FSREG/2])
+#define FDVALL_FR0	(((UINT64 *)&mips3.cpr[1][0])[FDREG/2])
+
+#define FRVALS_FR1	(((float *)&mips3.cpr[1][FRREG])[BYTE_XOR_LE(0)])
+#define FTVALS_FR1	(((float *)&mips3.cpr[1][FTREG])[BYTE_XOR_LE(0)])
+#define FSVALS_FR1	(((float *)&mips3.cpr[1][FSREG])[BYTE_XOR_LE(0)])
+#define FDVALS_FR1	(((float *)&mips3.cpr[1][FDREG])[BYTE_XOR_LE(0)])
+#define FSVALW_FR1	(((UINT32 *)&mips3.cpr[1][FSREG])[BYTE_XOR_LE(0)])
+#define FDVALW_FR1	(((UINT32 *)&mips3.cpr[1][FDREG])[BYTE_XOR_LE(0)])
+
+#define FRVALD_FR1	(*(double *)&mips3.cpr[1][FRREG])
+#define FTVALD_FR1	(*(double *)&mips3.cpr[1][FTREG])
+#define FSVALD_FR1	(*(double *)&mips3.cpr[1][FSREG])
+#define FDVALD_FR1	(*(double *)&mips3.cpr[1][FDREG])
+#define FSVALL_FR1	(*(UINT64 *)&mips3.cpr[1][FSREG])
+#define FDVALL_FR1	(*(UINT64 *)&mips3.cpr[1][FDREG])
 
 #define IS_SINGLE(o) (((o) & (1 << 21)) == 0)
 #define IS_DOUBLE(o) (((o) & (1 << 21)) != 0)
@@ -154,6 +174,9 @@
 
 #define GET_FCC(n)	((mips3.ccr[1][31] >> fcc_shift[n]) & 1)
 #define SET_FCC(n,v) (mips3.ccr[1][31] = (mips3.ccr[1][31] & ~(1 << fcc_shift[n])) | ((v) << fcc_shift[n]))
+
+#define IS_FR0		(!(SR & SR_FR))
+#define IS_FR1		(SR & SR_FR)
 
 
 /*###################################################################################################
@@ -372,7 +395,8 @@ INLINE void generate_exception(int exception, int backup)
 static void generate_tlb_exception(int exception, offs_t address)
 {
 	mips3.cpr[0][COP0_BadVAddr] = address;
-	mips3.cpr[0][COP0_Context] = (mips3.cpr[0][COP0_Context] & 0xffe00000) | ((address >> 11) & 0x001ffffc);
+	mips3.cpr[0][COP0_Context] = (mips3.cpr[0][COP0_Context] & 0xff800000) | ((address >> 9) & 0x007ffff0);
+	mips3.cpr[0][COP0_EntryHi] = (address & 0xffffe000) | (mips3.cpr[0][COP0_EntryHi] & 0xff);
 	generate_exception(exception, 1);
 }
 
@@ -668,10 +692,14 @@ static void map_tlb_entries(void)
 						UINT32 pfn = (lo >> 6) & 0x00ffffff;
 						UINT32 wp = (~lo >> 2) & 1;
 
-						for (i = 0; i <= count; i++, vpn++)
+						for (i = 0; i <= count; i++, vpn++, pfn++)
 							if (vpn < 0x80000 || vpn >= 0xc0000)
-								mips3.tlb_table[vpn] = (pfn++ << 12) | wp;
+								mips3.tlb_table[vpn] = (pfn << 12) | wp;
 					}
+
+					/* otherwise, advance by the number of pages we would have mapped */
+					else
+						vpn += count + 1;
 				}
 		}
 	}
@@ -916,6 +944,8 @@ INLINE void set_cop0_reg(int idx, UINT64 val)
 		{
 			/* update interrupts and cycle counting */
 			UINT32 diff = mips3.cpr[0][idx] ^ val;
+//          if (val & 0xe0)
+//              osd_die("System set 64-bit addressing mode, SR=%08X", val);
 			mips3.cpr[0][idx] = val;
 			if (diff & 0x8000)
 				update_cycle_counting();
@@ -1117,7 +1147,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 						if (mips3.tlb_table[vpn & 0xfffff] != 0xffffffff)
 						{
 #if PRINTF_TLB
-							printf("TLBP: Should havefound an entry\n");
+							printf("TLBP: Should have found an entry\n");
 //                          debug_halt_on_next_instruction();
 #endif
 						}
@@ -1140,14 +1170,36 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 **  COP1 (FPU) EXECUTION HANDLING
 **#################################################################################################*/
 
-INLINE UINT64 get_cop1_reg(int idx)
+INLINE UINT32 get_cop1_reg32(int idx)
 {
-	return mips3.cpr[1][idx];
+	if (IS_FR0)
+		return ((UINT32 *)&mips3.cpr[1][0])[idx];
+	else
+		return mips3.cpr[1][idx];
 }
 
-INLINE void set_cop1_reg(int idx, UINT64 val)
+INLINE UINT64 get_cop1_reg64(int idx)
 {
-	mips3.cpr[1][idx] = val;
+	if (IS_FR0)
+		return ((UINT64 *)&mips3.cpr[1][0])[idx/2];
+	else
+		return mips3.cpr[1][idx];
+}
+
+INLINE void set_cop1_reg32(int idx, UINT32 val)
+{
+	if (IS_FR0)
+		((UINT32 *)&mips3.cpr[1][0])[idx] = val;
+	else
+		mips3.cpr[1][idx] = val;
+}
+
+INLINE void set_cop1_reg64(int idx, UINT64 val)
+{
+	if (IS_FR0)
+		((UINT64 *)&mips3.cpr[1][0])[idx/2] = val;
+	else
+		mips3.cpr[1][idx] = val;
 }
 
 INLINE UINT64 get_cop1_creg(int idx)
@@ -1160,7 +1212,7 @@ INLINE void set_cop1_creg(int idx, UINT64 val)
 	mips3.ccr[1][idx] = val;
 }
 
-INLINE void handle_cop1(UINT32 op)
+INLINE void handle_cop1_fr0(UINT32 op)
 {
 	double dtemp;
 
@@ -1171,11 +1223,11 @@ INLINE void handle_cop1(UINT32 op)
 
 	switch (RSREG)
 	{
-		case 0x00:	/* MFCz */		if (RTREG) RTVAL64 = (INT32)get_cop1_reg(RDREG);		break;
-		case 0x01:	/* DMFCz */		if (RTREG) RTVAL64 = get_cop1_reg(RDREG);				break;
+		case 0x00:	/* MFCz */		if (RTREG) RTVAL64 = (INT32)get_cop1_reg32(RDREG);		break;
+		case 0x01:	/* DMFCz */		if (RTREG) RTVAL64 = get_cop1_reg64(RDREG);				break;
 		case 0x02:	/* CFCz */		if (RTREG) RTVAL64 = (INT32)get_cop1_creg(RDREG);		break;
-		case 0x04:	/* MTCz */		set_cop1_reg(RDREG, RTVAL32);							break;
-		case 0x05:	/* DMTCz */		set_cop1_reg(RDREG, RTVAL64);							break;
+		case 0x04:	/* MTCz */		set_cop1_reg32(RDREG, RTVAL32);							break;
+		case 0x05:	/* DMTCz */		set_cop1_reg64(RDREG, RTVAL64);							break;
 		case 0x06:	/* CTCz */		set_cop1_creg(RDREG, RTVAL32);							break;
 		case 0x08:	/* BC */
 			switch ((op >> 16) & 3)
@@ -1191,183 +1243,183 @@ INLINE void handle_cop1(UINT32 op)
 			{
 				case 0x00:
 					if (IS_SINGLE(op))	/* ADD.S */
-						FDVALS = FSVALS + FTVALS;
+						FDVALS_FR0 = FSVALS_FR0 + FTVALS_FR0;
 					else				/* ADD.D */
-						FDVALD = FSVALD + FTVALD;
+						FDVALD_FR0 = FSVALD_FR0 + FTVALD_FR0;
 					break;
 
 				case 0x01:
 					if (IS_SINGLE(op))	/* SUB.S */
-						FDVALS = FSVALS - FTVALS;
+						FDVALS_FR0 = FSVALS_FR0 - FTVALS_FR0;
 					else				/* SUB.D */
-						FDVALD = FSVALD - FTVALD;
+						FDVALD_FR0 = FSVALD_FR0 - FTVALD_FR0;
 					break;
 
 				case 0x02:
 					if (IS_SINGLE(op))	/* MUL.S */
-						FDVALS = FSVALS * FTVALS;
+						FDVALS_FR0 = FSVALS_FR0 * FTVALS_FR0;
 					else				/* MUL.D */
-						FDVALD = FSVALD * FTVALD;
+						FDVALD_FR0 = FSVALD_FR0 * FTVALD_FR0;
 					break;
 
 				case 0x03:
 					if (IS_SINGLE(op))	/* DIV.S */
-						FDVALS = FSVALS / FTVALS;
+						FDVALS_FR0 = FSVALS_FR0 / FTVALS_FR0;
 					else				/* DIV.D */
-						FDVALD = FSVALD / FTVALD;
+						FDVALD_FR0 = FSVALD_FR0 / FTVALD_FR0;
 					break;
 
 				case 0x04:
 					if (IS_SINGLE(op))	/* SQRT.S */
-						FDVALS = sqrt(FSVALS);
+						FDVALS_FR0 = sqrt(FSVALS_FR0);
 					else				/* SQRT.D */
-						FDVALD = sqrt(FSVALD);
+						FDVALD_FR0 = sqrt(FSVALD_FR0);
 					break;
 
 				case 0x05:
 					if (IS_SINGLE(op))	/* ABS.S */
-						FDVALS = fabs(FSVALS);
+						FDVALS_FR0 = fabs(FSVALS_FR0);
 					else				/* ABS.D */
-						FDVALD = fabs(FSVALD);
+						FDVALD_FR0 = fabs(FSVALD_FR0);
 					break;
 
 				case 0x06:
 					if (IS_SINGLE(op))	/* MOV.S */
-						FDVALS = FSVALS;
+						FDVALS_FR0 = FSVALS_FR0;
 					else				/* MOV.D */
-						FDVALD = FSVALD;
+						FDVALD_FR0 = FSVALD_FR0;
 					break;
 
 				case 0x07:
 					if (IS_SINGLE(op))	/* NEG.S */
-						FDVALS = -FSVALS;
+						FDVALS_FR0 = -FSVALS_FR0;
 					else				/* NEG.D */
-						FDVALD = -FSVALD;
+						FDVALD_FR0 = -FSVALD_FR0;
 					break;
 
 				case 0x08:
 					if (IS_SINGLE(op))	/* ROUND.L.S */
 					{
-						double temp = FSVALS;
+						double temp = FSVALS_FR0;
 						if (temp < 0)
 							temp = ceil(temp - 0.5);
 						else
 							temp = floor(temp + 0.5);
-						mips3.cpr[1][FDREG] = (INT64)temp;
+						FDVALL_FR0 = (INT64)temp;
 					}
 					else				/* ROUND.L.D */
 					{
-						double temp = FSVALD;
+						double temp = FSVALD_FR0;
 						if (temp < 0)
 							temp = ceil(temp - 0.5);
 						else
 							temp = floor(temp + 0.5);
-						mips3.cpr[1][FDREG] = (INT64)temp;
+						FDVALL_FR0 = (INT64)temp;
 					}
 					break;
 
 				case 0x09:
 					if (IS_SINGLE(op))	/* TRUNC.L.S */
 					{
-						double temp = FSVALS;
+						double temp = FSVALS_FR0;
 						if (temp < 0)
 							temp = ceil(temp);
 						else
 							temp = floor(temp);
-						mips3.cpr[1][FDREG] = (INT64)temp;
+						FDVALL_FR0 = (INT64)temp;
 					}
 					else				/* TRUNC.L.D */
 					{
-						double temp = FSVALD;
+						double temp = FSVALD_FR0;
 						if (temp < 0)
 							temp = ceil(temp);
 						else
 							temp = floor(temp);
-						mips3.cpr[1][FDREG] = (INT64)temp;
+						FDVALL_FR0 = (INT64)temp;
 					}
 					break;
 
 				case 0x0a:
 					if (IS_SINGLE(op))	/* CEIL.L.S */
-						dtemp = ceil(FSVALS);
+						dtemp = ceil(FSVALS_FR0);
 					else				/* CEIL.L.D */
-						dtemp = ceil(FSVALD);
-					mips3.cpr[1][FDREG] = (INT64)dtemp;
+						dtemp = ceil(FSVALD_FR0);
+					FDVALL_FR0 = (INT64)dtemp;
 					break;
 
 				case 0x0b:
 					if (IS_SINGLE(op))	/* FLOOR.L.S */
-						dtemp = floor(FSVALS);
+						dtemp = floor(FSVALS_FR0);
 					else				/* FLOOR.L.D */
-						dtemp = floor(FSVALD);
-					mips3.cpr[1][FDREG] = (INT64)dtemp;
+						dtemp = floor(FSVALD_FR0);
+					FDVALL_FR0 = (INT64)dtemp;
 					break;
 
 				case 0x0c:
 					if (IS_SINGLE(op))	/* ROUND.W.S */
 					{
-						dtemp = FSVALS;
+						dtemp = FSVALS_FR0;
 						if (dtemp < 0)
 							dtemp = ceil(dtemp - 0.5);
 						else
 							dtemp = floor(dtemp + 0.5);
-						mips3.cpr[1][FDREG] = (INT32)dtemp;
+						FDVALW_FR0 = (INT32)dtemp;
 					}
 					else				/* ROUND.W.D */
 					{
-						dtemp = FSVALD;
+						dtemp = FSVALD_FR0;
 						if (dtemp < 0)
 							dtemp = ceil(dtemp - 0.5);
 						else
 							dtemp = floor(dtemp + 0.5);
-						mips3.cpr[1][FDREG] = (INT32)dtemp;
+						FDVALW_FR0 = (INT32)dtemp;
 					}
 					break;
 
 				case 0x0d:
 					if (IS_SINGLE(op))	/* TRUNC.W.S */
 					{
-						dtemp = FSVALS;
+						dtemp = FSVALS_FR0;
 						if (dtemp < 0)
 							dtemp = ceil(dtemp);
 						else
 							dtemp = floor(dtemp);
-						mips3.cpr[1][FDREG] = (INT32)dtemp;
+						FDVALW_FR0 = (INT32)dtemp;
 					}
 					else				/* TRUNC.W.D */
 					{
-						dtemp = FSVALD;
+						dtemp = FSVALD_FR0;
 						if (dtemp < 0)
 							dtemp = ceil(dtemp);
 						else
 							dtemp = floor(dtemp);
-						mips3.cpr[1][FDREG] = (INT32)dtemp;
+						FDVALW_FR0 = (INT32)dtemp;
 					}
 					break;
 
 				case 0x0e:
 					if (IS_SINGLE(op))	/* CEIL.W.S */
-						dtemp = ceil(FSVALS);
+						dtemp = ceil(FSVALS_FR0);
 					else				/* CEIL.W.D */
-						dtemp = ceil(FSVALD);
-					mips3.cpr[1][FDREG] = (INT32)dtemp;
+						dtemp = ceil(FSVALD_FR0);
+					FDVALW_FR0 = (INT32)dtemp;
 					break;
 
 				case 0x0f:
 					if (IS_SINGLE(op))	/* FLOOR.W.S */
-						dtemp = floor(FSVALS);
+						dtemp = floor(FSVALS_FR0);
 					else				/* FLOOR.W.D */
-						dtemp = floor(FSVALD);
-					mips3.cpr[1][FDREG] = (INT32)dtemp;
+						dtemp = floor(FSVALD_FR0);
+					FDVALW_FR0 = (INT32)dtemp;
 					break;
 
 				case 0x11:	/* R5000 */
 					if (GET_FCC((op >> 18) & 7) == ((op >> 16) & 1))
 					{
 						if (IS_SINGLE(op))	/* MOVT/F.S */
-							FDVALS = FSVALS;
+							FDVALS_FR0 = FSVALS_FR0;
 						else				/* MOVT/F.D */
-							FDVALD = FSVALD;
+							FDVALD_FR0 = FSVALD_FR0;
 					}
 					break;
 
@@ -1375,9 +1427,9 @@ INLINE void handle_cop1(UINT32 op)
 					if (RTVAL64 == 0)
 					{
 						if (IS_SINGLE(op))	/* MOVZ.S */
-							FDVALS = FSVALS;
+							FDVALS_FR0 = FSVALS_FR0;
 						else				/* MOVZ.D */
-							FDVALD = FSVALD;
+							FDVALD_FR0 = FSVALD_FR0;
 					}
 					break;
 
@@ -1385,62 +1437,62 @@ INLINE void handle_cop1(UINT32 op)
 					if (RTVAL64 != 0)
 					{
 						if (IS_SINGLE(op))	/* MOVN.S */
-							FDVALS = FSVALS;
+							FDVALS_FR0 = FSVALS_FR0;
 						else				/* MOVN.D */
-							FDVALD = FSVALD;
+							FDVALD_FR0 = FSVALD_FR0;
 					}
 					break;
 
 				case 0x15:	/* R5000 */
 					if (IS_SINGLE(op))	/* RECIP.S */
-						FDVALS = 1.0 / FSVALS;
+						FDVALS_FR0 = 1.0f / FSVALS_FR0;
 					else				/* RECIP.D */
-						FDVALD = 1.0 / FSVALD;
+						FDVALD_FR0 = 1.0 / FSVALD_FR0;
 					break;
 
 				case 0x16:	/* R5000 */
 					if (IS_SINGLE(op))	/* RSQRT.S */
-						FDVALS = 1.0 / sqrt(FSVALS);
+						FDVALS_FR0 = 1.0f / sqrt(FSVALS_FR0);
 					else				/* RSQRT.D */
-						FDVALD = 1.0 / sqrt(FSVALD);
+						FDVALD_FR0 = 1.0 / sqrt(FSVALD_FR0);
 					break;
 
 				case 0x20:
 					if (IS_INTEGRAL(op))
 					{
 						if (IS_SINGLE(op))	/* CVT.S.W */
-							FDVALS = (INT32)mips3.cpr[1][FSREG];
+							FDVALS_FR0 = (INT32)FSVALW_FR0;
 						else				/* CVT.S.L */
-							FDVALS = (INT64)mips3.cpr[1][FSREG];
+							FDVALS_FR0 = (INT64)FSVALL_FR0;
 					}
 					else					/* CVT.S.D */
-						FDVALS = FSVALD;
+						FDVALS_FR0 = FSVALD_FR0;
 					break;
 
 				case 0x21:
 					if (IS_INTEGRAL(op))
 					{
 						if (IS_SINGLE(op))	/* CVT.D.W */
-							FDVALD = (INT32)mips3.cpr[1][FSREG];
+							FDVALD_FR0 = (INT32)FSVALW_FR0;
 						else				/* CVT.D.L */
-							FDVALD = (INT64)mips3.cpr[1][FSREG];
+							FDVALD_FR0 = (INT64)FSVALL_FR0;
 					}
 					else					/* CVT.D.S */
-						FDVALD = FSVALS;
+						FDVALD_FR0 = FSVALS_FR0;
 					break;
 
 				case 0x24:
 					if (IS_SINGLE(op))	/* CVT.W.S */
-						mips3.cpr[1][FDREG] = (INT32)FSVALS;
+						FDVALW_FR0 = (INT32)FSVALS_FR0;
 					else
-						mips3.cpr[1][FDREG] = (INT32)FSVALD;
+						FDVALW_FR0 = (INT32)FSVALD_FR0;
 					break;
 
 				case 0x25:
 					if (IS_SINGLE(op))	/* CVT.L.S */
-						mips3.cpr[1][FDREG] = (INT64)FSVALS;
+						FDVALL_FR0 = (INT64)FSVALS_FR0;
 					else				/* CVT.L.D */
-						mips3.cpr[1][FDREG] = (INT64)FSVALD;
+						FDVALL_FR0 = (INT64)FSVALD_FR0;
 					break;
 
 				case 0x30:
@@ -1462,49 +1514,405 @@ INLINE void handle_cop1(UINT32 op)
 				case 0x32:
 				case 0x3a:
 					if (IS_SINGLE(op))	/* C.EQ.S */
-						SET_FCC((op >> 8) & 7, (FSVALS == FTVALS));
+						SET_FCC((op >> 8) & 7, (FSVALS_FR0 == FTVALS_FR0));
 					else				/* C.EQ.D */
-						SET_FCC((op >> 8) & 7, (FSVALD == FTVALD));
+						SET_FCC((op >> 8) & 7, (FSVALD_FR0 == FTVALD_FR0));
 					break;
 
 				case 0x33:
 				case 0x3b:
 					if (IS_SINGLE(op))	/* C.UEQ.S */
-						SET_FCC((op >> 8) & 7, (FSVALS == FTVALS));
+						SET_FCC((op >> 8) & 7, (FSVALS_FR0 == FTVALS_FR0));
 					else				/* C.UEQ.D */
-						SET_FCC((op >> 8) & 7, (FSVALD == FTVALD));
+						SET_FCC((op >> 8) & 7, (FSVALD_FR0 == FTVALD_FR0));
 					break;
 
 				case 0x34:
 				case 0x3c:
 					if (IS_SINGLE(op))	/* C.OLT.S */
-						SET_FCC((op >> 8) & 7, (FSVALS < FTVALS));
+						SET_FCC((op >> 8) & 7, (FSVALS_FR0 < FTVALS_FR0));
 					else				/* C.OLT.D */
-						SET_FCC((op >> 8) & 7, (FSVALD < FTVALD));
+						SET_FCC((op >> 8) & 7, (FSVALD_FR0 < FTVALD_FR0));
 					break;
 
 				case 0x35:
 				case 0x3d:
 					if (IS_SINGLE(op))	/* C.ULT.S */
-						SET_FCC((op >> 8) & 7, (FSVALS < FTVALS));
+						SET_FCC((op >> 8) & 7, (FSVALS_FR0 < FTVALS_FR0));
 					else				/* C.ULT.D */
-						SET_FCC((op >> 8) & 7, (FSVALD < FTVALD));
+						SET_FCC((op >> 8) & 7, (FSVALD_FR0 < FTVALD_FR0));
 					break;
 
 				case 0x36:
 				case 0x3e:
 					if (IS_SINGLE(op))	/* C.OLE.S */
-						SET_FCC((op >> 8) & 7, (FSVALS <= FTVALS));
+						SET_FCC((op >> 8) & 7, (FSVALS_FR0 <= FTVALS_FR0));
 					else				/* C.OLE.D */
-						SET_FCC((op >> 8) & 7, (FSVALD <= FTVALD));
+						SET_FCC((op >> 8) & 7, (FSVALD_FR0 <= FTVALD_FR0));
 					break;
 
 				case 0x37:
 				case 0x3f:
 					if (IS_SINGLE(op))	/* C.ULE.S */
-						SET_FCC((op >> 8) & 7, (FSVALS <= FTVALS));
+						SET_FCC((op >> 8) & 7, (FSVALS_FR0 <= FTVALS_FR0));
 					else				/* C.ULE.D */
-						SET_FCC((op >> 8) & 7, (FSVALD <= FTVALD));
+						SET_FCC((op >> 8) & 7, (FSVALD_FR0 <= FTVALD_FR0));
+					break;
+
+				default:
+					fprintf(stderr, "cop1 %X\n", op);
+					break;
+			}
+			break;
+	}
+}
+
+
+INLINE void handle_cop1_fr1(UINT32 op)
+{
+	double dtemp;
+
+	/* note: additional condition codes available on R5000 only */
+
+	if (!(SR & SR_COP1))
+		generate_exception(EXCEPTION_BADCOP, 1);
+
+	switch (RSREG)
+	{
+		case 0x00:	/* MFCz */		if (RTREG) RTVAL64 = (INT32)get_cop1_reg32(RDREG);		break;
+		case 0x01:	/* DMFCz */		if (RTREG) RTVAL64 = get_cop1_reg64(RDREG);				break;
+		case 0x02:	/* CFCz */		if (RTREG) RTVAL64 = (INT32)get_cop1_creg(RDREG);		break;
+		case 0x04:	/* MTCz */		set_cop1_reg32(RDREG, RTVAL32);							break;
+		case 0x05:	/* DMTCz */		set_cop1_reg64(RDREG, RTVAL64);							break;
+		case 0x06:	/* CTCz */		set_cop1_creg(RDREG, RTVAL32);							break;
+		case 0x08:	/* BC */
+			switch ((op >> 16) & 3)
+			{
+				case 0x00:	/* BCzF */	if (!GET_FCC((op >> 18) & 7)) ADDPC(SIMMVAL);	break;
+				case 0x01:	/* BCzT */	if (GET_FCC((op >> 18) & 7)) ADDPC(SIMMVAL);	break;
+				case 0x02:	/* BCzFL */	if (!GET_FCC((op >> 18) & 7)) ADDPC(SIMMVAL); else mips3.pc += 4;	break;
+				case 0x03:	/* BCzTL */	if (GET_FCC((op >> 18) & 7)) ADDPC(SIMMVAL); else mips3.pc += 4;	break;
+			}
+			break;
+		default:
+			switch (op & 0x3f)
+			{
+				case 0x00:
+					if (IS_SINGLE(op))	/* ADD.S */
+						FDVALS_FR1 = FSVALS_FR1 + FTVALS_FR1;
+					else				/* ADD.D */
+						FDVALD_FR1 = FSVALD_FR1 + FTVALD_FR1;
+					break;
+
+				case 0x01:
+					if (IS_SINGLE(op))	/* SUB.S */
+						FDVALS_FR1 = FSVALS_FR1 - FTVALS_FR1;
+					else				/* SUB.D */
+						FDVALD_FR1 = FSVALD_FR1 - FTVALD_FR1;
+					break;
+
+				case 0x02:
+					if (IS_SINGLE(op))	/* MUL.S */
+						FDVALS_FR1 = FSVALS_FR1 * FTVALS_FR1;
+					else				/* MUL.D */
+						FDVALD_FR1 = FSVALD_FR1 * FTVALD_FR1;
+					break;
+
+				case 0x03:
+					if (IS_SINGLE(op))	/* DIV.S */
+						FDVALS_FR1 = FSVALS_FR1 / FTVALS_FR1;
+					else				/* DIV.D */
+						FDVALD_FR1 = FSVALD_FR1 / FTVALD_FR1;
+					break;
+
+				case 0x04:
+					if (IS_SINGLE(op))	/* SQRT.S */
+						FDVALS_FR1 = sqrt(FSVALS_FR1);
+					else				/* SQRT.D */
+						FDVALD_FR1 = sqrt(FSVALD_FR1);
+					break;
+
+				case 0x05:
+					if (IS_SINGLE(op))	/* ABS.S */
+						FDVALS_FR1 = fabs(FSVALS_FR1);
+					else				/* ABS.D */
+						FDVALD_FR1 = fabs(FSVALD_FR1);
+					break;
+
+				case 0x06:
+					if (IS_SINGLE(op))	/* MOV.S */
+						FDVALS_FR1 = FSVALS_FR1;
+					else				/* MOV.D */
+						FDVALD_FR1 = FSVALD_FR1;
+					break;
+
+				case 0x07:
+					if (IS_SINGLE(op))	/* NEG.S */
+						FDVALS_FR1 = -FSVALS_FR1;
+					else				/* NEG.D */
+						FDVALD_FR1 = -FSVALD_FR1;
+					break;
+
+				case 0x08:
+					if (IS_SINGLE(op))	/* ROUND.L.S */
+					{
+						double temp = FSVALS_FR1;
+						if (temp < 0)
+							temp = ceil(temp - 0.5);
+						else
+							temp = floor(temp + 0.5);
+						FDVALL_FR1 = (INT64)temp;
+					}
+					else				/* ROUND.L.D */
+					{
+						double temp = FSVALD_FR1;
+						if (temp < 0)
+							temp = ceil(temp - 0.5);
+						else
+							temp = floor(temp + 0.5);
+						FDVALL_FR1 = (INT64)temp;
+					}
+					break;
+
+				case 0x09:
+					if (IS_SINGLE(op))	/* TRUNC.L.S */
+					{
+						double temp = FSVALS_FR1;
+						if (temp < 0)
+							temp = ceil(temp);
+						else
+							temp = floor(temp);
+						FDVALL_FR1 = (INT64)temp;
+					}
+					else				/* TRUNC.L.D */
+					{
+						double temp = FSVALD_FR1;
+						if (temp < 0)
+							temp = ceil(temp);
+						else
+							temp = floor(temp);
+						FDVALL_FR1 = (INT64)temp;
+					}
+					break;
+
+				case 0x0a:
+					if (IS_SINGLE(op))	/* CEIL.L.S */
+						dtemp = ceil(FSVALS_FR1);
+					else				/* CEIL.L.D */
+						dtemp = ceil(FSVALD_FR1);
+					FDVALL_FR1 = (INT64)dtemp;
+					break;
+
+				case 0x0b:
+					if (IS_SINGLE(op))	/* FLOOR.L.S */
+						dtemp = floor(FSVALS_FR1);
+					else				/* FLOOR.L.D */
+						dtemp = floor(FSVALD_FR1);
+					FDVALL_FR1 = (INT64)dtemp;
+					break;
+
+				case 0x0c:
+					if (IS_SINGLE(op))	/* ROUND.W.S */
+					{
+						dtemp = FSVALS_FR1;
+						if (dtemp < 0)
+							dtemp = ceil(dtemp - 0.5);
+						else
+							dtemp = floor(dtemp + 0.5);
+						FDVALW_FR1 = (INT32)dtemp;
+					}
+					else				/* ROUND.W.D */
+					{
+						dtemp = FSVALD_FR1;
+						if (dtemp < 0)
+							dtemp = ceil(dtemp - 0.5);
+						else
+							dtemp = floor(dtemp + 0.5);
+						FDVALW_FR1 = (INT32)dtemp;
+					}
+					break;
+
+				case 0x0d:
+					if (IS_SINGLE(op))	/* TRUNC.W.S */
+					{
+						dtemp = FSVALS_FR1;
+						if (dtemp < 0)
+							dtemp = ceil(dtemp);
+						else
+							dtemp = floor(dtemp);
+						FDVALW_FR1 = (INT32)dtemp;
+					}
+					else				/* TRUNC.W.D */
+					{
+						dtemp = FSVALD_FR1;
+						if (dtemp < 0)
+							dtemp = ceil(dtemp);
+						else
+							dtemp = floor(dtemp);
+						FDVALW_FR1 = (INT32)dtemp;
+					}
+					break;
+
+				case 0x0e:
+					if (IS_SINGLE(op))	/* CEIL.W.S */
+						dtemp = ceil(FSVALS_FR1);
+					else				/* CEIL.W.D */
+						dtemp = ceil(FSVALD_FR1);
+					FDVALW_FR1 = (INT32)dtemp;
+					break;
+
+				case 0x0f:
+					if (IS_SINGLE(op))	/* FLOOR.W.S */
+						dtemp = floor(FSVALS_FR1);
+					else				/* FLOOR.W.D */
+						dtemp = floor(FSVALD_FR1);
+					FDVALW_FR1 = (INT32)dtemp;
+					break;
+
+				case 0x11:	/* R5000 */
+					if (GET_FCC((op >> 18) & 7) == ((op >> 16) & 1))
+					{
+						if (IS_SINGLE(op))	/* MOVT/F.S */
+							FDVALS_FR1 = FSVALS_FR1;
+						else				/* MOVT/F.D */
+							FDVALD_FR1 = FSVALD_FR1;
+					}
+					break;
+
+				case 0x12:	/* R5000 */
+					if (RTVAL64 == 0)
+					{
+						if (IS_SINGLE(op))	/* MOVZ.S */
+							FDVALS_FR1 = FSVALS_FR1;
+						else				/* MOVZ.D */
+							FDVALD_FR1 = FSVALD_FR1;
+					}
+					break;
+
+				case 0x13:	/* R5000 */
+					if (RTVAL64 != 0)
+					{
+						if (IS_SINGLE(op))	/* MOVN.S */
+							FDVALS_FR1 = FSVALS_FR1;
+						else				/* MOVN.D */
+							FDVALD_FR1 = FSVALD_FR1;
+					}
+					break;
+
+				case 0x15:	/* R5000 */
+					if (IS_SINGLE(op))	/* RECIP.S */
+						FDVALS_FR1 = 1.0f / FSVALS_FR1;
+					else				/* RECIP.D */
+						FDVALD_FR1 = 1.0 / FSVALD_FR1;
+					break;
+
+				case 0x16:	/* R5000 */
+					if (IS_SINGLE(op))	/* RSQRT.S */
+						FDVALS_FR1 = 1.0f / sqrt(FSVALS_FR1);
+					else				/* RSQRT.D */
+						FDVALD_FR1 = 1.0 / sqrt(FSVALD_FR1);
+					break;
+
+				case 0x20:
+					if (IS_INTEGRAL(op))
+					{
+						if (IS_SINGLE(op))	/* CVT.S.W */
+							FDVALS_FR1 = (INT32)FSVALW_FR1;
+						else				/* CVT.S.L */
+							FDVALS_FR1 = (INT64)FSVALL_FR1;
+					}
+					else					/* CVT.S.D */
+						FDVALS_FR1 = FSVALD_FR1;
+					break;
+
+				case 0x21:
+					if (IS_INTEGRAL(op))
+					{
+						if (IS_SINGLE(op))	/* CVT.D.W */
+							FDVALD_FR1 = (INT32)FSVALW_FR1;
+						else				/* CVT.D.L */
+							FDVALD_FR1 = (INT64)FSVALL_FR1;
+					}
+					else					/* CVT.D.S */
+						FDVALD_FR1 = FSVALS_FR1;
+					break;
+
+				case 0x24:
+					if (IS_SINGLE(op))	/* CVT.W.S */
+						FDVALW_FR1 = (INT32)FSVALS_FR1;
+					else
+						FDVALW_FR1 = (INT32)FSVALD_FR1;
+					break;
+
+				case 0x25:
+					if (IS_SINGLE(op))	/* CVT.L.S */
+						FDVALL_FR1 = (INT64)FSVALS_FR1;
+					else				/* CVT.L.D */
+						FDVALL_FR1 = (INT64)FSVALD_FR1;
+					break;
+
+				case 0x30:
+				case 0x38:
+					if (IS_SINGLE(op))	/* C.F.S */
+						SET_FCC((op >> 8) & 7, 0);
+					else				/* C.F.D */
+						SET_FCC((op >> 8) & 7, 0);
+					break;
+
+				case 0x31:
+				case 0x39:
+					if (IS_SINGLE(op))	/* C.UN.S */
+						SET_FCC((op >> 8) & 7, 0);
+					else				/* C.UN.D */
+						SET_FCC((op >> 8) & 7, 0);
+					break;
+
+				case 0x32:
+				case 0x3a:
+					if (IS_SINGLE(op))	/* C.EQ.S */
+						SET_FCC((op >> 8) & 7, (FSVALS_FR1 == FTVALS_FR1));
+					else				/* C.EQ.D */
+						SET_FCC((op >> 8) & 7, (FSVALD_FR1 == FTVALD_FR1));
+					break;
+
+				case 0x33:
+				case 0x3b:
+					if (IS_SINGLE(op))	/* C.UEQ.S */
+						SET_FCC((op >> 8) & 7, (FSVALS_FR1 == FTVALS_FR1));
+					else				/* C.UEQ.D */
+						SET_FCC((op >> 8) & 7, (FSVALD_FR1 == FTVALD_FR1));
+					break;
+
+				case 0x34:
+				case 0x3c:
+					if (IS_SINGLE(op))	/* C.OLT.S */
+						SET_FCC((op >> 8) & 7, (FSVALS_FR1 < FTVALS_FR1));
+					else				/* C.OLT.D */
+						SET_FCC((op >> 8) & 7, (FSVALD_FR1 < FTVALD_FR1));
+					break;
+
+				case 0x35:
+				case 0x3d:
+					if (IS_SINGLE(op))	/* C.ULT.S */
+						SET_FCC((op >> 8) & 7, (FSVALS_FR1 < FTVALS_FR1));
+					else				/* C.ULT.D */
+						SET_FCC((op >> 8) & 7, (FSVALD_FR1 < FTVALD_FR1));
+					break;
+
+				case 0x36:
+				case 0x3e:
+					if (IS_SINGLE(op))	/* C.OLE.S */
+						SET_FCC((op >> 8) & 7, (FSVALS_FR1 <= FTVALS_FR1));
+					else				/* C.OLE.D */
+						SET_FCC((op >> 8) & 7, (FSVALD_FR1 <= FTVALD_FR1));
+					break;
+
+				case 0x37:
+				case 0x3f:
+					if (IS_SINGLE(op))	/* C.ULE.S */
+						SET_FCC((op >> 8) & 7, (FSVALS_FR1 <= FTVALS_FR1));
+					else				/* C.ULE.D */
+						SET_FCC((op >> 8) & 7, (FSVALD_FR1 <= FTVALD_FR1));
 					break;
 
 				default:
@@ -1521,7 +1929,7 @@ INLINE void handle_cop1(UINT32 op)
 **  COP1X (FPU EXTRA) EXECUTION HANDLING
 **#################################################################################################*/
 
-INLINE void handle_cop1x(UINT32 op)
+INLINE void handle_cop1x_fr0(UINT32 op)
 {
 	UINT64 temp64;
 	UINT32 temp;
@@ -1532,54 +1940,130 @@ INLINE void handle_cop1x(UINT32 op)
 	switch (op & 0x3f)
 	{
 		case 0x00:		/* LWXC1 */
-			if (RLONG(RSVAL32 + RTVAL32, &temp)) set_cop1_reg(FDREG, temp);
+			if (RLONG(RSVAL32 + RTVAL32, &temp)) FDVALW_FR0 = temp;
 			break;
 
 		case 0x01:		/* LDXC1 */
-			if (RDOUBLE(RSVAL32 + RTVAL32, &temp64)) set_cop1_reg(FDREG, temp64);
+			if (RDOUBLE(RSVAL32 + RTVAL32, &temp64)) FDVALL_FR0 = temp64;
 			break;
 
 		case 0x08:		/* SWXC1 */
-			WLONG(RSVAL32 + RTVAL32, get_cop1_reg(FDREG));
+			WLONG(RSVAL32 + RTVAL32, get_cop1_reg32(FDREG));
 			break;
 
 		case 0x09:		/* SDXC1 */
-			WDOUBLE(RSVAL32 + RTVAL32, get_cop1_reg(FDREG));
+			WDOUBLE(RSVAL32 + RTVAL32, get_cop1_reg64(FDREG));
 			break;
 
 		case 0x0f:		/* PREFX */
 			break;
 
 		case 0x20:		/* MADD.S */
-			FDVALS = FSVALS * FTVALS + FRVALS;
+			FDVALS_FR0 = FSVALS_FR0 * FTVALS_FR0 + FRVALS_FR0;
 			break;
 
 		case 0x21:		/* MADD.D */
-			FDVALD = FSVALD * FTVALD + FRVALD;
+			FDVALD_FR0 = FSVALD_FR0 * FTVALD_FR0 + FRVALD_FR0;
 			break;
 
 		case 0x28:		/* MSUB.S */
-			FDVALS = FSVALS * FTVALS - FRVALS;
+			FDVALS_FR0 = FSVALS_FR0 * FTVALS_FR0 - FRVALS_FR0;
 			break;
 
 		case 0x29:		/* MSUB.D */
-			FDVALD = FSVALD * FTVALD - FRVALD;
+			FDVALD_FR0 = FSVALD_FR0 * FTVALD_FR0 - FRVALD_FR0;
 			break;
 
 		case 0x30:		/* NMADD.S */
-			FDVALS = -(FSVALS * FTVALS + FRVALS);
+			FDVALS_FR0 = -(FSVALS_FR0 * FTVALS_FR0 + FRVALS_FR0);
 			break;
 
 		case 0x31:		/* NMADD.D */
-			FDVALD = -(FSVALD * FTVALD + FRVALD);
+			FDVALD_FR0 = -(FSVALD_FR0 * FTVALD_FR0 + FRVALD_FR0);
 			break;
 
 		case 0x38:		/* NMSUB.S */
-			FDVALS = -(FSVALS * FTVALS - FRVALS);
+			FDVALS_FR0 = -(FSVALS_FR0 * FTVALS_FR0 - FRVALS_FR0);
 			break;
 
 		case 0x39:		/* NMSUB.D */
-			FDVALD = -(FSVALD * FTVALD - FRVALD);
+			FDVALD_FR0 = -(FSVALD_FR0 * FTVALD_FR0 - FRVALD_FR0);
+			break;
+
+		case 0x24:		/* MADD.W */
+		case 0x25:		/* MADD.L */
+		case 0x2c:		/* MSUB.W */
+		case 0x2d:		/* MSUB.L */
+		case 0x34:		/* NMADD.W */
+		case 0x35:		/* NMADD.L */
+		case 0x3c:		/* NMSUB.W */
+		case 0x3d:		/* NMSUB.L */
+		default:
+			fprintf(stderr, "cop1x %X\n", op);
+			break;
+	}
+}
+
+
+INLINE void handle_cop1x_fr1(UINT32 op)
+{
+	UINT64 temp64;
+	UINT32 temp;
+
+	if (!(SR & SR_COP1))
+		generate_exception(EXCEPTION_BADCOP, 1);
+
+	switch (op & 0x3f)
+	{
+		case 0x00:		/* LWXC1 */
+			if (RLONG(RSVAL32 + RTVAL32, &temp)) FDVALW_FR1 = temp;
+			break;
+
+		case 0x01:		/* LDXC1 */
+			if (RDOUBLE(RSVAL32 + RTVAL32, &temp64)) FDVALL_FR1 = temp64;
+			break;
+
+		case 0x08:		/* SWXC1 */
+			WLONG(RSVAL32 + RTVAL32, get_cop1_reg32(FDREG));
+			break;
+
+		case 0x09:		/* SDXC1 */
+			WDOUBLE(RSVAL32 + RTVAL32, get_cop1_reg64(FDREG));
+			break;
+
+		case 0x0f:		/* PREFX */
+			break;
+
+		case 0x20:		/* MADD.S */
+			FDVALS_FR1 = FSVALS_FR1 * FTVALS_FR1 + FRVALS_FR1;
+			break;
+
+		case 0x21:		/* MADD.D */
+			FDVALD_FR1 = FSVALD_FR1 * FTVALD_FR1 + FRVALD_FR1;
+			break;
+
+		case 0x28:		/* MSUB.S */
+			FDVALS_FR1 = FSVALS_FR1 * FTVALS_FR1 - FRVALS_FR1;
+			break;
+
+		case 0x29:		/* MSUB.D */
+			FDVALD_FR1 = FSVALD_FR1 * FTVALD_FR1 - FRVALD_FR1;
+			break;
+
+		case 0x30:		/* NMADD.S */
+			FDVALS_FR1 = -(FSVALS_FR1 * FTVALS_FR1 + FRVALS_FR1);
+			break;
+
+		case 0x31:		/* NMADD.D */
+			FDVALD_FR1 = -(FSVALD_FR1 * FTVALD_FR1 + FRVALD_FR1);
+			break;
+
+		case 0x38:		/* NMSUB.S */
+			FDVALS_FR1 = -(FSVALS_FR1 * FTVALS_FR1 - FRVALS_FR1);
+			break;
+
+		case 0x39:		/* NMSUB.D */
+			FDVALD_FR1 = -(FSVALD_FR1 * FTVALD_FR1 - FRVALD_FR1);
 			break;
 
 		case 0x24:		/* MADD.W */
@@ -1876,9 +2360,9 @@ int mips3_execute(int cycles)
 			case 0x0e:	/* XORI */		if (RTREG) RTVAL64 = RSVAL64 ^ UIMMVAL;									break;
 			case 0x0f:	/* LUI */		if (RTREG) RTVAL64 = (INT32)(UIMMVAL << 16);							break;
 			case 0x10:	/* COP0 */		handle_cop0(op);														break;
-			case 0x11:	/* COP1 */		handle_cop1(op);														break;
+			case 0x11:	/* COP1 */		if (IS_FR0) handle_cop1_fr0(op); else handle_cop1_fr1(op);				break;
 			case 0x12:	/* COP2 */		handle_cop2(op);														break;
-			case 0x13:	/* COP1X - R5000 */handle_cop1x(op);													break;
+			case 0x13:	/* COP1X - R5000 */if (IS_FR0) handle_cop1x_fr0(op); else handle_cop1x_fr1(op);			break;
 			case 0x14:	/* BEQL */		if (RSVAL64 == RTVAL64) ADDPC(SIMMVAL); else mips3.pc += 4;				break;
 			case 0x15:	/* BNEL */		if (RSVAL64 != RTVAL64) ADDPC(SIMMVAL);	else mips3.pc += 4;				break;
 			case 0x16:	/* BLEZL */		if ((INT64)RSVAL64 <= 0) ADDPC(SIMMVAL); else mips3.pc += 4;			break;
@@ -1907,11 +2391,11 @@ int mips3_execute(int cycles)
 			case 0x2e:	/* SWR */		(*mips3.swr)(op);														break;
 			case 0x2f:	/* CACHE */		/* effective no-op */													break;
 			case 0x30:	/* LL */		if (RLONG(SIMMVAL+RSVAL32, &temp) && RTREG) RTVAL64 = (UINT32)temp; mips3.ll_value = RTVAL32;		break;
-			case 0x31:	/* LWC1 */		if (RLONG(SIMMVAL+RSVAL32, &temp)) set_cop1_reg(RTREG, temp);			break;
+			case 0x31:	/* LWC1 */		if (RLONG(SIMMVAL+RSVAL32, &temp)) set_cop1_reg32(RTREG, temp);			break;
 			case 0x32:	/* LWC2 */		if (RLONG(SIMMVAL+RSVAL32, &temp)) set_cop2_reg(RTREG, temp);			break;
 			case 0x33:	/* PREF */		/* effective no-op */													break;
 			case 0x34:	/* LLD */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64) && RTREG) RTVAL64 = temp64; mips3.lld_value = temp64;		break;
-			case 0x35:	/* LDC1 */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64)) set_cop1_reg(RTREG, temp64);		break;
+			case 0x35:	/* LDC1 */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64)) set_cop1_reg64(RTREG, temp64);		break;
 			case 0x36:	/* LDC2 */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64)) set_cop2_reg(RTREG, temp64);		break;
 			case 0x37:	/* LD */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64) && RTREG) RTVAL64 = temp64;		break;
 			case 0x38:	/* SC */		if (RLONG(SIMMVAL+RSVAL32, &temp) && RTREG)
@@ -1927,7 +2411,7 @@ int mips3_execute(int cycles)
 									}
 								}
 								break;
-			case 0x39:	/* SWC1 */		WLONG(SIMMVAL+RSVAL32, get_cop1_reg(RTREG));							break;
+			case 0x39:	/* SWC1 */		WLONG(SIMMVAL+RSVAL32, get_cop1_reg32(RTREG));							break;
 			case 0x3a:	/* SWC2 */		WLONG(SIMMVAL+RSVAL32, get_cop2_reg(RTREG));							break;
 			case 0x3b:	/* SWC3 */		invalid_instruction(op);												break;
 			case 0x3c:	/* SCD */		if (RDOUBLE(SIMMVAL+RSVAL32, &temp64) && RTREG)
@@ -1943,7 +2427,7 @@ int mips3_execute(int cycles)
 									}
 								}
 								break;
-			case 0x3d:	/* SDC1 */		WDOUBLE(SIMMVAL+RSVAL32, get_cop1_reg(RTREG));							break;
+			case 0x3d:	/* SDC1 */		WDOUBLE(SIMMVAL+RSVAL32, get_cop1_reg64(RTREG));							break;
 			case 0x3e:	/* SDC2 */		WDOUBLE(SIMMVAL+RSVAL32, get_cop2_reg(RTREG));							break;
 			case 0x3f:	/* SD */		WDOUBLE(SIMMVAL+RSVAL32, RTVAL64);										break;
 			default:	/* ??? */		invalid_instruction(op);												break;

@@ -681,7 +681,7 @@ INPUT_PORTS_START( armwrest )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -692,7 +692,7 @@ static gfx_layout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout armwrest_charlayout =
+static const gfx_layout armwrest_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -703,7 +703,7 @@ static gfx_layout armwrest_charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout armwrest_charlayout2 =
+static const gfx_layout armwrest_charlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -714,7 +714,7 @@ static gfx_layout armwrest_charlayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout1 =
+static const gfx_layout charlayout1 =
 {
 	8,8,	/* 8*8 characters */
 	8192,	/* 8192 characters */
@@ -725,7 +725,7 @@ static gfx_layout charlayout1 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout2 =
+static const gfx_layout charlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	4096,	/* 4096 characters */
@@ -736,7 +736,7 @@ static gfx_layout charlayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode punchout_gfxdecodeinfo[] =
+static const gfx_decode punchout_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,                 0, 128 },
 	{ REGION_GFX2, 0, &charlayout,             128*4, 128 },
@@ -745,7 +745,7 @@ static gfx_decode punchout_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode armwrest_gfxdecodeinfo[] =
+static const gfx_decode armwrest_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &armwrest_charlayout,        0, 256 },
 	{ REGION_GFX2, 0, &armwrest_charlayout2,   256*4,  64 },

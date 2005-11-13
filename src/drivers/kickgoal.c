@@ -569,7 +569,7 @@ INPUT_PORTS_END
 
 /* GFX Decodes ***************************************************************/
 
-static gfx_layout fg816_charlayout =
+static const gfx_layout fg816_charlayout =
 {
 	8,16,
 	RGN_FRAC(1,4),
@@ -581,7 +581,7 @@ static gfx_layout fg816_charlayout =
 	16*8
 };
 
-static gfx_layout bg1632_charlayout =
+static const gfx_layout bg1632_charlayout =
 {
 	16,32,
 	RGN_FRAC(1,4),
@@ -593,7 +593,7 @@ static gfx_layout bg1632_charlayout =
 	16*16
 };
 
-static gfx_layout bg3264_charlayout =
+static const gfx_layout bg3264_charlayout =
 {
 	32,64,
 	RGN_FRAC(1,4),
@@ -609,7 +609,7 @@ static gfx_layout bg3264_charlayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fg816_charlayout,   0x000, 0x40 },
 	{ REGION_GFX1, 0, &bg1632_charlayout,  0x000, 0x40 },
@@ -617,7 +617,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_layout actionhw_fg88_alt_charlayout =
+static const gfx_layout actionhw_fg88_alt_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -629,7 +629,7 @@ static gfx_layout actionhw_fg88_alt_charlayout =
 };
 
 
-static gfx_layout actionhw_bg1616_charlayout =
+static const gfx_layout actionhw_bg1616_charlayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -643,7 +643,7 @@ static gfx_layout actionhw_bg1616_charlayout =
 
 
 
-static gfx_decode actionhw_gfxdecodeinfo[] =
+static const gfx_decode actionhw_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &actionhw_fg88_alt_charlayout,   0x000, 0x40 },
 	{ REGION_GFX1, 0, &actionhw_bg1616_charlayout,  0x000, 0x40 },

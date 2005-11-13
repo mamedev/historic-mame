@@ -39,7 +39,7 @@ ADDRESS_MAP_END
 INPUT_PORTS_START( dambustr )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -50,7 +50,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 8 },
 	{ -1 }	/* end of array */

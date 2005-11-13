@@ -1605,7 +1605,7 @@ INPUT_PORTS_END
 /*
 // for debugging
 
-static gfx_layout gfxlayout_8x8x4 =
+static const gfx_layout gfxlayout_8x8x4 =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -1615,7 +1615,7 @@ static gfx_layout gfxlayout_8x8x4 =
     { STEP8(0,8*4) },
     8*8*4
 };
-static gfx_layout gfxlayout_16x16x4 =
+static const gfx_layout gfxlayout_16x16x4 =
 {
     16,16,
     RGN_FRAC(1,1),
@@ -1626,7 +1626,7 @@ static gfx_layout gfxlayout_16x16x4 =
     { STEP16(0,16*4) },
     16*16*4
 };
-static gfx_layout gfxlayout_8x8x8 =
+static const gfx_layout gfxlayout_8x8x8 =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -1636,7 +1636,7 @@ static gfx_layout gfxlayout_8x8x8 =
     { STEP8(0,8*8) },
     8*8*8
 };
-static gfx_layout gfxlayout_16x16x8 =
+static const gfx_layout gfxlayout_16x16x8 =
 {
     16,16,
     RGN_FRAC(1,1),
@@ -1646,7 +1646,7 @@ static gfx_layout gfxlayout_16x16x8 =
     { STEP16(0,16*8) },
     16*16*8
 };
-static gfx_layout gfxlayout_16x16x1 =
+static const gfx_layout gfxlayout_16x16x1 =
 {
     16,16,
     RGN_FRAC(1,1),
@@ -1657,7 +1657,7 @@ static gfx_layout gfxlayout_16x16x1 =
     16*16*1
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
     { REGION_GFX1, 0, &gfxlayout_8x8x4,   0, 0x80  },
     { REGION_GFX1, 0, &gfxlayout_16x16x4, 0, 0x80  },
@@ -1665,7 +1665,7 @@ static gfx_decode gfxdecodeinfo[] =
     { REGION_GFX1, 0, &gfxlayout_16x16x8, 0, 0x08  },
     { -1 }
 };
-static gfx_decode gfxdecodeinfo_chmplst2[] =
+static const gfx_decode gfxdecodeinfo_chmplst2[] =
 {
     { REGION_GFX1, 0, &gfxlayout_8x8x4,   0, 0x80  },
     { REGION_GFX1, 0, &gfxlayout_16x16x4, 0, 0x80  },

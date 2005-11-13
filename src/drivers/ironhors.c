@@ -310,7 +310,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout ironhors_charlayout =
+static const gfx_layout ironhors_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -321,7 +321,7 @@ static gfx_layout ironhors_charlayout =
 	32*8
 };
 
-static gfx_layout ironhors_spritelayout =
+static const gfx_layout ironhors_spritelayout =
 {
 	16,16,
 	512,
@@ -334,7 +334,7 @@ static gfx_layout ironhors_spritelayout =
 	32*32
 };
 
-static gfx_decode ironhors_gfxdecodeinfo[] =
+static const gfx_decode ironhors_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &ironhors_charlayout,         0, 16*8 },
 	{ REGION_GFX1, 0, &ironhors_spritelayout, 16*8*16, 16*8 },
@@ -343,7 +343,7 @@ static gfx_decode ironhors_gfxdecodeinfo[] =
 };
 
 
-static gfx_layout farwest_charlayout =
+static const gfx_layout farwest_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -354,7 +354,7 @@ static gfx_layout farwest_charlayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout farwest_spritelayout =
+static const gfx_layout farwest_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
@@ -367,7 +367,7 @@ static gfx_layout farwest_spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout farwest_spritelayout2 =
+static const gfx_layout farwest_spritelayout2 =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -378,7 +378,7 @@ static gfx_layout farwest_spritelayout2 =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode farwest_gfxdecodeinfo[] =
+static const gfx_decode farwest_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &farwest_charlayout,         0, 16*8 },
 	{ REGION_GFX2, 0, &farwest_spritelayout, 16*8*16, 16*8 },

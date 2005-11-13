@@ -249,7 +249,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout alpha_layout =
+static const gfx_layout alpha_layout =
 {
 	8,8,
 	0x40,
@@ -261,7 +261,7 @@ static gfx_layout alpha_layout =
 };
 
 
-static gfx_layout obj_layout =
+static const gfx_layout obj_layout =
 {
 	16,16,
 	8, /* number of objects */
@@ -283,7 +283,7 @@ static gfx_layout obj_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000, &alpha_layout, 0, 4 },
 	{ REGION_GFX2, 0x200, &obj_layout,	 8, 1 },

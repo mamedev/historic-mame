@@ -1487,7 +1487,7 @@ static struct YM2151interface ym2151_interface =
  *
  *************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -1499,7 +1499,7 @@ static gfx_layout charlayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	0, 1024 },
 	{ -1 }

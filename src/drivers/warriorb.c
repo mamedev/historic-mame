@@ -431,7 +431,7 @@ INPUT_PORTS_END
                         GFX DECODING
 ***********************************************************/
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -442,7 +442,7 @@ static gfx_layout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),
@@ -453,7 +453,7 @@ static gfx_layout charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode warriorb_gfxdecodeinfo[] =
+static const gfx_decode warriorb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* sprites */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* scr tiles (screen 1) */

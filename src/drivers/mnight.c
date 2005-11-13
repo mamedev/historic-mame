@@ -285,7 +285,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	 /* 8*8 characters */
 	1024,	 /* 1024 characters */
@@ -296,7 +296,7 @@ static gfx_layout charlayout =
 	8*16
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	 /* 16*16 characters */
 	1536,	 /* 1536 sprites */
@@ -309,7 +309,7 @@ static gfx_layout spritelayout =
 	8*64
 };
 
-static gfx_layout bigspritelayout =
+static const gfx_layout bigspritelayout =
 {
 	32,32,	 /* 32*32 characters */
 	384,	 /* 384 sprites */
@@ -330,7 +330,7 @@ static gfx_layout bigspritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,     0*16, 16},
 	{ REGION_GFX2, 0, &spritelayout,    16*16, 16},

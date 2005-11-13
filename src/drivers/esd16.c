@@ -38,22 +38,22 @@ Head Panic
 
 extern UINT16 *esd16_vram_0, *esd16_scroll_0;
 extern UINT16 *esd16_vram_1, *esd16_scroll_1;
+extern UINT16 *head_layersize;
 extern tilemap *esdtilemap_1_16x16;
 
 /* Functions defined in vidhrdw: */
 
 WRITE16_HANDLER( esd16_vram_0_w );
 WRITE16_HANDLER( esd16_vram_1_w );
+WRITE16_HANDLER( esd16_tilemap0_color_w );
 
 VIDEO_START( esd16 );
 VIDEO_UPDATE( esd16 );
 VIDEO_UPDATE( hedpanic );
 
-UINT16 *head_layersize;
-UINT16* headpanic_platform_x;
-UINT16* headpanic_platform_y;
 
-
+static UINT16 *headpanic_platform_x;
+static UINT16 *headpanic_platform_y;
 
 /***************************************************************************
 
@@ -64,16 +64,6 @@ UINT16* headpanic_platform_y;
 ***************************************************************************/
 
 WRITE16_HANDLER( esd16_spriteram_w ) {	COMBINE_DATA(&spriteram16[offset]);	}
-
-WRITE16_HANDLER( esd16_flip_screen_w )
-{
-	if (ACCESSING_LSB && !(data & 0x7e))
-	{
-		flip_screen_set( data & 0x80 );
-		//               data & 0x01 ?? always 1
-	}
-	else	logerror("CPU #0 - PC %06X: unknown flip screen bits: %02X\n",activecpu_get_pc(),data);
-}
 
 WRITE16_HANDLER( esd16_sound_command_w )
 {
@@ -121,7 +111,7 @@ static ADDRESS_MAP_START( multchmp_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x500008, 0x50000b) AM_WRITE(MWA16_RAM						)	// ? 0
 	AM_RANGE(0x50000c, 0x50000f) AM_WRITE(MWA16_RAM						)	// ? 0
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP						)	// IRQ Ack
-	AM_RANGE(0x600008, 0x600009) AM_WRITE(esd16_flip_screen_w			)	// Flip Screen + ?
+	AM_RANGE(0x600008, 0x600009) AM_WRITE(esd16_tilemap0_color_w		)	// Flip Screen + Tileamp0 palette banking
 	AM_RANGE(0x60000a, 0x60000b) AM_WRITE(MWA16_NOP						)	// ? 2
 	AM_RANGE(0x60000c, 0x60000d) AM_WRITE(esd16_sound_command_w			)	// To Sound CPU
 ADDRESS_MAP_END
@@ -164,7 +154,6 @@ static WRITE16_HANDLER( esd_eeprom_w )
 //  logerror("(0x%06x) Unk EEPROM write: %04x %04x\n", activecpu_get_pc(), data, mem_mask);
 }
 
-
 static ADDRESS_MAP_START( hedpanic_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
 	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
@@ -187,11 +176,11 @@ static ADDRESS_MAP_START( hedpanic_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xb00004, 0xb00007) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_1	)	//
 	AM_RANGE(0xb00008, 0xb00009) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_x)
 	AM_RANGE(0xb0000a, 0xb0000b) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_y)
-//  AM_RANGE(0xb0000c, 0xb0000d) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown1) // ??
+	AM_RANGE(0xb0000c, 0xb0000d) AM_WRITE(MWA16_NOP) // ??
 	AM_RANGE(0xb0000e, 0xb0000f) AM_WRITE(MWA16_RAM) AM_BASE(&head_layersize) // ??
-//  AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown3 )   // IRQ Ack
-//  AM_RANGE(0xc00008, 0xc00009) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown5     )   // Flip Screen + ? // not checked
-//  AM_RANGE(0xc0000a, 0xc0000b) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown4 )   // ? 2 not checked
+	AM_RANGE(0xc00000, 0xc00001) AM_WRITE(MWA16_NOP) // IRQ Ack
+	AM_RANGE(0xc00008, 0xc00009) AM_WRITE(esd16_tilemap0_color_w)	// Flip Screen + Tileamp0 palette banking
+	AM_RANGE(0xc0000a, 0xc0000b) AM_WRITE(MWA16_NOP)	// ? 2 not checked
 	AM_RANGE(0xc0000c, 0xc0000d) AM_WRITE(esd16_sound_command_w			)	// To Sound CPU // ok
 	AM_RANGE(0xc0000e, 0xc0000f) AM_WRITE(esd_eeprom_w)
 	AM_RANGE(0xd00008, 0xd00009) AM_WRITE(hedpanic_platform_w)
@@ -215,9 +204,9 @@ static ADDRESS_MAP_START( mchampdx_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x320000, 0x323fff) AM_WRITE(esd16_vram_1_w) AM_BASE(&esd16_vram_1	)	//
 	AM_RANGE(0x324000, 0x327fff) AM_WRITE(esd16_vram_1_w) AM_BASE(&esd16_vram_1	)	// mirror?
 	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
-    AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)//AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown3 )   // IRQ Ack
-//  AM_RANGE(0x500008, 0x500009) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown5     )   // Flip Screen + ? // not checked
-//  AM_RANGE(0x50000a, 0x50000b) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown4 )   // ? 2 not checked
+    AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)	// IRQ Ack
+	AM_RANGE(0x500008, 0x500009) AM_WRITE(esd16_tilemap0_color_w)   // Flip Screen + Tileamp0 palette banking
+	AM_RANGE(0x50000a, 0x50000b) AM_WRITE(MWA16_NOP)	// ? 2 not checked
 	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(esd16_sound_command_w			)	// To Sound CPU // ok
 	AM_RANGE(0x50000e, 0x50000f) AM_WRITE(esd_eeprom_w)
 	AM_RANGE(0x600000, 0x6007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
@@ -226,7 +215,7 @@ static ADDRESS_MAP_START( mchampdx_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700004, 0x700007) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_1	)	//
 	AM_RANGE(0x700008, 0x700009) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_x) // not used in mchampdx?
 	AM_RANGE(0x70000a, 0x70000b) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_y) // not used in mchampdx?
-//  AM_RANGE(0x70000c, 0x70000d) AM_WRITE(MWA16_RAM) AM_BASE(&head_unknown1) // ??
+	AM_RANGE(0x70000c, 0x70000d) AM_WRITE(MWA16_NOP) // ??
 	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(MWA16_RAM) AM_BASE(&head_layersize) // ??
 	AM_RANGE(0xd00008, 0xd00009) AM_WRITE(hedpanic_platform_w) // not used in mchampdx?
 ADDRESS_MAP_END
@@ -412,7 +401,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 16x16x5, made of four 8x8 tiles */
-static gfx_layout layout_16x16x5 =
+static const gfx_layout layout_16x16x5 =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -424,7 +413,7 @@ static gfx_layout layout_16x16x5 =
 };
 
 /* 8x8x8 */
-static gfx_layout layout_8x8x8 =
+static const gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -436,7 +425,7 @@ static gfx_layout layout_8x8x8 =
 	8*8*2,
 };
 
-static gfx_decode esd16_gfxdecodeinfo[] =
+static const gfx_decode esd16_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x5, 0x200, 8 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,   0x000, 2 }, // [1] Layers
@@ -444,7 +433,7 @@ static gfx_decode esd16_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_layout hedpanic_layout_8x8x8 =
+static const gfx_layout hedpanic_layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -455,7 +444,7 @@ static gfx_layout hedpanic_layout_8x8x8 =
 	64*8,
 };
 
-static gfx_layout hedpanic_layout_16x16x8 =
+static const gfx_layout hedpanic_layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -470,7 +459,7 @@ static gfx_layout hedpanic_layout_16x16x8 =
 };
 
 
-static gfx_layout hedpanic_sprite_16x16x5 =
+static const gfx_layout hedpanic_sprite_16x16x5 =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -482,11 +471,11 @@ static gfx_layout hedpanic_sprite_16x16x5 =
 };
 
 
-static gfx_decode hedpanic_gfxdecodeinfo[] =
+static const gfx_decode hedpanic_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hedpanic_sprite_16x16x5, 0x200, 8 }, // [0] Sprites
-	{ REGION_GFX2, 0, &hedpanic_layout_8x8x8,   0x000, 2 }, // [1] Layers
-	{ REGION_GFX2, 0, &hedpanic_layout_16x16x8, 0x000, 2 }, // [1] Layers
+	{ REGION_GFX2, 0, &hedpanic_layout_8x8x8,   0x000, 4 }, // [1] Layers
+	{ REGION_GFX2, 0, &hedpanic_layout_16x16x8, 0x000, 4 }, // [2] Layers
 	{ -1 }
 };
 
@@ -634,7 +623,7 @@ ROM_START( multchmp )
 	ROM_LOAD( "multchmp.u31", 0x300000, 0x080000, CRC(b1e4e9e3) SHA1(1a7393e9073b028b4170393b3788ad8cb86c0c78) )
 	ROM_LOAD( "multchmp.u32", 0x380000, 0x080000, CRC(f05cb5b4) SHA1(1b33e60942238e39d61ae59e9317b99e83595ab1) )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "multchmp.u10", 0x00000, 0x20000, CRC(6e741fcd) SHA1(742e0952916c00f67dd9f8d01e721a9a538d2fc4) )
 ROM_END
 
@@ -688,7 +677,7 @@ Notes:
 
 ROM_START( mchampdx )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "esd2.cu02", 0x000000, 0x040000, CRC(4cca802c) SHA1(5e6e81febbb56b7c4630b530e546e7ab59c6c6c1))
+	ROM_LOAD16_BYTE( "esd2.cu02", 0x000000, 0x040000, CRC(4cca802c) SHA1(5e6e81febbb56b7c4630b530e546e7ab59c6c6c1) )
 	ROM_LOAD16_BYTE( "esd1.cu03", 0x000001, 0x040000, CRC(0af1cd0a) SHA1(d2befcb596d83d523317d17b4c1c71f99de0d33e) )
 
 	ROM_REGION( 0x84000, REGION_CPU2, 0 )		/* Z80 Code */
@@ -706,7 +695,7 @@ ROM_START( mchampdx )
 	ROM_LOAD16_BYTE( "rom.fu35", 0x000000, 0x200000, CRC(ba46f3dc) SHA1(4ac7695bdf4237654481f7f74f8650d70a51e691) )
 	ROM_LOAD16_BYTE( "rom.fu34", 0x000001, 0x200000, CRC(2895cf09) SHA1(88756fcd589af1986c3881d4080f086afc11b498) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "esd4.su10", 0x00000, 0x80000, CRC(14c4a30d) SHA1(d8eb2f08d5293f729cbec1897e3b92b675cc2814) )
 ROM_END
 
@@ -767,7 +756,7 @@ ROM_START( hedpanic )
 	ROM_LOAD16_BYTE( "esd8", 0x000000, 0x200000, CRC(23aceb4f) SHA1(35d9ebc33b9e1515e47750cfcdfc0bf8bf44b71d) )
 	ROM_LOAD16_BYTE( "esd9", 0x000001, 0x200000, CRC(76b46cd2) SHA1(679cbf50ae5935e8848868081ecef4ec66424f6c) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "esd4", 0x000000, 0x080000, CRC(5692fe92) SHA1(4423039cb437ab36d198b212ef394bf1704be404) ) // 0x020000 of data repeated 4x
 ROM_END
 
@@ -783,5 +772,5 @@ ROM_END
 GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0, "ESD", "Multi Champ (Korea)", 0 )
 
 /* ESD 08-26-1999 */
-GAME( 1999, mchampdx, 0, mchampdx, hedpanic, 0, ROT0, "ESD", "Multi Champ Deluxe", 0 )
-GAME( 2000, hedpanic, 0, hedpanic, hedpanic, 0, ROT0, "ESD / Fuuki", "Head Panic (Korea?)", 0 )
+GAME( 1999, mchampdx, 0, mchampdx, hedpanic, 0, ROT0, "ESD", "Multi Champ Deluxe (ver. 1126)", 0 )
+GAME( 2000, hedpanic, 0, hedpanic, hedpanic, 0, ROT0, "ESD / Fuuki", "Head Panic (Korea, ver. 0315)", 0 )

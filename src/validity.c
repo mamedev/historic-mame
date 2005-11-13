@@ -276,6 +276,7 @@ static int validate_driver(int drivnum, const machine_config *drv)
 		}
 
 	/* find shared ROM entries */
+#ifndef MESS
 	if (driver->rom && (driver->flags & NOT_A_DRIVER) == 0)
 	{
 		crc = (UINT32)driver->rom;
@@ -290,6 +291,7 @@ static int validate_driver(int drivnum, const machine_config *drv)
 				}
 			}
 	}
+#endif /* MESS */
 
 	return error;
 }
@@ -887,7 +889,7 @@ int mame_validitychecks(void)
 
 #ifndef MAME_DEBUG
 		/* non-debug builds only care about games in the same driver */
-		if (strcmp(Machine->gamedrv->source_file, driver->source_file) != 0)
+		if (Machine->gamedrv && strcmp(Machine->gamedrv->source_file, driver->source_file) != 0)
 			continue;
 #endif
 

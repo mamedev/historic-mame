@@ -256,7 +256,7 @@ INPUT_PORTS_START( skylance )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -267,7 +267,7 @@ static gfx_layout charlayout =
 	16*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	8,32,
 	RGN_FRAC(1,1),
@@ -281,7 +281,7 @@ static gfx_layout spritelayout =
 	4*16*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 8 },
 	{ REGION_GFX2, 0, &charlayout,	  0, 8 },

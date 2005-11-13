@@ -367,7 +367,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 16x16x4 tiles (made of four 8x8 tiles) */
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -379,7 +379,7 @@ static gfx_layout layout_16x16x4 =
 };
 
 /* Layers both use the first $20 color codes. Sprites the next $10 */
-static gfx_decode blmbycar_gfxdecodeinfo[] =
+static const gfx_decode blmbycar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0x0, 0x30 }, // [0] Layers + Sprites
 	{ -1 }

@@ -230,7 +230,7 @@ INPUT_PORTS_START( fastlane )
 
 INPUT_PORTS_END
 
-static gfx_layout gfxlayout =
+static const gfx_layout gfxlayout =
 {
 	8,8,
 	0x80000/32,
@@ -241,7 +241,7 @@ static gfx_layout gfxlayout =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout, 0, 64*16 },
 	{ -1 } /* end of array */

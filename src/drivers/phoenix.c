@@ -625,7 +625,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -636,14 +636,14 @@ static gfx_layout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode phoenix_gfxdecodeinfo[] =
+static const gfx_decode phoenix_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 16 },
 	{ REGION_GFX2, 0, &charlayout, 16*4, 16 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode pleiads_gfxdecodeinfo[] =
+static const gfx_decode pleiads_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,	  0, 32 },
 	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },
@@ -688,6 +688,12 @@ static struct AY8910interface survival_ay8910_interface =
 
 
 
+static MACHINE_INIT( phoenix )
+{
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x4000);
+}
+
+
 static MACHINE_DRIVER_START( phoenix )
 
 	/* basic machine hardware */
@@ -696,6 +702,8 @@ static MACHINE_DRIVER_START( phoenix )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
+
+	MDRV_MACHINE_INIT(phoenix)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

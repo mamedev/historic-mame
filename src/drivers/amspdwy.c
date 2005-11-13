@@ -217,7 +217,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout layout_8x8x2 =
+static const gfx_layout layout_8x8x2 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -228,7 +228,7 @@ static gfx_layout layout_8x8x2 =
 	8*8
 };
 
-static gfx_decode amspdwy_gfxdecodeinfo[] =
+static const gfx_decode amspdwy_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x2,   0, 8 }, // [0] Layer & Sprites
 	{ -1 }

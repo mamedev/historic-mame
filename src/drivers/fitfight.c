@@ -687,7 +687,7 @@ INPUT_PORTS_START( bbprot )
 INPUT_PORTS_END
 
 
-static gfx_layout fof_tile_layout =
+static const gfx_layout fof_tile_layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -699,7 +699,7 @@ static gfx_layout fof_tile_layout =
 };
 
 
-static gfx_layout fof_sprite_layout =
+static const gfx_layout fof_sprite_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -713,7 +713,7 @@ static gfx_layout fof_sprite_layout =
 	16*16
 };
 
-static gfx_layout bbprot_sprite_layout =
+static const gfx_layout bbprot_sprite_layout =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -727,7 +727,7 @@ static gfx_layout bbprot_sprite_layout =
 	16*16
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fof_tile_layout,   0x000, 256  }, /* tx tiles */
 	{ REGION_GFX1, 0, &fof_tile_layout,   0x200, 256  }, /* mid tiles */
@@ -737,7 +737,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode prot_gfxdecodeinfo[] =
+static const gfx_decode prot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fof_tile_layout,     0x0000, 256  }, /* tx tiles */
 	{ REGION_GFX1, 0, &fof_tile_layout,     0x0800, 256  }, /* mid tiles */

@@ -149,7 +149,7 @@ static ADDRESS_MAP_START( drtomy_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xffc000, 0xffffff) AM_RAM	/* Work RAM */
 ADDRESS_MAP_END
 
-static gfx_layout tilelayout8=
+static const gfx_layout tilelayout8=
 {
 	8,8,									/* 8x8 tiles */
 	RGN_FRAC(1,4),							/* number of tiles */
@@ -160,7 +160,7 @@ static gfx_layout tilelayout8=
 	8*8
 };
 
-static gfx_layout tilelayout16 =
+static const gfx_layout tilelayout16 =
 {
 	16,16,									/* 16x16 tiles */
 	RGN_FRAC(1,4),							/* number of tiles */
@@ -171,7 +171,7 @@ static gfx_layout tilelayout16 =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout8,  0x100, 16 }, /* Sprites */
 	{ REGION_GFX1, 0, &tilelayout16, 0x000, 16 }, /* BG */

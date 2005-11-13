@@ -9,7 +9,6 @@ TODO:
   (background scrolls faster than sprites)
 - should use VIDEO_RGB_DIRECT for alpha blending to work, but tilemap_draw_roz()
   doesn't support it.
-- lines of garbage tiles in a couple of places in macrossp (e.g. level 2). Bad ROM?
 - Sprite Zoom on quizmoon title screen isn't right
 - Tilemap zoom effect on macrossp title screen and probably other places
 - Priorities (Sprites & Backgrounds) - see quizmoon attract mode
@@ -709,7 +708,7 @@ INPUT_PORTS_END
 
 /*** GFX DECODE **************************************************************/
 
-static gfx_layout macrossp_char16x16x4layout =
+static const gfx_layout macrossp_char16x16x4layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -721,7 +720,7 @@ static gfx_layout macrossp_char16x16x4layout =
 	16*64
 };
 
-static gfx_layout macrossp_char16x16x8layout =
+static const gfx_layout macrossp_char16x16x8layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -733,7 +732,7 @@ static gfx_layout macrossp_char16x16x8layout =
 	16*128
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &macrossp_char16x16x8layout,   0x000, 0x20 },	/* 8bpp but 6bpp granularity */
 	{ REGION_GFX2, 0, &macrossp_char16x16x8layout,   0x800, 0x20 },	/* 8bpp but 6bpp granularity */
@@ -810,7 +809,7 @@ MACHINE_DRIVER_END
 
 ROM_START( macrossp )
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-	ROM_LOAD32_BYTE( "bp964a-c.u1", 0x000003, 0x080000, CRC(e37904e4) SHA1(e51e446f3699632c53c40e4c16d0ffb76ed1123f) )
+	ROM_LOAD32_BYTE( "bp964a-c.u1", 0x000003, 0x080000, CRC(39da35e7) SHA1(022c902b0adf21090c650ce68e4b8b42498e1be6) )
 	ROM_LOAD32_BYTE( "bp964a-c.u2", 0x000002, 0x080000, CRC(86d0ca6a) SHA1(8cc1b4a83cbba8b07e1343c5c20e2590d3ce471a) )
 	ROM_LOAD32_BYTE( "bp964a-c.u3", 0x000001, 0x080000, CRC(fb895a7b) SHA1(547e5d3d43e503a15573748ab49a44e5569db1d7) )
 	ROM_LOAD32_BYTE( "bp964a-c.u4", 0x000000, 0x080000, CRC(8c8b966c) SHA1(881fa2b7aefc3ea916924b715d2cd0ceaffe2d92) )

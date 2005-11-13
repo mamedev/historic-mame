@@ -192,7 +192,7 @@ INPUT_PORTS_START( scotrsht )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,1),	/* 1024 characters */
@@ -203,7 +203,7 @@ static gfx_layout charlayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),	/* 512 sprites */
@@ -216,7 +216,7 @@ static gfx_layout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,         0, 16*8 }, /* characters */
 	{ REGION_GFX2, 0, &spritelayout, 16*16*8, 16*8 }, /* sprites */

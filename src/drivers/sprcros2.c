@@ -233,7 +233,7 @@ INPUT_PORTS_START( sprcros2 )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout sprcros2_bglayout =
+static const gfx_layout sprcros2_bglayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -244,7 +244,7 @@ static gfx_layout sprcros2_bglayout =
 	8*8
 };
 
-static gfx_layout sprcros2_spritelayout =
+static const gfx_layout sprcros2_spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,3),
@@ -255,7 +255,7 @@ static gfx_layout sprcros2_spritelayout =
 	32*32
 };
 
-static gfx_layout sprcros2_fglayout =
+static const gfx_layout sprcros2_fglayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -266,7 +266,7 @@ static gfx_layout sprcros2_fglayout =
 	8*8*2
 };
 
-static gfx_decode sprcros2_gfxdecodeinfo[] =
+static const gfx_decode sprcros2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &sprcros2_bglayout,     0,   16 },
 	{ REGION_GFX2, 0, &sprcros2_spritelayout, 256, 6  },

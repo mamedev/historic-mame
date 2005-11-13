@@ -670,7 +670,7 @@ cpu #1 (PC=000007B6): unmapped program memory word write to 00600006 = 0140 & FF
 
 
 /* gfx decode , this one seems ok */
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -683,7 +683,7 @@ static gfx_layout tilelayout =
 
 // we don't decode the sprites, they are non-tile based and RLE encoded!, see suprnova.c */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 //  { REGION_GFX1, 0, &char2layout,   0, 512  },
 //  { REGION_GFX2, 0, &char2layout,   0, 512  },

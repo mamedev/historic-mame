@@ -167,7 +167,7 @@ static MACHINE_INIT( chinhero )
 
 /***************************************************************************************/
 
-static gfx_layout shangkid_char_layout = {
+static const gfx_layout shangkid_char_layout = {
 	8,8,
 	RGN_FRAC(1,1),
 	2,
@@ -177,7 +177,7 @@ static gfx_layout shangkid_char_layout = {
 	8*16
 };
 
-static gfx_layout shangkid_sprite_layout = {
+static const gfx_layout shangkid_sprite_layout = {
 	16,16,
 	RGN_FRAC(1,1),
 	2,
@@ -193,7 +193,7 @@ static gfx_layout shangkid_sprite_layout = {
 	8*0x40
 };
 
-static gfx_layout chinhero_sprite_layout1 = {
+static const gfx_layout chinhero_sprite_layout1 = {
 	16,16,
 	0x80,
 	3,
@@ -209,7 +209,7 @@ static gfx_layout chinhero_sprite_layout1 = {
 	8*0x40
 };
 
-static gfx_layout chinhero_sprite_layout2 = {
+static const gfx_layout chinhero_sprite_layout2 = {
 	16,16,
 	0x80,
 	3,
@@ -225,7 +225,7 @@ static gfx_layout chinhero_sprite_layout2 = {
 	8*0x40
 };
 
-static gfx_decode chinhero_gfxdecodeinfo[] = {
+static const gfx_decode chinhero_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0, &shangkid_char_layout,	0, 0x40 },
 	{ REGION_GFX2, 0, &chinhero_sprite_layout1,	0, 0x20 },
 	{ REGION_GFX2, 0, &chinhero_sprite_layout2,	0, 0x20 },
@@ -234,13 +234,13 @@ static gfx_decode chinhero_gfxdecodeinfo[] = {
 	{ -1 }
 };
 
-static gfx_decode shangkid_gfxdecodeinfo[] = {
+static const gfx_decode shangkid_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0, &shangkid_char_layout,	0, 0x40 },
 	{ REGION_GFX2, 0, &shangkid_sprite_layout,	0, 0x40 },
 	{ -1 }
 };
 
-static gfx_decode dynamski_gfxdecodeinfo[] = {
+static const gfx_decode dynamski_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0, &shangkid_char_layout,	   0, 0x10 },
 	{ REGION_GFX2, 0, &shangkid_sprite_layout,	0x40, 0x10 },
 	{ -1 }

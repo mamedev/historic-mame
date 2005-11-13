@@ -217,7 +217,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout holeland_charlayout =
+static const gfx_layout holeland_charlayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -228,7 +228,7 @@ static gfx_layout holeland_charlayout =
 	8*16
 };
 
-static gfx_layout crzrally_charlayout =
+static const gfx_layout crzrally_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -239,7 +239,7 @@ static gfx_layout crzrally_charlayout =
 	8*16
 };
 
-static gfx_layout holeland_spritelayout =
+static const gfx_layout holeland_spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,4),
@@ -254,7 +254,7 @@ static gfx_layout holeland_spritelayout =
 	64*8
 };
 
-static gfx_layout crzrally_spritelayout =
+static const gfx_layout crzrally_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -269,14 +269,14 @@ static gfx_layout crzrally_spritelayout =
 	8*16
 };
 
-static gfx_decode holeland_gfxdecodeinfo[] =
+static const gfx_decode holeland_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &holeland_charlayout,   0, 256 },
 	{ REGION_GFX2, 0, &holeland_spritelayout, 0, 256 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode crzrally_gfxdecodeinfo[] =
+static const gfx_decode crzrally_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &crzrally_charlayout,   0, 256 },
 	{ REGION_GFX2, 0, &crzrally_spritelayout, 0, 256 },

@@ -116,7 +116,7 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 
 /*************************************************************************/
 
-static gfx_layout shape_layout =
+static const gfx_layout shape_layout =
 {
 	8,8,
 	0x1000,
@@ -131,7 +131,7 @@ static gfx_layout shape_layout =
 	8*8
 }; /* shape_layout */
 
-static gfx_layout cg_layout =
+static const gfx_layout cg_layout =
 {
 	8,8,
 	0x1000,

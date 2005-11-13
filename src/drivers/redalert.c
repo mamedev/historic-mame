@@ -253,7 +253,7 @@ INPUT_PORTS_START( demoneye )
 INPUT_PORTS_END
 
 
-static gfx_layout backlayout =
+static const gfx_layout backlayout =
 {
 	8,8,	/* 8*8 characters */
 	0x400,	  /* 1024 characters */
@@ -264,7 +264,7 @@ static gfx_layout backlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
@@ -275,7 +275,7 @@ static gfx_layout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
@@ -286,7 +286,7 @@ static gfx_layout spritelayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode redalert_gfxdecodeinfo[] =
+static const gfx_decode redalert_gfxdecodeinfo[] =
 {
 	{ 0, 0x3000, &backlayout,	0, 8 }, 	/* the game dynamically modifies this */
 	{ 0, 0x4800, &charlayout,	0, 8 }, 	/* the game dynamically modifies this */
@@ -294,7 +294,7 @@ static gfx_decode redalert_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode demoneye_gfxdecodeinfo[] =
+static const gfx_decode demoneye_gfxdecodeinfo[] =
 {
 	{ 0, 0x3000, &backlayout,	0, 8 }, 	/* the game dynamically modifies this */
 	{ 0, 0x4800, &spritelayout,16, 4 }, 	/* the game dynamically modifies this */

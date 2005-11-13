@@ -570,7 +570,7 @@ DRIVER_INIT(ss23)
 */
 }
 #if 0
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -590,7 +590,7 @@ static gfx_layout sprite_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
 	{ -1 },

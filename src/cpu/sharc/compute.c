@@ -11,6 +11,11 @@
 #define SET_FLAG_AC_SUB(r,a,b)	{ sharc.astat |= ((!((UINT32)a < (UINT32)b)) ? AC : 0); }
 #define SET_FLAG_AV_SUB(r,a,b)	{ sharc.astat |= ((( ((a) ^ (b)) & ((a) ^ (r))) & 0x80000000) ? AV : 0); }
 
+#define IS_FLOAT_ZERO(r)		((((r) & 0x7fffffff) == 0))
+#define IS_FLOAT_DENORMAL(r)	((((r) & 0x7f800000) == 0) && (((r) & 0x7fffff) != 0))
+#define IS_FLOAT_NAN(r)			((((r) & 0x7f800000) == 0x7f800000) && (((r) & 0x7fffff) != 0))
+#define IS_FLOAT_INFINITY(r)	(((r) & 0x7fffffff) == 0x7f800000)
+
 #define CLEAR_MULTIPLIER_FLAGS()	(sharc.astat &= ~(MN|MV|MU|MI))
 
 #define SET_FLAG_MN(r)			{ sharc.astat |= (((r) & 0x80000000) ? MN : 0); }
@@ -19,6 +24,9 @@
 /* TODO: MU needs 80-bit result */
 #define SET_FLAG_MU(r)			{ sharc.astat |= ((((UINT32)((r) >> 32) == 0) && ((UINT32)(r)) != 0) ? MU : 0); }
 
+
+#define max(x,y)		((x) > (y)) ? (x) : (y)
+#define min(x,y)		((x) < (y)) ? (x) : (y)
 
 /*****************************************************************************/
 /* Integer ALU operations */
@@ -103,12 +111,23 @@ INLINE void compute_and(int rn, int rx, int ry)
 /* COMP(Rx, Ry) */
 INLINE void compute_comp(int rx, int ry)
 {
+	UINT32 comp_accum;
+
 	CLEAR_ALU_FLAGS();
 	if( REG(rx) == REG(ry) )
 		sharc.astat |= AZ;
 	if( (INT32)REG(rx) < (INT32)REG(ry) )
 		sharc.astat |= AN;
-	/* TODO: Update ASTAT compare accumulation register */
+
+	// Update ASTAT compare accumulation register
+	comp_accum = (sharc.astat >> 24) & 0xff;
+	comp_accum >>= 1;
+	if ( (INT32)REG(rx) > (INT32)REG(ry) )
+	{
+		comp_accum |= 0x80;
+	}
+	sharc.astat &= 0xffffff;
+	sharc.astat |= comp_accum << 24;
 }
 
 /* Rn = PASS Rx */
@@ -175,7 +194,7 @@ INLINE void compute_dec(int rn, int rx)
 /* Rn = MAX(Rx, Ry) */
 INLINE void compute_max(int rn, int rx, int ry)
 {
-	UINT32 r = ((INT32)REG(rx) > (INT32)REG(ry)) ? REG(rx) : REG(ry);
+	UINT32 r = max((INT32)REG(rx), (INT32)REG(ry));
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r);
@@ -192,8 +211,8 @@ INLINE void compute_neg(int rn, int rx)
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(REG(rn));
 	SET_FLAG_AZ(REG(rn));
-	/* TODO: AV flag */
-	/* TODO: AC flag */
+	SET_FLAG_AV_SUB(r, 0, REG(rx));
+	SET_FLAG_AC_SUB(r, 0, REG(rx));
 
 	REG(rn) = r;
 }
@@ -207,10 +226,42 @@ INLINE void compute_float(int rn, int rx)
 	FREG(rn) = (float)(INT32)REG(rx);
 
 	CLEAR_ALU_FLAGS();
+	// AN
 	SET_FLAG_AN(REG(rn));
-	/* TODO: AZ flag */
-	/* TODO: AU flag */
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(REG(rn)) || IS_FLOAT_ZERO(REG(rn))) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(REG(rn))) ? AUS : 0;
 	/* TODO: AV flag */
+}
+
+/* Rn = FIX Fx BY Ry */
+INLINE void compute_fix_scaled(int rn, int rx, int ry)
+{
+	INT32 alu_i;
+	SHARC_REG r_alu;
+
+	r_alu.f = (FREG(rx) * (float)pow(2.0, (INT32)REG(ry)));
+	if (sharc.mode1 & TRUNCATE)
+	{
+		alu_i = (INT32)(r_alu.f);
+	}
+	else
+	{
+		alu_i = (INT32)(r_alu.f < 0 ? (r_alu.f - 0.5f) : (r_alu.f + 0.5f));
+	}
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(alu_i);
+	// AZ
+	SET_FLAG_AZ(alu_i);
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+	/* TODO: AV flag */
+
+	REG(rn) = alu_i;
 }
 
 /* Fn = FLOAT Rx BY Ry */
@@ -218,15 +269,18 @@ INLINE void compute_float_scaled(int rn, int rx, int ry)
 {
 	float r = (float)(INT32)REG(rx);
 
-	r *= (float)pow(2.0, REG(ry));
+	r *= (float)pow(2.0, (INT32)REG(ry));
 
 	FREG(rn) = r;
 
 	CLEAR_ALU_FLAGS();
+	// AN
 	SET_FLAG_AN(REG(rn));
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(REG(rn)) || IS_FLOAT_ZERO(REG(rn))) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(REG(rn))) ? AUS : 0;
 	/* TODO: set AV if overflowed */
-	/* TODO: AZ flag */
-	/* TODO: AU flag */
 }
 
 /* Rn = LOGB Fx */
@@ -237,97 +291,267 @@ INLINE void compute_logb(int rn, int rx)
 	int exponent = (r >> 23) & 0xff;
 	exponent -= 127;
 
-	REG(rn) = exponent;
-
 	CLEAR_ALU_FLAGS();
-	SET_FLAG_AN(REG(rn));
-	SET_FLAG_AZ(REG(rn));
-	/* TODO: AV flag */
-	/* TODO: AI flag */
+	// AN
+	SET_FLAG_AN(exponent);
+	// AZ
+	SET_FLAG_AZ(exponent);
+	// AV
+	sharc.astat |= (IS_FLOAT_INFINITY(REG(rx)) || IS_FLOAT_ZERO(REG(rx))) ? AV : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	REG(rn) = exponent;
 }
 
 /* Fn = SCALB Fx BY Fy */
 INLINE void compute_scalb(int rn, int rx, int ry)
 {
-	float r = FREG(rx);
-	r *= (float)pow(2.0, REG(ry));
-
-	FREG(rn) = r;
+	SHARC_REG r;
+	r.f = FREG(rx);
+	r.f *= (float)pow(2.0, (INT32)REG(ry));
 
 	CLEAR_ALU_FLAGS();
-	SET_FLAG_AN(REG(rn));
+	// AN
+	SET_FLAG_AN(r.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r.r) || IS_FLOAT_ZERO(r.r)) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(r.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
 	/* TODO: AV flag */
-	/* TODO: AZ flag */
-	/* TODO: AU flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
 }
 
 /* Fn = Fx + Fy */
 INLINE void compute_fadd(int rn, int rx, int ry)
 {
-	FREG(rn) = FREG(rx) + FREG(ry);
+	SHARC_REG r;
+	r.f = FREG(rx) + FREG(ry);
 
 	CLEAR_ALU_FLAGS();
-	SET_FLAG_AN(REG(rn));
-	/* TODO: AZ flag */
-	/* TODO: AU flag */
+	// AN
+	SET_FLAG_AN(r.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r.r) || IS_FLOAT_ZERO(r.r)) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(r.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
 	/* TODO: AV flag */
-	/* TODO: AI flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
 }
 
 /* Fn = Fx - Fy */
 INLINE void compute_fsub(int rn, int rx, int ry)
 {
-	FREG(rn) = FREG(rx) - FREG(ry);
+	SHARC_REG r;
+	r.f = FREG(rx) - FREG(ry);
 
 	CLEAR_ALU_FLAGS();
-	SET_FLAG_AN(REG(rn));
-	/* TODO: AZ flag */
-	/* TODO: AU flag */
+	// AN
+	SET_FLAG_AN(r.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r.r) || IS_FLOAT_ZERO(r.r)) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(r.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
 	/* TODO: AV flag */
-	/* TODO: AI flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
 }
 
 /* Fn = -Fx */
 INLINE void compute_fneg(int rn, int rx)
 {
-	FREG(rn) = -FREG(rx);
+	SHARC_REG r;
+	r.f = -FREG(rx);
 
 	CLEAR_ALU_FLAGS();
-	SET_FLAG_AZ(REG(rn));
-	SET_FLAG_AN(REG(rn));
-	/* TODO: AI flag */
+	// AZ
+	SET_FLAG_AZ(r.r);
+	// AN
+	SET_FLAG_AN(r.r);
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
+}
+
+/* COMP(Fx, Fy) */
+INLINE void compute_fcomp(int rx, int ry)
+{
+	UINT32 comp_accum;
+
+	CLEAR_ALU_FLAGS();
+	// AZ
+	if( FREG(rx) == FREG(ry) )
+		sharc.astat |= AZ;
+	// AN
+	if( FREG(rx) < FREG(ry) )
+		sharc.astat |= AN;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	// Update ASTAT compare accumulation register
+	comp_accum = (sharc.astat >> 24) & 0xff;
+	comp_accum >>= 1;
+	if ( FREG(rx) > FREG(ry) )
+	{
+		comp_accum |= 0x80;
+	}
+	sharc.astat &= 0xffffff;
+	sharc.astat |= comp_accum << 24;
 }
 
 /* Fn = ABS(Fx + Fy) */
 INLINE void compute_fabs_plus(int rn, int rx, int ry)
 {
-	FREG(rn) = fabs(FREG(rx) + FREG(ry));
+	SHARC_REG r;
+	r.f = fabs(FREG(rx) + FREG(ry));
 
 	CLEAR_ALU_FLAGS();
-	/* TODO: AZ flag */
-	/* TODO: AU flag */
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r.r) || IS_FLOAT_ZERO(r.r)) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(r.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
 	/* TODO: AV flag */
-	/* TODO: AI flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
+}
+
+/* Fn = MAX(Fx, Fy) */
+INLINE void compute_fmax(int rn, int rx, int ry)
+{
+	SHARC_REG r_alu;
+
+	r_alu.f = max(FREG(rx), FREG(ry));
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_alu.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r_alu.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
+	/* TODO: AV flag */
+
+	FREG(rn) = r_alu.f;
+}
+
+/* Fn = MIN(Fx, Fy) */
+INLINE void compute_fmin(int rn, int rx, int ry)
+{
+	SHARC_REG r_alu;
+
+	r_alu.f = min(FREG(rx), FREG(ry));
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_alu.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r_alu.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
+	/* TODO: AV flag */
+
+	FREG(rn) = r_alu.f;
 }
 
 /* Fn = RECIPS Fx */
 INLINE void compute_recips(int rn, int rx)
 {
+	SHARC_REG r;
 	/* TODO: calculate reciprocal, this is too accurate! */
-	FREG(rn) = 1.0 / FREG(rx);
+	r.f = 1.0f / FREG(rx);
 
 	CLEAR_ALU_FLAGS();
-	SET_FLAG_AN(REG(rn));
-	/* TODO: AZ flag */
-	/* TODO: AV flag */
-	/* TODO: AI flag */
+	// AN
+	SET_FLAG_AN(r.r);
+	// AZ & AV
+	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? (AZ | AV) : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
+}
+
+/* Fn = RSQRTS Fx */
+INLINE void compute_rsqrts(int rn, int rx)
+{
+	SHARC_REG r;
+	/* TODO: calculate reciprocal, this is too accurate! */
+	r.f = 1.0f / sqrt(FREG(rx));
+
+	CLEAR_ALU_FLAGS();
+	// AN
+	sharc.astat |= (r.r == 0x80000000) ? AN : 0;
+	// AZ & AV
+	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? (AZ | AV) : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || (REG(rx) & 0x80000000)) ? AI : 0;
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(rn) = r.f;
+}
+
+
+/* Fn = PASS Fx */
+INLINE void compute_fpass(int rn, int rx)
+{
+	SHARC_REG r;
+	r.f = FREG(rx);
+
+	CLEAR_ALU_FLAGS();
+	// AN
+	SET_FLAG_AN(r.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? AZ : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+
+	FREG(rn) = r.f;
 }
 
 /*****************************************************************************/
 /* Multiplier opcodes */
 
 /* Rn = (unsigned)Rx * (unsigned)Ry, integer, no rounding */
-INLINE void compute_mul_uuir(int rn, int rx, int ry)
+INLINE void compute_mul_uuin(int rn, int rx, int ry)
 {
 	UINT64 r = (UINT64)(UINT32)REG(rx) * (UINT64)(UINT32)REG(ry);
 
@@ -337,6 +561,32 @@ INLINE void compute_mul_uuir(int rn, int rx, int ry)
 	SET_FLAG_MU(r);
 
 	REG(rn) = (UINT32)(r);
+}
+
+/* MRF + (signed)Rx * (signed)Ry, integer, no rounding */
+INLINE UINT32 compute_mrf_plus_mul_ssin(int rx, int ry)
+{
+	UINT64 r = sharc.mrf + ((INT64)(INT32)REG(rx) * (INT64)(INT32)REG(ry));
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN((UINT32)r);
+	SET_FLAG_MV(r);
+	SET_FLAG_MU(r);
+
+	return (UINT32)(r);
+}
+
+/* MRB + (signed)Rx * (signed)Ry, integer, no rounding */
+INLINE UINT32 compute_mrb_plus_mul_ssin(int rx, int ry)
+{
+	INT64 r = sharc.mrb + ((INT64)(INT32)REG(rx) * (INT64)(INT32)REG(ry));
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN((UINT32)r);
+	SET_FLAG_MV(r);
+	SET_FLAG_MU(r);
+
+	return (UINT32)(r);
 }
 
 /* Fn = Fx * Fy */
@@ -367,7 +617,8 @@ INLINE void compute_multi_mr_to_reg(int ai, int rk)
 		case 6:		osd_die("SHARC: tried to load MR2B"); break;
 		default:	osd_die("SHARC: unknown ai %d in mr_to_reg\n", ai);
 	}
-	/* TODO: clear multiplier flags */
+
+	CLEAR_MULTIPLIER_FLAGS();
 }
 
 INLINE void compute_multi_reg_to_mr(int ai, int rk)
@@ -382,7 +633,8 @@ INLINE void compute_multi_reg_to_mr(int ai, int rk)
 		case 6:		osd_die("SHARC: tried to write MR2B"); break;
 		default:	osd_die("SHARC: unknown ai %d in reg_to_mr\n", ai);
 	}
-	/* TODO: clear multiplier flags */
+
+	CLEAR_MULTIPLIER_FLAGS();
 }
 
 /* Ra = Rx + Ry,   Rs = Rx - Ry */
@@ -413,4 +665,248 @@ INLINE void compute_dual_add_sub(int ra, int rs, int rx, int ry)
 	{
 		sharc.astat |= AC;
 	}
+}
+
+/* Fa = Fx + Fy,   Fs = Fx - Fy */
+INLINE void compute_dual_fadd_fsub(int ra, int rs, int rx, int ry)
+{
+	SHARC_REG r_add, r_sub;
+	r_add.f = FREG(rx) + FREG(ry);
+	r_sub.f = FREG(rx) - FREG(ry);
+
+	CLEAR_ALU_FLAGS();
+	// AN
+	sharc.astat |= ((r_add.r & 0x80000000) || (r_sub.r & 0x80000000)) ? AN : 0;
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r_add.r) || IS_FLOAT_ZERO(r_add.r) ||
+					IS_FLOAT_DENORMAL(r_sub.r) || IS_FLOAT_ZERO(r_sub.r)) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_add.r) || IS_FLOAT_DENORMAL(r_sub.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
+	/* TODO: AV flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(ra) = r_add.f;
+	FREG(rs) = r_sub.f;
+}
+
+/* Fm = Fxm * Fym,   Fa = Fxa + Fya */
+INLINE void compute_fmul_fadd(int fm, int fxm, int fym, int fa, int fxa, int fya)
+{
+	SHARC_REG r_mul, r_add;
+	r_mul.f = FREG(fxm) * FREG(fym);
+	r_add.f = FREG(fxa) + FREG(fya);
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_add.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r_add.r) || IS_FLOAT_ZERO(r_add.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_add.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(fxa)) || IS_FLOAT_NAN(REG(fya))) ? AI : 0;
+	/* TODO: AV flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(fm) = r_mul.f;
+	FREG(fa) = r_add.f;
+}
+
+/* Fm = Fxm * Fym,   Fa = Fxa - Fya */
+INLINE void compute_fmul_fsub(int fm, int fxm, int fym, int fa, int fxa, int fya)
+{
+	SHARC_REG r_mul, r_sub;
+	r_mul.f = FREG(fxm) * FREG(fym);
+	r_sub.f = FREG(fxa) - FREG(fya);
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_sub.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r_sub.r) || IS_FLOAT_ZERO(r_sub.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_sub.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(fxa)) || IS_FLOAT_NAN(REG(fya))) ? AI : 0;
+	/* TODO: AV flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(fm) = r_mul.f;
+	FREG(fa) = r_sub.f;
+}
+
+/* Fm = Fxm * Fym,   Fa = FLOAT Fxa BY Fya */
+INLINE void compute_fmul_float_scaled(int fm, int fxm, int fym, int fa, int fxa, int fya)
+{
+	SHARC_REG r_mul, r_alu;
+	r_mul.f = FREG(fxm) * FREG(fym);
+
+	r_alu.f = (float)(INT32)REG(fxa);
+	r_alu.f *= (float)pow(2.0, (INT32)REG(fya));
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_alu.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r_alu.r) || IS_FLOAT_ZERO(r_alu.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	/* TODO: set AV if overflowed */
+
+	FREG(fm) = r_mul.f;
+	FREG(fa) = r_alu.f;
+}
+
+/* Fm = Fxm * Fym,   Fa = FIX Fxa BY Fya */
+INLINE void compute_fmul_fix_scaled(int fm, int fxm, int fym, int fa, int fxa, int fya)
+{
+	INT32 alu_i;
+	SHARC_REG r_mul, r_alu;
+	r_mul.f = FREG(fxm) * FREG(fym);
+
+	r_alu.f = (FREG(fxa) * (float)pow(2.0, (INT32)REG(fya)));
+	if (sharc.mode1 & TRUNCATE)
+	{
+		alu_i = (INT32)(r_alu.f);
+	}
+	else
+	{
+		alu_i = (INT32)(r_alu.f < 0 ? (r_alu.f - 0.5f) : (r_alu.f + 0.5f));
+	}
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(alu_i);
+	// AZ
+	SET_FLAG_AZ(alu_i);
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(fxa))) ? AI : 0;
+	/* TODO: AV flag */
+
+	FREG(fm) = r_mul.f;
+	REG(fa) = alu_i;
+}
+
+
+/* Fm = Fxm * Fym,   Fa = MAX(Fxa, Fya) */
+INLINE void compute_fmul_fmax(int fm, int fxm, int fym, int fa, int fxa, int fya)
+{
+	SHARC_REG r_mul, r_alu;
+	r_mul.f = FREG(fxm) * FREG(fym);
+
+	r_alu.f = max(FREG(fxa), FREG(fya));
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_alu.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r_alu.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(fxa)) || IS_FLOAT_NAN(REG(fya))) ? AI : 0;
+	/* TODO: AV flag */
+
+	FREG(fm) = r_mul.f;
+	FREG(fa) = r_alu.f;
+}
+
+
+/* Fm = Fxm * Fym,   Fa = MIN(Fxa, Fya) */
+INLINE void compute_fmul_fmin(int fm, int fxm, int fym, int fa, int fxa, int fya)
+{
+	SHARC_REG r_mul, r_alu;
+	r_mul.f = FREG(fxm) * FREG(fym);
+
+	r_alu.f = min(FREG(fxa), FREG(fya));
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_alu.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r_alu.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(fxa)) || IS_FLOAT_NAN(REG(fya))) ? AI : 0;
+	/* TODO: AV flag */
+
+	FREG(fm) = r_mul.f;
+	FREG(fa) = r_alu.f;
+}
+
+
+
+/* Fm = Fxm * Fym,   Fa = Fxa + Fya,   Fs = Fxa - Fya */
+INLINE void compute_fmul_dual_fadd_fsub(int fm, int fxm, int fym, int fa, int fs, int fxa, int fya)
+{
+	SHARC_REG r_mul, r_add, r_sub;
+	r_mul.f = FREG(fxm) * FREG(fym);
+	r_add.f = FREG(fxa) + FREG(fya);
+	r_sub.f = FREG(fxa) - FREG(fya);
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul.r);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	// AN
+	sharc.astat |= ((r_add.r & 0x80000000) || (r_sub.r & 0x80000000)) ? AN : 0;
+	// AZ
+	sharc.astat |= (IS_FLOAT_DENORMAL(r_add.r) || IS_FLOAT_ZERO(r_add.r) ||
+					IS_FLOAT_DENORMAL(r_sub.r) || IS_FLOAT_ZERO(r_sub.r)) ? AZ : 0;
+	// AUS
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_add.r) || IS_FLOAT_DENORMAL(r_sub.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(fxa)) || IS_FLOAT_NAN(REG(fya))) ? AI : 0;
+	/* TODO: AV flag */
+
+	// AIS
+	if (sharc.astat & AI)	sharc.stky |= AIS;
+
+	FREG(fm) = r_mul.f;
+	FREG(fa) = r_add.f;
+	FREG(fs) = r_sub.f;
 }

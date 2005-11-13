@@ -184,7 +184,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout shaolins_charlayout =
+static const gfx_layout shaolins_charlayout =
 {
 	8,8,	/* 8*8 chars */
 	512,	/* 512 characters */
@@ -195,7 +195,7 @@ static gfx_layout shaolins_charlayout =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout shaolins_spritelayout =
+static const gfx_layout shaolins_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	256,	/* 256 sprites */
@@ -208,7 +208,7 @@ static gfx_layout shaolins_spritelayout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static gfx_decode shaolins_gfxdecodeinfo[] =
+static const gfx_decode shaolins_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &shaolins_charlayout,         0, 16*8 },
 	{ REGION_GFX2, 0, &shaolins_spritelayout, 16*8*16, 16*8 },

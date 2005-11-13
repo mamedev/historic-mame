@@ -192,7 +192,7 @@ WRITE8_HANDLER( custom_io_w )
 
 static ADDRESS_MAP_START( map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xefff) AM_ROM
-	AM_RANGE(0xf000, 0xffff) AM_RAM
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_REGION(REGION_CPU1, 0xf000)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( csk227_map, ADDRESS_SPACE_IO, 8 )
@@ -538,7 +538,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	8192,   /* 8192 characters */
@@ -549,7 +549,7 @@ static gfx_layout charlayout =
 	16*8   /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout charlayout2 =
+static const gfx_layout charlayout2 =
 {
 	8,32,   /* 8*32 characters */
 	256,    /* 256 characters */
@@ -565,7 +565,7 @@ static gfx_layout charlayout2 =
 	4*16*8   /* every char takes 32 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,   0, 16 },
 	{ REGION_GFX2, 0x04000, &charlayout2,  0, 16 },

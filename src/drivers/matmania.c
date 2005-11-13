@@ -258,7 +258,7 @@ INPUT_PORTS_START( matmania )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -269,7 +269,7 @@ static gfx_layout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,  /* 16*16 tiles */
 	512,    /* 512 tiles */
@@ -282,7 +282,7 @@ static gfx_layout tilelayout =
 	32*8	/* every tile takes 16 consecutive bytes */
 };
 
-static gfx_layout matmania_spritelayout =
+static const gfx_layout matmania_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	3584,    /* 3584 sprites */
@@ -295,7 +295,7 @@ static gfx_layout matmania_spritelayout =
 	32*8	/* every sprite takes 16 consecutive bytes */
 };
 
-static gfx_layout maniach_spritelayout =
+static const gfx_layout maniach_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	3584,    /* 3584 sprites */
@@ -308,7 +308,7 @@ static gfx_layout maniach_spritelayout =
 	32*8	/* every sprite takes 16 consecutive bytes */
 };
 
-static gfx_layout maniach_tilelayout =
+static const gfx_layout maniach_tilelayout =
 {
 	16,16,  /* 16*16 tiles */
 	1024,    /* 1024 tiles */
@@ -321,7 +321,7 @@ static gfx_layout maniach_tilelayout =
 	32*8	/* every tile takes 16 consecutive bytes */
 };
 
-static gfx_decode matmania_gfxdecodeinfo[] =
+static const gfx_decode matmania_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,              0, 4 },
 	{ REGION_GFX2, 0, &tilelayout,            4*8, 4 },
@@ -329,7 +329,7 @@ static gfx_decode matmania_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode maniach_gfxdecodeinfo[] =
+static const gfx_decode maniach_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,             0, 4 },
 	{ REGION_GFX2, 0, &maniach_tilelayout,   4*8, 4 },

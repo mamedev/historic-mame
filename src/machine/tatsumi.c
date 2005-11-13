@@ -90,25 +90,26 @@ WRITE16_HANDLER( apache3_irq_ack_w )
 
 READ8_HANDLER( apache3_v30_v20_r )
 {
-	const UINT8* rom=(UINT8*)memory_region(REGION_CPU3);
+	UINT8 value;
 
 	/* Each V20 byte maps to a V30 word */
 	if ((tatsumi_control_word&0xe0)==0xe0)
-		rom+=0xf8000; /* Upper half */
+		offset+=0xf8000*2; /* Upper half */
 	else if ((tatsumi_control_word&0xe0)==0xc0)
-		rom+=0xf0000;
+		offset+=0xf0000*2;
 	else if ((tatsumi_control_word&0xe0)==0x80)
-		rom+=0x00000; // main ram
+		offset+=0x00000*2; // main ram
 	else
 		logerror("%08x: unmapped read z80 rom %08x\n",activecpu_get_pc(),offset);
 
-	return rom[offset/2];
+	cpuintrf_push_context(2);
+	value = program_read_byte(offset/2);
+	cpuintrf_pop_context();
+	return value;
 }
 
 WRITE8_HANDLER( apache3_v30_v20_w )
 {
-	UINT8* ram=(UINT8*)memory_region(REGION_CPU3);
-
 	if ((tatsumi_control_word&0xe0)!=0x80)
 		logerror("%08x: write unmapped v30 rom %08x\n",activecpu_get_pc(),offset);
 
@@ -116,7 +117,9 @@ WRITE8_HANDLER( apache3_v30_v20_w )
 	if (offset&1)
 		return;
 
-	ram[offset/2]=data&0xff;
+	cpuintrf_push_context(2);
+	program_write_byte(offset/2, data&0xff);
+	cpuintrf_pop_context();
 }
 
 READ16_HANDLER(apache3_z80_r)
@@ -155,19 +158,20 @@ WRITE16_HANDLER( apache3_a0000_w )
 
 READ8_HANDLER( roundup_v30_z80_r )
 {
-	const UINT8* rom=(UINT8*)memory_region(REGION_CPU3);
+	UINT8 value;
 
 	/* Each Z80 byte maps to a V30 word */
 	if (tatsumi_control_word&0x20)
-		rom+=0x8000; /* Upper half */
+		offset+=0x8000*2; /* Upper half */
 
-	return rom[offset/2];
+	cpuintrf_push_context(2);
+	value = program_read_byte(offset/2);
+	cpuintrf_pop_context();
+	return value;
 }
 
 WRITE8_HANDLER( roundup_v30_z80_w )
 {
-	UINT8* ram=(UINT8*)memory_region(REGION_CPU3);
-
 	/* Only 8 bits of the V30 data bus are connected - ignore writes to the other half */
 	if (offset&1)
 		return;
@@ -175,7 +179,9 @@ WRITE8_HANDLER( roundup_v30_z80_w )
 	if (tatsumi_control_word&0x20)
 		offset+=0x10000; /* Upper half of Z80 address space */
 
-	ram[offset/2]=data&0xff;
+	cpuintrf_push_context(2);
+	program_write_byte(offset/2, data&0xff);
+	cpuintrf_pop_context();
 }
 
 

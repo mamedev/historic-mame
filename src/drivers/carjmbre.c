@@ -154,7 +154,7 @@ INPUT_PORTS_START( carjmbre )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-static gfx_layout carjmbre_charlayout =
+static const gfx_layout carjmbre_charlayout =
 {
 	8,8,
 	RGN_FRAC(2,4),
@@ -165,7 +165,7 @@ static gfx_layout carjmbre_charlayout =
 	8*8
 };
 
-static gfx_layout carjmbre_spritelayout =
+static const gfx_layout carjmbre_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -176,7 +176,7 @@ static gfx_layout carjmbre_spritelayout =
 	16*8
 };
 
-static gfx_decode carjmbre_gfxdecodeinfo[] =
+static const gfx_decode carjmbre_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &carjmbre_charlayout,   0, 16 },
 	{ REGION_GFX2, 0, &carjmbre_spritelayout, 0, 16 },

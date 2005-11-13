@@ -903,7 +903,7 @@ INPUT_PORTS_START( nomnlndg )
 INPUT_PORTS_END
 
 
-static gfx_layout cosmic_spritelayout16 =
+static const gfx_layout cosmic_spritelayout16 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -916,7 +916,7 @@ static gfx_layout cosmic_spritelayout16 =
 	32*8
 };
 
-static gfx_layout cosmic_spritelayout32 =
+static const gfx_layout cosmic_spritelayout32 =
 {
 	32,32,
 	RGN_FRAC(1,2),
@@ -934,14 +934,14 @@ static gfx_layout cosmic_spritelayout32 =
 };
 
 
-static gfx_decode panic_gfxdecodeinfo[] =
+static const gfx_decode panic_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &cosmic_spritelayout16,  0, 8 },
 	{ REGION_GFX1, 0, &cosmic_spritelayout32,  0, 8 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode cosmica_gfxdecodeinfo[] =
+static const gfx_decode cosmica_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &cosmic_spritelayout16,  0, 16 },
 	{ REGION_GFX1, 0, &cosmic_spritelayout32,  0, 16 },

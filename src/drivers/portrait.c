@@ -230,7 +230,7 @@ INPUT_PORTS_START( portrait )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	16,16, /* tile width, height   */
 	1024,  /* number of characters  */
@@ -245,7 +245,7 @@ static gfx_layout tile_layout =
 	8*16 /* character offset */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &tile_layout, 0, 0x100 },
 	{ -1 } /* end of array */

@@ -292,7 +292,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout pfmolayout =
+static const gfx_layout pfmolayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -304,7 +304,7 @@ static gfx_layout pfmolayout =
 };
 
 
-static gfx_layout moexlayout =
+static const gfx_layout moexlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -316,7 +316,7 @@ static gfx_layout moexlayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pfmolayout,   0, 64 },		/* alpha & playfield */
 	{ REGION_GFX1, 1, &pfmolayout, 256, 16 },		/* sprites */

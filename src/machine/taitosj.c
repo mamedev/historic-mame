@@ -15,7 +15,7 @@
 
 
 static unsigned char fromz80,toz80;
-static int zaccept,zready;
+static int zaccept,zready,busreq;
 
 static int spacecr_prot_value;
 
@@ -31,6 +31,7 @@ MACHINE_INIT( taitosj )
 
 	zaccept = 1;
 	zready = 0;
+	busreq = 0;
  	if (Machine->drv->cpu[2].cpu_type != CPU_DUMMY)
 	cpunum_set_input_line(2,0,CLEAR_LINE);
 
@@ -206,6 +207,10 @@ logerror("%04x: 68705  68INTRQ **NOT SUPPORTED**!\n",activecpu_get_pc());
 logerror("%04x: 68705 <- Z80 %02x\n",activecpu_get_pc(),portA_in);
 #endif
 	}
+	if (~data & 0x08)
+		busreq = 1;
+	else
+		busreq = 0;
 	if (~data & 0x04)
 	{
 #if DEBUG_MCU
@@ -219,21 +224,21 @@ logerror("%04x: 68705 -> Z80 %02x\n",activecpu_get_pc(),portA_out);
 #if DEBUG_MCU
 logerror("%04x: 68705 write %02x to address %04x\n",activecpu_get_pc(),portA_out,address);
 #endif
-        memory_set_context(0);
+		memory_set_context(0);
 		program_write_byte(address, portA_out);
-        memory_set_context(2);
+		memory_set_context(2);
 
 		/* increase low 8 bits of latched address for burst writes */
 		address = (address & 0xff00) | ((address + 1) & 0xff);
 	}
 	if (~data & 0x20)
 	{
+		memory_set_context(0);
+		portA_in = program_read_byte(address);
+		memory_set_context(2);
 #if DEBUG_MCU
 logerror("%04x: 68705 read %02x from address %04x\n",activecpu_get_pc(),portA_in,address);
 #endif
-        memory_set_context(0);
-		portA_in = program_read_byte(address);
-        memory_set_context(2);
 	}
 	if (~data & 0x40)
 	{
@@ -265,7 +270,7 @@ READ8_HANDLER( taitosj_68705_portC_r )
 {
 	int res;
 
-	res = (zready << 0) | (zaccept << 1);
+	res = (zready << 0) | (zaccept << 1) | ((busreq^1) << 2);
 #if DEBUG_MCU
 logerror("%04x: 68705 port C read %02x\n",activecpu_get_pc(),res);
 #endif

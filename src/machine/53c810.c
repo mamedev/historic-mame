@@ -4,6 +4,7 @@
 #include "53c810.h"
 
 #define DMA_MAX_ICOUNT	512		/* Maximum number of DMA Scripts opcodes to run */
+#define DASM_OPCODES 0
 
 typedef struct
 {
@@ -21,11 +22,16 @@ static struct {
 	UINT8 scntl2;
 	UINT8 scntl3;
 	UINT8 scid;
+	UINT8 socl;
 	UINT8 istat;
 	UINT8 dstat;
+	UINT8 sstat0;
+	UINT8 sstat1;
+	UINT8 sstat2;
 	UINT8 dien;
 	UINT8 dcntl;
 	UINT8 dmode;
+	UINT32 temp;
 	UINT32 dsa;
 	UINT32 dsp;
 	UINT32 dsps;
@@ -39,6 +45,17 @@ static struct {
 	UINT8 scratch_b[4];
 	int dma_icount;
 	int halted;
+	int carry;
+
+	struct
+	{
+		void *data;		// device's "this" pointer
+		pSCSIDispatch handler;	// device's handler routine
+	} devices[8];
+
+	UINT32 (* fetch)(UINT32 dsp);
+	void (* irq_callback)(void);
+	void (* dma_callback)(UINT32, UINT32, int, int);
 } lsi810;
 
 static void (* dma_opcode[256])(void);
@@ -49,6 +66,15 @@ INLINE UINT32 FETCH(void)
 	UINT32 r = intf->fetch(lsi810.dsp);
 	lsi810.dsp += 4;
 	return r;
+}
+
+static UINT32 sign_extend24(UINT32 val)
+{
+	if (val & 0x00800000)
+		val |= 0xFF000000;
+	else
+		val &= ~0xFF000000;
+	return val;
 }
 
 static void dmaop_invalid(void)
@@ -89,25 +115,43 @@ static void dmaop_block_move(void)
 {
 	UINT32 address;
 	UINT32 count;
+	INT32 dsps;
 
 	address = FETCH();
+	count = lsi810.dcmd & 0x00ffffff;
+
+	// normal indirect
 	if (lsi810.dcmd & 0x20000000)
 		address = intf->fetch(address);
 
+	// table indirect
 	if (lsi810.dcmd & 0x10000000)
-		osd_die("LSI53C810: Table indirect not implemented\n");
+	{
+		dsps = (INT32)address&0xffffff;
+		// sign extend
+		if (dsps & 0x00800000)
+		{
+			dsps |= 0xff000000;
+		}
+		logerror("table offset: %x, DSA = %x\n", dsps, lsi810.dsa);
+		dsps += lsi810.dsa;
 
-	count = lsi810.dcmd & 0x00ffffff;
+		logerror("Loading from table at %x\n", dsps);
+		count = lsi810.fetch(dsps);
+		address = lsi810.fetch(dsps+4);
+	}
+
+	logerror("block move: address %x count %x phase %x\n", address, count, (lsi810.dcmd>>24)&7);
 
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_block_move not implemented\n");
+		osd_die("LSI53C810: dmaop_block_move not implemented in target mode\n");
 	}
 	else
 	{
 		/* initiator mode */
-		osd_die("LSI53C810: dmaop_block_move not implemented\n");
+		logerror("53c810: block_move not actually implemented\n");
 	}
 }
 
@@ -120,12 +164,19 @@ static void dmaop_select(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_select not implemented\n");
+		logerror("LSI53C810: reselect ID #%d\n", (lsi810.dcmd >> 16) & 0x07);
 	}
 	else
 	{
 		/* initiator mode */
-		osd_die("LSI53C810: dmaop_select not implemented\n");
+		logerror("53c810: SELECT: our ID %d, target ID %d\n", lsi810.scid&7, (lsi810.dcmd>>16)&7);
+
+		lsi810.sstat1 &= ~0x07;	// clear current bus phase
+		if (lsi810.dcmd & 0x01000000)	// select with ATN
+		{
+			printf("53c810: want select with ATN, setting message phase\n");
+			lsi810.sstat1 |= 0x7;	// ATN means we want message in phase
+		}
 	}
 }
 
@@ -138,7 +189,7 @@ static void dmaop_wait_disconnect(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_wait_disconnect not implemented\n");
+		osd_die("LSI53C810: dmaop_wait_disconnect not implemented in target mode\n");
 	}
 	else
 	{
@@ -156,7 +207,7 @@ static void dmaop_wait_reselect(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_wait_reselect not implemented\n");
+		osd_die("LSI53C810: dmaop_wait_reselect not implemented in target mode\n");
 	}
 	else
 	{
@@ -171,15 +222,26 @@ static void dmaop_set(void)
 
 	operand = FETCH();
 
-	if (lsi810.scntl0 & 0x01)
+	/* initiator mode */
+	if (lsi810.dcmd & 0x8)
 	{
-		/* target mode */
-		osd_die("LSI53C810: dmaop_set not implemented\n");
+		// set ATN in SOCL
+		lsi810.socl |= 0x08;
 	}
-	else
+	if (lsi810.dcmd & 0x40)
 	{
-		/* initiator mode */
-		osd_die("LSI53C810: dmaop_set not implemented\n");
+		// set ACK in SOCL
+		lsi810.socl |= 0x40;
+	}
+	if (lsi810.dcmd & 0x200)
+	{
+		// set target mode
+		lsi810.scntl0 |= 0x01;
+	}
+	if (lsi810.dcmd & 0x400)
+	{
+		// set carry in ALU
+		lsi810.carry = 1;
 	}
 }
 
@@ -189,21 +251,32 @@ static void dmaop_clear(void)
 
 	operand = FETCH();
 
-	if (lsi810.scntl0 & 0x01)
+	/* initiator mode */
+	if (lsi810.dcmd & 0x8)
 	{
-		/* target mode */
-		osd_die("LSI53C810: dmaop_clear not implemented\n");
+		//  clear ATN in SOCL
+		lsi810.socl &= ~0x08;
 	}
-	else
+	if (lsi810.dcmd & 0x40)
 	{
-		/* initiator mode */
-		osd_die("LSI53C810: dmaop_clear not implemented\n");
+		// clear ACK in SOCL
+		lsi810.socl &= ~0x40;
+	}
+	if (lsi810.dcmd & 0x200)
+	{
+		// clear target mode
+		lsi810.scntl0 &= ~0x01;
+	}
+	if (lsi810.dcmd & 0x400)
+	{
+		// clear carry in ALU
+		lsi810.carry = 0;
 	}
 }
 
 static void dmaop_move_from_sfbr(void)
 {
-	osd_die("LSI53C810: dmaop_move_from_sfbr not implemented\n");
+	osd_die("LSI53C810: dmaop_move_from_sfbr not implemented in target mode\n");
 }
 
 static void dmaop_move_to_sfbr(void)
@@ -216,49 +289,133 @@ static void dmaop_read_modify_write(void)
 	osd_die("LSI53C810: dmaop_read_modify_write not implemented\n");
 }
 
-static void dmaop_jump(void)
+static int scripts_compute_branch(void)
 {
-	UINT32 dsps, dest;
+	int dtest, ptest, wanted, passed;
+
+//        |jump if true
+// 878b0000   ||compare data
+// 1000 0111 1000 1011 0000 0000 0000 0000
+//   |   |rel   ||wait valid phase
+//   |      |compare phase
+//   |desired phase: message in
+
+	if (lsi810.dcmd & 0x00200000)
+	{
+		osd_die("LSI53C810: jump with carry test not implemented\n");
+	}
+
+	if (lsi810.dcmd & 0x00100000)
+	{
+		osd_die("LSI53C810: jump with interrupt on the fly not implemented\n");
+	}
+
+	// set desired result to take jump
+	wanted = (lsi810.dcmd & 0x00080000) ? 1 : 0;
+	// default to passing the tests in case they're disabled
+	dtest = ptest = wanted;
+
+	// phase test?
+	if (lsi810.dcmd & 0x00020000)
+	{
+		logerror("53c810: phase test.  current: %x.  target: %x\n", lsi810.sstat1 & 7, (lsi810.dcmd>>24)&7);
+
+		// do the phases match?
+		if (((lsi810.dcmd>>24)&7) == (lsi810.sstat1 & 7))
+		{
+			ptest = 1;
+		}
+	else
+		{
+			ptest = 0;
+		}
+	}
+
+	// data test?
+	if (lsi810.dcmd & 0x00040000)
+	{
+		logerror("53c810: data test.  target: %x [not yet implemented]\n", lsi810.dcmd&0xff);
+}
+
+	// if all conditions go, take the jump
+	passed = 0;
+	if ((ptest == dtest) && (dtest == wanted))
+	{
+		passed = 1;
+	}
+
+	logerror("53c810: phase test %d  data test %d  wanted %d => pass %d\n", ptest, dtest, wanted, passed);
+
+	return passed;
+}
+
+static UINT32 scripts_get_jump_dest(void)
+{
+	INT32 dsps;
+	UINT32 dest;
 
 	dsps = FETCH();
 
 	/* relative or absolute addressing? */
-	if (lsi810.dcmd & 0x08000000)
-		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF000000 : 0));
-	else
-		dest = dsps;
+	if (lsi810.dcmd & 0x00800000)
+	{
+		// sign-extend the 24-bit value
+		if (dsps & 0x00800000)
+		{
+			dsps |= 0xff000000;
+		}
 
-	osd_die("LSI53C810: dmaop_jump not implemented\n");
+		logerror("dsps = %x, dsp = %x\n", dsps, lsi810.dsp);
+		dsps += lsi810.dsp;
+}
+
+	dest = (UINT32)dsps;
+
+	logerror("cur DSP %x, dest %x\n", lsi810.dsp, dest);
+
+	return dest;
+}
+
+static void dmaop_jump(void)
+{
+	if (scripts_compute_branch())
+{
+		lsi810.dsp = scripts_get_jump_dest();
+	}
+	else
+	{
+		FETCH();	// skip operand to continue on
+	}
 }
 
 static void dmaop_call(void)
 {
-	UINT32 dsps, dest;
+	if (scripts_compute_branch())
+	{
+		// save return address
+		lsi810.temp = lsi810.dsp;
 
-	dsps = FETCH();
-
-	/* relative or absolute addressing? */
-	if (lsi810.dcmd & 0x08000000)
-		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF000000 : 0));
+		// and go
+		lsi810.dsp = scripts_get_jump_dest();
+	}
 	else
-		dest = dsps;
-
-	osd_die("LSI53C810: dmaop_call not implemented\n");
+	{
+		FETCH();	// skip operand to continue on
+	}
 }
 
 static void dmaop_return(void)
 {
-	UINT32 dsps, dest;
-
-	dsps = FETCH();
-
-	/* relative or absolute addressing? */
-	if (lsi810.dcmd & 0x08000000)
-		dest = dsps + ((lsi810.dcmd & 0x00FFFFFF) | ((lsi810.dcmd & 0x00800000) ? 0xFF000000 : 0));
+	// is this correct?  return only happens if the condition is true?
+	if (scripts_compute_branch())
+	{
+		// restore return address
+		lsi810.dsp = lsi810.temp;
+	}
 	else
-		dest = dsps;
-
-	osd_die("LSI53C810: dmaop_return not implemented\n");
+	{
+		FETCH();	// skip operand to continue on
+	}
 }
 
 static void dmaop_store(void)
@@ -280,6 +437,14 @@ static void dma_exec(void)
 	while(lsi810.dma_icount > 0)
 	{
 		int op;
+
+		if (DASM_OPCODES)
+		{
+			char buf[256];
+			lsi53c810_dasm(buf, lsi810.dsp);
+			logerror("0x%08X: %s\n", lsi810.dsp, buf);
+		}
+
 		lsi810.dcmd = FETCH();
 
 		op = (lsi810.dcmd >> 24) & 0xff;
@@ -291,6 +456,7 @@ static void dma_exec(void)
 
 UINT8 lsi53c810_reg_r(int reg)
 {
+	logerror("53c810: read reg %d:0x%x (PC=%x)\n", reg, reg, activecpu_get_pc());
 	switch(reg)
 	{
 		case 0x00:		/* SCNTL0 */
@@ -303,8 +469,16 @@ UINT8 lsi53c810_reg_r(int reg)
 			return lsi810.scntl3;
 		case 0x04:		/* SCID */
 			return lsi810.scid;
+		case 0x09:		/* SOCL */
+			return lsi810.socl;
 		case 0x0c:		/* DSTAT */
 			return lsi810.dstat;
+		case 0x0d:		/* SSTAT0 */
+			return lsi810.sstat0;
+		case 0x0e:		/* SSTAT1 */
+			return lsi810.sstat1;
+		case 0x0f:		/* SSTAT2 */
+			return lsi810.sstat2;
 		case 0x10:		/* DSA [7-0] */
 			return lsi810.dsa & 0xff;
 		case 0x11:		/* DSA [15-8] */
@@ -357,6 +531,7 @@ UINT8 lsi53c810_reg_r(int reg)
 
 void lsi53c810_reg_w(int reg, UINT8 value)
 {
+	logerror("53c810: %02x to reg %d:0x%x (PC=%x)\n", value, reg, reg, activecpu_get_pc());
 	switch(reg)
 	{
 		case 0x00:		/* SCNTL0 */
@@ -373,6 +548,18 @@ void lsi53c810_reg_w(int reg, UINT8 value)
 			break;
 		case 0x04:		/* SCID */
 			lsi810.scid = value;
+			break;
+		case 0x09:		/* SOCL */
+			lsi810.socl = value;
+			break;
+		case 0x0d:		/* SSTAT0 */
+			lsi810.sstat0 = value;
+			break;
+		case 0x0e:		/* SSTAT1 */
+			lsi810.sstat1 = value;
+			break;
+		case 0x0f:		/* SSTAT2 */
+			lsi810.sstat2 = value;
 			break;
 		case 0x10:		/* DSA [7-0] */
 			lsi810.dsa &= 0xffffff00;
@@ -561,3 +748,161 @@ void *lsi53c810_get_device(int id)
 
 	return NULL;
 }
+
+/*************************************
+ *
+ *  Disassembler
+ *
+ *************************************/
+
+static UINT32 lsi53c810_dasm_fetch(UINT32 pc)
+{
+	return intf->fetch(pc);
+}
+
+unsigned lsi53c810_dasm(char *buf, UINT32 pc)
+{
+	unsigned result = 0;
+	const char *op_mnemonic = NULL;
+	UINT32 op = lsi53c810_dasm_fetch(pc);
+	UINT32 dest;
+	int i;
+
+	static const char *phases[] =
+	{
+		"DATA_OUT", "DATA_IN", "CMD", "STATUS",
+		"RESERVED_OUT??", "RESERVED_IN??", "MSG_OUT", "MSG_IN"
+	};
+
+	if ((op & 0xF8000000) == 0x40000000)
+	{
+		/* SELECT */
+		dest = lsi53c810_dasm_fetch(pc + 4);
+
+		buf += sprintf(buf, "SELECT%s %d, 0x%08X",
+			(op & 0x01000000) ? " ATN" : "",
+			(op >> 16) & 0x07,
+			dest);
+
+		result = 8;
+	}
+	else if (((op & 0xF8000000) == 0x58000000)
+		| ((op & 0xF8000000) == 0x60000000))
+	{
+		static struct
+		{
+			UINT32 flag;
+			const char *text;
+		} flags[] =
+		{
+			{ 0x00000008, "ATN" },
+			{ 0x00000040, "ACK" },
+			{ 0x00000200, "TARGET" },
+			{ 0x00000400, "CARRY" }
+		};
+		int need_cojunction = FALSE;
+
+		/* SET/CLEAR */
+		switch(op & 0xF8000000)
+		{
+			case 0x58000000: op_mnemonic = "SET"; break;
+			case 0x60000000: op_mnemonic = "CLEAR"; break;
+		}
+
+		buf += sprintf(buf, "%s ", op_mnemonic);
+		need_cojunction = FALSE;
+
+		for (i = 0; i < sizeof(flags) / sizeof(flags[0]); i++)
+		{
+			if (op & flags[i].flag)
+			{
+				if (need_cojunction)
+					buf += sprintf(buf, " AND ");
+				else
+					need_cojunction = TRUE;
+				buf += sprintf(buf, "%s", flags[i].text);
+			}
+		}
+	}
+	else if (((op & 0xF8000000) == 0x80000000)
+		| ((op & 0xF8000000) == 0x88000000)
+		| ((op & 0xF8000000) == 0x98000000))
+	{
+		/* JUMP/CALL/INT */
+		switch(op & 0xF8000000)
+		{
+			case 0x80000000: op_mnemonic = "JUMP"; break;
+			case 0x88000000: op_mnemonic = "CALL"; break;
+			case 0x98000000: op_mnemonic = "INT"; break;
+		}
+
+		dest = lsi53c810_dasm_fetch(pc + 4);
+
+		if (op & 0x00800000)
+		{
+			/* relative */
+			if (dest & 0x00800000)
+				dest |= 0xFF000000;
+			else
+				dest &= 0x00FFFFFF;
+			dest = (pc + 8) + dest;
+			buf += sprintf(buf, "%s REL(0x%08X)", op_mnemonic, dest);
+		}
+		else
+		{
+			/* absolute */
+			buf += sprintf(buf, "%s 0x%08X", op_mnemonic, dest);
+		}
+
+		switch(op & 0x000B0000)
+		{
+			case 0x00000000:
+				buf += sprintf(buf, ", NOT??");
+				break;
+
+			case 0x00080000:
+				break;
+
+			case 0x00020000:
+			case 0x00030000:
+			case 0x000A0000:
+			case 0x000B0000:
+				buf += sprintf(buf, ", %s%s %s",
+					(op & 0x00010000) ? "WHEN" : "IF",
+					(op & 0x00080000) ? "" : " NOT",
+					phases[(op >> 24) & 0x07]);
+				break;
+
+			default:
+				osd_die("unknown op 0x%08X", op);
+				break;
+		}
+		result = 8;
+	}
+	else if ((op & 0xE0000000) == 0x00000000)
+	{
+		/* MOVE FROM */
+		dest = lsi53c810_dasm_fetch(pc + 4);
+
+		buf += sprintf(buf, "MOVE FROM 0x%08X, WHEN %s",
+			dest, phases[(op >> 24) & 0x07]);
+
+		result = 8;
+	}
+	else if ((op & 0xE0000000) == 0x20000000)
+	{
+		/* MOVE PTR */
+		dest = lsi53c810_dasm_fetch(pc + 4);
+
+		buf += sprintf(buf, "MOVE 0x%08X, PTR 0x%08X, WHEN %s",
+			(op & 0x00FFFFFF), dest, phases[(op >> 24) & 0x07]);
+
+		result = 8;
+	}
+	else
+	{
+		osd_die("unknown op 0x%08X", op);
+	}
+	return result;
+}
+

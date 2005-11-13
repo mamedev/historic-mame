@@ -85,7 +85,7 @@ UINT32 *bgpen_1, *bgpen_2, *screen1_brt, *screen2_brt;
 VIDEO_START( psikyo4 );
 VIDEO_UPDATE( psikyo4 );
 
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -96,7 +96,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*8
 };
 
-static gfx_decode gfxdecodeinfops4[] =
+static const gfx_decode gfxdecodeinfops4[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8, 0x000, 0x80 }, // 8bpp tiles
 	{ -1 }

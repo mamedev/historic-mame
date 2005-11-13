@@ -290,7 +290,7 @@ INPUT_PORTS_START( zerohour )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(1)
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -301,7 +301,7 @@ static gfx_layout charlayout =
 	16*8
 };
 
-static gfx_layout spritelayout8x8 =
+static const gfx_layout spritelayout8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -312,7 +312,7 @@ static gfx_layout spritelayout8x8 =
 	16*8
 };
 
-static gfx_layout spritelayout16x16 =
+static const gfx_layout spritelayout16x16 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -323,7 +323,7 @@ static gfx_layout spritelayout16x16 =
 	64*32
 };
 
-static gfx_layout spritelayout24x24 =
+static const gfx_layout spritelayout24x24 =
 {
 	24,24,
 	RGN_FRAC(1,1),
@@ -334,7 +334,7 @@ static gfx_layout spritelayout24x24 =
 	64*32
 };
 
-static gfx_layout spritelayout16x16bis =
+static const gfx_layout spritelayout16x16bis =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -345,7 +345,7 @@ static gfx_layout spritelayout16x16bis =
 	32*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,          0,  8 },
 	{ REGION_GFX3, 0x0000, &spritelayout8x8,   4*8, 16 },

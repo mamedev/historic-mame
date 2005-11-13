@@ -439,7 +439,7 @@ VIDEO_UPDATE( merit )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 }
 
-static gfx_layout tiles8x8x3_layout =
+static const gfx_layout tiles8x8x3_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -450,7 +450,7 @@ static gfx_layout tiles8x8x3_layout =
 	16*8
 };
 
-static gfx_layout tiles8x8x1_layout =
+static const gfx_layout tiles8x8x1_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),

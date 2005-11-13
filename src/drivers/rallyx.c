@@ -733,7 +733,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout rallyx_charlayout =
+static const gfx_layout rallyx_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -744,7 +744,7 @@ static gfx_layout rallyx_charlayout =
 	16*8
 };
 
-static gfx_layout jungler_charlayout =
+static const gfx_layout jungler_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -755,7 +755,7 @@ static gfx_layout jungler_charlayout =
 	16*8
 };
 
-static gfx_layout rallyx_spritelayout =
+static const gfx_layout rallyx_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -768,7 +768,7 @@ static gfx_layout rallyx_spritelayout =
 	64*8
 };
 
-static gfx_layout jungler_spritelayout =
+static const gfx_layout jungler_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -781,7 +781,7 @@ static gfx_layout jungler_spritelayout =
 	64*8
 };
 
-static gfx_layout dotlayout =
+static const gfx_layout dotlayout =
 {
 	4,4,
 	8,
@@ -792,7 +792,7 @@ static gfx_layout dotlayout =
 	16*8
 };
 
-static gfx_decode rallyx_gfxdecodeinfo[] =
+static const gfx_decode rallyx_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &rallyx_charlayout,     0, 64 },
 	{ REGION_GFX1, 0, &rallyx_spritelayout,   0, 64 },
@@ -800,7 +800,7 @@ static gfx_decode rallyx_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode jungler_gfxdecodeinfo[] =
+static const gfx_decode jungler_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &jungler_charlayout,    0, 64 },
 	{ REGION_GFX1, 0, &jungler_spritelayout,  0, 64 },

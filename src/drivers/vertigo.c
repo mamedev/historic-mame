@@ -13,6 +13,7 @@
 #include "vidhrdw/vector.h"
 #include "vertigo.h"
 #include "exidy440.h"
+#include "machine/pit8253.h"
 
 /*************************************
  *
@@ -32,7 +33,7 @@ static ADDRESS_MAP_START( vertigo_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x004050, 0x00405f) AM_WRITE(vertigo_audio_w) AM_MIRROR(0x001000)
 	AM_RANGE(0x004060, 0x00406f) AM_WRITE(vertigo_motor_w) AM_MIRROR(0x001000)
 	AM_RANGE(0x004070, 0x00407f) AM_WRITE(vertigo_wsot_w) AM_MIRROR(0x001000)
-	AM_RANGE(0x006000, 0x006007) AM_READWRITE(vertigo_8254_r, vertigo_8254_w)
+	AM_RANGE(0x006000, 0x006007) AM_READWRITE(pit8253_0_lsb_r, pit8253_0_lsb_w)
 	AM_RANGE(0x007000, 0x0073ff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x800000, 0x81ffff) AM_ROM
 ADDRESS_MAP_END
@@ -228,4 +229,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1986, topgunnr, 0, vertigo, vertigo, 0, ROT0, "Exidy", "Top Gunner", 0 )
+GAME( 1986, topgunnr, 0, vertigo, vertigo, 0, ROT0, "Exidy", "Top Gunner", GAME_SUPPORTS_SAVE )

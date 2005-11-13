@@ -1508,8 +1508,8 @@ DRIVER_INIT( scorpion )
 	ppi8255_set_portCread(1, scorpion_prot_r);
 
 	/* extra ROM */
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_ROM);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MWA8_ROM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_BANK1);
+	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x5800);
 
 	/* no background related */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, MWA8_NOP);

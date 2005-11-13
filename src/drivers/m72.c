@@ -1948,7 +1948,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,4),	/* NUM characters */
@@ -1959,7 +1959,7 @@ static gfx_layout tilelayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,4),	/* NUM characters */
@@ -1972,7 +1972,7 @@ static gfx_layout spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode m72_gfxdecodeinfo[] =
+static const gfx_decode m72_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,    0, 16 },
 	{ REGION_GFX2, 0, &tilelayout,    256, 16 },
@@ -1980,14 +1980,14 @@ static gfx_decode m72_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode rtype2_gfxdecodeinfo[] =
+static const gfx_decode rtype2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,     0, 16 },
 	{ REGION_GFX2, 0, &tilelayout,     256, 16 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode majtitle_gfxdecodeinfo[] =
+static const gfx_decode majtitle_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,     0, 16 },
 	{ REGION_GFX2, 0, &tilelayout,     256, 16 },

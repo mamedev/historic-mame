@@ -552,7 +552,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	4,
 	8,
@@ -564,7 +564,7 @@ static gfx_layout charlayout =
 	8*4*2
 };
 
-static gfx_layout magiccrd_charlayout =
+static const gfx_layout magiccrd_charlayout =
 {
     4,
 	8,
@@ -578,13 +578,13 @@ static gfx_layout magiccrd_charlayout =
 
 /* Graphics Decode Information */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout, 0, 16 },
 	{ -1 }
 };
 
-static gfx_decode magiccrd_gfxdecodeinfo[] =
+static const gfx_decode magiccrd_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &magiccrd_charlayout, 0, 16 },
 	{ -1 }

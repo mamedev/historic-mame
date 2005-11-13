@@ -2165,7 +2165,7 @@ INPUT_PORTS_START( ufosensi )
 	PORT_DIPSETTING(	0x00, "Infinite Lives (both set)" )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -2176,7 +2176,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	/* sprites use colors 0-511, but are not defined here */
 	{ REGION_GFX1, 0, &charlayout, 512, 128 },

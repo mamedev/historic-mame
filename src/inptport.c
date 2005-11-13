@@ -1215,7 +1215,7 @@ INLINE int string_to_seq_index(const char *string)
 	int seqindex;
 
 	for (seqindex = 0; seqindex < ARRAY_LENGTH(seqtypestrings); seqindex++)
-		if (!stricmp(string, seqtypestrings[seqindex]))
+		if (!mame_stricmp(string, seqtypestrings[seqindex]))
 			return seqindex;
 
 	return -1;

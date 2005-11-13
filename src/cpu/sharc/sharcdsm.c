@@ -258,35 +258,69 @@ void get_if_condition(int cond)
 	}
 }
 
-void pm_dm_ureg(int g, int d, int i, int m, int ureg)
+void pm_dm_ureg(int g, int d, int i, int m, int ureg, int update)
 {
-	/* TODO: pre-modify/post-modify ! */
-	if( d ) {
-		if( g )
-			print("PM(%s, %s) = %s", GET_DAG2_I(i), GET_DAG2_M(m), GET_UREG(ureg));
-		else
-			print("DM(%s, %s) = %s", GET_DAG1_I(i), GET_DAG1_M(m), GET_UREG(ureg));
-	} else {
-		if( g )
-			print("%s = PM(%s, %s)", GET_UREG(ureg), GET_DAG2_I(i), GET_DAG2_M(m));
-		else
-			print("%s = DM(%s, %s)", GET_UREG(ureg), GET_DAG1_I(i), GET_DAG1_M(m));
+	if (update)		// post-modify
+	{
+		if( d ) {
+			if( g )
+				print("PM(%s, %s) = %s", GET_DAG2_I(i), GET_DAG2_M(m), GET_UREG(ureg));
+			else
+				print("DM(%s, %s) = %s", GET_DAG1_I(i), GET_DAG1_M(m), GET_UREG(ureg));
+		} else {
+			if( g )
+				print("%s = PM(%s, %s)", GET_UREG(ureg), GET_DAG2_I(i), GET_DAG2_M(m));
+			else
+				print("%s = DM(%s, %s)", GET_UREG(ureg), GET_DAG1_I(i), GET_DAG1_M(m));
+		}
+
+	}
+	else			// pre-modify
+	{
+		if( d ) {
+			if( g )
+				print("PM(%s, %s) = %s", GET_DAG2_M(m), GET_DAG2_I(i), GET_UREG(ureg));
+			else
+				print("DM(%s, %s) = %s", GET_DAG1_M(m), GET_DAG1_I(i), GET_UREG(ureg));
+		} else {
+			if( g )
+				print("%s = PM(%s, %s)", GET_UREG(ureg), GET_DAG2_M(m), GET_DAG2_I(i));
+			else
+				print("%s = DM(%s, %s)", GET_UREG(ureg), GET_DAG1_M(m), GET_DAG1_I(i));
+		}
 	}
 }
 
-void pm_dm_imm_dreg(int g, int d, int i, int data, int dreg)
+void pm_dm_imm_dreg(int g, int d, int i, int data, int dreg, int update)
 {
-	/* TODO: pre-modify/post-modify ! */
-	if( d ) {
-		if( g )
-			print("PM(%s, 0x%02X) = %s", GET_DAG2_I(i), data, GET_DREG(dreg));
-		else
-			print("DM(%s, 0x%02X) = %s", GET_DAG1_I(i), data, GET_DREG(dreg));
-	} else {
-		if( g )
-			print("%s = PM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG2_I(i), data);
-		else
-			print("%s = DM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG1_I(i), data);
+	if (update)		// post-modify
+	{
+		if( d ) {
+			if( g )
+				print("PM(%s, 0x%02X) = %s", GET_DAG2_I(i), data, GET_DREG(dreg));
+			else
+				print("DM(%s, 0x%02X) = %s", GET_DAG1_I(i), data, GET_DREG(dreg));
+		} else {
+			if( g )
+				print("%s = PM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG2_I(i), data);
+			else
+				print("%s = DM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG1_I(i), data);
+		}
+
+	}
+	else			// pre-modify
+	{
+		if( d ) {
+			if( g )
+				print("PM(0x%02X, %s) = %s", data, GET_DAG2_I(i), GET_DREG(dreg));
+			else
+				print("DM(0x%02X, %s) = %s", data, GET_DAG1_I(i), GET_DREG(dreg));
+		} else {
+			if( g )
+				print("%s = PM(0x%02X, %s)", GET_DREG(dreg), data, GET_DAG2_I(i));
+			else
+				print("%s = DM(0x%02X, %s)", GET_DREG(dreg), data, GET_DAG1_I(i));
+		}
 	}
 }
 
@@ -378,6 +412,7 @@ static void dasm_compute_uregdmpm_regmod(UINT32 pc, UINT64 opcode)
 	int d = (opcode >> 31) & 0x1;
 	int i = (opcode >> 41) & 0x7;
 	int m = (opcode >> 38) & 0x7;
+	int u = (opcode >> 44) & 0x1;
 	int ureg = (opcode >> 23) & 0xff;
 	int comp = opcode & 0x7fffff;
 
@@ -386,7 +421,7 @@ static void dasm_compute_uregdmpm_regmod(UINT32 pc, UINT64 opcode)
 		compute(comp);
 		print(",  ");
 	}
-	pm_dm_ureg(g,d,i,m, ureg);
+	pm_dm_ureg(g,d,i,m, ureg, u);
 }
 
 static void dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
@@ -395,6 +430,7 @@ static void dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
 	int g = (opcode >> 40) & 0x1;
 	int d = (opcode >> 39) & 0x1;
 	int i = (opcode >> 41) & 0x7;
+	int u = (opcode >> 38) & 0x1;
 	int dreg = (opcode >> 23) & 0xf;
 	int data = (opcode >> 27) & 0x3f;
 	int comp = opcode & 0x7fffff;
@@ -404,7 +440,7 @@ static void dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
 		compute(comp);
 		print(",  ");
 	}
-	pm_dm_imm_dreg(g,d,i, data, dreg);
+	pm_dm_imm_dreg(g,d,i, data, dreg, u);
 }
 
 static void dasm_compute_ureg_ureg(UINT32 pc, UINT64 opcode)

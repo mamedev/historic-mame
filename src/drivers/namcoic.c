@@ -1501,7 +1501,7 @@ static int mbRoadNeedTransparent;
 #define ROAD_TILE_COUNT_MAX	(0xfa00/0x40) /* 0x3e8 */
 #define WORDS_PER_ROAD_TILE (0x40/2)
 
-static gfx_layout RoadTileLayout =
+static const gfx_layout RoadTileLayout =
 {
 	ROAD_TILE_SIZE,
 	ROAD_TILE_SIZE,

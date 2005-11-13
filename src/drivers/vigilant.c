@@ -465,7 +465,7 @@ INPUT_PORTS_START( buccanra )
 INPUT_PORTS_END
 
 
-static gfx_layout text_layout =
+static const gfx_layout text_layout =
 {
 	8,8, /* tile size */
 	RGN_FRAC(1,2), /* number of tiles */
@@ -476,7 +476,7 @@ static gfx_layout text_layout =
 	128
 };
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	16,16,	/* tile size */
 	RGN_FRAC(1,2),	/* number of sprites ($1000) */
@@ -497,7 +497,7 @@ static gfx_layout sprite_layout =
 	0x40*8
 };
 
-static gfx_layout sprite_layout_buccanrs =
+static const gfx_layout sprite_layout_buccanrs =
 {
 	16,16,	/* tile size */
 	RGN_FRAC(1,2),	/* number of sprites ($1000) */
@@ -519,7 +519,7 @@ static gfx_layout sprite_layout_buccanrs =
 };
 
 
-static gfx_layout back_layout =
+static const gfx_layout back_layout =
 {
 	32,1, /* tile size */
 	RGN_FRAC(1,1), /* number of tiles */
@@ -532,7 +532,7 @@ static gfx_layout back_layout =
 	16*8
 };
 
-static gfx_layout buccaneer_back_layout =
+static const gfx_layout buccaneer_back_layout =
 {
 	32,1, /* tile size */
 	RGN_FRAC(1,1), /* number of tiles */
@@ -545,7 +545,7 @@ static gfx_layout buccaneer_back_layout =
 	16*8
 };
 
-static gfx_decode vigilant_gfxdecodeinfo[] =
+static const gfx_decode vigilant_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &text_layout,   256, 16 },	/* colors 256-511 */
 	{ REGION_GFX2, 0, &sprite_layout,   0, 16 },	/* colors   0-255 */
@@ -555,7 +555,7 @@ static gfx_decode vigilant_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode buccanrs_gfxdecodeinfo[] =
+static const gfx_decode buccanrs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &text_layout,   256, 16 },	/* colors 256-511 */
 	{ REGION_GFX2, 0, &sprite_layout_buccanrs,   0, 16 },	/* colors   0-255 */
@@ -565,7 +565,7 @@ static gfx_decode buccanrs_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode kikcubic_gfxdecodeinfo[] =
+static const gfx_decode kikcubic_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &text_layout,   0, 16 },
 	{ REGION_GFX2, 0, &sprite_layout, 0, 16 },

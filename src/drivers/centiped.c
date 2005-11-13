@@ -1189,7 +1189,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1200,7 +1200,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	8,16,
 	RGN_FRAC(1,2),
@@ -1212,14 +1212,14 @@ static gfx_layout spritelayout =
 	16*8
 };
 
-static gfx_decode centiped_gfxdecodeinfo[] =
+static const gfx_decode centiped_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 1 },
 	{ REGION_GFX1, 0, &spritelayout,   4, 4*4*4 },
 	{ -1 }
 };
 
-static gfx_decode milliped_gfxdecodeinfo[] =
+static const gfx_decode milliped_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 4 },
 	{ REGION_GFX1, 0, &spritelayout, 4*4, 4*4*4*4 },
@@ -1234,7 +1234,7 @@ static gfx_decode milliped_gfxdecodeinfo[] =
  *
  *************************************/
 
-static gfx_layout warlords_charlayout =
+static const gfx_layout warlords_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1245,7 +1245,7 @@ static gfx_layout warlords_charlayout =
 	8*8
 };
 
-static gfx_decode warlords_gfxdecodeinfo[] =
+static const gfx_decode warlords_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000, &warlords_charlayout, 0,   8 },
 	{ REGION_GFX1, 0x200, &warlords_charlayout, 8*4, 8*4 },

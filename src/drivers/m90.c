@@ -643,7 +643,7 @@ INPUT_PORTS_END
 
 /*****************************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -654,7 +654,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -667,7 +667,7 @@ static gfx_layout spritelayout =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 16 },
 	{ REGION_GFX1, 0, &spritelayout, 256, 16 },
@@ -1161,10 +1161,15 @@ static DRIVER_INIT( bombrman )
 static UINT8 *bbmanw_ram_base;
 extern UINT8 *irem_cpu_decrypted;
 
-static WRITE8_HANDLER (bbmanw_ram_write)
+static WRITE8_HANDLER( bbmanw_ram_write )
 {
 	bbmanw_ram_base[offset]=data;
-	irem_cpu_decrypted[0x1a0c00+offset]=dynablaster_decryption_table[data];
+	irem_cpu_decrypted[0xa0c00+offset]=dynablaster_decryption_table[data];
+}
+
+static READ8_HANDLER( bbmanw_ram_read )
+{
+	return bbmanw_ram_base[offset];
 }
 
 static DRIVER_INIT( bbmanw )
@@ -1172,6 +1177,7 @@ static DRIVER_INIT( bbmanw )
 	irem_cpu_decrypt(0,dynablaster_decryption_table);
 
 	bbmanw_ram_base = memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0c00, 0xa0cff, 0, 0, bbmanw_ram_write);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0c00, 0xa0cff, 0, 0, bbmanw_ram_read);
 }
 
 static DRIVER_INIT( quizf1 )

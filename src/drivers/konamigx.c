@@ -1243,7 +1243,7 @@ static struct K054539interface k054539_interface =
 /* i think we could reduce the number of machine drivers with different visible areas by adjusting the sprite
    positioning on a per game basis too */
 
-static gfx_layout bglayout_8bpp =
+static const gfx_layout bglayout_8bpp =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1279,14 +1279,14 @@ gfx_layout t1_charlayout8 =
 };
 
 /* type 1 (opengolf + racinfrc) use 6 and 8 bpp planar layouts for the 53936 */
-static gfx_decode gfxdecodeinfo_opengolf[] =
+static const gfx_decode gfxdecodeinfo_opengolf[] =
 {
 	{ REGION_GFX3, 0, &t1_charlayout8, 0x0000, 8 },
 	{ REGION_GFX4, 0, &t1_charlayout6, 0x0000, 8 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_racinfrc[] =
+static const gfx_decode gfxdecodeinfo_racinfrc[] =
 {
 	{ REGION_GFX3, 0, &t1_charlayout6, 0x0000, 8 },
 	{ REGION_GFX4, 0, &t1_charlayout6, 0x0000, 8 },
@@ -1294,7 +1294,7 @@ static gfx_decode gfxdecodeinfo_racinfrc[] =
 };
 
 /* type 3 & 4 games use a simple 8bpp decode for the 53936 */
-static gfx_decode gfxdecodeinfo_type34[] =
+static const gfx_decode gfxdecodeinfo_type34[] =
 {
 	{ REGION_GFX3, 0, &bglayout_8bpp, 0x0000, 8 },
 	{ -1 } /* end of array */

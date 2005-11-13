@@ -2328,9 +2328,9 @@
  *           Z R   Z rBias  |   |     |         |
  *           |     |        |   Z     |   555   |
  *           |     |        |   Z     |      Out|---> Netlist Node
- *         .----.  |        |   |     |         |
- *  Vin >--| CC |--+--------'   +-----|Threshold|
- *         '----'               |     |         |
+ *         .----.  |      >-'   |     |         |
+ *  Vin >--| CC |--+--> option  +-----|Threshold|
+ *         '----'         >-----+     |         |
  *                              +-----|Trigger  |
  *                              |     |         |
  *                 .------+-----'     |  Reset  |
@@ -2344,6 +2344,9 @@
  *        The current follows the voltage I=Vin/R and charges C.
  *        rBias, rDischarge and rGnd should be 0 if not used.
  *        Reset is active low for the module.
+ *
+ *        Note that the CC source can be connected two different ways.
+ *        See the option flags below for more info.
  *
  *        DISC_555_OUT_SQW mode only:
  *        When there is no rDischarge there is a very short discharge
@@ -2382,6 +2385,14 @@
  *
  *  Waveform Types: (ORed with output types)
  *     See DISCRETE_555_ASTABLE for description.
+ *
+ *  Other Flags:
+ *     DISCRETE_555_CC_TO_DISCHARGE_PIN - The CC source connects to the
+ *                                        discharge pin. (Default)
+ *     DISCRETE_555_CC_TO_CAP           - The CC source connects to the
+ *                                        threshold pin.  This is not fully
+ *                                        implemented yet.  It only works properly
+ *                                        when only rDischarge is defined.
  *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug
  *
@@ -2616,6 +2627,8 @@ enum
                                                  * Used only internally in module. */
 
 #define DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE		0x80
+#define DISCRETE_555_CC_TO_DISCHARGE_PIN			0x00
+#define DISCRETE_555_CC_TO_CAP						0x80
 
 /* 566 output flags */
 #define DISC_566_OUT_DC					0x00

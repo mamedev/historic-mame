@@ -288,7 +288,7 @@ INPUT_PORTS_START( bestleag )
 INPUT_PORTS_END
 
 /* GFX Decode */
-static gfx_layout bestleag_charlayout =
+static const gfx_layout bestleag_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -299,7 +299,7 @@ static gfx_layout bestleag_charlayout =
 	8*8
 };
 
-static gfx_layout bestleag_char16layout =
+static const gfx_layout bestleag_char16layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -311,7 +311,7 @@ static gfx_layout bestleag_char16layout =
 	16*16
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bestleag_charlayout,     0x200, 16 },
 	{ REGION_GFX1, 0, &bestleag_char16layout,   0x000, 32 },

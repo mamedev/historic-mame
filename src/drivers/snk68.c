@@ -609,7 +609,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
 	2048,
@@ -620,7 +620,7 @@ static gfx_layout charlayout =
 	16*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout pow_spritelayout =
+static const gfx_layout pow_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096*4,
@@ -633,7 +633,7 @@ static gfx_layout pow_spritelayout =
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout searchar_spritelayout =
+static const gfx_layout searchar_spritelayout =
 {
 	16,16,
 	0x6000,
@@ -648,7 +648,7 @@ static gfx_layout searchar_spritelayout =
 	64*8
 };
 
-static gfx_layout ikari3_spritelayout =
+static const gfx_layout ikari3_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	4096*5,
@@ -661,21 +661,21 @@ static gfx_layout ikari3_spritelayout =
 	8*32	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode pow_gfxdecodeinfo[] =
+static const gfx_decode pow_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,		 0, 128 },
 	{ REGION_GFX2, 0, &pow_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode searchar_gfxdecodeinfo[] =
+static const gfx_decode searchar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,			  0,  16 },
 	{ REGION_GFX2, 0, &searchar_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode ikari3_gfxdecodeinfo[] =
+static const gfx_decode ikari3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,			0,	16 },
 	{ REGION_GFX2, 0, &ikari3_spritelayout, 0, 128 },

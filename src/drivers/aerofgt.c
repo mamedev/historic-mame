@@ -1122,7 +1122,7 @@ INPUT_PORTS_START( wbbc97 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 INPUT_PORTS_END
 
-static gfx_layout pspikes_charlayout =
+static const gfx_layout pspikes_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1133,7 +1133,7 @@ static gfx_layout pspikes_charlayout =
 	32*8
 };
 
-static gfx_layout aerofgt_charlayout =
+static const gfx_layout aerofgt_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1144,7 +1144,7 @@ static gfx_layout aerofgt_charlayout =
 	32*8
 };
 
-static gfx_layout pspikesb_charlayout =
+static const gfx_layout pspikesb_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1155,7 +1155,7 @@ static gfx_layout pspikesb_charlayout =
 	8*8
 };
 
-static gfx_layout aerfboot_charlayout =
+static const gfx_layout aerfboot_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -1166,7 +1166,7 @@ static gfx_layout aerfboot_charlayout =
 	8*8
 };
 
-static gfx_layout pspikes_spritelayout =
+static const gfx_layout pspikes_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1179,7 +1179,7 @@ static gfx_layout pspikes_spritelayout =
 	64*8
 };
 
-static gfx_layout pspikesb_spritelayout =
+static const gfx_layout pspikesb_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1191,7 +1191,7 @@ static gfx_layout pspikesb_spritelayout =
 	32*8
 };
 
-static gfx_layout aerofgtb_spritelayout =
+static const gfx_layout aerofgtb_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1204,7 +1204,7 @@ static gfx_layout aerofgtb_spritelayout =
 	64*8
 };
 
-static gfx_layout aerofgt_spritelayout =
+static const gfx_layout aerofgt_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1217,7 +1217,7 @@ static gfx_layout aerofgt_spritelayout =
 	128*8
 };
 
-static gfx_layout aerfboot_spritelayout =
+static const gfx_layout aerfboot_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1230,7 +1230,7 @@ static gfx_layout aerfboot_spritelayout =
 	64*8
 };
 
-static gfx_layout wbbc97_spritelayout =
+static const gfx_layout wbbc97_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1246,21 +1246,21 @@ static gfx_layout wbbc97_spritelayout =
 	8*32
 };
 
-static gfx_decode pspikes_gfxdecodeinfo[] =
+static const gfx_decode pspikes_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pspikes_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
 	{ REGION_GFX2, 0, &pspikes_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode pspikesb_gfxdecodeinfo[] =
+static const gfx_decode pspikesb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pspikesb_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
 	{ REGION_GFX2, 0, &pspikesb_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode turbofrc_gfxdecodeinfo[] =
+static const gfx_decode turbofrc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pspikes_charlayout,     0, 16 },
 	{ REGION_GFX2, 0, &pspikes_charlayout,   256, 16 },
@@ -1269,7 +1269,7 @@ static gfx_decode turbofrc_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode aerofgtb_gfxdecodeinfo[] =
+static const gfx_decode aerofgtb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pspikes_charlayout,      0, 16 },
 	{ REGION_GFX2, 0, &pspikes_charlayout,    256, 16 },
@@ -1278,7 +1278,7 @@ static gfx_decode aerofgtb_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode aerofgt_gfxdecodeinfo[] =
+static const gfx_decode aerofgt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &aerofgt_charlayout,     0, 16 },
 	{ REGION_GFX1, 0, &aerofgt_charlayout,   256, 16 },
@@ -1287,7 +1287,7 @@ static gfx_decode aerofgt_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode aerfboot_gfxdecodeinfo[] =
+static const gfx_decode aerfboot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0,       &aerfboot_charlayout,     0, 16 },
 	{ REGION_GFX1, 0x20000, &aerfboot_charlayout,   256, 16 },
@@ -1296,7 +1296,7 @@ static gfx_decode aerfboot_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode wbbc97_gfxdecodeinfo[] =
+static const gfx_decode wbbc97_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &pspikes_charlayout,      0, 64 },	/* colors    0-1023 in 8 banks */
 	{ REGION_GFX2, 0, &wbbc97_spritelayout, 1024, 64 },	/* colors 1024-2047 in 4 banks */

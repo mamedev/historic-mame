@@ -1042,7 +1042,7 @@ static void do_extractcd(int argc, char *argv[])
 	long trkoffs, trklen;
 	const char *typenames[8] = { "MODE1", "MODE1_RAW", "MODE2", "MODE2_FORM1", "MODE2_FORM2", "MODE2_FORM_MIX", "MODE2_RAW", "AUDIO" };
 	const char *subnames[2] = { "RW", "RW_RAW" };
-	unsigned char sector[CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA];
+	UINT8 sector[CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA];
 
 	/* require 5 args total */
 	if (argc != 5)
@@ -1424,7 +1424,7 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 		return CHDERR_OUT_OF_MEMORY;
 
 	/* check for midway */
-	if (!stricmp(name, "midway"))
+	if (!mame_stricmp(name, "midway"))
 	{
 		UINT32 maxsector = 0;
 		UINT32 numparts;
@@ -1455,7 +1455,7 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 	}
 
 	/* check for atari */
-	if (!stricmp(name, "atari"))
+	if (!mame_stricmp(name, "atari"))
 	{
 		UINT32 sectors[4];
 		UINT8 *data;
@@ -2126,33 +2126,33 @@ int main(int argc, char **argv)
 	chd_set_interface(&chdman_interface);
 
 	/* handle the appropriate command */
-	if (!stricmp(argv[1], "-createhd"))
+	if (!mame_stricmp(argv[1], "-createhd"))
 		do_createhd(argc, argv);
-	if (!stricmp(argv[1], "-createblankhd"))
+	if (!mame_stricmp(argv[1], "-createblankhd"))
 		do_createblankhd(argc, argv);
-	if (!stricmp(argv[1], "-copydata"))
+	if (!mame_stricmp(argv[1], "-copydata"))
 		do_copydata(argc, argv);
-	else if (!stricmp(argv[1], "-createcd"))
+	else if (!mame_stricmp(argv[1], "-createcd"))
 		do_createcd(argc, argv);
-	else if (!stricmp(argv[1], "-extract"))
+	else if (!mame_stricmp(argv[1], "-extract"))
 		do_extract(argc, argv);
-	else if (!stricmp(argv[1], "-extractcd"))
+	else if (!mame_stricmp(argv[1], "-extractcd"))
 		do_extractcd(argc, argv);
-	else if (!stricmp(argv[1], "-verify"))
+	else if (!mame_stricmp(argv[1], "-verify"))
 		do_verify(argc, argv, 0);
-	else if (!stricmp(argv[1], "-verifyfix"))
+	else if (!mame_stricmp(argv[1], "-verifyfix"))
 		do_verify(argc, argv, 1);
-	else if (!stricmp(argv[1], "-update"))
+	else if (!mame_stricmp(argv[1], "-update"))
 		do_merge_update_chomp(argc, argv, OPERATION_UPDATE);
-	else if (!stricmp(argv[1], "-chomp"))
+	else if (!mame_stricmp(argv[1], "-chomp"))
 		do_merge_update_chomp(argc, argv, OPERATION_CHOMP);
-	else if (!stricmp(argv[1], "-info"))
+	else if (!mame_stricmp(argv[1], "-info"))
 		do_info(argc, argv);
-	else if (!stricmp(argv[1], "-merge"))
+	else if (!mame_stricmp(argv[1], "-merge"))
 		do_merge_update_chomp(argc, argv, OPERATION_MERGE);
-	else if (!stricmp(argv[1], "-diff"))
+	else if (!mame_stricmp(argv[1], "-diff"))
 		do_diff(argc, argv);
-	else if (!stricmp(argv[1], "-setchs"))
+	else if (!mame_stricmp(argv[1], "-setchs"))
 		do_setchs(argc, argv);
 	else
 		error();

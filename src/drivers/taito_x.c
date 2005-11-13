@@ -981,7 +981,7 @@ INPUT_PORTS_END
 /**************************************************************************/
 
 #define NUM_TILES 16384
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,  /* 16*16 sprites */
 	NUM_TILES,	/* 16384 of them */
@@ -996,7 +996,7 @@ static gfx_layout tilelayout =
 };
 #undef NUM_TILES
 
-static gfx_layout ballbros_tilelayout =
+static const gfx_layout ballbros_tilelayout =
 {
 	16,16,  /* 16*16 sprites */
 	4096,	/* 4096 of them */
@@ -1010,13 +1010,13 @@ static gfx_layout ballbros_tilelayout =
 	32*8	/* every sprite takes 64 consecutive bytes */
 };
 
-static gfx_decode superman_gfxdecodeinfo[] =
+static const gfx_decode superman_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &tilelayout,    0, 256 },	 /* sprites & playfield */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode ballbros_gfxdecodeinfo[] =
+static const gfx_decode ballbros_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &ballbros_tilelayout,    0, 256 },	 /* sprites & playfield */
 	{ -1 } /* end of array */

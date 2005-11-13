@@ -322,7 +322,7 @@ VIDEO_UPDATE( magic10 )
 	tilemap_draw(bitmap,cliprect,layer2_tilemap,0,0);
 }
 
-static gfx_layout tiles8x8_layout =
+static const gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -333,7 +333,7 @@ static gfx_layout tiles8x8_layout =
 	8*8
 };
 
-static gfx_layout tiles16x16_layout =
+static const gfx_layout tiles16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -346,7 +346,7 @@ static gfx_layout tiles16x16_layout =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout,   0, 16 },
 	{ REGION_GFX1, 0, &tiles16x16_layout, 0, 16 },

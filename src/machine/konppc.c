@@ -4,9 +4,12 @@
 
 #define MAX_CG_BOARDS	2
 
-static UINT32 dsp_comm_ppc[2];
-static UINT32 dsp_comm_sharc[2];
-static int dsp_shared_ram_bank = 0;
+static UINT32 dsp_comm_ppc[MAX_CG_BOARDS][2];
+static UINT32 dsp_comm_sharc[MAX_CG_BOARDS][2];
+static int dsp_shared_ram_bank[MAX_CG_BOARDS];
+
+static int cgboard_id;
+static int cgboard_texture_bank = -1;
 
 static UINT32 *dsp_shared_ram[MAX_CG_BOARDS];
 
@@ -14,8 +17,19 @@ static UINT32 *dsp_shared_ram[MAX_CG_BOARDS];
 
 void init_konami_cgboard(int board_id)
 {
-	dsp_comm_ppc[0] = 0x00;
+	dsp_comm_ppc[board_id][0] = 0x00;
 	dsp_shared_ram[board_id] = auto_malloc(0x20000);
+	dsp_shared_ram_bank[board_id] = 0;
+}
+
+void set_cgboard_id(int board_id)
+{
+	cgboard_id = board_id;
+}
+
+void set_cgboard_texture_bank(int bank)
+{
+	cgboard_texture_bank = bank;
 }
 
 /*****************************************************************************/
@@ -25,50 +39,94 @@ void init_konami_cgboard(int board_id)
 READ32_HANDLER( cgboard_dsp_comm_r_ppc )
 {
 //  printf("dsp_cmd_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
-	return dsp_comm_sharc[offset] | dsp_comm_sharc[offset+1] << 8;
+	return dsp_comm_sharc[cgboard_id][offset] | dsp_comm_sharc[cgboard_id][offset+1] << 16;
 }
 
 WRITE32_HANDLER( cgboard_dsp_comm_w_ppc )
 {
 //  printf("dsp_cmd_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
 
-	if (offset == 0)
+	if (cgboard_id == 0)
 	{
-		if (!(mem_mask & 0xff000000))
+		if (offset == 0)
 		{
-			if (data & 0x10000000)
+			if (!(mem_mask & 0xff000000))
 			{
-				cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
-				cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to boot itself
-			}
-			else
-			{
-				cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+				if (data & 0x10000000)
+				{
+					cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
+					cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to boot itself
+				}
+				else
+				{
+					cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+				}
+
+				if (data & 0x02000000)
+				{
+					cpunum_set_input_line(2, INPUT_LINE_IRQ0, ASSERT_LINE);
+					cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
+				}
+				if (data & 0x04000000)
+				{
+					cpunum_set_input_line(2, INPUT_LINE_IRQ1, ASSERT_LINE);
+					cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
+				}
+
+				dsp_shared_ram_bank[cgboard_id] = (data >> 24) & 0x1;
 			}
 
-			if (data & 0x02000000)
+			if (!(mem_mask & 0x000000ff))
 			{
-				cpunum_set_input_line(2, INPUT_LINE_IRQ0, ASSERT_LINE);
-				cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
+				dsp_comm_ppc[cgboard_id][offset] = data & 0xff;
+				cpu_spinuntil_time(TIME_IN_USEC(500));			// Give the SHARC enough time to respond
 			}
-			if (data & 0x04000000)
-			{
-				cpunum_set_input_line(2, INPUT_LINE_IRQ1, ASSERT_LINE);
-				cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
-			}
-
-			dsp_shared_ram_bank = (data >> 24) & 0x1;
 		}
-
-		if (!(mem_mask & 0x000000ff))
+		else
 		{
-			dsp_comm_ppc[offset] = data & 0xff;
-			cpu_spinuntil_time(TIME_IN_USEC(500));			// Give the SHARC enough time to respond
+			dsp_comm_ppc[cgboard_id][offset] = data;
 		}
 	}
-	else
+	else if (cgboard_id == 1)
 	{
-		dsp_comm_ppc[offset] = data;
+		if (offset == 0)
+		{
+			if (!(mem_mask & 0xff000000))
+			{
+				if (data & 0x10000000)
+				{
+					cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
+					cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to boot itself
+				}
+				else
+				{
+					cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
+				}
+
+				if (data & 0x02000000)
+				{
+					cpunum_set_input_line(3, INPUT_LINE_IRQ0, ASSERT_LINE);
+					cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
+				}
+				if (data & 0x04000000)
+				{
+					cpunum_set_input_line(3, INPUT_LINE_IRQ1, ASSERT_LINE);
+					cpu_spinuntil_time(TIME_IN_USEC(1000));		// Give the SHARC enough time to respond
+				}
+
+				dsp_shared_ram_bank[cgboard_id] = (data >> 24) & 0x1;
+			}
+
+			if (!(mem_mask & 0x000000ff))
+			{
+				dsp_comm_ppc[cgboard_id][offset] = data & 0xff;
+				cpu_spinuntil_time(TIME_IN_USEC(500));			// Give the SHARC enough time to respond
+			}
+		}
+		else
+		{
+			dsp_comm_ppc[cgboard_id][offset] = data;
+		}
 	}
 }
 
@@ -76,12 +134,12 @@ WRITE32_HANDLER( cgboard_dsp_comm_w_ppc )
 
 READ32_HANDLER( cgboard_dsp_shared_r_ppc )
 {
-	return dsp_shared_ram[0][offset + (dsp_shared_ram_bank * 0x4000)];
+	return dsp_shared_ram[cgboard_id][offset + (dsp_shared_ram_bank[cgboard_id] * 0x4000)];
 }
 
 WRITE32_HANDLER( cgboard_dsp_shared_w_ppc )
 {
-	COMBINE_DATA(dsp_shared_ram[0] + (offset + (dsp_shared_ram_bank * 0x4000)));
+	COMBINE_DATA(dsp_shared_ram[cgboard_id] + (offset + (dsp_shared_ram_bank[cgboard_id] * 0x4000)));
 }
 
 /*****************************************************************************/
@@ -90,7 +148,7 @@ WRITE32_HANDLER( cgboard_dsp_shared_w_ppc )
 
 READ32_HANDLER( cgboard_dsp_comm_r_sharc )
 {
-	return dsp_comm_ppc[offset];
+	return dsp_comm_ppc[cgboard_id][offset];
 }
 
 WRITE32_HANDLER( cgboard_dsp_comm_w_sharc )
@@ -100,8 +158,23 @@ WRITE32_HANDLER( cgboard_dsp_comm_w_sharc )
 		osd_die("dsp_comm_w: %08X, %08X\n", data, offset);
 	}
 
+	if (offset == 1)
+	{
+		if (cgboard_texture_bank != -1)
+		{
+			if (data & 0x08)
+			{
+				memory_set_bankptr(cgboard_texture_bank, memory_region(REGION_USER5) + 0x800000);
+			}
+			else
+			{
+				memory_set_bankptr(cgboard_texture_bank, memory_region(REGION_USER5));
+			}
+		}
+	}
+
 //  printf("cgboard_dsp_comm_w_sharc: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
-	dsp_comm_sharc[offset] = data & 0xff;
+	dsp_comm_sharc[cgboard_id][offset] = data;
 }
 
 
@@ -112,11 +185,11 @@ READ32_HANDLER( cgboard_dsp_shared_r_sharc )
 
 	if (offset & 0x1)
 	{
-		return (dsp_shared_ram[0][(offset >> 1) + ((dsp_shared_ram_bank ^ 1) * 0x4000)] >> 0) & 0xffff;
+		return (dsp_shared_ram[cgboard_id][(offset >> 1) + ((dsp_shared_ram_bank[cgboard_id] ^ 1) * 0x4000)] >> 0) & 0xffff;
 	}
 	else
 	{
-		return (dsp_shared_ram[0][(offset >> 1) + ((dsp_shared_ram_bank ^ 1) * 0x4000)] >> 16) & 0xffff;
+		return (dsp_shared_ram[cgboard_id][(offset >> 1) + ((dsp_shared_ram_bank[cgboard_id] ^ 1) * 0x4000)] >> 16) & 0xffff;
 	}
 }
 
@@ -125,13 +198,13 @@ WRITE32_HANDLER( cgboard_dsp_shared_w_sharc )
 //  printf("dsp_shared_w: %08X, %08X\n", offset, data);
 	if (offset & 0x1)
 	{
-		dsp_shared_ram[0][(offset >> 1) + ((dsp_shared_ram_bank ^ 1) * 0x4000)] &= 0xffff0000;
-		dsp_shared_ram[0][(offset >> 1) + ((dsp_shared_ram_bank ^ 1) * 0x4000)] |= (data & 0xffff);
+		dsp_shared_ram[cgboard_id][(offset >> 1) + ((dsp_shared_ram_bank[cgboard_id] ^ 1) * 0x4000)] &= 0xffff0000;
+		dsp_shared_ram[cgboard_id][(offset >> 1) + ((dsp_shared_ram_bank[cgboard_id] ^ 1) * 0x4000)] |= (data & 0xffff);
 	}
 	else
 	{
-		dsp_shared_ram[0][(offset >> 1) + ((dsp_shared_ram_bank ^ 1) * 0x4000)] &= 0x0000ffff;
-		dsp_shared_ram[0][(offset >> 1) + ((dsp_shared_ram_bank ^ 1) * 0x4000)] |= ((data & 0xffff) << 16);
+		dsp_shared_ram[cgboard_id][(offset >> 1) + ((dsp_shared_ram_bank[cgboard_id] ^ 1) * 0x4000)] &= 0x0000ffff;
+		dsp_shared_ram[cgboard_id][(offset >> 1) + ((dsp_shared_ram_bank[cgboard_id] ^ 1) * 0x4000)] |= ((data & 0xffff) << 16);
 	}
 }
 

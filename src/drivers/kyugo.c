@@ -436,7 +436,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout fg_tilelayout =
+static const gfx_layout fg_tilelayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -447,7 +447,7 @@ static gfx_layout fg_tilelayout =
 	8*8*2
 };
 
-static gfx_layout bg_tilelayout =
+static const gfx_layout bg_tilelayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -458,7 +458,7 @@ static gfx_layout bg_tilelayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -471,7 +471,7 @@ static gfx_layout spritelayout =
 	16*16
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fg_tilelayout, 0, 64 },
 	{ REGION_GFX2, 0, &bg_tilelayout, 0, 32 },

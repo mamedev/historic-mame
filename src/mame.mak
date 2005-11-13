@@ -1278,6 +1278,7 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/fortecar.o \
 	$(OBJ)/drivers/coinmstr.o \
 	$(OBJ)/drivers/dwarfd.o \
+	$(OBJ)/drivers/tattack.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \
@@ -1311,7 +1312,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/laserbas.o \
 	$(OBJ)/drivers/turbosub.o \
-	$(OBJ)/drivers/penocup.o \
+	$(OBJ)/drivers/ttchamp.o \
 	$(OBJ)/drivers/dreamwld.o \
 	$(OBJ)/drivers/cybertnk.o \
 	$(OBJ)/drivers/funworld.o \

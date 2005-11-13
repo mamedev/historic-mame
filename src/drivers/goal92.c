@@ -265,7 +265,7 @@ static struct MSM5205interface msm5205_interface =
 	MSM5205_S96_4B		/* 4KHz 4-bit */
 };
 
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -276,7 +276,7 @@ static gfx_layout layout_8x8x4 =
 	8*8
 };
 
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -287,7 +287,7 @@ static gfx_layout layout_16x16x4 =
 	16*16
 };
 
-static gfx_layout layout_16x16x4_2 =
+static const gfx_layout layout_16x16x4_2 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -300,7 +300,7 @@ static gfx_layout layout_16x16x4_2 =
 	1024
 };
 
-static gfx_decode goal92_gfxdecodeinfo[] =
+static const gfx_decode goal92_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,		   0*16, 8*16 }, // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,		  48*16,   16 }, // Text Layer
@@ -310,7 +310,7 @@ static gfx_decode goal92_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode cupsocbl_gfxdecodeinfo[] =
+static const gfx_decode cupsocbl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4_2,	   0*16, 8*16 }, // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	      48*16,   16 }, // Text Layer

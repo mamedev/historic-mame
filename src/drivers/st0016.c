@@ -268,7 +268,7 @@ INPUT_PORTS_START( nratechu )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW)
 INPUT_PORTS_END
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 //  { 0, 0, &charlayout,      0, 16*4  },
 	{ -1 }	/* end of array */

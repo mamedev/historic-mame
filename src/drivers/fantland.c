@@ -638,7 +638,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout layout16x16x6 =
+static const gfx_layout layout16x16x6 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -649,7 +649,7 @@ static gfx_layout layout16x16x6 =
 	16*16*6
 };
 
-static gfx_decode fantland_gfxdecodeinfo[] =
+static const gfx_decode fantland_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout16x16x6, 0, 4 }, // [0] Sprites
 	{ -1 }

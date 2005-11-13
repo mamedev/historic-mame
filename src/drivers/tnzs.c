@@ -1241,7 +1241,7 @@ INPUT_PORTS_START( kageki )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static gfx_layout tnzs_charlayout =
+static const gfx_layout tnzs_charlayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -1254,7 +1254,7 @@ static gfx_layout tnzs_charlayout =
 	32*8
 };
 
-static gfx_layout insectx_charlayout =
+static const gfx_layout insectx_charlayout =
 {
 	16,16,
 	8192,
@@ -1267,13 +1267,13 @@ static gfx_layout insectx_charlayout =
 	64*8
 };
 
-static gfx_decode tnzs_gfxdecodeinfo[] =
+static const gfx_decode tnzs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tnzs_charlayout, 0, 32 },
 	{ -1 }	/* end of array */
 };
 
-static gfx_decode insectx_gfxdecodeinfo[] =
+static const gfx_decode insectx_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &insectx_charlayout, 0, 32 },
 	{ -1 }	/* end of array */

@@ -171,7 +171,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout diverboy_spritelayout =
+static const gfx_layout diverboy_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -184,7 +184,7 @@ static gfx_layout diverboy_spritelayout =
 	16*64
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &diverboy_spritelayout, 0, 4*16 },
 	{ REGION_GFX2, 0, &diverboy_spritelayout, 0, 4*16 },

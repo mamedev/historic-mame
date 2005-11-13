@@ -201,7 +201,7 @@ INPUT_PORTS_START( sspeedr )
 INPUT_PORTS_END
 
 
-static gfx_layout car_layout =
+static const gfx_layout car_layout =
 {
 	32, 16,
 	16,
@@ -221,7 +221,7 @@ static gfx_layout car_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &car_layout, 0, 1 },
 	{ REGION_GFX2, 0, &car_layout, 0, 1 },

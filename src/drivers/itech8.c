@@ -970,7 +970,7 @@ ADDRESS_MAP_END
 
 /*------ Ninja Clowns layout ------*/
 static ADDRESS_MAP_START( ninclown_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00007f) AM_RAM
+	AM_RANGE(0x000000, 0x00007f) AM_RAM AM_REGION(REGION_CPU1, 0)
 	AM_RANGE(0x000080, 0x003fff) AM_RAM AM_BASE((void *)&main_ram) AM_SIZE(&main_ram_size)
 	AM_RANGE(0x004000, 0x07ffff) AM_ROM
 	AM_RANGE(0x100080, 0x100081) AM_WRITE(sound_data16_w)

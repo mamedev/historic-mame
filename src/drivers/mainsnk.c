@@ -146,7 +146,7 @@ INPUT_PORTS_START( mainsnk )
 INPUT_PORTS_END
 
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -158,7 +158,7 @@ static gfx_layout tile_layout =
 };
 
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -177,7 +177,7 @@ static struct namco_interface snkwave_interface =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &tile_layout,	0,  8 },
 	{ REGION_GFX2, 0x0, &sprite_layout,	0, 16 },

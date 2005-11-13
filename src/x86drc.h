@@ -44,6 +44,7 @@ struct _drc_core
 	void *		out_of_cycles;			/* pointer to out of cycles jump point */
 	void *		recompile;				/* pointer to recompile jump point */
 	void *		dispatch;				/* pointer to dispatch jump point */
+	void *		flush;					/* pointer to flush jump point */
 
 	UINT32 *	pcptr;					/* pointer to where the PC is stored */
 	UINT32 *	icountptr;				/* pointer to where the icount is stored */

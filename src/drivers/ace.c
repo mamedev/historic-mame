@@ -248,7 +248,7 @@ INPUT_PORTS_START( ace )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	16,16,	/* 16*16 chars */
 	8,	/* 8 characters */
@@ -259,7 +259,7 @@ static gfx_layout charlayout =
 	64*8	/* every char takes 64 consecutive bytes */
 };
 
-static gfx_layout charlayout0 =
+static const gfx_layout charlayout0 =
 {
 	16,16,	/* 16*16 chars */
 	1,	/* 1 characters */
@@ -270,7 +270,7 @@ static gfx_layout charlayout0 =
 	256*8	/* every char takes 256 consecutive bytes */
 };
 
-static gfx_layout charlayout1 =
+static const gfx_layout charlayout1 =
 {
 	16,16,	/* 16*16 chars */
 	1,	/* 1 characters */
@@ -281,7 +281,7 @@ static gfx_layout charlayout1 =
 	256*8	/* every char takes 256 consecutive bytes */
 };
 
-static gfx_layout charlayout2 =
+static const gfx_layout charlayout2 =
 {
 	16,16,	/* 16*16 chars */
 	1,	/* 1 characters */
@@ -292,7 +292,7 @@ static gfx_layout charlayout2 =
 	256*8	/* every char takes 256 consecutive bytes */
 };
 
-static gfx_layout scorelayout =
+static const gfx_layout scorelayout =
 {
 	16,16,	/* 16*16 chars */
 	8,	/* 8 characters */
@@ -303,7 +303,7 @@ static gfx_layout scorelayout =
 	32*8	/* every char takes 32 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0     , &charlayout,  0, 2 },
 	{ 0          , 0x8000, &charlayout0, 0, 2 },    /* the game dynamically modifies this */

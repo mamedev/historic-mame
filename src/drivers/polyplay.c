@@ -274,7 +274,7 @@ static READ8_HANDLER( polyplay_random_read )
 }
 
 /* graphic structures */
-static gfx_layout charlayout_1_bit =
+static const gfx_layout charlayout_1_bit =
 {
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
@@ -285,7 +285,7 @@ static gfx_layout charlayout_1_bit =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout_3_bit =
+static const gfx_layout charlayout_3_bit =
 {
 	8,8,	/* 8*8 characters */
 	128,	/* 128 characters */
@@ -296,7 +296,7 @@ static gfx_layout charlayout_3_bit =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout_1_bit, 0, 1 },
 	{ REGION_CPU1, 0xec00, &charlayout_3_bit, 2, 1 },

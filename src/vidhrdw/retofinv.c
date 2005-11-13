@@ -142,32 +142,16 @@ VIDEO_START( retofinv )
 
 ***************************************************************************/
 
-READ8_HANDLER( retofinv_bg_videoram_r )
-{
-	return retofinv_bg_videoram[offset];
-}
-
-READ8_HANDLER( retofinv_fg_videoram_r )
-{
-	return retofinv_fg_videoram[offset];
-}
-
 WRITE8_HANDLER( retofinv_bg_videoram_w )
 {
-	if (retofinv_bg_videoram[offset] != data)
-	{
-		retofinv_bg_videoram[offset] = data;
-		tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
-	}
+	retofinv_bg_videoram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
 WRITE8_HANDLER( retofinv_fg_videoram_w )
 {
-	if (retofinv_fg_videoram[offset] != data)
-	{
-		retofinv_fg_videoram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
-	}
+	retofinv_fg_videoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
 WRITE8_HANDLER( retofinv_gfx_ctrl_w )

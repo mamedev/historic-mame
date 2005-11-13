@@ -404,7 +404,7 @@ INPUT_PORTS_END
 
 /****************************************************************************/
 
-static gfx_layout fglayout =
+static const gfx_layout fglayout =
 {
 	16,8,     /* 16*8 characters */
 	8192*2,   /* 16384 characters */
@@ -415,7 +415,7 @@ static gfx_layout fglayout =
 	16*8
 };
 
-static gfx_layout bglayout =
+static const gfx_layout bglayout =
 {
 	8,8,        /* 8*8 characters */
 	32768+1024, /* 32768+1024 characters */
@@ -426,7 +426,7 @@ static gfx_layout bglayout =
 	8*8*4
 };
 
-static gfx_layout objlayout =
+static const gfx_layout objlayout =
 {
 	16,16,    /* 16*16 characters */
 	8192+256, /* 8192+256 characters */
@@ -437,7 +437,7 @@ static gfx_layout objlayout =
 	16*16*4
 };
 
-static gfx_decode quizdna_gfxdecodeinfo[] =
+static const gfx_decode quizdna_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &fglayout,  0x7e0,  16 },
 	{ REGION_GFX2, 0x0000, &bglayout,  0x000, 128 },

@@ -934,7 +934,7 @@ INPUT_PORTS_START( tmmjprd )
 INPUT_PORTS_END
 
 
-static gfx_layout rabbit_sprite_8x8x4_layout =
+static const gfx_layout rabbit_sprite_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -945,7 +945,7 @@ static gfx_layout rabbit_sprite_8x8x4_layout =
 	8*32
 };
 
-static gfx_layout rabbit_sprite_8x8x8_layout =
+static const gfx_layout rabbit_sprite_8x8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -958,7 +958,7 @@ static gfx_layout rabbit_sprite_8x8x8_layout =
 
 
 
-static gfx_layout rabbit_sprite_16x16x4_layout =
+static const gfx_layout rabbit_sprite_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -969,7 +969,7 @@ static gfx_layout rabbit_sprite_16x16x4_layout =
 	16*32
 };
 
-static gfx_layout rabbit_sprite_16x16x8_layout =
+static const gfx_layout rabbit_sprite_16x16x8_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -980,7 +980,7 @@ static gfx_layout rabbit_sprite_16x16x8_layout =
 	16*64
 };
 
-static gfx_layout rabbit_8x8x4_layout =
+static const gfx_layout rabbit_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -991,7 +991,7 @@ static gfx_layout rabbit_8x8x4_layout =
 	8*32
 };
 
-static gfx_layout rabbit_16x16x4_layout =
+static const gfx_layout rabbit_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1002,7 +1002,7 @@ static gfx_layout rabbit_16x16x4_layout =
 	16*64
 };
 
-static gfx_layout rabbit_8x8x8_layout =
+static const gfx_layout rabbit_8x8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1013,7 +1013,7 @@ static gfx_layout rabbit_8x8x8_layout =
 	8*64
 };
 
-static gfx_layout rabbit_16x16x8_layout =
+static const gfx_layout rabbit_16x16x8_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1025,7 +1025,7 @@ static gfx_layout rabbit_16x16x8_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	/* this seems to be sprites */
 	{ REGION_USER1, 0, &rabbit_sprite_8x8x4_layout,   0x0, 0x1000  },

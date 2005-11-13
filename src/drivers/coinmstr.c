@@ -409,7 +409,7 @@ INPUT_PORTS_START( trailblz )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -420,7 +420,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 32 },
 	{ -1 }

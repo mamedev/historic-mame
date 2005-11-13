@@ -1,3 +1,109 @@
+0.102
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+bbmanw0101u4red [Pierpaolo Prazzoli]
+dirtfoxj063gra [Mamesick, Pierpaolo Prazzoli]
+starblad0101u5yel [Aaron Giles]
+mouja0101u5gre [Hau]
+
+
+
+Source Changes
+--------------
+Fixed a few more remaining issues from the 0.101u1 update. 
+[Aaron Giles, Pierpaolo Prazzoli]
+
+Fixed some bad tiles in naname. [Pierpaolo Prazzoli]
+
+Fixed music tempo in T.N.K.3/T.A.N.K. [R. Belmont, Kold666]
+
+Began adding support for SCRIPTS programs to the 53C810 emulation.
+[Nathan Woods, R. Belmont]
+
+Fixed inputs in Passing Shot (Japan). [Ange Albertini, Barry Rodewald]
+
+Added some missing sounds to Wonder Stick and Search Eye. 
+[Pierpaolo Prazzoli]
+
+Fixed status flag from MCU in Taito SJ games, fixing the last digit of the
+score in Front Line. [Nicola Salmoria]
+
+Many fixes to the SHARC core and Konami PPC drivers. [Ville Linde]
+
+Updated the discrete thump sound in Asteroids to use component values
+instead of derived equations. [Hans Andersson, Derrick Renaud]
+
+Added Tilemap0 color banking to esd16. [Pierpaolo Prazzoli]
+
+Fixed save/restore of 8253 PIT. Also several updates to Top Gunner:
+[Mathis Rosenhauer]
+ * Removed shift register since it just seems to be needed to
+    compensate for different DAC speeds
+ * Added 8254 PIT from PC emulation
+ * Added state saving
+
+Fixed bug in PSX GTE flag settings. [Olivier Galibert]
+
+Fixed 6502 initialization so that all internal states are reset properly.
+[Nathan Woods]
+
+Changed the makefile so that debug objects are not compiled on non-debug
+builds. [Aaron Giles]
+
+Marked most gfx_layout and gfx_decode structures in the code as const.
+[Aaron Giles]
+
+Fixed handling of the FR bit in the Status register on MIPS3. This fixes a
+few problems in CarnEvil, and probably affects a few other games as well.
+Also fixed bug where TLB exceptions were not filling in the Context and
+EntryHi registers correctly. [Aaron Giles]
+
+Removed ROMREGION_SOUNDONLY. Since -nosound no longer disables sound CPUs or
+sound cores (and hasn't for a while), failing to load sound ROMs was only
+leading to crashes. [Aaron Giles]
+
+Implemented pixel-accurate dithering in the Voodoo emulation. [Aaron Giles]
+
+Renamed my_stricmp to mame_stricmp, converted all uses of stricmp in the
+code to call mame_stricmp, and #defined stricmp to something invalid to
+prevent code from using it in the future. [Aaron Giles]
+
+Fixed implementation of mame_stricmp. [William Krick]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Jockey Grand Prix [Mamesick]
+Gradius 4: Fukkatsu [Ville Linde]
+See See Find Out [Tomasz Slanina]
+Pang Pang Car [Tomasz Slanina]
+D-Day (Jaleco) [Tomasz Slanina]
+
+
+
+New clones added
+----------------
+Touch & Go (newer revision) [Corrado Tomaselli]
+Avengers In Galactic Storm (World) [Corrado Tomaselli]
+Metamorphic Force (ver EAA) [Stefan Lindberg]
+Rohga v5.0 Asia/Europe [Stefan Lindberg]
+Rohga v3.0 Asia/Europe (Alt) [Stefan Lindberg]
+Tricky Doc (Alt) [Stefan Lindberg]
+Vandyke (Jaleco lic. Alt set) [Stefan Lindberg]
+Varth - Operation Thunderstorm (World 920714) [Stefan Lindberg]
+Super Monaco GP (US, Rev B) [Arzeno Fabrice]
+DownTown (Set 2) [Stefan Lindberg]
+NFL Blitz (boot ROM 1.1) [Brian Troha]
+Martial Champion (ver EAB) [Stefan Lindberg]
+NBA Play By Play [Ville Linde]
+
+
+
+
 0.101u5
 -------
 
@@ -82,6 +188,7 @@ Daytona USA 2 Power Edition [Ville Linde]
 
 
 
+
 0.101u4
 -------
 
@@ -152,6 +259,7 @@ New games marked as GAME_NOT_WORKING
 Dwarfs Den [David Haywood]
 Trivia Quest [Pierpaolo Prazzoli]
 Wheels & Fire [David Haywood]
+
 
 
 
@@ -247,6 +355,7 @@ Street Fighter EX 2 (ASIA 980312) [Corrado Tomaselli]
 Batsugun (set 2) [Parodier]
 Glass (Ver 1.0 set 2) [Corrado Tomaselli]
 Golden Tee Royal Edition Tournament (v4.02) [Brian Troha]
+
 
 
 

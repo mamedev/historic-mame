@@ -541,7 +541,7 @@ READ8_HANDLER( madalien_soundreg_r )
 }
 
 
-static gfx_layout charlayout_memory =
+static const gfx_layout charlayout_memory =
 {
 	8,8,    /* 8*8 characters */
 	256,	/* 256 characters */
@@ -552,7 +552,7 @@ static gfx_layout charlayout_memory =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,  /* 16*16 tiles */
 	16+1,	/* 16 tiles + 1 empty tile */
@@ -566,7 +566,7 @@ static gfx_layout tilelayout =
 };
 
 
-static gfx_decode madalien_gfxdecodeinfo[] =
+static const gfx_decode madalien_gfxdecodeinfo[] =
 {
 	{ 0, 0, &charlayout_memory,	0, 8 }, /* characters (the game dynamically modifies them) */
 	{ REGION_GFX1, 0, &tilelayout,	0, 8 },	/* background tiles */

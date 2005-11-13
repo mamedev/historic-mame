@@ -211,7 +211,7 @@ INPUT_PORTS_START( spcforc2 )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 chars */
 	512,    /* 512 characters */
@@ -223,7 +223,7 @@ static gfx_layout charlayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 8 },
 	{ -1 } /* end of array */
@@ -309,7 +309,7 @@ ROM_START( spcforce )
 	ROM_LOAD( "m8v4f.4c",  	  0x3800, 0x0800, CRC(f805c3cd) SHA1(78eb13b99aae895742b34ed56bee9313d3643de1) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )		/* sound MCU */
-	ROM_LOAD( "spacefor.snd", 0x0000, 0x0800, CRC(8820913c) SHA1(90002cafdf5f32f916e5457e013ebe53405d5ca8) )
+	ROM_LOAD( "vm5.k10",      0x0000, 0x0800, CRC(8820913c) SHA1(90002cafdf5f32f916e5457e013ebe53405d5ca8) )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rm1v2.6s",     0x0000, 0x0800, CRC(8e3490d7) SHA1(a5e47f953bb833c2bb769b266fff60f7a20c69a6) )
@@ -332,7 +332,7 @@ ROM_START( spcforc2 )
 	ROM_LOAD( "m8v4f.4c",  	  0x3800, 0x0800, CRC(f805c3cd) SHA1(78eb13b99aae895742b34ed56bee9313d3643de1) )
 
 	ROM_REGION( 0x1000, REGION_CPU2, 0 )		/* sound MCU */
-	ROM_LOAD( "spacefor.snd", 0x0000, 0x0800, CRC(8820913c) SHA1(90002cafdf5f32f916e5457e013ebe53405d5ca8) )
+	ROM_LOAD( "vm5.k10",      0x0000, 0x0800, CRC(8820913c) SHA1(90002cafdf5f32f916e5457e013ebe53405d5ca8) )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "spacefor.6s",  0x0000, 0x0800, CRC(848ae522) SHA1(deb28ba09556d04d9f6c906a163372f842b00c63) )

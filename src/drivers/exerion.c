@@ -228,7 +228,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -241,7 +241,7 @@ static gfx_layout charlayout =
 
 
 /* 16 x 16 sprites -- requires reorganizing characters in init_exerion() */
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -256,7 +256,7 @@ static gfx_layout spritelayout =
 
 
 /* Quick and dirty way to emulate pixel-doubled sprites. */
-static gfx_layout bigspritelayout =
+static const gfx_layout bigspritelayout =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -274,7 +274,7 @@ static gfx_layout bigspritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,         0, 64 },
 	{ REGION_GFX2, 0, &spritelayout,     256, 64 },

@@ -30,6 +30,12 @@
 #define FLG2	0x200000	/* FLAG2 */
 #define FLG3	0x400000	/* FLAG3 */
 
+// STKY flags
+#define AUS		0x1			/* ALU floating-point underflow */
+#define AVS		0x2			/* ALU floating-point overflow */
+#define AOS		0x4			/* ALU fixed-point overflow */
+#define AIS		0x20		/* ALU floating-point invalid operation */
+
 // MODE1 flags
 #define BR8			0x1			/* Bit-reverse for I8 */
 #define BR0			0x2			/* Bit-reverse for I0 */
@@ -91,7 +97,12 @@ static void systemreg_latency_op(void)
 
 		switch(systemreg_latency_reg)
 		{
-			case 0x9:	sharc.irptl = data; break;		/* IRPTL */
+			case 0x9:		/* IRPTL */
+			{
+				sharc.irptl = data;
+				break;
+			}
+
 			case 0xa:	sharc.mode2 = data; break;		/* MODE2 */
 
 			case 0xb:	/* MODE1 */
@@ -109,121 +120,103 @@ static void systemreg_latency_op(void)
 					osd_die("SHARC: systemreg_latency_op: enable MR alternate");
 				}
 
-				if (data & 0x8)			/* Switch DAG1 7-4 */
+				if ((data & 0x8) != (oldreg & 0x8))			/* Switch DAG1 7-4 */
 				{
-					if (((oldreg & data) & 0x8) == 0)
-					{
-						swap_sysreg(&sharc.dag1.i[4], &sharc.dag1_alt.i[4]);
-						swap_sysreg(&sharc.dag1.i[5], &sharc.dag1_alt.i[5]);
-						swap_sysreg(&sharc.dag1.i[6], &sharc.dag1_alt.i[6]);
-						swap_sysreg(&sharc.dag1.i[7], &sharc.dag1_alt.i[7]);
-						swap_sysreg(&sharc.dag1.m[4], &sharc.dag1_alt.m[4]);
-						swap_sysreg(&sharc.dag1.m[5], &sharc.dag1_alt.m[5]);
-						swap_sysreg(&sharc.dag1.m[6], &sharc.dag1_alt.m[6]);
-						swap_sysreg(&sharc.dag1.m[7], &sharc.dag1_alt.m[7]);
-						swap_sysreg(&sharc.dag1.l[4], &sharc.dag1_alt.l[4]);
-						swap_sysreg(&sharc.dag1.l[5], &sharc.dag1_alt.l[5]);
-						swap_sysreg(&sharc.dag1.l[6], &sharc.dag1_alt.l[6]);
-						swap_sysreg(&sharc.dag1.l[7], &sharc.dag1_alt.l[7]);
-						swap_sysreg(&sharc.dag1.b[4], &sharc.dag1_alt.b[4]);
-						swap_sysreg(&sharc.dag1.b[5], &sharc.dag1_alt.b[5]);
-						swap_sysreg(&sharc.dag1.b[6], &sharc.dag1_alt.b[6]);
-						swap_sysreg(&sharc.dag1.b[7], &sharc.dag1_alt.b[7]);
-					}
+					swap_sysreg(&sharc.dag1.i[4], &sharc.dag1_alt.i[4]);
+					swap_sysreg(&sharc.dag1.i[5], &sharc.dag1_alt.i[5]);
+					swap_sysreg(&sharc.dag1.i[6], &sharc.dag1_alt.i[6]);
+					swap_sysreg(&sharc.dag1.i[7], &sharc.dag1_alt.i[7]);
+					swap_sysreg(&sharc.dag1.m[4], &sharc.dag1_alt.m[4]);
+					swap_sysreg(&sharc.dag1.m[5], &sharc.dag1_alt.m[5]);
+					swap_sysreg(&sharc.dag1.m[6], &sharc.dag1_alt.m[6]);
+					swap_sysreg(&sharc.dag1.m[7], &sharc.dag1_alt.m[7]);
+					swap_sysreg(&sharc.dag1.l[4], &sharc.dag1_alt.l[4]);
+					swap_sysreg(&sharc.dag1.l[5], &sharc.dag1_alt.l[5]);
+					swap_sysreg(&sharc.dag1.l[6], &sharc.dag1_alt.l[6]);
+					swap_sysreg(&sharc.dag1.l[7], &sharc.dag1_alt.l[7]);
+					swap_sysreg(&sharc.dag1.b[4], &sharc.dag1_alt.b[4]);
+					swap_sysreg(&sharc.dag1.b[5], &sharc.dag1_alt.b[5]);
+					swap_sysreg(&sharc.dag1.b[6], &sharc.dag1_alt.b[6]);
+					swap_sysreg(&sharc.dag1.b[7], &sharc.dag1_alt.b[7]);
 				}
 
-				if (data & 0x10)		/* Switch DAG1 3-0 */
+				if ((data & 0x10) != (oldreg & 0x10))		/* Switch DAG1 3-0 */
 				{
-					if (((oldreg & data) & 0x10) == 0)
-					{
-						swap_sysreg(&sharc.dag1.i[0], &sharc.dag1_alt.i[0]);
-						swap_sysreg(&sharc.dag1.i[1], &sharc.dag1_alt.i[1]);
-						swap_sysreg(&sharc.dag1.i[2], &sharc.dag1_alt.i[2]);
-						swap_sysreg(&sharc.dag1.i[3], &sharc.dag1_alt.i[3]);
-						swap_sysreg(&sharc.dag1.m[0], &sharc.dag1_alt.m[0]);
-						swap_sysreg(&sharc.dag1.m[1], &sharc.dag1_alt.m[1]);
-						swap_sysreg(&sharc.dag1.m[2], &sharc.dag1_alt.m[2]);
-						swap_sysreg(&sharc.dag1.m[3], &sharc.dag1_alt.m[3]);
-						swap_sysreg(&sharc.dag1.l[0], &sharc.dag1_alt.l[0]);
-						swap_sysreg(&sharc.dag1.l[1], &sharc.dag1_alt.l[1]);
-						swap_sysreg(&sharc.dag1.l[2], &sharc.dag1_alt.l[2]);
-						swap_sysreg(&sharc.dag1.l[3], &sharc.dag1_alt.l[3]);
-						swap_sysreg(&sharc.dag1.b[0], &sharc.dag1_alt.b[0]);
-						swap_sysreg(&sharc.dag1.b[1], &sharc.dag1_alt.b[1]);
-						swap_sysreg(&sharc.dag1.b[2], &sharc.dag1_alt.b[2]);
-						swap_sysreg(&sharc.dag1.b[3], &sharc.dag1_alt.b[3]);
-					}
+					swap_sysreg(&sharc.dag1.i[0], &sharc.dag1_alt.i[0]);
+					swap_sysreg(&sharc.dag1.i[1], &sharc.dag1_alt.i[1]);
+					swap_sysreg(&sharc.dag1.i[2], &sharc.dag1_alt.i[2]);
+					swap_sysreg(&sharc.dag1.i[3], &sharc.dag1_alt.i[3]);
+					swap_sysreg(&sharc.dag1.m[0], &sharc.dag1_alt.m[0]);
+					swap_sysreg(&sharc.dag1.m[1], &sharc.dag1_alt.m[1]);
+					swap_sysreg(&sharc.dag1.m[2], &sharc.dag1_alt.m[2]);
+					swap_sysreg(&sharc.dag1.m[3], &sharc.dag1_alt.m[3]);
+					swap_sysreg(&sharc.dag1.l[0], &sharc.dag1_alt.l[0]);
+					swap_sysreg(&sharc.dag1.l[1], &sharc.dag1_alt.l[1]);
+					swap_sysreg(&sharc.dag1.l[2], &sharc.dag1_alt.l[2]);
+					swap_sysreg(&sharc.dag1.l[3], &sharc.dag1_alt.l[3]);
+					swap_sysreg(&sharc.dag1.b[0], &sharc.dag1_alt.b[0]);
+					swap_sysreg(&sharc.dag1.b[1], &sharc.dag1_alt.b[1]);
+					swap_sysreg(&sharc.dag1.b[2], &sharc.dag1_alt.b[2]);
+					swap_sysreg(&sharc.dag1.b[3], &sharc.dag1_alt.b[3]);
 				}
 
-				if (data & 0x20) {		/* Switch DAG2 15-12 */
-					if (((oldreg & data) & 0x20) == 0)
-					{
-						swap_sysreg(&sharc.dag2.i[4], &sharc.dag2_alt.i[4]);
-						swap_sysreg(&sharc.dag2.i[5], &sharc.dag2_alt.i[5]);
-						swap_sysreg(&sharc.dag2.i[6], &sharc.dag2_alt.i[6]);
-						swap_sysreg(&sharc.dag2.i[7], &sharc.dag2_alt.i[7]);
-						swap_sysreg(&sharc.dag2.m[4], &sharc.dag2_alt.m[4]);
-						swap_sysreg(&sharc.dag2.m[5], &sharc.dag2_alt.m[5]);
-						swap_sysreg(&sharc.dag2.m[6], &sharc.dag2_alt.m[6]);
-						swap_sysreg(&sharc.dag2.m[7], &sharc.dag2_alt.m[7]);
-						swap_sysreg(&sharc.dag2.l[4], &sharc.dag2_alt.l[4]);
-						swap_sysreg(&sharc.dag2.l[5], &sharc.dag2_alt.l[5]);
-						swap_sysreg(&sharc.dag2.l[6], &sharc.dag2_alt.l[6]);
-						swap_sysreg(&sharc.dag2.l[7], &sharc.dag2_alt.l[7]);
-						swap_sysreg(&sharc.dag2.b[4], &sharc.dag2_alt.b[4]);
-						swap_sysreg(&sharc.dag2.b[5], &sharc.dag2_alt.b[5]);
-						swap_sysreg(&sharc.dag2.b[6], &sharc.dag2_alt.b[6]);
-						swap_sysreg(&sharc.dag2.b[7], &sharc.dag2_alt.b[7]);
-					}
+				if ((data & 0x20) != (oldreg & 0x20)) {		/* Switch DAG2 15-12 */
+					swap_sysreg(&sharc.dag2.i[4], &sharc.dag2_alt.i[4]);
+					swap_sysreg(&sharc.dag2.i[5], &sharc.dag2_alt.i[5]);
+					swap_sysreg(&sharc.dag2.i[6], &sharc.dag2_alt.i[6]);
+					swap_sysreg(&sharc.dag2.i[7], &sharc.dag2_alt.i[7]);
+					swap_sysreg(&sharc.dag2.m[4], &sharc.dag2_alt.m[4]);
+					swap_sysreg(&sharc.dag2.m[5], &sharc.dag2_alt.m[5]);
+					swap_sysreg(&sharc.dag2.m[6], &sharc.dag2_alt.m[6]);
+					swap_sysreg(&sharc.dag2.m[7], &sharc.dag2_alt.m[7]);
+					swap_sysreg(&sharc.dag2.l[4], &sharc.dag2_alt.l[4]);
+					swap_sysreg(&sharc.dag2.l[5], &sharc.dag2_alt.l[5]);
+					swap_sysreg(&sharc.dag2.l[6], &sharc.dag2_alt.l[6]);
+					swap_sysreg(&sharc.dag2.l[7], &sharc.dag2_alt.l[7]);
+					swap_sysreg(&sharc.dag2.b[4], &sharc.dag2_alt.b[4]);
+					swap_sysreg(&sharc.dag2.b[5], &sharc.dag2_alt.b[5]);
+					swap_sysreg(&sharc.dag2.b[6], &sharc.dag2_alt.b[6]);
+					swap_sysreg(&sharc.dag2.b[7], &sharc.dag2_alt.b[7]);
 				}
 
-				if (data & 0x40) {		/* Switch DAG2 11-8 */
-					if (((oldreg & data) & 0x40) == 0)
-					{
-						swap_sysreg(&sharc.dag2.i[0], &sharc.dag2_alt.i[0]);
-						swap_sysreg(&sharc.dag2.i[1], &sharc.dag2_alt.i[1]);
-						swap_sysreg(&sharc.dag2.i[2], &sharc.dag2_alt.i[2]);
-						swap_sysreg(&sharc.dag2.i[3], &sharc.dag2_alt.i[3]);
-						swap_sysreg(&sharc.dag2.m[0], &sharc.dag2_alt.m[0]);
-						swap_sysreg(&sharc.dag2.m[1], &sharc.dag2_alt.m[1]);
-						swap_sysreg(&sharc.dag2.m[2], &sharc.dag2_alt.m[2]);
-						swap_sysreg(&sharc.dag2.m[3], &sharc.dag2_alt.m[3]);
-						swap_sysreg(&sharc.dag2.l[0], &sharc.dag2_alt.l[0]);
-						swap_sysreg(&sharc.dag2.l[1], &sharc.dag2_alt.l[1]);
-						swap_sysreg(&sharc.dag2.l[2], &sharc.dag2_alt.l[2]);
-						swap_sysreg(&sharc.dag2.l[3], &sharc.dag2_alt.l[3]);
-						swap_sysreg(&sharc.dag2.b[0], &sharc.dag2_alt.b[0]);
-						swap_sysreg(&sharc.dag2.b[1], &sharc.dag2_alt.b[1]);
-						swap_sysreg(&sharc.dag2.b[2], &sharc.dag2_alt.b[2]);
-						swap_sysreg(&sharc.dag2.b[3], &sharc.dag2_alt.b[3]);
-					}
+				if ((data & 0x40) != (oldreg & 0x40)) {		/* Switch DAG2 11-8 */
+					swap_sysreg(&sharc.dag2.i[0], &sharc.dag2_alt.i[0]);
+					swap_sysreg(&sharc.dag2.i[1], &sharc.dag2_alt.i[1]);
+					swap_sysreg(&sharc.dag2.i[2], &sharc.dag2_alt.i[2]);
+					swap_sysreg(&sharc.dag2.i[3], &sharc.dag2_alt.i[3]);
+					swap_sysreg(&sharc.dag2.m[0], &sharc.dag2_alt.m[0]);
+					swap_sysreg(&sharc.dag2.m[1], &sharc.dag2_alt.m[1]);
+					swap_sysreg(&sharc.dag2.m[2], &sharc.dag2_alt.m[2]);
+					swap_sysreg(&sharc.dag2.m[3], &sharc.dag2_alt.m[3]);
+					swap_sysreg(&sharc.dag2.l[0], &sharc.dag2_alt.l[0]);
+					swap_sysreg(&sharc.dag2.l[1], &sharc.dag2_alt.l[1]);
+					swap_sysreg(&sharc.dag2.l[2], &sharc.dag2_alt.l[2]);
+					swap_sysreg(&sharc.dag2.l[3], &sharc.dag2_alt.l[3]);
+					swap_sysreg(&sharc.dag2.b[0], &sharc.dag2_alt.b[0]);
+					swap_sysreg(&sharc.dag2.b[1], &sharc.dag2_alt.b[1]);
+					swap_sysreg(&sharc.dag2.b[2], &sharc.dag2_alt.b[2]);
+					swap_sysreg(&sharc.dag2.b[3], &sharc.dag2_alt.b[3]);
 				}
 
-				if (data & 0x80) {
-					if (((oldreg & data) & 0x80) == 0)
-					{
-						swap_sysreg(&sharc.r[8].r, &sharc.reg_alt[8].r);
-						swap_sysreg(&sharc.r[9].r, &sharc.reg_alt[9].r);
-						swap_sysreg(&sharc.r[10].r, &sharc.reg_alt[10].r);
-						swap_sysreg(&sharc.r[11].r, &sharc.reg_alt[11].r);
-						swap_sysreg(&sharc.r[12].r, &sharc.reg_alt[12].r);
-						swap_sysreg(&sharc.r[13].r, &sharc.reg_alt[13].r);
-						swap_sysreg(&sharc.r[14].r, &sharc.reg_alt[14].r);
-						swap_sysreg(&sharc.r[15].r, &sharc.reg_alt[15].r);
-					}
+				if ((data & 0x80) != (oldreg & 0x80)) {
+					swap_sysreg(&sharc.r[8].r, &sharc.reg_alt[8].r);
+					swap_sysreg(&sharc.r[9].r, &sharc.reg_alt[9].r);
+					swap_sysreg(&sharc.r[10].r, &sharc.reg_alt[10].r);
+					swap_sysreg(&sharc.r[11].r, &sharc.reg_alt[11].r);
+					swap_sysreg(&sharc.r[12].r, &sharc.reg_alt[12].r);
+					swap_sysreg(&sharc.r[13].r, &sharc.reg_alt[13].r);
+					swap_sysreg(&sharc.r[14].r, &sharc.reg_alt[14].r);
+					swap_sysreg(&sharc.r[15].r, &sharc.reg_alt[15].r);
 				}
-				if (data & 0x400) {
-					if (((oldreg & data) & 0x400) == 0)
-					{
-						swap_sysreg(&sharc.r[0].r, &sharc.reg_alt[0].r);
-						swap_sysreg(&sharc.r[1].r, &sharc.reg_alt[1].r);
-						swap_sysreg(&sharc.r[2].r, &sharc.reg_alt[2].r);
-						swap_sysreg(&sharc.r[3].r, &sharc.reg_alt[3].r);
-						swap_sysreg(&sharc.r[4].r, &sharc.reg_alt[4].r);
-						swap_sysreg(&sharc.r[5].r, &sharc.reg_alt[5].r);
-						swap_sysreg(&sharc.r[6].r, &sharc.reg_alt[6].r);
-						swap_sysreg(&sharc.r[7].r, &sharc.reg_alt[7].r);
-					}
+				if ((data & 0x400) != (oldreg & 0x400)) {
+					swap_sysreg(&sharc.r[0].r, &sharc.reg_alt[0].r);
+					swap_sysreg(&sharc.r[1].r, &sharc.reg_alt[1].r);
+					swap_sysreg(&sharc.r[2].r, &sharc.reg_alt[2].r);
+					swap_sysreg(&sharc.r[3].r, &sharc.reg_alt[3].r);
+					swap_sysreg(&sharc.r[4].r, &sharc.reg_alt[4].r);
+					swap_sysreg(&sharc.r[5].r, &sharc.reg_alt[5].r);
+					swap_sysreg(&sharc.r[6].r, &sharc.reg_alt[6].r);
+					swap_sysreg(&sharc.r[7].r, &sharc.reg_alt[7].r);
 				}
 				break;
 			}
@@ -237,7 +230,7 @@ static void systemreg_latency_op(void)
 	}
 }
 
-INLINE UINT32 GET_UREG(int ureg)
+static UINT32 GET_UREG(int ureg)
 {
 	int reg = ureg & 0xf;
 	switch((ureg >> 4) & 0xf)
@@ -362,7 +355,7 @@ INLINE UINT32 GET_UREG(int ureg)
 	}
 }
 
-INLINE void SET_UREG(int ureg, UINT32 data)
+static void SET_UREG(int ureg, UINT32 data)
 {
 	int reg = ureg & 0xf;
 	switch((ureg >> 4) & 0xf)
@@ -453,7 +446,7 @@ INLINE void SET_UREG(int ureg, UINT32 data)
 
 #define MAKE_EXTRACT_MASK(start_bit, length)	((0xffffffff << start_bit) & (((UINT32)0xffffffff) >> (32 - (start_bit + length))))
 
-INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
+static void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 {
 	INT8 shift = data & 0xff;
 	int bit = data & 0x3f;
@@ -463,14 +456,16 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 
 	switch(shiftop)
 	{
-		case 0x00:		/* LSHIFT Rx */
+		case 0x00:		/* LSHIFT Rx BY <data8>*/
 		{
 			if(shift < 0) {
 				REG(rn) = (shift > -32 ) ? (REG(rx) >> -shift) : 0;
-				SET_FLAG_SV_RSHIFT(REG(rx), -shift);
 			} else {
 				REG(rn) = (shift < 32) ? (REG(rx) << shift) : 0;
-				SET_FLAG_SV_LSHIFT(REG(rx), shift);
+				if (shift > 0)
+				{
+					sharc.astat |= SV;
+				}
 			}
 			SET_FLAG_SZ(REG(rn));
 			break;
@@ -499,10 +494,12 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			UINT32 r = 0;
 			if(shift < 0) {
 				r = (shift > -32 ) ? (REG(rx) >> -shift) : 0;
-				SET_FLAG_SV_RSHIFT(REG(rx), -shift);
 			} else {
 				r = (shift < 32) ? (REG(rx) << shift) : 0;
-				SET_FLAG_SV_LSHIFT(REG(rx), shift);
+				if (shift > 0)
+				{
+					sharc.astat |= SV;
+				}
 			}
 			SET_FLAG_SZ(r);
 
@@ -516,7 +513,10 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			REG(rn) = ext >> bit;
 
 			SET_FLAG_SZ(REG(rn));
-			/* TODO: set SV flag */
+			if (bit+len > 32)
+			{
+				sharc.astat |= SV;
+			}
 			break;
 		}
 
@@ -529,7 +529,8 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			REG(rn) = ext;
 
 			SET_FLAG_SZ(REG(rn));
-			if (bit+len > 32) {
+			if (bit+len > 32)
+			{
 				sharc.astat |= SV;
 			}
 			break;
@@ -544,7 +545,8 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			REG(rn) = ext << bit;
 
 			SET_FLAG_SZ(REG(rn));
-			if (bit+len > 32) {
+			if (bit+len > 32)
+			{
 				sharc.astat |= SV;
 			}
 			break;
@@ -557,7 +559,8 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			REG(rn) |= ext << bit;
 
 			SET_FLAG_SZ(REG(rn));
-			if (bit+len > 32) {
+			if (bit+len > 32)
+			{
 				sharc.astat |= SV;
 			}
 			break;
@@ -565,39 +568,52 @@ INLINE void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 
 		case 0x30:		/* BSET Rx BY <data8> */
 		{
+			REG(rn) = REG(rx);
 			if (data >= 0 && data < 32)
 			{
-				UINT32 xreg = REG(rx);
-				REG(rn) = xreg | (1 << data);
-
-				SET_FLAG_SZ(REG(rn));
+				REG(rn) |= (1 << data);
 			}
 			else
 			{
 				sharc.astat |= SV;
 			}
+			SET_FLAG_SZ(REG(rn));
+			break;
+		}
+
+		case 0x31:		/* BCLR Rx BY <data8> */
+		{
+			REG(rn) = REG(rx);
+			if (data >= 0 && data < 32)
+			{
+				REG(rn) &= ~(1 << data);
+			}
+			else
+			{
+				sharc.astat |= SV;
+			}
+			SET_FLAG_SZ(REG(rn));
 			break;
 		}
 
 		case 0x32:		/* BTGL Rx BY <data8> */
 		{
+			REG(rn) = REG(rx);
 			if (data >= 0 && data < 32)
 			{
-				UINT32 xreg = REG(rx);
-				REG(rn) = xreg ^ (1 << data);
-
-				SET_FLAG_SZ(REG(rn));
+				REG(rn) ^= (1 << data);
 			}
 			else
 			{
 				sharc.astat |= SV;
 			}
+			SET_FLAG_SZ(REG(rn));
 			break;
 		}
 
 		case 0x33:		/* BTST Rx BY <data8> */
 		{
-			if (data < 31)
+			if (data < 32)
 			{
 				UINT32 r = REG(rx) & (1 << data);
 
@@ -636,11 +652,6 @@ static void COMPUTE(UINT32 opcode)
 		int fxa = ((opcode >> 2) & 0x3) + 8;	// registers 8 - 11
 		int fya = (opcode & 0x3) + 12;			// registers 12 - 15
 
-		if (fm == fxa || fm == fya)
-		{
-			osd_die("SHARC: multi-op parallelity issue: dest reg %d = src reg (at %08X)", fm, sharc.pc);
-		}
-
 		multiop = (opcode >> 16) & 0x3f;
 		switch(multiop)
 		{
@@ -649,22 +660,47 @@ static void COMPUTE(UINT32 opcode)
 
 			case 0x18:		/* Fm = Fxm * Fym,   Fa = Fxa + Fya */
 			{
-				compute_fmul(fm, fxm, fym);
-				compute_fadd(fa, fxa, fya);
+				compute_fmul_fadd(fm, fxm, fym, fa, fxa, fya);
 				break;
 			}
 
 			case 0x19:		/* Fm = Fxm * Fym,   Fa = Fxa - Fya */
 			{
-				compute_fmul(fm, fxm, fym);
-				compute_fsub(fa, fxa, fya);
+				compute_fmul_fsub(fm, fxm, fym, fa, fxa, fya);
 				break;
 			}
 
 			case 0x1a:		/* Fm = Fxm * Fym,   Fa = FLOAT Fxa BY Fya */
 			{
-				compute_fmul(fm, fxm, fym);
-				compute_float_scaled(fa, fxa, fya);
+				compute_fmul_float_scaled(fm, fxm, fym, fa, fxa, fya);
+				break;
+			}
+
+			case 0x1b:		/* Fm = Fxm * Fym,   Fa = FIX Fxa BY Fya */
+			{
+				compute_fmul_fix_scaled(fm, fxm, fym, fa, fxa, fya);
+				break;
+			}
+
+			case 0x1e:		/* Fm = Fxm * Fym,   Fa = MAX(Fxa, Fya) */
+			{
+				compute_fmul_fmax(fm, fxm, fym, fa, fxa, fya);
+				break;
+			}
+
+			case 0x1f:		/* Fm = Fxm * Fym,   Fa = MIN(Fxa, Fya) */
+			{
+				compute_fmul_fmin(fm, fxm, fym, fa, fxa, fya);
+				break;
+			}
+
+			case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+			case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+			{
+				/* Parallel Multiplier & Dual Add/Subtract */
+				/* Floating-point */
+				int fs = (opcode >> 16) & 0xf;
+				compute_fmul_dual_fadd_fsub(fm, fxm, fym, fa, fs, fxa, fya);
 				break;
 			}
 
@@ -696,13 +732,19 @@ static void COMPUTE(UINT32 opcode)
 					case 0x62:		compute_max(rn, rx, ry); break;
 					case 0x81:		compute_fadd(rn, rx, ry); break;
 					case 0x82:		compute_fsub(rn, rx, ry); break;
+					case 0x8a:		compute_fcomp(rx, ry); break;
 					case 0x91:		compute_fabs_plus(rn, rx, ry); break;
+					case 0xa1:		compute_fpass(rn, rx); break;
 					case 0xa2:		compute_fneg(rn, rx); break;
 					case 0xbd:		compute_scalb(rn, rx, ry); break;
 					case 0xc1:		compute_logb(rn, rx); break;
 					case 0xc4:		compute_recips(rn, rx); break;
+					case 0xc5:		compute_rsqrts(rn, rx); break;
 					case 0xca:		compute_float(rn, rx); break;
+					case 0xd9:		compute_fix_scaled(rn, rx, ry); break;
 					case 0xda:		compute_float_scaled(rn, rx, ry); break;
+					case 0xe1:		compute_fmin(rn, rx, ry); break;
+					case 0xe2:		compute_fmax(rn, rx, ry); break;
 
 					case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
 					case 0x78: case 0x79: case 0x7a: case 0x7b: case 0x7c: case 0x7d: case 0x7e: case 0x7f:
@@ -711,6 +753,16 @@ static void COMPUTE(UINT32 opcode)
 						int rs = (opcode >> 12) & 0xf;
 						int ra = (opcode >> 8) & 0xf;
 						compute_dual_add_sub(ra, rs, rx, ry);
+						break;
+					}
+
+					case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf7:
+					case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0xff:
+					{
+						/* Floating-point Dual Add/Subtract */
+						int rs = (opcode >> 12) & 0xf;
+						int ra = (opcode >> 8) & 0xf;
+						compute_dual_fadd_fsub(ra, rs, rx, ry);
 						break;
 					}
 
@@ -729,7 +781,10 @@ static void COMPUTE(UINT32 opcode)
 					case 0x16:		sharc.mrb = 0; break;
 
 					case 0x30:		compute_fmul(rn, rx, ry); break;
-					case 0x40:		compute_mul_uuir(rn, rx, ry); break;
+					case 0x40:		compute_mul_uuin(rn, rx, ry); break;
+
+					case 0xb0:		REG(rn) = compute_mrf_plus_mul_ssin(rx, ry); break;
+					case 0xb2:		REG(rn) = compute_mrb_plus_mul_ssin(rx, ry); break;
 
 					default:
 						osd_die("SHARC: compute: multiplier operation %02X not implemented ! (%08X, %08X)", op, sharc.pc, opcode);
@@ -757,10 +812,14 @@ static void COMPUTE(UINT32 opcode)
 									  (((UINT32)REG(rx) << (32-s)) & ((UINT32)(0xffffffff) << (32-s)));
 						}
 						else
-				{
+						{
 							int s = shift & 0x1f;
 							REG(rn) = (((UINT32)REG(rx) << s) & ((UINT32)(0xffffffff) << s)) |
 									  (((UINT32)REG(rx) >> (32-s)) & ((UINT32)(0xffffffff) >> (32-s)));
+							if (shift > 0)
+							{
+								sharc.astat |= SV;
+							}
 						}
 						SET_FLAG_SZ(REG(rn));
 						break;
@@ -770,11 +829,13 @@ static void COMPUTE(UINT32 opcode)
 					{
 						INT8 shift = REG(ry);
 						if(shift < 0) {
-							REG(rn) = REG(rn) | (shift > -32 ) ? (REG(rx) >> -shift) : 0;
-							SET_FLAG_SV_RSHIFT(REG(rx), -shift);
+							REG(rn) = REG(rn) | ((shift > -32 ) ? (REG(rx) >> -shift) : 0);
 						} else {
-							REG(rn) = REG(rn) | (shift < 32) ? (REG(rx) << shift) : 0;
-							SET_FLAG_SV_LSHIFT(REG(rx), shift);
+							REG(rn) = REG(rn) | ((shift < 32) ? (REG(rx) << shift) : 0);
+							if (shift > 0)
+							{
+								sharc.astat |= SV;
+							}
 						}
 						SET_FLAG_SZ(REG(rn));
 						break;
@@ -788,23 +849,59 @@ static void COMPUTE(UINT32 opcode)
 						REG(rn) = ext >> bit;
 
 						SET_FLAG_SZ(REG(rn));
-						/* TODO: set SV flag */
+						if (bit+len > 32)
+						{
+							sharc.astat |= SV;
+						}
+						break;
+					}
+
+					case 0x12:		/* FEXT Rx BY Ry (Sign Extended) */
+					{
+						int bit = REG(ry) & 0x3f;
+						int len = (REG(ry) >> 6) & 0x3f;
+						UINT32 ext = (REG(rx) & MAKE_EXTRACT_MASK(bit, len)) >> bit;
+						if (ext & (1 << (len-1))) {
+							ext |= (UINT32)0xffffffff << (len-1);
+						}
+						REG(rn) = ext;
+
+						SET_FLAG_SZ(REG(rn));
+						if (bit+len > 32)
+						{
+							sharc.astat |= SV;
+						}
 						break;
 					}
 
 					case 0x30:		/* BSET Rx BY Ry */
 					{
 						UINT32 shift = REG(ry);
+						REG(rn) = REG(rx);
 						if (shift >= 0 && shift < 32)
 						{
-							UINT32 xreg = REG(rx);
-							REG(rn) = xreg | (1 << shift);
-
-							SET_FLAG_SZ(REG(rn));
+							REG(rn) |= (1 << shift);
 						}
 						else
 						{
 							sharc.astat |= SV;
+						}
+						SET_FLAG_SZ(REG(rn));
+						break;
+					}
+
+					case 0x33:		/* BTST Rx BY Ry */
+					{
+						UINT32 shift = REG(ry);
+						if (shift < 32)
+						{
+							UINT32 r = REG(rx) & (1 << shift);
+
+							SET_FLAG_SZ(r);
+						}
+						else
+						{
+							sharc.astat |= SZ | SV;
 						}
 						break;
 					}
@@ -891,9 +988,11 @@ INLINE void DELAY_SLOT(void)
 	sharc.pc++;
 	DECODE_AND_EXEC_OPCODE();
 	systemreg_latency_op();
+	IOP_LATENCY_OP();
 	sharc.pc++;
 	DECODE_AND_EXEC_OPCODE();
 	systemreg_latency_op();
+	IOP_LATENCY_OP();
 	sharc_icount-=2;
 }
 
@@ -903,7 +1002,7 @@ INLINE int IF_CONDITION_CODE(int cond)
 	{
 
 		case 0x00:	return sharc.astat & AZ;		/* EQ */
-		case 0x01:	return !(sharc.astat & AZ) || (sharc.astat & AN);	/* LT */
+		case 0x01:	return !(sharc.astat & AZ) && (sharc.astat & AN);	/* LT */
 		case 0x02:	return (sharc.astat & AZ) || (sharc.astat & AN);	/* LE */
 		case 0x03:	return (sharc.astat & AC);		/* AC */
 		case 0x04:	return (sharc.astat & AV);		/* AV */
@@ -944,7 +1043,7 @@ INLINE int DO_CONDITION_CODE(int cond)
 	{
 
 		case 0x00:	return sharc.astat & AZ;		/* EQ */
-		case 0x01:	return !(sharc.astat & AZ) || (sharc.astat & AN);	/* LT */
+		case 0x01:	return !(sharc.astat & AZ) && (sharc.astat & AN);	/* LT */
 		case 0x02:	return (sharc.astat & AZ) || (sharc.astat & AN);	/* LE */
 		case 0x03:	return (sharc.astat & AC);		/* AC */
 		case 0x04:	return (sharc.astat & AV);		/* AV */
@@ -958,7 +1057,7 @@ INLINE int DO_CONDITION_CODE(int cond)
 		case 0x0c:	return (sharc.astat & FLG3);	/* FLAG3 */
 		case 0x0d:	return (sharc.astat & BTF);		/* TF */
 		case 0x0e:	return 0;						/* BM */
-		case 0x0f:	return (sharc.curlcntr!=0);		/* LCE */
+		case 0x0f:	return (sharc.curlcntr==1);		/* LCE */
 		case 0x10:	return !(sharc.astat & AZ);		/* NOT EQUAL */
 		case 0x11:	return (sharc.astat & AZ) || !(sharc.astat & AN);	/* GE */
 		case 0x12:	return !(sharc.astat & AZ) && !(sharc.astat & AN);	/* GT */
@@ -1002,12 +1101,24 @@ static void sharcop_sysreg_bitop(void)
 			src ^= data;
 			break;
 		case 4:		/* TEST */
-			if((src & data) == data)
+			if ((src & data) == data)
+			{
 				sharc.astat |= BTF;
+			}
+			else
+			{
+				sharc.astat &= ~BTF;
+			}
 			break;
 		case 5:		/* XOR */
-			if(src == data)
+			if (src == data)
+			{
 				sharc.astat |= BTF;
+			}
+			else
+			{
+				sharc.astat &= ~BTF;
+			}
 			break;
 		default:
 			osd_die("SHARC: sysreg_bitop: invalid bitop %d\n", bop);
@@ -1015,6 +1126,25 @@ static void sharcop_sysreg_bitop(void)
 	}
 
 	SET_UREG(0x70 | sreg, src);
+}
+
+/* | 00010110 | */
+
+/* I register modify */
+static void sharcop_modify(void)
+{
+	int g = (sharc.opcode >> 38) & 0x1;
+	int i = (sharc.opcode >> 32) & 0x7;
+	INT32 data = (sharc.opcode);
+
+	if (g)		// PM
+	{
+		PM_REG_I(i) += data;
+	}
+	else		// DM
+	{
+		DM_REG_I(i) += data;
+	}
 }
 
 /*****************************************************************************/
@@ -1117,15 +1247,19 @@ static void sharcop_compute_dreg_to_dm_immmod(void)
 	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
 	int compute = sharc.opcode & 0x7fffff;
 
+	/* due to parallelity issues, source REG must be saved */
+	/* because the shift operation may change it */
+	UINT32 parallel_dreg = REG(dreg);
+
 	if(IF_CONDITION_CODE(cond) && compute != 0) {
 		COMPUTE(compute);
 	}
 
 	if(u) {		/* post-modify with update */
-		dm_write32(DM_REG_I(i), REG(dreg));
+		dm_write32(DM_REG_I(i), parallel_dreg);
 		DM_REG_I(i)+=mod;
 	} else {	/* pre-modify, no update */
-		dm_write32(DM_REG_I(i)+mod, REG(dreg));
+		dm_write32(DM_REG_I(i)+mod, parallel_dreg);
 	}
 }
 
@@ -1161,15 +1295,19 @@ static void sharcop_compute_dreg_to_pm_immmod(void)
 	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
 	int compute = sharc.opcode & 0x7fffff;
 
+	/* due to parallelity issues, source REG must be saved */
+	/* because the compute operation may change it */
+	UINT32 parallel_dreg = REG(dreg);
+
 	if(IF_CONDITION_CODE(cond) && compute != 0) {
 		COMPUTE(compute);
 	}
 
 	if(u) {		/* post-modify with update */
-		pm_write32(PM_REG_I(i), REG(dreg));
+		pm_write32(PM_REG_I(i), parallel_dreg);
 		PM_REG_I(i)+=mod;
 	} else {	/* pre-modify, no update */
-		pm_write32(PM_REG_I(i)+mod, REG(dreg));
+		pm_write32(PM_REG_I(i)+mod, parallel_dreg);
 	}
 }
 
@@ -1450,11 +1588,15 @@ static void sharcop_imm_shift_dreg_dmpm(void)
 	int rx = (sharc.opcode & 0xf);
 
 	if(IF_CONDITION_CODE(cond)) {
+		/* due to parallelity issues, source REG must be saved */
+		/* because the shift operation may change it */
+		UINT32 parallel_dreg = REG(dreg);
+
 		SHIFT_OPERATION_IMM(shiftop, data, rn, rx);
 
 		if(g) {		/* PM */
 			if(d) {		/* dreg -> PM */
-				pm_write32(PM_REG_I(i), REG(dreg));
+				pm_write32(PM_REG_I(i), parallel_dreg);
 				PM_REG_I(i)+=PM_REG_M(m);
 			} else {	/* PM <- dreg */
 				REG(dreg) = pm_read32(PM_REG_I(i));
@@ -1462,7 +1604,7 @@ static void sharcop_imm_shift_dreg_dmpm(void)
 			}
 		} else {	/* DM */
 			if(d) {		/* dreg -> DM */
-				dm_write32(DM_REG_I(i), REG(dreg));
+				dm_write32(DM_REG_I(i), parallel_dreg);
 				DM_REG_I(i)+=DM_REG_M(m);
 			} else {	/* DM <- dreg */
 				REG(dreg) = dm_read32(DM_REG_I(i));
@@ -1735,6 +1877,41 @@ static void sharcop_call_indirect_rel(void)
 	}
 }
 
+/* | 111 | */
+static void sharcop_jump_rel_dreg_dm(void)
+{
+	int d = (sharc.opcode >> 44) & 0x1;
+	int dmi = (sharc.opcode >> 41) & 0x7;
+	int dmm = (sharc.opcode >> 38) & 0x7;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		sharc.npc = sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
+	}
+	else
+	{
+		UINT32 compute = sharc.opcode & 0x7fffff;
+		/* due to parallelity issues, source REG must be saved */
+		/* because the compute operation may change it */
+		UINT32 parallel_dreg = REG(dreg);
+
+		if (compute != 0)
+		{
+			COMPUTE(compute);
+		}
+
+		if (d) {	/* dreg -> DM */
+			dm_write32(DM_REG_I(dmi), parallel_dreg);
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+		} else {	/* DM <- dreg */
+			REG(dreg) = dm_read32(DM_REG_I(dmi));
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+		}
+	}
+}
+
 
 /* | 00001010 | | */
 /* return from subroutine / compute */
@@ -1830,8 +2007,11 @@ static void sharcop_do_until_counter_imm(void)
 	}
 
 	sharc.lcntr = data;
-	PUSH_PC(sharc.pc+1);
-	PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
+	if (sharc.lcntr > 0)
+	{
+		PUSH_PC(sharc.pc+1);
+		PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
+	}
 }
 
 /* do until counter expired, LCNTR from UREG */
@@ -1852,8 +2032,11 @@ static void sharcop_do_until_counter_ureg(void)
 	}
 
 	sharc.lcntr = GET_UREG(ureg);
-	PUSH_PC(sharc.pc+1);
-	PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
+	if (sharc.lcntr > 0)
+	{
+		PUSH_PC(sharc.pc+1);
+		PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
+	}
 }
 
 /* do until */

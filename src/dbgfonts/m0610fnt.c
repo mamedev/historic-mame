@@ -261,7 +261,7 @@ static UINT8 fontdata[] =
 	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
-static gfx_layout fontlayout =
+static const gfx_layout fontlayout =
 {
 	6,10,	/* 6*10 characters */
 	256,	/* 256 characters */

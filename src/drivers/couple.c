@@ -401,7 +401,7 @@ INPUT_PORTS_START( couplep )
 INPUT_PORTS_END
 
 
-static gfx_layout tiles8x8x4_layout =
+static const gfx_layout tiles8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -412,7 +412,7 @@ static gfx_layout tiles8x8x4_layout =
 	16*8
 };
 
-static gfx_layout tiles8x8x3_layout =
+static const gfx_layout tiles8x8x3_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -423,7 +423,7 @@ static gfx_layout tiles8x8x3_layout =
 	16*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8x3_layout, 0, 32 },
 	{ REGION_GFX2, 0, &tiles8x8x4_layout, 0, 16 },

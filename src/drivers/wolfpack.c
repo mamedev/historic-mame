@@ -256,7 +256,7 @@ INPUT_PORTS_START( wolfpack )
 INPUT_PORTS_END
 
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	16, 8,
 	64,
@@ -273,7 +273,7 @@ static gfx_layout tile_layout =
 };
 
 
-static gfx_layout ship_layout =
+static const gfx_layout ship_layout =
 {
 	64, 16,
 	16,
@@ -297,7 +297,7 @@ static gfx_layout ship_layout =
 };
 
 
-static gfx_layout pt_layout =
+static const gfx_layout pt_layout =
 {
 	64, 8,
 	16,
@@ -320,7 +320,7 @@ static gfx_layout pt_layout =
 };
 
 
-static gfx_layout torpedo_layout =
+static const gfx_layout torpedo_layout =
 {
 	16, 32,
 	16,
@@ -340,7 +340,7 @@ static gfx_layout torpedo_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0, 2 },
 	{ REGION_GFX2, 0, &ship_layout, 6, 1 },

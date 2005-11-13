@@ -147,7 +147,7 @@
 #define LOG_GALILEO			(0)
 #define LOG_TIMERS			(0)
 #define LOG_DMA				(0)
-#define LOG_PCI				(1)
+#define LOG_PCI				(0)
 #define LOG_WIDGET			(0)
 
 
@@ -2793,7 +2793,7 @@ MACHINE_DRIVER_START( seattle_common )
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(512, 400)
 	MDRV_VISIBLE_AREA(0, 511, 0, 399)
 	MDRV_PALETTE_LENGTH(65536)
@@ -2962,6 +2962,18 @@ ROM_START( blitz )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
 	ROM_LOAD( "blitz1_2.u32", 0x000000, 0x80000, CRC(38dbecf5) SHA1(7dd5a5b3baf83a7f8f877ff4cd3f5e8b5201b36f) )
+
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.21 */
+	DISK_IMAGE( "blitz", 0, MD5(9cec59456c4d239ba05c7802082489e4) SHA1(0f001488b3709d40cee5e278603df2bbae1116b8) )
+ROM_END
+
+
+ROM_START( blitz11 )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.1 */
+	ROM_LOAD( "blitz1_1.u32", 0x000000, 0x80000, CRC(8163ce02) SHA1(89b432d8879052f6c5534ee49599f667f50a010f) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.21 */
 	DISK_IMAGE( "blitz", 0, MD5(9cec59456c4d239ba05c7802082489e4) SHA1(0f001488b3709d40cee5e278603df2bbae1116b8) )
@@ -3235,7 +3247,8 @@ GAME( 1998, vaportrp, vaportrx, seattle200, vaportrx, vaportrx, ROT0, "Atari Gam
 
 /* Midway */
 GAME( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)", 0 )
-GAME( 1997, blitz,    0,        seattle150, blitz,    blitz,    ROT0, "Midway Games", "NFL Blitz", 0 )
+GAME( 1997, blitz,    0,        seattle150, blitz,    blitz,    ROT0, "Midway Games", "NFL Blitz (boot ROM 1.2)", 0 )
+GAME( 1997, blitz11,  blitz,    seattle150, blitz,    blitz,    ROT0, "Midway Games", "NFL Blitz (boot ROM 1.1)", 0 )
 GAME( 1998, blitz99,  0,        seattle150, blitz99,  blitz99,  ROT0, "Midway Games", "NFL Blitz '99", 0 )
 GAME( 1999, blitz2k,  0,        seattle150, blitz99,  blitz2k,  ROT0, "Midway Games", "NFL Blitz 2000 Gold Edition", 0 )
 GAME( 1998, carnevil, 0,        carnevil,   carnevil, carnevil, ROT0, "Midway Games", "CarnEvil", 0 )

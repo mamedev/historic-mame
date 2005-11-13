@@ -578,7 +578,7 @@ static MACHINE_INIT( lethalen )
 	memory_set_bankptr(1, &prgrom[0x10000]);
 	memory_set_bankptr(2, &prgrom[0x48000]);
 }
-static gfx_layout lethal_6bpp =
+static const gfx_layout lethal_6bpp =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -592,7 +592,7 @@ static gfx_layout lethal_6bpp =
 };
 
 /* we use this decode instead of the one done by the sprite video start due to it being 6bpp */
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &lethal_6bpp,   0x000/*0x400*/, 256  }, /* sprites tiles */
 	{ -1 } /* end of array */

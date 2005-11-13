@@ -550,7 +550,7 @@ INPUT_PORTS_START( hangman )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout statriv2_tiles8x16_layout =
+static const gfx_layout statriv2_tiles8x16_layout =
 {
 	8,16,
 	RGN_FRAC(1,1),
@@ -562,7 +562,7 @@ static gfx_layout statriv2_tiles8x16_layout =
 	16*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &statriv2_tiles8x16_layout, 0, 64 },
 	{ -1 }

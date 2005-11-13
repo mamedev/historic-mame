@@ -150,7 +150,7 @@ INPUT_PORTS_START( ettrivia )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -161,7 +161,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,    0, 32 },
 	{ REGION_GFX2, 0, &charlayout, 32*4, 32 },

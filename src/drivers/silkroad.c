@@ -362,7 +362,7 @@ INPUT_PORTS_END
 
 
 /* BACKGROUNDS */
-static gfx_layout tiles16x16x6_layout =
+static const gfx_layout tiles16x16x6_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -373,7 +373,7 @@ static gfx_layout tiles16x16x6_layout =
 	16*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles16x16x6_layout,  0x0000, 256 },
 	{ -1 }

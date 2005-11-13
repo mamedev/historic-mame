@@ -950,7 +950,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -961,7 +961,7 @@ static gfx_layout charlayout =
 	32*8
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -974,7 +974,7 @@ static gfx_layout tilelayout =
 	128*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,  0, 256 },	/* OBJ */
 	{ REGION_GFX1, 0, &charlayout,  0, 256 },	/* SCR */
@@ -1260,7 +1260,7 @@ ROM_START( bonzeadv )
 	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	  /* ADPCM samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
 	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
 ROM_END
 
@@ -1283,7 +1283,7 @@ ROM_START( bonzeadu )
 	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	  /* ADPCM samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
 	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
 ROM_END
 
@@ -1306,7 +1306,7 @@ ROM_START( jigkmgri )
 	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	  /* ADPCM samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
 	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
 ROM_END
 
@@ -1329,7 +1329,7 @@ ROM_START( asuka )
 	ROM_LOAD( "b68-11.bin", 0x00000, 0x04000, CRC(c378b508) SHA1(1b145fe736b924f298e02532cf9f26cc18b42ca7) )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* ADPCM samples */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "b68-10.bin", 0x00000, 0x10000, CRC(387aaf40) SHA1(47c583564ef1d49ece15f97221b2e073e8fb0544) )
 ROM_END
 
@@ -1352,7 +1352,7 @@ ROM_START( mofflott )
 	ROM_LOAD( "c17-07.bin", 0x00000, 0x04000, CRC(cdb7bc2c) SHA1(5113055c954a39918436db75cc06b53c29c60728) )
 	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* ADPCM samples */
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
 	ROM_LOAD( "c17-06.bin", 0x00000, 0x10000, CRC(5c332125) SHA1(408f42df18b38347c8a4e177a9484162a66877e1) )
 ROM_END
 

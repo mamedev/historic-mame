@@ -274,7 +274,7 @@ INPUT_PORTS_START( tecfri )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 chars */
     2048,   /* 2048 characters */
@@ -285,7 +285,7 @@ static gfx_layout charlayout =
     8*8*4     /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout trckydoc_spritelayout =
+static const gfx_layout trckydoc_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
     512,	/* 512 sprites */
@@ -299,7 +299,7 @@ static gfx_layout trckydoc_spritelayout =
     16*16     /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout sauro_spritelayout =
+static const gfx_layout sauro_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
     1024,	/* 1024 sprites */
@@ -313,7 +313,7 @@ static gfx_layout sauro_spritelayout =
     16*16     /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode sauro_gfxdecodeinfo[] =
+static const gfx_decode sauro_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 64 },
 	{ REGION_GFX2, 0, &charlayout, 0, 64 },
@@ -321,7 +321,7 @@ static gfx_decode sauro_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode trckydoc_gfxdecodeinfo[] =
+static const gfx_decode trckydoc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 64 },
 	{ REGION_GFX2, 0, &trckydoc_spritelayout, 0, 64 },
@@ -444,6 +444,30 @@ ROM_START( trckydoc )
 	ROM_LOAD( "tdprm.prm",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
 ROM_END
 
+ROM_START( trckydca )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )          /* 64k for code */
+	ROM_LOAD( "trckydca.d9",  0x0000,  0x8000, CRC(99c38aa4) SHA1(298a19439cc17743e10d101c50a26b9a7348299e) )
+	ROM_LOAD( "trckydca.b9",  0x8000,  0x8000, CRC(b6048a15) SHA1(d982fafbfa391ef9bab50bfd52607494e2a9eedf) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "trckydoc.e6",     0x00000, 0x8000, CRC(ec326392) SHA1(e6954fecc501a821caa21e67597914519fbbe58f) )
+	ROM_LOAD( "trckydoc.g6",     0x08000, 0x8000, CRC(6a65c088) SHA1(4a70c104809d86b4eef6cc0df9452966fe7c9859) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "trckydoc.h1",    0x00000, 0x4000, CRC(8b73cbf3) SHA1(d10f79a38c1596c90bac9cf4c64ba38ae6ecd8cb) )
+	ROM_LOAD( "trckydoc.e1",    0x04000, 0x4000, CRC(841be98e) SHA1(82da07490b73edcbffc3b9247205aab3a1f7d7ad) )
+	ROM_LOAD( "trckydoc.c1",    0x08000, 0x4000, CRC(1d25574b) SHA1(924e4376a7fe6cdfff0fa6045aaa3f7c0633d275) )
+	ROM_LOAD( "trckydoc.a1",    0x0c000, 0x4000, CRC(436c59ba) SHA1(2aa9c155c432a3c81420520c53bb944dcc613a94) )
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) // colour proms
+	ROM_LOAD( "tdclr3.prm",    0x0000, 0x0100, CRC(671d0140) SHA1(7d5fcd9589c46590b0a240cac428f993201bec2a) )
+	ROM_LOAD( "tdclr2.prm",    0x0400, 0x0100, CRC(874f9050) SHA1(db40d68f5166657fce0eadcd82143112b0388894) )
+	ROM_LOAD( "tdclr1.prm",    0x0800, 0x0100, CRC(57f127b0) SHA1(3d2b18a7a31933579f06d92fa0cc3f0e1fe8b98a) )
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) // unknown
+	ROM_LOAD( "tdprm.prm",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
+ROM_END
+
 static DRIVER_INIT( tecfri )
 {
 	/* This game doesn't like all memory to be initialized to zero, it won't
@@ -455,5 +479,6 @@ static DRIVER_INIT( tecfri )
 	RAM[0xe000] = 1;
 }
 
-GAME( 1987, sauro,    0, sauro,    tecfri, tecfri, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_SOUND )
-GAME( 1987, trckydoc, 0, trckydoc, tecfri, tecfri, ROT0, "Tecfri", "Tricky Doc", 0 )
+GAME( 1987, sauro,    0,        sauro,    tecfri, tecfri, ROT0, "Tecfri", "Sauro", GAME_IMPERFECT_SOUND )
+GAME( 1987, trckydoc, 0,        trckydoc, tecfri, tecfri, ROT0, "Tecfri", "Tricky Doc (Set 1)", 0 )
+GAME( 1987, trckydca, trckydoc, trckydoc, tecfri, tecfri, ROT0, "Tecfri", "Tricky Doc (Set 2)", 0 )

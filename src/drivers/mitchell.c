@@ -1156,7 +1156,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	32768,	/* 32768 characters */
@@ -1167,7 +1167,7 @@ static gfx_layout charlayout =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout marukin_charlayout =
+static const gfx_layout marukin_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	65536,	/* 65536 characters */
@@ -1178,7 +1178,7 @@ static gfx_layout marukin_charlayout =
 	32*8    /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	2048,   /* 2048 sprites */
@@ -1191,28 +1191,28 @@ static gfx_layout spritelayout =
 	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
-static gfx_decode mgakuen_gfxdecodeinfo[] =
+static const gfx_decode mgakuen_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &marukin_charlayout, 0,  64 }, /* colors 0-1023 */
 	{ REGION_GFX2, 0, &spritelayout,       0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode marukin_gfxdecodeinfo[] =
+static const gfx_decode marukin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &marukin_charlayout, 0, 128 }, /* colors 0-2047 */
 	{ REGION_GFX2, 0, &spritelayout,       0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 128 }, /* colors 0-2047 */
 	{ REGION_GFX2, 0, &spritelayout,   0,  16 }, /* colors 0- 255 */
 	{ -1 } /* end of array */
 };
 
-static gfx_layout mstworld_charlayout =
+static const gfx_layout mstworld_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -1223,7 +1223,7 @@ static gfx_layout mstworld_charlayout =
 	8*8
 };
 
-static gfx_layout mstworld_spritelayout =
+static const gfx_layout mstworld_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1238,7 +1238,7 @@ static gfx_layout mstworld_spritelayout =
 };
 
 
-static gfx_decode mstworld_gfxdecodeinfo[] =
+static const gfx_decode mstworld_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mstworld_charlayout,   0x000, 0x40 },
 	{ REGION_GFX2, 0, &mstworld_spritelayout, 0x000, 0x40 },

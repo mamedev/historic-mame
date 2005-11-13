@@ -633,7 +633,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8, /* 8x8 characters */
 	1024, /* 1024 characters */
@@ -644,7 +644,7 @@ static gfx_layout charlayout =
 	32*8 /* offset to next character */
 };
 
-static gfx_layout tileslayout1 =
+static const gfx_layout tileslayout1 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -664,7 +664,7 @@ static gfx_layout tileslayout1 =
 	64*8 /* offset to next tile */
 };
 
-static gfx_layout tileslayout2 =
+static const gfx_layout tileslayout2 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -684,7 +684,7 @@ static gfx_layout tileslayout2 =
 	64*8 /* offset to next tile */
 };
 
-static gfx_layout tileslayout3 =
+static const gfx_layout tileslayout3 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -704,7 +704,7 @@ static gfx_layout tileslayout3 =
 	64*8 /* offset to next tile */
 };
 
-static gfx_layout tileslayout4 =
+static const gfx_layout tileslayout4 =
 {
 	16,16, /* tile size */
 	256, /* number of tiles */
@@ -724,7 +724,7 @@ static gfx_layout tileslayout4 =
 	64*8 /* offset to next tile */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	/* 8x8 text, 8 colors */
 	{ REGION_GFX1, 0x00000, &charlayout,	 0, 4 },	/* colors   0- 32 */

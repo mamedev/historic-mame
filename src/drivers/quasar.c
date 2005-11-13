@@ -375,7 +375,7 @@ INPUT_PORTS_START( quasar )
 
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -388,7 +388,7 @@ static gfx_layout charlayout =
 
 /* S2636 Mappings */
 
-static gfx_layout s2636_character10 =
+static const gfx_layout s2636_character10 =
 {
 	8,10,
 	5,
@@ -399,7 +399,7 @@ static gfx_layout s2636_character10 =
 	8*16
 };
 
-static gfx_layout charlayout8colour =
+static const gfx_layout charlayout8colour =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -410,7 +410,7 @@ static gfx_layout charlayout8colour =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,     0, 256},		/* Rom chars */
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Ram chars (NOT USED) */

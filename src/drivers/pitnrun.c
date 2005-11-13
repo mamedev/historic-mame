@@ -247,7 +247,7 @@ INPUT_PORTS_START( pitnrun )
 INPUT_PORTS_END
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -260,7 +260,7 @@ static gfx_layout spritelayout =
 	32*8
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -277,7 +277,7 @@ static struct AY8910interface ay8910_interface =
 	soundlatch_r
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX3, 0, &charlayout,   64, 2 },
 	{ REGION_GFX2, 0, &charlayout,   32, 2 },

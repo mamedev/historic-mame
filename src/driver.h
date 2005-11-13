@@ -343,7 +343,7 @@ struct _machine_config
 	UINT32 aspect_x, aspect_y;
 	int screen_width,screen_height;
 	rectangle default_visible_area;
-	gfx_decode *gfxdecodeinfo;
+	const gfx_decode *gfxdecodeinfo;
 	UINT32 total_colors;
 	UINT32 color_table_len;
 

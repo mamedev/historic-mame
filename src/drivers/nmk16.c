@@ -2624,7 +2624,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -2635,7 +2635,7 @@ static gfx_layout charlayout =
 	32*8
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -2648,7 +2648,7 @@ static gfx_layout tilelayout =
 	32*32
 };
 
-static gfx_decode tharrier_gfxdecodeinfo[] =
+static const gfx_decode tharrier_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x200-0x2ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2656,7 +2656,7 @@ static gfx_decode tharrier_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode macross_gfxdecodeinfo[] =
+static const gfx_decode macross_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x200, 16 },	/* color 0x200-0x2ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2664,7 +2664,7 @@ static gfx_decode macross_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode macross2_gfxdecodeinfo[] =
+static const gfx_decode macross2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },	/* color 0x300-0x3ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2672,7 +2672,7 @@ static gfx_decode macross2_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode bjtwin_gfxdecodeinfo[] =
+static const gfx_decode bjtwin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
 	{ REGION_GFX2, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
@@ -2680,7 +2680,7 @@ static gfx_decode bjtwin_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode bioship_gfxdecodeinfo[] =
+static const gfx_decode bioship_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },	/* color 0x300-0x3ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
@@ -2689,7 +2689,7 @@ static gfx_decode bioship_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode strahl_gfxdecodeinfo[] =
+static const gfx_decode strahl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
 	{ REGION_GFX2, 0, &tilelayout, 0x300, 16 },	/* color 0x300-0x3ff */
@@ -3505,6 +3505,39 @@ ROM_START( vandyjal )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )  /* 68000 code */
 	ROM_LOAD16_BYTE( "vdk-1.16",   0x00000, 0x20000, CRC(c1d01c59) SHA1(04a7fd31ca4d87d078070390660edf08bf1d96b5) )
 	ROM_LOAD16_BYTE( "jaleco2.15", 0x00001, 0x20000, CRC(170e4d2e) SHA1(6009d19d30e345fea93e039d165061e2b20ff058) )
+
+	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu code */
+	ROM_LOAD( "vdk-4.127",    0x00000, 0x10000, CRC(eba544f0) SHA1(36f6d048d15a392542a9220a244d8a7049aaff8b) )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "vdk-3.222",		0x000000, 0x010000, CRC(5a547c1b) SHA1(2d61f51ce2f91ebf0053ce3a00911d1bcbaba816) )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vdk-01.13",		0x000000, 0x080000, CRC(195a24be) SHA1(3a20dd746a87efc5c1fdc5025b709efeff82e05e) )	/* 16x16 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "vdk-07.202",	0x000000, 0x080000, CRC(42d41f06) SHA1(69fd1d38187b8081f65acea2424bc1a0d455d90c) )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-06.203",	0x000001, 0x080000, CRC(d54722a8) SHA1(47f8e97b29ae0ff1a1d7d50734e4219a87a2ed57) )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-04.2-1",	0x100000, 0x080000, CRC(0a730547) SHA1(afac0549eb86d1fab5ca8ae2a0dad14144f55c02) )	/* Sprites */
+	ROM_LOAD16_BYTE( "vdk-05.3-1",	0x100001, 0x080000, CRC(ba456d27) SHA1(5485a560ae2c2c8b6fdec314393c02a3de758ef3) )	/* Sprites */
+
+	ROM_REGION( 0x0a0000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-02.126",     0x000000, 0x020000, CRC(b2103274) SHA1(6bbdc912393607cd5306be946327c5ea0178c7a6) )
+	ROM_CONTINUE(               0x040000, 0x060000 )	/* banked */
+
+	ROM_REGION( 0x0a0000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "vdk-03.165",     0x000000, 0x020000, CRC(631776d3) SHA1(ffd76e5b03130252c55eaa6ae7edfee5632dae73) )
+	ROM_CONTINUE(               0x040000, 0x060000 )	/* banked */
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic100.bpr", 0x0000, 0x0100, CRC(98ed1c97) SHA1(f125ad05c3cbd1b1ab356161f9b1d814781d4c3b) )	/* V-sync hw (unused) */
+	ROM_LOAD( "ic101.bpr", 0x0100, 0x0100, CRC(cfdbb86c) SHA1(588822f6308a860937349c9106c2b4b1a75823ec) )	/* H-sync hw (unused) */
+ROM_END
+
+ROM_START( vandyja2 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "vdk-even.16",  0x00000, 0x20000, CRC(cde05a84) SHA1(dab5981d7dad9abe86cfe011da8ca0b11d484a3f) ) /* Hand written labels, dated 2/12 */
+	ROM_LOAD16_BYTE( "vdk-odd.15",   0x00001, 0x20000, CRC(0f6fea40) SHA1(3acbe72c251d51b028d8c66274263a2b39b042ea) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu code */
 	ROM_LOAD( "vdk-4.127",    0x00000, 0x10000, CRC(eba544f0) SHA1(36f6d048d15a392542a9220a244d8a7049aaff8b) )
@@ -4653,7 +4686,8 @@ GAME( 1990, mustangs, mustang, mustang,  mustang,  mustang,  ROT0,   "UPL (Seoul
 GAME( 1990, mustangb, mustang, mustangb, mustang,  mustang,  ROT0,   "bootleg",						"US AAF Mustang (bootleg)", GAME_UNEMULATED_PROTECTION ) // Playable but there are Still Protection Problems
 GAME( 1990, bioship,  0,       bioship,  bioship,  0,        ROT0,   "UPL (American Sammy license)",	"Bio-ship Paladin", GAME_IMPERFECT_SOUND )
 GAME( 1990, vandyke,  0,       vandyke,  vandyke,  0,        ROT270, "UPL",							"Vandyke (Japan)",  GAME_IMPERFECT_SOUND )
-GAME( 1990, vandyjal, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco)",  GAME_IMPERFECT_SOUND )
+GAME( 1990, vandyjal, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco, Set 1)",  GAME_IMPERFECT_SOUND )
+GAME( 1990, vandyja2, vandyke, vandyke,  vandyke,  0,        ROT270, "UPL (Jaleco license)",           "Vandyke (Jaleco, Set 2)",  GAME_IMPERFECT_SOUND )
 GAME( 1991, manybloc, 0,       manybloc, manybloc, 0,        ROT270, "Bee-Oh",                         "Many Block", GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
 GAME( 1991, blkheart, 0,       macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND  ) // Playable but there are Still Protection Problems
 GAME( 1991, blkhearj, blkheart,macross,  blkheart, blkheart, ROT0,   "UPL",							"Black Heart (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND ) // Playable but there are Still Protection Problems
@@ -4661,7 +4695,7 @@ GAME( 1991, acrobatm, 0,       acrobatm, acrobatm, 0,        ROT270, "UPL (Taito
 GAME( 1992, strahl,   0,       strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 1)", GAME_IMPERFECT_SOUND )
 GAME( 1992, strahla,  strahl,  strahl,   strahl,   0,        ROT0,   "UPL",							"Koutetsu Yousai Strahl (Japan set 2)", GAME_IMPERFECT_SOUND )
 GAME( 1991, tdragon,  0,       tdragon,  tdragon,  tdragon,  ROT270, "NMK (Tecmo license)",			"Thunder Dragon", GAME_IMPERFECT_SOUND )
-GAME(  1991, tdragonb, tdragon, tdragonb, tdragonb, tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)", 0 )
+GAME( 1991, tdragonb, tdragon, tdragonb, tdragonb, tdragonb, ROT270, "NMK / Tecmo",					"Thunder Dragon (Bootleg)", 0 )
 GAME( 1992, ssmissin, 0,       ssmissin, ssmissin, ssmissin, ROT270, "Comad",				            "S.S. Mission", GAME_NO_COCKTAIL )
 GAME( 1991, hachamf,  0,       hachamf,  hachamf,  hachamf,  ROT0,   "NMK",							"Hacha Mecha Fighter", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1992, macross,  0,       macross,  macross,  nmk,      ROT270, "Banpresto",						"Super Spacefortress Macross / Chou-Jikuu Yousai Macross", GAME_IMPERFECT_SOUND )

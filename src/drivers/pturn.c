@@ -205,7 +205,7 @@ static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xffe0, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -216,7 +216,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,3),
@@ -234,7 +234,7 @@ static gfx_layout spritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0x000, 32 },
 	{ REGION_GFX2, 0, &charlayout,   0x000, 32 },

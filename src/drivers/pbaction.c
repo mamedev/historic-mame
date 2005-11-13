@@ -198,7 +198,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout1 =
+static const gfx_layout charlayout1 =
 {
 	8,8,	/* 8*8 characters */
 	1024,	/* 1024 characters */
@@ -208,7 +208,7 @@ static gfx_layout charlayout1 =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout charlayout2 =
+static const gfx_layout charlayout2 =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -218,7 +218,7 @@ static gfx_layout charlayout2 =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
-static gfx_layout spritelayout1 =
+static const gfx_layout spritelayout1 =
 {
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
@@ -230,7 +230,7 @@ static gfx_layout spritelayout1 =
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
-static gfx_layout spritelayout2 =
+static const gfx_layout spritelayout2 =
 {
 	32,32,	/* 32*32 sprites */
 	32,	/* 32 sprites */
@@ -249,7 +249,7 @@ static gfx_layout spritelayout2 =
 
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout1,    0, 16 },	/*   0-127 characters */
 	{ REGION_GFX2, 0x00000, &charlayout2,  128,  8 },	/* 128-255 background */

@@ -771,7 +771,7 @@ INPUT_PORTS_END
  * Graphics layouts
  *********************************************************************/
 
-static gfx_layout charlayout_2bpp =
+static const gfx_layout charlayout_2bpp =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -782,7 +782,7 @@ static gfx_layout charlayout_2bpp =
 	8*8*2
 };
 
-static gfx_layout bigspritelayout =
+static const gfx_layout bigspritelayout =
 {
 	32,32,
 	RGN_FRAC(1,2),
@@ -799,7 +799,7 @@ static gfx_layout bigspritelayout =
 	32*64
 };
 
-static gfx_layout smallspritelayout =
+static const gfx_layout smallspritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -813,7 +813,7 @@ static gfx_layout smallspritelayout =
 	16*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_2bpp,   0x0000, 128 },
 	{ REGION_GFX2, 0, &charlayout_2bpp,   0x0200,  64 },

@@ -2152,7 +2152,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout bg1_layout =
+static const gfx_layout bg1_layout =
 {
 	8, 8,
 	RGN_FRAC(1,2),
@@ -2163,7 +2163,7 @@ static gfx_layout bg1_layout =
 	8*8*2
 };
 
-static gfx_layout bg2_layout =
+static const gfx_layout bg2_layout =
 {
 	8, 8,
 	RGN_FRAC(1,1),
@@ -2176,7 +2176,7 @@ static gfx_layout bg2_layout =
 
 #define O 8*8*2
 #define O2 2*O
-static gfx_layout sp1_layout =
+static const gfx_layout sp1_layout =
 {
 	16, 16,
 	RGN_FRAC(1,2),
@@ -2191,7 +2191,7 @@ static gfx_layout sp1_layout =
 
 #define O 8*8*4
 #define O2 2*O
-static gfx_layout sp2_layout =
+static const gfx_layout sp2_layout =
 {
 	16, 16,
 	RGN_FRAC(1,1),
@@ -2204,7 +2204,7 @@ static gfx_layout sp2_layout =
 #undef O
 #undef O2
 
-static gfx_layout char_layout =
+static const gfx_layout char_layout =
 {
 	8, 8,
 	1024,
@@ -2215,7 +2215,7 @@ static gfx_layout char_layout =
 	8*8*4
 };
 
-static gfx_decode gfxdecodeinfo1[] =
+static const gfx_decode gfxdecodeinfo1[] =
 {
 	{ REGION_GFX1, 0, &bg1_layout, 0, 16 },
 	{ REGION_GFX1, 0, &sp1_layout, 0, 16 },
@@ -2223,7 +2223,7 @@ static gfx_decode gfxdecodeinfo1[] =
 	{ -1 }
 };
 
-static gfx_decode gfxdecodeinfo2[] =
+static const gfx_decode gfxdecodeinfo2[] =
 {
 	{ REGION_GFX1, 0, &bg2_layout, 0, 16 },
 	{ REGION_GFX1, 0, &sp2_layout, 0, 16 },

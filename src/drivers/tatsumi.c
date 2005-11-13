@@ -74,7 +74,7 @@
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
-static UINT16 *cyclwarr_cpub_ram;
+static UINT16 *cyclwarr_cpua_ram, *cyclwarr_cpub_ram;
 UINT16 *tatsumi_c_ram, *apache3_g_ram;
 UINT16 *roundup5_d0000_ram, *roundup5_e0000_ram;
 UINT8 *tatsumi_rom_sprite_lookup1, *tatsumi_rom_sprite_lookup2;
@@ -262,7 +262,7 @@ static ADDRESS_MAP_START( readmem_cyclwarr_a, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_cyclwarr_a, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x00dfff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x000000, 0x00dfff) AM_WRITE(MWA16_RAM) AM_BASE(&cyclwarr_cpua_ram)
 	AM_RANGE(0x00e000, 0x00ffff) AM_WRITE(MWA16_RAM) AM_BASE(&videoram16)
 	AM_RANGE(0x03e000, 0x03efff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x040000, 0x043fff) AM_WRITE(cyclwarr_cpu_bb_w)
@@ -527,7 +527,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout roundup5_charlayout =
+static const gfx_layout roundup5_charlayout =
 {
 	8,8,	/* 16*16 sprites */
 	RGN_FRAC(1,1),	/* 4096 sprites */
@@ -538,7 +538,7 @@ static gfx_layout roundup5_charlayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout cyclwarr_charlayout =
+static const gfx_layout cyclwarr_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -548,7 +548,7 @@ static gfx_layout cyclwarr_charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8},
 	8*8
 };
-static gfx_layout cyclwarr_charlayout2 =
+static const gfx_layout cyclwarr_charlayout2 =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -558,7 +558,7 @@ static gfx_layout cyclwarr_charlayout2 =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8},
 	8*8
 };
-static gfx_layout roundup5_vramlayout =
+static const gfx_layout roundup5_vramlayout =
 {
 	8,8,
 	4096 + 2048,
@@ -569,21 +569,21 @@ static gfx_layout roundup5_vramlayout =
 	8*16
 };
 
-static gfx_decode gfxdecodeinfo_apache3[] =
+static const gfx_decode gfxdecodeinfo_apache3[] =
 {
 	{ REGION_GFX1, 0, &roundup5_charlayout,    1024, 128},
 	{ REGION_GFX4, 0, &cyclwarr_charlayout,     768, 16},
 	{ -1 } /* end of array */
 };
 
-static gfx_decode roundup5_gfxdecodeinfo[] =
+static const gfx_decode roundup5_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &roundup5_charlayout,     1024, 256},
 	{ 0, 0, &roundup5_vramlayout,					0, 16},
 	{ -1 } /* end of array */
 };
 
-static gfx_decode cyclwarr_gfxdecodeinfo[] =
+static const gfx_decode cyclwarr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &roundup5_charlayout,    8192, 512},
 	{ REGION_GFX5, 0, &cyclwarr_charlayout,    0, 512},
@@ -963,11 +963,11 @@ static DRIVER_INIT( cyclwarr )
 	}
 
 	dst = memory_region(REGION_CPU1);
-	memcpy(dst,dst+0x100000,8);
+	memcpy(cyclwarr_cpua_ram,dst+0x100000,8);
 	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x100000);
 
 	dst = memory_region(REGION_CPU2);
-	memcpy(dst,dst+0x100000,8);
+	memcpy(cyclwarr_cpub_ram,dst+0x100000,8);
 	memory_set_bankptr(2, memory_region(REGION_CPU2) + 0x100000);
 
 	// Copy sprite & palette data out of GFX rom area

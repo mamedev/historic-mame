@@ -718,7 +718,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -729,7 +729,7 @@ static gfx_layout layout_8x8x4 =
 	8*8*4
 };
 
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -740,7 +740,7 @@ static gfx_layout layout_16x16x4 =
 	16*16*4
 };
 
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -751,7 +751,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*8
 };
 
-static gfx_decode realbrk_gfxdecodeinfo[] =
+static const gfx_decode realbrk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,		0, 0x80		},	// [0] Backgrounds
 	{ REGION_GFX2, 0, &layout_8x8x4,		0, 0x800	},	// [1] Text
@@ -911,7 +911,7 @@ ROM_START( realbrk )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Sprites (16 colors) */
 	ROM_LOAD( "52312.14f", 0x000000, 0x200000, CRC(2203d7c5) SHA1(0403f02b8f2bfc6cf98ff598eb9c2e3facc7ac4c) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "52303.2e", 0x000000, 0x400000, CRC(d3005b1e) SHA1(3afd10cdbc3aa7605083a9fcf3c4b8276937c2c4) )
 ROM_END
 
@@ -936,7 +936,7 @@ ROM_START( pkgnsh )
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Sprites (16 colors) Not Used */
 
-	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "50508.1e", 0x000000, 0x080000, CRC(95a1473a) SHA1(d382a9a603711747c2fe5bd5721de5af369ccc42) )
 	ROM_LOAD( "50507.1f", 0x080000, 0x080000, CRC(34a003a1) SHA1(f3fa4de1f75e8fa18a8431a8c2ce495aa47989b9) )
 ROM_END
@@ -963,7 +963,7 @@ ROM_START( pkgnshdx )
 
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Sprites (16 colors) Not Used */
 
-	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "52203.2e", 0x000000, 0x100000, CRC(342a193d) SHA1(1e75ec7ac48dcc8396a0fa6db14f2661c28f671c) )
 ROM_END
 

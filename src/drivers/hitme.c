@@ -255,7 +255,7 @@ ADDRESS_MAP_END
     character.
 */
 
-static gfx_layout hitme_charlayout =
+static const gfx_layout hitme_charlayout =
 {
 	8,10,
 	RGN_FRAC(1,2),
@@ -266,14 +266,14 @@ static gfx_layout hitme_charlayout =
 	8*8
 };
 
-static gfx_decode hitme_gfxdecodeinfo[] =
+static const gfx_decode hitme_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hitme_charlayout, 0, 2  },
 	{ -1 }
 };
 
 
-static gfx_layout barricad_charlayout =
+static const gfx_layout barricad_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -284,7 +284,7 @@ static gfx_layout barricad_charlayout =
 	8*8
 };
 
-static gfx_decode barricad_gfxdecodeinfo[] =
+static const gfx_decode barricad_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &barricad_charlayout,   0, 1  },
 	{ -1 }

@@ -183,7 +183,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -194,7 +194,7 @@ static gfx_layout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -207,7 +207,7 @@ static gfx_layout spritelayout =
 	32*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,        0, 32 },
 	{ REGION_GFX2, 0, &charlayout,     32*8, 32 },
@@ -438,7 +438,7 @@ INPUT_PORTS_START( robowres )
 	PORT_DIPSETTING(    0x80, DEF_STR( English ) )
 INPUT_PORTS_END
 
-static gfx_layout robowres_charlayout =
+static const gfx_layout robowres_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -449,7 +449,7 @@ static gfx_layout robowres_charlayout =
 	8*8
 };
 
-static gfx_layout robowres_spritelayout =
+static const gfx_layout robowres_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -463,7 +463,7 @@ static gfx_layout robowres_spritelayout =
 };
 
 
-static gfx_decode robowres_gfxdecodeinfo[] =
+static const gfx_decode robowres_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &robowres_charlayout,        0, 32 },
 	{ REGION_GFX2, 0, &robowres_charlayout,     	 0, 32 },

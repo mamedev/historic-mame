@@ -315,7 +315,7 @@ INPUT_PORTS_START( sprint4 )
 INPUT_PORTS_END
 
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8, 8,
 	256,
@@ -331,7 +331,7 @@ static gfx_layout tile_layout =
 };
 
 
-static gfx_layout car_layout =
+static const gfx_layout car_layout =
 {
 	12, 16,
 	64,
@@ -350,7 +350,7 @@ static gfx_layout car_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0, 5 },
 	{ REGION_GFX2, 0, &car_layout, 0, 5 },

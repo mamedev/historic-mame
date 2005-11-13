@@ -119,7 +119,7 @@ INPUT_PORTS_START( trucocl )
 INPUT_PORTS_END
 
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,8,		/* 8*8 characters */
 	0x10000/32,	/* 2048 characters */
@@ -132,7 +132,7 @@ static gfx_layout tilelayout =
 
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, 		&tilelayout,      0, 2 },
 	{ REGION_GFX1, 0x10000, &tilelayout,      0, 2 },

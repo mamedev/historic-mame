@@ -23,13 +23,13 @@
 
 /* Supervisor board emulation */
 
-static unsigned char portA_in,portA_out,ddrA;
-static unsigned char portB_in,portB_out,ddrB;
-static unsigned char portC_in,portC_out,ddrC;
-static unsigned char tdr,tcr;
+static UINT8 portA_in,portA_out,ddrA;
+static UINT8 portB_in,portB_out,ddrB;
+static UINT8 portC_in,portC_out,ddrC;
+static UINT8 tdr,tcr;
 static mame_timer *mcu_timer;
-static signed char digitA, digitB, digitC;
-static unsigned char lamps;
+static INT8 digitA, digitB, digitC;
+static UINT8 lamps;
 
 /* Port A:
     0   (in)  DSW
@@ -269,7 +269,7 @@ int atari_readinputport(int port)
 
 static ADDRESS_MAP_START(a600xl_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_RAM
-	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)	/* self test */
+	AM_RANGE(0x5000, 0x57ff) AM_ROM AM_REGION(REGION_CPU1, 0x5000)	/* self test */
 	AM_RANGE(0x8000, 0xbfff) AM_ROM	/* game cartridge */
 	AM_RANGE(0xc000, 0xcfff) AM_ROM /* OS */
 	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)

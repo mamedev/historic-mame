@@ -1944,53 +1944,59 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout charlayout =
+#ifdef LSB_FIRST
+#define XOR(x) ((x)^8)
+#else
+#define XOR(x) (x)
+#endif
+
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048+1,	/* 2048 characters (+ blank one) */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4) },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
 	32*8     /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4 },
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4),
+			XOR(8*4), XOR(9*4), XOR(10*4), XOR(11*4), XOR(12*4), XOR(13*4), XOR(14*4), XOR(15*4) },
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
 			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout spritelayout3216 =
+static const gfx_layout spritelayout3216 =
 {
 	32,16,	/* 32*16 sprites */
 	256,	/* 256 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
-		   16*4,17*4, 18*4, 19*4, 20*4, 21*4, 22*4, 23*4,
-		   24*4,25*4, 26*4, 27*4, 28*4, 29*4, 30*4, 31*4},
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4),
+			XOR(8*4), XOR(9*4), XOR(10*4), XOR(11*4), XOR(12*4), XOR(13*4), XOR(14*4), XOR(15*4),
+		   XOR(16*4),XOR(17*4), XOR(18*4), XOR(19*4), XOR(20*4), XOR(21*4), XOR(22*4), XOR(23*4),
+		   XOR(24*4),XOR(25*4), XOR(26*4), XOR(27*4), XOR(28*4), XOR(29*4), XOR(30*4), XOR(31*4)},
 	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
 			8*128, 9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128 },
 	256*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout spritelayout1632 =
+static const gfx_layout spritelayout1632 =
 {
 	16,32,	/* 16*32 sprites */
 	256,	/* 256 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4},
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4),
+			XOR(8*4), XOR(9*4), XOR(10*4), XOR(11*4), XOR(12*4), XOR(13*4), XOR(14*4), XOR(15*4)},
 	{ 0*64,  1*64,  2*64,  3*64,  4*64,  5*64,  6*64,  7*64,
 	  8*64,  9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64,
 	 16*64, 17*64, 18*64, 19*64, 20*64, 21*64, 22*64, 23*64,
@@ -1998,16 +2004,16 @@ static gfx_layout spritelayout1632 =
 	256*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout spritelayout3232 =
+static const gfx_layout spritelayout3232 =
 {
 	32,32,	/* 32*32 sprites */
 	128,	/* 128 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
-		   16*4,17*4, 18*4, 19*4, 20*4, 21*4, 22*4, 23*4,
-		   24*4,25*4, 26*4, 27*4, 28*4, 29*4, 30*4, 31*4},
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4),
+			XOR(8*4), XOR(9*4), XOR(10*4), XOR(11*4), XOR(12*4), XOR(13*4), XOR(14*4), XOR(15*4),
+		   XOR(16*4),XOR(17*4), XOR(18*4), XOR(19*4), XOR(20*4), XOR(21*4), XOR(22*4), XOR(23*4),
+		   XOR(24*4),XOR(25*4), XOR(26*4), XOR(27*4), XOR(28*4), XOR(29*4), XOR(30*4), XOR(31*4)},
 	{ 0*128, 1*128, 2*128, 3*128, 4*128, 5*128, 6*128, 7*128,
 			8*128,  9*128, 10*128, 11*128, 12*128, 13*128, 14*128, 15*128,
 		   16*128, 17*128, 18*128, 19*128, 20*128, 21*128, 22*128, 23*128,
@@ -2015,45 +2021,45 @@ static gfx_layout spritelayout3232 =
 	512*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout spritelayout816 =
+static const gfx_layout spritelayout816 =
 {
 	8,16,	/* 16*16 sprites */
 	1024,	/* 1024 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4},
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4)},
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
 	64*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout spritelayout168 =
+static const gfx_layout spritelayout168 =
 {
 	16,8,	/* 16*8 sprites */
 	1024,	/* 1024 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4},
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4),
+			XOR(8*4), XOR(9*4), XOR(10*4), XOR(11*4), XOR(12*4), XOR(13*4), XOR(14*4), XOR(15*4)},
 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64},
 	64*8     /* every sprite takes 128 consecutive bytes */
 
 };
 
-static gfx_layout spritelayout6464 =
+static const gfx_layout spritelayout6464 =
 {
 	64,64,	/* 32*32 sprites */
 	32,	/* 128 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 }, /* the two bitplanes are merged in the same nibble */
-	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
-			8*4, 9*4, 10*4, 11*4, 12*4, 13*4, 14*4, 15*4,
-		   16*4,17*4, 18*4, 19*4, 20*4, 21*4, 22*4, 23*4,
-		   24*4,25*4, 26*4, 27*4, 28*4, 29*4, 30*4, 31*4,
-		   32*4,33*4, 34*4, 35*4, 36*4, 37*4, 38*4, 39*4,
-		   40*4,41*4, 42*4, 43*4, 44*4, 45*4, 46*4, 47*4,
-		   48*4,49*4, 50*4, 51*4, 52*4, 53*4, 54*4, 55*4,
-		   56*4,57*4, 58*4, 59*4, 60*4, 61*4, 62*4, 63*4},
+	{ XOR(0*4), XOR(1*4), XOR(2*4), XOR(3*4), XOR(4*4), XOR(5*4), XOR(6*4), XOR(7*4),
+			XOR(8*4), XOR(9*4), XOR(10*4), XOR(11*4), XOR(12*4), XOR(13*4), XOR(14*4), XOR(15*4),
+		   XOR(16*4),XOR(17*4), XOR(18*4), XOR(19*4), XOR(20*4), XOR(21*4), XOR(22*4), XOR(23*4),
+		   XOR(24*4),XOR(25*4), XOR(26*4), XOR(27*4), XOR(28*4), XOR(29*4), XOR(30*4), XOR(31*4),
+		   XOR(32*4),XOR(33*4), XOR(34*4), XOR(35*4), XOR(36*4), XOR(37*4), XOR(38*4), XOR(39*4),
+		   XOR(40*4),XOR(41*4), XOR(42*4), XOR(43*4), XOR(44*4), XOR(45*4), XOR(46*4), XOR(47*4),
+		   XOR(48*4),XOR(49*4), XOR(50*4), XOR(51*4), XOR(52*4), XOR(53*4), XOR(54*4), XOR(55*4),
+		   XOR(56*4),XOR(57*4), XOR(58*4), XOR(59*4), XOR(60*4), XOR(61*4), XOR(62*4), XOR(63*4)},
 
 	{ 0*256, 1*256, 2*256, 3*256, 4*256, 5*256, 6*256, 7*256,
 			8*256,  9*256, 10*256, 11*256, 12*256, 13*256, 14*256, 15*256,
@@ -2066,7 +2072,7 @@ static gfx_layout spritelayout6464 =
 	2048*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
     { 0, 0x0, &charlayout,   0, 0x80 },	/* the game dynamically modifies this */
     { 0, 0x0, &spritelayout, 0, 0x80 },	/* the game dynamically modifies this */

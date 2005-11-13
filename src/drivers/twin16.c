@@ -901,7 +901,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout alpha_layout =
+static const gfx_layout alpha_layout =
 {
 	8,8,
 	0x200,
@@ -914,7 +914,7 @@ static gfx_layout alpha_layout =
 
 /* Graphics Decode Info */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &alpha_layout, 0, 16 },
 	{ -1 }

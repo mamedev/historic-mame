@@ -174,7 +174,7 @@ static void drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 VIDEO_UPDATE( tail2nos )
 {
-	static gfx_layout tilelayout =
+	static const gfx_layout tilelayout =
 	{
 		16,16,
 		TOTAL_CHARS,

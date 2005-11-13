@@ -179,7 +179,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff6000, 0xff6fff) AM_READWRITE(MRA16_RAM, atarigen_alpha_w)        AM_SHARE(8) AM_BASE(&atarigen_alpha)
 	AM_RANGE(0xff7000, 0xff77ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w)   AM_SHARE(9) AM_BASE(&atarimo_0_spriteram)
 	AM_RANGE(0xff7800, 0xff9fff) AM_RAM                                           AM_SHARE(10)
-	AM_RANGE(0xffa000, 0xffbfff) AM_ROM                                           AM_SHARE(11)
+	AM_RANGE(0xffa000, 0xffbfff) AM_READWRITE(MRA16_RAM, MWA16_NOP)               AM_SHARE(11)
 	AM_RANGE(0xffc000, 0xffffff) AM_RAM                                           AM_SHARE(12)
 ADDRESS_MAP_END
 
@@ -207,7 +207,7 @@ static ADDRESS_MAP_START( extra_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff7000, 0xff77ff) AM_READWRITE(MRA16_RAM, atarimo_0_spriteram_w)   AM_SHARE(9)
 	AM_RANGE(0xff7800, 0xff9fff) AM_RAM                                           AM_SHARE(10)
 	AM_RANGE(0xffa000, 0xffbfff) AM_RAM                                           AM_SHARE(11)
-	AM_RANGE(0xffc000, 0xffffff) AM_ROM                                           AM_SHARE(12)
+	AM_RANGE(0xffc000, 0xffffff) AM_READWRITE(MRA16_RAM, MWA16_NOP)               AM_SHARE(12)
 ADDRESS_MAP_END
 
 
@@ -379,7 +379,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout pfanlayout =
+static const gfx_layout pfanlayout =
 {
 	16,8,
 	RGN_FRAC(1,1),
@@ -390,7 +390,7 @@ static gfx_layout pfanlayout =
 	32*8
 };
 
-static gfx_layout pfanlayout_interleaved =
+static const gfx_layout pfanlayout_interleaved =
 {
 	16,8,
 	RGN_FRAC(1,2),
@@ -401,7 +401,7 @@ static gfx_layout pfanlayout_interleaved =
 	16*8
 };
 
-static gfx_layout molayout =
+static const gfx_layout molayout =
 {
 	16,8,
 	RGN_FRAC(1,4),
@@ -413,7 +413,7 @@ static gfx_layout molayout =
 	16*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &pfanlayout,     0, 128 },
 	{ REGION_GFX1, 0, &molayout,   0x600, 16 },
@@ -421,7 +421,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode gfxdecodeinfo_interleaved[] =
+static const gfx_decode gfxdecodeinfo_interleaved[] =
 {
 	{ REGION_GFX2, 0, &pfanlayout_interleaved,     0, 128 },
 	{ REGION_GFX1, 0, &molayout,               0x600, 16 },

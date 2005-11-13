@@ -378,7 +378,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles in 2 roms */
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -390,7 +390,7 @@ static gfx_layout layout_8x8x4 =
 };
 
 /* 8x8x8 tiles in 4 roms */
-static gfx_layout layout_8x8x8 =
+static const gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -402,7 +402,7 @@ static gfx_layout layout_8x8x8 =
 	8*8*8/4
 };
 
-static gfx_decode yunsung8_gfxdecodeinfo[] =
+static const gfx_decode yunsung8_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x8, 0, 0x08 }, // [0] Tiles (Background)
 	{ REGION_GFX2, 0, &layout_8x8x4, 0,	0x40 }, // [1] Tiles (Text)

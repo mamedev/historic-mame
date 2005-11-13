@@ -314,7 +314,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout molayout =
+static const gfx_layout molayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -326,7 +326,7 @@ static gfx_layout molayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &molayout,  256, 16 },
 	{ -1 }

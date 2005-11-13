@@ -2558,21 +2558,21 @@ INLINE INT64 BOUNDS( INT64 n_value, INT64 n_max, int n_maxflag, INT64 n_min, int
 {
 	if( n_value > n_max )
 	{
-		FLAG |= n_maxflag;
+		FLAG |= 1 << n_maxflag;
 	}
 	else if( n_value < n_min )
 	{
-		FLAG |= n_minflag;
+		FLAG |= 1 << n_minflag;
 	}
 	return n_value;
 }
 
-#define A1( a ) BOUNDS( ( a ), 0x7fffffff, 30, -(INT64)0x80000000, ( 1 << 27 ) )
-#define A2( a ) BOUNDS( ( a ), 0x7fffffff, 29, -(INT64)0x80000000, ( 1 << 26 ) )
-#define A3( a ) BOUNDS( ( a ), 0x7fffffff, 28, -(INT64)0x80000000, ( 1 << 25 ) )
+#define A1( a ) BOUNDS( ( a ), 0x7fffffff, 30, -(INT64)0x80000000, 27 )
+#define A2( a ) BOUNDS( ( a ), 0x7fffffff, 29, -(INT64)0x80000000, 26 )
+#define A3( a ) BOUNDS( ( a ), 0x7fffffff, 28, -(INT64)0x80000000, 25 )
 #define Lm_B1( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 31 ) | ( 1 << 24 ) )
 #define Lm_B2( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 31 ) | ( 1 << 23 ) )
-#define Lm_B3( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 22 ) )
+#define Lm_B3( a, l ) LIM( ( a ), 0x7fff, -0x8000 * !l, ( 1 << 31 ) | ( 1 << 22 ) )
 #define Lm_C1( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 21 ) )
 #define Lm_C2( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 20 ) )
 #define Lm_C3( a ) LIM( ( a ), 0x00ff, 0x0000, ( 1 << 19 ) )

@@ -151,7 +151,7 @@ READ8_HANDLER( PC3259_3_r )
 
 /***************************************************************************/
 
-static gfx_layout char_layout =
+static const gfx_layout char_layout =
 {
 	8,8,
 	0x200,
@@ -162,7 +162,7 @@ static gfx_layout char_layout =
 	8*8
 };
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	0x300,
@@ -173,7 +173,7 @@ static gfx_layout tile_layout =
 	16*8
 };
 
-static gfx_layout player_layout =
+static const gfx_layout player_layout =
 {
 	32,32,
 	0x10,
@@ -198,7 +198,7 @@ static gfx_layout player_layout =
 	0x800
 };
 
-static gfx_layout rain_layout =
+static const gfx_layout rain_layout =
 {
 	16,16,
 	0x10,
@@ -214,7 +214,7 @@ static gfx_layout rain_layout =
 	0x100
 };
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	16,16,
 	0x80,
@@ -231,7 +231,7 @@ static gfx_layout sprite_layout =
 	0x100
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &char_layout,    0x20, 8 },
 	{ REGION_GFX2, 0x0000, &tile_layout,	0x00, 2 },

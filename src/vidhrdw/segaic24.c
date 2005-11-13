@@ -83,7 +83,7 @@ static int sys24_char_dirty, sys24_char_gfx_index;
 static tilemap *sys24_tile_layer[4];
 
 #ifdef LSB_FIRST
-static gfx_layout sys24_char_layout = {
+static const gfx_layout sys24_char_layout = {
 	8, 8,
 	SYS24_TILES,
 	4,
@@ -93,7 +93,7 @@ static gfx_layout sys24_char_layout = {
 	8*32
 };
 #else
-static gfx_layout sys24_char_layout = {
+static const gfx_layout sys24_char_layout = {
 	8, 8,
 	SYS24_TILES,
 	4,

@@ -491,7 +491,7 @@ INPUT_PORTS_END
 
 /* Graphic Decoding */
 
-static gfx_layout fg8x8x4_layout =
+static const gfx_layout fg8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -502,7 +502,7 @@ static gfx_layout fg8x8x4_layout =
 	32*8
 };
 
-static gfx_layout sp16x16x5_layout =
+static const gfx_layout sp16x16x5_layout =
 {
 	16,16,
 	RGN_FRAC(1,5),
@@ -513,7 +513,7 @@ static gfx_layout sp16x16x5_layout =
 	16*16
 };
 
-static gfx_layout bg16x16x6_layout =
+static const gfx_layout bg16x16x6_layout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -524,7 +524,7 @@ static gfx_layout bg16x16x6_layout =
 	64*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &fg8x8x4_layout,   0x0000, 256 },
 	{ REGION_GFX2, 0, &sp16x16x5_layout, 0x1000, 128 },
@@ -617,7 +617,7 @@ ROM_START( shadfrce )
 	ROM_LOAD( "32j2-0.5",  0x100000, 0x100000, CRC(5fac3e01) SHA1(20c30f4c76e303285ae37e596afe86aa4812c3b9) )
 	ROM_LOAD( "32j3-0.6",  0x200000, 0x100000, CRC(d297925e) SHA1(5bc4d37bf0dc54114884c816b94a64ef1ccfeda5) )
 
-	ROM_REGION( 0x080000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Samples */
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "32j9-0.76",  0x000000, 0x080000, CRC(16001e81) SHA1(67928d2024f963aee91f1498b6f4c76101d2f3b8) )
 ROM_END
 

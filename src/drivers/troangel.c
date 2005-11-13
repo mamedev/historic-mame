@@ -129,7 +129,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8, /* character size */
 	1024, /* number of characters */
@@ -140,7 +140,7 @@ static gfx_layout charlayout =
 	8*8	/* character offset */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,32, /* sprite size */
 	64, /* number of sprites */
@@ -155,7 +155,7 @@ static gfx_layout spritelayout =
 	32*8	/* character offset */
 };
 
-static gfx_decode troangel_gfxdecodeinfo[] =
+static const gfx_decode troangel_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,      0, 32 },
 	{ REGION_GFX2, 0x0000, &spritelayout, 32*8, 32 },

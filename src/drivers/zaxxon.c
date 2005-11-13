@@ -1042,7 +1042,7 @@ gfx_layout zaxxon_charlayout2 =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout zaxxon_spritelayout =
+static const gfx_layout zaxxon_spritelayout =
 {
 	32,32,	/* 32*32 sprites */
 	64, /* 64 sprites */
@@ -1059,7 +1059,7 @@ static gfx_layout zaxxon_spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout congo_spritelayout =
+static const gfx_layout congo_spritelayout =
 {
 	32,32,	/* 32*32 sprites */
 	128,	/* 128 sprites */
@@ -1078,7 +1078,7 @@ static gfx_layout congo_spritelayout =
 
 /* Graphics Decode Info */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &zaxxon_charlayout1,	 0, 32 },	/* characters */
 	{ REGION_GFX2, 0, &zaxxon_charlayout2,	 0, 32 },	/* background tiles */
@@ -1086,7 +1086,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode congo_gfxdecodeinfo[] =
+static const gfx_decode congo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &zaxxon_charlayout1,	 0, 32 },	/* characters */
 	{ REGION_GFX2, 0, &zaxxon_charlayout2,	 0, 32 },	/* background tiles */

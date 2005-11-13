@@ -22,4 +22,6 @@ extern void lsi53c810_set_device(int id, void *);
 UINT8 lsi53c810_reg_r(int reg);
 void lsi53c810_reg_w(int reg, UINT8 value);
 
+unsigned lsi53c810_dasm(char *buf, UINT32 pc);
+
 #endif

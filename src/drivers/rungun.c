@@ -310,7 +310,7 @@ static struct K054539interface k054539_interface =
 
 /**********************************************************************************/
 
-static gfx_layout bglayout =
+static const gfx_layout bglayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -323,7 +323,7 @@ static gfx_layout bglayout =
 	128*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bglayout, 0x0000, 64 },
 	{ -1 } /* end of array */

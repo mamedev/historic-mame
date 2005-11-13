@@ -707,7 +707,7 @@ INPUT_PORTS_START( hotmind )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -718,7 +718,7 @@ static gfx_layout charlayout =
 	32*8
 };
 
-static gfx_layout hotmind_charlayout =
+static const gfx_layout hotmind_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -729,7 +729,7 @@ static gfx_layout hotmind_charlayout =
 	8*8
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -742,7 +742,7 @@ static gfx_layout tilelayout =
 	32*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	32,32,
 	RGN_FRAC(1,4),
@@ -759,7 +759,7 @@ static gfx_layout spritelayout =
 	128*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &spritelayout, 0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout,   0x000,  8 },	/* colors 0x000-0x07f */
@@ -769,7 +769,7 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 
-static gfx_layout wcharlayout =
+static const gfx_layout wcharlayout =
 {
 	8,8,
 	RGN_FRAC(1,6),
@@ -780,7 +780,7 @@ static gfx_layout wcharlayout =
 	8*8
 };
 
-static gfx_layout wtilelayout =
+static const gfx_layout wtilelayout =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -794,7 +794,7 @@ static gfx_layout wtilelayout =
 };
 
 /* tiles are 6 bpp, sprites only 5bpp */
-static gfx_layout wspritelayout =
+static const gfx_layout wspritelayout =
 {
 	16,16,
 	RGN_FRAC(1,6),
@@ -807,7 +807,7 @@ static gfx_layout wspritelayout =
 	32*8
 };
 
-static gfx_decode wbeachvl_gfxdecodeinfo[] =
+static const gfx_decode wbeachvl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &wspritelayout, 0x600, 16 },	/* colors 0x600-0x7ff */
 	{ REGION_GFX1, 0, &wtilelayout,   0x000, 16 },	/* colors 0x000-0x3ff */
@@ -815,7 +815,7 @@ static gfx_decode wbeachvl_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode excelsr_gfxdecodeinfo[] =
+static const gfx_decode excelsr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout, 0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout, 0x000,  8 },	/* colors 0x000-0x07f */
@@ -824,7 +824,7 @@ static gfx_decode excelsr_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode hotmind_gfxdecodeinfo[] =
+static const gfx_decode hotmind_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tilelayout,         0x200, 16 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout,         0x000, 16 },	/* colors 0x000-0x0ff */

@@ -58,7 +58,6 @@ struct pit8253_timer
 	void (*freq_callback)(double);	/* callback function for when output frequency changes */
 
 	mame_time last_updated;			/* time when last updated */
-	double saved_time;				/* last_updated relative to time when state saved/restored */
 
 	mame_timer *outputtimer;		/* MAME timer for output change callback */
 	mame_timer *freqtimer;			/* MAME timer for output frequency change callback */
@@ -768,60 +767,6 @@ static void outputcallback(int param)
 }
 
 
-static void	postload(void)
-{
-	int	i, timerno;
-	struct pit8253 *pit;
-	struct pit8253_timer *timer;
-	mame_time now;
-
-	LOG2(("pit8253: postload()\n"));
-
-	now = mame_timer_get_time();
-
-	for	(i = 0;	i <	pit_count; i++)
-	{
-		pit	= get_pit(i);
-		for	(timerno = 0; timerno <	MAX_TIMER; timerno++)
-		{
-			timer =	get_timer(pit,timerno);
-
-			/* Adjust for the fact that the value returned by
-               mame_timer_get_time() is discontinuous over a save and restore. */
-
-			timer->saved_time =	mame_time_to_double(sub_mame_times(now,timer->last_updated));
-		}
-	}
-}
-
-
-static void	presave(void)
-{
-	int	i, timerno;
-	struct pit8253 *pit;
-	struct pit8253_timer *timer;
-	mame_time now;
-
-	LOG2(("pit8253: presave()\n"));
-
-	now = mame_timer_get_time();
-
-	for	(i = 0;	i <	pit_count; i++)
-	{
-		pit	= get_pit(i);
-		for	(timerno = 0; timerno <	MAX_TIMER; timerno++)
-		{
-			timer =	get_timer(pit,timerno);
-
-			/* Adjust for the fact that the value returned by
-               mame_timer_get_time() is discontinuous over a save and restore. */
-
-			timer->last_updated	= add_mame_times(double_to_mame_time(timer->saved_time),now);
-		}
-	}
-}
-
-
 int	pit8253_init(int count,	const struct pit8253_config *config)
 {
 	int	i, timerno,	n=0;
@@ -885,17 +830,16 @@ int	pit8253_init(int count,	const struct pit8253_config *config)
 			state_save_register_int	  ("pit8253", n, "latched_count",    &timer->latched_count);
 			state_save_register_int	  ("pit8253", n, "latched_status",   &timer->latched_status);
 			state_save_register_int	  ("pit8253", n, "null_count",       &timer->null_count);
+			state_save_register_int	  ("pit8253", n, "phase",            &timer->phase);
 			state_save_register_UINT32("pit8253", n, "cycles_to_output", &timer->cycles_to_output, 1);
 			state_save_register_UINT32("pit8253", n, "cycles_to_freq",   &timer->cycles_to_freq,   1);
 			state_save_register_UINT32("pit8253", n, "freq_count",       &timer->freq_count,       1);
-			state_save_register_double("pit8253", n, "saved_time",       &timer->saved_time,       1);
+			state_save_register_INT32 ("pit8253", n, "last_updated.sec", &timer->last_updated.seconds, 1);
+			state_save_register_INT64 ("pit8253", n, "last_updated.sub", &timer->last_updated.subseconds, 1);
 			++n;
 		}
 		pit8253_reset(i);
 	}
-
-	state_save_register_func_postload(postload);
-	state_save_register_func_presave(presave);
 
 	LOG1(("pit8253_init(): initialized successfully\n"));
 
@@ -1277,6 +1221,11 @@ READ8_HANDLER (	pit8253_0_r	) {	return pit8253_read(0, offset);	}
 READ8_HANDLER (	pit8253_1_r	) {	return pit8253_read(1, offset);	}
 WRITE8_HANDLER ( pit8253_0_w ) { pit8253_write(0, offset, data); }
 WRITE8_HANDLER ( pit8253_1_w ) { pit8253_write(1, offset, data); }
+
+READ16_HANDLER ( pit8253_0_lsb_r ) { return pit8253_read(0, offset);	}
+READ16_HANDLER ( pit8253_1_lsb_r ) { return pit8253_read(1, offset);	}
+WRITE16_HANDLER ( pit8253_0_lsb_w ) { if (ACCESSING_LSB) pit8253_write(0, offset, data); }
+WRITE16_HANDLER ( pit8253_1_lsb_w ) { if (ACCESSING_LSB) pit8253_write(1, offset, data); }
 
 READ32_HANDLER ( pit8253_32le_0_r ) { return read32le_with_read8_handler(pit8253_0_r, offset, mem_mask); }
 READ32_HANDLER ( pit8253_32le_1_r ) { return read32le_with_read8_handler(pit8253_1_r, offset, mem_mask); }

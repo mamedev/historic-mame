@@ -989,7 +989,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout spyhunt_charlayout =
+static const gfx_layout spyhunt_charlayout =
 {
 	64,32,
 	RGN_FRAC(1,2),
@@ -1007,7 +1007,7 @@ static gfx_layout spyhunt_charlayout =
 };
 
 
-static gfx_layout spyhunt_alphalayout =
+static const gfx_layout spyhunt_alphalayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1019,7 +1019,7 @@ static gfx_layout spyhunt_alphalayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &mcr_bg_layout,     0, 4 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout, 0, 4 },
@@ -1027,7 +1027,7 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 
-static gfx_decode spyhunt_gfxdecodeinfo[] =
+static const gfx_decode spyhunt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spyhunt_charlayout,  1*16, 1 },
 	{ REGION_GFX2, 0, &mcr_sprite_layout,   0*16, 4 },

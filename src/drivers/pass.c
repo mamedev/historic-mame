@@ -237,7 +237,7 @@ INPUT_PORTS_START( pass )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 INPUT_PORTS_END
 
-static gfx_layout tiles8x8_layout =
+static const gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -249,7 +249,7 @@ static gfx_layout tiles8x8_layout =
 };
 
 /* for something so simple this took a while to see */
-static gfx_layout tiles4x4_fg_layout =
+static const gfx_layout tiles4x4_fg_layout =
 {
 	4,4,
 	RGN_FRAC(1,1),
@@ -260,7 +260,7 @@ static gfx_layout tiles4x4_fg_layout =
 	4*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles4x4_fg_layout, 256, 2 },
 	{ REGION_GFX2, 0, &tiles8x8_layout, 0, 2 },

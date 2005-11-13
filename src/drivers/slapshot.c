@@ -483,7 +483,7 @@ INPUT_PORTS_END
 
 ***********************************************************/
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -499,7 +499,7 @@ static gfx_layout tilelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout slapshot_charlayout =
+static const gfx_layout slapshot_charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -510,7 +510,7 @@ static gfx_layout slapshot_charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode slapshot_gfxdecodeinfo[] =
+static const gfx_decode slapshot_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tilelayout,  0, 256 },	/* sprite parts */
 	{ REGION_GFX1, 0x0, &slapshot_charlayout,  0, 256 },	/* sprites & playfield */

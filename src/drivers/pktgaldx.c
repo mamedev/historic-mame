@@ -286,7 +286,7 @@ INPUT_PORTS_START( pktgaldx )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-static gfx_layout tile_8x8_layout =
+static const gfx_layout tile_8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -297,7 +297,7 @@ static gfx_layout tile_8x8_layout =
 	8*16
 };
 
-static gfx_layout tile_16x16_layout =
+static const gfx_layout tile_16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -308,7 +308,7 @@ static gfx_layout tile_16x16_layout =
 	32*16
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -320,7 +320,7 @@ static gfx_layout spritelayout =
 	32*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_8x8_layout,     0, 32 },	/* Tiles (8x8) */
 	{ REGION_GFX1, 0, &tile_16x16_layout,   0, 32 },	/* Tiles (16x16) */
@@ -328,7 +328,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_layout bootleg_spritelayout =
+static const gfx_layout bootleg_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -340,7 +340,7 @@ static gfx_layout bootleg_spritelayout =
 	16*64
 };
 
-static gfx_decode bootleg_gfxdecodeinfo[] =
+static const gfx_decode bootleg_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bootleg_spritelayout,     0, 64 },
 	{ -1 } /* end of array */

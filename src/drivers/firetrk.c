@@ -791,7 +791,7 @@ INPUT_PORTS_START( montecar )
 INPUT_PORTS_END
 
 
-static gfx_layout firetrk_text_layout =
+static const gfx_layout firetrk_text_layout =
 {
 	16, 16, /* width, height */
 	32,     /* total         */
@@ -809,7 +809,7 @@ static gfx_layout firetrk_text_layout =
 };
 
 
-static gfx_layout superbug_text_layout =
+static const gfx_layout superbug_text_layout =
 {
 	16, 16, /* width, height */
 	32,     /* total         */
@@ -827,7 +827,7 @@ static gfx_layout superbug_text_layout =
 };
 
 
-static gfx_layout montecar_text_layout =
+static const gfx_layout montecar_text_layout =
 {
 	8, 8,   /* width, height */
 	64,     /* total         */
@@ -843,7 +843,7 @@ static gfx_layout montecar_text_layout =
 };
 
 
-static gfx_layout firetrk_tile_layout =
+static const gfx_layout firetrk_tile_layout =
 {
 	16, 16, /* width, height */
 	64,     /* total         */
@@ -861,7 +861,7 @@ static gfx_layout firetrk_tile_layout =
 };
 
 
-static gfx_layout superbug_tile_layout =
+static const gfx_layout superbug_tile_layout =
 {
 	16, 16, /* width, height */
 	64,     /* total         */
@@ -879,7 +879,7 @@ static gfx_layout superbug_tile_layout =
 };
 
 
-static gfx_layout firetrk_car_layout1 =
+static const gfx_layout firetrk_car_layout1 =
 {
 	32, 32, /* width, height */
 	4,      /* total         */
@@ -901,7 +901,7 @@ static gfx_layout firetrk_car_layout1 =
 };
 
 
-static gfx_layout superbug_car_layout1 =
+static const gfx_layout superbug_car_layout1 =
 {
 	32, 32, /* width, height */
 	4,      /* total         */
@@ -923,7 +923,7 @@ static gfx_layout superbug_car_layout1 =
 };
 
 
-static gfx_layout montecar_car_layout =
+static const gfx_layout montecar_car_layout =
 {
 	32, 32, /* width, height */
 	8,      /* total         */
@@ -946,7 +946,7 @@ static gfx_layout montecar_car_layout =
 };
 
 
-static gfx_layout firetrk_car_layout2 =
+static const gfx_layout firetrk_car_layout2 =
 {
 	32, 32, /* width, height */
 	4,      /* total         */
@@ -968,7 +968,7 @@ static gfx_layout firetrk_car_layout2 =
 };
 
 
-static gfx_layout superbug_car_layout2 =
+static const gfx_layout superbug_car_layout2 =
 {
 	32, 32, /* width, height */
 	4,      /* total         */
@@ -990,7 +990,7 @@ static gfx_layout superbug_car_layout2 =
 };
 
 
-static gfx_layout firetrk_trailer_layout =
+static const gfx_layout firetrk_trailer_layout =
 {
 	64, 64, /* width, height */
 	8,      /* total         */
@@ -1020,7 +1020,7 @@ static gfx_layout firetrk_trailer_layout =
 };
 
 
-static gfx_decode firetrk_gfxdecodeinfo[] =
+static const gfx_decode firetrk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &firetrk_text_layout, 26, 1 },
 	{ REGION_GFX2, 0, &firetrk_tile_layout, 0, 8 },
@@ -1032,7 +1032,7 @@ static gfx_decode firetrk_gfxdecodeinfo[] =
 };
 
 
-static gfx_decode superbug_gfxdecodeinfo[] =
+static const gfx_decode superbug_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &superbug_text_layout, 26, 1 },
 	{ REGION_GFX2, 0, &superbug_tile_layout, 0, 8 },
@@ -1043,7 +1043,7 @@ static gfx_decode superbug_gfxdecodeinfo[] =
 };
 
 
-static gfx_decode montecar_gfxdecodeinfo[] =
+static const gfx_decode montecar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &montecar_text_layout, 44, 1 },
 	{ REGION_GFX2, 0, &firetrk_tile_layout, 0, 8 },

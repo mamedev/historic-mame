@@ -262,7 +262,7 @@ INPUT_PORTS_START( dragrace )
 INPUT_PORTS_END
 
 
-static gfx_layout dragrace_tile_layout1 =
+static const gfx_layout dragrace_tile_layout1 =
 {
 	16, 16,   /* width, height */
 	0x40,     /* total         */
@@ -280,7 +280,7 @@ static gfx_layout dragrace_tile_layout1 =
 };
 
 
-static gfx_layout dragrace_tile_layout2 =
+static const gfx_layout dragrace_tile_layout2 =
 {
 	16, 16,   /* width, height */
 	0x20,     /* total         */
@@ -300,7 +300,7 @@ static gfx_layout dragrace_tile_layout2 =
 };
 
 
-static gfx_decode dragrace_gfx_decode_info[] =
+static const gfx_decode dragrace_gfx_decode_info[] =
 {
 	{ REGION_GFX1, 0, &dragrace_tile_layout1, 0, 4 },
 	{ REGION_GFX2, 0, &dragrace_tile_layout2, 8, 2 },

@@ -28,7 +28,7 @@ VIDEO_UPDATE(wink)
 }
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	RGN_FRAC(1,3),
@@ -39,7 +39,7 @@ static gfx_layout charlayout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0, 4 },
 	{ -1 } /* end of array */

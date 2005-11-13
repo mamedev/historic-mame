@@ -168,7 +168,7 @@ INPUT_PORTS_START( poolshrk )
 INPUT_PORTS_END
 
 
-static gfx_layout poolshrk_sprite_layout =
+static const gfx_layout poolshrk_sprite_layout =
 {
 	16, 16,   /* width, height */
 	16,       /* total         */
@@ -186,7 +186,7 @@ static gfx_layout poolshrk_sprite_layout =
 };
 
 
-static gfx_layout poolshrk_tile_layout =
+static const gfx_layout poolshrk_tile_layout =
 {
 	8, 8,     /* width, height */
 	64,       /* total         */
@@ -202,7 +202,7 @@ static gfx_layout poolshrk_tile_layout =
 };
 
 
-static gfx_decode poolshrk_gfx_decode_info[] =
+static const gfx_decode poolshrk_gfx_decode_info[] =
 {
 	{ REGION_GFX1, 0, &poolshrk_sprite_layout, 0, 2 },
 	{ REGION_GFX2, 0, &poolshrk_tile_layout, 0, 1 },

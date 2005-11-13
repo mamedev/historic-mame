@@ -175,7 +175,7 @@ INPUT_PORTS_START( onetwo )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static gfx_layout tiles8x8x6_layout =
+static const gfx_layout tiles8x8x6_layout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -186,7 +186,7 @@ static gfx_layout tiles8x8x6_layout =
 	16*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8x6_layout, 0, 2 },
 	{ -1 }

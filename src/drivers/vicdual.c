@@ -1144,7 +1144,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -1155,7 +1155,7 @@ static gfx_layout charlayout =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ 0, 0xe800, &charlayout, 0, 32 },	/* the game dynamically modifies this */
 	{ -1 }	/* end of array */

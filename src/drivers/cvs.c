@@ -338,7 +338,7 @@ INPUT_PORTS_START( cvs )
 
 INPUT_PORTS_END
 
-static gfx_layout charlayout8colour =
+static const gfx_layout charlayout8colour =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -351,7 +351,7 @@ static gfx_layout charlayout8colour =
 
 /* S2636 Mappings */
 
-static gfx_layout s2636_character10 =
+static const gfx_layout s2636_character10 =
 {
 	8,10,
 	5,
@@ -362,7 +362,7 @@ static gfx_layout s2636_character10 =
 	8*16
 };
 
-static gfx_decode cvs_gfxdecodeinfo[] =
+static const gfx_decode cvs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Rom chars */
 	{ REGION_GFX1, 0x0000, &charlayout8colour, 0, 259 },	/* Ram chars */

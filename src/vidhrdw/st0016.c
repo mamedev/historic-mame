@@ -33,7 +33,7 @@ int st0016_game;
 static UINT8 st0016_vregs[0xc0];
 static int st0016_ramgfx;
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	0x10000,

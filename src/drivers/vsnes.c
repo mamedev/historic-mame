@@ -2039,7 +2039,7 @@ INPUT_PORTS_START( supxevs )
 	PORT_DIPSETTING(    0xc0, "Wrong 3" )
 INPUT_PORTS_END
 
-static gfx_decode nes_gfxdecodeinfo[] =
+static const gfx_decode nes_gfxdecodeinfo[] =
 {
 	/* none, the ppu generates one */
 	{ -1 } /* end of array */

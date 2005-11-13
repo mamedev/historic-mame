@@ -248,7 +248,7 @@ INPUT_PORTS_START( firebatl )
 INPUT_PORTS_END
 
 
-static gfx_layout layout_8x8x2 =
+static const gfx_layout layout_8x8x2 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -259,7 +259,7 @@ static gfx_layout layout_8x8x2 =
 	8*8*2
 };
 
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -270,7 +270,7 @@ static gfx_layout layout_8x8x4 =
 	8*8*2
 };
 
-static gfx_layout layout_16x16x4 =
+static const gfx_layout layout_16x16x4 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -281,7 +281,7 @@ static gfx_layout layout_16x16x4 =
 	16*16*2
 };
 
-static gfx_decode firebatl_gfxdecodeinfo[] =
+static const gfx_decode firebatl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4,   0, 16 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4,	 16,  1 }, // [1] Layer 0
@@ -289,7 +289,7 @@ static gfx_decode firebatl_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode clshroad_gfxdecodeinfo[] =
+static const gfx_decode clshroad_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x4, 0, 16 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x4, 0x90,  1 }, // [1] Layer 0

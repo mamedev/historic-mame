@@ -470,8 +470,6 @@ static void print_game_rom(FILE* out, const game_driver* game)
 		{
 			if (ROMREGION_GETFLAGS(region) & ROMREGION_DISPOSE)
 				fprintf(out, " dispose=\"yes\"");
-			if (ROMREGION_GETFLAGS(region) & ROMREGION_SOUNDONLY)
-				fprintf(out, " soundonly=\"yes\"");
 
 			fprintf(out, " offset=\"%x\"", offset);
 			fprintf(out, "/>\n");
@@ -973,7 +971,6 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"\t\t\t<!ATTLIST rom offset CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST rom status (baddump|nodump|good) \"good\">\n"
 		"\t\t\t<!ATTLIST rom dispose (yes|no) \"no\">\n"
-		"\t\t\t<!ATTLIST rom soundonly (yes|no) \"no\">\n"
 		"\t\t<!ELEMENT disk EMPTY>\n"
 		"\t\t\t<!ATTLIST disk name CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST disk md5 CDATA #IMPLIED>\n"
@@ -987,7 +984,6 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"\t\t<!ELEMENT chip EMPTY>\n"
 		"\t\t\t<!ATTLIST chip name CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST chip type (cpu|audio) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST chip soundonly (yes|no) \"no\">\n"
 		"\t\t\t<!ATTLIST chip clock CDATA #IMPLIED>\n"
 		"\t\t<!ELEMENT video EMPTY>\n"
 		"\t\t\t<!ATTLIST video screen (raster|vector) #REQUIRED>\n"

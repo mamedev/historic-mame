@@ -839,7 +839,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout_1k =
+static const gfx_layout charlayout_1k =
 {
 	8,8,
 	128,
@@ -850,7 +850,7 @@ static gfx_layout charlayout_1k =
 	8*8
 };
 
-static gfx_layout charlayout_2k =
+static const gfx_layout charlayout_2k =
 {
 	8,8,
 	256,
@@ -861,19 +861,19 @@ static gfx_layout charlayout_2k =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo_1k[] =
+static const gfx_decode gfxdecodeinfo_1k[] =
 {
 	{ REGION_CPU1, 0x3000, &charlayout_1k, 0, 4 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_2k[] =
+static const gfx_decode gfxdecodeinfo_2k[] =
 {
 	{ REGION_CPU1, 0x3000, &charlayout_2k, 0, 2 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_color[] =
+static const gfx_decode gfxdecodeinfo_color[] =
 {
 	{ REGION_CPU1, 0x4800, &charlayout_2k, 0, 256 },
 	{ -1 } /* end of array */

@@ -404,7 +404,7 @@ INPUT_PORTS_START( minesw4p )
 INPUT_PORTS_END
 
 
-static gfx_layout blockade_layout =
+static const gfx_layout blockade_layout =
 {
 	8,8,    /* 8*8 characters */
 	32, /* 32 characters */
@@ -415,7 +415,7 @@ static gfx_layout blockade_layout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout blasto_layout =
+static const gfx_layout blasto_layout =
 {
 	8,8,    /* 8*8 characters */
 	64, /* 64 characters */
@@ -426,13 +426,13 @@ static gfx_layout blasto_layout =
 	8*8 /* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &blockade_layout, 0, 1 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode blasto_gfxdecodeinfo[] =
+static const gfx_decode blasto_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &blasto_layout,   0, 1 },
 	{ -1 } /* end of array */

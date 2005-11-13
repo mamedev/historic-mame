@@ -418,7 +418,7 @@ INPUT_PORTS_END
 
 ***************************************************************************/
 
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -429,7 +429,7 @@ static gfx_layout layout_8x8x4 =
 	8*8*4
 };
 
-static gfx_layout layout_8x8x8 =
+static const gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -440,7 +440,7 @@ static gfx_layout layout_8x8x8 =
 	8*8*4
 };
 
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -451,7 +451,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*4
 };
 
-static gfx_layout torus_layout_16x16x8 =
+static const gfx_layout torus_layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -462,7 +462,7 @@ static gfx_layout torus_layout_16x16x8 =
 	128*8
 };
 
-static gfx_decode paradise_gfxdecodeinfo[] =
+static const gfx_decode paradise_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,	0x100, 1  }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x400, 16 }, // [1] Background
@@ -471,7 +471,7 @@ static gfx_decode paradise_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode torus_gfxdecodeinfo[] =
+static const gfx_decode torus_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &torus_layout_16x16x8, 0x100, 1  }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	     0x400, 16 }, // [1] Background
@@ -584,10 +584,10 @@ ROM_START( paradise )
 	ROM_LOAD( "u110", 0x00000, 0x20000, CRC(9807a7e6) SHA1(30e2a741a93954cfe672c61c93a990d0c3b25145) )
 	ROM_LOAD( "u111", 0x20000, 0x20000, CRC(bc9f93f0) SHA1(dd4cfc849a0c0f918ac0dfeb7f00a67aae5a1c13) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u85", 0x00000, 0x40000, CRC(bf3c3065) SHA1(54dd7ffea2fb3f31ed575e982b82691cddc2581a) )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples (banked) */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Samples (banked) */
 	ROM_LOAD( "u113", 0x00000, 0x80000, CRC(53de6025) SHA1(c94b3778b57ff7f46ce4cff661841019fb187d5d) )
 ROM_END
 
@@ -611,10 +611,10 @@ ROM_START( tgtball )
 	ROM_LOAD( "rom4.bin", 0x00000, 0x80000,  CRC(0a5abf62) SHA1(6900d598764300c81c90f5a7efb294639178bee6) )
 	ROM_LOAD( "rom3.bin", 0x80000, 0x80000,  CRC(94822bbf) SHA1(9fa6595eb819f163b58181926c276346cfa5c332) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "yunsung.85", 0x00000, 0x20000, CRC(cdf3336b) SHA1(98029d6d5d8ffb3b24ae2bcf950618a7d5b404c3) )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples (banked) */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Samples (banked) */
 	ROM_LOAD( "yunsung.113", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
 ROM_END
 
@@ -638,10 +638,10 @@ ROM_START( tgtballa )
 	ROM_LOAD( "yunsung.110", 0x00000, 0x80000, CRC(c209201e) SHA1(ba1cb3a204f689f9a3636834628d2265927e34f7) )
 	ROM_LOAD( "yunsung.111", 0x80000, 0x80000, CRC(82334337) SHA1(4b2a07196027b190366131cd7b8eca87a1bd0b1c) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "yunsung.85", 0x00000, 0x20000, CRC(cdf3336b) SHA1(98029d6d5d8ffb3b24ae2bcf950618a7d5b404c3) )
 
-	ROM_REGION( 0x80000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples (banked) */
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Samples (banked) */
 	ROM_LOAD( "yunsung.113", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
 ROM_END
 
@@ -665,7 +665,7 @@ ROM_START( torus )
 	ROM_LOAD( "bc4.bin",      0x00000, 0x20000, CRC(ee914caf) SHA1(42f3d760a4c14658ac2eb0ba7f54fb9916368b50) )
 	ROM_LOAD( "bc3.bin",      0x20000, 0x20000, CRC(aff1dab9) SHA1(ae488abd605c1e78b8b73452a2c1391cc0fe6b00) )
 
-	ROM_REGION( 0x40000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "bc15.bin",     0x00000, 0x40000, CRC(12d84839) SHA1(840d82253c0651ebe6799ea2bb5bae334e963e12) )
 ROM_END
 

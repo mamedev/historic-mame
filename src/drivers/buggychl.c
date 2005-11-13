@@ -354,7 +354,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	256,
@@ -365,7 +365,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,1,
 	RGN_FRAC(1,8),
@@ -377,7 +377,7 @@ static gfx_layout spritelayout =
 	8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ 0,           0, &charlayout,   0, 8 }, /* decoded at runtime */
 	/* sprites are drawn pixel by pixel by draw_sprites() */

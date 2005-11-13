@@ -605,7 +605,7 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -616,7 +616,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout sprites =
+static const gfx_layout sprites =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -628,7 +628,7 @@ static gfx_layout sprites =
 	16*16
 };
 
-static gfx_layout pro_tiles =
+static const gfx_layout pro_tiles =
 {
 	16,16,
 	16,
@@ -644,7 +644,7 @@ static gfx_layout pro_tiles =
 	64*8
 };
 
-static gfx_layout tiles1 =
+static const gfx_layout tiles1 =
 {
 	16,16,
 	128,
@@ -660,7 +660,7 @@ static gfx_layout tiles1 =
 	64*8
 };
 
-static gfx_layout tiles2 =
+static const gfx_layout tiles2 =
 {
 	16,16,
 	128,
@@ -674,7 +674,7 @@ static gfx_layout tiles2 =
 	64*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,  0, 4 },
 	{ REGION_GFX1, 0x00000, &sprites,     0, 4 },
@@ -683,7 +683,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode prosport_gfxdecodeinfo[] =
+static const gfx_decode prosport_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,  0, 4 },
 	{ REGION_GFX1, 0x00000, &sprites,     0, 4 },

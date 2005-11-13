@@ -10,6 +10,7 @@
     ---------------+------+-----------+----------+--------------------
     Alligator Hunt | 1994 | GAE1 449  | 940411   | DS5002FP, but unprotected version available
     World Rally 2  | 1995 | GAE1 449  | 950510   | DS5002FP
+    Touch & Go     | 1995 | GAE1 501  | 950906   | DS5002FP
     Touch & Go     | 1995 | GAE1 501  | 950510-1 | DS5002FP
     Maniac Square  | 1996 | Unknown   | ???      | DS5002FP, but unprotected version available
     Snow Board     | 1996 | CG-1V 366 | 960419/1 | Lattice IspLSI 1016-80LJ
@@ -55,7 +56,7 @@ VIDEO_START( gaelco2_dual );
 VIDEO_UPDATE( bang );
 
 
-#define TILELAYOUT16(NUM) static gfx_layout tilelayout16_##NUM =				\
+#define TILELAYOUT16(NUM) static const gfx_layout tilelayout16_##NUM =				\
 {																					\
 	16,16,											/* 16x16 tiles */				\
 	NUM/32,											/* number of tiles */			\
@@ -66,7 +67,7 @@ VIDEO_UPDATE( bang );
 	32*8																			\
 }
 
-#define GFXDECODEINFO(NUM,ENTRIES) static gfx_decode gfxdecodeinfo_##NUM[] =	\
+#define GFXDECODEINFO(NUM,ENTRIES) static const gfx_decode gfxdecodeinfo_##NUM[] =	\
 {																						\
 	{ REGION_GFX1, 0x0000000, &tilelayout16_##NUM,0,	ENTRIES },						\
 	{ -1 }																				\
@@ -891,7 +892,23 @@ REF: 950510-1
 */
 
 
-ROM_START( touchgo )
+ROM_START( touchgo ) /* REF 950906, no plug-in daughterboard */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE(	"tg56.bin",	0x000000, 0x080000, CRC(fd3b4642) SHA1(3cab42aecad5ee641711763c6047b56784c2bcf3) )
+	ROM_LOAD16_BYTE(	"tg57.bin",	0x000001, 0x080000, CRC(ee891835) SHA1(9f8c60e5e3696b70f756c3521e10313005053cc7) )
+
+	ROM_REGION( 0x1400000, REGION_GFX1, 0 ) /* GFX + Sound */
+	/* 0x0000000-0x0ffffff filled in in the DRIVER_INIT */
+	ROM_LOAD( "ic69",       0x1000000, 0x0200000, CRC(18bb12d4) SHA1(ee6e7a63b86c56d71e62db0ae5892ab3ab94b0a0) )	/* GFX only */
+
+	ROM_REGION( 0x0c00000, REGION_GFX2, ROMREGION_DISPOSE ) /* Temporary storage */
+	ROM_LOAD( "ic65",		0x0000000, 0x0400000, CRC(91b89c7c) SHA1(1c24b494b56845b0f21be40ab737f251d7683c7d) )	/* GFX only */
+	ROM_LOAD( "ic66",		0x0400000, 0x0200000, CRC(52682953) SHA1(82cde061bdd827ed4a47a9a4256cd0e887ebc29d) )	/* Sound only */
+	ROM_FILL(				0x0600000, 0x0200000, 0x0 )			/* Empty */
+	ROM_LOAD( "ic67",		0x0800000, 0x0400000, CRC(c0a2ce5b) SHA1(94b024373c7c546c0f4fe9737639f02e9c7ebbdb) )	/* GFX only */
+ROM_END
+
+ROM_START( touchgo2 ) /* REF: 950510-1 */
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE(	"tg56",	0x000000, 0x080000, CRC(6d0f5c65) SHA1(00db7a7da3ec1676169aa78fe4f08a7746c3accf) )
 	ROM_LOAD16_BYTE(	"tg57",	0x000001, 0x080000, CRC(845787b5) SHA1(27c9910cd9f38328326ecb5cd093dfeb6d4f6244) )
@@ -906,7 +923,6 @@ ROM_START( touchgo )
 	ROM_FILL(				0x0600000, 0x0200000, 0x0 )			/* Empty */
 	ROM_LOAD( "ic67",		0x0800000, 0x0400000, CRC(c0a2ce5b) SHA1(94b024373c7c546c0f4fe9737639f02e9c7ebbdb) )	/* GFX only */
 ROM_END
-
 
 
 /*============================================================================
@@ -1347,7 +1363,8 @@ ROM_END
 
 GAME( 1994, aligator, 0,        alighunt, alighunt, alighunt, ROT0, "Gaelco", "Alligator Hunt", GAME_UNEMULATED_PROTECTION )
 GAME( 1994, aligatun, aligator, alighunt, alighunt, alighunt, ROT0, "Gaelco", "Alligator Hunt (unprotected)", 0 )
-GAME( 1995, touchgo,  0,        touchgo,  touchgo,  touchgo,  ROT0, "Gaelco", "Touch & Go", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1995, touchgo,  0,        touchgo,  touchgo,  touchgo,  ROT0, "Gaelco", "Touch & Go (newer revision)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1995, touchgo2,  touchgo,        touchgo,  touchgo,  touchgo,  ROT0, "Gaelco", "Touch & Go (earlier revision)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1995, wrally2,  0,        wrally2,  wrally2,  0,        ROT0, "Gaelco", "World Rally 2: Twin Racing", GAME_UNEMULATED_PROTECTION )
 GAME( 1996, maniacsq, 0,        maniacsq, maniacsq, 0,        ROT0, "Gaelco", "Maniac Square (unprotected)", 0 )
 GAME( 1996, snowboar, 0,        snowboar, snowboar, snowboar, ROT0, "Gaelco", "Snow Board Championship (set 1)", GAME_UNEMULATED_PROTECTION )

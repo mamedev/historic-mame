@@ -192,37 +192,18 @@
 
 static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
-static WRITE32_HANDLER( paletteram32_w )
-{
-	int r,g,b;
-
-	COMBINE_DATA(&paletteram32[offset]);
-	data = paletteram32[offset];
-
-	r = ((data >> 6) & 0x1f);
-	g = ((data >> 0) & 0x3f);
-	b = ((data >> 11) & 0x1f);
-
-	b = (b << 3) | (b >> 2);
-	g = (g << 2) | (g >> 3);
-	r = (r << 3) | (r >> 2);
-
-	palette_set_color(offset, r, g, b);
-}
-
-
 /* K037122 Tilemap chip (move to konamiic.c ?) */
 
 static UINT32 *K037122_tile_ram;
 static UINT32 *K037122_char_ram;
 static UINT8 *K037122_dirty_map;
 static int K037122_gfx_index, K037122_char_dirty;
-static tilemap *K037122_layer[1];
+static tilemap *K037122_layer[2];
 static UINT32 K037122_reg[256];
 
-#define K037122_NUM_TILES		8192
+#define K037122_NUM_TILES		16384
 
-static gfx_layout K037122_char_layout =
+static const gfx_layout K037122_char_layout =
 {
 	8, 8,
 	K037122_NUM_TILES,
@@ -233,12 +214,34 @@ static gfx_layout K037122_char_layout =
 	8*128
 };
 
-static void K037122_tile_info(int tile_index)
+static void K037122_tile_info_layer0(int tile_index)
+{
+	UINT32 val = K037122_tile_ram[tile_index + (0x8000/4)];
+	int color = (val >> 17) & 0x1f;
+	int tile = val & 0x3fff;
+	int flags = 0;
+
+	if (val & 0x400000)
+		flags |= TILE_FLIPX;
+	if (val & 0x800000)
+		flags |= TILE_FLIPY;
+
+	SET_TILE_INFO(K037122_gfx_index, tile, color, flags);
+}
+
+static void K037122_tile_info_layer1(int tile_index)
 {
 	UINT32 val = K037122_tile_ram[tile_index];
-	int color = val >> 16;
-	int tile = val & 0xffff;
-	SET_TILE_INFO(K037122_gfx_index, tile, color/2, 0);
+	int color = (val >> 17) & 0x1f;
+	int tile = val & 0x3fff;
+	int flags = 0;
+
+	if (val & 0x400000)
+		flags |= TILE_FLIPX;
+	if (val & 0x800000)
+		flags |= TILE_FLIPY;
+
+	SET_TILE_INFO(K037122_gfx_index, tile, color, flags);
 }
 
 int K037122_vh_start(void)
@@ -264,18 +267,20 @@ int K037122_vh_start(void)
 		return 1;
 	}
 
-	K037122_layer[0] = tilemap_create(K037122_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+	K037122_layer[0] = tilemap_create(K037122_tile_info_layer0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+	K037122_layer[1] = tilemap_create(K037122_tile_info_layer1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 128, 64);
 
-	if( !K037122_layer[0] ) {
+	if( !K037122_layer[0] || !K037122_layer[1] ) {
 		free(K037122_dirty_map);
 		free(K037122_tile_ram);
 		free(K037122_char_ram);
 	}
 
 	tilemap_set_transparent_pen(K037122_layer[0], 0);
+	tilemap_set_transparent_pen(K037122_layer[1], 0);
 
-	memset(K037122_char_ram, 0, 0x80000);
-	memset(K037122_tile_ram, 0, 0x10000);
+	memset(K037122_char_ram, 0, 0x200000);
+	memset(K037122_tile_ram, 0, 0x20000);
 	memset(K037122_dirty_map, 0, K037122_NUM_TILES);
 
 	Machine->gfx[K037122_gfx_index] = decodegfx((UINT8*)K037122_char_ram, &K037122_char_layout);
@@ -316,7 +321,14 @@ void K037122_tile_update(void)
 
 void K037122_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	tilemap_draw(bitmap, cliprect, K037122_layer[0], 0,0);
+	if (K037122_reg[0xc] & 0x10000)
+	{
+		tilemap_draw(bitmap, cliprect, K037122_layer[1], 0,0);
+	}
+	else
+	{
+		tilemap_draw(bitmap, cliprect, K037122_layer[0], 0,0);
+	}
 }
 
 
@@ -329,6 +341,64 @@ WRITE32_HANDLER(K037122_tile_w)
 {
 	COMBINE_DATA(K037122_tile_ram + offset);
 	tilemap_mark_tile_dirty(K037122_layer[0], offset);
+}
+
+
+static void update_palette_color(UINT32 palette_base, int color)
+{
+	int r,g,b;
+	UINT32 data = K037122_tile_ram[(palette_base/4) + color];
+
+	r = ((data >> 6) & 0x1f);
+	g = ((data >> 0) & 0x3f);
+	b = ((data >> 11) & 0x1f);
+
+	b = (b << 3) | (b >> 2);
+	g = (g << 2) | (g >> 3);
+	r = (r << 3) | (r >> 2);
+
+	palette_set_color(color, r, g, b);
+}
+
+READ32_HANDLER(K037122_sram_r)
+{
+	return K037122_tile_ram[offset];
+}
+
+WRITE32_HANDLER(K037122_sram_w)
+{
+	COMBINE_DATA(K037122_tile_ram + offset);
+
+	if (K037122_reg[0xc] & 0x10000)
+	{
+		if (offset < 0x8000/4)
+		{
+			tilemap_mark_tile_dirty(K037122_layer[1], offset);
+		}
+		else if (offset >= 0x8000/4 && offset < 0x18000/4)
+		{
+			tilemap_mark_tile_dirty(K037122_layer[0], offset - (0x8000/4));
+		}
+		else if (offset >= 0x18000/4)
+		{
+			update_palette_color(0x18000, offset - (0x18000/4));
+		}
+	}
+	else
+	{
+		if (offset < 0x8000/4)
+		{
+			update_palette_color(0, offset);
+		}
+		else if (offset >= 0x8000/4 && offset < 0x18000/4)
+		{
+			tilemap_mark_tile_dirty(K037122_layer[0], offset - (0x8000/4));
+		}
+		else if (offset >= 0x18000/4)
+		{
+			tilemap_mark_tile_dirty(K037122_layer[1], offset - (0x18000/4));
+		}
+	}
 }
 
 
@@ -350,13 +420,19 @@ WRITE32_HANDLER(K037122_char_w)
 	addr = offset + (bank * (0x40000/4));
 
 	COMBINE_DATA(K037122_char_ram + addr);
-	K037122_dirty_map[offset / 32] = 1;
+	K037122_dirty_map[addr / 32] = 1;
 	K037122_char_dirty = 1;
 }
 
-
 READ32_HANDLER(K037122_reg_r)
 {
+	switch (offset)
+	{
+		case 0x14/4:
+		{
+			return 0x000003fa;
+		}
+	}
 	return K037122_reg[offset];
 }
 
@@ -384,8 +460,6 @@ VIDEO_START( hornet )
 
 VIDEO_UPDATE( hornet )
 {
-	fillbitmap(bitmap, Machine->remapped_colortable[0], cliprect);
-
 	video_update_voodoo(screen, bitmap, cliprect);
 
 	K037122_tile_update();
@@ -406,18 +480,18 @@ static READ32_HANDLER( sysreg_r )
 		{
 			//printf("read sysreg 0\n");
 			r |= readinputport(0) << 24;
-	}
+		}
 		if (!(mem_mask & 0x00ff0000))
 		{
 			r |= readinputport(1) << 16;
-	}
+		}
 		if (!(mem_mask & 0x0000ff00))
 		{
 			r |= readinputport(2) << 8;
 		}
 		if (!(mem_mask & 0x000000ff))
 		{
-			r |= 0xff;
+			r |= 0xf7;
 		}
 	}
 	else if (offset == 1)
@@ -433,14 +507,21 @@ static READ32_HANDLER( sysreg_r )
 static WRITE32_HANDLER( sysreg_w )
 {
 	if( offset == 0 ) {
-		if( mem_mask == 0x00ffffff )
+		if (!(mem_mask & 0xff000000))
+		{
 			led_reg0 = (data >> 24) & 0xff;
-		if( mem_mask == 0xff00ffff )
+		}
+		if (!(mem_mask & 0x00ff0000))
+		{
 			led_reg1 = (data >> 16) & 0xff;
+		}
 		return;
 	}
 	if( offset == 1 )
 	{
+		if (!(mem_mask & 0xff000000))
+		{
+		}
 		if (!(mem_mask & 0x000000ff))
 		{
 			if (data & 0x80)	/* CG Board 1 IRQ Ack */
@@ -451,6 +532,7 @@ static WRITE32_HANDLER( sysreg_w )
 			{
 				cpunum_set_input_line(0, INPUT_LINE_IRQ0, CLEAR_LINE);
 			}
+			set_cgboard_id((data >> 4) & 0x3);
 		}
 		return;
 	}
@@ -461,9 +543,6 @@ static UINT8 sndto68k[16], sndtoppc[2];	/* read/write split mapping */
 static READ32_HANDLER( ppc_sound_r )
 {
 	UINT32 r = 0;
-
-	/* Hack to get past the sound IC test */
-	return 0x005f0000;
 
 	if (!(mem_mask & 0xff000000))
 	{
@@ -484,11 +563,10 @@ INLINE void write_snd_ppc(int reg, int val)
 
 	if (reg == 7)
 	{
-		cpunum_set_input_line(1, 1, HOLD_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_IRQ2, ASSERT_LINE);
 	}
 }
 
-#if 0
 static WRITE32_HANDLER( ppc_sound_w )
 {
 	int reg=0, val=0;
@@ -523,7 +601,6 @@ static WRITE32_HANDLER( ppc_sound_w )
 		write_snd_ppc(reg, val);
 	}
 }
-#endif
 
 static int comm_rombank = 0;
 
@@ -550,37 +627,37 @@ static READ32_HANDLER( comm0_unk_r )
 /*****************************************************************************/
 
 static ADDRESS_MAP_START( hornet_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_RAM AM_SHARE(3)
-	AM_RANGE(0x74000000, 0x740000ff) AM_READWRITE(K037122_reg_r, K037122_reg_w)
-	AM_RANGE(0x74020000, 0x74027fff) AM_READWRITE(paletteram32_r, paletteram32_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x74028000, 0x7403ffff) AM_READWRITE(K037122_tile_r, K037122_tile_w)
-	AM_RANGE(0x74040000, 0x7407ffff) AM_READWRITE(K037122_char_r, K037122_char_w)
-	AM_RANGE(0x78000000, 0x7800ffff) AM_READWRITE(cgboard_dsp_shared_r_ppc, cgboard_dsp_shared_w_ppc)
-	AM_RANGE(0x780c0000, 0x780c0003) AM_READWRITE(cgboard_dsp_comm_r_ppc, cgboard_dsp_comm_w_ppc)
-	AM_RANGE(0x7d000000, 0x7d00ffff) AM_READ(sysreg_r)
-	AM_RANGE(0x7d010000, 0x7d01ffff) AM_WRITE(sysreg_w)
-	AM_RANGE(0x7d020000, 0x7d021fff) AM_READWRITE(timekeeper_0_32be_r, timekeeper_0_32be_w)	/* M48T58Y RTC/NVRAM */
-	AM_RANGE(0x7d030000, 0x7d030007) AM_READ(ppc_sound_r)
-	AM_RANGE(0x7d042000, 0x7d043fff) AM_RAM				/* COMM BOARD 0 */
-	AM_RANGE(0x7d044000, 0x7d044007) AM_READ(comm0_unk_r)
-	AM_RANGE(0x7d048000, 0x7d048003) AM_WRITE(comm1_w)
-	AM_RANGE(0x7d04a000, 0x7d04a003) AM_WRITE(comm_rombank_w)
-	AM_RANGE(0x7d050000, 0x7d05ffff) AM_ROMBANK(1)		/* COMM BOARD 1 */
-	AM_RANGE(0x7e000000, 0x7e7fffff) AM_ROM AM_SHARE(4) /* Data ROM */
-	AM_RANGE(0x7f000000, 0x7f1fffff) AM_ROM AM_SHARE(2)
-	AM_RANGE(0x80000000, 0x803fffff) AM_RAM	AM_SHARE(3)	/* Work RAM */
-	AM_RANGE(0xfe000000, 0xfe7fffff) AM_ROM AM_REGION(REGION_USER2, 0) AM_SHARE(4) /* Data ROM */
-	AM_RANGE(0xff000000, 0xff1fffff) AM_ROM AM_SHARE(2)
-	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)
+	AM_RANGE(0x00000000, 0x003fffff) AM_MIRROR(0x80000000) AM_RAM		/* Work RAM */
+	AM_RANGE(0x74000000, 0x740000ff) AM_MIRROR(0x80000000) AM_READWRITE(K037122_reg_r, K037122_reg_w)
+	AM_RANGE(0x74020000, 0x7403ffff) AM_MIRROR(0x80000000) AM_READWRITE(K037122_sram_r, K037122_sram_w)
+	AM_RANGE(0x74040000, 0x7407ffff) AM_MIRROR(0x80000000) AM_READWRITE(K037122_char_r, K037122_char_w)
+	AM_RANGE(0x78000000, 0x7800ffff) AM_MIRROR(0x80000000) AM_READWRITE(cgboard_dsp_shared_r_ppc, cgboard_dsp_shared_w_ppc)
+	AM_RANGE(0x780c0000, 0x780c0003) AM_MIRROR(0x80000000) AM_READWRITE(cgboard_dsp_comm_r_ppc, cgboard_dsp_comm_w_ppc)
+	AM_RANGE(0x7d000000, 0x7d00ffff) AM_MIRROR(0x80000000) AM_READ(sysreg_r)
+	AM_RANGE(0x7d010000, 0x7d01ffff) AM_MIRROR(0x80000000) AM_WRITE(sysreg_w)
+	AM_RANGE(0x7d020000, 0x7d021fff) AM_MIRROR(0x80000000) AM_READWRITE(timekeeper_0_32be_r, timekeeper_0_32be_w)	/* M48T58Y RTC/NVRAM */
+	AM_RANGE(0x7d030000, 0x7d030007) AM_MIRROR(0x80000000) AM_READWRITE(ppc_sound_r, ppc_sound_w)
+	AM_RANGE(0x7d042000, 0x7d043fff) AM_MIRROR(0x80000000) AM_RAM				/* COMM BOARD 0 */
+	AM_RANGE(0x7d044000, 0x7d044007) AM_MIRROR(0x80000000) AM_READ(comm0_unk_r)
+	AM_RANGE(0x7d048000, 0x7d048003) AM_MIRROR(0x80000000) AM_WRITE(comm1_w)
+	AM_RANGE(0x7d04a000, 0x7d04a003) AM_MIRROR(0x80000000) AM_WRITE(comm_rombank_w)
+	AM_RANGE(0x7d050000, 0x7d05ffff) AM_MIRROR(0x80000000) AM_ROMBANK(1)		/* COMM BOARD 1 */
+	AM_RANGE(0x7e000000, 0x7e7fffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION(REGION_USER2, 0)		/* Data ROM */
+	AM_RANGE(0x7f000000, 0x7f1fffff) AM_MIRROR(0x80000000) AM_ROM AM_SHARE(2)
+	AM_RANGE(0x7fe00000, 0x7fffffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)	/* Program ROM */
 ADDRESS_MAP_END
 
 /*****************************************************************************/
 
 static void *m68k_timer;
+static int m68k_irq1_enable;
 
 static void m68k_timer_tick(int param)
 {
-	//cpunum_set_input_line(1, INPUT_LINE_IRQ1, HOLD_LINE);
+	if (m68k_irq1_enable)
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ1, ASSERT_LINE);
+	}
 }
 
 static READ16_HANDLER( sndcomm68k_r )
@@ -590,18 +667,11 @@ static READ16_HANDLER( sndcomm68k_r )
 
 static WRITE16_HANDLER( sndcomm68k_w )
 {
-/*  if (offset == 4)
+	if (offset == 4)
     {
-        if (data & 0x1)
-        {
-            cpunum_set_input_line(1, INPUT_LINE_IRQ2, ASSERT_LINE);
-        }
-        else
-        {
-            cpunum_set_input_line(1, INPUT_LINE_IRQ2, CLEAR_LINE);
-        }
+    	m68k_irq1_enable = data & 0x1;
     }
-*/
+
 	logerror("sndcomm68k_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
 	sndtoppc[offset] = data;
 }
@@ -627,24 +697,35 @@ static READ16_HANDLER( rf5c400_r )
 
 static WRITE16_HANDLER( rf5c400_w )
 {
-	switch(offset)
-	{
-		case 0x00:
-		{
-			rf5c400_status = data;
-			break;
-		}
-
-		case 0x01:		// set channel ?
-		{
-			rf5c400_status = data;
-			break;
-		}
-	}
-
 	if (offset < 0x400)
 	{
-		logerror("rf5c400_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+		switch(offset)
+		{
+			case 0x00:
+			{
+				rf5c400_status = data;
+				break;
+			}
+
+			case 0x01:		// set channel ?
+			{
+				rf5c400_status = data;
+				break;
+			}
+
+			default:
+			{
+				logerror("rf5c400_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+				break;
+			}
+		}
+	}
+	else
+	{
+		// channel registers
+		int channel = (offset >> 5) & 0x1f;
+		int reg = (offset & 0x1f);
+		logerror("RF5C400: Channel %.d: Reg %02X: %04X\n", channel, reg, data);
 	}
 }
 
@@ -745,64 +826,64 @@ static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_DATA, 32 )
 	AM_RANGE(0x2600000, 0x27fffff) AM_WRITE(voodoo_textureram_w)
 	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
 	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
-	AM_RANGE(0x3600000, 0x37fffff) AM_ROM AM_REGION(REGION_USER5, 0)
+	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(5)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
 
 INPUT_PORTS_START( hornet )
 	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 
 	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 
 	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_7)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_7)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
 	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x80, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, "DIP2" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, "DIP3" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIP4" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIP5" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIP6" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIP7" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x00, "24/15KHz" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Screen Flip (H)" )
+	PORT_DIPSETTING( 0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Screen Flip (V)" )
+	PORT_DIPSETTING( 0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIP4" )
+	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIP5" )
+	PORT_DIPSETTING( 0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Harness" )
+	PORT_DIPSETTING( 0x04, "JVS" )
+	PORT_DIPSETTING( 0x00, "JAMMA" )
+	PORT_DIPNAME( 0x02, 0x02, "DIP7" )
+	PORT_DIPSETTING( 0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "Monitor Type" )
+	PORT_DIPSETTING( 0x01, "24KHz" )
+	PORT_DIPSETTING( 0x00, "15KHz" )
 
 INPUT_PORTS_END
 
@@ -825,34 +906,26 @@ static sharc_config sharc_cfg =
 
 */
 
-static int vblank = 0;
 static INTERRUPT_GEN( hornet_vblank )
 {
-	if (vblank == 0)
-	{
-		cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
-	}
-	else
-	{
-//      cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
-	}
-	vblank++;
-	vblank &= 1;
+	cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
 }
 
 static MACHINE_INIT( hornet )
 {
 	memory_set_bankptr(1, memory_region(REGION_USER3));
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+
+	memory_set_bankptr(5, memory_region(REGION_USER5));
 }
 
 static MACHINE_DRIVER_START( hornet )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
+	MDRV_CPU_ADD_TAG("main", PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
 	MDRV_CPU_CONFIG(hornet_ppc_cfg)
 	MDRV_CPU_PROGRAM_MAP(hornet_map, 0)
-	MDRV_CPU_VBLANK_INT(hornet_vblank, 2)
+	MDRV_CPU_VBLANK_INT(hornet_vblank, 1)
 
 	MDRV_CPU_ADD(M68000, 64000000/4)	/* 16MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_memmap, 0)
@@ -862,7 +935,7 @@ static MACHINE_DRIVER_START( hornet )
 	MDRV_CPU_DATA_MAP(sharc_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(0)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT( hornet )
 
@@ -878,6 +951,44 @@ static MACHINE_DRIVER_START( hornet )
 	MDRV_VIDEO_UPDATE(hornet)
 
 MACHINE_DRIVER_END
+
+static int vblank=0;
+static INTERRUPT_GEN( hornet_2board_vblank )
+{
+	if (vblank == 0)
+	{
+		cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
+	}
+	vblank++;
+	vblank &= 1;
+}
+
+static MACHINE_INIT( hornet_2board )
+{
+	memory_set_bankptr(1, memory_region(REGION_USER3));
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
+
+	memory_set_bankptr(5, memory_region(REGION_USER5));
+}
+
+static MACHINE_DRIVER_START( hornet_2board )
+
+	MDRV_IMPORT_FROM(hornet)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(hornet_2board_vblank, 2)
+
+	MDRV_CPU_ADD(ADSP21062, 36000000)
+	MDRV_CPU_CONFIG(sharc_cfg)
+	MDRV_CPU_DATA_MAP(sharc_map, 0)
+
+	MDRV_MACHINE_INIT(hornet_2board)
+MACHINE_DRIVER_END
+
 
 static UINT8 jamma_rdata[1024];
 static void jamma_r(int length)
@@ -898,6 +1009,7 @@ static UINT8 backup_ram[0x2000];
 static DRIVER_INIT( hornet )
 {
 	init_konami_cgboard(0);
+	set_cgboard_texture_bank(5);
 	sharc_dataram = auto_malloc(0x100000);
 
 	m68k_timer = timer_alloc(m68k_timer_tick);
@@ -935,6 +1047,9 @@ static DRIVER_INIT(gradius4)
 
 static DRIVER_INIT(nbapbp)
 {
+	int i;
+	UINT16 checksum;
+
 	/* RTC data */
 	backup_ram[0x00] = 0x47;	// 'G'
 	backup_ram[0x01] = 0x58;	// 'X'
@@ -946,21 +1061,19 @@ static DRIVER_INIT(nbapbp)
 	backup_ram[0x07] = 0x00;	//
 	backup_ram[0x08] = 0x19;	//
 	backup_ram[0x09] = 0x98;	// 1998
-	backup_ram[0x0a] = 0x43;	// 'C'
-	backup_ram[0x0b] = 0x4c;	// 'L'
-	backup_ram[0x0c] = 0x53;	// 'S'
+	backup_ram[0x0a] = 0x4a;	// 'J'
+	backup_ram[0x0b] = 0x41;	// 'A'
+	backup_ram[0x0c] = 0x41;	// 'A'
 	backup_ram[0x0d] = 0x00;	//
-	backup_ram[0x0e] = 0x02;	// checksum
-	backup_ram[0x0f] = 0xd8;	// checksum
 
-	backup_ram[0x10] = 0x41;
-	backup_ram[0x11] = 0x6d;
-	backup_ram[0x12] = 0x36;
-	backup_ram[0x13] = 0x34;
-	backup_ram[0x14] = 0x65;
-	backup_ram[0x15] = 0x76;
-	backup_ram[0x16] = 0x65;
-	backup_ram[0x17] = 0x52;
+	checksum = 0;
+	for (i=0; i < 14; i++)
+	{
+		checksum += backup_ram[i];
+		checksum &= 0xffff;
+	}
+	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
+	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 0;
 	init_hornet();
@@ -977,7 +1090,6 @@ static DRIVER_INIT(sscope)
 	backup_ram[0x02] = 0x38;	// '8'
 	backup_ram[0x03] = 0x33;	// '3'
 	backup_ram[0x04] = 0x30;	// '0'
-
 	backup_ram[0x05] = 0x00;	//
 	backup_ram[0x06] = 0x00;	//
 	backup_ram[0x07] = 0x00;	//
@@ -999,6 +1111,8 @@ static DRIVER_INIT(sscope)
 
 	voodoo_version = 0;
 	init_hornet();
+
+	init_konami_cgboard(1);
 }
 
 static DRIVER_INIT(sscope2)
@@ -1012,13 +1126,12 @@ static DRIVER_INIT(sscope2)
 	backup_ram[0x02] = 0x39;	// '9'
 	backup_ram[0x03] = 0x33;	// '3'
 	backup_ram[0x04] = 0x31;	// '1'
-
 	backup_ram[0x05] = 0x00;	//
 	backup_ram[0x06] = 0x00;	//
 	backup_ram[0x07] = 0x00;	//
 	backup_ram[0x08] = 0x20;	//
 	backup_ram[0x09] = 0x00;	// 2000
-	backup_ram[0x0a] = 0x4a;	// 'U'
+	backup_ram[0x0a] = 0x55;	// 'U'
 	backup_ram[0x0b] = 0x41;	// 'A'
 	backup_ram[0x0c] = 0x41;	// 'A'
 	backup_ram[0x0d] = 0x00;	//
@@ -1029,9 +1142,10 @@ static DRIVER_INIT(sscope2)
 		checksum += (backup_ram[i] << 8) | (backup_ram[i+1]);
 		checksum &= 0xffff;
 	}
-	checksum = -1 - checksum;
+	checksum = (-1 - checksum) - 1;
 	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
+
 
 	/* Silent Scope data */
 	backup_ram[0x1f40] = 0x47;	// 'G'
@@ -1039,7 +1153,6 @@ static DRIVER_INIT(sscope2)
 	backup_ram[0x1f42] = 0x38;	// '8'
 	backup_ram[0x1f43] = 0x33;	// '3'
 	backup_ram[0x1f44] = 0x30;	// '0'
-
 	backup_ram[0x1f45] = 0x00;	//
 	backup_ram[0x1f46] = 0x00;	//
 	backup_ram[0x1f47] = 0x00;	//
@@ -1056,12 +1169,14 @@ static DRIVER_INIT(sscope2)
 		checksum += (backup_ram[i] << 8) | (backup_ram[i+1]);
 		checksum &= 0xffff;
 	}
-	checksum = -1 - checksum;
+	checksum = (-1 - checksum) - 1;
 	backup_ram[0x1f4e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x1f4f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 1;
 	init_hornet();
+
+	init_konami_cgboard(1);
 }
 
 /*****************************************************************************/
@@ -1069,6 +1184,8 @@ static DRIVER_INIT(sscope2)
 ROM_START(sscope)
 	ROM_REGION32_BE(0x200000, REGION_USER1, 0)	/* PowerPC program */
 	ROM_LOAD16_WORD_SWAP("ss1-1.27p", 0x000000, 0x200000, CRC(3b6bb075) SHA1(babc134c3a20c7cdcaa735d5f1fd5cab38667a14))
+
+	ROM_REGION32_BE(0x800000, REGION_USER2, 0)	/* Data roms */
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("ss1-1.7s", 0x000000, 0x80000, CRC(2805ea1d) SHA1(2556a51ee98cb8f59bf081e916c69a24532196f1))
@@ -1086,7 +1203,7 @@ ROM_START(sscope2)
 	ROM_REGION32_BE(0x200000, REGION_USER1, 0)	/* PowerPC program */
 	ROM_LOAD16_WORD_SWAP("931d01.bin", 0x000000, 0x200000, CRC(4065fde6) SHA1(84f2dedc3e8f61651b22c0a21433a64993e1b9e2))
 
-	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* Data roms */
+	ROM_REGION32_BE(0x800000, REGION_USER2, 0)	/* Data roms */
 		ROM_LOAD32_WORD_SWAP("931a04.bin", 0x000000, 0x200000, CRC(4f5917e6) SHA1(a63a107f1d6d9756e4ab0965d72ea446f0692814))
 
 	ROM_REGION32_BE(0x800000, REGION_USER3, 0)	/* Comm board roms */
@@ -1106,15 +1223,15 @@ ROM_START(gradius4)
 	ROM_REGION32_BE(0x200000, REGION_USER1, 0)	/* PowerPC program */
         ROM_LOAD16_WORD_SWAP( "837c01.27p",   0x000000, 0x200000, CRC(ce003123) SHA1(15e33997be2c1b3f71998627c540db378680a7a1) )
 
-	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* Data roms */
+	ROM_REGION32_BE(0x800000, REGION_USER2, 0)	/* Data roms */
         ROM_LOAD32_WORD_SWAP( "837a04.16t",   0x000000, 0x200000, CRC(18453b59) SHA1(3c75a54d8c09c0796223b42d30fb3867a911a074) )
         ROM_LOAD32_WORD_SWAP( "837a05.14t",   0x000002, 0x200000, CRC(77178633) SHA1(ececdd501d0692390325c8dad6dbb068808a8b26) )
 
 	ROM_REGION32_BE(0x1000000, REGION_USER5, 0)	/* CG Board texture roms */
-        ROM_LOAD32_WORD_SWAP( "837a14.32u",   0x000000, 0x400000, CRC(ff1b5d18) SHA1(7a38362170133dcc6ea01eb62981845917b85c36) )
-        ROM_LOAD32_WORD_SWAP( "837a13.24u",   0x000002, 0x400000, CRC(d86e10ff) SHA1(6de1179d7081d9a93ab6df47692d3efc190c38ba) )
-        ROM_LOAD32_WORD_SWAP( "837a16.32v",   0x800000, 0x400000, CRC(bb7a7558) SHA1(8c8cc062793c2dcfa72657b6ea0813d7223a0b87) )
-        ROM_LOAD32_WORD_SWAP( "837a15.24v",   0x800002, 0x400000, CRC(e0620737) SHA1(c14078cdb44f75c7c956b3627045d8494941d6b4) )
+        ROM_LOAD32_WORD_SWAP( "837a14.32u",   0x000002, 0x400000, CRC(ff1b5d18) SHA1(7a38362170133dcc6ea01eb62981845917b85c36) )
+        ROM_LOAD32_WORD_SWAP( "837a13.24u",   0x000000, 0x400000, CRC(d86e10ff) SHA1(6de1179d7081d9a93ab6df47692d3efc190c38ba) )
+        ROM_LOAD32_WORD_SWAP( "837a16.32v",   0x800002, 0x400000, CRC(bb7a7558) SHA1(8c8cc062793c2dcfa72657b6ea0813d7223a0b87) )
+        ROM_LOAD32_WORD_SWAP( "837a15.24v",   0x800000, 0x400000, CRC(e0620737) SHA1(c14078cdb44f75c7c956b3627045d8494941d6b4) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
         ROM_LOAD16_WORD_SWAP( "837a08.7s",    0x000000, 0x080000, CRC(c3a7ff56) SHA1(9d8d033277d560b58da151338d14b4758a9235ea) )
@@ -1133,10 +1250,10 @@ ROM_START(nbapbp)
         ROM_LOAD32_WORD_SWAP( "778a05.14t",   0x000002, 0x400000, CRC(03249803) SHA1(f632a5f1dfa0a8500407214df0ec8d98ce09bc2b) )
 
 	ROM_REGION32_BE(0x1000000, REGION_USER5, 0)	/* CG Board texture roms */
-        ROM_LOAD32_WORD_SWAP( "778a14.32u",   0x000000, 0x400000, CRC(db0c278d) SHA1(bb9884b6cdcdb707fff7e56e92e2ede062abcfd3) )
-        ROM_LOAD32_WORD_SWAP( "778a13.24u",   0x000002, 0x400000, CRC(47fda9cc) SHA1(4aae01c1f1861b4b12a3f9de6b39eb4d11a9736b) )
-        ROM_LOAD32_WORD_SWAP( "778a16.32v",   0x800000, 0x400000, CRC(6c0f46ea) SHA1(c6b9fbe14e13114a91a5925a0b46496260539687) )
-        ROM_LOAD32_WORD_SWAP( "778a15.24v",   0x800002, 0x400000, CRC(d176ad0d) SHA1(2be755dfa3f60379d396734809bbaaaad49e0db5) )
+        ROM_LOAD32_WORD_SWAP( "778a14.32u",   0x000002, 0x400000, CRC(db0c278d) SHA1(bb9884b6cdcdb707fff7e56e92e2ede062abcfd3) )
+        ROM_LOAD32_WORD_SWAP( "778a13.24u",   0x000000, 0x400000, CRC(47fda9cc) SHA1(4aae01c1f1861b4b12a3f9de6b39eb4d11a9736b) )
+        ROM_LOAD32_WORD_SWAP( "778a16.32v",   0x800002, 0x400000, CRC(6c0f46ea) SHA1(c6b9fbe14e13114a91a5925a0b46496260539687) )
+        ROM_LOAD32_WORD_SWAP( "778a15.24v",   0x800000, 0x400000, CRC(d176ad0d) SHA1(2be755dfa3f60379d396734809bbaaaad49e0db5) )
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
         ROM_LOAD16_WORD_SWAP( "778a08.7s",    0x000000, 0x080000, CRC(6259b4bf) SHA1(d0c38870495c9a07984b4b85e736d6477dd44832) )
@@ -1150,7 +1267,7 @@ ROM_END
 
 /*************************************************************************/
 
-GAME( 1999, gradius4,	0,		hornet, hornet,	gradius4,	ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1998, nbapbp,	0,		hornet, hornet,	nbapbp,		ROT0,	"Konami",	"NBA Play By Play", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1999, sscope,	0,		hornet,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 2000, sscope2,	0,		hornet,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1998, gradius4,	0,		hornet,			hornet,	gradius4,	ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_NO_SOUND )
+GAME( 1998, nbapbp,		0,		hornet,			hornet,	nbapbp,		ROT0,	"Konami",	"NBA Play By Play", GAME_NO_SOUND )
+GAME( 2000, sscope,		0,		hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 2000, sscope2,	0,		hornet_2board,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_NOT_WORKING|GAME_NO_SOUND )

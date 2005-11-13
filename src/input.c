@@ -838,13 +838,13 @@ input_code token_to_code(const char *token)
 	input_code code;
 
 	/* look for special cases */
-	if (!stricmp(token, "OR"))
+	if (!mame_stricmp(token, "OR"))
 		return CODE_OR;
-	if (!stricmp(token, "NOT"))
+	if (!mame_stricmp(token, "NOT"))
 		return CODE_NOT;
-	if (!stricmp(token, "NONE"))
+	if (!mame_stricmp(token, "NONE"))
 		return CODE_NONE;
-	if (!stricmp(token, "DEFAULT"))
+	if (!mame_stricmp(token, "DEFAULT"))
 		return CODE_DEFAULT;
 
 	/* look for a match against any of the codes in the table */

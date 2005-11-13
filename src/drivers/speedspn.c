@@ -266,7 +266,7 @@ INPUT_PORTS_END
 
 /*** GFX DECODE **************************************************************/
 
-static gfx_layout speedspn_charlayout =
+static const gfx_layout speedspn_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -277,7 +277,7 @@ static gfx_layout speedspn_charlayout =
 	8*8
 };
 
-static gfx_layout speedspn_spritelayout =
+static const gfx_layout speedspn_spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -291,7 +291,7 @@ static gfx_layout speedspn_spritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &speedspn_charlayout,   0x000, 0x40 },
 	{ REGION_GFX2, 0, &speedspn_spritelayout, 0x000, 0x40 },

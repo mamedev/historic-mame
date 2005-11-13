@@ -24,6 +24,7 @@ static UINT32 sse_control[4] = { 0x9fc0, 0xbfc0, 0xdfc0, 0xffc0 };
 
 static void append_entry_point(drc_core *drc);
 static void append_recompile(drc_core *drc);
+static void append_flush(drc_core *drc);
 static void append_out_of_cycles(drc_core *drc);
 
 #if LOG_DISPATCHES
@@ -121,6 +122,8 @@ void drc_cache_reset(drc_core *drc)
 	append_recompile(drc);
 	drc->dispatch = drc->cache_top;
 	drc_append_dispatcher(drc);
+	drc->flush = drc->cache_top;
+	append_flush(drc);
 
 	/* populate the recompile table */
 	for (i = 0; i < (1 << drc->l2bits); i++)
@@ -638,6 +641,18 @@ static void append_recompile(drc_core *drc)
 {
 	_push_imm(drc);													// push drc
 	drc_append_save_call_restore(drc, (genf *)recompile_code, 4);	// call recompile_code
+	drc_append_dispatcher(drc);										// dispatch
+}
+
+
+/*------------------------------------------------------------------
+    append_flush
+------------------------------------------------------------------*/
+
+static void append_flush(drc_core *drc)
+{
+	_push_imm(drc);													// push drc
+	drc_append_save_call_restore(drc, (genf *)drc_cache_reset, 4);	// call drc_cache_reset
 	drc_append_dispatcher(drc);										// dispatch
 }
 

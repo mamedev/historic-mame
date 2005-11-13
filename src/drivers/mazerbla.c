@@ -741,7 +741,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 		{
 			for (x = 0; x <= pix_xsize; x++)
 			{
-				UINT8 pixeldata = rom[offs + (bits>>3)];
+				UINT8 pixeldata = rom[(offs + (bits>>3)) % 0x2000];
 				UINT8 data = (pixeldata>>(6-(bits&7))) & 3;
 				UINT8 col = 0;
 
@@ -791,7 +791,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 		{
 			for (x = 0; x <= pix_xsize; x++)
 			{
-				UINT8 pixeldata = rom[offs + (bits>>3)];
+				UINT8 pixeldata = rom[(offs + (bits>>3)) % 0x2000];
 				UINT8 data = (pixeldata>>(7-(bits&7))) & 1;
 
 				/* color = 4 MSB = front PEN, 4 LSB = background PEN */
@@ -826,7 +826,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 		{
 			for (x = 0; x <= pix_xsize; x++)
 			{
-				UINT8 pixeldata = rom[offs + (bits>>3)];
+				UINT8 pixeldata = rom[(offs + (bits>>3)) % 0x2000];
 				UINT8 data = (pixeldata>>(4-(bits&7))) & 15;
 				UINT8 col = 0;
 
@@ -913,7 +913,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 		{
 			for (x = 0; x <= pix_xsize; x++)
 			{
-				UINT8 pixeldata = rom[offs + (bits>>3)];
+				UINT8 pixeldata = rom[(offs + (bits>>3)) % 0x2000];
 				UINT8 data = (pixeldata>>(6-(bits&7))) & 3;
 				UINT8 col = 0;
 

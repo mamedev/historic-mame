@@ -437,7 +437,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	64,
@@ -449,7 +449,7 @@ static gfx_layout charlayout =
 };
 
 
-static gfx_layout fieldlayout =
+static const gfx_layout fieldlayout =
 {
 	8,8,
 	64,
@@ -461,7 +461,7 @@ static gfx_layout fieldlayout =
 };
 
 
-static gfx_layout soccer_fieldlayout =
+static const gfx_layout soccer_fieldlayout =
 {
 	8,8,
 	64,
@@ -473,7 +473,7 @@ static gfx_layout soccer_fieldlayout =
 };
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	8,16,
 	64,
@@ -486,7 +486,7 @@ static gfx_layout spritelayout =
 };
 
 
-static gfx_layout spritemasklayout =
+static const gfx_layout spritemasklayout =
 {
 	8,16,
 	64,
@@ -499,7 +499,7 @@ static gfx_layout spritemasklayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,  0x00, 0x01 }, /* offset into colors, # of colors */
 	{ REGION_GFX2, 0, &fieldlayout, 0x02, 0x01 }, /* offset into colors, # of colors */
@@ -507,7 +507,7 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 
-static gfx_decode soccer_gfxdecodeinfo[] =
+static const gfx_decode soccer_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,         0x00, 0x01 }, /* offset into colors, # of colors */
 	{ REGION_GFX3, 0x0400, &soccer_fieldlayout, 0x06, 0x01 }, /* offset into colors, # of colors */

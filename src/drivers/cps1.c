@@ -3589,7 +3589,7 @@ INPUT_PORTS_START( rockmanj )
 INPUT_PORTS_END
 
 
-static gfx_layout layout8x8 =
+static const gfx_layout layout8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -3601,7 +3601,7 @@ static gfx_layout layout8x8 =
 	64*8		/* char modulo */
 };
 
-static gfx_layout layout16x16 =
+static const gfx_layout layout16x16 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -3612,7 +3612,7 @@ static gfx_layout layout16x16 =
 	128*8		/* char modulo */
 };
 
-static gfx_layout layout32x32 =
+static const gfx_layout layout32x32 =
 {
 	32,32,
 	RGN_FRAC(1,1),
@@ -6370,6 +6370,35 @@ ROM_END
 
 ROM_START( varth )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "vae_30b.rom",  0x00000, 0x20000, CRC(adb8d391) SHA1(5e7160509e0315eb32cc390ddd7e4ef7a4a1a70a) )
+	ROM_LOAD16_BYTE( "vae_35b.rom",  0x00001, 0x20000, CRC(44e5548f) SHA1(17b4be1f4159f6b6803d8c2950823ece0bdde8b2) )
+	ROM_LOAD16_BYTE( "vae_31b.rom",  0x40000, 0x20000, CRC(1749a71c) SHA1(bd9bfd5bbe2d426c94df755c977faa92a28f16ab) )
+	ROM_LOAD16_BYTE( "vae_36b.rom",  0x40001, 0x20000, CRC(5f2e2450) SHA1(676e8d96406d81ceadd4a0a69959cdcb6d5d9ac8) )
+	ROM_LOAD16_BYTE( "vae_28b.rom",  0x80000, 0x20000, CRC(e524ca50) SHA1(487d5ddabe852872f331362034c4fa16e0926e3d) )
+	ROM_LOAD16_BYTE( "vae_33b.rom",  0x80001, 0x20000, CRC(c0bbf8c9) SHA1(447540b856776770af8022a291d46612c1bb5909) )
+	ROM_LOAD16_BYTE( "vae_29b.rom",  0xc0000, 0x20000, CRC(6640996a) SHA1(3ed7bd947dc8224435680dedf4955ed6041c6028) )
+	ROM_LOAD16_BYTE( "vae_34b.rom",  0xc0001, 0x20000, CRC(fa59be8a) SHA1(86a3d3a7126c021e2ca8ac20238695396367e098) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	ROMX_LOAD( "va_gfx5.rom",  0x000000, 0x80000, CRC(b1fb726e) SHA1(5ac0876b6c49d0a99710dda68653664f4d8c1167) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "va_gfx7.rom",  0x000002, 0x80000, CRC(4c6588cd) SHA1(d14e8cf051ac934ccc989d8c571c6cc9eed34af5) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "va_gfx1.rom",  0x000004, 0x80000, CRC(0b1ace37) SHA1(6f9493c22f667f683db2789972fd16bb94724679) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "va_gfx3.rom",  0x000006, 0x80000, CRC(44dfe706) SHA1(a013a434df3161a91aafbb35dc4e20dfb3f177f4) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "va_09.rom",     0x00000, 0x08000, CRC(7a99446e) SHA1(ca027f41e3e58be5abc33ad7380746658cb5380a) )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "va_18.rom",    0x00000, 0x20000, CRC(de30510e) SHA1(8e878696192606b76a3a0e53553e638d9621cff7) )
+	ROM_LOAD( "va_19.rom",    0x20000, 0x20000, CRC(0610a4ac) SHA1(3da02ea6a7a56c85de898806d2a1cf6bc526c1b3) )
+ROM_END
+
+ROM_START( varthr1 )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_BYTE( "vae_30a.rom",  0x00000, 0x20000, CRC(7fcd0091) SHA1(7bed452736eda4a26c43c5dd54ec6799afa6e770) )
 	ROM_LOAD16_BYTE( "vae_35a.rom",  0x00001, 0x20000, CRC(35cf9509) SHA1(a189ca7740d77262413ec2891af034d0057892be) )
 	ROM_LOAD16_BYTE( "vae_31a.rom",  0x40000, 0x20000, CRC(15e5ee81) SHA1(6c6248b07f7e956a37d5dcb4b67d026f57fae13b) )
@@ -7490,7 +7519,8 @@ GAME( 1992, sf2m6,    sf2ce,    sf2,      sf2,      cps1,     ROT0,   "bootleg",
 GAME( 1992, sf2m7,    sf2ce,    sf2,      sf2,      cps1,     ROT0,   "bootleg","Street Fighter II' - Champion Edition (M7)", 0 )
 GAME( 1992, sf2yyc,   sf2ce,    sf2,      sf2,      cps1,     ROT0,   "bootleg","Street Fighter II' - Champion Edition (YYC)", 0 )
 GAME( 1992, sf2koryu, sf2ce,    sf2,      sf2,      cps1,     ROT0,   "bootleg","Street Fighter II' - Champion Edition (Kouryu)", 0 )
-GAME( 1992, varth,    0,        cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (World 920612)" , 0)		// "ETC"
+GAME( 1992, varth,    0,        cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (World 920714)" , 0)		// "ETC"
+GAME( 1992, varthr1,  varth,    cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (World 920612)" , 0)		// "ETC"
 GAME( 1992, varthu,   varth,    cps1,     varth,    cps1,     ROT270, "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US 920612)", 0 )
 GAME( 1992, varthj,   varth,    cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (Japan 920714)", 0 )
 GAME( 1992, cworld2j, 0,        cps1,     cworld2j, cps1,     ROT0,   "Capcom", "Capcom World 2 (Japan 920611)", 0 )

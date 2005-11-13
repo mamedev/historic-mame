@@ -444,7 +444,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	16,16,	/* 16*16 tiles */
 	8192,	/* 8192 tiles */
@@ -457,7 +457,7 @@ static gfx_layout tile_layout =
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 
-static gfx_layout sprite_layout = {
+static const gfx_layout sprite_layout = {
 	16,16,	/* 16*16 tiles */
 	0x90000/32, /* 4096 tiles */
 	4,	/* 4 bits per pixel */
@@ -471,7 +471,7 @@ static gfx_layout sprite_layout = {
 
 /* Graphics Decode Info */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,   256, 32 },
 	{ REGION_GFX2, 0, &sprite_layout,	0, 16 },

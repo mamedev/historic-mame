@@ -209,23 +209,9 @@ WRITE16_HANDLER( nemesis_characterram_word_w )
 }
 
 
-/* Fix the gdx decode info for lsb first systems */
-static void nemesis_lsbify_gfx(void)
-{
-	int i, j;
-	for(i=0; i<8; i++)
-		for(j=0; j<Machine->drv->gfxdecodeinfo[i].gfxlayout->width; j++)
-			Machine->drv->gfxdecodeinfo[i].gfxlayout->xoffset[j] ^= 8;
-}
-
-
 /* claim a palette dirty array */
 VIDEO_START( nemesis )
 {
-#ifdef LSB_FIRST
-	nemesis_lsbify_gfx();
-#endif
-
 	spriteram_words = spriteram_size / 2;
 
 	background = tilemap_create(

@@ -468,7 +468,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -479,7 +479,7 @@ static gfx_layout charlayout =
 	32*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
@@ -492,7 +492,7 @@ static gfx_layout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout gberetb_charlayout =
+static const gfx_layout gberetb_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
@@ -503,7 +503,7 @@ static gfx_layout gberetb_charlayout =
 	32*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout gberetb_spritelayout =
+static const gfx_layout gberetb_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	512,	/* 512 sprites */
@@ -518,14 +518,14 @@ static gfx_layout gberetb_spritelayout =
 
 /* Graphics Decode Information */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,       0, 16 },
 	{ REGION_GFX2, 0, &spritelayout, 16*16, 16 },
 	{ -1 }
 };
 
-static gfx_decode gberetb_gfxdecodeinfo[] =
+static const gfx_decode gberetb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gberetb_charlayout,       0, 16 },
 	{ REGION_GFX2, 0, &gberetb_spritelayout, 16*16, 16 },

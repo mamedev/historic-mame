@@ -81,7 +81,7 @@ INPUT_PORTS_START( meijinsn )
 	PORT_START	/* DSW */
 INPUT_PORTS_END
 
-static gfx_layout meijinsn_layout =
+static const gfx_layout meijinsn_layout =
 {
 	4,8,
 	RGN_FRAC(1,1),
@@ -92,7 +92,7 @@ static gfx_layout meijinsn_layout =
 	8*16
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0, &meijinsn_layout,   0x0, 2  }, /* bg tiles */
 

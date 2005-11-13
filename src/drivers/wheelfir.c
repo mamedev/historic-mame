@@ -130,7 +130,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout wheelfir_layout =
+static const gfx_layout wheelfir_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -143,7 +143,7 @@ static gfx_layout wheelfir_layout =
 
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &wheelfir_layout,   0x0, 2  },
 	{ -1 } /* end of array */

@@ -647,7 +647,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout charlayout_1bpp =
+static const gfx_layout charlayout_1bpp =
 {
 	8,8,
 	256,
@@ -658,7 +658,7 @@ static gfx_layout charlayout_1bpp =
 	8*8
 };
 
-static gfx_layout charlayout_2bpp =
+static const gfx_layout charlayout_2bpp =
 {
 	8,8,
 	256,
@@ -669,7 +669,7 @@ static gfx_layout charlayout_2bpp =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -681,7 +681,7 @@ static gfx_layout spritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo_1bpp[] =
+static const gfx_decode gfxdecodeinfo_1bpp[] =
 {
 	{ REGION_CPU1, 0x4800, &charlayout_1bpp, 0, 4 },	/* the game dynamically modifies this */
 	{ REGION_GFX1, 0x0000, &spritelayout,    8, 2 },
@@ -689,7 +689,7 @@ static gfx_decode gfxdecodeinfo_1bpp[] =
 };
 
 
-static gfx_decode gfxdecodeinfo_2bpp[] =
+static const gfx_decode gfxdecodeinfo_2bpp[] =
 {
 	{ REGION_CPU1, 0x6000, &charlayout_2bpp, 0, 4 },	/* the game dynamically modifies this */
 	{ REGION_GFX1, 0x0000, &spritelayout,   16, 2 },

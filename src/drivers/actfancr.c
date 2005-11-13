@@ -325,7 +325,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout chars =
+static const gfx_layout chars =
 {
 	8,8,	/* 8*8 chars */
 	4096,
@@ -336,7 +336,7 @@ static gfx_layout chars =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout tiles =
+static const gfx_layout tiles =
 {
 	16,16,	/* 16*16 sprites */
 	2048,
@@ -349,7 +349,7 @@ static gfx_layout tiles =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout sprites =
+static const gfx_layout sprites =
 {
 	16,16,	/* 16*16 sprites */
 	2048+1024,
@@ -362,7 +362,7 @@ static gfx_layout sprites =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode actfan_gfxdecodeinfo[] =
+static const gfx_decode actfan_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &chars,       0, 16 },
 	{ REGION_GFX2, 0, &sprites,   512, 16 },
@@ -370,7 +370,7 @@ static gfx_decode actfan_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode triothep_gfxdecodeinfo[] =
+static const gfx_decode triothep_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &chars,       0, 16 },
 	{ REGION_GFX2, 0, &sprites,   256, 16 },

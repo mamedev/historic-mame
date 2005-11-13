@@ -314,7 +314,7 @@ INPUT_PORTS_START( tankbust )
 	PORT_DIPSETTING(	0x00, "4" )
 INPUT_PORTS_END
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	32,32,	/* 32*32 pixels */
 	64,		/* 64 sprites */
@@ -331,7 +331,7 @@ static gfx_layout spritelayout =
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 pixels */
 	2048,	/* 2048 characters */
@@ -342,7 +342,7 @@ static gfx_layout charlayout =
 	8*8		/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout2 =
+static const gfx_layout charlayout2 =
 {
 	8,8,	/* 8*8 pixels */
 	256,	/* 256 characters */
@@ -353,7 +353,7 @@ static gfx_layout charlayout2 =
 	8*8		/* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,	0x00, 2 },	/* sprites 32x32  (2 * 16 colors) */
 	{ REGION_GFX2, 0, &charlayout,		0x20, 8 },	/* bg tilemap characters */

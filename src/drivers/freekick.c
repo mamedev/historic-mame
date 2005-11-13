@@ -840,7 +840,7 @@ PORT_START
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -851,7 +851,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -866,7 +866,7 @@ static gfx_layout spritelayout =
 	16*16
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0x000, 32 },
 	{ REGION_GFX2, 0, &spritelayout, 0x100, 32 },

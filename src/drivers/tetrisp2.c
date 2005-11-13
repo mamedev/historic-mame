@@ -609,7 +609,7 @@ INPUT_PORTS_END
 
 
 /* 8x8x8 tiles */
-static gfx_layout layout_8x8x8 =
+static const gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -621,7 +621,7 @@ static gfx_layout layout_8x8x8 =
 };
 
 /* 16x16x8 tiles */
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -632,7 +632,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*8
 };
 
-static gfx_decode tetrisp2_gfxdecodeinfo[] =
+static const gfx_decode tetrisp2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x8,   0x0000, 0x10 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x8, 0x1000, 0x10 }, // [1] Background
@@ -801,7 +801,7 @@ ROM_START( tetrisp2 )
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )	/* 8x8x8 (Foreground) */
 	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, CRC(34dd1bad) SHA1(9bdf1dde11f82839676400de5dd7acb06ea8cdb2) )	// 11111xxxxxxxxxxxxxx = 0xFF
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "96019-07.7", 0x000000, 0x400000, CRC(a8a61954) SHA1(86c3db10b348ba1f44ff696877b8b20845fa53de) )
 
 ROM_END
@@ -848,7 +848,7 @@ ROM_START( teplus2j )
 	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE )	/* 8x8x8 (Foreground) */
 	ROM_LOAD( "tetp2-10.bin", 0x000000, 0x080000, CRC(34dd1bad) SHA1(9bdf1dde11f82839676400de5dd7acb06ea8cdb2) )	// 11111xxxxxxxxxxxxxx = 0xFF
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "96019-07.7", 0x000000, 0x400000, CRC(a8a61954) SHA1(86c3db10b348ba1f44ff696877b8b20845fa53de) )
 
 ROM_END

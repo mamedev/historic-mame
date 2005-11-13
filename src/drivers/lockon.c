@@ -361,39 +361,49 @@ static WRITE8_HANDLER(z80_shared_w)
 
 static READ8_HANDLER(main_gnd_r)
 {
-       const UINT8* rom=(UINT8*)memory_region(REGION_CPU2);
-       return rom[offset | (v30_gnd_addr << 16)];
+	UINT8 result;
+	cpuintrf_push_context(1);
+	result = program_read_byte(offset | (v30_gnd_addr << 16));
+	cpuintrf_pop_context();
+	return result;
 }
 
 static WRITE8_HANDLER(main_gnd_w)
 {
-       UINT8* rom=(UINT8*)memory_region(REGION_CPU2);
-       rom[offset | (v30_gnd_addr << 16)] = data;
+	cpuintrf_push_context(1);
+	program_write_byte(offset | (v30_gnd_addr << 16), data);
+	cpuintrf_pop_context();
 }
 
 static READ8_HANDLER(main_obj_r)
 {
-       const UINT8* rom=(UINT8*)memory_region(REGION_CPU3);
-       return rom[offset | (v30_obj_addr << 16)];
+	UINT8 result;
+	cpuintrf_push_context(2);
+	result = program_read_byte(offset | (v30_obj_addr << 16));
+	cpuintrf_pop_context();
+	return result;
 }
 
 static WRITE8_HANDLER(main_obj_w)
 {
-       UINT8* ram=(UINT8*)memory_region(REGION_CPU3);
-       ram[offset | (v30_obj_addr << 16)] = data;
+	cpuintrf_push_context(2);
+	program_write_byte(offset | (v30_obj_addr << 16), data);
+	cpuintrf_pop_context();
 }
 
 
 static WRITE8_HANDLER(testcs_w)
 {
-       UINT8* gnd=(UINT8*)memory_region(REGION_CPU2);
-       UINT8* obj=(UINT8*)memory_region(REGION_CPU3);
+	if(offset<0x800)
+	{
+		cpuintrf_push_context(1);
+		program_write_byte(offset | (v30_gnd_addr << 16), data);
+		cpuintrf_pop_context();
 
-       if(offset<0x800)
-       {
-            gnd[offset | (v30_gnd_addr << 16)] = data;
-            obj[offset | (v30_obj_addr << 16)] = data;
-       }
+		cpuintrf_push_context(2);
+		program_write_byte(offset | (v30_obj_addr << 16), data);
+		cpuintrf_pop_context();
+	}
 }
 
 /*
@@ -495,7 +505,7 @@ static ADDRESS_MAP_START( sound_io, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
-static gfx_layout char_layout =
+static const gfx_layout char_layout =
 {
 	8,8,
 	1024,
@@ -506,7 +516,7 @@ static gfx_layout char_layout =
 	8*8
 };
 
-static gfx_layout object_layout =
+static const gfx_layout object_layout =
 {
 	8,8,
 	4096,
@@ -517,7 +527,7 @@ static gfx_layout object_layout =
 	8*8
 };
 
-static gfx_layout scene_layout =
+static const gfx_layout scene_layout =
 {
 	8,8,
 	4096,
@@ -528,7 +538,7 @@ static gfx_layout scene_layout =
 	8*8
 };
 
-static gfx_layout hud_layout =
+static const gfx_layout hud_layout =
 {
 	8,8,
 	1024,
@@ -539,7 +549,7 @@ static gfx_layout hud_layout =
 	8*8
 };
 
-static gfx_layout ground_layout =
+static const gfx_layout ground_layout =
 {
 	8,8,
 	8192,
@@ -551,7 +561,7 @@ static gfx_layout ground_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &object_layout,  0, 16 },
 	{ REGION_GFX2, 0, &object_layout,  0, 16 },

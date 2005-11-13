@@ -212,7 +212,7 @@ INPUT_PORTS_END
 
 /* Graphics Layout */
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8, 8,
 	RGN_FRAC(1,1),
@@ -225,7 +225,7 @@ static gfx_layout charlayout =
 
 /* Graphics Decode Information */
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	0, 32 },
 	{ -1 }

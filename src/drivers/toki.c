@@ -342,7 +342,7 @@ INPUT_PORTS_END
 
 /*****************************************************************************/
 
-static gfx_layout toki_charlayout =
+static const gfx_layout toki_charlayout =
 {
 	8,8,
 	4096,
@@ -353,7 +353,7 @@ static gfx_layout toki_charlayout =
 	16*8
 };
 
-static gfx_layout toki_tilelayout =
+static const gfx_layout toki_tilelayout =
 {
 	16,16,
 	4096,
@@ -366,7 +366,7 @@ static gfx_layout toki_tilelayout =
 	128*8
 };
 
-static gfx_layout toki_spritelayout =
+static const gfx_layout toki_spritelayout =
 {
 	16,16,
 	8192,
@@ -379,7 +379,7 @@ static gfx_layout toki_spritelayout =
 	128*8
 };
 
-static gfx_decode toki_gfxdecodeinfo[] =
+static const gfx_decode toki_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &toki_charlayout,  16*16, 16 },
 	{ REGION_GFX2, 0, &toki_spritelayout, 0*16, 16 },
@@ -388,7 +388,7 @@ static gfx_decode toki_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_layout tokib_charlayout =
+static const gfx_layout tokib_charlayout =
 {
 	8,8,	/* 8 by 8 */
 	4096,	/* 4096 characters */
@@ -399,7 +399,7 @@ static gfx_layout tokib_charlayout =
 	8*8
 };
 
-static gfx_layout tokib_tilelayout =
+static const gfx_layout tokib_tilelayout =
 {
 	16,16,	/* 16 by 16 */
 	4096,	/* 4096 characters */
@@ -415,7 +415,7 @@ static gfx_layout tokib_tilelayout =
 	8*8
 };
 
-static gfx_layout tokib_spriteslayout =
+static const gfx_layout tokib_spriteslayout =
 {
 	16,16,	/* 16 by 16 */
 	8192,	/* 8192 sprites */
@@ -427,7 +427,7 @@ static gfx_layout tokib_spriteslayout =
 	16*16
 };
 
-static gfx_decode tokib_gfxdecodeinfo[] =
+static const gfx_decode tokib_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tokib_charlayout,	16*16, 16 },
 	{ REGION_GFX2, 0, &tokib_spriteslayout,  0*16, 16 },

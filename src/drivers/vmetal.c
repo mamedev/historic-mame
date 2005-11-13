@@ -340,7 +340,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout char16x16layout =
+static const gfx_layout char16x16layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -351,7 +351,7 @@ static gfx_layout char16x16layout =
 	16*64
 };
 
-static gfx_layout char8x8layout =
+static const gfx_layout char8x8layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -362,7 +362,7 @@ static gfx_layout char8x8layout =
 	8*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char16x16layout,   0x1000, 512  }, /* bg tiles */
 	{ REGION_GFX1, 0, &char8x8layout,   0x1000, 512  }, /* bg tiles */

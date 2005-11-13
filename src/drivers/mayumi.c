@@ -247,7 +247,7 @@ INPUT_PORTS_END
 
 /****************************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	8192,   /* 8192 characters */
@@ -258,7 +258,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout, 0, 32 },
 	{ -1 } /* end of array */

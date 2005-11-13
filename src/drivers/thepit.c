@@ -516,7 +516,7 @@ INPUT_PORTS_START( rtriv )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,    /* 256 characters */
@@ -528,7 +528,7 @@ static gfx_layout charlayout =
 };
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	64,     /* 64 sprites */
@@ -542,7 +542,7 @@ static gfx_layout spritelayout =
 };
 
 
-static gfx_layout suprmous_charlayout =
+static const gfx_layout suprmous_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -554,7 +554,7 @@ static gfx_layout suprmous_charlayout =
 };
 
 
-static gfx_layout suprmous_spritelayout =
+static const gfx_layout suprmous_spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	64,		/* 64 sprites */
@@ -568,14 +568,14 @@ static gfx_layout suprmous_spritelayout =
 };
 
 
-static gfx_decode thepit_gfxdecodeinfo[] =
+static const gfx_decode thepit_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 8 },
 	{ REGION_GFX1, 0, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode intrepid_gfxdecodeinfo[] =
+static const gfx_decode intrepid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,     0, 8 },
 	{ REGION_GFX1, 0x0000, &spritelayout,   0, 8 },
@@ -584,7 +584,7 @@ static gfx_decode intrepid_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode suprmous_gfxdecodeinfo[] =
+static const gfx_decode suprmous_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &suprmous_charlayout,   0, 4 },
 	{ REGION_GFX1, 0x0800, &suprmous_spritelayout, 0, 4 },

@@ -272,7 +272,7 @@ INPUT_PORTS_START( cm2v841 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8, 8,
 	4096,
@@ -283,7 +283,7 @@ static gfx_layout charlayout =
 	8*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	80, 32,
 	12,
@@ -304,7 +304,7 @@ static gfx_layout spritelayout =
 	10*64*8
 };
 
-static gfx_layout spritelayout2 =
+static const gfx_layout spritelayout2 =
 {
 	80, 128,
 	6,
@@ -340,13 +340,13 @@ static gfx_layout spritelayout2 =
 	128*64*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 16 },
 	{ -1 }
 };
 
-static gfx_decode gfxdecodeinfoalt[] =
+static const gfx_decode gfxdecodeinfoalt[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 16 },
 	{ REGION_GFX2, 0x0040, &spritelayout,  0, 16 },

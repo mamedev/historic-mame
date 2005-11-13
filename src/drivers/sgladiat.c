@@ -27,7 +27,7 @@ AT08XX03:
 
 extern UINT8 *snk_rambase;
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	256,
@@ -38,7 +38,7 @@ static gfx_layout tile_layout =
 	256
 };
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	16,16,
 	256,
@@ -50,7 +50,7 @@ static gfx_layout sprite_layout =
 	256
 };
 
-static gfx_decode tnk3_gfxdecodeinfo[] =
+static const gfx_decode tnk3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0, &tile_layout,	128*3,  8 },
 	{ REGION_GFX2, 0x0, &tile_layout,	128*1, 16 },

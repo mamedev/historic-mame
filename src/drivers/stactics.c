@@ -221,7 +221,7 @@ INPUT_PORTS_END
 
 /* For the character graphics */
 
-static gfx_layout gfxlayout =
+static const gfx_layout gfxlayout =
 {
     8,8,
     256,
@@ -234,7 +234,7 @@ static gfx_layout gfxlayout =
 
 /* For the LED Fire Beam (made up) */
 
-static gfx_layout firelayout =
+static const gfx_layout firelayout =
 {
     16,9,
     256,
@@ -245,7 +245,7 @@ static gfx_layout firelayout =
     8*9
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
     { 0, 0, &gfxlayout,  0,      64*4 },    /* Dynamically decoded from RAM */
     { 0, 0, &gfxlayout,  1*2*16, 64*4 },    /* Dynamically decoded from RAM */

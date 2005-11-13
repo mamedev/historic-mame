@@ -460,7 +460,7 @@ INPUT_PORTS_END
 
 /*** GFX Decode ***/
 
-static gfx_layout mcatadv_tiles16x16x4_layout =
+static const gfx_layout mcatadv_tiles16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -471,7 +471,7 @@ static gfx_layout mcatadv_tiles16x16x4_layout =
 	128*8
 };
 
-static gfx_decode mcatadv_gfxdecodeinfo[] =
+static const gfx_decode mcatadv_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &mcatadv_tiles16x16x4_layout, 0, 0x200 },
 	{ REGION_GFX3, 0, &mcatadv_tiles16x16x4_layout, 0, 0x200 },

@@ -9,6 +9,10 @@ How to calibrate the guns:
   - after you've shot the target press 9 again to move onto the next one
   - once you get back to the start again press f2 to exit.
 
+How to calibrate the steering in DirtFox:
+  - hold 9, press f2
+  - verify that controls are set to zero then press f2 to exit.
+
 Final Lap Notes:
     1..4 cabinets may be wired together.
     To move through self test options, press gas pedal and change gear shift from low to high
@@ -1365,11 +1369,11 @@ INPUT_PORTS_START( dirtfox )
 	PORT_START_TAG("AN4")		/* 63B05Z0 - 8 CHANNEL ANALOG - CHANNEL 4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_START_TAG("AN5")		/* Steering Wheel */
-	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(70) PORT_KEYDELTA(50) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(70) PORT_KEYDELTA(50) PORT_PLAYER(1) PORT_RESET
 	PORT_START_TAG("AN6")		/* Brake pedal */
-	PORT_BIT( 0xff, 0xff, IPT_PEDAL ) PORT_MINMAX(0x00,0x7f) PORT_SENSITIVITY(100) PORT_KEYDELTA(30) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x7f) PORT_SENSITIVITY(100) PORT_KEYDELTA(30) PORT_PLAYER(2)
 	PORT_START_TAG("AN7")		/* Accelerator pedal */
-	PORT_BIT( 0xff, 0xff, IPT_PEDAL ) PORT_MINMAX(0x00,0x7f) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0x7f) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
 	PORT_START_TAG("MCUH")		/* 63B05Z0 - PORT H */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1415,7 +1419,7 @@ INPUT_PORTS_END
 /* Namco System II - Graphics Declarations                   */
 /*************************************************************/
 
-static gfx_layout obj_layout = {
+static const gfx_layout obj_layout = {
 	32,32,
 	0x800,	/* number of sprites */
 	8,		/* bits per pixel */
@@ -1438,7 +1442,7 @@ static gfx_layout obj_layout = {
 	0x800 /* sprite offset */
 };
 
-static gfx_layout chr_layout = {
+static const gfx_layout chr_layout = {
 	8,8,
 	RGN_FRAC(1,1),
 	8,
@@ -1448,7 +1452,7 @@ static gfx_layout chr_layout = {
 	8*64
 };
 
-static gfx_layout roz_layout = {
+static const gfx_layout roz_layout = {
 	8,8,
 	0x10000,
 	8,
@@ -1458,7 +1462,7 @@ static gfx_layout roz_layout = {
 	8*64
 };
 
-static gfx_layout luckywld_sprite_layout = /* same as Namco System21 */
+static const gfx_layout luckywld_sprite_layout = /* same as Namco System21 */
 {
 	16,16,
 	RGN_FRAC(1,4),	/* number of tiles */
@@ -1481,7 +1485,7 @@ static gfx_layout luckywld_sprite_layout = /* same as Namco System21 */
 	8*64 /* sprite offset */
 };
 
-static gfx_layout luckywld_roz_layout =
+static const gfx_layout luckywld_roz_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1492,7 +1496,7 @@ static gfx_layout luckywld_roz_layout =
 	16*128
 };
 
-static gfx_layout metlhawk_sprite_layout = {
+static const gfx_layout metlhawk_sprite_layout = {
 	32,32,
 	0x1000,	/* number of sprites */
 	8, /* bits per pixel */
@@ -1502,7 +1506,7 @@ static gfx_layout metlhawk_sprite_layout = {
 	32*32*8
 };
 
-static gfx_decode metlhawk_gfxdecodeinfo[] =
+static const gfx_decode metlhawk_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &metlhawk_sprite_layout,	 0*256, 16 },
 	{ REGION_GFX3, 0x000000, &luckywld_roz_layout,		 0*256, 16 },
@@ -1510,7 +1514,7 @@ static gfx_decode metlhawk_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
@@ -1519,7 +1523,7 @@ static gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode finallap_gfxdecodeinfo[] =
+static const gfx_decode finallap_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &obj_layout,  0*256, 16 },
 	{ REGION_GFX1, 0x200000, &obj_layout,  0*256, 16 },
@@ -1527,7 +1531,7 @@ static gfx_decode finallap_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode sgunner_gfxdecodeinfo[] =
+static const gfx_decode sgunner_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &luckywld_sprite_layout,	 0*256, 16 },
 	{ REGION_GFX3, 0x000000, &luckywld_roz_layout,		 0*256, 16 },
@@ -1535,7 +1539,7 @@ static gfx_decode sgunner_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode luckywld_gfxdecodeinfo[] =
+static const gfx_decode luckywld_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &luckywld_sprite_layout,	 0*256, 16 },
 	{ REGION_GFX3, 0x000000, &luckywld_roz_layout,		 0*256, 16 },

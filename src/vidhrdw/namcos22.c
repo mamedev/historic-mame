@@ -164,7 +164,7 @@ namcos22_point_rom_r( offs_t offs )
 }
 
 /* text layer uses a set of 16x16x8bpp tiles defined in RAM */
-static gfx_layout cg_layout =
+static const gfx_layout cg_layout =
 {
 	16,16,
 	NUM_CG_CHARS,

@@ -1178,7 +1178,7 @@ INPUT_PORTS_END
 /**************************************************************************/
 
 
-static gfx_layout char_layout =
+static const gfx_layout char_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1189,14 +1189,14 @@ static gfx_layout char_layout =
 	32*8
 };
 
-static gfx_decode mrokumei_gfxdecodeinfo[] =
+static const gfx_decode mrokumei_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &char_layout, 0x6000, 0x100 },
 	{ REGION_GFX2, 0, &char_layout, 0x7000, 0x100 },
 	{ -1 }
 };
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1207,7 +1207,7 @@ static gfx_layout tile_layout =
 	64*8
 };
 
-static gfx_decode reikaids_gfxdecodeinfo[] =
+static const gfx_decode reikaids_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0x6000, 0x20 },
 	{ REGION_GFX2, 0, &tile_layout, 0x4000, 0x20 },
@@ -1216,14 +1216,14 @@ static gfx_decode reikaids_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode pteacher_gfxdecodeinfo[] =
+static const gfx_decode pteacher_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout, 0x0000, 0x40 },
 	{ REGION_GFX2, 0, &tile_layout, 0x4000, 0x40 },
 	{ -1 }
 };
 
-static gfx_layout tile_layout_4bpp_hi =
+static const gfx_layout tile_layout_4bpp_hi =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1234,7 +1234,7 @@ static gfx_layout tile_layout_4bpp_hi =
 	64*8
 };
 
-static gfx_layout tile_layout_4bpp_lo =
+static const gfx_layout tile_layout_4bpp_lo =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1245,7 +1245,7 @@ static gfx_layout tile_layout_4bpp_lo =
 	64*8
 };
 
-static gfx_decode lemnangl_gfxdecodeinfo[] =
+static const gfx_decode lemnangl_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout_4bpp_hi, 0x0000, 0x200 },
 	{ REGION_GFX1, 0, &tile_layout_4bpp_lo, 0x2000, 0x200 },

@@ -158,7 +158,7 @@ INPUT_PORTS_START( stlforce )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-static gfx_layout stlforce_bglayout =
+static const gfx_layout stlforce_bglayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -169,7 +169,7 @@ static gfx_layout stlforce_bglayout =
 	32*32
 };
 
-static gfx_layout stlforce_txlayout =
+static const gfx_layout stlforce_txlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -180,7 +180,7 @@ static gfx_layout stlforce_txlayout =
 	8*32
 };
 
-static gfx_layout stlforce_splayout =
+static const gfx_layout stlforce_splayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -191,7 +191,7 @@ static gfx_layout stlforce_splayout =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &stlforce_bglayout, 0, 256  },
 	{ REGION_GFX1, 0, &stlforce_txlayout, 0, 256  },

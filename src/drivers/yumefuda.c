@@ -91,7 +91,7 @@ VIDEO_UPDATE( yumefuda )
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),

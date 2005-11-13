@@ -58,6 +58,7 @@ VIDEO_UPDATE( gunbustr );
 static UINT16 coin_word;
 static UINT32 *gunbustr_ram;
 extern UINT32 *f3_shared_ram;
+static UINT16 *sound_ram;
 
 /* F3 sound */
 READ16_HANDLER(f3_68000_share_r);
@@ -252,7 +253,7 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM) AM_BASE(&sound_ram)
 	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
 	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
 	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
@@ -342,7 +343,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **********************************************************/
 
-static gfx_layout tile16x16_layout =
+static const gfx_layout tile16x16_layout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -354,7 +355,7 @@ static gfx_layout tile16x16_layout =
 	64*16	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -365,7 +366,7 @@ static gfx_layout charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode gunbustr_gfxdecodeinfo[] =
+static const gfx_decode gunbustr_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x16_layout,  0, 512 },
 	{ REGION_GFX1, 0x0, &charlayout,        0, 512 },
@@ -380,13 +381,13 @@ static gfx_decode gunbustr_gfxdecodeinfo[] =
 static MACHINE_INIT( gunbustr )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&RAM[0x80000]);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
+	memory_set_bankptr(1,&ROM[0x80000]);
 
-	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
-	RAM[1]=RAM[0x80001];
-	RAM[2]=RAM[0x80002];
-	RAM[3]=RAM[0x80003];
+	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
+	sound_ram[1]=ROM[0x80001];
+	sound_ram[2]=ROM[0x80002];
+	sound_ram[3]=ROM[0x80003];
 
 	f3_68681_reset();
 }
@@ -495,7 +496,7 @@ ROM_START( gunbustr )
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "d27-03.bin", 0x00000, 0x80000, CRC(23bf2000) SHA1(49b29e771a47fcd7e6cd4e2704b217f9727f8299) )	/* STY, used to create big sprites on the fly */
 
-	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "d27-08.bin", 0x000000, 0x100000, CRC(7c147e30) SHA1(b605045154967050ec06391798da4afe3686a6e1) )
 	/* 0x200000 Empty bank? */
 	ROM_LOAD16_BYTE( "d27-09.bin", 0x400000, 0x100000, CRC(3e060304) SHA1(c4da4a94c168c3a454409d758c3ed45babbab170) )

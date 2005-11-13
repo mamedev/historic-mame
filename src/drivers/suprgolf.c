@@ -270,7 +270,7 @@ static struct YM2203interface ym2203_interface =
 	suprgolf_writeB,
 	irqhandler
 };
-static gfx_layout gfxlayout =
+static const gfx_layout gfxlayout =
 {
    8,8,
    RGN_FRAC(1,1),
@@ -281,7 +281,7 @@ static gfx_layout gfxlayout =
 	8*8*4
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &gfxlayout,   0, 32 },
 	{ -1 }

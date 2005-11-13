@@ -76,7 +76,7 @@ INPUT_PORTS_START( mquake )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ -1 } /* end of array */
 };

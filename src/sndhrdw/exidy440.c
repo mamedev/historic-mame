@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "exidy440.h"
+#include "state.h"
 #include <math.h>
 
 
@@ -154,6 +155,8 @@ void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 	/* reset the system */
 	exidy440_sound_command = 0;
 	exidy440_sound_command_ack = 1;
+	state_save_register_global(exidy440_sound_command);
+	state_save_register_global(exidy440_sound_command_ack);
 
 	/* reset the 6844 */
 	for (i = 0; i < 4; i++)
@@ -164,6 +167,10 @@ void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 	m6844_priority = 0x00;
 	m6844_interrupt = 0x00;
 	m6844_chain = 0x00;
+
+	state_save_register_int("m6844", 0, "priority", &m6844_priority);
+	state_save_register_int("m6844", 0, "interrupt", &m6844_interrupt);
+	state_save_register_int("m6844", 0, "chain", &m6844_chain);
 
 	channel_frequency[0] = clock;   /* channels 0 and 1 are run by FCLK */
 	channel_frequency[1] = clock;

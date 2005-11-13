@@ -940,7 +940,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	256,
@@ -952,7 +952,7 @@ static gfx_layout charlayout =
 };
 
 
-static gfx_layout backlayout =
+static const gfx_layout backlayout =
 {
 	8,8,
 	256,
@@ -964,7 +964,7 @@ static gfx_layout backlayout =
 };
 
 
-static gfx_layout spaceod_layout =
+static const gfx_layout spaceod_layout =
 {
 	8,8,
 	256,
@@ -976,14 +976,14 @@ static gfx_layout spaceod_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
 	{ -1 } /* end of array */
 };
 
 
-static gfx_decode monsterb_gfxdecodeinfo[] =
+static const gfx_decode monsterb_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
 	{ REGION_GFX1, 0x0000, &backlayout, 0x41, 0x10 },
@@ -994,7 +994,7 @@ static gfx_decode monsterb_gfxdecodeinfo[] =
 };
 
 
-static gfx_decode spaceod_gfxdecodeinfo[] =
+static const gfx_decode spaceod_gfxdecodeinfo[] =
 {
 	{ REGION_CPU1, 0xe800, &charlayout,     0x01, 0x10 },
 	{ REGION_GFX1, 0x0000, &spaceod_layout, 0x41, 1 },

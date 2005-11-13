@@ -631,7 +631,7 @@ INPUT_PORTS_END
 
 /* GFX Decodes */
 
-static gfx_layout tiles8x8_layout =
+static const gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -642,7 +642,7 @@ static gfx_layout tiles8x8_layout =
 	8*8
 };
 
-static gfx_layout tiles16x16_layout =
+static const gfx_layout tiles16x16_layout =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -655,7 +655,7 @@ static gfx_layout tiles16x16_layout =
 	16*16
 };
 
-static gfx_decode sslam_gfxdecodeinfo[] =
+static const gfx_decode sslam_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tiles8x8_layout,   0x300, 16 }, /* spr */
 	{ REGION_GFX1, 0, &tiles16x16_layout,     0, 16 }, /* bg */
@@ -664,7 +664,7 @@ static gfx_decode sslam_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static gfx_decode powerbal_gfxdecodeinfo[] =
+static const gfx_decode powerbal_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tiles8x8_layout,   0x100, 16 }, /* spr */
 	{ REGION_GFX1, 0, &tiles8x8_layout,       0, 16 }, /* bg */

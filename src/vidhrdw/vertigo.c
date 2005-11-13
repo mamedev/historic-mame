@@ -46,6 +46,7 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "vertigo.h"
+#include "state.h"
 
 
 /*************************************
@@ -54,7 +55,6 @@
  *
  *************************************/
 
-#define VEN_JMPR 0x10
 #define MC_LENGTH 512
 
 #define V_ADDPOINT(h,v,c,i) \
@@ -69,7 +69,7 @@
 #define EXOR(r,s)	((r) ^ (s))
 #define EXNOR(r,s)	(~((r) ^ (s)))
 
-/* possible values for MC_DST */
+/* values for MC_DST */
 enum {
 	QREG = 0,
 	NOP,
@@ -81,20 +81,20 @@ enum {
 	RAMU
 };
 
-/* possible values for MC_IF */
+/* values for MC_IF */
 enum {
 	S_ROMDE = 0,
 	S_RAMDE
 };
 
-/* possible values for MC_OA */
+/* values for MC_OA */
 enum {
 	S_SREG = 0,
 	S_ROMA,
 	S_RAMD
 };
 
-/* possible values for MC_JMP */
+/* values for MC_JMP */
 enum {
 	S_JBK = 0,
 	S_CALL,
@@ -102,7 +102,7 @@ enum {
 	S_RETURN
 };
 
-/* possible values for MC_JCON */
+/* values for MC_JCON */
 enum {
 	S_ALWAYS = 0,
 	S_MSB,
@@ -131,54 +131,53 @@ UINT16 *vertigo_vectorram;
 
 typedef struct _am2901
 {
-	int ram[16]; /* internal ram */
-	int d;		 /* direct data D input */
-	int q;		 /* Q register */
-	int f;		 /* F ALU result */
-	int y;		 /* Y output */
+	UINT32 ram[16];	  /* internal ram */
+	UINT32 d;		  /* direct data D input */
+	UINT32 q;		  /* Q register */
+	UINT32 f;		  /* F ALU result */
+	UINT32 y;		  /* Y output */
 } am2901;
 
 typedef struct _vector_generator
 {
-	int sreg;		 /* Vector Generator shift register */
-	int l1;			 /* VG latch 1 adder operand only */
-	int l2;			 /* VG latch 2 adder operand only */
-	int c_v;		 /* VG vertical position counter */
-	int c_h;		 /* VG horizontal position counter */
-	int c_l;		 /* VG length counter */
-	int adder_s;	 /* VG slope generator result and B input */
-	int adder_a;	 /* VG slope generator A input */
-	int color;		 /* VG color */
-	int intensity;	 /* VG intensity */
-	int brez;		 /* VG h/v-counters enable */
-	int vfin;		 /* VG drawing yes/no */
-	int hud1;		 /* VG h-counter up or down (stored in L1) */
-	int hud2;		 /* VG h-counter up or down (stored in L2) */
-	int vud1;		 /* VG v-counter up or down (stored in L1) */
-	int vud2;		 /* VG v-counter up or down (stored in L2) */
-	int hc1;		 /* VG use h- or v-counter in L1 mode */
-	int ven;		 /* VG state of transistor which controls intensity output */
-	int venshift;
+	UINT32 sreg;	  /* shift register */
+	UINT32 l1;		  /* latch 1 adder operand only */
+	UINT32 l2;		  /* latch 2 adder operand only */
+	UINT32 c_v;		  /* vertical position counter */
+	UINT32 c_h;		  /* horizontal position counter */
+	UINT32 c_l;		  /* length counter */
+	UINT32 adder_s;	  /* slope generator result and B input */
+	UINT32 adder_a;	  /* slope generator A input */
+	UINT32 color;	  /* color */
+	UINT32 intensity; /* intensity */
+	UINT32 brez;	  /* h/v-counters enable */
+	UINT32 vfin;	  /* drawing yes/no */
+	UINT32 hud1;	  /* h-counter up or down (stored in L1) */
+	UINT32 hud2;	  /* h-counter up or down (stored in L2) */
+	UINT32 vud1;	  /* v-counter up or down (stored in L1) */
+	UINT32 vud2;	  /* v-counter up or down (stored in L2) */
+	UINT32 hc1;		  /* use h- or v-counter in L1 mode */
+	UINT32 ven;       /* vector intensity enable */
 } vector_generator;
 
 typedef struct _microcode
 {
-	int x;
-	int a;
-	int b;
-	int inst;
-	int dest;
-	int cn;
-	int mreq;
-	int rsel;
-	int rwrite;
-	int of;
-	int iif;
-	int oa;
-	int jpos;
-	int jmp;
-	int jcon;
-	int ma;
+	UINT32 x;
+	UINT32 a;
+	UINT32 b;
+	UINT32 inst;
+	UINT32 dest;
+	UINT32 cn;
+	UINT32 mreq;
+	UINT32 rsel;
+	UINT32 rwrite;
+	UINT32 of;
+	UINT32 iif;
+	UINT32 oa;
+	UINT32 jpos;
+	UINT32 jmp;
+	UINT32 jcon;
+	UINT32 ma;
 } microcode;
 
 typedef struct _vproc
@@ -186,8 +185,8 @@ typedef struct _vproc
 	UINT16 sram[64]; /* external sram */
 	UINT16 ramlatch; /* latch between 2901 and sram */
 	UINT16 rom_adr;	 /* vector ROM/RAM address latch */
-	int pc;			 /* program counter */
-	int ret;		 /* return address */
+	UINT32 pc;		 /* program counter */
+	UINT32 ret;		 /* return address */
 
 } vproc;
 
@@ -243,6 +242,37 @@ void vertigo_vproc_init(void)
 	memset(&vs, 0, sizeof(vs));
 	memset(&bsp, 0, sizeof(bsp));
 	memset(&vgen, 0, sizeof(vgen));
+
+	state_save_register_item_array("vector_proc", 0, vs.sram);
+	state_save_register_item("vector_proc", 0, vs.ramlatch);
+	state_save_register_item("vector_proc", 0, vs.rom_adr);
+	state_save_register_item("vector_proc", 0, vs.pc);
+	state_save_register_item("vector_proc", 0, vs.ret);
+
+	state_save_register_item_array("vector_proc", 0, bsp.ram);
+	state_save_register_item("vector_proc", 0, bsp.d);
+	state_save_register_item("vector_proc", 0, bsp.q);
+	state_save_register_item("vector_proc", 0, bsp.f);
+	state_save_register_item("vector_proc", 0, bsp.y);
+
+	state_save_register_item("vector_proc", 0, vgen.sreg);
+	state_save_register_item("vector_proc", 0, vgen.l1);
+	state_save_register_item("vector_proc", 0, vgen.l2);
+	state_save_register_item("vector_proc", 0, vgen.c_v);
+	state_save_register_item("vector_proc", 0, vgen.c_h);
+	state_save_register_item("vector_proc", 0, vgen.c_l);
+	state_save_register_item("vector_proc", 0, vgen.adder_s);
+	state_save_register_item("vector_proc", 0, vgen.adder_a);
+	state_save_register_item("vector_proc", 0, vgen.color);
+	state_save_register_item("vector_proc", 0, vgen.intensity);
+	state_save_register_item("vector_proc", 0, vgen.brez);
+	state_save_register_item("vector_proc", 0, vgen.vfin);
+	state_save_register_item("vector_proc", 0, vgen.hud1);
+	state_save_register_item("vector_proc", 0, vgen.hud2);
+	state_save_register_item("vector_proc", 0, vgen.vud1);
+	state_save_register_item("vector_proc", 0, vgen.vud2);
+	state_save_register_item("vector_proc", 0, vgen.hc1);
+	state_save_register_item("vector_proc", 0, vgen.ven);
 }
 
 
@@ -389,21 +419,6 @@ static void vertigo_vgen (vector_generator *vg)
 
 		if ((vg->c_l & 0x800) == 0)
 		{
-			if (vg->brez)
-			{
-				/* Counters finished so draw vector */
-				if (vg->venshift & VEN_JMPR)
-				{
-					V_ADDPOINT (vg->c_h, vg->c_v, vg->color, vg->intensity);
-				}
-				else
-				{
-					/* It's over before the signal left the shift register.
-                       Draw a dot.*/
-					V_ADDPOINT (vg->c_h, vg->c_v, 0, 0);
-					V_ADDPOINT (vg->c_h, vg->c_v, vg->color, vg->intensity);
-				}
-			}
 			vg->brez = 0;
 			vg->vfin = 0;
 		}
@@ -438,20 +453,13 @@ static void vertigo_vgen (vector_generator *vg)
 		vg->adder_s = (vg->adder_s + vg->adder_a) & 0xfff;
 	}
 
-	/* BREZ also controls a transistor which modulates the
-       intensity DAC of output. There is a shift register in between
-       which could be used to introduce some delay. I.e. chopping
-       a bit from the start of the vector. I think this produces
-       the LCD-like look of the score that is visible on real
-       screenshots.
-    */
-
-	vg->venshift = (vg->venshift << 1) | vg->brez;
-
-	if (((vg->venshift & VEN_JMPR) == 0) && ((vg->venshift << 1) & VEN_JMPR))
+	if (vg->brez ^ vg->ven)
 	{
-		/* Signal left the shift register. Start vector from here. */
+		if (vg->brez)
 		V_ADDPOINT (vg->c_h, vg->c_v, 0, 0);
+		else
+			V_ADDPOINT (vg->c_h, vg->c_v, vg->color, vg->intensity);
+		vg->ven = vg->brez;
 	}
 }
 
@@ -581,7 +589,7 @@ void vertigo_vproc(int cycles, int irq4)
 			break;
 		case S_FEQ0:
 			/* ALU is 0 */
-			jcond = (bsp.f==0)? 1 : 0;
+			jcond = (bsp.f == 0)? 1 : 0;
 			break;
 		case S_Y10:
 			jcond = (bsp.y >> 10) & 1;
@@ -595,6 +603,16 @@ void vertigo_vproc(int cycles, int irq4)
 			break;
 		case S_INTL4:
 			jcond = irq4;
+			/* Detect idle loop. If the code takes a jump
+             on irq4 or !irq4 the destination is a idle loop
+             waiting for irq4 state change. We then take a short
+             cut and run for just 100 cycles to make sure the
+             loop is actually entered.
+            */
+			if ((cmc->jpos != irq4) && cycles > 100)
+			{
+				cycles=100;
+			}
 			break;
 		default:
 			jcond = 1;

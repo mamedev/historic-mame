@@ -1817,7 +1817,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 8x8x4 tiles */
-static gfx_layout layout_8x8x4 =
+static const gfx_layout layout_8x8x4 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1829,7 +1829,7 @@ static gfx_layout layout_8x8x4 =
 };
 
 /* 8x8x6 tiles (in a 8x8x8 layout) */
-static gfx_layout layout_8x8x6 =
+static const gfx_layout layout_8x8x6 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1842,7 +1842,7 @@ static gfx_layout layout_8x8x6 =
 
 /* 8x8x6 tiles (4 bits in one rom, 2 bits in the other,
    unpacked in 2 pages of 4 bits) */
-static gfx_layout layout_8x8x6_2 =
+static const gfx_layout layout_8x8x6_2 =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1854,7 +1854,7 @@ static gfx_layout layout_8x8x6_2 =
 };
 
 /* 8x8x8 tiles */
-static gfx_layout layout_8x8x8 =
+static const gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1867,7 +1867,7 @@ static gfx_layout layout_8x8x8 =
 
 #if 0
 /* 16x16x8 Zooming Sprites - No need to decode them */
-static gfx_layout layout_sprites =
+static const gfx_layout layout_sprites =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1883,7 +1883,7 @@ static gfx_layout layout_sprites =
                                 Dangun Feveron
 ***************************************************************************/
 
-static gfx_decode dfeveron_gfxdecodeinfo[] =
+static const gfx_decode dfeveron_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
@@ -1900,7 +1900,7 @@ static gfx_decode dfeveron_gfxdecodeinfo[] =
                                 Dodonpachi
 ***************************************************************************/
 
-static gfx_decode ddonpach_gfxdecodeinfo[] =
+static const gfx_decode ddonpach_gfxdecodeinfo[] =
 {
 	/* Layers 0&1 are 4 bit deep and use the first 16 of every 256
        colors for any given color code (a PALETTE_INIT function
@@ -1919,7 +1919,7 @@ static gfx_decode ddonpach_gfxdecodeinfo[] =
                                 Donpachi
 ***************************************************************************/
 
-static gfx_decode donpachi_gfxdecodeinfo[] =
+static const gfx_decode donpachi_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
@@ -1937,7 +1937,7 @@ static gfx_decode donpachi_gfxdecodeinfo[] =
                                 Esprade
 ***************************************************************************/
 
-static gfx_decode esprade_gfxdecodeinfo[] =
+static const gfx_decode esprade_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
@@ -1950,7 +1950,7 @@ static gfx_decode esprade_gfxdecodeinfo[] =
                                 Hotdog Storm
 ***************************************************************************/
 
-static gfx_decode hotdogst_gfxdecodeinfo[] =
+static const gfx_decode hotdogst_gfxdecodeinfo[] =
 {
 	/* There are only $800 colors here, the first half for sprites
        the second half for tiles. We use $8000 virtual colors instead
@@ -1968,7 +1968,7 @@ static gfx_decode hotdogst_gfxdecodeinfo[] =
                                 Koro Koro Quest
 ***************************************************************************/
 
-static gfx_decode korokoro_gfxdecodeinfo[] =
+static const gfx_decode korokoro_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x4400, 0x40 }, // [0] Layer 0
@@ -1979,7 +1979,7 @@ static gfx_decode korokoro_gfxdecodeinfo[] =
                                 Mazinger Z
 ***************************************************************************/
 
-static gfx_decode mazinger_gfxdecodeinfo[] =
+static const gfx_decode mazinger_gfxdecodeinfo[] =
 {
 	/*  Sprites are 4 bit deep.
         Layer 0 is 4 bit deep.
@@ -2000,7 +2000,7 @@ static gfx_decode mazinger_gfxdecodeinfo[] =
                                 Power Instinct 2
 ***************************************************************************/
 
-static gfx_decode pwrinst2_gfxdecodeinfo[] =
+static const gfx_decode pwrinst2_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x4,	0x0800+0x8000, 0x40 }, // [0] Layer 0
@@ -2015,7 +2015,7 @@ static gfx_decode pwrinst2_gfxdecodeinfo[] =
                                 Sailor Moon
 ***************************************************************************/
 
-static gfx_decode sailormn_gfxdecodeinfo[] =
+static const gfx_decode sailormn_gfxdecodeinfo[] =
 {
 	/* 4 bit sprites ? */
 //    REGION_GFX1                                       // Sprites
@@ -2030,7 +2030,7 @@ static gfx_decode sailormn_gfxdecodeinfo[] =
                                 Uo Poko
 ***************************************************************************/
 
-static gfx_decode uopoko_gfxdecodeinfo[] =
+static const gfx_decode uopoko_gfxdecodeinfo[] =
 {
 //    REGION_GFX1                                       // Sprites
 	{ REGION_GFX2, 0, &layout_8x8x8,	0x4000, 0x40 }, // [0] Layer 0
@@ -2811,11 +2811,11 @@ ROM_START( agallet )	// Shows "Taiwan Only" on the copyright notice screen.
 	ROM_LOAD( "bp962a.u65", 0x200000, 0x100000, CRC(135fcf9a) SHA1(2e8c89c2627bbdef160d96724d07883fb2fa1a57) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x200000, 0x100000             )
 
-	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #0 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #0 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp962a.u48", 0x040000, 0x200000, CRC(ae00a1ce) SHA1(5e8c74df0ac77efb3080406870856f958be14f79) )	// 16 x $20000, FIRST AND SECOND HALF IDENTICAL
 
-	ROM_REGION( 0x240000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND2, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp962a.u47", 0x040000, 0x200000, CRC(6d4e9737) SHA1(81c7ecdfc2d38d0b35e26745866f6672f566f936) )	// 16 x $20000, FIRST AND SECOND HALF IDENTICAL
 ROM_END
@@ -2845,7 +2845,7 @@ ROM_START( dfeveron )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
 	ROM_LOAD( "cv01-u49.bin", 0x000000, 0x200000, CRC(d21cdda7) SHA1(cace4650de580c3c4a037f1f5c32bfc1846b383c) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "cv01-u19.bin", 0x000000, 0x400000, CRC(5f5514da) SHA1(53f27364aee544572a82649c9ff29bacc642b732) )
 ROM_END
 
@@ -2952,7 +2952,7 @@ ROM_START( feversos )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
 	ROM_LOAD( "cv01-u49.bin", 0x000000, 0x200000, CRC(d21cdda7) SHA1(cace4650de580c3c4a037f1f5c32bfc1846b383c) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "cv01-u19.bin", 0x000000, 0x400000, CRC(5f5514da) SHA1(53f27364aee544572a82649c9ff29bacc642b732) )
 ROM_END
 
@@ -2989,7 +2989,7 @@ ROM_START( ddonpach )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "u62.bin", 0x000000, 0x200000, CRC(292bfb6b) SHA1(11b385991ee990eb5ef36e136b988802b5f90fa4) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u6.bin", 0x000000, 0x200000, CRC(9dfdafaf) SHA1(f5cb450cdc78a20c3a74c6dac05c9ac3cba08327) )
 	ROM_LOAD( "u7.bin", 0x200000, 0x200000, CRC(795b17d5) SHA1(cbfc29f1df9600c82e0fdae00edd00da5b73e14c) )
 ROM_END
@@ -3015,7 +3015,7 @@ ROM_START( ddonpchj )
 	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "u62.bin", 0x000000, 0x200000, CRC(292bfb6b) SHA1(11b385991ee990eb5ef36e136b988802b5f90fa4) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u6.bin", 0x000000, 0x200000, CRC(9dfdafaf) SHA1(f5cb450cdc78a20c3a74c6dac05c9ac3cba08327) )
 	ROM_LOAD( "u7.bin", 0x200000, 0x200000, CRC(795b17d5) SHA1(cbfc29f1df9600c82e0fdae00edd00da5b73e14c) )
 ROM_END
@@ -3076,11 +3076,11 @@ ROM_START( donpachi )
 	ROM_REGION( 0x040000, REGION_GFX4, ROMREGION_DISPOSE )	/* Text / Character Layer */
 	ROM_LOAD( "text.u58", 0x000000, 0x040000, CRC(5dba06e7) SHA1(f9dab7f6c732a683fddb4cae090a875b3962332b) )
 
-	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "atdp.u33", 0x040000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
 
-	ROM_REGION( 0x340000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x340000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "atdp.u32", 0x040000, 0x100000, CRC(0d89fcca) SHA1(e16ed15fa5e72537822f7b37e83ccfed0fa87338) )
 	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
@@ -3103,11 +3103,11 @@ ROM_START( donpachj )
 	ROM_REGION( 0x040000, REGION_GFX4, ROMREGION_DISPOSE )	/* Text / Character Layer */
 	ROM_LOAD( "u58.bin", 0x000000, 0x040000, CRC(285379ff) SHA1(b9552edcec29ddf4b552800b145c398b94117ab0) )
 
-	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "atdp.u33", 0x040000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
 
-	ROM_REGION( 0x340000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x340000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "atdp.u32", 0x040000, 0x100000, CRC(0d89fcca) SHA1(e16ed15fa5e72537822f7b37e83ccfed0fa87338) )
 	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
@@ -3130,11 +3130,11 @@ ROM_START( donpachk )
 	ROM_REGION( 0x040000, REGION_GFX4, ROMREGION_DISPOSE )	/* Text / Character Layer */
 	ROM_LOAD( "u58.bin", 0x000000, 0x040000, CRC(285379ff) SHA1(b9552edcec29ddf4b552800b145c398b94117ab0) )
 
-	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "atdp.u33", 0x040000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
 
-	ROM_REGION( 0x340000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x340000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "atdp.u32", 0x040000, 0x100000, CRC(0d89fcca) SHA1(e16ed15fa5e72537822f7b37e83ccfed0fa87338) )
 	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
@@ -3172,7 +3172,7 @@ ROM_START( esprade )
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "u51.bin", 0x000000, 0x400000, CRC(0b9b875c) SHA1(ef05447cd8565ae24bb71db42342724622ad1e3e) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u19.bin", 0x000000, 0x400000, CRC(f54b1cab) SHA1(34d70bb5798de85d892c062001d9ac1d6604fd9f) )
 ROM_END
 
@@ -3198,7 +3198,7 @@ ROM_START( espradej )
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "u51.bin", 0x000000, 0x400000, CRC(0b9b875c) SHA1(ef05447cd8565ae24bb71db42342724622ad1e3e) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u19.bin", 0x000000, 0x400000, CRC(f54b1cab) SHA1(34d70bb5798de85d892c062001d9ac1d6604fd9f) )
 ROM_END
 
@@ -3224,7 +3224,7 @@ ROM_START( espradeo )
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "u51.bin", 0x000000, 0x400000, CRC(0b9b875c) SHA1(ef05447cd8565ae24bb71db42342724622ad1e3e) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u19.bin", 0x000000, 0x400000, CRC(f54b1cab) SHA1(34d70bb5798de85d892c062001d9ac1d6604fd9f) )
 ROM_END
 
@@ -3287,7 +3287,7 @@ ROM_START( gaia )
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "bg3.998", 0x000000, 0x400000, CRC(bcd61d1c) SHA1(660a3b02a8c39e1117b00d0ad06f73221fef4ce8) )
 
-	ROM_REGION( 0xc00000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0xc00000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "snd1.447", 0x000000, 0x400000, CRC(92770a52) SHA1(81f6835e1b45eb0f367e4586fdda92466f02edb9) )
 	ROM_LOAD( "snd2.454", 0x400000, 0x400000, CRC(329ae1cf) SHA1(0c5e5074a5d8f4fb85ab4893bc953f192dcb301a) )
 	ROM_LOAD( "snd3.455", 0x800000, 0x400000, CRC(4048d64e) SHA1(5e4ec6d37e70484e2fcd04188385e79ef0b53026) )
@@ -3331,7 +3331,7 @@ ROM_START( guwange )
 	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "u10103.bin", 0x000000, 0x400000, CRC(0fe91b8e) SHA1(8b71ebeef5e4d2b00fdaaab97776d74e1c96dc59) )
 
-	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u0462.bin", 0x000000, 0x400000, CRC(b3d75691) SHA1(71d8dae92be1542a3cff50efeec0bf3c14ab59f5) )
 ROM_END
 
@@ -3379,7 +3379,7 @@ ROM_START( hotdogst )
 	ROM_REGION( 0x80000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
 	ROM_LOAD( "mp5u64", 0x00000, 0x80000, CRC(9b26458c) SHA1(acef62422fa3f92e6ca1eba0ee6fb914cd1ee190) )
 
-	ROM_REGION( 0xc0000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0xc0000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "mp1u65", 0x40000, 0x80000, CRC(4868be1b) SHA1(32b8234b19fdbe07fa5057fa7965e36807e35e77) )	// 1xxxxxxxxxxxxxxxxxx = 0xFF, 4 x 0x20000
 ROM_END
@@ -3413,7 +3413,7 @@ ROM_START( korokoro )
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "mp-001_ver01.u1060", 0x000000, 0x100000, CRC(ec9cf9d8) SHA1(32fa7120e30c14e484de3b3a9c93efe3654d43c8) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "mp-001_ver01.u1186", 0x000000, 0x100000, CRC(d16e7c5d) SHA1(1f825ace3ed2e23c8d3212320c4645d3d52214c7) )
 ROM_END
 
@@ -3464,7 +3464,7 @@ ROM_START( mazinger )
 	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
 	ROM_LOAD( "bp943a-0.u63", 0x000000, 0x200000, CRC(c1fed98a) SHA1(c276505f80a49b129862966a19db507f97153e45) )	// FIXED BITS (xxxxxxxx00000000)
 
-	ROM_REGION( 0x0c0000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x0c0000, REGION_SOUND1, 0 )	/* Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp943a-4.u64", 0x040000, 0x080000, CRC(3fc7f29a) SHA1(feb21b918243c0a03dfa4a80cc80b86be4f62680) )	// 4 x $20000
 ROM_END
@@ -3545,12 +3545,12 @@ ROM_START( metmqstr )
 	ROM_LOAD( "bp947a.u46", 0x000000, 0x100000, CRC(0f9c906e) SHA1(03872e8be28637df66373bddb04ed91de4f9db75) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x000000, 0x100000             )
 
-	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp947a.u42", 0x040000, 0x100000, CRC(2ce8ff2a) SHA1(8ef8c5b7d4a0e60c980c2962e75f7977faafa311) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x040000, 0x100000             )
 
-	ROM_REGION( 0x140000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x140000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp947a.u37", 0x040000, 0x100000, CRC(c3077c8f) SHA1(0a76316a81b7de78279b859549eb5161a721ac71) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x040000, 0x100000             )
@@ -3584,12 +3584,12 @@ ROM_START( nmaster )
 	ROM_LOAD( "bp947a.u46", 0x000000, 0x100000, CRC(0f9c906e) SHA1(03872e8be28637df66373bddb04ed91de4f9db75) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x000000, 0x100000             )
 
-	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp947a.u42", 0x040000, 0x100000, CRC(2ce8ff2a) SHA1(8ef8c5b7d4a0e60c980c2962e75f7977faafa311) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x040000, 0x100000             )
 
-	ROM_REGION( 0x140000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x140000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bp947a.u37", 0x040000, 0x100000, CRC(c3077c8f) SHA1(0a76316a81b7de78279b859549eb5161a721ac71) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(           0x040000, 0x100000             )
@@ -3642,12 +3642,12 @@ ROM_START( pwrinst2 )
 	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
 	ROM_LOAD( "g02.82a", 0x000000, 0x080000, CRC(4b3567d6) SHA1(d3e14783b312d2bea9722a8e3c22bcec81e26166) )
 
-	ROM_REGION( 0x440000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x440000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "g02.u53", 0x040000, 0x200000, CRC(c4bdd9e0) SHA1(a938a831e789ddf6f3cc5f3e5f3877ec7bd62d4e) )
 	ROM_LOAD( "g02.u54", 0x240000, 0x200000, CRC(1357d50e) SHA1(433766177ce9d6933f90de85ba91bfc6d8d5d664) )
 
-	ROM_REGION( 0x440000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x440000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "g02.u55", 0x040000, 0x200000, CRC(2d102898) SHA1(bd81f4cd2ba100707db0c5bb1419f0b23c998574) )
 	ROM_LOAD( "g02.u56", 0x240000, 0x200000, CRC(9ff50dda) SHA1(1121685e387c20e228032f2b0f5cbb606376fc15) )
@@ -3685,12 +3685,12 @@ ROM_START( pwrins2j )
 	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
 	ROM_LOAD( "g02j.82a", 0x000000, 0x080000, CRC(3be86fe1) SHA1(313bfe5fb8dc5fee4462db259738e079759f9390) )
 
-	ROM_REGION( 0x440000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x440000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "g02.u53", 0x040000, 0x200000, CRC(c4bdd9e0) SHA1(a938a831e789ddf6f3cc5f3e5f3877ec7bd62d4e) )
 	ROM_LOAD( "g02.u54", 0x240000, 0x200000, CRC(1357d50e) SHA1(433766177ce9d6933f90de85ba91bfc6d8d5d664) )
 
-	ROM_REGION( 0x440000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #2 Samples */
+	ROM_REGION( 0x440000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "g02.u55", 0x040000, 0x200000, CRC(2d102898) SHA1(bd81f4cd2ba100707db0c5bb1419f0b23c998574) )
 	ROM_LOAD( "g02.u56", 0x240000, 0x200000, CRC(9ff50dda) SHA1(1121685e387c20e228032f2b0f5cbb606376fc15) )
@@ -3777,11 +3777,11 @@ ROM_START( sailormn )
 	ROM_LOAD( "bpsm.u63", 0xe00000, 0x100000, CRC(d57a56b4) SHA1(e039b336887b66eba4e0630a3cb04cbd8fe14073) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(         0xe00000, 0x100000             )
 
-	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #0 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #0 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bpsm.u48", 0x040000, 0x200000, CRC(498e4ed1) SHA1(28d45a41702d9e5af4e214c1800b2e513ec84d51) )	// 16 x $20000
 
-	ROM_REGION( 0x240000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND2, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bpsm.u47", 0x040000, 0x080000, CRC(0f2901b9) SHA1(ebd3e9e39e8d2bc91688dac19b99548a28b4733c) )	// 4 x $20000
 	ROM_RELOAD(           0x0c0000, 0x080000             )
@@ -3821,11 +3821,11 @@ ROM_START( sailormo )
 	ROM_LOAD( "bpsm.u63", 0xe00000, 0x100000, CRC(d57a56b4) SHA1(e039b336887b66eba4e0630a3cb04cbd8fe14073) )	// FIRST AND SECOND HALF IDENTICAL
 	ROM_CONTINUE(         0xe00000, 0x100000             )
 
-	ROM_REGION( 0x240000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* OKIM6295 #0 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #0 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bpsm.u48", 0x040000, 0x200000, CRC(498e4ed1) SHA1(28d45a41702d9e5af4e214c1800b2e513ec84d51) )	// 16 x $20000
 
-	ROM_REGION( 0x240000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* OKIM6295 #1 Samples */
+	ROM_REGION( 0x240000, REGION_SOUND2, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
 	ROM_LOAD( "bpsm.u47", 0x040000, 0x080000, CRC(0f2901b9) SHA1(ebd3e9e39e8d2bc91688dac19b99548a28b4733c) )	// 4 x $20000
 	ROM_RELOAD(           0x0c0000, 0x080000             )
@@ -3853,7 +3853,7 @@ ROM_START( uopoko )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
 	ROM_LOAD( "u49.bin", 0x000000, 0x400000, CRC(12fb11bb) SHA1(953df1b16b5c9a6c3eb2fdebec4669a879270e73) )
 
-	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "u4.bin", 0x000000, 0x200000, CRC(a2d0d755) SHA1(f8493ef7f367f3dc2a229ba785ac67bc5c2c54c0) )
 ROM_END
 

@@ -294,7 +294,7 @@ INPUT_PORTS_START( thehustj )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,			/* 8 x 8 characters */
 	0x40000/32, 	/* 8192 characters */
@@ -305,7 +305,7 @@ static gfx_layout charlayout =
 	32*8			/* every character takes 32 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	8,8,			/* 8*8 sprites */
 	0x40000/32, /* 8192 sprites */
@@ -317,7 +317,7 @@ static gfx_layout spritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,		0, 1 }, /* colors  0-15 */
 	{ REGION_GFX2, 0, &spritelayout, 4*16, 1 }, /* colors 64-79 */

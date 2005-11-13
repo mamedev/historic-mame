@@ -1674,7 +1674,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout_2bpp =
+static const gfx_layout charlayout_2bpp =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1685,7 +1685,7 @@ static gfx_layout charlayout_2bpp =
 	16*8
 };
 
-static gfx_layout charlayout_xevious =
+static const gfx_layout charlayout_xevious =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1696,7 +1696,7 @@ static gfx_layout charlayout_xevious =
 	8*8
 };
 
-static gfx_layout charlayout_digdug =
+static const gfx_layout charlayout_digdug =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1707,7 +1707,7 @@ static gfx_layout charlayout_digdug =
 	8*8
 };
 
-static gfx_layout bgcharlayout =
+static const gfx_layout bgcharlayout =
 {
 	8,8,
 	RGN_FRAC(1,2),
@@ -1718,7 +1718,7 @@ static gfx_layout bgcharlayout =
 	8*8
 };
 
-static gfx_layout spritelayout_bosco =
+static const gfx_layout spritelayout_bosco =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1731,7 +1731,7 @@ static gfx_layout spritelayout_bosco =
 	64*8
 };
 
-static gfx_layout spritelayout_galaga =
+static const gfx_layout spritelayout_galaga =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1744,7 +1744,7 @@ static gfx_layout spritelayout_galaga =
 	64*8
 };
 
-static gfx_layout spritelayout_xevious =
+static const gfx_layout spritelayout_xevious =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -1757,7 +1757,7 @@ static gfx_layout spritelayout_xevious =
 	64*8
 };
 
-static gfx_layout dotlayout =
+static const gfx_layout dotlayout =
 {
 	4,4,
 	8,
@@ -1768,7 +1768,7 @@ static gfx_layout dotlayout =
 	16*8
 };
 
-static gfx_decode gfxdecodeinfo_bosco[] =
+static const gfx_decode gfxdecodeinfo_bosco[] =
 {
 	{ REGION_GFX1, 0, &charlayout_2bpp,       0, 64 },
 	{ REGION_GFX2, 0, &spritelayout_bosco, 64*4, 64 },
@@ -1776,14 +1776,14 @@ static gfx_decode gfxdecodeinfo_bosco[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_galaga[] =
+static const gfx_decode gfxdecodeinfo_galaga[] =
 {
 	{ REGION_GFX1, 0, &charlayout_2bpp,        0, 64 },
 	{ REGION_GFX2, 0, &spritelayout_galaga, 64*4, 64 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_xevious[] =
+static const gfx_decode gfxdecodeinfo_xevious[] =
 {
 	{ REGION_GFX1, 0, &charlayout_xevious, 128*4+64*8,  64 },
 	{ REGION_GFX2, 0, &bgcharlayout,                0, 128 },
@@ -1791,7 +1791,7 @@ static gfx_decode gfxdecodeinfo_xevious[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_digdug[] =
+static const gfx_decode gfxdecodeinfo_digdug[] =
 {
 	{ REGION_GFX1, 0, &charlayout_digdug,         0, 16 },
 	{ REGION_GFX2, 0, &spritelayout_galaga,    16*2, 64 },

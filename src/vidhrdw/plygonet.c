@@ -58,7 +58,7 @@ WRITE32_HANDLER( polygonet_ttl_ram_w )
 
 VIDEO_START(polygonet_vh_start)
 {
-	static gfx_layout charlayout =
+	static const gfx_layout charlayout =
 	{
 		8, 8,		// 8x8
 		4096,		// # of tiles

@@ -454,7 +454,7 @@ INPUT_PORTS_START( bking2 )
 INPUT_PORTS_END
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	1024,   /* 1024 characters */
@@ -494,7 +494,7 @@ gfx_layout balllayout =
 	16*8    /* every sprite takes 16 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout, 0,           4  }, /* playfield */
 	{ REGION_GFX2, 0, &crowlayout, 4*8,         4  }, /* crow */

@@ -402,7 +402,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
@@ -413,7 +413,7 @@ static gfx_layout charlayout =
 	8*8		/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,8,	/* 8*8 tiles */
 	4096,	/* 4096 tiles */
@@ -424,7 +424,7 @@ static gfx_layout tilelayout =
 	8*8		/* every tile takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	2048,	/* 2048 sprites */
@@ -449,7 +449,7 @@ static struct YM3812interface ym3812_interface =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout,   1536, 32 },	/* colors 1536-1791 */
 	{ REGION_GFX2, 0x00000, &tilelayout,   1280, 16 },	/* colors 1280-1535 */

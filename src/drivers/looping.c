@@ -299,7 +299,7 @@ static ADDRESS_MAP_START( looping_io_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x001, 0x007) AM_WRITE(looping_sound_sw)
 ADDRESS_MAP_END
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,		/* 8*8 characters */
 	0x100,		/* number of characters */
@@ -310,7 +310,7 @@ static gfx_layout tile_layout =
 	8*8
 };
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	16,16,		/* 8*8 characters */
 	0x40,		/* number of characters */
@@ -327,7 +327,7 @@ static gfx_layout sprite_layout =
 	8*8*4
 };
 
-static gfx_decode looping_gfxdecodeinfo[] =
+static const gfx_decode looping_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,		0, 8 },
 	{ REGION_GFX1, 0, &sprite_layout,	0, 8 },

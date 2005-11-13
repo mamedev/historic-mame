@@ -267,7 +267,7 @@ WRITE8_HANDLER( tceptor_bg_scroll_w )
 
 static int decode_bg(int region)
 {
-	static gfx_layout bg_layout =
+	static const gfx_layout bg_layout =
 	{
 		8, 8,
 		2048,
@@ -309,7 +309,7 @@ static int decode_bg(int region)
 	return 0;
 }
 
-static int decode_sprite(int gfx_index, gfx_layout *layout, const void *data)
+static int decode_sprite(int gfx_index, const gfx_layout *layout, const void *data)
 {
 	/* decode the graphics */
 	Machine->gfx[gfx_index] = decodegfx(data, layout);
@@ -326,7 +326,7 @@ static int decode_sprite(int gfx_index, gfx_layout *layout, const void *data)
 // fix sprite order
 static int decode_sprite16(int region)
 {
-	static gfx_layout spr16_layout =
+	static const gfx_layout spr16_layout =
 	{
 		16, 16,
 		512,
@@ -380,7 +380,7 @@ static int decode_sprite16(int region)
 // fix sprite order
 static int decode_sprite32(int region)
 {
-	static gfx_layout spr32_layout =
+	static const gfx_layout spr32_layout =
 	{
 		32, 32,
 		1024,

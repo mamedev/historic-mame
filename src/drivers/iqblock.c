@@ -222,7 +222,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout tilelayout1 =
+static const gfx_layout tilelayout1 =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -233,7 +233,7 @@ static gfx_layout tilelayout1 =
 	8*16
 };
 
-static gfx_layout tilelayout2 =
+static const gfx_layout tilelayout2 =
 {
 	8,32,
 	RGN_FRAC(1,2),
@@ -247,7 +247,7 @@ static gfx_layout tilelayout2 =
 	32*16
 };
 
-static gfx_layout tilelayout3 =
+static const gfx_layout tilelayout3 =
 {
 	8,32,
 	RGN_FRAC(1,3),
@@ -261,14 +261,14 @@ static gfx_layout tilelayout3 =
 	32*16
 };
 
-static gfx_decode gfxdecodeinfo_iqblock[] =
+static const gfx_decode gfxdecodeinfo_iqblock[] =
 {
 	{ REGION_GFX1, 0, &tilelayout1, 0, 16 },	/* only odd color codes are used */
 	{ REGION_GFX2, 0, &tilelayout2, 0,  4 },	/* only color codes 0 and 3 used */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gfxdecodeinfo_cabaret[] =
+static const gfx_decode gfxdecodeinfo_cabaret[] =
 {
 	{ REGION_GFX1, 0, &tilelayout1, 0, 16 },
 	{ REGION_GFX2, 0, &tilelayout3, 0, 16 },

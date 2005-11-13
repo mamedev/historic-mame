@@ -466,7 +466,7 @@ INPUT_PORTS_END
 **
 ***************************************************************************/
 
-static gfx_layout sprite_layout =
+static const gfx_layout sprite_layout =
 {
 	16,16,
 	0x100,
@@ -483,7 +483,7 @@ static gfx_layout sprite_layout =
 	256
 };
 
-static gfx_layout tile_layout =
+static const gfx_layout tile_layout =
 {
 	8,8,
 	0x100,
@@ -494,7 +494,7 @@ static gfx_layout tile_layout =
 	256
 };
 
-static gfx_decode marvins_gfxdecodeinfo[] =
+static const gfx_decode marvins_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tile_layout,	0x080, 8  }, /* text layer */
 	{ REGION_GFX2, 0, &tile_layout,	0x110, 1  }, /* background */

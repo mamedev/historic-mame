@@ -16,7 +16,7 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
     [ 2 Scrolling Layers ]
 
         Tile Size:              8 x 8 x 8
-        Color Codes:            1 per Layer
+        Color Codes:            1 per Layer (banked for Layer 0)
         Layer Size (tiles) :    128 x 64
         Layer Size (pixels):    1024 x 512
 
@@ -40,17 +40,14 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 UINT16 *esd16_vram_0, *esd16_scroll_0;
 UINT16 *esd16_vram_1, *esd16_scroll_1;
-
-//extern UINT16 *head_unknown1;
-extern UINT16 *head_layersize;
-//extern UINT16 *head_unknown3;
-//extern UINT16 *head_unknown4;
-//extern UINT16 *head_unknown5;
+UINT16 *head_layersize;
+static int esd16_tilemap0_color = 0;
 
 /* Functions defined in vidhrdw: */
 
 WRITE16_HANDLER( esd16_vram_0_w );
 WRITE16_HANDLER( esd16_vram_1_w );
+WRITE16_HANDLER( esd16_tilemap0_color_w );
 
 VIDEO_START( esd16 );
 VIDEO_UPDATE( esd16 );
@@ -64,8 +61,8 @@ VIDEO_UPDATE( esd16 );
 
         0.w                             Code
 
-    No color code:  layer 0 (backmost) usues the second 256 colors,
-                    layer 1 the first 256.
+    Color code:  layer 0 (backmost) can bank at every 256 colors,
+                 layer 1 uses the first 256.
 
 ***************************************************************************/
 
@@ -77,7 +74,7 @@ static void get_tile_info_0(int tile_index)
 	SET_TILE_INFO(
 			1,
 			code,
-			1,
+			esd16_tilemap0_color,
 			0)
 }
 
@@ -117,6 +114,14 @@ WRITE16_HANDLER( esd16_vram_1_w )
 		tilemap_mark_tile_dirty(esdtilemap_1,offset);
 		tilemap_mark_tile_dirty(esdtilemap_1_16x16,offset);
 	}
+}
+
+WRITE16_HANDLER( esd16_tilemap0_color_w )
+{
+	esd16_tilemap0_color = data & 3;
+	tilemap_mark_all_tiles_dirty(esdtilemap_0);
+
+	flip_screen_set(data & 0x80);
 }
 
 

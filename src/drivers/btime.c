@@ -1176,7 +1176,7 @@ INPUT_PORTS_START( sdtennis )
       whatever the coinage Dip Switch are (they are not read in this case) */
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	1024,   /* 1024 characters */
@@ -1187,7 +1187,7 @@ static gfx_layout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	256,    /* 256 sprites */
@@ -1200,7 +1200,7 @@ static gfx_layout spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout zoar_spritelayout =
+static const gfx_layout zoar_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	128,    /* 256 sprites */
@@ -1213,7 +1213,7 @@ static gfx_layout zoar_spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout btime_tilelayout =
+static const gfx_layout btime_tilelayout =
 {
 	16,16,  /* 16*16 characters */
 	64,    /* 64 characters */
@@ -1226,7 +1226,7 @@ static gfx_layout btime_tilelayout =
 	32*8    /* every tile takes 32 consecutive bytes */
 };
 
-static gfx_layout cookrace_tilelayout =
+static const gfx_layout cookrace_tilelayout =
 {
 	8,8,  /* 8*8 characters */
 	256,    /* 256 characters */
@@ -1237,7 +1237,7 @@ static gfx_layout cookrace_tilelayout =
 	8*8    /* every tile takes 8 consecutive bytes */
 };
 
-static gfx_layout bnj_tilelayout =
+static const gfx_layout bnj_tilelayout =
 {
 	16,16,  /* 16*16 characters */
 	64, /* 64 characters */
@@ -1250,7 +1250,7 @@ static gfx_layout bnj_tilelayout =
 	64*8    /* every tile takes 64 consecutive bytes */
 };
 
-static gfx_decode btime_gfxdecodeinfo[] =
+static const gfx_decode btime_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
@@ -1258,7 +1258,7 @@ static gfx_decode btime_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode cookrace_gfxdecodeinfo[] =
+static const gfx_decode cookrace_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
@@ -1266,14 +1266,14 @@ static gfx_decode cookrace_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode lnc_gfxdecodeinfo[] =
+static const gfx_decode lnc_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 },     /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 },     /* sprites */
 	{ -1 } /* end of array */
 };
 
-static gfx_decode bnj_gfxdecodeinfo[] =
+static const gfx_decode bnj_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 1 }, /* char set #1 */
 	{ REGION_GFX1, 0, &spritelayout,        0, 1 }, /* sprites */
@@ -1281,7 +1281,7 @@ static gfx_decode bnj_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode zoar_gfxdecodeinfo[] =
+static const gfx_decode zoar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,          0, 8 }, /* char set #1 */
 	{ REGION_GFX4, 0, &zoar_spritelayout,   0, 8 }, /* sprites */
@@ -1289,7 +1289,7 @@ static gfx_decode zoar_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode disco_gfxdecodeinfo[] =
+static const gfx_decode disco_gfxdecodeinfo[] =
 {
 	{ 0, 0x2000, &charlayout,          0, 4 }, /* char set #1 */
 	{ 0, 0x2000, &spritelayout,        0, 4 }, /* sprites */

@@ -185,7 +185,7 @@ INPUT_PORTS_START( orbit )
 INPUT_PORTS_END
 
 
-static gfx_layout orbit_full_sprite_layout =
+static const gfx_layout orbit_full_sprite_layout =
 {
 	8, 32,    /* width, height */
 	128,      /* total         */
@@ -204,7 +204,7 @@ static gfx_layout orbit_full_sprite_layout =
 };
 
 
-static gfx_layout orbit_upper_sprite_layout =
+static const gfx_layout orbit_upper_sprite_layout =
 {
 	8, 16,    /* width, height */
 	128,      /* total         */
@@ -221,7 +221,7 @@ static gfx_layout orbit_upper_sprite_layout =
 };
 
 
-static gfx_layout orbit_lower_sprite_layout =
+static const gfx_layout orbit_lower_sprite_layout =
 {
 	8, 16,    /* width, height */
 	128,      /* total         */
@@ -238,7 +238,7 @@ static gfx_layout orbit_lower_sprite_layout =
 };
 
 
-static gfx_layout orbit_tile_layout =
+static const gfx_layout orbit_tile_layout =
 {
 	16, 16,   /* width, height */
 	64,       /* total         */
@@ -255,7 +255,7 @@ static gfx_layout orbit_tile_layout =
 };
 
 
-static gfx_decode orbit_gfx_decode_info[] =
+static const gfx_decode orbit_gfx_decode_info[] =
 {
 	{ REGION_GFX1, 0, &orbit_full_sprite_layout, 0, 1 },
 	{ REGION_GFX1, 0, &orbit_upper_sprite_layout, 0, 1 },

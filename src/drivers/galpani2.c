@@ -436,7 +436,7 @@ INPUT_PORTS_END
     16x16x8 made of four 8x8x8 tiles arrenged like: 01
                                                     23
 */
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -447,7 +447,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*8
 };
 
-static gfx_decode galpani2_gfxdecodeinfo[] =
+static const gfx_decode galpani2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8,	0,	0x40	}, // [0] Sprites
 	{ -1 }
@@ -629,11 +629,11 @@ ROM_START( galpani2 )
 	ROM_LOAD16_BYTE( "g204t1.33", 0x400000, 0x040000, CRC(65a1f838) SHA1(ccc3bb4a4f4ea1677caa1a3a51bc0a13b4b619c7) )
 	ROM_LOAD16_BYTE( "g204t1.27", 0x400001, 0x040000, CRC(39059f66) SHA1(6bf41738033a13b63d96babf827c73c914323425) )
 
-	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "gp2-100.043", 0x040000, 0x100000, CRC(4235ac5b) SHA1(7e35831523fbb2d0587b9ab93c13b2b43dc481a8) )	// $10 x $10000
 	ROM_COPY( REGION_SOUND1, 0x0c0000, 0, 0x40000 )
 
-	ROM_REGION( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 )	/* Samples */
 	ROM_LOAD( "gp2-102.045", 0x000000, 0x100000, CRC(b4bee779) SHA1(a41098e4b8e48577719dc4bd7f09f5e893e8b388) )	//  $8 x $40000
 	ROM_CONTINUE(            0x200000, 0x100000 )
 	ROM_LOAD( "gp2-101.044", 0x100000, 0x100000, CRC(f75ba6a0) SHA1(91cc0c019a7ebfa2562bbe570af029f00b5e0699) )	//  $4 x $40000
@@ -690,11 +690,11 @@ ROM_START( gpan2qiz )
 	ROM_LOAD16_BYTE( "g204j0.169", 0x400000, 0x040000, CRC(212d8aab) SHA1(459f556978ef9a103279cf633fcc1cacb367ea61) )
 	ROM_LOAD16_BYTE( "g204j1.170", 0x400001, 0x040000, CRC(bfd89343) SHA1(884d17b3302643d86f84a4a4917de850c5bf8924) )
 
-	ROM_REGION( 0x140000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "gp2-100j.61", 0x040000, 0x100000, CRC(60382cbf) SHA1(766c50a3302bc11d54de49a2850522d93fc36ba2) )
 	ROM_COPY( REGION_SOUND1, 0x0c0000, 0, 0x40000 )
 
-	ROM_REGION( 0x400000, REGION_SOUND2, ROMREGION_SOUNDONLY )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND2, 0 )	/* Samples */
 	ROM_LOAD( "gp2-102.59",  0x280000, 0x080000, CRC(1bed6ecd) SHA1(3208aacac64ac95fcb6eeef59986c3154c1c415b) )
 	ROM_CONTINUE(            0x200000, 0x080000 )
 	ROM_CONTINUE(            0x080000, 0x080000 )

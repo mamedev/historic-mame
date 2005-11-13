@@ -1787,7 +1787,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 chars */
 	2048,
@@ -1799,7 +1799,7 @@ static gfx_layout charlayout =
 };
 
 /* You wouldn't believe how long it took me to figure this one out.. */
-static gfx_layout charlayout_V =
+static const gfx_layout charlayout_V =
 {
 	8,8,
 	2048,
@@ -1810,7 +1810,7 @@ static gfx_layout charlayout_V =
 	32*8    /* every sprite takes 16 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	4096*4,
@@ -1823,7 +1823,7 @@ static gfx_layout spritelayout =
 	8*32    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout spritelayout_V =
+static const gfx_layout spritelayout_V =
 {
 	16,16,  /* 16*16 sprites */
 	0x5000,
@@ -1836,7 +1836,7 @@ static gfx_layout spritelayout_V =
 	8*32    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_layout tnexspce_layout =
+static const gfx_layout tnexspce_layout =
 {
 	8,8,    /* 8x8 */
 	RGN_FRAC(1,1),  /* Number of tiles */
@@ -1847,7 +1847,7 @@ static gfx_layout tnexspce_layout =
 	32*8 /* every char takes 32 consecutive bytes */
 };
 
-static gfx_layout paddle_layout =
+static const gfx_layout paddle_layout =
 {
 	8,8,    /* 8*8 chars */
 	0x4000,
@@ -1858,7 +1858,7 @@ static gfx_layout paddle_layout =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout sting_layout1 =
+static const gfx_layout sting_layout1 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1869,7 +1869,7 @@ static gfx_layout sting_layout1 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout sting_layout2 =
+static const gfx_layout sting_layout2 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1880,7 +1880,7 @@ static gfx_layout sting_layout2 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout sting_layout3 =
+static const gfx_layout sting_layout3 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1891,7 +1891,7 @@ static gfx_layout sting_layout3 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout kyros_char_layout1 =
+static const gfx_layout kyros_char_layout1 =
 {
 	8,8,    /* 8*8 chars */
 	0x8000/16,
@@ -1902,7 +1902,7 @@ static gfx_layout kyros_char_layout1 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout kyros_char_layout2 =
+static const gfx_layout kyros_char_layout2 =
 {
 	8,8,    /* 8*8 chars */
 	0x8000/16,
@@ -1913,7 +1913,7 @@ static gfx_layout kyros_char_layout2 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout jongbou_layout1 =
+static const gfx_layout jongbou_layout1 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1924,7 +1924,7 @@ static gfx_layout jongbou_layout1 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout jongbou_layout2 =
+static const gfx_layout jongbou_layout2 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1935,7 +1935,7 @@ static gfx_layout jongbou_layout2 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout jongbou_layout3 =
+static const gfx_layout jongbou_layout3 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1946,7 +1946,7 @@ static gfx_layout jongbou_layout3 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout jongbou_layout4 =
+static const gfx_layout jongbou_layout4 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1957,7 +1957,7 @@ static gfx_layout jongbou_layout4 =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout jongbou_layout5 =
+static const gfx_layout jongbou_layout5 =
 {
 	8,8,    /* 8*8 chars */
 	1024,
@@ -1970,33 +1970,33 @@ static gfx_layout jongbou_layout5 =
 
 /******************************************************************************/
 
-static gfx_decode alpha68k_II_gfxdecodeinfo[] =
+static const gfx_decode alpha68k_II_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0,  16 },
 	{ REGION_GFX2, 0, &spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode alpha68k_V_gfxdecodeinfo[] =
+static const gfx_decode alpha68k_V_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_V,    0,  16 },
 	{ REGION_GFX2, 0, &spritelayout_V,  0, 256 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode paddle_gfxdecodeinfo[] =
+static const gfx_decode paddle_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &paddle_layout,  0, 64 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode tnexspce_gfxdecodeinfo[] =
+static const gfx_decode tnexspce_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tnexspce_layout,  0, 64 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode sstingry_gfxdecodeinfo[] =
+static const gfx_decode sstingry_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &sting_layout1,  0, 32 },
 	{ REGION_GFX1, 0x00000, &sting_layout2,  0, 32 },
@@ -2005,7 +2005,7 @@ static gfx_decode sstingry_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode kyros_gfxdecodeinfo[] =
+static const gfx_decode kyros_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &kyros_char_layout1,  0, 32 },
 	{ REGION_GFX1, 0x00000, &kyros_char_layout2,  0, 32 },
@@ -2018,7 +2018,7 @@ static gfx_decode kyros_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode jongbou_gfxdecodeinfo[] =
+static const gfx_decode jongbou_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &jongbou_layout1,  0, 32 },
 	{ REGION_GFX1, 0, &jongbou_layout2,  0, 32 },

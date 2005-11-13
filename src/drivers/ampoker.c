@@ -257,7 +257,7 @@ INPUT_PORTS_START( ampoker2 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8, 8,
 	1024,
@@ -268,7 +268,7 @@ static gfx_layout charlayout =
 	16*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,	   0, 16 },
 	{ -1 }

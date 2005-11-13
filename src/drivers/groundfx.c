@@ -383,7 +383,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **********************************************************/
 
-static gfx_layout tile16x16_layout =
+static const gfx_layout tile16x16_layout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,2),
@@ -395,7 +395,7 @@ static gfx_layout tile16x16_layout =
 	64*16	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -406,7 +406,7 @@ static gfx_layout charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout pivlayout =
+static const gfx_layout pivlayout =
 {
 	8,8,    /* 8*8 characters */
 	RGN_FRAC(1,2),
@@ -417,7 +417,7 @@ static gfx_layout pivlayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode groundfx_gfxdecodeinfo[] =
+static const gfx_decode groundfx_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x16_layout,  4096, 512 },
 	{ REGION_GFX1, 0x0, &charlayout,        0, 512 },
@@ -527,7 +527,7 @@ ROM_START( groundfx )
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "d51-13.7", 0x00000,  0x80000,  CRC(36921b8b) SHA1(2130120f78a3b984618a53054fc937cf727177b9) )	/* STY, spritemap */
 
-	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "d51-01.73", 0x000000, 0x200000, CRC(92f09155) SHA1(8015e1997818bb480174394eb43840bf26679bcf) )	/* Ensoniq samples */
 	ROM_LOAD16_BYTE( "d51-02.74", 0xc00000, 0x200000, CRC(20a9428f) SHA1(c9033d02a49c72f704808f5f899101617d5814e5) )
 ROM_END

@@ -273,7 +273,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout spritelayout_4bpp =
+static const gfx_layout spritelayout_4bpp =
 {
 	16,16,
 	RGN_FRAC(1,2),
@@ -286,7 +286,7 @@ static gfx_layout spritelayout_4bpp =
 };
 
 #if 0
-static gfx_layout spritelayout_6bpp =
+static const gfx_layout spritelayout_6bpp =
 {
 	16,16,
 	RGN_FRAC(1,3),
@@ -299,7 +299,7 @@ static gfx_layout spritelayout_6bpp =
 };
 #endif
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,2), //todo
@@ -310,7 +310,7 @@ static gfx_layout charlayout =
 	16*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout_4bpp,   0, 256 },
 	{ REGION_GFX2, 0, &spritelayout_4bpp,   0, 256 },
@@ -320,7 +320,7 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 #if 0
-static gfx_decode gfxdecodeinfo2[] =
+static const gfx_decode gfxdecodeinfo2[] =
 {
 	{ REGION_GFX1, 0, &spritelayout_6bpp,   0, 256 },
 	{ REGION_GFX1, 0, &charlayout,          0, 256 },
@@ -423,6 +423,38 @@ MACHINE_DRIVER_END
 /***************************************************************************/
 
 ROM_START( avengrgs )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD32_WORD_SWAP( "sf_00-0.7k", 0x000002, 0x80000, CRC(7d20e2df) SHA1(e8be1751029aea74680ac00cd7f3cf84e1adfc56) )
+	ROM_LOAD32_WORD_SWAP( "sf_01-0.7l", 0x000000, 0x80000, CRC(f37c0a01) SHA1(8c4e28cde9e93457197b1849e6c9ef9516b5732f) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mcg-00.1j", 0x000001, 0x200000, CRC(99129d9a) SHA1(1d1574e2326dca1043e05c229b54497df6ed5a35) )
+	ROM_LOAD16_BYTE( "mcg-02.1f", 0x000000, 0x200000, CRC(29af9866) SHA1(56531911f8724975a7f81e61b7dec7fa72d50747) )
+	ROM_LOAD16_BYTE( "mcg-04.3j", 0x400001, 0x200000, CRC(a4954c0e) SHA1(897a7313505f562879578941931a39afd34c9eef) )
+	ROM_LOAD16_BYTE( "mcg-06.3f", 0x400000, 0x200000, CRC(01571cf6) SHA1(74f85d523f2783374f041aa95abe6d1b8c872127) )
+
+	ROM_REGION( 0x800000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mcg-01.1d", 0x000001, 0x200000, CRC(3638861b) SHA1(0896110acdb4442e4819f73285b9e725fc787b7a) )
+	ROM_LOAD16_BYTE( "mcg-03.7m", 0x000000, 0x200000, CRC(4a0c965f) SHA1(b658ae5e6e2ff6f42b605bb6c49ad8a67507f2ab) )
+	ROM_LOAD16_BYTE( "mcg-05.3d", 0x400001, 0x200000, CRC(182c2b49) SHA1(e53c06e95508e6c7e746f81668a4f7c08bfc6d36) )
+	ROM_LOAD16_BYTE( "mcg-07.8m", 0x400000, 0x200000, CRC(d09a3635) SHA1(8e184f3a3046bd8401762bbb480f5832fde91dde) )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "mcg-08.7p", 0x000001, 0x200000, CRC(c253943e) SHA1(b97a1d565ffbf2190ba0b25de5ef0bb3b9c9248b) )
+	ROM_LOAD16_BYTE( "mcg-09.7n", 0x000000, 0x200000, CRC(8fb9870b) SHA1(046b6d07610cf09f008d1595605139071671d95c) )
+	ROM_LOAD16_BYTE( "mcg-10.8p", 0x400001, 0x200000, CRC(1383f524) SHA1(eadd8b579cc21ae119b7439c7882e39f22ac3b8c) )
+	ROM_LOAD16_BYTE( "mcg-11.8n", 0x400000, 0x200000, CRC(8f7fc281) SHA1(8cac51036088dbf4ff3c2b91ef88ef30a30b0be1) )
+
+	ROM_REGION( 0x80000, REGION_GFX4, 0 )
+	ROM_LOAD( "sf_02-0.6j", 0x000000, 0x80000, CRC(c98585dd) SHA1(752e246e2c72eb2b786c49d69f7ee4401a15c8aa) )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mcg-12.5a",  0x400000, 0x200000, CRC(bef9b28f) SHA1(b7a2a0539ea4d22b48ce3f3eb367017f219da2c1) )
+	ROM_LOAD16_WORD_SWAP( "mcg-13.9k",  0x200000, 0x200000, CRC(92301551) SHA1(a7891e7a3c8d7f165ca73f5d5a034501df46e9a2) )
+	ROM_LOAD16_WORD_SWAP( "mcg-14.6a",  0x000000, 0x200000, CRC(c0d8b5f0) SHA1(08eecf6e7d0273e41cda3472709a67e2b16068c9) )
+ROM_END
+
+ROM_START( avengrgj )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD32_WORD_SWAP( "sd_00-2.7k", 0x000002, 0x80000, CRC(136be46a) SHA1(7679f5f78f7983d43ecdb9bdd04e45792a13d9f2) )
 	ROM_LOAD32_WORD_SWAP( "sd_01-2.7l", 0x000000, 0x80000, CRC(9d87f576) SHA1(dd20cd060d020d81f4e012be10d0211be7526641) )
@@ -607,7 +639,8 @@ static DRIVER_INIT( mlc )
 
 /***************************************************************************/
 
-GAME( 1995, avengrgs, 0,        avengrgs, avengrgs, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", GAME_NOT_WORKING )
+GAME( 1995, avengrgs, 0,        avengrgs, avengrgs, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (World)", GAME_NOT_WORKING )
+GAME( 1995, avengrgj, avengrgs, avengrgs, avengrgs, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", GAME_NOT_WORKING )
 GAME( 1996, stadhr96, 0,        mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAD)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1996, stadh96a, stadhr96, mlc,      avengrgs, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAJ)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1996, skullfng, 0,        mlc,      avengrgs, mlc,      ROT270, "Data East Corporation", "Skull Fang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)

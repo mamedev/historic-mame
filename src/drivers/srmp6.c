@@ -399,7 +399,7 @@ INPUT_PORTS_END
 
 /* all this is plain wrong, failed attempt at decoding the gfx */
 /*
-static gfx_layout wrong_layout =
+static const gfx_layout wrong_layout =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -410,7 +410,7 @@ static gfx_layout wrong_layout =
     8*8*8
 };
 
-static gfx_layout wrong_layout2 =
+static const gfx_layout wrong_layout2 =
 {
     8,8,
     RGN_FRAC(1,1),
@@ -421,7 +421,7 @@ static gfx_layout wrong_layout2 =
     8*8*1
 };
 */
-static gfx_layout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granularity in roms */
+static const gfx_layout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granularity in roms */
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -433,7 +433,7 @@ static gfx_layout wrong_layout3 = /* 16x16x9? seems to be some 18 bytes granular
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 //  { REGION_GFX1, 0, &wrong_layout,  0, 0x100 },   // sprites (8x8x?)
 //  { REGION_GFX1, 0, &wrong_layout2, 0, 0x100 },   // tiles (16x16x?)

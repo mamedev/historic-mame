@@ -519,7 +519,7 @@ ADDRESS_MAP_END
   GFX decoding
 **************************************************************************/
 
-static gfx_layout omegaf_charlayout =
+static const gfx_layout omegaf_charlayout =
 {
 	8, 8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
@@ -530,7 +530,7 @@ static gfx_layout omegaf_charlayout =
 	8*32
 };
 
-static gfx_layout omegaf_spritelayout =
+static const gfx_layout omegaf_spritelayout =
 {
 	16, 16,	/* 16x16 characters */
 	1024,
@@ -543,7 +543,7 @@ static gfx_layout omegaf_spritelayout =
 	16*64
 };
 
-static gfx_layout omegaf_bigspritelayout =
+static const gfx_layout omegaf_bigspritelayout =
 {
 	32, 32,	/* 32x32 characters */
 	256,
@@ -560,7 +560,7 @@ static gfx_layout omegaf_bigspritelayout =
 	16*64*4
 };
 
-static gfx_layout omegaf_bglayout =
+static const gfx_layout omegaf_bglayout =
 {
 	16, 16,	/* 16x16 characters */
 	4096,
@@ -573,7 +573,7 @@ static gfx_layout omegaf_bglayout =
 	16*64
 };
 
-static gfx_layout robokid_spritelayout =
+static const gfx_layout robokid_spritelayout =
 {
 	16, 16,	/* 16x16 characters */
 	2048,
@@ -586,7 +586,7 @@ static gfx_layout robokid_spritelayout =
 	16*64
 };
 
-static gfx_layout robokid_bigspritelayout =
+static const gfx_layout robokid_bigspritelayout =
 {
 	32, 32,	/* 32x32 characters */
 	512,
@@ -603,7 +603,7 @@ static gfx_layout robokid_bigspritelayout =
 	16*64*4
 };
 
-static gfx_decode omegaf_gfxdecodeinfo[] =
+static const gfx_decode omegaf_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &omegaf_bglayout,         0*16, 16},
 	{ REGION_GFX2, 0, &omegaf_bglayout,         0*16, 16},
@@ -614,7 +614,7 @@ static gfx_decode omegaf_gfxdecodeinfo[] =
 	{ -1} /* end of array */
 };
 
-static gfx_decode robokid_gfxdecodeinfo[] =
+static const gfx_decode robokid_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &omegaf_bglayout,          0*16, 16},
 	{ REGION_GFX2, 0, &omegaf_bglayout,          0*16, 16},

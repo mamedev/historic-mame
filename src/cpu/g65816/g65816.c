@@ -99,14 +99,14 @@ static int g65816_readop(UINT32 offset, int size, UINT64 *value)
 }
 
 /* Layout of the registers in the MAME debugger */
-static unsigned char g65816i_register_layout[] =
+static UINT8 g65816i_register_layout[] =
 {
 	G65816_PB, G65816_PC, G65816_S, G65816_DB, G65816_D, G65816_P, G65816_E, -1,
 	G65816_A, G65816_X, G65816_Y, G65816_NMI_STATE, G65816_IRQ_STATE, 0
 };
 
 /* Layout of the MAME debugger windows x,y,w,h */
-static unsigned char g65816i_window_layout[] = {
+static UINT8 g65816i_window_layout[] = {
 	25, 0,55, 3, /* register window (top, right rows) */
 	 0, 0,24,22, /* disassembler window (left colums) */
 	25, 4,55, 9, /* memory #1 window (right, upper middle) */

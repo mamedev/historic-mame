@@ -1009,7 +1009,7 @@ INPUT_PORTS_END
                             WEC Le Mans 24 Graphics Layout
 ***************************************************************************/
 
-static gfx_layout wecleman_bg_layout =
+static const gfx_layout wecleman_bg_layout =
 {
 	8,8,
 	8*0x8000*3/(8*8*3),
@@ -1021,7 +1021,7 @@ static gfx_layout wecleman_bg_layout =
 };
 
 /* We draw the road, made of 512 pixel lines, using 64x1 tiles */
-static gfx_layout wecleman_road_layout =
+static const gfx_layout wecleman_road_layout =
 {
 	64,1,
 	8*0x4000*3/(64*1*3),
@@ -1040,7 +1040,7 @@ static gfx_layout wecleman_road_layout =
 	64*1
 };
 
-static gfx_decode wecleman_gfxdecodeinfo[] =
+static const gfx_decode wecleman_gfxdecodeinfo[] =
 {
 	// REGION_GFX1 holds sprite, which are not decoded here
 	{ REGION_GFX2, 0, &wecleman_bg_layout,   0, 2048/8 },	// [0] bg + fg + txt
@@ -1055,7 +1055,7 @@ static gfx_decode wecleman_gfxdecodeinfo[] =
 
 /* We draw the road, made of 512 pixel lines, using 64x1 tiles */
 /* tiles are doubled horizontally */
-static gfx_layout hotchase_road_layout =
+static const gfx_layout hotchase_road_layout =
 {
 	64,1,
 	RGN_FRAC(1,1),
@@ -1069,7 +1069,7 @@ static gfx_layout hotchase_road_layout =
 	32*4
 };
 
-static gfx_decode hotchase_gfxdecodeinfo[] =
+static const gfx_decode hotchase_gfxdecodeinfo[] =
 {
 	// REGION_GFX1 holds sprite, which are not decoded here
 	// REGION_GFX2 and 3 are for the 051316

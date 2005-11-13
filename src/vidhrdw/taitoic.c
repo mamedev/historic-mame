@@ -1481,7 +1481,7 @@ static void TC0080VCO_get_tx_tile_info(int tile_index)
 
 /* Is this endian-correct ??? */
 
-static gfx_layout TC0080VCO_charlayout =
+static const gfx_layout TC0080VCO_charlayout =
 {
 	8, 8,	/* 8x8 pixels */
 	256,	/* 256 chars */
@@ -2217,7 +2217,7 @@ void (*TC0100SCN_get_tile_info[TC0100SCN_MAX_CHIPS][3])(int tile_index) =
 };
 
 
-static gfx_layout TC0100SCN_charlayout =
+static const gfx_layout TC0100SCN_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
@@ -3112,7 +3112,7 @@ void (*tc480_get_tile_info[5])(int tile_index) =
 };
 
 
-static gfx_layout TC0480SCP_charlayout =
+static const gfx_layout TC0480SCP_charlayout =
 {
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */

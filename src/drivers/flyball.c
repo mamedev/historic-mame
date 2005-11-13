@@ -207,7 +207,7 @@ INPUT_PORTS_START( flyball )
 INPUT_PORTS_END
 
 
-static gfx_layout flyball_tiles_layout =
+static const gfx_layout flyball_tiles_layout =
 {
 	8, 16,    /* width, height */
 	128,      /* total         */
@@ -223,7 +223,7 @@ static gfx_layout flyball_tiles_layout =
 	0x80      /* increment */
 };
 
-static gfx_layout flyball_sprites_layout =
+static const gfx_layout flyball_sprites_layout =
 {
 	16, 16,   /* width, height */
 	16,       /* total         */
@@ -240,7 +240,7 @@ static gfx_layout flyball_sprites_layout =
 	0x100     /* increment */
 };
 
-static gfx_decode flyball_gfx_decode_info[] =
+static const gfx_decode flyball_gfx_decode_info[] =
 {
 	{ REGION_GFX1, 0, &flyball_tiles_layout, 0, 2 },
 	{ REGION_GFX2, 0, &flyball_sprites_layout, 2, 2 },

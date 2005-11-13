@@ -167,7 +167,7 @@ static READ16_HANDLER( roldfrog_bombs_r )
 
 static ADDRESS_MAP_START( roldfrog_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x3fffff) AM_READ(MRA16_ROM)			/* ROM */
-	AM_RANGE(0x400000, 0x407fff) AM_ROM						/* Protection Data */
+	AM_RANGE(0x400000, 0x407fff) AM_ROM	AM_BASE(&roldfrog_protdata)					/* Protection Data */
 	AM_RANGE(0x408000, 0x4087ff) AM_READ(MRA16_RAM)			/* Extra Ram */
 	AM_RANGE(0x800000, 0x83ffff) AM_READ(MRA16_RAM)			/* Pixel Layer */
 	AM_RANGE(0x840000, 0x840001) AM_READ(input_port_0_word_r)/* DIPSW #1 */
@@ -391,7 +391,7 @@ INPUT_PORTS_START( funystrp )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 INPUT_PORTS_END
 
-static gfx_layout tilelayout8 =
+static const gfx_layout tilelayout8 =
 {
 	8,8,									/* 8x8 tiles */
 	0x20000/8,								/* number of tiles */
@@ -402,7 +402,7 @@ static gfx_layout tilelayout8 =
 	8*8
 };
 
-static gfx_layout tilelayout16 =
+static const gfx_layout tilelayout16 =
 {
 	16,16,									/* 16x16 tiles */
 	0x20000/32,								/* number of tiles */
@@ -413,7 +413,7 @@ static gfx_layout tilelayout16 =
 	32*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &tilelayout8 ,0,128 },
 	{ REGION_GFX1, 0x000000, &tilelayout16,0,128 },
@@ -602,7 +602,7 @@ ROM_START( roldfrog )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "roldfrog.009",	0x300001, 0x080000, CRC(e475fb76) SHA1(9ab56db86530647ea4a5d2109a02119710ff9b7e) )
 	/* 68000 code - supplied by protection device? */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x40000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x400000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )
@@ -626,7 +626,7 @@ ROM_START( roldfrga )
 	ROM_LOAD16_BYTE( "roldfrog.005",	0x300000, 0x080000, CRC(b683160c) SHA1(526a772108a6bf71207a7b6de7cbd14f8e9496bc) )
 	ROM_LOAD16_BYTE( "9",	            0x300001, 0x080000, CRC(fd515b58) SHA1(7926ab9afbc260219351a02b56b82ede883f9aab) )	// differs with roldfrog.009 by 1 byte
 	/* 68000 code - supplied by protection device? */
-	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x40000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
+	ROM_LOAD16_WORD_SWAP( "protdata.bin", 0x400000, 0x8000, CRC(ecaa8dd1) SHA1(b15f583d1a96b6b7ce50bcdca8cb28508f92b6a5) )
 
 	ROM_REGION( 0x90000, REGION_CPU2, 0 )	/* Z80 Code */
 	ROM_LOAD( "roldfrog.001", 0x00000, 0x20000, CRC(ba9eb1c6) SHA1(649d1103f3188554eaa3fc87a1f52c53233932b2) )

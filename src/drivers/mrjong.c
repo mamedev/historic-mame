@@ -147,7 +147,7 @@ INPUT_PORTS_START( mrjong )
 INPUT_PORTS_END
 
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8, 8,				/* 8*8 characters */
 	512,				/* 512 characters */
@@ -158,7 +158,7 @@ static gfx_layout tilelayout =
 	8*8				/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16, 16,				/* 16*16 sprites */
 	128,				/* 128 sprites */
@@ -171,7 +171,7 @@ static gfx_layout spritelayout =
 	32*8				/* every sprite takes 32 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,      0, 32 },
 	{ REGION_GFX1, 0x0000, &spritelayout,    0, 32 },

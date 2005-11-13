@@ -41,15 +41,12 @@ typedef void genf(void);
 
 /* These are forward struct declarations that are used to break
    circular dependencies in the code */
-
 typedef struct _mame_display mame_display;
 typedef struct _game_driver game_driver;
 typedef struct _machine_config machine_config;
 typedef struct _rom_load_data rom_load_data;
 typedef struct _xml_data_node xml_data_node;
 typedef struct _performance_info performance_info;
-
-
 typedef struct _osd_file osd_file;
 
 
@@ -160,6 +157,7 @@ typedef union
 #ifndef MAX
 #define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
+
 
 /* Highly useful macro for compile-time knowledge of an array size */
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
@@ -308,17 +306,20 @@ typedef union
 ***************************************************************************/
 
 /* since stricmp is not part of the standard, we use this instead */
-INLINE int my_stricmp(const char *dst, const char *src)
+INLINE int mame_stricmp(const char *s1, const char *s2)
 {
-	while (*src && *dst)
-	{
-		if (tolower(*src) != tolower(*dst))
-			return *dst - *src;
-		src++;
-		dst++;
-	}
-	return *dst - *src;
+	for (;;)
+ 	{
+		int c1 = tolower(*s1++);
+		int c2 = tolower(*s2++);
+		if (c1 == 0 || c1 != c2)
+			return c1 - c2;
+ 	}
 }
+
+/* this macro prevents people from using stricmp directly */
+#undef stricmp
+#define stricmp !MUST_USE_MAME_STRICMP_INSTEAD!
 
 /* compute the intersection of two rectangles */
 INLINE void sect_rect(rectangle *dst, const rectangle *src)

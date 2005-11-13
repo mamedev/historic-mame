@@ -1209,7 +1209,7 @@ INPUT_PORTS_END
 
 /* the 4bpp gfx encoding is annoying */
 
-static gfx_layout hng64_4_even_layout =
+static const gfx_layout hng64_4_even_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1220,7 +1220,7 @@ static gfx_layout hng64_4_even_layout =
 	8*64
 };
 
-static gfx_layout hng64_4_odd_layout =
+static const gfx_layout hng64_4_odd_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1234,7 +1234,7 @@ static gfx_layout hng64_4_odd_layout =
 };
 
 
-static gfx_layout hng64_4_16_layout =
+static const gfx_layout hng64_4_16_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1248,7 +1248,7 @@ static gfx_layout hng64_4_16_layout =
 };
 
 
-static gfx_layout hng64_layout =
+static const gfx_layout hng64_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -1260,7 +1260,7 @@ static gfx_layout hng64_layout =
 };
 
 
-static gfx_layout hng64_16_layout =
+static const gfx_layout hng64_16_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1274,7 +1274,7 @@ static gfx_layout hng64_16_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hng64_4_even_layout, 0x0, 0x100 }, /* scrolltiles */
 	{ REGION_GFX1, 0, &hng64_4_odd_layout,  0x0, 0x100 }, /* scrolltiles */

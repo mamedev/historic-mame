@@ -179,7 +179,7 @@ INPUT_PORTS_START( battlane )
 INPUT_PORTS_END
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16, 16,
 	RGN_FRAC(1,3),
@@ -196,7 +196,7 @@ static gfx_layout spritelayout =
 	16*8*2
 };
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16, 16,    /* 16*16 tiles */
 	256,    /* 256 tiles */
@@ -215,7 +215,7 @@ static gfx_layout tilelayout =
 	8*8*4*2     /* every char takes consecutive bytes */
 };
 
-static gfx_layout tilelayout2 =
+static const gfx_layout tilelayout2 =
 {
 	16, 16,    /* 16*16 tiles */
 	256,    /* 256 tiles */
@@ -235,7 +235,7 @@ static gfx_layout tilelayout2 =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout,  0, 2 },	/* colors 0x00-0x0f */
 	{ REGION_GFX2, 0, &tilelayout,   32, 4 },	/* colors 0x20-0x3f */

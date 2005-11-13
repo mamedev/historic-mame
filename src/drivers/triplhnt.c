@@ -226,7 +226,7 @@ INPUT_PORTS_START( triplhnt )
 INPUT_PORTS_END
 
 
-static gfx_layout triplhnt_small_sprite_layout =
+static const gfx_layout triplhnt_small_sprite_layout =
 {
 	32, 32,   /* width, height */
 	16,       /* total         */
@@ -249,7 +249,7 @@ static gfx_layout triplhnt_small_sprite_layout =
 };
 
 
-static gfx_layout triplhnt_large_sprite_layout =
+static const gfx_layout triplhnt_large_sprite_layout =
 {
 	64, 64,   /* width, height */
 	16,       /* total         */
@@ -280,7 +280,7 @@ static gfx_layout triplhnt_large_sprite_layout =
 };
 
 
-static gfx_layout triplhnt_tile_layout =
+static const gfx_layout triplhnt_tile_layout =
 {
 	16, 16,   /* width, height */
 	64,       /* total         */
@@ -297,7 +297,7 @@ static gfx_layout triplhnt_tile_layout =
 };
 
 
-static gfx_decode triplhnt_gfx_decode_info[] =
+static const gfx_decode triplhnt_gfx_decode_info[] =
 {
 	{ REGION_GFX1, 0, &triplhnt_small_sprite_layout, 0, 1 },
 	{ REGION_GFX1, 0, &triplhnt_large_sprite_layout, 0, 1 },

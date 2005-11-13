@@ -213,7 +213,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout layout_1bpp =
+static const gfx_layout layout_1bpp =
 {
 	8,8,    		/* 8*8 characters */
 	RGN_FRAC(1,2),	/* 256 characters */
@@ -224,7 +224,7 @@ static gfx_layout layout_1bpp =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout layout_2bpp =
+static const gfx_layout layout_2bpp =
 {
 	8,8,    		/* 8*8 characters */
 	RGN_FRAC(1,2),	/* 256 characters */
@@ -235,7 +235,7 @@ static gfx_layout layout_2bpp =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout layout_3bpp =
+static const gfx_layout layout_3bpp =
 {
 	8,8,    		/* 8*8 characters */
 	RGN_FRAC(1,3),	/* 256 characters */
@@ -246,7 +246,7 @@ static gfx_layout layout_3bpp =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_3bpp, 0,       256/8 },	/* background */
 	{ REGION_GFX2, 0, &layout_2bpp, 8*4,     8 },		/* foreground */

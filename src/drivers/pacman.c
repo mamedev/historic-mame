@@ -2772,7 +2772,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,8,	/* 8*8 characters */
     RGN_FRAC(1,2),    /* 256 characters */
@@ -2784,7 +2784,7 @@ static gfx_layout tilelayout =
 };
 
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,2),	/* 64 sprites */
@@ -2798,7 +2798,7 @@ static gfx_layout spritelayout =
 };
 
 
-static gfx_layout crush4_tilelayout =
+static const gfx_layout crush4_tilelayout =
 {
 	8,8, /* 8*8 characters */
     RGN_FRAC(1,4),
@@ -2809,7 +2809,7 @@ static gfx_layout crush4_tilelayout =
     16*8    /* every char takes 16 bytes */
 };
 
-static gfx_layout crush4_spritelayout =
+static const gfx_layout crush4_spritelayout =
 {
 	16,16, /* 16*16 sprites */
 	RGN_FRAC(1,4),
@@ -2823,7 +2823,7 @@ static gfx_layout crush4_spritelayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x1000, &spritelayout, 0, 128 },
@@ -2831,14 +2831,14 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 
-static gfx_decode s2650games_gfxdecodeinfo[] =
+static const gfx_decode s2650games_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x4000, &spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode crush4_gfxdecodeinfo[] =
+static const gfx_decode crush4_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &crush4_tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x1000, &crush4_spritelayout, 0, 128 },

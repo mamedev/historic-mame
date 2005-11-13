@@ -118,7 +118,7 @@ void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
     region
 -------------------------------------------------*/
 
-unsigned char *memory_region(int num)
+UINT8 *memory_region(int num)
 {
 	int i;
 
@@ -454,7 +454,7 @@ mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
 	if (bitmap != NULL)
 	{
 		int i, rowlen, rdwidth, bitmapsize, linearraysize, pixelsize;
-		unsigned char *bm;
+		UINT8 *bm;
 
 		/* initialize the basic parameters */
 		bitmap->depth = depth;
@@ -479,7 +479,7 @@ mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
 
 		/* determine total memory for bitmap and line arrays */
 		bitmapsize = (height + 2 * BITMAP_SAFETY) * rowlen;
-		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *);
+		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(UINT8 *);
 
 		/* align to 16 bytes */
 		linearraysize = (linearraysize + 15) & ~15;
@@ -493,7 +493,7 @@ mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
 		}
 
 		/* clear ALL bitmap, including safety area, to avoid garbage on right */
-		bm = (unsigned char *)bitmap->line + linearraysize;
+		bm = (UINT8 *)bitmap->line + linearraysize;
 		memset(bm, 0, (height + 2 * BITMAP_SAFETY) * rowlen);
 
 		/* initialize the line pointers */
@@ -1815,10 +1815,6 @@ int rom_load(const rom_entry *romp)
 			printf("Error: missing ROM_REGION header\n");
 			return 1;
 		}
-
-		/* if sound is disabled and it's a sound-only region, skip it */
-		if (Machine->sample_rate == 0 && ROMREGION_ISSOUNDONLY(region))
-			continue;
 
 		/* allocate memory for the region */
 		if (new_memory_region(regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)))

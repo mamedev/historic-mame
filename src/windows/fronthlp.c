@@ -121,7 +121,7 @@ int strwildcmp(const char *sp1, const char *sp2)
 		if (s2[i] == '?' && s1[i] != '?') s2[i] = s1[i];
 	}
 
-	return stricmp(s1, s2);
+	return mame_stricmp(s1, s2);
 }
 
 
@@ -395,7 +395,7 @@ void romident(const char* name,int enter_dirs)
 	else
 	{
 		unsigned l = strlen(name);
-		if (l>=4 && stricmp(name+l-4,".zip")==0)
+		if (l>=4 && mame_stricmp(name+l-4,".zip")==0)
 			identify_zip(name);
 		else
 			identify_file(name);
@@ -412,9 +412,9 @@ int CLIB_DECL compare_names(const void *elem1, const void *elem2)
 	char name1[200],name2[200];
 	namecopy(name1,drv1->description);
 	namecopy(name2,drv2->description);
-	cmp = stricmp(name1,name2);
+	cmp = mame_stricmp(name1,name2);
 	if (cmp == 0)
-		cmp = stricmp(drv1->description, drv2->description);
+		cmp = mame_stricmp(drv1->description, drv2->description);
 	return cmp;
 }
 
@@ -518,7 +518,7 @@ int frontend_help (const char *gamename)
 		case LIST_ROMS: /* game roms list or */
 		case LIST_SAMPLES: /* game samples list */
 			j = 0;
-			while (drivers[j] && (stricmp(gamename,drivers[j]->name) != 0))
+			while (drivers[j] && (mame_stricmp(gamename,drivers[j]->name) != 0))
 				j++;
 			if (drivers[j] == 0)
 			{

@@ -209,7 +209,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout wrally_tilelayout16 =
+static const gfx_layout wrally_tilelayout16 =
 {
 	16,16,									/* 16x16 tiles */
 	RGN_FRAC(1,2),							/* number of tiles */
@@ -222,7 +222,7 @@ static gfx_layout wrally_tilelayout16 =
 	64*8
 };
 
-static gfx_decode wrally_gfxdecodeinfo[] =
+static const gfx_decode wrally_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x000000, &wrally_tilelayout16, 0, 64*8 },
 	{ -1 }

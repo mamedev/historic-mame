@@ -1852,7 +1852,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout charlayout_32k =
+static const gfx_layout charlayout_32k =
 {
 	8,8,
 	1024,
@@ -1863,7 +1863,7 @@ static gfx_layout charlayout_32k =
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
-static gfx_layout chars_3bpp =
+static const gfx_layout chars_3bpp =
 {
 	8,8,
 	1024,
@@ -1875,7 +1875,7 @@ static gfx_layout chars_3bpp =
 };
 
 /* SRDarwin characters - very unusual layout for Data East */
-static gfx_layout charlayout_16k =
+static const gfx_layout charlayout_16k =
 {
 	8,8,	/* 8*8 characters */
 	1024,
@@ -1886,7 +1886,7 @@ static gfx_layout charlayout_16k =
 	8*8	/* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout oscar_charlayout =
+static const gfx_layout oscar_charlayout =
 {
 	8,8,
 	1024,
@@ -1898,7 +1898,7 @@ static gfx_layout oscar_charlayout =
 };
 
 /* Darwin sprites - only 3bpp */
-static gfx_layout sr_sprites =
+static const gfx_layout sr_sprites =
 {
 	16,16,
 	2048,
@@ -1910,7 +1910,7 @@ static gfx_layout sr_sprites =
 	16*16
 };
 
-static gfx_layout srdarwin_tiles =
+static const gfx_layout srdarwin_tiles =
 {
 	16,16,
 	256,
@@ -1923,7 +1923,7 @@ static gfx_layout srdarwin_tiles =
 	32*8	/* every tile takes 32 consecutive bytes */
 };
 
-static gfx_layout tiles =
+static const gfx_layout tiles =
 {
 	16,16,
 	4096,
@@ -1936,7 +1936,7 @@ static gfx_layout tiles =
 };
 
 /* X flipped on Ghostbusters tiles */
-static gfx_layout tiles_r =
+static const gfx_layout tiles_r =
 {
 	16,16,
 	2048,
@@ -1948,7 +1948,7 @@ static gfx_layout tiles_r =
 	16*16
 };
 
-static gfx_decode cobracom_gfxdecodeinfo[] =
+static const gfx_decode cobracom_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout_32k, 0, 8 },
 	{ REGION_GFX2, 0, &tiles,         64, 4 },
@@ -1957,7 +1957,7 @@ static gfx_decode cobracom_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode ghostb_gfxdecodeinfo[] =
+static const gfx_decode ghostb_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &chars_3bpp,	0,  4 },
 	{ REGION_GFX2, 0, &tiles,     256, 16 },
@@ -1965,7 +1965,7 @@ static gfx_decode ghostb_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode srdarwin_gfxdecodeinfo[] =
+static const gfx_decode srdarwin_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &charlayout_16k,128, 4 }, /* Only 1 used so far :/ */
 	{ REGION_GFX2, 0x00000, &sr_sprites,     64, 8 },
@@ -1976,7 +1976,7 @@ static gfx_decode srdarwin_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static gfx_decode gondo_gfxdecodeinfo[] =
+static const gfx_decode gondo_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &chars_3bpp,  0, 16 }, /* Chars */
 	{ REGION_GFX2, 0, &tiles,     256, 32 }, /* Sprites */
@@ -1984,7 +1984,7 @@ static gfx_decode gondo_gfxdecodeinfo[] =
  	{ -1 } /* end of array */
 };
 
-static gfx_decode oscar_gfxdecodeinfo[] =
+static const gfx_decode oscar_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &oscar_charlayout, 256,  8 }, /* Chars */
 	{ REGION_GFX2, 0, &tiles,              0, 16 }, /* Sprites */
@@ -1992,7 +1992,7 @@ static gfx_decode oscar_gfxdecodeinfo[] =
  	{ -1 } /* end of array */
 };
 
-static gfx_decode shackled_gfxdecodeinfo[] =
+static const gfx_decode shackled_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &chars_3bpp,   0,  4 },
 	{ REGION_GFX2, 0, &tiles,      256, 16 },

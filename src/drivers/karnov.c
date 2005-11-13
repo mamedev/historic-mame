@@ -601,7 +601,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout chars =
+static const gfx_layout chars =
 {
 	8,8,
 	1024,
@@ -612,7 +612,7 @@ static gfx_layout chars =
 	8*8	/* every sprite takes 8 consecutive bytes */
 };
 
-static gfx_layout sprites =
+static const gfx_layout sprites =
 {
 	16,16,
 	4096,
@@ -626,7 +626,7 @@ static gfx_layout sprites =
 
 
 /* 16x16 tiles, 4 Planes, each plane is 0x10000 bytes */
-static gfx_layout tiles =
+static const gfx_layout tiles =
 {
 	16,16,
 	2048,
@@ -638,7 +638,7 @@ static gfx_layout tiles =
 	16*16
 };
 
-static gfx_decode karnov_gfxdecodeinfo[] =
+static const gfx_decode karnov_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &chars,     0,  4 },	/* colors 0-31 */
 	{ REGION_GFX2, 0, &tiles,   512, 16 },	/* colors 512-767 */

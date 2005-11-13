@@ -586,7 +586,7 @@ ADDRESS_MAP_END
 
 
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -597,7 +597,7 @@ static gfx_layout tilelayout =
 	8*8*4
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -608,7 +608,7 @@ static gfx_layout spritelayout =
 	16*16*4
 };
 
-static gfx_decode gfxdecodeinfo_Z[] =
+static const gfx_decode gfxdecodeinfo_Z[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   256*0, 16 },	// [0] Scroll 0
 	{ REGION_GFX2, 0, &tilelayout,   256*2, 16 },	// [1] Scroll 1
@@ -616,7 +616,7 @@ static gfx_decode gfxdecodeinfo_Z[] =
 	{ -1 }
 };
 
-static gfx_decode gfxdecodeinfo_ABC[] =
+static const gfx_decode gfxdecodeinfo_ABC[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,   256*0, 16 },	// [0] Scroll 0
 	{ REGION_GFX2, 0, &tilelayout,   256*1, 16 },	// [1] Scroll 1

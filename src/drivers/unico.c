@@ -613,7 +613,7 @@ INPUT_PORTS_END
 ***************************************************************************/
 
 /* 16x16x8 */
-static gfx_layout layout_16x16x8 =
+static const gfx_layout layout_16x16x8 =
 {
 	16,16,
 	RGN_FRAC(1,4),
@@ -627,7 +627,7 @@ static gfx_layout layout_16x16x8 =
 	16*16*2
 };
 
-static gfx_decode unico_gfxdecodeinfo[] =
+static const gfx_decode unico_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_16x16x8, 0x0, 0x20 }, // [0] Sprites
 	{ REGION_GFX2, 0, &layout_16x16x8, 0x0, 0x20 }, // [1] Layers

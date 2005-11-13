@@ -47,6 +47,7 @@ VIDEO_UPDATE( superchs );
 static UINT16 coin_word;
 static UINT32 *superchs_ram;
 static UINT32 *shared_ram;
+static UINT16 *sound_ram;
 extern UINT32 *f3_shared_ram;
 
 static int steer=0;
@@ -295,7 +296,7 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM) AM_BASE(&sound_ram)
 	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
 	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
 	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
@@ -370,7 +371,7 @@ INPUT_PORTS_END
                 GFX DECODING
 **********************************************************/
 
-static gfx_layout tile16x16_layout =
+static const gfx_layout tile16x16_layout =
 {
 	16,16,	/* 16*16 sprites */
 	RGN_FRAC(1,1),
@@ -382,7 +383,7 @@ static gfx_layout tile16x16_layout =
 	64*16	/* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	16,16,    /* 16*16 characters */
 	RGN_FRAC(1,1),
@@ -393,7 +394,7 @@ static gfx_layout charlayout =
 	128*8     /* every sprite takes 128 consecutive bytes */
 };
 
-static gfx_decode superchs_gfxdecodeinfo[] =
+static const gfx_decode superchs_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0x0, &tile16x16_layout,  0, 512 },
 	{ REGION_GFX1, 0x0, &charlayout,        0, 512 },
@@ -408,13 +409,13 @@ static gfx_decode superchs_gfxdecodeinfo[] =
 static MACHINE_INIT( superchs )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *RAM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&RAM[0x80000]);
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
+	memory_set_bankptr(1,&ROM[0x80000]);
 
-	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
-	RAM[1]=RAM[0x80001];
-	RAM[2]=RAM[0x80002];
-	RAM[3]=RAM[0x80003];
+	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
+	sound_ram[1]=ROM[0x80001];
+	sound_ram[2]=ROM[0x80002];
+	sound_ram[3]=ROM[0x80003];
 
 	f3_68681_reset();
 }
@@ -534,7 +535,7 @@ ROM_START( superchs )
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "d46-07.34", 0x00000, 0x80000, CRC(c3b8b093) SHA1(f34364248ca7fdaaa1a0f8f6f795f9b4bc935fb9) )	/* STY, used to create big sprites on the fly */
 
-	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "d46-10.2", 0xc00000, 0x200000, CRC(306256be) SHA1(e6e5d4a4c0b98470f2aff2e94624dd19af73ec5d) )
 	ROM_LOAD16_BYTE( "d46-12.4", 0x000000, 0x200000, CRC(a24a53a8) SHA1(5d5fb87a94ceabda89360064d7d9b6d23c4c606b) )
 	ROM_RELOAD     (             0x400000, 0x200000 )

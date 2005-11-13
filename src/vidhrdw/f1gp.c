@@ -266,7 +266,7 @@ static void f1gp_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int c
 
 VIDEO_UPDATE( f1gp )
 {
-	static gfx_layout tilelayout =
+	static const gfx_layout tilelayout =
 	{
 		16,16,
 		TOTAL_CHARS,

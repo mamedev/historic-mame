@@ -265,7 +265,7 @@ static ADDRESS_MAP_START( mcu_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0080, 0x0fff) AM_ROM
 ADDRESS_MAP_END
 
-static gfx_layout layout_8x8x8 =
+static const gfx_layout layout_8x8x8 =
 {
 	8,8,
 	RGN_FRAC(1,8),
@@ -276,7 +276,7 @@ static gfx_layout layout_8x8x8 =
 	8*8
 };
 
-static gfx_layout layout_8x8x3 =
+static const gfx_layout layout_8x8x3 =
 {
 	8,8,
 	RGN_FRAC(1,3),
@@ -287,7 +287,7 @@ static gfx_layout layout_8x8x3 =
 	8*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &layout_8x8x8, 0x000, 1 }, // 8bpp tiles
 	{ REGION_GFX2, 0, &layout_8x8x3, 0x100, 32 }, // 3bpp tiles

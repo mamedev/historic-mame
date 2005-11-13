@@ -434,26 +434,6 @@ void process_romdispose(struct state_t* state, enum token_t t, const char* s, un
 	}
 }
 
-/* Convert gamelist:game:rom:soundonly=yes -> game:rom:flags=soundonly */
-void process_romsoundonly(struct state_t* state, enum token_t t, const char* s, unsigned len, const char** attributes)
-{
-	if (t == token_data) {
-		if (strncmp("yes", s, len) == 0) {
-			fprintf(state->os, L2P "flags soundonly" L2N);
-		}
-	}
-}
-
-/* Convert gamelist:game:chip:audio=yes -> game:rom:flags=audio */
-void process_chipsoundonly(struct state_t* state, enum token_t t, const char* s, unsigned len, const char** attributes)
-{
-	if (t == token_data) {
-		if (strncmp("yes", s, len) == 0) {
-			fprintf(state->os, L2P "flags audio" L2N);
-		}
-	}
-}
-
 /* Remove gamelist:game:input:tilt=no */
 void process_inputtilt(struct state_t* state, enum token_t t, const char* s, unsigned len, const char** attributes)
 {
@@ -580,13 +560,11 @@ struct conversion_t {
 	{ 3, { "mame", "game", "rom", "offset", 0 }, process_romoffset },
 	{ 3, { "mame", "game", "rom", "status", 0 }, process_romstatus },
 	{ 3, { "mame", "game", "rom", "dispose", 0 }, process_romdispose },
-	{ 3, { "mame", "game", "rom", "soundonly", 0 }, process_romsoundonly },
 	{ 2, { "mame", "game", "sampleof", 0, 0 }, process_reference },
 	{ 3, { "mame", "game", "sample", "name", 0 }, process_samplename },
 	{ 2, { "mame", "game", "chip", 0, 0 }, process_set2 },
 	{ 3, { "mame", "game", "chip", "type", 0 }, process_item3 },
 	{ 3, { "mame", "game", "chip", "name", 0 }, process_string3 },
-	{ 3, { "mame", "game", "chip", "soundonly", 0 }, process_chipsoundonly },
 	{ 3, { "mame", "game", "chip", "clock", 0 }, process_num3 },
 	{ 2, { "mame", "game", "video", 0, 0 }, process_set2 },
 	{ 3, { "mame", "game", "video", "screen", 0 }, process_item3 },

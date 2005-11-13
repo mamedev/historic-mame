@@ -234,7 +234,7 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static gfx_layout dcon_charlayout =
+static const gfx_layout dcon_charlayout =
 {
 	8,8,		/* 8*8 characters */
 	RGN_FRAC(1,2),
@@ -245,7 +245,7 @@ static gfx_layout dcon_charlayout =
 	128
 };
 
-static gfx_layout dcon_tilelayout =
+static const gfx_layout dcon_tilelayout =
 {
 	16,16,	/* 16*16 tiles */
 	RGN_FRAC(1,1),
@@ -263,7 +263,7 @@ static gfx_layout dcon_tilelayout =
 	1024
 };
 
-static gfx_decode dcon_gfxdecodeinfo[] =
+static const gfx_decode dcon_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &dcon_charlayout,    1024+768, 16 },
 	{ REGION_GFX2, 0, &dcon_tilelayout,    1024+0,   16 },

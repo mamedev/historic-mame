@@ -95,6 +95,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x303fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x304000, 0x307fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x308000, 0x30ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x6007ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x700000, 0x703fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x704000, 0x707fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x708000, 0x70ffff) AM_READ(MRA16_RAM)
@@ -326,7 +327,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -337,7 +338,7 @@ static gfx_layout charlayout =
 	32*8
 };
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -350,7 +351,7 @@ static gfx_layout spritelayout =
 	128*8
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* colors   0-255 */
 	{ REGION_GFX2, 0, &spritelayout, 512, 16 },	/* colors 512-767 */

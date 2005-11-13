@@ -475,7 +475,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout bglayout =
+static const gfx_layout bglayout =
 {
 	8,4,
 	RGN_FRAC(1,1),
@@ -487,7 +487,7 @@ static gfx_layout bglayout =
 };
 
 
-static gfx_layout splayout =
+static const gfx_layout splayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -500,7 +500,7 @@ static gfx_layout splayout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &bglayout,    0, 64 },
 	{ REGION_GFX2, 0, &bglayout,    0, 64 },
@@ -509,7 +509,7 @@ static gfx_decode gfxdecodeinfo[] =
 };
 
 
-static gfx_decode gfxdecodeinfo_hatris[] =
+static const gfx_decode gfxdecodeinfo_hatris[] =
 {
 	{ REGION_GFX1, 0, &bglayout,    0, 128 },
 	{ REGION_GFX2, 0, &bglayout,    0, 128 },

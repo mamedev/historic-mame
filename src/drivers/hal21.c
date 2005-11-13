@@ -513,7 +513,7 @@ INPUT_PORTS_END
 
 /**************************************************************************/
 
-static gfx_layout char256 = {
+static const gfx_layout char256 = {
 	8,8,
 	0x100,
 	4,
@@ -523,7 +523,7 @@ static gfx_layout char256 = {
 	256
 };
 
-static gfx_layout char1024 = {
+static const gfx_layout char1024 = {
 	8,8,
 	0x400,
 	4,
@@ -533,7 +533,7 @@ static gfx_layout char1024 = {
 	256
 };
 
-static gfx_layout sprite1024 = {
+static const gfx_layout sprite1024 = {
 	16,16,
 	0x400,
 	3,
@@ -549,7 +549,7 @@ static gfx_layout sprite1024 = {
 	256
 };
 
-static gfx_decode aso_gfxdecodeinfo[] =
+static const gfx_decode aso_gfxdecodeinfo[] =
 {
 	/* colors 512-1023 are currently unused, I think they are a second bank */
 	{ REGION_GFX1, 0, &char256,    128*3,  8 }, /* colors 384..511 */

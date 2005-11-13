@@ -2653,7 +2653,7 @@ MACHINE_DRIVER_END
 
 
 
-static gfx_layout zoomlayout =
+static const gfx_layout zoomlayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -2665,7 +2665,7 @@ static gfx_layout zoomlayout =
 			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
 	16*64
 };
-static gfx_decode glfgreat_gfxdecodeinfo[] =
+static const gfx_decode glfgreat_gfxdecodeinfo[] =
 {
 	{ REGION_GFX3, 0, &zoomlayout, 0x400, 16 },
 	{ -1 }

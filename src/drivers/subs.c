@@ -149,7 +149,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout playfield_layout =
+static const gfx_layout playfield_layout =
 {
 	8,8,
 	256,
@@ -161,7 +161,7 @@ static gfx_layout playfield_layout =
 };
 
 
-static gfx_layout motion_layout =
+static const gfx_layout motion_layout =
 {
 	16,16,
 	64,
@@ -176,7 +176,7 @@ static gfx_layout motion_layout =
 };
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &playfield_layout, 0, 2 }, 	/* playfield graphics */
 	{ REGION_GFX2, 0, &motion_layout,    0, 2 }, 	/* motion graphics */

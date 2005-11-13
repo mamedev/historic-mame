@@ -89,6 +89,8 @@
 #define SR_TS				0x00200000
 #define SR_BEV				0x00400000
 #define SR_RE				0x02000000
+#define SR_FR				0x04000000
+#define SR_RP				0x08000000
 #define SR_COP0				0x10000000
 #define SR_COP1				0x20000000
 #define SR_COP2				0x40000000
@@ -134,6 +136,9 @@
 #define SIMMVAL		((INT16)op)
 #define UIMMVAL		((UINT16)op)
 #define LIMMVAL		(op & 0x03ffffff)
+
+#define IS_FR0		(!(mips3.cpr[0][COP0_Status] & SR_FR))
+#define IS_FR1		(mips3.cpr[0][COP0_Status] & SR_FR)
 
 
 
@@ -185,6 +190,7 @@ typedef struct
 	UINT64		count_zero_time;
 	void *		compare_int_timer;
 	UINT8		is_mips4;
+	UINT8		flush_pending;
 
 	/* memory accesses */
 	UINT8		bigendian;
@@ -579,10 +585,14 @@ static void map_tlb_entries(void)
 						UINT32 pfn = (lo >> 6) & 0x00ffffff;
 						UINT32 wp = (~lo >> 2) & 1;
 
-						for (i = 0; i <= count; i++, vpn++)
+						for (i = 0; i <= count; i++, vpn++, pfn++)
 							if (vpn < 0x80000 || vpn >= 0xc0000)
-								mips3.tlb_table[vpn] = (pfn++ << 12) | wp;
+								mips3.tlb_table[vpn] = (pfn << 12) | wp;
 					}
+
+					/* otherwise, advance by the number of pages we would have mapped */
+					else
+						vpn += count + 1;
 				}
 		}
 	}

@@ -205,7 +205,7 @@ INPUT_PORTS_END
 
 
 
-static gfx_layout cbasebal_textlayout =
+static const gfx_layout cbasebal_textlayout =
 {
 	8,8,	/* 8*8 characters */
 	4096,	/* 4096 characters */
@@ -216,7 +216,7 @@ static gfx_layout cbasebal_textlayout =
 	16*8    /* every char takes 16 consecutive bytes */
 };
 
-static gfx_layout cbasebal_tilelayout =
+static const gfx_layout cbasebal_tilelayout =
 {
 	16,16,	/* 16*16 tiles */
 	4096,	/* 4096 tiles */
@@ -229,7 +229,7 @@ static gfx_layout cbasebal_tilelayout =
 	64*8    /* every tile takes 64 consecutive bytes */
 };
 
-static gfx_layout cbasebal_spritelayout =
+static const gfx_layout cbasebal_spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	4096,   /* 2048 sprites */
@@ -242,7 +242,7 @@ static gfx_layout cbasebal_spritelayout =
 	64*8    /* every sprite takes 64 consecutive bytes */
 };
 
-static gfx_decode cbasebal_gfxdecodeinfo[] =
+static const gfx_decode cbasebal_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &cbasebal_textlayout,   256,  8 }, /* colors 256- 287 */
 	{ REGION_GFX2, 0, &cbasebal_tilelayout,   768, 16 }, /* colors 768-1023 */

@@ -658,7 +658,7 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static gfx_layout swapcharlayout =
+static const gfx_layout swapcharlayout =
 {
 	8,8,    /* 8*8 characters */
 	256,	/* 256 characters */
@@ -669,7 +669,7 @@ static gfx_layout swapcharlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout =
+static const gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	RGN_FRAC(1,2),
@@ -680,7 +680,7 @@ static gfx_layout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static gfx_layout charlayout_memory =
+static const gfx_layout charlayout_memory =
 {
 	8,8,    /* 8*8 characters */
 	256,	/* 256 characters */
@@ -693,21 +693,21 @@ static gfx_layout charlayout_memory =
 
 /* Graphics Decode Information */
 
-static gfx_decode sasuke_gfxdecodeinfo[] =
+static const gfx_decode sasuke_gfxdecodeinfo[] =
 {
 	{ 0,           0x1000, &swapcharlayout,      0, 4 },	/* the game dynamically modifies this */
 	{ REGION_GFX1, 0x0000, &swapcharlayout,    4*4, 4 },
 	{ -1 }
 };
 
-static gfx_decode satansat_gfxdecodeinfo[] =
+static const gfx_decode satansat_gfxdecodeinfo[] =
 {
 	{ 0,           0x1000, &charlayout_memory,   0, 4 },	/* the game dynamically modifies this */
 	{ REGION_GFX1, 0x0000, &charlayout,        4*4, 4 },
 	{ -1 }
 };
 
-static gfx_decode vanguard_gfxdecodeinfo[] =
+static const gfx_decode vanguard_gfxdecodeinfo[] =
 {
 	{ 0,           0x1000, &charlayout_memory,   0, 8 },	/* the game dynamically modifies this */
 	{ REGION_GFX1, 0x0000, &charlayout,        8*4, 8 },

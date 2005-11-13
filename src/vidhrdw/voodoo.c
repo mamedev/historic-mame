@@ -61,7 +61,7 @@
 #define LOG_MEMFIFO				(0)
 #define LOG_TEXTURERAM			(0)
 #define LOG_FRAMEBUFFER			(0)
-#define LOG_RASTERIZERS			(1)
+#define LOG_RASTERIZERS			(0)
 #define DEBUG_LOD				(0)
 
 
@@ -99,7 +99,10 @@
 
 #define ADD_TO_PIXEL_COUNT(a)	do { if ((a) > 0) pixelcount += (a); } while (0)
 
-#define DITHER_VAL(val,dith)	((((val) << 1) - ((val) >> 4) + (dith)) >> 1)
+/* note that these equations and the dither matrixes have
+   been confirmed to be exact matches to the real hardware */
+#define DITHER_RB(val,dith)	((((val) << 1) - ((val) >> 4) + ((val) >> 7) + (dith)) >> 1)
+#define DITHER_G(val,dith)	((((val) << 2) - ((val) >> 4) + ((val) >> 6) + (dith)) >> 2)
 
 
 
@@ -178,8 +181,8 @@ static UINT8 *textureram[MAX_TMUS];
 static UINT32 *cmdfifo;
 static UINT32 cmdfifo_expected;
 
-static UINT16 *pen_lookup;
-static UINT16 *lod_lookup;
+static UINT32 *pen_lookup;
+static INT16 *lod_lookup;
 
 /* register pointers */
 static UINT32 voodoo_regs[0x400];
@@ -309,6 +312,7 @@ static int generic_polys;
  *
  *************************************/
 
+/* these two dither matrices have been confirmed on real hardware */
 static const UINT8 dither_matrix_4x4[16] =
 {
 	 0,  8,  2, 10,
@@ -319,10 +323,10 @@ static const UINT8 dither_matrix_4x4[16] =
 
 static const UINT8 dither_matrix_2x2[16] =
 {
-	 0,  8,  0,  8,
-	12,  4, 12,  4,
-	 0,  8,  0,  8,
-	12,  4, 12,  4
+	 2, 10,  2, 10,
+	14,  6, 14,  6,
+	 2, 10,  2, 10,
+	14,  6, 14,  6
 };
 
 static const INT32 lod_dither_matrix[16] =
@@ -720,25 +724,25 @@ int voodoo_start_common(void)
 	/* initialize LOD tables */
 	for (i = 0; i < 65536; i++)
 	{
-		UINT32 bits = (i << 16) | 0x8000;
+		UINT32 bits = i << 16;
 		float fval = u2f(bits);
+		float flod;
 
 		if (fval <= 0)
-			lod_lookup[i] = 0;
+			flod = 0;
 		else
 		{
-			float flod = 0.5 * (log(fval) / log(2.0));
-			if (flod <= 0)
-				lod_lookup[i] = 0;
-			else if (flod < 8)
-				lod_lookup[i] = (int)(256.0 * flod);
-			else
-				lod_lookup[i] = 256 * 8;
+			flod = log(fval) / log(2.0);
+			if (flod <= -100.0)
+				flod = -100.0;
+			if (flod >= 100.0)
+				flod = 100.0;
 		}
+		lod_lookup[i] = (int)(256.0 * flod);
 	}
 
 	/* init the palette */
-	for (i = 1; i < 65535; i++)
+	for (i = 0; i < 65536; i++)
 	{
 		int r = (i >> 11) & 0x1f;
 		int g = (i >> 5) & 0x3f;
@@ -746,11 +750,8 @@ int voodoo_start_common(void)
 		r = (r << 3) | (r >> 2);
 		g = (g << 2) | (g >> 4);
 		b = (b << 3) | (b >> 2);
-		palette_set_color(i - 1, r, g, b);
-		pen_lookup[i] = i - 1;
+		pen_lookup[i] = (r << 16) | (g << 8) | b;
 	}
-	pen_lookup[0] = get_black_pen();
-	pen_lookup[65535] = get_white_pen();
 
 	/* allocate a vblank timer */
 	vblank_timer = timer_alloc(vblank_callback);
@@ -905,6 +906,24 @@ VIDEO_START( voodoo3_2x4mb )
 
 VIDEO_STOP( voodoo )
 {
+	if (0)
+	{
+		printf("Stall PCI for HWM: %d\n", (voodoo_regs[fbiInit0] >> 4) & 1);
+		printf("PCI FIFO Empty Entries LWM: %X\n", (voodoo_regs[fbiInit0] >> 6) & 0x1f);
+		printf("LFB -> FIFO: %d\n", (voodoo_regs[fbiInit0] >> 11) & 1);
+		printf("Texture -> FIFO: %d\n", (voodoo_regs[fbiInit0] >> 12) & 1);
+		printf("Memory FIFO: %d\n", (voodoo_regs[fbiInit0] >> 13) & 1);
+		printf("Memory FIFO HWM: %X\n", ((voodoo_regs[fbiInit0] >> 14) & 0x7ff) << 5);
+		printf("Memory FIFO Write Burst HWM: %X\n", (voodoo_regs[fbiInit0] >> 25) & 0x3f);
+		printf("Memory FIFO LWM for PCI: %X\n", (voodoo_regs[fbiInit4] >> 4) & 0x3f);
+		printf("Memory FIFO row start: %X\n", (voodoo_regs[fbiInit4] >> 8) & 0x3ff);
+		printf("Memory FIFO row rollover: %X\n", (voodoo_regs[fbiInit4] >> 18) & 0x3ff);
+		printf("Video dither subtract: %X\n", (voodoo_regs[fbiInit2] >> 0) & 1);
+		printf("DRAM banking: %X\n", (voodoo_regs[fbiInit2] >> 1) & 1);
+		printf("Triple buffer: %X\n", (voodoo_regs[fbiInit2] >> 4) & 1);
+		printf("Video buffer offset: %X\n", (voodoo_regs[fbiInit2] >> 11) & 0x1ff);
+		printf("DRAM banking: %X\n", (voodoo_regs[fbiInit2] >> 20) & 1);
+	}
 }
 
 
@@ -926,7 +945,7 @@ VIDEO_UPDATE( voodoo )
 #if (OPTIMIZATIONS_ENABLED)
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT32 *dest = (UINT32 *)bitmap->line[y];
 		UINT16 *source = &frontbuf[1024 * (y & ~resolution_mask)];
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dest[x] = pen_lookup[source[x & ~resolution_mask]];
@@ -934,7 +953,7 @@ VIDEO_UPDATE( voodoo )
 #else
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		UINT32 *dest = (UINT32 *)bitmap->line[y];
 		UINT16 *source = &frontbuf[1024 * y];
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			*dest++ = pen_lookup[*source++];
@@ -1033,16 +1052,8 @@ VIDEO_UPDATE( voodoo )
 	/* note of if the LOD logging key is pressed (debug) */
 	if (DEBUG_LOD)
 	{
-		loglod = 0xff;
-		if (code_pressed(KEYCODE_0_PAD)) loglod = 0;
-		if (code_pressed(KEYCODE_1_PAD)) loglod = 1;
-		if (code_pressed(KEYCODE_2_PAD)) loglod = 2;
-		if (code_pressed(KEYCODE_3_PAD)) loglod = 3;
-		if (code_pressed(KEYCODE_4_PAD)) loglod = 4;
-		if (code_pressed(KEYCODE_5_PAD)) loglod = 5;
-		if (code_pressed(KEYCODE_6_PAD)) loglod = 6;
-		if (code_pressed(KEYCODE_7_PAD)) loglod = 7;
-		if (code_pressed(KEYCODE_8_PAD)) loglod = 8;
+		loglod = 0;
+		if (code_pressed(KEYCODE_L)) loglod = 1;
 	}
 
 #if (LOG_RASTERIZERS)
@@ -1663,7 +1674,10 @@ READ32_HANDLER( voodoo_regs_r )
 			result |= ((voodoo_regs[fbiInit0] >> 13) & 1) ? (fifo_space << 12) : (0xffff << 12);
 
 			/* swap buffers pending */
-			result |= num_pending_swaps << 28;
+			if (num_pending_swaps < 7)
+				result |= num_pending_swaps << 28;
+			else
+				result |= 7 << 28;
 
 			activecpu_eat_cycles(1000);
 

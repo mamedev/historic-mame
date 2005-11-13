@@ -847,7 +847,7 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static gfx_layout spritelayout =
+static const gfx_layout spritelayout =
 {
 	16, 16,	/* 16x16 characters */
 	0x200000 / 128,	/* 16384 characters */
@@ -860,7 +860,7 @@ static gfx_layout spritelayout =
 	16*16*4
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spritelayout, 0,  (0x4440/4)/16 },
 	{ -1 } /* end of array */

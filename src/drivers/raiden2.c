@@ -565,7 +565,7 @@ INPUT_PORTS_END
 
 /* GFX DECODING */
 
-static gfx_layout raiden2_charlayout =
+static const gfx_layout raiden2_charlayout =
 {
 	8,8,
 	4096,
@@ -577,7 +577,7 @@ static gfx_layout raiden2_charlayout =
 };
 
 
-static gfx_layout raiden2_tilelayout =
+static const gfx_layout raiden2_tilelayout =
 {
 	16,16,
 	0x8000,
@@ -594,7 +594,7 @@ static gfx_layout raiden2_tilelayout =
 	128*8
 };
 
-static gfx_layout r2_t2 =
+static const gfx_layout r2_t2 =
 {
 	16, 16,
 	0x10000,
@@ -606,7 +606,7 @@ static gfx_layout r2_t2 =
 	16*16*4
 };
 
-static gfx_decode raiden2_gfxdecodeinfo[] =
+static const gfx_decode raiden2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x00000, &raiden2_charlayout, 1792, 128 },
 	{ REGION_GFX2, 0x00000, &raiden2_tilelayout, 0x400, 128 },

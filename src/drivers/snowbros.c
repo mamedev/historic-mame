@@ -952,7 +952,7 @@ INPUT_PORTS_END
 
 /* SnowBros */
 
-static gfx_layout tilelayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -963,7 +963,7 @@ static gfx_layout tilelayout =
 	32*32
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
 	{ -1 } /* end of array */
@@ -971,7 +971,7 @@ static gfx_decode gfxdecodeinfo[] =
 
 /* Winter Bobble */
 
-static gfx_layout tilelayout_wb =
+static const gfx_layout tilelayout_wb =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -982,7 +982,7 @@ static gfx_layout tilelayout_wb =
 	16*64
 };
 
-static gfx_decode gfxdecodeinfo_wb[] =
+static const gfx_decode gfxdecodeinfo_wb[] =
 {
 	{ REGION_GFX1, 0, &tilelayout_wb,  0, 16 },
 	{ -1 }
@@ -990,7 +990,7 @@ static gfx_decode gfxdecodeinfo_wb[] =
 
 /* SemiCom */
 
-static gfx_layout hyperpac_tilelayout =
+static const gfx_layout hyperpac_tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -1004,7 +1004,7 @@ static gfx_layout hyperpac_tilelayout =
 };
 
 
-static gfx_layout sb3_tilebglayout =
+static const gfx_layout sb3_tilebglayout =
 {
  	16,16,
  	RGN_FRAC(1,1),
@@ -1018,14 +1018,14 @@ static gfx_layout sb3_tilebglayout =
 };
 
 
-static gfx_decode sb3_gfxdecodeinfo[] =
+static const gfx_decode sb3_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
 	{ REGION_GFX2, 0, &sb3_tilebglayout,  0, 2 },
 	{ -1 } /* end of array */
 };
 
-static gfx_decode hyperpac_gfxdecodeinfo[] =
+static const gfx_decode hyperpac_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &hyperpac_tilelayout,  0, 16 },
 	{ -1 } /* end of array */

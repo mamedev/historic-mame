@@ -278,7 +278,7 @@ INPUT_PORTS_END
 
 /*** GFX DECODE **************************************************************/
 
-static gfx_layout suprslam_8x8x4_layout =
+static const gfx_layout suprslam_8x8x4_layout =
 {
 	8,8,
 	RGN_FRAC(1,1),
@@ -289,7 +289,7 @@ static gfx_layout suprslam_8x8x4_layout =
 	8*32
 };
 
-static gfx_layout suprslam_16x16x4_layout =
+static const gfx_layout suprslam_16x16x4_layout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -303,7 +303,7 @@ static gfx_layout suprslam_16x16x4_layout =
 	16*64
 };
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &suprslam_8x8x4_layout,   0x000, 16 },
 	{ REGION_GFX2, 0, &suprslam_16x16x4_layout, 0x200, 16 },

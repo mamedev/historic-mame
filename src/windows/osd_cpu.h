@@ -30,10 +30,6 @@
 #define __extension__
 #endif
 
-#ifdef _MSC_VER
-#define strcasecmp stricmp
-#endif
-
 /* The Win32 port requires this constant for variable arg routines. */
 #ifndef CLIB_DECL
 #define CLIB_DECL

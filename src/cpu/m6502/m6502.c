@@ -143,6 +143,7 @@ static void m6502_common_init(UINT8 subtype, void (**insn)(void), const char *ty
 {
 	int cpu = cpu_getactivecpu();
 
+	memset(&m6502, 0, sizeof(m6502));
 	m6502.subtype = subtype;
 	m6502.insn = insn;
 	m6502.rdmem_id = program_read_byte_8;

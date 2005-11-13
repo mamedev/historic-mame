@@ -648,7 +648,7 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static gfx_layout CGA_charlayout =
+static const gfx_layout CGA_charlayout =
 {
 	8,8,					/* 8 x 16 characters */
     256,                    /* 256 characters */
@@ -664,7 +664,7 @@ static gfx_layout CGA_charlayout =
     8*8                     /* every char takes 8 bytes */
 };
 
-static gfx_decode CGA_gfxdecodeinfo[] =
+static const gfx_decode CGA_gfxdecodeinfo[] =
 {
 /* Support up to four CGA fonts */
 	{ REGION_GFX1, 0x0000, &CGA_charlayout,              0, 256 },   /* Font 0 */

@@ -126,7 +126,7 @@ INPUT_PORTS_START( jackpool )
 INPUT_PORTS_END
 
 
-static gfx_layout tiles8x8_layout =
+static const gfx_layout tiles8x8_layout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -162,7 +162,7 @@ VIDEO_UPDATE(jackpool)
 }
 
 
-static gfx_decode gfxdecodeinfo[] =
+static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tiles8x8_layout,   0x000, 256  }, /* sprites */
 	{ -1 } /* end of array */
