@@ -90,10 +90,13 @@ INLINE memory_entry *find_entry(void *pointer)
 {
 	int i;
 
-	// find a matching entry
-	for (i = 0; i < MAX_ALLOCS; i++)
-		if (memory_list[i].base == pointer)
-			return &memory_list[i];
+	if (pointer)
+	{
+		// find a matching entry
+		for (i = 0; i < MAX_ALLOCS; i++)
+			if (memory_list[i].base == pointer)
+				return &memory_list[i];
+	}
 	return NULL;
 }
 

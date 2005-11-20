@@ -206,6 +206,7 @@ SOUNDS+=C352@
 SOUNDS+=VRENDER0@
 #SOUNDS+=VOTRAX@
 SOUNDS+=ES8712@
+SOUNDS+=SOUND_RF5C400@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
@@ -356,7 +357,7 @@ $(OBJ)/midway.a: \
 	$(OBJ)/vidhrdw/mcr68.o $(OBJ)/drivers/mcr68.o \
 	$(OBJ)/vidhrdw/balsente.o $(OBJ)/machine/balsente.o $(OBJ)/drivers/balsente.o \
 	$(OBJ)/vidhrdw/gridlee.o $(OBJ)/sndhrdw/gridlee.o $(OBJ)/drivers/gridlee.o \
-	$(OBJ)/drivers/seattle.o $(OBJ)/drivers/vegas.o $(OBJ)/vidhrdw/voodoo.o $(OBJ)/machine/smc91c9x.o \
+	$(OBJ)/drivers/seattle.o $(OBJ)/drivers/vegas.o \
 	$(OBJ)/vidhrdw/exterm.o $(OBJ)/drivers/exterm.o \
 	$(OBJ)/machine/midwayic.o $(OBJ)/sndhrdw/dcs.o \
 	$(OBJ)/machine/midyunit.o $(OBJ)/vidhrdw/midyunit.o $(OBJ)/drivers/midyunit.o \
@@ -1032,6 +1033,7 @@ $(OBJ)/seta.a: \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/drivers/seta.o \
 	$(OBJ)/vidhrdw/seta2.o $(OBJ)/drivers/seta2.o \
 	$(OBJ)/vidhrdw/ssv.o $(OBJ)/drivers/ssv.o \
+	$(OBJ)/drivers/darkhors.o \
 	$(OBJ)/vidhrdw/st0016.o $(OBJ)/drivers/st0016.o \
 	$(OBJ)/drivers/macs.o \
 	$(OBJ)/drivers/srmp6.o \
@@ -1354,8 +1356,11 @@ OBJS += \
 	$(OBJ)/machine/pcshare.o \
 	$(OBJ)/machine/pic8259.o \
 	$(OBJ)/machine/pit8253.o \
+ 	$(OBJ)/machine/smc91c9x.o \
 	$(OBJ)/vidhrdw/crtc6845.o \
 	$(OBJ)/vidhrdw/avgdvg.o \
 	$(OBJ)/vidhrdw/poly.o \
 	$(OBJ)/vidhrdw/tlc34076.o \
 	$(OBJ)/vidhrdw/res_net.o \
+ 	$(OBJ)/vidhrdw/voodoo.o \
+ 

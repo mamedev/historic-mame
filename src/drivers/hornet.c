@@ -189,6 +189,7 @@
 #include "machine/konppc.h"
 #include "vidhrdw/voodoo.h"
 #include "machine/timekpr.h"
+#include "sound/rf5c400.h"
 
 static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
@@ -315,6 +316,7 @@ void K037122_tile_update(void)
 			}
 		}
 		tilemap_mark_all_tiles_dirty(K037122_layer[0]);
+		tilemap_mark_all_tiles_dirty(K037122_layer[1]);
 		K037122_char_dirty = 0;
 	}
 }
@@ -330,19 +332,6 @@ void K037122_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 		tilemap_draw(bitmap, cliprect, K037122_layer[0], 0,0);
 	}
 }
-
-
-READ32_HANDLER(K037122_tile_r)
-{
-	return K037122_tile_ram[offset];
-}
-
-WRITE32_HANDLER(K037122_tile_w)
-{
-	COMBINE_DATA(K037122_tile_ram + offset);
-	tilemap_mark_tile_dirty(K037122_layer[0], offset);
-}
-
 
 static void update_palette_color(UINT32 palette_base, int color)
 {
@@ -563,7 +552,7 @@ INLINE void write_snd_ppc(int reg, int val)
 
 	if (reg == 7)
 	{
-		cpunum_set_input_line(1, INPUT_LINE_IRQ2, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_IRQ2, PULSE_LINE);
 	}
 }
 
@@ -571,7 +560,7 @@ static WRITE32_HANDLER( ppc_sound_w )
 {
 	int reg=0, val=0;
 
-	printf("ppc_sound_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+	//printf("ppc_sound_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 
 	if (!(mem_mask & 0xff000000))
 	{
@@ -656,7 +645,7 @@ static void m68k_timer_tick(int param)
 {
 	if (m68k_irq1_enable)
 	{
-		cpunum_set_input_line(1, INPUT_LINE_IRQ1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_IRQ1, PULSE_LINE);
 	}
 }
 
@@ -676,63 +665,10 @@ static WRITE16_HANDLER( sndcomm68k_w )
 	sndtoppc[offset] = data;
 }
 
-static UINT16 rf5c400_status = 0;
-static READ16_HANDLER( rf5c400_r )
-{
-	switch(offset)
-	{
-		case 0x00:
-		{
-			return rf5c400_status;
-		}
-
-		case 0x04:
-		{
-			return 0;
-		}
-	}
-
-	return 0;
-}
-
-static WRITE16_HANDLER( rf5c400_w )
-{
-	if (offset < 0x400)
-	{
-		switch(offset)
-		{
-			case 0x00:
-			{
-				rf5c400_status = data;
-				break;
-			}
-
-			case 0x01:		// set channel ?
-			{
-				rf5c400_status = data;
-				break;
-			}
-
-			default:
-			{
-				logerror("rf5c400_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
-				break;
-			}
-		}
-	}
-	else
-	{
-		// channel registers
-		int channel = (offset >> 5) & 0x1f;
-		int reg = (offset & 0x1f);
-		logerror("RF5C400: Channel %.d: Reg %02X: %04X\n", channel, reg, data);
-	}
-}
-
 static ADDRESS_MAP_START( sound_memmap, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x100000, 0x10ffff) AM_RAM		/* Work RAM */
-	AM_RANGE(0x200000, 0x200fff) AM_READWRITE(rf5c400_r, rf5c400_w)		/* Ricoh RF5C400 */
+	AM_RANGE(0x200000, 0x200fff) AM_READWRITE(RF5C400_0_r, RF5C400_0_w)		/* Ricoh RF5C400 */
 	AM_RANGE(0x300000, 0x30000f) AM_READ(sndcomm68k_r)
 	AM_RANGE(0x300000, 0x30000f) AM_WRITE(sndcomm68k_w)
 ADDRESS_MAP_END
@@ -887,6 +823,11 @@ INPUT_PORTS_START( hornet )
 
 INPUT_PORTS_END
 
+static struct RF5C400interface rf5c400_interface =
+{
+	REGION_SOUND1
+};
+
 static ppc_config hornet_ppc_cfg =
 {
 	PPC_MODEL_403GA
@@ -949,6 +890,13 @@ static MACHINE_DRIVER_START( hornet )
 
 	MDRV_VIDEO_START(hornet)
 	MDRV_VIDEO_UPDATE(hornet)
+
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(RF5C400, 0)
+	MDRV_SOUND_CONFIG(rf5c400_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 
 MACHINE_DRIVER_END
 
@@ -1194,7 +1142,7 @@ ROM_START(sscope)
     	ROM_LOAD32_WORD_SWAP( "ss1-3.u32",    0x000000, 0x400000, CRC(335793e1) SHA1(d582b53c3853abd59bc728f619a30c27cfc9497c) )
     	ROM_LOAD32_WORD_SWAP( "ss1-3.u24",    0x000002, 0x400000, CRC(d6e7877e) SHA1(b4d0e17ada7dd126ec564a20e7140775b4b3fdb7) )
 
-	ROM_REGION(0x400000, REGION_USER4, 0)		/* PCM sample roms */
+	ROM_REGION(0x400000, REGION_SOUND1, 0)		/* PCM sample roms */
         ROM_LOAD( "ss1-1.16p",    0x000000, 0x200000, CRC(4503ff1e) SHA1(2c208a1e9a5633c97e8a8387b7fcc7460013bc2c) )
         ROM_LOAD( "ss1-1.14p",    0x200000, 0x200000, CRC(a5bd9a93) SHA1(c789a272b9f2b449b07fff1c04b6c9ef3ca6bfe0) )
 ROM_END
@@ -1213,7 +1161,7 @@ ROM_START(sscope2)
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("931a08.bin", 0x000000, 0x80000, CRC(1597d604) SHA1(a1eab4d25907930b59ea558b484c3b6ddcb9303c))
 
-	ROM_REGION(0xc00000, REGION_USER4, 0)		/* PCM sample roms */
+	ROM_REGION(0xc00000, REGION_SOUND1, 0)		/* PCM sample roms */
         ROM_LOAD( "931a09.bin",   0x000000, 0x400000, CRC(694c354c) SHA1(42f54254a5959e1b341f2801f1ad032c4ed6f329) )
         ROM_LOAD( "931a10.bin",   0x400000, 0x400000, CRC(78ceb519) SHA1(e61c0d21b6dc37a9293e72814474f5aee59115ad) )
         ROM_LOAD( "931a11.bin",   0x800000, 0x400000, CRC(9c8362b2) SHA1(a8158c4db386e2bbd61dc9a600720f07a1eba294) )
@@ -1236,7 +1184,7 @@ ROM_START(gradius4)
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
         ROM_LOAD16_WORD_SWAP( "837a08.7s",    0x000000, 0x080000, CRC(c3a7ff56) SHA1(9d8d033277d560b58da151338d14b4758a9235ea) )
 
-	ROM_REGION(0x800000, REGION_USER4, 0)		/* PCM sample roms */
+	ROM_REGION(0x800000, REGION_SOUND1, 0)		/* PCM sample roms */
         ROM_LOAD( "837a09.16p",   0x000000, 0x400000, CRC(fb8f3dc2) SHA1(69e314ac06308c5a24309abc3d7b05af6c0302a8) )
         ROM_LOAD( "837a10.14p",   0x400000, 0x400000, CRC(1419cad2) SHA1(a6369a5c29813fa51e8246d0c091736f32994f3d) )
 ROM_END
@@ -1258,7 +1206,7 @@ ROM_START(nbapbp)
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
         ROM_LOAD16_WORD_SWAP( "778a08.7s",    0x000000, 0x080000, CRC(6259b4bf) SHA1(d0c38870495c9a07984b4b85e736d6477dd44832) )
 
-	ROM_REGION(0x1000000, REGION_USER4, 0)		/* PCM sample roms */
+	ROM_REGION(0x1000000, REGION_SOUND1, 0)		/* PCM sample roms */
         ROM_LOAD( "778a09.16p",   0x000000, 0x400000, CRC(e8c6fd93) SHA1(dd378b67b3b7dd932e4b39fbf4321e706522247f) )
         ROM_LOAD( "778a10.14p",   0x400000, 0x400000, CRC(c6a0857b) SHA1(976734ba56460fcc090619fbba043a3d888c4f4e) )
         ROM_LOAD( "778a11.12p",   0x800000, 0x400000, CRC(40199382) SHA1(bee268adf9b6634a4f6bb39278ecd02f2bdcb1f4) )
@@ -1267,7 +1215,7 @@ ROM_END
 
 /*************************************************************************/
 
-GAME( 1998, gradius4,	0,		hornet,			hornet,	gradius4,	ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_NO_SOUND )
-GAME( 1998, nbapbp,		0,		hornet,			hornet,	nbapbp,		ROT0,	"Konami",	"NBA Play By Play", GAME_NO_SOUND )
-GAME( 2000, sscope,		0,		hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 2000, sscope2,	0,		hornet_2board,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1998, gradius4,	0,		hornet,			hornet,	gradius4,	ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_IMPERFECT_SOUND )
+GAME( 1998, nbapbp,		0,		hornet,			hornet,	nbapbp,		ROT0,	"Konami",	"NBA Play By Play", GAME_IMPERFECT_SOUND )
+GAME( 2000, sscope,		0,		hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
+GAME( 2000, sscope2,	0,		hornet_2board,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )

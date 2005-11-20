@@ -13,6 +13,7 @@
 #include "blit.h"
 #include "video.h"
 #include "window.h"
+#include "osdepend.h"
 #include "vidhrdw/vector.h"
 
 
@@ -174,8 +175,8 @@ UINT32 asmblit_rgbmask[MAX_VIDEO_HEIGHT * 2 * 16];
 //============================================================
 
 // blitter cache
-static UINT8				active_fast_blitter[MAX_BLITTER_SIZE];
-static UINT8				active_update_blitter[MAX_BLITTER_SIZE];
+static UINT8 *				active_fast_blitter;
+static UINT8 *				active_update_blitter;
 
 // current parameters
 static struct win_blit_params	active_blitter_params;
@@ -1485,6 +1486,16 @@ static void generate_blitter(const struct win_blit_params *blit)
 	UINT8 *addrfixups[2][32];
 	UINT32 valuefixups[32];
 	int middle, last;
+
+	// allocate the blitters if we haven't yet
+	if (!active_fast_blitter)
+		active_fast_blitter = osd_alloc_executable(MAX_BLITTER_SIZE);
+	if (!active_update_blitter)
+		active_update_blitter = osd_alloc_executable(MAX_BLITTER_SIZE);
+	if (!active_fast_blitter || !active_update_blitter)
+		osd_die("Out of memory for blitters!");
+	fastptr = active_fast_blitter;
+	updateptr = active_update_blitter;
 
 	// determine MMX/XMM support
 	if (use_mmx == -1)

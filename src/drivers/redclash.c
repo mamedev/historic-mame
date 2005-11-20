@@ -7,7 +7,7 @@ runs on hardware similar to Lady Bug
 driver by inkling
 
 Notes:
-- In the Tehkan set the ship doesn't move during attract mode. Earlier version?
+- In the Tehkan set (redclsha) the ship doesn't move during attract mode. Earlier version?
   Gameplay is different too.
 
 TODO:
@@ -444,6 +444,30 @@ ROM_END
 
 ROM_START( redclash )
 	ROM_REGION(0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "11.11c",       0x0000, 0x1000, CRC(695e070e) SHA1(8d0451a05572f62e0f282ab96bdd26d08b77a6c9) )
+	ROM_LOAD( "13.7c",        0x1000, 0x1000, CRC(c2090318) SHA1(71725cdf51aedf5f29fa1dd1a41ad5e62c9a580d) )
+	ROM_LOAD( "12.9c",        0x2000, 0x1000, CRC(b60e5ada) SHA1(37440f382c5e8852d804fa9837c36cc1e9d94d1d) )
+
+	ROM_REGION(0x0800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "6.12a",        0x0000, 0x0800, CRC(da9bbcc2) SHA1(4cbe03c7f5e99cc2f124e0089ea3c392156b5d92) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "14.3e",        0x0000, 0x0800, CRC(483a1293) SHA1(e7812475c7509389bcf8fee35598e9894428eb37) )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "15.3d",        0x0800, 0x0800, CRC(c45d9601) SHA1(2f156ad61161d65284df0cc55eb1b3b990eb41cb) )
+	ROM_CONTINUE(             0x1800, 0x0800 )
+
+	ROM_REGION( 0x2000, REGION_GFX3, ROMREGION_DISPOSE )
+	/* gfx data will be rearranged here for 8x8 sprites */
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "1.12f",        0x0000, 0x0020, CRC(43989681) SHA1(0d471e6f499294f2f62f27392b8370e2af8e38a3) ) /* palette */
+	ROM_LOAD( "2.4a",         0x0020, 0x0020, CRC(9adabf46) SHA1(f3538fdbc4280b6be46a4d7ebb4c34bd1a1ce2b7) ) /* sprite color lookup table */
+	ROM_LOAD( "3.11e",        0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* ?? */
+ROM_END
+
+ROM_START( redclsha )
+	ROM_REGION(0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "rc1.11c",      0x0000, 0x1000, CRC(5b62ff5a) SHA1(981d3c72f28b7d136a0bad9243d39fd1ba3abc97) )
 	ROM_LOAD( "rc3.7c",       0x1000, 0x1000, CRC(409c4ee7) SHA1(15c03a4093d7695751a143aa749229fcb7721f46) )
 	ROM_LOAD( "rc2.9c",       0x2000, 0x1000, CRC(5f215c9a) SHA1(c305f7be19f6a052c08feb0b63a0326b6a1bd808) )
@@ -461,9 +485,9 @@ ROM_START( redclash )
 	/* gfx data will be rearranged here for 8x8 sprites */
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "6331-1.12f",   0x0000, 0x0020, CRC(43989681) SHA1(0d471e6f499294f2f62f27392b8370e2af8e38a3) ) /* palette */
-	ROM_LOAD( "6331-2.4a",    0x0020, 0x0020, CRC(9adabf46) SHA1(f3538fdbc4280b6be46a4d7ebb4c34bd1a1ce2b7) ) /* sprite color lookup table */
-	ROM_LOAD( "6331-3.11e",   0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* ?? */
+	ROM_LOAD( "1.12f",        0x0000, 0x0020, CRC(43989681) SHA1(0d471e6f499294f2f62f27392b8370e2af8e38a3) ) /* palette */
+	ROM_LOAD( "2.4a",         0x0020, 0x0020, CRC(9adabf46) SHA1(f3538fdbc4280b6be46a4d7ebb4c34bd1a1ce2b7) ) /* sprite color lookup table */
+	ROM_LOAD( "3.11e",        0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* ?? */
 ROM_END
 
 ROM_START( redclask )
@@ -488,9 +512,9 @@ ROM_START( redclask )
 	/* gfx data will be rearranged here for 8x8 sprites */
 
 	ROM_REGION( 0x0060, REGION_PROMS, 0 )
-	ROM_LOAD( "6331-1.12f",   0x0000, 0x0020, CRC(43989681) SHA1(0d471e6f499294f2f62f27392b8370e2af8e38a3) ) /* 6331.7e */
-	ROM_LOAD( "6331-2.4a",    0x0020, 0x0020, CRC(9adabf46) SHA1(f3538fdbc4280b6be46a4d7ebb4c34bd1a1ce2b7) ) /* 6331.2r */
-	ROM_LOAD( "6331-3.11e",   0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* 6331.6w */
+	ROM_LOAD( "1.12f",        0x0000, 0x0020, CRC(43989681) SHA1(0d471e6f499294f2f62f27392b8370e2af8e38a3) ) /* 6331.7e */
+	ROM_LOAD( "2.4a",         0x0020, 0x0020, CRC(9adabf46) SHA1(f3538fdbc4280b6be46a4d7ebb4c34bd1a1ce2b7) ) /* 6331.2r */
+	ROM_LOAD( "3.11e",        0x0040, 0x0020, CRC(27fa3a50) SHA1(7cf59b7a37c156640d6ea91554d1c4276c1780e0) ) /* 6331.6w */
 ROM_END
 
 static DRIVER_INIT( redclash )
@@ -508,5 +532,6 @@ static DRIVER_INIT( redclash )
 
 
 GAME( 1980, zerohour, 0,        zerohour, zerohour, redclash, ROT270, "Universal", "Zero Hour",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
-GAME( 1981, redclash, 0,        redclash, redclash, redclash, ROT270, "Tehkan",    "Red Clash",          GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1981, redclash, 0,        redclash, redclash, redclash, ROT270, "Tehkan",    "Red Clash (set 1)",  GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1981, redclsha, redclash, redclash, redclash, redclash, ROT270, "Tehkan",    "Red Clash (set 2)",  GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
 GAME( 1981, redclask, redclash, redclash, redclash, redclash, ROT270, "Kaneko",    "Red Clash (Kaneko)", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )

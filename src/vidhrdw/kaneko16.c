@@ -66,7 +66,7 @@ UINT16 *kaneko16_sprites_regs;
 
 UINT16 *kaneko16_bg15_select, *kaneko16_bg15_reg;
 static mame_bitmap *kaneko16_bg15_bitmap;
-static mame_bitmap *sprites_bitmap; /* bitmap used for to keep sprites on screen (mgcrystl 1st boss)*/
+static mame_bitmap *sprites_bitmap; /* bitmap used for to keep sprites on screen (mgcrystl 1st boss) */
 
 struct tempsprite
 {
@@ -99,8 +99,8 @@ WRITE16_HANDLER( kaneko16_display_enable )
 
 Offset:
 
-0000.w          fedc ba-- ---- ----     unused?
-                ---- --9- ---- ----     High Priority (vs Sprites)
+0000.w          fedc b--- ---- ----     unused?
+                ---- -a9- ---- ----     High Priority (vs Sprites)
                 ---- ---8 ---- ----     High Priority (vs Tiles)
                 ---- ---- 7654 32--     Color
                 ---- ---- ---- --1-     Flip X
@@ -110,14 +110,13 @@ Offset:
 
 ***************************************************************************/
 
-
 #define KANEKO16_LAYER(_N_) \
 static void get_tile_info_##_N_(int tile_index) \
 { \
 	UINT16 code_hi = kaneko16_vram_##_N_[ 2 * tile_index + 0]; \
 	UINT16 code_lo = kaneko16_vram_##_N_[ 2 * tile_index + 1]; \
 	SET_TILE_INFO(1 + _N_/2, code_lo, (code_hi >> 2) & 0x3f, TILE_FLIPXY( code_hi & 3 )); \
-	tile_info.priority	=	(code_hi >> 8) & 3; \
+	tile_info.priority	=	(code_hi >> 8) & 7; \
 } \
 \
 WRITE16_HANDLER( kaneko16_vram_##_N_##_w ) \
@@ -480,6 +479,105 @@ int kaneko16_parse_sprite_type3(int i, struct tempsprite *s)
 	return					(attr & 0x04) ? USE_LATCHED_XY : 0;
 }
 
+// custom function to draw a single sprite. needed to keep correct sprites - sprites and sprites - tilemaps priorities
+static void kaneko16_draw_sprites_custom(mame_bitmap *dest_bmp,const gfx_element *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		const rectangle *clip,int priority)
+{
+	const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
+	UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
+
+	int sprite_screen_height = ((1<<16)*gfx->height+0x8000)>>16;
+	int sprite_screen_width = ((1<<16)*gfx->width+0x8000)>>16;
+
+	if (sprite_screen_width && sprite_screen_height)
+	{
+		/* compute sprite increment per screen pixel */
+		int dx = (gfx->width<<16)/sprite_screen_width;
+		int dy = (gfx->height<<16)/sprite_screen_height;
+
+		int ex = sx+sprite_screen_width;
+		int ey = sy+sprite_screen_height;
+
+		int x_index_base;
+		int y_index;
+
+		if( flipx )
+		{
+			x_index_base = (sprite_screen_width-1)*dx;
+			dx = -dx;
+		}
+		else
+		{
+			x_index_base = 0;
+		}
+
+		if( flipy )
+		{
+			y_index = (sprite_screen_height-1)*dy;
+			dy = -dy;
+		}
+		else
+		{
+			y_index = 0;
+		}
+
+		if( clip )
+		{
+			if( sx < clip->min_x)
+			{ /* clip left */
+				int pixels = clip->min_x-sx;
+				sx += pixels;
+				x_index_base += pixels*dx;
+			}
+			if( sy < clip->min_y )
+			{ /* clip top */
+				int pixels = clip->min_y-sy;
+				sy += pixels;
+				y_index += pixels*dy;
+			}
+			/* NS 980211 - fixed incorrect clipping */
+			if( ex > clip->max_x+1 )
+			{ /* clip right */
+				int pixels = ex-clip->max_x-1;
+				ex -= pixels;
+			}
+			if( ey > clip->max_y+1 )
+			{ /* clip bottom */
+				int pixels = ey-clip->max_y-1;
+				ey -= pixels;
+			}
+		}
+
+		if( ex>sx )
+		{ /* skip if inner loop doesn't draw anything */
+			int y;
+
+			for( y=sy; y<ey; y++ )
+			{
+				UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
+				UINT16 *dest = (UINT16 *)dest_bmp->line[y];
+				UINT8 *pri = priority_bitmap->line[y];
+
+				int x, x_index = x_index_base;
+				for( x=sx; x<ex; x++ )
+				{
+					int c = source[x_index>>16];
+					if( c != 0 )
+					{
+						if (pri[x] < priority)
+							dest[x] = pal[c];
+						pri[x] = 0xff; // mark it "already drawn"
+					}
+					x_index += dx;
+				}
+
+				y_index += dy;
+			}
+		}
+	}
+}
+
 /* Build a list of sprites to display & draw them */
 
 void kaneko16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int pri)
@@ -587,15 +685,25 @@ void kaneko16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int p
 		UINT32 primask = kaneko16_priority.sprite[curr_pri];
 
 		/* You can choose which sprite priorities get displayed (for debug) */
-		if ( ((1 << curr_pri) & pri) == 0 )	continue;
+		if ( curr_pri == pri )	continue;
 
-		pdrawgfx(	bitmap,Machine->gfx[0],
-					s->code,
-					s->color,
-					s->flipx, s->flipy,
-					s->x, s->y,
-					cliprect,TRANSPARENCY_PEN,0,
-					primask );
+		kaneko16_draw_sprites_custom(	bitmap,Machine->gfx[0],
+										s->code,
+										s->color,
+										s->flipx, s->flipy,
+										s->x, s->y,
+										cliprect,
+										primask );
+
+		// wrap around x for sandscrp
+		if (kaneko16_sprite_type == 3)
+			kaneko16_draw_sprites_custom(	bitmap,Machine->gfx[0],
+											s->code,
+											s->color,
+											s->flipx, s->flipy,
+											s->x + 512, s->y,
+											cliprect,
+											primask );
 #ifdef MAME_DEBUG
 #if 0
 if (code_pressed(KEYCODE_Z))
@@ -942,33 +1050,31 @@ if ( code_pressed(KEYCODE_Z) ||
 		flag = 0;
 	}
 
-	/* Fill the bitmap with pen 0. This is wrong, but will work most of
-       the times. To do it right, each pixel should be drawn with pen 0
-       of the bottomost tile that covers it (which is pretty tricky to do) */
-
-	if (flag!=0)	fillbitmap(bitmap,Machine->pens[0],cliprect);
+	if (flag!=0)
+	{
+		if(kaneko16_sprite_type == 1)
+			fillbitmap(bitmap,Machine->pens[0x7f00],cliprect);
+		else
+			/* Fill the bitmap with pen 0. This is wrong, but will work most of
+            the times. To do it right, each pixel should be drawn with pen 0
+            of the bottomost tile that covers it (which is pretty tricky to do) */
+			fillbitmap(bitmap,Machine->pens[0],cliprect);
+	}
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	if (!kaneko16_disp_enable) return;
 
-	if (kaneko16_tmap_2)
+	for ( i = 0; i < 8; i++ )
 	{
-	/*
-        The only working game using a 2nd VIEW2 chip is mgcrystl, where
-        its tilemaps seem to always be below every sprite. Hence we can
-        draw them with priority 0. To treat more complex cases, however,
-        we need tilemap.c to handle 8 "layers" (4 priorities x 2 chips)
-    */
-		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+ 8)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_2, i, 0);
-		for ( i = 0; i < 4; i++ )	if (layers_ctrl&(1<<(i+12)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_3, i, 0);
-	}
+		tilemap_draw_primask(bitmap,cliprect, kaneko16_tmap_0, i, i, 0);
+		tilemap_draw_primask(bitmap,cliprect, kaneko16_tmap_1, i, i, 0);
 
-	for ( i = 0; i < 4; i++ )
-	{
-		int tile = kaneko16_priority.tile[i];
-		if (layers_ctrl&(1<<(tile+0)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_0, tile, 1<<i );
-		if (layers_ctrl&(1<<(tile+4)))	tilemap_draw(bitmap,cliprect, kaneko16_tmap_1, tile, 1<<i );
+		if (kaneko16_tmap_2)
+		{
+		tilemap_draw_primask(bitmap,cliprect, kaneko16_tmap_2, i, kaneko16_priority.VIEW2_2_pri ? i : 0, 0);
+		tilemap_draw_primask(bitmap,cliprect, kaneko16_tmap_3, i, kaneko16_priority.VIEW2_2_pri ? i : 0, 0);
+		}
 	}
 
 	/* Sprites last (rendered with pdrawgfx, so they can slip

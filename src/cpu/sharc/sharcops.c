@@ -1643,10 +1643,18 @@ static void sharcop_jump_direct_abs(void)
 	int cond = (sharc.opcode >> 33) & 0x1f;
 	UINT32 address = sharc.opcode & 0xffffff;
 
-	if(IF_CONDITION_CODE(cond)) {
-		/* TODO */
+	if(IF_CONDITION_CODE(cond))
+	{
+		// Clear Interrupt
 		if(ci)
-			osd_die("SHARC: jump_direct_abs: Clear Interrupt not implemented\n");
+		{
+			// TODO: anything else?
+			if (sharc.status_stkp > 0)
+			{
+				SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
+				SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+			}
+		}
 
 		if(j) {
 			DELAY_SLOT();
@@ -1690,9 +1698,16 @@ static void sharcop_jump_direct_rel(void)
 	if(IF_CONDITION_CODE(cond)) {
 		sharc.npc = sharc.pc + SIGN_EXTEND24(address);
 
-		/* TODO */
+		// Clear Interrupt
 		if(ci)
-			osd_die("SHARC: jump_direct_rel: Clear Interrupt not implemented\n");
+		{
+			// TODO: anything else?
+			if (sharc.status_stkp > 0)
+			{
+				SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
+				SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+			}
+		}
 
 		if(j) {
 			DELAY_SLOT();
@@ -1709,7 +1724,7 @@ static void sharcop_jump_direct_rel(void)
 static void sharcop_jump_indirect(void)
 {
 	int la = (sharc.opcode >> 38) & 0x1;
-//  int ci = (sharc.opcode >> 24) & 0x1;
+	int ci = (sharc.opcode >> 24) & 0x1;
 	int j = (sharc.opcode >> 26) & 0x1;
 	int e = (sharc.opcode >> 25) & 0x1;
 	int pmi = (sharc.opcode >> 30) & 0x7;
@@ -1717,9 +1732,16 @@ static void sharcop_jump_indirect(void)
 	int cond = (sharc.opcode >> 33) & 0x1f;
 	int compute = sharc.opcode & 0x7fffff;
 
-	// TODO: implement Clear Interrupt
-//  if(ci)
-//      osd_die("SHARC: jump_indirect_rel: Clear Interrupt not implemented\n");
+	// Clear Interrupt
+	if(ci)
+	{
+		// TODO: anything else?
+		if (sharc.status_stkp > 0)
+		{
+			SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
+			SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+		}
+	}
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {
@@ -1798,15 +1820,22 @@ static void sharcop_call_indirect(void)
 static void sharcop_jump_indirect_rel(void)
 {
 	int la = (sharc.opcode >> 38) & 0x1;
-//  int ci = (sharc.opcode >> 24) & 0x1;
+	int ci = (sharc.opcode >> 24) & 0x1;
 	int j = (sharc.opcode >> 26) & 0x1;
 	int e = (sharc.opcode >> 25) & 0x1;
 	int cond = (sharc.opcode >> 33) & 0x1f;
 	int compute = sharc.opcode & 0x7fffff;
 
-	// TODO: implement Clear Interrupt
-//  if(ci)
-//      osd_die("SHARC: jump_indirect_rel: Clear Interrupt not implemented\n");
+	// Clear Interrupt
+	if(ci)
+	{
+		// TODO: anything else?
+		if (sharc.status_stkp > 0)
+		{
+			SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
+			SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+		}
+	}
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {
@@ -1920,11 +1949,11 @@ static void sharcop_rts(void)
 	int cond = (sharc.opcode >> 33) & 0x1f;
 	int j = (sharc.opcode >> 26) & 0x1;
 	int e = (sharc.opcode >> 25) & 0x1;
-	int lr = (sharc.opcode >> 24) & 0x1;
+	//int lr = (sharc.opcode >> 24) & 0x1;
 	int compute = sharc.opcode & 0x7fffff;
 
-	if(lr)
-		osd_die("SHARC: rts: loop reentry not implemented !\n");
+	//if(lr)
+	//  osd_die("SHARC: rts: loop reentry not implemented !\n");
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {

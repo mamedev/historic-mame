@@ -95,6 +95,89 @@ VIDEO_UPDATE( snowbros )
 	}
 }
 
+VIDEO_UPDATE( honeydol )
+{
+	int sx=0, sy=0, x=0, y=0, offs;
+
+	/* not standard snowbros video */
+
+	fillbitmap(bitmap,0xf0,&Machine->visible_area);
+
+	for (offs = 0x0000/2;offs < 0x2000/2;offs += 8)
+	{
+		int dx = (spriteram16[offs+4]>>8) & 0xff;
+		int dy = (spriteram16[offs+5]>>8) & 0xff;
+		int tilecolour = (spriteram16[offs+3]>>8)&3;
+		int attr = spriteram16[offs+7]>>8;
+		int flipx =   attr & 0x80;
+		int flipy =  (attr & 0x40) << 1;
+		int tile  = ((attr & 0x3f)<<8) + ((spriteram16[offs+6]>>8) & 0xff);
+
+		x = dx;
+		y = dy;
+
+		if (x > 511) x &= 0x1ff;
+		if (y > 511) y &= 0x1ff;
+
+		if (flip_screen)
+		{
+			sx = 240 - x;
+			sy = 240 - y;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+		else
+		{
+			sx = x;
+			sy = y;
+		}
+
+		drawgfx(bitmap,Machine->gfx[1],
+				tile,
+				tilecolour,
+				flipx, flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+		/* second list interleaved with first ??? */
+		dx = spriteram16[offs+4] & 0xff;
+		dy = spriteram16[offs+5] & 0xff;
+		tilecolour = spriteram16[offs+3];
+		attr = spriteram16[offs+7];
+		flipx =   attr & 0x80;
+		flipy =  (attr & 0x40) << 1;
+		tile  = ((attr & 0x3f) << 8) + (spriteram16[offs+6] & 0xff);
+
+		x = dx;
+		y = dy;
+
+		if (x > 511) x &= 0x1ff;
+		if (y > 511) y &= 0x1ff;
+
+		if (flip_screen)
+		{
+			sx = 240 - x;
+			sy = 240 - y;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+		else
+		{
+			sx = x;
+			sy = y;
+		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				tile,
+				(tilecolour & 0xf0) >> 4,
+				flipx, flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+	}
+}
+
+
 VIDEO_UPDATE( wintbob )
 {
 	int offs;

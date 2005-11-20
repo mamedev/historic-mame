@@ -7,24 +7,30 @@
 
 
 CPU     :   68000
-Sound   :   M6295 + Optional FM
+Sound   :   M6295 + Optional FM / ICS2115
 Video   :   IGS011
 NVRAM   :   Battery for main RAM
 
 ---------------------------------------------------------------------------
 Year + Game               FM Sound    Chips
 ---------------------------------------------------------------------------
-199?  The Great Wall      -
-199?  Long Hu Bang        -
-1995  China Dragon        YM3812      IGS003, IGS011, IGS012, IGSD0301
-1996  Champion List II    YM2413      IGS011
-1996  Xing Yen Man Guan   -
+1995  Long Hu Bang        -           ?
+1995  Zhong Guo Long      YM3812      IGS003, IGS011, IGS012, IGSD0301
+1996  Long Hu Bang II     YM2413      IGS011
+1996  Wan Li Chang Cheng  -           ?
+1996  Xing Yen Man Guan   -           ?
+1996  Virtua Bowling      -           IGS011, IGS012
 ---------------------------------------------------------------------------
 
 To do:
 
 - Protection emulation instead of patching the roms
 - A few graphical bugs
+- xymg: when you press Reach it locks.
+- vbowlj: trackball support, slow & low volume sound
+- vbowl: decryption & protection
+- lhb: in the copyright screen the '5' in '1995' is drawn by the cpu on layer 5,
+  but with wrong colors (since the top nibble of the affected pixels is left to 0xf)
 
 ***************************************************************************/
 
@@ -32,6 +38,7 @@ To do:
 #include "sound/okim6295.h"
 #include "sound/2413intf.h"
 #include "sound/3812intf.h"
+#include "sound/ics2115.h"
 
 /***************************************************************************
 
@@ -59,7 +66,7 @@ static WRITE16_HANDLER( igs_priority_w )
 {
 	COMBINE_DATA(&igs_priority);
 
-	logerror("%06x: igs_priority = %02x\n", activecpu_get_pc(), igs_priority);
+//  logerror("%06x: igs_priority = %02x\n", activecpu_get_pc(), igs_priority);
 
 	if (data & ~0x7)
 		logerror("%06x: warning, unknown bits written to igs_priority = %02x\n", activecpu_get_pc(), igs_priority);
@@ -138,6 +145,37 @@ VIDEO_UPDATE(igs)
 	}
 }
 
+static READ16_HANDLER( igs_layers_r )
+{
+	int layer0 = ((offset & (0x80000/2)) ? 4 : 0) + ((offset & 1) ? 0 : 2);
+
+	UINT8 *l0 = layer[layer0];
+	UINT8 *l1 = layer[layer0+1];
+
+	offset >>= 1;
+	offset &= 0x1ffff;
+
+	return (l0[offset] << 8) | l1[offset];
+}
+
+static WRITE16_HANDLER( igs_layers_w )
+{
+	UINT16 word;
+
+	int layer0 = ((offset & (0x80000/2)) ? 4 : 0) + ((offset & 1) ? 0 : 2);
+
+	UINT8 *l0 = layer[layer0];
+	UINT8 *l1 = layer[layer0+1];
+
+	offset >>= 1;
+	offset &= 0x1ffff;
+
+	word = (l0[offset] << 8) | l1[offset];
+	COMBINE_DATA(&word);
+	l0[offset] = word >> 8;
+	l1[offset] = word;
+}
+
 /***************************************************************************
 
     Blitter
@@ -150,7 +188,7 @@ static struct
 	UINT16	x, y, w, h,
 			gfx_lo, gfx_hi,
 			depth,
-			mask,	// currently not used!
+			pen,
 			flags;
 
 }	blitter;
@@ -163,7 +201,7 @@ static WRITE16_HANDLER( igs_blit_gfx_hi_w )	{	COMBINE_DATA(&blitter.gfx_hi);	}
 static WRITE16_HANDLER( igs_blit_w_w )		{	COMBINE_DATA(&blitter.w);		}
 static WRITE16_HANDLER( igs_blit_h_w )		{	COMBINE_DATA(&blitter.h);		}
 static WRITE16_HANDLER( igs_blit_depth_w )	{	COMBINE_DATA(&blitter.depth);	}
-static WRITE16_HANDLER( igs_blit_mask_w )	{	COMBINE_DATA(&blitter.mask);	}
+static WRITE16_HANDLER( igs_blit_pen_w )	{	COMBINE_DATA(&blitter.pen);		}
 
 
 static WRITE16_HANDLER( igs_blit_flags_w )
@@ -171,7 +209,7 @@ static WRITE16_HANDLER( igs_blit_flags_w )
 	int x, xstart, xend, xinc, flipx;
 	int y, ystart, yend, yinc, flipy;
 	int depth4, clear, opaque, z;
-	UINT8 trans_pen, pen_hi, *dest;
+	UINT8 trans_pen, clear_pen, pen_hi, *dest;
 	UINT8 pen = 0;
 
 	UINT8 *gfx		=	memory_region(REGION_GFX1);
@@ -183,8 +221,8 @@ static WRITE16_HANDLER( igs_blit_flags_w )
 
 	COMBINE_DATA(&blitter.flags);
 
-	logerror("%06x: blit x %03x, y %03x, w %03x, h %03x, gfx %03x%04x, depth %02x, mask %02x, flags %03x\n", activecpu_get_pc(),
-					blitter.x,blitter.y,blitter.w,blitter.h,blitter.gfx_hi,blitter.gfx_lo,blitter.depth,blitter.mask,blitter.flags);
+	logerror("%06x: blit x %03x, y %03x, w %03x, h %03x, gfx %03x%04x, depth %02x, pen %02x, flags %03x\n", activecpu_get_pc(),
+					blitter.x,blitter.y,blitter.w,blitter.h,blitter.gfx_hi,blitter.gfx_lo,blitter.depth,blitter.pen,blitter.flags);
 
 	dest	=	layer[	   blitter.flags & 0x0007	];
 	opaque	=			 !(blitter.flags & 0x0008);
@@ -207,10 +245,18 @@ static WRITE16_HANDLER( igs_blit_flags_w )
 	if (depth4)
 	{
 		z	*=	2;
-		if (gfx2 && (blitter.gfx_hi & 0x80))	trans_pen = 0x1f;
+		if (gfx2 && (blitter.gfx_hi & 0x80))	trans_pen = 0x1f;	// chmplst2
 		else									trans_pen = 0x0f;
+
+		clear_pen = blitter.pen | 0xf0;
 	}
-	else										trans_pen = 0xff;
+	else
+	{
+		if (gfx2)	trans_pen = 0x1f;	// vbowl
+		else		trans_pen = 0xff;
+
+		clear_pen = blitter.pen;
+	}
 
 	xstart = (blitter.x & 0x1ff) - (blitter.x & 0x200);
 	ystart = (blitter.y & 0x0ff) - (blitter.y & 0x100);
@@ -228,20 +274,21 @@ static WRITE16_HANDLER( igs_blit_flags_w )
 			// fetch the pixel
 			if (!clear)
 			{
-				if (depth4)
+				if (depth4)		pen = (gfx[(z/2)%gfx_size] >> ((z&1)?4:0)) & 0x0f;
+				else			pen = gfx[z%gfx_size];
+
+				if ( gfx2 )
 				{
-					pen = (gfx[(z/2)%gfx_size] >> ((z&1)?4:0)) & 0x0f;
-					if ( gfx2 && (gfx2[(z/8)%gfx2_size] & (1 << (z & 7))) )
+					pen &= 0x0f;
+					if ( gfx2[(z/8)%gfx2_size] & (1 << (z & 7)) )
 						pen |= 0x10;
 				}
-				else
-					pen = gfx[z%gfx_size];
 			}
 
 			// plot it
 			if (x >= clip.min_x && x <= clip.max_x && y >= clip.min_y && y <= clip.max_y)
 			{
-				if      (clear)				dest[x + y * 512] = 0xff;
+				if      (clear)				dest[x + y * 512] = clear_pen;
 				else if (pen != trans_pen)	dest[x + y * 512] = pen | pen_hi;
 				else if (opaque)			dest[x + y * 512] = 0xff;
 			}
@@ -409,6 +456,35 @@ void chindrag_decrypt(void)
 }
 
 
+void drgnwrld_decrypt(void)
+{
+	int i;
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1));
+
+	int rom_size = 0x80000;
+
+	for (i=0; i<rom_size/2; i++)
+	{
+		UINT16 x = src[i];
+
+		if ((i & 0x2000) == 0x0000 || (i & 0x0004) == 0x0000 || (i & 0x0090) == 0x0000)
+			x ^= 0x0004;
+
+		if ((i & 0x0100) == 0x0100 || (i & 0x0040) == 0x0040 || (i & 0x0012) == 0x0012)
+			x ^= 0x0020;
+/*
+        if ((((i & 0x1000) == 0x1000) ^ ((i & 0x0100) == 0x0100))
+            || (i & 0x0880) == 0x0800 || (i & 0x0240) == 0x0240)
+                x ^= 0x0200;
+*/
+		if ((x & 0x0024) == 0x0004 || (x & 0x0024) == 0x0020)
+			x ^= 0x0024;
+
+		src[i] = x;
+	}
+}
+
+
 void chmplst2_decrypt(void)
 {
 	int i,j;
@@ -437,6 +513,66 @@ void chmplst2_decrypt(void)
 	memcpy(src,result_data,rom_size);
 
 	free(result_data);
+}
+
+
+
+void vbowlj_decrypt(void)
+{
+	int i;
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1));
+
+	int rom_size = 0x80000;
+
+	for(i=0; i<rom_size/2; i++)
+	{
+		UINT16 x = src[i];
+
+		if((i & 0x4100) == 0x0100)
+			x ^= 0x0002;
+
+		if((i & 0x4000) == 0x4000 && (i & 0x0300) != 0x0100)
+			x ^= 0x0002;
+
+		if((i & 0x5700) == 0x5100)
+			x ^= 0x0002;
+
+		if((i & 0x5500) == 0x1000)
+			x ^= 0x0002;
+
+		if((i & 0x0140) != 0x0000 || (i & 0x0012) == 0x0012)
+			x ^= 0x0400;
+
+		if((i & 0x2004) != 0x2004 || (i & 0x0090) == 0x0000)
+			x ^= 0x2000;
+
+	    src[i] = (x << 8) | (x >> 8);
+	  }
+}
+
+// To do:
+void vbowl_decrypt(void)
+{
+	int i;
+	UINT16 *src = (UINT16 *) (memory_region(REGION_CPU1));
+
+	int rom_size = 0x80000;
+
+	for(i=0; i<rom_size/2; i++)
+	{
+		UINT16 x = src[i];
+
+		if((i & 0x0140) == 0x0000 && (i & 0x0012) != 0x0012)
+			x ^= 0x5555;
+		else
+			x ^= 0x5d55;
+
+	    x = (x >> 1) + (x << 15);
+
+	    src[i] = (x << 8) | (x >> 8);
+	}
+
+//  vbowlj_decrypt();
 }
 
 
@@ -759,6 +895,71 @@ static READ16_HANDLER( lhb_input2_r )
 
 
 
+static WRITE16_HANDLER( vbowl_magic_w )
+{
+	COMBINE_DATA(&igs_magic[offset]);
+
+	if (offset == 0)
+		return;
+
+	switch(igs_magic[0])
+	{
+		case 0x02:
+			if (ACCESSING_LSB)
+			{
+				coin_counter_w(0,data & 1);
+				coin_counter_w(1,data & 2);
+			}
+
+			if (data & ~0x3)
+				logerror("%06x: warning, unknown bits written in coin counter = %02x\n", activecpu_get_pc(), data);
+
+			break;
+
+		default:
+//          ui_popup("magic %x <- %04x",igs_magic[0],data);
+			logerror("%06x: warning, writing to igs_magic %02x = %02x\n", activecpu_get_pc(), igs_magic[0], data);
+	}
+}
+
+static READ16_HANDLER( vbowl_magic_r )
+{
+	switch(igs_magic[0])
+	{
+		case 0x00:	return readinputport(5);
+		case 0x01:	return readinputport(6);
+
+		case 0x20:	return 0x49;
+		case 0x21:	return 0x47;
+		case 0x22:	return 0x53;
+
+		case 0x24:	return 0x41;
+		case 0x25:	return 0x41;
+		case 0x26:	return 0x7f;
+		case 0x27:	return 0x41;
+		case 0x28:	return 0x41;
+
+		case 0x2a:	return 0x3e;
+		case 0x2b:	return 0x41;
+		case 0x2c:	return 0x49;
+		case 0x2d:	return 0xf9;
+		case 0x2e:	return 0x0a;
+
+		case 0x30:	return 0x26;
+		case 0x31:	return 0x49;
+		case 0x32:	return 0x49;
+		case 0x33:	return 0x49;
+		case 0x34:	return 0x32;
+
+		default:
+			logerror("%06x: warning, reading with igs_magic = %02x\n", activecpu_get_pc(), igs_magic[0]);
+	}
+
+	return 0;
+}
+
+
+
 static WRITE16_HANDLER( xymg_magic_w )
 {
 	COMBINE_DATA(&igs_magic[offset]);
@@ -832,6 +1033,7 @@ static WRITE16_HANDLER( igs_YM3812_write_port_0_w )
 static ADDRESS_MAP_START( chindrag_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x600000, 0x600001) AM_READ(OKIM6295_status_0_lsb_r)
@@ -855,7 +1057,7 @@ static ADDRESS_MAP_START( chindrag_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa5a000, 0xa5a001) AM_WRITE(igs_blit_gfx_lo_w)
 	AM_RANGE(0xa5a800, 0xa5a801) AM_WRITE(igs_blit_gfx_hi_w)
 	AM_RANGE(0xa5b000, 0xa5b001) AM_WRITE(igs_blit_flags_w)
-	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_mask_w)
+	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_pen_w)
 	AM_RANGE(0xa5c000, 0xa5c001) AM_WRITE(igs_blit_depth_w)
 ADDRESS_MAP_END
 
@@ -866,6 +1068,8 @@ static ADDRESS_MAP_START( chmplst2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x200000, 0x200001) AM_READ(OKIM6295_status_0_lsb_r)
 	AM_RANGE(0x208002, 0x208003) AM_READ(chmplst2_magic_r)
+	AM_RANGE(0x20c000, 0x20cfff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x210000, 0x211fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x214000, 0x214001) AM_READ(input_port_3_word_r)
 	AM_RANGE(0xa88000, 0xa88001) AM_READ(igs_3_input_r)
 ADDRESS_MAP_END
@@ -886,7 +1090,7 @@ static ADDRESS_MAP_START( chmplst2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa5a000, 0xa5a001) AM_WRITE(igs_blit_gfx_lo_w)
 	AM_RANGE(0xa5a800, 0xa5a801) AM_WRITE(igs_blit_gfx_hi_w)
 	AM_RANGE(0xa5b000, 0xa5b001) AM_WRITE(igs_blit_flags_w)
-	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_mask_w)
+	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_pen_w)
 	AM_RANGE(0xa5c000, 0xa5c001) AM_WRITE(igs_blit_depth_w)
 ADDRESS_MAP_END
 
@@ -895,6 +1099,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( grtwall_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x520000, 0x520001) AM_READ(input_port_4_word_r)
 	AM_RANGE(0x600000, 0x600001) AM_READ(OKIM6295_status_0_lsb_r)
@@ -916,7 +1121,7 @@ static ADDRESS_MAP_START( grtwall_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa5a000, 0xa5a001) AM_WRITE(igs_blit_gfx_lo_w)
 	AM_RANGE(0xa5a800, 0xa5a801) AM_WRITE(igs_blit_gfx_hi_w)
 	AM_RANGE(0xa5b000, 0xa5b001) AM_WRITE(igs_blit_flags_w)
-	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_mask_w)
+	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_pen_w)
 	AM_RANGE(0xa5c000, 0xa5c001) AM_WRITE(igs_blit_depth_w)
 ADDRESS_MAP_END
 
@@ -925,6 +1130,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( lhb_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x3fffff) AM_READ(igs_layers_r)
 	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x600000, 0x600001) AM_READ(OKIM6295_status_0_lsb_r)
 	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_5_word_r)
@@ -935,6 +1142,7 @@ static ADDRESS_MAP_START( lhb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x010000, 0x010001) AM_WRITE(lhb_okibank_w)
 	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x200000, 0x200fff) AM_WRITE(MWA16_RAM) AM_BASE(&igs_priority_ram)
+	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(igs_layers_w)
 	AM_RANGE(0x400000, 0x401fff) AM_WRITE(igs_palette_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(OKIM6295_data_0_lsb_w)
 	AM_RANGE(0x700002, 0x700003) AM_WRITE(lhb_input2_w)
@@ -947,8 +1155,113 @@ static ADDRESS_MAP_START( lhb_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x85a000, 0x85a001) AM_WRITE(igs_blit_gfx_lo_w)
 	AM_RANGE(0x85a800, 0x85a801) AM_WRITE(igs_blit_gfx_hi_w)
 	AM_RANGE(0x85b000, 0x85b001) AM_WRITE(igs_blit_flags_w)
-	AM_RANGE(0x85b800, 0x85b801) AM_WRITE(igs_blit_mask_w)
+	AM_RANGE(0x85b800, 0x85b801) AM_WRITE(igs_blit_pen_w)
 	AM_RANGE(0x85c000, 0x85c001) AM_WRITE(igs_blit_depth_w)
+ADDRESS_MAP_END
+
+
+
+
+static READ16_HANDLER( ics2115_0_word_r )
+{
+	switch(offset)
+	{
+		case 0:	return ics2115_r(0);
+		case 1:	return ics2115_r(1);
+		case 2:	return (ics2115_r(3) << 8) | ics2115_r(2);
+	}
+	return 0xff;
+}
+
+static WRITE16_HANDLER( ics2115_0_word_w )
+{
+	switch(offset)
+	{
+		case 1:
+			if (ACCESSING_LSB)	ics2115_w(1,data);
+			break;
+		case 2:
+			if (ACCESSING_LSB)	ics2115_w(2,data);
+			if (ACCESSING_MSB)	ics2115_w(3,data>>8);
+			break;
+	}
+}
+
+static WRITE16_HANDLER( vbowl_unk_w )
+{
+}
+
+static READ16_HANDLER( vbowl_unk_r )
+{
+	return 0xffff;
+}
+
+static UINT16 *vbowl_trackball;
+static VIDEO_EOF( vbowl )
+{
+	vbowl_trackball[0] = vbowl_trackball[1];
+	vbowl_trackball[1] = (readinputport(8) << 8) | readinputport(7);
+}
+
+static WRITE16_HANDLER( vbowl_pen_hi_w )
+{
+	if (ACCESSING_LSB)
+	{
+		chmplst2_pen_hi = data & 0x07;
+	}
+
+	if (data & ~0x7)
+		logerror("%06x: warning, unknown bits written to pen_hi = %04x\n", activecpu_get_pc(), igs_priority);
+}
+
+static WRITE16_HANDLER( vbowl_link_0_w )	{ }
+static WRITE16_HANDLER( vbowl_link_1_w )	{ }
+static WRITE16_HANDLER( vbowl_link_2_w )	{ }
+static WRITE16_HANDLER( vbowl_link_3_w )	{ }
+
+static ADDRESS_MAP_START( vbowl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x3fffff) AM_READ(igs_layers_r)
+	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x520001) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x600000, 0x600007) AM_READ(ics2115_0_word_r)
+	AM_RANGE(0x700000, 0x700003) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800002, 0x800003) AM_READ(vbowl_magic_r)
+	AM_RANGE(0xa88000, 0xa88001) AM_READ(igs_4_input_r)
+
+	AM_RANGE(0xa80000, 0xa80001) AM_READ(vbowl_unk_r)
+	AM_RANGE(0xa90000, 0xa90001) AM_READ(vbowl_unk_r)
+	AM_RANGE(0xa98000, 0xa98001) AM_READ(vbowl_unk_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( vbowl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(MWA16_RAM) AM_BASE(&igs_priority_ram)
+	AM_RANGE(0x300000, 0x3fffff) AM_WRITE(igs_layers_w)
+	AM_RANGE(0x400000, 0x401fff) AM_WRITE(igs_palette_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x600000, 0x600007) AM_WRITE(ics2115_0_word_w)
+	AM_RANGE(0x700000, 0x700003) AM_WRITE(MWA16_RAM) AM_BASE(&vbowl_trackball)
+	AM_RANGE(0x700004, 0x700005) AM_WRITE(vbowl_pen_hi_w)
+	AM_RANGE(0x800000, 0x800003) AM_WRITE(vbowl_magic_w)
+
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(vbowl_link_0_w)
+	AM_RANGE(0xa08000, 0xa08001) AM_WRITE(vbowl_link_1_w)
+	AM_RANGE(0xa10000, 0xa10001) AM_WRITE(vbowl_link_2_w)
+	AM_RANGE(0xa18000, 0xa18001) AM_WRITE(vbowl_link_3_w)
+
+	AM_RANGE(0xa20000, 0xa20001) AM_WRITE(igs_priority_w)
+	AM_RANGE(0xa40000, 0xa40001) AM_WRITE(igs_4_input_w)
+	AM_RANGE(0xa58000, 0xa58001) AM_WRITE(igs_blit_x_w)
+	AM_RANGE(0xa58800, 0xa58801) AM_WRITE(igs_blit_y_w)
+	AM_RANGE(0xa59000, 0xa59001) AM_WRITE(igs_blit_w_w)
+	AM_RANGE(0xa59800, 0xa59801) AM_WRITE(igs_blit_h_w)
+	AM_RANGE(0xa5a000, 0xa5a001) AM_WRITE(igs_blit_gfx_lo_w)
+	AM_RANGE(0xa5a800, 0xa5a801) AM_WRITE(igs_blit_gfx_hi_w)
+	AM_RANGE(0xa5b000, 0xa5b001) AM_WRITE(igs_blit_flags_w)
+	AM_RANGE(0xa5b800, 0xa5b801) AM_WRITE(igs_blit_pen_w)
+	AM_RANGE(0xa5c000, 0xa5c001) AM_WRITE(igs_blit_depth_w)
 ADDRESS_MAP_END
 
 
@@ -956,6 +1269,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( xymg_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x400000, 0x401fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x600000, 0x600001) AM_READ(OKIM6295_status_0_lsb_r)
 	AM_RANGE(0x700002, 0x700003) AM_READ(xymg_magic_r)
@@ -978,7 +1292,7 @@ static ADDRESS_MAP_START( xymg_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x85a000, 0x85a001) AM_WRITE(igs_blit_gfx_lo_w)
 	AM_RANGE(0x85a800, 0x85a801) AM_WRITE(igs_blit_gfx_hi_w)
 	AM_RANGE(0x85b000, 0x85b001) AM_WRITE(igs_blit_flags_w)
-	AM_RANGE(0x85b800, 0x85b801) AM_WRITE(igs_blit_mask_w)
+	AM_RANGE(0x85b800, 0x85b801) AM_WRITE(igs_blit_pen_w)
 	AM_RANGE(0x85c000, 0x85c001) AM_WRITE(igs_blit_depth_w)
 	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size) // extra ram
 ADDRESS_MAP_END
@@ -1039,7 +1353,7 @@ INPUT_PORTS_START( chindrag )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Service Mode?" )
+	PORT_DIPNAME( 0x80, 0x80, "Test?" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1225,6 +1539,106 @@ INPUT_PORTS_START( chmplst2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+
+INPUT_PORTS_START( drgnwrld )
+	PORT_START	// IN0 - DSW1
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Normal  ) )	// 513
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard    ) )	// 627
+	PORT_DIPSETTING(    0x08, DEF_STR( Harder  ) )	// 741
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )	// 855
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN1 - DSW2
+	PORT_DIPNAME( 0x01, 0x01, "Open Girl?" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Background" )
+	PORT_DIPSETTING(    0x02, "Girl" )
+	PORT_DIPSETTING(    0x00, "Landscape" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Bang Turtle?" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Send Boom?" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Test?" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+  	PORT_START	// IN2 - DSW3
+	PORT_DIPNAME( 0xff, 0xff, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0xff, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN3
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F1)	// keep pressed while booting
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE2 )	// used?
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE3 )	// used?
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )	// press in girl test to pause, button 3 advances
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN5
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+
+	PORT_START	// IN6
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -1479,6 +1893,144 @@ INPUT_PORTS_START( lhb )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( vbowl )
+	PORT_START	// IN0 - DSW1
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Sexy Interlude" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Controls ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Joystick ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Trackball ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN1 - DSW2
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy   ) )	// 5
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )	// 7
+	PORT_DIPSETTING(    0x01, DEF_STR( Medium ) )	// 9
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard   ) )	// 11
+	PORT_DIPNAME( 0x04, 0x04, "Spares To Win (Frames 1-5)" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x18, 0x18, "Points To Win (Frames 6-10)" )
+	PORT_DIPSETTING(    0x18, "160" )
+	PORT_DIPSETTING(    0x10, "170" )
+	PORT_DIPSETTING(    0x08, "180" )
+	PORT_DIPSETTING(    0x00, "190" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+  	PORT_START	// IN2 - DSW3
+	PORT_DIPNAME( 0x03, 0x03, "Cabinet ID" )
+	PORT_DIPSETTING(    0x03, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x04, 0x04, "Linked Cabinets" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	// IN3 - DSW4
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	// IN4
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN5
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 )
+
+	PORT_START	// IN6
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+
+	PORT_START	// IN7
+    PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_X ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(1)
+
+	PORT_START	// IN8
+    PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(30) PORT_KEYDELTA(30) PORT_PLAYER(1)
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( xymg )
 	PORT_START	// IN0 - DSW1
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
@@ -1697,7 +2249,7 @@ static MACHINE_DRIVER_START( igs_base )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 1047600 / 132)
+	MDRV_SOUND_ADD_TAG("OKIM6295", OKIM6295, 1047600 / 132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -1774,6 +2326,45 @@ MACHINE_DRIVER_END
 
 
 
+static void sound_irq(int state)
+{
+//  cpunum_set_input_line(0, 3, state);
+}
+
+static struct ics2115_interface pgm_ics2115_interface = {
+	REGION_SOUND1,
+	sound_irq
+};
+
+static INTERRUPT_GEN( vbowl_interrupt )
+{
+	switch (cpu_getiloops())
+	{
+		case 0:	cpunum_set_input_line(0, 4, HOLD_LINE);	break;
+		case 1:	cpunum_set_input_line(0, 5, HOLD_LINE);	break;
+		case 2:	cpunum_set_input_line(0, 6, HOLD_LINE);	break;
+		default:
+		case 3:	cpunum_set_input_line(0, 3, HOLD_LINE);	break;	// sound
+	}
+}
+
+static MACHINE_DRIVER_START( vbowl )
+	MDRV_IMPORT_FROM(igs_base)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(vbowl_readmem,vbowl_writemem)
+	MDRV_CPU_VBLANK_INT(vbowl_interrupt,3+4)
+
+	MDRV_VIDEO_EOF(vbowl)	// trackball
+//  MDRV_GFXDECODE(gfxdecodeinfo_chmplst2)
+
+	MDRV_SOUND_REMOVE("OKIM6295")
+	MDRV_SOUND_ADD(ICS2115, 0)
+	MDRV_SOUND_CONFIG(pgm_ics2115_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 5.0)
+MACHINE_DRIVER_END
+
+
+
 static MACHINE_DRIVER_START( xymg )
 	MDRV_IMPORT_FROM(igs_base)
 	MDRV_CPU_MODIFY("main")
@@ -1800,7 +2391,7 @@ static DRIVER_INIT( chmplst2 )
 	rom[0x2fe96/2]	=	0x6036;		// 02FE96: 6736    beq 2fece  (fills palette with red otherwise)
 	rom[0x325da/2]	=	0x6036;		// 0325DA: 6736    beq 32612  (fills palette with green otherwise)
 	rom[0x3d80a/2]	=	0x6034;		// 03D80A: 6734    beq 3d840  (fills palette with black otherwise)
-	rom[0x3ed80/2]	=	0x6034;		// 03ED80: 6736    beq 3edb8  (fills palette with red otherwise)
+	rom[0x3ed80/2]	=	0x6036;		// 03ED80: 6736    beq 3edb8  (fills palette with red otherwise)
 	rom[0x41d72/2]	=	0x6034;		// 041D72: 6734    beq 41da8  (fills palette with black otherwise)
 	rom[0x44834/2]	=	0x6034;		// 044834: 6734    beq 4486a  (fills palette with black otherwise)
 }
@@ -1858,6 +2449,29 @@ static DRIVER_INIT( chugokur )
 	rom[0x2a86e/2]	=	0x606c;		// 02A86E: 676C        beq 2a8dc    (ASIC11 CHECK PORT ERROR 2)
 }
 
+static DRIVER_INIT( drgnwrld )
+{
+	UINT16 *rom = (UINT16 *) memory_region(REGION_CPU1);
+
+	drgnwrld_decrypt();
+	chindrag_gfx_decrypt();
+
+	// PROTECTION CHECKS
+	rom[0x032ee/2]	=	0x606c;		// 0032EE: 676C        beq 335c     (ASIC11 CHECK PORT ERROR 3)
+	rom[0x23d5e/2]	=	0x606c;		// 023D5E: 676C        beq 23dcc    (CHECK PORT ERROR 1)
+	rom[0x23fd0/2]	=	0x606c;		// 023FD0: 676C        beq 2403e    (CHECK PORT ERROR 2)
+	rom[0x24170/2]	=	0x606c;		// 024170: 676C        beq 241de    (CHECK PORT ERROR 3)
+	rom[0x24348/2]	=	0x606c;		// 024348: 676C        beq 243b6    (ASIC11 CHECK PORT ERROR 4)
+	rom[0x2454e/2]	=	0x606c;		// 02454E: 676C        beq 245bc    (ASIC11 CHECK PORT ERROR 3)
+	rom[0x246cc/2]	=	0x606c;		// 0246CC: 676C        beq 2473a    (ASIC11 CHECK PORT ERROR 2)
+	rom[0x24922/2]	=	0x606c;		// 024922: 676C        beq 24990    (ASIC11 CHECK PORT ERROR 1)
+	rom[0x24b66/2]	=	0x606c;		// 024B66: 676C        beq 24bd4    (ASIC12 CHECK PORT ERROR 4)
+	rom[0x24de2/2]	=	0x606c;		// 024DE2: 676C        beq 24e50    (ASIC12 CHECK PORT ERROR 3)
+	rom[0x2502a/2]	=	0x606c;		// 02502A: 676C        beq 25098    (ASIC12 CHECK PORT ERROR 2)
+	rom[0x25556/2]	=	0x6000;		// 025556: 6700 E584   beq 23adc    (ASIC12 CHECK PORT ERROR 1)
+	rom[0x2a16c/2]	=	0x606c;		// 02A16C: 676C        beq 2a1da    (ASIC11 CHECK PORT ERROR 2)
+}
+
 static DRIVER_INIT( grtwall )
 {
 	UINT16 *rom = (UINT16 *) memory_region(REGION_CPU1);
@@ -1888,6 +2502,45 @@ static DRIVER_INIT( lhb )
 
 	// PROTECTION CHECKS
 	rom[0x2eef6/2]	=	0x4e75;		// 02EEF6: 4E56 FE00    link A6, #-$200  (fills palette with pink otherwise)
+}
+
+
+
+// To do:
+DRIVER_INIT( vbowl )
+{
+//  UINT16 *rom = (UINT16 *) memory_region(REGION_CPU1);
+	UINT8  *gfx = (UINT8 *)  memory_region(REGION_GFX1);
+	int i;
+
+	vbowl_decrypt();
+
+	for (i = 0x400000-1; i >= 0; i--)
+	{
+		gfx[i * 2 + 1] = (gfx[i] & 0xf0) >> 4;
+		gfx[i * 2 + 0] = (gfx[i] & 0x0f) >> 0;
+	}
+
+	// PROTECTION CHECKS
+//  rom[0x37b4/2]   =   0x4e75;     // 0037B4: 4E56 0000 link    A6, #$0
+}
+
+DRIVER_INIT( vbowlj )
+{
+	UINT16 *rom = (UINT16 *) memory_region(REGION_CPU1);
+	UINT8  *gfx = (UINT8 *)  memory_region(REGION_GFX1);
+	int i;
+
+	vbowlj_decrypt();
+
+	for (i = 0x400000-1; i >= 0; i--)
+	{
+		gfx[i * 2 + 1] = (gfx[i] & 0xf0) >> 4;
+		gfx[i * 2 + 0] = (gfx[i] & 0x0f) >> 0;
+	}
+
+	// PROTECTION CHECKS
+	rom[0x37b4/2]	=	0x4e75;		// 0037B4: 4E56 0000 link    A6, #$0
 }
 
 
@@ -2005,6 +2658,18 @@ SOUND DATA?: "CHINA DRAGON U44"
 
 */
 
+ROM_START( drgnwrld )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "dwen.bin", 0x00000, 0x80000, CRC(a6daa2b8) SHA1(0cbfd001c1fd82a6385453d1c2a808add67746af) )
+
+	ROM_REGION( 0x420000, REGION_GFX1, 0 )
+	ROM_LOAD( "d0301", 0x000000, 0x400000, CRC(78ab45d9) SHA1(c326ee9f150d766edd6886075c94dea3691b606d) )
+	ROM_LOAD( "cg",    0x400000, 0x020000, CRC(2dda0be3) SHA1(587b7cab747d4336515c98eb3365341bb6c7e5e4) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "sp", 0x00000, 0x40000, CRC(fde63ce1) SHA1(cc32d2cace319fe4d5d0aa96d7addb2d1def62f2) )
+ROM_END
+
 ROM_START( chugokur )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "china_jp.v20", 0x00000, 0x80000, CRC(9e018d1a) SHA1(fe14e6344434cabf43685e50fd49c90f05f565be) )
@@ -2084,6 +2749,67 @@ ROM_END
 
 
 /*
+Virtua Bowling by IGS
+
+PCB # 0101
+
+U45  (27c240) is probably program
+next to 68000 processor
+U68,U69 probably images   (27c800 - mask)
+U67, U66 sound and ????  (27c040)
+
+ASIC chip used
+
+SMD - custom chip IGS 011      F5XD  174
+SMD - custom --near sound section - unknown -- i.d. rubbed off
+SMD - custom  -- near inputs and 68000  IGS 012    9441EK001
+
+XTL near sound 33.868mhz
+XTL near 68000  22.0000mhz
+
+there are 4 banks of 8 dip switches
+*/
+
+ROM_START( vbowl )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD( "v101xcm.u45", 0x00000, 0x80000, CRC(a086050f) SHA1(5d044665a786e7f8f60e0474ebe02ecd33e36290) ) // second half all 00
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0)
+	ROM_LOAD( "vrbowlng.u69", 0x000000, 0x400000, CRC(b0d339e8) SHA1(a26a5e0202a78e8cdc562b10d64e14eadfa4e115) )
+	// extra space to expand every 4 bits to 8
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_INVERT )
+	ROM_LOAD( "vrbowlng.u68", 0x000000, 0x100000, CRC(b0ce27e7) SHA1(6d3ef97edd606f384b1e05b152fbea12714887b7) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "vrbowlng.u67", 0x00000, 0x80000, CRC(53000936) SHA1(e50c6216f559a9248c095bdfae05c3be4be79ff3) )	// 8 bit signed mono & u-law
+	ROM_LOAD( "vrbowlng.u66", 0x80000, 0x80000, CRC(f62cf8ed) SHA1(c53e47e2c619ed974ad40ee4aaa4a35147ea8311) )	// 8 bit signed mono
+	ROM_COPY( REGION_SOUND1, 0, 0x100000,0x100000)
+	ROM_COPY( REGION_SOUND1, 0, 0x200000,0x100000)
+	ROM_COPY( REGION_SOUND1, 0, 0x300000,0x100000)
+ROM_END
+
+ROM_START( vbowlj )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD( "vrbowlng.u45", 0x00000, 0x80000, CRC(091c19c1) SHA1(5a7bfbee357122e9061b38dfe988c3853b0984b0) ) // second half all 00
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0)
+	ROM_LOAD( "vrbowlng.u69", 0x000000, 0x400000, CRC(b0d339e8) SHA1(a26a5e0202a78e8cdc562b10d64e14eadfa4e115) )
+	// extra space to expand every 4 bits to 8
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_INVERT )
+	ROM_LOAD( "vrbowlng.u68", 0x000000, 0x100000, CRC(b0ce27e7) SHA1(6d3ef97edd606f384b1e05b152fbea12714887b7) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "vrbowlng.u67", 0x00000, 0x80000, CRC(53000936) SHA1(e50c6216f559a9248c095bdfae05c3be4be79ff3) )	// 8 bit signed mono & u-law
+	ROM_LOAD( "vrbowlng.u66", 0x80000, 0x80000, CRC(f62cf8ed) SHA1(c53e47e2c619ed974ad40ee4aaa4a35147ea8311) )	// 8 bit signed mono
+	ROM_COPY( REGION_SOUND1, 0, 0x100000,0x100000)
+	ROM_COPY( REGION_SOUND1, 0, 0x200000,0x100000)
+	ROM_COPY( REGION_SOUND1, 0, 0x300000,0x100000)
+ROM_END
+
+
+/*
     Xing Yen Man Guan
 
     Other files in the zip:
@@ -2114,9 +2840,12 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 199?, lhb,      0,        lhb,      lhb,      lhb,      ROT0, "IGS",        "Long Hu Bang"                , 0 )
-GAME( 1995, chindrag, 0,        chindrag, chindrag, chindrag, ROT0, "IGS / ALTA", "Chuugokuryuu (Japan, V021J)" , 0 )
-GAME( 1995, chugokur, chindrag, chindrag, chindrag, chugokur, ROT0, "IGS / ALTA", "Chuugokuryuu (Japan, V020J)" , 0 )
-GAME( 1996, chmplst2, 0,        chmplst2, chmplst2, chmplst2, ROT0, "IGS",        "Champion List II",            GAME_IMPERFECT_GRAPHICS )
-GAME( 1996, xymg,     0,        xymg,     xymg,     xymg,     ROT0, "IGS",        "Xing Yen Man Guan (V651C)",   GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAME( 199?, grtwall,  xymg,     grtwall,  grtwall,  grtwall,  ROT0, "IGS",        "Xing Yen Man Guan (V638C)?",  GAME_IMPERFECT_GRAPHICS )
+GAME( 1995, lhb,      0,        lhb,      lhb,      lhb,      ROT0, "IGS",        "Long Hu Bang",                    0 )
+GAME( 1995, chindrag, drgnwrld, chindrag, chindrag, chindrag, ROT0, "IGS / ALTA", "Zhong Guo Long (Japan, V021J)",   0 )
+GAME( 1995, chugokur, drgnwrld, chindrag, chindrag, chugokur, ROT0, "IGS / ALTA", "Zhong Guo Long (Japan, V020J)",   0 )
+GAME( 1996, chmplst2, 0,        chmplst2, chmplst2, chmplst2, ROT0, "IGS",        "Long Hu Bang II",                 GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, xymg,     0,        xymg,     xymg,     xymg,     ROT0, "IGS",        "Xing Yen Man Guan (V651C)",       GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1996, grtwall,  xymg,     grtwall,  grtwall,  grtwall,  ROT0, "IGS",        "Wan Li Chang Cheng (V638C)",      GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, vbowl,    0,        vbowl,    vbowl,    vbowl,    ROT0, "Alta / IGS", "Virtua Bowling (World, V101XCM)", GAME_NOT_WORKING )
+GAME( 1996, vbowlj,   vbowl,    vbowl,    vbowl,    vbowlj,   ROT0, "Alta / IGS", "Virtua Bowling (Japan, V100JCM)", GAME_IMPERFECT_SOUND )
+GAME( 1997, drgnwrld, 0,        chindrag, drgnwrld, drgnwrld, ROT0, "IGS",        "Dragon World (World, V0400)",     0 )

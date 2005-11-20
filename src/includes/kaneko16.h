@@ -51,7 +51,7 @@ PALETTE_INIT( berlwall );
 
 typedef struct
 {
-	int tile[4];
+	int VIEW2_2_pri;
 	int sprite[4];
 }	kaneko16_priority_t;
 

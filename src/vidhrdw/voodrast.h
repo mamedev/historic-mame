@@ -453,16 +453,12 @@ do {																				\
 void RENDERFUNC(void)
 {
 #if (PER_PIXEL_LOD)
-	float sscale0 = (float)(trex_width[0] * trex_width[0]) * (1. / 65536.);
-	float tscale0 = (float)(trex_height[0] * trex_height[0]) * (1. / 65536.);
-	float tex0x = tri_ds0dx * tri_ds0dx * sscale0 + tri_dt0dx * tri_dt0dx * tscale0;
-	float tex0y = tri_ds0dy * tri_ds0dy * sscale0 + tri_dt0dy * tri_dt0dy * tscale0;
+	float tex0x = tri_ds0dx * tri_ds0dx + tri_dt0dx * tri_dt0dx;
+	float tex0y = tri_ds0dy * tri_ds0dy + tri_dt0dy * tri_dt0dy;
 	INT16 lodbase0 = ((tex0x > tex0y) ? lod_lookup[f2u(tex0x) >> 16] : lod_lookup[f2u(tex0y) >> 16]) / 2;
 #if (NUM_TMUS > 1)
-	float sscale1 = (float)(trex_width[1] * trex_width[1]) * (1. / 65536.);
-	float tscale1 = (float)(trex_height[1] * trex_height[1]) * (1. / 65536.);
-	float tex1x = tri_ds1dx * tri_ds1dx * sscale1 + tri_dt1dx * tri_dt1dx * tscale1;
-	float tex1y = tri_ds1dy * tri_ds1dy * sscale1 + tri_dt1dy * tri_dt1dy * tscale1;
+	float tex1x = tri_ds1dx * tri_ds1dx + tri_dt1dx * tri_dt1dx;
+	float tex1y = tri_ds1dy * tri_ds1dy + tri_dt1dy * tri_dt1dy;
 	INT16 lodbase1 = ((tex1x > tex1y) ? lod_lookup[f2u(tex1x) >> 16] : lod_lookup[f2u(tex1y) >> 16]) / 2;
 #endif
 #endif

@@ -267,23 +267,6 @@ void double_to_dsp_with_flags(double val, union genreg *result)
 }
 #endif
 
-#if !USE_FP
-INLINE int count_leading_zeros(UINT32 val)
-{
-	int count;
-	for (count = 0; (INT32)val >= 0; count++) val <<= 1;
-	return count;
-}
-
-
-INLINE int count_leading_ones(UINT32 val)
-{
-	int count;
-	for (count = 0; (INT32)val < 0; count++) val <<= 1;
-	return count;
-}
-#endif
-
 /* integer to floating point conversion */
 #if USE_FP
 static void int2float(union genreg *srcdst)

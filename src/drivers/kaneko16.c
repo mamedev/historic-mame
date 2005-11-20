@@ -58,6 +58,10 @@ To Do:
 
 - Find infos about the communication stuff (even if it won't be supported)
 
+[bonkadv]
+
+- Bad tilemap colors in levels 2 and 3
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -94,16 +98,10 @@ MACHINE_INIT( kaneko16 )
     0   1   2   S2  3
     0   1   2   3   S3
 */
-
-	kaneko16_priority.tile[0] = 0;
-	kaneko16_priority.tile[1] = 1;
-	kaneko16_priority.tile[2] = 2;
-	kaneko16_priority.tile[3] = 3;
-
-	kaneko16_priority.sprite[0] = 0xfffc;	// above tile[0],   below the others
-	kaneko16_priority.sprite[1] = 0xfff0;	// above tile[0-1], below the others
-	kaneko16_priority.sprite[2] = 0xff00;	// above tile[0-2], below the others
-	kaneko16_priority.sprite[3] = 0x0000;	// above all
+	kaneko16_priority.sprite[0] = 1;	// above tile[0],   below the others
+	kaneko16_priority.sprite[1] = 2;	// above tile[0-1], below the others
+	kaneko16_priority.sprite[2] = 3;	// above tile[0-2], below the others
+	kaneko16_priority.sprite[3] = 8;	// above all
 }
 
 static MACHINE_INIT( berlwall )
@@ -129,43 +127,36 @@ static MACHINE_INIT( blazeon )
     0   1   2   3   S2
     0   1   2   3   S3
 */
-	kaneko16_priority.sprite[0] = 0xfffc;	// above tile[0], below the others
-	kaneko16_priority.sprite[1] = 0xfff0;	// above tile[0-1], below the others
-	kaneko16_priority.sprite[2] = 0x0000;	// above all
-	kaneko16_priority.sprite[3] = 0x0000;	// ""
+	kaneko16_priority.sprite[0] = 1;	// above tile[0], below the others
+	kaneko16_priority.sprite[1] = 2;	// above tile[0-1], below the others
+	kaneko16_priority.sprite[2] = 8;	// above all
+	kaneko16_priority.sprite[3] = 8;	// ""
 }
 
 static MACHINE_INIT( bloodwar )
 {
-	/* Priorities unknown */
-	kaneko16_priority.tile[0] = 0;
-	kaneko16_priority.tile[1] = 1;
-	kaneko16_priority.tile[2] = 2;
-	kaneko16_priority.tile[3] = 3;
-
-	kaneko16_priority.sprite[0] = 0x0000;	// above all
-	kaneko16_priority.sprite[1] = 0x0000;	// above all
-	kaneko16_priority.sprite[2] = 0x0000;	// above all
-	kaneko16_priority.sprite[3] = 0x0000;	// above all
+	kaneko16_priority.sprite[0] = 2;	// ever used ?
+	kaneko16_priority.sprite[1] = 3;	// character selection / vs. portraits
+	kaneko16_priority.sprite[2] = 5;	// winning portrait
+	kaneko16_priority.sprite[3] = 7;
 
 	kaneko16_sprite_type = 1;
+
+	kaneko16_priority.VIEW2_2_pri = 1;
 
 	toybox_mcu_init();
 }
 
 static MACHINE_INIT( bonkadv )
 {
-	kaneko16_priority.tile[0] = 3;
-	kaneko16_priority.tile[1] = 2;
-	kaneko16_priority.tile[2] = 1;
-	kaneko16_priority.tile[3] = 0;
-
-	kaneko16_priority.sprite[0] = 0xfffe;	// below all (ever used ?)
-	kaneko16_priority.sprite[1] = 0xfffe;	// below all (volcano lava on level 2)
-	kaneko16_priority.sprite[2] = 0x0000;	// above all
-	kaneko16_priority.sprite[3] = 0x0000;	// above all
+	kaneko16_priority.sprite[0] = 2;	// ever used ?
+	kaneko16_priority.sprite[1] = 3;	// volcano lava on level 2
+	kaneko16_priority.sprite[2] = 5;	// in-game player
+	kaneko16_priority.sprite[3] = 7;	// demostration text
 
 	kaneko16_sprite_type = 1;
+
+	kaneko16_priority.VIEW2_2_pri = 1;
 
 	toybox_mcu_init();
 }
@@ -174,15 +165,12 @@ static MACHINE_INIT( bakubrkr )
 {
 	machine_init_kaneko16();
 
-	kaneko16_priority.tile[0] = 0;
-	kaneko16_priority.tile[1] = 1;
-	kaneko16_priority.tile[2] = 2;
-	kaneko16_priority.tile[3] = 3;
+	kaneko16_priority.sprite[0] = 8;	// above all
+	kaneko16_priority.sprite[1] = 8;	// above all
+	kaneko16_priority.sprite[2] = 8;	// above all
+	kaneko16_priority.sprite[3] = 8;	// above all
 
-	kaneko16_priority.sprite[0] = 0x0000;	// above all
-	kaneko16_priority.sprite[1] = 0x0000;	// above all
-	kaneko16_priority.sprite[2] = 0x0000;	// above all
-	kaneko16_priority.sprite[3] = 0x0000;	// above all
+	kaneko16_priority.VIEW2_2_pri = 1;
 }
 
 static MACHINE_INIT( gtmr )
@@ -190,6 +178,8 @@ static MACHINE_INIT( gtmr )
 	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 1;
+
+	kaneko16_priority.VIEW2_2_pri = 1;
 
 	toybox_mcu_init();
 }
@@ -213,15 +203,12 @@ static MACHINE_INIT( mgcrystl )
     tiles of the 2nd VIEW2 chip always behind sprites?
 
 */
-	kaneko16_priority.tile[0] = 2;	// priorty mask = 1
-	kaneko16_priority.tile[1] = 0;	// priorty mask = 2
-	kaneko16_priority.tile[2] = 3;	// priorty mask = 4
-	kaneko16_priority.tile[3] = 1;	// priorty mask = 8
+	kaneko16_priority.sprite[0] = 2;	// below all
+	kaneko16_priority.sprite[1] = 3;	// above tile[0], below the others
+	kaneko16_priority.sprite[2] = 5;	// above all
+	kaneko16_priority.sprite[3] = 7;	// ""
 
-	kaneko16_priority.sprite[0] = 0xfffe;	// below all
-	kaneko16_priority.sprite[1] = 0xfffc;	// above tile[0], below the others
-	kaneko16_priority.sprite[2] = 0x0000;	// above all
-	kaneko16_priority.sprite[3] = 0x0000;	// ""
+	kaneko16_priority.VIEW2_2_pri = 0;
 }
 
 static MACHINE_INIT( sandscrp )
@@ -404,6 +391,14 @@ WRITE16_HANDLER( kaneko16_eeprom_w )
 		// clock line asserted: write latch or select next bit to read
 		EEPROM_set_clock_line((data & 0x01) ? ASSERT_LINE : CLEAR_LINE );
 	}
+
+	if (ACCESSING_MSB)
+	{
+		coin_counter_w(0, data & 0x0100);
+		coin_counter_w(1, data & 0x0200);
+		coin_lockout_w(0, data & 0x8000);
+		coin_lockout_w(1, data & 0x8000);
+	}
 }
 
 
@@ -528,7 +523,7 @@ static WRITE16_HANDLER( bloodwar_oki_0_bank_w )
 {
 	if (ACCESSING_LSB)
 	{
-		OKIM6295_set_bank_base(0, 0x40000 * (data & 0x3) );
+		OKIM6295_set_bank_base(0, 0x40000 * (data & 0xf) );
 //      logerror("CPU #0 PC %06X : OKI0  bank %08X\n",activecpu_get_pc(),data);
 	}
 }
@@ -537,7 +532,7 @@ static WRITE16_HANDLER( bloodwar_oki_1_bank_w )
 {
 	if (ACCESSING_LSB)
 	{
-		OKIM6295_set_bank_base(1, 0x40000 * (data & 0x3) );
+		OKIM6295_set_bank_base(1, 0x40000 * data );
 //      logerror("CPU #0 PC %06X : OKI1  bank %08X\n",activecpu_get_pc(),data);
 	}
 }
@@ -547,9 +542,9 @@ static WRITE16_HANDLER( bloodwar_coin_lockout_w )
 	if (ACCESSING_MSB)
 	{
 		coin_counter_w(0, data & 0x0100);
-
-		coin_lockout_w(0, data & 0x8000 );
-		coin_lockout_w(1, data & 0x8000 );
+		coin_counter_w(1, data & 0x0200);
+		coin_lockout_w(0, data & 0x8000);
+		coin_lockout_w(1, data & 0x8000);
 	}
 }
 
@@ -698,7 +693,6 @@ WRITE16_HANDLER( gtmr_oki_1_data_w )
 //      logerror("CPU #0 PC %06X : OKI1 <- %08X\n",activecpu_get_pc(),data);
 	}
 }
-
 
 static ADDRESS_MAP_START( gtmr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0ffffd) AM_READ(MRA16_ROM					)	// ROM
@@ -2291,7 +2285,6 @@ static MACHINE_DRIVER_START( bloodwar )
 	MDRV_CPU_PROGRAM_MAP(bloodwar,0)
 
 	MDRV_MACHINE_INIT( bloodwar )
-
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2329,7 +2322,6 @@ static MACHINE_DRIVER_START( bonkadv )
 	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM + 1 ) // comment above
 
 	MDRV_MACHINE_INIT( bonkadv )
-
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2751,9 +2743,9 @@ PALs : BW-U47, BW-U48 (backgrounds encryption)
 ***************************************************************************/
 
 ROM_START( berlwall )
- 	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "bw100a", 0x000000, 0x020000, CRC(e6bcb4eb) SHA1(220b8fddc79230b4f6a8cf33e1035355c485e8d1) )
-	ROM_LOAD16_BYTE( "bw101a", 0x000001, 0x020000, CRC(38056fb2) SHA1(48338b9a5ebea872286541a3c45016673c4af76b) )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "u23_01.bin", 0x000000, 0x020000, CRC(76b526ce) SHA1(95ba7cccbe88fd695c28b6a7c25a1afd130c1aa6) )
+	ROM_LOAD16_BYTE( "u39_01.bin", 0x000001, 0x020000, CRC(78fa7ef2) SHA1(8392de6e307dcd2bf5bcbeb37d578d33246acfcf) )
 
 	ROM_REGION( 0x120000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "bw001",  0x000000, 0x080000, CRC(bc927260) SHA1(44273a8b6a041504d54da4a7897adf23e3e9db10) )
@@ -2777,10 +2769,55 @@ ROM_START( berlwall )
 	ROM_LOAD( "bw000",  0x000000, 0x040000, CRC(d8fe869d) SHA1(75e9044c4164ca6db9519fcff8eca6c8a2d8d5d1) )
 ROM_END
 
+
+/*
+berlwalt original bug ?
+
+info from SebV:
+
+After about level 5 or so, if you insert a coin when the continue screen
+pops up, an error message "Copy Board" pops up.
+----------------------------------------
+Happened to me when player dies, at level 4.
+The message is not written in ROM, its sprite ram adress is (always?)
+$30fd40
+Routine $337d2 writes it (and routine $5c8c erases it)
+The 'COPY BOARD!' message in stored in ROM directly as sprite number
+($1cfa8)
+
+$20288a : seems to contain the level number (initialized to 2 (?) when a
+game is started, and is incremented by 1 once a level is finished)
+
+01CF3E: move.b  $20288a.l, D0
+01CF44: cmpi.b  #$d, D0
+01CF48: bcs     1cf76                   ; branch not taken -=> 'COPY BOARD!'
+01CF4A: movem.l D0/A0-A2, -(A7)
+01CF4E: movea.l A0, A1
+01CF50: lea     ($4c,PC), A0; ($1cf9e)
+01CF54: nop
+01CF56: lea     ($a,A0), A0             ; A0 = $1cfa8 = 'COPY BOARD!'
+01CF5A: lea     $30e064.l, A1
+01CF60: lea     (-$64,A1), A1
+01CF64: lea     ($1d40,A1), A1
+01CF68: move.b  #$80, D1
+01CF6C: jsr     $33776.l                ; display routine
+01CF72: movem.l (A7)+, D0/A0-A2
+01CF76:
+
+berlwall levels: 1-1,2,3(anim),...
+berlwalt levels: 1-1(anim)2-1/2/3/4/5(anim)3-1/2/3/4/5(anim)4-1(*)
+
+note: berlwall may be genuine while berlwalt may be bootleg! because
+stage 1-1 of berlwalt is stage 1-3 of berlwall, and berlwall has
+explanation ingame. + the flyer from TAFA shows main character as
+berlwall and not berlwalt!
+--------------------------------------------------------------------------------
+*/
+
 ROM_START( berlwalt )
  	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "u23_01.bin", 0x000000, 0x020000, CRC(76b526ce) SHA1(95ba7cccbe88fd695c28b6a7c25a1afd130c1aa6) )
-	ROM_LOAD16_BYTE( "u39_01.bin", 0x000001, 0x020000, CRC(78fa7ef2) SHA1(8392de6e307dcd2bf5bcbeb37d578d33246acfcf) )
+	ROM_LOAD16_BYTE( "bw100a", 0x000000, 0x020000, CRC(e6bcb4eb) SHA1(220b8fddc79230b4f6a8cf33e1035355c485e8d1) )
+	ROM_LOAD16_BYTE( "bw101a", 0x000001, 0x020000, CRC(38056fb2) SHA1(48338b9a5ebea872286541a3c45016673c4af76b) )
 
 	ROM_REGION( 0x120000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "bw001",  0x000000, 0x080000, CRC(bc927260) SHA1(44273a8b6a041504d54da4a7897adf23e3e9db10) )
@@ -2962,7 +2999,7 @@ ROM_START( bloodwar )
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
 	ROM_LOAD( "3010226.55", 0x000000, 0x100000, CRC(fcf215de) SHA1(83015f10e62b917efd6e3edfbd45fb8f9b35db2b) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "101f0223.101", 0x000000, 0x100000, CRC(295f3c93) SHA1(558698f1d04b23dd2a73e2eae5ecce598defb228) )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
@@ -3906,27 +3943,27 @@ ROM_END
 
 /* Working games */
 
-GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall,   ROT0,  "Kaneko", "The Berlin Wall (set 1)", 0 )
-GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall,   ROT0,  "Kaneko", "The Berlin Wall (set 2)", 0 )
+GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall,   ROT0,  "Kaneko", "The Berlin Wall", 0 )
+GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall,   ROT0,  "Kaneko", "The Berlin Wall (bootleg ?)", 0 )
 GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko", "Magical Crystals (World)", 0 )
 GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)", 0 )
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16,   ROT0,  "Atlus",  "Blaze On (Japan)", 0 )
+GAME( 1992, explbrkr, 0,        bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Explosive Breaker", 0 )
+GAME( 1992, bakubrkr, explbrkr, bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Bakuretsu Breaker", 0 )
 GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion (set 1)", 0 )
 GAME( 1992, sandscra, sandscrp, sandscrp, sandscrp, 0,          ROT90, "Face",   "Sand Scorpion (set 2)", 0 )
+GAME( 1994, bonkadv,  0,        bonkadv , bonkadv,  samplebank, ROT0,  "Kaneko", "B.C. Kid / Bonk's Adventure / Kyukyoku!! PC Genjin", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "1000 Miglia: Great 1000 Miles Rally (94/07/18)", 0 )
 GAME( 1994, gtmra,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "1000 Miglia: Great 1000 Miles Rally (94/06/13)", 0 )
 GAME( 1994, gtmre,    gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally: Evolution Model!!! (94/09/06)", 0 )
-GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally: U.S.A Version! (94/09/06)" , 0) // U.S.A version seems part of the title, rather than region
+GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally: U.S.A Version! (94/09/06)", 0 ) // U.S.A version seems part of the title, rather than region
 GAME( 1995, gtmr2,    0,        gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/05/24)", 0 )
 GAME( 1995, gtmr2a,   gtmr2,    gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally (95/04/04)", 0 )
 GAME( 1995, gtmr2u,   gtmr2,    gtmr2,    gtmr2,    samplebank, ROT0,  "Kaneko", "Great 1000 Miles Rally 2 USA (95/05/18)", 0 )
 
 /* Non-working games (mainly due to protection) */
 
-GAME( 1992, explbrkr, 0,        bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Explosive Breaker",       GAME_IMPERFECT_GRAPHICS )
-GAME( 1992, bakubrkr, explbrkr, bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Bakuretsu Breaker",       GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr,   ROT0,  "Kaneko", "Shogun Warriors",         GAME_NOT_WORKING )
 GAME( 1992, fjbuster, shogwarr, shogwarr, shogwarr, shogwarr,   ROT0,  "Kaneko", "Fujiyama Buster (Japan)", GAME_NOT_WORKING )
 GAME( 1992, brapboys, 0,        shogwarr, shogwarr, 0,          ROT0,  "Kaneko", "B.Rap Boys",              GAME_NOT_WORKING )
-GAME( 1994, bloodwar, 0,        bloodwar, bloodwar, kaneko16,   ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )
-GAME( 1994, bonkadv,  0,        bonkadv , bonkadv,  samplebank, ROT0,  "Kaneko", "B.C. Kid / Bonk's Adventure / Kyukyoku!! PC Genjin", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1994, bloodwar, 0,        bloodwar, bloodwar, samplebank, ROT0,  "Kaneko", "Blood Warrior",           GAME_NOT_WORKING )

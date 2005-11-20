@@ -2681,7 +2681,7 @@ static unsigned dump_dasm( unsigned pc )
 						{
 							if ( p < n)
 							{
-								l += win_printf( win, "%02X%",
+								l += win_printf( win, "%02X",
 									RDMEM(order(p,4)) );
 								p ++;
 							}

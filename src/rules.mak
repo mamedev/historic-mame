@@ -2128,3 +2128,11 @@ else
 SOUNDDEFS += -DHAS_ES8712=0
 endif
 
+SOUND=$(strip $(findstring RF5C400@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_RF5C400=1
+SOUNDOBJS += $(OBJ)/sound/rf5c400.o
+else
+SOUNDDEFS += -DHAS_RF5C400=0
+endif
+

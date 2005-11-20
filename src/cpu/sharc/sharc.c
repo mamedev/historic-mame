@@ -21,6 +21,7 @@ enum {
 	SHARC_R8,		SHARC_R9,		SHARC_R10,		SHARC_R11,
 	SHARC_R12,		SHARC_R13,		SHARC_R14,		SHARC_R15,
 	SHARC_SYSCON,	SHARC_SYSSTAT,	SHARC_MRF,		SHARC_MRB,
+	SHARC_STATUS_STKP,
 	SHARC_I0,		SHARC_I1,		SHARC_I2,		SHARC_I3,
 	SHARC_I4,		SHARC_I5,		SHARC_I6,		SHARC_I7,
 	SHARC_I8,		SHARC_I9,		SHARC_I10,		SHARC_I11,
@@ -1132,6 +1133,7 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SHARC_IMASK:		info->i = sharc.imask;					break;
 		case CPUINFO_INT_REGISTER + SHARC_USTAT1:		info->i = sharc.ustat1;					break;
 		case CPUINFO_INT_REGISTER + SHARC_USTAT2:		info->i = sharc.ustat2;					break;
+		case CPUINFO_INT_REGISTER + SHARC_STATUS_STKP:	info->i = sharc.status_stkp;			break;
 
 		case CPUINFO_INT_REGISTER + SHARC_R0:			info->i = sharc.r[0].r;					break;
 		case CPUINFO_INT_REGISTER + SHARC_R1:			info->i = sharc.r[1].r;					break;
@@ -1217,6 +1219,7 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + SHARC_IMASK:		sprintf(info->s = cpuintrf_temp_str(), "IMASK: %08X", sharc.imask); break;
 		case CPUINFO_STR_REGISTER + SHARC_USTAT1:		sprintf(info->s = cpuintrf_temp_str(), "USTAT1: %08X", sharc.ustat1); break;
 		case CPUINFO_STR_REGISTER + SHARC_USTAT2:		sprintf(info->s = cpuintrf_temp_str(), "USTAT2: %08X", sharc.ustat2); break;
+		case CPUINFO_STR_REGISTER + SHARC_STATUS_STKP:	sprintf(info->s = cpuintrf_temp_str(), "STATUSSTKP: %08X", sharc.status_stkp); break;
 
 		case CPUINFO_STR_REGISTER + SHARC_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", (UINT32)sharc.r[0].r); break;
 		case CPUINFO_STR_REGISTER + SHARC_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", (UINT32)sharc.r[1].r); break;

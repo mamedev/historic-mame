@@ -6,63 +6,29 @@ Ernesto Corvi
 ernesto@imagina.com
 
 Notes:
-- 4 players mode is not emulated. THis involves some shared RAM and a subboard.
+- 4 players mode is not emulated. This involves some shared RAM and a subboard.
   There is additional code for a third Z80 in the bootleg version, I don't
   know if it's related or if its just a replacement for the 68705.
 
 - kicknrun does a PS4 STOP ERROR short after boot, but works afterwards.
   PS4 is the mcu.
 
-- kikikai sometimes crashes, might be a synchronization issue
-
-
-Revision:
-
-4-1-2002 Acho A. Tang
-
-[Kiki Kaikai]
-
-- Part of Kiki's code runs straight across banked ROM boundaries which MAME's
-  current memory model doesn't seem to handle very well. The result is
-  garbage being executed and thus the game crashes. This can be avoided by
-  preloading bank zero into its default location.
-
-- Kiki Kaikai also suffers from random lock-up's. It happens when the sound
+- Kiki Kaikai suffers from random lock-up's. It happens when the sound
   CPU misses CTS from YM2203. The processor will loop infinitely and the main
   CPU will in turn wait forever. It's difficult to meet the required level
-  of synchronization but we can filter the 2205's busy signal.
+  of synchronization. THis is kludged by filtering the 2203's busy signal.
 
-- Collision is not working on some sprites and the exact reason is unknown.
-  My investigation so far has dismissed the following possibilities:
+- KiKi KaiKai uses a custom 68701 MCU which isn't dumped. The bootleg Knight Boy
+  replaces it with a 68705. The bootleg is NOT 100% equivalent to the original
+  (a situation similar to Bubble Bobble): collision detection is imperfect, the
+  player can't be killed by some enemies.
+  I think the bootleggers put the custom mcu in a test rig, examined its bus
+  activity and replicated the behaviour inaccurately because they coudln't
+  figure it all out. Indeed, the 68705 code reads all the memory locations
+  related to the missing collision detection, but does nothing with them.
 
- 1) Hidden IRQ's - RST38 and NMI are the only interrupts operatubg in mode 1
-    and they both work as supposed to.
-
- 2) Collision code missing - I've located collision routines responsible for
-    over 90% of the enemies. They're called by individual sprite handlers
-    everytime after VRAM update - except those with collision problems.
-
- 3) Collision data missing - Sprite information is stored at $D800. Data of
-     the questionable sprites is further formatted, tagged and copied to the
-     memory area shared with the MCU.
-
- 4) MCU not working - The MCU latches specially formatted sprite data at
-    $E820 byte-by-byte, one after another into the accumulator, but does
-    not process nor store them into memory. It then asserts $E8A3 when
-    the reading is done. The code is about a kilobyte long and I checked
-    everywhere including IRQ services but no sign of collision functions.
-    The main CPU expects a result at $E8A2 however. The problrm is quite
-    similar to the randomization at $C07C in Bubble Bobble.
-
-    Kiki Kaikai is likely to have extra circuitary connected to the MCU. I've
-    added a function in machine\mexico86.c to simulate its I/O behavior but we
-    need real board owners to verify. Mexico86 and Kick'n Run don't use
-    $E8A2-$E8A3 so they're not affected in any way.
-
-- Modified VIDEO_UPDATE. The orignal is a Mexico86 duplicate which produces
-  graphics artifacts especially beyond stage 3.
-
-- Rearranged DIP settings according to the Japanese manual.
+- In the KiKi KaiKai MCU simulation, I don't bother supporting the coinage dip
+  switch settings. Therefore, it's hardwired to be 1 coin / 1 credit.
 
 ***************************************************************************/
 
@@ -72,6 +38,8 @@ Revision:
 
 /* in machine/mexico86.c */
 extern unsigned char *mexico86_protection_ram;
+WRITE8_HANDLER( mexico86_f008_w );
+INTERRUPT_GEN( kikikai_interrupt );
 INTERRUPT_GEN( mexico86_m68705_interrupt );
 READ8_HANDLER( mexico86_68705_portA_r );
 WRITE8_HANDLER( mexico86_68705_portA_w );
@@ -104,23 +72,6 @@ static READ8_HANDLER( shared_r )
 static WRITE8_HANDLER( shared_w )
 {
 	shared[offset] = data;
-}
-
-/*
-$f008 - write
-bit 7 = ? (unused?)
-bit 6 = ? (unused?)
-bit 5 = ? (unused?)
-bit 4 = ? (usually set in game)
-bit 3 = ? (usually set in game)
-bit 2 = sound cpu reset line
-bit 1 = microcontroller reset line
-bit 0 = ? (unused?)
-*/
-static WRITE8_HANDLER( mexico86_f008_w )
-{
-	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 4) ? CLEAR_LINE : ASSERT_LINE);
-	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 2) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
@@ -353,20 +304,20 @@ INPUT_PORTS_START( kikikai )
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "50000 100000" )
 	PORT_DIPSETTING(    0x0c, "70000 150000" )
 	PORT_DIPSETTING(    0x08, "70000 200000" )
 	PORT_DIPSETTING(    0x04, "100000 300000" )
-	PORT_DIPSETTING(    0x00, "50000 100000" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x10, "5" )
-	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x40, "A" )
 	PORT_DIPSETTING(    0x00, "B" )
@@ -418,14 +369,14 @@ static struct YM2203interface ym2203_interface =
 static MACHINE_DRIVER_START( mexico86 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
+	MDRV_CPU_ADD_TAG("main",Z80, 6000000)      /* 6 MHz??? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
 	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(M68705, 4000000/2) /* xtal is 4MHz (????) I think it's divided by 2 internally */
+	MDRV_CPU_ADD_TAG("mcu", M68705, 4000000/2) /* xtal is 4MHz (????) I think it's divided by 2 internally */
 	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 	MDRV_CPU_VBLANK_INT(mexico86_m68705_interrupt,2)
 
@@ -453,15 +404,33 @@ static MACHINE_DRIVER_START( mexico86 )
 
 	MDRV_SOUND_ADD(YM2203, 3000000)
 	MDRV_SOUND_CONFIG(ym2203_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
+	MDRV_SOUND_ROUTE(2, "mono", 0.30)
+	MDRV_SOUND_ROUTE(3, "mono", 1.00)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( knightb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mexico86)
+	MDRV_CPU_REMOVE("sub")
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(kikikai)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( kikikai )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(mexico86)
-	MDRV_CPU_REMOVE("sub")
+	MDRV_IMPORT_FROM(knightb)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(kikikai_interrupt, 1) // IRQs should be triggered by the MCU, but we don't have it
+
+	MDRV_CPU_REMOVE("mcu")	// we don't have code for the 68701
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(kikikai)
@@ -485,12 +454,37 @@ ROM_START( kikikai )
 	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, CRC(cc3539db) SHA1(4239a40fdee65cba613e4b4ec54cf7899480e366) )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
-	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, CRC(3cc2bbe4) SHA1(af018a1e0655b66fd859617a3bd0c01a4967c0e6) )
+	ROM_LOAD( "68701.bin",    0x0000, 0x0800, NO_DUMP )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a85-15.rom", 0x00000, 0x10000, CRC(aebc8c32) SHA1(77347cf5780f084a77123eb636cd0bad672a39e8) )
 	ROM_LOAD( "a85-14.rom", 0x10000, 0x10000, CRC(a9df0453) SHA1(a5e9cd6266ab3ae46cd1b35a4603e13a2ca023fb) )
 	ROM_LOAD( "a85-13.rom", 0x20000, 0x10000, CRC(3eeaf878) SHA1(f8ae8938a8358d1222e9fdf7bc0094ac13faf404) )
+	ROM_LOAD( "a85-12.rom", 0x30000, 0x10000, CRC(91e58067) SHA1(c7eb9bf650039254fb7664758938b1012eacc597) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "a85-08.rom", 0x0000, 0x0100, CRC(d15f61a8) SHA1(945c8aa26c85269c10373218bef13e04e25eb1e4) )
+	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, CRC(8fc3fa86) SHA1(d4d86f8e147bbf2a370de428ac20a28b0f146782) )
+	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, CRC(b931c94d) SHA1(fb554084f34c602d1ff7806fb945a06cf14332af) )
+ROM_END
+
+ROM_START( knightb )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )    /* 196k for code */
+	ROM_LOAD( "a85-17.rom", 0x00000, 0x08000, CRC(c141d5ab) SHA1(fe3622ba283e514416c43a44f83f922a958b27cd) ) /* 1st half, main code        */
+	ROM_CONTINUE(           0x20000, 0x08000 )             /* 2nd half, banked at 0x8000 */
+	ROM_LOAD( "a85-16.rom", 0x10000, 0x10000, CRC(4094d750) SHA1(05e0ad177a3eb144b203784ecb6242a0fc5c4d4d) ) /* banked at 0x8000           */
+	ROM_COPY(  REGION_CPU1, 0x10000, 0x08000, 0x04000 ) //AT: set as default to avoid banking problems
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )    /* 64k for the audio cpu */
+	ROM_LOAD( "a85-11.rom", 0x0000, 0x8000, CRC(cc3539db) SHA1(4239a40fdee65cba613e4b4ec54cf7899480e366) )
+
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
+	ROM_LOAD( "knightb.uc", 0x0000, 0x0800, CRC(3cc2bbe4) SHA1(af018a1e0655b66fd859617a3bd0c01a4967c0e6) )
+
+	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "knightb.d",  0x00000, 0x10000, CRC(53ecdb3f) SHA1(f8b4822926f3712a426c014759b1cf382a7ad9d1) )
+	ROM_LOAD( "a85-14.rom", 0x10000, 0x10000, CRC(a9df0453) SHA1(a5e9cd6266ab3ae46cd1b35a4603e13a2ca023fb) )
+	ROM_LOAD( "knightb.b",  0x20000, 0x10000, CRC(63ad7df3) SHA1(8ce149b63032bcdd596a3fa52baba2f2c154e84e) )
 	ROM_LOAD( "a85-12.rom", 0x30000, 0x10000, CRC(91e58067) SHA1(c7eb9bf650039254fb7664758938b1012eacc597) )
 
 	ROM_REGION( 0x0300, REGION_PROMS, 0 )
@@ -565,5 +559,6 @@ ROM_END
 
 
 GAME( 1986, kikikai,  0,        kikikai,  kikikai,  0, ROT90, "Taito Corporation", "KiKi KaiKai", 0 )
-GAME( 1986, kicknrun, 0,        mexico86, mexico86, 0, ROT0, "Taito Corporation", "Kick and Run", 0 )
-GAME( 1986, mexico86, kicknrun, mexico86, mexico86, 0, ROT0, "bootleg", "Mexico 86", 0 )
+GAME( 1986, knightb,  kikikai,  knightb,  kikikai,  0, ROT90, "bootleg", "Knight Boy", 0 )
+GAME( 1986, kicknrun, 0,        mexico86, mexico86, 0, ROT0,  "Taito Corporation", "Kick and Run", 0 )
+GAME( 1986, mexico86, kicknrun, mexico86, mexico86, 0, ROT0,  "bootleg", "Mexico 86", 0 )

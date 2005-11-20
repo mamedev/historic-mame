@@ -267,7 +267,7 @@ static READ32_HANDLER( sysreg_r )
 		}
 		if (!(mem_mask & 0x000000ff))
 		{
-			r |= 0xff;
+			r |= 0xf7;
 		}
 	}
 	else if (offset == 1)

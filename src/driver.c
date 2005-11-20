@@ -841,6 +841,7 @@ const game_driver *drivers[] =
 	DRIVER( panicger )	/* (c) 1980 */
 	DRIVER( zerohour )	/* 8011 (c) Universal */
 	DRIVER( redclash )	/* (c) 1981 Tehkan */
+	DRIVER( redclsha )	/* (c) 1981 Tehkan */
 	DRIVER( redclask )	/* (c) Kaneko (bootleg?) */
 	DRIVER( magspot )	/* ???? (c) [1980] */
 	DRIVER( magspot2 )	/* 8013 (c) [1980] */
@@ -1539,6 +1540,7 @@ const game_driver *drivers[] =
 	DRIVER( sboblbob )	/* bootleg */
 	DRIVER( missb2 )	/* bootleg on enhanced hardware */
 	DRIVER( kikikai )	/* A85 (c) 1986 Taito Corporation */
+	DRIVER( knightb )	/* bootleg */
 	DRIVER( kicknrun )	/* A87 (c) 1986 Taito Corporation */
 	DRIVER( mexico86 )	/* bootleg (Micro Research) */
 	DRIVER( darius )	/* A96 (c) 1986 Taito Corporation Japan (World) */
@@ -1946,6 +1948,7 @@ const game_driver *drivers[] =
 	DRIVER( snowbroc )	/* MIN16-02 (c) 1990 Toaplan + Romstar license */
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
 	DRIVER( wintbob )	/* bootleg */
+	DRIVER( honeydol )	/* (c) 1995 Barko Corp */
 	/* SemiCom games on snowbros like hardware */
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
 	DRIVER( hyperpcb )	/* bootleg */
@@ -3474,13 +3477,15 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tantrbl )	/* bootleg */
 	DRIVER( tantrbl2 )	/* bootleg */
 	DRIVER( puyo )		/* (c) 1992 Sega / Compile */
+	DRIVER( puyobl )	/* bootleg */
 	DRIVER( puyoj )		/* (c) 1992 Sega / Compile */
 	DRIVER( puyoja )	/* (c) 1992 Sega / Compile */
-	DRIVER( puyobl )	/* bootleg */
-	DRIVER( ichidant )	/* (c) 1994 Sega */
-	DRIVER( ichidnte )	/* (c) 1994 Sega */
-	DRIVER( ichidntb )	/* bootleg */
+	DRIVER( ichir )		/* (c) 1994 Sega */
+	DRIVER( ichirk )	/* (c) 1994 Sega */
+	DRIVER( ichirj )	/* (c) 1994 Sega */
+	DRIVER( ichirjbl )	/* bootleg */
 	DRIVER( stkclmns )	/* (c) 1994 Sega */
+	DRIVER( stkclmnj )	/* (c) 1994 Sega */
 	DRIVER( puyopuy2 )	/* (c) 1994 Compile + Sega license */
 	DRIVER( potopoto )	/* (c) 1994 Sega */
 	DRIVER( zunkyou )	/* (c) 1994 Sega */
@@ -5997,6 +6002,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( jsk )		/* (c) 1997 Visco */
 	DRIVER( gdfs )		/* (c) 1995 Banpresto */
 
+	DRIVER( darkhors )	/* bootleg of Jockey Club II */
+
 	/* ST-0016 based games (ST-0016 is a z80 / gfx / sound all in one) */
 	/* plain ST-0016 */
 	DRIVER( renju )
@@ -6301,7 +6308,8 @@ Other Sun games
 	DRIVER( ddenlovr )	/* "113" (c) 1996 Dynax */
 	DRIVER( hanakanz )	/* "507" 1996 Dynax */
 	DRIVER( hkagerou )	/* "510" Hana Kagerou 1996 Nakanihon */
-	DRIVER( realbrk )	/* "523" Billiard Academy Real Break 1998 */
+	DRIVER( realbrk )	/* "600" Billiard Academy Real Break 1998 (Europe)*/
+	DRIVER( realbrkj )	/* "523" Billiard Academy Real Break 1998 (Japan)*/
 	DRIVER( mjchuuka )	/* "???" (c) 1998 Dynax */
 	DRIVER( mjreach1 )	/* "526" Mahjong Reach Ippatsu 1998 Nihon System/Dynax */
 
@@ -6330,14 +6338,17 @@ Other Sun games
 	DRIVER( iqblock )	/* (c) 1993 */
 	DRIVER( grndtour )	/* (c) 1993 */
 	DRIVER( cabaret )
-	DRIVER( chindrag )	/* (c) 1994 */
-	DRIVER( chugokur )	/* (c) 1994 */
-	DRIVER( grtwall )	/* (c) 1994 */
-	DRIVER( lhb )
-	DRIVER( xymg )
-	DRIVER( lordgun )	/* (c) 1994 */
-	DRIVER( vbowl )
+	DRIVER( lhb )		/* (c) 1995 */
+	DRIVER( chindrag )	/* (c) 1995 */
+	DRIVER( chugokur )	/* (c) 1995 */
 	DRIVER( chmplst2 )	/* (c) 1996 */
+	DRIVER( xymg )		/* (c) 1996 */
+	DRIVER( grtwall )	/* (c) 1996 */
+	DRIVER( vbowl )		/* (c) 1996 */
+	DRIVER( vbowlj )	/* (c) 1996 */
+	DRIVER( drgnwrld )	/* (c) 1997 */
+
+	DRIVER( lordgun )	/* (c) 1994 */
 	DRIVER( tarzan )
 
 	/* IGS PGM System Games */
@@ -6682,6 +6693,7 @@ Other Sun games
 	DRIVER( funybubl )	/* Comad Industries */
 	DRIVER( dcheese )	/* (c) 1993 HAR */
 	DRIVER( lottof2 )	/* (c) 1993 HAR */
+	DRIVER( fredmem )	/* (c) 1993 HAR */
 	DRIVER( f15se )		/* Microprose */
 	DRIVER( botss )		/* Microprose */
 	DRIVER( stankatk )	/* Microprose */

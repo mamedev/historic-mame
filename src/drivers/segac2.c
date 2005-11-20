@@ -3,35 +3,39 @@
     Sega System C/C2 Driver
     driver by David Haywood and Aaron Giles
     ---------------------------------------
-    Last Update 17 Sept 2005
+    Last Update 15 Nov 2005
 
 
     Sega's C2 was used between 1989 and 1994, the hardware being very similar to that
     used by the Sega MegaDrive/Genesis Home Console Sega produced around the same time.
 
-    Year  Game                  Developer         Versions Dumped  Board  Status        Gen Ver Exists?
-    ====  ====================  ================  ===============  =====  ============  ===============
-    1989  Bloxeed               Sega / Elorg      Eng              C      Playable      n
-    1990  Columns               Sega              Jpn              C      Playable      y
-    1990  Columns II            Sega              Jpn              C      Playable      n
-    1990  Borench               Sega              Eng              C2     Playable      n
-    1990  ThunderForce AC       Sega / Technosoft Eng, Jpn, EngBL  C2     Playable      y (as ThunderForce 3?)
-    1991  Twin Squash           Sega              Eng              C2     Playable      n
-    1992  Ribbit!               Sega              Eng              C2     Playable      ?
-    1992  Tant-R                Sega              Jpn, JpnBL       C2     Playable      y
-    1992  Puyo Puyo             Sega / Compile    Jpn (2 Vers)     C2     Playable      y
-    1994  Ichidant-R            Sega              Jpn              C2     Playable      y
-    1994  PotoPoto              Sega              Jpn              C2     Playable      n
-    1994  Puyo Puyo 2           Compile           Jpn              C2     Playable      y
-    1994  Stack Columns         Sega              Jpn              C2     Playable      n
-    1994  Zunzunkyou No Yabou   Sega              Jpn              C2     Playable      n
+    todo: fill in protection chip data
+
+    Year  Game                       Developer         Protection Chip  Board
+    ====  ====================       ================  ===============  =====
+    1989  Bloxeed                    Sega / Elorg                       C
+    1990  Columns                    Sega                               C
+    1990  Columns II                 Sega                               C
+    1990  Borench                    Sega                               C2
+    1990  ThunderForce AC            Sega / Technosoft                  C2
+    1991  Twin Squash                Sega                               C2
+    1992  Ribbit!                    Sega                               C2
+    1992  Tant-R (Japan)             Sega              317-0211         C2
+    1992  Tant-R (Korea)             Sega                               C2
+    1992  Puyo Puyo                  Sega / Compile    317-0203         C2
+    1994  Ichidant-R (World)         Sega                               C2
+    1994  Ichidant-R (Japan)         Sega                               C2
+    1994  Ichidant-R (Korea)         Sega                               C2
+    1994  PotoPoto (Japan)           Sega                               C2
+    1994  Puyo Puyo 2                Compile                            C2
+    1994  Stack Columns (World)      Sega              317-0223         C2
+    1994  Stack Columns (Japan)      Sega                               C2
+    1994  Zunzunkyou No Yabou        Sega                               C2
 
         + Print Club Vols 1,2,4,5 (and 3?)
 
 
-    Notes:  Eng indicates game is in the English Language, Most Likely a European / US Romset
-            Jpn indicates the game plays in Japanese and is therefore likely a Japanes Romset
-
+     Notes:
             Bloxeed doesn't Read from the Protection Chip at all; all of the other games do.
             Currently the protection chip is mostly understood, and needs a table of 256
             4-bit values for each game. In all cases except for Poto Poto and Puyo Puyo 2,
@@ -84,7 +88,7 @@
 #define XL2_CLOCK			53693175
 
 
-#define LOG_PROTECTION		0
+#define LOG_PROTECTION		1
 #define LOG_PALETTE			0
 #define LOG_IOCHIP			0
 
@@ -1073,7 +1077,7 @@ INPUT_PORTS_START( zunkyou )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ichidant )
+INPUT_PORTS_START( ichir )
 	PORT_INCLUDE( systemc_generic )
 
 	PORT_MODIFY("P1")
@@ -1374,7 +1378,7 @@ ROM_START( tantrbl2 ) /* Tant-R (Puzzle & Action) (Alt Bootleg Running on C Boar
 	ROM_LOAD16_BYTE( "mpr15615.33",  0x100001, 0x080000, CRC(36a88bd4) SHA1(cc7f6a947d1b79bb86957c43035b53d6d2bcfa28) )
 ROM_END
 
-ROM_START( ichidntb ) /* Ichident-R (Puzzle & Action 2) (Bootleg Running on C Board?, No Samples) */
+ROM_START( ichirjbl ) /* Ichident-R (Puzzle & Action 2) (Bootleg Running on C Board?, No Samples) */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "27c4000.2",0x000000, 0x080000, CRC(5a194f44) SHA1(67a4d21b91704f8c2210b5106e82e22ba3366f4c) )
 	ROM_LOAD16_BYTE( "27c4000.1",0x000001, 0x080000, CRC(de209f84) SHA1(0860d0ebfab2952e82fc1e292bf9410d673d9322) )
@@ -1468,10 +1472,11 @@ ROM_END
 
 ROM_START( tantrkor ) /* Tant-R (Puzzle & Action) (Korea) (c)1993 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "32", 0x000000, 0x080000, CRC(7efe26b3) SHA1(958420b9b400eafe392745af90bff729463427c7) )
-	ROM_LOAD16_BYTE( "31", 0x000001, 0x080000, CRC(af5a860f) SHA1(cb0011f420721d035e9f0e43bb72cf286982fd32) )
-	ROM_LOAD16_BYTE( "34", 0x100000, 0x080000, BAD_DUMP CRC(a4d01173) SHA1(d5bff55a675a71f1cb623d1e3f94650e12419b3a) )
-	ROM_LOAD16_BYTE( "33", 0x100001, 0x080000, CRC(82d78413) SHA1(9ff9c2b1632e280444965110bab90c0fc98cd6da) )
+	/* strange names, but this is what was printed on the (original) chips */
+	ROM_LOAD16_BYTE( "m15592b.32", 0x000000, 0x080000, CRC(7efe26b3) SHA1(958420b9b400eafe392745af90bff729463427c7) )
+	ROM_LOAD16_BYTE( "m15592b.31", 0x000001, 0x080000, CRC(af5a860f) SHA1(cb0011f420721d035e9f0e43bb72cf286982fd32) )
+	ROM_LOAD16_BYTE( "m15992b.34", 0x100000, 0x080000, CRC(6282a5d4) SHA1(9220e119e79d969d7d70e8a25c75dd3d9bc340ae) )
+	ROM_LOAD16_BYTE( "m15592b.33", 0x100001, 0x080000, CRC(82d78413) SHA1(9ff9c2b1632e280444965110bab90c0fc98cd6da) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )
 	ROM_LOAD( "epr15617.4", 0x000000, 0x040000, CRC(338324a1) SHA1(79e2782d0d4764dd723886f846c852a6f6c1fb64) )
@@ -1538,19 +1543,7 @@ ROM_START( puyobl ) /* Puyo Puyo  (c)1992 Sega / Compile  Bootleg */
 	ROM_LOAD( "puyopuyb.abo", 0x000000, 0x020000, CRC(79112b3b) SHA1(fc3a202e1e2ff39950d4af689b7fcca86c301805) )
 ROM_END
 
-
-ROM_START( ichidant ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
-	ROM_REGION( 0x200000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "epr16886", 0x000000, 0x080000, CRC(38208e28) SHA1(07fc634bdf2d3e25274c9c374b3506dec765114c) )
-	ROM_LOAD16_BYTE( "epr16885", 0x000001, 0x080000, CRC(1ce4e837) SHA1(16600600e12e3f35e3da89524f7f51f019b5ad17) )
-	ROM_LOAD16_BYTE( "epr16888", 0x100000, 0x080000, CRC(85d73722) SHA1(7ebe81b4d6c89f87f60200a3a8cddb07d581adef) )
-	ROM_LOAD16_BYTE( "epr16887", 0x100001, 0x080000, CRC(bc3bbf25) SHA1(e760ad400bc183b38e9787d88c8ac084fbe2ae21) )
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
-	ROM_LOAD( "epr16884", 0x000000, 0x080000, CRC(fd9dcdd6) SHA1(b8053a2e68072e7664ffc3c53f983f3ba72a892b) )
-ROM_END
-
-ROM_START( ichidnte ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
+ROM_START( ichir ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega (World) */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "pa2_32.bin", 0x000000, 0x080000, CRC(7ba0c025) SHA1(855e9bb2a20c6f51b26381233c57c26aa96ad1f6) )
 	ROM_LOAD16_BYTE( "pa2_31.bin", 0x000001, 0x080000, CRC(5f86e5cc) SHA1(44e201de00dfbf7c66d0e0d40d17b162c6f0625b) )
@@ -1561,8 +1554,41 @@ ROM_START( ichidnte ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega */
 	ROM_LOAD( "pa2_02.bin", 0x000000, 0x080000, CRC(fc7b0da5) SHA1(46770aa7e19b4f8a183be3f433c48ad677b552b1) )
 ROM_END
 
+ROM_START( ichirk ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega (Korea) */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	/* Again the part numbers are quite strange for the Korean verison */
+	ROM_LOAD16_BYTE( "epr_ichi.32", 0x000000, 0x080000, CRC(804dea11) SHA1(40bf8cbd40969a5880df10914252b7f64d5ce8e9) )
+	ROM_LOAD16_BYTE( "epr_ichi.31", 0x000001, 0x080000, CRC(92452353) SHA1(d2e1da5b139965611cd8d707d23396b5d4c07d12) )
+	ROM_LOAD16_BYTE( "epr16888",   0x100000, 0x080000, CRC(85d73722) SHA1(7ebe81b4d6c89f87f60200a3a8cddb07d581adef) )  // m17235a.34
+	ROM_LOAD16_BYTE( "epr16887",   0x100001, 0x080000, CRC(bc3bbf25) SHA1(e760ad400bc183b38e9787d88c8ac084fbe2ae21) )  // m17220a.33
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "pa2_02.bin", 0x000000, 0x080000, CRC(fc7b0da5) SHA1(46770aa7e19b4f8a183be3f433c48ad677b552b1) ) // m17220a.4
+ROM_END
+
+ROM_START( ichirj ) /* Ichident-R (Puzzle & Action 2)  (c)1994 Sega (Japan) */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr16886", 0x000000, 0x080000, CRC(38208e28) SHA1(07fc634bdf2d3e25274c9c374b3506dec765114c) )
+	ROM_LOAD16_BYTE( "epr16885", 0x000001, 0x080000, CRC(1ce4e837) SHA1(16600600e12e3f35e3da89524f7f51f019b5ad17) )
+	ROM_LOAD16_BYTE( "epr16888", 0x100000, 0x080000, CRC(85d73722) SHA1(7ebe81b4d6c89f87f60200a3a8cddb07d581adef) )
+	ROM_LOAD16_BYTE( "epr16887", 0x100001, 0x080000, CRC(bc3bbf25) SHA1(e760ad400bc183b38e9787d88c8ac084fbe2ae21) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr16884", 0x000000, 0x080000, CRC(fd9dcdd6) SHA1(b8053a2e68072e7664ffc3c53f983f3ba72a892b) )
+ROM_END
 
 ROM_START( stkclmns ) /* Stack Columns  (c)1994 Sega */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr16874.32", 0x000000, 0x080000, CRC(d78a871c) SHA1(7efcd5d07b089442be5170a3cf9e09579527252f) )
+	ROM_LOAD16_BYTE( "epr16873.31", 0x000001, 0x080000, CRC(1def1da4) SHA1(da534a971b40277b2d58ef22c07ca468250d23ca) )
+	ROM_LOAD16_BYTE( "mpr16797.34", 0x100000, 0x080000, CRC(b28e9bd5) SHA1(227eb591d10c9dbc52b35954ebd322e2a4451df2) )
+	ROM_LOAD16_BYTE( "mpr16796.33", 0x100001, 0x080000, CRC(ec7de52d) SHA1(85bc48cef15e615ad9059500808d17916c854a87) )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )
+	ROM_LOAD( "epr16793.4", 0x000000, 0x020000, CRC(ebb2d057) SHA1(4a19ee5d71e4aabe7d9b9b968ab5ee4bc6262aad) )
+ROM_END
+
+ROM_START( stkclmnj ) /* Stack Columns  (c)1994 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "epr16795.32", 0x000000, 0x080000, CRC(b478fd02) SHA1(aaf9d9f9f4dc900b4e8ff6f258f26e782e5c3166) )
 	ROM_LOAD16_BYTE( "epr16794.31", 0x000001, 0x080000, CRC(6d0e8c56) SHA1(8f98d9fd98a1faa70b173cfd72f15102d11e79ae) )
@@ -1856,26 +1882,7 @@ static DRIVER_INIT( puyo )
 	common_init(table);
 }
 
-
-static DRIVER_INIT( ichidant )
-{
-	/* 317-0224 */
-	static const UINT32 table[256/8] =
-	{
-		0x55116622, 0x55116622, 0x55117733, 0x55117733,
-		0x8800aa22, 0x8800aa22, 0x8800bb33, 0x8800bb33,
-		0x11550044, 0x55114400, 0x11551155, 0x55115511,
-		0xcc44cc44, 0x88008800, 0xcc44dd55, 0x88009911,
-		0xdd99eeaa, 0xdd99eeaa, 0xdd99ffbb, 0xdd99ffbb,
-		0xaa228800, 0xaa228800, 0xaa229911, 0xaa229911,
-		0x99dd88cc, 0xdd99cc88, 0x99dd99dd, 0xdd99dd99,
-		0xee66ee66, 0xaa22aa22, 0xee66ff77, 0xaa22bb33
-	};
-	common_init(table);
-}
-
-
-static DRIVER_INIT( ichidnte )
+static DRIVER_INIT( ichir )
 {
 	static const UINT32 table[256/8] =
 	{
@@ -1891,8 +1898,63 @@ static DRIVER_INIT( ichidnte )
 	common_init(table);
 }
 
+static DRIVER_INIT( ichirk )
+{
+	static const UINT32 table[256/8] =
+	{
+		0x44004400, 0x00440044,	0x55114400, 0x11550044,
+		0x55885588, 0x55885588,	0x66bb77aa, 0x66bb77aa,
+		0x02020202, 0x46464646,	0x13130202, 0x57574646,
+		0x138a138a, 0x138a138a,	0x20b931a8, 0x20b931a8,
+		0x44004400, 0x00440044,	0x55114400, 0x11550044,
+		0x55885588, 0x55885588,	0x66bb77aa, 0x66bb77aa,
+		0x8a8a8a8a, 0xcececece,	0x9b9b8a8a, 0xdfdfcece,
+		0x9b029b02, 0x9b029b02,	0xa831b920, 0xa831b920
+	};
+	common_init(table);
+}
+
+static DRIVER_INIT( ichirj )
+{
+	/* 317-0224 */
+	static const UINT32 table[256/8] =
+	{
+		0x55116622, 0x55116622, 0x55117733, 0x55117733,
+		0x8800aa22, 0x8800aa22, 0x8800bb33, 0x8800bb33,
+		0x11550044, 0x55114400, 0x11551155, 0x55115511,
+		0xcc44cc44, 0x88008800, 0xcc44dd55, 0x88009911,
+		0xdd99eeaa, 0xdd99eeaa, 0xdd99ffbb, 0xdd99ffbb,
+		0xaa228800, 0xaa228800, 0xaa229911, 0xaa229911,
+		0x99dd88cc, 0xdd99cc88, 0x99dd99dd, 0xdd99dd99,
+		0xee66ee66, 0xaa22aa22, 0xee66ff77, 0xaa22bb33
+	};
+	common_init(table);
+}
+static DRIVER_INIT( ichirjbl )
+{
+	/* when did this actually work? - the protection is patched but the new check fails? */
+	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+	rom[0x390/2] = 0x6600;
+}
+
 
 static DRIVER_INIT( stkclmns )
+{
+	static const UINT32 table[256/8] =
+	{
+		0x1d591d59, 0x0c590c59, 0x1d590c48, 0x0c591d48,
+		0x1f5b1f5b, 0x0e5b0e5b, 0x1f5b0e4a, 0x0e5b1f4a,
+		0x915d915d, 0x805d805d, 0x915d804c, 0x805d914c,
+		0x935f935f, 0x825f825f, 0x935f824e, 0x825f934e,
+		0x15153737, 0x04152637, 0x15152626, 0x04153726,
+		0x17173535, 0x06172435, 0x17172424, 0x06173524,
+		0x9911bb33, 0x8811aa33, 0x9911aa22, 0x8811bb22,
+		0x9b13b931, 0x8a13a831, 0x9b13a820, 0x8a13b920
+	};
+	common_init(table);
+}
+
+static DRIVER_INIT( stkclmnj )
 {
 	static const UINT32 table[256/8] =
 	{
@@ -2064,11 +2126,11 @@ static DRIVER_INIT( pclubjv5 )
 ******************************************************************************/
 
 /* System C Games */
-GAME( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (C System)", 0 )
+GAME( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (World, C System)", 0 )
 GAME( 1989, bloxeedu, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (US, C System)", 0 )
 GAME( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)", 0 )
 GAME( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)", 0 )
-GAME( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time", 0 )
+GAME( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (World)", 0 )
 GAME( 1990, column2j, columns2, segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)", 0 )
 
 /* System C-2 Games */
@@ -2078,18 +2140,20 @@ GAME( 1990, tfrceacj, tfrceac,  segac2,   tfrceac,  tfrceac,  ROT0, "Sega / Tech
 GAME( 1990, tfrceacb, tfrceac,  segac2,   tfrceac,  tfrceacb, ROT0, "bootleg",                "ThunderForce AC (bootleg)", 0 )
 GAME( 1991, twinsqua, 0,        segac2,   twinsqua, twinsqua, ROT0, "Sega",                   "Twin Squash", 0 )
 GAME( 1991, ribbit,   0,        segac2,   ribbit,   ribbit,   ROT0, "Sega",                   "Ribbit!", 0 )
-GAME( 1992, tantr,    0,        segac2,   ichidant, tantr,    ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Japan)", 0 )
-GAME( 1993, tantrkor, tantr,    segac2,   ichidant, tantrkor, ROT0, "Sega",                   "Tant-R (Puzzle & Action) (Korea)", 0 )
-GAME( 1992, tantrbl,  tantr,    segac2,   ichidant, c2boot,   ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 1)", 0 )
-GAME( 1994, tantrbl2, tantr,    segac,    ichidant, tantr,    ROT0, "bootleg",                "Tant-R (Puzzle & Action) (Japan) (bootleg set 2)", 0 )
+GAME( 1992, tantr,    0,        segac2,   ichir,    tantr,    ROT0, "Sega",                   "Puzzle & Action: Tant-R (Japan)", 0 )
+GAME( 1993, tantrkor, tantr,    segac2,   ichir,    tantrkor, ROT0, "Sega",                   "Puzzle & Action: Tant-R (Korea)", 0 )
+GAME( 1992, tantrbl,  tantr,    segac2,   ichir,    c2boot,   ROT0, "bootleg",                "Puzzle & Action: Tant-R (Japan) (bootleg set 1)", 0 )
+GAME( 1994, tantrbl2, tantr,    segac,    ichir,    tantr,    ROT0, "bootleg",                "Puzzle & Action: Tant-R (Japan) (bootleg set 2)", 0 ) // Common bootleg in Europe, C board, no samples
 GAME( 1992, puyo,     0,        segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (World)", 0 )
 GAME( 1992, puyobl,   puyo,     segac2,   puyo,     puyo,     ROT0, "bootleg",                "Puyo Puyo (World, bootleg)", 0 )
 GAME( 1992, puyoj,    puyo,     segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (Japan)", 0 )
 GAME( 1992, puyoja,   puyo,     segac2,   puyo,     puyo,     ROT0, "Sega / Compile",         "Puyo Puyo (Japan, Rev A)", 0 )
-GAME( 1994, ichidant, 0,        segac2,   ichidant, ichidant, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (Japan)", 0 )
-GAME( 1994, ichidnte, ichidant, segac2,   ichidant, ichidnte, ROT0, "Sega",                   "Ichidant-R (Puzzle & Action 2) (English)", 0 )
-GAME( 1994, ichidntb, ichidant, segac,    ichidant, c2boot,   ROT0, "bootleg",                "Ichidant-R (Puzzle & Action 2) (Japan) (bootleg)", 0 )
-GAME( 1994, stkclmns, 0,        segac2,   stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (Japan)", 0 )
+GAME( 1994, ichir,    0,        segac2,   ichir,    ichir,    ROT0, "Sega",                   "Puzzle & Action: Ichidant-R (World)", 0 )
+GAME( 1994, ichirk,   ichir,    segac2,   ichir,    ichirk,   ROT0, "Sega",                   "Puzzle & Action: Ichidant-R (Korea)", 0 )
+GAME( 1994, ichirj,   ichir,    segac2,   ichir,    ichirj,   ROT0, "Sega",                   "Puzzle & Action: Ichidant-R (Japan)", 0 )
+GAME( 1994, ichirjbl, ichir,    segac,    ichir,    ichirjbl, ROT0, "bootleg",                "Puzzle & Action: Ichidant-R (Japan) (bootleg)", 0 ) // C board, no samples
+GAME( 1994, stkclmns, 0,        segac2,   stkclmns, stkclmns, ROT0, "Sega",                   "Stack Columns (World)", 0 )
+GAME( 1994, stkclmnj, stkclmns, segac2,   stkclmns, stkclmnj, ROT0, "Sega",                   "Stack Columns (Japan)", 0 )
 GAME( 1994, puyopuy2, 0,        segac2,   puyopuy2, puyopuy2, ROT0, "Compile (Sega license)", "Puyo Puyo 2 (Japan)", 0 )
 GAME( 1994, potopoto, 0,        segac2,   potopoto, potopoto, ROT0, "Sega",                   "Poto Poto (Japan)", 0 )
 GAME( 1994, zunkyou,  0,        segac2,   zunkyou,  zunkyou,  ROT0, "Sega",                   "Zunzunkyou No Yabou (Japan)", 0 )

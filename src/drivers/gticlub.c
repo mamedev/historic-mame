@@ -145,6 +145,8 @@ static void eeprom_handler(mame_file *file,int read_or_write)
 	}
 }
 
+static UINT8 inputport2 = 0xff;
+
 //UINT32 eeprom_bit = 0;
 static READ32_HANDLER( sysreg_r )
 {
@@ -161,7 +163,9 @@ static READ32_HANDLER( sysreg_r )
 		}
 		if (!(mem_mask & 0x0000ff00))
 		{
-			r |= readinputport(2) << 8;
+			//r |= readinputport(2) << 8;
+			inputport2 ^= 0x80;
+			r |= inputport2 << 8;
 		}
 		if (!(mem_mask & 0x000000ff))
 		{
@@ -280,6 +284,15 @@ static WRITE32_HANDLER( ppc_sound_w )
 	}
 }
 
+static READ32_HANDLER( lanc_r )
+{
+	return 0;
+}
+
+static WRITE32_HANDLER( lanc_w )
+{
+}
+
 /******************************************************************/
 
 static ADDRESS_MAP_START( gticlub_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -293,7 +306,8 @@ static ADDRESS_MAP_START( gticlub_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x78080000, 0x7808000f) AM_MIRROR(0x80000000) AM_READWRITE(texture1_r, texture1_w)
 	AM_RANGE(0x780c0000, 0x780c0003) AM_MIRROR(0x80000000) AM_READWRITE(cgboard_dsp_comm_r_ppc, cgboard_dsp_comm_w_ppc)
 	AM_RANGE(0x7e000000, 0x7e003fff) AM_MIRROR(0x80000000) AM_READWRITE(sysreg_r, sysreg_w)
-	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_MIRROR(0x80000000) AM_RAM
+	AM_RANGE(0x7e008000, 0x7e009fff) AM_MIRROR(0x80000000) AM_READWRITE(lanc_r, lanc_w)
+	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_MIRROR(0x80000000) AM_RAM		// LANC RAM
 	AM_RANGE(0x7e00c000, 0x7e00c007) AM_MIRROR(0x80000000) AM_WRITE(ppc_sound_w)
 	AM_RANGE(0x7e00c008, 0x7e00c00f) AM_MIRROR(0x80000000) AM_READ(ppc_sound_r)
 	AM_RANGE(0x7f000000, 0x7f3fffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION(REGION_USER2, 0)	/* Data ROM */
@@ -378,7 +392,7 @@ READ32_HANDLER( K001005_r )
 		}
 
 		case 0x11b:			// status ?
-			return 0x8000;
+			return 0x8002;
 
 		case 0x11c:			// slave status ?
 			return 0x8000;
