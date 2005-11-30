@@ -342,3 +342,59 @@ WRITE16_HANDLER( jleague_protection_w )
 	}
 }
 
+/******************************************************************************
+ ******************************************************************************
+  Air Rescue
+ ******************************************************************************
+ ******************************************************************************/
+/*
+    protection
+    a00000 - a00002 dsp i/o
+    a00004 - dsp int/ack
+
+    dsp uses its p0/p1 for address select
+    dsp.sr = ???0 read a00000 into dsp.a
+    dsp.sr = ???1 read a00002 into dsp.b
+    dsp.sr = ???2 write dsp.b in a00000
+    dsp.sr = ???3 write dsp.a in a00002
+
+    Use of p0/p1 means there's no other way for dsp to communicate with V60, unless it shares RAM.
+    99.99% of the dsp code is unused because the V60 ROM is hardcoded as part of a twin set,
+    maybe the standalone board was for dev only? nop the 3 bytes at 0x06023A for standalone. (centred intro text)
+*/
+static UINT16 arescue_dsp_io[6] = {0,0,0,0,0,0};
+
+READ16_HANDLER( arescue_dsp_r )
+{
+	if( offset == 4/2 )
+	{
+		switch( arescue_dsp_io[0] )
+		{
+			case 0:
+			case 1:
+			case 2:
+				break;
+
+			case 3:
+				arescue_dsp_io[0] = 0x8000;
+				arescue_dsp_io[2/2] = 0x0001;
+				break;
+
+			case 6:
+				arescue_dsp_io[0] = 4 * arescue_dsp_io[2/2];
+				break;
+
+			default:
+				logerror("Unhandled DSP cmd %04x (%04x).\n", arescue_dsp_io[0], arescue_dsp_io[1] );
+				break;
+		}
+	}
+
+	return arescue_dsp_io[offset];
+}
+
+WRITE16_HANDLER( arescue_dsp_w )
+{
+	COMBINE_DATA(&arescue_dsp_io[offset]);
+}
+

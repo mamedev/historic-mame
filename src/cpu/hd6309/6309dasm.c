@@ -650,7 +650,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 	int i, j, k, page=0, opcode, numoperands, mode, size, access;
 	UINT8 operandarray[4];
 	const char *sym1, *sym2;
-	int rel, pb, offset, reg, pb2;
+	int rel, pb, offset = 0, reg, pb2;
 	unsigned ea = 0;
 	int p = 0;
 	unsigned flags;

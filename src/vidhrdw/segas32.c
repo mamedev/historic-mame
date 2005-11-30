@@ -2047,7 +2047,7 @@ static void mix_all_layers(int which, int xoffs, mame_bitmap *bitmap, const rect
 		UINT8		mixshift;			/* shift from control reg */
 		UINT8		coloroffs;			/* color offset index */
 	} layerorder[16][8], layersort[8];
-	struct layer_info temp_sprite_save;
+	struct layer_info temp_sprite_save = { 0 };
 	UINT8 sprgroup_shift, sprgroup_mask, sprgroup_or;
 	int numlayers, laynum, groupnum;
 	int rgboffs[3][3];

@@ -1,3 +1,11 @@
+/***************************************************************************
+
+    info.c
+
+    Dumps the MAME internal data as an XML file.
+
+***************************************************************************/
+
 #include <ctype.h>
 
 #include "driver.h"
@@ -16,6 +24,11 @@
 #define XML_ROOT "mame"
 #define XML_TOP "game"
 #endif
+
+#ifdef MESS
+void print_game_device(FILE* out, const game_driver* game);
+void print_game_ramoptions(FILE* out, const game_driver* game);
+#endif /* MESS */
 
 extern game_driver driver_0;
 
@@ -749,43 +762,6 @@ static void print_game_driver(FILE* out, const game_driver* game)
 
 	fprintf(out, "/>\n");
 }
-
-#ifdef MESS
-static void print_game_device(FILE* out, const game_driver* game)
-{
-	const struct IODevice* dev;
-
-	begin_resource_tracking();
-
-	dev = devices_allocate(game);
-	if (dev)
-	{
-		while(dev->type < IO_COUNT)
-		{
-		fprintf(out, "\t\t<device");
-		fprintf(out, " name=\"%s\"", normalize_string(device_typename(dev->type)));
-		fprintf(out, ">\n");
-
-		if (dev->file_extensions) {
-			const char* ext = dev->file_extensions;
-			while (*ext) {
-				fprintf(out, "\t\t\t<extension");
-				fprintf(out, " name=\"%s\"", normalize_string(ext));
-				fprintf(out, "/>\n");
-				ext += strlen(ext) + 1;
-			}
-		}
-
-		fprintf(out, "\t\t</device>\n");
-
-			dev++;
-		}
-	}
-	end_resource_tracking();
-}
-#endif /* MESS */
-
-
 
 /* Print the MAME info record for a game */
 static void print_game_info(FILE* out, const game_driver* game)

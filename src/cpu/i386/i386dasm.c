@@ -1466,8 +1466,9 @@ static char* handle_param(char* s, UINT32 param)
 				d32 = FETCHD32();
 				s += sprintf( s, "%s", hexstring(pc + d32, 0) );
 			} else {
+				/* make sure to keep the relative offset within the segment */
 				d16 = FETCHD16();
-				s += sprintf( s, "%s", hexstring(pc + d16, 0) );
+				s += sprintf( s, "%s", hexstring((pc & 0xFFFF0000) | ((pc + d16) & 0x0000FFFF), 0) );
 			}
 			break;
 

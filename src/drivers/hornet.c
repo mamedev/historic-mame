@@ -436,20 +436,21 @@ VIDEO_START( hornet )
 {
 	if (voodoo_version == 0)
 	{
-		video_start_voodoo_1x4mb();
+		if (voodoo_start(0, VOODOO_1, 2, 4, 0))
+			return 1;
 	}
 	else
 	{
-		video_start_voodoo2_1x4mb();
+		if (voodoo_start(0, VOODOO_2, 2, 4, 0))
+			return 1;
 	}
-	voodoo_reset();
 
 	return K037122_vh_start();
 }
 
 VIDEO_UPDATE( hornet )
 {
-	video_update_voodoo(screen, bitmap, cliprect);
+	voodoo_update(0, bitmap, cliprect);
 
 	K037122_tile_update();
 	K037122_tile_draw(bitmap, cliprect);
@@ -737,7 +738,7 @@ WRITE32_HANDLER(pci_3dfx_w)
 
 		case 0x10:		// initEnable
 		{
-			voodoo_set_init_enable(data);
+			voodoo_set_init_enable(0, data);
 			break;
 		}
 
@@ -757,9 +758,7 @@ static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_DATA, 32 )
 	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
 	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
 	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
-	AM_RANGE(0x2400000, 0x24fffff) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
-	AM_RANGE(0x2500000, 0x25fffff) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
-	AM_RANGE(0x2600000, 0x27fffff) AM_WRITE(voodoo_textureram_w)
+	AM_RANGE(0x2400000, 0x27fffff) AM_READWRITE(voodoo_0_r, voodoo_0_w)
 	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
 	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
 	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(5)

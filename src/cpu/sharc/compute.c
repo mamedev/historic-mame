@@ -25,9 +25,6 @@
 #define SET_FLAG_MU(r)			{ sharc.astat |= ((((UINT32)((r) >> 32) == 0) && ((UINT32)(r)) != 0) ? MU : 0); }
 
 
-#define max(x,y)		((x) > (y)) ? (x) : (y)
-#define min(x,y)		((x) < (y)) ? (x) : (y)
-
 /*****************************************************************************/
 /* Integer ALU operations */
 
@@ -194,7 +191,7 @@ INLINE void compute_dec(int rn, int rx)
 /* Rn = MAX(Rx, Ry) */
 INLINE void compute_max(int rn, int rx, int ry)
 {
-	UINT32 r = max((INT32)REG(rx), (INT32)REG(ry));
+	UINT32 r = MAX((INT32)REG(rx), (INT32)REG(ry));
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r);
@@ -452,7 +449,7 @@ INLINE void compute_fmax(int rn, int rx, int ry)
 {
 	SHARC_REG r_alu;
 
-	r_alu.f = max(FREG(rx), FREG(ry));
+	r_alu.f = MAX(FREG(rx), FREG(ry));
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r_alu.r);
@@ -472,7 +469,7 @@ INLINE void compute_fmin(int rn, int rx, int ry)
 {
 	SHARC_REG r_alu;
 
-	r_alu.f = min(FREG(rx), FREG(ry));
+	r_alu.f = MIN(FREG(rx), FREG(ry));
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r_alu.r);
@@ -824,7 +821,7 @@ INLINE void compute_fmul_fmax(int fm, int fxm, int fym, int fa, int fxa, int fya
 	SHARC_REG r_mul, r_alu;
 	r_mul.f = FREG(fxm) * FREG(fym);
 
-	r_alu.f = max(FREG(fxa), FREG(fya));
+	r_alu.f = MAX(FREG(fxa), FREG(fya));
 
 	CLEAR_MULTIPLIER_FLAGS();
 	SET_FLAG_MN(r_mul.r);
@@ -853,7 +850,7 @@ INLINE void compute_fmul_fmin(int fm, int fxm, int fym, int fa, int fxa, int fya
 	SHARC_REG r_mul, r_alu;
 	r_mul.f = FREG(fxm) * FREG(fym);
 
-	r_alu.f = min(FREG(fxa), FREG(fya));
+	r_alu.f = MIN(FREG(fxa), FREG(fya));
 
 	CLEAR_MULTIPLIER_FLAGS();
 	SET_FLAG_MN(r_mul.r);

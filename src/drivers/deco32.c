@@ -38,12 +38,12 @@
 Locked 'n Loaded (US)
 Data East Corporation (c) 1994
 
-PCB Layout - Same PCB as used for Dragon Gun, see comment below:
+DE-0359-2 PCB Layout - Same PCB as used for Dragon Gun, see comment below:
 
 ------------------------------------------------------------
-|     32.220MHz   28.000MHz                                |
+|     32.220MHz   28.000MHz                 8M-7    8M-3   |
 |                                          MBM-05  MBM-03  |
-|         NH06-0   HuC6280A                                |
+|         NH06-0   HuC6280A                 8M-5    8M-1   |
 |           YM2151                         MBM-04  MBM-02  |
 --+                                                        |
 --+           MBM-07                                       |
@@ -67,6 +67,7 @@ PCB Layout - Same PCB as used for Dragon Gun, see comment below:
                                   --------------------------+
 
 2M-4 through 2M-7 are empty sockets for additional program ROMs (used by dragon Gun)
+Odd numbered 8M are empty sockets
 AUX edge connector is a 48 pin type simular to those used on Namco System 11, 12, ect
 
 
@@ -98,7 +99,6 @@ Locked 'n Loaded appears to be a conversion of Dragon Gun (c) 1993 as
 there are 12 surface mounted GFX roms and 1 surface mounted sample rom
 left over from the conversion.  The roms labeled "MAR-xx" are those
 from Dragon Gun.
-
 
 
 ***************************************************************************/
@@ -2166,21 +2166,21 @@ ROM_END
 
 ROM_START( dragngun )
 	ROM_REGION(0x400000, REGION_CPU1, 0 ) /* ARM 32 bit code */
-	ROM_LOAD32_BYTE( "kb02.bin", 0x000000, 0x40000, CRC(4fb9cfea) SHA1(e20fbae32682fc5fdc82070d2d6c73b5b7ac13f8) )
-	ROM_LOAD32_BYTE( "kb06.bin", 0x000001, 0x40000, CRC(2395efec) SHA1(3c08299a6cdeebf9d3d5d367ab435eec76986194) )
-	ROM_LOAD32_BYTE( "kb00.bin", 0x000002, 0x40000, CRC(1539ff35) SHA1(6c82fe01f5ebf5cdd3a914cc823499fa6a26f9a9) )
-	ROM_LOAD32_BYTE( "kb04.bin", 0x000003, 0x40000, CRC(5b5c1ec2) SHA1(3c5c02b7e432cf1861e0c8db23b302dc47774a42) )
-	ROM_LOAD32_BYTE( "kb03.bin", 0x300000, 0x40000, CRC(6c6a4f42) SHA1(ae96fe81f9ba587eb3194dbffa0233413d63c4c6) )
-	ROM_LOAD32_BYTE( "kb07.bin", 0x300001, 0x40000, CRC(2637e8a1) SHA1(7bcd1b1f3a4e6aaa0a3b78ca77dc666948c87547) )
-	ROM_LOAD32_BYTE( "kb01.bin", 0x300002, 0x40000, CRC(d780ba8d) SHA1(0e315c718c038962b6020945b48bcc632de6f5e1) )
-	ROM_LOAD32_BYTE( "kb05.bin", 0x300003, 0x40000, CRC(fbad737b) SHA1(04e16abe8c4cec4f172bea29516535511db9db90) )
+	ROM_LOAD32_BYTE( "kb02.a9",  0x000000, 0x40000, CRC(4fb9cfea) SHA1(e20fbae32682fc5fdc82070d2d6c73b5b7ac13f8) )
+	ROM_LOAD32_BYTE( "kb06.c9",  0x000001, 0x40000, CRC(2395efec) SHA1(3c08299a6cdeebf9d3d5d367ab435eec76986194) )
+	ROM_LOAD32_BYTE( "kb00.a5",  0x000002, 0x40000, CRC(1539ff35) SHA1(6c82fe01f5ebf5cdd3a914cc823499fa6a26f9a9) )
+	ROM_LOAD32_BYTE( "kb04.c5",  0x000003, 0x40000, CRC(5b5c1ec2) SHA1(3c5c02b7e432cf1861e0c8db23b302dc47774a42) )
+	ROM_LOAD32_BYTE( "kb03.a10", 0x300000, 0x40000, CRC(6c6a4f42) SHA1(ae96fe81f9ba587eb3194dbffa0233413d63c4c6) )
+	ROM_LOAD32_BYTE( "kb07.c10", 0x300001, 0x40000, CRC(2637e8a1) SHA1(7bcd1b1f3a4e6aaa0a3b78ca77dc666948c87547) )
+	ROM_LOAD32_BYTE( "kb01.a7",  0x300002, 0x40000, CRC(d780ba8d) SHA1(0e315c718c038962b6020945b48bcc632de6f5e1) )
+	ROM_LOAD32_BYTE( "kb05.c7",  0x300003, 0x40000, CRC(fbad737b) SHA1(04e16abe8c4cec4f172bea29516535511db9db90) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
-	ROM_LOAD( "kb10.bin",  0x00000,  0x10000,  CRC(ec56f560) SHA1(feb9491683ba7f1000edebb568d6b3471fcc87fb) )
+	ROM_LOAD( "kb10.n25",  0x00000,  0x10000,  CRC(ec56f560) SHA1(feb9491683ba7f1000edebb568d6b3471fcc87fb) )
 
 	ROM_REGION( 0x020000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD16_BYTE( "kb08.bin",  0x00000,  0x10000,  CRC(8fe4e5f5) SHA1(922b94f8ce0c35e965259c11e95891ef4be913d4) ) /* Encrypted tiles */
-	ROM_LOAD16_BYTE( "kb09.bin",  0x00001,  0x10000,  CRC(e9dcac3f) SHA1(0621e601ffae73bbf69623042c9c8ab0526c3de6) )
+	ROM_LOAD16_BYTE( "kb08.a15",  0x00000,  0x10000,  CRC(8fe4e5f5) SHA1(922b94f8ce0c35e965259c11e95891ef4be913d4) ) /* Encrypted tiles */
+	ROM_LOAD16_BYTE( "kb09.a17",  0x00001,  0x10000,  CRC(e9dcac3f) SHA1(0621e601ffae73bbf69623042c9c8ab0526c3de6) )
 
 	ROM_REGION( 0x120000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mar-00.bin",  0x00000,  0x80000,  CRC(d0491a37) SHA1(cc0ae1e9e5f42ba30159fb79bccd2e237cd037d0) ) /* Encrypted tiles */
@@ -2229,13 +2229,13 @@ ROM_START( dragngun )
 	ROM_LOAD( "mar-28.bin",  0x00000,  0x100000,  CRC(5a2ec71d) SHA1(447c404e6bb696f7eb7c61992a99b9be56f5d6b0) )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )
-	ROM_LOAD( "dgadpcm2.bin", 0x000000, 0x80000,  CRC(3e006c6e) SHA1(55786e0fde2bf6ba9802f3f4fa8d4c21625b976a) )
+	ROM_LOAD( "mar-06.n17", 0x000000, 0x80000,  CRC(3e006c6e) SHA1(55786e0fde2bf6ba9802f3f4fa8d4c21625b976a) )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )
-	ROM_LOAD( "dgadpcm1.bin", 0x000000, 0x80000,  CRC(b9281dfd) SHA1(449faf5d36f3b970d0a9b483e2152a5f68604a77) )
+	ROM_LOAD( "mar-08.n21", 0x000000, 0x80000,  CRC(b9281dfd) SHA1(449faf5d36f3b970d0a9b483e2152a5f68604a77) )
 
 	ROM_REGION(0x80000, REGION_SOUND3, 0 )
-	ROM_LOAD( "mar-07.bin", 0x000000, 0x80000,  CRC(40287d62) SHA1(c00cb08bcdae55bcddc14c38e88b0484b1bc9e3e) )
+	ROM_LOAD( "mar-07.n19", 0x000000, 0x80000,  CRC(40287d62) SHA1(c00cb08bcdae55bcddc14c38e88b0484b1bc9e3e) )
 ROM_END
 
 ROM_START( fghthist )

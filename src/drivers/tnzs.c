@@ -1851,6 +1851,35 @@ ROM_START( kagekij )
 	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, CRC(184409f1) SHA1(711bdd499670e86630ebb6820262b1d8d651c987) )	/* JP ver */
 ROM_END
 
+/* Board ID is M6100309A - program rom has been hacked to say 1992 :/
+    supported because it appears to be a different code revision to the other supported sets
+*/
+
+ROM_START( kagekia )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "b35_16.11c", 0x00000, 0x08000, CRC(1cf67603) SHA1(0627285ac69e44312d7694c64b96a81489d8663c) )	/* World? (hacked) ver */
+	ROM_CONTINUE(           0x18000, 0x08000 )
+	ROM_LOAD( "b35-10.9c",  0x20000, 0x10000, CRC(b150457d) SHA1(a58e46e7dfdc93c2cc7c04d623d7754f85ba693b) )
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )
+	ROM_LOAD( "b35-11j.43e", 0x00000, 0x08000, CRC(64d093fc) SHA1(3ca3f69d8946c453c0edb8586b92e2948a2d0b6c) )	/* JP ver */
+	ROM_CONTINUE(            0x10000, 0x08000 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b35-01.13a",  0x00000, 0x20000, CRC(01d83a69) SHA1(92a84329306b58a45f7bb443a8642eeaeb04d553) )
+	ROM_LOAD( "b35-02.12a",  0x20000, 0x20000, CRC(d8af47ac) SHA1(2ef9ca991bf55ed6c12bf3a7dc4aa904d7749d5c) )
+	ROM_LOAD( "b35-03.10a",  0x40000, 0x20000, CRC(3cb68797) SHA1(e7669b1a9a26dede560cc87695004d29510bc1f5) )
+	ROM_LOAD( "b35-04.8a",   0x60000, 0x20000, CRC(71c03f91) SHA1(edce6e5a52b0c83c1c3c6bf9bc6b7957f7941521) )
+	ROM_LOAD( "b35-05.7a",   0x80000, 0x20000, CRC(a4e20c08) SHA1(5d1d23d1410fea8650b18c595b0170a17e5d89a6) )
+	ROM_LOAD( "b35-06.5a",   0xa0000, 0x20000, CRC(3f8ab658) SHA1(44de7ee2bdb89bc520ed9bc812c26789c3f31411) )
+	ROM_LOAD( "b35-07.4a",   0xc0000, 0x20000, CRC(1b4af049) SHA1(09783816d5076219d241538e2711402eb8c4cd03) )
+	ROM_LOAD( "b35-08.2a",   0xe0000, 0x20000, CRC(deb2268c) SHA1(318bf3da6cbe20758397d5f78caf3cda02f322d7) )
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* samples */
+	ROM_LOAD( "b35-12j.98g", 0x00000, 0x10000, CRC(184409f1) SHA1(711bdd499670e86630ebb6820262b1d8d651c987) )	/* JP ver */
+ROM_END
+
+
 ROM_START( chukatai )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
 	ROM_LOAD( "b44-10", 0x00000, 0x08000, CRC(8c69e008) SHA1(7825965f517f3562a508345b7c0d32b8a57bd38a) )
@@ -2104,6 +2133,7 @@ GAME( 1987, drtopplu, drtoppel, drtoppel, drtopplu, drtoppel, ROT90,  "Taito Ame
 GAME( 1987, drtopplj, drtoppel, drtoppel, drtopplu, drtoppel, ROT90,  "Taito Corporation", "Dr. Toppel's Tankentai (Japan)", 0 )
 GAME( 1988, kageki,   0,        kageki,   kageki,   kageki,   ROT90,  "Taito America Corporation (Romstar license)", "Kageki (US)", 0 )
 GAME( 1988, kagekij,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (Japan)", 0 )
+GAME( 1992, kagekia,  kageki,   kageki,   kageki,   kageki,   ROT90,  "Taito Corporation", "Kageki (World?, hack)", 0 ) // date is hacked at least, might also be a Japan set hacked to show english
 GAME( 1988, chukatai, 0,        tnzs,     chukatai, chukatai, ROT0,   "Taito Corporation Japan", "Chuka Taisen (World)", 0 )
 GAME( 1988, chukatau, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito America Corporation", "Chuka Taisen (US)", 0 )
 GAME( 1988, chukataj, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito Corporation", "Chuka Taisen (Japan)", 0 )

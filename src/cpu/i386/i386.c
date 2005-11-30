@@ -152,6 +152,7 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 	if( I.address_size ) {
 		switch( rm )
 		{
+			default:
 			case 0: ea = REG32(EAX); segment = DS; break;
 			case 1: ea = REG32(ECX); segment = DS; break;
 			case 2: ea = REG32(EDX); segment = DS; break;
@@ -184,6 +185,7 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 	} else {
 		switch( rm )
 		{
+			default:
 			case 0: ea = REG16(BX) + REG16(SI); segment = DS; break;
 			case 1: ea = REG16(BX) + REG16(DI); segment = DS; break;
 			case 2: ea = REG16(BP) + REG16(SI); segment = SS; break;

@@ -290,9 +290,56 @@ static struct dynamic_address
  *
  *************************************/
 
+static void vblank_assert(int state);
 static void timer_callback(int param);
 static void ide_interrupt(int state);
 static void remap_dynamic_addresses(void);
+
+
+
+/*************************************
+ *
+ *  Video start and update
+ *
+ *************************************/
+
+static VIDEO_START( vegas_voodoo2 )
+{
+	if (voodoo_start(0, VOODOO_2, 2, 4, 4))
+		return 1;
+
+	voodoo_set_vblank_callback(0, vblank_assert);
+
+	return 0;
+}
+
+
+static VIDEO_START( vegas_voodoo_banshee )
+{
+	if (voodoo_start(0, VOODOO_BANSHEE, 2, 4, 0))
+		return 1;
+
+	voodoo_set_vblank_callback(0, vblank_assert);
+
+	return 0;
+}
+
+
+static VIDEO_START( vegas_voodoo3 )
+{
+	if (voodoo_start(0, VOODOO_3, 4, 4, 4))
+		return 1;
+
+	voodoo_set_vblank_callback(0, vblank_assert);
+
+	return 0;
+}
+
+
+static VIDEO_UPDATE( vegas )
+{
+	voodoo_update(0, bitmap, cliprect);
+}
 
 
 
@@ -340,7 +387,7 @@ static MACHINE_INIT( vegas )
 
 	/* reset subsystems */
 	ide_controller_reset(0);
-	voodoo_reset();
+	voodoo_reset(0);
 	smc91c94_reset();
 
 	/* initialize IRQ states */
@@ -349,7 +396,7 @@ static MACHINE_INIT( vegas )
 	sio_irq_state = 0;
 
 	/* find out what type of voodoo we have */
-	voodoo_type = voodoo_get_type();
+	voodoo_type = voodoo_get_type(0);
 	has_dcs3 = (mame_find_cpu_index("dcs3") != -1);
 }
 
@@ -546,7 +593,7 @@ static READ32_HANDLER( pci_3dfx_r )
 	switch (offset)
 	{
 		case 0x00:		/* ID register: 0x0002 = SST-2, 0x121a = 3dfx */
-			if (voodoo_type == 2)
+			if (voodoo_type == VOODOO_2)
 				result = 0x0002121a;
 			else
 				result = 0x0003121a;
@@ -578,7 +625,7 @@ static WRITE32_HANDLER( pci_3dfx_w )
 	switch (offset)
 	{
 		case 0x04:		/* address register */
-			if (voodoo_type == 2)
+			if (voodoo_type == VOODOO_2)
 				pci_3dfx_regs[offset] &= 0xff000000;
 			else
 				pci_3dfx_regs[offset] &= 0xfe000000;
@@ -586,25 +633,25 @@ static WRITE32_HANDLER( pci_3dfx_w )
 			break;
 
 		case 0x05:		/* address register */
-			if (voodoo_type == 3)
+			if (voodoo_type == VOODOO_3)
 				pci_3dfx_regs[offset] &= 0xfe000000;
 			remap_dynamic_addresses();
 			break;
 
 		case 0x06:		/* I/O register */
-			if (voodoo_type == 3)
+			if (voodoo_type == VOODOO_3)
 				pci_3dfx_regs[offset] &= 0xffffff00;
 			remap_dynamic_addresses();
 			break;
 
 		case 0x0c:		/* romBaseAddr register */
-			if (voodoo_type == 3)
+			if (voodoo_type == VOODOO_3)
 				pci_3dfx_regs[offset] &= 0xffff0000;
 			remap_dynamic_addresses();
 			break;
 
 		case 0x10:		/* initEnable register */
-			voodoo_set_init_enable(data);
+			voodoo_set_init_enable(0, data);
 			break;
 
 	}
@@ -1379,37 +1426,35 @@ static void remap_dynamic_addresses(void)
 		base = pci_3dfx_regs[0x04] & 0xfffffff0;
 		if (base >= ramsize && base < 0x20000000)
 		{
-			if (voodoo_type == 2)
+			if (voodoo_type == VOODOO_2)
 			{
-				add_dynamic_address(base + 0x000000, base + 0x3fffff, voodoo_regs_r, voodoo2_regs_w);
-				add_dynamic_address(base + 0x400000, base + 0x7fffff, voodoo_framebuf_r, voodoo_framebuf_w);
-				add_dynamic_address(base + 0x800000, base + 0xffffff, MRA32_NOP, voodoo_textureram_w);
+				add_dynamic_address(base + 0x000000, base + 0xffffff, voodoo_0_r, voodoo_0_w);
 			}
 			else
 			{
-				add_dynamic_address(base + 0x0000000, base + 0x007ffff, voodoo3_ioreg_r, voodoo3_ioreg_w);
-				add_dynamic_address(base + 0x0080000, base + 0x00fffff, voodoo3_cmdagp_r, voodoo3_cmdagp_w);
-				add_dynamic_address(base + 0x0100000, base + 0x01fffff, voodoo3_2d_r, voodoo3_2d_w);
-				add_dynamic_address(base + 0x0200000, base + 0x05fffff, voodoo_regs_r, voodoo2_regs_w);
-				add_dynamic_address(base + 0x0600000, base + 0x09fffff, MRA32_NOP, voodoo_textureram_w);
-				add_dynamic_address(base + 0x0c00000, base + 0x0ffffff, voodoo3_yuv_r, voodoo3_yuv_w);
-				add_dynamic_address(base + 0x1000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);
+/*              add_dynamic_address(base + 0x0000000, base + 0x007ffff, voodoo3_ioreg_r, voodoo3_ioreg_w);
+                add_dynamic_address(base + 0x0080000, base + 0x00fffff, voodoo3_cmdagp_r, voodoo3_cmdagp_w);
+                add_dynamic_address(base + 0x0100000, base + 0x01fffff, voodoo3_2d_r, voodoo3_2d_w);
+                add_dynamic_address(base + 0x0200000, base + 0x05fffff, voodoo_regs_r, voodoo2_regs_w);
+                add_dynamic_address(base + 0x0600000, base + 0x09fffff, MRA32_NOP, voodoo_textureram_w);
+                add_dynamic_address(base + 0x0c00000, base + 0x0ffffff, voodoo3_yuv_r, voodoo3_yuv_w);
+                add_dynamic_address(base + 0x1000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);*/
 			}
 		}
 
-		if (voodoo_type >= 3)
+		if (voodoo_type >= VOODOO_3)
 		{
-			base = pci_3dfx_regs[0x05] & 0xfffffff0;
-			if (base >= ramsize && base < 0x20000000)
-				add_dynamic_address(base + 0x0000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);
+/*          base = pci_3dfx_regs[0x05] & 0xfffffff0;
+            if (base >= ramsize && base < 0x20000000)
+                add_dynamic_address(base + 0x0000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);
 
-			base = pci_3dfx_regs[0x06] & 0xfffffff0;
-			if (base >= ramsize && base < 0x20000000)
-				add_dynamic_address(base + 0x0000000, base + 0x00000ff, voodoo3_ioreg_r, voodoo3_ioreg_w);
+            base = pci_3dfx_regs[0x06] & 0xfffffff0;
+            if (base >= ramsize && base < 0x20000000)
+                add_dynamic_address(base + 0x0000000, base + 0x00000ff, voodoo3_ioreg_r, voodoo3_ioreg_w);
 
-			base = pci_3dfx_regs[0x0c] & 0xffff0000;
-			if (base >= ramsize && base < 0x20000000)
-				add_dynamic_address(base + 0x0000000, base + 0x000ffff, voodoo3_rom_r, NULL);
+            base = pci_3dfx_regs[0x0c] & 0xffff0000;
+            if (base >= ramsize && base < 0x20000000)
+                add_dynamic_address(base + 0x0000000, base + 0x000ffff, voodoo3_rom_r, NULL);*/
 		}
 	}
 
@@ -2162,9 +2207,8 @@ MACHINE_DRIVER_START( vegascore )
 	MDRV_VISIBLE_AREA(0, 639, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_VIDEO_START(voodoo2_2x4mb)
-	MDRV_VIDEO_STOP(voodoo)
-	MDRV_VIDEO_UPDATE(voodoo)
+	MDRV_VIDEO_START(vegas_voodoo2)
+	MDRV_VIDEO_UPDATE(vegas)
 MACHINE_DRIVER_END
 
 
@@ -2191,14 +2235,14 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( vegasban )
 	MDRV_IMPORT_FROM(vegas32m)
-	MDRV_VIDEO_START(voodoo3_1x4mb)
+	MDRV_VIDEO_START(vegas_voodoo_banshee)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( vegasv3 )
 	MDRV_IMPORT_FROM(vegas32m)
 	MDRV_CPU_REPLACE("main", RM7000LE, SYSTEM_CLOCK*2.5)
-	MDRV_VIDEO_START(voodoo3_2x4mb)
+	MDRV_VIDEO_START(vegas_voodoo3)
 MACHINE_DRIVER_END
 
 
@@ -2351,7 +2395,7 @@ static void init_common(int ioasic, int serialnum)
 	smc91c94_init(&ethernet_intf);
 
 	/* set our VBLANK callback */
-	voodoo_set_vblank_callback(vblank_assert);
+	voodoo_set_vblank_callback(0, vblank_assert);
 
 	/* allocate RAM for the timekeeper */
 	timekeeper_nvram_size = 0x8000;

@@ -79,20 +79,33 @@ enum
 
 static void tape_set_audio( int track, int bOn )
 {
-	sample_set_volume( track, bOn?1.0:0 );
+	sample_set_volume( track, bOn ? 1.0 : 0.0 );
 }
 
 static void tape_set_motor( int bOn )
 {
 	if( bOn )
 	{
-		sample_start( 0, 0, 1 );
-		sample_start( 1, 1, 1 );
+		/* If talk track is not playing, start it. */
+		if (! sample_playing( kTalkTrack ))
+			sample_start( 0, kTalkTrack, 1 );
+
+		/* Resume playback of talk track. */
+		sample_set_pause( kTalkTrack, 0);
+
+
+		/* If crash track is not playing, start it. */
+		if (! sample_playing( kCrashTrack ))
+			sample_start( 1, kCrashTrack, 1 );
+
+		/* Resume playback of crash track. */
+		sample_set_pause( kCrashTrack, 0);
 	}
 	else
 	{
-		sample_stop( kTalkTrack );
-		sample_stop( kCrashTrack );
+		/* Pause both the talk and crash tracks. */
+		sample_set_pause( kTalkTrack, 1 );
+		sample_set_pause( kCrashTrack, 1 );
 	}
 }
 
@@ -121,7 +134,7 @@ static WRITE8_HANDLER( tape_control_w )
 		break;
 
 	case 0x09: /* talk track off */
-		sample_set_volume( kTalkTrack, 0 );
+		tape_set_audio( kTalkTrack, 0 );
 		break;
 
 	case 0x0a: /* motor on */

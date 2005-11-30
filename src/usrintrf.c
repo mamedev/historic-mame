@@ -1952,6 +1952,7 @@ INLINE void analog_menu_add_item(ui_menu_item *item, const input_port_entry *in,
 	item->subtext = &menu_string_pool[menu_string_pool_offset];
 	switch (which_item)
 	{
+		default:
 		case ANALOG_ITEM_KEYSPEED:
 			value = in->analog.delta;
 			minval = 1;

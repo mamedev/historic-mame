@@ -11,11 +11,11 @@
 
 
 
-unsigned char *goldstar_video1, *goldstar_video2, *goldstar_video3;
-int goldstar_video_size;
-unsigned char *goldstar_scroll1, *goldstar_scroll2, *goldstar_scroll3;
+UINT8 *goldstar_video1, *goldstar_video2, *goldstar_video3;
+size_t goldstar_video_size;
+UINT8 *goldstar_scroll1, *goldstar_scroll2, *goldstar_scroll3;
 
-static unsigned char *dirtybuffer1, *dirtybuffer2, *dirtybuffer3;
+static UINT8 *dirtybuffer1, *dirtybuffer2, *dirtybuffer3;
 static mame_bitmap *tmpbitmap1, *tmpbitmap2, *tmpbitmap3;
 static int bgcolor;
 
@@ -33,7 +33,7 @@ VIDEO_START( goldstar )
 	if (video_start_generic() != 0)
 		return 1;
 
-	dirtybuffer1 = auto_malloc(3 * goldstar_video_size * sizeof(unsigned char));
+	dirtybuffer1 = auto_malloc(3 * goldstar_video_size * sizeof(UINT8));
 	dirtybuffer2 = dirtybuffer1 + goldstar_video_size;
 	dirtybuffer3 = dirtybuffer2 + goldstar_video_size;
 

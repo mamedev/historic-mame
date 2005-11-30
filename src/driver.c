@@ -546,6 +546,7 @@ const game_driver *drivers[] =
 	DRIVER( popflama )	/* (c) 1982 Jaleco */
 	DRIVER( popflamb )	/* (c) 1982 Jaleco */
 	DRIVER( trvmstr )	/* (c) 1985 Enerdyne Technologies Inc. */
+	DRIVER( trvmstra )	/* (c) 1985 Enerdyne Technologies Inc. */
 	DRIVER( trvgns )	/* (c) 198? Enerdyne Technologies Inc. */
 
 
@@ -680,7 +681,8 @@ const game_driver *drivers[] =
 	DRIVER( mmaze )		/* (c) 1988 (Japan) */
 	DRIVER( bakutotu )	/* (c) 1988 (Japan) */
 	DRIVER( wldcourt )	/* (c) 1988 (Japan) */
-	DRIVER( splatter )	/* (c) 1988 (Japan) */
+	DRIVER( splatter )	/* (c) 1988 (World) */
+	DRIVER( splattej )	/* (c) 1988 (Japan) */
 	DRIVER( faceoff )	/* (c) 1988 (Japan) */
 	DRIVER( rompers )	/* (c) 1989 (Japan) */
 	DRIVER( romperso )	/* (c) 1989 (Japan) */
@@ -1642,6 +1644,7 @@ const game_driver *drivers[] =
 	DRIVER( drtopplj )	/* B19 (c) 1987 Taito Corporation (Japan) */
 	DRIVER( kageki )	/* B35 (c) 1988 Taito America Corporation + Romstar license (US) */
 	DRIVER( kagekij )	/* B35 (c) 1988 Taito Corporation (Japan) */
+	DRIVER( kagekia )	/* B35 (c) 1992 (hack?) */
 	DRIVER( chukatai )	/* B44 (c) 1988 Taito Corporation Japan (World) */
 	DRIVER( chukatau )	/* B44 (c) 1988 Taito Corporation (US) */
 	DRIVER( chukataj )	/* B44 (c) 1988 Taito Corporation (Japan) */
@@ -2557,12 +2560,14 @@ V-V                           TP-027
 	DRIVER( plsmaswd )	/* Plasma Sword (USA 980316) */
 	DRIVER( stargld2 )	/* Star Gladiator 2 (JAPAN 980316) */
 	DRIVER( tgmj )		/* Tetris The Grand Master (JAPAN 980710) */
-	DRIVER( techromn )	/* Tech Romancer (USA 980914) */
+	DRIVER( techromn )	/* Tech Romancer (EURO 980914) */
+	DRIVER( techromu )	/* Tech Romancer (USA 980914) */
 	DRIVER( kikaioh )	/* Kikaioh (JAPAN 980914) */
 	DRIVER( sfex2p )	/* Street Fighter EX 2 Plus (USA 990611) */
 	DRIVER( sfex2pa )	/* Street Fighter EX 2 Plus (ASIA 990611) */
 	DRIVER( sfex2pj )	/* Street Fighter EX 2 Plus (JAPAN 990611) */
-	DRIVER( strider2 )	/* Strider 2 (ASIA 991213) */
+	DRIVER( strider2 )	/* Strider 2 (USA 991213) */
+	DRIVER( stridr2a )	/* Strider 2 (ASIA 991213) */
 	DRIVER( shiryu2 )	/* Strider Hiryu 2 (JAPAN 991213) */
 						/* Rival Schools 2 */
 
@@ -2963,6 +2968,7 @@ V-V                           TP-027
 	DRIVER( wboy3 )		/* 834-5984 (c) 1986 + Escape license (S1) */
 	DRIVER( wboyu )		/* 834-5753 (? maybe a conversion) (c) 1986 + Escape license (S1) */
 	DRIVER( wbdeluxe )	/* (c) 1986 + Escape license (S1) */
+	DRIVER( wboysys2 )      /* 834-5984  (c) 1986 + Escape license (S1) */
 	DRIVER( gardia )	/* 834-6119 (S2?) */
 	DRIVER( gardiab )	/* bootleg */
 	DRIVER( noboranb )	/* bootleg */
@@ -3423,6 +3429,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( srally2 )
 	DRIVER( von2 )
 	DRIVER( von254g )
+	DRIVER( fvipers2 )
 	DRIVER( vs298 )
 	DRIVER( vs2v991 )
 	DRIVER( vs299 )
@@ -3432,6 +3439,8 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( dayto2pe )
 	DRIVER( dirtdvls )
 	DRIVER( swtrilgy )
+	DRIVER( spikeout )
+	DRIVER( spikeofe )
 
 
 	/* Deniam games */
@@ -5830,7 +5839,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( aligatun )	/* (c) 1994 - Ref 940411 (unprotected) */
 	DRIVER( biomtoy )	/* (c) 1995 - Ref 922804/2 - (unprotected) */
 	DRIVER( touchgo )	/* (c) 1995 - Ref 950906 */
-	DRIVER( touchgo2 )	/* (c) 1995 - Ref 950510-1 */
+	DRIVER( touchgon )	/* (c) 1995 - Ref 950906 */
+	DRIVER( touchgoe )	/* (c) 1995 - Ref 950510-1 */
 	DRIVER( wrally2 )	/* (c) 1995 - Ref 950510 */
 	DRIVER( maniacsp )	/* (c) 1996 - Ref 922804/2 - (prototype) */
 	DRIVER( maniacsq )	/* (c) 1996 - Ref ??? - (unprotected) */
@@ -5994,6 +6004,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( stmblade )	/* (c) 1996 Visco */
 	DRIVER( mslider )	/* (c) 1997 Visco / Datt Japan */
 	DRIVER( ryorioh )	/* (c) 1998 Visco */
+	DRIVER( janjans2 )	/* (c) 2000 Visco */
 	DRIVER( vasara )	/* (c) 2000 Visco */
 	DRIVER( vasara2 )	/* (c) 2001 Visco */
 	DRIVER( vasara2a )	/* (c) 2001 Visco */
@@ -6260,12 +6271,14 @@ Other Sun games
 	DRIVER( hotbubl )	/* (c) Pandora */
 	DRIVER( popspops )	/* (c) 1999 */
 	DRIVER( firehawk )	/* (c) 2001 ESD */
+	DRIVER( spec2k )	/* (c) 2000 Yonatech */
 
 	/* ESD games */
 	/* http://www.esdgame.co.kr/english/ */
 	DRIVER( multchmp )	/* (c) 1998 (Korea) */
 	DRIVER( mchampdx )	/* (c) 1999 ESD */
 	DRIVER( hedpanic )	/* (c) 2000 ESD */
+	DRIVER( tangtang )	/* (c) 2000 ESD */
 
 	/* Dyna Electronics / Dynax / Nakanihon games */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */

@@ -678,7 +678,7 @@ cant_create_primary:
 
 static int create_blit_surface(void)
 {
-	int width, height;
+	int width = 0, height = 0;
 	HRESULT result;
 	int done = 0;
 

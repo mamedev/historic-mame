@@ -391,6 +391,7 @@ static struct TMS36XXinterface tms3615_interface =
      * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
      */
 	{0.15,0.20,0,0,0,0}
+
 };
 
 
@@ -633,18 +634,47 @@ ROM_START( trvmstr )
 	ROM_LOAD( "ic50.bin",     0x1000, 0x1000, CRC(f09da428) SHA1(092d0eea41c8bbd48d7a3aff54c15f85262b21ff) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic63.bin",     0x0000, 0x0100, NO_DUMP )  /* palette low bits */
-	ROM_LOAD( "ic64.bin",     0x0100, 0x0100, CRC(e9915da8) SHA1(7c64ea76e39eaff724179d52ff5482df363fcf56) )  /* palette high bits */
+	ROM_LOAD( "ic64.bin",     0x0000, 0x0100, CRC(e9915da8) SHA1(7c64ea76e39eaff724179d52ff5482df363fcf56) )  /* palette low & high bits */
+	ROM_RELOAD(				  0x0100, 0x0100 )
 
 	ROM_REGION( 0x20000, REGION_USER1, 0 )	/* Questions roms */
 	ROM_LOAD( "sport_lo.u2",  0x00000, 0x4000, CRC(24f30489) SHA1(b34ecd485bccb7b78332196e6dffd18721177ac3) )
 	ROM_LOAD( "sport_hi.u1",  0x04000, 0x4000, CRC(d64a7480) SHA1(4239c7142d783cbd4242ff58d74e87d87f3535e6) )
 	ROM_LOAD( "etain_lo.u4",  0x08000, 0x4000, CRC(a2af9709) SHA1(24858ab58a8a6577446215e261da877cb48c03df) )
 	ROM_LOAD( "etain_hi.u3",  0x0c000, 0x4000, CRC(82a60dea) SHA1(2b03a67507c5a5c343804cf40b8b8147df070002) )
-	ROM_LOAD( "scien_lo.u8",  0x10000, 0x4000, CRC(01a01ff1) SHA1(d3b62ae466681ae01ab1beaf2958af94c9c4cbcb) )
-	ROM_LOAD( "scien_hi.u7",  0x14000, 0x4000, CRC(0bc68078) SHA1(910cd1a8ca68cff87c93a8ffa810d77338fc710b) )
-	ROM_LOAD( "sex_lo.u6",    0x18000, 0x4000, CRC(f2ecfa88) SHA1(15e9ce1be8b868a99b72426abbdf086fcf134517) )
-	ROM_LOAD( "sex_hi.u5",    0x1c000, 0x4000, CRC(de4a6c4b) SHA1(ba12193eabcee7e4d354678ddd780e1e338efbb1) )
+	ROM_LOAD( "sex_lo.u6",    0x10000, 0x4000, CRC(f2ecfa88) SHA1(15e9ce1be8b868a99b72426abbdf086fcf134517) )
+	ROM_LOAD( "sex_hi.u5",    0x14000, 0x4000, CRC(de4a6c4b) SHA1(ba12193eabcee7e4d354678ddd780e1e338efbb1) )
+	ROM_LOAD( "scien_lo.u8",  0x18000, 0x4000, CRC(01a01ff1) SHA1(d3b62ae466681ae01ab1beaf2958af94c9c4cbcb) )
+	ROM_LOAD( "scien_hi.u7",  0x1c000, 0x4000, CRC(0bc68078) SHA1(910cd1a8ca68cff87c93a8ffa810d77338fc710b) )
+ROM_END
+
+ROM_START( trvmstra )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ic30a.bin",    0x0000, 0x2000, CRC(4c175c45) SHA1(770e128ad30ef6ad9936cbf4da810c8b38c7b630) )
+	ROM_LOAD( "ic28a.bin",    0x1000, 0x2000, CRC(3a8ca87d) SHA1(bf82ca226daa13eabf8db3cabe2c047b831188e8) )
+	ROM_LOAD( "ic26a.bin",    0x2000, 0x2000, CRC(3c655400) SHA1(d536e7cf63834b0ce94fb4e597c370befa792f82) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic44.bin",     0x0000, 0x1000, CRC(dac8cff7) SHA1(21da2b2ceb4a726d03b2e49a2df75ca66b89a197) )
+	ROM_LOAD( "ic46.bin",     0x1000, 0x1000, CRC(a97ab879) SHA1(67b86d056896f10e0c055fb58c97341cf75c3d17) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic48.bin",     0x0000, 0x1000, CRC(79952015) SHA1(8407c2bab476a60d945d82201f01bf59ae9e0dad) )
+	ROM_LOAD( "ic50.bin",     0x1000, 0x1000, CRC(f09da428) SHA1(092d0eea41c8bbd48d7a3aff54c15f85262b21ff) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic64.bin",     0x0000, 0x0100, CRC(e9915da8) SHA1(7c64ea76e39eaff724179d52ff5482df363fcf56) )  /* palette low & high bits */
+	ROM_RELOAD(				  0x0100, 0x0100 )
+
+	ROM_REGION( 0x20000, REGION_USER1, 0 )	/* Questions roms */
+	ROM_LOAD( "enter_lo.u2",  0x00000, 0x4000, CRC(a65b8f83) SHA1(a86bef07349a00aa977270e3504cf2698c7c6333) )
+	ROM_LOAD( "enter_hi.u1",  0x04000, 0x4000, CRC(caede447) SHA1(ee6d015e3e7d338926296c69eab3e07dbb64a8e6) )
+	ROM_LOAD( "sports_lo.u4", 0x08000, 0x4000, CRC(d5317b26) SHA1(8d93cf9c15b25687f224e01f332f53cac3180b83) )
+	ROM_LOAD( "sports_hi.u3", 0x0c000, 0x4000, CRC(9f706db2) SHA1(171b5c490bd576d33355cfd3cd4d1b0c5cb90e00) )
+	ROM_LOAD( "sex2_lo.u6",   0x10000, 0x4000, CRC(b73f2e31) SHA1(4390152e053118c31ed74fe850ea7124c0e7b731) )
+	ROM_LOAD( "sex2_hi.u5",   0x14000, 0x4000, CRC(bf654110) SHA1(5229f5e6973a04c53572ea94c14d79a238c0e90f) )
+	ROM_LOAD( "comic_lo.u8",  0x18000, 0x4000, CRC(109bd359) SHA1(ea8cb4b0a14a3ef4932947afdfa773ecc34c2b9b) )
+	ROM_LOAD( "comic_hi.u7",  0x1c000, 0x4000, CRC(8e8b5f71) SHA1(71514af2af2468a13cf5cc4237fa2590d7a16b27) )
 ROM_END
 
 ROM_START( trvgns )
@@ -663,9 +693,9 @@ ROM_START( trvgns )
 	ROM_RELOAD(				 0x0000, 0x1000 )	//until the rom is redumped
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	/* wrong! from naughtyb just to see the game */
-	ROM_LOAD( "ic63.bin", 0x0000, 0x0100, BAD_DUMP CRC(98ad89a1) SHA1(ddee7dcb003b66fbc7d6d6e90d499ed090c59227) ) /* palette low bits */
-	ROM_LOAD( "ic64.bin", 0x0100, 0x0100, BAD_DUMP CRC(909107d4) SHA1(138ace7845424bc3ca86b0889be634943c8c2d19) ) /* palette high bits */
+	/* wrong! from trvmstr just to see the game */
+	ROM_LOAD( "ic64.bin",     0x0000, 0x0100, BAD_DUMP CRC(e9915da8) SHA1(7c64ea76e39eaff724179d52ff5482df363fcf56) )  /* palette low & high bits */
+	ROM_RELOAD(				  0x0100, 0x0100 )
 
 	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* Question roms */
 	ROM_LOAD( "trvgns.u2",   0x00000, 0x4000, CRC(109bd359) SHA1(ea8cb4b0a14a3ef4932947afdfa773ecc34c2b9b) )
@@ -722,5 +752,6 @@ GAME( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0,        ROT90, "Jaleco (Ci
 GAME( 1982, popflame, 0,		popflame, naughtyb, popflame, ROT90, "Jaleco", "Pop Flamer (protected)", 0 )
 GAME( 1982, popflama, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (not protected)", 0 )
 GAME( 1982, popflamb, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (hack?)", 0 )
-GAME( 1985, trvmstr,  0,		naughtyb, trvmstr,  trvmstr,  ROT90, "Enerdyne Technologies Inc.", "Trivia Master", GAME_WRONG_COLORS )
+GAME( 1985, trvmstr,  0,		naughtyb, trvmstr,  trvmstr,  ROT90, "Enerdyne Technologies Inc.", "Trivia Master (set 1)", 0 )
+GAME( 1985, trvmstra, trvmstr,  naughtyb, trvmstr,  trvmstr,  ROT90, "Enerdyne Technologies Inc.", "Trivia Master (set 2)", 0 )
 GAME( 198?, trvgns,   0,		naughtyb, trvmstr,  trvmstr,  ROT90, "Enerdyne Technologies Inc.", "Trivia Genius", GAME_WRONG_COLORS )

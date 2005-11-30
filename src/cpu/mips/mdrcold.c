@@ -420,7 +420,7 @@ static void append_generate_exception(drc_core *drc, UINT8 exception)
 
 static void append_readwrite_and_translate(drc_core *drc, int is_write, int size, int is_signed, int do_translate)
 {
-	link_info link1, link2, link3;
+	link_info link1 = { 0 }, link2 = { 0 }, link3 = { 0 };
 	int ramnum;
 
 	if (do_translate)
@@ -914,7 +914,7 @@ static UINT32 recompile_instruction(drc_core *drc, UINT32 pc, UINT32 physpc)
 		0x0000ffff,0xffffffff,
 		0x00ffffff,0xffffffff
 	};
-	link_info link1, link2, link3;
+	link_info link1, link2 = { 0 }, link3;
 	UINT32 op = cpu_readop32(physpc);
 	int cycles;
 

@@ -145,7 +145,7 @@ READ8_HANDLER( wow_speech_r )
 				totalword[0] = 0;				   /* Clear the total word stack */
 				return data;
 	}
-	if (PhonemeTable[Phoneme] == "PA0")						   /* We know PA0 is never part of a word */
+	if (Phoneme==3)						   /* We know PA0 is never part of a word */
 				totalword[0] = 0;				   /* Clear the total word stack */
 
 /* Phoneme to word translation */

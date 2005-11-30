@@ -3648,6 +3648,31 @@ ROM_START( wboyu )
 	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
 ROM_END
 
+
+ROM_START( wboysys2 )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 256k for code */
+	ROM_LOAD( "7580.90",  0x0000, 0x8000, CRC(d69927a5) SHA1(b633177146a83953131d4e03fa987416f222199a) ) /* encrypted */
+	ROM_LOAD( "7579.91",  0x10000, 0x8000, CRC(8a6f4b00) SHA1(2b1c26daa2e9c668292db73e28318257c62b175c) ) /* encrypted */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "7583.126", 0x0000, 0x8000, CRC(99334b3c) SHA1(dfc09f63082b7666fa2152e22810c0455a7e5051) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "7581.4",   0x00000, 0x8000, CRC(d95565fd) SHA1(25f1653cca1d6432171a7b391cbb76bc18ddfb06) )
+	ROM_LOAD( "7582.5",   0x08000, 0x8000, CRC(560cbac0) SHA1(851283e6d63e33d250840501dd22750b19772fb0) )
+	ROM_LOAD( "7607.6",   0x10000, 0x8000, CRC(bd36df03) SHA1(7f7efac2c71fae48dd1dcb4dcc849f07e8127f7d) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, 0 ) /* 128k for sprites data */
+	ROM_LOAD( "7578.87",  0x00000, 0x8000, CRC(6ff1637f) SHA1(9a6ddbd7b8d53273b30c3529b028c1f28bf3c63b) )
+	ROM_LOAD( "7577.86",  0x08000, 0x8000, CRC(58b3705e) SHA1(1a8ff3f1765a3b21145bd1a6c85441f806f7b17d) )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "pr-7345.20",      0x0000, 0x0100, CRC(8eee0f72) SHA1(b5694c120f604a5f7cc95618a71ab16a1a6151ed) ) /* palette red component */
+	ROM_LOAD( "pr-7344.14",      0x0100, 0x0100, CRC(3e7babd7) SHA1(d4f8790db4dce75e27156a4c6de2dcef2baf6d76) ) /* palette green component */
+	ROM_LOAD( "pr-7343.8",      0x0200, 0x0100, CRC(371c44a6) SHA1(ac37458d1feb6566b09a795b20c21953d4ab109d) ) /* palette blue component */
+	ROM_LOAD( "pr-5317.28",     0x0300, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
+ROM_END
+
 ROM_START( wbdeluxe )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "wbd1.bin",		0x0000, 0x2000, CRC(a1bedbd7) SHA1(32d171847ca02b01a7ac810cac3185c81c923285) )
@@ -4192,6 +4217,7 @@ GAME( 1986, wboy2,    wboy,     system1,  wboy,     wboy2,    ROT0,   "Sega (Esc
 GAME( 1986, wboy2u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 2 not encrypted)", 0 )
 GAME( 1986, wboy3,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 3)", 0 )
 GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)", 0 )
+GAME( 1986, wboysys2, wboy,     wbml,     wboy,     wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (system 2)", 0 )
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe", 0 )
 GAME( 1986, gardia,   0,        brain,    brain,    gardia,   ROT270, "Sega / Coreland", 	   "Gardia", GAME_NO_COCKTAIL )
 GAME( 1986, gardiab,  gardia,   brain,    brain,    gardiab,  ROT270, "bootleg", 		 	   "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

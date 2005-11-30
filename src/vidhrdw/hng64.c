@@ -374,7 +374,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 
 	UINT32 numPolys = 0 ;
 
-	struct polygon lastPoly ;
+	struct polygon lastPoly = { 0 } ;
 
 	// Set some matrices to the identity...
 	SetIdentity(projectionMatrix) ;

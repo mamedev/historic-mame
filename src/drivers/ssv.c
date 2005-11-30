@@ -46,6 +46,7 @@ STA-0001B   ?           98  Gourmet Battle Quiz Ryorioh CooKing     Visco
 STA-0001B   P1-112C     98  Pachinko Sexy Reaction                  Sammy
 STA-0001B   B1-001A     99  Pachinko Sexy Reaction 2                Sammy
 STA-0001B   P1-112C     99  Change Air Blade                        Visco
+STA-0001B   VISCO-JJ1   00  Lovely Pop Mahjong Jan Jan Shimasyo 2   Visco
 STA-0001B   SSV_SUB     00  Vasara                                  Visco
 STA-0001B   SSV_SUB     01  Vasara 2                                Visco
 -----------------------------------------------------------------------------------
@@ -3995,7 +3996,7 @@ ROM_END
 
 /***************************************************************************
 
-                            Jan Jan Simasyo (Japan)
+             Lovely Pop Mahjong Janjan Shimasho (Japan)
 
 (c)1996 Visco, SSV System
 
@@ -4031,6 +4032,49 @@ ROM_START( janjans1 )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_ERASE | 0 )	/* Samples */
 	ROM_LOAD16_BYTE( "jj1-snd1.bin", 0x000000, 0x200000, CRC(9b3a7ae5) SHA1(193743fcce779c4a8a73a44c54b5391d08116331) )
+ROM_END
+
+/***************************************************************************
+
+            Lovely Pop Mahjong Janjan Shimasho 2 (Japan)
+
+(c)1996-2000 Visco
+
+This game runs on SSV hardware. The game PCB is VISCO-JJ1
+The game PCB contains mostly just ROMs and logic, plus....
+NEC D71051 (DIP28)
+8MHz OSC TI 75175 (DIP8)
+2x PALs (near program ROMs)
+2x 8-pin connectors for extra controls
+
+***************************************************************************/
+
+ROM_START( janjans2 )
+    ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )        /* V60 Code */
+    ROM_LOAD16_WORD( "jan2-dat.u28",  0x000000, 0x200000, CRC(0c9c62bf) SHA1(17c6eea7cec05860c238cc22706fec1a8e3d9263) )
+    ROM_LOAD16_BYTE( "jan2-prol.u26", 0x200000, 0x080000, CRC(758a7249) SHA1(1126e8527bad000bdfbd59da46d72ed256cb0fa9) )
+    ROM_RELOAD(                       0x300000, 0x080000             )
+    ROM_LOAD16_BYTE( "jan2-proh.u27", 0x200001, 0x080000, CRC(fcd5da62) SHA1(e0243e41e4ec25e82b0316f1189ed069c369e7b1) )
+    ROM_RELOAD(                       0x300001, 0x080000             )
+
+    ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )    /* Sprites */
+    ROM_LOAD( "jan2-a0.u13", 0x0000000, 0x400000, CRC(37869bea) SHA1(6259e8584775ca702ef4e9e460c6d874980ffecb) )
+    ROM_LOAD( "jan2-a1.u14", 0x0400000, 0x400000, CRC(8189e74f) SHA1(ea083a7ef0858dac59e14a77f10a9900b20447f3) )
+
+    ROM_LOAD( "jan2-b0.u16", 0x0800000, 0x400000, CRC(19877c5c) SHA1(5faaf3b862ca544589b46cf52d5fdb73287ceb6f) )
+    ROM_LOAD( "jan2-b1.u17", 0x0c00000, 0x400000, CRC(8d0f7190) SHA1(d06b53d627f7629bda4de7e130eae2be14c18a5a) )
+
+    ROM_LOAD( "jan2-c0.u21", 0x1000000, 0x400000, CRC(8bdff3d5) SHA1(be3d2f72abae620f8855d5443dae62880f58f7c6) )
+    ROM_LOAD( "jan2-c1.u22", 0x1400000, 0x400000, CRC(f7ea5934) SHA1(1767a0206fc35dc2800c9b5b061f704828571452) )
+
+    ROM_LOAD( "jan2-d0.u34", 0x1800000, 0x400000, CRC(479fdb54) SHA1(667d89518877a3b501a87c9c765b85b9a0b23517) )
+    ROM_LOAD( "jan2-d1.u35", 0x1c00000, 0x400000, CRC(c0148895) SHA1(f89482a6ef475ca44d570332d05201b34887afbb) )
+
+    ROM_REGION16_BE( 0x400000, REGION_SOUND1, ROMREGION_ERASE | 0 )    /* Samples */
+    ROM_LOAD16_BYTE( "jan2-snd0.u29", 0x000000, 0x200000, CRC(22cc054e) SHA1(4926dd9f8f85880d6c1d14f93d68f330898b473a) )
+
+    ROM_REGION16_BE( 0x400000, REGION_SOUND2, ROMREGION_ERASE | 0 )    /* Samples */
+    ROM_LOAD16_BYTE( "jan2-snd1.u33", 0x000000, 0x200000, CRC(cbcac4a6) SHA1(f0c57fa6784e910bdb94f046d09e58e26921773b) )
 ROM_END
 
 
@@ -5213,6 +5257,7 @@ GAME( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco", 
 GAME( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAME( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAME( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
+GAME( 2000,  janjans2, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo 2 (Japan)",    GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                           GAME_NO_COCKTAIL )
 GAME( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
 GAME( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )

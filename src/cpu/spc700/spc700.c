@@ -289,7 +289,7 @@ INLINE uint read_8_immediate(uint address)
 INLINE uint read_8_instruction(uint address)
 {
 	address = MAKE_UINT_16(address);
-	return spc700_read_8_instruction(address);
+	return spc700_read_instruction(address);
 }
 
 INLINE uint read_8_direct(uint address)

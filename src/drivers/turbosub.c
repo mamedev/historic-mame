@@ -1,33 +1,48 @@
-/*
-Turbo Sub (Unreleased prototype)
-(C) 1986 Entertainment Sciences
+/***********************************************************************
+
+    Entertainment Sciences Real-Time Image Processor System
+
+Turbo Sub   1986
+Bouncer     1983 (No ROMs available)
 
 Hardware
---------
-* 6809
+========
+* 6809 (Game Processor)
  - i8251A (USART)
-* 6809
-* 6809
- - TMS5220?
- - DAC?
-* AM29116DC (16-bit bipolar microprocessor)
+* 6809 (Frame Processor)
+* 6809 (Sound Processor)
+ - TMS5220NL
+ - DAC
+* AM29116DC (Video Processor)
 
-Useful information
-------------------
-http://www.ionpool.net/arcade/es/turbo_sub.html  (includes PCB pictures)
+Useful References
+=================
+http://www.turbosub.com/schematics.htm
+http://www.turbosub.com/ripdoc1.jpg (1 to 4)
+http://www.ionpool.net/arcade/es/turbo_sub.html
 http://www.bitsavers.org/pdf/amd/_dataSheets/29116_dataSheet_Mar86.pdf
 
-Main PCB RAM
-------------
-8xAM29128 (2k ea = 16k)
-4xAM29128 (2k ea = 8k)
-8xS2016C  (2k ea = 16k)
+Note: The schematics do not represent exactly the final hardware.
 
-Video PCB RAM
----------------
-20 x AM9122 (256x4 SRAM)
-3 x AM93422 (256x2 SRAM)
-*/
+Information
+===========
+
+The game processor is responsible for gameplay and reading inputs
+(keypad, ADC and digital). It shares 16kB of RAM with the frame processor.
+According to the schematics, it also has access to collision detection RAM
+and palette RAM used by the video system.
+
+The frame processor organises data supplied by the game processor into a
+suitable format for the video processor and video hardware. It shares 8kB of
+banked RAM (Frame Drive Table) with the video processor.
+
+The video processor instructions are stored in 6 PROMS (which are ARE
+NOT DUMPED).
+
+Each CPU has a R/W status port used to communicate with the other CPUs
+and hardware.
+
+***********************************************************************/
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
@@ -36,9 +51,13 @@ Video PCB RAM
 /* Set to 1 to display test results and skip on errors */
 #define ROM_PATCHES 1
 
+/* Frame Drive Table bank indicators */
+int _FASEL = 0;
+int _FBSEL = 1;
+
+static UINT8 *FDT_A;
+static UINT8 *FDT_B;
 static UINT8 INTER_CPU_REG;
-static int gfx_w=0x1d8;
-static int gfx_s=0x80;
 
 VIDEO_START( turbosub )
 {
@@ -47,131 +66,122 @@ VIDEO_START( turbosub )
 
 VIDEO_UPDATE( turbosub )
 {
-	int x,y;
-	fillbitmap(bitmap,0,cliprect);
-	if(code_pressed(KEYCODE_Z))
-	{
-		gfx_w=(gfx_w-1)&2047;
-		printf("W: %x\n",gfx_w);
-	}
-
-	if(code_pressed(KEYCODE_X))
-	{
-		gfx_w=(gfx_w+1)&2047;
-		printf("W: %x\n",gfx_w);
-	}
-
-	if(code_pressed_memory(KEYCODE_C))
-	{
-		gfx_w=(gfx_w-1)&511;
-		printf("W: %x\n",gfx_w);
-	}
-
-	if(code_pressed_memory(KEYCODE_V))
-	{
-		gfx_w=(gfx_w+1)&2047;
-		printf("W: %x\n",gfx_w);
-	}
-
-	if(code_pressed(KEYCODE_A))
-	{
-		gfx_s++;
-		printf("S: %x\n",gfx_s);
-	}
-
-	if(code_pressed(KEYCODE_S))
-	{
-		gfx_s--;
-		printf("S: %x\n",gfx_s);
-	}
+}
 
 
-	if(code_pressed_memory(KEYCODE_D))
-	{
-		gfx_s++;
-		printf("S: %x\n",gfx_s);
-	}
+static MACHINE_INIT( turbosub )
+{
+#if ROM_PATCHES
+	UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
 
-	if(code_pressed_memory(KEYCODE_F))
-	{
-		gfx_s--;
-		printf("S: %x\n",gfx_s);
-	}
+	rom[0xf564]=0;		/* Display test status */
+	rom[0xf60a]=0x20;	/* Skip on error */
+#endif
+}
 
-	for(y=0;y<256;y++)
-		for(x=0;x<gfx_w;x++)
-		{
-			if(x<256)
-				plot_pixel(bitmap,x,y,memory_region(REGION_GFX1)[(gfx_s*gfx_w+y*gfx_w+x)&0x7ffff]);
-//              plot_pixel(bitmap,x,y,memory_region(REGION_GFX2)[(gfx_s*gfx_w+y*gfx_w+x)&0x3ffff]);
-
-		}
+static DRIVER_INIT( turbosub )
+{
+	FDT_A = auto_malloc(0x1000);
+	FDT_B = auto_malloc(0x1000);
 }
 
 /* i8251A UART */
 static WRITE8_HANDLER( UART_W )
 {
-        if (offset==0) printf("%c",data);
+	if (offset==0)
+		printf("%c",data);
 }
 
 static READ8_HANDLER( UART_R )
 {
-        return 0;
+	return 0;
 }
 
-/* Corresponds to CPU 1 [6000] and something else (AM29116?) */
-static READ8_HANDLER( A4800_R )
+/*
+        Game Processor
+        ==============
+
+Status Write            Status Read
+============            ===========
+0: 6809 #0 ROM bank bit 0       0: Frame CPU status out D0
+1: 6809 #0 ROM bank bit 1       1: Frame CPU status out D0
+2:                              2: Frame CPU status out D0
+3:                              3: Frame CPU status out D0
+4: ? (usually 1)                4:
+5: ? (usually 1)                5:
+6: V0? (AM29116)(active high?)  6:
+7: Game/Frame CPU NMI           7: /RIPERR ?
+
+*/
+
+static READ8_HANDLER( G_STATUS_R )
 {
-        return INTER_CPU_REG;
+	return 0x80 | INTER_CPU_REG;
 }
 
-/* Unknown - CPU1<->AM29116 interface? */
-static READ8_HANDLER( B6000_R )
+static WRITE8_HANDLER( G_STATUS_W )
 {
-        return 0;
-}
-
-/* Read by CPU0 at 4800 */
-static WRITE8_HANDLER( B6000_W )
-{
-        INTER_CPU_REG = data;
-}
-
-/* Control register */
-static WRITE8_HANDLER( A4800_W )
-{
-        /*
-        Bit 0 6809 #0 ROM bank bit 0
-        Bit 1 6809 #0 ROM bank bit 1
-        Bit 2 ?
-        Bit 3 ?
-        Bit 4 ?
-        Bit 5 ?
-        Bit 6 ?
-        Bit 7 6809 #1 NMI
-        */
-
 	int bankaddress;
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	bankaddress = 0x10000 + (data & 0x03) * 0x10000;
 	memory_set_bankptr(1,&ROM[bankaddress]);
 
+        cpunum_set_input_line(0, INPUT_LINE_NMI, (data&0x80) ? ASSERT_LINE : CLEAR_LINE);
         cpunum_set_input_line(1, INPUT_LINE_NMI, (data&0x80) ? ASSERT_LINE : CLEAR_LINE);
 }
 
-
-
 /*
-   Look out for:
-   o  Analog controls
-   o  Digital controls
-   o  Numeric keypad
+        Frame Processor
+        ===============
+
+Status Write            Status Read
+============            ===========
+0: Game CPU status in D0        0: /VBLANK ?
+1: Game CPU status in D1        1:
+2: Game CPU status in D2        2:
+3: Game CPU status in D3        3:
+4:                              4:
+5:                              5:
+6:                              6: /FBSEL
+7:                      7:
+
 */
+
+static READ8_HANDLER( F_STATUS_R )
+{
+	return (_FBSEL << 6);
+}
+
+static WRITE8_HANDLER( F_STATUS_W )
+{
+        INTER_CPU_REG = data;
+}
+
+static WRITE8_HANDLER( FRAME )
+{
+	_FASEL = !_FASEL;
+	_FBSEL = !_FBSEL;
+}
+
+static READ8_HANDLER( FDT_R )
+{
+ 	if(!_FASEL)
+ 		return FDT_A[offset];
+ 	else
+ 		return FDT_B[offset];
+}
+
+static WRITE8_HANDLER( FDT_W )
+{
+ 	if(!_FASEL)
+ 		FDT_A[offset] = data;
+ 	else
+ 		FDT_B[offset] = data;
+}
 
 INPUT_PORTS_START( turbosub )
 PORT_START
 INPUT_PORTS_END
-
 
 /*
 TURBOSUB.U85
@@ -194,70 +204,70 @@ Self-tests (initiated by CPU 0)
        f561: LDY, #$0001             Change to 0 to print out test results.
        f737: JMP [A,X]               A = test number/2
 
-       Test   Loc.                  Desc.                                                             Status
-       ====   ====                  =====                                                             ======
-       0-16                         CPU 0 ROM checksums                                               OK
-       17                           CPU 0 RAM 0000-07ff                                               OK
-       18                           CPU 0 RAM 0800-0fff                                               OK
-       19                           CPU 0 RAM 1000-17ff                                               OK
-       20                           CPU 0 RAM 1800-1fff                                               OK
-       21                           CPU 0 RAM 2000-27ff                                               OK
-       22                           CPU 0 RAM 2800-2fff                                               OK
-       23                           CPU 0 RAM 3000-37ff                                               OK
-       24     0xf90d                ?                                                                 FAIL
-                                    [4800]<-90 then [4800]<-B0
-                                    Expect negative number from [4800] before time out.
+    Test   Loc.                  Desc.                                                              Status
+    ====   ====                  =====                                                              ======
+    0-16                         CPU 0 ROM checksums                                                OK
+    17                           CPU 0 RAM 0000-07ff                                                OK
+    18                           CPU 0 RAM 0800-0fff                                                OK
+    19                           CPU 0 RAM 1000-17ff                                                OK
+    20                           CPU 0 RAM 1800-1fff                                                OK
+    21                           CPU 0 RAM 2000-27ff                                                OK
+    22                           CPU 0 RAM 2800-2fff                                                OK
+    23                           CPU 0 RAM 3000-37ff                                                OK
+    24     0xf90d                ?                                                                  FAIL
+                                     [4800]<-b10010000
+                     [4800]<-b11010000
+                                     Expect bit 7 of [4800] == 1 on SECOND access or thereafter.
 
-       25     0xf966                CPU 0<->1 communication test                                      OK
-       26     0xf98b                CPU 1 ROM e000-ffff checksum                                      OK                                     OK
-       27     0xf990                CPU 1 RAM 3000-37ff                                               OK
-       28     0xf995                CPU 1 RAM 0000-0fff                                               OK
-       29     0xf99a                CPU 1 RAM 1000-17ff                                               OK
-       30     0xf99f                CPU 1 RAM 1800-1fff                                               OK
-       31     0xf9a4                CPU 1 RAM 2000-27ff                                               OK
-       32     0xf9a9                CPU 1 RAM 2800-2fff                                               OK
-       33     0xf9ae                CPU 1 RAM 3000-37ff                                               OK
-       34     0xf9b3                CPU 1 RAM 3800-3fff                                               OK
+    25     0xf966                CPU 0<->1 communication test                                       OK
+    26     0xf98b                CPU 1 ROM e000-ffff checksum                                       OK
+    27     0xf990                CPU 1 RAM 3000-37ff                                                OK
+    28     0xf995                CPU 1 RAM 0000-0fff                                                OK
+    29     0xf99a                CPU 1 RAM 1000-17ff                                                OK
+    30     0xf99f                CPU 1 RAM 1800-1fff                                                OK
+    31     0xf9a4                CPU 1 RAM 2000-27ff                                                OK
+    32     0xf9a9                CPU 1 RAM 2800-2fff                                                OK
+    33     0xf9ae                CPU 1 RAM 3000-37ff                        OK
+    34     0xf9b3                CPU 1 RAM 3800-3fff                        OK
 
-       35     0xf9dd                CPU 1: Read [6000]                                                FAIL
-       36     0xf9e3                                                                                  FAIL
-       37     0xf9e3                                                                                  FAIL
-       38     0xf9e3                CPU 1 RAM 4000-4ffe (even bytes)                                  OK
-       39     0xf9e3                CPU 1 RAM 4001-4fff (odd bytes)                                   OK
+    35     0xf9dd/0xf115                                                                    FAIL
 
-       40     0xfa06                                                                                  FAIL
-       41     0xfafd                                                                                  OK
-       42     0xfb0e                                                                                  FAIL
-       43     0xfb2a                                                                                  FAIL
-       44     0xfbc9                                                                                  FAIL
-       45     0xfd61                                                                                  FAIL
-       46     0xfd70                                                                                  FAIL
-       47     0xfd97                                                                                  FAIL
-       48     0xfdc9                                                                                  FAIL
-       49     0xfdee                                                                                  FAIL
-       50     0xfe05                                                                                  FAIL
-       51     0xfe3d                                                                                  FAIL
-       52     0xfe54                                                                                  FAIL
-       53     0xfe6b                                                                                  FAIL
-       54     0xfe82                                                                                  FAIL
-       55     0xfe99                                                                                  FAIL
+    36     0xf9e3/f151           TEST banked FDT?                                                   OK
+    37     0xf9e3                TEST banked FDT?                                                   OK
+    38     0xf9e3                CPU 1 FDT (even bytes)                                     OK
+    39     0xf9e3                CPU 1 FDT (odd bytes)                                          OK
+
+    40     0xfa06                                                                                   FAIL
+    41     0xfafd                                                                                   OK
+    42     0xfb0e                                                                                   FAIL
+    43     0xfb2a                                                                                   FAIL
+    44     0xfbc9                                                                                   FAIL
+    45     0xfd61                                                                                   FAIL
+    46     0xfd70                                                                                   FAIL
+    47     0xfd97                                                                                   FAIL
+    48     0xfdc9                                                                                   FAIL
+    49     0xfdee                                                                                   FAIL
+    50     0xfe05                                                                                   FAIL
+    51     0xfe3d                                                                                   FAIL
+    52     0xfe54                                                                                   FAIL
+    53     0xfe6b                                                                                   FAIL
+    54     0xfe82                                                                                   FAIL
+    55     0xfe99                                                                                   FAIL
 */
 
-static ADDRESS_MAP_START( cpu0_map, ADDRESS_SPACE_PROGRAM, 8 )
-        AM_RANGE(0x0000, 0x36ff) AM_RAM
-        AM_RANGE(0x3700, 0x3fff) AM_RAM AM_SHARE(1)
-        AM_RANGE(0x40ff, 0x40ff) AM_RAM                                    /* W */
-        AM_RANGE(0x41ff, 0x41ff) AM_RAM                                    /* W */
-        AM_RANGE(0x42ff, 0x42ff) AM_RAM                                    /* W */
-        AM_RANGE(0x4C00, 0x4C00) AM_RAM                                    /* R/W - An input device? (doesn't enter auto mode depending on read) */
-        AM_RANGE(0x4800, 0x4800) AM_READWRITE(A4800_R, A4800_W)            /* Control Register */
-        AM_RANGE(0x5000, 0x5000) AM_RAM                                    /* Write - related to 4C00 */
-        AM_RANGE(0x5400, 0x54ff) AM_RAM                                    /* UART buffer? */
-        AM_RANGE(0x5c00, 0x5c01) AM_READWRITE(UART_R, UART_W)              /* i8251A USART */
-        AM_RANGE(0x6000, 0xdfff) AM_READWRITE(MRA8_BANK1, MWA8_ROM)        /* Bank switched ROMs */
+static ADDRESS_MAP_START( game_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+        AM_RANGE(0x0000, 0x3fff) AM_RAM AM_SHARE(1)
+        AM_RANGE(0x40ff, 0x40ff) AM_RAM                                 /* W */
+        AM_RANGE(0x41ff, 0x41ff) AM_RAM                                 /* W */
+        AM_RANGE(0x42ff, 0x4300) AM_RAM                                 /* W */
+        AM_RANGE(0x4800, 0x4800) AM_READWRITE(G_STATUS_R, G_STATUS_W)   /* Status port */
+        AM_RANGE(0x4C00, 0x4C00) AM_RAM                    		/* R/W - An input device? (doesn't enter auto mode depending on read) */
+        AM_RANGE(0x5000, 0x5000) AM_RAM                     		/* Write - related to 4C00. Bit 8 = ? bits0..3 =????  */
+        AM_RANGE(0x5400, 0x54ff) AM_RAM                                 /* UART buffer? */
+        AM_RANGE(0x5c00, 0x5c01) AM_READWRITE(UART_R, UART_W)           /* i8251A USART */
+        AM_RANGE(0x6000, 0xdfff) AM_READWRITE(MRA8_BANK1, MWA8_ROM)     /* Bank switched ROMs */
         AM_RANGE(0xe000, 0xffff) AM_ROM
 ADDRESS_MAP_END
-
 
 /*
 TURBOSUB.U63
@@ -269,18 +279,16 @@ Vectors
 Reset:  EF2A
 /NMI:   EF30
 Others: E064
+
 */
 
-
-static ADDRESS_MAP_START( cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
-        AM_RANGE(0x0000, 0x36ff) AM_RAM
-        AM_RANGE(0x3700, 0x3fff) AM_RAM AM_SHARE(1)
-        AM_RANGE(0x4000, 0x4fff) AM_RAM                            /* 4kB  RAM */
-        AM_RANGE(0x6000, 0x6000) AM_READWRITE(B6000_R, B6000_W)    /* Read: AM29116? */
-        AM_RANGE(0x8000, 0x8000) AM_RAM                            /* Write */
+static ADDRESS_MAP_START( frame_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+        AM_RANGE(0x0000, 0x3fff) AM_RAM AM_SHARE(1)			/* 16kB RAM: Shared with game CPU */
+        AM_RANGE(0x4000, 0x4fff) AM_READWRITE(FDT_R, FDT_W)		/* 8kB RAM: Frame Drive Table (banked) */
+        AM_RANGE(0x6000, 0x6000) AM_READWRITE(F_STATUS_R, F_STATUS_W)	/* Status port */
+        AM_RANGE(0x8000, 0x8000) AM_WRITE(FRAME)
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
-
 
 /*
 TURBOSUB.U66
@@ -290,46 +298,48 @@ Vectors
 =======
 
 Reset: ecb5               `
+/NMI:  ecb5
 FIRQ:  e114
 IRQ:   e0d3
-/NMI:  ecb5
+
 SWI:   e13d
 SWI2:  e13d
 SWI3:  e13d
+
 */
 
-static ADDRESS_MAP_START( cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+
+/* Sound CPU */
+
+static ADDRESS_MAP_START( sound_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
         AM_RANGE(0x0000, 0x07ff) AM_RAM
-        AM_RANGE(0x200c, 0x200d) AM_RAM                    /* R/W - probably shared with another CPU */
-        AM_RANGE(0x200e, 0x200f) AM_RAM                    /* R/W */
-        AM_RANGE(0x2020, 0x2024) AM_RAM                    /* R/W */
+	AM_RANGE(0x2008, 0x2008) AM_RAM		/* R=status line? D7 0=Ready? 1=Not ready? */
+	AM_RANGE(0x2009, 0x2009) AM_RAM         /* W (only written once - with value read from 2008) */
+	AM_RANGE(0x200a, 0x200b) AM_RAM         /* W 16-bit value during FIRQ */
+        AM_RANGE(0x200c, 0x200c) AM_RAM         /* W */
+        AM_RANGE(0x200d, 0x200d) AM_RAM         /* W - 03 */
+        AM_RANGE(0x200e, 0x200e) AM_RAM         /* R/W - communication with game processor */
+	AM_RANGE(0x200f, 0x200f) AM_RAM         /* R/W - communication with game processor */
+        AM_RANGE(0x2020, 0x2020) AM_RAM		/* W - 42 */
+        AM_RANGE(0x2021, 0x2021) AM_RAM		/* W - 42,1 and R during FIRQ? */
+        AM_RANGE(0x2022, 0x2023) AM_RAM		/* R/W rarely */
+        AM_RANGE(0x2024, 0x2025) AM_RAM		/* R/W rarely */
+        AM_RANGE(0x8000, 0x8006) AM_RAM		/* R */
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
-static MACHINE_INIT( turbosub )
-{
-#if ROM_PATCHES
-       UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
-
-       rom[0xf564]=0;              /* Display test status */
-       rom[0xf60a]=0x20;           /* Skip on error */
-#endif
-
-}
-
 static MACHINE_DRIVER_START( turbosub )
 
-	MDRV_CPU_ADD(M6809,4000000)
-	MDRV_CPU_PROGRAM_MAP(cpu0_map,0)
+	MDRV_CPU_ADD(M6809E,4000000)
+	MDRV_CPU_PROGRAM_MAP(game_cpu_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)		/* Unverified */
 
-	MDRV_CPU_ADD(M6809,4000000)
-	MDRV_CPU_PROGRAM_MAP(cpu1_map,0)
+	MDRV_CPU_ADD(M6809E,4000000)
+	MDRV_CPU_PROGRAM_MAP(frame_cpu_map,0)
 
-	MDRV_CPU_ADD(M6809,4000000)
-	MDRV_CPU_PROGRAM_MAP(cpu2_map,0)
-
-	/* Don't forget the AM29116! */
+	MDRV_CPU_ADD(M6809E,4000000)
+	MDRV_CPU_PROGRAM_MAP(sound_cpu_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -338,7 +348,6 @@ static MACHINE_DRIVER_START( turbosub )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(34*8, 34*8)
 	MDRV_VISIBLE_AREA(0*8, 34*8-1, 0, 34*8-1)
-	//MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
         MDRV_MACHINE_INIT( turbosub )
         MDRV_INTERLEAVE(100)
@@ -347,18 +356,11 @@ static MACHINE_DRIVER_START( turbosub )
 	MDRV_VIDEO_UPDATE(turbosub)
 MACHINE_DRIVER_END
 
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
 ROM_START( turbosub )
 	ROM_REGION( 0xc0000, REGION_USER1, 0) /* Non-bankswitched, 6809 #0 code */
 	ROM_LOAD( "turbosub.u85",    0x18000, 0x4000, CRC(eabb9509) SHA1(cbfb6c5becb3fe1b4ed729e92a0f4029a5df7d67) )
 
-	ROM_REGION( 0x48000, REGION_CPU1, 0 )
-	/* Bankswitched 6809 code */
+	ROM_REGION( 0x48000, REGION_CPU1, 0 ) /* Bankswitched 6809 code */
 	ROM_LOAD( "turbosub.u82",    0x10000, 0x2000, CRC(de32eb6f) SHA1(90bf31a5adf261d47b4f52e93b5e97f343b7ebf0) )
         ROM_CONTINUE(                0x20000, 0x2000 )
 	ROM_LOAD( "turbosub.u81",    0x12000, 0x2000, CRC(9ae09613) SHA1(9b5ada4a21473b30be98bcc461129b6ed4e0bb11) )
@@ -386,12 +388,12 @@ ROM_START( turbosub )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
 	ROM_LOAD( "turbosub.u66",   0xc000, 0x4000, CRC(5091bf3d) SHA1(7ab872cef1562a45f7533c16bbbae8772673465b) )
 
-       	ROM_REGION( 0xc0000, REGION_USER2, 0)       /* Unknown */
+       	ROM_REGION( 0xc0000, REGION_USER2, 0) /* Unknown */
 	ROM_LOAD( "turbosub.u67",    0x00000, 0x4000, CRC(f8ae82e9) SHA1(fd27b9fe7872c3c680a1f71a4a5d5eeaa12e4a19) )
 	ROM_LOAD( "turbosub.u68",    0x04000, 0x4000, CRC(72e3d09b) SHA1(eefdfcd0c4c32e465f18d40f46cb5bc022c22bfd) )
 	ROM_LOAD( "turbosub.u69",    0x00000, 0x4000, CRC(ad04193b) SHA1(2f660302e60a7e68e079a8dd13266a77c077f939) )
 
-	ROM_REGION( 0x80000, REGION_GFX1, 0 )
+	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* Incorrect */
 	ROMX_LOAD( "turbosub.u4",    0x00000, 0x4000, CRC(08303604) SHA1(f075b645d89a2d91bd9b621748906a9f9890ee60), ROM_SKIP(3) )
 	ROMX_LOAD( "turbosub.u14",   0x00001, 0x4000, CRC(83b26c8d) SHA1(2dfa3b45c44652d255c402511bb3810fffb0731d), ROM_SKIP(3) )
 	ROMX_LOAD( "turbosub.u24",   0x00002, 0x4000, CRC(6bbb6cb3) SHA1(d513e547a05b34076bb8261abd51301ac5f3f5d4), ROM_SKIP(3) )
@@ -432,7 +434,7 @@ ROM_START( turbosub )
 	ROMX_LOAD( "turbosub.u26",   0x70002, 0x4000, CRC(867cfe32) SHA1(549e4e557d63dfab8e8c463916512a1b422ce425), ROM_SKIP(3) )
 	ROMX_LOAD( "turbosub.u36",   0x70003, 0x4000, CRC(0d8ebc21) SHA1(7ae65edae05869376caa975ff2c778a08e8ad8a2), ROM_SKIP(3) )
 
-	ROM_REGION( 0x40000, REGION_GFX2, 0)  //gfx ?
+	ROM_REGION( 0x40000, REGION_GFX2, 0) /* Incorrect */
 	ROMX_LOAD( "turbosub.u44",   0x00000, 0x4000, CRC(eaa05860) SHA1(f649891dae9354b7f2e46e6a380b52a569229d64), ROM_SKIP(3) )
 	ROMX_LOAD( "turbosub.u54",   0x00001, 0x4000, CRC(bebf98d8) SHA1(170502bb44fc6d6bf14d8dac4778b37888c14a7b), ROM_SKIP(3) )
 
@@ -459,3 +461,4 @@ ROM_START( turbosub )
 ROM_END
 
 GAME( 1986, turbosub,  0,       turbosub,  turbosub,  0, ROT0, "Entertainment Sciences", "Turbo Sub",GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
+/* One day, perhaps Bouncer will be added here... */

@@ -237,7 +237,9 @@ static const char* g_cpcc[64] =
 #define LIMIT_CPU_TYPES(ALLOWED_CPU_TYPES)	\
 	if(!(g_cpu_type & ALLOWED_CPU_TYPES))	\
 	{										\
-		d68000_illegal();					\
+		if((g_cpu_ir & 0xf000) == 0xf000)	\
+			d68000_1111();					\
+		else d68000_illegal();				\
 		return;								\
 	}
 
@@ -647,7 +649,7 @@ static char* get_ea_mode_str(uint instruction, uint size)
 
 static void d68000_illegal(void)
 {
-	sprintf(g_dasm_str, "dc.w $%04x; ILLEGAL", g_cpu_ir);
+	sprintf(g_dasm_str, "dc.w    $%04x; ILLEGAL", g_cpu_ir);
 }
 
 static void d68000_1010(void)
@@ -908,20 +910,20 @@ static void d68000_asl_ea(void)
 static void d68000_bcc_8(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + make_int_8(g_cpu_ir));
+	sprintf(g_dasm_str, "b%-2s     $%x", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bcc_16(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "b%-2s     %x", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + make_int_16(read_imm_16()));
+	sprintf(g_dasm_str, "b%-2s     $%x", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bcc_32(void)
 {
 	uint temp_pc = g_cpu_pc;
 	LIMIT_CPU_TYPES(M68020_PLUS);
-	sprintf(g_dasm_str, "b%-2s     %x; (2+)", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + read_imm_32());
+	sprintf(g_dasm_str, "b%-2s     $%x; (2+)", g_cc[(g_cpu_ir>>8)&0xf], temp_pc + read_imm_32());
 }
 
 static void d68000_bchg_r(void)
@@ -1123,20 +1125,20 @@ static void d68020_bftst(void)
 static void d68000_bra_8(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "bra     %x", temp_pc + make_int_8(g_cpu_ir));
+	sprintf(g_dasm_str, "bra     $%x", temp_pc + make_int_8(g_cpu_ir));
 }
 
 static void d68000_bra_16(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "bra     %x", temp_pc + make_int_16(read_imm_16()));
+	sprintf(g_dasm_str, "bra     $%x", temp_pc + make_int_16(read_imm_16()));
 }
 
 static void d68020_bra_32(void)
 {
 	uint temp_pc = g_cpu_pc;
 	LIMIT_CPU_TYPES(M68020_PLUS);
-	sprintf(g_dasm_str, "bra     %x; (2+)", temp_pc + read_imm_32());
+	sprintf(g_dasm_str, "bra     $%x; (2+)", temp_pc + read_imm_32());
 }
 
 static void d68000_bset_r(void)
@@ -1153,14 +1155,14 @@ static void d68000_bset_s(void)
 static void d68000_bsr_8(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "bsr     %x", temp_pc + make_int_8(g_cpu_ir));
+	sprintf(g_dasm_str, "bsr     $%x", temp_pc + make_int_8(g_cpu_ir));
 	SET_OPCODE_FLAGS(DASMFLAG_STEP_OVER);
 }
 
 static void d68000_bsr_16(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "bsr     %x", temp_pc + make_int_16(read_imm_16()));
+	sprintf(g_dasm_str, "bsr     $%x", temp_pc + make_int_16(read_imm_16()));
 	SET_OPCODE_FLAGS(DASMFLAG_STEP_OVER);
 }
 
@@ -1168,7 +1170,7 @@ static void d68020_bsr_32(void)
 {
 	uint temp_pc = g_cpu_pc;
 	LIMIT_CPU_TYPES(M68020_PLUS);
-	sprintf(g_dasm_str, "bsr     %x; (2+)", temp_pc + peek_imm_32());
+	sprintf(g_dasm_str, "bsr     $%x; (2+)", temp_pc + peek_imm_32());
 	SET_OPCODE_FLAGS(DASMFLAG_STEP_OVER);
 }
 
@@ -1537,14 +1539,14 @@ static void d68040_cpush(void)
 static void d68000_dbra(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "dbra    D%d, %x", g_cpu_ir & 7, temp_pc + make_int_16(read_imm_16()));
+	sprintf(g_dasm_str, "dbra    D%d, $%x", g_cpu_ir & 7, temp_pc + make_int_16(read_imm_16()));
 	SET_OPCODE_FLAGS(DASMFLAG_STEP_OVER);
 }
 
 static void d68000_dbcc(void)
 {
 	uint temp_pc = g_cpu_pc;
-	sprintf(g_dasm_str, "db%-2s    D%d, %x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_ir & 7, temp_pc + make_int_16(read_imm_16()));
+	sprintf(g_dasm_str, "db%-2s    D%d, $%x", g_cc[(g_cpu_ir>>8)&0xf], g_cpu_ir & 7, temp_pc + make_int_16(read_imm_16()));
 	SET_OPCODE_FLAGS(DASMFLAG_STEP_OVER);
 }
 

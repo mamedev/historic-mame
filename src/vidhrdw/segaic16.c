@@ -894,6 +894,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, mame_bitm
 			colclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 			/* get the effective scroll values */
+			effxscroll = xscroll;
 			effyscroll = textram[0xf30/2 + (x/16) * 2 + which] & 0x0ff;
 
 			/* adjust the xscroll for flipped screen */
@@ -901,7 +902,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, mame_bitm
 				effxscroll += 17;
 
 			/* draw the chunk */
-			effxscroll = (0xc8 - xscroll + info->xoffs) & 0x3ff;
+			effxscroll = (0xc8 - effxscroll + info->xoffs) & 0x3ff;
 			effyscroll = effyscroll & 0x1ff;
 			segaic16_draw_virtual_tilemap(info, bitmap, &colclip, pages, effxscroll, effyscroll, flags, priority);
 		}

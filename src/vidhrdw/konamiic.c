@@ -6509,6 +6509,7 @@ READ16_HANDLER( K056832_mw_rom_word_r )
 
 		switch (bit)
 		{
+			default:
 			case 0:
 				res = (temp & 0x80) << 5;
 				res |= ((temp & 0x40) >> 2);

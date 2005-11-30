@@ -1609,6 +1609,7 @@ int CmpOperation(void **wd, UINT64 *pa)
 
 	switch(st)
 	{
+		default:
 		case DT_WORD:        cmpVal = (UINT64)*((UINT16*)S) ; break ;
 		case DT_DOUBLE_WORD: cmpVal = (UINT64)*((UINT32*)S) ; break ;
 		case DT_LONG_WORD:   cmpVal = (UINT64)*((UINT64*)S) ; break ;

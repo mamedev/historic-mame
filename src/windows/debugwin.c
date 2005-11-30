@@ -825,7 +825,7 @@ static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 			RECT bounds;
 
 			// initialize the text bounds
-			bounds.left = 0;
+			bounds.left = bounds.right = 0;
 			bounds.top = row * debug_font_height;
 			bounds.bottom = bounds.top + debug_font_height;
 

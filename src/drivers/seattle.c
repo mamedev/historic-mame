@@ -342,7 +342,7 @@ struct galileo_data
 	struct galileo_timer timer[4];
 
 	/* DMA info */
-	UINT8			dma_pending_on_vblank[4];
+	UINT8			dma_stalled_on_voodoo[4];
 
 	/* PCI info */
 	UINT32			pci_bridge_regs[0x40];
@@ -405,12 +405,51 @@ static UINT32 cmos_write_enabled;
  *
  *************************************/
 
+static void vblank_assert(int state);
 static void update_vblank_irq(void);
 static void galileo_reset(void);
 static void galileo_timer_callback(int param);
 static void galileo_perform_dma(int which);
+static void galileo_voodoo_unstall(void);
 static void widget_reset(void);
 static void update_widget_irq(void);
+
+
+
+/*************************************
+ *
+ *  Video start and update
+ *
+ *************************************/
+
+static VIDEO_START( seattle )
+{
+	if (voodoo_start(0, VOODOO_1, 2, 4, 0))
+		return 1;
+
+	voodoo_set_vblank_callback(0, vblank_assert);
+	voodoo_set_unstall_callback(0, galileo_voodoo_unstall);
+
+	return 0;
+}
+
+
+static VIDEO_START( flagstaff )
+{
+	if (voodoo_start(0, VOODOO_1, 2, 4, 4))
+		return 1;
+
+	voodoo_set_vblank_callback(0, vblank_assert);
+	voodoo_set_unstall_callback(0, galileo_voodoo_unstall);
+
+	return 0;
+}
+
+
+static VIDEO_UPDATE( seattle )
+{
+	voodoo_update(0, bitmap, cliprect);
+}
 
 
 
@@ -461,7 +500,7 @@ static MACHINE_INIT( seattle )
 	/* reset the other devices */
 	galileo_reset();
 	ide_controller_reset(0);
-	voodoo_reset();
+	voodoo_reset(0);
 	if (board_config == SEATTLE_WIDGET_CONFIG)
 		widget_reset();
 	if (board_config == FLAGSTAFF_CONFIG)
@@ -650,15 +689,6 @@ static void vblank_assert(int state)
 		vblank_latch = 1;
 		update_vblank_irq();
 	}
-
-	/* if we have stalled DMA, restart */
-	if (state)
-	{
-		if (galileo.dma_pending_on_vblank[0]) { cpuintrf_push_context(0); galileo_perform_dma(0); cpuintrf_pop_context(); }
-		if (galileo.dma_pending_on_vblank[1]) { cpuintrf_push_context(0); galileo_perform_dma(1); cpuintrf_pop_context(); }
-		if (galileo.dma_pending_on_vblank[2]) { cpuintrf_push_context(0); galileo_perform_dma(2); cpuintrf_pop_context(); }
-		if (galileo.dma_pending_on_vblank[3]) { cpuintrf_push_context(0); galileo_perform_dma(3); cpuintrf_pop_context(); }
-	}
 }
 
 
@@ -735,11 +765,11 @@ static void pci_3dfx_w(UINT8 reg, UINT8 type, UINT32 data)
 		case 0x04:		/* address register */
 			galileo.pci_3dfx_regs[reg] &= 0xff000000;
 			if (data != 0x08000000)
-				logerror("3dfx not mapped where we expect it!\n");
+				logerror("3dfx not mapped where we expect it! (%08X)\n", data);
 			break;
 
 		case 0x10:		/* initEnable register */
-			voodoo_set_init_enable(data);
+			voodoo_set_init_enable(0, data);
 			break;
 	}
 	if (LOG_PCI)
@@ -882,9 +912,9 @@ static void galileo_perform_dma(int which)
 		offs_t srcaddr = galileo.reg[GREG_DMA0_SOURCE + which];
 		offs_t dstaddr = galileo.reg[GREG_DMA0_DEST + which];
 		UINT32 bytesleft = galileo.reg[GREG_DMA0_COUNT + which] & 0xffff;
-		int srcinc, dstinc, i;
+		int srcinc, dstinc;
 
-		galileo.dma_pending_on_vblank[which] = 0;
+		galileo.dma_stalled_on_voodoo[which] = FALSE;
 		galileo.reg[GREG_DMA0_CONTROL + which] |= 0x5000;
 
 		/* determine src/dst inc */
@@ -906,67 +936,55 @@ static void galileo_perform_dma(int which)
 		if (LOG_DMA)
 			logerror("Performing DMA%d: src=%08X dst=%08X bytes=%04X sinc=%d dinc=%d\n", which, srcaddr, dstaddr, bytesleft, srcinc, dstinc);
 
-		/* special case: transfer ram to voodoo */
-		if (bytesleft % 4 == 0 && srcaddr % 4 == 0 && srcaddr < 0x007fffff && dstaddr >= 0x08000000 && dstaddr < 0x09000000)
+		/* special case: transfer to voodoo */
+		if (dstaddr >= 0x08000000 && dstaddr < 0x09000000)
 		{
-			UINT32 *src = &rambase[srcaddr/4];
-			bytesleft /= 4;
+			if (bytesleft % 4 != 0)
+				osd_die("Galileo DMA to voodoo: bytesleft = %d\n", bytesleft);
+			srcinc *= 4;
+			dstinc *= 4;
 
-			/* if the voodoo is blocked, stall until the next VBLANK */
-			if (voodoo_fifo_words_left() < bytesleft)
+			/* transfer data */
+			while (bytesleft >= 4)
 			{
-				if (LOG_DMA)
-					logerror("DMA%d: blocked on voodoo\n", which);
-				galileo.dma_pending_on_vblank[which] = 1;
-				return;
-			}
-
-			/* transfer to registers */
-			if (dstaddr < 0x8400000)
-			{
-				dstaddr = (dstaddr & 0x3fffff) / 4;
-				for (i = 0; i < bytesleft; i++)
+				/* if the voodoo is stalled, stop early */
+				if (voodoo_is_stalled(0))
 				{
-					voodoo_regs_w(dstaddr, *src, 0);
-					src += srcinc;
-					dstaddr += dstinc;
+					if (LOG_DMA)
+						logerror("Stalled on voodoo with %d bytes left\n", bytesleft);
+					break;
 				}
-			}
 
-			/* transfer to framebuf */
-			else if (dstaddr < 0x8800000)
-			{
-				dstaddr = (dstaddr & 0x3fffff) / 4;
-				for (i = 0; i < bytesleft; i++)
-				{
-					voodoo_framebuf_w(dstaddr, *src, 0);
-					src += srcinc;
-					dstaddr += dstinc;
-				}
-			}
-
-			/* transfer to textureram */
-			else
-			{
-				dstaddr = (dstaddr & 0x7fffff) / 4;
-				for (i = 0; i < bytesleft; i++)
-				{
-					voodoo_textureram_w(dstaddr, *src, 0);
-					src += srcinc;
-					dstaddr += dstinc;
-				}
+				/* write the data and advance */
+				voodoo_0_w((dstaddr & 0xffffff) / 4, program_read_dword(srcaddr), 0);
+				srcaddr += srcinc;
+				dstaddr += dstinc;
+				bytesleft -= 4;
 			}
 		}
 
 		/* standard transfer */
 		else
 		{
-			for (i = 0; i < bytesleft; i++)
+			while (bytesleft > 0)
 			{
 				program_write_byte(dstaddr, program_read_byte(srcaddr));
 				srcaddr += srcinc;
 				dstaddr += dstinc;
+				bytesleft--;
 			}
+		}
+
+		/* not verified, but seems logical these should be updated byte the end */
+		galileo.reg[GREG_DMA0_SOURCE + which] = srcaddr;
+		galileo.reg[GREG_DMA0_DEST + which] = dstaddr;
+		galileo.reg[GREG_DMA0_COUNT + which] = (galileo.reg[GREG_DMA0_COUNT + which] & ~0xffff) | bytesleft;
+
+		/* if we did not hit zero, punt and mark us stalled */
+		if (bytesleft != 0)
+		{
+			galileo.dma_stalled_on_voodoo[which] = TRUE;
+			return;
 		}
 
 		/* interrupt? */
@@ -978,6 +996,16 @@ static void galileo_perform_dma(int which)
 	} while (galileo_dma_fetch_next(which));
 
 	galileo.reg[GREG_DMA0_CONTROL + which] &= ~0x5000;
+}
+
+
+static void galileo_voodoo_unstall(void)
+{
+	/* if we have stalled DMA, restart */
+	if (galileo.dma_stalled_on_voodoo[0]) { cpuintrf_push_context(0); galileo_perform_dma(0); cpuintrf_pop_context(); }
+	if (galileo.dma_stalled_on_voodoo[1]) { cpuintrf_push_context(0); galileo_perform_dma(1); cpuintrf_pop_context(); }
+	if (galileo.dma_stalled_on_voodoo[2]) { cpuintrf_push_context(0); galileo_perform_dma(2); cpuintrf_pop_context(); }
+	if (galileo.dma_stalled_on_voodoo[3]) { cpuintrf_push_context(0); galileo_perform_dma(3); cpuintrf_pop_context(); }
 }
 
 
@@ -1250,7 +1278,7 @@ static VIDEO_UPDATE( carnevil )
 	int beamx, beamy;
 
 	/* first do common video update */
-	video_update_voodoo(screen, bitmap, cliprect);
+	voodoo_update(0, bitmap, cliprect);
 
 	/* now draw the crosshairs */
 	get_crosshair_xy(0, &beamx, &beamy);
@@ -1533,9 +1561,7 @@ static READ32_HANDLER( generic_speedup2_r )
 static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x00000000, 0x007fffff) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
-	AM_RANGE(0x08000000, 0x083fffff) AM_READWRITE(voodoo_regs_r, voodoo_regs_w)
-	AM_RANGE(0x08400000, 0x087fffff) AM_READWRITE(voodoo_framebuf_r, voodoo_framebuf_w)
-	AM_RANGE(0x08800000, 0x08ffffff) AM_WRITE(voodoo_textureram_w)
+	AM_RANGE(0x08000000, 0x08ffffff) AM_READWRITE(voodoo_0_r, voodoo_0_w)
 	AM_RANGE(0x0a000000, 0x0a0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
 	AM_RANGE(0x0a00040c, 0x0a00040f) AM_NOP						// IDE-related, but annoying
 	AM_RANGE(0x0a000f00, 0x0a000f07) AM_READWRITE(ide_bus_master32_0_r, ide_bus_master32_0_w)
@@ -2798,9 +2824,8 @@ MACHINE_DRIVER_START( seattle_common )
 	MDRV_VISIBLE_AREA(0, 511, 0, 399)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_VIDEO_START(voodoo_1x4mb)
-	MDRV_VIDEO_STOP(voodoo)
-	MDRV_VIDEO_UPDATE(voodoo)
+	MDRV_VIDEO_START(seattle)
+	MDRV_VIDEO_UPDATE(seattle)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -2836,7 +2861,7 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( flagstaff )
 	MDRV_IMPORT_FROM(seattle_common)
 	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*4)
-	MDRV_VIDEO_START(voodoo_2x4mb)
+	MDRV_VIDEO_START(flagstaff)
 	MDRV_IMPORT_FROM(cage_seattle)
 MACHINE_DRIVER_END
 
@@ -3040,9 +3065,6 @@ static void init_common(int ioasic, int serialnum, int yearoffs, int config)
 	/* initialize the subsystems */
 	ide_controller_init(0, &ide_intf);
 	midway_ioasic_init(ioasic, serialnum, yearoffs, ioasic_irq);
-
-	/* set our VBLANK callback */
-	voodoo_set_vblank_callback(vblank_assert);
 
 	/* switch off the configuration */
 	board_config = config;

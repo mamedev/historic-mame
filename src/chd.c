@@ -749,7 +749,7 @@ UINT32 chd_get_metadata(chd_file *chd, UINT32 *metatag, UINT32 metaindex, void *
 int chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen)
 {
 	UINT8 raw_meta_header[METADATA_HEADER_SIZE];
-	metadata_entry metaentry;
+	metadata_entry metaentry = { 0 };
 	UINT32 count;
 
 	/* if the disk is an old version, punt */

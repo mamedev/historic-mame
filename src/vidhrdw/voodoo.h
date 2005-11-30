@@ -6,38 +6,28 @@
 
 **************************************************************************/
 
-VIDEO_START( voodoo_1x4mb );
-VIDEO_START( voodoo_2x4mb );
-VIDEO_START( voodoo2_1x4mb );
-VIDEO_START( voodoo2_2x4mb );
-VIDEO_START( voodoo3_1x4mb );
-VIDEO_START( voodoo3_2x4mb );
-VIDEO_STOP( voodoo );
-VIDEO_UPDATE( voodoo );
+#define MAX_VOODOO			2
 
-void voodoo_set_init_enable(UINT32 newval);
-void voodoo_set_vblank_callback(void (*vblank)(int));
-UINT32 voodoo_fifo_words_left(void);
+/* enumeration specifying which model of Voodoo we are emulating */
+enum
+{
+	VOODOO_1,
+	VOODOO_2,
+	VOODOO_BANSHEE,
+	VOODOO_3
+};
 
-void voodoo_reset(void);
-int voodoo_get_type(void);
+int voodoo_start(int which, int type, int fbmem_in_mb, int tmem0_in_mb, int tmem1_in_mb);
+void voodoo_update(int which, mame_bitmap *bitmap, const rectangle *cliprect);
+void voodoo_reset(int which);
+int voodoo_get_type(int which);
+int voodoo_is_stalled(int which);
+void voodoo_set_init_enable(int which, UINT32 newval);
+void voodoo_set_vblank_callback(int which, void (*vblank)(int));
+void voodoo_set_unstall_callback(int which, void (*unstall)(void));
 
-WRITE32_HANDLER( voodoo_regs_w );
-READ32_HANDLER( voodoo_regs_r );
-WRITE32_HANDLER( voodoo_regs_alt_w );
-READ32_HANDLER( voodoo_regs_alt_r );
-WRITE32_HANDLER( voodoo_framebuf_w );
-READ32_HANDLER( voodoo_framebuf_r );
-WRITE32_HANDLER( voodoo_textureram_w );
+READ32_HANDLER( voodoo_0_r );
+WRITE32_HANDLER( voodoo_0_w );
 
-WRITE32_HANDLER( voodoo2_regs_w );
-
-READ32_HANDLER( voodoo3_rom_r );
-WRITE32_HANDLER( voodoo3_ioreg_w );
-READ32_HANDLER( voodoo3_ioreg_r );
-WRITE32_HANDLER( voodoo3_cmdagp_w );
-READ32_HANDLER( voodoo3_cmdagp_r );
-WRITE32_HANDLER( voodoo3_2d_w );
-READ32_HANDLER( voodoo3_2d_r );
-WRITE32_HANDLER( voodoo3_yuv_w );
-READ32_HANDLER( voodoo3_yuv_r );
+READ32_HANDLER( voodoo_1_r );
+WRITE32_HANDLER( voodoo_1_w );

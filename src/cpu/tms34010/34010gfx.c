@@ -1031,7 +1031,7 @@ static void FUNCTION_NAME(pixblt)(int src_is_linear, int dst_is_linear)
 		void (*word_write)(offs_t address,UINT16 data);
 		UINT16 (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
-		XY dstxy;
+		XY dstxy = { 0 };
 
 		/* determine read/write functions */
 		if (IOREG(REG_DPYCTL) & 0x0800)
@@ -1290,7 +1290,7 @@ static void FUNCTION_NAME(pixblt_r)(int src_is_linear, int dst_is_linear)
 		void (*word_write)(offs_t address,UINT16 data);
 		UINT16 (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
-		XY dstxy;
+		XY dstxy = { 0 };
 
 		/* determine read/write functions */
 		if (IOREG(REG_DPYCTL) & 0x0800)
@@ -1553,7 +1553,7 @@ static void FUNCTION_NAME(pixblt_b)(int dst_is_linear)
 		void (*word_write)(offs_t address,UINT16 data);
 		UINT16 (*word_read)(offs_t address);
 		UINT32 saddr, daddr;
-		XY dstxy;
+		XY dstxy = { 0 };
 
 		/* determine read/write functions */
 		if (IOREG(REG_DPYCTL) & 0x0800)
@@ -1767,7 +1767,7 @@ static void FUNCTION_NAME(fill)(int dst_is_linear)
 		void (*word_write)(offs_t address,UINT16 data);
 		UINT16 (*word_read)(offs_t address);
 		UINT32 daddr;
-		XY dstxy;
+		XY dstxy = { 0 };
 
 		/* determine read/write functions */
 		if (IOREG(REG_DPYCTL) & 0x0800)

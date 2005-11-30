@@ -254,7 +254,7 @@ static CMDERR internal_parse_command(const char *original_command, int validate_
 	char *params[MAX_COMMAND_PARAMS];
 	CMDERR result = CMDERR_NONE;
 	char *command_start;
-	char *p, c;
+	char *p, c = 0;
 
 	/* make a copy of the command */
 	strcpy(command, original_command);

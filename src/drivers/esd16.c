@@ -220,6 +220,46 @@ static ADDRESS_MAP_START( mchampdx_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xd00008, 0xd00009) AM_WRITE(hedpanic_platform_w) // not used in mchampdx?
 ADDRESS_MAP_END
 
+/* Tang Tang - like the others but again with different addresses */
+
+static ADDRESS_MAP_START( tangtang_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0x500006, 0x500007) AM_READ(esd_eeprom_r	)
+	AM_RANGE(0x700000, 0x70ffff) AM_READ(MRA16_RAM) // main ram
+	ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( tangtang_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x100fff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x200800, 0x200807) AM_WRITE(esd16_spriteram_w				)	// Sprites (Mirrored)
+
+	AM_RANGE(0x300000, 0x303fff) AM_WRITE(esd16_vram_0_w) AM_BASE(&esd16_vram_0	)	// Layers
+	AM_RANGE(0x320000, 0x323fff) AM_WRITE(esd16_vram_1_w) AM_BASE(&esd16_vram_1	)	//
+	AM_RANGE(0x324000, 0x327fff) AM_WRITE(esd16_vram_1_w) AM_BASE(&esd16_vram_1	)	// mirror?
+
+	AM_RANGE(0x400000, 0x400003) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_0	)	// Scroll
+	AM_RANGE(0x400004, 0x400007) AM_WRITE(MWA16_RAM) AM_BASE(&esd16_scroll_1	)	//
+	AM_RANGE(0x400008, 0x400009) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_x) // not used in mchampdx?
+	AM_RANGE(0x40000a, 0x40000b) AM_WRITE(MWA16_RAM) AM_BASE(&headpanic_platform_y) // not used in mchampdx?
+	AM_RANGE(0x40000c, 0x40000d) AM_WRITE(MWA16_NOP) // ??
+	AM_RANGE(0x40000e, 0x40000f) AM_WRITE(MWA16_RAM) AM_BASE(&head_layersize) // ??
+
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)	// IRQ Ack
+	AM_RANGE(0x500008, 0x500009) AM_WRITE(esd16_tilemap0_color_w)   // Flip Screen + Tileamp0 palette banking
+	AM_RANGE(0x50000a, 0x50000b) AM_WRITE(MWA16_NOP)	// ? 2 not checked
+	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(esd16_sound_command_w			)	// To Sound CPU // ok
+	AM_RANGE(0x50000e, 0x50000f) AM_WRITE(esd_eeprom_w)
+
+	AM_RANGE(0x600008, 0x600009) AM_WRITE(hedpanic_platform_w)
+
+	AM_RANGE(0x700000, 0x70ffff) AM_WRITE(MWA16_RAM)
+ADDRESS_MAP_END
+
 /***************************************************************************
 
 
@@ -479,6 +519,13 @@ static const gfx_decode hedpanic_gfxdecodeinfo[] =
 	{ -1 }
 };
 
+static const gfx_decode tangtang_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &layout_16x16x5, 0x200, 8 }, // [0] Sprites
+	{ REGION_GFX2, 0, &hedpanic_layout_8x8x8,   0x000, 4 }, // [1] Layers
+	{ REGION_GFX2, 0, &hedpanic_layout_16x16x8, 0x000, 4 }, // [2] Layers
+	{ -1 }
+};
 
 /***************************************************************************
 
@@ -549,6 +596,17 @@ static MACHINE_DRIVER_START( mchampdx )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(mchampdx_readmem,mchampdx_writemem)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( tangtang )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hedpanic)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(tangtang_readmem,tangtang_writemem)
+
+	MDRV_GFXDECODE(tangtang_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -699,6 +757,52 @@ ROM_START( mchampdx )
 	ROM_LOAD( "esd4.su10", 0x00000, 0x80000, CRC(14c4a30d) SHA1(d8eb2f08d5293f729cbec1897e3b92b675cc2814) )
 ROM_END
 
+/* Tang Tang
+
+CPU
+1x cpu 68000 @ 16MHz
+1x cpu Z80
+1x audio YM3812 labeled as U6612
+1x audio OKI6295 labeled as AD-65
+1x oscillator 16.000000MHz
+1x oscillator 14.0000MHz
+
+ROMs
+2x M27C2001 (1,2)
+6x MX27C2000 (3,JU03,JU04,JU05,JU06,JU07)
+1x AT27C010 (4)
+2x MX29F1610MC (FU34,FU35)
+
+Note
+1x connector JAMMA
+1x trimmer (volume)
+2x pushbutton
+
+*/
+
+ROM_START( tangtang )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "esd2.cu02", 0x000000, 0x040000,  CRC(b6dd6e3d) SHA1(44d2663827c45267eb154c873f3bd2e9e2bf3d3f) )
+	ROM_LOAD16_BYTE( "esd1.cu03", 0x000001, 0x040000,  CRC(b6c0f2f4) SHA1(68ad76e7e380c728dda200a852729e034d9c9f4c) )
+
+	ROM_REGION( 0x84000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "esd3.su06", 0x00000, 0x0c000, CRC(d48ecc5c) SHA1(5015dd775980542eb29a08bffe1a09ea87d56272) )
+	ROM_CONTINUE(             0x10000, 0x34000             )
+
+	ROM_REGION( 0x140000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites, 16x16x5 */
+	ROM_LOAD( "ju04.bin", 0x000000, 0x040000, CRC(f999b9d7) SHA1(9e4d0e68cdc429c7563b8ad51c072d68ffed09dc) )
+	ROM_LOAD( "ju05.bin", 0x040000, 0x040000, CRC(679302cf) SHA1(911c2f7e0e809ee28e4f2364788fd51d2bcef24e) )
+	ROM_LOAD( "ju06.bin", 0x080000, 0x040000, CRC(01f59ff7) SHA1(a62a2d5c2d107f67fecfc08fdb5d801ee39c3875) )
+	ROM_LOAD( "ju07.bin", 0x0c0000, 0x040000, CRC(556acac3) SHA1(10e919e63b434da80fb261db1d8967cb11e95e00) )
+	ROM_LOAD( "ju08.bin", 0x100000, 0x040000, CRC(ecc2d8c7) SHA1(1aabdf7204fcdff8d46cb50de8b097e3775dddf3) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layers, 16x16x8 */
+	ROM_LOAD16_BYTE( "rom.fu35", 0x000000, 0x200000, NO_DUMP )
+	ROM_LOAD16_BYTE( "rom.fu34", 0x000001, 0x200000, NO_DUMP )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "esd4.su10", 0x00000, 0x20000, CRC(f2dfb02d) SHA1(04001488697aad3e5b2d15c9f5a81dc2b7d0952c) )
+ROM_END
 
 /***************************************************************************
 
@@ -774,3 +878,5 @@ GAME( 1998, multchmp, 0, multchmp, multchmp, 0, ROT0, "ESD", "Multi Champ (Korea
 /* ESD 08-26-1999 */
 GAME( 1999, mchampdx, 0, mchampdx, hedpanic, 0, ROT0, "ESD", "Multi Champ Deluxe (ver. 1126)", 0 )
 GAME( 2000, hedpanic, 0, hedpanic, hedpanic, 0, ROT0, "ESD / Fuuki", "Head Panic (Korea, ver. 0315)", 0 )
+
+GAME( 2000, tangtang, 0, tangtang, hedpanic, 0, ROT0, "ESD", "Tang Tang", GAME_NOT_WORKING ) // missing bg roms

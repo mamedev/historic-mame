@@ -35,6 +35,9 @@ WRITE16_HANDLER( ga2_dpram_w );
 
 WRITE16_HANDLER(sonic_level_load_protection);
 
+READ16_HANDLER( arescue_dsp_r );
+WRITE16_HANDLER( arescue_dsp_w );
+
 
 /*----------- defined in vidhrdw/segas32.c -----------*/
 
