@@ -475,6 +475,7 @@ static int h8_execute(int cycles)
 		CALL_MAME_DEBUG;
 #endif
 		opcode = cpu_readop16(h8.pc);
+//      printf("[%06x]: %04x => %x\n", h8.pc, opcode, (opcode>>12)&0xf);
 		h8.pc += 2;
 
 		switch((opcode>>12) & 0xf)
@@ -2017,8 +2018,9 @@ static void h8_group7(UINT16 opcode)
 
 			switch((ext16>>8)&0xff)
 			{
+			case 0x30:
 			case 0x60:
-				bitnr = h8_getreg8((ext16>>4)&0xf)&7;
+				bitnr = (ext16>>4)&7;
 				udata8 = h8_bset8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
 				break;
 			case 0x70:
@@ -2026,6 +2028,7 @@ static void h8_group7(UINT16 opcode)
 				if(ext16&0x80) h8.h8err = 1;
 				udata8 = h8_bset8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
 				break;
+			case 0x32:
 			case 0x62:
 				bitnr = h8_getreg8((ext16>>4)&0xf)&7;
 				udata8 = h8_bclr8(bitnr, udata8); h8_mem_write8(address24, udata8); H8_IFETCH_TIMING(2); H8_BYTE_TIMING(2, address24);
@@ -2300,8 +2303,27 @@ static void h8_cmp32(UINT32 src, UINT32 dst)
 
 static UINT8 h8_subx8(UINT8 src, UINT8 dst)
 {
-	h8.h8err = 1;
-	return 0;
+	UINT16 res;
+
+	res = (UINT16)dst - src - (h8.h8cflag) ? 1 : 0;
+	// H,N,Z,V,C modified
+	h8.h8nflag = (res>>7) & 1;
+	h8.h8vflag = (((src^dst) & (res^dst))>>7) & 1;
+	h8.h8cflag = (res >> 8) & 1;
+
+	// zflag
+	if((res&0xff)==0)
+	{
+		h8.h8zflag = 1;
+	}
+	else
+	{
+		h8.h8zflag = 0;
+	}
+
+	h8.h8hflag = ((src^dst^res) & 0x10) ? 1 : 0;
+
+	return res;
 }
 
 static UINT8 h8_or8(UINT8 src, UINT8 dst)

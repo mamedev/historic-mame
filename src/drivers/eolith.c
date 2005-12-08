@@ -29,6 +29,7 @@
  - Land Breaker ver 3.03
  - Land Breaker ver 3.02(MCU internal flash dump is missing)
  - Raccoon World
+ - Fortress 2 Blue Arcade
 
  Known games not dumped
  - Ribbon (Step1. Mild Mind) (c) 1999
@@ -101,6 +102,7 @@ static WRITE32_HANDLER(systemcontrol_w) //BAD!!!
 }
 
 static ADDRESS_MAP_START( eolith_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM // fort2b needs ram here, mirror?
 	AM_RANGE(0x40000000, 0x40ffffff) AM_RAM
 	AM_RANGE(0x90000000, 0x907fffff) AM_WRITE(eolith_vram_w) AM_READ(eolith_vram_r)
 	AM_RANGE(0xfa000000, 0xfbffffff) AM_ROM AM_REGION(REGION_USER1, 0)//mirror for hiddnctch
@@ -312,6 +314,36 @@ ROM_START( landbrka )
 	ROM_LOAD( "lb_3.u97", 0x00000, 0x80000, CRC(5b34dff0) SHA1(1668763e977e272781ddcc74beba97b53477cc9d) )
 ROM_END
 
+/* Fortress 2 Blue */
+
+ROM_START( fort2b )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "ftii012.u43", 0x00000, 0x80000, CRC(6424e05f) SHA1(2f02f103de180561e372ce897f8410a11c4cb58d) )
+
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Game Data - banked ROM, swapping necessary */
+	ROM_LOAD32_WORD_SWAP( "ftii000.u39", 0x0000000, 0x400000, CRC(be74121d) SHA1(ee072044f84e11c48537d79bd9766bf8cc28f002) )
+	ROM_LOAD32_WORD_SWAP( "ftii004.u34", 0x0000002, 0x400000, CRC(d4399f98) SHA1(88f5a1097f44d2070cfc96c9cd83342d1975dcfe) )
+	ROM_LOAD32_WORD_SWAP( "ftii001.u40", 0x0800000, 0x400000, CRC(35c396ff) SHA1(d05dee021e1a93e224b05949c18a5107e0aceb4d) )
+	ROM_LOAD32_WORD_SWAP( "ftii005.u35", 0x0800002, 0x400000, CRC(ff553679) SHA1(d9f1ebc28098a20a59b76ee859527e946c82a1df) )
+	ROM_LOAD32_WORD_SWAP( "ftii002.u41", 0x1000000, 0x400000, CRC(1d79ed5a) SHA1(0319392dbfe4a20be462ca9cc5a66575ba0a32b4) )
+	ROM_LOAD32_WORD_SWAP( "ftii006.u36", 0x1000002, 0x400000, CRC(c6049bbc) SHA1(bd9231b5fe1a7307668960c1f9f188f4a49f1c45) )
+	ROM_LOAD32_WORD_SWAP( "ftii003.u42", 0x1800000, 0x400000, CRC(3cac1efe) SHA1(aca009a39b5d6049e3cf234f4412868a569ffb18) )
+	ROM_LOAD32_WORD_SWAP( "ftii007.u37", 0x1800002, 0x400000, CRC(a583a672) SHA1(b013fbfaa1e3f573a305e6346e50b930766daa1d) )
+
+	ROM_REGION( 0x008000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
+	ROM_LOAD( "ftii010.u107", 0x0000, 0x8000, CRC(afd5263d) SHA1(71ace1b749d8a6b84d08b97185e7e512d04e4b8d) )
+
+	ROM_REGION( 0x08000, REGION_CPU3, 0 ) /* AT89c52 */
+	ROM_LOAD( "ftii008.u11", 0x0000, 0x8000, CRC(79012474) SHA1(09a2d5705d7bc52cc2d1644c87c1e31ee44813ef) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
+	ROM_LOAD( "ftii009.u108", 0x00000, 0x80000,  CRC(9b996b60) SHA1(c4e34601f754ae2908dd6d59ea9da0c5c6f56f2d) )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
+	ROM_LOAD( "ftii011.u97", 0x00000, 0x80000, CRC(8a431b14) SHA1(5a9824280f30ef2e7b7f16652b2f9f9559cb764f) )
+ROM_END
+
+
 
 /*
 
@@ -376,3 +408,6 @@ GAME( 1999, landbrk,  0, eolith, eolith, 0, ROT0, "Eolith", "Land Breaker (World
 GAME( 1999, landbrka,  landbrk, eolith, eolith, landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
 
 GAME( 1998, hidnctch, 0, eolith, eolith, 0, ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea)",  GAME_NO_SOUND | GAME_NOT_WORKING ) // or Teurrin Geurim Chajgi '98
+
+/* eeprom is broken? (at least credit display / settings are, will crash after inserting a couple of coins), weaspons seem partly broken, locks up in attract after a few loops */
+GAME( 2001, fort2b,  0, eolith, eolith, 0, ROT0, "Eolith", "Fortress 2 Blue Arcade",  GAME_NO_SOUND | GAME_NOT_WORKING  )

@@ -185,7 +185,7 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( taotaido )
-	PORT_START	/* Player 1 controls (0xffff81.b) */
+	PORT_START_TAG("IN0")	/* Player 1 controls (0xffff81.b) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -199,7 +199,7 @@ INPUT_PORTS_START( taotaido )
 #endif
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Player 2 controls (0xffff83.b) */
+	PORT_START_TAG("IN1")	/* Player 2 controls (0xffff83.b) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -207,13 +207,13 @@ INPUT_PORTS_START( taotaido )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)	// "Punch"
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	// "Kick"
 #if TAOTAIDO_SHOW_ALL_INPUTS
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 #else
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 #endif
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* System inputs (0xffff85.b) */
+	PORT_START_TAG("IN2")	/* System inputs (0xffff85.b) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )	// see notes
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
@@ -227,7 +227,7 @@ INPUT_PORTS_START( taotaido )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )	// see notes - SERVICE in "test mode"
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	// VBLANK ? The game freezes when ON
 
-	PORT_START	/* DSW A (0xffff87.b -> !0xfe2f6c.w or !0xfe30d0) */
+	PORT_START_TAG("DSW0")	/* DSW A (0xffff87.b -> !0xfe2f6c.w or !0xfe30d0) */
 	PORT_DIPNAME( 0x01, 0x01, "Coin Slot" )
 	PORT_DIPSETTING(    0x01, "Same" )
 	PORT_DIPSETTING(    0x00, "Individual" )
@@ -253,7 +253,7 @@ INPUT_PORTS_START( taotaido )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* DSW B (0xffff89.b -> !0xfe73c2.w or !0xfe751c.w) */
+	PORT_START_TAG("DSW1")	/* DSW B (0xffff89.b -> !0xfe73c2.w or !0xfe751c.w) */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )	// check code at 0x0963e2 or 0x845e2
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -276,7 +276,7 @@ INPUT_PORTS_START( taotaido )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* DSW C (0xffff8b.b -> !0xfe2f94.w or !0xfe30f8.w) */
+	PORT_START_TAG("DSW2")	/* DSW C (0xffff8b.b -> !0xfe2f94.w or !0xfe30f8.w) */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )	// doesn't seem to be demo sounds
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
@@ -302,7 +302,7 @@ INPUT_PORTS_START( taotaido )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* Jumpers (0xffff8f.b) */
+	PORT_START_TAG("JP0")	/* Jumpers (0xffff8f.b) */
 	PORT_DIPNAME( 0x0f, 0x08, "Country" )
 	PORT_DIPSETTING(    0x00, "US" )				// also (c) Mc O'River Inc
 	PORT_DIPSETTING(    0x01, DEF_STR( Japan ) )
@@ -317,7 +317,7 @@ INPUT_PORTS_START( taotaido )
 
 #if TAOTAIDO_SHOW_ALL_INPUTS
 	/* These inputs are only to fit the test mode - leftover from another game ? */
-	PORT_START	/* Player 3 inputs (0xffffa1.b) */
+	PORT_START_TAG("IN3")	/* Player 3 inputs (0xffffa1.b) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
@@ -327,7 +327,7 @@ INPUT_PORTS_START( taotaido )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* Player 4 inputs (0xffffa3.b) */
+	PORT_START_TAG("IN4")	/* Player 4 inputs (0xffffa3.b) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
@@ -337,6 +337,16 @@ INPUT_PORTS_START( taotaido )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 #endif
+INPUT_PORTS_END
+
+INPUT_PORTS_START( taotaida )
+	PORT_INCLUDE(taotaido)
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -458,4 +468,4 @@ ROM_START( taotaida )
 ROM_END
 
 GAME( 1993, taotaido, 0,        taotaido, taotaido, 0, ROT0, "Video System Co.", "Tao Taido (set 1)", GAME_NO_COCKTAIL )
-GAME( 1993, taotaida, taotaido, taotaido, taotaido, 0, ROT0, "Video System Co.", "Tao Taido (set 2)", GAME_NO_COCKTAIL )
+GAME( 1993, taotaida, taotaido, taotaido, taotaida, 0, ROT0, "Video System Co.", "Tao Taido (set 2)", GAME_NO_COCKTAIL )

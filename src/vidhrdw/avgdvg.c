@@ -449,12 +449,16 @@ void avg_set_flip_x(int flip)
 {
 	if (flip)
 		flip_x = 1;
+	else
+		flip_x = 0;
 }
 
 void avg_set_flip_y(int flip)
 {
 	if (flip)
 		flip_y = 1;
+	else
+		flip_y = 0;
 }
 
 void avg_apply_flipping_and_swapping(int *x, int *y)

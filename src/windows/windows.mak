@@ -17,7 +17,6 @@ OSOBJS = \
 	$(OBJ)/windows/input.o \
 	$(OBJ)/windows/misc.o \
 	$(OBJ)/windows/rc.o \
-	$(OBJ)/windows/snprintf.o \
 	$(OBJ)/windows/sound.o \
 	$(OBJ)/windows/ticker.o \
 	$(OBJ)/windows/video.o \

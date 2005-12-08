@@ -27,6 +27,9 @@ enum
 /* number of clocks to set up a triangle (just a guess) */
 #define TRIANGLE_SETUP_CLOCKS	100
 
+/* maximum number of rasterizers */
+#define MAX_RASTERIZERS			1024
+
 /* size of the rasterizer hash table */
 #define RASTER_HASH_SIZE		97
 
@@ -40,6 +43,7 @@ enum
 #define LFB_RGB_PRESENT			1
 #define LFB_ALPHA_PRESENT		2
 #define LFB_DEPTH_PRESENT		4
+#define LFB_DEPTH_PRESENT_MSW	8
 
 /* shorter combinations to make the table smaller */
 #define REG_R					(REGISTER_READ)
@@ -524,7 +528,7 @@ static const UINT8 dither_matrix_2x2[4] =
 	(c) = (((val) << 2) & 0xf8) | (((val) >> 3) & 0x07);	\
 
 #define EXTRACT_1555_TO_8888(val, a, b, c, d)				\
-	(a) = ((val) & 0x8000) ? 0xff : 0x00;					\
+	(a) = ((INT16)(val) >> 15) & 0xff;						\
 	EXTRACT_x555_TO_888(val, b, c, d)						\
 
 #define EXTRACT_5551_TO_8888(val, a, b, c, d)				\
@@ -637,9 +641,10 @@ static const UINT8 dither_matrix_2x2[4] =
 #define FOGMODE_ENABLE_FOG(val)				(((val) >> 0) & 1)
 #define FOGMODE_FOG_ADD(val)				(((val) >> 1) & 1)
 #define FOGMODE_FOG_MULT(val)				(((val) >> 2) & 1)
-#define FOGMODE_FOG_ALPHA(val)				(((val) >> 3) & 1)
-#define FOGMODE_FOG_Z(val)					(((val) >> 4) & 1)
+#define FOGMODE_FOG_ZALPHA(val)				(((val) >> 3) & 3)
 #define FOGMODE_FOG_CONSTANT(val)			(((val) >> 5) & 1)
+#define FOGMODE_FOG_DITHER(val)				(((val) >> 6) & 1)		/* voodoo 2 only */
+#define FOGMODE_FOG_ZONES(val)				(((val) >> 7) & 1)		/* voodoo 2 only */
 
 #define FBZMODE_ENABLE_CLIPPING(val)		(((val) >> 0) & 1)
 #define FBZMODE_ENABLE_CHROMAKEY(val)		(((val) >> 1) & 1)
@@ -672,6 +677,12 @@ static const UINT8 dither_matrix_2x2[4] =
 #define LFBMODE_WRITE_W_SELECT(val)			(((val) >> 14) & 1)
 #define LFBMODE_WORD_SWAP_READS(val)		(((val) >> 15) & 1)
 #define LFBMODE_BYTE_SWIZZLE_READS(val)		(((val) >> 16) & 1)
+
+#define CHROMARANGE_BLUE_EXCLUSIVE(val)		(((val) >> 24) & 1)
+#define CHROMARANGE_GREEN_EXCLUSIVE(val)	(((val) >> 25) & 1)
+#define CHROMARANGE_RED_EXCLUSIVE(val)		(((val) >> 26) & 1)
+#define CHROMARANGE_UNION_MODE(val)			(((val) >> 27) & 1)
+#define CHROMARANGE_ENABLE(val)				(((val) >> 28) & 1)
 
 #define FBIINIT0_VGA_PASSTHRU(val)			(((val) >> 0) & 1)
 #define FBIINIT0_GRAPHICS_RESET(val)		(((val) >> 1) & 1)
@@ -869,7 +880,7 @@ struct _pci_state
 	UINT32		fifo_mem[64*2];			/* memory backing the PCI FIFO */
 	UINT32		init_enable;			/* initEnable value */
 	UINT8		stall_state;			/* state of the system if we're stalled */
-	void		(*unstall_callback)(void); /* callback for when the stalling stops */
+	void		(*stall_callback)(int); /* callback for stalling/unstalling */
 	UINT8		op_pending;				/* true if an operation is pending */
 	mame_time	op_end_time;			/* time when the pending operation ends */
 	mame_timer *continue_timer;			/* timer to use to continue processing */
@@ -905,11 +916,6 @@ struct _tmu_state
 	INT64		dsdy, dtdy;				/* delta S,T per Y */
 	INT64		dwdy;					/* delta W per Y */
 
-	UINT8		shifts, shiftt;			/* shift S/T values to get them to 18-bit */
-	INT32		startss, startst;		/* starting S,T (shifted) */
-	INT32		dssdx, dstdx;			/* delta S,T per X (shifted) */
-	INT32		dssdy, dstdy;			/* delta S,T per Y (shifted) */
-
 	INT32		lodmin, lodmax;			/* min, max LOD values */
 	INT32		lodbias;				/* LOD bias */
 	UINT32		lodmask;				/* mask of available LODs */
@@ -921,6 +927,8 @@ struct _tmu_state
 
 	UINT32		wmask;					/* mask for the current texture width */
 	UINT32		hmask;					/* mask for the current texture height */
+
+	UINT32		bilinear_mask;			/* mask for bilinear resolution (0xf0 for V1, 0xff for V2) */
 
 	ncc_table	ncc[2];					/* two NCC tables */
 
@@ -935,7 +943,6 @@ typedef struct _tmu_state tmu_state;
 
 struct _tmu_shared_state
 {
-
 	rgb_t		rgb332[256];			/* RGB 3-3-2 lookup table */
 	rgb_t		alpha8[256];			/* alpha 8-bit lookup table */
 	rgb_t		int8[256];				/* intensity 8-bit lookup table */
@@ -969,6 +976,8 @@ struct _fbi_state
 	UINT32		x_tiles;				/* number of tiles in the X direction */
 
 	rgb_t		pen[65536];				/* mapping from pixels to pens */
+	rgb_t		clut[33];				/* clut gamma data */
+	UINT8		clut_dirty;				/* do we need to recompute? */
 
 	mame_timer *vblank_timer;			/* VBLANK timer */
 	UINT8		vblank;					/* VBLANK state */
@@ -982,6 +991,7 @@ struct _fbi_state
 
 	UINT8		fogblend[64];			/* 64-entry fog table */
 	UINT8		fogdelta[64];			/* 64-entry fog table */
+	UINT8		fogdelta_mask;			/* mask for for delta (0xff for V1, 0xfc for V2) */
 
 	/* triangle setup info */
 	UINT8		cheating_allowed;		/* allow cheating? */
@@ -1017,18 +1027,21 @@ struct _voodoo_stats
 	UINT8		display;				/* display stats? */
 	INT32		swaps;					/* total swaps */
 	INT32		stalls;					/* total stalls */
-	INT32		start_triangles;		/* starting triangles */
-	INT32		start_pixels_in;		/* starting pixels in */
-	INT32		start_pixels_out;		/* starting pixels out */
-	INT32		start_chroma_fail;		/* starting chroma fail */
-	INT32		start_zfunc_fail;		/* starting z func fail */
-	INT32		start_afunc_fail;		/* starting a func fail */
+	INT32		total_triangles;		/* total triangles */
+	INT32		total_pixels_in;		/* total pixels in */
+	INT32		total_pixels_out;		/* total pixels out */
+	INT32		total_chroma_fail;		/* total chroma fail */
+	INT32		total_zfunc_fail;		/* total z func fail */
+	INT32		total_afunc_fail;		/* total a func fail */
+	INT32		total_clipped;			/* total clipped */
+	INT32		total_stippled;			/* total stippled */
 	INT32		lfb_writes;				/* LFB writes */
 	INT32		lfb_reads;				/* LFB reads */
 	INT32		reg_writes;				/* register writes */
 	INT32		reg_reads;				/* register reads */
 	INT32		tex_writes;				/* texture writes */
 	INT32		texture_mode[16];		/* 16 different texture modes */
+	UINT8		render_override;		/* render override */
 };
 typedef struct _voodoo_stats voodoo_stats;
 
@@ -1057,6 +1070,7 @@ struct _voodoo_state
 	UINT8		chipmask;				/* mask for which chips are available */
 	UINT32		freq;					/* operating frequency */
 	subseconds_t subseconds_per_cycle;	/* subseconds per cycle */
+	UINT32		extra_cycles;			/* extra cycles not yet accounted for */
 	int			trigger;				/* trigger used for stalling */
 
 	voodoo_reg	reg[0x400];				/* raw registers */
@@ -1072,6 +1086,8 @@ struct _voodoo_state
 	offs_t		last_status_pc;			/* PC of last status read (for logging) */
 	UINT32		last_status_value;		/* value of last status read (for logging) */
 
+	int			next_rasterizer;		/* next rasterizer index */
+	raster_info	rasterizer[MAX_RASTERIZERS]; /* array of rasterizers */
 	raster_info *raster_hash[RASTER_HASH_SIZE]; /* hash table of rasterizers */
 };
 /* typedef struct _voodoo_state voodoo_state; -- declared above */
@@ -1382,17 +1398,177 @@ while (0)
 
 /*************************************
  *
+ *  Clamping macros
+ *
+ *************************************/
+
+#define CLAMPED_ARGB(ITERR, ITERG, ITERB, ITERA, FBZCP, RESULT)					\
+do 																				\
+{																				\
+	INT32 r = (INT32)(ITERR) >> 12;												\
+	INT32 g = (INT32)(ITERG) >> 12;												\
+	INT32 b = (INT32)(ITERB) >> 12;												\
+	INT32 a = (INT32)(ITERA) >> 12;												\
+																				\
+	if (FBZCP_RGBZW_CLAMP(FBZCP) == 0)											\
+	{																			\
+		r &= 0xfff;																\
+		if (r == 0xfff)															\
+			r = 0;																\
+		else if (r == 0x100)													\
+			r = 0xff;															\
+		else																	\
+			r &= 0xff;															\
+																				\
+		g &= 0xfff;																\
+		if (g == 0xfff)															\
+			g = 0;																\
+		else if (g == 0x100)													\
+			g = 0xff;															\
+		else																	\
+			g &= 0xff;															\
+																				\
+		b &= 0xfff;																\
+		if (b == 0xfff)															\
+			b = 0;																\
+		else if (b == 0x100)													\
+			b = 0xff;															\
+		else																	\
+			b &= 0xff;															\
+																				\
+		a &= 0xfff;																\
+		if (a == 0xfff)															\
+			a = 0;																\
+		else if (a == 0x100)													\
+			a = 0xff;															\
+		else																	\
+			a &= 0xff;															\
+	}																			\
+	else																		\
+	{																			\
+		CLAMP(r, 0, 0xff);														\
+		CLAMP(g, 0, 0xff);														\
+		CLAMP(b, 0, 0xff);														\
+		CLAMP(a, 0, 0xff);														\
+	}																			\
+	(RESULT) = MAKE_ARGB(a, r, g, b);											\
+} 																				\
+while (0)
+
+
+#define CLAMPED_Z(ITERZ, FBZCP, RESULT)											\
+do 																				\
+{																				\
+	(RESULT) = (INT32)(ITERZ) >> 12;											\
+	if (FBZCP_RGBZW_CLAMP(FBZCP) == 0)											\
+	{																			\
+		(RESULT) &= 0xfffff;													\
+		if ((RESULT) == 0xfffff)												\
+			(RESULT) = 0;														\
+		else if ((RESULT) == 0x10000)											\
+			(RESULT) = 0xffff;													\
+		else																	\
+			(RESULT) &= 0xffff;													\
+	}																			\
+	else																		\
+	{																			\
+		CLAMP((RESULT), 0, 0xffff);												\
+	}																			\
+} 																				\
+while (0)
+
+
+#define CLAMPED_W(ITERW, FBZCP, RESULT)											\
+do 																				\
+{																				\
+	(RESULT) = (INT16)((ITERW) >> 32);											\
+	if (FBZCP_RGBZW_CLAMP(FBZCP) == 0)											\
+	{																			\
+		(RESULT) &= 0xffff;														\
+		if ((RESULT) == 0xffff)													\
+			(RESULT) = 0;														\
+		else if ((RESULT) == 0x100)												\
+			(RESULT) = 0xff;													\
+		(RESULT) &= 0xff;														\
+	}																			\
+	else																		\
+	{																			\
+		CLAMP((RESULT), 0, 0xff);												\
+	}																			\
+} 																				\
+while (0)
+
+
+
+/*************************************
+ *
  *  Chroma keying macro
  *
  *************************************/
 
-#define APPLY_CHROMAKEY(VV, COLOR)												\
+#define APPLY_CHROMAKEY(VV, FBZMODE, COLOR)										\
 do 																				\
 {																				\
-	if ((((COLOR) ^ (VV)->reg[chromaKey].u) & 0xffffff) == 0)					\
+	if (FBZMODE_ENABLE_CHROMAKEY(FBZMODE))										\
 	{																			\
-		(VV)->reg[fbiChromaFail].u++;											\
-		goto skipdrawdepth;														\
+		/* non-range version */													\
+		if (!CHROMARANGE_ENABLE((VV)->reg[chromaRange].u))						\
+		{																		\
+			if ((((COLOR) ^ (VV)->reg[chromaKey].u) & 0xffffff) == 0)			\
+			{																	\
+				(VV)->reg[fbiChromaFail].u++;									\
+				goto skipdrawdepth;												\
+			}																	\
+		}																		\
+																				\
+		/* tricky range version */												\
+		else																	\
+		{																		\
+			UINT32 color = (COLOR);												\
+			INT32 low, high, test;												\
+			int results = 0;													\
+																				\
+			/* check blue */													\
+			low = RGB_BLUE((VV)->reg[chromaKey].u);								\
+			high = RGB_BLUE((VV)->reg[chromaRange].u);							\
+			test = RGB_BLUE(color);												\
+			results = (test >= low && test <= high);							\
+			results ^= CHROMARANGE_BLUE_EXCLUSIVE((VV)->reg[chromaRange].u);	\
+			results <<= 1;														\
+																				\
+			/* check green */													\
+			low = RGB_GREEN((VV)->reg[chromaKey].u);							\
+			high = RGB_GREEN((VV)->reg[chromaRange].u);							\
+			test = RGB_GREEN(color);											\
+			results |= (test >= low && test <= high);							\
+			results ^= CHROMARANGE_GREEN_EXCLUSIVE((VV)->reg[chromaRange].u);	\
+			results <<= 1;														\
+																				\
+			/* check red */														\
+			low = RGB_RED((VV)->reg[chromaKey].u);								\
+			high = RGB_RED((VV)->reg[chromaRange].u);							\
+			test = RGB_RED(color);												\
+			results |= (test >= low && test <= high);							\
+			results ^= CHROMARANGE_RED_EXCLUSIVE((VV)->reg[chromaRange].u);		\
+																				\
+			/* final result */													\
+			if (CHROMARANGE_UNION_MODE((VV)->reg[chromaRange].u))				\
+			{																	\
+				if (results != 0)												\
+				{																\
+					(VV)->reg[fbiChromaFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+			}																	\
+			else																\
+			{																	\
+				if (results == 7)												\
+				{																\
+					(VV)->reg[fbiChromaFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+			}																	\
+		}																		\
 	}																			\
 }																				\
 while (0)
@@ -1405,13 +1581,16 @@ while (0)
  *
  *************************************/
 
-#define APPLY_ALPHAMASK(VV, AA)													\
+#define APPLY_ALPHAMASK(VV, FBZMODE, AA)										\
 do 																				\
 {																				\
-	if (((AA) & 1) == 0)														\
+	if (FBZMODE_ENABLE_ALPHA_MASK(FBZMODE))										\
 	{																			\
-		(VV)->reg[fbiAfuncFail].u++;											\
-		goto skipdrawdepth;														\
+		if (((AA) & 1) == 0)													\
+		{																		\
+			(VV)->reg[fbiAfuncFail].u++;										\
+			goto skipdrawdepth;													\
+		}																		\
 	}																			\
 }																				\
 while (0)
@@ -1424,65 +1603,68 @@ while (0)
  *
  *************************************/
 
-#define APPLY_ALPHATEST(VV, AA, ALPHAMODE)										\
+#define APPLY_ALPHATEST(VV, ALPHAMODE, AA)										\
 do 																				\
 {																				\
-	switch (ALPHAMODE_ALPHAFUNCTION(ALPHAMODE))									\
+	if (ALPHAMODE_ALPHATEST(ALPHAMODE))											\
 	{																			\
-		case 0:		/* alphaOP = never */										\
-			(VV)->reg[fbiAfuncFail].u++;										\
-			goto skipdrawdepth;													\
-																				\
-		case 1:		/* alphaOP = less than */									\
-			if ((AA) >= ALPHAMODE_ALPHAREF(ALPHAMODE))							\
-			{																	\
+		switch (ALPHAMODE_ALPHAFUNCTION(ALPHAMODE))								\
+		{																		\
+			case 0:		/* alphaOP = never */									\
 				(VV)->reg[fbiAfuncFail].u++;									\
 				goto skipdrawdepth;												\
-			}																	\
-			break;																\
 																				\
-		case 2:		/* alphaOP = equal */										\
-			if ((AA) != ALPHAMODE_ALPHAREF(ALPHAMODE))							\
-			{																	\
-				(VV)->reg[fbiAfuncFail].u++;									\
-				goto skipdrawdepth;												\
-			}																	\
-			break;																\
+			case 1:		/* alphaOP = less than */								\
+				if ((AA) >= ALPHAMODE_ALPHAREF(ALPHAMODE))						\
+				{																\
+					(VV)->reg[fbiAfuncFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+				break;															\
 																				\
-		case 3:		/* alphaOP = less than or equal */							\
-			if ((AA) > ALPHAMODE_ALPHAREF(ALPHAMODE))							\
-			{																	\
-				(VV)->reg[fbiAfuncFail].u++;									\
-				goto skipdrawdepth;												\
-			}																	\
-			break;																\
+			case 2:		/* alphaOP = equal */									\
+				if ((AA) != ALPHAMODE_ALPHAREF(ALPHAMODE))						\
+				{																\
+					(VV)->reg[fbiAfuncFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+				break;															\
 																				\
-		case 4:		/* alphaOP = greater than */								\
-			if ((AA) <= ALPHAMODE_ALPHAREF(ALPHAMODE))							\
-			{																	\
-				(VV)->reg[fbiAfuncFail].u++;									\
-				goto skipdrawdepth;												\
-			}																	\
-			break;																\
+			case 3:		/* alphaOP = less than or equal */						\
+				if ((AA) > ALPHAMODE_ALPHAREF(ALPHAMODE))						\
+				{																\
+					(VV)->reg[fbiAfuncFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+				break;															\
 																				\
-		case 5:		/* alphaOP = not equal */									\
-			if ((AA) == ALPHAMODE_ALPHAREF(ALPHAMODE))							\
-			{																	\
-				(VV)->reg[fbiAfuncFail].u++;									\
-				goto skipdrawdepth;												\
-			}																	\
-			break;																\
+			case 4:		/* alphaOP = greater than */							\
+				if ((AA) <= ALPHAMODE_ALPHAREF(ALPHAMODE))						\
+				{																\
+					(VV)->reg[fbiAfuncFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+				break;															\
 																				\
-		case 6:		/* alphaOP = greater than or equal */						\
-			if ((AA) < ALPHAMODE_ALPHAREF(ALPHAMODE))							\
-			{																	\
-				(VV)->reg[fbiAfuncFail].u++;									\
-				goto skipdrawdepth;												\
-			}																	\
-			break;																\
+			case 5:		/* alphaOP = not equal */								\
+				if ((AA) == ALPHAMODE_ALPHAREF(ALPHAMODE))						\
+				{																\
+					(VV)->reg[fbiAfuncFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+				break;															\
 																				\
-		case 7:		/* alphaOP = always */										\
-			break;																\
+			case 6:		/* alphaOP = greater than or equal */					\
+				if ((AA) < ALPHAMODE_ALPHAREF(ALPHAMODE))						\
+				{																\
+					(VV)->reg[fbiAfuncFail].u++;								\
+					goto skipdrawdepth;											\
+				}																\
+				break;															\
+																				\
+			case 7:		/* alphaOP = always */									\
+				break;															\
+		}																		\
 	}																			\
 }																				\
 while (0)
@@ -1633,7 +1815,9 @@ do																				\
 				break;															\
 																				\
 			case 15:	/* A_COLORBEFOREFOG */									\
-				osd_die("Unimplemented voodoo feature: A_COLORBEFOREFOG\n");	\
+				(RR) += (dr * (prefogr + 1)) >> 8;								\
+				(GG) += (dg * (prefogg + 1)) >> 8;								\
+				(BB) += (db * (prefogb + 1)) >> 8;								\
 				break;															\
 		}																		\
 																				\
@@ -1663,7 +1847,7 @@ while (0)
  *
  *************************************/
 
-#define APPLY_FOGGING(VV, FOGMODE, XX, YY, RR, GG, BB, ITERZ, ITERA)			\
+#define APPLY_FOGGING(VV, FOGMODE, FBZCP, XX, YY, RR, GG, BB, ITERZ, ITERW, ITERAXXX)	\
 do																				\
 {																				\
 	if (FOGMODE_ENABLE_FOG(FOGMODE))											\
@@ -1701,19 +1885,47 @@ do																				\
 				fb -= (BB);														\
 			}																	\
 																				\
-			/* blend using iterated Z */										\
-			if (FOGMODE_FOG_Z(FOGMODE))											\
-				fogblend = ((ITERZ) >> 20) & 0xff;								\
+			/* fog blending mode */												\
+			switch (FOGMODE_FOG_ZALPHA(FOGMODE))								\
+			{																	\
+				case 0:		/* fog table */										\
+				{																\
+					INT32 delta = (VV)->fbi.fogdelta[wfloat >> 10];				\
+					INT32 deltaval;												\
 																				\
-			/* blend using iterated A */										\
-			else if (FOGMODE_FOG_ALPHA(FOGMODE))								\
-				fogblend = (ITERA);												\
+					/* perform the multiply against lower 8 bits of wfloat */	\
+					deltaval = (delta & (VV)->fbi.fogdelta_mask) *				\
+								((wfloat >> 2) & 0xff);							\
 																				\
-			/* blend using fog table */											\
-			else 																\
-				fogblend = (VV)->fbi.fogblend[wfloat >> 10] +					\
-							(((VV)->fbi.fogdelta[wfloat >> 10] *				\
-								((wfloat >> 2) & 0xff)) >> 8);					\
+					/* fog zones allow for negating this value */				\
+					if (FOGMODE_FOG_ZONES(FOGMODE) && (delta & 2))				\
+						deltaval = -deltaval;									\
+					deltaval >>= 6;												\
+																				\
+					/* apply dither */											\
+					if (FOGMODE_FOG_DITHER(FOGMODE))							\
+						deltaval += dither_matrix_4x4[(((YY) & 3) << 2) + 		\
+														((XX) & 3)];			\
+					deltaval >>= 4;												\
+																				\
+					/* add to the blending factor */							\
+					fogblend = (VV)->fbi.fogblend[wfloat >> 10] + deltaval;		\
+					break;														\
+				}																\
+																				\
+				case 1:		/* iterated A */									\
+					fogblend = (ITERAXXX) >> 24;								\
+					break;														\
+																				\
+				case 2:		/* iterated Z */									\
+					CLAMPED_Z((ITERZ), FBZCP, fogblend);						\
+					fogblend >>= 8;												\
+					break;														\
+																				\
+				case 3:		/* iterated W - Voodoo 2 only */					\
+					CLAMPED_W((ITERW), FBZCP, fogblend);						\
+					break;														\
+			}																	\
 																				\
 			/* perform the blend */												\
 			fogblend++;															\
@@ -1802,8 +2014,8 @@ do 																				\
 	texbase = (TT)->lodoffset[ilod];											\
 																				\
 	/* compute the maximum s and t values at this LOD */						\
-	smax = ((TT)->wmask >> ilod) + 1;											\
-	tmax = ((TT)->hmask >> ilod) + 1;											\
+	smax = (TT)->wmask >> ilod;													\
+	tmax = (TT)->hmask >> ilod;													\
 																				\
 	/* determine whether we are point-sampled or bilinear */					\
 	if ((lod == (TT)->lodmin && !TEXMODE_MAGNIFICATION_FILTER(TEXMODE)) ||		\
@@ -1819,12 +2031,12 @@ do 																				\
 																				\
 		/* clamp/wrap S/T if necessary */										\
 		if (TEXMODE_CLAMP_S(TEXMODE))											\
-			CLAMP(s, 0, smax - 1);												\
+			CLAMP(s, 0, smax);													\
 		if (TEXMODE_CLAMP_T(TEXMODE))											\
-			CLAMP(t, 0, tmax - 1);												\
-		s &= smax - 1;															\
-		t &= tmax - 1;															\
-		t *= smax;																\
+			CLAMP(t, 0, tmax);													\
+		s &= smax;																\
+		t &= tmax;																\
+		t *= smax + 1;															\
 																				\
 		/* fetch texel data */													\
 		if (TEXMODE_FORMAT(TEXMODE) < 8)										\
@@ -1862,8 +2074,8 @@ do 																				\
 		t -= 0x80;																\
 																				\
 		/* extract the fractions */												\
-		sfrac = s & 0xff;														\
-		tfrac = t & 0xff;														\
+		sfrac = s & (TT)->bilinear_mask;										\
+		tfrac = t & (TT)->bilinear_mask;										\
 																				\
 		/* now toss the rest */													\
 		s >>= 8;																\
@@ -1874,20 +2086,20 @@ do 																				\
 		/* clamp/wrap S/T if necessary */										\
 		if (TEXMODE_CLAMP_S(TEXMODE))											\
 		{																		\
-			CLAMP(s, 0, smax - 1);												\
-			CLAMP(s1, 0, smax - 1);												\
+			CLAMP(s, 0, smax);													\
+			CLAMP(s1, 0, smax);													\
 		}																		\
 		if (TEXMODE_CLAMP_T(TEXMODE))											\
 		{																		\
-			CLAMP(t, 0, tmax - 1);												\
-			CLAMP(t1, 0, tmax - 1);												\
+			CLAMP(t, 0, tmax);													\
+			CLAMP(t1, 0, tmax);													\
 		}																		\
-		s &= smax - 1;															\
-		s1 &= smax - 1;															\
-		t &= tmax - 1;															\
-		t1 &= tmax - 1;															\
-		t *= smax;																\
-		t1 *= smax;																\
+		s &= smax;																\
+		s1 &= smax;																\
+		t &= tmax;																\
+		t1 &= tmax;																\
+		t *= smax + 1;															\
+		t1 *= smax + 1;															\
 																				\
 		/* fetch texel data */													\
 		if (TEXMODE_FORMAT(TEXMODE) < 8)										\
@@ -2096,18 +2308,14 @@ do 																				\
 	CLAMP(tb, 0x00, 0xff);														\
 	CLAMP(ta, 0x00, 0xff);														\
 																				\
-	/* invert */																\
-	if (TEXMODE_TC_INVERT_OUTPUT(TEXMODE))										\
-	{																			\
-		tr ^= 0xff;																\
-		tg ^= 0xff;																\
-		tb ^= 0xff;																\
-	}																			\
-	if (TEXMODE_TCA_INVERT_OUTPUT(TEXMODE))										\
-		ta ^= 0xff;																\
-																				\
 	/* produce the final result */												\
 	(RESULT) = MAKE_ARGB(ta, tr, tg, tb);										\
+																				\
+	/* invert */																\
+	if (TEXMODE_TC_INVERT_OUTPUT(TEXMODE))										\
+		(RESULT) ^= 0x00ffffff;													\
+	if (TEXMODE_TCA_INVERT_OUTPUT(TEXMODE))										\
+		(RESULT) ^= 0xff000000;													\
 } 																				\
 while (0)
 
@@ -2119,10 +2327,11 @@ while (0)
  *
  *************************************/
 
-#define PIXEL_PIPELINE_BEGIN(VV, XX, YY, SCRY, FBZMODE, ITERZ, ITERW)			\
+#define PIXEL_PIPELINE_BEGIN(VV, XX, YY, SCRY, FBZCOLORPATH, FBZMODE, ITERZ, ITERW)	\
 do 																				\
 {																				\
 	INT32 depthval, wfloat;														\
+	INT32 prefogr, prefogg, prefogb;											\
 	INT32 r, g, b, a;															\
 																				\
 	(VV)->reg[fbiPixelsIn].u++;													\
@@ -2134,7 +2343,10 @@ do 																				\
 			(XX) >= ((VV)->reg[clipLeftRight].u & 0x3ff) ||						\
 			(SCRY) < (((VV)->reg[clipLowYHighY].u >> 16) & 0x3ff) ||			\
 			(SCRY) >= ((VV)->reg[clipLowYHighY].u & 0x3ff))						\
+		{																		\
+			v->stats.total_clipped++;											\
 			goto skipdrawdepth;													\
+		}																		\
 	}																			\
 																				\
 	/* rotate stipple pattern */												\
@@ -2148,7 +2360,10 @@ do 																				\
 		if (FBZMODE_STIPPLE_PATTERN(FBZMODE) == 0)								\
 		{																		\
 			if (((VV)->reg[stipple].u & 0x80000000) == 0)						\
+			{																	\
+				v->stats.total_stippled++;										\
 				goto skipdrawdepth;												\
+			}																	\
 		}																		\
 																				\
 		/* pattern mode */														\
@@ -2156,7 +2371,10 @@ do 																				\
 		{																		\
 			int stipple_index = (((YY) & 3) << 3) | (~(XX) & 7);				\
 			if ((((VV)->reg[stipple].u >> stipple_index) & 1) == 0)				\
+			{																	\
+				v->stats.total_stippled++;										\
 				goto skipdrawdepth;												\
+			}																	\
 		}																		\
 	}																			\
 																				\
@@ -2177,7 +2395,7 @@ do 																				\
 																				\
 	/* compute depth value (W or Z) for this pixel */							\
 	if (FBZMODE_WBUFFER_SELECT(FBZMODE) == 0)									\
-		depthval = ((ITERZ) >> 12) & 0xffff;									\
+		CLAMPED_Z(ITERZ, FBZCOLORPATH, depthval);								\
 	else if (FBZMODE_DEPTH_FLOAT_SELECT(FBZMODE) == 0)							\
 		depthval = wfloat;														\
 	else																		\
@@ -2197,6 +2415,13 @@ do 																				\
 		}																		\
 	}																			\
 																				\
+	/* add the bias */															\
+	if (FBZMODE_ENABLE_DEPTH_BIAS(FBZMODE))										\
+	{																			\
+		depthval += (INT16)v->reg[zaColor].u;									\
+		CLAMP(depthval, 0, 0xffff);												\
+	}																			\
+																				\
 	/* handle depth buffer testing */											\
 	if (FBZMODE_ENABLE_DEPTHBUF(FBZMODE))										\
 	{																			\
@@ -2205,16 +2430,7 @@ do 																				\
 		/* the source depth is either the iterated W/Z+bias or a */				\
 		/* constant value */													\
 		if (FBZMODE_DEPTH_SOURCE_COMPARE(FBZMODE) == 0)							\
-		{																		\
 			depthsource = depthval;												\
-																				\
-			/* add the bias */													\
-			if (FBZMODE_ENABLE_DEPTH_BIAS(FBZMODE))								\
-				depthsource += (INT16)v->reg[zaColor].u;						\
-																				\
-			/* clamp */															\
-			CLAMP(depthsource, 0, 0xffff);										\
-		}																		\
 		else																	\
 			depthsource = v->reg[zaColor].u & 0xffff;							\
 																				\
@@ -2279,13 +2495,20 @@ do 																				\
 	}
 
 
-#define PIXEL_PIPELINE_END(VV, XX, YY, dest, depth, FBZMODE, ALPHAMODE, FOGMODE, ITERZ, ITERA) \
+#define PIXEL_PIPELINE_END(VV, XX, YY, dest, depth, FBZMODE, FBZCOLORPATH, ALPHAMODE, FOGMODE, ITERZ, ITERW, ITERAXXX) \
 																				\
 	/* perform fogging */														\
-	APPLY_FOGGING(VV, FOGMODE, XX, YY, r, g, b, ITERZ, ITERA);					\
+	prefogr = r;																\
+	prefogg = g;																\
+	prefogb = b;																\
+	APPLY_FOGGING(VV, FOGMODE, FBZCOLORPATH, XX, YY, r, g, b, 					\
+					ITERZ, ITERW, ITERAXXX);									\
 																				\
 	/* perform alpha blending */												\
 	APPLY_ALPHA_BLEND(FBZMODE, ALPHAMODE, XX, YY, r, g, b, a);					\
+																				\
+	/* modify the pixel for debugging purposes */								\
+	MODIFY_PIXEL(VV);															\
 																				\
 	/* write to framebuffer */													\
 	if (FBZMODE_RGB_BUFFER_MASK(FBZMODE))										\
@@ -2357,7 +2580,7 @@ while (0)
 
     INT32 r, g, b, a;
 */
-#define COLORPATH_PIPELINE(VV, FBZCOLORPATH, FBZMODE, ALPHAMODE, TEXELARGB, ITERZ, ITERRGB, ITERA) \
+#define COLORPATH_PIPELINE(VV, FBZCOLORPATH, FBZMODE, ALPHAMODE, TEXELARGB, ITERZ, ITERW, ITERARGB) \
 do 																				\
 {																				\
 	INT32 blendr, blendg, blendb, blenda;										\
@@ -2370,7 +2593,7 @@ do 																				\
 	switch (FBZCP_CC_RGBSELECT(FBZCOLORPATH))									\
 	{																			\
 		case 0:		/* iterated RGB */											\
-			c_other = (ITERRGB);												\
+			c_other = (ITERARGB);												\
 			break;																\
 																				\
 		case 1:		/* texture RGB */											\
@@ -2387,14 +2610,13 @@ do 																				\
 	}																			\
 																				\
 	/* handle chroma key */														\
-	if (FBZMODE_ENABLE_CHROMAKEY(FBZMODE))										\
-		APPLY_CHROMAKEY(VV, c_other);											\
+	APPLY_CHROMAKEY(VV, FBZMODE, c_other);										\
 																				\
 	/* compute a_other */														\
 	switch (FBZCP_CC_ASELECT(FBZCOLORPATH))										\
 	{																			\
 		case 0:		/* iterated alpha */										\
-			a_other = ((ITERA) >> 14) & 0xff;									\
+			a_other = RGB_ALPHA(ITERARGB);										\
 			break;																\
 																				\
 		case 1:		/* texture alpha */											\
@@ -2411,25 +2633,23 @@ do 																				\
 	}																			\
 																				\
 	/* handle alpha mask */														\
-	if (FBZMODE_ENABLE_ALPHA_MASK(FBZMODE))										\
-		APPLY_ALPHAMASK(VV, a_other);											\
+	APPLY_ALPHAMASK(VV, FBZMODE, a_other);										\
 																				\
 	/* handle alpha test */														\
-	if (ALPHAMODE_ALPHATEST(ALPHAMODE))											\
-		APPLY_ALPHATEST(VV, a_other, ALPHAMODE);								\
+	APPLY_ALPHATEST(VV, ALPHAMODE, a_other);									\
 																				\
 	/* compute c_local */														\
 	if (FBZCP_CC_LOCALSELECT_OVERRIDE(FBZCOLORPATH) == 0)						\
 	{																			\
 		if (FBZCP_CC_LOCALSELECT(FBZCOLORPATH) == 0)	/* iterated RGB */		\
-			c_local = (ITERRGB);												\
+			c_local = (ITERARGB);												\
 		else											/* color0 RGB */		\
 			c_local = (VV)->reg[color0].u;										\
 	}																			\
 	else																		\
 	{																			\
 		if (!((TEXELARGB) & 0x80000000))				/* iterated RGB */		\
-			c_local = (ITERRGB);												\
+			c_local = (ITERARGB);												\
 		else											/* color0 RGB */		\
 			c_local = (VV)->reg[color0].u;										\
 	}																			\
@@ -2437,20 +2657,21 @@ do 																				\
 	/* compute a_local */														\
 	switch (FBZCP_CCA_LOCALSELECT(FBZCOLORPATH))								\
 	{																			\
+		default:																\
 		case 0:		/* iterated alpha */										\
-			a_local = ((ITERA) >> 12) & 0xff;									\
+			a_local = RGB_ALPHA(ITERARGB);										\
 			break;																\
 																				\
 		case 1:		/* color0 alpha */											\
-			a_local = (VV)->reg[color0].u >> 24;								\
+			a_local = RGB_ALPHA((VV)->reg[color0].u);							\
 			break;																\
 																				\
-		case 2:		/* iterated Z[27:20] */										\
-			a_local = ((ITERZ) >> 20) & 0xff;									\
+		case 2:		/* clamped iterated Z[27:20] */								\
+			CLAMPED_Z(ITERZ, FBZCOLORPATH, a_local);							\
 			break;																\
 																				\
-		default:	/* reserved */												\
-			a_local = 0;														\
+		case 3:		/* clamped iterated W[39:32] */								\
+			CLAMPED_W(ITERW, FBZCOLORPATH, a_local);	/* Voodoo 2 only */		\
 			break;																\
 	}																			\
 																				\
@@ -2741,10 +2962,12 @@ static void raster_##name(voodoo_state *v, UINT16 *drawbuf)						\
 		/* loop in X */															\
 		for (x = startx; x < stopx; x++)										\
 		{																		\
+			rgb_t iterargb = 0;													\
 			rgb_t texel = 0;													\
 																				\
 			/* pixel pipeline part 1 handles depth testing and stippling */		\
-			PIXEL_PIPELINE_BEGIN(v, x, y, scry, FBZMODE, iterz, iterw);			\
+			PIXEL_PIPELINE_BEGIN(v, x, y, scry, FBZCOLORPATH, FBZMODE, 			\
+									iterz, iterw);								\
 																				\
 			/* run the texture pipeline on TMU1 to produce a value in texel */	\
 			if (TMUS >= 2)														\
@@ -2760,12 +2983,13 @@ static void raster_##name(voodoo_state *v, UINT16 *drawbuf)						\
 									iters0, itert0, iterw0, texel);				\
 																				\
 			/* colorpath pipeline selects source colors and does blending */	\
+			CLAMPED_ARGB(iterr, iterg, iterb, itera, FBZCOLORPATH, iterargb);	\
 			COLORPATH_PIPELINE(v, FBZCOLORPATH, FBZMODE, ALPHAMODE,	texel,		\
-								iterz, ITER_RGB(iterr, iterg, iterb), itera);	\
+								iterz, iterw, iterargb);						\
 																				\
 			/* pixel pipeline part 2 handles fog, alpha, and final output */	\
-			PIXEL_PIPELINE_END(v, x, y, dest, depth, FBZMODE,				 	\
-									ALPHAMODE, FOGMODE, iterz, itera);			\
+			PIXEL_PIPELINE_END(v, x, y, dest, depth, FBZMODE, FBZCOLORPATH,	 	\
+									ALPHAMODE, FOGMODE, iterz, iterw, iterargb);\
 																				\
 			/* update the iterated parameters */								\
 			iterr += v->fbi.drdx;												\

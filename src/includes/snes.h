@@ -335,11 +335,13 @@ extern READ8_HANDLER( snes_r_bank1 );
 extern READ8_HANDLER( snes_r_bank2 );
 extern READ8_HANDLER( snes_r_bank3 );
 extern READ8_HANDLER( snes_r_bank4 );
+extern READ8_HANDLER( snes_r_bank6 );
 extern READ8_HANDLER( snes_r_io );
 extern READ8_HANDLER( snes_r_sram );
 extern WRITE8_HANDLER( snes_w_bank1 );
 extern WRITE8_HANDLER( snes_w_bank2 );
 extern WRITE8_HANDLER( snes_w_bank4 );
+extern WRITE8_HANDLER( snes_w_bank6 );
 extern WRITE8_HANDLER( snes_w_io );
 extern WRITE8_HANDLER( snes_w_sram );
 
@@ -378,9 +380,12 @@ struct SNES_PPU_STRUCT
 		UINT8 address_low;
 		UINT8 address_high;
 		UINT16 address;
-		UINT16 high_priority;
+		UINT16 priority_rotation;
 		UINT8 size[2];
 		UINT32 name_select;
+		UINT8 first_sprite;
+		UINT8 flip;
+		UINT16 write_latch;
 	} oam;
 	struct
 	{

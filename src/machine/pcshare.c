@@ -276,7 +276,7 @@ void init_pc_common(UINT32 flags)
 	/* PIT */
 	if (flags & PCCOMMON_TIMER_8254)
 		pit8253_init(1, &pc_pit8254_config);
-	else
+	else if (flags & PCCOMMON_TIMER_8253)
 		pit8253_init(1, &pc_pit8253_config);
 
 	/* PC-XT keyboard */

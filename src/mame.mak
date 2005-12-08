@@ -305,8 +305,6 @@ $(OBJ)/namco.a: \
 	$(OBJ)/drivers/namcos10.o \
 	$(OBJ)/drivers/namcos11.o \
 	$(OBJ)/drivers/namcos12.o \
-	$(OBJ)/vidhrdw/namcos3d.o \
-	$(OBJ)/vidhrdw/matrix3d.o \
 	$(OBJ)/vidhrdw/namcos21.o $(OBJ)/drivers/namcos21.o \
 	$(OBJ)/vidhrdw/namcos22.o $(OBJ)/drivers/namcos22.o \
 	$(OBJ)/drivers/namcos23.o \
@@ -1080,6 +1078,7 @@ $(OBJ)/playmark.a: \
 	$(OBJ)/vidhrdw/sderby.o $(OBJ)/drivers/sderby.o \
 	$(OBJ)/vidhrdw/playmark.o $(OBJ)/drivers/playmark.o \
 	$(OBJ)/drivers/drtomy.o \
+	$(OBJ)/drivers/powerbal.o \
 
 $(OBJ)/pacific.a: \
 	$(OBJ)/vidhrdw/thief.o $(OBJ)/drivers/thief.o \

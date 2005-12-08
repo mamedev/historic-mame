@@ -22,9 +22,7 @@
         * San Francisco Rush: The Rock [Flagstaff, Atari, 192MHz, 8MB RAM, 2xTMU]
 
     Known bugs:
-        * Blitz: hangs if POST is enabled due to TMU 1 attempted accesses
         * Carnevil: lets you set the flash brightness; need to emulate that
-        * Hyperdrive: long delay after you select a track; may be a timer issue
 
 ***************************************************************************
 
@@ -127,6 +125,7 @@
 **************************************************************************/
 
 #include "driver.h"
+#include "debugcpu.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "cpu/mips/mips3.h"
 #include "sndhrdw/dcs.h"
@@ -144,9 +143,9 @@
  *
  *************************************/
 
-#define LOG_GALILEO			(0)
+#define LOG_GALILEO			(1)
 #define LOG_TIMERS			(0)
-#define LOG_DMA				(0)
+#define LOG_DMA				(1)
 #define LOG_PCI				(0)
 #define LOG_WIDGET			(0)
 
@@ -342,6 +341,7 @@ struct galileo_data
 	struct galileo_timer timer[4];
 
 	/* DMA info */
+	INT8			dma_active;
 	UINT8			dma_stalled_on_voodoo[4];
 
 	/* PCI info */
@@ -374,6 +374,12 @@ static UINT32 *rombase;
 
 static struct galileo_data galileo;
 static struct widget_data widget;
+
+static UINT8 voodoo_stalled;
+static UINT8 cpu_stalled_on_voodoo;
+static UINT32 cpu_stalled_offset;
+static UINT32 cpu_stalled_data;
+static UINT32 cpu_stalled_mem_mask;
 
 static UINT8 board_config;
 
@@ -410,7 +416,7 @@ static void update_vblank_irq(void);
 static void galileo_reset(void);
 static void galileo_timer_callback(int param);
 static void galileo_perform_dma(int which);
-static void galileo_voodoo_unstall(void);
+static void voodoo_stall(int stall);
 static void widget_reset(void);
 static void update_widget_irq(void);
 
@@ -428,7 +434,7 @@ static VIDEO_START( seattle )
 		return 1;
 
 	voodoo_set_vblank_callback(0, vblank_assert);
-	voodoo_set_unstall_callback(0, galileo_voodoo_unstall);
+	voodoo_set_stall_callback(0, voodoo_stall);
 
 	return 0;
 }
@@ -440,7 +446,7 @@ static VIDEO_START( flagstaff )
 		return 1;
 
 	voodoo_set_vblank_callback(0, vblank_assert);
-	voodoo_set_unstall_callback(0, galileo_voodoo_unstall);
+	voodoo_set_stall_callback(0, voodoo_stall);
 
 	return 0;
 }
@@ -482,8 +488,11 @@ static MACHINE_INIT( seattle )
 	galileo.timer[1].timer = timer_alloc(galileo_timer_callback);
 	galileo.timer[2].timer = timer_alloc(galileo_timer_callback);
 	galileo.timer[3].timer = timer_alloc(galileo_timer_callback);
+	galileo.dma_active = -1;
 
 	vblank_irq_num = 0;
+	voodoo_stalled = FALSE;
+	cpu_stalled_on_voodoo = FALSE;
 
 	/* reset either the DCS2 board or the CAGE board */
 	if (mame_find_cpu_index("dcs2") != -1)
@@ -914,7 +923,7 @@ static void galileo_perform_dma(int which)
 		UINT32 bytesleft = galileo.reg[GREG_DMA0_COUNT + which] & 0xffff;
 		int srcinc, dstinc;
 
-		galileo.dma_stalled_on_voodoo[which] = FALSE;
+		galileo.dma_active = which;
 		galileo.reg[GREG_DMA0_CONTROL + which] |= 0x5000;
 
 		/* determine src/dst inc */
@@ -948,7 +957,7 @@ static void galileo_perform_dma(int which)
 			while (bytesleft >= 4)
 			{
 				/* if the voodoo is stalled, stop early */
-				if (voodoo_is_stalled(0))
+				if (voodoo_stalled)
 				{
 					if (LOG_DMA)
 						logerror("Stalled on voodoo with %d bytes left\n", bytesleft);
@@ -979,13 +988,11 @@ static void galileo_perform_dma(int which)
 		galileo.reg[GREG_DMA0_SOURCE + which] = srcaddr;
 		galileo.reg[GREG_DMA0_DEST + which] = dstaddr;
 		galileo.reg[GREG_DMA0_COUNT + which] = (galileo.reg[GREG_DMA0_COUNT + which] & ~0xffff) | bytesleft;
+		galileo.dma_active = -1;
 
-		/* if we did not hit zero, punt and mark us stalled */
+		/* if we did not hit zero, punt and return later */
 		if (bytesleft != 0)
-		{
-			galileo.dma_stalled_on_voodoo[which] = TRUE;
 			return;
-		}
 
 		/* interrupt? */
 		if (!(galileo.reg[GREG_DMA0_CONTROL + which] & 0x400))
@@ -996,16 +1003,6 @@ static void galileo_perform_dma(int which)
 	} while (galileo_dma_fetch_next(which));
 
 	galileo.reg[GREG_DMA0_CONTROL + which] &= ~0x5000;
-}
-
-
-static void galileo_voodoo_unstall(void)
-{
-	/* if we have stalled DMA, restart */
-	if (galileo.dma_stalled_on_voodoo[0]) { cpuintrf_push_context(0); galileo_perform_dma(0); cpuintrf_pop_context(); }
-	if (galileo.dma_stalled_on_voodoo[1]) { cpuintrf_push_context(0); galileo_perform_dma(1); cpuintrf_pop_context(); }
-	if (galileo.dma_stalled_on_voodoo[2]) { cpuintrf_push_context(0); galileo_perform_dma(2); cpuintrf_pop_context(); }
-	if (galileo.dma_stalled_on_voodoo[3]) { cpuintrf_push_context(0); galileo_perform_dma(3); cpuintrf_pop_context(); }
 }
 
 
@@ -1090,8 +1087,8 @@ static READ32_HANDLER( galileo_r )
 		case GREG_INT_STATE:
 		case GREG_INT_MASK:
 		case GREG_TIMER_CONTROL:
-			if (LOG_GALILEO)
-				logerror("%08X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
+//          if (LOG_GALILEO)
+//              logerror("%08X:Galileo read from offset %03X = %08X\n", activecpu_get_pc(), offset*4, result);
 			break;
 
 		default:
@@ -1234,6 +1231,95 @@ static WRITE32_HANDLER( galileo_w )
 		default:
 			logerror("%08X:Galileo write to offset %03X = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			break;
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Voodoo handling
+ *
+ *************************************/
+
+static WRITE32_HANDLER( seattle_voodoo_w )
+{
+	/* if we're not stalled, just write and get out */
+	if (!voodoo_stalled)
+	{
+		voodoo_0_w(offset, data, mem_mask);
+		return;
+	}
+
+	/* shouldn't get here if the CPU is already stalled */
+	if (cpu_stalled_on_voodoo)
+		osd_die("seattle_voodoo_w while CPU is stalled\n");
+
+	/* remember all the info about this access for later */
+	cpu_stalled_on_voodoo = TRUE;
+	cpu_stalled_offset = offset;
+	cpu_stalled_data = data;
+	cpu_stalled_mem_mask = mem_mask;
+
+	/* spin until we send the magic trigger */
+	cpu_spinuntil_trigger(45678);
+	if (LOG_DMA) logerror("Stalling CPU on voodoo (already stalled)\n");
+}
+
+
+static void voodoo_stall(int stall)
+{
+	/* set the new state */
+	voodoo_stalled = stall;
+
+	/* if we're stalling and DMA is active, take note */
+	if (stall)
+	{
+		if (galileo.dma_active != -1)
+		{
+			if (LOG_DMA) logerror("Stalling DMA%d on voodoo\n", galileo.dma_active);
+			galileo.dma_stalled_on_voodoo[galileo.dma_active] = TRUE;
+		}
+		else
+		{
+			if (LOG_DMA) logerror("Stalling CPU on voodoo\n");
+			cpu_spinuntil_trigger(45678);
+		}
+	}
+
+	/* if we're unstalling, resume DMA or allow the CPU to proceed */
+	else
+	{
+		int which;
+
+		/* loop over any active DMAs and resume them */
+		for (which = 0; which < 4; which++)
+			if (galileo.dma_stalled_on_voodoo[which])
+			{
+				if (LOG_DMA) logerror("Resuming DMA%d on voodoo\n", which);
+
+				/* mark this DMA as no longer stalled */
+				galileo.dma_stalled_on_voodoo[which] = FALSE;
+
+				/* resume execution */
+				cpuintrf_push_context(0);
+				galileo_perform_dma(which);
+				cpuintrf_pop_context();
+				break;
+			}
+
+		/* if we finished all our pending DMAs, then we can resume CPU operations */
+		if (!voodoo_stalled)
+		{
+			/* if the CPU had a pending write, do it now */
+			if (cpu_stalled_on_voodoo)
+				voodoo_0_w(cpu_stalled_offset, cpu_stalled_data, cpu_stalled_mem_mask);
+			cpu_stalled_on_voodoo = FALSE;
+
+			/* resume CPU execution */
+			if (LOG_DMA) logerror("Resuming CPU on voodoo\n");
+			cpu_trigger(45678);
+		}
 	}
 }
 
@@ -1558,10 +1644,81 @@ static READ32_HANDLER( generic_speedup2_r )
  *
  *************************************/
 
+/*
+
+    WG3DH config:
+
+RAS[1:0] = 00000000-007FFFFF
+  RAS[0] = 00000000-001FFFFF
+  RAS[1] = 00200000-003FFFFF
+
+RAS[3:2] = 04000000-07FFFFFF
+  RAS[2] = 04000000-05FFFFFF
+  RAS[3] = 06000000-07FFFFFF
+
+PCI I/O  = 0A000000-0BFFFFFF
+PCI Mem  = 08000000-09FFFFFF
+
+ CS[2:0] = 10000000-15FFFFFF
+   CS[0] = 10000000-11FFFFFF
+   CS[1] = 12000000-13FFFFFF
+   CS[2] = 14000000-15FFFFFF
+
+ CS[3]/B = 16000000-1FFFFFFF
+   CS[3] = 16000000-17FFFFFF
+
+
+
+    Carnevil config:
+
+RAS[1:0] = 00000000-03FFFFFF
+  RAS[0] = 00000000-00BFFFFF
+  RAS[1] = 00100000-03FFFFFF
+
+RAS[3:2] = 04000000-07FFFFFF
+  RAS[2] = 04000000-05FFFFFF
+  RAS[3] = 06000000-07FFFFFF
+
+PCI I/O  = 0A000000-0BFFFFFF
+PCI Mem  = 08000000-09FFFFFF
+
+ CS[2:0] = 10000000-15FFFFFF
+   CS[0] = 10000000-11FFFFFF
+   CS[1] = 12000000-13FFFFFF
+   CS[2] = 14000000-15FFFFFF
+
+ CS[3]/B = 16000000-1FFFFFFF
+   CS[3] = 16000000-17FFFFFF
+
+
+
+    SFRush config:
+
+RAS[1:0] = 00000000-007FFFFF
+  RAS[0] = 00000000-007FFFFF
+  RAS[1] = 00080000-00AFFFFF
+
+RAS[3:2] = 04000000-07FFFFFF
+  RAS[2] = 04000000-05FFFFFF
+  RAS[3] = 06000000-07FFFFFF
+
+PCI I/O  = 0A000000-0BFFFFFF
+PCI Mem  = 08000000-09FFFFFF
+
+ CS[2:0] = 10000000-15FFFFFF
+   CS[0] = 10000000-11FFFFFF
+   CS[1] = 12000000-13FFFFFF
+   CS[2] = 14000000-15FFFFFF
+
+ CS[3]/B = 16000000-1FFFFFFF
+   CS[3] = 16000000-17FFFFFF
+
+*/
+
 static ADDRESS_MAP_START( seattle_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x00000000, 0x007fffff) AM_RAM AM_BASE(&rambase)	// wg3dh only has 4MB; sfrush, blitz99 8MB
-	AM_RANGE(0x08000000, 0x08ffffff) AM_READWRITE(voodoo_0_r, voodoo_0_w)
+	AM_RANGE(0x08000000, 0x08ffffff) AM_READWRITE(voodoo_0_r, seattle_voodoo_w)
 	AM_RANGE(0x0a000000, 0x0a0003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
 	AM_RANGE(0x0a00040c, 0x0a00040f) AM_NOP						// IDE-related, but annoying
 	AM_RANGE(0x0a000f00, 0x0a000f07) AM_READWRITE(ide_bus_master32_0_r, ide_bus_master32_0_w)
@@ -1586,116 +1743,12 @@ ADDRESS_MAP_END
 
 /*************************************
  *
- *  Input ports
+ *  Common input ports
  *
  *************************************/
 
-INPUT_PORTS_START( wg3dh )
-	PORT_START	    /* DIPs */
-	PORT_DIPNAME( 0x0001, 0x0001, "Unknown0001" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_SERVICE( 0x0002, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown0040" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0080, "Unknown0080" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)	/* 3d cam */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( mace )
-	PORT_START	    /* DIPs */
+INPUT_PORTS_START( seattle_common )
+	PORT_START_TAG("DIPS")
 	PORT_DIPNAME( 0x0001, 0x0001, "Unknown0001" )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
@@ -1714,108 +1767,6 @@ INPUT_PORTS_START( mace )
 	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0080, 0x0080, "Unknown0080" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x0000, "Resolution" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Low ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Medium ) )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)	/* 3d cam */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-INPUT_PORTS_END
-
-
-INPUT_PORTS_START( sfrush )
-	PORT_START	    /* DIPs */
-	PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_DIPNAME( 0x0002, 0x0002, "Boot ROM Test" )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0040, 0x0040, "Unknown0040" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
@@ -1847,23 +1798,111 @@ INPUT_PORTS_START( sfrush )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )	/* coin 1 */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )	/* coin 2 */
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )	/* abort */
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) 	/* tilt */
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE2 )	/* test */
+	PORT_START_TAG("SYSTEM")
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
+	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
+
+	PORT_START_TAG("P12")
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)	/* 3d cam */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("P34")
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+
+/*************************************
+ *
+ *  Input ports
+ *
+ *************************************/
+
+INPUT_PORTS_START( wg3dh )
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0002, 0x0002, "Boot ROM Test" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( mace )
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
+	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_SERVICE_NO_TOGGLE( 0x0080, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x8000, 0x0000, "Resolution" )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Low ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Medium ) )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( sfrush )
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
+	PORT_SERVICE_NO_TOGGLE( 0x0001, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0002, 0x0002, "Boot ROM Test" )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+
+	PORT_MODIFY("SYSTEM")
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)	/* reverse */
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )	/* service coin */
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )	/* coin 3 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )	/* coin 4 */
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P12")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	/* view 1 */
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	/* view 2 */
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)	/* view 3 */
@@ -1881,7 +1920,7 @@ INPUT_PORTS_START( sfrush )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P34")
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -1911,183 +1950,39 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( sfrushrk )
-	PORT_START	    /* DIPs */
+	PORT_INCLUDE(sfrush)
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0001, 0x0001, "Calibrate at startup" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0001, DEF_STR( On ))
 	PORT_DIPNAME( 0x0002, 0x0002, "Unknown0002" )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )	/* coin 1 */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )	/* coin 2 */
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )	/* abort */
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) 	/* tilt */
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE2 )	/* test */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)	/* reverse */
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )	/* service coin */
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )	/* coin 3 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )	/* coin 4 */
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	/* view 1 */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	/* view 2 */
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)	/* view 3 */
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)	/* music */
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)	/* track 1 */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)	/* track 2 */
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(3)	/* track 3 */
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(3)	/* track 4 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	/* 1st gear */
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	/* 2nd gear */
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)	/* 3rd gear */
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)	/* 4th gear */
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20) PORT_PLAYER(1)
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(2)
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(3)
-
-	PORT_START
-	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(5)
+	PORT_SERVICE_NO_TOGGLE( 0x0080, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( calspeed )
-	PORT_START	    /* DIPs */
-	PORT_DIPNAME( 0x0001, 0x0001, "Unknown0001" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0002, 0x0002, "Unknown0002" )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_SERVICE_NO_TOGGLE( 0x0080, IP_ACTIVE_LOW )
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )	/* coin 1 */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )	/* coin 2 */
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )	/* start */
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) 	/* tilt */
+	PORT_MODIFY("SYSTEM")
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE2 )	/* test */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )	/* service coin */
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )	/* coin 3 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )	/* coin 4 */
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P12")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)	/* radio */
 	PORT_BIT( 0x000c, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -2100,7 +1995,7 @@ INPUT_PORTS_START( calspeed )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)	/* 3rd gear */
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)	/* 4th gear */
 
-	PORT_START
+	PORT_MODIFY("P34")
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -2130,71 +2025,25 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( vaportrx )
-	PORT_START	    /* DIPs */
-	PORT_DIPNAME( 0x0001, 0x0001, "Unknown0001" )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0002, 0x0002, "Unknown0002" )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_SERVICE_NO_TOGGLE( 0x0080, IP_ACTIVE_LOW )
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )					/* coin 1 */
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )					/* coin 2 */
+	PORT_MODIFY("SYSTEM")
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)	/* left trigger */
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) 					/* tilt */
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE2 )					/* test */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )					/* service coin */
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )					/* coin 3 */
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )					/* coin 4 */
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
 	PORT_BIT( 0xe000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P12")
 	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)	/* right trigger */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	/* left thumb */
@@ -2205,7 +2054,7 @@ INPUT_PORTS_START( vaportrx )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	/* right view */
 	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P34")
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -2235,92 +2084,27 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( biofreak )
-	PORT_START	    /* DIPs */
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0001, 0x0001, "Hilink download??" )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0002, 0x0002, "Boot ROM Test" )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown0040" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0080, "Unknown0080" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x4000, 0x4000, "Unknown4000" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Unknown8000" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_MODIFY("P12")
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)	/* LP = P1 left punch */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)	/* F  = P1 ??? */
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	/* RP = P1 right punch */
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	/* LP = P1 left punch */
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	/* F  = P1 ??? */
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)	/* RP = P1 right punch */
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P34")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)	/* LK = P1 left kick */
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)	/* RK = P1 right kick */
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)	/* T  = P1 ??? */
@@ -2333,7 +2117,9 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( blitz )
-	PORT_START	    /* DIPs */
+	PORT_INCLUDE(seattle_common)
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0001, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x0001, "Dipswitch" )
 	PORT_DIPSETTING(      0x0000, "CMOS" )
@@ -2381,66 +2167,20 @@ INPUT_PORTS_START( blitz )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_MODIFY("P12")
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_MODIFY("P34")
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( blitz99 )
-	PORT_START	    /* DIPs */
-	PORT_DIPNAME( 0x0001, 0x0000, "Coinage Source" )
-	PORT_DIPSETTING(      0x0001, "Dipswitch" )
-	PORT_DIPSETTING(      0x0000, "CMOS" )
+	PORT_INCLUDE(blitz)
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x003e, 0x003e, DEF_STR( Coinage ))
 	PORT_DIPSETTING(      0x003e, "USA 1" )
 	PORT_DIPSETTING(      0x003c, "USA 2" )
@@ -2477,89 +2217,16 @@ INPUT_PORTS_START( blitz99 )
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "Power Up Test Loop" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( No ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x0100, 0x0100, "Joysticks" )
-	PORT_DIPSETTING(      0x0100, "8-Way" )
-	PORT_DIPSETTING(      0x0000, "49-Way" )
-	PORT_DIPNAME( 0x0600, 0x0200, "Graphics Mode" )
-	PORT_DIPSETTING(      0x0200, "512x385 @ 25KHz" )
-	PORT_DIPSETTING(      0x0400, "512x256 @ 15KHz" )
-//  PORT_DIPSETTING(      0x0600, "0" )         /* Marked as Unused in the manual */
-//  PORT_DIPSETTING(      0x0000, "3" )         /* Marked as Unused in the manual */
-	PORT_DIPNAME( 0x1800, 0x1800, "Graphics Speed" )
-	PORT_DIPSETTING(      0x0000, "45 MHz" )
-	PORT_DIPSETTING(      0x0800, "47 MHz" )
-	PORT_DIPSETTING(      0x1000, "49 MHz" )
-	PORT_DIPSETTING(      0x1800, "51 MHz" )
 	PORT_DIPNAME( 0x2000, 0x0000, DEF_STR( Players ) )
 	PORT_DIPSETTING(      0x2000, "2" )
 	PORT_DIPSETTING(      0x0000, "4" )
-	PORT_DIPNAME( 0x4000, 0x0000, "Power On Self Test" )
-	PORT_DIPSETTING(      0x0000, DEF_STR( No ))
-	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ))
-	PORT_DIPNAME( 0x8000, 0x8000, "Test Switch" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( carnevil )
-	PORT_START	    /* DIPs */
+	PORT_INCLUDE( seattle_common )
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0001, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x0001, "Dipswitch" )
 	PORT_DIPSETTING(      0x0000, "CMOS" )
@@ -2625,24 +2292,13 @@ INPUT_PORTS_START( carnevil )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_MODIFY("SYSTEM")
 	PORT_BIT( 0x0780, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
 
-	PORT_START
+	PORT_MODIFY("P12")
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P34")
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START				/* fake analog X */
@@ -2666,7 +2322,9 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( hyprdriv )
-	PORT_START	    /* DIPs */
+	PORT_INCLUDE( seattle_common )
+
+	PORT_MODIFY("DIPS")
 	PORT_DIPNAME( 0x0001, 0x0000, "Coinage Source" )
 	PORT_DIPSETTING(      0x0001, "Dipswitch" )
 	PORT_DIPSETTING(      0x0000, "CMOS" )
@@ -2732,24 +2390,7 @@ INPUT_PORTS_START( hyprdriv )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
-	PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
-	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
-
-	PORT_START
+	PORT_MODIFY("P12")
 	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT ) PORT_2WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_2WAY PORT_PLAYER(1)
@@ -2758,7 +2399,7 @@ INPUT_PORTS_START( hyprdriv )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0xff80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START
+	PORT_MODIFY("P34")
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
@@ -2820,8 +2461,8 @@ MACHINE_DRIVER_START( seattle_common )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(512, 400)
-	MDRV_VISIBLE_AREA(0, 511, 0, 399)
+	MDRV_SCREEN_SIZE(640, 480)
+	MDRV_VISIBLE_AREA(0, 639, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_VIDEO_START(seattle)

@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  Funky Jet                               (c) 1992 Mitchell Corporation
+  Funky Jet                               (c) 1992 Data East / Mitchell Corporation
   Sotsugyo Shousho                        (c) 1995 Mitchell Corporation
 
   But actually a Data East pcb...  Hardware is pretty close to Super Burger
@@ -37,6 +37,53 @@ Stephh's notes :
 
   - When the "Unused" Dip Switch is ON, the palette is modified.
 
+
+Funky Jet
+Data East, 1992
+
+PCB Layout
+----------
+
+DE-0372-0
+|-------------------------------------------------------------|
+|                                               32.200MHz     |
+|   3014   2151     JH02.15F            |-----|               |
+|                                       | 45  |  PAL          |
+|VOL                6264                |-----|               |
+|          JH03.14J             |-----|                       |
+|                               | 59  |                       |
+| M6295    6264     JH01-2.13F  |-----|    PAL                |
+|                                          PAL   63           |
+|          6264     JH00-2.11F             PAL                |
+|                                     6264               PAL  |
+|                                                             |
+|    6116                             6264                    |
+|    6116                                     28MHz |-------| |
+|                     |-------|                     |       | |
+|J                    |       |               6116  |  52   | |
+|A       DSW2(8)      |  74   |               6116  |       | |
+|M                    |       |         6116        |-------| |
+|M       DSW1(8)      |-------|         6116                  |
+|A      |-----|                                     MAT-01.4A |
+|       | 146 |                                               |
+|       |-----|     MAT-02.2F                       MAT-00.2A |
+|        PAL                                                  |
+|-------------------------------------------------------------|
+Notes:
+      68000 clock     - 14.000MHz [28/2]
+      YM2151 clock    - 3.58MHz [32.220/9]
+      HuC6280 clock   - 8.050MHz [32.200/4]
+      Oki M6295 clock - 1.000MHz [28/28], Sample Rate = 1000000/132
+      VSync           - 58Hz
+      HSync           - 15.68kHz
+
+      Custom ICs -
+                   74 (QFP160)
+                   52 (QFP128)
+                   45 (QFP80) - HuC6280
+                   59 (QFP64) - 68000
+                   146(QFP100)
+                   63 (SOP28)
 
 ***************************************************************************/
 
@@ -137,7 +184,7 @@ INPUT_PORTS_START( funkyjet )
 
 	/* Dips seem inverted with respect to other Deco games */
 
-	PORT_START	/* Dip switch bank 1 */
+	PORT_START_TAG("DSWA")	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
@@ -161,7 +208,7 @@ INPUT_PORTS_START( funkyjet )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 
-	PORT_START	/* Dip switch bank 2 */
+	PORT_START_TAG("DSWB")	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "1" )
 	PORT_DIPSETTING(    0xc0, "2" )
@@ -184,6 +231,16 @@ INPUT_PORTS_START( funkyjet )
   	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( funkyjej )
+	PORT_INCLUDE(funkyjet)
+
+	PORT_MODIFY("DSWB")
+
+  	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( sotsugyo )
@@ -317,11 +374,11 @@ static MACHINE_DRIVER_START( funkyjet )
 	MDRV_CPU_PROGRAM_MAP(funkyjet_readmem,funkyjet_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(H6280,32220000/8)	/* Custom chip 45, Audio section crystal is 32.220 MHz */
+	MDRV_CPU_ADD(H6280,32220000/4)	/* Custom chip 45, Audio section crystal is 32.220 MHz */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(529)
 
 	/* video hardware */
@@ -342,7 +399,7 @@ static MACHINE_DRIVER_START( funkyjet )
 	MDRV_SOUND_ROUTE(0, "left", 0.45)
 	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
-	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
@@ -354,6 +411,25 @@ ROM_START( funkyjet )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "jk00.12f", 0x00000, 0x40000, CRC(712089c1) SHA1(84167c90303a228107f55596e2ff8b9f111d1bc2) )
 	ROM_LOAD16_BYTE( "jk01.13f", 0x00001, 0x40000, CRC(be3920d7) SHA1(6627956d148681bc49991c544a09b07271ea4c7f) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
+	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, CRC(748c0bd8) SHA1(35910e6a4c4f198fb76bde0f5b053e2c66cfa0ff) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mat02", 0x000000, 0x80000, CRC(e4b94c7e) SHA1(7b6ddd0bd388c8d32277fce4b3abb102724bc7d1) ) /* Encrypted chars */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mat01", 0x000000, 0x80000, CRC(24093a8d) SHA1(71f76ddd8a4b6e05ceb2fff4e20b6edb5e011e79) ) /* sprites */
+  	ROM_LOAD( "mat00", 0x080000, 0x80000, CRC(fbda0228) SHA1(815d49898d02e699393e370209181f2ca8301949) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
+  	ROM_LOAD( "jk03.15h",    0x00000, 0x20000, CRC(69a0eaf7) SHA1(05038e82ee03106625f05082fe9912e16be181ee) )
+ROM_END
+
+ROM_START( funkyjej )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "jh00-2.11f", 0x00000, 0x40000, CRC(5b98b700) SHA1(604bd04f4031b0a3b53db2fab4a0e160dff6936d) )
+	ROM_LOAD16_BYTE( "jh01-2.13f", 0x00001, 0x40000, CRC(21280220) SHA1(b365b6c8aa778e21a14b2813e93b9c9d02e14995) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "jk02.16f",    0x00000, 0x10000, CRC(748c0bd8) SHA1(35910e6a4c4f198fb76bde0f5b053e2c66cfa0ff) )
@@ -395,5 +471,6 @@ static DRIVER_INIT( funkyjet )
 
 /******************************************************************************/
 
-GAME( 1992, funkyjet, 0, funkyjet, funkyjet, funkyjet, ROT0, "[Data East] (Mitchell license)", "Funky Jet", 0 )
-GAME( 1995, sotsugyo, 0, funkyjet, sotsugyo, funkyjet, ROT0, "Mitchell (Atlus license)", "Sotsugyo Shousho", 0 )
+GAME( 1992, funkyjet, 0,        funkyjet, funkyjet, funkyjet, ROT0, "[Data East] (Mitchell license)", "Funky Jet (World)", 0 )
+GAME( 1992, funkyjej, funkyjet, funkyjet, funkyjej, funkyjet, ROT0, "Data East Corporation", "Funky Jet (Japan)", 0 )
+GAME( 1995, sotsugyo, 0,        funkyjet, sotsugyo, funkyjet, ROT0, "Mitchell (Atlus license)", "Sotsugyo Shousho", 0 )

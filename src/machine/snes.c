@@ -7,16 +7,21 @@
   R. Belmont
   Anthony Kruize
   Based on the original code by Lee Hammerton (aka Savoury Snax)
+  Thanks to Anomie for invaluable technical information.
 
 ***************************************************************************/
 #define __MACHINE_SNES_C
 
+#include <math.h>
 #include "driver.h"
 #include "includes/snes.h"
 #include "cpu/g65816/g65816.h"
 #ifdef MESS
 #include "image.h"
 #endif
+
+// add-on chip emulators
+#include "machine/snesdsp1.c"
 
 /* -- Globals -- */
 UINT8  *snes_ram = NULL;		/* 65816 ram */
@@ -28,9 +33,15 @@ static UINT16 cgram_address;	/* CGRAM address */
 static UINT8  vram_read_offset;	/* VRAM read offset */
 UINT8  spc_port_in[4];	/* Port for sending data to the SPC700 */
 UINT8  spc_port_out[4];	/* Port for receiving data from the SPC700 */
-UINT8  ppu_last_scroll;	/* as per Theme Park, this is shared by all scroll regs */
+static UINT8 ppu_last_scroll;	/* as per Theme Park, this is shared by all scroll regs */
 static UINT8 snes_hdma_chnl;	/* channels enabled for HDMA */
 static UINT8 joy1l, joy1h, joy2l, joy2h, joy3l, joy3h, joy4l, joy4h;
+static UINT8 read_ophct = 0, read_opvct = 0;
+static mame_timer *snes_scanline_timer;
+static mame_timer *snes_hblank_timer;
+static mame_timer *snes_nmi_timer;
+static mame_timer *snes_hirq_timer;
+static double hblank_offset;
 
 // full graphic variables
 static UINT16 vram_fgr_high, vram_fgr_increment, vram_fgr_count, vram_fgr_mask, vram_fgr_shift, vram_read_buffer;
@@ -48,9 +59,212 @@ static struct
 	UINT8 oldrol;
 } joypad[4];
 
+// utility function - latches the H/V counters.  Used by IRQ, writes to WRIO, etc.
+static void snes_latch_counters(void)
+{
+	snes_ppu.beam.current_horz = (cpu_gethorzbeampos()*342)/512;
+	snes_ppu.beam.latch_vert = snes_ppu.beam.current_vert;
+	snes_ppu.beam.latch_horz = snes_ppu.beam.current_horz;
+	snes_ram[STAT78] |= 0x40;	// indicate we latched
+	read_ophct = read_opvct = 0;	// clear read flags
+}
+
+static void snes_nmi_tick(int ref)
+{
+	// pull NMI
+	cpunum_set_input_line( 0, G65816_LINE_NMI, HOLD_LINE );
+
+	// don't happen again
+	timer_adjust(snes_nmi_timer, TIME_NEVER, 0, TIME_NEVER);
+}
+
+static void snes_hirq_tick(int ref)
+{
+	// latch the counters and pull IRQ
+	// (don't need to switch to the 65816 context, we don't do anything dependant on it)
+	snes_latch_counters();
+	snes_ram[TIMEUP] = 0x80;	/* Indicate that irq occured */
+	cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
+
+	// don't happen again
+	timer_adjust(snes_hirq_timer, TIME_NEVER, 0, TIME_NEVER);
+}
+
+static void snes_scanline_tick(int ref)
+{
+	// make sure we're in the 65816's context since we're messing with the OAM and stuff
+	cpuintrf_push_context(0);
+
+	/* Increase current line - we want to latch on this line during it, not after it */
+	snes_ppu.beam.current_vert = (snes_ppu.beam.current_vert + 1) % (((snes_ram[STAT78] & 0x10) == SNES_NTSC) ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
+
+	// not in hblank
+	snes_ram[HVBJOY] &= ~0x40;
+
+	/* Vertical IRQ timer - only if horizontal isn't also enabled! */
+	if ((snes_ram[NMITIMEN] & 0x20) && !(snes_ram[NMITIMEN] & 0x10))
+	{
+		if (snes_ppu.beam.current_vert == (((snes_ram[VTIMEH] << 8) | snes_ram[VTIMEL]) & 0x1ff))
+		{
+			snes_ram[TIMEUP] = 0x80;	/* Indicate that irq occured */
+			// IRQ latches the counters, do it now
+			snes_latch_counters();
+			cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
+		}
+	}
+	/* Horizontal IRQ timer */
+	if( snes_ram[NMITIMEN] & 0x10 )
+	{
+		int setirq = 1;
+		int pixel = ((snes_ram[HTIMEH] << 8) | snes_ram[HTIMEL]) & 0x1ff;
+
+		// is the HIRQ on a specific scanline?
+		if (snes_ram[NMITIMEN] & 0x20)
+		{
+			if (snes_ppu.beam.current_vert != (((snes_ram[VTIMEH] << 8) | snes_ram[VTIMEL]) & 0x1ff) )
+			{
+				setirq = 0;
+			}
+		}
+
+		if (setirq)
+		{
+			double hofs;
+
+			if (pixel == 0)
+			{
+				snes_hirq_tick(0);
+			}
+			else
+			{
+				hofs = (cpu_getscanlineperiod() * (double)pixel) / (342.0);
+				timer_adjust(snes_hirq_timer, hofs, 0, TIME_NEVER);
+			}
+		}
+    	}
+
+	/* Start of VBlank */
+	if( snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line )
+	{
+		program_write_byte(OAMADDL, snes_ppu.oam.address_low ); /* Reset oam address */
+		program_write_byte(OAMADDH, snes_ppu.oam.address_high );
+		snes_ram[HVBJOY] |= 0x81;		/* Set vblank bit to on & indicate controllers being read */
+		snes_ram[RDNMI] |= 0x80;		/* Set NMI occured bit */
+
+		if( snes_ram[NMITIMEN] & 0x80 )	/* NMI only signaled if this bit set */
+		{
+			// NMI goes off about 12 cycles after this (otherwise Chrono Trigger, NFL QB Club, etc. lock up)
+			timer_adjust(snes_nmi_timer, TIME_IN_CYCLES(12, 0), 0, TIME_NEVER);
+		}
+	}
+
+	// hdma reset happens at scanline 0, H=~6
+	if (snes_ppu.beam.current_vert == 0)
+	{
+		snes_hdma_init();
+	}
+
+	/* three lines after start of vblank we update the controllers (value from snes9x) */
+	if (snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line + 3)
+	{
+		int i;
+
+		joypad[0].low = readinputport( 0 );
+		joypad[0].high = readinputport( 1 );
+		joypad[1].low = readinputport( 2 );
+		joypad[1].high = readinputport( 3 );
+		joypad[2].low = readinputport( 4 );
+		joypad[2].high = readinputport( 5 );
+		joypad[3].low = readinputport( 6 );
+		joypad[3].high = readinputport( 7 );
+
+		// avoid sending signals that could crash games
+		for (i = 0; i < 4; i++)
+		{
+			// if left, no right
+			if (joypad[i].high & 2)	joypad[i].high &= ~1;
+			// if up, no down
+			if (joypad[i].high & 8)	joypad[i].high &= ~4;
+		}
+
+		// is automatic reading on?
+		if (snes_ram[NMITIMEN] & 1)
+		{
+			joy1l = joypad[0].low;
+			joy1h = joypad[0].high;
+			joy2l = joypad[1].low;
+			joy2h = joypad[1].high;
+			joy3l = joypad[2].low;
+			joy3h = joypad[2].high;
+			joy4l = joypad[3].low;
+			joy4h = joypad[3].high;
+
+			// make sure oldrol starts returning all 1s because the auto-read reads it :-)
+			joypad[0].oldrol = 16;
+			joypad[1].oldrol = 16;
+		}
+
+		snes_ram[HVBJOY] &= 0xfe;		/* Clear busy bit */
+	}
+
+	if( snes_ppu.beam.current_vert == 0 )
+	{	/* VBlank is over, time for a new frame */
+		snes_ram[HVBJOY] &= 0x7f;		/* Clear vblank bit */
+		snes_ram[RDNMI]  &= 0x7f;		/* Clear nmi occured bit */
+		snes_ram[STAT77] &= 0x3f;		/* Clear Time Over and Range Over bits */
+		snes_ram[STAT78] ^= 0x80;		/* Toggle field flag */
+
+		cpunum_set_input_line( 0, G65816_LINE_NMI, CLEAR_LINE );
+	}
+
+	cpuintrf_pop_context();
+
+	timer_adjust(snes_scanline_timer, TIME_NEVER, 0, TIME_NEVER);
+	timer_adjust(snes_hblank_timer, cpu_getscanlinetime(snes_ppu.beam.current_vert)-hblank_offset, 0, TIME_NEVER);
+}
+
+/* This is called at the start of hblank *before* the scanline indicated in current_vert! */
+static void snes_hblank_tick(int ref)
+{
+	int nextline;
+
+	// we need to know the next scanline with wrapping...
+	nextline = (snes_ppu.beam.current_vert + 1) % (((snes_ram[STAT78] & 0x10) == SNES_NTSC) ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
+
+	/* make sure we halt */
+	timer_adjust(snes_hblank_timer, TIME_NEVER, 0, TIME_NEVER);
+
+	// we must guarantee the 65816's context for HDMA to work
+  	cpuintrf_push_context(0);
+
+	/* draw a scanline */
+	if (snes_ppu.beam.current_vert <= snes_ppu.beam.last_visible_line)
+	{
+		if (snes_ppu.beam.current_vert > 0)
+		{
+			/* Do HDMA */
+			if( snes_ram[HDMAEN] )
+				snes_hdma();
+
+			force_partial_update(snes_ppu.beam.current_vert-1);
+		}
+	}
+
+	cpuintrf_pop_context();
+
+	// signal hblank
+	snes_ram[HVBJOY] |= 0x40;
+
+	/* kick off the start of scanline timer */
+	timer_adjust(snes_scanline_timer, cpu_getscanlinetime(snes_ppu.beam.current_vert), 0, TIME_NEVER);
+}
+
 static void snes_init_ram(void)
 {
 	int i;
+
+	/* Init DSP1 interface */
+	InitDSP1();
 
 	/* Init VRAM */
 	snes_vram = (UINT8 *)memory_region( REGION_GFX1 );
@@ -69,7 +283,6 @@ static void snes_init_ram(void)
 	cpuintrf_push_context(0);
 	for (i = 0; i < (128*1024); i++)
 	{
-
 		program_write_byte(0x7e0000 + i, 0x55);
 	}
 	cpuintrf_pop_context();
@@ -86,6 +299,38 @@ static void snes_init_ram(void)
 	cgram_address = 0;
 	vram_read_offset = 2;
 	joy1l = joy1h = joy2l = joy2h = joy3l = joy3h = 0;
+
+	// set up some known register power-up defaults
+	snes_ram[WRIO] = 0xff;
+	snes_ram[VMAIN] = 0x80;
+
+	/* init timers and stop them */
+	snes_scanline_timer = timer_alloc(snes_scanline_tick);
+	timer_adjust(snes_scanline_timer, TIME_NEVER, 0, TIME_NEVER);
+	snes_hblank_timer = timer_alloc(snes_hblank_tick);
+	timer_adjust(snes_hblank_timer, TIME_NEVER, 0, TIME_NEVER);
+	snes_nmi_timer = timer_alloc(snes_nmi_tick);
+	timer_adjust(snes_nmi_timer, TIME_NEVER, 0, TIME_NEVER);
+	snes_hirq_timer = timer_alloc(snes_hirq_tick);
+	timer_adjust(snes_hirq_timer, TIME_NEVER, 0, TIME_NEVER);
+
+	// SNES hcounter has a 0-339 range.  hblank starts at counter 260.
+	// clayfighter sets an HIRQ at 260, apparently it wants it to be before hdma kicks off, so we'll delay 2 pixels.
+	hblank_offset = cpu_getscanlineperiod() * ((339. - 268.) / 339.);
+	timer_adjust(snes_hblank_timer, cpu_getscanlinetime(0) - hblank_offset, 0, TIME_NEVER);
+
+	// check if DSP1 is present (maybe not 100%?)
+	has_dsp1 = ((snes_r_bank1(0xffd6) >= 3) && (snes_r_bank1(0xffd6) <= 5)) ? 1 : 0;
+
+	// init frame counter so first line is 0
+	if( Machine->drv->frames_per_second == 60 )
+	{
+		snes_ppu.beam.current_vert = SNES_MAX_LINES_NTSC;
+	}
+	else
+	{
+		snes_ppu.beam.current_vert = SNES_MAX_LINES_PAL;
+	}
 }
 
 /* should we treat this as nvram in MAME? */
@@ -138,12 +383,25 @@ READ8_HANDLER( snes_r_bank1 )
 {
 	UINT16 address = offset & 0xffff;
 
+	if ((snes_cart.mode == SNES_MODE_20) && (has_dsp1))
+	{
+		if ((address >= 0x8000) && (offset >= 0x200000))
+		{
+			return dsp1_read(address);
+		}
+	}
+
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
 		return program_read_byte(0x7e0000 + address );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
 		return snes_r_io( address );
 	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
+	{
+		if( snes_cart.mode == SNES_MODE_20 )
 		return 0xff;
+	else
+			return dsp1_read(address);
+	}
 	else
 	{
 		if( snes_cart.mode == SNES_MODE_20 )
@@ -160,6 +418,14 @@ READ8_HANDLER( snes_r_bank2 )
 {
 	UINT16 address = offset & 0xffff;
 
+	if ((snes_cart.mode == SNES_MODE_20) && (has_dsp1))
+	{
+		if (address >= 0x8000)
+		{
+			return dsp1_read(address);
+		}
+	}
+
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
 		return program_read_byte(0x7e0000 + address );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
@@ -172,10 +438,12 @@ READ8_HANDLER( snes_r_bank2 )
 		{
 			int mask;
 
+			offset -= 0x6000;
+
 			// limit SRAM size to what's actually present
 			mask = (snes_cart.sram * 1024) - 1;
 			offset &= mask;
-			return snes_ram[0x300000 + offset];	/* sram */
+			return snes_ram[0x306000 + offset];	/* sram */
 		}
 	}
 	else
@@ -209,6 +477,19 @@ READ8_HANDLER( snes_r_bank3 )
 	return 0xff;
 }
 
+/* 0x600000 - 0x6fffff */
+READ8_HANDLER( snes_r_bank6 )
+{
+	UINT16 address = offset & 0xffff;
+
+	if (address < 0x8000)
+	{
+		return dsp1_read(address);
+	}
+
+	return 0xff;
+}
+
 /* 0x800000 - 0xffffff */
 READ8_HANDLER( snes_r_bank4 )
 {
@@ -235,12 +516,24 @@ WRITE8_HANDLER( snes_w_bank1 )
 {
 	UINT16 address = offset & 0xffff;
 
+	if ((address >= 0x8000) && (offset >= 0x200000))
+	{
+		dsp1_write(address, data);
+		return;
+	}
+
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
 		program_write_byte(0x7e0000 + address, data );
 	else if( address >= 0x2000 && address <= 0x5fff )	/* I/O */
 		snes_w_io( address, data );
 	else if( address >= 0x6000 && address <= 0x7fff )	/* Reserved */
+		if( snes_cart.mode == SNES_MODE_20 )
 		logerror( "Attempt to write to reserved address: %X\n", offset );
+	else
+		{
+			dsp1_write(address, data);
+			return;
+		}
 	else
 		logerror( "Attempt to write to ROM address: %X\n", offset );
 }
@@ -249,6 +542,12 @@ WRITE8_HANDLER( snes_w_bank1 )
 WRITE8_HANDLER( snes_w_bank2 )
 {
 	UINT16 address = offset & 0xffff;
+
+	if (address >= 0x8000)
+	{
+		dsp1_write(address, data);
+		return;
+	}
 
 	if( address <= 0x1fff )								/* Mirror of Low RAM */
 		program_write_byte(0x7e0000 + address, data );
@@ -262,14 +561,28 @@ WRITE8_HANDLER( snes_w_bank2 )
 		{
 			int mask;
 
+			offset -= 0x6000;
+
 			// limit SRAM size to what's actually present
 			mask = (snes_cart.sram * 1024) - 1;
 			offset &= mask;
-			snes_ram[0x300000 + offset] = data;  /* sram */
+			snes_ram[0x306000 + offset] = data;  /* sram */
 		}
 	}
 	else
 		logerror( "Attempt to write to ROM address: %X\n", offset );
+}
+
+/* 0x600000 - 0x6fffff */
+WRITE8_HANDLER( snes_w_bank6 )
+{
+	UINT16 address = offset & 0xffff;
+
+	if (address < 0x8000)
+	{
+		dsp1_write(address, data);
+		return;
+	}
 }
 
 /* 0x800000 - 0xffffff */
@@ -302,6 +615,12 @@ WRITE8_HANDLER( snes_w_bank4 )
 READ8_HANDLER( snes_r_io )
 {
 	UINT8 value = 0;
+
+	// APU is mirrored from 2140 to 217f
+	if (offset >= APU00 && offset < WMDATA)
+	{
+		return spc_port_out[offset & 0x3];
+	}
 
 	/* offset is from 0x000000 */
 	switch( offset )
@@ -340,24 +659,31 @@ READ8_HANDLER( snes_r_io )
 				return snes_ram[offset];
 			}
 		case SLHV:		/* Software latch for H/V counter */
-			/* FIXME: horizontal latch is a major fudge!!! */
+			snes_ppu.beam.current_horz = (cpu_gethorzbeampos()*342)/512;
+
 			snes_ppu.beam.latch_vert = snes_ppu.beam.current_vert;
 			snes_ppu.beam.latch_horz = snes_ppu.beam.current_horz;
-			snes_ppu.beam.current_horz = 0;
 			return 0x0;		/* Return value is meaningless */
 		case ROAMDATA:	/* Read data from OAM (DR) */
 			{
 				int oam_addr = snes_ppu.oam.address;
 
-				while (oam_addr > 0x21f) oam_addr -= 0x220;
+				if (oam_addr & 0x100)
+				{
+					oam_addr &= 0x10f;
+				}
+				else
+				{
+					oam_addr &= 0x1ff;
+				}
 
 				value = (snes_oam[oam_addr] >> (snes_ram[OAMDATA] << 3)) & 0xff;
 				snes_ram[OAMDATA] = (snes_ram[OAMDATA] + 1) % 2;
 				if( snes_ram[OAMDATA] == 0 )
 				{
 					snes_ppu.oam.address++;
-					snes_ram[OAMADDL] = snes_ppu.oam.address & 0xff;
-					snes_ram[OAMADDH] = (snes_ppu.oam.address >> 8) & 0x1;
+					snes_ppu.oam.address_low = snes_ram[OAMADDL] = snes_ppu.oam.address & 0xff;
+					snes_ppu.oam.address_high = snes_ram[OAMADDH] = (snes_ppu.oam.address >> 8) & 0x1;
 				}
 				return value;
 			}
@@ -394,7 +720,7 @@ READ8_HANDLER( snes_r_io )
 
 				value = (vram_read_buffer>>8) & 0xff;
 
-				if (!vram_fgr_high)
+				if (vram_fgr_high)
 				{
 					if (vram_fgr_count)
 					{
@@ -422,7 +748,6 @@ READ8_HANDLER( snes_r_io )
 		case OPHCT:		/* Horizontal counter data by ext/soft latch */
 			{
 				/* FIXME: need to handle STAT78 reset */
-				static UINT8 read_ophct = 0;
 				if( read_ophct )
 				{
 					value = (snes_ppu.beam.latch_horz >> 8) & 0x1;
@@ -438,7 +763,6 @@ READ8_HANDLER( snes_r_io )
 		case OPVCT:		/* Vertical counter data by ext/soft latch */
 			{
 				/* FIXME: need to handle STAT78 reset */
-				static UINT8 read_opvct = 0;
 				if( read_opvct )
 				{
 					value = (snes_ppu.beam.latch_vert >> 8) & 0x1;
@@ -455,24 +779,9 @@ READ8_HANDLER( snes_r_io )
 			return snes_ram[offset];
 		case STAT78:	/* PPU status flag and version number */
 			/* FIXME: need to reset OPHCT and OPVCT */
-			return snes_ram[offset];
-		case APU00:		/* Audio port register */
-		case APU01:
-		case APU02:
-		case APU03:
-		case APU00+4:		/* these registers are mirrored */
-		case APU01+4:
-		case APU02+4:
-		case APU03+4:
-		case APU00+8:
-		case APU01+8:
-		case APU02+8:
-		case APU03+8:
-		case APU00+12:
-		case APU01+12:
-		case APU02+12:
-		case APU03+12:
-			return spc_port_out[offset & 0x3];
+			value = snes_ram[offset];
+			snes_ram[offset] &= ~0x40;	// clear 'latched counters' flag
+			return value;
 		case WMDATA:	/* Data to read from WRAM */
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
@@ -521,19 +830,20 @@ READ8_HANDLER( snes_r_io )
 			return snes_ram[offset];
 		case RDNMI:			/* NMI flag by v-blank and version number */
 			value = snes_ram[offset];
-			snes_ram[offset] &= 0xf;	/* NMI flag is reset on read */
+			snes_ram[offset] &= 0x7f;	/* NMI flag is reset on read */
 			return value;
 		case TIMEUP:		/* IRQ flag by H/V count timer */
 			value = snes_ram[offset];
 			snes_ram[offset] = 0;	/* Register is reset on read */
 			return value;
 		case HVBJOY:		/* H/V blank and joypad controller enable */
-			/* FIXME: HBLANK is emulated wrong at present */
-			// bits: 7 = VBLANK, 6 = HBLANK, 0 = CONTROLLERS_BUSY
-			snes_ram[offset] ^= 0x40;	// fake hblank
+			// electronics test says hcounter 272 is start of hblank, which is beampos 363
+//          if (cpu_gethorzbeampos() >= 363) snes_ram[offset] |= 0x40;
+//              else snes_ram[offset] &= ~0x40;
 			return snes_ram[offset];
-		case RDIO:			/* Programmable I/O port (in port ) */
-			/* FIXME: do something here */
+		case RDIO:			/* Programmable I/O port - echos back what's written to WRIO */
+			return snes_ram[WRIO];
+			break;
 		case RDDIVL:		/* Quotient of divide result (low) */
 		case RDDIVH:		/* Quotient of divide result (high) */
 		case RDMPYL:		/* Product/Remainder of mult/div result (low) */
@@ -601,6 +911,15 @@ READ8_HANDLER( snes_r_io )
  */
 WRITE8_HANDLER( snes_w_io )
 {
+	// APU is mirrored from 2140 to 217f
+	if (offset >= APU00 && offset < WMDATA)
+	{
+//          printf("816: %02x to APU @ %d\n", data, offset&3);
+	     	spc_port_in[offset & 0x3] = data;
+		cpu_boost_interleave(0, TIME_IN_USEC(20));
+		return;
+	}
+
 	/* offset is from 0x000000 */
 	switch( offset )
 	{
@@ -654,24 +973,46 @@ WRITE8_HANDLER( snes_w_io )
 		case OAMADDH:	/* Address for accessing OAM (high) */
 			snes_ppu.oam.address_high = data & 0x1;
 			snes_ppu.oam.address = ((data & 0x1) << 8) + snes_ppu.oam.address_low;
-			if( data & 0x80 )
-				snes_ppu.oam.high_priority = snes_ppu.oam.address;
+			snes_ppu.oam.priority_rotation = (data & 0x80) ? 1 : 0;
 			snes_ram[OAMDATA] = 0;
 			break;
 		case OAMDATA:	/* Data for OAM write (DW) */
 			{
 				int oam_addr = snes_ppu.oam.address;
 
-				while (oam_addr > 0x21f) oam_addr -= 0x220;
-
-				snes_oam[oam_addr] = ((snes_oam[oam_addr] >> 8) & 0xff) + (data << 8);
+				if (oam_addr >= 0x100)
+				{
+					oam_addr &= 0x10f;
+					if (!(snes_ram[OAMDATA]))
+					{
+						snes_oam[oam_addr] &= 0xff00;
+						snes_oam[oam_addr] |= data;
+					}
+					else
+					{
+						snes_oam[oam_addr] &= 0x00ff;
+						snes_oam[oam_addr] |= (data<<8);
+					}
+				}
+				else
+				{
+					oam_addr &= 0x1ff;
+					if (!(snes_ram[OAMDATA]))
+					{
+						snes_ppu.oam.write_latch = data;
+					}
+					else
+					{
+						snes_oam[oam_addr] = (data<<8) | snes_ppu.oam.write_latch;
+					}
+				}
 				snes_ram[OAMDATA] = (snes_ram[OAMDATA] + 1) % 2;
 				if( snes_ram[OAMDATA] == 0 )
 				{
 					snes_ram[OAMDATA] = 0;
 					snes_ppu.oam.address++;
-					snes_ram[OAMADDL] = snes_ppu.oam.address & 0xff;
-					snes_ram[OAMADDH] = (snes_ppu.oam.address >> 8) & 0x1;
+					snes_ppu.oam.address_low = snes_ram[OAMADDL] = snes_ppu.oam.address & 0xff;
+					snes_ppu.oam.address_high = snes_ram[OAMADDH] = (snes_ppu.oam.address >> 8) & 0x1;
 				}
 				return;
 			}
@@ -943,26 +1284,6 @@ WRITE8_HANDLER( snes_w_io )
 				printf( "Pseudo 512 mode: %s\n", (data & 0x8) ? "on" : "off" );
 #endif
 			break;
-		case APU00:		/* Audio port register */
-		case APU01:
-		case APU02:
-		case APU03:
-		case APU00+4:		/* these registers are mirrored: see NBA Live '95 @ 8098c5 */
-		case APU01+4:
-		case APU02+4:
-		case APU03+4:
-		case APU00+8:
-		case APU01+8:
-		case APU02+8:
-		case APU03+8:
-		case APU00+12:
-		case APU01+12:
-		case APU02+12:
-		case APU03+12:
-//          printf("816: %02x to APU @ %d\n", data, offset&3);
-	     		spc_port_in[offset & 0x3] = data;
-			cpu_boost_interleave(0, TIME_IN_USEC(20));
-			return;
 		case WMDATA:	/* Data to write to WRAM */
 			{
 				UINT32 addr = ((snes_ram[WMADDH] & 0x1) << 16) | (snes_ram[WMADDM] << 8) | snes_ram[WMADDL];
@@ -988,7 +1309,13 @@ WRITE8_HANDLER( snes_w_io )
 			break;
 		case NMITIMEN:	/* Flag for v-blank, timer int. and joy read */
 		case OLDJOY2:	/* Old NES joystick support */
-		case WRIO:    	/* Programmable I/O port */
+			break;
+		case WRIO:		/* Programmable I/O port - latches H/V counters on a 1->0 transition */
+			if (!(snes_ram[WRIO] & 0x80) && (data & 0x80))
+			{
+				// external latch
+				snes_latch_counters();
+			}
 		case WRMPYA:	/* Multiplier A */
 			break;
 		case WRMPYB:	/* Multiplier B */
@@ -1034,7 +1361,7 @@ WRITE8_HANDLER( snes_w_io )
 		case MEMSEL:	/* Access cycle designation in memory (2) area */
 			/* FIXME: Need to adjust the speed only during access of banks 0x80+
              * Currently we are just increasing it no matter what */
-			cpunum_set_clockscale( 0, (data & 0x1) ? 1.335820896 : 1.0 );
+//          cpunum_set_clockscale( 0, (data & 0x1) ? 1.335820896 : 1.0 );
 #ifdef SNES_DBG_REG_W
 			if( (data & 0x1) != (snes_ram[MEMSEL] & 0x1) )
 				printf( "CPU speed: %f Mhz\n", (data & 0x1) ? 3.58 : 2.68 );
@@ -1181,109 +1508,6 @@ DRIVER_INIT( snes )
 	free_memory_region(REGION_USER3);
 }
 #endif	/* MESS */
-
-INTERRUPT_GEN(snes_scanline_interrupt)
-{
-	/* Start of VBlank */
-	if( snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line )
-	{
-		program_write_byte(OAMADDL, snes_ppu.oam.address_low ); /* Reset oam address */
-		program_write_byte(OAMADDH, snes_ppu.oam.address_high );
-		snes_ram[HVBJOY] |= 0x81;		/* Set vblank bit to on & indicate controllers being read */
-		snes_ram[RDNMI] |= 0x80;		/* Set NMI occured bit */
-		if( snes_ram[NMITIMEN] & 0x80 )	/* NMI only signaled if this bit set */
-		{
-			cpunum_set_input_line( 0, G65816_LINE_NMI, HOLD_LINE );
-		}
-	}
-
-	/* three lines after start of vblank we update the controllers (value from snes9x) */
-	if (snes_ppu.beam.current_vert == snes_ppu.beam.last_visible_line + 3)
-	{
-		int i;
-
-		joypad[0].low = readinputport( 0 );
-		joypad[0].high = readinputport( 1 );
-		joypad[1].low = readinputport( 2 );
-		joypad[1].high = readinputport( 3 );
-		joypad[2].low = readinputport( 4 );
-		joypad[2].high = readinputport( 5 );
-		joypad[3].low = readinputport( 6 );
-		joypad[3].high = readinputport( 7 );
-
-		// avoid sending signals that could crash games
-		for (i = 0; i < 4; i++)
-		{
-			// if left, no right
-			if (joypad[i].high & 2)	joypad[i].high &= ~1;
-			// if up, no down
-			if (joypad[i].high & 8)	joypad[i].high &= ~4;
-		}
-
-		// is automatic reading on?
-		if (snes_ram[NMITIMEN] & 1)
-		{
-			joy1l = joypad[0].low;
-			joy1h = joypad[0].high;
-			joy2l = joypad[1].low;
-			joy2h = joypad[1].high;
-			joy3l = joypad[2].low;
-			joy3h = joypad[2].high;
-			joy4l = joypad[3].low;
-			joy4h = joypad[3].high;
-
-			// make sure oldrol starts returning all 1s because the auto-read reads it :-)
-			joypad[0].oldrol = 16;
-			joypad[1].oldrol = 16;
-		}
-
-		snes_ram[HVBJOY] &= 0x7e;		/* Clear busy bit */
-	}
-
-	/* Setup HDMA on start of new frame */
-	if( snes_ppu.beam.current_vert == 0 )
-		snes_hdma_init();
-
-	/* Let's draw the current line */
-	if( snes_ppu.beam.current_vert < snes_ppu.beam.last_visible_line )
-	{
-		/* Do HDMA */
-		if( snes_ram[HDMAEN] )
-			snes_hdma();
-
-		force_partial_update( snes_ppu.beam.current_vert );
-	}
-
-	/* Vertical IRQ timer */
-	if( snes_ram[NMITIMEN] & 0x20 )
-	{
-		if( snes_ppu.beam.current_vert == (((snes_ram[VTIMEH] << 8) | snes_ram[VTIMEL]) & 0x1ff) )
-		{
-			snes_ram[TIMEUP] = 0x80;	/* Indicate that irq occured */
-			cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
-		}
-	}
-	/* Horizontal IRQ timer */
-	/* FIXME: Commented out as it causes heaps of trouble right now */
-/*  if( snes_ram[NMITIMEN] & 0x10 )
-    {
-        if( (((snes_ram[HTIMEH] << 8) | snes_ram[HTIMEL]) & 0x1ff) )
-        {
-            snes_ram[TIMEUP] = 0x80;
-            cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
-        }
-    } */
-
-	/* Increase current line */
-	snes_ppu.beam.current_vert = (snes_ppu.beam.current_vert + 1) % (snes_ram[STAT78] == SNES_NTSC ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
-	if( snes_ppu.beam.current_vert == 0 )
-	{	/* VBlank is over, time for a new frame */
-		snes_ram[HVBJOY] &= 0x7f;		/* Clear vblank bit */
-		snes_ram[RDNMI]  &= 0x7f;		/* Clear nmi occured bit */
-		snes_ram[STAT77] &= 0x3f;		/* Clear Time Over and Range Over bits */
-		cpunum_set_input_line( 0, G65816_LINE_NMI, CLEAR_LINE );
-	}
-}
 
 void snes_hdma_init()
 {

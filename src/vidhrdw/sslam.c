@@ -123,7 +123,7 @@ WRITE16_HANDLER( sslam_bg_tileram_w )
 	tilemap_mark_tile_dirty(sslam_bg_tilemap,offset);
 }
 
-static void get_powerbal_bg_tile_info(int tile_index)
+static void get_powerbls_bg_tile_info(int tile_index)
 {
 	int code = sslam_bg_tileram[tile_index*2+1] & 0x0fff;
 	int colr = (sslam_bg_tileram[tile_index*2+1] & 0xf000) >> 12;
@@ -134,7 +134,7 @@ static void get_powerbal_bg_tile_info(int tile_index)
 	SET_TILE_INFO(1,code,colr,0)
 }
 
-WRITE16_HANDLER( powerbal_bg_tileram_w )
+WRITE16_HANDLER( powerbls_bg_tileram_w )
 {
 	COMBINE_DATA(&sslam_bg_tileram[offset]);
 	tilemap_mark_tile_dirty(sslam_bg_tilemap,offset>>1);
@@ -157,9 +157,9 @@ VIDEO_START(sslam)
 	return 0;
 }
 
-VIDEO_START(powerbal)
+VIDEO_START(powerbls)
 {
-	sslam_bg_tilemap = tilemap_create(get_powerbal_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
+	sslam_bg_tilemap = tilemap_create(get_powerbls_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,64);
 
 	if (!sslam_bg_tilemap)
 		return 1;
@@ -206,7 +206,7 @@ VIDEO_UPDATE(sslam)
 	tilemap_draw(bitmap,cliprect,sslam_tx_tilemap,0,0);
 }
 
-VIDEO_UPDATE(powerbal)
+VIDEO_UPDATE(powerbls)
 {
 	if(!(sslam_regs[6] & 1))
 	{

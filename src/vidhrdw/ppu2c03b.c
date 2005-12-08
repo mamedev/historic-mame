@@ -17,6 +17,7 @@
 #define VISIBLE_SCREEN_HEIGHT	(30*8)	/* Visible screen height */
 #define VIDEORAM_SIZE			0x4000	/* videoram size */
 #define SPRITERAM_SIZE			0x100	/* spriteram size */
+#define SPRITERAM_MASK			(0x100-1)	/* spriteram size */
 #define CHARGEN_NUM_CHARS		512		/* max number of characters handled by the chargen */
 
 /* default monochromatic colortable */
@@ -1124,6 +1125,7 @@ void ppu2c03b_w( int num, int offset, int data )
  *************************************/
 void ppu2c03b_spriteram_dma( int num, const UINT8 *source )
 {
+	int i;
 	/* check bounds */
 	if ( num >= intf->num )
 	{
@@ -1131,7 +1133,10 @@ void ppu2c03b_spriteram_dma( int num, const UINT8 *source )
 		return;
 	}
 
-	memcpy( chips[num].spriteram, source, SPRITERAM_SIZE );
+	//should last 513 CPU cycles.
+
+	for(i=0;i<SPRITERAM_SIZE;i++)
+		chips[num].spriteram[(chips[num].regs[PPU_SPRITE_ADDRESS]+i)&SPRITERAM_MASK]=source[i];
 }
 
 /*************************************

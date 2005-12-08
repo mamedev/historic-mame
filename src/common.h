@@ -124,7 +124,8 @@ enum
 #define ROMENTRYTYPE_CONTINUE		4					/* this entry continues loading the previous ROM */
 #define ROMENTRYTYPE_FILL			5					/* this entry fills an area with a constant value */
 #define ROMENTRYTYPE_COPY			6					/* this entry copies data from another region/offset */
-#define ROMENTRYTYPE_COUNT			7
+#define ROMENTRYTYPE_CARTRIDGE		7					/* this entry specifies a cartridge (MESS) */
+#define ROMENTRYTYPE_COUNT			8
 
 #define ROMENTRY_REGION				((const char *)ROMENTRYTYPE_REGION)
 #define ROMENTRY_END				((const char *)ROMENTRYTYPE_END)
@@ -132,6 +133,7 @@ enum
 #define ROMENTRY_CONTINUE			((const char *)ROMENTRYTYPE_CONTINUE)
 #define ROMENTRY_FILL				((const char *)ROMENTRYTYPE_FILL)
 #define ROMENTRY_COPY				((const char *)ROMENTRYTYPE_COPY)
+#define ROMENTRY_CARTRIDGE			((const char *)ROMENTRYTYPE_CARTRIDGE)
 
 /* ----- per-entry macros ----- */
 #define ROMENTRY_GETTYPE(r)			((FPTR)(r)->_name)

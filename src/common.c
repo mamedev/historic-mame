@@ -1662,6 +1662,10 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 				romp++; /* skip over file */
 			}
 		}
+		else
+		{
+			romp++;	/* something else; skip */
+		}
 	}
 	return 1;
 

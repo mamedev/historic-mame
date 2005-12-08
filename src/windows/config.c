@@ -32,7 +32,7 @@
 #include "video.h"
 #include "fileio.h"
 
-#if NEW_DEBUGGER
+#ifdef NEW_DEBUGGER
 #include "debug/debugcpu.h"
 #endif
 
@@ -133,7 +133,7 @@ static int init_errorlog(struct rc_option *option, const char *arg, int priority
 	/* provide errorlog from here on */
 	if (errorlog && !logfile)
 	{
-		logfile = fopen("error.log","wa");
+		logfile = fopen("error.log","w");
 		curlogsize = 0;
 		if (!logfile)
 		{
@@ -335,28 +335,23 @@ int parse_config (const char* filename, const game_driver *gamedrv)
 		sprintf(buffer, "%s", filename);
 	}
 
-	if (verbose)
-		fprintf(stderr, "parsing %s...", buffer);
-
 	f = mame_fopen (buffer, NULL, FILETYPE_INI, 0);
 	if (f)
 	{
 		if(osd_rc_read(rc, f, buffer, 1, 1))
 		{
 			if (verbose)
-				fprintf (stderr, "problem parsing %s\n", buffer);
+				fprintf (stderr, "Parsing %s : ERROR\n", buffer);
 			retval = 1;
 		}
-		else
+		else if (verbose)
 		{
-			if (verbose)
-				fprintf (stderr, "OK.\n");
+			fprintf (stderr, "Parsing %s : OK\n", buffer);
 		}
 	}
-	else
+	else if (verbose)
 	{
-		if (verbose)
-			fprintf (stderr, "N/A\n");
+		fprintf (stderr, "Parsing %s : N/A\n", buffer);
 	}
 
 	if (f)
@@ -557,8 +552,15 @@ int cli_frontend_init (int argc, char **argv)
 	/* nice hack: load source_file.ini (omit if referenced later any) */
 	{
 		const game_driver *tmp_gd;
+		const char *start;
 
-		sprintf(buffer, "%s", drivers[game_index]->source_file+4);
+		/* remove the path and the .c suffix from the source file name */
+		start = strrchr(drivers[game_index]->source_file, '/');
+		if (!start)
+			start = strrchr(drivers[game_index]->source_file, '\\');
+		if (!start)
+			start = drivers[game_index]->source_file - 1;
+		sprintf(buffer, "%s", start + 1);
 		buffer[strlen(buffer) - 2] = 0;
 
 		tmp_gd = drivers[game_index];

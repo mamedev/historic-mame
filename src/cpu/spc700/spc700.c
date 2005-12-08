@@ -12,11 +12,18 @@
   It was designed by Sony's Ken Kutaragi, later the "father of the PlayStation".
 
   Original emulation by Anthony Kruize and Lee Hammerton.
-  Substantially revised September 2005 by R. Belmont.
+  Substantially revised by R. Belmont.
 
   Thanks to Anonymous, TRAC, Brad Martin, anomie, Blargg, and everyone
   else on ZSNES Technical for probing the darker corners of the SNES
   with test programs so we have a chance at getting things accurate.
+
+  MESS Bugzilla bugs:
+  - 804 ADC sets carry too late (FIXED)
+  - 805 ADDW/SUBW set V wrongly (FIXED)
+  - 806 BRK should modify PSW (FIXED)
+  - 807 DAA/DAS problem (FIXED)
+
 
 */
 /* ======================================================================== */
@@ -576,9 +583,9 @@ INLINE void SET_FLAG_I(uint value)
 
 #define SUBOP_ADC(A, B)						\
 	spc_int16 = (A) + (B) + CFLAG_AS_1();			\
+	TMP1 = ((A) & 0x0f) + (CFLAG_AS_1());			\
 	FLAG_C  = (spc_int16 > 0xff) ? CFLAG_SET : 0;		\
 	FLAG_V =  (~((A) ^ (B))) & (((A) ^ spc_int16) & 0x80); \
-	TMP1 = ((A) & 0x0f) + (CFLAG_AS_1());			\
 	FLAG_H = (((spc_int16 & 0x0f) - TMP1) & 0x10) >> 1; 	\
 	FLAG_NZ = (UINT8)spc_int16
 
@@ -611,7 +618,7 @@ INLINE void SET_FLAG_I(uint value)
 			FLAG_C = (TMP3 > 0xff) ? CFLAG_SET : 0;	\
 			FLAG_H = ((unsigned) ((((DST) >> 8) & 0x0F) + \
 				(((SRC) >> 8) & 0x0F) + TMP2)) > 0x0F ? HFLAG_SET : 0; \
-			FLAG_V = (~((DST) ^ (SRC)) & ((SRC) ^ (UINT16) spc_int32) & 0x8000) ? VFLAG_SET : 0; \
+			FLAG_V = (~((DST) ^ (SRC)) & ((SRC) ^ (UINT16) spc_int16) & 0x8000) ? VFLAG_SET : 0; \
 			FLAG_Z = (spc_int16 != 0);		\
 			FLAG_N = (spc_int16>>8);		\
 			SET_REG_YA(spc_int16);
@@ -714,6 +721,8 @@ INLINE void SET_FLAG_I(uint value)
 			CLK(BCLK);														\
 			PUSH_16(REG_PC);												\
 			PUSH_8(GET_REG_P_BRK());										\
+			FLAG_B |= FLAGPOS_B;												\
+			FLAG_I = IFLAG_CLEAR;												\
 			JUMP(read_16_VEC(VECTOR_BRK))
 
 /* Call subroutine */
@@ -798,7 +807,7 @@ INLINE void SET_FLAG_I(uint value)
 				REG_A += 0x60;		\
 				FLAG_C = CFLAG_SET;	\
 			}				\
-			FLAG_NZ = REG_A;
+			FLAG_NZ = REG_A = MAKE_UINT_8(REG_A);
 
 /* Decimal adjust for subtraction */
 #define OP_DAS(BCLK)														\
@@ -813,7 +822,7 @@ INLINE void SET_FLAG_I(uint value)
 				REG_A -= 0x60;		\
 				FLAG_C = 0;		\
 			}				\
-			FLAG_NZ = REG_A
+			FLAG_NZ = REG_A = MAKE_UINT_8(REG_A)
 
 /* Decrement register and branch if not zero */
 /* speed up busy loops */
@@ -1216,7 +1225,7 @@ INLINE void SET_FLAG_I(uint value)
 			FLAG_C = (TMP3 <= 0xff) ? CFLAG_SET : 0;	\
 			FLAG_H = ((unsigned) ((((DST) >> 8) & 0x0F) - \
 				(((SRC) >> 8) & 0x0F) - TMP2)) > 0x0F ? HFLAG_SET : 0; \
-			FLAG_V = (((DST) ^ (SRC)) & ((DST) ^ (UINT16) spc_int32) & 0x8000) ? VFLAG_SET : 0; \
+			FLAG_V = (((DST) ^ (SRC)) & ((DST) ^ (UINT16) spc_int16) & 0x8000) ? VFLAG_SET : 0; \
 			FLAG_Z = (spc_int16 != 0);		\
 			FLAG_N = (spc_int16>>8);		\
 			SET_REG_YA(spc_int16);

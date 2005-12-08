@@ -3,7 +3,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern UINT16 *aquarium_scroll, *aquarium_priority;
+extern UINT16 *aquarium_scroll;
 
 static tilemap *aquarium_txt_tilemap;
 extern UINT16 *aquarium_txt_videoram;
@@ -14,20 +14,15 @@ extern UINT16 *aquarium_mid_videoram;
 static tilemap *aquarium_bak_tilemap;
 extern UINT16 *aquarium_bak_videoram;
 
-
 /* gcpinbal.c modified */
 static void aquarium_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
 {
 	int offs,chain_pos;
 	int x,y,curx,cury;
-	int priority=0;
 	UINT8 col,flipx,flipy,chain;
 	UINT16 code;
 
-	/* According to Raine, word in ioc_ram determines sprite/tile priority... */
-	priority = (aquarium_priority[0x0/2] & 0x8800) ? 0 : 1;
-
-	for (offs = spriteram_size/2-8;offs >= 0;offs -= 8)
+	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
 		code = ((spriteram16[offs+5])&0xff) + (((spriteram16[offs+6]) &0xff) << 8);
 		code &= 0x3fff;
@@ -58,13 +53,20 @@ static void aquarium_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 
 			for (chain_pos = chain;chain_pos >= 0;chain_pos--)
 			{
-				pdrawgfx(bitmap, Machine->gfx[0],
+				drawgfx(bitmap, Machine->gfx[0],
 						code,
 						col,
 						flipx, flipy,
 						curx,cury,
-						cliprect,TRANSPARENCY_PEN,0,
-						priority ? 0xfc : 0xf0);
+						cliprect,TRANSPARENCY_PEN,0);
+
+				/* wrap around y */
+				drawgfx(bitmap, Machine->gfx[0],
+						code,
+						col,
+						flipx, flipy,
+						curx,cury+256,
+						cliprect,TRANSPARENCY_PEN,0);
 
 				code++;
 
@@ -115,12 +117,15 @@ WRITE16_HANDLER( aquarium_txt_videoram_w )
 
 static void get_aquarium_mid_tile_info(int tile_index)
 {
-	int tileno,colour;
+	int tileno,colour,flag;
 
 	tileno = (aquarium_mid_videoram[tile_index*2] & 0x0fff);
 	colour = (aquarium_mid_videoram[tile_index*2+1] & 0x001f);
+	flag   = TILE_FLIPYX((aquarium_mid_videoram[tile_index*2+1] & 0x300) >> 8);
 
-	SET_TILE_INFO(1,tileno,colour,0)
+	SET_TILE_INFO(1,tileno,colour,flag)
+
+	tile_info.priority = (aquarium_mid_videoram[tile_index*2+1] & 0x20) >> 5;
 }
 
 WRITE16_HANDLER( aquarium_mid_videoram_w )
@@ -136,12 +141,15 @@ WRITE16_HANDLER( aquarium_mid_videoram_w )
 static void get_aquarium_bak_tile_info(int tile_index)
 
 {
-	int tileno,colour;
+	int tileno,colour,flag;
 
 	tileno = (aquarium_bak_videoram[tile_index*2] & 0x0fff);
 	colour = (aquarium_bak_videoram[tile_index*2+1] & 0x001f);
+	flag   = TILE_FLIPYX((aquarium_bak_videoram[tile_index*2+1] & 0x300) >> 8);
 
-	SET_TILE_INFO(3,tileno,colour,0)
+	SET_TILE_INFO(3,tileno,colour,flag)
+
+	tile_info.priority = (aquarium_bak_videoram[tile_index*2+1] & 0x20) >> 5;
 }
 
 WRITE16_HANDLER( aquarium_bak_videoram_w )
@@ -159,9 +167,8 @@ VIDEO_START(aquarium)
 	if (!aquarium_txt_tilemap) return 1;
 	tilemap_set_transparent_pen(aquarium_txt_tilemap,0);
 
-	aquarium_bak_tilemap = tilemap_create(get_aquarium_bak_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,32,32);
+	aquarium_bak_tilemap = tilemap_create(get_aquarium_bak_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE, 16, 16,32,32);
 	if (!aquarium_bak_tilemap) return 1;
-	tilemap_set_transparent_pen(aquarium_bak_tilemap,0);
 
 	aquarium_mid_tilemap = tilemap_create(get_aquarium_mid_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 16, 16,32,32);
 	if (!aquarium_mid_tilemap) return 1;
@@ -172,9 +179,6 @@ VIDEO_START(aquarium)
 
 VIDEO_UPDATE(aquarium)
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
-	fillbitmap(priority_bitmap,0,cliprect);
-
 	tilemap_set_scrollx(aquarium_mid_tilemap, 0, aquarium_scroll[0]);
 	tilemap_set_scrolly(aquarium_mid_tilemap, 0, aquarium_scroll[1]);
 	tilemap_set_scrollx(aquarium_bak_tilemap, 0, aquarium_scroll[2]);
@@ -182,8 +186,13 @@ VIDEO_UPDATE(aquarium)
 	tilemap_set_scrollx(aquarium_txt_tilemap, 0, aquarium_scroll[4]);
 	tilemap_set_scrolly(aquarium_txt_tilemap, 0, aquarium_scroll[5]);
 
-	tilemap_draw(bitmap,cliprect,aquarium_bak_tilemap,0,2);
-	tilemap_draw(bitmap,cliprect,aquarium_mid_tilemap,0,4);
-	tilemap_draw(bitmap,cliprect,aquarium_txt_tilemap,0,1);
+	tilemap_draw(bitmap,cliprect,aquarium_bak_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,aquarium_mid_tilemap,0,0);
+
 	aquarium_draw_sprites(bitmap,cliprect,16);
+
+	tilemap_draw(bitmap,cliprect,aquarium_bak_tilemap,1,0);
+	tilemap_draw(bitmap,cliprect,aquarium_mid_tilemap,1,0);
+
+	tilemap_draw(bitmap,cliprect,aquarium_txt_tilemap,0,0);
 }

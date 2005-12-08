@@ -322,6 +322,33 @@ ROM_START( promutra )
 	ROM_LOAD( "enter3.hi3",   0x38000, 0x8000, CRC(a8cf603b) SHA1(6efa5753d8d252452b3f5be8635a28364e4d8de1) )
 ROM_END
 
+ROM_START( promutrb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u16.u16",      0x0000, 0x8000, CRC(e37d48be) SHA1(1d700cff0c28e50fa2851e0c46de21aa47a23416) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mt44ic.44",    0x0000, 0x1000, CRC(8d543ea4) SHA1(86ab848a45851540d5d3315e15b92f7b2ac0b77c) )
+	ROM_LOAD( "mt46ic.46",    0x1000, 0x1000, CRC(6d6e1f68) SHA1(e8196ecd915a2528122407d31a7078f177be0beb) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mt48ic.48",    0x0000, 0x1000, CRC(f2efe300) SHA1(419e889b2f4d038ae64e3ccf4e2498add80b4c9f) )
+	ROM_LOAD( "mt50ic.50",    0x1000, 0x1000, CRC(ee89d24e) SHA1(e3536df549278040255657201433ab23e0386533) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic63.prm",     0x0000, 0x0100, CRC(749da5a8) SHA1(8e30f5b014bc8ff2dc4986ef35a979e525681cb9) ) /* palette low bits */
+	ROM_LOAD( "ic64.prm",     0x0100, 0x0100, CRC(1cf9c914) SHA1(4c39b10c1be889d6ef4313b2112f4216d34f7327) ) /* palette high bits */
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* Question roms */
+	ROM_LOAD( "movie-tv.lo0", 0x00000, 0x8000, CRC(dbf03e62) SHA1(0210442ff80cce8fe39ba5e373bca0f47bb389c4) )
+	ROM_LOAD( "movie-tv.hi0", 0x08000, 0x8000, CRC(77f09aab) SHA1(007ae0ec1f37b575412fa71c92d1891a62069089) )
+	ROM_LOAD( "rock-pop.lo1", 0x10000, 0x8000, CRC(4252bc23) SHA1(d6c5b3c5f227b043f298cea585bcb934538b8880) )
+	ROM_LOAD( "rock-pop.hi1", 0x18000, 0x8000, CRC(272aba66) SHA1(305866b07c6bb2d71ee169b0e8c75f95896d4484) )
+	ROM_LOAD( "country.lo2",  0x20000, 0x8000, CRC(44673138) SHA1(4e5a3181300bd5f0e9336c2d0ddf900a9b4256d9) )
+	ROM_LOAD( "country.hi2",  0x28000, 0x8000, CRC(3d35a612) SHA1(9d17477c8097b1110ed752caa6d280160368eac1) )
+	ROM_LOAD( "enter3.lo3",   0x30000, 0x8000, CRC(a8cf603b) SHA1(6efa5753d8d252452b3f5be8635a28364e4d8de1) )
+	ROM_LOAD( "geninfo.hi3",  0x38000, 0x8000, CRC(2747fd74) SHA1(d34ac30349dc965ecd8b05b3f1cb7ee24627f369) )
+ROM_END
+
 ROM_START( strvmstr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "stm16.u16",    0x0000, 0x8000, CRC(ae734db9) SHA1(1bacdfdebaa1f250bfbd49053c3910f1396afe11) )
@@ -349,6 +376,7 @@ ROM_START( strvmstr )
 	ROM_LOAD( "entrtn.hi3",   0x38000, 0x8000, CRC(a8cf603b) SHA1(6efa5753d8d252452b3f5be8635a28364e4d8de1) )
 ROM_END
 
-GAME(  1985, promutrv, 0,        ettrivia, ettrivia, 0, ROT270, "Enerdyne Technologies Inc.", "Progressive Music Trivia (Question set 1)", 0 )
-GAME(  1985, promutra, promutrv, ettrivia, ettrivia, 0, ROT270, "Enerdyne Technologies Inc.", "Progressive Music Trivia (Question set 2)", 0 )
+GAME( 1985, promutrv, 0,        ettrivia, ettrivia, 0, ROT270, "Enerdyne Technologies Inc.", "Progressive Music Trivia (Question set 1)", 0 )
+GAME( 1985, promutra, promutrv, ettrivia, ettrivia, 0, ROT270, "Enerdyne Technologies Inc.", "Progressive Music Trivia (Question set 2)", 0 )
+GAME( 1985, promutrb, promutrv, ettrivia, ettrivia, 0, ROT270, "Enerdyne Technologies Inc.", "Progressive Music Trivia (Question set 3)", 0 )
 GAME( 1986, strvmstr, 0,        ettrivia, ettrivia, 0, ROT270, "Enerdyne Technologies Inc.", "Super Trivia Master", GAME_WRONG_COLORS )

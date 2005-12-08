@@ -2074,6 +2074,56 @@ ROM_END
 
 ROM_START( kidniki )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* main CPU */
+	ROM_LOAD( "ky_a-4e-g.bin", 0x00000, 0x04000, CRC(2edcbcd7) SHA1(fbb8e3cddfba01523c0d253cbc74ddb259b6197d) )
+	ROM_LOAD( "dr03.4cd",      0x04000, 0x04000, CRC(dba20934) SHA1(a7aac4fcea5c1a94ddaf67e85bf2ce2e77c965cb) )
+	ROM_LOAD( "ky_t-8k-g.bin", 0x10000, 0x08000, CRC(dbc42f31) SHA1(a7c7fdde1a8b63660d3e38786dbc80b6d91bde1b) )	/* banked at 8000-9fff */
+	ROM_LOAD( "dr12.8l",       0x18000, 0x08000, CRC(c0b255fd) SHA1(bdd74239a3490eb35cb736cac6f5030bec4b2392) )
+	ROM_CONTINUE(              0x28000, 0x08000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
+	ROM_LOAD( "dr00.3a",      0x4000, 0x04000, CRC(458309f7) SHA1(7dfd77e0cd76a4b6f913eb434ac20ef5a172e2f0) )
+	ROM_LOAD( "dr01.3cd",     0x8000, 0x04000, CRC(e66897bd) SHA1(04ea4a857a94d4e884fb28623ec6195dae701e25) )
+	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, CRC(f9e31e26) SHA1(712b1bde4b3c18c9ac26d58ade48316af004e733) ) /* 6803 code */
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "dr06.2b",      0x00000, 0x8000, CRC(4d9a970f) SHA1(affeea31706644a9f1dcd1c4f739cadbdd58e597) )	/* tiles */
+	ROM_LOAD( "dr07.2dc",     0x08000, 0x8000, CRC(ab59a4c4) SHA1(4e1eca8d4185ef35e2be13fa6a4af01f36d19f27) )
+	ROM_LOAD( "dr05.2a",      0x10000, 0x8000, CRC(2e6dad0c) SHA1(fe79c510cea3f57ba61ac2e8d9858c887688897b) )
+
+	ROM_REGION( 0x30000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "dr21.4k",      0x00000, 0x4000, CRC(a06cea9a) SHA1(d78792b8e310fed3dc622c05d81303dad338afa7) )	/* sprites */
+	ROM_LOAD( "dr19.4f",      0x04000, 0x4000, CRC(b34605ad) SHA1(56eba99c73527326f3428961732854753a6a5a2e) )
+	ROM_LOAD( "dr22.4l",      0x08000, 0x4000, CRC(41303de8) SHA1(7bffda2e4c95b021f21d8375cf2d6b14280ea7b5) )
+	ROM_LOAD( "dr20.4jh",     0x0c000, 0x4000, CRC(5fbe6f61) SHA1(18ab120777fffe912c8fc139fda2977a44aa453f) )
+	ROM_LOAD( "dr14.3p",      0x10000, 0x4000, CRC(76cfbcbc) SHA1(3fdffc5893143b06535b5d85cd2a01c61d08e679) )
+	ROM_LOAD( "dr24.4p",      0x14000, 0x4000, CRC(d51c8db5) SHA1(be48478afa0acc33e6a02a0a31f1f07ce3c7a3b8) )
+	ROM_LOAD( "dr23.4nm",     0x18000, 0x4000, CRC(03469df8) SHA1(f3ffc0419c9d9c9a69387f62ceb9081170f861d4) )
+	ROM_LOAD( "dr13.3nm",     0x1c000, 0x4000, CRC(d5c3dfe0) SHA1(c0e6b23bed9bf650d516a80c8b94f2d888d81c2d) )
+	ROM_LOAD( "dr16.4cb",     0x20000, 0x4000, CRC(f1d1bb93) SHA1(42103d2e89a0d1edc834d08a6c443065fdacdbf2) )
+	ROM_LOAD( "dr18.4e",      0x24000, 0x4000, CRC(edb7f25b) SHA1(394337132ff74b8d06d02233201f8ae8958e2aa6) )
+	ROM_LOAD( "dr17.4dc",     0x28000, 0x4000, CRC(4fb87868) SHA1(73d779d687a6c319cd85793f95cb24413010b5e2) )
+	ROM_LOAD( "dr15.4a",      0x2c000, 0x4000, CRC(e0b88de5) SHA1(08808ca90d34e494697a74e8a2314e32087e2f4d) )
+
+	ROM_REGION( 0x0c000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "dr08.4l",      0x00000, 0x4000, CRC(32d50643) SHA1(58bff370a3e24f21d5fb35289e85084b03178f88) )	/* chars */
+	ROM_LOAD( "dr09.4m",      0x04000, 0x4000, CRC(17df6f95) SHA1(669a81906dfd81d807cbb2b5827ddb504536cb2c) )
+	ROM_LOAD( "dr10.4n",      0x08000, 0x4000, CRC(820ce252) SHA1(910dbb910fdfcf9542360c0cd78c58c93d1d0c26) )
+
+	ROM_REGION( 0x0920, REGION_PROMS, 0 )
+	ROM_LOAD( "dr25.3f",      0x0000, 0x0100, CRC(8e91430b) SHA1(a7a1567a0fd31cd65260f3ddb5280368704378bd) )	/* character palette red component */
+	ROM_LOAD( "dr30.1m",      0x0100, 0x0100, CRC(28c73263) SHA1(ffeb8d1310759bf20b1624ab92fc91078726679c) )	/* sprite palette red component */
+	ROM_LOAD( "dr26.3h",      0x0200, 0x0100, CRC(b563b93f) SHA1(86aefdaa63b35fe82f9f70eff3e4c14629f7a184) )	/* character palette green component */
+	ROM_LOAD( "dr31.1n",      0x0300, 0x0100, CRC(3529210e) SHA1(3042ec941bdcb873077e77cffe36d4a28298bbbb) )	/* sprite palette green component */
+	ROM_LOAD( "dr27.3j",      0x0400, 0x0100, CRC(70d668ef) SHA1(2cc647f2708932105bb9a5130aacc5a8a160e418) )	/* character palette blue component */
+	ROM_LOAD( "dr29.1l",      0x0500, 0x0100, CRC(1173a754) SHA1(dbb7d02b72ae1842e0d17aee324a5b85ff2a2178) )	/* sprite palette blue component */
+	ROM_LOAD( "dr32.5p",      0x0600, 0x0020, CRC(11cd1f2e) SHA1(45ceb84ff373127ff370610c1ce8d83fc6045bcb) )	/* sprite height, one entry per 32 */
+	                                                        /* sprites. Used at run time! */
+	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, CRC(6cef0fbd) SHA1(0c5c63a203e7bd852a3574c18f212487caf529ca) )	/* unknown */
+	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, CRC(34d88d3c) SHA1(727f4c5cfff33538886fa0a29fd119aa085d7008) )	/* video timing - common to the other games */
+ROM_END
+
+ROM_START( kidnikiu )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* main CPU */
 	ROM_LOAD( "dr04.4e",      0x00000, 0x04000, CRC(80431858) SHA1(3a387f63ce0c7601264f91ae1f6fe604f2ef8ef1) )
 	ROM_LOAD( "dr03.4cd",     0x04000, 0x04000, CRC(dba20934) SHA1(a7aac4fcea5c1a94ddaf67e85bf2ce2e77c965cb) )
 	ROM_LOAD( "dr11.8k",      0x10000, 0x08000, CRC(04d82d93) SHA1(a901659cbe12a284f30a6b98ea6907df0222ddbf) )	/* banked at 8000-9fff */
@@ -2129,7 +2179,7 @@ ROM_START( yanchamr )
 	ROM_LOAD( "ky_a-4d-.bin", 0x04000, 0x04000, CRC(401af828) SHA1(eec1c082f42e441071fcf005803205b2275b0327) )
 	ROM_LOAD( "ky_t-8k-.bin", 0x10000, 0x08000, CRC(e967de88) SHA1(75c0890eb98feb882fe01de5e93e228690e00904) )	/* banked at 8000-9fff */
 	ROM_LOAD( "ky_t-8l-.bin", 0x18000, 0x08000, CRC(a929110b) SHA1(87334f946e14c79426bc7a14e8da984bb8ef9cfc) )
-/*  ROM_CONTINUE(             0x28000, 0x08000 ) */
+	/*  ROM_CONTINUE(             0x28000, 0x08000 ) */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD( "ky_a-3a-.bin", 0x4000, 0x04000, CRC(cb365f3b) SHA1(fefad25459eb00d228ee29931c5714ae895b76c7) )
@@ -2178,7 +2228,7 @@ ROM_START( lithero )
 	ROM_LOAD( "4.bin",        0x00000, 0x08000, CRC(80903766) SHA1(f16d603798f8a9ad62df8d89334758326257201a) )
 	ROM_LOAD( "11.bin",       0x10000, 0x08000, CRC(7a1ef8cb) SHA1(5c94a06a5f64365068daee3d7da7f2a8e52479da) ) /* banked at 8000-9fff */
 	ROM_LOAD( "12.bin",       0x18000, 0x08000, CRC(a929110b) SHA1(87334f946e14c79426bc7a14e8da984bb8ef9cfc) )
-/*  ROM_CONTINUE(             0x28000, 0x08000 ) */
+	/*  ROM_CONTINUE(             0x28000, 0x08000 ) */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* sound CPU */
 	ROM_LOAD( "ky_a-3a-.bin", 0x4000, 0x04000, CRC(cb365f3b) SHA1(fefad25459eb00d228ee29931c5714ae895b76c7) )
@@ -2553,7 +2603,8 @@ GAME( 1985, ldrun3,   0,        ldrun3,   ldrun3,   0,        ROT0,   "Irem (lic
 GAME( 1985, ldrun3jp, ldrun3,   ldrun3,   ldrun3,   0,        ROT0,   "Irem (licensed from Broderbund)", "Lode Runner III - Majin No Fukkatsu", 0 )
 GAME( 1986, ldrun4,   0,        ldrun4,   ldrun4,   ldrun4,   ROT0,   "Irem (licensed from Broderbund)", "Lode Runner IV - Teikoku Karano Dasshutsu", 0 )
 GAME( 1985, lotlot,   0,        lotlot,   lotlot,   0,        ROT0,   "Irem (licensed from Tokuma Shoten)", "Lot Lot", 0 )
-GAME( 1986, kidniki,  0,        kidniki,  kidniki,  kidniki,  ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
+GAME( 1986, kidniki,  0,        kidniki,  kidniki,  kidniki,  ROT0,   "Irem", "Kid Niki - Radical Ninja (World)", GAME_IMPERFECT_SOUND )
+GAME( 1986, kidnikiu, kidniki,  kidniki,  kidniki,  kidniki,  ROT0,   "Irem (Data East USA license)", "Kid Niki - Radical Ninja (US)", GAME_IMPERFECT_SOUND )
 GAME( 1986, yanchamr, kidniki,  kidniki,  kidniki,  kidniki,  ROT0,   "Irem", "Kaiketsu Yanchamaru (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1987, lithero,  kidniki,  kidniki,  kidniki,  kidniki,  ROT0,   "bootleg", "Little Hero", GAME_IMPERFECT_SOUND )
 GAME( 1985, spelunkr, 0,        spelunkr, spelunkr, spelunkr, ROT0,   "Irem (licensed from Broderbund)", "Spelunker", 0 )

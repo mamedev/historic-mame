@@ -205,11 +205,11 @@ WRITE16_HANDLER( bigtwin_paletteram_w );
 WRITE16_HANDLER( sslam_tx_tileram_w );
 WRITE16_HANDLER( sslam_md_tileram_w );
 WRITE16_HANDLER( sslam_bg_tileram_w );
-WRITE16_HANDLER( powerbal_bg_tileram_w );
+WRITE16_HANDLER( powerbls_bg_tileram_w );
 VIDEO_START(sslam);
-VIDEO_START(powerbal);
+VIDEO_START(powerbls);
 VIDEO_UPDATE(sslam);
-VIDEO_UPDATE(powerbal);
+VIDEO_UPDATE(powerbls);
 
 
 static void sslam_play(int melody, int data)
@@ -335,7 +335,7 @@ static INTERRUPT_GEN( sslam_interrupt )
 	}
 }
 
-static WRITE16_HANDLER( powerbal_sound_w )
+static WRITE16_HANDLER( powerbls_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpunum_set_input_line(1,I8051_INT1_LINE,PULSE_LINE);
@@ -368,9 +368,9 @@ static ADDRESS_MAP_START( sslam_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0xffffff) AM_ROM   /* I don't honestly know where the rom is mirrored .. so all unmapped reads / writes go to rom */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( powerbal_map, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( powerbls_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
-	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, powerbal_bg_tileram_w) AM_BASE(&sslam_bg_tileram)
+	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, powerbls_bg_tileram_w) AM_BASE(&sslam_bg_tileram)
 	AM_RANGE(0x104000, 0x107fff) AM_RAM // not used
 	AM_RANGE(0x110000, 0x11000d) AM_RAM AM_BASE(&sslam_regs)
 	AM_RANGE(0x200000, 0x200001) AM_WRITENOP
@@ -381,7 +381,7 @@ static ADDRESS_MAP_START( powerbal_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300014, 0x300015) AM_READ(port_tag_to_handler16("IN2"))
 	AM_RANGE(0x30001a, 0x30001b) AM_READ(port_tag_to_handler16("DSW1"))
 	AM_RANGE(0x30001c, 0x30001d) AM_READ(port_tag_to_handler16("DSW2"))
-	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(powerbal_sound_w)
+	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(powerbls_sound_w)
 	AM_RANGE(0x304000, 0x304001) AM_WRITENOP
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM	  /* Main RAM */
 ADDRESS_MAP_END
@@ -547,7 +547,7 @@ INPUT_PORTS_START( sslam )
 	PORT_DIPSETTING(    0x00, "Individual" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( powerbal )
+INPUT_PORTS_START( powerbls )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -664,7 +664,7 @@ static const gfx_decode sslam_gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static const gfx_decode powerbal_gfxdecodeinfo[] =
+static const gfx_decode powerbls_gfxdecodeinfo[] =
 {
 	{ REGION_GFX2, 0, &tiles8x8_layout,   0x100, 16 }, /* spr */
 	{ REGION_GFX1, 0, &tiles8x8_layout,       0, 16 }, /* bg */
@@ -703,11 +703,11 @@ static MACHINE_DRIVER_START( sslam )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( powerbal )
+static MACHINE_DRIVER_START( powerbls )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
-	MDRV_CPU_PROGRAM_MAP(powerbal_map, 0)
+	MDRV_CPU_PROGRAM_MAP(powerbls_map, 0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_CPU_ADD(I8051, 12000000)
@@ -721,11 +721,11 @@ static MACHINE_DRIVER_START( powerbal )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(powerbal_gfxdecodeinfo)
+	MDRV_GFXDECODE(powerbls_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x200)
 
-	MDRV_VIDEO_START(powerbal)
-	MDRV_VIDEO_UPDATE(powerbal)
+	MDRV_VIDEO_START(powerbls)
+	MDRV_VIDEO_UPDATE(powerbls)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -858,7 +858,7 @@ ROM_START( sslama )
 ROM_END
 
 // it's a conversion for a sslam pcb
-ROM_START( powerbal )
+ROM_START( powerbls )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "21.u67", 0x00000, 0x40000, CRC(4e302381) SHA1(5685d15fd3137866093ff13b95a7df2265a8bc64) )
 	ROM_LOAD16_BYTE( "22.u66", 0x00001, 0x40000, CRC(89b70599) SHA1(57a5d71e4d8ca62fffe2e81116c5236d2194ae11) )
@@ -889,6 +889,6 @@ ROM_START( powerbal )
 ROM_END
 
 
-GAME( 1993, sslam,    0,      sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
-GAME( 1993, sslama,   sslam,  sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
-GAME( 1994, powerbal, 0,      powerbal, powerbal, 0, ROT0, "Playmark", "Power Balls", 0 )
+GAME( 1993, sslam,    0,        sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 1)", GAME_IMPERFECT_SOUND )
+GAME( 1993, sslama,   sslam,    sslam,    sslam,    0, ROT0, "Playmark", "Super Slam (set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1994, powerbls, powerbal, powerbls, powerbls, 0, ROT0, "Playmark", "Power Balls (Super Slam conversion)", 0 )

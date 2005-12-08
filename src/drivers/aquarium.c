@@ -26,7 +26,7 @@ AQUARF1              68000-16            6
 
 Controls + Dipswitches *done* - stephh
 Verify Z80 program banking
-Fix Priority Problems
+Fix Priority Problems *done* - Pierpaolo Prazzoli
 Merge with gcpinbal.c (and clean up gcpinbal.c)
 
 
@@ -163,8 +163,8 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc80000, 0xc81fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xd00000, 0xd00fff) AM_WRITE(paletteram16_RRRRGGGGBBBBRGBx_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xd80014, 0xd8001f) AM_WRITE(MWA16_RAM) AM_BASE(&aquarium_scroll)
-	AM_RANGE(0xd80068, 0xd80069) AM_WRITE(MWA16_RAM) AM_BASE(&aquarium_priority)  /* maybe not on this game? */
-	AM_RANGE(0xd80088, 0xd80089) AM_WRITE(MWA16_NOP) /* ?? video related */
+	AM_RANGE(0xd80068, 0xd80069) AM_WRITENOP  /* probably not used */
+	AM_RANGE(0xd80088, 0xd80089) AM_WRITENOP /* ?? video related */
 	AM_RANGE(0xd8008a, 0xd8008b) AM_WRITE(aquarium_sound_w)
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
@@ -450,7 +450,7 @@ ROM_START( aquarium )
 ROM_END
 
 #if !AQUARIUS_HACK
-GAME( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium (Japan)", GAME_NO_COCKTAIL )
 #else
-GAME( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1996, aquarium, 0, aquarium, aquarium, aquarium, ROT0, "Excellent System", "Aquarium", GAME_NO_COCKTAIL )
 #endif

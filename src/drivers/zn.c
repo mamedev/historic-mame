@@ -137,6 +137,7 @@ static struct
 	{ "sfex2pa",  cp10, cp12 }, /* OK */
 	{ "sfex2pj",  cp10, cp12 }, /* OK */
 	{ "strider2", cp10, cp13 }, /* OK ( random crashes on bosses ) */
+	{ "stridr2a", cp10, cp13 }, /* OK ( random crashes on bosses ) */
 	{ "shiryu2",  cp10, cp13 }, /* OK ( random crashes on bosses ) */
 	{ "beastrzr", et01, et02 }, /* OK */
 	{ "beastrzb", et01, et02 }, /* OK */

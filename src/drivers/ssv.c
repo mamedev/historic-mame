@@ -34,11 +34,11 @@ STA-0001B   ?           94  Twin Eagle II - The Rescue Mission      Seta
 STA-0001B   VISCO       95  Mobil Suit Gundam Final Shooting (1)    Banpresto
 STA-0001B   P1-102A     95  Mahjong Hyper Reaction                  Sammy
 ?           ?           95  Ultra X Weapons / Ultra Keibitai        Banpresto + Tsuburaya Prod.
-STA-0001B   VISCO-JJ1   96  Lovely Pop Mahjong Jan Jan Shimasyo     Visco
+STA-0001B   VISCO-JJ1   96  Lovely Pop Mahjong JangJang Shimasho    Visco
 STA-0001B   VISCO-001B  96  Storm Blade                             Visco
 STA-0001B   P1-105A     96? Meosis Magic                            Sammy
 STA-0001B   ?           97  Joryuu Syougi Kyoushitsu (2)            Visco
-STA-0001B   VISCO-JJ1   97  Koi Koi Shimasyo 2                      Visco
+STA-0001B   VISCO-JJ1   97  Koi Koi Shimasho 2                      Visco
 STA-0001B   P1-112A     97  Mahjong Hyper Reaction 2                Sammy
 STA-0001B   ?           97  Monster Slider                          Visco / Datt
 STA-0001    ?           97  Super Real Mahjong P7                   Seta
@@ -46,7 +46,7 @@ STA-0001B   ?           98  Gourmet Battle Quiz Ryorioh CooKing     Visco
 STA-0001B   P1-112C     98  Pachinko Sexy Reaction                  Sammy
 STA-0001B   B1-001A     99  Pachinko Sexy Reaction 2                Sammy
 STA-0001B   P1-112C     99  Change Air Blade                        Visco
-STA-0001B   VISCO-JJ1   00  Lovely Pop Mahjong Jan Jan Shimasyo 2   Visco
+STA-0001B   VISCO-JJ1   00  Lovely Pop Mahjong JangJang Shimasho 2  Visco
 STA-0001B   SSV_SUB     00  Vasara                                  Visco
 STA-0001B   SSV_SUB     01  Vasara 2                                Visco
 -----------------------------------------------------------------------------------
@@ -1656,7 +1656,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-                                Jan Jan Simasyo
+                                JangJang Shimasho
 ***************************************************************************/
 
 INPUT_PORTS_START( janjans1 )
@@ -1841,7 +1841,7 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-                            Koi Koi Simasyo 2
+                            Koi Koi Simasho 2
 ***************************************************************************/
 
 INPUT_PORTS_START( koikois2 )
@@ -3996,7 +3996,7 @@ ROM_END
 
 /***************************************************************************
 
-             Lovely Pop Mahjong Janjan Shimasho (Japan)
+             Lovely Pop Mahjong Jangjang Shimasho (Japan)
 
 (c)1996 Visco, SSV System
 
@@ -4036,7 +4036,7 @@ ROM_END
 
 /***************************************************************************
 
-            Lovely Pop Mahjong Janjan Shimasho 2 (Japan)
+            Lovely Pop Mahjong JangJang Shimasho 2 (Japan)
 
 (c)1996-2000 Visco
 
@@ -4172,7 +4172,7 @@ ROM_END
 
 /***************************************************************************
 
-                            Koi Koi Simasyo 2 (Japan)
+                            Koi Koi Shimasho 2 (Japan)
 
 (c)1997 Visco, SSV System
 
@@ -5246,18 +5246,18 @@ GAME( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy", 
 GAME( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 1995,  gdfs,     0,        gdfs,     gdfs,     gdfs,     ROT0,   "Banpresto",          "Mobil Suit Gundam Final Shooting (Japan)",         GAME_NO_COCKTAIL )
 GAME( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270, "Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
-GAME( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo (Japan)",      GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong JangJang Shimasho (Japan)",     GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 1996?, meosism,  0,        meosism,  meosism,  meosism,  ROT0,   "Sammy",              "Meosis Magic (Japan)",                             GAME_NO_COCKTAIL )
 GAME( 1996,  stmblade, 0,        stmblade, stmblade, stmblade, ROT270, "Visco",              "Storm Blade (US)",                                 GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 1997,  hypreac2, 0,        hypreac2, hypreac2, hypreac2, ROT0,   "Sammy",              "Mahjong Hyper Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
-GAME( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasyo 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
+GAME( 1997,  koikois2, 0,        janjans1, koikois2, janjans1, ROT0,   "Visco",              "Koi Koi Shimasho 2 - Super Real Hanafuda (Japan)", GAME_NO_COCKTAIL )
 GAME( 1997,  mslider,  0,        mslider,  mslider,  mslider,  ROT0,   "Visco / Datt Japan", "Monster Slider (Japan)",                           GAME_NO_COCKTAIL )
 GAME( 1997,  srmp7,    0,        srmp7,    srmp7,    srmp7,    ROT0,   "Seta",               "Super Real Mahjong P7 (Japan)",                    GAME_NO_COCKTAIL | GAME_IMPERFECT_SOUND )
 GAME( 1998,  ryorioh,  0,        ryorioh,  ryorioh,  ryorioh,  ROT0,   "Visco",              "Gourmet Battle Quiz Ryohrioh CooKing (Japan)",     GAME_NO_COCKTAIL )
 GAME( 1998,  sxyreact, 0,        sxyreact, sxyreact, sxyreact, ROT0,   "Sammy",              "Pachinko Sexy Reaction (Japan)",                   GAME_NO_COCKTAIL )
 GAME( 1999,  sxyreac2, 0,        sxyreact, sxyreact, sxyreac2, ROT0,   "Sammy",              "Pachinko Sexy Reaction 2 (Japan)",                 GAME_NO_COCKTAIL )
 GAME( 1999,  cairblad, 0,        sxyreact, cairblad, sxyreact, ROT270, "Sammy",              "Change Air Blade (Japan)",                         GAME_NO_COCKTAIL )
-GAME( 2000,  janjans2, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong Jan Jan Shimasyo 2 (Japan)",    GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 2000,  janjans2, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong JangJang Shimasho 2 (Japan)",   GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 2000,  vasara,   0,        ryorioh,  vasara,   vasara,   ROT270, "Visco",              "Vasara",                                           GAME_NO_COCKTAIL )
 GAME( 2001,  vasara2,  0,        ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 1)",                                 GAME_NO_COCKTAIL )
 GAME( 2001,  vasara2a, vasara2,  ryorioh,  vasara2,  vasara,   ROT270, "Visco",              "Vasara 2 (set 2)",                                 GAME_NO_COCKTAIL )
