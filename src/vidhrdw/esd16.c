@@ -175,7 +175,8 @@ VIDEO_START( esd16 )
 
         2.w                             Code
 
-        4.w     fed- ---- ---- ----
+        4.w     f--- ---- ---- ----     Sprite priority
+                -ed- ---- ---- ----
                 ---c ---- ---- ----     Color?
                 ---- ba9- ---- ----     Color
                 ---- ---8 7654 3210     X (Signed)
@@ -195,7 +196,7 @@ static void esd16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 	int max_x		=	Machine->drv->screen_width;
 	int max_y		=	Machine->drv->screen_height;
 
-	for ( offs = 0; offs < spriteram_size/2; offs += 8/2 )
+	for ( offs = spriteram_size/2 - 8/2; offs >= 0 ; offs -= 8/2 )
 	{
 		int y, starty, endy, incy;
 
@@ -210,6 +211,13 @@ static void esd16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 		int	flipy	=	attr & 0x0000;
 
 		int color	=	(sx >> 9) & 0xf;
+
+		int pri_mask;
+
+		if(sx & 0x8000)
+			pri_mask = 0xfffe; // under "tilemap 1"
+		else
+			pri_mask = 0; // above everything
 
 		sx	=	sx & 0x1ff;
 		if (sx >= 0x180)	sx -= 0x200;
@@ -226,12 +234,12 @@ static void esd16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 
 		for (y = starty ; y != endy ; y += incy)
 		{
-			drawgfx(	bitmap, Machine->gfx[0],
+			pdrawgfx(	bitmap, Machine->gfx[0],
 						code++,
 						color,
 						flipx, flipy,
 						sx, y,
-						cliprect, TRANSPARENCY_PEN,0	);
+						cliprect, TRANSPARENCY_PEN, 0, pri_mask	);
 		}
 	}
 }
@@ -244,7 +252,7 @@ static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect
 	int max_x		=	Machine->drv->screen_width;
 	int max_y		=	Machine->drv->screen_height;
 
-	for ( offs = 0; offs < spriteram_size/2; offs += 8/2 )
+	for ( offs = spriteram_size/2 - 8/2; offs >= 0 ; offs -= 8/2 )
 	{
 		int y, starty, endy, incy;
 
@@ -259,6 +267,13 @@ static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect
 		int	flipy	=	sy & 0x0000;
 
 		int color	=	(sx >> 9) & 0xf;
+
+		int pri_mask;
+
+		if(sx & 0x8000)
+			pri_mask = 0xfffe; // under "tilemap 1"
+		else
+			pri_mask = 0; // above everything
 
 		sx	=	sx & 0x1ff;
 		if (sx >= 0x180)	sx -= 0x200;
@@ -278,12 +293,12 @@ static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect
 
 		for (y = starty ; y != endy ; y += incy)
 		{
-			drawgfx(	bitmap, Machine->gfx[0],
+			pdrawgfx(	bitmap, Machine->gfx[0],
 						code++,
 						color,
 						flipx, flipy,
 						sx, y,
-						cliprect, TRANSPARENCY_PEN,0	);
+						cliprect, TRANSPARENCY_PEN, 0, pri_mask	);
 		}
 	}
 }
@@ -301,6 +316,8 @@ static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect
 VIDEO_UPDATE( esd16 )
 {
 	int layers_ctrl = -1;
+
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	tilemap_set_scrollx(esdtilemap_0, 0, esd16_scroll_0[0]);
 	tilemap_set_scrolly(esdtilemap_0, 0, esd16_scroll_0[1]);
@@ -320,7 +337,7 @@ if ( code_pressed(KEYCODE_Z) )
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,esdtilemap_0,0,0);
 	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,esdtilemap_1,0,0);
+	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,esdtilemap_1,0,1);
 
 	if (layers_ctrl & 4)	esd16_draw_sprites(bitmap,cliprect);
 }
@@ -330,9 +347,10 @@ VIDEO_UPDATE( hedpanic )
 {
 	int layers_ctrl = -1;
 
+	fillbitmap(priority_bitmap,0,cliprect);
+
 	tilemap_set_scrollx(esdtilemap_0, 0, esd16_scroll_0[0]);
 	tilemap_set_scrolly(esdtilemap_0, 0, esd16_scroll_0[1]);
-
 
 #ifdef MAME_DEBUG
 if ( code_pressed(KEYCODE_Z) )
@@ -352,16 +370,17 @@ if ( code_pressed(KEYCODE_Z) )
 		{
 			tilemap_set_scrollx(esdtilemap_1_16x16, 0, esd16_scroll_1[0]);
 			tilemap_set_scrolly(esdtilemap_1_16x16, 0, esd16_scroll_1[1]);
-			tilemap_draw(bitmap,cliprect,esdtilemap_1_16x16,0,0);
+			tilemap_draw(bitmap,cliprect,esdtilemap_1_16x16,0,1);
 		}
 		else
 		{
 			tilemap_set_scrollx(esdtilemap_1, 0, esd16_scroll_1[0]);
 			tilemap_set_scrolly(esdtilemap_1, 0, esd16_scroll_1[1]);
-			tilemap_draw(bitmap,cliprect,esdtilemap_1,0,0);
+			tilemap_draw(bitmap,cliprect,esdtilemap_1,0,1);
 		}
 
 	}
+
 	if (layers_ctrl & 4)	hedpanic_draw_sprites(bitmap,cliprect);
 
 

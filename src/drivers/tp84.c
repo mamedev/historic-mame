@@ -195,6 +195,27 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( tp84b_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_WRITE(tp84_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x0400, 0x07ff) AM_RAM AM_WRITE(tp84_videoram2_w) AM_BASE(&tp84_videoram2)
+	AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(tp84_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(tp84_colorram2_w) AM_BASE(&tp84_colorram2)
+	AM_RANGE(0x1000, 0x17ff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&sharedram)
+	AM_RANGE(0x1800, 0x1800) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0x1a00, 0x1a00) AM_READWRITE(input_port_0_r, tp84_col0_w)
+	AM_RANGE(0x1a20, 0x1a20) AM_READ(input_port_1_r)
+	AM_RANGE(0x1a40, 0x1a40) AM_READ(input_port_2_r)
+	AM_RANGE(0x1a60, 0x1a60) AM_READ(input_port_3_r)
+	AM_RANGE(0x1c00, 0x1c00) AM_READWRITE(input_port_4_r, MWA8_NOP)
+	AM_RANGE(0x1c04, 0x1c04) AM_WRITE(tp84_flipscreen_x_w)
+	AM_RANGE(0x1c05, 0x1c05) AM_WRITE(tp84_flipscreen_y_w)
+	AM_RANGE(0x1e00, 0x1e00) AM_WRITE(tp84_sh_irqtrigger_w)
+	AM_RANGE(0x1e80, 0x1e80) AM_WRITE(soundlatch_w)
+	AM_RANGE(0x1f00, 0x1f00) AM_WRITE(tp84_scroll_x_w)
+	AM_RANGE(0x1f80, 0x1f80) AM_WRITE(tp84_scroll_y_w)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
+ADDRESS_MAP_END
+
 
 /* CPU 2 read addresses */
 static ADDRESS_MAP_START( readmem_cpu2, ADDRESS_SPACE_PROGRAM, 8 )
@@ -453,7 +474,7 @@ static const gfx_decode gfxdecodeinfo[] =
 static MACHINE_DRIVER_START( tp84 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6809, 1500000)	/* ??? */
+	MDRV_CPU_ADD_TAG("cpu1",M6809, 1500000)	/* ??? */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
@@ -502,7 +523,11 @@ static MACHINE_DRIVER_START( tp84 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
-
+static MACHINE_DRIVER_START( tp84b )
+	MDRV_IMPORT_FROM(tp84)
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_PROGRAM_MAP(tp84b_cpu1_map,0)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -572,7 +597,34 @@ ROM_START( tp84a )
 	ROM_LOAD( "tp84_16c.bin", 0x0400, 0x0100, CRC(13c4e198) SHA1(42ab23206be99e840bd9c52cefa175c12fac8e5b) ) /* sprite lookup table */
 ROM_END
 
+ROM_START( tp84b )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	/* 0x6000 - 0x7fff space for diagnostic rom */
+	ROM_LOAD( "388j05.8j",   0x8000, 0x4000, CRC(a59e2fda) SHA1(7d776d5d3fcfbe81d42580cfe93614dc4618a440) )
+	ROM_LOAD( "388j07.10j",  0xc000, 0x4000, CRC(d25d18e6) SHA1(043f515cc66f6af004be81d6a6b5a92b553107ff) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "388j08.10d", 0xe000, 0x2000, CRC(2aea6b42) SHA1(58c3b4852f22a766f440b98904b73c00a31eae01) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for code of sound cpu Z80 */
+	ROM_LOAD( "388j13.6a", 0x0000, 0x2000, CRC(c44414da) SHA1(981289f5bdf7dc1348f4ca547ac933ef503b6588) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "388j02.2j",  0x0000, 0x4000, CRC(e1225f53) SHA1(59d07dc4faafc82999e9716f0bba1cb7350c03e3) ) /* chars */
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "388j09.12a", 0x0000, 0x4000, CRC(aec90936) SHA1(3420c24bbedb140cb20fdaf51acbe9493830b64a) ) /* sprites */
+	ROM_LOAD( "388j11.14a", 0x4000, 0x4000, CRC(29257f03) SHA1(ebbb980bd226e8ada7e517e92487a32bfbc82f91) )
+
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
+	ROM_LOAD( "388j14.2c",  0x0000, 0x0100, CRC(d737eaba) SHA1(e39026f87f5b995cf4a38b5d3d3fee7561762ae6) ) /* palette red component */
+	ROM_LOAD( "388j15.2d",  0x0100, 0x0100, CRC(2f6a9a2a) SHA1(f09d8b92c7f9bf046cdd815c5282d0510e61b6e0) ) /* palette green component */
+	ROM_LOAD( "388j16.1e",  0x0200, 0x0100, CRC(2e21329b) SHA1(9ba8af294dbd6f3a5d039c74a56e0605a913c037) ) /* palette blue component */
+	ROM_LOAD( "388j18.1f",  0x0300, 0x0100, CRC(61d2d398) SHA1(3f74ad733b07b6a31cf9d4956d171eb9253dd6bf) ) /* char lookup table */
+	ROM_LOAD( "388j17.16c", 0x0400, 0x0100, CRC(13c4e198) SHA1(42ab23206be99e840bd9c52cefa175c12fac8e5b) ) /* sprite lookup table */
+ROM_END
 
 
-GAME( 1984, tp84,  0,    tp84, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)", 0 )
-GAME( 1984, tp84a, tp84, tp84, tp84a,0, ROT90, "Konami", "Time Pilot '84 (set 2)", 0 )
+GAME( 1984, tp84,  0,    tp84,  tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 1)", 0 )
+GAME( 1984, tp84a, tp84, tp84,  tp84a,0, ROT90, "Konami", "Time Pilot '84 (set 2)", 0 )
+GAME( 1984, tp84b, tp84, tp84b, tp84, 0, ROT90, "Konami", "Time Pilot '84 (set 3)", 0 )

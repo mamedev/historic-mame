@@ -138,17 +138,20 @@ ToDo / Notes:
 -Weird design choices:
  introdon: has the working button as BUTTON2 and not BUTTON1
  batmanfr: BUTTON1 isn't used at all.
--seabass/gaxeduel: Player sprite is corrupt/missing during movements,caused
+-seabass: Player sprite is corrupt/missing during movements,caused
  by incomplete framebuffer switching.
 -sss: Missing backgrounds during gameplay. <- seems just too dark (night),probably
  just the positioning isn't correct...
 -elandore: Polygons structures/textures aren't right in gameplay,known as protection
  for the humans structures,imperfect VDP1 emulation for the dragons.
 -hanagumi: ending screens have corrupt graphics. (*untested*)
--znpwfv: has various serious video issues.
+-znpwfv: missing Gouraud shading on distorted sprites and polygons
+-znpwfv,twcup98: missing "two screens" mode in RBG emulation
 -batmanfr: Missing sound,caused by an extra ADSP chip which is on the cart.The CPU is a
  ADSP-2181,and it's the same used by NBA Jam Extreme (ZN game).
 -twcup98: missing Tecmo logo
+-vfremix: hangs after second match
+-sokyugrt: gameplay seems to be not smooth, timing?
 -Here's the list of unmapped read/writes:
 *<all games>
 cpu #0 (PC=0000365C): unmapped program memory dword write to 057FFFFC = 000D0000 & FFFF0000
@@ -221,6 +224,18 @@ DRIVER_INIT(sss);
 DRIVER_INIT(othellos);
 DRIVER_INIT(sassisu);
 DRIVER_INIT(gaxeduel);
+DRIVER_INIT(suikoenb);
+DRIVER_INIT(sokyugrt);
+DRIVER_INIT(znpwfv);
+DRIVER_INIT(twcup98);
+DRIVER_INIT(smleague);
+DRIVER_INIT(maruchan);
+DRIVER_INIT(sandor);
+DRIVER_INIT(colmns97);
+DRIVER_INIT(pblbeach);
+DRIVER_INIT(shanhigw);
+DRIVER_INIT(finlarch);
+DRIVER_INIT(elandore);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -237,6 +252,7 @@ static UINT16* scsp_regs;
 static UINT16* sound_ram;
 
 int stv_vblank,stv_hblank;
+int stv_enable_slave_sh2;
 /*SMPC stuff*/
 static UINT8 NMI_reset;
 static void system_reset(void);
@@ -270,7 +286,7 @@ static void dma_indirect_lv2(void); /*DMA level 2 indirect transfer function*/
 
 
 int minit_boost,sinit_boost;
-
+double minit_boost_timeslice, sinit_boost_timeslice;
 
 static int scanline;
 
@@ -2089,6 +2105,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				if(LOG_SMPC) logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
+				stv_enable_slave_sh2 = 1;
 				cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 				cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 				#endif
@@ -2096,6 +2113,8 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x03:
 				if(LOG_SMPC) logerror ("SMPC: Slave OFF\n");
 				smpc_ram[0x5f]=0x03;
+				stv_enable_slave_sh2 = 0;
+				cpu_trigger(1000);
 				cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 				break;
 			case 0x06:
@@ -3493,7 +3512,7 @@ static WRITE32_HANDLER( stv_scsp_regs_w32 )
 static WRITE32_HANDLER( minit_w )
 {
 	logerror("cpu #%d (PC=%08X) MINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
-	cpu_boost_interleave(0, TIME_IN_USEC(minit_boost));
+	cpu_boost_interleave(minit_boost_timeslice, TIME_IN_USEC(minit_boost));
 	cpu_trigger(1000);
 	cpunum_set_info_int(1, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
@@ -3501,7 +3520,7 @@ static WRITE32_HANDLER( minit_w )
 static WRITE32_HANDLER( sinit_w )
 {
 	logerror("cpu #%d (PC=%08X) SINIT write = %08x\n",cpu_getactivecpu(), activecpu_get_pc(),data);
-	cpu_boost_interleave(0, TIME_IN_USEC(sinit_boost));
+	cpu_boost_interleave(sinit_boost_timeslice, TIME_IN_USEC(sinit_boost));
 	cpunum_set_info_int(0, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
@@ -4167,6 +4186,12 @@ DRIVER_INIT ( stv )
 
 	memory_set_bankptr(1,&ROM[0x000000]);
 
+	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
+	minit_boost = 400;
+	sinit_boost = 400;
+	minit_boost_timeslice = 0;
+	sinit_boost_timeslice = 0;
+
 	smpc_ram = auto_malloc (0x80);
 	stv_scu = auto_malloc (0x100);
 	scsp_regs = auto_malloc (0x1000);
@@ -4239,6 +4264,7 @@ MACHINE_INIT( stv )
 
 	// don't let the slave cpu and the 68k go anywhere
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	stv_enable_slave_sh2 = 0;
 	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 
 	timer_0 = 0;
@@ -4246,21 +4272,6 @@ MACHINE_INIT( stv )
 	en_68k = 0;
 	NMI_reset = 1;
 	smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
-
-	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
-	minit_boost = 400;
-	sinit_boost = 400;
-
-	/* puyosun doesn't seem to care */
-	if ((!strcmp(Machine->gamedrv->name,"puyosun")) ||
-	    (!strcmp(Machine->gamedrv->name,"mausuke")) ||
-	    (!strcmp(Machine->gamedrv->name,"groovef")) ||
-		(!strcmp(Machine->gamedrv->name,"batmanfr")) ||
-		(!strcmp(Machine->gamedrv->name,"colmns97")))
-	{
-		minit_boost = 0;
-		sinit_boost = 0;
-	}
 
 	cpunum_set_clock(0, MASTER_CLOCK_320/2);
 	cpunum_set_clock(1, MASTER_CLOCK_320/2);
@@ -5339,7 +5350,7 @@ GAMEB( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0,   "Sega", 
 /* Playable */
 GAMEB( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     				  "Baku Baku Animal (J 950407 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, batmanfr,  stvbios, stvbios, stv, stv,  batmanfr,  ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, colmns97,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Columns '97 (JET 961209 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, colmns97,  stvbios, stvbios, stv, stv,  colmns97,  ROT0,   "Sega", 	 				  "Columns '97 (JET 961209 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  				  "Cotton 2 (JUET 970902 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  				  "Cotton Boomerang (JUET 980709 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron (Tecmo license)", 	  "Danchi de Hanafuoda (J 990607 V1.400)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -5353,22 +5364,22 @@ GAMEB( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",
 GAMEB( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				  "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEB( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,		 ROT0,   "Sunsoft / Success", 		  "Karaoke Quiz Intro Don Don! (J 960213 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   				  "Pro Mahjong Kiwame S (J 951020 V1.208)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1997, maruchan,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega / Toyosuisan", 	      "Maru-Chan de Goo! (J 971216 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1997, maruchan,  stvbios, stvbios, stv, stv,  maruchan,  ROT0,   "Sega / Toyosuisan", 	      "Maru-Chan de Goo! (J 971216 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East",				  "Mausuke no Ojama the World (J 960314 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, othellos,  stvbios, stvbios, stv, stv,  othellos,  ROT0,   "Success",  				  "Othello Shiyouyo (J 980423 V1.002)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1995, pblbeach,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "T&E Soft",   				  "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, pblbeach,  stvbios, stvbios, stv, stv,  pblbeach,  ROT0,   "T&E Soft",   				  "Pebble Beach - The Great Shot (JUE 950913 V0.990)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    				  "Princess Clara Daisakusen (J 960910 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  				  "Puyo Puyo Sun (J 961115 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, sassisu,   stvbios, stvbios, stv, stv,  sassisu,   ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, seabass,   stvbios, stvbios, stv, stv,  seabass,   ROT0,   "A wave inc. (Able license)","Sea Bass Fishing (JUET 971110 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1995, shanhigw,  stvbios, stvbios, stv, stv,  stv,	     ROT0,   "Sunsoft / Activision", 	  "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, shanhigw,  stvbios, stvbios, stv, stv,  shanhigw,	ROT0,   "Sunsoft / Activision", 	  "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  				  "Shienryu (JUET 961226 V1.000)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEB( 1995, smleague,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Super Major League (U 960108 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1995, finlarch,  smleague,stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Final Arch (J 950714 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, smleague,  stvbios, stvbios, stv, stv,  smleague,  ROT0,   "Sega", 	     			  "Super Major League (U 960108 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, finlarch,  smleague,stvbios, stv, stv,  finlarch,  ROT0,   "Sega", 	     			  "Final Arch (J 950714 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, sss,       stvbios, stvbios, stv, stv,  sss,       ROT0,   "Capcom / Cave / Victor",	  "Steep Slope Sliders (JUET 981110 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1995, sandor,    stvbios, stvbios, stv, stv,  ic13,		 ROT0,   "Sega", 	     			  "Sando-R (J 951114 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Raizing / 8ing",    		  "Soukyugurentai / Terra Diver (JUET 960821 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1995, suikoenb,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Data East",  				  "Suikoenbu (J 950314 V2.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, sandor,    stvbios, stvbios, stv, stv,  sandor,    ROT0,   "Sega", 	     			  "Sando-R (J 951114 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  sokyugrt,  ROT0,   "Raizing / 8ing",    		  "Soukyugurentai / Terra Diver (JUET 960821 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0,   "Data East",  				  "Suikoenbu (J 950314 V2.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, thunt,     sandor,  stvbios, stv, stv,  thunt,     ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Virtua Fighter Kids (JUET 960319 V0.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0,   "Sega", 	 				  "Winter Heat (JUET 971012 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -5377,13 +5388,13 @@ GAMEB( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0,   "Sega", 
 GAMEB( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong (J 961214 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEB( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft",    				  "Astra SuperStars (J 980514 V1.002)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEB( 1998, twcup98,   stvbios, stvbios, stv, stv,  ic13,		 ROT0,   "Tecmo",      				  "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) // player movement
-GAMEB( 1997, znpwfv,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1998, twcup98,   stvbios, stvbios, stv, stv,  twcup98,   ROT0,   "Tecmo",      				  "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) // player movement
+GAMEB( 1997, znpwfv,    stvbios, stvbios, stv, stv,  znpwfv,    ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Doing Something.. but not enough yet */
-GAMEB( 1998, elandore,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
+GAMEB( 1998, elandore,  stvbios, stvbios, stv, stv,  elandore,  ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
 GAMEB( 1998, rsgun,     stvbios, stvbios, stv, stv,  stv,       ROT0,   "Treasure",   				  "Radiant Silvergun (JUET 980523 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEB( 1995, vfremix,   stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	     			  "Virtua Fighter Remix (JUETBKAL 950428 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEB( 1995, vfremix,   stvbios, stvbios, stv, stv,  vfremix,   ROT0,   "Sega", 	     			  "Virtua Fighter Remix (JUETBKAL 950428 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEB( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			  "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEB( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,  	 ROT0,   "Sega", 	     			  "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 

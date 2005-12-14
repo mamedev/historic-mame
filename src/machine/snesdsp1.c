@@ -112,10 +112,6 @@ static double SinTable2[INCR];
 #define Angle(x) (((x)/(65536/INCR)) & (INCR-1))
 #define Cos(x) ((double) CosTable2[x])
 #define Sin(x) ((double) SinTable2[x])
-#ifdef PI
-#undef PI
-#endif
-#define PI 3.1415926535897932384626433832795
 
 // init DSP1 math tables
 void InitDSP1(void)
@@ -127,8 +123,8 @@ void InitDSP1(void)
 
 	for (i=0; i<INCR; i++)
 	{
-		CosTable2[i] = (cos((double)(2*PI*i/INCR)));
-		SinTable2[i] = (sin((double)(2*PI*i/INCR)));
+		CosTable2[i] = (cos((double)(2*M_PI*i/INCR)));
+		SinTable2[i] = (sin((double)(2*M_PI*i/INCR)));
 	}
 
 	// expand the DSP-1 data ROM

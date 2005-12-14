@@ -79,6 +79,8 @@ struct YMZ280BChip
 	struct YMZ280BVoice	voice[8];	/* the 8 voices */
 	void *update_timer;				/* timer for ymz280b_force_update */
 	UINT32 rom_readback_addr;		/* where the CPU can read the ROM */
+	read8_handler ext_ram_read;		/* external RAM read handler */
+	write8_handler ext_ram_write;	/* external RAM write handler */
 
 	INT16 *ibuffer[2];				/* internal buffer */
 	UINT32 ibuffer_pos_in;
@@ -727,6 +729,9 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
+	chip->ext_ram_read = intf->ext_read;
+	chip->ext_ram_write = intf->ext_write;
+
 	/* compute ADPCM tables */
 	compute_tables();
 
@@ -965,6 +970,10 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 				chip->rom_readback_addr |= data;
 				break;
 
+			case 0x87:		/* RAM write */
+				chip->ext_ram_write(chip->rom_readback_addr, data);
+				break;
+
 			case 0xfe:		/* IRQ mask */
 				chip->irq_mask = data;
 				update_irq_state(chip);
@@ -1158,6 +1167,30 @@ WRITE16_HANDLER( YMZ280B_data_1_msb_w )
 {
 	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
 	if (ACCESSING_MSB)	write_to_register(chip, (data >> 8) & 0xff);
+}
+
+/**********************************************************************************************
+
+     YMZ280B_data_0_r/YMZ280B_data_1_r -- handle an external RAM read
+
+***********************************************************************************************/
+
+READ8_HANDLER( YMZ280B_data_0_r )
+{
+	UINT8 data;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 0);
+	data = chip->ext_ram_read(chip->rom_readback_addr - 1);
+	chip->rom_readback_addr++;
+	return data;
+}
+
+READ8_HANDLER( YMZ280B_data_1_r )
+{
+	UINT8 data;
+	struct YMZ280BChip *chip = sndti_token(SOUND_YMZ280B, 1);
+	data = chip->ext_ram_read(chip->rom_readback_addr - 1);
+	chip->rom_readback_addr++;
+	return data;
 }
 
 

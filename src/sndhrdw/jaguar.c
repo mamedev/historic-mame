@@ -248,16 +248,16 @@ void cojag_sound_init(void)
 		jaguar_wave_rom[0x000 + i] = ((i <= 0x40) ? i : 0x80 - i) * 32767 / 0x40;
 
 		/* F1D200 = full sine wave */
-		jaguar_wave_rom[0x080 + i] = (int)(32767. * sin(2.0 * 3.1415927 * (double)i / (double)0x80));
+		jaguar_wave_rom[0x080 + i] = (int)(32767. * sin(2.0 * M_PI * (double)i / (double)0x80));
 
 		/* F1D400 = amplitude modulated sine wave? */
-		jaguar_wave_rom[0x100 + i] = (int)(32767. * sin(2.0 * 3.1415927 * (double)i / (double)0x80));
+		jaguar_wave_rom[0x100 + i] = (int)(32767. * sin(2.0 * M_PI * (double)i / (double)0x80));
 
 		/* F1D600 = sine wave and second order harmonic */
-		jaguar_wave_rom[0x180 + i] = (int)(32767. * sin(2.0 * 3.1415927 * (double)i / (double)0x80));
+		jaguar_wave_rom[0x180 + i] = (int)(32767. * sin(2.0 * M_PI * (double)i / (double)0x80));
 
 		/* F1D800 = chirp (sine wave of increasing frequency) */
-		jaguar_wave_rom[0x200 + i] = (int)(32767. * sin(2.0 * 3.1415927 * (double)i / (double)0x80));
+		jaguar_wave_rom[0x200 + i] = (int)(32767. * sin(2.0 * M_PI * (double)i / (double)0x80));
 
 		/* F1DA00 = traingle wave with noise */
 		jaguar_wave_rom[0x280 + i] = jaguar_wave_rom[0x000 + i] * (rand() % 32768) / 32768;

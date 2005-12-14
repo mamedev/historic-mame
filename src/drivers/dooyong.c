@@ -910,6 +910,19 @@ static MACHINE_DRIVER_START( sound_2151 )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( sound_2151_m68k )
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2151, 4000000)
+	MDRV_SOUND_CONFIG(ym2151_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( lastday )
 
 	/* basic machine hardware */
@@ -1111,7 +1124,7 @@ static MACHINE_DRIVER_START( rshark )
 	MDRV_VIDEO_UPDATE(rshark)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM( sound_2151 )
+	MDRV_IMPORT_FROM( sound_2151_m68k )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( superx ) // dif mem map
@@ -1139,7 +1152,7 @@ static MACHINE_DRIVER_START( superx ) // dif mem map
 	MDRV_VIDEO_UPDATE(rshark)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM( sound_2151 )
+	MDRV_IMPORT_FROM( sound_2151_m68k )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( popbingo )
@@ -1167,7 +1180,7 @@ static MACHINE_DRIVER_START( popbingo )
 	MDRV_VIDEO_UPDATE(popbingo)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM( sound_2151 )
+	MDRV_IMPORT_FROM( sound_2151_m68k )
 MACHINE_DRIVER_END
 
 /***************************************************************************

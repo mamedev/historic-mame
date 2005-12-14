@@ -498,12 +498,6 @@ static FILE *sample[9];
 #endif
 
 
-/* own PI definition */
-#ifdef PI
-	#undef PI
-#endif
-#define PI 3.14159265358979323846
-
 
 
 static void init_tables(void)
@@ -549,7 +543,7 @@ static void init_tables(void)
 	for (i=0; i<SIN_LEN; i++)
 	{
 		/* non-standard sinus */
-		m = sin( ((i*2)+1) * PI / SIN_LEN ); /* verified on the real chip */
+		m = sin( ((i*2)+1) * M_PI / SIN_LEN ); /* verified on the real chip */
 
 		/* we never reach zero here due to ((i*2)+1) */
 

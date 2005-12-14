@@ -394,7 +394,7 @@ INLINE void roundupt_drawgfxzoomrotate( mame_bitmap *dest_bmp,const gfx_element 
 //                          int incxy=0;
 //                          int incyx=0;
 //                          int incyy=0x10000;
-							double theta=rotate * ((2.0 * PI)/512.0);
+							double theta=rotate * ((2.0 * M_PI)/512.0);
 							double c=cos(theta);
 							double s=sin(theta);
 
@@ -688,7 +688,7 @@ extent_x=extent_y=0;
 
 		if (rotate)
 		{
-			double theta=rotate * ((2.0 * PI)/512.0);
+			double theta=rotate * ((2.0 * M_PI)/512.0);
 
 			int incxx=(int)((float)65536.0 * cos(theta));
 			int incxy=(int)((float)65536.0 * -sin(theta));

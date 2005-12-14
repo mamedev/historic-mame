@@ -4,6 +4,14 @@ System Control Unit - DSP emulator version 0.06
 Written by Angelo Salese & Mariusz Wojcieszek
 
 Changelog:
+051129: Mariusz Wojcieszek
+- Fixed parallel instructions which increment CT registers to update CT register only
+  once, after dsp operation is finished. This fixes instructions like
+  MOV MC0,X MOV MC0,Y used by vfremix
+- Changed ALU 32bit instructions to not sign extend their result when loaded to ALU.
+  This matches Sega's dspsim behaviour.
+- Changed DMA addnumber handling to match Sega's dspsim.
+
 050813: Mariusz Wojcieszek
 - Fixed add number in DSP DMA
 
@@ -363,6 +371,9 @@ static void dsp_operation(void)
 {
 	INT64 i1,i2;
 	INT32 i3;
+	int update_ct[4] = {0,0,0,0};
+	int dsp_mem;
+
 
 	/* ALU */
 	switch( (opcode & 0x3c000000) >> 26 )
@@ -371,36 +382,38 @@ static void dsp_operation(void)
 			break;
 		case 0x1:	/* AND */
 			i3 = dsp_reg.acl.si & dsp_reg.pl.si;
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z(i3 == 0);
 			SET_C(0);
 			SET_S(i3 < 0);
 			break;
 		case 0x2:	/* OR */
 			i3 = dsp_reg.acl.si | dsp_reg.pl.si;
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z(i3 == 0);
 			SET_C(0);
 			SET_S(i3 < 0);
 			break;
 		case 0x3:	/* XOR */
 			i3 = dsp_reg.acl.si ^ dsp_reg.pl.si;
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z(i3 == 0);
 			SET_C(0);
 			SET_S(i3 < 0);
 			break;
 		case 0x4:	/* ADD */
 			i3 = dsp_reg.acl.si + dsp_reg.pl.si;
-			dsp_reg.alu = i3;
-			SET_Z(i3 == 0);
-			SET_S(i3 < 0);
+			dsp_reg.alu = (UINT64)(UINT32)i3;
+			//SET_Z(i3 == 0);
+			SET_Z( (i3 & S64(0xffffffffffff)) == 0 );
+			//SET_S(i3 < 0);
+			SET_S( i3 & S64(0x1000000000000));
 			SET_C(i3 & S64(0x100000000));
 			SET_V(((i3) ^ (dsp_reg.acl.si)) & ((i3) ^ (dsp_reg.pl.si)) & 0x80000000);
 			break;
 		case 0x5:	/* SUB */
 			i3 = dsp_reg.acl.si - dsp_reg.pl.si;
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z(i3 == 0);
 			SET_C(i3 & S64(0x100000000));
 			SET_S(i3 < 0);
@@ -410,8 +423,8 @@ static void dsp_operation(void)
 			i1 = COMBINE_64_32_32((INT32)dsp_reg.ph.si,dsp_reg.pl.si);
 			i2 = COMBINE_64_32_32((INT32)dsp_reg.ach.si,dsp_reg.acl.si);
 			dsp_reg.alu = i1 + i2;
-			SET_Z(dsp_reg.alu == 0);
-			SET_S(dsp_reg.alu < 0);
+			SET_Z((dsp_reg.alu & S64(0xffffffffffff)) == 0);
+			SET_S((dsp_reg.alu & S64(0x800000000000)) > 0);
 			SET_C((dsp_reg.alu) & S64(0x1000000000000));
 			SET_V(((dsp_reg.alu) ^ (i1)) & ((dsp_reg.alu) ^ (i2)) & S64(0x800000000000));
 			break;
@@ -420,28 +433,28 @@ static void dsp_operation(void)
 			break;
 		case 0x8:	/* SR */
 			i3 = (dsp_reg.acl.si >> 1) | (dsp_reg.acl.si & 0x80000000);/*MSB does not change*/
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z(i3 == 0);
 			SET_S(i3 < 0);
 			SET_C(dsp_reg.acl.ui & 0x80000000);
 			break;
 		case 0x9:	/* RR */
 			i3 = ((dsp_reg.acl.ui >> 1) & 0x7fffffff) | ((dsp_reg.acl.ui << 31) & 0x80000000);
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z( i3 == 0 );
 			SET_S( i3 < 0 );
 			SET_C( dsp_reg.acl.ui & 0x1 );
 			break;
 		case 0xa:	/* SL */
 			i3 = dsp_reg.acl.si << 1;
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z( i3 == 0 );
 			SET_S( i3 < 0 );
 			SET_C( dsp_reg.acl.ui & 0x80000000 );
 			break;
 		case 0xB:	/* RL */
 			i3 = ((dsp_reg.acl.si << 1) & 0xfffffffe) | ((dsp_reg.acl.si >> 31) & 0x1);
-			dsp_reg.alu = i3;
+			dsp_reg.alu = (UINT64)(UINT32)i3;
 			SET_Z( i3 == 0 );
 			SET_S( i3 < 0 );
 			SET_C( dsp_reg.acl.ui & 0x80000000 );
@@ -464,7 +477,13 @@ static void dsp_operation(void)
 	if ( opcode & 0x2000000 )
 	{
 		/* MOV [s],X */
-		dsp_reg.rx.ui = dsp_get_source_mem_value( (opcode & 0x700000) >> 20 );
+		dsp_mem = (opcode & 0x700000) >> 20;
+		if ( dsp_mem & 4 )
+		{
+			dsp_mem &= 3;
+			update_ct[dsp_mem] = 1;
+		}
+		dsp_reg.rx.ui = dsp_get_source_mem_value( dsp_mem );
 		update_mul = 1;
 	}
 	switch( (opcode & 0x1800000) >> 23 )
@@ -477,7 +496,13 @@ static void dsp_operation(void)
 			dsp_reg.pl.ui = (UINT32)((dsp_reg.mul & U64(0x00000000ffffffff)) >> 0);
 			break;
 		case 0x3:	/* MOV [s],P */
-			dsp_reg.pl.ui = dsp_get_source_mem_value(  (opcode & 0x700000) >> 20 );
+			dsp_mem = (opcode & 0x700000) >> 20;
+			if ( dsp_mem & 4 )
+			{
+				dsp_mem &= 3;
+				update_ct[dsp_mem] = 1;
+			}
+			dsp_reg.pl.ui = dsp_get_source_mem_value(  dsp_mem );
 			dsp_reg.ph.si = (dsp_reg.pl.si < 0) ? -1 : 0;
 			break;
 	}
@@ -486,7 +511,13 @@ static void dsp_operation(void)
 	if ( opcode & 0x80000 )
 	{
 		/* MOV [s],Y */
-		dsp_reg.ry.ui = dsp_get_source_mem_value( (opcode & 0x1C000 ) >> 14 );
+		dsp_mem = (opcode & 0x1C000 ) >> 14;
+		if (dsp_mem & 4)
+		{
+			dsp_mem &= 3;
+			update_ct[dsp_mem] = 1;
+		}
+		dsp_reg.ry.ui = dsp_get_source_mem_value( dsp_mem );
 		update_mul = 1;
 	}
 	switch( (opcode & 0x60000) >> 17 )
@@ -502,10 +533,23 @@ static void dsp_operation(void)
 			dsp_reg.acl.ui = (UINT32)((dsp_reg.alu & U64(0x00000000ffffffff)) >> 0);
 			break;
 		case 0x3:	/* MOV [s], A */
-			dsp_reg.acl.ui = dsp_get_source_mem_value( (opcode & 0x1C000 ) >> 14 );
+			dsp_mem = (opcode & 0x1C000 ) >> 14;
+			if (dsp_mem & 4)
+			{
+				dsp_mem &= 3;
+				update_ct[dsp_mem] = 1;
+			}
+			dsp_reg.acl.ui = dsp_get_source_mem_value( dsp_mem );
 			dsp_reg.ach.si = ((dsp_reg.acl.si < 0) ? -1 : 0);
 			break;
 	}
+
+	/* update CT registers */
+	if ( update_ct[0] ) { dsp_reg.ct0++; dsp_reg.ct0 &= 0x3f; };
+	if ( update_ct[1] ) { dsp_reg.ct1++; dsp_reg.ct1 &= 0x3f; };
+	if ( update_ct[2] ) { dsp_reg.ct2++; dsp_reg.ct2 &= 0x3f; };
+	if ( update_ct[3] ) { dsp_reg.ct3++; dsp_reg.ct3 &= 0x3f; };
+
 
 	/* D1-Bus */
 	switch( (opcode & 0x3000) >> 12 )
@@ -558,6 +602,7 @@ static void dsp_dma( void )
 	UINT32 counter = 0;
 	UINT32 data;
 
+
 	T0F_1;
 
 	if ( opcode & 0x2000 )
@@ -576,9 +621,9 @@ static void dsp_dma( void )
 		{
 		  case 0: add = 0; break;  /* 0 */
 		  case 1: add = 4; break;  /* 1 */
-		  case 2: add = 8; break;  /* 2 */
+		  case 2: add = 4; break;  /* 2 */
 		  case 3: add = 16; break; /* 4 */
-		  case 4: add = 32; break;  /* 8 */
+		  case 4: add = 16; break;  /* 8 */
   		  case 5: add = 64; break; /* 16 */
   		  case 6: add = 128; break; /* 32 */
   		  case 7: add = 256; break; /* 64 */
@@ -593,21 +638,33 @@ static void dsp_dma( void )
 		dest &= 0x07ffffff;
 		transfer_cnt &= 0xff;
 
-		/* check for not B-Bus transfer */
-		if ( !((source >= 0x05a00000) && (source <= 0x05ffffff)) )
-		{
-			if ( add > 0 ) add = 4; /* only add number 1 is valid for not B-Bus transfers */
-		}
-
 #if DEBUG_DSP
         fprintf( log_file, "/*DSP DMA D0,[RAM%d],%d add=%d*/\n", dsp_mem, transfer_cnt, add );
 #endif
+
 		for ( counter = 0; counter < transfer_cnt ; counter++ )
 		{
-		    data = program_read_dword(source );
 #if DEBUG_DSP
-            fprintf( log_file, "%08X, %08X,\n", source, data );
+            fprintf( log_file, "%08X, ", source ); fflush( log_file );
 #endif
+
+			if ( source >= 0x06000000 && source <= 0x060fffff )
+			{
+				data = program_read_dword(source );
+			}
+			else
+			{
+				data = 0;
+				//ui_popup( "Bad DSP DMA mem read = %08X", source );
+#if DEBUG_DSP
+				fprintf( log_file, "/*Bad DSP DMA mem read = %08X*/\n", source );
+#endif
+			}
+
+#if DEBUG_DSP
+            fprintf( log_file, "%08X,\n", data );
+#endif
+
 			dsp_set_dest_dma_mem( dsp_mem, data, counter );
 			source += add;
 		}
@@ -626,18 +683,12 @@ static void dsp_dma( void )
 		transfer_cnt &= 0xff;
 		//logerror("[DSP DMA] SRC = %08x | DEST = %08x | SIZE = %08x | ADD VALUE = %08x\n",source,dest,transfer_cnt,add);
 
-		/* check for not B-Bus transfer */
-		if ( !((dest >= 0x05a00000) && (dest <= 0x05ffffff)) )
-		{
-			if ( add > 0 ) add = 4; /* only add number 1 is valid for not B-Bus transfers */
-		}
-
 #if DEBUG_DSP
-    fprintf( log_file, "/*DSP DMA [RAM%d],D0,%d\tadd=%d,source=%08X*/\n", dsp_mem, transfer_cnt, add, source );
+		fprintf( log_file, "/*DSP DMA [RAM%d],D0,%d\tadd=%d,source=%08X*/\n", dsp_mem, transfer_cnt, add, source );
 #endif
 		for ( counter = 0; counter < transfer_cnt; counter++ )
 		{
-			program_write_dword(dest, program_read_word(dsp_get_mem_source_dma( dsp_mem, counter ) ) );
+			program_write_dword(dest, dsp_get_mem_source_dma( dsp_mem, counter ) );
 			dest += add;
 		}
 

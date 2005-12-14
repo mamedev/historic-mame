@@ -202,14 +202,18 @@ static WRITE8_HANDLER( sprite_dma_w )
 {
 	int source = ( data & 7 ) * 0x100;
 
-	ppu2c03b_spriteram_dma( 0, &work_ram[source] );
+	cpuintrf_push_context(0);
+	ppu2c03b_spriteram_dma( 0, source );
+	cpuintrf_pop_context();
 }
 
 static WRITE8_HANDLER( sprite_dma_1_w )
 {
 	int source = ( data & 7 ) * 0x100;
 
-	ppu2c03b_spriteram_dma( 1, &work_ram_1[source] );
+	cpuintrf_push_context(1);
+	ppu2c03b_spriteram_dma( 1, source );
+	cpuintrf_pop_context();
 }
 
 static WRITE8_HANDLER( vsnes_coin_counter_w )

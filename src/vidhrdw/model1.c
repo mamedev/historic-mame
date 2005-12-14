@@ -7,13 +7,6 @@
 #include <math.h>
 
 
-#ifndef min
-#define min(a,b) (a<b?a:b)
-#endif
-#ifndef max
-#define max(a,b) (a>b?a:b)
-#endif
-
 UINT16 *model1_display_list0, *model1_display_list1;
 UINT16 *model1_color_xlat;
 static UINT16 listctl[2];
@@ -872,14 +865,14 @@ static void push_object(UINT32 tex_adr, UINT32 poly_adr, UINT32 size)
 
 		{
 			/*float dif=mult_vector(&vn, &view.light);
-            float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif);
-            cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
-            cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], min(1.0,ln));
+            float ln=lightparams[lightmode].a + lightparams[lightmode].d*MAX(0.0,dif);
+            cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], MIN(1.0,ln));
+            cquad.col = scale_color(Machine->pens[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)], MIN(1.0,ln));
             */
 			float dif=mult_vector(&vn, &view.light);
 			float spec=compute_specular(&vn,&view.light,dif,lightmode);
-			float ln=lightparams[lightmode].a + lightparams[lightmode].d*max(0.0,dif) + spec;
-			int lumval=255.0*min(1.0,ln);
+			float ln=lightparams[lightmode].a + lightparams[lightmode].d*MAX(0.0,dif) + spec;
+			int lumval=255.0*MIN(1.0,ln);
 			int color=paletteram16[0x1000|(tgp_ram[tex_adr-0x40000] & 0x3ff)];
 			int r=(color>>0x0)&0x1f;
 			int g=(color>>0x5)&0x1f;

@@ -24,6 +24,9 @@ enum
 /* maximum number of TMUs */
 #define MAX_TMU					2
 
+/* accumulate operations less than this number of clocks */
+#define ACCUMULATE_THRESHOLD	0
+
 /* number of clocks to set up a triangle (just a guess) */
 #define TRIANGLE_SETUP_CLOCKS	100
 
@@ -33,25 +36,29 @@ enum
 /* size of the rasterizer hash table */
 #define RASTER_HASH_SIZE		97
 
-/* flags for the register access array */
-#define REGISTER_READ			0x01
-#define REGISTER_WRITE			0x02
-#define REGISTER_PIPELINED		0x04
-#define REGISTER_FIFO			0x08
-
 /* flags for LFB writes */
 #define LFB_RGB_PRESENT			1
 #define LFB_ALPHA_PRESENT		2
 #define LFB_DEPTH_PRESENT		4
 #define LFB_DEPTH_PRESENT_MSW	8
 
+/* flags for the register access array */
+#define REGISTER_READ			0x01
+#define REGISTER_WRITE			0x02
+#define REGISTER_PIPELINED		0x04
+#define REGISTER_FIFO			0x08
+#define REGISTER_WRITETHRU		0x10
+
 /* shorter combinations to make the table smaller */
 #define REG_R					(REGISTER_READ)
 #define REG_W					(REGISTER_WRITE)
+#define REG_WT					(REGISTER_WRITE | REGISTER_WRITETHRU)
 #define REG_RW					(REGISTER_READ | REGISTER_WRITE)
+#define REG_RWT					(REGISTER_READ | REGISTER_WRITE | REGISTER_WRITETHRU)
 #define REG_RP					(REGISTER_READ | REGISTER_PIPELINED)
 #define REG_WP					(REGISTER_WRITE | REGISTER_PIPELINED)
 #define REG_RWP					(REGISTER_READ | REGISTER_WRITE | REGISTER_PIPELINED)
+#define REG_RWPT				(REGISTER_READ | REGISTER_WRITE | REGISTER_PIPELINED | REGISTER_WRITETHRU)
 #define REG_RF					(REGISTER_READ | REGISTER_FIFO)
 #define REG_WF					(REGISTER_WRITE | REGISTER_FIFO)
 #define REG_RWF					(REGISTER_READ | REGISTER_WRITE | REGISTER_FIFO)
@@ -311,7 +318,7 @@ static const UINT8 register_alias_map[0x40] =
 static const UINT8 register_access[0x100] =
 {
 	/* 0x000 */
-	REG_RP,		REG_RWP,	REG_WPF,	REG_WPF,
+	REG_RP,		REG_RWPT,	REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
@@ -355,17 +362,17 @@ static const UINT8 register_access[0x100] =
 	/* 0x1c0 */
 	REG_WF,		REG_WF,		REG_WF,		REG_WF,
 	REG_WF,		REG_WF,		REG_WF,		REG_WF,
-	REG_RW,		REG_RW,		REG_RW,		REG_RW,
-	REG_RW,		REG_RW,		REG_RW,		REG_RW,
+	REG_RWT,	REG_RWT,	REG_RWT,	REG_RWT,
+	REG_RWT,	REG_RWT,	REG_RWT,	REG_RW,
 
 	/* 0x200 */
-	REG_RW,		REG_R,		REG_RW,		REG_RW,
-	REG_RW,		REG_RW,		REG_RW,		REG_RW,
-	REG_W,		REG_W,		REG_WF,		REG_W,
-	REG_W,		REG_W,		REG_W,		REG_W,
+	REG_RWT,	REG_R,		REG_RWT,	REG_RWT,
+	REG_RWT,	REG_RWT,	REG_RWT,	REG_RWT,
+	REG_WT,		REG_WT,		REG_WF,		REG_WT,
+	REG_WT,		REG_WT,		REG_WT,		REG_WT,
 
 	/* 0x240 */
-	REG_R,		REG_RW,		REG_RW,		REG_RW,
+	REG_R,		REG_RWT,	REG_RWT,	REG_RWT,
 	REG_R,		REG_R,		REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
@@ -572,9 +579,6 @@ static const UINT8 dither_matrix_2x2[4] =
 
 /* macro for clamping a value between minimum and maximum values */
 #define CLAMP(val,min,max)		do { if ((val) < (min)) { (val) = (min); } else if ((val) > (max)) { (val) = (max); } } while (0)
-
-/* macro for in-place conversion of data from float to fixed point */
-#define FLOAT2FIXED(val,bits) 	do { (val) = (INT32)(u2f(val) * (float)(1 << (bits))); } while (0)
 
 /* macro to compute the base 2 log for LOD calculations */
 #define LOGB2(x)				(log((double)(x)) / log(2.0))
@@ -955,6 +959,17 @@ struct _tmu_shared_state
 typedef struct _tmu_shared_state tmu_shared_state;
 
 
+struct _setup_vertex
+{
+	float		x, y;					/* X, Y coordinates */
+	float		a, r, g, b;				/* A, R, G, B values */
+	float 		z, wb;					/* Z and broadcast W values */
+	float		w0, s0, t0;				/* W, S, T for TMU 0 */
+	float		w1, s1, t1;				/* W, S, T for TMU 1 */
+};
+typedef struct _setup_vertex setup_vertex;
+
+
 struct _fbi_state
 {
 	void *		ram;					/* pointer to frame buffer RAM */
@@ -988,6 +1003,9 @@ struct _fbi_state
 	void		(*vblank_client)(int);	/* client callback */
 
 	fifo_state	fifo;					/* framebuffer memory fifo */
+	UINT32 *	cmdfifo;				/* pointer to cmdfifo base */
+	UINT32		cmdfifobase;			/* base offset for cmdfifo */
+	UINT32		cmdfifomax;				/* maximum valid offset for cmdfifo */
 
 	UINT8		fogblend[64];			/* 64-entry fog table */
 	UINT8		fogdelta[64];			/* 64-entry fog table */
@@ -1008,6 +1026,9 @@ struct _fbi_state
 	INT32		drdy, dgdy, dbdy, dady;	/* delta R,G,B,A per Y */
 	INT32		dzdy;					/* delta Z per Y */
 	INT64		dwdy;					/* delta W per Y */
+
+	UINT8		sverts;					/* number of vertices ready */
+	setup_vertex svert[3];				/* 3 setup vertices */
 };
 typedef struct _fbi_state fbi_state;
 
@@ -1270,6 +1291,61 @@ INLINE INT32 fast_reciplog(INT64 value, INT32 *log2)
 
 	/* on the way out, apply the original sign to the reciprocal */
 	return neg ? -recip : recip;
+}
+
+
+
+/*************************************
+ *
+ *  Float-to-int conversions
+ *
+ *************************************/
+
+INLINE INT32 float_to_int32(UINT32 data, int fixedbits)
+{
+	int exponent = ((data >> 23) & 0xff) - 127 - 23 + fixedbits;
+	INT32 result = (data & 0x7fffff) | 0x800000;
+	if (exponent < 0)
+	{
+		if (exponent > -32)
+			result >>= -exponent;
+		else
+			result = 0;
+	}
+	else
+	{
+		if (exponent < 32)
+			result <<= exponent;
+		else
+			result = 0x7fffffff;
+	}
+	if (data & 0x80000000)
+		result = -result;
+	return result;
+}
+
+
+INLINE INT64 float_to_int64(UINT32 data, int fixedbits)
+{
+	int exponent = ((data >> 23) & 0xff) - 127 - 23 + fixedbits;
+	INT64 result = (data & 0x7fffff) | 0x800000;
+	if (exponent < 0)
+	{
+		if (exponent > -64)
+			result >>= -exponent;
+		else
+			result = 0;
+	}
+	else
+	{
+		if (exponent < 64)
+			result <<= exponent;
+		else
+			result = U64(0x7fffffffffffffff);
+	}
+	if (data & 0x80000000)
+		result = -result;
+	return result;
 }
 
 
@@ -2822,7 +2898,9 @@ while (0)
  *  Rasterizer generator macro
  *
  *************************************/
-
+// ALPHAMODE==9? no
+// FBZCOLORPATH==0142613A? no
+// FBZCOLORPATH==00482435? no
 #define ITER_RGB(r,g,b)	((((r) << 4) & 0xff0000) | (((g) >> 4) & 0xff00) | (((b) >> 12) & 0xff))
 
 #define RASTERIZER(name, TMUS, FBZCOLORPATH, FBZMODE, ALPHAMODE, FOGMODE, TEXMODE0, TEXMODE1) \

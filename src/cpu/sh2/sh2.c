@@ -27,6 +27,9 @@
 
 /*****************************************************************************
     Changes
+    20051129 Mariusz Wojcieszek
+    - introduced cpu_readop16() for opcode fetching
+
     20050813 Mariusz Wojcieszek
     - fixed 64 bit / 32 bit division in division unit
 
@@ -2366,12 +2369,12 @@ static int sh2_execute(int cycles)
 
 		if (sh2.delay)
 		{
-			opcode = RW(sh2.delay & AM);
+			opcode = cpu_readop16(WORD_XOR_BE((UINT32)(sh2.delay & AM)));
 			change_pc(sh2.pc & AM);
 			sh2.pc -= 2;
 		}
 		else
-			opcode = RW(sh2.pc & AM);
+			opcode = cpu_readop16(WORD_XOR_BE((UINT32)(sh2.pc & AM)));
 
 		CALL_MAME_DEBUG;
 

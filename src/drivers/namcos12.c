@@ -3,6 +3,7 @@
   Namco System 12 - Arcade PSX Hardware
   =====================================
   Driver by smf
+  Board notes by The Guru
   H8/3002 and Golgo13 support by R. Belmont based on work by The_Author and DynaChicken
 
   Issues:
@@ -12,52 +13,54 @@
     - day, date, and year from the RTC appear to be ignored (hour/min/sec are fine). H8 core bug or BIOS doesn't care?
     - golgo13 assumes the test switch is a switch, not a button - must hold down F2 to stay in test mode
 
-Game & software revision                 Company/Year              CPU board    Mother board          Daughter board     Keycus
--------------------------------------------------------------------------------------------------------------------------------
+Game & software revision                 Company/Year            CPU board   Mother board        Daughter board   Keycus
+------------------------------------------------------------------------------------------------------------------------
 *Aerosmith - Quest for Fame              (C) Namco,        2001
-Aqua Rush (AQ1/VER.A1)                   (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M5F2      KC053
+Aqua Rush (AQ1/VER.A1)                   (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M5F2    KC053
 *Attack Pla-Rail                         (C) Tomy/Namco    199?
-Derby Quiz My Dream Horse (MDH1/VER.A2)  (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M10X64    KC035
-Ehrgeiz (EG2/VER.A)                      (C) Square/Namco, 1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC021
-Ehrgeiz (EG3/VER.A)                      (C) Square/Namco, 1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC021
-Fighting Layer (FTL0/VER.A)              (C) Arika/Namco,  1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F4      KC037
+Derby Quiz My Dream Horse (MDH1/VER.A2)  (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M10X64  KC035
+Ehrgeiz (EG2/VER.A)                      (C) Square/Namco, 1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC021
+Ehrgeiz (EG3/VER.A)                      (C) Square/Namco, 1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC021
+Fighting Layer (FTL0/VER.A)              (C) Arika/Namco,  1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F4    KC037
 *Fighting Spirit Biography 3             (C) Namco,        1997
-*Ghoul Panic                             (C) Namco/Raizing 1999
-Golgo 13 (GLG1/VER.A)                    (C) Raizing/Namco,1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M8F6      KC054
+Ghoul Panic (OB2/VER.A)                  (C) Namco/Raizing 1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC045
+Golgo 13 (GLG1/VER.A)                    (C) Raizing/Namco,1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M8F6    KC054
 *Kaiun Quiz                              (C) Namco,        199?
 *Kart Duel                               (C) Namco,        2000
-Libero Grande (LG2/VER.A)                (C) Namco,        1997    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC014
-Mr Driller (DRI1/VER.A2)                 (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(C)    SYSTEM12 M8F2F     KC048
+Libero Grande (LG2/VER.A)                (C) Namco,        1997  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F2F   KC014
+Mr Driller (DRI1/VER.A2)                 (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M8F2F   KC048
 *Oh Bakyuuun                             (C) Namco/Raizing 1999
 *Over Kuhn                               (C) Namco         1999
-Paca Paca Passion (PPP1/VER.A2)          (C) Produce/Namco,1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC038
-*Paca Paca Passion Special               (C) Produce/Namco,1999
-*Paca Paca Passion 2                     (C) Produce/Namco,1999
-Soul Calibur (SOC11/VER.A2)              (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F2      KC020
-Soul Calibur (SOC11/VER.B)               (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F2      KC020
-Soul Calibur (SOC14/VER.C)               (C) Namco,        1998    COH 700      SYSTEM12 MOTHER       JO 11-04-98        none
+Paca Paca Passion (PPP1/VER.A2)          (C) Produce/Namco,1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F2F   KC038
+Paca Paca Passion Special (PSP1/VER.A)   (C) Produce/Namco,1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M5F2    KC052
+Paca Paca Passion 2 (PKS1/VER.A)         (C) Produce/Namco,1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F2    KC046
+Soul Calibur (SOC11/VER.A2)              (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F2    KC020
+Soul Calibur (SOC11/VER.B)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F2    KC020
+*Soul Calibur (SOC11/VER.C)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F4    KC020
+Soul Calibur (SOC14/VER.C)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER     JO 11-04-98      none
 *Soul Calibur Ver.B                      (C) Namco,        199?
 *Submarines                              (C) Namco,        199?
 *Super World Stadium '98                 (C) Namco,        1998
-Super World Stadium '99 (SS91/VER.A3)    (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M5F4      KC043
+Super World Stadium '99 (SS91/VER.A3)    (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F4    KC043
 *Super World Stadium 2000                (C) Namco,        2000
 *Super World Stadium 2001                (C) Namco,        2001
 *Techno Drive                            (C) Namco,        1998
 *TeknoWerk                               (C) Namco,        1999
-Tenkomori Shooting (TKM2/VER.A1)         (C) Namco,        1998    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M4F6      KC036
-Tekken 3 (TET1/VER.E1)                   (C) Namco,        1996    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F2F     KC006
-Tekken 3 (TET2/VER.A)                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER       SYSTEM12 M8F2F     KC006
-Tekken 3 (TET3/VER.A)                    (C) Namco,        1996    COH 700      SYSTEM12 MOTHER       SYSTEM12 M8F2F     KC006
-Tekken Tag Tournament (TEG3/VER.B)       (C) Namco,        1999    COH 700      SYSTEM12 MOTHER(B)    SYSTEM12 M8F4      KC044
+*Tenkomori Shooting (TKM1/VER.A1)         (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC036
+Tenkomori Shooting (TKM2/VER.A1)         (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC036
+Tekken 3 (TET1/VER.E1)                   (C) Namco,        1996  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F2F   KC006
+Tekken 3 (TET2/VER.A)                    (C) Namco,        1996  COH-700     SYSTEM12 MOTHER     SYSTEM12 M8F2F   KC006
+Tekken 3 (TET3/VER.A)                    (C) Namco,        1996  COH-700     SYSTEM12 MOTHER     SYSTEM12 M8F2F   KC006
+Tekken Tag Tournament (TEG3/VER.B)       (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F4    KC044
 *Toukon Retsuden 3                       (C) Namco,        199?
 *Truck Kyosokyoku                        (C) Namco,        2000
 *Um Jammer Lammy                         (C) Namco,        1999
 
-* - denotes not dumped yet. If you can help with the remaining undumped S12 games,
-    please contact http://unemulated.emuunlim.com or http://targets.mame.net
+* - Denotes not dumped yet. If you can help with the remaining undumped S12 games,
+    please contact me at http://www.mameworld.net/gurudumps/
+    Note that this list above may not be 100% complete. Alternative versions are also welcome :-)
 
-
-The Namco System 12 system comprises 4 PCB's....
+The Namco System 12 system comprises 3 mandatory PCB's....
 MOTHER PCB  - This is the main PCB. It holds all sound circuitry, sound ROMs, program ROMs, shared RAM, bank-switching
               logic, controller/input logic (including sound CPU) and some video output circuitry.
               There are three known revisions of this PCB. The 3rd revision has some extra circuitry for analog controls,
@@ -67,9 +70,14 @@ CPU PCB     - All games use the exact same PCB. Contains main CPU/RAM and GPU/Vi
 ROM PCB     - There are eight known revisions of this PCB (so far). They're mostly identical except for the type and
               number of ROMs used. Most have a PAL and a CPLD known as a 'KEYCUS'. Some also have an additional CPLD for
               protection.
+
+And 2 game-specific/optional PCBs....
 NETWORK PCB - Used to connect 2 PCBs together using standard USB cables. The board plugs in where the CPU board would
               normally be, and the CPU board plugs into another connector on the Network PCB. Seems to be only used on
               Libero Grande, Tekken 3 and Ehrgeiz (so far?)
+GUN I/F PCB - Used to connect and control the light guns. The board plugs in where the CPU board would
+              normally be, and the CPU board plugs into another connector on the GUN I/F PCB. The guns plug into this
+              PCB directly, no extra gun hardware is needed. Seems to be used only on Ghoul Panic so far.
 
 Each game has a 3 or 4 digit letter code assigned to it which is printed on a small sticker and placed on the underside
 of the main PCB.
@@ -183,7 +191,10 @@ Notes:
                      Libero Grande             LG2 Ver.A    LG2/VER.A        MOTHER(B)
                      Mr Driller                DRI1 Ver.A   DRI1/VER.A2      MOTHER(C) (ROMs serialised)
                      Paca Paca Passion         PPP1 Ver.A   PPP1/VER.A2      MOTHER(B)
+                     Paca Paca Passion 2       PKS1 Ver.A   PKS1/VER.A       MOTHER(B)
+                     Paca Paca Passion SP      PSP1 Ver.A   PSP1/VER.A       MOTHER(C) (ROMs serialised)
                      Soul Calibur              SOC1 Ver.A   SOC11/VER.A2     MOTHER(B)
+                     Soul Calibur              SOC1 Ver.C   SOC11/VER.C      MOTHER(B)
                      Tekken Tag Tournament     TEG3 Ver.B   TEG3/VER.B       MOTHER(B)
 
       PRG.2N/PRG.2R: Main program ROMs \ Intel 28F016S5 2M x8 FLASHROM (for 2N, TSOP40)
@@ -202,18 +213,19 @@ Notes:
                      --------------------------------------------------------------------
                      Ehrgeiz                   EG2 Ver.A    EG2/VER.A        MOTHER(B)
                      Fighting Layer            FTL1 Ver.A   FTL0/VER.A       MOTHER(B)
+                     Ghoul Panic               OB2 Ver.A    OB2/VER.A        MOTHER(B)
                      Soul Calibur              SOC1 Ver.B   SOC11/VER.B      MOTHER(B)
                      Soul Calibur              TET1 Ver.C   SOC14/VER.C      MOTHER  (factory upgraded from Tekken 3 to Soul Calibur)
                      Super World Stadium '99   SS91 Ver.A   SS91/VER.A3      MOTHER(B)
                      Tekken 3                  TET1 Ver.A   TET1/VER.E1      MOTHER(B)
                      Tekken 3                  TET2 Ver.A   TET2/VER.A       MOTHER
                      Tekken 3                  TET3 Ver.A   TET3/VER.A       MOTHER
+                     Tenkomori Shooting        TKM1 Ver.A   TKM1/VER.A1      MOTHER(B)
                      Tenkomori Shooting        TKM2 Ver.A   TKM2/VER.A1      MOTHER(B)
 
       SOUND.11S    : Fujitsu 29F400TA-90 512K x8 EEPROM (holds H8/3002 program, SOP44)
                      This ROM is not labelled with any other markings except the manufacturer and chip type. The ROM labels
                      in the archives are simply made up for convenience.
-
 
 
 ROM Daughterboard PCB
@@ -271,10 +283,19 @@ Ehrgeiz       EG3/VER.A    SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC021 
                                                                                    EG1 FL1U, EG1 FL1L, EG1 FL2U
                                                                                    EG1 FL2L, EG1 FL3U, EG1 FL3L
 
+Tenkomori     TKM1/VER.A1  SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC036    TKM1 WAVE0, TKM1 WAVE1
+Shooting                                                                           TKM1 ROM0U, TKM1 ROM0L
+                                                                                   TKM1 FL1U, TKM1 FL1L, TKM1 FL2U
+                                                                                   TKM1 FL2L, TKM1 FL3U, TKM1 FL3L
+
 Tenkomori     TKM2/VER.A1  SYSTEM 12 M4F6 PCB 8661960901 (8661970901)     KC036    TKM1 WAVE0, TKM1 WAVE1
 Shooting                                                                           TKM1 ROM0U, TKM1 ROM0L
                                                                                    TKM1 FL1U, TKM1 FL1L, TKM1 FL2U
                                                                                    TKM1 FL2L, TKM1 FL3U, TKM1 FL3L
+
+Ghoul Panic   OB2/VER.A    Same PCB but sticker says....                  KC045    OB1 WAVE0
+                           'SYSTEM 12 M4F0 PCB 8661962000'                         OB1 ROM0U, OB1 ROM0L
+                           (i.e no FlashROMs)
 
 ********
 *Type 2*
@@ -322,11 +343,21 @@ Game          Revision     PCB                                            KEYCUS
 Soul Calibur  SOC11/VER.A2 SYSTEM 12 M5F2 PCB 8661961300 (8661971300)     KC020    SOC1 WAVE0
                                                                                    SOC1 ROM0, SOC1 ROM1, SOC1 ROM2
                                                                                    SOC1 FL3, SOC1 FL4
+
 Soul Calibur  SOC11/VER.B  SYSTEM 12 M5F2 PCB 8661961300 (8661971300)     KC020    SOC1 WAVE0
                                                                                    SOC1 ROM0, SOC1 ROM1, SOC1 ROM2
                                                                                    SOC1 FL3, SOC1 FL4
+
 Aqua Rush     AQ1/VER.A1   Same PCB but sticker says....                  KC053    AQ1 WAVE0
                            'SYSTEM 12 M5F0 PCB 8661962200'                         AQ1 ROM0, AQ1 ROM1
+                           (i.e no FlashROMs)
+
+Paca Paca     PKS1/VER.A   Same PCB but sticker says....                  KC046    PKS1 WAVE0, PKS1 WAVE 1
+Passion 2                  'SYSTEM 12 M5F0 PCB 8661962200'                         PKS1 ROM0, PKS1 ROM1, PKS1 ROM2
+                           (i.e no FlashROMs)
+
+Paca Paca     PSP1/VER.A   Same PCB but sticker says....                  KC052    PSP1 WAVE0, PSP1 WAVE 1
+Passion Special            'SYSTEM 12 M5F0 PCB 8661962200'                         PSP1 ROM0, PSP1 ROM1, PSP1 ROM2
                            (i.e no FlashROMs)
 
 ********
@@ -364,15 +395,20 @@ This PCB is used on:
                Software
 Game           Revision     PCB                                            KEYCUS   ROMs Populated
 -------------------------------------------------------------------------------------------------------------------
-Fighting Layer FTL0/VER.A  SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC037    FTL1 WAVE0, FTL1 WAVE1
+Fighting Layer FTL0/VER.A   SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC037    FTL1 WAVE0, FTL1 WAVE1
                                                                                     FTL1 ROM0, FTL1 ROM1, FTL1 ROM2
                                                                                     FTL1 FL4L, FTL1 FL4H
                                                                                     FTL1 FL3L, FTL1 FL3H
 
-Super World    SS91/VER.A3 SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC027    SS91 WAVE0, SS91 WAVE1
+Super World    SS91/VER.A3  SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC027    SS91 WAVE0, SS91 WAVE1
 Stadium '99                                                         (sticker KC043) SS91 ROM0, SS91 ROM1
                                                                                     SS91 FL4L, SS91 FL4H
                                                                                     SS91 FL3L, SS91 FL3H
+
+Soul Calibur   SOC11/VER.C  SYSTEM 12 M5F4 PCB 8661961200 (8661971200)     KC020    SOC1 WAVE0
+                                                                                    SOC1 ROM0, SOC1 ROM1, SOC1 ROM2
+                                                                                    SOC1 FL4L, SOC1 FL4H
+                                                                                    SOC1 FL3L, SOC1 FL3H
 
 ********
 *Type 4*
@@ -609,7 +645,6 @@ Soul Calibur   SOC14/VER.C   JO 11-04-98                                    ----
                                                                                      FL3, FL4
 
 
-
 CPU PCB
 -------
 COH-700 GP-15
@@ -691,6 +726,47 @@ Notes:
       Ehrgeiz       (EG2/VER.A)
 
       Note that the games will also work without this PCB.
+
+
+Gun Board (This is the same Gun Board used with Point Blank 2 on System 11 hardware)
+---------
+
+SYSTEM11 GUN I/F A4111 PCB 8645960701 (8645970701)
+|-------------------------------------------|
+|    |-------|    |-------|    |-------|    |
+|    |S11GUN3|    |S11GUN2|    |S11GUN1|    |
+|    |       |    |       |    |       |    |
+|    |       |    |       |    |       |    |
+|    |-------|    |-------|    |-------|    |
+|                                           |
+|                                           |
+|                                           |
+|      SLA4060                              |
+|J3                     |---------|         |
+|                       | S11GUN0 |         |
+|                       |         |         |
+|                       |         |         |
+|                       |         |  AV9170 |
+|                       |---------|         |
+|                                           |
+|                   J2                      |
+|                                           |
+|                   J1                      |
+|-------------------------------------------|
+Notes:
+      SLA4060 - Sanken Electric Co. NPN Darlington Transistor Array (SIP12)
+      J1      - 96 pin connector joining to the mother board (connector below the PCB)
+      J2      - 96 pin connector joining to the CPU board (connector above the PCB)
+      J3      - 10 pin connector joining to the gun via a 24V solenoid driver board (for the gun recoil)
+      S11GUN0 - PLCC84 FPGA (not populated)
+      S11GUN1 - Altera Max EPM7128STC100-10 EPLD (QFP100, not populated)
+      S11GUN2 - Altera Max EPM7128STC100-10 EPLD (QFP100, labelled 'S11GUN2)
+      S11GUN3 - Altera Max EPM7128STC100-10 EPLD (QFP100, not populated)
+      AV9170  - Integrated Circuit Systems Inc. AV9170 Clock Synchronizer and Multiplier, Voltage Controlled Oscillator (SOIC8)
+
+      This PCB was found on the following games (so far)....
+
+      Ghoul Panic (OB2/VER.A)
  */
 
 #include "driver.h"
@@ -795,7 +871,11 @@ static WRITE32_HANDLER( dmaoffset_w )
 {
 	if( ACCESSING_LSW32 )
 	{
-		m_n_dmaoffset = ( offset * 4 ) + ( data << 16 );
+		m_n_dmaoffset = ( offset * 4 ) | ( data << 16 );
+	}
+	if( ACCESSING_MSW32 )
+	{
+		m_n_dmaoffset = ( ( offset + 2 ) * 4 ) | ( data & 0xffff0000 );
 	}
 	verboselog( 1, "dmaoffset_w( %08x, %08x, %08x ) %08x\n", offset, data, mem_mask, m_n_dmaoffset );
 }
@@ -904,6 +984,8 @@ MACHINE_INIT( namcos12 )
 		strcmp( Machine->gamedrv->name, "golgo13" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "mrdrillr" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "pacapp" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "pacappsp" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "pacapp2" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "tenkomor" ) == 0 )
 	{
 		/* this is based on guesswork, it might not even be keycus. */
@@ -1454,6 +1536,42 @@ ROM_START( pacapp )
 	ROM_LOAD( "ppp1wave1.4",         0x0800000, 0x800000, CRC(cbcf74c5) SHA1(a089277c9befc87b5bbe0d4e5b8187a4ad5ef143) )
 ROM_END
 
+ROM_START( pacappsp )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "psp1vera.2l",  0x0000000, 0x200000, CRC(4b6943af) SHA1(63b21794719bc1fc075e9cc4f1c1783442860036) )
+	ROM_LOAD16_BYTE( "psp1vera.2p",  0x0000001, 0x200000, CRC(91397f04) SHA1(db3dd59edcdec10eb2fee74450c024a7ecffe1c9) )
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD(        "psp1rom0.ic7", 0x0000000, 0x800000, CRC(7c26ff47) SHA1(f9d366ae9eb11e14875b611112bc82f7c7d391e0) )
+	ROM_LOAD(        "psp1rom1.ic8", 0x0800000, 0x800000, CRC(4b764fc3) SHA1(92a7f0f1537f2f4d5a8b0218720978b576f78dad) )
+	ROM_LOAD(        "psp1rom2.ic9", 0x1000000, 0x800000, CRC(a3fa6730) SHA1(0126a77661c3add0bfec9f6ef15021e602b7a614) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "psp1vera.11s", 0x0000000, 0x080000, CRC(47b9ccab) SHA1(15d4c5ac9ae7202df2d0ef84092679d190f2c45a) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "psp1wave0.ic2",       0x0000000, 0x800000, CRC(44b9a327) SHA1(ab20d5371f7a8c3a7fbc21fcf54a93c1cd007cd2) )
+	ROM_LOAD( "psp1wave1.ic1",       0x0800000, 0x800000, CRC(c045b09c) SHA1(1cfd7003771576f6574d91d862af1f76ceaed64f) )
+ROM_END
+
+ROM_START( pacapp2 )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "pks1vera.2l",  0x0000000, 0x200000, CRC(aec428d3) SHA1(c13aecc6a367d6da501dce66fecbab5458ecac53) )
+	ROM_LOAD16_BYTE( "pks1vera.2p",  0x0000001, 0x200000, CRC(289e6e8a) SHA1(b8197355bee5660e8ff78a1c427c6d2b94a12b9d) )
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD(        "pks1rom0.ic7", 0x0000000, 0x800000, CRC(91f151fc) SHA1(84b4c9b2a9ae5687e1cba5f0a0db96495956cbfe) )
+	ROM_LOAD(        "pks1rom1.ic8", 0x0800000, 0x800000, CRC(8195f981) SHA1(1b9c2289e0975606ff52b9974778f82c9c29e955) )
+	ROM_LOAD(        "pks1rom2.ic9", 0x1000000, 0x800000, CRC(fea93ddc) SHA1(5f9c3f899a11797746d9c1077960f918aaca95f4) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "pks1vera.11s", 0x0000000, 0x080000, CRC(4942b588) SHA1(b28eb64a7347259619e32fdd396770983e25a707) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "pks1wave0.ic2",       0x0000000, 0x800000, CRC(3ebd27c3) SHA1(af874c3fb4cf1651075f307daefe7e3434769ecb) )
+	ROM_LOAD( "pks1wave1.ic1",       0x0800000, 0x800000, CRC(07e426b7) SHA1(6dd038d4f2c95470f1ca09cfead83802e9480d02) )
+ROM_END
+
 ROM_START( soulclbr )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc14verc.2e", 0x0000000, 0x200000, CRC(c40e9614) SHA1(dc20469f0d657423e472fdf5897852ab9fb8bb73) )
@@ -1619,6 +1737,8 @@ GAME( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",     
 GAME( 1998, tenkomor,  0,        coh700, namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM2/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
+GAME( 1999, pacappsp,  0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion Special (PSP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, pacapp2,   0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion 2 (PKS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* id */
 GAME( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
 GAME( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

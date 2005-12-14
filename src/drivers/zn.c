@@ -82,6 +82,7 @@ static const unsigned char mg02[ 8 ] = { 0xe0, 0x7c, 0x40, 0xc1, 0xf9, 0xfa, 0xf
 static const unsigned char mg03[ 8 ] = { 0xc0, 0x04, 0x78, 0x82, 0x03, 0xf1, 0x10, 0xe0 };
 static const unsigned char mg04[ 8 ] = { 0xf0, 0xe1, 0x81, 0x82, 0xfa, 0x04, 0x3c, 0xc0 };
 static const unsigned char mg05[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x0c, 0x10, 0xe0 }; /* brute forced */
+static const unsigned char mg06[ 8 ] = { 0xc0, 0xe2, 0xe1, 0xfd, 0x04, 0x78, 0x70, 0xf0 };
 static const unsigned char mg08[ 8 ] = { 0xf0, 0xfa, 0xf9, 0xc1, 0x20, 0x1c, 0x7c, 0x80 };
 static const unsigned char mg09[ 8 ] = { 0xf0, 0x03, 0xe2, 0x18, 0x78, 0x7c, 0x3c, 0xc0 }; /* brute forced */
 static const unsigned char mg11[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x1c, 0x10, 0xf0 };
@@ -148,6 +149,8 @@ static struct
 	{ "cbaj",     mg01, mg03 }, /* OK */
 	{ "shngmtkb", mg01, mg04 }, /* OK */
 	{ "doapp",    mg01, mg05 }, /* OK */
+	{ "flamegun", mg01, mg06 }, /* OK, geometry issues */
+	{ "flameguj", mg01, mg06 }, /* OK, geometry issues */
 	{ "glpracr3", mg01, mg08 },
 	{ "tondemo",  mg01, mg09 }, /* OK */
 	{ "brvblade", mg01, mg11 }, /* OK */
@@ -3934,6 +3937,46 @@ ROM_START( tecmowcm )
 	ROM_LOAD( "twm-4.220",          0x1400000, 0x400000, CRC(17cd0ec9) SHA1(37581530e974af692ab71471d0238801cd19c843) )
 ROM_END
 
+ROM_START( flamegun )
+	TPS_BIOS
+
+	ROM_REGION32_LE( 0x03400000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "flamegun.119",   0x0000001, 0x100000, CRC(bc8e9e29) SHA1(02e4f079f0ed864dbc056d5f64d33a0522c034fd) )
+	ROM_LOAD16_BYTE( "flamegun.120",   0x0000000, 0x100000, CRC(387f3070) SHA1(6b12765f1d3ec5f3d1cdfd961fba72a319d65ff4) )
+	ROM_LOAD( "fg00.216",              0x0400000, 0x400000, CRC(f33736ca) SHA1(7b18f9fef1df913b7ed3a2c97e9c4925790d86c5) )
+	ROM_LOAD( "fg01.217",              0x0800000, 0x400000, CRC(8980ff44) SHA1(f677bf5d279ad7731730b7e36ebf33d554903ce6) )
+	ROM_LOAD( "fg02.218",              0x0c00000, 0x400000, CRC(97d1b032) SHA1(1d23cd40ced002ae1fe2fb009d2f31d8612b125a) )
+	ROM_LOAD( "fg03.219",              0x1000000, 0x400000, CRC(cf84508c) SHA1(2a1173e3751f5a8b2400219a75f23d2450a0ebd6) )
+	ROM_LOAD( "fg04.220",              0x1400000, 0x400000, CRC(5cc333fa) SHA1(fd81e811ef2026b245e65c104d24ae1679baa0f5) )
+	ROM_LOAD( "fg05.221",              0x1800000, 0x400000, CRC(9490bc1b) SHA1(c5ea133de0a271793601f2701267d3ca82781f60) )
+	ROM_LOAD( "fg06.222",              0x1c00000, 0x400000, CRC(8c29b754) SHA1(304086196321b7d9748456ed1af8965ac6192942) )
+	ROM_LOAD( "fg07.223",              0x2000000, 0x400000, CRC(f62cefe8) SHA1(a59a3a41258e8474f0aeb0e3b8c2f73caf47ece4) )
+	ROM_LOAD( "fg08.323",              0x2400000, 0x400000, CRC(855959b4) SHA1(994b7c8bd883a41470791802d5a07a98a553096e) )
+	ROM_LOAD( "fg09.324",              0x2800000, 0x400000, CRC(82f129b4) SHA1(c0dcbc908c12f7cecbb051a671649edd20bac32c) )
+	ROM_LOAD( "fg0a.325",              0x2c00000, 0x400000, CRC(f8d2b20c) SHA1(d0c9e413d72772ab8710e217d228e001b28667c8) )
+	ROM_LOAD( "fb0b.326",              0x3000000, 0x400000, CRC(ad78ec79) SHA1(7e37a90a64c70f2c0024eaf30e1e4e028c0d858e) )
+ROM_END
+
+ROM_START( flameguj )
+	TPS_BIOS
+
+	ROM_REGION32_LE( 0x03400000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "fg_1.119",       0x0000001, 0x100000, CRC(1f2aa527) SHA1(de3a20d9aeb745fe82cd1d87bde26876e088483a) )
+	ROM_LOAD16_BYTE( "fg_2.120",       0x0000000, 0x100000, CRC(a2cd4cad) SHA1(bf542eeb6e768b3e86bacdc79ab04be394ce3e63) )
+	ROM_LOAD( "fg00.216",              0x0400000, 0x400000, CRC(f33736ca) SHA1(7b18f9fef1df913b7ed3a2c97e9c4925790d86c5) )
+	ROM_LOAD( "fg01.217",              0x0800000, 0x400000, CRC(8980ff44) SHA1(f677bf5d279ad7731730b7e36ebf33d554903ce6) )
+	ROM_LOAD( "fg02.218",              0x0c00000, 0x400000, CRC(97d1b032) SHA1(1d23cd40ced002ae1fe2fb009d2f31d8612b125a) )
+	ROM_LOAD( "fg03.219",              0x1000000, 0x400000, CRC(cf84508c) SHA1(2a1173e3751f5a8b2400219a75f23d2450a0ebd6) )
+	ROM_LOAD( "fg04.220",              0x1400000, 0x400000, CRC(5cc333fa) SHA1(fd81e811ef2026b245e65c104d24ae1679baa0f5) )
+	ROM_LOAD( "fg05.221",              0x1800000, 0x400000, CRC(9490bc1b) SHA1(c5ea133de0a271793601f2701267d3ca82781f60) )
+	ROM_LOAD( "fg06.222",              0x1c00000, 0x400000, CRC(8c29b754) SHA1(304086196321b7d9748456ed1af8965ac6192942) )
+	ROM_LOAD( "fg07.223",              0x2000000, 0x400000, CRC(f62cefe8) SHA1(a59a3a41258e8474f0aeb0e3b8c2f73caf47ece4) )
+	ROM_LOAD( "fg08.323",              0x2400000, 0x400000, CRC(855959b4) SHA1(994b7c8bd883a41470791802d5a07a98a553096e) )
+	ROM_LOAD( "fg09.324",              0x2800000, 0x400000, CRC(82f129b4) SHA1(c0dcbc908c12f7cecbb051a671649edd20bac32c) )
+	ROM_LOAD( "fg0a.325",              0x2c00000, 0x400000, CRC(f8d2b20c) SHA1(d0c9e413d72772ab8710e217d228e001b28667c8) )
+	ROM_LOAD( "fb0b.326",              0x3000000, 0x400000, CRC(ad78ec79) SHA1(7e37a90a64c70f2c0024eaf30e1e4e028c0d858e) )
+ROM_END
+
 ROM_START( mfjump )
 	TPS_BIOS
 
@@ -4504,6 +4547,8 @@ GAME( 1998, cbaj,     tps,      coh1002msnd, zn, coh1002m, ROT0, "Tecmo", "Cool 
 GAME( 1998, shngmtkb, tps,      coh1002m, zn, coh1002m, ROT0, "Sunsoft / Activision", "Shanghai Matekibuyuu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1999, tondemo,  tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1999, glpracr3, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 3 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, flamegun, tps,      coh1002m, zn, coh1002m, ROT0, "GAPS Inc.", "Flame Gunner", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, flameguj, flamegun, coh1002m, zn, coh1002m, ROT0, "GAPS Inc.", "Flame Gunner (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 2000, tecmowcm, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Tecmo World Cup Millennium (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 2001, mfjump,   tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Monster Farm Jump (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 

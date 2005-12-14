@@ -143,9 +143,9 @@
  *
  *************************************/
 
-#define LOG_GALILEO			(1)
+#define LOG_GALILEO			(0)
 #define LOG_TIMERS			(0)
-#define LOG_DMA				(1)
+#define LOG_DMA				(0)
 #define LOG_PCI				(0)
 #define LOG_WIDGET			(0)
 
@@ -1244,6 +1244,9 @@ static WRITE32_HANDLER( galileo_w )
 
 static WRITE32_HANDLER( seattle_voodoo_w )
 {
+	if (!(offset & 0xc00000/2))
+		logerror("%08X:Write voodoo reg %06X = %08X\n", activecpu_get_pc(), offset, data);
+
 	/* if we're not stalled, just write and get out */
 	if (!voodoo_stalled)
 	{
@@ -1263,7 +1266,7 @@ static WRITE32_HANDLER( seattle_voodoo_w )
 
 	/* spin until we send the magic trigger */
 	cpu_spinuntil_trigger(45678);
-	if (LOG_DMA) logerror("Stalling CPU on voodoo (already stalled)\n");
+	if (LOG_DMA) logerror("%08X:Stalling CPU on voodoo (already stalled)\n", activecpu_get_pc());
 }
 
 
@@ -1282,7 +1285,7 @@ static void voodoo_stall(int stall)
 		}
 		else
 		{
-			if (LOG_DMA) logerror("Stalling CPU on voodoo\n");
+			if (LOG_DMA) logerror("%08X:Stalling CPU on voodoo\n", activecpu_get_pc());
 			cpu_spinuntil_trigger(45678);
 		}
 	}
@@ -2441,8 +2444,8 @@ INPUT_PORTS_END
 
 static struct mips3_config config =
 {
-	16384,			/* code cache size */
-	16384,			/* data cache size */
+	16384,		/* code cache size */
+	16384,		/* data cache size */
 	SYSTEM_CLOCK	/* system clock rate */
 };
 
@@ -2527,14 +2530,26 @@ ROM_END
 
 
 ROM_START( mace )
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1, Labeled as Version 1.0 */
+	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
+
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.0ce 7/2/97 */
+	ROM_LOAD( "mace10ce.u32", 0x000000, 0x80000, CRC(7a50b37e) SHA1(33788835f84a9443566c80bee9f20a1691490c6d) )
+
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0B 6/10/97 */
+	DISK_IMAGE( "mace", 0, MD5(668f6216114fe4c7c265b3d13398e71e) SHA1(6761c9a3da1f0b6b82b146ff2debd04986b8f460) )
+ROM_END
+
+
+ROM_START( macea )
 	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
 	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "maceboot.u32", 0x000000, 0x80000, CRC(effe3ebc) SHA1(7af3ca3580d6276ffa7ab8b4c57274e15ee6bcbb) )
 
-	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "mace", 0, BAD_DUMP MD5(276577faa5632eb23dc5a97c11c0a1b1) SHA1(e2cce4ff2e15267b7008422252bdf62b188cf743) )
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0a */
+	DISK_IMAGE( "macea", 0, BAD_DUMP MD5(276577faa5632eb23dc5a97c11c0a1b1) SHA1(e2cce4ff2e15267b7008422252bdf62b188cf743) )
 ROM_END
 
 
@@ -2578,7 +2593,7 @@ ROM_START( calspeed )
 	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
 	ROM_LOAD( "caspd1_2.u32", 0x000000, 0x80000, CRC(0a235e4e) SHA1(b352f10fad786260b58bd344b5002b6ea7aaf76d) )
 
 	DISK_REGION( REGION_DISKS )
@@ -2650,8 +2665,8 @@ ROM_START( blitz99 )
 	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD( "blitz99.u32", 0x000000, 0x80000, CRC(777119b2) SHA1(40d255181c2f3a787919c339e83593fd506779a5) )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.0 */
+	ROM_LOAD( "bltz9910.u32", 0x000000, 0x80000, CRC(777119b2) SHA1(40d255181c2f3a787919c339e83593fd506779a5) )
 
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.30 */
 	DISK_IMAGE( "blitz99", 0, MD5(4bb6caf8f985e90d99989eede5504188) SHA1(4675751875943b756c8db6997fd288938a7999bb) )
@@ -2901,7 +2916,8 @@ static DRIVER_INIT( hyprdriv )
 
 /* Atari */
 GAME( 1996, wg3dh,    0,        phoenixsa,  wg3dh,    wg3dh,    ROT0, "Atari Games",  "Wayne Gretzky's 3D Hockey", 0 )
-GAME( 1996, mace,     0,        seattle150, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age", 0 )
+GAME( 1996, mace,     0,        seattle150, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age (boot ROM 1.0ce, HDD 1.0b)", 0 )
+GAME( 1997, macea,    mace,     seattle150, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age (HDD 1.0a", 0 )
 GAME( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Games",  "San Francisco Rush", 0 )
 GAME( 1996, sfrushrk, 0,        flagstaff,  sfrushrk, sfrushrk, ROT0, "Atari Games",  "San Francisco Rush: The Rock", GAME_NOT_WORKING )
 GAME( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed", 0 )

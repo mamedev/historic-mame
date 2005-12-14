@@ -11,6 +11,10 @@ to be honest i think some of these cause more problems than they're worth ...
 extern UINT32 *stv_workram_h;
 extern UINT32 *stv_workram_l;
 extern UINT32 *stv_backupram;
+extern int stv_enable_slave_sh2;
+
+extern int minit_boost,sinit_boost;
+extern double minit_boost_timeslice, sinit_boost_timeslice;
 
 DRIVER_INIT ( stv );
 
@@ -227,6 +231,12 @@ static READ32_HANDLER( prikura_speedup_r )
 	return stv_workram_h[0x0b9228/4];
 }
 
+static void prikura_slave_speedup( UINT32 data )
+{
+	if ( activecpu_get_pc() == 0x06018c70 )
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
+}
 
 DRIVER_INIT(prikura)
 {
@@ -238,8 +248,13 @@ DRIVER_INIT(prikura)
     (loops for 263473 instructions)
 */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60b9228, 0x60b922b, 0, 0, prikura_speedup_r );
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)prikura_slave_speedup );
 
 	init_stv();
+
+	minit_boost = sinit_boost = 0;
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
+
 }
 
 
@@ -310,24 +325,22 @@ static READ32_HANDLER( puyosun_speedup_r )
 	return stv_workram_h[0x0ffc10/4];
 }
 
-static READ32_HANDLER( puyosun_speedup2_r )
+static void puyosun_slave_speedup( UINT32 data )
 {
-	/* this is read when the opcode is read .. we can't do much else because the only
-     thing the loop checks is an internal sh2 register */
-
-	if (activecpu_get_pc()==0x6023702) cpu_spinuntil_time(TIME_IN_USEC(2000));
-
-//  logerror ("Ugly %08x\n", activecpu_get_pc());
-
-	return stv_workram_h[0x023700/4];
+	if ( activecpu_get_pc() == 0x6023700 )
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
 }
 
 DRIVER_INIT(puyosun)
 {
    	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, puyosun_speedup_r ); // idle loop of main cpu
-   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6023700, 0x6023703, 0, 0, puyosun_speedup2_r ); // UGLY hack for second cpu
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)puyosun_slave_speedup );
 
 	init_ic13();
+
+	minit_boost = sinit_boost = 0;
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 /* mausuke
@@ -352,6 +365,9 @@ DRIVER_INIT(mausuke)
    	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, mausuke_speedup_r ); // idle loop of main cpu
 
 	init_ic13();
+
+	minit_boost = sinit_boost = 0;
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 static READ32_HANDLER( cottonbm_speedup_r )
@@ -361,41 +377,34 @@ static READ32_HANDLER( cottonbm_speedup_r )
 	return stv_workram_h[0x0ffc10/4];
 }
 
-static READ32_HANDLER( cottonbm_speedup2_r )
+static void cottonbm_slave_speedup( UINT32 data )
 {
-	/* this is read when the opcode is read .. we can't do much else because the only
-     thing the loop checks is an internal sh2 register
-
-     it will fill the log with cpu #1 (PC=06032B52): warning - op-code execute on mapped I/O :/
-     */
-
-	if (activecpu_get_pc()==0x6032b52)
-	{
-		if (
+	if (activecpu_get_pc() == 0x6032b54)
+		if ( (data & 0x00800000) == 0 )
+		{
+			if (
 		   (stv_workram_h[0x0ffc44/4] != 0x260fbe34) &&
 		   (stv_workram_h[0x0ffc48/4] != 0x260fbe34) &&
 		   (stv_workram_h[0x0ffc44/4] != 0x260fbe2c) &&
 		   (stv_workram_h[0x0ffc48/4] != 0x260fbe2c)
-		   )
-		{
-			logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+			)
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
 
-			cpu_spinuntil_time(TIME_IN_USEC(200));
+				cpunum_spinuntil_trigger(1, 1000);
+			}
 		}
-
-	}
-
-//  logerror ("Ugly %08x\n", activecpu_get_pc());
-
-	return stv_workram_h[0x032b50/4];
 }
+
 
 DRIVER_INIT(cottonbm)
 {
    	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, cottonbm_speedup_r ); // idle loop of main cpu
-   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6032b50, 0x6032b53, 0, 0, cottonbm_speedup2_r ); // UGLY hack for second cpu
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)cottonbm_slave_speedup );
 
 	init_stv();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(10);
 }
 
 static READ32_HANDLER( cotton2_speedup_r )
@@ -405,41 +414,33 @@ static READ32_HANDLER( cotton2_speedup_r )
 	return stv_workram_h[0x0ffc10/4];
 }
 
-static READ32_HANDLER( cotton2_speedup2_r )
+static void cotton2_slave_speedup( UINT32 data )
 {
-	/* this is read when the opcode is read .. we can't do much else because the only
-     thing the loop checks is an internal sh2 register
-
-     it will fill the log with cpu #1 (PC=xxx): warning - op-code execute on mapped I/O :/
-     */
-
-	if (activecpu_get_pc()==0x60338ec)
-	{
-		if (
-		   (stv_workram_h[0x0ffc44/4] != 0x260fd264) &&
-		   (stv_workram_h[0x0ffc48/4] != 0x260fd264) &&
-		   (stv_workram_h[0x0ffc44/4] != 0x260fd25c) &&
-		   (stv_workram_h[0x0ffc48/4] != 0x260fd25c)
-		   )
+	if (activecpu_get_pc() == 0x60338ec)
+		if ( (data & 0x00800000) == 0 )
 		{
-			logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+			if (
+			(stv_workram_h[0x0ffc44/4] != 0x260fd264) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260fd264) &&
+			(stv_workram_h[0x0ffc44/4] != 0x260fd25c) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260fd25c)
+			)
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
 
-			cpu_spinuntil_time(TIME_IN_USEC(200));
+				cpunum_spinuntil_trigger(1, 1000);
+			}
 		}
-
-	}
-
-//  logerror ("Ugly %08x\n", activecpu_get_pc());
-
-	return stv_workram_h[0x0338ec/4];
 }
 
 DRIVER_INIT(cotton2)
 {
    	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, cotton2_speedup_r ); // idle loop of main cpu
-   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60338ec, 0x60338ef, 0, 0, cotton2_speedup2_r ); // UGLY hack for second cpu
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)cotton2_slave_speedup );
 
 	init_stv();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 static READ32_HANDLER( dnmtdeka_speedup_r )
@@ -473,12 +474,19 @@ static READ32_HANDLER( fhboxers_speedup2_r )
 	return stv_workram_h[0x090740/4];
 }
 
-/* fhboxers ... doesn't seem to work properly anyway .. even without the speedups, timing issues / interrupt order .. who knows */
+static READ32_HANDLER( fhboxers_speedup3_r )
+{
+	if (activecpu_get_pc()==0x0600b320 )
+		cpu_spinuntil_int();
+
+	return stv_workram_h[0x90bb4/4];
+}
 
 DRIVER_INIT(fhboxers)
 {
    	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x600420c, 0x600420f, 0, 0, fhboxers_speedup_r ); // idle loop of main cpu
    	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6090740, 0x6090743, 0, 0, fhboxers_speedup2_r ); // idle loop of second cpu
+  	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x06090bb4, 0x06090bb7, 0, 0, fhboxers_speedup3_r ); // idle loop of main cpu
 
 	init_ic13();
 }
@@ -548,12 +556,11 @@ static READ32_HANDLER( groovef_second_cpu_off_r )
 }
 */
 
-static READ32_HANDLER( groovef_second_skip_r )
+static void groovef_slave_speedup( UINT32 data )
 {
-	if (activecpu_get_pc()==0x060060ca) cpu_spinuntil_time(TIME_IN_USEC(200));
-
-
-	return stv_workram_h[0x0060e0/4];
+	if ( activecpu_get_pc() == 0x060060c4 )
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
 }
 
 DRIVER_INIT( groovef )
@@ -564,9 +571,12 @@ DRIVER_INIT( groovef )
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60c64ec, 0x60c64ef, 0, 0, groovef_speedup_r );
 //  memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060dc, 0x60060df, 0, 0, groovef_second_cpu_off_r ); // not a good idea, needs it for ai.
-	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060e0, 0x60060e3, 0, 0, groovef_second_skip_r ); // careful .. its not an interrupt wait loop
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)groovef_slave_speedup );
 
 	init_stv();
+
+	minit_boost = sinit_boost = 0;
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 /* danchih hangs on the title screen without this hack .. */
@@ -598,9 +608,23 @@ and Hanafuda works without hack now (unless the sound ram one)
 
 static READ32_HANDLER( danchih_hack_r )
 {
+	logerror( "DMASt_SCU1: Read at PC=%08x, value = %08x\n", activecpu_get_pc(), stv_workram_h[0x0ffcbc/4] );
 	if (activecpu_get_pc()==0x06028b2a) return 0x0e0c0000;
 
 	return stv_workram_h[0x0ffcbc/4];
+}
+
+static READ32_HANDLER( danchih_speedup_r )
+{
+	if (activecpu_get_pc()==0x06028c90) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+static void danchih_slave_speedup( UINT32 data )
+{
+	if ( activecpu_get_pc() == 0x0602ae28 )
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
 }
 
 DRIVER_INIT( danchih )
@@ -608,7 +632,13 @@ DRIVER_INIT( danchih )
 	/* prevent game from hanging on title screen -- todo: remove these hacks */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffcbc, 0x60ffcbf, 0, 0, danchih_hack_r );
 
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, danchih_speedup_r );
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)danchih_slave_speedup );
+
 	init_stv();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
+
 }
 
 /*
@@ -638,9 +668,19 @@ static READ32_HANDLER( astrass_hack_r )
 	return stv_workram_h[0x000770/4];
 }
 
+static READ32_HANDLER( astrass_speedup_r )
+{
+	if(activecpu_get_pc() == 0x0605b9dc )
+		cpu_spinuntil_time(TIME_IN_USEC(20));
+
+	return stv_workram_h[0x8e4d8/4];
+}
+
 DRIVER_INIT( astrass )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000770, 0x6000773, 0, 0, astrass_hack_r );
+
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0608e4d8, 0x0608e4db, 0, 0, astrass_speedup_r );
 
 	init_ic13();
 }
@@ -698,6 +738,38 @@ DRIVER_INIT(thunt)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)thunt_slave_speedup);
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(1);
+}
+
+static READ32_HANDLER(sandor_speedup_r)
+{
+	if (activecpu_get_pc() == 0x0602a0fa) cpu_spinuntil_int();
+	return stv_workram_h[0x000314f8/4];
+}
+
+static READ32_HANDLER(sandor_speedup2_r)
+{
+	if (activecpu_get_pc() == 0x06013fc0) cpu_spinuntil_int();
+	return stv_workram_h[0x00075a2c/4];
+}
+
+
+static void sandor_slave_speedup(UINT32 data)
+{
+	if (activecpu_get_pc() == 0x0602abce)
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
+}
+
+DRIVER_INIT(sandor)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060314f8, 0x060314fb, 0, 0, sandor_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x06075a2c, 0x06075a2f, 0, 0, sandor_speedup2_r );
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)sandor_slave_speedup);
+	init_ic13();
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(1);
+
 }
 
 static READ32_HANDLER(grdforce_speedup_r)
@@ -706,6 +778,25 @@ static READ32_HANDLER(grdforce_speedup_r)
 	return stv_workram_h[0x000ffc10/4];
 }
 
+static void grdforce_slave_speedup( UINT32 data )
+{
+	if (activecpu_get_pc() == 0x06043aa4)
+		if ( (data & 0x00800000) == 0 )
+		{
+			if (
+			(stv_workram_h[0x0ffc44/4] != 0x260fd258) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260fd258) &&
+			(stv_workram_h[0x0ffc44/4] != 0x260fd25c) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260fd25c)
+			)
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+
+				//cpu_spinuntil_time(TIME_IN_USEC(200));
+				cpunum_spinuntil_trigger(1, 1000);
+			}
+		}
+}
 
 DRIVER_INIT(grdforce)
 {
@@ -721,7 +812,11 @@ DRIVER_INIT(grdforce)
 */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060ffc10, 0x060ffc13, 0, 0, grdforce_speedup_r );
 
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)grdforce_slave_speedup);
+
 	init_stv();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 static void batmanfr_slave_speedup( UINT32 data )
@@ -737,13 +832,21 @@ DRIVER_INIT(batmanfr)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)batmanfr_slave_speedup );
 
 	init_stv();
+
+	minit_boost = sinit_boost = 0;
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 static void colmns97_slave_speedup( UINT32 data )
 {
 	if (activecpu_get_pc() == 0x060298a4 )
 		if ( (data & 0x00800000) == 0 )
-			cpunum_spinuntil_trigger(1, 1000);
+			if ( (stv_workram_h[0x0ffc48/4] != 0x260ef3fc) )
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+				cpunum_spinuntil_trigger(1, 1000);
+			}
+
 }
 
 DRIVER_INIT(colmns97)
@@ -751,8 +854,16 @@ DRIVER_INIT(colmns97)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)colmns97_slave_speedup );
 
 	init_ic13();
+
+	minit_boost = sinit_boost = 0;
+
 }
 
+static READ32_HANDLER(winterht_speedup_r)
+{
+	if ( activecpu_get_pc() == 0x06098aec ) cpu_spinuntil_time(TIME_IN_USEC(20));//cpu_spinuntil_int();
+	return stv_workram_h[0x000ffc10/4];
+}
 
 static void winterht_slave_speedup( UINT32 data )
 {
@@ -763,9 +874,19 @@ static void winterht_slave_speedup( UINT32 data )
 
 DRIVER_INIT(winterht)
 {
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060ffc10, 0x060ffc13, 0, 0, winterht_speedup_r );
+
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)winterht_slave_speedup );
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
+}
+
+static READ32_HANDLER(seabass_speedup_r)
+{
+	if ( activecpu_get_pc() == 0x0602cbfc ) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x000ffc10/4];
 }
 
 static void seabass_slave_speedup( UINT32 data )
@@ -775,11 +896,16 @@ static void seabass_slave_speedup( UINT32 data )
 			cpunum_spinuntil_trigger(1, 1000);
 }
 
+
 DRIVER_INIT(seabass)
 {
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060ffc10, 0x060ffc13, 0, 0, seabass_speedup_r );
+
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)seabass_slave_speedup );
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
 }
 
 static void vfremix_slave_speedup( UINT32 data )
@@ -801,6 +927,8 @@ DRIVER_INIT(vfremix)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)vfremix_slave_speedup );
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(20);
 }
 
 static READ32_HANDLER(diehard_speedup_r)
@@ -821,9 +949,11 @@ static READ32_HANDLER(diehard_slave_speedup_r)
 DRIVER_INIT(diehard)
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060986ac, 0x060986af, 0, 0, diehard_speedup_r );
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0be0, 0x060e0be3, 0, 0, diehard_slave_speedup_r );
+	//memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0be0, 0x060e0be3, 0, 0, diehard_slave_speedup_r );
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 static READ32_HANDLER(sss_speedup_r)
@@ -845,6 +975,8 @@ DRIVER_INIT(sss)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)sss_slave_speedup );
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
 static READ32_HANDLER(othellos_speedup_r)
@@ -855,9 +987,13 @@ static READ32_HANDLER(othellos_speedup_r)
 
 static void othellos_slave_speedup( UINT32 data )
 {
-	if (activecpu_get_pc() == 0x0602d390 )
+	if (activecpu_get_pc() == 0x0602d930 )
 		if ( (data & 0x00800000) == 0 )
-			cpunum_spinuntil_trigger(1, 1000);
+			if ( (stv_workram_h[0x0ffc48/4] != 0x260fd25c ) )
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+				cpunum_spinuntil_trigger(1, 1000);
+			}
 }
 
 DRIVER_INIT(othellos)
@@ -866,6 +1002,9 @@ DRIVER_INIT(othellos)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)othellos_slave_speedup );
 
 	init_stv();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
+
 }
 
 static void sassisu_slave_speedup( UINT32 data )
@@ -880,6 +1019,8 @@ DRIVER_INIT(sassisu)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)sassisu_slave_speedup );
 
 	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
 }
 
 static READ32_HANDLER(gaxeduel_speedup_r)
@@ -892,4 +1033,223 @@ DRIVER_INIT(gaxeduel)
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002f4068, 0x002f406b, 0, 0, gaxeduel_speedup_r);
 	init_ic13();
+}
+
+static READ32_HANDLER(suikoenb_speedup_r)
+{
+	if ( activecpu_get_pc() == 0x06013f7c ) cpu_spinuntil_int();
+	return stv_workram_h[0x000705d0 / 4];
+}
+
+DRIVER_INIT(suikoenb)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060705d0, 0x060705d3, 0, 0, suikoenb_speedup_r);
+	init_ic13();
+}
+
+static void sokyugrt_slave_speedup( UINT32 data )
+{
+	logerror( "SlaveSH2: Idle loop skip, data = %08X\n", data );
+	if (stv_enable_slave_sh2)
+		if ( activecpu_get_pc() == 0x0605eec2 )
+			if ( (data & 0x00800000) == 0 )
+				cpunum_spinuntil_trigger(1, 1000);
+}
+
+static READ32_HANDLER(sokyugrt_speedup_r)
+{
+	if ( activecpu_get_pc() == 0x0605d9dc ) cpu_spinuntil_int();
+	return stv_workram_h[0x000788cc / 4];
+}
+
+DRIVER_INIT(sokyugrt)
+{
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)sokyugrt_slave_speedup );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060788cc, 0x060788cf, 0, 0, sokyugrt_speedup_r);
+	init_ic13();
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
+
+}
+
+static READ32_HANDLER( znpwfv_speedup_r )
+{
+	if (activecpu_get_pc()==0x6012ec4) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+static void znpwfv_slave_speedup( UINT32 data )
+{
+	if ( activecpu_get_pc() == 0x060175a8 )
+		if ( (data & 0x00800000) == 0 )
+		{
+			if (
+			(stv_workram_h[0x0ffc44/4] != 0x260f359c) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260f359c)
+			)
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+
+				cpunum_spinuntil_trigger(1, 1000);
+			}
+		}
+}
+
+DRIVER_INIT(znpwfv)
+{
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)znpwfv_slave_speedup );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, znpwfv_speedup_r );
+
+	init_ic13();
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(20);
+
+}
+
+static READ32_HANDLER( twcup98_speedup_r )
+{
+	if (activecpu_get_pc()==0x605ede0) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+static void twcup98_slave_speedup( UINT32 data )
+{
+	if ( activecpu_get_pc() == 0x06062bcc )
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
+}
+
+DRIVER_INIT(twcup98)
+{
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)twcup98_slave_speedup );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, twcup98_speedup_r );
+
+	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
+}
+
+static READ32_HANDLER( smleague_speedup_r )
+{
+	if (activecpu_get_pc()==0x6063bf6) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+static void smleague_slave_speedup( UINT32 data )
+{
+	if ( activecpu_get_pc() == 0x06062bcc )
+		if ( (data & 0x00800000) == 0 )
+			cpunum_spinuntil_trigger(1, 1000);
+}
+
+DRIVER_INIT(smleague)
+{
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)smleague_slave_speedup );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, smleague_speedup_r );
+
+	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
+}
+
+static READ32_HANDLER( finlarch_speedup_r )
+{
+	if (activecpu_get_pc()==0x6064d62) cpu_spinuntil_int();
+	return stv_workram_h[0x0ffc10/4];
+}
+
+
+DRIVER_INIT(finlarch)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, finlarch_speedup_r );
+
+	init_ic13();
+
+}
+
+static READ32_HANDLER( maruchan_speedup_r )
+{
+	if (activecpu_get_pc()==0x06012a54) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+static void maruchan_slave_speedup( UINT32 data )
+{
+	if ( activecpu_get_pc() == 0x0601ba48 )
+		if ( (data & 0x00800000) == 0 )
+			if (
+			(stv_workram_h[0x0ffc48/4] != 0x260ef3c8) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260ef3c4)
+			)
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+
+				cpunum_spinuntil_trigger(1, 1000);
+			}
+
+}
+
+DRIVER_INIT(maruchan)
+{
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)maruchan_slave_speedup );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, maruchan_speedup_r );
+
+	init_ic13();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
+}
+
+static READ32_HANDLER( pblbeach_speedup_r )
+{
+	if (activecpu_get_pc()==0x0605eb7a)
+		if (stv_workram_h[0x006c398/4] != 0)
+			cpu_spinuntil_int();
+	return stv_workram_h[0x006c398/4];
+}
+
+DRIVER_INIT(pblbeach)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0606c398, 0x0606c39b, 0, 0, pblbeach_speedup_r );
+
+	init_ic13();
+}
+
+static READ32_HANDLER( shanhigw_speedup_r )
+{
+	if (activecpu_get_pc()==0x06020c5e)
+			cpu_spinuntil_int();
+	return stv_workram_h[0x95cd8/4];
+}
+
+DRIVER_INIT(shanhigw)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x06095cd8, 0x06095cdb, 0, 0, shanhigw_speedup_r );
+
+	init_stv();
+}
+
+static READ32_HANDLER( elandore_speedup_r )
+{
+	if (activecpu_get_pc()==0x0604eac2) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+
+static void elandore_slave_speedup(UINT32 data)
+{
+	if (activecpu_get_pc() == 0x0605340c)
+		if ( (data & 0x00800000) == 0 )
+			if ( (stv_workram_h[0x0ffc48/4] != 0x260ee018) )
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+
+				cpunum_spinuntil_trigger(1, 1000);
+			}
+}
+
+DRIVER_INIT(elandore)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, elandore_speedup_r );
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)elandore_slave_speedup);
+	init_stv();
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(0);
+
 }

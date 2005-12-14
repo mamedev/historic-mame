@@ -1981,7 +1981,7 @@ WRITE16_HANDLER( K055550_word_w )
 				{
 					if (dy)
 					{
-						angle = (atan((double)dy / dx) * 128.0) / 3.1415926535897932384626433832795;
+						angle = (atan((double)dy / dx) * 128.0) / M_PI;
 						if (dx < 0) angle += 128;
 						i = (angle - 0x40) & 0xff;
 					}

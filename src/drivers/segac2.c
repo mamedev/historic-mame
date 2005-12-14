@@ -786,7 +786,7 @@ INPUT_PORTS_START( columns )
     PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )		/* Button 3 Unused */
 
 	PORT_MODIFY("DSW")
-    PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
     /* The first level increase (from 0 to 1) is always after destroying
@@ -798,6 +798,32 @@ INPUT_PORTS_START( columns )
     PORT_DIPSETTING(    0x20, DEF_STR( Hardest ) )  // 25 jewels
 INPUT_PORTS_END
 
+INPUT_PORTS_START( columnsu )
+	PORT_INCLUDE( systemc_generic )
+
+	PORT_MODIFY("P1")
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		/* Button 2 Unused */
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )		/* Button 3 Unused */
+
+	PORT_MODIFY("P2")
+    PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		/* Button 2 Unused */
+    PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )		/* Button 3 Unused */
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    /* The first level increase (from 0 to 1) is always after destroying
+       35 jewels. Then, the level gets 1 level more every : */
+    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )     // 50 jewels
+    PORT_DIPSETTING(    0x10, DEF_STR( Medium ) )   // 40 jewels
+    PORT_DIPSETTING(    0x30, DEF_STR( Hard ) )     // 35 jewels
+    PORT_DIPSETTING(    0x20, DEF_STR( Hardest ) )  // 25 jewels
+INPUT_PORTS_END
 
 INPUT_PORTS_START( columns2 )
 	PORT_INCLUDE( systemc_generic )
@@ -1344,10 +1370,16 @@ ROM_START( bloxeedu ) /* Bloxeed USA (C System Version)  (c)1989 Sega / Elorg */
 ROM_END
 
 
-ROM_START( columns ) /* Columns (US) (c)1990 Sega */
+ROM_START( columns ) /* Columns (World) (c)1990 Sega */
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "epr13114.32", 0x000000, 0x020000, CRC(ff78f740) SHA1(0a034103a4b942f43e62f6e717f5dbf1bfb0b613) )
 	ROM_LOAD16_BYTE( "epr13113.31", 0x000001, 0x020000, CRC(9a426d9b) SHA1(3322e65ebf8d0a6047f7d408387c63ea401b8973) )
+ROM_END
+
+ROM_START( columnsu ) /* Columns (US) (c)1990 Sega */
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr13116a.32", 0x000000, 0x020000, CRC(a0284b16) SHA1(a72c8567ab2386ef6bc7bb83cc1612f4c6bf8461) )
+	ROM_LOAD16_BYTE( "epr13115a.31", 0x000001, 0x020000, CRC(e37496f3) SHA1(30ebeed76613ae8d6d3ce9fca282124685067b27) )
 ROM_END
 
 ROM_START( columnsj ) /* Columns (Jpn) (c)1990 Sega */
@@ -2128,7 +2160,8 @@ static DRIVER_INIT( pclubjv5 )
 /* System C Games */
 GAME( 1989, bloxeedc, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (World, C System)", 0 )
 GAME( 1989, bloxeedu, bloxeed,  segac,    bloxeedc, bloxeedc, ROT0, "Sega / Elorg",           "Bloxeed (US, C System)", 0 )
-GAME( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (US)", 0 )
+GAME( 1990, columns,  0,        segac,    columns,  columns,  ROT0, "Sega",                   "Columns (World)", 0 )
+GAME( 1990, columnsu, columns,  segac,    columnsu, columns,  ROT0, "Sega",                   "Columns (US, cocktail)", 0 ) // has cocktail mode dsw
 GAME( 1990, columnsj, columns,  segac,    columns,  columns,  ROT0, "Sega",                   "Columns (Japan)", 0 )
 GAME( 1990, columns2, 0,        segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (World)", 0 )
 GAME( 1990, column2j, columns2, segac,    columns2, columns2, ROT0, "Sega",                   "Columns II: The Voyage Through Time (Japan)", 0 )

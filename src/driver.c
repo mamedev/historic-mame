@@ -2580,6 +2580,8 @@ V-V                           TP-027
 	DRIVER( shngmtkb )	/* Shanghai Matekibuyuu */
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
 	DRIVER( glpracr3 )	/* Gallop Racer 3 (JAPAN) */
+	DRIVER( flamegun )	/* Flame Gunner (USA) */
+	DRIVER( flameguj )	/* Flame Gunner (JAPAN) */
 	DRIVER( tecmowcm )	/* Tecmo World Cup Millenium (JAPAN) */
 	DRIVER( mfjump )	/* Monster Farm Jump (JAPAN) */
 
@@ -2656,6 +2658,8 @@ V-V                           TP-027
 	DRIVER( tenkomor )	/* Tenkomori Shooting (TKM2/VER.A1) */
 	DRIVER( fgtlayer )	/* Fighting Layer (FTL0/VER.A) */
 	DRIVER( pacapp )	/* Paca Paca Passion (PPP1/VER.A2) */
+	DRIVER( pacappsp )	/* Paca Paca Passion Special (PSP1/VER.A) */
+	DRIVER( pacapp2 )	/* Paca Paca Passion 2 (PKS1/VER.A) */
 	DRIVER( sws99 )		/* Super World Stadium '99 (SS91/VER.A3) */
 	DRIVER( tekkentt )	/* Tekken Tag Tournament (TEG3/VER.B) */
 	DRIVER( mrdrillr )	/* Mr Driller (DRI1/VER.A2) */
@@ -3279,6 +3283,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( spidman )	/* (c) 1991 (World) */
 	DRIVER( spidmanu )	/* (c) 1991 (US) */
 	DRIVER( arabfgt )	/* (c) 1991 */
+	DRIVER( arabfgtu )	/* (c) 1991 (US) */
 	DRIVER( arabfgtj )	/* (c) 1991 (Japan) */
 	DRIVER( arescue )	/* (c) 1992 */
 	DRIVER( f1lap )		/* (c) 1993 */
@@ -3443,6 +3448,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( swtrilga )	/* 1998 */
 	DRIVER( spikeout )	/* 1998 */
 	DRIVER( spikeofe )	/* 1998 */
+	DRIVER( eca )		/* 1999 */
 
 
 	/* Deniam games */
@@ -3472,6 +3478,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bloxeedc )	/* (c) 1989 Sega / Elorg */
 	DRIVER( bloxeedu )	/* (c) 1989 Sega / Elorg */
 	DRIVER( columns )	/* (c) 1990 Sega */
+	DRIVER( columnsu )	/* (c) 1990 Sega */
 	DRIVER( columnsj )	/* (c) 1990 Sega */
 	DRIVER( columns2 )	/* (c) 1990 Sega */
 	DRIVER( column2j )	/* (c) 1990 Sega */
@@ -3990,6 +3997,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( circusce )	/* GX380 (c) 1984 + Centuri license */
 	DRIVER( tp84 )		/* GX388 (c) 1984 */
 	DRIVER( tp84a )		/* GX388 (c) 1984 */
+	DRIVER( tp84b )		/* GX388 (c) 1984 */
 	DRIVER( hyperspt )	/* GX330 (c) 1984 + Centuri */
 	DRIVER( hpolym84 )	/* GX330 (c) 1984 */
 	DRIVER( sbasketb )	/* GX405 (c) 1984 */
@@ -5182,6 +5190,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( saiyugb1 )	/* bootleg */
 	DRIVER( saiyugb2 )	/* bootleg */
 	DRIVER( wwfsstar )	/* TA-0024 (c) 1989 (Europe) */
+	DRIVER( wwfsstaa )	/* TA-0024 (c) 1989 (US, newer) */
 	DRIVER( wwfsstau )	/* TA-0024 (c) 1989 (US) */
 	DRIVER( wwfsstaj )	/* TA-0024 (c) 1989 (Japan) */
 	DRIVER( vball )		/* TA-0025 (c) 1988 */
@@ -5388,15 +5397,16 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( thegrid )	/* (c) 2001 Midway */
 
 	/* Midway / Atari  Voodoo based Hardware (Seattle, Flagstaff) */
-	DRIVER( wg3dh )	/* (c) 1996 Atari Games */
+	DRIVER( wg3dh )		/* (c) 1996 Atari Games */
 	DRIVER( mace )		/* (c) 1996 Atari Games */
+	DRIVER( macea )		/* (c) 1996 Atari Games */
 	DRIVER( sfrush )	/* (c) 1996 Atari Games */
 	DRIVER( sfrushrk )	/* (c) 1996 Atari Games */
 	DRIVER( calspeed )	/* (c) 1996 Atari Games */
 	DRIVER( vaportrx )	/* (c) 1998 Atari Games */
 	DRIVER( vaportrp )	/* (c) 1998 Atari Games */
 	DRIVER( carnevil )	/* (c) 1998 Midway Games */
-	DRIVER( biofreak )	/* (c) 1997 Midway Games */
+	DRIVER( biofreak )	/* (c) 1997 Midway Games (prototype) */
 	DRIVER( blitz )		/* (c) 1997 Midway Games */
 	DRIVER( blitz11 )	/* (c) 1997 Midway Games */
 	DRIVER( blitz99 )	/* (c) 1998 Midway Games */
@@ -6270,6 +6280,7 @@ Other Sun games
 	/* http://www.esdgame.co.kr/english/ */
 	DRIVER( multchmp )	/* (c) 1998 (Korea) */
 	DRIVER( mchampdx )	/* (c) 1999 ESD */
+	DRIVER( mchampda )	/* (c) 1999 ESD */
 	DRIVER( hedpanic )	/* (c) 2000 ESD */
 	DRIVER( tangtang )	/* (c) 2000 ESD */
 
@@ -6751,10 +6762,10 @@ Other Sun games
 	DRIVER( cybertnk )	/* (c) 1990 Coreland */
 	DRIVER( pkscram )	/* (c) 1993 Cosmo Electronics Corporation */
 	DRIVER( jollycrd )	/* (c) 1985 TAB-Austria */
-	DRIVER( jollycdb )	/* (c) 1993 Soft Design */
-	DRIVER( jollycdc )	/* 199? bootleg? */
-	DRIVER( jollycdd )	/* (c) 1986 Fun World */
-	DRIVER( jollycde )	/* (c) 1990 Inter Games */
+	DRIVER( jolycdcr )	/* (c) 1993 Soft Design */
+	DRIVER( jolycdit )	/* 199? bootleg? */
+	DRIVER( jolycdat )	/* (c) 1986 Fun World */
+	DRIVER( jolycdab )	/* (c) 1990 Inter Games */
 	DRIVER( bigdeal )	/* (c) 1986 Fun World */
 	DRIVER( bigdealb )	/* (c) 1986 Fun World */
 	DRIVER( cuoreuno )	/* (c) 1997 bootleg? */

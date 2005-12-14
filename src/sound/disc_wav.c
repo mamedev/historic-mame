@@ -499,7 +499,7 @@ void dss_noise_step(struct node_description *node)
 	if(DSS_NOISE__ENABLE)
 	{
 		/* Only sample noise on rollover to next cycle */
-		if(context->phase>(2.0*PI))
+		if(context->phase>(2.0*M_PI))
 		{
 			int newval=rand() & 0x7fff;
 			node->output=DSS_NOISE__AMP*(1-(newval/16384.0));
@@ -520,7 +520,7 @@ void dss_noise_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*PI*DSS_NOISE__FREQ)/Machine->sample_rate)),2.0*PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_NOISE__FREQ)/Machine->sample_rate)),2.0*M_PI);
 }
 
 
@@ -896,7 +896,7 @@ void dss_sawtoothwave_step(struct node_description *node)
 
 	if(DSS_SAWTOOTHWAVE__ENABLE)
 	{
-		node->output=(context->type==0)?context->phase*(DSS_SAWTOOTHWAVE__AMP/(2.0*PI)):DSS_SAWTOOTHWAVE__AMP-(context->phase*(DSS_SAWTOOTHWAVE__AMP/(2.0*PI)));
+		node->output=(context->type==0)?context->phase*(DSS_SAWTOOTHWAVE__AMP/(2.0*M_PI)):DSS_SAWTOOTHWAVE__AMP-(context->phase*(DSS_SAWTOOTHWAVE__AMP/(2.0*M_PI)));
 		node->output-=DSS_SAWTOOTHWAVE__AMP/2.0;
 		/* Add DC Bias component */
 		node->output=node->output+DSS_SAWTOOTHWAVE__BIAS;
@@ -913,7 +913,7 @@ void dss_sawtoothwave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*PI*DSS_SAWTOOTHWAVE__FREQ)/Machine->sample_rate)),2.0*PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SAWTOOTHWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
 }
 
 void dss_sawtoothwave_reset(struct node_description *node)
@@ -922,9 +922,9 @@ void dss_sawtoothwave_reset(struct node_description *node)
 	double start;
 
 	/* Establish starting phase, convert from degrees to radians */
-	start=(DSS_SAWTOOTHWAVE__PHASE/360.0)*(2.0*PI);
+	start=(DSS_SAWTOOTHWAVE__PHASE/360.0)*(2.0*M_PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(start,2.0*PI);
+	context->phase=fmod(start,2.0*M_PI);
 
 	/* Invert gradient depending on sawtooth type /|/|/|/|/| or |\|\|\|\|\ */
 	context->type=(DSS_SAWTOOTHWAVE__GRAD)?1:0;
@@ -1098,7 +1098,7 @@ void dss_sinewave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*PI*DSS_SINEWAVE__FREQ)/Machine->sample_rate)),2.0*PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SINEWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
 }
 
 void dss_sinewave_reset(struct node_description *node)
@@ -1107,9 +1107,9 @@ void dss_sinewave_reset(struct node_description *node)
 	double start;
 
 	/* Establish starting phase, convert from degrees to radians */
-	start=(DSS_SINEWAVE__PHASE/360.0)*(2.0*PI);
+	start=(DSS_SINEWAVE__PHASE/360.0)*(2.0*M_PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(start,2.0*PI);
+	context->phase=fmod(start,2.0*M_PI);
 	/* Step the output to make it correct */
 	dss_sinewave_step(node);
 }
@@ -1139,7 +1139,7 @@ void dss_squarewave_step(struct node_description *node)
 	struct dss_squarewave_context *context = node->context;
 
 	/* Establish trigger phase from duty */
-	context->trigger=((100-DSS_SQUAREWAVE__DUTY)/100)*(2.0*PI);
+	context->trigger=((100-DSS_SQUAREWAVE__DUTY)/100)*(2.0*M_PI);
 
 	/* Set the output */
 	if(DSS_SQUAREWAVE__ENABLE)
@@ -1164,7 +1164,7 @@ void dss_squarewave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*PI*DSS_SQUAREWAVE__FREQ)/Machine->sample_rate)),2.0*PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SQUAREWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
 }
 
 void dss_squarewave_reset(struct node_description *node)
@@ -1173,9 +1173,9 @@ void dss_squarewave_reset(struct node_description *node)
 	double start;
 
 	/* Establish starting phase, convert from degrees to radians */
-	start=(DSS_SQUAREWAVE__PHASE/360.0)*(2.0*PI);
+	start=(DSS_SQUAREWAVE__PHASE/360.0)*(2.0*M_PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(start,2.0*PI);
+	context->phase=fmod(start,2.0*M_PI);
 
 	/* Step the output */
 	dss_squarewave_step(node);
@@ -1286,7 +1286,7 @@ void dss_squarewave2_step(struct node_description *node)
 	if(DSS_SQUAREWAVE2__ENABLE)
 	{
 		/* Establish trigger phase from time periods */
-		context->trigger=(DSS_SQUAREWAVE2__T_OFF / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * PI);
+		context->trigger=(DSS_SQUAREWAVE2__T_OFF / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * M_PI);
 
 		/* Work out the phase step based on phase/freq & sample rate */
 		/* The enable input only curtails output, phase rotation     */
@@ -1295,9 +1295,9 @@ void dss_squarewave2_step(struct node_description *node)
 		/*     phase step = 2Pi/(output period/sample period)        */
 		/*                    boils out to                           */
 		/*     phase step = 2Pi/(output period*sample freq)          */
-		newphase = context->phase + ((2.0 * PI) / ((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) * Machine->sample_rate));
+		newphase = context->phase + ((2.0 * M_PI) / ((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) * Machine->sample_rate));
 		/* Keep the new phasor in the 2Pi range.*/
-		context->phase = fmod(newphase, 2.0 * PI);
+		context->phase = fmod(newphase, 2.0 * M_PI);
 
 		if(context->phase>context->trigger)
 			node->output=(DSS_SQUAREWAVE2__AMP/2.0);
@@ -1321,11 +1321,11 @@ void dss_squarewave2_reset(struct node_description *node)
 	/* Establish starting phase, convert from degrees to radians */
 	/* Only valid if we have set the on/off time                 */
 	if((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) != 0.0)
-		start = (DSS_SQUAREWAVE2__SHIFT / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * PI);
+		start = (DSS_SQUAREWAVE2__SHIFT / (DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON)) * (2.0 * M_PI);
 	else
 		start = 0.0;
 	/* Make sure its always mod 2Pi */
-	context->phase = fmod(start, 2.0 * PI);
+	context->phase = fmod(start, 2.0 * M_PI);
 
 	/* Step the output */
 	dss_squarewave2_step(node);
@@ -1355,8 +1355,8 @@ void dss_trianglewave_step(struct node_description *node)
 
 	if(DSS_TRIANGLEWAVE__ENABLE)
 	{
-		node->output=context->phase < PI ? (DSS_TRIANGLEWAVE__AMP * (context->phase / (PI/2.0) - 1.0))/2.0 :
-									(DSS_TRIANGLEWAVE__AMP * (3.0 - context->phase / (PI/2.0)))/2.0 ;
+		node->output=context->phase < M_PI ? (DSS_TRIANGLEWAVE__AMP * (context->phase / (M_PI/2.0) - 1.0))/2.0 :
+									(DSS_TRIANGLEWAVE__AMP * (3.0 - context->phase / (M_PI/2.0)))/2.0 ;
 
 		/* Add DC Bias component */
 		node->output=node->output+DSS_TRIANGLEWAVE__BIAS;
@@ -1373,7 +1373,7 @@ void dss_trianglewave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*PI*DSS_TRIANGLEWAVE__FREQ)/Machine->sample_rate)),2.0*PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_TRIANGLEWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
 }
 
 void dss_trianglewave_reset(struct node_description *node)
@@ -1382,9 +1382,9 @@ void dss_trianglewave_reset(struct node_description *node)
 	double start;
 
 	/* Establish starting phase, convert from degrees to radians */
-	start=(DSS_TRIANGLEWAVE__PHASE/360.0)*(2.0*PI);
+	start=(DSS_TRIANGLEWAVE__PHASE/360.0)*(2.0*M_PI);
 	/* Make sure its always mod 2Pi */
-	context->phase=fmod(start,2.0*PI);
+	context->phase=fmod(start,2.0*M_PI);
 
 	/* Step to set the output */
 	dss_trianglewave_step(node);

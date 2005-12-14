@@ -1564,8 +1564,8 @@ static void init_tables(void)
 
 	for (i=0; i < SIN_LEN; i++)
 	{
-		double m = sin( ((i*2)+1) * PI / SIN_LEN );
-		double m2 = sin( ((i*4)+1) * PI / SIN_LEN );
+		double m = sin( ((i*2)+1) * M_PI / SIN_LEN );
+		double m2 = sin( ((i*4)+1) * M_PI / SIN_LEN );
 
 		// Waveform 0: sin(wt)    (0 <= wt <= 2PI)
 		wavetable[0][i] = (INT16)(m * MAXOUT);

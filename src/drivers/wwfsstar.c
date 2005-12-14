@@ -374,6 +374,7 @@ MACHINE_DRIVER_END
 /*******************************************************************************
  Rom Loaders / Game Drivers
 *******************************************************************************/
+
 ROM_START( wwfsstar )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
 	ROM_LOAD16_BYTE( "24ac-0_j-1.34", 0x00000, 0x20000, CRC(ec8fd2c9) SHA1(04ab93e2a1becdc480750c3b55839328b2af4639) )
@@ -500,6 +501,35 @@ ROM_START( wwfsstau )
 	ROM_LOAD( "wwfs44.bin",    0x70000, 0x10000, CRC(4f965fa9) SHA1(4312838e216d2a90fe413d027f46d77c74a0aa07) )
 ROM_END
 
+/* this set is using the proper mask rom dumps */
+ROM_START( wwfsstaa )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
+	ROM_LOAD16_BYTE( "24ac-06.34", 0x00000, 0x20000, CRC(924a50e4) SHA1(e163ffc6bada5db0d979523dde77355acedcd456) )
+	ROM_LOAD16_BYTE( "24ad-07.35", 0x00001, 0x20000, CRC(9a76a50e) SHA1(adde96956a7602ae1ece797732e8295dc176b071) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU (Z80)  */
+	ROM_LOAD( "24ab-0.12", 0x00000, 0x08000, CRC(1e44f8aa) SHA1(e03857d6954e9b9b6073b211e2d6570032af8807) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "24a9-0.46", 0x00000, 0x20000, CRC(703ff08f) SHA1(08c4d33208eb4c76c751a1a0fe16a817bdc30820) )
+	ROM_LOAD( "24j8-0.45", 0x20000, 0x20000, CRC(61138487) SHA1(6d5e3b12acdefb6923aa8ae0704f6c328f4747b3) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE ) /* FG0 Tiles (8x8) */
+	ROM_LOAD( "24aa-0.58", 0x00000, 0x20000, CRC(cb12ba40) SHA1(2d39f778d9daf0d3606b63975bd6cfc45847a265) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE ) /* SPR Tiles (16x16) */
+	ROM_LOAD( "c951.114",   0x000000, 0x80000, CRC(fa76d1f0) SHA1(f69f8e6d1c5f27b054133e0faa49a8e1a9c391b2) )
+	ROM_LOAD( "24j4-0.115", 0x080000, 0x40000, CRC(c4a589a3) SHA1(5511e77c8b381419d7c63971023783c26ef6d94b) )
+	ROM_LOAD( "24j5-0.116", 0x0c0000, 0x40000, CRC(d6bca436) SHA1(25857a840b93f7f106a3a5c7dde8e0a732f45013) )
+	ROM_LOAD( "c950.117",   0x100000, 0x80000, CRC(cca5703d) SHA1(d10ef7ef1789a4f1a732a7c08ab163ec0d347da1) )
+	ROM_LOAD( "24j2-0.118", 0x180000, 0x40000, CRC(dc1b7600) SHA1(bd80d7d4063f2b739ac9420132859c23473d9968) )
+	ROM_LOAD( "24j3-0.119", 0x1c0000, 0x40000, CRC(3ba12d43) SHA1(f60d5ff54fdef5a31fe1ee7041dda325ef6649c8) )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* BG0 Tiles (16x16) */
+	ROM_LOAD( "24j7-0.113", 0x00000, 0x40000, CRC(e0a1909e) SHA1(6ec0db2e0297256d1c6d003a0e5b29236048bd88) )
+	ROM_LOAD( "24j6-0.112", 0x40000, 0x40000, CRC(77932ef8) SHA1(a6ee3fc05ca0001d5181b69f2b754170ba7a814a) )
+ROM_END
+
 ROM_START( wwfsstaj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* Main CPU  (68000) */
 	ROM_LOAD16_BYTE( "24ac-0_j-1_japan.34", 0x00000, 0x20000, CRC(f872e968) SHA1(e52298817348601ed88c369018d3110e467cf602) )
@@ -568,4 +598,5 @@ ROM_END
 
 GAME( 1989, wwfsstar, 0,        wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (Europe)", 0 )
 GAME( 1989, wwfsstau, wwfsstar, wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (US)", 0 )
+GAME( 1989, wwfsstaa, wwfsstar, wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (US, Newer)", 0 )
 GAME( 1989, wwfsstaj, wwfsstar, wwfsstar, wwfsstar,  0, ROT0, "Technos Japan", "WWF Superstars (Japan)",GAME_NOT_WORKING ) // missing a program rom

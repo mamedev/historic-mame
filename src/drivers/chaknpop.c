@@ -9,6 +9,7 @@
 #include "sound/ay8910.h"
 
 /* machine/chaknpop.c */
+extern UINT8 *chaknpop_ram;
 DRIVER_INIT( chaknpop );
 MACHINE_INIT( chaknpop );
 READ8_HANDLER( chaknpop_mcu_portA_r );
@@ -88,7 +89,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&chaknpop_ram)
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(chaknpop_mcu_portA_w)
 	AM_RANGE(0x8801, 0x8801) AM_WRITE(chaknpop_mcu_portB_w)
 	AM_RANGE(0x8802, 0x8802) AM_WRITE(chaknpop_mcu_portC_w)

@@ -81,12 +81,12 @@ PALETTE_INIT( astrocde )
 
 	for(i=0;i<32;i++)
 	{
-		RY = C*sin(i*2.0*3.14159/32.0);
+		RY = C*sin(i*2.0*M_PI/32.0);
 		if (i == 0)
 			BY = 0;
 		else
-//          BY = C*cos(i*2.0*3.14159/32.0);
-			BY = 1.15*cos(i*2.0*3.14159/32.0);
+//          BY = C*cos(i*2.0*M_PI/32.0);
+			BY = 1.15*cos(i*2.0*M_PI/32.0);
 
 
 		for(j=0;j<8;j++)

@@ -117,11 +117,6 @@
 #include "fm.h"
 
 
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
-
-
 /* include external DELTA-T unit (when needed) */
 #if (BUILD_YM2608||BUILD_YM2610||BUILD_YM2610B)
 	#include "ymdeltat.h"
@@ -1502,7 +1497,7 @@ static int init_tables(void)
 	for (i=0; i<SIN_LEN; i++)
 	{
 		/* non-standard sinus */
-		m = sin( ((i*2)+1) * PI / SIN_LEN ); /* checked against the real chip */
+		m = sin( ((i*2)+1) * M_PI / SIN_LEN ); /* checked against the real chip */
 
 		/* we never reach zero here due to ((i*2)+1) */
 

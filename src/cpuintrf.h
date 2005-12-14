@@ -181,6 +181,7 @@ enum
 	CPU_Z80GB,
 	CPU_TMS7000,
 	CPU_TMS7000_EXL,
+	CPU_COP411,
 #endif
     CPU_COUNT
 };

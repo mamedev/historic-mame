@@ -1,6 +1,5 @@
 //fix me -- some calspeed sky still busted
 //fix me -- blitz2k dies when starting a game with heavy fog (in DRC)
-//fix me -- vapor trx in-game has giant poly over top
 //optimize -- 64-bit multiplies for S/T
 
 /*************************************************************************
@@ -51,7 +50,6 @@
     --------------------------
 
     still to be implemented:
-        * clutData gamma correction
         * trilinear textures
 
     things to verify:
@@ -159,6 +157,8 @@ bits(7:4) and bit(24)), X, and Y:
 #define LOG_LFB				(0)
 #define LOG_TEXTURE_RAM		(0)
 #define LOG_RASTERIZERS		(0)
+#define LOG_CMDFIFO			(0)
+#define LOG_CMDFIFO_VERBOSE	(0)
 
 #define MODIFY_PIXEL(VV)
 
@@ -192,11 +192,18 @@ static void flush_fifos(voodoo_state *v, mame_time current_time);
 static void stall_cpu_callback(void *param);
 static void stall_cpu(voodoo_state *v, int state, mame_time current_time);
 static void vblank_callback(void *param);
-static UINT32 voodoo_r(voodoo_state *v, offs_t offset);
+static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data);
+static INT32 register_swapcheck_w(voodoo_state *v, offs_t offset, UINT32 data);
+static INT32 lfb_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem_mask);
+static INT32 texture_w(voodoo_state *v, offs_t offset, UINT32 data);
 static void voodoo_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem_mask);
+static UINT32 voodoo_r(voodoo_state *v, offs_t offset);
 static INT32 fastfill(voodoo_state *v);
 static INT32 swapbuffer(voodoo_state *v, UINT32 data);
+static INT32 begin_triangle(voodoo_state *v);
+static INT32 draw_triangle(voodoo_state *v);
 static INT32 triangle(voodoo_state *v);
+static INT32 setup_and_draw_triangle(voodoo_state *v);
 static raster_info *add_rasterizer(voodoo_state *v, const raster_info *cinfo);
 static raster_info *find_rasterizer(voodoo_state *v, int texcount);
 static void dump_rasterizer_stats(voodoo_state *v);
@@ -744,6 +751,8 @@ static void vblank_off_callback(void *param)
 {
 	voodoo_state *v = param;
 
+	logerror("--- vblank end\n");
+
 	/* set internal state and call the client */
 	v->fbi.vblank = FALSE;
 	if (v->fbi.vblank_client)
@@ -758,14 +767,24 @@ static void vblank_callback(void *param)
 {
 	voodoo_state *v = param;
 
+	logerror("--- vblank start\n");
+
 	/* flush the pipes */
 	if (v->pci.op_pending)
+	{
+		logerror("---- vblank flush begin\n");
 		flush_fifos(v, mame_timer_get_time());
+		logerror("---- vblank flush end\n");
+	}
 
 	/* increment the count */
 	v->fbi.vblank_count++;
 	if (v->fbi.vblank_count > 250)
 		v->fbi.vblank_count = 250;
+	logerror("---- vblank count = %d", v->fbi.vblank_count);
+	if (v->fbi.vblank_swap_pending)
+		logerror(" (target=%d)", v->fbi.vblank_swap);
+	logerror("\n");
 
 	/* if we're past the swap count, do the swap */
 	if (v->fbi.vblank_swap_pending && v->fbi.vblank_count >= v->fbi.vblank_swap)
@@ -828,7 +847,7 @@ static void recompute_video_memory(voodoo_state *v)
 		memory_config = FBIINIT5_BUFFER_ALLOCATION(v->reg[fbiInit5].u);
 
 	/* tiles are 64x16/32; x_tiles specifies how many half-tiles */
-	v->fbi.tile_width = 64;
+	v->fbi.tile_width = (v->type == VOODOO_1) ? 64 : 32;
 	v->fbi.tile_height = (v->type == VOODOO_1) ? 16 : 32;
 	v->fbi.x_tiles = FBIINIT1_X_VIDEO_TILES(v->reg[fbiInit1].u);
 	if (v->type == VOODOO_2)
@@ -890,6 +909,11 @@ static void recompute_video_memory(voodoo_state *v)
 		v->fbi.auxmax = (UINT16 *)((UINT8 *)v->fbi.ram + v->fbi.mask + 1) - v->fbi.aux;
 	}
 
+/*  printf("rgb[0] = %08X   rgb[1] = %08X   rgb[2] = %08X   aux = %08X\n",
+            (UINT8 *)v->fbi.rgb[0] - (UINT8 *)v->fbi.ram,
+            (UINT8 *)v->fbi.rgb[1] - (UINT8 *)v->fbi.ram,
+            v->fbi.rgb[2] ? ((UINT8 *)v->fbi.rgb[2] - (UINT8 *)v->fbi.ram) : 0,
+            (UINT8 *)v->fbi.aux - (UINT8 *)v->fbi.ram);*/
 	logerror("VOODOO.%d.VIDMEM: rgbmax=%X,%X,%X  auxmax=%X\n", v->index, v->fbi.rgbmax[0], v->fbi.rgbmax[1], v->fbi.rgbmax[2], v->fbi.auxmax);
 
 	/* compute the memory FIFO location and size */
@@ -1194,6 +1218,543 @@ INLINE void prepare_tmu(tmu_state *t)
 
 /*************************************
  *
+ *  Command FIFO depth computation
+ *
+ *************************************/
+
+static int cmdfifo_compute_expected_depth(voodoo_state *v)
+{
+	UINT32 readptr = v->reg[cmdFifoRdPtr].u;
+	UINT32 command = v->fbi.cmdfifo[readptr / 4];
+	int i, count = 0;
+
+	/* low 3 bits specify the packet type */
+	switch (command & 7)
+	{
+		/*
+            Packet type 0: 1 or 2 words
+
+              Word  Bits
+                0  31:29 = reserved
+                0  28:6  = Address [24:2]
+                0   5:3  = Function (0 = NOP, 1 = JSR, 2 = RET, 3 = JMP LOCAL, 4 = JMP AGP)
+                0   2:0  = Packet type (0)
+                1  31:11 = reserved (JMP AGP only)
+                1  10:0  = Address [35:25]
+        */
+		case 0:
+			if (((command >> 3) & 7) == 4)
+				return 2;
+			return 1;
+
+		/*
+            Packet type 1: 1 + N words
+
+              Word  Bits
+                0  31:16 = Number of words
+                0    15  = Increment?
+                0  14:3  = Register base
+                0   2:0  = Packet type (1)
+                1  31:0  = Data word
+        */
+		case 1:
+			return 1 + (command >> 16);
+
+		/*
+            Packet type 2: 1 + N words
+
+              Word  Bits
+                0  31:3  = 2D Register mask
+                0   2:0  = Packet type (2)
+                1  31:0  = Data word
+        */
+		case 2:
+			for (i = 3; i <= 31; i++)
+				if (command & (1 << i)) count++;
+			return 1 + count;
+
+		/*
+            Packet type 3: 1 + N words
+
+              Word  Bits
+                0  31:29 = Number of dummy entries following the data
+                0   28   = Packed color data?
+                0   25   = Disable ping pong sign correction (0=normal, 1=disable)
+                0   24   = Culling sign (0=positive, 1=negative)
+                0   23   = Enable culling (0=disable, 1=enable)
+                0   22   = Strip mode (0=strip, 1=fan)
+                0   17   = Setup S1 and T1
+                0   16   = Setup W1
+                0   15   = Setup S0 and T0
+                0   14   = Setup W0
+                0   13   = Setup Wb
+                0   12   = Setup Z
+                0   11   = Setup Alpha
+                0   10   = Setup RGB
+                0   9:6  = Number of vertices
+                0   5:3  = Command (0=Independent tris, 1=Start new strip, 2=Continue strip)
+                0   2:0  = Packet type (3)
+                1  31:0  = Data word
+        */
+		case 3:
+			count = 2;		/* X/Y */
+			if (command & (1 << 28))
+			{
+				if (command & (3 << 10)) count++;		/* ARGB */
+			}
+			else
+			{
+				if (command & (1 << 10)) count += 3;	/* RGB */
+				if (command & (1 << 11)) count++;		/* A */
+			}
+			if (command & (1 << 12)) count++;			/* Z */
+			if (command & (1 << 13)) count++;			/* Wb */
+			if (command & (1 << 14)) count++;			/* W0 */
+			if (command & (1 << 15)) count += 2;		/* S0/T0 */
+			if (command & (1 << 16)) count++;			/* W1 */
+			if (command & (1 << 17)) count += 2;		/* S1/T1 */
+			count *= (command >> 6) & 15;				/* numverts */
+			return 1 + count + (command >> 29);
+
+		/*
+            Packet type 4: 1 + N words
+
+              Word  Bits
+                0  31:29 = Number of dummy entries following the data
+                0  28:15 = General register mask
+                0  14:3  = Register base
+                0   2:0  = Packet type (4)
+                1  31:0  = Data word
+        */
+		case 4:
+			for (i = 15; i <= 28; i++)
+				if (command & (1 << i)) count++;
+			return 1 + count + (command >> 29);
+
+		/*
+            Packet type 5: 2 + N words
+
+              Word  Bits
+                0  31:30 = Space (0,1=reserved, 2=LFB, 3=texture)
+                0  29:26 = Byte disable W2
+                0  25:22 = Byte disable WN
+                0  21:3  = Num words
+                0   2:0  = Packet type (5)
+                1  31:30 = Reserved
+                1  29:0  = Base address [24:0]
+                2  31:0  = Data word
+        */
+		case 5:
+			return 2 + ((command >> 3) & 0x7ffff);
+
+		default:
+			printf("UNKNOWN PACKET TYPE %d\n", command & 7);
+			return 1;
+	}
+	return 1;
+}
+
+
+
+/*************************************
+ *
+ *  Command FIFO execution
+ *
+ *************************************/
+
+static UINT32 cmdfifo_execute(voodoo_state *v)
+{
+	UINT32 readptr = v->reg[cmdFifoRdPtr].u;
+	UINT32 *src = &v->fbi.cmdfifo[readptr / 4];
+	UINT32 command = *src++;
+	int count, inc, code, i;
+	setup_vertex svert;
+	offs_t target;
+	int cycles = 0;
+
+	switch (command & 7)
+	{
+		/*
+            Packet type 0: 1 or 2 words
+
+              Word  Bits
+                0  31:29 = reserved
+                0  28:6  = Address [24:2]
+                0   5:3  = Function (0 = NOP, 1 = JSR, 2 = RET, 3 = JMP LOCAL, 4 = JMP AGP)
+                0   2:0  = Packet type (0)
+                1  31:11 = reserved (JMP AGP only)
+                1  10:0  = Address [35:25]
+        */
+		case 0:
+
+			/* extract parameters */
+			target = (command >> 4) & 0x1fffffc;
+
+			/* switch off of the specific command */
+			switch ((command >> 3) & 7)
+			{
+				case 0:		/* NOP */
+					if (LOG_CMDFIFO) logerror("  NOP\n");
+					break;
+
+				case 1:		/* JSR */
+					if (LOG_CMDFIFO) logerror("  JSR $%06X\n", target);
+					printf("JSR in CMDFIFO!\n");
+					src = &v->fbi.cmdfifo[target / 4];
+					break;
+
+				case 2:		/* RET */
+					if (LOG_CMDFIFO) logerror("  RET $%06X\n", target);
+					printf("RET in CMDFIFO!\n");
+					break;
+
+				case 3:		/* JMP LOCAL FRAME BUFFER */
+					if (LOG_CMDFIFO) logerror("  JMP LOCAL FRAMEBUF $%06X\n", target);
+					src = &v->fbi.cmdfifo[target / 4];
+					break;
+
+				case 4:		/* JMP AGP */
+					if (LOG_CMDFIFO) logerror("  JMP AGP $%06X\n", target);
+					printf("JMP AGP in CMDFIFO!\n");
+					src = &v->fbi.cmdfifo[target / 4];
+					break;
+
+				default:
+					printf("INVALID JUMP COMMAND!\n");
+					logerror("  INVALID JUMP COMMAND\n");
+					break;
+			}
+			break;
+
+		/*
+            Packet type 1: 1 + N words
+
+              Word  Bits
+                0  31:16 = Number of words
+                0    15  = Increment?
+                0  14:3  = Register base
+                0   2:0  = Packet type (1)
+                1  31:0  = Data word
+        */
+		case 1:
+
+			/* extract parameters */
+			count = command >> 16;
+			inc = (command >> 15) & 1;
+			target = (command >> 3) & 0xfff;
+
+			if (LOG_CMDFIFO) logerror("  PACKET TYPE 1: count=%d inc=%d reg=%04X\n", count, inc, target);
+
+			/* loop over all registers and write them one at a time */
+			for (i = 0; i < count; i++, target += inc)
+				cycles += register_swapcheck_w(v, target, *src++);
+			break;
+
+		/*
+            Packet type 2: 1 + N words
+
+              Word  Bits
+                0  31:3  = 2D Register mask
+                0   2:0  = Packet type (2)
+                1  31:0  = Data word
+        */
+		case 2:
+			if (LOG_CMDFIFO) logerror("  PACKET TYPE 2: mask=%X\n", (command >> 3) & 0x1ffffff);
+
+			/* loop over all registers and write them one at a time */
+			for (i = 3; i <= 31; i++)
+				if (command & (1 << i))
+					cycles += register_swapcheck_w(v, bltSrcBaseAddr + (i - 3), *src++);
+			break;
+
+		/*
+            Packet type 3: 1 + N words
+
+              Word  Bits
+                0  31:29 = Number of dummy entries following the data
+                0   28   = Packed color data?
+                0   25   = Disable ping pong sign correction (0=normal, 1=disable)
+                0   24   = Culling sign (0=positive, 1=negative)
+                0   23   = Enable culling (0=disable, 1=enable)
+                0   22   = Strip mode (0=strip, 1=fan)
+                0   17   = Setup S1 and T1
+                0   16   = Setup W1
+                0   15   = Setup S0 and T0
+                0   14   = Setup W0
+                0   13   = Setup Wb
+                0   12   = Setup Z
+                0   11   = Setup Alpha
+                0   10   = Setup RGB
+                0   9:6  = Number of vertices
+                0   5:3  = Command (0=Independent tris, 1=Start new strip, 2=Continue strip)
+                0   2:0  = Packet type (3)
+                1  31:0  = Data word
+        */
+		case 3:
+
+			/* extract parameters */
+			count = (command >> 6) & 15;
+			code = (command >> 3) & 7;
+
+			if (LOG_CMDFIFO) logerror("  PACKET TYPE 3: count=%d code=%d mask=%03X smode=%02X pc=%d\n", count, code, (command >> 10) & 0xfff, (command >> 22) & 0x3f, (command >> 28) & 1);
+
+			/* copy relevant bits into the setup mode register */
+			v->reg[sSetupMode].u = ((command >> 10) & 0xff) | ((command >> 6) & 0xf0000);
+
+			/* loop over triangles */
+			for (i = 0; i < count; i++)
+			{
+				/* always extract X/Y */
+				svert.x = *(float *)src++;
+				svert.y = *(float *)src++;
+
+				/* load ARGB values if packed */
+				if (command & (1 << 28))
+				{
+					if (command & (3 << 10))
+					{
+						UINT32 argb = *src++;
+						if (command & (1 << 10))
+						{
+							svert.r = RGB_RED(argb);
+							svert.g = RGB_GREEN(argb);
+							svert.b = RGB_BLUE(argb);
+						}
+						if (command & (1 << 11))
+							svert.a = RGB_ALPHA(argb);
+					}
+				}
+
+				/* load ARGB values if not packed */
+				else
+				{
+					if (command & (1 << 10))
+					{
+						svert.r = *(float *)src++;
+						svert.g = *(float *)src++;
+						svert.b = *(float *)src++;
+					}
+					if (command & (1 << 11))
+						svert.a = *(float *)src++;
+				}
+
+				/* load Z and Wb values */
+				if (command & (1 << 12))
+					svert.z = *(float *)src++;
+				if (command & (1 << 13))
+					svert.wb = *(float *)src++;
+
+				/* load W0, S0, T0 values */
+				if (command & (1 << 14))
+					svert.w0 = *(float *)src++;
+				if (command & (1 << 15))
+				{
+					svert.s0 = *(float *)src++;
+					svert.t0 = *(float *)src++;
+				}
+
+				/* load W1, S1, T1 values */
+				if (command & (1 << 16))
+					svert.w1 = *(float *)src++;
+				if (command & (1 << 17))
+				{
+					svert.s1 = *(float *)src++;
+					svert.t1 = *(float *)src++;
+				}
+
+				/* if we're starting a new strip, or if this is the first of a set of verts */
+				/* for a series of individual triangles, initialize all the verts */
+				if ((code == 1 && i == 0) || (code == 0 && i % 3 == 0))
+				{
+					v->fbi.sverts = 1;
+					v->fbi.svert[0] = v->fbi.svert[1] = v->fbi.svert[2] = svert;
+				}
+
+				/* otherwise, add this to the list */
+				else
+				{
+					/* for strip mode, shuffle vertex 1 down to 0 */
+					if (!(command & (1 << 22)))
+						v->fbi.svert[0] = v->fbi.svert[1];
+
+					/* copy 2 down to 1 and add our new one regardless */
+					v->fbi.svert[1] = v->fbi.svert[2];
+					v->fbi.svert[2] = svert;
+
+					/* if we have enough, draw */
+					if (++v->fbi.sverts >= 3)
+						cycles += setup_and_draw_triangle(v);
+				}
+			}
+
+			/* account for the extra dummy words */
+			src += command >> 29;
+			break;
+
+		/*
+            Packet type 4: 1 + N words
+
+              Word  Bits
+                0  31:29 = Number of dummy entries following the data
+                0  28:15 = General register mask
+                0  14:3  = Register base
+                0   2:0  = Packet type (4)
+                1  31:0  = Data word
+        */
+		case 4:
+
+			/* extract parameters */
+			target = (command >> 3) & 0xfff;
+
+			if (LOG_CMDFIFO) logerror("  PACKET TYPE 4: mask=%X reg=%04X pad=%d\n", (command >> 15) & 0x3fff, target, command >> 29);
+
+			/* loop over all registers and write them one at a time */
+			for (i = 15; i <= 28; i++)
+				if (command & (1 << i))
+					cycles += register_swapcheck_w(v, target + (i - 15), *src++);
+
+			/* account for the extra dummy words */
+			src += command >> 29;
+			break;
+
+		/*
+            Packet type 5: 2 + N words
+
+              Word  Bits
+                0  31:30 = Space (0,1=reserved, 2=LFB, 3=texture)
+                0  29:26 = Byte disable W2
+                0  25:22 = Byte disable WN
+                0  21:3  = Num words
+                0   2:0  = Packet type (5)
+                1  31:30 = Reserved
+                1  29:0  = Base address [24:0]
+                2  31:0  = Data word
+        */
+		case 5:
+
+			/* extract parameters */
+			count = (command >> 3) & 0x7ffff;
+			target = *src++ / 4;
+
+			/* handle LFB writes */
+			if ((command >> 30) == 2)
+			{
+				if (LOG_CMDFIFO) logerror("  PACKET TYPE 5: LFB count=%d dest=%08X bd2=%X bdN=%X\n", count, target, (command >> 26) & 15, (command >> 22) & 15);
+
+				/* loop over words */
+				for (i = 0; i < count; i++)
+					cycles += lfb_w(v, target++, *src++, 0);
+			}
+			else if ((command >> 30) == 3)
+			{
+				if (LOG_CMDFIFO) logerror("  PACKET TYPE 5: textureRAM count=%d dest=%08X bd2=%X bdN=%X\n", count, target, (command >> 26) & 15, (command >> 22) & 15);
+
+				/* loop over words */
+				for (i = 0; i < count; i++)
+					cycles += texture_w(v, target++, *src++);
+			}
+			break;
+
+		default:
+			fprintf(stderr, "PACKET TYPE %d\n", command & 7);
+			break;
+	}
+
+	/* by default just update the read pointer past all the data we consumed */
+	v->reg[cmdFifoRdPtr].u = 4 * (src - v->fbi.cmdfifo);
+	return cycles;
+}
+
+
+
+/*************************************
+ *
+ *  Handle execution if we're ready
+ *
+ *************************************/
+
+static INT32 cmdfifo_execute_if_ready(voodoo_state *v)
+{
+	int needed_depth;
+	int cycles;
+
+	/* all CMDFIFO commands need at least one word */
+	if (v->reg[cmdFifoDepth].u == 0)
+		return -1;
+
+	/* see if we have enough for the current command */
+	needed_depth = cmdfifo_compute_expected_depth(v);
+	if (v->reg[cmdFifoDepth].u < needed_depth)
+		return -1;
+
+	/* execute */
+	cycles = cmdfifo_execute(v);
+	v->reg[cmdFifoDepth].u -= needed_depth;
+	return cycles;
+}
+
+
+
+/*************************************
+ *
+ *  Handle writes to the CMD FIFO
+ *
+ *************************************/
+
+static void cmdfifo_w(voodoo_state *v, offs_t offset, UINT32 data)
+{
+	UINT32 addr = v->fbi.cmdfifobase + offset * 4;
+
+	if (LOG_CMDFIFO_VERBOSE) logerror("CMDFIFO_w(%04X) = %08X\n", offset, data);
+
+	/* write the data */
+	if (offset < v->fbi.cmdfifomax)
+		v->fbi.cmdfifo[addr / 4] = data;
+
+	/* count holes? */
+	if (!FBIINIT7_DISABLE_CMDFIFO_HOLES(v->reg[fbiInit7].u))
+	{
+		/* in-order, no holes */
+		if (v->reg[cmdFifoHoles].u == 0 && addr == v->reg[cmdFifoAMin].u + 4)
+		{
+			v->reg[cmdFifoAMin].u = v->reg[cmdFifoAMax].u = addr;
+			v->reg[cmdFifoDepth].u++;
+		}
+
+		/* out-of-order, below the minimum */
+		else if (addr < v->reg[cmdFifoAMin].u)
+		{
+			if (v->reg[cmdFifoHoles].u != 0)
+				logerror("Unexpected CMDFIFO: AMin=%08X AMax=%08X Holes=%d WroteTo:%08X\n",
+						v->reg[cmdFifoAMin].u, v->reg[cmdFifoAMax].u, v->reg[cmdFifoHoles].u, addr);
+			v->reg[cmdFifoAMin].u = v->reg[cmdFifoAMax].u = addr;
+			v->reg[cmdFifoDepth].u++;
+		}
+
+		/* out-of-order, but within the min-max range */
+		else if (addr < v->reg[cmdFifoAMax].u)
+		{
+			v->reg[cmdFifoHoles].u--;
+			if (v->reg[cmdFifoHoles].u == 0)
+			{
+				v->reg[cmdFifoDepth].u += (v->reg[cmdFifoAMax].u - v->reg[cmdFifoAMin].u) / 4;
+				v->reg[cmdFifoAMin].u = v->reg[cmdFifoAMax].u;
+			}
+		}
+
+		/* out-of-order, bumping max */
+		else
+		{
+			v->reg[cmdFifoHoles].u += (addr - v->reg[cmdFifoAMax].u) / 4 - 1;
+			v->reg[cmdFifoAMax].u = addr;
+		}
+	}
+}
+
+
+
+/*************************************
+ *
  *  Stall the activecpu until we are
  *  ready
  *
@@ -1286,10 +1847,20 @@ static void stall_cpu(voodoo_state *v, int state, mame_time current_time)
  *
  *************************************/
 
+static INT32 register_swapcheck_w(voodoo_state *v, offs_t offset, UINT32 data)
+{
+	/* if there's a swapbufferCMD, make sure we bump the pending count */
+	if ((offset & 0xff) == swapbufferCMD)
+		v->fbi.swaps_pending++;
+	return register_w(v, offset, data);
+}
+
+
 static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 {
 	UINT32 origdata = data;
 	INT32 cycles = 0;
+	INT64 data64;
 	UINT8 regnum;
 	UINT8 chips;
 
@@ -1313,137 +1884,138 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 	{
 		/* Vertex data is 12.4 formatted fixed point */
 		case fvertexAx:
-			FLOAT2FIXED(data, 4);
+			data = float_to_int32(data, 4);
 		case vertexAx:
 			if (chips & 1) v->fbi.ax = (INT16)data;
 			break;
 
 		case fvertexAy:
-			FLOAT2FIXED(data, 4);
+			data = float_to_int32(data, 4);
 		case vertexAy:
 			if (chips & 1) v->fbi.ay = (INT16)data;
 			break;
 
 		case fvertexBx:
-			FLOAT2FIXED(data, 4);
+			data = float_to_int32(data, 4);
 		case vertexBx:
 			if (chips & 1) v->fbi.bx = (INT16)data;
 			break;
 
 		case fvertexBy:
-			FLOAT2FIXED(data, 4);
+			data = float_to_int32(data, 4);
 		case vertexBy:
 			if (chips & 1) v->fbi.by = (INT16)data;
 			break;
 
 		case fvertexCx:
-			FLOAT2FIXED(data, 4);
+			data = float_to_int32(data, 4);
 		case vertexCx:
 			if (chips & 1) v->fbi.cx = (INT16)data;
 			break;
 
 		case fvertexCy:
-			FLOAT2FIXED(data, 4);
+			data = float_to_int32(data, 4);
 		case vertexCy:
 			if (chips & 1) v->fbi.cy = (INT16)data;
 			break;
 
 		/* RGB data is 12.12 formatted fixed point */
 		case fstartR:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case startR:
 			if (chips & 1) v->fbi.startr = (INT32)(data << 8) >> 8;
 			break;
 
 		case fstartG:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case startG:
 			if (chips & 1) v->fbi.startg = (INT32)(data << 8) >> 8;
 			break;
 
 		case fstartB:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case startB:
 			if (chips & 1) v->fbi.startb = (INT32)(data << 8) >> 8;
 			break;
 
 		case fstartA:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case startA:
 			if (chips & 1) v->fbi.starta = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdRdX:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dRdX:
 			if (chips & 1) v->fbi.drdx = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdGdX:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dGdX:
 			if (chips & 1) v->fbi.dgdx = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdBdX:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dBdX:
 			if (chips & 1) v->fbi.dbdx = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdAdX:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dAdX:
 			if (chips & 1) v->fbi.dadx = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdRdY:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dRdY:
 			if (chips & 1) v->fbi.drdy = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdGdY:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dGdY:
 			if (chips & 1) v->fbi.dgdy = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdBdY:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dBdY:
 			if (chips & 1) v->fbi.dbdy = (INT32)(data << 8) >> 8;
 			break;
 
 		case fdAdY:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dAdY:
 			if (chips & 1) v->fbi.dady = (INT32)(data << 8) >> 8;
 			break;
 
 		/* Z data is 20.12 formatted fixed point */
 		case fstartZ:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case startZ:
 			if (chips & 1) v->fbi.startz = (INT32)data;
 			break;
 
 		case fdZdX:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dZdX:
 			if (chips & 1) v->fbi.dzdx = (INT32)data;
 			break;
 
 		case fdZdY:
-			FLOAT2FIXED(data, 12);
+			data = float_to_int32(data, 12);
 		case dZdY:
 			if (chips & 1) v->fbi.dzdy = (INT32)data;
 			break;
 
 		/* S,T data is 14.18 formatted fixed point, converted to 16.32 internally */
 		case fstartS:
-			if (chips & 2) v->tmu[0].starts = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].starts = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 2) v->tmu[0].starts = data64;
+			if (chips & 4) v->tmu[1].starts = data64;
 			break;
 		case startS:
 			if (chips & 2) v->tmu[0].starts = (INT64)(INT32)data << 14;
@@ -1451,8 +2023,9 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fstartT:
-			if (chips & 2) v->tmu[0].startt = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].startt = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 2) v->tmu[0].startt = data64;
+			if (chips & 4) v->tmu[1].startt = data64;
 			break;
 		case startT:
 			if (chips & 2) v->tmu[0].startt = (INT64)(INT32)data << 14;
@@ -1460,8 +2033,9 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fdSdX:
-			if (chips & 2) v->tmu[0].dsdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].dsdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 2) v->tmu[0].dsdx = data64;
+			if (chips & 4) v->tmu[1].dsdx = data64;
 			break;
 		case dSdX:
 			if (chips & 2) v->tmu[0].dsdx = (INT64)(INT32)data << 14;
@@ -1469,8 +2043,9 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fdTdX:
-			if (chips & 2) v->tmu[0].dtdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].dtdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 2) v->tmu[0].dtdx = data64;
+			if (chips & 4) v->tmu[1].dtdx = data64;
 			break;
 		case dTdX:
 			if (chips & 2) v->tmu[0].dtdx = (INT64)(INT32)data << 14;
@@ -1478,8 +2053,9 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fdSdY:
-			if (chips & 2) v->tmu[0].dsdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].dsdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 2) v->tmu[0].dsdy = data64;
+			if (chips & 4) v->tmu[1].dsdy = data64;
 			break;
 		case dSdY:
 			if (chips & 2) v->tmu[0].dsdy = (INT64)(INT32)data << 14;
@@ -1487,8 +2063,9 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fdTdY:
-			if (chips & 2) v->tmu[0].dtdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].dtdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 2) v->tmu[0].dtdy = data64;
+			if (chips & 4) v->tmu[1].dtdy = data64;
 			break;
 		case dTdY:
 			if (chips & 2) v->tmu[0].dtdy = (INT64)(INT32)data << 14;
@@ -1497,9 +2074,10 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 
 		/* W data is 2.30 formatted fixed point, converted to 16.32 internally */
 		case fstartW:
-			if (chips & 1) v->fbi.startw = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 2) v->tmu[0].startw = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].startw = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 1) v->fbi.startw = data64;
+			if (chips & 2) v->tmu[0].startw = data64;
+			if (chips & 4) v->tmu[1].startw = data64;
 			break;
 		case startW:
 			if (chips & 1) v->fbi.startw = (INT64)(INT32)data << 2;
@@ -1508,9 +2086,10 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fdWdX:
-			if (chips & 1) v->fbi.dwdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 2) v->tmu[0].dwdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].dwdx = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 1) v->fbi.dwdx = data64;
+			if (chips & 2) v->tmu[0].dwdx = data64;
+			if (chips & 4) v->tmu[1].dwdx = data64;
 			break;
 		case dWdX:
 			if (chips & 1) v->fbi.dwdx = (INT64)(INT32)data << 2;
@@ -1519,14 +2098,26 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case fdWdY:
-			if (chips & 1) v->fbi.dwdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 2) v->tmu[0].dwdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
-			if (chips & 4) v->tmu[1].dwdy = (INT64)(u2f(data) * (float)(1 << 16) * (float)(1 << 16));
+			data64 = float_to_int64(data, 32);
+			if (chips & 1) v->fbi.dwdy = data64;
+			if (chips & 2) v->tmu[0].dwdy = data64;
+			if (chips & 4) v->tmu[1].dwdy = data64;
 			break;
 		case dWdY:
 			if (chips & 1) v->fbi.dwdy = (INT64)(INT32)data << 2;
 			if (chips & 2) v->tmu[0].dwdy = (INT64)(INT32)data << 2;
 			if (chips & 4) v->tmu[1].dwdy = (INT64)(INT32)data << 2;
+			break;
+
+		/* setup bits */
+		case sARGB:
+			if (chips & 1)
+			{
+				v->reg[sAlpha].f = RGB_ALPHA(data);
+				v->reg[sRed].f = RGB_RED(data);
+				v->reg[sGreen].f = RGB_GREEN(data);
+				v->reg[sBlue].f = RGB_BLUE(data);
+			}
 			break;
 
 		/* mask off invalid bits for different cards */
@@ -1545,7 +2136,7 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 		case fogMode:
 			if (v->type < VOODOO_2)
 				data &= 0x0000003f;
-			if (chips & 1) v->reg[fbzMode].u = data;
+			if (chips & 1) v->reg[fogMode].u = data;
 			break;
 
 		/* triangle drawing */
@@ -1559,6 +2150,14 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			v->fbi.cheating_allowed = TRUE;
 			v->fbi.sign = data;
 			cycles = triangle(v);
+			break;
+
+		case sBeginTriCMD:
+			cycles = begin_triangle(v);
+			break;
+
+		case sDrawTriCMD:
+			cycles = draw_triangle(v);
 			break;
 
 		/* other commands */
@@ -1669,6 +2268,17 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			{
 				v->reg[regnum].u = data;
 				recompute_video_memory(v);
+			}
+			break;
+
+		/* cmdFifo controls */
+		case cmdFifoBaseAddr:
+			if (chips & 1)
+			{
+				v->fbi.cmdfifo = (UINT32 *)v->fbi.ram;
+				v->fbi.cmdfifobase = (data & 0x3ff) << 12;
+				v->fbi.cmdfifomax = (((data >> 16) & 0x3ff) - (data & 0x3ff) + 1) << 10;
+				printf("CMDFIFO = %08X-%08X\n", (data & 0x3ff) << 12, ((data >> 16) & 0x3ff) << 12);
 			}
 			break;
 
@@ -2177,7 +2787,7 @@ static INT32 texture_w(voodoo_state *v, offs_t offset, UINT32 data)
 
 		/* determine how 8-bit textures are handled the texture */
 		/* old code has a bit about how this is broken in gauntleg unless we always look at TMU0 */
-		if (TEXMODE_SEQ_8_DOWNLD(t->reg[textureMode].u))
+		if (TEXMODE_SEQ_8_DOWNLD(v->tmu[0].reg/*t->reg*/[textureMode].u))
 			tbaseaddr += tt * ((t->wmask >> lod) + 1) + ((ts << 1) & 0xfc);
 		else
 			tbaseaddr += tt * ((t->wmask >> lod) + 1) + (ts & 0xfc);
@@ -2220,6 +2830,13 @@ static INT32 texture_w(voodoo_state *v, offs_t offset, UINT32 data)
 
 static void flush_fifos(voodoo_state *v, mame_time current_time)
 {
+	static UINT8 in_flush;
+
+	/* check for recursive calls */
+	if (in_flush)
+		return;
+	in_flush = TRUE;
+
 	if (!v->pci.op_pending) osd_die("flush_fifos called with no pending operation");
 
 	if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:flush_fifos start -- pending=%d.%08X%08X cur=%d.%08X%08X\n", v->index,
@@ -2238,43 +2855,62 @@ static void flush_fifos(voodoo_state *v, mame_time current_time)
 			UINT32 address;
 			UINT32 data;
 
-			/* choose which FIFO to read from */
-			if (!fifo_empty(&v->fbi.fifo))
-				fifo = &v->fbi.fifo;
-			else if (!fifo_empty(&v->pci.fifo))
-				fifo = &v->pci.fifo;
-			else
+			/* we might be in CMDFIFO mode */
+			if (FBIINIT7_CMDFIFO_ENABLE(v->reg[fbiInit7].u))
 			{
-				v->pci.op_pending = FALSE;
-				if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:flush_fifos end -- FIFOs empty\n", v->index);
-				return;
+				/* if we don't have anything to execute, we're done for now */
+				cycles = cmdfifo_execute_if_ready(v);
+				if (cycles == -1)
+				{
+					v->pci.op_pending = FALSE;
+					in_flush = FALSE;
+					if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:flush_fifos end -- CMDFIFO empty\n", v->index);
+					return;
+				}
 			}
 
-			/* extract address and data */
-			address = fifo_remove(fifo);
-			data = fifo_remove(fifo);
-
-			/* target the appropriate location */
-			if ((address & (0xc00000/4)) == 0)
-				cycles = register_w(v, address, data);
-			else if (address & (0x800000/4))
-				cycles = texture_w(v, address, data);
+			/* else we are in standard PCI/memory FIFO mode */
 			else
 			{
-				UINT32 mem_mask = 0;
+				/* choose which FIFO to read from */
+				if (!fifo_empty(&v->fbi.fifo))
+					fifo = &v->fbi.fifo;
+				else if (!fifo_empty(&v->pci.fifo))
+					fifo = &v->pci.fifo;
+				else
+				{
+					v->pci.op_pending = FALSE;
+					in_flush = FALSE;
+					if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:flush_fifos end -- FIFOs empty\n", v->index);
+					return;
+				}
 
-				/* compute mem_mask */
-				if (address & 0x80000000)
-					mem_mask |= 0xffff0000;
-				if (address & 0x40000000)
-					mem_mask |= 0x0000ffff;
-				address &= 0xffffff;
+				/* extract address and data */
+				address = fifo_remove(fifo);
+				data = fifo_remove(fifo);
 
-				cycles = lfb_w(v, address, data, mem_mask);
+				/* target the appropriate location */
+				if ((address & (0xc00000/4)) == 0)
+					cycles = register_w(v, address, data);
+				else if (address & (0x800000/4))
+					cycles = texture_w(v, address, data);
+				else
+				{
+					UINT32 mem_mask = 0;
+
+					/* compute mem_mask */
+					if (address & 0x80000000)
+						mem_mask |= 0xffff0000;
+					if (address & 0x40000000)
+						mem_mask |= 0x0000ffff;
+					address &= 0xffffff;
+
+					cycles = lfb_w(v, address, data, mem_mask);
+				}
 			}
 
 			/* accumulate smaller operations */
-			if (cycles < 500)
+			if (cycles < ACCUMULATE_THRESHOLD)
 			{
 				v->extra_cycles += cycles;
 				cycles = 0;
@@ -2296,6 +2932,8 @@ static void flush_fifos(voodoo_state *v, mame_time current_time)
 
 	if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:flush_fifos end -- pending command complete at %d.%08X%08X\n", v->index,
 		v->pci.op_end_time.seconds, (UINT32)(v->pci.op_end_time.subseconds >> 32), (UINT32)v->pci.op_end_time.subseconds);
+
+	in_flush = FALSE;
 }
 
 
@@ -2315,14 +2953,67 @@ static void voodoo_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem_mas
 
 	/* should not be getting accesses while stalled */
 	if (v->pci.stall_state != NOT_STALLED)
-		osd_die("voodoo_w while stalled!\n");
+		logerror("voodoo_w while stalled!\n");
+
+	/* if we have something pending, flush the FIFOs up to the current time */
+	if (v->pci.op_pending)
+		flush_fifos(v, mame_timer_get_time());
 
 	/* special handling for registers */
 	if ((offset & 0xc00000/4) == 0)
 	{
+		UINT8 access;
+
+		/* some special stuff for Voodoo 2 */
+		if (v->type >= VOODOO_2)
+		{
+			/* we might be in CMDFIFO mode */
+			if (FBIINIT7_CMDFIFO_ENABLE(v->reg[fbiInit7].u))
+			{
+				/* if bit 21 is set, we're writing to the FIFO */
+				if (offset & 0x200000/4)
+				{
+					/* check for byte swizzling (bit 18) */
+					if (offset & 0x40000/4)
+						data = FLIPENDIAN_INT32(data);
+					cmdfifo_w(v, offset & 0xffff, data);
+
+					/* execute if we can */
+					if (!v->pci.op_pending)
+					{
+						INT32 cycles = cmdfifo_execute_if_ready(v);
+						if (cycles > 0)
+						{
+							v->pci.op_pending = TRUE;
+							v->pci.op_end_time = add_subseconds_to_mame_time(mame_timer_get_time(), (subseconds_t)cycles * v->subseconds_per_cycle);
+
+							if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:direct write start at %d.%08X%08X end at %d.%08X%08X\n", v->index,
+								mame_timer_get_time().seconds, (UINT32)(mame_timer_get_time().subseconds >> 32), (UINT32)mame_timer_get_time().subseconds,
+								v->pci.op_end_time.seconds, (UINT32)(v->pci.op_end_time.subseconds >> 32), (UINT32)v->pci.op_end_time.subseconds);
+						}
+					}
+					profiler_mark(PROFILER_END);
+					return;
+				}
+
+				/* we're a register access; but only certain ones are allowed */
+				access = register_access[offset & 0xff];
+				if (!(access & REGISTER_WRITETHRU))
+				{
+					logerror("Ignoring write to %s in CMDFIFO mode\n", voodoo_reg_name[offset & 0xff]);
+					profiler_mark(PROFILER_END);
+					return;
+				}
+			}
+
+			/* if not, we might be byte swizzled (bit 20) */
+			else if (offset & 0x100000/4)
+				data = FLIPENDIAN_INT32(data);
+		}
+
 		/* check the access behavior; note that the table works even if the */
 		/* alternate mapping is used */
-		UINT8 access = register_access[offset & 0xff];
+		access = register_access[offset & 0xff];
 
 		/* ignore if writes aren't allowed */
 		if (!(access & REGISTER_WRITE))
@@ -2339,10 +3030,6 @@ static void voodoo_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem_mas
 		if ((offset & 0xff) == swapbufferCMD)
 			v->fbi.swaps_pending++;
 	}
-
-	/* if we have something pending, flush the FIFOs up to the current time */
-	if (v->pci.op_pending)
-		flush_fifos(v, mame_timer_get_time());
 
 	/* if we don't have anything pending, or if FIFOs are disabled, just execute */
 	if (!v->pci.op_pending || !INITEN_ENABLE_PCI_FIFO(v->pci.init_enable))
@@ -2558,15 +3245,15 @@ static UINT32 register_r(voodoo_state *v, offs_t offset)
 		int logit = TRUE;
 
 		/* don't log multiple identical status reads from the same address */
-		if (regnum == status)
-		{
-			offs_t pc = activecpu_get_pc();
-			if (pc == v->last_status_pc && result == v->last_status_value)
-				logit = FALSE;
-			v->last_status_pc = pc;
-			v->last_status_value = result;
-		}
-
+/*      if (regnum == status)
+        {
+            offs_t pc = activecpu_get_pc();
+            if (pc == v->last_status_pc && result == v->last_status_value)
+                logit = FALSE;
+            v->last_status_pc = pc;
+            v->last_status_value = result;
+        }
+*/
 		if (logit)
 			logerror("VOODOO.%d.REG:%s read = %08X\n", v->index, voodoo_reg_name[regnum], result);
 	}
@@ -2790,7 +3477,7 @@ static INT32 swapbuffer(voodoo_state *v, UINT32 data)
 
 	/* determine how many cycles to wait; we deliberately overshoot here because */
 	/* the final count gets updated on the VBLANK */
-	return v->fbi.vblank_swap * v->freq / 30;
+	return (v->fbi.vblank_swap + 1) * v->freq / 30;
 }
 
 
@@ -2887,6 +3574,197 @@ static INT32 triangle(voodoo_state *v)
 
 	/* 1 pixel per clock, plus some setup time */
 	return TRIANGLE_SETUP_CLOCKS + v->reg[fbiPixelsIn].u - start_pixels_in;
+}
+
+
+static INT32 begin_triangle(voodoo_state *v)
+{
+	setup_vertex *sv = &v->fbi.svert[2];
+
+	/* extract all the data from registers */
+	sv->x = v->reg[sVx].f;
+	sv->y = v->reg[sVy].f;
+	sv->wb = v->reg[sWb].f;
+	sv->w0 = v->reg[sWtmu0].f;
+	sv->s0 = v->reg[sS_W0].f;
+	sv->t0 = v->reg[sT_W0].f;
+	sv->w1 = v->reg[sWtmu1].f;
+	sv->s1 = v->reg[sS_Wtmu1].f;
+	sv->t1 = v->reg[sT_Wtmu1].f;
+	sv->a = v->reg[sAlpha].f;
+	sv->r = v->reg[sRed].f;
+	sv->g = v->reg[sGreen].f;
+	sv->b = v->reg[sBlue].f;
+
+	/* spread it across all three verts and reset the count */
+	v->fbi.svert[0] = v->fbi.svert[1] = v->fbi.svert[2];
+	v->fbi.sverts = 1;
+
+	return 0;
+}
+
+
+static INT32 draw_triangle(voodoo_state *v)
+{
+	setup_vertex *sv = &v->fbi.svert[2];
+	int cycles = 0;
+
+	/* for strip mode, shuffle vertex 1 down to 0 */
+	if (!(v->reg[sSetupMode].u & (1 << 16)))
+		v->fbi.svert[0] = v->fbi.svert[1];
+
+	/* copy 2 down to 1 regardless */
+	v->fbi.svert[1] = v->fbi.svert[2];
+
+	/* extract all the data from registers */
+	sv->x = v->reg[sVx].f;
+	sv->y = v->reg[sVy].f;
+	sv->wb = v->reg[sWb].f;
+	sv->w0 = v->reg[sWtmu0].f;
+	sv->s0 = v->reg[sS_W0].f;
+	sv->t0 = v->reg[sT_W0].f;
+	sv->w1 = v->reg[sWtmu1].f;
+	sv->s1 = v->reg[sS_Wtmu1].f;
+	sv->t1 = v->reg[sT_Wtmu1].f;
+	sv->a = v->reg[sAlpha].f;
+	sv->r = v->reg[sRed].f;
+	sv->g = v->reg[sGreen].f;
+	sv->b = v->reg[sBlue].f;
+
+	/* if we have enough verts, go ahead and draw */
+	if (++v->fbi.sverts >= 3)
+		cycles = setup_and_draw_triangle(v);
+
+	return cycles;
+}
+
+
+
+/*************************************
+ *
+ *  Triangle setup
+ *
+ *************************************/
+
+static INT32 setup_and_draw_triangle(voodoo_state *v)
+{
+	float dx1, dy1, dx2, dy2;
+	float divisor, tdiv;
+
+	/* grab the X/Ys at least */
+	v->fbi.ax = (INT16)(v->fbi.svert[0].x * 16.0);
+	v->fbi.ay = (INT16)(v->fbi.svert[0].y * 16.0);
+	v->fbi.bx = (INT16)(v->fbi.svert[1].x * 16.0);
+	v->fbi.by = (INT16)(v->fbi.svert[1].y * 16.0);
+	v->fbi.cx = (INT16)(v->fbi.svert[2].x * 16.0);
+	v->fbi.cy = (INT16)(v->fbi.svert[2].y * 16.0);
+
+	/* compute the divisor */
+	divisor = 1.0f / ((v->fbi.svert[0].x - v->fbi.svert[1].x) * (v->fbi.svert[0].y - v->fbi.svert[2].y) -
+					  (v->fbi.svert[0].x - v->fbi.svert[2].x) * (v->fbi.svert[0].y - v->fbi.svert[1].y));
+
+	/* backface culling */
+	if (v->reg[sSetupMode].u & 0x20000)
+	{
+		int culling_sign = (v->reg[sSetupMode].u >> 18) & 1;
+		int divisor_sign = (divisor < 0);
+
+		/* if doing strips and ping pong is enabled, apply the ping pong */
+		if ((v->reg[sSetupMode].u & 0x90000) == 0x00000)
+			culling_sign ^= (v->fbi.sverts - 3) & 1;
+
+		/* if our sign matches the culling sign, we're done for */
+		if (divisor_sign == culling_sign)
+			return TRIANGLE_SETUP_CLOCKS;
+	}
+
+	/* compute the dx/dy values */
+	dx1 = v->fbi.svert[0].y - v->fbi.svert[2].y;
+	dx2 = v->fbi.svert[0].y - v->fbi.svert[1].y;
+	dy1 = v->fbi.svert[0].x - v->fbi.svert[1].x;
+	dy2 = v->fbi.svert[0].x - v->fbi.svert[2].x;
+
+	/* set up R,G,B */
+	tdiv = divisor * 4096.0f;
+	if (v->reg[sSetupMode].u & (1 << 0))
+	{
+		v->fbi.startr = (INT32)(v->fbi.svert[0].r * 4096.0f);
+		v->fbi.drdx = (INT32)(((v->fbi.svert[0].r - v->fbi.svert[1].r) * dx1 - (v->fbi.svert[0].r - v->fbi.svert[2].r) * dx2) * tdiv);
+		v->fbi.drdy = (INT32)(((v->fbi.svert[0].r - v->fbi.svert[2].r) * dy1 - (v->fbi.svert[0].r - v->fbi.svert[1].r) * dy2) * tdiv);
+		v->fbi.startg = (INT32)(v->fbi.svert[0].g * 4096.0f);
+		v->fbi.dgdx = (INT32)(((v->fbi.svert[0].g - v->fbi.svert[1].g) * dx1 - (v->fbi.svert[0].g - v->fbi.svert[2].g) * dx2) * tdiv);
+		v->fbi.dgdy = (INT32)(((v->fbi.svert[0].g - v->fbi.svert[2].g) * dy1 - (v->fbi.svert[0].g - v->fbi.svert[1].g) * dy2) * tdiv);
+		v->fbi.startb = (INT32)(v->fbi.svert[0].b * 4096.0f);
+		v->fbi.dbdx = (INT32)(((v->fbi.svert[0].b - v->fbi.svert[1].b) * dx1 - (v->fbi.svert[0].b - v->fbi.svert[2].b) * dx2) * tdiv);
+		v->fbi.dbdy = (INT32)(((v->fbi.svert[0].b - v->fbi.svert[2].b) * dy1 - (v->fbi.svert[0].b - v->fbi.svert[1].b) * dy2) * tdiv);
+	}
+
+	/* set up alpha */
+	if (v->reg[sSetupMode].u & (1 << 1))
+	{
+		v->fbi.starta = (INT32)(v->fbi.svert[0].a * 4096.0);
+		v->fbi.dadx = (INT32)(((v->fbi.svert[0].a - v->fbi.svert[1].a) * dx1 - (v->fbi.svert[0].a - v->fbi.svert[2].a) * dx2) * tdiv);
+		v->fbi.dady = (INT32)(((v->fbi.svert[0].a - v->fbi.svert[2].a) * dy1 - (v->fbi.svert[0].a - v->fbi.svert[1].a) * dy2) * tdiv);
+	}
+
+	/* set up Z */
+	if (v->reg[sSetupMode].u & (1 << 2))
+	{
+		v->fbi.startz = (INT32)(v->fbi.svert[0].z * 4096.0);
+		v->fbi.dzdx = (INT32)(((v->fbi.svert[0].z - v->fbi.svert[1].z) * dx1 - (v->fbi.svert[0].z - v->fbi.svert[2].z) * dx2) * tdiv);
+		v->fbi.dzdy = (INT32)(((v->fbi.svert[0].z - v->fbi.svert[2].z) * dy1 - (v->fbi.svert[0].z - v->fbi.svert[1].z) * dy2) * tdiv);
+	}
+
+	/* set up Wb */
+	tdiv = divisor * 65536.0f * 65536.0f;
+	if (v->reg[sSetupMode].u & (1 << 3))
+	{
+		v->fbi.startw = v->tmu[0].startw = v->tmu[1].startw = (INT64)(v->fbi.svert[0].wb * 65536.0f * 65536.0f);
+		v->fbi.dwdx = v->tmu[0].dwdx = v->tmu[1].dwdx = ((v->fbi.svert[0].wb - v->fbi.svert[1].wb) * dx1 - (v->fbi.svert[0].wb - v->fbi.svert[2].wb) * dx2) * tdiv;
+		v->fbi.dwdy = v->tmu[0].dwdy = v->tmu[1].dwdy = ((v->fbi.svert[0].wb - v->fbi.svert[2].wb) * dy1 - (v->fbi.svert[0].wb - v->fbi.svert[1].wb) * dy2) * tdiv;
+	}
+
+	/* set up W0 */
+	if (v->reg[sSetupMode].u & (1 << 4))
+	{
+		v->tmu[0].startw = v->tmu[1].startw = (INT64)(v->fbi.svert[0].w0 * 65536.0f * 65536.0f);
+		v->tmu[0].dwdx = v->tmu[1].dwdx = ((v->fbi.svert[0].w0 - v->fbi.svert[1].w0) * dx1 - (v->fbi.svert[0].w0 - v->fbi.svert[2].w0) * dx2) * tdiv;
+		v->tmu[0].dwdy = v->tmu[1].dwdy = ((v->fbi.svert[0].w0 - v->fbi.svert[2].w0) * dy1 - (v->fbi.svert[0].w0 - v->fbi.svert[1].w0) * dy2) * tdiv;
+	}
+
+	/* set up S0,T0 */
+	if (v->reg[sSetupMode].u & (1 << 5))
+	{
+		v->tmu[0].starts = v->tmu[1].starts = (INT64)(v->fbi.svert[0].s0 * 65536.0f * 65536.0f);
+		v->tmu[0].dsdx = v->tmu[1].dsdx = ((v->fbi.svert[0].s0 - v->fbi.svert[1].s0) * dx1 - (v->fbi.svert[0].s0 - v->fbi.svert[2].s0) * dx2) * tdiv;
+		v->tmu[0].dsdy = v->tmu[1].dsdy = ((v->fbi.svert[0].s0 - v->fbi.svert[2].s0) * dy1 - (v->fbi.svert[0].s0 - v->fbi.svert[1].s0) * dy2) * tdiv;
+		v->tmu[0].startt = v->tmu[1].startt = (INT64)(v->fbi.svert[0].t0 * 65536.0f * 65536.0f);
+		v->tmu[0].dtdx = v->tmu[1].dtdx = ((v->fbi.svert[0].t0 - v->fbi.svert[1].t0) * dx1 - (v->fbi.svert[0].t0 - v->fbi.svert[2].t0) * dx2) * tdiv;
+		v->tmu[0].dtdy = v->tmu[1].dtdy = ((v->fbi.svert[0].t0 - v->fbi.svert[2].t0) * dy1 - (v->fbi.svert[0].t0 - v->fbi.svert[1].t0) * dy2) * tdiv;
+	}
+
+	/* set up W1 */
+	if (v->reg[sSetupMode].u & (1 << 6))
+	{
+		v->tmu[1].startw = (INT64)(v->fbi.svert[0].w1 * 65536.0f * 65536.0f);
+		v->tmu[1].dwdx = ((v->fbi.svert[0].w1 - v->fbi.svert[1].w1) * dx1 - (v->fbi.svert[0].w1 - v->fbi.svert[2].w1) * dx2) * tdiv;
+		v->tmu[1].dwdy = ((v->fbi.svert[0].w1 - v->fbi.svert[2].w1) * dy1 - (v->fbi.svert[0].w1 - v->fbi.svert[1].w1) * dy2) * tdiv;
+	}
+
+	/* set up S1,T1 */
+	if (v->reg[sSetupMode].u & (1 << 7))
+	{
+		v->tmu[1].starts = (INT64)(v->fbi.svert[0].s1 * 65536.0f * 65536.0f);
+		v->tmu[1].dsdx = ((v->fbi.svert[0].s1 - v->fbi.svert[1].s1) * dx1 - (v->fbi.svert[0].s1 - v->fbi.svert[2].s1) * dx2) * tdiv;
+		v->tmu[1].dsdy = ((v->fbi.svert[0].s1 - v->fbi.svert[2].s1) * dy1 - (v->fbi.svert[0].s1 - v->fbi.svert[1].s1) * dy2) * tdiv;
+		v->tmu[1].startt = (INT64)(v->fbi.svert[0].t1 * 65536.0f * 65536.0f);
+		v->tmu[1].dtdx = ((v->fbi.svert[0].t1 - v->fbi.svert[1].t1) * dx1 - (v->fbi.svert[0].t1 - v->fbi.svert[2].t1) * dx2) * tdiv;
+		v->tmu[1].dtdy = ((v->fbi.svert[0].t1 - v->fbi.svert[2].t1) * dy1 - (v->fbi.svert[0].t1 - v->fbi.svert[1].t1) * dy2) * tdiv;
+	}
+
+	/* draw the triangle */
+	v->fbi.cheating_allowed = 1;
+	return triangle(v);
 }
 
 
@@ -3072,6 +3950,12 @@ RASTERIZER_ENTRY( 0x00600C09,  0x00045119, 0x00000000, 0x000B0779, 0x0824100F, 0
 RASTERIZER_ENTRY( 0x00600C09,  0x00045119, 0x00000000, 0x000B0779, 0x0824180F, 0xFFFFFFFF )	/* in-game */
 RASTERIZER_ENTRY( 0x00600C09,  0x00045119, 0x00000000, 0x000B0779, 0x082410CF, 0xFFFFFFFF )	/* in-game */
 RASTERIZER_ENTRY( 0x00600C09,  0x00045119, 0x00000000, 0x000B0779, 0x082418CF, 0xFFFFFFFF )	/* in-game */
+
+/* vaportrx ----> fbzColorPath alphaMode   fogMode,    fbzMode,    texMode0,   texMode1  */
+RASTERIZER_ENTRY( 0x00482405,  0x00000009, 0x00000000, 0x000B0739, 0x0C26100F, 0xFFFFFFFF )	/* intro */
+RASTERIZER_ENTRY( 0x00482405,  0x00000000, 0x00000000, 0x000B0739, 0x0C26100F, 0xFFFFFFFF )	/* in-game */
+RASTERIZER_ENTRY( 0x00482435,  0x00000000, 0x00000000, 0x000B0739, 0x0C261A0F, 0xFFFFFFFF )	/* in-game */
+RASTERIZER_ENTRY( 0x00482435,  0x00045119, 0x00000000, 0x000B07F9, 0x0C261ACF, 0xFFFFFFFF )	/* in-game */
 
 /* wg3dh -------> fbzColorPath alphaMode   fogMode,    fbzMode,    texMode0,   texMode1  */
 RASTERIZER_ENTRY( 0x00000035,  0x00045119, 0x00000000, 0x000B0779, 0x082410DF, 0xFFFFFFFF )	/* title */

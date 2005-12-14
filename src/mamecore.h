@@ -143,6 +143,13 @@ typedef union
 #endif
 
 
+/* this is not part of the C/C++ standards and is not present on */
+/* strict ANSI compilers or when compiling under GCC with -ansi */
+#ifndef M_PI
+#define M_PI    3.14159265358979323846
+#endif
+
+
 
 /***************************************************************************
 
@@ -161,6 +168,11 @@ typedef union
 
 /* Highly useful macro for compile-time knowledge of an array size */
 #define ARRAY_LENGTH(x) (sizeof(x) / sizeof(x[0]))
+
+
+/* macros to convert radians to degrees and degrees to radians */
+#define RADIAN_TO_DEGREE(x)   ((180.0 / M_PI) * (x))
+#define DEGREE_TO_RADIAN(x)   ((M_PI / 180.0) * (x))
 
 
 /* U64 and S64 are used to wrap long integer constants. */

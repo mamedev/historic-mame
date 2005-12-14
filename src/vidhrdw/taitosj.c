@@ -511,6 +511,11 @@ static void calculate_sprites_areas(void)
 
 		if (get_sprite_xy(i, &sx, &sy))
 		{
+			if (flipscreen[0])
+				sx = 238 - sx;
+			if (flipscreen[1])
+				sy = 242 - sy;
+
 			minx = sx;
 			miny = sy;
 
@@ -558,17 +563,9 @@ static int check_sprite_plane_bitpattern(int num)
 	flipy = taitosj_spritebank[offs + 2] & 2;
 
 	if (flipscreen[0])
-	{
 		flipx = !flipx;
-		minx = MIN(minx + 2, Machine->drv->screen_width);
-		maxx = MIN(maxx + 2, Machine->drv->screen_width);
-	}
 	if (flipscreen[1])
-	{
 		flipy = !flipy;
-		miny = MIN(miny + 2, Machine->drv->screen_height);
-		maxy = MIN(maxy + 2, Machine->drv->screen_height);
-	}
 
 	/* draw sprite into a bitmap and check if playfields collide */
 	drawgfx(sprite_plane_collbitmap1, Machine->gfx[(taitosj_spritebank[offs + 3] & 0x40) ? 3 : 1],

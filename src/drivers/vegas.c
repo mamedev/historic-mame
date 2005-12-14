@@ -607,7 +607,7 @@ static READ32_HANDLER( pci_3dfx_r )
 			result = 0x00044000;
 			break;
 
-		case 0x15:		/* ???? -- gauntleg want's 0s in the bits below */
+		case 0x15:		/* ???? -- gauntleg wants 0s in the bits below */
 			result &= 0xf000ffff;
 			break;
 	}
@@ -2393,9 +2393,6 @@ static void init_common(int ioasic, int serialnum)
 	midway_ioasic_init(ioasic, serialnum, 80, ioasic_irq);
 	midway_ioasic_set_auto_ack(1);
 	smc91c94_init(&ethernet_intf);
-
-	/* set our VBLANK callback */
-	voodoo_set_vblank_callback(0, vblank_assert);
 
 	/* allocate RAM for the timekeeper */
 	timekeeper_nvram_size = 0x8000;

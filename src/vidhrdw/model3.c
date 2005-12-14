@@ -40,17 +40,6 @@ typedef struct
 
 #define MAX_TRIANGLES		65536
 
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
-
-#define RADIAN_TO_DEGREE(x)		((x) * 180.0 / PI)
-#define max(x,y)		(((int)(x) > (int)(y)) ? (x) : (y))
-#define min(x,y)		(((int)(x) < (int)(y)) ? (x) : (y))
-
 
 /* forward declarations */
 static void real3d_traverse_display_list(void);
@@ -1555,7 +1544,7 @@ static void traverse_root_node(UINT32 address)
 
 	fov_x = viewport_left + viewport_right;
 	fov_y = viewport_top + viewport_bottom;
-	viewport_focal_length = (viewport_region_height / 2) / tan( (fov_y * 3.1415926535 / 180.0f) / 2.0f );
+	viewport_focal_length = (viewport_region_height / 2) / tan( (fov_y * M_PI / 180.0f) / 2.0f );
 
 	matrix_base_address = node[22];
 	/* TODO: where does node[23] point to ? LOD table ? */

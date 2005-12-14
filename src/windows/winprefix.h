@@ -1,6 +1,6 @@
 //============================================================
 //
-//  win32.h - Win32 prefix file, included by ALL files
+//  winprefix.h - Win32 prefix file, included by ALL files
 //
 //============================================================
 
@@ -23,7 +23,3 @@ void * realloc_file_line(void *memory, size_t size, const char *file, int line);
 #undef realloc
 #define realloc(x,y) realloc_file_line(x, y, __FILE__, __LINE__)
 #endif
-
-// missing math constants
-#define PI				3.1415927
-#define M_PI			PI

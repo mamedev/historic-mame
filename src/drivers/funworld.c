@@ -690,7 +690,7 @@ ROM_START( jollycrd )
 	ROM_LOAD( "jolycard.ch2", 0x8000, 0x8000, CRC(c512b103) SHA1(1f4e78e97855afaf0332fb75e1b5571aafd01c29) )
 ROM_END
 
-ROM_START( jollycdb )
+ROM_START( jolycdcr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "jollypkr.003", 0x8000, 0x8000, CRC(ea7340b4) SHA1(7dd468f28a488a4781521809d06db1d7917048ad) )
 
@@ -699,7 +699,7 @@ ROM_START( jollycdb )
 	ROM_LOAD( "jolycard.ch2", 0x8000, 0x8000, CRC(c512b103) SHA1(1f4e78e97855afaf0332fb75e1b5571aafd01c29) )
 ROM_END
 
-ROM_START( jollycdc )
+ROM_START( jolycdit )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "jn.bin", 0x8000, 0x8000, CRC(6ae00ed0) SHA1(5921c2882aeb5eadd0e04a477fa505ad35e9d98c) )
 
@@ -708,7 +708,7 @@ ROM_START( jollycdc )
 	ROM_LOAD( "2.bin", 0x8000, 0x8000, CRC(46805150) SHA1(63687ac44f6ace6d8924b2629536bcc7d3979ed2) )
 ROM_END
 
-ROM_START( jollycdd )
+ROM_START( jolycdat )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "bonucard.cpu", 0x4000, 0x4000, CRC(da342100) SHA1(451fa6074aad19e9efd148c3d18115a20a3d344a) )
 	ROM_CONTINUE(			  0xc000, 0x4000 )
@@ -719,7 +719,7 @@ ROM_START( jollycdd )
 	ROM_LOAD( "jolycard.ch2", 0x8000, 0x8000, CRC(c512b103) SHA1(1f4e78e97855afaf0332fb75e1b5571aafd01c29) )
 ROM_END
 
-ROM_START( jollycde )
+ROM_START( jolycdab )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "ig1poker.run", 0x8000, 0x8000, CRC(c96e6542) SHA1(ed6c0cf9fe8597dba9149b2225320d8d9c39219a) )
 	ROM_RELOAD(				  0x4000, 0x4000 )
@@ -811,10 +811,10 @@ static DRIVER_INIT( funworld )
 
 //    YEAR  NAME      PARENT    MACHINE   INPUT     INIT            COMPANY        FULLNAME
 GAME( 1985, jollycrd, 0, 		funworld, funworld, funworld, ROT0, "TAB-Austria", "Jolly Card (Austria)", GAME_WRONG_COLORS )
-GAME( 1993, jollycdb, jollycrd,	jollypkr, funworld, funworld, ROT0, "Soft Design", "Jolly Card (Croatia)", GAME_WRONG_COLORS )
-GAME( 199?, jollycdc, jollycrd,	funworld, funworld, funworld, ROT0, "bootleg?",    "Jolly Card (Italia, bad dump?)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
-GAME( 1986, jollycdd, jollycrd,	bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (Austria, Fun World)", GAME_WRONG_COLORS )
-GAME( 1990, jollycde, jollycrd, funworld, funworld, funworld, ROT0, "Inter Games", "Jolly Card (Austria, Fun World, bootleg)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAME( 1993, jolycdcr, jollycrd,	jollypkr, funworld, funworld, ROT0, "Soft Design", "Jolly Card (Croatia)", GAME_WRONG_COLORS )
+GAME( 199?, jolycdit, jollycrd,	funworld, funworld, funworld, ROT0, "bootleg?",    "Jolly Card (Italia, bad dump?)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAME( 1986, jolycdat, jollycrd,	bonuscrd, funworld, funworld, ROT0, "Fun World",   "Jolly Card (Austria, Fun World)", GAME_WRONG_COLORS )
+GAME( 1990, jolycdab, jollycrd, funworld, funworld, funworld, ROT0, "Inter Games", "Jolly Card (Austria, Fun World, bootleg)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
 GAME( 1986, bigdeal,  0,		bonuscrd, funworld, funworld, ROT0, "Fun World",   "Big Deal (Hungary, set 1)", GAME_WRONG_COLORS )
 GAME( 1986, bigdealb, bigdeal,	bonuscrd, funworld, funworld, ROT0, "Fun World",   "Big Deal (Hungary, set 2)", GAME_WRONG_COLORS )
 GAME( 1997, cuoreuno, 0, 		funworld, funworld, funworld, ROT0, "bootleg?",    "Cuore Uno (Italia)", GAME_WRONG_COLORS | GAME_NOT_WORKING )

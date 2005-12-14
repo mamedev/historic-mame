@@ -247,41 +247,41 @@ unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram )
 		switch( INS_RT( op ) )
 		{
 		case RT_BLTZ:
-			sprintf( buffer, "bltz    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+			sprintf( buffer, "bltz    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 			break;
 		case RT_BGEZ:
-			sprintf( buffer, "bgez    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+			sprintf( buffer, "bgez    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 			break;
 		case RT_BLTZAL:
-			sprintf( buffer, "bltzal  %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+			sprintf( buffer, "bltzal  %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 			break;
 		case RT_BGEZAL:
-			sprintf( buffer, "bgezal  %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+			sprintf( buffer, "bgezal  %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 			break;
 		}
 		break;
 	case OP_J:
-		sprintf( buffer, "j       $%08x", ( pc & 0xF0000000 ) + ( INS_TARGET( op ) << 2 ) );
+		sprintf( buffer, "j       $%08x", ( ( pc + 4 ) & 0xF0000000 ) + ( INS_TARGET( op ) << 2 ) );
 		break;
 	case OP_JAL:
-		sprintf( buffer, "jal     $%08x", ( pc & 0xF0000000 ) + ( INS_TARGET( op ) << 2 ) );
+		sprintf( buffer, "jal     $%08x", ( ( pc + 4 ) & 0xF0000000 ) + ( INS_TARGET( op ) << 2 ) );
 		break;
 	case OP_BEQ:
-		sprintf( buffer, "beq     %s,%s,$%08x", s_cpugenreg[ INS_RS( op ) ], s_cpugenreg[ INS_RT( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+		sprintf( buffer, "beq     %s,%s,$%08x", s_cpugenreg[ INS_RS( op ) ], s_cpugenreg[ INS_RT( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 		break;
 	case OP_BNE:
-		sprintf( buffer, "bne     %s,%s,$%08x", s_cpugenreg[ INS_RS( op ) ], s_cpugenreg[ INS_RT( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+		sprintf( buffer, "bne     %s,%s,$%08x", s_cpugenreg[ INS_RS( op ) ], s_cpugenreg[ INS_RT( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 		break;
 	case OP_BLEZ:
 		if( INS_RT( op ) == 0 )
 		{
-			sprintf( buffer, "blez    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+			sprintf( buffer, "blez    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 		}
 		break;
 	case OP_BGTZ:
 		if( INS_RT( op ) == 0 )
 		{
-			sprintf( buffer, "bgtz    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+			sprintf( buffer, "bgtz    %s,$%08x", s_cpugenreg[ INS_RS( op ) ], pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 		}
 		break;
 	case OP_ADDI:
@@ -321,10 +321,10 @@ unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram )
 			switch( INS_RT( op ) )
 			{
 			case RT_BCF:
-				sprintf( buffer, "bc0f    $%08x", pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+				sprintf( buffer, "bc0f    $%08x", pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 				break;
 			case RT_BCT:
-				sprintf( buffer, "bc0t    $%08x", pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+				sprintf( buffer, "bc0t    $%08x", pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 				break;
 			}
 			break;
@@ -376,10 +376,10 @@ unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram )
 			switch( INS_RT( op ) )
 			{
 			case RT_BCF:
-				sprintf( buffer, "bc1f    $%08x", pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+				sprintf( buffer, "bc1f    $%08x", pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 				break;
 			case RT_BCT:
-				sprintf( buffer, "bc1t    $%08x", pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+				sprintf( buffer, "bc1t    $%08x", pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 				break;
 			}
 			break;
@@ -412,10 +412,10 @@ unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram )
 			switch( INS_RT( op ) )
 			{
 			case RT_BCF:
-				sprintf( buffer, "bc2f    $%08x", pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+				sprintf( buffer, "bc2f    $%08x", pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 				break;
 			case RT_BCT:
-				sprintf( buffer, "bc2t    $%08x", pc + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
+				sprintf( buffer, "bc2t    $%08x", pc + 4 + ( MIPS_WORD_EXTEND( INS_IMMEDIATE( op ) ) << 2 ) );
 				break;
 			}
 			break;

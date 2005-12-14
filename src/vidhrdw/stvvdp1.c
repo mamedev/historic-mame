@@ -647,7 +647,6 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 				((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0x0000ffff) >> 0):
 				((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0xffff0000) >> 16);
 
-
 				mode = 1;
 				transmask = 0xf;
 
@@ -656,11 +655,8 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 					if (pix & 0x8000)
 					{
 						mode = 5;
-						transmask = 0x7fff;
-
+						transmask = 0x8000;
 					}
-
-
 				}
 				else
 				{
@@ -689,7 +685,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 			case 0x0028: // mode 5 32,768 colour RGB mode (16bits)
 				pix = gfxdata[patterndata+offsetcnt*2+1] | (gfxdata[patterndata+offsetcnt*2]<<8) ;
 				mode = 5;
-				transmask = 0x7fff;
+				transmask = 0x8000;
 				break;
 			default: // other settings illegal
 				pix = rand();
@@ -1159,7 +1155,7 @@ void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 	int zoompoint;
 	int x,y;
 	int x2,y2;
-	int screen_width,screen_height;
+	int screen_width,screen_height,screen_height_negative = 0;
 
 	direction = (stv2_current_sprite.CMDCTRL & 0x0030)>>4;
 
@@ -1177,15 +1173,16 @@ void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 	y = stv2_current_sprite.CMDYA;
 
 	screen_width = (INT16)stv2_current_sprite.CMDXB;
-	if ( screen_width < 0 )
+	if ( (screen_width < 0) && zoompoint)
 	{
 		screen_width = -screen_width;
 		direction |= 1;
 	}
 
 	screen_height = (INT16)stv2_current_sprite.CMDYB;
-	if ( screen_height < 0 )
+	if ( (screen_height < 0) && zoompoint )
 	{
+		screen_height_negative = 1;
 		screen_height = -screen_height;
 		direction |= 2;
 	}
@@ -1254,6 +1251,14 @@ void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 		q[2].y = y2s(y)+screen_height;
 		q[3].x = x2s(x);
 		q[3].y = y2s(y)+screen_height;
+
+		if ( screen_height_negative )
+		{
+			q[0].y += screen_height;
+			q[1].y += screen_height;
+			q[2].y += screen_height;
+			q[3].y += screen_height;
+		}
 	}
 	else
 	{
@@ -1318,59 +1323,100 @@ void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect,
 
 	if (vdp1_sprite_log) logerror ("Drawing Normal Sprite x %04x y %04x xsize %04x ysize %04x patterndata %06x\n",x,y,xsize,ysize,patterndata);
 
-	for (ycnt = 0; ycnt != ysize; ycnt++) {
+	if ( x > cliprect->max_x ) return;
+	if ( y > cliprect->max_y ) return;
 
-		if ( shading )
-		{
-			stv_setup_shading_for_line( xsize,
-										stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GA, stv_gouraud_shading.GD ),
-										stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GB, stv_gouraud_shading.GC ));
-		}
+	if ( shading == 0 )
+	{
+		int su, u, dux, duy;
+		int maxdrawypos, maxdrawxpos;
 
-		if (direction & 0x2) // 'yflip' (reverse direction)
+		u = 0;
+		dux = 1;
+		duy = xsize;
+		if ( direction & 0x1 ) //xflip
 		{
-			drawypos = y+((ysize-1)-ycnt);
+			dux = -1;
+			u = xsize - 1;
 		}
-		else
+		if ( direction & 0x2 ) //yflip
 		{
-			drawypos = y+ycnt;
+			duy = -xsize;
+			u += xsize*(ysize-1);
 		}
-
-		if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y))
+		if ( y < cliprect->min_y ) //clip y
+		{
+			u += xsize*(cliprect->min_y - y);
+			ysize -= (cliprect->min_y - y);
+			y = cliprect->min_y;
+		}
+		if ( x < cliprect->min_x ) //clip x
+		{
+			u += dux*(cliprect->min_x - x);
+			xsize -= (cliprect->min_x - x);
+			x = cliprect->min_x;
+		}
+		maxdrawypos = MIN(y+ysize-1,cliprect->max_y);
+		maxdrawxpos = MIN(x+xsize-1,cliprect->max_x);
+		for (drawypos = y; drawypos <= maxdrawypos; drawypos++ )
 		{
 			destline = stv_framebuffer_draw_lines[drawypos];
-
-			for (xcnt = 0; xcnt != xsize; xcnt ++)
+			su = u;
+			for (drawxpos = x; drawxpos <= maxdrawxpos; drawxpos++ )
 			{
-				if (direction & 0x1) // 'xflip' (reverse direction)
-				{
-					drawxpos = x+((xsize-1)-xcnt);
-				}
-				else
-				{
-					drawxpos = x+xcnt;
-				}
-				if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x))
-				{
-					int offsetcnt;
-
-					offsetcnt = ycnt*xsize+xcnt;
-
-					drawpixel(destline+drawxpos, patterndata, offsetcnt);
-				} // drawxpos
-				if  ( shading )
-				{
-					stv_compute_shading_for_next_point();
-				}
-
-			} // xcnt
-
-		} // if drawypos
-
-	} // ycny
-
-	if ( shading )
+				drawpixel( destline + drawxpos, patterndata, u );
+				u += dux;
+			}
+			u = su + duy;
+		}
+	}
+	else
 	{
+		for (ycnt = 0; ycnt != ysize; ycnt++) {
+
+			stv_setup_shading_for_line( xsize,
+					stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GA, stv_gouraud_shading.GD ),
+					stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GB, stv_gouraud_shading.GC ));
+
+			if (direction & 0x2) // 'yflip' (reverse direction)
+			{
+				drawypos = y+((ysize-1)-ycnt);
+			}
+			else
+			{
+				drawypos = y+ycnt;
+			}
+
+			if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y))
+			{
+				destline = stv_framebuffer_draw_lines[drawypos];
+
+				for (xcnt = 0; xcnt != xsize; xcnt ++)
+				{
+					if (direction & 0x1) // 'xflip' (reverse direction)
+					{
+						drawxpos = x+((xsize-1)-xcnt);
+					}
+					else
+					{
+						drawxpos = x+xcnt;
+					}
+					if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x))
+					{
+						int offsetcnt;
+
+						offsetcnt = ycnt*xsize+xcnt;
+
+						drawpixel(destline+drawxpos, patterndata, offsetcnt);
+					} // drawxpos
+					stv_compute_shading_for_next_point();
+
+				} // xcnt
+
+			} // if drawypos
+
+		} // ycny
+
 		stv_clear_gouraud_shading();
 	}
 }
@@ -1528,12 +1574,22 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 					break;
 
 				case 0x0002:
+					if ( (stv2_current_sprite.CMDPMOD & 0x7) == 4 )
+					{
+						//turn off Gouraud shading atm
+						stv2_current_sprite.CMDPMOD &= 0xfff8;
+					}
 					if (vdp1_sprite_log) logerror ("Sprite List Distorted Sprite\n");
 					stv2_current_sprite.ispoly = 0;
 					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0004:
+					if ( (stv2_current_sprite.CMDPMOD & 0x7) == 4 )
+					{
+						//turn off Gouraud shading atm
+						stv2_current_sprite.CMDPMOD &= 0xfff8;
+					}
 					if (vdp1_sprite_log) logerror ("Sprite List Polygon\n");
 					stv2_current_sprite.ispoly = 1;
 					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
