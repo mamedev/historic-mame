@@ -319,7 +319,7 @@ INLINE int CONDITION(int c)
     register writing
 ===========================================================================*/
 
-static void wr_inval(INT32 val) { logerror( "ADSP %04x: Writing to an invalid register!", adsp2100.ppc ); }
+static void wr_inval(INT32 val) { logerror( "ADSP %04x: Writing to an invalid register!\n", adsp2100.ppc ); }
 static void wr_ax0(INT32 val)   { adsp2100.core.ax0.s = val; }
 static void wr_ax1(INT32 val)   { adsp2100.core.ax1.s = val; }
 static void wr_mx0(INT32 val)   { adsp2100.core.mx0.s = val; }
@@ -371,16 +371,40 @@ static void wr_px(INT32 val)    { adsp2100.px = val; }
 static void wr_ifc(INT32 val)
 {
 	adsp2100.ifc = val;
-	if (val & 0x002) adsp2100.irq_latch[ADSP2101_IRQ0] = 0;
-	if (val & 0x004) adsp2100.irq_latch[ADSP2101_IRQ1] = 0;
-	if (val & 0x008) adsp2100.irq_latch[ADSP2101_SPORT0_RX] = 0;
-	if (val & 0x010) adsp2100.irq_latch[ADSP2101_SPORT0_TX] = 0;
-	if (val & 0x020) adsp2100.irq_latch[ADSP2101_IRQ2] = 0;
-	if (val & 0x080) adsp2100.irq_latch[ADSP2101_IRQ0] = 1;
-	if (val & 0x100) adsp2100.irq_latch[ADSP2101_IRQ1] = 1;
-	if (val & 0x200) adsp2100.irq_latch[ADSP2101_SPORT0_RX] = 1;
-	if (val & 0x400) adsp2100.irq_latch[ADSP2101_SPORT0_TX] = 1;
-	if (val & 0x800) adsp2100.irq_latch[ADSP2101_IRQ2] = 1;
+	if (chip_type >= CHIP_TYPE_ADSP2181)
+	{
+		/* clear timer */
+		if (val & 0x0002) adsp2100.irq_latch[ADSP2181_IRQ0] = 0;
+		if (val & 0x0004) adsp2100.irq_latch[ADSP2181_IRQ1] = 0;
+		/* clear BDMA */
+		if (val & 0x0010) adsp2100.irq_latch[ADSP2181_IRQE] = 0;
+		if (val & 0x0020) adsp2100.irq_latch[ADSP2181_SPORT0_RX] = 0;
+		if (val & 0x0040) adsp2100.irq_latch[ADSP2181_SPORT0_TX] = 0;
+		if (val & 0x0080) adsp2100.irq_latch[ADSP2181_IRQ2] = 0;
+		/* force timer */
+		if (val & 0x0200) adsp2100.irq_latch[ADSP2181_IRQ0] = 1;
+		if (val & 0x0400) adsp2100.irq_latch[ADSP2181_IRQ1] = 1;
+		/* force BDMA */
+		if (val & 0x1000) adsp2100.irq_latch[ADSP2181_IRQE] = 1;
+		if (val & 0x2000) adsp2100.irq_latch[ADSP2181_SPORT0_RX] = 1;
+		if (val & 0x4000) adsp2100.irq_latch[ADSP2181_SPORT0_TX] = 1;
+		if (val & 0x8000) adsp2100.irq_latch[ADSP2181_IRQ2] = 1;
+	}
+	else
+	{
+		/* clear timer */
+		if (val & 0x002) adsp2100.irq_latch[ADSP2101_IRQ0] = 0;
+		if (val & 0x004) adsp2100.irq_latch[ADSP2101_IRQ1] = 0;
+		if (val & 0x008) adsp2100.irq_latch[ADSP2101_SPORT0_RX] = 0;
+		if (val & 0x010) adsp2100.irq_latch[ADSP2101_SPORT0_TX] = 0;
+		if (val & 0x020) adsp2100.irq_latch[ADSP2101_IRQ2] = 0;
+		/* set timer */
+		if (val & 0x080) adsp2100.irq_latch[ADSP2101_IRQ0] = 1;
+		if (val & 0x100) adsp2100.irq_latch[ADSP2101_IRQ1] = 1;
+		if (val & 0x200) adsp2100.irq_latch[ADSP2101_SPORT0_RX] = 1;
+		if (val & 0x400) adsp2100.irq_latch[ADSP2101_SPORT0_TX] = 1;
+		if (val & 0x800) adsp2100.irq_latch[ADSP2101_IRQ2] = 1;
+	}
 	check_irqs();
 }
 static void wr_tx0(INT32 val)	{ if (adsp2100.sport_tx_callback) (*adsp2100.sport_tx_callback)(0, val); }
@@ -416,7 +440,7 @@ static void (*wr_reg[4][16])(INT32) =
     register reading
 ===========================================================================*/
 
-static INT32 rd_inval(void) { logerror( "ADSP %04x: Writing to an invalid register!", adsp2100.ppc ); return 0; }
+static INT32 rd_inval(void) { logerror( "ADSP %04x: Writing to an invalid register!\n", adsp2100.ppc ); return 0; }
 static INT32 rd_ax0(void)   { return adsp2100.core.ax0.s; }
 static INT32 rd_ax1(void)   { return adsp2100.core.ax1.s; }
 static INT32 rd_mx0(void)   { return adsp2100.core.mx0.s; }

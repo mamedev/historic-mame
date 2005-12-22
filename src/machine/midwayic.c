@@ -559,9 +559,11 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
-	ioasic.has_dcs = (mame_find_cpu_index("dcs2") != -1);
+	ioasic.has_dcs = (mame_find_cpu_index("dcs2") != -1 || mame_find_cpu_index("dcs3") != -1);
 	ioasic.has_cage = (mame_find_cpu_index("cage") != -1);
 	ioasic.dcs_cpu = mame_find_cpu_index("dcs2");
+	if (ioasic.dcs_cpu == (UINT8)-1)
+		ioasic.dcs_cpu = mame_find_cpu_index("dcs3");
 	ioasic.shuffle_type = shuffle;
 	ioasic.shuffle_map = &shuffle_maps[shuffle][0];
 	ioasic.auto_ack = 0;
@@ -652,7 +654,7 @@ static void cage_irq_handler(int reason)
 
 static void ioasic_input_empty(int state)
 {
-//  logerror("ioasic_input_empty(%d)\n", state);
+	logerror("ioasic_input_empty(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0080;
 	else
@@ -663,7 +665,7 @@ static void ioasic_input_empty(int state)
 
 static void ioasic_output_full(int state)
 {
-//  logerror("ioasic_output_full(%d)\n", state);
+	logerror("ioasic_output_full(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0040;
 	else

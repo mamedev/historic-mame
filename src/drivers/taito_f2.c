@@ -4044,7 +4044,7 @@ static MACHINE_DRIVER_START( ssi )
 
 	/* video hardware */
 	MDRV_VIDEO_START(taitof2_ssi)
-	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed)
+	MDRV_VIDEO_EOF(taitof2_partial_buffer_delayed_thundfox)	// buffer_delayed_thundfox instead of buffer_delayed fixes the butterfly powerup
 	MDRV_VIDEO_UPDATE(ssi)
 MACHINE_DRIVER_END
 

@@ -232,6 +232,7 @@ static void update_ethernet_irq(void)
 	UINT8 state = ethernet.reg[EREG_INTERRUPT] & 0xff;
 
 	/* update the IRQ state */
+	logerror("update_ethernet_irq(%02X & %02X)\n", state, mask);
 	ethernet.irq_state = ((mask & state) != 0);
 	if (ethernet.irq_handler)
 		(*ethernet.irq_handler)(ethernet.irq_state ? ASSERT_LINE : CLEAR_LINE);
@@ -280,7 +281,7 @@ static void finish_enqueue(int param)
 	update_stats();
 
 	/* loopback? */
-	if (ethernet.reg[EREG_TCR] & 0x2000)
+	if (ethernet.reg[EREG_TCR] & 0x2002)
 		if (ethernet.fifo_count < ETHER_RX_BUFFERS)
 		{
 			int buffer_len = ((ethernet.tx[3] << 8) | ethernet.tx[2]) & 0x7ff;

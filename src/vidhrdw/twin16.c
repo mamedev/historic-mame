@@ -141,7 +141,13 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 							case 2: pen = (pen>>4)&0xf; break;
 							case 3: pen = pen&0xf; break;
 							}
-							if( pen && pdest[sx]<pval) { dest[sx] = pal_data[pen]; pdest[sx]|=0x10; }
+
+							if( pen )
+							{
+								if(pdest[sx]<pval) { dest[sx] = pal_data[pen]; }
+
+								pdest[sx]|=0x10;
+							}
 						}
 					}
 				}

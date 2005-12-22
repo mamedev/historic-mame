@@ -3705,9 +3705,20 @@ static READ32_HANDLER( a_bus_ctrl_r )
 				case 0x8a620000:
 					ctrl_index++;
 					return ROM[ctrl_index];
-				case 0x77770000://rsgun,wrong
-					ctrl_index++;
-					return ROM[ctrl_index];
+				case 0x77770000: {//rsgun
+					UINT32 val =
+						((ctrl_index & 0xff)<<24) |
+						(((ctrl_index+1) & 0xff)<<16) |
+						(((ctrl_index+2) & 0xff)<<8) |
+						((ctrl_index+3) & 0xff);
+					if(ctrl_index & 0x100)
+						val &= 0x0f0f0f0f;
+					else
+						val &= 0xf0f0f0f0;
+
+					ctrl_index += 4;
+					return val;
+				}
 				case 0xff7f0000://elandore
 					if(a_bus[2] == 0xe69000f9)
 					{
@@ -3755,7 +3766,7 @@ static WRITE32_HANDLER ( a_bus_ctrl_w )
 			case 0x77c30000: ctrl_index = ((0x145ffac+0x28ea0)/4)-1; break;
 			case 0x8a620000: ctrl_index = ((0x145ffac+0x30380)/4)-1; break;
 			/*rsgun*/
-			case 0x77770000: ctrl_index = (0x2b153c/4)-1; break;
+			case 0x77770000: ctrl_index = 0; break;
 			/*elandore*/
 			case 0xff7f0000: ctrl_index = ((0x400000)/4)-1; break;
 			case 0xffbf0000: ctrl_index = (0x1c40000/4)-1; break;

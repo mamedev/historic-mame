@@ -353,6 +353,34 @@ static WRITE32_HANDLER( psh_ymf_pcm_w )
 	}
 }
 
+#define PCM_BANK_NO(n)	((ps4_io_select[0] >> (n * 4 + 24)) & 0x07)
+
+static void set_hotgmck_pcm_bank(int n)
+{
+	UINT8 *ymf_pcmbank = memory_region(REGION_SOUND1) + 0x200000;
+	UINT8 *pcm_rom = memory_region(REGION_SOUND2);
+
+	memcpy(ymf_pcmbank + n * 0x100000, pcm_rom + PCM_BANK_NO(n) * 0x100000, 0x100000);
+}
+
+static WRITE32_HANDLER( hotgmck_pcm_bank_w )
+{
+	int old_bank0 = PCM_BANK_NO(0);
+	int old_bank1 = PCM_BANK_NO(1);
+	int new_bank0, new_bank1;
+
+	COMBINE_DATA(&ps4_io_select[0]);
+
+	new_bank0 = PCM_BANK_NO(0);
+	new_bank1 = PCM_BANK_NO(1);
+
+	if (old_bank0 != new_bank0)
+		set_hotgmck_pcm_bank(0);
+
+	if (old_bank1 != new_bank1)
+		set_hotgmck_pcm_bank(1);
+}
+
 static ADDRESS_MAP_START( ps4_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_READ(MRA32_ROM)	// program ROM (1 meg)
 	AM_RANGE(0x02000000, 0x021fffff) AM_READ(MRA32_BANK1) // data ROM
@@ -745,7 +773,9 @@ ROM_START( hotgmck )
 	ROM_LOAD32_WORD( "3l.bin", 0x1800000, 0x400000, CRC(a8a646f7) SHA1(be96626f3a4c8eb81f0bb7d8ac1c4e6619be50c8) )
 	ROM_LOAD32_WORD( "3h.bin", 0x1800002, 0x400000, CRC(8c32becd) SHA1(9a8ddda4c6c007bb5cd4abb11859a4b7f1b1d578) )
 
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+
+	ROM_REGION( 0x800000, REGION_SOUND2, 0 )
 	ROM_LOAD( "snd0.bin", 0x000000, 0x400000, CRC(c090d51a) SHA1(d229753b536209fe0da1985ca694fd1a73bc0f39) )
 	ROM_LOAD( "snd1.bin", 0x400000, 0x400000, CRC(c24243b5) SHA1(2100d5d7d2e4b9ed90bde38cb61a5da09f00ce21) )
 ROM_END
@@ -770,7 +800,9 @@ ROM_START( hgkairak )
 	ROM_LOAD32_WORD( "5l.u7",  0x2800000, 0x400000, CRC(4639ef36) SHA1(324ffcfa1b1b9def00c15f628c59cea1d09b031d) )
 	ROM_LOAD32_WORD( "5h.u16", 0x2800002, 0x400000, CRC(549e9e9e) SHA1(90c1695c89c059852f8b4f714b3dfee006839b44) )
 
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+
+	ROM_REGION( 0x800000, REGION_SOUND2, 0 )
 	ROM_LOAD( "snd0.u10", 0x000000, 0x400000, CRC(0e8e5fdf) SHA1(041e3118f7a838dcc9fb99a1028fb48a452ba1d9) )
 	ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(d8057d2f) SHA1(51d96cc4e9da81cbd1e815c652707407e6c7c3ae) )
 ROM_END
@@ -800,7 +832,9 @@ ROM_START( hotgmck3 )
 	ROM_LOAD32_WORD( "7l.u9",  0x3800000, 0x400000, CRC(2ec78fb2) SHA1(194e9833ab7057c2f83c581e722b41631d99fccc) )
 	ROM_LOAD32_WORD( "7h.u18", 0x3800002, 0x400000, CRC(c1735612) SHA1(84e32d3249d57cdc8ea91780801eaa196c439895) )
 
-	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+
+	ROM_REGION( 0x800000, REGION_SOUND2, 0 )
 	ROM_LOAD( "snd0.u10", 0x000000, 0x400000, CRC(d62a0dba) SHA1(d81e2e1251b62eca8cd4d8eec2515b2cf7d7ff0a) )
 	ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(1df91fb4) SHA1(f0f2d2d717fbd16a67da9f0e21f288ceedef839f) )
 ROM_END
@@ -905,11 +939,28 @@ PC  :000029F8: BT      $000029EC
 	return ps4_ram[0x00001c/4];
 }
 
+static void install_hotgmck_pcm_bank(void)
+{
+	UINT8 *ymf_pcm = memory_region(REGION_SOUND1);
+	UINT8 *pcm_rom = memory_region(REGION_SOUND2);
+
+	memcpy(ymf_pcm, pcm_rom, 0x200000);
+
+	ps4_io_select[0] = (ps4_io_select[0] & 0x00ffffff) | 0x32000000;
+	set_hotgmck_pcm_bank(0);
+	set_hotgmck_pcm_bank(1);
+
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800008, 0x580000b, 0, 0, hotgmck_pcm_bank_w );
+	state_save_register_func_postload_int(set_hotgmck_pcm_bank, 0);
+	state_save_register_func_postload_int(set_hotgmck_pcm_bank, 1);
+}
+
 static DRIVER_INIT( hotgmck )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	memory_set_bankptr(1,&RAM[0x100000]);
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800000, 0x5800007, 0, 0, hotgmck_io32_r ); // Different Inputs
+	install_hotgmck_pcm_bank();	// Banked PCM ROM
 }
 
 static DRIVER_INIT( loderndf )
@@ -930,9 +981,9 @@ static DRIVER_INIT( hotdebut )
 
 /*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
-GAME( 1997, hotgmck,  0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1998, hgkairak, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1999, hotgmck3, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick 3 Digital Surfing (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1997, hotgmck,  0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", 0 )
+GAME( 1998, hgkairak, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", 0 )
+GAME( 1999, hotgmck3, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick 3 Digital Surfing (Japan)", 0 )
 GAME( 2000, loderndf, 0,        ps4small,  loderndf, loderndf, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B) (Japan)", 0 )
 GAME( 2000, loderdfa, loderndf, ps4small,  loderndf, loderdfa, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. A) (Japan)", 0 )
 GAME( 2000, hotdebut, 0,        ps4small,  hotdebut, hotdebut, ROT0,   "Psikyo / Moss", "Quiz de Idol! Hot Debut (Japan)", 0 )

@@ -15,7 +15,6 @@ UINT8 *chaknpop_ram;
 static UINT8 mcu_seed;
 static UINT8 mcu_select;
 static UINT8 mcu_result;
-static UINT8 mcu_wait;
 
 /* mcu data that is extracted from the real board! */
 /* updated on 2st Jun 2003 */
@@ -82,9 +81,6 @@ READ8_HANDLER( chaknpop_mcu_portA_r )
 READ8_HANDLER( chaknpop_mcu_portB_r )
 {
 	//logerror("%04x: MCU portB read\n", activecpu_get_pc());
-
-	if (--mcu_wait)
-		return 0x00;
 
 	return 0xff;
 }
@@ -163,11 +159,9 @@ DRIVER_INIT( chaknpop )
 	state_save_register_UINT8("chankpop", 0, "mcu_seed",    &mcu_seed,    1);
 	state_save_register_UINT8("chankpop", 0, "mcu_result",  &mcu_result,  1);
 	state_save_register_UINT8("chankpop", 0, "mcu_select",  &mcu_select,  1);
-	state_save_register_UINT8("chankpop", 0, "mcu_wait",    &mcu_wait,    1);
 }
 
 MACHINE_INIT( chaknpop )
 {
 	mcu_seed = MCU_INITIAL_SEED;
-	mcu_wait = 0;
 }

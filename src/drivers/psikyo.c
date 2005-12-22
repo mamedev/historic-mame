@@ -84,7 +84,13 @@ extern void psikyo_switch_banks( int tilemap, int bank );
 
 /* Variables only used here */
 
-static int ack_latch;
+static UINT8 psikyo_soundlatch;
+static int z80_nmi, mcu_status;
+
+MACHINE_INIT( psikyo )
+{
+	z80_nmi = mcu_status = 0;
+}
 
 
 /***************************************************************************
@@ -95,19 +101,50 @@ static int ack_latch;
 
 ***************************************************************************/
 
+static int psikyo_readcoinport(int has_mcu)
+{
+	int ret = readinputport(1) & ~0x84;
+
+	if (has_mcu)
+	{
+		/* Don't know exactly what this bit is, but s1945 and tengai
+           both spin waiting for it to go low during POST.  Also,
+           the following code in tengai (don't know where or if it is
+           reached) waits for it to pulse:
+
+           01A546:  move.b  (A2), D0    ; A2 = $c00003
+           01A548:  andi.b  #$4, D0
+           01A54C:  beq     $1a546
+           01A54E:  move.b  (A2), D0
+           01A550:  andi.b  #$4, D0
+           01A554:  bne     $1a54e
+
+           Interestingly, s1945jn has the code that spins on this bit,
+           but said code is never reached.  Prototype? */
+		if (mcu_status) ret |= 0x04;
+		mcu_status = !mcu_status;	/* hack */
+	}
+
+	if (z80_nmi)
+	{
+		ret |= 0x80;
+
+		/* main CPU might be waiting for sound CPU to finish NMI,
+           so set a timer to give sound CPU a chance to run */
+		timer_set(TIME_NOW, 0, NULL);
+//      logerror("PC %06X - Read coin port during Z80 NMI\n", activecpu_get_pc());
+	}
+
+	return ret;
+}
+
 READ32_HANDLER( sngkace_input_r )
 {
 	switch(offset)
 	{
 		case 0x0:	return (readinputport(0) << 16) | 0xffff;
 		case 0x1:	return (readinputport(2) << 16) | readinputport(4);
-		case 0x2:
-		{
-					const int bit = 0x80;
-					int ret = ack_latch ? bit : 0;
-					if (Machine->sample_rate == 0)	ret = 0;
-					return (((readinputport(1) & ~bit) | ret) << 16) | readinputport(3);
-		}
+		case 0x2:	return (psikyo_readcoinport(0) << 16) | readinputport(3);
 		default:	logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 					return 0;
 	}
@@ -117,14 +154,7 @@ READ32_HANDLER( gunbird_input_r )
 {
 	switch(offset)
 	{
-		case 0x0:
-		{
-					const int bit = 0x80;
-					int ret = ack_latch ? bit : 0;
-
-					if (Machine->sample_rate == 0)	ret = 0;
-					return (readinputport(0) << 16) | (readinputport(1) & ~bit) | ret;
-		}
+		case 0x0:	return (readinputport(0) << 16) | psikyo_readcoinport(0);
 		case 0x1:	return (readinputport(2) << 16) | readinputport(3);
 		default:	logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 					return 0;
@@ -132,17 +162,17 @@ READ32_HANDLER( gunbird_input_r )
 }
 
 
+static void psikyo_soundlatch_callback(int data)
+{
+	psikyo_soundlatch = data;
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
+	z80_nmi = 1;
+}
+
 WRITE32_HANDLER( psikyo_soundlatch_w )
 {
 	if (ACCESSING_LSB32)
-	{
-		if (Machine->sample_rate == 0)		return;
-
-		ack_latch = 1;
-		soundlatch_w(0, data & 0xff);
-		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
-	}
+		timer_set(TIME_NOW, data & 0xff, psikyo_soundlatch_callback);
 }
 
 /***************************************************************************
@@ -152,14 +182,7 @@ WRITE32_HANDLER( psikyo_soundlatch_w )
 WRITE32_HANDLER( s1945_soundlatch_w )
 {
 	if (!(mem_mask & 0x00ff0000))
-	{
-		if (Machine->sample_rate == 0)		return;
-
-		ack_latch = 1;
-		soundlatch_w(0, (data >> 16) & 0xff);
-		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
-	}
+		timer_set(TIME_NOW, (data >> 16) & 0xff, psikyo_soundlatch_callback);
 }
 
 static UINT8 s1945_table[256] = {
@@ -167,7 +190,6 @@ static UINT8 s1945_table[256] = {
 	0x00, 0x00, 0x2c, 0x9e, 0x00, 0x00, 0x2f, 0x0e, 0x00, 0x00, 0x31, 0x10, 0x00, 0x00, 0xc5, 0x1e,
 	0x00, 0x00, 0x32, 0x90, 0x00, 0x00, 0xac, 0x5c, 0x00, 0x00, 0x2b, 0xc0
 };
-
 
 static UINT8 s1945a_table[256] = {
 	0x00, 0x00, 0x64, 0xbe, 0x00, 0x00, 0x26, 0x2c, 0x00, 0x00, 0x2c, 0xda, 0x00, 0x00, 0x2c, 0xbc,
@@ -288,13 +310,7 @@ READ32_HANDLER( s1945_input_r )
 {
 	switch(offset)
 	{
-		case 0x0:
-		{
-					const int bit = 0x04;
-					int ret = ack_latch ? bit : 0;
-					if (Machine->sample_rate == 0)	ret = 0;
-					return (readinputport(0) << 16) | (readinputport(1) & ~bit) | ret;
-		}
+		case 0x0:	return (readinputport(0) << 16) | psikyo_readcoinport(1);
 		case 0x1:	return (((readinputport(2) << 16) | readinputport(3)) & 0xffff000f) | s1945_mcu_r(offset-1, mem_mask);
 		case 0x2:	return s1945_mcu_r(offset-1, mem_mask);
 		default:	logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
@@ -358,10 +374,17 @@ static void sound_irq( int irq )
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-WRITE8_HANDLER( psikyo_ack_latch_w )
+READ8_HANDLER( psikyo_soundlatch_r )
 {
-	ack_latch = 0;
+	return psikyo_soundlatch;
 }
+
+WRITE8_HANDLER( psikyo_clear_nmi_w )
+{
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
+	z80_nmi = 0;
+}
+
 
 /***************************************************************************
                         Sengoku Ace / Samurai Aces
@@ -391,7 +414,7 @@ static ADDRESS_MAP_START( sngkace_sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_READ(YM2610_status_port_0_A_r		)
 	AM_RANGE(0x02, 0x02) AM_READ(YM2610_status_port_0_B_r		)
-	AM_RANGE(0x08, 0x08) AM_READ(soundlatch_r					)
+	AM_RANGE(0x08, 0x08) AM_READ(psikyo_soundlatch_r			)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sngkace_sound_writeport, ADDRESS_SPACE_IO, 8 )
@@ -401,7 +424,7 @@ static ADDRESS_MAP_START( sngkace_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM2610_control_port_0_B_w		)
 	AM_RANGE(0x03, 0x03) AM_WRITE(YM2610_data_port_0_B_w		)
 	AM_RANGE(0x04, 0x04) AM_WRITE(sngkace_sound_bankswitch_w	)
-	AM_RANGE(0x0c, 0x0c) AM_WRITE(psikyo_ack_latch_w			)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(psikyo_clear_nmi_w			)
 ADDRESS_MAP_END
 
 
@@ -437,7 +460,7 @@ static ADDRESS_MAP_START( gunbird_sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x04, 0x04) AM_READ(YM2610_status_port_0_A_r		)
 	AM_RANGE(0x06, 0x06) AM_READ(YM2610_status_port_0_B_r		)
-	AM_RANGE(0x08, 0x08) AM_READ(soundlatch_r					)
+	AM_RANGE(0x08, 0x08) AM_READ(psikyo_soundlatch_r			)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gunbird_sound_writeport, ADDRESS_SPACE_IO, 8 )
@@ -447,9 +470,8 @@ static ADDRESS_MAP_START( gunbird_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x05, 0x05) AM_WRITE(YM2610_data_port_0_A_w		)
 	AM_RANGE(0x06, 0x06) AM_WRITE(YM2610_control_port_0_B_w		)
 	AM_RANGE(0x07, 0x07) AM_WRITE(YM2610_data_port_0_B_w		)
-	AM_RANGE(0x0c, 0x0c) AM_WRITE(psikyo_ack_latch_w			)
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(psikyo_clear_nmi_w			)
 ADDRESS_MAP_END
-
 
 
 /***************************************************************************
@@ -459,7 +481,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( s1945_sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x08, 0x08) AM_READ(YMF278B_status_port_0_r		)
-	AM_RANGE(0x10, 0x10) AM_READ(soundlatch_r					)
+	AM_RANGE(0x10, 0x10) AM_READ(psikyo_soundlatch_r			)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( s1945_sound_writeport, ADDRESS_SPACE_IO, 8 )
@@ -472,7 +494,7 @@ static ADDRESS_MAP_START( s1945_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0b, 0x0b) AM_WRITE(YMF278B_data_port_0_B_w		)
 	AM_RANGE(0x0c, 0x0c) AM_WRITE(YMF278B_control_port_0_C_w	)
 	AM_RANGE(0x0d, 0x0d) AM_WRITE(YMF278B_data_port_0_C_w		)
-	AM_RANGE(0x18, 0x18) AM_WRITE(psikyo_ack_latch_w			)
+	AM_RANGE(0x18, 0x18) AM_WRITE(psikyo_clear_nmi_w			)
 ADDRESS_MAP_END
 
 
@@ -507,7 +529,7 @@ ADDRESS_MAP_END
 #define PSIKYO_PORT_COIN \
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW,  IPT_COIN1    ) \
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW,  IPT_COIN2    ) \
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW,  IPT_UNKNOWN  ) \
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SPECIAL  ) \
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN  ) \
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW,  IPT_SERVICE1 ) \
 	PORT_BIT(0x0020, IP_ACTIVE_LOW,  IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) \
@@ -1555,6 +1577,8 @@ static MACHINE_DRIVER_START( sngkace )
 	MDRV_FRAMES_PER_SECOND(59.3)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
+	MDRV_MACHINE_INIT(psikyo)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(320, 256)
@@ -1605,6 +1629,8 @@ static MACHINE_DRIVER_START( gunbird )
 
 	MDRV_FRAMES_PER_SECOND(59.3)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
+
+	MDRV_MACHINE_INIT(psikyo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1666,6 +1692,8 @@ static MACHINE_DRIVER_START( s1945 )
 
 	MDRV_FRAMES_PER_SECOND(59.3)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
+
+	MDRV_MACHINE_INIT(psikyo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2175,6 +2203,7 @@ DRIVER_INIT( s1945j )
 
 	psikyo_ka302c_banking = 0; // Banking is controlled by mcu
 }
+
 
 /***************************************************************************
 

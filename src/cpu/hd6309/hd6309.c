@@ -106,6 +106,10 @@
 #define false 0
 #endif
 
+#ifdef MAME_DEBUG
+extern offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+#endif
+
 /*#define BIG_SWITCH*/
 
 #ifdef MAME_DEBUG
@@ -615,16 +619,6 @@ static void set_irq_line(int irqline, int state)
 		if (state == CLEAR_LINE) return;
 		CHECK_IRQ_LINES();
 	}
-}
-
-static offs_t hd6309_dasm(char *buffer, offs_t pc)
-{
-#ifdef MAME_DEBUG
-	return Dasm6309(buffer,pc);
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
 }
 
 /* includes the actual opcode implementations */
@@ -1306,7 +1300,9 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = hd6309_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = hd6309_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hd6309_dasm;		break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = hd6309_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = hd6309.irq_callback; break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hd6309_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = hd6309_reg_layout;			break;

@@ -24,7 +24,7 @@
     Voodoo 2:
         2,4MB frame buffer RAM
         2,4,8,16MB texture RAM
-        75MHz clock frquency
+        90MHz clock frquency
         clears @ 2 pixels/clock (RGB and depth simultaneously)
         renders @ 1 pixel/clock
         ultrafast clears @ 16 pixels/clock
@@ -34,7 +34,7 @@
     Voodoo Banshee (h3):
         Integrated VGA support
         2,4,8MB frame buffer RAM
-        75MHz clock frquency
+        90MHz clock frquency
         clears @ 2 pixels/clock (RGB and depth simultaneously)
         renders @ 1 pixel/clock
         ultrafast clears @ 32 pixels/clock
@@ -151,6 +151,7 @@ bits(7:4) and bit(24)), X, and Y:
 #define DEBUG_DEPTH			(0)
 #define DEBUG_LOD			(0)
 
+#define LOG_VBLANK_SWAP		(0)
 #define LOG_FIFO			(0)
 #define LOG_FIFO_VERBOSE	(0)
 #define LOG_REGISTERS		(0)
@@ -277,7 +278,7 @@ int voodoo_start(int which, int type, int fbmem_in_mb, int tmem0_in_mb, int tmem
 	v->index = which;
 	v->type = type;
 	v->chipmask = 0x01;
-	v->freq = (type == VOODOO_1) ? 50000000 : 75000000;
+	v->freq = (type == VOODOO_1) ? 50000000 : 90000000;
 	v->subseconds_per_cycle = MAX_SUBSECONDS / v->freq;
 	v->trigger = 51324 + which;
 
@@ -649,7 +650,7 @@ static void swap_buffers(voodoo_state *v)
 {
 	int count;
 
-	logerror("--- swap_buffers @ %d\n", cpu_getscanline());
+	if (LOG_VBLANK_SWAP) logerror("--- swap_buffers @ %d\n", cpu_getscanline());
 
 	/* force a partial update */
 	force_partial_update(cpu_getscanline());
@@ -751,7 +752,7 @@ static void vblank_off_callback(void *param)
 {
 	voodoo_state *v = param;
 
-	logerror("--- vblank end\n");
+	if (LOG_VBLANK_SWAP) logerror("--- vblank end\n");
 
 	/* set internal state and call the client */
 	v->fbi.vblank = FALSE;
@@ -767,24 +768,24 @@ static void vblank_callback(void *param)
 {
 	voodoo_state *v = param;
 
-	logerror("--- vblank start\n");
+	if (LOG_VBLANK_SWAP) logerror("--- vblank start\n");
 
 	/* flush the pipes */
 	if (v->pci.op_pending)
 	{
-		logerror("---- vblank flush begin\n");
+		if (LOG_VBLANK_SWAP) logerror("---- vblank flush begin\n");
 		flush_fifos(v, mame_timer_get_time());
-		logerror("---- vblank flush end\n");
+		if (LOG_VBLANK_SWAP) logerror("---- vblank flush end\n");
 	}
 
 	/* increment the count */
 	v->fbi.vblank_count++;
 	if (v->fbi.vblank_count > 250)
 		v->fbi.vblank_count = 250;
-	logerror("---- vblank count = %d", v->fbi.vblank_count);
+	if (LOG_VBLANK_SWAP) logerror("---- vblank count = %d", v->fbi.vblank_count);
 	if (v->fbi.vblank_swap_pending)
-		logerror(" (target=%d)", v->fbi.vblank_swap);
-	logerror("\n");
+		if (LOG_VBLANK_SWAP) logerror(" (target=%d)", v->fbi.vblank_swap);
+	if (LOG_VBLANK_SWAP) logerror("\n");
 
 	/* if we're past the swap count, do the swap */
 	if (v->fbi.vblank_swap_pending && v->fbi.vblank_count >= v->fbi.vblank_swap)
@@ -858,7 +859,7 @@ static void recompute_video_memory(voodoo_state *v)
 	}
 	v->fbi.rowpixels = v->fbi.tile_width * v->fbi.x_tiles;
 
-	logerror("VOODOO.%d.VIDMEM: buffer_pages=%X  fifo=%X-%X  tiles=%X  rowpix=%d\n", v->index, buffer_pages, fifo_start_page, fifo_last_page, v->fbi.x_tiles, v->fbi.rowpixels);
+//  logerror("VOODOO.%d.VIDMEM: buffer_pages=%X  fifo=%X-%X  tiles=%X  rowpix=%d\n", v->index, buffer_pages, fifo_start_page, fifo_last_page, v->fbi.x_tiles, v->fbi.rowpixels);
 
 	/* first RGB buffer always starts at 0 */
 	v->fbi.rgb[0] = v->fbi.ram;
@@ -914,7 +915,7 @@ static void recompute_video_memory(voodoo_state *v)
             (UINT8 *)v->fbi.rgb[1] - (UINT8 *)v->fbi.ram,
             v->fbi.rgb[2] ? ((UINT8 *)v->fbi.rgb[2] - (UINT8 *)v->fbi.ram) : 0,
             (UINT8 *)v->fbi.aux - (UINT8 *)v->fbi.ram);*/
-	logerror("VOODOO.%d.VIDMEM: rgbmax=%X,%X,%X  auxmax=%X\n", v->index, v->fbi.rgbmax[0], v->fbi.rgbmax[1], v->fbi.rgbmax[2], v->fbi.auxmax);
+//  logerror("VOODOO.%d.VIDMEM: rgbmax=%X,%X,%X  auxmax=%X\n", v->index, v->fbi.rgbmax[0], v->fbi.rgbmax[1], v->fbi.rgbmax[2], v->fbi.auxmax);
 
 	/* compute the memory FIFO location and size */
 	if (fifo_last_page > v->fbi.mask / 0x1000)
@@ -939,9 +940,14 @@ static void recompute_video_memory(voodoo_state *v)
 	/* reset the FIFO */
 	fifo_reset(&v->fbi.fifo);
 
-	/* reset our front buffer */
-	v->fbi.frontbuf = 0;
-	v->fbi.backbuf = 1;
+	/* reset our front/back buffers if they are out of range */
+	if (!v->fbi.rgb[2])
+	{
+		if (v->fbi.frontbuf == 2)
+			v->fbi.frontbuf = 0;
+		if (v->fbi.backbuf == 2)
+			v->fbi.backbuf = 0;
+	}
 }
 
 
@@ -2180,12 +2186,17 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 		case clutData:
 			if (chips & 1)
 			{
-				int index = data >> 24;
-				if (index <= 32)
+				if (!FBIINIT1_VIDEO_TIMING_RESET(v->reg[fbiInit1].u))
 				{
-					v->fbi.clut[index] = data;
-					v->fbi.clut_dirty = TRUE;
+					int index = data >> 24;
+					if (index <= 32)
+					{
+						v->fbi.clut[index] = data;
+						v->fbi.clut_dirty = TRUE;
+					}
 				}
+				else
+					logerror("clutData ignored because video timing reset = 1\n");
 			}
 			break;
 

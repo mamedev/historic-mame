@@ -3983,17 +3983,6 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t z80_dasm( char *buffer, offs_t pc )
-{
-#ifdef MAME_DEBUG
-	return DasmZ80( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
-}
-
-
 
 /**************************************************************************
  * Generic set_info
@@ -4263,9 +4252,11 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:
 			info->burn = NULL;
 			break;
-		case CPUINFO_PTR_DISASSEMBLE:
-			info->disassemble = z80_dasm;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE_NEW:
+			info->disassemble_new = z80_dasm;
 			break;
+#endif
 		case CPUINFO_PTR_IRQ_CALLBACK:
 			info->irqcallback = Z80.irq_callback;
 			break;

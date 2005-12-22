@@ -80,7 +80,7 @@ typedef struct {
 #define _RP EA_PORT_RD
 #define _WP EA_PORT_WR
 
-static z80dasm mnemonic_xx_cb[256]= {
+static const z80dasm mnemonic_xx_cb[256]= {
 	{_RW,zRLC,"b=Y"},   {_RW,zRLC,"c=Y"},   {_RW,zRLC,"d=Y"},   {_RW,zRLC,"e=Y"},
 	{_RW,zRLC,"h=Y"},   {_RW,zRLC,"l=Y"},   {_RW,zRLC,"Y"},     {_RW,zRLC,"a=Y"},
 	{_RW,zRRC,"b=Y"},   {_RW,zRRC,"c=Y"},   {_RW,zRRC,"d=Y"},   {_RW,zRRC,"e=Y"},
@@ -147,7 +147,7 @@ static z80dasm mnemonic_xx_cb[256]= {
 	{_WM,zSET,"h=7,Y"}, {_WM,zSET,"l=7,Y"}, {_WM,zSET,"7,Y"},   {_WM,zSET,"a=7,Y"}
 };
 
-static z80dasm mnemonic_cb[256] = {
+static const z80dasm mnemonic_cb[256] = {
 	{_0, zRLC,"b"},     {_0, zRLC,"c"},     {_0, zRLC,"d"},     {_0, zRLC,"e"},
 	{_0, zRLC,"h"},     {_0, zRLC,"l"},     {_RW,zRLC,"(hl)"},  {_0, zRLC,"a"},
 	{_0, zRRC,"b"},     {_0, zRRC,"c"},     {_0, zRRC,"d"},     {_0, zRRC,"e"},
@@ -214,7 +214,7 @@ static z80dasm mnemonic_cb[256] = {
 	{_0, zSET,"7,h"},   {_0, zSET,"7,l"},   {_WM,zSET,"7,(hl)"},{_0, zSET,"7,a"}
 };
 
-static z80dasm mnemonic_ed[256]= {
+static const z80dasm mnemonic_ed[256]= {
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
@@ -281,7 +281,7 @@ static z80dasm mnemonic_ed[256]= {
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"}
 };
 
-static z80dasm mnemonic_xx[256]= {
+static const z80dasm mnemonic_xx[256]= {
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zADD,"I,bc"},  {_0, zDB,"?"},      {_0, zDB,"?"},
@@ -348,7 +348,7 @@ static z80dasm mnemonic_xx[256]= {
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"}
 };
 
-static z80dasm mnemonic_main[256]= {
+static const z80dasm mnemonic_main[256]= {
 	{_0, zNOP,0},		{_0, zLD,"bc,N"},   {_WM,zLD,"(bc),a"}, {_0, zINC,"bc"},
 	{_0, zINC,"b"},     {_0, zDEC,"b"},     {_0, zLD,"b,B"},    {_0, zRLCA,0},
 	{_0, zEX,"af,af'"}, {_0, zADD,"hl,bc"}, {_RM,zLD,"a,(bc)"}, {_0, zDEC,"bc"},
@@ -431,41 +431,41 @@ static unsigned z80_get_reg(int reg) { union cpuinfo info; z80_get_info(CPUINFO_
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
-unsigned DasmZ80( char *buffer, unsigned pc )
+unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-    z80dasm *d;
+    const z80dasm *d;
 	const char *symbol, *src;
 	const char *ixy;
 	char *dst;
-	unsigned PC = pc;
 	INT8 offset = 0;
 	UINT8 op, op1;
 	UINT16 ea = 0, xy = 0;
+	int pos = 0;
 
 	ixy = "oops!!";
 	dst = buffer;
 	symbol = NULL;
 
-	op = cpu_readop( pc++ );
+	op = oprom[pos++];
     op1 = 0; /* keep GCC happy */
 
     switch (op)
 	{
 	case 0xcb:
-		op = cpu_readop(pc++);
+		op = oprom[pos++];
         d = &mnemonic_cb[op];
 		break;
 	case 0xed:
-		op1 = cpu_readop(pc++);
+		op1 = oprom[pos++];
         d = &mnemonic_ed[op1];
 		break;
 	case 0xdd:
 		ixy = "ix";
-		op1 = cpu_readop(pc++);
+		op1 = oprom[pos++];
 		if( op1 == 0xcb )
 		{
-			offset = (INT8) cpu_readop_arg(pc++);
-			op1 = cpu_readop_arg(pc++); /* fourth byte from opcode_arg_base! */
+			offset = (INT8) opram[pos++];
+			op1 = opram[pos++]; /* fourth byte from opcode_arg_base! */
 			xy = z80_get_reg( Z80_IX );
 			ea = (xy + offset) & 0xffff;
 			d = &mnemonic_xx_cb[op1];
@@ -474,11 +474,11 @@ unsigned DasmZ80( char *buffer, unsigned pc )
         break;
 	case 0xfd:
 		ixy = "iy";
-		op1 = cpu_readop(pc++);
+		op1 = oprom[pos++];
 		if( op1 == 0xcb )
 		{
-			offset = (INT8) cpu_readop_arg(pc++);
-			op1 = cpu_readop_arg(pc++); /* fourth byte from opcode_arg_base! */
+			offset = (INT8) opram[pos++];
+			op1 = opram[pos++]; /* fourth byte from opcode_arg_base! */
 			xy = z80_get_reg( Z80_IY );
 			ea = (ea + offset) & 0xffff;
 			d = &mnemonic_xx_cb[op1];
@@ -502,13 +502,13 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 				dst += sprintf( dst, "$%02x,$%02x", op, op1);
 				break;
 			case 'A':
-				ea = cpu_readop_arg(pc) + ( cpu_readop_arg((pc+1)&0xffff) << 8);
-				pc += 2;
+				ea = opram[pos+0] + ( opram[pos+1] << 8);
+				pos += 2;
 				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
 				dst += sprintf( dst, "%s", symbol );
                 break;
             case 'B':   /* Byte op arg */
-				ea = cpu_readop_arg( pc++ );
+				ea = opram[pos++];
 				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
 				dst += sprintf( dst, "%s", symbol );
 				break;
@@ -543,7 +543,7 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 				else
 				if( !strncmp( src, "(P)", 3) )
 				{
-					ea = (z80_get_reg( Z80_AF ) & 0xff00) | cpu_readop_arg( pc );
+					ea = (z80_get_reg( Z80_AF ) & 0xff00) | opram[pos];
                     set_ea_info(0, ea, EA_UINT16, d->access);
                 }
                 else
@@ -560,18 +560,18 @@ unsigned DasmZ80( char *buffer, unsigned pc )
                 }
                 break;
 			case 'N':   /* Immediate 16 bit */
-				ea = cpu_readop_arg(pc) + ( cpu_readop_arg((pc+1)&0xffff) << 8 );
-				pc += 2;
+				ea = opram[pos+0] + ( opram[pos+1] << 8 );
+				pos += 2;
 				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE );
 				dst += sprintf( dst, "%s", symbol );
                 break;
 			case 'O':   /* Offset relative to PC */
-				offset = (INT8) cpu_readop_arg(pc++);
-				symbol = set_ea_info(0, PC, offset + 2, d->access);
+				offset = (INT8) opram[pos++];
+				symbol = set_ea_info(0, pc, offset + 2, d->access);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'P':   /* Port number */
-				ea = cpu_readop_arg( pc++ );
+				ea = opram[pos++];
 				dst += sprintf( dst, "$%02X", ea );
                 break;
             case 'V':   /* Restart vector */
@@ -580,13 +580,13 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'W':   /* Memory address word */
-				ea = cpu_readop_arg(pc) + ( cpu_readop_arg((pc+1)&0xffff) << 8);
-				pc += 2;
+				ea = opram[pos+0] + ( opram[pos+1] << 8);
+				pos += 2;
 				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'X':
-				offset = (INT8) cpu_readop_arg(pc++);
+				offset = (INT8) opram[pos++];
                 ea = (xy + offset) & 0xffff;
             case 'Y':
 				symbol = set_ea_info(0, ea, EA_UINT8, d->access);
@@ -607,7 +607,7 @@ unsigned DasmZ80( char *buffer, unsigned pc )
 		dst += sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
     }
 
-    return (pc - PC) | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
+    return pos | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
 }
 
 #endif

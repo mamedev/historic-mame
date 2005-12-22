@@ -43,11 +43,6 @@ Notes:
 
 
 TODO:
-- The MCU simulation in hotsmash is wrong. It's enough to make the game playable
-  to a certain degree, but that's all. Also, should there be a timer?
-
-- Dip switches in hotsmash.
-
 - The way we generate NMI in sqix doesn't make much sense, but is a workaround
   for the slow gameplay you would otherwise get. Some interaction with vblank?
 
@@ -310,13 +305,157 @@ WRITE8_HANDLER( bootleg_flipscreen_w )
 }
 
 
+/***************************************************************************
+
+ Hot Smash 68705 protection interface
+
+***************************************************************************/
+
+/*
+ * This wrapper routine is necessary because the dial is not connected to an
+ * hardware counter as usual, but the DIR and CLOCK inputs are directly
+ * connected to the 68705 which acts as a counter.
+ */
+
+int read_dial(int player)
+{
+	int newpos;
+	static int oldpos[2];
+	static int sign[2];
+
+	/* get the new position and adjust the result */
+	newpos = readinputport(3 + player);
+	if (newpos != oldpos[player])
+	{
+		sign[player] = ((newpos - oldpos[player]) & 0x80) >> 7;
+		oldpos[player] = newpos;
+	}
+
+	if (player == 0)
+		return ((oldpos[player] & 1) << 2) | (sign[player] << 3);
+	else	// player == 1
+		return ((oldpos[player] & 1) << 3) | (sign[player] << 2);
+}
+
+
+
+static void delayed_z80_mcu_w(int data)
+{
+logerror("Z80 sends command %02x\n",data);
+	from_z80 = data;
+	from_mcu_pending = 0;
+	cpunum_set_input_line(1, 0, HOLD_LINE);
+	cpu_boost_interleave(0, TIME_IN_USEC(200));
+}
+
+static void delayed_mcu_z80_w(int data)
+{
+logerror("68705 sends answer %02x\n",data);
+	from_mcu = data;
+	from_mcu_pending = 1;
+}
+
+
+/*
+ *  Port C connections:
+ *  (all lines active low)
+ *
+ *  0-2 W  select I/O; inputs are read from port A, outputs are written to port B
+ *         000  dsw A (I)
+ *         001  dsw B (I)
+ *         010  not used
+ *         011  from Z80 (I)
+ *         100  not used
+ *         101  to Z80 (O)
+ *         110  P1 dial input (I)
+ *         111  P2 dial input (I)
+ *  3   W  clocks the active latch
+ *  4-7 W  not used
+ */
+
+static UINT8 portA_in, portB_out, portC;
+
+READ8_HANDLER( hotsmash_68705_portA_r )
+{
+//logerror("%04x: 68705 reads port A = %02x\n",activecpu_get_pc(),portA_in);
+	return portA_in;
+}
+
+WRITE8_HANDLER( hotsmash_68705_portB_w )
+{
+	portB_out = data;
+}
+
+READ8_HANDLER( hotsmash_68705_portC_r )
+{
+	return portC;
+}
+
+WRITE8_HANDLER( hotsmash_68705_portC_w )
+{
+	portC = data;
+
+	if ((data & 0x08) == 0)
+	{
+		switch (data & 0x07)
+		{
+			case 0x0:	// dsw A
+				portA_in = readinputport(0);
+				break;
+
+			case 0x1:	// dsw B
+				portA_in = readinputport(1);
+				break;
+
+			case 0x2:
+				break;
+
+			case 0x3:	// command from Z80
+				portA_in = from_z80;
+logerror("%04x: z80 reads command %02x\n",activecpu_get_pc(),from_z80);
+				break;
+
+			case 0x4:
+				break;
+
+			case 0x5:	// answer to Z80
+				timer_set(TIME_NOW, portB_out, delayed_mcu_z80_w);
+				break;
+
+			case 0x6:
+				portA_in = read_dial(0);
+				break;
+
+			case 0x7:
+				portA_in = read_dial(1);
+				break;
+		}
+	}
+}
+
+static WRITE8_HANDLER( hotsmash_z80_mcu_w )
+{
+	timer_set(TIME_NOW, data, delayed_z80_mcu_w);
+}
+
+static READ8_HANDLER(hotsmash_from_mcu_r)
+{
+logerror("%04x: z80 reads answer %02x\n",activecpu_get_pc(),from_mcu);
+	from_mcu_pending = 0;
+	return from_mcu;
+}
+
+static READ8_HANDLER(hotsmash_ay_port_a_r)
+{
+//logerror("%04x: ay_port_a_r and mcu_pending is %d\n",activecpu_get_pc(),from_mcu_pending);
+	return readinputport(2) | ((from_mcu_pending^1) << 7);
+}
+
 /**************************************************************************
 
-pbillian / hotsmash MCU simulation
+pbillian MCU simulation
 
 **************************************************************************/
-
-static int is_pbillian;
 
 static WRITE8_HANDLER( pbillian_z80_mcu_w )
 {
@@ -325,118 +464,24 @@ static WRITE8_HANDLER( pbillian_z80_mcu_w )
 
 static READ8_HANDLER(pbillian_from_mcu_r)
 {
-	if (is_pbillian)
+	static int curr_player;
+
+	switch (from_z80)
 	{
-		static int curr_player;
-
-		switch (from_z80)
-		{
-			case 0x01: return readinputport(4 + 2 * curr_player);
-			case 0x02: return readinputport(5 + 2 * curr_player);
-			case 0x04: return readinputport(0);
-			case 0x08: return readinputport(1);
-			case 0x80: curr_player = 0; return 0;
-			case 0x81: curr_player = 1; return 0;
-		}
-	}
-	else
-	{
-		static int score[2],game[2];
-		static const char *answer = "";
-		static int answercounter;
-		int points_per_game = ((readinputport(1) & 0x10) >> 4) + 4;
-
-		/*
-            When a goal is scored, the Z80 sends a special command - 0x80 or
-            0x81, depending on who scored. It expects the MCU to return a few
-            special commands, telling it what to do (remove ball, increase
-            score etc.)
-
-            0x80 = ?
-            0x81 = ?
-            0x82 = stop ball
-            0x83 = time over
-            0x84 = P1 score++
-            0x85 = P2 score++
-            0x86 = P1 game++
-            0x87 = P2 game++
-            0x88 = P1 WIN
-            0x89 = P2 WIN
-            0x8a = restart P1 side
-            0x8b = restart P2 side
-            0x8c = next game
-            0x8d = ?
-        */
-
-		switch (from_z80)
-		{
-			case 0x01:
-				if (answercounter)
-				{
-					answercounter--;
-					return readinputport(4);
-				}
-				if (*answer)
-				{
-					answercounter = 50;
-					return *(answer++);
-				}
-				else return readinputport(4);
-
-			case 0x02: return readinputport(5);
-			case 0x04: return readinputport(0);
-			case 0x08: return readinputport(1);
-			case 0x20: return 0;	// select player 2?
-			case 0x40: score[0] = score[1] = game[0] = game[1] = 0;	return 0; // start game 1 player?
-			case 0x41: score[0] = score[1] = game[0] = game[1] = 0;	return 0; // start game 2 players?
-			case 0x80:
-				score[1]++;
-				if (score[1] < points_per_game)
-					answer = "\x82\x85\x8a";
-				else
-				{
-					score[0] = score[1] = 0;
-					game[1]++;
-					if (game[1] < 2)
-						answer = "\x82\x87\x8c";
-					else
-					{
-						game[0] = game[1] = 0;
-						answer = "\x82\x89\x8c";
-					}
-				}
-				return 0;
-			case 0x81:
-				score[0]++;
-				if (score[0] < points_per_game)
-					answer = "\x82\x84\x8b";
-				else
-				{
-					score[0] = score[1] = 0;
-					game[0]++;
-					if (game[0] < 2)
-						answer = "\x82\x86\x8c";
-					else
-					{
-						game[0] = game[1] = 0;
-						answer = "\x82\x88\x8c";
-					}
-				}
-				return 0;
-//          case 0xf0: return 0;    // resync?
-		}
+		case 0x01: return readinputport(4 + 2 * curr_player);
+		case 0x02: return readinputport(5 + 2 * curr_player);
+		case 0x04: return readinputport(0);
+		case 0x08: return readinputport(1);
+		case 0x80: curr_player = 0; return 0;
+		case 0x81: curr_player = 1; return 0;
 	}
 
 	logerror("408[%x] r at %x\n",from_z80,activecpu_get_pc());
 	return 0;
 }
 
-static READ8_HANDLER(ay_port_a_r)
+static READ8_HANDLER(pbillian_ay_port_a_r)
 {
-	/* temp kludge for hotsmash */
-	if (activecpu_get_pc() == 0x21a)
-		return 0xff;
-
 //  logerror("%04x: ay_port_a_r\n",activecpu_get_pc());
 	 /* bits 76------  MCU status bits */
 	return (rand()&0xc0)|readinputport(3);
@@ -461,6 +506,20 @@ static ADDRESS_MAP_START( pbillian_port_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0403, 0x0403) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x0408, 0x0408) AM_READ(pbillian_from_mcu_r)
 	AM_RANGE(0x0408, 0x0408) AM_WRITE(pbillian_z80_mcu_w)
+	AM_RANGE(0x0410, 0x0410) AM_WRITE(pbillian_0410_w)
+	AM_RANGE(0x0418, 0x0418) AM_READ(MRA8_NOP)  //?
+	AM_RANGE(0x0419, 0x0419) AM_WRITE(MWA8_NOP)  //? watchdog ?
+	AM_RANGE(0x041a, 0x041a) AM_WRITE(pbillian_sample_trigger_w)
+	AM_RANGE(0x041b, 0x041b) AM_READ(MRA8_NOP)  // input related? but probably not used
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hotsmash_port_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_READWRITE(paletteram_r, paletteram_BBGGRRII_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0401, 0x0401) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x0402, 0x0402) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x0403, 0x0403) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x0408, 0x0408) AM_READ(hotsmash_from_mcu_r)
+	AM_RANGE(0x0408, 0x0408) AM_WRITE(hotsmash_z80_mcu_w)
 	AM_RANGE(0x0410, 0x0410) AM_WRITE(pbillian_0410_w)
 	AM_RANGE(0x0418, 0x0418) AM_READ(MRA8_NOP)  //?
 	AM_RANGE(0x0419, 0x0419) AM_WRITE(MWA8_NOP)  //? watchdog ?
@@ -496,6 +555,16 @@ static ADDRESS_MAP_START( bootleg_port_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0418, 0x0418) AM_READ(input_port_2_r)
 	AM_RANGE(0x0800, 0x77ff) AM_READWRITE(MRA8_RAM, superqix_bitmapram_w) AM_BASE(&superqix_bitmapram)
 	AM_RANGE(0x8800, 0xf7ff) AM_READWRITE(MRA8_RAM, superqix_bitmapram2_w) AM_BASE(&superqix_bitmapram2)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( m68705_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
+	AM_RANGE(0x0000, 0x0000) AM_READ(hotsmash_68705_portA_r)
+	AM_RANGE(0x0001, 0x0001) AM_WRITE(hotsmash_68705_portB_w)
+	AM_RANGE(0x0002, 0x0002) AM_READWRITE(hotsmash_68705_portC_r, hotsmash_68705_portC_w)
+	AM_RANGE(0x0010, 0x007f) AM_RAM
+	AM_RANGE(0x0080, 0x07ff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -607,9 +676,9 @@ INPUT_PORTS_START( hotsmash )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
@@ -622,19 +691,19 @@ INPUT_PORTS_START( hotsmash )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x01, "2" )
-	PORT_DIPSETTING(    0x02, "3" )
-	PORT_DIPSETTING(    0x03, "4" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x04, "2" )
-	PORT_DIPSETTING(    0x08, "3" )
-	PORT_DIPSETTING(    0x0c, "4" )
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty vs. CPU" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty vs. 2P" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x10, 0x10, "Points per game" )
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -653,15 +722,13 @@ INPUT_PORTS_START( hotsmash )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )//$49c
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )//$42d
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	// mcu status (0 = pending mcu->z80)
 
 	PORT_START
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(15) PORT_KEYDELTA(30) PORT_CENTERDELTA(0) PORT_PLAYER(1)
 
 	PORT_START
-	PORT_BIT( 0x7f, 0x38, IPT_PADDLE ) PORT_MINMAX(0x10,0x7f) PORT_SENSITIVITY(30) PORT_KEYDELTA(5) PORT_CENTERDELTA(0) PORT_REVERSE
-
-	PORT_START
-	PORT_BIT( 0x7f, 0x38, IPT_PADDLE ) PORT_MINMAX(0x10,0x7f) PORT_SENSITIVITY(30) PORT_KEYDELTA(5) PORT_CENTERDELTA(0) PORT_REVERSE PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(15) PORT_KEYDELTA(30) PORT_CENTERDELTA(0) PORT_PLAYER(2)
 
 INPUT_PORTS_END
 
@@ -808,7 +875,13 @@ static struct Samplesinterface custom_interface =
 
 static struct AY8910interface pbillian_ay8910_interface =
 {
-	ay_port_a_r,					/* port Aread */
+	pbillian_ay_port_a_r,			/* port Aread */
+	input_port_2_r					/* port Bread */
+};
+
+static struct AY8910interface hotsmash_ay8910_interface =
+{
+	hotsmash_ay_port_a_r,			/* port Aread */
 	input_port_2_r					/* port Bread */
 };
 
@@ -886,6 +959,38 @@ static MACHINE_DRIVER_START( pbillian )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( hotsmash )
+	MDRV_CPU_ADD(Z80,12000000/2)		 /* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(hotsmash_port_map,0)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(M68705, 4000000/2) /* ???? */
+	MDRV_CPU_PROGRAM_MAP(m68705_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pbillian_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(pbillian)
+	MDRV_VIDEO_UPDATE(pbillian)
+
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(hotsmash_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( sqix )
 
@@ -989,7 +1094,7 @@ ROM_START( hotsmash )
 	ROM_LOAD( "b18-04",  0x00000, 0x08000, CRC(981bde2c) SHA1(ebcc901a036cde16b33d534d423500d74523b781) )
 
 	ROM_REGION( 0x0800, REGION_CPU2, 0 )
-	ROM_LOAD( "b18-06.mcu", 0x0000, 0x0800, NO_DUMP )
+	ROM_LOAD( "b18-06.mcu", 0x0000, 0x0800, CRC(67c0920a) SHA1(23a294892823d1d9216ea8ddfa9df1c8af149477) )
 
 	ROM_REGION( 0x8000, REGION_SOUND1, 0 )
 	ROM_LOAD( "b18-05",  0x0000, 0x08000, CRC(dab5e718) SHA1(6cf6486f283f5177dfdc657b1627fbfa3f0743e8) )
@@ -1090,13 +1195,11 @@ ROM_END
 static DRIVER_INIT( pbillian )
 {
 	pbillian_show_power = 1;
-	is_pbillian=1;
 }
 
 static DRIVER_INIT( hotsmash )
 {
 	pbillian_show_power = 0;
-	is_pbillian=0;
 }
 
 static DRIVER_INIT( sqix )
@@ -1174,7 +1277,7 @@ static DRIVER_INIT( perestro )
 
 
 GAME( 1986, pbillian, 0,        pbillian, pbillian, pbillian, ROT0,  "Taito", "Prebillian", 0 )
-GAME( 1987, hotsmash, 0,        pbillian, hotsmash, hotsmash, ROT90, "Taito", "Vs. Hot Smash", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAME( 1987, hotsmash, 0,        hotsmash, hotsmash, hotsmash, ROT90, "Taito", "Vs. Hot Smash", 0 )
 GAME( 1987, sqix,     0,        sqix,     superqix, sqix,     ROT90, "Taito", "Super Qix (set 1)", 0 )
 GAME( 1987, sqixa,    sqix,     sqix,     superqix, sqixa,    ROT90, "Taito", "Super Qix (set 2)", 0 )
 GAME( 1987, sqixbl,   sqix,     sqixbl,   superqix, 0,        ROT90, "bootleg", "Super Qix (bootleg)", 0 )

@@ -1291,8 +1291,10 @@ Zip Zap (pcb marked Barko Corp 950509)
 
 ROM_START( zipzap )
 	ROM_REGION( 0x500000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "ud17.bin", 0x000001, 0x40000, CRC(2901fae1) SHA1(0d6ca6d48c5586c05f3c02aee51a95da38b3751f) )
-	ROM_LOAD16_BYTE( "ue17.bin", 0x000000, 0x40000, CRC(da6c3fc8) SHA1(4bc01bc6f62553f6ac4f7252f7d9bf0d639f6935) )
+	/* all the roms for this game could do with checking on another board, this one was in pretty bad condition
+       and reads weren't always consistent */
+	ROM_LOAD16_BYTE( "ud17.bin", 0x000001, 0x40000, BAD_DUMP CRC(2901fae1) SHA1(0d6ca6d48c5586c05f3c02aee51a95da38b3751f) )
+	ROM_LOAD16_BYTE( "ue17.bin", 0x000000, 0x40000, BAD_DUMP CRC(da6c3fc8) SHA1(4bc01bc6f62553f6ac4f7252f7d9bf0d639f6935) )
 	/* gfx bitmaps */
 	ROM_LOAD16_BYTE( "938.bin",  0x400000, 0x80000, CRC(61c06b60) SHA1(b3abae020009a48b99862766e0981e1118159a47) ) // good title backgruond
 	ROM_LOAD16_BYTE( "942.bin",  0x400001, 0x80000, CRC(282413b8) SHA1(e2ecaaa3c5b2355eadc016b73d7d658f25e1e0db) ) // (and corrupt gfx on select mode screen)

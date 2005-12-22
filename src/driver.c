@@ -339,6 +339,7 @@ const game_driver *drivers[] =
 	DRIVER( silvland )	/* Falcon */
 	DRIVER( yamato )	/* (c) 1983 Sega */
 	DRIVER( yamato2 )	/* (c) 1983 Sega */
+	DRIVER( toprollr )	/* (c) 1983 Jaleco */
 	DRIVER( swimmer )	/* (c) 1982 Tehkan */
 	DRIVER( swimmera )	/* (c) 1982 Tehkan */
 	DRIVER( swimmerb )	/* (c) 1982 Tehkan */
@@ -2651,19 +2652,23 @@ V-V                           TP-027
 	DRIVER( tekken3a )	/* Tekken 3 (TET2/VER.A) */
 	DRIVER( lbgrande )	/* Libero Grande (LG2/VER.A) */
 	DRIVER( soulclbr )	/* Soul Calibur (SOC14/VER.C) */
-	DRIVER( soulclba )	/* Soul Calibur (SOC11/VER.A2) */
+	DRIVER( soulclba )	/* Soul Calibur (SOC11/VER.B) */
+	DRIVER( soulclbb )	/* Soul Calibur (SOC11/VER.A2) */
 	DRIVER( ehrgeiz )	/* Ehrgeiz (EG3/VER.A) */
 	DRIVER( ehrgeiza )	/* Ehrgeiz (EG2/VER.A) */
 	DRIVER( mdhorse )	/* Derby Quiz My Dream Horse (MDH1/VER.A2) */
 	DRIVER( tenkomor )	/* Tenkomori Shooting (TKM2/VER.A1) */
+	DRIVER( tenkomoj )	/* Tenkomori Shooting (TKM1/VER.A1) */
 	DRIVER( fgtlayer )	/* Fighting Layer (FTL0/VER.A) */
 	DRIVER( pacapp )	/* Paca Paca Passion (PPP1/VER.A2) */
-	DRIVER( pacappsp )	/* Paca Paca Passion Special (PSP1/VER.A) */
-	DRIVER( pacapp2 )	/* Paca Paca Passion 2 (PKS1/VER.A) */
 	DRIVER( sws99 )		/* Super World Stadium '99 (SS91/VER.A3) */
-	DRIVER( tekkentt )	/* Tekken Tag Tournament (TEG3/VER.B) */
+	DRIVER( tektagt )	/* Tekken Tag Tournament (TEG3/VER.C1) */
+	DRIVER( tektagta )	/* Tekken Tag Tournament (TEG3/VER.B) */
+	DRIVER( ghlpanic )	/* Ghoul Panic (OB2/VER.A) */
+	DRIVER( pacapp2 )	/* Paca Paca Passion 2 (PKS1/VER.A) */
 	DRIVER( mrdrillr )	/* Mr Driller (DRI1/VER.A2) */
 	DRIVER( aquarush )	/* Aqua Rush (AQ1/VER.A1) */
+	DRIVER( pacappsp )	/* Paca Paca Passion Special (PSP1/VER.A) */
 	DRIVER( golgo13 )	/* Golgo 13 (GLG1/VER.A) */
 
 	/* Namco System 10 */
@@ -5043,7 +5048,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( miexchng )	/* 0231 (c) 1997 Face */
 	DRIVER( kof97 )		/* 0232 (c) 1997 SNK */
 	DRIVER( kof97a )	/* 0232 (c) 1997 SNK */
-	DRIVER( kof97pls )	/* 0232 bootleg */
+	DRIVER( kof97pls )	/* bootleg of kof97 */
+	DRIVER( kog )		/* bootleg of kof97 */
 	DRIVER( magdrop3 )	/* 0233 (c) 1997 Data East Corporation */
 	DRIVER( lastblad )	/* 0234 (c) 1997 SNK */
 	DRIVER( lastblda )	/* 0234 (c) 1997 SNK */
@@ -5063,6 +5069,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( neocup98 )	/* 0244 (c) 1998 SNK */
 	DRIVER( breakrev )	/* 0245 (c) 1998 Visco */
 	DRIVER( shocktr2 )	/* 0246 (c) 1998 Saurus */
+	DRIVER( lans2004 )	/* bootleg of shocktr2 */
 	DRIVER( flipshot )	/* 0247 (c) 1998 Visco */
 	DRIVER( pbobbl2n )	/* 0248 (c) 1999 Taito (SNK license) */
 	DRIVER( ctomaday )	/* 0249 (c) 1999 Visco */
@@ -5082,17 +5089,21 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mslug3n )	/* 0256 (c) 2000 SNK */
 	DRIVER( kof2000 )	/* 0257 (c) 2000 SNK */
 	DRIVER( kof2000n )	/* 0257 (c) 2000 SNK */
-				/* 0258 SNK vs. Capcom */
+				/* 0258 SNK vs. Capcom? */
 	DRIVER( bangbead )	/* 0259 (c) 2000 Visco */
 	DRIVER( nitd )		/* 0260 (c) 2000 Eleven / Gavaking */
 	DRIVER( sengoku3 )	/* 0261 (c) 2001 SNK */
 	DRIVER( kof2001 )	/* 0262 (c) 2001 Eolith / SNK */
 	DRIVER( kof2001h )	/* 0262 (c) 2001 Eolith / SNK */
+	DRIVER( cthd2003 )	/* bootleg of kof2001*/
 	DRIVER( mslug4 )	/* 0263 (c) 2002 Mega Enterprise */
 	DRIVER( ms4plus )	/* 0263 bootleg */
 	DRIVER( rotd )		/* 0264 (c) 2002 Evoga */
 	DRIVER( kof2002 )	/* 0265 (c) 2002 Eolith / Playmore */
+	DRIVER( kof10th )	/* bootleg of kof2002 */
+	DRIVER( kof2k4se )	/* bootleg of kof2002 */
 	DRIVER( matrim )	/* 0266 (c) 2002 Atlus */
+
 
 	/* The BreezaSoft games don't have proper ID codes */
 	DRIVER( jockeygp )
@@ -5403,6 +5414,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sfrush )	/* (c) 1996 Atari Games */
 	DRIVER( sfrushrk )	/* (c) 1996 Atari Games */
 	DRIVER( calspeed )	/* (c) 1996 Atari Games */
+	DRIVER( calspeda )	/* (c) 1996 Atari Games */
 	DRIVER( vaportrx )	/* (c) 1998 Atari Games */
 	DRIVER( vaportrp )	/* (c) 1998 Atari Games */
 	DRIVER( carnevil )	/* (c) 1998 Midway Games */
@@ -5418,11 +5430,14 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gauntl12 )	/* (c) 1998 Atari Games */
 	DRIVER( tenthdeg )	/* (c) 1998 Atari Games (prototype) */
 	DRIVER( roadburn )	/* (c) 1999 Atari Games */
-	DRIVER( sfru2049 )	/* (c) 1999 Atari Games */
+	DRIVER( sf2049 )	/* (c) 1999 Atari Games */
+	DRIVER( sf2049se )	/* (c) 1999 Atari Games */
+	DRIVER( sf2049te )	/* (c) 1999 Atari Games */
 	DRIVER( warfa )		/* (c) 1999 Atari Games */
 	DRIVER( nbashowt )	/* (c) 1998 Midway Games */
 	DRIVER( nbanfl )	/* (c) 1999 Midway Games */
 	DRIVER( gauntdl )	/* (c) 1999 Midway Games */
+	DRIVER( gauntd24 )	/* (c) 1999 Midway Games */
 	DRIVER( cartfury )	/* (c) 2000 Midway Games */
 
 	/* Cinematronics raster games */
@@ -6392,6 +6407,9 @@ Other Sun games
 	DRIVER( olds )		/* (c) 1999 */
 	DRIVER( olds100 )	/* (c) 1999 */
 	DRIVER( olds100a )	/* (c) 1999 */
+  	DRIVER( kov2 )		/* (c) 2000 */
+ 	DRIVER( kov2106 )	/* (c) 2000 */
+  	DRIVER( kov2p )		/* (c) 2000 */
 	DRIVER( ddp2 )		/* (c) 2001 */
 	DRIVER( puzzli2 )	/* (c) 2001 */
 
@@ -6610,6 +6628,7 @@ Other Sun games
 	DRIVER( gt103aa )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103ab )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( findout )	/* (c) 1987 [Elettronolo] */
+	DRIVER( quiz )		/* (c) 1986 Italian bootleg */
 	DRIVER( gs4002 )	/* (c) 1982 G.E.I. */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102b )	/* (c) 1984 Greyhound Electronics */
@@ -6641,6 +6660,7 @@ Other Sun games
 	DRIVER( maddonna )	/* (c) 1995 Tuning */
 	DRIVER( maddonnb )	/* (c) 1995 Tuning */
 	DRIVER( tugboat )	/* (c) 1982 ETM */
+	DRIVER( noahsark )	/* (c) 1983 Enter-Tech */
 	DRIVER( gotcha )	/* (c) 1997 Dongsung + "presented by Para" */
 	DRIVER( amerdart )	/* (c) 1989 Ameri Corporation */
 	DRIVER( amerdar2 )	/* (c) 1989 Ameri Corporation */
@@ -6799,6 +6819,9 @@ Other Sun games
 	DRIVER( dwarfd )	/* (c) 198? Electro-Sports */
 	DRIVER( trvquest )	/* (c) 1984 Sunn / Techstar */
 	DRIVER( wheelfir )	/* (c) 199? TCH */
+	DRIVER( littlerb )	/* (c) 1993 TCH */
 	DRIVER( tattack )	/* (c) 198? Shonan */
+	DRIVER( mosaicf2 )	/* (c) 1999 F2 System */
+	DRIVER( rbmk )		/* (c) 1995 GMS */
 
 #endif	/* DRIVER_RECURSIVE */

@@ -38,7 +38,8 @@
 #define AMASK	(active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3)
 #define AMASKS(s) (active_address_space[s].addrmask | 3)
 #define ASHIFT	(activecpu_addrbus_shift(ADDRESS_SPACE_PROGRAM))
-#define ALIGN	(activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8)
+#define DALIGN	(activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8)
+#define IALIGN	(activecpu_min_instruction_bytes() < DALIGN ? activecpu_min_instruction_bytes() : DALIGN)
 #define INSTL	activecpu_max_instruction_bytes()
 #define ENDIAN	activecpu_endianness()
 
@@ -2647,7 +2648,7 @@ static unsigned dump_dasm( unsigned pc )
 			{
 				unsigned p = rshift(pc);
 				unsigned n = rshift(pc_next);
-				switch( ALIGN )
+				switch( IALIGN )
 				{
 				case 1:
 					for( x = 0; x < INSTL; x++ )
@@ -2710,7 +2711,7 @@ static unsigned dump_dasm( unsigned pc )
              * instruction size boundary, else bail out...
              */
 			if( DBGDASM.pc_cpu > pc_first && DBGDASM.pc_cpu < pc )
-				pc_first += ALIGN;
+				pc_first += IALIGN;
 			else
 				line_pc_cpu = 0;
 		}
@@ -2793,6 +2794,9 @@ static void dump_mem_hex( int which, unsigned len_addr, unsigned len_data )
 			break;
 		case 8: /* UINT32 mode */
 			DBGMEM[which].address = (DBGMEM[which].base + order(offs,4)) & AMASKS(DBGMEM[which].space);
+			break;
+		case 16: /* UINT64 mode */
+			DBGMEM[which].address = (DBGMEM[which].base + order(offs,8)) & AMASKS(DBGMEM[which].space);
 			break;
 		}
 
@@ -2881,6 +2885,7 @@ static void dump_mem( int which, int set_title )
 		case MODE_HEX_UINT8:  dump_mem_hex( which, len_addr, 2 ); break;
 		case MODE_HEX_UINT16: dump_mem_hex( which, len_addr, 4 ); break;
 		case MODE_HEX_UINT32: dump_mem_hex( which, len_addr, 8 ); break;
+		case MODE_HEX_UINT64: dump_mem_hex( which, len_addr, 16 ); break;
 	}
 }
 
@@ -3110,7 +3115,7 @@ static void edit_mem( int which )
 			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~3) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
 			break;
 		case MODE_HEX_UINT64:
-			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~8) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
+			DBGMEM[which].address = (DBGMEM[which].base + (DBGMEM[which].offset & ~7) + pedit[DBGMEM[which].offset].n ) & AMASKS(DBGMEM[which].space);
 			break;
 	}
 	win_set_title( win, name_memory(DBGMEM[which].address) );
@@ -3511,7 +3516,7 @@ static void cmd_help( void )
 		title = "MAME debugger CPU registers help";
 		dst += sprintf( dst, "%s [%s] Version %s", activecpu_name(), activecpu_core_family(), activecpu_core_version() ) + 1;
 		dst += sprintf( dst, "Address bits   : %d [%08X]", (int)activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM), (int)(0xffffffffUL >> (32 - (int)activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM))) ) + 1;
-		dst += sprintf( dst, "Code align unit: %d byte(s)", (int)activecpu_databus_width(ADDRESS_SPACE_PROGRAM)/8 ) + 1;
+		dst += sprintf( dst, "Code align unit: %d byte(s)", (int)IALIGN ) + 1;
 		dst += sprintf( dst, "This CPU is    : %s endian", (ENDIAN == CPU_IS_LE) ? "little" : "big") + 1;
 		dst += sprintf( dst, "Source file    : %s", activecpu_core_file() ) + 1;
 //      dst += sprintf( dst, "Internal read  : %s", cputype_get_interface(cputype)->internal_read ? "yes" : "no" ) + 1;
@@ -3958,7 +3963,7 @@ static void cmd_dasm_to_file( void )
 
 		if( opcodes )
 		{
-			switch( ALIGN )
+			switch( IALIGN )
 			{
 			case 1: /* dump bytes */
 				for( i = 0; i < INSTL; i++ )
@@ -4047,7 +4052,7 @@ static void cmd_dump_to_file( void )
 	end = rshift(end);
 	asciimode = 1;			/* default to translation table */
 	space = ADDRESS_SPACE_PROGRAM;	/* default to data mode (offset 0) */
-	datasize = ALIGN*2; 	/* default to align unit of that CPU */
+	datasize = DALIGN*2; 	/* default to align unit of that CPU */
 	data = get_option_or_value( &cmd, &length, "BYTE\0WORD\0DWORD\0");
 	if( length )
 	{
@@ -4731,15 +4736,15 @@ static void cmd_dasm_up( void )
          */
 		unsigned dasm_pc_tmp = rshift(DBGDASM.pc_top - lshift(INSTL)) & AMASK;
 		int i;
-		for( i = 0; i < INSTL; i += ALIGN )
+		for( i = 0; i < INSTL; i += IALIGN )
 		{
 			if( dasm_line( lshift(dasm_pc_tmp), 1 ) == DBGDASM.pc_top )
 				break;
-			dasm_pc_tmp += ALIGN;
+			dasm_pc_tmp += IALIGN;
 		}
 		dasm_pc_tmp = lshift(dasm_pc_tmp);
 		if( dasm_pc_tmp == DBGDASM.pc_top )
-			dasm_pc_tmp -= ALIGN;
+			dasm_pc_tmp -= IALIGN;
 		DBGDASM.pc_cur = dasm_pc_tmp;
 		if( DBGDASM.pc_cur < DBGDASM.pc_top )
 			DBGDASM.pc_top = DBGDASM.pc_cur;
@@ -4851,7 +4856,7 @@ static void cmd_dasm_end( void )
 		end_address = dasm_line( tmp_address, h );
 		if( end_address < tmp_address )
 			break;
-		tmp_address += ALIGN;
+		tmp_address += IALIGN;
 	}
 	DBGDASM.pc_top = tmp_address;
 	DBGDASM.pc_cur = dasm_line( DBGDASM.pc_top, h - 1 );
@@ -5176,7 +5181,7 @@ static void cmd_set_dasm_opcodes( void )
 	char *cmd = CMD;
 	UINT32 win = WIN_DASM(active_cpu);
 	UINT32 w = win_get_w( win );
-	UINT32 dw = (INSTL / ALIGN) * (ALIGN * 2 + 1);
+	UINT32 dw = (INSTL / IALIGN) * (IALIGN * 2 + 1);
 	int state;
 
 	state = get_boolean( &cmd, NULL );

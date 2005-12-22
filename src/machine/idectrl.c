@@ -6,6 +6,7 @@
 
 #include "idectrl.h"
 #include "state.h"
+#include "debugcpu.h"
 
 
 /*************************************
@@ -1293,7 +1294,7 @@ static UINT32 ide_controller_read(struct ide_state *ide, offs_t offset, int size
 	UINT32 result = 0;
 
 	/* logit */
-	if (offset != IDE_ADDR_DATA && offset != IDE_ADDR_STATUS_COMMAND && offset != IDE_ADDR_STATUS_CONTROL)
+//  if (offset != IDE_ADDR_DATA && offset != IDE_ADDR_STATUS_COMMAND && offset != IDE_ADDR_STATUS_CONTROL)
 		LOG(("%08X:IDE read at %03X, size=%d\n", activecpu_get_previouspc(), offset, size));
 
 	switch (offset)

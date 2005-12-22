@@ -77,6 +77,64 @@
 
 ***************************************************************************
 
+    Blitz '99 board:
+
+    Seattle 5770-15206-08
+        1x R5000 CPU (heatsink covering part numbers)
+        1x Midway 5410-14589-00 IO chip
+        1x Midway 5410-14590-00 ??
+        1x Midway 5410-15349-00 Orbit 61142A ??
+        1x ADSP-2115
+        1x Midway security PIC Blitz 99 25" 481xxxxxx (U96)
+        1x mid sized QFP (Galileo?) has heatsink (u86)
+        1x mid sized QFP (PixelFX?) heakstink (u17)
+        1x mid sized QFP, smaller (TexelFX?) heatsink (u87)
+        12x v53c16258hk40 256Kx16 RAM (near Voodoo section)
+        1x PC87415VCG IDE controller
+        1x lh52256cn-70ll RAM  (near Galileo)
+        1x 7can2 4k (unknown Texas Instruments SOIC)
+        2x IDT 7201 LA 35J  (512x9 Async FIFO)
+        1x DS232AS serial port chip
+        1x Altera PLCC Seattle A-21859 (u50)
+        1x Altera PLCC PAD_C1 (u60)
+        3x IS61C256AH-15 (32Kx8 SRAM) near ADSP
+        1x TMS418160ADZ (1Meg x 16 RAM) near ADSP
+        4x TMS418160ADZ (1Meg x 16 RAM) near CPU
+        1x TVP3409-17OCFN (3dfx DAC?)
+        1xAD1866 audio DAC
+        1x Maxim max693acwe (watchdog) near 2325 battery and Midway IO chip
+        4MHz crystal attached to security PIC
+        14.31818MHz crystal near 3dfx DAC
+        16MHz crystal attached to ADSP
+        16.6667MHz crystal near Midway IO chip
+        33.3333MHz crystal near IDE chip and Galileo(PCI bus I assume)
+        50MHz crystal near CPU
+
+    Boot ROM-1.3
+    Sound ROM-1.02
+
+    Connectors:
+        P2 and P6 look like PCI slots, but with no connectors soldered in, near
+            3dfx/Galileo/IDE section.
+        P19 is for the Daisy Dukes widget board(used by Cal Speed), and maybe
+            the Carnevil gun board.
+        P28 is a large 120 pin connector that is not populated, right next to
+            the CPU.
+        P20 is a 10 pin connector labeled "factory test".
+        P1 is a 5 pin unpopulated connector marked "snd in" no idea what it
+            would be for.
+        P11 is a 5 pin connector marked "snd out" for line level stereo output.
+        P25 is a standard IDE connector marked "Disk Drive" P15 is a laptop
+            sized IDE connection right next to it.
+        P9 and P10 are 14 pin connectors marked "Player 3 I/O" and player 4
+            respectively.
+        P16 is a 6 pin marked "Aux in"
+        P3 is a 6 pin marked "Bill in"
+        P8 is a 14 pin marked "Aux Latched Outputs"
+        P22 is a 9 pin marked "serial port"
+
+***************************************************************************
+
     Interrupt summary:
 
                         __________
@@ -1244,9 +1302,6 @@ static WRITE32_HANDLER( galileo_w )
 
 static WRITE32_HANDLER( seattle_voodoo_w )
 {
-	if (!(offset & 0xc00000/2))
-		logerror("%08X:Write voodoo reg %06X = %08X\n", activecpu_get_pc(), offset, data);
-
 	/* if we're not stalled, just write and get out */
 	if (!voodoo_stalled)
 	{
@@ -2518,38 +2573,38 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( wg3dh )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
-	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version L1.2 */
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version L1.2 (10/8/96) */
 	ROM_LOAD( "wg3dh_12.u32", 0x000000, 0x80000, CRC(15e4cea2) SHA1(72c0db7dc53ce645ba27a5311b5ce803ad39f131) )
 
-	DISK_REGION( REGION_DISKS )
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.3 (Guts 10/15/96, Main 10/15/96) */
 	DISK_IMAGE( "wg3dh", 0, MD5(424dbda376e8c45ec873b79194bdb924) SHA1(c12875036487a9324734012e601d1f234d2e783e) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
+	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 ROM_END
 
 
 ROM_START( mace )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1, Labeled as Version 1.0 */
-	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.0ce 7/2/97 */
 	ROM_LOAD( "mace10ce.u32", 0x000000, 0x80000, CRC(7a50b37e) SHA1(33788835f84a9443566c80bee9f20a1691490c6d) )
 
-	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0B 6/10/97 */
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0B 6/10/97 (Guts 7/2/97, Main 7/2/97) */
 	DISK_IMAGE( "mace", 0, MD5(668f6216114fe4c7c265b3d13398e71e) SHA1(6761c9a3da1f0b6b82b146ff2debd04986b8f460) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1, Labeled as Version 1.0 */
+	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 ROM_END
 
 
 ROM_START( macea )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
-	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version ??? 5/7/97 */
 	ROM_LOAD( "maceboot.u32", 0x000000, 0x80000, CRC(effe3ebc) SHA1(7af3ca3580d6276ffa7ab8b4c57274e15ee6bcbb) )
 
-	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0a */
+	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0a (Guts 6/9/97, Main 5/12/97) */
 	DISK_IMAGE( "macea", 0, BAD_DUMP MD5(276577faa5632eb23dc5a97c11c0a1b1) SHA1(e2cce4ff2e15267b7008422252bdf62b188cf743) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
+	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 ROM_END
 
 
@@ -2590,43 +2645,55 @@ ROM_END
 
 
 ROM_START( calspeed )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 (2/18/98) */
 	ROM_LOAD( "caspd1_2.u32", 0x000000, 0x80000, CRC(0a235e4e) SHA1(b352f10fad786260b58bd344b5002b6ea7aaf76d) )
 
-	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "calspeed", 0, MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
+	DISK_REGION( REGION_DISKS )	/* Release version 2.1a (4/17/98) (Guts 1.25 4/17/98, Main 4/17/98) */
+	DISK_IMAGE( "calspeed", 0, MD5(1b79ff4ecaa52693bdb19c720332dd59) SHA1(94af22d5797dbbaf6178fba1194257a603fda9ee) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+ROM_END
+
+
+ROM_START( calspeda )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 (2/18/98) */
+	ROM_LOAD( "caspd1_2.u32", 0x000000, 0x80000, CRC(0a235e4e) SHA1(b352f10fad786260b58bd344b5002b6ea7aaf76d) )
+
+	DISK_REGION( REGION_DISKS )	/* Release version 1.0r7a (3/4/98) (Guts 3/3/98, Main 1/19/98) */
+	DISK_IMAGE( "calspeda", 0, MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
 
 ROM_START( vaportrx )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "vtrxboot.bin", 0x000000, 0x80000, CRC(ee487a6c) SHA1(fb9efda85047cf615f24f7276a9af9fd542f3354) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "vaportrx", 0, MD5(eb8dcf83fe8b7122481d24ad8fbc8a9a) SHA1(f6ddb8eb66d979d49799e39fa4d749636693a1b0) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
 
 ROM_START( vaportrp )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
-	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "vtrxboot.bin", 0x000000, 0x80000, CRC(ee487a6c) SHA1(fb9efda85047cf615f24f7276a9af9fd542f3354) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "vaportrp", 0, MD5(fac4d37e049bc649696f4834044860e6) SHA1(75e2eaf81c69d2a337736dbead804ac339fd0675) )
+
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
 
 ROM_START( biofreak )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2638,7 +2705,7 @@ ROM_END
 
 
 ROM_START( blitz )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
@@ -2650,7 +2717,7 @@ ROM_END
 
 
 ROM_START( blitz11 )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.1 */
@@ -2662,7 +2729,7 @@ ROM_END
 
 
 ROM_START( blitz99 )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.0 */
@@ -2674,7 +2741,7 @@ ROM_END
 
 
 ROM_START( blitz2k )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.4 */
@@ -2686,7 +2753,7 @@ ROM_END
 
 
 ROM_START( carnevil )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2698,7 +2765,7 @@ ROM_END
 
 
 ROM_START( hyprdriv )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "seattle.snd", 0x000000, 0x8000, BAD_DUMP CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2920,7 +2987,8 @@ GAME( 1996, mace,     0,        seattle150, mace,     mace,     ROT0, "Atari Gam
 GAME( 1997, macea,    mace,     seattle150, mace,     mace,     ROT0, "Atari Games",  "Mace: The Dark Age (HDD 1.0a", 0 )
 GAME( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Games",  "San Francisco Rush", 0 )
 GAME( 1996, sfrushrk, 0,        flagstaff,  sfrushrk, sfrushrk, ROT0, "Atari Games",  "San Francisco Rush: The Rock", GAME_NOT_WORKING )
-GAME( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed", 0 )
+GAME( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed (Version 2.1a, 4/17/98)", 0 )
+GAME( 1998, calspeda, calspeed, seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed (Version 1.0r7a 3/4/98)", 0 )
 GAME( 1998, vaportrx, 0,        seattle200, vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX", 0 )
 GAME( 1998, vaportrp, vaportrx, seattle200, vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX (prototype)", 0 )
 

@@ -35,7 +35,7 @@ static UINT8 *namcos1_videoram;
 
   so there is just 3x0x2000 RAM, plus the CUS116 internal registers.
 */
-static UINT8 *namcos1_paletteram;
+extern UINT8 *namcos1_paletteram;
 static UINT8 namcos1_cus116[0x10];
 
 /*
@@ -105,7 +105,6 @@ VIDEO_START( namcos1 )
 
 	/* allocate videoram */
 	namcos1_videoram = auto_malloc(0x8000);
-	namcos1_paletteram = auto_malloc(0x6000);
 	namcos1_spriteram = auto_malloc(0x1000);
 
 	/* initialize playfields */
@@ -117,7 +116,7 @@ VIDEO_START( namcos1 )
 	bg_tilemap[5] = tilemap_create(fg_get_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 
 	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !bg_tilemap[3] || !bg_tilemap[4] || !bg_tilemap[5]
-			|| !namcos1_videoram || !namcos1_paletteram)
+			|| !namcos1_videoram)
 		return 1;
 
 	tilemap_set_scrolldx(bg_tilemap[4],73,512-73);
@@ -127,7 +126,6 @@ VIDEO_START( namcos1 )
 
 	/* register videoram to the save state system (post-allocation) */
 	state_save_register_UINT8("video", 0, "vram", namcos1_videoram, 0x8000);
-	state_save_register_UINT8("video", 0, "paletteram", namcos1_paletteram, 0x6000);
 	state_save_register_UINT8("video", 0, "cus116", namcos1_cus116, 0x10);
 	state_save_register_UINT8("video", 0, "spriteram", namcos1_spriteram, 0x1000);
 	state_save_register_UINT8("video", 0, "playfield", namcos1_playfield_control, 0x20);
@@ -135,6 +133,12 @@ VIDEO_START( namcos1 )
 	/* set table for sprite color == 0x7f */
 	for (i = 0;i <= 15;i++)
 		gfx_drawmode_table[i] = DRAWMODE_SHADOW;
+
+	/* clear paletteram */
+	memset(namcos1_paletteram, 0, 0x8000);
+	memset(namcos1_cus116, 0, 0x10);
+	for (i = 0; i < 0x2000; i++)
+		palette_set_color(i, 0, 0, 0);
 
 	/* all palette entries are not affected by shadow sprites... */
 	for (i = 0;i < 0x2000;i++)
@@ -183,41 +187,37 @@ WRITE8_HANDLER( namcos1_videoram_w )
 }
 
 
-READ8_HANDLER( namcos1_paletteram_r )
-{
-	if ((offset & 0x1800) != 0x1800)
-	{
-		int color = ((offset & 0x6000) >> 2) | (offset & 0x7ff);
-		int component = (offset & 0x1800) >> 11;
-
-		return namcos1_paletteram[color + 0x2000 * component];
-	}
-	else
-	{
-		offset &= 0x0f;
-		return namcos1_cus116[offset];
-	}
-}
-
 WRITE8_HANDLER( namcos1_paletteram_w )
 {
+	if (namcos1_paletteram[offset] == data)
+		return;
+
 	if ((offset & 0x1800) != 0x1800)
 	{
 		int r,g,b;
 		int color = ((offset & 0x6000) >> 2) | (offset & 0x7ff);
-		int component = (offset & 0x1800) >> 11;
 
-		namcos1_paletteram[color + 0x2000 * component] = data;
+		namcos1_paletteram[offset] = data;
 
-		r = namcos1_paletteram[color];
-		g = namcos1_paletteram[color + 0x2000];
-		b = namcos1_paletteram[color + 0x4000];
+		offset &= ~0x1800;
+		r = namcos1_paletteram[offset];
+		g = namcos1_paletteram[offset + 0x0800];
+		b = namcos1_paletteram[offset + 0x1000];
 		palette_set_color(color,r,g,b);
 	}
 	else
 	{
-		offset &= 0x0f;
-		namcos1_cus116[offset] = data;
+		int i, j;
+
+		namcos1_cus116[offset & 0x0f] = data;
+
+		for (i = 0x1800; i < 0x8000; i += 0x2000)
+		{
+			offset = (offset & 0x0f) | i;
+
+			for (j = 0; j < 0x80; j++, offset += 0x10)
+				namcos1_paletteram[offset] = data;
+		}
 	}
 }
 

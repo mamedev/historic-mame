@@ -168,12 +168,15 @@ extern void adsp2115_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 #define ADSP2181_IRQ2		2		/* IRQ2 */
 #define ADSP2181_SPORT0_RX	3		/* SPORT0 receive IRQ */
 #define ADSP2181_SPORT0_TX	4		/* SPORT0 transmit IRQ */
+#define ADSP2181_IRQE		5		/* IRQE */
+#define ADSP2181_IRQL1		6		/* IRQL1 */
+#define ADSP2181_IRQL2		7		/* IRQL2 */
 
 extern void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 extern void adsp2181_load_boot_data(UINT8 *srcdata, UINT32 *dstdata);
 extern void adsp2181_idma_addr_w(UINT16 data);
 extern void adsp2181_idma_data_w(UINT16 data);
-extern UINT16 adsp2181_idma_data_r(UINT16 data);
+extern UINT16 adsp2181_idma_data_r(void);
 #endif
 
 #endif /* _ADSP2100_H */

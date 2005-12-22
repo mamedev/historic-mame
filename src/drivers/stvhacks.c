@@ -1100,8 +1100,7 @@ DRIVER_INIT(znpwfv)
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, znpwfv_speedup_r );
 
 	init_ic13();
-	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(20);
-
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(10);
 }
 
 static READ32_HANDLER( twcup98_speedup_r )

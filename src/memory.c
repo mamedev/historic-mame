@@ -3036,7 +3036,7 @@ static genf *get_static_handler(int databits, int readorwrite, int spacenum, int
     debugging
 -------------------------------------------------*/
 
-static void dump_map(FILE *file, const addrspace_data *space, const table_data *table)
+static const char *handler_to_string(const table_data *table, UINT8 entry)
 {
 	static const char *strings[] =
 	{
@@ -3048,22 +3048,34 @@ static void dump_map(FILE *file, const addrspace_data *space, const table_data *
 		"bank 20",		"bank 21",		"bank 22",		"bank 23",
 		"bank 24",		"bank 25",		"bank 26",		"bank 27",
 		"bank 28",		"bank 29",		"bank 30",		"bank 31",
-		"bank 32",		"bank 33",		"bank 34",		"bank 35",
-		"bank 36",		"bank 37",		"bank 38",		"bank 39",
-		"bank 40",		"bank 41",		"bank 42",		"bank 43",
-		"bank 44",		"bank 45",		"bank 46",		"bank 47",
-		"bank 48",		"bank 49",		"bank 50",		"bank 51",
-		"bank 52",		"bank 53",		"bank 54",		"bank 55",
-		"bank 56",		"bank 57",		"bank 58",		"bank 59",
-		"bank 60",		"bank 61",		"bank 62",		"bank 63",
-		"bank 64",		"bank 65",		"bank 66",		"bank 67",
-		"RAM",			"ROM",			"nop",			"unmapped"
+		"bank 32",		"ram[33]",		"ram[34]",		"ram[35]",
+		"ram[36]",		"ram[37]",		"ram[38]",		"ram[39]",
+		"ram[40]",		"ram[41]",		"ram[42]",		"ram[43]",
+		"ram[44]",		"ram[45]",		"ram[46]",		"ram[47]",
+		"ram[48]",		"ram[49]",		"ram[50]",		"ram[51]",
+		"ram[52]",		"ram[53]",		"ram[54]",		"ram[55]",
+		"ram[56]",		"ram[57]",		"ram[58]",		"ram[59]",
+		"ram[60]",		"ram[61]",		"ram[62]",		"ram[63]",
+		"ram[64]",		"ram[65]",		"ram[66]",		"ram[67]",
+		"ram[68]",		"rom",			"nop",			"unmapped"
 	};
 
+	/* constant strings for lower entries */
+	if (entry < STATIC_COUNT)
+		return strings[entry];
+	else
+		return table->handlers[entry].name ? table->handlers[entry].name : "???";
+}
+
+static void dump_map(FILE *file, const addrspace_data *space, const table_data *table)
+{
 	int l1count = 1 << LEVEL1_BITS;
 	int l2count = 1 << LEVEL2_BITS;
+	UINT8 lastentry = STATIC_UNMAP;
+	int entrymatches = 0;
 	int i, j;
 
+	/* dump generic information */
 	fprintf(file, "  Address bits = %d\n", space->abits);
 	fprintf(file, "     Data bits = %d\n", space->dbits);
 	fprintf(file, "       L1 bits = %d\n", LEVEL1_BITS);
@@ -3071,43 +3083,83 @@ static void dump_map(FILE *file, const addrspace_data *space, const table_data *
 	fprintf(file, "  Address mask = %X\n", space->mask);
 	fprintf(file, "\n");
 
+	/* loop over level 1 entries */
 	for (i = 0; i < l1count; i++)
 	{
 		UINT8 entry = table->table[i];
-		if (entry != STATIC_UNMAP)
-		{
-			fprintf(file, "%05X  %08X-%08X    = %02X: ", i,
-					i << LEVEL2_BITS,
-					((i+1) << LEVEL2_BITS) - 1, entry);
-			if (entry < STATIC_COUNT)
-				fprintf(file, "%s [offset=%08X]\n", (entry < sizeof(strings) / sizeof(strings[0]))
-					? strings[entry] : "???", table->handlers[entry].offset);
-			else if (entry < SUBTABLE_BASE)
-				fprintf(file, "handler(%08X) [offset=%08X]\n", (UINT32)table->handlers[entry].handler.generic, table->handlers[entry].offset);
-			else
-			{
-				fprintf(file, "subtable %d\n", entry - SUBTABLE_BASE);
-				entry -= SUBTABLE_BASE;
 
-				for (j = 0; j < l2count; j++)
+		/* if this entry matches the previous one, just count it */
+		if (entry < SUBTABLE_BASE && entry == lastentry)
+		{
+			entrymatches++;
+			continue;
+		}
+
+		/* otherwise, print accumulated info */
+		if (lastentry < SUBTABLE_BASE && lastentry != STATIC_UNMAP)
+			fprintf(file, "%08X-%08X    = %02X: %s [offset=%08X]\n",
+							(i - entrymatches) << LEVEL2_BITS,
+							(i << LEVEL2_BITS) - 1,
+							lastentry,
+							handler_to_string(table, lastentry),
+							table->handlers[lastentry].offset);
+
+		/* start counting with this entry */
+		lastentry = entry;
+		entrymatches = 1;
+
+		/* if we're a subtable, we need to drill down */
+		if (entry >= SUBTABLE_BASE)
+		{
+			UINT8 lastentry2 = STATIC_UNMAP;
+			int entry2matches = 0;
+
+			/* loop over level 2 entries */
+			entry -= SUBTABLE_BASE;
+			for (j = 0; j < l2count; j++)
+			{
+				UINT8 entry2 = table->table[(1 << LEVEL1_BITS) + (entry << LEVEL2_BITS) + j];
+
+				/* if this entry matches the previous one, just count it */
+				if (entry2 < SUBTABLE_BASE && entry2 == lastentry2)
 				{
-					UINT8 entry2 = table->table[(1 << LEVEL1_BITS) + (entry << LEVEL2_BITS) + j];
-					if (entry2 != STATIC_UNMAP)
-					{
-						fprintf(file, "   %05X  %08X-%08X = %02X: ", j,
-								((i << LEVEL2_BITS) | j),
-								((i << LEVEL2_BITS) | (j+1)) - 1, entry2);
-						if (entry2 < STATIC_COUNT)
-							fprintf(file, "%s [offset=%08X]\n", strings[entry2], table->handlers[entry2].offset);
-						else if (entry2 < SUBTABLE_BASE)
-							fprintf(file, "handler(%08X) [offset=%08X]\n", (UINT32)table->handlers[entry2].handler.generic, table->handlers[entry2].offset);
-						else
-							fprintf(file, "subtable %d???????????\n", entry2 - SUBTABLE_BASE);
-					}
+					entry2matches++;
+					continue;
 				}
+
+				/* otherwise, print accumulated info */
+				if (lastentry2 < SUBTABLE_BASE && lastentry2 != STATIC_UNMAP)
+					fprintf(file, "%08X-%08X    = %02X: %s [offset=%08X]\n",
+									((i << LEVEL2_BITS) | (j - entry2matches)),
+									((i << LEVEL2_BITS) | j) - 1,
+									lastentry2,
+									handler_to_string(table, lastentry2),
+									table->handlers[lastentry2].offset);
+
+				/* start counting with this entry */
+				lastentry2 = entry2;
+				entry2matches = 1;
 			}
+
+			/* flush the last entry */
+			if (lastentry2 < SUBTABLE_BASE && lastentry2 != STATIC_UNMAP)
+				fprintf(file, "%08X-%08X    = %02X: %s [offset=%08X]\n",
+								((i << LEVEL2_BITS) | (j - entry2matches)),
+								((i << LEVEL2_BITS) | j) - 1,
+								lastentry2,
+								handler_to_string(table, lastentry2),
+								table->handlers[lastentry2].offset);
 		}
 	}
+
+	/* flush the last entry */
+	if (lastentry < SUBTABLE_BASE && lastentry != STATIC_UNMAP)
+		fprintf(file, "%08X-%08X    = %02X: %s [offset=%08X]\n",
+						(i - entrymatches) << LEVEL2_BITS,
+						(i << LEVEL2_BITS) - 1,
+						lastentry,
+						handler_to_string(table, lastentry),
+						table->handlers[lastentry].offset);
 }
 
 void memory_dump(FILE *file)
@@ -3137,3 +3189,24 @@ void memory_dump(FILE *file)
 			}
 }
 
+
+/*-------------------------------------------------
+    memory_get_handler_string - return a string
+    describing the handler at a particular offset
+-------------------------------------------------*/
+
+const char *memory_get_handler_string(int read0_or_write1, int cpunum, int spacenum, offs_t offset)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	const table_data *table = read0_or_write1 ? &space->write : &space->read;
+	UINT8 entry;
+
+	/* perform the lookup */
+	offset &= space->mask;
+	entry = table->table[LEVEL1_INDEX(offset)];
+	if (entry >= SUBTABLE_BASE)
+		entry = table->table[LEVEL2_INDEX(entry, offset)];
+
+	/* 8-bit case: RAM/ROM */
+	return handler_to_string(table, entry);
+}

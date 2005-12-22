@@ -87,6 +87,7 @@ static void execute_trace(int ref, int params, const char **param);
 static void execute_traceover(int ref, int params, const char **param);
 static void execute_snap(int ref, int params, const char **param);
 static void execute_source(int ref, int params, const char **param);
+static void execute_map(int ref, int params, const char **param);
 static void execute_memdump(int ref, int params, const char **param);
 
 
@@ -175,6 +176,9 @@ void debug_command_init(void)
 
 	debug_console_register_command("source",    CMDFLAG_NONE, 0, 1, 1, execute_source);
 
+	debug_console_register_command("map",		CMDFLAG_NONE, ADDRESS_SPACE_PROGRAM, 1, 1, execute_map);
+	debug_console_register_command("mapd",		CMDFLAG_NONE, ADDRESS_SPACE_DATA, 1, 1, execute_map);
+	debug_console_register_command("mapi",		CMDFLAG_NONE, ADDRESS_SPACE_IO, 1, 1, execute_map);
 	debug_console_register_command("memdump",	CMDFLAG_NONE, 0, 0, 1, execute_memdump);
 }
 
@@ -1733,6 +1737,43 @@ static void execute_snap(int ref, int params, const char *param[])
 static void execute_source(int ref, int params, const char *param[])
 {
 	debug_source_script(param[0]);
+}
+
+
+/*-------------------------------------------------
+    execute_map - execute the map command
+-------------------------------------------------*/
+
+static void execute_map(int ref, int params, const char *param[])
+{
+	UINT64 address, cpunum = cpu_getactivecpu();
+	const struct debug_cpu_info *info;
+	int spacenum = ref;
+	offs_t taddress;
+
+	/* validate parameters */
+	if (!validate_parameter_number(param[0], &address))
+		return;
+	info = debug_get_cpu_info(cpunum);
+
+	/* do the translation first */
+	taddress = address;
+	if (info->translate)
+	{
+		if ((*info->translate)(spacenum, &taddress))
+			debug_console_printf("%08X logical -> %08X physical\n", (UINT32)address, taddress);
+		else
+		{
+			debug_console_printf("%08X logical -> unmapped\n", (UINT32)address);
+			return;
+		}
+	}
+	else
+		debug_console_printf("%08X physical\n", taddress);
+
+	/* now do the mapping */
+	debug_console_printf("  -> read: %s\n", memory_get_handler_string(0, cpunum, spacenum, taddress));
+	debug_console_printf("  -> write: %s\n", memory_get_handler_string(1, cpunum, spacenum, taddress));
 }
 
 

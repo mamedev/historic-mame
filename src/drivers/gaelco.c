@@ -16,6 +16,8 @@
 extern UINT16 *gaelco_vregs;
 extern UINT16 *gaelco_videoram;
 extern UINT16 *gaelco_spriteram;
+extern tilemap *pant[2];
+UINT16 *gaelco_screen;
 
 /* from vidhrdw/gaelco.c */
 WRITE16_HANDLER( gaelco_vram_w );
@@ -552,15 +554,414 @@ ROM_START( biomtoy )
 	ROM_LOAD( "c3",	0x0c0000, 0x080000, CRC(914e4bbc) SHA1(ca82b7481621a119f05992ed093b963da70d748a) )
 ROM_END
 
-/*============================================================================
-                    SQUASH & THUNDER HOOP
-============================================================================*/
+/*********** Squash Encryption Related Code ******************/
+
+INPUT_PORTS_START( squash )
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+
+	PORT_START	/* 1P INPUTS & COINSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* 2P INPUTS & STARTSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+static int lastpc=0;
+static int lastword=0;
+static int lastoffset=0;
+
+// Nicola's decrypt routines for high word
+
+static int add_7_13_8_4_15(int val, int inc)
+{
+	if (inc > 0)
+	{
+		while (inc-- > 0)
+		{
+			val ^= 0x0080;	// BIT 7
+			if ((val & 0x0080) == 0)	// BIT 7 carries to...
+			{
+				val ^= 0x2000;	// BIT 13
+				if ((val & 0x2000) == 0)	// BIT 13 carries to...
+				{
+					val ^= 0x0100;	// BIT 8
+					if ((val & 0x0100) == 0)	// BIT 8 carries to...
+					{
+						val ^= 0x0010;	// BIT 4
+						if ((val & 0x0010) == 0)	// BIT 4 carries to...
+							val ^= 0x8000;	// BIT 15
+					}
+				}
+			}
+		}
+	}
+	else if (inc < 0)
+	{
+		while (inc++ < 0)
+		{
+			val ^= 0x0080;	// BIT 7
+			if ((val & 0x0080) != 0)	// BIT 7 carries to...
+			{
+				val ^= 0x2000;	// BIT 13
+				if ((val & 0x2000) != 0)	// BIT 13 carries to...
+				{
+					val ^= 0x0100;	// BIT 8
+					if ((val & 0x0100) != 0)	// BIT 8 carries to...
+					{
+						val ^= 0x0010;	// BIT 4
+						if ((val & 0x0010) != 0)	// BIT 4 carries to...
+							val ^= 0x8000;	// BIT 15
+					}
+				}
+			}
+		}
+	}
+
+	return val;
+}
+
+
+static int add_12_14_0_2_1(int val, int inc)
+{
+	if (inc > 0)
+	{
+		while (inc-- > 0)
+		{
+			val ^= 0x1000;	// BIT 12
+			if ((val & 0x1000) == 0)	// BIT 12 carries to...
+			{
+				val ^= 0x4000;	// BIT 14
+				if ((val & 0x4000) == 0)	// BIT 14 carries to...
+				{
+					val ^= 0x0001;	// BIT 0
+					if ((val & 0x0001) == 0)	// BIT 0 carries to...
+					{
+						val ^= 0x0004;	// BIT 2
+						if ((val & 0x0004) == 0)	// BIT 2 carries to...
+							val ^= 0x0002;	// BIT 1
+					}
+				}
+			}
+		}
+	}
+	else if (inc < 0)
+	{
+		while (inc++ < 0)
+		{
+			val ^= 0x1000;	// BIT 12
+			if ((val & 0x1000) != 0)	// BIT 12 carries to...
+			{
+				val ^= 0x4000;	// BIT 14
+				if ((val & 0x4000) != 0)	// BIT 14 carries to...
+				{
+					val ^= 0x0001;	// BIT 0
+					if ((val & 0x0001) != 0)	// BIT 0 carries to...
+					{
+						val ^= 0x0004;	// BIT 2
+						if ((val & 0x0004) != 0)	// BIT 2 carries to...
+							val ^= 0x0002;	// BIT 1
+					}
+				}
+			}
+		}
+	}
+
+	return val;
+}
+
+
+static int add_9_10_5_11_6_3(int val, int inc)
+{
+	if (inc > 0)
+	{
+		while (inc-- > 0)
+		{
+			val ^= 0x0200;	// BIT 9
+			if ((val & 0x0200) == 0)	// BIT 9 carries to...
+			{
+				val ^= 0x0400;	// BIT 10
+				if ((val & 0x0400) == 0)	// BIT 10 carries to...
+				{
+					val ^= 0x0020;	// BIT 5
+					if ((val & 0x0020) == 0)	// BIT 5 carries to...
+					{
+						val ^= 0x0800;	// BIT 11
+						if ((val & 0x0800) == 0)	// BIT 11 carries to...
+						{
+							val ^= 0x0040;	// BIT 6
+							if ((val & 0x0040) == 0)	// BIT 6 carries to...
+								val ^= 0x0008;	// BIT 3
+						}
+					}
+				}
+			}
+		}
+	}
+	else if (inc < 0)
+	{
+		while (inc++ < 0)
+		{
+			val ^= 0x0200;	// BIT 9
+			if ((val & 0x0200) != 0)	// BIT 9 carries to...
+			{
+				val ^= 0x0400;	// BIT 10
+				if ((val & 0x0400) != 0)	// BIT 10 carries to...
+				{
+					val ^= 0x0020;	// BIT 5
+					if ((val & 0x0020) != 0)	// BIT 5 carries to...
+					{
+						val ^= 0x0800;	// BIT 11
+						if ((val & 0x0800) != 0)	// BIT 11 carries to...
+						{
+							val ^= 0x0040;	// BIT 6
+							if ((val & 0x0040) != 0)	// BIT 6 carries to...
+								val ^= 0x0008;	// BIT 3
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return val;
+}
+
+
+static int decrypt_high_word(int high_word)
+{
+	int src = high_word;
+	int dst = src;
+
+
+	// invert some bits...
+	dst ^= 0x0800;	// BIT 11
+	dst ^= 0x0004;	// BIT 2
+	dst ^= 0x0010;	// BIT 4
+
+
+	if (BIT(dst,5) == 0)
+	{
+		dst = add_12_14_0_2_1( dst, 4 );
+		dst = add_7_13_8_4_15( dst, 4 );
+	}
+
+	dst = add_9_10_5_11_6_3( dst, -1 );
+
+	if (BIT(dst,9) != 0)
+	{
+		dst = add_12_14_0_2_1( dst, 1 );
+		dst = add_7_13_8_4_15( dst, 1 );
+	}
+
+	dst = add_9_10_5_11_6_3( dst, -2 );
+
+	if (BIT(dst,5) != 0)
+	{
+		dst = add_12_14_0_2_1( dst, 2 );
+		dst = add_7_13_8_4_15( dst, 2 );
+	}
+
+	dst = add_9_10_5_11_6_3( dst, -8 );
+
+	if (BIT(dst,3) != 0)
+	{
+		dst = add_12_14_0_2_1( dst, 8 );
+		dst = add_7_13_8_4_15( dst, 8 );
+	}
+
+	dst ^= 0x0040;	// BIT 6
+
+	if (BIT(dst,6) != 0)
+	{
+		dst = add_12_14_0_2_1( dst, 16 );
+		dst = add_7_13_8_4_15( dst, 16 );
+	}
+
+
+	dst ^= 0xffff;
+
+	dst = BITSWAP16(dst,5,7,9,12,2,14,13,15,3,6,8,11,4,10,0,1);
+
+	return dst;
+}
+
+static UINT16 squash_encrypt(int offset, int data)
+{
+        UINT16 *RAM = (UINT16 *)memory_region(REGION_USER1);
+
+		int thispc = activecpu_get_pc();
+        int savedata = data;
+		int whichfile;
+        int foffset;
+
+        /* check if 2nd half of 32 bit */
+        if(lastpc == thispc && offset == lastoffset + 1)
+        {
+                lastpc = 0;
+                whichfile = RAM[lastword];
+ 		        foffset = data;
+				data = RAM[(whichfile*0x10000)+foffset];
+                logerror("%8x : data2 = %4x > %4x\n",activecpu_get_pc(),savedata,data);
+        }
+        else
+        {
+                /* code as 1st word */
+                lastword = data;
+                lastpc = thispc;
+                lastoffset = offset;
+
+                /* high word returned */
+                data = decrypt_high_word(lastword);
+
+                logerror("%8x : data1 = %4x > %4x @ %8x\n",activecpu_get_pc(),savedata,data,lastoffset);
+        }
+        return data;
+}
+
+WRITE16_HANDLER( gaelco_vram_encrypted_w )
+{
+	int oldword = gaelco_videoram[offset];
+//  printf("gaelco_vram_encrypted_w!!\n");
+
+	data = squash_encrypt(offset,data);
+	COMBINE_DATA(&gaelco_videoram[offset]);
+
+	if (oldword != gaelco_videoram[offset])
+		tilemap_mark_tile_dirty(pant[offset >> 11],((offset << 1) & 0x0fff) >> 2);
+}
+
+WRITE16_HANDLER(gaelco_encrypted_w)
+{
+//  printf("gaelco_encrypted_w!!\n");
+
+	 data = squash_encrypt(offset,data);
+        COMBINE_DATA(&gaelco_screen[offset]);
+}
+
+
+static ADDRESS_MAP_START( squash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)			/* ROM */
+	AM_RANGE(0x100000, 0x101fff) AM_READ(MRA16_RAM)			/* Video RAM */
+	AM_RANGE(0x102000, 0x103fff) AM_READ(MRA16_RAM)			/* Screen RAM */
+	AM_RANGE(0x200000, 0x2007ff) AM_READ(MRA16_RAM)			/* Palette */
+	AM_RANGE(0x440000, 0x440fff) AM_READ(MRA16_RAM)			/* Sprite RAM */
+	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_0_word_r)/* DIPSW #2 */
+	AM_RANGE(0x700002, 0x700003) AM_READ(input_port_1_word_r)/* DIPSW #1 */
+	AM_RANGE(0x700004, 0x700005) AM_READ(input_port_2_word_r)/* INPUT #1 */
+	AM_RANGE(0x700006, 0x700007) AM_READ(input_port_3_word_r)/* INPUT #2 */
+	AM_RANGE(0x70000e, 0x70000f) AM_READ(OKIM6295_status_0_lsb_r)/* OKI6295 status register */
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)			/* Work RAM */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( squash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)								/* ROM */
+	AM_RANGE(0x100000, 0x101fff) AM_WRITE(gaelco_vram_encrypted_w) AM_BASE(&gaelco_videoram)		/* Video RAM */
+	AM_RANGE(0x102000, 0x103fff) AM_WRITE(gaelco_encrypted_w) AM_BASE(&gaelco_screen)                                                                /* Screen RAM */
+	AM_RANGE(0x108000, 0x108007) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_vregs)				/* Video Registers */
+//  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                     /* INT 6 ACK/Watchdog timer */
+	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)/* Palette */
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_spriteram)			/* Sprite RAM */
+	AM_RANGE(0x70000c, 0x70000d) AM_WRITE(OKIM6295_bankswitch_w)					/* OKI6295 bankswitch */
+	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(OKIM6295_data_0_lsb_w)					/* OKI6295 data register */
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)								/* Work RAM */
+ADDRESS_MAP_END
+
 
 static MACHINE_DRIVER_START( squash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* MC68000P12, 12 MHz */
-	MDRV_CPU_PROGRAM_MAP(maniacsq_readmem,maniacsq_writemem)
+	MDRV_CPU_PROGRAM_MAP(squash_readmem,squash_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -574,8 +975,8 @@ static MACHINE_DRIVER_START( squash )
 	MDRV_GFXDECODE(gfxdecodeinfo_0x100000)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_VIDEO_START(bigkarnk)
-	MDRV_VIDEO_UPDATE(bigkarnk)
+	MDRV_VIDEO_START(maniacsq)
+	MDRV_VIDEO_UPDATE(maniacsq)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -585,33 +986,44 @@ static MACHINE_DRIVER_START( squash )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
-/* missing DS5002FP code and encrypted video ram */
+/* encrypted video ram */
 ROM_START( squash )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "squash.d18", 0x000000, 0x20000, CRC(ce7aae96) SHA1(4fe8666ae571bffc5a08fa68346c0623282989eb) )
 	ROM_LOAD16_BYTE( "squash.d16", 0x000001, 0x20000, CRC(8ffaedd7) SHA1(f4aada17ba67dd8b6c5a395e832bcbba2764c59d) )
 
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "squash.c09", 0x000000, 0x80000, CRC(0bb91c69) SHA1(8be945049ab411a4d49bd64bd3937542ec9ef9fb) )
-	ROM_RELOAD(		        0x080000, 0x080000 )
-	ROM_LOAD( "squash.c10", 0x100000, 0x80000, CRC(892a035c) SHA1(d0156ceb9aa6639a1124c17fb12389be319bb51f) )
-	ROM_RELOAD(		        0x180000, 0x080000 )
-	ROM_LOAD( "squash.c11", 0x200000, 0x80000, CRC(9e19694d) SHA1(1df4646f3147719fef516a37aa361ae26d9b23a2) )
-	ROM_RELOAD(		        0x280000, 0x080000 )
-	ROM_LOAD( "squash.c12", 0x300000, 0x80000, CRC(5c440645) SHA1(4f2fc1647ffc549fa079f2dc0aaaceb447afdf44) )
-	ROM_RELOAD(		        0x380000, 0x080000 )
+	/* Decryption table */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION16_LE( 0x20000*1800, REGION_USER1, ROMREGION_ERASEFF)
+	ROM_LOAD( "squash.ec2", 0x000000, 210894848, BAD_DUMP CRC(162aa9a3) SHA1(9c31daecc180e2438e0bf9457a5529e9dab016f4) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "squash.c09", 0x300000, 0x80000, CRC(0bb91c69) SHA1(8be945049ab411a4d49bd64bd3937542ec9ef9fb) )
+	ROM_RELOAD(		        0x380000, 0x80000 )
+	ROM_LOAD( "squash.c10", 0x200000, 0x80000, CRC(892a035c) SHA1(d0156ceb9aa6639a1124c17fb12389be319bb51f) )
+	ROM_RELOAD(		        0x280000, 0x80000 )
+	ROM_LOAD( "squash.c11", 0x100000, 0x80000, CRC(9e19694d) SHA1(1df4646f3147719fef516a37aa361ae26d9b23a2) )
+	ROM_RELOAD(		        0x180000, 0x80000 )
+	ROM_LOAD( "squash.c12", 0x000000, 0x80000, CRC(5c440645) SHA1(4f2fc1647ffc549fa079f2dc0aaaceb447afdf44) )
+	ROM_RELOAD(		        0x080000, 0x80000 )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "squash.d01",   0x000000, 0x80000, CRC(a1b9651b) SHA1(a396ba94889f70ea06d6330e3606b0f2497ff6ce) )
+	/* 0x00000-0x2ffff is fixed, 0x30000-0x3ffff is bank switched from all the ROMs */
+	ROM_RELOAD(		0x040000, 0x080000 )
+	ROM_RELOAD(		0x0c0000, 0x080000 )
 ROM_END
 
-/* missing DS5002FP code and encrypted video ram */
+/* encrypted video ram */
 ROM_START( thoop )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	//does it need to be half the size?
 	ROM_LOAD16_BYTE( "th18dea1.040", 0x000000, 0x80000, CRC(59bad625) SHA1(28e058b2290bc5f7130b801014d026432f9e7fd5) )
 	ROM_LOAD16_BYTE( "th161eb4.020", 0x000001, 0x40000, CRC(6add61ed) SHA1(0e789d9a0ac19b6143044fbc04ab2227735b2a8f) )
 
+	ROM_REGION16_LE( 0x40000, REGION_USER1, ROMREGION_ERASEFF)
+	ROM_REGION16_LE( 0x40000, REGION_USER2, ROMREGION_ERASEFF)
+	ROM_REGION16_LE( 0x20000*1606, REGION_USER3, ROMREGION_ERASEFF)
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c09", 0x000000, 0x100000, CRC(06f0edbf) SHA1(3cf2e5c29cd00b43d49a106084076f2ac0dbad98) )
@@ -626,5 +1038,5 @@ ROM_END
 GAME( 1991, bigkarnk, 0,        bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak", 0 )
 GAME( 1995, biomtoy,  0,        maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)", 0 )
 GAME( 1996, maniacsp, maniacsq, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)", 0 )
-GAME( 1992, squash,   0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1992, squash,   0,		squash,   squash,   0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_IMPERFECT_GRAPHICS ) // problems with decryption + prioirites
 GAME( 1992, thoop,    0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Thunder Hoop",      GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )

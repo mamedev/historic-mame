@@ -618,7 +618,7 @@ MACHINE_DRIVER_END
 (C) ESD 1998
 PCB No. ESD 11-09-98    (Probably the manufacture date)
 CPU: MC68HC000FN16 (68000, 68 pin square socketed)
-SND: Z80, U6612 (Probably YM3812), AD-65 (OKI 6295), U6614 (YM3014)
+SND: Z80, U6612 (YM3812), AD-65 (OKI 6295), U6614 (YM3014)
 OSC: 16.000MHz, 14.000MHz
 RAM: 4 x 62256, 9 x 6116
 DIPS: 2 x 8 position
@@ -813,7 +813,7 @@ Notes:
       68000 (MC68HC000FN16-2E60R-QQJU9508)
       Z80 (Z84C00006FEC-Z80CPU-9618Z3)
       OKI6295 label AD65 (sound)
-      U6614 (custom chips)
+      YM3014 label U6614 (sound)
       YM3812 label U6612 (sound)
       MCM6206 - 32k x8 SRAM (SOJ28)
       6116    - 2k x8 SRAM (SOP28)

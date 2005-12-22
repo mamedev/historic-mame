@@ -29,11 +29,6 @@
 #include "mamedbg.h"
 #include "hd6309.h"
 
-#ifndef TRUE
-#define TRUE	-1
-#define FALSE	0
-#endif
-
 typedef struct {				/* opcode structure */
    UINT8	opcode; 			/* 8-bit opcode value */
    UINT8	numoperands;
@@ -45,53 +40,40 @@ typedef struct {				/* opcode structure */
    unsigned flags;				/* disassembly flags */
 } opcodeinfo;
 
-/* 6309 ADDRESSING MODES */
-enum HD6309_ADDRESSING_MODES {
+/* 6809/6309 ADDRESSING MODES */
+enum HD6309_ADDRESSING_MODES
+{
 	INH,
 	DIR,
+	DIR_IM,
 	IND,
 	REL,
 	EXT,
 	IMM,
+	IMM_RR,
+	IMM_BW,
+	IMM_TFM,
 	LREL,
 	PG2,						/* PAGE SWITCHES -  Page 2 */
 	PG3 						/*                  Page 3 */
 };
 
-/* number of opcodes in each page */
-//#define NUMPG1OPS 237
-//#define NUMPG2OPS 118
-//#define NUMPG3OPS 83
-
-#if 0
-static char modenames[10][19] = {
-   "inherent",
-   "direct",
-   "indexed",
-   "relative",
-   "extended",
-   "immediate",
-   "long relative",
-   "page 2",
-   "page 3",
-};
-#endif
 
 /* page 1 ops */
-static opcodeinfo pg1opcodes[] =
+static const opcodeinfo hd6309_pg1opcodes[] =
 {
 	{ 0x00,1,"NEG",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
-	{ 0x01,2,"OIM",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
-	{ 0x02,2,"AIM",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
+	{ 0x01,2,"OIM",     DIR_IM, EA_UINT8,  EA_ZPG_RDWR,  6},
+	{ 0x02,2,"AIM",     DIR_IM, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x03,1,"COM",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x04,1,"LSR",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
-	{ 0x05,2,"EIM",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
+	{ 0x05,2,"EIM",     DIR_IM, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x06,1,"ROR",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x07,1,"ASR",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x08,1,"ASL",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x09,1,"ROL",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x0a,1,"DEC",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
-	{ 0x0b,2,"TIM",     DIR, EA_UINT8,  EA_ZPG_RD,    6},  /* Unsure about this cycle count (TL)*/
+	{ 0x0b,2,"TIM",     DIR_IM, EA_UINT8,  EA_ZPG_RD,    6},  /* Unsure about this cycle count (TL)*/
 	{ 0x0c,1,"INC",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x0d,1,"TST",     DIR, EA_UINT8,  EA_ZPG_RDWR,  6},
 	{ 0x0e,1,"JMP",     DIR, EA_UINT8,  EA_ABS_PC,    3},
@@ -108,8 +90,8 @@ static opcodeinfo pg1opcodes[] =
 	{ 0x1a,1,"ORCC",    IMM, 0,        0,            3},
 	{ 0x1c,1,"ANDCC",   IMM, 0,        0,            3},
 	{ 0x1d,0,"SEX",     INH, 0,        0,            2},
-	{ 0x1e,1,"EXG",     IMM, 0,        0,            8},
-	{ 0x1f,1,"TFR",     IMM, 0,        0,            6},
+	{ 0x1e,1,"EXG",     IMM_RR, 0,        0,            8},
+	{ 0x1f,1,"TFR",     IMM_RR, 0,        0,            6},
 
 	{ 0x20,1,"BRA",     REL, EA_INT8,  EA_REL_PC,    3},
 	{ 0x21,1,"BRN",     REL, EA_INT8,  EA_REL_PC,    3},
@@ -335,7 +317,7 @@ static opcodeinfo pg1opcodes[] =
 };
 
 /* page 2 ops 10xx*/
-static opcodeinfo pg2opcodes[] =
+static const opcodeinfo hd6309_pg2opcodes[] =
 {
 	{ 0x21,3,"LBRN",    LREL,EA_INT16, EA_REL_PC,    5},
 	{ 0x22,3,"LBHI",    LREL,EA_INT16, EA_REL_PC,    5},
@@ -353,14 +335,14 @@ static opcodeinfo pg2opcodes[] =
 	{ 0x2E,3,"LBGT",    LREL,EA_INT16, EA_REL_PC,    5},
 	{ 0x2F,3,"LBLE",    LREL,EA_INT16, EA_REL_PC,    5},
 
-	{ 0x30,2,"ADDR",     IMM,        0,        0,    4},
-	{ 0x31,2,"ADCR",     IMM,        0,        0,    4},
-	{ 0x32,2,"SUBR",     IMM,        0,        0,    4},
-	{ 0x33,2,"SBCR",     IMM,        0,        0,    4},
-	{ 0x34,2,"ANDR",     IMM,        0,        0,    4},
-	{ 0x35,2,"ORR",      IMM,        0,        0,    4},
-	{ 0x36,2,"EORR",     IMM,        0,        0,    4},
-	{ 0x37,2,"CMPR",     IMM,        0,        0,    4},
+	{ 0x30,2,"ADDR",     IMM_RR,        0,        0,    4},
+	{ 0x31,2,"ADCR",     IMM_RR,        0,        0,    4},
+	{ 0x32,2,"SUBR",     IMM_RR,        0,        0,    4},
+	{ 0x33,2,"SBCR",     IMM_RR,        0,        0,    4},
+	{ 0x34,2,"ANDR",     IMM_RR,        0,        0,    4},
+	{ 0x35,2,"ORR",      IMM_RR,        0,        0,    4},
+	{ 0x36,2,"EORR",     IMM_RR,        0,        0,    4},
+	{ 0x37,2,"CMPR",     IMM_RR,        0,        0,    4},
 
 	{ 0x38,0,"PSHSW",    INH,        0,        0,    6},
 	{ 0x39,0,"PULSW",    INH,        0,        0,    6},
@@ -488,22 +470,22 @@ static opcodeinfo pg2opcodes[] =
 };
 
 /* page 3 ops 11xx */
-static opcodeinfo pg3opcodes[] =
+static const opcodeinfo hd6309_pg3opcodes[] =
 {
-	{ 0x30,3,"BAND",    DIR, EA_UINT8, EA_ZPG_RDWR,  7},
-	{ 0x31,3,"BIAND",   DIR, EA_UINT8, EA_ZPG_RDWR,  7},
-	{ 0x32,3,"BOR",     DIR, EA_UINT8, EA_ZPG_RDWR,  7},
-	{ 0x33,3,"BIOR",    DIR, EA_UINT8, EA_ZPG_RDWR,  7},
-	{ 0x34,3,"BEOR",    DIR, EA_UINT8, EA_ZPG_RDWR,  7},
-	{ 0x35,3,"BIEOR",   DIR, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x30,3,"BAND",    IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x31,3,"BIAND",   IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x32,3,"BOR",     IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x33,3,"BIOR",    IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x34,3,"BEOR",    IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x35,3,"BIEOR",   IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
 
-	{ 0x36,3,"LDBT",    DIR, EA_UINT8, EA_ZPG_RD,    7},
-	{ 0x37,3,"STBT",    DIR, EA_UINT8, EA_ZPG_RDWR,  7},
+	{ 0x36,3,"LDBT",    IMM_BW, EA_UINT8, EA_ZPG_RD,    7},
+	{ 0x37,3,"STBT",    IMM_BW, EA_UINT8, EA_ZPG_RDWR,  7},
 
-	{ 0x38,2,"TFM",     IMM, 0,        0,            6},
-	{ 0x39,2,"TFM",     IMM, 0,        0,            6},
-	{ 0x3A,2,"TFM",     IMM, 0,        0,            6},
-	{ 0x3B,2,"TFM",     IMM, 0,        0,            6},
+	{ 0x38,2,"TFM",     IMM_TFM, 0,        0,            6},
+	{ 0x39,2,"TFM",     IMM_TFM, 0,        0,            6},
+	{ 0x3A,2,"TFM",     IMM_TFM, 0,        0,            6},
+	{ 0x3B,2,"TFM",     IMM_TFM, 0,        0,            6},
 
 	{ 0x3C,2,"BITMD",   IMM, EA_UINT8, EA_VALUE,     4},
 	{ 0x3D,2,"LDMD",    IMM, EA_UINT8, EA_VALUE,     5},
@@ -603,29 +585,24 @@ static opcodeinfo pg3opcodes[] =
 
 };
 
-int numops6309[3] =
+static const opcodeinfo *hd6309_pgpointers[3] =
 {
-	sizeof(pg1opcodes)/sizeof(opcodeinfo),
-	sizeof(pg2opcodes)/sizeof(opcodeinfo),
-	sizeof(pg3opcodes)/sizeof(opcodeinfo)
+	hd6309_pg1opcodes, hd6309_pg2opcodes, hd6309_pg3opcodes
 };
 
-static opcodeinfo *pgpointers[3] =
+static const int hd6309_numops[3] =
 {
-   pg1opcodes,pg2opcodes,pg3opcodes,
-};
-
-static const UINT8 regid_6309[5] = {
-	HD6309_X, HD6309_Y, HD6309_U, HD6309_S, HD6309_PC
+	sizeof(hd6309_pg1opcodes) / sizeof(hd6309_pg1opcodes[0]),
+	sizeof(hd6309_pg2opcodes) / sizeof(hd6309_pg2opcodes[0]),
+	sizeof(hd6309_pg3opcodes) / sizeof(hd6309_pg3opcodes[0])
 };
 
 static const char *regs_6309[5] = { "X","Y","U","S","PC" };
 
-static const UINT8 btmRegs_id[] = { HD6309_CC, HD6309_A, HD6309_B, 0 };
-
 static const char *btwRegs[5] = { "CC", "A", "B", "inv" };
 
-static const char *teregs[16] = {
+static const char *teregs_6309[16] =
+{
 	"D","X","Y","U","S","PC","W","V",
 	"A","B","CC","DP","0","0","E","F"
 };
@@ -637,46 +614,49 @@ static const char *tfmregs[16] = {
 
 static const char *tfm_s[] = { "%s+,%s+", "%s-,%s-", "%s+,%s", "%s,%s+" };
 
-static char *hexstring (int address)
+offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
-	static char labtemp[10];
-	sprintf (labtemp, "$%04hX", (unsigned short)address);
-	return labtemp;
-}
-
-
-unsigned Dasm6309 (char *buffer, unsigned pc)
-{
-	int i, j, k, page=0, opcode, numoperands, mode, size, access;
-	UINT8 operandarray[4];
-	const char *sym1, *sym2;
+	int i, k, page = 0, opcode, numoperands, mode, size, access;
+	const UINT8 *operandarray;
+	const char *sym1;
 	int rel, pb, offset = 0, reg, pb2;
 	unsigned ea = 0;
 	int p = 0;
 	unsigned flags;
+	const int *numops;
+	const opcodeinfo **pgpointers;
+	const opcodeinfo *pg1opcodes;
+	const char **regs;
+	const char **teregs;
+
+	numops = hd6309_numops;
+	pgpointers = hd6309_pgpointers;
+	pg1opcodes = pgpointers[0];
+	regs = regs_6309;
+	teregs = teregs_6309;
 
 	*buffer = '\0';
 
-	opcode = cpu_readop(pc+(p++));
-	for( i = 0; i < numops6309[0]; i++ )
+	opcode = oprom[p++];
+	for( i = 0; i < numops[0]; i++ )
 		if (pg1opcodes[i].opcode == opcode)
 			break;
 
-	if( i < numops6309[0] )
+	if( i < numops[0] )
 	{
 		if( pg1opcodes[i].mode >= PG2 )
 		{
-			opcode = cpu_readop(pc+(p++));
+			opcode = oprom[p++];
 			page = pg1opcodes[i].mode - PG2 + 1;		  /* get page # */
-			for( k = 0; k < numops6309[page]; k++ )
+			for( k = 0; k < numops[page]; k++ )
 				if (opcode == pgpointers[page][k].opcode)
 					break;
 
-			if( k != numops6309[page] )
+			if( k != numops[page] )
 			{	/* opcode found */
 				numoperands = pgpointers[page][k].numoperands - 1;
-				for (j = 0; j < numoperands; j++)
-					operandarray[j] = cpu_readop_arg(pc+(p++));
+				operandarray = &opram[p];
+				p += numoperands;
 				mode = pgpointers[page][k].mode;
 				size = pgpointers[page][k].size;
 				access = pgpointers[page][k].access;
@@ -685,15 +665,15 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			 }
 			 else
 			 {	/* not found in alternate page */
-				strcpy (buffer, "Illegal Opcode (JMP [$FFF0])");
+				strcpy (buffer, "Illegal Opcode");
 				return 2;
 			 }
 		}
 		else
 		{	/* page 1 opcode */
 			numoperands = pg1opcodes[i].numoperands;
-			for( j = 0; j < numoperands; j++ )
-				operandarray[j] = cpu_readop_arg(pc+(p++));
+			operandarray = &opram[p];
+			p += numoperands;
 			mode = pg1opcodes[i].mode;
 			size = pg1opcodes[i].size;
 			access = pg1opcodes[i].access;
@@ -703,30 +683,14 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 	}
 	else
 	{
-		strcpy (buffer, "Illegal Opcode (JMP [$FFF0])");
+		strcpy (buffer, "Illegal Opcode");
 		return 1;
 	}
 
-	pc += p;
-
-	if( opcode != 0x1f &&	// reg <-> reg instructions
-		opcode != 0x1e &&
-		opcode != 0x31 &&
-		opcode != 0x30 &&
-		opcode != 0x34 &&
-		opcode != 0x37 &&
-		opcode != 0x36 &&
-		opcode != 0x35 &&
-		opcode != 0x33 &&
-		opcode != 0x32 &&
-		opcode != 0x38 &&
-		opcode != 0x39 &&
-		opcode != 0x3a &&
-		opcode != 0x3b )
-	{
 		if( mode == IMM )
 			buffer += sprintf (buffer, "#");
-	}
+
+	pc += p;
 
 	switch (mode)
 	{
@@ -770,28 +734,25 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 		{	/* 8-bit offset */
 
 			/* KW 11/05/98 Fix of indirect opcodes      */
-			offset = (INT8)cpu_readop_arg(pc);
+			offset = (INT8) opram[p];
 			p++;
 			if( pb == 0x8c || pb == 0xac || pb == 0xcc || pb == 0xec || pb == 0x9c || pb == 0xbc || pb == 0xdc || pb == 0xfc  ) reg = 4;
 			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
 			if( pb == 0x8c || pb == 0xac || pb == 0xcc || pb == 0xec || pb == 0x9c || pb == 0xbc || pb == 0xdc || pb == 0xfc)
 			{
 				sym1 = set_ea_info(1, pc, (INT8)offset, EA_REL_PC);
-				ea = (pc + (INT8)offset + activecpu_get_reg(regid_6309[reg])) & 0xffff;
-				buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
+				buffer += sprintf (buffer, "%d,%s", offset, regs[reg]);
 			}
 			else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT8, EA_VALUE);
-				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
-				buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
+				buffer += sprintf (buffer, "%d,%s", offset, regs[reg]);
 			}
 		}
 		else
 		if ( pb == 0x8f || pb == 0x90 )
 		{
 			if( (pb & 0x90) == 0x90 ) buffer += sprintf (buffer, "[");
-			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",W");
 		}
 		else
@@ -826,30 +787,26 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			p += 2;
 
 			sym1 = set_ea_info(1, offset, EA_INT16, EA_MEM_WR);
-			ea = ((activecpu_get_reg(HD6309_E) << 8) + (activecpu_get_reg(HD6309_F)) + offset) & 0xffff;
 			buffer += sprintf (buffer, "%s,W", sym1);
 		}
 		else
 		if ( pb == 0xcf || pb == 0xd0 )
 		{
-			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",W++");
 		}
 		else
 		if ( pb == 0xef || pb == 0xf0 )
 		{
-			ea = (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F);
 			buffer += sprintf (buffer, ",--W");
 		}
 		else
 			{
 				sym1 = set_ea_info(1, offset, EA_INT16, EA_VALUE);
-				ea = (activecpu_get_reg(regid_6309[reg]) + offset) & 0xffff;
-				buffer += sprintf (buffer, "%s,%s", sym1, regs_6309[reg]);
+				buffer += sprintf (buffer, "%s,%s", sym1, regs[reg]);
 			}
 		}
 		else
-		if( (pb & 0x80) )
+		if( pb & 0x80 )
 		{
 			if( (pb & 0x90) == 0x90 )
 				buffer += sprintf (buffer, "[");
@@ -857,48 +814,37 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			switch( pb & 0x8f )
 			{
 			case 0x80:
-				ea = activecpu_get_reg(regid_6309[reg]);
-				buffer += sprintf (buffer, ",%s+", regs_6309[reg]);
+				buffer += sprintf (buffer, ",%s+", regs[reg]);
 				break;
 			case 0x81:
-				ea = activecpu_get_reg(regid_6309[reg]);
-				buffer += sprintf (buffer, ",%s++", regs_6309[reg]);
+				buffer += sprintf (buffer, ",%s++", regs[reg]);
 				break;
 			case 0x82:
-				ea = activecpu_get_reg(regid_6309[reg]);
-				buffer += sprintf (buffer, ",-%s", regs_6309[reg]);
+				buffer += sprintf (buffer, ",-%s", regs[reg]);
 				break;
 			case 0x83:
-				ea = activecpu_get_reg(regid_6309[reg]);
-				buffer += sprintf (buffer, ",--%s", regs_6309[reg]);
+				buffer += sprintf (buffer, ",--%s", regs[reg]);
 				break;
 			case 0x84:
-				ea = activecpu_get_reg(regid_6309[reg]);
-				buffer += sprintf (buffer, ",%s", regs_6309[reg]);
+				buffer += sprintf (buffer, ",%s", regs[reg]);
 				break;
 			case 0x85:
-				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_B)) & 0xffff;
-				buffer += sprintf (buffer, "B,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "B,%s", regs[reg]);
 				break;
 			case 0x86:
-				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_A)) & 0xffff;
-				buffer += sprintf (buffer, "A,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "A,%s", regs[reg]);
 				break;
 			case 0x87:
-				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_E)) & 0xffff;
-				buffer += sprintf (buffer, "E,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "E,%s", regs[reg]);
 				break;
 			case 0x8a:
-				ea = (activecpu_get_reg(regid_6309[reg]) + (INT8) activecpu_get_reg(HD6309_F)) & 0xffff;
-				buffer += sprintf (buffer, "F,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "F,%s", regs[reg]);
 				break;
 			case 0x8b:
-				ea = (activecpu_get_reg(regid_6309[reg]) + (activecpu_get_reg(HD6309_A) << 8) + activecpu_get_reg(HD6309_B)) & 0xffff;
-				buffer += sprintf (buffer, "D,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "D,%s", regs[reg]);
 				break;
 			case 0x8e:
-				ea = (activecpu_get_reg(regid_6309[reg]) + (activecpu_get_reg(HD6309_E) << 8) + activecpu_get_reg(HD6309_F)) & 0xffff;
-				buffer += sprintf (buffer, "W,%s", regs_6309[reg]);
+				buffer += sprintf (buffer, "W,%s", regs[reg]);
 				break;
 			}
 		}
@@ -907,23 +853,21 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			offset = pb & 0x1f;
 			if (offset > 15)
 				offset = offset - 32;
-			buffer += sprintf (buffer, "%d,%s", offset, regs_6309[reg]);
+			buffer += sprintf (buffer, "%d,%s", offset, regs[reg]);
 		}
 		/* indirect */
 		if( (pb & 0x90) == 0x90 )
 		{
-			ea = ( program_read_byte_8( ea ) << 8 ) + program_read_byte_8( (ea+1) & 0xffff );
 			buffer += sprintf (buffer, "]");
 		}
-		sym2 = set_ea_info(0, ea, size, access);
 		break;
-	default:
-		if( page == 2 && ( opcode == 0x30 || opcode == 0x31 || opcode == 0x32 || opcode == 0x33 || opcode == 0x34 || opcode == 0x35 || opcode == 0x36 || opcode == 0x37 ) )
-		{
-			/* BAND, BIAND, BOR, BIOR, BEOR, BIEOR, LDBT, STBT */
 
-			/* Decode register */
+	case IMM_RR:	  /* immediate register-register */
+		buffer += sprintf (buffer, "%s,%s", teregs[ (operandarray[0] >> 4) & 0xf], teregs[operandarray[0] & 0xf]);
+		break;
 
+	case IMM_BW:	  /* bitwise operations (6309 only) */
+		/* Decode register */
 			pb = operandarray[0];
 
 			buffer += sprintf (buffer, "%s", btwRegs[ ((pb & 0xc0) >> 6) ]);
@@ -934,23 +878,29 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			buffer += sprintf (buffer, ",");
 
 			/* print zero page access */
-
 			ea = operandarray[1];
 			sym1 = set_ea_info(0, ea, size, access );
 			buffer += sprintf (buffer, "%s", sym1 );
-		}
-		else
-		if( page == 2 && ( opcode == 0x38 || opcode == 0x39 || opcode == 0x3a || opcode == 0x3b ) )
-		{
-			/* TFM instructions */
+		break;
+
+	case IMM_TFM:	  /* transfer from memory (6309 only) */
 			buffer += sprintf (buffer, tfm_s[opcode & 0x07], tfmregs[ (operandarray[0] >> 4) & 0xf], tfmregs[operandarray[0] & 0xf]);
-		}
-		else
-		if( opcode == 0x1f || opcode == 0x1e || ( page == 1 && (opcode == 0x31 || opcode == 0x30 || opcode == 0x34 || opcode == 0x37 || opcode == 0x35 || opcode == 0x33 || opcode == 0x1e || opcode == 0x32 ) ) )
-		{	/* TFR/EXG + new 2nd page reg<->reg instructions*/
-			buffer += sprintf (buffer, "%s,%s", teregs[ (operandarray[0] >> 4) & 0xf], teregs[operandarray[0] & 0xf]);
-		}
-		else
+		break;
+
+	case DIR_IM:	  /* direct in memory (6309 only) */
+		buffer += sprintf (buffer, "#");
+		ea = operandarray[0];
+		sym1 = set_ea_info(0, ea, EA_UINT8, EA_VALUE );
+		buffer += sprintf (buffer, "%s", sym1 );
+
+		buffer += sprintf (buffer, ",");
+
+		ea = operandarray[1];
+		sym1 = set_ea_info(0, ea, size, access );
+		buffer += sprintf (buffer, "%s", sym1 );
+		break;
+
+	default:
 		if( opcode == 0x34 || opcode == 0x36 )
 		{	/* PUSH */
 			pb2 = operandarray[0];
@@ -1070,25 +1020,9 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			else
 			if( numoperands == 2 )
 			{
-				if( opcode == 0x01 || opcode == 0x02 || opcode == 0x05 || opcode == 0x0B )
-				{
-					buffer += sprintf (buffer, "#");
-					ea = operandarray[0];
-					sym1 = set_ea_info(0, ea, EA_UINT8, EA_VALUE );
-					buffer += sprintf (buffer, "%s", sym1 );
-
-					buffer += sprintf (buffer, ",");
-
-					ea = operandarray[1];
-					sym1 = set_ea_info(0, ea, size, access );
-					buffer += sprintf (buffer, "%s", sym1 );
-				}
-				else
-				{
 					ea = (operandarray[0] << 8) + operandarray[1];
 					sym1 = set_ea_info(0, ea, size, access );
 					buffer += sprintf (buffer, "%s", sym1 );
-				}
 			}
 			else
 			if( numoperands == 1 )

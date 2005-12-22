@@ -468,11 +468,9 @@ VIDEO_UPDATE( cclimber )
 }
 
 
-
 VIDEO_UPDATE( swimmer )
 {
 	int offs;
-
 
 	if (get_vh_global_attribute_changed())
 	{
@@ -584,3 +582,282 @@ VIDEO_UPDATE( swimmer )
 		/* draw the "big sprite" over sprites */
 		drawbigsprite(bitmap);
 }
+
+VIDEO_UPDATE( yamato )
+{
+	int offs;
+	int i,j;
+
+	/* bg gradient */
+	fillbitmap(bitmap, 0, cliprect);
+
+	for(i=0;i<256;i++)
+	{
+		for(j=0;j<256;j++)
+		{
+			plot_pixel(bitmap, i-8, j, 16*4+8*4 + memory_region(REGION_USER1)[(flip_screen_x?0x1280:0x1200)+(i>>1)]);
+		}
+	}
+
+	if (get_vh_global_attribute_changed())
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy,flipx,flipy;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			/* vertical flipping flips two adjacent characters */
+			if (flipy) sy ^= 1;
+
+			if (flip_screen_x)
+			{
+				sx = 31 - sx;
+				flipx = !flipx;
+			}
+			if (flip_screen_y)
+			{
+				sy = 31 - sy;
+				flipy = !flipy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x10) ? 1 : 0],
+					videoram[offs] + 8 * (colorram[offs] & 0x20),
+					colorram[offs] & 0x0f,
+					flipx,flipy,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the temporary bitmap to the screen */
+	{
+		int scroll[32];
+
+
+		if (flip_screen_x)
+		{
+			for (offs = 0;offs < 32;offs++)
+			{
+				scroll[offs] = -cclimber_column_scroll[31 - offs];
+				if (flip_screen_y) scroll[offs] = -scroll[offs];
+			}
+		}
+		else
+		{
+			for (offs = 0;offs < 32;offs++)
+			{
+				scroll[offs] = -cclimber_column_scroll[offs];
+				if (flip_screen_y) scroll[offs] = -scroll[offs];
+			}
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+
+	if (cclimber_bigspriteram[0] & 1)
+		/* draw the "big sprite" below sprites */
+		drawbigsprite(bitmap);
+
+
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		int sx,sy,flipx,flipy;
+
+
+		sx = spriteram[offs + 3];
+		sy = 240 - spriteram[offs + 2];
+		flipx = spriteram[offs] & 0x40;
+		flipy = spriteram[offs] & 0x80;
+		if (flip_screen_x)
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+		if (flip_screen_y)
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 4 : 3],
+				(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20),
+				spriteram[offs + 1] & 0x0f,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+
+	if ((cclimber_bigspriteram[0] & 1) == 0)
+		/* draw the "big sprite" over sprites */
+		drawbigsprite(bitmap);
+}
+
+
+/* Top Roller */
+#define PRIORITY_OVER  	0x20
+#define PRIORITY_UNDER 	0x00
+#define PRIORITY_MASK 	0x20
+
+static tilemap *bg_tilemap;
+
+UINT8 *videoram2;
+UINT8 *videoram3;
+UINT8 *videoram4;
+
+
+static void get_tile_info_bg(int tile_index)
+{
+	int code = videoram3[tile_index];
+	int atr = videoram4[tile_index];
+	int flipx,flipy,bank;
+
+	bank=(atr&8)<<5;
+
+	flipx=(atr&2)?1:0;
+	flipy=atr&4;
+
+	if(bank)
+		flipx=1;
+
+	code+=bank;
+	SET_TILE_INFO(1, code, 0, (flipx?TILE_FLIPX:0)|(flipy?TILE_FLIPY:0))
+}
+
+VIDEO_START( toprollr )
+{
+	bg_tilemap = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
+	return 0;
+}
+
+static void trdrawbigsprite(mame_bitmap *bitmap,const rectangle *cliprect,int priority)
+{
+		if((cclimber_bigspriteram[1]&PRIORITY_MASK)==priority)
+		{
+			int code,xs,ys,pal,bank,x,y;
+			int flipx=0;
+			int flipy=0;
+
+			xs=136-cclimber_bigspriteram[3];
+			ys=128-cclimber_bigspriteram[2];
+
+			if (flip_screen_x)
+			{
+				flipx^=1;
+			}
+
+			pal=cclimber_bigspriteram[1]&7;
+
+			bank=(cclimber_bigspriteram[1]>>3)&3;
+
+
+			for(y=0;y<16;y++)
+				for(x=0;x<16;x++)
+				{
+					int sx=x;
+					int sy=y;
+					if (flipx) sx = 15 - x;
+					if (flipy) sy = 15 - y;
+
+					code=cclimber_bsvideoram[y*16+x];
+					drawgfx(bitmap, Machine->gfx[3], code+bank*256, pal, flipx, flipy,(sx*8+xs)&0xff,(sy*8+ys)&0xff, cliprect, TRANSPARENCY_PEN, 0);
+					drawgfx(bitmap, Machine->gfx[3], code+bank*256, pal, flipx, flipy,((sx*8+xs)&0xff)-256,((sy*8+ys)&0xff)-256, cliprect, TRANSPARENCY_PEN, 0);
+				}
+
+		}
+}
+
+VIDEO_UPDATE( toprollr )
+{
+
+	UINT32 x,y,c,d;
+	int offs;
+
+	tilemap_set_scrollx(bg_tilemap,0,videoram3[0]+8);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
+	trdrawbigsprite(bitmap, cliprect, PRIORITY_UNDER);
+
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		int sx,sy,flipx,flipy;
+
+		sx = spriteram[offs + 3]-8;
+		sy = 240 - spriteram[offs + 2];
+		flipx = spriteram[offs] & 0x40;
+		flipy = spriteram[offs] & 0x80;
+		if (flip_screen_x)
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+		if (flip_screen_y)
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[2],
+			(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20)+8*(spriteram[offs + 1] & 0x10),
+				spriteram[offs + 1] & 0x0f,
+				flipx,flipy,
+				sx,sy,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
+	}
+
+	trdrawbigsprite(bitmap, cliprect, PRIORITY_OVER);
+
+	for(y=0;y<32;y++)
+		for(x=0;x<32;x++)
+		{
+			int sx=x*8;
+			int sy=y*8;
+			int flipx=0;
+			int flipy=0;
+
+			c=videoram[y*32+x];
+			d=videoram2[y*32+x];
+
+			if (flip_screen_x)
+			{
+				sx = 240 - sx;
+				flipx^=1;
+			}
+			if (flip_screen_y)
+			{
+				sy = 240 - sy;
+				flipy^=1;
+			}
+
+			if(x>3&&x<29)
+				drawgfx(bitmap, Machine->gfx[0], c+((d&0xf0)<<4), (d>>2)&0x3, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+			else
+			{
+				/* hack */
+				drawgfx(bitmap, Machine->gfx[0], 45, 0, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_NONE, 0); //black
+				drawgfx(bitmap, Machine->gfx[0], c+((d&0xf0)<<4), (d>>2)&0x3, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+			}
+		}
+}
+
+
+
+

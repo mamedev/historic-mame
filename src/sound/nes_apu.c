@@ -13,6 +13,11 @@
   Any modifications to this code must be duly noted in the source and
   approved by Matthew Conte and myself prior to public submission.
 
+  timing notes:
+  master = 21477270
+  2A03 clock = master/12
+  sequencer = master/89490 or CPU/7457
+
  *****************************************************************************
 
    NES_APU.C
@@ -524,8 +529,10 @@ INLINE void apu_regwrite(struct nesapu_info *info,int address, uint8 value)
 
    case APU_WRE3:
       info->APU.dpcm.regs[3] = value;
-      //apu_dpcmreset(info->APU.dpcm);
       break;
+
+   case APU_IRQCTRL:
+   	break;
 
    case APU_SMASK:
       if (value & 0x01)
@@ -708,17 +715,17 @@ void nesapu_get_info(void *token, UINT32 state, union sndinfo *info)
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
-		case SNDINFO_PTR_SET_INFO:						info->set_info = nesapu_set_info;		break;
-		case SNDINFO_PTR_START:							info->start = nesapu_start;				break;
-		case SNDINFO_PTR_STOP:							/* Nothing */							break;
-		case SNDINFO_PTR_RESET:							/* Nothing */							break;
+		case SNDINFO_PTR_SET_INFO:						info->set_info = nesapu_set_info;       break;
+		case SNDINFO_PTR_START:							info->start = nesapu_start;		break;
+		case SNDINFO_PTR_STOP:							/* Nothing */				break;
+		case SNDINFO_PTR_RESET:							/* Nothing */				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
-		case SNDINFO_STR_NAME:							info->s = "NES";						break;
+		case SNDINFO_STR_NAME:						info->s = "N2A03";				break;
 		case SNDINFO_STR_CORE_FAMILY:					info->s = "Nintendo custom";			break;
-		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
-		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
-		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2004, The MAME Team"; break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";				break;
+		case SNDINFO_STR_CORE_FILE:					info->s = __FILE__;		      		break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2005, The MAME Team";  break;
 	}
 }
 

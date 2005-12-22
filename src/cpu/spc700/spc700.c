@@ -1224,7 +1224,7 @@ INLINE void SET_FLAG_I(uint value)
 			spc_int16 = ((TMP1 & 0xff) + (TMP3 << 8)) & 0xffff;	\
 			FLAG_C = (TMP3 <= 0xff) ? CFLAG_SET : 0;	\
 			FLAG_H = ((unsigned) ((((DST) >> 8) & 0x0F) - \
-				(((SRC) >> 8) & 0x0F) - TMP2)) > 0x0F ? HFLAG_SET : 0; \
+				(((SRC) >> 8) & 0x0F) - TMP2)) > 0x0F ?  0: HFLAG_SET; \
 			FLAG_V = (((DST) ^ (SRC)) & ((DST) ^ (UINT16) spc_int16) & 0x8000) ? VFLAG_SET : 0; \
 			FLAG_Z = (spc_int16 != 0);		\
 			FLAG_N = (spc_int16>>8);		\

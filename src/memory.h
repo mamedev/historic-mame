@@ -951,7 +951,8 @@ UINT32 *	_memory_install_write32_matchmask_handler(int cpunum, int spacenum, off
 UINT64 *	_memory_install_write64_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write64_handler handler, const char *handler_name);
 
 /* ----- memory debugging ----- */
-void memory_dump(FILE *file);
+void 		memory_dump(FILE *file);
+const char *memory_get_handler_string(int read0_or_write1, int cpunum, int spacenum, offs_t offset);
 
 
 

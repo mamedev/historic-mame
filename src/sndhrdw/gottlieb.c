@@ -3,7 +3,7 @@
 #include "sound/samples.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
-#include "sound/2151intf.h"
+#include "sound/sp0250.h"
 
 
 WRITE8_HANDLER( gottlieb_sh_w )
@@ -198,14 +198,21 @@ WRITE8_HANDLER( gottlieb_riot_w )
 
 
 
-static int psg_latch;
+static UINT8 psg_latch;
 static void *nmi_timer;
 static int nmi_rate;
+static int sp0250_drq;
+static UINT8 sp0250_latch;
 
 static void nmi_callback(int param);
 void gottlieb_sound_init(void)
 {
 	nmi_timer = timer_alloc(nmi_callback);
+}
+
+void stooges_sp0250_drq(int level)
+{
+	sp0250_drq = (level == ASSERT_LINE) ? 1 : 0;
 }
 
 READ8_HANDLER( stooges_sound_input_r )
@@ -218,7 +225,7 @@ READ8_HANDLER( stooges_sound_input_r )
 
 	/* bit 7 comes from the speech chip DATA REQUEST pin */
 
-	return 0xc0;
+	return 0x40 | (sp0250_drq << 7);
 }
 
 WRITE8_HANDLER( stooges_8910_latch_w )
@@ -245,6 +252,11 @@ static WRITE8_HANDLER( common_sound_control_w )
 		timer_adjust(nmi_timer, TIME_NEVER, 0, 0);
 
 	/* Bit 1 controls a LED on the sound board. I'm not emulating it */
+}
+
+WRITE8_HANDLER( stooges_sp0250_latch_w )
+{
+	sp0250_latch = data;
 }
 
 WRITE8_HANDLER( stooges_sound_control_w )
@@ -280,6 +292,7 @@ WRITE8_HANDLER( stooges_sound_control_w )
 	/* bit 6 = speech chip DATA PRESENT pin; high then low to make the chip read data */
 	if ((last & 0x40) == 0x40 && (data & 0x40) == 0x00)
 	{
+		sp0250_w(0,sp0250_latch);
 	}
 
 	/* bit 7 goes to the speech chip RESET pin */

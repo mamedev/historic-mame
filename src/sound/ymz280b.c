@@ -971,7 +971,10 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 				break;
 
 			case 0x87:		/* RAM write */
-				chip->ext_ram_write(chip->rom_readback_addr, data);
+				if (chip->ext_ram_write)
+					chip->ext_ram_write(chip->rom_readback_addr, data);
+				else
+					logerror("YMZ280B attempted RAM write to %X\n", chip->rom_readback_addr);
 				break;
 
 			case 0xfe:		/* IRQ mask */

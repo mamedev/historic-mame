@@ -12,9 +12,7 @@ Known Issues:
     the type of collision (and determine whether a pit stop is
     required) that I don't know how to handle.
 
--   sound: missing speech and engine noise
-
--   rain rendering is probably wrong
+-   sound: missing engine noise
 
 -   "radar" is probably wrong
 
@@ -45,6 +43,7 @@ Notes:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
+#include "grchamp.h"
 
 /* from vidhrdw */
 extern PALETTE_INIT( grchamp );
@@ -72,6 +71,13 @@ extern WRITE8_HANDLER( grchamp_control0_w );
 extern WRITE8_HANDLER( grchamp_coinled_w );
 extern WRITE8_HANDLER( grchamp_sound_w );
 extern WRITE8_HANDLER( grchamp_comm_w );
+
+extern WRITE8_HANDLER( grchamp_portA_0_w );
+extern WRITE8_HANDLER( grchamp_portB_0_w );
+extern WRITE8_HANDLER( grchamp_portA_1_w );
+extern WRITE8_HANDLER( grchamp_portB_1_w );
+extern WRITE8_HANDLER( grchamp_portA_2_w );
+extern WRITE8_HANDLER( grchamp_portB_2_w );
 
 extern int grchamp_collision;
 
@@ -151,6 +157,38 @@ READ8_HANDLER( PC3259_3_r )
 
 /***************************************************************************/
 
+
+static WRITE8_HANDLER( NC_w )
+{
+
+}
+
+
+static struct AY8910interface ay8910_interface_1 =
+{
+	0,
+	0,
+	grchamp_portA_0_w,
+	grchamp_portB_0_w
+};
+
+static struct AY8910interface ay8910_interface_2 =
+{
+	0,
+	0,
+	grchamp_portA_1_w,
+	grchamp_portB_1_w
+};
+
+static struct AY8910interface ay8910_interface_3 =
+{
+	0,
+	0,
+	grchamp_portA_2_w,
+	grchamp_portB_2_w
+};
+
+/***************************************************************************/
 static const gfx_layout char_layout =
 {
 	8,8,
@@ -231,28 +269,47 @@ static const gfx_layout sprite_layout =
 	0x100
 };
 
+
+static const gfx_layout headlights_layout =
+{
+	64,64,
+	4, // Number of sprites
+	1, // One bitplane
+	{0},
+	{
+		0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+		0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
+		0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,
+		0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
+		0x20,0x21,0x22,0x23,0x24,0x25,0x26,0x27,
+		0x28,0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,
+		0x30,0x31,0x32,0x33,0x34,0x35,0x36,0x37,
+		0x38,0x39,0x3a,0x3b,0x3c,0x3d,0x3e,0x3f
+	},
+	{
+		0x0000,0x0040,0x0080,0x00c0,0x0100,0x0140,0x0180,0x01c0,
+		0x0200,0x0240,0x0280,0x02c0,0x0300,0x0340,0x0380,0x03c0,
+		0x0400,0x0440,0x0480,0x04c0,0x0500,0x0540,0x0580,0x05c0,
+		0x0600,0x0640,0x0680,0x06c0,0x0700,0x0740,0x0780,0x07c0,
+		0x0800,0x0840,0x0880,0x08c0,0x0900,0x0940,0x0980,0x09c0,
+		0x0a00,0x0a40,0x0a80,0x0ac0,0x0b00,0x0b40,0x0b80,0x0bc0,
+		0x0c00,0x0c40,0x0c80,0x0cc0,0x0d00,0x0d40,0x0d80,0x0dc0,
+		0x0e00,0x0e40,0x0e80,0x0ec0,0x0f00,0x0f40,0x0f80,0x0fc0
+	},
+	4096
+};
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &char_layout,    0x20, 8 },
-	{ REGION_GFX2, 0x0000, &tile_layout,	0x00, 2 },
-	{ REGION_GFX1, 0x2000, &player_layout,	0x20, 8 },
-	{ REGION_GFX1, 0x0000, &sprite_layout,	0x20, 9 },
-	{ REGION_GFX3, 0x0000, &rain_layout,	0x20, 1 },
+	{ REGION_GFX1, 0x0000, &char_layout,		0x20, 8 },
+	{ REGION_GFX2, 0x0000, &tile_layout,		0x00, 16 },
+	{ REGION_GFX1, 0x2000, &player_layout,		0x20, 32 },
+	{ REGION_GFX1, 0x0000, &sprite_layout,		0x20, 32 },
+	{ REGION_GFX3, 0x0000, &rain_layout,		0x20, 1 },
+	{ REGION_GFX4, 0x0000, &headlights_layout,	0x00, 1 },
 	{ -1 }
 };
 
 /***************************************************************************/
-#if 0
-static UINT8 *shareram;
-static WRITE8_HANDLER( shareram_w )
-{
-	shareram[offset] = data;
-}
-static READ8_HANDLER( shareram_r )
-{
-	return shareram[offset];
-}
-#endif
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
@@ -293,12 +350,17 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(grchamp_player_xpos_w)
 	AM_RANGE(0x03, 0x03) AM_WRITE(grchamp_player_ypos_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(grchamp_tile_select_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(MWA8_NOP) // NC according to schematics
+	AM_RANGE(0x06, 0x06) AM_WRITE(MWA8_NOP) // NC according to schematics
 	AM_RANGE(0x07, 0x07) AM_WRITE(grchamp_rain_xpos_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(grchamp_rain_ypos_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(grchamp_coinled_w)
-	AM_RANGE(0x0a, 0x0a) AM_WRITE(MWA8_NOP) // ?
-	AM_RANGE(0x0d, 0x0d) AM_WRITE(MWA8_NOP) // watchdog?
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(MWA8_NOP) // Unknown
+	AM_RANGE(0x0b, 0x0b) AM_WRITE(MWA8_NOP) // NC according to schematics
+	AM_RANGE(0x0c, 0x0c) AM_WRITE(MWA8_NOP) // NC according to schematics
+	AM_RANGE(0x0d, 0x0d) AM_WRITE(MWA8_NOP) // Unknown, watchdog?
 	AM_RANGE(0x0e, 0x0e) AM_WRITE(grchamp_sound_w)
+	AM_RANGE(0x0f, 0x0f) AM_WRITE(MWA8_NOP) // NC according to schematics
 	AM_RANGE(0x10, 0x13) AM_WRITE(grchamp_comm_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(grchamp_led_data0_w)
 	AM_RANGE(0x24, 0x24) AM_WRITE(grchamp_led_data1_w)
@@ -340,8 +402,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
-//  AM_RANGE(0x4801, 0x4801) AM_READ(AY8910_read_port_0_r)
-//  AM_RANGE(0x4803, 0x4803) AM_READ(AY8910_read_port_1_r)
+	AM_RANGE(0x4801, 0x4801) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x4803, 0x4803) AM_READ(AY8910_read_port_1_r)
 	AM_RANGE(0x4805, 0x4805) AM_READ(AY8910_read_port_2_r)
 	AM_RANGE(0x5000, 0x5000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
@@ -373,16 +435,19 @@ static INTERRUPT_GEN( grchamp_interrupt )
 static MACHINE_DRIVER_START( grchamp )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000) /* ? */
+	/* CPU BOARD */
+	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 6000000) /* ? */
+	/* GAME BOARD */
+	MDRV_CPU_ADD(Z80, 3000000)
 	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
 	MDRV_CPU_IO_MAP(readport2,writeport2)
 	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)	/* irq's are triggered from the main cpu */
 
+	/* SOUND BOARD */
 	MDRV_CPU_ADD(Z80, 3000000)
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
@@ -393,12 +458,12 @@ static MACHINE_DRIVER_START( grchamp )
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS )
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 255, 16, 255-16)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x44)
-	MDRV_COLORTABLE_LENGTH(0x44) /* 4 fake colors */
+	MDRV_PALETTE_LENGTH(0x40+0x40*70)
+	MDRV_COLORTABLE_LENGTH(0x40+0x40*70)
 
 	MDRV_PALETTE_INIT(grchamp)
 	MDRV_VIDEO_START(grchamp)
@@ -408,13 +473,20 @@ static MACHINE_DRIVER_START( grchamp )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(AY8910, 1500000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_CONFIG(ay8910_interface_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.2)
 
 	MDRV_SOUND_ADD(AY8910, 1500000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.2)
 
 	MDRV_SOUND_ADD(AY8910, 1500000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_CONFIG(ay8910_interface_3)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.2)
+
+	MDRV_SOUND_ADD(DISCRETE, 0)
+	MDRV_SOUND_CONFIG(grchamp_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( grchamp )

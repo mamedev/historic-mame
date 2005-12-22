@@ -151,11 +151,11 @@ typedef struct
 	UINT8		idma_offs;
 
 	/* interrupt handling */
-	UINT8		imask;
+	UINT16		imask;
 	UINT8		icntl;
 	UINT16		ifc;
-    UINT8    	irq_state[5];
-    UINT8    	irq_latch[5];
+    UINT8    	irq_state[8];
+    UINT8    	irq_latch[8];
     INT32		interrupt_cycles;
     int			(*irq_callback)(int irqline);
 
@@ -297,7 +297,7 @@ INLINE void set_core_2181(void)
 {
 	chip_type = CHIP_TYPE_ADSP2181;
 	mstat_mask = 0x7f;
-	imask_mask = 0x3f;
+	imask_mask = 0x3ff;
 }
 #endif
 
@@ -364,11 +364,82 @@ INLINE int adsp2101_generate_irq(int which, int indx)
 }
 
 
+INLINE int adsp2181_generate_irq(int which, int indx)
+{
+	/* skip if masked */
+	if (!(adsp2100.imask & (0x200 >> indx)))
+		return 0;
+
+	/* clear the latch */
+	adsp2100.irq_latch[which] = 0;
+
+	/* push the PC and the status */
+	pc_stack_push();
+	stat_stack_push();
+
+	/* vector to location & stop idling */
+	adsp2100.pc = 0x04 + indx * 4;
+	adsp2100.idle = 0;
+
+	/* mask other interrupts based on the nesting bit */
+	if (adsp2100.icntl & 0x10) adsp2100.imask &= ~(0x3ff >> indx);
+	else adsp2100.imask &= ~0x3ff;
+
+	return 1;
+}
+
+
 static void check_irqs(void)
 {
 	UINT8 check;
 
-	if (chip_type >= CHIP_TYPE_ADSP2101)
+	if (chip_type >= CHIP_TYPE_ADSP2181)
+	{
+		/* check IRQ2 */
+		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[ADSP2181_IRQ2] : adsp2100.irq_state[ADSP2181_IRQ2];
+		if (check && adsp2181_generate_irq(ADSP2181_IRQ2, 0))
+			return;
+
+		/* check IRQL1 */
+		check = adsp2100.irq_state[ADSP2181_IRQL1];
+		if (check && adsp2181_generate_irq(ADSP2181_IRQL1, 1))
+			return;
+
+		/* check IRQL2 */
+		check = adsp2100.irq_state[ADSP2181_IRQL2];
+		if (check && adsp2181_generate_irq(ADSP2181_IRQL2, 2))
+			return;
+
+		/* check SPORT0 transmit */
+		check = adsp2100.irq_latch[ADSP2181_SPORT0_TX];
+		if (check && adsp2181_generate_irq(ADSP2181_SPORT0_TX, 3))
+			return;
+
+		/* check SPORT0 receive */
+		check = adsp2100.irq_latch[ADSP2181_SPORT0_RX];
+		if (check && adsp2181_generate_irq(ADSP2181_SPORT0_RX, 4))
+			return;
+
+		/* check IRQE */
+		check = adsp2100.irq_latch[ADSP2181_IRQE];
+		if (check && adsp2181_generate_irq(ADSP2181_IRQE, 5))
+			return;
+
+		/* check BDMA interrupt */
+
+		/* check IRQ1/SPORT1 transmit */
+		check = (adsp2100.icntl & 2) ? adsp2100.irq_latch[ADSP2181_IRQ1] : adsp2100.irq_state[ADSP2181_IRQ1];
+		if (check && adsp2181_generate_irq(ADSP2181_IRQ1, 7))
+			return;
+
+		/* check IRQ0/SPORT1 receive */
+		check = (adsp2100.icntl & 1) ? adsp2100.irq_latch[ADSP2181_IRQ0] : adsp2100.irq_state[ADSP2181_IRQ0];
+		if (check && adsp2181_generate_irq(ADSP2181_IRQ0, 8))
+			return;
+
+		/* check timer */
+	}
+	else if (chip_type >= CHIP_TYPE_ADSP2101)
 	{
 		/* check IRQ2 */
 		check = (adsp2100.icntl & 4) ? adsp2100.irq_latch[ADSP2101_IRQ2] : adsp2100.irq_state[ADSP2101_IRQ2];
@@ -394,6 +465,8 @@ static void check_irqs(void)
 		check = (adsp2100.icntl & 1) ? adsp2100.irq_latch[ADSP2101_IRQ0] : adsp2100.irq_state[ADSP2101_IRQ0];
 		if (check && adsp2101_generate_irq(ADSP2101_IRQ0, 4))
 			return;
+
+		/* check timer */
 	}
 	else
 	{
@@ -2299,7 +2372,7 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 11;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 1;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = adsp2181_set_info;		break;
@@ -2320,12 +2393,14 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info)
 
 void adsp2181_idma_addr_w(UINT16 data)
 {
+	logerror("IDMA_addr = %04X\n", data);
 	adsp2100.idma_addr = data;
 	adsp2100.idma_offs = 0;
 }
 
 void adsp2181_idma_data_w(UINT16 data)
 {
+	logerror("IDMA_data(%04X) = %04X\n", adsp2100.idma_addr, data);
 	/* program memory? */
 	if (!(adsp2100.idma_addr & 0x4000))
 	{
@@ -2349,7 +2424,7 @@ void adsp2181_idma_data_w(UINT16 data)
 		WWORD_DATA(adsp2100.idma_addr++ & 0x3fff, data);
 }
 
-UINT16 adsp2181_idma_data_r(UINT16 data)
+UINT16 adsp2181_idma_data_r(void)
 {
 	UINT16 result = 0xffff;
 
@@ -2375,6 +2450,7 @@ UINT16 adsp2181_idma_data_r(UINT16 data)
 	else
 		result = RWORD_DATA(adsp2100.idma_addr++ & 0x3fff);
 
+	logerror("IDMA_data_read(%04X) = %04X\n", adsp2100.idma_addr, result);
 	return result;
 }
 

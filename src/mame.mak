@@ -392,7 +392,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/machine/qix.o $(OBJ)/vidhrdw/qix.o \
 	$(OBJ)/drivers/qix.o $(OBJ)/sndhrdw/qix.o \
 	$(OBJ)/machine/taitosj.o $(OBJ)/vidhrdw/taitosj.o $(OBJ)/drivers/taitosj.o \
-	$(OBJ)/machine/grchamp.o $(OBJ)/vidhrdw/grchamp.o $(OBJ)/drivers/grchamp.o \
+	$(OBJ)/machine/grchamp.o $(OBJ)/vidhrdw/grchamp.o $(OBJ)/drivers/grchamp.o $(OBJ)/sndhrdw/grchamp.o\
 	$(OBJ)/machine/pitnrun.o $(OBJ)/vidhrdw/pitnrun.o $(OBJ)/drivers/pitnrun.o \
 	$(OBJ)/drivers/marinedt.o \
 	$(OBJ)/drivers/changela.o \
@@ -1232,6 +1232,8 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/jackpool.o \
 	$(OBJ)/drivers/magic10.o \
 	$(OBJ)/drivers/wheelfir.o \
+	$(OBJ)/drivers/littlerb.o \
+	$(OBJ)/drivers/rbmk.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \
@@ -1327,6 +1329,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/murogem.o \
 	$(OBJ)/drivers/attckufo.o $(OBJ)/sndhrdw/attckufo.o $(OBJ)/vidhrdw/attckufo.o \
 	$(OBJ)/drivers/trvquest.o \
+	$(OBJ)/drivers/f-32.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

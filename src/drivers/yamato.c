@@ -1,8 +1,63 @@
 /*
 
-TODO:
-- This runs on Crazy Climber hardware, should be merged with that driver.
-- Two ROMs are not used, I don't know what they are.
+    T.S. 17.12.2005:
+
+    Yamato:
+    -------
+     Added temporary bg gradient (bad colors/offset).
+
+     Gradient table are stored in two(?) ROMs.
+     Each table is 256 bytes long: 128 for normal
+     and 128 bytes for flipped screen.
+     Color format is unknown - probably direct RGB
+     mapping of 8 or 16 (both roms) bits. Also table
+     selection source is unknown.
+
+     TODO:
+      - bg gradient color decode & table selection
+
+
+ Top Roller:
+ ----------
+     It's made by the same developers as Yamato and use
+     probably the same encrypted SEGA cpu as Yamato.
+
+     lives - $6155
+
+     TODO:
+      - bg tile flip is wrong
+    - dump color proms
+    - COINB DSW is missing
+    - few issues in cocktail mode
+
+-------------------------------------------------------------
+
+ Top Roller
+ Jaleco
+
+ Hardware : Original Jaleco board no 8307-B/8307-A(redump)
+
+ Main CPU : Encrypted Z80 (probably 315-5018)
+ Sound : AY-3-8910
+
+ ROMS CRC32 + positions :
+
+ [9894374d]  d5
+ [ef789f00]  f5
+ [d45494ba]  h5
+ [1cb48ea0]  k5
+ [84139f46]  l5
+ [e30c1dd8]  m5
+ [904fffb6]  d3
+ [94371cfb]  f3
+ [8a8032a7]  h3
+ [1e8914a6]  k3
+ [b20a9fa2]  l3
+ [7f989dc9]  p3
+ [89327329]  a4 bottom board 89327329
+ [7a945733]  c4 bottom board
+ [5f2c2a78]  h4 bottom board  bad dump / [1d9e3325] (8307-A)
+ [ce3afe26]  j4 bottom board
 
 */
 
@@ -17,11 +72,17 @@ extern unsigned char *cclimber_bsvideoram;
 extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
+
+extern UINT8 *videoram2;
+extern UINT8 *videoram3;
+extern UINT8 *videoram4;
+
 WRITE8_HANDLER( cclimber_colorram_w );
 WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
 PALETTE_INIT( cclimber );
-VIDEO_UPDATE( cclimber );
-
+VIDEO_UPDATE( yamato );
+VIDEO_START( toprollr );
+VIDEO_UPDATE( toprollr );
 
 PALETTE_INIT( yamato )
 {
@@ -103,10 +164,13 @@ PALETTE_INIT( yamato )
 		if (i % 4 == 0) COLOR(2,i) = 0;
 		else COLOR(2,i) = i + 64;
 	}
+
+	/* fake colors for bg gradient */
+	for (i = 0;i < 256;i++)
+	{
+		palette_set_color(i+16*4+8*4,0,0,i);
+	}
 }
-
-
-
 
 static int p0,p1;
 
@@ -206,7 +270,48 @@ static ADDRESS_MAP_START( yamato_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x03, 0x03) AM_WRITE(AY8910_write_port_1_w)
 ADDRESS_MAP_END
 
+/* Top Roller */
+static int jaleco_rombank=0;
 
+static WRITE8_HANDLER(rombank_w)
+{
+	jaleco_rombank&=~(1<<offset);
+	jaleco_rombank|=(data&1)<<offset;
+
+	if(jaleco_rombank<3)
+	{
+		memory_set_bank(1, jaleco_rombank);
+	}
+}
+
+static ADDRESS_MAP_START( trmem_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0x6000, 0x6bff) AM_RAM
+	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
+	AM_RANGE(0x8c00, 0x8fff) AM_RAM AM_BASE(&videoram3)
+	AM_RANGE(0x9000, 0x93ff) AM_RAM AM_BASE(&videoram)
+	AM_RANGE(0x9400, 0x97ff) AM_RAM AM_BASE(&videoram4)
+	AM_RANGE(0x9800, 0x987f) AM_RAM /* unused ? */
+	AM_RANGE(0x9880, 0x995f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x99dc, 0x99df) AM_RAM AM_BASE(&cclimber_bigspriteram)
+	AM_RANGE(0x9c00, 0x9fff) AM_RAM AM_BASE(&videoram2)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w) AM_READ(input_port_0_r)     /* IN0 */
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xa004, 0xa004) AM_WRITENOP /* watchdog ? */
+	AM_RANGE(0xa005, 0xa006) AM_WRITE(rombank_w)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)  AM_WRITENOP   /* IN1 */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)  AM_WRITENOP   /* DSW */
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)     /* IN2 */
+	AM_RANGE(0xc000, 0xffff) AM_ROM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( trport_map, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x0d, 0x0d) AM_NOP
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( yamato )
 	PORT_START      /* IN0 */
@@ -275,9 +380,57 @@ INPUT_PORTS_START( yamato )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( toprollr )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+
+	PORT_START      /* DSW */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x1c, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "Every 30000" )
+	PORT_DIPSETTING(    0x20, "Every 50000" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
 
 
-static const gfx_layout charlayout =
+INPUT_PORTS_END
+
+static gfx_layout charlayout =
 {
 	8,8,    /* 8*8 characters */
 	512,    /* 512 characters (256 in Crazy Climber) */
@@ -287,22 +440,49 @@ static const gfx_layout charlayout =
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
-static const gfx_layout bscharlayout =
+static gfx_layout bscharlayout =
 {
 	8,8,    /* 8*8 characters */
 	512,//256,    /* 256 characters */
+
+
 	2,      /* 2 bits per pixel */
 	{ 0, 512*8*8 }, /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },     /* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
-static const gfx_layout spritelayout =
+static gfx_layout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	128,    /* 128 sprites (64 in Crazy Climber) */
 	2,      /* 2 bits per pixel */
 	{ 0, 128*16*16 },       /* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,       /* pretty straightforward layout */
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8    /* every sprite takes 32 consecutive bytes */
+};
+
+
+static gfx_layout trcharlayout =
+{
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ 0,RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static gfx_layout trspritelayout =
+{
+	16,16,  /* 16*16 sprites */
+	RGN_FRAC(1,2),    /* 128 sprites (64 in Crazy Climber) */
+	2,      /* 2 bits per pixel */
+	{ 0, RGN_FRAC(1,2) },       /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,       /* pretty straightforward layout */
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -320,8 +500,14 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-
-
+static gfx_decode tr_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &trcharlayout,      0, 16 },
+	{ REGION_GFX2, 0x0000, &trcharlayout,      0, 16 },
+	{ REGION_GFX1, 0x0000, &trspritelayout,    0, 16 },
+	{ REGION_GFX3, 0x0000, &trcharlayout,   	 0, 16 },
+	{ -1 } /* end of array */
+};
 
 static MACHINE_DRIVER_START( yamato )
 
@@ -344,12 +530,12 @@ static MACHINE_DRIVER_START( yamato )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(96)
+	MDRV_PALETTE_LENGTH(96+256)
 	MDRV_COLORTABLE_LENGTH(16*4+8*4)
 
 	MDRV_PALETTE_INIT(yamato)
 	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(cclimber)
+	MDRV_VIDEO_UPDATE(yamato)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -362,6 +548,36 @@ static MACHINE_DRIVER_START( yamato )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( toprollr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)
+	MDRV_CPU_PROGRAM_MAP(trmem_map,0)
+	MDRV_CPU_IO_MAP(trport_map,0)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(2*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(tr_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	//MDRV_PALETTE_INIT(toprollr)
+
+	MDRV_VIDEO_START(toprollr)
+	MDRV_VIDEO_UPDATE(toprollr)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 1536000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
 
 ROM_START( yamato )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
@@ -370,10 +586,6 @@ ROM_START( yamato )
 	ROM_LOAD( "4.5jh",        0x4000, 0x2000, CRC(59a468e8) SHA1(a79cdee6efefd87a356cc8d710f8050bc12e07c3) )
 	/* hole at 6000-6fff */
 	ROM_LOAD( "11.5a",        0x7000, 0x1000, CRC(35987485) SHA1(1f0cb545bbd52982cbf801bc1dd2c4087af2f5f7) )
-
-	/* I don't know what the following ROMs are! */
-	ROM_LOAD( "5.5lm",        0xf000, 0x1000, CRC(7761ad24) SHA1(98878b19addd142d35718080eece05eaaee0388d) )	/* ?? */
-	ROM_LOAD( "6.5n",         0xf000, 0x1000, CRC(da48444c) SHA1(a43e672ce262eb817fb4e5715ef4fb304a6a2815) )	/* ?? */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, CRC(3aad9e3c) SHA1(37b0414b265397881bb45b166ecab85880d1358d) )
@@ -387,6 +599,10 @@ ROM_START( yamato )
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "8.11c",        0x0000, 0x1000, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
 	ROM_LOAD( "7.11a",        0x1000, 0x1000, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
+	ROM_LOAD( "5.5lm",        0x0000, 0x1000, CRC(7761ad24) SHA1(98878b19addd142d35718080eece05eaaee0388d) )	/* ?? */
+	ROM_LOAD( "6.5n",         0x1000, 0x1000, CRC(da48444c) SHA1(a43e672ce262eb817fb4e5715ef4fb304a6a2815) )
 
 	ROM_REGION( 0x00a0, REGION_PROMS, 0 )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, CRC(ef2053ab) SHA1(2006cbf003f90a8e75f39047a88a3bba85d78e80) )
@@ -404,10 +620,6 @@ ROM_START( yamato2 )
 	/* hole at 6000-6fff */
 	/* 7000-7fff not present here */
 
-	/* I don't know what the following ROMs are! */
-	ROM_LOAD( "5.5lm",        0xf000, 0x1000, CRC(7761ad24) SHA1(98878b19addd142d35718080eece05eaaee0388d) )	/* ?? */
-	ROM_LOAD( "6.5n",         0xf000, 0x1000, CRC(da48444c) SHA1(a43e672ce262eb817fb4e5715ef4fb304a6a2815) )	/* ?? */
-
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
 	ROM_LOAD( "1.5v",         0x0000, 0x0800, CRC(3aad9e3c) SHA1(37b0414b265397881bb45b166ecab85880d1358d) )
 
@@ -421,6 +633,10 @@ ROM_START( yamato2 )
 	ROM_LOAD( "8.11c",        0x0000, 0x1000, CRC(28024d9a) SHA1(c871c4d74be72a8bfea99e89d43f91922f4b734b) )
 	ROM_LOAD( "7.11a",        0x1000, 0x1000, CRC(4a179790) SHA1(7fb6b033de939ff8bd13055c073311dca2c1a6fe) )
 
+	ROM_REGION( 0x2000, REGION_USER1, 0 )
+	ROM_LOAD( "5.5lm",        0x0000, 0x1000, CRC(7761ad24) SHA1(98878b19addd142d35718080eece05eaaee0388d) )	/* ?? */
+	ROM_LOAD( "6.5n",         0x1000, 0x1000, CRC(da48444c) SHA1(a43e672ce262eb817fb4e5715ef4fb304a6a2815) )
+
 	ROM_REGION( 0x00a0, REGION_PROMS, 0 )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, CRC(ef2053ab) SHA1(2006cbf003f90a8e75f39047a88a3bba85d78e80) )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, CRC(2281d39f) SHA1(e9b568bdacf7ab611801cf42ea5c7624f5440ef6) )
@@ -429,12 +645,56 @@ ROM_START( yamato2 )
 	ROM_LOAD( "5.bpr",        0x0080, 0x0020, CRC(edd6c05f) SHA1(b95db8aaf74fe175d1179f0d85f79242b16f5fb4) )
 ROM_END
 
+ROM_START( toprollr )
+	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "10.k3", 0xc000, 0x2000, CRC(1e8914a6) SHA1(ec17f185f890d04ce75a5d8edf8b32da60e7a8d8) )
+	ROM_LOAD( "11.l3", 0xe000, 0x2000, CRC(b20a9fa2) SHA1(accd3296447eca002b0808e7b02832f5e35407e8) )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "15.h4", 0x0000, 0x2000, CRC(1d9e3325) SHA1(e7f6863aa2ba2aeec40cfcc5cf6c69e947c185b5) )
+	ROM_LOAD( "16.j4", 0x2000, 0x2000, CRC(ce3afe26) SHA1(7de00720f091537c64cc0fec687c061de3a8b1a3) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "5.l5",  0x0000, 0x1000, CRC(84139f46) SHA1(976f781fb279dd540778708174b942a263f16443) )
+	ROM_LOAD( "6.m5",  0x1000, 0x1000, CRC(e30c1dd8) SHA1(1777bf98625153c9b191020860e4e1839b46b998) )
+
+	ROM_REGION( 0x04000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "13.a4", 0x0000, 0x2000, CRC(89327329) SHA1(555331a3136aa8c5bb35b97dd54bc59da067be57) )
+	ROM_LOAD( "14.c4", 0x2000, 0x2000, CRC(7a945733) SHA1(14187ba303aecf0a812c425c34d8edda3deaa2b5) )
+
+	ROM_REGION( 0x12000, REGION_USER1, 0 )
+	ROM_LOAD( "2.f5",	0x00000, 0x02000, CRC(ef789f00) SHA1(424d69584d391ee7b9ad5db7ee6ced97d69897d4) )
+	ROM_LOAD( "8.f3",	0x02000, 0x02000, CRC(94371cfb) SHA1(cb501c36b213c995a4048b3a96c85848c556cd05) )
+	ROM_LOAD( "4.k5",	0x04000, 0x02000, CRC(1cb48ea0) SHA1(fdc75075112042ec84a7d1b3e5b5a6db1d1cb871) )
+	ROM_COPY( REGION_USER1, 0x04000, 0x0a000, 0x02000 )
+	ROM_COPY( REGION_USER1, 0x04000, 0x10000, 0x02000 )
+	ROM_LOAD( "3.h5",	0x06000, 0x02000, CRC(d45494ba) SHA1(6e235b34f9457acadad6d4e27799978bc2e3db08) )
+	ROM_LOAD( "9.h3",	0x08000, 0x02000, CRC(8a8032a7) SHA1(d6642d72645c613c21f65bbbe1560d0437d41f43) )
+	ROM_LOAD( "1.d5",	0x0c000, 0x02000, CRC(9894374d) SHA1(173de4abbc3fb5d522aa6d6d5caf8e4d54f2a598) )
+	ROM_LOAD( "7.d3",	0x0e000, 0x02000, CRC(904fffb6) SHA1(5528bc2a4d2fe8672428fd4725644265f0d57ded) )
+
+	ROM_REGION( 0x01a0, REGION_PROMS, 0 )
+	/* top board */
+	ROM_LOAD( "prom.9p",  0x0000, 0x0020, NO_DUMP )
+	ROM_LOAD( "prom.9n",  0x0020, 0x0020, NO_DUMP )
+	ROM_LOAD( "prom.9s",  0x0040, 0x0100, NO_DUMP )
+	/* bottom board - video */
+	ROM_LOAD( "prom.a1",  0x0140, 0x0020, NO_DUMP )
+	ROM_LOAD( "prom.r2",  0x0160, 0x0020, NO_DUMP )
+	ROM_LOAD( "prom.p2",  0x0180, 0x0020, NO_DUMP )
+
+ROM_END
 
 static DRIVER_INIT( yamato )
 {
 	yamato_decode();
 }
 
+static DRIVER_INIT( toprollr )
+{
+	toprollr_decode();
+}
 
-GAME( 1983, yamato,  0,      yamato, yamato, yamato, ROT90, "Sega", "Yamato (US)", 0 )
-GAME( 1983, yamato2, yamato, yamato, yamato, yamato, ROT90, "Sega", "Yamato (World?)", 0 )
+GAME( 1983, yamato,  0,      yamato, yamato, yamato, ROT90, "Sega", "Yamato (US)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1983, yamato2, yamato, yamato, yamato, yamato, ROT90, "Sega", "Yamato (World?)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1983, toprollr, 0, toprollr, toprollr, toprollr, ROT90, "Jaleco", "Top Roller", GAME_IMPERFECT_GRAPHICS|GAME_WRONG_COLORS )

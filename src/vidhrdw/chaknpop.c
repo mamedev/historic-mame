@@ -17,7 +17,7 @@
 #define GFX_TX_BANK2	0x80
 
 #define TX_COLOR1	0x0b
-#define TX_COLOR2	0x3f
+#define TX_COLOR2	0x01
 
 UINT8 *chaknpop_txram;
 UINT8 *chaknpop_sprram;
@@ -142,13 +142,9 @@ WRITE8_HANDLER( chaknpop_attrram_w )
 	{
 		chaknpop_attrram[offset] = data;
 
-		switch (offset)
-		{
-		case TX_COLOR1:
-		case TX_COLOR2:
-		tx_tilemap_mark_all_dirty();
+		if (offset == TX_COLOR1 || offset == TX_COLOR2)
+			tx_tilemap_mark_all_dirty();
 	}
-}
 }
 
 

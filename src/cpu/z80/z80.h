@@ -29,7 +29,7 @@ enum
 extern void z80_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned DasmZ80(char *buffer, unsigned pc);
+extern unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
 
 

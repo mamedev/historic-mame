@@ -76,7 +76,7 @@ enum
 #define RECIPLOG_LOOKUP_PREC	22
 
 /* output precision is how many fraction bits the result should have */
-#define RECIP_OUTPUT_PREC		16
+#define RECIP_OUTPUT_PREC		15
 #define LOG_OUTPUT_PREC			8
 
 
@@ -2056,15 +2056,14 @@ do 																				\
 	if (TEXMODE_ENABLE_PERSPECTIVE(TEXMODE))									\
 	{																			\
 		oow = fast_reciplog((ITERW), &lod);										\
-		s = ((INT64)oow * (ITERS)) >> 30;										\
-		t = ((INT64)oow * (ITERT)) >> 30;										\
+		s = ((INT64)oow * (ITERS)) >> 29;										\
+		t = ((INT64)oow * (ITERT)) >> 29;										\
 		lod += (LODBASE);														\
 	}																			\
 	else																		\
 	{																			\
 		s = (ITERS) >> 14;														\
 		t = (ITERT) >> 14;														\
-		oow = 1 << 16;															\
 		lod = (LODBASE);														\
 	}																			\
 																				\
@@ -2336,7 +2335,7 @@ do 																				\
 			break;																\
 	}																			\
 																				\
-		/* reverse the RGB blend */												\
+	/* reverse the RGB blend */													\
 	if (!TEXMODE_TC_REVERSE_BLEND(TEXMODE))										\
 	{																			\
 		blendr ^= 0xff;															\
@@ -2804,6 +2803,12 @@ do 																				\
 		case 4:		/* texture alpha */											\
 			blendr = blendg = blendb = (TEXELARGB) >> 24;						\
 			break;																\
+																				\
+		case 5:		/* texture RGB (Voodoo 2 only) */							\
+			blendr = RGB_RED(TEXELARGB);										\
+			blendg = RGB_GREEN(TEXELARGB);										\
+			blendb = RGB_BLUE(TEXELARGB);										\
+			break;																\
 	}																			\
 																				\
 	/* blend alpha */															\
@@ -2898,9 +2903,7 @@ while (0)
  *  Rasterizer generator macro
  *
  *************************************/
-// ALPHAMODE==9? no
-// FBZCOLORPATH==0142613A? no
-// FBZCOLORPATH==00482435? no
+
 #define ITER_RGB(r,g,b)	((((r) << 4) & 0xff0000) | (((g) >> 4) & 0xff00) | (((b) >> 12) & 0xff))
 
 #define RASTERIZER(name, TMUS, FBZCOLORPATH, FBZMODE, ALPHAMODE, FOGMODE, TEXMODE0, TEXMODE1) \

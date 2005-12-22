@@ -30,3 +30,7 @@ void dcs_data_w(int data);
 void dcs_reset_w(int state);
 
 void dcs_fifo_notify(int count, int max);
+
+WRITE32_HANDLER( dcs3_idma_addr_w );
+WRITE32_HANDLER( dcs3_idma_data_w );
+READ32_HANDLER( dcs3_idma_data_r );

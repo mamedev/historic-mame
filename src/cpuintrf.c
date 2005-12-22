@@ -1276,7 +1276,7 @@ offs_t activecpu_dasm(char *buffer, offs_t pc)
 			}
 		}
 
-		return (*cpu[activecpu].intf.disassemble_new)(buffer, pc, opbuf, argbuf, maxbytes);
+		return activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
 	}
 	return (*cpu[activecpu].intf.disassemble)(buffer, pc);
 }
@@ -1284,8 +1284,37 @@ offs_t activecpu_dasm(char *buffer, offs_t pc)
 
 unsigned activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
+	unsigned result;
+
 	VERIFY_ACTIVECPU(1, activecpu_dasm_new);
-	return (*cpu[activecpu].intf.disassemble_new)(buffer, pc, oprom, opram, bytes);
+
+	if (cpu[activecpu].intf.disassemble_new)
+	{
+		result = (*cpu[activecpu].intf.disassemble_new)(buffer, pc, oprom, opram, bytes);
+	}
+	else
+	{
+		/* if no disassembler present, dump vanilla bytes */
+		switch(activecpu_min_instruction_bytes())
+		{
+			case 1:
+			default:
+				sprintf(buffer, "$%02X", (unsigned) *((UINT8 *) oprom));
+				result = 1;
+				break;
+
+			case 2:
+				sprintf(buffer, "$%04X", (unsigned) *((UINT16 *) oprom));
+				result = 2;
+				break;
+
+			case 4:
+				sprintf(buffer, "$%08X", (unsigned) *((UINT32 *) oprom));
+				result = 4;
+				break;
+		}
+	}
+	return result;
 }
 
 

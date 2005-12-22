@@ -1727,11 +1727,7 @@ endif
 SOUND=$(strip $(findstring NES@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_NES=1
-ifndef MESS
 SOUNDOBJS += $(OBJ)/sound/nes_apu.o
-else
-SOUNDOBJS += $(OBJ)/mess/sound/nes_apu2.o $(OBJ)/mess/sound/nesintf.o
-endif
 else
 SOUNDDEFS += -DHAS_NES=0
 endif

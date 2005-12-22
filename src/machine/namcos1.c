@@ -10,12 +10,13 @@
 /* from vidhrdw */
 READ8_HANDLER( namcos1_videoram_r );
 WRITE8_HANDLER( namcos1_videoram_w );
-READ8_HANDLER( namcos1_paletteram_r );
 WRITE8_HANDLER( namcos1_paletteram_w );
 READ8_HANDLER( namcos1_spriteram_r );
 WRITE8_HANDLER( namcos1_spriteram_w );
 extern void namcos1_set_scroll_offsets( const int *bgx, const int *bgy, int negative, int optimize );
 extern void namcos1_set_sprite_offsets( int x, int y );
+
+UINT8 *namcos1_paletteram;
 
 static UINT8 *namcos1_triram;
 static UINT8 *s1ram;
@@ -802,7 +803,7 @@ static void namcos1_build_banks(read8_handler key_r,write8_handler key_w)
 	/* 3D glasses */
 	namcos1_install_bank(0x160,0x160,0,namcos1_3dcs_w,0,0);
 	/* RAM 6 banks - palette */
-	namcos1_install_bank(0x170,0x173,namcos1_paletteram_r,namcos1_paletteram_w,0,0);
+	namcos1_install_bank(0x170,0x173,0,namcos1_paletteram_w,0,namcos1_paletteram);
 	/* RAM 5 banks - videoram */
 	namcos1_install_bank(0x178,0x17b,namcos1_videoram_r,namcos1_videoram_w,0,0);
 	/* key chip bank */
@@ -970,10 +971,12 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 	/* S1 RAM pointer set */
 	s1ram = auto_malloc(0x8000);
 	namcos1_triram = auto_malloc(0x800);
+	namcos1_paletteram = auto_malloc(0x8000);
 
 	/* Register volatile user memory for save state */
 	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "s1ram", s1ram, 0x8000);
 	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "triram", namcos1_triram, 0x800);
+	state_save_register_UINT8 ("memory", cpu_gettotalcpu(), "paletteram", namcos1_paletteram, 0x8000);
 
 	/* Point mcu & sound shared RAM to destination */
 	memory_set_bankptr( 18, namcos1_triram );

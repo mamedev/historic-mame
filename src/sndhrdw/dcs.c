@@ -87,8 +87,8 @@
 #include <math.h>
 
 
-#define LOG_DCS_TRANSFERS			(0)
-#define LOG_DCS_IO					(0)
+#define LOG_DCS_TRANSFERS			(1)
+#define LOG_DCS_IO					(1)
 #define LOG_BUFFER_FILLING			(0)
 
 #define HLE_TRANSFERS				(1)
@@ -194,6 +194,8 @@ static UINT32 *dcs_program_ram;
 
 static size_t bank20_size;
 static size_t bootbank_stride;
+
+static UINT8 dcs3_start_on_next_write;
 
 static int dcs_state;
 static int transfer_state;
@@ -335,6 +337,16 @@ ADDRESS_MAP_END
 ADDRESS_MAP_START( dcs3_data_map, ADDRESS_SPACE_DATA, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20) AM_SIZE(&bank20_size) AM_BASE(&dcs_data_ram) /* D/RAM */
+	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
+	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x3800, 0x3fdf) AM_RAM								/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+ADDRESS_MAP_END
+
+
+ADDRESS_MAP_START( dcs3_io_map, ADDRESS_SPACE_IO, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0400, 0x0400) AM_READWRITE(input_latch_r, input_latch_ack_w) /* input latch read */
 	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)			/* soundlatch write */
 	AM_RANGE(0x0402, 0x0402) AM_READWRITE(output_control_r, output_control_w) /* secondary soundlatch read */
@@ -344,11 +356,6 @@ ADDRESS_MAP_START( dcs3_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x0481, 0x0481) AM_NOP								/* LED in bit $2000 */
 	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_data_bank_select_r, dcs_data_bank_select_w) /* D/RAM bank */
 	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
-	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
-	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
-	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
-	AM_RANGE(0x3800, 0x3fdf) AM_RAM								/* internal data ram */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
 ADDRESS_MAP_END
 
 
@@ -359,7 +366,6 @@ ADDRESS_MAP_END
 
 MACHINE_DRIVER_START( dcs_audio )
 	MDRV_CPU_ADD_TAG("dcs", ADSP2105, 10000000)
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dcs_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs_data_map,0)
 
@@ -380,7 +386,6 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( dcs2_audio )
 	MDRV_CPU_ADD_TAG("dcs2", ADSP2115, 16000000)
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dcs2_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs2_data_map,0)
 
@@ -409,9 +414,9 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( dcs3_audio )
 	MDRV_CPU_ADD_TAG("dcs3", ADSP2181, 33000000)
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dcs3_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs3_data_map,0)
+	MDRV_CPU_IO_MAP(dcs3_io_map,0)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
@@ -442,13 +447,21 @@ MACHINE_DRIVER_END
 
 static void dcs_boot(void)
 {
-	UINT32 max_banks = dcs.databank_count * bank20_size / 0x1000;
-	UINT8 buffer[0x1000];
-	int i;
+	if (Machine->drv->cpu[dcs_cpunum].cpu_type != CPU_ADSP2181)
+	{
+		UINT32 max_banks = dcs.databank_count * bank20_size / 0x1000;
+		UINT8 buffer[0x1000];
+		int i;
 
-	for (i = 0; i < 0x1000; i++)
-		buffer[i] = dcs.soundboot[(dcs.databank % max_banks) * 0x1000 + i];
-	adsp2105_load_boot_data(buffer, dcs_program_ram);
+		for (i = 0; i < 0x1000; i++)
+			buffer[i] = dcs.soundboot[(dcs.databank % max_banks) * 0x1000 + i];
+		adsp2105_load_boot_data(buffer, dcs_program_ram);
+	}
+	else
+	{
+		cpunum_set_input_line(dcs_cpunum, INPUT_LINE_HALT, ASSERT_LINE);
+		dcs3_start_on_next_write = FALSE;
+	}
 }
 
 
@@ -1052,6 +1065,45 @@ static void sound_tx_callback(int port, INT32 data)
 
 	/* remove timer */
 	timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);
+}
+
+
+
+/***************************************************************************
+    DCS3 IDMA ACCESS
+****************************************************************************/
+
+WRITE32_HANDLER( dcs3_idma_addr_w )
+{
+	cpuintrf_push_context(dcs_cpunum);
+	adsp2181_idma_addr_w(data);
+	if (data == 0)
+		dcs3_start_on_next_write = TRUE;
+	cpuintrf_pop_context();
+}
+
+
+WRITE32_HANDLER( dcs3_idma_data_w )
+{
+	cpuintrf_push_context(dcs_cpunum);
+	adsp2181_idma_data_w(data);
+	cpuintrf_pop_context();
+	if (dcs3_start_on_next_write)
+	{
+		logerror("Starting DCS3 CPU\n");
+		cpunum_set_input_line(dcs_cpunum, INPUT_LINE_HALT, CLEAR_LINE);
+		dcs3_start_on_next_write = FALSE;
+	}
+}
+
+
+READ32_HANDLER( dcs3_idma_data_r )
+{
+	UINT32 result;
+	cpuintrf_push_context(dcs_cpunum);
+	result = adsp2181_idma_data_r();
+	cpuintrf_pop_context();
+	return result;
 }
 
 

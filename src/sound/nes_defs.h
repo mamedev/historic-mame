@@ -73,8 +73,8 @@ typedef struct queue_s
 #define  APU_WRE1    0x11
 #define  APU_WRE2    0x12
 #define  APU_WRE3    0x13
-
 #define  APU_SMASK   0x15
+#define  APU_IRQCTRL 0x17
 
 #define  NOISE_LONG     0x4000
 #define  NOISE_SHORT    93
@@ -149,7 +149,7 @@ typedef struct apu
    dpcm_t     dpcm;
 
    /* APU registers */
-   unsigned char regs[22];
+   unsigned char regs[0x17];
 
    /* Sound pointers */
    void *buffer;

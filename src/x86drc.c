@@ -303,7 +303,7 @@ void drc_append_verify_code(drc_core *drc, void *code, UINT8 length)
 		target = drc->cache_top;									// target:
 		_ror_r32_imm(REG_EAX, 1);									// ror  eax,1
 		_add_r32_m32bd(REG_EAX, REG_EBX, 0);						// add  eax,[ebx]
-		_sub_r32_imm(REG_ECX, 1);									// sub  ecx,1
+		_sub_or_dec_r32_imm(REG_ECX, 1);							// sub  ecx,1
 		_lea_r32_m32bd(REG_EBX, REG_EBX, 4);						// lea  ebx,[ebx+4]
 		_jcc(COND_NZ, target);										// jnz  target
 		_cmp_r32_imm(REG_EAX, sum);									// cmp  eax,sum
@@ -419,7 +419,7 @@ void drc_append_standard_epilogue(drc_core *drc, INT32 cycles, INT32 pcdelta, in
 		if (drc->icount_in_memory)
 			_sub_m32abs_imm(drc->icountptr, cycles);				// sub  [icount],cycles
 		else
-			_sub_r32_imm(REG_EBP, cycles);							// sub  ebp,cycles
+			_sub_or_dec_r32_imm(REG_EBP, cycles);					// sub  ebp,cycles
 	}
 	if (pcdelta != 0 && !drc->pc_in_memory)
 		_lea_r32_m32bd(REG_EDI, REG_EDI, pcdelta);					// lea  edi,[edi+pcdelta]

@@ -14,7 +14,7 @@ UINT16 *gaelco_vregs;
 UINT16 *gaelco_videoram;
 UINT16 *gaelco_spriteram;
 
-static tilemap *pant[2];
+tilemap *pant[2];
 
 
 /***************************************************************************

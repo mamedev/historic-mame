@@ -26,7 +26,7 @@ struct dss_filter1_context
 	double x1;		/* x[k-1], previous input value */
 	double y1;		/* y[k-1], previous output value */
 	double a1;		/* digital filter coefficients, denominator */
-	double b0, b1;	/* digital filter coefficients, numerator */
+	double b0, b1;		/* digital filter coefficients, numerator */
 };
 
 struct dss_filter2_context
@@ -97,7 +97,7 @@ struct dst_rcfilter_context
  * input[4]    - Voltage reference. Usually 0V.
  *
  ************************************************************************/
-#define DST_CRFILTER__ENABLE	(*(node->input[0]))
+#define DST_CRFILTER__ENABLE		(*(node->input[0]))
 #define DST_CRFILTER__IN		(*(node->input[1]))
 #define DST_CRFILTER__R			(*(node->input[2]))
 #define DST_CRFILTER__C			(*(node->input[3]))
@@ -163,7 +163,7 @@ static void calculate_filter1_coefficients(double fc, double type,
 	else if (type == DISC_FILTER_HIGHPASS)
 	{
 		*b0 = two_over_T/den;
-		*b1 = *b0;
+		*b1 = -(*b0);
 	}
 	else
 	{
@@ -595,7 +595,7 @@ void dst_rcdisc2_reset(struct node_description *node)
  *
  ************************************************************************/
 #define DST_RCDISC3__ENABLE	(*(node->input[0]))
-#define DST_RCDISC3__IN	    (*(node->input[1]))
+#define DST_RCDISC3__IN		(*(node->input[1]))
 #define DST_RCDISC3__R1		(*(node->input[2]))
 #define DST_RCDISC3__R2		(*(node->input[3]))
 #define DST_RCDISC3__C		(*(node->input[4]))
@@ -826,7 +826,7 @@ void dst_rcdisc5_reset(struct node_description *node)
  * input[4]    - Voltage reference. Usually 0V.
  *
  ************************************************************************/
-#define DST_RCFILTER__ENABLE	(*(node->input[0]))
+#define DST_RCFILTER__ENABLE		(*(node->input[0]))
 #define DST_RCFILTER__VIN		(*(node->input[1]))
 #define DST_RCFILTER__R			(*(node->input[2]))
 #define DST_RCFILTER__C			(*(node->input[3]))
@@ -875,7 +875,7 @@ void dst_rcfilter_reset(struct node_description *node)
  * input[3]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
-#define DST_RCFILTERN__ENABLE	(*(node->input[0]))
+#define DST_RCFILTERN__ENABLE		(*(node->input[0]))
 #define DST_RCFILTERN__IN		(*(node->input[1]))
 #define DST_RCFILTERN__R		(*(node->input[2]))
 #define DST_RCFILTERN__C		(*(node->input[3]))
@@ -960,7 +960,7 @@ void dst_rcdiscN_step(struct node_description *node)
  * input[5]    - Capacitor Value (initialization only)
  *
  ************************************************************************/
-#define DST_RCDISC2N__ENABLE	(*(node->input[0]))
+#define DST_RCDISC2N__ENABLE		(*(node->input[0]))
 #define DST_RCDISC2N__IN0		(*(node->input[1]))
 #define DST_RCDISC2N__R0		(*(node->input[2]))
 #define DST_RCDISC2N__IN1		(*(node->input[3]))
@@ -969,8 +969,8 @@ void dst_rcdiscN_step(struct node_description *node)
 
 struct dss_rcdisc2_context
 {
-	double x1;		/* x[k-1], last input value */
-	double y1;		/* y[k-1], last output value */
+	double x1;			/* x[k-1], last input value */
+	double y1;			/* y[k-1], last output value */
 	double a1_0, b0_0, b1_0;	/* digital filter coefficients, filter #1 */
 	double a1_1, b0_1, b1_1;	/* digital filter coefficients, filter #2 */
 };

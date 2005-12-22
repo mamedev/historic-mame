@@ -6,13 +6,13 @@
 
     Games supported:
         * Gauntlet Legends [Atari, 200MHz, 8MB RAM, 2-TMU * 4MB]
-        * Gauntlet Dark Legacy [Atari, 200MHz]
         * War: Final Assault [Midway, 250MHz, 2-TMU]
         * NBA on NBC
         * Tenth Degree/ Juko Threat
         * NBA Showtime Gold + NFL Blitz 2000 Gold
 
     Durango PCB (uses an RM7000 or RM5271 @ 250MHz):
+        * Gauntlet Dark Legacy [Atari, 200MHz]
         * Road Burners [Atari, 250MHz, 32MB RAM, 2-TMU * 4MB]
         * San Francisco Rush 2049 [Atari, RM7000 @ 250MHz, 32MB RAM, Voodoo3 w/16MB]
         * San Francisco Rush 2049 Tournament Edition (PIC ID = 348)
@@ -60,6 +60,193 @@
     UART Transmit      |          |----------(IRQ0)--->|          |
     -------(0x0010)--->|          |                    |__________|
                        |__________|
+
+
+***************************************************************************
+
+ Gauntlet Legends info:
+
+
+ CPU PCB:  Vegas CPU  Midway no.5770-15563-06
+ --------------------------------------------
+
+ U16   33.3333MHz Oscillator (to U2 uPD82157N7-002)
+ U9   100.0000MHz Oscillator (to U10 MPC948)
+
+ U1   79RV5000-200      IDT 64-bit Processor     TBGA
+ U2   uPD82157N7-002    NEC                      TBGA (huge)
+ U3   uPD4516161ag5-A10 NEC 1Megx16 SDRAM        TSOP
+ U4   uPD4516161ag5-A10 NEC 1Megx16 SDRAM        TSOP
+ U5   uPD4516161ag5-A10 NEC 1Megx16 SDRAM        TSOP
+ U6   uPD4516161ag5-A10 NEC 1Megx16 SDRAM        TSOP
+ U13  EPM7032LC44-15T   Altera PLD               Midway no.A-22544
+ U11  93LC46B           Microchip EEPROM         Midway no.A-22545
+ U18  27C4001           Boot ROM
+ U10  MPC948            Motorola low voltage clock distribution chip
+ U21  PC1646U2          CMD EIDE Controller
+
+
+ Sound I/O PCB: Vegas 7-7-7 SIO-4 PCB  Midway no.5770-15534-04
+ -------------------------------------------------------------
+
+ U1   33.3333MHz  Oscillator
+ Y1   20.0000MHz  XTAL       (to U24 SMC91C94QFP)
+ Y2    4.0000MHz  XTAL       (to U37 PIC micro)
+ Y3   16.0000MHz  XTAL       (to U14 ADSP)
+
+ U28  M4T28-BR12SH1    ST Timer Keeper Snap Hat RAM
+ U14  ADSP2104         Analog Devices DSP
+ U8   EPF6016TC144-2   Altera FLEX 6000 PLD    144 pin TQFP
+ U11  5410-14589-00    Midway Custom           164 pin QFP
+ U34  5410-14590-00    Midway Custom            80 pin PQFP
+ U18  ADC0848CCN       NSC ADC
+ U24  SMC91C94QFP      SMC ISA/PCMCIA Ethernet & Modem Controller
+ U5   AD1866R          Analog Devices dual 16-bit audio DAC
+ U31  IS61C256AH-15J   ISSI 32kx8 SRAM
+ U32  IS61C256AH-15J   ISSI 32kx8 SRAM
+ U33  IS61C256AH-15J   ISSI 32kx8 SRAM
+ U25  TMS418160ADZ     TI 1048576x16 DRAM
+ U26  TMS418160ADZ     TI 1048576x16 DRAM
+ U37  PIC16C57C        Microchip PIC  Atari no.322 Gauntlet 27"
+ U44  27C256           Vegas SIO Audio Boot ROM
+ U1   AM7201-35JC      AMD opamp
+ U2   AM7201-35JC      AMD opamp
+
+
+ GFX Card: Quantum 3D - Obsidian2 PCI (3DFx Voodoo2)
+ ---------------------------------------------------
+
+ U1    500-0009-01      3DFX Pixel processor    256 pin PQFP
+ U26   500-0010-01      3DFX Texture processor  208 pin PQFP
+ U2    500-0010-01      3DFX Texture processor  208 pin PQFP
+ U20   ICS5342-3        ICS DAC
+ U21   XC9572           Xilinx CPLD Firmware 546-0014-02
+ U53   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U54   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U55   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U56   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U37   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U38   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U39   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U40   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U45   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U46   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U47   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U48   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U49   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U50   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U51   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U52   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U57   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U58   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U59   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+ U60   SM81C256K16CJ-25 Silicon Magic 100MHz EDO RAM, 4Meg
+
+
+***************************************************************************
+
+ Gauntlet Dark Legacy Info:
+
+
+ CPU board: Durango 5770-15982-00    sticker with RM5271 on it
+ --------------------------------
+ 1x RM5271 CPU(assuming this is correct...don't want to remove the heatsink from my good board)
+ 1x medium sized BGA, has heatsink
+ 1x Atmel ATF1500A  PLD  A-22912
+ 4x MT48LC1M16AT RAM
+ 1x 93clc46b       label A-22911   config eeprom
+ 1x texas instruments 8CA00YF (don't know what it is)
+ 1x motorolla MPC948 clock distribution chip
+ 100MHz crystal
+ 1x CMDPCI646U2 IDE controller
+ 1x 7segment LED display (cycles IOASIC if you try to load a game that doesnt match the PIC, spins during normal play)
+ 1x 232ACBN serial port controller
+ other misc 74xxx parts
+ Boot ROM 1.7
+
+ Connectors:
+   P1 4 pin marked "Reset/Interrupt"
+   P2 20 pin marked "PCI Extend"
+   P8B Standard PCI connector found on PC motherboards (although is custom mounted on the side of the PCB) Voodoo connects here
+   P3 DB15 labeled "Video In" Voodoo connects here, but is not required if you connect directly to the Voodoo card.
+   P4 Standard IDE connector marked "IDE HDD"
+   P5 9 pin marked "Serial"
+   Non-designated connector marked "EXP CONN" Standard PCI connector found on PC motherboards(custom mounted on the side of the PCB), SIO connects here
+
+
+
+ SIO board: Vegas777 5770-15534-05
+ ---------------------------------
+ 1x Midway 5410-14589-00 IO chip
+ 1x ADSP-2104  (16MHz crystal attached to clock pins)
+ 1x ADC0848CCN analog input chip
+ 1x ST M4t28-br12sh1  timekeeper
+ 1x Altera Flex epf6016tc144   pld
+ 1x Midway security PIC Gauntlet DL 27" 346xxxxxx (4MHz crystal attached)
+ 2x KM416C1200CJ-6  RAM
+ 1x SMSC LAN91C94 ethernet
+ 1x Midway 5410-14590-00 ???
+ 3x CY7C199-15VC  32Kx8 SRAM
+ 1x AD1866 DAC
+ 20MHz crystal attached to LAN chip
+ other misc parts
+ SIO ROM 1.0
+
+
+
+ Voodoo card: Quantum3D Obsidian2 PCI 650-0818-03D
+ -------------------------------------------------
+ (SLI pin holes filled with solder, no connector, has no VGA input/passthrough connector, only VGA out)
+
+ 1x XC9572 label 546-0014-02
+ 20x silicon magic 100MHz   sm81c256k16cj-25   RAM (8MB for texture RAM, 2MB for framebuffer?)
+ 2x 3dfx 500-0010-01 texelfx
+ 1x 3dfx 500-0009-01 pixelfx
+ 1x 14.318MHz crystal
+ 1 x 3384q 10bit bus switch(i think)
+ 1x ICS GenDAC ICS5342-3
+ other misc IC's
+
+
+***************************************************************************
+
+ Gauntlet Legends versus Gauntlet Dark Legacy
+
+
+ CPU board: Vegas 5770-15563-06
+ ------------------------------
+ 4x NEC D4516161A65-A10-9NF 8MB RAM  (other difference here...this PCB only has spots for these chips, the Durango has alternate positions for RAM, I assume for larger chips)
+ 1x 33.3333MHz crystal (in addition to the 100MHz crystal, on Durango this spot is present but unpopulated)
+ 1x Atmel ATF1500A  PLD A-22560 (replaces A-22912 on Durango)
+ 1x 93lc46b (A-22545 config EEPROM, dump is mostly FF and 00)
+ Boot ROM "Gauntlet Update Boot v1.5 A-5343-30022-7"
+
+
+
+ SIO board: Vegas777 5770-15534-05 (same as Legacy)
+ --------------------------------------------------
+ Security PIC "Gauntlet 27" 322xxxxxx"
+ Sound ROM "Gauntlet 3D U44 Sound 1.0"
+ 2x TMS418160ADZ RAM instead of 2x KM416C1200CJ-6 on Legacy
+ 20MHz crystal attached to LAN chip
+ 1x Valor  SF1012 ethernet physical interface(also on other board)
+
+ Connectors:
+   P1 5 pin marked "Snd Line In"
+   P5 5 pin marked "Snd Line Out"
+   unmarked 4 pin PC style power connector(for hard drive)
+   standard JAMMA connection
+   P7 14 pin marked "PLYR4"
+   P14 14 pin marked "PLYR3"
+   P23 10 pin marked "Coin DR"
+   P10 unmarked 10 pin connector (no idea)
+   P21 99 pin unmarked -right on top of PCI edge connection to CPU board
+   P15 20 pin marked "Aux Latched Out"
+   P8 14 pin unmarked
+   P2 11 pin marked "Gun 2 I/O"
+   P4 11 pin marked "Gun 1 I/O"
+   P 18 standard ethernet connector
+
 
 **************************************************************************/
 
@@ -1297,22 +1484,6 @@ static WRITE32_HANDLER( ethernet_w )
 }
 
 
-static WRITE32_HANDLER( sound_dma_addr_w )
-{
-	cpuintrf_push_context(1);
-	adsp2181_idma_addr_w(data);
-	cpuintrf_pop_context();
-}
-
-
-static WRITE32_HANDLER( sound_dma_data_w )
-{
-	cpuintrf_push_context(1);
-	adsp2181_idma_data_w(data);
-	cpuintrf_pop_context();
-}
-
-
 
 /*************************************
  *
@@ -1385,8 +1556,8 @@ static void remap_dynamic_addresses(void)
 		add_dynamic_address(base + 0x1000, base + 0x1003, NULL, asic_fifo_w);
 		if (has_dcs3)
 		{
-			add_dynamic_address(base + 0x5000, base + 0x5003, NULL, sound_dma_addr_w);
-			add_dynamic_address(base + 0x7000, base + 0x7003, NULL, sound_dma_data_w);
+			add_dynamic_address(base + 0x5000, base + 0x5003, NULL, dcs3_idma_addr_w);
+			add_dynamic_address(base + 0x7000, base + 0x7003, dcs3_idma_data_r, dcs3_idma_data_w);
 		}
 	}
 
@@ -1464,9 +1635,9 @@ static void remap_dynamic_addresses(void)
 	{
 		if (LOG_DYNAMIC) logerror("  installing: %08X-%08X %s,%s\n", 0xa0000000+dynamic[addr].start, 0xa0000000+dynamic[addr].end, dynamic[addr].rdname, dynamic[addr].wrname);
 		if (dynamic[addr].read)
-			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].read);
+			_memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].read, dynamic[addr].wrname);
 		if (dynamic[addr].write)
-			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].write);
+			_memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].write, dynamic[addr].wrname);
 	}
 
 	if (LOG_DYNAMIC)
@@ -1782,11 +1953,42 @@ INPUT_PORTS_START( warfa )
 	PORT_DIPNAME( 0x0002, 0x0002, "Quantum 3dfx card rev" )
 	PORT_DIPSETTING(      0x0002, "4" )
 	PORT_DIPSETTING(      0x0000, "?" )
-	PORT_BIT( 0x003c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown0004" )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown0008" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown0010" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown0020" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0040, 0x0040, "Boot ROM Test" )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
-	PORT_BIT( 0x3f80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown0080" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown0100" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0200, 0x0200, "Unknown0200" )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0400, 0x0400, "Unknown0400" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x0800, 0x0800, "Unknown0800" )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x1000, 0x1000, "Unknown1000" )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
+	PORT_DIPNAME( 0x2000, 0x2000, "Unknown2000" )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0xc000, 0x4000, "Resolution" )
 	PORT_DIPSETTING(      0xc000, "Standard Res 512x256" )
 	PORT_DIPSETTING(      0x4000, "Medium Res 512x384" )
@@ -2254,123 +2456,158 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( gauntleg )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 1.5 11/17/1998 */
 	ROM_LOAD( "legend15.bin", 0x000000, 0x80000, CRC(a8372d70) SHA1(d8cd4fd4d7007ee38bb58b5a818d0f83043d5a48) )
 
-	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "gauntleg", 0, MD5(2d814e48ef612fa387df671466824c97) SHA1(2e01dc43186578384207dc0b630efbc46427dd46) )
+	DISK_REGION( REGION_DISKS )	/* Guts 1.5 1/14/1999 Game 1/14/1999 */
+	DISK_IMAGE( "gauntleg", 0, MD5(e8c0c5fafbf004ab2e5808bcd80bfb07) SHA1(fa042d9b565282e69192096bd6f66d8af5aacd2e) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( gauntl12 )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 1.3 9/25/1998 */
 	ROM_LOAD( "legend12.bin", 0x000000, 0x80000, CRC(34674c5f) SHA1(92ec1779f3ab32944cbd953b6e1889503a57794b) )
 
-	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "gauntl12", 0, MD5(52e4b984ae722da56ff6cf623e296a32) SHA1(bd01508ffd8fee497c8a75eacddff816147fd8c2) )
+	DISK_REGION( REGION_DISKS )	/* Guts 1.4 10/22/1998 Main 10/23/1998 */
+	DISK_IMAGE( "gauntl12", 0, MD5(d5712ae31835bcae086ec7259c2541e0) SHA1(40ba1b8464ffd4003aac5511306b4c34bfa227ea) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( gauntdl )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 1.7 12/14/1999 */
 	ROM_LOAD( "gauntdl.bin", 0x000000, 0x80000, CRC(3d631518) SHA1(d7f5a3bc109a19c9c7a711d607ff87e11868b536) )
 
-	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "gauntdl", 0, MD5(002cbaf85806be0dbd21949bf8ce83c2) SHA1(5e73de969a2d6896bcd01d075370520e063e8cc5) )
+	DISK_REGION( REGION_DISKS )	/* Guts: 1.9 3/17/2000 Game 5/9/2000 */
+	DISK_IMAGE( "gauntdl", 0, MD5(3a83b244543f0076fc0cbc8eb6c742b8) SHA1(30bfc810debeca6a4fccd954d0b68c1185f2c384) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
+ROM_END
+
+
+ROM_START( gauntd24 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 1.7 12/14/1999 */
+	ROM_LOAD( "gauntdl.bin", 0x000000, 0x80000, CRC(3d631518) SHA1(d7f5a3bc109a19c9c7a711d607ff87e11868b536) )
+
+	DISK_REGION( REGION_DISKS )	/* Guts: 1.9 3/17/2000 Game 3/19/2000 */
+	DISK_IMAGE( "gauntdl24", 0, MD5(1faed82ad08aba21be061ccca709e691) SHA1(d6d9b15f3e20e3456431a6799aceeb2c0b4336aa) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( warfa )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "warsnd.106", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 1.9 3/25/1999 */
 	ROM_LOAD( "warboot.v19", 0x000000, 0x80000, CRC(b0c095cd) SHA1(d3b8cccdca83f0ecb49aa7993864cfdaa4e5c6f0) )
 
-	DISK_REGION( REGION_DISKS )
+	DISK_REGION( REGION_DISKS )	/* Guts 1.3 4/20/1999 Game 4/20/1999 */
 	DISK_IMAGE( "warfa", 0, MD5(01035f301d84d665f7c4bf7e3554c516) SHA1(9ce1d4a3115329b9b6fb6482b11b22b52a7fef79) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_LOAD16_BYTE( "warsnd.106", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( tenthdeg )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "tenthdeg.snd", 0x000000, 0x8000, CRC(1c75c1c1) SHA1(02ac1419b0fd4acc3f39676e7dce879e926d998b) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "tenthdeg.bio", 0x000000, 0x80000, CRC(1cd2191b) SHA1(a40c48f3d6a9e2760cec809a79a35abe762da9ce) )
 
-	DISK_REGION( REGION_DISKS )
+	DISK_REGION( REGION_DISKS )	/* Guts 5/26/1998 Main 8/25/1998 */
 	DISK_IMAGE( "tenthdeg", 0, MD5(be653883b640f540945e9c8ab8f72463) SHA1(5ba31d22c0fa29897b45e01c4f1afed8b906f500) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_LOAD16_BYTE( "tenthdeg.snd", 0x000000, 0x8000, CRC(1c75c1c1) SHA1(02ac1419b0fd4acc3f39676e7dce879e926d998b) )
 ROM_END
 
 
 ROM_START( roadburn )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 2.6 4/22/1999 */
 	ROM_LOAD( "rbmain.bin", 0x000000, 0x80000, CRC(060e1aa8) SHA1(2a1027d209f87249fe143500e721dfde7fb5f3bc) )
 
-	DISK_REGION( REGION_DISKS )
+	DISK_REGION( REGION_DISKS )	/* Guts 4/22/1999 Game 4/22/1999 */
 	DISK_IMAGE( "roadburn", 0, MD5(ce4710671f4266389e7d71f1fc0da81d) SHA1(1c971c9ed573d178d9f318ccd88d305d8146de2d) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2181 data */
 ROM_END
 
 
 ROM_START( nbashowt )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "nbau27.100", 0x000000, 0x80000, CRC(ff5d620d) SHA1(8f07567929f40a2269a42495dfa9dd5edef688fe) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "nbashowt", 0, MD5(2dab719f8f0fdeb8ac1db3844ed8c1e4) SHA1(bf60b8f74647dc911f78f364a72ef0301ae0167a) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( nbanfl )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "u27nflnba.bin", 0x000000, 0x80000, CRC(6a9bd382) SHA1(18b942df6af86ea944c24166dbe88148334eaff9) )
 //  ROM_LOAD( "bootnflnba.bin", 0x000000, 0x80000, CRC(3def7053) SHA1(8f07567929f40a2269a42495dfa9dd5edef688fe) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "nbanfl", 0, MD5(9e3748957c672f6d7a1e464546f46b15) SHA1(4256c7487a55fd0d0e4241f595cc886d4402fd7d) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( cartfury )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "bootu27", 0x000000, 0x80000, CRC(c44550a2) SHA1(ad30f1c3382ff2f5902a4cbacbb1f0c4e37f42f9) )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "cartfury", 0, MD5(d8e9d2616f8d70155f1068f884aa39e5) SHA1(98597d79ea25c0e74a575ba636abccc68fd5d301) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
-ROM_START( sfru2049 )
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
-
+ROM_START( sf2049 )
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD( "u27a.dat", 0x000000, 0x80000, CRC(174ba8fe) SHA1(baba83b811eca659f00514a008a86ef0ac9680ee) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "sfru2049", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
+	DISK_IMAGE( "sf2049", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
+ROM_END
+
+
+ROM_START( sf2049se )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD( "u27a.dat", 0x000000, 0x80000, CRC(174ba8fe) SHA1(baba83b811eca659f00514a008a86ef0ac9680ee) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "sf2049se", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
+ROM_END
+
+
+ROM_START( sf2049te )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD( "u27a.dat", 0x000000, 0x80000, CRC(174ba8fe) SHA1(baba83b811eca659f00514a008a86ef0ac9680ee) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "sf2049te", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
+
+	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
@@ -2468,11 +2705,19 @@ static DRIVER_INIT( cartfury )
 }
 
 
-static DRIVER_INIT( sfru2049 )
+static DRIVER_INIT( sf2049 )
 {
 	dcs3_init(0);
 	init_common(MIDWAY_IOASIC_STANDARD, 336/* others? */);
 }
+
+
+static DRIVER_INIT( sf2049te )
+{
+	dcs3_init(0);
+	init_common(MIDWAY_IOASIC_STANDARD, 348/* others? */);
+}
+
 
 
 
@@ -2482,18 +2727,23 @@ static DRIVER_INIT( sfru2049 )
  *
  *************************************/
 
-// Voodoo 2 games
-GAME( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.6)", 0 )
-GAME( 1998, gauntl12, gauntleg, vegas,    gauntleg, gauntleg, ROT0, "Atari Games", "Gauntlet Legends (version 1.2)", GAME_NO_SOUND )
-GAME( 1999, gauntdl,  0,        vegas,    gauntdl , gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy", GAME_IMPERFECT_GRAPHICS )
-GAME( 1999, warfa,    0,        vegas250, warfa,    warfa,    ROT0, "Atari Games", "War: The Final Assault", GAME_NOT_WORKING )
-GAME( 1998, tenthdeg, 0,        vegas,    tenthdeg, tenthdeg, ROT0, "Atari Games", "Tenth Degree", GAME_IMPERFECT_GRAPHICS )
-GAME( 1999, roadburn, 0,        vegas32m, roadburn, roadburn, ROT0, "Atari Games", "Road Burners", GAME_NO_SOUND | GAME_NOT_WORKING )
+/* Voodoo 2 + DCS2 */
+GAME( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games",  "Gauntlet Legends (version 1.6)", 0 )
+GAME( 1998, gauntl12, gauntleg, vegas,    gauntleg, gauntleg, ROT0, "Atari Games",  "Gauntlet Legends (version 1.2)", GAME_NO_SOUND )
+GAME( 1998, tenthdeg, 0,        vegas,    tenthdeg, tenthdeg, ROT0, "Atari Games",  "Tenth Degree", 0 )
+GAME( 1999, gauntdl,  0,        vegas,    gauntdl,  gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy (version DL 2.52)", 0 )
+GAME( 1999, gauntd24, gauntdl,  vegas,    gauntdl,  gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy (version DL 2.4)", 0 )
+GAME( 1999, warfa,    0,        vegas250, warfa,    warfa,    ROT0, "Atari Games",  "War: The Final Assault", GAME_NOT_WORKING )
 
-// Voodoo banshee games
+/* Voodoo 2 + ADAGE */
+GAME( 1999, roadburn, 0,        vegas32m, roadburn, roadburn, ROT0, "Atari Games",  "Road Burners", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+/* Voodoo banshee + ??? */
 GAME( 1998, nbashowt, 0,        vegasban, nbashowt, nbashowt, ROT0, "Midway Games", "NBA Showtime: NBA on NBC", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAME( 1999, nbanfl,   0,        vegasban, nbashowt, nbanfl,   ROT0, "Midway Games", "NBA Showtime / NFL Blitz 2000", GAME_NO_SOUND | GAME_NOT_WORKING )
 
-// Voodoo 3 games
-GAME( 1998, sfru2049, 0,        vegasv3,  vegas,    sfru2049, ROT0, "Atari Games", "San Francisco Rush 2049", GAME_NO_SOUND | GAME_NOT_WORKING )
+/* Voodoo 3 + ADAGE */
+GAME( 1998, sf2049,   0,        vegasv3,  vegas,    sf2049,   ROT0, "Atari Games",  "San Francisco Rush 2049", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, sf2049se, sf2049,   vegasv3,  vegas,    sf2049,   ROT0, "Atari Games",  "San Francisco Rush 2049: Special Edition", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, sf2049te, sf2049,   vegasv3,  vegas,    sf2049te, ROT0, "Atari Games",  "San Francisco Rush 2049: Tournament Edition", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAME( 2000, cartfury, 0,        vegasv3,  roadburn, cartfury, ROT0, "Midway Games", "Cart Fury", GAME_NO_SOUND | GAME_NOT_WORKING )

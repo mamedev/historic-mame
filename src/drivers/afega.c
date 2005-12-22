@@ -10,7 +10,7 @@ Video Chips :   AFEGA AFI-GFSK  (68 Pin PLCC)
                 AFEGA AFI-GFLK (208 Pin PQFP)
 
 Sound CPU   :   Z80
-Sound Chips :   M6295 (AD-65)  +  YM2151 (BS901)  +  YM3014 (BS90?)
+Sound Chips :   M6295 (AD-65)  +  YM2151 (BS901)  +  YM3012 (BS902)
 
 ---------------------------------------------------------------------------
 Year + Game                     Notes
@@ -1097,8 +1097,8 @@ ROM_END
 (C) Afega 1998
 
 CPU: 68HC000FN10 (68000, 68 pin PLCC)
-SND: Z84C000FEC (Z80, 44 pin PQFP), AD-65 (44 pin PQFP, Probably OKI M6295),
-     BS901 (Probably YM2151 or YM3812, 24 pin DIP), BS901 (possibly YM3014 or similar? 16 pin DIP)
+SND: Z84C000FEC (Z80, 44 pin PQFP), AD-65 (OKI M6295),
+     BS901 (YM2151, 24 pin DIP), BS901 (YM3012, 16 pin DIP)
 OSC: 12.000MHz (near 68000), 4.000MHz (Near Z84000)
 RAM: LH52B256 x 8, 6116 x 7
 DIPS: 2 x 8 position
@@ -1158,7 +1158,7 @@ The pcb might be missing an eprom in a socket
 
 1x 68k
 1x z80
-1x Ad65 (probably oki 6295)
+1x Ad65 (oki 6295)
 1x OSC 12mhz (near 68k)
 1x OSC 4mhz (near z80)
 1x ym2151
@@ -1261,7 +1261,7 @@ ROM_END
 /*
 
 Hot Bubble
-Afega, 199?
+Afega, 1998
 
 PCB Layout
 ----------
@@ -1458,11 +1458,11 @@ ROM_START( spec2k )
 	ROM_LOAD( "yonatech1.u103", 0x00000, 0x10000, CRC(ef5acda7) SHA1(e55b36a1598ecbbbad984997d61599dfa3958f60) )
 
 	ROM_REGION( 0x200000, REGION_GFX1,ROMREGION_DISPOSE ) /* Sprites, 16x16x4 */
-	ROM_LOAD( "spectrum2000.uc1", 0x00000, 0x200000,  NO_DUMP )
+	ROM_LOAD( "u154.bin", 0x00000, 0x200000, CRC(f77b764e) SHA1(37e249bd4d7174c5232261880ce8debf42723716) )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Layer 0, 16x16x8 */
-	ROM_LOAD( "spectrum2000.uc2", 0x000000, 0x200000, NO_DUMP )
-	ROM_LOAD( "spectrum2000.uc3", 0x200000, 0x200000, NO_DUMP )
+	ROM_LOAD( "u153.bin", 0x000000, 0x200000, CRC(a00bbf8f) SHA1(622f52ef50d52cdd5e6b250d68439caae5c13404) )
+	ROM_LOAD( "u152.bin", 0x200000, 0x200000, CRC(f6423fab) SHA1(253e0791eb58efa1df42e9c74d397e6e65c8c252) )
 
 	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_ERASEFF )	/* Layer 1, 8x8x4 */
 	ROM_LOAD( "yonatech4.u3", 0x00000, 0x20000, CRC(5626b08e) SHA1(63207ed6b4fc8684690bf3fe1991a4f3babd73e8) )
@@ -1500,4 +1500,4 @@ GAME( 1998, bubl2000, 0,        bubl2000, bubl2000, bubl2000, ROT0,   "Tuning", 
 GAME( 1998, hotbubl,  bubl2000, bubl2000, bubl2000, bubl2000, ROT0,   "Pandora", "Hot Bubble" , 0) // on an afega board ..
 GAME( 1999, popspops, 0,        popspops, popspops, grdnstrm, ROT0,   "Afega", "Pop's Pop's", 0 )
 GAME( 2001, firehawk, 0,        firehawk, firehawk, 0,        ORIENTATION_FLIP_Y, "ESD", "Fire Hawk", GAME_NOT_WORKING )
-GAME( 2000, spec2k,   0,        firehawk, spec2k,   spec2k,   ORIENTATION_FLIP_Y, "Yonatech", "Spectrum 2000", GAME_NOT_WORKING )
+GAME( 2000, spec2k,   0,        firehawk, spec2k,   spec2k,   ORIENTATION_FLIP_Y, "Yonatech", "Spectrum 2000 (Euro)", 0 )

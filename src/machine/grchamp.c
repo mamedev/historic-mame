@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "grchamp.h"
 
 extern UINT8 grchamp_videoreg0;
 extern UINT8 grchamp_vreg1[0x10];
@@ -93,7 +94,7 @@ WRITE8_HANDLER( grchamp_port_1_w ) {
 		/* OUT1 - Page 43: writes to 'Left Synk Bus' */		/* bg0 yscroll msb */
 		/* OUT2 - Page 43: writes to 'Left Synk Bus' */		/* bg0 xscroll? */
 
-	case 3: /* OUT3 - Page 45 */
+	case 0x03: /* OUT3 - Page 45 */
 		/*  bit0-bit3 = Analog Tachometer output
             bit4 = Palette selector. (Goes to A4 on the color prom). I believe this
                 select between colors 0-15 and colors 16-31.
@@ -103,7 +104,7 @@ WRITE8_HANDLER( grchamp_port_1_w ) {
         */
 		break;
 
-	case 4: /* OUT4 - Page 46 */
+	case 0x04: /* OUT4 - Page 46 */
 		/* trigger irq on cpu2 when vblank arrives */
 		grchamp_cpu_irq_enable[1] = data & 1;
 		break;
@@ -112,19 +113,59 @@ WRITE8_HANDLER( grchamp_port_1_w ) {
 		/* OUT6 - unused */									/* bg1 yscroll msb */
 		/* OUT7 - Page 44: writes to 'Right Synk Bus' */	/* bg1 xscroll? */
 
-	case 8: /* OUT8 - Page 47 */
+	case 0x08: /* OUT8 - Page 47 */
 		comm_latch = data;
 		break;
-
 		/* OUT9 - Page 47: writes to 'Center Synk Bus' */	/* bg2 yscroll lsb */
 		/* OUTA - Page 47: writes to 'Center Synk Bus' */	/* bg2 yscroll msb? */
 		/* OUTB - Page 47: writes to 'Center Synk Bus' */	/* bg2 xscroll? */
-
+	case 0x0C: /* OUTC - Page 48: goes to connector Q-23 */
+		discrete_sound_w(GRCHAMP_ENGINE_CS_EN, data & 0x80);
+		discrete_sound_w(GRCHAMP_SIFT_DATA, (data >> 5) & 0x03);
+		discrete_sound_w(GRCHAMP_ATTACK_UP_DATA, (data >> 2) & 0x07);
+		discrete_sound_w(GRCHAMP_IDLING_EN, data & 0x02);
+		discrete_sound_w(GRCHAMP_FOG_EN, data & 0x01);
+		break;
+	case 0x0D: /* OUTD - Page 48: goes to connector Q-25 */
+		discrete_sound_w(GRCHAMP_PLAYER_SPEED_DATA, (data >> 4) & 0x0f);
+		discrete_sound_w(GRCHAMP_ATTACK_SPEED_DATA,  data & 0x0f);
+		break;
 	default:
-		/* OUTC - Page 48: goes to connector Q-23 */
-		/* OUTD - Page 48: goes to connector Q-25 */
 		/* OUTE - Page 48: goes to connector Q-27 */
 		/* OUTF - unused */
 		break;
 	}
+}
+/***************************************************************************
+
+    CPU 3
+
+***************************************************************************/
+
+WRITE8_HANDLER( grchamp_portA_0_w ) // IC 3B
+{
+	discrete_sound_w(GRCHAMP_A_DATA, data);
+}
+WRITE8_HANDLER( grchamp_portB_0_w ) // IC 3B
+{
+	discrete_sound_w(GRCHAMP_B_DATA, 255-data);
+}
+
+WRITE8_HANDLER( grchamp_portA_1_w ) // IC 2B
+{
+
+}
+
+WRITE8_HANDLER( grchamp_portB_1_w ) // IC 2B
+{
+
+}
+
+WRITE8_HANDLER( grchamp_portA_2_w ) // IC 1B
+{
+
+}
+WRITE8_HANDLER( grchamp_portB_2_w ) // IC 1B
+{
+
 }

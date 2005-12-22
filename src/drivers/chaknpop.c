@@ -288,7 +288,8 @@ static MACHINE_DRIVER_START( chaknpop )
 	/* basic machine hardware */
 	/* the real board is 3.072MHz, but it is faster for MAME */
 	//MDRV_CPU_ADD(Z80, 18432000 / 6)   /* 3.072 MHz */
-	MDRV_CPU_ADD(Z80, 2860000)
+	MDRV_CPU_ADD(Z80, 2350000)
+	//MDRV_CPU_ADD(Z80, 2760000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 

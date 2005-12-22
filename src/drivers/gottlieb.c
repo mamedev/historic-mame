@@ -152,6 +152,8 @@ VBlank duration: 1/VSYNC * (16/256) = 1017.6 us
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/samples.h"
+#include "sound/sp0250.h"
+
 
 extern UINT8 *gottlieb_charram;
 
@@ -175,8 +177,10 @@ extern WRITE8_HANDLER( gottlieb_riot_w );
 extern WRITE8_HANDLER( gottlieb_speech_w );
 extern WRITE8_HANDLER( gottlieb_speech_clock_DAC_w );
 extern void gottlieb_sound_init(void);
+extern void stooges_sp0250_drq(int level);
 extern READ8_HANDLER( stooges_sound_input_r );
 extern WRITE8_HANDLER( stooges_8910_latch_w );
+extern WRITE8_HANDLER( stooges_sp0250_latch_w );
 extern WRITE8_HANDLER( stooges_sound_control_w );
 extern WRITE8_HANDLER( gottlieb_nmi_rate_w );
 extern WRITE8_HANDLER( gottlieb_cause_dac_nmi_w );
@@ -490,7 +494,7 @@ ADDRESS_MAP_END
 
 ADDRESS_MAP_START( stooges_sound2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(MWA8_NOP)	/* speech chip. The game sends strings */
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(stooges_sp0250_latch_w)	/* speech chip. The game sends strings */
 									/* of 15 bytes (clocked by 4000). The chip also */
 									/* checks a DATA REQUEST bit in 6000. */
 	AM_RANGE(0x4000, 0x4000) AM_WRITE(stooges_sound_control_w)
@@ -1524,6 +1528,11 @@ static struct Samplesinterface reactor_samples_interface =
 #define gottlieb_samples_interface qbert_samples_interface	/* not used */
 #define krull_samples_interface qbert_samples_interface		/* not used */
 
+struct sp0250_interface sp0250_interface =
+{
+	stooges_sp0250_drq
+};
+
 
 
 /********************************************************************
@@ -1629,7 +1638,7 @@ static MACHINE_DRIVER_START( gottlieb2 )
 	MDRV_CPU_ADD_TAG("sound2", M6502, 1000000)	/* 1 MHz */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(stooges_sound2_readmem,stooges_sound2_writemem)
-								/* NMIs are triggered by the Votrax SC-01 */
+
 	MDRV_FRAMES_PER_SECOND(61)
 	MDRV_VBLANK_DURATION(1018)	/* frames per second, vblank duration */
 
@@ -1650,16 +1659,20 @@ static MACHINE_DRIVER_START( gottlieb2 )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 
 	MDRV_SOUND_ADD(DAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 
 	MDRV_SOUND_ADD(AY8910, 2000000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 
 	MDRV_SOUND_ADD(AY8910, 2000000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(SP0250, 3120000)
+	MDRV_SOUND_CONFIG(sp0250_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -2284,6 +2297,6 @@ GAME( 1983, qbertqub, 0,        qbert,    qbertqub, 0,        ROT270, "Mylstar",
 GAME( 1983, screwloo, 0,        gottlieb2,screwloo, gottlieb, ROT0,   "Mylstar", "Screw Loose (prototype)", 0 )
 GAME( 1984, curvebal, 0,        gottlieb, curvebal, 0,        ROT270, "Mylstar", "Curve Ball", 0 )
 GAME( 1984, usvsthem, 0,        gottlieb2,usvsthem, laserdsc, ROT0,   "Mylstar", "Us vs. Them", GAME_NOT_WORKING )
-GAME( 1984, 3stooges, 0,        stooges,  3stooges, stooges,  ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", GAME_IMPERFECT_SOUND )
+GAME( 1984, 3stooges, 0,        stooges,  3stooges, stooges,  ROT0,   "Mylstar", "The Three Stooges In Brides Is Brides", 0 )
 GAME( 1984, vidvince, 0,        vidvince, vidvince, gottlieb, ROT0,   "Mylstar", "Video Vince and the Game Factory (prototype)", GAME_IMPERFECT_GRAPHICS ) // sprite wrapping issues
 GAME( 1984, wizwarz,  0,        gottlieb2,wizwarz,  gottlieb, ROT0,   "Mylstar", "Wiz Warz (prototype)", 0 )

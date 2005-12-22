@@ -1459,7 +1459,7 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 	{
 		UINT32 sectors[4];
 		UINT8 *data;
-		int i;
+		int i, maxdiff;
 
 		if (!chd_read(chd, 0x200 / header->hunkbytes, 1, temp))
 			goto error;
@@ -1469,9 +1469,12 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 			goto error;
 		for (i = 0; i < 4; i++)
 			sectors[i] = data[i*4+0x40] | (data[i*4+0x41] << 8) | (data[i*4+0x42] << 16) | (data[i*4+0x43] << 24);
-		if (sectors[0] != 8 || sectors[2] - sectors[1] != sectors[3] - sectors[2])
+		maxdiff = sectors[2] - sectors[1];
+		if (sectors[3] - sectors[2] > maxdiff)
+			maxdiff = sectors[3] - sectors[2];
+		if (sectors[0] != 8)
 			goto error;
-		*maxhunk = (sectors[3] + (sectors[3] - sectors[2]) + sectors_per_hunk - 1) / sectors_per_hunk;
+		*maxhunk = (sectors[3] + maxdiff + sectors_per_hunk - 1) / sectors_per_hunk;
 		printf("Maximum hunk: %d\n", *maxhunk);
 		if (*maxhunk >= header->totalhunks)
 		{

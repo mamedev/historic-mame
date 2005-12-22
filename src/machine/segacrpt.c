@@ -108,6 +108,7 @@
   315-5013      Super Zaxxon           used Zaxxon for known plaintext attack
   ???-????      Super Locomotive
   315-5018      Yamato
+  ???-????      Top Roller             same key as Yamato
   315-5028      Sindbad Mystery
   315-5030      Up'n Down &            unencrypted version available
            M120 Razzmatazz
@@ -429,6 +430,72 @@ void yamato_decode(void)
 
 
 	sega_decode(convtable);
+}
+
+void toprollr_decode(void)
+{
+	/* same tables as in Yamato, but encrypted ROM is banked */
+	UINT8 *decrypted;
+
+	static const unsigned char convtable[32][4] =
+	{
+		/*       opcode                   data                     address      */
+		/*  A    B    C    D         A    B    C    D                           */
+		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x80,0xa0 },	/* ...0...0...0...0 */
+		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x80,0xa0 },	/* ...0...0...0...1 */
+		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },	/* ...0...0...1...0 */
+		{ 0x88,0xa8,0x80,0xa0 }, { 0x20,0xa0,0x28,0xa8 },	/* ...0...0...1...1 */
+		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x08,0x28 },	/* ...0...1...0...0 */
+		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },	/* ...0...1...0...1 */
+		{ 0x20,0xa0,0x28,0xa8 }, { 0x20,0xa0,0x28,0xa8 },	/* ...0...1...1...0 */
+		{ 0x88,0xa8,0x80,0xa0 }, { 0x88,0xa8,0x80,0xa0 },	/* ...0...1...1...1 */
+		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x08,0x28 },	/* ...1...0...0...0 */
+		{ 0x20,0xa0,0x28,0xa8 }, { 0x28,0x20,0xa8,0xa0 },	/* ...1...0...0...1 */
+		{ 0xa0,0x20,0x80,0x00 }, { 0x20,0xa0,0x28,0xa8 },	/* ...1...0...1...0 */
+		{ 0x28,0x20,0xa8,0xa0 }, { 0x20,0xa0,0x28,0xa8 },	/* ...1...0...1...1 */
+		{ 0x20,0xa0,0x28,0xa8 }, { 0x88,0xa8,0x08,0x28 },	/* ...1...1...0...0 */
+		{ 0x88,0xa8,0x08,0x28 }, { 0x88,0xa8,0x08,0x28 },	/* ...1...1...0...1 */
+		{ 0xa0,0x20,0x80,0x00 }, { 0x88,0x08,0x80,0x00 },	/* ...1...1...1...0 */
+		{ 0x20,0xa0,0x28,0xa8 }, { 0x00,0x08,0x20,0x28 }	/* ...1...1...1...1 */
+	};
+
+	int A;
+
+	UINT8 *rom = memory_region(REGION_USER1);
+	int bankstart;
+	decrypted = auto_malloc(0x6000*3);
+
+
+	for(bankstart=0;bankstart<0x6000*3;bankstart+=0x6000)
+	for (A = 0x0000;A < 0x6000;A++)
+	{
+		int xor = 0;
+
+		UINT8 src = rom[A+bankstart];
+
+		/* pick the translation table from bits 0, 4, 8 and 12 of the address */
+		int row = (A & 1) + (((A >> 4) & 1) << 1) + (((A >> 8) & 1) << 2) + (((A >> 12) & 1) << 3);
+
+		/* pick the offset in the table from bits 3 and 5 of the source data */
+		int col = ((src >> 3) & 1) + (((src >> 5) & 1) << 1);
+		/* the bottom half of the translation table is the mirror image of the top */
+		if (src & 0x80)
+		{
+			col = 3 - col;
+			xor = 0xa8;
+		}
+
+		/* decode the opcodes */
+		decrypted[A+bankstart] = (src & ~0xa8) | (convtable[2*row][col] ^ xor);
+
+		/* decode the data */
+		rom[A+bankstart] = (src & ~0xa8) | (convtable[2*row+1][col] ^ xor);
+	}
+
+	memory_configure_bank(1,0,3, memory_region(REGION_USER1),0x6000);
+	memory_configure_bank_decrypted(1,0,3,decrypted,0x6000);
+	memory_set_decrypted_region(0, 0x0000, 0x5fff, decrypted);
+	memory_set_bank(1, 0);
 }
 
 

@@ -279,7 +279,6 @@ O to A-F AND, at the same time, O to P ... Any help is appreciated ...
 Notes & Todo:
 -------------
 
-- Fix Mike Tyson's Punchout background when playing.
 - Look at Ninja Gaiden 3. It has some slight timming issues on the
   second level. Probably related to the mapper's irq timming.
 - Fix some remaining bad gfx in Rad Racer II.
@@ -378,10 +377,8 @@ static WRITE8_HANDLER( ram_8w_w )
 
 static WRITE8_HANDLER( sprite_dma_w )
 {
-	int source = ( data & 7 ) * 0x100;
-	cpuintrf_push_context(0);
-	ppu2c03b_spriteram_dma( 0, source );
-	cpuintrf_pop_context();
+	int source = ( data & 7 );
+	ppu2c03b_spriteram_dma(source );
 }
 
 static NVRAM_HANDLER( playch10 )
@@ -407,6 +404,21 @@ static WRITE8_HANDLER( time_w )
 	timedata[offset] = data;
 
 	ui_popup("Time: %d%d%d%d",timedata[3],timedata[2],timedata[1],timedata[0]);
+}
+
+static READ8_HANDLER( psg_4015_r )
+{
+	return NESPSG_0_r(0x15);
+}
+
+static WRITE8_HANDLER( psg_4015_w )
+{
+	NESPSG_0_w(0x15, data);
+}
+
+static WRITE8_HANDLER( psg_4017_w )
+{
+	NESPSG_0_w(0x17, data);
 }
 
 /******************************************************************************/
@@ -442,10 +454,11 @@ static ADDRESS_MAP_START( cart_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_MIRROR(0x1800) AM_BASE(&work_ram)
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c03b_0_r, ppu2c03b_0_w)
 	AM_RANGE(0x4011, 0x4011) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x4000, 0x4013) AM_READWRITE(NESPSG_0_r, NESPSG_0_w)
 	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_w)
-	AM_RANGE(0x4000, 0x4015) AM_READWRITE(NESPSG_0_r, NESPSG_0_w)
+	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg_4015_r, psg_4015_w)  /* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(pc10_in0_r, pc10_in0_w)
-	AM_RANGE(0x4017, 0x4017) AM_READ(pc10_in1_r) AM_WRITENOP // in1 writes ignored
+	AM_RANGE(0x4017, 0x4017) AM_READWRITE(pc10_in1_r, psg_4017_w) /* IN1 - input port 2 / PSG second control register */
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 

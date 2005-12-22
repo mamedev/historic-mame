@@ -781,6 +781,9 @@ do { _arith_r32_imm_common(3, dreg, imm); } while (0)
 do { _arith_r32_imm_common(4, dreg, imm); } while (0)
 
 #define _sub_r32_imm(dreg, imm) \
+do { _arith_r32_imm_common(5, dreg, imm); } while (0)
+
+#define _sub_or_dec_r32_imm(dreg, imm) \
 do { if ((imm) == 1) OP1(0x48 + dreg); else _arith_r32_imm_common(5, dreg, imm); } while (0)
 
 #define _xor_r32_imm(dreg, imm) \
