@@ -30,7 +30,7 @@
     DCS RAM-based stereo (Seattle):
         * ADSP-2115 @ 16MHz
         * dual channel output (stereo)
-        * RAM-based, 2-4MB total
+        * RAM-based, 2MB total
         * used in:
             War Gods (1995)
             Wayne Gretzky's 3D Hockey (1996)
@@ -83,12 +83,13 @@
 #include "cpu/adsp2100/adsp2100.h"
 #include "dcs.h"
 #include "sound/dmadac.h"
+#include "machine/midwayic.h"
 
 #include <math.h>
 
 
-#define LOG_DCS_TRANSFERS			(1)
-#define LOG_DCS_IO					(1)
+#define LOG_DCS_TRANSFERS			(0)
+#define LOG_DCS_IO					(0)
 #define LOG_BUFFER_FILLING			(0)
 
 #define HLE_TRANSFERS				(1)
@@ -115,23 +116,30 @@
 /* These are the some of the control register, we dont use them all */
 enum
 {
-	S1_AUTOBUF_REG = 15,
-	S1_RFSDIV_REG,
-	S1_SCLKDIV_REG,
-	S1_CONTROL_REG,
-	S0_AUTOBUF_REG,
-	S0_RFSDIV_REG,
-	S0_SCLKDIV_REG,
-	S0_CONTROL_REG,
-	S0_MCTXLO_REG,
-	S0_MCTXHI_REG,
-	S0_MCRXLO_REG,
-	S0_MCRXHI_REG,
-	TIMER_SCALE_REG,
-	TIMER_COUNT_REG,
-	TIMER_PERIOD_REG,
-	WAITSTATES_REG,
-	SYSCONTROL_REG
+	IDMA_CONTROL_REG = 0,	/* 3fe0 */
+	BDMA_INT_ADDR_REG,		/* 3fe1 */
+	BDMA_EXT_ADDR_REG,		/* 3fe2 */
+	BDMA_CONTROL_REG,		/* 3fe3 */
+	BDMA_WORD_COUNT_REG,	/* 3fe4 */
+	PROG_FLAG_DATA_REG,		/* 3fe5 */
+	PROG_FLAG_CONTROL_REG,	/* 3fe6 */
+	S1_AUTOBUF_REG = 15,	/* 3fef */
+	S1_RFSDIV_REG,			/* 3ff0 */
+	S1_SCLKDIV_REG,			/* 3ff1 */
+	S1_CONTROL_REG,			/* 3ff2 */
+	S0_AUTOBUF_REG,			/* 3ff3 */
+	S0_RFSDIV_REG,			/* 3ff4 */
+	S0_SCLKDIV_REG,			/* 3ff5 */
+	S0_CONTROL_REG,			/* 3ff6 */
+	S0_MCTXLO_REG,			/* 3ff7 */
+	S0_MCTXHI_REG,			/* 3ff8 */
+	S0_MCRXLO_REG,			/* 3ff9 */
+	S0_MCRXHI_REG,			/* 3ffa */
+	TIMER_SCALE_REG,		/* 3ffb */
+	TIMER_COUNT_REG,		/* 3ffc */
+	TIMER_PERIOD_REG,		/* 3ffd */
+	WAITSTATES_REG,			/* 3ffe */
+	SYSCONTROL_REG			/* 3fff */
 };
 
 
@@ -196,6 +204,7 @@ static size_t bank20_size;
 static size_t bootbank_stride;
 
 static UINT8 dcs3_start_on_next_write;
+static UINT16 dcs3_amp_control;
 
 static int dcs_state;
 static int transfer_state;
@@ -221,7 +230,11 @@ static READ16_HANDLER( dcs_data_bank_select_r );
 static WRITE16_HANDLER( dcs2_sram_bank_w );
 static READ16_HANDLER( dcs2_sram_bank_r );
 
-static WRITE16_HANDLER( dcs_control_w );
+static WRITE16_HANDLER( dcs3_amp_control_w );
+static READ16_HANDLER( dcs3_amp_status_r );
+
+static READ16_HANDLER( adsp_control_r );
+static WRITE16_HANDLER( adsp_control_w );
 
 static READ16_HANDLER( latch_status_r );
 static READ16_HANDLER( fifo_input_r );
@@ -233,6 +246,7 @@ static WRITE16_HANDLER( output_control_w );
 
 static void dcs_irq(int state);
 static void sport0_irq(int state);
+static void recompute_sample_rate(void);
 static void sound_tx_callback(int port, INT32 data);
 
 static READ16_HANDLER( dcs_polling_r );
@@ -258,7 +272,7 @@ ADDRESS_MAP_START( dcs_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x3000, 0x3000) AM_WRITE(dcs_data_bank_select_w)	/* bank selector */
 	AM_RANGE(0x3400, 0x3403) AM_READWRITE(input_latch_r, output_latch_w) /* soundlatch read/write */
 	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(adsp_control_r, adsp_control_w)	/* adsp control regs */
 ADDRESS_MAP_END
 
 
@@ -272,7 +286,7 @@ ADDRESS_MAP_START( dcs_uart_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x3403, 0x3403) AM_READWRITE(input_latch_r, output_latch_w) /* soundlatch read/write */
 	AM_RANGE(0x3404, 0x3405) AM_NOP								/* UART (ignored) */
 	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(adsp_control_r, adsp_control_w)	/* adsp control regs */
 ADDRESS_MAP_END
 
 
@@ -301,7 +315,7 @@ ADDRESS_MAP_START( dcs2_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
 	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
 	AM_RANGE(0x3a00, 0x3a00) AM_READNOP							/* controls final sample rate */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(adsp_control_r, adsp_control_w)	/* adsp control regs */
 ADDRESS_MAP_END
 
 
@@ -322,7 +336,7 @@ ADDRESS_MAP_START( dcs2_rom_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
 	AM_RANGE(0x3800, 0x39ff) AM_RAM								/* internal data ram */
 	AM_RANGE(0x3a00, 0x3a00) AM_READNOP							/* controls final sample rate */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(adsp_control_r, adsp_control_w)	/* adsp control regs */
 ADDRESS_MAP_END
 
 
@@ -337,11 +351,8 @@ ADDRESS_MAP_END
 ADDRESS_MAP_START( dcs3_data_map, ADDRESS_SPACE_DATA, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20) AM_SIZE(&bank20_size) AM_BASE(&dcs_data_ram) /* D/RAM */
-	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
-	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
-	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
-	AM_RANGE(0x3800, 0x3fdf) AM_RAM								/* internal data ram */
-	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+	AM_RANGE(0x0400, 0x3fdf) AM_RAM								/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_READWRITE(adsp_control_r, adsp_control_w)	/* adsp control regs */
 ADDRESS_MAP_END
 
 
@@ -352,8 +363,7 @@ ADDRESS_MAP_START( dcs3_io_map, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0x0402, 0x0402) AM_READWRITE(output_control_r, output_control_w) /* secondary soundlatch read */
 	AM_RANGE(0x0403, 0x0403) AM_READ(latch_status_r)			/* latch status read */
 	AM_RANGE(0x0404, 0x0407) AM_READ(fifo_input_r)				/* FIFO input read */
-	AM_RANGE(0x0480, 0x0480) AM_READWRITE(dcs2_sram_bank_r, dcs2_sram_bank_w) /* S/RAM bank */
-	AM_RANGE(0x0481, 0x0481) AM_NOP								/* LED in bit $2000 */
+	AM_RANGE(0x0481, 0x0481) AM_READWRITE(dcs3_amp_status_r, dcs3_amp_control_w) /* LED in bit $2000 */
 	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_data_bank_select_r, dcs_data_bank_select_w) /* D/RAM bank */
 	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
 ADDRESS_MAP_END
@@ -413,7 +423,7 @@ MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( dcs3_audio )
-	MDRV_CPU_ADD_TAG("dcs3", ADSP2181, 33000000)
+	MDRV_CPU_ADD_TAG("dcs3", ADSP2181, 32000000)
 	MDRV_CPU_PROGRAM_MAP(dcs3_program_map,0)
 	MDRV_CPU_DATA_MAP(dcs3_data_map,0)
 	MDRV_CPU_IO_MAP(dcs3_io_map,0)
@@ -460,7 +470,7 @@ static void dcs_boot(void)
 	else
 	{
 		cpunum_set_input_line(dcs_cpunum, INPUT_LINE_HALT, ASSERT_LINE);
-		dcs3_start_on_next_write = FALSE;
+		dcs3_start_on_next_write = 0;
 	}
 }
 
@@ -643,6 +653,7 @@ static READ16_HANDLER( dcs_sdrc_asic_ver_r )
 
 static WRITE16_HANDLER( dcs_data_bank_select_w )
 {
+	logerror("%04X:databank = %X\n", activecpu_get_pc(), data);
 	dcs.databank = data;
 	memory_set_bankptr(20, &dcs.sounddata[(dcs.databank % dcs.databank_count) * bank20_size/2]);
 
@@ -895,6 +906,45 @@ int dcs_data2_r(void)
 
 
 /***************************************************************************
+    AMP STATUS
+****************************************************************************/
+
+static WRITE16_HANDLER( dcs3_amp_control_w )
+{
+	/*
+        bit 14    = enable/disable output
+        bit 13    = LED
+        bit 12:11 = number of channels (2,4,6)
+        bit 0     = FIFO full reset?
+    */
+	int enable = (data >> 14) & 1;
+	int channels = 2 + 2 * ((data >> 11) & 3);
+
+	dcs3_amp_control = data;
+
+	if (channels != dcs.channels)
+	{
+		dcs.channels = channels;
+		dmadac_enable(0, dcs.channels, enable);
+		if (dcs.channels < 6)
+			dmadac_enable(dcs.channels, 6 - dcs.channels, FALSE);
+		recompute_sample_rate();
+	}
+
+	midway_ioasic_fifo_reset_w(~data & 1);
+}
+
+
+static READ16_HANDLER( dcs3_amp_status_r )
+{
+	static UINT16 bits;
+	bits ^= 0x0010;
+	return (dcs3_amp_control & ~0x0010) | bits;
+}
+
+
+
+/***************************************************************************
     ADSP CONTROL & TRANSMIT CALLBACK
 ****************************************************************************/
 
@@ -917,7 +967,24 @@ int dcs_data2_r(void)
     0x3c00-0x3fff = Memory Mapped control registers & reserved.
 */
 
-static WRITE16_HANDLER( dcs_control_w )
+static READ16_HANDLER( adsp_control_r )
+{
+	UINT16 result = 0xffff;
+	switch (offset)
+	{
+		case IDMA_CONTROL_REG:
+			result = adsp2181_idma_addr_r();
+			break;
+
+		default:
+			result = dcs.control_regs[offset];
+			break;
+	}
+	return result;
+}
+
+
+static WRITE16_HANDLER( adsp_control_w )
 {
 	dcs.control_regs[offset] = data;
 	switch (offset)
@@ -953,6 +1020,10 @@ static WRITE16_HANDLER( dcs_control_w )
 				logerror("Oh no!, the data is compresed with u-law encoding\n");
 			if (((data >> 4) & 3) == 3)
 				logerror("Oh no!, the data is compresed with A-law encoding\n");
+			break;
+
+		case IDMA_CONTROL_REG:
+			adsp2181_idma_addr_w(data);
 			break;
 	}
 }
@@ -1001,6 +1072,24 @@ static void sport0_irq(int state)
 }
 
 
+static void recompute_sample_rate(void)
+{
+	/* calculate how long until we generate an interrupt */
+
+	/* frequency in Hz per each bit sent */
+	double sample_rate = (double)Machine->drv->cpu[dcs_cpunum].cpu_clock / (double)(2 * (dcs.control_regs[S1_SCLKDIV_REG] + 1));
+
+	/* now put it down to samples, so we know what the channel frequency has to be */
+	sample_rate /= 16 * dcs.channels;
+	dmadac_set_frequency(0, dcs.channels, sample_rate);
+	dmadac_enable(0, dcs.channels, 1);
+
+	/* fire off a timer wich will hit every half-buffer */
+	if (dcs.incs)
+		timer_adjust(dcs.reg_timer, TIME_IN_HZ(sample_rate) * (dcs.size / (2 * dcs.channels * dcs.incs)), 0, TIME_IN_HZ(sample_rate) * (dcs.size / (2 * dcs.channels * dcs.incs)));
+}
+
+
 static void sound_tx_callback(int port, INT32 data)
 {
 	/* check if it's for SPORT1 */
@@ -1016,7 +1105,6 @@ static void sound_tx_callback(int port, INT32 data)
 			/* get the autobuffer registers */
 			int		mreg, lreg;
 			UINT16	source;
-			double	sample_rate;
 
 			dcs.ireg = (dcs.control_regs[S1_AUTOBUF_REG] >> 9) & 7;
 			mreg = (dcs.control_regs[S1_AUTOBUF_REG] >> 7) & 3;
@@ -1038,22 +1126,8 @@ static void sound_tx_callback(int port, INT32 data)
 			/* save it as it is now */
 			dcs.ireg_base = source;
 
-			/* calculate how long until we generate an interrupt */
-
-			/* frequency in Hz per each bit sent */
-			sample_rate = (double)Machine->drv->cpu[dcs_cpunum].cpu_clock / (double)(2 * (dcs.control_regs[S1_SCLKDIV_REG] + 1));
-
-			/* now put it down to samples, so we know what the channel frequency has to be */
-			sample_rate /= 16 * dcs.channels;
-			dmadac_set_frequency(0, dcs.channels, sample_rate);
-			dmadac_enable(0, dcs.channels, 1);
-
-			/* fire off a timer wich will hit every half-buffer */
-			if (dcs.channels == 1)
-				timer_adjust(dcs.reg_timer, TIME_IN_HZ(sample_rate) * (dcs.size / (2 * dcs.incs)), 0, TIME_IN_HZ(sample_rate) * (dcs.size / (2 * dcs.incs)));
-			else
-				timer_adjust(dcs.reg_timer, TIME_IN_HZ(sample_rate) * (dcs.size / (4 * dcs.incs)), 0, TIME_IN_HZ(sample_rate) * (dcs.size / (4 * dcs.incs)));
-
+			/* recompute the sample rate and timer */
+			recompute_sample_rate();
 			return;
 		}
 		else
@@ -1075,24 +1149,37 @@ static void sound_tx_callback(int port, INT32 data)
 
 WRITE32_HANDLER( dcs3_idma_addr_w )
 {
+	if (LOG_DCS_TRANSFERS)
+		logerror("%08X:IDMA_addr = %04X\n", activecpu_get_pc(), data);
 	cpuintrf_push_context(dcs_cpunum);
 	adsp2181_idma_addr_w(data);
 	if (data == 0)
-		dcs3_start_on_next_write = TRUE;
+		dcs3_start_on_next_write = 2;
 	cpuintrf_pop_context();
 }
 
 
 WRITE32_HANDLER( dcs3_idma_data_w )
 {
+	UINT32 pc = activecpu_get_pc();
 	cpuintrf_push_context(dcs_cpunum);
-	adsp2181_idma_data_w(data);
+	if ((mem_mask & 0x0000ffff) != 0x0000ffff)
+	{
+		if (LOG_DCS_TRANSFERS)
+			logerror("%08X:IDMA_data_w(%04X) = %04X\n", pc, adsp2181_idma_addr_r(), data & 0xffff);
+		adsp2181_idma_data_w(data & 0xffff);
+	}
+	if ((mem_mask & 0xffff0000) != 0xffff0000)
+	{
+		if (LOG_DCS_TRANSFERS)
+			logerror("%08X:IDMA_data_w(%04X) = %04X\n", pc, adsp2181_idma_addr_r(), data >> 16);
+		adsp2181_idma_data_w(data >> 16);
+	}
 	cpuintrf_pop_context();
-	if (dcs3_start_on_next_write)
+	if (dcs3_start_on_next_write && --dcs3_start_on_next_write == 0)
 	{
 		logerror("Starting DCS3 CPU\n");
 		cpunum_set_input_line(dcs_cpunum, INPUT_LINE_HALT, CLEAR_LINE);
-		dcs3_start_on_next_write = FALSE;
 	}
 }
 
@@ -1103,6 +1190,8 @@ READ32_HANDLER( dcs3_idma_data_r )
 	cpuintrf_push_context(dcs_cpunum);
 	result = adsp2181_idma_data_r();
 	cpuintrf_pop_context();
+	if (LOG_DCS_TRANSFERS)
+		logerror("%08X:IDMA_data_r(%04X) = %04X\n", activecpu_get_pc(), adsp2181_idma_addr_r(), result);
 	return result;
 }
 

@@ -1352,7 +1352,7 @@ int SE3208Dasm(UINT32 PC,char *Buffer)
 			continue;
 		}
 		Context.PC=PC;
-		Opcode=cpu_readop16(PC);
+		Opcode=cpu_readop16(WORD_XOR_LE(PC));
 		DecodeOp(Opcode)(Opcode,Buffer);
 		PC+=2;
 	}

@@ -21,32 +21,6 @@
 
 
 /*###################################################################################################
-**  DEBUGGING
-**#################################################################################################*/
-
-#define DEBUG			0
-
-
-
-/*###################################################################################################
-**  CONSTANTS
-**#################################################################################################*/
-
-
-
-/*###################################################################################################
-**  TYPE DEFINITIONS
-**#################################################################################################*/
-
-
-
-/*###################################################################################################
-**  LOCAL VARIABLES
-**#################################################################################################*/
-
-
-
-/*###################################################################################################
 **  PROTOTYPES
 **#################################################################################################*/
 
@@ -1757,11 +1731,11 @@ static void execute_map(int ref, int params, const char *param[])
 	info = debug_get_cpu_info(cpunum);
 
 	/* do the translation first */
-	taddress = address;
+	taddress = ADDR2BYTE(address, info, spacenum);
 	if (info->translate)
 	{
 		if ((*info->translate)(spacenum, &taddress))
-			debug_console_printf("%08X logical -> %08X physical\n", (UINT32)address, taddress);
+			debug_console_printf("%08X logical -> %08X physical\n", (UINT32)address, BYTE2ADDR(taddress, info, spacenum));
 		else
 		{
 			debug_console_printf("%08X logical -> unmapped\n", (UINT32)address);
@@ -1769,7 +1743,7 @@ static void execute_map(int ref, int params, const char *param[])
 		}
 	}
 	else
-		debug_console_printf("%08X physical\n", taddress);
+		debug_console_printf("%08X physical\n", BYTE2ADDR(taddress, info, spacenum));
 
 	/* now do the mapping */
 	debug_console_printf("  -> read: %s\n", memory_get_handler_string(0, cpunum, spacenum, taddress));

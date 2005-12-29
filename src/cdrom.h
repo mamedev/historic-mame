@@ -105,6 +105,7 @@ int cdrom_get_adr_control(cdrom_file *file, int track);
 UINT32 cdrom_get_track_start(cdrom_file *file, int track, int msf);
 int cdrom_get_track_type(cdrom_file *file, int track);
 cdrom_toc *cdrom_get_toc(cdrom_file *file);
+UINT32 cdrom_get_track_length(cdrom_file *file, int track);
 
 #endif	// __CDROM_H__
 

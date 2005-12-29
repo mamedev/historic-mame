@@ -259,9 +259,10 @@ typedef struct _data_accessors data_accessors;
 #define MRA8_BANK30				((read8_handler)STATIC_BANK30)
 #define MRA8_BANK31				((read8_handler)STATIC_BANK31)
 #define MRA8_BANK32				((read8_handler)STATIC_BANK32)
-#define MRA8_NOP				((read8_handler)STATIC_NOP)
 #define MRA8_RAM				((read8_handler)STATIC_RAM)
 #define MRA8_ROM				((read8_handler)STATIC_ROM)
+#define MRA8_NOP				((read8_handler)STATIC_NOP)
+#define MRA8_UNMAP				((read8_handler)STATIC_UNMAP)
 
 /* 8-bit writes */
 #define MWA8_BANK1				((write8_handler)STATIC_BANK1)
@@ -296,9 +297,10 @@ typedef struct _data_accessors data_accessors;
 #define MWA8_BANK30				((write8_handler)STATIC_BANK30)
 #define MWA8_BANK31				((write8_handler)STATIC_BANK31)
 #define MWA8_BANK32				((write8_handler)STATIC_BANK32)
-#define MWA8_NOP				((write8_handler)STATIC_NOP)
 #define MWA8_RAM				((write8_handler)STATIC_RAM)
 #define MWA8_ROM				((write8_handler)STATIC_ROM)
+#define MWA8_NOP				((write8_handler)STATIC_NOP)
+#define MWA8_UNMAP				((write8_handler)STATIC_UNMAP)
 
 /* 16-bit reads */
 #define MRA16_BANK1				((read16_handler)STATIC_BANK1)
@@ -333,9 +335,10 @@ typedef struct _data_accessors data_accessors;
 #define MRA16_BANK30			((read16_handler)STATIC_BANK30)
 #define MRA16_BANK31			((read16_handler)STATIC_BANK31)
 #define MRA16_BANK32			((read16_handler)STATIC_BANK32)
-#define MRA16_NOP				((read16_handler)STATIC_NOP)
 #define MRA16_RAM				((read16_handler)STATIC_RAM)
 #define MRA16_ROM				((read16_handler)STATIC_ROM)
+#define MRA16_NOP				((read16_handler)STATIC_NOP)
+#define MRA16_UNMAP				((read16_handler)STATIC_UNMAP)
 
 /* 16-bit writes */
 #define MWA16_BANK1				((write16_handler)STATIC_BANK1)
@@ -370,9 +373,10 @@ typedef struct _data_accessors data_accessors;
 #define MWA16_BANK30			((write16_handler)STATIC_BANK30)
 #define MWA16_BANK31			((write16_handler)STATIC_BANK31)
 #define MWA16_BANK32			((write16_handler)STATIC_BANK32)
-#define MWA16_NOP				((write16_handler)STATIC_NOP)
 #define MWA16_RAM				((write16_handler)STATIC_RAM)
 #define MWA16_ROM				((write16_handler)STATIC_ROM)
+#define MWA16_NOP				((write16_handler)STATIC_NOP)
+#define MWA16_UNMAP				((write16_handler)STATIC_UNMAP)
 
 /* 32-bit reads */
 #define MRA32_BANK1				((read32_handler)STATIC_BANK1)
@@ -407,9 +411,10 @@ typedef struct _data_accessors data_accessors;
 #define MRA32_BANK30			((read32_handler)STATIC_BANK30)
 #define MRA32_BANK31			((read32_handler)STATIC_BANK31)
 #define MRA32_BANK32			((read32_handler)STATIC_BANK32)
-#define MRA32_NOP				((read32_handler)STATIC_NOP)
 #define MRA32_RAM				((read32_handler)STATIC_RAM)
 #define MRA32_ROM				((read32_handler)STATIC_ROM)
+#define MRA32_NOP				((read32_handler)STATIC_NOP)
+#define MRA32_UNMAP				((read32_handler)STATIC_UNMAP)
 
 /* 32-bit writes */
 #define MWA32_BANK1				((write32_handler)STATIC_BANK1)
@@ -444,9 +449,10 @@ typedef struct _data_accessors data_accessors;
 #define MWA32_BANK30			((write32_handler)STATIC_BANK30)
 #define MWA32_BANK31			((write32_handler)STATIC_BANK31)
 #define MWA32_BANK32			((write32_handler)STATIC_BANK32)
-#define MWA32_NOP				((write32_handler)STATIC_NOP)
 #define MWA32_RAM				((write32_handler)STATIC_RAM)
 #define MWA32_ROM				((write32_handler)STATIC_ROM)
+#define MWA32_NOP				((write32_handler)STATIC_NOP)
+#define MWA32_UNMAP				((write32_handler)STATIC_UNMAP)
 
 /* 64-bit reads */
 #define MRA64_BANK1				((read64_handler)STATIC_BANK1)
@@ -481,9 +487,10 @@ typedef struct _data_accessors data_accessors;
 #define MRA64_BANK30			((read64_handler)STATIC_BANK30)
 #define MRA64_BANK31			((read64_handler)STATIC_BANK31)
 #define MRA64_BANK32			((read64_handler)STATIC_BANK32)
-#define MRA64_NOP				((read64_handler)STATIC_NOP)
 #define MRA64_RAM				((read64_handler)STATIC_RAM)
 #define MRA64_ROM				((read64_handler)STATIC_ROM)
+#define MRA64_NOP				((read64_handler)STATIC_NOP)
+#define MRA64_UNMAP				((read64_handler)STATIC_UNMAP)
 
 /* 64-bit writes */
 #define MWA64_BANK1				((write64_handler)STATIC_BANK1)
@@ -518,9 +525,10 @@ typedef struct _data_accessors data_accessors;
 #define MWA64_BANK30			((write64_handler)STATIC_BANK30)
 #define MWA64_BANK31			((write64_handler)STATIC_BANK31)
 #define MWA64_BANK32			((write64_handler)STATIC_BANK32)
-#define MWA64_NOP				((write64_handler)STATIC_NOP)
 #define MWA64_RAM				((write64_handler)STATIC_RAM)
 #define MWA64_ROM				((write64_handler)STATIC_ROM)
+#define MWA64_NOP				((write64_handler)STATIC_NOP)
+#define MWA64_UNMAP				((write64_handler)STATIC_UNMAP)
 
 
 

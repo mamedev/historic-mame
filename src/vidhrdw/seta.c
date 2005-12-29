@@ -51,7 +51,7 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
                         f--- ---- ---- ----     Flip X
                         -e-- ---- ---- ----     Flip Y
-                        --dc b--- ---- ----     -
+                        --dc ba-- ---- ----     -
                         ---- --98 7654 3210     Code (Lower bits)
 
         Spriteram16_2 + 0x400.w
@@ -542,13 +542,10 @@ VIDEO_START( oisipuzl_2_layers )
 
 /* 2 layers, 6 bit deep. The color codes have a 16 color granularity.
 
-   One layer only uses the first 16 colors of the palette (repeated
-   4 times to fill the 64 colors) and regardless of the color code!
+   One layer repeats every 16 colors to fill the 64 colors for the 6bpp gfx
 
    The other uses the first 64 colors of the palette regardless of
-   the color code too!
-
-   I think that's because this game's a prototype..
+   the color code!
 */
 PALETTE_INIT( blandia )
 {
@@ -556,8 +553,8 @@ PALETTE_INIT( blandia )
 	for( color = 0; color < 32; color++ )
 		for( pen = 0; pen < 64; pen++ )
 		{
-			colortable[color * 64 + pen + 16*32]       = (pen%16) + 16*32*1;
-			colortable[color * 64 + pen + 16*32+64*32] = pen      + 16*32*2;
+			colortable[color * 64 + pen + 16*32]       = (pen % 16) + color * 0x10 + 16*32*1;
+			colortable[color * 64 + pen + 16*32+64*32] = pen        + 16*32*2;
 		}
 }
 
@@ -606,16 +603,15 @@ PALETTE_INIT( zingzip )
 PALETTE_INIT( usclssic )
 {
 	int color, pen;
-	unsigned char *PROM = memory_region(REGION_PROMS);
 	int x;
 
-	/* DECODE PROM - we don't use the colours yet */
+	/* DECODE PROM */
 	for (x = 0x000; x < 0x200 ; x++)
 	{
 		int r,g,b;
 		int data;
 
-		data = (PROM[x*2] <<8) | PROM[x*2+1];
+		data = (color_prom[x*2] <<8) | color_prom[x*2+1];
 
 		r = (data >> 10) & 0x1f;
 		g = (data >>  5) & 0x1f;

@@ -44,12 +44,6 @@ static PALETTE_INIT( skyraid )
 }
 
 
-static READ8_HANDLER( skyraid_zeropage_r )
-{
-	return memory_region(REGION_CPU1)[offset & 0xff];
-}
-
-
 static READ8_HANDLER( skyraid_alpha_num_r)
 {
 	return skyraid_alpha_num_ram[offset & 0x7f];
@@ -66,12 +60,6 @@ static READ8_HANDLER( skyraid_port_0_r )
 		val |= 0x80;
 
 	return val;
-}
-
-
-static WRITE8_HANDLER( skyraid_zeropage_w )
-{
-	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }
 
 
@@ -113,8 +101,7 @@ static WRITE8_HANDLER( skyraid_scroll_w )
 
 
 static ADDRESS_MAP_START( skyraid_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x03ff) AM_READ(skyraid_zeropage_r)
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM) AM_MIRROR(0x300)
 	AM_RANGE(0x0800, 0x087f) AM_READ(MRA8_RAM)
 	AM_RANGE(0x0880, 0x0bff) AM_READ(skyraid_alpha_num_r)
 	AM_RANGE(0x1000, 0x1000) AM_READ(skyraid_port_0_r)
@@ -127,8 +114,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( skyraid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0100, 0x03ff) AM_WRITE(skyraid_zeropage_w)
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_MIRROR(0x300)
 	AM_RANGE(0x0400, 0x040f) AM_WRITE(MWA8_RAM) AM_BASE(&skyraid_pos_ram)
 	AM_RANGE(0x0800, 0x087f) AM_WRITE(MWA8_RAM) AM_BASE(&skyraid_alpha_num_ram)
 	AM_RANGE(0x0880, 0x0bff) AM_WRITE(skyraid_alpha_num_w)

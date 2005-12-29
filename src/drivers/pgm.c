@@ -73,38 +73,58 @@ The Killing Blade
 Dragon World 2
 Dragon World 3
 Dragon World 2001
-Demon Front (c) 2002
-The Gladiator (c) 2002
+Demon Front
+The Gladiator
 Puzzli II
 
 There is also a single board version of the PGM system used by
 
 Demon Front
-Later Cave shooters (with different bios?)
+Some Later (2002/2003) Cave shooters (Uses a Custom CAVE BIOS)
 
+To Do / Notes:  (Revised December 2005)
 
-To Do / Notes:
+Missing Sprite Features
+  Zooming (table is uploaded to Video Ram)
+  It is possible sprites should be transfered out of RAM with a DMA device.
+  Priority?
 
-some sprite problems
-optimize?
-layer enables?
-sprites use dma?
-verify some things
-protection in many games
+Protection in Mnny Games
+  It is possible to read the Internal Rom of the ASIC27A games with external data
+  rom, but not the ones with no External Rom.
+  Some of the other protection devices aren't understood at all yet, for example
+  the ones on Dragon World 3, Oriental Legend Super and The Killing Blade.
+  an ARM core with thumbs support is required to emulate the ASIC27A based games
+  even with the internal rom.  At the current time the MAME core does not support
+  this, Nebula does.
 
-some dumps are suspicious (orlegend super clones are missing roms, drgw3k sets might not have the right protection rom..)
+fix sound comms, several games fail prior to their protection checks due to the
+current sound implementation.
+
+Fix IRQs, maybe the protection device generates one of them on DW2 as I believe
+it's the only game that needs IRQ4 and Puzzli2 explicitly doesn't want IRQ4 to be
+active.
+
+Some dumps are suspicious (orlegend super clones are missing roms, drgw3k sets
+might not have the right protection rom)  In many cases the external protection
+data roms change with each revision of the game.
 
 
 General Notes:
+--------------
 
-the current 'kov' sets were from 'sango' boards but the protection determines the region so
-it makes more sense to name them kov since the roms are probably the same on the various
+Tit makes more sense to name them kov since the roms are probably the same on the various
 boards.  The current sets were taken from taiwan boards incase somebody finds
 it not to be the case however due to the previous note.
 
-dragon world 2 still has strange protection issues, we have to patch the code for now, what
+As we can't dump the internal rom of rhte protection devices (which contain the region
+information the only way we can support multiple regions is with a fake dipswitch, this
+isn't idea as it gives the false impression that the board contain a region dipswitch)
+
+Dragon World 2 still has strange protection issues, we have to patch the code for now, what
 should really happen, it jumps to invalid code, should the protection device cause the 68k
-to see valid code there or something?
+to see valid code there or something?  The English version of Dragon World 2 still appears
+to have some problems which the current patching doesn't cover.
 
 kov superheroes uses a different protection chip / different protection commands and doesn't
 work, some of the gfx also need redumping to check they're the same as kov, its using invalid
@@ -112,11 +132,13 @@ codes for the ones we have (could just be protection tho)
 
 
 Protection Devices / Co-processors
+----------------------------------
 
 IGS used a variety of additional ASIC chips on the game boards, these act as protection and
 also give additional power to the board to make up for the limited power of the 68000
 processor.  Some protection devices use external data roms, others have internal code only.
-Most of these are not emulated correctly.
+Most of these are not emulated correctly. In most cases the protection device supplies the
+game region code..
 
 ASIC 3:
     used by:
@@ -146,9 +168,10 @@ ASIC 28:
     used by:
     Knights of Valour 1 / Plus / Superheroes (plus & superheroes seems to use extra functions, emulation issues reported in places in plus)
     Photo Y2k / Real and Fake (maybe..)
+    This could be an ARM chip like the 27A below, but without the support for an external ROM (or nothing uses it..)
 
-ASIC 27:
-    arm9? cpu with 64kb internal rom (different per game) + external data rom
+ASIC 27A:
+    arm9? cpu with (max?) 64kb internal rom (different per game / revision) + optional external data rom
     probably used to give extra power to the system, lots of calculations are offloaded to it
     used by:
     DoDonPachi II
@@ -156,6 +179,7 @@ ASIC 27:
     Martial Masters
     Demon Front
     Puzzli II
+    The Gladiator
 
 there are probably more...
 
@@ -1951,6 +1975,7 @@ ROM_START( kovplusa )
 	ROM_LOAD( "m0600.rom",    0x400000, 0x400000, CRC(3ada4fd6) SHA1(4c87adb25d31cbd41f04fbffe31f7bc37173da76) )
 ROM_END
 
+/* is this loading the right roms? */
 ROM_START( kovsh )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
@@ -2198,6 +2223,10 @@ ROM_START( puzlstar )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
 
+	ROM_REGION( 0x4000, REGION_CPU3, 0 ) /* ARM protection ASIC - internal rom */
+	/* this has no external rom so the internal rom probably can't be dumped */
+//  ROM_LOAD( "puzlstar_igs027a.bin", 0x000000, 0x04000, NO_DUMP )
+
 	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
 	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
 	ROM_LOAD( "t0800.u5",    0x400000, 0x200000, CRC(f9d84e59) SHA1(80ec77025ac5bf355b1a60f2a678dd4c56071f6b) )
@@ -2322,7 +2351,7 @@ ROM_START( olds100 )
 	ROM_LOAD16_BYTE( "v100-u3.040",      0x100000, 0x080000,  CRC(d0e2b741) SHA1(2e671dbb4320d1f0c059b35efd33cdea26f12131) )
 	ROM_LOAD16_BYTE( "v100-u4.040",      0x200001, 0x080000,  CRC(32a6bdbd) SHA1(a93d7f4eae722a58eca9ec351ad5890cefda56f0) )
 	ROM_LOAD16_BYTE( "v100-u5.040",      0x200000, 0x080000,  CRC(b4a1cafb) SHA1(b2fccd480ede93f58ad043387b18b898152f06ef) )
-	/* u1 is missing from this set? */
+	/* u1 is missing from this set? - the parent has v101 rom for u1 so it probably doesn't go with v100 main program roms */
 //  ROM_LOAD16_WORD_SWAP( "v100-u1.040",0x300000, 0x080000,    CRC(1) SHA1(1) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
@@ -2495,10 +2524,10 @@ ROM_START( kov2p )
 
 	ROM_REGION( 0x2800000, REGION_GFX3, 0 ) /* Sprite Colour Data */
 	ROM_LOAD( "a1200.rom",    0x0000000, 0x0800000, CRC(ceeb81d8) SHA1(5476729443fc1bc9593ae10fbf7cbc5d7290b017) )
-	ROM_LOAD( "a1201.rom",    0x0800000, 0x0800000, CRC(21063ca7) SHA1(cf561b44902425a920d5cbea5bf65dd9530b2289) )
+	ROM_LOAD( "a1201.rom_p",  0x0800000, 0x0800000, CRC(21063ca7) SHA1(cf561b44902425a920d5cbea5bf65dd9530b2289) ) // either this or a1201.rom in kov2 is probably bad
 	ROM_LOAD( "a1202.rom",    0x1000000, 0x0800000, CRC(4bb92fae) SHA1(f0b6d72ed425de1c69dc8f8d5795ea760a4a59b0) )
 	ROM_LOAD( "a1203.rom",    0x1800000, 0x0800000, CRC(e73cb627) SHA1(4c6e48b845a5d1e8f9899010fbf273d54c2b8899) )
-	ROM_LOAD( "a1204.rom",    0x2000000, 0x0200000, CRC(14b4b5bb) SHA1(d7db5740eec971f2782fb2885ee3af8f2a796550) )
+	ROM_LOAD( "a1204.rom_p",  0x2000000, 0x0200000, CRC(14b4b5bb) SHA1(d7db5740eec971f2782fb2885ee3af8f2a796550) ) // either this or a1204.rom in kov2 is probably bad
 
 	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b1200.rom",   0x0000000, 0x0800000,  CRC(bed7d994) SHA1(019dfba8154256d64cd249eb0fa4c451edce34b8) )
@@ -2509,6 +2538,20 @@ ROM_START( kov2p )
 	ROM_LOAD( "m1200.rom",    0x200000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
 ROM_END
 
+/*
+
+Do Donpachi II
+Cave, 2001
+
+This is a PGM cart containing not a lot....
+5x SOP44 mask ROMs (4x 64M, 1x 32M)
+2x EPROMs (1x 4M, 1x 16M)
+2x PALs (labelled FN U14 and FN U15)
+1x custom IGS027A (QFP120)
+3x RAMs WINBOND W24257AJ-8N
+Some logic IC's, resistors, caps etc.
+
+*/
 
 ROM_START( ddp2 )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
@@ -2516,6 +2559,9 @@ ROM_START( ddp2 )
 	ROM_LOAD16_WORD_SWAP( "v100.u8",    0x100000, 0x200000, CRC(0c8aa8ea) SHA1(57e33224622607a1df8daabf26ba063cf8a6d3fc) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
+
+	ROM_REGION( 0x4000, REGION_CPU3, 0 ) /* ARM protection ASIC - internal rom */
+	ROM_LOAD( "ddp2_igs027a.bin", 0x000000, 0x04000, NO_DUMP )
 
 	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* Protection Data (encrypted external ARM data, internal missing) */
 	ROM_LOAD( "v100.u23", 0x000000, 0x20000, CRC(06c3dd29) SHA1(20c9479f158467fc2037dcf162b6c6be18c91d46) )
@@ -2600,6 +2646,11 @@ ROM_START( puzzli2 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
 
+	ROM_REGION( 0x4000, REGION_CPU3, 0 ) /* ARM protection ASIC - internal rom */
+	/* this has no external rom so the internal rom probably can't be dumped */
+//  ROM_LOAD( "puzzli2_igs027a.bin", 0x000000, 0x04000, NO_DUMP )
+
+
 	ROM_REGION( 0x600000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
 	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
 	ROM_LOAD( "t0900.u9",    0x400000, 0x200000, CRC(70615611) SHA1(a46d4aa71396947b427f9ba4ba0e636876c09d6b) )
@@ -2618,37 +2669,222 @@ ROM_START( puzzli2 )
 	ROM_LOAD( "m0900.u2",    0x200000, 0x400000, CRC(9ea7af2e) SHA1(d2593d391a93c5cf5a554750c32886dea6599b3d) )
 ROM_END
 
+
+/*
+
+Martial Masters
+IGS, 2001
+
+Cart for IGS PGM system. This game is a straight rip-off of any of the
+late side-by-side fighting games made by SNK or Capcom such as King Of Fighters
+or Super Street Fighter II etc
+
+
+PCB Layout
+----------
+
+IGS PCB-0293-01
+|-----------------------------------------------|
+| 62256              62256         IGS027A      |
+| 62256                                         |
+|                      *                        |
+|                                               |
+| PAL                                           |
+|                                               |
+| PAL             V102_16M.U10  T1000.U3        |
+|                                               |
+|                 V104_32M.U9              22MHz|
+|-|                                           |-|
+  |--------------------||---------------------|
+Notes:
+      62256        - 32K x8 SRAM (SOJ28)
+      IGS027A      - Custom IGS IC, ARM7 based CPU with internal 64K ROM (QFP120)
+      T1000.U3     - 23C6410 64MBit MaskROM (SOP44)
+      V102_16M.U10 - MX29F1610MC 16MBit SOP44 FlashROM mounted onto a tiny DIP42 to SOP44 adapter board
+                     (manufactured by IGS) which is plugged into a standard DIP42 socket. This chip was
+                     read directly on the adapter as a 27C160 EPROM. The socket is wired to accept 32MBit
+                     DIP42 EPROMs.
+      V104_32M.U9  - M27C3202CZ 32MBit TSOP48 Type II OTP MaskROM mounted onto a tiny DIP42 to TSOP48 Type II
+                     adapter board (manufactured by IGS) which is plugged into a standard DIP42 socket. This
+                     chip was read directly on the adapter as a 27C322 EPROM. The socket is wired to accept
+                     32MBit DIP42 EPROMs.
+      *            - Unpopulated position for 62256 SRAM
+
+
+IGS PCB-0292-00
+|-----------------------------------------------|
+| A1000.U3         A1002.U6           A1004.U10 |
+|          A1001.U4         A1003.U8            |
+|                                               |
+|                                               |
+|                                               |
+|                                               |
+|                  M1001.U7           B1001.U11 |
+|          M1000.U5         B1000.U9            |
+|                                               |
+|-|                                           |-|
+  |--------------------||---------------------|
+
+
+
+*/
+
+ROM_START( martmast )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v104_32m.u9",    0x100000, 0x400000, CRC(cfd9dff4) SHA1(328eaf6ac49a73265ee4e0f992b1b1312f49877b) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
+
+	ROM_REGION( 0x4000, REGION_CPU3, 0 ) /* ARM protection ASIC - internal rom */
+	ROM_LOAD( "mmasters_arm.bin", 0x000000, 0x04000, BAD_DUMP CRC(a6c0828c) SHA1(0a5bda56dca264c3c7ff7698b8f699563f203c4d) ) // not verified, could be bad
+
+	ROM_REGION( 0x400000, REGION_USER1, 0 ) /* Protection Data (encrypted external ARM data) */
+	ROM_LOAD( "v102_16m.u10", 0x000000, 0x200000,  CRC(18b745e6) SHA1(7bcb58dd3a2d6072f492cf0dd7181cb061c1f49d) )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "t1000.u3",    0x400000, 0x800000, CRC(bbf879b5) SHA1(bd9a6aea34ad4001e89e62ff4b7a2292eb833c00) )
+
+	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	ROM_REGION( 0x2800000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a1000.u3",    0x0000000, 0x0800000, CRC(43577ac8) SHA1(6eea8b455985d5bac74dcc9943cdc3c0902de6cc) )
+	ROM_LOAD( "a1001.u4",    0x0800000, 0x0800000, CRC(fe7a476f) SHA1(a8c7f1f0dd3e53141aed6d927eb88a3ceebb81e4) )
+	ROM_LOAD( "a1002.u6",    0x1000000, 0x0800000, CRC(62e33d38) SHA1(96163d583e25073594f8413ce263e56b66bd69a1) )
+	ROM_LOAD( "a1003.u8",    0x1800000, 0x0800000, CRC(b2c4945a) SHA1(7b18287a2db56db3651cfd4deb607af53522fefd) )
+	ROM_LOAD( "a1004.u10",   0x2000000, 0x0400000, CRC(9fd3f5fd) SHA1(057531f91062be51589c6cf8f4170089b9be6380) )
+
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b1000.u9",    0x0000000, 0x0800000,  CRC(c5961f6f) SHA1(a68060b10edbd084cbde79d2ed1c9084777beb10) )
+	ROM_LOAD( "b1001.u11",   0x0800000, 0x0800000,  CRC(0b7e1c06) SHA1(545e15e0087f8621d593fecd8b4013f7ca311686) )
+
+	ROM_REGION( 0x1200000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+	ROM_LOAD( "m1000.u5",    0x200000, 0x800000, CRC(ed407ae8) SHA1(a6e9c09b39c13e8fb7fbc89fa9f823cbeb66e901) )
+	ROM_LOAD( "m1001.u7",    0xa00000, 0x400000, CRC(662d2d48) SHA1(2fcc3099d9c04456cae3b13035fb28eaf709e7d8) )
+ROM_END
+
+/*
+
+Demon Front
+IGS, 2002
+
+Cart for IGS PGM system. This game is a straight rip-off of Metal Slug.
+
+PCB Layout
+----------
+
+IGS PCB-0387-02-FV
+|-----------------------------------------------|
+| BS616LV1010                      IGS027A      |
+| BS616LV1010                                   |
+|                                               |
+|                              *     BS616LV1010|
+|            PAL  PAL                           |
+|                                               |
+| V102_16M.U5        V101_32M.U26               |
+|                                        PAL    |
+|                             T04501.U29   22MHz|
+|-|                                           |-|
+  |--------------------||---------------------|
+Notes:
+      BS616LV1010  - 64K x16 SRAM (TSOP44)
+      IGS027A      - Custom IGS IC, ARM7 based CPU (QFP120)
+      T04501.U29   - 23C6410 64MBit MaskROM (SOP44)
+      V102_16M.U5  - 27C160 16MBit EPROM (DIP42)
+      V101_32M.U26 - 27C322 32MBit EPROM (DIP42)
+      *            - Unpopulated position for 29F1610 16MBit SOP44 FlashROM, linked to IGS027A
+
+
+IGS PCB-0390-00-FV-A
+|-----------------------------------------------|
+| A04501.U3  A04502.U4  A04503.U6   U8*     U10*|
+|                                               |
+|                                               |
+|                                               |
+|                                               |
+|     W04501.U5   U7*    B04501.U9   B04502.U11 |
+|                                               |
+|                                               |
+|                                               |
+|-|                                           |-|
+  |--------------------||---------------------|
+Notes:
+      *  - Unpopulated SOP44 ROM position.
+
+*/
+
+ROM_START( dmnfrnt )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v102_16m.u5",    0x100000, 0x200000, CRC(3d4d481a) SHA1(95953b8f31343389405cc722b4177ff5adf67b62) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
+
+	ROM_REGION( 0x4000, REGION_CPU3, 0 ) /* ARM protection ASIC - internal rom */
+	ROM_LOAD( "dmnfrnt_igs027a.bin", 0x000000, 0x04000, NO_DUMP )
+
+	ROM_REGION( 0x400000, REGION_USER1, 0 ) /* Protection Data (encrypted external ARM data, internal missing) */
+	ROM_LOAD( "v101_32m.u26", 0x000000, 0x400000,  CRC(93965281) SHA1(89da198aaa7ca759cb96b5f18859a477e55fd590) )
+
+	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "t04501.u29",    0x400000, 0x800000, CRC(900eaaac) SHA1(4033cb7b28fcadb92d5af3ea7fdd1c22747618fd) )
+
+	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	ROM_REGION( 0x1800000, REGION_GFX3, 0 ) /* Sprite Colour Data */
+	ROM_LOAD( "a04501.u3",    0x0000000, 0x0800000, CRC(9741bea6) SHA1(e3e904249be228628c8c2bd3495cda23586dc048) )
+	ROM_LOAD( "a04502.u4",    0x0800000, 0x0800000, CRC(e104f405) SHA1(124b3deed3e838f8bae6c7d78bdd788859597585) )
+	ROM_LOAD( "a04503.u6",    0x1000000, 0x0800000, CRC(bfd5cfe3) SHA1(fbe4c0a2987c2036df707b86597d78124ee2e665) )
+
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b04501.u9",    0x0000000, 0x0800000,  CRC(29320b7d) SHA1(59c78805e666f912df201c34616744f46057937b) )
+	ROM_LOAD( "b04502.u11",   0x0800000, 0x0200000,  CRC(578c00e9) SHA1(14235cc8b0f8c7dd659512f017a2d4aacd91d89d) )
+
+	ROM_REGION( 0xc00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+	ROM_LOAD( "w04501.u5",    0x200000, 0x800000, CRC(3ab58137) SHA1(b221f7e551ff0bfa3fd97b6ebedbac69442a66e9) )
+ROM_END
+
+
+
 /*** GAME ********************************************************************/
 
-GAME( 1997, pgm,      0,          pgm, pgm,   0,          ROT0, "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
+GAME( 1997, pgm,      0,          pgm, pgm,      0,          ROT0,   "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
 
-GAME( 1997, orlegend, pgm,        pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orlegnde, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orlegndc, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orld111c, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orld105k, orlegend,   pgm, orld105k,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, drgw2,    pgm,        pgm, pgm,   drgw2,      ROT0, "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1997, drgw2c,   drgw2,      pgm, pgm,   drgw2c,     ROT0, "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1997, drgw2j,   drgw2,      pgm, pgm,   drgw2j,     ROT0, "IGS", "Chuugokuryuu II (ver. 100J, Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, kov,      pgm,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAME( 1999, kov115,   kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAME( 1999, kovj,     kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 100, Japanese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAME( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1999, kovplusa, kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1999, photoy2k, pgm,        pgm, sango, djlzz, 	   ROT0, "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
-GAME( 1999, raf102j,  photoy2k,   pgm, sango, djlzz, 	   ROT0, "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+GAME( 1997, orlegend, pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orlegnde, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orlegndc, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orld111c, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, orld105k, orlegend,   pgm, orld105k, orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1997, drgw2,    pgm,        pgm, pgm,      drgw2,      ROT0,   "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1997, drgw2c,   drgw2,      pgm, pgm,      drgw2c,     ROT0,   "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1997, drgw2j,   drgw2,      pgm, pgm,      drgw2j,     ROT0,   "IGS", "Chuugokuryuu II (ver. 100J, Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, kov,      pgm,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kov115,   kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kovj,     kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 100, Japanese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kovplus,  kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, kovplusa, kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, photoy2k, pgm,        pgm, sango,    djlzz,      ROT0,   "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+GAME( 1999, raf102j,  photoy2k,   pgm, sango,    djlzz,      ROT0,   "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
 
 /* not working */
-GAME( 1998, drgw3,    pgm,        pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1998, drgw3k,   drgw3,      pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1998, killbld,  pgm,        pgm, sango, killbld,	   ROT0, "IGS", "The Killing Blade", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, puzlstar, pgm,        pgm, sango, pstar,	   ROT0, "IGS", "Puzzle Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, olds,     pgm,        pgm, pgm,   orlegend,    ROT0, "IGS", "Oriental Legend Super (Korea 101)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1999, olds100,  olds,       pgm, pgm,   orlegend,    ROT0, "IGS", "Oriental Legend Super (100)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1999, olds100a, olds,       pgm, pgm,   orlegend,    ROT0, "IGS", "Oriental Legend Super (100 alt)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 2000, kov2,     pgm,        pgm, sango, pgm,         ROT0, "IGS", "Knights of Valour 2", GAME_NOT_WORKING )
-GAME( 2000, kov2106,  kov2,       pgm, sango, pgm,         ROT0, "IGS", "Knights of Valour 2 (106)", GAME_NOT_WORKING )
-GAME( 2000, kov2p,    kov2,       pgm, sango, pgm,         ROT0, "IGS", "Knights of Valour 2 Plus - Nine Dragons", GAME_NOT_WORKING )
-GAME( 2001, ddp2,     pgm,        pgm, ddp2,  ddp2, 	   ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 2001, puzzli2,  pgm,        pgm, sango, puzzli2,    ROT0, "IGS", "Puzzli 2 Super", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, drgw3,    pgm,        pgm, sango,    dw3,        ROT0,   "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, drgw3k,   drgw3,      pgm, sango,    dw3,        ROT0,   "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, kovsh,    kov,        pgm, sango,    kovsh,      ROT0,   "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, killbld,  pgm,        pgm, sango,    killbld,    ROT0,   "IGS", "The Killing Blade", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, puzlstar, pgm,        pgm, sango,    pstar,      ROT0,   "IGS", "Puzzle Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, olds,     pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (Korea 101)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1999, olds100,  olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 1999, olds100a, olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100 alt)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAME( 2000, kov2,     pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2", GAME_NOT_WORKING )
+GAME( 2000, kov2106,  kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 (106)", GAME_NOT_WORKING )
+GAME( 2000, kov2p,    kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 Plus - Nine Dragons", GAME_NOT_WORKING )
+GAME( 2001, ddp2,     pgm,        pgm, ddp2,     ddp2,       ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, puzzli2,  pgm,        pgm, sango,    puzzli2,    ROT0,   "IGS", "Puzzli 2 Super", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, martmast, pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Martial Masters", GAME_NOT_WORKING )
+GAME( 2002, dmnfrnt,  pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front", GAME_NOT_WORKING )

@@ -13,14 +13,6 @@
 
 
 /*###################################################################################################
-**  DEBUGGING
-**#################################################################################################*/
-
-#define DEBUG			0
-
-
-
-/*###################################################################################################
 **  CONSTANTS
 **#################################################################################################*/
 
@@ -105,6 +97,9 @@ static struct help_item static_help_list[] =
 		"  save <filename>,<address>,<length>[,<cpunum>] -- save binary program memory to the given file\n"
 		"  saved <filename>,<address>,<length>[,<cpunum>] -- save binary data memory to the given file\n"
 		"  savei <filename>,<address>,<length>[,<cpunum>] -- save binary I/O memory to the given file\n"
+		"  map <address> -- map logical program address to physical address and bank\n"
+		"  mapd <address> -- map logical data address to physical address and bank\n"
+		"  mapi <address> -- map logical I/O address to physical address and bank\n"
 		"  memdump [<filename>] -- dump the current memory map to <filename>\n"
 		"\n"
 	},
@@ -898,6 +893,21 @@ static struct help_item static_help_list[] =
 		"hotspot 1,40,#1000\n"
 		"  Looks for hotspots on CPU 1 using a search buffer of 64 entries, reporting any entries which\n"
 		"  end up with 1000 or more hits.\n"
+	},
+	{
+		"map",
+		"\n"
+		"  map[{d|i}] <address>\n"
+		"\n"
+		"The map/mapd/mapi commands map a logical address in memory to the correct physical address, as\n"
+		"well as specifying the bank. 'map' will map program space memory, while 'mapd' will map data space\n"
+		"memory and 'mapi' will map I/O space memory.\n"
+		"\n"
+		"Example:\n"
+		"\n"
+		"map 152d0\n"
+		"  Gives physical address and bank for logical address 152d0 in program memory\n"
+		"\n"
 	},
 	{
 		"memdump",

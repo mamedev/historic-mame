@@ -5,8 +5,8 @@
 
  TODO :
 
- Verify IRQ frequency and sources -- this seems very wrong at the moment causing
- laggy gameplay.  Vblank flag should also be checked.
+ IRQ frequencies have been measured, however the 'vblank' flag may still be
+ incorrect.  It hasn't been verified that the game speed is correct
 
  Incorrect behavior of the above either causes a hang on count-out, or laggy
  gameplay.
@@ -57,7 +57,6 @@
  Notes:
 
  - Scrolling *might* be slightly off, i'm not sure
- - Maybe Palette Marking could be Improved
 
 *******************************************************************************/
 
@@ -199,7 +198,7 @@ INPUT_PORTS_START( wwfsstar )
 	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Button B (1P VS 2P - Buy-in)")
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK ) // ??
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -298,18 +297,6 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-/*******************************************************************************
- Interrupt Function
-********************************************************************************
- 2 different interrupts.. it seems they must both happen during the vblank
- period or something for the game to function correctly ? (see notes at top of
- file)
-*******************************************************************************/
-
-static INTERRUPT_GEN( wwfsstar_interrupt ) {
-
-	cpunum_set_input_line(0, 5 + cpu_getiloops(), HOLD_LINE);
-}
 
 /*******************************************************************************
  Sound Stuff..
@@ -338,17 +325,18 @@ static MACHINE_DRIVER_START( wwfsstar )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 12000000)	/* unknown */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(wwfsstar_interrupt,2)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1) // measured at 59hz
+	MDRV_CPU_PERIODIC_INT(irq5_line_hold,TIME_IN_HZ(977)) // measured at 977Hz
 
 	MDRV_CPU_ADD(Z80, 3579545)
 	/* audio CPU */	/* unknown */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_FRAMES_PER_SECOND(59)
+	MDRV_VBLANK_DURATION(2000) //?
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)

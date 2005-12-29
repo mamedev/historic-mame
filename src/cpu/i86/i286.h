@@ -6,7 +6,7 @@
 
 #include "i86.h"
 
-void i286_set_address_mask(offs_t mask);
+#define INPUT_LINE_A20		1
 
 #undef GetMemB
 #undef GetMemW

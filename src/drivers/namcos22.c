@@ -1832,8 +1832,7 @@ static WRITE32_HANDLER( spotram_w )
       mSpotRAM.RAM = auto_malloc(SPOTRAM_SIZE*2);
       if( !mSpotRAM.RAM )
       {
-         printf( "insufficient mem for spot ram\n" );
-         exit(1);
+         osd_die( "insufficient mem for spot ram\n" );
       }
    }
 	if( offset==0 )

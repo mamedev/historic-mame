@@ -97,7 +97,7 @@ static void stv_vdp2_fade_effects(void);
 static void refresh_palette_data(void);
 static int stv_vdp2_window_process(int x,int y);
 static int stv_vdp2_apply_window_on_layer(rectangle *cliprect);
-static mame_bitmap *stv_vdp2_roz_bitmap;
+static mame_bitmap *stv_vdp2_roz_bitmap[2];
 
 #ifdef MAME_DEBUG
 #define LOG_VDP2 1
@@ -2047,10 +2047,13 @@ static struct stv_vdp2_tilemap_capabilities
 	UINT8  fade_control;
 	UINT8  window_control;
 
-	UINT8  real_map_offset[16];
+//  UINT8  real_map_offset[16];
 
 	int layer_name; /* just to keep track */
 } stv2_current_tilemap;
+
+#define STV_VDP2_RBG_ROTATION_PARAMETER_A	1
+#define STV_VDP2_RBG_ROTATION_PARAMETER_B	2
 
 static struct rotation_table
 {
@@ -2082,6 +2085,28 @@ static struct rotation_table
 	INT32	dkax;
 
 } stv_current_rotation_parameter_table;
+
+static struct _stv_vdp2_layer_data_placement
+{
+	UINT32	map_offset_min;
+	UINT32	map_offset_max;
+	UINT32  tile_offset_min;
+	UINT32	tile_offset_max;
+} stv_vdp2_layer_data_placement;
+
+static struct _stv_rbg_cache_data
+{
+	UINT8	watch_vdp2_vram_writes;
+	UINT8	is_cache_dirty;
+
+	UINT32	map_offset_min[2];
+	UINT32	map_offset_max[2];
+	UINT32	tile_offset_min[2];
+	UINT32	tile_offset_max[2];
+
+	struct stv_vdp2_tilemap_capabilities	layer_data[2];
+
+} stv_rbg_cache_data;
 
 INLINE INT32 mul_fixed32( INT32 a, INT32 b )
 {
@@ -2567,6 +2592,36 @@ static void stv_vdp2_compute_color_offset_RGB555( int *r, int *g, int *b, int co
 	*g >>= 3;
 	*b >>= 3;
 
+}
+
+static void stv_vdp2_compute_color_offset_RGB555_UINT16(UINT16 *rgb, int cor)
+{
+	int _r = (*rgb & 0x7c00) >> (10-3);
+	int _g = (*rgb & 0x03e0) >> (5-3);
+	int _b = (*rgb & 0x001f) << 3;
+	if ( cor == 0 )
+	{
+		_r = (STV_VDP2_COAR & 0x100) ? (_r - (0x100 - (STV_VDP2_COAR & 0xff))) : ((STV_VDP2_COAR & 0xff) + _r);
+		_g = (STV_VDP2_COAG & 0x100) ? (_g - (0x100 - (STV_VDP2_COAG & 0xff))) : ((STV_VDP2_COAG & 0xff) + _g);
+		_b = (STV_VDP2_COAB & 0x100) ? (_b - (0x100 - (STV_VDP2_COAB & 0xff))) : ((STV_VDP2_COAB & 0xff) + _b);
+	}
+	else
+	{
+		_r = (STV_VDP2_COBR & 0x100) ? (_r - (0xff - (STV_VDP2_COBR & 0xff))) : ((STV_VDP2_COBR & 0xff) + _r);
+		_g = (STV_VDP2_COBG & 0x100) ? (_g - (0xff - (STV_VDP2_COBG & 0xff))) : ((STV_VDP2_COBG & 0xff) + _g);
+		_b = (STV_VDP2_COBB & 0x100) ? (_b - (0xff - (STV_VDP2_COBB & 0xff))) : ((STV_VDP2_COBB & 0xff) + _b);
+	}
+	if(_r < 0) 		{ _r = 0; }
+	if(_r > 0xff) 	{ _r = 0xff; }
+	if(_g < 0) 		{ _g = 0; }
+	if(_g > 0xff) 	{ _g = 0xff; }
+	if(_b < 0) 		{ _b = 0; }
+	if(_b > 0xff) 	{ _b = 0xff; }
+	_r >>= 3;
+	_g >>= 3;
+	_b >>= 3;
+
+	*rgb = (_r << 10) |  (_g << 5) | _b;
 }
 
 static void stv_vdp2_drawgfx_rgb555( mame_bitmap *dest_bmp, unsigned int code, int flipx, int flipy,
@@ -3207,6 +3262,8 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 	int linescroll_per_tile, linescroll_enabled;
 	rectangle linescroll_cliprect;
 
+	int tilecodemin = 0x10000000, tilecodemax = 0;
+
 	if ( stv2_current_tilemap.incx == 0 || stv2_current_tilemap.incy == 0 ) return;
 
 	if ( stv2_current_tilemap.colour_calculation_enabled == 1 )
@@ -3690,6 +3747,47 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 
 		}
 	}
+	if ( stv2_current_tilemap.layer_name & 0x80 )
+	{
+		int shifttable[4] = {0,1,2,2};
+		int uppermask, uppermaskshift;
+		int mapsize;
+		uppermaskshift = (1-stv2_current_tilemap.pattern_data_size) | ((1-stv2_current_tilemap.tile_size)<<1);
+		uppermask = 0x1ff >> uppermaskshift;
+
+		if ( LOG_VDP2 )
+		{
+			logerror( "Layer RBG%d, size %d x %d\n", stv2_current_tilemap.layer_name & 0x7f, cliprect->max_x + 1, cliprect->max_y + 1 );
+			logerror( "Tiles: min %08X, max %08X\n", tilecodemin, tilecodemax );
+			logerror( "MAP size in dwords %08X\n", mpsize_dwords );
+			for (i = 0; i < stv2_current_tilemap.map_count; i++)
+			{
+				logerror( "Map register %d: base %08X\n", stv2_current_tilemap.map_offset[i], base[i] );
+			}
+		}
+
+		// store map information
+		stv_vdp2_layer_data_placement.map_offset_min = 0x7fffffff;
+		stv_vdp2_layer_data_placement.map_offset_max = 0x00000000;
+		for (i = 0; i < stv2_current_tilemap.map_count; i++)
+		{
+			if ( base[i] < stv_vdp2_layer_data_placement.map_offset_min )
+				stv_vdp2_layer_data_placement.map_offset_min = base[i];
+			if ( base[i] > stv_vdp2_layer_data_placement.map_offset_max )
+				stv_vdp2_layer_data_placement.map_offset_max = base[i];
+		}
+
+
+		mapsize = ((1 & uppermask) >> shifttable[stv2_current_tilemap.plane_size]) * plsize_bytes -
+				  ((0 & uppermask) >> shifttable[stv2_current_tilemap.plane_size]) * plsize_bytes;
+		mapsize /= 4;
+
+		stv_vdp2_layer_data_placement.map_offset_max += mapsize;
+
+		stv_vdp2_layer_data_placement.tile_offset_min = tilecodemin * 0x20 / 4;
+		stv_vdp2_layer_data_placement.tile_offset_max = (tilecodemax + 1) * 0x20 / 4;
+	}
+
 }
 
 
@@ -3972,6 +4070,8 @@ static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
 
 				if ( x & clipxmask || y & clipymask ) continue;
 				pix = ((UINT16*)roz_bitmap->line[y & planerenderedsizey])[x & planerenderedsizex];
+				if(stv2_current_tilemap.fade_control & 1)
+					stv_vdp2_compute_color_offset_RGB555_UINT16(&pix,stv2_current_tilemap.fade_control & 2);
 				switch( stv2_current_tilemap.transparency )
 				{
 					case TRANSPARENCY_PEN:
@@ -4059,6 +4159,8 @@ static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
 				if ( x & clipxmask || y & clipymask ) continue;
 
 				pix = ((UINT16*)roz_bitmap->line[y & planerenderedsizey])[x & planerenderedsizex];
+				if(stv2_current_tilemap.fade_control & 1)
+					stv_vdp2_compute_color_offset_RGB555_UINT16(&pix,stv2_current_tilemap.fade_control & 2);
 				switch( stv2_current_tilemap.transparency )
 				{
 					case TRANSPARENCY_PEN:
@@ -4449,122 +4551,58 @@ static void stv_vdp2_draw_NBG3(mame_bitmap *bitmap, const rectangle *cliprect)
 }
 
 
-static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
+static void stv_vdp2_draw_rotation_screen(mame_bitmap *bitmap, const rectangle *cliprect, int iRP)
 {
-	/*
-       Colours           : 16, 256, 2048, 32768, 16770000
-       Char Size         : 1x1 cells, 2x2 cells
-       Pattern Data Size : 1 word, 2 words
-       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
-       Planes            : 4
-       Bitmap            : Possible
-       Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
-       Scale             : 0.25 x - 256 x
-       Rotation          : Yes
-       Linescroll        : Yes
-       Column Scroll     : Yes
-       Mosaic            : Yes
-    */
-	rectangle roz_clip_rect;
-	int planesizex = 0, planesizey = 0, planerenderedsizex = 0, planerenderedsizey = 0;
+	rectangle roz_clip_rect, mycliprect;
+	int planesizex = 0, planesizey = 0, planerenderedsizex, planerenderedsizey;
 	UINT8 colour_calculation_enabled;
 	UINT8 window_control;
-	int iRP = 1;
-	rectangle mycliprect;
+	UINT8 fade_control;
 
-	stv2_current_tilemap.enabled = STV_VDP2_R0ON;
-
-//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
-
-	//stv2_current_tilemap.trans_enabled = STV_VDP2_R0TPON;
-	if ( STV_VDP2_R0CCEN )
+	if ( iRP == 1)
 	{
-		stv2_current_tilemap.colour_calculation_enabled = 1;
-		alpha_set_level( ((UINT16)(0x1f-STV_VDP2_R0CCRT)*0xff)/0x1f);
+		stv2_current_tilemap.bitmap_map = STV_VDP2_RAMP_;
+		stv2_current_tilemap.map_offset[0] = STV_VDP2_RAMPA | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[1] = STV_VDP2_RAMPB | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[2] = STV_VDP2_RAMPC | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[3] = STV_VDP2_RAMPD | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[4] = STV_VDP2_RAMPE | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[5] = STV_VDP2_RAMPF | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[6] = STV_VDP2_RAMPG | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[7] = STV_VDP2_RAMPH | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[8] = STV_VDP2_RAMPI | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[9] = STV_VDP2_RAMPJ | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[10] = STV_VDP2_RAMPK | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[11] = STV_VDP2_RAMPL | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[12] = STV_VDP2_RAMPM | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[13] = STV_VDP2_RAMPN | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[14] = STV_VDP2_RAMPO | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_offset[15] = STV_VDP2_RAMPP | (STV_VDP2_RAMP_ << 6);
+		stv2_current_tilemap.map_count = 16;
 	}
 	else
 	{
-		stv2_current_tilemap.colour_calculation_enabled = 0;
+		stv2_current_tilemap.bitmap_map = STV_VDP2_RBMP_;
+		stv2_current_tilemap.map_offset[0] = STV_VDP2_RBMPA | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[1] = STV_VDP2_RBMPB | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[2] = STV_VDP2_RBMPC | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[3] = STV_VDP2_RBMPD | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[4] = STV_VDP2_RBMPE | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[5] = STV_VDP2_RBMPF | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[6] = STV_VDP2_RBMPG | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[7] = STV_VDP2_RBMPH | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[8] = STV_VDP2_RBMPI | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[9] = STV_VDP2_RBMPJ | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[10] = STV_VDP2_RBMPK | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[11] = STV_VDP2_RBMPL | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[12] = STV_VDP2_RBMPM | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[13] = STV_VDP2_RBMPN | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[14] = STV_VDP2_RBMPO | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_offset[15] = STV_VDP2_RBMPP | (STV_VDP2_RBMP_ << 6);
+		stv2_current_tilemap.map_count = 16;
 	}
-	if ( STV_VDP2_R0TPON == 0 )
-	{
-		stv2_current_tilemap.transparency = TRANSPARENCY_PEN;
-	}
-	else
-	{
-		stv2_current_tilemap.transparency = TRANSPARENCY_NONE;
-	}
-	stv2_current_tilemap.colour_depth = STV_VDP2_R0CHCN;
-	stv2_current_tilemap.tile_size = STV_VDP2_R0CHSZ;
-	stv2_current_tilemap.bitmap_enable = STV_VDP2_R0BMEN;
-	stv2_current_tilemap.bitmap_size = STV_VDP2_R0BMSZ;
-	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_R0BMP;
-	switch(STV_VDP2_RPMD)
-	{
-		case 0://Rotation Parameter A
-		case 2://Rotation Parameter A & B CKTE (wrong)
-		case 3://Rotation Parameter A & B Window (wrong)
-			stv2_current_tilemap.bitmap_map = STV_VDP2_RAMP_;
-			stv2_current_tilemap.map_offset[0] = STV_VDP2_RAMPA | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[1] = STV_VDP2_RAMPB | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[2] = STV_VDP2_RAMPC | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[3] = STV_VDP2_RAMPD | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[4] = STV_VDP2_RAMPE | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[5] = STV_VDP2_RAMPF | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[6] = STV_VDP2_RAMPG | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[7] = STV_VDP2_RAMPH | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[8] = STV_VDP2_RAMPI | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[9] = STV_VDP2_RAMPJ | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[10] = STV_VDP2_RAMPK | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[11] = STV_VDP2_RAMPL | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[12] = STV_VDP2_RAMPM | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[13] = STV_VDP2_RAMPN | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[14] = STV_VDP2_RAMPO | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_offset[15] = STV_VDP2_RAMPP | (STV_VDP2_RAMP_ << 6);
-			stv2_current_tilemap.map_count = 16;
-			iRP = 1;
-			break;
-		case 1://Rotation Parameter B
-			stv2_current_tilemap.bitmap_map = STV_VDP2_RBMP_;
-			stv2_current_tilemap.map_offset[0] = STV_VDP2_RBMPA | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[1] = STV_VDP2_RBMPB | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[2] = STV_VDP2_RBMPC | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[3] = STV_VDP2_RBMPD | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[4] = STV_VDP2_RBMPE | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[5] = STV_VDP2_RBMPF | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[6] = STV_VDP2_RBMPG | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[7] = STV_VDP2_RBMPH | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[8] = STV_VDP2_RBMPI | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[9] = STV_VDP2_RBMPJ | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[10] = STV_VDP2_RBMPK | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[11] = STV_VDP2_RBMPL | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[12] = STV_VDP2_RBMPM | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[13] = STV_VDP2_RBMPN | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[14] = STV_VDP2_RBMPO | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_offset[15] = STV_VDP2_RBMPP | (STV_VDP2_RBMP_ << 6);
-			stv2_current_tilemap.map_count = 16;
-			iRP = 2;
-			break;
-	}
-
-	stv2_current_tilemap.pattern_data_size = STV_VDP2_R0PNB;
-	stv2_current_tilemap.character_number_supplement = STV_VDP2_R0CNSM;
-	stv2_current_tilemap.special_priority_register = STV_VDP2_R0SPR;
-	stv2_current_tilemap.special_colour_control_register = STV_VDP2_R0SCC;
-	stv2_current_tilemap.supplementary_palette_bits = STV_VDP2_R0SPLT;
-	stv2_current_tilemap.supplementary_character_bits = STV_VDP2_R0SPCN;
 
 	stv_vdp2_fill_rotation_parameter_table(iRP);
-
-	stv2_current_tilemap.scrollx = 0;
-	stv2_current_tilemap.scrolly = 0;
-	stv2_current_tilemap.incx = 0x10000;
-	stv2_current_tilemap.incy = 0x10000;
-
-	stv2_current_tilemap.linescroll_enable = 0;
-	stv2_current_tilemap.linescroll_interval = 0;
-	stv2_current_tilemap.linescroll_table_address = 0;
-	stv2_current_tilemap.vertical_linescroll_enable = 0;
 
 	if ( iRP == 1 )
 	{
@@ -4574,15 +4612,6 @@ static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 	{
 		stv2_current_tilemap.plane_size = STV_VDP2_RBPLSZ;
 	}
-	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_R0CAOS;
-	stv2_current_tilemap.fade_control = (STV_VDP2_R0COEN * 1) | (STV_VDP2_R0COSL * 2);
-	stv2_current_tilemap.window_control = (STV_VDP2_R0LOG * 0x01) |
-										  (STV_VDP2_R0W0E * 0x02) |
-										  (STV_VDP2_R0W1E * 0x04) |
-										  (STV_VDP2_R0SWE * 0x08) |
-										  (STV_VDP2_R0W0A * 0x10) |
-										  (STV_VDP2_R0W1A * 0x20) |
-										  (STV_VDP2_R0SWA * 0x40);
 
 	if (stv2_current_tilemap.bitmap_enable)
 	{
@@ -4615,11 +4644,6 @@ static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 		}
 	}
 
-	/*Use 0x80 as a normal/rotate switch*/
-	stv2_current_tilemap.layer_name=0x80;
-
-	if ( !stv_vdp2_render_rbg0 ) return;
-	if ( !stv2_current_tilemap.enabled ) return;
 
 	if ( stv_vdp2_is_rotation_applied() == 0 )
 	{
@@ -4630,9 +4654,9 @@ static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 	}
 	else
 	{
-		if ( stv_vdp2_roz_bitmap == NULL )
+		if ( stv_vdp2_roz_bitmap[iRP-1] == NULL )
 		{
-			stv_vdp2_roz_bitmap = auto_bitmap_alloc( 4096, 4096 );
+			stv_vdp2_roz_bitmap[iRP-1] = auto_bitmap_alloc( 4096, 4096 );
 		}
 
 		roz_clip_rect.min_x = roz_clip_rect.min_y = 0;
@@ -4663,9 +4687,27 @@ static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 		stv2_current_tilemap.colour_calculation_enabled = 0;
 		window_control = stv2_current_tilemap.window_control;
 		stv2_current_tilemap.window_control = 0;
+		fade_control = stv2_current_tilemap.fade_control;
+		stv2_current_tilemap.fade_control = 0;
 		profiler_mark(PROFILER_USER1);
-		fillbitmap( stv_vdp2_roz_bitmap, get_black_pen(), &roz_clip_rect );
-		stv_vdp2_check_tilemap(stv_vdp2_roz_bitmap, &roz_clip_rect);
+		if ( LOG_VDP2 ) logerror( "Checking for cached RBG bitmap, cache_dirty = %d, memcmp() = %d\n", stv_rbg_cache_data.is_cache_dirty, memcmp(&stv_rbg_cache_data.layer_data[iRP-1],&stv2_current_tilemap,sizeof(stv2_current_tilemap)));
+		if ( (stv_rbg_cache_data.is_cache_dirty & iRP) ||
+			memcmp(&stv_rbg_cache_data.layer_data[iRP-1],&stv2_current_tilemap,sizeof(stv2_current_tilemap)) != 0 )
+		{
+			fillbitmap( stv_vdp2_roz_bitmap[iRP-1], get_black_pen(), &roz_clip_rect );
+			stv_vdp2_check_tilemap(stv_vdp2_roz_bitmap[iRP-1], &roz_clip_rect);
+			// prepare cache data
+			stv_rbg_cache_data.watch_vdp2_vram_writes |= iRP;
+			stv_rbg_cache_data.is_cache_dirty &= ~iRP;
+			memcpy(&stv_rbg_cache_data.layer_data[iRP-1], &stv2_current_tilemap, sizeof(stv2_current_tilemap));
+			stv_rbg_cache_data.map_offset_min[iRP-1] = stv_vdp2_layer_data_placement.map_offset_min;
+			stv_rbg_cache_data.map_offset_max[iRP-1] = stv_vdp2_layer_data_placement.map_offset_max;
+			stv_rbg_cache_data.tile_offset_min[iRP-1] = stv_vdp2_layer_data_placement.tile_offset_min;
+			stv_rbg_cache_data.tile_offset_max[iRP-1] = stv_vdp2_layer_data_placement.tile_offset_max;
+			if ( LOG_VDP2 ) logerror( "Cache watch: map = %06X - %06X, tile = %06X - %06X\n", stv_rbg_cache_data.map_offset_min[iRP-1],
+				stv_rbg_cache_data.map_offset_max[iRP-1], stv_rbg_cache_data.tile_offset_min[iRP-1], stv_rbg_cache_data.tile_offset_max[iRP-1] );
+		}
+
 		profiler_mark(PROFILER_END);
 
 		if ( colour_calculation_enabled )
@@ -4684,9 +4726,109 @@ static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 			stv_vdp2_apply_window_on_layer(&mycliprect);
 		}
 
+		stv2_current_tilemap.fade_control = fade_control;
+
 		profiler_mark(PROFILER_USER2);
-		stv_vdp2_copy_roz_bitmap(bitmap, stv_vdp2_roz_bitmap, &mycliprect, iRP, planesizex, planesizey, planerenderedsizex, planerenderedsizey );
+		stv_vdp2_copy_roz_bitmap(bitmap, stv_vdp2_roz_bitmap[iRP-1], &mycliprect, iRP, planesizex, planesizey, planerenderedsizex, planerenderedsizey );
 		profiler_mark(PROFILER_END);
+	}
+
+}
+
+static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
+{
+	/*
+       Colours           : 16, 256, 2048, 32768, 16770000
+       Char Size         : 1x1 cells, 2x2 cells
+       Pattern Data Size : 1 word, 2 words
+       Plane Layouts     : 1 x 1, 2 x 1, 2 x 2
+       Planes            : 4
+       Bitmap            : Possible
+       Bitmap Sizes      : 512 x 256, 512 x 512, 1024 x 256, 1024 x 512
+       Scale             : 0.25 x - 256 x
+       Rotation          : Yes
+       Linescroll        : Yes
+       Column Scroll     : Yes
+       Mosaic            : Yes
+    */
+
+	stv2_current_tilemap.enabled = STV_VDP2_R0ON;
+
+//  if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
+
+	//stv2_current_tilemap.trans_enabled = STV_VDP2_R0TPON;
+	if ( STV_VDP2_R0CCEN )
+	{
+		stv2_current_tilemap.colour_calculation_enabled = 1;
+		alpha_set_level( ((UINT16)(0x1f-STV_VDP2_R0CCRT)*0xff)/0x1f);
+	}
+	else
+	{
+		stv2_current_tilemap.colour_calculation_enabled = 0;
+	}
+	if ( STV_VDP2_R0TPON == 0 )
+	{
+		stv2_current_tilemap.transparency = TRANSPARENCY_PEN;
+	}
+	else
+	{
+		stv2_current_tilemap.transparency = TRANSPARENCY_NONE;
+	}
+	stv2_current_tilemap.colour_depth = STV_VDP2_R0CHCN;
+	stv2_current_tilemap.tile_size = STV_VDP2_R0CHSZ;
+	stv2_current_tilemap.bitmap_enable = STV_VDP2_R0BMEN;
+	stv2_current_tilemap.bitmap_size = STV_VDP2_R0BMSZ;
+	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_R0BMP;
+
+	stv2_current_tilemap.pattern_data_size = STV_VDP2_R0PNB;
+	stv2_current_tilemap.character_number_supplement = STV_VDP2_R0CNSM;
+	stv2_current_tilemap.special_priority_register = STV_VDP2_R0SPR;
+	stv2_current_tilemap.special_colour_control_register = STV_VDP2_R0SCC;
+	stv2_current_tilemap.supplementary_palette_bits = STV_VDP2_R0SPLT;
+	stv2_current_tilemap.supplementary_character_bits = STV_VDP2_R0SPCN;
+
+	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_R0CAOS;
+	stv2_current_tilemap.fade_control = (STV_VDP2_R0COEN * 1) | (STV_VDP2_R0COSL * 2);
+	stv2_current_tilemap.window_control = (STV_VDP2_R0LOG * 0x01) |
+										  (STV_VDP2_R0W0E * 0x02) |
+										  (STV_VDP2_R0W1E * 0x04) |
+										  (STV_VDP2_R0SWE * 0x08) |
+										  (STV_VDP2_R0W0A * 0x10) |
+										  (STV_VDP2_R0W1A * 0x20) |
+										  (STV_VDP2_R0SWA * 0x40);
+
+	stv2_current_tilemap.scrollx = 0;
+	stv2_current_tilemap.scrolly = 0;
+	stv2_current_tilemap.incx = 0x10000;
+	stv2_current_tilemap.incy = 0x10000;
+
+	stv2_current_tilemap.linescroll_enable = 0;
+	stv2_current_tilemap.linescroll_interval = 0;
+	stv2_current_tilemap.linescroll_table_address = 0;
+	stv2_current_tilemap.vertical_linescroll_enable = 0;
+
+	/*Use 0x80 as a normal/rotate switch*/
+	stv2_current_tilemap.layer_name=0x80;
+
+	if ( !stv_vdp2_render_rbg0 ) return;
+	if ( !stv2_current_tilemap.enabled ) return;
+
+	switch(STV_VDP2_RPMD)
+	{
+		case 0://Rotation Parameter A
+			stv_vdp2_draw_rotation_screen(bitmap, cliprect, 1 );
+			break;
+		case 1://Rotation Parameter B
+		//case 2:
+			stv_vdp2_draw_rotation_screen(bitmap, cliprect, 2 );
+			break;
+		case 2://Rotation Parameter A & B CKTE
+			stv_vdp2_draw_rotation_screen(bitmap, cliprect, 2 );
+			stv_vdp2_draw_rotation_screen(bitmap, cliprect, 1 );
+			break;
+		case 3://Rotation Parameter A & B Window (wrong)
+			stv_vdp2_draw_rotation_screen(bitmap, cliprect, 1 );
+			break;
 	}
 
 }
@@ -4749,6 +4891,36 @@ WRITE32_HANDLER ( stv_vdp2_vram_w )
 
 	stv_vdp2_vram_dirty_8x8x4[offset/8] = 1;
 	stv_vdp2_vram_dirty_8x8x8[offset/16] = 1;
+
+	if ( stv_rbg_cache_data.watch_vdp2_vram_writes )
+	{
+		if ( stv_rbg_cache_data.watch_vdp2_vram_writes & STV_VDP2_RBG_ROTATION_PARAMETER_A )
+		{
+			if ( (offset >= stv_rbg_cache_data.map_offset_min[0] &&
+				 offset < stv_rbg_cache_data.map_offset_max[0]) ||
+				 (offset >= stv_rbg_cache_data.tile_offset_min[0] &&
+				 offset < stv_rbg_cache_data.tile_offset_max[0]) )
+			{
+				if ( LOG_VDP2 ) logerror( "RBG Cache: dirtying for RP = 1, write at offset = %06X\n", offset );
+				stv_rbg_cache_data.is_cache_dirty |= STV_VDP2_RBG_ROTATION_PARAMETER_A;
+				stv_rbg_cache_data.watch_vdp2_vram_writes &= ~STV_VDP2_RBG_ROTATION_PARAMETER_A;
+			}
+		}
+		if ( stv_rbg_cache_data.watch_vdp2_vram_writes & STV_VDP2_RBG_ROTATION_PARAMETER_B )
+		{
+			if ( (offset >= stv_rbg_cache_data.map_offset_min[1] &&
+				 offset < stv_rbg_cache_data.map_offset_max[1]) ||
+				 (offset >= stv_rbg_cache_data.tile_offset_min[1] &&
+				 offset < stv_rbg_cache_data.tile_offset_max[1]) )
+			{
+				if ( LOG_VDP2 ) logerror( "RBG Cache: dirtying for RP = 2, write at offset = %06X\n", offset );
+				stv_rbg_cache_data.is_cache_dirty |= STV_VDP2_RBG_ROTATION_PARAMETER_B;
+				stv_rbg_cache_data.watch_vdp2_vram_writes &= ~STV_VDP2_RBG_ROTATION_PARAMETER_B;
+			}
+		}
+
+	}
+
 }
 
 READ32_HANDLER ( stv_vdp2_vram_r )
@@ -4941,13 +5113,17 @@ int stv_vdp2_start ( void )
 //  Machine->gfx[0]->color_granularity=4;
 //  Machine->gfx[1]->color_granularity=4;
 
+	memset( &stv_rbg_cache_data, 0, sizeof(stv_rbg_cache_data));
+	stv_rbg_cache_data.is_cache_dirty = 3;
+	memset( &stv_vdp2_layer_data_placement, 0, sizeof(stv_vdp2_layer_data_placement));
+
 	return 0;
 }
 
 /* maybe we should move this to vidhrdw/stv.c */
 VIDEO_START( stv_vdp2 )
 {
-	stv_vdp2_roz_bitmap = NULL;
+	stv_vdp2_roz_bitmap[0] =  stv_vdp2_roz_bitmap[1] = NULL;
 	stv_vdp2_start();
 	stv_vdp1_start();
 	debug.l_en = 0xff;
@@ -5279,6 +5455,7 @@ extern int       stv_framebuffer_mode;
 
 static int		stv_sprite_priorities_used[8];
 static int		stv_sprite_priorities_usage_valid;
+static UINT8	stv_sprite_priorities_in_fb_line[512][8];
 
 
 void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 pri)
@@ -5400,6 +5577,10 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 		{
 			for ( y = mycliprect.min_y; y <= mycliprect.max_y; y++ )
 			{
+				if ( stv_sprite_priorities_usage_valid )
+					if (stv_sprite_priorities_in_fb_line[y][pri] == 0)
+						continue;
+
 				framebuffer_line = stv_framebuffer_display_lines[y];
 				bitmap_line = (UINT16*)bitmap->line[y];
 
@@ -5411,6 +5592,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 						if ( sprite_priorities[0] != pri )
 						{
 							stv_sprite_priorities_used[sprite_priorities[0]] = 1;
+							stv_sprite_priorities_in_fb_line[y][sprite_priorities[0]] = 1;
 							continue;
 						};
 						b = (pix & 0x7c00) >> 10;
@@ -5428,6 +5610,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 						if ( priority != pri )
 						{
 							stv_sprite_priorities_used[priority] = 1;
+							stv_sprite_priorities_in_fb_line[y][priority] = 1;
 							continue;
 						};
 
@@ -5456,6 +5639,10 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 		{
 			for ( y = mycliprect.min_y; y <= mycliprect.max_y; y++ )
 			{
+				if ( stv_sprite_priorities_usage_valid )
+					if (stv_sprite_priorities_in_fb_line[y][pri] == 0)
+						continue;
+
 				framebuffer_line = stv_framebuffer_display_lines[y];
 				bitmap_line = (UINT16*)bitmap->line[y];
 
@@ -5467,6 +5654,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 						if ( sprite_priorities[0] != pri )
 						{
 							stv_sprite_priorities_used[sprite_priorities[0]] = 1;
+							stv_sprite_priorities_in_fb_line[y][sprite_priorities[0]] = 1;
 							continue;
 						};
 
@@ -5486,6 +5674,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 						if ( priority != pri )
 						{
 							stv_sprite_priorities_used[priority] = 1;
+							stv_sprite_priorities_in_fb_line[y][priority] = 1;
 							continue;
 						};
 
@@ -5519,6 +5708,10 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 	{
 		for ( y = mycliprect.min_y; y <= mycliprect.max_y; y++ )
 		{
+			if ( stv_sprite_priorities_usage_valid )
+				if (stv_sprite_priorities_in_fb_line[y][pri] == 0)
+					continue;
+
 			framebuffer_line = stv_framebuffer_display_lines[y];
 			if ( interlace_framebuffer == 0 )
 			{
@@ -5538,6 +5731,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 					if ( sprite_priorities[0] != pri )
 					{
 						stv_sprite_priorities_used[sprite_priorities[0]] = 1;
+						stv_sprite_priorities_in_fb_line[y][sprite_priorities[0]] = 1;
 						continue;
 					};
 					b = (pix & 0x7c00) >> 10;
@@ -5586,6 +5780,7 @@ void stv_vdp2_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT8 
 					if ( priority != pri )
 					{
 						stv_sprite_priorities_used[priority] = 1;
+						stv_sprite_priorities_in_fb_line[y][priority] = 1;
 						continue;
 					};
 
@@ -5696,6 +5891,7 @@ VIDEO_UPDATE( stv_vdp2 )
 	{
 		stv_sprite_priorities_usage_valid = 0;
 		memset(stv_sprite_priorities_used, 0, sizeof(stv_sprite_priorities_used));
+		memset(stv_sprite_priorities_in_fb_line, 0, sizeof(stv_sprite_priorities_in_fb_line));
 
 		/*If a plane has a priority value of zero it isn't shown at all.*/
 		for(pri=1;pri<8;pri++)

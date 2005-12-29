@@ -30,6 +30,21 @@
 #endif
 #endif
 
+#ifdef HAVE_UNISTD_H
+#include <sys/types.h>
+#include <unistd.h>
+#endif
+
+#ifdef _POSIX_VERSION
+#define OFF_T off_t
+#define FSEEK fseeko
+#define FTELL ftello
+#else
+#define OFF_T long
+#define FSEEK fseek
+#define FTELL ftell
+#endif
+
 
 /***************************************************************************
     CONSTANTS & DEFINES
@@ -1864,7 +1879,7 @@ static UINT64 get_file_size(const char *file)
 	CloseHandle(handle);
 	return filesize;
 #else
-	size_t filesize;
+	OFF_T filesize;
 	FILE *f;
 
 	/* attempt to open the file */
@@ -1873,8 +1888,8 @@ static UINT64 get_file_size(const char *file)
 		return 0;
 
 	/* get the size */
-	fseek(f, 0, SEEK_END);
-	filesize = ftell(f);
+	FSEEK(f, 0, SEEK_END);
+	filesize = FTELL(f);
 	fclose(f);
 
 	return filesize;
@@ -2026,7 +2041,7 @@ static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count,
 		else
 			return 0;
 #else
-		fseek((FILE *)file, offset, SEEK_SET);
+		FSEEK((FILE *)file, offset, SEEK_SET);
 		return fread(buffer, 1, count, (FILE *)file);
 #endif
 	}
@@ -2065,7 +2080,7 @@ static UINT32 chdman_write(chd_interface_file *file, UINT64 offset, UINT32 count
 		else
 			return 0;
 #else
-		fseek((FILE *)file, offset, SEEK_SET);
+		FSEEK((FILE *)file, offset, SEEK_SET);
 		return fwrite(buffer, 1, count, (FILE *)file);
 #endif
 	}
@@ -2097,13 +2112,13 @@ static UINT64 chdman_length(chd_interface_file *file)
 			filesize = 0;
 		return filesize;
 #else
-		size_t oldpos = ftell((FILE *)file);
-		size_t filesize;
+		OFF_T oldpos = FTELL((FILE *)file);
+		OFF_T filesize;
 
 		/* get the size */
-		fseek((FILE *)file, 0, SEEK_END);
-		filesize = ftell((FILE *)file);
-		fseek((FILE *)file, oldpos, SEEK_SET);
+		FSEEK((FILE *)file, 0, SEEK_END);
+		filesize = FTELL((FILE *)file);
+		FSEEK((FILE *)file, oldpos, SEEK_SET);
 
 		return filesize;
 #endif
@@ -2131,9 +2146,9 @@ int main(int argc, char **argv)
 	/* handle the appropriate command */
 	if (!mame_stricmp(argv[1], "-createhd"))
 		do_createhd(argc, argv);
-	if (!mame_stricmp(argv[1], "-createblankhd"))
+	else if (!mame_stricmp(argv[1], "-createblankhd"))
 		do_createblankhd(argc, argv);
-	if (!mame_stricmp(argv[1], "-copydata"))
+	else if (!mame_stricmp(argv[1], "-copydata"))
 		do_copydata(argc, argv);
 	else if (!mame_stricmp(argv[1], "-createcd"))
 		do_createcd(argc, argv);

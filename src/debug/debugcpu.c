@@ -19,14 +19,6 @@
 
 
 /*###################################################################################################
-**  DEBUGGING
-**#################################################################################################*/
-
-#define DEBUG			0
-
-
-
-/*###################################################################################################
 **  CONSTANTS
 **#################################################################################################*/
 
@@ -97,6 +89,7 @@ static UINT64 get_cpu_reg(UINT32 ref);
 static void set_cpu_reg(UINT32 ref, UINT64 value);
 static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
 static void check_hotspots(int cpunum, int spacenum, offs_t address);
+static void flush_traces(void);
 
 
 
@@ -115,6 +108,7 @@ void mame_debug_init(void)
 	debug_command_init();
 	debug_console_init();
 	debug_view_init();
+	atexit(flush_traces);
 }
 
 
@@ -1985,5 +1979,22 @@ void debug_source_script(const char *file)
 		debug_source_file = fopen(file, "r");
 		if (!debug_source_file)
 			debug_console_printf("Cannot open command file '%s'\n", file);
+	}
+}
+
+
+/*-------------------------------------------------
+    flush_traces - flushes all traces; this is
+    useful if a trace is going on when we osd_die
+-------------------------------------------------*/
+
+static void flush_traces(void)
+{
+	int cpunum;
+
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	{
+		if (debug_cpuinfo[cpunum].trace.file)
+			fflush(debug_cpuinfo[cpunum].trace.file);
 	}
 }

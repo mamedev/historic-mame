@@ -414,6 +414,42 @@ static ADDRESS_MAP_START( zipzap_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM) // main ram
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( supmodel_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x520000, 0x53ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x580000, 0x583fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x600000, 0x600fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x680000, 0x68001f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x700fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x780000, 0x78001f) AM_READ(MRA16_RAM)
+	AM_RANGE(0x800000, 0x800001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x800002, 0x800003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x800004, 0x800005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x800006, 0x800007) AM_READ(kludge)
+	AM_RANGE(0x800008, 0x800009) AM_READ(kludge)
+	AM_RANGE(0xc80000, 0xc8ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xf80000, 0xf80001) AM_READ(comad_OKIM6295_status_0_msb_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( supmodel_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x4fffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x500000, 0x51ffff) AM_WRITE(MWA16_RAM) AM_BASE(&galpanic_fgvideoram) AM_SIZE(&galpanic_fgvideoram_size)
+	AM_RANGE(0x520000, 0x53ffff) AM_WRITE(galpanic_bgvideoram_w) AM_BASE(&galpanic_bgvideoram)
+	AM_RANGE(0x580000, 0x583fff) AM_WRITE(galpanic_bgvideoram_mirror_w)
+	AM_RANGE(0x600000, 0x600fff) AM_WRITE(galpanic_paletteram_w) AM_BASE(&paletteram16)	/* 1024 colors, but only 512 seem to be used */
+	AM_RANGE(0x680000, 0x68001f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x700000, 0x700fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x780000, 0x78001f) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(galpania_6295_bankswitch_w)	/* not sure */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xc80000, 0xc8ffff) AM_WRITE(MWA16_RAM) // main ram
+	AM_RANGE(0xd80000, 0xd80001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xe00012, 0xe00013) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xe80000, 0xe80001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0xf80000, 0xf80001) AM_WRITE(OKIM6295_data_0_msb_w)
+ADDRESS_MAP_END
+
 #define COMMON_COIN0\
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) )\
 	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_1C ) )\
@@ -993,6 +1029,23 @@ static MACHINE_DRIVER_START( comad )
 	MDRV_VIDEO_UPDATE(comad)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( supmodel )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(comad)
+	MDRV_CPU_REPLACE("main", M68000, 12000000)	/* ? */
+	MDRV_CPU_PROGRAM_MAP(supmodel_readmem,supmodel_writemem)
+	MDRV_CPU_VBLANK_INT(galpanic_interrupt,2)
+
+	/* video hardware */
+	MDRV_VIDEO_UPDATE(comad)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("oki", OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
 
 static MACHINE_DRIVER_START( fantsia2 )
 
@@ -1015,12 +1068,11 @@ static MACHINE_DRIVER_START( galhustl )
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(comad)
-
-	/* sound hardware */
-	MDRV_SOUND_REPLACE("oki", OKIM6295, 8000)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
+
+
+
+
 
 static MACHINE_DRIVER_START( zipzap )
 
@@ -1317,10 +1369,34 @@ ROM_START( zipzap )
 	ROM_RELOAD(          0xc0000, 0x80000 )
 ROM_END
 
+ROM_START( supmodel )
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "prog2.12",  0x000000, 0x80000, CRC(714b7e74) SHA1(a4f7754a4b04729084ccb1359f9bdfbad6150222) )
+	ROM_LOAD16_BYTE( "prog1.7",   0x000001, 0x80000, CRC(0bb858de) SHA1(bd2039fa46fce89289e99a790400bd567f90105e) )
+	ROM_LOAD16_BYTE( "i-scr2.10", 0x100000, 0x80000, CRC(d07ec0ce) SHA1(88997254ea2bffa83ab4a77087905cf646ee3c12) )
+	ROM_LOAD16_BYTE( "i-scr1.5",  0x100001, 0x80000, CRC(a96a8bde) SHA1(e93de2df1391a8e94d655e1c9e148196e692e661) )
+	ROM_LOAD16_BYTE( "i-scr4.9",  0x200000, 0x80000, CRC(e959cab5) SHA1(13d744aa71d9485a4530418536c38a542a269e27) )
+	ROM_LOAD16_BYTE( "i-scr3.4",  0x200001, 0x80000, CRC(4bf5e082) SHA1(14ab9ebe0c7a2154275b0aeb76f99d73552d862f) )
+	ROM_LOAD16_BYTE( "i-scr6.8",  0x300000, 0x80000, CRC(e71337c2) SHA1(be1b532e66e70f7d30b657a88c1f9b154187636e) )
+	ROM_LOAD16_BYTE( "i-scr5.3",  0x300001, 0x80000, CRC(641ccdfb) SHA1(f48dc0461bc49cfe4adcf769e9abfe83efa077a1) )
+	ROM_LOAD16_BYTE( "i-scr8.11", 0x400000, 0x80000, CRC(7c1813c8) SHA1(80fe97ac640847360529edfb728955e1067b0c14) )
+	ROM_LOAD16_BYTE( "i-scr7.6",  0x400001, 0x80000, CRC(19c73268) SHA1(aa6dc8c817a2e9707ea74e219ab34cf826223741) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "obj1.13",  0x00000, 0x80000, CRC(832cd451) SHA1(29dfab1d4b7a15f3fe9fbedef41d405a40235a77) )
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	/* 00000-2ffff is fixed, 30000-3ffff is bank switched from all the ROMs */
+	ROM_LOAD( "music1.1", 0x00000, 0x80000, CRC(2b1f6655) SHA1(e7b52cf4bd16590c598c375d5a97b724bc9ef631) )
+	ROM_RELOAD(               0x40000, 0x80000 )
+	ROM_LOAD( "music2.2", 0xc0000, 0x80000, CRC(cccae65a) SHA1(5e4e2e51884eaf191f103aa189ff33371fc91d6d) )
+ROM_END
+
 GAME( 1990, galpanic, 0,        galpanic, galpanic, 0, ROT90, "Kaneko", "Gals Panic (set 1)", GAME_NO_COCKTAIL )
 GAME( 1990, galpanib, galpanic, galpanib, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 2)", GAME_NO_COCKTAIL )
 GAME( 1990, galpania, galpanic, galpania, galpanib, 0, ROT90, "Kaneko", "Gals Panic (set 3)", GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, fantasia, 0,        comad,    fantasia, 0, ROT90, "Comad & New Japan System", "Fantasia", GAME_NO_COCKTAIL )
+GAME( 1994, supmodel, 0,        supmodel, fantasia, 0, ROT90, "Comad & New Japan System", "Super Model",GAME_NO_COCKTAIL ) // 'official' or hack of fantasia?
 GAME( 1995, newfant,  0,        comad,    fantasia, 0, ROT90, "Comad & New Japan System", "New Fantasia", GAME_NO_COCKTAIL )
 GAME( 1995, fantsy95, 0,        comad,    fantasia, 0, ROT90, "Hi-max Technology Inc.", "Fantasy '95", GAME_NO_COCKTAIL )
 GAME( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )

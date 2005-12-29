@@ -569,6 +569,11 @@ int cdrom_get_track_type(cdrom_file *file, int track)
 	return 0;
 }
 
+UINT32 cdrom_get_track_length(cdrom_file *file, int track)
+{
+	return (file->cdtoc.tracks[track].frames * file->cdtoc.tracks[track].datasize);
+}
+
 INLINE UINT8 make_bcd(UINT8 data)
 {
 	return ((data / 10) << 4) | (data % 10);
@@ -591,13 +596,13 @@ UINT32 cdrom_get_track_start(cdrom_file *file, int track, int msf)
 		s = tstart / 75;
 		f = tstart % 75;
 		#if VERBOSE
-		logerror("SCSICD: %d blocks => %d M %d S %d F\n",  cdrom_get_chd_start_of_track(file, track), m, s, f);
+		logerror("CDROM: %d blocks => %d M %d S %d F\n",  cdrom_get_chd_start_of_track(file, track), m, s, f);
 		#endif
 
 		tstart = make_bcd(m)<<16 | make_bcd(s)<<8 | make_bcd(f);
 
 		#if VERBOSE
-		logerror("SCSICD: %08x in BCD\n", tstart);
+		logerror("CDROM: %08x in BCD\n", tstart);
 		#endif
 
 		return tstart;

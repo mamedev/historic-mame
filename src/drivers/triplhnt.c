@@ -91,18 +91,6 @@ WRITE8_HANDLER( triplhnt_misc_w )
 }
 
 
-WRITE8_HANDLER( triplhnt_zeropage_w )
-{
-	memory_region(REGION_CPU1)[offset & 0xff] = data;
-}
-
-
-READ8_HANDLER( triplhnt_zeropage_r )
-{
-	return memory_region(REGION_CPU1)[offset & 0xff];
-}
-
-
 READ8_HANDLER( triplhnt_cmos_r )
 {
 	triplhnt_cmos_latch = offset;
@@ -141,8 +129,7 @@ READ8_HANDLER( triplhnt_da_latch_r )
 
 
 static ADDRESS_MAP_START( triplhnt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x03ff) AM_READ(triplhnt_zeropage_r)
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM) AM_MIRROR(0x300)
 	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_0_r)
 	AM_RANGE(0x0c08, 0x0c08) AM_READ(input_port_1_r)
 	AM_RANGE(0x0c09, 0x0c09) AM_READ(input_port_2_r)
@@ -158,8 +145,7 @@ static ADDRESS_MAP_START( triplhnt_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( triplhnt_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0100, 0x03ff) AM_WRITE(triplhnt_zeropage_w)
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_MIRROR(0x300)
 	AM_RANGE(0x0400, 0x04ff) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_playfield_ram)
 	AM_RANGE(0x0800, 0x080f) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_vpos_ram)
 	AM_RANGE(0x0810, 0x081f) AM_WRITE(MWA8_RAM) AM_BASE(&triplhnt_hpos_ram)

@@ -270,7 +270,7 @@ void timekeeper_init( int chip, int type, UINT8 *data )
 		c->offset_month = 0x1ffe;
 		c->offset_year = 0x1fff;
 		c->offset_century = 0x1ff1;
-		c->offset_flags = 0x1fff0;
+		c->offset_flags = 0x1ff0;
 		c->size = 0x2000;
 		break;
 	}

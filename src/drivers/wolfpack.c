@@ -81,12 +81,6 @@ static PALETTE_INIT( wolfpack )
 }
 
 
-static READ8_HANDLER( wolfpack_zeropage_r )
-{
-	return memory_region(REGION_CPU1)[offset & 0xff];
-}
-
-
 static READ8_HANDLER( wolfpack_input_r )
 {
 	UINT8 val = readinputport(0);
@@ -130,12 +124,6 @@ static READ8_HANDLER( wolfpack_misc_r )
 }
 
 
-static WRITE8_HANDLER( wolfpack_zeropage_w )
-{
-	memory_region(REGION_CPU1)[offset & 0xff] = data;
-}
-
-
 static WRITE8_HANDLER( wolfpack_high_explo_w ) { }
 static WRITE8_HANDLER( wolfpack_sonar_ping_w ) {}
 static WRITE8_HANDLER( wolfpack_sirlat_w ) {}
@@ -169,8 +157,7 @@ static WRITE8_HANDLER( wolfpack_coldetres_w )
 
 
 static ADDRESS_MAP_START( wolfpack_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x01ff) AM_READ(wolfpack_zeropage_r)
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM) AM_MIRROR(0x100)
 	AM_RANGE(0x1000, 0x1000) AM_READ(wolfpack_input_r)
 	AM_RANGE(0x2000, 0x2000) AM_READ(wolfpack_misc_r)
 	AM_RANGE(0x3000, 0x3000) AM_READ(input_port_1_r)
@@ -181,8 +168,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( wolfpack_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0100, 0x01ff) AM_WRITE(wolfpack_zeropage_w)
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_MIRROR(0x100)
 	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&wolfpack_alpha_num_ram)
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(wolfpack_high_explo_w)
 	AM_RANGE(0x2001, 0x2001) AM_WRITE(wolfpack_sonar_ping_w)

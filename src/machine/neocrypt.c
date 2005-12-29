@@ -1,5 +1,45 @@
 /***************************************************************************
 
+    NeoGeo Encryption
+
+    NeoGeo 'C' (Graphics) Rom encryption
+      CMC42 and CMC50 protection chips
+      Also contains 'S' (Text Layer) data on these games
+      M1 (Z80) rom is also encrypted for CMC50: NOT DECRYPTED
+
+      Later games use additional basic scrambling on top of the standard
+      CMC scramble.
+
+    NeoGeo 'P' Rom Encryption
+      Used on various games
+
+      kof98
+        - unique early encryption
+      kof99, garou, garouo, mslug3, kof2000
+        - complex SMA chip which appears to contain part of the game rom
+          internally and decrypts the 68k code on the board.  Also has a
+          random number generator and  custom bankswitching
+          (see machine/neoprot.c)
+      kof2002, matrim, samsho5, samsh5p
+        - some basic block / bank swapping
+      svcchaos, kof2003, mslug5
+        - different scrambling with additional xor
+        - p3 on kof2003: NOT DECRYPTED
+
+    NeoGeo 'V' Rom encryption
+      NEO-PCM2 chip used on various games
+      type1 used on pnyaa, rotd, mslug4
+      type2 used on kof2002, matrim, mslug5, svcchaos,
+                    samsho5, samsh5s, kof2003
+
+***************************************************************************/
+
+#include "driver.h"
+#include "neogeo.h"
+
+
+/***************************************************************************
+
 NeoGeo 'C' ROM encryption
 
 Starting with KOF99, all NeoGeo games have encrypted graphics. Additionally
@@ -55,10 +95,6 @@ table of encrypted-decrypted address correspondencies could be built and
 analyzed, quickly leading to the algorithm.
 
 ***************************************************************************/
-
-#include "driver.h"
-#include "neogeo.h"
-
 
 const unsigned char *type0_t03;
 const unsigned char *type0_t12;
@@ -528,18 +564,19 @@ static void neogeo_gfx_decrypt(int extra_xor)
 	}
 
 	free(buf);
+}
 
+/* the S data comes from the end of the C data */
+void neogeo_sfix_decrypt(void)
+{
+	int i;
+	int rom_size = memory_region_length(REGION_GFX3);
+	int tx_size = memory_region_length(REGION_GFX1);
+	UINT8 *src = memory_region(REGION_GFX3)+rom_size-tx_size;
+	UINT8 *dst = memory_region(REGION_GFX1);
 
-	/* the S data comes from the end fo the C data */
-	{
-		int i;
-		int tx_size = memory_region_length(REGION_GFX1);
-		UINT8 *src = memory_region(REGION_GFX3)+rom_size-tx_size;
-		UINT8 *dst = memory_region(REGION_GFX1);
-
-		for (i = 0;i < tx_size;i++)
-			dst[i] = src[(i & ~0x1f) + ((i & 7) << 2) + ((~i & 8) >> 2) + ((i & 0x10) >> 4)];
-	}
+	for (i = 0;i < tx_size;i++)
+		dst[i] = src[(i & ~0x1f) + ((i & 7) << 2) + ((~i & 8) >> 2) + ((i & 0x10) >> 4)];
 }
 
 
@@ -556,6 +593,7 @@ void kof99_neogeo_gfx_decrypt(int extra_xor)
 	address_16_23_xor2 = kof99_address_16_23_xor2;
 	address_0_7_xor =    kof99_address_0_7_xor;
 	neogeo_gfx_decrypt(extra_xor);
+	neogeo_sfix_decrypt();
 }
 
 /* CMC50 protection chip */
@@ -571,6 +609,360 @@ void kof2000_neogeo_gfx_decrypt(int extra_xor)
 	address_16_23_xor2 = kof2000_address_16_23_xor2;
 	address_0_7_xor =    kof2000_address_0_7_xor;
 	neogeo_gfx_decrypt(extra_xor);
+	neogeo_sfix_decrypt();
 
 	/* here I should also decrypt the sound ROM */
 }
+
+/* CMC42 protection chip */
+void cmc42_neogeo_gfx_decrypt(int extra_xor)
+{
+	type0_t03 =          kof99_type0_t03;
+	type0_t12 =          kof99_type0_t12;
+	type1_t03 =          kof99_type1_t03;
+	type1_t12 =          kof99_type1_t12;
+	address_8_15_xor1 =  kof99_address_8_15_xor1;
+	address_8_15_xor2 =  kof99_address_8_15_xor2;
+	address_16_23_xor1 = kof99_address_16_23_xor1;
+	address_16_23_xor2 = kof99_address_16_23_xor2;
+	address_0_7_xor =    kof99_address_0_7_xor;
+	neogeo_gfx_decrypt(extra_xor);
+}
+
+/* CMC50 protection chip */
+void cmc50_neogeo_gfx_decrypt(int extra_xor)
+{
+	type0_t03 =          kof2000_type0_t03;
+	type0_t12 =          kof2000_type0_t12;
+	type1_t03 =          kof2000_type1_t03;
+	type1_t12 =          kof2000_type1_t12;
+	address_8_15_xor1 =  kof2000_address_8_15_xor1;
+	address_8_15_xor2 =  kof2000_address_8_15_xor2;
+	address_16_23_xor1 = kof2000_address_16_23_xor1;
+	address_16_23_xor2 = kof2000_address_16_23_xor2;
+	address_0_7_xor =    kof2000_address_0_7_xor;
+	neogeo_gfx_decrypt(extra_xor);
+
+	/* here I should also decrypt the sound ROM */
+}
+
+
+
+/***************************************************************************
+
+NeoGeo 'P' ROM encryption
+
+***************************************************************************/
+
+/* Kof98 uses an early encryption, quite different from the others */
+void kof98_decrypt_68k(void)
+{
+	UINT8 *src = memory_region(REGION_CPU1);
+	UINT8 *dst = malloc(0x200000);
+	int i, j, k;
+	unsigned int sec[]={0x000000,0x100000,0x000004,0x100004,0x10000a,0x00000a,0x10000e,0x00000e};
+	unsigned int pos[]={0x000,0x004,0x00a,0x00e};
+
+	memcpy( dst, src, 0x200000);
+	for( i=0x800; i<0x100000; i+=0x200 )
+	{
+		for( j=0; j<0x100; j+=0x10 )
+		{
+			for( k=0; k<16; k+=2)
+			{
+				memcpy( &src[i+j+k],       &dst[ i+j+sec[k/2]+0x100 ], 2 );
+				memcpy( &src[i+j+k+0x100], &dst[ i+j+sec[k/2] ],       2 );
+			}
+			if( i >= 0x080000 && i < 0x0c0000)
+			{
+				for( k=0; k<4; k++ )
+				{
+					memcpy( &src[i+j+pos[k]],       &dst[i+j+pos[k]],       2 );
+					memcpy( &src[i+j+pos[k]+0x100], &dst[i+j+pos[k]+0x100], 2 );
+				}
+			}
+			else if( i >= 0x0c0000 )
+			{
+				for( k=0; k<4; k++ )
+				{
+					memcpy( &src[i+j+pos[k]],       &dst[i+j+pos[k]+0x100], 2 );
+					memcpy( &src[i+j+pos[k]+0x100], &dst[i+j+pos[k]],       2 );
+				}
+			}
+		}
+		memcpy( &src[i+0x000000], &dst[i+0x000000], 2 );
+		memcpy( &src[i+0x000002], &dst[i+0x100000], 2 );
+		memcpy( &src[i+0x000100], &dst[i+0x000100], 2 );
+		memcpy( &src[i+0x000102], &dst[i+0x100100], 2 );
+	}
+	memcpy( &src[0x100000], &src[0x200000], 0x400000 );
+
+	free(dst);
+}
+
+/* kof99, garou, garouo, mslug3 and kof2000 have and SMA chip which contains program code and decrypts the 68k roms */
+void kof99_decrypt_68k(void)
+{
+	UINT16 *rom;
+	int i,j;
+
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],13,7,3,0,9,4,5,6,1,12,8,14,10,11,2,15);
+	}
+
+	/* swap address lines for the banked part */
+	for (i = 0;i < 0x600000/2;i+=0x800/2)
+	{
+		UINT16 buffer[0x800/2];
+		memcpy(buffer,&rom[i],0x800);
+		for (j = 0;j < 0x800/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,13,12,11,10,6,2,4,9,8,3,1,7,0,5)];
+		}
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (UINT16 *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x700000/2 + BITSWAP24(i,23,22,21,20,19,18,11,6,14,17,16,5,8,10,12,0,4,3,2,7,9,15,13,1)];
+	}
+}
+
+void garou_decrypt_68k(void)
+{
+	UINT16 *rom;
+	int i,j;
+
+	/* thanks to Razoola and Mr K for the info */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],13,12,14,10,8,2,3,1,5,9,11,4,15,0,6,7);
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (UINT16 *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x710000/2 + BITSWAP24(i,23,22,21,20,19,18,4,5,16,14,7,9,6,13,17,15,3,1,2,12,11,8,10,0)];
+	}
+
+	/* swap address lines for the banked part */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	for (i = 0;i < 0x800000/2;i+=0x8000/2)
+	{
+		UINT16 buffer[0x8000/2];
+		memcpy(buffer,&rom[i],0x8000);
+		for (j = 0;j < 0x8000/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,9,4,8,3,13,6,2,7,0,12,1,11,10,5)];
+		}
+	}
+}
+
+void garouo_decrypt_68k(void)
+{
+	UINT16 *rom;
+	int i,j;
+
+	/* thanks to Razoola and Mr K for the info */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],14,5,1,11,7,4,10,15,3,12,8,13,0,2,9,6);
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (UINT16 *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x7f8000/2 + BITSWAP24(i,23,22,21,20,19,18,5,16,11,2,6,7,17,3,12,8,14,4,0,9,1,10,15,13)];
+	}
+
+	/* swap address lines for the banked part */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	for (i = 0;i < 0x800000/2;i+=0x8000/2)
+	{
+		UINT16 buffer[0x8000/2];
+		memcpy(buffer,&rom[i],0x8000);
+		for (j = 0;j < 0x8000/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,12,8,1,7,11,3,13,10,6,9,5,4,0,2)];
+		}
+	}
+}
+
+void mslug3_decrypt_68k(void)
+{
+	UINT16 *rom;
+	int i,j;
+
+	/* thanks to Razoola and Mr K for the info */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],4,11,14,3,1,13,0,7,2,8,12,15,10,9,5,6);
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (UINT16 *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x5d0000/2 + BITSWAP24(i,23,22,21,20,19,18,15,2,1,13,3,0,9,6,16,4,11,5,7,12,17,14,10,8)];
+	}
+
+	/* swap address lines for the banked part */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	for (i = 0;i < 0x800000/2;i+=0x10000/2)
+	{
+		UINT16 buffer[0x10000/2];
+		memcpy(buffer,&rom[i],0x10000);
+		for (j = 0;j < 0x10000/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,2,11,0,14,6,4,13,8,9,3,10,7,5,12,1)];
+		}
+	}
+}
+
+void kof2000_decrypt_68k(void)
+{
+	UINT16 *rom;
+	int i,j;
+
+	/* thanks to Razoola and Mr K for the info */
+	rom = (UINT16 *)(memory_region(REGION_CPU1) + 0x100000);
+	/* swap data lines on the whole ROMs */
+	for (i = 0;i < 0x800000/2;i++)
+	{
+		rom[i] = BITSWAP16(rom[i],12,8,11,3,15,14,7,0,10,13,6,5,9,2,1,4);
+	}
+
+	/* swap address lines for the banked part */
+	for (i = 0;i < 0x63a000/2;i+=0x800/2)
+	{
+		UINT16 buffer[0x800/2];
+		memcpy(buffer,&rom[i],0x800);
+		for (j = 0;j < 0x800/2;j++)
+		{
+			rom[i+j] = buffer[BITSWAP24(j,23,22,21,20,19,18,17,16,15,14,13,12,11,10,4,1,3,8,6,2,7,0,9,5)];
+		}
+	}
+
+	/* swap address lines & relocate fixed part */
+	rom = (UINT16 *)memory_region(REGION_CPU1);
+	for (i = 0;i < 0x0c0000/2;i++)
+	{
+		rom[i] = rom[0x73a000/2 + BITSWAP24(i,23,22,21,20,19,18,8,4,15,13,3,14,16,2,6,17,7,12,10,0,5,11,1,9)];
+	}
+}
+
+/* kof2002, matrim, samsho5, samsh5p have some simple block swapping */
+
+void kof2002_decrypt_68k(void)
+{
+	int i;
+	unsigned int sec[]={0x100000,0x280000,0x300000,0x180000,0x000000,0x380000,0x200000,0x080000};
+	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
+	UINT8 *dst = malloc(0x400000);
+	if (dst)
+	{
+		memcpy( dst, src, 0x400000 );
+		for( i=0; i<8; ++i )
+		{
+			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
+		}
+	free(dst);
+	}
+}
+
+void matrim_decrypt_68k(void)
+{
+	int i;
+	unsigned int sec[]={0x100000,0x280000,0x300000,0x180000,0x000000,0x380000,0x200000,0x080000};
+	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
+	UINT8 *dst = malloc(0x400000);
+	if (dst)
+	{
+		memcpy( dst, src, 0x400000);
+		for( i=0; i<8; ++i )
+		{
+			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
+		}
+	free(dst);
+	}
+}
+
+/***************************************************************************
+
+NeoGeo 'V' (PCM) ROM encryption
+  NEOPCM2 chip
+
+***************************************************************************/
+
+/* Neo-Pcm2 Drivers for Encrypted V Roms */
+void neo_pcm2_snk_1999(int value)
+{	/* thanks to Elsemi for the NEO-PCM2 info */
+	UINT16 *rom = (UINT16 *)memory_region(REGION_SOUND1);
+	int size = memory_region_length(REGION_SOUND1);
+	int i, j;
+
+	if( rom != NULL )
+	{	/* swap address lines on the whole ROMs */
+		UINT16 *buffer = malloc((value / 2) * sizeof(UINT16));
+		if (!buffer)
+			return;
+
+		for( i = 0; i < size / 2; i += ( value / 2 ) )
+		{
+			memcpy( buffer, &rom[ i ], value );
+			for( j = 0; j < (value / 2); j++ )
+			{
+				rom[ i + j ] = buffer[ j ^ (value/4) ];
+			}
+		}
+		free(buffer);
+	}
+}
+
+/* the later PCM2 games have additional scrambling */
+void neo_pcm2_swap(int value)
+{
+	unsigned int addrs[7][2]={
+		{0x000000,0xA5000},
+		{0xFFCE20,0x01000},
+		{0xFE2CF6,0x4E001},
+		{0xFFAC28,0xC2000},
+		{0xFEB2C0,0x0A000},
+		{0xFF14EA,0xA7001},
+		{0xFFB440,0x02000}};
+		unsigned int xordata[7][8]={
+		{0xF9,0xE0,0x5D,0xF3,0xEA,0x92,0xBE,0xEF},
+		{0xC4,0x83,0xA8,0x5F,0x21,0x27,0x64,0xAF},
+		{0xC3,0xFD,0x81,0xAC,0x6D,0xE7,0xBF,0x9E},
+		{0xC3,0xFD,0x81,0xAC,0x6D,0xE7,0xBF,0x9E},
+		{0xCB,0x29,0x7D,0x43,0xD2,0x3A,0xC2,0xB4},
+		{0x4B,0xA4,0x63,0x46,0xF0,0x91,0xEA,0x62},
+		{0x4B,0xA4,0x63,0x46,0xF0,0x91,0xEA,0x62}};
+	UINT8 *src = memory_region(REGION_SOUND1);
+	UINT8 *buf = malloc(0x1000000);
+	int i, j, d;
+
+	memcpy(buf,src,0x1000000);
+	for (i=0;i<0x1000000;i++)
+	{
+		j=BITSWAP24(i,23,22,21,20,19,18,17,0,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,16);
+		j=j^addrs[value][1];
+		d=((i+addrs[value][0])&0xffffff);
+		src[j]=buf[d]^xordata[value][j&0x7];
+	}
+	free(buf);
+}
+
+

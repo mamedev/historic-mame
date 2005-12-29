@@ -880,7 +880,7 @@ DRIVER_INIT(winterht)
 
 	init_ic13();
 
-	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(2);
 }
 
 static READ32_HANDLER(seabass_speedup_r)
@@ -1020,7 +1020,7 @@ DRIVER_INIT(sassisu)
 
 	init_ic13();
 
-	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(2);
 }
 
 static READ32_HANDLER(gaxeduel_speedup_r)
@@ -1100,7 +1100,7 @@ DRIVER_INIT(znpwfv)
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, znpwfv_speedup_r );
 
 	init_ic13();
-	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(10);
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(2);
 }
 
 static READ32_HANDLER( twcup98_speedup_r )
@@ -1250,5 +1250,34 @@ DRIVER_INIT(elandore)
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)elandore_slave_speedup);
 	init_stv();
 	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(0);
+
+}
+
+static READ32_HANDLER( rsgun_speedup_r )
+{
+	if (activecpu_get_pc()==0x06034d06) cpu_spinuntil_time(TIME_IN_USEC(20));
+	return stv_workram_h[0x0ffc10/4];
+}
+
+static void rsgun_slave_speedup(UINT32 data)
+{
+	if (activecpu_get_pc() == 0x06036154)
+		if ( (data & 0x00800000) == 0 )
+			if ((stv_workram_h[0x0ffc48/4] != 0x260efc50))
+			{
+				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
+
+				cpunum_spinuntil_trigger(1, 1000);
+			}
+}
+
+DRIVER_INIT(rsgun)
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, rsgun_speedup_r );
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)rsgun_slave_speedup);
+
+	init_stv();
+
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(20);
 
 }

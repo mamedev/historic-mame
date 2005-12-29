@@ -873,6 +873,8 @@ static INTERRUPT_GEN( ddragon_interrupt )
 {
 	int scanline=271 - cpu_getiloops();
 
+
+
 	/* VBLK is lowered on scanline 0 */
 	if (scanline==0) {
 		VBLK=0;
@@ -886,7 +888,11 @@ static INTERRUPT_GEN( ddragon_interrupt )
 
 	/* IMS is triggered every time VPOS line 3 is raised, as VPOS counter starts at 16, effectively every 16 scanlines */
 	if ((scanline%16)==0)
+	{
 		cpunum_set_input_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
+		force_partial_update(scanline /*cpu_getscanline()*/);
+	}
+
 }
 
 static MACHINE_DRIVER_START( ddragon )
@@ -905,7 +911,7 @@ static MACHINE_DRIVER_START( ddragon )
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)
-	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+	MDRV_INTERLEAVE(1000) /* heavy interleaving to sync up sprite<->main cpu's */
 
 	MDRV_MACHINE_INIT(ddragon)
 
@@ -955,7 +961,7 @@ static MACHINE_DRIVER_START( darktowr )
 
 	MDRV_FRAMES_PER_SECOND(((12000000.0 / 256.0) / 3.0) / 272.0)
 	MDRV_VBLANK_DURATION(0)
-	MDRV_INTERLEAVE(100) /* heavy interleaving to sync up sprite<->main cpu's */
+	MDRV_INTERLEAVE(1000) /* heavy interleaving to sync up sprite<->main cpu's */
 
 	MDRV_MACHINE_INIT(ddragon)
 

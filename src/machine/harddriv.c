@@ -835,7 +835,7 @@ WRITE16_HANDLER( hd68k_adsp_program_w )
 		COMBINE_DATA(&temp);
 		oldword = (oldword & 0xffff0000) | temp;
 	}
-	ADSP2100_WRPGM(base, oldword);
+	*base = oldword;
 }
 
 
@@ -1408,7 +1408,7 @@ WRITE16_HANDLER( hd68k_ds3_program_w )
 		COMBINE_DATA(&temp);
 		oldword = (oldword & 0xffffff00) | (temp & 0xff);
 	}
-	ADSP2100_WRPGM(base, oldword);
+	*base = oldword;
 }
 
 

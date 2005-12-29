@@ -69,8 +69,7 @@ static WRITE8_HANDLER( lamps2_w )
 
 
 static ADDRESS_MAP_START( usg_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
 
 	AM_RANGE(0x2000, 0x2000) AM_READ(input_port_1_r)
 	AM_RANGE(0x2010, 0x2010) AM_READ(input_port_0_r)
@@ -84,8 +83,7 @@ static ADDRESS_MAP_START( usg_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( usg185_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
 
 	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_1_r)
 	AM_RANGE(0x2410, 0x2410) AM_READ(input_port_0_r)
@@ -99,8 +97,7 @@ static ADDRESS_MAP_START( usg185_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( usg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 
 	AM_RANGE(0x2020, 0x2020) AM_WRITE(lamps1_w)
 	AM_RANGE(0x2030, 0x2030) AM_WRITE(lamps2_w)
@@ -120,8 +117,7 @@ static ADDRESS_MAP_START( usg_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( usg185_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 
 	AM_RANGE(0x2420, 0x2420) AM_WRITE(lamps1_w)
 	AM_RANGE(0x2430, 0x2430) AM_WRITE(lamps2_w)
@@ -302,7 +298,7 @@ static MACHINE_DRIVER_START( usg )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_NVRAM_HANDLER(generic_1fill)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -375,6 +371,45 @@ ROM_START( usg82 )
 ROM_END
 
 
+
+/*
+Games V18.2
+US Games, 1989
+
+A Trivia game by US Games.
+The PCB looks _A LOT_ like a Williams Pinball PCB.
+Perhaps they manufactured it?
+
+PCB Layout
+----------
+
+|--------------------------------------------------|
+|   DS1225   6809     68B45     AY-3-8912   TDA2003|
+|                                      18MHz       |
+|    GROM0                                         |-|
+|           PAL                            ULN2805   |
+|    GROM1          6116  6116                      2|
+|                                                   2|
+|    GROM2                                          W|
+|                                                   A|
+|    GROM3                                          Y|
+|LED                                                 |
+|LED GROM4                                         |-|
+|    PAL      6116                                 |
+|--------------------------------------------------|
+*/
+
+ROM_START( usg182 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD( "grom0.u12",    0x08000, 0x08000, CRC(f5a053c1) SHA1(ae2740cd9af0af7a74a88720ebafd785bfc8614b) )
+	/* for the banked region */
+	ROM_LOAD( "grom4.u36",    0x10000, 0x10000, CRC(b104744d) SHA1(fa2128c39a135b119ef625eed447afa523f912c0) )
+	ROM_LOAD( "grom3.u35",    0x20000, 0x10000, CRC(795e71c8) SHA1(852dceab906f79d05da67a81f855c71738662430) )
+	ROM_LOAD( "grom2.u28",    0x30000, 0x10000, CRC(c6ba8a81) SHA1(e826492626707e30782d4d2f42419357970d67b3) )
+	ROM_LOAD( "grom1.u18",    0x48000, 0x08000, CRC(73bbc1c8) SHA1(9bb5067bf914b7c87a1ee29d6818de782fa28637) )
+ROM_END
+
+
 ROM_START( usg185 ) // an upgraded 182?
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
 	ROM_LOAD( "usg182.u12",   0x08000, 0x08000, CRC(2f4ed125) SHA1(6ea2ce263b8abe8d283d1c85d403ec908a422448) )
@@ -409,10 +444,10 @@ ROM_START( usg252 )
 ROM_END
 
 
-
-GAME( 1987, usg32,  0,     usg,  usg32, 0, ROT0, "U.S. Games", "Super Duper Casino (California V3.2)", 0 )
-GAME( 1988, usg83,  0,     usg,  usg83, 0, ROT0, "U.S. Games", "Super Ten V8.3", 0 )
-GAME( 1988, usg83x, usg83, usg,  usg83, 0, ROT0, "U.S. Games", "Super Ten V8.3X", 0 )
-GAME( 1988, usg82,  usg83, usg,  usg83, 0, ROT0, "U.S. Games", "Super Ten V8.2" , 0)	// "Feb.08,1988"
+GAME( 1987, usg32,  0,     usg,    usg32, 0, ROT0, "U.S. Games", "Super Duper Casino (California V3.2)", 0 )
+GAME( 1988, usg83,  0,     usg,    usg83, 0, ROT0, "U.S. Games", "Super Ten V8.3", 0 )
+GAME( 1988, usg83x, usg83, usg,    usg83, 0, ROT0, "U.S. Games", "Super Ten V8.3X", 0 )
+GAME( 1988, usg82,  usg83, usg,    usg83, 0, ROT0, "U.S. Games", "Super Ten V8.2" , 0)	// "Feb.08,1988"
+GAME( 1989, usg182, 0,     usg185, usg83, 0, ROT0, "U.S. Games", "Games V18.2", 0 )
 GAME( 1991, usg185, 0,     usg185, usg83, 0, ROT0, "U.S. Games", "Games V18.7C", 0 )
 GAME( 1992, usg252, 0,     usg185, usg83, 0, ROT0, "U.S. Games", "Games V25.4X", 0 )

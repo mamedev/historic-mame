@@ -187,3 +187,17 @@ VIDEO_UPDATE(mainsnk)
 	update_palette(1);
 }
 
+VIDEO_UPDATE(canvas)
+{
+	rectangle myclip;
+	myclip.min_x = cliprect->min_x+8;
+	myclip.max_x = cliprect->max_x-8;
+	myclip.min_y = cliprect->min_y;
+	myclip.max_y = cliprect->max_y;
+	tilemap_draw(bitmap,&myclip,me_bg_tilemap,0,0);
+	draw_sprites( bitmap,&myclip, 0,0 );
+//  tilemap_draw(bitmap,&myclip,me_fg_tilemap,0,0);
+//  draw_status( bitmap,cliprect,0,0x400 );
+//  draw_status( bitmap,cliprect,32*8,0x40 );
+	update_palette(1);
+}

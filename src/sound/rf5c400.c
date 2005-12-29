@@ -20,6 +20,7 @@ struct rf5c400_info
 	sound_stream *stream;
 
 	int current_channel;
+	int keyon_channel;
 
 	struct RF5C400_CHANNEL
 	{
@@ -27,14 +28,21 @@ struct rf5c400_info
 		UINT32 end;
 		UINT64 pos;
 		UINT64 step;
-		int keyon;
-		int volume;
-		int pan;
+		UINT16 keyon;
+		INT16 volume;
+		UINT16 pan;
+		UINT16 flag;
+		UINT16 sysflag;
+		UINT16 keyflag;
 	} channels[32];
 };
 
-static int pan_table[2][32];
-static int volume_table[32];
+static int volume_table[256];
+
+enum {
+	RF5C400_FLG_LOOP		= 0x1000,	// loop ?
+};
+
 
 /*****************************************************************************/
 
@@ -59,19 +67,20 @@ static void rf5c400_update(void *param, stream_sample_t **inputs, stream_sample_
 				UINT32 cur_pos = channel->start + (channel->pos >> 16);
 
 				sample = rom[cur_pos];
-				//sample = (sample * volume_table[31]) >> 16;
 
-				//buffer[0][i] += (sample * pan_table[0][channel->pan]) >> 16;
-				//buffer[1][i] += (sample * pan_table[1][channel->pan]) >> 16;
-
-				buffer[0][i] += sample;
-				buffer[1][i] += sample;
+				sample *= volume_table[channel->volume];
+				buffer[0][i] += (sample - ((sample * (channel->pan & 0xff)) >> 8)) >> 6;
+				buffer[1][i] += (sample - ((sample * (channel->pan >>8)) >> 8)) >> 6;
 
 				channel->pos += channel->step;
 				if (cur_pos > info->rom_length || cur_pos > channel->end)
 				{
-					channel->keyon = 0;
-					channel->pos = 0;
+					if ( (channel->flag & RF5C400_FLG_LOOP) ) {
+						channel->pos = 0;
+					} else {
+						channel->keyon = 0;
+						channel->pos = 0;
+					}
 				}
 			}
 		}
@@ -102,20 +111,16 @@ static void rf5c400_init_chip(struct rf5c400_info *info, int sndindex)
 		}
 	}
 
-	info->stream = stream_create(0, 2, Machine->sample_rate, info, rf5c400_update);
-
-	// init pan table
-	for (i=0; i < 32; i++)
-	{
-		pan_table[0][i] = (int)(65536.0 / pow(10.0, ((double)(i) / (32.0 / 96.0)) / 20.0));
-		pan_table[1][i] = (int)(65536.0 / pow(10.0, ((double)(31-i) / (32.0 / 96.0)) / 20.0));
-	}
-
 	// init volume table
-	for (i=0; i < 32; i++)
 	{
-		volume_table[i] = (int)(65536.0 / pow(10.0, ((double)(31-i) / (32.0 / 96.0)) / 20.0));
+		double max=255.0;
+		for (i = 0; i < 256; i++) {
+			volume_table[i]=(UINT16)max;
+			max /= pow(10.0,(double)((2.5/(256.0/16.0))/20));
+		}
 	}
+
+	info->stream = stream_create(0, 2, Machine->sample_rate, info, rf5c400_update);
 }
 
 
@@ -168,21 +173,38 @@ static void rf5c400_w(int chipnum, int offset, UINT16 data)
 				break;
 			}
 
-			case 0x01:		// channel / pan / volume
+			case 0x01:		// channel control
 			{
-				data &= 0xff;
-				if (data < 0x20)
-				{
-					info->current_channel = data;
+				switch ( data & 0x60 ) {
+					case 0x60:
+						if ( !info->channels[data&0x1f].keyon ) {
+							info->channels[data&0x1f].pos = 0;
+							info->channels[data&0x1f].keyon = 1;
+						}
+						break;
+					case 0x40:
+						if ( !(info->channels[data&0x1f].keyflag & 0x2000) ) {
+							info->channels[data&0x1f].pos = 0;
+							info->channels[data&0x1f].keyon = 0;
+						}
+						break;
+					default:
+						info->channels[data&0x1f].pos = 0;
+						info->channels[data&0x1f].keyon = 0;
 				}
-				else if (data >= 0x40 && data < 0x60)
-				{
-					info->channels[info->current_channel].pan = data - 0x40;
-				}
-				else if (data >= 0x60 && data < 0x80)
-				{
-					info->channels[info->current_channel].volume = data - 0x60;
-				}
+				break;
+			}
+
+			case 0x8:
+			{
+				data &= 0x1f;
+				info->current_channel = data;
+				break;
+			}
+
+			case 0x9:
+			{
+				info->channels[info->current_channel].sysflag = data;
 				break;
 			}
 
@@ -214,9 +236,6 @@ static void rf5c400_w(int chipnum, int offset, UINT16 data)
 			{
 				channel->start &= 0xff0000;
 				channel->start |= data;
-
-				channel->pos = 0;
-				channel->keyon = 1;		// TODO: the key on is surely somewhere else..
 				break;
 			}
 			case 0x02:		// sample playing frequency
@@ -247,16 +266,24 @@ static void rf5c400_w(int chipnum, int offset, UINT16 data)
 			{
 				break;
 			}
-			case 0x07:		// unknown
+			case 0x07:		// channel volume
 			{
+				channel->pan = data;
 				break;
 			}
-			case 0x08:		// unknown
+			case 0x08:		// volume
 			{
+				channel->volume = data & 0xff;
+				break;
+			}
+			case 0x0E:
+			{
+				channel->keyflag = data;
 				break;
 			}
 			case 0x10:		// unknown
 			{
+				channel->flag = data;
 				break;
 			}
 		}

@@ -889,6 +889,104 @@ ROM_START( equitess )
 	ROM_LOAD( "bprom.3h",  0x00000, 0x020, CRC(33b98466) SHA1(017c73cf8c17dc5047c89316ae5b45f8d22092e8) )
 ROM_END
 
+
+
+/*
+
+Gekisou (JPN Ver.)
+(c)1985 Eastern
+
+68K55-2
+CPU:MC68000P8
+OSC:12.000MHz
+
+0.5C         [7e8bf4d1]
+
+1.15B        [945fd546]
+2.15D        [3c057150]
+3.14B        [7c1cf4d0]
+4.14D        [c7282391]
+
+5.16R        [88ef550a]
+6.15R        [473e3fbf]
+7.18R        [a1918b6c]
+8.8R         [2e0c392c]
+9.6R         [56a03b08]
+10.9R        [11d89c73]
+
+2N.BPR       [c7333120]
+3N.BPR       [c7333120]
+4N.BPR       [c7333120]
+5N.BPR       [c7333120]
+
+1B.BPR       [11a1c0aa]
+2B.BPR       [4f5d4141]
+4B.BPR       [c7ebe52c]
+
+
+SOUND BOARD NO.59 MC 07
+CPU  :TMP8085AP
+Sound:AY-3-8910A,OKI M5232,D8155HC
+OSC  :6.144MHz
+
+V1.1L        [dc6af437]
+V2.1H        [cb12582e]
+V3.1E        [0ab5e777]
+
+3H.BPR       [33b98466]
+
+*/
+
+
+ROM_START( gekisou )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) // 68000 ROMs
+	ROM_LOAD16_BYTE( "1.15b", 0x00001, 0x4000, CRC(945fd546) SHA1(6045dbf11272fcec8320aacb2852d4223d0943a0) )
+	ROM_LOAD16_BYTE( "2.15d", 0x00000, 0x4000, CRC(3c057150) SHA1(2b1ad7993addfd1c0eee99dfe5bb3476cd387f6a) )
+	ROM_LOAD16_BYTE( "3.14b", 0x08001, 0x4000, CRC(7c1cf4d0) SHA1(a122d3a51d205123e04c694912809e0bb31155d5) )
+	ROM_LOAD16_BYTE( "4.14d", 0x08000, 0x4000, CRC(c7282391) SHA1(144a34d74bb1e71e2f799913ab04927d00faec87) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) // 8085A ROMs
+	ROM_LOAD( "v1.1l", 0x00000, 0x4000, CRC(dc6af437) SHA1(77112fec51343d8e73765b2a342a888612813c3b) )
+	ROM_LOAD( "v2.1h", 0x04000, 0x4000, CRC(cb12582e) SHA1(ef378232e2744540cc4c9187cfb36d780dadc962) )
+	ROM_LOAD( "v3.1e", 0x08000, 0x4000, CRC(0ab5e777) SHA1(9177c42418f022a65d73c3302873b894c5a137a4) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE ) // chars
+	ROM_LOAD( "0.5c",  0x00000, 0x1000, CRC(7e8bf4d1) SHA1(8abb82be006e8d1df449a5f83d59637314405119) )
+
+	/* GFX loading is wrong -- why do we load roms twice in other sets anyway, we shouldn't load
+       things twice unless they are on the board twice, if they're not we should expand them in
+       init functions. */
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE ) // tile set1
+//  ROM_LOAD_NIB_HIGH( "5.16r",  0x00000, 0x4000, CRC(88ef550a) SHA1(b50e7b8257d1bb6923d289e7af885c14d089b394) )
+	ROM_LOAD         ( "5.16r",  0x04000, 0x4000, CRC(88ef550a) SHA1(b50e7b8257d1bb6923d289e7af885c14d089b394) )
+	ROM_LOAD         ( "6.15r",  0x08000, 0x4000, CRC(473e3fbf) SHA1(5039387b3627c19f592d630ba7bd010a3881adc5) )
+	ROM_LOAD         ( "7.18r",  0x0c000, 0x4000, CRC(a1918b6c) SHA1(6ffa4c845d23d311b59cc19411a68a782618b3fd) )
+
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_DISPOSE ) // tile set2
+
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE ) // sprite set1
+//  ROM_LOAD_NIB_HIGH( "8.8r",     0x00000, 0x4000, CRC(2e0c392c) SHA1(48542a24a34e3d5d00af418b29a2ee15557efc99) )
+	ROM_LOAD         ( "8.8r",     0x04000, 0x4000, CRC(2e0c392c) SHA1(48542a24a34e3d5d00af418b29a2ee15557efc99) )
+	ROM_LOAD         ( "9.6r",     0x08000, 0x4000, CRC(56a03b08) SHA1(d90b246890fedfc437de85be8bcc6b60ff068be1) )
+	ROM_LOAD         ( "10.9r",    0x0c000, 0x4000, CRC(11d89c73) SHA1(8753f635d321c8e9b93b0ab767cf44aca1db7a0a) )
+
+	ROM_REGION( 0x8000, REGION_GFX5, ROMREGION_DISPOSE ) // sprite set2
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 ) // RGB PROMs
+	ROM_LOAD( "1b.bpr",  0x00000, 0x100, CRC(11a1c0aa) SHA1(d007d31f68bf802c89422ea2393747ac8de94d70) ) // R
+	ROM_LOAD( "2b.bpr",  0x00100, 0x100, CRC(4f5d4141) SHA1(965221c6af4a868760e6d168b55e037fc5f9fa52) ) // G
+	ROM_LOAD( "4b.bpr",  0x00200, 0x100, CRC(c7ebe52c) SHA1(19d2ee70d67fd5e1c57f66d030ec9a5b6af5a49e) ) // B
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 ) // CLUT(same PROM x 4)
+	ROM_LOAD( "2n.bpr",  0x0000, 0x100, CRC(c7333120) SHA1(ad590e8ece3dcf56b285c4a080f4ee8bb4c9d77c) )
+	ROM_LOAD( "3n.bpr",  0x0000, 0x100, CRC(c7333120) SHA1(ad590e8ece3dcf56b285c4a080f4ee8bb4c9d77c) )
+	ROM_LOAD( "4n.bpr",  0x0000, 0x100, CRC(c7333120) SHA1(ad590e8ece3dcf56b285c4a080f4ee8bb4c9d77c) )
+	ROM_LOAD( "5n.bpr",  0x0000, 0x100, CRC(c7333120) SHA1(ad590e8ece3dcf56b285c4a080f4ee8bb4c9d77c) )
+
+	ROM_REGION( 0x0020, REGION_USER2, 0 ) // MSM5232 PROM?
+	ROM_LOAD( "3h.bpr",  0x00000, 0x020, CRC(33b98466) SHA1(017c73cf8c17dc5047c89316ae5b45f8d22092e8) )
+ROM_END
+
 /******************************************************************************/
 // Koukouyakyuh ROM Map
 
@@ -1365,6 +1463,7 @@ static DRIVER_INIT( hvoltage )
 // Equites Hardware
 GAME( 1984, equites,  0,        equites,  equites,  equites,  ROT90, "Alpha Denshi Co.",                "Equites", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
 GAME( 1984, equitess, equites,  equites,  equites,  equites,  ROT90, "Alpha Denshi Co. (Sega license)", "Equites (Sega)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL )
+GAME( 1985, gekisou,  0,        equites,  equites,  equites,  ROT90, "Eastern",                         "Gekisou (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NO_COCKTAIL | GAME_NOT_WORKING )
 GAME( 1984, bullfgtr, 0,        equites,  bullfgtr, bullfgtr, ROT90, "Alpha Denshi Co.",                "Bull Fighter", GAME_UNEMULATED_PROTECTION )
 GAME( 1984, bullfgts, bullfgtr, equites,  bullfgtr, bullfgts, ROT90, "Alpha Denshi Co. (Sega license)", "Bull Fighter (Sega)", GAME_UNEMULATED_PROTECTION )
 GAME( 1985, kouyakyu, 0,        equites,  kouyakyu, kouyakyu, ROT0,  "Alpha Denshi Co.",                "The Koukouyakyuh", GAME_UNEMULATED_PROTECTION )

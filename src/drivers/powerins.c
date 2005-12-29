@@ -6,9 +6,12 @@
                 driver by   Luca Elia (l.elia@tin.it)
 
 Set 1
+    CPU:    MC68000, Z80 (for sound)
+    Sound:  2x OKI6295 + 1x YM2203
+Set 2
     CPU:    MC68000
     Sound:  OKIM6295
-Set 2
+Set 3
     CPU:    MC68000, Z80 (for sound)
     Sound:  2x OKI6295 (Sound code supports an additional YM2203, but it's not fitted)
 
@@ -25,6 +28,7 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "machine/nmk112.h"
 #include "sound/okim6295.h"
+#include "sound/2203intf.h"
 
 /* Variables that vidhrdw has access to */
 
@@ -69,14 +73,14 @@ static WRITE16_HANDLER( powerins_okibank_w )
 	}
 }
 
-static WRITE16_HANDLER( powerina_soundlatch_w )
+static WRITE16_HANDLER( powerins_soundlatch_w )
 {
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0, data & 0xff);
 	}
 }
-static READ8_HANDLER( powerina_fake_ym2203_r )
+static READ8_HANDLER( powerinb_fake_ym2203_r )
 {
 	return 0x01;
 }
@@ -88,7 +92,7 @@ static ADDRESS_MAP_START( powerins_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100002, 0x100003) AM_READ(input_port_1_word_r		)	// P1 + P2
 	AM_RANGE(0x100008, 0x100009) AM_READ(input_port_2_word_r		)	// DSW 1
 	AM_RANGE(0x10000a, 0x10000b) AM_READ(input_port_3_word_r		)	// DSW 2
-	AM_RANGE(0x10003e, 0x10003f) AM_READ(OKIM6295_status_0_lsb_r	)	// OKI Status
+	AM_RANGE(0x10003e, 0x10003f) AM_READ(OKIM6295_status_0_lsb_r	)	// OKI Status (used by powerina)
 	AM_RANGE(0x120000, 0x120fff) AM_READ(MRA16_RAM				)	// Palette
 /**/AM_RANGE(0x130000, 0x130007) AM_READ(MRA16_RAM				)	// VRAM 0 Control
 	AM_RANGE(0x140000, 0x143fff) AM_READ(MRA16_RAM				)	// VRAM 0
@@ -101,9 +105,9 @@ static ADDRESS_MAP_START( powerins_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x100014, 0x100015) AM_WRITE(powerins_flipscreen_w					)	// Flip Screen
 	AM_RANGE(0x100016, 0x100017) AM_WRITE(MWA16_NOP								)	// ? always 1
 	AM_RANGE(0x100018, 0x100019) AM_WRITE(powerins_tilebank_w						)	// Tiles Banking (VRAM 0)
-	AM_RANGE(0x10001e, 0x10001f) AM_WRITE(powerina_soundlatch_w					)	// Sound Latch
+	AM_RANGE(0x10001e, 0x10001f) AM_WRITE(powerins_soundlatch_w					)	// Sound Latch
 	AM_RANGE(0x100030, 0x100031) AM_WRITE(powerins_okibank_w						)	// Sound
-	AM_RANGE(0x10003e, 0x10003f) AM_WRITE(OKIM6295_data_0_lsb_w					)	//
+	AM_RANGE(0x10003e, 0x10003f) AM_WRITE(OKIM6295_data_0_lsb_w					)	// used by powerina
 	AM_RANGE(0x120000, 0x120fff) AM_WRITE(powerins_paletteram16_w) AM_BASE(&paletteram16	)	// Palette
 	AM_RANGE(0x130000, 0x130007) AM_WRITE(MWA16_RAM) AM_BASE(&powerins_vctrl_0			)	// VRAM 0 Control
 	AM_RANGE(0x140000, 0x143fff) AM_WRITE(powerins_vram_0_w) AM_BASE(&powerins_vram_0		)	// VRAM 0
@@ -112,9 +116,9 @@ static ADDRESS_MAP_START( powerins_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180000, 0x18ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16					)	// RAM + Sprites
 ADDRESS_MAP_END
 
-/* There is a hidden test mode screen (set 18ff08 to 4 during test mode)
-   that calls the data written to $10001e "sound code".
-   This is a bootleg, so the original may have a sound CPU */
+/* In powerina there is a hidden test mode screen because it's a bootleg
+   without a sound CPU. Set 18ff08 to 4 during test mode that calls the
+   data written to $10001e "sound code". */
 
 static ADDRESS_MAP_START( readmem_snd, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
@@ -129,24 +133,21 @@ static ADDRESS_MAP_START( writemem_snd, ADDRESS_SPACE_PROGRAM, 8 )
 //  AM_RANGE(0xe001, 0xe001) AM_WRITE(MWA8_NOP) // ?
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readport_snd, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( powerins_io_snd, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-/*  AM_RANGE(0x00, 0x00) AM_READ(YM2203_status_port_0_r)    Not fitted on this board */
-/*  AM_RANGE(0x01, 0x01) AM_READ(YM2203_read_port_0_r)      Not fitted on this board */
-	AM_RANGE(0x00, 0x00) AM_READ(powerina_fake_ym2203_r)
-	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP)
-	AM_RANGE(0x80, 0x80) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0x88, 0x88) AM_READ(OKIM6295_status_1_r)
+	AM_RANGE(0x00, 0x00) AM_READWRITE(YM2203_status_port_0_r, YM2203_control_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(YM2203_read_port_0_r, YM2203_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0x88, 0x88) AM_READWRITE(OKIM6295_status_1_r, OKIM6295_data_1_w)
+	AM_RANGE(0x90, 0x97) AM_WRITE(NMK112_okibank_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport_snd, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( powerinb_io_snd, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-/*  AM_RANGE(0x00, 0x00) AM_WRITE(YM2203_control_port_0_w)  Not fitted on this board */
-/*  AM_RANGE(0x01, 0x01) AM_WRITE(YM2203_write_port_0_w)    Not fitted on this board */
-	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x01, 0x01) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x80, 0x80) AM_WRITE(OKIM6295_data_0_w)
-	AM_RANGE(0x88, 0x88) AM_WRITE(OKIM6295_data_1_w)
+	AM_RANGE(0x00, 0x00) AM_READWRITE(powerinb_fake_ym2203_r, MWA8_NOP)
+	AM_RANGE(0x01, 0x01) AM_NOP
+	AM_RANGE(0x80, 0x80) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0x88, 0x88) AM_READWRITE(OKIM6295_status_1_r, OKIM6295_data_1_w)
 	AM_RANGE(0x90, 0x97) AM_WRITE(NMK112_okibank_w)
 ADDRESS_MAP_END
 
@@ -323,34 +324,31 @@ MACHINE_INIT( powerins )
 	oki_bank = -1;	// samples bank "unitialised"
 }
 
-/**** The Z80 sound code communicates with a YM2203, but the *****/
-/**** current supported bootleg board does not have one fitted ***/
-#if 0
+
 static void irqhandler(int irq)
 {
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
+
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	16000000 / 4,	/* ? */
-	{ YM2203_VOL(100,100) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	0, 0, 0, 0,
+	irqhandler
 };
-#endif
 
 static MACHINE_DRIVER_START( powerins )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* ? (it affects the game's speed!) */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12MHz */
 	MDRV_CPU_PROGRAM_MAP(powerins_readmem,powerins_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_CPU_ADD_TAG("sound", Z80, 6000000) /* 6 MHz */
+	/* audio CPU */
+	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
+	MDRV_CPU_IO_MAP(powerins_io_snd,0)
+
+	MDRV_FRAMES_PER_SECOND(56)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_INIT(powerins)
@@ -368,9 +366,17 @@ static MACHINE_DRIVER_START( powerins )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD_TAG("oki1", OKIM6295, 6000)
+	MDRV_SOUND_ADD_TAG("oki1", OKIM6295, 4000000 / 165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD_TAG("oki2", OKIM6295, 4000000 / 165)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+
+	MDRV_SOUND_ADD_TAG("ym2203", YM2203, 12000000 / 8)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( powerina )
@@ -378,24 +384,32 @@ static MACHINE_DRIVER_START( powerina )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(powerins)
 
-	MDRV_CPU_ADD(Z80, 6000000) /* 6 MHz */
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(readmem_snd,writemem_snd)
-	MDRV_CPU_IO_MAP(readport_snd,writeport_snd)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(120))	// YM2203 rate is at 150??
+	MDRV_FRAMES_PER_SECOND(60)
 
-	MDRV_SOUND_REPLACE("oki1", OKIM6295, 16000000/4/165)
+	MDRV_CPU_REMOVE("sound")
+
+	MDRV_SOUND_REPLACE("oki1", OKIM6295, 6000)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MDRV_SOUND_ADD(OKIM6295, 16000000/4/165)
-	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-
-/*  MDRV_SOUND_ADD(YM2203, ym2203_interface)    Sound code talks to one, but */
-/*                                              it's not fitted on the board */
+	MDRV_SOUND_REMOVE("oki2")
+	MDRV_SOUND_REMOVE("ym2203")
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( powerinb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(powerins)
+
+	MDRV_FRAMES_PER_SECOND(60)
+
+	MDRV_CPU_MODIFY("sound") /* 6 MHz */
+	/* audio CPU */
+	MDRV_CPU_IO_MAP(powerinb_io_snd,0)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(120))	// YM2203 rate is at 150??
+
+	MDRV_SOUND_REMOVE("ym2203")	// Sound code talks to one, but it's not fitted on the board
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -404,7 +418,101 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
+/*
 
+Gouketsuji Ichizoku (Power Instinct Japan)
+Atlus, 1993
+
+PCB Layout
+----------
+
+OS93095 (C) ATLUS 1993 MADE IN JAPAN
+|---------------------------------------------------------------|
+|LA4460  VOL  YM2203 Z80   93095-2  12MHz      AAA64K1P-35(x8)  |
+|4558 YM3014  M6295          6264                               |
+|                  93095-11 |------|          CXK58258BP-35L(x8)|
+|          M6295   93095-10 |NMK112|                            |
+|                  93095-9  |      |                            |
+|   16MHz          93095-8  |------|           |------||------| |
+|    DSW1  DSW2   |------|    22               |NMK009||NMK009| |
+|J                |NMK005|                     |      ||      | |
+|A                |      |                     |------||------| |
+|M                |------|            |------|                  |
+|M                            6116    |NMK008|         93095-19 |
+|A |------|6116               6116    |      |                  |
+|  |NMK111|6116                       |------|         93095-18 |
+|  |      |       |------|                                      |
+|  |------|       |NMK901|    62256    93095-4         93095-17 |
+| 6264            |      |    62256    93095-3J                 |
+| 6264    93095-7 |------|          |------------|     93095-16 |
+||------|                    20     |   68000    |              |
+||NMK111| 93095-6 |---| |---|       |------------|     93095-15 |
+||      |         |NMK| |NMK|                                   |
+||------| 93095-5 |903| |903|                          93095-14 |
+||------|         |---| |---||---| 21                           |
+||NMK111| 93095-1            |NMK|                     93095-13 |
+||      |          6116      |902|    14MHz                     |
+||------|          6116      |---|                     93095-12 |
+|---------------------------------------------------------------|
+Notes:
+      68000 clock - 12.000MHz
+      Z80 clock   - 6.000MHz [12/2]
+      6295 clocks - 4.000MHz [16/4], sample rate = 4000000 / 165
+      YM2203 clock- 1.500MHz [12/8]
+      VSync       - 56Hz
+      HSync       - 15.35kHz
+
+      ROMs -
+            -1, -2   : 27C1001 EPROM
+            -3, -4   : 27C4096 EPROM
+            -5, -6   : 8M 42 pin MASKROM (578200)
+            -7       : 4M 40 pin MASKROM (574200)
+            -8 to -19: 8M 42 pin MASKROM (578200)
+            20       : 82S129 PROM
+            21       : 82S135 PROM
+            22       : 82S123 PROM
+
+*/
+
+ROM_START( powerins )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "93095-3j.u108", 0x00000, 0x80000, CRC(3050a3fb) SHA1(e7e729bf62266e2e78ccd84cf937abb99de18ad5) )
+	ROM_LOAD16_WORD_SWAP( "93095-4.u109",  0x80000, 0x80000, CRC(d3d7a782) SHA1(7846de0ebb09bd9b2534cd451ff9aa5175e60647) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Z80 Code */
+	ROM_LOAD( "93095-2.u90",  0x00000, 0x20000, CRC(4b123cc6) SHA1(ed61d3a2ab20c86b91fd7bafa717be3ce26159be) )
+
+	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "93095-5.u16",  0x000000, 0x100000, CRC(b1371808) SHA1(15fca313314ff2e0caff35841a2fdda97f6235a8) )
+	ROM_LOAD( "93095-6.u17",  0x100000, 0x100000, CRC(29c85d80) SHA1(abd54f9c8bade21ea918a426627199da04193165) )
+	ROM_LOAD( "93095-7.u18",  0x200000, 0x080000, CRC(2dd76149) SHA1(975e4d371fdfbbd9a568da4d4c91ffd3f0ae636e) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "93095-1.u15",  0x000000, 0x020000, CRC(6a579ee0) SHA1(438e87b930e068e0cf7352e614a14049ebde6b8a) )
+
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "93095-12.u116", 0x000000, 0x100000, CRC(35f3c2a3) SHA1(70efebfe248401ba3d766dc0e4bcc2846cd0d9a0) )
+	ROM_LOAD( "93095-13.u117", 0x100000, 0x100000, CRC(1ebd45da) SHA1(99b0ac734890673064b2a4b4b57ff2694e338dea) )
+	ROM_LOAD( "93095-14.u118", 0x200000, 0x100000, CRC(760d871b) SHA1(4887122ad0518c90f08c11a7a6b694f3fd218498) )
+	ROM_LOAD( "93095-15.u119", 0x300000, 0x100000, CRC(d011be88) SHA1(837409a2584abdf22e022b0f06181a600a974cbe) )
+	ROM_LOAD( "93095-16.u120", 0x400000, 0x100000, CRC(a9c16c9c) SHA1(a34e81324c875c2a57f778d1dbdda8da81850a29) )
+	ROM_LOAD( "93095-17.u121", 0x500000, 0x100000, CRC(51b57288) SHA1(821473d51565bc0a8b9a979723ce1307b97e517e) )
+	ROM_LOAD( "93095-18.u122", 0x600000, 0x100000, CRC(b135e3f2) SHA1(339fb4007ca0f379b7554a1c4f711f494a371fb2) )
+	ROM_LOAD( "93095-19.u123", 0x700000, 0x100000, CRC(67695537) SHA1(4c78ce3e36f27d2a6a9e50e8bf896335d4d0958a) )
+
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* 8 bit adpcm (banked) */
+	ROM_LOAD( "93095-10.u48", 0x040000, 0x100000, CRC(329ac6c5) SHA1(e809b94e2623141f5a48995cfa97fe1ead7ab40b) )
+	ROM_LOAD( "93095-11.u49", 0x140000, 0x100000, CRC(75d6097c) SHA1(3c89a7c9b12087e2d969b822419d3e5f98f5cb1d) )
+
+	ROM_REGION( 0x240000, REGION_SOUND2, 0 )	/* 8 bit adpcm (banked) */
+	ROM_LOAD( "93095-8.u46",  0x040000, 0x100000, CRC(f019bedb) SHA1(4b6e10f85671c75b666e547887d403d6e607cec8) )
+	ROM_LOAD( "93095-9.u47",  0x140000, 0x100000, CRC(adc83765) SHA1(9e760443f9de21c1bb7e33eaa1541023fcdc60ab) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )		/* unknown */
+	ROM_LOAD( "22.u81",       0x000000, 0x0020, CRC(67d5ec4b) SHA1(87d32948a0c88277dcdd0eaa035bde40fc7db5fe) )
+	ROM_LOAD( "21.u71",       0x000020, 0x0100, CRC(182cd81f) SHA1(3a76bea81b34ea7ccf56044206721058aa5b03e6) )
+	ROM_LOAD( "20.u54",       0x000100, 0x0100, CRC(38bd0e2f) SHA1(20d311869642cd96bb831fdf4a458e0d872f03eb) )
+ROM_END
 
 /***************************************************************************
 
@@ -436,7 +544,7 @@ Sound processor -  Main processor
 
 ***************************************************************************/
 
-ROM_START( powerins )
+ROM_START( powerina )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_WORD_SWAP( "rom1", 0x000000, 0x080000, CRC(b86c84d6) SHA1(2ec0933130925dfae859ea6abe62a8c92385aee8) )
 	ROM_LOAD16_WORD_SWAP( "rom2", 0x080000, 0x080000, CRC(d3d7a782) SHA1(7846de0ebb09bd9b2534cd451ff9aa5175e60647) )
@@ -510,7 +618,7 @@ Notes:
 
 ***************************************************************************/
 
-ROM_START( powerina )
+ROM_START( powerinb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "2q.bin", 0x000000, 0x80000, CRC(11bf3f2a) SHA1(c840add78da9b19839c667f9bbd77e0a7c560ed7) )
 	ROM_LOAD16_BYTE( "2r.bin", 0x000001, 0x80000, CRC(d8d621be) SHA1(91d501ac661c1ff52c85eee96c455c008a7dad1c) )
@@ -564,7 +672,7 @@ ROM_START( powerina )
 ROM_END
 
 /* set only contained the 2 program roms */
-ROM_START( powerinj )
+ROM_START( powernjb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	/* 32_WORD on a 68k? strange, maybe the bootleg was just hooked up in an unusual way */
 	ROM_LOAD32_WORD( "j21.a3", 0x000000, 0x80000, CRC(59594382) SHA1(de89257f15cbd3051d15d4496e8f0105ae8810e3) )
@@ -618,7 +726,9 @@ ROM_START( powerinj )
 	ROM_LOAD( "82s147.bin", 0x0020, 0x0200, CRC(d7818542) SHA1(e94f8004c804f260874a117d59dfa0637c5d3d73) )
 ROM_END
 
+
 /* all supported sets give a 93.10.20 date */
-GAME( 1993, powerins, 0,		powerins, powerins, 0, ROT0, "Atlus", "Power Instinct (USA, bootleg) (set 1)", 0 )
-GAME( 1993, powerina, powerins, powerina, powerins, 0, ROT0, "Atlus", "Power Instinct (USA, bootleg) (set 2)", 0 )
-GAME( 1993, powerinj, powerins, powerina, powerins, 0, ROT0, "Atlus", "Gouketsuji Ichizoku (Japan, bootleg)", 0 )
+GAME( 1993, powerins, 0,        powerins, powerins, 0, ROT0, "Atlus", "Gouketsuji Ichizoku (Japan)", 0 )
+GAME( 1993, powerina, powerins, powerina, powerins, 0, ROT0, "Atlus", "Power Instinct (USA, bootleg set 1)", 0 )
+GAME( 1993, powerinb, powerins, powerinb, powerins, 0, ROT0, "Atlus", "Power Instinct (USA, bootleg set 2)", 0 )
+GAME( 1993, powernjb, powerins, powerinb, powerins, 0, ROT0, "Atlus", "Gouketsuji Ichizoku (Japan, bootleg)", 0 )

@@ -4761,7 +4761,7 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-    Passing Shot, Sega System 16B
+    Passing Shot (World, 2 Players), Sega System 16B
     CPU: FD1094 No. 317-0080
     ROM Board No. 171-5358
 
@@ -4801,11 +4801,50 @@ ROM_START( passsht )
 	ROM_LOAD( "epr11861.a11", 0x40000, 0x08000, CRC(38b54a71) SHA1(68ec4ef5b115844214ff2213be1ce6678904fbd2) )
 ROM_END
 
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+    Passing Shot (World, 4 Players), Sega System 16B
+    CPU: FD1094 No. 317-0074
+    ROM Board No. 171-5358
+*/
+
+ROM_START( passshta )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "8.4a", 0x000000, 0x10000, CRC(b84dc139) SHA1(6cd65a62bf092d8c4785ad8b2618c77d2cfca8e0) ) // no epr# on chips
+	ROM_LOAD16_BYTE( "5.1a", 0x000001, 0x10000, CRC(effe29df) SHA1(e9274454257fb28519be70cefa04157115c5e29c) ) // no epr# on chips
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0074.key", 0x0000, 0x2000, CRC(71bd232d) SHA1(59825414e373b0fb367d6fbac1e82ad4bd6817f1) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "opr11854.b9",  0x00000, 0x10000, CRC(d31c0b6c) SHA1(610d04988da70c30300cc5614817eda9d2204f39) )
+	ROM_LOAD( "opr11855.b10", 0x10000, 0x10000, CRC(b78762b4) SHA1(d594ef846bd7fed8da91a89906b39c1a2867a1fe) )
+	ROM_LOAD( "opr11856.b11", 0x20000, 0x10000, CRC(ea49f666) SHA1(36ccd32cdcbb7fcc300628bb59c220ec3c324d82) )
+
+	ROM_REGION16_BE( 0x60000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "opr11862.b1",  0x00001, 0x10000, CRC(b6e94727) SHA1(0838e034f1f10d9cd1312c8c94b5c57387c0c271) )
+	ROM_LOAD16_BYTE( "opr11865.b5",  0x00000, 0x10000, CRC(17e8d5d5) SHA1(ac1074b0a705be13c6e3391441e6cfec1d2b3f8a) )
+	ROM_LOAD16_BYTE( "opr11863.b2",  0x20001, 0x10000, CRC(3e670098) SHA1(2cfc83f4294be30cd868738886ac546bd8489962) )
+//  only 1 byte different, probably bad
+//  ROM_LOAD16_BYTE( "17.2b",        0x20001, 0x10000, CRC(66f38725) SHA1(f12076cc5a2ed66cbd7182a3786087121ec65b5c) )
+	ROM_LOAD16_BYTE( "opr11866.b6",  0x20000, 0x10000, CRC(50eb71cc) SHA1(463b4917ca19c7f4ad2c2845caa104d5e4a2dda3) )
+	ROM_LOAD16_BYTE( "opr11864.b3",  0x40001, 0x10000, CRC(05733ca8) SHA1(1dbc7c99450ebe6a9fd8c0244fd3cb38b74984ef) )
+	ROM_LOAD16_BYTE( "opr11867.b7",  0x40000, 0x10000, CRC(81e49697) SHA1(a70fa409e3555ad6c8f28930a7026fdf2deb8c65) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr11857.a7",  0x00000, 0x08000, CRC(789edc06) SHA1(8c89c94e503513c287807d187de78a7fbd75a7cf) )
+	ROM_LOAD( "epr11858.a8",  0x10000, 0x08000, CRC(08ab0018) SHA1(0685f80a7d403208c9cfffea3f2035324f3924fe) )
+	ROM_LOAD( "epr11859.a9",  0x20000, 0x08000, CRC(8673e01b) SHA1(e79183ab30e683fdf61ced2e9dbe010567c324cb) )
+	ROM_LOAD( "epr11860.a10", 0x30000, 0x08000, CRC(10263746) SHA1(1f981fb185c6a9795208ecdcfba36cf892a99ed5) )
+	ROM_LOAD( "epr11861.a11", 0x40000, 0x08000, CRC(38b54a71) SHA1(68ec4ef5b115844214ff2213be1ce6678904fbd2) )
+ROM_END
+
 
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-    Passing Shot (Japan, 4 Player), Sega System 16B
+    Passing Shot (Japan, 4 Players), Sega System 16B
     CPU: FD1094 No. 317-0070
     ROM Board No. 171-5358
 
@@ -5989,7 +6028,8 @@ GAME( 1989, goldnax1, goldnaxe, system16b,      goldnaxe, generic_5797,  ROT0,  
 GAME( 1987, hwchamp,  0,        system16b,      hwchamp,  hwchamp,       ROT0,   "Sega",           "Heavyweight Champ", 0 )
 GAME( 1989, mvp,      0,        system16b,      mvp,      generic_5797,  ROT0,   "Sega",           "MVP (set 2, US, FD1094 317-0143)", 0 )
 GAME( 1989, mvpj,     mvp,      system16b,      mvp,      generic_5704,  ROT0,   "Sega",           "MVP (set 1, Japan, FD1094 317-0142)", 0 )
-GAME( 1988, passsht,  0,        system16b,      passsht,  generic_5358,  ROT270, "Sega",           "Passing Shot (2 Players, FD1094 317-0080)", 0 )
+GAME( 1988, passsht,  0,        system16b,      passsht,  generic_5358,  ROT270, "Sega",           "Passing Shot (World, 2 Players, FD1094 317-0080)", 0 )
+GAME( 1988, passshta, passsht,  system16b,      passshtj, passshtj,      ROT270, "Sega",           "Passing Shot (World, 4 Players, FD1094 317-0074)", 0 )
 GAME( 1988, passshtj, passsht,  system16b,      passshtj, passshtj,      ROT270, "Sega",           "Passing Shot (Japan, 4 Players, FD1094 317-0070)", 0 )
 GAME( 1991, riotcity, 0,        system16b,      riotcity, generic_5704,  ROT0,   "Sega / Westone", "Riot City (Japan)", 0 )
 GAME( 1990, ryukyu,   0,        system16b,      ryukyu,   generic_5704,  ROT0,   "Success / Sega", "RyuKyu (Japan, FD1094 317-5023)", 0 )

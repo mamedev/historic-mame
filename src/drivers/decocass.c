@@ -838,6 +838,9 @@ ROM_START( cexplore )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cexplore.cas", 0x0000, 0x8000, CRC(fae49c66) SHA1(4ae69e2f706fdf30204f0aa1277619395cacc21b) )
+
+	ROM_REGION( 0x4000, REGION_USER3, 0 )	  /* roms from the overlay pcb */
+	ROM_LOAD( "cexplore_overlay_roms", 0x0000, 0x4000, NO_DUMP )
 ROM_END
 
 ROM_START( cprogolf )
@@ -1193,7 +1196,7 @@ GAMEB( 1982, csweetht, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270,
 GAMEB( 1982, cptennis, decocass, decocass, cptennis, decocass, decocass, ROT270, "Data East Corporation", "Pro Tennis (Cassette)", 0 )
 GAMEB( 1982, ctornado, decocass, decocass, ctornado, decocass, decocass, ROT270, "Data East Corporation", "Tornado (Cassette)", 0 )
 GAMEB( 1982, cburnrub, decocass, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 1)", 0 )
-GAMEB( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 2)", 0 )
+GAMEB( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 2)", GAME_NOT_WORKING )
 GAMEB( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "Data East Corporation", "Bump N Jump (Cassette)", 0 )
 GAMEB( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "Data East Corporation", "Burger Time (Cassette)", 0 )
 GAMEB( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 1)", 0 )

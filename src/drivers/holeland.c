@@ -333,16 +333,49 @@ static MACHINE_DRIVER_START( holeland )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
+/*
+
+Crazy Rally
+Tecfri, 1985
+
+PCB Layout
+|----------------------------------------------|
+|                   20MHz                      |
+|  Z80                                         |
+|                                        PAL   |
+|              3.7D      2149                  |
+|  AY-3-8910                                   |
+|  DSW2   DSW1 2.7F      2149         82S147.1F|
+|1                                             |
+|8 AY-3-8910   1.7G       5.5G                 |
+|W           555                               |
+|A                        4.5H                 |
+|Y                                             |
+|     VOL                 2128          9.1I   |
+|         741                                  |
+|    TDA1510                            8.1K   |
+|              2149  2149  PAL                 |
+|   82S129.9L  2149  2149  PAL          7.1L   |
+|   82S129.9M  2149  2149  PAL                 |
+|   82S129.9N  2149  2149               6.1N   |
+|----------------------------------------------|
+Notes:
+      Z80 clock - 5.000MHz [20/4]
+      AY3-8910 clock - 1.25MHz [20/16]
+      VSync - 59Hz
+      HSync - 15.08kHz
+
+*/
 
 static MACHINE_DRIVER_START( crzrally )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)        /* 4 MHz ? */
+	MDRV_CPU_ADD(Z80, 20000000/4)        /* 5 MHz */
 	MDRV_CPU_PROGRAM_MAP(crzrally_readmem,crzrally_writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(59)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -359,11 +392,11 @@ static MACHINE_DRIVER_START( crzrally )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(AY8910, 1818182)
+	MDRV_SOUND_ADD(AY8910, 20000000/16)
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
-	MDRV_SOUND_ADD(AY8910, 1818182)
+	MDRV_SOUND_ADD(AY8910, 20000000/16)
 	MDRV_SOUND_CONFIG(ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
@@ -399,6 +432,7 @@ ROM_START( holeland )
 	ROM_LOAD( "3n",          0x0200, 0x0100, CRC(3d7b3af6) SHA1(0c4f95b26e9fe25a5d8c79f06e7ceab78a07d35c) )  /* Blue component */
 ROM_END
 
+
 ROM_START( crzrally )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "1.7g",        0x0000, 0x4000, CRC(8fe01f86) SHA1(3e08f2cdcd08b25f2bb32d1c4d4caf4ac60c94d6) )
@@ -406,8 +440,8 @@ ROM_START( crzrally )
 	ROM_LOAD( "3.7d",        0x8000, 0x4000, CRC(25c861c3) SHA1(cc9f5f33833279b4430a4b8497cc16a222d31805) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "4.5g",        0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
-	ROM_LOAD( "5.5f",        0x2000, 0x2000, CRC(b34aa904) SHA1(fb4301fd06efc33df9d9f611c3e67a9f7198531d) )
+	ROM_LOAD( "4.5h",        0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
+	ROM_LOAD( "5.5g",        0x2000, 0x2000, CRC(b34aa904) SHA1(fb4301fd06efc33df9d9f611c3e67a9f7198531d) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "6.1f",        0x0000, 0x2000, CRC(a909ff0f) SHA1(9ce37a6bbb09c936551082dea62a791d10d7d346) )
@@ -419,6 +453,34 @@ ROM_START( crzrally )
 	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, CRC(98ff725a) SHA1(553f033212a7c4785c0beb8156400cabcd53cf25) )  /* Red component */
 	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, CRC(d41f5800) SHA1(446046f5694357da876e1307f49584d79c8d9a1a) )  /* Green component */
 	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, CRC(9ed49cb4) SHA1(f54e66e2211d5fb0da9a81e11670367ee4d9b49a) )  /* Blue component */
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) // unknown
+	ROM_LOAD( "82s147.1f",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
+ROM_END
+
+ROM_START( crzralla )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "crzralla_1.7g",        0x0000, 0x4000, CRC(8c6a70aa) SHA1(61b10cb16ddce813a768181483b03bead5b05702) )
+	ROM_LOAD( "crzralla_2.7f",        0x4000, 0x4000, CRC(7fdd4a45) SHA1(194d504adfd83adc52df2df27a18116a3072ea9d) )
+	ROM_LOAD( "crzralla_3.7d",        0x8000, 0x4000, CRC(a25edd17) SHA1(8f883bf3e42b9bf929717f6f13a281f0b83669b1) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "4.5h",                 0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
+	ROM_LOAD( "crzralla_5.5g",        0x2000, 0x2000, CRC(81e9b043) SHA1(effc082a025ce36ab6ba8603a82be1469eee6276) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "6.1f",        0x0000, 0x2000, CRC(a909ff0f) SHA1(9ce37a6bbb09c936551082dea62a791d10d7d346) )
+	ROM_LOAD( "7.1l",        0x2000, 0x2000, CRC(38fb0a16) SHA1(a17ec5c9acc5c244ffc715ee2376fbf8209e72fd) )
+	ROM_LOAD( "8.1k",        0x4000, 0x2000, CRC(660aa0f0) SHA1(1bb85851349f772f21db9629b0086b2460614b9d) )
+	ROM_LOAD( "9.1i",        0x6000, 0x2000, CRC(37d0790e) SHA1(877335a06d1842264daff9eb46d6ea1ce8249c29) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, CRC(98ff725a) SHA1(553f033212a7c4785c0beb8156400cabcd53cf25) )  /* Red component */
+	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, CRC(d41f5800) SHA1(446046f5694357da876e1307f49584d79c8d9a1a) )  /* Green component */
+	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, CRC(9ed49cb4) SHA1(f54e66e2211d5fb0da9a81e11670367ee4d9b49a) )  /* Blue component */
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) // unknown
+	ROM_LOAD( "82s147.1f",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
 ROM_END
 
 ROM_START( crzrallg )
@@ -428,8 +490,8 @@ ROM_START( crzrallg )
 	ROM_LOAD( "14.7d",       0x8000, 0x4000, CRC(4c0351ba) SHA1(0ed04825d3affe0477bb963f1c96ff223e4bcf50) )
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
-	ROM_LOAD( "4.5g",        0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
-	ROM_LOAD( "16.5f",       0x2000, 0x2000, CRC(94289f9e) SHA1(8da00814d8f769de124bc09f4c1ee851c99cec0e) )
+	ROM_LOAD( "4.5h",        0x0000, 0x2000, CRC(29dece8b) SHA1(d8a0cfd1259d49f59f9751a2db99b46b9da6a87d) )
+	ROM_LOAD( "16.5g",       0x2000, 0x2000, CRC(94289f9e) SHA1(8da00814d8f769de124bc09f4c1ee851c99cec0e) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "17.1n",       0x0000, 0x2000, CRC(985ed5c8) SHA1(ee91a6701a8b8bb24d6fa08596deff95816e759e) )
@@ -441,9 +503,13 @@ ROM_START( crzrallg )
 	ROM_LOAD( "82s129.9n",   0x0000, 0x0100, CRC(98ff725a) SHA1(553f033212a7c4785c0beb8156400cabcd53cf25) )  /* Red component */
 	ROM_LOAD( "82s129.9m",   0x0100, 0x0100, CRC(d41f5800) SHA1(446046f5694357da876e1307f49584d79c8d9a1a) )  /* Green component */
 	ROM_LOAD( "82s129.9l",   0x0200, 0x0100, CRC(9ed49cb4) SHA1(f54e66e2211d5fb0da9a81e11670367ee4d9b49a) )  /* Blue component */
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) // unknown
+	ROM_LOAD( "82s147.1f",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
 ROM_END
 
 
 GAME( 1984, holeland, 0,        holeland, holeland, 0, ROT0,   "Tecfri", "Hole Land", GAME_IMPERFECT_GRAPHICS )
-GAME( 1985, crzrally, 0,        crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally", GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, crzrally, 0,        crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally (set 1)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, crzralla, crzrally, crzrally, crzrally, 0, ROT270, "Tecfri", "Crazy Rally (set 2)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1985, crzrallg, crzrally, crzrally, crzrally, 0, ROT270, "Tecfri (Gecas license)", "Crazy Rally (Gecas license)", GAME_IMPERFECT_GRAPHICS )

@@ -155,12 +155,6 @@ static READ8_HANDLER( starshp1_port_2_r )
 }
 
 
-static READ8_HANDLER( starshp1_zeropage_r )
-{
-	return memory_region(REGION_CPU1)[offset & 0xff];
-}
-
-
 static WRITE8_HANDLER( starshp1_analog_in_w )
 {
 	starshp1_analog_in_select = offset & 3;
@@ -230,15 +224,8 @@ static WRITE8_HANDLER( starshp1_misc_w )
 }
 
 
-static WRITE8_HANDLER( starshp1_zeropage_w )
-{
-	memory_region(REGION_CPU1)[offset & 0xff] = data;
-}
-
-
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0100, 0x01ff) AM_READ(starshp1_zeropage_r)
+	AM_RANGE(0x0000, 0x00ff) AM_READ(MRA8_RAM) AM_MIRROR(0x100)
 	AM_RANGE(0x2c00, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
 	AM_RANGE(0xb000, 0xb000) AM_READ(starshp1_port_1_r)
@@ -248,8 +235,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0100, 0x01ff) AM_WRITE(starshp1_zeropage_w)
+	AM_RANGE(0x0000, 0x00ff) AM_WRITE(MWA8_RAM) AM_MIRROR(0x100)
 	AM_RANGE(0x2c00, 0x3fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc300, 0xc3ff) AM_WRITE(starshp1_sspic_w) /* spaceship picture */
 	AM_RANGE(0xc400, 0xc4ff) AM_WRITE(starshp1_ssadd_w) /* spaceship address */

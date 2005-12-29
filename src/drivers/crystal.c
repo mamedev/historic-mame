@@ -537,9 +537,6 @@ static void PatchReset(void)
 	//I'll add some code there that makes the game stay in a loop
 	//reading the flip register so the idle skip works
 
-	const UINT8 Patch[]={	0x01,0xEA,0xC0,0x40,0x0A,0x40,0x06,0xE9,
-				0x20,0x2A,0xC0,0x40,0x0A,0x40,0x06,0xE9,
-				0x20,0x3A,0xD0,0xA1,0xFA,0xD4,0xF4,0xDE};
 /*
 Loop1:
     LDI 1,%R2
@@ -555,7 +552,25 @@ loop:
     JMP Loop1
 */
 
+#if 1
+	const UINT32 Patch[] =
+	{
+		0x40c0ea01,
+		0xe906400a,
+		0x40c02a20,
+		0xe906400a,
+		0xa1d03a20,
+		0xdef4d4fa
+	};
+
 	memcpy(ResetPatch,Patch,sizeof(Patch));
+#else
+	const UINT8 Patch[]={	0x01,0xEA,0xC0,0x40,0x0A,0x40,0x06,0xE9,
+				0x20,0x2A,0xC0,0x40,0x0A,0x40,0x06,0xE9,
+				0x20,0x3A,0xD0,0xA1,0xFA,0xD4,0xF4,0xDE};
+
+	memcpy(ResetPatch,Patch,sizeof(Patch));
+#endif
 }
 
 static MACHINE_INIT(crystal)
@@ -844,7 +859,7 @@ ROM_START( crysking )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) // bios
 	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9) SHA1(b6f6dda58d9c82273f9422c1bd623411e58982cb))
 
-	ROM_REGION( 0x3000000, REGION_USER1, 0 ) // Flash
+	ROM_REGION32_LE( 0x3000000, REGION_USER1, 0 ) // Flash
 	ROM_LOAD("bcsv0004f01.u1",  0x0000000, 0x1000000, CRC(8FEFF120) SHA1(2ea42fa893bff845b5b855e2556789f8354e9066) )
 	ROM_LOAD("bcsv0004f02.u2",  0x1000000, 0x1000000, CRC(0E799845) SHA1(419674ce043cb1efb18303f4cb7fdbbae642ee39) )
 	ROM_LOAD("bcsv0004f03.u3",  0x2000000, 0x1000000, CRC(659E2D17) SHA1(342c98f3f695ef4dea8b533612451c4d2fb58809) )
@@ -857,7 +872,7 @@ ROM_START( evosocc )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) // bios
 	ROM_LOAD("mx27l1000.u14",  0x000000, 0x020000, CRC(BEFF39A9) SHA1(b6f6dda58d9c82273f9422c1bd623411e58982cb))
 
-	ROM_REGION( 0x3000000, REGION_USER1, 0 ) // Flash
+	ROM_REGION32_LE( 0x3000000, REGION_USER1, 0 ) // Flash
 	ROM_LOAD("bcsv0001u01",  0x0000000, 0x1000000, CRC(2581A0EA) SHA1(ee483ac60a3ed00a21cb515974cec4af19916a7d) )
 	ROM_LOAD("bcsv0001u02",  0x1000000, 0x1000000, CRC(47EF1794) SHA1(f573706c17d1342b9b7aed9b40b8b648f0bf58db) )
 	ROM_LOAD("bcsv0001u03",  0x2000000, 0x1000000, CRC(F396A2EC) SHA1(f305eb10856fb5d4c229a6b09d6a2fb21b24ce66) )
@@ -873,18 +888,17 @@ DRIVER_INIT(crysking)
 
 	//patch the data feed by the protection
 
-	Rom[0x7bb6/2]=0xDF01;
-	Rom[0x7bb8/2]=0x9C00;
+	Rom[WORD_XOR_LE(0x7bb6/2)]=0xDF01;
+	Rom[WORD_XOR_LE(0x7bb8/2)]=0x9C00;
 
-	Rom[0x976a/2]=0x901C;
-	Rom[0x976c/2]=0x9001;
+	Rom[WORD_XOR_LE(0x976a/2)]=0x901C;
+	Rom[WORD_XOR_LE(0x976c/2)]=0x9001;
 
-	Rom[0x8096/2]=0x90FC;
-	Rom[0x8098/2]=0x9001;
+	Rom[WORD_XOR_LE(0x8096/2)]=0x90FC;
+	Rom[WORD_XOR_LE(0x8098/2)]=0x9001;
 
-	Rom[0x8a52/2]=0x4000;	//NOP
-	Rom[0x8a54/2]=0x403c;	//NOP
-
+	Rom[WORD_XOR_LE(0x8a52/2)]=0x4000;	//NOP
+	Rom[WORD_XOR_LE(0x8a54/2)]=0x403c;	//NOP
 }
 
 DRIVER_INIT(evosocc)
@@ -892,17 +906,17 @@ DRIVER_INIT(evosocc)
 	UINT16 *Rom=(UINT16*) memory_region(REGION_USER1);
 	Rom+=0x1000000*2/2;
 
-	Rom[0x97388E/2]=0x90FC;	//PUSH R2..R7
-	Rom[0x973890/2]=0x9001;	//PUSH R0
+	Rom[WORD_XOR_LE(0x97388E/2)]=0x90FC;	//PUSH R2..R7
+	Rom[WORD_XOR_LE(0x973890/2)]=0x9001;	//PUSH R0
 
-	Rom[0x971058/2]=0x907C;	//PUSH R2..R6
-	Rom[0x971060/2]=0x9001; //PUSH R0
+	Rom[WORD_XOR_LE(0x971058/2)]=0x907C;	//PUSH R2..R6
+	Rom[WORD_XOR_LE(0x971060/2)]=0x9001; //PUSH R0
 
-	Rom[0x978036/2]=0x900C;	//PUSH R2-R3
-	Rom[0x978038/2]=0x8303;	//LD    (%SP,0xC),R3
+	Rom[WORD_XOR_LE(0x978036/2)]=0x900C;	//PUSH R2-R3
+	Rom[WORD_XOR_LE(0x978038/2)]=0x8303;	//LD    (%SP,0xC),R3
 
-	Rom[0x974ED0/2]=0x90FC;	//PUSH R7-R6-R5-R4-R3-R2
-	Rom[0x974ED2/2]=0x9001;	//PUSH R0
+	Rom[WORD_XOR_LE(0x974ED0/2)]=0x90FC;	//PUSH R7-R6-R5-R4-R3-R2
+	Rom[WORD_XOR_LE(0x974ED2/2)]=0x9001;	//PUSH R0
 }
 
 GAME( 2001, crysbios,		   0,  crystal, crystal,        0, ROT0, "Brezzasoft", "Crystal System BIOS", NOT_A_DRIVER )

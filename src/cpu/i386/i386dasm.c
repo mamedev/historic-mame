@@ -1956,9 +1956,9 @@ static void decode_opcode(char *s, const I386_OPCODE *op, UINT8 op1)
 				{
 					p++;
 				};
-				s += sprintf( s, "%s", &op->mnemonic[p+1] );
+				s += sprintf( s, "%-8s", &op->mnemonic[p+1] );
 			} else {
-				s += sprintf( s, "%s", op->mnemonic );
+				s += sprintf( s, "%-8s", op->mnemonic );
 			}
 			goto handle_params;
 

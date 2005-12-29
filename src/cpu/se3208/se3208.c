@@ -1786,7 +1786,7 @@ static int SE3208_Run(int cycles)
 	SE3208_ICount=cycles;
 	do
 	{
-		UINT16 Opcode=cpu_readop16(Context.PC);
+		UINT16 Opcode=cpu_readop16(WORD_XOR_LE(Context.PC));
 #ifdef MAME_DEBUG
 		CALL_MAME_DEBUG;
 #endif

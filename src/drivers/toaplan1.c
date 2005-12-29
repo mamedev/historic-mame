@@ -1181,6 +1181,81 @@ INPUT_PORTS_START( outzone )
 	TOAPLAN1_SYSTEM_INPUTS
 
 	PORT_START		/* Territory Jumper Block */
+	PORT_DIPNAME( 0x0f, 0x02, "Territory" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
+	PORT_DIPSETTING(    0x01, "US" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
+	PORT_DIPSETTING(    0x03, "Hong Kong" )
+	PORT_DIPSETTING(    0x04, "Korea" )
+	PORT_DIPSETTING(    0x05, "Taiwan" )
+	PORT_DIPSETTING(    0x06, "Taiwan (Spacy License)" )
+	PORT_DIPSETTING(    0x07, "US (Romstar License)" )
+	PORT_DIPSETTING(    0x08, "Hong Kong (Honest Trading License)" )
+//  PORT_DIPSETTING(    0x09, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0a, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0b, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0d, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0e, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0f, DEF_STR( Japan ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( outzonea )
+	TOAPLAN1_VBLANK_INPUT
+
+	TOAPLAN1_PLAYER_INPUT( 1, IPT_BUTTON3, )
+
+	TOAPLAN1_PLAYER_INPUT( 2, IPT_BUTTON3, )
+
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START		/* DSW B */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "Every 300K" )
+	PORT_DIPSETTING(    0x04, "200K and 500K" )
+	PORT_DIPSETTING(    0x08, "300K only" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Invulnerability" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	TOAPLAN1_SYSTEM_INPUTS
+
+	PORT_START		/* Territory Jumper Block */
 	PORT_DIPNAME( 0x07, 0x02, "Territory" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
 	PORT_DIPSETTING(    0x01, "US" )
@@ -1188,9 +1263,86 @@ INPUT_PORTS_START( outzone )
 	PORT_DIPSETTING(    0x03, "Hong Kong" )
 	PORT_DIPSETTING(    0x04, "Korea" )
 	PORT_DIPSETTING(    0x05, "Taiwan" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x06, "No Warning Screen" )
+	PORT_DIPSETTING(    0x07, "No Warning Screen" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) ) // doesn't seem to matter on this set
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( outzoneb )
+	TOAPLAN1_VBLANK_INPUT
+
+	TOAPLAN1_PLAYER_INPUT( 1, IPT_BUTTON3, )
+
+	TOAPLAN1_PLAYER_INPUT( 2, IPT_BUTTON3, )
+
+	PORT_START		/* DSW A */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START		/* DSW B */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "Every 300K" )
+	PORT_DIPSETTING(    0x04, "200K and 500K" )
+	PORT_DIPSETTING(    0x08, "300K only" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Invulnerability" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	TOAPLAN1_SYSTEM_INPUTS
+
+	PORT_START		/* Territory Jumper Block */
+	PORT_DIPNAME( 0x0f, 0x02, "Territory" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Europe ) )
+	PORT_DIPSETTING(    0x01, "US" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
+	PORT_DIPSETTING(    0x03, "Hong Kong" )
+	PORT_DIPSETTING(    0x04, "Korea" )
+	PORT_DIPSETTING(    0x05, "Taiwan" )
+	PORT_DIPSETTING(    0x06, "Taiwan (Spacy Co License)" )
+	PORT_DIPSETTING(    0x07, "US (Romstar License)" )
+	PORT_DIPSETTING(    0x08, "Hong Kong & China (Honest Trading License)" )
+//  PORT_DIPSETTING(    0x09, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0a, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0b, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0c, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0d, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0e, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x0f, DEF_STR( Japan ) )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -2047,6 +2199,7 @@ ROM_START( outzone )
 	ROM_LOAD( "tp018_11.bpr",  0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
 ROM_END
 
+/* is this a prototype? */
 ROM_START( outzonea )					/* From board serial number 2122 */
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "rom7.bin",  0x000000, 0x20000, CRC(936e25d8) SHA1(ffb7990ea1539d868a9ad2fb711b0febd90f098d) )
@@ -2069,6 +2222,31 @@ ROM_START( outzonea )					/* From board serial number 2122 */
 	ROM_LOAD( "tp018_10.bpr",  0x00, 0x20, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )	/* sprite attribute (flip/position) ?? */
 	ROM_LOAD( "tp018_11.bpr",  0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
 ROM_END
+
+/* from a bootleg board, but probably an alt original set with different licenses */
+ROM_START( outzoneb )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "prg2.bin",  0x000001, 0x20000, CRC(9704db16) SHA1(12b43a6961a7f63f29563eb77aaacb70d3c368dd) )
+	ROM_LOAD16_BYTE( "prg1.bin",  0x000000, 0x20000, CRC(127a38d7) SHA1(d7f1ed91ff7d4de9e8215aa3b5cb65693145e433) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
+	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, CRC(73d8e235) SHA1(f37ad497259a467cdf2ec8b3e6e7d3e873087e6c) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, CRC(c64ec7b6) SHA1(e73b51c3713c2ea7a572a02531c15d1261ddeaa0) )
+	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, CRC(64b6c5ac) SHA1(07fa20115f603445c0d51af3465c0471c09d76b1) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom2.bin",  0x00000, 0x20000, CRC(6bb72d16) SHA1(a127b10d9c255542bd09fcb5df057c12fd28c0d1) )
+	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, CRC(0934782d) SHA1(e4a775ead23227d7d6e76aea23aa3103b511d031) )
+	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, CRC(ec903c07) SHA1(75906f31200877fc8f6e78c2606ad5be49778165) )
+	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, CRC(50cbf1a8) SHA1(cfab1504746654b4a61912155e9aeca746c65321) )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp018_10.bpr",  0x00, 0x20, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp018_11.bpr",  0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
+ROM_END
+
 
 ROM_START( vimana )			/* From board serial number 1547.04 (July '94) */
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
@@ -2173,7 +2351,8 @@ GAME( 1990, fireshrk, 0,        samesame, fireshrk, toaplan1, ROT270, "Toaplan",
 GAME( 1989, samesame, fireshrk, samesame, samesame, toaplan1, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
 GAME( 1989, samesam2, fireshrk, samesame, samesam2, toaplan1, ROT270, "Toaplan", "Same! Same! Same! (2P Ver.)", GAME_NO_SOUND )
 GAME( 1990, outzone,  0,        outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 1)", 0 )
-GAME( 1990, outzonea, outzone,  outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 2)", 0 )
+GAME( 1990, outzonea, outzone,  outzone,  outzonea, toaplan1, ROT270, "Toaplan", "Out Zone (set 2, prototype?)", 0 ) // early revision at least
+GAME( 1990, outzoneb, outzone,  outzone,  outzoneb, toaplan1, ROT270, "Toaplan", "Out Zone (set 3)", 0 )
 GAME( 1991, vimana,   0,        vimana,   vimana,   vimana,   ROT270, "Toaplan", "Vimana", GAME_NO_SOUND )
 GAME( 1991, vimana1,  vimana,   vimana,   vimana,   vimana,   ROT270, "Toaplan", "Vimana (old set)", GAME_NO_SOUND )
 GAME( 1991, vimanan,  vimana,   vimana,   vimanan,  vimana,   ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )

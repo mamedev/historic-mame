@@ -6,6 +6,74 @@
 **      Written by Aaron Giles
 **
 **
+**###################################################################################################
+**
+**
+**  For ADSP-2101, ADSP-2111
+**  ------------------------
+**
+**      MMAP = 0                                        MMAP = 1
+**
+**      Automatic boot loading                          No auto boot loading
+**
+**      Program Space:                                  Program Space:
+**          0000-07ff = 2k Internal RAM (booted)            0000-37ff = 14k External access
+**          0800-3fff = 14k External access                 3800-3fff = 2k Internal RAM
+**
+**      Data Space:                                     Data Space:
+**          0000-03ff = 1k External DWAIT0                  0000-03ff = 1k External DWAIT0
+**          0400-07ff = 1k External DWAIT1                  0400-07ff = 1k External DWAIT1
+**          0800-2fff = 10k External DWAIT2                 0800-2fff = 10k External DWAIT2
+**          3000-33ff = 1k External DWAIT3                  3000-33ff = 1k External DWAIT3
+**          3400-37ff = 1k External DWAIT4                  3400-37ff = 1k External DWAIT4
+**          3800-3bff = 1k Internal RAM                     3800-3bff = 1k Internal RAM
+**          3c00-3fff = 1k Internal Control regs            3c00-3fff = 1k Internal Control regs
+**
+**
+**  For ADSP-2105, ADSP-2115, ADSP-2104
+**  -----------------------------------
+**
+**      MMAP = 0                                        MMAP = 1
+**
+**      Automatic boot loading                          No auto boot loading
+**
+**      Program Space:                                  Program Space:
+**          0000-03ff = 1k Internal RAM (booted)            0000-37ff = 14k External access
+**          0400-07ff = 1k Reserved                         3800-3bff = 1k Internal RAM
+**          0800-3fff = 14k External access                 3c00-3fff = 1k Reserved
+**
+**      Data Space:                                     Data Space:
+**          0000-03ff = 1k External DWAIT0                  0000-03ff = 1k External DWAIT0
+**          0400-07ff = 1k External DWAIT1                  0400-07ff = 1k External DWAIT1
+**          0800-2fff = 10k External DWAIT2                 0800-2fff = 10k External DWAIT2
+**          3000-33ff = 1k External DWAIT3                  3000-33ff = 1k External DWAIT3
+**          3400-37ff = 1k External DWAIT4                  3400-37ff = 1k External DWAIT4
+**          3800-39ff = 512 Internal RAM                    3800-39ff = 512 Internal RAM
+**          3a00-3bff = 512 Reserved                        3a00-3bff = 512 Reserved
+**          3c00-3fff = 1k Internal Control regs            3c00-3fff = 1k Internal Control regs
+**
+**
+**  For ADSP-2181
+**  -------------
+**
+**      MMAP = 0                                        MMAP = 1
+**
+**      Program Space:                                  Program Space:
+**          0000-1fff = 8k Internal RAM                     0000-1fff = 8k External access
+**          2000-3fff = 8k Internal RAM or Overlay          2000-3fff = 8k Internal
+**
+**      Data Space:                                     Data Space:
+**          0000-1fff = 8k Internal RAM or Overlay          0000-1fff = 8k Internal RAM or Overlay
+**          2000-3fdf = 8k-32 Internal RAM                  2000-3fdf = 8k-32 Internal RAM
+**          3fe0-3fff = 32 Internal Control regs            3fe0-3fff = 32 Internal Control regs
+**
+**      I/O Space:                                      I/O Space:
+**          0000-01ff = 512 External IOWAIT0                0000-01ff = 512 External IOWAIT0
+**          0200-03ff = 512 External IOWAIT1                0200-03ff = 512 External IOWAIT1
+**          0400-05ff = 512 External IOWAIT2                0400-05ff = 512 External IOWAIT2
+**          0600-07ff = 512 External IOWAIT3                0600-07ff = 512 External IOWAIT3
+**
+**
 **#################################################################################################*/
 
 #include <stdio.h>
@@ -134,7 +202,7 @@ typedef struct
 	UINT32		loop_stack[LOOP_STACK_DEPTH];
 	UINT32		cntr_stack[CNTR_STACK_DEPTH];
 	UINT32		pc_stack[PC_STACK_DEPTH];
-	UINT8		stat_stack[STAT_STACK_DEPTH][3];
+	UINT16		stat_stack[STAT_STACK_DEPTH][3];
 	INT32		pc_sp;
 	INT32		cntr_sp;
 	INT32		stat_sp;
@@ -204,43 +272,39 @@ static void check_irqs(void);
 **  MEMORY ACCESSORS
 **#################################################################################################*/
 
-INLINE UINT32 RWORD_DATA(UINT32 addr)
+INLINE UINT16 RWORD_DATA(UINT32 addr)
 {
-	addr <<= 1;
-	return ADSP2100_RDMEM_WORD(addr);
+	return data_read_word_16le(addr << 1);
 }
 
-INLINE void WWORD_DATA(UINT32 addr, UINT32 data)
+INLINE void WWORD_DATA(UINT32 addr, UINT16 data)
 {
-	addr <<= 1;
-	ADSP2100_WRMEM_WORD(addr, data);
+	data_write_word_16le(addr << 1, data);
 }
 
-INLINE UINT32 RWORD_IO(UINT32 addr)
+INLINE UINT16 RWORD_IO(UINT32 addr)
 {
-	addr <<= 1;
-	return io_read_word_16le(addr);
+	return io_read_word_16le(addr << 1);
 }
 
-INLINE void WWORD_IO(UINT32 addr, UINT32 data)
+INLINE void WWORD_IO(UINT32 addr, UINT16 data)
 {
-	addr <<= 1;
-	io_write_word_16le(addr, data);
+	io_write_word_16le(addr << 1, data);
 }
 
 INLINE UINT32 RWORD_PGM(UINT32 addr)
 {
-	addr <<= 2;
-	return cpu_readop32(addr);
+	return program_read_dword_32le(addr << 2);
 }
 
 INLINE void WWORD_PGM(UINT32 addr, UINT32 data)
 {
-	addr <<= 2;
-	ADSP2100_WRPGM(cpu_opptr(addr), data);
+	program_write_dword_32le(addr << 2, data & 0xffffff);
 }
 
-#define ROPCODE() RWORD_PGM(adsp2100.pc)
+#define ROPCODE() cpu_readop32(adsp2100.pc << 2)
+
+#define CHANGEPC() change_pc(adsp2100.pc << 2)
 
 
 /*###################################################################################################
@@ -329,6 +393,7 @@ INLINE int adsp2100_generate_irq(int which)
 
 	/* vector to location & stop idling */
 	adsp2100.pc = which;
+	CHANGEPC();
 	adsp2100.idle = 0;
 
 	/* mask other interrupts based on the nesting bit */
@@ -354,6 +419,7 @@ INLINE int adsp2101_generate_irq(int which, int indx)
 
 	/* vector to location & stop idling */
 	adsp2100.pc = 0x04 + indx * 4;
+	CHANGEPC();
 	adsp2100.idle = 0;
 
 	/* mask other interrupts based on the nesting bit */
@@ -379,6 +445,7 @@ INLINE int adsp2181_generate_irq(int which, int indx)
 
 	/* vector to location & stop idling */
 	adsp2100.pc = 0x04 + indx * 4;
+	CHANGEPC();
 	adsp2100.idle = 0;
 
 	/* mask other interrupts based on the nesting bit */
@@ -525,7 +592,10 @@ static void adsp2100_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
+	{
 		adsp2100 = *(adsp2100_Regs *)src;
+		CHANGEPC();
+	}
 
 	/* reset the chip type */
 	set_core_2100();
@@ -544,11 +614,13 @@ static void adsp2100_init(void)
 {
 	/* create the tables */
 	if (!create_tables())
-		exit(-1);
+		osd_die("creating adsp2100 tables failed\n");
 }
 
 static void adsp2100_reset(void *param)
 {
+	int irq;
+
 	/* ensure that zero is zero */
 	adsp2100.core.zero.u = adsp2100.alt.zero.u = 0;
 
@@ -583,6 +655,7 @@ static void adsp2100_reset(void *param)
 			chip_type = CHIP_TYPE_ADSP2100;
 			break;
 	}
+	CHANGEPC();
 
 	adsp2100.ppc = -1;
 	adsp2100.loop = 0xffff;
@@ -609,14 +682,8 @@ static void adsp2100_reset(void *param)
 
 	/* reset interrupts */
 	adsp2100.imask = 0;
-	adsp2100.irq_state[0] = CLEAR_LINE;
-	adsp2100.irq_state[1] = CLEAR_LINE;
-	adsp2100.irq_state[2] = CLEAR_LINE;
-	adsp2100.irq_state[3] = CLEAR_LINE;
-	adsp2100.irq_latch[0] = CLEAR_LINE;
-	adsp2100.irq_latch[1] = CLEAR_LINE;
-	adsp2100.irq_latch[2] = CLEAR_LINE;
-	adsp2100.irq_latch[3] = CLEAR_LINE;
+	for (irq = 0; irq < 8; irq++)
+		adsp2100.irq_state[irq] = adsp2100.irq_latch[irq] = CLEAR_LINE;
 	adsp2100.interrupt_cycles = 0;
 }
 
@@ -761,6 +828,8 @@ static int adsp2100_execute(int cycles)
 	adsp2100_icount -= adsp2100.interrupt_cycles;
 	adsp2100.interrupt_cycles = 0;
 
+	CHANGEPC();
+
 	/* core execution loop */
 	do
 	{
@@ -867,6 +936,7 @@ static int adsp2100_execute(int cycles)
 						if (op & 0x000001)
 							pc_stack_push();
 						adsp2100.pc = ((op >> 4) & 0x0fff) | ((op << 10) & 0x3000);
+						CHANGEPC();
 					}
 				}
 				else
@@ -876,6 +946,7 @@ static int adsp2100_execute(int cycles)
 						if (op & 0x000001)
 							pc_stack_push();
 						adsp2100.pc = ((op >> 4) & 0x0fff) | ((op << 10) & 0x3000);
+						CHANGEPC();
 					}
 				}
 				break;
@@ -960,6 +1031,7 @@ static int adsp2100_execute(int cycles)
 					if (op & 0x000010)
 						pc_stack_push();
 					adsp2100.pc = adsp2100.i[4 + ((op >> 6) & 3)] & 0x3fff;
+					CHANGEPC();
 				}
 				break;
 			case 0x0c:
@@ -1041,9 +1113,13 @@ static int adsp2100_execute(int cycles)
 				break;
 			case 0x18: case 0x19: case 0x1a: case 0x1b:
 				/* 000110xx xxxxxxxx xxxxxxxx  conditional jump (immediate addr) */
-				if (CONDITION(op & 15)) adsp2100.pc = (op >> 4) & 0x3fff;
+				if (CONDITION(op & 15))
+				{
+					adsp2100.pc = (op >> 4) & 0x3fff;
+					CHANGEPC();
+				}
 				/* check for a busy loop */
-				if ( adsp2100.pc == adsp2100.ppc )
+				if (adsp2100.pc == adsp2100.ppc)
 					adsp2100_icount = 0;
 				break;
 			case 0x1c: case 0x1d: case 0x1e: case 0x1f:
@@ -1052,6 +1128,7 @@ static int adsp2100_execute(int cycles)
 				{
 					pc_stack_push();
 					adsp2100.pc = (op >> 4) & 0x3fff;
+					CHANGEPC();
 				}
 				break;
 			case 0x20: case 0x21:
@@ -1923,7 +2000,7 @@ static void adsp21xx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + ADSP2100_STATSP: 	sprintf(info->s = cpuintrf_temp_str(), "STSP:%01X   ", adsp2100.stat_sp); break;
 		case CPUINFO_STR_REGISTER + ADSP2100_LOOPSP: 	sprintf(info->s = cpuintrf_temp_str(), "LPSP:%01X   ", adsp2100.loop_sp); break;
 
-		case CPUINFO_STR_REGISTER + ADSP2100_IMASK: 	sprintf(info->s = cpuintrf_temp_str(), "IMSK:%02X  ", adsp2100.imask); break;
+		case CPUINFO_STR_REGISTER + ADSP2100_IMASK: 	sprintf(info->s = cpuintrf_temp_str(), "IMSK:%03X  ", adsp2100.imask); break;
 		case CPUINFO_STR_REGISTER + ADSP2100_ICNTL: 	sprintf(info->s = cpuintrf_temp_str(), "ICTL:%02X  ", adsp2100.icntl); break;
 		case CPUINFO_STR_REGISTER + ADSP2100_IRQSTATE0:	sprintf(info->s = cpuintrf_temp_str(), "IRQ0:%X   ", adsp2100.irq_state[0]); break;
 		case CPUINFO_STR_REGISTER + ADSP2100_IRQSTATE1:	sprintf(info->s = cpuintrf_temp_str(), "IRQ1:%X   ", adsp2100.irq_state[1]); break;
@@ -2001,7 +2078,10 @@ static void adsp2101_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
+	{
 		adsp2100 = *(adsp2100_Regs *)src;
+		CHANGEPC();
+	}
 
 	/* reset the chip type */
 	set_core_2101();
@@ -2077,7 +2157,10 @@ static void adsp2104_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
+	{
 		adsp2100 = *(adsp2100_Regs *)src;
+		CHANGEPC();
+	}
 
 	/* reset the chip type */
 	set_core_2104();
@@ -2094,7 +2177,7 @@ void adsp2104_load_boot_data(UINT8 *srcdata, UINT32 *dstdata)
 	for (i = 0; i < pagelen; i++)
 	{
 		UINT32 opcode = (srcdata[(i*4+0)] << 16) | (srcdata[(i*4+1)] << 8) | srcdata[(i*4+2)];
-		ADSP2100_WRPGM(&dstdata[i], opcode);
+		dstdata[i] = opcode;
 	}
 }
 
@@ -2165,7 +2248,10 @@ static void adsp2105_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
+	{
 		adsp2100 = *(adsp2100_Regs *)src;
+		CHANGEPC();
+	}
 
 	/* reset the chip type */
 	set_core_2105();
@@ -2242,7 +2328,10 @@ static void adsp2115_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
+	{
 		adsp2100 = *(adsp2100_Regs *)src;
+		CHANGEPC();
+	}
 
 	/* reset the chip type */
 	set_core_2115();
@@ -2323,7 +2412,10 @@ static void adsp2181_set_context(void *src)
 {
 	/* copy the context */
 	if (src)
+	{
 		adsp2100 = *(adsp2100_Regs *)src;
+		CHANGEPC();
+	}
 
 	/* reset the chip type */
 	set_core_2181();
@@ -2393,14 +2485,17 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info)
 
 void adsp2181_idma_addr_w(UINT16 data)
 {
-	logerror("IDMA_addr = %04X\n", data);
 	adsp2100.idma_addr = data;
 	adsp2100.idma_offs = 0;
 }
 
+UINT16 adsp2181_idma_addr_r(void)
+{
+	return adsp2100.idma_addr;
+}
+
 void adsp2181_idma_data_w(UINT16 data)
 {
-	logerror("IDMA_data(%04X) = %04X\n", adsp2100.idma_addr, data);
 	/* program memory? */
 	if (!(adsp2100.idma_addr & 0x4000))
 	{
@@ -2450,7 +2545,6 @@ UINT16 adsp2181_idma_data_r(void)
 	else
 		result = RWORD_DATA(adsp2100.idma_addr++ & 0x3fff);
 
-	logerror("IDMA_data_read(%04X) = %04X\n", adsp2100.idma_addr, result);
 	return result;
 }
 

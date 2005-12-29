@@ -12,6 +12,7 @@
     Minigame Cool Collection (c) 1999 Semicom
     Super Lup Lup Puzzle     (c) 1999 Omega System       (version 4.0)
     Lup Lup Puzzle           (c) 1999 Omega System       (version 3.0 and 2.9)
+    Puzzle Bang Bang         (c) 1999 Omega System       (version 2.8)
 
  Games Needed:
 
@@ -189,7 +190,7 @@ static void draw_sprites(mame_bitmap *bitmap)
 			if(tiles[offs] & 0x0100) continue;
 
 			code  = tiles[offs+1];
-			color = (tiles[offs+2] >> (palshift)) & 0x7f;
+			color = (tiles[offs+2] >> palshift) & 0x7f;
 
 			x = tiles[offs+3] & 0x01ff;
 			y = 256 - (tiles[offs] & 0x00ff);
@@ -306,7 +307,6 @@ void nvram_handler_93C46_vamphalf(mame_file *file,int read_or_write)
 		{
 			if (!strcmp(Machine->gamedrv->name,"suplup")) EEPROM_set_data(suplup_default_nvram,128);
 			if (!strcmp(Machine->gamedrv->name,"misncrft")) EEPROM_set_data(misncrft_default_nvram,128);
-
 		}
 	}
 }
@@ -649,6 +649,22 @@ ROM_START( luplup29 ) /* version 2.9 / 990108 */
 ROM_END
 
 
+ROM_START( puzlbang ) /* version 2.8 / 990106 */
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "pbb-rom1.v28", 0x00000, 0x80000, CRC(fd21c5ff) SHA1(bc6314bbb2495c140788025153c893d5fd00bdc1) )
+	ROM_LOAD( "pbb-rom2.v28", 0x80000, 0x80000, CRC(490ecaeb) SHA1(2b0f25e3d681ddf95b3c65754900c046b5b50b09) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE ) /* 16x16x8 Sprites */
+	ROM_LOAD32_WORD( "pbbang28-roml00", 0x000000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "pbbang28-romu00", 0x000002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "pbbang28-roml01", 0x400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "pbbang28-romu01", 0x400002, 0x200000, NO_DUMP )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
+	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
+ROM_END
+
+
 ROM_START( suplup )
 	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code */
 	ROM_LOAD( "suplup-rom1.bin", 0x00000, 0x80000, CRC(61fb2dbe) SHA1(21cb8f571b2479de6779b877b656d1ffe5b3516f) )
@@ -751,6 +767,19 @@ static READ16_HANDLER( luplup29_speedup_r )
 	return wram[(0x113f08/2)+offset];
 }
 
+static READ16_HANDLER( puzlbang_speedup_r )
+{
+	if(activecpu_get_pc() == 0xae6d2 )
+	{
+		if(irq_active())
+			cpu_spinuntil_int();
+		else
+			activecpu_eat_cycles(50);
+	}
+
+	return wram[(0x113ecc/2)+offset];
+}
+
 DRIVER_INIT( vamphalf )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x0004a6d0, 0x0004a6d3, 0, 0, vamphalf_speedup_r );
@@ -799,9 +828,18 @@ DRIVER_INIT( luplup29 )
 	/* no flipscreen */
 }
 
+DRIVER_INIT( puzlbang )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00113ecc, 0x00113ecf, 0, 0, puzlbang_speedup_r );
+
+	palshift = 8;
+	/* no flipscreen */
+}
+
 GAME( 1999, suplup,   0,      suplup,   common, suplup,   ROT0,  "Omega System",      "Super Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 4.0 / 990518)" , 0) // also has 'Puzzle Bang Bang' title but it can't be selected
 GAME( 1999, luplup,   suplup, suplup,   common, luplup,   ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 3.0 / 990128)", 0 )
 GAME( 1999, luplup29, suplup, suplup,   common, luplup29, ROT0,  "Omega System",      "Lup Lup Puzzle / Zhuan Zhuan Puzzle (version 2.9 / 990108)", GAME_NOT_WORKING )
+GAME( 1999, puzlbang, suplup, suplup,   common, puzlbang, ROT0,  "Omega System",      "Puzzle Bang Bang (version 2.8 / 990106)", GAME_NOT_WORKING ) // Korean only
 GAME( 1999, vamphalf, 0,      vamphalf, common, vamphalf, ROT0,  "Danbi & F2 System", "Vamp 1/2 (Korea version)", 0 )
 GAME( 2000, misncrft, 0,      misncrft, common, misncrft, ROT90, "Sun",               "Mission Craft (version 2.4)", GAME_NO_SOUND )
 GAME( 1999, coolmini, 0,      coolmini, common, coolmini, ROT0,  "Semicom",           "Cool Minigame Collection", 0 )

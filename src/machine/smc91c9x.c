@@ -232,7 +232,6 @@ static void update_ethernet_irq(void)
 	UINT8 state = ethernet.reg[EREG_INTERRUPT] & 0xff;
 
 	/* update the IRQ state */
-	logerror("update_ethernet_irq(%02X & %02X)\n", state, mask);
 	ethernet.irq_state = ((mask & state) != 0);
 	if (ethernet.irq_handler)
 		(*ethernet.irq_handler)(ethernet.irq_state ? ASSERT_LINE : CLEAR_LINE);

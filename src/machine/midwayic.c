@@ -77,6 +77,7 @@ struct ioasic_state
 	UINT8	irq_state;
 	UINT16	sound_irq_state;
 	UINT8	auto_ack;
+	UINT8	force_fifo_full;
 
 	UINT16	fifo[FIFO_SIZE];
 	UINT16	fifo_in;
@@ -537,7 +538,6 @@ enum
 
 static UINT16 ioasic_fifo_r(void);
 static UINT16 ioasic_fifo_status_r(void);
-static void ioasic_fifo_reset_w(int state);
 static void ioasic_input_empty(int state);
 static void ioasic_output_full(int state);
 static void update_ioasic_irq(void);
@@ -582,7 +582,7 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 		dcs_set_fifo_callbacks(ioasic_fifo_r, ioasic_fifo_status_r);
 		dcs_set_io_callbacks(ioasic_output_full, ioasic_input_empty);
 	}
-	ioasic_fifo_reset_w(1);
+	midway_ioasic_fifo_reset_w(1);
 
 	/* configure the CAGE IRQ */
 	if (ioasic.has_cage)
@@ -608,7 +608,7 @@ void midway_ioasic_reset(void)
 	ioasic.sound_irq_state = 0x0080;
 	ioasic.reg[IOASIC_INTCTL] = 0;
 	if (ioasic.has_dcs)
-		ioasic_fifo_reset_w(1);
+		midway_ioasic_fifo_reset_w(1);
 	update_ioasic_irq();
 	midway_serial_pic_reset_w(1);
 }
@@ -654,7 +654,7 @@ static void cage_irq_handler(int reason)
 
 static void ioasic_input_empty(int state)
 {
-	logerror("ioasic_input_empty(%d)\n", state);
+//  logerror("ioasic_input_empty(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0080;
 	else
@@ -665,7 +665,7 @@ static void ioasic_input_empty(int state)
 
 static void ioasic_output_full(int state)
 {
-	logerror("ioasic_output_full(%d)\n", state);
+//  logerror("ioasic_output_full(%d)\n", state);
 	if (state)
 		ioasic.sound_irq_state |= 0x0040;
 	else
@@ -720,11 +720,11 @@ static UINT16 ioasic_fifo_status_r(void)
 {
 	UINT16 result = 0;
 
-	if (ioasic.fifo_bytes == 0)
+	if (ioasic.fifo_bytes == 0 && !ioasic.force_fifo_full)
 		result |= 0x08;
 	if (ioasic.fifo_bytes >= FIFO_SIZE/2)
 		result |= 0x10;
-	if (ioasic.fifo_bytes >= FIFO_SIZE)
+	if (ioasic.fifo_bytes >= FIFO_SIZE || ioasic.force_fifo_full)
 		result |= 0x20;
 
 	/* kludge alert: if we're reading this from the DCS CPU itself, and we recently cleared */
@@ -746,7 +746,7 @@ static UINT16 ioasic_fifo_status_r(void)
 }
 
 
-static void ioasic_fifo_reset_w(int state)
+void midway_ioasic_fifo_reset_w(int state)
 {
 	/* on the high state, reset the FIFO data */
 	if (state)
@@ -754,10 +754,11 @@ static void ioasic_fifo_reset_w(int state)
 		ioasic.fifo_in = 0;
 		ioasic.fifo_out = 0;
 		ioasic.fifo_bytes = 0;
+		ioasic.force_fifo_full = 0;
 		update_ioasic_irq();
 	}
 	if (LOG_FIFO)
-		logerror("fifo_reset(%d)\n", state);
+		logerror("%08X:fifo_reset(%d)\n", activecpu_get_pc(), state);
 }
 
 
@@ -777,6 +778,16 @@ void midway_ioasic_fifo_w(UINT16 data)
 		if (LOG_FIFO)
 			logerror("fifo_w(%04X): out of space!\n", data);
 	}
+	dcs_fifo_notify(ioasic.fifo_bytes, FIFO_SIZE);
+}
+
+
+void midway_ioasic_fifo_full_w(UINT16 data)
+{
+	if (LOG_FIFO)
+		logerror("fifo_full_w(%04X)\n", data);
+	ioasic.force_fifo_full = 1;
+	update_ioasic_irq();
 	dcs_fifo_notify(ioasic.fifo_bytes, FIFO_SIZE);
 }
 
@@ -954,7 +965,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 			}
 
 			/* FIFO reset? */
-			ioasic_fifo_reset_w(~newreg & 4);
+			midway_ioasic_fifo_reset_w(~newreg & 4);
 			break;
 
 		case IOASIC_SOUNDOUT:

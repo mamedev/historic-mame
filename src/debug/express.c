@@ -22,7 +22,7 @@
 **  DEBUGGING
 **#################################################################################################*/
 
-#define DEBUG					0
+#define DEBUG_TOKENS			0
 
 
 
@@ -380,7 +380,7 @@ INLINE void set_lval_value(struct token *token, const struct symbol_table *table
 
 static void print_tokens(FILE *out, struct parsed_expression *expr)
 {
-#if DEBUG
+#if DEBUG_TOKENS
 	struct token *token = expr->token;
 
 	printf("----\n");

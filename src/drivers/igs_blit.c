@@ -2772,7 +2772,7 @@ there are 4 banks of 8 dip switches
 
 ROM_START( vbowl )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "v101xcm.u45", 0x00000, 0x80000, CRC(a086050f) SHA1(5d044665a786e7f8f60e0474ebe02ecd33e36290) ) // second half all 00
+	ROM_LOAD( "v101xcm.u45", 0x00000, 0x80000, BAD_DUMP CRC(a086050f) SHA1(5d044665a786e7f8f60e0474ebe02ecd33e36290) ) // second half all 00
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0)
 	ROM_LOAD( "vrbowlng.u69", 0x000000, 0x400000, CRC(b0d339e8) SHA1(a26a5e0202a78e8cdc562b10d64e14eadfa4e115) )

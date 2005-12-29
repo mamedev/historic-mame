@@ -1037,10 +1037,10 @@ ROM_END
 
 ROM_START( emeralda )
 	ROM_REGION( 0xa80000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "ep0lb.bin",    0x080001, 0x080000, CRC(fcd55293) SHA1(fdabf9d5f528c37196ac1e031b097618b4c887b5) ) /* 0xc00000 */
-	ROM_LOAD16_BYTE( "ep0ub.bin",    0x080000, 0x080000, CRC(a52f00d5) SHA1(85f95d2a69a2df2e9195f55583645c064b0b6fe6) )
-	ROM_LOAD16_BYTE( "em1-ep1l.bin", 0x180001, 0x080000, CRC(373c1c59) SHA1(385cb3bc056b798878de890dbff97a8bdd48fe4e) )
-	ROM_LOAD16_BYTE( "em1-ep1u.bin", 0x180000, 0x080000, CRC(4e969152) SHA1(2c89ae5d43585f479f16cf8278f8fc001e077e45) )
+	ROM_LOAD16_BYTE( "em1-ep0lb.bin", 0x080001, 0x080000, CRC(fcd55293) SHA1(fdabf9d5f528c37196ac1e031b097618b4c887b5) ) /* 0xc00000 */
+	ROM_LOAD16_BYTE( "em1-ep0ub.bin", 0x080000, 0x080000, CRC(a52f00d5) SHA1(85f95d2a69a2df2e9195f55583645c064b0b6fe6) )
+	ROM_LOAD16_BYTE( "em1-ep1l.bin",  0x180001, 0x080000, CRC(373c1c59) SHA1(385cb3bc056b798878de890dbff97a8bdd48fe4e) )
+	ROM_LOAD16_BYTE( "em1-ep1u.bin",  0x180000, 0x080000, CRC(4e969152) SHA1(2c89ae5d43585f479f16cf8278f8fc001e077e45) )
 ROM_END
 
 ROM_START( emerldaa )
@@ -1149,10 +1149,23 @@ ROM_END
 
 ROM_START( swcourt )
 	ROM_REGION( 0xa80000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "sc1-ep0l.bin", 0x080001, 0x080000, CRC(145111dd) SHA1(f8f74f77fb80af2ea37ea8ddbf02c1f3fcaf3fdb) ) /* 0xc00000 */
-	ROM_LOAD16_BYTE( "sc1-ep0u.bin", 0x080000, 0x080000, CRC(c721c138) SHA1(5d30d66629d982b54c3bb62118be940dc7b69a6b) )
-	ROM_LOAD16_BYTE( "sc1-ep1l.bin", 0x180001, 0x080000, CRC(fb45cf5f) SHA1(6ded351daa9b39d0b8149100caefc4fa0c598e79) )
-	ROM_LOAD16_BYTE( "sc1-ep1u.bin", 0x180000, 0x080000, CRC(1ce07b15) SHA1(b1b28cc480301c9ad642597c7cdd8e9cdec996a6) )
+	ROM_LOAD16_BYTE( "sc2-ep0l.4c",  0x080001, 0x080000, CRC(5053a02e) SHA1(8ab5a085969cef5e01be01d8f531233002ea5bff) ) /* 0xc00000 */
+	ROM_LOAD16_BYTE( "sc2-ep0u.4f",  0x080000, 0x080000, CRC(7b3fc7fa) SHA1(f96c03a03339b7677b8dc8689d907f2c8895886c) )
+	ROM_LOAD16_BYTE( "sc1-ep1l.5c", 0x180001, 0x080000, CRC(fb45cf5f) SHA1(6ded351daa9b39d0b8149100caefc4fa0c598e79) )
+	ROM_LOAD16_BYTE( "sc1-ep1u.5f", 0x180000, 0x080000, CRC(1ce07b15) SHA1(b1b28cc480301c9ad642597c7cdd8e9cdec996a6) )
+
+	ROM_LOAD16_BYTE( "sc1-ma0l.bin", 0x280001, 0x100000, CRC(3e531f5e) SHA1(6da56630bdfbb19f1639c539779c180d106f6ee2) ) /* 0x400000 */
+	ROM_LOAD16_BYTE( "sc1-ma0u.bin", 0x280000, 0x100000, CRC(31e76a45) SHA1(5c278c167c1025c648ce2da2c3764645e96dcd55) )
+	ROM_LOAD16_BYTE( "sc1-ma1l.bin", 0x480001, 0x100000, CRC(8ba3a4ec) SHA1(f881e7b4728f388d18450ba85e13e233071fbc88) )
+	ROM_LOAD16_BYTE( "sc1-ma1u.bin", 0x480000, 0x100000, CRC(252dc4b7) SHA1(f1be6bd045495c7a0ecd97f01d1dc8ad341fecfd) )
+ROM_END
+
+ROM_START( swcourtj )
+	ROM_REGION( 0xa80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "sc1-ep0l.4c", 0x080001, 0x080000, CRC(145111dd) SHA1(f8f74f77fb80af2ea37ea8ddbf02c1f3fcaf3fdb) ) /* 0xc00000 */
+	ROM_LOAD16_BYTE( "sc1-ep0u.4f", 0x080000, 0x080000, CRC(c721c138) SHA1(5d30d66629d982b54c3bb62118be940dc7b69a6b) )
+	ROM_LOAD16_BYTE( "sc1-ep1l.5c", 0x180001, 0x080000, CRC(fb45cf5f) SHA1(6ded351daa9b39d0b8149100caefc4fa0c598e79) )
+	ROM_LOAD16_BYTE( "sc1-ep1u.5f", 0x180000, 0x080000, CRC(1ce07b15) SHA1(b1b28cc480301c9ad642597c7cdd8e9cdec996a6) )
 
 	ROM_LOAD16_BYTE( "sc1-ma0l.bin", 0x280001, 0x100000, CRC(3e531f5e) SHA1(6da56630bdfbb19f1639c539779c180d106f6ee2) ) /* 0x400000 */
 	ROM_LOAD16_BYTE( "sc1-ma0u.bin", 0x280000, 0x100000, CRC(31e76a45) SHA1(5c278c167c1025c648ce2da2c3764645e96dcd55) )
@@ -1213,18 +1226,19 @@ ROM_START( xday2 )
 ROM_END
 
 GAME( 1992,bkrtmaq,  0,        namcona1w, namcona1_quiz,	bkrtmaq,  ROT0, "Namco", "Bakuretsu Quiz Ma-Q Dai Bouken (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1992,cgangpzl, 0,        namcona1w, namcona1_joy,	cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (US)", GAME_IMPERFECT_SOUND )
-GAME( 1992,cgangpzj, cgangpzl, namcona1w, namcona1_joy,	cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1992,exvania,  0,        namcona1,  namcona1_joy,	exbania,  ROT0, "Namco", "Exvania (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1992,fghtatck, 0,        namcona1,  namcona1_joy,	fa,       ROT90,"Namco", "Fighter & Attacker (US)", GAME_IMPERFECT_SOUND )
-GAME( 1992,fa,       fghtatck, namcona1,  namcona1_joy,	fa,       ROT90,"Namco", "F/A (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1992,knckhead, 0,        namcona1,  namcona1_joy,	knckhead, ROT0, "Namco", "Knuckle Heads (World)", GAME_IMPERFECT_SOUND )
-GAME( 1992,knckhedj, knckhead, namcona1,  namcona1_joy,	knckhead, ROT0, "Namco", "Knuckle Heads (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1992,swcourt,  0,        namcona1w, namcona1_joy,	swcourt,  ROT0, "Namco", "Super World Court (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1993,emeralda, 0,        namcona1w, namcona1_joy,	emeralda, ROT0, "Namco", "Emeraldia (Japan Version B)", GAME_IMPERFECT_SOUND )
-GAME( 1993,emerldaa, emeralda, namcona1w, namcona1_joy,	emeralda, ROT0, "Namco", "Emeraldia (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1993,numanath, 0,        namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (World)", GAME_IMPERFECT_SOUND )
-GAME( 1993,numanatj, numanath, namcona1,  namcona1_joy,	numanath, ROT0, "Namco", "Numan Athletics (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1993,quiztou,  0,        namcona1,  namcona1_quiz,	quiztou,  ROT0, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1993,tinklpit, 0,        namcona1w, namcona1_joy,	tinklpit, ROT0, "Namco", "Tinkle Pit (Japan)", GAME_IMPERFECT_SOUND )
-GAME( 1995,xday2,    0,        namcona1,  namcona1_joy,        xday2,    ROT0, "Namco", "X-Day 2 (Japan)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
+GAME( 1992,cgangpzl, 0,        namcona1w, namcona1_joy,	 cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (US)", GAME_IMPERFECT_SOUND )
+GAME( 1992,cgangpzj, cgangpzl, namcona1w, namcona1_joy,	 cgangpzl, ROT0, "Namco", "Cosmo Gang the Puzzle (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1992,exvania,  0,        namcona1,  namcona1_joy,	 exbania,  ROT0, "Namco", "Exvania (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1992,fghtatck, 0,        namcona1,  namcona1_joy,	 fa,       ROT90,"Namco", "Fighter & Attacker (US)", GAME_IMPERFECT_SOUND )
+GAME( 1992,fa,       fghtatck, namcona1,  namcona1_joy,	 fa,       ROT90,"Namco", "F/A (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1992,knckhead, 0,        namcona1,  namcona1_joy,	 knckhead, ROT0, "Namco", "Knuckle Heads (World)", GAME_IMPERFECT_SOUND )
+GAME( 1992,knckhedj, knckhead, namcona1,  namcona1_joy,	 knckhead, ROT0, "Namco", "Knuckle Heads (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1992,swcourt,  0,        namcona1w, namcona1_joy,	 swcourt,  ROT0, "Namco", "Super World Court (World)", GAME_IMPERFECT_SOUND )
+GAME( 1992,swcourtj, swcourt,  namcona1w, namcona1_joy,	 swcourt,  ROT0, "Namco", "Super World Court (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1993,emeralda, 0,        namcona1w, namcona1_joy,	 emeralda, ROT0, "Namco", "Emeraldia (Japan Version B)", GAME_IMPERFECT_SOUND )
+GAME( 1993,emerldaa, emeralda, namcona1w, namcona1_joy,	 emeralda, ROT0, "Namco", "Emeraldia (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1993,numanath, 0,        namcona1,  namcona1_joy,	 numanath, ROT0, "Namco", "Numan Athletics (World)", GAME_IMPERFECT_SOUND )
+GAME( 1993,numanatj, numanath, namcona1,  namcona1_joy,	 numanath, ROT0, "Namco", "Numan Athletics (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1993,quiztou,  0,        namcona1,  namcona1_quiz, quiztou,  ROT0, "Namco", "Nettou! Gekitou! Quiztou!! (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1993,tinklpit, 0,        namcona1w, namcona1_joy,	 tinklpit, ROT0, "Namco", "Tinkle Pit (Japan)", GAME_IMPERFECT_SOUND )
+GAME( 1995,xday2,    0,        namcona1,  namcona1_joy,  xday2,    ROT0, "Namco", "X-Day 2 (Japan)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )

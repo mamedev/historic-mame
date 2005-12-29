@@ -558,7 +558,7 @@ int jaguardsp_execute(int cycles)
 	do
 	{
 		/* debugging */
-		//if (jaguar.PC < 0xf1b000 || jaguar.PC > 0xf1d000) { fprintf(stderr, "DSP: jaguar.PC = %06X\n", jaguar.PC); exit(1); }
+		//if (jaguar.PC < 0xf1b000 || jaguar.PC > 0xf1d000) { osd_die(stderr, "DSP: jaguar.PC = %06X\n", jaguar.PC); }
 		jaguar.ppc = jaguar.PC;
 		CALL_MAME_DEBUG;
 

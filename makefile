@@ -74,39 +74,39 @@ else
 PREFIX =
 endif
 
-# by default, compile for Pentium target and add no suffix
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)
+# by default, compile for Pentium target
+NAME = $(PREFIX)$(TARGET)
 ARCH = -march=pentium
 
-# architecture-specific builds get extra options and a suffix
+# architecture-specific builds get extra options
 ifdef ATHLON
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)at
+NAME = $(PREFIX)$(TARGET)at
 ARCH = -march=athlon
 endif
 
 ifdef I686
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
+NAME = $(PREFIX)$(TARGET)pp
 ARCH = -march=pentiumpro
 endif
 
 ifdef P4
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)p4
+NAME = $(PREFIX)$(TARGET)p4
 ARCH = -march=pentium4
 endif
 
 ifdef AMD64
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)64
+NAME = $(PREFIX)$(TARGET)64
 ARCH = -march=athlon64
 endif
 
 ifdef PM
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)pm
+NAME = $(PREFIX)$(TARGET)pm
 ARCH = -march=pentium3 -msse2
 endif
 
 # debug builds just get the 'd' suffix and nothing more
 ifdef DEBUG
-NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
+NAME = $(PREFIX)$(TARGET)d
 endif
 
 

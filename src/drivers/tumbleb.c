@@ -166,6 +166,7 @@ Notes:
 #include "sound/2151intf.h"
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
+#include "machine/random.h"
 
 #define TUMBLEP_HACK	0
 #define FNCYWLD_HACK	0
@@ -181,6 +182,7 @@ VIDEO_UPDATE( jumppop );
 VIDEO_UPDATE( semicom );
 VIDEO_UPDATE( semicom_altoffsets );
 VIDEO_UPDATE( bcstory );
+VIDEO_UPDATE(semibase );
 VIDEO_START( suprtrio );
 VIDEO_UPDATE( suprtrio );
 
@@ -242,7 +244,7 @@ static READ16_HANDLER( tumblepopb_controls_r )
         	return 0;
 	}
 
-	return ~0;
+	return -0;
 }
 
 /******************************************************************************/
@@ -317,8 +319,13 @@ static ADDRESS_MAP_START( fncywld_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
+READ16_HANDLER( semibase_unknown_r )
+{
+	return mame_rand();
+}
 static ADDRESS_MAP_START( htchctch_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10000f) AM_READ(semibase_unknown_r)
 	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x160000, 0x160fff) AM_READ(MRA16_RAM)
@@ -1254,6 +1261,87 @@ INPUT_PORTS_START( bcstory )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( semibase )
+	PORT_START	/* Player 1 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START	/* Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* Credits */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 ) // eh, maybe it isn't vblank on the others then??
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* Dip switch bank 1 */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )			/* Should be Test Mode?? but hangs with black screen */
+	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Level 1" )
+	PORT_DIPSETTING(    0x08, "Level 2" )
+	PORT_DIPSETTING(    0x00, "Level 3" )
+	PORT_DIPSETTING(    0x0e, "Level 4" )
+	PORT_DIPSETTING(    0x06, "Level 5" )
+	PORT_DIPSETTING(    0x0a, "Level 6" )
+	PORT_DIPSETTING(    0x02, "Level 7" )
+	PORT_DIPSETTING(    0x0c, "Level 8" )
+	PORT_DIPNAME( 0x70, 0x70, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* Dip switch bank 2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Full Set Price" )
+	PORT_DIPSETTING(    0x00, "4 Credits" )
+	PORT_DIPSETTING(    0x80, "6 Credits" )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( suprtrio )
 	PORT_START
@@ -1580,6 +1668,11 @@ MACHINE_DRIVER_START( bcstory )
 	MDRV_SOUND_CONFIG(semicom_ym2151_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.10)
 	MDRV_SOUND_ROUTE(1, "right", 0.10)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( semibase )
+	MDRV_IMPORT_FROM(bcstory)
+	MDRV_VIDEO_UPDATE(semibase )
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( metlsavr )
@@ -2016,6 +2109,82 @@ ROM_START( bcstrya )
 	ROM_LOAD16_BYTE( "bcstry_u.108", 0x200001, 0x80000, CRC(442307ed) SHA1(71b7f19af64d9961f0f9205b86b4b0ebc13fddda) ) // b
 	ROM_LOAD16_BYTE( "bcstry_u.102", 0x300000, 0x80000, CRC(71b40ece) SHA1(1a13dfd7615a6f61851897ebcb10fa69bc8ae525) ) // a
 	ROM_LOAD16_BYTE( "bcstry_u.107", 0x300001, 0x80000, CRC(ab3c923a) SHA1(aaca1d2ed7b53e0933e0bd94a19458dd1598f204) ) // a
+ROM_END
+
+/* Semicom Baseball */
+
+/*
+
+SemiCom Baseball (MuHanSeungBu)
+
+MC68HC000P10 & Z80
+QuickLogic QL2007-XPQ208C
+BS901, BS902 & AD-65 (YM2151, YM3012 & OKI M6295)
+P87C52EBPN MCU
+OSC: 4.096MHz, 15.000MHz
+Ram:
+ UM62256E-70LL x 2 (by 68000)
+ HY6264A LP-70 x 2 (by QuickLogic QL2007)
+ Temic HM3-65738BK-5 (by Z80)
+ Temic HM3-65738BK-5 x 2
+ Sony CXK5814P-35L x 2
+
+No roms had any labels, I used the IC position and
+logical use (IE:z80 for the Z80 program rom)
+
+*/
+
+ROM_START( semibase )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "ic35.68k",  0x40001, 0x20000, CRC(d2249605) SHA1(ab3faa832f14f799e4a975673495d30160c6eae5) )
+	ROM_CONTINUE ( 0x00001, 0x20000)
+	ROM_LOAD16_BYTE( "ic62.68k",  0x40000, 0x20000, CRC(85ea81c3) SHA1(7e97316f5f373b98fa4063acd74f784b312a1cc4) )
+	ROM_CONTINUE ( 0x00000, 0x20000)
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "ic21.z80", 0x04000, 0x4000 , CRC(d95c64d0) SHA1(1b239e8b23b820610dbf67cbd525d4a6c956ba35) )
+	ROM_CONTINUE( 0x0000, 0x4000 )
+	ROM_CONTINUE( 0xc000, 0x4000 )
+	ROM_CONTINUE( 0x8000, 0x4000 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	/* once the game has decrypted this it's almost identical to bcstory with several ram addresses being 0x4 higher than in bcstory
+     and 1200FE: andi.b  #$f, D1  instead of #$3  (unless bcstory data is wrong?) */
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200 , CRC(ecbf2163) SHA1(634b366a8c4ba8699851861bf935b55850f93a7f) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "ic64.snd", 0x00000, 0x40000, CRC(8a60649c) SHA1(aeb266436f6af4173b84dbb19362563b6c5db507) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Tiles */
+	ROM_LOAD16_BYTE( "ic109.gfx", 0x000000, 0x20000, CRC(2b86e983) SHA1(f625da05d68c78173e346f9c60ab4b0672b9f357) ) // tiles a plane 0
+	ROM_CONTINUE ( 0x100000,0x20000) // tiles a plane 1
+	ROM_CONTINUE ( 0x040000,0x20000) // tiles b plane 0
+	ROM_CONTINUE ( 0x140000,0x20000) // tiles b plane 1
+	ROM_LOAD16_BYTE( "ic113.gfx", 0x000001, 0x20000, CRC(e39b6610) SHA1(604f876f0bf9ed70f627944397e78ee16869d0ba) ) // tiles a plane 2
+	ROM_CONTINUE ( 0x100001,0x20000) // tiles a plane 3
+	ROM_CONTINUE ( 0x040001,0x20000) // tiles b plane 2
+	ROM_CONTINUE ( 0x140001,0x20000) // tiles b plane 3
+	ROM_LOAD16_BYTE( "ic110.gfx", 0x080000, 0x20000, CRC(bba4a015) SHA1(4e03585ff493148b9eeaaabb8d37630962ab6c74) ) // tiles c plane 0
+	ROM_CONTINUE ( 0x180000,0x20000) // tiles c plane 1
+	ROM_CONTINUE ( 0x0c0000,0x20000) // tiles d plane 0
+	ROM_CONTINUE ( 0x1c0000,0x20000) // tiles d plane 1
+	ROM_LOAD16_BYTE( "ic111.gfx", 0x080001, 0x20000, CRC(61133b63) SHA1(8820c88297fbcf5e1102c01245391f49a9c63186) ) // tiles c plane 2
+	ROM_CONTINUE ( 0x180001,0x20000) // tiles c plane 3
+	ROM_CONTINUE ( 0x0c0001,0x20000) // tiles d plane 2
+	ROM_CONTINUE ( 0x1c0001,0x20000) // tiles d plane 3
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "ic100.gfx", 0x000000, 0x80000, CRC(01c3d12a) SHA1(128c21b18f73445a8e77fe5dd3072c1b1e20c47a) ) // b
+	ROM_LOAD16_BYTE( "ic106.gfx", 0x000001, 0x80000, CRC(db282ac2) SHA1(127637967e7620cd7e81aff268fb776d0211e58a) ) // b
+	ROM_LOAD16_BYTE( "ic99.gfx",  0x100000, 0x80000, CRC(349df821) SHA1(34af8b748aad5807300f8e76eb8a99366878004b) ) // a
+	ROM_LOAD16_BYTE( "ic105.gfx", 0x100001, 0x80000, CRC(f7caa81c) SHA1(2270d133c7b116d66581fc688086dd331b811478) ) // a
+	ROM_LOAD16_BYTE( "ic104.gfx", 0x200000, 0x80000, CRC(51a5d38a) SHA1(0258ae29779f7f1246845622a579d37dca64fb2f) ) // b
+	ROM_LOAD16_BYTE( "ic108.gfx", 0x200001, 0x80000, CRC(b253d60e) SHA1(aca2f6c2233372841908377407068c5d45f5f9c4) ) // b
+	ROM_LOAD16_BYTE( "ic102.gfx", 0x300000, 0x80000, CRC(3caefe97) SHA1(e60c6ef9e1dd6abdd763648dbcebefa4f19364c4) ) // a
+	ROM_LOAD16_BYTE( "ic107.gfx", 0x300001, 0x80000, CRC(68109898) SHA1(dbc0d431da33e22b8d0f918b9c8a3c1667bc4f8e) ) // a
 ROM_END
 
 
@@ -2529,5 +2698,6 @@ GAME( 1995, chokchok, 0,       cookbib,   chokchok, chokchok, ROT0, "SemiCom", "
 GAME( 1994, metlsavr, 0,       metlsavr,  metlsavr, chokchok, ROT0, "First Amusement", "Metal Saver", 0 )
 GAME( 1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME( 1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
+GAME( 199?, semibase, 0,       semibase,  semibase, bcstory,  ROT0, "SemiCom", "MuHanSeungBu (SemiCom Baseball)", GAME_IMPERFECT_GRAPHICS)// sprite offsets..
 GAME( 2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop", 0 )
 GAME( 1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio", 0 )

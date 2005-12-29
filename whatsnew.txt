@@ -1,3 +1,119 @@
+0.103
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+astrob0102u5gre [Nicola Salmoria]
+
+
+
+Source Changes
+--------------
+Completely rewrote machine/stvcd.c and .h. There's a lot less there now, 
+but what's there is more understandable and works much better. [R. Belmont]
+
+Some RF5C400 improvements. [hoot development team]
+
+Cleaned up/reorganized some of the messy Neo Geo code. Separated out bootleg-
+specific hacks into additional files. [David Haywood]
+
+Replaced a few stray exit() calls with osd_die(). [Oliver Stoneberg]
+
+Fixed layer 1 colors in Blandia. [Pierpaolo Prazzoli]
+
+Corrected interrupt timing in wwfstar driver. [David Haywood]
+
+Fixed chdman to support 64-bit file sizes on some *nix platforms.
+[Lawrence Gold]
+
+More ST-V updates: [Mariusz Wojcieszek]
+ * added idle loop skipping for rsgun
+ * added RBG caching
+ * added RBG "two screens" mode
+ * added Critter Crusher (not working due to missing inputs)
+ * fixed several bugs introduced recently with all the other changes
+
+Changed i286 core to use the same INPUT_LINE_A20 that the i386 core uses.
+[Nathan Woods]
+
+Added partial updates and boosted the interleave in the ddragon driver.
+[David Haywood]
+
+Added cdrom_get_track_length() to cdrom.c. [R. Belmont]
+
+Added an atexit handler to ensure trace files are closed in the debugger
+in the event of an early exit. [Nathan Woods]
+
+Merged the Sprint 4/Ultra Tank drivers and made the following fixes:
+[Stefan Jokisch]
+
+ * Ultra Tank:
+    - hardware collision detection (computer is now able to manoeuvre 
+         around barriers)
+    - sprite fixes (invisble tank option works, tank explosion sequence)
+    - playfield fixes (text colors are different)
+    - watchdog and coin lockout added
+    - sync and color proms added
+    - motor sound fix (previously this was hooked up to the wrong address)
+    - misc internal fixes like cpu speed, RAM size etc
+
+ * Sprint 4:
+   - sound support (inherited from Ultra Tank)
+   - watchdog added
+
+Fixed bug in the Grand Champion fog effect. [Hans Andersson]
+
+Fixed Triple Hunt and several older Atari games to use RAM mirroring for
+zero page memory. [Stefan Jokisch]
+
+Fixed several endian issues with the SE3208 core and the Crystal System
+driver. [Brad Oliver]
+
+Got the DCS-3 sound system working for Road Burners. [Aaron Giles]
+
+Did some cleanup in the ADSP-21xx core to support program memory more 
+correctly and support execution from multiple banks. [Aaron Giles]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Mad Ball [David Haywood, Brian Troha]
+Super Model [David Haywood]
+Garogun Seroyang (Korea) [David Haywood, Pierpaolo Prazzoli]
+MuHanSeungBu (SemiCom Baseball) [David Haywood, Brian Troha]
+Games V18.2 [Pierpaolo Prazzoli, Guru]
+
+
+
+New clones added
+----------------
+Puzzle Bang Bang [Brian Troha, Pierpaolo Prazzoli]
+Super World Court (World) [Stefan Lindberg]
+Out Zone (set 3) [David Haywood]
+Mini Vegas 4in1 [Tomasz Slanina]
+Crazy Rally (set 2) [David Haywood, Guru]
+Gouketsuji Ichizoku (Japan) [Pierpaolo Prazzoli, Guru]
+Dynamite Duke (Japan) [Pierpaolo Prazzoli, Guru]
+The Double Dynamites (Japan) [Pierpaolo Prazzoli, Bryan McPhail, Guru]
+Passing Shot (World, 4 Players, FD1094 317-0074) [Mame Italia]
+
+
+
+New games marked as GAME_NOT_WORKING
+------------------------------------
+Martial Masters [David Haywood]
+Demon Front [David Haywood]
+Canvas Croquis [David Haywood]
+Go 2000 [David Haywood, Brian Troha]
+Gekisou (Japan) [David Haywood]
+Critter Crusher [Mariusz Wojcieszek, Guru]
+Card Line [Tomasz Slanina]
+Shuttle Invader [Tomasz Slanina, Guru]
+
+
+
 0.102u5
 -------
 
@@ -111,7 +227,7 @@ Mosaic (F2 System) [Pierpaolo Prazzoli]
 Vs. Hot Smash [Nicola Salmoria]
 Noah's Ark [David Widel]
 Top Roller [Tomasz Slanina]
-Squash (Ver. 1.0) [David Haywood, Mike Coates]
+Squash (Ver. 1.0) [David Haywood, Mike Coates, Nicola Salmoria]
 
 
 

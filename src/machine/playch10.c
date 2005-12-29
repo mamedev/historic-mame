@@ -271,7 +271,7 @@ DRIVER_INIT( playch10 )
 	/* initialize the security chip */
 	if ( RP5H01_init( &rp5h01_interface ) )
 	{
-		exit( -1 );
+		osd_die("rp5h01_interface initualization failed\n");
 	}
 
 	/* set the controller to default */

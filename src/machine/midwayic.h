@@ -29,6 +29,8 @@ void midway_ioasic_set_auto_ack(int auto_ack);
 void midway_ioasic_set_shuffle_state(int state);
 void midway_ioasic_reset(void);
 void midway_ioasic_fifo_w(UINT16 data);
+void midway_ioasic_fifo_reset_w(int state);
+void midway_ioasic_fifo_full_w(UINT16 data);
 READ32_HANDLER( midway_ioasic_r );
 WRITE32_HANDLER( midway_ioasic_w );
 READ32_HANDLER( midway_ioasic_packed_r );

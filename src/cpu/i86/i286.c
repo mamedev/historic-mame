@@ -174,9 +174,9 @@ static void i286_urinit(void)
 	}
 }
 
-void i286_set_address_mask(offs_t mask)
+static void i286_set_a20_line(int state)
 {
-	I.amask=mask;
+	I.amask = state ? 0x00ffffff : 0x000fffff;
 }
 
 static void i286_reset (void *param)
@@ -367,6 +367,8 @@ static void i286_set_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are set as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);				break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
+
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_A20:	i286_set_a20_line(info->i);				break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I286_PC:

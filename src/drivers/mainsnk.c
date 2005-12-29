@@ -1,13 +1,72 @@
-/* Main Event - SNK
+/* Main Event - SNK 1984
+   Canvas Croquis - SNK 1985
+
    driver by    David Haywood
         Tomasz Slanina
 
- ROM doesn't pass its internal checksum
+  Notes: Main Event
+  -----------------
 
+ ROM doesn't pass its internal checksum
 
  Todo:
   - fix controls (now you need to press button1 + direction for punch/block ) and DIPs
   - verify position of status bars
+
+  Notes: Canvas Croquis
+  ---------------------
+
+ GFX banking is wrong?
+ Doesn't have the front layer?
+ Doesn't have the status bars?
+
+-----
+
+Canvas Croquis
+
+file : readme.txt
+author : Stefan Lindberg
+created: 2005-12-24
+updated: *
+version: 1.0
+
+Canvas Croquis, SNK 1984
+
+Note:
+
+The bproms(MB7054) was read as 74s572.
+I have not tested this PCB yet so i have no idea if it's workin.
+All Bproms and P1-P8 is on top pcb, P9-P14 on bottom board, see pictures.
+
+Documentation:
+
+Name Size CRC32
+-----------------------------------------------------------
+cc_top_pcb.jpg 974024 0xd2fb553e
+cc_bottom_pcb.jpg 964448 0xe8bad203
+Roms:
+Name Size CRC32 Chip Type
+-----------------------------------------------------------
+cc_bprom1.j10 1024 0xfbbbf911 MB7054 (read as 74s572)
+cc_bprom2.j9 1024 0x19efe7df MB7054 (read as 74s572)
+cc_bprom3.j8 1024 0x21f72498 MB7054 (read as 74s572)
+cc_p1.a2 8192 0xfa7109e1 M5L2764k
+cc_p2.a3 8192 0x8b8beb34 M5L2764k
+cc_p3.a4 8192 0xea342f87 M5L2764k
+cc_p4.a5 8192 0x9cf35d98 M5L2764k
+cc_p5.a7 8192 0xc5ef1eda M5L2764k
+cc_p6.a8 8192 0x7b1dd7fc M5L2764k
+cc_p7.h2 16384 0x029b5ea0 M5L27128k
+cc_p8.f2 8192 0x0f0368ce M5L2764k
+cc_p9.a2 16384 0xb58c5f24 M5L27128k
+cc_p10.b2 16384 0x3c0a4eeb M5L27128k
+cc_p11.c2 16384 0x4c8c2156 M5L27128k
+cc_p12.j8 8192 0x9003a979 M5L2764k
+cc_p13.j5 8192 0xa52cd549 M5L2764k
+cc_p14.j2 8192 0xedc6a1eb M5L2764k
+
+. Board supplied by Stefan Lindberg
+. Board dumped by Stefan Lindberg
 
 */
 
@@ -25,6 +84,7 @@ WRITE8_HANDLER(me_fgram_w);
 WRITE8_HANDLER(me_bgram_w);
 VIDEO_START(mainsnk);
 VIDEO_UPDATE(mainsnk);
+VIDEO_UPDATE(canvas);
 
 static int sound_cpu_ready;
 static int sound_command;
@@ -79,7 +139,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_ROM AM_BASE(&namco_wavedata)
+	AM_RANGE(0x0000, 0x7fff) AM_ROM AM_BASE(&namco_wavedata)
 	AM_RANGE(0x8000, 0x87ff) AM_RAM
 	AM_RANGE(0xa000, 0xa000) AM_READ(sound_command_r)
 	AM_RANGE(0xc000, 0xc000) AM_READ(sound_ack_r)
@@ -142,7 +202,130 @@ INPUT_PORTS_START( mainsnk )
 	PORT_DIPNAME( 0x80, 0x00, "SW 2-7" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
+INPUT_PORTS_START( canvas )
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "2" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "3" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, "4" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -184,7 +367,7 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-static MACHINE_DRIVER_START( mainsnk)
+static MACHINE_DRIVER_START( mainsnk )
 	MDRV_CPU_ADD(Z80, 3360000)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
@@ -217,6 +400,16 @@ static MACHINE_DRIVER_START( mainsnk)
 	MDRV_SOUND_ADD(NAMCO, 24000)
 	MDRV_SOUND_CONFIG(snkwave_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.08)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( canvas )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mainsnk)
+
+	MDRV_VISIBLE_AREA(1*8, 33*8-1, 0*8, 27*8-1)
+
+	MDRV_VIDEO_UPDATE(canvas)
 MACHINE_DRIVER_END
 
 
@@ -255,5 +448,40 @@ ROM_START( mainsnk)
 	ROM_LOAD( "main1.bin",    0x001000, 0x000800, CRC(deb895c4) SHA1(f1281dcb3471d9627565706ff09ba72f09dc62a4) )
 ROM_END
 
-GAME( 1984, mainsnk,      0,          mainsnk, mainsnk, 0,          ROT0, "SNK", "Main Event (1984)", 0)
+DRIVER_INIT ( canvas )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc000, 0, 0, input_port_0_r );
+}
 
+ROM_START( canvas )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "cc_p1.a2",      0x000000, 0x002000, CRC(fa7109e1) SHA1(23e31e14af2171ee2fd7290194805b95b0f7b35c) )
+	ROM_LOAD( "cc_p2.a3",      0x002000, 0x002000, CRC(8b8beb34) SHA1(c678ed7ec302eaac3594950f10f0a170353345e5) )
+	ROM_LOAD( "cc_p3.a4",      0x004000, 0x002000, CRC(ea342f87) SHA1(087e1260ba51bf47bf19942b59d21d067515989d) )
+	ROM_LOAD( "cc_p4.a5",      0x006000, 0x002000, CRC(9cf35d98) SHA1(08de7863f1a540b69487c87eb0a493ceeacffa1b) )
+	ROM_LOAD( "cc_p5.a7",      0x008000, 0x002000, CRC(c5ef1eda) SHA1(31cf3e7fe52718bebffdac9b3666454b0956a6d9) )
+	ROM_LOAD( "cc_p6.a8",      0x00a000, 0x002000, CRC(7b1dd7fc) SHA1(1287ab261885d5e9ba957024d7a00c7a0d31235b) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "cc_p7.h2",	0x0000, 0x4000, CRC(029b5ea0) SHA1(88f84b4dd01656ded8d983396ded404c9d8186f1) )
+	ROM_LOAD( "cc_p8.f2",	0x4000, 0x2000, CRC(0f0368ce) SHA1(a02f066ea024285a931b85709822a50a4099e0b0) )
+
+	ROM_REGION( 0xc000, REGION_GFX1, 0 )
+	ROM_LOAD( "cc_p9.a2",       0x000000, 0x004000, CRC(b58c5f24) SHA1(7026b3d4f8060fd6607eb6d356d6b61cc9cb75c3) )
+	ROM_LOAD( "cc_p10.b2",      0x004000, 0x004000, CRC(3c0a4eeb) SHA1(53742a5bef16e71bebefb0e43a175341f5bf0aa6) )
+	ROM_LOAD( "cc_p11.c2",      0x008000, 0x004000, CRC(4c8c2156) SHA1(7f1d9a1e1c6cab91f24c7fc75d0c7ec2702137af) )
+
+	ROM_REGION( 0x6000, REGION_GFX2, 0 )
+	ROM_LOAD( "cc_p12.j8",      0x000000, 0x002000, CRC(9003a979) SHA1(f63959a9dc9ee67622865e783d2e501c640a4bed) )
+	ROM_LOAD( "cc_p13.j5",      0x002000, 0x002000, CRC(a52cd549) SHA1(1902b8c107c5156113068ced74349ac576ac047c) )
+	ROM_LOAD( "cc_p14.j2",      0x004000, 0x002000, CRC(edc6a1e8) SHA1(8c948a5f057e13bb9ed9738b66c702f45586fe59) )
+
+	ROM_REGION( 0x1800, REGION_PROMS, 0 )
+	ROM_LOAD( "cc_bprom3.j8",    0x000000, 0x000400, CRC(21f72498) SHA1(a586c869cb4633fec0df92b5646ece78f99b6f2a) )
+	ROM_LOAD( "cc_bprom2.j9",    0x000800, 0x000400, CRC(19efe7df) SHA1(7e49af8b8b01fb929b87d6285da32fbe4c58606d) )
+	ROM_LOAD( "cc_bprom1.j10",   0x001000, 0x000400, CRC(fbbbf911) SHA1(86394a7f67bc4f89f72b9607ca3733ab3d690289) )
+ROM_END
+
+
+GAME( 1984, mainsnk,      0,          mainsnk, mainsnk, 0,        ROT0, "SNK", "Main Event (1984)", 0)
+GAME( 1985, canvas,       0,          canvas,  canvas,  canvas,   ROT0, "SNK", "Canvas Croquis", GAME_NOT_WORKING)

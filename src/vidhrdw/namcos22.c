@@ -1161,8 +1161,7 @@ MallocSceneNode( void )
       node = auto_malloc(sizeof(struct SceneNode));
       if( !node )
       {
-         logerror( "insufficient mem for scene node\n" );
-         exit(1);
+         osd_die( "insufficient mem for scene node\n" );
       }
    }
    memset( node, 0, sizeof(*node) );
@@ -1286,7 +1285,7 @@ RenderSceneHelper( mame_bitmap *bitmap, struct SceneNode *node )
                break;
 
             default:
-               exit(1);
+               osd_die("invalid node->type\n");
                break;
             }
             FreeSceneNode( node );
