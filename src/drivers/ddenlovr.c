@@ -20,11 +20,12 @@ Year + Game                 Board           CPU     Sound                       
 93 The First Funky Fighter  N7403208L-2     2xZ80   AY2149 + YM2413 + M6295     NL-001, NL-002, NL-005
 94 Quiz 365                                 68000   AY8910 + YM2413 + M6295
 94 Rong Rong                                Z80              YM2413 + M6295     NAKANIHON NL-002
-95 Don Den Lover Vol 1      D11309208L1     68000   AY8910 + YM2413 + M6295     NAKANIHON NL-005
+95 Mahjong Daichuukaken     D11107218L1     Z80     AY8910 + YM2413 + M6295     70C160F009
 95 Nettoh Quiz Champion                     68000   AY8910 + YM2413 + M6295
+96 Don Den Lover Vol 1      D11309208L1     68000   AY8910 + YM2413 + M6295     NAKANIHON NL-005
 96 Hana Kanzashi                            Z80              YM2413 + M6295     70C160F011?
 97 Hana Kagerou                             Z80              YM2413 + M6295     70C160F011
-98 Mahjong Chuukanejyo                      Z80     AY8910 + YM2413 + M6295     70C160F009
+98 Mahjong Chuukanejyo      D11107218L1     Z80     AY8910 + YM2413 + M6295     70C160F009
 98 Mahjong Reach Ippatsu                    Z80              YM2413 + M6295     70C160F011
 ---------------------------------------------------------------------------------------------------------------------------
 
@@ -5195,6 +5196,83 @@ ROM_END
 
 /***************************************************************************
 
+Mahjong The Dai Chuuka Ken (China Version)
+Dynax, 1995
+
+PCB Layout
+----------
+
+D11107218L1 DYNAX INC. NAGOYA JAPAN
+|-----------------------------------------------------|
+|10-WAY              18-WAY                  1    5.5V|
+|                               6606         x        |
+|   MB3712  VOL  358                                  |
+|                358                                  |
+|                               16MHz        43256    |
+|                 6868A                               |
+|              95101            Z84C015      2        |
+|                                                     |
+|2                                              3631  |
+|8                                                    |
+|W                                                    |
+|A                                         PAL        |
+|Y                     28.322MHz      PAL             |
+|                                                     |
+|                         |---------|                 |
+|                         |NAKANIHON|                 |
+|                         |70C160F009   3       4     |
+|                 44C251  |         |                 |
+|                 44C251  |         |   5       6     |
+| DSW1     DSW2   44C251  |---------|                 |
+| DSW3     DSW4   44C251                7       8     |
+|-----------------------------------------------------|
+Notes:
+      PCB uses common 10-way/18-way and 28-way Mahjong pinouts
+      5.5V    - Battery
+      6606    - Compatible to M6295 (QFP44)
+      6868A   - compatible to YM2413 (DIP18)
+      3631    - Unknown DIP18 chip (maybe RTC?)
+      Z84C015 - Toshiba TMPZ84C015BF-6 Z80 compatible CPU (clock input 16.0MHz)
+      44C251  - Texas Instruments TMS44C251-12SD 256k x4 Dual Port VRAM (ZIP28)
+      95101   - Winbond 95101, compatible to AY-3-8910 (DIP40)
+      43256   - NEC D43256 32k x8 SRAM (DIP28)
+      70C160F009 - Custom Dynax graphics generator (QFP160)
+      All DIPSW's have 10 switches per DIPSW
+      All ROMs are 27C040
+                          1   - Sound samples
+                          2   - Main program
+                          3,4 - Graphics
+                          5-8 - unused DIP32 sockets
+
+      The same PCB is used with 'Mahjong Zhong Hua Er Nu', with ROM locations
+      as follows....
+                    1 - D1111-A.1B
+                    2 - D12102.5B
+                    3 - D12103.11C
+                    4 - D12104.11A
+                    5 - D12105.12C
+                    6 - D12106.12A
+                    7 - D12107.13C
+                    8 - D12108.13A
+
+***************************************************************************/
+
+ROM_START( mjdchuka )
+	ROM_REGION( 0x90000+16*0x1000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "2.5b", 0x00000, 0x80000, CRC(7957b4e7) SHA1(8b76c15694e42ff0b2ec5aeae059bf342f6bf476) )
+	ROM_RELOAD(       0x10000, 0x80000 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_ERASEFF )	/* blitter data */
+	ROM_LOAD16_BYTE( "3.11c", 0x000000, 0x080000, CRC(c66553c3) SHA1(6e5380fdb97cc8b52986f3a3a8cac43c0f38cf54) )
+	ROM_LOAD16_BYTE( "4.11a", 0x000001, 0x080000, CRC(972852fb) SHA1(157f0a772bf060efc39033b10e63a6cb1022edf6) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "1.1b", 0x00000, 0x80000, CRC(9759c65e) SHA1(cf098c07616b6d2a2ba10ff6ae0006442b675326) )
+ROM_END
+
+
+/***************************************************************************
+
 The First Funky Fighter
 Nakanihon, 1994
 
@@ -5266,6 +5344,7 @@ GAME( 1994, quiz365,  0,       quiz365,  quiz365,  0,        ROT0, "Nakanihon", 
 GAME( 1994, quiz365t, quiz365, quiz365,  quiz365,  0,        ROT0, "Nakanihon + Taito",                           "Quiz 365 (Hong Kong & Taiwan)",              GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
 GAME( 1994, rongrong, 0,       rongrong, rongrong, rongrong, ROT0, "Nakanihon",                                   "Rong Rong (Europe)",                         GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 GAME( 1994, rongrngg, rongrong,rongrong, rongrong, rongrong, ROT0, "Nakanihon",                                   "Rong Rong (Germany)",                        GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
+GAME( 1995, mjdchuka, 0,       mjchuuka, mjchuuka, 0,        ROT0, "Dynax",                                       "Mahjong The Dai Chuuka Ken (China, v. D111)",GAME_NO_COCKTAIL )
 GAME( 1995, nettoqc,  0,       nettoqc,  nettoqc,  0,        ROT0, "Nakanihon",                                   "Nettoh Quiz Champion (Japan)",               GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 GAME( 1996, ddenlovr, 0,       ddenlovr, ddenlovr, 0,        ROT0, "Dynax",                                       "Don Den Lover Vol. 1 (Hong Kong)",           GAME_NO_COCKTAIL | GAME_IMPERFECT_COLORS )
 GAME( 1996, hanakanz, 0,       hanakanz, hanakanz, 0,        ROT0, "Dynax",                                       "Hana Kanzashi (Japan)",                      GAME_NO_COCKTAIL )

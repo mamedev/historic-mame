@@ -1626,7 +1626,7 @@ void galaxian_init_stars(int colors_offset)
 	for (i = 0;i < 64;i++)
 	{
 		int bits,r,g,b;
-		int map[4] = { 0x00, 0x88, 0xcc, 0xff };
+		static const int map[4] = { 0x00, 0x88, 0xcc, 0xff };
 
 
 		bits = (i >> 0) & 0x03;

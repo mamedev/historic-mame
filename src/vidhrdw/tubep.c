@@ -220,9 +220,9 @@ PALETTE_INIT( tubep )
 
 	/* background/sprites palette variables */
 
-	const int resistors_0[6] = { 33000, 15000, 8200, 4700, 2200, 1000 };
-	const int resistors_1[6] = { 15000,  8200, 4700, 2200, 1000,  470 };
-	const int resistors_2[6] = {  8200,  4700, 2200, 1000,  470,  220 };
+	static const int resistors_0[6] = { 33000, 15000, 8200, 4700, 2200, 1000 };
+	static const int resistors_1[6] = { 15000,  8200, 4700, 2200, 1000,  470 };
+	static const int resistors_2[6] = {  8200,  4700, 2200, 1000,  470,  220 };
 
 	int active_resistors_r[3*6];
 	int active_resistors_g[3*6];
@@ -236,8 +236,8 @@ PALETTE_INIT( tubep )
 
 	/* text palette variables */
 
-	const int resistors_txt_rg[3] = { 1000, 470, 220 };
-	const int resistors_txt_b [2] = { 470, 220 };
+	static const int resistors_txt_rg[3] = { 1000, 470, 220 };
+	static const int resistors_txt_b [2] = { 470, 220 };
 	double weights_txt_rg[3];
 	double weights_txt_b[2];
 

@@ -162,6 +162,7 @@ int					debug_get_execution_state(void);
 UINT32				debug_get_execution_counter(void);
 void				debug_trace_printf(int cpunum, const char *fmt, ...);
 void				debug_source_script(const char *file);
+void				debug_flush_traces(void);
 
 /* debugging hooks */
 void				debug_vblank_hook(void);

@@ -2075,7 +2075,7 @@ static DRIVER_INIT( mstworld )
 	UINT8* dst    = memory_region(REGION_CPU1) ;
 	int x;
 
-	int tablebank[]=
+	static const int tablebank[]=
 	{
 		/* fixed code */ 0,  0,
 		/* fixed code */ 1,  1,

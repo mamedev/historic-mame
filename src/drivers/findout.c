@@ -2,6 +2,7 @@
 
 Find Out    (c) 1987
 Trivia      (c) 1984 / 1986
+Quiz        (c) 1991
 
 driver by Nicola Salmoria
 
@@ -456,6 +457,25 @@ ROM_START( quiz )
 	ROM_LOAD( "prom_am27s29pc.bin", 0x0000, 0x0200, CRC(19e3f161) SHA1(52da3c1e50c2329454de14cb9c46149e573e562b) )
 ROM_END
 
+ROM_START( quiz211 )
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "1a.bin",         0x000000, 0x4000, CRC(116de0ea) SHA1(9af97b100aa2c79a58de055abe726d6e2e00aab4) )
+	ROM_CONTINUE(				0x000000, 0x4000 ) // halves identical
+	ROM_LOAD( "hobby.bin",      0x10000, 0x8000, CRC(c86d0c2b) SHA1(987ef17c7b9cc119511a16cbd98ec44d24665af5) )
+	ROM_LOAD( "musica.bin",     0x18000, 0x8000, CRC(6b08990f) SHA1(bbc633dc4e0c395269d3d3fbf1f7617ea7adabf1) )
+	ROM_LOAD( "natura.bin",     0x20000, 0x8000, CRC(f17b0d59) SHA1(ebe3d5a0247f3065f0c5d4ee0b846a737700f379) )
+	ROM_LOAD( "spettacolo.bin", 0x28000, 0x8000, CRC(38b8e37a) SHA1(e6df575f61ac61e825d98eaef99c128647806a75) )
+	ROM_LOAD( "mondiali90.bin", 0x30000, 0x4000, CRC(35622870) SHA1(f2dab64106ca4ef07175a0ad9491470964d8a0d2) )
+
+	ROM_REGION( 0x0e00, REGION_PROMS, 0 ) /* unknown */
+	ROM_LOAD( "prom_27s13-1.bin", 0x0000, 0x0200, CRC(71df3345) SHA1(3d64c47b2ce093afad56d8963c151a7854451236) )
+	ROM_LOAD( "prom_27s13-2.bin", 0x0200, 0x0200, CRC(71df3345) SHA1(3d64c47b2ce093afad56d8963c151a7854451236) )
+	ROM_LOAD( "prom_27s13-3.bin", 0x0400, 0x0200, CRC(71df3345) SHA1(3d64c47b2ce093afad56d8963c151a7854451236) )
+	ROM_LOAD( "prom_27s13-4.bin", 0x0600, 0x0200, CRC(71df3345) SHA1(3d64c47b2ce093afad56d8963c151a7854451236) )
+	ROM_LOAD( "prom_27s13-5.bin", 0x0800, 0x0200, CRC(71df3345) SHA1(3d64c47b2ce093afad56d8963c151a7854451236) )
+	ROM_LOAD( "prom_27s13-6.bin", 0x0a00, 0x0200, CRC(71df3345) SHA1(3d64c47b2ce093afad56d8963c151a7854451236) )
+	ROM_LOAD( "prom_6349-1n.bin", 0x0c00, 0x0200, CRC(19e3f161) SHA1(52da3c1e50c2329454de14cb9c46149e573e562b) )
+ROM_END
 
 /*
 
@@ -479,7 +499,9 @@ GAME( 1984, gt103aa,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics"
 GAME( 1984, gt103ab,  gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1984, gt103asx, gt103a, findout, findout, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Sex questions)",   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
+GAME( 1986, quiz,     0,      findout, quiz,    0, ROT0, "Italian bootleg",       "Quiz (Revision 2)",                      GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+
 GAME( 1987, findout,  0,      findout, findout, 0, ROT0, "Elettronolo",           "Find Out (Version 4.04)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1986, quiz,     0,      findout, quiz,    0, ROT0, "Italian bootleg",       "Quiz (Revision 2)",                      GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1991, quiz211,  0,      findout, quiz,    0, ROT0, "Elettronolo",           "Quiz (Revision 2.1)",                    GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 

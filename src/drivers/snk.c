@@ -288,7 +288,7 @@ static int snk_sound_register;
 /*********************************************************************/
 
 static int snk_rot8( int which ){
-	const int dial_8[8]   = { 0xf0,0x30,0x10,0x50,0x40,0xc0,0x80,0xa0 };
+	static const int dial_8[8]   = { 0xf0,0x30,0x10,0x50,0x40,0xc0,0x80,0xa0 };
 	int value = readinputport(which+1);
 	int joypos16 = value>>4;
 	return (value&0xf) | dial_8[joypos16>>1];
@@ -299,7 +299,7 @@ static int snk_rot12( int which ){
     This routine converts a 4 bit (16 directional) analog input to the 12
     directional input that many SNK games require.
 */
-	const int dial_12[13] = {
+	static const int dial_12[13] = {
 	0xb0,0xa0,0x90,0x80,0x70,0x60,
 	0xf0,
 	/* 0xf0 isn't a valid direction, but avoids the "joystick error"

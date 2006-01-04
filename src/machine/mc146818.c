@@ -17,9 +17,7 @@
         0x01 Second Alarm  (BCD 00-59, Hex 00-3B; "don't care" if C0-FF)
         0x02 Minutes       (BCD 00-59, Hex 00-3B)
         0x03 Minute Alarm  (BCD 00-59, Hex 00-3B; "don't care" if C0-FF))
-        0x04 Hours         (BCD 00-23, He
-
-        x 00-17 if 24 hr mode)
+        0x04 Hours         (BCD 00-23, Hex 00-17 if 24 hr mode)
                         (BCD 01-12, Hex 01-0C if 12 hr am)
                         (BCD 81-92. Hex 81-8C if 12 hr pm)
         0x05 Hour Alarm    (same as hours; "don't care" if C0-FF))
@@ -76,58 +74,6 @@
 #include "machine/mc146818.h"
 #include "memconv.h"
 
-
-/***************************************************************************
-
-    Binary coded decimal
-
-***************************************************************************/
-
-int bcd_adjust(int value)
-{
-	if ((value & 0xf) >= 0xa)
-		value = value + 0x10 - 0xa;
-	if ((value & 0xf0) >= 0xa0)
-		value = value - 0xa0 + 0x100;
-	return value;
-}
-
-int dec_2_bcd(int a)
-{
-	return (a % 10) | ((a / 10) << 4);
-}
-
-int bcd_2_dec(int a)
-{
-	return (a & 0xf) + (a >> 4) * 10;
-}
-
-/***************************************************************************
-
-    Gregorian calendar code
-
-***************************************************************************/
-
-int	gregorian_is_leap_year(int year)
-{
-	return ((year & 4) == 0)
-		&& ((year % 100 != 0) || (year % 400 == 0));
-}
-
-/* months are one counted */
-int gregorian_days_in_month(int month, int year)
-{
-	static int days_in_month[] =
-	{
-		31, 28, 31, 30, 31, 30,
-		31, 31, 30, 31, 30, 31
-	};
-
-	if ((month != 2) || !gregorian_is_leap_year(year))
-		return days_in_month[month-1];
-	else
-		return 29;
-}
 
 
 #define LOG_MC146818		0

@@ -137,7 +137,7 @@ tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
 static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
-	const UINT8 layout[8][8] =
+	static const UINT8 layout[8][8] =
 	{
 		{0,1,4,5,16,17,20,21},
 		{2,3,6,7,18,19,22,23},

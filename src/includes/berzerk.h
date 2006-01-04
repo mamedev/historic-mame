@@ -13,9 +13,8 @@ READ8_HANDLER( berzerk_led_off_r );
 
 /* defined in vidrhdw/berzerk.c */
 
-extern UINT8 *berzerk_magicram;
-
 PALETTE_INIT( berzerk );
+VIDEO_START( berzerk );
 WRITE8_HANDLER( berzerk_videoram_w );
 WRITE8_HANDLER( berzerk_colorram_w );
 WRITE8_HANDLER( berzerk_magicram_w );
@@ -26,6 +25,5 @@ READ8_HANDLER( berzerk_port_4e_r );
 /* defined in sndhrdw/berzerk.c */
 
 extern struct Samplesinterface berzerk_samples_interface;
-WRITE8_HANDLER( berzerk_sound_control_a_w );
-WRITE8_HANDLER( berzerk_sound_control_b_w );
-READ8_HANDLER( berzerk_voiceboard_r );
+WRITE8_HANDLER( berzerk_sound_w );
+READ8_HANDLER( berzerk_sound_r );

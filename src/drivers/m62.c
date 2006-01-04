@@ -136,7 +136,7 @@ READ8_HANDLER( ldrun2_bankswitch_r )
 WRITE8_HANDLER( ldrun2_bankswitch_w )
 {
 	static int bankcontrol[2];
-	int banks[30] =
+	static const int banks[30] =
 	{
 		0,0,0,0,0,1,0,1,0,0,
 		0,1,1,1,1,1,0,0,0,0,

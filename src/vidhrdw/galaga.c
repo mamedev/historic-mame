@@ -379,7 +379,7 @@ PALETTE_INIT( galaga )
 	for (i = 0;i < 64;i++)
 	{
 		int bits,r,g,b;
-		int map[4] = { 0x00, 0x47, 0x97 ,0xde };
+		static const int map[4] = { 0x00, 0x47, 0x97 ,0xde };
 
 		bits = (i >> 0) & 0x03;
 		r = map[bits];
@@ -604,7 +604,7 @@ VIDEO_EOF( galaga )
 {
 	/* this function is called by galaga_interrupt_1() */
 	int s0,s1,s2;
-	int speeds[8] = { -1, -2, -3, 0, 3, 2, 1, 0 };
+	static const int speeds[8] = { -1, -2, -3, 0, 3, 2, 1, 0 };
 
 
 	s0 = galaga_starcontrol[0];

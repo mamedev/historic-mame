@@ -686,7 +686,7 @@ int win_d3d_effects_init_surfaces(void)
 
 static int effects_scanline_init(void)
 {
-	int scanline_data[2][4] = { { 0xFFFFFF, 0x000000, -1, -1 }, { 0x9F9F9F, 0xFFFFFF, 0x9F9F9F, 0x000000 } };
+	static const int scanline_data[2][4] = { { 0xFFFFFF, 0x000000, -1, -1 }, { 0x9F9F9F, 0xFFFFFF, 0x9F9F9F, 0x000000 } };
 
 	DDSURFACEDESC2 surface_desc = { sizeof(DDSURFACEDESC2) };
 	HRESULT result;

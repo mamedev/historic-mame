@@ -205,14 +205,14 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 {
 	const char *pBuf0;
 
-	const char *pConditionCodeTable[16] =
+	static const char *pConditionCodeTable[16] =
 	{
 		"EQ","NE","CS","CC",
 		"MI","PL","VS","VC",
 		"HI","LS","GE","LT",
 		"GT","LE","","NV"
 	};
-	const char *pOperation[16] =
+	static const char *pOperation[16] =
 	{
 		"AND","EOR","SUB","RSB",
 		"ADD","ADC","SBC","RSC",

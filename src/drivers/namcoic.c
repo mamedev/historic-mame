@@ -82,7 +82,7 @@ namco_tilemap_init( int gfxbank, void *maskBaseAddr,
 		/* define offsets for scrolling */
 		for( i=0; i<4; i++ )
 		{
-			const int adj[4] = { 4,2,1,0 };
+			static const int adj[4] = { 4,2,1,0 };
 			int dx = 44+adj[i];
 			tilemap_set_scrolldx( mTilemapInfo.tmap[i], -dx, -(-288-dx) );
 			tilemap_set_scrolldy( mTilemapInfo.tmap[i], -24, -(-224-24) );

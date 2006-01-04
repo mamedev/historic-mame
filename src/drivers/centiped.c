@@ -1033,8 +1033,8 @@ INPUT_PORTS_START( warlords )
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ))
-	PORT_DIPSETTING(    0x80, "Upright (no overlay)" )
-	PORT_DIPSETTING(    0x00, "Cocktail (overlay)" )
+	PORT_DIPSETTING(    0x80, "Upright (overlay)" )
+	PORT_DIPSETTING(    0x00, "Cocktail (no overlay)" )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)

@@ -660,6 +660,13 @@ static struct help_item static_help_list[] =
 		"\n"
 	},
 	{
+		"traceflush",
+		"\n"
+		"  traceflush\n"
+		"\n"
+		"Flushes all open trace files.\n"
+	},
+	{
 		"bpset",
 		"\n"
 		"  bp[set] <address>[,<condition>[,<action>]]\n"

@@ -15,6 +15,46 @@ TODO:
 - Sound samples were getting chopped; I fixed this by changing sound/adpcm.c to
   disregard requests to play new samples until the previous one is finished.
 
+Gotcha pcb: 97,7,29 PARA VER 3.0 but it is the same as ppchamp
+
+Pasha Pasha Champ Mini Game Festival
+Dongsung, 1997
+
+PCB Layout
+----------
+97,7,29 PARA VER 2.0
+|------------------------------------------------|
+|HA13001  CA5102     U53    14.31818MHz          |
+|           CY5001   U54                         |
+|VOL  6MHz 6116      U55  6116               6116|
+| 1MHz     UZ02      U56                         |
+|          Z80                          GAL      |
+|J  AD-65  UZ11                                  |
+|A                6116                  PAL      |
+|M                                               |
+|M  DIPSW2        6116      PAL                  |
+|A                                               |
+|   DIPSW1  6116                |--------|       |
+|           6116  PAL           |ALTERA  |       |
+|                               |MAX     |       |
+|     UCN5801      6        PAL |EPM7128 |   U41A|
+|     UCN5801 PAL  8  62256     |--------|U42A   |
+|  LAMP       PAL  0  U3                         |
+|PBSW         PAL  0  62256  6264            U41B|
+|                  0  U2     6264         U42B   |
+|------------------------------------------------|
+Notes:
+      68000 clock - 14.31818MHz
+      M6295 clock - 1.000MHz, sample rate = 1000000/165
+      YM2151 clock- 3.579545MHz [14.31818/4]
+      Z80 clock   - 6.000MHz
+      VSync       - 55Hz
+      HSync       - 14.5kHz
+      LAMP        - Player 1, 2 & 3 lamp driver connector for buttons Start, Blue, Green and Red
+                    14 pin connector, 4 for each player plus 2 for 12V
+      PBSW        - Player 1, 2 & 3 button connector for buttons Start, Blue, Green and Red
+                    15 pin connector, 4 for each player plus 3 for ground
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -237,16 +277,16 @@ static struct YM2151interface ym2151_interface =
 static MACHINE_DRIVER_START( gotcha )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,12000000)	/* 12 MHz ? */
+	MDRV_CPU_ADD(M68000,14318180)	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
-	MDRV_CPU_ADD(Z80,6000000)	/* 6 MHz ? */
+	MDRV_CPU_ADD(Z80,6000000)	/* 6 MHz */
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 //  MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -267,7 +307,7 @@ static MACHINE_DRIVER_START( gotcha )
 	MDRV_SOUND_ROUTE(0, "mono", 0.80)
 	MDRV_SOUND_ROUTE(1, "mono", 0.80)
 
-	MDRV_SOUND_ADD(OKIM6295, 1056000/132)
+	MDRV_SOUND_ADD(OKIM6295, 1000000/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
@@ -316,6 +356,41 @@ ROM_START( gotcha )
 	ROM_LOAD( "gotcha-u.z11", 0x000000, 0x80000, CRC(6111c6ae) SHA1(9170a37eaca56586da2f5e4894816640193c8802) )
 ROM_END
 
+ROM_START( ppchamp )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "u3", 0x00000, 0x40000, CRC(f56c0fc2) SHA1(7158c9f252e48b0605dc98e3f0d3ad9d0b376cc8) )
+	ROM_LOAD16_BYTE( "u2", 0x00001, 0x40000, CRC(a941ffdc) SHA1(0667dafd11ba3a79e8c6df61521344c70e287250) )
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "uz02", 0x00000, 0x10000, CRC(f4f6e16b) SHA1(a360c571bee7391c66e98e5e111e78ac9732390e) )
 
-GAME( 1997, gotcha, 0, gotcha, gotcha, 0, ROT0, "Dongsung", "Got-cha", 0 )
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "u42a",         0x000000, 0x20000, CRC(f0b521d1) SHA1(fe44bfa13818eee08d112c2f75e14bfd67bbefbf) )
+	ROM_CONTINUE(             0x100000, 0x20000 )
+	ROM_CONTINUE(             0x020000, 0x20000 )
+	ROM_CONTINUE(             0x120000, 0x20000 )
+	ROM_LOAD( "u42b",         0x040000, 0x20000, CRC(1107918e) SHA1(bb508da36814f2954d6a9996b777d095f6e9c243) )
+	ROM_CONTINUE(             0x140000, 0x20000 )
+	ROM_CONTINUE(             0x060000, 0x20000 )
+	ROM_CONTINUE(             0x160000, 0x20000 )
+	ROM_LOAD( "u41a",         0x080000, 0x20000, CRC(3f567d33) SHA1(77122c1cdea663922fe570e005bfbb4c779f30da) )
+	ROM_CONTINUE(             0x180000, 0x20000 )
+	ROM_CONTINUE(             0x0a0000, 0x20000 )
+	ROM_CONTINUE(             0x1a0000, 0x20000 )
+	ROM_LOAD( "u41b",         0x0c0000, 0x20000, CRC(18a3497e) SHA1(7938f4e723bf4d29de6c9eda807c37d86b7ac78c) )
+	ROM_CONTINUE(             0x1c0000, 0x20000 )
+	ROM_CONTINUE(             0x0e0000, 0x20000 )
+	ROM_CONTINUE(             0x1e0000, 0x20000 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "u56", 0x000000, 0x80000, CRC(160e46b3) SHA1(e2bec3388d41afb9f1025d66c15fcc6ca4d40703) )
+	ROM_LOAD( "u55", 0x080000, 0x80000, CRC(7351b61c) SHA1(2ef3011a7a1ff253f45186e46cfdce5f4ef17322) )
+	ROM_LOAD( "u54", 0x100000, 0x80000, CRC(a3d8c5ef) SHA1(f59874844934f3ce76a49e4a9618510537378387) )
+	ROM_LOAD( "u53", 0x180000, 0x80000, CRC(10ca65c4) SHA1(66ba3c6e1bda18c5668a609adc60bfe547205e53) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )
+	ROM_LOAD( "uz11", 0x00000, 0x80000, CRC(3d96274c) SHA1(c7a670af86194c370bf8fb30afbe027ab78a0227) )
+ROM_END
+
+GAME( 1997, gotcha,  0,      gotcha, gotcha, 0, ROT0, "Dongsung", "Got-cha Mini Game Festival", 0 )
+GAME( 1997, ppchamp, gotcha, gotcha, gotcha, 0, ROT0, "Dongsung", "Pasha Pasha Champ Mini Game Festival", 0 )

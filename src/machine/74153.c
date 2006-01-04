@@ -37,7 +37,7 @@
 #include "machine/74153.h"
 
 
-#define MAX_TTL74153 4
+#define MAX_TTL74153 9
 
 struct TTL74153
 {
@@ -48,7 +48,7 @@ struct TTL74153
 	int a;					/* pin 14 */
 	int b;					/* pin 2 */
 	int input_lines[2][4];	/* pins 3-6,10-13 */
-	int enable[2];			/* pins 1,9 */
+	int enable[2];			/* pins 1,15 */
 
 	/* output */
 	int output[2];			/* pins 7,9 */

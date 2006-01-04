@@ -72,7 +72,7 @@ WRITE8_HANDLER( thief_color_map_w ){
     ----xx--    green
     ------xx    red
 */
-	const UINT8 intensity[4] = {0x00,0x55,0xAA,0xFF};
+	static const UINT8 intensity[4] = {0x00,0x55,0xAA,0xFF};
 	int r = intensity[(data & 0x03) >> 0];
     int g = intensity[(data & 0x0C) >> 2];
     int b = intensity[(data & 0x30) >> 4];

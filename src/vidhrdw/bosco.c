@@ -86,7 +86,7 @@ PALETTE_INIT( bosco )
 	for (i = 0;i < 64;i++)
 	{
 		int bits,r,g,b;
-		int map[4] = { 0x00, 0x47, 0x97, 0xde };
+		static const int map[4] = { 0x00, 0x47, 0x97, 0xde };
 
 		bits = (i >> 0) & 0x03;
 		r = map[bits];
@@ -346,8 +346,8 @@ VIDEO_UPDATE( bosco )
 
 VIDEO_EOF( bosco )
 {
-	int speedsx[8] = { -1, -2, -3, 0, 3, 2, 1, 0 };
-	int speedsy[8] = { 0, -1, -2, -3, 0, 3, 2, 1 };
+	static const int speedsx[8] = { -1, -2, -3, 0, 3, 2, 1, 0 };
+	static const int speedsy[8] = { 0, -1, -2, -3, 0, 3, 2, 1 };
 
 	stars_scrollx += speedsx[bosco_starcontrol & 0x07];
 	stars_scrolly += speedsy[(bosco_starcontrol & 0x38) >> 3];

@@ -213,7 +213,8 @@ void swmathbox_reset(void)
 
 void run_mbox(void)
 {
-	static short ACC, A, B, C;
+	static INT16 A, B, C;
+	static INT32 ACC;
 
 	int RAMWORD = 0;
 	int MA_byte;
@@ -260,15 +261,28 @@ void run_mbox(void)
          * IP15_8 provide the instruction strobes
          */
 
-		/* 0x01 - LAC */
+
+		/* The accumulator is built from two ls299 (msb) and two ls164
+         * (lsb). You can only read/write the 16 msb. The lsb are
+         * used while adding up multiplication results giving better
+         * accuracy.
+         */
+
+		/* 0x10 - CLEAR_ACC */
+		if (IP15_8 & CLEAR_ACC)
+		{
+			ACC = 0;
+		}
+
+		/* 0x01 - LAC (also clears lsb)*/
 		if (IP15_8 & LAC)
-			ACC = RAMWORD;
+			ACC = (RAMWORD << 16);
 
 		/* 0x02 - READ_ACC */
 		if (IP15_8 & READ_ACC)
 		{
-			starwars_mathram[MA_byte+1] = (ACC & 0x00ff);
-			starwars_mathram[MA_byte  ] = (ACC & 0xff00) >> 8;
+			starwars_mathram[MA_byte+1] = ((ACC >> 16) & 0xff);
+			starwars_mathram[MA_byte  ] = ((ACC >> 24) & 0xff);
 		}
 
 		/* 0x04 - M_HALT */
@@ -279,18 +293,47 @@ void run_mbox(void)
 		if (IP15_8 & INC_BIC)
 			BIC = (BIC + 1) & 0x1ff; /* Restrict to 9 bits */
 
-		/* 0x10 - CLEAR_ACC */
-		if (IP15_8 & CLEAR_ACC)
-			ACC = 0;
-
-		/* 0x20 - LDC */
+		/* 0x20 - LDC*/
 		if (IP15_8 & LDC)
 		{
 			C = RAMWORD;
-			/* TODO: this next line is accurate to the schematics, but doesn't seem to work right */
-			/* ACC=ACC+(  ( (long)((A-B)*C) )>>14  ); */
-			/* round the result - this fixes bad trench vectors in Star Wars */
-			ACC += ((((long)((A - B) * C)) >> 13) + 1) >> 1;
+
+			/* This is a serial subtractor - multiplier (74ls384) -
+             * accumulator. For the full calculation 33 GMCLK pulses
+             * are generated. The calculation performed is:
+             *
+             * ACC = ACC + (A - B) * C
+             *
+             * 1. pulse: Bit 0 of A and B are subtracted. Bit 0 of the
+             * multiplication between multiplicand C and 0 is
+             * calculated (bit 0 of A-B is not yet at the multiplier
+             * input). Bit 0 of ACC is added to 0 (again, 'real' results
+             * from the previous operations are no yet there).
+             *
+             * 2. pulse: Bit 1 of A-B is calculated. Bit 1 of
+             * mutliplication is calculated based on bit 0 of A-B and
+             * bit 1 of C. Bit 1 of ACC is added to the multiplication
+             * result from first pulse.
+             *
+             * 3. pulse: Bit 2 of A-B is calculated. Bit 2 of
+             * mutliplication is calculated based on bit 1 of A-B and
+             * bit 2 of C. Bit 2 of ACC is added to the multiplication
+             * between bit 1 of C and bit 0 of A-B.
+             *
+             * etc.
+             *
+             * This pipeline causes the shifts between A-B, C and ACC.
+             * The 32 bit ACC and one bit adder form a ring so it
+             * takes 33 clock pulses to do a full rotation.
+             */
+
+			ACC += (((INT32)(A - B) << 1) * C) << 1;
+
+			/* A and B are sign extended (requred by the ls384). After
+             * multiplication they just contain the sign.
+             */
+			A = (A & 0x8000)? 0xffff: 0;
+			B = (B & 0x8000)? 0xffff: 0;
 		}
 
 		/* 0x40 - LDB */

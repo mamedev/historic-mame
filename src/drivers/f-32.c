@@ -7,8 +7,58 @@
  ----------------------------------
  Mosaic               F-E1-32-009
 
-
  driver by Pierpaolo Prazzoli
+
+   CPU: Hyperstone E1-32XN
+ Video: QuickLogic QL2003-XPL84C
+ Sound: OKI 6295, BS901 (YM2151) & BS902 (YM3012)
+   OSC: 20MHz & 14.31818MHz
+EEPROM: 93C46
+
+F-E1-32-009
++------------------------------------------------------------------+
+|            VOL                               +---------+         |
++-+                              YM3812        |   SND   |         |
+  |                                            +---------+         |
++-+                              YM2151            OKI6295         |
+|                                                                  |
+|                                   +---------------+              |
+|                                   |               |              |
+|J                   +-------+      |               |              |
+|A                   | VRAML |      | QuickLogic    |  14.31818MHz |
+|M                   +-------+      | QL2003-XPL84C |              |
+|M                   +-------+      | 9819 BA       |   +-----+    |
+|A                   | VRAMU |      |               |   |93C46|    |
+|                    +-------+      +---------------+   +-----+    |
+|C                                                                 |
+|O                                      +---------+   +---------+  |
+|N                                      |   L00   |   |   U00   |  |
+|N                                      |         |   |         |  |
+|E                                      +---------+   +---------+  |
+|C                   +------------+     +---------+   +---------+  |
+|T                   |            |     |   L01   |   |   U01   |  |
+|O                   |            |     |         |   |         |  |
+|R                   | HyperStone |     +---------+   +---------+  |
+|                    |  E1-32XN   |     +---------+   +---------+  |
+|                    |            |     |   L02   |   |   U02   |  |
+|          +-----+   |            |     |         |   |         |  |
+|          |DRAML|   +------------+     +---------+   +---------+  |
++-+        +-----+                      +---------+   +---------+  |
+  |        +-----+               20MHz  |   L03   |   |   U03   |  |
++-+        |DRAMU|                      |         |   |         |  |
+|          +-----+    +----------+      +---------+   +---------+  |
+|  +--+ +--+          |   ROM1   |                                 |
+|  |S3| |S1|          +----------+                                 |
++------------------------------------------------------------------+
+
+S3 is a reset button
+S1 is the setup button
+
+VRAML & VRAMU are KM6161002CJ-12
+DRAML & DRAMU are GM71C18163CJ6
+
+ROM1 & SND are stardard 27C040 and/or 27C020 eproms
+L00-L03 & U00-U03 are 29F1610ML Flash roms
 
 *********************************************************************/
 
@@ -22,7 +72,7 @@ static UINT32 *vram;
 
 static READ32_HANDLER( oki_32bit_r )
 {
-	return OKIM6295_status_0_r(0) ^ 0x80;
+	return OKIM6295_status_0_r(0);
 }
 
 static WRITE32_HANDLER( oki_32bit_w )
@@ -90,8 +140,8 @@ static ADDRESS_MAP_START( common_map, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mosaicf2_io, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x4000, 0x4003) AM_READ(ym2151_status_32bit_r)
-	AM_RANGE(0x4810, 0x4813) AM_READ(oki_32bit_r)
+	AM_RANGE(0x4000, 0x4003) AM_READ(oki_32bit_r)
+	AM_RANGE(0x4810, 0x4813) AM_READ(ym2151_status_32bit_r)
 	AM_RANGE(0x5000, 0x5003) AM_READ(input_port_0_dword_r)
 	AM_RANGE(0x5200, 0x5203) AM_READ(input_port_1_dword_r)
 	AM_RANGE(0x5400, 0x5403) AM_READ(eeprom_r)

@@ -46,7 +46,7 @@ void topspeed_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	UINT16 data,tilenum,code,color;
 	UINT8 flipx,flipy,priority,bad_chunks;
 	UINT8 j,k,px,py,zx,zy,zoomx,zoomy;
-	int primasks[2] = {0xff00,0xfffc};	/* Sprites are over bottom layer or under top layer */
+	static const int primasks[2] = {0xff00,0xfffc};	/* Sprites are over bottom layer or under top layer */
 
 	/* Most of spriteram is not used by the 68000: rest is scratch space for the h/w perhaps ? */
 

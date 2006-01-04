@@ -130,6 +130,13 @@ static void ppcdrc_recompile(drc_core *drc)
 		pc += (INT8)(result >> 24);
 		if (result & RECOMPILE_END_OF_STRING)
 			break;
+
+		/* do not recompile across MMU page boundaries */
+		if ((pc & 0x0FFF) == 0)
+		{
+			remaining = 0;
+			break;
+		}
 	}
 
 	/* add dispatcher just in case */
@@ -330,13 +337,15 @@ static void append_check_interrupts(drc_core *drc, int inline_generate)
 	_test_r32_imm(REG_EAX, 0x1);			/* is it a IRQ? */
 	_jcc_short_link(COND_Z, &link3);
 	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
-	_jmp(ppc.generate_interrupt_exception);
+	_mov_r32_m32abs(REG_EAX, &ppc.generate_interrupt_exception);
+	_jmp_r32(REG_EAX);
 	_resolve_link(&link3);
 
 	_test_r32_imm(REG_EAX, 0x2);			/* is it a decrementer exception */
 	_jcc_short_link(COND_Z, &link4);
 	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
-	_jmp(ppc.generate_decrementer_exception);
+	_mov_r32_m32abs(REG_EAX, &ppc.generate_decrementer_exception);
+	_jmp_r32(REG_EAX);
 	_resolve_link(&link4);
 
 	_resolve_link(&link1);

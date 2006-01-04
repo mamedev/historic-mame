@@ -60,7 +60,7 @@ void kog_px_decrypt( void )
 	UINT8 *dst = malloc( 0x600000 );
 	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
 	int i;
-	unsigned int sec[] = { 0x3, 0x8, 0x7, 0xC, 0x1, 0xA, 0x6, 0xD };
+	static const unsigned int sec[] = { 0x3, 0x8, 0x7, 0xC, 0x1, 0xA, 0x6, 0xD };
 
 	for (i = 0; i < 8; i++){
 		memcpy (dst + i * 0x20000, src + sec[i] * 0x20000, 0x20000);
@@ -538,7 +538,7 @@ void decrypt_kof2k4se_68k( void )
 	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
 	UINT8 *dst = malloc(0x400000);
 	int i;
-	unsigned int sec[] = {0x300000,0x200000,0x100000,0x000000};
+	static const unsigned int sec[] = {0x300000,0x200000,0x100000,0x000000};
 	if (dst)
 	{
 		memcpy(dst,src,0x400000);
@@ -604,7 +604,7 @@ void lans2004_decrypt_68k( void )
 	UINT8 *dst = malloc(0x600000);
 
 	if (dst) {
-		int sec[] = { 0x3, 0x8, 0x7, 0xC, 0x1, 0xA, 0x6, 0xD };
+		static const int sec[] = { 0x3, 0x8, 0x7, 0xC, 0x1, 0xA, 0x6, 0xD };
 
 		for (i = 0; i < 8; i++)
 			memcpy (dst + i * 0x20000, src + sec[i] * 0x20000, 0x20000);

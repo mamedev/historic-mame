@@ -88,6 +88,7 @@ DRIVER_INIT( bowler );
 DRIVER_INIT( gunfight );
 DRIVER_INIT( bandido );
 DRIVER_INIT( indianbt );
+DRIVER_INIT( shuttlei );
 
 void c8080bw_flip_screen_w(int data);
 void c8080bw_screen_red_w(int data);

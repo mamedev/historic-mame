@@ -122,8 +122,8 @@ PROM  : Type MB7051
 static PALETTE_INIT( shougi )
 {
 	int i;
-	const int resistances_b[2]  = { 470, 220 };
-	const int resistances_rg[3] = { 1000, 470, 220 };
+	static const int resistances_b[2]  = { 470, 220 };
+	static const int resistances_rg[3] = { 1000, 470, 220 };
 	double weights_r[3], weights_g[3], weights_b[2];
 
 

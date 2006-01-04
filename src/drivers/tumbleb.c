@@ -6,13 +6,15 @@
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 1)
   Tumblepop             (c) 1991 Data East Corporation (Bootleg 2)
   Jump Kids             (c) 1993 Comad
+  Metal Saver           (c) 1994 First Amusement
+  Super Trio[1]         (c) 1994 GameAce
   Fancy World           (c) 1995 Unico
   Choky! Choky!         (c) 1995 SemiCom
   Hatch Catch           (c) 1995 SemiCom
   Cookie & Bibi[2]      (c) 1995 SemiCom
   B.C. Story            (c) 1997 SemiCom
+  MuHanSeungBu          (c) 1997 SemiCom (Korea Only)
   Jumping Pop           (c) 2001 ESD
-  Super Trio[1]         (c) 1994 GameAce
 
   [1] has the same sprites as the bootlegs, not much else is the same tho
 
@@ -1293,7 +1295,7 @@ INPUT_PORTS_START( semibase )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )			/* Should be Test Mode?? but hangs with black screen */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )		/* Unfinished Test Mode, Hangs with black screen, same as a real PCB */
 	PORT_DIPNAME( 0x0e, 0x0e, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x04, "Level 1" )
 	PORT_DIPSETTING(    0x08, "Level 2" )
@@ -2691,13 +2693,13 @@ DRIVER_INIT( chokchok )
 GAME( 1991, tumbleb,  tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
 GAME( 1991, tumbleb2, tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
 GAME( 1993, jumpkids, 0,       jumpkids,  tumblepb, jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
-GAME( 1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" , 0 ) // game says 1996, testmode 1995?
+GAME( 1994, metlsavr, 0,       metlsavr,  metlsavr, chokchok, ROT0, "First Amusement", "Metal Saver", 0 )
+GAME( 1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio", 0 )
 GAME( 1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" , 0 ) // not 100% sure about gfx offsets
 GAME( 1995, cookbib,  0,       cookbib,   cookbib,  htchctch, ROT0, "SemiCom", "Cookie & Bibi" , 0 ) // not 100% sure about gfx offsets
 GAME( 1995, chokchok, 0,       cookbib,   chokchok, chokchok, ROT0, "SemiCom", "Choky! Choky!", GAME_IMPERFECT_GRAPHICS ) // corruption during attract mode (tmap disable?)
-GAME( 1994, metlsavr, 0,       metlsavr,  metlsavr, chokchok, ROT0, "First Amusement", "Metal Saver", 0 )
+GAME( 1996, fncywld,  0,       fncywld,   fncywld,  fncywld,  ROT0, "Unico", "Fancy World - Earth of Crisis" , 0 ) // game says 1996, testmode 1995?
 GAME( 1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME( 1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
-GAME( 199?, semibase, 0,       semibase,  semibase, bcstory,  ROT0, "SemiCom", "MuHanSeungBu (SemiCom Baseball)", GAME_IMPERFECT_GRAPHICS)// sprite offsets..
+GAME( 1997, semibase, 0,       semibase,  semibase, bcstory,  ROT0, "SemiCom", "MuHanSeungBu (SemiCom Baseball)", GAME_IMPERFECT_GRAPHICS)// sprite offsets..
 GAME( 2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop", 0 )
-GAME( 1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio", 0 )

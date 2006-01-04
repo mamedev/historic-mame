@@ -384,7 +384,7 @@ static void wgp_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int y
 	UINT16 code,bigsprite,map_index;
 	UINT16 rotate=0;
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	int primasks[2] = {0x0, 0xfffc};	/* fff0 => under rhs of road only */
+	static const int primasks[2] = {0x0, 0xfffc};	/* fff0 => under rhs of road only */
 
 	for (offs = 0x1ff;offs >= 0;offs--)
 	{

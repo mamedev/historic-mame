@@ -86,8 +86,8 @@ static double weights_r[2], weights_g[3], weights_b[3];
 static PALETTE_INIT( mazerbla )
 {
 
-	const int resistances_r[2]  = { 4700, 2200 };
-	const int resistances_gb[3] = { 10000, 4700, 2200 };
+	static const int resistances_r[2]  = { 4700, 2200 };
+	static const int resistances_gb[3] = { 10000, 4700, 2200 };
 
 
 /* just to calculate coefficients for later use */

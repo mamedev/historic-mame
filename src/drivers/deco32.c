@@ -31,7 +31,7 @@
     Tattoo Assassins & Dragongun use an unemulated chip (Ace/Jack) for
     special blending effects.  It's exact effect is unclear.
 
-    Video backgrounds in Dragongun and Lock N Load?
+    Video backgrounds in Dragongun?
 
 
 
@@ -489,6 +489,45 @@ static WRITE32_HANDLER( tattass_control_w )
 
 /**********************************************************************************/
 
+static READ32_HANDLER( nslasher_prot_r )
+{
+	switch (offset<<1) {
+	case 0x280: return readinputport(0) << 16; /* IN0 */
+	case 0x4c4: return readinputport(1) << 16; /* IN1 */
+	case 0x35a: return (EEPROM_read_bit()<< 16) | 0xffff; // Debug switch in low word??
+	}
+
+	logerror("%08x: Read unmapped prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+
+	return 0xffffffff;
+}
+
+static WRITE32_HANDLER( nslasher_eeprom_w )
+{
+	if (ACCESSING_LSB32)
+	{
+		EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
+		EEPROM_write_bit(data & 0x10);
+		EEPROM_set_cs_line((data & 0x40) ? CLEAR_LINE : ASSERT_LINE);
+
+		deco32_pri_w(0,data&0x3,0); /* Bit 0 - layer priority toggle, Bit 1 - BG2/3 Joint mode (8bpp) */
+	}
+}
+
+static WRITE32_HANDLER( nslasher_prot_w )
+{
+	//logerror("%08x:write prot %08x (%08x) %08x\n",activecpu_get_pc(),offset<<1,mem_mask,data);
+
+	/* Only sound port of chip is used - no protection */
+	if (offset==0x700/4) {
+		soundlatch_w(0,(data>>16)&0xff);
+		//cpunum_set_input_line_and_vector(1, 0, ASSERT_LINE, 0xc7 | 0x10);
+		//cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
+	}
+}
+
+/**********************************************************************************/
+
 static ADDRESS_MAP_START( captaven_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
 
@@ -821,7 +860,7 @@ static ADDRESS_MAP_START( tattass_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x120000, 0x120003) AM_READ(MRA32_NOP) /* ACIA (unused) */
 
 	AM_RANGE(0x162000, 0x162fff) AM_READ(MRA32_RAM) /* 'Jack' RAM!? */
-	AM_RANGE(0x163000, 0x16307f) AM_READ(MRA32_RAM)
+	AM_RANGE(0x163000, 0x16309f) AM_READ(MRA32_RAM)
 	AM_RANGE(0x168000, 0x169fff) AM_READ(MRA32_RAM)
 
 	AM_RANGE(0x170000, 0x171fff) AM_READ(MRA32_RAM)
@@ -857,8 +896,7 @@ static ADDRESS_MAP_START( tattass_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x150000, 0x150003) AM_WRITE(tattass_control_w) /* Volume port/Eprom/Priority */
 
 	AM_RANGE(0x162000, 0x162fff) AM_WRITE(MWA32_RAM) /* 'Jack' RAM!? */
-	AM_RANGE(0x163000, 0x16307f) AM_WRITE(MWA32_RAM) /* 'Ace' RAM!? */
-	AM_RANGE(0x163080, 0x16309f) AM_WRITE(MWA32_RAM) /* 'Ace' control RAM!? */
+	AM_RANGE(0x163000, 0x16309f) AM_WRITE(deco32_ace_ram_w) AM_BASE(&deco32_ace_ram) /* 'Ace' RAM!? */
 
 	AM_RANGE(0x164000, 0x164003) AM_WRITE(MWA32_NOP) /* Palette control BG2/3 ($1a constant) */
 	AM_RANGE(0x164004, 0x164007) AM_WRITE(MWA32_NOP) /* Palette control Obj1 ($6 constant) */
@@ -891,6 +929,79 @@ static ADDRESS_MAP_START( tattass_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1e0000, 0x1e001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf34_control)
 
 	AM_RANGE(0x200000, 0x200fff) AM_WRITE(tattass_prot_w) AM_BASE(&deco32_prot_ram)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( nslasher_readmem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
+	AM_RANGE(0x100000, 0x11ffff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x120000, 0x1200ff) AM_READ(MRA32_NOP) /* ACIA (unused) */
+
+	AM_RANGE(0x163000, 0x16309f) AM_READ(MRA32_RAM)
+	AM_RANGE(0x168000, 0x169fff) AM_READ(MRA32_RAM)
+
+	AM_RANGE(0x170000, 0x171fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x178000, 0x179fff) AM_READ(MRA32_RAM)
+
+	AM_RANGE(0x182000, 0x183fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x184000, 0x185fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x192000, 0x1927ff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x192800, 0x193fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x194000, 0x1947ff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x194800, 0x195fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1a0000, 0x1a001f) AM_READ(MRA32_RAM)
+
+	AM_RANGE(0x1c2000, 0x1c3fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1c4000, 0x1c5fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1d2000, 0x1d27ff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1d2800, 0x1d3fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1d4000, 0x1d47ff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1d4800, 0x1d5fff) AM_READ(MRA32_RAM)
+	AM_RANGE(0x1e0000, 0x1e001f) AM_READ(MRA32_RAM)
+
+	AM_RANGE(0x200000, 0x200fff) AM_READ(nslasher_prot_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( nslasher_writemem, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x100000, 0x11ffff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_ram)
+
+	AM_RANGE(0x120000, 0x120003) AM_WRITE(MWA32_NOP) /* ACIA (unused) */
+//  AM_RANGE(0x130000, 0x130003) AM_WRITE(MWA32_NOP) /* Coin port (unused?) */
+	AM_RANGE(0x140000, 0x140003) AM_WRITE(MWA32_NOP) /* Vblank ack */
+	AM_RANGE(0x150000, 0x150003) AM_WRITE(nslasher_eeprom_w) /* Volume port/Eprom/Priority */
+
+	AM_RANGE(0x163000, 0x16309f) AM_WRITE(deco32_ace_ram_w) AM_BASE(&deco32_ace_ram) /* 'Ace' RAM!? */
+	AM_RANGE(0x164000, 0x164003) AM_WRITE(MWA32_NOP) /* Palette control BG2/3 ($1a constant) */
+	AM_RANGE(0x164004, 0x164007) AM_WRITE(MWA32_NOP) /* Palette control Obj1 ($4 constant) */
+	AM_RANGE(0x164008, 0x16400b) AM_WRITE(MWA32_NOP) /* Palette control Obj2 ($6 constant) */
+	AM_RANGE(0x16400c, 0x16400f) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x168000, 0x169fff) AM_WRITE(deco32_buffered_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x16c000, 0x16c003) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x16c008, 0x16c00b) AM_WRITE(deco32_palette_dma_w)
+
+	AM_RANGE(0x170000, 0x171fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x174000, 0x174003) AM_WRITE(MWA32_NOP) /* Sprite DMA mode (2) */
+	AM_RANGE(0x174010, 0x174013) AM_WRITE(buffer_spriteram32_w)
+	AM_RANGE(0x174018, 0x17401b) AM_WRITE(MWA32_NOP) /* Sprite 'CPU' (unused) */
+
+	AM_RANGE(0x178000, 0x179fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32_2) AM_SIZE(&spriteram_2_size)
+	AM_RANGE(0x17c000, 0x17c003) AM_WRITE(MWA32_NOP) /* Sprite DMA mode (2) */
+	AM_RANGE(0x17c010, 0x17c013) AM_WRITE(buffer_spriteram32_2_w)
+	AM_RANGE(0x17c018, 0x17c01b) AM_WRITE(MWA32_NOP) /* Sprite 'CPU' (unused) */
+
+	AM_RANGE(0x182000, 0x183fff) AM_WRITE(deco32_pf1_data_w) AM_BASE(&deco32_pf1_data)
+	AM_RANGE(0x184000, 0x185fff) AM_WRITE(deco32_pf2_data_w) AM_BASE(&deco32_pf2_data)
+	AM_RANGE(0x192000, 0x193fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf1_rowscroll)
+	AM_RANGE(0x194000, 0x195fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf2_rowscroll)
+	AM_RANGE(0x1a0000, 0x1a001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf12_control)
+
+	AM_RANGE(0x1c2000, 0x1c3fff) AM_WRITE(deco32_pf3_data_w) AM_BASE(&deco32_pf3_data)
+	AM_RANGE(0x1c4000, 0x1c5fff) AM_WRITE(deco32_pf4_data_w) AM_BASE(&deco32_pf4_data)
+	AM_RANGE(0x1d2000, 0x1d3fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf3_rowscroll)
+	AM_RANGE(0x1d4000, 0x1d5fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf4_rowscroll)
+	AM_RANGE(0x1e0000, 0x1e001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf34_control)
+
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(nslasher_prot_w) AM_BASE(&deco32_prot_ram)
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -929,7 +1040,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x130000, 0x130001) AM_WRITE(OKIM6295_data_1_w)
 	AM_RANGE(0x1f0000, 0x1f1fff) AM_WRITE(MWA8_BANK8)
 	AM_RANGE(0x1fec00, 0x1fec01) AM_WRITE(H6280_timer_w)
-	AM_RANGE(0x1ff402, 0x1ff403) AM_WRITE(H6280_irq_status_w)
+	AM_RANGE(0x1ff400, 0x1ff403) AM_WRITE(H6280_irq_status_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem_tattass, ADDRESS_SPACE_PROGRAM, 8 )
@@ -945,6 +1056,17 @@ static ADDRESS_MAP_START( sound_writemem_tattass, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(deco32_bsmt0_w)
 	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(deco32_bsmt1_w)
 	AM_RANGE(0x2000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( nslasher_sound, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	// 4000-7fff - banked area?
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0xa001, 0xa001) AM_READ(YM2151_status_port_0_r) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0xb000, 0xb000) AM_READ(OKIM6295_status_0_r) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xc000, 0xc000) AM_READ(OKIM6295_status_1_r) AM_WRITE(OKIM6295_data_1_w)
+	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
 /**********************************************************************************/
@@ -1359,6 +1481,44 @@ INPUT_PORTS_START( tattass )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( nslasher )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED ) /* 'soundmask' */
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START3 )
+INPUT_PORTS_END
+
 /**********************************************************************************/
 
 static const gfx_layout charlayout =
@@ -1378,7 +1538,19 @@ static const gfx_layout spritelayout =
 	RGN_FRAC(1,1),
 	4,
 	{ 16, 0, 24, 8 },
-//  { 24, 16, 8, 0 },
+	{ 64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+4, 64*8+5, 64*8+6, 64*8+7,
+		0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	128*8
+};
+
+static const gfx_layout spritelayout_5bpp =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	5,
+	{ RGN_FRAC(1,2), 16, 0, 24, 8 },
 	{ 64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+4, 64*8+5, 64*8+6, 64*8+7,
 		0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
@@ -1418,13 +1590,10 @@ static const gfx_layout spritelayout2 =
 	RGN_FRAC(1,5),
 	5,
 	{ 0x800000*8, 0x600000*8, 0x400000*8, 0x200000*8, 0 },
-	{ //7,6,5,4,3,2,1,0,16*8+7, 16*8+6, 16*8+5, 16*8+4, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
-16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
-0,1,2,3,4,5,6,7
-
-	  },
-
-
+	{
+		16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7,
+		0,1,2,3,4,5,6,7
+	},
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
 	32*8
 };
@@ -1485,11 +1654,21 @@ static const gfx_decode gfxdecodeinfo_dragngun[] =
 
 static const gfx_decode gfxdecodeinfo_tattass[] =
 {
-	{ REGION_GFX1, 0, &charlayout,          0, 16 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tilelayout,        256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */
 	{ REGION_GFX2, 0, &tilelayout,        512, 32 },	/* Tiles 16x16 */
 	{ REGION_GFX3, 0, &spritelayout2,    1536, 16 },	/* Sprites 16x16 */
 	{ REGION_GFX4, 0, &spritelayout,     1024+256, 32 },	/* Sprites 16x16 */
+	{ -1 } /* end of array */
+};
+
+static const gfx_decode gfxdecodeinfo_nslasher[] =
+{
+	{ REGION_GFX1, 0, &charlayout,          0, 32 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tilelayout,          0, 32 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tilelayout,        512, 32 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &spritelayout_5bpp,1024, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX4, 0, &spritelayout,     1536, 32 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -1498,6 +1677,11 @@ static const gfx_decode gfxdecodeinfo_tattass[] =
 static void sound_irq(int state)
 {
 	cpunum_set_input_line(1,1,state); /* IRQ 2 */
+}
+
+static void sound_irq_nslasher(int state)
+{
+	cpunum_set_input_line_and_vector(1, 0, state, 0x38);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -1509,6 +1693,12 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 static struct YM2151interface ym2151_interface =
 {
 	sound_irq,
+	sound_bankswitch_w
+};
+
+static struct YM2151interface ym2151_interface_nslasher =
+{
+	sound_irq_nslasher,
 	sound_bankswitch_w
 };
 
@@ -1641,13 +1831,13 @@ static MACHINE_DRIVER_START( fghthist )
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo_fghthist)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(tattass)
+	MDRV_VIDEO_START(fghthist)
 	MDRV_VIDEO_UPDATE(fghthist)
 
 	/* sound hardware */
@@ -1685,13 +1875,13 @@ static MACHINE_DRIVER_START( fghthsta )
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(40*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo_fghthist)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(tattass)
+	MDRV_VIDEO_START(fghthist)
 	MDRV_VIDEO_UPDATE(fghthist)
 
 	/* sound hardware */
@@ -1838,8 +2028,8 @@ static MACHINE_DRIVER_START( tattass )
 	MDRV_GFXDECODE(gfxdecodeinfo_tattass)
 	MDRV_PALETTE_LENGTH(2048)
 
-	MDRV_VIDEO_START(tattass)
-	MDRV_VIDEO_UPDATE(tattass)
+	MDRV_VIDEO_START(nslasher)
+	MDRV_VIDEO_UPDATE(nslasher)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1848,6 +2038,49 @@ static MACHINE_DRIVER_START( tattass )
 	MDRV_SOUND_CONFIG(bsmt2000_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( nslasher )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(ARM, 28000000 / 2) /* Unconfirmed */
+	MDRV_CPU_PROGRAM_MAP(nslasher_readmem,nslasher_writemem)
+	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 7000000) // todo
+	MDRV_CPU_PROGRAM_MAP(nslasher_sound,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
+	MDRV_NVRAM_HANDLER(93C46)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_nslasher)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(nslasher)
+	MDRV_VIDEO_UPDATE(nslasher)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_CONFIG(ym2151_interface_nslasher)
+	MDRV_SOUND_ROUTE(0, "left", 0.42)
+	MDRV_SOUND_ROUTE(1, "right", 0.42)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+
+	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
 MACHINE_DRIVER_END
 
 /**********************************************************************************/
@@ -2561,11 +2794,6 @@ ROM_START( nslasher )
 	ROM_LOAD32_WORD( "mainprg.1f", 0x000000, 0x80000, CRC(507acbae) SHA1(329a2bb244f2f3adb8d75cab5aa2dcb129d70712) )
 	ROM_LOAD32_WORD( "mainprg.2f", 0x000002, 0x80000, CRC(931fc7ee) SHA1(54eb12abfa3f332ce9b43a45ec424aaee88641a6) )
 
-	/* Japanese program roms for comparison - see decrypt analysis */
-//  ROM_REGION(0x100000, REGION_CPU3, 0 ) /* Encrypted ARM 32 bit code */
-//  ROM_LOAD32_WORD( "lx-00.bin", 0x000000, 0x80000, CRC(6ed5fb88) SHA1(84350da7939a479968a523c84e254e3ee54b8da2) )
-//  ROM_LOAD32_WORD( "lx-01.bin", 0x000002, 0x80000, CRC(a6df2152) SHA1(6fe7e0b2e71c5f807951dcc81a6a3cff55247961) )
-
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "sndprg.17l",  0x00000,  0x10000,  CRC(18939e92) SHA1(50b37a78d9d2259d4b140dd17393c4e5ca92bca5) )
 
@@ -2575,13 +2803,13 @@ ROM_START( nslasher )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mbh-01.9c",  0x000000,  0x200000,  CRC(1853dafc) SHA1(b1183c0db301cbed9f079c782202dbfc553b198e) ) /* Encrypted tiles */
 
-	ROM_REGION( 0xc00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD16_BYTE( "mbh-02.14c",  0x000001,  0x200000,  CRC(b2f158a1) SHA1(4f8c0b324813db198fe1dad7fff4185b828b94de) )
-	ROM_LOAD16_BYTE( "mbh-04.16c",  0x000000,  0x200000,  CRC(eecfe06d) SHA1(2df817fe5e2ea31207b217bb03dc58979c05d0d2) )
+	ROM_REGION( 0xa00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "mbh-02.14c",  0x000001,  0x200000, CRC(b2f158a1) SHA1(4f8c0b324813db198fe1dad7fff4185b828b94de) )
+	ROM_LOAD16_BYTE( "mbh-04.16c",  0x000000,  0x200000, CRC(eecfe06d) SHA1(2df817fe5e2ea31207b217bb03dc58979c05d0d2) )
 	ROM_LOAD16_BYTE( "mbh-03.15c",  0x400001,  0x80000,  CRC(787787e3) SHA1(531444e3f28aa9a7539a5a76ca94a9d6b97274c5) )
 	ROM_LOAD16_BYTE( "mbh-05.17c",  0x400000,  0x80000,  CRC(1d2b7c17) SHA1(ae0b8e0448a1a8180fb424fb0bc8a4302f8ff602) )
-	ROM_LOAD16_BYTE( "mbh-06.18c",  0xa00000,  0x100000,  CRC(038c2127) SHA1(5bdb215305f1a419fde27a83b623a38b9328e560) )
-	ROM_LOAD16_BYTE( "mbh-07.19c",  0xb00000,  0x40000,  CRC(bbd22323) SHA1(6ab665b2e6d04cdadc48c52e15098e978b61fe10) )
+	ROM_LOAD32_BYTE( "mbh-06.18c",  0x500000,  0x100000, CRC(038c2127) SHA1(5bdb215305f1a419fde27a83b623a38b9328e560) )
+	ROM_LOAD32_BYTE( "mbh-07.19c",  0x900000,  0x40000,  CRC(bbd22323) SHA1(6ab665b2e6d04cdadc48c52e15098e978b61fe10) )
 
 	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
 	ROM_LOAD16_BYTE( "mbh-08.16e",  0x000001,  0x80000,  CRC(cdd7f8cb) SHA1(910bbe8783c0ba722e9d6399b332d658fa059fdb) )
@@ -2596,8 +2824,8 @@ ROM_END
 
 ROM_START( nslashej )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* Encrypted ARM 32 bit code */
-	ROM_LOAD32_WORD( "lx-00.bin", 0x000000, 0x80000, CRC(6ed5fb88) SHA1(84350da7939a479968a523c84e254e3ee54b8da2) )
-	ROM_LOAD32_WORD( "lx-01.bin", 0x000002, 0x80000, CRC(a6df2152) SHA1(6fe7e0b2e71c5f807951dcc81a6a3cff55247961) )
+	ROM_LOAD32_WORD( "lx-00.1f", 0x000000, 0x80000, CRC(6ed5fb88) SHA1(84350da7939a479968a523c84e254e3ee54b8da2) )
+	ROM_LOAD32_WORD( "lx-01.2f", 0x000002, 0x80000, CRC(a6df2152) SHA1(6fe7e0b2e71c5f807951dcc81a6a3cff55247961) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "sndprg.17l",  0x00000,  0x10000,  CRC(18939e92) SHA1(50b37a78d9d2259d4b140dd17393c4e5ca92bca5) )
@@ -2608,13 +2836,13 @@ ROM_START( nslashej )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mbh-01.9c",  0x000000,  0x200000,  CRC(1853dafc) SHA1(b1183c0db301cbed9f079c782202dbfc553b198e) ) /* Encrypted tiles */
 
-	ROM_REGION( 0xc00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD16_BYTE( "mbh-02.14c",  0x000001,  0x200000,  CRC(b2f158a1) SHA1(4f8c0b324813db198fe1dad7fff4185b828b94de) )
-	ROM_LOAD16_BYTE( "mbh-04.16c",  0x000000,  0x200000,  CRC(eecfe06d) SHA1(2df817fe5e2ea31207b217bb03dc58979c05d0d2) )
+	ROM_REGION( 0xa00000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "mbh-02.14c",  0x000001,  0x200000, CRC(b2f158a1) SHA1(4f8c0b324813db198fe1dad7fff4185b828b94de) )
+	ROM_LOAD16_BYTE( "mbh-04.16c",  0x000000,  0x200000, CRC(eecfe06d) SHA1(2df817fe5e2ea31207b217bb03dc58979c05d0d2) )
 	ROM_LOAD16_BYTE( "mbh-03.15c",  0x400001,  0x80000,  CRC(787787e3) SHA1(531444e3f28aa9a7539a5a76ca94a9d6b97274c5) )
 	ROM_LOAD16_BYTE( "mbh-05.17c",  0x400000,  0x80000,  CRC(1d2b7c17) SHA1(ae0b8e0448a1a8180fb424fb0bc8a4302f8ff602) )
-	ROM_LOAD16_BYTE( "mbh-06.18c",  0xa00000,  0x100000,  CRC(038c2127) SHA1(5bdb215305f1a419fde27a83b623a38b9328e560) )
-	ROM_LOAD16_BYTE( "mbh-07.19c",  0xb00000,  0x40000,  CRC(bbd22323) SHA1(6ab665b2e6d04cdadc48c52e15098e978b61fe10) )
+	ROM_LOAD32_BYTE( "mbh-06.18c",  0x500000,  0x100000, CRC(038c2127) SHA1(5bdb215305f1a419fde27a83b623a38b9328e560) )
+	ROM_LOAD32_BYTE( "mbh-07.19c",  0x900000,  0x40000,  CRC(bbd22323) SHA1(6ab665b2e6d04cdadc48c52e15098e978b61fe10) )
 
 	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
 	ROM_LOAD16_BYTE( "mbh-08.16e",  0x000001,  0x80000,  CRC(cdd7f8cb) SHA1(910bbe8783c0ba722e9d6399b332d658fa059fdb) )
@@ -2659,6 +2887,19 @@ static READ32_HANDLER( tattass_skip )
 	UINT32 ret=deco32_ram[0];
 
 	if (activecpu_get_pc()==0x1c5ec && left>32) {
+		//logerror("%08x (%08x): CPU Spin - %d cycles left this frame ran %d (%d)\n",activecpu_get_pc(),ret,cycles_left_to_run(),cycles_currently_ran(),cycles_left_to_run()+cycles_currently_ran());
+		cpu_spinuntil_int();
+	}
+
+	return ret;
+}
+
+static READ32_HANDLER( nslasher_skip )
+{
+	int left=cycles_left_to_run();
+	UINT32 ret=deco32_ram[0];
+
+	if (activecpu_get_pc()==0x9c8 && left>32 && (ret&0x80)) {
 		//logerror("%08x (%08x): CPU Spin - %d cycles left this frame ran %d (%d)\n",activecpu_get_pc(),ret,cycles_left_to_run(),cycles_currently_ran(),cycles_left_to_run()+cycles_currently_ran());
 		cpu_spinuntil_int();
 	}
@@ -2765,6 +3006,8 @@ static DRIVER_INIT( nslasher )
 
 	decrypt156();
 
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100003, 0, 0, nslasher_skip);
+
 	/* The board for Night Slashers is very close to the Fighter's History and
     Tattoo Assassins boards, but has an encrypted ARM cpu. */
 }
@@ -2784,5 +3027,5 @@ GAME( 1993, fghthsta, fghthist, fghthsta, fghthist, fghthist, ROT0, "Data East C
 GAME( 1994, lockload, 0,        lockload, lockload, lockload, ROT0, "Data East Corporation", "Locked 'n Loaded (US)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAME( 1994, tattass,  0,        tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (US Prototype)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, tattassa, tattass,  tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (Asia Prototype)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, nslasher, 0,        tattass,  tattass,  nslasher, ROT0, "Data East Corporation", "Night Slashers", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
-GAME( 1993, nslashej, nslasher,        tattass,  tattass,  nslasher, ROT0, "Data East Corporation", "Night Slashers (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)
+GAME( 1994, nslasher, 0,        nslasher, nslasher, nslasher, ROT0, "Data East Corporation", "Night Slashers (Korea Rev 1.3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1994, nslashej, nslasher, nslasher, nslasher, nslasher, ROT0, "Data East Corporation", "Night Slashers (Japan Rev 1.2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

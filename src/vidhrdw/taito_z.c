@@ -187,7 +187,7 @@ static void contcirc_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *clip
 	int zoomx, zoomy, zx, zy;
 	int sprite_chunk,map_offset,code,j,k,px,py;
 	int bad_chunks;
-	int primasks[2] = {0xf0,0xfc};
+	static const int primasks[2] = {0xf0,0xfc};
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
@@ -279,7 +279,7 @@ static void chasehq_draw_sprites_16x16(mame_bitmap *bitmap,const rectangle *clip
 	int zoomx, zoomy, zx, zy;
 	int sprite_chunk,map_offset,code,j,k,px,py;
 	int bad_chunks;
-	int primasks[2] = {0xf0,0xfc};
+	static const int primasks[2] = {0xf0,0xfc};
 
 	for (offs = spriteram_size/2-4;offs >=0;offs -= 4)
 	{
@@ -464,7 +464,7 @@ static void bshark_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *clipre
 	int zoomx, zoomy, zx, zy;
 	int sprite_chunk,map_offset,code,j,k,px,py;
 	int bad_chunks;
-	int primasks[2] = {0xf0,0xfc};
+	static const int primasks[2] = {0xf0,0xfc};
 
 	for (offs = spriteram_size/2-4;offs >= 0;offs -= 4)
 	{
@@ -557,7 +557,7 @@ static void sci_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,
 	int zoomx, zoomy, zx, zy;
 	int sprite_chunk,map_offset,code,j,k,px,py;
 	int bad_chunks;
-	int primasks[2] = {0xf0,0xfc};
+	static const int primasks[2] = {0xf0,0xfc};
 
 	/* SCI alternates between two areas of its spriteram */
 
@@ -659,7 +659,7 @@ static void aquajack_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *clip
 	int zoomx, zoomy, zx, zy;
 	int sprite_chunk,map_offset,code,j,k,px,py;
 	int bad_chunks;
-	int primasks[2] = {0xf0,0xfc};
+	static const int primasks[2] = {0xf0,0xfc};
 
 	for (offs = 0;offs < spriteram_size/2;offs += 4)
 	{
@@ -751,7 +751,7 @@ static void spacegun_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *clip
 	int zoomx, zoomy, zx, zy;
 	int sprite_chunk,map_offset,code,j,k,px,py;
 	int bad_chunks;
-	int primasks[2] = {0xf0,0xfc};
+	static const int primasks[2] = {0xf0,0xfc};
 
 	for (offs = 0; offs < spriteram_size/2-4;offs += 4)
 	{

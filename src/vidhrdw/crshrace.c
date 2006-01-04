@@ -122,7 +122,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		int ox,oy,x,y,xsize,ysize,zoomx,zoomy,flipx,flipy,color;
 		/* table hand made by looking at the ship explosion in aerofgt attract mode */
 		/* it's almost a logarithmic scale but not exactly */
-		int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+		static const int zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 
 		attr_start = 4 * (buffered_spriteram16[offs++] & 0x03ff);
 

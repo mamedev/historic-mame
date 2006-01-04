@@ -79,7 +79,6 @@ static const char *sample_names[] =
 #define DEATH_CHANNEL 6    /* special channel for fake death sound only */
 
 /* berzerk sound */
-static int lastfreq = 0;
 static int lastnoise = 0;
 static int lastvoice = 0;
 
@@ -114,7 +113,7 @@ static void berzerk_sh_start(void)
 	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, berzerk_sh_update);
 }
 
-WRITE8_HANDLER( berzerk_sound_control_a_w )
+WRITE8_HANDLER( berzerk_sound_w )
 {
 	int noise = 0;
 	int voice = 0;
@@ -292,18 +291,14 @@ logerror("Trying death sound");
 	} /* End of berzerknoisemulate */
 }
 
-WRITE8_HANDLER( berzerk_sound_control_b_w )
-{
-	logerror("B Data value %d and offset %d at %d\n", data, offset, lastfreq);
-}
 
-
-READ8_HANDLER( berzerk_voiceboard_r )
+READ8_HANDLER( berzerk_sound_r )
 {
-   if (!voice_playing)
-      return 0x00;
-   else
-      return 0x40;
+	if ( offset == 4 && voice_playing )
+	{
+		return 0x40;
+	}
+	return 0x00;
 }
 
 

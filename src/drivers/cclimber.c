@@ -1155,7 +1155,7 @@ static DRIVER_INIT( cannonb )
 	{
 		unsigned char src;
 		int i;
-		unsigned char xor_tab[4] ={0x92, 0x82, 0x12, 0x10};
+		static const unsigned char xor_tab[4] ={0x92, 0x82, 0x12, 0x10};
 
 		src = rom[A+0x10000];
 

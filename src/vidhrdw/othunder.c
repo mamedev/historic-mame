@@ -104,7 +104,7 @@ spriteram is being tested, take no notice of that.]
 ********************************************************/
 
 
-static void othunder_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,int *primasks,int y_offs)
+static void othunder_draw_sprites_16x8(mame_bitmap *bitmap,const rectangle *cliprect,const int *primasks,int y_offs)
 {
 	UINT16 *spritemap = (UINT16 *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
@@ -261,7 +261,7 @@ VIDEO_UPDATE( othunder )
 
 	/* Sprites can be under/over the layer below text layer */
 	{
-		int primasks[2] = {0xf0,0xfc};
+		static const int primasks[2] = {0xf0,0xfc};
 		othunder_draw_sprites_16x8(bitmap,cliprect,primasks,3);
 	}
 

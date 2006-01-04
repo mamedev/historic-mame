@@ -98,14 +98,14 @@ void ppu2c03b_init_palette( int first_entry ) {
 	double hue = 332.0;
 	double bright_adjust = 1.0;
 
-	double brightness[3][4] =
+	static const double brightness[3][4] =
 	{
 		{ 0.50, 0.75, 1.0, 1.0 },
 		{ 0.29, 0.45, 0.73, 0.9 },
 		{ 0, 0.24, 0.47, 0.77 }
 	};
 
-	double angle[16] = { 0, 240, 210, 180, 150, 120, 90, 60, 30, 0, 330, 300, 270, 0, 0, 0 };
+	static const double angle[16] = { 0, 240, 210, 180, 150, 120, 90, 60, 30, 0, 330, 300, 270, 0, 0, 0 };
 
 	/* loop through the 4 intensities */
 	for (i = 0; i < 4; i++)

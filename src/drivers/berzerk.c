@@ -11,51 +11,38 @@
 #include "sound/samples.h"
 
 
-static ADDRESS_MAP_START( berzerk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x37ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x87ff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( berzerk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x0800, 0x09ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x1000, 0x37ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x5fff) AM_WRITE(berzerk_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x6000, 0x7fff) AM_WRITE(berzerk_magicram_w) AM_BASE(&berzerk_magicram)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(berzerk_colorram_w) AM_BASE(&colorram)
+static ADDRESS_MAP_START( berzerk_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_ROM
+	AM_RANGE(0x0800, 0x09ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x1000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(MRA8_RAM,berzerk_videoram_w) AM_BASE(&videoram) AM_SHARE(1)
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(MRA8_RAM,berzerk_magicram_w) AM_SHARE(1)
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM,berzerk_colorram_w) AM_BASE(&colorram)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( frenzy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x87ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf800, 0xf9ff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( frenzy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x5fff) AM_WRITE(berzerk_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x6000, 0x7fff) AM_WRITE(berzerk_magicram_w) AM_BASE(&berzerk_magicram)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(berzerk_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf800, 0xf9ff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( frenzy_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(MRA8_RAM,berzerk_videoram_w) AM_BASE(&videoram) AM_SHARE(1)
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(MRA8_RAM,berzerk_magicram_w) AM_SHARE(1)
+	AM_RANGE(0x8000, 0x87ff) AM_READWRITE(MRA8_RAM,berzerk_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xc000, 0xcfff) AM_ROM
+	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( port_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x44, 0x44) AM_READ(berzerk_voiceboard_r)
+	AM_RANGE(0x40, 0x47) AM_READWRITE(berzerk_sound_r,berzerk_sound_w) /* First sound board */
 	AM_RANGE(0x48, 0x48) AM_READ(input_port_0_r)
 	AM_RANGE(0x49, 0x49) AM_READ(input_port_1_r)
 	AM_RANGE(0x4a, 0x4a) AM_READ(input_port_2_r)
-	AM_RANGE(0x4c, 0x4c) AM_READ(berzerk_nmi_enable_r)
-	AM_RANGE(0x4d, 0x4d) AM_READ(berzerk_nmi_disable_r)
+	AM_RANGE(0x4b, 0x4b) AM_WRITE(berzerk_magicram_control_w)
+	AM_RANGE(0x4c, 0x4c) AM_READWRITE(berzerk_nmi_enable_r,berzerk_nmi_enable_w)
+	AM_RANGE(0x4d, 0x4d) AM_READWRITE(berzerk_nmi_disable_r,berzerk_nmi_disable_w)
 	AM_RANGE(0x4e, 0x4e) AM_READ(berzerk_port_4e_r)
+	AM_RANGE(0x4f, 0x4f) AM_WRITE(berzerk_irq_enable_w)
+	AM_RANGE(0x50, 0x57) AM_WRITE(MWA8_NOP) /* Second sound board but not used */
 	AM_RANGE(0x60, 0x60) AM_READ(input_port_4_r)
 	AM_RANGE(0x61, 0x61) AM_READ(input_port_5_r)
 	AM_RANGE(0x62, 0x62) AM_READ(input_port_6_r)
@@ -64,17 +51,6 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x65, 0x65) AM_READ(input_port_9_r)
 	AM_RANGE(0x66, 0x66) AM_READ(berzerk_led_off_r)
 	AM_RANGE(0x67, 0x67) AM_READ(berzerk_led_on_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x40, 0x46) AM_WRITE(berzerk_sound_control_a_w) /* First sound board */
-	AM_RANGE(0x47, 0x47) AM_WRITE(MWA8_NOP) /* not used sound stuff */
-	AM_RANGE(0x4b, 0x4b) AM_WRITE(berzerk_magicram_control_w)
-	AM_RANGE(0x4c, 0x4c) AM_WRITE(berzerk_nmi_enable_w)
-	AM_RANGE(0x4d, 0x4d) AM_WRITE(berzerk_nmi_disable_w)
-	AM_RANGE(0x4f, 0x4f) AM_WRITE(berzerk_irq_enable_w)
-	AM_RANGE(0x50, 0x57) AM_WRITE(MWA8_NOP) /* Second sound board but not used */
 ADDRESS_MAP_END
 
 
@@ -313,8 +289,8 @@ static MACHINE_DRIVER_START( berzerk )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 2500000)        /* 2.5 MHz */
-	MDRV_CPU_PROGRAM_MAP(berzerk_readmem,berzerk_writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(berzerk_map,0)
+	MDRV_CPU_IO_MAP(port_map,0)
 	MDRV_CPU_VBLANK_INT(berzerk_interrupt,8)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -330,7 +306,7 @@ static MACHINE_DRIVER_START( berzerk )
 	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_PALETTE_INIT(berzerk)
-	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_START(berzerk)
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
@@ -346,10 +322,7 @@ static MACHINE_DRIVER_START( frenzy )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(berzerk)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(frenzy_readmem,frenzy_writemem)
-
-	MDRV_MACHINE_INIT(NULL)
-	MDRV_NVRAM_HANDLER(NULL)
+	MDRV_CPU_PROGRAM_MAP(frenzy_map,0)
 MACHINE_DRIVER_END
 
 
@@ -368,6 +341,7 @@ ROM_START( berzerk )
 	ROM_LOAD( "5d-3",         0x2000, 0x0800, CRC(fcaefa95) SHA1(07f849aa39f1e3db938187ffde4a46a588156ddc) )
 	ROM_LOAD( "6d-4",         0x2800, 0x0800, CRC(1e35b9a0) SHA1(5a5e549ec0e4803ab2d1eac6b3e7171aedf28244) )
 	ROM_LOAD( "5c-5",         0x3000, 0x0800, CRC(c8c665e5) SHA1(e9eca4b119549e0061384abf52327c14b0d56624) )
+	ROM_FILL( 0x3800, 0x0800, 0xff )
 
 	ROM_REGION( 0x01000, REGION_SOUND1, 0 ) /* voice data */
 	ROM_LOAD( "1c",           0x0000, 0x0800, CRC(2cfe825d) SHA1(f12fed8712f20fa8213f606c4049a8144bfea42e) )	/* VSU-1000 board */
@@ -382,6 +356,7 @@ ROM_START( berzerk1 )
 	ROM_LOAD( "rom3.5d",      0x2000, 0x0800, CRC(6a1936b4) SHA1(f1635e9d2f25514c35559d2a247c3bc4b4034c19) )
 	ROM_LOAD( "rom4.6d",      0x2800, 0x0800, CRC(fa5dce40) SHA1(b3a3ee52bf65bbb3a20f905d3e4ebdf6871dcb5d) )
 	ROM_LOAD( "rom5.5c",      0x3000, 0x0800, CRC(2579b9f4) SHA1(890f0237afbb194166eae88c98de81989f408548) )
+	ROM_FILL( 0x3800, 0x0800, 0xff )
 
 	ROM_REGION( 0x01000, REGION_SOUND1, 0 ) /* voice data */
 	ROM_LOAD( "1c",           0x0000, 0x0800, CRC(2cfe825d) SHA1(f12fed8712f20fa8213f606c4049a8144bfea42e) )	/* VSU-1000 board */
@@ -395,7 +370,6 @@ ROM_START( frenzy )
 	ROM_LOAD( "3d-2",         0x2000, 0x1000, CRC(3eb9bc9b) SHA1(1e43e76ae0606a6d41d9006005d6001bdee48694) )
 	ROM_LOAD( "5d-3",         0x3000, 0x1000, CRC(e1d3133c) SHA1(2af4a9bc2b29735a548ae770f872127bc009cc42) )
 	ROM_LOAD( "6d-4",         0xc000, 0x1000, CRC(5581a7b1) SHA1(1f633c1c29d3b64f701c601feba26da66a6c6f23) )
-	/* 1c & 2c are the voice ROMs */
 
 	ROM_REGION( 0x01000, REGION_SOUND1, 0 ) /* voice data */
 	ROM_LOAD( "1c",           0x0000, 0x0800, CRC(2cfe825d) SHA1(f12fed8712f20fa8213f606c4049a8144bfea42e) )	/* VSU-1000 board */

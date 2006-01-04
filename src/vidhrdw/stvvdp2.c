@@ -3433,7 +3433,7 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 	/* Precalculate bases from MAP registers */
 	for (i = 0; i < stv2_current_tilemap.map_count; i++)
 	{
-		int shifttable[4] = {0,1,2,2};
+		static const int shifttable[4] = {0,1,2,2};
 
 		int uppermask, uppermaskshift;
 

@@ -49,7 +49,7 @@ enum
 READ32_HANDLER( am53cf96_r )
 {
 	int reg, shift, rv;
-	int states[] = { 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 0 };
+	static const int states[] = { 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 0 };
 
 	reg = offset * 2;
 	if (mem_mask == 0xffffff00)

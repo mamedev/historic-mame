@@ -301,7 +301,7 @@ VIDEO_UPDATE( fuuki16 )
     */
 
 	int tm_back, tm_middle, tm_front;
-	int pri_table[6][3] = {
+	static const int pri_table[6][3] = {
 		{ 0, 1, 2 },
 		{ 0, 2, 1 },
 		{ 1, 0, 2 },

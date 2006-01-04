@@ -1000,6 +1000,7 @@ static ADDRESS_MAP_START( pwrinst2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x40ffff) AM_READ(MRA16_RAM					)	// RAM
 	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r		)	// Inputs
 	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r		)	//
+	AM_RANGE(0x600000, 0x6fffff) AM_READ(MRA16_ROM					) AM_REGION(REGION_USER1, 0)	// extra data ROM space
 	AM_RANGE(0x800000, 0x807fff) AM_READ(MRA16_RAM					)	// Layer 2
 	AM_RANGE(0x880000, 0x887fff) AM_READ(MRA16_RAM					)	// Layer 0
 	AM_RANGE(0x900000, 0x907fff) AM_READ(MRA16_RAM					)	// Layer 1
@@ -2528,12 +2529,12 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( pwrinst2 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz */
 	MDRV_CPU_PROGRAM_MAP(pwrinst2_readmem,pwrinst2_writemem)
 	MDRV_CPU_VBLANK_INT(cave_interrupt,1)
 
 	MDRV_CPU_ADD(Z80,16000000 / 2)
-	/* audio CPU */	/* ? */
+	/* audio CPU */	/* 8 MHz */
 	MDRV_CPU_PROGRAM_MAP(pwrinst2_sound_readmem,pwrinst2_sound_writemem)
 	MDRV_CPU_IO_MAP(pwrinst2_sound_readport,pwrinst2_sound_writeport)
 
@@ -2569,12 +2570,12 @@ static MACHINE_DRIVER_START( pwrinst2 )
 	MDRV_SOUND_ROUTE(3, "left",  0.80)
 	MDRV_SOUND_ROUTE(3, "right", 0.80)
 
-	MDRV_SOUND_ADD(OKIM6295, 18000)
+	MDRV_SOUND_ADD(OKIM6295, 3000000 / 165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 
-	MDRV_SOUND_ADD(OKIM6295, 18000)
+	MDRV_SOUND_ADD(OKIM6295, 3000000 / 165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.00)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.00)
@@ -3617,6 +3618,9 @@ ROM_START( pwrinst2 )
 	ROM_LOAD16_BYTE( "g02.u43", 0x100000, 0x80000, CRC(178e3d24) SHA1(926234f4196a5d5e3bd1438abbf73355f2c65b06) )
 	ROM_LOAD16_BYTE( "g02.u42", 0x100001, 0x80000, CRC(a0b4ee99) SHA1(c6df4aa2543b04d8bda7683f503e5eb763e506af) )
 
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 )	/* 68000 extra data roms */
+	/* not used */
+
 	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Z80 code */
 	ROM_LOAD( "g02.u3a", 0x00000, 0x0c000, CRC(ebea5e1e) SHA1(4d3af9e5f29d0c1b26563f51250039c9e8bd3735) )
 	ROM_CONTINUE(        0x10000, 0x14000             )
@@ -3660,6 +3664,9 @@ ROM_START( pwrins2j )
 	ROM_LOAD16_BYTE( "g02j.u43", 0x100000, 0x80000, CRC(c94c596b) SHA1(ee755a344f769e3ed05d8ca57f517b9e8c02f22e) )
 	ROM_LOAD16_BYTE( "g02j.u42", 0x100001, 0x80000, CRC(4f4c8270) SHA1(1fa964f5646bd1d078e3661c21e191b0789c05c9) )
 
+	ROM_REGION16_BE( 0x100000, REGION_USER1, ROMREGION_ERASE00 )	/* 68000 extra data roms */
+	/* not used */
+
 	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Z80 code */
 	ROM_LOAD( "g02j.u3a", 0x00000, 0x0c000, CRC(eead01f1) SHA1(0ced6755e471e0303fe397b3d54a5c799762ebd8) )
 	ROM_CONTINUE(        0x10000, 0x14000             )
@@ -3684,6 +3691,156 @@ ROM_START( pwrins2j )
 
 	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
 	ROM_LOAD( "g02j.82a", 0x000000, 0x080000, CRC(3be86fe1) SHA1(313bfe5fb8dc5fee4462db259738e079759f9390) )
+
+	ROM_REGION( 0x440000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u53", 0x040000, 0x200000, CRC(c4bdd9e0) SHA1(a938a831e789ddf6f3cc5f3e5f3877ec7bd62d4e) )
+	ROM_LOAD( "g02.u54", 0x240000, 0x200000, CRC(1357d50e) SHA1(433766177ce9d6933f90de85ba91bfc6d8d5d664) )
+
+	ROM_REGION( 0x440000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u55", 0x040000, 0x200000, CRC(2d102898) SHA1(bd81f4cd2ba100707db0c5bb1419f0b23c998574) )
+	ROM_LOAD( "g02.u56", 0x240000, 0x200000, CRC(9ff50dda) SHA1(1121685e387c20e228032f2b0f5cbb606376fc15) )
+ROM_END
+
+/*
+
+Power Instinct Legends (US)
+Gouketsuji Ichizoku Saikyou Densetsu (Japan)
+Atlus, 1995
+
+PCB Layout
+----------
+
+AT047G2-B ATLUS
+|---------------------------------------------------------------|
+|LM324 M6295  G02_U53          Z80  16MHz 28MHz 12MHz  TA8030S  |
+|VOL          G02_U54 |------| SOUND_U3                TEXT_U82 |
+|      M6295  G02_U55 |NMK112|   6264         6264              |
+|uPC2505      G02_U56 |      |                        |------|  |
+|      4558           |------|                6264    |038   |  |
+|     Y3014   YM2203    PAL                           |9429WX|  |
+|                                            ATGS_U89 |------|  |
+|J       TEST_SW  62256                                         |
+|A    93C46       62256                       6264    |------|  |
+|M            |----SUB-BOARD-----|                    |038   |  |
+|M    |---|   |*P  P *P  P *P *P |      PAL   6264    |9429WX|  |
+|A    |   |   | R  R  R  R  R  R |                    |------|  |
+|     | 6 |   | 1  O  1  O  1  1 |           ATGS_U81           |
+|     | 8 |   | 2  G  2  G  2  2 |                    |------|  |
+|     | 0 |   | U  U  U  U  U  U |            6264    |038   |  |
+|     | 0 |   | 2  4  4  4  3  5 |                    |9429WX|  |
+|     | 0 |   |    5     4       |62256       6264    |------|  |
+|     |   |   |------------------|62256                         |
+|     |---|     PAL            |-------|     ATGS_U78 |------|  |
+|--------|                     |8647-01|              |038   |  |
+|*ATGS_U1|                     |013    |    KM416C256 |9429WX|  |
+|        |                     |9341E70|              |------|  |
+|        |G02_U66    G02_U63   |-------|                6264    |
+|        |  G02_U65    G02_U62   62256      KM416C256           |
+|*ATGS_U2|    G02_U64    G02_U61 62256                  6264    |
+|--------|------------------------------------------------------|
+Notes:
+      ROMs marked with * are located on a plug-in sub board
+      68000 clock - 16.000MHz
+      Z80 clock   - 8.000MHz [16/2]
+      6295 clocks - 3.000MHz [12/4], sample rate = 3000000 / 165
+      YM2203 clock- 4.000MHz [16/4]
+      VSync       - 57.5Hz
+      HSync       - 15.23kHz
+
+      ROMs -
+            U3       : 27C1001 EPROM
+            U82      : 27C040 EPROM
+            PR12*    : 27C040 EPROMs
+            PROG*    : 27C040 EPROMs
+            ALL other ROMs are soldered-in 16M 42 pin MASKROM (read as 27C160)
+*/
+
+ROM_START( plegends )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "d12.u45", 0x000000, 0x80000, CRC(ed8a2e3d) SHA1(0a09c58cd8a726189cd7679d06343e0b8c3de945) )
+	ROM_LOAD16_BYTE( "d13.u44", 0x000001, 0x80000, CRC(25821731) SHA1(7c6ece92b36dc7eb489879d9ae3e8af9380b9f62) )
+	ROM_LOAD16_BYTE( "d14.u2",  0x100000, 0x80000, CRC(c2cb1402) SHA1(78e70915ca32b97c22605a304dc8611e1fe01ae9) ) /* Contains text strings */
+	ROM_LOAD16_BYTE( "d16.u3",  0x100001, 0x80000, CRC(50a1c63e) SHA1(5a8431a81aa61034e67141944b9e7cf97842773a) ) /* Contains text strings */
+
+	ROM_REGION16_BE( 0x100000, REGION_USER1, 0 )	/* 68000 extra data roms */
+	ROM_LOAD16_BYTE( "d15.u4",  0x000000, 0x80000, CRC(6352cec0) SHA1(a54d55b8d642e438158268d0d41880b6589e48e2) )
+	ROM_LOAD16_BYTE( "d17.u5",  0x000001, 0x80000, CRC(7af810d8) SHA1(5e24f78a228809a001f3f3372c1b32ea05070e17) )
+
+	ROM_REGION( 0x44000, REGION_CPU2, 0 )		/* Z80 code */
+	ROM_LOAD( "d19.u3", 0x00000, 0x0c000, CRC(47598459) SHA1(4e9dcfebfbd160230768965e8c6e5ed446c1aa7b) ) /* Same as sound.u3 below, but twice the size? */
+	ROM_CONTINUE(        0x10000, 0x34000             )
+
+	ROM_REGION( 0x1000000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "g02.u61", 0x000000, 0x200000, CRC(91e30398) SHA1(2b59a5e40bed2a988382054fe30d92808dad3348) )
+	ROM_LOAD( "g02.u62", 0x200000, 0x200000, CRC(d9455dd7) SHA1(afa69fe9a540cd78b8cfecf09cffa1401c01141a) )
+	ROM_LOAD( "g02.u63", 0x400000, 0x200000, CRC(4d20560b) SHA1(ceaee8cf0b69cc366b95ddcb689a5594d79e5114) )
+	ROM_LOAD( "g02.u64", 0x600000, 0x200000, CRC(b17b9b6e) SHA1(fc6213d8322cda4c7f653e2d7d6d314ce84c97b7) )
+	ROM_LOAD( "g02.u65", 0x800000, 0x200000, CRC(08541878) SHA1(138cf077a49a26440a3da1bdc2c399a208359e57) )
+	ROM_LOAD( "g02.u66", 0xa00000, 0x200000, CRC(becf2a36) SHA1(f8b386d0292b1dc745b7253a3df51d1aa8d5e9db) )
+	ROM_LOAD( "atgs.u1", 0xc00000, 0x200000, CRC(aa6f34a9) SHA1(00de85de1b413bd2c46931c13365f8556b50b634) ) /* US version's rom labeled "sp6_u67-1" */
+	ROM_LOAD( "atgs.u2", 0xe00000, 0x200000, CRC(553eda27) SHA1(5b9126f966f0c64b3ac7c06526064d71e4df60c5) ) /* US version's rom labeled "sp6_u67-2" */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "atgs.u78", 0x000000, 0x200000, CRC(16710ecb) SHA1(6277f7f6095457df649932550b04242e5853ec5e) ) /* US version's rom labeled "bg0_u78" */
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "atgs.u81", 0x000000, 0x200000, CRC(cb2aca91) SHA1(869f0f2db35c45ec90b74d33d521cbb598e60a3f) ) /* US version's rom labeled "bg1_u81" */
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "atgs.u89", 0x000000, 0x200000, CRC(65f45a0f) SHA1(b7f4b56308dcdc144100d0a92d91255459a320a4) ) /* US version's rom labeled "bg2_u89" */
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
+	ROM_LOAD( "text.u82", 0x000000, 0x080000, CRC(f57333ea) SHA1(409d8005ffcf91943e4a743b2434ce425f5bdc36) ) /* US version's rom labeled "d20" */
+
+	ROM_REGION( 0x440000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u53", 0x040000, 0x200000, CRC(c4bdd9e0) SHA1(a938a831e789ddf6f3cc5f3e5f3877ec7bd62d4e) )
+	ROM_LOAD( "g02.u54", 0x240000, 0x200000, CRC(1357d50e) SHA1(433766177ce9d6933f90de85ba91bfc6d8d5d664) )
+
+	ROM_REGION( 0x440000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "g02.u55", 0x040000, 0x200000, CRC(2d102898) SHA1(bd81f4cd2ba100707db0c5bb1419f0b23c998574) )
+	ROM_LOAD( "g02.u56", 0x240000, 0x200000, CRC(9ff50dda) SHA1(1121685e387c20e228032f2b0f5cbb606376fc15) )
+ROM_END
+
+ROM_START( plegendj )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "prog.u45", 0x000000, 0x80000, CRC(94f53db2) SHA1(34c671f160cfcb7d46cc964731ff2b77dc0be928) )
+	ROM_LOAD16_BYTE( "prog.u44", 0x000001, 0x80000, CRC(db0ad756) SHA1(9c1510491cdc9442062ee3bd8a1bb93f00d33d97) )
+	ROM_LOAD16_BYTE( "pr12.u2",  0x100000, 0x80000, CRC(0e202559) SHA1(217a8e47d5c679aff02ca43de1641230e4f78b01) ) /* Contains text in Japanese */
+	ROM_LOAD16_BYTE( "pr12.u3",  0x100001, 0x80000, CRC(54742f21) SHA1(fae7bb7381478eb077f0409acd521f77417aa968) ) /* Contains text in Japanese */
+
+	ROM_REGION16_BE( 0x100000, REGION_USER1, 0 )	/* 68000 extra data roms */
+	ROM_LOAD16_BYTE( "d15.u4",  0x000000, 0x80000, CRC(6352cec0) SHA1(a54d55b8d642e438158268d0d41880b6589e48e2) )
+	ROM_LOAD16_BYTE( "d17.u5",  0x000001, 0x80000, CRC(7af810d8) SHA1(5e24f78a228809a001f3f3372c1b32ea05070e17) )
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Z80 code */
+	ROM_LOAD( "sound.u3", 0x00000, 0x0c000, CRC(36f71520) SHA1(11d0a059ddba3e1aa4c54ccdde7b3f5c7bde482f) )
+	ROM_CONTINUE(        0x10000, 0x14000             )
+
+	ROM_REGION( 0x1000000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "g02.u61", 0x000000, 0x200000, CRC(91e30398) SHA1(2b59a5e40bed2a988382054fe30d92808dad3348) )
+	ROM_LOAD( "g02.u62", 0x200000, 0x200000, CRC(d9455dd7) SHA1(afa69fe9a540cd78b8cfecf09cffa1401c01141a) )
+	ROM_LOAD( "g02.u63", 0x400000, 0x200000, CRC(4d20560b) SHA1(ceaee8cf0b69cc366b95ddcb689a5594d79e5114) )
+	ROM_LOAD( "g02.u64", 0x600000, 0x200000, CRC(b17b9b6e) SHA1(fc6213d8322cda4c7f653e2d7d6d314ce84c97b7) )
+	ROM_LOAD( "g02.u65", 0x800000, 0x200000, CRC(08541878) SHA1(138cf077a49a26440a3da1bdc2c399a208359e57) )
+	ROM_LOAD( "g02.u66", 0xa00000, 0x200000, CRC(becf2a36) SHA1(f8b386d0292b1dc745b7253a3df51d1aa8d5e9db) )
+	ROM_LOAD( "atgs.u1", 0xc00000, 0x200000, CRC(aa6f34a9) SHA1(00de85de1b413bd2c46931c13365f8556b50b634) ) /* US version's rom labeled "sp6_u67-1" */
+	ROM_LOAD( "atgs.u2", 0xe00000, 0x200000, CRC(553eda27) SHA1(5b9126f966f0c64b3ac7c06526064d71e4df60c5) ) /* US version's rom labeled "sp6_u67-2" */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "atgs.u78", 0x000000, 0x200000, CRC(16710ecb) SHA1(6277f7f6095457df649932550b04242e5853ec5e) ) /* US version's rom labeled "bg0_u78" */
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "atgs.u81", 0x000000, 0x200000, CRC(cb2aca91) SHA1(869f0f2db35c45ec90b74d33d521cbb598e60a3f) ) /* US version's rom labeled "bg1_u81" */
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "atgs.u89", 0x000000, 0x200000, CRC(65f45a0f) SHA1(b7f4b56308dcdc144100d0a92d91255459a320a4) ) /* US version's rom labeled "bg2_u89" */
+
+	ROM_REGION( 0x080000, REGION_GFX5, ROMREGION_DISPOSE )	/* Layer 3 */
+	ROM_LOAD( "text.u82", 0x000000, 0x080000, CRC(f57333ea) SHA1(409d8005ffcf91943e4a743b2434ce425f5bdc36) ) /* US version's rom labeled "d20" */
 
 	ROM_REGION( 0x440000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
 	/* Leave the 0x40000 bytes addressable by the chip empty */
@@ -4175,14 +4332,16 @@ DRIVER_INIT( korokoro )
 
 ***************************************************************************/
 
-GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)", 0 )
-GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku 2 (Japan)", 0 )
+GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)", 0 ) /* 94.04.08 */
+GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku 2 (Japan)", 0 ) /* 94.04.08 */
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                               , 0) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (US)"                           , 0 )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                        , 0 )
 GAME( 1995, donpachk, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                        , 0 )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"                            , 0 )
 GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"          , 0 )
+GAME( 1995, plegends, 0,        pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Power Instinct Legends (USA)", 0 ) /* 95.06.20 */
+GAME( 1995, plegendj, plegends, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku Saikyou Densetsu (Japan)", 0 ) /* 95.06.20 */
 GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)"   , 0) // region in eeprom
 GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)"    , 0) // region in eeprom
 GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"                               , 0) // board was taiwan, region in eeprom

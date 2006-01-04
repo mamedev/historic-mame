@@ -28,7 +28,8 @@ Year + Game                     PCB         Video Chip  Issues / Notes
 92  The Karate Tournament       VG460-B     14100
 93? Lady Killer / Moeyo Gonta!! VG460-B     14100
 93  Poitto!                     MTR5260-A   14100
-94  Dharma Doujou               ?           ?
+94  Dharma Doujou               MTR5260-A   14220
+94  Gun Master                  MTR5260-A   14220
 94  Toride II Adauchi Gaiden    MTR5260-A   14220
 94  Blazing Tornado             ?           14220       Also has Konami 053936 gfx chip
 96  Grand Striker 2             HUM-003(A)  14220       Also has Konami 053936 gfx chip
@@ -44,8 +45,8 @@ Year + Game                     PCB         Video Chip  Issues / Notes
 98  Mahjong Gakuensai 2         VG340-A     14300       No sound CPU
 96  Mouja                       VG410-B     14300       No sound CPU
 ---------------------------------------------------------------------------
+
 Not dumped yet:
-94  Gun Master
 94  Toride II
 
 To Do:
@@ -3892,7 +3893,7 @@ MACHINE_DRIVER_END
 
 NVRAM_HANDLER( dokyusp )
 {
-	UINT8 def_data[] = {0x00,0xe0};
+	static const UINT8 def_data[] = {0x00,0xe0};
 
 	if (read_or_write)
 		EEPROM_save(file);
@@ -4426,7 +4427,7 @@ static DRIVER_INIT( balcube )
 
 	while(src < end)
 	{
-		const unsigned char scramble[16] =
+		static const unsigned char scramble[16] =
 		 { 0x0,0x8,0x4,0xc,0x2,0xa,0x6,0xe,0x1,0x9,0x5,0xd,0x3,0xb,0x7,0xf };
 
 		unsigned char data;
@@ -4762,6 +4763,41 @@ ROM_START( dharma )
 ROM_END
 
 /*
+
+Gun Master
+Metro Corp. 1994
+
+PCB Layout
+----------
+
+MTR5260-A
+|-----------------------------------------------|
+|TA7222            3.579545MHz                  |
+|            YM3012                      6116   |
+|C3403  C3403      YM2151  M6295                |
+|       26.666MHz              GMJA-7   GMJA-8  |
+|            6264                               |
+|J           6264           |--------|  D78C10  |
+|A           6264           |IMAGETEK|          |
+|M                          |14220   |          |
+|M               MM1035     |        |          |
+|A         |------------|   |--------|          |
+|          |    68000   |               GMJA-1  |
+|          |------------|                       |
+|                                       GMJA-2  |
+|              24MHz                            |
+|       MACH110                         GMJA-3  |
+|                  6264                         |
+|DSW1              6264                 GMJA-4  |
+|DSW2    GMJA-6    GMJA-5                       |
+|-----------------------------------------------|
+Notes:
+      68000 clock     - 12.000MHz [24/2]
+      D78C10 clock    - 12.000MHz [24/2]
+      YM2151 clock    - 3.579545MHz
+      Oki M6295 clock - 1.200MHz [24/20], sample rate = 1200000 / 132
+      VSync - 60Hz
+      HSync - 15.55kHz
 
 68000 @ 12MHz
 NEC D78C10

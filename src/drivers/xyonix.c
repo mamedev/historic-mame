@@ -44,7 +44,7 @@ static int e0_data,credits,coins;
 
 void handle_coins(int coin)
 {
-	int coinage_table[4][2] = {{2,3},{2,1},{1,2},{1,1}};
+	static const int coinage_table[4][2] = {{2,3},{2,1},{1,2},{1,1}};
 	int tmp = 0;
 
 //  ui_popup("Coin %d",coin);

@@ -214,7 +214,8 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	rectangle clip = *cliprect;
 	const gfx_element *gfx = Machine->gfx[1 + sprite_bank];
-	int i, j, pribase[4]={0x0180, 0x0080, 0x0100, 0x0000};
+	int i, j;
+	static const int pribase[4]={0x0180, 0x0080, 0x0100, 0x0000};
 
 	/* score covers sprites */
 	if (flipscreen)

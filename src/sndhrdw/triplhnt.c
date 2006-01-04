@@ -102,7 +102,7 @@ DISCRETE_SOUND_START(triplhnt_discrete_interface)
 	/*                   NODE                 GAIN      OFFSET  INIT */
 	DISCRETE_INPUTX_DATA(TRIPLHNT_BEAR_ROAR_DATA, -1, 0x0f, 0)
 	DISCRETE_INPUT_NOT  (TRIPLHNT_BEAR_EN)
-	DISCRETE_INPUTX_DATA(TRIPLHNT_SHOT_DATA, 0,0,0)	// disabled until hooked up
+	DISCRETE_INPUT_DATA (TRIPLHNT_SHOT_DATA)
 	DISCRETE_INPUT_LOGIC(TRIPLHNT_SCREECH_EN)
 	DISCRETE_INPUT_NOT  (TRIPLHNT_LAMP_EN)
 	/************************************************/
@@ -150,7 +150,7 @@ DISCRETE_SOUND_START(triplhnt_discrete_interface)
 	/************************************************/
 	DISCRETE_SWITCH(NODE_40, 1,	// Gate A9, pins 6, 8, 11, 3
 			TRIPLHNT_NOISE,	// noise enables the data which is then inverted
-			1, TRIPLHNT_SHOT_DATA)	// the data has been previously inverted for ease of use
+			1, TRIPLHNT_SHOT_DATA)
 	DISCRETE_DAC_R1(TRIPLHNT_SHOT_SND, 1,
 			NODE_40,
 			DEFAULT_TTL_V_LOGIC_1,

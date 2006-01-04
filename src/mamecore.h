@@ -329,9 +329,11 @@ INLINE int mame_stricmp(const char *s1, const char *s2)
  	}
 }
 
+
 /* this macro prevents people from using stricmp directly */
 #undef stricmp
 #define stricmp !MUST_USE_MAME_STRICMP_INSTEAD!
+
 
 /* compute the intersection of two rectangles */
 INLINE void sect_rect(rectangle *dst, const rectangle *src)
@@ -341,6 +343,7 @@ INLINE void sect_rect(rectangle *dst, const rectangle *src)
 	if (src->min_y > dst->min_y) dst->min_y = src->min_y;
 	if (src->max_y < dst->max_y) dst->max_y = src->max_y;
 }
+
 
 /* convert a series of 32 bits into a float */
 INLINE float u2f(UINT32 v)
@@ -353,6 +356,7 @@ INLINE float u2f(UINT32 v)
 	return u.ff;
 }
 
+
 /* convert a float into a series of 32 bits */
 INLINE UINT32 f2u(float f)
 {
@@ -364,6 +368,7 @@ INLINE UINT32 f2u(float f)
 	return u.vv;
 }
 
+
 /* convert a series of 64 bits into a double */
 INLINE float u2d(UINT64 v)
 {
@@ -374,6 +379,7 @@ INLINE float u2d(UINT64 v)
 	u.vv = v;
 	return u.dd;
 }
+
 
 /* convert a double into a series of 64 bits */
 INLINE UINT64 d2u(double d)
@@ -427,6 +433,61 @@ INLINE INT32 fixed_mul_shift(INT32 val1, INT32 val2, UINT8 shift)
 	return (INT32)(((INT64)val1 * (INT64)val2) >> shift);
 }
 #endif
+
+
+
+/***************************************************************************
+
+    Binary coded decimal
+
+***************************************************************************/
+
+INLINE int bcd_adjust(int value)
+{
+	if ((value & 0xf) >= 0xa)
+		value = value + 0x10 - 0xa;
+	if ((value & 0xf0) >= 0xa0)
+		value = value - 0xa0 + 0x100;
+	return value;
+}
+
+
+INLINE int dec_2_bcd(int a)
+{
+	return (a % 10) | ((a / 10) << 4);
+}
+
+
+INLINE int bcd_2_dec(int a)
+{
+	return (a & 0xf) + (a >> 4) * 10;
+}
+
+
+
+/***************************************************************************
+
+    Gregorian calendar code
+
+***************************************************************************/
+
+INLINE int gregorian_is_leap_year(int year)
+{
+	return ((year & 4) == 0)
+		&& ((year % 100 != 0) || (year % 400 == 0));
+}
+
+
+/* months are one counted */
+INLINE int gregorian_days_in_month(int month, int year)
+{
+	if (month == 2)
+		return gregorian_is_leap_year(year) ? 29 : 28;
+	else if (month == 4 || month == 6 || month == 9 || month == 11)
+		return 30;
+	else
+		return 31;
+}
 
 
 

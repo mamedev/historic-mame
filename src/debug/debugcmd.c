@@ -59,6 +59,7 @@ static void execute_dasm(int ref, int params, const char **param);
 static void execute_find(int ref, int params, const char **param);
 static void execute_trace(int ref, int params, const char **param);
 static void execute_traceover(int ref, int params, const char **param);
+static void execute_traceflush(int ref, int params, const char **param);
 static void execute_snap(int ref, int params, const char **param);
 static void execute_source(int ref, int params, const char **param);
 static void execute_map(int ref, int params, const char **param);
@@ -145,6 +146,7 @@ void debug_command_init(void)
 
 	debug_console_register_command("trace",     CMDFLAG_NONE, 0, 1, 3, execute_trace);
 	debug_console_register_command("traceover", CMDFLAG_NONE, 0, 1, 3, execute_traceover);
+	debug_console_register_command("traceflush",CMDFLAG_NONE, 0, 0, 0, execute_traceflush);
 
 	debug_console_register_command("snap",      CMDFLAG_NONE, 0, 0, 1, execute_snap);
 
@@ -1672,6 +1674,16 @@ static void execute_trace(int ref, int params, const char *param[])
 static void execute_traceover(int ref, int params, const char *param[])
 {
 	execute_trace_internal(ref, params, param, 1);
+}
+
+
+/*-------------------------------------------------
+    execute_traceflush - execute the trace flush command
+-------------------------------------------------*/
+
+static void execute_traceflush(int ref, int params, const char *param[])
+{
+	debug_flush_traces();
 }
 
 

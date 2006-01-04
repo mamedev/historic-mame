@@ -103,7 +103,7 @@ WRITE8_HANDLER( slapfight_port_09_w )
 /* Status register */
 READ8_HANDLER( slapfight_port_00_r )
 {
-	int states[3]={ 0xc7, 0x55, 0x00 };
+	static const int states[3]={ 0xc7, 0x55, 0x00 };
 
 	slapfight_status = states[slapfight_status_state];
 
@@ -123,7 +123,7 @@ READ8_HANDLER( slapfight_port_00_r )
 */
 READ8_HANDLER( getstar_e803_r )
 {
-unsigned char seq[] = { 0, 1, ((0+5)^0x56) };
+	static const unsigned char seq[] = { 0, 1, ((0+5)^0x56) };
 unsigned char val;
 
 	val = seq[getstar_sequence_index];

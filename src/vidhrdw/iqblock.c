@@ -47,13 +47,13 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( iqblock )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8, 8,64,32);
-	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,32,64, 8);
+	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,     8, 8,64,32);
+	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,32,64, 8);
 
 	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_transparent_pen(bg_tilemap,0);
 	tilemap_set_scroll_cols(fg_tilemap,64);
 
 	return 0;
@@ -100,8 +100,8 @@ WRITE8_HANDLER( iqblock_fgscroll_w )
 VIDEO_UPDATE( iqblock )
 {
 	if (!iqblock_videoenable) return;
-
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+
 }
 

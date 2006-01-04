@@ -71,8 +71,8 @@ VIDEO_UPDATE(bishi)
 {
 	int layers[4], i;/*, old;*/
 /*  int bg_colorbase, new_colorbase, plane, dirty; */
-	int pris[4] = { K55_PRIINP_0, K55_PRIINP_3, K55_PRIINP_6, K55_PRIINP_7 };
-	int enables[4] = { K55_INP_VRAM_A, K55_INP_VRAM_B, K55_INP_VRAM_C, K55_INP_VRAM_D };
+	static const int pris[4] = { K55_PRIINP_0, K55_PRIINP_3, K55_PRIINP_6, K55_PRIINP_7 };
+	static const int enables[4] = { K55_INP_VRAM_A, K55_INP_VRAM_B, K55_INP_VRAM_C, K55_INP_VRAM_D };
 
 	K054338_update_all_shadows();
 	K054338_fill_backcolor(bitmap, 0);

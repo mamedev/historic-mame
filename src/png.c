@@ -144,7 +144,7 @@ int png_inflate_image (png_info *p)
 int png_read_file(mame_file *fp, png_info *p)
 {
 	/* translates color_type to bytes per pixel */
-	const int samples[] = {1, 0, 3, 1, 2, 0, 4};
+	static const int samples[] = {1, 0, 3, 1, 2, 0, 4};
 
 	UINT32 chunk_length, chunk_type=0, chunk_crc, crc;
 	UINT8 *chunk_data, *temp;

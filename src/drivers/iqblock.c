@@ -43,6 +43,10 @@ Stephh's notes :
     something to do with "Demo Sounds".
     I can't tell however if setting the Dip Switch to OFF means "Demo Sounds" OFF or ON !
 
+Grndtour:
+ - Title should flash 3X slowly. In MAME it flashes too fast, or strangely??
+
+
 ***************************************************************************/
 
 #include "driver.h"

@@ -56,8 +56,33 @@
     Changelog, version 1.07, 3/9/00:
         Changed timer to be single shot - fixes Crude Buster music in level 1.
 
-******************************************************************************/
+    Changelog, version 1.08, 8/11/05: (Charles MacDonald)
 
+        Changed timer implementation, no longer single shot and reading the
+        timer registers returns the count only. Fixes the following:
+        - Mesopotamia: Music tempo & in-game timer
+        - Dragon Saber: DDA effects
+        - Magical Chase: Music tempo and speed regulation
+        - Cadash: Allows the first level to start
+        - Turrican: Allows the game to start
+
+        Changed PLX and PLY to set NZ flags. Fixes:
+        - Afterburner: Graphics unpacking
+        - Aoi Blink: Collision detection with background
+
+        Fixed the decimal version of ADC/SBC to *not* update the V flag,
+        only the binary ones do.
+
+        Fixed B flag handling so it is always set outside of an interrupt;
+        even after being set by PLP and RTI.
+
+        Fixed P state after reset to set I and B, leaving T, D cleared and
+        NVZC randomized (cleared in this case).
+
+        Fixed interrupt processing order (Timer has highest priority followed
+        by IRQ1 and finally IRQ2).
+
+******************************************************************************/
 #include "memory.h"
 #include "cpuintrf.h"
 #include "mamedbg.h"
@@ -118,7 +143,7 @@ typedef struct
 #if LAZY_FLAGS
     int NZ;             /* last value (lazy N and Z flag) */
 #endif
-
+	UINT8 io_buffer;	/* last value written to the PSG, timer, and interrupt pages */
 }   h6280_Regs;
 
 static  h6280_Regs  h6280;
@@ -147,8 +172,8 @@ static void h6280_reset(void *param)
 	/* wipe out the h6280 structure */
 	memset(&h6280, 0, sizeof(h6280_Regs));
 
-	/* set I and Z flags */
-	P = _fI | _fZ;
+	/* set I and B flags */
+	P = _fI | _fB;
 
     /* stack starts at 0x01ff */
 	h6280.sp.d = 0x1ff;
@@ -160,7 +185,6 @@ static void h6280_reset(void *param)
 
 	/* timer off by default */
 	h6280.timer_status=0;
-	h6280.timer_ack=1;
 
     /* clear pending interrupts */
 	for (i = 0; i < 3; i++)
@@ -213,9 +237,9 @@ static int h6280_execute(int cycles)
 		{
 			deltacycle = lastcycle - h6280_ICount;
 			h6280.timer_value -= deltacycle;
-			if(h6280.timer_value<=0 && h6280.timer_ack==1)
+			if(h6280.timer_value<=0)
 			{
-				h6280.timer_ack=h6280.timer_status=0;
+				h6280.timer_value=h6280.timer_load;
 				set_irq_line(2,ASSERT_LINE);
 			}
 		}
@@ -294,53 +318,47 @@ READ8_HANDLER( H6280_irq_status_r )
 {
 	int status;
 
-	switch (offset)
+	switch (offset&3)
 	{
-		case 0: /* Read irq mask */
-			return h6280.irq_mask;
-
-		case 1: /* Read irq status */
+	default:return h6280.io_buffer;break;
+	case 3:
+		{
 			status=0;
 			if(h6280.irq_state[1]!=CLEAR_LINE) status|=1; /* IRQ 2 */
 			if(h6280.irq_state[0]!=CLEAR_LINE) status|=2; /* IRQ 1 */
 			if(h6280.irq_state[2]!=CLEAR_LINE) status|=4; /* TIMER */
-			return status;
+			return status|(h6280.io_buffer&(~H6280_IRQ_MASK));break;
+		}
+	case 2: return h6280.irq_mask|(h6280.io_buffer&(~H6280_IRQ_MASK));break;
 	}
-
-	return 0;
 }
 
 WRITE8_HANDLER( H6280_irq_status_w )
 {
-	switch (offset)
+	h6280.io_buffer=data;
+	switch (offset&3)
 	{
-		case 0: /* Write irq mask */
+		default:h6280.io_buffer=data;break;
+		case 2: /* Write irq mask */
 			h6280.irq_mask=data&0x7;
 			CHECK_IRQ_LINES;
 			break;
 
-		case 1: /* Timer irq ack - timer is reloaded here */
-			h6280.timer_value = h6280.timer_load;
-			h6280.timer_ack=1; /* Timer can't refire until ack'd */
+		case 3: /* Timer irq ack */
+			set_irq_line(2,CLEAR_LINE);
 			break;
 	}
 }
 
 READ8_HANDLER( H6280_timer_r )
 {
-	switch (offset) {
-		case 0: /* Counter value */
-			return (h6280.timer_value/1024)&127;
-
-		case 1: /* Read counter status */
-			return h6280.timer_status;
-	}
-
-	return 0;
+	/* only returns countdown */
+	return ((h6280.timer_value/1024)&0x7F)|(h6280.io_buffer&0x80);
 }
 
 WRITE8_HANDLER( H6280_timer_w )
 {
+	h6280.io_buffer=data;
 	switch (offset) {
 		case 0: /* Counter preload */
 			h6280.timer_load=h6280.timer_value=((data&127)+1)*1024;
@@ -362,7 +380,6 @@ static int h6280_translate(int space, offs_t *addr)
 		*addr = TRANSLATED(*addr);
 	return 1;
 }
-
 
 /*****************************************************************************/
 

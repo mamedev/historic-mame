@@ -77,7 +77,7 @@ PALETTE_INIT( naughtyb )
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 	/* note: there is no resistor on second PROM so we define second resistance as 0 */
-	const int resistances[2] = { 270, 0 };
+	static const int resistances[2] = { 270, 0 };
 	double weights_r[2], weights_g[2], weights_b[2];
 
 

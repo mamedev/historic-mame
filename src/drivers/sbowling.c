@@ -293,8 +293,8 @@ static PALETTE_INIT( sbowling )
 {
 	int i;
 
-	const int resistances_rg[3] = { 470, 270, 100 };
-	const int resistances_b[2]  = { 270, 100 };
+	static const int resistances_rg[3] = { 470, 270, 100 };
+	static const int resistances_b[2]  = { 270, 100 };
 	double outputs_r[1<<3], outputs_g[1<<3], outputs_b[1<<2];
 
 	/* the game uses output collector PROMs type: NEC B406  */

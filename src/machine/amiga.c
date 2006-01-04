@@ -1240,7 +1240,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 			{
 				int lo = ( offset & 2 );
 				int loc = ( offset - 0x48 ) >> 2;
-				int order[4] = { 2, 1, 0, 3 };
+				static const int order[4] = { 2, 1, 0, 3 };
 
 				if ( lo )
 					custom_regs.BLTxPTL[order[loc]] = ( data & 0xfffe ); /* should be word aligned, we make sure is is */
@@ -1260,7 +1260,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 		case 0x0066: /* BLTDMOD */
 			{
 				int loc = ( offset >> 1 ) & 3;
-				int order[4] = { 2, 1, 0, 3 };
+				static const int order[4] = { 2, 1, 0, 3 };
 
 				custom_regs.BLTxMOD[order[loc]] = ( signed short )( data & ~1 ); /* strip off lsb */
 			}
@@ -1271,7 +1271,7 @@ WRITE16_HANDLER ( amiga_custom_w )
 		case 0x0074: /* BLTADAT */
 			{
 				int loc = ( offset >> 1 ) & 3;
-				int order[3] = { 2, 1, 0 };
+				static const int order[3] = { 2, 1, 0 };
 
 				custom_regs.BLTxDAT[order[loc]] = data;
 			}

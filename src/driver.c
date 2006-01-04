@@ -2048,6 +2048,8 @@ V-V                           TP-027
 	/* Cave was formed in 1994 from the ruins of Toaplan, like Raizing was. */
 	DRIVER( pwrinst2 )	/* (c) 1994 Atlus */
 	DRIVER( pwrins2j )	/* (c) 1994 Atlus */
+	DRIVER( plegends )	/* (c) 1994 Atlus */
+	DRIVER( plegendj )	/* (c) 1994 Atlus */
 	DRIVER( mazinger )	/* (c) 1994 Banpresto (country is in EEPROM) */
 	DRIVER( donpachi )	/* (c) 1995 Atlus/Cave */
 	DRIVER( donpachj )	/* (c) 1995 Atlus/Cave */
@@ -3671,6 +3673,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( abattle2 )	/* Sidam */
 	DRIVER( afire )		/* Rene Pierre */
 	DRIVER( acombat )	/* bootleg */
+	DRIVER( sstarbtl )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
 	DRIVER( prosoccr )	/* (c) 1983 */
@@ -3915,6 +3918,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* Data East MLC Games */
 	DRIVER( hoops96 )	/* MCE (c) 1996 Data East Corporation */
 	DRIVER( ddream95 )	/* MCE (c) 1996 Data East Corporation */
+	DRIVER( hoops95 )	/* MCE (c) 1996 Data East Corporation */
 	DRIVER( avengrgs )	/* MCG (c) 1995 Data East Corporation (World) */
 	DRIVER( avengrgj )	/* MCG (c) 1995 Data East Corporation (Japan) */
 	DRIVER( skullfng )	/* MCH (c) 1996 Data East Corporation (Japan) */
@@ -5232,6 +5236,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ddungeon )	/* Game Room */
 	DRIVER( darktowr )	/* Game Room */
 	DRIVER( tstrike )	/* Game Room */
+	DRIVER( tstrikea )	/* Game Room */
 	DRIVER( ctribe )	/* TA-0028 (c) 1990 (US) */
 	DRIVER( ctribeb )	/* bootleg */
 	DRIVER( blockout )	/* TA-0029 (c) 1989 + California Dreams */
@@ -6362,6 +6367,7 @@ Other Sun games
 	DRIVER( quiz365t )	/* "78" (c) 1994 Nakanihon (Taiwan) */
 	DRIVER( rongrong )	/* "80" (c) 1994 Nakanihon */
 	DRIVER( rongrngg )	/* "80" (c) 1994 Nakanihon */
+	DRIVER( mjdchuka )	/*      (c) 1995 Nakanihon */
 	DRIVER( nettoqc )	/* "103" (c) 1995 Nakanihon */
 	DRIVER( ddenlovr )	/* "113" (c) 1996 Dynax */
 	DRIVER( hanakanz )	/* "507" 1996 Dynax */
@@ -6659,6 +6665,7 @@ Other Sun games
 	DRIVER( gt103ab )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( findout )	/* (c) 1987 [Elettronolo] */
 	DRIVER( quiz )		/* (c) 1986 Italian bootleg */
+	DRIVER( quiz211 )	/* (c) 1986 Italian bootleg */
 	DRIVER( gs4002 )	/* (c) 1982 G.E.I. */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102b )	/* (c) 1984 Greyhound Electronics */
@@ -6692,6 +6699,7 @@ Other Sun games
 	DRIVER( tugboat )	/* (c) 1982 ETM */
 	DRIVER( noahsark )	/* (c) 1983 Enter-Tech */
 	DRIVER( gotcha )	/* (c) 1997 Dongsung + "presented by Para" */
+	DRIVER( ppchamp )	/* (c) 1997 Dongsung + "presented by Para" */
 	DRIVER( amerdart )	/* (c) 1989 Ameri Corporation */
 	DRIVER( amerdar2 )	/* (c) 1989 Ameri Corporation */
 	DRIVER( coolpool )	/* (c) 1992 Catalina Games */
@@ -6857,5 +6865,6 @@ Other Sun games
 	DRIVER( mosaicf2 )	/* (c) 1999 F2 System */
 	DRIVER( rbmk )		/* (c) 1995 GMS */
 	DRIVER( go2000 )	/* (c) 2000 SA */
+	DRIVER( mirax )		/* (c) 1985 Current Technologies */
 
 #endif	/* DRIVER_RECURSIVE */

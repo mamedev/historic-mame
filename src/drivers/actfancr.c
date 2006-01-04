@@ -139,7 +139,7 @@ static ADDRESS_MAP_START( triothep_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x130000, 0x1305ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(MWA8_RAM) AM_BASE(&actfancr_ram) /* Main ram */
 	AM_RANGE(0x1ff000, 0x1ff001) AM_WRITE(triothep_control_select_w)
-	AM_RANGE(0x1ff402, 0x1ff403) AM_WRITE(H6280_irq_status_w)
+	AM_RANGE(0x1ff400, 0x1ff403) AM_WRITE(H6280_irq_status_w)
 ADDRESS_MAP_END
 
 /******************************************************************************/

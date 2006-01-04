@@ -2153,7 +2153,7 @@ void YM2203Postload(void *chip)
 
 static void YM2203_save_state(YM2203 *F2203, int index)
 {
-	const char statename[] = "YM2203";
+	static const char statename[] = "YM2203";
 
 	state_save_register_UINT8 (statename, index, "regs"   , F2203->REGS   , 256);
 	FMsave_state_st(statename,index,&F2203->OPN.ST);
@@ -3368,7 +3368,7 @@ void YM2608Postload(void *chip)
 
 static void YM2608_save_state(YM2608 *F2608, int index)
 {
-	const char statename[] = "YM2608";
+	static const char statename[] = "YM2608";
 
 	state_save_register_UINT8 (statename, index, "regs"   , F2608->REGS   , 512);
 	FMsave_state_st(statename,index,&F2608->OPN.ST);
@@ -4053,7 +4053,7 @@ void YM2610Postload(void *chip)
 
 static void YM2610_save_state(YM2610 *F2610, int index)
 {
-	const char statename[] = "YM2610";
+	static const char statename[] = "YM2610";
 
 	state_save_register_UINT8 (statename, index, "regs"   , F2610->REGS   , 512);
 	FMsave_state_st(statename,index,&F2610->OPN.ST);
@@ -4538,7 +4538,7 @@ void YM2612Postload(void *chip)
 
 static void YM2612_save_state(YM2612 *F2612, int index)
 {
-	const char statename[] = "YM2612";
+	static const char statename[] = "YM2612";
 
 	state_save_register_UINT8 (statename, index, "regs"   , F2612->REGS   , 512);
 	FMsave_state_st(statename,index,&F2612->OPN.ST);

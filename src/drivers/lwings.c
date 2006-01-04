@@ -136,7 +136,7 @@ static WRITE8_HANDLER( avengers_prot_bank_w )
 
 static int avengers_fetch_paldata( void )
 {
-	const char pal_data[] =
+	static const char pal_data[] =
 	/* page 1: 0x03,0x02,0x01,0x00 */
 	"0000000000000000" "A65486A6364676D6" "C764C777676778A7" "A574E5E5C5756AE5"
 	"0000000000000000" "F51785D505159405" "A637B6A636269636" "F45744E424348824"
@@ -218,8 +218,8 @@ static int avengers_fetch_paldata( void )
 
 static READ8_HANDLER( avengers_protection_r )
 {
-	const int xpos[8] = { 10, 7,  0, -7, -10, -7,   0,  7 };
-	const int ypos[8] = {  0, 7, 10,  7,   0, -7, -10, -7 };
+	static const int xpos[8] = { 10, 7,  0, -7, -10, -7,   0,  7 };
+	static const int ypos[8] = {  0, 7, 10,  7,   0, -7, -10, -7 };
 	int best_dist = 0;
 	int best_dir = 0;
 	int x,y;

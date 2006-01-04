@@ -372,7 +372,7 @@ static void mcu_process_command(void)
 		{
 			int difficulty = mcu_buffer[2] & 0x3;
 			int stage = mcu_buffer[3];
-			const UINT8 difficulty_table[4] = { 5, 3, 1, 2 };
+			static const UINT8 difficulty_table[4] = { 5, 3, 1, 2 };
 			int result = difficulty_table[difficulty];
 
 			if (stage == 0)
@@ -389,7 +389,7 @@ static void mcu_process_command(void)
 	case 0x55: /* 0x55, 0x00, 0x00, 0x00, DSW2 -> timer */
 		{
 			int difficulty = mcu_buffer[4] & 0x3;
-			const UINT16 table[4] =
+			static const UINT16 table[4] =
 			{
 				0x4001, 0x5001, 0x1502, 0x0002
 			};
@@ -439,7 +439,7 @@ static void mcu_process_command(void)
 			int indx = mcu_buffer[3];
 			int enemy_type=0;
 
-			static int table[] =
+			static const int table[] =
 			{
 				0x01, 0x06, 0x06, 0x05, 0x05, 0x05, 0x05, 0x05,	/* for stage#: 0 */
 				0x02, 0x0a, 0x0a, 0x09, 0x09, 0x09, 0x09,	/* for stage#: 1 */

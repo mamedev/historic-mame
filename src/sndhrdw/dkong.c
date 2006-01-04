@@ -16,7 +16,7 @@ WRITE8_HANDLER( dkong_sh1_w )
 {
 	static int state[8];
 	static int count = 0;
-	int sample_order[7] = {1,2,1,2,0,1,0};
+	static const int sample_order[7] = {1,2,1,2,0,1,0};
 
 	if (state[offset] != data)
 	{
@@ -102,7 +102,7 @@ WRITE8_HANDLER( dkongjr_sh_climb_w )
 {
 	static int climb = 0;
 	static int count;
-	int sample_order[7] = {1,2,1,2,0,1,0};
+	static const int sample_order[7] = {1,2,1,2,0,1,0};
 
 	if (climb != data)
 	{

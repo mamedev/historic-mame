@@ -89,7 +89,6 @@ static UINT64 get_cpu_reg(UINT32 ref);
 static void set_cpu_reg(UINT32 ref, UINT64 value);
 static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
 static void check_hotspots(int cpunum, int spacenum, offs_t address);
-static void flush_traces(void);
 
 
 
@@ -108,7 +107,7 @@ void mame_debug_init(void)
 	debug_command_init();
 	debug_console_init();
 	debug_view_init();
-	atexit(flush_traces);
+	atexit(debug_flush_traces);
 }
 
 
@@ -961,6 +960,7 @@ static void process_source_file(void)
 	{
 		char buf[512];
 		int i;
+		char *s;
 
 		/* stop at the end of file */
 		if (feof(debug_source_file))
@@ -970,9 +970,16 @@ static void process_source_file(void)
 			return;
 		}
 
-		/* fetch the next line and strip any whitespace */
+		/* fetch the next line */
 		memset(buf, 0, sizeof(buf));
 		fgets(buf, sizeof(buf), debug_source_file);
+
+		/* strip out comments (text after '#') */
+		s = strchr(buf, '#');
+		if (s)
+			*s = '\0';
+
+		/* strip whitespace */
 		i = strlen(buf);
 		while((i > 0) && (isspace(buf[i-1])))
 			buf[--i] = '\0';
@@ -1984,11 +1991,11 @@ void debug_source_script(const char *file)
 
 
 /*-------------------------------------------------
-    flush_traces - flushes all traces; this is
+    debug_flush_traces - flushes all traces; this is
     useful if a trace is going on when we osd_die
 -------------------------------------------------*/
 
-static void flush_traces(void)
+void debug_flush_traces(void)
 {
 	int cpunum;
 

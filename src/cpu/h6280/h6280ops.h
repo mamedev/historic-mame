@@ -77,6 +77,12 @@
 #define CHECK_IRQ_LINES 										\
 	if( !(P & _fI) )											\
 	{															\
+        if ( h6280.irq_state[2] != CLEAR_LINE &&                \
+			 !(h6280.irq_mask & 0x4) )							\
+		{														\
+ 			DO_INTERRUPT(H6280_TIMER_VEC);						\
+       }                                                       	\
+		else													\
 		if ( h6280.irq_state[0] != CLEAR_LINE &&				\
 			 !(h6280.irq_mask & 0x2) )							\
 		{														\
@@ -90,13 +96,6 @@
 			DO_INTERRUPT(H6280_IRQ2_VEC);						\
 			(*h6280.irq_callback)(1);							\
         }                                                       \
-		else													\
-        if ( h6280.irq_state[2] != CLEAR_LINE &&                \
-			 !(h6280.irq_mask & 0x4) )							\
-		{														\
-			h6280.irq_state[2] = CLEAR_LINE;					\
- 			DO_INTERRUPT(H6280_TIMER_VEC);						\
-       }                                                       	\
     }
 
 /***************************************************************
@@ -346,14 +345,12 @@
 	int c = (P & _fC);											\
 	int lo = (A & 0x0f) + (tmp & 0x0f) + c; 					\
 	int hi = (A & 0xf0) + (tmp & 0xf0); 						\
-		P &= ~(_fV | _fC);										\
+		P &= ~_fC;											\
 		if (lo > 0x09)											\
 		{														\
 			hi += 0x10; 										\
 			lo += 0x06; 										\
 		}														\
-		if (~(A^tmp) & (A^hi) & _fN)							\
-			P |= _fV;											\
 		if (hi > 0x90)											\
 			hi += 0x60; 										\
 		if (hi & 0xff00)										\
@@ -466,7 +463,7 @@
 	PCW++;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
-	PUSH(P | _fB);												\
+	PUSH(P);												\
 	P = (P & ~_fD) | _fI;										\
 	PCL = RDMEM(H6280_IRQ2_VEC); 								\
 	PCH = RDMEM(H6280_IRQ2_VEC+1);								\
@@ -736,6 +733,7 @@
 
 #define PLP 													\
 	PULL(P);													\
+	P |= _fB;													\
 	NZ = ((P & _fN) << 8) | 									\
 		 ((P & _fZ) ^ _fZ); 									\
 	CHECK_IRQ_LINES
@@ -744,6 +742,7 @@
 
 #define PLP 													\
 	PULL(P); 													\
+	P |= _fB;													\
 	CHECK_IRQ_LINES
 #endif
 
@@ -751,13 +750,15 @@
  *  PLX Pull index X
  ***************************************************************/
 #define PLX                                                     \
-    PULL(X)
+    PULL(X);													\
+	SET_NZ(X)
 
 /* 6280 ********************************************************
  *  PLY Pull index Y
  ***************************************************************/
 #define PLY                                                     \
-    PULL(Y)
+    PULL(Y);													\
+	SET_NZ(Y)
 
 /* 6280 ********************************************************
  *  RMB Reset memory bit
@@ -793,6 +794,7 @@
 
 #define RTI 													\
 	PULL(P);													\
+	P |= _fB;													\
 	NZ = ((P & _fN) << 8) | 									\
 		 ((P & _fZ) ^ _fZ); 									\
 	PULL(PCL);													\
@@ -803,6 +805,7 @@
 
 #define RTI 													\
 	PULL(P);													\
+	P |= _fB;													\
 	PULL(PCL);													\
 	PULL(PCH);													\
 	CHANGE_PC;													\
@@ -845,9 +848,7 @@
 	int sum = A - tmp - c;										\
 	int lo = (A & 0x0f) - (tmp & 0x0f) - c; 					\
 	int hi = (A & 0xf0) - (tmp & 0xf0); 						\
-		P &= ~(_fV | _fC);										\
-		if ((A^tmp) & (A^sum) & _fN)							\
-			P |= _fV;											\
+		P &= ~_fC;										\
 		if (lo & 0xf0)											\
 			lo -= 6;											\
 		if (lo & 0x80)											\

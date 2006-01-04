@@ -8674,7 +8674,7 @@ static READ16_HANDLER( downtown_protection_r )
 	{
 		case 0xa3:
 		{
-			unsigned char word[] = "WALTZ0";
+			static const unsigned char word[] = "WALTZ0";
 			if (offset >= 0x100/2 && offset <= 0x10a/2)	return word[offset-0x100/2];
 			else										return 0;
 		}

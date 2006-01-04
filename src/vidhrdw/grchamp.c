@@ -65,8 +65,8 @@ PALETTE_INIT( grchamp )
 {
 	int i,j;
 	UINT8 r,g,b;
-	UINT8 rg_bits[8] = {0,42,67,92,126,139,148,156}; // Calculated values as below
-	UINT8 b_bits[4]  = {0,67,126,148}; // Calculated values as below
+	static const UINT8 rg_bits[8] = {0,42,67,92,126,139,148,156}; // Calculated values as below
+	static const UINT8 b_bits[4]  = {0,67,126,148}; // Calculated values as below
 
 	/* for r & g DAC is 100, 270, 470 Ohm wired together, connected to 100 Ohm pull-up and finally 100 Ohm in series */
     /* for b DAC is 100, 270 Ohm wired together, connected to 100 Ohm pull-up and finally 100 Ohm in series */

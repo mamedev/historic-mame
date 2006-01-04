@@ -41,7 +41,7 @@ WRITE16_HANDLER( welltris_spriteram_w )
 /* Sprite Drawing is pretty much the same as fromance.c */
 static void welltris_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
-	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
+	static const UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 	int offs;
 
 	/* draw the sprites */

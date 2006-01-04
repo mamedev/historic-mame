@@ -305,7 +305,7 @@ Note:   Not all sprites are displayed: in the top part of spriteram
 static void psikyo_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int trans_pen)
 {
 	/* tile layers 0 & 1 have priorities 1 & 2 */
-	int pri[] = { 0, 0xfc, 0xff, 0xff };
+	static const int pri[] = { 0, 0xfc, 0xff, 0xff };
 
 	int offs;
 

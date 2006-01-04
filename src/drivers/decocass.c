@@ -1196,11 +1196,11 @@ GAMEB( 1982, csweetht, cdiscon1, decocass, cdiscon1, decocass, decocass, ROT270,
 GAMEB( 1982, cptennis, decocass, decocass, cptennis, decocass, decocass, ROT270, "Data East Corporation", "Pro Tennis (Cassette)", 0 )
 GAMEB( 1982, ctornado, decocass, decocass, ctornado, decocass, decocass, ROT270, "Data East Corporation", "Tornado (Cassette)", 0 )
 GAMEB( 1982, cburnrub, decocass, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 1)", 0 )
-GAMEB( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 2)", GAME_NOT_WORKING )
+GAMEB( 1982, cburnrb2, cburnrub, decocass, cburnrub, decocass, decocass, ROT270, "Data East Corporation", "Burnin' Rubber (Cassette, set 2)", 0 )
 GAMEB( 1982, cbnj,     cburnrub, decocass, cbnj,     decocass, decocass, ROT270, "Data East Corporation", "Bump N Jump (Cassette)", 0 )
 GAMEB( 1983, cbtime,   decocass, decocass, cbtime,   dc_btime, decocass, ROT270, "Data East Corporation", "Burger Time (Cassette)", 0 )
 GAMEB( 1983, cgraplop, decocass, decocass, cgraplop, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 1)", 0 )
-GAMEB( 1983, cgraplp2, cgraplop, decocass, cgraplp2, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)", 0 )
+GAMEB( 1983, cgraplp2, cgraplop, decocass, cgraplp2, decocass, decocass, ROT270, "Data East Corporation", "Graplop (aka Cluster Buster) (Cassette, set 2)", GAME_NOT_WORKING )
 GAMEB( 1983, clapapa,  decocass, decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (aka La.Pa.Pa) (Cassette)" , 0) /* Displays 'LaPaPa during attract */
 GAMEB( 1983, clapapa2, clapapa,  decocass, clapapa,  decocass, decocass, ROT270, "Data East Corporation", "Rootin' Tootin' (Cassette)" , 0)				/* Displays 'Rootin' Tootin' during attract */
 GAMEB( 1984, cfghtice, decocass, decocass, cfghtice, decocass, decocass, ROT270, "Data East Corporation", "Fighting Ice Hockey (Cassette)", 0 )

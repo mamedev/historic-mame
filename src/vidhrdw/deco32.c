@@ -8,6 +8,7 @@ UINT32 *deco32_pf12_control,*deco32_pf34_control;
 UINT32 *deco32_pf1_rowscroll,*deco32_pf2_rowscroll,*deco32_pf3_rowscroll,*deco32_pf4_rowscroll;
 UINT32 *dragngun_sprite_layout_0_ram, *dragngun_sprite_layout_1_ram;
 UINT32 *dragngun_sprite_lookup_0_ram, *dragngun_sprite_lookup_1_ram;
+UINT32 *deco32_ace_ram;
 
 static UINT8 *dirty_palette;
 static tilemap *pf1_tilemap,*pf1a_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
@@ -15,7 +16,10 @@ static int deco32_pf1_bank,deco32_pf2_bank,deco32_pf3_bank,deco32_pf4_bank;
 static int deco32_pf1_flip,deco32_pf2_flip,deco32_pf3_flip,deco32_pf4_flip;
 static int deco32_pf2_colourbank,deco32_pf4_colourbank,deco32_pri;
 
+static mame_bitmap *sprite0_mix_bitmap, *sprite1_mix_bitmap, *tilemap_alpha_bitmap;
+
 static int dragngun_sprite_ctrl;
+static int deco32_ace_ram_dirty, has_ace_ram;
 
 int deco32_raster_display_position;
 UINT16 *deco32_raster_display_list;
@@ -80,6 +84,77 @@ WRITE32_HANDLER( dragngun_spriteram_dma_w )
 	memset(spriteram32,0,0x2000);
 }
 
+WRITE32_HANDLER( deco32_ace_ram_w )
+{
+	/* Some notes pieced together from Tattoo Assassins info:
+
+        Bytes 0 to 0x58 - object alpha control?
+        Bytes 0x5c to 0x7c - tilemap alpha control
+
+        0 = opaque, 0x10 = 50% transparent, 0x20 = fully transparent
+
+        Byte 0x00: ACEO000P0
+                            P8
+                            1P0
+                            1P8
+                            O010C1
+                            o010C8
+                            ??
+
+        Hardware fade registers:
+
+        Byte 0x80: fadeptred
+        Byte 0x84: fadeptgreen
+        Byte 0x88: fadeptblue
+        Byte 0x8c: fadestred
+        Byte 0x90: fadestgreen
+        Byte 0x94: fadestblue
+        Byte 0x98: fadetype
+
+        The 'ST' value lerps between the 'PT' value and the palette entries.  So, if PT==0,
+        then ST ranging from 0 to 255 will cause a fade to black (when ST==255 the palette
+        becomes zero).
+
+        'fadetype' - 1100 for multiplicative fade, 1000 for additive
+    */
+	if (offset>=(0x80/4) && (data!=deco32_ace_ram[offset]))
+		deco32_ace_ram_dirty=1;
+
+	COMBINE_DATA(&deco32_ace_ram[offset]);
+}
+
+static void updateAceRam(void)
+{
+	int r,g,b,i;
+	UINT8 fadeptr=deco32_ace_ram[0x20];
+	UINT8 fadeptg=deco32_ace_ram[0x21];
+	UINT8 fadeptb=deco32_ace_ram[0x22];
+	UINT8 fadepsr=deco32_ace_ram[0x23];
+	UINT8 fadepsg=deco32_ace_ram[0x24];
+	UINT8 fadepsb=deco32_ace_ram[0x25];
+//  UINT8 mode=deco32_ace_ram[0x26];
+
+	deco32_ace_ram_dirty=0;
+
+	for (i=0; i<2048; i++)
+	{
+		/* Lerp palette entry to 'fadept' according to 'fadeps' */
+		b = (paletteram32[i] >>16) & 0xff;
+		g = (paletteram32[i] >> 8) & 0xff;
+		r = (paletteram32[i] >> 0) & 0xff;
+
+		if (i>255) /* Screenshots seem to suggest ACE fades do not affect playfield 1 palette (0-255) */
+		{
+			/* Yeah, this should really be fixed point, I know */
+			b = (UINT8)((float)b + (((float)fadeptb - (float)b) * (float)fadepsb/255.0f));
+			g = (UINT8)((float)g + (((float)fadeptg - (float)g) * (float)fadepsg/255.0f));
+			r = (UINT8)((float)r + (((float)fadeptr - (float)r) * (float)fadepsr/255.0f));
+		}
+
+		palette_set_color(i,r,g,b);
+	}
+}
+
 /******************************************************************************/
 
 /* Later games have double buffered paletteram - the real palette ram is
@@ -113,11 +188,18 @@ WRITE32_HANDLER( deco32_palette_dma_w )
 		if (dirty_palette[i]) {
 			dirty_palette[i]=0;
 
-			b = (paletteram32[i] >>16) & 0xff;
-			g = (paletteram32[i] >> 8) & 0xff;
-			r = (paletteram32[i] >> 0) & 0xff;
+			if (has_ace_ram)
+			{
+				deco32_ace_ram_dirty=1;
+			}
+			else
+			{
+				b = (paletteram32[i] >>16) & 0xff;
+				g = (paletteram32[i] >> 8) & 0xff;
+				r = (paletteram32[i] >> 0) & 0xff;
 
-			palette_set_color(i,r,g,b);
+				palette_set_color(i,r,g,b);
+			}
 		}
 	}
 }
@@ -209,7 +291,7 @@ static void captaven_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, 
 	}
 }
 
-static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank, int mask)
+static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank, int mask, int colourmask)
 {
 	int offs;
 
@@ -226,7 +308,7 @@ static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, i
 
 		trans=TRANSPARENCY_PEN;
 		x = spritedata[offs+2];
-		colour = (x >>9) & 0xf;
+		colour = (x >>9) & colourmask;
 
 		if (gfxbank==4) {
 			if ((y&0x8000)!=mask) /* Defer alpha until last (seperate pass) */
@@ -284,6 +366,122 @@ static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, i
 	}
 }
 
+/*
+    This renders sprites to a 16 bit bitmap, for later mixing.
+    Bottom 8 bits per pixel is palettised sprite data, top 8 is
+    colour/alpha/priority.
+*/
+void deco32_drawsprite(mame_bitmap *dest,const gfx_element *gfx,
+		unsigned int code,unsigned int priority,int flipx,int flipy,int sx,int sy,
+		const rectangle *clip)
+{
+	int ox,oy,cx,cy;
+	int x_index,y_index,x,y;
+
+	int source_base = (code % gfx->total_elements) * gfx->height;
+
+	/* check bounds */
+	ox = sx;
+	oy = sy;
+
+	if (sx>319 || sy>247 || sx<-15 || sy<-7)
+		return;
+
+	if (sy<0) sy=0;
+	if (sx<0) sx=0;
+	if (sx>319) cx=319;
+	else cx=ox+16;
+
+	cy=(sy-oy);
+
+	if (flipy) y_index=15-cy; else y_index=cy;
+
+	for( y=0; y<16-cy; y++ )
+	{
+		UINT8 *source = gfx->gfxdata + ((source_base+y_index) * gfx->line_modulo);
+		UINT16 *destb = (UINT16 *)dest->line[sy];
+
+		if (flipx) { source+=15-(sx-ox); x_index=-1; } else { x_index=1; source+=(sx-ox); }
+
+		for (x=sx; x<cx; x++)
+		{
+			int c = *source;
+			if( c )
+				destb[x] = c | priority;
+
+			source+=x_index;
+		}
+
+		sy++;
+		if (sy>247)
+			return;
+		if (flipy) y_index--; else y_index++;
+	}
+}
+
+// Merge with Tattass & Fghthist sprite routines later
+static void nslasher_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank)
+{
+	int offs;
+
+	// Draw sprites back to front saving priority & alpha data per pixel for later mixing
+	for (offs = 0; offs<0x400; offs+=4)
+	{
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult; /*,pri=0,spri=0;*/
+		int trans;
+
+		sprite = spritedata[offs+1] & 0xffff;
+
+		y = spritedata[offs];
+		flash=y&0x1000;
+		if (flash && (cpu_getcurrentframe() & 1)) continue;
+
+		trans=TRANSPARENCY_PEN;
+		x = spritedata[offs+2];
+
+		// Prepare colour, priority and alpha info
+		colour = (x>>9) & 0x7f;
+		if (y&0x8000)
+			colour|=0x80;
+		colour<<=8;
+
+		fx = y & 0x2000;
+		fy = y & 0x4000;
+		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
+
+		x = x & 0x01ff;
+		y = y & 0x01ff;
+		if (x >= 320) x -= 512;
+		if (y >= 256) y -= 512;
+
+		sprite &= ~multi;
+		if (fy)
+			inc = -1;
+		else
+		{
+			sprite += multi;
+			inc = 1;
+		}
+
+		mult=+16;
+
+		if (fx) fx=0; else fx=1;
+		if (fy) fy=0; else fy=1;
+
+		while (multi >= 0)
+		{
+			deco32_drawsprite(bitmap,Machine->gfx[gfxbank],
+					sprite - multi * inc,
+					colour,
+					fx,fy,
+					x,y + mult * multi,
+					&Machine->visible_area);
+
+			multi--;
+		}
+	}
+}
+
 INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const rectangle *clip,int transparency,int transparent_color,
@@ -321,9 +519,6 @@ INLINE void dragngun_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		{
 			const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
 			int source_base = (code % gfx->total_elements) * gfx->height;
-
-//          int sprite_screen_height = (scaley*gfx->height+0x8000)>>16;
-//          int sprite_screen_width = (scalex*gfx->width+0x8000)>>16;
 
 			if (sprite_screen_width && sprite_screen_height)
 			{
@@ -797,19 +992,21 @@ VIDEO_START( captaven )
 
 	deco32_pf2_colourbank=16;
 	deco32_pf4_colourbank=0;
+	has_ace_ram=0;
 
 	return 0;
 }
 
-VIDEO_START( fghthist ) //unused
+VIDEO_START( fghthist )
 {
 	pf1_tilemap = tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	pf2_tilemap = tilemap_create(get_pf2_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	pf3_tilemap = tilemap_create(get_pf3_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
 	pf4_tilemap = tilemap_create(get_pf4_tile_info, deco16_scan_rows,TILEMAP_OPAQUE,     16,16,64,32);
 	pf1a_tilemap =0;
+	dirty_palette = auto_malloc(4096);
 
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (!deco_allocate_sprite_bitmap() || !dirty_palette || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -818,6 +1015,7 @@ VIDEO_START( fghthist ) //unused
 
 	deco32_raster_display_list=0;
 	deco32_pf2_colourbank=deco32_pf4_colourbank=0;
+	has_ace_ram=0;
 
 	return 0;
 }
@@ -845,6 +1043,7 @@ VIDEO_START( dragngun )
 
 	alpha_set_level(0x80);
 	state_save_register_int("deco32", 0, "SCTRL", &dragngun_sprite_ctrl);
+	has_ace_ram=0;
 
 	return 0;
 }
@@ -872,11 +1071,12 @@ VIDEO_START( lockload )
 
 	alpha_set_level(0x80);
 	state_save_register_int("deco32", 0, "SCTRL", &dragngun_sprite_ctrl);
+	has_ace_ram=0;
 
 	return 0;
 }
 
-VIDEO_START( tattass )
+VIDEO_START( nslasher )
 {
 	pf1_tilemap = tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	pf2_tilemap = tilemap_create(get_pf2_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
@@ -885,7 +1085,11 @@ VIDEO_START( tattass )
 	pf1a_tilemap =0;
 	dirty_palette = auto_malloc(4096);
 
-	if (!deco_allocate_sprite_bitmap() || !dirty_palette || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	sprite0_mix_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -16 );
+	sprite1_mix_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -16 );
+	tilemap_alpha_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -16 );
+
+	if (!sprite1_mix_bitmap || !sprite0_mix_bitmap || !tilemap_alpha_bitmap || !dirty_palette || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -894,8 +1098,56 @@ VIDEO_START( tattass )
 	memset(dirty_palette,0,4096);
 
 	deco32_raster_display_list=0;
+	deco32_pf2_colourbank=16;
+	deco32_pf4_colourbank=16;
+	state_save_register_UINT32("deco32", 0, "pri", &deco32_pri, 1);
+	alpha_set_level(0x80);
+	has_ace_ram=1;
+
+	return 0;
+}
+
+VIDEO_START( hvysmsh )
+{
+	pf1_tilemap = tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	pf2_tilemap = tilemap_create(get_pf2_tile_info, deco16_scan_rows,TILEMAP_OPAQUE,16,16,64,32);
+	pf1a_tilemap =0;
+
+	if (!deco_allocate_sprite_bitmap() || !pf1_tilemap || !pf2_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+
+	deco32_raster_display_list=0;
+	deco32_pf2_colourbank=16;
+	has_ace_ram=0;
+
+	return 0;
+}
+
+VIDEO_START( backfire )
+{
+	pf1_tilemap = tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	pf2_tilemap = tilemap_create(get_pf2_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+	pf3_tilemap = tilemap_create(get_pf3_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+	pf4_tilemap = tilemap_create(get_pf4_tile_info, deco16_scan_rows,TILEMAP_OPAQUE,     16,16,64,32);
+	pf1a_tilemap=tilemap_create(get_pf1a_tile_info,   deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
+//  dirty_palette = auto_malloc(4096);
+
+	if (!deco_allocate_sprite_bitmap() || !pf1a_tilemap || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+	tilemap_set_transparent_pen(pf2_tilemap,0);
+	tilemap_set_transparent_pen(pf3_tilemap,0);
+	tilemap_set_transparent_pen(pf1a_tilemap,0);
+//  memset(dirty_palette,0,4096);
+
+	deco32_raster_display_list=0;
+	deco32_pf2_colourbank=16;
 	deco32_pf4_colourbank=16;
 	alpha_set_level(0x80);
+	has_ace_ram=0;
 
 	return 0;
 }
@@ -1196,58 +1448,6 @@ VIDEO_UPDATE( dragngun )
 		tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,0);
 }
 
-VIDEO_UPDATE( tattass )
-{
-	/* Dirty tilemaps if any globals change */
-	if (deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
-		tilemap_mark_all_tiles_dirty(pf1_tilemap);
-	if (deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf2_tilemap);
-	if ((((deco32_pf34_control[7]>> 4)&0x3)<<12)!=deco32_pf3_bank || deco32_pf3_flip!=((deco32_pf34_control[6]>>0)&0x3))
-		tilemap_mark_all_tiles_dirty(pf3_tilemap);
-	if ((((deco32_pf34_control[7]>>12)&0x3)<<12)!=deco32_pf4_bank || deco32_pf4_flip!=((deco32_pf34_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf4_tilemap);
-
-	deco32_pf3_bank=((deco32_pf34_control[7]>> 4)&0x3)<<12;
-	deco32_pf4_bank=((deco32_pf34_control[7]>>12)&0x3)<<12;
-	deco32_pf1_flip=(deco32_pf12_control[6]>>0)&0x3;
-	deco32_pf2_flip=(deco32_pf12_control[6]>>8)&0x3;
-	deco32_pf3_flip=(deco32_pf34_control[6]>>0)&0x3;
-	deco32_pf4_flip=(deco32_pf34_control[6]>>8)&0x3;
-
-	/* Setup scroll registers */
-	deco32_setup_scroll(pf1_tilemap, 256,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
-	deco32_setup_scroll(pf2_tilemap, 512,(deco32_pf12_control[5]>>8)&0xff,(deco32_pf12_control[6]>>8)&0xff,deco32_pf12_control[4],deco32_pf12_control[3],deco32_pf2_rowscroll,deco32_pf2_rowscroll+0x200);
-	deco32_setup_scroll(pf3_tilemap, 512,(deco32_pf34_control[5]>>0)&0xff,(deco32_pf34_control[6]>>0)&0xff,deco32_pf34_control[2],deco32_pf34_control[1],deco32_pf3_rowscroll,deco32_pf3_rowscroll+0x200);
-	deco32_setup_scroll(pf4_tilemap, 512,(deco32_pf34_control[5]>>8)&0xff,(deco32_pf34_control[6]>>8)&0xff,deco32_pf34_control[4],deco32_pf34_control[3],deco32_pf4_rowscroll,deco32_pf4_rowscroll+0x200);
-
-	/* Enable registers - pf3/4 enable is not set on the 'fire' stage - hardware bug?  Maybe enable isn't hooked up */
-//  tilemap_set_enable(pf1_tilemap, deco32_pf12_control[5]&0x0080);
-//  tilemap_set_enable(pf2_tilemap, deco32_pf12_control[5]&0x8000);
-//  tilemap_set_enable(pf3_tilemap, deco32_pf34_control[5]&0x0080);
-//  tilemap_set_enable(pf4_tilemap, deco32_pf34_control[5]&0x8000);
-
-	deco16_clear_sprite_priority_bitmap();
-	fillbitmap(priority_bitmap,0,cliprect);
-	if ((deco32_pf34_control[5]&0x8000)==0)
-		fillbitmap(bitmap,Machine->pens[0x200],cliprect);
-
-	/* Draw playfields & sprites */
-	if (deco32_pri&2) {
-		combined_tilemap_draw(bitmap);
-	} else {
-		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
-		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
-	}
-	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
-
-	tattass_drawsprites(bitmap,buffered_spriteram32,3,0);
-	tattass_drawsprites(bitmap,buffered_spriteram32_2,4,0);
-	tattass_drawsprites(bitmap,buffered_spriteram32_2,4,0x8000); /* Alpha pass after all other sprites have been drawn */
-
-	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
-}
-
 VIDEO_UPDATE( fghthist )
 {
 	/* Dirty tilemaps if any globals change */
@@ -1284,15 +1484,323 @@ VIDEO_UPDATE( fghthist )
 	deco32_setup_scroll(pf4_tilemap, 512,(deco32_pf34_control[5]>>8)&0xff,(deco32_pf34_control[6]>>8)&0xff,deco32_pf34_control[4],deco32_pf34_control[3],deco32_pf4_rowscroll,deco32_pf4_rowscroll+0x200);
 
 	/* Draw screen */
+	deco16_clear_sprite_priority_bitmap();
 	fillbitmap(priority_bitmap,0,cliprect);
 	if ((deco32_pf34_control[5]&0x8000)==0)
 		fillbitmap(bitmap,Machine->pens[0x200],cliprect); //TODO - pf4 palette entry 0 is shown
 	else
 		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,1);
-if (!code_pressed(KEYCODE_Q))	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,2);
-if (!code_pressed(KEYCODE_W))	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
-if (!code_pressed(KEYCODE_E))	tattass_drawsprites(bitmap,buffered_spriteram32,3,0);
-if (!code_pressed(KEYCODE_R))	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,2);
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
+	tattass_drawsprites(bitmap,buffered_spriteram32,3,0, 0xf);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
 //  print_debug_info(bitmap);
 }
+
+/*
+    This function mimics the priority PROM/circuit on the pcb.  It takes
+    the tilemaps & sprite bitmaps as inputs, and outputs a final pixel
+    based on alpha & priority values.  Rendering sprites to temporary
+    bitmaps is the only reasonable way to implement proper priority &
+    blending support - it can't be done in-place on the final framebuffer
+    without a lot of support bitmaps.
+*/
+static void mixDualAlphaSprites(mame_bitmap *bitmap, const gfx_element *gfx0, const gfx_element *gfx1, int mixAlphaTilemap)
+{
+	const pen_t *pal0 = gfx0->colortable;
+	const pen_t *pal1 = gfx1->colortable;
+	const pen_t *pal2 = (deco32_pri&1) ? Machine->gfx[1]->colortable : Machine->gfx[2]->colortable;
+	int x,y;
+
+	/* Mix sprites into main bitmap, based on priority & alpha */
+	for (y=8; y<248; y++) {
+		UINT8* tilemapPri=(UINT8 *)priority_bitmap->line[y];
+		UINT16* sprite0=(UINT16 *)sprite0_mix_bitmap->line[y];
+		UINT16* sprite1=(UINT16 *)sprite1_mix_bitmap->line[y];
+		UINT32* destLine=(UINT32 *)bitmap->line[y];
+		UINT16* alphaTilemap=(UINT16 *)tilemap_alpha_bitmap->line[y];
+
+		for (x=0; x<320; x++) {
+			UINT16 priColAlphaPal0=sprite0[x];
+			UINT16 priColAlphaPal1=sprite1[x];
+			UINT16 pri0=(priColAlphaPal0&0x6000)>>13;
+			UINT16 pri1=(priColAlphaPal1&0x6000)>>13;
+			UINT16 col0=(priColAlphaPal0&0x1f00)>>8;
+			UINT16 col1=(priColAlphaPal1&0x0f00)>>8;
+			UINT16 alpha1=priColAlphaPal1&0x8000;
+
+			// Apply sprite bitmap 0 according to priority rules
+			if ((priColAlphaPal0&0xff)!=0)
+			{
+				/*
+                    Sprite 0 priority rules:
+
+                    0 = Sprite above all layers
+                    1 = Sprite under top playfield
+                    2 = Sprite under top two playfields
+                    3 = Sprite under all playfields
+                */
+				if ((pri0&0x3)==0 || (pri0&0x3)==1 || ((pri0&0x3)==2 && mixAlphaTilemap)) // Spri0 on top of everything, or under alpha playfield
+				{
+					destLine[x]=pal0[(priColAlphaPal0&0xff) + (gfx0->color_granularity * col0)];
+				}
+				else if ((pri0&0x3)==2) // Spri0 under top playfield
+				{
+					if (tilemapPri[x]<4)
+						destLine[x]=pal0[(priColAlphaPal0&0xff) + (gfx0->color_granularity * col0)];
+				}
+				else // Spri0 under top & middle playfields
+				{
+					if (tilemapPri[x]<2)
+						destLine[x]=pal0[(priColAlphaPal0&0xff) + (gfx0->color_granularity * col0)];
+				}
+			}
+
+			// Apply sprite bitmap 1 according to priority rules
+			if ((priColAlphaPal1&0xff)!=0)
+			{
+				// Apply alpha for this pixel based on Ace setting
+				if (alpha1)
+				{
+					/*
+                        Alpha rules:
+
+                        Pri 0 - Over all tilemaps, but under sprite 0 pri 0, pri 1, pri 2
+                        Pri 1 -
+                        Pri 2 -
+                        Pri 3 -
+                    */
+					alpha_set_level(0x80);
+
+					/* Alpha values are tied to ACE ram... */
+					//int alpha=((deco32_ace_ram[0x0 + (((priColAlphaPal1&0xf0)>>4)/2)]) * 8)-1;
+					//if (alpha<0)
+					//  alpha=0;
+					//alpha_set_level(255-alpha);
+
+					/* I don't really understand how object ACE ram is really hooked up,
+                        the only obvious place in Night Slashers is the stagecoach in level 2 */
+
+					if (pri1==0 && (((priColAlphaPal0&0xff)==0 || ((pri0&0x3)!=0 && (pri0&0x3)!=1 && (pri0&0x3)!=2))))
+					{
+						if ((deco32_pri&1)==0 || ((deco32_pri&1)==1 && tilemapPri[x]<4) || ((deco32_pri&1)==1 && mixAlphaTilemap))
+							destLine[x]=alpha_blend32(destLine[x], pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)]);
+					}
+					else if (pri1==1 && ((priColAlphaPal0&0xff)==0 || ((pri0&0x3)!=0 && (pri0&0x3)!=1 && (pri0&0x3)!=2)))
+						destLine[x]=alpha_blend32(destLine[x], pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)]);
+					else if (pri1==2)// TOdo
+						destLine[x]=alpha_blend32(destLine[x], pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)]);
+					else if (pri1==3)// TOdo
+						destLine[x]=alpha_blend32(destLine[x], pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)]);
+				}
+				else
+				{
+					/*
+                        Non alpha rules:
+
+                        Pri 0 - Under sprite 0 pri 0, over all tilemaps
+                    */
+					if (pri1==0 && ((priColAlphaPal0&0xff)==0 || ((pri0&0x3)!=0)))
+						destLine[x]=pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)];
+					else if (pri1==1) // todo
+						destLine[x]=pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)];
+					else if (pri1==2) // todo
+						destLine[x]=pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)];
+					else if (pri1==3) // todo
+						destLine[x]=pal1[(priColAlphaPal1&0xff) + (gfx1->color_granularity * col1)];
+				}
+			}
+
+			/* Optionally mix in alpha tilemap */
+			if (mixAlphaTilemap)
+			{
+				UINT16 p=alphaTilemap[x];
+				if (p&0xf)
+				{
+					/* Alpha tilemap under top two sprite 0 priorities */
+					if (((priColAlphaPal0&0xff)==0 || (pri0&0x3)==2 || (pri0&0x3)==3)
+						&& ((priColAlphaPal1&0xff)==0 || (pri1&0x3)==2 || (pri1&0x3)==3 || alpha1))
+					{
+						/* Alpha values are tied to ACE ram */
+						int alpha=((deco32_ace_ram[0x17 + (((p&0xf0)>>4)/2)]) * 8)-1;
+						if (alpha<0)
+							alpha=0;
+						alpha_set_level(255-alpha);
+
+						destLine[x]=alpha_blend32(destLine[x], pal2[p]);
+					}
+				}
+			}
+		}
+	}
+}
+
+VIDEO_UPDATE( nslasher )
+{
+	int alphaTilemap=0;
+
+	/* Dirty tilemaps if any globals change */
+	if (deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
+		tilemap_mark_all_tiles_dirty(pf1_tilemap);
+	if (deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf2_tilemap);
+	if ((((deco32_pf12_control[7]>>12)&0x7)<<12)!=deco32_pf2_bank || deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf2_tilemap);
+	if ((((deco32_pf34_control[7]>> 4)&0x3)<<12)!=deco32_pf3_bank || deco32_pf3_flip!=((deco32_pf34_control[6]>>0)&0x3))
+		tilemap_mark_all_tiles_dirty(pf3_tilemap);
+	if ((((deco32_pf34_control[7]>>12)&0x3)<<12)!=deco32_pf4_bank || deco32_pf4_flip!=((deco32_pf34_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf4_tilemap);
+
+	deco32_pf2_bank=((deco32_pf12_control[7]>>12)&0x3)<<12;
+	deco32_pf3_bank=((deco32_pf34_control[7]>> 4)&0x3)<<12;
+	deco32_pf4_bank=((deco32_pf34_control[7]>>12)&0x3)<<12;
+	deco32_pf1_flip=(deco32_pf12_control[6]>>0)&0x3;
+	deco32_pf2_flip=(deco32_pf12_control[6]>>8)&0x3;
+	deco32_pf3_flip=(deco32_pf34_control[6]>>0)&0x3;
+	deco32_pf4_flip=(deco32_pf34_control[6]>>8)&0x3;
+
+	/* Setup scroll registers */
+	deco32_setup_scroll(pf1_tilemap, 256,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
+	deco32_setup_scroll(pf2_tilemap, 512,(deco32_pf12_control[5]>>8)&0xff,(deco32_pf12_control[6]>>8)&0xff,deco32_pf12_control[4],deco32_pf12_control[3],deco32_pf2_rowscroll,deco32_pf2_rowscroll+0x200);
+	deco32_setup_scroll(pf3_tilemap, 512,(deco32_pf34_control[5]>>0)&0xff,(deco32_pf34_control[6]>>0)&0xff,deco32_pf34_control[2],deco32_pf34_control[1],deco32_pf3_rowscroll,deco32_pf3_rowscroll+0x200);
+	deco32_setup_scroll(pf4_tilemap, 512,(deco32_pf34_control[5]>>8)&0xff,(deco32_pf34_control[6]>>8)&0xff,deco32_pf34_control[4],deco32_pf34_control[3],deco32_pf4_rowscroll,deco32_pf4_rowscroll+0x200);
+
+	/* Enable registers */
+	tilemap_set_enable(pf1_tilemap, deco32_pf12_control[5]&0x0080);
+	tilemap_set_enable(pf2_tilemap, deco32_pf12_control[5]&0x8000);
+	tilemap_set_enable(pf3_tilemap, deco32_pf34_control[5]&0x0080);
+	tilemap_set_enable(pf4_tilemap, deco32_pf34_control[5]&0x8000);
+
+	/* This is not a conclusive test for deciding if tilemap needs alpha blending */
+	if (deco32_ace_ram[0x17]!=0x0 && deco32_pri)
+		alphaTilemap=1;
+
+	if (deco32_ace_ram_dirty)
+		updateAceRam();
+
+	fillbitmap(sprite0_mix_bitmap,0,cliprect);
+	fillbitmap(sprite1_mix_bitmap,0,cliprect);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(tilemap_alpha_bitmap,0,cliprect);
+	if ((deco32_pf34_control[5]&0x8000)==0)
+		fillbitmap(bitmap,Machine->pens[0x200],cliprect);
+
+	/* Draw sprites to temporary bitmaps, saving alpha & priority info for later mixing */
+	nslasher_drawsprites(sprite0_mix_bitmap,buffered_spriteram32,3);
+	nslasher_drawsprites(sprite1_mix_bitmap,buffered_spriteram32_2,4);
+
+	/* Render alpha-blended tilemap to seperate buffer for proper mixing */
+	if (alphaTilemap)
+		fillbitmap(tilemap_alpha_bitmap,0,cliprect);
+
+	/* Draw playfields & sprites */
+	if (deco32_pri&2)
+	{
+		combined_tilemap_draw(bitmap);
+		tilemap_draw(bitmap,cliprect,pf2_tilemap,0,4);
+	}
+	else
+	{
+		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,1);
+		if (deco32_pri&1)
+		{
+			tilemap_draw(bitmap,cliprect,pf2_tilemap,0,2);
+			if (alphaTilemap)
+				tilemap_draw(tilemap_alpha_bitmap,cliprect,pf3_tilemap,0,4);
+			else
+				tilemap_draw(bitmap,cliprect,pf3_tilemap,0,4);
+		}
+		else
+		{
+			tilemap_draw(bitmap,cliprect,pf3_tilemap,0,2);
+			if (alphaTilemap)
+				tilemap_draw(tilemap_alpha_bitmap,cliprect,pf2_tilemap,0,4);
+			else
+				tilemap_draw(bitmap,cliprect,pf2_tilemap,0,4);
+		}
+	}
+
+	mixDualAlphaSprites(bitmap, Machine->gfx[3], Machine->gfx[4], alphaTilemap);
+
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+}
+
+VIDEO_UPDATE( hvysmsh )
+{
+	/* Dirty tilemaps if any globals change */
+	if (deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
+		tilemap_mark_all_tiles_dirty(pf1_tilemap);
+	if (deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf2_tilemap);
+	if ((((deco32_pf12_control[7]>>12)&0x7)<<12)!=deco32_pf2_bank || deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf2_tilemap);
+
+	deco32_pf2_bank=((deco32_pf12_control[7]>>12)&0x3)<<12;
+	deco32_pf1_flip=(deco32_pf12_control[6]>>0)&0x3;
+	deco32_pf2_flip=(deco32_pf12_control[6]>>8)&0x3;
+
+	/* Setup scroll registers */
+	deco32_setup_scroll(pf1_tilemap, 256,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
+	deco32_setup_scroll(pf2_tilemap, 512,(deco32_pf12_control[5]>>8)&0xff,(deco32_pf12_control[6]>>8)&0xff,deco32_pf12_control[4],deco32_pf12_control[3],deco32_pf2_rowscroll,deco32_pf2_rowscroll+0x200);
+
+	deco16_clear_sprite_priority_bitmap();
+	fillbitmap(priority_bitmap,0,cliprect);
+
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	tattass_drawsprites(bitmap,spriteram32,2,0,0x1f);
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+}
+
+VIDEO_UPDATE( backfire )
+{
+	/* Dirty tilemaps if any globals change */
+	if (deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
+		tilemap_mark_all_tiles_dirty(pf1_tilemap);
+	if (deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf2_tilemap);
+	if ((((deco32_pf12_control[7]>> 4)&0x3)<<12)!=deco32_pf1_bank || deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
+		tilemap_mark_all_tiles_dirty(pf1a_tilemap);
+	if ((((deco32_pf12_control[7]>>12)&0x7)<<12)!=deco32_pf2_bank || deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf2_tilemap);
+	if ((((deco32_pf34_control[7]>> 4)&0x3)<<12)!=deco32_pf3_bank || deco32_pf3_flip!=((deco32_pf34_control[6]>>0)&0x3))
+		tilemap_mark_all_tiles_dirty(pf3_tilemap);
+	if ((((deco32_pf34_control[7]>>12)&0x3)<<12)!=deco32_pf4_bank || deco32_pf4_flip!=((deco32_pf34_control[6]>>8)&0x3))
+		tilemap_mark_all_tiles_dirty(pf4_tilemap);
+
+	deco32_pf1_bank=((deco32_pf12_control[7]>> 4)&0x3)<<12;
+	deco32_pf2_bank=((deco32_pf12_control[7]>>12)&0x3)<<12;
+	deco32_pf3_bank=((deco32_pf34_control[7]>> 4)&0x3)<<12;
+	deco32_pf4_bank=((deco32_pf34_control[7]>>12)&0x3)<<12;
+	deco32_pf1_flip=(deco32_pf12_control[6]>>0)&0x3;
+	deco32_pf2_flip=(deco32_pf12_control[6]>>8)&0x3;
+	deco32_pf3_flip=(deco32_pf34_control[6]>>0)&0x3;
+	deco32_pf4_flip=(deco32_pf34_control[6]>>8)&0x3;
+
+	/* Setup scroll registers */
+	deco32_setup_scroll(pf1_tilemap, 256,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
+	deco32_setup_scroll(pf1a_tilemap,512,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
+	deco32_setup_scroll(pf2_tilemap, 512,(deco32_pf12_control[5]>>8)&0xff,(deco32_pf12_control[6]>>8)&0xff,deco32_pf12_control[4],deco32_pf12_control[3],deco32_pf2_rowscroll,deco32_pf2_rowscroll+0x200);
+	deco32_setup_scroll(pf3_tilemap, 512,(deco32_pf34_control[5]>>0)&0xff,(deco32_pf34_control[6]>>0)&0xff,deco32_pf34_control[2],deco32_pf34_control[1],deco32_pf3_rowscroll,deco32_pf3_rowscroll+0x200);
+	deco32_setup_scroll(pf4_tilemap, 512,(deco32_pf34_control[5]>>8)&0xff,(deco32_pf34_control[6]>>8)&0xff,deco32_pf34_control[4],deco32_pf34_control[3],deco32_pf4_rowscroll,deco32_pf4_rowscroll+0x200);
+
+	deco16_clear_sprite_priority_bitmap();
+	fillbitmap(priority_bitmap,0,cliprect);
+//  if ((deco32_pf34_control[5]&0x8000)==0)
+	fillbitmap(bitmap,Machine->pens[0x200],cliprect);
+
+	tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+
+	/* PF1 can be in 8x8 mode or 16x16 mode */
+	if (deco32_pf12_control[6]&0x80)
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	else
+		tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,0);
+
+	tattass_drawsprites(bitmap,spriteram32,3,0,0x1f);
+
+//print_debug_info(bitmap);
+}
+

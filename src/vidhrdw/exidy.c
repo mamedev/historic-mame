@@ -398,7 +398,7 @@ INLINE int sprite_2_enabled(void)
 VIDEO_EOF( exidy )
 {
 	UINT8 enable_set = ((sprite_enable & 0x20) != 0);
-    rectangle clip = { 0, 15, 0, 15 };
+    static const rectangle clip = { 0, 15, 0, 15 };
     int pen0 = Machine->pens[0];
     int org_1_x = 0, org_1_y = 0;
     int org_2_x = 0, org_2_y = 0;
