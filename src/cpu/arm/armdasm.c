@@ -340,19 +340,37 @@ void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 	{
 		/* co-processor */
 		/* xxxx1110 oooLNNNN ddddpppp qqq1MMMM MRC/MCR */
-		if( opcode&0x00100000 )
+		if( (opcode&0x0f100000)==0x0e100000 )
 		{
-			pBuf += sprintf( pBuf, "MRC" );
+			if( (opcode&0x0f100010)==0x0e100010 )
+			{
+				pBuf += sprintf( pBuf, "MRC" );
+			}
+			else if( (opcode&0x0f100010)==0x0e000010 )
+			{
+				pBuf += sprintf( pBuf, "MCR" );
+			}
+			else
+			{
+				pBuf += sprintf( pBuf, "???" );
+			}
+
+			pBuf += sprintf( pBuf, "%s", pConditionCode );
+			pBuf = WritePadding( pBuf, pBuf0 );
+			pBuf += sprintf( pBuf, "R%d, CR%d {CRM%d, q%d}",(opcode>>12)&0xf, (opcode>>16)&0xf, (opcode>>0)&0xf, (opcode>>5)&0x7);
+			/* Nb:  full form should be o, p, R, CR, CRM, q */
+		}
+		else if( (opcode&0x0f000010)==0x0e000000 )
+		{
+			pBuf += sprintf( pBuf, "CDP" );
+			pBuf += sprintf( pBuf, "%s", pConditionCode );
+			pBuf = WritePadding( pBuf, pBuf0 );
+			pBuf += sprintf( pBuf, "%08x", opcode );
 		}
 		else
 		{
-			pBuf += sprintf( pBuf, "MCR" );
+			pBuf += sprintf( pBuf, "???" );
 		}
-		pBuf += sprintf( pBuf, "%s", pConditionCode );
-
-		pBuf = WritePadding( pBuf, pBuf0 );
-		pBuf += sprintf( pBuf, "R%d, CR%d, CRM%d",(opcode>>12)&0xf, (opcode>>16)&0xf, (opcode>>0)&0xf);
-
 	}
 	else if( (opcode&0x0f000000) == 0x0f000000 )
 	{

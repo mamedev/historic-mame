@@ -801,7 +801,7 @@ static WRITE16_HANDLER( random_number_16_w )
 
 static READ16_HANDLER( random_number_16_r )
 {
-	return rand();
+	return mame_rand();
 }
 
 static WRITE32_HANDLER( random_number_32_w )
@@ -811,7 +811,7 @@ static WRITE32_HANDLER( random_number_32_w )
 
 static READ32_HANDLER( random_number_32_r )
 {
-	return rand() | (rand() << 16);
+	return mame_rand() ^ (mame_rand() << 16);
 }
 
 
@@ -2238,6 +2238,34 @@ ROM_START( alien3 )
 	ROM_LOAD_x2( "15942.bin",     0x080000, 0x040000, CRC(a1e1d0ec) SHA1(10d8d2235a67a4ba475fe98124c6a4a5311592b5) )
 	ROM_LOAD16_BYTE( "15855.bin", 0x100000, 0x080000, CRC(a6fadabe) SHA1(328bbb54651eef197ba13f1bd9228f3f4de7ee5e) )
 	ROM_LOAD16_BYTE( "15854.bin", 0x100001, 0x080000, CRC(d1aec392) SHA1(f48804fe0151e83ad45e912b55db8ae8ddebd2ad) )
+
+	ROM_REGION( 0x500000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD_x4( "15859.bin", 0x100000, 0x040000, CRC(91b55bd0) SHA1(23b85a006a91c2a5eb1cee14172fd0d8b7732518) )
+	ROM_LOAD( "15858.bin",    0x200000, 0x100000, CRC(2eb64c10) SHA1(b2dbe86b82e889f4a9850cf4aa6596a139c1c3d6) )
+	ROM_LOAD( "15857.bin",    0x300000, 0x100000, CRC(915c56df) SHA1(7031f937c826af17caf7ec8cbb6155d0a55bd38a) )
+	ROM_LOAD( "15856.bin",    0x400000, 0x100000, CRC(a5ef4f1f) SHA1(e8da7a995955e80872a25bd75465c590b649cfab) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "15863.bin", 0x000000, 0x200000, CRC(9d36b645) SHA1(2977047780b615b64c3b4aec78fef0643d40490e) )
+	ROM_LOAD16_BYTE( "15862.bin", 0x000001, 0x200000, CRC(9e277d25) SHA1(9f191484a42391268306a8d2d95c340ce8b2d6cd) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "15864.bin", 0x000000, 0x200000, CRC(58207157) SHA1(d1b0c7edac8b89b1322398d4cd3a976a88bc0b56) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15866.bin", 0x000002, 0x200000, CRC(9c53732c) SHA1(9aa5103cc10b4927c16e0cf102b64a15dd038756) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15868.bin", 0x000004, 0x200000, CRC(62d556e8) SHA1(d70cab0881784a3d4dd06d0c99587ca6054c2dc4) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15870.bin", 0x000006, 0x200000, CRC(d31c0400) SHA1(44c1b2e5236d894d31ff72552a7ad50270dd2fad) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15865.bin", 0x800000, 0x200000, CRC(dd64f87b) SHA1(cfa96c5f2b1221706552f5cef4aa7c61ebe21e39) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15867.bin", 0x800002, 0x200000, CRC(8cf9cb11) SHA1(a77399fccee3f258a5716721edd69a33f94f8daf) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15869.bin", 0x800004, 0x200000, CRC(dd4b137f) SHA1(7316dce32d35bf468defae5e6ed86910a37a2457) , ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "15871.bin", 0x800006, 0x200000, CRC(58eb10ae) SHA1(23f2a72dc7b2d7b5c8a979952f81608296805745) , ROM_SKIP(6)|ROM_GROUPWORD )
+ROM_END
+
+ROM_START( alien3u )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code + data */
+	ROM_LOAD_x2( "epr-15941.bin",  0x000000, 0x040000, CRC(bf8c257f) SHA1(d08b77d2e3f5af0da7e7d8727fbe7fc0eb1153ff) )
+	ROM_LOAD_x2( "epr-15940a.bin", 0x080000, 0x040000, CRC(8840b51e) SHA1(0aa6945000676b1adc535b1557a1455d62aed9f5) )
+	ROM_LOAD16_BYTE( "15855.bin",  0x100000, 0x080000, CRC(a6fadabe) SHA1(328bbb54651eef197ba13f1bd9228f3f4de7ee5e) )
+	ROM_LOAD16_BYTE( "15854.bin",  0x100001, 0x080000, CRC(d1aec392) SHA1(f48804fe0151e83ad45e912b55db8ae8ddebd2ad) )
 
 	ROM_REGION( 0x500000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD_x4( "15859.bin", 0x100000, 0x040000, CRC(91b55bd0) SHA1(23b85a006a91c2a5eb1cee14172fd0d8b7732518) )
@@ -3687,7 +3715,8 @@ static DRIVER_INIT( titlef )
  *************************************/
 
 GAME( 1992, arescue,  0,        system32,     arescue,  arescue,  ROT0, "Sega",   "Air Rescue", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, alien3,   0,        system32,     alien3,   alien3,   ROT0, "Sega",   "Alien3: The Gun", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, alien3,   0,        system32,     alien3,   alien3,   ROT0, "Sega",   "Alien3: The Gun (World)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, alien3u,  alien3,   system32,     alien3,   alien3,   ROT0, "Sega",   "Alien3: The Gun (US)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, arabfgt,  0,        system32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (World)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, arabfgtu, arabfgt,  system32,     arabfgtu, arabfgt,  ROT0, "Sega",   "Arabian Fight (US)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, arabfgtj, arabfgt,  system32,     arabfgt,  arabfgt,  ROT0, "Sega",   "Arabian Fight (Japan)", GAME_IMPERFECT_GRAPHICS )

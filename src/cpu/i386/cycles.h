@@ -313,6 +313,12 @@ typedef enum {
 	CYCLES_FXTRACT,
 	CYCLES_FYL2X,
 	CYCLES_FYL2XPI,
+	CYCLES_CMPXCHG_REG_REG_T,
+	CYCLES_CMPXCHG_REG_REG_F,
+	CYCLES_CMPXCHG_REG_MEM_T,
+	CYCLES_CMPXCHG_REG_MEM_F,
+	CYCLES_XADD_REG_REG,
+	CYCLES_XADD_REG_MEM,
 
 	CYCLES_NUM_OPCODES
 } X86_CYCLES;
@@ -653,4 +659,8 @@ static X86_CYCLE_TABLE x86_cycle_table[] =
 	{ CYCLES_FXTRACT,			{ {  0,  0 },  { 16, 16 },  { 13, 13 },  {  1,  1 }	}		},
 	{ CYCLES_FYL2X,				{ {  0,  0 },  {196,196 },  {111,111 },  {  1,  1 }	}		},
 	{ CYCLES_FYL2XPI,			{ {  0,  0 },  {171,171 },  {103,103 },  {  1,  1 }	}		},
+	{ CYCLES_CMPXCHG_REG_REG_T,	{ {  0,  0 },  {  6,  6 },  {  6,  6 },  {  6,  6 } }		},
+	{ CYCLES_CMPXCHG_REG_REG_F,	{ {  0,  0 },  {  9,  9 },  {  9,  9 },  {  9,  9 } } 		},
+	{ CYCLES_CMPXCHG_REG_MEM_T,	{ {  0,  0 },  {  7,  7 },  {  7,  7 },  {  7,  7 } }		},
+	{ CYCLES_CMPXCHG_REG_MEM_F,	{ {  0,  0 },  { 10, 10 },  { 10, 10 },  { 10, 10 } }		},
 };

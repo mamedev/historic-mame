@@ -529,6 +529,20 @@ static struct help_item static_help_list[] =
 		"\n"
 	},
 	{
+		"gtime",
+		"\n"
+		"  gt[ime] <milliseconds>\n"
+		"\n"
+		"The gtime command resumes execution of the current code. Control will not be returned to the\n"
+		"debugger until	a specified delay has elapsed. The delay is in milliseconds.\n"
+		"\n"
+		"Example:\n"
+		"\n"
+		"gtime #10000\n"
+		"  Resume execution for ten seconds\n"
+		"\n"
+	},
+	{
 		"next",
 		"\n"
 		"  n[ext]\n"

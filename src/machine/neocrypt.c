@@ -646,7 +646,50 @@ void cmc50_neogeo_gfx_decrypt(int extra_xor)
 	/* here I should also decrypt the sound ROM */
 }
 
+/* svcchaos has an additional scramble on top of the standard CMC scrambling */
 
+void svcchaos_gfx_decrypt( void )
+{
+	const unsigned char xor[ 4 ] = { 0x34, 0x21, 0xc4, 0xe9 };
+	int i;
+	int ofst;
+	int rom_size = memory_region_length( REGION_GFX3 );
+	UINT8 *rom = memory_region( REGION_GFX3 );
+	UINT8 *buf = malloc( rom_size );
+
+	for( i = 0; i < rom_size; i++ )
+	{
+		rom[ i ] ^= xor[ (i % 4) ];
+	}
+	for( i = 0; i < rom_size; i += 4 )
+	{
+		UINT32 *rom32 = (UINT32*)&rom[ i ];
+		*rom32 = BITSWAP32( *rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16 );
+	}
+	memcpy( buf, rom, rom_size );
+	for( i = 0; i < rom_size / 4; i++ )
+	{
+		ofst =  BITSWAP24( (i & 0x1fffff), 0x17, 0x16, 0x15, 0x04, 0x0b, 0x0e, 0x08, 0x0c, 0x10, 0x00, 0x0a, 0x13, 0x03, 0x06, 0x02, 0x07, 0x0d, 0x01, 0x11, 0x09, 0x14, 0x0f, 0x12, 0x05 );
+		ofst ^= 0x0c8923;
+		ofst += (i & 0xffe00000);
+		memcpy( &rom[ i * 4 ], &buf[ ofst * 4 ], 0x04 );
+	}
+	free( buf );
+}
+
+/* and a further swap on the s1 data */
+void svcchaos_s1data_decrypt( void )
+{
+	int i;
+	UINT8 *s1 = memory_region( REGION_GFX1 );
+	size_t s1_size = memory_region_length( REGION_GFX1 );
+
+
+	for( i = 0; i < s1_size; i++ ) // Decrypt S
+	{
+		s1[ i ] = BITSWAP8( s1[ i ] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3 );
+	}
+}
 
 /***************************************************************************
 
@@ -897,6 +940,229 @@ void matrim_decrypt_68k(void)
 		}
 	free(dst);
 	}
+}
+
+void samsho5_decrypt_68k(void)
+{
+	int i;
+	unsigned int sec[]={0x000000,0x080000,0x700000,0x680000,0x500000,0x180000,0x200000,0x480000,0x300000,0x780000,0x600000,0x280000,0x100000,0x580000,0x400000,0x380000};
+	UINT8 *src = memory_region(REGION_CPU1);
+	UINT8 *dst = malloc(0x800000);
+
+	if (dst) // Descramble P
+	{
+		memcpy( dst, src, 0x800000 );
+		for( i=0; i<16; ++i )
+		{
+			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
+		}
+	free(dst);
+	}
+}
+
+void samsh5p_decrypt_68k(void)
+{
+	int i;
+	unsigned int sec[]={0x000000,0x080000,0x500000,0x480000,0x600000,0x580000,0x700000,0x280000,0x100000,0x680000,0x400000,0x780000,0x200000,0x380000,0x300000,0x180000};
+	UINT8 *src = memory_region(REGION_CPU1);
+	UINT8 *dst = malloc(0x800000);
+
+	if (dst) // Descramble P
+	{
+		memcpy( dst, src, 0x800000 );
+		for( i=0; i<16; ++i )
+		{
+			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
+		}
+	free(dst);
+	}
+}
+
+/* mslug5, svcchaos, kof2003 have updated P rom scramble */
+
+void mslug5_decrypt_68k(void)
+{
+	const unsigned char xor1[ 0x20 ] = { 0xc2, 0x4b, 0x74, 0xfd, 0x0b, 0x34, 0xeb, 0xd7, 0x10, 0x6d, 0xf9, 0xce, 0x5d, 0xd5, 0x61, 0x29, 0xf5, 0xbe, 0x0d, 0x82, 0x72, 0x45, 0x0f, 0x24, 0xb3, 0x34, 0x1b, 0x99, 0xea, 0x09, 0xf3, 0x03 };
+	const unsigned char xor2[ 0x20 ] = { 0x36, 0x09, 0xb0, 0x64, 0x95, 0x0f, 0x90, 0x42, 0x6e, 0x0f, 0x30, 0xf6, 0xe5, 0x08, 0x30, 0x64, 0x08, 0x04, 0x00, 0x2f, 0x72, 0x09, 0xa0, 0x13, 0xc9, 0x0b, 0xa0, 0x3e, 0xc2, 0x00, 0x40, 0x2b };
+	int i;
+	int ofst;
+	int rom_size = 0x800000;
+	UINT8 *rom = memory_region( REGION_CPU1 );
+	UINT8 *buf = malloc( rom_size );
+
+	for( i = 0; i < 0x100000; i++ ) // Decrypt P
+	{
+		rom[ i ] ^= xor1[ (i % 0x20) ];
+	}
+	for( i = 0x100000; i < 0x800000; i++ )
+	{
+		rom[ i ] ^= xor2[ (i % 0x20) ];
+	}
+	for( i = 0x100000; i < 0x0800000; i += 4 )
+	{
+		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
+		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0 );
+	}
+	memcpy( buf, rom, rom_size );
+	for( i = 0; i < 0x0100000 / 0x10000; i++ )
+	{
+		ofst = (i & 0xf0) + BITSWAP8( (i & 0x0f), 7, 6, 5, 4, 1, 0, 3, 2 );
+		memcpy( &rom[ i * 0x10000 ], &buf[ ofst * 0x10000 ], 0x10000 );
+	}
+	for( i = 0x100000; i < 0x800000; i += 0x100 )
+	{
+		ofst = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00700) + (BITSWAP8( ((i & 0x0ff000) >> 12), 5, 4, 7, 6, 1, 0, 3, 2 ) << 12);
+		memcpy( &rom[ i ], &buf[ ofst ], 0x100 );
+	}
+	memcpy( buf, rom, rom_size );
+	memcpy( &rom[ 0x100000 ], &buf[ 0x700000 ], 0x100000 );
+	memcpy( &rom[ 0x200000 ], &buf[ 0x100000 ], 0x600000 );
+	free( buf );
+}
+
+void svcchaos_px_decrypt(void)
+{
+	const unsigned char xor1[ 0x20 ] = { 0x3b, 0x6a, 0xf7, 0xb7, 0xe8, 0xa9, 0x20, 0x99, 0x9f, 0x39, 0x34, 0x0c, 0xc3, 0x9a, 0xa5, 0xc8, 0xb8, 0x18, 0xce, 0x56, 0x94, 0x44, 0xe3, 0x7a, 0xf7, 0xdd, 0x42, 0xf0, 0x18, 0x60, 0x92, 0x9f };
+	const unsigned char xor2[ 0x20 ] = { 0x69, 0x0b, 0x60, 0xd6, 0x4f, 0x01, 0x40, 0x1a, 0x9f, 0x0b, 0xf0, 0x75, 0x58, 0x0e, 0x60, 0xb4, 0x14, 0x04, 0x20, 0xe4, 0xb9, 0x0d, 0x10, 0x89, 0xeb, 0x07, 0x30, 0x90, 0x50, 0x0e, 0x20, 0x26 };
+	int i;
+	int ofst;
+	int rom_size = 0x800000;
+	UINT8 *rom = memory_region( REGION_CPU1 );
+	UINT8 *buf = malloc( rom_size );
+
+	for( i = 0; i < 0x100000; i++ )
+	{
+		rom[ i ] ^= xor1[ (i % 0x20) ];
+	}
+	for( i = 0x100000; i < 0x800000; i++ )
+	{
+		rom[ i ] ^= xor2[ (i % 0x20) ];
+	}
+	for( i = 0x100000; i < 0x800000; i += 4 )
+	{
+		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
+		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0 );
+	}
+	memcpy( buf, rom, rom_size );
+	for( i = 0; i < 0x0100000 / 0x10000; i++ )
+	{
+		ofst = (i & 0xf0) + BITSWAP8( (i & 0x0f), 7, 6, 5, 4, 2, 3, 0, 1 );
+		memcpy( &rom[ i * 0x10000 ], &buf[ ofst * 0x10000 ], 0x10000 );
+	}
+	for( i = 0x100000; i < 0x800000; i += 0x100 )
+	{
+		ofst = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00a00) + (BITSWAP8( ((i & 0x0ff000) >> 12), 4, 5, 6, 7, 1, 0, 3, 2 ) << 12);
+		memcpy( &rom[ i ], &buf[ ofst ], 0x100 );
+	}
+	memcpy( buf, rom, rom_size );
+	memcpy( &rom[ 0x100000 ], &buf[ 0x700000 ], 0x100000 );
+	memcpy( &rom[ 0x200000 ], &buf[ 0x100000 ], 0x600000 );
+	free( buf );
+}
+
+void kof2003_decrypt_s1data( void )
+{
+	UINT8 *src;
+	UINT8 *dst;
+	int i;
+	int tx_size = memory_region_length( REGION_GFX1 );
+	int srom_size = memory_region_length( REGION_GFX3 );
+
+	src = memory_region( REGION_GFX3 ) + srom_size - 0x1000000 - 0x80000; // Decrypt S
+	dst = memory_region( REGION_GFX1 );
+
+	for( i = 0; i < tx_size / 2; i++ )
+	{
+		dst[ i ] = src[ (i & ~0x1f) + ((i & 7) << 2) + ((~i & 8) >> 2) + ((i & 0x10) >> 4) ];
+	}
+
+	src = memory_region( REGION_GFX3 ) + srom_size - 0x80000;
+	dst = memory_region( REGION_GFX1 ) + 0x80000;
+
+	for( i = 0; i < tx_size / 2; i++ )
+	{
+		dst[ i ] = src[ (i & ~0x1f) + ((i & 7) << 2) + ((~i & 8) >> 2) + ((i & 0x10) >> 4) ];
+	}
+
+	dst = memory_region( REGION_GFX1 );
+
+	for( i = 0; i < tx_size; i++ )
+	{
+		dst[ i ] = BITSWAP8( dst[ i ] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3 );
+	}
+}
+
+void kof2003_decrypt_68k( void )
+{
+	const unsigned char xor2[ 0x20 ] = { 0xb4, 0x0f, 0x40, 0x6c, 0x38, 0x07, 0xd0, 0x3f, 0x53, 0x08, 0x80, 0xaa, 0xbe, 0x07, 0xc0, 0xfa, 0xd0, 0x08, 0x10, 0xd2, 0xf1, 0x03, 0x70, 0x7e, 0x87, 0x0b, 0x40, 0xf6, 0x2a, 0x0a, 0xe0, 0xf9 };
+	int i;
+	int ofst;
+	int rom_size = 0x900000;
+	UINT8 *rom = memory_region( REGION_CPU1 );
+	UINT8 *buf = malloc( rom_size );
+
+	for( i = 0x100000; i < 0x800000; i++ ) // Decrypt P
+	{
+		rom[ i ] ^= xor2[ (i % 0x20) ];
+	}
+	for( i = 0x100000; i < 0x800000; i += 4 )
+	{
+		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
+		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 4, 5, 6, 7, 8, 9, 10, 11, 3, 2, 1, 0 );
+	}
+	memcpy( buf, rom, 0x800000 );
+	for( i = 0; i < 0x0100000 / 0x10000; i++ )
+	{
+		ofst = (i & 0xf0) + BITSWAP8( (i & 0x0f), 7, 6, 5, 4, 1, 0, 3, 2 );
+		memcpy( &rom[ i * 0x10000 ], &buf[ ofst * 0x10000 ], 0x10000 );
+	}
+	for( i = 0x100000; i < 0x800000; i += 0x100 )
+	{
+		ofst = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00300) + (BITSWAP8( ((i & 0x0ff000) >> 12), 4, 5, 6, 7, 1, 0, 3, 2 ) << 12);
+		memcpy( &rom[ i ], &buf[ ofst ], 0x100 );
+	}
+	memcpy( buf, rom, rom_size );
+	memcpy( &rom[ 0x100000 ], &buf[ 0x800000 ], 0x100000 );
+	memcpy( &rom[ 0x200000 ], &buf[ 0x100000 ], 0x700000 );
+	free( buf );
+}
+
+
+
+void kof2003a_px_decrypt( void )
+{
+	int i,j;
+	UINT8 *src = memory_region( REGION_CPU1 );
+	UINT8 *dst = malloc(0x900000);
+
+	for(i = 0; i < 0x100000; i++)
+		dst[i] = src[i] ^ 0xFF ^ src[ 0x0FFFE0 + (i % 0x20)];
+
+	for(i = 0x100000; i < 0x800000; i++)
+		dst[i] = src[i] ^ 0xFF ^ src[ 0x7FFFE0 + (i % 0x20)];
+
+	for(i = 0x100000; i < 0x800000; i += 4)
+	{
+		UINT16 *rom16 = (UINT16*)&dst[i + 1];
+		*rom16 = (*rom16&0xF00F) | BITSWAP8((*rom16>>4)&0xFF, 1, 0, 3, 2, 5, 4, 7, 6)<<4;
+	}
+
+	for(i = 0; i < 0x10; i++)
+	{
+		j = (i & 0xf0) + BITSWAP8((i & 0x0f), 7, 6, 5, 4, 0, 1, 2, 3);
+		memcpy(src + i * 0x10000, dst + j * 0x10000, 0x10000);
+	}
+
+	memcpy(src + 0x100000, src + 0x800000, 0x100000);
+
+	for(i = 0x100000; i < 0x800000; i += 0x100)
+	{
+		j = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00800)
+			+ (BITSWAP8(((i & 0x0ff000) >> 12), 4, 5, 6, 7, 1, 0, 3, 2) << 12);
+		memcpy(src + i + 0x100000, dst + j, 0x100);
+	}
+
+	free(dst);
 }
 
 /***************************************************************************

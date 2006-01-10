@@ -94,7 +94,7 @@ VIDEO_UPDATE( monzagp )
 	{
 		UINT16 *dest = bitmap->line[sy];
 		int sx;
-		for( sx=0; sx<512; sx++ );
+		for( sx=0; sx<512; sx++ )
 		{
 			dest[sx] = *source++;
 		}

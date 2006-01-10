@@ -338,7 +338,7 @@ WRITE8_HANDLER( phoenix_sound_control_a_w )
 		return;
 
 	discrete_sound_w(PHOENIX_EFFECT_2_DATA, data & 0x0f);
-	discrete_sound_w(PHOENIX_EFFECT_2_FREQ, (data & 0x20) >> 4);
+	discrete_sound_w(PHOENIX_EFFECT_2_FREQ, (data & 0x30) >> 4);
 //  discrete_sound_w(PHOENIX_EFFECT_3_EN  , data & 0x40);
 //  discrete_sound_w(PHOENIX_EFFECT_4_EN  , data & 0x80);
 

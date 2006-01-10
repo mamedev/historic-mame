@@ -491,13 +491,14 @@ static WRITE32_HANDLER( tattass_control_w )
 
 static READ32_HANDLER( nslasher_prot_r )
 {
+	
 	switch (offset<<1) {
-	case 0x280: return readinputport(0) << 16; /* IN0 */
-	case 0x4c4: return readinputport(1) << 16; /* IN1 */
+	case 0x280: return readinputport(0) << 16| 0xffff; /* IN0 */
+	case 0x4c4: return readinputport(1) << 16| 0xffff; /* IN1 */
 	case 0x35a: return (EEPROM_read_bit()<< 16) | 0xffff; // Debug switch in low word??
 	}
 
-	logerror("%08x: Read unmapped prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
+	//logerror("%08x: Read unmapped prot %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
 
 	return 0xffffffff;
 }
@@ -514,15 +515,15 @@ static WRITE32_HANDLER( nslasher_eeprom_w )
 	}
 }
 
+
 static WRITE32_HANDLER( nslasher_prot_w )
 {
 	//logerror("%08x:write prot %08x (%08x) %08x\n",activecpu_get_pc(),offset<<1,mem_mask,data);
 
 	/* Only sound port of chip is used - no protection */
 	if (offset==0x700/4) {
+		
 		soundlatch_w(0,(data>>16)&0xff);
-		//cpunum_set_input_line_and_vector(1, 0, ASSERT_LINE, 0xc7 | 0x10);
-		//cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -1058,15 +1059,25 @@ static ADDRESS_MAP_START( sound_writemem_tattass, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
+static READ8_HANDLER(latch_r)
+{
+	UINT8 latch=soundlatch_r(0);
+	soundlatch_clear_w (0,0);
+	return latch;
+}
+
 static ADDRESS_MAP_START( nslasher_sound, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_ROM
-	// 4000-7fff - banked area?
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0x87ff) AM_RAM
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xa001, 0xa001) AM_READ(YM2151_status_port_0_r) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xb000, 0xb000) AM_READ(OKIM6295_status_0_r) AM_WRITE(OKIM6295_data_0_w)
 	AM_RANGE(0xc000, 0xc000) AM_READ(OKIM6295_status_1_r) AM_WRITE(OKIM6295_data_1_w)
-	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(latch_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( nslasher_io_sound, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0xffff) AM_ROM AM_REGION(REGION_CPU2, 0)
 ADDRESS_MAP_END
 
 /**********************************************************************************/
@@ -1681,7 +1692,7 @@ static void sound_irq(int state)
 
 static void sound_irq_nslasher(int state)
 {
-	cpunum_set_input_line_and_vector(1, 0, state, 0x38);
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x38);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )
@@ -2047,8 +2058,9 @@ static MACHINE_DRIVER_START( nslasher )
 	MDRV_CPU_PROGRAM_MAP(nslasher_readmem,nslasher_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 7000000) // todo
+	MDRV_CPU_ADD(Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(nslasher_sound,0)
+	MDRV_CPU_IO_MAP(nslasher_io_sound,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)
@@ -2796,6 +2808,7 @@ ROM_START( nslasher )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "sndprg.17l",  0x00000,  0x10000,  CRC(18939e92) SHA1(50b37a78d9d2259d4b140dd17393c4e5ca92bca5) )
+	
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mbh-00.8c",  0x000000,  0x200000,  CRC(a877f8a3) SHA1(79253525f360a73161894f31e211e4d6b38d307a) ) /* Encrypted tiles */
@@ -2820,6 +2833,7 @@ ROM_START( nslasher )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )
 	ROM_LOAD( "mbh-11.16l", 0x000000,  0x80000,  CRC(0ec40b6b) SHA1(9fef44149608ae2a00f6a75a6f77f2efcab6e78e) )
+	
 ROM_END
 
 ROM_START( nslashej )
@@ -3007,9 +3021,12 @@ static DRIVER_INIT( nslasher )
 	decrypt156();
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100003, 0, 0, nslasher_skip);
+	
+	soundlatch_setclearedvalue(0xff);
 
 	/* The board for Night Slashers is very close to the Fighter's History and
     Tattoo Assassins boards, but has an encrypted ARM cpu. */
+
 }
 
 /**********************************************************************************/
@@ -3027,5 +3044,5 @@ GAME( 1993, fghthsta, fghthist, fghthsta, fghthist, fghthist, ROT0, "Data East C
 GAME( 1994, lockload, 0,        lockload, lockload, lockload, ROT0, "Data East Corporation", "Locked 'n Loaded (US)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAME( 1994, tattass,  0,        tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (US Prototype)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, tattassa, tattass,  tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (Asia Prototype)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1994, nslasher, 0,        nslasher, nslasher, nslasher, ROT0, "Data East Corporation", "Night Slashers (Korea Rev 1.3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1994, nslashej, nslasher, nslasher, nslasher, nslasher, ROT0, "Data East Corporation", "Night Slashers (Japan Rev 1.2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1994, nslasher, 0,        nslasher, nslasher, nslasher, ROT0, "Data East Corporation", "Night Slashers (Korea Rev 1.3)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, nslashej, nslasher, nslasher, nslasher, nslasher, ROT0, "Data East Corporation", "Night Slashers (Japan Rev 1.2)", GAME_IMPERFECT_GRAPHICS )

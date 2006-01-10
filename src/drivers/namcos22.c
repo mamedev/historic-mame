@@ -1555,8 +1555,6 @@ namcos22_UploadCodeToDSP( void )
 
 			logerror( "0x%08x uploading dsp%d code (dst=0x%04x; len=0x%04x)\n",
 				activecpu_get_previouspc(), uploadType, dstLoc, size );
-			printf( "0x%08x uploading dsp%d code (dst=0x%04x; len=0x%04x)\n",
-				activecpu_get_previouspc(), uploadType, dstLoc, size );
 
 			if( pUploadDest )
 			{
@@ -3324,7 +3322,7 @@ ROM_START( victlapw )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "adv1data.6r", 0, 0x080000, CRC(10eecdb4) SHA1(aaedeed166614e6670e765e0d7e4e9eb5f38ad10) )
 	NAMCO_C7X_BIOS
 
@@ -3378,7 +3376,7 @@ ROM_START( raveracw )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) SHA1(140c513349240417bb546dd2d151f3666b818e91) )
 	NAMCO_C7X_BIOS
 
@@ -3436,7 +3434,7 @@ ROM_START( raveracj )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) SHA1(140c513349240417bb546dd2d151f3666b818e91) )
 	NAMCO_C7X_BIOS
 
@@ -3494,7 +3492,7 @@ ROM_START( ridgera2 )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
 	NAMCO_C7X_BIOS
 
@@ -3538,7 +3536,7 @@ ROM_START( ridger2a )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
 	NAMCO_C7X_BIOS
 
@@ -3582,7 +3580,7 @@ ROM_START( ridger2b )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
 	NAMCO_C7X_BIOS
 
@@ -3626,7 +3624,7 @@ ROM_START( ridgerac )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )
 	NAMCO_C7X_BIOS
 
@@ -3668,7 +3666,7 @@ ROM_START( ridgeraj )
 
 	ROM_REGION( 0x20000, REGION_CPU3, 0 ) /* Slave DSP */
 
-	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_REGION16_LE( 0x080000, REGION_CPU4, 0 ) /* BIOS */
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )

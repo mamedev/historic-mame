@@ -176,6 +176,7 @@ void				debug_cpu_single_step_out(void);
 void				debug_cpu_go(offs_t targetpc);
 void				debug_cpu_go_vblank(void);
 void				debug_cpu_go_interrupt(int irqline);
+void				debug_cpu_go_milliseconds(UINT64 milliseconds);
 void				debug_cpu_next_cpu(void);
 void				debug_cpu_ignore_cpu(int cpunum, int ignore);
 

@@ -228,7 +228,7 @@ DRVLIBS = \
 	$(OBJ)/fuuki.a $(OBJ)/unico.a $(OBJ)/dynax.a \
 	$(OBJ)/sigma.a $(OBJ)/igs.a $(OBJ)/ramtek.a $(OBJ)/omori.a $(OBJ)/tch.a \
 	$(OBJ)/usgames.a $(OBJ)/sanritsu.a $(OBJ)/rare.a \
-	$(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a \
+	$(OBJ)/alba.a $(OBJ)/homedata.a $(OBJ)/artmagic.a $(OBJ)/bfm.a \
 	$(OBJ)/taiyo.a $(OBJ)/edevices.a $(OBJ)/other.a $(OBJ)/excelent.a $(OBJ)/nix.a \
 	$(OBJ)/arcadia.a $(OBJ)/othertrv.a $(OBJ)/other68k.a $(OBJ)/otherz80.a \
 	$(OBJ)/neogeo.a \
@@ -606,6 +606,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/drivers/dblewing.o \
 	$(OBJ)/drivers/dietgo.o $(OBJ)/vidhrdw/dietgo.o \
 	$(OBJ)/drivers/deco156.o $(OBJ)/machine/deco156.o \
+	$(OBJ)/drivers/backfire.o \
 	$(OBJ)/drivers/simpl156.o $(OBJ)/vidhrdw/simpl156.o \
 	$(OBJ)/vidhrdw/deco_mlc.o $(OBJ)/drivers/deco_mlc.o \
 	$(OBJ)/vidhrdw/sshangha.o $(OBJ)/drivers/sshangha.o \
@@ -615,7 +616,6 @@ $(OBJ)/tehkan.a: \
 	$(OBJ)/vidhrdw/bombjack.o $(OBJ)/drivers/bombjack.o \
 	$(OBJ)/vidhrdw/lvcards.o $(OBJ)/drivers/lvcards.o \
 	$(OBJ)/vidhrdw/pbaction.o $(OBJ)/drivers/pbaction.o \
-	$(OBJ)/vidhrdw/lvpoker.o $(OBJ)/drivers/lvpoker.o \
 	$(OBJ)/vidhrdw/tehkanwc.o $(OBJ)/drivers/tehkanwc.o \
 	$(OBJ)/vidhrdw/solomon.o $(OBJ)/drivers/solomon.o \
 	$(OBJ)/vidhrdw/tecmo.o $(OBJ)/drivers/tecmo.o \
@@ -1203,6 +1203,16 @@ $(OBJ)/arcadia.a: \
 	$(OBJ)/vidhrdw/amiga.o $(OBJ)/machine/amiga.o $(OBJ)/drivers/arcadia.o \
 	$(OBJ)/drivers/mquake.o \
 
+$(OBJ)/bfm.a: \
+	$(OBJ)/drivers/bfm_sc2.o \
+	$(OBJ)/vidhrdw/bfm_adr2.o \
+	$(OBJ)/machine/steppers.o \
+	$(OBJ)/machine/lamps.o \
+	$(OBJ)/machine/mmtr.o \
+	$(OBJ)/machine/vacfdisp.o \
+	$(OBJ)/drivers/mpu4.o \
+	$(OBJ)/machine/6840ptm.o \
+
 $(OBJ)/othertrv.a: \
 	$(OBJ)/drivers/findout.o \
 	$(OBJ)/drivers/getrivia.o \
@@ -1331,7 +1341,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/trvquest.o \
 	$(OBJ)/drivers/f-32.o \
 	$(OBJ)/drivers/cardline.o \
-
+	$(OBJ)/drivers/lastfght.o \
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o
 

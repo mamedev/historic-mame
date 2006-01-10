@@ -1125,33 +1125,6 @@ VIDEO_START( hvysmsh )
 	return 0;
 }
 
-VIDEO_START( backfire )
-{
-	pf1_tilemap = tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-	pf2_tilemap = tilemap_create(get_pf2_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf3_tilemap = tilemap_create(get_pf3_tile_info, deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf4_tilemap = tilemap_create(get_pf4_tile_info, deco16_scan_rows,TILEMAP_OPAQUE,     16,16,64,32);
-	pf1a_tilemap=tilemap_create(get_pf1a_tile_info,   deco16_scan_rows,TILEMAP_TRANSPARENT,16,16,64,32);
-//  dirty_palette = auto_malloc(4096);
-
-	if (!deco_allocate_sprite_bitmap() || !pf1a_tilemap || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
-		return 1;
-
-	tilemap_set_transparent_pen(pf1_tilemap,0);
-	tilemap_set_transparent_pen(pf2_tilemap,0);
-	tilemap_set_transparent_pen(pf3_tilemap,0);
-	tilemap_set_transparent_pen(pf1a_tilemap,0);
-//  memset(dirty_palette,0,4096);
-
-	deco32_raster_display_list=0;
-	deco32_pf2_colourbank=16;
-	deco32_pf4_colourbank=16;
-	alpha_set_level(0x80);
-	has_ace_ram=0;
-
-	return 0;
-}
-
 /******************************************************************************/
 
 VIDEO_EOF( captaven )
@@ -1751,56 +1724,3 @@ VIDEO_UPDATE( hvysmsh )
 	tattass_drawsprites(bitmap,spriteram32,2,0,0x1f);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 }
-
-VIDEO_UPDATE( backfire )
-{
-	/* Dirty tilemaps if any globals change */
-	if (deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
-		tilemap_mark_all_tiles_dirty(pf1_tilemap);
-	if (deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf2_tilemap);
-	if ((((deco32_pf12_control[7]>> 4)&0x3)<<12)!=deco32_pf1_bank || deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
-		tilemap_mark_all_tiles_dirty(pf1a_tilemap);
-	if ((((deco32_pf12_control[7]>>12)&0x7)<<12)!=deco32_pf2_bank || deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf2_tilemap);
-	if ((((deco32_pf34_control[7]>> 4)&0x3)<<12)!=deco32_pf3_bank || deco32_pf3_flip!=((deco32_pf34_control[6]>>0)&0x3))
-		tilemap_mark_all_tiles_dirty(pf3_tilemap);
-	if ((((deco32_pf34_control[7]>>12)&0x3)<<12)!=deco32_pf4_bank || deco32_pf4_flip!=((deco32_pf34_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf4_tilemap);
-
-	deco32_pf1_bank=((deco32_pf12_control[7]>> 4)&0x3)<<12;
-	deco32_pf2_bank=((deco32_pf12_control[7]>>12)&0x3)<<12;
-	deco32_pf3_bank=((deco32_pf34_control[7]>> 4)&0x3)<<12;
-	deco32_pf4_bank=((deco32_pf34_control[7]>>12)&0x3)<<12;
-	deco32_pf1_flip=(deco32_pf12_control[6]>>0)&0x3;
-	deco32_pf2_flip=(deco32_pf12_control[6]>>8)&0x3;
-	deco32_pf3_flip=(deco32_pf34_control[6]>>0)&0x3;
-	deco32_pf4_flip=(deco32_pf34_control[6]>>8)&0x3;
-
-	/* Setup scroll registers */
-	deco32_setup_scroll(pf1_tilemap, 256,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
-	deco32_setup_scroll(pf1a_tilemap,512,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
-	deco32_setup_scroll(pf2_tilemap, 512,(deco32_pf12_control[5]>>8)&0xff,(deco32_pf12_control[6]>>8)&0xff,deco32_pf12_control[4],deco32_pf12_control[3],deco32_pf2_rowscroll,deco32_pf2_rowscroll+0x200);
-	deco32_setup_scroll(pf3_tilemap, 512,(deco32_pf34_control[5]>>0)&0xff,(deco32_pf34_control[6]>>0)&0xff,deco32_pf34_control[2],deco32_pf34_control[1],deco32_pf3_rowscroll,deco32_pf3_rowscroll+0x200);
-	deco32_setup_scroll(pf4_tilemap, 512,(deco32_pf34_control[5]>>8)&0xff,(deco32_pf34_control[6]>>8)&0xff,deco32_pf34_control[4],deco32_pf34_control[3],deco32_pf4_rowscroll,deco32_pf4_rowscroll+0x200);
-
-	deco16_clear_sprite_priority_bitmap();
-	fillbitmap(priority_bitmap,0,cliprect);
-//  if ((deco32_pf34_control[5]&0x8000)==0)
-	fillbitmap(bitmap,Machine->pens[0x200],cliprect);
-
-	tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
-
-	/* PF1 can be in 8x8 mode or 16x16 mode */
-	if (deco32_pf12_control[6]&0x80)
-		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
-	else
-		tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,0);
-
-	tattass_drawsprites(bitmap,spriteram32,3,0,0x1f);
-
-//print_debug_info(bitmap);
-}
-

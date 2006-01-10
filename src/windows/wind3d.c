@@ -512,13 +512,13 @@ static void adjust_prescale(int width, int height)
 
 void win_d3d_wait_vsync(void)
 {
-	HRESULT result;
 	BOOL is_vblank;
 
 	// if we're not already in VBLANK, wait for it
-	result = IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank);
-	if (result == DD_OK && !is_vblank)
-		result = IDirectDraw7_WaitForVerticalBlank(ddraw7, DDWAITVB_BLOCKBEGIN, 0);
+	while (IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank)==DD_OK && is_vblank)
+		;
+	while (IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank)==DD_OK && !is_vblank)
+		;
 }
 
 
@@ -2390,16 +2390,17 @@ tryagain:
 	result = IDirect3DDevice7_EndScene(d3d_device7);
 
 	// sync to VBLANK?
-	if ((win_wait_vsync || win_sync_refresh) && throttle && mame_get_performance_info()->game_speed_percent > 95)
+	if ((win_wait_vsync || win_sync_refresh) && throttle && !(!win_window_mode && win_triple_buffer))
 	{
 		BOOL is_vblank;
 
 		// this counts as idle time
 		profiler_mark(PROFILER_IDLE);
 
-		result = IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank);
-		if (!is_vblank)
-			result = IDirectDraw7_WaitForVerticalBlank(ddraw7, DDWAITVB_BLOCKBEGIN, 0);
+		while (IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank)==DD_OK && is_vblank)
+			;
+		while (IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank)==DD_OK && !is_vblank)
+			;
 
 		// idle time done
 		profiler_mark(PROFILER_END);

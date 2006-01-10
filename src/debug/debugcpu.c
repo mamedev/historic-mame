@@ -63,6 +63,8 @@ static int break_on_vblank;
 static int break_on_interrupt;
 static int break_on_interrupt_cpunum;
 static int break_on_interrupt_irqline;
+static int break_on_time;
+static mame_time break_on_time_target;
 static int memory_modified;
 static int memory_hook_cpunum;
 
@@ -468,6 +470,24 @@ void debug_cpu_go_interrupt(int irqline)
 
 
 /*-------------------------------------------------
+    debug_cpu_go_milliseconds - run until the
+    specified delay elapses
+-------------------------------------------------*/
+
+void debug_cpu_go_milliseconds(UINT64 milliseconds)
+{
+	if (!within_debugger_code)
+		return;
+	execution_state = EXECUTION_STATE_RUNNING;
+	debug_cpuinfo[cpu_getactivecpu()].temp_breakpoint_pc = ~0;
+	break_on_time = 1;
+	break_on_time_target = add_mame_times(
+		mame_timer_get_time(),
+		make_mame_time(milliseconds / 1000, (milliseconds % 1000) * (MAX_SUBSECONDS / 1000)));
+}
+
+
+/*-------------------------------------------------
     debug_cpu_next_cpu - execute until we hit
     the next CPU
 -------------------------------------------------*/
@@ -713,6 +733,14 @@ void MAME_Debug(void)
 		{
 			debug_console_printf("Stopped on interrupt (CPU %d, IRQ %d)\n", break_on_interrupt_cpunum, break_on_interrupt_irqline);
 			break_on_interrupt = 0;
+			execution_state = EXECUTION_STATE_STOPPED;
+		}
+
+		/* see if we hit a target time */
+		if (break_on_time && (compare_mame_times(mame_timer_get_time(), break_on_time_target) > 0))
+		{
+			debug_console_printf("Stopped at time interval %.1g\n", timer_get_time());
+			break_on_time = 0;
 			execution_state = EXECUTION_STATE_STOPPED;
 		}
 

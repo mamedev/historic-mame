@@ -1,5 +1,4 @@
 /*
-
 Real Battle Mahjong King by 'Game Men System Co. Ltd.'
 
 PCB Layout
@@ -33,13 +32,18 @@ Notes:
       68000 clock - 11.000MHz [22/2]
       VSync       - 58Hz
       Hsync       - none (dead board, no signal)
-      M6295 clock - 1.100MHz [22/20], sample rate = 1100000 / 165, chip is printed 'AD-65'
-      YM2151 clock- 2.750MHz [22/8], chip is printed 'K-666'. YM3014 chip is printed 'K-664'
+      M6295 clock - 1.100MHz [22/20], sample rate = 1100000 / 165, chip is 
+printed 'AD-65'
+      YM2151 clock- 2.750MHz [22/8], chip is printed 'K-666'. YM3014 chip is 
+printed 'K-664'
                 * - Unpopulated position for PIC16F84
-        3.6V_BATT - Purpose of battery unknown, does not appear to be used for backup of suicide RAM,
+        3.6V_BATT - Purpose of battery unknown, does not appear to be used 
+for backup of suicide RAM,
                     and there's no RTC on the board.
-            93C46 - 128 x8 EEPROM. This chip was covered by a plactic cover. There's nothing else under
-                    the cover, but there was an unpopulated position for a PIC16F84
+            93C46 - 128 x8 EEPROM. This chip was covered by a plactic cover. 
+There's nothing else under
+                    the cover, but there was an unpopulated position for a 
+PIC16F84
             89C51 - Atmel 89C51 Microcontroller (protected)
 
       ROMs -
@@ -106,11 +110,14 @@ static ADDRESS_MAP_START( rbmk_mem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x500000, 0x50ffff) AM_RAM
 	AM_RANGE(0x940000, 0x940fff) AM_RAM AM_BASE(&gms_vidram2)
 	AM_RANGE(0x980300, 0x983fff) AM_RAM // 0x2048  words ???, byte access
-	AM_RANGE(0x900000, 0x900fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_READ(paletteram16_word_r) AM_BASE(&paletteram16)
+	AM_RANGE(0x900000, 0x900fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) 
+AM_READ(paletteram16_word_r) AM_BASE(&paletteram16)
 	AM_RANGE(0x9c0000, 0x9c0fff) AM_RAM AM_BASE(&gms_vidram)
 	AM_RANGE(0xb00000, 0xb00001) AM_WRITE(eeprom_w)
-	AM_RANGE(0xC00000, 0xC00001) AM_READ(input_port_0_word_r) AM_WRITE(gms_write1)
-	AM_RANGE(0xC08000, 0xC08001) AM_READ(input_port_1_word_r) AM_WRITE(gms_write2)
+	AM_RANGE(0xC00000, 0xC00001) AM_READ(input_port_0_word_r) 
+AM_WRITE(gms_write1)
+	AM_RANGE(0xC08000, 0xC08001) AM_READ(input_port_1_word_r) 
+AM_WRITE(gms_write2)
 	AM_RANGE(0xC10000, 0xC10001) AM_READ(eeprom_r)
 	AM_RANGE(0xC18080, 0xC18081) AM_READ(gms_read)
 	AM_RANGE(0xC20000, 0xC20001) AM_READ(input_port_2_word_r)
@@ -178,34 +185,23 @@ INPUT_PORTS_START( rbmk )
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
 
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT  )
+
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_MAHJONG_BET )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
-
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )

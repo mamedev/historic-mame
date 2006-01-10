@@ -1,25 +1,53 @@
+/***************************************************************************
+
+  vidhrdw.c
+
+  Functions to emulate the video hardware of the machine.
+
+***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap;
 
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-  I don't know the exact resistor values, I'm using the 1942 ones.
-
-  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
-        -- 470 ohm resistor  -- RED/GREEN/BLUE
-        -- 1  kohm resistor  -- RED/GREEN/BLUE
-  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
-  Color Fixed by Boochip 10/sep/03
-
-***************************************************************************/
-
-PALETTE_INIT( lvcards )
+PALETTE_INIT( ponttehk )
 {
+	int i;
 
+	for ( i = 0; i < Machine->drv->total_colors; i++ )
+	{
+		int bit0,bit1,bit2,bit3,r,g,b;
+
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+		bit3 = (color_prom[0] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		/* green component */
+		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		/* blue component */
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_set_color(i,r,g,b);
+
+		color_prom++;
+	}
+}
+
+PALETTE_INIT( lvcards ) //Ever so slightly different, but different enough.
+{
 	int i;
 
 	for ( i = 0; i < Machine->drv->total_colors; i++ )

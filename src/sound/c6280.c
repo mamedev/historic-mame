@@ -61,6 +61,9 @@
 #include "state.h"
 #include "c6280.h"
 
+/* only needed for io_buffer */
+#include "cpu/h6280/h6280.h"
+
 /* Local function prototypes */
 void c6280_init(c6280_t *p, double clk, double rate);
 void c6280_write(c6280_t *p, int offset, int data);
@@ -302,8 +305,9 @@ static void *c6280_start(int sndindex, int clock, const void *config)
     return info;
 }
 
-WRITE8_HANDLER( C6280_0_w ) {  c6280_write(sndti_token(SOUND_C6280, 0),offset,data); }
-WRITE8_HANDLER( C6280_1_w ) {  c6280_write(sndti_token(SOUND_C6280, 1),offset,data); }
+READ8_HANDLER(  C6280_r) { return get_h6280io_buffer();}
+WRITE8_HANDLER( C6280_0_w ) {  set_h6280io_buffer(data); c6280_write(sndti_token(SOUND_C6280, 0),offset,data); }
+WRITE8_HANDLER( C6280_1_w ) {  set_h6280io_buffer(data); c6280_write(sndti_token(SOUND_C6280, 1),offset,data); }
 
 
 

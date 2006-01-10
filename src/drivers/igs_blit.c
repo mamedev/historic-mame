@@ -2772,7 +2772,7 @@ there are 4 banks of 8 dip switches
 
 ROM_START( vbowl )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD( "v101xcm.u45", 0x00000, 0x80000, BAD_DUMP CRC(a086050f) SHA1(5d044665a786e7f8f60e0474ebe02ecd33e36290) ) // second half all 00
+	ROM_LOAD( "bowlingv101xcm.u45", 0x00000, 0x80000, CRC(ab8e3f1f) SHA1(69159e22559d6a26fe2afafd770aa640c192ba4b) )
 
 	ROM_REGION( 0x800000, REGION_GFX1, 0)
 	ROM_LOAD( "vrbowlng.u69", 0x000000, 0x400000, CRC(b0d339e8) SHA1(a26a5e0202a78e8cdc562b10d64e14eadfa4e115) )
@@ -2846,6 +2846,6 @@ GAME( 1995, chugokur, drgnwrld, chindrag, chindrag, chugokur, ROT0, "IGS / ALTA"
 GAME( 1996, chmplst2, 0,        chmplst2, chmplst2, chmplst2, ROT0, "IGS",        "Long Hu Bang II",                 GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, xymg,     0,        xymg,     xymg,     xymg,     ROT0, "IGS",        "Xing Yen Man Guan (V651C)",       GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAME( 1996, grtwall,  xymg,     grtwall,  grtwall,  grtwall,  ROT0, "IGS",        "Wan Li Chang Cheng (V638C)",      GAME_IMPERFECT_GRAPHICS )
-GAME( 1996, vbowl,    0,        vbowl,    vbowl,    vbowl,    ROT0, "Alta / IGS", "Virtua Bowling (World, V101XCM)", GAME_NOT_WORKING )
+GAME( 1996, vbowl,    0,        vbowl,    vbowl,    vbowlj,   ROT0, "Alta / IGS", "Virtua Bowling (World, V101XCM)", GAME_NOT_WORKING )
 GAME( 1996, vbowlj,   vbowl,    vbowl,    vbowl,    vbowlj,   ROT0, "Alta / IGS", "Virtua Bowling (Japan, V100JCM)", GAME_IMPERFECT_SOUND )
 GAME( 1997, drgnwrld, 0,        chindrag, drgnwrld, drgnwrld, ROT0, "IGS",        "Dragon World (World, V0400)",     0 )

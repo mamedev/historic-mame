@@ -167,7 +167,7 @@ static UINT8 *dirty_palette;
 static int deco16_pf1_bank,deco16_pf2_bank,deco16_pf3_bank,deco16_pf4_bank;
 static int deco16_pf12_16x16_gfx_bank,deco16_pf34_16x16_gfx_bank,deco16_pf12_8x8_gfx_bank;
 static int deco16_pf1_colourmask,deco16_pf2_colourmask,deco16_pf3_colourmask,deco16_pf4_colourmask;
-static int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,deco16_pf4_colour_bank;
+int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,deco16_pf4_colour_bank;
 static int deco16_pf1_trans_mask,deco16_pf2_trans_mask,deco16_pf3_trans_mask,deco16_pf4_trans_mask;
 static int (*deco16_bank_callback_1)(const int bank);
 static int (*deco16_bank_callback_2)(const int bank);

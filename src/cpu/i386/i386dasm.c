@@ -550,8 +550,8 @@ static const I386_OPCODE i386_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"imul",			MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	// 0xb0
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"cmpxchg",			MODRM,			PARAM_RM8,			PARAM_REG,			0				},
+	{"cmpxchg",			MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"lss",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
 	{"btr",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"lfs",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
@@ -567,8 +567,8 @@ static const I386_OPCODE i386_opcode_table2[256] =
 	{"movsx",			MODRM,			PARAM_REG,			PARAM_RM8,			0				},
 	{"movsx",			MODRM,			PARAM_REG,			PARAM_RM16,			0				},
 	// 0xc0
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"xadd",			MODRM,			PARAM_RM8,			PARAM_REG,			0				},
+	{"xadd",			MODRM,			PARAM_RM,			PARAM_REG,			0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
@@ -1089,7 +1089,7 @@ static const I386_OPCODE group0F01_table[8] =
 	{"smsw",			0,				PARAM_RM,			0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"lmsw",			0,				PARAM_RM,			0,					0				},
-	{"???",				0,				0,					0,					0				}
+	{"invlpg",			0,				PARAM_RM,			0,					0				}
 };
 
 static const I386_OPCODE group0FBA_table[8] =

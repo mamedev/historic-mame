@@ -253,7 +253,7 @@ static opcode_struct g_opcodes_prefix89[256] =
 // 0x10
 	{BPL, I, RELB}, {ORA, M, DIY }, {ORA, M, DI  }, {ORA, M, SIY },
 	{TRB, M, D   }, {MPY, M, DX  }, {ASL, M, DX  }, {ORA, M, DLIY},
-	{CLC, I, IMP }, {ORA, M, AY  }, {INA, I, IMP }, {TCS, I, IMP },
+	{CLC, I, IMP }, {MPY, M, AY  }, {INA, I, IMP }, {TCS, I, IMP },
 	{TRB, M, A   }, {ORA, M, AX  }, {ASL, M, AX  }, {ORA, M, ALX },
 // 0x20
 	{JSR, I, A   }, {AND, M, DXI }, {JSL, I, AL  }, {AND, M, S   },

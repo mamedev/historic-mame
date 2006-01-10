@@ -10,7 +10,7 @@
 
     Byte 0:
         Bit 0 : Y co-ord hi bit
-        Bit 1,2: ?
+        Bit 1,2 : Sprite width (1x, 2x, 4x, 8x) - NOT YET EMULATED (todo)
         Bit 3,4 : Sprite height (1x, 2x, 4x, 8x)
         Bit 5  - X flip
         Bit 6  - Y flip
@@ -64,21 +64,12 @@ configuration is 2 chips of 16*16 tiles, 1 of 8*8.
    bank 1:
    0: horizontal scroll
    2: vertical scroll
-   4: Style of colscroll (low 4 bits, top 4 bits do nothing)
-   6: Style of rowscroll (low 4 bits, top 4 bits do nothing)
+   4: colscroll shifter (low 4 bits, top 4 bits do nothing)
+   6: rowscroll shifter (low 4 bits, top 4 bits do nothing)
 
-Rowscroll/Colscroll styles:
-    0: 256 scroll registers (Robocop)
-    1: 128 scroll registers
-    2:  64 scroll registers
-    3:  32 scroll registers (Heavy Barrel, Midres)
-    4:  16 scroll registers (Bad Dudes, Sly Spy)
-    5:   8 scroll registers (Hippodrome)
-    6:   4 scroll registers (Heavy Barrel)
-    7:   2 scroll registers (Heavy Barrel, used on other games but registers kept at 0)
-    8:   1 scroll register (ie, none)
-
-    Values above are *multiplied* by playfield shape.
+   Row & column scroll can be applied simultaneously or by themselves.
+   The shift register controls the granularity of the scroll offsets
+   (more details given later).
 
 Playfield priority (Bad Dudes, etc):
     In the bottommost playfield, pens 8-15 can have priority over the next playfield.
@@ -95,6 +86,11 @@ Priority word (Midres):
             ~ = Sprites are on top of playfields
     Bit 2
     Bit 3 set = ...
+
+Todo:
+    Implement multi-width sprites (used by Birdtry).
+    Implement sprite/tilemap orthogonality (not strictly needed as no
+    games make deliberate use of it).
 
 ***************************************************************************/
 
@@ -219,343 +215,186 @@ static void dec0_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int p
 
 /******************************************************************************/
 
-static void dec0_pf1_update(void)
+static void custom_tilemap_draw(mame_bitmap *bitmap,
+								const rectangle *cliprect,
+								tilemap *tilemap_ptr,
+								const UINT16 *rowscroll_ptr,
+								const UINT16 *colscroll_ptr,
+								const UINT16 *control0,
+								const UINT16 *control1,
+								int flags)
 {
-	int offs,lines,height,scrolly,scrollx;
-	tilemap *tilemap_ptr;
+	const mame_bitmap *src_bitmap = tilemap_get_pixmap(tilemap_ptr);
+	int x, y, p;
+	int column_offset=0, src_x=0, src_y=0;
+	unsigned int scrollx=control1[0];
+	unsigned int scrolly=control1[1];
+	int width_mask = src_bitmap->width - 1;
+	int height_mask = src_bitmap->height - 1;
+	int row_scroll_enabled = (rowscroll_ptr && (control0[0]&0x4));
+	int col_scroll_enabled = (colscroll_ptr && (control0[0]&0x8));
 
-	/* Flipscreen */
-	flip_screen_set(dec0_pf1_control_0[0]&0x80);
+	if (!src_bitmap)
+		return;
 
-	/* Master scroll registers */
-	scrollx = dec0_pf1_control_1[0];
-	scrolly = dec0_pf1_control_1[1];
+	/* Column scroll & row scroll may per applied per pixel, there are 
+	shift registers for each which control the granularity of the row/col
+	offset (down to per line level for row, and per 8 lines for column).
+	
+	Nb:  The row & col selectors are _not_ affected by the shape of the
+	playfield (ie, 256*1024, 512*512 or 1024*256).  So even if the tilemap
+	width is only 256, 'src_x' should not wrap at 256 in the code below (to
+	do so would mean the top half of row RAM would never be accessed which
+	is incorrect).
+	
+	Nb2:  Real hardware exhibits a strange bug with column scroll on 'mode 2'
+	(256*1024) - the first column has a strange additional offset, but 
+	curiously the first 'wrap' (at scroll offset 256) does not have this offset,
+	it is displayed as expected.  The bug is confimed to only affect this mode,
+	the other two modes work as expected.  This bug is not emulated, as it
+	doesn't affect any games.
+	*/
 
-	/* Playfield shape */
-	switch (dec0_pf1_control_0[3]&0x3) {
-		case 0:	height=1; tilemap_ptr=pf1_tilemap_0; break; /* 4x1, 256 rows */
-		case 1:	height=2; tilemap_ptr=pf1_tilemap_1; break; /* 2x2, 512 rows */
-		case 2:	height=4; tilemap_ptr=pf1_tilemap_2; break; /* 1x4, 1024 rows */
-		default: height=2; tilemap_ptr=pf1_tilemap_1; break; /* Never happens */
-	}
+	if (flip_screen)
+		src_y = (src_bitmap->height - 256) - scrolly;
+	else
+		src_y = scrolly;
 
-	/* Column scroll - may be screen-wise rather than tilemap-wise, not confirmed yet */
-	if (dec0_pf1_control_0[0]&0x8 && dec0_pf1_colscroll[0]) {
-		tilemap_set_scroll_cols(tilemap_ptr,32);
-		tilemap_set_scroll_rows(tilemap_ptr,1);
-		tilemap_set_scrollx(tilemap_ptr,0,scrollx);
+	for (y=0; y<=cliprect->max_y; y++) {
+		if (row_scroll_enabled)
+			src_x=scrollx + rowscroll_ptr[(src_y >> (control1[3]&0xf))&(0x1ff>>(control1[3]&0xf))];
+		else
+			src_x=scrollx;
 
-		for (offs = 0;offs < 32;offs++)
-			tilemap_set_scrolly(tilemap_ptr, offs, scrolly + dec0_pf1_colscroll[offs]);
-	}
+		if (flip_screen)
+			src_x=(src_bitmap->width - 256) - src_x;
 
-	/* Row scroll enable bit */
-	else if (dec0_pf1_control_0[0]&0x4) {
-		/* Rowscroll style */
-		switch (dec0_pf1_control_1[3]&0xf) {
-			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
-			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
-			case 2: lines=64; break; /* 64 horizontal scroll registers (Not used?) */
-			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
-			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
-			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
-			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
-			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
-			default: lines=1;
+		for (x=0; x<=cliprect->max_x; x++) {
+			if (col_scroll_enabled)
+				column_offset=colscroll_ptr[((src_x >> 3) >> (control1[2]&0xf))&(0x3f>>(control1[2]&0xf))];
+
+			p = (((UINT16*)src_bitmap->line[(src_y + column_offset)&height_mask])[src_x&width_mask]);
+
+			src_x++;
+			if ((flags&TILEMAP_IGNORE_TRANSPARENCY) || (p&0xf))
+			{
+				if( flags & TILEMAP_FRONT )
+				{
+					/* Top 8 pens of top 8 palettes only */
+					if ((p&0x88)==0x88)
+						plot_pixel(bitmap, x, y, Machine->pens[p]);
+				}
+				else
+				{
+					plot_pixel(bitmap, x, y, Machine->pens[p]);
+				}
+			}
 		}
-
-		tilemap_set_scroll_cols(tilemap_ptr,1);
-		tilemap_set_scroll_rows(tilemap_ptr,lines*height);
-		tilemap_set_scrolly(tilemap_ptr,0,scrolly);
-		for (offs = 0; offs < lines*height; offs++)
-			tilemap_set_scrollx(tilemap_ptr,offs,scrollx + dec0_pf1_rowscroll[offs]);
-	}
-	else { /* Scroll registers not enabled */
-		tilemap_set_scroll_rows(tilemap_ptr,1);
-		tilemap_set_scroll_cols(tilemap_ptr,1);
-		tilemap_set_scrollx(tilemap_ptr,0,scrollx);
-		tilemap_set_scrolly(tilemap_ptr,0,scrolly);
-	}
-}
-
-static void dec0_pf2_update(void)
-{
-	int offs,lines,height,scrolly,scrollx;
-	tilemap *tilemap_ptr;
-
-	/* Master scroll registers */
-	scrollx = dec0_pf2_control_1[0];
-	scrolly = dec0_pf2_control_1[1];
-
-	/* Playfield shape */
-	switch (dec0_pf2_control_0[3]&0x3) {
-		case 0:	height=1; tilemap_ptr=pf2_tilemap_0; break; /* 4x1, 256 rows */
-		case 1:	height=2; tilemap_ptr=pf2_tilemap_1; break; /* 2x2, 512 rows */
-		case 2:	height=4; tilemap_ptr=pf2_tilemap_2; break; /* 1x4, 1024 rows */
-		default: height=2; tilemap_ptr=pf2_tilemap_1; break; /* Never happens */
-	}
-
-	/* Column scroll - may be screen-wise rather than tilemap-wise, not confirmed yet */
-	if (dec0_pf2_control_0[0]&0x8 && (dec0_pf2_colscroll[0] || dec0_pf2_colscroll[1])) {
-		switch (dec0_pf2_control_1[2]&0x7) {
-			case 0: lines=1; break;
-			case 1: lines=2; break;
-			case 2: lines=4; break;
-			case 3: lines=8; break;
-			case 4: lines=16; break;
-			case 5: lines=32; break;
-			case 6: lines=64; break;
-			case 7: lines=128; break;
-			default: lines=1;
-		}
-		if (height==2) lines*=2; else if (height==1) lines*=4;
-
-		tilemap_set_scroll_cols(tilemap_ptr,lines);
-		tilemap_set_scroll_rows(tilemap_ptr,1);
-		tilemap_set_scrollx(tilemap_ptr,0,scrollx);
-
-		for (offs = 0;offs < lines;offs++)
-			tilemap_set_scrolly(tilemap_ptr, offs, scrolly + dec0_pf2_colscroll[offs]);
-	}
-
-	/* Row scroll enable bit */
-	else if (dec0_pf2_control_0[0]&0x4) {
-		/* Rowscroll style */
-		switch (dec0_pf2_control_1[3]&0xf) {
-			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
-			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
-			case 2: lines=64; break; /* 64 horizontal scroll registers (Not used?) */
-			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
-			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
-			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
-			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
-			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
-			default: lines=1;
-		}
-
-		tilemap_set_scroll_cols(tilemap_ptr,1);
-		tilemap_set_scroll_rows(tilemap_ptr,lines*height);
-		tilemap_set_scrolly(tilemap_ptr,0,scrolly);
-		for (offs = 0; offs < lines*height; offs++)
-			tilemap_set_scrollx(tilemap_ptr,offs,scrollx + dec0_pf2_rowscroll[offs]);
-	}
-	else { /* Scroll registers not enabled */
-		tilemap_set_scroll_rows(tilemap_ptr,1);
-		tilemap_set_scroll_cols(tilemap_ptr,1);
-		tilemap_set_scrollx(tilemap_ptr,0,scrollx);
-		tilemap_set_scrolly(tilemap_ptr,0,scrolly);
-	}
-}
-
-static void dec0_pf3_update(void)
-{
-	int offs,lines,height,scrolly,scrollx;
-	tilemap *tilemap_ptr;
-
-	/* Master scroll registers */
-	scrollx = dec0_pf3_control_1[0];
-	scrolly = dec0_pf3_control_1[1];
-
-	/* Playfield shape */
-	switch (dec0_pf3_control_0[3]&0x3) {
-		case 0:	height=1; tilemap_ptr=pf3_tilemap_0; break; /* 4x1, 256 rows */
-		case 1:	height=2; tilemap_ptr=pf3_tilemap_1; break; /* 2x2, 512 rows */
-		case 2:	height=4; tilemap_ptr=pf3_tilemap_2; break; /* 1x4, 1024 rows */
-		default: height=2; tilemap_ptr=pf3_tilemap_1; break; /* Never happens */
-	}
-
-	/* Column scroll - may be screen-wise rather than tilemap-wise, not confirmed yet */
-	if (dec0_pf3_control_0[0]&0x8 && (dec0_pf3_colscroll[0] || dec0_pf3_colscroll[1])) {
-		switch (dec0_pf3_control_1[2]&0x7) {
-			case 0: lines=2; break;
-			case 1: lines=2; break;
-			case 2: lines=4; break;
-			case 3: lines=8; break;
-			case 4: lines=16; break;
-			case 5: lines=32; break;
-			case 6: lines=64; break;
-			case 7: lines=128; break;
-			default: lines=1;
-		}
-		if (height==2) lines*=2; else if (height==1) lines*=4;
-
-		tilemap_set_scroll_cols(tilemap_ptr,lines);
-		tilemap_set_scroll_rows(tilemap_ptr,1);
-		tilemap_set_scrollx(tilemap_ptr,0,scrollx);
-
-		for (offs = 0;offs < lines;offs++) {
-			tilemap_set_scrolly(tilemap_ptr, offs, scrolly + dec0_pf3_colscroll[offs]);
-		}
-	}
-
-	/* Row scroll enable bit */
-	else if (dec0_pf3_control_0[0]&0x4) {
-		/* Rowscroll style */
-		switch (dec0_pf3_control_1[3]&0xf) {
-			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
-			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
-			case 2: lines=64; break; /* 64 horizontal scroll registers (Not used?) */
-			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
-			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
-			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
-			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
-			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
-			default: lines=1;
-		}
-
-		tilemap_set_scroll_cols(tilemap_ptr,1);
-		tilemap_set_scroll_rows(tilemap_ptr,lines*height);
-		tilemap_set_scrolly(tilemap_ptr,0,scrolly);
-		for (offs = 0; offs < lines*height; offs++)
-			tilemap_set_scrollx(tilemap_ptr,offs,scrollx + dec0_pf3_rowscroll[offs]);
-	}
-	else { /* Scroll registers not enabled */
-		tilemap_set_scroll_rows(tilemap_ptr,1);
-		tilemap_set_scroll_cols(tilemap_ptr,1);
-		tilemap_set_scrollx(tilemap_ptr,0,scrollx);
-		tilemap_set_scrolly(tilemap_ptr,0,scrolly);
+		src_y++; 
 	}
 }
 
 /******************************************************************************/
 
-static void dec0_pf1_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags,int pri)
+static void dec0_pf1_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags)
 {
-	tilemap_set_enable(pf1_tilemap_0,0);
-	tilemap_set_enable(pf1_tilemap_1,0);
-	tilemap_set_enable(pf1_tilemap_2,0);
-
 	switch (dec0_pf1_control_0[3]&0x3) {
 		case 0:	/* 4x1 */
-			tilemap_set_enable(pf1_tilemap_0,1);
-			tilemap_draw(bitmap,cliprect,pf1_tilemap_0,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf1_tilemap_0,dec0_pf1_rowscroll,dec0_pf1_colscroll,dec0_pf1_control_0,dec0_pf1_control_1,flags);
 			break;
 		case 1:	/* 2x2 */
 		default:
-			tilemap_set_enable(pf1_tilemap_1,1);
-			tilemap_draw(bitmap,cliprect,pf1_tilemap_1,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf1_tilemap_1,dec0_pf1_rowscroll,dec0_pf1_colscroll,dec0_pf1_control_0,dec0_pf1_control_1,flags);
 			break;
 		case 2:	/* 1x4 */
-			tilemap_set_enable(pf1_tilemap_2,1);
-			tilemap_draw(bitmap,cliprect,pf1_tilemap_2,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf1_tilemap_2,dec0_pf1_rowscroll,dec0_pf1_colscroll,dec0_pf1_control_0,dec0_pf1_control_1,flags);
 			break;
-	}
+	};
 }
 
-static void dec0_pf2_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags,int pri)
+static void dec0_pf2_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags)
 {
-	tilemap_set_enable(pf2_tilemap_0,0);
-	tilemap_set_enable(pf2_tilemap_1,0);
-	tilemap_set_enable(pf2_tilemap_2,0);
-
 	switch (dec0_pf2_control_0[3]&0x3) {
 		case 0:	/* 4x1 */
-			tilemap_set_enable(pf2_tilemap_0,1);
-			tilemap_draw(bitmap,cliprect,pf2_tilemap_0,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf2_tilemap_0,dec0_pf2_rowscroll,dec0_pf2_colscroll,dec0_pf2_control_0,dec0_pf2_control_1,flags);
 			break;
 		case 1:	/* 2x2 */
 		default:
-			tilemap_set_enable(pf2_tilemap_1,1);
-			tilemap_draw(bitmap,cliprect,pf2_tilemap_1,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf2_tilemap_1,dec0_pf2_rowscroll,dec0_pf2_colscroll,dec0_pf2_control_0,dec0_pf2_control_1,flags);
 			break;
 		case 2:	/* 1x4 */
-			tilemap_set_enable(pf2_tilemap_2,1);
-			tilemap_draw(bitmap,cliprect,pf2_tilemap_2,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf2_tilemap_2,dec0_pf2_rowscroll,dec0_pf2_colscroll,dec0_pf2_control_0,dec0_pf2_control_1,flags);
 			break;
-	}
+	};
 }
 
-static void dec0_pf3_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags,int pri)
+static void dec0_pf3_draw(mame_bitmap *bitmap,const rectangle *cliprect,int flags)
 {
-	tilemap_set_enable(pf3_tilemap_0,0);
-	tilemap_set_enable(pf3_tilemap_1,0);
-	tilemap_set_enable(pf3_tilemap_2,0);
-
 	switch (dec0_pf3_control_0[3]&0x3) {
 		case 0:	/* 4x1 */
-			tilemap_set_enable(pf3_tilemap_0,1);
-			tilemap_draw(bitmap,cliprect,pf3_tilemap_0,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf3_tilemap_0,dec0_pf3_rowscroll,dec0_pf3_colscroll,dec0_pf3_control_0,dec0_pf3_control_1,flags);
 			break;
 		case 1:	/* 2x2 */
 		default:
-			tilemap_set_enable(pf3_tilemap_1,1);
-			tilemap_draw(bitmap,cliprect,pf3_tilemap_1,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf3_tilemap_1,dec0_pf3_rowscroll,dec0_pf3_colscroll,dec0_pf3_control_0,dec0_pf3_control_1,flags);
 			break;
 		case 2:	/* 1x4 */
-			tilemap_set_enable(pf3_tilemap_2,1);
-			tilemap_draw(bitmap,cliprect,pf3_tilemap_2,flags,pri);
+			custom_tilemap_draw(bitmap,cliprect,pf3_tilemap_2,dec0_pf3_rowscroll,dec0_pf3_colscroll,dec0_pf3_control_0,dec0_pf3_control_1,flags);
 			break;
-	}
+	};
 }
 
 /******************************************************************************/
 
 VIDEO_UPDATE( hbarrel )
 {
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf3_update();
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
 
-	dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-	dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+	dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
 	dec0_drawsprites(bitmap,cliprect,0x08,0x08);
-	dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
-	dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+	dec0_pf2_draw(bitmap,cliprect,0);
 
 	/* HB always keeps pf2 on top of pf3, no need explicitly support priority register */
 
 	dec0_drawsprites(bitmap,cliprect,0x08,0x00);
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
 
 VIDEO_UPDATE( baddudes )
 {
-	/* WARNING: priority inverted wrt all the other games */
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf3_update();
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
 
 	/* WARNING: inverted wrt Midnight Resistance */
 	if ((dec0_pri & 0x01) == 0)
 	{
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		if (!(dec0_pri & 2))
-			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		if (!(dec0_pri & 4))
-			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
+		dec0_pf3_draw(bitmap,cliprect,0);
 
 		if (dec0_pri & 2)
-			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT); /* Foreground pens only */
 
 		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 		if (dec0_pri & 4)
-			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1); /* Foreground pens only */
+			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT); /* Foreground pens only */
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		if (!(dec0_pri & 2))
-			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		if (!(dec0_pri & 4))
-			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
+		dec0_pf2_draw(bitmap,cliprect,0);
 
 		if (dec0_pri & 2)
-			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+			dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT); /* Foreground pens only */
 
 		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 		if (dec0_pri & 4)
-			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+			dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT); /* Foreground pens only */
 	}
 
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
@@ -564,9 +403,7 @@ VIDEO_UPDATE( robocop )
 {
 	int trans;
 
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf3_update();
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
 
 	if (dec0_pri & 0x04)
 		trans = 0x08;
@@ -579,25 +416,21 @@ VIDEO_UPDATE( robocop )
 		/* Robocop uses it only for the title screen, so this might be just */
 		/* completely wrong. The top 8 bits of the register might mean */
 		/* something (they are 0x80 in midres, 0x00 here) */
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY);
 
 		if (dec0_pri & 0x02)
 			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,0);
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
 
 		if (dec0_pri & 0x02)
 			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,0);
 	}
 
 	if (dec0_pri & 0x02)
@@ -605,69 +438,60 @@ VIDEO_UPDATE( robocop )
 	else
 		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
 
 VIDEO_UPDATE( birdtry )
 {
-	/* This game doesn't have the extra playfield chip on the game board */
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-	dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
+
+	/* This game doesn't have the extra playfield chip on the game board, but
+	the palette does show through. */
+	fillbitmap(bitmap,Machine->pens[768],cliprect);
+	dec0_pf2_draw(bitmap,cliprect,0);
 	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
 
 VIDEO_UPDATE( hippodrm )
 {
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf3_update();
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
 
 	if (dec0_pri & 0x01)
 	{
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
+		dec0_pf3_draw(bitmap,cliprect,0);
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
+		dec0_pf2_draw(bitmap,cliprect,0);
 	}
 
 	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
 
 VIDEO_UPDATE( slyspy )
 {
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf3_update();
-
-	dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-	dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
-	dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
-	if (!(dec0_pri&0x80))
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
+	
+	dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
+	dec0_pf2_draw(bitmap,cliprect,0);
 
 	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
+	/* Redraw top 8 pens of top 8 palettes over sprites */
 	if (dec0_pri&0x80)
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT);
 
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
@@ -676,35 +500,29 @@ VIDEO_UPDATE( midres )
 {
 	int trans;
 
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
+
 	if (dec0_pri & 0x04)
 		trans = 0x00;
 	else trans = 0x08;
 
-	dec0_pf1_update();
-	dec0_pf2_update();
-	dec0_pf3_update();
-
 	if (dec0_pri & 0x01)
 	{
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
 
 		if (dec0_pri & 0x02)
 			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf3_draw(bitmap,cliprect,0);
 	}
 	else
 	{
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_BACK|TILEMAP_IGNORE_TRANSPARENCY,0);
-		dec0_pf3_draw(bitmap,cliprect,TILEMAP_FRONT|TILEMAP_IGNORE_TRANSPARENCY,1);
+		dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
 
 		if (dec0_pri & 0x02)
 			dec0_drawsprites(bitmap,cliprect,0x08,trans);
 
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_BACK,0);
-		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT,1);
+		dec0_pf2_draw(bitmap,cliprect,0);
 	}
 
 	if (dec0_pri & 0x02)
@@ -712,7 +530,7 @@ VIDEO_UPDATE( midres )
 	else
 		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
-	dec0_pf1_draw(bitmap,cliprect,0,0);
+	dec0_pf1_draw(bitmap,cliprect,0);
 }
 
 /******************************************************************************/
@@ -882,39 +700,17 @@ VIDEO_START( dec0_nodma )
 	pf1_tilemap_0 = tilemap_create(get_pf1_tile_info,tile_shape0_8x8_scan,TILEMAP_TRANSPARENT, 8, 8,128, 32);
 	pf1_tilemap_1 = tilemap_create(get_pf1_tile_info,tile_shape1_8x8_scan,TILEMAP_TRANSPARENT, 8, 8, 64, 64);
 	pf1_tilemap_2 = tilemap_create(get_pf1_tile_info,tile_shape2_8x8_scan,TILEMAP_TRANSPARENT, 8, 8, 32,128);
-	pf2_tilemap_0 = tilemap_create(get_pf2_tile_info,tile_shape0_scan,    TILEMAP_SPLIT,      16,16, 64, 16);
-	pf2_tilemap_1 = tilemap_create(get_pf2_tile_info,tile_shape1_scan,    TILEMAP_SPLIT,      16,16, 32, 32);
-	pf2_tilemap_2 = tilemap_create(get_pf2_tile_info,tile_shape2_scan,    TILEMAP_SPLIT,      16,16, 16, 64);
-	pf3_tilemap_0 = tilemap_create(get_pf3_tile_info,tile_shape0_scan,    TILEMAP_SPLIT,      16,16, 64, 16);
-	pf3_tilemap_1 = tilemap_create(get_pf3_tile_info,tile_shape1_scan,    TILEMAP_SPLIT,      16,16, 32, 32);
-	pf3_tilemap_2 = tilemap_create(get_pf3_tile_info,tile_shape2_scan,    TILEMAP_SPLIT,      16,16, 16, 64);
+	pf2_tilemap_0 = tilemap_create(get_pf2_tile_info,tile_shape0_scan,    TILEMAP_TRANSPARENT,16,16, 64, 16);
+	pf2_tilemap_1 = tilemap_create(get_pf2_tile_info,tile_shape1_scan,    TILEMAP_TRANSPARENT,16,16, 32, 32);
+	pf2_tilemap_2 = tilemap_create(get_pf2_tile_info,tile_shape2_scan,    TILEMAP_TRANSPARENT,16,16, 16, 64);
+	pf3_tilemap_0 = tilemap_create(get_pf3_tile_info,tile_shape0_scan,    TILEMAP_TRANSPARENT,16,16, 64, 16);
+	pf3_tilemap_1 = tilemap_create(get_pf3_tile_info,tile_shape1_scan,    TILEMAP_TRANSPARENT,16,16, 32, 32);
+	pf3_tilemap_2 = tilemap_create(get_pf3_tile_info,tile_shape2_scan,    TILEMAP_TRANSPARENT,16,16, 16, 64);
 
 	if (!pf1_tilemap_0 || !pf1_tilemap_1 || !pf1_tilemap_2
 		|| !pf2_tilemap_0 || !pf2_tilemap_1 || !pf2_tilemap_2
 		|| !pf3_tilemap_0 || !pf3_tilemap_1 || !pf3_tilemap_2)
 		return 1;
-
-	tilemap_set_transparent_pen(pf1_tilemap_0,0);
-	tilemap_set_transparent_pen(pf1_tilemap_1,0);
-	tilemap_set_transparent_pen(pf1_tilemap_2,0);
-	tilemap_set_transparent_pen(pf2_tilemap_0,0);
-	tilemap_set_transparent_pen(pf2_tilemap_1,0);
-	tilemap_set_transparent_pen(pf2_tilemap_2,0);
-	tilemap_set_transparent_pen(pf3_tilemap_0,0);
-	tilemap_set_transparent_pen(pf3_tilemap_1,0);
-	tilemap_set_transparent_pen(pf3_tilemap_2,0);
-	tilemap_set_transmask(pf2_tilemap_0,0,0xffff,0x0001); /* Transparent pen 1 only */
-	tilemap_set_transmask(pf2_tilemap_1,0,0xffff,0x0001); /* Transparent pen 1 only */
-	tilemap_set_transmask(pf2_tilemap_2,0,0xffff,0x0001); /* Transparent pen 1 only */
-	tilemap_set_transmask(pf3_tilemap_0,0,0xffff,0x0001); /* Transparent pen 1 only */
-	tilemap_set_transmask(pf3_tilemap_1,0,0xffff,0x0001); /* Transparent pen 1 only */
-	tilemap_set_transmask(pf3_tilemap_2,0,0xffff,0x0001); /* Transparent pen 1 only */
-	tilemap_set_transmask(pf2_tilemap_0,1,0x00ff,0xff01); /* Bottom/Top 8 pen split */
-	tilemap_set_transmask(pf2_tilemap_1,1,0x00ff,0xff01); /* Bottom/Top 8 pen split */
-	tilemap_set_transmask(pf2_tilemap_2,1,0x00ff,0xff01); /* Bottom/Top 8 pen split */
-	tilemap_set_transmask(pf3_tilemap_0,1,0x00ff,0xff01); /* Bottom/Top 8 pen split */
-	tilemap_set_transmask(pf3_tilemap_1,1,0x00ff,0xff01); /* Bottom/Top 8 pen split */
-	tilemap_set_transmask(pf3_tilemap_2,1,0x00ff,0xff01); /* Bottom/Top 8 pen split */
 
 	dec0_spriteram=spriteram16;
 

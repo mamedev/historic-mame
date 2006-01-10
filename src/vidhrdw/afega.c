@@ -230,7 +230,7 @@ VIDEO_START( firehawk )
 
 ***************************************************************************/
 
-static void afega_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
+static void afega_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect, UINT16 attr_mask)
 {
 	int offs;
 
@@ -245,7 +245,7 @@ static void afega_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		int y, ynum, ystart, yend, yinc;
 
 		attr	=		spriteram16[offs + 0x0/2];
-		if (!(attr & 1))	continue;
+		if (!(attr & attr_mask))	continue;
 		dim		=		spriteram16[offs + 0x2/2];
 		code	=		spriteram16[offs + 0x6/2];
 		sx		=		spriteram16[offs + 0x8/2];
@@ -306,102 +306,48 @@ if (code_pressed(KEYCODE_X))
 
 ***************************************************************************/
 
-VIDEO_UPDATE( afega )
+static void video_update(int screen, mame_bitmap *bitmap, const rectangle *cliprect,
+	int dsw_flipscreen,			// 1 = Horizontal and vertical screen flip are hardwired to 2 dip switches
+	int xoffset, int yoffset,	// tilemap_0 offsets
+	int attr_mask				// "sprite active" mask
+	)
 {
 	int layers_ctrl = -1;
 
-	/* Horizintal and vertical screen flip are hardwired to 2 dip switches */
-	flip_screen_x_set(~readinputport(2) & 0x0100);
-	flip_screen_y_set(~readinputport(2) & 0x0200);
+	if (dsw_flipscreen)
+	{
+		
+		flip_screen_x_set(~readinputport(2) & 0x0100);
+		flip_screen_y_set(~readinputport(2) & 0x0200);
+	}
 
-	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0]);
-	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1] - 0x100);
+	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1] + xoffset);
+	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0] + yoffset);
 
-	tilemap_set_scrolly(tilemap_1, 0, afega_scroll_1[0]);
 	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
+	tilemap_set_scrolly(tilemap_1, 0, afega_scroll_1[0]);
 
 #ifdef MAME_DEBUG
-if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
+if ( code_pressed(KEYCODE_Z) )
 {	int msk = 0;
 	if (code_pressed(KEYCODE_Q))	msk |= 1;
 	if (code_pressed(KEYCODE_W))	msk |= 2;
-	if (code_pressed(KEYCODE_E))	msk |= 4;
+	if (code_pressed(KEYCODE_A))	msk |= 4;
 	if (msk != 0) layers_ctrl &= msk;	}
 #endif
 
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
 	else					fillbitmap(bitmap,get_black_pen(),cliprect);
 
-	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap,cliprect);
+	if (layers_ctrl & 4) 	afega_draw_sprites(bitmap,cliprect, attr_mask);
 
-	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
+	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }
 
-VIDEO_UPDATE( redhawkb )
-{
-	int layers_ctrl = -1;
-
-	/* Horizintal and vertical screen flip are hardwired to 2 dip switches */
-//  flip_screen_x_set(~readinputport(2) & 0x0100);
-//  flip_screen_y_set(~readinputport(2) & 0x0200);
-
-	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0]+0x100);
-	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1]);
-
-	tilemap_set_scrolly(tilemap_1, 0, afega_scroll_1[0]);
-	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
-
-#ifdef MAME_DEBUG
-if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
-{	int msk = 0;
-	if (code_pressed(KEYCODE_Q))	msk |= 1;
-	if (code_pressed(KEYCODE_W))	msk |= 2;
-	if (code_pressed(KEYCODE_E))	msk |= 4;
-	if (msk != 0) layers_ctrl &= msk;	}
-#endif
-
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
-	else					fillbitmap(bitmap,get_black_pen(),cliprect);
-
-	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap,cliprect);
-
-	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
-}
-
-/* Same as 'afega', but no screen flip support */
-VIDEO_UPDATE( bubl2000 )
-{
-	int layers_ctrl = -1;
-
-/* I really would like somebody to see the schematics of 'bubl2000' for confirmation */
-#if 0
-	/* Horizintal and vertical screen flip are hardwired to 2 dip switches */
-	flip_screen_x_set(~readinputport(2) & 0x0100);
-	flip_screen_y_set(~readinputport(2) & 0x0200);
-#endif
-
-	tilemap_set_scrolly(tilemap_0, 0, afega_scroll_0[0]);
-	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_0[1] - 0x100);
-
-	tilemap_set_scrolly(tilemap_1, 0, afega_scroll_1[0]);
-	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
-
-#ifdef MAME_DEBUG
-if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
-{	int msk = 0;
-	if (code_pressed(KEYCODE_Q))	msk |= 1;
-	if (code_pressed(KEYCODE_W))	msk |= 2;
-	if (code_pressed(KEYCODE_E))	msk |= 4;
-	if (msk != 0) layers_ctrl &= msk;	}
-#endif
-
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
-	else					fillbitmap(bitmap,get_black_pen(),cliprect);
-
-	if (layers_ctrl & 2) 	afega_draw_sprites(bitmap,cliprect);
-
-	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
-}
+VIDEO_UPDATE( afega )		{	video_update(screen,bitmap,cliprect, 1, -0x100,+0x000, 0x0001);	}
+VIDEO_UPDATE( bubl2000 )	{	video_update(screen,bitmap,cliprect, 0, -0x100,+0x000, 0x0001);	}	// no flipscreen support, I really would confirmation from the schematics
+VIDEO_UPDATE( redhawkb )	{	video_update(screen,bitmap,cliprect, 0, +0x000,+0x100, 0x0001);	}
+VIDEO_UPDATE( twinactn )	{	video_update(screen,bitmap,cliprect, 0, +0x000,+0x000, 0x0100);	}
 
 VIDEO_UPDATE( firehawk )
 {
@@ -409,7 +355,7 @@ VIDEO_UPDATE( firehawk )
 	tilemap_set_scrollx(tilemap_0, 0, afega_scroll_1[0]);
 
 	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
-	afega_draw_sprites(bitmap,cliprect);
+	afega_draw_sprites(bitmap,cliprect,1);
 
 	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }

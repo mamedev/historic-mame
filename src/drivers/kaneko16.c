@@ -39,6 +39,7 @@ Year + Game                 PCB         Notes
 ---------------------------------------------------------------------------
 
 Note: gtmr manual shows "Compatible with AX Kaneko System Board"
+Note: Magic Crystals reports "TOYBOX SYSTEM Version 0.93B+"
 
 To Do:
 
@@ -3427,18 +3428,20 @@ DIP settings:
 3: Unused
 4: Unused
 
+Yes, one program rom actually is a 27C010 and the other one is a 27C020
+
 ***************************************************************************/
 
-ROM_START( mgcrystl )
+ROM_START( mgcrystl ) /* Master Up: 92/01/10 14:21:30 */
  	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "magcrstl.u18", 0x000000, 0x020000, CRC(c7456ba7) SHA1(96c25c3432069373fa86d7af3e093e02e39aea34) )
-	ROM_LOAD16_BYTE( "magcrstl.u19", 0x000001, 0x040000, CRC(ea8f9300) SHA1(0cd0d448805aa45986b63befca00b08fe066dbb2) ) //!!
+	ROM_LOAD16_BYTE( "mc100e02.u18", 0x000000, 0x020000, CRC(246a1335) SHA1(8333945a92e08a7bff425d2d6602557386016dc5) ) /* Labeled as MC100E/U18-02 */
+	ROM_LOAD16_BYTE( "mc101e02.u19", 0x000001, 0x040000, CRC(708ea1dc) SHA1(ae6eca6620729bc1e815f1bfbd8fe130f0ba943c) ) /* Labeled as MC101E/U19-02 */
 
 	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "mc000.u38",    0x000000, 0x100000, CRC(28acf6f4) SHA1(6647ad90ea580b65ed28772f9d65352b06833d0c) )
 	ROM_LOAD( "mc001.u37",    0x100000, 0x080000, CRC(005bc43d) SHA1(6f6cd99e8e60562fa86581008455a6d9d646fa95) )
 	ROM_RELOAD(               0x180000, 0x080000             )
-	ROM_LOAD( "magcrstl.u36", 0x200000, 0x020000, CRC(22729037) SHA1(de4e1bdab57aa617411b6327f3db4856970e8953) )
+	ROM_LOAD( "mc002e02.u36", 0x200000, 0x020000, CRC(27ac1056) SHA1(34b07c1a0d403ca45c9849d3d8d311012f787df6) ) /* Labeled as MC002E/U36-02 */
 	ROM_RELOAD(               0x220000, 0x020000             )
 	ROM_RELOAD(               0x240000, 0x020000             )
 	ROM_RELOAD(               0x260000, 0x020000             )
@@ -3453,16 +3456,40 @@ ROM_START( mgcrystl )
 	ROM_LOAD( "mc030.u32",  0x000000, 0x040000, CRC(c165962e) SHA1(f7e130db387ae9dcb7223f7ad6e51270d3033bc9) )
 ROM_END
 
-ROM_START( mgcrystj )
+ROM_START( mgcrysto ) /* Master Up: 91/12/10 01:56:06 */
  	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "mc100j.u18", 0x000000, 0x020000, CRC(afe5882d) SHA1(176e6e12e3df63c08d7aff781f5e5a9bd83ec293) )
-	ROM_LOAD16_BYTE( "mc101j.u19", 0x000001, 0x040000, CRC(60da5492) SHA1(82b90a617d355825624ce9fb30bddf4714bd0d18) )	//!!
+	ROM_LOAD16_BYTE( "mc100h00.u18", 0x000000, 0x020000, CRC(c7456ba7) SHA1(96c25c3432069373fa86d7af3e093e02e39aea34) ) /* Labeled as MC100H/U18-00 */
+	ROM_LOAD16_BYTE( "mc101h00.u19", 0x000001, 0x040000, CRC(ea8f9300) SHA1(0cd0d448805aa45986b63befca00b08fe066dbb2) ) /* Labeled as MC101H/U19-00 */
+
+	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "mc000.u38",    0x000000, 0x100000, CRC(28acf6f4) SHA1(6647ad90ea580b65ed28772f9d65352b06833d0c) )
+	ROM_LOAD( "mc001.u37",    0x100000, 0x080000, CRC(005bc43d) SHA1(6f6cd99e8e60562fa86581008455a6d9d646fa95) )
+	ROM_RELOAD(               0x180000, 0x080000             )
+	ROM_LOAD( "mc002h00.u36", 0x200000, 0x020000, CRC(22729037) SHA1(de4e1bdab57aa617411b6327f3db4856970e8953) ) /* Labeled as MC002H/U36-00 */
+	ROM_RELOAD(               0x220000, 0x020000             )
+	ROM_RELOAD(               0x240000, 0x020000             )
+	ROM_RELOAD(               0x260000, 0x020000             )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "mc010.u04",  0x000000, 0x100000, CRC(85072772) SHA1(25e903cc2c893d61db791d1fe60a1205a4395667) )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "mc020.u34",  0x000000, 0x100000, CRC(1ea92ff1) SHA1(66ec53e664b2a5a751a280a538aaeceafc187ceb) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "mc030.u32",  0x000000, 0x040000, CRC(c165962e) SHA1(f7e130db387ae9dcb7223f7ad6e51270d3033bc9) )
+ROM_END
+
+ROM_START( mgcrystj ) /* Master Up: 92/01/13 14:44:20 */
+ 	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "mc100j02.u18", 0x000000, 0x020000, CRC(afe5882d) SHA1(176e6e12e3df63c08d7aff781f5e5a9bd83ec293) ) /* Labeled as MC100J/U18-02 */
+	ROM_LOAD16_BYTE( "mc101j02.u19", 0x000001, 0x040000, CRC(60da5492) SHA1(82b90a617d355825624ce9fb30bddf4714bd0d18) ) /* Labeled as MC101J/U19-02 */
 
 	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
 	ROM_LOAD( "mc000.u38",  0x000000, 0x100000, CRC(28acf6f4) SHA1(6647ad90ea580b65ed28772f9d65352b06833d0c) )
 	ROM_LOAD( "mc001.u37",  0x100000, 0x080000, CRC(005bc43d) SHA1(6f6cd99e8e60562fa86581008455a6d9d646fa95) )
 	ROM_RELOAD(             0x180000, 0x080000             )
-	ROM_LOAD( "mc002j.u36", 0x200000, 0x020000, CRC(27ac1056) SHA1(34b07c1a0d403ca45c9849d3d8d311012f787df6) )
+	ROM_LOAD( "mc002e02.u36", 0x200000, 0x020000, CRC(27ac1056) SHA1(34b07c1a0d403ca45c9849d3d8d311012f787df6) ) /* Labeled as MC002J/U36-02, but same as MC002E/U36-02 */
 	ROM_RELOAD(             0x220000, 0x020000             )
 	ROM_RELOAD(             0x240000, 0x020000             )
 	ROM_RELOAD(             0x260000, 0x020000             )
@@ -3945,8 +3972,9 @@ ROM_END
 
 GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall,   ROT0,  "Kaneko", "The Berlin Wall", 0 )
 GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall,   ROT0,  "Kaneko", "The Berlin Wall (bootleg ?)", 0 )
-GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko", "Magical Crystals (World)", 0 )
-GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)", 0 )
+GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko", "Magical Crystals (World, 92/01/10)", 0 )
+GAME( 1991, mgcrysto, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko", "Magical Crystals (World, 91/12/10)", 0 )
+GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16,   ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan, 92/01/13)", 0 )
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16,   ROT0,  "Atlus",  "Blaze On (Japan)", 0 )
 GAME( 1992, explbrkr, 0,        bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Explosive Breaker", 0 )
 GAME( 1992, bakubrkr, explbrkr, bakubrkr, bakubrkr, kaneko16,   ROT90, "Kaneko", "Bakuretsu Breaker", 0 )

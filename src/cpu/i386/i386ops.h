@@ -17,7 +17,7 @@ typedef struct {
 #define OP_CYRIX		0x8000
 #define OP_2BYTE		0x80000000
 
-static X86_OPCODE x86_opcode_table[] =
+static const X86_OPCODE x86_opcode_table[] =
 {
 //  Opcode      Flags                       16-bit handler                  32-bit handler
 	{ 0x00,		OP_I386,					I386OP(add_rm8_r8),				I386OP(add_rm8_r8),			},
@@ -286,6 +286,7 @@ static X86_OPCODE x86_opcode_table[] =
 	{ 0xFF,		OP_I386,					I386OP(groupFF_16),				I386OP(groupFF_32),			},
 	{ 0x00,		OP_2BYTE|OP_I386,			I386OP(group0F00_16),			I386OP(group0F00_32),		},
 	{ 0x01,		OP_2BYTE|OP_I386,			I386OP(group0F01_16),			I386OP(group0F01_32),		},
+	{ 0x01,		OP_2BYTE|OP_I486,			I486OP(group0F01_16),			I486OP(group0F01_32),		},
 	{ 0x02,		OP_2BYTE|OP_I386,			I386OP(unimplemented),			I386OP(unimplemented),		},
 	{ 0x03,		OP_2BYTE|OP_I386,			I386OP(unimplemented),			I386OP(unimplemented),		},
 	{ 0x06,		OP_2BYTE|OP_I386,			I386OP(clts),					I386OP(clts),				},
@@ -348,6 +349,8 @@ static X86_OPCODE x86_opcode_table[] =
 	{ 0xAD,		OP_2BYTE|OP_I386,			I386OP(shrd16_cl),				I386OP(shrd32_cl),			},
 	{ 0xAE,		OP_2BYTE|OP_I386,			I386OP(invalid),				I386OP(invalid),			},
 	{ 0xAF,		OP_2BYTE|OP_I386,			I386OP(imul_r16_rm16),			I386OP(imul_r32_rm32),		},
+	{ 0xB0,		OP_2BYTE|OP_I486,			I486OP(cmpxchg_rm8_r8),			I486OP(cmpxchg_rm8_r8),		},
+	{ 0xB1,		OP_2BYTE|OP_I486,			I486OP(cmpxchg_rm16_r16),		I486OP(cmpxchg_rm32_r32),	},
 	{ 0xB2,		OP_2BYTE|OP_I386,			I386OP(lss16),					I386OP(lss32),				},
 	{ 0xB3,		OP_2BYTE|OP_I386,			I386OP(btr_rm16_r16),			I386OP(btr_rm32_r32),		},
 	{ 0xB4,		OP_2BYTE|OP_I386,			I386OP(lfs16),					I386OP(lfs32),				},
@@ -360,4 +363,6 @@ static X86_OPCODE x86_opcode_table[] =
 	{ 0xBD,		OP_2BYTE|OP_I386,			I386OP(bsr_r16_rm16),			I386OP(bsr_r32_rm32),		},
 	{ 0xBE,		OP_2BYTE|OP_I386,			I386OP(movsx_r16_rm8),			I386OP(movsx_r32_rm8),		},
 	{ 0xBF,		OP_2BYTE|OP_I386,			I386OP(invalid),				I386OP(movsx_r32_rm16),		},
+	{ 0xC0,		OP_2BYTE|OP_I486,			I486OP(xadd_rm8_r8),			I486OP(xadd_rm8_r8),		},
+	{ 0xC1,		OP_2BYTE|OP_I486,			I486OP(xadd_rm16_r16),			I486OP(xadd_rm32_r32),		}
 };

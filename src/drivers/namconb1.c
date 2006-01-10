@@ -806,7 +806,7 @@ ROM_START( ptblank )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gn1-spr0.bin", 0, 0x20000, CRC(6836ba38) SHA1(6ea17ea4bbb59be108e8887acd7871409580732f) )
 	NAMCO_C7X_BIOS
 
@@ -836,7 +836,7 @@ ROM_START( gunbulet )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gn1-spr0.bin", 0, 0x20000, CRC(6836ba38) SHA1(6ea17ea4bbb59be108e8887acd7871409580732f) )
 	NAMCO_C7X_BIOS
 
@@ -866,7 +866,7 @@ ROM_START( nebulray )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "nr1-spr0", 0, 0x20000, CRC(1cc2b44b) SHA1(161f4ed39fabe89d7ee1d539f8b9f08cd0ff3111) )
 	NAMCO_C7X_BIOS
 
@@ -903,7 +903,7 @@ ROM_START( nebulryj )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "nr1-spr0", 0, 0x20000, CRC(1cc2b44b) SHA1(161f4ed39fabe89d7ee1d539f8b9f08cd0ff3111) )
 	NAMCO_C7X_BIOS
 
@@ -940,7 +940,7 @@ ROM_START( gslgr94u )
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gse2spr0.bin", 0, 0x20000, CRC(17e87cfc) SHA1(9cbeadb6dfcb736e8c80eab344f70fc2f58469d6) )
 	NAMCO_C7X_BIOS
 
@@ -968,7 +968,7 @@ ROM_START( gslugrsj )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "gs1spr0.5b", 0, 0x80000, CRC(561ea20f) SHA1(adac6b77effc3a82079a9b228bafca0fcef72ba5) )
 	NAMCO_C7X_BIOS
 
@@ -996,7 +996,7 @@ ROM_START( sws95 )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ss51spr0.bin", 0, 0x80000, CRC(71cb12f5) SHA1(6e13bd16a5ba14d6e47a21875db3663ada3c06a5) )
 	NAMCO_C7X_BIOS
 
@@ -1025,7 +1025,7 @@ ROM_START( sws96 )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ss61spr0.bin", 0, 0x80000, CRC(71cb12f5) SHA1(6e13bd16a5ba14d6e47a21875db3663ada3c06a5) )
 	NAMCO_C7X_BIOS
 
@@ -1053,7 +1053,7 @@ ROM_START( sws97 )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ss71spr0.bin", 0, 0x80000, CRC(71cb12f5) SHA1(6e13bd16a5ba14d6e47a21875db3663ada3c06a5) )
 	NAMCO_C7X_BIOS
 
@@ -1081,7 +1081,7 @@ ROM_START( vshoot )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "vsj1spr0.5b", 0, 0x80000, CRC(b0c71aa6) SHA1(a94fae02b46a645ff728d2f98827c85ff155892b) )
 	NAMCO_C7X_BIOS
 
@@ -1111,7 +1111,7 @@ ROM_START( outfxies )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ou1spr0.5b", 0, 0x80000, CRC(60cee566) SHA1(2f3b96793816d90011586e0f9f71c58b636b6d4c) )
 	NAMCO_C7X_BIOS
 
@@ -1156,7 +1156,7 @@ ROM_START( outfxesj )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ou1spr0.5b", 0, 0x80000, CRC(60cee566) SHA1(2f3b96793816d90011586e0f9f71c58b636b6d4c) )
 	NAMCO_C7X_BIOS
 
@@ -1202,7 +1202,7 @@ ROM_START( machbrkr )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* sound program */
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "mb1_spr0.5b", 0, 0x80000, CRC(d10f6272) SHA1(cb99e06e050dbf86998ea51ef2ca130b2acfb2f6) )
 	NAMCO_C7X_BIOS
 

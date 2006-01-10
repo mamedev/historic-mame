@@ -3,17 +3,6 @@
 ********************************************************************************
  driver by David Haywood
 
- TODO :
-
- IRQ frequencies have been measured, however the 'vblank' flag may still be
- incorrect.  It hasn't been verified that the game speed is correct
-
- Incorrect behavior of the above either causes a hang on count-out, or laggy
- gameplay.
-
- Dump original MASK roms for GFX - the current roms are from a bootleg board
-
-
  Special Thanks to:
 
  Richard Bush & the Rest of the Raine Team - Raine's WWF Superstars driver on
@@ -23,7 +12,7 @@
 
  Hardware:
 
- Primary CPU : 68000 - Clock Speed Unknown
+ Primary CPU : 68000
 
  Sound CPUs : Z80
 
@@ -67,34 +56,27 @@
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
-WRITE16_HANDLER ( wwfsstar_scrollwrite );
-
 /* in (vidhrdw/wwfsstar.c) */
 VIDEO_START( wwfsstar );
 VIDEO_UPDATE( wwfsstar );
-
-READ16_HANDLER( input_port_2_word_r_cust );
-
 WRITE16_HANDLER( wwfsstar_fg0_videoram_w );
 WRITE16_HANDLER( wwfsstar_bg0_videoram_w );
-WRITE16_HANDLER ( wwfsstar_soundwrite );
 
+extern UINT16 *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 
-static WRITE16_HANDLER( wwfsstar_flipscreen_w )
-{
-	flip_screen_set(data & 1);
-}
+static READ16_HANDLER( input_port_2_word_r_cust );
+static WRITE16_HANDLER( wwfsstar_irqack_w );
+static WRITE16_HANDLER( wwfsstar_flipscreen_w );
+static WRITE16_HANDLER ( wwfsstar_soundwrite );
+static WRITE16_HANDLER ( wwfsstar_scrollwrite );
 
+static int vblank;
 
 /*******************************************************************************
  Memory Maps
 ********************************************************************************
  Pretty Straightforward
-
- some unknown writes in the 0x180000 region
 *******************************************************************************/
-
-extern UINT16 *wwfsstar_fg0_videoram, *wwfsstar_bg0_videoram;
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)	/* Rom */
@@ -105,7 +87,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180002, 0x180003) AM_READ(input_port_4_word_r)	/* DSW1 */
 	AM_RANGE(0x180004, 0x180005) AM_READ(input_port_0_word_r)	/* CTRLS0 */
 	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_1_word_r)	/* CTRLS1 */
-	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_2_word_r)	/* MISC */
+	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_2_word_r_cust)	/* MISC */
 	AM_RANGE(0x1c0000, 0x1c3fff) AM_READ(MRA16_RAM)	/* Work Ram */
 ADDRESS_MAP_END
 
@@ -115,8 +97,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(wwfsstar_bg0_videoram_w) AM_BASE(&wwfsstar_bg0_videoram)	/* BG0 Ram */
 	AM_RANGE(0x100000, 0x1003ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)	/* SPR Ram */
 	AM_RANGE(0x140000, 0x140fff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x180000, 0x180001) AM_WRITE(MWA16_NOP)	/* ??? */
-	AM_RANGE(0x180002, 0x180003) AM_WRITE(MWA16_NOP)	/* ??? */
+	AM_RANGE(0x180000, 0x180003) AM_WRITE(wwfsstar_irqack_w)
 	AM_RANGE(0x180004, 0x180007) AM_WRITE(wwfsstar_scrollwrite)
 	AM_RANGE(0x180008, 0x180009) AM_WRITE(wwfsstar_soundwrite)
 	AM_RANGE(0x18000a, 0x18000b) AM_WRITE(wwfsstar_flipscreen_w)
@@ -148,7 +129,7 @@ ADDRESS_MAP_END
 
 int wwfsstar_scrollx, wwfsstar_scrolly; /* used in (vidhrdw/wwfsstar.c) */
 
-WRITE16_HANDLER ( wwfsstar_scrollwrite )
+static WRITE16_HANDLER ( wwfsstar_scrollwrite )
 {
 	switch (offset)
 	{
@@ -161,12 +142,72 @@ WRITE16_HANDLER ( wwfsstar_scrollwrite )
 	}
 }
 
-WRITE16_HANDLER ( wwfsstar_soundwrite )
+static WRITE16_HANDLER ( wwfsstar_soundwrite )
 {
 	soundlatch_w(1,data & 0xff);
 	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
+static WRITE16_HANDLER( wwfsstar_flipscreen_w )
+{
+	flip_screen_set(data & 1);
+}
+
+static WRITE16_HANDLER( wwfsstar_irqack_w )
+{
+	if(offset == 0)
+		cpunum_set_input_line(0, 6, CLEAR_LINE);
+
+	else
+		cpunum_set_input_line(0, 5, CLEAR_LINE);
+}
+
+/*
+    Interrupt behaviour verified from actual PCB.
+
+    After the post third match intermission, there's a tight loop
+    which polls the vblank input bit until it is active.
+    The subsequent vblank ISR does not complete during the vblank
+    duration. On the real PCB, the 68000 would catch the active
+    vblank value before the interrupt was taken. The MAME
+    implementation does not and thus hangs.
+
+    A hack is required: raise the vblank bit a scanline early.
+*/
+
+static INTERRUPT_GEN( wwfsstars_interrupt )
+{
+	int scanline = 271 - cpu_getiloops();
+
+	/* Vblank is lowered on scanline 0 (8) */
+	if (scanline == 0)
+	{
+		vblank = 0;
+	}
+	/* Hack */
+	else if (scanline==239)
+	{
+		vblank = 1;
+	}
+	/* Vblank is raised on scanline 240 (248) */
+	else if (scanline==240)
+	{
+		force_partial_update(scanline);
+		cpunum_set_input_line(0, 6, ASSERT_LINE);
+	}
+
+	/* An interrupt is generated every 16 scanlines */
+	if (scanline%16 == 0)
+	{
+		force_partial_update(scanline);
+		cpunum_set_input_line(0, 5, ASSERT_LINE);
+	}
+}
+
+static READ16_HANDLER( input_port_2_word_r_cust )
+{
+	return readinputport(2) | vblank;
+}
 
 /*******************************************************************************
  Input Ports
@@ -198,7 +239,7 @@ INPUT_PORTS_START( wwfsstar )
 	PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_START2 ) PORT_NAME("Button B (1P VS 2P - Buy-in)")
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK ) // ??
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* VBlank */
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -316,29 +357,25 @@ static struct YM2151interface ym2151_interface =
 
 /*******************************************************************************
  Machine Driver(s)
-********************************************************************************
- Clock Speeds are currently Unknown
 *******************************************************************************/
 
 static MACHINE_DRIVER_START( wwfsstar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)	/* unknown */
+	MDRV_CPU_ADD(M68000, 10000000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq6_line_hold,1) // measured at 59hz
-	MDRV_CPU_PERIODIC_INT(irq5_line_hold,TIME_IN_HZ(977)) // measured at 977Hz
+	MDRV_CPU_VBLANK_INT(wwfsstars_interrupt,272)
 
 	MDRV_CPU_ADD(Z80, 3579545)
-	/* audio CPU */	/* unknown */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 
-	MDRV_FRAMES_PER_SECOND(59)
-	MDRV_VBLANK_DURATION(2000) //?
+	MDRV_FRAMES_PER_SECOND(57.44)
+	MDRV_VBLANK_DURATION(0)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(384)
 

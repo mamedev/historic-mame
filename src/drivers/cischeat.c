@@ -52,6 +52,12 @@ Year + Game     Hardware:   Main    Sub#1   Sub#2   Sound   Sound Chips
         MB - Middle board  (GFX)               GP-9189  EB90015-20038
         LB - Lower board   (CPU/GFX)           GP-9188A EB90015-20037-1
 
+[92 Arm Champs II]          68000   -       -       -       2xM6295
+
+    Top board   EB91042-20048-3 AC-91106B
+    Lower board EB91015-20038 GP-9189
+    Same chips as Scud Hammer
+
 [94 Scud Hammer]            68000   -       -       -       2xM6295
 
     Board CF-92128B Chips:
@@ -599,6 +605,101 @@ static ADDRESS_MAP_START( writemem_scudhamm, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x10001c, 0x10001d) AM_WRITE(scudhamm_enable_w			)	// ?
 	AM_RANGE(0x100040, 0x100041) AM_WRITE(MWA16_NOP					)	// ? 0 written before reading
 	AM_RANGE(0x100050, 0x100051) AM_WRITE(scudhamm_motor_command_w	)	// Move Motor
+ADDRESS_MAP_END
+
+
+/**************************************************************************
+                            Arm Champs II
+**************************************************************************/
+
+static READ16_HANDLER( armchmp2_motor_status_r )
+{
+	return 0x11;
+}
+
+static WRITE16_HANDLER( armchmp2_motor_command_w )
+{
+	COMBINE_DATA( &scudhamm_motor_command );
+}
+
+static READ16_HANDLER( armchmp2_analog_r )
+{
+	int armdelta;
+	static int armold = 0;
+
+	armdelta = readinputport(1) - armold;
+	armold = readinputport(1);
+
+	return ~( scudhamm_motor_command + armdelta );	// + x : x<=0 and player loses, x>0 and player wins
+}
+
+static READ16_HANDLER( armchmp2_buttons_r )
+{
+	int arm_x = readinputport(1);
+
+	UINT16 ret = readinputport(0);
+
+	if (arm_x < 0x40)		ret &= ~1;
+	else if (arm_x > 0xc0)	ret &= ~2;
+	else if ((arm_x > 0x60) && (arm_x < 0xa0))	ret &= ~4;
+
+	return ret;
+}
+
+/*
+    f--- ---- ---- ----
+    -edc ---- ---- ----     Leds
+    ---- ba9- ---- ----
+    ---- ---8 ---- ----		Start button led
+    ---- ---- 76-- ----     Coin counters
+    ---- ---- --54 3210
+*/
+static WRITE16_HANDLER( armchmp2_leds_w )
+{
+	if (ACCESSING_MSB)
+	{
+		set_led_status(0, data & 0x0100);
+ 		set_led_status(1, data & 0x1000);
+		set_led_status(2, data & 0x2000);
+		set_led_status(3, data & 0x4000);
+	}
+
+	if (ACCESSING_LSB)
+	{
+		coin_counter_w(0, data & 0x0040);
+		coin_counter_w(1, data & 0x0080);
+	}
+}
+
+static ADDRESS_MAP_START( readmem_armchmp2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM					)	// ROM
+	AM_RANGE(0x0f0000, 0x0fffff) AM_READ(MRA16_RAM					)	// Work RAM + Spriteram
+	AM_RANGE(0x082000, 0x082fff) AM_READ(MRA16_RAM					)	// Video Registers + RAM
+	AM_RANGE(0x0a0000, 0x0a3fff) AM_READ(MRA16_RAM					)	// Scroll RAM 0
+	AM_RANGE(0x0b0000, 0x0b3fff) AM_READ(MRA16_RAM					)	// Scroll RAM 2
+	AM_RANGE(0x0b8000, 0x0bffff) AM_READ(MRA16_RAM					)	// Palette
+	AM_RANGE(0x100000, 0x100001) AM_READ(input_port_2_word_r		)	// DSW
+	AM_RANGE(0x100004, 0x100005) AM_READ(input_port_3_word_r		)	// DSW
+	AM_RANGE(0x100008, 0x100009) AM_READ(armchmp2_buttons_r			)	// Buttons + Sensors
+	AM_RANGE(0x10000c, 0x10000d) AM_READ(armchmp2_analog_r			)	// A / D
+	AM_RANGE(0x100010, 0x100011) AM_READ(armchmp2_motor_status_r	)	// Motor Limit Switches?
+	AM_RANGE(0x100014, 0x100015) AM_READ(OKIM6295_status_0_lsb_r	)	// Sound
+	AM_RANGE(0x100018, 0x100019) AM_READ(OKIM6295_status_1_lsb_r	)	//
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( writemem_armchmp2, ADDRESS_SPACE_PROGRAM, 16 )
+ 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM					)	// ROM
+	AM_RANGE(0x0f0000, 0x0fffff) AM_WRITE(MWA16_RAM) AM_BASE(				&megasys1_ram			)	// Work RAM + Spriteram
+	AM_RANGE(0x082000, 0x082fff) AM_WRITE(scudhamm_vregs_w) AM_BASE(		&megasys1_vregs			)	// Video Registers + RAM
+	AM_RANGE(0x0a0000, 0x0a3fff) AM_WRITE(megasys1_scrollram_0_w) AM_BASE(	&megasys1_scrollram[0]	)	// Scroll RAM 0
+	AM_RANGE(0x0b0000, 0x0b3fff) AM_WRITE(megasys1_scrollram_2_w) AM_BASE(	&megasys1_scrollram[2]	)	// Scroll RAM 2
+	AM_RANGE(0x0b8000, 0x0bffff) AM_WRITE(scudhamm_paletteram16_w) AM_BASE(	&paletteram16			)	// Palette
+ 	AM_RANGE(0x100000, 0x100001) AM_WRITE(scudhamm_oki_bank_w		)	// Sound
+ 	AM_RANGE(0x100008, 0x100009) AM_WRITE(armchmp2_leds_w			)	// Leds + Coin Counters
+ 	AM_RANGE(0x10000c, 0x10000d) AM_WRITE(MWA16_NOP					)	// ?
+	AM_RANGE(0x100010, 0x100011) AM_WRITE(armchmp2_motor_command_w	)	// Move Motor
+	AM_RANGE(0x100014, 0x100015) AM_WRITE(OKIM6295_data_0_lsb_w		)	// Sound
+	AM_RANGE(0x100018, 0x100019) AM_WRITE(OKIM6295_data_1_lsb_w		)	//
 ADDRESS_MAP_END
 
 
@@ -1415,6 +1516,77 @@ INPUT_PORTS_START( scudhamm )
 INPUT_PORTS_END
 
 
+/**************************************************************************
+                            Arm Champs II
+**************************************************************************/
+
+INPUT_PORTS_START( armchmp2 )
+	PORT_START_TAG("IN0")	// Buttons + Sensors
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_SPECIAL  ) // left   sensor
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_SPECIAL  ) // right  sensor
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SPECIAL  ) // center sensor
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE( 0x0010, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_COIN1    )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_COIN2    )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1  ) // hard
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2  ) // easy
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3  ) // elbow (it always complains though)
+
+	PORT_START_TAG("IN1")	// A/D
+	PORT_BIT( 0x00ff, 0x0000, IPT_DIAL ) PORT_MINMAX(0x0000,0x00ff) PORT_SENSITIVITY(100) PORT_KEYDELTA(0)
+
+	PORT_START_TAG("IN2")	// DSW
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x000c, "2" )
+	PORT_DIPSETTING(      0x0008, "3" )
+	PORT_DIPSETTING(      0x0004, "4" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Game_Time ) )
+	PORT_DIPSETTING(      0x0000, "15 s" )
+	PORT_DIPSETTING(      0x0030, "20 s" )
+	PORT_DIPSETTING(      0x0020, "25 s" )
+	PORT_DIPSETTING(      0x0010, "30 s" )
+	PORT_DIPNAME( 0x00c0, 0x0000, DEF_STR( Region ) )	// some text is in japanese regardless!
+	PORT_DIPSETTING(      0x00c0, DEF_STR( Japan ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( USA ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Europe ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( World ) )
+
+	PORT_START_TAG("IN3")	// DSW
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Demo Arm" )
+	PORT_DIPSETTING(    0x80, "Center" )
+	PORT_DIPSETTING(    0x00, "Side" )
+INPUT_PORTS_END
+
 
 /**************************************************************************
 
@@ -1714,7 +1886,7 @@ INTERRUPT_GEN( interrupt_scudhamm )
 static MACHINE_DRIVER_START( scudhamm )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_ADD_TAG("main",M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(readmem_scudhamm,writemem_scudhamm)
 	MDRV_CPU_VBLANK_INT(interrupt_scudhamm,INTERRUPT_NUM_SCUDHAMM)
 
@@ -1743,6 +1915,30 @@ static MACHINE_DRIVER_START( scudhamm )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+MACHINE_DRIVER_END
+
+
+/**************************************************************************
+                            Arm Champs II
+**************************************************************************/
+
+INTERRUPT_GEN( interrupt_armchmp2)
+{
+	switch ( cpu_getiloops() )
+	{
+		case 0:		cpunum_set_input_line(0, 4, PULSE_LINE);
+		case 14:	cpunum_set_input_line(0, 2, PULSE_LINE);
+	}
+}
+
+static MACHINE_DRIVER_START( armchmp2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(scudhamm)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(readmem_armchmp2,writemem_armchmp2)
+	MDRV_CPU_VBLANK_INT(interrupt_armchmp2,INTERRUPT_NUM_SCUDHAMM)
+
 MACHINE_DRIVER_END
 
 
@@ -2771,6 +2967,187 @@ ROM_END
 
 /***************************************************************************
 
+Arm Champs II
+Jaleco, 1992
+
+An arm wrestling game from Jaleco. Game is part mechanical, part video. The video part
+is shown on a vertical screen, being your opponent you are wrestling. The mechanical 
+part is an arm you force against to pin your opponent's 'arm'. The mechanical arm is powered 
+by a motor. The arm probably has a 5k potentiometer connected to it to give feedback to the
+hardware about the position of the mechanical arm. 
+The opponents get progressively harder and harder, it's almost impossible to beat the final
+few opponents unless you have a few friends handy to swing on the arm ;-))
+Arm Champs II appears to be a simple ROM upgrade on Arm Champs hardware.
+The hardware appears to be similar to Jaleco's 'Grand Prix Star' etc, using many of
+the same custom IC's, and even some of the same ROMs.
+
+
+PCB Layouts
+-----------
+
+(top board)
+EB91042-20048-3
+AC-91106B
+|---------------------------------------------------------------------------|
+| uPC1318                                         GS9001501   TL7705        |
+|          |-------------|                                                  |
+|POWER     |   68000-12  |                                  PR88004Q_8.IC102|
+|          |-------------|                                                  |
+|                         24MHz                        AC91106_VER1.2_7.IC99|
+|                                                                           |
+|                                                 GS9000406    GS90015-02   |
+|                                                                          |-|
+|                                                   6264          6264     | |
+|                                     AC91106_VER1.7_4.IC63                | |
+|C                                                                         | |
+|U                                    AC91106_VER1.7_3.IC62                | |
+|S                                                                         | |
+|T                                                    MR91042-07-R66_6.IC95| |
+|O                                       62256                             |-|
+|M                                                                          |
+|7                                       62256    GS9000406    GS90015-02   |
+|2                     ADC0804                                              |
+|P                                                               6264       |
+|I                                                                         |-|
+|N                                                GS90015-03     6264      | |
+|                                                                          | |
+|                                 M6295                     PR91042_5.IC91 | |
+|                                      MR91042-08_2.IC57                   | |
+|                                                                          | |
+|                                 M6295                                    | |
+|                PMI_PM7528            AC91106_VER1.2_1.IC56               | |
+|                                                     62256                | |
+|                                                     62256                | |
+| POWER     DSW1   DSW2            4MHz                                    |-|
+|---------------------------------------------------------------------------|
+Notes:
+      68000 clock       - 12.0MHz [24/2]
+      Jaleco Custom ICs -
+                         GS9001501 (QFP44)
+                         GS9000406 (QFP80, x2)
+                         GS90015-02 (QFP100, x2)
+                         GS90015-03 (QFP80)
+
+      ROMs -
+            PR88004Q_8.IC102      - 82S147 PROM
+            AC91106_VER1.2_7.IC99 - 27C010 EPROM
+            MR91042007-R66_6.IC95 - 4M MASKROM
+            AC91106_VER1.7_4.IC63 - 27C010 EPROM
+            AC91106_VER1.7_3.IC62 - 27C010 EPROM
+            MR91042-08_2.IC57     - 4M MASKROM
+            AC91106_VER1.2_1.IC56 - 27C4001 EPROM
+            PR91042_5.IC91        - 82S129 PROM
+
+
+(lower board)
+GP-9189
+EB91015-20038
+|---------------------------------------------------------------------------|
+|MR91042-01-R60_1.IC1                                                       |
+|        MR91042-02-R61_2.IC2    62256                             62256    |
+|                                       GS90015-06    GS90015-06            |
+|MR91042-03-R62_3.IC5                                                       |
+|        MR91042-04-R63_4.IC6    62256                             62256    |
+|                                                                           |
+|MR91042-05-R64_5.IC11                                                      |
+|        MR91042-06-R65_6.IC12   62256                             62256   |-|
+|                                       GS90015-03    GS90015-03           | |
+|                                                                          | |
+|                                62256                             62256   | |
+|                                                                          | |
+|                                                                          | |
+|                        GS90015-08                                        | |
+|                                               GS90015-07   GS90015-10    |-|
+|                                                                           |
+|                                                                           |
+| CH9072-5_11.IC33                                                          |
+|              GS90015-11              CH9072-6_12.IC35                     |
+|                                      CH9072-4_13.IC39                    |-|
+|                                                                          | |
+|                                                                          | |
+|                          MR90015-35-W33_14.IC54                          | |
+|                                                                          | |
+|      CH9072-8_15.IC59    MR90015-35-W33_17.IC67                          | |
+|                                                    GS90015-09            | |
+|              PR88004W_16.IC66                                            | |
+|                                                                          | |
+|                                                      6116                | |
+| POWER                                                6116                |-|
+|---------------------------------------------------------------------------|
+Notes:
+      Jaleco Custom ICs -
+                         GS90015-03 (QFP80, x2)
+                         GS90015-06 (QFP100, x2)
+                         GS90015-07 (QFP64)
+                         GS90015-08 (QFP64)
+                         GS90015-09 (QFP64)
+                         GS90015-10 (QFP64)
+                         GS90015-11 (QFP100)
+
+      ROMs -
+            PR88004W_16.IC66      - 82S135 PROM
+            CH9072-4_13.IC39      - Atmel AT27HC642R
+            CH9072-5_11.IC33      - Atmel AT27HC642R
+            CH9072-6_12.IC35      - Atmel AT27HC642R
+            CH9072-8_15.IC59      - Atmel AT27HC642R
+            MR90015-35-W33_14.IC54- 4M MASKROM  \
+            MR90015-35-W33_17.IC67- 4M MASKROM  / Contain same data
+            MR91042-01-R60_1.IC1  - 4M MASKROM
+            MR91042-02-R61_2.IC2  - 4M MASKROM
+            MR91042-03-R62_3.IC5  - 4M MASKROM
+            MR91042-04-R63_4.IC6  - 4M MASKROM
+            MR91042-05-R64_5.IC11 - 4M MASKROM
+            MR91042-06-R65_6.IC12 - 4M MASKROM
+       
+***************************************************************************/
+
+ROM_START( armchmp2 )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD16_BYTE( "ac91106_ver1.7_4.ic63", 0x000000, 0x020000, CRC(aaa11bc7) SHA1(ac6186f45a006074d3a86d7437c5a3411bf27188) )
+	ROM_LOAD16_BYTE( "ac91106_ver1.7_3.ic62", 0x000001, 0x020000, CRC(a7965879) SHA1(556fecd6ea0f977b718d132c4180bb2160b9da7e) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "mr91042-07-r66_6.ic95",  0x000000, 0x080000, CRC(d1be8699) SHA1(67563761f95892b08c7113ab1c52ab5aa7118fb8) )
+
+//  ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+//  UNUSED
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "ac91106_ver1.2_7.ic99", 0x000000, 0x020000, CRC(09755aef) SHA1(39c901fb9408a0ba488f0112d7f48b929b092e3b) )
+
+	ROM_REGION( 0x300000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD16_BYTE( "mr91042-01-r60_1.ic1",  0x000000, 0x080000, CRC(fdfe6951) SHA1(ba6c5cd5d16fdca6f131302b19e621f8abe8136a) )
+	ROM_LOAD16_BYTE( "mr91042-02-r61_2.ic2",  0x000001, 0x080000, CRC(2e6c8b30) SHA1(70503fec251606b37fea2c7f91e682aece252035) )
+	ROM_LOAD16_BYTE( "mr91042-03-r62_3.ic5",  0x100000, 0x080000, CRC(07ba6d3a) SHA1(9c58e3a1931b593448c53a59e7f5b9aaac40ff88) )
+	ROM_LOAD16_BYTE( "mr91042-04-r63_4.ic6",  0x100001, 0x080000, CRC(f37cb12c) SHA1(282ebbd795284d7efa335b797ca1eedc1110e9da) )
+	ROM_LOAD16_BYTE( "mr91042-05-r64_5.ic11", 0x200000, 0x080000, CRC(7a3bb52d) SHA1(7f9d1dad4c89e6b55415b082363bc261115e9f96) )
+	ROM_LOAD16_BYTE( "mr91042-06-r65_6.ic12", 0x200001, 0x080000, CRC(5312a4f2) SHA1(4dcd2839bb5acccecf1eb6c0e19e877a0cff6875) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )		/* Samples (4x40000) */
+	ROM_LOAD( "mr91042-08_2.ic57",     0x000000, 0x080000, CRC(dc015f6c) SHA1(9d0677c50a25be1d11d43e54dbf3005f18b79b66) )
+	ROM_RELOAD(                        0x080000, 0x080000 )
+
+	ROM_REGION( 0x100000, REGION_SOUND2, 0 )		/* Samples (4x40000) */
+	ROM_LOAD( "ac91106_ver1.2_1.ic56", 0x000000, 0x080000, CRC(48208b69) SHA1(5dfcc7744f7cdd0326886a4a841755ab6ec5482b) )
+	ROM_RELOAD(                        0x080000, 0x080000 )
+
+	ROM_REGION( 0x80000, REGION_USER2, 0 )		/* ? Unused ROMs ? */
+	ROM_LOAD( "ch9072-4_13.ic39", 0x000000, 0x002000, CRC(b45b4dc0) SHA1(b9fae0c9ac2d40f0a202c538d866d5f2941ba8dd) )
+	ROM_LOAD( "ch9072-5_11.ic33", 0x000000, 0x002000, CRC(e122916b) SHA1(86d5ecc7ecc6f175ecb28459697ef33e1ee06860) )
+	ROM_LOAD( "ch9072-6_12.ic35", 0x000000, 0x002000, CRC(05d95bf7) SHA1(78181cf71f22c090a1e62823a43757353a9ef6ab) )
+	ROM_LOAD( "ch9072-8_15.ic59", 0x000000, 0x002000, CRC(6bf52596) SHA1(bf4e7e7df3daae4aa6a441b58b15a435aa45630e) )
+
+	ROM_LOAD( "mr90015-35-w33_17.ic67", 0x000000, 0x080000, CRC(9d428fb7) SHA1(02f72938d73db932bd217620a175a05215f6016a) )
+	ROM_LOAD( "mr90015-35-w33_14.ic54", 0x000000, 0x080000, CRC(9d428fb7) SHA1(02f72938d73db932bd217620a175a05215f6016a) )
+
+	ROM_LOAD( "pr88004q_8.ic102", 0x000000, 0x000200, CRC(9327dc37) SHA1(cfe7b144cdcd76170d47f1c4e0f72b6d4fca0c8d) )
+	ROM_LOAD( "pr88004w_16.ic66", 0x000000, 0x000100, CRC(3d648467) SHA1(bf8dbaa2176c801f7370313425c87f0eefe8a3a4) )
+
+	ROM_LOAD( "pr91042_5.ic91", 0x000000, 0x000100, CRC(e71de4aa) SHA1(d06e5a35ad2127df2d6328cce153073380ee7819) )
+ROM_END
+
+/***************************************************************************
+
 
                                 Game Drivers
 
@@ -2780,7 +3157,7 @@ ROM_END
 GAME( 1989, bigrun,   0, bigrun,   bigrun,   bigrun,   ROT0,   "Jaleco", "Big Run (11th Rallye version)", GAME_IMPERFECT_GRAPHICS )	// there's a 13th Rallye version (1991)
 GAME( 1990, cischeat, 0, cischeat, cischeat, cischeat, ROT0,   "Jaleco", "Cisco Heat",                    GAME_IMPERFECT_GRAPHICS )
 GAME( 1991, f1gpstar, 0, f1gpstar, f1gpstar, f1gpstar, ROT0,   "Jaleco", "Grand Prix Star",               GAME_IMPERFECT_GRAPHICS )
+GAME( 1992, armchmp2, 0, armchmp2, armchmp2, 0,        ROT270, "Jaleco", "Arm Champs II",                 GAME_IMPERFECT_GRAPHICS )
 GAME( 1992, wildplt,  0, f1gpstr2, wildplt,  wildplt,  ROT0,   "Jaleco", "Wild Pilot",                    GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, f1gpstr2, 0, f1gpstr2, f1gpstar, f1gpstar, ROT0,   "Jaleco", "F-1 Grand Prix Star II",        GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, scudhamm, 0, scudhamm, scudhamm, 0,        ROT270, "Jaleco", "Scud Hammer",                   GAME_IMPERFECT_GRAPHICS )
-

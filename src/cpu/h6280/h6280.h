@@ -43,6 +43,10 @@ WRITE8_HANDLER( H6280_irq_status_w );
 READ8_HANDLER( H6280_timer_r );
 WRITE8_HANDLER( H6280_timer_w );
 
+/* functions for use by the PSG and joypad port only! */
+UINT8 get_h6280io_buffer(void);
+void set_h6280io_buffer(UINT8);
+
 #ifdef MAME_DEBUG
 extern int Dasm6280(char *buffer, int pc);
 #endif

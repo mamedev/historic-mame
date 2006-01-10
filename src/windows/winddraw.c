@@ -189,13 +189,13 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, LPDIRECTDRAWSURFACE surfa
 
 void win_ddraw_wait_vsync(void)
 {
-	HRESULT result;
 	BOOL is_vblank;
 
 	// if we're not already in VBLANK, wait for it
-	result = IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank);
-	if (result == DD_OK && !is_vblank)
-		result = IDirectDraw_WaitForVerticalBlank(ddraw, DDWAITVB_BLOCKBEGIN, 0);
+	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && is_vblank)
+		;
+	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && !is_vblank)
+		;
 }
 
 
@@ -1208,16 +1208,17 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 	HRESULT result;
 
 	// sync to VBLANK?
-	if ((win_wait_vsync || win_sync_refresh) && throttle && mame_get_performance_info()->game_speed_percent > 95)
+	if ((win_wait_vsync || win_sync_refresh) && throttle && !(!win_window_mode && back_surface))
 	{
 		BOOL is_vblank;
 
 		// this counts as idle time
 		profiler_mark(PROFILER_IDLE);
 
-		result = IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank);
-		if (!is_vblank)
-			result = IDirectDraw_WaitForVerticalBlank(ddraw, DDWAITVB_BLOCKBEGIN, 0);
+		while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && is_vblank)
+			;
+		while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && !is_vblank)
+			;
 
 		// idle time done
 		profiler_mark(PROFILER_END);

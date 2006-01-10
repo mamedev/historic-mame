@@ -6,9 +6,6 @@
 
     Blocks can be scaled and subpositioned, and are usually 4-6bpp but two 4bpp blocks can be
     combined into 8bpp with a flag.
-
-    Todo: captaven throw animation...? missing sprites?? Could be SH2 bug
-          captaven X flip - definitely a SH2 bug
 */
 
 #include "driver.h"
@@ -197,7 +194,7 @@ static void mlc_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	UINT32 *index_ptr=0;
-	int offs,fx=0,fy=0,x,y,color,colorOffset,sprite,indx,h,w,bx,by;
+	int offs,fx=0,fy=0,x,y,color,colorOffset,sprite,indx,h,w,bx,by,fx1,fy1;
 	int xmult,ymult,xoffs,yoffs;
 	UINT8 *rom = memory_region(REGION_GFX2) + 0x20000, *index_ptr8;
 	UINT8 *rawrom = memory_region(REGION_GFX2);
@@ -235,10 +232,12 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
             Spriteram (2) format (16 bit):
 
-            Word 0: 0xf000 - ? (Always 0x2000?)
+            Word 0: 0xe000 - ? (Always 0x2000?)
+            		0x1000 - X flip
                     0x0f00 - Width in tiles (0==16)
                     0x00ff - X position offset
-            Word 1: 0xf000 - ? (Always 0x2000?)
+            Word 1: 0xe000 - ? (Always 0x2000?)
+            		0x1000 - Y flip	
                     0x0f00 - Height in tiles (0==16)
                     0x00ff - Y position offset
             Word 2: 0xff00 - ? (Always 0?)
@@ -301,6 +300,10 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 			//unused byte 5
 			yoffs=index_ptr8[0]&0xff;
 			xoffs=index_ptr8[2]&0xff;
+			
+			fy1=(index_ptr8[1]&0xf0)>>4;
+			fx1=(index_ptr8[3]&0xf0)>>4;
+
 			if (index_ptr8[4]&0x40)
 				blockIsTilemapIndex=1;
 			else
@@ -333,14 +336,21 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 			yoffs=index_ptr[0]&0xff;
 			xoffs=index_ptr[1]&0xff;
+			
+			fy1=(index_ptr[0]&0xf000)>>12; 
+			fx1=(index_ptr[1]&0xf000)>>12;
+			
 		}
+		
+		if(fx1&1) fx^=0x8000;
+		if(fy1&1) fy^=0x4000;
 
 		if (fx) xmult=-1; else xmult=1;
 		if (fy) ymult=-1; else ymult=1;
 
 		ybase=y<<16;
 		if (fy)
-			ybase+=(yoffs-16) * (yscale<<8);
+			ybase+=(yoffs-15) * (yscale<<8);
 		else
 			ybase-=yoffs * (yscale<<8);
 
@@ -353,7 +363,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 			int xinc=(xscale<<8)*16;
 
 			if (fx)
-				xbase+=(xoffs-16) * (xscale<<8);
+				xbase+=(xoffs-15) * (xscale<<8);
 			else
 				xbase-=xoffs * (xscale<<8);
 

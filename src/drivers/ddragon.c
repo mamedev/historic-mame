@@ -8,6 +8,30 @@ Toffy / Super Toffy added by David Haywood
 Thanks to Bryan McPhail for spotting the Toffy program rom encryption
 Toffy / Super Toffy sound hooked up by R. Belmont.
 
+BM, 8/1/2006: 
+
+Double Dragon has a crash which sometimes occurs at the very end of the game
+(right before the final animation sequence).  It occurs because of a jump look up 
+table:
+
+	BAD3: LDY   #$BADD
+	BAD7: JSR   [A,Y]
+
+At the point of the crash A is 0x3e which causes a jump to 0x3401 (background tile
+ram) which obviously doesn't contain proper code and causes a crash.  The jump
+table has 32 entries, and only the last contains an invalid jump vector.  A is set
+to 0x3e as a result of code at 0x625f - it reads from the shared spriteram (0x2049
+in main cpu memory space), copies the value to 0x523 (main ram) where it is later
+fetched and shifted to make 0x3e.
+
+So..  it's not clear where the error is - the 0x1f value is actually written to
+shared RAM by the main CPU - perhaps the MCU should modify it before the main CPU
+reads it back?  Perhaps 0x1f should never be written at all?  If you want to trace
+this further please submit a proper fix!  In the meantime I have patched the error
+by making sure the invalid jump is never taken - this fixes the crash (see 
+ddragon_spriteram_r).
+
+
 
 Modifications by Bryan McPhail, June-November 2003:
 
@@ -41,6 +65,7 @@ conversion kit which could be applied to a bootleg double dragon :-p?
 ***************************************************************************/
 
 #include "driver.h"
+#include "state.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
@@ -68,6 +93,7 @@ static int sprite_irq, sound_irq, ym_irq, snd_cpu;
 static int adpcm_pos[2],adpcm_end[2],adpcm_idle[2];
 static UINT8* darktowr_mcu_ports, *darktowr_ram;
 static int VBLK;
+static int bank_data;
 /* end of private globals */
 
 static MACHINE_INIT( ddragon )
@@ -131,6 +157,8 @@ static WRITE8_HANDLER( ddragon_bankswitch_w )
 		cpunum_set_input_line( 1, sprite_irq, (sprite_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
 	memory_set_bankptr( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
+
+	bank_data=data;
 }
 
 static WRITE8_HANDLER( toffy_bankswitch_w )
@@ -180,9 +208,9 @@ static READ8_HANDLER( darktowr_bank_r )
 		// logerror("BankRead %05x %08x\n",activecpu_get_pc(),offset);
 
 		/* Horrible hack - the alternate TStrike set is mismatched against the MCU,
-        so just hack around the protection here.  (The hacks are 'right' as I have
-        the original source code & notes to this version of TStrike to examine).
-        */
+		so just hack around the protection here.  (The hacks are 'right' as I have
+		the original source code & notes to this version of TStrike to examine).
+		*/
 		if(!strcmp(Machine->gamedrv->name, "tstrike"))
 		{
 			/* Static protection checks at boot-up */
@@ -194,7 +222,7 @@ static READ8_HANDLER( darktowr_bank_r )
 			/* Just return whatever the code is expecting */
 			return darktowr_ram[0xbe1];
 		}
-
+		
 		if (offset==0x1401 || offset==1) {
 			return darktowr_mcu_ports[0];
 		}
@@ -299,6 +327,10 @@ static READ8_HANDLER( port4_r )
 
 static READ8_HANDLER( ddragon_spriteram_r )
 {
+	/* Double Dragon crash fix - see notes above */
+	if (offset==0x49 && activecpu_get_pc()==0x6261 && ddragon_spriteram[offset]==0x1f)
+		return 0x1;
+
 	return ddragon_spriteram[offset];
 }
 
@@ -1621,6 +1653,17 @@ toffy / stoffy are 'encrytped
 
 */
 
+static void ddragon_restore_state(int dummy)
+{
+	ddragon_bankswitch_w(0, bank_data);
+}
+
+static DRIVER_INIT( ddragon )
+{
+	state_save_register_int("ddragon", 0, "bank", &bank_data);
+	state_save_register_func_postload_int(ddragon_restore_state, 0);
+}
+
 static DRIVER_INIT( toffy )
 {
 	/* the program rom has a simple bitswap encryption */
@@ -1655,10 +1698,10 @@ static DRIVER_INIT( toffy )
 
 }
 
-GAME( 1987, ddragon,  0,        ddragon,  ddragon,  0, ROT0, "Technos", "Double Dragon (Japan)", 0 )
-GAME( 1987, ddragonw, ddragon,  ddragon,  ddragon,  0, ROT0, "[Technos] (Taito license)", "Double Dragon (World)", 0 )
-GAME( 1987, ddragonu, ddragon,  ddragon,  ddragon,  0, ROT0, "[Technos] (Taito America license)", "Double Dragon (US)", 0 )
-GAME( 1987, ddragonb, ddragon,  ddragonb, ddragon,  0, ROT0, "bootleg", "Double Dragon (bootleg)", 0 )
+GAME( 1987, ddragon,  0,        ddragon,  ddragon,  ddragon, ROT0, "Technos", "Double Dragon (Japan)", 0 )
+GAME( 1987, ddragonw, ddragon,  ddragon,  ddragon,  ddragon, ROT0, "[Technos] (Taito license)", "Double Dragon (World)", 0 )
+GAME( 1987, ddragonu, ddragon,  ddragon,  ddragon,  ddragon, ROT0, "[Technos] (Taito America license)", "Double Dragon (US)", 0 )
+GAME( 1987, ddragonb, ddragon,  ddragonb, ddragon,  ddragon, ROT0, "bootleg", "Double Dragon (bootleg)", 0 )
 GAME( 1988, ddragon2, 0,        ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge (World)", 0 )
 GAME( 1988, ddragn2u, ddragon2, ddragon2, ddragon2, 0, ROT0, "Technos", "Double Dragon II - The Revenge (US)", 0 )
 

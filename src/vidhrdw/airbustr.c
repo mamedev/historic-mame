@@ -34,8 +34,9 @@
 #include "vidhrdw/generic.h"
 
 UINT8 *airbustr_videoram2, *airbustr_colorram2;
-
+int airbustr_clear_sprites;
 static tilemap *bg_tilemap, *fg_tilemap;
+static mame_bitmap *sprites_bitmap;
 
 WRITE8_HANDLER( airbustr_videoram_w )
 {
@@ -138,6 +139,9 @@ VIDEO_START( airbustr )
 	if ( !fg_tilemap )
 		return 1;
 
+	if ((sprites_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		return 1;
+
 	tilemap_set_transparent_pen(fg_tilemap, 0);
 
 	tilemap_set_scrolldx(bg_tilemap, 0x094, 0x06a);
@@ -231,6 +235,17 @@ static void airbustr_draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect
 VIDEO_UPDATE( airbustr )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
-	airbustr_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);	
+
+	if(airbustr_clear_sprites)
+	{
+		fillbitmap(sprites_bitmap,0,cliprect);
+		airbustr_draw_sprites(bitmap, cliprect);
+	}
+	else
+	{
+		/* keep sprites on the bitmap without clearing them */
+		airbustr_draw_sprites(sprites_bitmap, cliprect);
+		copybitmap(bitmap,sprites_bitmap,0,0,0,0,cliprect,TRANSPARENCY_PEN,0);
+	}
 }

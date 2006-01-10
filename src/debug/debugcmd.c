@@ -40,6 +40,7 @@ static void execute_out(int ref, int params, const char **param);
 static void execute_go(int ref, int params, const char **param);
 static void execute_go_vblank(int ref, int params, const char **param);
 static void execute_go_interrupt(int ref, int params, const char **param);
+static void execute_go_time(int ref, int params, const char *param[]);
 static void execute_focus(int ref, int params, const char **param);
 static void execute_ignore(int ref, int params, const char **param);
 static void execute_observe(int ref, int params, const char **param);
@@ -101,6 +102,8 @@ void debug_command_init(void)
 	debug_console_register_command("gv",        CMDFLAG_NONE, 0, 0, 0, execute_go_vblank);
 	debug_console_register_command("gint",      CMDFLAG_NONE, 0, 0, 1, execute_go_interrupt);
 	debug_console_register_command("gi",        CMDFLAG_NONE, 0, 0, 1, execute_go_interrupt);
+	debug_console_register_command("gtime",     CMDFLAG_NONE, 0, 0, 1, execute_go_time);
+	debug_console_register_command("gt",        CMDFLAG_NONE, 0, 0, 1, execute_go_time);
 	debug_console_register_command("next",      CMDFLAG_NONE, 0, 0, 0, execute_next);
 	debug_console_register_command("n",         CMDFLAG_NONE, 0, 0, 0, execute_next);
 	debug_console_register_command("focus",     CMDFLAG_NONE, 0, 1, 1, execute_focus);
@@ -549,6 +552,22 @@ static void execute_go_interrupt(int ref, int params, const char *param[])
 		return;
 
 	debug_cpu_go_interrupt(irqline);
+}
+
+
+/*-------------------------------------------------
+    execute_go_time - execute the gtime command
+-------------------------------------------------*/
+
+static void execute_go_time(int ref, int params, const char *param[])
+{
+	UINT64 milliseconds = -1;
+
+	/* if we have a parameter, use it instead */
+	if (params > 0 && !validate_parameter_number(param[0], &milliseconds))
+		return;
+
+	debug_cpu_go_milliseconds(milliseconds);
 }
 
 

@@ -14,11 +14,9 @@
 #include "driver.h"
 #include "neogeo.h"
 
-/* The King of Gladiator (The King of Fighters '96 bootleg) */
+/* General Bootleg Functions - used by more than 1 game */
 
-/* the protection patching here may be incomplete */
-
-void kog_cx_decrypt( void )
+void neogeo_bootleg_cx_decrypt( void )
 {
 	int i;
 	int cx_size = memory_region_length( REGION_GFX3 );
@@ -34,22 +32,35 @@ void kog_cx_decrypt( void )
 	free( buf );
 }
 
-void kog_sx_decrypt( void )
+void neogeo_bootleg_sx_decrypt( int value )
 {
-	int i;
 	int sx_size = memory_region_length( REGION_GFX1 );
 	UINT8 *rom = memory_region( REGION_GFX1 );
-	UINT8 *buf = malloc( sx_size );
+	int i;
 
-	memcpy( buf, rom, sx_size );
+	if (value == 1)
+	{
+		UINT8 *buf = malloc( sx_size );
+		memcpy( buf, rom, sx_size );
 
-	for( i = 0; i < sx_size; i += 0x10 ){
-	memcpy( &rom[ i        ], &buf[ i + 0x08 ], 0x08 );
-	memcpy( &rom[ i + 0x08 ], &buf[ i        ], 0x08 );
+		for( i = 0; i < sx_size; i += 0x10 )
+		{
+			memcpy( &rom[ i ], &buf[ i + 8 ], 8 );
+			memcpy( &rom[ i + 8 ], &buf[ i ], 8 );
+		}
+		free( buf );
 	}
-
-	free( buf );
+	else if (value == 2)
+	{
+		for( i = 0; i < sx_size; i++ )
+			rom[ i ] = BITSWAP8( rom[ i ], 7, 6, 0, 4, 3, 2, 1, 5 );
+	}
 }
+
+
+/* The King of Gladiator (The King of Fighters '97 bootleg) */
+
+/* the protection patching here may be incomplete */
 
 // Thanks to Razoola for the info
 
@@ -111,6 +122,8 @@ void kog_px_decrypt( void )
 	rom[0x93A58/2] = 0xFD08;
 	rom[0x93A66/2] = 0xF9CA;
 	rom[0x93A72/2] = 0xF9BE;
+
+	/* a jumper pad on th PCB acts as a ROM overlay and is used to select the game language as opposed to the BIOS */
 	src[0x1FFFFC/2] = 0x01; // Enable "King of Gladiator" on Title Screen
 }
 
@@ -119,17 +132,6 @@ void kog_px_decrypt( void )
 /* this uses RAM based tiles for the text layer, however the implementation
   is incomplete, at the moment the S data is copied from the program rom on
   start-up instead */
-
-static const gfx_layout kof10th_layout =
-{
-	8,8,			/* 8 x 8 chars */
-	8192,
-	4,				/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },    /* planes are packed in a nibble */
-	{ 33*4, 32*4, 49*4, 48*4, 1*4, 0*4, 17*4, 16*4 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	32*8	/* 32 bytes per char */
-};
 
 static UINT16 kof10thExtraRAMB[0x01000];
 
@@ -151,15 +153,10 @@ WRITE16_HANDLER( kof10th_custom_w )
 	if (!kof10thExtraRAMB[0xFFE]) { // Write to RAM bank A
 		UINT16 *prom = (UINT16*)memory_region( REGION_CPU1 );
 		COMBINE_DATA(&prom[(0xE0000/2) + (offset & 0xFFFF)]);
-	} else {
-//      S data should be written here... ??  scrambled??
-//      UINT16 *prom = (UINT16*)memory_region( REGION_GFX1 );
-//      UINT8 datalow = BITSWAP8((data&0xff)^0xf3,7,6,0,4,3,2,1,5);
-//      UINT8 datahigh = BITSWAP8(((data>>8)&0xff)^0xf3,7,6,0,4,3,2,1,5);
-//      data = datalow | datahigh<<8;
-//      COMBINE_DATA(&prom[offset & 0xFFFF]);
-//      decodechar(Machine->gfx[0], (offset&0xffff)/16, (UINT8 *)prom, &kof10th_layout);
-
+	} else { // Write S data on-the-fly
+		UINT8 *srom = memory_region( REGION_GFX1 );
+		srom[offset] = BITSWAP8(data,7,6,0,4,3,2,1,5);
+		decodechar(Machine->gfx[0], offset>>5, srom, Machine->drv->gfxdecodeinfo[0].gfxlayout);
 	}
 }
 
@@ -168,13 +165,11 @@ static WRITE16_HANDLER( kof10th_bankswitch_w )
 	if (offset >= 0x5F000) {
 		if (offset == 0x5FFF8) { // Standard bankswitch
 			kof10thBankswitch(data);
-		} else if (offset == 0x5FFFC && kof10thExtraRAMB[0xFFC] != data) {
+		} else if (offset == 0x5FFFC && kof10thExtraRAMB[0xFFC] != data) { // Special bankswitch
 			UINT8 *src = memory_region( REGION_CPU1 );
-			memcpy (src + 0x400,  src + ((data & 1) ? 0x800400 : 0x700400), 0xdfbff);
+			memcpy (src + 0x10000,  src + ((data & 1) ? 0x810000 : 0x710000), 0xcffff);
 		}
 		COMBINE_DATA(&kof10thExtraRAMB[offset & 0xFFF]);
-	} else {
-		// Usually writes 0x8EF3 or 0x7DF3, sometimes writes 0x0003 to offset 0x25FFF0
 	}
 }
 
@@ -190,15 +185,16 @@ void decrypt_kof10th( void )
 	int i, j;
 	UINT8 *dst = malloc(0x900000);
 	UINT8 *src = memory_region( REGION_CPU1 );
-	UINT8 *srm = memory_region( REGION_GFX1 );
 
 	if (dst) {
-		memcpy(dst + 0x000000, src + 0x600000, 0x100000); // Correct?
+		memcpy(dst + 0x000000, src + 0x700000, 0x100000); // Correct (Verified in Uni-bios)
 		memcpy(dst + 0x100000, src + 0x000000, 0x800000);
+	
 		for (i = 0; i < 0x900000; i++) {
-			j = (i&0xFFF000) + BITSWAP16(i&0xFFF,15,14,13,12,11,2,9,8,7,1,5,4,3,10,6,0);
+			j = BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,2,9,8,7,1,5,4,3,10,6,0);
 			src[j] = dst[i];
 		}
+	
 		free(dst);
 	}
 
@@ -209,15 +205,6 @@ void decrypt_kof10th( void )
 	((UINT16*)src)[0x8bf4/2] = 0x4ef9; // Run code to change "S" data
 	((UINT16*)src)[0x8bf6/2] = 0x000d;
 	((UINT16*)src)[0x8bf8/2] = 0xf980;
-
- 	for (i = 0; i < 0x10000; i++) { // Get S data, should be done on the fly
-		srm[0x00000+(i^1)]=BITSWAP8(src[0x600000+i]^0xf3,7,6,0,4,3,2,1,5);
- 		srm[0x10000+(i^1)]=BITSWAP8(src[0x6d0000+i]^0xf3,7,6,0,4,3,2,1,5);
-	}
- 	for (i = 0; i < 0x04000; i++) {
-		srm[0x02000+(i^1)]=BITSWAP8(src[0x6c2000+i]^0xf3,7,6,0,4,3,2,1,5);
-		srm[0x12000+(i^1)]=BITSWAP8(src[0x612000+i]^0xf3,7,6,0,4,3,2,1,5);
-	}
 }
 
 void decrypt_kf10thep(void)
@@ -302,32 +289,34 @@ void decrypt_kf2k5uni(void)
 	kf2k5uni_mx_decrypt();
 }
 
+/* Kof2002 Magic Plus */
+
+void kf2k2mp_decrypt( void )
+{
+	int i,j;
+
+	unsigned char *src = memory_region(REGION_CPU1);
+	unsigned char *dst = (unsigned char*)malloc(0x80);
+
+	memcpy(src, src + 0x300000, 0x500000);
+
+	if (dst)
+	{
+		for (i = 0; i < 0x800000; i+=0x80)
+		{
+			for (j = 0; j < 0x80 / 2; j++)
+			{
+				int ofst = BITSWAP8( j, 6, 7, 2, 3, 4, 5, 0, 1 );
+				memcpy(dst + j * 2, src + i + ofst * 2, 2);
+			}
+			memcpy(src + i, dst, 0x80);
+		}
+	}
+	free(dst);
+}
+
 /* Kof2002 Magic Plus 2 */
 
-void neogeo_bootleg_sx_decrypt( int value )
-{
-	int sx_size = memory_region_length( REGION_GFX1 );
-	UINT8 *rom = memory_region( REGION_GFX1 );
-	int i;
-
-	if (value == 1)
-	{
-		UINT8 *buf = malloc( sx_size );
-		memcpy( buf, rom, sx_size );
-
-		for( i = 0; i < sx_size; i += 0x10 )
-		{
-			memcpy( &rom[ i ], &buf[ i + 8 ], 8 );
-			memcpy( &rom[ i + 8 ], &buf[ i ], 8 );
-		}
-		free( buf );
-	}
-	else if (value == 2)
-	{
-		for( i = 0; i < sx_size; i++ )
-			rom[ i ] = BITSWAP8( rom[ i ], 7, 6, 0, 4, 3, 2, 1, 5 );
-	}
-}
 
 void kof2km2_px_decrypt( void )
 {
@@ -552,40 +541,6 @@ void decrypt_kof2k4se_68k( void )
 }
 
 /* Lans2004 (bootleg of Shock Troopers 2) */
-
-void lans2004_cx_decrypt( void )
-{
-	int i;
-	int cx_size = memory_region_length( REGION_GFX3 );
-	UINT8 *rom = memory_region( REGION_GFX3 );
-	UINT8 *buf = malloc( cx_size );
-
-	memcpy( buf, rom, cx_size );
-
-	for( i = 0; i < cx_size / 0x40; i++ ){
-		memcpy( &rom[ i * 0x40 ], &buf[ (i ^ 1) * 0x40 ], 0x40 );
-	}
-
-	free( buf );
-}
-
-void lans2004_sx_decrypt( void )
-{
-	int i;
-	UINT8 *dst = malloc(0x20000);
-	UINT8 *rom = memory_region(REGION_GFX1);
-	if ( dst )
-	{
-		memcpy(dst,rom,0x20000);
-
-		for (i = 0; i < 0x20000; i += 0x000010 )
-		{
-			memcpy( rom + i, dst + i + 8, 8 );
-			memcpy( rom + i + 8, dst + i, 8 );
-		}
-	}
-	free(dst);
-}
 
 void lans2004_vx_decrypt( void )
 {

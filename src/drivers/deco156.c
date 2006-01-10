@@ -3,15 +3,11 @@
 
     Heavy Smash
     World Cup Volleyball 95
-    Backfire!
 
-    See also deco32.c, deco_mlc.c
+    See also deco32.c, deco_mlc.c, backfire.c
 
     Todo:
-      Find bank bits for Heavy Smash OKI chips
-      Sound for Backfire & WCV95
-      Backfire & WCV95 use the unemulated math
-      coprocessor of the DE156
+		complete co-processor emulation for wcvol95
 
     Emulation by Bryan McPhail, mish@tendril.co.uk
 */
@@ -29,9 +25,8 @@ extern void decrypt156(void);
 #include "cpu/arm/arm.h"
 
 VIDEO_START(hvysmsh);
-VIDEO_START(backfire);
 VIDEO_UPDATE(hvysmsh);
-VIDEO_UPDATE(backfire);
+
 
 /***************************************************************************/
 
@@ -106,34 +101,6 @@ static WRITE32_HANDLER(wcvol95_nonbuffered_palette_w)
 }
 
 
-static READ32_HANDLER(backfire_eeprom_r)
-{
-	return (EEPROM_read_bit()<<24) | readinputport(0) | (readinputport(3)<<16);
-}
-
-static READ32_HANDLER(backfire_control2_r)
-{
-//  logerror("%08x:Read eprom %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
-	return (EEPROM_read_bit()<<24) | readinputport(1) | (readinputport(1)<<16);
-}
-
-static READ32_HANDLER(backfire_control3_r)
-{
-//  logerror("%08x:Read eprom %08x (%08x)\n",activecpu_get_pc(),offset<<1,mem_mask);
-	return (EEPROM_read_bit()<<24) | readinputport(2) | (readinputport(2)<<16);
-}
-
-
-static WRITE32_HANDLER(backfire_eeprom_w)
-{
-// logerror("%08x:write eprom %08x (%08x) %08x\n",activecpu_get_pc(),offset<<1,mem_mask,data);
-	if (ACCESSING_LSB32) {
-		EEPROM_set_clock_line((data & 0x2) ? ASSERT_LINE : CLEAR_LINE);
-		EEPROM_write_bit(data & 0x1);
-		EEPROM_set_cs_line((data & 0x4) ? CLEAR_LINE : ASSERT_LINE);
-	}
-}
-
 static READ32_HANDLER( deco156_snd_r )
 {
 	return YMZ280B_status_0_r(0);
@@ -141,10 +108,10 @@ static READ32_HANDLER( deco156_snd_r )
 
 static WRITE32_HANDLER( deco156_snd_w )
 {
-//  if (offset)
-//      YMZ280B_register_0_w(0, data);
-//  else
-//      YMZ280B_data_0_w(0, data);
+	if (offset)
+		YMZ280B_data_0_w(0, data);
+	else
+		YMZ280B_register_0_w(0, data);
 }
 
 /***************************************************************************/
@@ -185,27 +152,6 @@ static ADDRESS_MAP_START( wcvol95_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1a0000, 0x1a0007) AM_READ(deco156_snd_r) AM_WRITE(deco156_snd_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( backfire_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x100000, 0x10001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf12_control)
-	AM_RANGE(0x110000, 0x111fff) AM_WRITE(deco32_pf1_data_w) AM_BASE(&deco32_pf1_data)
-	AM_RANGE(0x114000, 0x115fff) AM_WRITE(deco32_pf2_data_w) AM_BASE(&deco32_pf2_data)
-	AM_RANGE(0x120000, 0x120fff) AM_RAM AM_BASE(&deco32_pf1_rowscroll)
-	AM_RANGE(0x124000, 0x124fff) AM_RAM AM_BASE(&deco32_pf2_rowscroll)
-	AM_RANGE(0x130000, 0x13001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf34_control)
-	AM_RANGE(0x140000, 0x141fff) AM_WRITE(deco32_pf3_data_w) AM_BASE(&deco32_pf3_data)
-	AM_RANGE(0x144000, 0x145fff) AM_WRITE(deco32_pf4_data_w) AM_BASE(&deco32_pf4_data)
-	AM_RANGE(0x150000, 0x150fff) AM_RAM AM_BASE(&deco32_pf3_rowscroll)
-	AM_RANGE(0x154000, 0x154fff) AM_RAM AM_BASE(&deco32_pf4_rowscroll)
-	AM_RANGE(0x160000, 0x161fff) AM_WRITE(wcvol95_nonbuffered_palette_w) AM_BASE(&paletteram32)
-	AM_RANGE(0x170000, 0x177fff) AM_RAM
-	AM_RANGE(0x184000, 0x185fff) AM_RAM AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x18c000, 0x18dfff) AM_RAM
-	AM_RANGE(0x190000, 0x190003) AM_READ(backfire_eeprom_r)
-	AM_RANGE(0x194000, 0x194003) AM_READ(backfire_control2_r)
-	AM_RANGE(0x1a4000, 0x1a4003) AM_WRITE(backfire_eeprom_w)
-	AM_RANGE(0x1c0000, 0x1c0007) AM_READ(deco156_snd_r) AM_WRITE(deco156_snd_w)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -285,55 +231,6 @@ INPUT_PORTS_START( wcvol95 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( backfire )
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED ) /* 'soundmask' */
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED ) /* 'soundmask' */
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-INPUT_PORTS_END
 
 /**********************************************************************************/
 
@@ -382,15 +279,6 @@ static const gfx_decode gfxdecodeinfo_hvysmsh[] =
 	{ -1 } /* end of array */
 };
 
-static const gfx_decode gfxdecodeinfo_backfire[] =
-{
-	{ REGION_GFX1, 0, &charlayout,      0, 128 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tilelayout,      0, 128 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0, &tilelayout,      1024, 128 },	/* Tiles 16x16 */
-	{ REGION_GFX3, 0, &spritelayout,  1024+512, 32  },	/* Sprites 16x16 */
-	{ REGION_GFX4, 0, &spritelayout,  1024+512, 32 },	/* Sprites 16x16 */
-	{ -1 } /* end of array */
-};
 
 /**********************************************************************************/
 
@@ -475,35 +363,6 @@ static MACHINE_DRIVER_START( wcvol95 )
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( backfire )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(ARM, 28000000/2) /* Unconfirmed */
-	MDRV_CPU_PROGRAM_MAP(backfire_map,0)
-	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
-
-	MDRV_FRAMES_PER_SECOND(58)
-	MDRV_VBLANK_DURATION(529)
-	MDRV_NVRAM_HANDLER(93C46)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_BUFFERS_SPRITERAM | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(40*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo_backfire)
-	MDRV_PALETTE_LENGTH(2048)
-
-	MDRV_VIDEO_START(backfire)
-	MDRV_VIDEO_UPDATE(backfire)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-
-	MDRV_SOUND_ADD(YMZ280B, 28000000 / 2)
-	MDRV_SOUND_CONFIG(ymz280b_intf)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
-MACHINE_DRIVER_END
 
 /**********************************************************************************/
 
@@ -645,132 +504,12 @@ ROM_START( wcvol95 )
 //  ROM_LOAD( "93c46.3k",    0x00, 0x80, CRC(88f8e270) SHA1(cb82203ad38e0c12ea998562b7b785979726afe5) )
 ROM_END
 
-/*
-
-Backfire!
-Data East, 1995
-
-This game is similar to World Rally, Blomby Car, Drift Out'94 etc
-
-
-PCB Layout
-----------
-
-
-DE-0432-2
----------------------------------------------------------------------
-|              MBZ-06.19L     28.000MHz                MBZ-04.19A * |
-|                                           52                      |
-|                              153                     MBZ-03.18A + |
-|              MBZ-05.17L                                           |
-|                                                                   |
---|        LC7881  YMZ280B-F   153          52         MBZ-04.16A * |
-  |                                                                 |
---|                                                    MBZ-03.15A + |
-|                     CY7C185 (x2)                                  |
-|J                                     141                          |
-|                                                      MBZ-02.12A   |
-|A                                                                  |
-|                                                      MBZ-01.10A   |
-|M       223                                                        |
-|                                                      MBZ-00.9A    |
-|M         93C45.8M   CY7C185 (x2)     141                          |
-|                                                                   |
-|A                                                                  |
-|                                                                   |
---|                                                                 |
-  |                                                                 |
---|        TSW1                                                     |
-|                                          CY7C185 (x4)             |
-|                                                           156     |
-|                 ADC0808       RA01-0.3J                           |
-|                               RA00-0.2J                           |
-|CONN2      CONN1    D4701                                          |
-|                                                                   |
----------------------------------------------------------------------
-
-
-Notes:
-CONN1 & CONN2: For connection of potentiometer or opto steering wheel.
-               Joystick (via JAMMA) can also be used for controls.
-TSW1: Push Button TEST switch to access options menu (coins/lives etc).
-*   : These ROMs have identical contents AND identical halves.
-+   : These ROMs have identical contents AND identical halves.
-
-*/
-
-ROM_START( backfire )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* DE156 code (encrypted) */
-	ROM_LOAD32_WORD( "ra00-0.2j",    0x000002, 0x080000, CRC(790da069) SHA1(84fd90fb1833b97459cb337fdb92f7b6e93b5936) )
-	ROM_LOAD32_WORD( "ra01-0.3j",    0x000000, 0x080000, CRC(447cb57b) SHA1(1d503b9cf1cadd3fdd7c9d6d59d4c40a59fa25ab))
-
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles 1 */
-	ROM_LOAD( "mbz-00.9a",    0x000000, 0x080000, CRC(1098d504) SHA1(1fecd26b92faffce0b59a8a9646bfd457c17c87c) )
-	ROM_CONTINUE( 0x200000, 0x080000)
-	ROM_CONTINUE( 0x100000, 0x080000)
-	ROM_CONTINUE( 0x300000, 0x080000)
-	ROM_LOAD( "mbz-01.10a",    0x080000, 0x080000, CRC(19b81e5c) SHA1(4c8204a6a4ad30b23fbfdd79c6e39581e23de6ae) )
-	ROM_CONTINUE( 0x280000, 0x080000)
-	ROM_CONTINUE( 0x180000, 0x080000)
-	ROM_CONTINUE( 0x380000, 0x080000)
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles 2 */
-	ROM_LOAD( "mbz-02.12a",    0x000000, 0x100000, CRC(2bd2b0a1) SHA1(8fcb37728f3248ad55e48f2d398b014b36c9ec05) )
-
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites 1 */
-	ROM_LOAD16_BYTE( "mbz-03.15a",    0x000001, 0x200000, CRC(2e818569) SHA1(457c1cad25d9b21459262be8b5788969f566a996) )
-	ROM_LOAD16_BYTE( "mbz-04.16a",    0x000000, 0x200000, CRC(67bdafb1) SHA1(9729c18f3153e4bba703a6f46ad0b886c52d84e2) )
-
-	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites 2 */
-	ROM_LOAD16_BYTE( "mbz-03.18a",    0x000001, 0x200000, CRC(2e818569) SHA1(457c1cad25d9b21459262be8b5788969f566a996) )
-	ROM_LOAD16_BYTE( "mbz-04.19a",    0x000000, 0x200000, CRC(67bdafb1) SHA1(9729c18f3153e4bba703a6f46ad0b886c52d84e2) )
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* samples 1 */
-	ROM_LOAD( "mbz-06.19l",    0x00000, 0x080000,  CRC(4a38c635) SHA1(7f0fb6a7a4aa6774c04fa38e53ceff8744fe1e9f) )
-
-	ROM_REGION( 0x200000, REGION_SOUND2, 0 ) /* samples 2 */
-	ROM_LOAD( "mbz-05.17l",    0x00000, 0x200000,  CRC(947c1da6) SHA1(ac36006e04dc5e3990f76539763cc76facd08376) )
-ROM_END
-
-ROM_START( backfira )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* DE156 code (encrypted) */
-	ROM_LOAD32_WORD( "rb-00h.h2",    0x000002, 0x080000, CRC(60973046) SHA1(e70d9be9cb172920da2a2ac9d317768b1438c59d) )
-	ROM_LOAD32_WORD( "rb-01l.h3",    0x000000, 0x080000, CRC(27472f60) SHA1(d73b1e68dc51e28b1148db39ce22bd2e93f6fd0a) )
-
-	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE ) /* Tiles 1 */
-	ROM_LOAD( "mbz-00.9a",    0x000000, 0x080000, CRC(1098d504) SHA1(1fecd26b92faffce0b59a8a9646bfd457c17c87c) )
-	ROM_CONTINUE( 0x200000, 0x080000)
-	ROM_CONTINUE( 0x100000, 0x080000)
-	ROM_CONTINUE( 0x300000, 0x080000)
-	ROM_LOAD( "mbz-01.10a",    0x080000, 0x080000, CRC(19b81e5c) SHA1(4c8204a6a4ad30b23fbfdd79c6e39581e23de6ae) )
-	ROM_CONTINUE( 0x280000, 0x080000)
-	ROM_CONTINUE( 0x180000, 0x080000)
-	ROM_CONTINUE( 0x380000, 0x080000)
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* Tiles 2 */
-	ROM_LOAD( "mbz-02.12a",    0x000000, 0x100000, CRC(2bd2b0a1) SHA1(8fcb37728f3248ad55e48f2d398b014b36c9ec05) )
-
-	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprites 1 */
-	ROM_LOAD16_BYTE( "mbz-03.15a",    0x000001, 0x200000, CRC(2e818569) SHA1(457c1cad25d9b21459262be8b5788969f566a996) )
-	ROM_LOAD16_BYTE( "mbz-04.16a",    0x000000, 0x200000, CRC(67bdafb1) SHA1(9729c18f3153e4bba703a6f46ad0b886c52d84e2) )
-
-	ROM_REGION( 0x400000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites 2 */
-	ROM_LOAD16_BYTE( "mbz-03.18a",    0x000001, 0x200000, CRC(2e818569) SHA1(457c1cad25d9b21459262be8b5788969f566a996) )
-	ROM_LOAD16_BYTE( "mbz-04.19a",    0x000000, 0x200000, CRC(67bdafb1) SHA1(9729c18f3153e4bba703a6f46ad0b886c52d84e2) )
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* samples 1 */
-	ROM_LOAD( "mbz-06.19l",    0x00000, 0x080000,  CRC(4a38c635) SHA1(7f0fb6a7a4aa6774c04fa38e53ceff8744fe1e9f) )
-
-	ROM_REGION( 0x200000, REGION_SOUND2, 0 ) /* samples 2 */
-	ROM_LOAD( "mbz-05.17l",    0x00000, 0x200000,  CRC(947c1da6) SHA1(ac36006e04dc5e3990f76539763cc76facd08376) )
-ROM_END
-
 /**********************************************************************************/
 
-static DRIVER_INIT( hvysmsh )
+static void descramble_sound( int region )
 {
-	UINT8 *rom = memory_region(REGION_SOUND2);
-	int length = memory_region_length(REGION_SOUND2);
+	UINT8 *rom = memory_region(region);
+	int length = memory_region_length(region);
 	UINT8 *buf1 = malloc(length);
 	UINT32 x;
 
@@ -789,28 +528,26 @@ static DRIVER_INIT( hvysmsh )
 	}
 
 	memcpy(rom,buf1,length);
-	free (buf1);
 
+	free (buf1);
+}
+
+static DRIVER_INIT( hvysmsh )
+{
 	deco56_decrypt(REGION_GFX1); /* 141 */
 	decrypt156();
+	descramble_sound(REGION_SOUND2);
 }
 
 static DRIVER_INIT( wcvol95 )
 {
 	deco56_decrypt(REGION_GFX1); /* 141 */
 	decrypt156();
+	descramble_sound(REGION_SOUND1);
 }
 
-static DRIVER_INIT( backfire )
-{
-	deco56_decrypt(REGION_GFX1); /* 141 */
-	deco56_decrypt(REGION_GFX2); /* 141 */
-	decrypt156();
-}
 
 /**********************************************************************************/
 
 GAME( 1993, hvysmsh,  0,        hvysmsh,       hvysmsh,  hvysmsh,  ROT0, "Data East Corporation", "Heavy Smash (Japan version -2)", 0)
-GAME( 1995, wcvol95,  0,        wcvol95,       wcvol95,  wcvol95,  ROT0, "Data East Corporation", "World Cup Volley '95 (Japan v1.0)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAME( 1995, backfire, 0,        backfire,      backfire, backfire, ROT0, "Data East Corporation", "Backfire!", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
-GAME( 1995, backfira, backfire, backfire,      backfire, backfire, ROT0, "Data East Corporation", "Backfire! (set 2)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING)
+GAME( 1995, wcvol95,  0,        wcvol95,       wcvol95,  wcvol95,  ROT0, "Data East Corporation", "World Cup Volley '95 (Japan v1.0)",0 )

@@ -6,7 +6,7 @@
       Timing - Currently very approximated, nothing relies on proper timing so far.
       IRQ timing not yet correct (again, nothing is affected by this so far).
 
-    Recent changes (2005):
+	Recent changes (2005):
       Fixed software interrupts
       Fixed various mode change bugs
       Added preliminary co-processor support.
@@ -26,6 +26,7 @@
 #define WRITE32(addr,data)	cpu_write32(addr,data)
 
 #define ARM_DEBUG_CORE 0
+#define ARM_DEBUG_COPRO 0
 
 enum
 {
@@ -255,6 +256,7 @@ enum
 typedef struct
 {
 	UINT32 sArmRegister[kNumRegisters];
+	UINT32 coproRegister[16];
 	UINT8 pendingIrq;
 	UINT8 pendingFiq;
 	int (*irq_callback)(int);
@@ -640,7 +642,17 @@ static void HandleMemSingle( UINT32 insn )
 			if (rd == eR15)
 			{
 				R15 = (READ32(rnv) & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15 & MODE_MASK);
-				R15 -= 4;
+
+				/* 
+				The docs are explicit in that the bottom bits should be masked off 
+				when writing to R15 in this way, however World Cup Volleyball 95 has
+				an example of an unaligned jump (bottom bits = 2) where execution
+				should definitely continue from the rounded up address.  
+
+				In other cases, 4 is subracted from R15 here to account for pipelining.
+				*/
+				if ((READ32(rnv)&3)==0)
+					R15 -= 4;
 			}
 			else
 			{
@@ -870,7 +882,7 @@ static void HandleALU( UINT32 insn )
 				if ((R15&MODE_MASK)!=0)
 				{
 					SetRegister(rdn,rd);
-
+									
 					/* IRQ masks may have changed in this instruction */
 					//arm_check_irq_state();
 				}
@@ -891,14 +903,14 @@ static void HandleALU( UINT32 insn )
 				logerror("%08x: TST class on R15 s bit set\n",R15);
 
 			/* Dubious hack for 'TEQS R15, #$3', the docs suggest execution
-                should continue two instructions later (because pipelined R15
-                is read back as already being incremented), but it seems the
-                hardware should execute the instruction in the delay slot.
-                Simulate it by just setting the PC back to the previously
-                skipped instruction.
+				should continue two instructions later (because pipelined R15
+				is read back as already being incremented), but it seems the
+				hardware should execute the instruction in the delay slot.  
+				Simulate it by just setting the PC back to the previously
+				skipped instruction.
 
-                See Heavy Smash (Data East) at 0x1c4
-            */
+				See Heavy Smash (Data East) at 0x1c4
+			*/
 			if (insn==0xe33ff003)
 				rd-=4;
 
@@ -1236,44 +1248,122 @@ static UINT32 decodeShift( UINT32 insn, UINT32 *pCarry)
 	return 0;
 } /* decodeShift */
 
+
+static UINT32 BCDToDecimal(UINT32 value)
+{
+	UINT32	accumulator = 0;
+	UINT32	multiplier = 1;
+	int		i;
+
+	for(i = 0; i < 8; i++)
+	{
+		accumulator += (value & 0xF) * multiplier;
+
+		multiplier *= 10;
+		value >>= 4;
+	}
+
+	return accumulator;
+}
+
+static UINT32 DecimalToBCD(UINT32 value)
+{
+	UINT32	accumulator = 0;
+	UINT32	divisor = 10;
+	int		i;
+
+	for(i = 0; i < 8; i++)
+	{
+		UINT32	temp;
+
+		temp = value % divisor;
+		value -= temp;
+		temp /= divisor / 10;
+
+		accumulator += temp << (i * 4);
+
+		divisor *= 10;
+	}
+
+	return accumulator;
+}
+
 static void HandleCoPro( UINT32 insn)
 {
 	UINT32 rn=(insn>>12)&0xf;
 	UINT32 crn=(insn>>16)&0xf;
 
-static UINT32 regs[16];
-
-	if( insn&0x00100000 )
+	/* MRC - transfer copro register to main register */
+	if( (insn&0x0f100010)==0x0e100010 )
 	{
-		// MRC
-		logerror("%08x:  Copro read %08x to %08x\n", R15, crn, rn);
-		SetRegister(rn, rand() | (rand()<<16)); //regs[crn]);//
+		SetRegister(rn, arm.coproRegister[crn]);
+
+		if (ARM_DEBUG_COPRO)
+			logerror("%08x:  Copro read CR%d (%08x) to R%d\n", R15, crn, arm.coproRegister[crn], rn);
+	}
+	/* MCR - transfer main register to copro register */
+	else if( (insn&0x0f100010)==0x0e000010 )
+	{
+		arm.coproRegister[crn]=GetRegister(rn);
+
+		/* Data East 156 copro specific - trigger BCD operation */
+		if (crn==2)
+		{
+			if (arm.coproRegister[crn]==0)
+			{
+				/* Unpack BCD */
+				int v0=BCDToDecimal(arm.coproRegister[0]);
+				int v1=BCDToDecimal(arm.coproRegister[1]);
+				
+				/* Repack vcd */
+				arm.coproRegister[5]=DecimalToBCD(v0+v1);
+	
+				if (ARM_DEBUG_COPRO)
+					logerror("Cmd:  Add 0 + 1, result in 5 (%08x + %08x == %08x)\n", v0, v1, arm.coproRegister[5]);
+			}
+			else if (arm.coproRegister[crn]==3)
+			{
+				/* Unpack BCD */
+				int v0=BCDToDecimal(arm.coproRegister[0]);
+				int v1=BCDToDecimal(arm.coproRegister[1]);
+
+				/* Repack vcd */
+				arm.coproRegister[5]=DecimalToBCD(v0-v1);
+
+				if (ARM_DEBUG_COPRO)
+					logerror("Cmd:  Sub 0 - 1, result in 5 (%08x - %08x == %08x)\n", v0, v1, arm.coproRegister[5]);
+			}
+			else 
+			{
+				logerror("Unknown bcd copro command %08x\n", arm.coproRegister[crn]);
+			}
+		}
+
+		if (ARM_DEBUG_COPRO)
+			logerror("%08x:  Copro write R%d (%08x) to CR%d\n", R15, rn, GetRegister(rn), crn);
+	}
+	/* CDP - perform copro operation */
+	else if( (insn&0x0f000010)==0x0e000000 )
+	{
+		/* Data East 156 copro specific divider - result in reg 3/4 */
+		if (arm.coproRegister[1])
+		{
+			arm.coproRegister[3]=arm.coproRegister[0] / arm.coproRegister[1];
+			arm.coproRegister[4]=arm.coproRegister[0] % arm.coproRegister[1];
+		}
+		else
+		{
+			/* Unverified */
+			arm.coproRegister[3]=0xffffffff;
+			arm.coproRegister[4]=0xffffffff;
+		}
+
+		if (ARM_DEBUG_COPRO)
+			logerror("%08x:  Copro cdp (%08x) (3==> %08x, 4==> %08x)\n", R15, insn, arm.coproRegister[3], arm.coproRegister[4]);
 	}
 	else
 	{
-		// MCR
-		logerror("%08x:  Copro write %08x to %08x\n", R15, GetRegister(rn), crn);
-
-		if (crn==0 && (insn&0x10)==0)
-		{
-			//regs[3]=GetRegister(crn) * regs[1];
-			if (regs[1])
-				regs[3]=regs[0] / regs[1];
-			else
-				regs[3]=0;
-
-			if (regs[1])
-				regs[4]=regs[0] % regs[1];
-			else
-				regs[4]=0;
-		}
-		else if (crn==0 || crn==1)
-			regs[crn]=GetRegister(rn);
-		if (crn==2)
-		{
-			regs[3]=regs[0] * regs[1];
-			regs[5]=regs[0] % regs[1];
-		}
+		logerror("%08x:  Unimplemented copro instruction %08x\n", R15, insn);
 	}
 }
 

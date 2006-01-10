@@ -82,6 +82,10 @@
         Fixed interrupt processing order (Timer has highest priority followed
         by IRQ1 and finally IRQ2).
 
+    Changelog, version 1.08, 1/07/06: (Rob Bohms)
+
+        Added emulation of the T flag, fixes PCE Ankuku Densetsu title screen
+
 ******************************************************************************/
 #include "memory.h"
 #include "cpuintrf.h"
@@ -380,6 +384,16 @@ static int h6280_translate(int space, offs_t *addr)
 		*addr = TRANSLATED(*addr);
 	return 1;
 }
+
+UINT8 get_h6280io_buffer()
+{
+	return h6280.io_buffer;
+}
+void set_h6280io_buffer(UINT8 data)
+{
+	h6280.io_buffer=data;
+}
+
 
 /*****************************************************************************/
 

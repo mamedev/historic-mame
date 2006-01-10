@@ -331,16 +331,20 @@ int mame_faccess(const char *filename, int filetype)
 	int pathindex;
 
 	/* copy the filename and add an extension */
-	strcpy(modified_filename, filename);
+	strncpy(modified_filename, filename, sizeof(modified_filename) - 1);
+	modified_filename[sizeof(modified_filename) - 1] = 0;
 	if (extension)
 	{
 		char *p = strchr(modified_filename, '.');
 		if (p)
-			strcpy(p, extension);
+		{
+			strncpy(p, extension, sizeof(modified_filename) - (p - modified_filename) - 1);
+			modified_filename[sizeof(modified_filename) - 1] = 0;
+		}
 		else
 		{
-			strcat(modified_filename, ".");
-			strcat(modified_filename, extension);
+			strncat(modified_filename, ".", sizeof(modified_filename) - strlen(modified_filename) - 1);
+			strncat(modified_filename, extension, sizeof(modified_filename) - strlen(modified_filename) - 1);
 		}
 	}
 
@@ -350,19 +354,19 @@ int mame_faccess(const char *filename, int filetype)
 		char name[256];
 
 		/* first check the raw filename, in case we're looking for a directory */
-		sprintf(name, "%s", filename);
+		snprintf(name, sizeof(name), "%s", filename);
 		LOG(("mame_faccess: trying %s\n", name));
 		if (osd_get_path_info(filetype, pathindex, name) != PATH_NOT_FOUND)
 			return 1;
 
 		/* try again with a .zip extension */
-		sprintf(name, "%s.zip", filename);
+		snprintf(name, sizeof(name), "%s.zip", filename);
 		LOG(("mame_faccess: trying %s\n", name));
 		if (osd_get_path_info(filetype, pathindex, name) != PATH_NOT_FOUND)
 			return 1;
 
 		/* does such a directory (or file) exist? */
-		sprintf(name, "%s", modified_filename);
+		snprintf(name, sizeof(name), "%s", modified_filename);
 		LOG(("mame_faccess: trying %s\n", name));
 		if (osd_get_path_info(filetype, pathindex, name) != PATH_NOT_FOUND)
 			return 1;
@@ -749,7 +753,7 @@ UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length)
     compose_path
 ***************************************************************************/
 
-INLINE void compose_path(char *output, const char *gamename, const char *filename, const char *extension)
+INLINE void compose_path(char *output, size_t outputlen, const char *gamename, const char *filename, const char *extension)
 {
 	char *filename_base = output;
 	*output = 0;
@@ -757,7 +761,8 @@ INLINE void compose_path(char *output, const char *gamename, const char *filenam
 #ifdef MESS
 	if (filename && osd_is_absolute_path(filename))
 	{
-		strcpy(output, filename);
+		strncpy(output, filename, outputlen - 1);
+		output[outputlen - 1] = 0;
 		return;
 	}
 #endif
@@ -765,23 +770,23 @@ INLINE void compose_path(char *output, const char *gamename, const char *filenam
 	/* if there's a gamename, add that; only add a '/' if there is a filename as well */
 	if (gamename)
 	{
-		strcat(output, gamename);
+		strncat(output, gamename, outputlen - strlen(output) - 1);
 		if (filename)
 		{
-			strcat(output, "/");
+			strncat(output, "/", outputlen - strlen(output) - 1);
 			filename_base = &output[strlen(output)];
 		}
 	}
 
 	/* if there's a filename, add that */
 	if (filename)
-		strcat(output, filename);
+		strncat(output, filename, outputlen - strlen(output) - 1);
 
 	/* if there's no extension in the filename, add the extension */
 	if (extension && !strchr(filename_base, '.'))
 	{
-		strcat(output, ".");
-		strcat(output, extension);
+		strncat(output, ".", outputlen - strlen(output) - 1);
+		strncat(output, extension, outputlen - strlen(output) - 1);
 	}
 }
 
@@ -930,7 +935,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 		/* ----------------- STEP 1: OPEN THE FILE RAW -------------------- */
 
 		/* first look for path/gamename as a directory */
-		compose_path(name, gamename, NULL, NULL);
+		compose_path(name, sizeof(name), gamename, NULL, NULL);
 		LOG(("Trying %s\n", name));
 
 #ifdef MESS
@@ -949,7 +954,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 		if (*name == 0 || osd_get_path_info(pathtype, pathindex, name) == PATH_IS_DIRECTORY)
 		{
 			/* now look for path/gamename/filename.ext */
-			compose_path(name, gamename, filename, extension);
+			compose_path(name, sizeof(name), gamename, filename, extension);
 
 			/* if we need checksums, load it into RAM and compute it along the way */
 			if (flags & FILEFLAG_HASH)
@@ -1036,7 +1041,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 		if (!(flags & (FILEFLAG_OPENWRITE | FILEFLAG_NOZIP)))
 		{
 			/* first look for path/gamename.zip */
-			compose_path(name, gamename, NULL, "zip");
+			compose_path(name, sizeof(name), gamename, NULL, "zip");
 			LOG(("Trying %s file\n", name));
 
 			/* if the ZIP file exists, proceed */
@@ -1045,7 +1050,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 				UINT32 ziplength;
 
 				/* if the file was able to be extracted from the ZIP, continue */
-				compose_path(tempname, NULL, filename, extension);
+				compose_path(tempname, sizeof(tempname), NULL, filename, extension);
 
 				/* verify-only case */
 				if (flags & FILEFLAG_VERIFY_ONLY)

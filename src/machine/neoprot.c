@@ -66,7 +66,10 @@ void install_sram_protection(void)
 			!strcmp(Machine->gamedrv->name,"mslug3") ||
 			!strcmp(Machine->gamedrv->name,"garou") ||
 			!strcmp(Machine->gamedrv->name,"garouo") ||
-			!strcmp(Machine->gamedrv->name,"garoup"))
+			!strcmp(Machine->gamedrv->name,"garoup") ||
+			!strcmp(Machine->gamedrv->name,"samsho5") ||
+			!strcmp(Machine->gamedrv->name,"samsho5h") ||
+			!strcmp(Machine->gamedrv->name,"samsh5sp"))
 			neogeo_sram_protection_hack = 0x100/2;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))
@@ -148,20 +151,31 @@ logerror("unknown protection read at pc %06x, offset %08x\n",activecpu_get_pc(),
 			return 0;
 	}
 }
-
 static WRITE16_HANDLER( fatfury2_protection_16_w )
 {
 	switch (offset)
 	{
-		case 0x55552/2:	 /* data == 0x5555; read back from 55550, ffff0, 00000, ff000 */
+		case 0x11112/2: /* data == 0x1111; expects 0xFF000000 back */
+			neogeo_prot_data = 0xFF000000;
+			break;
+
+		case 0x33332/2: /* data == 0x3333; expects 0x0000FFFF back */
+			neogeo_prot_data = 0x0000FFFF;
+			break;
+
+		case 0x44442/2: /* data == 0x4444; expects 0x00FF0000 back */
+			neogeo_prot_data = 0x00FF0000;
+			break;
+
+		case 0x55552/2: /* data == 0x5555; read back from 55550, ffff0, 00000, ff000 */
 			neogeo_prot_data = 0xff00ff00;
 			break;
 
-		case 0x56782/2:	 /* data == 0x1234; read back from 36000 *or* 36004 */
+		case 0x56782/2: /* data == 0x1234; read back from 36000 *or* 36004 */
 			neogeo_prot_data = 0xf05a3601;
 			break;
 
-		case 0x42812/2:	 /* data == 0x1824; read back from 36008 *or* 3600c */
+		case 0x42812/2: /* data == 0x1824; read back from 36008 *or* 3600c */
 			neogeo_prot_data = 0x81422418;
 			break;
 
@@ -176,26 +190,14 @@ static WRITE16_HANDLER( fatfury2_protection_16_w )
 			break;
 
 		default:
-logerror("unknown protection write at pc %06x, offset %08x, data %02x\n",activecpu_get_pc(),offset,data);
+			logerror("unknown protection write at pc %06x, offset %08x, data %02x\n",activecpu_get_pc(),offset,data);
 			break;
 	}
 }
 
 void fatfury2_install_protection(void)
 {
-	/* Hacks the program rom of Fatal Fury 2, needed either in arcade or console mode */
-	/* otherwise at level 2 you cannot hit the opponent and other problems */
-
-	/* there seems to also be another protection check like the countless ones */
-	/* patched above by protecting a SRAM location, but that trick doesn't work */
-	/* here (or maybe the SRAM location to protect is different), so I patch out */
-	/* the routine which trashes memory. Without this, the game goes nuts after */
-	/* the first bonus stage. */
-	UINT16 *mem16 = (UINT16 *)memory_region(REGION_CPU1);
-	mem16[0xb820/2] = 0x4e71;
-	mem16[0xb822/2] = 0x4e71;
-
-	/* again, the protection involves reading and writing addresses in the */
+	/* the protection involves reading and writing addresses in the */
 	/* 0x2xxxxx range. There are several checks all around the code. */
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2fffff, 0, 0, fatfury2_protection_16_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2fffff, 0, 0, fatfury2_protection_16_w);
@@ -525,4 +527,72 @@ void kof2000_install_protection(void)
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
+}
+
+/************************ PVC Protection ***********************
+  mslug5, svcchaos, kof2003
+***************************************************************/
+
+static unsigned short CartRAM[0x1000];
+
+void pvc_w8(unsigned int offset, unsigned char data)
+{
+	*(((unsigned char*)CartRAM)+offset)=data;
+}
+
+unsigned char pvc_r8(unsigned int offset)
+{
+	return *(((unsigned char*)CartRAM)+offset);
+}
+
+void pvc_prot1( void )
+{
+	unsigned char b1, b2;
+	b1 = pvc_r8(0x1fe1);
+	b2 = pvc_r8(0x1fe0);
+	pvc_w8(0x1fe2,(((b2>>0)&0xf)<<1)|((b1>>4)&1));
+	pvc_w8(0x1fe3,(((b2>>4)&0xf)<<1)|((b1>>5)&1));
+	pvc_w8(0x1fe4,(((b1>>0)&0xf)<<1)|((b1>>6)&1));
+	pvc_w8(0x1fe5, (b1>>7));
+}
+
+
+void pvc_prot2( void ) // on writes to e8/e9/ea/eb
+{
+	unsigned char b1, b2, b3, b4;
+	b1 = pvc_r8(0x1fe9);
+	b2 = pvc_r8(0x1fe8);
+	b3 = pvc_r8(0x1feb);
+	b4 = pvc_r8(0x1fea);
+	pvc_w8(0x1fec,(b2>>1)|((b1>>1)<<4));
+	pvc_w8(0x1fed,(b4>>1)|((b2&1)<<4)|((b1&1)<<5)|((b4&1)<<6)|((b3&1)<<7));
+}
+
+void pvc_write_bankswitch( void )
+{
+	UINT32 bankaddress;
+	bankaddress = ((CartRAM[0xff8]>>8)|(CartRAM[0xff9]<<8));
+	*(((unsigned char *)CartRAM) + 0x1ff0) = 0xA0;
+	*(((unsigned char *)CartRAM) + 0x1ff1) &= 0xFE;
+	*(((unsigned char *)CartRAM) + 0x1ff3) &= 0x7F;
+	neogeo_set_cpu1_second_bank(bankaddress+0x100000);
+}
+
+static READ16_HANDLER( pvc_prot_r )
+{
+	return CartRAM[ offset ];
+}
+
+static WRITE16_HANDLER( pvc_prot_w )
+{
+	COMBINE_DATA( &CartRAM[ offset ] );
+	if (offset == 0xFF0)pvc_prot1();
+	else if(offset >= 0xFF4 && offset <= 0xFF5)pvc_prot2();
+	else if(offset >= 0xFF8)pvc_write_bankswitch();
+}
+
+void install_pvc_protection( void )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, pvc_prot_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, pvc_prot_w);
 }

@@ -489,7 +489,7 @@ static void build_opcode_table(UINT32 features)
 
 	for (i=0; i < sizeof(x86_opcode_table)/sizeof(X86_OPCODE); i++)
 	{
-		X86_OPCODE *op = &x86_opcode_table[i];
+		const X86_OPCODE *op = &x86_opcode_table[i];
 
 		if ((op->flags & features))
 		{

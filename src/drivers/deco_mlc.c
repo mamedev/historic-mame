@@ -88,18 +88,19 @@
         it is barely used by the game (only checked at startup).  See decoprot.c
 
     Driver todo:
-        Sprite X flip seems broken in Avengrgs - this seems to be a SH2 CPU bug in that
-        the sprite flip is not set in software, meaning that many backgrounds appear
-        incomplete (two identical sprites drawn on top of each other instead of
-        flipped side by side) and Captain America always faces the wrong way.
+        stadhr96 seems to require raster IRQ video update support.
 
-        StadHero96 seems to require raster IRQ video update support.
+		Several sprites are quite broken in stadhr96.
 
-        Dunk Dream 95 seems to have a dual screen mode(??)
-
-        Sound is wrong.
+        ddream95 seems to have a dual screen mode(??)
 
         All DE156 based games make used of an unemulated co-processor.
+		 -- partial emulation, see cpu/arm/arm.c
+
+	    skullfng appears to need clipping window support on the sprites before the
+		boss
+
+		eeprom write is broken in avengrgs
 
     Driver by Bryan McPhail, bmcphail@tendril.co.uk, thank you to Avedis and The Guru.
 
@@ -467,7 +468,7 @@ static MACHINE_DRIVER_START( mlc )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(YMZ280B, 42000000 / 2)
+	MDRV_SOUND_ADD(YMZ280B, 42000000 / 3)
 	MDRV_SOUND_CONFIG(ymz280b_intf)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
@@ -507,10 +508,10 @@ ROM_START( avengrgs )
 	ROM_REGION( 0x80000, REGION_GFX2, 0 )
 	ROM_LOAD( "sf_02-0.6j", 0x000000, 0x80000, CRC(c98585dd) SHA1(752e246e2c72eb2b786c49d69f7ee4401a15c8aa) )
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mcg-12.5a",  0x400000, 0x200000, CRC(bef9b28f) SHA1(b7a2a0539ea4d22b48ce3f3eb367017f219da2c1) )
-	ROM_LOAD16_WORD_SWAP( "mcg-13.9k",  0x200000, 0x200000, CRC(92301551) SHA1(a7891e7a3c8d7f165ca73f5d5a034501df46e9a2) )
-	ROM_LOAD16_WORD_SWAP( "mcg-14.6a",  0x000000, 0x200000, CRC(c0d8b5f0) SHA1(08eecf6e7d0273e41cda3472709a67e2b16068c9) )
+	ROM_REGION( 0x800000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD( "mcg-12.5a",  0x000000, 0x200000, CRC(bef9b28f) SHA1(b7a2a0539ea4d22b48ce3f3eb367017f219da2c1) ) // basic coin sounds etc.
+	ROM_LOAD( "mcg-13.9k",  0x200000, 0x200000, CRC(92301551) SHA1(a7891e7a3c8d7f165ca73f5d5a034501df46e9a2) ) // music
+	ROM_LOAD( "mcg-14.6a",  0x400000, 0x200000, CRC(c0d8b5f0) SHA1(08eecf6e7d0273e41cda3472709a67e2b16068c9) ) // music
 ROM_END
 
 ROM_START( avengrgj )
@@ -535,10 +536,10 @@ ROM_START( avengrgj )
 	ROM_REGION( 0x80000, REGION_GFX2, 0 )
 	ROM_LOAD( "sd_02-0.6j", 0x000000, 0x80000, CRC(24fc2b3c) SHA1(805eaa8e8ba49320ba83bda6307cc1d15d619358) )
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mcg-12.5a",  0x400000, 0x200000, CRC(bef9b28f) SHA1(b7a2a0539ea4d22b48ce3f3eb367017f219da2c1) )
-	ROM_LOAD16_WORD_SWAP( "mcg-13.9k",  0x200000, 0x200000, CRC(92301551) SHA1(a7891e7a3c8d7f165ca73f5d5a034501df46e9a2) )
-	ROM_LOAD16_WORD_SWAP( "mcg-14.6a",  0x000000, 0x200000, CRC(c0d8b5f0) SHA1(08eecf6e7d0273e41cda3472709a67e2b16068c9) )
+	ROM_REGION( 0x800000, REGION_SOUND1, ROMREGION_ERASE00 )
+	ROM_LOAD( "mcg-12.5a",  0x000000, 0x200000, CRC(bef9b28f) SHA1(b7a2a0539ea4d22b48ce3f3eb367017f219da2c1) ) // basic coin sounds etc.
+	ROM_LOAD( "mcg-13.9k",  0x200000, 0x200000, CRC(92301551) SHA1(a7891e7a3c8d7f165ca73f5d5a034501df46e9a2) ) // music
+	ROM_LOAD( "mcg-14.6a",  0x400000, 0x200000, CRC(c0d8b5f0) SHA1(08eecf6e7d0273e41cda3472709a67e2b16068c9) ) // music
 ROM_END
 
 ROM_START( stadhr96 )
@@ -558,7 +559,7 @@ ROM_START( stadhr96 )
 	ROM_LOAD( "ead02-0.6h", 0x000000, 0x80000, CRC(f95ad7ce) SHA1(878dcc1d5f76c8523c788e66bb4a8c5740d515e5) )
 
 	ROM_REGION( 0x800000, REGION_SOUND1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mcm-06.6a",  0x000000, 0x400000,  CRC(fbc178f3) SHA1(f44cb913177b6552b30c139505c3284bc445ba13) )
+	ROM_LOAD( "mcm-06.6a",  0x000000, 0x400000,  CRC(fbc178f3) SHA1(f44cb913177b6552b30c139505c3284bc445ba13) )
 ROM_END
 
 ROM_START( stadh96a )
@@ -578,7 +579,7 @@ ROM_START( stadh96a )
 	ROM_LOAD( "sh-eaf.6h", 0x000000, 0x80000, CRC(f074a5c8) SHA1(72709cc0ac2d0df19393b405d8f927834f563e69) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mcm-06.6a",  0x000000, 0x400000,  CRC(fbc178f3) SHA1(f44cb913177b6552b30c139505c3284bc445ba13) )
+	ROM_LOAD( "mcm-06.6a",  0x000000, 0x400000,  CRC(fbc178f3) SHA1(f44cb913177b6552b30c139505c3284bc445ba13) )
 ROM_END
 
 ROM_START( hoops96 )
@@ -597,7 +598,7 @@ ROM_START( hoops96 )
 	ROM_LOAD( "rr02-0.6h", 0x020000, 0x20000, CRC(9490041c) SHA1(febedd0683dbcb080d304d03e4a3b501caeb6bb8) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mce-05.6a",  0x000000, 0x400000,  CRC(e7a9355a) SHA1(039b23666e224c33ebb02baa80e496f8bce0514f) )
+	ROM_LOAD( "mce-05.6a",  0x000000, 0x400000,  CRC(e7a9355a) SHA1(039b23666e224c33ebb02baa80e496f8bce0514f) )
 ROM_END
 
 ROM_START( hoops95 )
@@ -635,7 +636,7 @@ ROM_START( ddream95 )
 	ROM_LOAD( "rl02-0.6h", 0x020000, 0x20000, CRC(9490041c) SHA1(febedd0683dbcb080d304d03e4a3b501caeb6bb8) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mce-05.6a",  0x000000, 0x400000,  CRC(e7a9355a) SHA1(039b23666e224c33ebb02baa80e496f8bce0514f) )
+	ROM_LOAD( "mce-05.6a",  0x000000, 0x400000,  CRC(e7a9355a) SHA1(039b23666e224c33ebb02baa80e496f8bce0514f) )
 ROM_END
 
 ROM_START( skullfng )
@@ -661,6 +662,34 @@ ROM_END
 
 /***************************************************************************/
 
+static void descramble_sound( void )
+{
+	/* the same as simpl156 / heavy smash? */
+	UINT8 *rom = memory_region(REGION_SOUND1);
+	int length = memory_region_length(REGION_SOUND1);
+	UINT8 *buf1 = malloc(length);
+
+	UINT32 x;
+
+	for (x=0;x<length;x++)
+	{
+		UINT32 addr;
+
+		addr = BITSWAP24 (x,23,22,21,0, 20,
+		                    19,18,17,16,
+		                    15,14,13,12,
+		                    11,10,9, 8,
+		                    7, 6, 5, 4,
+		                    3, 2, 1 );
+
+		buf1[addr] = rom[x];
+	}
+
+	memcpy(rom,buf1,length);
+
+	free (buf1);
+}
+
 static READ32_HANDLER( avengrgs_speedup_r )
 {
 	UINT32 a=mlc_ram[0x89a0/4];
@@ -675,6 +704,7 @@ static DRIVER_INIT( avengrgs )
 {
 	mainCpuIsArm=0;
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01089a0, 0x01089a3, 0, 0, avengrgs_speedup_r );
+	descramble_sound();
 }
 
 static DRIVER_INIT( mlc )
@@ -682,18 +712,19 @@ static DRIVER_INIT( mlc )
 	/* The timing in the ARM core isn't as accurate as it should be, so bump up the
         effective clock rate here to compensate otherwise we have slowdowns in
         Skull Fung where there probably shouldn't be. */
-	cpunum_set_clockscale(0, 1.3f);
+	cpunum_set_clockscale(0, 2.0f);
 	mainCpuIsArm=1;
 	decrypt156();
+	descramble_sound();
 }
 
 /***************************************************************************/
 
-GAME( 1995, avengrgs, 0,        avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (US)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, avengrgj, avengrgs, avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1995, avengrgs, 0,        avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (US)", 0 ) // seems ok
+GAME( 1995, avengrgj, avengrgs, avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", 0 ) // seems ok
 GAME( 1996, stadhr96, 0,        mlc_6bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAD)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1996, stadh96a, stadhr96, mlc_6bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAJ)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1996, skullfng, 0,        mlc_6bpp, mlc, mlc,      ROT270, "Data East Corporation", "Skull Fang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
-GAME( 1996, hoops96,  0,        mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops '96 (Europe/Asia 2.0)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
-GAME( 1996, ddream95, hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Dunk Dream '95 (Japan 1.4 EAM)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
-GAME( 1996, hoops95,  hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops (Europe/Asia 1.7)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
+GAME( 1996, hoops96,  0,        mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops '96 (Europe/Asia 2.0)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, ddream95, hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Dunk Dream '95 (Japan 1.4 EAM)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, hoops95,  hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops (Europe/Asia 1.7)", GAME_IMPERFECT_GRAPHICS )

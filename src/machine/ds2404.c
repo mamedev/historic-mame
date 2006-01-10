@@ -23,9 +23,7 @@ typedef struct {
 	UINT8 a1, a2;
 	UINT8 sram[512];	/* 4096 bits */
 	UINT8 ram[32];		/* scratchpad ram, 256 bits */
-	UINT64 rtc;			/* 40-bit RTC counter */
-	UINT64 timer;		/* 40-bit interval timer */
-	UINT64 clock_adjust;	/* How many seconds to adjust the clock to match PC clock */
+	UINT8 rtc[5];		/* 40-bit RTC counter */
 	DS2404_STATE state[8];
 	int state_ptr;
 } DS2404;
@@ -84,64 +82,26 @@ static void ds2404_cmd(UINT8 cmd)
 
 static UINT8 ds2404_readmem(void)
 {
-	UINT8 value;
-
-	if( ds2404.address < 0x200 ) {
-		value = ds2404.sram[ds2404.address];
-		return value;
-	} else {
-		time_t current_time;
-
-		time( &current_time );
-		current_time -= ds2404.clock_adjust;
-
-		switch( ds2404.address )
-		{
-			case 0x200:
-				return 0;
-			case 0x203:
-				return (current_time & 0xff);
-			case 0x204:
-				return (current_time >> 8) & 0xff;
-			case 0x205:
-				return (current_time >> 16) & 0xff;
-			case 0x206:
-				return (current_time >> 24) & 0xff;
-			default:
-				return 0;
-		}
+	if( ds2404.address < 0x200 )
+	{
+		return ds2404.sram[ ds2404.address ];
 	}
+	else if( ds2404.address >= 0x202 && ds2404.address <= 0x206 )
+	{
+		return ds2404.rtc[ ds2404.address - 0x202 ];
+	}
+	return 0;
 }
 
 static void ds2404_writemem(UINT8 value)
 {
-	if( ds2404.address < 0x200 ) {
-		ds2404.sram[ds2404.address] = value;
-	} else {
-
-		switch( ds2404.address )
-		{
-			case 0x202:
-				ds2404.rtc &= ~(UINT64)0xff;
-				ds2404.rtc |= (UINT64)value;
-				break;
-			case 0x203:
-				ds2404.rtc &= ~(UINT64)0xff00;
-				ds2404.rtc |= ((UINT64)value << 8);
-				break;
-			case 0x204:
-				ds2404.rtc &= ~(UINT64)0xff0000;
-				ds2404.rtc |= ((UINT64)value << 16);
-				break;
-			case 0x205:
-				ds2404.rtc &= ~(UINT64)0xff000000;
-				ds2404.rtc |= ((UINT64)value << 24);
-				break;
-			case 0x206:
-				ds2404.rtc &= ~(UINT64)U64(0xff00000000);
-				ds2404.rtc |= ((UINT64)value << 32);
-				break;
-		}
+	if( ds2404.address < 0x200 )
+	{
+		ds2404.sram[ ds2404.address ] = value;
+	}
+	else if( ds2404.address >= 0x202 && ds2404.address <= 0x206 )
+	{
+		ds2404.rtc[ ds2404.address - 0x202 ] = value;
 	}
 }
 
@@ -308,15 +268,44 @@ WRITE8_HANDLER( DS2404_clk_w )
 	}
 }
 
+static void DS2404_tick( int unused )
+{
+	int i;
+	for( i = 0; i < 5; i++ )
+	{
+		ds2404.rtc[ i ]++;
+		if( ds2404.rtc[ i ] != 0 )
+		{
+			break;
+		}
+	}
+}
+
 void DS2404_init(int ref_year, int ref_month, int ref_day)
 {
-	int years = ref_year - 1970;
-	int leap_days = years / 4;
-	int month = ref_month - 1;
-	int day = ref_day - 1;
+	struct tm ref_tm;
+	time_t ref_time;
+	time_t current_time;
+	mame_timer *timer;
 
-	ds2404.clock_adjust = (years * 365 * 24 * 60 * 60) + (leap_days * 24 * 60 * 60) +
-						  (month * 30 * 24 * 60 * 60) + (day * 24 * 60 * 60);
+	memset( &ref_tm, 0, sizeof( ref_tm ) );
+	ref_tm.tm_year = ref_year - 1900;
+	ref_tm.tm_mon = ref_month - 1;
+	ref_tm.tm_mday = ref_day;
+
+	ref_time = mktime( &ref_tm );
+
+	time( &current_time );
+	current_time -= ref_time;
+
+	ds2404.rtc[ 0 ] = 0x0;
+	ds2404.rtc[ 1 ] = ( current_time >> 0 ) & 0xff;
+	ds2404.rtc[ 2 ] = ( current_time >> 8 ) & 0xff;
+	ds2404.rtc[ 3 ] = ( current_time >> 16 ) & 0xff;
+	ds2404.rtc[ 4 ] = ( current_time >> 24 ) & 0xff;
+
+	timer = timer_alloc( DS2404_tick );
+	timer_adjust( timer, TIME_IN_HZ( 256 ), 0, TIME_IN_HZ( 256 ) );
 }
 
 void DS2404_load(mame_file *file)

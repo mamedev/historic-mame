@@ -686,12 +686,12 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #define OP_MPY(MODE)														\
 	CLK(CLK_OP + CLK_R8 + CLK_##MODE);	\
 	SRC = OPER_8_##MODE();			\
-	{ int temp = SRC * REG_A;  REG_A = temp & 0xff; REG_BA = (temp>>8)&0xff; FLAG_Z = temp; FLAG_N = (temp & 0x8000) ? 1 : 0; }
+	{ int temp = SRC * REG_A;  REG_A = temp & 0xff; REG_BA = (temp>>8)&0xff; FLAG_Z = temp; FLAG_N = (temp & 0x8000) ? 1 : 0; FLAG_C = 0; }
 #else
 #define OP_MPY(MODE)														\
 	CLK(CLK_OP + CLK_R16 + CLK_##MODE);	\
 	SRC = OPER_16_##MODE();			\
-	{ int temp = SRC * REG_A;  REG_A = temp & 0xffff;  REG_BA = (temp>>16)&0xffff; FLAG_Z = temp; FLAG_N = (temp & 0x80000000) ? 1 : 0; }
+	{ int temp = SRC * REG_A;  REG_A = temp & 0xffff;  REG_BA = (temp>>16)&0xffff; FLAG_Z = temp; FLAG_N = (temp & 0x80000000) ? 1 : 0; FLAG_C = 0; }
 #endif
 
 /* M37710   Divide */
@@ -1880,6 +1880,65 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 			FLAG_C = ~FLAG_C
 #endif
 
+/* M37710   Subtract with Carry - B accumulator */
+/* Unusual behavior: C flag is inverted */
+#undef OP_SBCB
+#if FLAG_SET_M
+#define OP_SBCB(MODE)														\
+			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
+			SRC = OPER_8_##MODE();											\
+			FLAG_C = ~FLAG_C;												\
+			if(!FLAG_D)														\
+			{																\
+				FLAG_C = REG_BA - SRC - CFLAG_AS_1();						\
+				FLAG_V = VFLAG_SUB_8(SRC, REG_BA, FLAG_C);					\
+				FLAG_N = FLAG_Z = REG_BA = MAKE_UINT_8(FLAG_C);				\
+				FLAG_C = ~FLAG_C;											\
+				BREAKOUT;													\
+			}																\
+			DST = CFLAG_AS_1();												\
+			FLAG_C = REG_BA - SRC - DST;										\
+			FLAG_V = VFLAG_SUB_8(SRC, REG_BA, FLAG_C);						\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C-=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C-=0x60;												\
+			FLAG_N = FLAG_Z = REG_BA = MAKE_UINT_8(FLAG_C);					\
+			FLAG_C = ~FLAG_C
+#else
+#define OP_SBCB(MODE)														\
+			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
+			SRC = OPER_16_##MODE();											\
+			FLAG_C = ~FLAG_C;												\
+			if(!FLAG_D)														\
+			{																\
+				FLAG_C = REG_BA - SRC - CFLAG_AS_1();						\
+				FLAG_V = VFLAG_SUB_16(SRC, REG_BA, FLAG_C);					\
+				FLAG_Z = REG_BA = MAKE_UINT_16(FLAG_C);						\
+				FLAG_N = NFLAG_16(REG_BA);									\
+				FLAG_C = ~CFLAG_16(FLAG_C);									\
+				BREAKOUT;													\
+			}																\
+			DST    = CFLAG_AS_1();											\
+			FLAG_C = MAKE_UINT_8(REG_BA) - MAKE_UINT_8(SRC) - DST;			\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C-=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C-=0x60;												\
+			FLAG_Z = MAKE_UINT_8(FLAG_C);									\
+			DST    = CFLAG_AS_1();											\
+			FLAG_C = MAKE_UINT_8(REG_A>>8) - MAKE_UINT_8(SRC>>8) - DST;		\
+			if((FLAG_C & 0xf) > 9)											\
+				FLAG_C-=6;													\
+			if((FLAG_C & 0xf0) > 0x90)										\
+				FLAG_C-=0x60;												\
+			FLAG_Z |= MAKE_UINT_8(FLAG_C) << 8;								\
+			FLAG_N = NFLAG_16(FLAG_Z);										\
+			FLAG_V = VFLAG_SUB_16(SRC, REG_BA, FLAG_Z);						\
+			REG_BA = FLAG_Z;												\
+			FLAG_C = ~FLAG_C
+#endif
+
 /* M37710   Set Carry flag */
 #undef OP_SEC
 #define OP_SEC()															\
@@ -2610,11 +2669,14 @@ OP(1d7, OP_CMPB  ( DLIY        ) ) /* CMPB dliy(G) */
 OP(1d9, OP_CMPB  ( AY          ) ) /* CMPB ay      */
 OP(1dd, OP_CMPB  ( AX          ) ) /* CMPB ax      */
 OP(1df, OP_CMPB  ( ALX         ) ) /* CMPB alx (G) */
+OP(1e9, OP_SBCB  ( IMM         ) ) /* SBCB imm     */
+OP(1f5, OP_SBCB  ( DX          ) ) /* SBCB dx      */
 OP(200, OP_UNIMP (             ) ) /* unimplemented */
 OP(203, OP_MPY   ( S           ) ) /* MPY s       */
 OP(205, OP_MPY   ( D           ) ) /* MPY d       */
 OP(209, OP_MPY   ( IMM         ) ) /* MPY imm     */
 OP(215, OP_MPY   ( DX          ) ) /* MPY dx      */
+OP(219, OP_MPY   ( AY	       ) ) /* MPY ay      */
 OP(225, OP_DIV   ( D           ) ) /* DIV d       */
 OP(228, OP_XAB   (             ) ) /* XAB         */
 OP(235, OP_DIV   ( DX          ) ) /* DIV dx      */
@@ -2688,8 +2750,8 @@ TABLE_OPCODES2 =
 	O(200),O(1d1),O(1d2),O(1d3),O(200),O(1d5),O(200),O(1d7),	// d0
 	O(200),O(1d9),O(200),O(200),O(200),O(1dd),O(200),O(1df),
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// e0
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),	// f0
+	O(200),O(1e9),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(200),O(200),O(200),O(200),O(1f5),O(200),O(200),	// f0
 	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200)
 };
 
@@ -2698,7 +2760,7 @@ TABLE_OPCODES3 =
 	O(200),O(200),O(200),O(203),O(200),O(205),O(200),O(200),
 	O(200),O(209),O(200),O(200),O(200),O(200),O(200),O(200),
 	O(200),O(200),O(200),O(200),O(200),O(215),O(200),O(200),	// 10
-	O(200),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
+	O(200),O(219),O(200),O(200),O(200),O(200),O(200),O(200),
 	O(200),O(200),O(200),O(200),O(200),O(225),O(200),O(200),	// 20
 	O(228),O(200),O(200),O(200),O(200),O(200),O(200),O(200),
 	O(200),O(200),O(200),O(200),O(200),O(235),O(200),O(200),	// 30

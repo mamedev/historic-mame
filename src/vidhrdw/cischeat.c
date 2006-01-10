@@ -578,9 +578,10 @@ WRITE16_HANDLER( scudhamm_vregs_w )
 		case 0x000/2+2 : megasys1_set_vreg_flag(0,new_data);break;
 
 //      UNUSED LAYER
-//      case 0x008/2+0 : MEGASYS1_VREG_SCROLL(1,x)      break;
-//      case 0x008/2+1 : MEGASYS1_VREG_SCROLL(1,y)      break;
-//      case 0x008/2+2 : megasys1_set_vreg_flag(1,new_data);break;
+		case 0x008/2+0 :
+		case 0x008/2+1 :
+		case 0x008/2+2 :
+			break;
 
 		case 0x100/2+0 : MEGASYS1_VREG_SCROLL(2,x)		break;
 		case 0x100/2+1 : MEGASYS1_VREG_SCROLL(2,y)		break;
