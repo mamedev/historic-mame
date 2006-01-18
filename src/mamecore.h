@@ -473,8 +473,7 @@ INLINE int bcd_2_dec(int a)
 
 INLINE int gregorian_is_leap_year(int year)
 {
-	return ((year & 4) == 0)
-		&& ((year % 100 != 0) || (year % 400 == 0));
+	return !(year % 100 ? year % 4 : year % 400);
 }
 
 

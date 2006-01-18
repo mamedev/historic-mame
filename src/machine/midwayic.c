@@ -559,11 +559,13 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
-	ioasic.has_dcs = (mame_find_cpu_index("dcs2") != -1 || mame_find_cpu_index("dcs3") != -1);
+	ioasic.has_dcs = (mame_find_cpu_index("dcs2") != -1 || mame_find_cpu_index("dsio") != -1 || mame_find_cpu_index("denver") != -1);
 	ioasic.has_cage = (mame_find_cpu_index("cage") != -1);
 	ioasic.dcs_cpu = mame_find_cpu_index("dcs2");
 	if (ioasic.dcs_cpu == (UINT8)-1)
-		ioasic.dcs_cpu = mame_find_cpu_index("dcs3");
+		ioasic.dcs_cpu = mame_find_cpu_index("dsio");
+	if (ioasic.dcs_cpu == (UINT8)-1)
+		ioasic.dcs_cpu = mame_find_cpu_index("denver");
 	ioasic.shuffle_type = shuffle;
 	ioasic.shuffle_map = &shuffle_maps[shuffle][0];
 	ioasic.auto_ack = 0;

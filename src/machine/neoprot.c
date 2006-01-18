@@ -69,7 +69,9 @@ void install_sram_protection(void)
 			!strcmp(Machine->gamedrv->name,"garoup") ||
 			!strcmp(Machine->gamedrv->name,"samsho5") ||
 			!strcmp(Machine->gamedrv->name,"samsho5h") ||
-			!strcmp(Machine->gamedrv->name,"samsh5sp"))
+			!strcmp(Machine->gamedrv->name,"samsh5sp") ||
+			!strcmp(Machine->gamedrv->name,"samsh5sh") ||
+			!strcmp(Machine->gamedrv->name,"samsh5sn"))
 			neogeo_sram_protection_hack = 0x100/2;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))

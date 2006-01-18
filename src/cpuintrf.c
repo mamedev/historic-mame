@@ -1267,11 +1267,15 @@ offs_t activecpu_dasm(char *buffer, offs_t pc)
 				physpc ^= xorval;
 
 				/* get pointer to data */
-				ptr = memory_get_op_ptr(cpu_getactivecpu(), physpc);
+				ptr = memory_get_op_ptr(cpu_getactivecpu(), physpc, 0);
 				if (ptr)
 				{
 					opbuf[numbytes] = *ptr;
-					argbuf[numbytes] = *(ptr + (opcode_arg_base - opcode_base));
+					ptr = memory_get_op_ptr(cpu_getactivecpu(), physpc, 1);
+					if (ptr)
+						argbuf[numbytes] = *ptr;
+					else
+						argbuf[numbytes] = opbuf[numbytes];
 				}
 			}
 		}

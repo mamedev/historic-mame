@@ -830,7 +830,7 @@ ROM_END
 
 ROM_START( magiccrd )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )
-    ROM_LOAD( "magicard.004", 0x0000, 0x8000,  CRC(f6e948b8) ) // only last 16kbyte visible?
+    ROM_LOAD( "magicard.004", 0x0000, 0x8000,  CRC(f6e948b8) SHA1(7d5983015a508ab135ccbf69b7f3c526c229e3ef) ) // only last 16kbyte visible?
 	ROM_LOAD( "magicard.01",  0x8000, 0x10000, CRC(c94767d4) SHA1(171ac946bdf2575f9e4a31e534a8e641597af519) ) // 1ST AND 2ND HALF IDENTICAL
 
 	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )

@@ -14,29 +14,16 @@
 #include "sound/2203intf.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
+#include "deco16ic.h"
 
 VIDEO_START( vaportra );
 VIDEO_UPDATE( vaportra );
 
-WRITE16_HANDLER( vaportra_pf1_data_w );
-WRITE16_HANDLER( vaportra_pf2_data_w );
-WRITE16_HANDLER( vaportra_pf3_data_w );
-WRITE16_HANDLER( vaportra_pf4_data_w );
-
-WRITE16_HANDLER( vaportra_control_0_w );
-WRITE16_HANDLER( vaportra_control_1_w );
-WRITE16_HANDLER( vaportra_control_2_w );
+WRITE16_HANDLER( vaportra_priority_w );
 WRITE16_HANDLER( vaportra_palette_24bit_rg_w );
 WRITE16_HANDLER( vaportra_palette_24bit_b_w );
 
-extern UINT16 *vaportra_pf1_data,*vaportra_pf2_data,*vaportra_pf3_data,*vaportra_pf4_data;
-
 /******************************************************************************/
-
-static READ16_HANDLER( vaportra_pf1_data_r ) { return vaportra_pf1_data[offset]; }
-static READ16_HANDLER( vaportra_pf2_data_r ) { return vaportra_pf2_data[offset]; }
-static READ16_HANDLER( vaportra_pf3_data_r ) { return vaportra_pf3_data[offset]; }
-static READ16_HANDLER( vaportra_pf4_data_r ) { return vaportra_pf4_data[offset]; }
 
 static WRITE16_HANDLER( vaportra_sound_w )
 {
@@ -68,10 +55,10 @@ static ADDRESS_MAP_START( vaportra_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x10000f) AM_READ(vaportra_control_r)
 
-	AM_RANGE(0x200000, 0x201fff) AM_READ(vaportra_pf2_data_r)
-	AM_RANGE(0x202000, 0x203fff) AM_READ(vaportra_pf4_data_r)
-	AM_RANGE(0x280000, 0x281fff) AM_READ(vaportra_pf1_data_r)
-	AM_RANGE(0x282000, 0x283fff) AM_READ(vaportra_pf3_data_r)
+	AM_RANGE(0x200000, 0x201fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x202000, 0x203fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x280000, 0x281fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x282000, 0x283fff) AM_READ(MRA16_RAM)
 
 	AM_RANGE(0x300000, 0x300fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x304000, 0x304fff) AM_READ(MRA16_RAM)
@@ -82,19 +69,20 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vaportra_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x100003) AM_WRITE(vaportra_control_2_w)
+	AM_RANGE(0x100000, 0x100003) AM_WRITE(vaportra_priority_w)
 	AM_RANGE(0x100006, 0x100007) AM_WRITE(vaportra_sound_w)
 
-	AM_RANGE(0x200000, 0x201fff) AM_WRITE(vaportra_pf2_data_w) AM_BASE(&vaportra_pf2_data)
-	AM_RANGE(0x202000, 0x203fff) AM_WRITE(vaportra_pf4_data_w) AM_BASE(&vaportra_pf4_data)
-	AM_RANGE(0x240000, 0x24000f) AM_WRITE(vaportra_control_0_w)
+	AM_RANGE(0x200000, 0x201fff) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
+	AM_RANGE(0x202000, 0x203fff) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
+	AM_RANGE(0x240000, 0x24000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf34_control)
 
-	AM_RANGE(0x280000, 0x281fff) AM_WRITE(vaportra_pf1_data_w) AM_BASE(&vaportra_pf1_data)
-	AM_RANGE(0x282000, 0x283fff) AM_WRITE(vaportra_pf3_data_w) AM_BASE(&vaportra_pf3_data)
-	AM_RANGE(0x2c0000, 0x2c000f) AM_WRITE(vaportra_control_1_w)
+	AM_RANGE(0x280000, 0x281fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x282000, 0x283fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x2c0000, 0x2c000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
 
 	AM_RANGE(0x300000, 0x3009ff) AM_WRITE(vaportra_palette_24bit_rg_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x304000, 0x3049ff) AM_WRITE(vaportra_palette_24bit_b_w) AM_BASE(&paletteram16_2)
+
 	AM_RANGE(0x308000, 0x308001) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x30c000, 0x30c001) AM_WRITE(buffer_spriteram16_w)
 	AM_RANGE(0xff8000, 0xff87ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
@@ -233,61 +221,34 @@ INPUT_PORTS_END
 
 static const gfx_layout charlayout =
 {
-	8,8,	/* 8*8 chars */
-	4096,
-	4,		/* 4 bits per pixel  */
-	{ 8, 0,  0x40000*8+8, 0x40000*8 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(0,2)+8,RGN_FRAC(0,2)+0,RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 8 consecutive bytes */
+	8*16
 };
 
-static const gfx_layout seallayout =
+static const gfx_layout tilelayout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,2),
 	4,
-	{ 0x80000*8+8, 0x80000*8, 8, 0 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
+	{ RGN_FRAC(0,2)+8,RGN_FRAC(0,2)+0,RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0 },
+	{ 256,257,258,259,260,261,262,263,0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,8*16,9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
+	32*16
 };
 
-static const gfx_layout seallayout3 =
-{
-	16,16,
-	4096,
-	4,
-	{ 8, 0, 0x40000*8+8, 0x40000*8 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
 
-static const gfx_layout seallayout2 =
-{
-	16,16,
-	4096*2,
-	4,
-	{ 8, 0, 0x80000*8+8, 0x80000*8 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
-	{ REGION_GFX2, 0x000000, &seallayout,  768, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX1, 0x000000, &seallayout3, 512, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0x040000, &seallayout, 1024, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX3, 0x000000, &seallayout2, 256, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0x000000, &charlayout,    0x000, 0x500 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0x000000, &tilelayout,    0x000, 0x500 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0x000000, &tilelayout,    0x000, 0x500 },	/* Tiles 16x16 */ // ok
+	{ REGION_GFX3, 0x000000, &tilelayout,    0x100, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -365,8 +326,8 @@ ROM_START( vaportra )
 	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, CRC(0330e13b) SHA1(dce70667ea738295332556752d1305c5e941b383) ) /* chars & tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, CRC(c217a31b) SHA1(e259d48190d6890781fb0338e17e14822876babb) ) /* tiles 2 */
-	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, CRC(091ff98e) SHA1(814dc08c055bad5368955a4b1fe6a706b58adc02) ) /* tiles 3 */
+	ROM_LOAD( "vtmaa02.bin",   0x000000, 0x80000, CRC(091ff98e) SHA1(814dc08c055bad5368955a4b1fe6a706b58adc02) ) /* tiles 3 */
+  	ROM_LOAD( "vtmaa01.bin",   0x080000, 0x80000, CRC(c217a31b) SHA1(e259d48190d6890781fb0338e17e14822876babb) ) /* tiles 2 */
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, CRC(1a30bf81) SHA1(00e6c713e12133a99d64ca80638c9cbc8e26b2c8) ) /* sprites */
@@ -396,8 +357,8 @@ ROM_START( vaportru )
 	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, CRC(0330e13b) SHA1(dce70667ea738295332556752d1305c5e941b383) ) /* chars & tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, CRC(c217a31b) SHA1(e259d48190d6890781fb0338e17e14822876babb) ) /* tiles 2 */
-	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, CRC(091ff98e) SHA1(814dc08c055bad5368955a4b1fe6a706b58adc02) ) /* tiles 3 */
+	ROM_LOAD( "vtmaa02.bin",   0x000000, 0x80000, CRC(091ff98e) SHA1(814dc08c055bad5368955a4b1fe6a706b58adc02) ) /* tiles 3 */
+  	ROM_LOAD( "vtmaa01.bin",   0x080000, 0x80000, CRC(c217a31b) SHA1(e259d48190d6890781fb0338e17e14822876babb) ) /* tiles 2 */
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, CRC(1a30bf81) SHA1(00e6c713e12133a99d64ca80638c9cbc8e26b2c8) ) /* sprites */
@@ -427,8 +388,8 @@ ROM_START( kuhga )
 	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, CRC(0330e13b) SHA1(dce70667ea738295332556752d1305c5e941b383) ) /* chars & tiles */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, CRC(c217a31b) SHA1(e259d48190d6890781fb0338e17e14822876babb) ) /* tiles 2 */
-	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, CRC(091ff98e) SHA1(814dc08c055bad5368955a4b1fe6a706b58adc02) ) /* tiles 3 */
+	ROM_LOAD( "vtmaa02.bin",   0x000000, 0x80000, CRC(091ff98e) SHA1(814dc08c055bad5368955a4b1fe6a706b58adc02) ) /* tiles 3 */
+  	ROM_LOAD( "vtmaa01.bin",   0x080000, 0x80000, CRC(c217a31b) SHA1(e259d48190d6890781fb0338e17e14822876babb) ) /* tiles 2 */
 
 	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )
   	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, CRC(1a30bf81) SHA1(00e6c713e12133a99d64ca80638c9cbc8e26b2c8) ) /* sprites */

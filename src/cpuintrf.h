@@ -298,6 +298,7 @@ enum
 	CPUINFO_PTR_READ,									/* R/O: int (*read)(int space, UINT32 offset, int size, UINT64 *value) */
 	CPUINFO_PTR_WRITE,									/* R/O: int (*write)(int space, UINT32 offset, int size, UINT64 value) */
 	CPUINFO_PTR_READOP,									/* R/O: int (*readop)(UINT32 offset, int size, UINT64 *value) */
+	CPUINFO_PTR_DEBUG_SETUP_COMMANDS,					/* R/O: void (*setup_commands)(void) */
 	CPUINFO_PTR_IRQ_CALLBACK,							/* R/W: int (*irqcallback)(int state) */
 	CPUINFO_PTR_INSTRUCTION_COUNTER,					/* R/O: int *icount */
 	CPUINFO_PTR_REGISTER_LAYOUT,						/* R/O: struct debug_register_layout *layout */
@@ -346,6 +347,7 @@ union cpuinfo
 	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
 	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
 	int		(*readop)(UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READOP */
+	void	(*setup_commands)(void);					/* CPUINFO_PTR_DEBUG_SETUP_COMMANDS */
 	int *	icount;										/* CPUINFO_PTR_INSTRUCTION_COUNTER */
 	construct_map_t internal_map;						/* CPUINFO_PTR_INTERNAL_MEMORY_MAP */
 };

@@ -19,7 +19,7 @@ Unmapped registers:
 
     ASIC "219" notes
 
-    On the 219 ASIC used on NA-1 and NA-2, the high registers have the following 
+    On the 219 ASIC used on NA-1 and NA-2, the high registers have the following
     meaning instead:
     0x1f7: bank for voices 0-3
     0x1f1: bank for voices 4-7
@@ -29,9 +29,9 @@ Unmapped registers:
     Some games (bkrtmaq, xday2) write to 0x1fd for voices 12-15 instead.  Probably the bank registers
     mirror at 1f8, in which case 1ff is also 0-3, 1f9 is also 4-7, 1fb is also 8-11, and 1fd is also 12-15.
 
-    Each bank is 0x20000 (128k), and the voice addresses on the 219 are all multiplied by 2.  
-    Additionally, the 219's base pitch is the same as the C352's (42667).  But these changes 
-    are IMO not sufficient to make this a separate file - all the other registers are 
+    Each bank is 0x20000 (128k), and the voice addresses on the 219 are all multiplied by 2.
+    Additionally, the 219's base pitch is the same as the C352's (42667).  But these changes
+    are IMO not sufficient to make this a separate file - all the other registers are
     fully compatible.
 
     Finally, the 219 only has 16 voices.

@@ -1107,24 +1107,6 @@ VIDEO_START( nslasher )
 	return 0;
 }
 
-VIDEO_START( hvysmsh )
-{
-	pf1_tilemap = tilemap_create(get_pf1_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
-	pf2_tilemap = tilemap_create(get_pf2_tile_info, deco16_scan_rows,TILEMAP_OPAQUE,16,16,64,32);
-	pf1a_tilemap =0;
-
-	if (!deco_allocate_sprite_bitmap() || !pf1_tilemap || !pf2_tilemap)
-		return 1;
-
-	tilemap_set_transparent_pen(pf1_tilemap,0);
-
-	deco32_raster_display_list=0;
-	deco32_pf2_colourbank=16;
-	has_ace_ram=0;
-
-	return 0;
-}
-
 /******************************************************************************/
 
 VIDEO_EOF( captaven )
@@ -1696,31 +1678,5 @@ VIDEO_UPDATE( nslasher )
 
 	mixDualAlphaSprites(bitmap, Machine->gfx[3], Machine->gfx[4], alphaTilemap);
 
-	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
-}
-
-VIDEO_UPDATE( hvysmsh )
-{
-	/* Dirty tilemaps if any globals change */
-	if (deco32_pf1_flip!=((deco32_pf12_control[6]>>0)&0x3))
-		tilemap_mark_all_tiles_dirty(pf1_tilemap);
-	if (deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf2_tilemap);
-	if ((((deco32_pf12_control[7]>>12)&0x7)<<12)!=deco32_pf2_bank || deco32_pf2_flip!=((deco32_pf12_control[6]>>8)&0x3))
-		tilemap_mark_all_tiles_dirty(pf2_tilemap);
-
-	deco32_pf2_bank=((deco32_pf12_control[7]>>12)&0x3)<<12;
-	deco32_pf1_flip=(deco32_pf12_control[6]>>0)&0x3;
-	deco32_pf2_flip=(deco32_pf12_control[6]>>8)&0x3;
-
-	/* Setup scroll registers */
-	deco32_setup_scroll(pf1_tilemap, 256,(deco32_pf12_control[5]>>0)&0xff,(deco32_pf12_control[6]>>0)&0xff,deco32_pf12_control[2],deco32_pf12_control[1],deco32_pf1_rowscroll,deco32_pf1_rowscroll+0x200);
-	deco32_setup_scroll(pf2_tilemap, 512,(deco32_pf12_control[5]>>8)&0xff,(deco32_pf12_control[6]>>8)&0xff,deco32_pf12_control[4],deco32_pf12_control[3],deco32_pf2_rowscroll,deco32_pf2_rowscroll+0x200);
-
-	deco16_clear_sprite_priority_bitmap();
-	fillbitmap(priority_bitmap,0,cliprect);
-
-	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
-	tattass_drawsprites(bitmap,spriteram32,2,0,0x1f);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 }

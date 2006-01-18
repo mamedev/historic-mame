@@ -582,8 +582,8 @@ simulate_mcu( void )
 		}
 
 		/* "analog" and "encoder" ports are polled during test mode,
-	     * but I haven't found any games that make use of them.
-	     */
+         * but I haven't found any games that make use of them.
+         */
 		mcu_ram[0xfc0/2+0x05] = 0xffff; /* analog0,1 */
 		mcu_ram[0xfc0/2+0x06] = 0xffff; /* analog2,3 */
 		mcu_ram[0xfc0/2+0x07] = 0xffff; /* analog4,5 */
@@ -1001,12 +1001,12 @@ static void namcona1_blit( void )
 	(void)src2;
 	(void)src0;
 
-/*	logerror( "0x%08x: blt(%08x,%08x,%08x);%04x %04x %04x; %04x %04x %04x; gfx=%04x\n",
-		activecpu_get_pc(),
-		dst_baseaddr,src_baseaddr,num_bytes,
-		src0,src1,src2,
-		dst0,dst1,dst2,
-		gfxbank );*/
+/*  logerror( "0x%08x: blt(%08x,%08x,%08x);%04x %04x %04x; %04x %04x %04x; gfx=%04x\n",
+        activecpu_get_pc(),
+        dst_baseaddr,src_baseaddr,num_bytes,
+        src0,src1,src2,
+        dst0,dst1,dst2,
+        gfxbank );*/
 
 	blit_setup( dst1, &dest_bytes_per_row, &dst_pitch, gfxbank);
 	blit_setup( src1, &source_bytes_per_row, &src_pitch, gfxbank );
@@ -1093,9 +1093,9 @@ static READ16_HANDLER( mcu_mailbox_r )
 
 static WRITE16_HANDLER( mcu_mailbox_w_68k )
 {
-//	logerror("mailbox_w_68k: %x @ %x\n", data, offset);
+//  logerror("mailbox_w_68k: %x @ %x\n", data, offset);
 
-	if (offset == 4) cpunum_set_input_line(1, M37710_LINE_IRQ0, HOLD_LINE); 
+	if (offset == 4) cpunum_set_input_line(1, M37710_LINE_IRQ0, HOLD_LINE);
 
 	COMBINE_DATA(&mcu_mailbox[offset%8]);
 }
@@ -1160,7 +1160,7 @@ static READ16_HANDLER( na1mcu_shared_r )
 	}
 #endif
 
-	return ((data>>8)&0xff) | ((data<<8)&0xff00); 
+	return ((data>>8)&0xff) | ((data<<8)&0xff00);
 }
 
 static WRITE16_HANDLER( na1mcu_shared_w )
@@ -1336,8 +1336,8 @@ INTERRUPT_GEN( namcona1_interrupt )
 }
 
 // MCU interrupts: IRQ 0 => process mail slot (probably set on mail slot write from 68k)
-//                 IRQ 1 => 
-//                 IRQ 2 => 
+//                 IRQ 1 =>
+//                 IRQ 2 =>
 
 static INTERRUPT_GEN( mcu_interrupt )
 {

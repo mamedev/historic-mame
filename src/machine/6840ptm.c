@@ -55,7 +55,7 @@ struct ptm6840
 
   // each PTM has 3 timers
 
-  mame_timer *timer1, 
+  mame_timer *timer1,
 	         *timer2,
 			 *timer3;
 
@@ -108,7 +108,7 @@ void ptm6840_unconfig(void)
 	ptm[i].timer2 = NULL;
 
 	if ( ptm[i].timer3 );// mame_timer_remove( ptm[i].timer3 );
-	//timer_adjust(ptm[i].timer3, TIME_NEVER, 0, 0);	
+	//timer_adjust(ptm[i].timer3, TIME_NEVER, 0, 0);
 	ptm[i].timer3 = NULL;
 	i++;
   }
@@ -227,7 +227,7 @@ void ptm6840_write (int which, int offset, int data)
   long time;
 if (offset < 2)
 {
- idx = (offset == 1) ? 1 : (currptr->control_reg[1] & 0x01) ? 0 : 2;	
+ idx = (offset == 1) ? 1 : (currptr->control_reg[1] & 0x01) ? 0 : 2;
 
 logerror("MC6840 #%d : Control register %d selected\n",which,idx);
 
@@ -235,7 +235,7 @@ logerror("MC6840 #%d : Control register %d selected\n",which,idx);
 
 /* bit 1 - 7  are the same for all timer control registers
 
-            bit 1 --> 0 = timer uses external clock line 
+            bit 1 --> 0 = timer uses external clock line
                       1 = timer uses internal E clock ( CPU Clock / 10, most likely 1 Mhz)
 
             bit 2 --> counting mode
@@ -250,13 +250,13 @@ logerror("MC6840 #%d : Control register %d selected\n",which,idx);
                       0 1 1 --> pulse width comparison mode
                       1 0 0 --> single shot mode
                       1 0 1 --> freq comparison mode
-                      1 1 0 --> single shot mode  
+                      1 1 0 --> single shot mode
                       1 1 1 --> pulse width comparison mode
 
             bit 6 --> IRQ enable,     1 = enabled, 0 = disabled
             bit 7 --> Output enable,  1 = enabled, 0 = disabled
 
-  // 0100 0010 --> IRQ enable, 
+  // 0100 0010 --> IRQ enable,
 */
 
 		  if ( data & 0x04 )
@@ -273,7 +273,7 @@ logerror("MC6840 #%d : Control register %d selected\n",which,idx);
 		  }
 		  else
 		  { // clock select = 0, use external clock
-			// ????damn 
+			// ????damn
 		  }
 
 		  switch ( idx )
@@ -394,7 +394,7 @@ static void ptm6840_t1_timeout(int which)
 
 static void ptm6840_t2_timeout(int which)
 {
-  struct ptm6840 *p = ptm + which;  
+  struct ptm6840 *p = ptm + which;
 
   logerror("**ptm6840 %d t2 timeout**\n", which);
 

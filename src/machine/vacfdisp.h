@@ -3,13 +3,13 @@
 #ifndef BFM_VFD
 #define BFM_VFD
 
-#define MAX_VFDS  3	  // max number of vfd displays emulated 
+#define MAX_VFDS  3	  // max number of vfd displays emulated
 
 #define VFDTYPE_BFMBD1	0 // bellfruit BD1 display
 #define VFDTYPE_MSC1937 1 // OKI MSC1937   display
 
 
-void   vfd_init(  int id, int type );	 // setup a vfd 
+void   vfd_init(  int id, int type );	 // setup a vfd
 
 void   vfd_reset( int id);		 // reset the vfd
 

@@ -1,55 +1,55 @@
 /********************************************************************
- Preliminary Hyperstone based dgPix games driver
 
- Games dumped
- - X-Files
+ "dgPIX" games driver
 
- Known games not dumped
- - Elfin (c) 1999
+ Games Supported:
+ ---------------------------------------------------------------------------
+ - X-Files                             (c) 1999 dgPIX Entertainment Inc.
+ - King of Dynast Gear (version 1.8)   (c) 1999 EZ Graphics [*]
 
- Notes:
+ [*] the version number is written at the beginning of the game settings
+
+
+ Games Needed:
+ ---------------------------------------------------------------------------
+ - Elfin                               (c) 1999 dgPIX Entertainment Inc.
+
+
+ driver by Pierpaolo Prazzoli & Tomasz Slanina
+
+ - Pierpaolo Prazzoli 2006.01.16
+   - added King of Dynast Gear (protection patched by Tomasz)
+   - fixed frame buffer drawing
+   - fixed flash roms reading
+   - added game settings writing to flash roms
+   - added coin counters
+
  - TS 2005.02.15
    Added double buffering
 
  - TS 2005.02.06
-   Preliminary emulation of X-Files.  VRender0- is probably just framebuffer.
+   Preliminary emulation of X-Files. VRender0- is probably just framebuffer.
    Patch in DRIVER_INIT removes call at RAM adr $8f30 - protection ?
    (without fix, game freezes int one of startup screens - like on real
-    board  with  protection PIC removed)
+   board  with  protection PIC removed)
 
 *********************************************************************/
 
 #include "driver.h"
-#include "machine/random.h"
 #include "vidhrdw/generic.h"
 
 static UINT32 *vram;
-static int vbuffer=0;
+static int vbuffer = 0;
 static mame_bitmap *bitmaps[2];
 
-static void plot_pixel_rgb(int x, int y, int color)
-{
-	if (Machine->color_depth == 32)
-	{
-		UINT32 cb=(color&0x1f)<<3;
-		UINT32 cg=(color&0x3e0)>>2;
-		UINT32 cr=(color&0x7c00)>>7;
-		((UINT32 *)bitmaps[vbuffer]->line[y])[x] = cb | (cg<<8) | (cr<<16);
-	}
-	else
-	{
-		((UINT16 *)bitmaps[vbuffer]->line[y])[x] = ((color&0x7c00)>>10)|((color&0x1f)<<10)|(color&0x3e0);
-	}
-}
-
+static int flash_roms;
 static UINT32 flash_cmd = 0;
 
 static READ32_HANDLER( flash_r )
 {
-	UINT32 *ROM = (UINT32 *)memory_region(REGION_USER2);
+	UINT32 *ROM = (UINT32 *)memory_region(REGION_USER1);
 
-	if((offset*4 >= 400000*0 && offset*4 < 0x400000*1) ||
-	   (offset*4 >= 400000*7 && offset*4 < 0x400000*8))
+	if(offset >= (0x2000000 - flash_roms * 0x400000) / 4)
 	{
 		if(flash_cmd == 0x90900000)
 		{
@@ -63,50 +63,86 @@ static READ32_HANDLER( flash_r )
 		}
 		else if(flash_cmd == 0x70700000)
 		{
-			//mode = 70700000 @ 13DB8
+			//read status and ?
 			return 0x82<<16;
 		}
-		else if(flash_cmd == 0xE8E80000)
+		else if(flash_cmd == 0xe8e80000)
 		{
-			//mode = E8E80000 @ 14252
+			//read status ?
 			return 0x80<<16;
 		}
 	}
-	return ROM[offset&0x1fffff];
+
+	return ROM[offset];
 }
 
 static WRITE32_HANDLER( flash_w )
 {
-	flash_cmd = data;
+	if(flash_cmd == 0x20200000)
+	{
+		// erase game settings
+		if(data == 0xd0d00000)
+		{
+			// point to game settings
+			UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x380000;
+			memset(rom, 0xff, 0x10000);
+
+			flash_cmd = 0;
+		}
+	}
+	else if(flash_cmd == 0x0f0f0000)
+	{
+		if(data == 0xd0d00000)
+		{
+			// finished
+			flash_cmd = 0;
+		}
+		else
+		{
+			UINT16 *rom = (UINT16 *)memory_region(REGION_USER1);
+
+			// write game settings
+
+			if(ACCESSING_LSW32)
+				rom[BYTE_XOR_BE(offset*2 + 1)] = data & 0xffff;
+			else
+				rom[BYTE_XOR_BE(offset*2 + 0)] = (data & 0xffff0000) >> 16;
+		}
+	}
+	else
+	{
+		flash_cmd = data;
+	}
 }
-
-
 
 static WRITE32_HANDLER( vram_w )
 {
-//  int x,y;
-	switch(mem_mask)
-	{
-		case 0:
-			vram_w(offset,data,0xffff);
-			vram_w(offset,data,0xffff0000);
-		return;
+	int x,y,color;
 
-		case 0xffff:
-			if(data&0x80000000)
-				return;
-		break;
-
-		case 0xffff0000:
-			if(data&0x8000)
-				return;
-		break;
-	}
 	COMBINE_DATA(&vram[offset+(0x40000/4)*vbuffer]);
-	if( (offset&0xff)<160 && (offset>>8)<240)
+
+	x = offset >> 8;
+	y = offset & 0xff;
+
+	if(y < 160 && x < 240)
 	{
-		plot_pixel_rgb((offset&0xff)*2,offset>>8,(vram[offset]>>16)&0xffff);
-		plot_pixel_rgb((offset&0xff)*2+1,offset>>8,(vram[offset])&0xffff);
+		if(!(vram[offset+(0x40000/4)*vbuffer] & 0x80000000))
+		{
+			color = (vram[offset+(0x40000/4)*vbuffer] & 0x7fff0000) >> 16;
+			/* data is BGR; convert to RGB */
+			color = ((color & 0x1f) << 10) | (color & 0x3e0) | ((color & 0x7c00) >> 10);
+
+			plot_pixel(bitmaps[vbuffer],y*2+0,x,color);
+		}
+
+		if(!(vram[offset+(0x40000/4)*vbuffer] & 0x00008000))
+		{
+			color = vram[offset+(0x40000/4)*vbuffer] & 0x00007fff;
+			/* data is BGR; convert to RGB */
+			color = ((color & 0x1f) << 10) | (color & 0x3e0) | ((color & 0x7c00) >> 10);
+
+			plot_pixel(bitmaps[vbuffer],y*2+1,x,color);
+		}
 	}
 }
 
@@ -115,161 +151,140 @@ static READ32_HANDLER( vram_r )
 	return vram[offset+(0x40000/4)*vbuffer];
 }
 
-VIDEO_START(dgpix)
+static WRITE32_HANDLER( vbuffer_w )
 {
-	vram=auto_malloc(0x40000*2);
+	static int old_vbuf = 3;
+
+	if(old_vbuf == 3 && (data & 3) == 2)
+	{
+		vbuffer ^= 1;
+	}
+
+	old_vbuf = data & 3;
+}
+
+static WRITE32_HANDLER( coin_w )
+{
+	coin_counter_w(0, data & 1);
+	coin_counter_w(1, data & 2);
+}
+
+static ADDRESS_MAP_START( rev4_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
+	AM_RANGE(0x40000000, 0x4003ffff) AM_READWRITE(vram_r, vram_w)
+	AM_RANGE(0xe0000000, 0xe1ffffff) AM_READWRITE(flash_r, flash_w)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0x1c00000)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( rev5_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x007fffff) AM_RAM
+	AM_RANGE(0x40000000, 0x4003ffff) AM_READWRITE(vram_r, vram_w)
+	AM_RANGE(0xe2000000, 0xe3ffffff) AM_READWRITE(flash_r, flash_w)
+	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0x1c00000)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( io_map, ADDRESS_SPACE_IO, 32 )
+	AM_RANGE(0x0200, 0x0203) AM_READNOP // used to sync with the protecion PIC? tested bits 0 and 1
+	AM_RANGE(0x0400, 0x0403) AM_READWRITE(input_port_0_dword_r, vbuffer_w)
+	AM_RANGE(0x0a10, 0x0a13) AM_READ(input_port_1_dword_r)
+	AM_RANGE(0x0200, 0x0203) AM_WRITE(coin_w)
+	AM_RANGE(0x0c00, 0x0c03) AM_WRITENOP // writes only: 1, 0, 1 at startup
+	AM_RANGE(0x0c80, 0x0c83) AM_WRITENOP // sound commands / latches
+	AM_RANGE(0x0c80, 0x0c83) AM_READNOP //read at startup -> cmp 0xFE
+	AM_RANGE(0x0c84, 0x0c87) AM_READNOP // sound status, checks bit 0x40 and 0x80
+ADDRESS_MAP_END
+
+
+void nvram_handler_flashroms(mame_file *file,int read_or_write)
+{
+	if (read_or_write)
+	{
+		// point to game settings
+		UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x380000;
+		UINT8 tmp[0x10000];
+		int i;
+
+		// save the new settings
+		for( i = 0; i < 0x10000; i++ )
+			tmp[i] = rom[WORD_XOR_BE(i)];
+
+		mame_fwrite( file, tmp, 0x10000 );
+	}
+	else if (file)
+	{
+		// point to game settings
+		UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x380000;
+		UINT8 tmp[0x10000];
+		int i;
+
+		mame_fread( file, tmp, 0x10000 );
+
+		// overlap the default settings with the saved ones
+		for( i = 0; i < 0x10000; i++ )
+			rom[WORD_XOR_BE(i)] = tmp[i];
+	}
+}
+
+INPUT_PORTS_START( dgpix )
+	PORT_START
+	PORT_BIT( 0x00000001, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0xfffffffe, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x00000001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00000002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00000004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00000008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00000010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x00000020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x00000040, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00000080, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00000100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x00000200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x00000400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x00000800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x00001000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x00002000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x00004000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00008000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE_NO_TOGGLE( 0x00010000, IP_ACTIVE_LOW )
+	PORT_BIT( 0x00010000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00020000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00040000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x00080000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00100000, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x00200000, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x00400000, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x00800000, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xff000000, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+VIDEO_START( dgpix )
+{
+	vram = auto_malloc(0x40000*2);
 	bitmaps[0] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 	bitmaps[1] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+
 	return 0;
 }
 
 VIDEO_UPDATE( dgpix )
 {
-	copybitmap(bitmap,bitmaps[vbuffer^1 ],0,0,0,0,cliprect,TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap,bitmaps[vbuffer ^ 1],0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 }
 
-
-
-
-static ADDRESS_MAP_START( dgpix_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
-	AM_RANGE(0x3ffff000, 0x3fffffff) AM_RAM
-	AM_RANGE(0x40000000, 0x4003ffff) AM_WRITE(vram_w) AM_READ(vram_r)
-	AM_RANGE(0xe0000000, 0xe1ffffff) AM_READ(flash_r) AM_WRITE(flash_w)
-	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0)
-ADDRESS_MAP_END
-
-static READ32_HANDLER( io_200_r )
-{
-	return rand()&3;
-}
-
-static READ32_HANDLER( io_400_r )
-{
-	//bit 0 = vblank
-	return rand();//(rand()&(~1))| (readinputportbytag("VBL"));
-}
-
-static WRITE32_HANDLER( io_400_w )
-{
-	if((data&3)==2)
-	vbuffer^=1;
-}
-
-static READ32_HANDLER( io_C80_r )
-{
-	return rand()&0x40;
-}
-
-static READ32_HANDLER( io_C84_r )
-{
-	return mame_rand();
-}
-
-static READ32_HANDLER( rand1_r )
-{
-	return  0xffffffff;
-}
-
-static ADDRESS_MAP_START( io_map, ADDRESS_SPACE_IO, 32 )
-	AM_RANGE(0x0200, 0x0203) AM_READ(io_200_r)
-	AM_RANGE(0x0400, 0x0403) AM_READ(io_400_r) AM_WRITE(io_400_w)
-	AM_RANGE(0x0600, 0x0603) AM_READ(rand1_r)
-	AM_RANGE(0x0800, 0x0803) AM_READ(rand1_r)
-	AM_RANGE(0x0a10, 0x0a13) AM_READ(input_port_0_dword_r)
-	AM_RANGE(0x0c80, 0x0c83) AM_READ(io_C80_r)
-	AM_RANGE(0x0c84, 0x0c87) AM_READ(io_C84_r)
-ADDRESS_MAP_END
-
-INPUT_PORTS_START( dgpix )
-PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-
-	PORT_BIT( 0x400000, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x800000, IP_ACTIVE_LOW, IPT_START2 )
-
-	PORT_DIPNAME( 0x00010000, 0x00010000, "testmode" )
-	PORT_DIPSETTING(      0x00010000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_DIPNAME( 0x0040, 0x0040, "0-06" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "0-07" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_DIPNAME( 0x4000, 0x4000, "0-0e" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "0-0f" )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_DIPNAME( 0x00020000, 0x00020000, "0-11" )
-	PORT_DIPSETTING(      0x00020000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00040000, 0x00040000, "0-12" )
-	PORT_DIPSETTING(      0x00040000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00080000, 0x00080000, "0-13" )
-	PORT_DIPSETTING(      0x00080000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00100000, 0x00100000, "0-14" )
-	PORT_DIPSETTING(      0x00100000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x00200000, 0x00200000, "0-15" )
-	PORT_DIPSETTING(      0x00200000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_DIPNAME( 0x01000000, 0x01000000, "0-18" )
-	PORT_DIPSETTING(      0x01000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02000000, 0x02000000, "0-19" )
-	PORT_DIPSETTING(      0x02000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04000000, 0x04000000, "0-1a" )
-	PORT_DIPSETTING(      0x04000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08000000, 0x08000000, "0-1b" )
-	PORT_DIPSETTING(      0x08000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10000000, 0x10000000, "0-1c" )
-	PORT_DIPSETTING(      0x10000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20000000, 0x20000000, "0-1d" )
-	PORT_DIPSETTING(      0x20000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40000000, 0x40000000, "0-1e" )
-	PORT_DIPSETTING(      0x40000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80000000, 0x80000000, "0-1f" )
-	PORT_DIPSETTING(      0x80000000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-
-	PORT_START_TAG("VBL")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK )
-
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( dgpix )
-	MDRV_CPU_ADD(E132XT, 14318180*3)		 /* ?? */
-	MDRV_CPU_PROGRAM_MAP(dgpix_map,0)
+static MACHINE_DRIVER_START( common )
+	MDRV_CPU_ADD_TAG("cpu", E132XT, 16934400)
 	MDRV_CPU_IO_MAP(io_map,0)
+
+/*
+    unknown 16bit sound cpu, embedded inside the KS0164 sound chip
+*/
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_NVRAM_HANDLER(flashroms)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
@@ -280,8 +295,21 @@ static MACHINE_DRIVER_START( dgpix )
 	MDRV_VIDEO_START(dgpix)
 	MDRV_VIDEO_UPDATE(dgpix)
 
+	/* sound hardware */
+	// KS0164 sound chip
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( rev4_pcb )
+	MDRV_IMPORT_FROM(common)
+	MDRV_CPU_MODIFY("cpu")
+	MDRV_CPU_PROGRAM_MAP(rev4_map,0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( rev5_pcb )
+	MDRV_IMPORT_FROM(common)
+	MDRV_CPU_MODIFY("cpu")
+	MDRV_CPU_PROGRAM_MAP(rev5_map,0)
+MACHINE_DRIVER_END
 
 /*
 
@@ -323,7 +351,7 @@ VRenderOMinus Rev4
 
 Notes
 -----
-ST7705C          : EEPROM?
+ST7705C          : Reset/Watchdog IC (SOIC8)
 E1-32XT          : Hyperstone E1-32XT CPU
 169NDK19         : Xtal, 16.9MHz
 CONN1,CONN2,CONN3: Connectors for small daughterboard containing
@@ -338,26 +366,125 @@ SEC KM6161002    : Graphics RAM (SOJ44)
 */
 
 ROM_START( xfiles )
-	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD16_WORD_SWAP( "u9.bin",  0x000000, 0x400000, CRC(ebdb75c0) SHA1(9aa5736bbf3215c35d62b424c2e5e40223227baf) )
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code & Data */
+	/* 0 - 0x17fffff empty space */
+	ROM_LOAD16_WORD_SWAP( "u8.bin",  0x1800000, 0x400000, CRC(3b2c2bc1) SHA1(1c07fb5bd8a8c9b5fb169e6400fef845f3aee7aa) )
+	ROM_LOAD16_WORD_SWAP( "u9.bin",  0x1c00000, 0x400000, CRC(6ecdd1eb) SHA1(e26c9711e589865cc75ec693d382758fa52528b8) )
 
-	ROM_REGION32_BE( 0x400000*8, REGION_USER2, ROMREGION_ERASEFF )
-	ROM_LOAD16_WORD_SWAP( "u8.bin",  0x400000*0, 0x400000, CRC(3b2c2bc1) SHA1(1c07fb5bd8a8c9b5fb169e6400fef845f3aee7aa) )
-	ROM_LOAD16_WORD_SWAP( "u9.bin",  0x400000*1, 0x400000, CRC(ebdb75c0) SHA1(9aa5736bbf3215c35d62b424c2e5e40223227baf) )
-
-
-	ROM_REGION32_BE( 0x400000, REGION_SOUND1, 0 ) /* samples ? */
-	ROM_LOAD16_WORD_SWAP( "u10.bin", 0x000000, 0x400000, CRC(f2ef1eb9) SHA1(d033d140fce6716d7d78509aa5387829f0a1404c) )
+	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
+	ROM_LOAD16_WORD_SWAP( "u10.bin", 0x0000000, 0x400000, CRC(f2ef1eb9) SHA1(d033d140fce6716d7d78509aa5387829f0a1404c) )
 ROM_END
 
-static DRIVER_INIT(xfiles)
+/*
+King of Dynast Gear
+EZ Graphics, 1999
+
+This game runs on the same hardware as X-Files.
+
+PCB Layout
+----------
+
+VRenderO Minus Rev5 dgPIX Entertainment Inc. 1999
+|-----------------------------------------------------|
+|TDA1515                C-O-N-N-1                     |
+|   DA1545A                                       C   |
+|                                                 O   |
+|  VOL1    K4E151611                  KS0164      N   |
+|  VOL2    K4E151611                              N   |
+|J                                    169NDK19    3   |
+|A     14.31818MHz                     CONN2          |
+|M  KA4558                                            |
+|M                                                    |
+|A                                          KM6161002 |
+|          E1-32XT                                    |
+|                                           KM6161002 |
+|                                                     |
+|       ST7705C                             KM6161002 |
+| B1             XCS05                                |
+| B2 B3          14.31818MHz  LED           KM6161002 |
+|-----------------------------------------------------|
+Notes:
+      ST7705C      - Reset/Watchdog IC (SOIC8)
+      E1-32XT      - Hyperstone E1-32XT CPU (QFP144)
+      169NDK19     - Xtal, 16.9344MHz
+      CONN1,CONN2, - Connectors for joining main board to small sub-board
+      CONN3
+      XCS05        - Xilinx Spartan XCS05 FPGA (QFP100)
+      B1,B2,B3     - Push Buttons for TEST, SERVICE and RESET
+      KS0164       - SEC KS0164. Manufactured by Samsung Electronics. Possibly sound
+                     related or Sound CPU? (QFP100)
+      K4E151611    - Samsung K4E151611C-JC60 1M x16Bit CMOS EDO DRAM (SOJ44)
+      KM6161002    - Samsung KM6161002CJ-12 64k x16Bit High-Speed CMOS SRAM (SOJ44)
+
+Sub-Board
+---------
+
+Flash Module Type-A REV2 dgPIX Entertainment Inc. 1999
+|---------------------------------------|
+|            C-O-N-N-1            U100  |
+|C                FLASH.U3      FLASH.U5|
+|O        FLASH.U2       FLASH.U4       |
+|N FLASH.U10                            |
+|N                                      |
+|3                FLASH.U7      FLASH.U9|
+|  CONN2  FLASH.U6       FLASH.U8       |
+|---------------------------------------|
+Notes:
+      FLASH        - Intel DA28F320J5 32M x8 StrataFlash surface-mounted FlashROM (SSOP56)
+      CONN1,CONN2,
+      CONN3        - Connectors for joining small sub-board to main board
+      U100         - A custom programmed PIC (Programmable Interrupt Controller), rebadged as 'dgPIX-PR1' (DIP18)
+
+*/
+
+ROM_START( kdynastg )
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 )  /* Hyperstone CPU Code & Data */
+	/* 0 - 0x0ffffff empty space */
+	ROM_LOAD16_WORD_SWAP( "flash.u6",  0x1000000, 0x400000, CRC(280dd64e) SHA1(0e23b227b1183fb5591c3a849b5a5fe7faa23cc8) )
+	ROM_LOAD16_WORD_SWAP( "flash.u7",  0x1400000, 0x400000, CRC(f9125894) SHA1(abaad31f7a02143ea7029e47e6baf2976365f70c) )
+	ROM_LOAD16_WORD_SWAP( "flash.u8",  0x1800000, 0x400000, CRC(1016b61c) SHA1(eab4934e1f41cc26259e5187a94ceebd45888a94) )
+	ROM_LOAD16_WORD_SWAP( "flash.u9",  0x1c00000, 0x400000, CRC(093d9243) SHA1(2a643acc7144193aaa3606a84b0c67aadb4c543b) )
+
+	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
+	ROM_LOAD16_WORD_SWAP( "flash.u10", 0x0000000, 0x400000, CRC(3f103cb1) SHA1(2ff9bd73f3005f09d872018b81c915b01d6703f5) )
+ROM_END
+
+static DRIVER_INIT( xfiles )
 {
-	memory_region(REGION_USER1)[0x3aa92c]=0;
-	memory_region(REGION_USER1)[0x3aa92d]=3;
-	memory_region(REGION_USER1)[0x3aa930]=0;
-	memory_region(REGION_USER1)[0x3aa931]=3;
-	memory_region(REGION_USER1)[0x3aa932]=0;
-	memory_region(REGION_USER1)[0x3aa933]=3;
+	UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000;
+
+	rom[BYTE4_XOR_BE(0x3aa92e)] = 3;
+	rom[BYTE4_XOR_BE(0x3aa92f)] = 0;
+	rom[BYTE4_XOR_BE(0x3aa930)] = 3;
+	rom[BYTE4_XOR_BE(0x3aa931)] = 0;
+	rom[BYTE4_XOR_BE(0x3aa932)] = 3;
+	rom[BYTE4_XOR_BE(0x3aa933)] = 0;
+
+//  protection related ?
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xf0c8b440, 0xf0c8b447, 0, 0, MRA32_NOP );
+
+	flash_roms = 2;
 }
 
-GAME( 1999, xfiles, 0, dgpix, dgpix, xfiles, ROT0, "dgPIX Entertainment Inc.", "X-Files", GAME_NO_SOUND | GAME_NOT_WORKING )
+static DRIVER_INIT( kdynastg )
+{
+	UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000;
+
+	rom[BYTE4_XOR_BE(0x3aaa10)] = 3; // 129f0 - nopped call
+	rom[BYTE4_XOR_BE(0x3aaa11)] = 0;
+	rom[BYTE4_XOR_BE(0x3aaa12)] = 3;
+	rom[BYTE4_XOR_BE(0x3aaa13)] = 0;
+	rom[BYTE4_XOR_BE(0x3aaa14)] = 3;
+	rom[BYTE4_XOR_BE(0x3aaa15)] = 0;
+
+	rom[BYTE4_XOR_BE(0x3a45c8)] = 5; // c5a8 - added ret
+	rom[BYTE4_XOR_BE(0x3a45c9)] = 0;
+
+//  protection related ?
+//  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x12341234, 0x12341243, 0, 0, MRA32_NOP );
+
+	flash_roms = 4;
+}
+
+GAME( 1999, xfiles,   0, rev4_pcb, dgpix, xfiles,   ROT0, "dgPIX Entertainment Inc.", "X-Files",                           GAME_NO_SOUND )
+GAME( 1999, kdynastg, 0, rev5_pcb, dgpix, kdynastg, ROT0, "EZ Graphics",              "King of Dynast Gear (version 1.8)", GAME_NO_SOUND )

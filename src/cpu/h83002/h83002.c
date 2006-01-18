@@ -135,6 +135,7 @@ static UINT8 h8_rotxr8(UINT8 src);
 static UINT16 h8_rotxr16(UINT16 src);
 
 static UINT8 h8_shll8(UINT8 src);
+static UINT16 h8_shll16(UINT16 src);
 static UINT8 h8_shlr8(UINT8 src);
 static UINT16 h8_shlr16(UINT16 src);
 static UINT32 h8_shlr32(UINT32 src);
@@ -352,7 +353,7 @@ static void h8_init(void)
 static void h8_reset(void *param)
 {
 	h8.h8err = 0;
-	h8.pc = h8_mem_read32(0);
+	h8.pc = h8_mem_read32(0) & 0xffffff;
 	change_pc(h8.pc);
 
 	// disable timers
@@ -373,7 +374,7 @@ static void h8_GenException(UINT8 vectornr)
 
 	// generate address from vector
 	h8_set_ccr(h8_get_ccr() | 0x80);
-	h8.pc = h8_mem_read32(vectornr * 4);
+	h8.pc = h8_mem_read32(vectornr * 4) & 0xffffff;
 	change_pc(h8.pc);
 
 	// I couldn't find timing info for exceptions, so this is a guess (based on JSR/BSR)
@@ -1009,7 +1010,13 @@ static void h8_group1(UINT16 opcode)
 			h8_setreg8(opcode & 0xf, udata8);
 			H8_IFETCH_TIMING(1);
 			break;
+		case 0x1:
 			// shll.w Rx
+			udata16 = h8_getreg16(opcode & 0xf);
+			udata16 = h8_shll16(udata16);
+			h8_setreg16(opcode & 0xf, udata16);
+			H8_IFETCH_TIMING(1);
+			break;
 		case 0x8:
 			// shal.b Rx
 			udata8 = h8_getreg8(opcode & 0xf);
@@ -1183,6 +1190,12 @@ static void h8_group1(UINT16 opcode)
 			h8_setreg16(dstreg, udata16);
 			H8_IFETCH_TIMING(1);
 			break;
+		case 0x7:
+			// extu.l Rx
+			dstreg = opcode & 0xf;
+			h8_setreg32(dstreg, h8_getreg32(dstreg) & 0xffff);
+			H8_IFETCH_TIMING(1);
+			break;
 		case 0x8:
 			// neg.b Rx
 			//sprintf(output, "%4.4x neg.b %s", opcode, reg_names8[opcode & 0xf]);
@@ -1262,6 +1275,20 @@ static void h8_group1(UINT16 opcode)
 		case 7:	// dec.l #1, rN
 			dstreg = opcode & 0x7;
 			udata32 = h8_dec32(h8_getreg32(dstreg));
+			h8_setreg32(dstreg, udata32);
+			H8_IFETCH_TIMING(1);
+			break;
+		case 8:	// subs.l #2, rN (decrement without touching flags)
+			dstreg = opcode & 0x7;
+			udata32 = h8_getreg32(dstreg);
+			udata32-=2;
+			h8_setreg32(dstreg, udata32);
+			H8_IFETCH_TIMING(1);
+			break;
+		case 9:	// subs.l #4, rN (decrement without touching flags)
+			dstreg = opcode & 0x7;
+			udata32 = h8_getreg32(dstreg);
+			udata32-=4;
 			h8_setreg32(dstreg, udata32);
 			H8_IFETCH_TIMING(1);
 			break;
@@ -2883,6 +2910,28 @@ static UINT8 h8_shll8(UINT8 src)
 	return res;
 }
 
+static UINT16 h8_shll16(UINT16 src)
+{
+	UINT16 res;
+	h8.h8cflag = (src>>15) & 1;
+	res = src<<1;
+	// N and Z modified
+	h8.h8nflag = (res>>15) & 1;
+	h8.h8vflag = 0;
+
+	// zflag
+	if(res==0)
+	{
+		h8.h8zflag = 1;
+	}
+	else
+	{
+		h8.h8zflag = 0;
+	}
+
+	return res;
+}
+
 static UINT8 h8_shlr8(UINT8 src)
 {
 	UINT8 res;
@@ -3522,4 +3571,3 @@ void h8_3002_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_STR_REGISTER + H8_E7:     sprintf(info->s = cpuintrf_temp_str(), "SP   :%08x", h8.regs[7]); break;
 	}
 }
-

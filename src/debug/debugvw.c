@@ -1036,7 +1036,7 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 	int minlen = BYTE2ADDR(activecpu_min_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
 	int maxlen = BYTE2ADDR(activecpu_max_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
 	int use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
-	UINT32 addrmask = BYTE2ADDR(0xffffffff, cpuinfo, ADDRESS_SPACE_PROGRAM);
+	UINT32 addrmask = cpuinfo->space[ADDRESS_SPACE_PROGRAM].logaddrmask;
 	offs_t curpc, lastgoodpc = startpc, temppc;
 	UINT8 opbuf[1024], argbuf[1024];
 	char dasmbuffer[100];
@@ -1067,7 +1067,7 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
 		for (testpc = curpc; testpc < startpc; testpc += instlen)
 		{
 			/* convert PC to a byte offset */
-			offs_t pcbyte = ADDR2BYTE(testpc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+			offs_t pcbyte = ADDR2BYTE_MASKED(testpc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 			/* get the disassembly, but only if mapped */
 			instlen = 1;
@@ -1179,7 +1179,7 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debu
     for the disassembly view
 -------------------------------------------------*/
 
-static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, int lines)
+static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, int lines, int original_cpunum)
 {
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	struct debug_view_disasm *dasmdata = view->extra_data;
@@ -1189,12 +1189,11 @@ static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, 
 	int line;
 
 	/* switch to the context of the CPU in question */
-	cpuintrf_push_context(view->cpunum);
-	addrmask = BYTE2ADDR(0xffffffff, cpuinfo, ADDRESS_SPACE_PROGRAM);
+	addrmask = cpuinfo->space[ADDRESS_SPACE_PROGRAM].logaddrmask;
 	use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 
 	/* determine how many characters we need for an address and set the divider */
-	dasmdata->divider1 = 1 + cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars + 1;
+	dasmdata->divider1 = 1 + cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars + 1;
 
 	/* assume a fixed 40 characters for the disassembly */
 	dasmdata->divider2 = dasmdata->divider1 + 1 + DASM_WIDTH + 1;
@@ -1218,11 +1217,11 @@ static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, 
 		int instr = startline + line;
 
 		/* convert PC to a byte offset */
-		pcbyte = ADDR2BYTE(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+		pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 		/* convert back and set the address of this instruction */
 		dasmdata->address[instr] = pcbyte;
-		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars, BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM));
+		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars, BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM));
 
 		/* make sure we can translate the address */
 		tempaddr = pcbyte;
@@ -1248,7 +1247,7 @@ static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, 
 			else
 			{
 				/* get the disassembly, but only if mapped */
-				if (memory_get_op_ptr(view->cpunum, pcbyte) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
+				if (memory_get_op_ptr(view->cpunum, pcbyte, 0) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
 				{
 					memory_set_opbase(pcbyte);
 					pc += numbytes = activecpu_dasm(buffer, pc & addrmask) & DASMFLAG_LENGTHMASK;
@@ -1256,7 +1255,8 @@ static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, 
 				else
 				{
 					sprintf(buffer, "<unmapped>");
-					pc += numbytes = 1;
+					numbytes = minbytes;
+					pc += BYTE2ADDR(minbytes, cpuinfo, ADDRESS_SPACE_PROGRAM);
 				}
 			}
 		}
@@ -1274,11 +1274,8 @@ static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, 
 	dasmdata->last_opcode_base = opcode_base;
 	dasmdata->last_opcode_arg_base = opcode_arg_base;
 
-	/* restore the context */
-	cpuintrf_pop_context();
-
 	/* reset the opcode base */
-	if (view->cpunum == cpu_getactivecpu())
+	if (view->cpunum == original_cpunum)
 		memory_set_opbase(activecpu_get_physical_pc_byte());
 }
 
@@ -1292,12 +1289,16 @@ static void disasm_update(struct debug_view *view)
 {
 	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	offs_t pc = cpunum_get_reg(view->cpunum, REG_PC);
-	offs_t pcbyte = ADDR2BYTE(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+	offs_t pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 	struct debug_view_disasm *dasmdata = view->extra_data;
 	struct debug_view_char *dest = view->viewdata;
+	int original_cpunum = cpu_getactivecpu();
 	UINT8 need_to_recompute = 0;
 	EXPRERR exprerr;
 	UINT32 row;
+
+	/* switch to the CPU's context */
+	cpuintrf_push_context(view->cpunum);
 
 	/* if our expression is dirty, fix it */
 	if ((dasmdata->expression_dirty || view->cpunum != dasmdata->cpunum) && dasmdata->expression_string)
@@ -1325,7 +1326,7 @@ static void disasm_update(struct debug_view *view)
 		exprerr = expression_execute(dasmdata->expression, &result);
 		if (exprerr == EXPRERR_NONE && result != dasmdata->last_result)
 		{
-			offs_t resultbyte = ADDR2BYTE(result, cpuinfo, ADDRESS_SPACE_PROGRAM);
+			offs_t resultbyte = ADDR2BYTE_MASKED(result, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 			/* update the result */
 			dasmdata->last_result = result;
@@ -1366,7 +1367,7 @@ static void disasm_update(struct debug_view *view)
 		view->top_row = 0;
 		view->left_col = 0;
 
-		disasm_recompute(view, pc, 0, DASM_LINES);
+		disasm_recompute(view, pc, 0, DASM_LINES, original_cpunum);
 	}
 
 	/* loop over visible rows */
@@ -1384,11 +1385,11 @@ static void disasm_update(struct debug_view *view)
 			{
 				attrib = DCA_CURRENT;
 				if (!need_to_recompute)
-					disasm_recompute(view, pc, effrow, 1);
+					disasm_recompute(view, pc, effrow, 1, original_cpunum);
 			}
 			else
 				for (bp = cpuinfo->first_bp; bp; bp = bp->next)
-					if (dasmdata->address[effrow] == ADDR2BYTE(bp->address, cpuinfo, ADDRESS_SPACE_PROGRAM))
+					if (dasmdata->address[effrow] == ADDR2BYTE_MASKED(bp->address, cpuinfo, ADDRESS_SPACE_PROGRAM))
 						attrib = DCA_CHANGED;
 		}
 
@@ -1421,6 +1422,9 @@ static void disasm_update(struct debug_view *view)
 			col++;
 		}
 	}
+
+	/* restore the original CPU context */
+	cpuintrf_pop_context();
 }
 
 
@@ -1807,10 +1811,10 @@ static void memory_update(struct debug_view *view)
 	cpuintrf_push_context(view->cpunum);
 
 	/* determine how many characters we need for an address and set the divider */
-	sprintf(addrformat, " %*s%%0%dX ", 8 - cpuinfo->space[memdata->spacenum].addrchars, "", cpuinfo->space[memdata->spacenum].addrchars);
+	sprintf(addrformat, " %*s%%0%dX ", 8 - cpuinfo->space[memdata->spacenum].logchars, "", cpuinfo->space[memdata->spacenum].logchars);
 
 	/* compute total rows and columns */
-	view->total_rows = (ADDR2BYTE(~0, cpuinfo, memdata->spacenum) / 0x10) + 1;
+	view->total_rows = (cpuinfo->space[memdata->spacenum].logbytemask / 0x10) + 1;
 	view->total_cols = 77;
 
 	/* set up the dividers */
@@ -1857,8 +1861,8 @@ static void memory_update(struct debug_view *view)
 		if (result != memdata->last_result || memdata->expression_dirty || view->cpunum != memdata->cpunum)
 		{
 			memdata->last_result = result;
-			view->top_row = ADDR2BYTE(memdata->last_result, cpuinfo, memdata->spacenum) / 0x10;
-			memdata->byte_offset = ADDR2BYTE(memdata->last_result, cpuinfo, memdata->spacenum) % 0x10;
+			view->top_row = ADDR2BYTE_MASKED(memdata->last_result, cpuinfo, memdata->spacenum) / 0x10;
+			memdata->byte_offset = ADDR2BYTE_MASKED(memdata->last_result, cpuinfo, memdata->spacenum) % 0x10;
 			view->cursor_row = view->top_row;
 		}
 
@@ -1888,7 +1892,7 @@ static void memory_update(struct debug_view *view)
 			/* generate the string */
 			if (!memdata->reverse_view)
 			{
-				len = sprintf(&data[len], addrformat, BYTE2ADDR(addrbyte, cpuinfo, memdata->spacenum));
+				len = sprintf(&data[len], addrformat, BYTE2ADDR(addrbyte & cpuinfo->space[memdata->spacenum].logbytemask, cpuinfo, memdata->spacenum));
 				len += sprintf(&data[len], " ");
 				switch (memdata->bytes_per_chunk)
 				{
@@ -1979,7 +1983,7 @@ static void memory_update(struct debug_view *view)
 						}
 						break;
 				}
-				len += sprintf(&data[len], addrformat, BYTE2ADDR(addrbyte, cpuinfo, memdata->spacenum));
+				len += sprintf(&data[len], addrformat, BYTE2ADDR(addrbyte & cpuinfo->space[memdata->spacenum].logbytemask, cpuinfo, memdata->spacenum));
 			}
 
 			/* copy data */

@@ -11,7 +11,7 @@
 //        add different types of stepper motors if needed                //
 //                                                                       //
 //       - keep track of the rotation speed, useful for motion blur      //
-//       - pinmame mech.c uses a clever trick involving mech pulses per	 //
+//       - pinmame mech.c uses a clever trick involving mech pulses per  //
 //         VBLANK, worth including here?                                 //
 // Any fixes for this driver should be forwarded to AGEMAME HQ           //
 // (http://www.mameworld.net/agemame/)                                   //
@@ -30,10 +30,10 @@ static struct
 {
   UINT8 pattern,	  // coil pattern
 	    old_pattern;  // old coil pattern
-	    
+
   INT16	step_pos,	  // step position 0 - max_steps
 	    max_steps;	  // maximum step position
-		
+
   INT16	index_pos,	  // position of index (in steps)
 	    index_len,	  // length of index   (in steps)
 		index_patt;	  // pattern needed on coils (0=don't care)
@@ -373,7 +373,7 @@ static void update_optic(int id)
 	   ( ( steppers[id].pattern == steppers[id].index_patt || steppers[id].index_patt==0) ||
 		 ( steppers[id].pattern == 0 &&
 		   (steppers[id].old_pattern == steppers[id].index_patt || steppers[id].index_patt==0)
-		 ) 
+		 )
 	   )
 	 )
   {

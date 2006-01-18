@@ -2,13 +2,11 @@
 
     Backfire!
 
-	tilemap priorities aren't hardcoded, different levels need the layers swapped
+    inputs are incomplete (p2 side.., alt control modes etc.)
 
-	if you insert a coin during the attract demo you end up with a pink background
-	 -- priority bug again, we're seeing the wrong tilemap
+    there may still be some problems with the 156 co-processor, but it seems to be mostly correct
 
-	inputs don't work properly
-	( needs 156 maths co-processor emulation, see cpu/arm/arm.c )
+    set 2 defaults to wheel controls, so until they're mapped you must change back to joystick in test mode
 
 */
 
@@ -23,6 +21,7 @@ extern void decrypt156(void);
 #include "sound/okim6295.h"
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
+#include "machine/random.h"
 #include "deco16ic.h"
 #include "state.h"
 
@@ -33,7 +32,7 @@ mame_bitmap * backfire_left;
 mame_bitmap * backfire_right;
 
 //UINT32 *backfire_180010, *backfire_188010;
-//UINT32 *backfire_1a8000, *backfire_1ac000;
+UINT32 *backfire_left_priority, *backfire_right_priority;
 
 extern int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,deco16_pf4_colour_bank;
 
@@ -41,7 +40,7 @@ extern int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,
 
 static int backfire_bank_callback(int bank)
 {
-//	printf("bank callback %04x\n",bank); // bit 1 gets set too?
+//  printf("bank callback %04x\n",bank); // bit 1 gets set too?
 
 	bank = bank >> 4;
 
@@ -119,11 +118,15 @@ static void backfire_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect, 
 		pri = (x&0xc000); // 2 bits or 1?
 
 		switch (pri&0xc000) {
-		case 0x0000: pri=0; break;
-		case 0x4000: pri=0xf0; break;
-		case 0x8000: pri=0xf0|0xcc; break;
-		case 0xc000: pri=0xf0|0xcc; break; /*  or 0xf0|0xcc|0xaa ? */
+			case 0x0000: pri=0;   break; // numbers, people, cars when in the air, status display..
+			case 0x4000: pri=0xf0;break; // cars most of the time
+			case 0x8000: pri=0;   break; // car wheels during jump?
+			case 0xc000: pri=0xf0;break; /* car wheels in race? */
 		}
+
+		// pri 0 = ontop of everything//
+
+//      pri = 0;
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -176,11 +179,7 @@ static void backfire_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect, 
 VIDEO_UPDATE(backfire)
 {
 	/* screen 1 uses pf1 as the forground and pf3 as the background */
-
 	/* screen 2 uses pf2 as the foreground and pf4 as the background */
-
-	/* the tilemap priorities can change! -- not yet emulated */
-
 	int x,y;
 
 	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
@@ -188,15 +187,43 @@ VIDEO_UPDATE(backfire)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(backfire_left,Machine->pens[0x100],cliprect);
-	deco16_tilemap_1_draw(backfire_left,cliprect,0,0);
-	deco16_tilemap_3_draw(backfire_left,cliprect,0,0);
-	backfire_drawsprites(backfire_left,cliprect,backfire_spriteram32_1,3);
+
+	if (backfire_left_priority[0] == 0)
+	{
+		deco16_tilemap_3_draw(backfire_left,cliprect,0,1);
+		deco16_tilemap_1_draw(backfire_left,cliprect,0,2);
+		backfire_drawsprites(backfire_left,cliprect,backfire_spriteram32_1,3);
+	}
+	else if (backfire_left_priority[0] == 2)
+	{
+		deco16_tilemap_1_draw(backfire_left,cliprect,0,2);
+		deco16_tilemap_3_draw(backfire_left,cliprect,0,4);
+		backfire_drawsprites(backfire_left,cliprect,backfire_spriteram32_1,3);
+	}
+	else
+	{
+		ui_popup( "unknown left priority %08x", backfire_left_priority[0] );
+	}
 
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(backfire_right,Machine->pens[0x500],cliprect);
-	deco16_tilemap_2_draw(backfire_right,cliprect,0,0);
-	deco16_tilemap_4_draw(backfire_right,cliprect,0,0);
-	backfire_drawsprites(backfire_right,cliprect,backfire_spriteram32_2,4);
+
+	if (backfire_right_priority[0] == 0)
+	{
+		deco16_tilemap_4_draw(backfire_right,cliprect,0,1);
+		deco16_tilemap_2_draw(backfire_right,cliprect,0,2);
+		backfire_drawsprites(backfire_right,cliprect,backfire_spriteram32_2,4);
+	}
+	else if (backfire_right_priority[0] == 2)
+	{
+		deco16_tilemap_2_draw(backfire_right,cliprect,0,2);
+		deco16_tilemap_4_draw(backfire_right,cliprect,0,4);
+		backfire_drawsprites(backfire_right,cliprect,backfire_spriteram32_2,4);
+	}
+	else
+	{
+		ui_popup( "unknown right priority %08x", backfire_right_priority[0] );
+	}
 
 	/* copy the screens to the final display bitmap */
 	for(y=0;y<32*8;y++)
@@ -216,7 +243,6 @@ VIDEO_UPDATE(backfire)
 		}
 	}
 
-	//ui_popup( "%08x %08x %08x %08x", backfire_180010[0], backfire_188010[0], backfire_1a8000[0], backfire_1a8000[0] );
 }
 
 
@@ -243,7 +269,7 @@ static READ32_HANDLER(backfire_control3_r)
 
 static WRITE32_HANDLER(backfire_eeprom_w)
 {
-// logerror("%08x:write eprom %08x (%08x) %08x\n",activecpu_get_pc(),offset<<1,mem_mask,data);
+	logerror("%08x:write eprom %08x (%08x) %08x\n",activecpu_get_pc(),offset<<1,mem_mask,data);
 	if (ACCESSING_LSB32) {
 		EEPROM_set_clock_line((data & 0x2) ? ASSERT_LINE : CLEAR_LINE);
 		EEPROM_write_bit(data & 0x1);
@@ -302,6 +328,21 @@ WRITE32_HANDLER( backfire_pf2_data_w ) { data &=0x0000ffff; mem_mask &=0x0000fff
 WRITE32_HANDLER( backfire_pf3_data_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; deco16_pf3_data_w(offset,data,mem_mask); }
 WRITE32_HANDLER( backfire_pf4_data_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; deco16_pf4_data_w(offset,data,mem_mask); }
 
+READ32_HANDLER( backfire_unknown_wheel_r )
+{
+	return readinputport(4);
+}
+
+READ32_HANDLER( backfire_wheel1_r )
+{
+	return mame_rand();
+}
+
+READ32_HANDLER( backfire_wheel2_r )
+{
+	return mame_rand();
+}
+
 
 static ADDRESS_MAP_START( backfire_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
@@ -318,8 +359,8 @@ static ADDRESS_MAP_START( backfire_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x160000, 0x161fff) AM_WRITE(wcvol95_nonbuffered_palette_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x170000, 0x177fff) AM_RAM AM_BASE( &backfire_mainram )// main ram
 
-//	AM_RANGE(0x180010, 0x180013) AM_RAM AM_BASE(&backfire_180010)
-//	AM_RANGE(0x188010, 0x188013) AM_RAM AM_BASE(&backfire_188010)
+//  AM_RANGE(0x180010, 0x180013) AM_RAM AM_BASE(&backfire_180010) // always 180010 ?
+//  AM_RANGE(0x188010, 0x188013) AM_RAM AM_BASE(&backfire_188010) // always 188010 ?
 
 	AM_RANGE(0x184000, 0x185fff) AM_RAM AM_BASE( &backfire_spriteram32_1 )
 	AM_RANGE(0x18c000, 0x18dfff) AM_RAM AM_BASE( &backfire_spriteram32_2 )
@@ -327,9 +368,14 @@ static ADDRESS_MAP_START( backfire_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x194000, 0x194003) AM_READ(backfire_control2_r)
 	AM_RANGE(0x1a4000, 0x1a4003) AM_WRITE(backfire_eeprom_w)
 
-//	AM_RANGE(0x1a8000, 0x1a8003) AM_RAM AM_BASE(&backfire_1a8000)
-//	AM_RANGE(0x1ac000, 0x1ac003) AM_RAM AM_BASE(&backfire_1ac000)
-//	AM_RANGE(0x1b0000, 0x1b0003) AM_WRITE(MWA32_NOP)
+	AM_RANGE(0x1a8000, 0x1a8003) AM_RAM AM_BASE(&backfire_left_priority)
+	AM_RANGE(0x1ac000, 0x1ac003) AM_RAM AM_BASE(&backfire_right_priority)
+//  AM_RANGE(0x1b0000, 0x1b0003) AM_WRITE(MWA32_NOP) // always 1b0000
+
+	/* when set to pentometer in test mode */
+//  AM_RANGE(0x1e4000, 0x1e4003) AM_READ(backfire_unknown_wheel_r)
+//  AM_RANGE(0x1e8000, 0x1e8003) AM_READ(backfire_wheel1_r)
+//  AM_RANGE(0x1e8004, 0x1e8007) AM_READ(backfire_wheel2_r)
 
 	AM_RANGE(0x1c0000, 0x1c0007) AM_READ(deco156_snd_r) AM_WRITE(deco156_snd_w)
 ADDRESS_MAP_END
@@ -383,6 +429,15 @@ INPUT_PORTS_START( backfire )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED ) /* 'soundmask' */
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT ( 0x00ff, 0x0080, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
+
+	PORT_START
+	PORT_BIT ( 0x00ff, 0x0080, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(30) PORT_KEYDELTA(1)
+
+	PORT_START
+	/* ?? */
 INPUT_PORTS_END
 
 
@@ -629,9 +684,11 @@ static void descramble_sound( void )
 
 static READ32_HANDLER( backfire_speedup_r )
 {
-	//printf( "%08x\n",activecpu_get_pc());
+//  printf( "%08x\n",activecpu_get_pc());
 
-	if (activecpu_get_pc()==0xce44)  cpu_spinuntil_time(TIME_IN_USEC(400));
+	if (activecpu_get_pc()==0xce44)  cpu_spinuntil_time(TIME_IN_USEC(400)); // backfire
+	if (activecpu_get_pc()==0xcee4)  cpu_spinuntil_time(TIME_IN_USEC(400)); // backfira
+
 	return backfire_mainram[0x18/4];
 }
 
@@ -646,7 +703,7 @@ static DRIVER_INIT( backfire )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0170018, 0x017001b, 0, 0, backfire_speedup_r );
 }
 
-GAME( 1995, backfire, 0,        backfire,      backfire, backfire, ROT0, "Data East Corporation", "Backfire!", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING)
-GAME( 1995, backfira, backfire, backfire,      backfire, backfire, ROT0, "Data East Corporation", "Backfire! (set 2)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING)
+GAME( 1995, backfire, 0,        backfire,      backfire, backfire, ROT0, "Data East Corporation", "Backfire!", 0 )
+GAME( 1995, backfira, backfire, backfire,      backfire, backfire, ROT0, "Data East Corporation", "Backfire! (set 2)", 0 ) // defaults to wheel controls, must change to joystick to play
 
 

@@ -16,6 +16,8 @@ TODO:
 -Merge with the Merit.c driver;
 -Uncertain Manufacturer & Year of production,is it Merit,it is an hack/bootleg running
 on that board or Merit got bankrupt and can't use his trademark?
+- update 2006018 by f205v: in-game grafics clearly displays Merit simbol, for this reason
+I changed manufacturer to "Merit"
 
 ********************************************************************************************
 
@@ -478,35 +480,45 @@ ROM_START( couple )
 	ROM_LOAD( "thecoupl.007", 0x00000, 0x0800, CRC(6c36361e) SHA1(7a018eecf3d8b7cf8845dcfcf8067feb292933b2) )
 ROM_END
 
-/*Corrado Tomaselli's dump,same except for the first z80 rom,first noticeable differences are that
+/*f205v's dump,same except for the first z80 rom,first noticeable differences are that
 it doesn't jump to the backup ram area and it gives an extra play if you reach a certain
-amount of points */
-/*
-001 -> 1.1d
-002 -> 2.1e
-003 -> 3.9c
-004 -> 4.9d
-005 -> 5.10c
-006 -> 6.10d
-007 -> 7.7a
-TODO: rename the roms.
-*/
+amount of points (there is a dip switch to select the trigger: 150.000 or 200.000*/
 ROM_START( couplep )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "1.1d",         0x00000, 0x8000, CRC(4601ace6) SHA1(a824ceebf8b9ce77ef2c8e92636e4261f2ae0420) )
-	ROM_LOAD( "thecoupl.002", 0x10000, 0x8000, CRC(17372a93) SHA1(e0f0980003473555c2543d98d1494f82afa49f1a) )
+	ROM_LOAD( "thecoupl.002", 0x10000, 0x8000, CRC(17372a93) SHA1(e0f0980003473555c2543d98d1494f82afa49f1a) )  /* original label: 2.1e */
 
 	ROM_REGION( 0x18000, REGION_GFX1, 0 )
-	ROM_LOAD( "thecoupl.003", 0x00000, 0x8000, CRC(f017399a) SHA1(baf4c1bea6a12b1d4c8838552503fbdb81378411) )
-	ROM_LOAD( "thecoupl.004", 0x08000, 0x8000, CRC(66da76c1) SHA1(8cdcec008d0d51704544069246e9eabb5d5958ea) )
-	ROM_LOAD( "thecoupl.005", 0x10000, 0x8000, CRC(fc22bcf4) SHA1(cf3f6872965cb264d56d3a0b5ab998541b9af4ef) )
+	ROM_LOAD( "thecoupl.003", 0x00000, 0x8000, CRC(f017399a) SHA1(baf4c1bea6a12b1d4c8838552503fbdb81378411) )  /* original label: 3.9c */
+	ROM_LOAD( "thecoupl.004", 0x08000, 0x8000, CRC(66da76c1) SHA1(8cdcec008d0d51704544069246e9eabb5d5958ea) )  /* original label: 4.9d */
+	ROM_LOAD( "thecoupl.005", 0x10000, 0x8000, CRC(fc22bcf4) SHA1(cf3f6872965cb264d56d3a0b5ab998541b9af4ef) )  /* original label: 5.10c */
 
 	ROM_REGION( 0x08000, REGION_GFX2, 0 )
-	ROM_LOAD( "thecoupl.006", 0x00000, 0x8000, CRC(a6a9a73d) SHA1(f3cb1d434d730f6e00f48079eaf8b88f57779fa0) )
+	ROM_LOAD( "thecoupl.006", 0x00000, 0x8000, CRC(a6a9a73d) SHA1(f3cb1d434d730f6e00f48079eaf8b88f57779fa0) )  /* original label: 6.10d */
 
 	ROM_REGION( 0x0800, REGION_PROMS, 0 )
 	/*Only 0x00-0xff data seems color prom*/
-	ROM_LOAD( "thecoupl.007", 0x00000, 0x0800, CRC(6c36361e) SHA1(7a018eecf3d8b7cf8845dcfcf8067feb292933b2) )
+	ROM_LOAD( "thecoupl.007", 0x00000, 0x0800, CRC(6c36361e) SHA1(7a018eecf3d8b7cf8845dcfcf8067feb292933b2) )  /* original label: 7.7a */
+ROM_END
+
+/*f205v's dump,this one looks like an intermediate release between set1 and set2;
+it has same dips as set1, but remaining machine code is the same as set2*/
+ROM_START( couplei )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD( "1.1d",         0x00000, 0x8000, CRC(760fa29e) SHA1(a37a1562028d9615adff3d2ef88e0156354c720a) )
+	ROM_LOAD( "thecoupl.002", 0x10000, 0x8000, CRC(17372a93) SHA1(e0f0980003473555c2543d98d1494f82afa49f1a) )  /* original label: 2.1e */
+
+	ROM_REGION( 0x18000, REGION_GFX1, 0 )
+	ROM_LOAD( "thecoupl.003", 0x00000, 0x8000, CRC(f017399a) SHA1(baf4c1bea6a12b1d4c8838552503fbdb81378411) )  /* original label: 3.9c */
+	ROM_LOAD( "thecoupl.004", 0x08000, 0x8000, CRC(66da76c1) SHA1(8cdcec008d0d51704544069246e9eabb5d5958ea) )  /* original label: 4.9d */
+	ROM_LOAD( "thecoupl.005", 0x10000, 0x8000, CRC(fc22bcf4) SHA1(cf3f6872965cb264d56d3a0b5ab998541b9af4ef) )  /* original label: 5.10c */
+
+	ROM_REGION( 0x08000, REGION_GFX2, 0 )
+	ROM_LOAD( "thecoupl.006", 0x00000, 0x8000, CRC(a6a9a73d) SHA1(f3cb1d434d730f6e00f48079eaf8b88f57779fa0) )  /* original label: 6.10d */
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
+	/*Only 0x00-0xff data seems color prom*/
+	ROM_LOAD( "thecoupl.007", 0x00000, 0x0800, CRC(6c36361e) SHA1(7a018eecf3d8b7cf8845dcfcf8067feb292933b2) )  /* original label: 7.7a */
 ROM_END
 
 static DRIVER_INIT( couple )
@@ -528,10 +540,17 @@ static DRIVER_INIT( couple )
 
 	/*The banked rom isn't a *real* banking,it's just a strange rom hook-up,the 2nd
       and the 3rd halves are 100% identical(!),unless it's an error of TWO different
-      dumpers it's just the way it is,a.k.a. it's an "hardware" banking.*/
+      dumpers it's just the way it is,a.k.a. it's an "hardware" banking.
+    update 20060118 by f205v: now we have 3 dumps from 3 different boards and they
+    all behave the same...*/
 	memory_set_bankptr(1,ROM + 0x10000 + (0x2000 * 2));
 }
 
-/*Year is bogus,Service Mode says 1986 and title screen says 1988?*/
-GAME( 1986, couple,  0,      couple, couple, couple, ROT0, "The Couples", "The Couples (Set 1)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
-GAME( 1986, couplep, couple, couple, couplep, couple, ROT0, "The Couples", "The Couples (Set 2)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
+/*Year is uncertain:
+title screen says "1988"
+PCB marking (set 2) and (set 3) says "230188"
+service mode says "6221-51 U5-0 12/02/86" */
+
+GAME( 1988, couple,  0,      couple, couple,  couple, ROT0, "Merit", "The Couples (Set 1)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
+GAME( 1988, couplep, couple, couple, couplep, couple, ROT0, "Merit", "The Couples (Set 2)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)
+GAME( 1988, couplei, couple, couple, couple,  couple, ROT0, "Merit", "The Couples (Set 3)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NOT_WORKING)

@@ -650,7 +650,7 @@ static READ16_HANDLER( armchmp2_buttons_r )
     f--- ---- ---- ----
     -edc ---- ---- ----     Leds
     ---- ba9- ---- ----
-    ---- ---8 ---- ----		Start button led
+    ---- ---8 ---- ----     Start button led
     ---- ---- 76-- ----     Coin counters
     ---- ---- --54 3210
 */
@@ -2971,10 +2971,10 @@ Arm Champs II
 Jaleco, 1992
 
 An arm wrestling game from Jaleco. Game is part mechanical, part video. The video part
-is shown on a vertical screen, being your opponent you are wrestling. The mechanical 
-part is an arm you force against to pin your opponent's 'arm'. The mechanical arm is powered 
+is shown on a vertical screen, being your opponent you are wrestling. The mechanical
+part is an arm you force against to pin your opponent's 'arm'. The mechanical arm is powered
 by a motor. The arm probably has a 5k potentiometer connected to it to give feedback to the
-hardware about the position of the mechanical arm. 
+hardware about the position of the mechanical arm.
 The opponents get progressively harder and harder, it's almost impossible to beat the final
 few opponents unless you have a few friends handy to swing on the arm ;-))
 Arm Champs II appears to be a simple ROM upgrade on Arm Champs hardware.
@@ -3098,7 +3098,7 @@ Notes:
             MR91042-04-R63_4.IC6  - 4M MASKROM
             MR91042-05-R64_5.IC11 - 4M MASKROM
             MR91042-06-R65_6.IC12 - 4M MASKROM
-       
+
 ***************************************************************************/
 
 ROM_START( armchmp2 )

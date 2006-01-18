@@ -31,3 +31,19 @@ WRITE32_HANDLER( voodoo_0_w );
 
 READ32_HANDLER( voodoo_1_r );
 WRITE32_HANDLER( voodoo_1_w );
+
+READ32_HANDLER( banshee_0_r );
+WRITE32_HANDLER( banshee_0_w );
+READ32_HANDLER( banshee_fb_0_r );
+WRITE32_HANDLER( banshee_fb_0_w );
+READ32_HANDLER( banshee_io_0_r );
+WRITE32_HANDLER( banshee_io_0_w );
+READ32_HANDLER( banshee_rom_0_r );
+
+READ32_HANDLER( banshee_1_r );
+WRITE32_HANDLER( banshee_1_w );
+READ32_HANDLER( banshee_fb_1_r );
+WRITE32_HANDLER( banshee_fb_1_w );
+READ32_HANDLER( banshee_io_1_r );
+WRITE32_HANDLER( banshee_io_1_w );
+READ32_HANDLER( banshee_rom_1_r );

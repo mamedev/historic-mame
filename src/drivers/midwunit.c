@@ -17,6 +17,70 @@
     Known bugs:
         * WWF has an unimplemented and not Y2K compatible real-time clock
 
+***************************************************************************
+
+MK3/ Ultimate Mortal Kombat 3 / Williams-Midway Wolf hardware
+Midway, 1995
+
+PCB Layout
+----------
+
+5770-14086-05
+|---------------------------------------------------------------------------------------------------|
+| 42C8128 42C8128 42C8128 42C8128                       *U102       *U103       *U104       *U105   |
+| 42C8128 42C8128 42C8128 42C8128                                                                   |
+|                                                       *U106       *U107       *U108       *U109   |
+|                                                                                                   |
+|                |---------|                             U110        U111        U112        U113   |
+| |-------|      |5410-    |                                                                        |
+| |5410-  |      |12862-   |                            *U114       *U115       *U116       *U117   |
+| |14120-0|      |00       |          |------|                                                      |
+| |-------|      |WILLIAMS |          |ALTERA|           U118        U119        U120        U121   |
+| 84256  84256   |---------|          |FPGA3 |                                                      |
+|                                     |------|           U122        U123        U124        U125   |
+|                                        RESET_SW                                                   |
+|                                                        U126        U127        U128        U129   |
+| 8MHz      |------|                                                                                |
+|           |ALTERA|              BATTERY                U130        U131        U132        U133   |
+||------|   |FPGA2 |                                                                                |
+||ALTERA|   |      |      42S4260                                                                   |
+||FPGA1 |   |------|                            10MHz                                               |
+||      |50MHz                               GAL       |-----|               ROM.U5         *U9     |
+||------|                  ROM.U54                     |ADSP-|                                      |
+|              LH5268                                  |2105 |               ROM.U4         *U8     |
+|   |------|                                           |-----|                                      |
+|   |TMS   |               ROM.U63      PIC16C57.U64                         ROM.U3         *U7     |
+|   |34010 |                                             65764                                      |
+|   |      | LED LED                                     65764               ROM.U2         *U6     |
+|   |------|                                 P6          65764                                      |
+|                                                                                                   |
+|                                                                                                   |
+|    TL084                                                    MAX693               DSW2    DSW1     |
+|                AD1851                                       ULN2064                               |
+|TDA7240                                                         LED                                |
+|            |----|         JAMMA           |----|             P9    P10     P11      P12           |
+|------------|    |-------------------------|    |--------------------------------------------------|
+Notes:
+      *            - Empty DIP32 socket (for UMK3)
+      P9/10/11/12  - connector for extra controls
+      P6           - connector possibly tied to the PIC via some logic?
+      GAL          - labelled 'MKIII-U57 A-20093 (C)1995 MIDWAY MFG. CO.'
+      PIC.U64      - labelled 'MK3 ULTIMATE U64'
+      ALTERA FPGA1 - labelled 'MKIII-U45 A-20096 (C)1995 MIDWAY MFG. CO.'
+      ALTERA FPGA2 - labelled 'MKIII-U47 A-20249 (C)1995 MIDWAY MFG. CO.'
+      ALTERA FPGA3 - labelled 'MKIII-U35 A-20095 (C)1995 MIDWAY MFG. CO.'
+      TMS34010     - input clock (pin5) 50.000MHz
+      ADSP-2105    - clock input 10.000MHz
+      PIC16C57     - clock input 4.000MHz [8/2]
+      TDA7240      - Sound Amplifier IC
+      RAM          - 42C8128 (x8), 42S4260 (x1), 84256 (x2), LH5268 (x1), 65764 (x3)
+      VSync        - 54.5Hz (measured on pin 31 of TMS34010)
+      HSync        - 15.81kHz (measured on pin 30 of TMS34010)
+
+      All ROMs from U102 to U133 are labelled 'MORTAL KOMBAT III ULTIMATE (C) MIDWAY MFG U' + U# as 3 digits + 'VIDEO IMAGE'
+      U3 labelled 'MORTAL KOMBAT 3 U3 MUSIC/SPCH'
+      U2 labelled 'MORTAL KOMBAT 3 U2 ULTIMATE'
+
 **************************************************************************/
 
 
@@ -597,7 +661,7 @@ static MACHINE_DRIVER_START( wunit )
 	MDRV_VIDEO_UPDATE(midtunit)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM(dcs_audio)
+	MDRV_IMPORT_FROM(dcs_audio_8k)
 MACHINE_DRIVER_END
 
 

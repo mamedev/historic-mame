@@ -237,23 +237,23 @@ static void custom_tilemap_draw(mame_bitmap *bitmap,
 	if (!src_bitmap)
 		return;
 
-	/* Column scroll & row scroll may per applied per pixel, there are 
-	shift registers for each which control the granularity of the row/col
-	offset (down to per line level for row, and per 8 lines for column).
-	
-	Nb:  The row & col selectors are _not_ affected by the shape of the
-	playfield (ie, 256*1024, 512*512 or 1024*256).  So even if the tilemap
-	width is only 256, 'src_x' should not wrap at 256 in the code below (to
-	do so would mean the top half of row RAM would never be accessed which
-	is incorrect).
-	
-	Nb2:  Real hardware exhibits a strange bug with column scroll on 'mode 2'
-	(256*1024) - the first column has a strange additional offset, but 
-	curiously the first 'wrap' (at scroll offset 256) does not have this offset,
-	it is displayed as expected.  The bug is confimed to only affect this mode,
-	the other two modes work as expected.  This bug is not emulated, as it
-	doesn't affect any games.
-	*/
+	/* Column scroll & row scroll may per applied per pixel, there are
+    shift registers for each which control the granularity of the row/col
+    offset (down to per line level for row, and per 8 lines for column).
+
+    Nb:  The row & col selectors are _not_ affected by the shape of the
+    playfield (ie, 256*1024, 512*512 or 1024*256).  So even if the tilemap
+    width is only 256, 'src_x' should not wrap at 256 in the code below (to
+    do so would mean the top half of row RAM would never be accessed which
+    is incorrect).
+
+    Nb2:  Real hardware exhibits a strange bug with column scroll on 'mode 2'
+    (256*1024) - the first column has a strange additional offset, but
+    curiously the first 'wrap' (at scroll offset 256) does not have this offset,
+    it is displayed as expected.  The bug is confimed to only affect this mode,
+    the other two modes work as expected.  This bug is not emulated, as it
+    doesn't affect any games.
+    */
 
 	if (flip_screen)
 		src_y = (src_bitmap->height - 256) - scrolly;
@@ -290,7 +290,7 @@ static void custom_tilemap_draw(mame_bitmap *bitmap,
 				}
 			}
 		}
-		src_y++; 
+		src_y++;
 	}
 }
 
@@ -445,10 +445,10 @@ VIDEO_UPDATE( robocop )
 
 VIDEO_UPDATE( birdtry )
 {
-	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
 
 	/* This game doesn't have the extra playfield chip on the game board, but
-	the palette does show through. */
+    the palette does show through. */
 	fillbitmap(bitmap,Machine->pens[768],cliprect);
 	dec0_pf2_draw(bitmap,cliprect,0);
 	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
@@ -459,7 +459,7 @@ VIDEO_UPDATE( birdtry )
 
 VIDEO_UPDATE( hippodrm )
 {
-	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
 
 	if (dec0_pri & 0x01)
 	{
@@ -480,8 +480,8 @@ VIDEO_UPDATE( hippodrm )
 
 VIDEO_UPDATE( slyspy )
 {
-	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
-	
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
+
 	dec0_pf3_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY);
 	dec0_pf2_draw(bitmap,cliprect,0);
 
@@ -500,7 +500,7 @@ VIDEO_UPDATE( midres )
 {
 	int trans;
 
-	flip_screen_set(dec0_pf1_control_0[0]&0x80);	
+	flip_screen_set(dec0_pf1_control_0[0]&0x80);
 
 	if (dec0_pri & 0x04)
 		trans = 0x00;

@@ -810,7 +810,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 							if (symbol->type == SMT_FUNCTION)
 							{
 								token++;
-								SET_TOKEN_INFO(0, TOK_OPERATOR, TVL_EXECUTEFUNC, TIN_PRECEDENCE_15);
+								SET_TOKEN_INFO(0, TOK_OPERATOR, TVL_EXECUTEFUNC, TIN_PRECEDENCE_0);
 							}
 						}
 					}
@@ -1119,11 +1119,8 @@ static EXPRERR execute_function(struct parsed_expression *expr, struct token *to
 		}
 
 		/* otherwise, pop as a standard rval */
-		else
-		{
-			exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
-			funcparams[MAX_FUNCTION_PARAMS - (++paramcount)] = t1.value.i;
-		}
+		exprerr = pop_token_rval(expr, &t1, expr->table); if (exprerr != 0) return exprerr;
+		funcparams[MAX_FUNCTION_PARAMS - (++paramcount)] = t1.value.i;
 	}
 
 	/* if we didn't find the symbol, fail */

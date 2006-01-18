@@ -16,8 +16,6 @@ down hardware (it doesn't write any good sound data btw, mostly zeros).
 
   These are NOT driver bugs!  They all exist in the original game.
 
-  Same hardware as Tumblepop, the two drivers can be joined at a later date.
-
   Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
@@ -27,19 +25,10 @@ down hardware (it doesn't write any good sound data btw, mostly zeros).
 #include "cpu/h6280/h6280.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
+#include "deco16ic.h"
 
 VIDEO_START( supbtime );
 VIDEO_UPDATE( supbtime );
-VIDEO_UPDATE( chinatwn );
-
-WRITE16_HANDLER( supbtime_pf2_data_w );
-WRITE16_HANDLER( supbtime_pf1_data_w );
-WRITE16_HANDLER( supbtime_control_0_w );
-
-extern UINT16 *supbtime_pf2_data,*supbtime_pf1_data,*supbtime_pf1_row;
-
-static READ16_HANDLER( supbtime_pf1_data_r ) { return supbtime_pf1_data[offset]; }
-static READ16_HANDLER( supbtime_pf2_data_r ) { return supbtime_pf2_data[offset]; }
 
 /******************************************************************************/
 
@@ -76,9 +65,10 @@ static ADDRESS_MAP_START( supbtime_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x120000, 0x1207ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x180000, 0x18000f) AM_READ(supbtime_controls_r)
-	AM_RANGE(0x320000, 0x321fff) AM_READ(supbtime_pf1_data_r)
-	AM_RANGE(0x322000, 0x323fff) AM_READ(supbtime_pf2_data_r)
-	AM_RANGE(0x340000, 0x3401ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x322000, 0x323fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x340000, 0x3407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x342000, 0x3427ff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( supbtime_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -91,14 +81,11 @@ static ADDRESS_MAP_START( supbtime_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x18000a, 0x18000d) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x1a0000, 0x1a0001) AM_WRITE(sound_w)
 
-	AM_RANGE(0x300000, 0x30000f) AM_WRITE(supbtime_control_0_w)
-	AM_RANGE(0x320000, 0x321fff) AM_WRITE(supbtime_pf1_data_w) AM_BASE(&supbtime_pf1_data)
-	AM_RANGE(0x322000, 0x323fff) AM_WRITE(supbtime_pf2_data_w) AM_BASE(&supbtime_pf2_data)
-
-	AM_RANGE(0x340000, 0x3401ff) AM_WRITE(MWA16_RAM) AM_BASE(&supbtime_pf1_row)
-	AM_RANGE(0x340400, 0x3405ff) AM_WRITE(MWA16_NOP)/* Unused col scroll */
-	AM_RANGE(0x342000, 0x3421ff) AM_WRITE(MWA16_NOP)/* Unused row scroll */
-	AM_RANGE(0x342400, 0x3425ff) AM_WRITE(MWA16_NOP)/* Unused col scroll */
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x322000, 0x323fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x340000, 0x3407ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x342000, 0x3427ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( chinatwn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -107,9 +94,10 @@ static ADDRESS_MAP_START( chinatwn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x180000, 0x18000f) AM_READ(supbtime_controls_r)
 	AM_RANGE(0x1a0000, 0x1a3fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x320000, 0x321fff) AM_READ(supbtime_pf1_data_r)
-	AM_RANGE(0x322000, 0x323fff) AM_READ(supbtime_pf2_data_r)
-	AM_RANGE(0x340000, 0x3401ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x322000, 0x323fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x340000, 0x3407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x342000, 0x3427ff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( chinatwn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -120,9 +108,11 @@ static ADDRESS_MAP_START( chinatwn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x18000a, 0x18000d) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x1a0000, 0x1a3fff) AM_WRITE(MWA16_RAM)
 
-	AM_RANGE(0x300000, 0x30000f) AM_WRITE(supbtime_control_0_w)
-	AM_RANGE(0x320000, 0x321fff) AM_WRITE(supbtime_pf1_data_w) AM_BASE(&supbtime_pf1_data)
-	AM_RANGE(0x322000, 0x323fff) AM_WRITE(supbtime_pf2_data_w) AM_BASE(&supbtime_pf2_data)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x322000, 0x323fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x340000, 0x3407ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll) // unused
+	AM_RANGE(0x342000, 0x3427ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll) // unused
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -329,48 +319,45 @@ INPUT_PORTS_END
 
 /******************************************************************************/
 
-static const gfx_layout charlayout =
+static const gfx_layout tile_8x8_layout =
 {
-	8,8,	/* 8*8 chars */
-	4096,
-	4,		/* 4 bits per pixel  */
-	{ 0x40000*8+8, 0x40000*8, 8, 0 },
+	8,8,
+	RGN_FRAC(1,2),
+	4,
+	{ RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0,RGN_FRAC(0,2)+8,RGN_FRAC(0,2)+0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 8 consecutive bytes */
+	8*16
 };
 
-static const gfx_layout tile_layout =
+static const gfx_layout tile_16x16_layout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,2),
 	4,
-	{ 0x40000*8+8, 0x40000*8, 8, 0 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
+	{ RGN_FRAC(1,2)+8,RGN_FRAC(1,2)+0,RGN_FRAC(0,2)+8,RGN_FRAC(0,2)+0 },
+	{ 256,257,258,259,260,261,262,263,0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,8*16,9*16,10*16,11*16,12*16,13*16,14*16,15*16 },
+	32*16
 };
 
-static const gfx_layout sprite_layout =
+static const gfx_layout spritelayout =
 {
 	16,16,
-	4096*2,
+	RGN_FRAC(1,1),
 	4,
-	{ 8, 0, 0x80000*8+8, 0x80000*8 },
-	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
-		0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
+	{ 24,8,16,0 },
+	{ 512,513,514,515,516,517,518,519, 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+	  8*32, 9*32,10*32,11*32,12*32,13*32,14*32,15*32},
+	32*32
 };
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   256, 16 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tile_layout,  512, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0, &sprite_layout,  0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &tile_8x8_layout,     0x100, 32 },	/* Tiles (8x8) */
+	{ REGION_GFX1, 0, &tile_16x16_layout,   0x100, 32 },	/* Tiles (16x16) */
+	{ REGION_GFX2, 0, &spritelayout,        0, 16 },	/* Sprites (16x16) */
 	{ -1 } /* end of array */
 };
 
@@ -446,7 +433,7 @@ static MACHINE_DRIVER_START( chinatwn )
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(supbtime)
-	MDRV_VIDEO_UPDATE(chinatwn)
+	MDRV_VIDEO_UPDATE(supbtime)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -475,8 +462,8 @@ ROM_START( supbtime )
 	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, CRC(a715cca0) SHA1(0539bba39c60324d85599ac69ff78bb215deb511) ) /* chars */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, CRC(30043094) SHA1(5302cfd9bdaf90c4901fda75407379c4ce1cbdec) ) /* sprites */
-	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, CRC(434af3fb) SHA1(1cfd30d14f03554e826576d6d32ce424f0df3748) )
+  	ROM_LOAD16_BYTE( "mae00.bin", 0x000001, 0x80000, CRC(30043094) SHA1(5302cfd9bdaf90c4901fda75407379c4ce1cbdec) ) /* sprites */
+	ROM_LOAD16_BYTE( "mae01.bin", 0x000000, 0x80000, CRC(434af3fb) SHA1(1cfd30d14f03554e826576d6d32ce424f0df3748) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, CRC(2f2246ff) SHA1(3fcceb6f5aa5f33187bcf4c59d88327f396fa80d) )
@@ -494,8 +481,8 @@ ROM_START( supbtimj )
 	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, CRC(a715cca0) SHA1(0539bba39c60324d85599ac69ff78bb215deb511) ) /* chars */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, CRC(30043094) SHA1(5302cfd9bdaf90c4901fda75407379c4ce1cbdec) ) /* sprites */
-	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, CRC(434af3fb) SHA1(1cfd30d14f03554e826576d6d32ce424f0df3748) )
+  	ROM_LOAD16_BYTE( "mae00.bin", 0x000001, 0x80000, CRC(30043094) SHA1(5302cfd9bdaf90c4901fda75407379c4ce1cbdec) ) /* sprites */
+	ROM_LOAD16_BYTE( "mae01.bin", 0x000000, 0x80000, CRC(434af3fb) SHA1(1cfd30d14f03554e826576d6d32ce424f0df3748) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, CRC(2f2246ff) SHA1(3fcceb6f5aa5f33187bcf4c59d88327f396fa80d) )
@@ -513,8 +500,8 @@ ROM_START( chinatwn )
 	ROM_LOAD( "mak-02.h2", 0x000000, 0x80000, CRC(745b2c50) SHA1(557ac71da170a04caaab393dc43e46858ef8dd70) ) /* chars */
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-  	ROM_LOAD( "mak-00.a2", 0x000000, 0x80000, CRC(18e8cc1b) SHA1(afa79557222a94de7d9fde526ca45796f74fb3b2) ) /* sprites */
-	ROM_LOAD( "mak-01.a4", 0x080000, 0x80000, CRC(d88ebda8) SHA1(ec6eab95f3ca8ee946151c46c6570b0b0c508ffc) )
+  	ROM_LOAD16_BYTE( "mak-00.a2", 0x000001, 0x80000, CRC(18e8cc1b) SHA1(afa79557222a94de7d9fde526ca45796f74fb3b2) ) /* sprites */
+	ROM_LOAD16_BYTE( "mak-01.a4", 0x000000, 0x80000, CRC(d88ebda8) SHA1(ec6eab95f3ca8ee946151c46c6570b0b0c508ffc) )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* ADPCM samples */
   	ROM_LOAD( "gv_03-.j14",    0x00000, 0x20000, CRC(948faf92) SHA1(2538c7d4fa7fe0bfdd5dccece8ee82e911cee63f) )

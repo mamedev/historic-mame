@@ -285,7 +285,6 @@ void init_pc_common(UINT32 flags)
 	else
 		at_keyboard_init(AT_KEYBOARD_TYPE_PC);
 	at_keyboard_set_scan_code_set(1);
-	at_keyboard_set_input_port_base(4);
 
 	/* PIC */
 	pic8259_init(2, pc_pic_set_int_line);

@@ -396,7 +396,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/marinedt.o \
 	$(OBJ)/drivers/changela.o \
 	$(OBJ)/drivers/jollyjgr.o \
-	$(OBJ)/vidhrdw/crbaloon.o $(OBJ)/drivers/crbaloon.o \
+	$(OBJ)/vidhrdw/crbaloon.o $(OBJ)/drivers/crbaloon.o $(OBJ)/sndhrdw/crbaloon.o \
 	$(OBJ)/vidhrdw/bking2.o $(OBJ)/drivers/bking2.o \
 	$(OBJ)/vidhrdw/gsword.o $(OBJ)/drivers/gsword.o $(OBJ)/machine/tait8741.o \
 	$(OBJ)/vidhrdw/msisaac.o $(OBJ)/drivers/msisaac.o \

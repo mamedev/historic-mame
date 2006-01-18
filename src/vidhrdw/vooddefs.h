@@ -43,11 +43,11 @@ enum
 #define LFB_DEPTH_PRESENT_MSW	8
 
 /* flags for the register access array */
-#define REGISTER_READ			0x01
-#define REGISTER_WRITE			0x02
-#define REGISTER_PIPELINED		0x04
-#define REGISTER_FIFO			0x08
-#define REGISTER_WRITETHRU		0x10
+#define REGISTER_READ			0x01		/* reads are allowed */
+#define REGISTER_WRITE			0x02		/* writes are allowed */
+#define REGISTER_PIPELINED		0x04		/* writes are pipelined */
+#define REGISTER_FIFO			0x08		/* writes go to FIFO */
+#define REGISTER_WRITETHRU		0x10		/* writes are valid even for CMDFIFO */
 
 /* shorter combinations to make the table smaller */
 #define REG_R					(REGISTER_READ)
@@ -96,7 +96,7 @@ enum
 
 /* 0x000 */
 #define status			(0x000/4)	/* R  P  */
-#define intrCtrl		(0x004/4)	/* RW P   -- Voodoo2 only */
+#define intrCtrl		(0x004/4)	/* RW P   -- Voodoo2/Banshee only */
 #define vertexAx		(0x008/4)	/*  W PF */
 #define vertexAy		(0x00c/4)	/*  W PF */
 #define vertexBx		(0x010/4)	/*  W PF */
@@ -180,8 +180,8 @@ enum
 #define fogColor		(0x12c/4)	/*  W  F */
 #define zaColor			(0x130/4)	/*  W  F */
 #define chromaKey		(0x134/4)	/*  W  F */
-#define chromaRange		(0x138/4)	/*  W  F  -- Voodoo2 only */
-#define userIntrCMD		(0x13c/4)	/*  W  F  -- Voodoo2 only */
+#define chromaRange		(0x138/4)	/*  W  F  -- Voodoo2/Banshee only */
+#define userIntrCMD		(0x13c/4)	/*  W  F  -- Voodoo2/Banshee only */
 
 /* 0x140 */
 #define stipple			(0x140/4)	/* RW  F */
@@ -199,24 +199,30 @@ enum
 #define cmdFifoBump		(0x1e4/4)	/* RW     -- Voodoo2 only */
 #define cmdFifoRdPtr	(0x1e8/4)	/* RW     -- Voodoo2 only */
 #define cmdFifoAMin		(0x1ec/4)	/* RW     -- Voodoo2 only */
+#define colBufferAddr	(0x1ec/4)	/* RW     -- Banshee only */
 #define cmdFifoAMax		(0x1f0/4)	/* RW     -- Voodoo2 only */
+#define colBufferStride	(0x1f0/4)	/* RW     -- Banshee only */
 #define cmdFifoDepth	(0x1f4/4)	/* RW     -- Voodoo2 only */
+#define auxBufferAddr	(0x1f4/4)	/* RW     -- Banshee only */
 #define cmdFifoHoles	(0x1f8/4)	/* RW     -- Voodoo2 only */
+#define auxBufferStride	(0x1f8/4)	/* RW     -- Banshee only */
 
 /* 0x200 */
-#define fbiInit4		(0x200/4)	/* RW    */
-#define vRetrace		(0x204/4)	/* R     */
-#define backPorch		(0x208/4)	/* RW    */
-#define videoDimensions	(0x20c/4)	/* RW    */
-#define fbiInit0		(0x210/4)	/* RW    */
-#define fbiInit1		(0x214/4)	/* RW    */
-#define fbiInit2		(0x218/4)	/* RW    */
-#define fbiInit3		(0x21c/4)	/* RW    */
-#define hSync			(0x220/4)	/*  W    */
-#define vSync			(0x224/4)	/*  W    */
-#define clutData		(0x228/4)	/*  W  F */
-#define dacData			(0x22c/4)	/*  W    */
-#define maxRgbDelta		(0x230/4)	/*  W    */
+#define fbiInit4		(0x200/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define clipLeftRight1	(0x200/4)	/* RW     -- Banshee only */
+#define vRetrace		(0x204/4)	/* R      -- Voodoo/Voodoo2 only */
+#define clipTopBottom1	(0x204/4)	/* RW     -- Banshee only */
+#define backPorch		(0x208/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define videoDimensions	(0x20c/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define fbiInit0		(0x210/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define fbiInit1		(0x214/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define fbiInit2		(0x218/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define fbiInit3		(0x21c/4)	/* RW     -- Voodoo/Voodoo2 only */
+#define hSync			(0x220/4)	/*  W     -- Voodoo/Voodoo2 only */
+#define vSync			(0x224/4)	/*  W     -- Voodoo/Voodoo2 only */
+#define clutData		(0x228/4)	/*  W  F  -- Voodoo/Voodoo2 only */
+#define dacData			(0x22c/4)	/*  W     -- Voodoo/Voodoo2 only */
+#define maxRgbDelta		(0x230/4)	/*  W     -- Voodoo/Voodoo2 only */
 #define hBorder			(0x234/4)	/*  W     -- Voodoo2 only */
 #define vBorder			(0x238/4)	/*  W     -- Voodoo2 only */
 #define borderColor		(0x23c/4)	/*  W     -- Voodoo2 only */
@@ -226,28 +232,31 @@ enum
 #define fbiInit5		(0x244/4)	/* RW     -- Voodoo2 only */
 #define fbiInit6		(0x248/4)	/* RW     -- Voodoo2 only */
 #define fbiInit7		(0x24c/4)	/* RW     -- Voodoo2 only */
-#define fbiSwapHistory	(0x258/4)	/* R      -- Voodoo2 only */
-#define fbiTrianglesOut	(0x25c/4)	/* R      -- Voodoo2 only */
-#define sSetupMode		(0x260/4)	/*  W PF  -- Voodoo2 only */
-#define sVx				(0x264/4)	/*  W PF  -- Voodoo2 only */
-#define sVy				(0x268/4)	/*  W PF  -- Voodoo2 only */
-#define sARGB			(0x26c/4)	/*  W PF  -- Voodoo2 only */
-#define sRed			(0x270/4)	/*  W PF  -- Voodoo2 only */
-#define sGreen			(0x274/4)	/*  W PF  -- Voodoo2 only */
-#define sBlue			(0x278/4)	/*  W PF  -- Voodoo2 only */
-#define sAlpha			(0x27c/4)	/*  W PF  -- Voodoo2 only */
+#define swapPending		(0x24c/4)	/*  W     -- Banshee only */
+#define leftOverlayBuf	(0x250/4)	/*  W     -- Banshee only */
+#define rightOverlayBuf	(0x254/4)	/*  W     -- Banshee only */
+#define fbiSwapHistory	(0x258/4)	/* R      -- Voodoo2/Banshee only */
+#define fbiTrianglesOut	(0x25c/4)	/* R      -- Voodoo2/Banshee only */
+#define sSetupMode		(0x260/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sVx				(0x264/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sVy				(0x268/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sARGB			(0x26c/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sRed			(0x270/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sGreen			(0x274/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sBlue			(0x278/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sAlpha			(0x27c/4)	/*  W PF  -- Voodoo2/Banshee only */
 
 /* 0x280 */
-#define sVz				(0x280/4)	/*  W PF  -- Voodoo2 only */
-#define sWb				(0x284/4)	/*  W PF  -- Voodoo2 only */
-#define sWtmu0			(0x288/4)	/*  W PF  -- Voodoo2 only */
-#define sS_W0			(0x28c/4)	/*  W PF  -- Voodoo2 only */
-#define sT_W0			(0x290/4)	/*  W PF  -- Voodoo2 only */
-#define sWtmu1			(0x294/4)	/*  W PF  -- Voodoo2 only */
-#define sS_Wtmu1		(0x298/4)	/*  W PF  -- Voodoo2 only */
-#define sT_Wtmu1		(0x29c/4)	/*  W PF  -- Voodoo2 only */
-#define sDrawTriCMD		(0x2a0/4)	/*  W PF  -- Voodoo2 only */
-#define sBeginTriCMD	(0x2a4/4)	/*  W PF  -- Voodoo2 only */
+#define sVz				(0x280/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sWb				(0x284/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sWtmu0			(0x288/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sS_W0			(0x28c/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sT_W0			(0x290/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sWtmu1			(0x294/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sS_Wtmu1		(0x298/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sT_Wtmu1		(0x29c/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sDrawTriCMD		(0x2a0/4)	/*  W PF  -- Voodoo2/Banshee only */
+#define sBeginTriCMD	(0x2a4/4)	/*  W PF  -- Voodoo2/Banshee only */
 
 /* 0x2c0 */
 #define bltSrcBaseAddr	(0x2c0/4)	/* RW PF  -- Voodoo2 only */
@@ -273,7 +282,7 @@ enum
 #define texBaseAddr_1	(0x310/4)	/*  W PF */
 #define texBaseAddr_2	(0x314/4)	/*  W PF */
 #define texBaseAddr_3_8	(0x318/4)	/*  W PF */
-#define trexInit0		(0x31c/4)	/*  W  F */
+#define trexInit0		(0x31c/4)	/*  W  F  -- Voodoo/Voodoo2 only */
 #define trexInit1		(0x320/4)	/*  W  F */
 #define nccTable		(0x324/4)	/*  W  F */
 
@@ -315,7 +324,98 @@ static const UINT8 register_alias_map[0x40] =
  *
  *************************************/
 
-static const UINT8 register_access[0x100] =
+static const UINT8 voodoo_register_access[0x100] =
+{
+	/* 0x000 */
+	REG_RP,		0,			REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x040 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x080 */
+	REG_WPF,	0,			REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x0c0 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x100 */
+	REG_WPF,	REG_RWPF,	REG_RWPF,	REG_RWPF,
+	REG_RWF,	REG_RWF,	REG_RWF,	REG_RWF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		0,			0,
+
+	/* 0x140 */
+	REG_RWF,	REG_RWF,	REG_RWF,	REG_R,
+	REG_R,		REG_R,		REG_R,		REG_R,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x180 */
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x1c0 */
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+
+	/* 0x200 */
+	REG_RW,		REG_R,		REG_RW,		REG_RW,
+	REG_RW,		REG_RW,		REG_RW,		REG_RW,
+	REG_W,		REG_W,		REG_W,		REG_W,
+	REG_W,		0,			0,			0,
+
+	/* 0x240 */
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+
+	/* 0x280 */
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+
+	/* 0x2c0 */
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+
+	/* 0x300 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x340 */
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x380 */
+	REG_WF
+};
+
+
+static const UINT8 voodoo2_register_access[0x100] =
 {
 	/* 0x000 */
 	REG_RP,		REG_RWPT,	REG_WPF,	REG_WPF,
@@ -373,7 +473,7 @@ static const UINT8 register_access[0x100] =
 
 	/* 0x240 */
 	REG_R,		REG_RWT,	REG_RWT,	REG_RWT,
-	REG_R,		REG_R,		REG_WPF,	REG_WPF,
+	0,			0,			REG_R,		REG_R,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
 
@@ -392,6 +492,97 @@ static const UINT8 register_access[0x100] =
 	/* 0x300 */
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
 	REG_WPF,	REG_WPF,	REG_WPF,	REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x340 */
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x380 */
+	REG_WF
+};
+
+
+static const UINT8 banshee_register_access[0x100] =
+{
+	/* 0x000 */
+	REG_RP,		REG_RWPT,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x040 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x080 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x0c0 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x100 */
+	REG_WPF,	REG_RWPF,	REG_RWPF,	REG_RWPF,
+	REG_RWF,	REG_RWF,	REG_RWF,	REG_RWF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x140 */
+	REG_RWF,	REG_RWF,	REG_RWF,	REG_R,
+	REG_R,		REG_R,		REG_R,		REG_R,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x180 */
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+
+	/* 0x1c0 */
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	REG_WF,		REG_WF,		REG_WF,		REG_WF,
+	0,			0,			0,			REG_RWF,
+	REG_RWF,	REG_RWF,	REG_RWF,	0,
+
+	/* 0x200 */
+	REG_RWF,	REG_RWF,	0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+
+	/* 0x240 */
+	0,			0,			0,			REG_WT,
+	REG_RWF,	REG_RWF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_R,		REG_R,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+
+	/* 0x280 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	0,			0,
+	0,			0,			0,			0,
+
+	/* 0x2c0 */
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+	0,			0,			0,			0,
+
+	/* 0x300 */
+	REG_WPF,	REG_WPF,	REG_WPF,	REG_WPF,
+	REG_WPF,	REG_WPF,	REG_WPF,	0,
 	REG_WF,		REG_WF,		REG_WF,		REG_WF,
 	REG_WF,		REG_WF,		REG_WF,		REG_WF,
 
@@ -487,6 +678,283 @@ static const char *voodoo_reg_name[] =
 	"nccTable1.7",	"nccTable1.8",	"nccTable1.9",	"nccTable1.A",
 	/* 0x380 */
 	"nccTable1.B"
+};
+
+
+static const char *banshee_reg_name[] =
+{
+	/* 0x000 */
+	"status",		"intrCtrl",		"vertexAx",		"vertexAy",
+	"vertexBx",		"vertexBy",		"vertexCx",		"vertexCy",
+	"startR",		"startG",		"startB",		"startZ",
+	"startA",		"startS",		"startT",		"startW",
+	/* 0x040 */
+	"dRdX",			"dGdX",			"dBdX",			"dZdX",
+	"dAdX",			"dSdX",			"dTdX",			"dWdX",
+	"dRdY",			"dGdY",			"dBdY",			"dZdY",
+	"dAdY",			"dSdY",			"dTdY",			"dWdY",
+	/* 0x080 */
+	"triangleCMD",	"reserved084",	"fvertexAx",	"fvertexAy",
+	"fvertexBx",	"fvertexBy",	"fvertexCx",	"fvertexCy",
+	"fstartR",		"fstartG",		"fstartB",		"fstartZ",
+	"fstartA",		"fstartS",		"fstartT",		"fstartW",
+	/* 0x0c0 */
+	"fdRdX",		"fdGdX",		"fdBdX",		"fdZdX",
+	"fdAdX",		"fdSdX",		"fdTdX",		"fdWdX",
+	"fdRdY",		"fdGdY",		"fdBdY",		"fdZdY",
+	"fdAdY",		"fdSdY",		"fdTdY",		"fdWdY",
+	/* 0x100 */
+	"ftriangleCMD",	"fbzColorPath",	"fogMode",		"alphaMode",
+	"fbzMode",		"lfbMode",		"clipLeftRight","clipLowYHighY",
+	"nopCMD",		"fastfillCMD",	"swapbufferCMD","fogColor",
+	"zaColor",		"chromaKey",	"chromaRange",	"userIntrCMD",
+	/* 0x140 */
+	"stipple",		"color0",		"color1",		"fbiPixelsIn",
+	"fbiChromaFail","fbiZfuncFail",	"fbiAfuncFail",	"fbiPixelsOut",
+	"fogTable160",	"fogTable164",	"fogTable168",	"fogTable16c",
+	"fogTable170",	"fogTable174",	"fogTable178",	"fogTable17c",
+	/* 0x180 */
+	"fogTable180",	"fogTable184",	"fogTable188",	"fogTable18c",
+	"fogTable190",	"fogTable194",	"fogTable198",	"fogTable19c",
+	"fogTable1a0",	"fogTable1a4",	"fogTable1a8",	"fogTable1ac",
+	"fogTable1b0",	"fogTable1b4",	"fogTable1b8",	"fogTable1bc",
+	/* 0x1c0 */
+	"fogTable1c0",	"fogTable1c4",	"fogTable1c8",	"fogTable1cc",
+	"fogTable1d0",	"fogTable1d4",	"fogTable1d8",	"fogTable1dc",
+	"reserved1e0",	"reserved1e4",	"reserved1e8",	"colBufferAddr",
+	"colBufferStride","auxBufferAddr","auxBufferStride","reserved1fc",
+	/* 0x200 */
+	"clipLeftRight1","clipTopBottom1","reserved208","reserved20c",
+	"reserved210",	"reserved214",	"reserved218",	"reserved21c",
+	"reserved220",	"reserved224",	"reserved228",	"reserved22c",
+	"reserved230",	"reserved234",	"reserved238",	"reserved23c",
+	/* 0x240 */
+	"reserved240",	"reserved244",	"reserved248",	"swapPending",
+	"leftOverlayBuf","rightOverlayBuf","fbiSwapHistory","fbiTrianglesOut",
+	"sSetupMode",	"sVx",			"sVy",			"sARGB",
+	"sRed",			"sGreen",		"sBlue",		"sAlpha",
+	/* 0x280 */
+	"sVz",			"sWb",			"sWtmu0",		"sS/Wtmu0",
+	"sT/Wtmu0",		"sWtmu1",		"sS/Wtmu1",		"sT/Wtmu1",
+	"sDrawTriCMD",	"sBeginTriCMD",	"reserved2a8",	"reserved2ac",
+	"reserved2b0",	"reserved2b4",	"reserved2b8",	"reserved2bc",
+	/* 0x2c0 */
+	"reserved2c0",	"reserved2c4",	"reserved2c8",	"reserved2cc",
+	"reserved2d0",	"reserved2d4",	"reserved2d8",	"reserved2dc",
+	"reserved2e0",	"reserved2e4",	"reserved2e8",	"reserved2ec",
+	"reserved2f0",	"reserved2f4",	"reserved2f8",	"reserved2fc",
+	/* 0x300 */
+	"textureMode",	"tLOD",			"tDetail",		"texBaseAddr",
+	"texBaseAddr_1","texBaseAddr_2","texBaseAddr_3_8","reserved31c",
+	"trexInit1",	"nccTable0.0",	"nccTable0.1",	"nccTable0.2",
+	"nccTable0.3",	"nccTable0.4",	"nccTable0.5",	"nccTable0.6",
+	/* 0x340 */
+	"nccTable0.7",	"nccTable0.8",	"nccTable0.9",	"nccTable0.A",
+	"nccTable0.B",	"nccTable1.0",	"nccTable1.1",	"nccTable1.2",
+	"nccTable1.3",	"nccTable1.4",	"nccTable1.5",	"nccTable1.6",
+	"nccTable1.7",	"nccTable1.8",	"nccTable1.9",	"nccTable1.A",
+	/* 0x380 */
+	"nccTable1.B"
+};
+
+
+
+/*************************************
+ *
+ *  Voodoo Banshee I/O space registers
+ *
+ *************************************/
+
+/* 0x000 */
+#define io_status						(0x000/4)	/*  */
+#define io_pciInit0						(0x004/4)	/*  */
+#define io_sipMonitor					(0x008/4)	/*  */
+#define io_lfbMemoryConfig				(0x00c/4)	/*  */
+#define io_miscInit0					(0x010/4)	/*  */
+#define io_miscInit1					(0x014/4)	/*  */
+#define io_dramInit0					(0x018/4)	/*  */
+#define io_dramInit1					(0x01c/4)	/*  */
+#define io_agpInit						(0x020/4)	/*  */
+#define io_tmuGbeInit					(0x024/4)	/*  */
+#define io_vgaInit0						(0x028/4)	/*  */
+#define io_vgaInit1						(0x02c/4)	/*  */
+#define io_dramCommand					(0x030/4)	/*  */
+#define io_dramData						(0x034/4)	/*  */
+
+/* 0x040 */
+#define io_pllCtrl0						(0x040/4)	/*  */
+#define io_pllCtrl1						(0x044/4)	/*  */
+#define io_pllCtrl2						(0x048/4)	/*  */
+#define io_dacMode						(0x04c/4)	/*  */
+#define io_dacAddr						(0x050/4)	/*  */
+#define io_dacData						(0x054/4)	/*  */
+#define io_rgbMaxDelta					(0x058/4)	/*  */
+#define io_vidProcCfg					(0x05c/4)	/*  */
+#define io_hwCurPatAddr					(0x060/4)	/*  */
+#define io_hwCurLoc						(0x064/4)	/*  */
+#define io_hwCurC0						(0x068/4)	/*  */
+#define io_hwCurC1						(0x06c/4)	/*  */
+#define io_vidInFormat					(0x070/4)	/*  */
+#define io_vidInStatus					(0x074/4)	/*  */
+#define io_vidSerialParallelPort		(0x078/4)	/*  */
+#define io_vidInXDecimDeltas			(0x07c/4)	/*  */
+
+/* 0x080 */
+#define io_vidInDecimInitErrs			(0x080/4)	/*  */
+#define io_vidInYDecimDeltas			(0x084/4)	/*  */
+#define io_vidPixelBufThold				(0x088/4)	/*  */
+#define io_vidChromaMin					(0x08c/4)	/*  */
+#define io_vidChromaMax					(0x090/4)	/*  */
+#define io_vidCurrentLine				(0x094/4)	/*  */
+#define io_vidScreenSize				(0x098/4)	/*  */
+#define io_vidOverlayStartCoords		(0x09c/4)	/*  */
+#define io_vidOverlayEndScreenCoord		(0x0a0/4)	/*  */
+#define io_vidOverlayDudx				(0x0a4/4)	/*  */
+#define io_vidOverlayDudxOffsetSrcWidth	(0x0a8/4)	/*  */
+#define io_vidOverlayDvdy				(0x0ac/4)	/*  */
+#define io_vgab0						(0x0b0/4)	/*  */
+#define io_vgab4						(0x0b4/4)	/*  */
+#define io_vgab8						(0x0b8/4)	/*  */
+#define io_vgabc						(0x0bc/4)	/*  */
+
+/* 0x0c0 */
+#define io_vgac0						(0x0c0/4)	/*  */
+#define io_vgac4						(0x0c4/4)	/*  */
+#define io_vgac8						(0x0c8/4)	/*  */
+#define io_vgacc						(0x0cc/4)	/*  */
+#define io_vgad0						(0x0d0/4)	/*  */
+#define io_vgad4						(0x0d4/4)	/*  */
+#define io_vgad8						(0x0d8/4)	/*  */
+#define io_vgadc						(0x0dc/4)	/*  */
+#define io_vidOverlayDvdyOffset			(0x0e0/4)	/*  */
+#define io_vidDesktopStartAddr			(0x0e4/4)	/*  */
+#define io_vidDesktopOverlayStride		(0x0e8/4)	/*  */
+#define io_vidInAddr0					(0x0ec/4)	/*  */
+#define io_vidInAddr1					(0x0f0/4)	/*  */
+#define io_vidInAddr2					(0x0f4/4)	/*  */
+#define io_vidInStride					(0x0f8/4)	/*  */
+#define io_vidCurrOverlayStartAddr		(0x0fc/4)	/*  */
+
+
+
+/*************************************
+ *
+ *  Register string table for debug
+ *
+ *************************************/
+
+static const char *banshee_io_reg_name[] =
+{
+	/* 0x000 */
+	"status",		"pciInit0",		"sipMonitor",	"lfbMemoryConfig",
+	"miscInit0",	"miscInit1",	"dramInit0",	"dramInit1",
+	"agpInit",		"tmuGbeInit",	"vgaInit0",		"vgaInit1",
+	"dramCommand",	"dramData",		"reserved38",	"reserved3c",
+
+	/* 0x040 */
+	"pllCtrl0",		"pllCtrl1",		"pllCtrl2",		"dacMode",
+	"dacAddr",		"dacData",		"rgbMaxDelta",	"vidProcCfg",
+	"hwCurPatAddr",	"hwCurLoc",		"hwCurC0",		"hwCurC1",
+	"vidInFormat",	"vidInStatus",	"vidSerialParallelPort","vidInXDecimDeltas",
+
+	/* 0x080 */
+	"vidInDecimInitErrs","vidInYDecimDeltas","vidPixelBufThold","vidChromaMin",
+	"vidChromaMax",	"vidCurrentLine","vidScreenSize","vidOverlayStartCoords",
+	"vidOverlayEndScreenCoord","vidOverlayDudx","vidOverlayDudxOffsetSrcWidth","vidOverlayDvdy",
+	"vga[b0]",		"vga[b4]",		"vga[b8]",		"vga[bc]",
+
+	/* 0x0c0 */
+	"vga[c0]",		"vga[c4]",		"vga[c8]",		"vga[cc]",
+	"vga[d0]",		"vga[d4]",		"vga[d8]",		"vga[dc]",
+	"vidOverlayDvdyOffset","vidDesktopStartAddr","vidDesktopOverlayStride","vidInAddr0",
+	"vidInAddr1",	"vidInAddr2",	"vidInStride",	"vidCurrOverlayStartAddr"
+};
+
+
+
+/*************************************
+ *
+ *  Voodoo Banshee AGP space registers
+ *
+ *************************************/
+
+/* 0x000 */
+#define agpReqSize				(0x000/4)	/*  */
+#define agpHostAddressLow		(0x004/4)	/*  */
+#define agpHostAddressHigh		(0x008/4)	/*  */
+#define agpGraphicsAddress		(0x00c/4)	/*  */
+#define agpGraphicsStride		(0x010/4)	/*  */
+#define agpMoveCMD				(0x014/4)	/*  */
+#define cmdBaseAddr0			(0x020/4)	/*  */
+#define cmdBaseSize0			(0x024/4)	/*  */
+#define cmdBump0				(0x028/4)	/*  */
+#define cmdRdPtrL0				(0x02c/4)	/*  */
+#define cmdRdPtrH0				(0x030/4)	/*  */
+#define cmdAMin0				(0x034/4)	/*  */
+#define cmdAMax0				(0x03c/4)	/*  */
+
+/* 0x040 */
+#define cmdFifoDepth0			(0x044/4)	/*  */
+#define cmdHoleCnt0				(0x048/4)	/*  */
+#define cmdBaseAddr1			(0x050/4)	/*  */
+#define cmdBaseSize1			(0x054/4)	/*  */
+#define cmdBump1				(0x058/4)	/*  */
+#define cmdRdPtrL1				(0x05c/4)	/*  */
+#define cmdRdPtrH1				(0x060/4)	/*  */
+#define cmdAMin1				(0x064/4)	/*  */
+#define cmdAMax1				(0x06c/4)	/*  */
+#define cmdFifoDepth1			(0x074/4)	/*  */
+#define cmdHoleCnt1				(0x078/4)	/*  */
+
+/* 0x080 */
+#define cmdFifoThresh			(0x080/4)	/*  */
+#define cmdHoleInt				(0x084/4)	/*  */
+
+/* 0x100 */
+#define yuvBaseAddress			(0x100/4)	/*  */
+#define yuvStride				(0x104/4)	/*  */
+#define crc1					(0x120/4)	/*  */
+#define crc2					(0x130/4)	/*  */
+
+
+
+/*************************************
+ *
+ *  Register string table for debug
+ *
+ *************************************/
+
+static const char *banshee_agp_reg_name[] =
+{
+	/* 0x000 */
+	"agpReqSize",	"agpHostAddressLow","agpHostAddressHigh","agpGraphicsAddress",
+	"agpGraphicsStride","agpMoveCMD","reserved18",	"reserved1c",
+	"cmdBaseAddr0",	"cmdBaseSize0",	"cmdBump0",		"cmdRdPtrL0",
+	"cmdRdPtrH0",	"cmdAMin0",		"reserved38",	"cmdAMax0",
+
+	/* 0x040 */
+	"reserved40",	"cmdFifoDepth0","cmdHoleCnt0",	"reserved4c",
+	"cmdBaseAddr1",	"cmdBaseSize1",	"cmdBump1",		"cmdRdPtrL1",
+	"cmdRdPtrH1",	"cmdAMin1",		"reserved68",	"cmdAMax1",
+	"reserved70",	"cmdFifoDepth1","cmdHoleCnt1",	"reserved7c",
+
+	/* 0x080 */
+	"cmdFifoThresh","cmdHoleInt",	"reserved88",	"reserved8c",
+	"reserved90",	"reserved94",	"reserved98",	"reserved9c",
+	"reserveda0",	"reserveda4",	"reserveda8",	"reservedac",
+	"reservedb0",	"reservedb4",	"reservedb8",	"reservedbc",
+
+	/* 0x0c0 */
+	"reservedc0",	"reservedc4",	"reservedc8",	"reservedcc",
+	"reservedd0",	"reservedd4",	"reservedd8",	"reserveddc",
+	"reservede0",	"reservede4",	"reservede8",	"reservedec",
+	"reservedf0",	"reservedf4",	"reservedf8",	"reservedfc",
+
+	/* 0x100 */
+	"yuvBaseAddress","yuvStride",	"reserved108",	"reserved10c",
+	"reserved110",	"reserved114",	"reserved118",	"reserved11c",
+	"crc1",			"reserved124",	"reserved128",	"reserved12c",
+	"crc2",			"reserved134",	"reserved138",	"reserved13c"
 };
 
 
@@ -843,11 +1311,16 @@ static const UINT8 dither_matrix_2x2[4] =
 #define TEXLOD_TMULTIBASEADDR(val)			(((val) >> 24) & 1)
 #define TEXLOD_TDATA_SWIZZLE(val)			(((val) >> 25) & 1)
 #define TEXLOD_TDATA_SWAP(val)				(((val) >> 26) & 1)
-#define TEXLOD_TDIRECT_WRITE(val)			(((val) >> 27) & 1)
+#define TEXLOD_TDIRECT_WRITE(val)			(((val) >> 27) & 1)		/* Voodoo 2 only */
 
 #define TEXDETAIL_DETAIL_MAX(val)			(((val) >> 0) & 0xff)
 #define TEXDETAIL_DETAIL_BIAS(val)			(((val) >> 8) & 0x3f)
 #define TEXDETAIL_DETAIL_SCALE(val)			(((val) >> 14) & 7)
+#define TEXDETAIL_RGB_MIN_FILTER(val)		(((val) >> 17) & 1)		/* Voodoo 2 only */
+#define TEXDETAIL_RGB_MAG_FILTER(val)		(((val) >> 18) & 1)		/* Voodoo 2 only */
+#define TEXDETAIL_ALPHA_MIN_FILTER(val)		(((val) >> 19) & 1)		/* Voodoo 2 only */
+#define TEXDETAIL_ALPHA_MAG_FILTER(val)		(((val) >> 20) & 1)		/* Voodoo 2 only */
+#define TEXDETAIL_SEPARATE_RGBA_FILTER(val)	(((val) >> 21) & 1)		/* Voodoo 2 only */
 
 
 
@@ -876,6 +1349,21 @@ struct _fifo_state
 	INT32		out;					/* output pointer */
 };
 typedef struct _fifo_state fifo_state;
+
+
+struct _cmdfifo_info
+{
+	UINT8		enable;					/* enabled? */
+	UINT8		count_holes;			/* count holes? */
+	UINT32		base;					/* base address in framebuffer RAM */
+	UINT32		end;					/* end address in framebuffer RAM */
+	UINT32		rdptr;					/* current read pointer */
+	UINT32		amin;					/* minimum address */
+	UINT32		amax;					/* maximum address */
+	UINT32		depth;					/* current depth */
+	UINT32		holes;					/* number of holes */
+};
+typedef struct _cmdfifo_info cmdfifo_info;
 
 
 struct _pci_state
@@ -912,6 +1400,9 @@ struct _tmu_state
 	UINT32		mask;					/* mask to apply to pointers */
 	voodoo_reg *reg;					/* pointer to our register base */
 	UINT32		regdirty;				/* true if the LOD/mode/base registers have changed */
+
+	UINT32		texaddr_mask;			/* mask for texture address */
+	UINT8		texaddr_shift;			/* shift for texture address */
 
 	INT64		starts, startt;			/* starting S,T (14.18) */
 	INT64		startw;					/* starting W (2.30) */
@@ -983,6 +1474,10 @@ struct _fbi_state
 	UINT8		backbuf;				/* back buffer index */
 	UINT8		swaps_pending;			/* number of pending swaps */
 
+	UINT32		yorigin;				/* Y origin subtract value */
+	UINT32		lfb_base;				/* base of LFB in memory */
+	UINT8		lfb_stride;				/* stride of LFB accesses in bits */
+
 	UINT32		width;					/* width of current frame buffer */
 	UINT32		height;					/* height of current frame buffer */
 	UINT32		rowpixels;				/* pixels per row */
@@ -991,7 +1486,7 @@ struct _fbi_state
 	UINT32		x_tiles;				/* number of tiles in the X direction */
 
 	rgb_t		pen[65536];				/* mapping from pixels to pens */
-	rgb_t		clut[33];				/* clut gamma data */
+	rgb_t		clut[512];				/* clut gamma data */
 	UINT8		clut_dirty;				/* do we need to recompute? */
 
 	mame_timer *vblank_timer;			/* VBLANK timer */
@@ -1003,9 +1498,7 @@ struct _fbi_state
 	void		(*vblank_client)(int);	/* client callback */
 
 	fifo_state	fifo;					/* framebuffer memory fifo */
-	UINT32 *	cmdfifo;				/* pointer to cmdfifo base */
-	UINT32		cmdfifobase;			/* base offset for cmdfifo */
-	UINT32		cmdfifomax;				/* maximum valid offset for cmdfifo */
+	cmdfifo_info cmdfifo[2];			/* command FIFOs */
 
 	UINT8		fogblend[64];			/* 64-entry fog table */
 	UINT8		fogdelta[64];			/* 64-entry fog table */
@@ -1084,6 +1577,20 @@ struct _raster_info
 typedef struct _raster_info raster_info;
 
 
+struct _banshee_info
+{
+	UINT32		io[0x40];				/* I/O registers */
+	UINT32		agp[0x80];				/* AGP registers */
+	UINT8		vga[0x20];				/* VGA registers */
+	UINT8		crtc[0x27];				/* VGA CRTC registers */
+	UINT8		seq[0x05];				/* VGA sequencer registers */
+	UINT8		gc[0x05];				/* VGA graphics controller registers */
+	UINT8		att[0x15];				/* VGA attribute registers */
+	UINT8		attff;					/* VGA attribute flip-flop */
+};
+typedef struct _banshee_info banshee_info;
+
+
 struct _voodoo_state
 {
 	UINT8		index;					/* index of board */
@@ -1095,12 +1602,17 @@ struct _voodoo_state
 	int			trigger;				/* trigger used for stalling */
 
 	voodoo_reg	reg[0x400];				/* raw registers */
+	const UINT8 *regaccess;				/* register access array */
+	const char **regnames;				/* register names array */
+	UINT8		alt_regmap;				/* enable alternate register map? */
+
 	pci_state	pci;					/* PCI state */
 	dac_state	dac;					/* DAC state */
 
 	fbi_state	fbi;					/* FBI states */
 	tmu_state	tmu[MAX_TMU];			/* TMU states */
 	tmu_shared_state tmushare;			/* TMU shared state */
+	banshee_info banshee;				/* Banshee state */
 
 	voodoo_stats stats;					/* internal statistics */
 
@@ -3006,7 +3518,7 @@ static void raster_##name(voodoo_state *v, UINT16 *drawbuf)						\
 		/* determine the screen Y */											\
 		scry = y;																\
 		if (FBZMODE_Y_ORIGIN(FBZMODE))											\
-			scry = (FBIINIT3_YORIGIN_SUBTRACT(v->reg[fbiInit3].u) - y) & 0x3ff;	\
+			scry = (v->fbi.yorigin - y) & 0x3ff;								\
 																				\
 		/* get pointers to the target buffer and depth buffer */				\
 		dest = drawbuf + scry * v->fbi.rowpixels;								\
@@ -3051,14 +3563,16 @@ static void raster_##name(voodoo_state *v, UINT16 *drawbuf)						\
 									iterz, iterw);								\
 																				\
 			/* run the texture pipeline on TMU1 to produce a value in texel */	\
-			if (TMUS >= 2)														\
+			/* note that they set LOD min to 8 to "disable" a TMU */			\
+			if (TMUS >= 2 && v->tmu[1].lodmin < (8 << 8))						\
 				TEXTURE_PIPELINE(&v->tmu[1], x, y, TEXMODE1, texel,				\
 									v->tmu[1].lookup, v->tmu[1].lodbase,		\
 									iters1, itert1, iterw1, texel);				\
 																				\
 			/* run the texture pipeline on TMU0 to produce a final */			\
 			/* result in texel */												\
-			if (TMUS >= 1)														\
+			/* note that they set LOD min to 8 to "disable" a TMU */			\
+			if (TMUS >= 1 && v->tmu[0].lodmin < (8 << 8))						\
 				TEXTURE_PIPELINE(&v->tmu[0], x, y, TEXMODE0, texel, 			\
 									v->tmu[0].lookup, v->tmu[0].lodbase,		\
 									iters0, itert0, iterw0, texel);				\

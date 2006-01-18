@@ -26,11 +26,6 @@ int at_keyboard_read(void);
 void at_keyboard_write(UINT8 data);
 void at_keyboard_reset(void);
 void at_keyboard_set_scan_code_set(int set);
-void at_keyboard_set_input_port_base(int base);
-
-//QUEUE_CHARS( at_keyboard );
-//ACCEPT_CHAR( at_keyboard );
-//CHARQUEUE_EMPTY( at_keyboard );
 
 INPUT_PORTS_EXTERN( pc_keyboard );
 INPUT_PORTS_EXTERN( at_keyboard );

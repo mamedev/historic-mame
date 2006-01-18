@@ -1013,7 +1013,7 @@ MACHINE_DRIVER_START( midvunit )
 	MDRV_IMPORT_FROM(midvcommon)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM(dcs_audio)
+	MDRV_IMPORT_FROM(dcs_audio_2k)
 MACHINE_DRIVER_END
 
 
@@ -1029,7 +1029,7 @@ MACHINE_DRIVER_START( midvplus )
 	MDRV_NVRAM_HANDLER(midway_serial_pic2)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM(dcs2_audio)
+	MDRV_IMPORT_FROM(dcs2_audio_2115)
 MACHINE_DRIVER_END
 
 
@@ -1270,7 +1270,7 @@ ROM_END
 
 
 ROM_START( wargods )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* sound data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* sound data */
 	ROM_LOAD16_BYTE( "u2.rom",   0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER1, 0 )
@@ -1366,7 +1366,7 @@ static DRIVER_INIT( wargods )
 	UINT8 default_nvram[256];
 
 	/* initialize the subsystems */
-	dcs2_init(0x3839);
+	dcs2_init(2, 0x3839);
 	ide_controller_init(0, &ide_intf);
 	midway_ioasic_init(0, 452/* no alternates */, 94, NULL);
 	adc_shift = 16;

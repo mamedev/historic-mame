@@ -1,4 +1,13 @@
-/* PC-AT Keyboard emulation */
+/**********************************************************************
+
+    pckeybrd.c
+
+    PC-style keyboard emulation
+
+    This emulation is decoupled from the AT 8042 emulation used in the
+    IBM ATs and above
+
+**********************************************************************/
 
 /* Todo: (added by KT 22-Jun-2000
     1. Check scancodes I have added are the actual scancodes for set 2 or 3.
@@ -173,7 +182,8 @@ typedef struct at_keyboard
 	int input_state;
 	int scan_code_set;
 	int last_code;
-	int input_port_base;
+
+	int ports[8];
 } at_keyboard;
 
 static at_keyboard keyboard;
@@ -299,8 +309,11 @@ static int at_keyboard_queue_size(void);
 
 void at_keyboard_init(AT_KEYBOARD_TYPE type)
 {
+	int i;
+	char buf[32];
+
+	memset(&keyboard, 0, sizeof(keyboard));
 	keyboard.type = type;
-	keyboard.input_port_base = 0;
 	keyboard.on = 1;
 	keyboard.delay = 60;
 	keyboard.repeat = 8;
@@ -314,6 +327,13 @@ void at_keyboard_init(AT_KEYBOARD_TYPE type)
 	set_led_status(1, 0);
 
 	keyboard.scan_code_set = 3;
+
+	/* locate the keyboard ports */
+	for (i = 0; i < sizeof(keyboard.ports) / sizeof(keyboard.ports[0]); i++)
+	{
+		sprintf(buf, "pc_keyboard_%d", i);
+		keyboard.ports[i] = port_tag_to_index(buf);
+	}
 }
 
 
@@ -336,12 +356,6 @@ void at_keyboard_reset(void)
 void	at_keyboard_set_scan_code_set(int set)
 {
 	keyboard.scan_code_set = set;
-}
-
-/* set base index for input ports */
-void at_keyboard_set_input_port_base(int base)
-{
-	//keyboard.input_port_base = base;
 }
 
 
@@ -473,18 +487,27 @@ static void at_keyboard_extended_scancode_insert(int code, int pressed)
 /**************************************************************************
  *  scan keys and stuff make/break codes
  **************************************************************************/
+
+static UINT32 at_keyboard_readport(int port)
+{
+	UINT32 result = 0;
+	if (keyboard.ports[port] >= 0)
+		result = readinputport(keyboard.ports[port]);
+	return result;
+}
+
 void at_keyboard_polling(void)
 {
 	int i;
 
-	//if (keyboard.on)
+	if (keyboard.on)
 	{
 		/* add codes for keys that are set */
 		for( i = 0x01; i < 0x80; i++  )
 		{
 			if (i==0x60) i+=0x10; // keys 0x60..0x6f need special handling
 
-			if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
+			if( at_keyboard_readport(i/16) & (1 << (i & 15)) )
 			{
 				if( keyboard.make[i] == 0 )
 				{
@@ -526,7 +549,7 @@ void at_keyboard_polling(void)
 			/* extended scan-codes */
 			for( i = 0x60; i < 0x70; i++  )
 			{
-				if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
+				if( at_keyboard_readport(i/16) & (1 << (i & 15)) )
 				{
 					if( keyboard.make[i] == 0 )
 					{

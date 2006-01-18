@@ -1860,7 +1860,7 @@ INPUT_PORTS_START( seattle_common )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT ) /* Slam Switch */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test switch */
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_SERVICE1 )
@@ -1871,7 +1871,7 @@ INPUT_PORTS_START( seattle_common )
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_VOLUME_UP )
 	PORT_BIT( 0x6000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SPECIAL )	/* Bill */
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BILL1 )
 
 	PORT_START_TAG("P12")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
@@ -2533,21 +2533,21 @@ MACHINE_DRIVER_END
 MACHINE_DRIVER_START( phoenixsa )
 	MDRV_IMPORT_FROM(seattle_common)
 	MDRV_CPU_REPLACE("main", R4700LE, SYSTEM_CLOCK*2)
-	MDRV_IMPORT_FROM(dcs2_audio)
+	MDRV_IMPORT_FROM(dcs2_audio_2115)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( seattle150 )
 	MDRV_IMPORT_FROM(seattle_common)
 	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*3)
-	MDRV_IMPORT_FROM(dcs2_audio)
+	MDRV_IMPORT_FROM(dcs2_audio_2115)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( seattle200 )
 	MDRV_IMPORT_FROM(seattle_common)
 	MDRV_CPU_REPLACE("main", R5000LE, SYSTEM_CLOCK*4)
-	MDRV_IMPORT_FROM(dcs2_audio)
+	MDRV_IMPORT_FROM(dcs2_audio_2115)
 MACHINE_DRIVER_END
 
 
@@ -2579,7 +2579,7 @@ ROM_START( wg3dh )
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.3 (Guts 10/15/96, Main 10/15/96) */
 	DISK_IMAGE( "wg3dh", 0, MD5(424dbda376e8c45ec873b79194bdb924) SHA1(c12875036487a9324734012e601d1f234d2e783e) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
 	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 ROM_END
 
@@ -2591,7 +2591,7 @@ ROM_START( mace )
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0B 6/10/97 (Guts 7/2/97, Main 7/2/97) */
 	DISK_IMAGE( "mace", 0, MD5(668f6216114fe4c7c265b3d13398e71e) SHA1(6761c9a3da1f0b6b82b146ff2debd04986b8f460) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1, Labeled as Version 1.0 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1, Labeled as Version 1.0 */
 	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 ROM_END
 
@@ -2603,7 +2603,7 @@ ROM_START( macea )
 	DISK_REGION( REGION_DISKS )	/* Hard Drive Version 1.0a (Guts 6/9/97, Main 5/12/97) */
 	DISK_IMAGE( "macea", 0, BAD_DUMP MD5(276577faa5632eb23dc5a97c11c0a1b1) SHA1(e2cce4ff2e15267b7008422252bdf62b188cf743) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version L1.1 */
 	ROM_LOAD16_BYTE( "soundl11.u95", 0x000000, 0x8000, CRC(c589458c) SHA1(0cf970a35910a74cdcf3bd8119bfc0c693e19b00) )
 ROM_END
 
@@ -2651,7 +2651,7 @@ ROM_START( calspeed )
 	DISK_REGION( REGION_DISKS )	/* Release version 2.1a (4/17/98) (Guts 1.25 4/17/98, Main 4/17/98) */
 	DISK_IMAGE( "calspeed", 0, MD5(1b79ff4ecaa52693bdb19c720332dd59) SHA1(94af22d5797dbbaf6178fba1194257a603fda9ee) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
@@ -2663,7 +2663,7 @@ ROM_START( calspeda )
 	DISK_REGION( REGION_DISKS )	/* Release version 1.0r7a (3/4/98) (Guts 3/3/98, Main 1/19/98) */
 	DISK_IMAGE( "calspeda", 0, MD5(dc8c919af86a1ab88a0b05ea2b6c74b3) SHA1(e6cbc8290af2df9704838a925cb43b6972b80d95) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
@@ -2675,7 +2675,7 @@ ROM_START( vaportrx )
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "vaportrx", 0, MD5(eb8dcf83fe8b7122481d24ad8fbc8a9a) SHA1(f6ddb8eb66d979d49799e39fa4d749636693a1b0) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
@@ -2687,13 +2687,13 @@ ROM_START( vaportrp )
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "vaportrp", 0, MD5(fac4d37e049bc649696f4834044860e6) SHA1(75e2eaf81c69d2a337736dbead804ac339fd0675) )
 
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 ROM_END
 
 
 ROM_START( biofreak )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2705,7 +2705,7 @@ ROM_END
 
 
 ROM_START( blitz )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.2 */
@@ -2717,7 +2717,7 @@ ROM_END
 
 
 ROM_START( blitz11 )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.1 */
@@ -2729,7 +2729,7 @@ ROM_END
 
 
 ROM_START( blitz99 )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.0 */
@@ -2741,7 +2741,7 @@ ROM_END
 
 
 ROM_START( blitz2k )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* Boot Code Version 1.4 */
@@ -2753,7 +2753,7 @@ ROM_END
 
 
 ROM_START( carnevil )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2765,7 +2765,7 @@ ROM_END
 
 
 ROM_START( hyprdriv )
-	ROM_REGION16_LE( 0x210000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD16_BYTE( "seattle.snd", 0x000000, 0x8000, BAD_DUMP CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
 
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
@@ -2833,7 +2833,7 @@ static void add_speedup(offs_t pc, UINT32 op)
 
 static DRIVER_INIT( wg3dh )
 {
-	dcs2_init(0x3839);
+	dcs2_init(2, 0x3839);
 	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80, PHOENIX_CONFIG);
 
 	/* speedups */
@@ -2844,7 +2844,7 @@ static DRIVER_INIT( wg3dh )
 
 static DRIVER_INIT( mace )
 {
-	dcs2_init(0x3839);
+	dcs2_init(2, 0x3839);
 	init_common(MIDWAY_IOASIC_MACE, 319/* others? */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
@@ -2880,7 +2880,7 @@ static DRIVER_INIT( sfrushrk )
 
 static DRIVER_INIT( calspeed )
 {
-	dcs2_init(0x39c0);
+	dcs2_init(2, 0x39c0);
 	init_common(MIDWAY_IOASIC_CALSPEED, 328/* others? */, 100, SEATTLE_WIDGET_CONFIG);
 	midway_ioasic_set_auto_ack(1);
 
@@ -2892,7 +2892,7 @@ static DRIVER_INIT( calspeed )
 
 static DRIVER_INIT( vaportrx )
 {
-	dcs2_init(0x39c2);
+	dcs2_init(2, 0x39c2);
 	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* 334? unknown */, 100, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */
@@ -2901,7 +2901,7 @@ static DRIVER_INIT( vaportrx )
 
 static DRIVER_INIT( biofreak )
 {
-	dcs2_init(0x3835);
+	dcs2_init(2, 0x3835);
 	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
@@ -2912,7 +2912,7 @@ static DRIVER_INIT( biofreak )
 
 static DRIVER_INIT( blitz )
 {
-	dcs2_init(0x39c2);
+	dcs2_init(2, 0x39c2);
 	init_common(MIDWAY_IOASIC_BLITZ99, 444/* or 528 */, 80, SEATTLE_CONFIG);
 
 	/* for some reason, the code in the ROM appears buggy; this is a small patch to fix it */
@@ -2929,7 +2929,7 @@ static DRIVER_INIT( blitz )
 
 static DRIVER_INIT( blitz99 )
 {
-	dcs2_init(0x0afb);
+	dcs2_init(2, 0x0afb);
 	init_common(MIDWAY_IOASIC_BLITZ99, 481/* or 484 or 520 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
@@ -2940,7 +2940,7 @@ static DRIVER_INIT( blitz99 )
 
 static DRIVER_INIT( blitz2k )
 {
-	dcs2_init(0x0b5d);
+	dcs2_init(2, 0x0b5d);
 	init_common(MIDWAY_IOASIC_BLITZ99, 494/* or 498 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
@@ -2951,7 +2951,7 @@ static DRIVER_INIT( blitz2k )
 
 static DRIVER_INIT( carnevil )
 {
-	dcs2_init(0x0af7);
+	dcs2_init(2, 0x0af7);
 	init_common(MIDWAY_IOASIC_CARNEVIL, 469/* 469 or 486 or 528 */, 80, SEATTLE_CONFIG);
 
 	/* set up the gun */
@@ -2965,7 +2965,7 @@ static DRIVER_INIT( carnevil )
 
 static DRIVER_INIT( hyprdriv )
 {
-	dcs2_init(0x0af7);
+	dcs2_init(2, 0x0af7);
 	init_common(MIDWAY_IOASIC_HYPRDRIV, 469/* unknown */, 80, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */

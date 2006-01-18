@@ -2,8 +2,7 @@
 
  Title                          Copyright            PCB - ID
  ----------------------------------------------------------------------------
- Multi 5 / New Multi Game 5     (c) 1998 Yun Sung    YS-1300
- Multi 5 / New Multi Game 5                          YS-1301 undumped alt. version ?
+ Multi 5 / New Multi Game 5     (c) 1998 Yun Sung    YS-1300 / YS-1301
  Search Eye                     (c) 1999 Yun Sung    YS-1905
  Puzzle Club (set 1)            (c) 2000 Yun Sung    YS-2113
  Puzzle Club (set 2)            (c) 2000 Yun Sung    YS-2111

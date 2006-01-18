@@ -18,6 +18,11 @@
 #include "i386intf.h"
 #include "state.h"
 
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#include "debug/debugcpu.h"
+#include "debug/express.h"
+#endif
+
 int parity_table[256];
 MODRM_TABLE MODRM_table[256];
 
@@ -25,15 +30,13 @@ MODRM_TABLE MODRM_table[256];
 
 #define INT_DEBUG	1
 
-void i386_load_segment_descriptor( int segment )
+static void i386_load_protected_mode_segment( I386_SREG *seg )
 {
 	UINT32 v1,v2;
 	UINT32 base, limit;
 	int entry;
 
-	if (PROTECTED_MODE)
-	{
-		if( I.sreg[segment].selector & 0x4 ) {
+	if( seg->selector & 0x4 ) {
 			base = I.ldtr.base;
 			limit = I.ldtr.limit;
 		} else {
@@ -43,14 +46,21 @@ void i386_load_segment_descriptor( int segment )
 
 		if (limit == 0)
 			return;
-		entry = (I.sreg[segment].selector % limit) & ~0x7;
+	entry = (seg->selector % limit) & ~0x7;
 
 		v1 = READ32( base + entry );
 		v2 = READ32( base + entry + 4 );
 
-		I.sreg[segment].base = (v2 & 0xff000000) | ((v2 & 0xff) << 16) | ((v1 >> 16) & 0xffff);
-		I.sreg[segment].limit = ((v2 << 16) & 0xf0000) | (v1 & 0xffff);
-		I.sreg[segment].d = ((v2 & 0x400000) && PROTECTED_MODE && !V8086_MODE) ? 1 : 0;
+	seg->base = (v2 & 0xff000000) | ((v2 & 0xff) << 16) | ((v1 >> 16) & 0xffff);
+	seg->limit = ((v2 << 16) & 0xf0000) | (v1 & 0xffff);
+	seg->d = ((v2 & 0x400000) && PROTECTED_MODE && !V8086_MODE) ? 1 : 0;
+}
+
+void i386_load_segment_descriptor( int segment )
+{
+	if (PROTECTED_MODE)
+	{
+		i386_load_protected_mode_segment( &I.sreg[segment] );
 	}
 	else
 	{
@@ -405,6 +415,52 @@ static void I386OP(decode_two_byte)(void)
 	else
 		I.opcode_table2_16[I.opcode]();
 }
+
+/*************************************************************************/
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+
+static UINT64 i386_debug_segbase(UINT32 ref, UINT32 params, UINT64 *param)
+{
+	UINT32 result;
+	I386_SREG seg;
+
+	if (PROTECTED_MODE)
+	{
+		memset(&seg, 0, sizeof(seg));
+		seg.selector = (UINT16) param[0];
+		i386_load_protected_mode_segment(&seg);
+		result = seg.base;
+	}
+	else
+	{
+		result = param[0] << 4;
+	}
+	return result;
+}
+
+static UINT64 i386_debug_seglimit(UINT32 ref, UINT32 params, UINT64 *param)
+{
+	UINT32 result = 0;
+	I386_SREG seg;
+
+	if (PROTECTED_MODE)
+	{
+		memset(&seg, 0, sizeof(seg));
+		seg.selector = (UINT16) param[0];
+		i386_load_protected_mode_segment(&seg);
+		result = seg.limit;
+	}
+	return result;
+}
+
+static void i386_debug_setup(void)
+{
+	symtable_add_function(global_symtable, "segbase", 0, 1, 1, i386_debug_segbase);
+	symtable_add_function(global_symtable, "seglimit", 0, 1, 1, i386_debug_seglimit);
+}
+
+#endif /* defined(MAME_DEBUG) && defined(NEW_DEBUGGER) */
 
 /*************************************************************************/
 
@@ -874,6 +930,9 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i386_reg_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i386_win_layout;		break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address_cb;	break;
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+		case CPUINFO_PTR_DEBUG_SETUP_COMMANDS:			info->setup_commands = i386_debug_setup; break;
+#endif
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I386"); break;

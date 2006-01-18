@@ -19,22 +19,14 @@
 #include "sound/2203intf.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
+#include "deco16ic.h"
 
 VIDEO_START( twocrude );
 VIDEO_UPDATE( twocrude );
 
-WRITE16_HANDLER( twocrude_pf1_data_w );
-WRITE16_HANDLER( twocrude_pf2_data_w );
-WRITE16_HANDLER( twocrude_pf3_data_w );
-WRITE16_HANDLER( twocrude_pf4_data_w );
-WRITE16_HANDLER( twocrude_control_0_w );
-WRITE16_HANDLER( twocrude_control_1_w );
 WRITE16_HANDLER( twocrude_palette_24bit_rg_w );
 WRITE16_HANDLER( twocrude_palette_24bit_b_w );
 
-extern UINT16 *twocrude_pf1_rowscroll,*twocrude_pf2_rowscroll;
-extern UINT16 *twocrude_pf3_rowscroll,*twocrude_pf4_rowscroll;
-extern UINT16 *twocrude_pf1_data, *twocrude_pf2_data, *twocrude_pf3_data, *twocrude_pf4_data;
 static UINT16 *twocrude_ram;
 extern void twocrude_pri_w(int pri);
 WRITE16_HANDLER( twocrude_update_sprites_w );
@@ -113,24 +105,19 @@ READ16_HANDLER( twocrude_control_r )
 	return ~0;
 }
 
-static READ16_HANDLER( twocrude_pf1_data_r ) { return twocrude_pf1_data[offset]; }
-static READ16_HANDLER( twocrude_pf2_data_r ) { return twocrude_pf2_data[offset]; }
-static READ16_HANDLER( twocrude_pf3_data_r ) { return twocrude_pf3_data[offset]; }
-static READ16_HANDLER( twocrude_pf4_data_r ) { return twocrude_pf4_data[offset]; }
-
 /******************************************************************************/
 
 static ADDRESS_MAP_START( twocrude_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
 
-	AM_RANGE(0x0a0000, 0x0a1fff) AM_READ(twocrude_pf1_data_r)
-	AM_RANGE(0x0a2000, 0x0a2fff) AM_READ(twocrude_pf4_data_r)
+	AM_RANGE(0x0a0000, 0x0a1fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0a2000, 0x0a2fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0a4000, 0x0a47ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0a6000, 0x0a67ff) AM_READ(MRA16_RAM)
 
-	AM_RANGE(0x0a8000, 0x0a8fff) AM_READ(twocrude_pf3_data_r)
-	AM_RANGE(0x0aa000, 0x0aafff) AM_READ(twocrude_pf2_data_r)
+	AM_RANGE(0x0a8000, 0x0a8fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x0aa000, 0x0aafff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0ac000, 0x0ac7ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x0ae000, 0x0ae7ff) AM_READ(MRA16_RAM)
 
@@ -144,20 +131,22 @@ static ADDRESS_MAP_START( twocrude_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM) AM_BASE(&twocrude_ram)
 
-	AM_RANGE(0x0a0000, 0x0a1fff) AM_WRITE(twocrude_pf1_data_w) AM_BASE(&twocrude_pf1_data)
-	AM_RANGE(0x0a2000, 0x0a2fff) AM_WRITE(twocrude_pf4_data_w) AM_BASE(&twocrude_pf4_data)
-	AM_RANGE(0x0a4000, 0x0a47ff) AM_WRITE(MWA16_RAM) AM_BASE(&twocrude_pf1_rowscroll)
-	AM_RANGE(0x0a6000, 0x0a67ff) AM_WRITE(MWA16_RAM) AM_BASE(&twocrude_pf4_rowscroll)
+	AM_RANGE(0x0a0000, 0x0a1fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x0a2000, 0x0a2fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x0a4000, 0x0a47ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
+	AM_RANGE(0x0a6000, 0x0a67ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
 
-	AM_RANGE(0x0a8000, 0x0a8fff) AM_WRITE(twocrude_pf3_data_w) AM_BASE(&twocrude_pf3_data)
-	AM_RANGE(0x0aa000, 0x0aafff) AM_WRITE(twocrude_pf2_data_w) AM_BASE(&twocrude_pf2_data)
-	AM_RANGE(0x0ac000, 0x0ac7ff) AM_WRITE(MWA16_RAM) AM_BASE(&twocrude_pf3_rowscroll)
-	AM_RANGE(0x0ae000, 0x0ae7ff) AM_WRITE(MWA16_RAM) AM_BASE(&twocrude_pf2_rowscroll)
+	AM_RANGE(0x0a8000, 0x0a8fff) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
+	AM_RANGE(0x0aa000, 0x0aafff) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
+	AM_RANGE(0x0ac000, 0x0ac7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf3_rowscroll)
+	AM_RANGE(0x0ae000, 0x0ae7ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf4_rowscroll)
 
 	AM_RANGE(0x0b0000, 0x0b07ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x0b4000, 0x0b4001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x0b5000, 0x0b500f) AM_WRITE(twocrude_control_1_w)
-	AM_RANGE(0x0b6000, 0x0b600f) AM_WRITE(twocrude_control_0_w)
+
+	AM_RANGE(0x0b5000, 0x0b500f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf12_control)
+	AM_RANGE(0x0b6000, 0x0b600f) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf34_control)
+
 	AM_RANGE(0x0b8000, 0x0b8fff) AM_WRITE(twocrude_palette_24bit_rg_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x0b9000, 0x0b9fff) AM_WRITE(twocrude_palette_24bit_b_w) AM_BASE(&paletteram16_2)
 	AM_RANGE(0x0bc000, 0x0bc00f) AM_WRITE(twocrude_control_w)
@@ -299,19 +288,18 @@ INPUT_PORTS_END
 static const gfx_layout charlayout =
 {
 	8,8,
-	4096,
+	RGN_FRAC(1,1),
 	4,
-	{ 0x10000*8+8, 8, 0x10000*8, 0 },
+	{ 24,16,8,0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			 },
-	16*8
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	8*32
 };
 
 static const gfx_layout tilelayout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,1),
 	4,
 	{ 24, 16, 8, 0 },
 	{ 64*8+0, 64*8+1, 64*8+2, 64*8+3, 64*8+4, 64*8+5, 64*8+6, 64*8+7,
@@ -336,11 +324,10 @@ static const gfx_layout spritelayout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout, 	   0, 16 },	/* Characters 8x8 */
-	{ REGION_GFX2, 0, &tilelayout,  1024, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0, &tilelayout,   768, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX3, 0, &tilelayout,   512, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX4, 0, &spritelayout, 256, 80 },	/* Sprites 16x16 */
+	{ REGION_GFX1, 0, &charlayout, 	   0, 0x500 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &tilelayout,     0, 0x500 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tilelayout,     0, 0x500 },	/* Tiles 16x16 */
+	{ REGION_GFX3, 0, &spritelayout, 0x100, 80 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -411,17 +398,15 @@ ROM_START( cbuster )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, CRC(65f20f10) SHA1(cf914893edd98a0f39bbf7068a469ed7d34bd90e) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
-	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
+	ROM_LOAD16_BYTE( "fu05-.rom",     0x80000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
+	ROM_LOAD16_BYTE( "fu06-.rom",     0x80001, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-01",        0x00000, 0x80000, CRC(1080d619) SHA1(68f33a1580d33e4dd0858248c12a0a10ac117249) ) /* Tiles */
 
-	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
-
-	ROM_REGION( 0x180000,REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000,REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-02",        0x000000, 0x80000, CRC(58b7231d) SHA1(5b51a2fa42c67f23648be205295184a1fddc00f5) ) /* Sprites */
 	/* Space for extra sprites to be copied to (0x20000) */
 	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, CRC(76053b9d) SHA1(093cd01a13509701ec9dd1a806132600a5bd1915) )
@@ -451,17 +436,15 @@ ROM_START( cbusterw )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, CRC(65f20f10) SHA1(cf914893edd98a0f39bbf7068a469ed7d34bd90e) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
-	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
+	ROM_LOAD16_BYTE( "fu05-.rom",     0x80000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
+	ROM_LOAD16_BYTE( "fu06-.rom",     0x80001, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-01",        0x00000, 0x80000, CRC(1080d619) SHA1(68f33a1580d33e4dd0858248c12a0a10ac117249) ) /* Tiles */
 
-	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
-
-	ROM_REGION( 0x180000,REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000,REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-02",        0x000000, 0x80000, CRC(58b7231d) SHA1(5b51a2fa42c67f23648be205295184a1fddc00f5) ) /* Sprites */
 	/* Space for extra sprites to be copied to (0x20000) */
 	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, CRC(76053b9d) SHA1(093cd01a13509701ec9dd1a806132600a5bd1915) )
@@ -491,17 +474,15 @@ ROM_START( cbusterj )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, CRC(65f20f10) SHA1(cf914893edd98a0f39bbf7068a469ed7d34bd90e) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
-	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
+	ROM_LOAD16_BYTE( "fu05-.rom",     0x80000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
+	ROM_LOAD16_BYTE( "fu06-.rom",     0x80001, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-01",        0x00000, 0x80000, CRC(1080d619) SHA1(68f33a1580d33e4dd0858248c12a0a10ac117249) ) /* Tiles */
 
-	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
-
-	ROM_REGION( 0x180000,REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000,REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-02",        0x000000, 0x80000, CRC(58b7231d) SHA1(5b51a2fa42c67f23648be205295184a1fddc00f5) ) /* Sprites */
 	/* Space for extra sprites to be copied to (0x20000) */
 	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, CRC(76053b9d) SHA1(093cd01a13509701ec9dd1a806132600a5bd1915) )
@@ -531,17 +512,15 @@ ROM_START( twocrude )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound CPU */
 	ROM_LOAD( "fu11-.rom",     0x00000, 0x10000, CRC(65f20f10) SHA1(cf914893edd98a0f39bbf7068a469ed7d34bd90e) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "fu05-.rom",     0x00000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
-	ROM_LOAD( "fu06-.rom",     0x10000, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
+	ROM_LOAD16_BYTE( "fu05-.rom",     0x80000, 0x10000, CRC(8134d412) SHA1(9c70ff6f9f24ec89c0bb4645afdf2a5ca27e9a0c) ) /* Chars */
+	ROM_LOAD16_BYTE( "fu06-.rom",     0x80001, 0x10000, CRC(2f914a45) SHA1(bb44ba4779e45ee77ef0006363df91aac1f4559a) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-01",        0x00000, 0x80000, CRC(1080d619) SHA1(68f33a1580d33e4dd0858248c12a0a10ac117249) ) /* Tiles */
 
-	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "mab-00",        0x00000, 0x80000, CRC(660eaabd) SHA1(e3d614e13fdb9af159d9758a869d9dae3dbe14e0) ) /* Tiles */
-
-	ROM_REGION( 0x180000,REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x180000,REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "mab-02",        0x000000, 0x80000, CRC(58b7231d) SHA1(5b51a2fa42c67f23648be205295184a1fddc00f5) ) /* Sprites */
 	/* Space for extra sprites to be copied to (0x20000) */
 	ROM_LOAD( "mab-03",        0x0a0000, 0x80000, CRC(76053b9d) SHA1(093cd01a13509701ec9dd1a806132600a5bd1915) )
@@ -587,8 +566,8 @@ static DRIVER_INIT( twocrude )
 	}
 
 	/* Rearrange the 'extra' sprite bank to be in the same format as main sprites */
-	RAM = memory_region(REGION_GFX4) + 0x080000;
-	PTR = memory_region(REGION_GFX4) + 0x140000;
+	RAM = memory_region(REGION_GFX3) + 0x080000;
+	PTR = memory_region(REGION_GFX3) + 0x140000;
 	for (i=0; i<0x20000; i+=64) {
 		for (j=0; j<16; j+=1) { /* Copy 16 lines down */
 			RAM[i+      0+j*2]=PTR[i/2+      0+j]; /* Pixels 0-7 for each plane */

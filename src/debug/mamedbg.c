@@ -2607,7 +2607,7 @@ static unsigned dump_dasm( unsigned pc )
 	UINT32 win = WIN_DASM(active_cpu);
 	int w = win_get_w(win);
 	int h = win_get_h(win);
-	int x, y, l, line_pc_cpu = INVALID, line_pc_cur = INVALID;
+	int y, l, line_pc_cpu = INVALID, line_pc_cur = INVALID;
 	UINT8 color;
 	char dasm[127+1];
 	unsigned pc_first = pc, pc_next;
@@ -2648,51 +2648,24 @@ static unsigned dump_dasm( unsigned pc )
 			{
 				unsigned p = rshift(pc);
 				unsigned n = rshift(pc_next);
-				switch( IALIGN )
+				int i, j;
+
+				for( i = 0; i < INSTL; i += IALIGN )
 				{
-				case 1:
-					for( x = 0; x < INSTL; x++ )
+					for( j = 0; j < IALIGN; j++ )
 					{
 						if ( p < n )
 						{
-							l += win_printf( win, "%02X ",
-								RDMEM(order(p,1)) );
+							l += win_printf( win, "%02X",
+								RDSPC(ADDRESS_SPACE_PROGRAM, order(p,IALIGN)) );
 							p++;
 						}
-						else l += win_printf( win, "   " );
+						else l += win_printf( win, "  " );
 					}
-					break;
-				case 2:
-					for( x = 0; x < INSTL; x += 2 )
-					{
-						if ( p < n )
-						{
-							l += win_printf( win, "%02X%02X ",
-								RDMEM(order(p+0,2)), RDMEM(order(p+1,2)) );
-							p += 2;
-						}
-						else l += win_printf( win, "     " );
-					}
-					break;
-				case 4:
-					for( x = 0; x < INSTL; x += 4 )
-					{
-						int tmp;
-						for (tmp=0; tmp<4; tmp++)
-						{
-							if ( p < n)
-							{
-								l += win_printf( win, "%02X",
-									RDMEM(order(p,4)) );
-								p ++;
-							}
-							else l += win_printf( win, "  " );
-						}
-						l += win_printf( win, " " );
-					}
-					break;
+					l += win_printf( win, " " );
 				}
 			}
+
 			pc = pc_next;
 			switch( dbg_dasm_case )
 			{
@@ -3912,7 +3885,7 @@ static void cmd_dasm_to_file( void )
 	const char *filename;
 	int length;
 	FILE *file;
-	unsigned i, pc, size, start, end, width, opcodes;
+	unsigned pc, size, start, end, width, opcodes;
 
 	filename = get_file_name( &cmd, &length );
 	if( !length )
@@ -3954,47 +3927,29 @@ static void cmd_dasm_to_file( void )
 
 	for( pc = start; pc <= end; /* */ )
 	{
-		unsigned p = rshift(pc);
-		unsigned s;
 		size = activecpu_dasm( buffer, pc ) & DASMFLAG_LENGTHMASK;
-		s = rshift(size);
 
 		fprintf(file, "%0*X: ", width, pc );
 
 		if( opcodes )
 		{
-			switch( IALIGN )
+			unsigned p = rshift(pc);
+			unsigned n = rshift(pc + size);
+			int i, j;
+
+			for( i = 0; i < INSTL; i += IALIGN )
 			{
-			case 1: /* dump bytes */
-				for( i = 0; i < INSTL; i++ )
+				for( j = 0; j < IALIGN; j++ )
 				{
-					if ( i < s )
-						fprintf( file, "%02X ", RDMEM(order(p+i,1)) );
-					else
-						fprintf( file, "   ");
+					if ( p < n )
+					{
+						fprintf( file, "%02X",
+							RDSPC(ADDRESS_SPACE_PROGRAM, order(p,IALIGN)) );
+						p++;
+					}
+					else fprintf( file, "  " );
 				}
-				break;
-			case 2: /* dump words */
-				for( i = 0; i < INSTL; i += 2 )
-				{
-					if ( i < s )
-						fprintf( file, "%02X%02X ",
-							RDMEM(order(p+i+0,2)), RDMEM(order(p+i+1,2)) );
-					else
-						fprintf( file, "     ");
-				}
-				break;
-			case 4: /* dump dwords */
-				for( i = 0; i < INSTL; i += 4 )
-				{
-					if ( i < s )
-						fprintf( file, "%02X%02X%02X%02X ",
-							RDMEM(order(p+i+0,4)), RDMEM(order(p+i+1,4)),
-							RDMEM(order(p+i+2,4)), RDMEM(order(p+i+3,4)) );
-					else
-						fprintf( file, "     ");
-				}
-				break;
+				fprintf( file, " " );
 			}
 		}
 
@@ -5377,7 +5332,7 @@ void MAME_Debug(void)
 	{
 		debug_key_delay = 0;
 		if (!debug_key_pressed)
-			debug_key_pressed = input_port_type_pressed(IPT_UI_ON_SCREEN_DISPLAY,0);
+			debug_key_pressed = input_port_type_pressed(IPT_UI_DEBUG_BREAK,0);
 	}
 
 	if( dbg_fast )

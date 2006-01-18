@@ -719,33 +719,33 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
     CPU and offset
 -------------------------------------------------*/
 
-void *memory_get_op_ptr(int cpunum, offs_t offset)
+void *memory_get_op_ptr(int cpunum, offs_t offset, int arg)
 {
-	offs_t new_offset;
-	void *ptr;
-	UINT8 *saved_opcode_base;
-	UINT8 *saved_opcode_arg_base;
-	offs_t saved_opcode_mask;
-	offs_t saved_opcode_memory_min;
-	offs_t saved_opcode_memory_max;
-	UINT8 saved_opcode_entry;
+	addrspace_data *space = &cpudata[cpunum].space[ADDRESS_SPACE_PROGRAM];
+	void *ptr = NULL;
+	UINT8 entry;
 
+	/* if there is a custom mapper, use that */
 	if (cpudata[cpunum].opbase)
 	{
 		/* need to save opcode info */
-		saved_opcode_base = opcode_base;
-		saved_opcode_arg_base = opcode_arg_base;
-		saved_opcode_mask = opcode_mask;
-		saved_opcode_memory_min = opcode_memory_min;
-		saved_opcode_memory_max = opcode_memory_max;
-		saved_opcode_entry = opcode_entry;
+		UINT8 *saved_opcode_base = opcode_base;
+		UINT8 *saved_opcode_arg_base = opcode_arg_base;
+		offs_t saved_opcode_mask = opcode_mask;
+		offs_t saved_opcode_memory_min = opcode_memory_min;
+		offs_t saved_opcode_memory_max = opcode_memory_max;
+		UINT8 saved_opcode_entry = opcode_entry;
 
-		new_offset = (*cpudata[cpunum].opbase)(offset);
+		/* query the handler */
+		offs_t new_offset = (*cpudata[cpunum].opbase)(offset);
 
+		/* if it returns ~0, we use whatever data the handler set */
 		if (new_offset == ~0)
-			ptr = &opcode_base[offset];
+			ptr = arg ? &opcode_arg_base[offset] : &opcode_base[offset];
+
+		/* otherwise, we use the new offset in the generic case below */
 		else
-			ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, new_offset);
+			offset = new_offset;
 
 		/* restore opcode info */
 		opcode_base = saved_opcode_base;
@@ -754,12 +754,25 @@ void *memory_get_op_ptr(int cpunum, offs_t offset)
 		opcode_memory_min = saved_opcode_memory_min;
 		opcode_memory_max = saved_opcode_memory_max;
 		opcode_entry = saved_opcode_entry;
+
+		/* if we got our pointer, we're done */
+		if (ptr)
+			return ptr;
 	}
-	else
-	{
-		ptr = memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
-	}
-	return ptr;
+
+	/* perform the lookup */
+	offset &= space->mask;
+	entry = space->read.table[LEVEL1_INDEX(offset)];
+	if (entry >= SUBTABLE_BASE)
+		entry = space->read.table[LEVEL2_INDEX(entry, offset)];
+
+	/* if a non-RAM area, return NULL */
+	if (entry >= STATIC_RAM)
+		return NULL;
+
+	/* adjust the offset */
+	offset = (offset - space->read.handlers[entry].offset) & space->read.handlers[entry].mask;
+	return (arg && bankd_ptr[entry]) ? &bankd_ptr[entry][offset] : &bank_ptr[entry][offset];
 }
 
 
@@ -881,6 +894,16 @@ void memory_set_debugger_access(int debugger)
     read handler for X-bit case
 -------------------------------------------------*/
 
+void *_memory_install_read_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_read_handler()\n");
+	install_mem_handler(space, 0, space->dbits, 0, start, end, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
+}
+
 UINT8 *_memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler, const char *handler_name)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
@@ -918,6 +941,16 @@ UINT64 *_memory_install_read64_handler(int cpunum, int spacenum, offs_t start, o
     memory_install_writeX_handler - install dynamic
     write handler for X-bit case
 -------------------------------------------------*/
+
+void *_memory_install_write_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_write_handler()\n");
+	install_mem_handler(space, 1, space->dbits, 0, start, end, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
+}
 
 UINT8 *_memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler, const char *handler_name)
 {
@@ -958,6 +991,16 @@ UINT64 *_memory_install_write64_handler(int cpunum, int spacenum, offs_t start, 
     X-bit case
 -------------------------------------------------*/
 
+void *_memory_install_read_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_read_matchmask_handler()\n");
+	install_mem_handler(space, 0, space->dbits, 1, matchval, maskval, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
+}
+
 UINT8 *_memory_install_read8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, read8_handler handler, const char *handler_name)
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
@@ -996,6 +1039,16 @@ UINT64 *_memory_install_read64_matchmask_handler(int cpunum, int spacenum, offs_
     install dynamic match/mask write handler for
     X-bit case
 -------------------------------------------------*/
+
+void *_memory_install_write_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, int handler, const char *handler_name)
+{
+	addrspace_data *space = &cpudata[cpunum].space[spacenum];
+	if ((handler < 0) || (handler >= STATIC_COUNT))
+		osd_die("fatal: can only use static banks with memory_install_write_matchmask_handler()\n");
+	install_mem_handler(space, 1, space->dbits, 1, matchval, maskval, mask, mirror, (genf *)handler, 0, handler_name);
+	mem_dump();
+	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
+}
 
 UINT8 *_memory_install_write8_matchmask_handler(int cpunum, int spacenum, offs_t matchval, offs_t maskval, offs_t mask, offs_t mirror, write8_handler handler, const char *handler_name)
 {
@@ -1380,6 +1433,8 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 	/* sanity check */
 	if (space->dbits != databits)
 		osd_die("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
+	if (start > end)
+		osd_die("fatal: install_mem_handler called with start greater than end\n");
 
 	/* if we're installing a new bank, make sure we mark it */
 	if (HANDLER_IS_BANK(handler))

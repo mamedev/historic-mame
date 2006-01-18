@@ -89,18 +89,7 @@
 
     Driver todo:
         stadhr96 seems to require raster IRQ video update support.
-
-		Several sprites are quite broken in stadhr96.
-
         ddream95 seems to have a dual screen mode(??)
-
-        All DE156 based games make used of an unemulated co-processor.
-		 -- partial emulation, see cpu/arm/arm.c
-
-	    skullfng appears to need clipping window support on the sprites before the
-		boss
-
-		eeprom write is broken in avengrgs
 
     Driver by Bryan McPhail, bmcphail@tendril.co.uk, thank you to Avedis and The Guru.
 
@@ -117,11 +106,13 @@ extern void decrypt156(void);
 
 VIDEO_START( mlc );
 VIDEO_UPDATE( mlc );
+VIDEO_EOF( mlc );
 
-extern UINT32 *mlc_vram;
+extern UINT32 *mlc_vram, *mlc_clip_ram;
 static UINT32 *mlc_ram, *irq_ram;
 static void *raster_irq_timer;
 static int mainCpuIsArm=1;
+int mlc_raster_table[9][256];
 
 /***************************************************************************/
 
@@ -137,8 +128,15 @@ static READ32_HANDLER(test2_r)
 //   logerror("%08x:  Test2_r %d\n",activecpu_get_pc(),offset);
 	return rand(); //0xffffffff;
 }
+
 static READ32_HANDLER(test3_r)
 {
+/*
+    test3 7 - vbl loop on 0x10 0000 at end of IRQ
+
+*/
+//if (offset==0)
+//  return rand()|(rand()<<16);
 //  logerror("%08x:  Test3_r %d\n",activecpu_get_pc(),offset);
 	return 0xffffffff;
 }
@@ -201,7 +199,7 @@ static READ32_HANDLER( decomlc_vbl_r )
 {
 	static int i=0xffffffff;
 	i ^=0xffffffff;
-
+//logerror("vbl r %08x\n", activecpu_get_pc());
 	// Todo: Vblank probably in $10
 	return i;
 }
@@ -214,30 +212,56 @@ static READ32_HANDLER( mlc_scanline_r )
 
 static void interrupt_gen(int scanline)
 {
-//  logerror("hit scanline IRQ %d\n", scanline);
-
+//  logerror("hit scanline IRQ %d (%08x)\n", scanline, info.i);
 	cpunum_set_input_line(0, mainCpuIsArm ? ARM_IRQ_LINE : 1, HOLD_LINE);
 	timer_adjust(raster_irq_timer,TIME_NEVER,0,0);
 }
 
 static WRITE32_HANDLER( mlc_irq_w )
 {
+	static int lastScanline[9]={ 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+	int scanline=cpu_getscanline();
 	irq_ram[offset]=data&0xffff;
 
 	switch (offset*4)
 	{
 	case 0x10: /* IRQ ack.  Value written doesn't matter */
 		cpunum_set_input_line(0, mainCpuIsArm ? ARM_IRQ_LINE : 1, CLEAR_LINE);
+		return;
 		break;
 	case 0x14: /* Prepare scanline interrupt */
 		timer_adjust(raster_irq_timer,cpu_getscanlinetime(irq_ram[0x14/4]),irq_ram[0x14/4],TIME_NEVER);
 		//logerror("prepare scanline to fire at %d (currently on %d)\n", irq_ram[0x14/4], cpu_getscanline());
+		return;
 		break;
+	case 0x18:
+	case 0x1c:
+	case 0x20:
+	case 0x24:
+	case 0x28:
+	case 0x2c:
+	case 0x30:
+	case 0x34:
+	case 0x38:
+		/* Update scanlines up to present line */
+		while (lastScanline[offset-6]<scanline)
+		{
+			mlc_raster_table[offset-6][lastScanline[offset-6]+1]=mlc_raster_table[offset-6][lastScanline[offset-6]];
+			lastScanline[offset-6]++;
+		}
+
+		if (lastScanline[offset-6] > scanline)
+			lastScanline[offset-6]=0;
+
+		/* Set current scanline value */
+		mlc_raster_table[offset-6][scanline]=data&0xffff;
+		break;
+
 	default:
 		break;
 	};
 
-	//logerror("irqw %04x %04x\n", offset * 4, data&0xffff);
+//  logerror("irqw %04x %04x (%d)\n", offset * 4, data&0xffff, scanline);
 }
 
 static READ32_HANDLER(mlc_spriteram_r)
@@ -252,6 +276,13 @@ static READ32_HANDLER(mlc_vram_r)
 
 static READ32_HANDLER(stadhr96_prot_146_r)
 {
+	/*
+        cpu #0 (PC=00041BD0): unmapped program memory dword write to 00708004 = 000F0000 & FFFFFFFF
+        cpu #0 (PC=00041BFC): unmapped program memory dword write to 0070F0C8 = 00028800 & FFFFFFFF
+        cpu #0 (PC=00041C08): unmapped program memory dword write to 0070F010 = 00081920 & FFFFFFFF
+        cpu #0 (PC=00041C14): unmapped program memory dword write to 0070F020 = 00040960 & FFFFFFFF
+        cpu #0 (PC=00041C20): unmapped program memory dword write to 0070F03C = 5A5A5A5A & FFFFFFFF
+    */
 	offset<<=1;
 
 	logerror("%08x:  Read prot %04x\n", activecpu_get_pc(), offset);
@@ -262,7 +293,9 @@ static READ32_HANDLER(stadhr96_prot_146_r)
 		return 0x0002 << 16;
 	if (offset==0x53c)
 		return 0x0008 << 16;
-// 2 4 8 written at startup
+	if (offset==0x304)
+		return 0x0001 << 16; // Unknown, is either 0,1,2,3
+
 	return 0;
 }
 
@@ -272,20 +305,17 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(24) )
 	AM_RANGE(0x0000000, 0x00fffff) AM_READ(MRA32_ROM)
 	AM_RANGE(0x0100000, 0x011ffff) AM_READ(MRA32_RAM)
-
 	AM_RANGE(0x0200000, 0x020000f) AM_READ(MRA32_NOP) /* IRQ control? */
 	AM_RANGE(0x0200070, 0x0200073) AM_READ(decomlc_vbl_r)
 	AM_RANGE(0x0200074, 0x0200077) AM_READ(mlc_scanline_r)
 	AM_RANGE(0x0200078, 0x020007f) AM_READ(test2_r)
-	AM_RANGE(0x0200080, 0x02000ff) AM_READ(MRA32_RAM) //test only.
+	AM_RANGE(0x0200080, 0x02000ff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0204000, 0x0206fff) AM_READ(mlc_spriteram_r)
 	AM_RANGE(0x0200080, 0x02000ff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0280000, 0x029ffff) AM_READ(mlc_vram_r)
 	AM_RANGE(0x0300000, 0x0307fff) AM_READ(MRA32_RAM)
-
 	AM_RANGE(0x0400000, 0x0400003) AM_READ(avengrs_control_r)
 	AM_RANGE(0x0440000, 0x044001f) AM_READ(test3_r)
-
 	AM_RANGE(0x0600004, 0x0600007) AM_READ(avengrs_sound_r)
 	AM_RANGE(0x070f000, 0x070ffff) AM_READ(stadhr96_prot_146_r)
 ADDRESS_MAP_END
@@ -295,7 +325,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x0000000, 0x00fffff) AM_WRITE(MWA32_ROM)
 	AM_RANGE(0x0100000, 0x011ffff) AM_WRITE(MWA32_RAM) AM_BASE(&mlc_ram)
 	AM_RANGE(0x0200000, 0x020007f) AM_WRITE(mlc_irq_w) AM_BASE(&irq_ram)
-	AM_RANGE(0x0200080, 0x02000ff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x0200080, 0x02000ff) AM_WRITE(MWA32_RAM) AM_BASE(&mlc_clip_ram)
 	AM_RANGE(0x0204000, 0x0206fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x0280000, 0x029ffff) AM_WRITE(MWA32_RAM) AM_BASE(&mlc_vram)
 	AM_RANGE(0x0300000, 0x0307fff) AM_WRITE(avengrs_palette_w) AM_BASE(&paletteram32)
@@ -434,6 +464,7 @@ static MACHINE_DRIVER_START( avengrgs )
 
 	MDRV_VIDEO_START(mlc)
 	MDRV_VIDEO_UPDATE(mlc)
+	MDRV_VIDEO_EOF(mlc)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -464,6 +495,7 @@ static MACHINE_DRIVER_START( mlc )
 
 	MDRV_VIDEO_START(mlc)
 	MDRV_VIDEO_UPDATE(mlc)
+	MDRV_VIDEO_EOF(mlc)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -720,11 +752,11 @@ static DRIVER_INIT( mlc )
 
 /***************************************************************************/
 
-GAME( 1995, avengrgs, 0,        avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (US)", 0 ) // seems ok
-GAME( 1995, avengrgj, avengrgs, avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", 0 ) // seems ok
+GAME( 1995, avengrgs, 0,        avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (US)", 0 )
+GAME( 1995, avengrgj, avengrgs, avengrgs, mlc, avengrgs, ROT0,   "Data East Corporation", "Avengers In Galactic Storm (Japan)", 0 )
 GAME( 1996, stadhr96, 0,        mlc_6bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAD)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 1996, stadh96a, stadhr96, mlc_6bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Stadium Hero 96 (Version EAJ)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1996, skullfng, 0,        mlc_6bpp, mlc, mlc,      ROT270, "Data East Corporation", "Skull Fang (Japan)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING)
-GAME( 1996, hoops96,  0,        mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops '96 (Europe/Asia 2.0)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1996, ddream95, hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Dunk Dream '95 (Japan 1.4 EAM)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1996, hoops95,  hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops (Europe/Asia 1.7)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1996, skullfng, 0,        mlc_6bpp, mlc, mlc,      ROT270, "Data East Corporation", "Skull Fang (Japan)", 0 )
+GAME( 1996, hoops96,  0,        mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops '96 (Europe/Asia 2.0)", 0 )
+GAME( 1995, ddream95, hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Dunk Dream '95 (Japan 1.4 EAM)", 0 )
+GAME( 1995, hoops95,  hoops96,  mlc_5bpp, mlc, mlc,      ROT0,   "Data East Corporation", "Hoops (Europe/Asia 1.7)", 0 )

@@ -606,7 +606,7 @@ static void append_readwrite_and_translate(drc_core *drc, int is_write, int size
 	{
 		_resolve_link(&link1);														// error:
 		_mov_r32_m32bd(REG_EAX, REG_ESP, 4);										// mov  eax,[esp+4]
-		_add_r32_imm(REG_ESP, is_write ? 8 : 4);									// add  esp,stack_bytes
+		_add_r32_imm(REG_ESP, is_write ? (8+4) : (4+4));							// add  esp,stack_bytes
 		_jmp(is_write ? mips3.generate_tlbstore_exception : mips3.generate_tlbload_exception);// jmp    generate_exception
 	}
 }

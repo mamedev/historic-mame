@@ -800,7 +800,7 @@ static void video_update_rocknms_0(mame_bitmap *bitmap, const rectangle *cliprec
 	rocknms_rect_main.min_y = 0;
 	rocknms_rect_main.max_x = 320-1;
 	rocknms_rect_main.max_y = 224-1;
-	//	sect_rect  &rocknms_rect_sub  &myclip
+	//  sect_rect  &rocknms_rect_sub  &myclip
 	if(rocknms_rect_main.min_x < (mainscr_y+320-1) - myclip.max_y) rocknms_rect_main.min_x = (mainscr_y+320-1) - myclip.max_y;
 	if(rocknms_rect_main.min_y < myclip.min_x      - mainscr_x   ) rocknms_rect_main.min_y = myclip.min_x - mainscr_x;
 	if(rocknms_rect_main.max_x > (mainscr_y+320-1) - myclip.min_y) rocknms_rect_main.max_x = (mainscr_y+320-1) - myclip.min_y;

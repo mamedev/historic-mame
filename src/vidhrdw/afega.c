@@ -316,7 +316,7 @@ static void video_update(int screen, mame_bitmap *bitmap, const rectangle *clipr
 
 	if (dsw_flipscreen)
 	{
-		
+
 		flip_screen_x_set(~readinputport(2) & 0x0100);
 		flip_screen_y_set(~readinputport(2) & 0x0200);
 	}

@@ -31,10 +31,10 @@ Notes:
 -   The Japan set doesn't seem to have (or use) NVRAM. I can't enter
     a test mode or use the service coin either !?
 
--	Rock and Tread emulation by Justin Lee Turner
-	Roms from my bootleg PCB's.  PCB's and roms are printed MADE IN KOREA.
-	Bootleg PCB's use FPGA, no JALACO Custom
-	PCB's made from deleted MAME roms??? ROCKN4 was unreleased??
+-   Rock and Tread emulation by Justin Lee Turner
+    Roms from my bootleg PCB's.  PCB's and roms are printed MADE IN KOREA.
+    Bootleg PCB's use FPGA, no JALACO Custom
+    PCB's made from deleted MAME roms??? ROCKN4 was unreleased??
 
 ***************************************************************************/
 
@@ -493,11 +493,11 @@ static ADDRESS_MAP_START( rocknms_main_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x108000, 0x10ffff) AM_READ(MRA16_RAM				)	// Work RAM
 	AM_RANGE(0x200000, 0x23ffff) AM_READ(tetrisp2_priority_r	)	// Priority
 	AM_RANGE(0x300000, 0x31ffff) AM_READ(MRA16_RAM				)	// Palette
-//	AM_RANGE(0x500000, 0x50ffff) AM_READ(MRA16_RAM				)	// Line
+//  AM_RANGE(0x500000, 0x50ffff) AM_READ(MRA16_RAM              )   // Line
 	AM_RANGE(0x600000, 0x60ffff) AM_READ(MRA16_RAM				)	// Rotation
 	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// Foreground
 	AM_RANGE(0x804000, 0x807fff) AM_READ(MRA16_RAM				)	// Background
-//	AM_RANGE(0x808000, 0x809fff) AM_READ(MRA16_RAM				)	// ???
+//  AM_RANGE(0x808000, 0x809fff) AM_READ(MRA16_RAM              )   // ???
 	AM_RANGE(0x900000, 0x903fff) AM_READ(rockn_nvram_r		)	// NVRAM
 	AM_RANGE(0xa30000, 0xa30001) AM_READ(rockn_soundvolume_r	)	// Sound Volume
 	AM_RANGE(0xa40002, 0xa40003) AM_READ(tetrisp2_sound_r		)	// Sound
@@ -516,11 +516,11 @@ static ADDRESS_MAP_START( rocknms_main_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x108000, 0x10ffff) AM_WRITE(MWA16_RAM									)	// Work RAM
 	AM_RANGE(0x200000, 0x23ffff) AM_WRITE(rockn_priority_w) AM_BASE(&tetrisp2_priority	)	// Priority
 	AM_RANGE(0x300000, 0x31ffff) AM_WRITE(tetrisp2_palette_w) AM_BASE(&paletteram16			)	// Palette
-//	AM_RANGE(0x500000, 0x50ffff) AM_WRITE(MWA16_RAM									)	// Line
+//  AM_RANGE(0x500000, 0x50ffff) AM_WRITE(MWA16_RAM                                 )   // Line
 	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(tetrisp2_vram_rot_w) AM_BASE(&tetrisp2_vram_rot	)	// Rotation
 	AM_RANGE(0x800000, 0x803fff) AM_WRITE(tetrisp2_vram_fg_w) AM_BASE(&tetrisp2_vram_fg		)	// Foreground
 	AM_RANGE(0x804000, 0x807fff) AM_WRITE(tetrisp2_vram_bg_w) AM_BASE(&tetrisp2_vram_bg		)	// Background
-//	AM_RANGE(0x808000, 0x809fff) AM_WRITE(MWA16_RAM									)	// ???
+//  AM_RANGE(0x808000, 0x809fff) AM_WRITE(MWA16_RAM                                 )   // ???
 	AM_RANGE(0x900000, 0x903fff) AM_WRITE(tetrisp2_nvram_w) AM_BASE(&tetrisp2_nvram) AM_SIZE(&tetrisp2_nvram_size	)	// NVRAM
 	AM_RANGE(0xa30000, 0xa30001) AM_WRITE(rockn_soundvolume_w						)	// Sound Volume
 	AM_RANGE(0xa40000, 0xa40003) AM_WRITE(tetrisp2_sound_w							)	// Sound
@@ -545,13 +545,13 @@ static ADDRESS_MAP_START( rocknms_sub_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x108000, 0x10ffff) AM_READ(MRA16_RAM				)	// Work RAM
 	AM_RANGE(0x200000, 0x23ffff) AM_READ(rocknms_sub_priority_r	)	// Priority
 	AM_RANGE(0x300000, 0x31ffff) AM_READ(MRA16_RAM				)	// Palette
-//	AM_RANGE(0x500000, 0x50ffff) AM_READ(MRA16_RAM				)	// Line
+//  AM_RANGE(0x500000, 0x50ffff) AM_READ(MRA16_RAM              )   // Line
 	AM_RANGE(0x600000, 0x60ffff) AM_READ(MRA16_RAM				)	// Rotation
 	AM_RANGE(0x800000, 0x803fff) AM_READ(MRA16_RAM				)	// Foreground
 	AM_RANGE(0x804000, 0x807fff) AM_READ(MRA16_RAM				)	// Background
-//	AM_RANGE(0x808000, 0x809fff) AM_READ(MRA16_RAM				)	// ???
+//  AM_RANGE(0x808000, 0x809fff) AM_READ(MRA16_RAM              )   // ???
 	AM_RANGE(0x900000, 0x907fff) AM_READ(MRA16_RAM				)	// NVRAM
-//	AM_RANGE(0xbe0000, 0xbe0001) AM_READ(MRA16_NOP				)	// INT-level1 dummy read
+//  AM_RANGE(0xbe0000, 0xbe0001) AM_READ(MRA16_NOP              )   // INT-level1 dummy read
 	AM_RANGE(0xbe0002, 0xbe0003) AM_READ(rocknms_main2sub_r		)	// MAIN -> SUB Communication
 	AM_RANGE(0xbe000a, 0xbe000b) AM_READ(watchdog_reset16_r	)	// Watchdog
 ADDRESS_MAP_END
@@ -564,11 +564,11 @@ static ADDRESS_MAP_START( rocknms_sub_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x108000, 0x10ffff) AM_WRITE(MWA16_RAM									)	// Work RAM
 	AM_RANGE(0x200000, 0x23ffff) AM_WRITE(rocknms_sub_priority_w) AM_BASE(&rocknms_sub_priority	)	// Priority
 	AM_RANGE(0x300000, 0x31ffff) AM_WRITE(rocknms_sub_palette_w) AM_BASE(&paletteram16_2			)	// Palette
-//	AM_RANGE(0x500000, 0x50ffff) AM_WRITE(MWA16_RAM									)	// Line
+//  AM_RANGE(0x500000, 0x50ffff) AM_WRITE(MWA16_RAM                                 )   // Line
 	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(rocknms_sub_vram_rot_w) AM_BASE(&rocknms_sub_vram_rot	)	// Rotation
 	AM_RANGE(0x800000, 0x803fff) AM_WRITE(rocknms_sub_vram_fg_w) AM_BASE(&rocknms_sub_vram_fg		)	// Foreground
 	AM_RANGE(0x804000, 0x807fff) AM_WRITE(rocknms_sub_vram_bg_w) AM_BASE(&rocknms_sub_vram_bg		)	// Background
-//	AM_RANGE(0x808000, 0x809fff) AM_WRITE(MWA16_RAM									)	// ???
+//  AM_RANGE(0x808000, 0x809fff) AM_WRITE(MWA16_RAM                                 )   // ???
 	AM_RANGE(0x900000, 0x907fff) AM_WRITE(MWA16_RAM	)	// NVRAM
 	AM_RANGE(0xa30000, 0xa30001) AM_WRITE(rockn_soundvolume_w						)	// Sound Volume
 	AM_RANGE(0xa40000, 0xa40003) AM_WRITE(tetrisp2_sound_w							)	// Sound
@@ -1364,24 +1364,24 @@ ROM_END
 
 /***************************************************************************
 
-							Rock'n Tread 1 (Japan)
-							Rock'n Tread 2 (Japan)
-							Rock'n MegaSession (Japan)
-							Rock'n 3 (Japan)
-							Rock'n 4 (Japan)
+                            Rock'n Tread 1 (Japan)
+                            Rock'n Tread 2 (Japan)
+                            Rock'n MegaSession (Japan)
+                            Rock'n 3 (Japan)
+                            Rock'n 4 (Japan)
 
 (c)1997 Jaleco
 
-CPU:	68000-12
-Sound:	YMZ280B-F
-OSC:	12.000MHz
-		48.0000MHz
-		16.9344MHz
+CPU:    68000-12
+Sound:  YMZ280B-F
+OSC:    12.000MHz
+        48.0000MHz
+        16.9344MHz
 
-Custom:	SS91022-03
-		GS91022-04
-		GS91022-05
-		SS91022-05
+Custom: SS91022-03
+        GS91022-04
+        GS91022-05
+        SS91022-05
 
 ***************************************************************************/
 

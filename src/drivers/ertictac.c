@@ -20,6 +20,9 @@ TODO:
  - is screen double buffered ?
  - flashing text in test mode
 
+  Poizone PCB appears to be a Jamam Acorn Archimedes based system,
+   Poizone was also released on the AA computer.
+
 **********************************************************************/
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -339,40 +342,39 @@ ROM_START( ertictac )
 	ROM_LOAD32_BYTE( "16", 0xc0003, 0x10000, CRC(70a8d136) SHA1(50b11f5701ed5b79a5d59c9a3c7d5b7528e66a4d) )
 ROM_END
 
-/* -- add the correct CRCs before enabling this!
 ROM_START( poizone )
 	ROM_REGION(0x800000, REGION_USER1, 0 )
-	ROM_LOAD32_BYTE( "p_son01.bin", 0x00000, 0x10000, CRC(8dce677c) SHA1(9f12b1febe796038caa1ecad1d17864dc546cfd8) )
-	ROM_LOAD32_BYTE( "p_son02.bin", 0x00001, 0x10000, CRC(7c5c916c) SHA1(d4ed5fc3a7b27253551e7d9176ed9e6513092e60) )
-	ROM_LOAD32_BYTE( "p_son03.bin", 0x00002, 0x10000, CRC(edca5ac6) SHA1(f6c4b8030f3c1c93922c5f7232f2159e0471b93a) )
-	ROM_LOAD32_BYTE( "p_son04.bin", 0x00003, 0x10000, CRC(959be81c) SHA1(3e8eaacf8809863fd712ad605d23fdda4e904aee) )
-	ROM_LOAD32_BYTE( "p_son05.bin", 0x40000, 0x10000, CRC(d08a6c89) SHA1(17b0f5fb2094126146b09d69c91bf413737b0c9e) )
-	ROM_LOAD32_BYTE( "p_son06.bin", 0x40001, 0x10000, CRC(d727bcd8) SHA1(4627f8d4d6e6f323445b3ffcfc0d9c699a9a4f89) )
-	ROM_LOAD32_BYTE( "p_son07.bin", 0x40002, 0x10000, CRC(23b75de2) SHA1(e18f5339ca2dd362298784ff3e5479d780d823f8) )
-	ROM_LOAD32_BYTE( "p_son08.bin", 0x40003, 0x10000, CRC(9448ccdf) SHA1(75fe3c31625f8ba1eedd806b52993e92b1f585b6) )
-	ROM_LOAD32_BYTE( "p_son09.bin", 0x80000, 0x10000, CRC(2bfb312e) SHA1(af7a4a1926c9c3d0b3ad41a4729a17383581c070) )
-	ROM_LOAD32_BYTE( "p_son10.bin", 0x80001, 0x10000, CRC(e7a05477) SHA1(0ec6f94a35b87e1e4529dea194fce1fde9a5b0ad) )
-	ROM_LOAD32_BYTE( "p_son11.bin", 0x80002, 0x10000, CRC(3722591c) SHA1(e0c4075bc4b1c90a6decba3005a1f8298bd61bd1) )
-	ROM_LOAD32_BYTE( "p_son12.bin", 0x80003, 0x10000, CRC(fe022b7e) SHA1(056f7283bc54eff555fd1db91410c020fd905063) )
+	ROM_LOAD32_BYTE( "p_son01.bin", 0x00000, 0x10000, CRC(28793c9f) SHA1(2d9f7d667203e745b47cd2cc97501ae961ae1a66) )
+	ROM_LOAD32_BYTE( "p_son02.bin", 0x00001, 0x10000, CRC(2d4b6f4b) SHA1(8df2680d6e5dc41787b3a72e594f01f5e732d0ec) )
+	ROM_LOAD32_BYTE( "p_son03.bin", 0x00002, 0x10000, CRC(0834d46e) SHA1(bf1cc9b47759ef39ed8fd8f334ed8f2902be3bf8) )
+	ROM_LOAD32_BYTE( "p_son04.bin", 0x00003, 0x10000, CRC(9e9b1f6e) SHA1(d95067f3ecca3c079a67bd0b80e3b45c5b42151e) )
+	ROM_LOAD32_BYTE( "p_son05.bin", 0x40000, 0x10000, CRC(be62ad42) SHA1(5eb51ad277ec7b7f1b5995bcdea35114f805baae) )
+	ROM_LOAD32_BYTE( "p_son06.bin", 0x40001, 0x10000, CRC(c2f9141c) SHA1(e910fefcd6f0b99ab299b3a5f099b9ef84e1cc23) )
+	ROM_LOAD32_BYTE( "p_son07.bin", 0x40002, 0x10000, CRC(8929c748) SHA1(35c108170590fbe97fdd4a1db7d660b4ee0adac8) )
+	ROM_LOAD32_BYTE( "p_son08.bin", 0x40003, 0x10000, CRC(0ef5b14f) SHA1(425f130b2a94a4152fab763e0734e71f2913b25f) )
+	ROM_LOAD32_BYTE( "p_son09.bin", 0x80000, 0x10000, CRC(e8cd75a6) SHA1(386a4ff576574e49711e72640dd3f33c8b7e04b3) )
+	ROM_LOAD32_BYTE( "p_son10.bin", 0x80001, 0x10000, CRC(1dc01da7) SHA1(d37456e3407cab5eff5bbd9735c3a54e73b27545) )
+	ROM_LOAD32_BYTE( "p_son11.bin", 0x80002, 0x10000, CRC(85e973ad) SHA1(850cd0dbda42eab78625038c6ea1f5b31674018a) )
+	ROM_LOAD32_BYTE( "p_son12.bin", 0x80003, 0x10000, CRC(b89376d1) SHA1(cff29c2a8db88d4d104bae19a90de034158fe9e7) )
 
-	ROM_LOAD32_BYTE( "p_son21.bin", 0x140000, 0x10000, CRC(83550842) SHA1(0fee78dbf13ba970e0544c48f8939550f9347822) )
-	ROM_LOAD32_BYTE( "p_son22.bin", 0x140001, 0x10000, CRC(3029567c) SHA1(6d49bea3a3f6f11f4182a602d37b53f1f896c154) )
-	ROM_LOAD32_BYTE( "p_son23.bin", 0x140002, 0x10000, CRC(500997ab) SHA1(028c7b3ca03141e5b596ab1e2ab98d0ccd9bf93a) )
-	ROM_LOAD32_BYTE( "p_son24.bin", 0x140003, 0x10000, CRC(70a8d136) SHA1(50b11f5701ed5b79a5d59c9a3c7d5b7528e66a4d) )
+	ROM_LOAD32_BYTE( "p_son21.bin", 0x140000, 0x10000, CRC(a0c06c1e) SHA1(8d065117788e96ecd147d3d7ffdd273d4b69bb7a) )
+	ROM_LOAD32_BYTE( "p_son22.bin", 0x140001, 0x10000, CRC(16f0bb52) SHA1(893ab1e72b84de7a38f88f9d713769968ebd4553) )
+	ROM_LOAD32_BYTE( "p_son23.bin", 0x140002, 0x10000, CRC(e9c118b2) SHA1(110d9a204e701b9b54d89f027f8892c3f3a819c7) )
+	ROM_LOAD32_BYTE( "p_son24.bin", 0x140003, 0x10000, CRC(a09d7f55) SHA1(e0d562c655c16034b40db93de801b98b7948beb2) )
 ROM_END
-*/
+
 static DRIVER_INIT( ertictac )
 {
 	((UINT32 *)memory_region(REGION_USER1))[0x55]=0;// patched TSTS r11,r15,lsl #32  @ $3800154
 }
 
-/*
+
 static DRIVER_INIT( poizone )
 {
 	((UINT32 *)memory_region(REGION_USER1))[0x21C/4]=0;// patched TSTS r11,r15,lsl #32  @ $380021C
 }
-*/
+
 
 GAME( 1990, ertictac, 0, ertictac, ertictac, ertictac, ROT0, "Sisteme", "Erotictac/Tactic" ,GAME_NO_SOUND)
-//GAME( 1990, poizone,  0, ertictac, ertictac, poizone,  ROT0, "Sisteme" ,"Poizone" ,GAME_NO_SOUND)
+GAME( 1991, poizone,  0, ertictac, ertictac, poizone,  ROT0, "Eterna" ,"Poizone" ,GAME_NO_SOUND|GAME_NOT_WORKING)
 

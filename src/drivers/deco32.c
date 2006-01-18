@@ -101,6 +101,122 @@ left over from the conversion.  The roms labeled "MAR-xx" are those
 from Dragon Gun.
 
 
+
+Night Slashers
+Data East, 1993
+
+PCB Layout
+----------
+
+DE-0397-0   DEC-22VO
+|-----------------------------------------------------|
+| TA8205AH   Z80          |-----|              HBM-07 |
+|         6164    YM2151  | 52  |                     |
+|         LX02            |     | HBM-09       HBM-06 |
+|     YM3012      32MHz   |-----|                     |
+|  JP1   HBM-11   93C45                        HBM-05 |
+|CN2     HBM-10           |-----|                     |
+|  M6295(1)               | 52  |              HBM-04 |
+|     M6295(2)            |     |                     |
+|      |-----| |-----|    |-----|    |-----|   HBM-03 |
+|J     | 104 | | 153 |               | 52  |          |
+|A     |     | |     |     |-----|   |     |   HBM-02 |
+|M     |-----| |-----|     | 153 |   |-----|          |
+|M                         |     |           28.322MHz|
+|A                         |-----|                    |
+|    |-----| PAL                                      |
+|    | 99  | PROM              |-----| 6164    HBM-01 |
+|    |     |                   | 74  | 6164           |
+|    |-----|                   |     |         HBM-00 |
+|      |-----|  |-----|        |-----|                |
+|      | 153 |  | 200 |        |-----| 6164           |
+|      |     |  |     |        | 141 | 6164           |
+|      |-----|  |-----|        |     |   PAL          |
+|TEST_SW                       |-----|   PAL  |-----| |
+|                                             | 156 | |
+|           LH52250  LH52250   LX-01          |     | |
+|  CN3      LH52250  LH52250   LX-00          |-----| |
+|-----------------------------------------------------|
+Notes:
+       The CPU is chip 156. It's an encrypted ARM-based CPU. The CPU is running at 7.0805MHz [28.322/4]
+
+       Z80B      - Goldstar Z8400B, running at 3.5555MHz [32/9]
+       YM2151    - Yamaha YM2151 sound chip, running at 3.5555MHz [32/9]
+       OKI M6295 - Oki M6295 PCM Sample chip, (1) running at 1.000MHz [32/32]. Sample rate = 1000000 / 132
+                                              (2) running at 2.000MHz [32/16]. Sample rate = 2000000 / 132
+       6164      - UM6164BK-20 8K x8 SRAM
+       LH52250   - Sharp LH52250 32K x8 SRAM
+       93C45     - 128bytes x8 Serial EEPROM
+       PALs      - PAL 16L8ACN (x 2, near program ROMs, one at 3D labelled 'VM-00', one at 4D labelled 'VM-01')
+                   PAL 16l8ACN (near chip 99, located at 8J, labelled 'VM-02')
+       HSync     - 15.86kHz
+       VSync     - 58Hz
+       Custom ICs-
+                   DE #            Package Type      Additional #'s (for reference of scratched-off chips on other PCB's)
+                   ------------------------------------------------------------------------------------------------------
+                   156 (CPU)       100 Pin PQFP      932EV 301801
+                   141             160 Pin PQFP      24220F008
+                   74              160 Pin PQFP      24220F009
+                   99              208 Pin PQFP      L7A0967
+                   52 (x3)         128 Pin PQFP      9322EV 298251 VC5259-0001
+                   153 (x3)        144 Pin PQFP      L7A0888 9328
+                   104             100 Pin PQFP      L7A0717 9148
+                   200             100 Pin PQFP      JAPAN 9320PD027  (chip is darker black)
+
+       Other     - There's a small push button near the JAMMA connector to access test mode.
+                   All settings are via an on-board menu.
+
+                   All pinouts conform to standard JAMMA pinout.  Joystick is 8-way with 3 buttons used.
+
+                   JP1: 1-2 Sound Output in MONO
+                        2-3 Sound Output in STEREO
+
+                   CN2: 4 Pin connector (use when JP1 = 2-3)
+                        Pin #   Signal
+                         1      L-Speaker +
+                         2      L-Speaker -
+                         3      R-Speaker -
+                         4      R-Speaker +
+
+                   CN3: 15 Pin connector (Player 3)
+                        Pin #   Signal
+                         1      COIN SW3
+                         2      3P PUSH 3
+                         3      3P LEFT
+                         4      3P RIGHT
+                         5      3P UP
+                         6      3P DOWN
+                         7      3P PUSH 1
+                         8      3P PUSH 2
+                         9-13   NOT USED
+                         14-15  GND
+
+
+       ROMs      - MAINPRG1.1F     HN27C4096      \
+                   MAINPRG2.2F     HN27C4096      /  Main Program (no ROM stickers attached, DE ROM code unknown)
+
+                   Japanese Version
+                   LX01-.2F        HN27C4096      \
+                   LX00-.1F        HN27C4096      /  Main Program (Japan version)
+
+                   MBH-00.8C   42 pin 16M MASK  (read as 27C160)    \
+                   MBH-01.9C   42 pin 16M MASK  (read as 27C160)    |
+                   MBH-02.14C  42 pin 16M MASK  (read as 27C160)    |
+                   MBH-03.15C  40 pin 4M MASK   (read as MX27C4100) |
+                   MBH-04.16C  42 pin 16M MASK  (read as 27C160)    |
+                   MBH-05.17C  40 pin 4M MASK   (read as MX27C4100) | GFX
+                   MBH-06.18C  32 pin 8M MASK   (read as 27C080)    |
+                   MBH-07.19C  32 pin 2M MASK   (read as 27C020)    |
+                   MBH-08.16E  40 pin 4M MASK   (read as MX27C2100) |
+                   MBH-09.18E  40 pin 4M MASK   (read as MX27C2100) /
+
+                   MBH-10.14L  32 pin 4M MASK   (read as 27C040)    \
+                   MBH-11.16L  32 pin 4M MASK   (read as 27C040)    / Sound (Samples)
+
+                   LX02-.17L   27C512                                 Sound Program
+
+                   PROM.9J     Fujitsu MB7124 compatible with 82S147  Labelled 'LN-00'
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -491,7 +607,7 @@ static WRITE32_HANDLER( tattass_control_w )
 
 static READ32_HANDLER( nslasher_prot_r )
 {
-	
+
 	switch (offset<<1) {
 	case 0x280: return readinputport(0) << 16| 0xffff; /* IN0 */
 	case 0x4c4: return readinputport(1) << 16| 0xffff; /* IN1 */
@@ -522,7 +638,7 @@ static WRITE32_HANDLER( nslasher_prot_w )
 
 	/* Only sound port of chip is used - no protection */
 	if (offset==0x700/4) {
-		
+
 		soundlatch_w(0,(data>>16)&0xff);
 	}
 }
@@ -2051,6 +2167,7 @@ static MACHINE_DRIVER_START( tattass )
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
+/* frequencies /dividers are unconfirmed */
 static MACHINE_DRIVER_START( nslasher )
 
 	/* basic machine hardware */
@@ -2058,7 +2175,7 @@ static MACHINE_DRIVER_START( nslasher )
 	MDRV_CPU_PROGRAM_MAP(nslasher_readmem,nslasher_writemem)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 28000000/4)
 	MDRV_CPU_PROGRAM_MAP(nslasher_sound,0)
 	MDRV_CPU_IO_MAP(nslasher_io_sound,0)
 
@@ -2079,20 +2196,20 @@ static MACHINE_DRIVER_START( nslasher )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(YM2151, 32220000/9)
+	MDRV_SOUND_ADD(YM2151, 32220000/16)
 	MDRV_SOUND_CONFIG(ym2151_interface_nslasher)
-	MDRV_SOUND_ROUTE(0, "left", 0.42)
-	MDRV_SOUND_ROUTE(1, "right", 0.42)
+	MDRV_SOUND_ROUTE(0, "left", 0.40)
+	MDRV_SOUND_ROUTE(1, "right", 0.40)
 
 	MDRV_SOUND_ADD(OKIM6295, 32220000/32/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 
 	MDRV_SOUND_ADD(OKIM6295, 32220000/16/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.35)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.35)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.10)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.10)
 MACHINE_DRIVER_END
 
 /**********************************************************************************/
@@ -2808,7 +2925,7 @@ ROM_START( nslasher )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "sndprg.17l",  0x00000,  0x10000,  CRC(18939e92) SHA1(50b37a78d9d2259d4b140dd17393c4e5ca92bca5) )
-	
+
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mbh-00.8c",  0x000000,  0x200000,  CRC(a877f8a3) SHA1(79253525f360a73161894f31e211e4d6b38d307a) ) /* Encrypted tiles */
@@ -2833,7 +2950,7 @@ ROM_START( nslasher )
 
 	ROM_REGION(0x80000, REGION_SOUND2, 0 )
 	ROM_LOAD( "mbh-11.16l", 0x000000,  0x80000,  CRC(0ec40b6b) SHA1(9fef44149608ae2a00f6a75a6f77f2efcab6e78e) )
-	
+
 ROM_END
 
 ROM_START( nslashej )
@@ -3021,7 +3138,7 @@ static DRIVER_INIT( nslasher )
 	decrypt156();
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100003, 0, 0, nslasher_skip);
-	
+
 	soundlatch_setclearedvalue(0xff);
 
 	/* The board for Night Slashers is very close to the Fighter's History and

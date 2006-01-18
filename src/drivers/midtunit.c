@@ -640,7 +640,7 @@ static MACHINE_DRIVER_START( tunit_dcs )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(tunit_core)
-	MDRV_IMPORT_FROM(dcs_audio)
+	MDRV_IMPORT_FROM(dcs_audio_2k)
 MACHINE_DRIVER_END
 
 

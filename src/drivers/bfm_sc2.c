@@ -2,6 +2,7 @@
 
   Bellfruit scorpion2/3 driver, (under heavy construction !!!)
 
+  18-01-2006: Cleaned up for MAME inclusion
   19-08-2005: Re-Animator
 
 Standard scorpion2 memorymap
@@ -22,7 +23,7 @@ Standard scorpion2 memorymap
 -----------+---+-----------------+-----------------------------------------
 2300-231F  | W | D D D D D D D D | output mux
 -----------+---+-----------------+-----------------------------------------
-2300-230B  | R | D D D D D D D D | input mux  
+2300-230B  | R | D D D D D D D D | input mux
 -----------+---+-----------------+-----------------------------------------
 2320       |R/W| D D D D D D D D | dimas0 ?
 -----------+---+-----------------+-----------------------------------------
@@ -32,7 +33,7 @@ Standard scorpion2 memorymap
 -----------+---+-----------------+-----------------------------------------
 2323       |R/W| D D D D D D D D | dimas3 ?
 -----------+---+-----------------+-----------------------------------------
-2324       |R/W| D D D D D D D D | expansion latch 
+2324       |R/W| D D D D D D D D | expansion latch
 -----------+---+-----------------+-----------------------------------------
 2325       | ? | D D D D D D D D | ???
 -----------+---+-----------------+-----------------------------------------
@@ -42,9 +43,9 @@ Standard scorpion2 memorymap
 -----------+---+-----------------+-----------------------------------------
 2328       |R/W| D D D D D D D D | muxena
 -----------+---+-----------------+-----------------------------------------
-2329	   | W | D D D D D D D D | Timer IRQ enable
+2329       | W | D D D D D D D D | Timer IRQ enable
 -----------+---+-----------------+-----------------------------------------
-232A       |R/W| D D D D D D D D | blkdiv ? 
+232A       |R/W| D D D D D D D D | blkdiv ?
 -----------+---+-----------------+-----------------------------------------
 232B       | ? | D D D D D D D D | ???
 -----------+---+-----------------+-----------------------------------------
@@ -54,31 +55,31 @@ Standard scorpion2 memorymap
 -----------+---+-----------------+-----------------------------------------
 232E       | R | D D D D D D D D | chip status b0 = IRQ status
 -----------+---+-----------------+-----------------------------------------
-232F	   | W | D D D D D D D D | coin inhibits
+232F       | W | D D D D D D D D | coin inhibits
 -----------+---+-----------------+-----------------------------------------
-2330	   | W | D D D D D D D D | payout slide latch
+2330       | W | D D D D D D D D | payout slide latch
 -----------+---+-----------------+-----------------------------------------
-2331	   | W | D D D D D D D D | payout triac latch
+2331       | W | D D D D D D D D | payout triac latch
 -----------+---+-----------------+-----------------------------------------
 2332       |R/W| D D D D D D D D | Watchdog timer
 -----------+---+-----------------+-----------------------------------------
 2333       | W | D D D D D D D D | electro mechanical meters
 -----------+---+-----------------+-----------------------------------------
-2334	   | ? | D D D D D D D D | ???
+2334       | ? | D D D D D D D D | ???
 -----------+---+-----------------+-----------------------------------------
-2335	   | ? | D D D D D D D D | ???
+2335       | ? | D D D D D D D D | ???
 -----------+---+-----------------+-----------------------------------------
 2336       |?/W| D D D D D D D D | dimcnt ?
 -----------+---+-----------------+-----------------------------------------
 2337       | W | D D D D D D D D | volume overide
 -----------+---+-----------------+-----------------------------------------
-2338	   | W | D D D D D D D D | payout chip select
+2338       | W | D D D D D D D D | payout chip select
 -----------+---+-----------------+-----------------------------------------
 2339       | W | D D D D D D D D | clkden ?
 -----------+---+-----------------+-----------------------------------------
-2400       |R/W| D D D D D D D D | uart1 (MC6850 compatible) control/status register 
+2400       |R/W| D D D D D D D D | uart1 (MC6850 compatible) control/status register
 -----------+---+-----------------+-----------------------------------------
-2500       |R/W| D D D D D D D D | uart1 (MC6850 compatible) data register 
+2500       |R/W| D D D D D D D D | uart1 (MC6850 compatible) data register
 -----------+---+-----------------+-----------------------------------------
 2600       |R/W| D D D D D D D D | uart2 (MC6850 compatible) control/status register
 -----------+---+-----------------+-----------------------------------------
@@ -96,9 +97,9 @@ Standard scorpion2 memorymap
 -----------+---+-----------------+-----------------------------------------
 2F00       |R/W| D D D D D D D D | vfd2
 -----------+---+-----------------+-----------------------------------------
-3FFE	   | R | D D D D D D D D | direct input1
+3FFE       | R | D D D D D D D D | direct input1
 -----------+---+-----------------+-----------------------------------------
-3FFF	   | R | D D D D D D D D | direct input2
+3FFF       | R | D D D D D D D D | direct input2
 -----------+---+-----------------+-----------------------------------------
 2A00       | W | D D D D D D D D | NEC uPD7759 data
 -----------+---+-----------------+-----------------------------------------
@@ -126,7 +127,7 @@ Adder hardware:
         * Golden Crown (1 Set)
 
     Known issues:
-        * Need to find the 'missing' games (see driver.c for the card numbers available)
+        * Need to find the 'missing' game numbers
         * To determine whether or not the VFD and door status are drawn on screen, change the
           comment status of the FAKE_VIDEO definition in bfm_adr2.c
 
@@ -151,7 +152,7 @@ Adder hardware:
 #include "machine/mmtr.h"
 #include "bfm_sc2.h"
 
-//#define LOG_SERIAL	  // log serial communication between mainboard (scorpion2) and videoboard (adder2)
+//#define LOG_SERIAL      // log serial communication between mainboard (scorpion2) and videoboard (adder2)
 #define  BFM_DEBUG //enable debug options on certain games
 //#define  UART_LOG //enable UART data logging
 
@@ -174,7 +175,7 @@ static UINT8 key[16];	// security device on gamecard (video games only)
 
 static UINT8 e2ram[1024]; // x24C08 e2ram
 
-static long const rombank_address[] = 
+static long const rombank_address[] =
 {
 	0x10000, 0x02000, 0x04000, 0x06000
 };
@@ -189,7 +190,7 @@ static int uart1_status;	  // MC6850 status
 static int uart2_status;	  // MC6850 status
 static int locked;			  // hardware lock/unlock status (0=unlocked)
 static int timer_enabled;
-static int reel_changed;  
+static int reel_changed;
 static int coin_inhibits;
 static int irq_timer_stat;
 static int expansion_latch;
@@ -231,8 +232,8 @@ UINT8 sc2_Inputs[64];			  // ??  multiplexed inputs,
 								  // need to be hooked to buttons
 
 static UINT8 input_override[64];  // bit pattern, bit set means this input is overriden and cannot be changed with switches
-					  
-/*		INPUTS layout
+
+/*      INPUTS layout
 
      b7 b6 b5 b4 b3 b2 b1 b0
 
@@ -246,7 +247,7 @@ static UINT8 input_override[64];  // bit pattern, bit set means this input is ov
      -- B4 B3 74 73 72 71 70  7
 
      B7 B6 B5 B4 B3 B2 B1 B0
-	  0  1  1  0  0  0
+      0  1  1  0  0  0
 
 */
 ///////////////////////////////////////////////////////////////////////////
@@ -386,7 +387,7 @@ void on_scorpion2_reset(void)
 			Stepper_reset_position(i);
 			if ( Stepper_optic_state(i) ) pattern |= 1<<i;
 		}
-		
+
 		optic_pattern = pattern;
 
 	}
@@ -402,7 +403,7 @@ void on_scorpion2_reset(void)
 
 	{
 		UINT8 *rom = memory_region(REGION_CPU1);
-		
+
 		selected_rom_bank = 3;
 		memory_set_bankptr(1,&rom[ rombank_address[ selected_rom_bank  ] ]);
 	}
@@ -413,7 +414,7 @@ void on_scorpion2_reset(void)
 void Scorpion2_SetSwitchState(int strobe, int data, int state)
 {
 	//logerror("setstate(%0x:%0x, %d) ", strobe, data, state);
-	if ( strobe < 11 && data < 8 ) 
+	if ( strobe < 11 && data < 8 )
 	{
 		if ( strobe < 8 )
 		{
@@ -454,7 +455,7 @@ int Scorpion2_GetSwitchState(int strobe, int data)
 {
 	int state = 0;
 
-	if ( strobe < 11 && data < 8 ) 
+	if ( strobe < 11 && data < 8 )
 	{
 		if ( strobe < 8 )
 		{
@@ -479,19 +480,19 @@ int Scorpion2_GetSwitchState(int strobe, int data)
 
 static NVRAM_HANDLER( nvram )
 {
-	if ( read_or_write ) 
+	if ( read_or_write )
 	{	// writing
 		mame_fwrite(file,nvram,nvram_size);
 		mame_fwrite(file,e2ram,sizeof(e2ram));
 	}
 	else
 	{ // reading
-		if ( file )	
+		if ( file )
 		{
-			mame_fread(file,nvram,nvram_size);	
+			mame_fread(file,nvram,nvram_size);
 			mame_fread(file,e2ram,sizeof(e2ram));
 		}
-		else 		
+		else
 		{
 			memset(nvram,0x00,nvram_size);
 			memset(e2ram,0x00,sizeof(e2ram));
@@ -528,7 +529,7 @@ static WRITE8_HANDLER( ram_w )
 
 static WRITE8_HANDLER( watchdog_w )
 {
-	watchdog_kicked = 1;  
+	watchdog_kicked = 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -546,7 +547,7 @@ static WRITE8_HANDLER( bankswitch_w )
 
 static INTERRUPT_GEN( timer_irq )
 {
-	timercnt++;	// keep timer running usefull to simulate hopper timeings
+	timercnt++;
 
 
 	if ( (timercnt & 0x03) == 0 ) adder2_show_alpha_display = readinputport(12) & 0x01;  // debug port
@@ -559,9 +560,9 @@ static INTERRUPT_GEN( timer_irq )
 	else
 	{
 		watchdog_cnt++;
-		if ( watchdog_cnt > 2 )	// this is a hack, i don't know what the watchdog timeout is, 3 IRQ's works fine 
+		if ( watchdog_cnt > 2 )	// this is a hack, i don't know what the watchdog timeout is, 3 IRQ's works fine
 		{  // reset board
-			machine_reset();		// reset entire machine cpu 0 should be enough, but that doesn't seem to work !!
+			machine_reset();		// reset entire machine. CPU 0 should be enough, but that doesn't seem to work !!
 			on_scorpion2_reset();
 			return;
 		}
@@ -603,7 +604,7 @@ static WRITE8_HANDLER( reel12_vid_w )  // in a video cabinet this is used to dri
 
 		if ( data & 0x01 )
 		{ // hopper power
-			if ( data & 0x02 ) 
+			if ( data & 0x02 )
 			{
 				hopper_running    = 1;
 			}
@@ -617,12 +618,12 @@ static WRITE8_HANDLER( reel12_vid_w )  // in a video cabinet this is used to dri
 			//hopper_coin_sense = 0;
 			hopper_running    = 0;
 		}
-		
+
 		if ( oldhop != hopper_running )
 		{
 			hopper_coin_sense = 0;
 			oldhop = hopper_running;
-			if ( hopper_running ) set_led_status(1,1);//logerror("hopper ** running **\n");
+			if ( hopper_running ) set_led_status(1,0);//logerror("hopper ** running **\n");
 			else                  set_led_status(1,0);//logerror("hopper stopped !!\n");
 		}
 	}
@@ -648,10 +649,10 @@ static WRITE8_HANDLER( reel34_w )
 static WRITE8_HANDLER( reel56_w )
 {
 	reel56_latch = data;
-	
+
 	if ( Stepper_update(4, data   ) ) reel_changed |= 0x10;
 	if ( Stepper_update(5, data>>4) ) reel_changed |= 0x20;
-	
+
 	if ( Stepper_optic_state(4) ) optic_pattern |=  0x10;
 	else                          optic_pattern &= ~0x10;
 	if ( Stepper_optic_state(5) ) optic_pattern |=  0x20;
@@ -666,7 +667,7 @@ static WRITE8_HANDLER( mmtr_w )
 {
 	int  changed = mmtr_latch ^ data;
 	long cycles  = MAME_TIME_TO_CYCLES(0, mame_timer_get_time() );
-	
+
 	mmtr_latch = data;
 
 	if ( changed & 0x01 )
@@ -842,9 +843,8 @@ static WRITE8_HANDLER( volume_override_w )
 
 	if ( old != volume_override )
 	{
-		//Temporarily disabled until we can actually store settings in non-UK Adder games
 		float percent = volume_override?1.0:(32-global_volume)/32.0;
-		
+
 		sndti_set_output_gain(SOUND_YM2413,  0, 0, percent);
 		sndti_set_output_gain(SOUND_YM2413,  0, 1, percent);
 		sndti_set_output_gain(SOUND_UPD7759, 0, 0, percent);
@@ -913,7 +913,7 @@ static READ8_HANDLER( vfd_status_hop_r )	// on video games, hopper inputs are co
 			result &= ~0x01;								  // set motor running input
 
 			if ( timercnt & 0x04 ) hopper_coin_sense ^= 1;	  // toggle coin seen
-	  
+
 			if ( hopper_coin_sense ) result &= ~0x02;		  // update coin seen input
 		}
 	}
@@ -940,19 +940,19 @@ static WRITE8_HANDLER( expansion_latch_w )
 	// bit6,  ? used in Del's millions
 	// bit7   ?
 
-	if ( changed & 0x04) 
+	if ( changed & 0x04)
 	{ // digital volume clock line changed
 		if ( !(data & 0x04) )
-		{ // changed from high to low, 
-			if ( !(data & 0x08) ) 
-			{ 
+		{ // changed from high to low,
+			if ( !(data & 0x08) )
+			{
 				if ( global_volume < 31 ) global_volume++; //0-31 expressed as 1-32
 			}
-			else               
-			{ 
-				if ( global_volume > 0  ) global_volume--; 
+			else
+			{
+				if ( global_volume > 0  ) global_volume--;
 			}
-			
+
 			{
 				float percent = volume_override?1.0:(32-global_volume)/32.0;
 
@@ -1015,7 +1015,7 @@ static WRITE8_HANDLER( coininhib_w )
 
 	p = 0x01;
 	i = 0;
-	
+
 	while ( i < 8 && changed )
 	{
 		if ( changed & p )
@@ -1044,7 +1044,7 @@ static READ8_HANDLER( direct_input_r )
 
 static READ8_HANDLER( coin_input_r )
 {
-	return input_port_0_r(0);	
+	return input_port_0_r(0);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1069,36 +1069,31 @@ static WRITE8_HANDLER( payout_triac_w )
 
 			case 0x02: slide = 2;
 				break;
-			
+
 			case 0x04: slide = 3;
 				break;
 
 			case 0x08: slide = 4;
 				break;
-			
+
 			case 0x10: slide = 5;
 				break;
-			
+
 			case 0x20: slide = 6;
 				break;
 		}
 
 		if ( slide )
 		{
-			if ( data == 0x4D ) 
+			if ( data == 0x4D )
 			{
 				if ( !slide_states[slide] )
 				{
-					logerror( "slide %d ON  *** TICK *** (coin out)\n",  slide );
-
-					ui_popup( "slide %d ON",  slide );
-					set_led_status(slide,1);
-
 					if ( slide_pay_sensor[slide] )
 					{
 						int strobe = slide_pay_sensor[slide]>>4, data = slide_pay_sensor[slide]&0x0F;
 
-						Scorpion2_SetSwitchState(strobe, data, 0); 
+						Scorpion2_SetSwitchState(strobe, data, 0);
 					}
 					slide_states[slide] = 1;
 				}
@@ -1107,15 +1102,11 @@ static WRITE8_HANDLER( payout_triac_w )
 			{
 				if ( slide_states[slide] )
 				{
-					logerror( "slide %d OFF *** TOCK ***\n",  slide );
-					ui_popup( "slide %d OFF",  slide );
-					set_led_status(slide,0);
-
 					if ( slide_pay_sensor[slide] )
 					{
 						int strobe = slide_pay_sensor[slide]>>4, data = slide_pay_sensor[slide]&0x0F;
-					
-						Scorpion2_SetSwitchState(strobe, data, 1); 
+
+						Scorpion2_SetSwitchState(strobe, data, 1);
 					}
 					slide_states[slide] = 0;
 				}
@@ -1301,7 +1292,7 @@ static int recdata(int changed, int data)
 	int res = 1;
 
 	if ( e2cnt < 8 )
-	{	
+	{
 		res = 0;
 
 		if ( (changed & SCL) && (data & SCL) )
@@ -1310,7 +1301,7 @@ static int recdata(int changed, int data)
 
 			if ( data & SDA ) e2data |=  pattern;
 			else              e2data &= ~pattern;
-	 
+
 			e2data_pin = e2data_to_read & 0x80 ? 1 : 0;
 
 			e2data_to_read <<= 1;
@@ -1337,7 +1328,7 @@ static int recAck(int changed, int data)
 		if ( data & SDA )
 		{
 			result = 1;
-		} 
+		}
 		else
 		{
 			result = -1;
@@ -1353,7 +1344,7 @@ static WRITE8_HANDLER( e2ram_w )
 	int changed, ack;
 
 	data ^= (SDA|SCL);  // invert signals
-  
+
 	changed  = (e2reg^data) & 0x03;
 
 	e2reg = data;
@@ -1361,25 +1352,25 @@ static WRITE8_HANDLER( e2ram_w )
 	// logerror("e2: D:%d C:%d [%d]:%d\n", data&SDA?1:0, data&SCL?1:0, e2state, e2cnt );
 
 	if ( changed )
-	{	
+	{
 		while ( 1 )
 		{
 			if ( (  (changed & SDA) && !(data & SDA))	&&  // 1->0 on SDA  AND
-				( !(changed & SCL) && (data & SCL) )    // SCL=1 and not changed  
+				( !(changed & SCL) && (data & SCL) )    // SCL=1 and not changed
 				)
 			{	// X24C08 Start condition (1->0 on SDA while SCL=1)
 				e2dummywrite = ( e2state == 5 );
-				
+
 				logerror("e2ram:   c:%d d:%d Start condition dummywrite=%d\n", (data & SCL)?1:0, (data&SDA)?1:0, e2dummywrite );
 
-				e2state = 1; // ready for commands		
+				e2state = 1; // ready for commands
 				e2cnt   = 0;
 				e2data  = 0;
 				break;
 			}
 
 			if ( (  (changed & SDA) && (data & SDA))	&&  // 0->1 on SDA  AND
-				( !(changed & SCL) && (data & SCL) )     // SCL=1 and not changed  
+				( !(changed & SCL) && (data & SCL) )     // SCL=1 and not changed
 				)
 			{	// X24C08 Stop condition (0->1 on SDA while SCL=1)
 				logerror("e2ram:   c:%d d:%d Stop condition\n", (data & SCL)?1:0, (data&SDA)?1:0 );
@@ -1398,7 +1389,7 @@ static WRITE8_HANDLER( e2ram_w )
 						e2cnt   = 0;
 						e2rw    = e2data & 1;
 
-						logerror("e2ram: Slave address received !!  device id=%01X device adr=%01d high order adr %0X RW=%d) %02X\n", 
+						logerror("e2ram: Slave address received !!  device id=%01X device adr=%01d high order adr %0X RW=%d) %02X\n",
 							e2data>>4, (e2data & 0x08)?1:0, (e2data>>1) & 0x03, e2rw , e2data );
 
 						e2state = 2;
@@ -1407,7 +1398,7 @@ static WRITE8_HANDLER( e2ram_w )
 
 				case 2: // Receive Acknowledge
 
-					ack = recAck(changed,data);		 
+					ack = recAck(changed,data);
 					if ( ack )
 					{
 						e2data_pin = 0;
@@ -1451,7 +1442,7 @@ static WRITE8_HANDLER( e2ram_w )
 						e2data = 0;
 					}
 					break;
-				
+
 				case 3: // writing data, receiving address
 
 					if ( recdata(changed, data) )
@@ -1468,12 +1459,12 @@ static WRITE8_HANDLER( e2ram_w )
 
 				case 4: // wait ack, for write address
 
-					ack = recAck(changed,data);		 
+					ack = recAck(changed,data);
 					if ( ack )
 					{
 						e2data_pin = 0;	// pin=0, no error !!
 
-						if ( ack < 0 ) 
+						if ( ack < 0 )
 						{
 							e2state = 0;
 							logerror("  ACK = 0, cancel write\n" );
@@ -1485,7 +1476,7 @@ static WRITE8_HANDLER( e2ram_w )
 						}
 					}
 					break;
-			
+
 				case 5: // receive data to write
 					if ( recdata(changed, data) )
 					{
@@ -1497,10 +1488,10 @@ static WRITE8_HANDLER( e2ram_w )
 
 				case 6: // Receive Acknowlede after writing
 
-					ack = recAck(changed,data);		 
+					ack = recAck(changed,data);
 					if ( ack )
 					{
-						if ( ack < 0 ) 
+						if ( ack < 0 )
 						{
 							e2state = 0;
 							logerror("  ACK=0, write canceled\n");
@@ -1523,19 +1514,19 @@ static WRITE8_HANDLER( e2ram_w )
 					if ( recdata(changed, data) )
 					{
 						//e2data_pin = 0;
-						
+
 						logerror("  address read, data = %02X waiting for ACK\n", e2data );
 
 						e2state = 8;
 					}
 					break;
 
-				case 8: 
+				case 8:
 
 					if ( recAck(changed, data) )
 					{
 						e2state = 7;
-						
+
 						e2address = (e2address & ~0x0F) | ((e2address+1)&0x0F); // lower 4 bits wrap around
 
 						e2data_to_read = e2ram[e2address];
@@ -1548,7 +1539,7 @@ static WRITE8_HANDLER( e2ram_w )
 					break;
 
 				case 0:
-	  
+
 					logerror("e2ram: ? c:%d d:%d\n", (data & SCL)?1:0, (data&SDA)?1:0 );
 					break;
 				}
@@ -1587,7 +1578,7 @@ static UINT8 codec_data[256];
 static void decode_mainrom(int rom_region)
 {
 	UINT8 *tmp, *rom;
-  
+
 	rom = memory_region(rom_region);
 
 	tmp = malloc(0x10000);
@@ -1600,14 +1591,14 @@ static void decode_mainrom(int rom_region)
 		memcpy(tmp, rom, 0x10000);
 
 		for ( i = 0; i < 256; i++ )
-		{ 
+		{
 			UINT8 data,pattern,newdata,*tab;
 			data    = i;
 
 			tab     = (UINT8*)DataDecode;
 			pattern = 0x01;
 			newdata = 0;
-			
+
 			do
 			{
 				newdata |= data & pattern ? *tab : 0;
@@ -1629,12 +1620,12 @@ static void decode_mainrom(int rom_region)
 			{
 				newaddress |= address & pattern ? *tab : 0;
 				pattern <<= 1;
-			} while ( *(++tab) );	  
+			} while ( *(++tab) );
 
 			rom[newaddress] = codec_data[ tmp[address] ];
 		}
 		free(tmp);
-	}	
+	}
 }
 
 // machine init (called only once) ////////////////////////////////////////
@@ -1644,7 +1635,7 @@ static MACHINE_INIT( init )
 	// reset the board //////////////////////////////////////////////////////
 
 	on_scorpion2_reset();
-	//BFM_dm01_reset();
+	//BFM_dm01_reset(); No known video based game has a Matrix board
 }
 
 // memory map for scorpion2 board video addon /////////////////////////////
@@ -1653,7 +1644,7 @@ static ADDRESS_MAP_START( memmap_vid, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x0000, 0x1fff) AM_READ(ram_r)			  // 8k RAM
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(ram_w) AM_BASE(&nvram) AM_SIZE(&nvram_size)
-	AM_RANGE(0x2000, 0x2000) AM_READ(vfd_status_hop_r)  //vfd_status_r)	// vfd status register
+	AM_RANGE(0x2000, 0x2000) AM_READ(vfd_status_hop_r)  //vfd_status_r) // vfd status register
 	AM_RANGE(0x2000, 0x20FF) AM_WRITE(reel12_vid_w)	  //reel12_w)
 	AM_RANGE(0x2100, 0x21FF) AM_WRITE(reel34_w)
 	AM_RANGE(0x2200, 0x22FF) AM_WRITE(reel56_w)
@@ -1692,8 +1683,8 @@ static ADDRESS_MAP_START( memmap_vid, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2A00, 0x2AFF) AM_WRITE(nec_latch_w)	  // this is where it reads?
 	AM_RANGE(0x2B00, 0x2BFF) AM_WRITE(nec_reset_w)	  // upd7759 reset line
 	AM_RANGE(0x2C00, 0x2C00) AM_WRITE(unlock_w)		  // custom chip unlock
-	AM_RANGE(0x2D00, 0x2D00) AM_WRITE(YM2413_register_port_0_w)//(sound_address_w)
-	AM_RANGE(0x2D01, 0x2D01) AM_WRITE(YM2413_data_port_0_w)//(sound_data_w)
+	AM_RANGE(0x2D00, 0x2D00) AM_WRITE(YM2413_register_port_0_w)
+	AM_RANGE(0x2D01, 0x2D01) AM_WRITE(YM2413_data_port_0_w)
 	AM_RANGE(0x2F00, 0x2F00) AM_WRITE(vfd2_data_w)	  // vfd2 data
 	AM_RANGE(0x2E00, 0x2E00) AM_WRITE(bankswitch_w)	  // write bank (rom page select for 0x6000 - 0x7fff )
 	AM_RANGE(0x3FFF, 0x3FFF) AM_READ( coin_input_r)
@@ -1701,7 +1692,7 @@ static ADDRESS_MAP_START( memmap_vid, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0xFFFF) AM_WRITE(unknown_w)		  // contains unknown I/O registers
 	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK1)		  // 8k  paged ROM (4 pages)
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)		  // 32k ROM
-  
+
 	AM_RANGE(0x3C00, 0x3C07) AM_READ(  key_r   )
 	AM_RANGE(0x3C80, 0x3C80) AM_WRITE( e2ram_w )
 
@@ -1710,137 +1701,6 @@ static ADDRESS_MAP_START( memmap_vid, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3e01, 0x3e01) AM_READ( vid_uart_rx_r)		// video uart receive  reg
 	AM_RANGE(0x3e01, 0x3e01) AM_WRITE(vid_uart_tx_w)		// video uart transmit reg
 ADDRESS_MAP_END
-
-// input ports for scorpion2 board ////////////////////////////////////////
-
-INPUT_PORTS_START( scorpion2 )
-	PORT_START_TAG("COINS")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN5 ) PORT_IMPULSE(3) PORT_NAME("C5")
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN6 ) PORT_IMPULSE(3) PORT_NAME("C6")
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN7 ) PORT_IMPULSE(3) PORT_NAME("C7")
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN8 ) PORT_IMPULSE(3) PORT_NAME("C8")
-
-	PORT_START_TAG("STROBE0")
-	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE1")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("I10")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("I11")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_NAME("I12")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON4) PORT_NAME("I13")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON5) PORT_NAME("I14")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE2")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON6)  PORT_NAME("I20")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON7)  PORT_NAME("I21")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON8)  PORT_NAME("I22")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON9)  PORT_NAME("I23")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON10) PORT_NAME("I24")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE3")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I30")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I31")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I32")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I33")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I34")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE4")
-	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_SERVICE) PORT_NAME("Cashbox Door") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Front Door") PORT_CODE(KEYCODE_F1) PORT_TOGGLE
-	PORT_BIT(0x04, IP_ACTIVE_HIGH,IPT_SERVICE) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I43")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I44")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE5")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I50")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I51")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I52")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I53")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I54")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE6")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I60")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I61")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I62")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I63")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I64")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE7")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I70")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I71")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I72")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I73")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I74")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE8")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I80")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I81")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I82")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I83")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("I84")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE9")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_Y)
-	PORT_DIPNAME( 0x02, 0x00, "DIL02" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIL03" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIL04" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL05" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
-
-	PORT_START_TAG("STROBE10")
-	PORT_DIPNAME( 0x01, 0x00, "DIL06" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIL07" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIL08" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIL10" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL11" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
-
-	PORT_START_TAG("STROBE11")
-	PORT_DIPNAME( 0x01, 0x00, "DIL12" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIL13" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIL14" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIL15" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL16" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
-
-INPUT_PORTS_END
 
 // input ports for pyramid ////////////////////////////////////////
 
@@ -1911,7 +1771,7 @@ INPUT_PORTS_END
 	PORT_DIPNAME( 0x01, 0x00, "DIL06" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x00, "Attract mode language" )
+	PORT_DIPNAME( 0x02, 0x02, "Attract mode language" )
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
 	PORT_DIPSETTING(    0x02, "Dutch"       )
 	PORT_DIPNAME( 0x0C, 0x00, "Skill Level" )
@@ -2009,7 +1869,7 @@ INPUT_PORTS_START( gldncrwn )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 
 	PORT_START_TAG("STROBE10")
-	PORT_DIPNAME( 0x01, 0x01, "Attract mode language" )
+	PORT_DIPNAME( 0x01, 0x00, "Attract mode language" )
 	PORT_DIPSETTING(    0x00, "Dutch")
 	PORT_DIPSETTING(    0x01, DEF_STR( English ) )
 	PORT_DIPNAME( 0x02, 0x00, "Max number of spins" )
@@ -2026,17 +1886,17 @@ INPUT_PORTS_START( gldncrwn )
 
 	PORT_START_TAG("STROBE11")
 	PORT_DIPNAME( 0x01, 0x01, "Credits required:" )
-	PORT_DIPSETTING(    0x00, "4 credits per game")PORT_CONDITION("STROBE11",0x10,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x01, "2 credits per game")PORT_CONDITION("STROBE11",0x10,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(    0x00, "1 credit  per round")PORT_CONDITION("STROBE11",0x10,PORTCOND_EQUALS,0x10)
-	PORT_DIPSETTING(    0x01, "4 credits per round")PORT_CONDITION("STROBE11",0x10,PORTCOND_EQUALS,0x10)
+	PORT_DIPSETTING(    0x00, "4 credits per game")PORT_CONDITION("STROBE10",0x10,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(    0x01, "2 credits per game")PORT_CONDITION("STROBE10",0x10,PORTCOND_EQUALS,0x00)
+	PORT_DIPSETTING(    0x00, "1 credit  per round")PORT_CONDITION("STROBE10",0x10,PORTCOND_EQUALS,0x10)
+	PORT_DIPSETTING(    0x01, "4 credits per round")PORT_CONDITION("STROBE10",0x10,PORTCOND_EQUALS,0x10)
 
 /*
-		  Type1 Type2
-		      0     0   4 credits per game
-			  0     1   2 credits per game
-			  1     0   1 credit  per round
-			  1     1   4 credits per round
+          Type1 Type2
+              0     0   4 credits per game
+              0     1   2 credits per game
+              1     0   1 credit  per round
+              1     1   4 credits per round
  */
 
 	PORT_DIPNAME( 0x02, 0x00, "Attract Mode" )
@@ -2046,10 +1906,10 @@ INPUT_PORTS_START( gldncrwn )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On  ) )
 	PORT_DIPNAME( 0x18, 0x00, "Time bar speed" )
-	PORT_DIPSETTING(    0x00, "1"  )
+	PORT_DIPSETTING(    0x00, "1 (fast)" )
 	PORT_DIPSETTING(    0x08, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
-	PORT_DIPSETTING(    0x18, "4" )
+	PORT_DIPSETTING(    0x18, "4 (slow)" )
 
 	PORT_START_TAG("DEBUGPORT")
 #ifdef BFM_DEBUG
@@ -2071,7 +1931,7 @@ INPUT_PORTS_START( gldncrwn )
 	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("Collect") PORT_CODE(KEYCODE_C)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER)	  PORT_NAME("Collect") PORT_CODE(KEYCODE_C)
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "Hand 1" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME( "Hand 2" )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME( "Hand 3" )
@@ -2123,7 +1983,7 @@ INPUT_PORTS_START( gldncrwn )
 	PORT_START_TAG("STROBE10")
 	PORT_BIT( 0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN  )
 
-	PORT_DIPNAME( 0x10, 0x00, "Coin Jam Alarm" )
+	PORT_DIPNAME( 0x10, 0x00, "Coin jam alarm" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
 
@@ -2157,14 +2017,14 @@ INPUT_PORTS_END
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(3) PORT_NAME("10p")
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3) PORT_NAME("20p")
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3) PORT_NAME("50p")
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3) PORT_NAME("£1.00")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3) PORT_NAME("?1.00")
 	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("STROBE0")
 	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE1")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("Collect/Strobe Advance") PORT_CODE(KEYCODE_C)
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER)   PORT_NAME("Collect/Strobe Advance") PORT_CODE(KEYCODE_C)
 	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Hand 1")
 	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Hand 2")
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_NAME("Hand 3")
@@ -2228,8 +2088,8 @@ INPUT_PORTS_END
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
 	PORT_DIPNAME( 0x10, 0x00, "Stake per Game / Jackpot" )
-	PORT_DIPSETTING(    0x00, "20p / £6" )
-	PORT_DIPSETTING(    0x10, "50p / £20" )
+	PORT_DIPSETTING(    0x00, "20p / ?6" )
+	PORT_DIPSETTING(    0x10, "50p / ?20" )
 
 	PORT_START_TAG("STROBE11")
 	PORT_DIPNAME( 0x01, 0x00, "DIL12" )
@@ -2247,7 +2107,7 @@ INPUT_PORTS_END
 	PORT_DIPSETTING(    0x00, "75%")
 	PORT_DIPSETTING(    0x04, "80%")
 	PORT_DIPSETTING(    0x14, "85%")
-	
+
 #ifdef BFM_DEBUG
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_TOGGLE PORT_NAME( "Alpha display toggle" ) PORT_CODE( KEYCODE_X )
 #endif
@@ -2261,29 +2121,29 @@ INPUT_PORTS_END
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3) PORT_NAME("Fl 1.00")
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3) PORT_NAME("Fl 2.50")
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3) PORT_NAME("Fl 5.00")
-	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN) 
+	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE0")
 	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE1")
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Reel 1")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN) 
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Reel 2")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Slot 1")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Slot 2")
 	PORT_BIT(0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE2")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON3)  PORT_NAME("Reel 3")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON4)  PORT_NAME("Reel 4")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_START3 )  PORT_NAME("Start") PORT_CODE( KEYCODE_1 )
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON3)  PORT_NAME("Slot 3")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON4)  PORT_NAME("Slot 4")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE ) PORT_NAME("Select") PORT_CODE( KEYCODE_W )
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START2 )  PORT_CODE( KEYCODE_M )
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE3")
 	PORT_BIT(0x0F, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START1 )  PORT_CODE( KEYCODE_N )
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE4")
@@ -2311,16 +2171,16 @@ INPUT_PORTS_END
 
 	PORT_START_TAG("STROBE9")
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_Y)
-	PORT_DIPNAME( 0x02, 0x02, "Fl 0.25 Inhibit?" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )//"Disabled")
-	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )//"Enabled")
-	PORT_DIPNAME( 0x04, 0x04, "Fl 1.00 Inhibit?" )
+	PORT_DIPNAME( 0x02, 0x00, "Fl 0.25 Inhibit?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x00, "Fl 1.00 Inhibit?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x08, "Fl 2.50 Inhibit?" )
+	PORT_DIPNAME( 0x08, 0x00, "Fl 2.50 Inhibit?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x10, 0x10, "Fl 5.00 Inhibit?" )
+	PORT_DIPNAME( 0x10, 0x00, "Fl 5.00 Inhibit?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
@@ -2362,30 +2222,30 @@ INPUT_PORTS_END
 
 	PORT_START_TAG("STROBE1")
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Reel 1")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN) 
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Reel 2")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Slot 1")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Slot 2")
 	PORT_BIT(0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE2")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON3)  PORT_NAME("Reel 3")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON4)  PORT_NAME("Reel 4")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_START3 )  PORT_NAME("Start")	  PORT_CODE( KEYCODE_1 )
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON3)  PORT_NAME("Slot 3")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON4)  PORT_NAME("Slot 4")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE)  PORT_NAME("Select") PORT_CODE( KEYCODE_W )
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START2 )  PORT_CODE( KEYCODE_M )
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE3")
 	PORT_BIT(0x01, IP_ACTIVE_LOW,  IPT_OTHER) PORT_TOGGLE PORT_NAME("Tube 1 level switch") PORT_CODE(KEYCODE_I) //Could do with being hooked up
 	PORT_BIT(0x02, IP_ACTIVE_LOW,  IPT_OTHER) PORT_TOGGLE PORT_NAME("Tube 2 level switch") PORT_CODE(KEYCODE_O) //to real program
 	PORT_BIT(0x0C, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START1 )  PORT_CODE( KEYCODE_N )
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE4")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE) PORT_NAME("Cashbox Door") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE) PORT_NAME("Front Door") PORT_CODE(KEYCODE_F1) PORT_TOGGLE
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH,IPT_SERVICE) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
+	PORT_BIT(0x01, IP_ACTIVE_LOW,  IPT_SERVICE) PORT_NAME("Cashbox Door") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
+	PORT_BIT(0x02, IP_ACTIVE_LOW,  IPT_SERVICE) PORT_NAME("Front Door") PORT_CODE(KEYCODE_F1) PORT_TOGGLE
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
 	PORT_BIT(0x18, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
@@ -2452,7 +2312,7 @@ INPUT_PORTS_END
 	PORT_DIPNAME( 0x08, 0x08, "Show hints" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "Win to credits" )
+	PORT_DIPNAME( 0x10, 0x00, "Pay win to credits" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
 
@@ -2477,17 +2337,17 @@ INPUT_PORTS_END
 
 	PORT_START_TAG("STROBE1")
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Reel 1")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN) 
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Reel 2")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Slot 1")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Slot 2")
 	PORT_BIT(0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE2")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON3)  PORT_NAME("Reel 3")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON4)  PORT_NAME("Reel 4")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_START1 )  PORT_NAME("Start")	  PORT_CODE( KEYCODE_1 )
+	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON3)  PORT_NAME("Slot 3")
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON4)  PORT_NAME("Slot 4")
+	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE)  PORT_NAME("Select") PORT_CODE( KEYCODE_W )
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1)  PORT_NAME("Stake")   PORT_CODE( KEYCODE_Q )
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1)  PORT_NAME("Stake")  PORT_CODE( KEYCODE_Q )
 	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE3")
@@ -2573,23 +2433,23 @@ INPUT_PORTS_START( paradice )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3) PORT_NAME("Fl 1.00")
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3) PORT_NAME("Fl 2.50")
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3) PORT_NAME("Fl 5.00")
-	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN) 
+	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE0")
 	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 ) PORT_NAME( "Start 1 Player Game(Left)" )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START3 ) PORT_NAME( "Start 2 Player Game(Right)" )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 ) PORT_NAME( "1 Player Start (Left)" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 ) PORT_NAME( "2 Player Start (Right)" )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "Column 1" )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME( "Column 2" )
-	PORT_BIT( 0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN ) 
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "A (Column 1)" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME( "B (Column 2)" )
+	PORT_BIT( 0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("STROBE2")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME( "Column 3" )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME( "C (Column 3)" )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2  ) PORT_NAME( "Start(Enter)" ) PORT_CODE( KEYCODE_SPACE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER  ) PORT_NAME( "Start (Enter)" ) PORT_CODE( KEYCODE_SPACE )
 	PORT_BIT( 0xF8, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("STROBE3")
@@ -2632,17 +2492,17 @@ INPUT_PORTS_START( paradice )
 	PORT_DIPNAME( 0x01, 0x01, "Joker" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	
+
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Language ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
-	PORT_DIPSETTING(    0x02, "Dutch"    )	
-	
+	PORT_DIPSETTING(    0x02, "Dutch"    )
+
 	PORT_DIPNAME( 0x0C, 0x0C, "Payout level" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Low ) )
 	PORT_DIPSETTING(    0x08, "Medium-Low"  )
 	PORT_DIPSETTING(    0x04, "Medium-High" )
-	PORT_DIPSETTING(    0x0C, DEF_STR( High ) ) 
-	
+	PORT_DIPSETTING(    0x0C, DEF_STR( High ) )
+
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
@@ -2679,21 +2539,21 @@ INPUT_PORTS_END
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3) PORT_NAME("Fl 1.00")
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3) PORT_NAME("Fl 2.50")
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3) PORT_NAME("Fl 5.00")
-	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN) 
+	PORT_BIT( 0xF0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE0")
 	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START_TAG("STROBE1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "Hand 1" )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME( "Hand 2" )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME( "Hand 3" )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME( "Hand 1 Left" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME( "Hand 2 Left" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME( "Hand 3 Left" )
 	PORT_BIT( 0xF8, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("STROBE2")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )  PORT_NAME( "Start 1 Player Game(Left)"  )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )         PORT_NAME( "Start (Enter)" ) PORT_CODE( KEYCODE_SPACE )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_NAME( "Start 2 Player Game(Right)"  )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 ) PORT_NAME( "1 Player Start (Left)" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_OTHER )  PORT_NAME( "Enter" ) PORT_CODE( KEYCODE_SPACE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2 ) PORT_NAME( "2 Player Start (Right)" )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON6 )PORT_NAME( "Hand 3 Right" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON5 )PORT_NAME( "Hand 2 Right" )
 	PORT_BIT( 0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -2739,11 +2599,11 @@ INPUT_PORTS_END
 	PORT_DIPNAME( 0x01, 0x00, "DIL06" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	
+
 	PORT_DIPNAME( 0x10, 0x00, "Coin Jam alarm" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off  ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On   ) )
-	
+
 	PORT_START_TAG("STROBE11")
 	PORT_DIPNAME( 0x01, 0x01, "Time bar" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -2761,116 +2621,6 @@ INPUT_PORTS_END
 #ifdef BFM_DEBUG
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_TOGGLE PORT_NAME( "Alpha display toggle" ) PORT_CODE( KEYCODE_X )
 #endif
-INPUT_PORTS_END
-
-// input ports for bfmcgslm /////////////////////////////////////////////////
-
-	INPUT_PORTS_START( bfmcgslm )
-	PORT_START_TAG("COINS")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 ) PORT_IMPULSE(3)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN5 ) PORT_IMPULSE(3) PORT_NAME("C5")
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN6 ) PORT_IMPULSE(3) PORT_NAME("C6")
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN7 ) PORT_IMPULSE(3) PORT_NAME("C7")
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN8 ) PORT_IMPULSE(3) PORT_NAME("C8")
-
-	PORT_START_TAG("STROBE0")
-	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE1")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1) PORT_NAME("Cancel")
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2) PORT_NAME("Hold 1")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3) PORT_NAME("Hold 2")
-	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON4) PORT_NAME("Hold 3")
-	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON5) PORT_NAME("Stop")
-	PORT_BIT(0xE0, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE2")
-	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_BUTTON6) PORT_NAME("Exchange")
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_START1) 
-	PORT_BIT(0xFA, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE3")
-	PORT_BIT(0x01, IP_ACTIVE_LOW,  IPT_SERVICE) PORT_NAME("Cashbox Door") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Front Door")   PORT_CODE(KEYCODE_F1) PORT_TOGGLE
-	PORT_BIT(0x04, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Refill Key")   PORT_CODE(KEYCODE_R) PORT_TOGGLE
-	PORT_BIT(0xF8, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE4")
-	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE5")
-	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE6")
-	PORT_DIPNAME( 0x07, 0x07, "PERCENTAGE KEY" )
-	PORT_DIPSETTING(    0x00, "No key" )
-	PORT_DIPSETTING(    0x01, "Key 1" )
-	PORT_DIPSETTING(    0x02, "Key 2" )
-	PORT_DIPSETTING(    0x03, "Key 3" )
-	PORT_DIPSETTING(    0x04, "Key 4" )
-	PORT_DIPSETTING(    0x05, "Key 5" )
-	PORT_DIPSETTING(    0x06, "Key 6" )
-	PORT_DIPSETTING(    0x07, "Key 7" )
-	PORT_BIT(0xF8, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE7")
-	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE8")
-	PORT_BIT(0xFF, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-
-	PORT_START_TAG("STROBE9")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_Y)
-	PORT_DIPNAME( 0x02, 0x00, "DIL02" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIL03" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIL04" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL05" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
-
-	PORT_START_TAG("STROBE10")
-	PORT_DIPNAME( 0x01, 0x00, "DIL06" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIL07" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIL08" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIL10" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL11" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
-
-	PORT_START_TAG("STROBE11")
-	PORT_DIPNAME( 0x01, 0x00, "DIL12" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIL13" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x00, "DIL14" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x08, 0x00, "DIL15" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL16" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
-
 INPUT_PORTS_END
 
  static struct upd7759_interface upd7759_interface =
@@ -2895,7 +2645,7 @@ static MACHINE_DRIVER_START( scorpion2_vid )
 
   MDRV_CPU_PERIODIC_INT(timer_irq, TIME_IN_HZ(1000) )	  // generate 1000 IRQ's per second
 
-  MDRV_NVRAM_HANDLER(nvram)					  	
+  MDRV_NVRAM_HANDLER(nvram)
 
   MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
   MDRV_SCREEN_SIZE( 400, 300)
@@ -2912,7 +2662,7 @@ static MACHINE_DRIVER_START( scorpion2_vid )
   MDRV_CPU_ADD_TAG("adder2", M6809, 2000000L )  // adder2 board 6809 CPU at 2 Mhz
   MDRV_CPU_PROGRAM_MAP(adder2_memmap,0)			// setup adder2 board memorymap
   MDRV_CPU_VBLANK_INT(adder2_vbl, 1);			// board has a VBL IRQ
-  
+
   MDRV_SPEAKER_STANDARD_MONO("mono")
   MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
   MDRV_SOUND_CONFIG(upd7759_interface)
@@ -2922,7 +2672,6 @@ static MACHINE_DRIVER_START( scorpion2_vid )
   MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 MACHINE_DRIVER_END
-
 
 // UK quintoon initialisation ////////////////////////////////////////////////
 
@@ -2950,10 +2699,10 @@ DRIVER_INIT (quintoon)
 	Scorpion2_SetSwitchState(3,1,1);	  // tube2 level switch
 	Scorpion2_SetSwitchState(3,2,1);	  // tube3 level switch
 
-	Scorpion2_SetSwitchState(5,2,1);	 
-	Scorpion2_SetSwitchState(6,4,1);	 
+	Scorpion2_SetSwitchState(5,2,1);
+	Scorpion2_SetSwitchState(6,4,1);
 
-	//Scorpion2_SetSwitchState(4,1,1);	 
+	//Scorpion2_SetSwitchState(4,1,1);
 
 	sc2_show_door   = 1;
 	sc2_door_state  = 0x41;
@@ -2989,7 +2738,7 @@ DRIVER_INIT (pyramid)
 	Scorpion2_SetSwitchState(3,1,1);	  // tube2 level switch
 	Scorpion2_SetSwitchState(3,2,1);	  // tube3 level switch
 
-	//Scorpion2_SetSwitchState(11,2,1);	  // DIL 14 ON !!
+	//Scorpion2_SetSwitchState(11,2,1);   // DIL 14 ON !!
 
 	sc2_show_door   = 1;
 	sc2_door_state  = 0x41;
@@ -3064,7 +2813,7 @@ DRIVER_INIT (qntoond)
 
 	pal = memory_region(REGION_PROMS);
 	if ( pal )
-	{	
+	{
 		memcpy(key, pal, 8);
 	}
 
@@ -3085,9 +2834,9 @@ DRIVER_INIT (qntoond)
 	Scorpion2_SetSwitchState(3,1,1);	  // tube2 level switch
 	Scorpion2_SetSwitchState(3,2,1);	  // tube3 level switch
 
-	//Scorpion2_SetSwitchState(4,0,1);	  // cash box   switch
-	//Scorpion2_SetSwitchState(4,1,1);	  // front door switch
-	//Scorpion2_SetSwitchState(11,2,1);	  // DIL 14 ON !!
+	//Scorpion2_SetSwitchState(4,0,1);    // cash box   switch
+	//Scorpion2_SetSwitchState(4,1,1);    // front door switch
+	//Scorpion2_SetSwitchState(11,2,1);   // DIL 14 ON !!
 
 	sc2_show_door   = 1;
 	sc2_door_state  = 0x41;
@@ -3123,10 +2872,10 @@ DRIVER_INIT (pokio)
 	Scorpion2_SetSwitchState(3,1,1);	  // tube2 level switch
 	Scorpion2_SetSwitchState(3,2,1);	  // tube3 level switch
 
-	//Scorpion2_SetSwitchState(4,0,1);	  // cash box   switch
-	//Scorpion2_SetSwitchState(4,1,1);	  // front door switch
+	//Scorpion2_SetSwitchState(4,0,1);    // cash box   switch
+	//Scorpion2_SetSwitchState(4,1,1);    // front door switch
 
-	//Scorpion2_SetSwitchState(11,2,1);	  // DIL 14 ON !!
+	//Scorpion2_SetSwitchState(11,2,1);   // DIL 14 ON !!
 
 	sc2_show_door   = 1;
 	sc2_door_state  = 0x41;
@@ -3162,8 +2911,8 @@ DRIVER_INIT (gldncrwn)
 	Scorpion2_SetSwitchState(3,1,1);	  // tube2 level switch
 	Scorpion2_SetSwitchState(3,2,1);	  // tube3 level switch
 
-	//Scorpion2_SetSwitchState(4,0,1);	  // cash box   switch
-	//Scorpion2_SetSwitchState(4,1,1);	  // front door switch
+	//Scorpion2_SetSwitchState(4,0,1);    // cash box   switch
+	//Scorpion2_SetSwitchState(4,1,1);    // front door switch
 	sc2_show_door   = 0;
 	sc2_door_state  = 0x41;
 }
@@ -3172,13 +2921,13 @@ DRIVER_INIT (gldncrwn)
 
 ROM_START( quintoon )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64 + 8k for code */
-	ROM_LOAD( "95750203.bin",   0x0000, 0x10000,  CRC(037ef2d0) SHA1(6958624e29629a7639a80e8929b833a8b0201833))	
+	ROM_LOAD( "95750203.bin",   0x0000, 0x10000,  CRC(037ef2d0) SHA1(6958624e29629a7639a80e8929b833a8b0201833))
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )	
-	ROM_LOAD( "quinp132", 0x0000, 0x20000,  CRC(63896a7f) SHA1(81aa56874a15faa3aabdfc0fc524b2e25b751f22))	
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "quinp132", 0x0000, 0x20000,  CRC(63896a7f) SHA1(81aa56874a15faa3aabdfc0fc524b2e25b751f22))
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples
-	ROM_LOAD( "95001016.snd",		0x00000, 0x20000, BAD_DUMP CRC(cf097d41) SHA1(6712f93896483360256d8baffc05977c8e532ef1))
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples - using Dutch version, need to check a UK Quintoon PCB
+	ROM_LOAD( "95001016.snd", 0x00000, 0x20000, BAD_DUMP CRC(cf097d41) SHA1(6712f93896483360256d8baffc05977c8e532ef1))
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "quinp233",0x00000, 0x20000, CRC(3d4ebecf) SHA1(b339cf16797ccf7a1ec20fcebf52b6edad9a1047))
@@ -3189,10 +2938,10 @@ ROM_END
 
 ROM_START( qntoond )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64 + 8k for code */
-	ROM_LOAD( "95750243.bin", 0x0000, 0x10000, CRC(36a8dcd1) SHA1(ab21301312fbb6609f850e1cf6bcda5a2b7f66f5))	
+	ROM_LOAD( "95750243.bin", 0x0000, 0x10000, CRC(36a8dcd1) SHA1(ab21301312fbb6609f850e1cf6bcda5a2b7f66f5))
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )	
-	ROM_LOAD( "95770024.vid", 0x0000, 0x20000,  CRC(5bc7ac55) SHA1(b54e9684f750b73c357d41b88ca8c527258e2a10))	
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "95770024.vid", 0x0000, 0x20000,  CRC(5bc7ac55) SHA1(b54e9684f750b73c357d41b88ca8c527258e2a10))
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples
 	ROM_LOAD( "95001016.snd", 0x00000, 0x20000, CRC(cf097d41) SHA1(6712f93896483360256d8baffc05977c8e532ef1))
@@ -3207,10 +2956,10 @@ ROM_END
 
 ROM_START( qntoondo )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64 + 8k for code */
-	ROM_LOAD( "95750136.bin", 0x0000, 0x10000, CRC(839ea01d) SHA1(d7f77dbaea4e87c3d782408eb50d10f44b6df5e2))	
+	ROM_LOAD( "95750136.bin", 0x0000, 0x10000, CRC(839ea01d) SHA1(d7f77dbaea4e87c3d782408eb50d10f44b6df5e2))
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )	
-	ROM_LOAD( "95770024.vid", 0x0000, 0x20000,  CRC(5bc7ac55) SHA1(b54e9684f750b73c357d41b88ca8c527258e2a10))	
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "95770024.vid", 0x0000, 0x20000,  CRC(5bc7ac55) SHA1(b54e9684f750b73c357d41b88ca8c527258e2a10))
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples
 	ROM_LOAD( "95001016.snd", 0x00000, 0x20000, CRC(cf097d41) SHA1(6712f93896483360256d8baffc05977c8e532ef1))
@@ -3225,10 +2974,10 @@ ROM_END
 
 ROM_START( gldncrwn )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64 + 8k for code */
-	ROM_LOAD( "95752011.bin", 0x0000, 0x10000, CRC(54f7cca0) SHA1(835727d88113700a38060f880b4dfba2ded41487))	
+	ROM_LOAD( "95752011.bin", 0x0000, 0x10000, CRC(54f7cca0) SHA1(835727d88113700a38060f880b4dfba2ded41487))
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )	
-	ROM_LOAD( "95770117.vid", 0x0000, 0x20000,   CRC(598ba7cb) SHA1(ab518d7df24b0b453ec3fcddfc4db63e0391fde7))	
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "95770117.vid", 0x0000, 0x20000,   CRC(598ba7cb) SHA1(ab518d7df24b0b453ec3fcddfc4db63e0391fde7))
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples
 	ROM_LOAD( "95001039.snd", 0x00000, 0x20000, CRC(6af26157) SHA1(9b3a85f5dd760c4430e38e2844928b74aadc7e75))
@@ -3265,10 +3014,10 @@ ROM_END
 
 ROM_START( pokio )
 	ROM_REGION( 0x12000, REGION_CPU1, 0 )	/* 64 + 8k for code */
-	ROM_LOAD( "95750278.bin", 0x0000, 0x10000, CRC(5124b24d) SHA1(9bc63891a8e9283c2baa64c264a5d6d1625d44b2))	
+	ROM_LOAD( "95750278.bin", 0x0000, 0x10000, CRC(5124b24d) SHA1(9bc63891a8e9283c2baa64c264a5d6d1625d44b2))
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 )	
-	ROM_LOAD( "95770044.vid", 0x0000, 0x20000,   CRC(46d7a6d8) SHA1(01f58e735621661b57c61491b3769ae99e92476a))	
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "95770044.vid", 0x0000, 0x20000,   CRC(46d7a6d8) SHA1(01f58e735621661b57c61491b3769ae99e92476a))
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples
 	ROM_LOAD( "95001016.snd", 0x00000, 0x20000, CRC(98aaff76) SHA1(4a59cf83daf018d93f1ff7805e06309d2f3d7252))
@@ -3364,7 +3113,7 @@ ROM_START( sltblgpo )
 	ROM_LOAD( "95770938.bin", 0x0000, 0x10000,  CRC(7e802634) SHA1(fecf86e632546649d5e647c42a248b39fc2cf982))
 
 	ROM_REGION( 0x20000, REGION_CPU2, 0 )
-	ROM_LOAD( "95770120.chr", 0x00000, 0x20000, CRC(ad505138) SHA1(67ccd8dc30e76283247ab5a62b22337ebaff74cd)) 
+	ROM_LOAD( "95770120.chr", 0x00000, 0x20000, CRC(ad505138) SHA1(67ccd8dc30e76283247ab5a62b22337ebaff74cd))
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) // samples
 	ROM_LOAD( "sound033.bin", 0x00000, 0x20000, CRC(bb1dfa55) SHA1(442454fccfe03e6f4c3353551cb7459e184a099d))
@@ -3376,9 +3125,9 @@ ROM_START( sltblgpo )
 	ROM_LOAD( "stsbcpal.bin", 0, 8 , CRC(c63bcab6) SHA1(238841165d5b3241b0bcc5c1792e9c0be1fc0177))
 ROM_END
 
-//	   year, name,     parent,	  machine,       input,     init,		monitor, company,    fullname
+//     year, name,     parent,    machine,       input,     init,       monitor, company,    fullname
 GAME ( 1993, qntoondo, qntoond,	  scorpion2_vid, qntoond,   qntoond,    0,       "BFM/ELAM", "Quintoon (Dutch, Game Card 95-750-136)",0)
-GAME(  1993, quintoon, 0,   	  scorpion2_vid, quintoon,  quintoon,   0,       "BFM",      "Quintoon (UK, Game Card 95-750-203)",		  GAME_IMPERFECT_SOUND  ) //Current samples need verification
+GAME(  1993, quintoon, 0,   	  scorpion2_vid, quintoon,  quintoon,   0,       "BFM",      "Quintoon (UK, Game Card 95-750-203)", GAME_IMPERFECT_SOUND  ) //Current samples need verification
 GAME ( 1993, qntoond,  0,		  scorpion2_vid, qntoond,   qntoond,    0,       "BFM/ELAM", "Quintoon (Dutch, Game Card 95-750-243)",0)
 GAME ( 1994, pokio,    0,		  scorpion2_vid, pokio,     pokio,      0,       "BFM/ELAM", "Pokio (Dutch, Game Card 95-750-278)",0)
 GAME ( 1995, slotsnl,  0,		  scorpion2_vid, slotsnl,   slotsnl,    0,       "BFM/ELAM", "Slots (Dutch, Game Card 95-750-368)",0)

@@ -90,7 +90,7 @@ int Mechmtr_update(int id, long cycles, int state)
   int res = 0;
 
   if ( id >= number_mtr ) return res;
-  
+
   state = state?1:0;
 
   if ( meter_info[id].state != state )

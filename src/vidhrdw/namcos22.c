@@ -1,30 +1,18 @@
 /**
  * video hardware for Namco System22
  *
- * ac: eeprom write fails
- * ac: advanced ram tests
- *
  * todo:
- * - sprite xy offset
- * - sprite clipping to window
- * - SPOT RAM?
- * - CMODE? (0..7)
  *
- * - sys22 variant of fog, fader
-    +0x0002.w   Fader Enable(?) (0: disabled)
-    +0x0011.w   Display Fader (R) (0x0100 = 1.0)
-    +0x0013.w   Display Fader (G) (0x0100 = 1.0)
-    +0x0015.w   Display Fader (B) (0x0100 = 1.0)
-    +0x0100.b   Fog1 Color (R) (world fogging)
-    +0x0101.b   Fog2 Color (R) (used for heating of brake-disc on RV1)
-    +0x0180.b   Fog1 Color (G)
-    +0x0181.b   Fog2 Color (G)
-    +0x0200.b   Fog1 Color (B)
-    +0x0201.b   Fog2 Color (B)
+ * - fog bugfixes
  *
- * - air combat22
- * - victory lap
- * - alpine surfer
+ * - SPOT
+ *
+ * - sprite
+ *          xy offset
+ *          clipping to window
+ *          eliminate garbage (air combat)
+ *
+ *
  *******************************
 czram[0] = 1fff 1fdf 1fbf 1f9f 1f7f 1f5f 1f3f 1f1f 1eff 1edf 1ebf 1e9f 1e7f 1e5f 1e3f 1e1f 1dff 1ddf 1dbf 1d9f 1d7f 1d5f 1d3f 1d1f 1cff 1cdf 1cbf 1c9f 1c7f 1c5f 1c3f 1c1f 1bff 1bdf 1bbf 1b9f 1b7f 1b5f 1b3f 1b1f 1aff 1adf 1abf 1a9f 1a7f 1a5f 1a3f 1a1f 19ff 19df 19bf 199f 197f 195f 193f 191f 18ff 18df 18bf 189f 187f 185f 183f 181f 17ff 17df 17bf 179f 177f 175f 173f 171f 16ff 16df 16bf 169f 167f 165f 163f 161f 15ff 15df 15bf 159f 157f 155f 153f 151f 14ff 14df 14bf 149f 147f 145f 143f 141f 13ff 13df 13bf 139f 137f 135f 133f 131f 12ff 12df 12bf 129f 127f 125f 123f 121f 11ff 11df 11bf 119f 117f 115f 113f 111f 10ff 10df 10bf 109f 107f 105f 103f 101f 0fff 0fdf 0fbf 0f9f 0f7f 0f5f 0f3f 0f1f 0eff 0edf 0ebf 0e9f 0e7f 0e5f 0e3f 0e1f 0dff 0ddf 0dbf 0d9f 0d7f 0d5f 0d3f 0d1f 0cff 0cdf 0cbf 0c9f 0c7f 0c5f 0c3f 0c1f 0bff 0bdf 0bbf 0b9f 0b7f 0b5f 0b3f 0b1f 0aff 0adf 0abf 0a9f 0a7f 0a5f 0a3f 0a1f 09ff 09df 09bf 099f 097f 095f 093f 091f 08ff 08df 08bf 089f 087f 085f 083f 081f 07ff 07df 07bf 079f 077f 075f 073f 071f 06ff 06df 06bf 069f 067f 065f 063f 061f 05ff 05df 05bf 059f 057f 055f 053f 051f 04ff 04df 04bf 049f 047f 045f 043f 041f 03ff 03df 03bf 039f 037f 035f 033f 031f 02ff 02df 02bf 029f 027f 025f 023f 021f 01ff 01df 01bf 019f 017f 015f 013f 011f 00ff 00df 00bf 009f 007f 005f 003f 001f
 czram[1] = 0000 0000 0000 0001 0002 0003 0005 0007 0009 000b 000e 0011 0014 0017 001b 001f 0023 0027 002c 0031 0036 003b 0041 0047 004d 0053 005a 0061 0068 006f 0077 007f 0087 008f 0098 00a1 00aa 00b3 00bd 00c7 00d1 00db 00e6 00f1 00fc 0107 0113 011f 012b 0137 0144 0151 015e 016b 0179 0187 0195 01a3 01b2 01c1 01d0 01df 01ef 01ff 020f 021f 0230 0241 0252 0263 0275 0287 0299 02ab 02be 02d1 02e4 02f7 030b 031f 0333 0347 035c 0371 0386 039b 03b1 03c7 03dd 03f3 040a 0421 0438 044f 0467 047f 0497 04af 04c8 04e1 04fa 0513 052d 0547 0561 057b 0596 05b1 05cc 05e7 0603 061f 063b 0657 0674 0691 06ae 06cb 06e9 0707 0725 0743 0762 0781 07a0 07bf 07df 07ff 081f 083f 0860 0881 08a2 08c3 08e5 0907 0929 094b 096e 0991 09b4 09d7 09fb 0a1f 0a43 0a67 0a8c 0ab1 0ad6 0afb 0b21 0b47 0b6d 0b93 0bba 0be1 0c08 0c2f 0c57 0c7f 0ca7 0ccf 0cf8 0d21 0d4a 0d73 0d9d 0dc7 0df1 0e1b 0e46 0e71 0e9c 0ec7 0ef3 0f1f 0f4b 0f77 0fa4 0fd1 0ffe 102b 1059 1087 10b5 10e3 1112 1141 1170 119f 11cf 11ff 122f 125f 1290 12c1 12f2 1323 1355 1387 13b9 13eb 141e 1451 1484 14b7 14eb 151f 1553 1587 15bc 15f1 1626 165b 1691 16c7 16fd 1733 176a 17a1 17d8 180f 1847 187f 18b7 18ef 1928 1961 199a 19d3 1a0d 1a47 1a81 1abb 1af6 1b31 1b6c 1ba7 1be3 1c1f 1c5b 1c97 1cd4 1d11 1d4e 1d8b 1dc9 1e07 1e45 1e83 1ec2 1f01 1f40 1f7f 1fbf 1fff
@@ -43,47 +31,14 @@ SPOT TABLE test
 03F2A2: 13FC 0001 0082 4021        move.b  #$1, $824021.l
 03F2AA: 33FC 4038 0080 0000        move.w  #$4038, $800000.l
 03F2B2: 06B9 0000 0001 00E0 AB08   addi.l  #$1, $e0ab08.l
-
-           0 1 2 3  4 5 6 7  8 9 a b  c d e f 10       14       18       1c
-00824000: ffffff00 00000000 0000007f 00ff0000 1000ff00 0f000000 00ff007f 00010007 // time crisis
-00824000: ffffff00 00000000 1830407f 00800000 0000007f 0f000000 0000037f 00010007 // trans sprite
-00824000: ffffff00 00000000 3040307f 00000000 0080007f 0f000000 0000037f 00010007 // trans poly
-00824000: ffffff00 00000000 1800187f 00800000 0080007f 0f000000 0000037f 00010007 // trans poly(2)
-00824000: ffffff00 00000000 1800187f 00000000 0000007f 0f800000 0000037f 00010007 // trans text
-                     ^^^^^^                                                       // fog color
-                            ^^^^^^                                                // background color
-                                       ^^^^                                       // spot transp
-                                                ^^                                // poly transp
-                                                         ^^                       // text transp
-                                                           ^^^^ ^^^^              // fade rgb,pct
-                                                                    ^^            // fader target (4==polygon layer)
 */
 #include "namcos22.h"
 #include <math.h>
 #include "drawgfx.h"
 
 static int mbSuperSystem22; /* used to conditionally support Super System22-specific features */
-static int mbSpotlightEnabled;
+static int mbSpotlightEnable;
 static UINT16 *namcos22_czram[4];
-
-#define PRI_OVER_TEXT (1<<31)
-#define POLY_PIXEL    (1<<30)
-#define SPRITE_PIXEL  (1<<29)
-
-
-static UINT8
-Clamp256( int v )
-{
-   if( v<0 )
-   {
-      v = 0;
-   }
-   else if( v>255 )
-   {
-      v = 255;
-   }
-   return v;
-} /* Clamp256 */
 
 static UINT8
 nthbyte( const UINT32 *pSource, int offs )
@@ -98,6 +53,115 @@ nthword( const UINT32 *pSource, int offs )
 	pSource += offs/2;
 	return (pSource[0]<<((offs&1)*16))>>16;
 }
+
+static struct
+{
+	int target;
+	int rFogColor;
+	int gFogColor;
+	int bFogColor;
+	int rFogColor2;
+	int gFogColor2;
+	int bFogColor2;
+	int rBackColor;
+	int gBackColor;
+	int bBackColor;
+	int rFadeColor;
+	int gFadeColor;
+	int bFadeColor;
+	int fadeFactor;
+	int spot_translucency;
+	int poly_translucency;
+	int text_translucency;
+	int palBase;
+} mixer;
+
+static void
+UpdateVideoMixer( void )
+{
+	memset( &mixer, 0, sizeof(mixer) );
+	if( mbSuperSystem22 )
+	{
+/*
+           0 1 2 3  4 5 6 7  8 9 a b  c d e f 10       14       18       1c
+00824000: ffffff00 00000000 0000007f 00ff0000 1000ff00 0f000000 00ff007f 00010007 // time crisis
+00824000: ffffff00 00000000 1830407f 00800000 0000007f 0f000000 0000037f 00010007 // trans sprite
+00824000: ffffff00 00000000 3040307f 00000000 0080007f 0f000000 0000037f 00010007 // trans poly
+00824000: ffffff00 00000000 1800187f 00800000 0080007f 0f000000 0000037f 00010007 // trans poly(2)
+00824000: ffffff00 00000000 1800187f 00000000 0000007f 0f800000 0000037f 00010007 // trans text
+*/
+		mixer.rFogColor         = nthbyte( namcos22_gamma, 0x05 );
+		mixer.gFogColor         = nthbyte( namcos22_gamma, 0x06 );
+		mixer.bFogColor         = nthbyte( namcos22_gamma, 0x07 );
+		mixer.rBackColor        = nthbyte( namcos22_gamma, 0x08 );
+		mixer.gBackColor        = nthbyte( namcos22_gamma, 0x09 );
+		mixer.bBackColor        = nthbyte( namcos22_gamma, 0x0a );
+		mixer.spot_translucency = nthbyte( namcos22_gamma, 0x0d );
+		mixer.poly_translucency = nthbyte( namcos22_gamma, 0x11 );
+		mixer.text_translucency = nthbyte( namcos22_gamma, 0x15 );
+		mixer.rFadeColor        = nthbyte( namcos22_gamma, 0x16 );
+		mixer.gFadeColor        = nthbyte( namcos22_gamma, 0x17 );
+		mixer.bFadeColor        = nthbyte( namcos22_gamma, 0x18 );
+		mixer.fadeFactor        = nthbyte( namcos22_gamma, 0x19 );
+		mixer.target            = nthbyte( namcos22_gamma, 0x1a );
+		mixer.palBase           = nthbyte( namcos22_gamma, 0x1b );
+	}
+	else
+	{
+/*
+90020000: 4f030000 7f00007f 4d4d4d42 0c00c0c0
+90020010: c0010001 00010000 00000000 00000000
+90020080: 00010101 01010102 00000000 00000000
+900200c0: 00000000 00000000 00000000 03000000
+90020100: fff35000 00000000 00000000 00000000
+90020180: ff713700 00000000 00000000 00000000
+90020200: ff100000 00000000 00000000 00000000
+*/
+		mixer.palBase     = 0x7f;
+		mixer.target      = 0x7;//nthbyte( namcos22_gamma, 0x0002 )*256 + nthbyte( namcos22_gamma, 0x0003 );
+		mixer.rFadeColor  = nthbyte( namcos22_gamma, 0x0011 )*256 + nthbyte( namcos22_gamma, 0x0012 );
+		mixer.gFadeColor  = nthbyte( namcos22_gamma, 0x0013 )*256 + nthbyte( namcos22_gamma, 0x0014 );
+		mixer.bFadeColor  = nthbyte( namcos22_gamma, 0x0015 )*256 + nthbyte( namcos22_gamma, 0x0016 );
+
+		mixer.fadeFactor  = 0x100 - mixer.rFadeColor; // hack
+		mixer.rFadeColor  = 0;
+		mixer.gFadeColor  = 0;
+		mixer.bFadeColor  = 0;
+
+		mixer.rFogColor   = nthbyte( namcos22_gamma, 0x0100 );
+		mixer.rFogColor2  = nthbyte( namcos22_gamma, 0x0101 );
+		mixer.gFogColor   = nthbyte( namcos22_gamma, 0x0180 );
+		mixer.gFogColor2  = nthbyte( namcos22_gamma, 0x0181 );
+		mixer.bFogColor   = nthbyte( namcos22_gamma, 0x0200 );
+		mixer.bFogColor2  = nthbyte( namcos22_gamma, 0x0201 );
+
+/*  +0x0002.w   Fader Enable(?) (0: disabled)
+ *  +0x0011.w   Display Fader (R) (0x0100 = 1.0)
+ *  +0x0013.w   Display Fader (G) (0x0100 = 1.0)
+ *  +0x0015.w   Display Fader (B) (0x0100 = 1.0)
+ *  +0x0100.b   Fog1 Color (R) (world fogging)
+ *  +0x0101.b   Fog2 Color (R) (used for heating of brake-disc on RV1)
+ *  +0x0180.b   Fog1 Color (G)
+ *  +0x0181.b   Fog2 Color (G)
+ *  +0x0200.b   Fog1 Color (B)
+ *  +0x0201.b   Fog2 Color (B)
+ */
+	}
+}
+
+static UINT8
+Clamp256( int v )
+{
+   if( v<0 )
+   {
+      v = 0;
+   }
+   else if( v>255 )
+   {
+      v = 255;
+   }
+   return v;
+} /* Clamp256 */
 
 static void Dump( FILE *f, unsigned addr1, unsigned addr2, const char *name );
 
@@ -178,17 +242,13 @@ typedef void drawscanline_t(
 	int sy );
 
 static void
-renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy, const pen_t *pens, int bn, UINT32 pri, UINT16 flags )
+renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge *e1, const edge *e2, int sy, int color, int bn, UINT16 flags, int cmode )
 {
-   int rBackColor = 0;
-   int gBackColor = 0;
-   int bBackColor = 0;
+	int fadeEnable = (mixer.target&1) && mixer.fadeFactor;
+	int fogDisable = color&0x80;
+	const pen_t *pens = &Machine->pens[(color&0x7f)<<8];
    int fogDensity = 0;
-
-   int rFadeColor = 0;
-   int gFadeColor = 0;
-   int bFadeColor = 0;
-   int fade = 0;
+	int prioverchar = (cmode&7)==1;
 
 	if( e1->x > e2->x )
 	{
@@ -196,6 +256,7 @@ renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge 
 	}
 
 	{
+		const UINT8 *pCharPri = (UINT8 *)priority_bitmap->line[sy];
 		UINT32 *pDest = (UINT32 *)bitmap->line[sy];
 		int x0 = (int)e1->x;
 		int x1 = (int)e2->x;
@@ -229,77 +290,123 @@ renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge 
 
          if( mbSuperSystem22 )
          {
-            int target = nthbyte( namcos22_gamma, 0x1a );
-            int cz = flags>>8;
-            static const int cztype_remap[4] = { 3,1,2,0 }; /* ? */
-            int cztype = cztype_remap[flags&3];
-            if( nthword(namcos22_czattr,4)&(0x4000>>(cztype*4)) )
-            {
-               int fogDelta = (INT16)nthword(namcos22_czattr, cztype);
-               cz = Clamp256(cz+fogDelta);
-               rBackColor = nthbyte( namcos22_gamma, 0x05 );
-               gBackColor = nthbyte( namcos22_gamma, 0x06 );
-               bBackColor = nthbyte( namcos22_gamma, 0x07 );
-               fogDensity = namcos22_czram[cztype][cz];
-            }
-
-            if( target&1 )
-            { /* affects polygon layer */
-               fade  = nthbyte( namcos22_gamma, 0x19 );
-               rFadeColor = nthbyte( namcos22_gamma, 0x16 );
-	            gFadeColor = nthbyte( namcos22_gamma, 0x17 );
-               bFadeColor = nthbyte( namcos22_gamma, 0x18 );
-            }
+				if( !fogDisable )
+				{
+					int cz = flags>>8;
+	            const int cztype_remap[4] = { 3,1,2,0 };
+	            int cztype = flags&3;
+	            if( nthword(namcos22_czattr,4)&(0x4000>>(cztype*4)) )
+	            {
+	               int fogDelta = (INT16)nthword(namcos22_czattr, cztype);
+			//          if( fogDelta == 0x8000 ) fogDelta = -0x7fff;
+	               //cz = Clamp256(cz+fogDelta);
+	               fogDensity = fogDelta + namcos22_czram[cztype_remap[cztype]][cz];
+						if( fogDensity<0x0000 )
+						{
+							fogDensity = 0x0000;
+						}
+						else if( fogDensity>0x1fff )
+						{
+							fogDensity = 0x1fff;
+						}
+					}
+				}
          }
+			else
+			{
+				fogDisable = 1;
+			}
 
          for( x=x0; x<x1; x++ )
 			{
-				float ooz = 1.0f/z;
-				UINT32 color = pens[texel((int)(u * ooz),bn+(int)(v*ooz))];
-				int shade = i*ooz;
-   			int r = color>>16;
-			   int g = (color>>8)&0xff;
-			   int b = color&0xff;
+				if( pCharPri[x]==0 || prioverchar )
+				{
+					float ooz = 1.0f/z;
+					int pen = texel((int)(u * ooz),bn+(int)(v*ooz));
+					switch( cmode )
+					{
+					case 0x2:
+						 pen = 0xe0|(pen>>4);
+						 break;
+					case 0x3:
+						pen = 0xe0|(pen&0xf);
+						break;
+					case 0x4:
+						pen = 0xec|(pen>>6);
+						break;
+					case 0x5:
+						pen = 0xec|((pen>>4)&3);
+						break;
+					case 0x6:
+						pen = 0xec|((pen>>2)&3);
+						break;
+					case 0x7:
+						pen = 0xec|(pen&3);
+						break;
+					case 0xa:
+						pen = 0xf0|(pen>>4);
+						break;
+					case 0xb:
+						pen = 0xf0|(pen&0xf);
+						break;
+					case 0xc:
+						pen = 0xfc|(pen>>6);
+						break;
+					case 0xd:
+						pen = 0xfc|((pen>>4)&3);
+						break;
+					case 0xe:
+						pen = 0xfc|((pen>>2)&3);
+						break;
+					case 0xf:
+						pen = 0xfc|(pen&3);
+						break;
+					default:
+						break;
+					}
 
-            r = r*shade/0x40;
-            if( r>0xff ) r = 0xff;
+					{
+						UINT32 rgb = pens[pen];
+						int shade = i*ooz;
+	   				int r = rgb>>16;
+						int g = (rgb>>8)&0xff;
+						int b = rgb&0xff;
+		            r = r*shade/0x40;
+		            if( r>0xff ) r = 0xff;
+			         g = g*shade/0x40;
+				      if( g>0xff ) g = 0xff;
+					   b = b*shade/0x40;
+		   			if( b>0xff ) b = 0xff;
+						if( !fogDisable )
+						{
+						   int fogDensity2 = 0x2000 - fogDensity;
+						   r = (r*fogDensity2 + fogDensity*mixer.rFogColor)>>13;
+						   g = (g*fogDensity2 + fogDensity*mixer.gFogColor)>>13;
+						   b = (b*fogDensity2 + fogDensity*mixer.bFogColor)>>13;
+						}
+						if( fadeEnable )
+						{
+							int fade2 = 0x100-mixer.fadeFactor;
+							r = (r*fade2+mixer.fadeFactor*mixer.rFadeColor)>>8;
+							g = (g*fade2+mixer.fadeFactor*mixer.gFadeColor)>>8;
+							b = (b*fade2+mixer.fadeFactor*mixer.bFadeColor)>>8;
+						}
+						if( prioverchar )
+						{
+							UINT32 color = pDest[x];
+							int tr = color>>16;
+							int tg = (color>>8)&0xff;
+							int tb = color&0xff;
+							int trans1 = 0x100 - mixer.poly_translucency;
+							r = (tr*mixer.poly_translucency + r*trans1)/0x100;
+							g = (tg*mixer.poly_translucency + g*trans1)/0x100;
+							b = (tb*mixer.poly_translucency + b*trans1)/0x100;
+						}
+						rgb = (r<<16)|(g<<8)|b;
+						pDest[x] = rgb;
+					}
+				}
 
-            g = g*shade/0x40;
-            if( g>0xff ) g = 0xff;
-
-            b = b*shade/0x40;
-	   	   if( b>0xff ) b = 0xff;
-
-            if( mbSuperSystem22 )
-            {
-               if( 1 || fogDensity>0 )
-               {
-                  int fogDensity2 = 0x2000 - fogDensity;
-                  if( 1 || fogDensity2>0 )
-           	      {
-                     r = (r*fogDensity2 + fogDensity*rBackColor)>>13;
-                     g = (g*fogDensity2 + fogDensity*gBackColor)>>13;
-                     b = (b*fogDensity2 + fogDensity*bBackColor)>>13;
-                  }
-                  else
-                  {
-                     r = rBackColor;
-                     g = gBackColor;
-                     b = bBackColor;
-                  }
-               }
-            }
-
-            if( fade )
-            {
-               int fade2 = 0x100-fade;
-               r = (r*fade2+fade*rFadeColor)>>8;
-               g = (g*fade2+fade*gFadeColor)>>8;
-               b = (b*fade2+fade*bFadeColor)>>8;
-            }
-
-			   color = (r<<16)|(g<<8)|b|pri;
-            pDest[x] = color;
             u += du;
 				v += dv;
 				i += di;
@@ -313,13 +420,13 @@ static void
 rendertri(
 		mame_bitmap *bitmap,
 		const rectangle *clip,
-      const pen_t *pens,
+      int color,
       int bn,
 		const vertex *v0,
 		const vertex *v1,
 		const vertex *v2,
-      UINT32 pri,
-      UINT16 flags )
+      UINT16 flags,
+		int cmode )
 {
 	int dy,ystart,yend,crop;
 
@@ -411,7 +518,7 @@ rendertri(
 
 			for( y=ystart; y<yend; y++ )
 			{
-				renderscanline_uvi_full( bitmap, clip, &e1,&e2,y, pens,bn,pri,flags );
+				renderscanline_uvi_full( bitmap, clip, &e1, &e2, y, color, bn, flags, cmode );
 
 				e2.x += dx2dy;
 				e2.u += du2dy;
@@ -459,7 +566,7 @@ rendertri(
 
 			for( y=ystart; y<yend; y++ )
 			{
-				renderscanline_uvi_full( bitmap, clip, &e1,&e2,y, pens,bn,pri,flags );
+				renderscanline_uvi_full( bitmap, clip, &e1,&e2,y, color, bn, flags, cmode );
 
 				e2.x += dx2dy;
 				e2.u += du2dy;
@@ -497,7 +604,7 @@ ProjectPoint( const Poly3dVertex *v, vertex *pv, int bDirect )
 	pv->u = (v->u+0.5f)*ooz;
 	pv->v = (v->v+0.5f)*ooz;
 	pv->i = (v->bri+0.5f)*ooz;
-}
+} /* ProjectPoint */
 
 static void
 BlitTriHelper(
@@ -507,17 +614,16 @@ BlitTriHelper(
 		const Poly3dVertex *v2,
 		unsigned color,
       int bn,
-      UINT32 pri,
       UINT16 flags,
-      int bDirect )
+      int bDirect,
+		int cmode )
 {
-   const pen_t *pens = &Machine->pens[color<<8];
 	vertex a,b,c;
    ProjectPoint( v0,&a,bDirect );
    ProjectPoint( v1,&b,bDirect );
    ProjectPoint( v2,&c,bDirect );
-   rendertri( pBitmap, &mClip.scissor, pens, bn, &a, &b, &c, pri,flags );
-}
+   rendertri( pBitmap, &mClip.scissor, color, bn, &a, &b, &c, flags, cmode );
+} /* BlitTriHelper */
 
 static float
 interp( float x0, float ns3d_y0, float x1, float ns3d_y1 )
@@ -542,9 +648,9 @@ BlitTri(
 	const Poly3dVertex *pv[3],
 	int color,
    int bn,
-   UINT32 pri,
    UINT16 flags,
-   int bDirect )
+   int bDirect,
+	int cmode )
 {
 	Poly3dVertex vc[3];
 	int i,j;
@@ -553,7 +659,7 @@ BlitTri(
 
    if( bDirect )
    {
-		BlitTriHelper( pBitmap, pv[0],pv[1],pv[2], color,bn,pri,flags,bDirect );
+		BlitTriHelper( pBitmap, pv[0],pv[1],pv[2], color,bn,flags,bDirect,cmode );
       return;
    }
 
@@ -578,7 +684,7 @@ BlitTri(
 	switch( bad_count )
 	{
 	case 0:
-		BlitTriHelper( pBitmap, pv[0],pv[1],pv[2], color,bn,pri,flags,bDirect );
+		BlitTriHelper( pBitmap, pv[0],pv[1],pv[2], color,bn,flags,bDirect,cmode );
 		break;
 
 	case 1:
@@ -593,7 +699,7 @@ BlitTri(
 		vc[iBad].v   = interp( pv[i]->z,pv[i]->v,   pv[iBad]->z, pv[iBad]->v );
 		vc[iBad].bri = interp( pv[i]->z,pv[i]->bri, pv[iBad]->z, pv[iBad]->bri );
 		vc[iBad].z = MIN_Z;
-		BlitTriHelper( pBitmap, &vc[0],&vc[1],&vc[2], color,bn,pri,flags,bDirect );
+		BlitTriHelper( pBitmap, &vc[0],&vc[1],&vc[2], color,bn,flags,bDirect,cmode );
 
 		j = (iBad+2)%3;
 		vc[i].x   = interp(pv[j]->z,pv[j]->x,   pv[iBad]->z,pv[iBad]->x  );
@@ -602,7 +708,7 @@ BlitTri(
 		vc[i].v   = interp(pv[j]->z,pv[j]->v,   pv[iBad]->z,pv[iBad]->v );
 		vc[i].bri = interp(pv[j]->z,pv[j]->bri, pv[iBad]->z,pv[iBad]->bri );
 		vc[i].z = MIN_Z;
-		BlitTriHelper( pBitmap, &vc[0],&vc[1],&vc[2], color,bn,pri,flags,bDirect );
+		BlitTriHelper( pBitmap, &vc[0],&vc[1],&vc[2], color,bn,flags,bDirect,cmode );
 		break;
 
 	case 2:
@@ -626,7 +732,7 @@ BlitTri(
 		vc[i].bri = interp(pv[iGood]->z,pv[iGood]->bri, pv[i]->z,pv[i]->bri );
 		vc[i].z = MIN_Z;
 
-		BlitTriHelper( pBitmap, &vc[0],&vc[1],&vc[2], color,bn,pri,flags,bDirect );
+		BlitTriHelper( pBitmap, &vc[0],&vc[1],&vc[2], color,bn,flags,bDirect,cmode );
 		break;
 
 	case 3:
@@ -636,19 +742,19 @@ BlitTri(
 } /* BlitTri */
 
 static void
-poly3d_DrawQuad( mame_bitmap *pBitmap, int textureBank, int color, Poly3dVertex v[4], UINT32 pri, UINT16 flags, int bDirect )
+poly3d_DrawQuad( mame_bitmap *pBitmap, int textureBank, int color, Poly3dVertex v[4], UINT16 flags, int bDirect, int cmode )
 {
    const Poly3dVertex *pv[3];
 
    pv[0] = &v[0];
    pv[1] = &v[1];
    pv[2] = &v[2];
-   BlitTri( pBitmap, pv, color, textureBank, pri, flags, bDirect );
+   BlitTri( pBitmap, pv, color, textureBank, flags, bDirect, cmode );
 
    pv[0] = &v[2];
    pv[1] = &v[3];
    pv[2] = &v[0];
-   BlitTri( pBitmap, pv, color, textureBank, pri, flags, bDirect );
+   BlitTri( pBitmap, pv, color, textureBank, flags, bDirect, cmode );
 }
 
 static void
@@ -656,7 +762,7 @@ mydrawgfxzoom(
 	mame_bitmap *dest_bmp,const gfx_element *gfx,
 	unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 	const rectangle *clip,int transparency,int transparent_color,
-	int scalex, int scaley, int z, UINT32 pri )
+	int scalex, int scaley, int z, int prioverchar )
 {
 	rectangle myclip;
 	if (!scalex || !scaley) return;
@@ -689,34 +795,20 @@ mydrawgfxzoom(
 			int x_index_base;
 			int y_index;
 
-         int rBackColor = 0;
-         int gBackColor = 0;
-         int bBackColor = 0;
-         int bFogEnabled = 0;
+         int bFogEnable = 0;
          INT16 fogDelta = 0;
-
-         int fade = 0;
-         int rFadeColor = 0;
-         int gFadeColor = 0;
-         int bFadeColor = 0;
+			int fadeEnable = (mixer.target&2) && mixer.fadeFactor;
 
          if( mbSuperSystem22 )
          {
-            int target = nthbyte( namcos22_gamma, 0x1a );
-            if( target&2 ) /* or 4? */
-            {
-               fade  = nthbyte( namcos22_gamma, 0x19 );
-               rFadeColor = nthbyte( namcos22_gamma, 0x16 );
-	            gFadeColor = nthbyte( namcos22_gamma, 0x17 );
-               bFadeColor = nthbyte( namcos22_gamma, 0x18 );
-            }
-
-            rBackColor = nthbyte( namcos22_gamma, 0x05 );
-            gBackColor = nthbyte( namcos22_gamma, 0x06 );
-            bBackColor = nthbyte( namcos22_gamma, 0x07 );
             fogDelta = nthword(namcos22_czattr, 0 );
-            bFogEnabled = nthword(namcos22_czattr,4)&0x4000; /* ? */
+            bFogEnable = nthword(namcos22_czattr,4)&0x4000; /* ? */
          }
+			else
+			{
+				bFogEnable = 0;
+			}
+
 			if( flipx )
 			{
 				x_index_base = (sprite_screen_width-1)*dx;
@@ -767,51 +859,43 @@ mydrawgfxzoom(
 				{
 					UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
 					UINT32 *dest = (UINT32 *)dest_bmp->line[y];
+					const UINT8 *pCharPri = (UINT8 *)priority_bitmap->line[y];
 					int x, x_index = x_index_base;
 					for( x=sx; x<ex; x++ )
 					{
 						int pen = source[x_index>>16];
 						if( pen != transparent_color )
 						{
-                     UINT32 color = pal[pen];
-                     int r = color>>16;
-	                  int g = (color>>8)&0xff;
-               		int b = color&0xff;
-
-                     if( bFogEnabled && z!=0xffff )
-                     {
-                        int zc = Clamp256(fogDelta + z);
-                        UINT16 fogDensity = namcos22_czram[3][zc];
-                        if( fogDensity>0 )
-                        {
-                           int fogDensity2 = 0x2000 - fogDensity;
-		                     if( fogDensity2>0 )
-           		            {
-                              r = (r*fogDensity2 + fogDensity*rBackColor)>>13;
-                              g = (g*fogDensity2 + fogDensity*gBackColor)>>13;
-                              b = (b*fogDensity2 + fogDensity*bBackColor)>>13;
-                           }
-                           else
-                           {
-                              r = rBackColor;
-                              g = gBackColor;
-                              b = bBackColor;
-                           }
-                        }
-                     }
-
-                     if( fade )
-                     {
-                        int fade2 = 0x100-fade;
-                        r = (r*fade2+fade*rFadeColor)>>8;
-                        g = (g*fade2+fade*gFadeColor)>>8;
-                        b = (b*fade2+fade*bFadeColor)>>8;
-                     }
-
-                     color = (r<<16)|(g<<8)|b;
-                     color = alpha_blend32(dest[x], color);
-                     color&=0xffffff;
-                     dest[x] = color|pri;
+							if( pCharPri[x]==0 || prioverchar )
+							{
+	                     UINT32 color = pal[pen];
+		                  int r = color>>16;
+			               int g = (color>>8)&0xff;
+				      		int b = color&0xff;
+	                     if( bFogEnable && z!=0xffff )
+		                  {
+			                  int zc = Clamp256(fogDelta + z);
+				               UINT16 fogDensity = namcos22_czram[3][zc];
+					            if( fogDensity>0 )
+						         {
+							         int fogDensity2 = 0x2000 - fogDensity;
+								      r = (r*fogDensity2 + fogDensity*mixer.rFogColor)>>13;
+									   g = (g*fogDensity2 + fogDensity*mixer.gFogColor)>>13;
+										b = (b*fogDensity2 + fogDensity*mixer.bFogColor)>>13;
+									}
+								}
+	                     if( fadeEnable )
+		                  {
+			                  int fade2 = 0x100-mixer.fadeFactor;
+				               r = (r*fade2+mixer.fadeFactor*mixer.rFadeColor)>>8;
+					            g = (g*fade2+mixer.fadeFactor*mixer.gFadeColor)>>8;
+						         b = (b*fade2+mixer.fadeFactor*mixer.bFadeColor)>>8;
+							   }
+	                     color = (r<<16)|(g<<8)|b;
+		                  color = alpha_blend32(dest[x], color);
+			               color&=0xffffff;
+				            dest[x] = color;
+							}
 						}
 						x_index += dx;
 					}
@@ -823,160 +907,51 @@ mydrawgfxzoom(
 } /* mydrawgfxzoom */
 
 static void
-mixtile(
-	mame_bitmap *dest_bmp,const gfx_element *gfx,
-	unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-	const rectangle *clip,int transparency,int transparent_color )
+ApplyGamma( mame_bitmap *bitmap )
 {
-	rectangle myclip;
-   myclip.min_x = 0;
-   myclip.min_y = 0;
-   myclip.max_x = dest_bmp->width-1;
-   myclip.max_y = dest_bmp->height-1;
-   clip=&myclip;
-
-   if( gfx && gfx->colortable )
-	{
-		const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)];
-		UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
-		int sprite_screen_height = gfx->height;
-		int sprite_screen_width  = gfx->width;
-		if (sprite_screen_width && sprite_screen_height)
+	int x,y;
+	if( mbSuperSystem22 )
+   { /* super system 22 */
+#ifdef LSB_FIRST
+#define XORPAT 0x3
+#else
+#define XORPAT 0x0
+#endif
+		const UINT8 *rlut = (const UINT8 *)&namcos22_gamma[0x100/4];
+		const UINT8 *glut = (const UINT8 *)&namcos22_gamma[0x200/4];
+		const UINT8 *blut = (const UINT8 *)&namcos22_gamma[0x300/4];
+		for( y=0; y<bitmap->height; y++ )
 		{
-			int dx = 1;
-			int dy = 1;
-			int ex = sx+sprite_screen_width;
-			int ey = sy+sprite_screen_height;
-			int x_index_base;
-			int y_index;
-         int spot_translucency = 0x00;
-         int poly_translucency = 0x00;
-         int text_translucency = 0x00;
-         if( mbSuperSystem22 )
-         {
-            spot_translucency = 0;//nthbyte( namcos22_gamma, 0x0d ); // 13
-            poly_translucency = nthbyte( namcos22_gamma, 0x11 ); // 17
-	         text_translucency = nthbyte( namcos22_gamma, 0x15 ); // 21
-         }
-			if( flipx )
+			UINT32 *dest = (UINT32 *)bitmap->line[y];
+			for( x=0; x<bitmap->width; x++ )
 			{
-				x_index_base = sprite_screen_width-1;
-				dx = -dx;
-			}
-			else
-			{
-				x_index_base = 0;
-			}
-			if( flipy )
-			{
-				y_index = sprite_screen_height-1;
-				dy = -dy;
-			}
-			else
-			{
-				y_index = 0;
-			}
-			if( clip )
-			{
-				if( sx < clip->min_x)
-				{ /* clip left */
-					int pixels = clip->min_x-sx;
-					sx += pixels;
-					x_index_base += pixels*dx;
-				}
-				if( sy < clip->min_y )
-				{ /* clip top */
-					int pixels = clip->min_y-sy;
-					sy += pixels;
-					y_index += pixels*dy;
-				}
-				if( ex > clip->max_x+1 )
-				{ /* clip right */
-					int pixels = ex-clip->max_x-1;
-					ex -= pixels;
-				}
-				if( ey > clip->max_y+1 )
-				{ /* clip bottom */
-					int pixels = ey-clip->max_y-1;
-					ey -= pixels;
-				}
-			}
-			if( ex>sx )
-			{ /* skip if inner loop doesn't draw anything */
-				int y;
-				for( y=sy; y<ey; y++ )
-				{
-					UINT8 *source = source_base + y_index * gfx->line_modulo;
-					UINT32 *dest = (UINT32 *)dest_bmp->line[y];
-					int x, x_index = x_index_base;
-					for( x=sx; x<ex; x++ )
-					{
-						int pen = source[x_index];
-                  UINT32 polysprite_color = dest[x];
-                  int r = (polysprite_color>>16)&0xff;
-                  int g = (polysprite_color>>8)&0xff;
-                  int b = polysprite_color&0xff;
-
-                  if( pen!=transparent_color )
-                  {
-                     if( mbSpotlightEnabled && (color&8)==0 )
-                     {
-                        int i0 = (pen|((color&7)<<4));
-                        int i1 = (0x80 - i0);
-                        i0 *= 0xff;
-                        r=(i1*r+i0)/0x80;
-                        g=(i1*g+i0)/0x80;
-                        b=(i1*b+i0)/0x80;
-                     }
-                     else
-                     {
-                        UINT32 color = pal[pen];
-                        int tr = color>>16;
-                        int tg = (color>>8)&0xff;
-           		         int tb = color&0xff;
-                        if( polysprite_color&PRI_OVER_TEXT )
-                        { /* polysprite layer over text */
-                           if( polysprite_color&POLY_PIXEL )
-                           {
-                              int trans1 = 0x100 - poly_translucency;
-                              r = (tr*poly_translucency + r*trans1)/0x100;
-                              g = (tg*poly_translucency + g*trans1)/0x100;
-                              b = (tb*poly_translucency + b*trans1)/0x100;
-                           }
-                           else if( polysprite_color&SPRITE_PIXEL )
-                           { // wrong!
-                              int trans1 = 0x100 - spot_translucency;
-                              r = (tr*spot_translucency + r*trans1)/0x100;
-                              g = (tg*spot_translucency + g*trans1)/0x100;
-                              b = (tb*spot_translucency + b*trans1)/0x100;
-                           }
-                        }
-                        else //if( text_translucency && (polysprite_color&(POLY_PIXEL|SPRITE_PIXEL)) )
-                        {
-                           int trans1 = 0x100 - text_translucency;
-                           r = (tr*trans1 + r*text_translucency)/0x100;
-                           g = (tg*trans1 + g*text_translucency)/0x100;
-                           b = (tb*trans1 + b*text_translucency)/0x100;
-                        }
-                     }
-                  } /* pen!=transparent_color */
-
-                  if( namcos22_gamma )
-                  {
-                      r = nthbyte( &namcos22_gamma[0x100/4], r );
-                      g = nthbyte( &namcos22_gamma[0x200/4], g );
-                      b = nthbyte( &namcos22_gamma[0x300/4], b );
-                   }
-                   dest[x] = (r<<16)|(g<<8)|b;
-
-                  x_index += dx;
-					}
-					y_index += dy;
-				}
+				int rgb = dest[x];
+				int r = rlut[XORPAT^(rgb>>16)];
+				int g = glut[XORPAT^((rgb>>8)&0xff)];
+				int b = blut[XORPAT^(rgb&0xff)];
+				dest[x] = (r<<16)|(g<<8)|b;
 			}
 		}
 	}
-} /* mixtile */
+	else
+	{ /* system 22 */
+		const UINT8 *rlut = 0x000+(const UINT8 *)memory_region(REGION_USER1);
+		const UINT8 *glut = 0x100+(const UINT8 *)memory_region(REGION_USER1);
+		const UINT8 *blut = 0x200+(const UINT8 *)memory_region(REGION_USER1);
+		for( y=0; y<bitmap->height; y++ )
+		{
+			UINT32 *dest = (UINT32 *)bitmap->line[y];
+			for( x=0; x<bitmap->width; x++ )
+			{
+				int rgb = dest[x];
+				int r = rlut[rgb>>16];
+				int g = glut[(rgb>>8)&0xff];
+				int b = blut[rgb&0xff];
+				dest[x] = (r<<16)|(g<<8)|b;
+			}
+		}
+	}
+} /* ApplyGamma */
 
 static void
 poly3d_Draw3dSprite( mame_bitmap *bitmap, gfx_element *gfx, int tileNumber, int color, int sx, int sy, int width, int height, int translucency, int zc, UINT32 pri )
@@ -1127,7 +1102,7 @@ struct SceneNode
          float vx,vy,vw,vh;
          int textureBank;
          int color;
-         int pri;
+         int cmode;
          int flags;
          int bDirect;
          Poly3dVertex v[4];
@@ -1137,6 +1112,7 @@ struct SceneNode
       {
          int tile, color, pri;
          int flipx, flipy;
+			int linkType;
 	      int numcols, numrows;
 	      int xpos, ypos;
 	      int sizex, sizey;
@@ -1148,6 +1124,13 @@ struct SceneNode
 static struct SceneNode mSceneRoot;
 static struct SceneNode *mpFreeSceneNode;
 
+static void
+FreeSceneNode( struct SceneNode *node )
+{
+   node->nextInBucket = mpFreeSceneNode;
+   mpFreeSceneNode = node;
+} /* FreeSceneNode */
+
 static struct SceneNode *
 MallocSceneNode( void )
 {
@@ -1158,22 +1141,25 @@ MallocSceneNode( void )
    }
    else
    {
-      node = auto_malloc(sizeof(struct SceneNode));
-      if( !node )
-      {
-         osd_die( "insufficient mem for scene node\n" );
-      }
+#define SCENE_NODE_POOL_SIZE 64
+		struct SceneNode *pSceneNodePool = auto_malloc(sizeof(struct SceneNode)*SCENE_NODE_POOL_SIZE);
+		if( !pSceneNodePool )
+		{
+         osd_die( "insufficient mem for scene node pool\n" );
+		}
+		else
+		{
+			int i;
+			for( i=0; i<SCENE_NODE_POOL_SIZE; i++ )
+			{
+				FreeSceneNode( &pSceneNodePool[i] );
+			}
+			return MallocSceneNode();
+		}
    }
    memset( node, 0, sizeof(*node) );
    return node;
 } /* MallocSceneNode */
-
-static void
-FreeSceneNode( struct SceneNode *node )
-{
-   node->nextInBucket = mpFreeSceneNode;
-   mpFreeSceneNode = node;
-} /* FreeSceneNode */
 
 static struct SceneNode *
 NewSceneNode( UINT32 zsortvalue24, SceneNodeType type )
@@ -1185,7 +1171,7 @@ NewSceneNode( UINT32 zsortvalue24, SceneNodeType type )
       int hash = (zsortvalue24>>20)&RADIX_MASK;
       struct SceneNode *next = node->data.nonleaf.next[hash];
       if( !next )
-      {
+      { /* lazily allocate tree node for this radix */
          next = MallocSceneNode();
          next->type = eSCENENODE_NONLEAF;
          node->data.nonleaf.next[hash] = next;
@@ -1195,7 +1181,7 @@ NewSceneNode( UINT32 zsortvalue24, SceneNodeType type )
    }
 
    if( node->type == eSCENENODE_NONLEAF )
-   { /* new allocation */
+   { /* first leaf allocation on this branch */
       node->type = type;
       return node;
    }
@@ -1203,8 +1189,18 @@ NewSceneNode( UINT32 zsortvalue24, SceneNodeType type )
    {
       struct SceneNode *leaf = MallocSceneNode();
       leaf->type = type;
+#if 0
       leaf->nextInBucket = node->nextInBucket;
       node->nextInBucket = leaf;
+#else
+		/* stable insertion sort */
+		leaf->nextInBucket = NULL;
+		while( node->nextInBucket )
+		{
+			node = node->nextInBucket;
+		}
+		node->nextInBucket = leaf;
+#endif
       return leaf;
    }
 } /* NewSceneNode */
@@ -1214,20 +1210,24 @@ RenderSprite( mame_bitmap *bitmap, struct SceneNode *node )
 {
    int tile = node->data.sprite.tile;
    int col,row;
-   UINT32 pri = SPRITE_PIXEL;
-   if( node->data.sprite.pri )
-   {
-      pri |= PRI_OVER_TEXT;
-   }
-
+	int i = 0;
    for( row=0; row<node->data.sprite.numrows; row++ )
    {
       for( col=0; col<node->data.sprite.numcols; col++ )
    	{
+         int code = tile;
+         if( node->data.sprite.linkType == 0xff )
+         {
+            code += i;
+         }
+         else
+         {
+            code += nthword( &spriteram32[0x800/4], i+node->data.sprite.linkType*4 );
+         }
          poly3d_Draw3dSprite(
                bitmap,
                Machine->gfx[GFX_SPRITE],
-               tile,
+               code,
                node->data.sprite.color,
                node->data.sprite.xpos+col*node->data.sprite.sizex,
                node->data.sprite.ypos+row*node->data.sprite.sizey,
@@ -1235,8 +1235,8 @@ RenderSprite( mame_bitmap *bitmap, struct SceneNode *node )
                node->data.sprite.sizey,
                node->data.sprite.translucency,
                node->data.sprite.cz,
-               pri );
-      	tile++;
+               node->data.sprite.pri );
+      	i++;
       } /* next col */
 	} /* next row */
 } /* RenderSprite */
@@ -1274,9 +1274,9 @@ RenderSceneHelper( mame_bitmap *bitmap, struct SceneNode *node )
                   node->data.quad3d.textureBank,
                   node->data.quad3d.color,
                   node->data.quad3d.v,
-                  POLY_PIXEL| ((node->data.quad3d.pri)?(PRI_OVER_TEXT):0),
                   node->data.quad3d.flags,
-                  node->data.quad3d.bDirect );
+                  node->data.quad3d.bDirect,
+                  node->data.quad3d.cmode );
                break;
 
             case eSCENENODE_SPRITE:
@@ -1438,147 +1438,41 @@ PatchTexture( void )
    }
 } /* PatchTexture */
 
-/*
-alpine ski ingame
-0x8cb6: namcos22_system_controller_w[0x4]:=0xff
-0x8dcc: dspram_w[0x4]:=0x0
-0x8dea: dspram_w[0x1]:=0x1
-0xa8b2: dspram_w[0x0]:=0x1
-0xaa12: dspram_w[0x0]:=0x0
-
-alpineski test
-0x8cb6: namcos22_system_controller_w[0x4]:=0xff
-0x1dda92: namcos22_system_controller_w[0x4]:=0x00
-0x1dee50: dspram_w[0x2]:=0x0
-0x1dd772: dspram_w[0x0]:=0x1
-
-prop test main:
-0xc0ca: namcos22_system_controller_w[0x4]:=0x00
-0xc13e: dspram_w[0x4]:=0x1
-0xc158: dspram_w[0x1]:=0x1
-0xbf62: namcos22_system_controller_w[0x14]:=0x00
-0xbf6a: dspram_w[0x0]:=0x1
-0xc018: dspram_w[0x0]:=0x0
-
-prop video test
-0xc0ca: namcos22_system_controller_w[0x4]:=0x00
-0x1a1fa: namcos22_system_controller_w[0x14]:=0x00
-0x3f568: dspram_w[0x2]:=0x4
-0x3dec2: dspram_w[0x0]:=0x1
-0xc0ca: namcos22_system_controller_w[0x4]:=0x00
-0x1a1fa: namcos22_system_controller_w[0x14]:=0x00
-0x3f568: dspram_w[0x2]:=0x5
-0x3dec2: dspram_w[0x0]:=0x1
-
-prop ingame:
-0xc0ca: namcos22_system_controller_w[0x4]:=0x00
-0xc13e: dspram_w[0x4]:=0x1
-0xc158: dspram_w[0x1]:=0x1
-0xbf62: namcos22_system_controller_w[0x14]:=0x00
-0xbf6a: dspram_w[0x0]:=0x1
-0xc018: dspram_w[0x0]:=0x0
-*/
-
-/*
-256 color test:
-00c10000: 00008010 00000800 00000100 00000100
-                 u        v       sx       sy     i    z
-00c10010: 0000ff00 0000ff00 0000ff80 0000ff80 00004020 00000001
-          0000ff00 0000fff0 0000ff80 00000080 00004020 00000001
-00c10040: 0000fff0 0000fff0 00000080 00000080 00004020 00000001
-          0000fff0 0000ff00 00000080 0000ff80 00004020 00000001
----------------------------------------------------------------
-gouraud shading:
-00c10000: 0010 0800 0300 0100 //red;ff..00
-00c10010: 0000 0000 ff00 ff60 ff20 0000
-          0000 0000 ff00 ff80 ff20 0000
-00c10040: 0000 0000 0080 ff80 0020 0000
-          0000 0000 0080 ff60 0020 0000
-
-00c10070: 0010 0800 0400 0100 //green;ff..00
-          0000 0000 ff00 ff90 ff20 0000
-          0000 0000 ff00 ffb0 ff20 0000
-          0000 0000 0080 ffb0 0020 0000
-          0000 0000 0080 ff90 0020 0000
-
-          0010 0800 0500 0100 //blue;ff..00
-00c100f0: 0000 0000 ff00 ffc0 ff20 0000
-          0000 0000 ff00 ffe0 ff20 0000
-00c10120: 0000 0000 0080 ffe0 0020 0000
-          0000 0000 0080 ffc0 0020 0000
-
-00c10150: 0010 0800 0200 0100 //grey;ff..00
-00c10160: 0000 0000 ff00 fff0 ff20 0000
-          0000 0000 ff00 0010 ff20 0000
-00c10190: 0000 0000 0080 0010 0020 0000
-          0000 0000 0080 fff0 0020 0000
-
-00c101c0: 0010 0800 0200 0100 //grey skew#1
-00c101d0: 0000 0000 ff00 0030 401f 0000
-          0000 0000 ff00 0050 401f 0000
-00c10200: 0000 0000 0080 0050 0020 0000
-          0000 0000 0080 0030 0020 0000
-
-00c10230: 0010 0800 0200 0100 //grey skew#2
-00c10240: 0000 0000 ff00 0060 4020 0000
-          0000 0000 ff00 0080 4020 0000
-00c10270: 0000 0000 0080 0080 0020 0000
-          0000 0000 0080 0060 0020 0000
-
-00c102a0: 0010 0800 0200 0100 //grey skew#3
-00c102b0: 0000 0000 ff00 0090 4021 0000
-          0000 0000 ff00 00b0 4021 0000
-00c102e0: 0000 0000 0080 00b0 0020 0000
-          0000 0000 0080 0090 0020 0000
-
-00c10310: 8010 0800 0200 0100           //grey big box
-00c10320: 0000 0000 00a0 ff60 4020 0001
-          0000 0000 00a0 00b0 2020 0001
-00c10350: 0000 0000 0100 00b0 0020 0001
-          0000 0000 0100 ff60 2020 0001
----------------------------------------------------------------
-geometry test:
-               pri      pri    color       cz
-00c10000: 00008010 00000800 00000100 00000100
-00c10010: 00000000 00000000 0000ffc2 0000ff83 0000401e 00000001
-          00000000 000000f0 0000fe71 0000002f 00004020 00000001
-00c10040: 000000f0 000000f0 000001e6 00000089 00004020 00000001
-          000000f0 00000000 00000094 0000ff8e 0000401e 00000001
-*/
 void
 namcos22_draw_direct_poly( const UINT16 *pSource )
 {
    /**
     * word#0:
     *    x--------------- end-of-display-list marker
-    *    ----xxxxxxxxxxxx pri (lo)
+    *    ----xxxxxxxxxxxx priority (lo)
     *
     * word#1:
-    *    ----xxxxxxxxxxxx pri (hi)
+    *    ----xxxxxxxxxxxx priority (hi)
     *
     * word#2:
-    *    x--------------- ?
-    *    -xxxxxxx-------- color
-    *    ---------xxx---- cmode (priority over characters)
-    *    ------------xxxx bn
+    *    xxxxxxxx-------- PAL (high bit is fog enable)
+    *    --------xxxx---- CMODE (color mode for texture unpack)
+     *    ------------xxxx BN (texture bank)
     *
     * word#3:
-    *    xxxxxxxx-------- zc
+    *    xxxxxxxx-------- ZC
     *    --------------xx depth cueing table select
     *
     * for each vertex:
-    *    0x0100 0x009c // u,v
-    *    0x0072 0xf307 // sx,sy
-    *    0x602b 0x9f28 // i,zpos
-    */
+    *    xxxx xxxx // u,v
+     *
+    *    xxxx xxxx // sx,sy
+     *
+    *    xx-- ---- // BRI
+     *    --xx xxxx // zpos
+     */
    INT32 zsortvalue24 = ((pSource[1]&0xfff)<<12)|(pSource[0]&0xfff);
-   unsigned color = (pSource[2]&0x7f00)>>8;
    struct SceneNode *node = NewSceneNode(zsortvalue24,eSCENENODE_QUAD3D);
    int i;
-   node->data.quad3d.pri = (pSource[2]&0x0070)==0x0010;
    node->data.quad3d.flags = ((pSource[3]&0x7f00)*2)|(pSource[3]&3);
-   node->data.quad3d.textureBank = pSource[2]&0xf;
-   node->data.quad3d.color = color;
+	node->data.quad3d.cmode = (pSource[2]&0x00f0)>>4;
+	node->data.quad3d.textureBank = pSource[2]&0xf;
+   node->data.quad3d.color = (pSource[2]&0xff00)>>8;
    pSource += 4;
    for( i=0; i<4; i++ )
    {
@@ -1707,6 +1601,7 @@ DrawSpritesHelper(
 			int zoomy = (1<<16)*sizey/0x20;
 			int flipy = attrs&0x8;
 			int numrows = attrs&0x7; /* 0000 0001 1111 1111 0000 0000 fccc frrr */
+			int linkType = (attrs&0x00ff0000)>>16;
 			int flipx = (attrs>>4)&0x8;
 			int numcols = (attrs>>4)&0x7;
 			int tile = code>>16;
@@ -1744,12 +1639,14 @@ DrawSpritesHelper(
          {
             struct SceneNode *node = NewSceneNode(zcoord,eSCENENODE_SPRITE);
             node->data.sprite.tile = tile;
-            node->data.sprite.pri = cz&0x80;//(color&0x80)
+            node->data.sprite.pri = cz&0x80;
+//              node->data.sprite.pri = (color&0x80);
             node->data.sprite.color = color&0x7f;
             node->data.sprite.flipx = flipx;
             node->data.sprite.flipy = flipy;
             node->data.sprite.numcols = numcols;
             node->data.sprite.numrows = numrows;
+            node->data.sprite.linkType = linkType;
             node->data.sprite.xpos = xpos;
             node->data.sprite.ypos = ypos;
             node->data.sprite.sizex = sizex;
@@ -1816,10 +1713,10 @@ DrawSprites( mame_bitmap *bitmap, const rectangle *cliprect )
         00980220:  000007ff 000007ff 000007ff 000007ff
         00980230:  000007ff 000007ff 05000500 050a050a
 
-        0x980400:   zoom table?
-        0x980600:   zoom table?
+        0x980400:   hzoom table
+        0x980600:   vzoom table
 
-        unknown table:
+        link table:
         0x980800:   0000 0001 0002 0003 ... 03ff
 
         eight words per sprite:
@@ -1928,19 +1825,69 @@ UpdatePalette( void ) /* for System22 - ignore gamma/fader effects for now */
 	}
 } /* UpdatePalette */
 
+static tilemap *bgtilemap;
+
+static void TextTilemapGetInfo( int tile_index )
+{
+	UINT16 data = nthword( namcos22_textram,tile_index );
+	/**
+     * x---.----.----.---- blend
+    * xxxx.----.----.---- palette select
+    * ----.xx--.----.---- flip
+    * ----.--xx.xxxx.xxxx code
+    */
+	SET_TILE_INFO( GFX_CHAR,data&0x03ff,data>>12,TILE_FLIPYX((data&0x0c00)>>10) );
+	if( data&0x8000 )
+	{
+		tile_info.priority = 1;
+	}
+} /* TextTilemapGetInfo */
+
+READ32_HANDLER( namcos22_textram_r )
+{
+	return namcos22_textram[offset];
+}
+
+WRITE32_HANDLER( namcos22_textram_w )
+{
+	COMBINE_DATA( &namcos22_textram[offset] );
+	tilemap_mark_tile_dirty( bgtilemap, offset*2 );
+	tilemap_mark_tile_dirty( bgtilemap, offset*2+1 );
+}
+
 static void
-DrawTextLayer( mame_bitmap *bitmap, const rectangle *cliprect )
-{//spot ram: ff..00; each entry repeats 4x; 0x400 == 32*32
-   int palBase = namcos22_gamma?(nthbyte(namcos22_gamma,0x1b)*16):0x7f0;
+DrawTranslucentCharacters( mame_bitmap *bitmap, const rectangle *cliprect )
+{
+	alpha_set_level( 0xff-mixer.text_translucency ); /* ? */
+	tilemap_draw( bitmap, cliprect, bgtilemap, TILEMAP_ALPHA|1, 0 );
+}
+
+static void
+DrawCharacterLayer( mame_bitmap *bitmap, const rectangle *cliprect )
+{
 	unsigned i;
    INT32 dx = namcos22_tilemapattr[0]>>16;
    INT32 dy = namcos22_tilemapattr[0]&0xffff;
-   /* tilemap[1] == 0x006e0000
-    * tilemap[2] == 0x01ff0000
+   /**
+     * namcos22_tilemapattr[0x4/4] == 0x006e0000
+    * namcos22_tilemapattr[0x8/4] == 0x01ff0000
+     * namcos22_tilemapattr[0xe/4] == ?
     */
-
    if( cgsomethingisdirty )
 	{
+		for( i=0; i<64*64; i+=2 )
+		{
+			UINT32 data = namcos22_textram[i/2];
+			if( cgdirty[(data>>16)&0x3ff] )
+			{
+				tilemap_mark_tile_dirty( bgtilemap,i );
+			}
+			if( cgdirty[data&0x3ff] )
+			{
+				tilemap_mark_tile_dirty( bgtilemap,i+1 );
+			}
+		}
+
 		for( i=0; i<NUM_CG_CHARS; i++ )
 		{
 			if( cgdirty[i] )
@@ -1952,44 +1899,12 @@ DrawTextLayer( mame_bitmap *bitmap, const rectangle *cliprect )
 		cgsomethingisdirty = 0;
 	}
 
-   {
-      int col,row;
-      int tileIndex = 0;
-      for( row=0; row<64; row++ )
-      {
-         for( col=0; col<64; col++ )
-         {
-            UINT16 data = nthword( namcos22_textram,tileIndex++ );
-           	/**
-             * xxxx------------ palette select
-             * ----xx---------- flip
-             * ------xxxxxxxxxx code
-             */
-            int flipy = data&0x800;
-            int flipx = data&0x400;
-            int tileNumber = data&0x3ff;
-            int color = data>>12;
-            int sx = (col*16 + 0x35c - dx/*+9*/)&0x3ff;
-            int sy = (row*16 - dy/*-9*/)&0x3ff;
-            if( sx>640 ) sx-= 0x400;
-            if( sy>480 ) sy-= 0x400;
-
-            mixtile(
-               bitmap,
-               Machine->gfx[GFX_CHAR],
-               tileNumber,
-               palBase+color,
-               flipx,
-               flipy,
-               sx,
-               sy,
-               NULL/*clip*/,
-               TRANSPARENCY_PEN,
-               0xf );
-         }
-      }
-   }
-} /* DrawTextLayer */
+	fillbitmap(priority_bitmap,0,cliprect);
+	tilemap_set_scrollx( bgtilemap,0, (dx-0x35c)&0x3ff );
+	tilemap_set_scrolly( bgtilemap,0, dy&0x3ff );
+	tilemap_set_palette_offset( bgtilemap, mixer.palBase*256 );
+	tilemap_draw( bitmap, cliprect, bgtilemap, 0/*flags*/, 0x1/*priority*/ ); /* opaque */
+} /* DrawCharacterLayer */
 
 /*********************************************************************************************/
 
@@ -2058,7 +1973,8 @@ BlitQuadHelper(
 		unsigned addr,
 		float m[4][4],
 		INT32 polygonShiftValue22, /* 22 bits */
-		INT32 flags )
+		int flags,
+		int packetFormat )
 {
    int absolutePriority = mAbsolutePriority;
    UINT32 zsortvalue24;
@@ -2090,7 +2006,7 @@ BlitQuadHelper(
 
    if( bBackFace && (flags&0x0020) )
 	{ /* backface cull one-sided polygons */
-			return;
+		return;
 	}
 
    for( i=0; i<4; i++ )
@@ -2123,10 +2039,14 @@ BlitQuadHelper(
             logerror( "unknown normal format: 0x%x\n", mSurfaceNormalFormat );
          }
       } /* pLitSurfaceInfo */
-      else
+      else if( packetFormat & 0x40 )
       {
          bri = (GetPolyData(i+addr)>>16)&0xff;
       }
+		else
+		{
+			bri = 0x40;
+		}
       pVerTex->bri = bri;
 	} /* for( i=0; i<4; i++ ) */
 
@@ -2178,10 +2098,9 @@ BlitQuadHelper(
 
    {
       struct SceneNode *node = NewSceneNode(zsortvalue24,eSCENENODE_QUAD3D);
-      int bank = (v[0].v>>12)&0xf;
-      node->data.quad3d.pri = flags&0x2000;
-      node->data.quad3d.textureBank = bank;
-      node->data.quad3d.color = (color>>8)&0x7f;
+		node->data.quad3d.cmode = (v[0].u>>12)&0xf;
+      node->data.quad3d.textureBank = (v[0].v>>12)&0xf;
+      node->data.quad3d.color = (color>>8)&0xff;
 
       {
          INT32 cz = (INT32)((zmin+zmax)/2.0f);
@@ -2232,18 +2151,49 @@ RegisterNormals( INT32 addr, float m[4][4] )
 static void
 BlitQuads( mame_bitmap *pBitmap, INT32 addr, float m[4][4], INT32 base )
 {
-   INT32 numAdditionalNormals = 0;
-	INT32 size = GetPolyData(addr++);
-	INT32 finish = addr + (size&0xff);
-	INT32 flags;
-	INT32 color;
-	INT32 bias;
+   int numAdditionalNormals = 0;
+	int chunkLength = GetPolyData(addr++);
+	int finish = addr + chunkLength;
+	if( chunkLength>0x100 )
+	{
+		osd_die( "bad packet length" );
+	}
 
 	while( addr<finish )
 	{
-		size = GetPolyData(addr++);
-		size &= 0xff;
-		switch( size )
+		int packetLength = GetPolyData( addr++ );
+		int packetFormat = GetPolyData( addr+0 );
+		int flags, color, bias;
+
+		/**
+         * packetFormat:
+         *      800000 final packet in chunk
+         *      080000 ?
+         *      020000 color word exists?
+         *      010000 z-offset word exists?
+         *      002000 ?
+         *      001000 z-offset word exists?
+         *      000400 ?
+         *      000080 tex# or UV or CMODE?
+         *      000040 use I
+         *      000001 ?
+         *
+         * flags:
+         *      1042 (always set)
+         *      0c00 depth-cueing mode (brake-disc(2108)=001e43, model font)
+         *      0200 usually 1
+         *      0100 ?
+         *      0040 1 ... polygon palette?
+         *      0020 cull backface
+         *      0002 ?
+         *      0001 ?
+         *
+         * color:
+         *      ff0000 type?
+         *      008000 depth-cueing off
+         *      007f00 palette#
+         */
+		switch( packetLength )
 		{
 		case 0x17:
 			/**
@@ -2254,7 +2204,7 @@ BlitQuads( mame_bitmap *pBitmap, INT32 addr, float m[4][4], INT32 base )
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
 			bias = 0;
-			BlitQuadHelper( pBitmap,color,addr+3,m,bias,flags );
+			BlitQuadHelper( pBitmap,color,addr+3,m,bias,flags,packetFormat );
 			break;
 
 		case 0x18:
@@ -2267,7 +2217,7 @@ BlitQuads( mame_bitmap *pBitmap, INT32 addr, float m[4][4], INT32 base )
 			flags = GetPolyData(addr+1);
 			color = GetPolyData(addr+2);
 			bias  = GetPolyData(addr+3);
-			BlitQuadHelper( pBitmap,color,addr+4,m,bias,flags );
+			BlitQuadHelper( pBitmap,color,addr+4,m,bias,flags,packetFormat );
 			break;
 
 		case 0x10: /* vertex lighting */
@@ -2298,10 +2248,9 @@ BlitQuads( mame_bitmap *pBitmap, INT32 addr, float m[4][4], INT32 base )
          break;
 
 		default:
-         logerror( "BlitQuads; unk opcode=0x%x\n", size );
 			break;
 		}
-		addr += size;
+		addr += packetLength;
 	}
 } /* BlitQuads */
 
@@ -2332,7 +2281,6 @@ READ32_HANDLER( namcos22_dspram_r )
 WRITE32_HANDLER( namcos22_dspram_w )
 {
 	COMBINE_DATA( &namcos22_polygonram[offset] );
-	namcos22_UploadCodeToDSP();
 }
 
 /*******************************************************************************/
@@ -2567,7 +2515,7 @@ DrawPolygons( mame_bitmap *bitmap )
 } /* DrawPolygons */
 
 void
-namcos22_dsp_enable( void )
+namcos22_enable_slave_simulation( void )
 {
 	mbDSPisActive = 1;
 }
@@ -2593,31 +2541,7 @@ READ32_HANDLER( namcos22_gamma_r )
 
 WRITE32_HANDLER( namcos22_gamma_w )
 {
-	UINT32 old = namcos22_gamma[offset];
 	COMBINE_DATA( &namcos22_gamma[offset] );
-	if( old!=namcos22_gamma[offset] )
-	{
-		memset( dirtypal, 1, NAMCOS22_PALETTE_SIZE/4 );
-	}
-	/**
-     * 824000: ffffff00 00ffffff 0000007f 00000000
-     *                    ^^^^^^                    RGB  (fog color)
-     *
-     * 824010: 0000ff00 0f00RRGG BBII017f 00010007
-     *                      ^^^^ ^^                 RGB(fade)
-     *                             ^^               fade (zero for none, 0xff for max)
-     *                               ^^             flags; fader targer
-     *                                                     1: affects polygon layer
-     *                                                     2: affects text(?)
-     *                                                     4: affects sprites(?)
-     *                                 ^^           tilemap palette base
-     *
-     * 824020: 00000001 00000000 00000000 00000000
-     *
-     * 824100: 00 05 0a 0f 13 17 1a 1e ... (red)
-     * 824200: 00 05 0a 0f 13 17 1a 1e ... (green)
-     * 824300: 00 05 0a 0f 13 17 1a 1e ... (blue)
-     */
 }
 
 READ32_HANDLER( namcos22_paletteram_r )
@@ -2631,19 +2555,15 @@ WRITE32_HANDLER( namcos22_paletteram_w )
 	dirtypal[offset&(0x7fff/4)] = 1;
 }
 
-READ32_HANDLER( namcos22_textram_r )
-{
-	return namcos22_textram[offset];
-}
-
-WRITE32_HANDLER( namcos22_textram_w )
-{
-	COMBINE_DATA( &namcos22_textram[offset] );
-}
-
 static int
 video_start_common( void )
 {
+	bgtilemap = tilemap_create( TextTilemapGetInfo,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64 );
+	if( bgtilemap )
+	{
+		tilemap_set_transparent_pen( bgtilemap, 0xf );
+	}
+
    namcos22_cgram = (UINT32 *)memory_region(REGION_CGRAM);
 
 	mbDSPisActive = 0;
@@ -2674,7 +2594,6 @@ VIDEO_START( namcos22 )
 {
    int result;
    mbSuperSystem22 = 0;
-   namcos22_gamma = NULL;
    result = video_start_common();
    return result;
 }
@@ -2691,65 +2610,20 @@ VIDEO_START( namcos22s )
    return result;
 }
 
-static void
-DrawBatch( const UINT32 *pSrc )
-{
-   int i,j,k;
-   for( i=0; i<256; i++ )
-   {
-      UINT16 dat[4*6+4];
-      UINT16 *pDst = dat;
-      if( *pSrc == 0xffffffff )
-      {
-         break;
-      }
-      for( j=0; j<4; j++ )
-      {
-         *pDst++ = (UINT16)*pSrc++;
-      }
-      for( j=0; j<4; j++ )
-      {
-         for( k=0; k<6; k++ )
-         {
-            *pDst++ = (UINT16)*pSrc++;
-         }
-      }
-      namcos22_draw_direct_poly( dat );
-      if( dat[0]&0x8000 ) break;
-   }
-}
-
 VIDEO_UPDATE( namcos22s )
 {
 	int beamx,beamy;
-
-   UINT32 bgColor = //get_black_pen()
-      (nthbyte(namcos22_gamma,0x8)<<16)|
-      (nthbyte(namcos22_gamma,0x9)<<8)|
-      (nthbyte(namcos22_gamma,0xa)<<0);
-
+	UINT32 bgColor;
+	UpdateVideoMixer();
+	bgColor = (mixer.rBackColor<<16)|(mixer.gBackColor<<8)|mixer.bBackColor;
    fillbitmap( bitmap, bgColor, cliprect );
-
    UpdatePaletteS();
-
-   {
-      static UINT32 ddraw_bank_old;
-      UINT32 ddraw_bank_new = namcos22_polygonram[0x8/4];
-      if( ddraw_bank_new != ddraw_bank_old )
-      {
-         DrawBatch( &namcos22_polygonram[0x10000/4] );
-         //DrawBatch( &namcos22_polygonram[0x18000/4] );
-         ddraw_bank_old = ddraw_bank_new;
-      }
-      else
-      {
-         DrawPolygons( bitmap );
-      }
-   }
-
+   DrawCharacterLayer( bitmap, cliprect );
+	DrawPolygons( bitmap );
    DrawSprites( bitmap, cliprect );
    RenderScene( bitmap );
-   DrawTextLayer( bitmap, cliprect );
+	DrawTranslucentCharacters( bitmap, cliprect );
+	ApplyGamma( bitmap );
 
 	if( namcos22_gametype == NAMCOS22_TIME_CRISIS )
 	{
@@ -2764,11 +2638,6 @@ VIDEO_UPDATE( namcos22s )
       FILE *f = fopen( "dump.txt", "wb" );
       if( f )
       {
-	      Dump(f,0x824000, 0x8243ff, "gamma");
-         Dump(f,0x940000, 0x94007f, "vics_control");
-         Dump(f,0x900000, 0x90ffff, "vics_data");
-         Dump(f,0x980000, 0x9affff, "sprite374" );
-	      Dump(f,0x810000, 0x81000f, "cz attr" );
          {
             int i,bank;
             for( bank=0; bank<4; bank++ )
@@ -2781,9 +2650,16 @@ VIDEO_UPDATE( namcos22s )
                fprintf( f, "\n" );
             }
          }
-         Dump(f,0x820000, 0x8202ff, "unk_ac" );
+
+	      Dump(f,0x810000, 0x81000f, "cz attr" );
+			Dump(f,0x820000, 0x8202ff, "unk_ac" );
+	      Dump(f,0x824000, 0x8243ff, "gamma");
+			Dump(f,0x828000, 0x83ffff, "palette" );
          Dump(f,0x8a0000, 0x8a000f, "tilemap_attr");
-         Dump(f,0x880000, 0x89ffff, "text_ram");
+         Dump(f,0x880000, 0x89ffff, "cgram/textram");
+         Dump(f,0x900000, 0x90ffff, "vics_data");
+         Dump(f,0x940000, 0x94007f, "vics_control");
+         Dump(f,0x980000, 0x9affff, "sprite374" );
          Dump(f,0xc00000, 0xc1ffff, "polygonram");
          fclose( f );
       }
@@ -2794,11 +2670,14 @@ VIDEO_UPDATE( namcos22s )
 
 VIDEO_UPDATE( namcos22 )
 {
+	UpdateVideoMixer();
    fillbitmap( bitmap, get_black_pen(), cliprect );
 	UpdatePalette();
+	DrawCharacterLayer( bitmap, cliprect );
    DrawPolygons( bitmap );
    RenderScene(bitmap);
-	DrawTextLayer( bitmap, cliprect );
+	DrawTranslucentCharacters( bitmap, cliprect );
+	ApplyGamma( bitmap );
 
 #ifdef MAME_DEBUG
    if( code_pressed(KEYCODE_D) )
@@ -2806,11 +2685,12 @@ VIDEO_UPDATE( namcos22 )
       FILE *f = fopen( "dump.txt", "wb" );
       if( f )
       {
-	      Dump(f,0x90000000, 0x90000003, "led?" );
-         Dump(f,0x90010000, 0x90017fff, "cz_ram");
-         Dump(f,0x900a0000, 0x900a000f, "tilemap_attr");
-         Dump(f,0x90020000, 0x90027fff, "gamma?");
-         Dump(f,0x70000000, 0x7001ffff, "polygonram");
+//        Dump(f,0x90000000, 0x90000003, "led?" );
+//         Dump(f,0x90010000, 0x90017fff, "cz_ram");
+//         Dump(f,0x900a0000, 0x900a000f, "tilemap_attr");
+         Dump(f,0x90020000, 0x90027fff, "gamma");
+			    //   0x90020000, 0x90027fff
+//         Dump(f,0x70000000, 0x7001ffff, "polygonram");
          fclose( f );
       }
       while( code_pressed(KEYCODE_D) ){}
@@ -2943,26 +2823,15 @@ Dump( FILE *f, unsigned addr1, unsigned addr2, const char *name )
  */
 WRITE32_HANDLER(namcos22_port800000_w)
 {
-   /*
-      00000011011111110000100011111111001001111110111110110001 - prop cycle
-      00000011011111110000100011111111001001111110111110110001 - time crisis
-      00000011011111110000100011111111001001111110111110110001 - alpine racer
-      00000011011111110000100011111111001001111110111110110001 - air combat22
-   */
+   /* 00000011011111110000100011111111001001111110111110110001 */
    UINT16 word = data>>16;
-/**
- * if( word&0x0404 )
- * {
- *    printf( "%d", (word&0x0101)?1:0 );
- * }
- */
    logerror( "%x: C304/C399: 0x%04x\n", activecpu_get_previouspc(), word );
    if( word == 0x4038 )
    {
-      mbSpotlightEnabled = 1;
+      mbSpotlightEnable = 1;
    }
    else
    {
-      mbSpotlightEnabled = 0;
+      mbSpotlightEnable = 0;
    }
-}
+} /* namcos22_port800000_w */

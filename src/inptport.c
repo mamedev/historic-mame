@@ -853,6 +853,7 @@ static const input_port_default_entry default_ports_builtin[] =
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_OTHER,   KEYBOARD, 			"Keyboard",		   		SEQ_DEF_0 )
 
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_ON_SCREEN_DISPLAY,"On Screen Display",	SEQ_DEF_1(KEYCODE_TILDE) )
+	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_DEBUG_BREAK,		"Break in Debugger",	SEQ_DEF_1(KEYCODE_TILDE) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_CONFIGURE,		"Config Menu",			SEQ_DEF_1(KEYCODE_TAB) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_PAUSE,			"Pause",				SEQ_DEF_1(KEYCODE_P) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_RESET_MACHINE,	"Reset Game",			SEQ_DEF_1(KEYCODE_F3) )

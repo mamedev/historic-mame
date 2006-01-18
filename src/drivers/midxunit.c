@@ -213,7 +213,7 @@ static MACHINE_DRIVER_START( midxunit )
 	MDRV_VIDEO_UPDATE(midtunit)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM(dcs_audio_uart)
+	MDRV_IMPORT_FROM(dcs_audio_2k_uart)
 MACHINE_DRIVER_END
 
 

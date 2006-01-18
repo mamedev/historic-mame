@@ -13,7 +13,7 @@ extern void *record;
 extern void *playback;
 
 extern int neogeo_rng;
-extern int neogeo_prot_data;;
+extern int neogeo_prot_data;
 
 UINT16 *neogeo_ram16;
 UINT16 *neogeo_sram16;

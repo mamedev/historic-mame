@@ -28,7 +28,8 @@
 #ifndef INVALID_SET_FILE_POINTER
 #define INVALID_SET_FILE_POINTER 0xffffffff
 #endif
-#endif
+
+#else
 
 #ifdef HAVE_UNISTD_H
 #include <sys/types.h>
@@ -43,6 +44,15 @@
 #define OFF_T long
 #define FSEEK fseek
 #define FTELL ftell
+#endif
+
+typedef struct
+{
+	FILE	*file;
+	char	*buf;
+	OFF_T	size;
+} iso_file_t;
+
 #endif
 
 
@@ -1938,7 +1948,35 @@ static chd_interface_file *chdman_open(const char *filename, const char *mode)
 			return NULL;
 		return (chd_interface_file *)handle;
 #else
-		return (chd_interface_file *)fopen(filename, mode);
+		iso_file_t *iso_file = NULL;
+		FILE *file = fopen(filename, mode);
+		if (file)
+		{
+			OFF_T size;
+			char *buf = (char *)malloc(BUFSIZ);
+			if (buf)
+			{
+				/*
+                 * Calling setbuf makes -createhd and -merge run 5 - 10x faster
+                 * on * Linux with the GNU C Library, and it shouldn't hurt
+                 * performance on other platforms (verified on Mac OS X).
+                 */
+				setbuf(file, buf);
+			}
+
+			FSEEK(file, 0, SEEK_END);
+			size = FTELL(file);
+			rewind(file);
+
+			iso_file = (iso_file_t *)malloc(sizeof(iso_file_t));
+			if (iso_file)
+			{
+				iso_file->file = file;
+				iso_file->buf = buf;
+				iso_file->size = size;
+			}
+		}
+		return (chd_interface_file *)iso_file;
 #endif
 	}
 }
@@ -1958,7 +1996,9 @@ static void chdman_close(chd_interface_file *file)
 #ifdef _WIN32
 	CloseHandle((HANDLE)file);
 #else
-	fclose((FILE *)file);
+	fclose(((iso_file_t *)file)->file);
+	free(((iso_file_t *)file)->buf);
+	free(file);
 #endif
 }
 
@@ -2041,8 +2081,11 @@ static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count,
 		else
 			return 0;
 #else
-		FSEEK((FILE *)file, offset, SEEK_SET);
-		return fread(buffer, 1, count, (FILE *)file);
+		iso_file_t *iso_file = (iso_file_t *)file;
+		if (FSEEK(iso_file->file, offset, SEEK_SET) == 0)
+			return fread(buffer, 1, count, iso_file->file);
+		else
+			return 0;
 #endif
 	}
 }
@@ -2080,8 +2123,15 @@ static UINT32 chdman_write(chd_interface_file *file, UINT64 offset, UINT32 count
 		else
 			return 0;
 #else
-		FSEEK((FILE *)file, offset, SEEK_SET);
-		return fwrite(buffer, 1, count, (FILE *)file);
+		size_t bytes_written = 0;
+		iso_file_t *iso_file = (iso_file_t *)file;
+		if (FSEEK(iso_file->file, offset, SEEK_SET) == 0)
+		{
+			bytes_written = fwrite(buffer, 1, count, iso_file->file);
+			if (offset + bytes_written > iso_file->size)
+				iso_file->size = offset + bytes_written;
+		}
+		return bytes_written;
 #endif
 	}
 }
@@ -2112,15 +2162,7 @@ static UINT64 chdman_length(chd_interface_file *file)
 			filesize = 0;
 		return filesize;
 #else
-		OFF_T oldpos = FTELL((FILE *)file);
-		OFF_T filesize;
-
-		/* get the size */
-		FSEEK((FILE *)file, 0, SEEK_END);
-		filesize = FTELL((FILE *)file);
-		FSEEK((FILE *)file, oldpos, SEEK_SET);
-
-		return filesize;
+		return ((iso_file_t *)file)->size;
 #endif
 	}
 }

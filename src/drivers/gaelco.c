@@ -344,7 +344,7 @@ PORT_START	/* DSW #2 */
 	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 
-PORT_START	/* DSW #1 */
+	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
@@ -372,7 +372,7 @@ PORT_START	/* DSW #1 */
 	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x00, "1C/1C or Free Play (if Coin B too)" )
 
-PORT_START	/* 1P INPUTS & COINSW */
+	PORT_START	/* 1P INPUTS & COINSW */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
@@ -382,7 +382,7 @@ PORT_START	/* 1P INPUTS & COINSW */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-PORT_START	/* 2P INPUTS & STARTSW */
+	PORT_START	/* 2P INPUTS & STARTSW */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
@@ -397,10 +397,10 @@ INPUT_PORTS_END
 static INPUT_PORTS_START( biomtoy )
 	PORT_START	/* DSW #2 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) ) /* Not Listed/shown in test mode */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) ) /* Not Listed/shown in test mode */
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
@@ -557,56 +557,53 @@ ROM_END
 /*********** Squash Encryption Related Code ******************/
 
 INPUT_PORTS_START( squash )
-	PORT_START	/* 8bit */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_START	/* DSW2 8bit */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0c, 0x0c, "Number of Faults" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPSETTING(    0x04, "6" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) /* Not Listed/shown in test mode */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) ) /* Listed as "Unused" in test mode */
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
-	PORT_START	/* 8bit */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_START	/* DSW1 8bit */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, "2 Player Continue" )
+	PORT_DIPSETTING(    0x40, "2 Credits / 5 Games" )
+	PORT_DIPSETTING(    0x00, "1 Credit / 3 Games" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
 
 	PORT_START	/* 1P INPUTS & COINSW */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
@@ -928,7 +925,6 @@ WRITE16_HANDLER(gaelco_encrypted_w)
         COMBINE_DATA(&gaelco_screen[offset]);
 }
 
-
 static ADDRESS_MAP_START( squash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)			/* ROM */
 	AM_RANGE(0x100000, 0x101fff) AM_READ(MRA16_RAM)			/* Video RAM */
@@ -955,7 +951,6 @@ static ADDRESS_MAP_START( squash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(OKIM6295_data_0_lsb_w)					/* OKI6295 data register */
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)								/* Work RAM */
 ADDRESS_MAP_END
-
 
 static MACHINE_DRIVER_START( squash )
 
@@ -1014,29 +1009,238 @@ ROM_START( squash )
 	ROM_RELOAD(		0x0c0000, 0x080000 )
 ROM_END
 
+/*********** Thunder Hoop Encryption Related Code ******************/
+
+INPUT_PORTS_START( thoop )
+	PORT_START	/* DSW2 8bit */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x04, 0x04, "Player Controls" )
+	PORT_DIPSETTING(    0x04, "2 Joysticks" )
+	PORT_DIPSETTING(    0x00, "1 Joystick" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x10, "2" )
+	PORT_DIPSETTING(    0x18, "1" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* DSW1 8bit */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x40, 0x40, "2 Credits to Start, 1 to Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+
+	PORT_START	/* 1P INPUTS & COINSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* 2P INPUTS & STARTSW */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START	/* 8bit */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+static UINT16 thoop_encrypt(int offset, int data)
+{
+        UINT16 *RAM = (UINT16 *)memory_region(REGION_USER1);
+
+		int thispc = activecpu_get_pc();
+        int savedata = data;
+		int whichfile;
+        int foffset;
+
+        /* check if 2nd half of 32 bit */
+        if(lastpc == thispc && offset == lastoffset + 1)
+        {
+                lastpc = 0;
+                whichfile = RAM[lastword];
+ 		        foffset = data;
+				data = RAM[(whichfile*0x10000)+foffset];
+                logerror("%8x : data2 = %4x > %4x\n",activecpu_get_pc(),savedata,data);
+        }
+        else
+        {
+                /* code as 1st word */
+                lastword = data;
+                lastpc = thispc;
+                lastoffset = offset;
+				savedata = data;
+
+                /* high word returned - first table is high word */
+                data = RAM[(0x10000)+savedata];
+				//data = decrypt_high_word(lastword);
+
+                logerror("%8x : data1 = %4x > %4x @ %8x\n",activecpu_get_pc(),savedata,data,lastoffset);
+        }
+        return data;
+}
+
+WRITE16_HANDLER( thoop_vram_encrypted_w )
+{
+	int oldword = gaelco_videoram[offset];
+//  printf("gaelco_vram_encrypted_w!!\n");
+
+	data = thoop_encrypt(offset,data);
+	COMBINE_DATA(&gaelco_videoram[offset]);
+
+	if (oldword != gaelco_videoram[offset])
+		tilemap_mark_tile_dirty(pant[offset >> 11],((offset << 1) & 0x0fff) >> 2);
+}
+
+WRITE16_HANDLER(thoop_encrypted_w)
+{
+//  printf("gaelco_encrypted_w!!\n");
+
+	 data = thoop_encrypt(offset,data);
+     COMBINE_DATA(&gaelco_screen[offset]);
+}
+
+
+static ADDRESS_MAP_START( thoop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)								/* ROM */
+	AM_RANGE(0x100000, 0x101fff) AM_WRITE(thoop_vram_encrypted_w) AM_BASE(&gaelco_videoram)		/* Video RAM */
+	AM_RANGE(0x102000, 0x103fff) AM_WRITE(thoop_encrypted_w) AM_BASE(&gaelco_screen)                                                                /* Screen RAM */
+	AM_RANGE(0x108000, 0x108007) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_vregs)				/* Video Registers */
+//  AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)                     /* INT 6 ACK/Watchdog timer */
+	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)/* Palette */
+	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_spriteram)			/* Sprite RAM */
+	AM_RANGE(0x70000c, 0x70000d) AM_WRITE(OKIM6295_bankswitch_w)					/* OKI6295 bankswitch */
+	AM_RANGE(0x70000e, 0x70000f) AM_WRITE(OKIM6295_data_0_lsb_w)					/* OKI6295 data register */
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)								/* Work RAM */
+ADDRESS_MAP_END
+
+static MACHINE_DRIVER_START( thoop )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* MC68000P12, 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(squash_readmem,thoop_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 320-1, 16, 256-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_0x100000)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(maniacsq)
+	MDRV_VIDEO_UPDATE(maniacsq)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
 /* encrypted video ram */
 ROM_START( thoop )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
-	//does it need to be half the size?
 	ROM_LOAD16_BYTE( "th18dea1.040", 0x000000, 0x80000, CRC(59bad625) SHA1(28e058b2290bc5f7130b801014d026432f9e7fd5) )
 	ROM_LOAD16_BYTE( "th161eb4.020", 0x000001, 0x40000, CRC(6add61ed) SHA1(0e789d9a0ac19b6143044fbc04ab2227735b2a8f) )
 
-	ROM_REGION16_LE( 0x40000, REGION_USER1, ROMREGION_ERASEFF)
-	ROM_REGION16_LE( 0x40000, REGION_USER2, ROMREGION_ERASEFF)
-	ROM_REGION16_LE( 0x20000*1606, REGION_USER3, ROMREGION_ERASEFF)
+	ROM_REGION16_LE( 0x20000*1605, REGION_USER1, ROMREGION_ERASEFF)
+	ROM_LOAD( "t-hoop.ec2", 0x000000, 210370560, BAD_DUMP CRC(88d800ff) SHA1(4b4b7e49fba173abe8c7b08c451e559ecadcf05f) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "c09", 0x000000, 0x100000, CRC(06f0edbf) SHA1(3cf2e5c29cd00b43d49a106084076f2ac0dbad98) )
-	ROM_LOAD( "c10", 0x100000, 0x100000, CRC(2d227085) SHA1(b224efd59ec83bb786fa92a23ef2d27ed36cab6c) )
-	ROM_LOAD( "c11", 0x200000, 0x100000, CRC(7403ef7e) SHA1(52a737816e25a07ada070ed3a5f40bbbd22ac8e0) )
-	ROM_LOAD( "c12", 0x300000, 0x100000, CRC(29a5ca36) SHA1(fdcfdefb3b02bfe34781fdd0295640caabe2a5fb) )
+	ROM_LOAD( "c09", 0x300000, 0x040000, CRC(06f0edbf) SHA1(3cf2e5c29cd00b43d49a106084076f2ac0dbad98) )
+	ROM_CONTINUE(    0x380000, 0x040000 )
+	ROM_CONTINUE(    0x340000, 0x040000 )
+	ROM_CONTINUE(    0x3c0000, 0x040000 )
+	ROM_LOAD( "c10", 0x200000, 0x040000, CRC(2d227085) SHA1(b224efd59ec83bb786fa92a23ef2d27ed36cab6c) )
+	ROM_CONTINUE(    0x280000, 0x040000 )
+	ROM_CONTINUE(    0x240000, 0x040000 )
+	ROM_CONTINUE(    0x2c0000, 0x040000 )
+	ROM_LOAD( "c11", 0x100000, 0x040000, CRC(7403ef7e) SHA1(52a737816e25a07ada070ed3a5f40bbbd22ac8e0) )
+	ROM_CONTINUE(    0x180000, 0x040000 )
+	ROM_CONTINUE(    0x140000, 0x040000 )
+	ROM_CONTINUE(    0x1c0000, 0x040000 )
+	ROM_LOAD( "c12", 0x000000, 0x040000, CRC(29a5ca36) SHA1(fdcfdefb3b02bfe34781fdd0295640caabe2a5fb) )
+	ROM_CONTINUE(    0x080000, 0x040000 )
+	ROM_CONTINUE(    0x040000, 0x040000 )
+	ROM_CONTINUE(    0x0c0000, 0x040000 )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
 	ROM_LOAD( "sound", 0x000000, 0x100000, CRC(99f80961) SHA1(de3a514a8f46dffd5f762e52aac1f4c3b08e2e18) )
+	/* 0x00000-0x2ffff is fixed, 0x30000-0x3ffff is bank switched from all the ROMs */
+	ROM_RELOAD(		   0x040000, 0x100000 )
 ROM_END
 
 GAME( 1991, bigkarnk, 0,        bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak", 0 )
 GAME( 1995, biomtoy,  0,        maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)", 0 )
 GAME( 1996, maniacsp, maniacsq, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)", 0 )
-GAME( 1992, squash,   0,		squash,   squash,   0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_IMPERFECT_GRAPHICS ) // problems with decryption + prioirites
-GAME( 1992, thoop,    0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Thunder Hoop",      GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1992, squash,   0,		squash,   squash,   0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_IMPERFECT_GRAPHICS )  // problems with decryption + prioirites
+GAME( 1992, thoop,    0,		thoop,    thoop,    0, ROT0, "Gaelco", "Thunder Hoop (Ver. 1)", 0 )

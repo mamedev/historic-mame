@@ -7,7 +7,7 @@
 #define LOG(x) logerror x
 
 static UINT8 m6840_irq_state;
-static UINT8 m6850_irq_state;
+UINT8 m6850_irq_state; // referenced in machine/6850acia.c
 static UINT8 scn2674_irq_state;
 static void update_irq(void);
 
@@ -31,7 +31,7 @@ static void update_irq(void);
     0 - Unused (no such IRQ on 68k)
 */
 
-static void update_mpu68_interrupts(void)
+void update_mpu68_interrupts(void)
 {
 	int newstate = 0;
 
@@ -46,7 +46,7 @@ static void update_mpu68_interrupts(void)
 	m6840_irq_state = 0;
 	m6850_irq_state = 0;
 	scn2674_irq_state = 0;
-	
+
 	/* set the new state of the IRQ lines */
 	if (newstate)
 		cpunum_set_input_line(1, newstate, HOLD_LINE);

@@ -40,8 +40,9 @@ enum
 **  MACROS
 **#################################################################################################*/
 
-#define ADDR2BYTE(val,info,spc) ((((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift) & active_address_space[spc].addrmask)
-#define BYTE2ADDR(val,info,spc) ((((val) & active_address_space[spc].addrmask) << (info)->space[spc].addr2byte_rshift) >> (info)->space[spc].addr2byte_lshift)
+#define ADDR2BYTE(val,info,spc) (((val) << (info)->space[spc].addr2byte_lshift) >> (info)->space[spc].addr2byte_rshift)
+#define ADDR2BYTE_MASKED(val,info,spc) (ADDR2BYTE(val,info,spc) & (info)->space[spc].logbytemask)
+#define BYTE2ADDR(val,info,spc) (((val) << (info)->space[spc].addr2byte_rshift) >> (info)->space[spc].addr2byte_lshift)
 
 
 
@@ -67,16 +68,21 @@ struct debug_trace_info
 };
 
 
-struct debug_space_info
+struct _debug_space_info
 {
 	UINT8			databytes;					/* width of the data bus, in bytes */
 	UINT8			pageshift;					/* page shift */
 	UINT8			addr2byte_lshift;			/* left shift to convert CPU address to a byte value */
 	UINT8			addr2byte_rshift;			/* right shift to convert CPU address to a byte value */
-	UINT8			addrchars;					/* number of characters to use for addresses */
-	offs_t			addrmask;					/* address mask */
+	UINT8			physchars;					/* number of characters to use for physical addresses */
+	UINT8			logchars;					/* number of characters to use for logical addresses */
+	offs_t			physaddrmask;				/* physical address mask */
+	offs_t			logaddrmask;				/* logical address mask */
+	offs_t			physbytemask;				/* physical byte mask */
+	offs_t			logbytemask;				/* logical byte mask */
 	struct watchpoint *first_wp;				/* first watchpoint */
 };
+typedef struct _debug_space_info debug_space_info;
 
 
 struct _debug_hotspot_entry
@@ -101,7 +107,7 @@ struct debug_cpu_info
 	struct symbol_table *symtable;				/* symbol table for expression evaluation */
 	struct debug_trace_info trace;				/* trace info */
 	struct breakpoint *first_bp;				/* first breakpoint */
-	struct debug_space_info space[ADDRESS_SPACES];/* per-address space info */
+	debug_space_info space[ADDRESS_SPACES];		/* per-address space info */
 	debug_hotspot_entry *hotspots;				/* hotspot list */
 	int				hotspot_count;				/* number of hotspots */
 	int				hotspot_threshhold;			/* threshhold for the number of hits to print */

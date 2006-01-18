@@ -235,7 +235,7 @@ static void airbustr_draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect
 VIDEO_UPDATE( airbustr )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);	
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 
 	if(airbustr_clear_sprites)
 	{

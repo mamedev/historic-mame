@@ -30,7 +30,7 @@ static struct
 
   UINT8	  window_start,		// display window start pos 0-15
 		  window_end,		// display window end   pos 0-15
-		  window_size,		// window  size 
+		  window_size,		// window  size
 		  pad;				// unused align byte
 
   INT8	  pcursor_pos,		// previous cursor pos
@@ -63,27 +63,27 @@ static int  BD1_setdata(int id, int segdata, int data);
 
 // local vars /////////////////////////////////////////////////////////////
 
-// 
+//
 // Bellfruit BD1 charset to ASCII conversion table
 //
-static const char BFM2ASCII[] = 
+static const char BFM2ASCII[] =
 //0123456789ABCDEF0123456789ABC DEF01 23456789ABCDEF0123456789ABCDEF
- "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ £\"#$%%'()*+.-./0123456789&%<=>?"\
- "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ £\"#$%%'()*+.-./0123456789&%<=>?"\
- "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ £\"#$%%'()*+.-./0123456789&%<=>?";
+ "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ ?\"#$%%'()*+.-./0123456789&%<=>?"\
+ "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ ?\"#$%%'()*+.-./0123456789&%<=>?"\
+ "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ ?\"#$%%'()*+.-./0123456789&%<=>?";
 
-// 
+//
 // OKI MSC1937 charset to ASCII conversion table
 //
 static const char OKI1937ASCII[]=
 //0123456789ABCDEF0123456789ABC DEF01 23456789ABCDEF0123456789ABCDEF
- "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ £\"#$%%'()*+.-./0123456789&%<=>?"\
- "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ £\"#$%%'()*+.-./0123456789&%<=>?"\
- "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ £\"#$%%'()*+.-./0123456789&%<=>?";
+ "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ ?\"#$%%'()*+.-./0123456789&%<=>?"\
+ "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ ?\"#$%%'()*+.-./0123456789&%<=>?"\
+ "@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ ?\"#$%%'()*+.-./0123456789&%<=>?";
 
 /*
    16 segment charset lookup table
-        2  
+        2
     ---------
    |\   |3  /|
  0 | \6 |  /7| 1
@@ -93,7 +93,7 @@ static const char OKI1937ASCII[]=
  D | /4 |A \B| 5
    |/   |   \|
     ---------  C
-        9   
+        9
 
   */
 
@@ -131,7 +131,7 @@ static unsigned short BFMcharset[]=
   0x0226, // 0000 0010 0010 0110 ].
   0x0810, // 0000 1000 0001 0000 ^.
   0x0200, // 0000 0010 0000 0000 _
-  0x0000, // 0000 0000 0000 0000  
+  0x0000, // 0000 0000 0000 0000
   0xC290, // 1100 0010 1001 0000 POUND.
   0x0009, // 0000 0000 0000 1001 ".
   0xC62A, // 1100 0110 0010 1010 #.
@@ -141,7 +141,7 @@ static unsigned short BFMcharset[]=
   0x0040, // 0000 0000 1000 0000 '.
   0x0880, // 0000 1000 1000 0000 (.
   0x0050, // 0000 0000 0101 0000 ).
-  0xCCD8, // 1100 1100 1101 1000 *. 
+  0xCCD8, // 1100 1100 1101 1000 *.
   0xC408, // 1100 0100 0000 1000 +.
   0x1000, // 0001 0000 0000 0000 .
   0xC000, // 1100 0000 0000 0000 -.
@@ -223,7 +223,7 @@ UINT16 *vfd_get_segments(int id)
 
 char  *vfd_get_string( int id)
 {
-  return vfds[id].string;
+  return (char *)vfds[id].string;
 }
 ///////////////////////////////////////////////////////////////////////////
 
@@ -254,7 +254,7 @@ void vfd_shift_data(int id, int data)
 int vfd_newdata(int id, int data)
 {
   int change = 0;
-	  
+
   switch ( vfds[id].type )
   {
   case VFDTYPE_BFMBD1:
@@ -302,12 +302,12 @@ int vfd_newdata(int id, int data)
 					break;
 
 		case 0xB0:	// 0xB0 - 0xBF Clear display area
-  
+
 					switch ( data & 0x03 )
 					{
 					case 0x00:	// clr nothing
 								break;
-								
+
 					case 0x01:	// clr inside window
 
 								if ( vfds[id].window_size > 0 )
@@ -537,10 +537,10 @@ static int BD1_setdata(int id, int segdata, int data)
 			}
 			else
 			{
-			  if ( move ) 
+			  if ( move )
 			  {
 				if   ( vfds[id].scroll_active ) ScrollLeft(id);
-				else                            vfds[id].scroll_active = 1; 
+				else                            vfds[id].scroll_active = 1;
 			  }
 
 			  if ( change )

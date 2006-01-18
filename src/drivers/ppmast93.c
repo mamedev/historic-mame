@@ -128,6 +128,8 @@ one for shoot and one for select.
 #include "driver.h"
 #include "sound/3812intf.h"
 #include "sound/2413intf.h"
+#include "sound/dac.h"
+
 
 static tilemap *ppmast93_fg_tilemap, *ppmast93_bg_tilemap;
 UINT8 *ppmast93_fgram, *ppmast93_bgram;
@@ -156,7 +158,6 @@ WRITE8_HANDLER( ppmast93_port4_w )
 	memory_set_bankptr(1,&rom[0x10000+(bank*0x4000)]);
 }
 
-
 static ADDRESS_MAP_START( ppmast93_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM) AM_WRITENOP AM_REGION(REGION_CPU1, 0x10000)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
@@ -179,18 +180,25 @@ static ADDRESS_MAP_START( ppmast93_cpu1_io, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ppmast93_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_ROM AM_REGION(REGION_CPU2, 0x10000)
+	AM_RANGE(0x0000, 0xfbff) AM_ROM AM_REGION(REGION_CPU2, 0x10000)
 	AM_RANGE(0xfc00, 0xfc00) AM_READ(soundlatch_r)
 	AM_RANGE(0xfd00, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( ppmast93_cpu2_io, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//  AM_RANGE(0x00, 0xff) AM_READNOP
 
-	AM_RANGE(0x00, 0x00) AM_WRITE(YM2413_register_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(YM2413_data_port_0_w)
-//  AM_RANGE(0x02, 0x02) AM_WRITENOP
+static WRITE8_HANDLER(ppmast_sound_w)
+{
+	switch(offset&0xff)
+	{
+		case 0: YM2413_register_port_0_w(0,data); break;
+		case 1: YM2413_data_port_0_w(0,data); break;
+		case 2: DAC_0_data_w(0,data);break;
+		default: logerror("%x %x - %x\n",offset,data,activecpu_get_previouspc());
+	}
+}
+
+static ADDRESS_MAP_START( ppmast93_cpu2_io, ADDRESS_SPACE_IO, 8 )
+	  AM_RANGE(0x0000, 0xffff) AM_READ(MRA8_ROM) AM_WRITE(ppmast_sound_w) AM_REGION(REGION_CPU2, 0x20000)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( ppmast93 )
@@ -266,9 +274,9 @@ INPUT_PORTS_START( ppmast93 )
 	PORT_DIPSETTING(    0x01, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
@@ -347,7 +355,7 @@ static MACHINE_DRIVER_START( ppmast93 )
 	MDRV_CPU_ADD(Z80,5000000)		 /* 5 MHz */
 	MDRV_CPU_PROGRAM_MAP(ppmast93_cpu2_map,0)
 	MDRV_CPU_IO_MAP(ppmast93_cpu2_io,0)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(78))
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(8000))
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -367,7 +375,11 @@ static MACHINE_DRIVER_START( ppmast93 )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(YM2413, 5000000/2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
 MACHINE_DRIVER_END
 
 ROM_START( ppmast93 )
@@ -387,4 +399,4 @@ ROM_START( ppmast93 )
 	ROM_LOAD( "prom1.ug26", 0x200, 0x100, CRC(d979c64e) SHA1(172c9579013d58e35a5b4f732e360811ac36295e) )
 ROM_END
 
-GAME( 1993, ppmast93, 0, ppmast93, ppmast93, 0, ROT0, "Electronic Devices S.R.L.", "Ping Pong Masters '93", GAME_NO_SOUND )
+GAME( 1993, ppmast93, 0, ppmast93, ppmast93, 0, ROT0, "Electronic Devices S.R.L.", "Ping Pong Masters '93", GAME_IMPERFECT_SOUND )

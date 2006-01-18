@@ -75,7 +75,8 @@
 
     Sound I/O boards:
         Vegas SIO  - ADSP2104 @ 16MHz, boot ROM, 4MB RAM
-        Denver SIO - ADSP2181 @ 32MHz, no ROM, 4MB RAM
+        Deluxe SIO - ADSP2181 @ 32MHz, no ROM, 4MB RAM
+        Denver SIO - ADSP2181 @ 33MHz, no ROM, 4MB RAM
 
     Video boards:
         Voodoo 2
@@ -476,7 +477,7 @@ static UINT32 *timekeeper_nvram;
 static size_t timekeeper_nvram_size;
 
 static UINT8 voodoo_type;
-static UINT8 has_dcs3;
+static UINT8 dcs_idma_cs;
 
 static int dynamic_count;
 static struct dynamic_address
@@ -524,7 +525,7 @@ static VIDEO_START( vegas_voodoo2 )
 
 static VIDEO_START( vegas_voodoo_banshee )
 {
-	if (voodoo_start(0, VOODOO_BANSHEE, 2, 4, 0))
+	if (voodoo_start(0, VOODOO_BANSHEE, 16, 16, 0))
 		return 1;
 
 	voodoo_set_vblank_callback(0, vblank_assert);
@@ -535,7 +536,7 @@ static VIDEO_START( vegas_voodoo_banshee )
 
 static VIDEO_START( vegas_voodoo3 )
 {
-	if (voodoo_start(0, VOODOO_3, 4, 4, 4))
+	if (voodoo_start(0, VOODOO_3, 16, 16, 16))
 		return 1;
 
 	voodoo_set_vblank_callback(0, vblank_assert);
@@ -587,7 +588,7 @@ static MACHINE_INIT( vegas )
 	memset(pci_3dfx_regs, 0, sizeof(pci_3dfx_regs));
 
 	/* reset the DCS system if we have one */
-	if (mame_find_cpu_index("dcs2") != -1 || mame_find_cpu_index("dcs3") != -1)
+	if (mame_find_cpu_index("dcs2") != -1 || mame_find_cpu_index("dsio") != -1 || mame_find_cpu_index("denver") != -1)
 	{
 		dcs_reset_w(1);
 		dcs_reset_w(0);
@@ -605,7 +606,12 @@ static MACHINE_INIT( vegas )
 
 	/* find out what type of voodoo we have */
 	voodoo_type = voodoo_get_type(0);
-	has_dcs3 = (mame_find_cpu_index("dcs3") != -1);
+	if (mame_find_cpu_index("dsio") != -1)
+		dcs_idma_cs = 6;
+	else if (mame_find_cpu_index("denver") != -1)
+		dcs_idma_cs = 7;
+	else
+		dcs_idma_cs = 0;
 }
 
 
@@ -709,6 +715,10 @@ static READ32_HANDLER( pci_bridge_r )
 	{
 		case 0x00:		/* ID register: 0x005a = VRC 5074, 0x1033 = NEC */
 			result = 0x005a1033;
+			break;
+
+		case 0x02:		/* revision ID register */
+			result = 0x00000004;
 			break;
 	}
 
@@ -841,21 +851,27 @@ static WRITE32_HANDLER( pci_3dfx_w )
 			break;
 
 		case 0x05:		/* address register */
-			if (voodoo_type == VOODOO_3)
+			if (voodoo_type >= VOODOO_BANSHEE)
+			{
 				pci_3dfx_regs[offset] &= 0xfe000000;
-			remap_dynamic_addresses();
+				remap_dynamic_addresses();
+			}
 			break;
 
 		case 0x06:		/* I/O register */
-			if (voodoo_type == VOODOO_3)
+			if (voodoo_type >= VOODOO_BANSHEE)
+			{
 				pci_3dfx_regs[offset] &= 0xffffff00;
-			remap_dynamic_addresses();
+				remap_dynamic_addresses();
+			}
 			break;
 
 		case 0x0c:		/* romBaseAddr register */
-			if (voodoo_type == VOODOO_3)
+			if (voodoo_type >= VOODOO_BANSHEE)
+			{
 				pci_3dfx_regs[offset] &= 0xffff0000;
-			remap_dynamic_addresses();
+				remap_dynamic_addresses();
+			}
 			break;
 
 		case 0x10:		/* initEnable register */
@@ -1122,7 +1138,7 @@ static WRITE32_HANDLER( nile_w )
 		case NREG_INTCLR+1:		/* Interrupt clear */
 			if (LOG_NILE) logerror("%08X:NILE WRITE: interrupt clear(%03X) = %08X & %08X\n", activecpu_get_pc(), offset*4, data, ~mem_mask);
 			logit = 0;
-			nile_irq_state &= ~nile_regs[offset];
+			nile_irq_state &= ~(nile_regs[offset] & ~0xf00);
 			update_nile_irqs();
 			break;
 
@@ -1588,18 +1604,26 @@ static void remap_dynamic_addresses(void)
 	{
 		add_dynamic_address(base + 0x0000, base + 0x003f, midway_ioasic_packed_r, midway_ioasic_packed_w);
 		add_dynamic_address(base + 0x1000, base + 0x1003, NULL, asic_fifo_w);
-		if (has_dcs3)
-		{
+		if (dcs_idma_cs != 0)
 			add_dynamic_address(base + 0x3000, base + 0x3003, NULL, dcs3_fifo_full_w);
-			add_dynamic_address(base + 0x5000, base + 0x5003, NULL, dcs3_idma_addr_w);
-			add_dynamic_address(base + 0x7000, base + 0x7003, dcs3_idma_data_r, dcs3_idma_data_w);
+		if (dcs_idma_cs == 6)
+		{
+			add_dynamic_address(base + 0x5000, base + 0x5003, NULL, dsio_idma_addr_w);
+			add_dynamic_address(base + 0x7000, base + 0x7003, dsio_idma_data_r, dsio_idma_data_w);
 		}
 	}
 
 	/* DCS7 */
 	base = nile_regs[NREG_DCS7] & 0x1fffff00;
 	if (base >= ramsize)
+	{
 		add_dynamic_address(base + 0x1000, base + 0x100f, ethernet_r, ethernet_w);
+		if (dcs_idma_cs == 7)
+		{
+			add_dynamic_address(base + 0x5000, base + 0x5003, NULL, dsio_idma_addr_w);
+			add_dynamic_address(base + 0x7000, base + 0x7003, dsio_idma_data_r, dsio_idma_data_w);
+		}
+	}
 
 	/* PCI config space */
 	if ((nile_regs[NREG_PCIINIT1] & 0xe) == 0xa)
@@ -1633,34 +1657,24 @@ static void remap_dynamic_addresses(void)
 		if (base >= ramsize && base < 0x20000000)
 		{
 			if (voodoo_type == VOODOO_2)
-			{
 				add_dynamic_address(base + 0x000000, base + 0xffffff, voodoo_0_r, voodoo_0_w);
-			}
 			else
-			{
-/*              add_dynamic_address(base + 0x0000000, base + 0x007ffff, voodoo3_ioreg_r, voodoo3_ioreg_w);
-                add_dynamic_address(base + 0x0080000, base + 0x00fffff, voodoo3_cmdagp_r, voodoo3_cmdagp_w);
-                add_dynamic_address(base + 0x0100000, base + 0x01fffff, voodoo3_2d_r, voodoo3_2d_w);
-                add_dynamic_address(base + 0x0200000, base + 0x05fffff, voodoo_regs_r, voodoo2_regs_w);
-                add_dynamic_address(base + 0x0600000, base + 0x09fffff, MRA32_NOP, voodoo_textureram_w);
-                add_dynamic_address(base + 0x0c00000, base + 0x0ffffff, voodoo3_yuv_r, voodoo3_yuv_w);
-                add_dynamic_address(base + 0x1000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);*/
-			}
+				add_dynamic_address(base + 0x000000, base + 0x1ffffff, banshee_0_r, banshee_0_w);
 		}
 
-		if (voodoo_type >= VOODOO_3)
+		if (voodoo_type >= VOODOO_BANSHEE)
 		{
-/*          base = pci_3dfx_regs[0x05] & 0xfffffff0;
+			base = pci_3dfx_regs[0x05] & 0xfffffff0;
             if (base >= ramsize && base < 0x20000000)
-                add_dynamic_address(base + 0x0000000, base + 0x1ffffff, voodoo_framebuf_r, voodoo_framebuf_w);
+				add_dynamic_address(base + 0x0000000, base + 0x1ffffff, banshee_fb_0_r, banshee_fb_0_w);
 
-            base = pci_3dfx_regs[0x06] & 0xfffffff0;
+			base = pci_3dfx_regs[0x06] & 0xfffffff0;
             if (base >= ramsize && base < 0x20000000)
-                add_dynamic_address(base + 0x0000000, base + 0x00000ff, voodoo3_ioreg_r, voodoo3_ioreg_w);
+				add_dynamic_address(base + 0x0000000, base + 0x00000ff, banshee_io_0_r, banshee_io_0_w);
 
-            base = pci_3dfx_regs[0x0c] & 0xffff0000;
+			base = pci_3dfx_regs[0x0c] & 0xffff0000;
             if (base >= ramsize && base < 0x20000000)
-                add_dynamic_address(base + 0x0000000, base + 0x000ffff, voodoo3_rom_r, NULL);*/
+				add_dynamic_address(base + 0x0000000, base + 0x000ffff, banshee_rom_0_r, NULL);
 		}
 	}
 
@@ -1668,7 +1682,7 @@ static void remap_dynamic_addresses(void)
 	if (LOG_DYNAMIC) logerror("remap_dynamic_addresses:\n");
 	for (addr = 0; addr < dynamic_count; addr++)
 	{
-		if (LOG_DYNAMIC) logerror("  installing: %08X-%08X %s,%s\n", 0xa0000000+dynamic[addr].start, 0xa0000000+dynamic[addr].end, dynamic[addr].rdname, dynamic[addr].wrname);
+		if (LOG_DYNAMIC) logerror("  installing: %08X-%08X %s,%s\n", dynamic[addr].start, dynamic[addr].end, dynamic[addr].rdname, dynamic[addr].wrname);
 		if (dynamic[addr].read)
 			_memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, dynamic[addr].start, dynamic[addr].end, 0, 0, dynamic[addr].read, dynamic[addr].wrname);
 		if (dynamic[addr].write)
@@ -2022,9 +2036,9 @@ INPUT_PORTS_START( nbashowt )
 	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR( Unknown ))	/* Marked as Unused in the manual */
 	PORT_DIPSETTING(      0x0040, "0" )
 	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPNAME( 0x0080, 0x0080, "Power Up Test Loop" )
-	PORT_DIPSETTING(      0x0080, "One Time" )
-	PORT_DIPSETTING(      0x0000, "Continuous" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Game" )
+	PORT_DIPSETTING(      0x0080, "NBA Showtime" )
+	PORT_DIPSETTING(      0x0000, "Blitz 99" )
 	PORT_DIPNAME( 0x0100, 0x0100, "Joysticks" )
 	PORT_DIPSETTING(      0x0100, "8-Way" )
 	PORT_DIPSETTING(      0x0000, "49-Way" )
@@ -2038,9 +2052,9 @@ INPUT_PORTS_START( nbashowt )
 	PORT_DIPSETTING(      0x0800, "47 MHz" )
 	PORT_DIPSETTING(      0x1000, "49 MHz" )
 	PORT_DIPSETTING(      0x1800, "51 MHz" )
-	PORT_DIPNAME( 0x2000, 0x0000, "Bill Validator" )
-	PORT_DIPSETTING(      0x2000, DEF_STR( None ) )
-	PORT_DIPSETTING(      0x0000, "One" )
+	PORT_DIPNAME( 0x2000, 0x0000, "Number of Players" )
+	PORT_DIPSETTING(      0x2000, "2" )
+	PORT_DIPSETTING(      0x0000, "4" )
 	PORT_DIPNAME( 0x4000, 0x0000, "Power On Self Test" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ))
 	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ))
@@ -2050,8 +2064,139 @@ INPUT_PORTS_START( nbashowt )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( vegas )
+INPUT_PORTS_START( sf2049 )
 	PORT_INCLUDE(vegas_common)
+
+	PORT_MODIFY("DIPS")
+	PORT_DIPNAME( 0x0003, 0x0003, "Test Mode" )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Off ))
+	PORT_DIPSETTING(      0x0002, "Disk-based Test" )
+	PORT_DIPSETTING(      0x0001, "EPROM-based Test" )
+	PORT_DIPSETTING(      0x0000, "Interactive Diagnostics" )
+	PORT_DIPNAME( 0x0080, 0x0080, "PM Dump" )
+	PORT_DIPSETTING(      0x0080, "Watchdog resets only" )
+	PORT_DIPSETTING(      0x0000, "All resets" )
+	PORT_DIPNAME( 0x0100, 0x0200, "Resolution" )
+	PORT_DIPSETTING(      0x0000, "Standard Res 512x256" )
+	PORT_DIPSETTING(      0x0200, "Medium Res 512x384" )
+	PORT_DIPSETTING(      0x0300, "VGA Res 640x480" )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10, 0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(5)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( sf2049se )
+	PORT_INCLUDE(vegas_common)
+
+	PORT_MODIFY("DIPS")
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10, 0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(5)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( sf2049te )
+	PORT_INCLUDE(vegas_common)
+
+	PORT_MODIFY("DIPS")
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10, 0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(5)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( cartfury )
+	PORT_INCLUDE(vegas_common)
+
+	PORT_MODIFY("DIPS")
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10, 0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(5)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_PEDAL ) PORT_MINMAX(0x00, 0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(100) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
+
+	PORT_START
+	PORT_BIT( 0xff, 0x80, IPT_SPECIAL )
 INPUT_PORTS_END
 
 
@@ -2110,12 +2255,15 @@ MACHINE_DRIVER_START( vegas32m )
 	MDRV_IMPORT_FROM(vegascore)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(vegas_map_32mb,0)
-	MDRV_IMPORT_FROM(dcs3_audio)
+	MDRV_IMPORT_FROM(dcs2_audio_dsio)
 MACHINE_DRIVER_END
 
 
 MACHINE_DRIVER_START( vegasban )
-	MDRV_IMPORT_FROM(vegas32m)
+	MDRV_IMPORT_FROM(vegascore)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(vegas_map_32mb,0)
+	MDRV_IMPORT_FROM(dcs2_audio_2104)
 	MDRV_VIDEO_START(vegas_voodoo_banshee)
 MACHINE_DRIVER_END
 
@@ -2124,6 +2272,15 @@ MACHINE_DRIVER_START( vegasv3 )
 	MDRV_IMPORT_FROM(vegas32m)
 	MDRV_CPU_REPLACE("main", RM7000LE, SYSTEM_CLOCK*2.5)
 	MDRV_VIDEO_START(vegas_voodoo3)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START( denver )
+	MDRV_IMPORT_FROM(vegascore)
+	MDRV_CPU_REPLACE("main", RM7000LE, SYSTEM_CLOCK*2.5)
+	MDRV_CPU_PROGRAM_MAP(vegas_map_32mb,0)
+	MDRV_VIDEO_START(vegas_voodoo3)
+	MDRV_IMPORT_FROM(dcs2_audio_denver)
 MACHINE_DRIVER_END
 
 
@@ -2141,7 +2298,7 @@ ROM_START( gauntleg )
 	DISK_REGION( REGION_DISKS )	/* Guts 1.5 1/14/1999 Game 1/14/1999 */
 	DISK_IMAGE( "gauntleg", 0, MD5(e8c0c5fafbf004ab2e5808bcd80bfb07) SHA1(fa042d9b565282e69192096bd6f66d8af5aacd2e) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2153,7 +2310,7 @@ ROM_START( gauntl12 )
 	DISK_REGION( REGION_DISKS )	/* Guts 1.4 10/22/1998 Main 10/23/1998 */
 	DISK_IMAGE( "gauntl12", 0, MD5(d5712ae31835bcae086ec7259c2541e0) SHA1(40ba1b8464ffd4003aac5511306b4c34bfa227ea) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2165,7 +2322,7 @@ ROM_START( gauntdl )
 	DISK_REGION( REGION_DISKS )	/* Guts: 1.9 3/17/2000 Game 5/9/2000 */
 	DISK_IMAGE( "gauntdl", 0, MD5(3a83b244543f0076fc0cbc8eb6c742b8) SHA1(30bfc810debeca6a4fccd954d0b68c1185f2c384) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2177,7 +2334,7 @@ ROM_START( gauntd24 )
 	DISK_REGION( REGION_DISKS )	/* Guts: 1.9 3/17/2000 Game 3/19/2000 */
 	DISK_IMAGE( "gauntd24", 0, MD5(1faed82ad08aba21be061ccca709e691) SHA1(d6d9b15f3e20e3456431a6799aceeb2c0b4336aa) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2189,7 +2346,7 @@ ROM_START( warfa )
 	DISK_REGION( REGION_DISKS )	/* Guts 1.3 4/20/1999 Game 4/20/1999 */
 	DISK_IMAGE( "warfa", 0, MD5(01035f301d84d665f7c4bf7e3554c516) SHA1(9ce1d4a3115329b9b6fb6482b11b22b52a7fef79) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "warsnd.106", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2201,7 +2358,7 @@ ROM_START( tenthdeg )
 	DISK_REGION( REGION_DISKS )	/* Guts 5/26/1998 Main 8/25/1998 */
 	DISK_IMAGE( "tenthdeg", 0, MD5(be653883b640f540945e9c8ab8f72463) SHA1(5ba31d22c0fa29897b45e01c4f1afed8b906f500) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2104 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "tenthdeg.snd", 0x000000, 0x8000, CRC(1c75c1c1) SHA1(02ac1419b0fd4acc3f39676e7dce879e926d998b) )
 ROM_END
 
@@ -2212,8 +2369,6 @@ ROM_START( roadburn )
 
 	DISK_REGION( REGION_DISKS )	/* Guts 4/22/1999 Game 4/22/1999 */
 	DISK_IMAGE( "roadburn", 0, MD5(ce4710671f4266389e7d71f1fc0da81d) SHA1(1c971c9ed573d178d9f318ccd88d305d8146de2d) )
-
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2181 data */
 ROM_END
 
 
@@ -2224,7 +2379,7 @@ ROM_START( nbashowt )
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "nbashowt", 0, MD5(2dab719f8f0fdeb8ac1db3844ed8c1e4) SHA1(bf60b8f74647dc911f78f364a72ef0301ae0167a) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2237,7 +2392,7 @@ ROM_START( nbanfl )
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "nbanfl", 0, MD5(9e3748957c672f6d7a1e464546f46b15) SHA1(4256c7487a55fd0d0e4241f595cc886d4402fd7d) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* Vegas SIO boot ROM */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
@@ -2249,44 +2404,35 @@ ROM_START( cartfury )
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE( "cartfury", 0, MD5(d8e9d2616f8d70155f1068f884aa39e5) SHA1(98597d79ea25c0e74a575ba636abccc68fd5d301) )
 
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
+	ROM_REGION16_LE( 0x10000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
 	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( sf2049 )
-	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )	/* EPROM 1.02 7/9/1999 */
 	ROM_LOAD( "u27a.dat", 0x000000, 0x80000, CRC(174ba8fe) SHA1(baba83b811eca659f00514a008a86ef0ac9680ee) )
 
-	DISK_REGION( REGION_DISKS )
+	DISK_REGION( REGION_DISKS )	/* Guts 1.03 9/3/1999 Game 9/8/1999 */
 	DISK_IMAGE( "sf2049", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
-
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
 ROM_END
 
 
 ROM_START( sf2049se )
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD( "u27a.dat", 0x000000, 0x80000, CRC(174ba8fe) SHA1(baba83b811eca659f00514a008a86ef0ac9680ee) )
+	ROM_LOAD( "sf2049te.bin", 0x000000, 0x80000, BAD_DUMP CRC(cc7c8601) SHA1(3f37dbd1b32b3ac5caa300725468e8e426f0fb83) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "sf2049se", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
-
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
+	DISK_IMAGE( "sf2049se", 0, MD5(3ea8c0f8394cb73e96176b1a70c03219) SHA1(b195f98756d9d7cde71b6467409faed33134a2d7) )
 ROM_END
 
 
 ROM_START( sf2049te )
 	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
-	ROM_LOAD( "u27a.dat", 0x000000, 0x80000, CRC(174ba8fe) SHA1(baba83b811eca659f00514a008a86ef0ac9680ee) )
+	ROM_LOAD( "sf2049te.bin", 0x000000, 0x80000, CRC(cc7c8601) SHA1(3f37dbd1b32b3ac5caa300725468e8e426f0fb83) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "sf2049te", 0, MD5(2f56375670c0f72b69c1b5ec6a54ba70) SHA1(e08d026ab2745cac6b8c820f010b28dffd5388dd) )
-
-	ROM_REGION16_LE( 0x410000, REGION_SOUND1, 0 )	/* ADSP-2105 data */
-	ROM_LOAD16_BYTE( "vegassio.bin", 0x000000, 0x8000, NO_DUMP CRC(d1470e23) SHA1(f6e8405cfa604528c0224401bc374a6df9caccef) )
+	DISK_IMAGE( "sf2049te", 0, MD5(476abcfbeb0d2817cb38ca36e78cddc6) SHA1(c01972f1b642f013d760f29f1e2ed7dcf78896c4) )
 ROM_END
 
 
@@ -2318,7 +2464,7 @@ static void init_common(int ioasic, int serialnum)
 
 static DRIVER_INIT( gauntleg )
 {
-	dcs2_init(0x0b5d);
+	dcs2_init(4, 0x0b5d);
 	init_common(MIDWAY_IOASIC_CALSPEED, 340/* 340=39", 322=27", others? */);
 
 	/* speedups */
@@ -2336,65 +2482,72 @@ static DRIVER_INIT( gauntleg )
 
 static DRIVER_INIT( gauntdl )
 {
-	dcs2_init(0x0b5d);
+	dcs2_init(4, 0x0b5d);
 	init_common(MIDWAY_IOASIC_GAUNTDL, 346/* 347, others? */);
 }
 
 
 static DRIVER_INIT( warfa )
 {
-	dcs2_init(0x0b5d);
+	dcs2_init(4, 0x0b5d);
 	init_common(MIDWAY_IOASIC_MACE, 337/* others? */);
 }
 
 
 static DRIVER_INIT( tenthdeg )
 {
-	dcs2_init(0x0afb);
+	dcs2_init(4, 0x0afb);
 	init_common(MIDWAY_IOASIC_GAUNTDL, 330/* others? */);
 }
 
 
 static DRIVER_INIT( roadburn )
 {
-	dcs3_init(0);	/* no place to hook :-( */
+	dcs2_init(4, 0);	/* no place to hook :-( */
 	init_common(MIDWAY_IOASIC_STANDARD, 325/* others? */);
 }
 
 
 static DRIVER_INIT( nbashowt )
 {
-	dcs3_init(0);
-	init_common(MIDWAY_IOASIC_MACE, 322/* unknown */);
+	dcs2_init(4, 0);
+	init_common(MIDWAY_IOASIC_MACE, 528/* or 478 or 487 */);
 }
 
 
 static DRIVER_INIT( nbanfl )
 {
-	dcs3_init(0);
-	init_common(MIDWAY_IOASIC_STANDARD, 109/* others? */);
+	dcs2_init(4, 0);
+	init_common(MIDWAY_IOASIC_BLITZ99, 498/* or 478 or 487 */);
 	/* NOT: MACE */
-}
-
-
-static DRIVER_INIT( cartfury )
-{
-	dcs3_init(0);
-	init_common(MIDWAY_IOASIC_CARNEVIL, 495/* others? */);
 }
 
 
 static DRIVER_INIT( sf2049 )
 {
-	dcs3_init(0);
+	dcs2_init(8, 0);
 	init_common(MIDWAY_IOASIC_STANDARD, 336/* others? */);
+}
+
+
+static DRIVER_INIT( sf2049se )
+{
+	dcs2_init(8, 0);
+	init_common(MIDWAY_IOASIC_SFRUSHRK, 336/* others? */);
 }
 
 
 static DRIVER_INIT( sf2049te )
 {
-	dcs3_init(0);
-	init_common(MIDWAY_IOASIC_STANDARD, 348/* others? */);
+	dcs2_init(8, 0);
+	init_common(MIDWAY_IOASIC_SFRUSHRK, 348/* others? */);
+}
+
+
+static DRIVER_INIT( cartfury )
+{
+	dcs2_init(4, 0);
+	init_common(MIDWAY_IOASIC_CARNEVIL, 495/* others? */);
 }
 
 
@@ -2406,23 +2559,27 @@ static DRIVER_INIT( sf2049te )
  *
  *************************************/
 
-/* Voodoo 2 + DCS2 */
+/* Vegas + Vegas SIO + Voodoo 2 */
 GAME( 1998, gauntleg, 0,        vegas,    gauntleg, gauntleg, ROT0, "Atari Games",  "Gauntlet Legends (version 1.6)", 0 )
 GAME( 1998, gauntl12, gauntleg, vegas,    gauntleg, gauntleg, ROT0, "Atari Games",  "Gauntlet Legends (version 1.2)", GAME_NO_SOUND )
 GAME( 1998, tenthdeg, 0,        vegas,    tenthdeg, tenthdeg, ROT0, "Atari Games",  "Tenth Degree", 0 )
+
+/* Durango + Vegas SIO + Voodoo 2 */
 GAME( 1999, gauntdl,  0,        vegas,    gauntdl,  gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy (version DL 2.52)", 0 )
 GAME( 1999, gauntd24, gauntdl,  vegas,    gauntdl,  gauntdl,  ROT0, "Midway Games", "Gauntlet Dark Legacy (version DL 2.4)", 0 )
 GAME( 1999, warfa,    0,        vegas250, warfa,    warfa,    ROT0, "Atari Games",  "War: The Final Assault", GAME_NOT_WORKING )
 
-/* Voodoo 2 + DCS3 */
+/* Durango + DSIO + Voodoo 2 */
 GAME( 1999, roadburn, 0,        vegas32m, roadburn, roadburn, ROT0, "Atari Games",  "Road Burners", GAME_NOT_WORKING )
 
-/* Voodoo banshee + ??? */
+/* Durango + DSIO? + Voodoo banshee */
 GAME( 1998, nbashowt, 0,        vegasban, nbashowt, nbashowt, ROT0, "Midway Games", "NBA Showtime: NBA on NBC", GAME_NO_SOUND | GAME_NOT_WORKING )
 GAME( 1999, nbanfl,   0,        vegasban, nbashowt, nbanfl,   ROT0, "Midway Games", "NBA Showtime / NFL Blitz 2000", GAME_NO_SOUND | GAME_NOT_WORKING )
 
-/* Voodoo 3 + DCS3 */
-GAME( 1998, sf2049,   0,        vegasv3,  vegas,    sf2049,   ROT0, "Atari Games",  "San Francisco Rush 2049", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 1998, sf2049se, sf2049,   vegasv3,  vegas,    sf2049,   ROT0, "Atari Games",  "San Francisco Rush 2049: Special Edition", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 1998, sf2049te, sf2049,   vegasv3,  vegas,    sf2049te, ROT0, "Atari Games",  "San Francisco Rush 2049: Tournament Edition", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 2000, cartfury, 0,        vegasv3,  roadburn, cartfury, ROT0, "Midway Games", "Cart Fury", GAME_NO_SOUND | GAME_NOT_WORKING )
+/* Durango + Denver SIO + Voodoo 3 */
+GAME( 1998, sf2049,   0,        denver,   sf2049,   sf2049,   ROT0, "Atari Games",  "San Francisco Rush 2049", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, sf2049se, sf2049,   denver,   sf2049se, sf2049se, ROT0, "Atari Games",  "San Francisco Rush 2049: Special Edition", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 1998, sf2049te, sf2049,   denver,   sf2049te, sf2049te, ROT0, "Atari Games",  "San Francisco Rush 2049: Tournament Edition", GAME_NO_SOUND | GAME_NOT_WORKING )
+
+/* Durango + Vegas SIO + Voodoo 3 */
+GAME( 2000, cartfury, 0,        vegasv3,  cartfury, cartfury, ROT0, "Midway Games", "Cart Fury", GAME_NO_SOUND | GAME_NOT_WORKING )

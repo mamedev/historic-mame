@@ -7,7 +7,7 @@
 
 
 CPU memorymap:
-      
+
    hex     |r/w| D D D D D D D D |
  location  |   | 7 6 5 4 3 2 1 0 | function
 -----------+---+-----------------+-----------------------------------------
@@ -30,7 +30,7 @@ CPU memorymap:
 A000-BFFF  |R/W| D D D D D D D D | ?window into character RAM/ROM?
 -----------+---+-----------------+-----------------------------------------
 C000-DFFF  |?/W| D D D D D D D D | I/O registers
-C000	   | W | ? ? ? ? ? ? D D | program ROM page select
+C000       | W | ? ? ? ? ? ? D D | program ROM page select
                                    controls what portion of the eprom is mapped
                                    at 0000 - 7FFFF
 
@@ -61,13 +61,13 @@ C101       |R/W| ? ? ? ? ? ? ? D | Vertical Blanking IRQ enable
 C102       |R/W| ? ? ? ? ? ? ? D | Pre Vertical Blanking IRQ enable
            |   |                 |  bit0  0 = disabled
            |   |                 |        1 = enabled,
-		   |   |                 |            generate IRQ 100 cycles before VBL
+           |   |                 |            generate IRQ 100 cycles before VBL
 -----------+---+-----------------+-----------------------------------------
 C103       | R | ? ? ? D D D D D | IRQ status
            |   |                 |
            |   |                 |   b0 = Raster IRQ status
            |   |                 |   b1 = VBL start
-           |   |                 |   b2 = VBL end  
+           |   |                 |   b2 = VBL end
            |   |                 |   b3 = UART IRQ
            |   |                 |   b4 = ???
            |   |                 |
@@ -112,7 +112,7 @@ int adder2_show_alpha_display;	  // flag, set if alpha display need to be displa
 
 
 
-static int adder2_selected_rom_bank;	  // 
+static int adder2_selected_rom_bank;	  //
 static int adder2_screen_page_reg;		  // access/display select
 static int adder2_c101;
 static int adder2_rx;
@@ -125,7 +125,7 @@ static UINT8 adder_screen_ram[2][0x1180];	// paged  display RAM
 static tilemap *tilemap0;  // tilemap screen0
 static tilemap *tilemap1;  // timemap screen1
 
-static int adder2_rompages[] = 
+static int adder2_rompages[] =
 {
 	0x00000,0x08000,0x10000,0x18000,
 };
@@ -150,7 +150,7 @@ static const gfx_layout charlayout =
 // characters are grouped by 64 (512 pixels)
 // there are max 128 of these groups
 
-gfx_decode adder2_gfxdecodeinfo[] = 
+gfx_decode adder2_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1,  0, &charlayout, 0, 16 },
 	{ -1 } /* end of array */
@@ -162,7 +162,7 @@ static void get_tile0_info(int tile_index)
 {
 	short data;
 	int  code,  color, flags,x,y;
-  
+
 	y = tile_index / 50;
 	x = tile_index - (y*50);
 
@@ -186,7 +186,7 @@ static void get_tile1_info(int tile_index)
 {
 	short data;
 	int  code,  color, flags,x,y;
-  
+
 	y = tile_index / 50;
 	x = tile_index - (y*50);
 
@@ -228,10 +228,10 @@ VIDEO_UPDATE( adder2 )
 	else                                     tilemap_draw(bitmap, &visible1, tilemap0, 0, 0);
 
 	#ifdef FAKE_VIDEO
-	
+
 	if ( adder2_show_alpha_display )
 		ui_draw_text(vfd_get_string(0), 10, 284);
- 
+
 	if ( sc2_show_door )
 	{
 		if ( Scorpion2_GetSwitchState(sc2_door_state>>4, sc2_door_state & 0x0F) )
@@ -282,7 +282,7 @@ static void on_adder2_reset(void)
 		UINT8 *rom = memory_region(REGION_CPU2);
 
 		adder2_selected_rom_bank = 0;
-		
+
 		memory_set_bankptr(2,&rom[ adder2_rompages[ adder2_selected_rom_bank & 0x03]  ]);
 	}
 }
@@ -293,7 +293,7 @@ MACHINE_INIT( adder2_init_vid )
 {
 	// setup the standard bellfruit BD1 display /////////////////////////////
 
-	vfd_init(0, VFDTYPE_BFMBD1);	
+	vfd_init(0, VFDTYPE_BFMBD1);
 
 	// reset the board //////////////////////////////////////////////////////
 
@@ -306,7 +306,7 @@ MACHINE_INIT( adder2_init_vid )
 
 INTERRUPT_GEN( adder2_vbl )
 {
-	if ( adder2_c101 & 0x01 ) 
+	if ( adder2_c101 & 0x01 )
 	{
 		adder_vbl_triggered = 1;
 		cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE );
@@ -332,7 +332,7 @@ static WRITE8_HANDLER( screen_ram_w )
 		UINT8 r,g,b;
 
 		pal = offset-102-1;
-		
+
 		r = ((data & 0x18)>>3) *  85;  // 00011000b = 0x18
 		g = ((data & 0x06)>>1) *  85;  // 00000110b = 0x06
 		b = ((data & 0x01)   ) * 255;
@@ -489,7 +489,7 @@ void adder2_decode_char_roms(void)
 				x = 0;
 				while ( x < 64 )
 				{
-					char *src = s + (y*256*8)+(x*4);
+					UINT8 *src = s + (y*256*8)+(x*4);
 
 					*p++ = src[0*256+0];*p++ = src[0*256+1];*p++ = src[0*256+2];*p++ = src[0*256+3];
 					*p++ = src[1*256+0];*p++ = src[1*256+1];*p++ = src[1*256+2];*p++ = src[1*256+3];
@@ -521,7 +521,7 @@ ADDRESS_MAP_START( adder2_memmap, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x8000, 0x917F) AM_WRITE(screen_ram_w)		  // screen RAM writes
 	AM_RANGE(0x8000, 0x917F) AM_READ( screen_ram_r)		  // screen RAM reads
-  
+
 	AM_RANGE(0x9180, 0x9FFF) AM_WRITE(normal_ram_w)		  // normal RAM writes
 	AM_RANGE(0x9180, 0x9FFF) AM_READ( normal_ram_r)		  // normal RAM reads
 

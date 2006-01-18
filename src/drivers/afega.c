@@ -2,12 +2,12 @@
 
   NOTE: this hardware is a bootleg of the hardware in nmk16.c
         twinactn is a bootleg of mustang with different graphics, different
-		sound hardware, and some code shifted around
+        sound hardware, and some code shifted around
 
   todo: either merge this with nmk16.c, or split the bootlegs / non nmk
         hardware from nmk16.c into an nmk16 bootlegs driver
 
-		understand the 'protection' it may just be some kind of mirroring.
+        understand the 'protection' it may just be some kind of mirroring.
 
 ****************************************************************************
 
@@ -164,7 +164,7 @@ static WRITE16_HANDLER( twinactn_flipscreen_w )
 }
 
 static ADDRESS_MAP_START( twinactn, ADDRESS_SPACE_PROGRAM, 16 )
-//	ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
+//  ADDRESS_MAP_FLAGS( AMEF_ABITS(20) )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x080000, 0x080001) AM_READ(input_port_0_word_r)		// Buttons
 	AM_RANGE(0x080002, 0x080003) AM_READ(input_port_1_word_r)		// P1 + P2
@@ -198,7 +198,7 @@ static WRITE8_HANDLER( spec2k_oki1_banking_w )
  	else if(data == 0xff)
  		OKIM6295_set_bank_base(1, 0x40000);
 }
- 
+
 static ADDRESS_MAP_START( afega_sound_cpu, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xefff) AM_ROM
 	AM_RANGE(0xf000, 0xf7ff) AM_RAM									// RAM
@@ -226,7 +226,7 @@ static WRITE8_HANDLER( twinactn_oki_bank_w )
 	if (data & (~3))
 		logerror("%04x: invalid oki bank %02x\n", activecpu_get_pc(), data);
 
-//	logerror("%04x: oki bank %02x\n", activecpu_get_pc(), data);
+//  logerror("%04x: oki bank %02x\n", activecpu_get_pc(), data);
 }
 
 static ADDRESS_MAP_START( twinactn_sound_cpu, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1706,24 +1706,24 @@ static DRIVER_INIT( spec2k )
 }
 
 /*
-	1995, Afega
+    1995, Afega
 
-	1x TMP68000P-10 (main)
-	1x GOLDSTAR Z8400A (sound)
-	1x AD-65 (equivalent to OKI6295)
-	1x LATTICE pLSI 1032 60LJ A428A48
-	1x oscillator 8.000MHz
-	1x oscillator 12.000MHz  
+    1x TMP68000P-10 (main)
+    1x GOLDSTAR Z8400A (sound)
+    1x AD-65 (equivalent to OKI6295)
+    1x LATTICE pLSI 1032 60LJ A428A48
+    1x oscillator 8.000MHz
+    1x oscillator 12.000MHz
 
-	1x 27256 (SU6)
-	1x 27C010 (SU12)
-	1x 27C020 (SU13)
-	2x 27c4001 (UB11, UB13)
-	3x 27C010 (UJ11, UJ12, UJ13)
-	1x 27C4001 (UI20)  
+    1x 27256 (SU6)
+    1x 27C010 (SU12)
+    1x 27C020 (SU13)
+    2x 27c4001 (UB11, UB13)
+    3x 27C010 (UJ11, UJ12, UJ13)
+    1x 27C4001 (UI20)
 
-	1x JAMMA edge connector
-	1x trimmer (volume)
+    1x JAMMA edge connector
+    1x trimmer (volume)
 */
 
 ROM_START( twinactn )

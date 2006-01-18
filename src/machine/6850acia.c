@@ -7,6 +7,10 @@
 
 **********************************************************************/
 #include "6850acia.h"
+
+extern UINT8 m6850_irq_state; // referenced from machine/mpu4.c
+void update_mpu68_interrupts(void); // referenced from machine/mpu4.c
+
 #define LOG_SERIAL	  // log serial communication
 #define  UART_LOG //enable UART data logging
 #define LOG_CTRL	  // log serial communication
@@ -37,8 +41,8 @@ void send_to_vid(int data)
 
   m6850_irq_state = 1;
   update_mpu68_interrupts();
-  //cpunum_set_input_line(1, 2, HOLD_LINE );	// trigger IRQ
-  
+  //cpunum_set_input_line(1, 2, HOLD_LINE );    // trigger IRQ
+
   #ifdef LOG_SERIAL
   logerror("svid  %02X  (%c)\n",data, data );
   #endif
@@ -82,7 +86,7 @@ void send_to_norm(int data)
   norm_viddata       = data;	// store data
 
   norm_uart_status |= 0x83; //TX full, RX empty, IRQ
-  
+
   #ifdef LOG_SERIAL
   logerror("snorm %02X(%c)\n",data, data );
   #endif
@@ -95,7 +99,7 @@ int get_vid_uart_status(void)
 
 //  if ( vid_data_from_norm ) vid_uart_status |= 0x01;  // receive  buffer full
 //  if ( !norm_data_from_vid ) vid_uart_status |= 0x02; // transmit buffer empty
-  
+
   #ifdef LOG_SERIAL
  logerror("Vid control status(%02X)\n",vid_uart_status);
   #endif
@@ -110,7 +114,7 @@ static int get_normal_uart_status(void)
 
 //  if ( norm_data_from_vid  ) norm_uart_status |= 0x01; // receive  buffer full
 //  if ( !vid_data_from_norm) norm_uart_status |= 0x02;  // transmit buffer empty
-  
+
  #ifdef LOG_SERIAL
  logerror("MPU4 control status(%02X)\n",norm_uart_status);
   #endif
@@ -136,7 +140,7 @@ if (norm_uart_status & 0x01)
 //  int data = read_from_vid();
 }
 uart1_status &= 0x7e; // Clear the IRQ and the RDR Full
-    
+
   return 0x06; //for now
 }
 }
@@ -157,7 +161,7 @@ static WRITE8_HANDLER( uart1ctrl_w )
          break;
       case 0x03:
 	     logerror("Resetting #1 Uart\n");
-	     uart1_status = 0x02;	     
+	     uart1_status = 0x02;
          break;
       }
       switch (data & 0x1c)
@@ -206,7 +210,7 @@ static WRITE8_HANDLER( uart1ctrl_w )
       {
          logerror("#1 Uart - RX IRQ=1\n");
       }
-      else 
+      else
       {
          logerror("#1 Uart - RX IRQ=0\n");
       }
@@ -214,7 +218,7 @@ static WRITE8_HANDLER( uart1ctrl_w )
 logerror("#1 Uart control reg (%02X)\n",data);
 #endif
 
-   }	
+   }
 
 
 
@@ -265,7 +269,7 @@ static WRITE8_HANDLER( uart2ctrl_w )
          break;
       case 0x03:
 	     logerror("Resetting #2 Uart\n");
-	     uart2_status = 0x02;	     
+	     uart2_status = 0x02;
          break;
       }
 
@@ -317,7 +321,7 @@ static WRITE8_HANDLER( uart2ctrl_w )
       {
          logerror("#2 Uart - RX IRQ=1\n");
       }
-      else 
+      else
       {
          logerror("#2 Uart - RX IRQ=0\n");
       }
@@ -425,11 +429,11 @@ if ((ctrl & 0x03) == 0x03)
       {
          logerror("norm Uart - RX IRQ=1\n");
       }
-      else 
+      else
       {
          logerror("norm Uart - RX IRQ=0\n");
       }
-   }	
+   }
 
 
 #ifdef LOG_SERIAL
@@ -446,7 +450,7 @@ if (norm_uart_status & 0x01)
   aciadata = read_from_vid();
 }
 norm_uart_status = norm_uart_status & 0x7e; // Clear the IRQ and the RDR Full
-    
+
 #ifdef LOG_SERIAL
 logerror("Received from VidCard (%02X)\n",aciadata);
 #endif
@@ -474,10 +478,10 @@ static READ16_HANDLER( vidcard_uart_ctrl_r )
 
 static WRITE16_HANDLER( vidcard_uart_ctrl_w )
 {
-//  vid_data_from_norm = 0;	// data available for adder from sc2
-//  vid_normdata       = 0;	// data
-//  norm_data_from_vid = 0;	// data available for sc2 from adder
-//  norm_viddata		 = 0;	// data
+//  vid_data_from_norm = 0; // data available for adder from sc2
+//  vid_normdata       = 0; // data
+//  norm_data_from_vid = 0; // data available for sc2 from adder
+//  norm_viddata         = 0;   // data
 
   if (ACCESSING_MSB)
   {
@@ -487,7 +491,7 @@ static WRITE16_HANDLER( vidcard_uart_ctrl_w )
   {
   ctrl = (data & 0xff);
   }
-  
+
      switch (ctrl & 0x03)
       {
       case 0x00:
@@ -502,7 +506,7 @@ static WRITE16_HANDLER( vidcard_uart_ctrl_w )
       case 0x03:
          logerror("Resetting Vid Uart\n");
          vid_uart_status = 0x02;
-         break;     
+         break;
       }
 
       switch (ctrl & 0x1c)
@@ -553,7 +557,7 @@ static WRITE16_HANDLER( vidcard_uart_ctrl_w )
       {
          logerror("Vid Uart - RX IRQ=1\n");
       }
-      else 
+      else
       {
          logerror("Vid Uart - RX IRQ=0\n");
       }
@@ -575,7 +579,7 @@ if (vid_uart_status & 0x01)
 vid_uart_status = vid_uart_status & 0x7e; // Clear the IRQ and the RDR Full
 //  return aciadata;
   return (aciadata << 8) | 0x00ff;
-  
+
 #ifdef LOG_SERIAL
   logerror("Received from NORM (%02X)\n",aciadata);
 #endif

@@ -5,10 +5,6 @@
 
   Main CPU: H8/3044
 
-  -- it might be missing 32k of code internal to the H8
-
-Last Fighting
-Subsino, 2000
 
 PCB Layout
 ----------
@@ -65,8 +61,6 @@ Notes:
                 V106.U16 - MX27C4000 4MBit DIP32 EPROM; Main Program
                 V100.U7  - ST M27C801 8MBit DIP32 EPROM; Audio Samples?
 
-
-
 */
 
 #include "driver.h"
@@ -83,26 +77,59 @@ static VIDEO_START( lastfght )
 
 static VIDEO_UPDATE( lastfght )
 {
+	int x,y;
+	int count;
+	static int base = 0;
+
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 	fillbitmap( priority_bitmap, 0, cliprect );
+
+	if ( code_pressed_memory(KEYCODE_W) )
+		base += 512*512;
+
+	if ( code_pressed_memory(KEYCODE_Q) )
+		base -= 512*512;
+
+	count = base;
+
+	for (y=0;y<512;y++)
+	{
+		for (x=0;x<512;x++)
+		{
+			UINT8 *gfxdata = memory_region( REGION_GFX1 );
+			UINT8 data;
+			data = gfxdata[count];
+			count++;
+			plot_pixel(bitmap,x,y,data);
+		}
+	}
 }
 
 static ADDRESS_MAP_START( lastfght_map, ADDRESS_SPACE_PROGRAM, 16 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(24) )
-	AM_RANGE(0x000000, 0x07ffff) AM_ROM AM_REGION(REGION_CPU1, 0) 
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM AM_REGION(REGION_CPU1, 0)
 	AM_RANGE(0x080000, 0x0fffff) AM_ROM AM_REGION(REGION_CPU1, 0)
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
+
+static INTERRUPT_GEN( unknown_interrupt )
+{
+	cpunum_set_input_line(0, cpu_getiloops(), HOLD_LINE);
+}
+
 
 static MACHINE_DRIVER_START( lastfght )
 	MDRV_CPU_ADD(H83002, 16000000)
 	MDRV_CPU_PROGRAM_MAP( lastfght_map, 0 )
-	
+	MDRV_CPU_VBLANK_INT(unknown_interrupt,6)
+
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE( 96*8, 64*8 )
-	MDRV_VISIBLE_AREA( 0, 96*8-1, 0, 64*8-1 )
+	MDRV_SCREEN_SIZE( 512, 512 )
+	MDRV_VISIBLE_AREA( 0, 512-1, 0, 512-1 )
 	MDRV_PALETTE_LENGTH( 256 )
 
 	MDRV_VIDEO_START( lastfght )
@@ -112,17 +139,20 @@ static MACHINE_DRIVER_START( lastfght )
 MACHINE_DRIVER_END
 
 ROM_START( lastfght )
+	// H8/3044 program
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD( "v106.u16",     0x000000, 0x080000, CRC(7aec89f4) SHA1(7cff00844ad82a0f8d19b1bd07ba3a2bced69d66) )
 
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )
-	ROM_LOAD( "v100.u7",     0x000000, 0x100000, CRC(c134378c) SHA1(999c75f3a7890421cfd904a926ca377ee43a6825) )
-
+	// graphics (512x256? pages)
 	ROM_REGION( 0x800000, REGION_GFX1, 0 )
-	ROM_LOAD( "1.b1",     0x000000, 0x200000, CRC(6c438136) SHA1(138934e948bbd6bd80f354f037badedef6cd8cb1) )
-	ROM_LOAD( "2.b2",     0x200000, 0x200000, CRC(9710bcff) SHA1(0291385489a065ed895c99ae7197fdeac0a0e2a0) )
-	ROM_LOAD( "3.b3",     0x400000, 0x200000, CRC(4236c79a) SHA1(94f093d12c096d38d1e7278796f6d58e4ba14e2e) )
-	ROM_LOAD( "4.b4",     0x600000, 0x200000, CRC(68153b0f) SHA1(46ddf37d5885f411e0e6de9c7e8969ba3a00f17f) )
+	ROM_LOAD( "1.b1",         0x000000, 0x200000, CRC(6c438136) SHA1(138934e948bbd6bd80f354f037badedef6cd8cb1) )
+	ROM_LOAD( "2.b2",         0x200000, 0x200000, CRC(9710bcff) SHA1(0291385489a065ed895c99ae7197fdeac0a0e2a0) )
+	ROM_LOAD( "3.b3",         0x400000, 0x200000, CRC(4236c79a) SHA1(94f093d12c096d38d1e7278796f6d58e4ba14e2e) )
+	ROM_LOAD( "4.b4",         0x600000, 0x200000, CRC(68153b0f) SHA1(46ddf37d5885f411e0e6de9c7e8969ba3a00f17f) )
+
+	// samples?
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )
+	ROM_LOAD( "v100.u7",      0x000000, 0x100000, CRC(c134378c) SHA1(999c75f3a7890421cfd904a926ca377ee43a6825) )
 ROM_END
 
 GAME(2000, lastfght, 0, lastfght, lastfght, 0, ROT0, "Subsino", "Last Fighting", GAME_NOT_WORKING|GAME_NO_SOUND)

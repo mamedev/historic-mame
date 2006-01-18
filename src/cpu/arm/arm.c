@@ -6,7 +6,7 @@
       Timing - Currently very approximated, nothing relies on proper timing so far.
       IRQ timing not yet correct (again, nothing is affected by this so far).
 
-	Recent changes (2005):
+    Recent changes (2005):
       Fixed software interrupts
       Fixed various mode change bugs
       Added preliminary co-processor support.
@@ -274,6 +274,7 @@ static void HandleMemSingle( UINT32 insn);
 static void HandleMemBlock( UINT32 insn);
 static void HandleCoPro( UINT32 insn);
 static UINT32 decodeShift( UINT32 insn, UINT32 *pCarry);
+static void arm_check_irq_state(void);
 
 /***************************************************************************/
 
@@ -448,6 +449,8 @@ static int arm_execute( int cycles )
 			R15 += 4;
 		}
 
+		arm_check_irq_state();
+
 		arm_icount -= 3;
 	} while( arm_icount > 0 );
 
@@ -489,6 +492,7 @@ static void arm_check_irq_state(void)
 		R15 = eARM_MODE_FIQ;	/* Set FIQ mode so PC is saved to correct R14 bank */
 		SetRegister( 14, pc );	/* save PC */
 		R15 = (pc&PSR_MASK)|(pc&IRQ_MASK)|0x1c|eARM_MODE_FIQ|I_MASK|F_MASK; /* Mask both IRQ & FIRQ, set PC=0x1c */
+		arm.pendingFiq=0;
 		return;
 	}
 
@@ -496,6 +500,7 @@ static void arm_check_irq_state(void)
 		R15 = eARM_MODE_IRQ;	/* Set IRQ mode so PC is saved to correct R14 bank */
 		SetRegister( 14, pc );	/* save PC */
 		R15 = (pc&PSR_MASK)|(pc&IRQ_MASK)|0x18|eARM_MODE_IRQ|I_MASK|(pc&F_MASK); /* Mask only IRQ, set PC=0x18 */
+		arm.pendingIrq=0;
 		return;
 	}
 }
@@ -505,14 +510,14 @@ static void set_irq_line(int irqline, int state)
 	switch (irqline) {
 
 	case ARM_IRQ_LINE: /* IRQ */
-		if (state)
+		if (state && (R15&0x3)!=eARM_MODE_IRQ) /* Don't allow nested IRQs */
 			arm.pendingIrq=1;
 		else
 			arm.pendingIrq=0;
 		break;
 
 	case ARM_FIRQ_LINE: /* FIRQ */
-		if (state)
+		if (state && (R15&0x3)!=eARM_MODE_FIQ) /* Don't allow nested FIRQs */
 			arm.pendingFiq=1;
 		else
 			arm.pendingFiq=0;
@@ -643,14 +648,14 @@ static void HandleMemSingle( UINT32 insn )
 			{
 				R15 = (READ32(rnv) & ADDRESS_MASK) | (R15 & PSR_MASK) | (R15 & MODE_MASK);
 
-				/* 
-				The docs are explicit in that the bottom bits should be masked off 
-				when writing to R15 in this way, however World Cup Volleyball 95 has
-				an example of an unaligned jump (bottom bits = 2) where execution
-				should definitely continue from the rounded up address.  
+				/*
+                The docs are explicit in that the bottom bits should be masked off
+                when writing to R15 in this way, however World Cup Volleyball 95 has
+                an example of an unaligned jump (bottom bits = 2) where execution
+                should definitely continue from the rounded up address.
 
-				In other cases, 4 is subracted from R15 here to account for pipelining.
-				*/
+                In other cases, 4 is subracted from R15 here to account for pipelining.
+                */
 				if ((READ32(rnv)&3)==0)
 					R15 -= 4;
 			}
@@ -712,9 +717,6 @@ static void HandleMemSingle( UINT32 insn )
 			}
 		}
 	}
-
-//  arm_check_irq_state()
-
 } /* HandleMemSingle */
 
 /* Set NZCV flags for ADDS / SUBS */
@@ -882,9 +884,6 @@ static void HandleALU( UINT32 insn )
 				if ((R15&MODE_MASK)!=0)
 				{
 					SetRegister(rdn,rd);
-									
-					/* IRQ masks may have changed in this instruction */
-					//arm_check_irq_state();
 				}
 				else
 				{
@@ -903,14 +902,14 @@ static void HandleALU( UINT32 insn )
 				logerror("%08x: TST class on R15 s bit set\n",R15);
 
 			/* Dubious hack for 'TEQS R15, #$3', the docs suggest execution
-				should continue two instructions later (because pipelined R15
-				is read back as already being incremented), but it seems the
-				hardware should execute the instruction in the delay slot.  
-				Simulate it by just setting the PC back to the previously
-				skipped instruction.
+                should continue two instructions later (because pipelined R15
+                is read back as already being incremented), but it seems the
+                hardware should execute the instruction in the delay slot.
+                Simulate it by just setting the PC back to the previously
+                skipped instruction.
 
-				See Heavy Smash (Data East) at 0x1c4
-			*/
+                See Heavy Smash (Data East) at 0x1c4
+            */
 			if (insn==0xe33ff003)
 				rd-=4;
 
@@ -922,9 +921,6 @@ static void HandleALU( UINT32 insn )
 			{
 				SetRegister(15, (rd&ADDRESS_MASK) | (rd&PSR_MASK) | (R15&IRQ_MASK) | (R15&MODE_MASK));
 			}
-
-			/* IRQ masks may have changed in this instruction */
-//          arm_check_irq_state();
 		} else {
 			if (ARM_DEBUG_CORE)
 				logerror("%08x: TST class on R15 no s bit set\n",R15);
@@ -1314,12 +1310,24 @@ static void HandleCoPro( UINT32 insn)
 				/* Unpack BCD */
 				int v0=BCDToDecimal(arm.coproRegister[0]);
 				int v1=BCDToDecimal(arm.coproRegister[1]);
-				
+
 				/* Repack vcd */
 				arm.coproRegister[5]=DecimalToBCD(v0+v1);
-	
+
 				if (ARM_DEBUG_COPRO)
 					logerror("Cmd:  Add 0 + 1, result in 5 (%08x + %08x == %08x)\n", v0, v1, arm.coproRegister[5]);
+			}
+			else if (arm.coproRegister[crn]==1)
+			{
+				/* Unpack BCD */
+				int v0=BCDToDecimal(arm.coproRegister[0]);
+				int v1=BCDToDecimal(arm.coproRegister[1]);
+
+				/* Repack vcd */
+				arm.coproRegister[5]=DecimalToBCD(v0*v1);
+
+				if (ARM_DEBUG_COPRO)
+					logerror("Cmd:  Multiply 0 * 1, result in 5 (%08x * %08x == %08x)\n", v0, v1, arm.coproRegister[5]);
 			}
 			else if (arm.coproRegister[crn]==3)
 			{
@@ -1333,9 +1341,9 @@ static void HandleCoPro( UINT32 insn)
 				if (ARM_DEBUG_COPRO)
 					logerror("Cmd:  Sub 0 - 1, result in 5 (%08x - %08x == %08x)\n", v0, v1, arm.coproRegister[5]);
 			}
-			else 
+			else
 			{
-				logerror("Unknown bcd copro command %08x\n", arm.coproRegister[crn]);
+				ui_popup("Unknown bcd copro command %08x\n", arm.coproRegister[crn]);
 			}
 		}
 

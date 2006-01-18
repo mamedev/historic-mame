@@ -11,6 +11,118 @@
     Known bugs:
         * none at this time
 
+****************************************************************************
+
+Killer Instinct 1 / Killer Instinct 2
+Rare/Nintendo, 1994/1995
+
+PCB Layout
+----------
+
+This is a fighting game using a hard drive to hold the graphics + code, running on
+what appears to be Williams Electronics manufactured hardware.
+
+KILLER INSTINCT V4.0
+5770-14397-03
+(C)1994 Nintendo/Rare
+(sticker - MIDWAY GAMES 44464 I457034  A-20333)
+|---------------------------------------------------------------|
+|       LED1  LED2       GAL          U10    U11    U12    U13  |
+|  TDA7240   TL084  AD1851  10MHz                               |
+|                      |--------|                               |
+|                      |ANALOG  |                               |
+|                      |DEVICES |                               |
+|                      |ADSP2105|                               |
+|                      |--------|                               |
+|J3                                   U33    U34    U35    U36  |
+|               71256 71256 71256 71256                         |
+|               71256 71256 71256 71256      MT4C4001  MT4C4001 |
+|J              71256 71256 71256 71256      MT4C4001  MT4C4001 |
+|A              71256 71256 71256 71256      MT4C4001  MT4C4001 |
+|M                                           MT4C4001  MT4C4001 |
+|M    ULN2064B                               MT4C4001  MT4C4001 |
+|A                                           MT4C4001  MT4C4001 |
+|          *1                                MT4C4001  MT4C4001 |
+|                        *5                  MT4C4001  MT4C4001 |
+|                                                               |
+|                               50MHz                       JP30|
+|              *4                MAX705                         |
+|                                 JP32  *2        *3        U98 |
+|  DSW1  DSW2                                                   |
+|       J7       J8           J6        S3                      |
+|---------------------|---------------|-------------------------|
+                      |     IDE44     |
+                      |               |
+                      |       *6      |
+                      |               |
+                      |     IDE44     |
+                      |-|-----------|-|
+                        |||||||||||||
+                        |||||||||||||
+                        |||||||||||||
+                        |||||||||||||
+                        |||||||||||||
+                        |||||||||||||
+                        |||||||||||||
+                        |||||||||||||
+                  |-----|||||||||||||-----|
+                  |     |-----------|     |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |        Seagate        |
+                  |                       |
+                  |        ST9420AG       |
+                  |                       |
+                  |      2.5" H/Drive     |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |                       |
+                  |-----------------------|
+
+Notes:
+      GAL - GAL20V8 labelled 'KI-U1 A-19802' (DIP24)
+      MT4C4001 - 1M x4 DRAM (SOJ28)
+      71256 - IDT 71256 32k x8 SRAM (SOJ28)
+      JP30 - 3 pin jumper to configure boot ROM. Set to 1-2. Settings are 1-2 = 4MBit. 2-3 = 8MBit.
+      JP32 - 2 pin jumper to disable Watch Dog (Hard-wired on the PCB shorted 1-2)
+      ADSP2105 - Analog Devices ADSP-2105 (PLCC68)
+      J7 - 15 pin connector for player 3 controls
+      J3 - 10 pin connector for extra controls
+      J6 - 44 pin connector for 2.5" IDE hard drive
+      H/drive - Seagate Marathon 2.5" IDE hard drive, model ST9420AG
+        -for KI2, labelled 'L2.1 KILLER INSTINCT 2 DISK (C)1985 NINTENDO/RARE) CHS - 988/16/52 - 420.8MB
+      For KI1 - H/drive - Seagate Marathon 2.5" IDE hard drive, model ST9150AG
+
+      J8 - 8 pin connector for coin 3-4
+      S3 - Reset push-button switch
+      LED1 - H/Drive activity LED
+      LED2 - Sound Active LED
+      *1 Altera EPM7096LC68-10 labelled 'KI-U92 A-19488 (C)1994 NINTENDO/RARE' (PLCC68)
+      *2 Altera MAX EPM7128ELC84-10 labelled 'KI-U103 A-19486 (C)1994 NINTENDO/RARE' (PLCC68)
+      *3 Altera MAX EPM7128ELC84-10 labelled 'KI-U103 A-19486 (C)1994 NINTENDO/RARE' (PLCC68)
+      *4 Altera EPM7032LC44 -15T labelled 'K12-U96 A-20351 (C)1996 NINTENDO/RARE' (PLCC44)
+      *5 MIPS 4600-based CPU, heatsinked (QFP208)
+      *6 Altera EPM7032LC44 -15T labelled 'K12-U1 A-20383 (C)1996 NINTENDO/RARE' (PLCC44)
+         - This is an updated hard drive controller sub board used only with KI2
+
+      ROMs
+      ----
+      U10 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U10 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U11 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U11 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U12 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U12 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U13 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U13 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U33 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U33 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U34 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U34 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U35 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U35 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U36 - ST 27C4001 EPROM labelled 'L1 KILLER INSTINCT U36 MUSIC/SPCH (C) 1994 Nintendo/Rare' (DIP32)
+      U98 - ST 27C4001 EPROM labelled 'L1.4 KILLER INSTINCT U98 ROM 1 (C) 1994 Nintendo/Rare' (DIP32)
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -549,7 +661,7 @@ MACHINE_DRIVER_START( kinst )
 	MDRV_VIDEO_UPDATE(kinst)
 
 	/* sound hardware */
-	MDRV_IMPORT_FROM(dcs_audio)
+	MDRV_IMPORT_FROM(dcs_audio_2k)
 MACHINE_DRIVER_END
 
 

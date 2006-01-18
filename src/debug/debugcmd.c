@@ -79,6 +79,8 @@ static void execute_memdump(int ref, int params, const char **param);
 
 void debug_command_init(void)
 {
+	int cpunum;
+
 	/* add a few simple global functions */
 	symtable_add_function(global_symtable, "min", 0, 2, 2, execute_min);
 	symtable_add_function(global_symtable, "max", 0, 2, 2, execute_max);
@@ -159,6 +161,14 @@ void debug_command_init(void)
 	debug_console_register_command("mapd",		CMDFLAG_NONE, ADDRESS_SPACE_DATA, 1, 1, execute_map);
 	debug_console_register_command("mapi",		CMDFLAG_NONE, ADDRESS_SPACE_IO, 1, 1, execute_map);
 	debug_console_register_command("memdump",	CMDFLAG_NONE, 0, 0, 1, execute_memdump);
+
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	{
+		void (*setup_commands)(void);
+		setup_commands = cpunum_get_info_fct(cpunum, CPUINFO_PTR_DEBUG_SETUP_COMMANDS);
+		if (setup_commands)
+			setup_commands();
+	}
 }
 
 
@@ -1167,8 +1177,8 @@ static void execute_save(int ref, int params, const char *param[])
 
 	/* determine the addresses to write */
 	info = debug_get_cpu_info(cpunum);
-	offset = ADDR2BYTE(offset, info, spacenum);
-	endoffset = ADDR2BYTE(offset + length - 1, info, spacenum);
+	offset = ADDR2BYTE_MASKED(offset, info, spacenum);
+	endoffset = ADDR2BYTE_MASKED(offset + length - 1, info, spacenum);
 
 	/* open the file */
 	f = fopen(param[0], "wb");
@@ -1233,8 +1243,8 @@ static void execute_dump(int ref, int params, const char *param[])
 		debug_console_printf("Invalid width! (must be 1,2,4 or 8)");
 		return;
 	}
-	offset = ADDR2BYTE(offset, info, spacenum);
-	endoffset = ADDR2BYTE(offset + length - 1, info, spacenum);
+	offset = ADDR2BYTE_MASKED(offset, info, spacenum);
+	endoffset = ADDR2BYTE_MASKED(offset + length - 1, info, spacenum);
 
 	/* open the file */
 	f = fopen(param[0], "w");
@@ -1252,7 +1262,7 @@ static void execute_dump(int ref, int params, const char *param[])
 		int outdex = 0;
 
 		/* print the address */
-		outdex += sprintf(&output[outdex], "%0*X: ", info->space[spacenum].addrchars, (UINT32)BYTE2ADDR(i, info, spacenum));
+		outdex += sprintf(&output[outdex], "%0*X: ", info->space[spacenum].logchars, (UINT32)BYTE2ADDR(i, info, spacenum));
 
 		/* print the bytes */
 		switch (width)
@@ -1391,8 +1401,8 @@ static void execute_find(int ref, int params, const char *param[])
 		return;
 	}
 	info = debug_get_cpu_info(cpunum);
-	offset = ADDR2BYTE(offset, info, spacenum);
-	endoffset = ADDR2BYTE(offset + length - 1, info, spacenum);
+	offset = ADDR2BYTE_MASKED(offset, info, spacenum);
+	endoffset = ADDR2BYTE_MASKED(offset + length - 1, info, spacenum);
 	cur_data_size = ADDR2BYTE(1, info, spacenum);
 	if (cur_data_size == 0)
 		cur_data_size = 1;
@@ -1457,7 +1467,7 @@ static void execute_find(int ref, int params, const char *param[])
 		if (match)
 		{
 			found++;
-			debug_console_printf("Found at %08X\n", (UINT32)BYTE2ADDR(i, info, spacenum));
+			debug_console_printf("Found at %*X\n", info->space[spacenum].logchars, (UINT32)BYTE2ADDR(i, info, spacenum));
 		}
 	}
 	cpuintrf_pop_context();
@@ -1522,7 +1532,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 	use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 	for (i = 0; i < length; )
 	{
-		int pcbyte = ADDR2BYTE(offset + i, info, ADDRESS_SPACE_PROGRAM);
+		int pcbyte = ADDR2BYTE_MASKED(offset + i, info, ADDRESS_SPACE_PROGRAM);
 		char output[200], disasm[200];
 		UINT64 dummyreadop;
 		offs_t tempaddr;
@@ -1530,7 +1540,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		int numbytes;
 
 		/* print the address */
-		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
+		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].logchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
 
 		/* make sure we can translate the address */
 		tempaddr = pcbyte;
@@ -1556,7 +1566,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 			else
 			{
 				/* get the disassembly up front, but only if mapped */
-				if (memory_get_op_ptr(cpunum, pcbyte) != NULL || (info->readop && (*info->readop)(pcbyte, 1, &dummyreadop)))
+				if (memory_get_op_ptr(cpunum, pcbyte, 0) != NULL || (info->readop && (*info->readop)(pcbyte, 1, &dummyreadop)))
 				{
 					memory_set_opbase(pcbyte);
 					i += numbytes = activecpu_dasm(disasm, offset + i) & DASMFLAG_LENGTHMASK;
@@ -1762,7 +1772,7 @@ static void execute_map(int ref, int params, const char *param[])
 	info = debug_get_cpu_info(cpunum);
 
 	/* do the translation first */
-	taddress = ADDR2BYTE(address, info, spacenum);
+	taddress = ADDR2BYTE_MASKED(address, info, spacenum);
 	if (info->translate)
 	{
 		if ((*info->translate)(spacenum, &taddress))

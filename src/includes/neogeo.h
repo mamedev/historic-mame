@@ -64,6 +64,7 @@ void mslug5_decrypt_68k(void);
 void svcchaos_px_decrypt(void);
 void svcchaos_gfx_decrypt(void);
 void svcchaos_s1data_decrypt(void);
+void decode_kf2k3pcb_croms(void);
 void samsho5_decrypt_68k(void);
 void kof2003_decrypt_68k(void);
 void kof2003_decrypt_s1data(void);

@@ -26,7 +26,7 @@ The VIDEO BOARD is driven by a 10mhz 68000 processor, and contains a 6840 timer,
 communications), an SAA1099 for stereo sound and SCN2674 gfx chip.
 
 The VIDEO CARTRIDGE plugs into the video board, and contains the program roms
-for the video based game. Like the MPU4 game card, in some cases an extra 
+for the video based game. Like the MPU4 game card, in some cases an extra
 OKI sound chip is in the video board's game card, and some games add extra RAM through this.
 There is a protection chip (similar to and replacing the MPU4 Characteriser, which is often fed question data to descramble
 (unknown how it works).
@@ -94,15 +94,15 @@ static int ic4_input_b;
 
 // user interface stuff ///////////////////////////////////////////////////
 
-static UINT8 lamps[224];		  
-static UINT8 inputs[32];		  
+static UINT8 lamps[224];
+static UINT8 inputs[32];
 
 static int optic_pattern;
 static UINT16 lamp_strobe;
 static UINT8  lamp_data;
 
 static int   led_mux_strobe;
-static UINT8 led_segs[8]; 
+static UINT8 led_segs[8];
 
 static int    input_strobe;	  // IC23 74LS138 A = CA2 IC7, B = CA2 IC4, C = CA2 IC8
 static int    output_strobe;  // same
@@ -156,13 +156,13 @@ static void on_reset(void)
 
 static NVRAM_HANDLER( nvram )
 {
-  if ( read_or_write ) 
+  if ( read_or_write )
   {	// writing
 	mame_fwrite(file,nvram,nvram_size);
   }
   else
   { // reading
-	if ( file ) mame_fread(file,nvram,nvram_size);	
+	if ( file ) mame_fread(file,nvram,nvram_size);
 	else 		memset(nvram,0x00,nvram_size);
   }
 }
@@ -192,8 +192,8 @@ static WRITE8_HANDLER( ic2_o1_callback )
 {
   ptm6840_set_c2(0,data); // copy output value to IC2 c2
 
-  // this output is the clock for timer2, 
-  // the output from timer2 is the input clock for timer3 
+  // this output is the clock for timer2,
+  // the output from timer2 is the input clock for timer3
   // the output from timer 3 is used as a square wave for the AY8913 audio output !!!
   //
 
@@ -210,7 +210,7 @@ static WRITE8_HANDLER( ic2_o3_callback )
  logerror("PTM0o3 output %d\n",data);
 }
 
-static struct ptm6840_interface ptm_ic2_intf = 
+static struct ptm6840_interface ptm_ic2_intf =
 {
   ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
   cpu0_irq
@@ -223,14 +223,14 @@ static void cpu1_irq(int state)
   update_mpu68_interrupts();
 }
 
-static struct ptm6840_interface ptm_vid_intf = 
+static struct ptm6840_interface ptm_vid_intf =
 {
   NULL, NULL, NULL,
   cpu1_irq
 };
 
 /***************************************************************************
-	6821 PIA handlers
+    6821 PIA handlers
 ***************************************************************************/
 
 static WRITE8_HANDLER( pia_ic3_porta_w )
@@ -298,9 +298,9 @@ static READ8_HANDLER( pia_ic3_cb2_r )
 }
 
 
-// IC3, lamp data lines + alphanumeric display 
+// IC3, lamp data lines + alphanumeric display
 
-static struct pia6821_interface pia_ic3_intf = 
+static struct pia6821_interface pia_ic3_intf =
 {
   /*inputs : A/B,CA/B1,CA/B2 */ pia_ic3_porta_r, pia_ic3_portb_r, pia_ic3_ca1_r, pia_ic3_cb1_r, pia_ic3_ca2_r, pia_ic3_cb2_r,
   /*outputs: A/B,CA/B2       */ pia_ic3_porta_w, pia_ic3_portb_w, pia_ic3_ca2_w, pia_ic3_cb2_w,
@@ -575,8 +575,8 @@ static READ8_HANDLER( pia_ic8_porta_r )
 {
   LOG_IC8(("%04x IC8 PIA Read of Port A (MUX input data)\n",activecpu_get_previouspc()));
 
-  // strobe 
-  
+  // strobe
+
   return inputs[ input_strobe&0x07 ];
 }
 
@@ -726,8 +726,8 @@ VIDEO_UPDATE( mpu4_vid )
 
 
 	/* this is in main ram.. i think it must transfer it out of here??? */
-//	count = 0x0018b6/2; // crmaze
-//	count = 0x004950/2; // turnover
+//  count = 0x0018b6/2; // crmaze
+//  count = 0x004950/2; // turnover
 
 	/* we're in row table mode...thats why */
 
@@ -863,8 +863,8 @@ void scn2674_write_init_regs(UINT8 data)
 
 		case 5:
 		   /* IR5 - Active Characters Per Row
-		     cccc cccc
-		     c = Characters Per Row */
+             cccc cccc
+             c = Characters Per Row */
 		   	IR5_scn2674_character_per_row = data;
 		   	LOGSTUFF("IR5 - Active Characters Per Row %02x\n",IR5_scn2674_character_per_row);
 			break;
@@ -1048,7 +1048,7 @@ void scn2674_write_command(UINT8 data)
 		LOGSTUFF("Line Zero IRQ: %d Disabled\n",(data>>3)&1);
 		LOGSTUFF("V-Blank   IRQ: %d Disabled\n",(data>>4)&1);
 
-//		scn2674_irq_mask &= ((data & 0x1f)^0x1f); // disables.. doesn't enable?
+//      scn2674_irq_mask &= ((data & 0x1f)^0x1f); // disables.. doesn't enable?
 
 		if (data&0x01) scn2674_irq_mask&=0xfe;
 		if (data&0x02) scn2674_irq_mask&=0xfd;
@@ -1135,36 +1135,36 @@ void scn2674_write_command(UINT8 data)
 READ16_HANDLER( mpu4_vid_scn2674_r )
 {
 	/*
-	Offset:  Purpose
-	 0       Interrupt Register
-	 1       Status Register
-	 2       Screen Start 1 Lower Register
-	 3       Screen Start 1 Upper Register
-	 4       Cursor Address Lower Register
-	 5       Cursor Address Upper Register
-	 6       Screen Start 2 Lower Register
-	 7       Screen Start 2 Upper Register
-	*/
+    Offset:  Purpose
+     0       Interrupt Register
+     1       Status Register
+     2       Screen Start 1 Lower Register
+     3       Screen Start 1 Upper Register
+     4       Cursor Address Lower Register
+     5       Cursor Address Upper Register
+     6       Screen Start 2 Lower Register
+     7       Screen Start 2 Upper Register
+    */
 
 	switch (offset)
 	{
 
-		/*	Status / Irq Register
+		/*  Status / Irq Register
 
-			--RV ZSRs
+            --RV ZSRs
 
-			-- = ALWAYS 0
-			R  = RDFLG (Status Register Only)
-			V  = Vblank
-			Z  = Line Zero
-			S  = Split 1
-			R  = Ready
-			s  = Split 2
-		*/
+            -- = ALWAYS 0
+            R  = RDFLG (Status Register Only)
+            V  = Vblank
+            Z  = Line Zero
+            S  = Split 1
+            R  = Ready
+            s  = Split 2
+        */
 		case 0:
 			printf("Read Irq Register %06x\n",activecpu_get_pc());
-	//		return scn2674_irq_register|0x08;
-	//		return 0x04;
+	//      return scn2674_irq_register|0x08;
+	//      return 0x04;
 			return scn2674_irq_register;
 
 		case 1:
@@ -1185,16 +1185,16 @@ READ16_HANDLER( mpu4_vid_scn2674_r )
 WRITE16_HANDLER( mpu4_vid_scn2674_w )
 {
 	/*
-	Offset:  Purpose
-	 0       Initialization Registers
-	 1       Command Register
-	 2       Screen Start 1 Lower Register
-	 3       Screen Start 1 Upper Register
-	 4       Cursor Address Lower Register
-	 5       Cursor Address Upper Register
-	 6       Screen Start 2 Lower Register
-	 7       Screen Start 2 Upper Register
-	*/
+    Offset:  Purpose
+     0       Initialization Registers
+     1       Command Register
+     2       Screen Start 1 Lower Register
+     3       Screen Start 1 Upper Register
+     4       Cursor Address Lower Register
+     5       Cursor Address Upper Register
+     6       Screen Start 2 Lower Register
+     7       Screen Start 2 Upper Register
+    */
 
 	data &=0x00ff; // its an 8-bit chip on a 16-bit board, feel the cheapness.
 
@@ -1231,7 +1231,7 @@ logerror("WData %d WOffset %d", data, offset);
 VIDEO_START( mpu4_vid )
 {
 	/* if anything uses tile sizes other than 8x8 we can't really do it this way.. we'll have to draw tiles by hand.
-	  maybe we will anyway, but for now we don't need to */
+      maybe we will anyway, but for now we don't need to */
 
 	mpu4_vid_vidram = auto_malloc (0x20000);
 	mpu4_vid_vidram_is_dirty = auto_malloc(0x1000);
@@ -1353,7 +1353,7 @@ hex  bit
 
 READ16_HANDLER( mpu4_vid_6850_r )
 {
-//	data &=0x00ff;
+//  data &=0x00ff;
 	switch (offset)
 	{
 		case 0: return mpu4_vid_6850_status_register;
@@ -1391,7 +1391,7 @@ WRITE16_HANDLER ( mpu4_vid_6850_w )
 static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x7fffff) AM_ROM
 
-// 	AM_RANGE(0x600000, 0x63ffff) AM_RAM? In expanded games (mating)
+//  AM_RANGE(0x600000, 0x63ffff) AM_RAM? In expanded games (mating)
 
 	AM_RANGE(0x800000, 0x80ffff) AM_RAM AM_BASE(&mpu4_vid_mainram) // mainram / char address ram?
 
@@ -1411,20 +1411,20 @@ static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
 	/* comms with the MPU4? - disabling this gives MPU4 communication breakdown */
     AM_RANGE(0xff8000, 0xff8001) AM_READ(  vidcard_uart_ctrl_r ) // 6850 compatible uart control reg read
     AM_RANGE(0xff8000, 0xff8001) AM_WRITE( vidcard_uart_ctrl_w )// 6850 compatible uart control reg write
-    AM_RANGE(0xff8002, 0xff8003) AM_READ(  vidcard_uart_rx_r )  // 6850 compatible uart read  data 
+    AM_RANGE(0xff8002, 0xff8003) AM_READ(  vidcard_uart_rx_r )  // 6850 compatible uart read  data
     AM_RANGE(0xff8002, 0xff8003) AM_WRITE( vidcard_uart_tx_w )  // 6850 compatible uart write data
 
 	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_r16u)  // 6840PTM IC2
 	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_w16)  // 6840PTM IC2
-	
+
 	/* characterizer??? */
-//	AM_RANGE(0xffd000, 0xffd00f) AM_RAM // crmaze et al???
+//  AM_RANGE(0xffd000, 0xffd00f) AM_RAM // crmaze et al???
 
 ADDRESS_MAP_END
 
 /* TODO: Add in proper MPU4 map*/
 static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
-  
+
   AM_RANGE(0x0000, 0x07ff) AM_READ(ram_r)		  // 2k NVRAM
   AM_RANGE(0x0000, 0x07ff) AM_WRITE(ram_w) AM_BASE(&nvram) AM_SIZE(&nvram_size)
 
@@ -1433,9 +1433,9 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
   AM_RANGE(0x0801, 0x0801) AM_READ( mpu4_uart_rx_r)		// video uart receive  reg
   AM_RANGE(0x0801, 0x0801) AM_WRITE(mpu4_uart_tx_w)		// video uart transmit reg
 
-//  AM_RANGE(0x0880, 0x0880) AM_READ(uart1stat_r)	//Could be a UART datalogger is here.
+//  AM_RANGE(0x0880, 0x0880) AM_READ(uart1stat_r)   //Could be a UART datalogger is here.
 //  AM_RANGE(0x0880, 0x0880) AM_WRITE(uart1ctrl_w)  // Or a PIA?
-//  AM_RANGE(0x0881, 0x0881) AM_READ(uart1data_r)	
+//  AM_RANGE(0x0881, 0x0881) AM_READ(uart1data_r)
 //  AM_RANGE(0x0881, 0x0881) AM_WRITE(uart1data_w)
 
   AM_RANGE(0x0900, 0x0907) AM_READ( ptm6840_0_r)  // 6840PTM IC2
@@ -1459,9 +1459,9 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
   AM_RANGE(0x0F00, 0x0F03) AM_WRITE(pia_5_w)	  // PIA6821 IC8
   AM_RANGE(0x0F00, 0x0F03) AM_READ( pia_5_r)
 
-// AM_RANGE(0x1000, 0xFFFF) AM_READ(MRA8_ROM)	  // 64k ROM
+// AM_RANGE(0x1000, 0xFFFF) AM_READ(MRA8_ROM)     // 64k ROM
 
-  AM_RANGE(0x1000, 0x3FFF) AM_RAM	  
+  AM_RANGE(0x1000, 0x3FFF) AM_RAM
   AM_RANGE(0x4000, 0x40ff) AM_RAM // it actually runs code from here...
   AM_RANGE(0x4100, 0xBFFF) AM_RAM
 
@@ -1484,14 +1484,14 @@ IRQ 4-7 Program Card
 
 INTERRUPT_GEN(mpu4_vid_irq)
 {
-//	if (cpu_getiloops()&1)
-//		cpunum_set_input_line(1, 1, HOLD_LINE);
-//	else
-//	LOGSTUFF("scn2674_irq_mask %02x",scn2674_irq_mask);
+//  if (cpu_getiloops()&1)
+//      cpunum_set_input_line(1, 1, HOLD_LINE);
+//  else
+//  LOGSTUFF("scn2674_irq_mask %02x",scn2674_irq_mask);
 
 	if (cpu_getiloops()==0) // vbl
 	{
-	//	if (scn2674_display_enabled) // ?
+	//  if (scn2674_display_enabled) // ?
 		{
 			if (scn2674_irq_mask&0x10)
 			{
@@ -1519,7 +1519,7 @@ MACHINE_INIT( mpu4_vid )
   pia_config(3, PIA_STANDARD_ORDERING, &pia_ic6_intf);
   pia_config(4, PIA_STANDARD_ORDERING, &pia_ic7_intf);
   pia_config(5, PIA_STANDARD_ORDERING, &pia_ic8_intf);
-  
+
 //  pia_config(6, PIA_ALTERNATE_ORDERING, &pia_gameboard_intf);
 
   pia_reset();
@@ -1539,10 +1539,10 @@ MACHINE_INIT( mpu4_vid )
   ptm6840_unconfig();
   ptm6840_config(0, &ptm_ic2_intf );
   ptm6840_config(1, &ptm_vid_intf );
-  
+
   // setup 224 lamps //////////////////////////////////////////////////////
 
-  Lamps_init(224);					
+  Lamps_init(224);
 
   // setup 8 mechanical meters ////////////////////////////////////////////
 
@@ -1553,11 +1553,11 @@ MACHINE_INIT( mpu4_vid )
   Stepper_init(0, STEPPER_48STEP_REEL);
   Stepper_init(1, STEPPER_48STEP_REEL);
   Stepper_init(2, STEPPER_48STEP_REEL);
-  Stepper_init(3, STEPPER_48STEP_REEL); 
-  
+  Stepper_init(3, STEPPER_48STEP_REEL);
+
   // setup the standard oki MSC1937 display ///////////////////////////////
 
-//  vfd_init(0, VFDTYPE_MSC1937);	// does oldtimer use a OKI MSC1937 alpha display controller ?
+//  vfd_init(0, VFDTYPE_MSC1937);   // does oldtimer use a OKI MSC1937 alpha display controller ?
 
   // reset the board //////////////////////////////////////////////////////
 
@@ -1578,13 +1578,13 @@ static INTERRUPT_GEN( gen_50hz )
 {
   signal_50hz = signal_50hz?0:1;
 
-  // update IC4 input port b  
+  // update IC4 input port b
 
   if ( signal_50hz ) ic4_input_b |=  0x04;
   else               ic4_input_b &= ~0x04;
 
   pia_set_input_ca1(1,signal_50hz);		  // signal is connected to IC4 CA2
-  pia_set_input_b(  1, ic4_input_b);	  // signal is connected to IC4 port 
+  pia_set_input_b(  1, ic4_input_b);	  // signal is connected to IC4 port
 }
 
 static MACHINE_DRIVER_START( mpu4_vid )
@@ -1613,7 +1613,7 @@ static MACHINE_DRIVER_START( mpu4_vid )
   MDRV_SPEAKER_STANDARD_MONO("mono")
   MDRV_SOUND_ADD(AY8910, 1000000)
   MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
-  
+
   MDRV_SPEAKER_STANDARD_STEREO("left", "right")// Present on all
   MDRV_SOUND_ADD(SAA1099, 0)
   MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.00)
@@ -1622,11 +1622,11 @@ static MACHINE_DRIVER_START( mpu4_vid )
 MACHINE_DRIVER_END
 
 /* There seem to be many versions of Crystal Maze... including several different bios roms and some
-   sound roms we don't even use? 
+   sound roms we don't even use?
    Not every 6809 ROM in these sets is a BIOS, it appears there were two different games with the same name.
-   
+
    One is non-video, and uses only the 6809, and the other is the one we're interested in (the older one)
-   
+
    Some of the dumps available seem to confuse the two.   */
 
 #define VID_BIOS \
@@ -1636,7 +1636,7 @@ ROM_START( bctvidbs )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for BIOS */
 	VID_BIOS
 ROM_END
-	
+
 ROM_START( crmaze ) // this set runs in MFME, so should be OK */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for BIOS */
 	VID_BIOS
@@ -1655,14 +1655,14 @@ ROM_START( crmaze ) // this set runs in MFME, so should be OK */
 
 	/* Does Crystal Maze really have a OKI sound roms? these were only in 2 sets */
 	/* This are Ed Tudor Pole samples, the game graphics are Richard O'Brien - Fruit machine perhaps? */
-//	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
-//	ROM_LOAD( "crmsnd.p1",  0x000000, 0x080000,  CRC(e05cdf96) SHA1(c85c7b31b775e3cc2d7f943eb02ff5ebae6c6080) )  // two sets differed by one byte 72C0: 73 / A7
-//	ROM_LOAD( "crmsnd.p2",  0x080000, 0x080000,  CRC(11da0781) SHA1(cd63834bf5d5034c2473372bfcc4930c300333f7) )
+//  ROM_REGION( 0x200000, REGION_SOUND1, 0 )
+//  ROM_LOAD( "crmsnd.p1",  0x000000, 0x080000,  CRC(e05cdf96) SHA1(c85c7b31b775e3cc2d7f943eb02ff5ebae6c6080) )  // two sets differed by one byte 72C0: 73 / A7
+//  ROM_LOAD( "crmsnd.p2",  0x080000, 0x080000,  CRC(11da0781) SHA1(cd63834bf5d5034c2473372bfcc4930c300333f7) )
 
 	/* there were also many 128kb (64k, duplicate halves) roms in the big set... nothing else has them, maybe they're not important? MFME doesn't need them */
 	/* they only seem to differ in the FFxx region.. what are they? NVRAM dumps? load one just in the remote chance we need it.. */
 	/* Appears to be the result of someone getting confused when dumping the AWP version*/
-//	ROM_LOAD( "crmc.p1",  0x080000, 0x020000,  CRC(58631e6d) SHA1(cffecd4c4ca46aa0ccfbaf7592d58da0428cf143) )
+//  ROM_LOAD( "crmc.p1",  0x080000, 0x020000,  CRC(58631e6d) SHA1(cffecd4c4ca46aa0ccfbaf7592d58da0428cf143) )
 ROM_END
 
 ROM_START( crmazea )

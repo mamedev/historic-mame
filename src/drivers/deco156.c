@@ -7,7 +7,7 @@
     See also deco32.c, deco_mlc.c, backfire.c
 
     Todo:
-		complete co-processor emulation for wcvol95
+        complete co-processor emulation for wcvol95
 
     Emulation by Bryan McPhail, mish@tendril.co.uk
 */
@@ -23,10 +23,133 @@ extern void decrypt156(void);
 #include "sound/okim6295.h"
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
+#include "deco16ic.h"
+#include "state.h"
 
 VIDEO_START(hvysmsh);
 VIDEO_UPDATE(hvysmsh);
 
+static int simpl156_bank_callback(const int bank)
+{
+	return ((bank>>4)&0x7) * 0x1000;
+}
+
+
+VIDEO_START( wcvol95 )
+{
+	/* allocate the ram as 16-bit (we do it here because the CPU is 32-bit) */
+	deco16_pf1_data = auto_malloc(0x2000);
+	deco16_pf2_data = auto_malloc(0x2000);
+	deco16_pf1_rowscroll = auto_malloc(0x800);
+	deco16_pf2_rowscroll = auto_malloc(0x800);
+	deco16_pf12_control = auto_malloc(0x10);
+	paletteram16 =  auto_malloc(0x1000);
+
+	/* and register the allocated ram so that save states still work */
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1 Data", deco16_pf1_data, 0x2000/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 2 Data", deco16_pf2_data, 0x2000/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1 Rowscroll", deco16_pf1_rowscroll, 0x800/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 2 Rowscroll", deco16_pf2_rowscroll, 0x800/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1+2 Control Registers", deco16_pf12_control, 0x10/2);
+	state_save_register_UINT16 ("156VIDEO", 0, "Paletteram", paletteram16, 0x1000/2);
+
+	if (deco16_1_video_init())
+		return 1;
+
+	deco16_set_tilemap_bank_callback(0, simpl156_bank_callback);
+	deco16_set_tilemap_bank_callback(1, simpl156_bank_callback);
+
+	return 0;
+}
+
+/* spriteram is really 16-bit.. this can be changed to use 16-bit ram like the tilemaps
+ its the same sprite chip Data East used on many, many 16-bit era titles */
+static void simpl156_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
+{
+	int offs;
+
+	flip_screen = 1;
+
+	for (offs = (0x1400/4)-4;offs >= 0;offs -= 4) // 0x1400 for charlien
+	{
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult, pri;
+
+		sprite = spriteram32[offs+1]&0xffff;
+
+		y = spriteram32[offs]&0xffff;
+		flash=y&0x1000;
+		if (flash && (cpu_getcurrentframe() & 1)) continue;
+
+		x = spriteram32[offs+2]&0xffff;
+		colour = (x >>9) & 0x1f;
+
+		pri = (x&0xc000); // 2 bits or 1?
+
+		switch (pri&0xc000) {
+		case 0x0000: pri=0; break;
+		case 0x4000: pri=0xf0; break;
+		case 0x8000: pri=0xf0|0xcc; break;
+		case 0xc000: pri=0xf0|0xcc; break; /*  or 0xf0|0xcc|0xaa ? */
+		}
+
+		fx = y & 0x2000;
+		fy = y & 0x4000;
+		multi = (1 << ((y & 0x0600) >> 9)) - 1;	/* 1x, 2x, 4x, 8x height */
+
+		x = x & 0x01ff;
+		y = y & 0x01ff;
+		if (x >= 320) x -= 512;
+		if (y >= 256) y -= 512;
+		y = 240 - y;
+        x = 304 - x;
+
+		if (x>320) continue;
+
+		sprite &= ~multi;
+		if (fy)
+			inc = -1;
+		else
+		{
+			sprite += multi;
+			inc = 1;
+		}
+
+		if (flip_screen)
+		{
+			y=240-y;
+			x=304-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
+
+		while (multi >= 0)
+		{
+			pdrawgfx(bitmap,Machine->gfx[2],
+					sprite - multi * inc,
+					colour,
+					fx,fy,
+					x,y + mult * multi,
+					cliprect,TRANSPARENCY_PEN,0,pri);
+
+			multi--;
+		}
+	}
+}
+
+
+
+VIDEO_UPDATE( wcvol95 )
+{
+	fillbitmap(priority_bitmap,0,NULL);
+
+	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
+
+	deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
+	simpl156_drawsprites(bitmap,cliprect);
+	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+}
 
 /***************************************************************************/
 
@@ -115,6 +238,17 @@ static WRITE32_HANDLER( deco156_snd_w )
 }
 
 /***************************************************************************/
+READ32_HANDLER( wcvol95_pf1_rowscroll_r ) { return deco16_pf1_rowscroll[offset]^0xffff0000; }
+READ32_HANDLER( wcvol95_pf2_rowscroll_r ) { return deco16_pf2_rowscroll[offset]^0xffff0000; }
+WRITE32_HANDLER( wcvol95_pf1_rowscroll_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; COMBINE_DATA(&deco16_pf1_rowscroll[offset]); }
+WRITE32_HANDLER( wcvol95_pf2_rowscroll_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; COMBINE_DATA(&deco16_pf2_rowscroll[offset]); }
+READ32_HANDLER ( wcvol95_pf12_control_r ) { return deco16_pf12_control[offset]^0xffff0000; }
+WRITE32_HANDLER( wcvol95_pf12_control_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; COMBINE_DATA(&deco16_pf12_control[offset]); }
+READ32_HANDLER( wcvol95_pf1_data_r ) {	return deco16_pf1_data[offset]^0xffff0000; }
+READ32_HANDLER( wcvol95_pf2_data_r ) {	return deco16_pf2_data[offset]^0xffff0000; }
+WRITE32_HANDLER( wcvol95_pf1_data_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; deco16_pf1_data_w(offset,data,mem_mask); }
+WRITE32_HANDLER( wcvol95_pf2_data_w ) { data &=0x0000ffff; mem_mask &=0x0000ffff; deco16_pf2_data_w(offset,data,mem_mask); }
+
 
 static ADDRESS_MAP_START( hvysmsh_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
@@ -126,11 +260,11 @@ static ADDRESS_MAP_START( hvysmsh_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x12000c, 0x12000f) AM_WRITE(hvysmsh_oki_0_bank_w)
 	AM_RANGE(0x140000, 0x140003) AM_READ(hvysmsh_oki_0_r) AM_WRITE(hvysmsh_oki_0_w)
 	AM_RANGE(0x160000, 0x160003) AM_READ(hvysmsh_oki_1_r) AM_WRITE(hvysmsh_oki_1_w)
-	AM_RANGE(0x180000, 0x18001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf12_control)
-	AM_RANGE(0x190000, 0x191fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf1_data_w) AM_BASE(&deco32_pf1_data)
-	AM_RANGE(0x194000, 0x195fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf2_data_w) AM_BASE(&deco32_pf2_data)
-	AM_RANGE(0x1a0000, 0x1a0fff) AM_RAM AM_BASE(&deco32_pf1_rowscroll)
-	AM_RANGE(0x1a4000, 0x1a4fff) AM_RAM AM_BASE(&deco32_pf2_rowscroll)
+	AM_RANGE(0x180000, 0x18001f) AM_READWRITE( wcvol95_pf12_control_r, wcvol95_pf12_control_w )
+	AM_RANGE(0x190000, 0x191fff) AM_READWRITE( wcvol95_pf1_data_r, wcvol95_pf1_data_w )
+	AM_RANGE(0x194000, 0x195fff) AM_READWRITE( wcvol95_pf2_data_r, wcvol95_pf2_data_w )
+	AM_RANGE(0x1a0000, 0x1a0fff) AM_READWRITE( wcvol95_pf1_rowscroll_r, wcvol95_pf1_rowscroll_w )
+	AM_RANGE(0x1a4000, 0x1a4fff) AM_READWRITE( wcvol95_pf2_rowscroll_r, wcvol95_pf2_rowscroll_w )
 	AM_RANGE(0x1c0000, 0x1c0fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_nonbuffered_palette_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x1d0010, 0x1d002f) AM_READ(MRA32_NOP) // Check for DMA complete?
 	AM_RANGE(0x1e0000, 0x1e1fff) AM_RAM AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
@@ -138,11 +272,11 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( wcvol95_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x100000, 0x10001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf12_control)
-	AM_RANGE(0x110000, 0x111fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf1_data_w) AM_BASE(&deco32_pf1_data)
-	AM_RANGE(0x114000, 0x115fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf2_data_w) AM_BASE(&deco32_pf2_data)
-	AM_RANGE(0x120000, 0x120fff) AM_RAM AM_BASE(&deco32_pf1_rowscroll)
-	AM_RANGE(0x124000, 0x124fff) AM_RAM AM_BASE(&deco32_pf2_rowscroll)
+	AM_RANGE(0x100000, 0x10001f) AM_READWRITE( wcvol95_pf12_control_r, wcvol95_pf12_control_w )
+	AM_RANGE(0x110000, 0x111fff) AM_READWRITE( wcvol95_pf1_data_r, wcvol95_pf1_data_w )
+	AM_RANGE(0x114000, 0x115fff) AM_READWRITE( wcvol95_pf2_data_r, wcvol95_pf2_data_w )
+	AM_RANGE(0x120000, 0x120fff) AM_READWRITE( wcvol95_pf1_rowscroll_r, wcvol95_pf1_rowscroll_w )
+	AM_RANGE(0x124000, 0x124fff) AM_READWRITE( wcvol95_pf2_rowscroll_r, wcvol95_pf2_rowscroll_w )
 	AM_RANGE(0x130000, 0x137fff) AM_RAM
 	AM_RANGE(0x140000, 0x140003) AM_READ(wcvol95_eeprom_r)
 	AM_RANGE(0x150000, 0x150003) AM_WRITE(wcvol95_eeprom_w)
@@ -316,8 +450,8 @@ static MACHINE_DRIVER_START( hvysmsh )
 	MDRV_GFXDECODE(gfxdecodeinfo_hvysmsh)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_VIDEO_START(hvysmsh)
-	MDRV_VIDEO_UPDATE(hvysmsh)
+	MDRV_VIDEO_START(wcvol95)
+	MDRV_VIDEO_UPDATE(wcvol95)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -351,8 +485,8 @@ static MACHINE_DRIVER_START( wcvol95 )
 	MDRV_GFXDECODE(gfxdecodeinfo_hvysmsh)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_VIDEO_START(hvysmsh)
-	MDRV_VIDEO_UPDATE(hvysmsh)
+	MDRV_VIDEO_START(wcvol95)
+	MDRV_VIDEO_UPDATE(wcvol95)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

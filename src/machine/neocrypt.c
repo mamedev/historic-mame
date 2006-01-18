@@ -546,15 +546,22 @@ static void neogeo_gfx_decrypt(int extra_xor)
 		baser ^= address_16_23_xor2[(baser >> 8) & 0xff] << 16;
 		baser ^= address_0_7_xor[(baser >> 8) & 0xff];
 
-		/* special handling for preisle2 */
-		if (rom_size == 0x3000000)
+
+		if (rom_size == 0x3000000) /* special handling for preisle2 */
 		{
 			if (rpos < 0x2000000/4)
 				baser &= (0x2000000/4)-1;
 			else
 				baser = 0x2000000/4 + (baser & ((0x1000000/4)-1));
 		}
-		else	/* Clamp to the real rom size */
+		else if (rom_size == 0x6000000)	/* special handling for kf2k3pcb */
+		{
+			if (rpos < 0x4000000/4)
+				baser &= (0x4000000/4)-1;
+			else
+				baser = 0x4000000/4 + (baser & ((0x1000000/4)-1));
+		}
+		else /* Clamp to the real rom size */
 			baser &= (rom_size/4)-1;
 
 		rom[4*rpos+0] = buf[4*baser+0];
@@ -690,6 +697,77 @@ void svcchaos_s1data_decrypt( void )
 		s1[ i ] = BITSWAP8( s1[ i ] ^ 0xd2, 4, 0, 7, 2, 5, 1, 6, 3 );
 	}
 }
+
+/* from Razoola */
+void decode_kf2k3pcb_croms( void )
+{
+	UINT8 *src = memory_region( REGION_GFX3 );
+	UINT8 *buffer = (UINT8*)malloc(0x6000000);
+	int i,j;
+	int addrxor=0x00000000;
+	int dataxor1=0xC5; // 0xC5988549
+	int dataxor2=0x98;
+	int dataxor3=0x85;
+	int dataxor4=0x49;
+	if (buffer){
+		for (i=0;i<0x6000000;i+=4)
+			{
+			j= ((i&~0xffffff)|BITSWAP24(i,23,21,10,20,19,22,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1,0))^addrxor;
+			buffer[j+0]=src[i+0];
+			buffer[j+1]=src[i+2];
+			buffer[j+2]=src[i+1];
+			buffer[j+3]=src[i+3];
+			}
+			for (i=0;i<0x6000000;i+=4)
+				{
+				src[i+3]=   ((buffer[i+0]>>5)&1)<<0|
+					((buffer[i+0]>>3)&1)<<1|
+					((buffer[i+1]>>7)&1)<<2|
+					((buffer[i+2]>>7)&1)<<3|
+					((buffer[i+0]>>0)&1)<<4|
+					((buffer[i+2]>>3)&1)<<5|
+					((buffer[i+1]>>5)&1)<<6|
+					((buffer[i+1]>>1)&1)<<7;
+
+				src[i+2]=   ((buffer[i+3]>>5)&1)<<0|
+					((buffer[i+1]>>6)&1)<<1|
+					((buffer[i+0]>>2)&1)<<2|
+					((buffer[i+2]>>4)&1)<<3|
+					((buffer[i+3]>>4)&1)<<4|
+					((buffer[i+3]>>2)&1)<<5|
+					((buffer[i+1]>>2)&1)<<6|
+					((buffer[i+3]>>3)&1)<<7;
+
+				src[i+1]=   ((buffer[i+0]>>6)&1)<<0|
+					((buffer[i+1]>>3)&1)<<1|
+					((buffer[i+2]>>5)&1)<<2|
+					((buffer[i+2]>>2)&1)<<3|
+					((buffer[i+3]>>6)&1)<<4|
+					((buffer[i+2]>>1)&1)<<5|
+					((buffer[i+1]>>4)&1)<<6|
+					((buffer[i+0]>>4)&1)<<7;
+
+				src[i+0]=   ((buffer[i+2]>>6)&1)<<0|
+					((buffer[i+0]>>7)&1)<<1|
+					((buffer[i+3]>>7)&1)<<2|
+					((buffer[i+3]>>1)&1)<<3|
+					((buffer[i+2]>>0)&1)<<4|
+					((buffer[i+0]>>1)&1)<<5|
+					((buffer[i+1]>>0)&1)<<6|
+					((buffer[i+3]>>0)&1)<<7;
+
+				buffer[i+0]=src[i+0]^dataxor1;
+				buffer[i+2]=src[i+1]^dataxor2;
+				buffer[i+1]=src[i+2]^dataxor3;
+				buffer[i+3]=src[i+3]^dataxor4;
+		}
+		memcpy(src,buffer,0x6000000);
+		}
+	free(buffer);
+}
+
+
+
 
 /***************************************************************************
 

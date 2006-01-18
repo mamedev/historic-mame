@@ -2676,7 +2676,7 @@ ADDRESS_MAP_END
 
 
 /***************************************************************************
-						Mahjong The Mysterious World
+                        Mahjong The Mysterious World
 ***************************************************************************/
 
 static ADDRESS_MAP_START( mjmyster_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2697,7 +2697,7 @@ static WRITE8_HANDLER( mjmyster_rambank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	memory_set_bankptr(2, &rom[0x90000 + 0x1000 * (data & 0x07)]);
-//	logerror("%04x: rambank = %02x\n", activecpu_get_pc(), data);
+//  logerror("%04x: rambank = %02x\n", activecpu_get_pc(), data);
 }
 
 static WRITE8_HANDLER( mjmyster_select2_w )
@@ -2757,7 +2757,7 @@ static WRITE8_HANDLER( mjmyster_coincounter_w )
 			coin_counter_w(0, (~data) & 0x01);	// coin in
 			coin_counter_w(0, (~data) & 0x02);	// coin out actually
 			#ifdef MAME_DEBUG
-//				ui_popup("cc: %02x",data);
+//              ui_popup("cc: %02x",data);
 			#endif
 
 			break;
@@ -4991,7 +4991,7 @@ MACHINE_DRIVER_END
 
 
 /***************************************************************************
-						Mahjong The Mysterious World
+                        Mahjong The Mysterious World
 ***************************************************************************/
 
 /*  the CPU is in Interrupt Mode 2

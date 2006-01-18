@@ -113,6 +113,7 @@ struct debugwin_info
 	struct debugview_info	view[MAX_VIEWS];
 
 	HWND					editwnd;
+	char					edit_defstr[256];
 	void					(*process_string)(struct debugwin_info *, const char *);
 	WNDPROC 				original_editproc;
 	char					history[HISTORY_LENGTH][MAX_EDIT_STRING];
@@ -377,10 +378,21 @@ void debugwin_update_during_game(void)
 	{
 		// see if the interrupt key is pressed and break if it is
 		temporarily_fake_that_we_are_not_visible = 1;
-		if (input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
+		if (input_ui_pressed(IPT_UI_DEBUG_BREAK))
 		{
+			struct debugwin_info *info;
+			HWND focuswnd = GetFocus();
+
 			debug_halt_on_next_instruction();
 			debug_console_printf("User-initiated break\n");
+
+			// if we were focused on some window's edit box, reset it to default
+			for (info = window_list; info; info = info->next)
+				if (focuswnd == info->editwnd)
+				{
+					SendMessage(focuswnd, WM_SETTEXT, (WPARAM)0, (LPARAM)info->edit_defstr);
+					SendMessage(focuswnd, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+				}
 		}
 		temporarily_fake_that_we_are_not_visible = 0;
 	}
@@ -441,6 +453,7 @@ static struct debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler)
 	// set the default handlers
 	info->handle_command = global_handle_command;
 	info->handle_key = global_handle_key;
+	strcpy(info->edit_defstr, "");
 
 	// hook us in
 	info->next = window_list;
@@ -1465,7 +1478,7 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 						if (strlen(buffer) > 0)
 						{
 							info->ignore_char_lparam = lparam >> 16;
-							SendMessage(wnd, WM_SETTEXT, (WPARAM)0, (LPARAM)"");
+							SendMessage(wnd, WM_SETTEXT, (WPARAM)0, (LPARAM)info->edit_defstr);
 						}
 						break;
 					}
@@ -1586,6 +1599,7 @@ static void memory_create_window(void)
 	// set up the view to track the initial expression
 	debug_view_begin_update(info->view[0].view);
 	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, "0");
+	strcpy(info->edit_defstr, "0");
 	debug_view_set_property_UINT32(info->view[0].view, DVP_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[0].view);
 
@@ -1711,6 +1725,9 @@ static void memory_process_string(struct debugwin_info *info, const char *string
 
 	// select everything in the edit text box
 	SendMessage(info->editwnd, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+
+	// update the default string to match
+	strncpy(info->edit_defstr, string, sizeof(info->edit_defstr) - 1);
 }
 
 
@@ -1864,6 +1881,7 @@ static void disasm_create_window(void)
 	// set up the view to track the initial expression
 	debug_view_begin_update(info->view[0].view);
 	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, "pc");
+	strcpy(info->edit_defstr, "pc");
 	debug_view_set_property_UINT32(info->view[0].view, DVP_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[0].view);
 
@@ -1987,6 +2005,9 @@ static void disasm_process_string(struct debugwin_info *info, const char *string
 
 	// select everything in the edit text box
 	SendMessage(info->editwnd, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
+
+	// update the default string to match
+	strncpy(info->edit_defstr, string, sizeof(info->edit_defstr) - 1);
 }
 
 
@@ -2362,6 +2383,13 @@ static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 
 static int global_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
+	int ignoreme;
+
+	/* ignore any keys that are received while the debug key is down */
+	ignoreme = input_ui_pressed(IPT_UI_DEBUG_BREAK);
+	if (ignoreme)
+		return 1;
+
 	switch (wparam)
 	{
 		case VK_F5:
