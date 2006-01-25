@@ -136,10 +136,40 @@ static void I486OP(cmpxchg_rm32_r32)(void)	// Opcode 0x0f b1
 
 static void I486OP(xadd_rm8_r8)(void)	// Opcode 0x0f c0
 {
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT8 dst = LOAD_RM8(modrm);
+		UINT8 src = LOAD_REG8(modrm);
+		STORE_RM16(modrm, dst + src);
+		STORE_REG16(modrm, dst);
+		CYCLES(CYCLES_XADD_REG_REG);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT8 dst = READ8(ea);
+		UINT8 src = LOAD_REG8(modrm);
+		WRITE8(ea, dst + src);
+		STORE_REG8(modrm, dst);
+		CYCLES(CYCLES_XADD_REG_MEM);
+	}
 }
 
 static void I486OP(xadd_rm16_r16)(void)	// Opcode 0x0f c1
 {
+	UINT8 modrm = FETCH();
+	if( modrm >= 0xc0 ) {
+		UINT16 dst = LOAD_RM16(modrm);
+		UINT16 src = LOAD_REG16(modrm);
+		STORE_RM16(modrm, dst + src);
+		STORE_REG16(modrm, dst);
+		CYCLES(CYCLES_XADD_REG_REG);
+	} else {
+		UINT32 ea = GetEA(modrm);
+		UINT16 dst = READ16(ea);
+		UINT16 src = LOAD_REG16(modrm);
+		WRITE16(ea, dst + src);
+		STORE_REG16(modrm, dst);
+		CYCLES(CYCLES_XADD_REG_MEM);
+	}
 }
 
 static void I486OP(xadd_rm32_r32)(void)	// Opcode 0x0f c1
@@ -149,14 +179,14 @@ static void I486OP(xadd_rm32_r32)(void)	// Opcode 0x0f c1
 		UINT32 dst = LOAD_RM32(modrm);
 		UINT32 src = LOAD_REG32(modrm);
 		STORE_RM32(modrm, dst + src);
-		STORE_REG32(modrm, src);
+		STORE_REG32(modrm, dst);
 		CYCLES(CYCLES_XADD_REG_REG);
 	} else {
 		UINT32 ea = GetEA(modrm);
 		UINT32 dst = READ32(ea);
 		UINT32 src = LOAD_REG32(modrm);
 		WRITE32(ea, dst + src);
-		STORE_REG32(modrm, src);
+		STORE_REG32(modrm, dst);
 		CYCLES(CYCLES_XADD_REG_MEM);
 	}
 }

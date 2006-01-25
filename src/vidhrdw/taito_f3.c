@@ -543,10 +543,6 @@ VIDEO_EOF( f3 )
 	}
 }
 
-VIDEO_STOP( f3 )
-{
-}
-
 VIDEO_START( f3 )
 {
 	const struct F3config *pCFG=&f3_config_table[0];

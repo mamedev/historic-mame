@@ -679,7 +679,7 @@ UINT8 namcoio_51XX_read(int chip)
 
 					if (io[chip].coins_per_cred[0] > 0)
 					{
-						if (io[chip].credits >= 9)
+						if (io[chip].credits >= 99)
 						{
 							WRITE_PORT(1,1);	// coin lockout
 						}

@@ -18,10 +18,6 @@ struct SEGAPCMinterface
 	int  region;
 };
 
-#define SEGAPCM_SAMPLE15K (4000000/256)
-#define SEGAPCM_SAMPLE32K (4000000/128)
-
-
 WRITE8_HANDLER( SegaPCM_w );
 READ8_HANDLER( SegaPCM_r );
 

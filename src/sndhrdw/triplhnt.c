@@ -163,8 +163,8 @@ DISCRETE_SOUND_START(triplhnt_discrete_interface)
 	DISCRETE_SCHMITT_OSCILLATOR(TRIPLHNT_SCREECH_SND, TRIPLHNT_SCREECH_EN, TRIPLHNT_NOISE, 3.4, &triplhnt_screech_osc)
 
 	/************************************************/
-	/* Final gain and ouput.                        */
+	/* Final mix and output.                        */
 	/************************************************/
 	DISCRETE_MIXER3(NODE_90, 1, TRIPLHNT_BEAR_ROAR_SND, TRIPLHNT_SHOT_SND, TRIPLHNT_SCREECH_SND, &triplhnt_mixer)
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END

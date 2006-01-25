@@ -190,6 +190,7 @@ enum
 
 	/* refresh rate */
 	UI_refresh_rate,
+	UI_decoding_gfx,
 
 	UI_last_mame_entry
 };

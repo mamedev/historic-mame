@@ -1985,6 +1985,8 @@ static const struct MultiPCM_interface multi32_pcm_interface =
 	REGION_SOUND1
 };
 
+
+
 /*************************************
  *
  *  Dual PCB shared memory comms
@@ -2014,6 +2016,8 @@ static READ16_HANDLER( dual_pcb_masterslave )
 {
 	return 0; // 0/1 master/slave
 }
+
+
 
 /*************************************
  *

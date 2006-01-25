@@ -298,7 +298,6 @@ static MACHINE_DRIVER_START( namcond1 )
 
 	MDRV_VIDEO_START(ygv608)
 	MDRV_VIDEO_UPDATE(ygv608)
-	MDRV_VIDEO_STOP(ygv608)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

@@ -115,7 +115,7 @@ DISCRETE_SOUND_START(poolshrk_discrete_interface)
 
 
 	/*
-     * The TC ouput of E8 is sent to a one shot made up by
+     * The TC output of E8 is sent to a one shot made up by
      * C12/R62.  Clamped by CR16. Shaped to square by L9.
      * This causes click to be triggered at the end of score.
      */
@@ -143,10 +143,10 @@ DISCRETE_SOUND_START(poolshrk_discrete_interface)
 	DISCRETE_TRANSFORM3(POOLSHRK_CLICK_SND, 1, NODE_41, 1, 3.4, "01&2*")	// Q0 output of J9, pin 14.  Set to proper amplitude
 
 	/************************************************/
-	/* Final gain and ouput.                        */
+	/* Final mix and output.                        */
 	/************************************************/
 	DISCRETE_MIXER4(NODE_90, 1, POOLSHRK_SCRATCH_SND, POOLSHRK_CLICK_SND, POOLSHRK_SCORE_SND, POOLSHRK_BUMP_SND, &poolshrk_mixer)
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END
 
 

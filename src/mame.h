@@ -19,6 +19,7 @@
 #include "fileio.h"
 #include "drawgfx.h"
 #include "palette.h"
+#include "inptport.h"
 
 #ifdef MESS
 #include "device.h"

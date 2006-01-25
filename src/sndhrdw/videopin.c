@@ -91,9 +91,9 @@ DISCRETE_SOUND_START(videopin_discrete_interface)
 	DISCRETE_SQUAREWFIX(VIDEOPIN_BELL_SND, VIDEOPIN_BELL_EN, 15750.0/16.0, NODE_30, 50.0, 0, 180.0)
 
 	/************************************************/
-	/* Final gain and ouput.                        */
+	/* Final mix and output.                        */
 	/************************************************/
 	DISCRETE_ADDER3(NODE_90, VIDEOPIN_ATTRACT_EN, VIDEOPIN_VOL_SND, VIDEOPIN_BELL_SND, VIDEOPIN_BONG_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0 + 740.2 + 1000.0))
-	DISCRETE_OUTPUT(NODE_91, 100)
+
+	DISCRETE_OUTPUT(NODE_90, 65534.0/(1000.0 + 740.2 + 1000.0))
 DISCRETE_SOUND_END

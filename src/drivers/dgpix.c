@@ -115,34 +115,54 @@ static WRITE32_HANDLER( flash_w )
 	}
 }
 
+static void plot_pixel_rgb(int x, int y, int color)
+{
+	if (Machine->color_depth == 32)
+	{
+		UINT32 b = (color & 0x001f) << 3;
+		UINT32 g = (color & 0x03e0) >> 2;
+		UINT32 r = (color & 0x7c00) >> 7;
+		((UINT32 *)bitmaps[vbuffer]->line[y])[x] = b | (g<<8) | (r<<16);
+	}
+	else
+	{
+		/* color is BGR; convert to RGB */
+		color = ((color & 0x1f) << 10) | (color & 0x3e0) | ((color & 0x7c00) >> 10);
+		((UINT16 *)bitmaps[vbuffer]->line[y])[x] = color;
+	}
+}
+
 static WRITE32_HANDLER( vram_w )
 {
-	int x,y,color;
+	int x,y;
+
+	switch(mem_mask)
+	{
+		case 0:
+			vram_w(offset,data,0x0000ffff);
+			vram_w(offset,data,0xffff0000);
+			return;
+
+		case 0xffff:
+			if(data & 0x80000000)
+				return;
+		break;
+
+		case 0xffff0000:
+			if(data & 0x8000)
+				return;
+		break;
+	}
 
 	COMBINE_DATA(&vram[offset+(0x40000/4)*vbuffer]);
 
-	x = offset >> 8;
-	y = offset & 0xff;
+	y = offset >> 8;
+	x = offset & 0xff;
 
-	if(y < 160 && x < 240)
+	if(x < 320/2 && y < 240)
 	{
-		if(!(vram[offset+(0x40000/4)*vbuffer] & 0x80000000))
-		{
-			color = (vram[offset+(0x40000/4)*vbuffer] & 0x7fff0000) >> 16;
-			/* data is BGR; convert to RGB */
-			color = ((color & 0x1f) << 10) | (color & 0x3e0) | ((color & 0x7c00) >> 10);
-
-			plot_pixel(bitmaps[vbuffer],y*2+0,x,color);
-		}
-
-		if(!(vram[offset+(0x40000/4)*vbuffer] & 0x00008000))
-		{
-			color = vram[offset+(0x40000/4)*vbuffer] & 0x00007fff;
-			/* data is BGR; convert to RGB */
-			color = ((color & 0x1f) << 10) | (color & 0x3e0) | ((color & 0x7c00) >> 10);
-
-			plot_pixel(bitmaps[vbuffer],y*2+1,x,color);
-		}
+		plot_pixel_rgb(x*2,  y,(vram[offset+(0x40000/4)*vbuffer]>>16) & 0x7fff);
+		plot_pixel_rgb(x*2+1,y, vram[offset+(0x40000/4)*vbuffer] & 0x7fff);
 	}
 }
 
@@ -264,6 +284,9 @@ VIDEO_START( dgpix )
 	vram = auto_malloc(0x40000*2);
 	bitmaps[0] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 	bitmaps[1] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+
+	if(!vram || !bitmaps[0] || !bitmaps[1])
+		return 1;
 
 	return 0;
 }

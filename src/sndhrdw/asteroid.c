@@ -208,9 +208,8 @@ DISCRETE_SOUND_START(asteroid_discrete_interface)
 	/************************************************/
 	DISCRETE_ADDER4(NODE_90, 1, ASTEROID_THUMP_SND, ASTEROID_SAUCER_SND, ASTEROID_SHIP_FIRE_SND, ASTEROID_SAUCER_FIRE_SND)
 	DISCRETE_ADDER4(NODE_91, 1, ASTEROID_THRUST_SND, ASTEROID_EXPLODE_SND, ASTEROID_LIFE_SND, NODE_90)
-	DISCRETE_GAIN(NODE_92, NODE_91, 65534.0 / (131.6+76.1+49.5+53.0+1000.0+600.0))
 
-	DISCRETE_OUTPUT(NODE_92, 100)		// Take the output from the mixer
+	DISCRETE_OUTPUT(NODE_91, 65534.0 / (131.6+76.1+49.5+53.0+1000.0+600.0))		// Take the output from the mixer
 DISCRETE_SOUND_END
 
 
@@ -272,9 +271,8 @@ DISCRETE_SOUND_START(astdelux_discrete_interface)
 	/* adder circuit                                */
 	/************************************************/
 	DISCRETE_ADDER2(NODE_90, 1, ASTEROID_THRUST_SND, ASTEROID_EXPLODE_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000+600))
 
-	DISCRETE_OUTPUT(NODE_91, 100)	// Take the output from the mixer
+	DISCRETE_OUTPUT(NODE_90, 65534.0/(1000+600))	// Take the output from the mixer
 DISCRETE_SOUND_END
 
 

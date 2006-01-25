@@ -137,9 +137,9 @@ DISCRETE_SOUND_START(skydiver_discrete_interface)
 	DISCRETE_MULTIPLY(SKYDIVER_WHISTLE2_SND, SKYDIVER_WHISTLE2_EN, NODE_39, 228.5/3.3)
 
 	/************************************************/
-	/* Final gain and ouput.                        */
+	/* Final mix and output.                        */
 	/************************************************/
 	DISCRETE_ADDER4(NODE_90, SKYDIVER_SOUND_EN, SKYDIVER_NOTE_SND, SKYDIVER_NOISE_SND, SKYDIVER_WHISTLE1_SND, SKYDIVER_WHISTLE2_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(1000.0 + 383.1 + 228.5 + 228.5))
-	DISCRETE_OUTPUT(NODE_91, 100)
+
+	DISCRETE_OUTPUT(NODE_90, 65534.0/(1000.0 + 383.1 + 228.5 + 228.5))
 DISCRETE_SOUND_END

@@ -64,7 +64,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( spaceint_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
@@ -389,9 +389,21 @@ ROM_START( spaceint )
 	ROM_LOAD( "clr",		  0x0000, 0x0100, CRC(13c1803f) SHA1(da59bf63d9e84aca32904c107674bc89974648eb) )
 ROM_END
 
+ROM_START( spaceinj )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "3j",			  0x0000, 0x0800, CRC(b26c57a1) SHA1(456330c09130f910e847ef4bfe773421615d1448) )
+	ROM_LOAD( "3f",			  0x0800, 0x0800, CRC(bac8b96c) SHA1(5a7b24402c7a1a08e69cf15eb31c93d411a7e929) )
+	ROM_LOAD( "3e",			  0x1000, 0x0800, CRC(346125f3) SHA1(59c120ac3b120fa28acef3b9041c03939f2981f8) )
+	ROM_LOAD( "3d",			  0x1800, 0x0800, CRC(3a3a261f) SHA1(0604ec621180016acab804b57ac405e434d6f0c0) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "clr",		  0x0000, 0x0100, BAD_DUMP CRC(13c1803f) SHA1(da59bf63d9e84aca32904c107674bc89974648eb) )
+ROM_END
+
 
 GAME( 1980, astinvad, 0,        astinvad, astinvad, 0, ROT270, "Stern",   "Astro Invader", 0 )
 GAME( 19??, kosmokil, astinvad, astinvad, kamikaze, 0, ROT270, "bootleg", "Kosmo Killer", 0 ) // says >BEM< Mi Italy but it looks hacked in, dif revision of game tho.
 GAME( 1979, kamikaze, astinvad, astinvad, kamikaze, 0, ROT270, "Leijac",  "Kamikaze", 0 )
 GAME( 1979, spcking2, 0,        spcking2, spcking2, 0, ROT270, "Konami",  "Space King 2", 0 )
 GAME( 1980, spaceint, 0,        spaceint, spaceint, 0, ROT90,  "Shoei",   "Space Intruder", GAME_WRONG_COLORS )
+GAME( 1980, spaceinj, spaceint, spaceint, spaceint, 0, ROT90,  "Shoei",   "Space Intruder (Japan)", GAME_WRONG_COLORS )

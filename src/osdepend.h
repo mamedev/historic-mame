@@ -239,6 +239,17 @@ enum
 	PATH_IS_DIRECTORY
 };
 
+/* These values are returned as error codes by osd_fopen() */
+typedef enum
+{
+	FILEERR_SUCCESS,
+	FILEERR_FAILURE,
+	FILEERR_OUT_OF_MEMORY,
+	FILEERR_NOT_FOUND,
+	FILEERR_ACCESS_DENIED,
+	FILEERR_ALREADY_OPEN
+} osd_file_error;
+
 
 /* Return the number of paths for a given type */
 int osd_get_path_count(int pathtype);
@@ -247,7 +258,7 @@ int osd_get_path_count(int pathtype);
 int osd_get_path_info(int pathtype, int pathindex, const char *filename);
 
 /* Attempt to open a file with the given name and mode using the specified path type */
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode);
+osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error);
 
 /* Seek within a file */
 int osd_fseek(osd_file *file, INT64 offset, int whence);

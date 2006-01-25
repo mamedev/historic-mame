@@ -2660,7 +2660,7 @@ SOUND DATA?: "CHINA DRAGON U44"
 
 ROM_START( drgnwrld )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "dwen.bin", 0x00000, 0x80000, CRC(a6daa2b8) SHA1(0cbfd001c1fd82a6385453d1c2a808add67746af) )
+	ROM_LOAD16_WORD_SWAP( "chinadr-v0400.bin", 0x00000, 0x80000, CRC(a6daa2b8) SHA1(0cbfd001c1fd82a6385453d1c2a808add67746af) )
 
 	ROM_REGION( 0x420000, REGION_GFX1, 0 )
 	ROM_LOAD( "d0301", 0x000000, 0x400000, CRC(78ab45d9) SHA1(c326ee9f150d766edd6886075c94dea3691b606d) )
@@ -2861,4 +2861,4 @@ GAME( 1996, grtwall,  xymg,     grtwall,  grtwall,  grtwall,  ROT0, "IGS",      
 GAME( 1996, vbowl,    0,        vbowl,    vbowl,    vbowlj,   ROT0, "Alta / IGS", "Virtua Bowling (World, V101XCM)", GAME_NOT_WORKING )
 GAME( 1996, vbowlj,   vbowl,    vbowl,    vbowl,    vbowlj,   ROT0, "Alta / IGS", "Virtua Bowling (Japan, V100JCM)", GAME_IMPERFECT_SOUND )
 GAME( 1997, drgnwrld, 0,        chindrag, drgnwrld, drgnwrld, ROT0, "IGS",        "Dragon World (World, V0400)",     0 )
-GAME( 1995, drgwrld3, 0,        chindrag, drgnwrld, drgnwrld, ROT0, "IGS",        "Dragon World (World, V0300)",     0 )
+GAME( 1995, drgwrld3, drgnwrld, chindrag, drgnwrld, drgnwrld, ROT0, "IGS",        "Dragon World (World, V0300)",     0 )

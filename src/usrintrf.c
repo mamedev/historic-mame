@@ -3031,6 +3031,24 @@ static void showcharset(mame_bitmap *bitmap)
 
 
 
+int ui_display_decoding(mame_bitmap *bitmap, int percent)
+{
+	char buf[1000];
+	char *bufptr = buf;
+
+	bufptr += sprintf(bufptr, "%s: %d%%", ui_getstring(UI_decoding_gfx), percent);
+
+	erase_screen(bitmap);
+
+	ui_draw_message_window(buf);
+	render_ui(bitmap);
+
+	update_video_and_audio();
+
+	return input_ui_pressed(IPT_UI_CANCEL);
+}
+
+
 int ui_display_copyright(mame_bitmap *bitmap)
 {
 	char buf[1000];

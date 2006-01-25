@@ -1,19 +1,18 @@
 /*
 
     Laser Battle / Lazarian (c) 1981 Zaccaria
-    Cat'N Mouse             (c) 1982 Zaccaria
+    Cat and Mouse           (c) 1982 Zaccaria
 
-    Preliminary driver by Pierpaolo Prazzoli
+    driver by Pierpaolo Prazzoli
 
-    The 2 games have a similar video hardware, but sound hardware is very different.
-    Also Laser Battle doesn't use the collision detection provided by the s2636 chips.
+    The 2 games have a similar video hardware, but sound hardware is very different
+    and they don't use the collision detection provided by the s2636 chips.
 
 TODO:
-- prom dump and colors (tile_index in tilemap needs to be adjusted)
-- sound (with schematics for laserbat)
+- how to use the 82S100 PLA dump
+- colors (tile_index in tilemap needs to be adjusted)
+- sound in laserbat (with schematics) and in catnmous
 - cocktail support
-- find out why catnmous and lazarian have code to jump into videoram
-  (it seems they want to execute vital code there...)
 
 */
 
@@ -115,15 +114,18 @@ static READ8_HANDLER( laserbat_input_r )
 
 static ADDRESS_MAP_START( laserbat_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x13ff) AM_ROM
+	AM_RANGE(0x2000, 0x33ff) AM_ROM
+	AM_RANGE(0x3800, 0x3bff) AM_ROM
+	AM_RANGE(0x4000, 0x53ff) AM_ROM
+	AM_RANGE(0x6000, 0x73ff) AM_ROM
+	AM_RANGE(0x7800, 0x7bff) AM_ROM
+
 	AM_RANGE(0x1400, 0x14ff) AM_MIRROR(0x6000) AM_WRITENOP // always 0 (bullet ram in Quasar)
 	AM_RANGE(0x1500, 0x15ff) AM_MIRROR(0x6000) AM_RAM AM_WRITE(laserbat_s2636_1_w) AM_BASE(&s2636_1_ram)
 	AM_RANGE(0x1600, 0x16ff) AM_MIRROR(0x6000) AM_RAM AM_WRITE(laserbat_s2636_2_w) AM_BASE(&s2636_2_ram)
 	AM_RANGE(0x1700, 0x17ff) AM_MIRROR(0x6000) AM_RAM AM_WRITE(laserbat_s2636_3_w) AM_BASE(&s2636_3_ram)
 	AM_RANGE(0x1800, 0x1bff) AM_MIRROR(0x6000) AM_WRITE(laserbat_videoram_w)
 	AM_RANGE(0x1c00, 0x1fff) AM_MIRROR(0x6000) AM_RAM
-	AM_RANGE(0x2000, 0x33ff) AM_ROM
-	AM_RANGE(0x4000, 0x53ff) AM_ROM
-	AM_RANGE(0x6000, 0x73ff) AM_ROM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( laserbat_io_map, ADDRESS_SPACE_IO, 8 )
@@ -138,7 +140,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( catnmous_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITENOP // unknown
+	AM_RANGE(0x00, 0x00) AM_WRITE(soundlatch_w) // soundlatch ?
 	AM_RANGE(0x01, 0x01) AM_WRITE(video_extra_w)
 	AM_RANGE(0x02, 0x02) AM_READ(laserbat_input_r)
 	AM_RANGE(0x02, 0x02) AM_WRITENOP // unknown
@@ -230,6 +232,167 @@ INPUT_PORTS_START( laserbat )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+
+	PORT_START	/* SENSE */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( lazarian )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Reset")
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Calibration Display" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Collision Detection" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Firing" )
+	PORT_DIPSETTING(    0x02, "Rapid" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Normal ) )
+	PORT_DIPNAME( 0x04, 0x00, "Freeze" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+
+	PORT_START	/* SENSE */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( catnmous )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Reset")
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0x70, 0x10, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x30, "5" )
+	PORT_DIPSETTING(    0x40, "Infinites" )
+//  PORT_DIPSETTING(    0x50, "Infinites" )
+//  PORT_DIPSETTING(    0x60, "Infinites" )
+//  PORT_DIPSETTING(    0x70, "Infinites" )
+	PORT_DIPNAME( 0x80, 0x80, "Game Over Melody" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* SENSE */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
@@ -362,13 +525,77 @@ static struct TMS36XXinterface tms36xx_interface =
 
 /* Cat'N Mouse sound ***********************************/
 
+static void zaccaria_irq0a(int state) { cpunum_set_input_line(1, INPUT_LINE_NMI, state ? ASSERT_LINE : CLEAR_LINE); }
+static void zaccaria_irq0b(int state) { cpunum_set_input_line(1,0,state ? ASSERT_LINE : CLEAR_LINE); }
+
+static int active_8910,port0a;
+
+static READ8_HANDLER( zaccaria_port0a_r )
+{
+	if (active_8910 == 0)
+		return AY8910_read_port_0_r(0);
+	else
+		return AY8910_read_port_1_r(0);
+}
+
+static WRITE8_HANDLER( zaccaria_port0a_w )
+{
+	port0a = data;
+}
+
+static WRITE8_HANDLER( zaccaria_port0b_w )
+{
+	static int last;
+
+
+	/* bit 1 goes to 8910 #0 BDIR pin  */
+	if ((last & 0x02) == 0x02 && (data & 0x02) == 0x00)
+	{
+		/* bit 0 goes to the 8910 #0 BC1 pin */
+		if (last & 0x01)
+			AY8910_control_port_0_w(0,port0a);
+		else
+			AY8910_write_port_0_w(0,port0a);
+	}
+	else if ((last & 0x02) == 0x00 && (data & 0x02) == 0x02)
+	{
+		/* bit 0 goes to the 8910 #0 BC1 pin */
+		if (last & 0x01)
+			active_8910 = 0;
+	}
+	/* bit 3 goes to 8910 #1 BDIR pin  */
+	if ((last & 0x08) == 0x08 && (data & 0x08) == 0x00)
+	{
+		/* bit 2 goes to the 8910 #1 BC1 pin */
+		if (last & 0x04)
+			AY8910_control_port_1_w(0,port0a);
+		else
+			AY8910_write_port_1_w(0,port0a);
+	}
+	else if ((last & 0x08) == 0x00 && (data & 0x08) == 0x08)
+	{
+		/* bit 2 goes to the 8910 #1 BC1 pin */
+		if (last & 0x04)
+			active_8910 = 1;
+	}
+
+	last = data;
+}
+
 static struct pia6821_interface pia_0_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
-	/*irqs   : A/B             */ 0, 0
+	/*inputs : A/B,CA/B1,CA/B2 */ zaccaria_port0a_r, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ zaccaria_port0a_w, zaccaria_port0b_w, 0, 0,
+	/*irqs   : A/B             */ zaccaria_irq0a, zaccaria_irq0b
 };
 
+static struct AY8910interface ay8910_interface =
+{
+	0,
+	soundlatch_r,
+	0,//ay8910_port0a_w,
+	0
+};
 
 static MACHINE_INIT( catnmous )
 {
@@ -382,6 +609,15 @@ static INTERRUPT_GEN( laserbat_interrupt )
 {
 	cpunum_set_input_line_and_vector(0,0,PULSE_LINE,0x0a);
 }
+
+static INTERRUPT_GEN( zaccaria_cb1_toggle )
+{
+	static int toggle;
+
+	pia_0_cb1_w(0,toggle & 1);
+	toggle ^= 1;
+}
+
 
 static MACHINE_DRIVER_START( laserbat )
 
@@ -430,6 +666,7 @@ static MACHINE_DRIVER_START( catnmous )
 
 	MDRV_CPU_ADD(M6802,3580000/4) /* ? */
 	MDRV_CPU_PROGRAM_MAP(catnmous_sound_map,0)
+	MDRV_CPU_PERIODIC_INT(zaccaria_cb1_toggle,TIME_IN_HZ(3580000/4096))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -439,7 +676,7 @@ static MACHINE_DRIVER_START( catnmous )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 32*8-1)
 
 	MDRV_GFXDECODE(laserbat_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
@@ -452,6 +689,7 @@ static MACHINE_DRIVER_START( catnmous )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(AY8910, 3580000/2) // ?
+	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_SOUND_ADD(AY8910, 3580000/2) // ?
@@ -533,7 +771,9 @@ ROM_START( lazarian )
 	ROM_CONTINUE(			 0x6800, 0x0400 )
 	ROM_LOAD( "laz.3b",      0x2c00, 0x0400, CRC(9ddbe048) SHA1(70d1e8af073c85aba08e5251691842069617e6ac) )
 	ROM_CONTINUE(			 0x6c00, 0x0400 )
-	ROM_LOAD( "laz.2b",      0x3000, 0x0400, CRC(d6eb400c) SHA1(89545498cc14b48763017b9b3a3395bf3ffed1c3) )
+	ROM_LOAD( "laz10-62.2b", 0x3800, 0x0400, CRC(4ad9f7af) SHA1(71bcb9d148a7372b7be0abccdf71eeedba8b6c0a) )
+	ROM_CONTINUE(			 0x7800, 0x0400 )
+	ROM_CONTINUE(			 0x3000, 0x0400 )
 	ROM_CONTINUE(			 0x7000, 0x0400 )
 
 	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
@@ -544,11 +784,53 @@ ROM_START( lazarian )
 	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "laz.14l",      0x0000, 0x0800, CRC(d29962d1) SHA1(5b6d0856c3ebbd5833b522f7c0240309cf3c9777) )
 
-	ROM_REGION( 0x8000, REGION_PROMS, 0 )
-	ROM_LOAD( "82s100_prom", 0x0000, 0x8000, NO_DUMP )
+	ROM_REGION( 0xb89f, REGION_PROMS, 0 )
+	ROM_LOAD( "lz82s100.jed", 0x0000, 0xb89f, CRC(693fb55b) SHA1(2ef9ff9f911b8199f15cc7627f99e82164d5b9c6) )
 ROM_END
 
 ROM_START( catnmous )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )
+	ROM_LOAD( "02-1.7c",      0x0000, 0x0400, CRC(d26ec566) SHA1(ceb16f64a3c1ff25a9eab6549f1ae24085bb9e27) )
+	ROM_CONTINUE(			  0x4000, 0x0400 )
+	ROM_LOAD( "02-2.6c",      0x0400, 0x0400, CRC(02a7e36c) SHA1(8495b2906ecb0791a47e9b6f1959ed6cbc14cce8) )
+	ROM_CONTINUE(			  0x4400, 0x0400 )
+	ROM_LOAD( "02-3.5c",      0x0800, 0x0400, CRC(ee9f90ee) SHA1(dc280dae3a18a9044497bdee41827d2510a04d06) )
+	ROM_CONTINUE(			  0x4800, 0x0400 )
+	ROM_LOAD( "02-4.3c",      0x0c00, 0x0400, CRC(71b97af9) SHA1(6735184dc16c8db3050be3b7b5dfdb7d46a671fe) )
+	ROM_CONTINUE(			  0x4c00, 0x0400 )
+	ROM_LOAD( "02-5.2c",      0x1000, 0x0400, CRC(887a1da2) SHA1(9e2548d1792c2d2b76811a1e0daae4d378f1f354) )
+	ROM_CONTINUE(			  0x5000, 0x0400 )
+	ROM_LOAD( "02-6.7b",      0x2000, 0x0400, CRC(22e045e9) SHA1(dd332e918500d8024d1329bc12c6f939fd41e4a7) )
+	ROM_CONTINUE(			  0x6000, 0x0400 )
+	ROM_LOAD( "02-7.6b",      0x2400, 0x0400, CRC(af330ad2) SHA1(cac70341687edd1daee323c0e332297c80057e1e) )
+	ROM_CONTINUE(			  0x6400, 0x0400 )
+	ROM_LOAD( "02-8.5b",      0x2800, 0x0400, CRC(c7d38401) SHA1(33a3bb393451cd3fefa23b5c8013068b5b0de7a5) )
+	ROM_CONTINUE(			  0x6800, 0x0400 )
+	ROM_LOAD( "02-9.3b",      0x2c00, 0x0400, CRC(c4a33f20) SHA1(355c4345daa681fa2bcfa1e345d2db34f9d94113) )
+	ROM_CONTINUE(			  0x6c00, 0x0400 )
+	ROM_LOAD( "02-10-11.2b",  0x3800, 0x0400, CRC(3f7d4b89) SHA1(c8e9be0149a2f728526a416ec5663e69cc2e6758) )
+	ROM_CONTINUE(			  0x7800, 0x0400 )
+	ROM_CONTINUE(			  0x3000, 0x0400 )
+	ROM_CONTINUE(			  0x7000, 0x0400 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "sound01.1d",   0xd000, 0x1000, CRC(f65cb9d0) SHA1(a2fe7563c6da055bf6aa20797b2d9fa184f0133c) )
+	ROM_LOAD( "sound01.1f",   0xe000, 0x1000, CRC(473c44de) SHA1(ff08b02d45a2c23cabb5db716aa203225a931424) )
+	ROM_LOAD( "sound01.1e",   0xf000, 0x1000, CRC(1bd90c93) SHA1(20fd2b765a42e25cf7f716e6631b8c567785a866) )
+
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "type01.8g",    0x0000, 0x0800, CRC(2b180d4a) SHA1(b6f48ffdbad64b4d9f1fe838000187800c51228c) )
+	ROM_LOAD( "type01.10g",   0x0800, 0x0800, CRC(e5259f9b) SHA1(396753291ab36c3ed72208d619665fc0f33d1e17) )
+	ROM_LOAD( "type01.11g",   0x1000, 0x0800, CRC(2999f378) SHA1(929082383b2b0006de171587adb932ce57316963) )
+
+	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "type01.14l",   0x0000, 0x0800, CRC(af79179a) SHA1(de61af7d02c93be326a33ee51572e3da7a25dab0) )
+
+	ROM_REGION( 0x0a3e, REGION_PROMS, 0 )
+	ROM_LOAD( "82s100.13m.jed", 0x0000, 0x0a3e, CRC(34987305) SHA1(6e47cce6cca312d12a13a57c32ff05794c28517b) )
+ROM_END
+
+ROM_START( catmousa )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
 	ROM_LOAD( "catnmous.7c",  0x0000, 0x0400, CRC(0bf9fc06) SHA1(7d5857121fe51f43e4ae7db34df720198994afdd) )
 	ROM_CONTINUE(			  0x4000, 0x0400 )
@@ -568,7 +850,8 @@ ROM_START( catnmous )
 	ROM_CONTINUE(			  0x6800, 0x0400 )
 	ROM_LOAD( "catnmous.3b",  0x2c00, 0x0400, CRC(e99fce4b) SHA1(2c8efdea55bae5526b547fec53e8f3642fe2bd2e) )
 	ROM_CONTINUE(			  0x6c00, 0x0400 )
-	ROM_LOAD( "catnmous.2b",  0x3000, 0x0400, CRC(880728fa) SHA1(f204d669c190ad0cf2c885af12625026534db655) )
+	// missing half rom
+	ROM_LOAD( "catnmous.2b",  0x3000, 0x0400, BAD_DUMP CRC(880728fa) SHA1(f204d669c190ad0cf2c885af12625026534db655) )
 	ROM_CONTINUE(			  0x7000, 0x0400 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
@@ -585,139 +868,11 @@ ROM_START( catnmous )
 	ROM_LOAD( "catnmous.14l", 0x0000, 0x0800, CRC(af79179a) SHA1(de61af7d02c93be326a33ee51572e3da7a25dab0) )
 
 	ROM_REGION( 0x8000, REGION_PROMS, 0 )
-	ROM_LOAD( "82s100_prom", 0x0000, 0x8000, NO_DUMP )
+	ROM_LOAD( "82s100.13m", 0x0000, 0x8000, NO_DUMP )
 ROM_END
 
-ROM_START( catmousa )
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )
-	ROM_LOAD( "02.1",         0x0000, 0x0400, CRC(d26ec566) SHA1(ceb16f64a3c1ff25a9eab6549f1ae24085bb9e27) )
-	ROM_CONTINUE(			  0x4000, 0x0400 )
-	ROM_LOAD( "02.2",         0x0400, 0x0400, CRC(02a7e36c) SHA1(8495b2906ecb0791a47e9b6f1959ed6cbc14cce8) )
-	ROM_CONTINUE(			  0x4400, 0x0400 )
-	ROM_LOAD( "02.3",         0x0800, 0x0400, CRC(ee9f90ee) SHA1(dc280dae3a18a9044497bdee41827d2510a04d06) )
-	ROM_CONTINUE(			  0x4800, 0x0400 )
-	ROM_LOAD( "02.4",         0x0c00, 0x0400, CRC(71b97af9) SHA1(6735184dc16c8db3050be3b7b5dfdb7d46a671fe) )
-	ROM_CONTINUE(			  0x4c00, 0x0400 )
-	ROM_LOAD( "02.5",         0x1000, 0x0400, CRC(887a1da2) SHA1(9e2548d1792c2d2b76811a1e0daae4d378f1f354) )
-	ROM_CONTINUE(			  0x5000, 0x0400 )
-	ROM_LOAD( "02.6",         0x2000, 0x0400, CRC(22e045e9) SHA1(dd332e918500d8024d1329bc12c6f939fd41e4a7) )
-	ROM_CONTINUE(			  0x6000, 0x0400 )
-	ROM_LOAD( "02.7",         0x2400, 0x0400, CRC(af330ad2) SHA1(cac70341687edd1daee323c0e332297c80057e1e) )
-	ROM_CONTINUE(			  0x6400, 0x0400 )
-	ROM_LOAD( "02.8",         0x2800, 0x0400, CRC(c7d38401) SHA1(33a3bb393451cd3fefa23b5c8013068b5b0de7a5) )
-	ROM_CONTINUE(			  0x6800, 0x0400 )
-	ROM_LOAD( "02.9",         0x2c00, 0x0400, CRC(c4a33f20) SHA1(355c4345daa681fa2bcfa1e345d2db34f9d94113) )
-	ROM_CONTINUE(			  0x6c00, 0x0400 )
-	ROM_LOAD( "02.10-11",     0x3000, 0x0400, CRC(18d8e4f0) SHA1(5ac91a67daac10913b85f99eb4e33313b2f3ce1d) )
-	ROM_CONTINUE(			  0x7000, 0x0400 )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "sound01.1d",   0xd000, 0x1000, CRC(f65cb9d0) SHA1(a2fe7563c6da055bf6aa20797b2d9fa184f0133c) )
-	ROM_LOAD( "sound01.1f",   0xe000, 0x1000, CRC(473c44de) SHA1(ff08b02d45a2c23cabb5db716aa203225a931424) )
-	ROM_LOAD( "sound01.1e",   0xf000, 0x1000, CRC(1bd90c93) SHA1(20fd2b765a42e25cf7f716e6631b8c567785a866) )
-
-	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "type01.8g",    0x0000, 0x0800, CRC(2b180d4a) SHA1(b6f48ffdbad64b4d9f1fe838000187800c51228c) )
-	ROM_LOAD( "type01.10g",   0x0800, 0x0800, CRC(e5259f9b) SHA1(396753291ab36c3ed72208d619665fc0f33d1e17) )
-	ROM_LOAD( "type01.11g",   0x1000, 0x0800, CRC(2999f378) SHA1(929082383b2b0006de171587adb932ce57316963) )
-
-	ROM_REGION( 0x0800, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "type01.14l",   0x0000, 0x0800, CRC(af79179a) SHA1(de61af7d02c93be326a33ee51572e3da7a25dab0) )
-
-	ROM_REGION( 0x8000, REGION_PROMS, 0 )
-	ROM_LOAD( "82s100_prom", 0x0000, 0x8000, NO_DUMP )
-ROM_END
-
-DRIVER_INIT( lazarian )
-{
-	// patch out protection ?
-	UINT8 *ROM = memory_region(REGION_CPU1);
-	//(this is just an input bit check...)
-//  ROM[0x1380] = 0xc0; // nop
-//  ROM[0x1381] = 0xc0; // nop
-//  ROM[0x1382] = 0xc0; // nop
-
-	// jumps to videoram!?
-	ROM[0x44fa] = 0xc0; // nop
-	ROM[0x44fb] = 0xc0; // nop
-	ROM[0x44fc] = 0xc0; // nop
-
-	//13A3: call $38f5
-	ROM[0x13a3] = 0xc0; // nop
-	ROM[0x13a4] = 0xc0; // nop
-	ROM[0x13a5] = 0xc0; // nop
-
-	// jumps to videoram!?
-	ROM[0x13ac] = 0xc0; // nop
-	ROM[0x13ad] = 0xc0; // nop
-	ROM[0x13ae] = 0xc0; // nop
-
-	// jumps to videoram!?
-	ROM[0x50ea] = 0xc0; // nop
-	ROM[0x50eb] = 0xc0; // nop
-	ROM[0x50ec] = 0xc0; // nop
-
-	//24B2: call $7882
-	ROM[0x24b2] = 0xc0; // nop
-	ROM[0x24b3] = 0xc0; // nop
-	ROM[0x24b4] = 0xc0; // nop
-
-	//2B30: call $7882
-	ROM[0x2b30] = 0xc0; // nop
-	ROM[0x2b31] = 0xc0; // nop
-	ROM[0x2b32] = 0xc0; // nop
-
-	//01D8: jp   *$1c02 -> wrong (?) jump from main ram!
-	//794D: ld   r0,r0
-}
-
-// main set has the same wrong (?) jumps, which are read from the same offsets in the rom, but at different PCs
-DRIVER_INIT( catmousa )
-{
-	// protection? core bug? encryption?
-	UINT8 *ROM = memory_region(REGION_CPU1);
-
-	//2E77: cal0 *$000d
-	//3AB7: ld   r0,r0
-	ROM[0x2e77] = 0xc0; // nop
-	ROM[0x2e78] = 0xc0; // nop
-
-	//4074: cal0 *$0007
-	//3BB0: ld   r0,r0
-	ROM[0x4074] = 0xc0; // nop
-	ROM[0x4075] = 0xc0; // nop
-
-	//40B6: cal0 *$0003
-	//3BBA: ld   r0,r0
-	ROM[0x40b6] = 0xc0; // nop
-	ROM[0x40b7] = 0xc0; // nop
-
-	//5209: cal0 *$0035
-	//3B69: ld   r0,r0
-	ROM[0x5209] = 0xc0; // nop
-	ROM[0x520a] = 0xc0; // nop
-
-	//518E: cal0 *$0007
-	//3BB0: ld   r0,r0
-	ROM[0x518e] = 0xc0; // nop
-	ROM[0x518f] = 0xc0; // nop
-
-	//521A: cal0 *$0007
-	//3BB0: ld   r0,r0
-	ROM[0x521a] = 0xc0; // nop
-	ROM[0x521b] = 0xc0; // nop
-
-	//491F: cal0 *$0035
-	//3B69: ld   r0,r0
-	//3B69: ld   r0,r0
-	ROM[0x491f] = 0xc0; // nop
-	ROM[0x4920] = 0xc0; // nop
-
-	//01B9: jp   *$1ce6 -> wrong (?) jump from main ram!
-	//3800: ld   r0,r0
-}
-
-GAME( 1981, laserbat, 0,        laserbat, laserbat, 0,        ROT0,  "Zaccaria", "Laser Battle",                    GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAME( 1981, lazarian, laserbat, laserbat, laserbat, lazarian, ROT0,  "Bally Midway (Zaccaria License)", "Lazarian", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1982, catnmous, 0,        catnmous, laserbat, 0,        ROT90, "Zaccaria", "Cat'N Mouse (set 1)",             GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1982, catmousa, catnmous, catnmous, laserbat, catmousa, ROT90, "Zaccaria", "Cat'N Mouse (set 2)",             GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1981, laserbat, 0,        laserbat, laserbat, 0, ROT0,  "Zaccaria", "Laser Battle",                    GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME( 1981, lazarian, laserbat, laserbat, lazarian, 0, ROT0,  "Bally Midway (Zaccaria License)", "Lazarian", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME( 1982, catnmous, 0,        catnmous, catnmous, 0, ROT90, "Zaccaria", "Cat and Mouse (set 1)",           GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME( 1982, catmousa, catnmous, catnmous, catnmous, 0, ROT90, "Zaccaria", "Cat and Mouse (set 2)",           GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_NOT_WORKING )

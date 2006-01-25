@@ -79,7 +79,7 @@ DISCRETE_SOUND_START(circus_discrete_interface)
 	/************************************************/
 	DISCRETE_CRFILTER(CIRCUS_MUSIC_SND, 1, CIRCUS_MUSIC_BIT, RES_K(50), CAP_U(.1))	/* 50K is just an average value */
 
-	DISCRETE_OUTPUT(CIRCUS_MUSIC_SND, 100)
+	DISCRETE_OUTPUT(CIRCUS_MUSIC_SND, 1)
 DISCRETE_SOUND_END
 
 const struct discrete_mixer_desc crash_mixer =
@@ -142,7 +142,7 @@ DISCRETE_SOUND_START(crash_discrete_interface)
 	/************************************************/
 	DISCRETE_MIXER2(NODE_90, 1, CRASH_MUSIC_SND, CRASH_BEEPER_SND, &crash_mixer)
 
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END
 
 /* Nodes - Inputs */
@@ -162,7 +162,7 @@ DISCRETE_SOUND_START(robotbwl_discrete_interface)
 	DISCRETE_RCFILTER(NODE_20, 1, ROBOTBWL_MUSIC_BIT, RES_K(10), CAP_U(.47))
 	DISCRETE_CRFILTER(ROBOTBWL_MUSIC_SND, 1, NODE_20, RES_K(10) + RES_K(22), CAP_U(.1))
 
-	DISCRETE_OUTPUT(ROBOTBWL_MUSIC_SND, 100)
+	DISCRETE_OUTPUT(ROBOTBWL_MUSIC_SND, 1)
 DISCRETE_SOUND_END
 
 

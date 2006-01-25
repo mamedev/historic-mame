@@ -465,7 +465,6 @@ extern UINT32 hng64_dls[2][0x81] ;
 
 VIDEO_START( hng64 ) ;
 VIDEO_UPDATE( hng64 ) ;
-VIDEO_STOP( hng64 ) ;
 
 static UINT32 activeBuffer ;
 
@@ -752,7 +751,7 @@ WRITE32_HANDLER( hng64_3d_1_w )
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
 
-	exit(1) ;
+	osd_die("WRITE32_HANDLER( hng64_3d_1_w )\n");
 }
 
 WRITE32_HANDLER( hng64_3d_2_w )
@@ -1420,7 +1419,6 @@ MACHINE_DRIVER_START( hng64 )
 
 	MDRV_VIDEO_START(hng64)
 	MDRV_VIDEO_UPDATE(hng64)
-	MDRV_VIDEO_STOP(hng64)
 MACHINE_DRIVER_END
 
 
@@ -1728,3 +1726,4 @@ GAME( 1997, roadedge, hng64,  hng64, hng64, hng64_race, ROT0, "SNK", "Roads Edge
 GAME( 1998, sams64_2, hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Samurai Shodown: Warrior's Rage", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 005 */
 GAME( 1998, fatfurwa, hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Fatal Fury: Wild Ambition (rev.A)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 006 */
 GAME( 1999, buriki,   hng64,  hng64, hng64, hng64_fght, ROT0, "SNK", "Buriki One (rev.B)", GAME_NOT_WORKING|GAME_NO_SOUND ) /* 007 */
+

@@ -39,8 +39,8 @@ struct debug_view_callbacks
 	int				(*alloc)(struct debug_view *);	/* allocate memory */
 	void			(*free)(struct debug_view *);	/* free memory */
 	void			(*update)(struct debug_view *);	/* update contents */
-	void			(*getprop)(struct debug_view *, UINT32, void *); /* get property */
-	void			(*setprop)(struct debug_view *, UINT32, const void *); /* set property */
+	void			(*getprop)(struct debug_view *, UINT32, union debug_property_info *value); /* get property */
+	void			(*setprop)(struct debug_view *, UINT32, union debug_property_info value); /* set property */
 };
 
 /* debug_view describes a single text-based view */
@@ -157,16 +157,16 @@ static void registers_update(struct debug_view *view);
 static int disasm_alloc(struct debug_view *view);
 static void disasm_free(struct debug_view *view);
 static void disasm_update(struct debug_view *view);
-static void	disasm_getprop(struct debug_view *view, UINT32 property, void *value);
-static void	disasm_setprop(struct debug_view *view, UINT32 property, const void *value);
+static void	disasm_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value);
+static void	disasm_setprop(struct debug_view *view, UINT32 property, union debug_property_info value);
 
 static int memory_alloc(struct debug_view *view);
 static void memory_free(struct debug_view *view);
 static void memory_update(struct debug_view *view);
-static void	memory_getprop(struct debug_view *view, UINT32 property, void *value);
-static void	memory_setprop(struct debug_view *view, UINT32 property, const void *value);
+static void	memory_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value);
+static void	memory_setprop(struct debug_view *view, UINT32 property, union debug_property_info value);
 
-static struct debug_view_callbacks callback_table[] =
+static const struct debug_view_callbacks callback_table[] =
 {
 	{	NULL,				NULL,				NULL,				NULL,				NULL },
 	{	NULL,				NULL,				console_update,		NULL,				NULL },
@@ -298,64 +298,64 @@ void debug_view_free(struct debug_view *view)
     of a given property
 -------------------------------------------------*/
 
-void debug_view_get_property(struct debug_view *view, int property, void *value)
+void debug_view_get_property(struct debug_view *view, int property, union debug_property_info *value)
 {
 	switch (property)
 	{
 		case DVP_VISIBLE_ROWS:
-			*(UINT32 *)value = view->visible_rows;
+			value->i = view->visible_rows;
 			break;
 
 		case DVP_VISIBLE_COLS:
-			*(UINT32 *)value = view->visible_cols;
+			value->i = view->visible_cols;
 			break;
 
 		case DVP_TOTAL_ROWS:
-			*(UINT32 *)value = view->total_rows;
+			value->i = view->total_rows;
 			break;
 
 		case DVP_TOTAL_COLS:
-			*(UINT32 *)value = view->total_cols;
+			value->i = view->total_cols;
 			break;
 
 		case DVP_TOP_ROW:
-			*(UINT32 *)value = view->top_row;
+			value->i = view->top_row;
 			break;
 
 		case DVP_LEFT_COL:
-			*(UINT32 *)value = view->left_col;
+			value->i = view->left_col;
 			break;
 
 		case DVP_UPDATE_CALLBACK:
-			*(genf **)value = (genf *) view->update_func;
+			value->f = (genf *) view->update_func;
 			break;
 
 		case DVP_VIEW_DATA:
-			*(struct debug_view_char **)value = view->viewdata;
+			value->p = (void *) view->viewdata;
 			break;
 
 		case DVP_CPUNUM:
-			*(UINT32 *)value = view->cpunum;
+			value->i = view->cpunum;
 			break;
 
 		case DVP_SUPPORTS_CURSOR:
-			*(UINT32 *)value = view->supports_cursor;
+			value->i = view->supports_cursor;
 			break;
 
 		case DVP_CURSOR_VISIBLE:
-			*(UINT32 *)value = view->cursor_visible;
+			value->i = view->cursor_visible;
 			break;
 
 		case DVP_CURSOR_ROW:
-			*(UINT32 *)value = view->cursor_row;
+			value->i = view->cursor_row;
 			break;
 
 		case DVP_CURSOR_COL:
-			*(UINT32 *)value = view->cursor_col;
+			value->i = view->cursor_col;
 			break;
 
 		case DVP_OSD_PRIVATE:
-			*(void **)value = view->osd_private_data;
+			value->p = view->osd_private_data;
 			break;
 
 		default:
@@ -373,65 +373,65 @@ void debug_view_get_property(struct debug_view *view, int property, void *value)
     of a given property
 -------------------------------------------------*/
 
-void debug_view_set_property(struct debug_view *view, int property, const void *value)
+void debug_view_set_property(struct debug_view *view, int property, union debug_property_info value)
 {
 	switch (property)
 	{
 		case DVP_VISIBLE_ROWS:
-			if (*(const UINT32 *)value != view->visible_rows)
+			if (value.i != view->visible_rows)
 			{
 				debug_view_begin_update(view);
-				view->visible_rows = *(const UINT32 *)value;
+				view->visible_rows = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_VISIBLE_COLS:
-			if (*(const UINT32 *)value != view->visible_cols)
+			if (value.i != view->visible_cols)
 			{
 				debug_view_begin_update(view);
-				view->visible_cols = *(const UINT32 *)value;
+				view->visible_cols = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_TOTAL_ROWS:
-			if (*(const UINT32 *)value != view->total_rows)
+			if (value.i != view->total_rows)
 			{
 				debug_view_begin_update(view);
-				view->total_rows = *(const UINT32 *)value;
+				view->total_rows = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_TOTAL_COLS:
-			if (*(const UINT32 *)value != view->total_cols)
+			if (value.i != view->total_cols)
 			{
 				debug_view_begin_update(view);
-				view->total_cols = *(const UINT32 *)value;
+				view->total_cols = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_TOP_ROW:
-			if (*(const UINT32 *)value != view->top_row)
+			if (value.i != view->top_row)
 			{
 				debug_view_begin_update(view);
-				view->top_row = *(const UINT32 *)value;
+				view->top_row = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_LEFT_COL:
-			if (*(const UINT32 *)value != view->left_col)
+			if (value.i != view->left_col)
 			{
 				debug_view_begin_update(view);
-				view->left_col = *(const UINT32 *)value;
+				view->left_col = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
@@ -439,7 +439,7 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 
 		case DVP_UPDATE_CALLBACK:
 			debug_view_begin_update(view);
-			view->update_func = (void (*)(struct debug_view *)) (genf *) value;
+			view->update_func = (void (*)(struct debug_view *)) value.f;
 			view->update_pending = 1;
 			debug_view_end_update(view);
 			break;
@@ -449,10 +449,10 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 			break;
 
 		case DVP_CPUNUM:
-			if (*(const UINT32 *)value != view->cpunum)
+			if (value.i != view->cpunum)
 			{
 				debug_view_begin_update(view);
-				view->cpunum = *(const UINT32 *)value;
+				view->cpunum = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
@@ -463,37 +463,37 @@ void debug_view_set_property(struct debug_view *view, int property, const void *
 			break;
 
 		case DVP_CURSOR_VISIBLE:
-			if (*(const UINT32 *)value != view->cursor_visible)
+			if (value.i != view->cursor_visible)
 			{
 				debug_view_begin_update(view);
-				view->cursor_visible = *(const UINT32 *)value;
+				view->cursor_visible = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_CURSOR_ROW:
-			if (*(const UINT32 *)value != view->cursor_row)
+			if (value.i != view->cursor_row)
 			{
 				debug_view_begin_update(view);
-				view->cursor_row = *(const UINT32 *)value;
+				view->cursor_row = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_CURSOR_COL:
-			if (*(const UINT32 *)value != view->cursor_col)
+			if (value.i != view->cursor_col)
 			{
 				debug_view_begin_update(view);
-				view->cursor_col = *(const UINT32 *)value;
+				view->cursor_col = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_OSD_PRIVATE:
-			view->osd_private_data = *(void **)value;
+			view->osd_private_data = value.p;
 			break;
 
 		default:
@@ -1433,18 +1433,18 @@ static void disasm_update(struct debug_view *view)
     of a given property
 -------------------------------------------------*/
 
-static void	disasm_getprop(struct debug_view *view, UINT32 property, void *value)
+static void	disasm_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value)
 {
 	struct debug_view_disasm *dasmdata = view->extra_data;
 
 	switch (property)
 	{
 		case DVP_EXPRESSION:
-			*(char **)value = dasmdata->expression_string;
+			value->s = dasmdata->expression_string;
 			break;
 
 		case DVP_TRACK_LIVE:
-			*(UINT32 *)value = dasmdata->live_tracking;
+			value->i = dasmdata->live_tracking;
 			break;
 
 		default:
@@ -1459,7 +1459,7 @@ static void	disasm_getprop(struct debug_view *view, UINT32 property, void *value
     of a given property
 -------------------------------------------------*/
 
-static void	disasm_setprop(struct debug_view *view, UINT32 property, const void *value)
+static void	disasm_setprop(struct debug_view *view, UINT32 property, union debug_property_info value)
 {
 	struct debug_view_disasm *dasmdata = view->extra_data;
 
@@ -1469,19 +1469,19 @@ static void	disasm_setprop(struct debug_view *view, UINT32 property, const void 
 			debug_view_begin_update(view);
 			if (dasmdata->expression_string)
 				free(dasmdata->expression_string);
-			dasmdata->expression_string = malloc(strlen((const char *)value) + 1);
+			dasmdata->expression_string = malloc(strlen(value.s) + 1);
 			if (dasmdata->expression_string)
-				strcpy(dasmdata->expression_string, (const char *)value);
+				strcpy(dasmdata->expression_string, value.s);
 			dasmdata->expression_dirty = 1;
 			view->update_pending = 1;
 			debug_view_end_update(view);
 			break;
 
 		case DVP_TRACK_LIVE:
-			if (*(const UINT32 *)value != dasmdata->live_tracking)
+			if (value.i != dasmdata->live_tracking)
 			{
 				debug_view_begin_update(view);
-				dasmdata->live_tracking = *(const UINT32 *)value;
+				dasmdata->live_tracking = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
@@ -2021,34 +2021,34 @@ static void memory_update(struct debug_view *view)
     of a given property
 -------------------------------------------------*/
 
-static void	memory_getprop(struct debug_view *view, UINT32 property, void *value)
+static void	memory_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value)
 {
 	struct debug_view_memory *memdata = view->extra_data;
 
 	switch (property)
 	{
 		case DVP_EXPRESSION:
-			*(char **)value = memdata->expression_string;
+			value->s = memdata->expression_string;
 			break;
 
 		case DVP_TRACK_LIVE:
-			*(UINT32 *)value = memdata->live_tracking;
+			value->i = memdata->live_tracking;
 			break;
 
 		case DVP_SPACENUM:
-			*(UINT32 *)value = memdata->spacenum;
+			value->i = memdata->spacenum;
 			break;
 
 		case DVP_BYTES_PER_CHUNK:
-			*(UINT32 *)value = memdata->bytes_per_chunk;
+			value->i = memdata->bytes_per_chunk;
 			break;
 
 		case DVP_REVERSE_VIEW:
-			*(UINT32 *)value = memdata->reverse_view;
+			value->i = memdata->reverse_view;
 			break;
 
 		case DVP_ASCII_VIEW:
-			*(UINT32 *)value = memdata->ascii_view;
+			value->i = memdata->ascii_view;
 			break;
 
 		default:
@@ -2063,7 +2063,7 @@ static void	memory_getprop(struct debug_view *view, UINT32 property, void *value
     of a given property
 -------------------------------------------------*/
 
-static void	memory_setprop(struct debug_view *view, UINT32 property, const void *value)
+static void	memory_setprop(struct debug_view *view, UINT32 property, union debug_property_info value)
 {
 	struct debug_view_memory *memdata = view->extra_data;
 
@@ -2073,59 +2073,59 @@ static void	memory_setprop(struct debug_view *view, UINT32 property, const void 
 			debug_view_begin_update(view);
 			if (memdata->expression_string)
 				free(memdata->expression_string);
-			memdata->expression_string = malloc(strlen((const char *)value) + 1);
+			memdata->expression_string = malloc(strlen(value.s) + 1);
 			if (memdata->expression_string)
-				strcpy(memdata->expression_string, (const char *)value);
+				strcpy(memdata->expression_string, value.s);
 			memdata->expression_dirty = 1;
 			view->update_pending = 1;
 			debug_view_end_update(view);
 			break;
 
 		case DVP_TRACK_LIVE:
-			if (*(const UINT32 *)value != memdata->live_tracking)
+			if (value.i != memdata->live_tracking)
 			{
 				debug_view_begin_update(view);
-				memdata->live_tracking = *(const UINT32 *)value;
+				memdata->live_tracking = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_SPACENUM:
-			if (*(const UINT32 *)value != memdata->spacenum)
+			if (value.i != memdata->spacenum)
 			{
 				debug_view_begin_update(view);
-				memdata->spacenum = *(const UINT32 *)value;
+				memdata->spacenum = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_BYTES_PER_CHUNK:
-			if (*(const UINT32 *)value != memdata->bytes_per_chunk)
+			if (value.i != memdata->bytes_per_chunk)
 			{
 				debug_view_begin_update(view);
-				memdata->bytes_per_chunk = *(const UINT32 *)value;
+				memdata->bytes_per_chunk = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_REVERSE_VIEW:
-			if (*(const UINT32 *)value != memdata->reverse_view)
+			if (value.i != memdata->reverse_view)
 			{
 				debug_view_begin_update(view);
-				memdata->reverse_view = *(const UINT32 *)value;
+				memdata->reverse_view = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
 			break;
 
 		case DVP_ASCII_VIEW:
-			if (*(const UINT32 *)value != memdata->ascii_view)
+			if (value.i != memdata->ascii_view)
 			{
 				debug_view_begin_update(view);
-				memdata->ascii_view = *(const UINT32 *)value;
+				memdata->ascii_view = value.i;
 				view->update_pending = 1;
 				debug_view_end_update(view);
 			}
@@ -2133,7 +2133,7 @@ static void	memory_setprop(struct debug_view *view, UINT32 property, const void 
 
 		case DVP_CHARACTER:
 			debug_view_begin_update(view);
-			memory_handle_char(view, *(const UINT32 *)value);
+			memory_handle_char(view, value.i);
 			view->update_pending = 1;
 			debug_view_end_update(view);
 			break;

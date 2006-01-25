@@ -4,6 +4,9 @@
 
     Controls execution of the core MAME system.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
 ****************************************************************************
 
     Since there has been confusion in the past over the order of
@@ -46,7 +49,6 @@
 
                 vh_open() [mame.c]
                     - calls palette_start() [palette.c] to allocate the palette
-                    - calls decode_graphics() [mame.c] to decode the graphics
                     - computes game resolution and aspect ratio
                     - calls artwork_create_display() [artwork.c] to set up the artwork and init the display
                     - allocates the scrbitmap
@@ -54,6 +56,7 @@
                     - calls init_buffered_spriteram() [mame.c] to set up buffered spriteram
                     - creates the debugger bitmap and font (old debugger only)
                     - calls palette_init() [palette.c] to finish palette initialization
+                    - calls decode_graphics() [mame.c] to decode the graphics
                     - resets the performance tracking variables
 
                 - calls tilemap_init() [tilemap.c] to initialize the tilemap system
@@ -149,9 +152,7 @@
 
 
 /***************************************************************************
-
-    Constants
-
+    CONSTANTS
 ***************************************************************************/
 
 #define FRAMES_PER_FPS_UPDATE		12
@@ -159,9 +160,7 @@
 
 
 /***************************************************************************
-
-    Global variables
-
+    TYPE DEFINITIONS
 ***************************************************************************/
 
 /* handy globals for other parts of the system */
@@ -169,6 +168,7 @@ void *record;	/* for -record */
 void *playback; /* for -playback */
 int mame_debug; /* !0 when -debug option is specified */
 int bailing;	/* set to 1 if the startup is aborted to prevent multiple error messages */
+int vector_updates = 0;
 
 /* the active machine */
 static running_machine active_machine;
@@ -198,8 +198,8 @@ static int vfcount;
 static performance_info performance;
 
 /* misc other statics */
-static int leds_status;
-static int mame_paused;
+static UINT32 leds_status;
+static UINT8 mame_paused;
 
 /* artwork callbacks */
 #ifndef MESS
@@ -212,34 +212,8 @@ static artwork_callbacks mame_artwork_callbacks =
 
 
 
-
 /***************************************************************************
-
-    Hard disk interface prototype
-
-***************************************************************************/
-
-static chd_interface_file *mame_chd_open(const char *filename, const char *mode);
-static void mame_chd_close(chd_interface_file *file);
-static UINT32 mame_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 mame_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 mame_chd_length(chd_interface_file *file);
-
-static chd_interface mame_chd_interface =
-{
-	mame_chd_open,
-	mame_chd_close,
-	mame_chd_read,
-	mame_chd_write,
-	mame_chd_length
-};
-
-
-
-/***************************************************************************
-
-    Other function prototypes
-
+    PROTOTYPES
 ***************************************************************************/
 
 static int init_machine(void);
@@ -260,10 +234,9 @@ static int input_is_coin(const char *name);
 static void input_is_coin_free(void);
 
 
+
 /***************************************************************************
-
-    Inline functions
-
+    INLINES
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -711,12 +684,6 @@ static int vh_open(void)
 	if (palette_start())
 		goto cant_start_palette;
 
-	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
-	/* palette_init() routine because it might need to check the Machine->gfx[] data */
-	if (Machine->drv->gfxdecodeinfo)
-		if (decode_graphics(Machine->drv->gfxdecodeinfo))
-			goto cant_decode_graphics;
-
 	/* if we're a vector game, override the screen width and height */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		scale_vectorgames(options.vector_width, options.vector_height, &bmwidth, &bmheight);
@@ -799,6 +766,12 @@ static int vh_open(void)
 
 	/* force the first update to be full */
 	set_vh_global_attribute(NULL, 0);
+
+	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
+	/* palette_init() routine because it might need to check the Machine->gfx[] data */
+	if (Machine->drv->gfxdecodeinfo)
+		if (decode_graphics(Machine->drv->gfxdecodeinfo))
+			goto cant_decode_graphics;
 
 	/* reset performance data */
 	last_fps_time = osd_cycles();
@@ -932,7 +905,20 @@ static int init_game_options(void)
 
 static int decode_graphics(const gfx_decode *gfxdecodeinfo)
 {
+	int totalgfx = 0, curgfx = 0;
 	int i;
+
+	/* count total graphics elements */
+	for (i = 0; i < MAX_GFX_ELEMENTS && gfxdecodeinfo[i].memory_region != -1; i++)
+	{
+		int region_length = 8 * memory_region_length(gfxdecodeinfo[i].memory_region);
+		const gfx_layout *gl = gfxdecodeinfo[i].gfxlayout;
+
+		if (IS_FRAC(gl->total))
+			totalgfx += region_length / gl->charincrement * FRAC_NUM(gl->total) / FRAC_DEN(gl->total);
+		else
+			totalgfx += gl->total;
+	}
 
 	/* loop over all elements */
 	for (i = 0; i < MAX_GFX_ELEMENTS && gfxdecodeinfo[i].memory_region != -1; i++)
@@ -989,12 +975,14 @@ static int decode_graphics(const gfx_decode *gfxdecodeinfo)
 		}
 
 		/* now decode the actual graphics */
+/*      ui_display_decoding(artwork_get_ui_bitmap(), curgfx * 100 / totalgfx);*/
 		if ((Machine->gfx[i] = decodegfx(region_base + gfxdecodeinfo[i].start, &glcopy)) == 0)
 		{
 			bailing = 1;
 			printf("Out of memory decoding gfx\n");
 			return 1;
 		}
+		curgfx += glcopy.total;
 
 		/* if we have a remapped colortable, point our local colortable to it */
 		if (Machine->remapped_colortable)
@@ -1312,8 +1300,6 @@ void update_video_and_audio(void)
     recompute_fps - recompute the frame rate
 -------------------------------------------------*/
 
-int vector_updates = 0;
-
 static void recompute_fps(int skipped_it)
 {
 	/* increment the frame counters */
@@ -1364,7 +1350,7 @@ int updatescreen(void)
 	sound_frame_update();
 
 	/* if we're not skipping this frame, draw the screen */
-	if (osd_skip_this_frame() == 0)
+	if (!osd_skip_this_frame())
 	{
 		profiler_mark(PROFILER_VIDEO);
 		draw_screen();
@@ -1666,83 +1652,4 @@ void machine_remove_sound(machine_config *machine, const char *tag)
 		}
 
 	logerror("Can't find sound '%s'!\n", tag);
-}
-
-
-
-/*-------------------------------------------------
-    mame_chd_open - interface for opening
-    a hard disk image
--------------------------------------------------*/
-
-chd_interface_file *mame_chd_open(const char *filename, const char *mode)
-{
-	/* look for read-only drives first in the ROM path */
-	if (mode[0] == 'r' && !strchr(mode, '+'))
-	{
-		const game_driver *drv;
-
-		/* attempt reading up the chain through the parents */
-		for (drv = Machine->gamedrv; drv != NULL; drv = drv->clone_of)
-		{
-			void* file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
-
-			if (file != NULL)
-				return file;
-		}
-
-		return NULL;
-	}
-
-	/* look for read/write drives in the diff area */
-	return (chd_interface_file *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
-}
-
-
-
-/*-------------------------------------------------
-    mame_chd_close - interface for closing
-    a hard disk image
--------------------------------------------------*/
-
-void mame_chd_close(chd_interface_file *file)
-{
-	mame_fclose((mame_file *)file);
-}
-
-
-
-/*-------------------------------------------------
-    mame_chd_read - interface for reading
-    from a hard disk image
--------------------------------------------------*/
-
-UINT32 mame_chd_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
-{
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fread((mame_file *)file, buffer, count);
-}
-
-
-
-/*-------------------------------------------------
-    mame_chd_write - interface for writing
-    to a hard disk image
--------------------------------------------------*/
-
-UINT32 mame_chd_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
-{
-	mame_fseek((mame_file *)file, offset, SEEK_SET);
-	return mame_fwrite((mame_file *)file, buffer, count);
-}
-
-
-/*-------------------------------------------------
-    mame_chd_length - interface for getting
-    the length a hard disk image
--------------------------------------------------*/
-
-UINT64 mame_chd_length(chd_interface_file *file)
-{
-	return mame_fsize((mame_file *)file);
 }

@@ -102,7 +102,7 @@ struct dss_schmitt_osc_context
 	double	vCap;			// current capacitor voltage
 	double	rc;				// r*c
 	double	exponent;
-	int		state;			// state of the ouput
+	int		state;			// state of the output
 };
 
 struct dss_sinewave_context

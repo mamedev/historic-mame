@@ -2870,7 +2870,7 @@ Notes:
       YM2151 clock  - 3.579545MHz
       VLM5030 clock - 3.579545MHz
       007232 clock  - 3.579545MHz
-      CN3/CN4 - 4 pin plug/jumper for stereo/mono ouput selection
+      CN3/CN4 - 4 pin plug/jumper for stereo/mono output selection
       CN5 - Right speaker output connection
       CN7 - 4 pin steering connector
       CN8 - 4 pin accelerate/brake connection

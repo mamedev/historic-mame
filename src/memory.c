@@ -772,7 +772,7 @@ void *memory_get_op_ptr(int cpunum, offs_t offset, int arg)
 
 	/* adjust the offset */
 	offset = (offset - space->read.handlers[entry].offset) & space->read.handlers[entry].mask;
-	return (arg && bankd_ptr[entry]) ? &bankd_ptr[entry][offset] : &bank_ptr[entry][offset];
+	return (!arg && bankd_ptr[entry]) ? &bankd_ptr[entry][offset] : &bank_ptr[entry][offset];
 }
 
 

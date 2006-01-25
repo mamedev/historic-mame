@@ -180,6 +180,8 @@ static int ecd_read(zip_file* zip) {
      ==0 error
 */
 zip_file* openzip(int pathtype, int pathindex, const char* zipfile) {
+	osd_file_error error;
+
 	/* allocate */
 	zip_file* zip = (zip_file*)malloc( sizeof(zip_file) );
 	if (!zip) {
@@ -187,7 +189,7 @@ zip_file* openzip(int pathtype, int pathindex, const char* zipfile) {
 	}
 
 	/* open */
-	zip->fp = osd_fopen(pathtype, pathindex, zipfile, "rb");
+	zip->fp = osd_fopen(pathtype, pathindex, zipfile, "rb", &error);
 	if (!zip->fp) {
 		errormsg ("Opening for reading", ERROR_FILESYSTEM, zipfile);
 		free(zip);
@@ -384,8 +386,10 @@ void suspendzip(zip_file* zip) {
     ==0 error (zip must be closed with closezip)
 */
 static zip_file* revivezip(zip_file* zip) {
+	osd_file_error error;
+
 	if (!zip->fp) {
-		zip->fp = osd_fopen(zip->pathtype, zip->pathindex, zip->zip, "rb");
+		zip->fp = osd_fopen(zip->pathtype, zip->pathindex, zip->zip, "rb", &error);
 		if (!zip->fp) {
 			return 0;
 		}

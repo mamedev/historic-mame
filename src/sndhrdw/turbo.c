@@ -142,8 +142,8 @@ DISCRETE_SOUND_START(turbo_sound_interface)
 	/************************************************/
 	/* Combine all 7 sound sources.                 */
 	/************************************************/
-	DISCRETE_GAIN(NODE_81,NODE_80,16000)
-	DISCRETE_OUTPUT(NODE_81, 100)
+
+	DISCRETE_OUTPUT(NODE_80, 16000)
 DISCRETE_SOUND_END
 
 #endif

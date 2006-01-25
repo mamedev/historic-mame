@@ -151,6 +151,7 @@ void CLIB_DECL ui_popup(const char *text, ...) ATTR_PRINTF(1,2);
 void CLIB_DECL ui_popup_time(int seconds, const char *text, ...) ATTR_PRINTF(2,3);
 
 /* informational displays used before the game is fully up and running */
+int ui_display_decoding(mame_bitmap *bitmap, int percent);
 int ui_display_copyright(mame_bitmap *bitmap);
 int ui_display_game_warnings(mame_bitmap *bitmap);
 int ui_display_game_info(mame_bitmap *bitmap);

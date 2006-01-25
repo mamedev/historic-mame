@@ -265,7 +265,7 @@ removal of hacks to change region / get info memory card manager
 
   Currently Blazing Star seems to have some issues with the new code
    (flickering during the Tunnel level, there are probably some timing bugs
-    elsewehre in the driver)
+    elsewhere in the driver)
 
 */
 

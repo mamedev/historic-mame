@@ -967,8 +967,7 @@ static void read_new_dir(unsigned long fileno)
 			// easy to fix, but make sure we *need* to first
 			if (curroot.length > 14336)
 			{
-				logerror("ERROR: root directory too big (%ld)\n", curroot.length);
-				exit(-1);
+				osd_die("ERROR: root directory too big (%ld)\n", curroot.length);
 			}
 
 			// done with all that, read the root directory now
@@ -979,8 +978,7 @@ static void read_new_dir(unsigned long fileno)
 	{
 		if (curdir[fileno].length > 14336)
 		{
-			logerror("ERROR: new directory too big (%ld)!\n", curdir[fileno].length);
-			exit(-1);
+			osd_die("ERROR: new directory too big (%ld)!\n", curdir[fileno].length);
 		}
 		make_dir_current(curdir[fileno].firstfad);
 	}

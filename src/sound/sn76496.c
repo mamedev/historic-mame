@@ -309,6 +309,8 @@ static int SN76496_init(struct SN76496 *R,int sndindex,int clock,int sample_rate
 {
 	int i;
 
+	sample_rate = clock/16;
+
 	R->Channel = stream_create(0,1, sample_rate,R,SN76496Update);
 
 	R->SampleRate = sample_rate;

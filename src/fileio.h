@@ -12,8 +12,9 @@
 #define __FILEIO_H__
 
 #include <stdarg.h>
+#include "mamecore.h"
 #include "osdepend.h"
-#include "hash.h"
+#include "chd.h"
 
 
 /* file types */
@@ -52,9 +53,12 @@ enum
 
 typedef struct _mame_file mame_file;
 
+extern chd_interface mame_chd_interface;
+
 int mame_faccess(const char *filename, int filetype);
 mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite);
-mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char* exphash);
+mame_file *mame_fopen_error(const char *gamename, const char *filename, int filetype, int openforwrite, osd_file_error *error);
+mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char *exphash);
 UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length);
 UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length);
 UINT32 mame_fread_swap(mame_file *file, void *buffer, UINT32 length);
@@ -72,7 +76,7 @@ UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length);
 #endif
 int mame_fseek(mame_file *file, INT64 offset, int whence);
 void mame_fclose(mame_file *file);
-int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, char* hash);
+int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, char *hash);
 UINT64 mame_fsize(mame_file *file);
 const char *mame_fhash(mame_file *file);
 int mame_fgetc(mame_file *file);

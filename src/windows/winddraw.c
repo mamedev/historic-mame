@@ -192,9 +192,9 @@ void win_ddraw_wait_vsync(void)
 	BOOL is_vblank;
 
 	// if we're not already in VBLANK, wait for it
-	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && is_vblank)
+	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank) == DD_OK && is_vblank)
 		;
-	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && !is_vblank)
+	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank) == DD_OK && !is_vblank)
 		;
 }
 
@@ -1210,17 +1210,9 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 	// sync to VBLANK?
 	if ((win_wait_vsync || win_sync_refresh) && throttle && !(!win_window_mode && back_surface))
 	{
-		BOOL is_vblank;
-
 		// this counts as idle time
 		profiler_mark(PROFILER_IDLE);
-
-		while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && is_vblank)
-			;
-		while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank)==DD_OK && !is_vblank)
-			;
-
-		// idle time done
+		win_ddraw_wait_vsync();
 		profiler_mark(PROFILER_END);
 	}
 

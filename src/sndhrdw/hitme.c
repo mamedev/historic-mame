@@ -73,9 +73,8 @@ DISCRETE_SOUND_START(hitme_discrete_interface)
 	DISCRETE_555_ASTABLE(NODE_24,1,22e3,39e3,NODE_23,&desc_hitme_555)
 
 	/* The output of the 555 timer is fed through a simple CR filter in the amp stage. */
-	DISCRETE_CRFILTER(NODE_25,1,NODE_24,1e3,50e-6)
+	DISCRETE_CRFILTER(HITME_FINAL_SND,1,NODE_24,1e3,50e-6)
 
 	/* We scale the final output of 3.3 to 16-bit range and output it at full volume */
-	DISCRETE_GAIN(HITME_FINAL_SND,NODE_25,32000.0/3.3)
-	DISCRETE_OUTPUT(HITME_FINAL_SND,100)
+	DISCRETE_OUTPUT(HITME_FINAL_SND,32000.0/3.3)
 DISCRETE_SOUND_END

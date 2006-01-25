@@ -321,7 +321,7 @@ DISCRETE_SOUND_START(firetrk_discrete_interface)
 	/************************************************/
 	DISCRETE_MIXER7(NODE_90, 1, FIRETRUCK_XTNDPLYSND, FIRETRUCK_HORNSND, FIRETRUCK_BELLSND, FIRETRUCK_SCREECHSND, FIRETRUCK_BANGSND, FIRETRUCK_MOTORSND, FIRETRUCK_SIRENSND, &firetrk_mixer)
 
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END
 
 
@@ -481,7 +481,7 @@ DISCRETE_SOUND_START(superbug_discrete_interface)
 	/* Combine all 4 sound sources.                 */
 	/************************************************/
 	DISCRETE_MIXER4(NODE_90, 1, SUPERBUG_MOTORSND, SUPERBUG_BANGSND, SUPERBUG_SCREECHSND, SUPERBUG_ASRSND, &superbug_mixer)
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END
 
 
@@ -703,5 +703,5 @@ DISCRETE_SOUND_START(montecar_discrete_interface)
 	/* Combine all 5 sound sources.                 */
 	/************************************************/
 	DISCRETE_MIXER5(NODE_90, 1, MONTECAR_BEEPSND, MONTECAR_SCREECHSND, MONTECAR_BANGSND, MONTECAR_DRONE_MOTORSND, MONTECAR_MOTORSND, &montecar_mixer)
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END

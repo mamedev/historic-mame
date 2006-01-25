@@ -45,7 +45,6 @@
 VIDEO_START( f3 );
 VIDEO_UPDATE( f3 );
 VIDEO_EOF( f3 );
-VIDEO_STOP( f3 );
 
 extern UINT32 *f3_vram,*f3_line_ram;
 extern UINT32 *f3_pf_data,*f3_pivot_ram;
@@ -516,7 +515,6 @@ static MACHINE_DRIVER_START( f3 )
 	MDRV_VIDEO_START(f3)
 	MDRV_VIDEO_EOF(f3)
 	MDRV_VIDEO_UPDATE(f3)
-	MDRV_VIDEO_STOP(f3)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

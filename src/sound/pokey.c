@@ -50,6 +50,9 @@
 #include "driver.h"
 #include "pokey.h"
 
+/* clear this to use Machine->sample_rate instead of the native rate */
+#define OUTPUT_NATIVE		1
+
 /*
  * Defining this produces much more (about twice as much)
  * but also more efficient code. Ideally this should be set
@@ -350,6 +353,15 @@ static void pokey_pot_trigger_7(void *param);
 
 #endif
 
+#if OUTPUT_NATIVE
+#define PROCESS_SAMPLE(chip)                                            \
+    ADJUST_EVENT(chip);                                                 \
+    /* adjust the sample position */                                    \
+	chip->samplepos_whole++;											\
+	/* store sum of output signals into the buffer */					\
+	*buffer++ = (sum > 0x7fff) ? 0x7fff : sum;							\
+	length--
+#else
 #define PROCESS_SAMPLE(chip)                                            \
     ADJUST_EVENT(chip);                                                 \
     /* adjust the sample position */                                    \
@@ -362,6 +374,7 @@ static void pokey_pot_trigger_7(void *param);
 	/* store sum of output signals into the buffer */					\
 	*buffer++ = (sum > 0x7fff) ? 0x7fff : sum;							\
 	length--
+#endif
 
 #if HEAVY_MACRO_USAGE
 
@@ -593,6 +606,7 @@ static void rand_init(UINT8 *rng, int size, int left, int right, int add)
 
 static void *pokey_start(int sndindex, int clock, const void *config)
 {
+	int sample_rate = OUTPUT_NATIVE ? clock : Machine->sample_rate;
 	struct POKEYregisters *chip;
 
 	chip = auto_malloc(sizeof(*chip));
@@ -613,7 +627,7 @@ static void *pokey_start(int sndindex, int clock, const void *config)
 	rand_init(chip->rand9,   9, 8, 1, 0x00180);
 	rand_init(chip->rand17, 17,16, 1, 0x1c000);
 
-	chip->samplerate_24_8 = (Machine->sample_rate) ? (clock << 8) / Machine->sample_rate : 1;
+	chip->samplerate_24_8 = (clock << 8) / sample_rate;
 	chip->divisor[CHAN1] = 4;
 	chip->divisor[CHAN2] = 4;
 	chip->divisor[CHAN3] = 4;
@@ -649,7 +663,7 @@ static void *pokey_start(int sndindex, int clock, const void *config)
 	chip->serout_w = chip->intf.serout_w;
 	chip->interrupt_cb = chip->intf.interrupt_cb;
 
-	chip->channel = stream_create(0, 1, Machine->sample_rate, chip, pokey_update);
+	chip->channel = stream_create(0, 1, sample_rate, chip, pokey_update);
 
     return chip;
 }

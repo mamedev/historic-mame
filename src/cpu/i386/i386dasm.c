@@ -15,6 +15,7 @@ enum {
 	PARAM_RM,			/* 16 or 32-bit memory or register */
 	PARAM_RM8,			/* 8-bit memory or register */
 	PARAM_RM16,			/* 16-bit memory or register */
+	PARAM_M64,			/* 64-bit memory */
 	PARAM_I8,			/* 8-bit signed immediate */
 	PARAM_I16,			/* 16-bit signed immediate */
 	PARAM_UI8,			/* 8-bit unsigned immediate */
@@ -574,7 +575,7 @@ static const I386_OPCODE i386_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"cmpxchg8b",		MODRM,			PARAM_M64,			0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
@@ -1413,6 +1414,15 @@ static char* handle_param(char* s, UINT32 param)
 				s += sprintf( s, "%s", i386_reg[0][MODRM_REG2] );
 			} else {
 				s += sprintf( s, "word ptr " );
+				s += sprintf( s, "%s", modrm_string );
+			}
+			break;
+
+		case PARAM_M64:
+			if( modrm >= 0xc0 ) {
+				s += sprintf( s, "???" );
+			} else {
+				s += sprintf( s, "qword ptr " );
 				s += sprintf( s, "%s", modrm_string );
 			}
 			break;

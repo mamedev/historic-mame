@@ -4131,7 +4131,7 @@ static void shuffle(UINT8 *buf,int len)
 
 	if (len == 2) return;
 
-	if (len % 4) exit(1);	/* must not happen */
+	if (len % 4) osd_die("shuffle() - not modulo 4\n");	/* must not happen */
 
 	len /= 2;
 
@@ -4214,3 +4214,4 @@ GAME( 1991, thndrx2a, thndrx2,  thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "
 
 GAME( 1993, prmrsocr, 0,        prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (ver EAB)", 0 )
 GAME( 1993, prmrsocj, prmrsocr, prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (ver JAB)", 0 )
+

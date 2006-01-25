@@ -2114,6 +2114,7 @@ V-V                           TP-027
 	DRIVER( robotryo )	/* (c) 1982 */
 	DRIVER( joust )		/* (c) 1982 */
 	DRIVER( joustr )	/* (c) 1982 */
+	DRIVER( joustg )	/* (c) 1982 */
 	DRIVER( joustwr )	/* (c) 1982 */
 	DRIVER( bubbles )	/* (c) 1982 */
 	DRIVER( bubblesr )	/* (c) 1982 */
@@ -2127,6 +2128,7 @@ V-V                           TP-027
 	DRIVER( blast30 )	/* (c) 1983 */
 	DRIVER( blastkit )	/* (c) 1983 */
 	DRIVER( spdball )	/* (c) 1985 */
+	DRIVER( alienar )	/* (c) 1985 Duncan Brown */
 	DRIVER( mysticm )	/* (c) 1983 */
 	DRIVER( tshoot )	/* (c) 1984 */
 	DRIVER( inferno )	/* (c) 1984 */
@@ -5285,6 +5287,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sia2650 )	/* (c) 1978 */
 	DRIVER( tinv2650 )	/* (c) 1978 */
 	DRIVER( dodgem )	/* (c) 1979 */
+	DRIVER( galaxia )	/* (c) 1979 */
 	DRIVER( laserbat )	/* (c) 1981 */
 	DRIVER( lazarian )	/* (c) 1981 */
 	DRIVER( catnmous )	/* (c) 1982 */
@@ -6642,6 +6645,7 @@ Other Sun games
 	DRIVER( kamikaze )	/* Leijac Corporation */
 	DRIVER( spcking2 )
 	DRIVER( spaceint )	/* [1980] Shoei */
+	DRIVER( spaceinj )	/* [1980] Shoei */
 	DRIVER( spacefb )	/* (c) [1980?] Nintendo */
 	DRIVER( spacefbg )	/* 834-0031 (c) 1980 Gremlin */
 	DRIVER( spacefbb )	/* bootleg */
@@ -6768,6 +6772,7 @@ Other Sun games
 	DRIVER( crgolfa )	/* (c) 1984 Nasco Japan */
 	DRIVER( crgolfb )	/* (c) 1984 Nasco Japan */
 	DRIVER( crgolfc )	/* (c) 1984 Nasco Japan */
+	DRIVER( crgolfhi )	/* (c) 1984 Nasco Japan */
 	DRIVER( truco )		/* (c) 198? Playtronic SRL */
 	DRIVER( thedeep )	/* (c) 1987 Woodplace */
 	DRIVER( rundeep )	/* (c) 1988 Cream (bootleg?) */
@@ -6800,6 +6805,7 @@ Other Sun games
 	DRIVER( landbrka )	/* (c) 1999 Eolith */
 	DRIVER( raccoon )	/* (c) 1999 Eolith */
 	DRIVER( fort2b )	/* (c) 2001 Eolith */
+	DRIVER( klondkp )	/* (c) 1999 Eolith */
 	DRIVER( xfiles )	/* (c) 1999 dgPIX Entertainment Inc */
 	DRIVER( kdynastg )	/* (c) 1999 dgPIX Entertainment Inc */
 	DRIVER( promutrv )	/* (c) 1985 Enerdyne Technologies Inc */

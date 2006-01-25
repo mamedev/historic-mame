@@ -100,8 +100,8 @@ static WRITE8_HANDLER( ay8910_port0a_w )
 }
 
 
-void zaccaria_irq0a(int state) { cpunum_set_input_line(1, INPUT_LINE_NMI, state ? ASSERT_LINE : CLEAR_LINE); }
-void zaccaria_irq0b(int state) { cpunum_set_input_line(1,0,state ? ASSERT_LINE : CLEAR_LINE); }
+static void zaccaria_irq0a(int state) { cpunum_set_input_line(1, INPUT_LINE_NMI, state ? ASSERT_LINE : CLEAR_LINE); }
+static void zaccaria_irq0b(int state) { cpunum_set_input_line(1,0,state ? ASSERT_LINE : CLEAR_LINE); }
 
 static int active_8910,port0a,acs;
 
@@ -642,7 +642,7 @@ static const gfx_decode gfxdecodeinfo[] =
 };
 
 
-struct AY8910interface ay8910_interface =
+static struct AY8910interface ay8910_interface =
 {
 	0,
 	soundlatch2_r,

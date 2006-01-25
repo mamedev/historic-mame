@@ -443,7 +443,6 @@ static MACHINE_DRIVER_START( konamigq )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type1 )
 	MDRV_VIDEO_UPDATE( konamigq )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

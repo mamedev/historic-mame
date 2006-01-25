@@ -884,7 +884,8 @@ $(OBJ)/gameplan.a: \
 $(OBJ)/zaccaria.a: \
 	$(OBJ)/vidhrdw/zac2650.o $(OBJ)/drivers/zac2650.o \
 	$(OBJ)/vidhrdw/zaccaria.o $(OBJ)/drivers/zaccaria.o \
-	$(OBJ)/drivers/laserbat.o
+	$(OBJ)/drivers/laserbat.o \
+	$(OBJ)/drivers/galaxia.o
 
 $(OBJ)/upl.a: \
 	$(OBJ)/vidhrdw/mouser.o $(OBJ)/drivers/mouser.o \
@@ -1318,6 +1319,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/crystal.o $(OBJ)/vidhrdw/vrender0.o $(OBJ)/machine/ds1302.o \
 	$(OBJ)/drivers/vamphalf.o $(OBJ)/drivers/dgpix.o \
 	$(OBJ)/vidhrdw/eolith.o $(OBJ)/drivers/eolith.o \
+	$(OBJ)/drivers/eolith16.o \
 	$(OBJ)/drivers/ertictac.o \
 	$(OBJ)/drivers/ssfindo.o \
 	$(OBJ)/drivers/spaceg.o \

@@ -8,10 +8,9 @@
 struct segapcm
 {
 	UINT8  *ram;
-	UINT16 low[16];
-	const UINT8 *rom, *rom_end;
-	UINT32 *step;
-	int rate;
+	UINT8 low[16];
+	const UINT8 *rom;
+	UINT32 max_addr;
 	int bankshift;
 	int bankmask;
 	sound_stream * stream;
@@ -21,46 +20,59 @@ static void SEGAPCM_update(void *param, stream_sample_t **inputs, stream_sample_
 {
 	struct segapcm *spcm = param;
 	int ch;
+
+	/* clear the buffers */
 	memset(buffer[0], 0, length*sizeof(*buffer[0]));
 	memset(buffer[1], 0, length*sizeof(*buffer[1]));
 
-	for(ch=0; ch<16; ch++)
-		if(!(spcm->ram[0x86+8*ch] & 1)) {
+	/* loop over channels */
+	for (ch = 0; ch < 16; ch++)
+
+		/* only process active channels */
+		if (!(spcm->ram[0x86+8*ch] & 1))
+		{
 			UINT8 *base = spcm->ram+8*ch;
-			UINT32 addr = (base[5] << 24) | (base[4] << 16) | spcm->low[ch];
-			UINT16 loop = (base[0x85] << 8)|base[0x84];
-			UINT8 end = base[6]+1;
-			UINT8 delta = base[7];
-			UINT32 step = spcm->step[delta];
-			UINT8 voll = base[2];
-			UINT8 volr = base[3];
 			UINT8 flags = base[0x86];
 			const UINT8 *rom = spcm->rom + ((flags & spcm->bankmask) << spcm->bankshift);
+			UINT32 addr = (base[5] << 16) | (base[4] << 8) | spcm->low[ch];
+			UINT16 loop = (base[0x85] << 8) | base[0x84];
+			UINT8 end = base[6] + 1;
+			UINT8 delta = base[7];
+			UINT8 voll = base[2];
+			UINT8 volr = base[3];
 			int i;
 
-			for(i=0; i<length; i++) {
-				INT8 v;
-				const UINT8 *ptr;
-				if((addr >> 24) == end) {
-					if(!(flags & 2))
-						addr = loop << 16;
-					else {
+			/* loop over samples on this channel */
+			for (i = 0; i < length; i++)
+			{
+				INT8 v = 0;
+
+				/* handle looping if we've hit the end */
+				if ((addr >> 16) == end)
+				{
+					if (!(flags & 2))
+						addr = loop << 8;
+					else
+					{
 						flags |= 1;
 						break;
 					}
 				}
-				ptr = rom + (addr >> 16);
-				if(ptr < spcm->rom_end)
-					v = rom[addr>>16] - 0x80;
-				else
-					v = 0;
-				buffer[0][i] += (v*voll);
-				buffer[1][i] += (v*volr);
-				addr += step;
+
+				/* fetch the sample */
+				if (addr < spcm->max_addr)
+					v = rom[addr >> 8] - 0x80;
+
+				/* apply panning and advance */
+				buffer[0][i] += v * voll;
+				buffer[1][i] += v * volr;
+				addr += delta;
 			}
+
+			/* store back the updated address and info */
 			base[0x86] = flags;
-			base[4] = addr >> 16;
-			base[5] = addr >> 24;
+			base[4] = addr >> 8;
+			base[5] = addr >> 16;
 			spcm->low[ch] = flags & 1 ? 0 : addr;
 		}
 }
@@ -69,21 +81,14 @@ static void *segapcm_start(int sndindex, int clock, const void *config)
 {
 	const struct SEGAPCMinterface *intf = config;
 	int mask, rom_mask;
-	int i;
 	struct segapcm *spcm;
 
 	spcm = auto_malloc(sizeof(*spcm));
 	memset(spcm, 0, sizeof(*spcm));
 
-	spcm->rate = clock;
-
 	spcm->rom = (const UINT8 *)memory_region(intf->region);
-	spcm->rom_end = spcm->rom + memory_region_length(intf->region);
+	spcm->max_addr = memory_region_length(intf->region) << 8;
 	spcm->ram = auto_malloc(0x800);
-	spcm->step = auto_malloc(sizeof(UINT32)*256);
-
-	for(i=0; i<256; i++)
-		spcm->step[i] = i*spcm->rate*(double)(65536/128) / Machine->sample_rate;
 
 	memset(spcm->ram, 0xff, 0x800);
 
@@ -97,7 +102,7 @@ static void *segapcm_start(int sndindex, int clock, const void *config)
 
 	spcm->bankmask = mask & (rom_mask >> spcm->bankshift);
 
-	spcm->stream = stream_create(0, 2, Machine->sample_rate, spcm, SEGAPCM_update );
+	spcm->stream = stream_create(0, 2, clock / 128, spcm, SEGAPCM_update);
 
 	return spcm;
 }

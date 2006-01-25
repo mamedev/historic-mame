@@ -101,13 +101,13 @@ static WRITE32_HANDLER( vram_w )
 
 	COMBINE_DATA(&vram[offset]);
 
-	x = offset >> 8;
-	y = offset & 0xff;
+	y = offset >> 8;
+	x = offset & 0xff;
 
-	if(x < 320 && y < 224)
+	if(x < 320/2 && y < 224)
 	{
-		plot_pixel(tmpbitmap,y*2+0,x,(vram[offset] >> 16) & 0x7fff);
-		plot_pixel(tmpbitmap,y*2+1,x,vram[offset] & 0x7fff);
+		plot_pixel(tmpbitmap,x*2+0,y,(vram[offset] >> 16) & 0x7fff);
+		plot_pixel(tmpbitmap,x*2+1,y,vram[offset] & 0x7fff);
 	}
 }
 

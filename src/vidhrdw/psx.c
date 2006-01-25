@@ -801,10 +801,6 @@ VIDEO_START( psx_type2 )
 	return psx_gpu_init();
 }
 
-VIDEO_STOP( psx )
-{
-}
-
 VIDEO_UPDATE( psx )
 {
 	UINT32 n_x;

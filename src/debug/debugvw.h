@@ -88,6 +88,14 @@ struct debug_view_char
 	UINT8		attrib;
 };
 
+union debug_property_info
+{
+	UINT32 i;
+	const char *s;
+	void *p;
+	genf *f;
+};
+
 
 
 /*###################################################################################################
@@ -103,8 +111,8 @@ struct debug_view *	debug_view_alloc(int type);
 void				debug_view_free(struct debug_view *view);
 
 /* property management */
-void				debug_view_get_property(struct debug_view *view, int property, void *value);
-void				debug_view_set_property(struct debug_view *view, int property, const void *value);
+void				debug_view_get_property(struct debug_view *view, int property, union debug_property_info *value);
+void				debug_view_set_property(struct debug_view *view, int property, union debug_property_info value);
 
 /* update management */
 void				debug_view_begin_update(struct debug_view *view);
@@ -120,53 +128,61 @@ void				debug_view_update_type(int type);
 
 INLINE UINT32 debug_view_get_property_UINT32(struct debug_view *view, int property)
 {
-	UINT32 value;
+	union debug_property_info value;
 	debug_view_get_property(view, property, &value);
-	return value;
+	return value.i;
 }
 
 INLINE void debug_view_set_property_UINT32(struct debug_view *view, int property, UINT32 value)
 {
-	debug_view_set_property(view, property, &value);
+	union debug_property_info info;
+	info.i = value;
+	debug_view_set_property(view, property, info);
 }
 
 
 INLINE const char *debug_view_get_property_string(struct debug_view *view, int property)
 {
-	const char *value;
-	debug_view_get_property(view, property, (void *)&value);
-	return value;
+	union debug_property_info value;
+	debug_view_get_property(view, property, &value);
+	return value.s;
 }
 
 INLINE void debug_view_set_property_string(struct debug_view *view, int property, const char *value)
 {
-	debug_view_set_property(view, property, value);
+	union debug_property_info info;
+	info.s = value;
+	debug_view_set_property(view, property, info);
 }
 
 
 INLINE void *debug_view_get_property_ptr(struct debug_view *view, int property)
 {
-	void *value;
+	union debug_property_info value;
 	debug_view_get_property(view, property, &value);
-	return value;
+	return value.p;
 }
 
 INLINE void debug_view_set_property_ptr(struct debug_view *view, int property, void *value)
 {
-	debug_view_set_property(view, property, value);
+	union debug_property_info info;
+	info.s = value;
+	debug_view_set_property(view, property, info);
 }
 
 
 INLINE genf *debug_view_get_property_fct(struct debug_view *view, int property)
 {
-	genf *value;
+	union debug_property_info value;
 	debug_view_get_property(view, property, &value);
-	return value;
+	return value.f;
 }
 
 INLINE void debug_view_set_property_fct(struct debug_view *view, int property, genf *value)
 {
-	debug_view_set_property(view, property, (void *) value);
+	union debug_property_info info;
+	info.f = value;
+	debug_view_set_property(view, property, info);
 }
 
 #endif

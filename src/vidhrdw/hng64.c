@@ -1316,13 +1316,6 @@ VIDEO_START( hng64 )
 	return 0;
 }
 
-VIDEO_STOP( hng64 )
-{
-	free(polys) ;
-	free(depthBuffer) ;
-}
-
-
 ///////////////
 // UTILITIES //
 ///////////////

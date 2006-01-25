@@ -71,6 +71,7 @@ struct _sound_stream
 
 	/* general information */
 	INT32			sample_rate;				/* sample rate of this stream */
+	INT32			new_sample_rate;			/* newly-set sample rate for the stream */
 	UINT32			samples_per_frame_frac;		/* fractional samples per frame */
 
 	/* input information */
@@ -225,11 +226,23 @@ void streams_frame_update(void)
 							/* if this input is further behind, note it */
 							if (str->input[inputnum].source_frac < min_source_frac)
 								min_source_frac = str->input[inputnum].source_frac;
+
+							/* if the stream has changed sample rate, update things */
+							if (stream->new_sample_rate != 0)
+								str->input[inputnum].step_frac = ((UINT64)stream->new_sample_rate << FRAC_BITS) / str->sample_rate;
 						}
 
 				/* update the in position to the minimum source frac */
 				output->cur_out_pos = min_source_frac >> FRAC_BITS;
 			}
+		}
+
+		/* update the sample rate */
+		if (stream->new_sample_rate)
+		{
+			stream->sample_rate = stream->new_sample_rate;
+			stream->samples_per_frame_frac = (UINT32)((double)stream->sample_rate * (double)(1 << FRAC_BITS) / Machine->drv->frames_per_second);
+			stream->new_sample_rate = 0;
 		}
 	}
 }
@@ -241,6 +254,13 @@ void streams_frame_update(void)
  *  Create a new stream
  *
  *************************************/
+
+static void stream_postload(void *param)
+{
+	sound_stream *stream = param;
+	stream->new_sample_rate = stream->sample_rate;
+}
+
 
 sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *param, stream_callback callback)
 {
@@ -285,6 +305,7 @@ sound_stream *stream_create(int inputs, int outputs, int sample_rate, void *para
 	/* create a unique tag for saving */
 	sprintf(statetag, "stream.%d", stream->index);
 	state_save_register_item(statetag, 0, stream->sample_rate);
+	state_save_register_func_postload_ptr(stream_postload, stream);
 
 	/* allocate resample buffers */
 	for (inputnum = 0; inputnum < inputs; inputnum++)
@@ -455,6 +476,21 @@ void stream_set_output_gain(sound_stream *stream, int output, float gain)
 {
 	stream_update(stream, 0);
 	stream->output[output].gain = (int)(0x100 * gain);
+}
+
+
+
+/*************************************
+ *
+ *  Set the sample rate on a given
+ *  stream
+ *
+ *************************************/
+
+void stream_set_sample_rate(sound_stream *stream, int sample_rate)
+{
+	/* we update this at the end of the current frame */
+	stream->new_sample_rate = sample_rate;
 }
 
 

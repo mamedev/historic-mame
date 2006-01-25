@@ -711,11 +711,11 @@ static void i386_set_a20_line(int state)
 {
 	if (state)
 	{
-		I.a20_mask = ~(1 << 20);
+		I.a20_mask = ~0;
 	}
 	else
 	{
-		I.a20_mask = ~0;
+		I.a20_mask = ~(1 << 20);
 	}
 }
 
@@ -781,9 +781,14 @@ static UINT8 i386_win_layout[] =
 
 static int translate_address_cb(int space, offs_t *addr)
 {
-	if (space == ADDRESS_SPACE_PROGRAM && (I.cr[0] & 0x80000000))
-		return translate_address(addr);
-	return 1;
+	int result = 1;
+	if (space == ADDRESS_SPACE_PROGRAM)
+	{
+		if (I.cr[0] & 0x80000000)
+			result = translate_address(addr);
+		*addr &= I.a20_mask;
+	}
+	return result;
 }
 
 static offs_t i386_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
@@ -798,14 +803,14 @@ static offs_t i386_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int
 
 static void i386_set_info(UINT32 state, union cpuinfo *info)
 {
+	if (state == CPUINFO_INT_INPUT_STATE+INPUT_LINE_A20)
+	{
+		i386_set_a20_line(info->i);
+		return;
+	}
 	if (state >= CPUINFO_INT_INPUT_STATE && state <= CPUINFO_INT_INPUT_STATE + 1)
 	{
 		i386_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);
-		return;
-	}
-	else if (state == CPUINFO_INT_INPUT_STATE+INPUT_LINE_A20)
-	{
-		i386_set_a20_line(info->i);
 		return;
 	}
 

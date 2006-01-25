@@ -31,10 +31,6 @@
 
 #define MAX_SAMPLE_CHUNK	10000
 
-#define FRAC_BITS			14
-#define FRAC_ONE			(1 << FRAC_BITS)
-#define FRAC_MASK			(FRAC_ONE - 1)
-
 
 /* struct describing a single playing ADPCM voice */
 struct ADPCMVoice
@@ -47,11 +43,6 @@ struct ADPCMVoice
 
 	struct adpcm_state adpcm;/* current ADPCM state */
 	UINT32 volume;			/* output volume */
-
-	INT16 last_sample;		/* last sample output */
-	INT16 curr_sample;		/* current sample target */
-	UINT32 source_step;		/* step value for frequency conversion */
-	UINT32 source_pos;		/* current fractional position */
 };
 
 struct okim6295
@@ -263,65 +254,22 @@ static void okim6295_update(void *param, stream_sample_t **inputs, stream_sample
 	for (i = 0; i < OKIM6295_VOICES; i++)
 	{
 		struct ADPCMVoice *voice = &chip->voice[i];
-		INT16 sample_data[MAX_SAMPLE_CHUNK], *curr_data = sample_data;
-		INT16 prev = voice->last_sample, curr = voice->curr_sample;
-		UINT32 final_pos;
-		UINT32 new_samples;
 		stream_sample_t *buffer = outputs[0];
-		int length = samples;
+		INT16 sample_data[MAX_SAMPLE_CHUNK];
+		int remaining = samples;
 
-		/* finish off the current sample */
-		if (voice->source_pos > 0)
+		/* loop while we have samples remaining */
+		while (remaining)
 		{
-			/* interpolate */
-			while (length > 0 && voice->source_pos < FRAC_ONE)
-			{
-				*buffer++ += (((INT32)prev * (INT32)(FRAC_ONE - voice->source_pos)) + ((INT32)curr * (INT32)voice->source_pos)) >> FRAC_BITS;
-				voice->source_pos += voice->source_step;
-				length--;
-			}
+			int samples = (remaining > MAX_SAMPLE_CHUNK) ? MAX_SAMPLE_CHUNK : remaining;
+			int samp;
 
-			/* if we're over, continue; otherwise, we're done */
-			if (voice->source_pos >= FRAC_ONE)
-				voice->source_pos -= FRAC_ONE;
-			else
-				continue;
+			generate_adpcm(chip, voice, sample_data, samples);
+			for (samp = 0; samp < samples; samp++)
+				*buffer++ += sample_data[samp];
+
+			remaining -= samples;
 		}
-
-		/* compute how many new samples we need */
-		final_pos = voice->source_pos + length * voice->source_step;
-		new_samples = (final_pos + FRAC_ONE - 1) >> FRAC_BITS;
-		if (new_samples > MAX_SAMPLE_CHUNK)
-			new_samples = MAX_SAMPLE_CHUNK;
-
-		/* generate them into our buffer */
-		generate_adpcm(chip, voice, sample_data, new_samples);
-		prev = curr;
-		curr = *curr_data++;
-
-		/* then sample-rate convert with linear interpolation */
-		while (length > 0)
-		{
-			/* interpolate */
-			while (length > 0 && voice->source_pos < FRAC_ONE)
-			{
-				*buffer++ += (((INT32)prev * (INT32)(FRAC_ONE - voice->source_pos)) + ((INT32)curr * (INT32)voice->source_pos)) >> FRAC_BITS;
-				voice->source_pos += voice->source_step;
-				length--;
-			}
-
-			/* if we're over, grab the next samples */
-			if (voice->source_pos >= FRAC_ONE)
-			{
-				voice->source_pos -= FRAC_ONE;
-				prev = curr;
-				curr = *curr_data++;
-			}
-		}
-
-		/* remember the last samples */
-		voice->last_sample = prev;
-		voice->curr_sample = curr;
 	}
 }
 
@@ -345,11 +293,6 @@ static void adpcm_state_save_register(struct ADPCMVoice *voice, int i)
 	state_save_register_INT32  (buf, i, "signal" , &voice->adpcm.signal,  1);
 	state_save_register_INT32  (buf, i, "step"   , &voice->adpcm.step,    1);
 	state_save_register_UINT32 (buf, i, "volume" , &voice->volume,  1);
-
-	state_save_register_INT16  (buf, i, "last_sample", &voice->last_sample, 1);
-	state_save_register_INT16  (buf, i, "curr_sample", &voice->curr_sample, 1);
-	state_save_register_UINT32 (buf, i, "source_step", &voice->source_step, 1);
-	state_save_register_UINT32 (buf, i, "source_pos" , &voice->source_pos,  1);
 	state_save_register_UINT32 (buf, i, "base_offset" , &voice->base_offset,  1);
 }
 
@@ -390,7 +333,7 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 	info->region_base = memory_region(intf->region);
 
 	/* generate the name and create the stream */
-	info->stream = stream_create(0, 1, Machine->sample_rate, info, okim6295_update);
+	info->stream = stream_create(0, 1, clock, info, okim6295_update);
 
 	/* initialize the voices */
 	for (voice = 0; voice < OKIM6295_VOICES; voice++)
@@ -398,8 +341,6 @@ static void *okim6295_start(int sndindex, int clock, const void *config)
 		/* initialize the rest of the structure */
 		info->voice[voice].volume = 255;
 		reset_adpcm(&info->voice[voice].adpcm);
-		if (Machine->sample_rate)
-			info->voice[voice].source_step = (UINT32)((double)clock * (double)FRAC_ONE / (double)Machine->sample_rate);
 	}
 
 	okim6295_state_save_register(info, sndindex);
@@ -420,11 +361,10 @@ static void okim6295_reset(void *chip)
 {
 	struct okim6295 *info = chip;
 	int i;
+
+	stream_update(info->stream, 0);
 	for (i = 0; i < OKIM6295_VOICES; i++)
-	{
-		stream_update(info->stream, 0);
 		info->voice[i].playing = 0;
-	}
 }
 
 
@@ -453,17 +393,7 @@ void OKIM6295_set_bank_base(int which, int base)
 void OKIM6295_set_frequency(int which, int frequency)
 {
 	struct okim6295 *info = sndti_token(SOUND_OKIM6295, which);
-	int channel;
-
-	stream_update(info->stream, 0);
-	for (channel = 0; channel < OKIM6295_VOICES; channel++)
-	{
-		struct ADPCMVoice *voice = &info->voice[channel];
-
-		/* update the stream and set the new base */
-		if (Machine->sample_rate)
-			voice->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
-	}
+	stream_set_sample_rate(info->stream, frequency);
 }
 
 

@@ -438,6 +438,46 @@ static void compose_path(TCHAR *output, int pathtype, int pathindex, const char 
 
 
 //============================================================
+//  get_last_fileerror
+//============================================================
+
+static osd_file_error get_last_fileerror(void)
+{
+	osd_file_error error;
+
+	switch(GetLastError())
+	{
+		case ERROR_SUCCESS:
+			error = FILEERR_SUCCESS;
+			break;
+
+		case ERROR_OUTOFMEMORY:
+			error = FILEERR_OUT_OF_MEMORY;
+			break;
+
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			error = FILEERR_NOT_FOUND;
+			break;
+
+		case ERROR_ACCESS_DENIED:
+			error = FILEERR_ACCESS_DENIED;
+			break;
+
+		case ERROR_SHARING_VIOLATION:
+			error = FILEERR_ALREADY_OPEN;
+			break;
+
+		default:
+			error = FILEERR_FAILURE;
+			break;
+	}
+	return error;
+}
+
+
+
+//============================================================
 //  osd_get_path_count
 //============================================================
 
@@ -480,7 +520,7 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 //  osd_fopen
 //============================================================
 
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
+osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error)
 {
 	DWORD disposition = 0, access = 0, sharemode = 0, flags = 0;
 	TCHAR fullpath[1024];
@@ -556,9 +596,11 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	/* get the file size */
 	file->end = GetFileSize(file->handle, &upperPos);
 	file->end |= (UINT64)upperPos << 32;
+	*error = FILEERR_SUCCESS;
 	return file;
 
 error:
+	*error = get_last_fileerror();
 	if (temp_file[0])
 		DeleteFile(temp_file);
 	return NULL;

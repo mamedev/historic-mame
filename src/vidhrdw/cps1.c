@@ -719,7 +719,7 @@ static void unshuffle(UINT64 *buf,int len)
 
 	if (len == 2) return;
 
-	if (len % 4) exit(1);   /* must not happen */
+	assert(len % 4 == 0);   /* must not happen */
 
 	len /= 2;
 
@@ -1965,3 +1965,4 @@ void cps2_objram_latch(void)
 	cps2_set_sprite_priorities();
 	memcpy(cps2_buffered_obj, cps2_objbase(), cps2_obj_size);
 }
+

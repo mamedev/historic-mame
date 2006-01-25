@@ -242,6 +242,24 @@ static void error(void)
 
 
 /*-------------------------------------------------
+    osd_die - error hook for assertions
+-------------------------------------------------*/
+
+void CLIB_DECL osd_die(const char *text,...)
+{
+	va_list arg;
+
+	/* standard vfprintf stuff here */
+	va_start(arg, text);
+	vfprintf(stderr, text, arg);
+	va_end(arg);
+
+	exit(-1);
+}
+
+
+
+/*-------------------------------------------------
     special_chd_init - set up a CHD file as a
     "fake" raw file for input
 -------------------------------------------------*/

@@ -459,7 +459,7 @@ static void shuffle(UINT8 *buf,int len)
 
 	if (len == 2) return;
 
-	if (len % 4) exit(1);	/* must not happen */
+	if (len % 4) osd_die("shuffle() - not modulo 4\n");	/* must not happen */
 
 	len /= 2;
 

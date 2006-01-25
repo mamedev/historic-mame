@@ -38,7 +38,7 @@ void CLIB_DECL logerror(const char *text,...)
 {
 }
 
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode)
+osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error)
 {
 	return (osd_file *)fopen(filename, mode);
 }

@@ -21,7 +21,6 @@
 
 ***********************************************************************************************/
 
-#define BACKEND_INTERPOLATE		1
 #define LOG_COMMANDS			0
 #define MAKE_WAVS				0
 
@@ -70,26 +69,18 @@ struct BSMT2000Voice
 struct BSMT2000Chip
 {
 	sound_stream *stream;				/* which stream are we using */
+	int			sample_rate;			/* output sample rate */
 	INT8 *		region_base;			/* pointer to the base of the region */
 	int			total_banks;			/* number of total banks in the region */
 	int			voices;					/* number of voices */
-	double 		master_clock;			/* master clock frequency */
-
-	INT32		output_step;			/* step value for frequency conversion */
-	INT32		output_pos;				/* current fractional position */
-	INT32		last_lsample;			/* last sample output */
-	INT32		last_rsample;			/* last sample output */
-	INT32		curr_lsample;			/* current sample target */
-	INT32		curr_rsample;			/* current sample target */
 
 	struct BSMT2000Voice *voice;		/* the voices */
 	struct BSMT2000Voice compressed;	/* the compressed voice */
 
-	INT32 *scratch;
+	INT32 *		scratch;
 
 #if MAKE_WAVS
 	void *		wavraw;					/* raw waveform */
-	void *		wavresample;			/* resampled waveform */
 #endif
 };
 
@@ -109,14 +100,6 @@ struct BSMT2000Chip
 #define interpolate2(sample1, sample2, accum)										\
 		(sample1 * (INT32)(0x8000 - (accum & 0x7fff)) + 							\
 		 sample2 * (INT32)(accum & 0x7fff)) >> 15;
-
-#if BACKEND_INTERPOLATE
-#define backend_interpolate(sample1, sample2, position)								\
-		(sample1 * (INT32)(FRAC_ONE - position) + 									\
-		 sample2 * (INT32)position) >> FRAC_BITS;
-#else
-#define backend_interpolate(sample1, sample2, position)	sample1
-#endif
 
 
 
@@ -225,96 +208,42 @@ static void bsmt2000_update(void *param, stream_sample_t **inputs, stream_sample
 {
 	struct BSMT2000Chip *chip = param;
 	INT32 *lsrc = chip->scratch, *rsrc = chip->scratch;
-	INT32 lprev = chip->last_lsample;
-	INT32 rprev = chip->last_rsample;
-	INT32 lcurr = chip->curr_lsample;
-	INT32 rcurr = chip->curr_rsample;
 	stream_sample_t *ldest = buffer[0];
 	stream_sample_t *rdest = buffer[1];
-	INT32 interp;
-	int remaining = length;
-	int samples_left = 0;
 
 #if MAKE_WAVS
 	/* start the logging once we have a sample rate */
-	if (chip->output_step)
-	{
-		if (!chip->wavraw)
-		{
-			int sample_rate = (int)((double)Machine->sample_rate / (double)(1 << FRAC_BITS) * (double)chip->output_step);
-			chip->wavraw = wav_open("raw.wav", sample_rate, 2);
-		}
-		if (!chip->wavresample)
-			chip->wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
-	}
+	if (!chip->wavraw)
+		chip->wavraw = wav_open("raw.wav", chip->sample_rate, 2);
 #endif
 
-	/* then sample-rate convert with linear interpolation */
-	while (remaining > 0)
+	/* loop until all samples are output */
+	while (length)
 	{
-		/* if we're over, grab the next samples */
-		while (chip->output_pos >= FRAC_ONE)
-		{
-			/* do we have any samples available? */
-			if (samples_left == 0)
-			{
-				/* compute how many new samples we need */
-				UINT32 final_pos = chip->output_pos + (remaining - 1) * chip->output_step;
-				samples_left = final_pos >> FRAC_BITS;
-				if (samples_left > MAX_SAMPLE_CHUNK)
-					samples_left = MAX_SAMPLE_CHUNK;
+		int samples = (length > MAX_SAMPLE_CHUNK) ? MAX_SAMPLE_CHUNK : length;
+		int samp;
 
-				/* determine left/right source data */
-				lsrc = chip->scratch;
-				rsrc = chip->scratch + samples_left;
-				generate_samples(chip, lsrc, rsrc, samples_left);
+		/* determine left/right source data */
+		lsrc = chip->scratch;
+		rsrc = chip->scratch + samples;
+		generate_samples(chip, lsrc, rsrc, samples);
+
+		/* copy the data */
+		for (samp = 0; samp < samples; samp++)
+		{
+			*ldest++ = lsrc[samp] >> 9;
+			*rdest++ = rsrc[samp] >> 9;
+		}
 
 #if MAKE_WAVS
-				/* log the raw data */
-				if (chip->wavraw)
-					wav_add_data_32lr(chip->wavraw, lsrc, rsrc, samples_left, 4);
+		/* log the raw data */
+		if (chip->wavraw)
+			wav_add_data_32lr(chip->wavraw, lsrc, rsrc, samples, 4);
 #endif
-			}
 
-			/* adjust the positions */
-			chip->output_pos -= FRAC_ONE;
-			lprev = lcurr;
-			rprev = rcurr;
-
-			/* fetch new samples */
-			lcurr = *lsrc++ >> 9;
-			rcurr = *rsrc++ >> 9;
-			samples_left--;
-		}
-
-		/* interpolate between the two current samples */
-		while (remaining > 0 && chip->output_pos < FRAC_ONE)
-		{
-			/* left channel */
-			interp = backend_interpolate(lprev, lcurr, chip->output_pos);
-			*ldest++ = (interp < -32768) ? -32768 : (interp > 32767) ? 32767 : interp;
-
-			/* right channel */
-			interp = backend_interpolate(rprev, rcurr, chip->output_pos);
-			*rdest++ = (interp < -32768) ? -32768 : (interp > 32767) ? 32767 : interp;
-
-			/* advance */
-			chip->output_pos += chip->output_step;
-			remaining--;
-		}
+		/* account for these samples */
+		length -= samples;
 	}
-
-	/* remember the last samples */
-	chip->last_lsample = lprev;
-	chip->last_rsample = rprev;
-	chip->curr_lsample = lcurr;
-	chip->curr_rsample = rcurr;
-
-#if MAKE_WAVS
-	/* log the resampled data */
-	if (chip->wavresample)
-		wav_add_data_16lr(chip->wavresample, buffer[0], buffer[1], length);
-#endif
 }
 
 
@@ -336,17 +265,18 @@ INLINE void init_voice(struct BSMT2000Voice *voice)
 
 
 INLINE void init_all_voices(struct BSMT2000Chip *chip)
- {
- 	int i;
+{
+	int i;
 
- 	/* init the voices */
- 	for (i = 0; i < chip->voices; i++)
- 		init_voice(&chip->voice[i]);
+	/* init the voices */
+	for (i = 0; i < chip->voices; i++)
+		init_voice(&chip->voice[i]);
 
- 	/* init the compressed voice (runs at a fixed rate of ~8kHz?) */
- 	init_voice(&chip->compressed);
- 	chip->compressed.adjusted_rate = 0x02aa << 4;
- }
+	/* init the compressed voice (runs at a fixed rate of ~8kHz?) */
+	init_voice(&chip->compressed);
+	chip->compressed.adjusted_rate = 0x02aa << 4;
+}
+
 
 static void *bsmt2000_start(int sndindex, int clock, const void *config)
 {
@@ -363,15 +293,12 @@ static void *bsmt2000_start(int sndindex, int clock, const void *config)
 		return NULL;
 
 	/* create the stream */
-	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, bsmt2000_update);
+	chip->sample_rate = clock / 1024;
+	chip->stream = stream_create(0, 2, chip->sample_rate, chip, bsmt2000_update);
 
 	/* initialize the regions */
 	chip->region_base = (INT8 *)memory_region(intf->region);
 	chip->total_banks = memory_region_length(intf->region) / 0x10000;
-
-	/* initialize the rest of the structure */
-	chip->master_clock = (double)clock;
-	chip->output_step = (int)((double)clock / 1024.0 * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 
 	/* init the voices */
 	init_all_voices(chip);

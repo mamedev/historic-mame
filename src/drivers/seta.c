@@ -1279,16 +1279,6 @@ void uPD71054_timer_init( void )
 
 
 /*------------------------------
-    exit
-------------------------------*/
-void uPD71054_timer_stop( void )
-{
-	timer_free();
-}
-
-
-
-/*------------------------------
     timer write handler
 ------------------------------*/
 WRITE16_HANDLER( timer_regs_w )
@@ -6907,7 +6897,6 @@ static INTERRUPT_GEN( wrofaero_interrupt )
 }
 
 MACHINE_INIT( wrofaero ) { uPD71054_timer_init(); }
-MACHINE_STOP( wrofaero ) { uPD71054_timer_stop(); }
 #endif	// __uPD71054_TIMER
 
 
@@ -6935,7 +6924,6 @@ static MACHINE_DRIVER_START( gundhara )
 
 #if	__uPD71054_TIMER
 	MDRV_MACHINE_INIT( wrofaero )
-	MDRV_MACHINE_STOP( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7016,7 +7004,6 @@ static MACHINE_DRIVER_START( kamenrid )
 
 #if	__uPD71054_TIMER
 	MDRV_MACHINE_INIT( wrofaero )
-	MDRV_MACHINE_STOP( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7090,7 +7077,6 @@ static MACHINE_DRIVER_START( madshark )
 
 #if	__uPD71054_TIMER
 	MDRV_MACHINE_INIT( wrofaero )
-	MDRV_MACHINE_STOP( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7138,7 +7124,6 @@ static MACHINE_DRIVER_START( msgundam )
 
 #if	__uPD71054_TIMER
 	MDRV_MACHINE_INIT( wrofaero )
-	MDRV_MACHINE_STOP( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7501,7 +7486,6 @@ static MACHINE_DRIVER_START( wrofaero )
 
 #if	__uPD71054_TIMER
 	MDRV_MACHINE_INIT( wrofaero )
-	MDRV_MACHINE_STOP( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */

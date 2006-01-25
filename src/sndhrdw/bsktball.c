@@ -130,5 +130,5 @@ DISCRETE_SOUND_START(bsktball_discrete_interface)
 	/* Mixing stage - B11                           */
 	/************************************************/
 	DISCRETE_MIXER3(NODE_90, 1, BSKTBALL_NOTE_SND, BSKTBALL_BOUNCE_SND, BSKTBALL_CROWD_SND, &bsktball_mixer)
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END

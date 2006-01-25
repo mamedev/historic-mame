@@ -117,7 +117,7 @@ DISCRETE_SOUND_START(atarifb_discrete_interface)
 	/* This is what the original game did.          */
 	/************************************************/
 	DISCRETE_MIXER3(NODE_90, ATARIFB_ATTRACT_EN, ATARIFB_HIT_SND, ATARIFB_WHISTLE_SND, ATARIFB_CROWD_SND, &atarifb_mixer)
-	DISCRETE_OUTPUT(NODE_90, 70)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END
 
 
@@ -204,5 +204,5 @@ DISCRETE_SOUND_START(abaseb_discrete_interface)
 	/* Mixing stage - A9                            */
 	/************************************************/
 	DISCRETE_MIXER3(NODE_90, ATARIFB_ATTRACT_EN, ABASEB_HIT_SND, ABASEB_WHISTLE_SND, ABASEB_CROWD_SND, &abaseb_mixer)
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END

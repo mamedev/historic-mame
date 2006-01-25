@@ -329,7 +329,7 @@ DISCRETE_SOUND_START(phoenix_discrete_interface)
 	/************************************************/
 	DISCRETE_MIXER4(NODE_90, 1, PHOENIX_EFFECT_1_SND, PHOENIX_EFFECT_2_SND, PHOENIX_EFFECT_3_SND, PHOENIX_EFFECT_4_SND,&phoenix_mixer)
 
-	DISCRETE_OUTPUT(NODE_90, 100)
+	DISCRETE_OUTPUT(NODE_90, 1)
 DISCRETE_SOUND_END
 
 WRITE8_HANDLER( phoenix_sound_control_a_w )

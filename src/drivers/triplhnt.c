@@ -4,6 +4,13 @@ Atari Triple Hunt Driver
 
   Calibrate controls in service mode the first time you run this game.
 
+To Do:
+ The two 8-Tracks need to be found and recorded.  And then tape emulation
+ needs to be added.  1 tape is for Witch Hunt.  The other is used for
+ both Bear and Racoon Hunt.
+ The 3 different overlays need to be found, scanned and added as artwork
+ to really make the game complete.
+
 ***************************************************************************/
 
 #include "driver.h"

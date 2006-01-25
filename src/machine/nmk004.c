@@ -449,9 +449,7 @@ static void fm_update(int channel)
 							return;
 
 						default:
-logerror("fm channel %d unsupported token %02x\n",channel,token);
-exit(0);
-							break;
+							osd_die("fm channel %d unsupported token %02x\n",channel,token);
 					}
 				}
 			} while (token == 0xef || (token & 0xf0) == 0xf0);
@@ -800,11 +798,10 @@ static void psg_update(int channel)
 
 			// token is the note to play
 			psg->note = token;
-if ((psg->note & 0x0f) > NOTE_PAUSE)
-{
-	logerror("PSG channel %d invalid note %02x\n",channel,psg->note);
-	exit(0);
-}
+			if ((psg->note & 0x0f) > NOTE_PAUSE)
+			{
+				osd_die("PSG channel %d invalid note %02x\n",channel,psg->note);
+			}
 
 			// optional note length (otherwise use the same length as the previous one)
 			if (read8(psg->current) & 0x80)
@@ -967,8 +964,7 @@ static void get_command(void)
 						channel -= PSG_CHANNELS;
 						if (channel >= EFFECTS_CHANNELS)
 						{
-							logerror("too many effects channels\n");
-							exit(0);
+							osd_die("too many effects channels\n");
 						}
 						NMK004_state.effects_control[channel].current = table_start;
 						NMK004_state.effects_control[channel].return_address_depth = 0;
@@ -1070,3 +1066,4 @@ last = res;
 
 	return res;
 }
+

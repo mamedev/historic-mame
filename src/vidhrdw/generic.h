@@ -33,8 +33,6 @@ extern mame_bitmap *tmpbitmap;
 
 VIDEO_START( generic );
 VIDEO_START( generic_bitmapped );
-void video_stop_generic(void);
-void video_stop_generic_bitmapped(void);
 VIDEO_UPDATE( generic_bitmapped );
 
 READ8_HANDLER( videoram_r );

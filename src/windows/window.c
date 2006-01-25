@@ -195,7 +195,7 @@ static BITMAPINFO *debug_dib_info = (BITMAPINFO *)debug_dib_info_data;
 #endif
 
 // effects table
-static struct win_effect_data effect_table[] =
+static const struct win_effect_data effect_table[] =
 {
 	{ "none",    EFFECT_NONE,        1, 1, 3, 4 },
 	{ "scan25",  EFFECT_SCANLINE_25, 1, 2, 3, 4 },
@@ -668,6 +668,13 @@ void win_destroy_window(void)
 	// kill the window if it still exists
 	if (win_video_window)
 		DestroyWindow(win_video_window);
+
+	// free converted bitmap, if allocated
+	if (converted_bitmap)
+	{
+		free(converted_bitmap);
+		converted_bitmap = NULL;
+	}
 }
 
 
@@ -1599,7 +1606,7 @@ static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds
 
 	// allocate a temporary bitmap in case we need it
 	if (!converted_bitmap)
-		converted_bitmap = auto_malloc(MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT * 4);
+		converted_bitmap = malloc(MAX_VIDEO_WIDTH * MAX_VIDEO_HEIGHT * 4);
 	if (!converted_bitmap)
 		return;
 

@@ -70,11 +70,11 @@ DISCRETE_SOUND_START(crbaloon_discrete_interface)
 	DISCRETE_CRFILTER(CRBALOON_MUSIC_SND, 1, NODE_22, RES_K(50), CAP_U(1))
 
 	/************************************************
-    * Final gain and ouput.
+    * Final mix and output.
     ************************************************/
 	DISCRETE_ADDER2(NODE_90, 1, CRBALOON_LAUGH_SND, CRBALOON_MUSIC_SND)
 	DISCRETE_CRFILTER(NODE_91, 1, NODE_90, RES_K(100), CAP_U(1))
-	DISCRETE_GAIN(NODE_92, NODE_91, 65000.0/12)
-	DISCRETE_OUTPUT(NODE_92, 100)
+
+	DISCRETE_OUTPUT(NODE_91, 65000.0/12)
 
 DISCRETE_SOUND_END

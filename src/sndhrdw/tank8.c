@@ -258,18 +258,7 @@ DISCRETE_SOUND_START(tank8_discrete_interface)
 	DISCRETE_MULTADD(NODE_131, 1, NODE_130, 1.0, -10)
 	DISCRETE_ADDER4(NODE_132, 1, TANK8_MOTOR5, TANK8_MOTOR6, TANK8_MOTOR7, TANK8_MOTOR8)
 	DISCRETE_MULTADD(NODE_133, 1, NODE_132, 1.0, -10)
-	DISCRETE_ADDER4(NODE_134, 1, TANK8_CRASHEXPL, TANK8_BUGLE, NODE_131, NODE_133)
+	DISCRETE_ADDER4(TANK8_FINAL_MIX, TANK8_ATTRACT_EN, TANK8_CRASHEXPL, TANK8_BUGLE, NODE_131, NODE_133)
 
-	/************************************************/
-	/* Sound is off in attract mode                 */
-	/************************************************/
-	DISCRETE_ONOFF(NODE_135, TANK8_ATTRACT_EN, NODE_134)
-
-	/************************************************/
-	/* Add some final gain to get to a good sound   */
-	/* level.                                       */
-	/************************************************/
-	DISCRETE_GAIN(TANK8_FINAL_MIX, NODE_135, 5000)
-
-	DISCRETE_OUTPUT(TANK8_FINAL_MIX, 100)
+	DISCRETE_OUTPUT(TANK8_FINAL_MIX, 5000)
 DISCRETE_SOUND_END

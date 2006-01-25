@@ -497,13 +497,10 @@ VIDEO_START( ygv608 )
 	tilemap_B_cache_16[1] = tilemap_create(get_tile_info_B_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 64,32);
 	tilemap_B_cache_16[2] = tilemap_create(get_tile_info_B_16, get_tile_offset, TILEMAP_TRANSPARENT, 16,16, 32,64);
 
-	return 0;
-}
-
-VIDEO_STOP( ygv608 )
-{
 	tilemap_A = NULL;
 	tilemap_B = NULL;
+
+	return 0;
 }
 
 static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )

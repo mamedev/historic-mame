@@ -11,7 +11,6 @@ Sound CPU: custom T5182 cpu (like seibu sound system but with internal code)
 ToDo:
 
 (almost everything)
--- sort out and decrypt gfx
 -- finish memory map
 -- where is the banking register (is this why it resets over and over again, or is it a decrypt/irq error?)
 -- emulate video hardware
@@ -83,24 +82,36 @@ INPUT_PORTS_END
 
 
 
-static const gfx_layout tiles8x8_layout =
+static const gfx_layout charlayout =
 {
 	8,8,
-	RGN_FRAC(1,1),
+	RGN_FRAC(1,2),
 	4,
-	{ 0, 1, 2, 3 },
-	{ 0, 4, 8, 12, 16, 20, 24, 28 },
-	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8
 };
+
+static const gfx_layout tilelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
+			16+0, 16+1, 16+2, 16+3, 24+0, 24+1, 24+2, 24+3 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
+	32*16
+};
+
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles8x8_layout, 0, 16 },
-	{ REGION_GFX2, 0, &tiles8x8_layout, 0, 16 },
-	{ REGION_GFX3, 0, &tiles8x8_layout, 0, 16 },
-	{ REGION_GFX4, 0, &tiles8x8_layout, 0, 16 },
-	{ REGION_GFX5, 0, &tiles8x8_layout, 0, 16 },
+	{ REGION_GFX1, 0, &charlayout,  0, 16 },
+	{ REGION_GFX2, 0, &tilelayout,  0, 16 },
+	{ REGION_GFX3, 0, &tilelayout,  0, 16 },
 	{ -1 }
 };
 
@@ -151,30 +162,21 @@ ROM_START( darkmist )
 	ROM_LOAD( "dm_16.rom", 0x10000, 0x08000, CRC(094579d9) SHA1(2449bc9ba38396912ee9b72dd870ea9fcff95776)  )
 	ROM_LOAD( "dm_17.rom", 0x18000, 0x08000, CRC(7723dcae) SHA1(a0c69e7a7b6fd74f7ed6b9c6419aed94aabcd4b0)  )
 
-
-	/* I guess these aren't all gfx, but they seem to be encrypted ... */
-
-	ROM_REGION( 0x20000, REGION_GFX1, 0 )
-	ROM_LOAD( "dm_01.rom", 0x00000, 0x10000, CRC(652aee6b) SHA1(f4150784f7bd7be83a0041e4c52540aa564062ba) )
-	ROM_LOAD( "dm_02.rom", 0x10000, 0x10000, CRC(e2dd15aa) SHA1(1f3a6a1e1afabfe9dc47549ef13ae7696302ae88)  )
-
-	ROM_REGION( 0x20000, REGION_GFX2, 0 )
-	ROM_LOAD( "dm_05.rom", 0x00000, 0x10000, CRC(ca79a738) SHA1(66a76ea0d8ecc44f6cc77102303df74f40bf6118)  )
-	ROM_LOAD( "dm_06.rom", 0x10000, 0x10000, CRC(9629ed2c) SHA1(453f6a0b12efdadd7fcbe03ad37afb0afa6be051)  )
-
-	ROM_REGION( 0x20000, REGION_GFX3, 0 )
-	ROM_LOAD( "dm_09.rom", 0x00000, 0x10000, CRC(52154b50) SHA1(5ee1a4bcf0752a057b9993b0069d744c35cf55f4)  )
-	ROM_LOAD( "dm_10.rom", 0x10000, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
-
-	ROM_REGION( 0x10000, REGION_GFX4, 0 )
-	ROM_LOAD( "dm_11.rom", 0x00000, 0x08000, CRC(3118e2f9) SHA1(dfd946ea1310851f97d31ce58d8280f2d92b0f59)  )
-	ROM_LOAD( "dm_12.rom", 0x08000, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
-
-	ROM_REGION( 0x4000, REGION_GFX5, 0 )
+	ROM_REGION( 0x4000, REGION_GFX1, 0 )
 	ROM_LOAD( "dm_13.rom", 0x00000, 0x02000, CRC(38bb38d9) SHA1(d751990166dd3d503c5de7667679b96210061cd1)  )
 	ROM_LOAD( "dm_14.rom", 0x02000, 0x02000, CRC(ac5a31f3) SHA1(79083390671062be2eab93cc875a0f86d709a963)  )
 
-	/* decrypted */
+	ROM_REGION( 0x40000, REGION_GFX2, 0 )
+	ROM_LOAD( "dm_05.rom", 0x00000, 0x10000, CRC(ca79a738) SHA1(66a76ea0d8ecc44f6cc77102303df74f40bf6118)  )
+	ROM_LOAD( "dm_01.rom", 0x10000, 0x10000, CRC(652aee6b) SHA1(f4150784f7bd7be83a0041e4c52540aa564062ba) )
+	ROM_LOAD( "dm_06.rom", 0x20000, 0x10000, CRC(9629ed2c) SHA1(453f6a0b12efdadd7fcbe03ad37afb0afa6be051)  )
+	ROM_LOAD( "dm_02.rom", 0x30000, 0x10000, CRC(e2dd15aa) SHA1(1f3a6a1e1afabfe9dc47549ef13ae7696302ae88)  )
+
+	ROM_REGION( 0x30000, REGION_GFX3, 0 )
+	ROM_LOAD( "dm_09.rom", 0x00000, 0x10000, CRC(52154b50) SHA1(5ee1a4bcf0752a057b9993b0069d744c35cf55f4)  )
+	ROM_LOAD( "dm_11.rom", 0x10000, 0x08000, CRC(3118e2f9) SHA1(dfd946ea1310851f97d31ce58d8280f2d92b0f59)  )
+	ROM_LOAD( "dm_10.rom", 0x18000, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
+	ROM_LOAD( "dm_12.rom", 0x28000, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
 
 	ROM_REGION( 0x10000, REGION_USER1, 0 ) //tile/attrib maps (width 512x64 )
 	ROM_LOAD( "dm_03.rom", 0x00000, 0x08000, CRC(60b40c2a) SHA1(c046273b15dab95ea4851c26ce941e580fa1b6ec)  )
@@ -193,13 +195,93 @@ ROM_START( darkmist )
 	ROM_LOAD( "82s129.d11",  0x0500, 0x0100, NO_DUMP  )
 ROM_END
 
+
+static void decrypt_gfx(void)
+{
+	UINT8 *buf = auto_malloc(0x40000);
+	UINT8 *rom;
+	int size;
+	int i;
+
+	rom = memory_region(REGION_GFX1);
+	size = memory_region_length(REGION_GFX1);
+
+	// data lines
+	for (i = 0;i < size/2;i++)
+	{
+		int w1;
+
+		w1 = (rom[i + 0*size/2] << 8) + rom[i + 1*size/2];
+
+		w1 = BITSWAP16(w1, 9,14,7,2, 6,8,3,15,  10,13,5,12,  0,11,4,1);
+
+		buf[i + 0*size/2] = w1 >> 8;
+		buf[i + 1*size/2] = w1 & 0xff;
+	}
+
+	// address lines
+	for (i = 0;i < size;i++)
+	{
+		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12, 3,2,1, 11,10,9,8, 0, 7,6,5,4)];
+	}
+
+
+	rom = memory_region(REGION_GFX2);
+	size = memory_region_length(REGION_GFX2);
+
+	// data lines
+	for (i = 0;i < size/2;i++)
+	{
+		int w1;
+
+		w1 = (rom[i + 0*size/2] << 8) + rom[i + 1*size/2];
+
+		w1 = BITSWAP16(w1, 9,14,7,2, 6,8,3,15,  10,13,5,12,  0,11,4,1);
+
+		buf[i + 0*size/2] = w1 >> 8;
+		buf[i + 1*size/2] = w1 & 0xff;
+	}
+
+	// address lines
+	for (i = 0;i < size;i++)
+	{
+		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13, 5,4,3,2, 12,11,10,9,8, 1,0, 7,6)];
+	}
+
+
+	rom = memory_region(REGION_GFX3);
+	size = memory_region_length(REGION_GFX3);
+
+	// data lines
+	for (i = 0;i < size/2;i++)
+	{
+		int w1;
+
+		w1 = (rom[i + 0*size/2] << 8) + rom[i + 1*size/2];
+
+		w1 = BITSWAP16(w1, 9,14,7,2, 6,8,3,15,  10,13,5,12,  0,11,4,1);
+
+		buf[i + 0*size/2] = w1 >> 8;
+		buf[i + 1*size/2] = w1 & 0xff;
+	}
+
+	// address lines
+	for (i = 0;i < size;i++)
+	{
+		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11, 9,8, 5,4,3, 10, 7,6, 1,0, 2)];
+	}
+}
+
+
 static DRIVER_INIT(darkmist)
 {
 	int i;
 	unsigned char *ROM = memory_region(REGION_CPU1);
-	UINT8 *buffer=auto_malloc(0x10000);
+	UINT8 *buffer = auto_malloc(0x10000);
 	UINT8 *decrypt = auto_malloc(0x8000);
 
+
+	decrypt_gfx();
 
 	/* is this complete? */
 

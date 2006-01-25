@@ -666,7 +666,6 @@ static MACHINE_DRIVER_START( coh1000c )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -709,7 +708,6 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -918,7 +916,6 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1350,7 +1347,6 @@ static MACHINE_DRIVER_START( coh1000ta )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1453,7 +1449,6 @@ static MACHINE_DRIVER_START( coh1000tb )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1643,7 +1638,6 @@ static MACHINE_DRIVER_START( coh3002t )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -1857,7 +1851,6 @@ static MACHINE_DRIVER_START( coh1000w )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -2103,7 +2096,6 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -2444,7 +2436,6 @@ static MACHINE_DRIVER_START( coh1000a )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -2615,7 +2606,6 @@ static MACHINE_DRIVER_START( coh1001l )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -2700,7 +2690,6 @@ static MACHINE_DRIVER_START( coh1002v )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -2969,7 +2958,6 @@ static MACHINE_DRIVER_START( coh1002m )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -3006,7 +2994,6 @@ static MACHINE_DRIVER_START( coh1002msnd )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -3046,7 +3033,6 @@ static MACHINE_DRIVER_START( coh1002ml )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

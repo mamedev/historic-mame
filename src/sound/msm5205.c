@@ -20,6 +20,7 @@
 
 #include "driver.h"
 #include "msm5205.h"
+#include "state.h"
 
 /*
  *
@@ -35,16 +36,16 @@ struct MSM5205Voice
 {
 	const struct MSM5205interface *intf;
 	sound_stream * stream;  /* number of stream system      */
-	int index;
-	int clock;				/* clock rate */
+	INT32 index;
+	INT32 clock;				/* clock rate */
 	void *timer;              /* VCLK callback timer          */
-	int data;               /* next adpcm data              */
-	int vclk;               /* vclk signal (external mode)  */
-	int reset;              /* reset pin signal             */
-	int prescaler;          /* prescaler selector S1 and S2 */
-	int bitwidth;           /* bit width selector -3B/4B    */
-	int signal;             /* current ADPCM signal         */
-	int step;               /* current ADPCM step           */
+	INT32 data;               /* next adpcm data              */
+	INT32 vclk;               /* vclk signal (external mode)  */
+	INT32 reset;              /* reset pin signal             */
+	INT32 prescaler;          /* prescaler selector S1 and S2 */
+	INT32 bitwidth;           /* bit width selector -3B/4B    */
+	INT32 signal;             /* current ADPCM signal         */
+	INT32 step;               /* current ADPCM step           */
 	int diff_lookup[49*16];
 };
 
@@ -193,6 +194,17 @@ static void *msm5205_start(int sndindex, int clock, const void *config)
 
 	/* initialize */
 	msm5205_reset(voice);
+
+	/* register for save states */
+	state_save_register_item("msm5205", sndindex, voice->clock);
+	state_save_register_item("msm5205", sndindex, voice->data);
+	state_save_register_item("msm5205", sndindex, voice->vclk);
+	state_save_register_item("msm5205", sndindex, voice->reset);
+	state_save_register_item("msm5205", sndindex, voice->prescaler);
+	state_save_register_item("msm5205", sndindex, voice->bitwidth);
+	state_save_register_item("msm5205", sndindex, voice->signal);
+	state_save_register_item("msm5205", sndindex, voice->step);
+
 	/* success */
 	return voice;
 }

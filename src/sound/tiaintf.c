@@ -26,9 +26,9 @@ static void *tia_start(int sndindex, int clock, const void *config)
     if (Machine->sample_rate == 0)
         return info;
 
-	info->channel = stream_create(0, 1, Machine->sample_rate, info, tia_update);
+	info->channel = stream_create(0, 1, clock, info, tia_update);
 
-	info->chip = tia_sound_init(clock, Machine->sample_rate, 16);
+	info->chip = tia_sound_init(clock, clock, 16);
 	if (!info->chip)
 		return NULL;
 

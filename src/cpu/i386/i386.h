@@ -449,6 +449,33 @@ INLINE UINT32 READ32(UINT32 ea)
 	return value;
 }
 
+INLINE UINT64 READ64(UINT32 ea)
+{
+	UINT64 value;
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	address &= I.a20_mask;
+	if( ea & 0x7 ) {		/* Unaligned read */
+		value = (((UINT64) program_read_byte_32le( address+0 )) << 0) |
+				(((UINT64) program_read_byte_32le( address+1 )) << 8) |
+				(((UINT64) program_read_byte_32le( address+2 )) << 16) |
+				(((UINT64) program_read_byte_32le( address+3 )) << 24) |
+				(((UINT64) program_read_byte_32le( address+4 )) << 32) |
+				(((UINT64) program_read_byte_32le( address+5 )) << 40) |
+				(((UINT64) program_read_byte_32le( address+6 )) << 48) |
+				(((UINT64) program_read_byte_32le( address+7 )) << 56);
+	} else {
+		value = (((UINT64) program_read_dword_32le( address+0 )) << 0) |
+				(((UINT64) program_read_dword_32le( address+4 )) << 32);
+	}
+	return value;
+}
+
 INLINE void WRITE8(UINT32 ea, UINT8 value)
 {
 	UINT32 address = ea;
@@ -495,6 +522,31 @@ INLINE void WRITE32(UINT32 ea, UINT32 value)
 		program_write_byte_32le( address+3, (value >> 24) & 0xff );
 	} else {
 		program_write_dword_32le(address, value);
+	}
+}
+
+INLINE void WRITE64(UINT32 ea, UINT64 value)
+{
+	UINT32 address = ea;
+
+	if (I.cr[0] & 0x80000000)		// page translation enabled
+	{
+		translate_address(&address);
+	}
+
+	ea &= I.a20_mask;
+	if( ea & 0x7 ) {		/* Unaligned write */
+		program_write_byte_32le( address+0, value & 0xff );
+		program_write_byte_32le( address+1, (value >> 8) & 0xff );
+		program_write_byte_32le( address+2, (value >> 16) & 0xff );
+		program_write_byte_32le( address+3, (value >> 24) & 0xff );
+		program_write_byte_32le( address+4, (value >> 32) & 0xff );
+		program_write_byte_32le( address+5, (value >> 40) & 0xff );
+		program_write_byte_32le( address+6, (value >> 48) & 0xff );
+		program_write_byte_32le( address+7, (value >> 56) & 0xff );
+	} else {
+		program_write_dword_32le(address+0, value & 0xffffffff);
+		program_write_dword_32le(address+4, (value >> 32) & 0xffffffff);
 	}
 }
 

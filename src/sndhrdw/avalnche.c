@@ -71,9 +71,9 @@ DISCRETE_SOUND_START(avalnche_discrete_interface)
 	DISCRETE_RCFILTER(AVALNCHE_SOUNDLVL_AUD0_SND, 1, NODE_30, 556.7, 1e-7)
 
 	/************************************************/
-	/* Final gain and ouput.                        */
+	/* Final mix and output.                        */
 	/************************************************/
 	DISCRETE_ADDER3(NODE_90, AVALNCHE_ATTRACT_EN, AVALNCHE_AUD1_SND, AVALNCHE_AUD2_SND, AVALNCHE_SOUNDLVL_AUD0_SND)
-	DISCRETE_GAIN(NODE_91, NODE_90, 65534.0/(725.6+750.2+750.2+1000.0))
-	DISCRETE_OUTPUT(NODE_91, 100)
+
+	DISCRETE_OUTPUT(NODE_90, 65534.0/(725.6+750.2+750.2+1000.0))
 DISCRETE_SOUND_END

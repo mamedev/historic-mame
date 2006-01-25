@@ -76,7 +76,7 @@
  *      DISCRETE_LOGIC_INVERT(NODE_13, 1, NODE_11)
  *      DISCRETE_SINEWAVE(NODE_14, NODE_13, 4000, 10000, 0, 0)
  *      DISCRETE_ADDER2(NODE_20, NODE_01, NODE_12, NODE_14)
- *      DISCRETE_OUTPUT(NODE_20, 100)
+ *      DISCRETE_OUTPUT(NODE_20, 1)
  *  DISCRETE_SOUND_END
  *
  * To aid simulation speed it is preferable to use the enable/disable
@@ -151,7 +151,7 @@
  * DISCRETE_MULTADD(NODE,ENAB,INP0,INP1,INP2)
  * DISCRETE_ONESHOT(NODE,TRIG,AMPL,WIDTH,TYPE)
  * DISCRETE_ONESHOTR(NODE,RESET,TRIG,AMPL,WIDTH,TYPE)
- * DISCRETE_ONOFF(NODE,IN0,IN1)
+ * DISCRETE_ONOFF(NODE,ENAB,INP0)
  * DISCRETE_RAMP(NODE,ENAB,RAMP,GRAD,MIN,MAX,CLAMP)
  * DISCRETE_SAMPLHOLD(NODE,ENAB,INP0,CLOCK,CLKTYPE)
  * DISCRETE_SWITCH(NODE,ENAB,SWITCH,INP0,INP1)
@@ -215,7 +215,8 @@
  * DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)
  * DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)
  *
- * DISCRETE_OUTPUT(OPNODE,VOL)
+ * DISCRETE_WAVELOG(NODE1,GAIN1,NODE2,GAIN2)
+ * DISCRETE_OUTPUT(OPNODE,GAIN)
  *
  ***********************************************************************
  =======================================================================
@@ -796,7 +797,7 @@
  *  Where:
  *     trshRise is the voltage level that triggers the gate input to go high (vGate) on rise.
  *     trshFall is the voltage level that triggers the gate input to go low (0V) on fall.
- *     vGate    is the ouput high voltage of the gate that gets fedback through rFeedback.
+ *     vGate    is the output high voltage of the gate that gets fedback through rFeedback.
  *
  *  Input Options:
  *     DISC_SCHMITT_OSC_IN_IS_LOGIC (DEFAULT)
@@ -2438,6 +2439,32 @@
  *
  ***********************************************************************
  =======================================================================
+ * Debugging modules.
+ =======================================================================
+ ***********************************************************************
+ *
+ * DISCRETE_WAVELOG - Dump 2 nodes into a stereo wav file
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_WAVELOG(left node,
+ *                      static gain for left node,
+ *                      right node,
+ *                      static gain for right node)
+ *
+ *  Use this to monitor nodes while debugging driver.  You should remove
+ *  these nodes from the final driver.  You can use up to a maximum of
+ *  DISCRETE_MAX_WAVELOGS.  Each file will be called discreteX.wav,
+ *  where X is 0-9, in the order they are created in the driver.
+ *
+ *  This can be used to monitor how a node's input affects it's output.
+ *  Monitor the input trigger against the final effect, etc.
+ *
+ *  When logging nodes that are voltage levels, you may want to use a
+ *  gain of 1000.  This will make the wav sample level reflect milli-volts.
+ *
+ ************************************************************************
+ =======================================================================
  * Must be last module.
  =======================================================================
  ***********************************************************************
@@ -2452,18 +2479,15 @@
  *
  *  Declaration syntax
  *
- *     DISCRETE_OUTPUT(name of output node,volume)
+ *     DISCRETE_OUTPUT(name of output node, gain)
  *
  *  Example config line
  *
- *     DISCRETE_OUTPUT(NODE_02,100)
+ *     DISCRETE_OUTPUT(NODE_02, 1000)
  *
- *  Output stream will be generated from the NODE_02 output stream.
+ *  Output stream will be generated from the NODE_02 output stream * 1000.
  *
- *  or for stereo use:
- *
- *     DISCRETE_OUTPUT(NODE_90, MIXER(100,MIXER_PAN_LEFT))
- *     DISCRETE_OUTPUT(NODE_91, MIXER(100,MIXER_PAN_RIGHT))
+ *  Multiple outputs can be used up to DISCRETE_MAX_OUTPUTS.
  *
  ************************************************************************/
 
@@ -2477,6 +2501,7 @@
 #define DISCRETE_MAX_NODES				300
 #define DISCRETE_MAX_INPUTS				10
 #define DISCRETE_MAX_OUTPUTS			16
+#define DISCRETE_MAX_WAVELOGS			10
 
 
 
@@ -2766,7 +2791,7 @@ struct discrete_schmitt_osc_desc
 	double	c;
 	double	trshRise;	// voltage that triggers the gate input to go high (vGate) on rise
 	double	trshFall;	// voltage that triggers the gate input to go low (0V) on fall
-	double	vGate;		// the ouput high voltage of the gate that gets fedback through rFeedback
+	double	vGate;		// the output high voltage of the gate that gets fedback through rFeedback
 	int		options;	// bitmaped options
 };
 
@@ -2953,10 +2978,10 @@ enum { NODE_00=0x40000000
 
 /* Some Pre-defined nodes for convenience */
 #define NODE_NC  NODE_00
-#define NODE_OP  (NODE_00+(DISCRETE_MAX_NODES))
+#define NODE_SPECIAL  (NODE_00+(DISCRETE_MAX_NODES))
 
 #define NODE_START	NODE_00
-#define NODE_END	NODE_OP
+#define NODE_END	NODE_SPECIAL
 
 
 
@@ -3063,6 +3088,9 @@ enum
 
 	/* Custom */
 	DST_CUSTOM,			/* whatever you want someday */
+
+	/* Debugging */
+	DSO_WAVELOG,		/* The final output node */
 
 	/* Output Node -- this must be the last entry in this enum! */
 	DSO_OUTPUT			/* The final output node */
@@ -3206,7 +3234,8 @@ enum
 #define DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)     { NODE, DSD_555_CC      , 7, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, OPTIONS, "555 Constant Current VCO" },
 #define DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)                        { NODE, DSD_566         , 4, { ENAB,VMOD,R,C }, { ENAB,VMOD,R,C }, OPTIONS, "566" },
 
-#define DISCRETE_OUTPUT(OPNODE,VOL)                                     { NODE_OP, DSO_OUTPUT   , 2, { OPNODE,NODE_NC }, {0,VOL }, NULL, "Output Node" },
+#define DISCRETE_WAVELOG(NODE1,GAIN1,NODE2,GAIN2)                  { NODE_SPECIAL, DSO_WAVELOG  , 4, { NODE1,NODE_NC,NODE2,NODE_NC }, { NODE1,GAIN1,NODE2,GAIN2 }, NULL, "Wave Log Node" },
+#define DISCRETE_OUTPUT(OPNODE,GAIN)                               { NODE_SPECIAL, DSO_OUTPUT   , 2, { OPNODE,NODE_NC }, { 0,GAIN }, NULL, "Output Node" },
 
 
 

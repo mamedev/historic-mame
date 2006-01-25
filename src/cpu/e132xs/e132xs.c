@@ -28,8 +28,15 @@
  - GMS30C2132
  - GMS30C2232
 
+ TODO:
+ - some wrong cycle counts
+ - support more than 1 cpu when it'll be needed
 
  CHANGELOG:
+
+ Pierpaolo Prazzoli
+ - Removed nested delays
+ - Don't allow software opcodes to be executed in a delay slot
 
  Tomasz Slanina
  - Fixed delayed branching for delay instructions longer than 2 bytes
@@ -431,12 +438,11 @@ UINT8 hyperstone_win_layout[] =
 
 
 /* Delay information */
-struct delay
+struct _delay
 {
-	UINT8	delay_cmd;
+	int		delay_cmd;
 	UINT32	delay_pc;
 	UINT32	no_delay_pc;
-	struct  delay *prev;
 };
 
 /* Internal registers */
@@ -455,7 +461,7 @@ typedef struct
 	double	time;
 	int		delay_timer;
 
-	struct delay *delay_tail;
+	struct _delay delay;
 
 	int	(*irq_callback)(int irqline);
 
@@ -787,7 +793,7 @@ void hyperstone_set_trap_entry(int which)
 /* Timer */
 static void hyperstone_timer(int num)
 {
-	TR = (TR + 1) & ((((UINT64)1)<<32) - 1);
+	TR++; // wrap around to 0 modulo 32 bits
 
 	if( hyperstone.delay_timer )
 	{
@@ -798,37 +804,38 @@ static void hyperstone_timer(int num)
 
 UINT32 get_global_register(UINT8 code)
 {
-	if( code >= 16 )
-	{
-		switch( code )
-		{
-		case 16:
-		case 17:
-		case 28:
-		case 29:
-		case 30:
-		case 31:
-			printf("read _Reserved_ Global Register %d @ %08X\n",code,PC);
-			break;
+/*
+    if( code >= 16 )
+    {
+        switch( code )
+        {
+        case 16:
+        case 17:
+        case 28:
+        case 29:
+        case 30:
+        case 31:
+            printf("read _Reserved_ Global Register %d @ %08X\n",code,PC);
+            break;
 
-		case BCR_REGISTER:
-			printf("read write-only BCR register @ %08X\n",PC);
-			return 0;
+        case BCR_REGISTER:
+            printf("read write-only BCR register @ %08X\n",PC);
+            return 0;
 
-		case TPR_REGISTER:
-			printf("read write-only TPR register @ %08X\n",PC);
-			return 0;
+        case TPR_REGISTER:
+            printf("read write-only TPR register @ %08X\n",PC);
+            return 0;
 
-		case FCR_REGISTER:
-			printf("read write-only FCR register @ %08X\n",PC);
-			return 0;
+        case FCR_REGISTER:
+            printf("read write-only FCR register @ %08X\n",PC);
+            return 0;
 
-		case MCR_REGISTER:
-			printf("read write-only MCR register @ %08X\n",PC);
-			return 0;
-		}
-	}
-
+        case MCR_REGISTER:
+            printf("read write-only MCR register @ %08X\n",PC);
+            return 0;
+        }
+    }
+*/
 	/* TODO: if PC is used in a delay instruction, the delayed PC is used */
 
 	return hyperstone.global_regs[code];
@@ -868,39 +875,39 @@ void set_global_register(UINT8 code, UINT32 val)
 			case 19:
 				SET_UB(val);
 				break;
+/*
+            case ISR_REGISTER:
+                printf("written %08X to read-only ISR register\n",val);
+                break;
 
-			case ISR_REGISTER:
-				printf("written %08X to read-only ISR register\n",val);
-				break;
-
-			case 22:
+            case 22:
 //              printf("written %08X to TCR register\n",val);
-				break;
+                break;
 
-			case 23:
+            case 23:
 //              printf("written %08X to TR register\n",val);
-				break;
+                break;
 
-			case 24:
+            case 24:
 //              printf("written %08X to WCR register\n",val);
-				break;
+                break;
 
-			case 16:
-			case 17:
-			case 28:
-			case 29:
-			case 30:
-			case 31:
-				printf("written %08X to _Reserved_ Global Register %d\n",val,code);
-				break;
+            case 16:
+            case 17:
+            case 28:
+            case 29:
+            case 30:
+            case 31:
+                printf("written %08X to _Reserved_ Global Register %d\n",val,code);
+                break;
 
-			case BCR_REGISTER:
-				break;
-
+            case BCR_REGISTER:
+                break;
+*/
 			case TPR_REGISTER:
 
 				hyperstone.n = (val & 0xff0000) >> 16;
-				hyperstone.time = cpunum_get_clock(cpu_getactivecpu()) / (hyperstone.n + 2);
+				hyperstone.time = cpunum_get_clock(0) / (hyperstone.n + 2);
 
 				if(!(val & 0x80000000)) /* change immediately */
 				{
@@ -913,25 +920,25 @@ void set_global_register(UINT8 code, UINT32 val)
 				}
 
 				break;
-
-			case FCR_REGISTER:
-				switch((val & 0x3000)>>12)
-				{
-				case 0:
-					printf("IO3 interrupt mode\n");
-					break;
-				case 1:
-					printf("IO3 timing mode\n");
-					break;
-				case 2:
-					printf("watchdog mode\n");
-					break;
-				case 3:
-					// IO3 standard mode
-					break;
-				}
-				break;
-
+/*
+            case FCR_REGISTER:
+                switch((val & 0x3000)>>12)
+                {
+                case 0:
+                    printf("IO3 interrupt mode\n");
+                    break;
+                case 1:
+                    printf("IO3 timing mode\n");
+                    break;
+                case 2:
+                    printf("watchdog mode\n");
+                    break;
+                case 3:
+                    // IO3 standard mode
+                    break;
+                }
+                break;
+*/
 			case MCR_REGISTER:
 				// bits 14..12 EntryTableMap
 				hyperstone_set_trap_entry((val & 0x7000) >> 12);
@@ -1259,22 +1266,6 @@ static void decode_registers(void)
 	}
 }
 
-void remove_delay(struct delay *entry)
-{
-	free(entry);
-	entry = NULL;
-}
-
-void check_and_remove_delays(void)
-{
-	struct delay *tmp;
-	while(hyperstone.delay_tail)
-	{
-		tmp = hyperstone.delay_tail;
-		hyperstone.delay_tail = (hyperstone.delay_tail)->prev;
-		remove_delay(tmp);
-	}
-}
 
 UINT32 immediate_value(void)
 {
@@ -1459,15 +1450,9 @@ void execute_br(INT32 rel)
 
 void execute_dbr(INT32 rel)
 {
-	struct delay *tmp;
-	tmp = (struct delay *) malloc(sizeof(struct delay));
-
-	tmp->delay_cmd    = DELAY_TAKEN;
-	tmp->delay_pc     = PC + rel;
-	tmp->no_delay_pc  = PC + 2;
-	tmp->prev         = hyperstone.delay_tail;
-
-	hyperstone.delay_tail = tmp;
+	hyperstone.delay.delay_cmd    = DELAY_TAKEN;
+	hyperstone.delay.delay_pc     = PC + rel;
+	hyperstone.delay.no_delay_pc  = PC + 2;
 
 	hyperstone.intblock = 3;
 
@@ -1570,34 +1555,37 @@ void execute_software(void)
 	UINT32 addr;
 	UINT32 stack_of_dst;
 
-	SET_ILC(1);
+	if(hyperstone.delay.delay_cmd == NO_DELAY)
+	{
+		SET_ILC(1);
 
-	addr = get_emu_code_addr((OP & 0xff00) >> 8);
-	reg = GET_FP + GET_FL;
+		addr = get_emu_code_addr((OP & 0xff00) >> 8);
+		reg = GET_FP + GET_FL;
 
-	//since it's sure the register is in the register part of the stack,
-	//set the stack address to a value above the highest address
-	//that can be set by a following frame instruction
-	stack_of_dst = (SP & ~0xff) + 64*4 + (((GET_FP + current_regs.dst) % 64) * 4); //converted to 32bits offset
+		//since it's sure the register is in the register part of the stack,
+		//set the stack address to a value above the highest address
+		//that can be set by a following frame instruction
+		stack_of_dst = (SP & ~0xff) + 64*4 + (((GET_FP + current_regs.dst) % 64) * 4); //converted to 32bits offset
 
-	oldSR = SR;
+		oldSR = SR;
 
-	SET_FL(6);
-	SET_FP(reg);
+		SET_FL(6);
+		SET_FP(reg);
 
-	SET_L_REG(0, stack_of_dst);
-	SET_L_REG(1, SREG);
-	SET_L_REG(2, SREGF);
-	SET_L_REG(3, (PC & 0xfffffffe) | GET_S);
-	SET_L_REG(4, oldSR);
+		SET_L_REG(0, stack_of_dst);
+		SET_L_REG(1, SREG);
+		SET_L_REG(2, SREGF);
+		SET_L_REG(3, (PC & 0xfffffffe) | GET_S);
+		SET_L_REG(4, oldSR);
 
-	SET_M(0);
-	SET_T(0);
-	SET_L(1);
+		SET_M(0);
+		SET_T(0);
+		SET_L(1);
 
-	PPC = PC;
-	PC = addr;
-	change_pc(PC);
+		PPC = PC;
+		PC = addr;
+		change_pc(PC);
+	}
 }
 
 
@@ -1656,7 +1644,7 @@ static void set_irq_line(int irqline, int state)
 
         if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3
 
-        if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
+      //  if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
 */
 		if(execint)
 		{
@@ -1674,18 +1662,19 @@ static void hyperstone_init(void)
 	state_save_register_UINT32("E132XS", cpu, "lregs",      hyperstone.local_regs, 64);
 	state_save_register_UINT32("E132XS", cpu, "ppc",        &hyperstone.ppc, 1);
 	state_save_register_UINT32("E132XS", cpu, "trap_entry", &hyperstone.trap_entry, 1);
+	state_save_register_UINT32("E132XS", cpu, "delay_pc",   &hyperstone.delay.delay_pc, 1);
+	state_save_register_UINT32("E132XS", cpu, "no_delay_pc",&hyperstone.delay.no_delay_pc, 1);
 	state_save_register_UINT16("E132XS", cpu, "op",         &hyperstone.op, 1);
 	state_save_register_UINT8( "E132XS", cpu, "n",	        &hyperstone.n, 1);
 	state_save_register_int(   "E132XS", cpu, "h_clear",    &hyperstone.h_clear);
 	state_save_register_int(   "E132XS", cpu, "ilc",        &hyperstone.instruction_length);
 	state_save_register_int(   "E132XS", cpu, "intblock",   &hyperstone.intblock);
 	state_save_register_int(   "E132XS", cpu, "delay_timer",&hyperstone.delay_timer);
+	state_save_register_int(   "E132XS", cpu, "delay_cmd",  &hyperstone.delay.delay_cmd);
 	state_save_register_double("E132XS", cpu, "time",       &hyperstone.time, 1);
 
 	hyperstone.timer = timer_alloc(hyperstone_timer);
 	timer_adjust(hyperstone.timer, TIME_NEVER, 0, 0);
-
-	hyperstone.delay_tail = NULL;
 }
 
 static void e116_init(void)
@@ -1728,8 +1717,6 @@ static void hyperstone_reset(void *param)
 
 	void *hyp_timer;
 
-	check_and_remove_delays();
-
 	hyp_timer = hyperstone.timer;
 	memset(&hyperstone, 0, sizeof(hyperstone_regs));
 	hyperstone.timer = hyp_timer;
@@ -1758,14 +1745,12 @@ static void hyperstone_reset(void *param)
 	SET_L_REG(0, (PC & 0xfffffffe) | GET_S);
 	SET_L_REG(1, SR);
 
-	hyperstone.delay_tail = NULL;
-
 	hyperstone_ICount -= 2;
 }
 
 static void hyperstone_exit(void)
 {
-	check_and_remove_delays();
+	// nothing to do
 }
 
 static int hyperstone_execute(int cycles)
@@ -1801,25 +1786,22 @@ static int hyperstone_execute(int cycles)
 			hyperstone.h_clear = 0;
 		}
 
-		if( GET_T && GET_P && !hyperstone.delay_tail ) /* Not in a Delayed Branch instructions */
+		if( GET_T && GET_P && hyperstone.delay.delay_cmd == NO_DELAY ) /* Not in a Delayed Branch instructions */
 		{
 			UINT32 addr = get_trap_addr(TRACE_EXCEPTION);
 			execute_exception(addr);
 		}
 
-		if(hyperstone.delay_tail)
+		if( hyperstone.delay.delay_cmd != NO_DELAY )
 		{
-			if( (hyperstone.delay_tail)->delay_cmd == DELAY_EXECUTE &&  PC>= (hyperstone.delay_tail)->no_delay_pc && PC< ( (hyperstone.delay_tail)->no_delay_pc + 6))
+			if( hyperstone.delay.delay_cmd == DELAY_EXECUTE &&  PC >= hyperstone.delay.no_delay_pc && PC < (hyperstone.delay.no_delay_pc + 6) )
 			{
-				struct delay *tmp;
-				PC = (hyperstone.delay_tail)->delay_pc;
-				tmp = hyperstone.delay_tail;
-				hyperstone.delay_tail = (hyperstone.delay_tail)->prev;
-				remove_delay(tmp);
+				PC = hyperstone.delay.delay_pc;
+				hyperstone.delay.delay_cmd = NO_DELAY;
 			}
-			else if( (hyperstone.delay_tail)->delay_cmd == DELAY_TAKEN )
+			else if( hyperstone.delay.delay_cmd == DELAY_TAKEN )
 			{
-				(hyperstone.delay_tail)->delay_cmd = DELAY_EXECUTE;
+				hyperstone.delay.delay_cmd = DELAY_EXECUTE;
 			}
 		}
 

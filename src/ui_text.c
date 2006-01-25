@@ -194,6 +194,7 @@ static const char *mame_default_text[] =
 
 	/* refresh rate */
 	"Refresh rate",
+	"Decoding Graphics",
 
 	NULL
 };

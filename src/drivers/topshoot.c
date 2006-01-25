@@ -202,7 +202,8 @@ static ADDRESS_MAP_START( topshoot_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(genesis_68k_to_z80_r)
 	AM_RANGE(0xc00000, 0xc0001f) AM_READ(genesis_vdp_r)				/* VDP Access */
-	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_BANK3)				/* Main Ram */
+	AM_RANGE(0xe00000, 0xe1ffff) AM_READ(MRA16_BANK3)
+	AM_RANGE(0xfe0000, 0xfeffff) AM_READ(MRA16_BANK4)
 	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)					/* Main Ram */
 ADDRESS_MAP_END
 
@@ -215,7 +216,7 @@ static ADDRESS_MAP_START( topshoot_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa11000, 0xa11203) AM_WRITE(genesis_ctrl_w)
 	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(megaplay_68k_to_z80_w)
 	AM_RANGE(0xc00000, 0xc0001f) AM_WRITE(genesis_vdp_w)				/* VDP Access */
-	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_BANK3)				/* Main Ram */
+	AM_RANGE(0xfe0000, 0xfeffff) AM_WRITE(MWA16_BANK4)
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&genesis_68k_ram)/* Main Ram */
 ADDRESS_MAP_END
 
@@ -299,6 +300,9 @@ DRIVER_INIT(topshoot)
 	/* hack -- fix vdp emulation instead */
 	init_genesis();
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC00004, 0xC00005, 0, 0, vdp_fake_r);
+
+	memory_set_bankptr(3, memory_region(REGION_CPU1) );
+	memory_set_bankptr(4, genesis_68k_ram );
 }
 
 

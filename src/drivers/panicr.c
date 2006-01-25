@@ -279,25 +279,23 @@ static const gfx_layout tilelayout =
 
 static const gfx_layout spritelayout =
 {
- 	16,16,
- 	RGN_FRAC(1,2),
- 	4,
- 	{ 0, 2, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+2  },
- 	{ 4,0, 5, 1,
- 	  4*8+4,  4*8+0, 4*8+5,  4*8+1,
- 	  8*8+4,  8*8+0, 8*8+5,  8*8+1,
- 	  12*8+4, 12*8+0,12*8+5, 12*8+1,
-  },
+	16,16,
+	RGN_FRAC(1,2),
+	4,
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4  },
+	{ 0, 1, 2, 3, 4*8+0, 4*8+1, 4*8+2,  4*8+3,
+		8*8+0, 8*8+1, 8*8+2, 8*8+3, 12*8+0, 12*8+1, 12*8+2, 12*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 16*8, 17*8, 18*8, 19*8,
 		32*8, 33*8, 34*8, 35*8, 48*8, 49*8, 50*8, 51*8 },
 	32*16
 };
 
+
 static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,   0, 8 },
 	{ REGION_GFX2, 0, &tilelayout,   0, 1 },
-	{ REGION_GFX3, 0, &spritelayout, 0, 1 },
+	{ REGION_GFX3, 0, &spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -433,7 +431,7 @@ static DRIVER_INIT( panicr )
 		w1 = (rom[i + 0*size/2] << 8) + rom[i + 1*size/2];
 
 
-		w1 = BITSWAP16(w1, 11,12, 0,8,  5, 7,15, 1, 13,10,14, 9,  3, 4, 6, 2);
+		w1 = BITSWAP16(w1, 11,5,7,12, 0,15,1,8, 4,10,13,3, 6,14,9,2);
 
 
 		buf[i + 0*size/2] = w1 >> 8;

@@ -21,18 +21,11 @@
 
 #define MAX_SAMPLE_CHUNK	10000
 
-#define FRAC_BITS			14
-#define FRAC_ONE			(1 << FRAC_BITS)
-#define FRAC_MASK			(FRAC_ONE - 1)
-
 
 /* the state of the streamed output */
 struct tms5110_info
 {
 	const struct TMS5110interface *intf;
-	INT16 last_sample, curr_sample;
-	UINT32 source_step;
-	UINT32 source_pos;
 	sound_stream *stream;
 	void *chip;
 };
@@ -64,22 +57,17 @@ static void *tms5110_start(int sndindex, int clock, const void *config)
 	sound_register_token(info);
 
 	/* initialize a stream */
-	info->stream = stream_create(0, 1, Machine->sample_rate, info, tms5110_update);
+	info->stream = stream_create(0, 1, clock / 80, info, tms5110_update);
 
     if (info->intf->M0_callback==NULL)
     {
-	logerror("\n file: 5110intf.c, tms5110_start(), line 53:\n  Missing _mandatory_ 'M0_callback' function pointer in the TMS5110 interface\n  This function is used by TMS5110 to call for a single bits\n  needed to generate the speech\n  Aborting startup...\n");
-	return NULL;
+		logerror("\n file: 5110intf.c, tms5110_start(), line 53:\n  Missing _mandatory_ 'M0_callback' function pointer in the TMS5110 interface\n  This function is used by TMS5110 to call for a single bits\n  needed to generate the speech\n  Aborting startup...\n");
+		return NULL;
     }
     tms5110_set_M0_callback(info->chip, info->intf->M0_callback );
 
     /* reset the 5110 */
     tms5110_reset_chip(info->chip);
-
-    /* set the initial frequency */
-    tms5110_set_frequency(clock);
-    info->source_pos = 0;
-    info->last_sample = info->curr_sample = 0;
 
     /* request a sound channel */
     return info;
@@ -184,67 +172,23 @@ int tms5110_ready_r(void)
 static void tms5110_update(void *param, stream_sample_t **inputs, stream_sample_t **_buffer, int length)
 {
 	struct tms5110_info *info = param;
-	INT16 sample_data[MAX_SAMPLE_CHUNK], *curr_data = sample_data;
-	INT16 prev = info->last_sample, curr = info->curr_sample;
+	INT16 sample_data[MAX_SAMPLE_CHUNK];
 	stream_sample_t *buffer = _buffer[0];
-	UINT32 final_pos;
-	UINT32 new_samples;
 
-	/* finish off the current sample */
-	if (info->source_pos > 0)
+	/* loop while we still have samples to generate */
+	while (length)
 	{
-		/* interpolate */
-		while (length > 0 && info->source_pos < FRAC_ONE)
-		{
-			*buffer++ = (((INT32)prev * (INT32)(FRAC_ONE - info->source_pos)) + ((INT32)curr * (INT32)info->source_pos)) >> FRAC_BITS;
-			info->source_pos += info->source_step;
-			length--;
-		}
+		int samples = (length > MAX_SAMPLE_CHUNK) ? MAX_SAMPLE_CHUNK : length;
+		int index;
 
-		/* if we're over, continue; otherwise, we're done */
-		if (info->source_pos >= FRAC_ONE)
-			info->source_pos -= FRAC_ONE;
-		else
-		{
-			tms5110_process(info->chip, sample_data, 0);
-			return;
-		}
+		/* generate the samples and copy to the target buffer */
+		tms5110_process(info->chip, sample_data, samples);
+		for (index = 0; index < samples; index++)
+			*buffer++ = sample_data[index];
+
+		/* account for the samples */
+		length -= samples;
 	}
-
-	/* compute how many new samples we need */
-	final_pos = info->source_pos + length * info->source_step;
-	new_samples = (final_pos + FRAC_ONE - 1) >> FRAC_BITS;
-	if (new_samples > MAX_SAMPLE_CHUNK)
-		new_samples = MAX_SAMPLE_CHUNK;
-
-	/* generate them into our buffer */
-	tms5110_process(info->chip, sample_data, new_samples);
-	prev = curr;
-	curr = *curr_data++;
-
-	/* then sample-rate convert with linear interpolation */
-	while (length > 0)
-	{
-		/* interpolate */
-		while (length > 0 && info->source_pos < FRAC_ONE)
-		{
-			*buffer++ = (((INT32)prev * (INT32)(FRAC_ONE - info->source_pos)) + ((INT32)curr * (INT32)info->source_pos)) >> FRAC_BITS;
-			info->source_pos += info->source_step;
-			length--;
-		}
-
-		/* if we're over, grab the next samples */
-		if (info->source_pos >= FRAC_ONE)
-		{
-			info->source_pos -= FRAC_ONE;
-			prev = curr;
-			curr = *curr_data++;
-		}
-	}
-
-	/* remember the last samples */
-	info->last_sample = prev;
-	info->curr_sample = curr;
 }
 
 
@@ -258,14 +202,7 @@ static void tms5110_update(void *param, stream_sample_t **inputs, stream_sample_
 void tms5110_set_frequency(int frequency)
 {
 	struct tms5110_info *info = sndti_token(SOUND_TMS5110, 0);
-
-	/* skip if output frequency is zero */
-	if (!Machine->sample_rate)
-		return;
-
-	/* update the stream and compute a new step size */
-	stream_update(info->stream, 0);
-	info->source_step = (UINT32)((double)(frequency / 80) * (double)FRAC_ONE / (double)Machine->sample_rate);
+	stream_set_sample_rate(info->stream, frequency / 80);
 }
 
 

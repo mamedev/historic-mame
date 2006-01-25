@@ -15,6 +15,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <assert.h>
 #include "osd_cpu.h"
 
 
@@ -156,6 +157,15 @@ typedef union
     Common macros
 
 ***************************************************************************/
+
+/* Standard MAME assertion macro */
+#undef assert
+#ifdef MAME_DEBUG
+#define assert(x)	do { if (!(x)) osd_die("assert: %s:%d: %s", __FILE__, __LINE__, #x); } while (0)
+#else
+#define assert(x)
+#endif
+
 
 /* Standard MIN/MAX macros */
 #ifndef MIN

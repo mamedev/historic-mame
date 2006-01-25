@@ -21,7 +21,6 @@
 
 ***********************************************************************************************/
 
-#define BACKEND_INTERPOLATE		1
 #define LOG_COMMANDS			0
 #define RAINE_CHECK				0
 #define MAKE_WAVS				0
@@ -33,11 +32,6 @@
 
 #define MAX_SAMPLE_CHUNK		10000
 #define ULAW_MAXBITS			8
-
-#define FRAC_BITS				14
-#define FRAC_ONE				(1 << FRAC_BITS)
-#define FRAC_MASK				(FRAC_ONE - 1)
-
 
 #define CONTROL_BS1				0x8000
 #define CONTROL_BS0				0x4000
@@ -105,10 +99,11 @@ struct ES5506Voice
 struct ES5506Chip
 {
 	sound_stream *stream;				/* which stream are we using */
+	int			sample_rate;			/* current sample rate */
 	UINT16 *	region_base[4];			/* pointer to the base of the region */
 	UINT32 		write_latch;			/* currently accumulated data for write */
 	UINT32 		read_latch;				/* currently accumulated data for read */
-	double 		master_clock;			/* master clock frequency */
+	UINT32 		master_clock;			/* master clock frequency */
 	void 		(*irq_callback)(int);	/* IRQ callback */
 	UINT16		(*port_read)(void);		/* input port read */
 
@@ -120,13 +115,6 @@ struct ES5506Chip
 	UINT8		lrend;					/* LR_END register */
 	UINT8		irqv;					/* IRQV register */
 
-	INT32		output_step;			/* step value for frequency conversion */
-	INT32		output_pos;				/* current fractional position */
-	INT32		last_lsample;			/* last sample output */
-	INT32		last_rsample;			/* last sample output */
-	INT32		curr_lsample;			/* current sample target */
-	INT32		curr_rsample;			/* current sample target */
-
 	struct 		ES5506Voice voice[32];	/* the 32 voices */
 
 	INT32 *		scratch;
@@ -136,7 +124,6 @@ struct ES5506Chip
 
 #if MAKE_WAVS
 	void *		wavraw;					/* raw waveform */
-	void *		wavresample;			/* resampled waveform */
 #endif
 };
 
@@ -230,22 +217,13 @@ static int compute_tables(struct ES5506Chip *chip)
 
 /**********************************************************************************************
 
-     interpolate
-     backend_interpolate -- interpolate between two samples
+     interpolate -- interpolate between two samples
 
 ***********************************************************************************************/
 
-#define interpolate(sample1, sample2, accum)										\
+#define interpolate(sample1, sample2, accum)								\
 		(sample1 * (INT32)(0x800 - (accum & 0x7ff)) + 						\
 		 sample2 * (INT32)(accum & 0x7ff)) >> 11;
-
-#if BACKEND_INTERPOLATE
-#define backend_interpolate(sample1, sample2, position)								\
-		(sample1 * (INT32)(FRAC_ONE - position) + 									\
-		 sample2 * (INT32)position) >> FRAC_BITS;
-#else
-#define backend_interpolate(sample1, sample2, position)	sample1
-#endif
 
 
 
@@ -793,96 +771,45 @@ static void es5506_update(void *param, stream_sample_t **inputs, stream_sample_t
 {
 	struct ES5506Chip *chip = param;
 	INT32 *lsrc = chip->scratch, *rsrc = chip->scratch;
-	INT32 lprev = chip->last_lsample;
-	INT32 rprev = chip->last_rsample;
-	INT32 lcurr = chip->curr_lsample;
-	INT32 rcurr = chip->curr_rsample;
 	stream_sample_t *ldest = buffer[0];
 	stream_sample_t *rdest = buffer[1];
-	INT32 interp;
-	int remaining = length;
-	int samples_left = 0;
 
 #if MAKE_WAVS
 	/* start the logging once we have a sample rate */
-	if (chip->output_step)
+	if (chip->sample_rate)
 	{
 		if (!chip->wavraw)
-		{
-			int sample_rate = (int)((double)Machine->sample_rate / (double)(1 << FRAC_BITS) * (double)chip->output_step);
-			chip->wavraw = wav_open("raw.wav", sample_rate, 2);
-		}
-		if (!chip->wavresample)
-			chip->wavresample = wav_open("resamp.wav", Machine->sample_rate, 2);
+			chip->wavraw = wav_open("raw.wav", chip->sample_rate, 2);
 	}
 #endif
 
-	/* then sample-rate convert with linear interpolation */
-	while (remaining > 0)
+	/* loop until all samples are output */
+	while (length)
 	{
-		/* if we're over, grab the next samples */
-		while (chip->output_pos >= FRAC_ONE)
-		{
-			/* do we have any samples available? */
-			if (samples_left == 0)
-			{
-				/* compute how many new samples we need */
-				UINT32 final_pos = chip->output_pos + (remaining - 1) * chip->output_step;
-				samples_left = final_pos >> FRAC_BITS;
-				if (samples_left > MAX_SAMPLE_CHUNK)
-					samples_left = MAX_SAMPLE_CHUNK;
+		int samples = (length > MAX_SAMPLE_CHUNK) ? MAX_SAMPLE_CHUNK : length;
+		int samp;
 
-				/* determine left/right source data */
-				lsrc = chip->scratch;
-				rsrc = chip->scratch + samples_left;
-				generate_samples(chip, lsrc, rsrc, samples_left);
+		/* determine left/right source data */
+		lsrc = chip->scratch;
+		rsrc = chip->scratch + samples;
+		generate_samples(chip, lsrc, rsrc, samples);
+
+		/* copy the data */
+		for (samp = 0; samp < samples; samp++)
+		{
+			*ldest++ = lsrc[samp] >> 4;
+			*rdest++ = rsrc[samp] >> 4;
+		}
 
 #if MAKE_WAVS
-				/* log the raw data */
-				if (chip->wavraw)
-					wav_add_data_32lr(chip->wavraw, lsrc, rsrc, samples_left, 4);
+		/* log the raw data */
+		if (chip->wavraw)
+			wav_add_data_32lr(chip->wavraw, lsrc, rsrc, samples, 4);
 #endif
-			}
 
-			/* adjust the positions */
-			chip->output_pos -= FRAC_ONE;
-			lprev = lcurr;
-			rprev = rcurr;
-
-			/* fetch new samples */
-			lcurr = *lsrc++ >> 4;
-			rcurr = *rsrc++ >> 4;
-			samples_left--;
-		}
-
-		/* interpolate between the two current samples */
-		while (remaining > 0 && chip->output_pos < FRAC_ONE)
-		{
-			/* left channel */
-			interp = backend_interpolate(lprev, lcurr, chip->output_pos);
-			*ldest++ = (interp < -32768) ? -32768 : (interp > 32767) ? 32767 : interp;
-
-			/* right channel */
-			interp = backend_interpolate(rprev, rcurr, chip->output_pos);
-			*rdest++ = (interp < -32768) ? -32768 : (interp > 32767) ? 32767 : interp;
-
-			/* advance */
-			chip->output_pos += chip->output_step;
-			remaining--;
-		}
+		/* account for these samples */
+		length -= samples;
 	}
-
-	/* remember the last samples */
-	chip->last_lsample = lprev;
-	chip->last_rsample = rprev;
-	chip->curr_lsample = lcurr;
-	chip->curr_rsample = rcurr;
-
-#if MAKE_WAVS
-	/* log the resampled data */
-	if (chip->wavresample)
-		wav_add_data_16lr(chip->wavresample, buffer[0], buffer[1], length);
-#endif
 }
 
 
@@ -910,7 +837,7 @@ static void *es5506_start_common(int sndtype, int sndindex, int clock, const voi
 		return NULL;
 
 	/* create the stream */
-	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, es5506_update);
+	chip->stream = stream_create(0, 2, clock / (16*32), chip, es5506_update);
 
 	/* initialize the regions */
 	chip->region_base[0] = intf->region0 ? (UINT16 *)memory_region(intf->region0) : NULL;
@@ -919,7 +846,7 @@ static void *es5506_start_common(int sndtype, int sndindex, int clock, const voi
 	chip->region_base[3] = intf->region3 ? (UINT16 *)memory_region(intf->region3) : NULL;
 
 	/* initialize the rest of the structure */
-	chip->master_clock = (double)clock;
+	chip->master_clock = clock;
 	chip->irq_callback = intf->irq_callback;
 	chip->irqv = 0x80;
 
@@ -972,8 +899,6 @@ static void es5506_stop(void *chip)
 	{
 		if (es5506[i].wavraw)
 			wav_close(es5506[i].wavraw);
-		if (es5506[i].wavresample)
-			wav_close(es5506[i].wavresample);
 	}
 }
 #endif
@@ -1065,13 +990,12 @@ INLINE void es5506_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 
 		case 0x58/8:	/* ACTV */
 		{
-			double sample_rate = chip->master_clock / (double)(16 * ((data & 0x1f) + 1));
-			if (Machine->sample_rate)
-				chip->output_step = (int)(sample_rate * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 			chip->active_voices = data & 0x1f;
+			chip->sample_rate = chip->master_clock / (16 * (chip->active_voices + 1));
+			stream_set_sample_rate(chip->stream, chip->sample_rate);
 
 			if (LOG_COMMANDS && eslog)
-				fprintf(eslog, "active voices=%d, sample_rate=%d, output_step=%08x\n", chip->active_voices, (int)sample_rate, chip->output_step);
+				fprintf(eslog, "active voices=%d, sample_rate=%d\n", chip->active_voices, chip->sample_rate);
 			break;
 		}
 
@@ -1747,13 +1671,12 @@ INLINE void es5505_reg_write_low(struct ES5506Chip *chip, struct ES5506Voice *vo
 		case 0x0d:	/* ACT */
 			if (ACCESSING_LSB)
 			{
-				double sample_rate = chip->master_clock / (double)(16 * ((data & 0x1f) + 1));
-				if (Machine->sample_rate)
-					chip->output_step = (int)(sample_rate * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 				chip->active_voices = data & 0x1f;
+				chip->sample_rate = chip->master_clock / (16 * (chip->active_voices + 1));
+				stream_set_sample_rate(chip->stream, chip->sample_rate);
 
 				if (LOG_COMMANDS && eslog)
-					fprintf(eslog, "active voices=%d, sample_rate=%d, output_step=%08x\n", chip->active_voices, (int)sample_rate, chip->output_step);
+					fprintf(eslog, "active voices=%d, sample_rate=%d\n", chip->active_voices, chip->sample_rate);
 			}
 			break;
 
@@ -1854,13 +1777,12 @@ INLINE void es5505_reg_write_high(struct ES5506Chip *chip, struct ES5506Voice *v
 		case 0x0d:	/* ACT */
 			if (ACCESSING_LSB)
 			{
-				double sample_rate = chip->master_clock / (double)(16 * ((data & 0x1f) + 1));
-				if (Machine->sample_rate)
-					chip->output_step = (int)(sample_rate * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 				chip->active_voices = data & 0x1f;
+				chip->sample_rate = chip->master_clock / (16 * (chip->active_voices + 1));
+				stream_set_sample_rate(chip->stream, chip->sample_rate);
 
 				if (LOG_COMMANDS && eslog)
-					fprintf(eslog, "active voices=%d, sample_rate=%d, output_step=%08x\n", chip->active_voices, (int)sample_rate, chip->output_step);
+					fprintf(eslog, "active voices=%d, sample_rate=%d\n", chip->active_voices, chip->sample_rate);
 			}
 			break;
 
@@ -1899,13 +1821,12 @@ INLINE void es5505_reg_write_test(struct ES5506Chip *chip, struct ES5506Voice *v
 		case 0x0d:	/* ACT */
 			if (ACCESSING_LSB)
 			{
-				double sample_rate = chip->master_clock / (double)(16 * ((data & 0x1f) + 1));
-				if (Machine->sample_rate)
-					chip->output_step = (int)(sample_rate * (double)(1 << FRAC_BITS) / (double)Machine->sample_rate);
 				chip->active_voices = data & 0x1f;
+				chip->sample_rate = chip->master_clock / (16 * (chip->active_voices + 1));
+				stream_set_sample_rate(chip->stream, chip->sample_rate);
 
 				if (LOG_COMMANDS && eslog)
-					fprintf(eslog, "active voices=%d, sample_rate=%d, output_step=%08x\n", chip->active_voices, (int)sample_rate, chip->output_step);
+					fprintf(eslog, "active voices=%d, sample_rate=%d\n", chip->active_voices, chip->sample_rate);
 			}
 			break;
 

@@ -11,7 +11,6 @@ PALETTE_INIT( psx );
 VIDEO_START( psx_type1 );
 VIDEO_START( psx_type2 );
 VIDEO_UPDATE( psx );
-VIDEO_STOP( psx );
 INTERRUPT_GEN( psx_vblank );
 extern void psx_gpu_reset( void );
 extern void psx_gpu_read( UINT32 *p_ram, INT32 n_size );

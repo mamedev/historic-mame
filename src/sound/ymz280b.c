@@ -77,24 +77,14 @@ struct YMZ280BChip
 	double master_clock;			/* master clock frequency */
 	void (*irq_callback)(int);		/* IRQ callback */
 	struct YMZ280BVoice	voice[8];	/* the 8 voices */
-	void *update_timer;				/* timer for ymz280b_force_update */
 	UINT32 rom_readback_addr;		/* where the CPU can read the ROM */
 	read8_handler ext_ram_read;		/* external RAM read handler */
 	write8_handler ext_ram_write;	/* external RAM write handler */
-
-	INT16 *ibuffer[2];				/* internal buffer */
-	UINT32 ibuffer_pos_in;
-	UINT32 ibuffer_pos_out;			/* (32-FRAC_BITS).FRAC_BITS fix point */
-	UINT32 ibuffer_samples;
-	int ibuffer_step;				/* (32-FRAC_BITS).FRAC_BITS fix point */
-	int ibuffer_samples_per_frame;	/* (32-FRAC_BITS).FRAC_BITS fix point */
-	double samples_left_over;
 
 #if MAKE_WAVS
 	void *		wavresample;			/* resampled waveform */
 #endif
 
-	INT32 *accumulator;
 	INT16 *scratch;
 };
 
@@ -205,7 +195,6 @@ static void YMZ280B_state_save_update_step(void *param)
 		if(voice->irq_schedule)
 			timer_set_ptr(0, chip, update_irq_state_cb[j]);
 	}
-	timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
 }
 
 
@@ -492,30 +481,16 @@ static int generate_pcm16(struct YMZ280BVoice *voice, UINT8 *base, INT16 *buffer
 
 ***********************************************************************************************/
 
-static void ymz280b_force_update(struct YMZ280BChip *chip)
+static void ymz280b_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	int length;
-
-	INT32 *lacc;
-	INT32 *racc;
+	struct YMZ280BChip *chip = param;
+	stream_sample_t *lacc = buffer[0];
+	stream_sample_t *racc = buffer[1];
 	int v;
-	double time_last_update;
-
-	if (Machine->sample_rate == 0) return;
-
-	/* elapsed time since the last callback */
-	time_last_update = timer_timeelapsed(chip->update_timer);
-	if(time_last_update <= 0) return;
-
-	/* compute how many samples to generate */
-	length = (int)(chip->samples_left_over + time_last_update * INTERNAL_SAMPLE_RATE) - chip->ibuffer_samples;
-	if(length <= 0) return;
-
-	lacc = chip->accumulator;
-	racc = chip->accumulator + length;
 
 	/* clear out the accumulator */
-	memset(chip->accumulator, 0, 2 * length * sizeof(chip->accumulator[0]));
+	memset(lacc, 0, length * sizeof(lacc[0]));
+	memset(racc, 0, length * sizeof(racc[0]));
 
 	/* loop over voices */
 	for (v = 0; v < 8; v++)
@@ -630,87 +605,11 @@ static void ymz280b_force_update(struct YMZ280BChip *chip)
 		voice->curr_sample = curr;
 	}
 
-	/* mix and clip the result */
 	for (v = 0; v < length; v++)
 	{
-		int lsamp = lacc[v] / 256;
-		int rsamp = racc[v] / 256;
-
-		if (lsamp < -32768) lsamp = -32768;
-		else if (lsamp > 32767) lsamp = 32767;
-		if (rsamp < -32768) rsamp = -32768;
-		else if (rsamp > 32767) rsamp = 32767;
-
-		chip->ibuffer[0][chip->ibuffer_pos_in] = lsamp;
-		chip->ibuffer[1][chip->ibuffer_pos_in] = rsamp;
-		chip->ibuffer_pos_in++;
-		chip->ibuffer_pos_in &= INTERNAL_BUFFER_SIZE - 1;
+		buffer[0][v] /= 256;
+		buffer[1][v] /= 256;
 	}
-
-	chip->ibuffer_samples += length;
-}
-
-
-static void ymz280b_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
-{
-	struct YMZ280BChip *chip = param;
-	int step = chip->ibuffer_step;
-	int samples_per_frame = chip->ibuffer_samples_per_frame;
-	UINT32 pos1,pos2,internal_samples;
-	int pos_dif;
-	double time_last_update;
-
-	ymz280b_force_update(chip);
-
-	/* elapsed time since the last callback */
-	time_last_update = timer_timeelapsed(chip->update_timer);
-	if(time_last_update <= 0)
-		return;
-
-	/* compute how many samples */
-	chip->samples_left_over += time_last_update * INTERNAL_SAMPLE_RATE;
-	internal_samples = (UINT32)chip->samples_left_over;
-	chip->samples_left_over -= (double)internal_samples;
-
-	pos2 = chip->ibuffer_pos_out;
-	for (pos1 = 0; pos1 < length ; pos1++)
-	{
-		buffer[0][pos1] = chip->ibuffer[0][pos2>>FRAC_BITS];
-		buffer[1][pos1] = chip->ibuffer[1][pos2>>FRAC_BITS];
-		pos2+=step;
-		pos2 &= (INTERNAL_BUFFER_SIZE<<FRAC_BITS)-1;
-	}
-	chip->ibuffer_pos_out = pos2;
-
-	pos_dif = (INTERNAL_BUFFER_SIZE<<FRAC_BITS) + chip->ibuffer_pos_out - (chip->ibuffer_pos_in<<FRAC_BITS);
-	pos_dif &= (INTERNAL_BUFFER_SIZE<<FRAC_BITS)-1;
-	if(pos_dif > (INTERNAL_BUFFER_SIZE<<FRAC_BITS)/2) pos_dif-=INTERNAL_BUFFER_SIZE<<FRAC_BITS;
-
-	if(pos_dif < -step * 32)
-		{
-		pos_dif += step/4;
-		chip->ibuffer_pos_out += step/4;
-		}
-	else if(pos_dif > -step * 16)
-	{
-		pos_dif -= step/4;
-		chip->ibuffer_pos_out -= step/4;
-	}
-
-	if(pos_dif > -step * 16)
-		chip->ibuffer_pos_out = (chip->ibuffer_pos_in<<FRAC_BITS) - samples_per_frame;
-	else if(pos_dif < -samples_per_frame)
-		chip->ibuffer_pos_out = (chip->ibuffer_pos_in<<FRAC_BITS) - step * 24;
-
-	chip->ibuffer_pos_out &= (INTERNAL_BUFFER_SIZE<<FRAC_BITS)-1;
-	chip->ibuffer_samples = 0;
-	timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
-
-#if MAKE_WAVS
-	/* log the resampled data */
-	if (ymz280b[num].wavresample)
-		wav_add_data_16lr(ymz280b[num].wavresample, buffer[0], buffer[1], length);
-#endif
 }
 
 
@@ -735,29 +634,15 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 	/* compute ADPCM tables */
 	compute_tables();
 
-	/* create the stream */
-	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, ymz280b_update);
-
 	/* initialize the rest of the structure */
 	chip->master_clock = (double)clock / 384.0;
 	chip->region_base = memory_region(intf->region);
 	chip->irq_callback = intf->irq_callback;
 
-	chip->update_timer = timer_alloc(NULL);
-	timer_adjust(chip->update_timer, TIME_NEVER, 0, 0);
-
-	chip->ibuffer[0] = auto_malloc(sizeof(chip->ibuffer[0][0]) * 2 * INTERNAL_BUFFER_SIZE);
-	if (!chip->ibuffer[0]) return NULL;
-	chip->ibuffer[1] = chip->ibuffer[0] + INTERNAL_BUFFER_SIZE;
-
-	if (Machine->sample_rate == 0) chip->ibuffer_step = 0;
-	else chip->ibuffer_step = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / (double)Machine->sample_rate + 0.5);
-	chip->ibuffer_samples_per_frame = (UINT32)(INTERNAL_SAMPLE_RATE * (double)FRAC_ONE / Machine->drv->frames_per_second + 0.5);
-	chip->ibuffer_pos_in = (chip->ibuffer_step * 24)>>FRAC_BITS;
-	chip->ibuffer_pos_out = 0;
+	/* create the stream */
+	chip->stream = stream_create(0, 2, INTERNAL_SAMPLE_RATE, chip, ymz280b_update);
 
 	/* allocate memory */
-	chip->accumulator = auto_malloc(sizeof(chip->accumulator[0]) * 2 * MAX_SAMPLE_CHUNK);
 	chip->scratch = auto_malloc(sizeof(chip->scratch[0]) * MAX_SAMPLE_CHUNK);
 
 	/* state save */
@@ -770,7 +655,6 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 		state_save_register_UINT8("YMZ280B", sndindex, "irq_enable", &chip->irq_enable,1);
 		state_save_register_UINT8("YMZ280B", sndindex, "keyon_enable", &chip->keyon_enable,1);
 		state_save_register_UINT32("YMZ280B", sndindex, "rom_readback", &chip->rom_readback_addr,1);
-		state_save_register_double("YMZ280B", sndindex, "samples_left_over", &chip->samples_left_over,1);
 		for (j = 0; j < 8; j++)
 		{
 			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "playing", &chip->voice[j].playing,1);
@@ -846,7 +730,7 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 	int i;
 
 	/* force an update */
-	ymz280b_force_update(chip);
+	stream_update(chip->stream, 0);
 
 	/* lower registers follow a pattern */
 	if (chip->current_register < 0x80)
@@ -1033,7 +917,7 @@ static int compute_status(struct YMZ280BChip *chip)
 	}
 
 	/* force an update */
-	ymz280b_force_update(chip);
+	stream_update(chip->stream, 0);
 
 	result = chip->status_register;
 

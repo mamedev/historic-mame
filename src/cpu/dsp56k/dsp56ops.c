@@ -8,12 +8,6 @@
 **
 **#################################################################################################*/
 
-/* todo :
- *
- *
-*/
-
-
 // Helper functions and macros
 #define BITS(CUR,MASK) (Dsp56kOpMask(CUR,MASK))
 static UINT16 Dsp56kOpMask(UINT16 op, UINT16 mask) ;
@@ -110,8 +104,7 @@ static UINT16 AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs) ;
 
 static void unimplemented(void)
 {
-	logerror("Unimplemented OP @ %04X: %04X\n", PC-2, OP) ;
-	exit(1);
+	osd_die("Unimplemented OP @ %04X: %04X\n", PC-2, OP) ;
 }
 
 
@@ -1576,9 +1569,7 @@ int AndiOperation(void)
 			break ;
 
 		default:
-			printf("DSP56k - BAD EE value in andi operation\n") ;
-			exit(1) ;
-			break ;
+			osd_die("DSP56k - BAD EE value in andi operation\n") ;
 	}
 
 
@@ -2415,3 +2406,4 @@ void SetProgramMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32
 		case DT_LONG_WORD:   program_write_word_16le(destinationAddr, (UINT16)( ((*((UINT64*)sourcePointer)) & (UINT64)U64(0x00000000ffff0000)) >> 16) ) ; break ;
 	}
 }
+

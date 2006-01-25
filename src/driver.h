@@ -53,6 +53,7 @@
 ***************************************************************************/
 
 #include "mamecore.h"
+#include "osdepend.h"
 #include "memory.h"
 #include "mamedbg.h"
 #include "mame.h"

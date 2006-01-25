@@ -658,7 +658,6 @@ DISCRETE_SOUND_START(stinger_discrete_interface)
 
 #define STINGER_SHOT_OUT	NODE_90
 #define STINGER_BOOM_OUT	NODE_91
-#define STINGER_FINAL_GAIN	NODE_98
 #define STINGER_FINAL_MIX	NODE_99
 
 	// triggers are interleaved to give each circuit sufficient time to reset
@@ -700,8 +699,8 @@ DISCRETE_SOUND_START(stinger_discrete_interface)
 	//---------------------------------------
 
 	DISCRETE_ADDER2	(STINGER_FINAL_MIX, 1, STINGER_SHOT_OUT, STINGER_BOOM_OUT)
-	DISCRETE_GAIN	(STINGER_FINAL_GAIN, STINGER_FINAL_MIX, 5.0)
-	DISCRETE_OUTPUT	(STINGER_FINAL_GAIN, 100)
+
+	DISCRETE_OUTPUT	(STINGER_FINAL_MIX, 5)
 
 DISCRETE_SOUND_END
 //* ANALOG SOUND ENDS

@@ -77,17 +77,13 @@ static const char *instruction_name[64] =
 	"RGCPY","RGCPY","RGCPY","RGCPY" 	/* Fx */
 };
 
-int HD63484_start(void)
+static int HD63484_start(void)
 {
 	fifo_counter = 0;
 	HD63484_ram = auto_malloc(HD63484_RAM_SIZE);
 	if (!HD63484_ram) return 1;
 	memset(HD63484_ram,0,HD63484_RAM_SIZE);
 	return 0;
-}
-
-void HD63484_stop(void)
-{
 }
 
 static void doclr(int opcode,UINT16 fill,int *dst,INT16 _ax,INT16 _ay)
@@ -715,11 +711,6 @@ PALETTE_INIT( shanghai )
 VIDEO_START( shanghai )
 {
 	return HD63484_start();
-}
-
-VIDEO_STOP( shanghai )
-{
-	HD63484_stop();
 }
 
 VIDEO_UPDATE( shanghai )
