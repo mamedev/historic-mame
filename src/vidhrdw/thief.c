@@ -118,22 +118,19 @@ VIDEO_START( thief ){
 
 	thief_page0	= auto_bitmap_alloc( 256,256 );
 	thief_page1	= auto_bitmap_alloc( 256,256 );
+	if (!thief_page0 || !thief_page1)
+		return 1;
+
 	videoram = auto_malloc( 0x2000*4*2 );
+	memset( videoram, 0, 0x2000*4*2 );
+
 	dirtybuffer = auto_malloc( 0x2000*2 );
+	memset( dirtybuffer, 1, 0x2000*2 );
 
 	thief_coprocessor.image_ram = auto_malloc( 0x2000 );
 	thief_coprocessor.context_ram = auto_malloc( 0x400 );
 
-	if( thief_page0 && thief_page1 &&
-		videoram && dirtybuffer &&
-		thief_coprocessor.image_ram &&
-		thief_coprocessor.context_ram )
-	{
-		memset( dirtybuffer, 1, 0x2000*2 );
-		memset( videoram, 0, 0x2000*4*2 );
-		return 0;
-	}
-	return 1;
+	return 0;
 }
 
 VIDEO_UPDATE( thief ){

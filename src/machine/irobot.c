@@ -375,7 +375,6 @@ void load_oproms(void)
 
 	/* allocate RAM */
 	mbops = auto_malloc(sizeof(irmb_ops) * 1024);
-	if (!mbops) return;
 
 	for (i = 0; i < 1024; i++)
 	{

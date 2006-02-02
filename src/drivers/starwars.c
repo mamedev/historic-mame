@@ -150,7 +150,6 @@ OPBASE_HANDLER( esb_setopbase )
 }
 
 
-
 /*************************************
  *
  *  Main CPU memory handlers
@@ -172,8 +171,8 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4620, 0x463f) AM_WRITE(avgdvg_reset_w)
 	AM_RANGE(0x4640, 0x465f) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x4660, 0x467f) AM_WRITE(irq_ack_w)
-	AM_RANGE(0x4680, 0x4687) AM_WRITE(starwars_out_w)
-	AM_RANGE(0x46a0, 0x46bf) AM_WRITE(MWA8_NOP)					/* nstore */
+	AM_RANGE(0x4680, 0x469f) AM_READWRITE(MRA8_NOP,starwars_out_w)
+	AM_RANGE(0x46a0, 0x46bf) AM_WRITE(MWA8_NOP)                                     /* nstore */
 	AM_RANGE(0x46c0, 0x46c2) AM_WRITE(starwars_adc_select_w)
 	AM_RANGE(0x46e0, 0x46e0) AM_WRITE(starwars_soundrst_w)
 	AM_RANGE(0x4700, 0x4707) AM_WRITE(swmathbx_w)
@@ -379,7 +378,7 @@ static MACHINE_DRIVER_START( starwars )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809,1500000)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_assert,6)		/* 183Hz ? */
+	MDRV_CPU_VBLANK_INT(irq0_line_assert,8)		/* 244Hz */
 
 	MDRV_CPU_ADD(M6809,1500000)
 	/* audio CPU */

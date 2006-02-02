@@ -10,6 +10,7 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "starwars.h"
+#include "random.h"
 #include "vidhrdw/avgdvg.h"
 
 
@@ -33,17 +34,16 @@
 #define MATHDEBUG	0
 
 
-/* Local variables */
 UINT8 *starwars_mathram;
 
+/* Local variables */
 static UINT8 control_num = kPitch;
 
 static int MPA; /* PROM address counter */
 static int BIC; /* Block index counter  */
-static int PRN; /* Pseudo-random number */
 
-static int div_result;
-static int divisor, dividend;
+static UINT16 dvd_shift, quotient_shift; /* Divider shift registers */
+static UINT16 divisor, dividend;         /* Divider latches */
 
 /* Store decoded PROM elements */
 static UINT8 *PROM_STR; /* Storage for instruction strobe only */
@@ -64,7 +64,7 @@ static void run_mbox(void);
 
 WRITE8_HANDLER( starwars_out_w )
 {
-	switch (offset)
+	switch (offset & 7)
 	{
 		case 0:		/* Coin counter 1 */
 			coin_counter_w(0, data);
@@ -87,9 +87,7 @@ WRITE8_HANDLER( starwars_out_w )
 			if (starwars_is_esb)
 				memory_set_bank(2, (data >> 7) & 1);
 			break;
-
 		case 5:		/* reset PRNG */
-			PRN = 0;
 			break;
 
 		case 6:		/* LED 1 */
@@ -97,7 +95,7 @@ WRITE8_HANDLER( starwars_out_w )
 			break;
 
 		case 7:
-			logerror("recall\n"); /* what's that? */
+			/* NVRAM array recall */
 			break;
 	}
 }
@@ -200,7 +198,6 @@ void swmathbox_init(void)
 void swmathbox_reset(void)
 {
 	MPA = BIC = 0;
-	PRN = 0;
 }
 
 
@@ -251,7 +248,7 @@ void run_mbox(void)
 		MA_byte = MA << 1;
 		RAMWORD = (starwars_mathram[MA_byte + 1] & 0x00ff) | ((starwars_mathram[MA_byte] & 0x00ff) << 8);
 
-		logerror("MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
+//      logerror("MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
 
 		/*
          * RAMWORD is the sixteen bit Math RAM value for the selected address
@@ -367,8 +364,20 @@ void run_mbox(void)
 
 READ8_HANDLER( swmathbx_prng_r )
 {
-	PRN = (int)((PRN + 0x2364) ^ 2); /* This is a total bodge for now, but it works!*/
-	return PRN;
+	/*
+     * The PRNG is a modified 23 bit LFSR. Taps are at 4 and 22 so the
+     * resulting LFSR polynomial is,
+     *
+     * x^5 + x^{23} + 1
+     *
+     * which is prime. It has a loop length of 8388607. The feedback
+     * bit is inverted so the PRNG can start with 0. Only 8 bits from
+     * bit 8 to 15 can be read by the CPU. The PRNG runs constantly at
+     * a clock speed of 3 MHz.
+     */
+
+	/* Use MAME's PRNG for now */
+	return mame_rand();
 }
 
 
@@ -381,18 +390,20 @@ READ8_HANDLER( swmathbx_prng_r )
 
 READ8_HANDLER( swmathbx_reh_r )
 {
-	return (div_result & 0xff00) >> 8;
+	return (quotient_shift & 0xff00) >> 8;
 }
 
 
 READ8_HANDLER( swmathbx_rel_r )
 {
-	return div_result & 0x00ff;
+	return quotient_shift & 0x00ff;
 }
 
 
 WRITE8_HANDLER( swmathbx_w )
 {
+	int i;
+
 	data &= 0xff;	/* ASG 971002 -- make sure we only get bytes here */
 	switch (offset)
 	{
@@ -411,6 +422,8 @@ WRITE8_HANDLER( swmathbx_w )
 
 		case 4: /* dvsrh */
 			divisor = (divisor & 0x00ff) | (data << 8);
+			dvd_shift = dividend;
+			quotient_shift = 0;
 			break;
 
 		case 5: /* dvsrl */
@@ -422,10 +435,25 @@ WRITE8_HANDLER( swmathbx_w )
 
 			divisor = (divisor & 0xff00) | data;
 
-			if (dividend >= 2 * divisor)
-				div_result = 0x7fff;
-			else
-				div_result = (int)(((long)dividend << 14) / (long)divisor);
+			/*
+             * Simple restoring division as shown in the
+             * schematics. The algorithm produces the same "wrong"
+             * results as the hardware if divisor < 2*dividend or
+             * divisor > 0x8000.
+             */
+			for (i = 1; i < 16; i++)
+			{
+				quotient_shift <<= 1;
+				if (((INT32)dvd_shift + (divisor ^ 0xffff) + 1) & 0x10000)
+				{
+					quotient_shift |= 1;
+					dvd_shift = (dvd_shift + (divisor ^ 0xffff) + 1) << 1;
+				}
+				else
+				{
+					dvd_shift <<= 1;
+				}
+			}
 			break;
 
 		case 6: /* dvddh */

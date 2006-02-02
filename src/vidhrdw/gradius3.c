@@ -93,9 +93,7 @@ VIDEO_START( gradius3 )
 	for (i = 0;i < TOTAL_SPRITES;i++)
 		decodechar(Machine->gfx[1],i,memory_region(REGION_GFX2),&spritelayout);
 
-	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
-		return 1;
-
+	dirtychar = auto_malloc(TOTAL_CHARS);
 	memset(dirtychar,1,TOTAL_CHARS);
 
 	return 0;

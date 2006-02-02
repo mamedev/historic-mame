@@ -189,8 +189,7 @@ static void pitfighb_cheap_slapstic_init(void)
 
 	/* allocate memory for a copy of bank 0 */
 	bslapstic_bank0 = auto_malloc(0x2000);
-	if (bslapstic_bank0)
-		memcpy(bslapstic_bank0, bslapstic_base, 0x2000);
+	memcpy(bslapstic_bank0, bslapstic_base, 0x2000);
 
 	/* not primed by default */
 	bslapstic_primed = 0;

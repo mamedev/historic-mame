@@ -96,7 +96,7 @@ static struct sprite *sprite_list_create(int num_sprites)
 {
 	struct sprite *spr_list;
 
-	if (!(spr_list = auto_malloc(num_sprites * sizeof(struct sprite)))) return NULL;
+	spr_list = auto_malloc(num_sprites * sizeof(struct sprite));
 
 	memset(spr_list, 0, num_sprites * sizeof(struct sprite));
 
@@ -899,7 +899,7 @@ VIDEO_START( wecleman )
 	int i, j;
 
 	if (Machine->color_depth > 16) return(1);
-	if (!(buffer = auto_malloc(0x12c00))) return(1);	// working buffer for sprite operations
+	buffer = auto_malloc(0x12c00);	// working buffer for sprite operations
 
 	gameid = 0;
 	wecleman_gfx_bank = bank;
@@ -1004,7 +1004,7 @@ VIDEO_START( hotchase )
 
 	UINT8 *buffer;
 
-	if (!(buffer = auto_malloc(0x400))) return(1);	// reserve 1k for sprite list
+	buffer = auto_malloc(0x400);	// reserve 1k for sprite list
 
 	gameid = 1;
 	wecleman_gfx_bank = bank;

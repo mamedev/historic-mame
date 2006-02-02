@@ -610,8 +610,7 @@ VIDEO_START( f3 )
 	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
 	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap || !pf_line_inf || !sa_line_inf || !pri_alp_bitmap
-		 || !spritelist || !vram_layer || !pixel_layer || !spriteram32_buffered || !pivot_dirty || !tile_opaque_sp || !tile_opaque_pf)
+	if (!vram_layer || !pixel_layer || !pri_alp_bitmap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);

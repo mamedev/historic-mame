@@ -1141,8 +1141,6 @@ VIDEO_START( cps )
 	memset(empty_tile,0xff,sizeof(empty_tile));
 
 	cps1_old_palette=auto_malloc(cps1_palette_size);
-	if (!cps1_old_palette)
-		return 1;
 	memset(cps1_old_palette, 0x00, cps1_palette_size);
 	for (i = 0;i < cps1_palette_entries*16;i++)
 	{
@@ -1150,14 +1148,10 @@ VIDEO_START( cps )
 	}
 
     cps1_buffered_obj = auto_malloc (cps1_obj_size);
-    if (!cps1_buffered_obj)
-		return 1;
     memset(cps1_buffered_obj, 0x00, cps1_obj_size);
 
     if (cps_version==2) {
 	cps2_buffered_obj = auto_malloc (cps2_obj_size);
-	if (!cps2_buffered_obj)
-	    return 1;
 	memset(cps2_buffered_obj, 0x00, cps2_obj_size);
     }
 

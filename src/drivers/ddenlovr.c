@@ -147,7 +147,7 @@ VIDEO_START(ddenlovr)
 {
 	int i;
 	for (i = 0; i < 8; i++)
-		if (!(pixmap[i] = auto_malloc(512*512)))	return 1;
+		pixmap[i] = auto_malloc(512*512);
 
 	if (!(framebuffer = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height))) return 1;
 

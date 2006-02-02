@@ -56,7 +56,7 @@ static READ16_HANDLER( vram_r )
 }
 
 static ADDRESS_MAP_START( eolith16_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x00000000, 0x0007ffff) AM_RAM
+	AM_RANGE(0x00000000, 0x001fffff) AM_RAM
 	AM_RANGE(0x50000000, 0x5000ffff) AM_READWRITE(vram_r, vram_w)
 	AM_RANGE(0x90000000, 0x9000002f) AM_WRITENOP //?
 	AM_RANGE(0xff000000, 0xff1fffff) AM_ROM AM_REGION(REGION_USER2, 0)
@@ -97,9 +97,6 @@ INPUT_PORTS_END
 VIDEO_START( eolith16 )
 {
 	vram = auto_malloc(0x10000*2);
-
-	if(!vram)
-		return 1;
 
 	return 0;
 }
@@ -161,7 +158,7 @@ PALETTE_INIT( eolith16 )
 }
 
 static MACHINE_DRIVER_START( eolith16 )
-	MDRV_CPU_ADD(E116T, 60000000)		 /* 60 Mz */
+	MDRV_CPU_ADD(E116T, 60000000)		 /* 60 MHz */
 	MDRV_CPU_PROGRAM_MAP(eolith16_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)

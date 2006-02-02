@@ -113,12 +113,6 @@ VIDEO_START( spcking2 )
 VIDEO_START( spaceint )
 {
 	colorram = auto_malloc(0x2000);
-
-	if (colorram == NULL)
-	{
-		return 1;
-	}
-
 	memset(colorram, 0, 0x2000);
 
 	return video_start_generic_bitmapped();

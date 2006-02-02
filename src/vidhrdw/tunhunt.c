@@ -86,8 +86,6 @@ VIDEO_START( tunhunt )
     With max RLE expansion, bitmap size is 256x64.
     */
 	dirtybuffer = auto_malloc(64);
-	if (!dirtybuffer)
-		return 1;
 
 	memset( dirtybuffer, 1, 64 );
 	tmpbitmap = auto_bitmap_alloc( 256, 64 );

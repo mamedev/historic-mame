@@ -139,8 +139,7 @@ VIDEO_START( bnj )
     if (video_start_generic() != 0)
         return 1;
 
-    if ((dirtybuffer2 = auto_malloc(bnj_backgroundram_size)) == 0)
-        return 1;
+    dirtybuffer2 = auto_malloc(bnj_backgroundram_size);
     memset(dirtybuffer2,1,bnj_backgroundram_size);
 
     /* the background area is twice as wide as the screen */

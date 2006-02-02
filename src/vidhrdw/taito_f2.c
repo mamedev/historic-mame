@@ -90,8 +90,6 @@ int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int
 	spriteram_delayed = auto_malloc(spriteram_size);
 	spriteram_buffered = auto_malloc(spriteram_size);
 	spritelist = auto_malloc(0x400 * sizeof(*spritelist));
-	if (!spriteram_delayed || !spriteram_buffered || !spritelist)
-		return 1;
 
 	chips = number_of_TC0100SCN();
 

@@ -257,8 +257,6 @@ VIDEO_START( m107 )
 	pf1_rowscroll=pf2_rowscroll=pf3_rowscroll=pf4_rowscroll=0;
 
 	m107_spriteram = auto_malloc(0x1000);
-	if (!m107_spriteram)
-		return 1;
 	memset(m107_spriteram,0,0x1000);
 
 	m107_sprite_list=0;

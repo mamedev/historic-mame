@@ -224,8 +224,7 @@ VIDEO_START( psikyo )
 	spritebuf2 = auto_malloc(0x2000);
 
 	if (tilemap_0_size0 && tilemap_0_size1 && tilemap_0_size2 && tilemap_0_size3 &&
-		tilemap_1_size0 && tilemap_1_size1 && tilemap_1_size2 && tilemap_1_size3 &&
-		spritebuf1 && spritebuf2)
+		tilemap_1_size0 && tilemap_1_size1 && tilemap_1_size2 && tilemap_1_size3)
 	{
 		tilemap_set_scroll_rows(tilemap_0_size0,0x80*16);	// line scrolling
 		tilemap_set_scroll_cols(tilemap_0_size0,1);

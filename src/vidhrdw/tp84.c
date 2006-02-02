@@ -231,9 +231,6 @@ VIDEO_START( tp84 )
 
 	sprite_mux_buffer = auto_malloc(256 * spriteram_size);
 
-	if (!sprite_mux_buffer)
-		return 1;
-
 	return 0;
 }
 

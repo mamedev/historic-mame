@@ -27,7 +27,7 @@ static int common_vh_start(int num_pixmaps)
 	{
 		if (i < total_pixmaps)
 		{
-			if (!(pixmap[i] = auto_malloc(256*256))) return 1;
+			pixmap[i] = auto_malloc(256*256);
 		}
 		else
 			pixmap[i] = NULL;

@@ -425,8 +425,7 @@ PALETTE_INIT( tubep )
 
 VIDEO_START( tubep )
 {
-	if ((dirtybuff = auto_malloc(0x800/2)) == 0)
-		return 1;
+	dirtybuff = auto_malloc(0x800/2);
 	memset(dirtybuff,1,0x800/2);
 
 	spritemap = auto_malloc(256*256*2);
@@ -434,7 +433,7 @@ VIDEO_START( tubep )
 
 	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
-	if ( (tmpbitmap == 0) || (spritemap == 0) )
+	if (tmpbitmap == NULL)
 		return 1;
 
 	return 0;

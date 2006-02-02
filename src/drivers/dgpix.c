@@ -285,7 +285,7 @@ VIDEO_START( dgpix )
 	bitmaps[0] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 	bitmaps[1] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
-	if(!vram || !bitmaps[0] || !bitmaps[1])
+	if(!bitmaps[0] || !bitmaps[1])
 		return 1;
 
 	return 0;

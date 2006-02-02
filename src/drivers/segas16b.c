@@ -994,8 +994,6 @@ static void system16b_generic_init(int _rom_board)
 	segaic16_tileram_0   = auto_malloc(0x10000);
 	segaic16_textram_0   = auto_malloc(0x01000);
 	workram              = auto_malloc(0x04000);
-	if (!segaic16_spriteram_0 || !paletteram16 || !segaic16_tileram_0 || !segaic16_textram_0 || !workram)
-		osd_die("Out of memory allocating RAM space\n");
 
 	/* init the memory mapper */
 	segaic16_memory_mapper_init(0, region_info_list[rom_board], sound_w, NULL);

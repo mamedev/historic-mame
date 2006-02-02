@@ -299,6 +299,8 @@ void debug_cpu_init(void)
 			/* skip if we don't get a valid string, or one without a colon */
 			if (str == NULL)
 				continue;
+			if (str[0] == '~')
+				str++;
 			colon = strchr(str, ':');
 			if (colon == NULL)
 				continue;

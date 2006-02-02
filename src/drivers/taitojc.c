@@ -405,7 +405,7 @@ VIDEO_START( taitojc )
 	memset(taitojc_tile_ram, 0, 0x4000);
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	Machine->gfx[taitojc_gfx_index] = decodegfx((UINT8 *)&taitojc_char_ram, &taitojc_char_layout);
+	Machine->gfx[taitojc_gfx_index] = allocgfx(&taitojc_char_layout);
 	if (!Machine->gfx[taitojc_gfx_index])
 		return 1;
 

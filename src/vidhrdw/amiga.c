@@ -744,8 +744,6 @@ VIDEO_START(amiga)
 	update_regs.RAM = memory_region(REGION_CPU1);
 
 	update_regs.sprite_in_scanline = auto_malloc( Machine->drv->screen_height * sizeof( int ) );
-	if ( update_regs.sprite_in_scanline == 0 )
-		return 1;
 
 	memset( update_regs.sprite_in_scanline, 0, Machine->drv->screen_height * sizeof( int ) );
 

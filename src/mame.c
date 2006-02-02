@@ -55,6 +55,7 @@
                     - sets the initial refresh rate and visible area
                     - calls init_buffered_spriteram() [mame.c] to set up buffered spriteram
                     - creates the debugger bitmap and font (old debugger only)
+                    - calls allocate_graphics() [mame.c] to allocate memory for the decoded graphics
                     - calls palette_init() [palette.c] to finish palette initialization
                     - calls decode_graphics() [mame.c] to decode the graphics
                     - resets the performance tracking variables
@@ -225,7 +226,8 @@ static void recompute_fps(int skipped_it);
 static int vh_open(void);
 static void vh_close(void);
 static int init_game_options(void);
-static int decode_graphics(const gfx_decode *gfxdecodeinfo);
+static int allocate_graphics(const gfx_decode *gfxdecodeinfo);
+static void decode_graphics(const gfx_decode *gfxdecodeinfo);
 static void compute_aspect_ratio(const machine_config *drv, int *aspect_x, int *aspect_y);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
@@ -760,6 +762,12 @@ static int vh_open(void)
 	}
 #endif
 
+	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
+	/* palette_init() routine because it might need to check the Machine->gfx[] data */
+	if (Machine->drv->gfxdecodeinfo)
+		if (allocate_graphics(Machine->drv->gfxdecodeinfo))
+			goto cant_allocate_graphics;
+
 	/* initialize the palette - must be done after osd_create_display() */
 	if (palette_init())
 		goto cant_init_palette;
@@ -767,11 +775,9 @@ static int vh_open(void)
 	/* force the first update to be full */
 	set_vh_global_attribute(NULL, 0);
 
-	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
-	/* palette_init() routine because it might need to check the Machine->gfx[] data */
+	/* actually decode the graphics */
 	if (Machine->drv->gfxdecodeinfo)
-		if (decode_graphics(Machine->drv->gfxdecodeinfo))
-			goto cant_decode_graphics;
+		decode_graphics(Machine->drv->gfxdecodeinfo);
 
 	/* reset performance data */
 	last_fps_time = osd_cycles();
@@ -796,7 +802,7 @@ cant_create_debug_bitmap:
 cant_init_buffered_spriteram:
 cant_create_scrbitmap:
 cant_create_display:
-cant_decode_graphics:
+cant_allocate_graphics:
 cant_start_palette:
 	vh_close();
 	return 1;
@@ -900,31 +906,18 @@ static int init_game_options(void)
 
 
 /*-------------------------------------------------
-    decode_graphics - decode the graphics
+    allocate_graphics - allocate memory for the
+    graphics
 -------------------------------------------------*/
 
-static int decode_graphics(const gfx_decode *gfxdecodeinfo)
+static int allocate_graphics(const gfx_decode *gfxdecodeinfo)
 {
-	int totalgfx = 0, curgfx = 0;
 	int i;
-
-	/* count total graphics elements */
-	for (i = 0; i < MAX_GFX_ELEMENTS && gfxdecodeinfo[i].memory_region != -1; i++)
-	{
-		int region_length = 8 * memory_region_length(gfxdecodeinfo[i].memory_region);
-		const gfx_layout *gl = gfxdecodeinfo[i].gfxlayout;
-
-		if (IS_FRAC(gl->total))
-			totalgfx += region_length / gl->charincrement * FRAC_NUM(gl->total) / FRAC_DEN(gl->total);
-		else
-			totalgfx += gl->total;
-	}
 
 	/* loop over all elements */
 	for (i = 0; i < MAX_GFX_ELEMENTS && gfxdecodeinfo[i].memory_region != -1; i++)
 	{
 		int region_length = 8 * memory_region_length(gfxdecodeinfo[i].memory_region);
-		UINT8 *region_base = memory_region(gfxdecodeinfo[i].memory_region);
 		gfx_layout glcopy;
 		int j;
 
@@ -974,15 +967,8 @@ static int decode_graphics(const gfx_decode *gfxdecodeinfo)
 			}
 		}
 
-		/* now decode the actual graphics */
-/*      ui_display_decoding(artwork_get_ui_bitmap(), curgfx * 100 / totalgfx);*/
-		if ((Machine->gfx[i] = decodegfx(region_base + gfxdecodeinfo[i].start, &glcopy)) == 0)
-		{
-			bailing = 1;
-			printf("Out of memory decoding gfx\n");
-			return 1;
-		}
-		curgfx += glcopy.total;
+		/* allocate the graphics */
+		Machine->gfx[i] = allocgfx(&glcopy);
 
 		/* if we have a remapped colortable, point our local colortable to it */
 		if (Machine->remapped_colortable)
@@ -990,6 +976,41 @@ static int decode_graphics(const gfx_decode *gfxdecodeinfo)
 		Machine->gfx[i]->total_colors = gfxdecodeinfo[i].total_color_codes;
 	}
 	return 0;
+}
+
+
+
+/*-------------------------------------------------
+    decode_graphics - decode the graphics
+-------------------------------------------------*/
+
+static void decode_graphics(const gfx_decode *gfxdecodeinfo)
+{
+	int totalgfx = 0, curgfx = 0;
+	int i;
+
+	/* count total graphics elements */
+	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
+		if (Machine->gfx[i])
+			totalgfx += Machine->gfx[i]->total_elements;
+
+	/* loop over all elements */
+	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
+		if (Machine->gfx[i])
+		{
+			UINT8 *region_base = memory_region(gfxdecodeinfo[i].memory_region);
+			gfx_element *gfx = Machine->gfx[i];
+			int j;
+
+			/* now decode the actual graphics */
+			for (j = 0; j < gfx->total_elements; j += 1024)
+			{
+				int num_to_decode = (j + 1024 < gfx->total_elements) ? 1024 : (gfx->total_elements - j);
+				decodegfx(gfx, region_base + gfxdecodeinfo[i].start, j, num_to_decode);
+				curgfx += num_to_decode;
+	/*          ui_display_decoding(artwork_get_ui_bitmap(), curgfx * 100 / totalgfx);*/
+			}
+		}
 }
 
 
@@ -1037,8 +1058,6 @@ static int init_buffered_spriteram(void)
 
 	/* allocate memory for the back buffer */
 	buffered_spriteram = auto_malloc(spriteram_size);
-	if (!buffered_spriteram)
-		return 1;
 
 	/* register for saving it */
 	state_save_register_UINT8("generic_video", 0, "buffered_spriteram", buffered_spriteram, spriteram_size);
@@ -1048,8 +1067,6 @@ static int init_buffered_spriteram(void)
 	{
 		/* allocate memory */
 		buffered_spriteram_2 = auto_malloc(spriteram_2_size);
-		if (!buffered_spriteram_2)
-			return 1;
 
 		/* register for saving it */
 		state_save_register_UINT8("generic_video", 0, "buffered_spriteram_2", buffered_spriteram_2, spriteram_2_size);

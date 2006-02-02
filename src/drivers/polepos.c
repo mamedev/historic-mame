@@ -217,7 +217,7 @@ Notes:
 #include "sound/namco54.h"
 #include "sound/custom.h"
 #include "sound/samples.h"
-#include "rc.h"
+#include "rescap.h"
 
 
 #define POLEPOS_TOGGLE	PORT_TOGGLE

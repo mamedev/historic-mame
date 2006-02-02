@@ -201,9 +201,6 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 
 	chips = auto_malloc( intf->num * sizeof( ppu2c03b_chip ) );
 
-	if ( chips == 0 )
-		return -1;
-
 	/* intialize our virtual chips */
 	for( i = 0; i < intf->num; i++ )
 	{
@@ -220,7 +217,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 		chips[i].colortable_mono = auto_malloc( sizeof( default_colortable_mono ) );
 
 		/* see if it failed */
-		if ( !chips[i].bitmap || !chips[i].videoram || !chips[i].spriteram || !chips[i].dirtychar || !chips[i].colortable_mono )
+		if ( !chips[i].bitmap )
 			return -1;
 
 		/* clear videoram & spriteram */
@@ -253,7 +250,8 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 		/* now create the gfx region */
 		{
 			UINT8 *src = chips[i].has_videorom ? memory_region( intf->vrom_region[i] ) : chips[i].videoram;
-			Machine->gfx[intf->gfx_layout_number[i]] = decodegfx( src, &ppu_charlayout );
+			Machine->gfx[intf->gfx_layout_number[i]] = allocgfx( &ppu_charlayout );
+			decodegfx( Machine->gfx[intf->gfx_layout_number[i]], src, 0, Machine->gfx[intf->gfx_layout_number[i]]->total_elements );
 
 			if ( Machine->gfx[intf->gfx_layout_number[i]] == 0 )
 				return -1;

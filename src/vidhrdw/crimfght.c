@@ -56,7 +56,6 @@ static void sprite_callback(int *code,int *color,int *priority,int *shadow)
 VIDEO_START( crimfght )
 {
 	paletteram = auto_malloc(0x400);
-	if (!paletteram) return 1;
 
 	layer_colorbase[0] = 0;
 	layer_colorbase[1] = 4;

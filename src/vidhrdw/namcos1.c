@@ -115,8 +115,7 @@ VIDEO_START( namcos1 )
 	bg_tilemap[4] = tilemap_create(fg_get_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 	bg_tilemap[5] = tilemap_create(fg_get_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !bg_tilemap[3] || !bg_tilemap[4] || !bg_tilemap[5]
-			|| !namcos1_videoram)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !bg_tilemap[3] || !bg_tilemap[4] || !bg_tilemap[5] )
 		return 1;
 
 	tilemap_set_scrolldx(bg_tilemap[4],73,512-73);

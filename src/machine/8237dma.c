@@ -68,8 +68,6 @@ int dma8237_init(int count)
 	int which;
 
 	dma = auto_malloc(count * sizeof(struct dma8237));
-	if (!dma)
-		return 1;
 	memset(dma, 0, count * sizeof(struct dma8237));
 	dma_count = count;
 

@@ -69,13 +69,11 @@ WRITE8_HANDLER( mnchmobl_sprite_tile_w ){ mnchmobl_sprite_tile[offset] = data; }
 VIDEO_START( mnchmobl )
 {
 	dirtybuffer = auto_malloc(0x100);
+	memset( dirtybuffer, 1, 0x100 );
 	tmpbitmap = auto_bitmap_alloc(512,512);
-	if( dirtybuffer && tmpbitmap )
-	{
-		memset( dirtybuffer, 1, 0x100 );
-		return 0;
-	}
-	return 1;
+	if( !tmpbitmap )
+		return 1;
+	return 0;
 }
 
 READ8_HANDLER( mnchmobl_videoram_r )

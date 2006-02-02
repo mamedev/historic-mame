@@ -150,9 +150,6 @@ VIDEO_START(macrossp)
 	spriteram_old = auto_malloc(spriteram_size);
 	spriteram_old2 = auto_malloc(spriteram_size);
 
-	if (!spriteram_old || !spriteram_old2)
-		return 1;
-
 	memset(spriteram_old,0,spriteram_size);
 	memset(spriteram_old2,0,spriteram_size);
 

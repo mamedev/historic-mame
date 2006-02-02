@@ -8,7 +8,6 @@
 
 
 extern int neogeo_sram_locked;
-extern offs_t neogeo_sram_protection_hack;
 extern void *record;
 extern void *playback;
 
@@ -71,6 +70,24 @@ MACHINE_INIT( neogeo )
 	}
 
 	neogeo_rng = 0x2345;	/* seed for the protection RNG in KOF99 onwards */
+
+	/* it boots up with the BIOS vectors selected - see fatfury3 which has a corrupt vector in the game cart */
+	neogeo_select_bios_vectors(0,0,0); // data doesn't matter
+
+	/* not ideal having these here, but they need to be checked every reset at least */
+	/* the rom banking is tied directly to the dipswitch?, or is there a bank write somewhere? */
+	if (!strcmp(Machine->gamedrv->name,"svcpcb"))
+	{
+		int harddip3 = readinputportbytag("HARDDIP")&1;
+		memcpy(memory_region( REGION_USER1 ),memory_region( REGION_USER1 )+0x20000+harddip3*0x20000, 0x20000);
+	}
+	/* a jumper pad on th PCB acts as a ROM overlay and is used to select the game language as opposed to the BIOS */
+	if (!strcmp(Machine->gamedrv->name,"kog"))
+	{
+		int jumper = readinputportbytag("JUMPER");
+		memory_region(REGION_CPU1)[0x1FFFFC/2] = jumper;
+	}
+
 }
 
 
@@ -140,8 +157,6 @@ DRIVER_INIT( neogeo )
 
 	/* Allocate ram banks */
 	neogeo_ram16 = auto_malloc (0x10000);
-	if (!neogeo_ram16)
-		return;
 	memory_set_bankptr(1, neogeo_ram16);
 
 	/* Set the biosbank */
@@ -158,8 +173,6 @@ DRIVER_INIT( neogeo )
 
 	/* Allocate and point to the memcard - bank 5 */
 	neogeo_memcard = auto_malloc(0x800);
-	if (!neogeo_memcard)
-		return;
 	memset(neogeo_memcard, 0, 0x800);
 	memcard_status=0;
 	memcard_number=0;
@@ -184,9 +197,6 @@ DRIVER_INIT( neogeo )
 		neogeo_game_vectors = auto_malloc (0x80);
 		memcpy( neogeo_game_vectors, gamerom, 0x80 );
 	}
-
-	/* setup SRAM protection */
-	install_sram_protection();
 
 	/* register state save */
 	neogeo_register_main_savestate();

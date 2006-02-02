@@ -65,8 +65,7 @@ VIDEO_START( f1gp )
 
 	tilemap_set_transparent_pen(fg_tilemap,0xff);
 
-	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
-		return 1;
+	dirtychar = auto_malloc(TOTAL_CHARS);
 	memset(dirtychar,1,TOTAL_CHARS);
 
 	zoomdata = (UINT16 *)memory_region(REGION_GFX4);
@@ -91,8 +90,7 @@ VIDEO_START( f1gp2 )
 	tilemap_set_scrolldx(fg_tilemap,-80,0);
 	tilemap_set_scrolldy(fg_tilemap,-26,0);
 
-	if (!(dirtychar = auto_malloc(TOTAL_CHARS)))
-		return 1;
+	dirtychar = auto_malloc(TOTAL_CHARS);
 	memset(dirtychar,1,TOTAL_CHARS);
 
 	zoomdata = (UINT16 *)memory_region(REGION_GFX4);

@@ -47,7 +47,7 @@ UINT32 *paletteram32;
     LOCAL VARIABLES
 -------------------------------------------------*/
 
-static rgb_t *game_palette;			/* RGB palette as set by the driver */
+rgb_t *game_palette;				/* RGB palette as set by the driver */
 static rgb_t *adjusted_palette;		/* actual RGB palette after brightness/gamma adjustments */
 static UINT32 *dirty_palette;
 static UINT16 *pen_brightness;
@@ -511,37 +511,27 @@ static int palette_alloc(void)
 
 	/* allocate memory for the raw game palette */
 	game_palette = auto_malloc(max_total_colors * sizeof(game_palette[0]));
-	if (!game_palette)
-		return 1;
 	for (i = 0; i < max_total_colors; i++)
 		game_palette[i] = MAKE_RGB((i & 1) * 0xff, ((i >> 1) & 1) * 0xff, ((i >> 2) & 1) * 0xff);
 
 	/* allocate memory for the adjusted game palette */
 	adjusted_palette = auto_malloc(max_total_colors * sizeof(adjusted_palette[0]));
-	if (!adjusted_palette)
-		return 1;
 	for (i = 0; i < max_total_colors; i++)
 		adjusted_palette[i] = game_palette[i];
 
 	/* allocate memory for the dirty palette array */
 	dirty_palette = auto_malloc((max_total_colors + 31) / 32 * sizeof(dirty_palette[0]));
-	if (!dirty_palette)
-		return 1;
 	dirty_palette[(max_total_colors - 1) / 32] = 0; /* initialize all the bits of the last dirty entry */
 	for (i = 0; i < max_total_colors; i++)
 		mark_pen_dirty(i);
 
 	/* allocate memory for the pen table */
 	Machine->pens = auto_malloc(total_colors * sizeof(Machine->pens[0]));
-	if (!Machine->pens)
-		return 1;
 	for (i = 0; i < total_colors; i++)
 		Machine->pens[i] = i;
 
 	/* allocate memory for the per-entry brightness table */
 	pen_brightness = auto_malloc(Machine->drv->total_colors * sizeof(pen_brightness[0]));
-	if (!pen_brightness)
-		return 1;
 	for (i = 0; i < Machine->drv->total_colors; i++)
 		pen_brightness[i] = 1 << PEN_BRIGHTNESS_BITS;
 
@@ -550,15 +540,11 @@ static int palette_alloc(void)
 	{
 		/* first for the raw colortable */
 		Machine->game_colortable = auto_malloc(Machine->drv->color_table_len * sizeof(Machine->game_colortable[0]));
-		if (!Machine->game_colortable)
-			return 1;
 		for (i = 0; i < Machine->drv->color_table_len; i++)
 			Machine->game_colortable[i] = i % total_colors;
 
 		/* then for the remapped colortable */
 		Machine->remapped_colortable = auto_malloc(Machine->drv->color_table_len * sizeof(Machine->remapped_colortable[0]));
-		if (!Machine->remapped_colortable)
-			return 1;
 	}
 
 	/* otherwise, keep the game_colortable NULL and point the remapped_colortable to the pens */
@@ -570,15 +556,11 @@ static int palette_alloc(void)
 
 	/* allocate memory for the debugger pens */
 	Machine->debug_pens = auto_malloc(DEBUGGER_TOTAL_COLORS * sizeof(Machine->debug_pens[0]));
-	if (!Machine->debug_pens)
-		return 1;
 	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
 		Machine->debug_pens[i] = i;
 
 	/* allocate memory for the debugger colortable */
 	Machine->debug_remapped_colortable = auto_malloc(2 * DEBUGGER_TOTAL_COLORS * DEBUGGER_TOTAL_COLORS * sizeof(Machine->debug_remapped_colortable[0]));
-	if (!Machine->debug_remapped_colortable)
-		return 1;
 	for (i = 0; i < DEBUGGER_TOTAL_COLORS * DEBUGGER_TOTAL_COLORS; i++)
 	{
 		Machine->debug_remapped_colortable[2*i+0] = i / DEBUGGER_TOTAL_COLORS;
@@ -594,8 +576,6 @@ static int palette_alloc(void)
          * bugs should the tilemap contains pens >= total_colors
          */
 		palette_shadow_table = auto_malloc(65536 * sizeof(palette_shadow_table[0]));
-		if (!palette_shadow_table)
-			return 1;
 
 		/* map entries up to the total_colors so they point to the next block of colors */
 		for (i = 0; i < 65536; i++)
@@ -618,7 +598,7 @@ static int palette_alloc(void)
 		{
 			if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS)
 			{
-				if (!(table_ptr16 = auto_malloc(65536 * sizeof(UINT16)))) return 1;
+				table_ptr16 = auto_malloc(65536 * sizeof(UINT16));
 
 				shadow_table_base[0] = shadow_table_base[2] = (UINT32*)table_ptr16;
 
@@ -630,7 +610,7 @@ static int palette_alloc(void)
 
 			if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
 			{
-				if (!(table_ptr16 = auto_malloc(65536 * sizeof(UINT16)))) return 1;
+				table_ptr16 = auto_malloc(65536 * sizeof(UINT16));
 
 				shadow_table_base[1] = shadow_table_base[3] = (UINT32*)table_ptr16;
 
@@ -644,7 +624,7 @@ static int palette_alloc(void)
 		{
 			if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS)
 			{
-				if (!(table_ptr32 = auto_malloc(65536 * sizeof(UINT32)))) return 1;
+				table_ptr32 = auto_malloc(65536 * sizeof(UINT32));
 
 				shadow_table_base[0] = table_ptr32;
 				shadow_table_base[2] = table_ptr32 + 32768;
@@ -654,7 +634,7 @@ static int palette_alloc(void)
 
 			if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
 			{
-				if (!(table_ptr32 = auto_malloc(65536 * sizeof(UINT32)))) return 1;
+				table_ptr32 = auto_malloc(65536 * sizeof(UINT32));
 
 				shadow_table_base[1] = table_ptr32;
 				shadow_table_base[3] = table_ptr32 + 32768;

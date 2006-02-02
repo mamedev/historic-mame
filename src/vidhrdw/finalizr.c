@@ -72,8 +72,7 @@ VIDEO_START( finalizr )
 	dirtybuffer = 0;
 	tmpbitmap = 0;
 
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)

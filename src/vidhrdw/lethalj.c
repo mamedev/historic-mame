@@ -85,8 +85,6 @@ VIDEO_START( lethalj )
 {
 	/* allocate video RAM for screen */
 	screenram = auto_malloc(BLITTER_DEST_WIDTH * BLITTER_DEST_HEIGHT * sizeof(screenram[0]));
-	if (!screenram)
-		return 1;
 
 	/* predetermine blitter info */
 	blitter_base = (UINT16 *)memory_region(REGION_GFX1);

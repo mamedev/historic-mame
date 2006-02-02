@@ -1509,7 +1509,7 @@ int K007342_vh_start(int gfx_index, void (*callback)(int tmap, int bank, int *co
 	K007342_ram = auto_malloc(0x2000);
 	K007342_scroll_ram = auto_malloc(0x0200);
 
-	if (!K007342_ram || !K007342_scroll_ram || !K007342_tilemap[0] || !K007342_tilemap[1])
+	if (!K007342_tilemap[0] || !K007342_tilemap[1])
 		return 1;
 
 	memset(K007342_ram,0,0x2000);
@@ -1686,7 +1686,6 @@ int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color))
 	K007420_gfx = Machine->gfx[gfxnum];
 	K007420_callback = callback;
 	K007420_ram = auto_malloc(0x200);
-	if (!K007420_ram) return 1;
 
 	memset(K007420_ram,0,0x200);
 
@@ -1991,9 +1990,10 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	charlayout.planeoffset[3] = plane0 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&charlayout);
+	Machine->gfx[gfx_index] = allocgfx(&charlayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
+	decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	if (Machine->drv->color_table_len)
@@ -2021,7 +2021,7 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 
 	K052109_ram = auto_malloc(0x6000);
 
-	if (!K052109_ram || !K052109_tilemap[0] || !K052109_tilemap[1] || !K052109_tilemap[2])
+	if (!K052109_tilemap[0] || !K052109_tilemap[1] || !K052109_tilemap[2])
 		return 1;
 
 	memset(K052109_ram,0,0x6000);
@@ -2467,9 +2467,10 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	spritelayout.planeoffset[3] = plane3 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
+	Machine->gfx[gfx_index] = allocgfx(&spritelayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
+	decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	if (Machine->drv->color_table_len)
@@ -2498,7 +2499,6 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K051960_gfx = Machine->gfx[gfx_index];
 	K051960_callback = callback;
 	K051960_ram = auto_malloc(0x400);
-	if (!K051960_ram) return 1;
 	memset(K051960_ram,0,0x400);
 
 	return 0;
@@ -2963,9 +2963,10 @@ int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int p
 	spritelayout.planeoffset[3] = plane0 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
+	Machine->gfx[gfx_index] = allocgfx(&spritelayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
+	decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	if (Machine->drv->color_table_len)
@@ -2997,11 +2998,8 @@ int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int p
 	K053245_ramsize[chip] = 0x800;
 	K053245_ram[chip] = auto_malloc(K053245_ramsize[chip]);
 	K053245_dx[chip] = K053245_dy[chip] = 0;
-	if (!K053245_ram[chip]) return 1;
 
 	K053245_buffer[chip] = auto_malloc(K053245_ramsize[chip]);
-	if (!K053245_buffer[chip])
-		return 1;
 
 	memset(K053245_ram[chip],0,K053245_ramsize[chip]);
 	memset(K053245_buffer[chip],0,K053245_ramsize[chip]);
@@ -3716,9 +3714,10 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	spritelayout.planeoffset[3] = plane3;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&spritelayout);
+	Machine->gfx[gfx_index] = allocgfx(&spritelayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
+	decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	if (Machine->drv->color_table_len)
@@ -3760,7 +3759,6 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	K053247_callback = callback;
 	K053246_OBJCHA_line = CLEAR_LINE;
 	K053247_ram = auto_malloc(0x1000);
-	if (!K053247_ram) return 1;
 
 	memset(K053247_ram,  0, 0x1000);
 	memset(K053246_regs, 0, 8);
@@ -3840,7 +3838,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		size4 *= 4*1024*1024;
 		/* set the # of tiles based on the 4bpp section */
 		spritelayout.total = size4 / 128;
-		if (!(K055673_rom = (UINT16 *)auto_malloc(size4 * 5))) return 1;
+		K055673_rom = auto_malloc(size4 * 5);
 		d = (UINT8 *)K055673_rom;
 		// now combine the graphics together to form 5bpp
 		s1 = memory_region(gfx_memory_region); // 4bpp area
@@ -3854,7 +3852,8 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 			*d++ = *s2++;
 		}
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)K055673_rom, &spritelayout);
+		Machine->gfx[gfx_index] = allocgfx(&spritelayout);
+		decodegfx(Machine->gfx[gfx_index], (UINT8 *)K055673_rom, 0, Machine->gfx[gfx_index]->total_elements);
 		break;
 	}
 	case K055673_LAYOUT_RNG:
@@ -3862,21 +3861,24 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		spritelayout2.total = memory_region_length(gfx_memory_region) / (16*16/2);
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)K055673_rom, &spritelayout2);
+		Machine->gfx[gfx_index] = allocgfx(&spritelayout2);
+		decodegfx(Machine->gfx[gfx_index], (UINT8 *)K055673_rom, 0, Machine->gfx[gfx_index]->total_elements);
 		break;
 	case K055673_LAYOUT_LE2:
 		K055673_rom = (UINT16 *)memory_region(gfx_memory_region);
 		spritelayout3.total = memory_region_length(gfx_memory_region) / (16*16);
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)K055673_rom, &spritelayout3);
+		Machine->gfx[gfx_index] = allocgfx(&spritelayout3);
+		decodegfx(Machine->gfx[gfx_index], (UINT8 *)K055673_rom, 0, Machine->gfx[gfx_index]->total_elements);
 		break;
 	case K055673_LAYOUT_GX6:
 		K055673_rom = (UINT16 *)memory_region(gfx_memory_region);
 		spritelayout4.total = memory_region_length(gfx_memory_region) / (16*16*6/8);
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)K055673_rom, &spritelayout4);
+		Machine->gfx[gfx_index] = allocgfx(&spritelayout4);
+		decodegfx(Machine->gfx[gfx_index], (UINT8 *)K055673_rom, 0, Machine->gfx[gfx_index]->total_elements);
 		break;
 	}
 
@@ -3916,7 +3918,6 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 	K053247_callback = callback;
 	K053246_OBJCHA_line = CLEAR_LINE;
 	K053247_ram = auto_malloc(0x1000);
-	if (!K053247_ram) return 1;
 
 	memset(K053247_ram,  0, 0x1000);
 	memset(K053246_regs, 0, 8);
@@ -4616,7 +4617,8 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 		charlayout.total = memory_region_length(gfx_memory_region) / 128;
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&charlayout);
+		Machine->gfx[gfx_index] = allocgfx(&charlayout);
+		decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 	}
 	else if (bpp == 7 || bpp == 8)
 	{
@@ -4642,7 +4644,8 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 		else for (i = 0;i < 8;i++) charlayout.planeoffset[i] = i;
 
 		/* decode the graphics */
-		Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region),&charlayout);
+		Machine->gfx[gfx_index] = allocgfx(&charlayout);
+		decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 	}
 	else
 	{
@@ -4674,7 +4677,7 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 
 	K051316_ram[chip] = auto_malloc(0x800);
 
-	if (!K051316_ram[chip] || !K051316_tilemap[chip])
+	if (!K051316_tilemap[chip])
 		return 1;
 
 	tilemap_set_transparent_pen(K051316_tilemap[chip],transparent_pen);
@@ -5555,7 +5558,8 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 	charlayout.planeoffset[3] = plane3;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout);
+	Machine->gfx[gfx_index] = allocgfx(&charlayout);
+	decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 	if (!Machine->gfx[gfx_index])
 		return 1;
 
@@ -5599,8 +5603,7 @@ int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2], int p
 
 	K054157_rambase = auto_malloc(0x14000);
 
-	if(!K054157_rambase
-	   || !K054157_tilemapb[0] || !K054157_tilemapb[1] || !K054157_tilemapb[2] || !K054157_tilemapb[3]
+	if(   !K054157_tilemapb[0] || !K054157_tilemapb[1] || !K054157_tilemapb[2] || !K054157_tilemapb[3]
 	   || !K054157_tilemaps[0] || !K054157_tilemaps[1] || !K054157_tilemaps[2] || !K054157_tilemaps[3])
 		return 1;
 
@@ -6185,7 +6188,8 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 			charlayout4.total = memory_region_length(gfx_memory_region) / (i*4);
 
 			/* decode the graphics */
-			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout4);
+			Machine->gfx[gfx_index] = allocgfx(&charlayout4);
+			decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 			break;
 
 		case K056832_BPP_5:
@@ -6193,7 +6197,8 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 			charlayout5.total = memory_region_length(gfx_memory_region) / (i*5);
 
 			/* decode the graphics */
-			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout5);
+			Machine->gfx[gfx_index] = allocgfx(&charlayout5);
+			decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 			break;
 
 		case K056832_BPP_6:
@@ -6201,7 +6206,8 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 			charlayout6.total = memory_region_length(gfx_memory_region) / (i*6);
 
 			/* decode the graphics */
-			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout6);
+			Machine->gfx[gfx_index] = allocgfx(&charlayout6);
+			decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 			break;
 
 		case K056832_BPP_8:
@@ -6209,7 +6215,8 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 			charlayout8.total = memory_region_length(gfx_memory_region) / (i*8);
 
 			/* decode the graphics */
-			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout8);
+			Machine->gfx[gfx_index] = allocgfx(&charlayout8);
+			decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 			break;
 
 		case K056832_BPP_8LE:
@@ -6217,14 +6224,16 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 			charlayout8le.total = memory_region_length(gfx_memory_region) / (i*8);
 
 			/* decode the graphics */
-			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout8le);
+			Machine->gfx[gfx_index] = allocgfx(&charlayout8le);
+			decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 			break;
 
 		case K056832_BPP_4dj:
 			charlayout4dj.total = memory_region_length(gfx_memory_region) / (i*4);
 
 			/* decode the graphics */
-			Machine->gfx[gfx_index] = decodegfx(memory_region(gfx_memory_region), &charlayout4dj);
+			Machine->gfx[gfx_index] = allocgfx(&charlayout4dj);
+			decodegfx(Machine->gfx[gfx_index], memory_region(gfx_memory_region), 0, Machine->gfx[gfx_index]->total_elements);
 			break;
 	}
 
@@ -6284,7 +6293,7 @@ int K056832_vh_start(int gfx_memory_region, int bpp, int big, int (*scrolld)[4][
 		K056832_PageTileMode[i] = 1;
 	}
 
-	if (!(K056832_videoram = auto_malloc(0x2000 * (K056832_PAGE_COUNT+1)))) return 1;
+	K056832_videoram = auto_malloc(0x2000 * (K056832_PAGE_COUNT+1));
 
 	K056832_tilemap[0x0] = tilemap_create(K056832_get_tile_info0, K056832_scan, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
 	K056832_tilemap[0x1] = tilemap_create(K056832_get_tile_info1, K056832_scan, TILEMAP_TRANSPARENT, 8, 8, 64, 32);
@@ -8014,7 +8023,7 @@ int K053250_vh_start(int chips, int *region)
 	for(chip=0; chip<chips; chip++)
 	{
 		K053250_info.chip[chip].base = memory_region(region[chip]);
-		if (!(ram = auto_malloc(0x6000))) return 1;
+		ram = auto_malloc(0x6000);
 		K053250_info.chip[chip].ram = ram;
 		K053250_info.chip[chip].rammax = ram + 0x800;
 		K053250_info.chip[chip].buffer[0] = ram + 0x2000;

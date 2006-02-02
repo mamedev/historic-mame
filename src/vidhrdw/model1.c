@@ -1422,9 +1422,6 @@ VIDEO_START(model1)
 	quaddb  = auto_malloc(1000000*sizeof(struct quad));
 	quadind = auto_malloc(1000000*sizeof(struct quad *));
 
-	if(!tgp_ram || !pointdb || !quaddb || !quadind)
-		return 1;
-
 	pointpt = pointdb;
 	quadpt = quaddb;
 	listctl[0] = listctl[1] = 0;

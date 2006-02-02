@@ -207,27 +207,17 @@ static int TMS9928A_start (const TMS9928a_interface *intf) {
     /* Video RAM */
     tms.vramsize = intf->vram;
     tms.vMem = (UINT8*) auto_malloc (intf->vram);
-    if (!tms.vMem)
-		return 1;
     memset (tms.vMem, 0, intf->vram);
 
     /* Sprite back buffer */
     tms.dBackMem = (UINT8*)auto_malloc (IMAGE_SIZE);
-    if (!tms.dBackMem)
-        return 1;
 
     /* dirty buffers */
     tms.DirtyName = (char*)auto_malloc (MAX_DIRTY_NAME);
-    if (!tms.DirtyName)
-        return 1;
 
     tms.DirtyPattern = (char*)auto_malloc (MAX_DIRTY_PATTERN);
-    if (!tms.DirtyPattern)
-        return 1;
 
     tms.DirtyColour = (char*)auto_malloc (MAX_DIRTY_COLOUR);
-    if (!tms.DirtyColour)
-        return 1;
 
     /* back bitmap */
     tms.tmpbmp = auto_bitmap_alloc (256, 192);

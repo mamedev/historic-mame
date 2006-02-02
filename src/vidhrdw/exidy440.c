@@ -65,24 +65,18 @@ VIDEO_START( exidy440 )
 
 	/* allocate a buffer for VRAM */
 	local_videoram = auto_malloc(256 * 256 * 2);
-	if (!local_videoram)
-		return 1;
 
 	/* clear it */
 	memset(local_videoram, 0, 256 * 256 * 2);
 
 	/* allocate a buffer for palette RAM */
 	local_paletteram = auto_malloc(512 * 2);
-	if (!local_paletteram)
-		return 1;
 
 	/* clear it */
 	memset(local_paletteram, 0, 512 * 2);
 
 	/* allocate a scanline dirty array */
 	scanline_dirty = auto_malloc(256);
-	if (!scanline_dirty)
-		return 1;
 
 	/* mark everything dirty to start */
 	memset(scanline_dirty, 1, 256);

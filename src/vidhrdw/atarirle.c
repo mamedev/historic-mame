@@ -329,8 +329,6 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 
 	/* allocate the object info */
 	mo->info = auto_malloc(sizeof(mo->info[0]) * mo->objectcount);
-	if (!mo->info)
-		return 0;
 
 	/* fill in the data */
 	memset(mo->info, 0, sizeof(mo->info[0]) * mo->objectcount);
@@ -339,8 +337,6 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 
 	/* allocate the spriteram */
 	mo->spriteram = auto_malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
-	if (!mo->spriteram)
-		return 0;
 
 	/* clear it to zero */
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
@@ -544,8 +540,6 @@ static int build_rle_tables(void)
 
 	/* allocate all 5 tables */
 	base = auto_malloc(0x500 * sizeof(UINT16));
-	if (!base)
-		return 0;
 
 	/* assign the tables */
 	rle_table[0] = &base[0x000];

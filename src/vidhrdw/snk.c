@@ -69,7 +69,6 @@ VIDEO_START( snk )
 	snk_blink_parity = 0;
 
 	dirtybuffer = auto_malloc( MAX_VRAM_SIZE );
-	if(!dirtybuffer) return 1;
 
 	tmpbitmap = auto_bitmap_alloc( 512, 512 );
 	if(!tmpbitmap) return 1;

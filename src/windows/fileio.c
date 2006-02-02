@@ -522,6 +522,7 @@ int osd_get_path_info(int pathtype, int pathindex, const char *filename)
 
 osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error)
 {
+	osd_file_error err = 0;
 	DWORD disposition = 0, access = 0, sharemode = 0, flags = 0;
 	TCHAR fullpath[1024];
 	DWORD upperPos = 0;
@@ -538,7 +539,10 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 		if (openfile[i].handle == NULL || openfile[i].handle == INVALID_HANDLE_VALUE)
 			break;
 	if (i == MAX_OPEN_FILES)
+	{
+		err = FILEERR_TOO_MANY_FILES;
 		goto error;
+	}
 
 	/* zap the file record */
 	file = &openfile[i];
@@ -600,7 +604,9 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 	return file;
 
 error:
-	*error = get_last_fileerror();
+	if (!err)
+		err = get_last_fileerror();
+	*error = err;
 	if (temp_file[0])
 		DeleteFile(temp_file);
 	return NULL;

@@ -38,7 +38,7 @@ static int port_B_ddr = 0; /* 6532 Data Direction Register B */
 
 static int PA7_irq = 0;  /* IRQ-on-write flag (sound CPU) */
 
-static int sound_data;	/* data for the sound cpu */
+static int sound_data; /* data for the sound cpu */
 static int main_data;   /* data for the main  cpu */
 
 
@@ -52,7 +52,7 @@ static int main_data;   /* data for the main  cpu */
 static void snd_interrupt(int foo)
 {
 	irq_flag |= 0x80; /* set timer interrupt flag */
-	cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
 }
 
 
@@ -85,6 +85,8 @@ READ8_HANDLER( starwars_m6532_r )
 			return port_B_ddr;
 
 		case 5: /* 0x85 - Read Interrupt Flag Register */
+			if (irq_flag)
+				cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 			temp = irq_flag;
 			irq_flag = 0;   /* Clear int flags */
 			return temp;
@@ -176,12 +178,10 @@ WRITE8_HANDLER( starwars_m6532_w )
 
 READ8_HANDLER( starwars_sin_r )
 {
-	int res;
-
 	port_A &= 0x7f; /* ready to receive new commands from main */
-	res = sound_data;
-	sound_data = 0;
-	return res;
+	if (PA7_irq)
+		cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE);
+	return sound_data;
 }
 
 
@@ -189,6 +189,7 @@ WRITE8_HANDLER( starwars_sout_w )
 {
 	port_A |= 0x40; /* result from sound cpu pending */
 	main_data = data;
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
 	return;
 }
 
@@ -202,24 +203,14 @@ WRITE8_HANDLER( starwars_sout_w )
 
 READ8_HANDLER( starwars_main_read_r )
 {
-	int res;
-
-	logerror("main_read_r\n");
-
 	port_A &= 0xbf;  /* ready to receive new commands from sound cpu */
-	res = main_data;
-	main_data = 0;
-	return res;
+	return main_data;
 }
 
 
 READ8_HANDLER( starwars_main_ready_flag_r )
 {
-#if 0 /* correct, but doesn't work */
 	return (port_A & 0xc0); /* only upper two flag bits mapped */
-#else
-	return (port_A & 0x40); /* sound cpu always ready */
-#endif
 }
 
 
@@ -227,8 +218,10 @@ WRITE8_HANDLER( starwars_main_wr_w )
 {
 	port_A |= 0x80;  /* command from main cpu pending */
 	sound_data = data;
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
+
 	if (PA7_irq)
-		cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
 }
 
 

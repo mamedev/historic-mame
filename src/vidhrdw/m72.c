@@ -174,7 +174,7 @@ VIDEO_START( m72 )
 
 	m72_spriteram = auto_malloc(spriteram_size);
 
-	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
+	if (!fg_tilemap || !bg_tilemap)
 		return 1;
 
 	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);

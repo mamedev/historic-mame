@@ -198,10 +198,13 @@ ROM_END
 
 static void decrypt_gfx(void)
 {
-	UINT8 *buf = auto_malloc(0x40000);
+	UINT8 *buf = malloc(0x40000);
 	UINT8 *rom;
 	int size;
 	int i;
+
+	if (!buf)
+		return;
 
 	rom = memory_region(REGION_GFX1);
 	size = memory_region_length(REGION_GFX1);
@@ -270,6 +273,7 @@ static void decrypt_gfx(void)
 	{
 		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11, 9,8, 5,4,3, 10, 7,6, 1,0, 2)];
 	}
+	free(buf);
 }
 
 
@@ -277,9 +281,9 @@ static DRIVER_INIT(darkmist)
 {
 	int i;
 	unsigned char *ROM = memory_region(REGION_CPU1);
-	UINT8 *buffer = auto_malloc(0x10000);
+	UINT8 *buffer = malloc(0x10000);
 	UINT8 *decrypt = auto_malloc(0x8000);
-
+	int size;
 
 	decrypt_gfx();
 
@@ -313,20 +317,25 @@ static DRIVER_INIT(darkmist)
 	memory_set_bankptr(1,&ROM[0x010000]);
 
 	//adr line swaps
+	if (!buffer)
+		return;
+
 	ROM = memory_region(REGION_USER1);
-	memcpy( buffer, ROM, memory_region_length(REGION_USER1) );
-	for(i=0;i<memory_region_length(REGION_USER1);i++)
+	size = memory_region_length(REGION_USER1);
+	memcpy( buffer, ROM, size );
+	for(i=0;i<size;i++)
 	{
 		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,6,5,4,3,2,14,13,12,11,8,7,1,0,10,9)];
 	}
 
 	ROM = memory_region(REGION_USER2);
-	memcpy( buffer, ROM, memory_region_length(REGION_USER2) );
-	for(i=0;i<memory_region_length(REGION_USER2);i++)
+	size = memory_region_length(REGION_USER2);
+	memcpy( buffer, ROM, size );
+	for(i=0;i<size;i++)
 	{
 		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14 ,5,4,3,2,11,10,9,8,13,12,1,0,7,6)];
 	}
-
+	free(buffer);
 #if 0
 	{
 		FILE *f=fopen("user2.bin","wb");

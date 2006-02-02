@@ -170,14 +170,9 @@ VIDEO_START( arabian )
 	/* plane A (top plane with motion objects) is in the upper 4 bits */
 	/* plane B (bottom plane with playfield) is in the lower 4 bits */
 	main_bitmap = auto_malloc(BITMAP_WIDTH * BITMAP_HEIGHT);
-	if (main_bitmap == 0)
-		return 1;
 
 	/* allocate memory for the converted graphics data */
 	converted_gfx = auto_malloc(0x8000 * 2);
-	if (converted_gfx == 0)
-		return 1;
-
 
 	/*--------------------------------------------------
         transform graphics data into more usable format

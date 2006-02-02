@@ -144,8 +144,6 @@ int rampart_bitmap_init(int _xdim, int _ydim)
 
 	/* allocate dirty map */
 	pfdirty = auto_malloc(sizeof(pfdirty[0]) * ydim);
-	if (!pfdirty)
-		return 0;
 	memset(pfdirty, 1, sizeof(pfdirty[0]) * ydim);
 
 	/* allocate playfield bitmap */

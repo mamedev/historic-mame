@@ -93,8 +93,7 @@ VIDEO_START( magmax )
 	int i,v;
 	unsigned char * prom14D = memory_region(REGION_USER2);
 
-	if ((prom_tab = auto_malloc(256 * sizeof(UINT32))) == 0)
-		return 1;
+	prom_tab = auto_malloc(256 * sizeof(UINT32));
 
 	/* Allocate temporary bitmap */
  	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)

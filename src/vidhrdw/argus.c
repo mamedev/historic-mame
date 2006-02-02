@@ -305,8 +305,6 @@ VIDEO_START( argus )
 
 	/* dummy RAM for back ground */
 	argus_dummy_bg0ram = auto_malloc( 0x800 );
-	if ( argus_dummy_bg0ram == NULL )
-		return 1;
 	memset( argus_dummy_bg0ram, 0, 0x800 );
 
 	memset( argus_bg0_scrollx, 0x00, 2 );
@@ -343,20 +341,9 @@ VIDEO_START( butasan )
 		return 1;
 
 	butasan_txram = auto_malloc( BUTASAN_TEXT_RAMSIZE );
-	if (butasan_txram == NULL)
-		return 1;
-
 	butasan_bg0ram = auto_malloc( BUTASAN_BG0_RAMSIZE );
-	if (butasan_bg0ram == NULL)
-		return 1;
-
 	butasan_txbackram = auto_malloc( BUTASAN_TXBACK_RAMSIZE );
-	if (butasan_txbackram == NULL)
-		return 1;
-
 	butasan_bg0backram = auto_malloc( BUTASAN_BG0BACK_RAMSIZE );
-	if (butasan_bg0backram == NULL)
-		return 1;
 
 	memset( butasan_txram,      0x00, BUTASAN_TEXT_RAMSIZE );
 	memset( butasan_bg0ram,     0x00, BUTASAN_BG0_RAMSIZE );

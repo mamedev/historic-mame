@@ -128,7 +128,7 @@ VIDEO_START( gomoku )
 
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32, 32);
 
-	if ((!gomoku_bg_bitmap) || (!gomoku_bg_dirty) || (!fg_tilemap))
+	if ((!gomoku_bg_bitmap) || (!fg_tilemap))
 	{
 		return 1;
 	}

@@ -226,10 +226,6 @@ VIDEO_START( vector )
 	old_list = auto_malloc (MAX_POINTS * sizeof (old_list[0]));
 	new_list = auto_malloc (MAX_POINTS * sizeof (new_list[0]));
 
-	/* did we get the requested memory? */
-	if (!(pTcosin && pixel && old_list && new_list && vector_dirty_list))
-		return 1;
-
 	/* build cosine table for fixing line width in antialias */
 	for (i=0; i<=2048; i++)
 	{

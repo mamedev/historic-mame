@@ -35,8 +35,15 @@
  CHANGELOG:
 
  Pierpaolo Prazzoli
+ - Fixed LDxx.N/P/S opcodes not to increment the destination register when
+   it's the same as the source or "next source" one.
+
+ Pierpaolo Prazzoli
  - Removed nested delays
- - Don't allow software opcodes to be executed in a delay slot
+ - Added better delay branch support
+ - Fixed PC seen by a delay instruction, because a delay instruction
+   should use the delayed PC (thus allowing the execution of software
+   opcodes too)
 
  Tomasz Slanina
  - Fixed delayed branching for delay instructions longer than 2 bytes
@@ -442,7 +449,6 @@ struct _delay
 {
 	int		delay_cmd;
 	UINT32	delay_pc;
-	UINT32	no_delay_pc;
 };
 
 /* Internal registers */
@@ -480,6 +486,12 @@ struct regs_decode
 	UINT32	next_src_value; // current next source register value
 	UINT32	dst_value;      // current destination register value
 	UINT32	next_dst_value; // current next destination register value
+	UINT8	sub_type;		// sub type opcode (for DD and X_CODE bits)
+	union
+	{
+			UINT32 u;
+			INT32  s;
+	} extra;				// extra value such as immediate value, const, pcrel, ...
 	void	(*set_src_register)(UINT8 reg, UINT32 data);  // set local / global source register
 	void	(*set_dst_register)(UINT8 reg, UINT32 data);  // set local / global destination register
 	UINT8	src_is_pc;
@@ -495,6 +507,8 @@ struct regs_decode
 #define SREGF current_regs.next_src_value
 #define DREG  current_regs.dst_value
 #define DREGF current_regs.next_dst_value
+#define EXTRA_U current_regs.extra.u
+#define EXTRA_S current_regs.extra.s
 
 #define SET_SREG( _data_ )  (*current_regs.set_src_register)(current_regs.src, _data_)
 #define SET_SREGF( _data_ ) (*current_regs.set_src_register)(current_regs.src + 1, _data_)
@@ -836,8 +850,6 @@ UINT32 get_global_register(UINT8 code)
         }
     }
 */
-	/* TODO: if PC is used in a delay instruction, the delayed PC is used */
-
 	return hyperstone.global_regs[code];
 }
 
@@ -974,17 +986,13 @@ void set_local_register(UINT8 code, UINT32 val)
 
 static void decode_source(int local, int hflag)
 {
-	UINT8 code = current_regs.src;
-
 	if(local)
 	{
+		UINT8 code = current_regs.src;
 		current_regs.set_src_register = set_local_register;
-
 		code = (current_regs.src + GET_FP) % 64; // registers offset by frame pointer
 		SREG = hyperstone.local_regs[code];
-
 		code = (current_regs.src + 1 + GET_FP) % 64;
-
 		SREGF = hyperstone.local_regs[code];
 	}
 	else
@@ -997,10 +1005,8 @@ static void decode_source(int local, int hflag)
 		SREG = hyperstone.global_regs[current_regs.src];
 
 		/* bound safe */
-		if(code != 15 && code != 31)
+		if(current_regs.src != 15 && current_regs.src != 31)
 			SREGF = hyperstone.global_regs[current_regs.src + 1];
-
-		/* TODO: if PC is used in a delay instruction, the delayed PC should be used */
 
 		if(current_regs.src == PC_REGISTER)
 			SRC_IS_PC = 1;
@@ -1018,17 +1024,13 @@ static void decode_source(int local, int hflag)
 
 static void decode_dest(int local, int hflag)
 {
-	UINT8 code = current_regs.dst;
-
 	if(local)
 	{
+		UINT8 code = current_regs.dst;
 		current_regs.set_dst_register = set_local_register;
-
 		code = (current_regs.dst + GET_FP) % 64; // registers offset by frame pointer
 		DREG = hyperstone.local_regs[code];
-
 		code = (current_regs.dst + 1 + GET_FP) % 64;
-
 		DREGF = hyperstone.local_regs[code];
 	}
 	else
@@ -1041,7 +1043,7 @@ static void decode_dest(int local, int hflag)
 		DREG = hyperstone.global_regs[current_regs.dst];
 
 		/* bound safe */
-		if(code != 15 && code != 31)
+		if(current_regs.dst != 15 && current_regs.dst != 31)
 			DREGF = hyperstone.global_regs[current_regs.dst + 1];
 
 		if(current_regs.dst == PC_REGISTER)
@@ -1050,6 +1052,258 @@ static void decode_dest(int local, int hflag)
 			DST_IS_SR = 1;
 		else if( current_regs.src == ISR_REGISTER )
 			printf("read dst ISR. PC = %08X\n",PPC);
+	}
+}
+
+INLINE void decode_RR(void)
+{
+	current_regs.src = SRC_CODE;
+	current_regs.dst = DST_CODE;
+	decode_source(S_BIT, 0);
+	decode_dest(D_BIT, 0);
+
+	if( SRC_CODE == DST_CODE && S_BIT == D_BIT )
+		SAME_SRC_DST = 1;
+
+	if( S_BIT == LOCAL && D_BIT == LOCAL )
+	{
+		if( SRC_CODE == ((DST_CODE + 1) % 64) )
+			SAME_SRC_DSTF = 1;
+
+		if( ((SRC_CODE + 1) % 64) == DST_CODE )
+			SAME_SRCF_DST = 1;
+	}
+	else if( S_BIT == 0 && D_BIT == 0 )
+	{
+		if( SRC_CODE == (DST_CODE + 1) )
+			SAME_SRC_DSTF = 1;
+
+		if( (SRC_CODE + 1) == DST_CODE )
+			SAME_SRCF_DST = 1;
+	}
+}
+
+INLINE void decode_LL(void)
+{
+	current_regs.src = SRC_CODE;
+	current_regs.dst = DST_CODE;
+	decode_source(LOCAL, 0);
+	decode_dest(LOCAL, 0);
+
+	if( SRC_CODE == DST_CODE )
+		SAME_SRC_DST = 1;
+
+	if( SRC_CODE == ((DST_CODE + 1) % 64) )
+		SAME_SRC_DSTF = 1;
+}
+
+INLINE void decode_LR(void)
+{
+	current_regs.src = SRC_CODE;
+	current_regs.dst = DST_CODE;
+	decode_source(S_BIT, 0);
+	decode_dest(LOCAL, 0);
+
+	if( ((SRC_CODE + 1) % 64) == DST_CODE && S_BIT == LOCAL )
+		SAME_SRCF_DST = 1;
+}
+
+INLINE void check_delay_PC(void)
+{
+	// if PC is used in a delay instruction, the delayed PC should be used
+	if( hyperstone.delay.delay_cmd == DELAY_EXECUTE )
+	{
+		PC = hyperstone.delay.delay_pc;
+		hyperstone.delay.delay_cmd = NO_DELAY;
+	}
+}
+
+INLINE void decode_immediate(void)
+{
+	switch( N_VALUE )
+	{
+		case 0:	case 1:  case 2:  case 3:  case 4:  case 5:  case 6:  case 7: case 8:
+		case 9:	case 10: case 11: case 12: case 13: case 14: case 15: case 16:
+			EXTRA_U = N_VALUE;
+			break;
+
+		case 17:
+			hyperstone.instruction_length = 3;
+			EXTRA_U = (READ_OP(PC) << 16) | READ_OP(PC + 2);
+			PC += 4;
+			break;
+
+		case 18:
+			hyperstone.instruction_length = 2;
+			EXTRA_U = READ_OP(PC);
+			PC += 2;
+			break;
+
+		case 19:
+			hyperstone.instruction_length = 2;
+			EXTRA_U = 0xffff0000 | READ_OP(PC);
+			PC += 2;
+			break;
+
+		case 20:
+			EXTRA_U = 32;	// bit 5 = 1, others = 0
+			break;
+
+		case 21:
+			EXTRA_U = 64;	// bit 6 = 1, others = 0
+			break;
+
+		case 22:
+			EXTRA_U = 128; // bit 7 = 1, others = 0
+			break;
+
+		case 23:
+			EXTRA_U = 0x80000000; // bit 31 = 1, others = 0 (2 at the power of 31)
+			break;
+
+		case 24:
+			EXTRA_U = -8;
+			break;
+
+		case 25:
+			EXTRA_U = -7;
+			break;
+
+		case 26:
+			EXTRA_U = -6;
+			break;
+
+		case 27:
+			EXTRA_U = -5;
+			break;
+
+		case 28:
+			EXTRA_U = -4;
+			break;
+
+		case 29:
+			EXTRA_U = -3;
+			break;
+
+		case 30:
+			EXTRA_U = -2;
+			break;
+
+		case 31:
+			EXTRA_U = -1;
+			break;
+	}
+}
+
+INLINE void decode_const(void)
+{
+	UINT16 imm_1 = READ_OP(PC);
+
+	PC += 2;
+	hyperstone.instruction_length = 2;
+
+	if( E_BIT(imm_1) )
+	{
+		UINT16 imm_2 = READ_OP(PC);
+
+		PC += 2;
+		hyperstone.instruction_length = 3;
+
+		EXTRA_S = imm_2;
+		EXTRA_S |= ((imm_1 & 0x3fff) << 16);
+
+		if( S_BIT_CONST(imm_1) )
+		{
+			EXTRA_S |= 0xc0000000;
+		}
+	}
+	else
+	{
+		EXTRA_S = imm_1 & 0x3fff;
+
+		if( S_BIT_CONST(imm_1) )
+		{
+			EXTRA_S |= 0xffffc000;
+		}
+	}
+}
+
+INLINE void decode_pcrel(void)
+{
+	if( OP & 0x80 )
+	{
+		UINT16 next = READ_OP(PC);
+
+		PC += 2;
+		hyperstone.instruction_length = 2;
+
+		EXTRA_S = (OP & 0x7f) << 16;
+		EXTRA_S |= (next & 0xfffe);
+
+		if( next & 1 )
+			EXTRA_S |= 0xff800000;
+	}
+	else
+	{
+		EXTRA_S = OP & 0x7e;
+
+		if( OP & 1 )
+			EXTRA_S |= 0xffffff80;
+	}
+}
+
+INLINE void decode_dis(void)
+{
+	UINT16 next_1 = READ_OP(PC);
+
+	PC += 2;
+	hyperstone.instruction_length = 2;
+
+	current_regs.sub_type = DD(next_1);
+
+	if( E_BIT(next_1) )
+	{
+		UINT16 next_2 = READ_OP(PC);
+
+		PC += 2;
+		hyperstone.instruction_length = 3;
+
+		EXTRA_S = next_2;
+		EXTRA_S |= ((next_1 & 0xfff) << 16);
+
+		if( S_BIT_CONST(next_1) )
+		{
+			EXTRA_S |= 0xf0000000;
+		}
+	}
+	else
+	{
+		EXTRA_S = next_1 & 0xfff;
+
+		if( S_BIT_CONST(next_1) )
+		{
+			EXTRA_S |= 0xfffff000;
+		}
+	}
+}
+
+INLINE void decode_lim(void)
+{
+	UINT32 next = READ_OP(PC);
+	PC += 2;
+	hyperstone.instruction_length = 2;
+
+	current_regs.sub_type = X_CODE(next);
+
+	if( E_BIT(next) )
+	{
+		EXTRA_U = ((next & 0xfff) << 16) | READ_OP(PC);
+		PC += 2;
+		hyperstone.instruction_length = 3;
+	}
+	else
+	{
+		EXTRA_U = next & 0xfff;
 	}
 }
 
@@ -1082,36 +1336,48 @@ static void decode_registers(void)
 		case 0xb0: case 0xb1: case 0xb2: case 0xb3: // MULU
 		case 0xb4: case 0xb5: case 0xb6: case 0xb7: // MULS
 		case 0xbc: case 0xbd: case 0xbe: case 0xbf: // MUL
+
+			check_delay_PC();
+			decode_RR();
+
+		break;
+
 		// RRlim decode
 		case 0x10: case 0x11: case 0x12: case 0x13: // XMx - XXx
+
+			decode_lim();
+			check_delay_PC();
+			decode_RR();
+
+		break;
+
 		// RRconst decode
 		case 0x14: case 0x15: case 0x16: case 0x17: // MASK
 		case 0x18: case 0x19: case 0x1a: case 0x1b: // SUM
 		case 0x1c: case 0x1d: case 0x1e: case 0x1f: // SUMS
+
+			decode_const();
+			check_delay_PC();
+			decode_RR();
+
+		break;
+
 		// RRdis decode
 		case 0x90: case 0x91: case 0x92: case 0x93: // LDxx.D/A/IOD/IOA
 		case 0x94: case 0x95: case 0x96: case 0x97: // LDxx.N/S
 		case 0x98: case 0x99: case 0x9a: case 0x9b: // STxx.D/A/IOD/IOA
 		case 0x9c: case 0x9d: case 0x9e: case 0x9f: // STxx.N/S
 
-			current_regs.src = SRC_CODE;
-			current_regs.dst = DST_CODE;
-			decode_source(S_BIT, 0);
-			decode_dest(D_BIT, 0);
+			decode_dis();
+			check_delay_PC();
+			decode_RR();
 
-			if( SRC_CODE == DST_CODE && S_BIT == D_BIT )
-				SAME_SRC_DST = 1;
-
-			if( SRC_CODE == (DST_CODE + 1) && S_BIT == D_BIT )
-				SAME_SRC_DSTF = 1;
-
-			if( (SRC_CODE + 1) == DST_CODE && S_BIT == D_BIT )
-				SAME_SRCF_DST = 1;
-
-			break;
+		break;
 
 		// RR decode with H flag
 		case 0x24: case 0x25: case 0x26: case 0x27: // MOV
+
+			check_delay_PC();
 
 			current_regs.src = SRC_CODE;
 			current_regs.dst = DST_CODE;
@@ -1120,9 +1386,9 @@ static void decode_registers(void)
 
 			if(GET_H)
 				if(S_BIT == 0 && D_BIT == 0)
-					printf("MOV with hflag and 2 GRegs! PC = %08X\n",PPC);
+					ui_popup("MOV with hflag and 2 GRegs! PC = %08X\n",PPC);
 
-			break;
+		break;
 
 		// Rimm decode
 		case 0x60: case 0x61: case 0x62: case 0x63: // CMPI
@@ -1132,34 +1398,50 @@ static void decode_registers(void)
 		case 0x74: case 0x75: case 0x76: case 0x77: // ANDNI
 		case 0x78: case 0x79: case 0x7a: case 0x7b: // ORI
 		case 0x7c: case 0x7d: case 0x7e: case 0x7f: // XORI
+
+			decode_immediate();
+			check_delay_PC();
+
+			current_regs.dst = DST_CODE;
+			decode_dest(D_BIT, 0);
+
+		break;
+
 		// Rn decode
 		case 0xa0: case 0xa1: case 0xa2: case 0xa3: // SHRI
 		case 0xa4: case 0xa5: case 0xa6: case 0xa7: // SARI
 		case 0xa8: case 0xa9: case 0xaa: case 0xab: // SHLI
 		case 0xb8: case 0xb9: case 0xba: case 0xbb: // SETxx - SETADR - FETCH
 
+			check_delay_PC();
+
 			current_regs.dst = DST_CODE;
 			decode_dest(D_BIT, 0);
 
-			break;
+		break;
 
 		// Rimm decode with H flag
 		case 0x64: case 0x65: case 0x66: case 0x67: // MOVI
 
+			decode_immediate();
+			check_delay_PC();
+
 			current_regs.dst = DST_CODE;
 			decode_dest(D_BIT, GET_H);
 
-			break;
+		break;
 
 		// Ln decode
 		case 0x80: case 0x81: // SHRDI
 		case 0x84: case 0x85: // SARDI
 		case 0x88: case 0x89: // SHLDI
 
+			check_delay_PC();
+
 			current_regs.dst = DST_CODE;
 			decode_dest(LOCAL, 0);
 
-			break;
+		break;
 
 		// LL decode
 		case 0x82: // SHRD
@@ -1186,21 +1468,22 @@ static void decode_registers(void)
 		case 0xcd: // FCVTD
 		case 0xcf: // DO
 		case 0xed: // FRAME
+
+			check_delay_PC();
+			decode_LL();
+
+		break;
+
 		// LLext decode
 		case 0xce: // EXTEND
 
-			current_regs.src = SRC_CODE;
-			current_regs.dst = DST_CODE;
-			decode_source(LOCAL, 0);
-			decode_dest(LOCAL, 0);
+			hyperstone.instruction_length = 2;
+			EXTRA_U = READ_OP(PC);
+			PC += 2;
+			check_delay_PC();
+			decode_LL();
 
-			if( SRC_CODE == DST_CODE )
-				SAME_SRC_DST = 1;
-
-			if( SRC_CODE == (DST_CODE + 1) )
-				SAME_SRC_DSTF = 1;
-
-			break;
+		break;
 
 		// LR decode
 		case 0xd0: case 0xd1: // LDW.R
@@ -1211,19 +1494,21 @@ static void decode_registers(void)
 		case 0xda: case 0xdb: // STD.R
 		case 0xdc: case 0xdd: // STW.P
 		case 0xde: case 0xdf: // STD.P
+
+			check_delay_PC();
+			decode_LR();
+
+		break;
+
 		// LRconst decode
 		case 0xee: case 0xef: // CALL
 
-			current_regs.src = SRC_CODE;
-			current_regs.dst = DST_CODE;
-			decode_source(S_BIT, 0);
-			decode_dest(LOCAL, 0);
+			decode_const();
+			check_delay_PC();
+			decode_LR();
 
-			if( (SRC_CODE + 1) == DST_CODE && S_BIT == LOCAL )
-				SAME_SRCF_DST = 1;
+		break;
 
-			break;
-/*
 
         // PCrel decode
         case 0xe0: // DBV
@@ -1252,12 +1537,19 @@ static void decode_registers(void)
         case 0xfa: // BLE
         case 0xfb: // BGT
         case 0xfc: // BR
-            break;
+
+			decode_pcrel();
+			check_delay_PC();
+
+        break;
 
         // PCadr decode
         case 0xfd: case 0xfe: case 0xff: // TRAPxx - TRAP
-            break;
 
+			check_delay_PC();
+
+		break;
+/*
         // RESERVED
         case 0x8c: case 0x8d:
         case 0xac: case 0xad: case 0xae: case 0xaf:
@@ -1267,196 +1559,23 @@ static void decode_registers(void)
 }
 
 
-UINT32 immediate_value(void)
-{
-	UINT16 imm1, imm2;
-	UINT32 ret;
 
-	switch( N_VALUE )
-	{
-		case 0:	case 1:  case 2:  case 3:  case 4:  case 5:  case 6:  case 7: case 8:
-		case 9:	case 10: case 11: case 12: case 13: case 14: case 15: case 16:
-			return N_VALUE;
-
-		case 17:
-			hyperstone.instruction_length = 3;
-			imm1 = READ_OP(PC);
-			PC += 2;
-			imm2 = READ_OP(PC);
-			PC += 2;
-			ret = (imm1 << 16) | imm2;
-			return ret;
-
-		case 18:
-			hyperstone.instruction_length = 2;
-			imm1 = READ_OP(PC);
-			PC += 2;
-			ret = imm1;
-			return ret;
-
-		case 19:
-			hyperstone.instruction_length = 2;
-			imm1 = READ_OP(PC);
-			PC += 2;
-			ret = 0xffff0000 | imm1;
-			return ret;
-
-		case 20:
-			return 32;	// bit 5 = 1, others = 0
-
-		case 21:
-			return 64;	// bit 6 = 1, others = 0
-
-		case 22:
-			return 128; // bit 7 = 1, others = 0
-
-		case 23:
-			return 0x80000000; // bit 31 = 1, others = 0 (2 at the power of 31)
-
-		case 24:
-			return -8;
-
-		case 25:
-			return -7;
-
-		case 26:
-			return -6;
-
-		case 27:
-			return -5;
-
-		case 28:
-			return -4;
-
-		case 29:
-			return -3;
-
-		case 30:
-			return -2;
-
-		case 31:
-			return -1;
-	}
-	return 0; //it should never be executed
-}
-
-INT32 get_const(void)
-{
-	INT32 const_val;
-	UINT16 imm1;
-
-	hyperstone.instruction_length = 2;
-	imm1 = READ_OP(PC);
-	PC += 2;
-
-	if( E_BIT(imm1) )
-	{
-		UINT16 imm2;
-
-		hyperstone.instruction_length = 3;
-		imm2 = READ_OP(PC);
-		PC += 2;
-
-		const_val = imm2;
-		const_val |= ((imm1 & 0x3fff) << 16);
-
-		if( S_BIT_CONST(imm1) )
-		{
-			const_val |= 0xc0000000;
-		}
-	}
-	else
-	{
-		const_val = imm1 & 0x3fff;
-
-		if( S_BIT_CONST(imm1) )
-		{
-			const_val |= 0xffffc000;
-		}
-	}
-	return const_val;
-}
-
-INT32 get_pcrel(void)
-{
-	INT32 ret;
-
-	if( OP & 0x80 )
-	{
-		UINT16 next;
-
-		hyperstone.instruction_length = 2;
-		next = READ_OP(PC);
-		PC += 2;
-
-		ret = (OP & 0x7f) << 16;
-
-		ret |= (next & 0xfffe);
-
-		if( next & 1 )
-			ret |= 0xff800000;
-	}
-	else
-	{
-		ret = OP & 0x7e;
-
-		if( OP & 1 )
-			ret |= 0xffffff80;
-	}
-
-	return ret;
-}
-
-INT32 get_dis(UINT32 val)
-{
-	INT32 ret;
-
-	if( E_BIT(val) )
-	{
-		UINT16 next;
-
-		hyperstone.instruction_length = 3;
-		next = READ_OP(PC);
-		PC += 2;
-
-		ret = next;
-		ret |= ((val & 0xfff) << 16);
-
-		if( S_BIT_CONST(val) )
-		{
-			ret |= 0xf0000000;
-		}
-	}
-	else
-	{
-		ret = val & 0xfff;
-		if( S_BIT_CONST(val) )
-		{
-			ret |= 0xfffff000;
-		}
-	}
-	return ret;
-}
-
-void execute_br(INT32 rel)
+INLINE void execute_br(void)
 {
 	PPC = PC;
-	PC += rel;
+	PC += EXTRA_S;
 	change_pc(PC);
 	SET_M(0);
 
 	hyperstone_ICount -= 2;
 }
 
-void execute_dbr(INT32 rel)
+INLINE void execute_dbr(void)
 {
-	hyperstone.delay.delay_cmd    = DELAY_TAKEN;
-	hyperstone.delay.delay_pc     = PC + rel;
-	hyperstone.delay.no_delay_pc  = PC + 2;
+	hyperstone.delay.delay_cmd = DELAY_TAKEN;
+	hyperstone.delay.delay_pc  = PC + EXTRA_S;
 
 	hyperstone.intblock = 3;
-
-	hyperstone_ICount -= 1;
 }
 
 
@@ -1555,37 +1674,34 @@ void execute_software(void)
 	UINT32 addr;
 	UINT32 stack_of_dst;
 
-	if(hyperstone.delay.delay_cmd == NO_DELAY)
-	{
-		SET_ILC(1);
+	SET_ILC(1);
 
-		addr = get_emu_code_addr((OP & 0xff00) >> 8);
-		reg = GET_FP + GET_FL;
+	addr = get_emu_code_addr((OP & 0xff00) >> 8);
+	reg = GET_FP + GET_FL;
 
-		//since it's sure the register is in the register part of the stack,
-		//set the stack address to a value above the highest address
-		//that can be set by a following frame instruction
-		stack_of_dst = (SP & ~0xff) + 64*4 + (((GET_FP + current_regs.dst) % 64) * 4); //converted to 32bits offset
+	//since it's sure the register is in the register part of the stack,
+	//set the stack address to a value above the highest address
+	//that can be set by a following frame instruction
+	stack_of_dst = (SP & ~0xff) + 64*4 + (((GET_FP + current_regs.dst) % 64) * 4); //converted to 32bits offset
 
-		oldSR = SR;
+	oldSR = SR;
 
-		SET_FL(6);
-		SET_FP(reg);
+	SET_FL(6);
+	SET_FP(reg);
 
-		SET_L_REG(0, stack_of_dst);
-		SET_L_REG(1, SREG);
-		SET_L_REG(2, SREGF);
-		SET_L_REG(3, (PC & 0xfffffffe) | GET_S);
-		SET_L_REG(4, oldSR);
+	SET_L_REG(0, stack_of_dst);
+	SET_L_REG(1, SREG);
+	SET_L_REG(2, SREGF);
+	SET_L_REG(3, (PC & 0xfffffffe) | GET_S);
+	SET_L_REG(4, oldSR);
 
-		SET_M(0);
-		SET_T(0);
-		SET_L(1);
+	SET_M(0);
+	SET_T(0);
+	SET_L(1);
 
-		PPC = PC;
-		PC = addr;
-		change_pc(PC);
-	}
+	PPC = PC;
+	PC = addr;
+	change_pc(PC);
 }
 
 
@@ -1663,7 +1779,6 @@ static void hyperstone_init(void)
 	state_save_register_UINT32("E132XS", cpu, "ppc",        &hyperstone.ppc, 1);
 	state_save_register_UINT32("E132XS", cpu, "trap_entry", &hyperstone.trap_entry, 1);
 	state_save_register_UINT32("E132XS", cpu, "delay_pc",   &hyperstone.delay.delay_pc, 1);
-	state_save_register_UINT32("E132XS", cpu, "no_delay_pc",&hyperstone.delay.no_delay_pc, 1);
 	state_save_register_UINT16("E132XS", cpu, "op",         &hyperstone.op, 1);
 	state_save_register_UINT8( "E132XS", cpu, "n",	        &hyperstone.n, 1);
 	state_save_register_int(   "E132XS", cpu, "h_clear",    &hyperstone.h_clear);
@@ -1780,7 +1895,7 @@ static int hyperstone_execute(int cycles)
 
 		SET_ILC(hyperstone.instruction_length & 3);
 
-		if(hyperstone.h_clear == 1)
+		if(hyperstone.h_clear)
 		{
 			SET_H(0);
 			hyperstone.h_clear = 0;
@@ -1792,17 +1907,9 @@ static int hyperstone_execute(int cycles)
 			execute_exception(addr);
 		}
 
-		if( hyperstone.delay.delay_cmd != NO_DELAY )
+		if( hyperstone.delay.delay_cmd == DELAY_TAKEN )
 		{
-			if( hyperstone.delay.delay_cmd == DELAY_EXECUTE &&  PC >= hyperstone.delay.no_delay_pc && PC < (hyperstone.delay.no_delay_pc + 6) )
-			{
-				PC = hyperstone.delay.delay_pc;
-				hyperstone.delay.delay_cmd = NO_DELAY;
-			}
-			else if( hyperstone.delay.delay_cmd == DELAY_TAKEN )
-			{
-				hyperstone.delay.delay_cmd = DELAY_EXECUTE;
-			}
+			hyperstone.delay.delay_cmd = DELAY_EXECUTE;
 		}
 
 		if(hyperstone.intblock > 0)
@@ -2053,60 +2160,31 @@ void hyperstone_divs(void)
 
 void hyperstone_xm(void)
 {
-	UINT32 val, lim;
-	UINT16 next_source;
-	UINT8 x_code;
-
-	hyperstone.instruction_length = 2;
-	next_source = READ_OP(PC);
-	PC += 2;
-
-	x_code = X_CODE(next_source);
-
-	if( E_BIT(next_source) )
-	{
-		UINT16 next_source_2;
-
-		hyperstone.instruction_length = 3;
-		next_source_2 = READ_OP(PC);
-		PC += 2;
-
-		lim = ((next_source & 0xfff) << 16) | next_source_2;
-	}
-	else
-	{
-		lim = next_source & 0xfff;
-	}
-
-	decode_registers();
-
 	if( SRC_IS_SR || DST_IS_SR || DST_IS_PC )
 	{
 		logerror("Denoted PC or SR in hyperstone_xm. PC = %08X\n", PC);
 	}
 	else
 	{
-		val = SREG;
-
-		switch( x_code )
+		switch( current_regs.sub_type ) // x_code
 		{
 			case 0:
 			case 1:
 			case 2:
 			case 3:
-				if( !SRC_IS_PC && (val > lim) )
+				if( !SRC_IS_PC && (SREG > EXTRA_U) )
 				{
 					UINT32 addr = get_trap_addr(RANGE_ERROR);
 					execute_exception(addr);
 				}
-				else if( SRC_IS_PC && (val >= lim) )
+				else if( SRC_IS_PC && (SREG >= EXTRA_U) )
 				{
 					UINT32 addr = get_trap_addr(RANGE_ERROR);
 					execute_exception(addr);
 				}
 				else
 				{
-					val <<= x_code;
+					SREG <<= current_regs.sub_type;
 				}
 
 				break;
@@ -2115,13 +2193,13 @@ void hyperstone_xm(void)
 			case 5:
 			case 6:
 			case 7:
-				x_code -= 4;
-				val <<= x_code;
+				current_regs.sub_type -= 4;
+				SREG <<= current_regs.sub_type;
 
 				break;
 		}
 
-		SET_DREG(val);
+		SET_DREG(SREG);
 	}
 
 	hyperstone_ICount -= 1;
@@ -2129,13 +2207,7 @@ void hyperstone_xm(void)
 
 void hyperstone_mask(void)
 {
-	UINT32 const_val;
-
-	const_val = get_const();
-
-	decode_registers();
-
-	DREG = SREG & const_val;
+	DREG = SREG & EXTRA_U;
 
 	SET_DREG(DREG);
 	SET_Z( DREG == 0 ? 1 : 0 );
@@ -2145,21 +2217,16 @@ void hyperstone_mask(void)
 
 void hyperstone_sum(void)
 {
-	UINT32 const_val;
 	UINT64 tmp;
-
-	const_val = get_const();
-
-	decode_registers();
 
 	if( SRC_IS_SR )
 		SREG = GET_C;
 
-	tmp = (UINT64)(SREG) + (UINT64)(const_val);
+	tmp = (UINT64)(SREG) + (UINT64)(EXTRA_U);
 	CHECK_C(tmp);
-	CHECK_VADD(SREG,const_val,tmp);
+	CHECK_VADD(SREG,EXTRA_U,tmp);
 
-	DREG = SREG + const_val;
+	DREG = SREG + EXTRA_U;
 
 	SET_DREG(DREG);
 
@@ -2174,24 +2241,20 @@ void hyperstone_sum(void)
 
 void hyperstone_sums(void)
 {
-	INT32 const_val, res;
+	INT32 res;
 	INT64 tmp;
-
-	const_val = get_const();
-
-	decode_registers();
 
 	if( SRC_IS_SR )
 		SREG = GET_C;
 
-	tmp = (INT64)((INT32)(SREG)) + (INT64)(const_val);
-	CHECK_VADD(SREG,const_val,tmp);
+	tmp = (INT64)((INT32)(SREG)) + (INT64)(EXTRA_S);
+	CHECK_VADD(SREG,EXTRA_S,tmp);
 
 //#if SETCARRYS
 //  CHECK_C(tmp);
 //#endif
 
-	res = (INT32)(SREG) + const_val;
+	res = (INT32)(SREG) + EXTRA_S;
 
 	SET_DREG(res);
 
@@ -2551,27 +2614,22 @@ void hyperstone_negs(void)
 
 void hyperstone_cmpi(void)
 {
-	UINT32 imm;
 	UINT64 tmp;
 
-	imm = immediate_value();
+	tmp = (UINT64)(DREG) - (UINT64)(EXTRA_U);
+	CHECK_VSUB(EXTRA_U,DREG,tmp);
 
-	decode_registers();
-
-	tmp = (UINT64)(DREG) - (UINT64)(imm);
-	CHECK_VSUB(imm,DREG,tmp);
-
-	if( DREG == imm )
+	if( DREG == EXTRA_U )
 		SET_Z(1);
 	else
 		SET_Z(0);
 
-	if( (INT32) DREG < (INT32) imm )
+	if( (INT32) DREG < (INT32) EXTRA_U )
 		SET_N(1);
 	else
 		SET_N(0);
 
-	if( DREG < imm )
+	if( DREG < EXTRA_U )
 		SET_C(1);
 	else
 		SET_C(0);
@@ -2581,23 +2639,19 @@ void hyperstone_cmpi(void)
 
 void hyperstone_movi(void)
 {
-	UINT32 imm;
-
-	imm = immediate_value();
-
 	if( !GET_S && current_regs.dst >= 16 )
 	{
 		UINT32 addr = get_trap_addr(PRIVILEGE_ERROR);
 		execute_exception(addr);
 	}
 
-	SET_DREG(imm);
+	SET_DREG(EXTRA_U);
 
 	if( DST_IS_PC )
 		SET_M(0);
 
-	SET_Z( imm == 0 ? 1 : 0 );
-	SET_N( SIGN_BIT(imm) );
+	SET_Z( EXTRA_U == 0 ? 1 : 0 );
+	SET_N( SIGN_BIT(EXTRA_U) );
 
 #if MISSIONCRAFT_FLAGS
 	SET_V(0); // or V undefined ?
@@ -2612,11 +2666,10 @@ void hyperstone_addi(void)
 	UINT64 tmp;
 
 	if( N_VALUE )
-		imm = immediate_value();
+		imm = EXTRA_U;
 	else
 		imm = GET_C & ((GET_Z == 0 ? 1 : 0) | (DREG & 0x01));
 
-	decode_registers();
 
 	tmp = (UINT64)(imm) + (UINT64)(DREG);
 	CHECK_C(tmp);
@@ -2640,11 +2693,9 @@ void hyperstone_addsi(void)
 	INT64 tmp;
 
 	if( N_VALUE )
-		imm = immediate_value();
+		imm = EXTRA_S;
 	else
 		imm = GET_C & ((GET_Z == 0 ? 1 : 0) | (DREG & 0x01));
-
-	decode_registers();
 
 	tmp = (INT64)(imm) + (INT64)((INT32)(DREG));
 	CHECK_VADD(imm,DREG,tmp);
@@ -2681,8 +2732,7 @@ void hyperstone_cmpbi(void)
 		}
 		else
 		{
-			imm = immediate_value();
-			decode_registers();
+			imm = EXTRA_U;
 		}
 
 		SET_Z( (DREG & imm) == 0 ? 1 : 0 );
@@ -2706,9 +2756,7 @@ void hyperstone_andni(void)
 	if( N_VALUE == 31 )
 		imm = 0x7fffffff; // bit 31 = 0, others = 1
 	else
-		imm = immediate_value();
-
-	decode_registers();
+		imm = EXTRA_U;
 
 	DREG = DREG & ~imm;
 
@@ -2720,13 +2768,7 @@ void hyperstone_andni(void)
 
 void hyperstone_ori(void)
 {
-	UINT32 imm;
-
-	imm = immediate_value();
-
-	decode_registers();
-
-	DREG = DREG | imm;
+	DREG = DREG | EXTRA_U;
 
 	SET_DREG(DREG);
 	SET_Z( DREG == 0 ? 1 : 0 );
@@ -2736,13 +2778,7 @@ void hyperstone_ori(void)
 
 void hyperstone_xori(void)
 {
-	UINT32 imm;
-
-	imm = immediate_value();
-
-	decode_registers();
-
-	DREG = DREG ^ imm;
+	DREG = DREG ^ EXTRA_U;
 
 	SET_DREG(DREG);
 	SET_Z( DREG == 0 ? 1 : 0 );
@@ -2777,7 +2813,6 @@ void hyperstone_shrdi(void)
 
 	hyperstone_ICount -= 2;
 }
-
 
 void hyperstone_shrd(void)
 {
@@ -3070,13 +3105,11 @@ void reserved(void)
 void hyperstone_testlz(void)
 {
 	UINT8 zeros = 0;
-	UINT32 code, mask;
-
-	code = SREG;
+	UINT32 mask;
 
 	for( mask = 0x80000000; ; mask >>= 1 )
 	{
-		if( code & mask )
+		if( SREG & mask )
 			break;
 		else
 			zeros++;
@@ -3130,24 +3163,14 @@ void hyperstone_rol(void)
 void hyperstone_ldxx1(void)
 {
 	UINT32 load;
-	UINT16 next_op;
-	INT32 dis;
-
-	hyperstone.instruction_length = 2;
-	next_op = READ_OP(PC);
-	PC += 2;
-
-	dis = get_dis(next_op);
-
-	decode_registers(); // re-decode because PC has changed
 
 	if( DST_IS_SR )
 	{
-		switch( DD(next_op) )
+		switch( current_regs.sub_type )
 		{
 			case 0: // LDBS.A
 
-				load = READ_B(dis);
+				load = READ_B(EXTRA_S);
 				load |= (load & 0x80) ? 0xffffff00 : 0;
 				SET_SREG(load);
 
@@ -3155,23 +3178,25 @@ void hyperstone_ldxx1(void)
 
 			case 1: // LDBU.A
 
-				load = READ_B(dis);
+				load = READ_B(EXTRA_S);
 				SET_SREG(load);
 
 				break;
 
 			case 2:
 
-				load = READ_HW(dis & ~1);
+				load = READ_HW(EXTRA_S & ~1);
 
-				if( dis & 1 ) // LDHS.A
+				if( EXTRA_S & 1 ) // LDHS.A
 				{
 					load |= (load & 0x8000) ? 0xffff0000 : 0;
 				}
-				else          // LDHU.A
-				{
-					/* nothing more */
-				}
+				/*
+                else          // LDHU.A
+                {
+                    // nothing more
+                }
+                */
 
 				SET_SREG(load);
 
@@ -3179,34 +3204,34 @@ void hyperstone_ldxx1(void)
 
 			case 3:
 
-				if( (dis & 3) == 3 )      // LDD.IOA
+				if( (EXTRA_S & 3) == 3 )      // LDD.IOA
 				{
-					load = IO_READ_W(dis & ~3);
+					load = IO_READ_W(EXTRA_S & ~3);
 					SET_SREG(load);
 
-					load = IO_READ_W((dis & ~3) + 4);
+					load = IO_READ_W((EXTRA_S & ~3) + 4);
 					SET_SREGF(load);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
-				else if( (dis & 3) == 2 ) // LDW.IOA
+				else if( (EXTRA_S & 3) == 2 ) // LDW.IOA
 				{
-					load = IO_READ_W(dis & ~3);
+					load = IO_READ_W(EXTRA_S & ~3);
 					SET_SREG(load);
 				}
-				else if( (dis & 3) == 1 ) // LDD.A
+				else if( (EXTRA_S & 3) == 1 ) // LDD.A
 				{
-					load = READ_W(dis & ~1);
+					load = READ_W(EXTRA_S & ~1);
 					SET_SREG(load);
 
-					load = READ_W((dis & ~1) + 4);
+					load = READ_W((EXTRA_S & ~1) + 4);
 					SET_SREGF(load);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
 				else                      // LDW.A
 				{
-					load = READ_W(dis & ~1);
+					load = READ_W(EXTRA_S & ~1);
 					SET_SREG(load);
 				}
 
@@ -3215,11 +3240,11 @@ void hyperstone_ldxx1(void)
 	}
 	else
 	{
-		switch( DD(next_op) )
+		switch( current_regs.sub_type )
 		{
 			case 0: // LDBS.D
 
-				load = READ_B(DREG + dis);
+				load = READ_B(DREG + EXTRA_S);
 				load |= (load & 0x80) ? 0xffffff00 : 0;
 				SET_SREG(load);
 
@@ -3227,23 +3252,25 @@ void hyperstone_ldxx1(void)
 
 			case 1: // LDBU.D
 
-				load = READ_B(DREG + dis);
+				load = READ_B(DREG + EXTRA_S);
 				SET_SREG(load);
 
 				break;
 
 			case 2:
 
-				load = READ_HW(DREG + (dis & ~1));
+				load = READ_HW(DREG + (EXTRA_S & ~1));
 
-				if( dis & 1 ) // LDHS.D
+				if( EXTRA_S & 1 ) // LDHS.D
 				{
 					load |= (load & 0x8000) ? 0xffff0000 : 0;
 				}
-				else          // LDHU.D
-				{
-					/* nothing more */
-				}
+				/*
+                else          // LDHU.D
+                {
+                    // nothing more
+                }
+                */
 
 				SET_SREG(load);
 
@@ -3251,34 +3278,34 @@ void hyperstone_ldxx1(void)
 
 			case 3:
 
-				if( (dis & 3) == 3 )      // LDD.IOD
+				if( (EXTRA_S & 3) == 3 )      // LDD.IOD
 				{
-					load = IO_READ_W(DREG + (dis & ~3));
+					load = IO_READ_W(DREG + (EXTRA_S & ~3));
 					SET_SREG(load);
 
-					load = IO_READ_W(DREG + (dis & ~3) + 4);
+					load = IO_READ_W(DREG + (EXTRA_S & ~3) + 4);
 					SET_SREGF(load);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
-				else if( (dis & 3) == 2 ) // LDW.IOD
+				else if( (EXTRA_S & 3) == 2 ) // LDW.IOD
 				{
-					load = IO_READ_W(DREG + (dis & ~3));
+					load = IO_READ_W(DREG + (EXTRA_S & ~3));
 					SET_SREG(load);
 				}
-				else if( (dis & 3) == 1 ) // LDD.D
+				else if( (EXTRA_S & 3) == 1 ) // LDD.D
 				{
-					load = READ_W(DREG + (dis & ~1));
+					load = READ_W(DREG + (EXTRA_S & ~1));
 					SET_SREG(load);
 
-					load = READ_W(DREG + (dis & ~1) + 4);
+					load = READ_W(DREG + (EXTRA_S & ~1) + 4);
 					SET_SREGF(load);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
 				else                      // LDW.D
 				{
-					load = READ_W(DREG + (dis & ~1));
+					load = READ_W(DREG + (EXTRA_S & ~1));
 					SET_SREG(load);
 				}
 
@@ -3292,16 +3319,6 @@ void hyperstone_ldxx1(void)
 void hyperstone_ldxx2(void)
 {
 	UINT32 load;
-	UINT16 next_op;
-	INT32 dis;
-
-	hyperstone.instruction_length = 2;
-	next_op = READ_OP(PC);
-	PC += 2;
-
-	dis = get_dis(next_op);
-
-	decode_registers(); // re-decode because PC has changed
 
 	if( DST_IS_PC || DST_IS_SR )
 	{
@@ -3309,22 +3326,32 @@ void hyperstone_ldxx2(void)
 	}
 	else
 	{
-		switch( DD(next_op) )
+		switch( current_regs.sub_type )
 		{
 			case 0: // LDBS.N
+
+				if(SAME_SRC_DST)
+					ui_popup("LDBS.N denoted same regs @ %08X",PPC);
 
 				load = READ_B(DREG);
 				load |= (load & 0x80) ? 0xffffff00 : 0;
 				SET_SREG(load);
-				SET_DREG(DREG + dis);
+
+				if(!SAME_SRC_DST)
+					SET_DREG(DREG + EXTRA_S);
 
 				break;
 
 			case 1: // LDBU.N
 
+				if(SAME_SRC_DST)
+					ui_popup("LDBU.N denoted same regs @ %08X",PPC);
+
 				load = READ_B(DREG);
 				SET_SREG(load);
-				SET_DREG(DREG + dis);
+
+				if(!SAME_SRC_DST)
+					SET_DREG(DREG + EXTRA_S);
 
 				break;
 
@@ -3332,54 +3359,74 @@ void hyperstone_ldxx2(void)
 
 				load = READ_HW(DREG);
 
-				if( dis & 1 ) // LDHS.N
+				if( EXTRA_S & 1 ) // LDHS.N
 				{
 					load |= (load & 0x8000) ? 0xffff0000 : 0;
+
+					if(SAME_SRC_DST)
+						ui_popup("LDHS.N denoted same regs @ %08X",PPC);
 				}
-				else          // LDHU.N
-				{
-					/* nothing more */
-				}
+				/*
+                else          // LDHU.N
+                {
+                    // nothing more
+                }
+                */
 
 				SET_SREG(load);
-				SET_DREG(DREG + (dis & ~1));
+
+				if(!SAME_SRC_DST)
+					SET_DREG(DREG + (EXTRA_S & ~1));
 
 				break;
 
 			case 3:
 
-				if( (dis & 3) == 3 )      // LDW.S
+				if( (EXTRA_S & 3) == 3 )      // LDW.S
 				{
+					if(SAME_SRC_DST)
+						ui_popup("LDW.S denoted same regs @ %08X",PPC);
+
 					if(DREG < SP)
 						SET_SREG(READ_W(DREG));
 					else
 						SET_SREG(GET_ABS_L_REG((DREG & 0xfc) >> 2));
 
-					SET_DREG(DREG + (dis & ~3));
+					if(!SAME_SRC_DST)
+						SET_DREG(DREG + (EXTRA_S & ~3));
 
 					hyperstone_ICount -= 2; // extra cycles
 				}
-				else if( (dis & 3) == 2 ) // Reserved
+				else if( (EXTRA_S & 3) == 2 ) // Reserved
 				{
 					logerror("Executed Reserved instruction in hyperstone_ldxx2. PC = %08X\n", PC);
 				}
-				else if( (dis & 3) == 1 ) // LDD.N
+				else if( (EXTRA_S & 3) == 1 ) // LDD.N
 				{
+					if(SAME_SRC_DST || SAME_SRCF_DST)
+						ui_popup("LDD.N denoted same regs @ %08X",PPC);
+
 					load = READ_W(DREG);
 					SET_SREG(load);
 
 					load = READ_W(DREG + 4);
 					SET_SREGF(load);
 
-					SET_DREG(DREG + (dis & ~1));
+					if(!SAME_SRC_DST && !SAME_SRCF_DST)
+						SET_DREG(DREG + (EXTRA_S & ~1));
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
 				else                      // LDW.N
 				{
+					if(SAME_SRC_DST)
+						ui_popup("LDW.N denoted same regs @ %08X",PPC);
+
 					load = READ_W(DREG);
 					SET_SREG(load);
-					SET_DREG(DREG + (dis & ~1));
+
+					if(!SAME_SRC_DST)
+						SET_DREG(DREG + (EXTRA_S & ~1));
 				}
 
 				break;
@@ -3392,75 +3439,66 @@ void hyperstone_ldxx2(void)
 //TODO: add trap error
 void hyperstone_stxx1(void)
 {
-	UINT16 next_op;
-	INT32 dis;
-
-	hyperstone.instruction_length = 2;
-	next_op = READ_OP(PC);
-	PC += 2;
-
-	dis = get_dis(next_op);
-
-	decode_registers(); // re-decode because PC has changed
-
 	if( SRC_IS_SR )
 		SREG = SREGF = 0;
 
 	if( DST_IS_SR )
 	{
-		switch( DD(next_op) )
+		switch( current_regs.sub_type )
 		{
 			case 0: // STBS.A
 
 				/* TODO: missing trap on range error */
-				WRITE_B(dis, SREG & 0xff);
+				WRITE_B(EXTRA_S, SREG & 0xff);
 
 				break;
 
 			case 1: // STBU.A
 
-				WRITE_B(dis, SREG & 0xff);
+				WRITE_B(EXTRA_S, SREG & 0xff);
 
 				break;
 
 			case 2:
 
-				WRITE_HW(dis & ~1, SREG & 0xffff);
+				WRITE_HW(EXTRA_S & ~1, SREG & 0xffff);
 
-				if( dis & 1 ) // STHS.A
-				{
-					/* TODO: missing trap on range error */
-				}
-				else          // STHU.A
-				{
-					/* nothing more */
-				}
+				/*
+                if( EXTRA_S & 1 ) // STHS.A
+                {
+                    // TODO: missing trap on range error
+                }
+                else          // STHU.A
+                {
+                    // nothing more
+                }
+                */
 
 				break;
 
 			case 3:
 
-				if( (dis & 3) == 3 )      // STD.IOA
+				if( (EXTRA_S & 3) == 3 )      // STD.IOA
 				{
-					IO_WRITE_W(dis & ~3, SREG);
-					IO_WRITE_W((dis & ~3) + 4, SREGF);
+					IO_WRITE_W(EXTRA_S & ~3, SREG);
+					IO_WRITE_W((EXTRA_S & ~3) + 4, SREGF);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
-				else if( (dis & 3) == 2 ) // STW.IOA
+				else if( (EXTRA_S & 3) == 2 ) // STW.IOA
 				{
-					IO_WRITE_W(dis & ~3, SREG);
+					IO_WRITE_W(EXTRA_S & ~3, SREG);
 				}
-				else if( (dis & 3) == 1 ) // STD.A
+				else if( (EXTRA_S & 3) == 1 ) // STD.A
 				{
-					WRITE_W(dis & ~1, SREG);
-					WRITE_W((dis & ~1) + 4, SREGF);
+					WRITE_W(EXTRA_S & ~1, SREG);
+					WRITE_W((EXTRA_S & ~1) + 4, SREGF);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
 				else                      // STW.A
 				{
-					WRITE_W(dis & ~1, SREG);
+					WRITE_W(EXTRA_S & ~1, SREG);
 				}
 
 				break;
@@ -3468,59 +3506,61 @@ void hyperstone_stxx1(void)
 	}
 	else
 	{
-		switch( DD(next_op) )
+		switch( current_regs.sub_type )
 		{
 			case 0: // STBS.D
 
 				/* TODO: missing trap on range error */
-				WRITE_B(DREG + dis, SREG & 0xff);
+				WRITE_B(DREG + EXTRA_S, SREG & 0xff);
 
 				break;
 
 			case 1: // STBU.D
 
-				WRITE_B(DREG + dis, SREG & 0xff);
+				WRITE_B(DREG + EXTRA_S, SREG & 0xff);
 
 				break;
 
 			case 2:
 
-				WRITE_HW(DREG + (dis & ~1), SREG & 0xffff);
+				WRITE_HW(DREG + (EXTRA_S & ~1), SREG & 0xffff);
 
-				if( dis & 1 ) // STHS.D
-				{
-					/* TODO: missing trap on range error */
-				}
-				else          // STHU.D
-				{
-					/* nothing more */
-				}
+				/*
+                if( EXTRA_S & 1 ) // STHS.D
+                {
+                    // TODO: missing trap on range error
+                }
+                else          // STHU.D
+                {
+                    // nothing more
+                }
+                */
 
 				break;
 
 			case 3:
 
-				if( (dis & 3) == 3 )      // STD.IOD
+				if( (EXTRA_S & 3) == 3 )      // STD.IOD
 				{
-					IO_WRITE_W(DREG + (dis & ~3), SREG);
-					IO_WRITE_W(DREG + (dis & ~3) + 4, SREGF);
+					IO_WRITE_W(DREG + (EXTRA_S & ~3), SREG);
+					IO_WRITE_W(DREG + (EXTRA_S & ~3) + 4, SREGF);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
-				else if( (dis & 3) == 2 ) // STW.IOD
+				else if( (EXTRA_S & 3) == 2 ) // STW.IOD
 				{
-					IO_WRITE_W(DREG + (dis & ~3), SREG);
+					IO_WRITE_W(DREG + (EXTRA_S & ~3), SREG);
 				}
-				else if( (dis & 3) == 1 ) // STD.D
+				else if( (EXTRA_S & 3) == 1 ) // STD.D
 				{
-					WRITE_W(DREG + (dis & ~1), SREG);
-					WRITE_W(DREG + (dis & ~1) + 4, SREGF);
+					WRITE_W(DREG + (EXTRA_S & ~1), SREG);
+					WRITE_W(DREG + (EXTRA_S & ~1) + 4, SREGF);
 
 					hyperstone_ICount -= 1; // extra cycle
 				}
 				else                      // STW.D
 				{
-					WRITE_W(DREG + (dis & ~1), SREG);
+					WRITE_W(DREG + (EXTRA_S & ~1), SREG);
 				}
 
 				break;
@@ -3532,17 +3572,6 @@ void hyperstone_stxx1(void)
 
 void hyperstone_stxx2(void)
 {
-	UINT16 next_op;
-	INT32 dis;
-
-	hyperstone.instruction_length = 2;
-	next_op = READ_OP(PC);
-	PC += 2;
-
-	dis = get_dis(next_op);
-
-	decode_registers(); // re-decode because PC has changed
-
 	if( SRC_IS_SR )
 		SREG = SREGF = 0;
 
@@ -3552,64 +3581,71 @@ void hyperstone_stxx2(void)
 	}
 	else
 	{
-		switch( DD( next_op ) )
+		switch( current_regs.sub_type )
 		{
 			case 0: // STBS.N
 
 				/* TODO: missing trap on range error */
 				WRITE_B(DREG, SREG & 0xff);
-				SET_DREG(DREG + dis);
+				SET_DREG(DREG + EXTRA_S);
 
 				break;
 
 			case 1: // STBU.N
 
 				WRITE_B(DREG, SREG & 0xff);
-				SET_DREG(DREG + dis);
+				SET_DREG(DREG + EXTRA_S);
 
 				break;
 
 			case 2:
 
 				WRITE_HW(DREG, SREG & 0xffff);
-				SET_DREG(DREG + (dis & ~1));
+				SET_DREG(DREG + (EXTRA_S & ~1));
 
-				if( dis & 1 ) // STHS.N
-				{
-					/* TODO: missing trap on range error */
-				}
-				else          // STHU.N
-				{
-					/* nothing more */
-				}
+				/*
+                if( EXTRA_S & 1 ) // STHS.N
+                {
+                    // TODO: missing trap on range error
+                }
+                else          // STHU.N
+                {
+                    // nothing more
+                }
+                */
 
 				break;
 
 			case 3:
 
-				if( (dis & 3) == 3 )      // STW.S
+				if( (EXTRA_S & 3) == 3 )      // STW.S
 				{
 					if(DREG < SP)
 						WRITE_W(DREG, SREG);
 					else
-						SET_ABS_L_REG((DREG & 0xfc) >> 2,SREG);
+					{
+						if(((DREG & 0xfc) >> 2) == current_regs.dst && D_BIT == LOCAL)
+							ui_popup("STW.S denoted the same local register @ %08X\n",PPC);
 
-					SET_DREG(DREG + (dis & ~3));
+						SET_ABS_L_REG((DREG & 0xfc) >> 2,SREG);
+					}
+
+					SET_DREG(DREG + (EXTRA_S & ~3));
 
 					hyperstone_ICount -= 2; // extra cycles
 
 				}
-				else if( (dis & 3) == 2 ) // Reserved
+				else if( (EXTRA_S & 3) == 2 ) // Reserved
 				{
 					logerror("Executed Reserved instruction in hyperstone_stxx2. PC = %08X\n", PC);
 				}
-				else if( (dis & 3) == 1 ) // STD.N
+				else if( (EXTRA_S & 3) == 1 ) // STD.N
 				{
 					WRITE_W(DREG, SREG);
-					SET_DREG(DREG + (dis & ~1));
+					SET_DREG(DREG + (EXTRA_S & ~1));
 
 					if( SAME_SRCF_DST )
-						WRITE_W(DREG + 4, SREGF + (dis & ~1));  // because DREG == SREGF and DREG has been incremented
+						WRITE_W(DREG + 4, SREGF + (EXTRA_S & ~1));  // because DREG == SREGF and DREG has been incremented
 					else
 						WRITE_W(DREG + 4, SREGF);
 
@@ -3618,7 +3654,7 @@ void hyperstone_stxx2(void)
 				else                      // STW.N
 				{
 					WRITE_W(DREG, SREG);
-					SET_DREG(DREG + (dis & ~1));
+					SET_DREG(DREG + (EXTRA_S & ~1));
 				}
 
 				break;
@@ -4118,7 +4154,7 @@ void hyperstone_mul(void)
 	}
 	else
 	{
-		single_word = (SREG * DREG) & 0xffffffff; // only the low-order word is taken
+		single_word = (SREG * DREG);// & 0xffffffff; // only the low-order word is taken
 
 		SET_DREG(single_word);
 
@@ -4219,23 +4255,16 @@ void hyperstone_fcvtd(void)
 void hyperstone_extend(void)
 {
 	//TODO: add locks, overflow error and other things
-	UINT16 ext_opcode;
 	UINT32 vals, vald;
-
-	hyperstone.instruction_length = 2;
-	ext_opcode = READ_OP(PC);
-	PC += 2;
-
-	decode_registers();
 
 	vals = SREG;
 	vald = DREG;
 
-	switch( ext_opcode )
+	switch( EXTRA_U ) // extended opcode
 	{
 		// signed or unsigned multiplication, single word product
 		case EMUL:
-		case 0x100:
+		case 0x100: // used in "N" type cpu
 		{
 			UINT32 result;
 
@@ -4417,7 +4446,7 @@ void hyperstone_extend(void)
 			break;
 		}
 		default:
-			logerror("Executed Illegal extended opcode (%x). PC = %08X\n", ext_opcode, PC);
+			logerror("Executed Illegal extended opcode (%X). PC = %08X\n", EXTRA_U, PC);
 			break;
 	}
 
@@ -4447,7 +4476,11 @@ void hyperstone_lddr(void)
 void hyperstone_ldwp(void)
 {
 	SET_SREG(READ_W(DREG));
-	SET_DREG(DREG + 4);
+
+	// post increment the destination register if it's different from the source one
+	// (needed by Hidden Catch)
+	if(!(current_regs.src == current_regs.dst && S_BIT == LOCAL))
+		SET_DREG(DREG + 4);
 
 	hyperstone_ICount -= 1;
 }
@@ -4456,7 +4489,17 @@ void hyperstone_lddp(void)
 {
 	SET_SREG(READ_W(DREG));
 	SET_SREGF(READ_W(DREG + 4));
-	SET_DREG(DREG + 8);
+
+	// post increment the destination register if it's different from the source one
+	// and from the "next source" one
+	if(!(current_regs.src == current_regs.dst && S_BIT == LOCAL) &&	!SAME_SRCF_DST )
+	{
+		SET_DREG(DREG + 8);
+	}
+	else
+	{
+		ui_popup("LDD.P denoted same regs @ %08X",PPC);
+	}
 
 	hyperstone_ICount -= 2;
 }
@@ -4511,116 +4554,103 @@ void hyperstone_stdp(void)
 
 void hyperstone_dbv(void)
 {
-	INT32 newPC = get_pcrel();
 	if( GET_V )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbnv(void)
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_V )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbe(void) //or DBZ
 {
-	INT32 newPC = get_pcrel();
 	if( GET_Z )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbne(void) //or DBNZ
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_Z )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbc(void) //or DBST
 {
-	INT32 newPC = get_pcrel();
 	if( GET_C )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbnc(void) //or DBHE
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_C )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbse(void)
 {
-	INT32 newPC = get_pcrel();
 	if( GET_C || GET_Z )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbht(void)
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_C && !GET_Z )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbn(void) //or DBLT
 {
-	INT32 newPC = get_pcrel();
 	if( GET_N )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbnn(void) //or DBGE
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_N )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dble(void)
 {
-	INT32 newPC = get_pcrel();
 	if( GET_N || GET_Z )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbgt(void)
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_N && !GET_Z )
-		execute_dbr(newPC);
-	else
-		hyperstone_ICount -= 1;
+		execute_dbr();
+
+	hyperstone_ICount -= 1;
 }
 
 void hyperstone_dbr(void)
 {
-	INT32 newPC = get_pcrel();
-	execute_dbr(newPC);
+	execute_dbr();
 }
 
 void hyperstone_frame(void)
@@ -4667,19 +4697,13 @@ void hyperstone_frame(void)
 
 void hyperstone_call(void)
 {
-	INT32 const_val;
-
-	const_val = get_const() & ~0x01;
-
-	decode_registers();
-
 	if( SRC_IS_SR )
 		SREG = 0;
 
 	if( !DST_CODE )
 		current_regs.dst = 16;
 
-	const_val += SREG;
+	EXTRA_S = (EXTRA_S & ~1) + SREG;
 
 	SET_ILC(hyperstone.instruction_length & 3);
 
@@ -4692,7 +4716,7 @@ void hyperstone_call(void)
 	SET_M(0);
 
 	PPC = PC;
-	PC = const_val;
+	PC = EXTRA_S; // const value
 	change_pc(PC);
 
 	hyperstone.intblock = 2;
@@ -4705,116 +4729,103 @@ void hyperstone_call(void)
 
 void hyperstone_bv(void)
 {
-	INT32 newPC = get_pcrel();
 	if( GET_V )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bnv(void)
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_V )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_be(void) //or BZ
 {
-	INT32 newPC = get_pcrel();
 	if( GET_Z )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bne(void) //or BNZ
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_Z )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bc(void) //or BST
 {
-	INT32 newPC = get_pcrel();
 	if( GET_C )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bnc(void) //or BHE
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_C )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bse(void)
 {
-	INT32 newPC = get_pcrel();
 	if( GET_C || GET_Z )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bht(void)
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_C && !GET_Z )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bn(void) //or BLT
 {
-	INT32 newPC = get_pcrel();
 	if( GET_N )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bnn(void) //or BGE
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_N )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_ble(void)
 {
-	INT32 newPC = get_pcrel();
 	if( GET_N || GET_Z )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_bgt(void)
 {
-	INT32 newPC = get_pcrel();
 	if( !GET_N && !GET_Z )
-		execute_br(newPC);
+		execute_br();
 	else
 		hyperstone_ICount -= 1;
 }
 
 void hyperstone_br(void)
 {
-	INT32 newPC = get_pcrel();
-	execute_br(newPC);
+	execute_br();
 }
 
 void hyperstone_trap(void)

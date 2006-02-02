@@ -546,7 +546,8 @@ gfx_element *build_debugger_font(void)
 {
 	gfx_element *font;
 
-	font = decodegfx(fontdata,&fontlayout);
+	font = allocgfx(&fontlayout);
+	decodegfx(font, fontdata, 0, font->total_elements);
 
 	if (font)
 	{

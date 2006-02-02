@@ -649,10 +649,6 @@ static int psx_gpu_init( void )
 
 	m_n_vram_size = Machine->drv->screen_width * Machine->drv->screen_height;
 	m_p_vram = auto_malloc( m_n_vram_size * 2 );
-	if( m_p_vram == NULL )
-	{
-		return 1;
-	}
 	memset( m_p_vram, 0x00, m_n_vram_size * 2 );
 
 	for( n_line = 0; n_line < 1024; n_line++ )

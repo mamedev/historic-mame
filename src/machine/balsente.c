@@ -213,8 +213,6 @@ static void poly17_init(void)
 	/* allocate memory */
 	p = poly17 = auto_malloc(POLY17_SIZE + 1);
 	r = rand17 = auto_malloc(POLY17_SIZE + 1);
-	if (!poly17 || !rand17)
-		return;
 
 	/* generate the polynomial */
 	for (i = 0; i < POLY17_SIZE; i++)

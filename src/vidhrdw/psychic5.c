@@ -293,20 +293,11 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( psychic5 )
 {
-	if ((psychic5_bg_videoram = auto_malloc(0x1000)) == 0)
-		return 1;
-
-	if ((psychic5_fg_videoram = auto_malloc(0x1000)) == 0)
-		return 1;
-
-	if ((ps5_dummy_bg_ram = auto_malloc(0x1000)) == 0)
-		return 1;
-
-	if ((ps5_io_ram = auto_malloc(0x400)) == 0)
-		return 1;
-
-	if ((ps5_palette_ram = auto_malloc(0xc00)) == 0)
-		return 1;
+	psychic5_bg_videoram = auto_malloc(0x1000);
+	psychic5_fg_videoram = auto_malloc(0x1000);
+	ps5_dummy_bg_ram = auto_malloc(0x1000);
+	ps5_io_ram = auto_malloc(0x400);
+	ps5_palette_ram = auto_malloc(0xc00);
 
 	memset(psychic5_bg_videoram, 0,0x1000);
 	memset(psychic5_fg_videoram,0,0x1000);

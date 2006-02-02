@@ -251,14 +251,14 @@ VIDEO_START( splndrbt )
 	tilemap_set_scrolldx(charmap1, 8, 8);
 	tilemap_set_scrolldy(charmap1, 32, 32);
 
-	if ((buf8ptr = auto_malloc(videoram_size * 2)) == NULL) return(-1);
+	buf8ptr = auto_malloc(videoram_size * 2);
 	charram0 = (UINT16*)buf8ptr;
 	charram1 = (UINT16*)(buf8ptr + videoram_size);
 
-	if ((dirtybuf = auto_malloc(0x800)) == NULL) return(-1);
+	dirtybuf = auto_malloc(0x800);
 	memset(dirtybuf, 1, 0x800);
 
-	if ((prestep = (struct PRESTEP_TYPE *)auto_malloc(i * sizeof(struct PRESTEP_TYPE))) == NULL) return(-1);
+	prestep = auto_malloc(i * sizeof(struct PRESTEP_TYPE));
 	splndrbt_prestep(prestep, &Machine->visible_area, BMW, 434, 96, 480);
 
 	defcharram = videoram16 + videoram_size / 2;

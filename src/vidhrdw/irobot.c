@@ -116,10 +116,8 @@ WRITE8_HANDLER( irobot_paletteram_w )
 VIDEO_START( irobot )
 {
 	/* Setup 2 bitmaps for the polygon generator */
-	if ((polybitmap1 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen_height)) == 0)
-		return 1;
-	if ((polybitmap2 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen_height)) == 0)
-		return 1;
+	polybitmap1 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen_height);
+	polybitmap2 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen_height);
 
 	/* Set clipping */
 	ir_xmin = ir_ymin = 0;

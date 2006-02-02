@@ -115,16 +115,14 @@ WRITE8_HANDLER( system1_paletteram_w )
 
 VIDEO_START( system1 )
 {
-	if ((sprite_onscreen_map = auto_malloc(256*256)) == 0)
-		return 1;
+	sprite_onscreen_map = auto_malloc(256*256);
 	memset(sprite_onscreen_map,255,256*256);
 
-	if ((bg_dirtybuffer = auto_malloc(1024)) == 0)
-		return 1;
+	bg_dirtybuffer = auto_malloc(1024);
 	memset(bg_dirtybuffer,1,1024);
-	if ((wbml_paged_videoram = auto_malloc(0x4000)) == 0)			/* Allocate 16k for background banked ram */
-		return 1;
+	wbml_paged_videoram = auto_malloc(0x4000);	/* Allocate 16k for background banked ram */
 	memset(wbml_paged_videoram,0,0x4000);
+
 	if ((tmp_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 

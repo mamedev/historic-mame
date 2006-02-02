@@ -24,8 +24,7 @@ static int 		 sp_overdraw = 0;
 
 VIDEO_START( ninjakd2 )
 {
-	if ((bg_dirtybuffer = auto_malloc(1024)) == 0)
-		return 1;
+	bg_dirtybuffer = auto_malloc(1024);
 
 	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
 		return 1;

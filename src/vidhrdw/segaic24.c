@@ -149,21 +149,10 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 		return 1;
 
 	sys24_char_ram = auto_malloc(0x80000);
-	if(!sys24_char_ram)
-		return 1;
 
 	sys24_tile_ram = auto_malloc(0x10000);
-	if(!sys24_tile_ram) {
-		free(sys24_char_ram);
-		return 1;
-	}
 
 	sys24_char_dirtymap = auto_malloc(SYS24_TILES);
-	if(!sys24_char_dirtymap) {
-		free(sys24_tile_ram);
-		free(sys24_char_ram);
-		return 1;
-	}
 
 	sys24_tile_layer[0] = tilemap_create(sys24_tile_info_0s, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
 	sys24_tile_layer[1] = tilemap_create(sys24_tile_info_0w, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
@@ -171,9 +160,6 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 	sys24_tile_layer[3] = tilemap_create(sys24_tile_info_1w, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
 
 	if(!sys24_tile_layer[0] || !sys24_tile_layer[1] || !sys24_tile_layer[2] || !sys24_tile_layer[3]) {
-		free(sys24_char_dirtymap);
-		free(sys24_tile_ram);
-		free(sys24_char_ram);
 		return 1;
 	}
 
@@ -186,12 +172,9 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 	memset(sys24_tile_ram, 0, 0x10000);
 	memset(sys24_char_dirtymap, 0, SYS24_TILES);
 
-	Machine->gfx[sys24_char_gfx_index] = decodegfx((unsigned char *)sys24_char_ram, &sys24_char_layout);
+	Machine->gfx[sys24_char_gfx_index] = allocgfx(&sys24_char_layout);
 
 	if(!Machine->gfx[sys24_char_gfx_index]) {
-		free(sys24_char_dirtymap);
-		free(sys24_tile_ram);
-		free(sys24_char_ram);
 		return 1;
 	}
 
@@ -672,8 +655,6 @@ static UINT16 *sys24_sprite_ram;
 int sys24_sprite_vh_start(void)
 {
 	sys24_sprite_ram = auto_malloc(0x40000);
-	if(!sys24_sprite_ram)
-		return 1;
 
 	state_save_register_UINT16("system24 sprite", 0, "ram", sys24_sprite_ram, 0x20000);
 	//  kc = 0;

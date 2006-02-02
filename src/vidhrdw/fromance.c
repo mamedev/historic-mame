@@ -85,7 +85,7 @@ VIDEO_START( fromance )
 	local_paletteram = auto_malloc(0x800 * 2);
 
 	/* handle failure */
-	if (!bg_tilemap || !fg_tilemap || !local_videoram[0] || !local_videoram[1] || !local_paletteram)
+	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
 	/* configure tilemaps */
@@ -110,7 +110,7 @@ VIDEO_START( nekkyoku )
 	local_paletteram = auto_malloc(0x800 * 2);
 
 	/* handle failure */
-	if (!bg_tilemap || !fg_tilemap || !local_videoram[0] || !local_videoram[1] || !local_paletteram)
+	if (!bg_tilemap || !fg_tilemap)
 		return 1;
 
 	/* configure tilemaps */

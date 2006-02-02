@@ -76,8 +76,6 @@ int pic8259_init(int count, void (*set_int_line)(int which, int interrupt))
 
 	/* allocate pic structures */
 	pic = auto_malloc(count * sizeof(struct pic8259));
-	if (!pic)
-		return 1;
 	memset(pic, 0, count * sizeof(struct pic8259));
 
 	for (i = 0; i < count; i++)

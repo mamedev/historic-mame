@@ -195,9 +195,6 @@ static void mc146818_timer(int param)
 void mc146818_init(MC146818_TYPE type)
 {
 	mc146818 = auto_malloc(sizeof(*mc146818));
-	if (!mc146818)
-		return;
-
 	memset(mc146818, 0, sizeof(*mc146818));
 	mc146818->type = type;
 	mc146818->last_refresh = timer_get_time();

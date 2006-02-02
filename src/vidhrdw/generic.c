@@ -65,8 +65,7 @@ VIDEO_START( generic )
 		return 1;
 	}
 
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
 
 	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)

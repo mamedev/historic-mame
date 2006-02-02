@@ -736,7 +736,7 @@ VIDEO_UPDATE( ygv608 )
 #ifdef _ENABLE_ROTATE_ZOOM
 		if( work_bitmap )
 			bitmap_free( work_bitmap );
-		work_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width,
+		work_bitmap = bitmap_alloc_depth( Machine->drv->screen_width,
 										  Machine->drv->screen_height,
 										  Machine->color_depth );
 #else

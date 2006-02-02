@@ -1,7 +1,7 @@
 #ifndef _discrete_h_
 #define _discrete_h_
 
-#include "rc.h"
+#include "rescap.h"
 
 /***********************************************************************
  *
@@ -25,7 +25,12 @@
  * Currently only one instance of a discrete sound system is supported.
  * If more then one instance is required in the future, then a chip #
  * will have to be added to the read/writes and the discrete inputs
- * modified to match.
+ * modified to match.  This functionality should never be needed.
+ * There is no real need to run more then 1 discrete system.
+ *
+ * If a clock is specified in the machine driver setup, then this is
+ * used for the simulation sample rate.  Otherwise it will default to
+ * run at the audio sample rate.
  *
  * Unused/Unconnected input nodes should be set to NODE_NC (No Connect)
  *
@@ -213,9 +218,17 @@
  * DISCRETE_555_ASTABLE_CV(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)
  * DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)
  * DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)
+ * DISCRETE_555_VCO1(NODE,RESET,VIN,OPTIONS)
+ * DISCRETE_555_VCO1_CV(NODE,RESET,VIN,CTRLV,OPTIONS)
  * DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)
  *
- * DISCRETE_WAVELOG(NODE1,GAIN1,NODE2,GAIN2)
+ * DISCRETE_CSVLOG1(NODE1)
+ * DISCRETE_CSVLOG2(NODE1,NODE2)
+ * DISCRETE_CSVLOG3(NODE1,NODE2,NODE3)
+ * DISCRETE_CSVLOG4(NODE1,NODE2,NODE3,NODE4)
+ * DISCRETE_CSVLOG5(NODE1,NODE2,NODE3,NODE4,NODE5)
+ * DISCRETE_WAVELOG1(NODE1,GAIN1)
+ * DISCRETE_WAVELOG2(NODE1,GAIN1,NODE2,GAIN2)
  * DISCRETE_OUTPUT(OPNODE,GAIN)
  *
  ***********************************************************************
@@ -337,7 +350,8 @@
  *
  *  This counter counts up/down from 0 to MAX.  When the enable is low, the output
  *  is held at it's last value.  When reset is high, the reset value is loaded
- *  into the output.  The counter can be clocked internally or externally.
+ *  into the output.  The counter can be clocked internally or externally.  It also
+ *  supports xTime used by the clock modules to pass on anti-aliasing info.
  *
  *  Declaration syntax
  *
@@ -734,10 +748,13 @@
  *  Z                   Z         vP/2 >--ZZZZ---+  |/     |
  *  |                   Z r5                     |         |
  * .----.               Z                        |   r3    |
- * | En |<--------.     |                        '--ZZZZ---+
+ * |  En|<--------.     |                        '--ZZZZ---+
  * '----'         |    gnd                                 |
  *    |           |                                        |
  *   gnd          '----------------------------------------'
+ *
+ * Notes: The 'En' block can be a transistor or 4066 switch.  It connects
+ *        r6 to ground when En is high.
  *
  *          --------------------------------------------------
  *
@@ -2160,7 +2177,8 @@
  =======================================================================
  ***********************************************************************
  *
- * DISCRETE_555_ASTABLE - NE555 Chip simulation (astable mode)
+ * DISCRETE_555_ASTABLE    - NE555 Chip simulation (astable mode).
+ * DISCRETE_555_ASTABLE_CV - NE555 Chip simulation (astable mode) with CV control.
  *
  *                                v555
  *                                 |
@@ -2206,7 +2224,7 @@
  *    {
  *        options,        // bit mapped options
  *        v555,           // B+ voltage of 555
- *        v555high,       // High output voltage of 555 (Usually v555 - 1.2)
+ *        v555high,       // High output voltage of 555 (Usually v555 - 1.2V)
  *        threshold555,   // normally 2/3 of v555
  *        trigger555      // normally 1/3 of v555
  *    }
@@ -2374,7 +2392,7 @@
  *     {
  *          options,        // bit mapped options
  *          v555,           // B+ voltage of 555
- *          v555high,       // High output voltage of 555 (Usually v555 - 1.7)
+ *          v555high,       // High output voltage of 555 (Usually v555 - 1.2V)
  *          threshold555,   // normally 2/3 of v555
  *          trigger555,     // normally 1/3 of v555
  *          vCCsource,      // B+ voltage of the Constant Current source
@@ -2396,6 +2414,48 @@
  *                                        when only rDischarge is defined.
  *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug
+ *
+ ***********************************************************************
+ *
+ * DISCRETE_555_VCO1    - Op-Amp based 555 VCO circuit.
+ * DISCRETE_555_VCO1_CV - Op-Amp based 555 VCO circuit with CV control.
+ *
+ *                               c
+ *  .------------------------+---||----+---------------------------> DISC_555_OUT_CAP
+ *  |                        |         |
+ *  |                        |   |\    |
+ *  |              r1        |   | \   |      .------------.
+ *  |  vIn1 >--+--ZZZZ-------+---|- \  |      |            |
+ *  |          |                 |   >-+---+--|Threshold   |
+ *  |          |   r2            |+ /      |  |         Out|------> DISC_555_OUT_xx
+ *  Z          '--ZZZZ--+--------| /       '--|Trigger     |
+ *  Z r4                |        |/           |            |
+ *  Z                   Z                     |       Reset|------< Reset
+ *  |                   Z r3          vIn2 >--|CV          |
+ * .----.               Z                     |            |
+ * |  En|<--------.     |                 .---|Discharge   |
+ * '----'         |    gnd                |   '------------'
+ *   |            |                       |
+ *  gnd           '-----------------------+---ZZZZ------> 5V
+ *                                             rX
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_555_VCO1(name of node,
+ *                       reset node or static value,
+ *                       Vin1 node or static value,
+ *                       address of discrete_555_vco1_desc structure)
+ *
+ *     DISCRETE_555_VCO1_CV(name of node,
+ *                          reset node or static value,
+ *                          Vin1 node or static value,
+ *                          Vin2 (CV) node or static value,
+ *                          address of discrete_555_vco1_desc structure)
+ *
+ * Notes: The value of resistor rX is not needed.  It is just a pull-up
+ *        for the discharge output.
+ *        The 'En' block can be a transistor or 4066 switch.  It connects
+ *        r4 to ground when En is high.
  *
  ***********************************************************************
  *
@@ -2443,22 +2503,48 @@
  =======================================================================
  ***********************************************************************
  *
- * DISCRETE_WAVELOG - Dump 2 nodes into a stereo wav file
+ * DISCRETE_CSVLOGx - Dump n nodes into a csv (comma separated value) file
  *
  *  Declaration syntax
  *
- *     DISCRETE_WAVELOG(left node,
- *                      static gain for left node,
- *                      right node,
- *                      static gain for right node)
+ *     DISCRETE_CSVLOGx(node 1, ...)
+ *         where x = 1 to 5
  *
- *  Use this to monitor nodes while debugging driver.  You should remove
- *  these nodes from the final driver.  You can use up to a maximum of
- *  DISCRETE_MAX_WAVELOGS.  Each file will be called discreteX.wav,
- *  where X is 0-9, in the order they are created in the driver.
+ *  WARNING: This can rapidally use up a lot of hard drive space.
+ *           48kHz sampling of 5 nodes used 217M after 80 seconds.
+ *
+ *  Use this to monitor nodes while debugging the driver.  You should
+ *  remove these nodes from the final driver.  You can use up to a maximum
+ *  DISCRETE_MAX_CSVLOGS.  Each file will be called discreteX_Y.csv,
+ *  where X is the sndindex.  Y is 0-9, in the order the file is
+ *  created in the driver.
+ *
+ *  This can be used to monitor how multiple nodes relate to each other.
+ *  The resulting file can be imported to a spreadsheet.
+ *
+ ************************************************************************
+ *
+ * DISCRETE_WAVELOG - Dump nodes into a wav file
+ *
+ *  Declaration syntax
+ *
+ *     DISCRETE_WAVELOG1(node,
+ *                       static gain for node)
+ *
+ *     DISCRETE_WAVELOG2(left node,
+ *                       static gain for left node,
+ *                       right node,
+ *                       static gain for right node)
+ *
+ *  Use this to monitor nodes while debugging the driver.  You should
+ *  remove these nodes from the final driver.  You can use up to a maximum
+ *  of DISCRETE_MAX_WAVELOGS.  Each file will be called discreteX_Y.wav,
+ *  where X is the sndindex.  Y is 0-9, in the order the file is
+ *  created in the driver.
  *
  *  This can be used to monitor how a node's input affects it's output.
- *  Monitor the input trigger against the final effect, etc.
+ *  Monitor the input trigger against the final effect, etc.  The resulting
+ *  file can be played/viewed etc. by music player/editor software.
  *
  *  When logging nodes that are voltage levels, you may want to use a
  *  gain of 1000.  This will make the wav sample level reflect milli-volts.
@@ -2502,6 +2588,7 @@
 #define DISCRETE_MAX_INPUTS				10
 #define DISCRETE_MAX_OUTPUTS			16
 #define DISCRETE_MAX_WAVELOGS			10
+#define DISCRETE_MAX_CSVLOGS			10
 
 
 
@@ -2723,13 +2810,14 @@ struct discrete_module
 struct node_description
 {
 	int				node;							/* The node's index number in the node list */
-	struct	discrete_module module;					/* Copy of the node's module info */
 	double			output;							/* The node's last output value */
 
 	int				active_inputs;					/* Number of active inputs on this node type */
 	int				input_is_node;					/* Bit Flags.  1 in bit location means input_is_node */
 	const double *	input[DISCRETE_MAX_INPUTS];		/* Addresses of Input values */
 
+	struct	discrete_module module;					/* Copy of the node's module info */
+	const struct discrete_sound_block *block;		/* Points to the node's setup block. */
 	void *			context;						/* Contextual information specific to this node type */
 	const char *	name;							/* Text name string for identification/debug */
 	const void *	custom;							/* Custom function specific initialisation data */
@@ -2898,7 +2986,7 @@ struct discrete_555_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
-	double	v555high;		// High output voltage of 555 (Usually v555 - 1.2)
+	double	v555high;		// High output voltage of 555 (Usually v555 - 1.2V)
 	double	threshold555;	// normally 2/3 of v555
 	double	trigger555;		// normally 1/3 of v555
 };
@@ -2908,7 +2996,7 @@ struct discrete_555_cc_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
-	double	v555high;		// High output voltage of 555 (Usually v555 - 1.7)
+	double	v555high;		// High output voltage of 555 (Usually v555 - 1.2V)
 	double	threshold555;	// normally 2/3 of v555
 	double	trigger555;		// normally 1/3 of v555
 	double	vCCsource;		// B+ voltage of the Constant Current source
@@ -3084,13 +3172,15 @@ enum
 	DSD_555_ASTBL,		/* NE555 Astable Emulation */
 	DSD_555_MSTBL,		/* NE555 Monostable Emulation */
 	DSD_555_CC,			/* Constant Current 555 circuit (VCO)*/
+	DSD_555_VCO1,		/* Op-Amp linear ramp based VCO */
 	DSD_566,			/* NE566 Emulation */
 
 	/* Custom */
 	DST_CUSTOM,			/* whatever you want someday */
 
 	/* Debugging */
-	DSO_WAVELOG,		/* The final output node */
+	DSO_CSVLOG,			/* Dump nodes as csv file */
+	DSO_WAVELOG,		/* Dump nodes as wav file */
 
 	/* Output Node -- this must be the last entry in this enum! */
 	DSO_OUTPUT			/* The final output node */
@@ -3232,9 +3322,17 @@ enum
 #define DISCRETE_555_ASTABLE_CV(NODE,RESET,R1,R2,C,CTRLV,OPTIONS)       { NODE, DSD_555_ASTBL   , 5, { RESET,R1,R2,C,CTRLV }, { RESET,R1,R2,C,CTRLV }, OPTIONS, "555 Astable with CV" },
 #define DISCRETE_555_MSTABLE(NODE,RESET,TRIG,R,C,OPTIONS)               { NODE, DSD_555_MSTBL   , 4, { RESET,TRIG,R,C }, { RESET,TRIG,R,C }, OPTIONS, "555 Monostable" },
 #define DISCRETE_555_CC(NODE,RESET,VIN,R,C,RBIAS,RGND,RDIS,OPTIONS)     { NODE, DSD_555_CC      , 7, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, { RESET,VIN,R,C,RBIAS,RGND,RDIS }, OPTIONS, "555 Constant Current VCO" },
+#define DISCRETE_555_VCO1(NODE,RESET,VIN,OPTIONS)                       { NODE, DSD_555_VCO1    , 3, { RESET,VIN,NODE_NC }, { RESET,VIN,-1 }, OPTIONS, "555 VCO1 - Op-Amp type" },
+#define DISCRETE_555_VCO1_CV(NODE,RESET,VIN,CTRLV,OPTIONS)              { NODE, DSD_555_VCO1    , 3, { RESET,VIN,CTRLV }, { RESET,VIN,CTRLV }, OPTIONS, "555 VCO1 with CV - Op-Amp type" },
 #define DISCRETE_566(NODE,ENAB,VMOD,R,C,OPTIONS)                        { NODE, DSD_566         , 4, { ENAB,VMOD,R,C }, { ENAB,VMOD,R,C }, OPTIONS, "566" },
 
-#define DISCRETE_WAVELOG(NODE1,GAIN1,NODE2,GAIN2)                  { NODE_SPECIAL, DSO_WAVELOG  , 4, { NODE1,NODE_NC,NODE2,NODE_NC }, { NODE1,GAIN1,NODE2,GAIN2 }, NULL, "Wave Log Node" },
+#define DISCRETE_CSVLOG1(NODE1)                                    { NODE_SPECIAL, DSO_CSVLOG   , 1, { NODE1 }, { NODE1 }, NULL, "CSV Log 1 Node" },
+#define DISCRETE_CSVLOG2(NODE1,NODE2)                              { NODE_SPECIAL, DSO_CSVLOG   , 2, { NODE1,NODE2 }, { NODE1,NODE2 }, NULL, "CSV Log 2 Nodes" },
+#define DISCRETE_CSVLOG3(NODE1,NODE2,NODE3)                        { NODE_SPECIAL, DSO_CSVLOG   , 3, { NODE1,NODE2,NODE3 }, { NODE1,NODE2,NODE3 }, NULL, "CSV Log 3 Nodes" },
+#define DISCRETE_CSVLOG4(NODE1,NODE2,NODE3,NODE4)                  { NODE_SPECIAL, DSO_CSVLOG   , 4, { NODE1,NODE2,NODE3,NODE4 }, { NODE1,NODE2,NODE3,NODE4 }, NULL, "CSV Log 4 Nodes" },
+#define DISCRETE_CSVLOG5(NODE1,NODE2,NODE3,NODE4,NODE5)            { NODE_SPECIAL, DSO_CSVLOG   , 5, { NODE1,NODE2,NODE3,NODE4,NODE5 }, { NODE1,NODE2,NODE3,NODE4,NODE5 }, NULL, "CSV Log 5 Nodes" },
+#define DISCRETE_WAVELOG1(NODE1,GAIN1)                             { NODE_SPECIAL, DSO_WAVELOG  , 2, { NODE1,NODE_NC }, { NODE1,GAIN1 }, NULL, "Wave Log 1 Node" },
+#define DISCRETE_WAVELOG2(NODE1,GAIN1,NODE2,GAIN2)                 { NODE_SPECIAL, DSO_WAVELOG  , 4, { NODE1,NODE_NC,NODE2,NODE_NC }, { NODE1,GAIN1,NODE2,GAIN2 }, NULL, "Wave Log 2 Nodes" },
 #define DISCRETE_OUTPUT(OPNODE,GAIN)                               { NODE_SPECIAL, DSO_OUTPUT   , 2, { OPNODE,NODE_NC }, { 0,GAIN }, NULL, "Output Node" },
 
 

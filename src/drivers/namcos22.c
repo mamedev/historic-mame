@@ -1364,10 +1364,6 @@ static WRITE32_HANDLER( spotram_w )
    if( !mSpotRAM.RAM )
    {
       mSpotRAM.RAM = auto_malloc(SPOTRAM_SIZE*2);
-      if( !mSpotRAM.RAM )
-      {
-         osd_die( "insufficient mem for spot ram\n" );
-      }
    }
 	if( offset==0 )
 	{

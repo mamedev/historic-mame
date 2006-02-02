@@ -125,16 +125,12 @@ VIDEO_START( exerion )
 
 	/* allocate memory to track the background latches */
 	background_latches = auto_malloc(Machine->drv->screen_height * 16);
-	if (!background_latches)
-		return 1;
 
 	/* allocate memory for the decoded background graphics */
 	background_gfx[0] = auto_malloc(2 * 256 * 256 * 4);
 	background_gfx[1] = background_gfx[0] + 256 * 256;
 	background_gfx[2] = background_gfx[1] + 256 * 256;
 	background_gfx[3] = background_gfx[2] + 256 * 256;
-	if (!background_gfx[0])
-		return 1;
 
 	/*---------------------------------
      * Decode the background graphics

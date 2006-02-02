@@ -133,8 +133,6 @@ static void outrun_generic_init(void)
 	segaic16_tileram_0   = auto_malloc(0x10000);
 	segaic16_textram_0   = auto_malloc(0x01000);
 	workram              = auto_malloc(0x08000);
-	if (!segaic16_spriteram_0 || !paletteram16 || !segaic16_tileram_0 || !segaic16_textram_0 || !workram)
-		osd_die("Out of memory allocating RAM space\n");
 
 	/* init the memory mapper */
 	segaic16_memory_mapper_init(0, outrun_info, sound_w, NULL);

@@ -31,11 +31,6 @@ Notes:
 -   The Japan set doesn't seem to have (or use) NVRAM. I can't enter
     a test mode or use the service coin either !?
 
--   Rock and Tread emulation by Justin Lee Turner
-    Roms from my bootleg PCB's.  PCB's and roms are printed MADE IN KOREA.
-    Bootleg PCB's use FPGA, no JALACO Custom
-    PCB's made from deleted MAME roms??? ROCKN4 was unreleased??
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -1385,7 +1380,7 @@ Custom: SS91022-03
 
 ***************************************************************************/
 
-ROM_START( rocknb ) /* JLT */
+ROM_START( rockna )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1", 0x000001, 0x80000, CRC(6078fa48) SHA1(e98c1a1abf026f2d5b5035ccbc9d412a08ca1f02) )
 	ROM_LOAD16_BYTE( "prg0", 0x000000, 0x80000, CRC(c8310bd0) SHA1(1efee954cc94b668b7d9f28a099b8d1c83d3093f) )
@@ -1424,7 +1419,7 @@ ROM_START( rocknb ) /* JLT */
 ROM_END
 
 
-ROM_START( rockn2b ) /* JLT */
+ROM_START( rockn2 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1", 0x000001, 0x80000, CRC(854b5a45) SHA1(91496bc511fef1d552d2bd00b82d2470eae94528) )
 	ROM_LOAD16_BYTE( "prg0", 0x000000, 0x80000, CRC(4665bbd2) SHA1(3562c67b81a32d178a8bcb872e676bf7284855d7) )
@@ -1470,7 +1465,7 @@ ROM_START( rockn2b ) /* JLT */
 ROM_END
 
 
-ROM_START( rockn3b ) /* JLT */
+ROM_START( rockn3 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1", 0x000001, 0x80000, CRC(abc6ab4a) SHA1(2f1983b95cd9e42d709edac5613b1f0b450df4ba) )
 	ROM_LOAD16_BYTE( "prg0", 0x000000, 0x80000, CRC(3ecba46e) SHA1(64ff5b7932a8d8dc01c649b9dcc1d55cf1e43387) )
@@ -1515,7 +1510,7 @@ ROM_START( rockn3b ) /* JLT */
 ROM_END
 
 
-ROM_START( rockn4b ) /* JLT */
+ROM_START( rockn4 )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "prg1", 0x000001, 0x80000, CRC(c666caea) SHA1(57018de40d71fe214a6b5cc33c8ad5e88622d010) )
 	ROM_LOAD16_BYTE( "prg0", 0x000000, 0x80000, CRC(cc94e557) SHA1(d38abed04239d9eecf1b1be7a9f765a1b7aa0d8d) )
@@ -1548,7 +1543,7 @@ ROM_START( rockn4b ) /* JLT */
 ROM_END
 
 
-ROM_START( rocknmsb ) /* JLT */
+ROM_START( rocknms )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "mast_prg1", 0x000001, 0x80000, CRC(c36674f8) SHA1(8aeb19fcd6f786c9d76a72abee4b607d29fb7d56) )
 	ROM_LOAD16_BYTE( "mast_prg0", 0x000000, 0x80000, CRC(69382065) SHA1(2d528c2954556d440e790db209a2e3563580296a) )
@@ -1618,13 +1613,10 @@ ROM_END
 
 GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", 0 )
 GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)", 0 )
-GAME( 1999, rockn,    0,        rockn,    rockn,   rockn,  ROT270, "Jaleco", "Rock'n Tread (Japan)", GAME_NO_SOUND )
 
-/* JLT */
-GAME( 1999, rocknb,   rockn,    rockn,    rockn,   rockn1,  ROT270, "Jaleco", "Rock'n Tread 1 (Japan, bootleg)",0)
-GAME( 1999, rockn2b,  0,        rockn2,   rockn,   rockn2,  ROT270, "Jaleco", "Rock'n Tread 2 (Japan, bootleg)",0)
-
-GAME( 1999, rocknmsb, 0,        rocknms,  rocknms,  rocknms, ROT0,   "bootleg", "Rock'n MegaSession (Japan, bootleg)", GAME_IMPERFECT_GRAPHICS )
-
-GAME( 1999, rockn3b,  0,        rockn2,   rockn,   rockn3,  ROT270, "bootleg", "Rock'n 3 (Japan, bootleg)",0 )
-GAME( 2000, rockn4b,  0,        rockn2,   rockn,   rockn3,  ROT270, "bootleg", "Rock'n 4 (Japan, prototype, bootleg)",0 )
+GAME( 1999, rockn,    0,        rockn,    rockn,   rockn,    ROT270, "Jaleco", "Rock'n Tread (Japan)", 0)
+GAME( 1999, rockna,   rockn,    rockn,    rockn,   rockn1,   ROT270, "Jaleco", "Rock'n Tread (Japan, alternate)", 0)
+GAME( 1999, rockn2,   0,        rockn2,   rockn,   rockn2,   ROT270, "Jaleco", "Rock'n Tread 2 (Japan)", 0)
+GAME( 1999, rocknms,  0,        rocknms,  rocknms, rocknms,  ROT0,   "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1999, rockn3,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco", "Rock'n 3 (Japan)", 0)
+GAME( 2000, rockn4,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan, prototype)", 0)

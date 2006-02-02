@@ -397,7 +397,26 @@ ROM_START( mspuzzle )
 	ROM_LOAD( "u426.bin", 0x180000, 0x80000, CRC(c927e8da) SHA1(2219f99bce6b2b9a827177c83952813df1a32c72) )
 
 	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* BG Tiles */
-	ROM_LOAD( "u512.bin", 0x00000, 0x40000, BAD_DUMP CRC(83588eba) SHA1(018054bd655063b838368fd872c0a3ff84de2d34) )
+	ROM_LOAD( "u512.bin", 0x00000, 0x40000, CRC(505ee3c2) SHA1(a719958c34d9c54445ad207bca1f49df3aff938b) )
+	ROM_LOAD( "u511.bin", 0x40000, 0x40000, CRC(3d6b6c78) SHA1(3016423102b4d47c0f1296471cf1670258acc856) )
+ROM_END
+
+ROM_START( mspuzzln )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "u1.rom", 0x00001, 0x20000, CRC(ec940df4) SHA1(20bb6e2757868cf8fbbb11e05adf8c1d625ee172) )
+	ROM_LOAD16_BYTE( "u2.rom", 0x00000, 0x20000, CRC(7b9cac82) SHA1(c5edfb3fbdf43219ba317c18222e671ebed94469) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "u210.rom", 0x00000, 0x40000, CRC(8826b018) SHA1(075e5cef114146c6c72c0331dd3434b27fed180d) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	ROM_LOAD( "u421.rom", 0x000000, 0x80000, CRC(3c567c55) SHA1(100e0c9535bf07f3ca8537b3a172486b65e5f24a) )
+	ROM_LOAD( "u420.rom", 0x100000, 0x80000, CRC(f52ab7fd) SHA1(e5b8905cae3e15a8a379c4c149441d849931cbde) )
+	ROM_LOAD( "u425.rom", 0x080000, 0x80000, BAD_DUMP CRC(1c4c8fc1) SHA1(90e3f297db68a44cba0966b599bb7c593eced16e) )
+	ROM_LOAD( "u426.rom", 0x180000, 0x80000, CRC(c28b2743) SHA1(df4bf998ae17ddebf1b4047564eb296c69bc9071) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, 0 ) /* BG Tiles */
+	ROM_LOAD( "u512.bin", 0x00000, 0x40000, CRC(505ee3c2) SHA1(a719958c34d9c54445ad207bca1f49df3aff938b) )
 	ROM_LOAD( "u511.bin", 0x40000, 0x40000, CRC(3d6b6c78) SHA1(3016423102b4d47c0f1296471cf1670258acc856) )
 ROM_END
 
@@ -418,7 +437,8 @@ ROM_START( dblpoint )
 	ROM_LOAD( "d15.bin", 0x40000, 0x40000, CRC(6b899a51) SHA1(04114ec9695caaac722800ac1a4ffb563ec433c9) )
 ROM_END
 
-GAME( 1994, gumbo,    0, gumbo,    gumbo,    0, ROT0,  "Min Corp.", "Gumbo", 0 )
-GAME( 1994, msbingo,  0, mspuzzle, msbingo,  0, ROT0,  "Min Corp.", "Miss Bingo", 0 )
-GAME( 1994, mspuzzle, 0, mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle", 0 )
-GAME( 1995, dblpoint, 0, dblpoint, dblpoint, 0, ROT0,  "Dong Bang Electron", "Double Point", 0 )
+GAME( 1994, gumbo,    0,        gumbo,    gumbo,    0, ROT0,  "Min Corp.", "Gumbo", 0 )
+GAME( 1994, msbingo,  0,        mspuzzle, msbingo,  0, ROT0,  "Min Corp.", "Miss Bingo", 0 )
+GAME( 1994, mspuzzle, 0,        mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle", 0 )
+GAME( 1994, mspuzzln, mspuzzle, mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle (Nudes)", 0 )
+GAME( 1995, dblpoint, 0,        dblpoint, dblpoint, 0, ROT0,  "Dong Bang Electron", "Double Point", 0 )

@@ -565,8 +565,8 @@ static void mbmj8688_gfxdraw(int gfxtype)
 static int common_video_start(void)
 {
 	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(512, 256)) == 0) return 1;
-	if ((mjsikaku_videoram = auto_malloc(512 * 256 * sizeof(UINT16))) == 0) return 1;
-	if ((nbmj8688_clut = auto_malloc(0x20 * sizeof(UINT8))) == 0) return 1;
+	mjsikaku_videoram = auto_malloc(512 * 256 * sizeof(UINT16));
+	nbmj8688_clut = auto_malloc(0x20 * sizeof(UINT8));
 	memset(mjsikaku_videoram, 0, (512 * 256 * sizeof(UINT16)));
 
 	mjsikaku_scrolly = 0;	// reset because crystalg/crystal2 don't write to this register
@@ -608,8 +608,8 @@ VIDEO_START( mbmj8688_pure_16bit_LCD )
 {
 	mjsikaku_gfxmode = GFXTYPE_PURE_16BIT;
 
-	if ((HD61830B_ram[0] = auto_malloc(0x10000)) == 0) return 1;
-	if ((HD61830B_ram[1] = auto_malloc(0x10000)) == 0) return 1;
+	HD61830B_ram[0] = auto_malloc(0x10000);
+	HD61830B_ram[1] = auto_malloc(0x10000);
 
 	return common_video_start();
 }

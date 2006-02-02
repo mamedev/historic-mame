@@ -29,7 +29,7 @@ VIDEO_START( rohga )
 {
 	rohga_spriteram = (UINT16*)auto_malloc(0x800);
 
-	if (!rohga_spriteram || deco16_2_video_init(0))
+	if (deco16_2_video_init(0))
 		return 1;
 
 	deco16_set_tilemap_bank_callback(0,wizdfire_bank_callback);

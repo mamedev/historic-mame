@@ -725,8 +725,6 @@ VIDEO_START( atari )
 	memset(&gtia, 0, sizeof(gtia));
 
 	antic.cclk_expand = auto_malloc(21 * 256 * sizeof(UINT32));
-	if( !antic.cclk_expand )
-		return 1;
 
 	antic.pf_21 	  = &antic.cclk_expand[ 0 * 256];
 	antic.pf_x10b	  = &antic.cclk_expand[ 1 * 256];
@@ -739,8 +737,6 @@ VIDEO_START( atari )
 	antic.pf_gtia3	  = &antic.cclk_expand[20 * 256];
 
 	antic.used_colors = auto_malloc(21 * 256 * sizeof(UINT8));
-	if( !antic.used_colors )
-		return 1;
 
 	memset(antic.used_colors, 0, 21 * 256 * sizeof(UINT8));
 
@@ -764,8 +760,6 @@ VIDEO_START( atari )
 	for( i = 0; i < 64; i++ )
     {
 		antic.prio_table[i] = auto_malloc(8*256);
-		if( !antic.prio_table[i] )
-			return 1;
     }
 
 	LOG(("atari prio_init\n"));
@@ -774,8 +768,6 @@ VIDEO_START( atari )
 	for( i = 0; i < Machine->drv->screen_height; i++ )
     {
 		antic.video[i] = auto_malloc(sizeof(VIDEO));
-		if( !antic.video[i] )
-            return 1;
 		memset(antic.video[i], 0, sizeof(VIDEO));
     }
 

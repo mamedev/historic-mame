@@ -4,7 +4,7 @@
 ****************************************************************************/
 #include "driver.h"
 #include "sound/filter.h"
-#include "rc.h"
+#include "rescap.h"
 #include "sound/custom.h"
 
 static int sample_msb = 0;

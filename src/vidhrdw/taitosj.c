@@ -202,12 +202,10 @@ VIDEO_START( taitosj )
 	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer2 = auto_malloc(videoram_size);
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((dirtybuffer3 = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer3 = auto_malloc(videoram_size);
 	memset(dirtybuffer3,1,videoram_size);
 
 	if ((sprite_plane_collbitmap1 = auto_bitmap_alloc(16,16)) == 0)

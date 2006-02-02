@@ -84,10 +84,6 @@ static VIDEO_START( common )
 	local_videoram = auto_malloc(0x80000);
 	pen_map = auto_malloc(65536 * sizeof(pen_map[0]));
 
-	/* handle failure */
-	if (!midyunit_cmos_ram || !local_videoram || !pen_map)
-		return 1;
-
 	/* we have to erase this since we rely on upper bits being 0 */
 	memset(local_videoram, 0, 0x80000);
 

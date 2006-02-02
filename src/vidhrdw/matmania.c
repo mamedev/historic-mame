@@ -129,12 +129,10 @@ WRITE8_HANDLER( matmania_paletteram_w )
 ***************************************************************************/
 VIDEO_START( matmania )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((dirtybuffer2 = auto_malloc(matmania_videoram3_size)) == 0)
-		return 1;
+	dirtybuffer2 = auto_malloc(matmania_videoram3_size);
 	memset(dirtybuffer2,1,matmania_videoram3_size);
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */

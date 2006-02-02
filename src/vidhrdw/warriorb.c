@@ -24,8 +24,6 @@ static int warriorb_core_vh_start (int x_offs,int multiscrn_xoffs)
 	int chips;
 
 	spritelist = auto_malloc(0x800 * sizeof(*spritelist));
-	if (!spritelist)
-		return 1;
 
 	chips = number_of_TC0100SCN();
 

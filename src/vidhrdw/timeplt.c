@@ -123,7 +123,7 @@ VIDEO_START( timeplt )
 	sprite_mux_buffer = auto_malloc(256 * spriteram_size);
 	sprite_mux_buffer_2 = auto_malloc(256 * spriteram_size);
 
-	if (!bg_tilemap || !sprite_mux_buffer || !sprite_mux_buffer_2)
+	if (!bg_tilemap)
 		return 1;
 
 	return 0;

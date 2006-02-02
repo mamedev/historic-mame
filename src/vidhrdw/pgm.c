@@ -287,7 +287,6 @@ VIDEO_START( pgm )
 	pgm_spritebufferram = auto_malloc (0xa00);
 
 	sprite_bitmap		= auto_malloc((448+32+32) * 224 * sizeof(UINT16));
-	if (!sprite_bitmap) return 1;
 
 
 

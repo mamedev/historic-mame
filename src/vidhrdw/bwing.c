@@ -201,7 +201,7 @@ VIDEO_START( bwing )
 	if (!(charmap = tilemap_create(get_charinfo,tilemap_scan_cols,TILEMAP_TRANSPARENT, 8, 8,32,32))) return(1);
 	if (!(fgmap = tilemap_create(get_fgtileinfo,bwing_scan_cols,TILEMAP_TRANSPARENT,16,16,64,64))) return(1);
 	if (!(bgmap = tilemap_create(get_bgtileinfo,bwing_scan_cols,TILEMAP_OPAQUE,16,16,64,64))) return(1);
-	if (!(srxlat = (int *)auto_malloc(0x8000))) return(1);
+	srxlat = auto_malloc(0x8000);
 
 	scrollmap[0] = fgmap;
 	scrollmap[1] = bgmap;

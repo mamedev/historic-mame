@@ -325,10 +325,10 @@ void hyhoo_gfxdraw(void)
 ******************************************************************************/
 VIDEO_START( hyhoo )
 {
-	if ((hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16))) == 0) return 1;
-	if ((hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16))) == 0) return 1;
-	if ((hyhoo_clut = auto_malloc(0x10 * sizeof(UINT8))) == 0) return 1;
+	hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	hyhoo_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
+	hyhoo_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
+	hyhoo_clut = auto_malloc(0x10 * sizeof(UINT8));
 	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
 	return 0;
 }

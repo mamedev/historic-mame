@@ -392,7 +392,7 @@ VIDEO_START( m92 )
 
 	paletteram = auto_malloc(0x1000);
 
-	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf1_wide_layer || !pf3_wide_layer || !paletteram)
+	if (!pf1_layer || !pf2_layer || !pf3_layer || !pf1_wide_layer || !pf3_wide_layer)
 		return 1;
 
 	/* split type 0 - totally transparent in front half */

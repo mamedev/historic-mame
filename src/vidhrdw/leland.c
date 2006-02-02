@@ -65,7 +65,7 @@ VIDEO_START( leland )
     fgbitmap = auto_bitmap_alloc(VIDEO_WIDTH * 8, VIDEO_HEIGHT * 8);
 
 	/* error cases */
-    if (!leland_video_ram || !fgbitmap)
+    if (!fgbitmap)
 		return 1;
 
 	/* reset videoram */
@@ -82,8 +82,6 @@ VIDEO_START( ataxx )
 
 	/* allocate memory */
 	ataxx_qram = auto_malloc(QRAM_SIZE);
-    if (!ataxx_qram)
-		return 1;
 
 	/* reset QRAM */
 	memset(ataxx_qram, 0, QRAM_SIZE);

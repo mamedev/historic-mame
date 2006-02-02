@@ -27,7 +27,7 @@
 #ifndef SN76477_SOUND_H
 #define SN76477_SOUND_H
 
-#include "rc.h"
+#include "rescap.h"
 
 /* The interface structure */
 struct SN76477interface {

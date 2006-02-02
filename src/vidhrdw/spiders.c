@@ -42,7 +42,7 @@ VIDEO_START( spiders )
 		bitflip[loop]|=(loop&0x40)?0x02:0x00;
 		bitflip[loop]|=(loop&0x80)?0x01:0x00;
 	}
-	if ((screenbuffer = auto_malloc(SCREENBUFFER_SIZE*sizeof(int))) == 0) return 1;
+	screenbuffer = auto_malloc(SCREENBUFFER_SIZE*sizeof(int));
 	memset(screenbuffer,1,SCREENBUFFER_SIZE*sizeof(int));
 	return 0;
 }

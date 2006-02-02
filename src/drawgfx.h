@@ -73,6 +73,7 @@ struct _gfx_element
 	UINT32 line_modulo;	/* amount to add to get to the next line (usually = width) */
 	UINT32 char_modulo;	/* = line_modulo * height */
 	UINT32 flags;
+	gfx_layout layout;	/* references the original layout */
 };
 typedef struct _gfx_element gfx_element;
 
@@ -146,7 +147,8 @@ extern int pdrawgfx_shadow_lowpri;
 #define plot_box(bm,x,y,w,h,p)	(*(bm)->plot_box)(bm,x,y,w,h,p)
 
 void decodechar(gfx_element *gfx,int num,const unsigned char *src,const gfx_layout *gl);
-gfx_element *decodegfx(const unsigned char *src,const gfx_layout *gl);
+gfx_element *allocgfx(const gfx_layout *gl);
+void decodegfx(gfx_element *gfx, const UINT8 *src, UINT32 first, UINT32 count);
 void set_pixel_functions(mame_bitmap *bitmap);
 void freegfx(gfx_element *gfx);
 void drawgfx(mame_bitmap *dest,const gfx_element *gfx,

@@ -353,14 +353,12 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 
 	/* allocate the spriteram */
 	mo->spriteram = auto_malloc(sizeof(mo->spriteram[0]) * mo->spriteramsize);
-	VERIFYRETFREE(mo->spriteram, "atarimo_init: out of memory for spriteram", 0)
 
 	/* clear it to zero */
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
 
 	/* allocate the code lookup */
 	mo->codelookup = auto_malloc(sizeof(mo->codelookup[0]) * round_to_powerof2(mo->codemask.mask));
-	VERIFYRETFREE(mo->codelookup, "atarimo_init: out of memory for code lookup", 0)
 
 	/* initialize it 1:1 */
 	for (i = 0; i < round_to_powerof2(mo->codemask.mask); i++)
@@ -368,7 +366,6 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 
 	/* allocate the color lookup */
 	mo->colorlookup = auto_malloc(sizeof(mo->colorlookup[0]) * round_to_powerof2(mo->colormask.mask));
-	VERIFYRETFREE(mo->colorlookup, "atarimo_init: out of memory for color lookup", 0)
 
 	/* initialize it 1:1 */
 	for (i = 0; i < round_to_powerof2(mo->colormask.mask); i++)
@@ -378,11 +375,9 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->dirtywidth = (Machine->drv->screen_width >> mo->tilexshift) + 2;
 	mo->dirtyheight = (Machine->drv->screen_height >> mo->tileyshift) + 2;
 	mo->dirtygrid = auto_malloc(mo->dirtywidth * mo->dirtyheight);
-	VERIFYRETFREE(mo->dirtygrid, "atarimo_init: out of memory for dirty grid", 0)
 
 	/* allocate the gfx lookup */
 	mo->gfxlookup = auto_malloc(sizeof(mo->gfxlookup[0]) * round_to_powerof2(mo->gfxmask.mask));
-	VERIFYRETFREE(mo->gfxlookup, "atarimo_init: out of memory for gfx lookup", 0)
 
 	/* initialize it with the gfxindex we were passed in */
 	for (i = 0; i < round_to_powerof2(mo->gfxmask.mask); i++)

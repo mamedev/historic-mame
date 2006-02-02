@@ -35,7 +35,6 @@ struct dss_counter_context
 	int		is_7492;
 	int		last;		// Last clock state
 	int		count;		// current count
-	double	t_sample;	// discrete clock rate in seconds
 	double	t_clock;	// fixed counter clock in seconds
 	double	t_left;		// time unused during last sample in seconds
 };
@@ -44,7 +43,6 @@ struct dss_lfsr_context
 {
 	unsigned int	lfsr_reg;
 	int				last;		// Last clock state
-	double			t_sample;	// discrete clock rate in seconds
 	double			t_clock;	// fixed counter clock in seconds
 	double			t_left;		// time unused during last sample in seconds
 	double			sampleStep;
@@ -62,7 +60,6 @@ struct dss_note_context
 	int		clock_type;
 	int		out_type;
 	int		last;		// Last clock state
-	double	t_sample;	// discrete clock rate in seconds
 	double	t_clock;	// fixed counter clock in seconds
 	double	t_left;		// time unused during last sample in seconds
 	int		max1;		// Max 1 Count stored as int for easy use.
@@ -83,7 +80,6 @@ struct dss_op_amp_osc_context
 	double	vCap;			// current capacitor voltage
 	double	rTotal;			// all input resistors in parallel
 	double	iFixed;			// fixed current athe the input
-	double	step;
 	double	temp1;			// Multi purpose
 	double	temp2;			// Multi purpose
 	double	temp3;			// Multi purpose
@@ -166,10 +162,10 @@ void dss_counter_step(struct node_description *node)
 	if (context->clock_type == DISC_CLK_IS_FREQ)
 	{
 		/* We need to keep clocking the internal clock even if disabled. */
-		cycles = (context->t_left + context->t_sample) / context->t_clock;
+		cycles = (context->t_left + discrete_current_context->sample_time) / context->t_clock;
 		inc = (int)cycles;
 		context->t_left = (cycles - inc) * context->t_clock;
-		if (inc) xTime = context->t_left / context->t_sample;
+		if (inc) xTime = context->t_left / discrete_current_context->sample_time;
 	}
 	else
 	{
@@ -260,7 +256,6 @@ void dss_counter_reset(struct node_description *node)
 	if ((context->clock_type < DISC_CLK_ON_F_EDGE) || (context->clock_type > DISC_CLK_IS_FREQ))
 		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
 	context->last = 0;
-	context->t_sample = 1.0 / Machine->sample_rate;
 	if (context->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_COUNTER__CLOCK;
 	context->t_left = 0;
 	context->count = DSS_COUNTER__INIT; /* count starts at reset value */
@@ -365,7 +360,7 @@ void dss_lfsr_step(struct node_description *node)
 	if (lfsr_desc->clock_type == DISC_CLK_IS_FREQ)
 	{
 		/* We need to keep clocking the internal clock even if disabled. */
-		cycles = (context->t_left + context->t_sample) / context->t_clock;
+		cycles = (context->t_left + discrete_current_context->sample_time) / context->t_clock;
 		inc = (int)cycles;
 		context->t_left = (cycles - inc) * context->t_clock;
 	}
@@ -450,7 +445,6 @@ void dss_lfsr_reset(struct node_description *node)
 	if ((lfsr_desc->clock_type < DISC_CLK_ON_F_EDGE) || (lfsr_desc->clock_type > DISC_CLK_IS_FREQ))
 		discrete_log("Invalid clock type passed in NODE_%d\n", node->node - NODE_START);
 	context->last = (DSS_COUNTER__CLOCK != 0);
-	context->t_sample = 1.0 / Machine->sample_rate;
 	if (lfsr_desc->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_LFSR_NOISE__CLOCK;
 	context->t_left = 0;
 
@@ -520,7 +514,7 @@ void dss_noise_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*M_PI*DSS_NOISE__FREQ)/Machine->sample_rate)),2.0*M_PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_NOISE__FREQ)/discrete_current_context->sample_rate)),2.0*M_PI);
 }
 
 
@@ -563,10 +557,10 @@ void dss_note_step(struct node_description *node)
 	if (context->clock_type == DISC_CLK_IS_FREQ)
 	{
 		/* We need to keep clocking the internal clock even if disabled. */
-		cycles = (context->t_left + context->t_sample) / context->t_clock;
+		cycles = (context->t_left + discrete_current_context->sample_time) / context->t_clock;
 		inc = (int)cycles;
 		context->t_left = (cycles - inc) * context->t_clock;
-		if (inc) xTime = context->t_left / context->t_sample;
+		if (inc) xTime = context->t_left / discrete_current_context->sample_time;
 	}
 	else
 	{
@@ -608,7 +602,7 @@ void dss_note_step(struct node_description *node)
 			for (clock = 0; clock < inc; clock++)
 			{
 				context->count1++;
-				if (context->count1 >= context->max1)
+				if (context->count1 > context->max1)
 				{
 					/* Max 1 count reached.  Load Data into counter. */
 					context->count1 = (int)DSS_NOTE__DATA;
@@ -645,7 +639,6 @@ void dss_note_reset(struct node_description *node)
 	context->clock_type = (int)DSS_NOTE__CLOCK_TYPE & DISC_CLK_MASK;
 	context->out_type =  (int)DSS_NOTE__CLOCK_TYPE & DISC_OUT_MASK;
 	context->last = (DSS_NOTE__CLOCK != 0);
-	context->t_sample = 1.0 / Machine->sample_rate;
 	if (context->clock_type == DISC_CLK_IS_FREQ) context->t_clock = 1.0 / DSS_NOTE__CLOCK;
 	context->t_left = 0;
 
@@ -684,7 +677,7 @@ void dss_op_amp_osc_step(struct node_description *node)
 	double vC;			// Current voltage on capacitor, before dt
 	double vCnext = 0;	// Voltage on capacitor, after dt
 
-	dt = context->step;	// Change in time
+	dt = discrete_current_context->sample_time;	// Change in time
 	vC = context->vCap;	// Set to voltage before change
 
 	/* work out the charge currents for the VCOs. */
@@ -865,7 +858,6 @@ void dss_op_amp_osc_reset(struct node_description *node)
 	}
 
 	context->vCap = 0;
-	context->step = 1.0 / Machine->sample_rate;
 
 	dss_op_amp_osc_step(node);
 }
@@ -913,7 +905,7 @@ void dss_sawtoothwave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SAWTOOTHWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SAWTOOTHWAVE__FREQ)/discrete_current_context->sample_rate)),2.0*M_PI);
 }
 
 void dss_sawtoothwave_reset(struct node_description *node)
@@ -1047,7 +1039,7 @@ void dss_schmitt_osc_reset(struct node_description *node)
      * So use this for the RC charge constant. */
 	rSource = 1.0 / ((1.0 / info->rIn) + (1.0 / info->rFeedback));
 	context->rc = rSource * info->c;
-	context->exponent = -1.0 / (context->rc  * Machine->sample_rate);
+	context->exponent = -1.0 / (context->rc  * discrete_current_context->sample_rate);
 	context->exponent = 1.0 - exp(context->exponent);
 
 	/* Cap is at 0V on power up.  Causing output to be high. */
@@ -1098,7 +1090,7 @@ void dss_sinewave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SINEWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SINEWAVE__FREQ)/discrete_current_context->sample_rate)),2.0*M_PI);
 }
 
 void dss_sinewave_reset(struct node_description *node)
@@ -1164,7 +1156,7 @@ void dss_squarewave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SQUAREWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_SQUAREWAVE__FREQ)/discrete_current_context->sample_rate)),2.0*M_PI);
 }
 
 void dss_squarewave_reset(struct node_description *node)
@@ -1233,7 +1225,7 @@ void dss_squarewfix_reset(struct node_description *node)
 {
 	struct dss_squarewfix_context *context = node->context;
 
-	context->sampleStep = 1.0 / Machine->sample_rate;
+	context->sampleStep = 1.0 / discrete_current_context->sample_rate;
 	context->flip_flop = 1;
 
 	/* Do the intial time shift and convert freq to off/on times */
@@ -1295,7 +1287,7 @@ void dss_squarewave2_step(struct node_description *node)
 		/*     phase step = 2Pi/(output period/sample period)        */
 		/*                    boils out to                           */
 		/*     phase step = 2Pi/(output period*sample freq)          */
-		newphase = context->phase + ((2.0 * M_PI) / ((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) * Machine->sample_rate));
+		newphase = context->phase + ((2.0 * M_PI) / ((DSS_SQUAREWAVE2__T_OFF + DSS_SQUAREWAVE2__T_ON) * discrete_current_context->sample_rate));
 		/* Keep the new phasor in the 2Pi range.*/
 		context->phase = fmod(newphase, 2.0 * M_PI);
 
@@ -1373,7 +1365,7 @@ void dss_trianglewave_step(struct node_description *node)
 	/*                    boils out to                           */
 	/*     phase step = (2Pi*output freq)/sample freq)           */
 	/* Also keep the new phasor in the 2Pi range.                */
-	context->phase=fmod((context->phase+((2.0*M_PI*DSS_TRIANGLEWAVE__FREQ)/Machine->sample_rate)),2.0*M_PI);
+	context->phase=fmod((context->phase+((2.0*M_PI*DSS_TRIANGLEWAVE__FREQ)/discrete_current_context->sample_rate)),2.0*M_PI);
 }
 
 void dss_trianglewave_reset(struct node_description *node)

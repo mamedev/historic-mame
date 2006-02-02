@@ -777,8 +777,6 @@ int	pit8253_init(int count,	const struct pit8253_config *config)
 
 	pit_count =	count;
 	pits = auto_malloc(count * sizeof(struct pit8253));
-	if (!pits)
-		goto error;
 
 	memset(pits, 0,	count *	sizeof(struct pit8253));
 

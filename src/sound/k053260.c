@@ -213,9 +213,6 @@ static void *k053260_start(int sndindex, int clock, const void *config)
 
 	ic->delta_table = ( unsigned long * )auto_malloc( 0x1000 * sizeof( unsigned long ) );
 
-	if ( ic->delta_table == 0 )
-		return NULL;
-
 	ic->channel = stream_create( 0, 2, Machine->sample_rate, ic, K053260_update );
 
 	InitDeltaTable( ic, clock );

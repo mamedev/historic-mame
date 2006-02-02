@@ -439,7 +439,7 @@ VIDEO_START( st0016 )
 		return 1;
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	Machine->gfx[gfx_index] = decodegfx((UINT8 *)st0016_charram,&charlayout);
+	Machine->gfx[gfx_index] = allocgfx(&charlayout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
 

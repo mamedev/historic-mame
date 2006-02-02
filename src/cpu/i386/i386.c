@@ -369,14 +369,8 @@ static void build_cycle_table(void)
 	int i, j;
 	for (j=0; j < X86_NUM_CPUS; j++)
 	{
-		if (!cycle_table_rm[j])
-		{
-			cycle_table_rm[j] = auto_malloc(sizeof(UINT8) * CYCLES_NUM_OPCODES);
-		}
-		if (!cycle_table_pm[j])
-		{
-			cycle_table_pm[j] = auto_malloc(sizeof(UINT8) * CYCLES_NUM_OPCODES);
-		}
+		cycle_table_rm[j] = auto_malloc(sizeof(UINT8) * CYCLES_NUM_OPCODES);
+		cycle_table_pm[j] = auto_malloc(sizeof(UINT8) * CYCLES_NUM_OPCODES);
 
 		for (i=0; i < sizeof(x86_cycle_table)/sizeof(X86_CYCLE_TABLE); i++)
 		{
@@ -590,11 +584,6 @@ void i386_reset(void *param)
 	CHANGE_PC(I.eip);
 }
 
-void i386_exit(void)
-{
-
-}
-
 static void i386_get_context(void *dst)
 {
 	if(dst) {
@@ -609,82 +598,6 @@ static void i386_set_context(void *src)
 	}
 
 	CHANGE_PC(I.eip);
-}
-
-unsigned i386_get_reg(int regnum)
-{
-	switch(regnum)
-	{
-		case REG_PC:		return I.pc;
-		case I386_EIP:		return I.eip;
-		case I386_EAX:		return REG32(EAX);
-		case I386_EBX:		return REG32(EBX);
-		case I386_ECX:		return REG32(ECX);
-		case I386_EDX:		return REG32(EDX);
-		case I386_EBP:		return REG32(EBP);
-		case I386_ESP:		return REG32(ESP);
-		case I386_ESI:		return REG32(ESI);
-		case I386_EDI:		return REG32(EDI);
-		case I386_EFLAGS:	return I.eflags;
-		case I386_CS:		return I.sreg[CS].selector;
-		case I386_SS:		return I.sreg[SS].selector;
-		case I386_DS:		return I.sreg[DS].selector;
-		case I386_ES:		return I.sreg[ES].selector;
-		case I386_FS:		return I.sreg[FS].selector;
-		case I386_GS:		return I.sreg[GS].selector;
-		case I386_CR0:		return I.cr[0];
-		case I386_CR1:		return I.cr[1];
-		case I386_CR2:		return I.cr[2];
-		case I386_CR3:		return I.cr[3];
-		case I386_DR0:		return I.dr[0];
-		case I386_DR1:		return I.dr[1];
-		case I386_DR2:		return I.dr[2];
-		case I386_DR3:		return I.dr[3];
-		case I386_DR4:		return I.dr[4];
-		case I386_DR5:		return I.dr[5];
-		case I386_DR6:		return I.dr[6];
-		case I386_DR7:		return I.dr[7];
-		case I386_TR6:		return I.tr[6];
-		case I386_TR7:		return I.tr[7];
-	}
-	return 0;
-}
-
-void i386_set_reg(int regnum, unsigned value)
-{
-	switch(regnum)
-	{
-		case I386_EIP:		I.eip = value; break;
-		case I386_EAX:		REG32(EAX) = value; break;
-		case I386_EBX:		REG32(EBX) = value; break;
-		case I386_ECX:		REG32(ECX) = value; break;
-		case I386_EDX:		REG32(EDX) = value; break;
-		case I386_EBP:		REG32(EBP) = value; break;
-		case I386_ESP:		REG32(ESP) = value; break;
-		case I386_ESI:		REG32(ESI) = value; break;
-		case I386_EDI:		REG32(EDI) = value; break;
-		case I386_EFLAGS:	I.eflags = value; break;
-		case I386_CS:		I.sreg[CS].selector = value & 0xffff; break;
-		case I386_SS:		I.sreg[SS].selector = value & 0xffff; break;
-		case I386_DS:		I.sreg[DS].selector = value & 0xffff; break;
-		case I386_ES:		I.sreg[ES].selector = value & 0xffff; break;
-		case I386_FS:		I.sreg[FS].selector = value & 0xffff; break;
-		case I386_GS:		I.sreg[GS].selector = value & 0xffff; break;
-		case I386_CR0:		I.cr[0] = value; break;
-		case I386_CR1:		I.cr[1] = value; break;
-		case I386_CR2:		I.cr[2] = value; break;
-		case I386_CR3:		I.cr[3] = value; break;
-		case I386_DR0:		I.dr[0] = value; break;
-		case I386_DR1:		I.dr[1] = value; break;
-		case I386_DR2:		I.dr[2] = value; break;
-		case I386_DR3:		I.dr[3] = value; break;
-		case I386_DR4:		I.dr[4] = value; break;
-		case I386_DR5:		I.dr[5] = value; break;
-		case I386_DR6:		I.dr[6] = value; break;
-		case I386_DR7:		I.dr[7] = value; break;
-		case I386_TR6:		I.tr[6] = value; break;
-		case I386_TR7:		I.tr[7] = value; break;
-	}
 }
 
 static void i386_set_irq_line(int irqline, int state)
@@ -820,6 +733,23 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I386_PC:			I.pc = info->i;break;
 		case CPUINFO_INT_REGISTER + I386_EIP:			I.eip = info->i; CHANGE_PC(I.eip); break;
+		case CPUINFO_INT_REGISTER + I386_AL:			REG8(AL) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_AH:			REG8(AH) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_BL:			REG8(BL) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_BH:			REG8(BH) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_CL:			REG8(CL) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_CH:			REG8(CH) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_DL:			REG8(DL) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_DH:			REG8(DH) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_AX:			REG16(AX) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_BX:			REG16(BX) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_CX:			REG16(CX) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_DX:			REG16(DX) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_SI:			REG16(SI) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_DI:			REG16(DI) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_BP:			REG16(BP) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_SP:			REG16(SP) = info->i; break;
+		case CPUINFO_INT_REGISTER + I386_IP:			I.eip = (I.eip & ~0xFFFF) | (info->i & 0xFFFF); CHANGE_PC(I.eip); break;
 		case CPUINFO_INT_REGISTER + I386_EAX:			REG32(EAX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_EBX:			REG32(EBX) = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_ECX:			REG32(ECX) = info->i; break;
@@ -890,6 +820,23 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + I386_PC:			info->i = I.pc; break;
 		case CPUINFO_INT_REGISTER + I386_EIP:			info->i = I.eip; break;
+		case CPUINFO_INT_REGISTER + I386_AL:			info->i = REG8(AL); break;
+		case CPUINFO_INT_REGISTER + I386_AH:			info->i = REG8(AH); break;
+		case CPUINFO_INT_REGISTER + I386_BL:			info->i = REG8(BL); break;
+		case CPUINFO_INT_REGISTER + I386_BH:			info->i = REG8(BH); break;
+		case CPUINFO_INT_REGISTER + I386_CL:			info->i = REG8(CL); break;
+		case CPUINFO_INT_REGISTER + I386_CH:			info->i = REG8(CH); break;
+		case CPUINFO_INT_REGISTER + I386_DL:			info->i = REG8(DL); break;
+		case CPUINFO_INT_REGISTER + I386_DH:			info->i = REG8(DH); break;
+		case CPUINFO_INT_REGISTER + I386_AX:			info->i = REG16(AX); break;
+		case CPUINFO_INT_REGISTER + I386_BX:			info->i = REG16(BX); break;
+		case CPUINFO_INT_REGISTER + I386_CX:			info->i = REG16(CX); break;
+		case CPUINFO_INT_REGISTER + I386_DX:			info->i = REG16(DX); break;
+		case CPUINFO_INT_REGISTER + I386_SI:			info->i = REG16(SI); break;
+		case CPUINFO_INT_REGISTER + I386_DI:			info->i = REG16(DI); break;
+		case CPUINFO_INT_REGISTER + I386_BP:			info->i = REG16(BP); break;
+		case CPUINFO_INT_REGISTER + I386_SP:			info->i = REG16(SP); break;
+		case CPUINFO_INT_REGISTER + I386_IP:			info->i = I.eip & 0xFFFF; break;
 		case CPUINFO_INT_REGISTER + I386_EAX:			info->i = REG32(EAX); break;
 		case CPUINFO_INT_REGISTER + I386_EBX:			info->i = REG32(EBX); break;
 		case CPUINFO_INT_REGISTER + I386_ECX:			info->i = REG32(ECX); break;
@@ -926,7 +873,6 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = i386_set_context;	break;
 		case CPUINFO_PTR_INIT:		      				info->init = i386_init;			break;
 		case CPUINFO_PTR_RESET:		      				info->reset = i386_reset;		break;
-		case CPUINFO_PTR_EXIT:		      				info->exit = i386_exit;			break;
 		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;		break;
 		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i386_dasm;		break;
@@ -950,6 +896,23 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_STR_REGISTER + I386_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", I.pc); break;
 		case CPUINFO_STR_REGISTER + I386_EIP:			sprintf(info->s = cpuintrf_temp_str(), "EIP: %08X", I.eip); break;
+		case CPUINFO_STR_REGISTER + I386_AL:			sprintf(info->s = cpuintrf_temp_str(), "~AL: %02X", REG8(AL)); break;
+		case CPUINFO_STR_REGISTER + I386_AH:			sprintf(info->s = cpuintrf_temp_str(), "~AH: %02X", REG8(AH)); break;
+		case CPUINFO_STR_REGISTER + I386_BL:			sprintf(info->s = cpuintrf_temp_str(), "~BL: %02X", REG8(BL)); break;
+		case CPUINFO_STR_REGISTER + I386_BH:			sprintf(info->s = cpuintrf_temp_str(), "~BH: %02X", REG8(BH)); break;
+		case CPUINFO_STR_REGISTER + I386_CL:			sprintf(info->s = cpuintrf_temp_str(), "~CL: %02X", REG8(CL)); break;
+		case CPUINFO_STR_REGISTER + I386_CH:			sprintf(info->s = cpuintrf_temp_str(), "~CH: %02X", REG8(CH)); break;
+		case CPUINFO_STR_REGISTER + I386_DL:			sprintf(info->s = cpuintrf_temp_str(), "~DL: %02X", REG8(DL)); break;
+		case CPUINFO_STR_REGISTER + I386_DH:			sprintf(info->s = cpuintrf_temp_str(), "~DH: %02X", REG8(DH)); break;
+		case CPUINFO_STR_REGISTER + I386_AX:			sprintf(info->s = cpuintrf_temp_str(), "~AX: %04X", REG16(AX)); break;
+		case CPUINFO_STR_REGISTER + I386_BX:			sprintf(info->s = cpuintrf_temp_str(), "~BX: %04X", REG16(BX)); break;
+		case CPUINFO_STR_REGISTER + I386_CX:			sprintf(info->s = cpuintrf_temp_str(), "~CX: %04X", REG16(CX)); break;
+		case CPUINFO_STR_REGISTER + I386_DX:			sprintf(info->s = cpuintrf_temp_str(), "~DX: %04X", REG16(DX)); break;
+		case CPUINFO_STR_REGISTER + I386_SI:			sprintf(info->s = cpuintrf_temp_str(), "~SI: %04X", REG16(SI)); break;
+		case CPUINFO_STR_REGISTER + I386_DI:			sprintf(info->s = cpuintrf_temp_str(), "~DI: %04X", REG16(DI)); break;
+		case CPUINFO_STR_REGISTER + I386_BP:			sprintf(info->s = cpuintrf_temp_str(), "~BP: %04X", REG16(BP)); break;
+		case CPUINFO_STR_REGISTER + I386_SP:			sprintf(info->s = cpuintrf_temp_str(), "~SP: %04X", REG16(SP)); break;
+		case CPUINFO_STR_REGISTER + I386_IP:			sprintf(info->s = cpuintrf_temp_str(), "~IP: %04X", I.eip & 0xFFFF); break;
 		case CPUINFO_STR_REGISTER + I386_EAX:			sprintf(info->s = cpuintrf_temp_str(), "EAX: %08X", I.reg.d[EAX]); break;
 		case CPUINFO_STR_REGISTER + I386_EBX:			sprintf(info->s = cpuintrf_temp_str(), "EBX: %08X", I.reg.d[EBX]); break;
 		case CPUINFO_STR_REGISTER + I386_ECX:			sprintf(info->s = cpuintrf_temp_str(), "ECX: %08X", I.reg.d[ECX]); break;

@@ -475,17 +475,7 @@ VIDEO_START( fromanc2 )
 		!fromanc2_tilemap[1][0] ||
 		!fromanc2_tilemap[1][1] ||
 		!fromanc2_tilemap[1][2] ||
-		!fromanc2_tilemap[1][3] ||
-		!fromanc2_videoram[0][0] ||
-		!fromanc2_videoram[0][1] ||
-		!fromanc2_videoram[0][2] ||
-		!fromanc2_videoram[0][3] ||
-		!fromanc2_videoram[1][0] ||
-		!fromanc2_videoram[1][1] ||
-		!fromanc2_videoram[1][2] ||
-		!fromanc2_videoram[1][3] ||
-		!fromanc2_paletteram[0] ||
-		!fromanc2_paletteram[1]) {
+		!fromanc2_tilemap[1][3]) {
 		return 1;
 	}
 
@@ -527,15 +517,7 @@ VIDEO_START( fromancr )
 		!fromanc2_tilemap[0][2] ||
 		!fromanc2_tilemap[1][0] ||
 		!fromanc2_tilemap[1][1] ||
-		!fromanc2_tilemap[1][2] ||
-		!fromanc2_videoram[0][0] ||
-		!fromanc2_videoram[0][1] ||
-		!fromanc2_videoram[0][2] ||
-		!fromanc2_videoram[1][0] ||
-		!fromanc2_videoram[1][1] ||
-		!fromanc2_videoram[1][2] ||
-		!fromanc2_paletteram[0] ||
-		!fromanc2_paletteram[1]) {
+		!fromanc2_tilemap[1][2]) {
 		return 1;
 	}
 
@@ -576,15 +558,7 @@ VIDEO_START( fromanc4 )
 		!fromanc2_tilemap[0][2] ||
 		!fromanc2_tilemap[1][0] ||
 		!fromanc2_tilemap[1][1] ||
-		!fromanc2_tilemap[1][2] ||
-		!fromanc2_videoram[0][0] ||
-		!fromanc2_videoram[0][1] ||
-		!fromanc2_videoram[0][2] ||
-		!fromanc2_videoram[1][0] ||
-		!fromanc2_videoram[1][1] ||
-		!fromanc2_videoram[1][2] ||
-		!fromanc2_paletteram[0] ||
-		!fromanc2_paletteram[1]) {
+		!fromanc2_tilemap[1][2]) {
 		return 1;
 	}
 

@@ -476,10 +476,6 @@ InitDSP( void )
 	UINT16 pc, loop;
 
 	mpDspState = auto_malloc( sizeof(*mpDspState) );
-	if( !mpDspState )
-	{
-		return -1;
-	}
 
 	memset( mpDspState, 0, sizeof(*mpDspState) );
 

@@ -278,19 +278,23 @@ static DRIVER_INIT( mustache )
 {
 	int i;
 
-	#define G1 (memory_region_length(REGION_GFX1)/3)
-	#define G2 (memory_region_length(REGION_GFX2)/2)
+	int G1 = memory_region_length(REGION_GFX1)/3;
+	int G2 = memory_region_length(REGION_GFX2)/2;
+	UINT8 *gfx1 = memory_region(REGION_GFX1);
+	UINT8 *gfx2 = memory_region(REGION_GFX2);
+	UINT8 *buf=malloc(G2*2);
 
-	UINT8 *buf=auto_malloc(G2*2);
+	if (!buf)
+		return;
 
 	/* BG data lines */
 	for (i=0;i<G1; i++)
 	{
 		UINT16 w;
 
-		buf[i] = BITSWAP8(memory_region(REGION_GFX1)[i], 0,5,2,6,4,1,7,3);
+		buf[i] = BITSWAP8(gfx1[i], 0,5,2,6,4,1,7,3);
 
-		w = (memory_region(REGION_GFX1)[i+G1] << 8) | memory_region(REGION_GFX1)[i+G1*2];
+		w = (gfx1[i+G1] << 8) | gfx1[i+G1*2];
 		w = BITSWAP16(w, 14,1,13,5,9,2,10,6, 3,8,4,15,0,11,12,7);
 
 		buf[i+G1]   = w >> 8;
@@ -299,14 +303,14 @@ static DRIVER_INIT( mustache )
 
 	/* BG address lines */
 	for (i = 0; i < 3*G1; i++)
-		memory_region(REGION_GFX1)[i] = buf[BITSWAP16(i,15,14,13,2,1,0,12,11,10,9,8,7,6,5,4,3)];
+		gfx1[i] = buf[BITSWAP16(i,15,14,13,2,1,0,12,11,10,9,8,7,6,5,4,3)];
 
 	/* SPR data lines */
 	for (i=0;i<G2; i++)
 	{
 		UINT16 w;
 
-		w = (memory_region(REGION_GFX2)[i] << 8) | memory_region(REGION_GFX2)[i+G2];
+		w = (gfx2[i] << 8) | gfx2[i+G2];
 		w = BITSWAP16(w, 5,7,11,4,15,10,3,14, 9,2,13,8,1,12,0,6 );
 
 		buf[i]    = w >> 8;
@@ -315,8 +319,9 @@ static DRIVER_INIT( mustache )
 
 	/* SPR address lines */
 	for (i = 0; i < 2*G2; i++)
-		memory_region(REGION_GFX2)[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)];
+		gfx2[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,12,11,10,9,8,7,6,5,4,13,14,3,2,1,0)];
 
+	free(buf);
 	seibu_sound_decrypt(REGION_CPU1,0x8000);
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd400, 0xd401, 0, 0, mustache_coin_hack_r);

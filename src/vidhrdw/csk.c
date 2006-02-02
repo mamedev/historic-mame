@@ -122,8 +122,7 @@ VIDEO_START( cska )
 	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 	tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
-	if (!dirtybuffer || !dirtybuffer1 || !cpk_colorram || !cpk_videoram || !cpk_expram ||
-		!cpk_palette || !cpk_palette2 || !tmpbitmap || !tmpbitmap2)
+	if (!tmpbitmap || !tmpbitmap2)
 	{
 		return 1;
 	}

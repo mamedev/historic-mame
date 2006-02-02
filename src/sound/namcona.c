@@ -1138,10 +1138,7 @@ static void *namcona_start(int sndindex, int clock, const void *config)
 	memset( chip->mSequence, 0x00, sizeof(chip->mSequence) );
 
 	chip->mpMixerBuffer = auto_malloc( sizeof(INT16)*chip->mSampleRate*2 );
-	if( chip->mpMixerBuffer )
-	{
-		chip->mpPitchTable = auto_malloc( sizeof(INT32)*0xff );
-		if( chip->mpPitchTable )
+	chip->mpPitchTable = auto_malloc( sizeof(INT32)*0xff );
 		{
 			int i;
 			for( i=0; i<0xff; i++ )
@@ -1160,10 +1157,8 @@ static void *namcona_start(int sndindex, int clock, const void *config)
 				}
 				chip->mpPitchTable[i] = (INT32)freq;
 			}
-			return chip;
 		}
-	}
-	return NULL;
+	return chip;
 } /* NAMCONA_sh_start */
 
 #if 0

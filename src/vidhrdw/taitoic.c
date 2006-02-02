@@ -829,8 +829,7 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 
 		PC080SN_ram[i] = auto_malloc(PC080SN_RAM_SIZE);
 
-		if (!PC080SN_ram[i] || !PC080SN_tilemap[i][0] ||
-				!PC080SN_tilemap[i][1])
+		if (!PC080SN_tilemap[i][0] || !PC080SN_tilemap[i][1])
 			return 1;
 
 		PC080SN_bg_ram[i][0]       = PC080SN_ram[i] + 0x0000 /2;
@@ -1250,9 +1249,6 @@ int PC090OJ_vh_start(int gfxnum,int x_offset,int y_offset,int use_buffer)
 	PC090OJ_ram = auto_malloc(PC090OJ_RAM_SIZE);
 	PC090OJ_ram_buffered = auto_malloc(PC090OJ_RAM_SIZE);
 
-	if (!PC090OJ_ram || !PC090OJ_ram_buffered)
-		return 1;
-
 	memset(PC090OJ_ram,0,PC090OJ_RAM_SIZE);
 	memset(PC090OJ_ram_buffered,0,PC090OJ_RAM_SIZE);
 
@@ -1566,7 +1562,7 @@ int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_f
 	TC0080VCO_tilemap[1] = tilemap_create(TC0080VCO_get_bg1_tile_info_0,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64);
 	TC0080VCO_ram = auto_malloc(TC0080VCO_RAM_SIZE);
 
-	if ( !TC0080VCO_ram || !TC0080VCO_tilemap[0] || !TC0080VCO_tilemap[1])
+	if ( !TC0080VCO_tilemap[0] || !TC0080VCO_tilemap[1])
 		return 1;
 
 	memset( TC0080VCO_ram,0,TC0080VCO_RAM_SIZE );
@@ -1592,7 +1588,7 @@ int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_f
 		TC0080VCO_tilemap[2] = tilemap_create(TC0080VCO_get_tx_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 		TC0080VCO_char_dirty = auto_malloc(TC0080VCO_TOTAL_CHARS);
 
-		if (!TC0080VCO_char_dirty || !TC0080VCO_tilemap[2])
+		if (!TC0080VCO_tilemap[2])
 			return 1;
 
 		TC0080VCO_dirty_chars();
@@ -1606,7 +1602,7 @@ int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_f
 			return 1;
 
 		/* create the char set (gfx will then be updated dynamically from RAM) */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)TC0080VCO_char_ram,&TC0080VCO_charlayout);
+		Machine->gfx[gfx_index] = allocgfx(&TC0080VCO_charlayout);
 		if (!Machine->gfx[gfx_index])
 			return 1;
 
@@ -2374,7 +2370,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		TC0100SCN_ram[i] = auto_malloc(TC0100SCN_RAM_SIZE);
 		TC0100SCN_char_dirty[i] = auto_malloc(TC0100SCN_TOTAL_CHARS);
 
-		if (!TC0100SCN_ram[i] || !TC0100SCN_char_dirty[i] ||
+		if (
 				!TC0100SCN_tilemap[i][0][0] || !TC0100SCN_tilemap[i][0][1] ||
 				!TC0100SCN_tilemap[i][1][0] || !TC0100SCN_tilemap[i][1][1] ||
 				!TC0100SCN_tilemap[i][2][0] || !TC0100SCN_tilemap[i][2][1] )
@@ -2407,7 +2403,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 			return 1;
 
 		/* create the char set (gfx will then be updated dynamically from RAM) */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)TC0100SCN_char_ram[i],&TC0100SCN_charlayout);
+		Machine->gfx[gfx_index] = allocgfx(&TC0100SCN_charlayout);
 		if (!Machine->gfx[gfx_index])
 			return 1;
 
@@ -2870,7 +2866,7 @@ int TC0280GRD_vh_start(int gfxnum)
 	TC0280GRD_ram = auto_malloc(TC0280GRD_RAM_SIZE);
 	TC0280GRD_tilemap = tilemap_create(TC0280GRD_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	if (!TC0280GRD_ram || !TC0280GRD_tilemap)
+	if (!TC0280GRD_tilemap)
 		return 1;
 
 	state_save_register_UINT16("TC0280GRDa", 0, "memory", TC0280GRD_ram, TC0280GRD_RAM_SIZE/2);
@@ -3273,7 +3269,7 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		TC0480SCP_ram = auto_malloc(TC0480SCP_RAM_SIZE);
 		TC0480SCP_char_dirty = auto_malloc(TC0480SCP_TOTAL_CHARS);
 
-		if (!TC0480SCP_ram || !TC0480SCP_char_dirty ||
+		if (
 				!TC0480SCP_tilemap[0][0] || !TC0480SCP_tilemap[0][1] ||
 				!TC0480SCP_tilemap[1][0] || !TC0480SCP_tilemap[1][1] ||
 				!TC0480SCP_tilemap[2][0] || !TC0480SCP_tilemap[2][1] ||
@@ -3301,7 +3297,7 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 			return 1;
 
 		/* create the char set (gfx will then be updated dynamically from RAM) */
-		Machine->gfx[gfx_index] = decodegfx((UINT8 *)TC0480SCP_char_ram,&TC0480SCP_charlayout);
+		Machine->gfx[gfx_index] = allocgfx(&TC0480SCP_charlayout);
 		if (!Machine->gfx[gfx_index])
 			return 1;
 
@@ -4041,8 +4037,6 @@ WRITE16_HANDLER( TC0150ROD_word_w )
 int TC0150ROD_vh_start(void)
 {
 	TC0150ROD_ram = auto_malloc(TC0150ROD_RAM_SIZE);
-
-	if (!TC0150ROD_ram) return 1;
 
 	state_save_register_UINT16("TC0150ROD", 0, "memory", TC0150ROD_ram, TC0150ROD_RAM_SIZE/2);
 	return 0;
@@ -4852,8 +4846,6 @@ int TC0110PCR_vh_start(void)
 {
 	TC0110PCR_ram[0] = auto_malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]));
 
-	if (!TC0110PCR_ram[0]) return 1;
-
 	state_save_register_UINT16("TC0110PCR-0", 0, "memory", TC0110PCR_ram[0],
 		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]) / 2);
 	state_save_register_func_postload_int(TC0110PCR_restore_colors, 0);
@@ -4867,8 +4859,6 @@ int TC0110PCR_1_vh_start(void)
 {
 	TC0110PCR_ram[1] = auto_malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1]));
 
-	if (!TC0110PCR_ram[1]) return 1;
-
 	state_save_register_UINT16("TC0110PCR-1", 0, "memory", TC0110PCR_ram[1],
 		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1])/2);
 	state_save_register_func_postload_int(TC0110PCR_restore_colors, 1);
@@ -4879,8 +4869,6 @@ int TC0110PCR_1_vh_start(void)
 int TC0110PCR_2_vh_start(void)
 {
 	TC0110PCR_ram[2] = auto_malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2]));
-
-	if (!TC0110PCR_ram[2]) return 1;
 
 	state_save_register_UINT16("TC0110PCR-2", 0, "memory", TC0110PCR_ram[2],
 		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2])/2);

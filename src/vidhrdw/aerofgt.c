@@ -395,110 +395,6 @@ static void aerofgt_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,in
 	}
 }
 
-//custom sprites drawing function needed to fix turbofrc sprites priority issues
-static void draw_sprites_custom(mame_bitmap *dest_bmp,const gfx_element *gfx,
-		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-		int scalex, int scaley,	const rectangle *clip,int priority)
-{
-	const pen_t *pal = &gfx->colortable[gfx->color_granularity * (color % gfx->total_colors)]; /* ASG 980209 */
-	UINT8 *source_base = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
-
-	int sprite_screen_height = ((scaley)*gfx->height+0x8000)>>16;
-	int sprite_screen_width = ((scalex)*gfx->width+0x8000)>>16;
-
-	if (!scalex || !scaley) return;
-
-	if (sprite_screen_width && sprite_screen_height)
-	{
-		/* compute sprite increment per screen pixel */
-		int dx = (gfx->width<<16)/sprite_screen_width;
-		int dy = (gfx->height<<16)/sprite_screen_height;
-
-		int ex = sx+sprite_screen_width;
-		int ey = sy+sprite_screen_height;
-
-		int x_index_base;
-		int y_index;
-
-		if( flipx )
-		{
-			x_index_base = (sprite_screen_width-1)*dx;
-			dx = -dx;
-		}
-		else
-		{
-			x_index_base = 0;
-		}
-
-		if( flipy )
-		{
-			y_index = (sprite_screen_height-1)*dy;
-			dy = -dy;
-		}
-		else
-		{
-			y_index = 0;
-		}
-
-		if( clip )
-		{
-			if( sx < clip->min_x)
-			{ /* clip left */
-				int pixels = clip->min_x-sx;
-				sx += pixels;
-				x_index_base += pixels*dx;
-			}
-			if( sy < clip->min_y )
-			{ /* clip top */
-				int pixels = clip->min_y-sy;
-				sy += pixels;
-				y_index += pixels*dy;
-			}
-			/* NS 980211 - fixed incorrect clipping */
-			if( ex > clip->max_x+1 )
-			{ /* clip right */
-				int pixels = ex-clip->max_x-1;
-				ex -= pixels;
-			}
-			if( ey > clip->max_y+1 )
-			{ /* clip bottom */
-				int pixels = ey-clip->max_y-1;
-				ey -= pixels;
-			}
-		}
-
-		if( ex>sx )
-		{ /* skip if inner loop doesn't draw anything */
-			int y;
-
-			for( y=sy; y<ey; y++ )
-			{
-				UINT8 *source = source_base + (y_index>>16) * gfx->line_modulo;
-				UINT16 *dest = (UINT16 *)dest_bmp->line[y];
-				UINT8 *pri = priority_bitmap->line[y];
-
-				int x, x_index = x_index_base;
-				for( x=sx; x<ex; x++ )
-				{
-					int c = source[x_index>>16];
-					if( c != 15 )
-					{
-						if (pri[x] < priority)
-							dest[x] = pal[c];
-
-						// sprites priority system don't support sprites orthogonality
-						if(priority == 2)
-							pri[x] = 0xff; // mark it "already drawn"
-					}
-					x_index += dx;
-				}
-
-				y_index += dy;
-			}
-		}
-	}
-}
-
 static void turbofrc_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int chip_disabled_pri)
 {
 	int attr_start,base,first;
@@ -553,9 +449,15 @@ static void turbofrc_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect,i
 				else
 					code = aerofgt_spriteram2[map_start % (aerofgt_spriteram2_size/2)];
 
-				draw_sprites_custom(bitmap,Machine->gfx[sprite_gfx + chip],
-									code,color,flipx,flipy,sx,sy,
-									zoomx<<11,zoomy<<11,cliprect,(pri || chip == chip_disabled_pri) ? 2 : 1);
+				pdrawgfxzoom(bitmap,Machine->gfx[sprite_gfx + chip],
+							 code,
+							 color,
+							 flipx,flipy,
+							 sx,sy,
+							 cliprect,TRANSPARENCY_PEN,15,
+							 zoomx << 11, zoomy << 11,
+							 (pri || chip == chip_disabled_pri) ? 0 : 2);
+
 				map_start++;
 			}
 

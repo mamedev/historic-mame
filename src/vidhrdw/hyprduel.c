@@ -319,7 +319,6 @@ static void alloc_empty_tiles(void)
 	int code,i;
 
 	empty_tiles = auto_malloc(16*16*16);
-	if (!empty_tiles) return;
 
 	for (code = 0;code < 0x10;code++)
 		for (i = 0;i < 16*16;i++)
@@ -335,7 +334,7 @@ VIDEO_START( hyprduel_14220 )
 	bg_tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 	bg_tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !empty_tiles || !hypr_tiletable_old)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2])
 		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap[0],0);

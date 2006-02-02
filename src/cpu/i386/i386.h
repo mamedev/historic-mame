@@ -67,6 +67,29 @@ typedef enum { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI } DREGS;
 enum
 {
 	I386_PC = 0,
+
+	/* 8-bit registers */
+	I386_AL,
+	I386_AH,
+	I386_BL,
+	I386_BH,
+	I386_CL,
+	I386_CH,
+	I386_DL,
+	I386_DH,
+
+	/* 16-bit registers */
+	I386_AX,
+	I386_BX,
+	I386_CX,
+	I386_DX,
+	I386_BP,
+	I386_SP,
+	I386_SI,
+	I386_DI,
+	I386_IP,
+
+	/* 32-bit registers */
 	I386_EAX,
 	I386_ECX,
 	I386_EDX,
@@ -75,13 +98,17 @@ enum
 	I386_ESP,
 	I386_ESI,
 	I386_EDI,
+	I386_EIP,
+
+	/* segment registers */
 	I386_CS,
 	I386_SS,
 	I386_DS,
 	I386_ES,
 	I386_FS,
 	I386_GS,
-	I386_EIP,
+
+	/* other */
 	I386_EFLAGS,
 	I386_CR0,
 	I386_CR1,

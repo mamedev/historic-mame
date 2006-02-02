@@ -79,7 +79,6 @@ struct dst_mixer_context
 struct dst_oneshot_context
 {
 	double countdown;
-	double stepsize;
 	int state;
 	int lastTrig;
 };
@@ -329,7 +328,7 @@ void dst_dac_r1_reset(struct node_description *node)
 	if (info->cFilter)
 	{
 		/* Setup filter constants */
-		context->exponent = -1.0 / (context->rTotal * info->cFilter  * Machine->sample_rate);
+		context->exponent = -1.0 / (context->rTotal * info->cFilter  * discrete_current_context->sample_rate);
 		context->exponent = 1.0 - exp(context->exponent);
 	}
 }
@@ -519,7 +518,7 @@ void dst_integrate_step(struct node_description *node)
 			iNeg = context->vMaxIn / info->r1;
 			iPos = (DST_INTEGRATE__TRG0 - OP_AMP_NORTON_VBE) / info->r2;
 			if (iPos < 0) iPos = 0;
-			node->output += iPos / Machine->sample_rate / info->c;
+			node->output += iPos / discrete_current_context->sample_rate / info->c;
 			break;
 
 		case DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON:
@@ -528,7 +527,7 @@ void dst_integrate_step(struct node_description *node)
 			iNeg = dst_trigger_function(trig0, trig1, 0, info->f0) ? context->vMaxInD / info->r1 : 0;
 			iPos =  dst_trigger_function(trig0, trig1, 0, info->f1) ? context->vMaxIn / info->r2 : 0;
 			iPos +=  dst_trigger_function(trig0, trig1, 0, info->f2) ? context->vMaxInD / info->r3 : 0;
-			node->output += (iPos - iNeg) / Machine->sample_rate / info->c;
+			node->output += (iPos - iNeg) / discrete_current_context->sample_rate / info->c;
 			break;
 	}
 
@@ -556,7 +555,7 @@ void dst_integrate_reset(struct node_description *node)
 		v = info->v1 * info->r3 / (info->r2 + info->r3);	/* vRef */
 		v = info->v1 - v;	/* actual charging voltage */
 		i = v / info->r1;
-		context->change = i / Machine->sample_rate / info->c;
+		context->change = i / discrete_current_context->sample_rate / info->c;
 	}
 	node->output = 0;
 }
@@ -894,7 +893,7 @@ void dst_mixer_step(struct node_description *node)
 								break;
 						}
 						/* Re-calculate exponent if resistor is a node */
-						context->exponent_rc[bit] = -1.0 / (rTemp2 * info->c[bit]  * Machine->sample_rate);
+						context->exponent_rc[bit] = -1.0 / (rTemp2 * info->c[bit]  * discrete_current_context->sample_rate);
 						context->exponent_rc[bit] = 1.0 - exp(context->exponent_rc[bit]);
 					}
 				}
@@ -928,7 +927,7 @@ void dst_mixer_step(struct node_description *node)
 			if (context->type & DISC_MIXER_HAS_R_NODE)
 			{
 				/* Re-calculate exponent if resistor nodes are used */
-				context->exponent_cF = -1.0 / (rTotal * info->cF  * Machine->sample_rate);
+				context->exponent_cF = -1.0 / (rTotal * info->cF  * discrete_current_context->sample_rate);
 				context->exponent_cF = 1.0 - exp(context->exponent_cF);
 			}
 			context->vCapF += (v -info->vRef - context->vCapF) * context->exponent_cF;
@@ -1005,17 +1004,15 @@ void dst_mixer_reset(struct node_description *node)
 					break;
 			}
 			/* Setup filter constants */
-			context->exponent_rc[bit] = -1.0 / (rTemp * info->c[bit]  * Machine->sample_rate);
+			context->exponent_rc[bit] = -1.0 / (rTemp * info->c[bit]  * discrete_current_context->sample_rate);
 			context->exponent_rc[bit] = 1.0 - exp(context->exponent_rc[bit]);
 		}
 	}
 
-	if (info->rF == 0)
+	if (info->rF != 0)
 	{
-		/* You must have an rF */
-		discrete_log("dst_mixer_reset - rF can't equal 0");
+		if (info->type == DISC_MIXER_IS_RESISTOR) context->rTotal += 1.0 / info->rF;
 	}
-	if (info->type == DISC_MIXER_IS_RESISTOR) context->rTotal += 1.0 / info->rF;
 	if (context->type == DISC_MIXER_IS_OP_AMP_WITH_RI) context->rTotal += 1.0 / info->rI;
 
 	context->vCapF = 0;
@@ -1023,7 +1020,7 @@ void dst_mixer_reset(struct node_description *node)
 	if (info->cF != 0)
 	{
 		/* Setup filter constants */
-		context->exponent_cF = -1.0 / (((info->type == DISC_MIXER_IS_OP_AMP) ? info->rF : (1.0 / context->rTotal))* info->cF  * Machine->sample_rate);
+		context->exponent_cF = -1.0 / (((info->type == DISC_MIXER_IS_OP_AMP) ? info->rF : (1.0 / context->rTotal))* info->cF  * discrete_current_context->sample_rate);
 		context->exponent_cF = 1.0 - exp(context->exponent_cF);
 	}
 
@@ -1034,7 +1031,7 @@ void dst_mixer_reset(struct node_description *node)
 		/* Setup filter constants */
 		/* We will use 100000 ohms as an average final stage impedance. */
 		/* Your amp/speaker system will have more effect on incorrect filtering then any value used here. */
-		context->exponent_cAmp = -1.0 / (100000 * info->cAmp  * Machine->sample_rate);
+		context->exponent_cAmp = -1.0 / (100000 * info->cAmp  * discrete_current_context->sample_rate);
 		context->exponent_cAmp = 1.0 - exp(context->exponent_cAmp);
 	}
 
@@ -1159,7 +1156,7 @@ void dst_oneshot_step(struct node_description *node)
 
 		if (doCount)
 		{
-			context->countdown -= context->stepsize;
+			context->countdown -= discrete_current_context->sample_time;
 			if(context->countdown <= 0.0)
 			{
 				node->output = (DST_ONESHOT__TYPE & DISC_OUT_ACTIVE_LOW) ? DST_ONESHOT__AMP : 0;
@@ -1175,7 +1172,6 @@ void dst_oneshot_reset(struct node_description *node)
 {
 	struct dst_oneshot_context *context = node->context;
 	context->countdown = 0;
-	context->stepsize = 1.0 / Machine->sample_rate;
 	context->state = 0;
 
  	context->lastTrig = 0;
@@ -1234,7 +1230,7 @@ void dst_ramp_reset(struct node_description *node)
 	struct dss_ramp_context *context = node->context;
 
 	node->output=DST_RAMP__CLAMP;
-	context->step = DST_RAMP__GRAD / Machine->sample_rate;
+	context->step = DST_RAMP__GRAD / discrete_current_context->sample_rate;
 	context->dir = ((DST_RAMP__END - DST_RAMP__START) == abs(DST_RAMP__END - DST_RAMP__START));
 	context->last_en = 0;
 }
@@ -1635,30 +1631,30 @@ void dst_tvca_op_amp_reset(struct node_description *node)
 	context->vCap1 = 0;
 	/* Charge rate thru r5 */
 	/* There can be a different charge rates depending on function F3. */
-	context->exponentC[0] = -1.0 / ((1.0 / (1.0 / info->r5 + 1.0 / info->r6)) * info->c1 * Machine->sample_rate);
+	context->exponentC[0] = -1.0 / ((1.0 / (1.0 / info->r5 + 1.0 / info->r6)) * info->c1 * discrete_current_context->sample_rate);
 	context->exponentC[0] = 1.0 - exp(context->exponentC[0]);
-	context->exponentC[1] = -1.0 / ((1.0 / (1.0 / info->r5 + 1.0 / context->r67)) * info->c1 * Machine->sample_rate);
+	context->exponentC[1] = -1.0 / ((1.0 / (1.0 / info->r5 + 1.0 / context->r67)) * info->c1 * discrete_current_context->sample_rate);
 	context->exponentC[1] = 1.0 - exp(context->exponentC[1]);
 	/* Discharge rate thru r6 + r7 */
-	context->exponentD[1] = -1.0 / (context->r67 * info->c1 * Machine->sample_rate);
+	context->exponentD[1] = -1.0 / (context->r67 * info->c1 * discrete_current_context->sample_rate);
 	context->exponentD[1] = 1.0 - exp(context->exponentD[1]);
 	/* Discharge rate thru r6 */
 	if (info->r6 != 0)
 	{
-		context->exponentD[0] = -1.0 / (info->r6 * info->c1 * Machine->sample_rate);
+		context->exponentD[0] = -1.0 / (info->r6 * info->c1 * discrete_current_context->sample_rate);
 		context->exponentD[0] = 1.0 - exp(context->exponentD[0]);
 	}
 	context->vCap2 = 0;
 	context->vTrig2 = (info->vP - 0.6) * (info->r9 / (info->r8 + info->r9));
-	context->exponent2[0] = -1.0 / (info->r9 * info->c2 * Machine->sample_rate);
+	context->exponent2[0] = -1.0 / (info->r9 * info->c2 * discrete_current_context->sample_rate);
 	context->exponent2[0] = 1.0 - exp(context->exponent2[0]);
-	context->exponent2[1] = -1.0 / ((1.0 / (1.0 / info->r8 + 1.0 / info->r9)) * info->c2 * Machine->sample_rate);
+	context->exponent2[1] = -1.0 / ((1.0 / (1.0 / info->r8 + 1.0 / info->r9)) * info->c2 * discrete_current_context->sample_rate);
 	context->exponent2[1] = 1.0 - exp(context->exponent2[1]);
 	context->vCap3 = 0;
 	context->vTrig3 = (info->vP - 0.6) * (info->r11 / (info->r10 + info->r11));
-	context->exponent3[0] = -1.0 / (info->r11 * info->c3 * Machine->sample_rate);
+	context->exponent3[0] = -1.0 / (info->r11 * info->c3 * discrete_current_context->sample_rate);
 	context->exponent3[0] = 1.0 - exp(context->exponent3[0]);
-	context->exponent3[1] = -1.0 / ((1.0 / (1.0 / info->r10 + 1.0 / info->r11)) * info->c3 * Machine->sample_rate);
+	context->exponent3[1] = -1.0 / ((1.0 / (1.0 / info->r10 + 1.0 / info->r11)) * info->c3 * discrete_current_context->sample_rate);
 	context->exponent3[1] = 1.0 - exp(context->exponent3[1]);
 
 	dst_tvca_op_amp_step(node);

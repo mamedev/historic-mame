@@ -505,9 +505,9 @@ VIDEO_START( nbmj8891_1layer )
 	int i;
 
 	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((nbmj8891_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char))) == 0) return 1;
-	if ((nbmj8891_palette = auto_malloc(0x200 * sizeof(char))) == 0) return 1;
-	if ((nbmj8891_clut = auto_malloc(0x800 * sizeof(char))) == 0) return 1;
+	nbmj8891_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char));
+	nbmj8891_palette = auto_malloc(0x200 * sizeof(char));
+	nbmj8891_clut = auto_malloc(0x800 * sizeof(char));
 	memset(nbmj8891_videoram0, 0xff, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(char)));
 	gfxdraw_mode = 0;
 
@@ -521,10 +521,10 @@ VIDEO_START( nbmj8891_2layer )
 {
 	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
 	if ((nbmj8891_tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((nbmj8891_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8))) == 0) return 1;
-	if ((nbmj8891_videoram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8))) == 0) return 1;
-	if ((nbmj8891_palette = auto_malloc(0x200 * sizeof(UINT8))) == 0) return 1;
-	if ((nbmj8891_clut = auto_malloc(0x800 * sizeof(UINT8))) == 0) return 1;
+	nbmj8891_videoram0 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8));
+	nbmj8891_videoram1 = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8));
+	nbmj8891_palette = auto_malloc(0x200 * sizeof(UINT8));
+	nbmj8891_clut = auto_malloc(0x800 * sizeof(UINT8));
 	memset(nbmj8891_videoram0, 0xff, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8)));
 	memset(nbmj8891_videoram1, 0xff, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8)));
 	Machine->pens[0x07f] = 0xff;	/* palette_transparent_pen */

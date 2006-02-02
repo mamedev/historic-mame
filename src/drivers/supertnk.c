@@ -127,11 +127,6 @@ VIDEO_START( supertnk )
 {
 	supertnk_videoram = auto_malloc(0x6000);	/* allocate physical video RAM */
 
-	if (supertnk_videoram  == NULL)
-	{
-		return 1;
-	}
-
 	memset(supertnk_videoram, 0, 0x6000);
 
 	return video_start_generic_bitmapped();

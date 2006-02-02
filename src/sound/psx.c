@@ -304,10 +304,6 @@ static void *psxspu_start(int sndindex, int clock, const void *config)
 	}
 
 	chip->m_p_n_spuram = auto_malloc( SPU_RAM_SIZE );
-	if( chip->m_p_n_spuram == NULL )
-	{
-		return NULL;
-	}
 
 	state_save_register_UINT16( "psx", sndindex, "m_n_mainvolumeleft", &chip->m_n_mainvolumeleft, 1 );
 	state_save_register_UINT16( "psx", sndindex, "m_n_mainvolumeright", &chip->m_n_mainvolumeright, 1 );

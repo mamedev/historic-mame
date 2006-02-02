@@ -20,63 +20,7 @@
 #include "driver.h"
 #include "neogeo.h"
 
-/************************ SRAM protection***********************
-  very basic check which is used on many games
-***************************************************************/
-
 int neogeo_sram_locked;
-offs_t neogeo_sram_protection_hack;
-
-void install_sram_protection(void)
-{
-	/* hacks to make the games which do protection checks run in arcade mode */
-	/* we write protect a SRAM location so it cannot be set to 1 */
-	neogeo_sram_protection_hack = ~0;
-	if (	!strcmp(Machine->gamedrv->name,"fatfury3") ||
-			!strcmp(Machine->gamedrv->name,"samsho3") ||
-			!strcmp(Machine->gamedrv->name,"samsho3a") ||
-			!strcmp(Machine->gamedrv->name,"samsho4") ||
-			!strcmp(Machine->gamedrv->name,"aof3") ||
-			!strcmp(Machine->gamedrv->name,"rbff1") ||
-			!strcmp(Machine->gamedrv->name,"rbffspec") ||
-			!strcmp(Machine->gamedrv->name,"kof95") ||
-			!strcmp(Machine->gamedrv->name,"kof96") ||
-			!strcmp(Machine->gamedrv->name,"kof96h") ||
-			!strcmp(Machine->gamedrv->name,"kof97") ||
-			!strcmp(Machine->gamedrv->name,"kof97a") ||
-			!strcmp(Machine->gamedrv->name,"kof97pls") ||
-			!strcmp(Machine->gamedrv->name,"kog") ||
-			!strcmp(Machine->gamedrv->name,"kof98") ||
-			!strcmp(Machine->gamedrv->name,"kof98k") ||
-			!strcmp(Machine->gamedrv->name,"kof98n") ||
-			!strcmp(Machine->gamedrv->name,"kof99") ||
-			!strcmp(Machine->gamedrv->name,"kof99a") ||
-			!strcmp(Machine->gamedrv->name,"kof99e") ||
-			!strcmp(Machine->gamedrv->name,"kof99n") ||
-			!strcmp(Machine->gamedrv->name,"kof99p") ||
-			!strcmp(Machine->gamedrv->name,"kof2000") ||
-			!strcmp(Machine->gamedrv->name,"kof2000n") ||
-			!strcmp(Machine->gamedrv->name,"kizuna") ||
-			!strcmp(Machine->gamedrv->name,"lastblad") ||
-			!strcmp(Machine->gamedrv->name,"lastblda") ||
-			!strcmp(Machine->gamedrv->name,"lastbld2") ||
-			!strcmp(Machine->gamedrv->name,"rbff2") ||
-			!strcmp(Machine->gamedrv->name,"rbff2a") ||
-			!strcmp(Machine->gamedrv->name,"mslug2") ||
-			!strcmp(Machine->gamedrv->name,"mslug3") ||
-			!strcmp(Machine->gamedrv->name,"garou") ||
-			!strcmp(Machine->gamedrv->name,"garouo") ||
-			!strcmp(Machine->gamedrv->name,"garoup") ||
-			!strcmp(Machine->gamedrv->name,"samsho5") ||
-			!strcmp(Machine->gamedrv->name,"samsho5h") ||
-			!strcmp(Machine->gamedrv->name,"samsh5sp") ||
-			!strcmp(Machine->gamedrv->name,"samsh5sh") ||
-			!strcmp(Machine->gamedrv->name,"samsh5sn"))
-			neogeo_sram_protection_hack = 0x100/2;
-
-	if (!strcmp(Machine->gamedrv->name,"pulstar"))
-		neogeo_sram_protection_hack = 0x35a/2;
-}
 
 WRITE16_HANDLER( neogeo_sram16_lock_w )
 {
@@ -97,36 +41,16 @@ WRITE16_HANDLER( neogeo_sram16_w )
 {
 	if (neogeo_sram_locked)
 	{
-logerror("PC %06x: warning: write %02x to SRAM %04x while it was protected\n",activecpu_get_pc(),data,offset<<1);
+		logerror("PC %06x: warning: write %02x to SRAM %04x while it was protected\n",activecpu_get_pc(),data,offset<<1);
 	}
 	else
 	{
-		if (offset == neogeo_sram_protection_hack)
-		{
-			if (ACCESSING_LSB && (data & 0xff) == 0x01)
-				return; /* fake protection pass */
-		}
-
 		COMBINE_DATA(&neogeo_sram16[offset]);
 	}
 }
 
 
-/************************ Super Sidekicks***********************
-  todo: emulate, not patch!
-***************************************************************/
-
-void ssideki_install_protection(void)
-{
-		/* patch out protection check */
-		/* the protection routines are at 0x25dcc and involve reading and writing */
-		/* addresses in the 0x2xxxxx range */
-		UINT16 *mem16 = (UINT16 *)memory_region(REGION_CPU1);
-		mem16[0x2240/2] = 0x4e71;
-}
-
 /************************ Fatal Fury 2 *************************
-  todo: emulate, not patch!
 ***************************************************************/
 int neogeo_prot_data;
 
@@ -203,18 +127,6 @@ void fatfury2_install_protection(void)
 	/* 0x2xxxxx range. There are several checks all around the code. */
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2fffff, 0, 0, fatfury2_protection_16_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2fffff, 0, 0, fatfury2_protection_16_w);
-}
-
-/************************ Fatal Fury 3 *************************
-  is this still needed? -- some people report other lockups
-  in this.
-***************************************************************/
-
-void fatfury3_install_protection(void)
-{
-	/* patch the first word, it must be 0x0010 not 0x0000 (initial stack pointer) */
-	UINT16 *mem16 = (UINT16 *)memory_region(REGION_CPU1);
-	mem16[0x0000/2] = 0x0010;
 }
 
 /************************ King of Fighters 98*******************
@@ -503,32 +415,32 @@ void garou_install_protection(void)
 {
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffc0, 0x2fffc1, 0, 0, garou_bankswitch_w);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffcc, 0x2fffcd, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2ffff1, 0, 0, sma_random_r);
 }
 
 void garouo_install_protection(void)
 {
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffc0, 0x2fffc1, 0, 0, garouo_bankswitch_w);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffcc, 0x2fffcd, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2ffff1, 0, 0, sma_random_r);
 }
 
 void mslug3_install_protection(void)
 {
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffe4, 0x2fffe5, 0, 0, mslug3_bankswitch_w);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
+//  memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
+//  memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
 }
 
 void kof2000_install_protection(void)
 {
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffec, 0x2fffed, 0, 0, kof2000_bankswitch_w);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffd8, 0x2fffd9, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffda, 0x2fffdb, 0, 0, sma_random_r);
 }
 
 /************************ PVC Protection ***********************

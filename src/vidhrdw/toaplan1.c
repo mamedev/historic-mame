@@ -278,28 +278,22 @@ static int toaplan1_create_tilemaps(void)
 
 static int toaplan1_paletteram_alloc(void)
 {
-	if ((paletteram16 = (UINT16 *)auto_malloc(toaplan1_colorram1_size + toaplan1_colorram2_size)) == 0)
-		return 1;
-
+	paletteram16 = auto_malloc(toaplan1_colorram1_size + toaplan1_colorram2_size);
 	return 0;
 }
 
 static int toaplan1_vram_alloc(void)
 {
-	if ((pf1_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-		return 1;
+	pf1_tilevram16 = auto_malloc(TOAPLAN1_TILEVRAM_SIZE);
 	memset(pf1_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf2_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-		return 1;
+	pf2_tilevram16 = auto_malloc(TOAPLAN1_TILEVRAM_SIZE);
 	memset(pf2_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf3_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-		return 1;
+	pf3_tilevram16 = auto_malloc(TOAPLAN1_TILEVRAM_SIZE);
 	memset(pf3_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
-	if ((pf4_tilevram16 = (UINT16 *)auto_malloc(TOAPLAN1_TILEVRAM_SIZE)) == 0)
-		return 1;
+	pf4_tilevram16 = auto_malloc(TOAPLAN1_TILEVRAM_SIZE);
 	memset(pf4_tilevram16,0,TOAPLAN1_TILEVRAM_SIZE);
 
 	return 0;
@@ -307,20 +301,16 @@ static int toaplan1_vram_alloc(void)
 
 static int toaplan1_spritevram_alloc(void)
 {
-	if ((spriteram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
-		return 1;
+	spriteram16 = auto_malloc(TOAPLAN1_SPRITERAM_SIZE);
 	memset(spriteram16,0,TOAPLAN1_SPRITERAM_SIZE);
 
-	if ((buffered_spriteram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITERAM_SIZE)) == 0)
-		return 1;
+	buffered_spriteram16 = auto_malloc(TOAPLAN1_SPRITERAM_SIZE);
 	memset(buffered_spriteram16,0,TOAPLAN1_SPRITERAM_SIZE);
 
-	if ((toaplan1_spritesizeram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
-		return 1;
+	toaplan1_spritesizeram16 = auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE);
 	memset(toaplan1_spritesizeram16,0,TOAPLAN1_SPRITESIZERAM_SIZE);
 
-	if ((toaplan1_buffered_spritesizeram16 = (UINT16 *)auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE)) == 0)
-		return 1;
+	toaplan1_buffered_spritesizeram16 = auto_malloc(TOAPLAN1_SPRITESIZERAM_SIZE);
 	memset(toaplan1_buffered_spritesizeram16,0,TOAPLAN1_SPRITESIZERAM_SIZE);
 
 	spriteram_size = TOAPLAN1_SPRITERAM_SIZE;

@@ -467,8 +467,7 @@ void atarigen_slapstic_init(int cpunum, int base, int chipnum)
 
 		/* allocate memory for a copy of bank 0 */
 		atarigen_slapstic_bank0 = auto_malloc(0x2000);
-		if (atarigen_slapstic_bank0)
-			memcpy(atarigen_slapstic_bank0, atarigen_slapstic, 0x2000);
+		memcpy(atarigen_slapstic_bank0, atarigen_slapstic, 0x2000);
 	}
 }
 

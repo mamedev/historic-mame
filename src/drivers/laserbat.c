@@ -462,7 +462,7 @@ VIDEO_START( laserbat )
 
 	collision_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8);
 
-	if (!bg_tilemap || !collision_bitmap || !videoram || !colorram)
+	if (!bg_tilemap || !collision_bitmap)
 		return 1;
 
 	s2636_x_offset = -19;

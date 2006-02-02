@@ -246,10 +246,9 @@ VIDEO_START( namcona1 )
 	cgram			= auto_malloc( 0x1000*0x20*2 );
 	dirtychar		= auto_malloc( 0x1000 );
 
-	if( shaperam && cgram && dirtychar )
 	{
-		gfx0 = decodegfx( (UINT8 *)cgram,&cg_layout );
-		gfx1 = decodegfx( (UINT8 *)shaperam,&shape_layout );
+		gfx0 = allocgfx( &cg_layout );
+		gfx1 = allocgfx( &shape_layout );
 		if( gfx0 && gfx1 )
 		{
 			gfx0->colortable = Machine->remapped_colortable;

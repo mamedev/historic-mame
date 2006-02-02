@@ -262,8 +262,7 @@ static int liberatr_init_planet(int planet_select)
            many segments it will take to store the description, allocate the
            space for it and copy the data to it.
         */
-		if ((buffer = (UINT8 *)auto_malloc(2*(128 + total_segment_count))) == 0)
-			return 1;
+		buffer = auto_malloc(2*(128 + total_segment_count));
 
 		liberatr_planet_segs[ planet_select ]->frame[ longitude ] = buffer;
 
@@ -311,13 +310,11 @@ VIDEO_START( liberatr )
     if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
     	return 1;
 
-	if ((liberatr_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height)) == 0)
-		return 1;
+	liberatr_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height);
 
 	/* allocate the planet descriptor structure */
-	if (((liberatr_planet_segs[0] = auto_malloc(sizeof(Liberator_Planet))) == 0) ||
-	    ((liberatr_planet_segs[1] = auto_malloc(sizeof(Liberator_Planet))) == 0))
-		return 1;
+	liberatr_planet_segs[0] = auto_malloc(sizeof(Liberator_Planet));
+	liberatr_planet_segs[1] = auto_malloc(sizeof(Liberator_Planet));
 
 	memset(liberatr_planet_segs[0], 0, sizeof(Liberator_Planet));
 	memset(liberatr_planet_segs[1], 0, sizeof(Liberator_Planet));

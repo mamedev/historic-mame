@@ -240,14 +240,14 @@ VIDEO_START( stactics )
     if ((bitmap_F = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)   return 1;
 
 	/* Allocate dirty buffers */
-	if ((dirty_videoram_b = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_videoram_d = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_videoram_e = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_videoram_f = (unsigned char *)auto_malloc(videoram_size)) == 0)       return 1;
-	if ((dirty_chardata_b = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
-	if ((dirty_chardata_d = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
-	if ((dirty_chardata_e = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
-	if ((dirty_chardata_f = (unsigned char *)auto_malloc(DIRTY_CHARDATA_SIZE)) == 0) return 1;
+	dirty_videoram_b = auto_malloc(videoram_size);
+	dirty_videoram_d = auto_malloc(videoram_size);
+	dirty_videoram_e = auto_malloc(videoram_size);
+	dirty_videoram_f = auto_malloc(videoram_size);
+	dirty_chardata_b = auto_malloc(DIRTY_CHARDATA_SIZE);
+	dirty_chardata_d = auto_malloc(DIRTY_CHARDATA_SIZE);
+	dirty_chardata_e = auto_malloc(DIRTY_CHARDATA_SIZE);
+	dirty_chardata_f = auto_malloc(DIRTY_CHARDATA_SIZE);
 
     memset(dirty_videoram_b,1,videoram_size);
     memset(dirty_videoram_d,1,videoram_size);
@@ -296,7 +296,7 @@ VIDEO_START( stactics )
     /* (I am basically just juggling the bytes */
     /* and storing it again to make it easier) */
 
-	if ((beamdata = (unsigned char *)auto_malloc(BEAMDATA_SIZE)) == 0) return 1;
+	beamdata = auto_malloc(BEAMDATA_SIZE);
 
     firebeam_data = memory_region(REGION_GFX1);
 

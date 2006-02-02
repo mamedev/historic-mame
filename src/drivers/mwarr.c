@@ -326,7 +326,7 @@ VIDEO_START( mwarr )
 
 	sprites_buffer = auto_malloc(sizeof(UINT16) * 0x800);
 
-	if(!bg_tilemap || !mlow_tilemap || !tx_tilemap || !sprites_buffer)
+	if(!bg_tilemap || !mlow_tilemap || !tx_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(mlow_tilemap,0);

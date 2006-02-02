@@ -885,9 +885,6 @@ VIDEO_START( astrocde )
 	rng = auto_malloc(RNG_PERIOD * sizeof(rng[0]));
 	star = auto_malloc(SCREEN_WIDTH * MAX_LINES * sizeof(star[0]));
 
-	if (!rng || !star)
-		return 1;
-
 	memset(sparkle,0,sizeof(sparkle));
 	CurrentScan = 0;
 

@@ -1629,7 +1629,7 @@ static MACHINE_DRIVER_START( htchctch )
 	MDRV_CPU_PROGRAM_MAP(semicom_sound_readmem,semicom_sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(529)
+	MDRV_VBLANK_DURATION(2400) // ?? cookbib needs it above ~2400 or the Joystick on the How to Play screen is the wrong colour?!
 
 	MDRV_MACHINE_INIT ( htchctch )
 

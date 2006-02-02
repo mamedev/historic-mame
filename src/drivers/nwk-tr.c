@@ -87,26 +87,15 @@ int K001604_vh_start(void)
 		return 1;
 
 	K001604_char_ram = auto_malloc(0x400000);
-	if( !K001604_char_ram )
-		return 1;
 
 	K001604_tile_ram = auto_malloc(0x20000);
-	if( !K001604_tile_ram )
-		return 1;
 
 	K001604_dirty_map = auto_malloc(K001604_NUM_TILES);
-	if( !K001604_dirty_map ) {
-		free(K001604_char_ram);
-		free(K001604_tile_ram);
-		return 1;
-	}
 
 	K001604_layer[0] = tilemap_create(K001604_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, width, 64);
 
 	if( !K001604_layer[0] ) {
-		free(K001604_dirty_map);
-		free(K001604_tile_ram);
-		free(K001604_char_ram);
+		return 1;
 	}
 
 	tilemap_set_transparent_pen(K001604_layer[0], 0);
@@ -115,11 +104,10 @@ int K001604_vh_start(void)
 	memset(K001604_tile_ram, 0, 0x10000);
 	memset(K001604_dirty_map, 0, K001604_NUM_TILES);
 
-	Machine->gfx[K001604_gfx_index] = decodegfx((UINT8*)K001604_char_ram, &K001604_char_layout);
+	Machine->gfx[K001604_gfx_index] = allocgfx(&K001604_char_layout);
+	decodegfx(Machine->gfx[K001604_gfx_index], (UINT8*)K001604_char_ram, 0, Machine->gfx[K001604_gfx_index]->total_elements);
 	if( !Machine->gfx[K001604_gfx_index] ) {
-		free(K001604_dirty_map);
-		free(K001604_tile_ram);
-		free(K001604_char_ram);
+		return 1;
 	}
 
 	if (Machine->drv->color_table_len)

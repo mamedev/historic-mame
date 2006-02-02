@@ -262,8 +262,6 @@ VIDEO_START( madalien )
 		return 1;
 
 	madalien_bgram = auto_malloc(0x1000);	/* ficticiuos background RAM for empty tile */
-	if (!madalien_bgram)
-		return 1;
 
 	memset(madalien_bgram, 0, 0x1000);
 

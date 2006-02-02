@@ -982,7 +982,7 @@ VIDEO_START( captaven )
 	pf3_tilemap = tilemap_create(get_ca_pf3_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
 	deco32_raster_display_list=auto_malloc(10 * 256);
 
-	if (!pf1_tilemap || !pf1a_tilemap ||!pf2_tilemap || !pf3_tilemap || !deco32_raster_display_list)
+	if (!pf1_tilemap || !pf1a_tilemap ||!pf2_tilemap || !pf3_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -1006,7 +1006,7 @@ VIDEO_START( fghthist )
 	pf1a_tilemap =0;
 	dirty_palette = auto_malloc(4096);
 
-	if (!deco_allocate_sprite_bitmap() || !dirty_palette || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (!deco_allocate_sprite_bitmap() || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -1030,7 +1030,7 @@ VIDEO_START( dragngun )
 	dirty_palette = auto_malloc(4096);
 	deco32_raster_display_list = auto_malloc(10 * 256);
 
-	if (!dirty_palette || !pf1_tilemap || !pf1a_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap || !deco32_raster_display_list)
+	if (!pf1_tilemap || !pf1a_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -1058,7 +1058,7 @@ VIDEO_START( lockload )
 	dirty_palette = auto_malloc(4096);
 	deco32_raster_display_list = auto_malloc(10 * 256);
 
-	if (!dirty_palette || !pf1_tilemap || !pf1a_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap || !deco32_raster_display_list)
+	if (!pf1_tilemap || !pf1a_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);
@@ -1089,7 +1089,7 @@ VIDEO_START( nslasher )
 	sprite1_mix_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -16 );
 	tilemap_alpha_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -16 );
 
-	if (!sprite1_mix_bitmap || !sprite0_mix_bitmap || !tilemap_alpha_bitmap || !dirty_palette || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (!sprite1_mix_bitmap || !sprite0_mix_bitmap || !tilemap_alpha_bitmap || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap,0);

@@ -289,8 +289,6 @@ static void *bsmt2000_start(int sndindex, int clock, const void *config)
 	/* allocate the voices */
 	chip->voices = intf->voices;
 	chip->voice = auto_malloc(chip->voices * sizeof(struct BSMT2000Voice));
-	if (!chip->voice)
-		return NULL;
 
 	/* create the stream */
 	chip->sample_rate = clock / 1024;

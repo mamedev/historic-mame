@@ -31,8 +31,6 @@ static VIDEO_START( othunder_core )
        which are what actually get put in the structure. */
 
 	spritelist = auto_malloc(0x2000 * sizeof(*spritelist));
-	if (!spritelist)
-		return 1;
 
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
 		return 1;

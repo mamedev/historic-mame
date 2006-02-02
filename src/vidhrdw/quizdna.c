@@ -62,7 +62,7 @@ VIDEO_START( quizdna )
 	quizdna_bg_tilemap = tilemap_create( get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32 );
 	quizdna_fg_tilemap = tilemap_create( get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,8,32,32 );
 
-	if (!quizdna_bg_ram || !quizdna_fg_ram || !quizdna_bg_tilemap || !quizdna_fg_tilemap)
+	if (!quizdna_bg_tilemap || !quizdna_fg_tilemap)
 		return 1;
 
 	tilemap_set_transparent_pen( quizdna_fg_tilemap,0 );

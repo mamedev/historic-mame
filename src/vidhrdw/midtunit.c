@@ -96,10 +96,6 @@ VIDEO_START( midtunit )
 	local_videoram = auto_malloc(0x100000);
 	pen_map = auto_malloc(65536 * sizeof(pen_map[0]));
 
-	/* handle failure */
-	if (!local_videoram || !pen_map)
-		return 1;
-
 	/* initialize pen map */
 	for (i = 0; i < 0x10000; i++)
 		pen_map[i] = i & 0x7fff;

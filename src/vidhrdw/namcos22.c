@@ -1143,11 +1143,6 @@ MallocSceneNode( void )
    {
 #define SCENE_NODE_POOL_SIZE 64
 		struct SceneNode *pSceneNodePool = auto_malloc(sizeof(struct SceneNode)*SCENE_NODE_POOL_SIZE);
-		if( !pSceneNodePool )
-		{
-         osd_die( "insufficient mem for scene node pool\n" );
-		}
-		else
 		{
 			int i;
 			for( i=0; i<SCENE_NODE_POOL_SIZE; i++ )
@@ -1541,7 +1536,6 @@ Prepare3dTexture( void *pTilemapROM, void *pTextureROM )
     { /* following setup is Namco System 22 specific */
 	      const UINT8 *pPackedTileAttr = 0x200000 + (UINT8 *)pTilemapROM;
 	      UINT8 *pUnpackedTileAttr = auto_malloc(0x080000*2);
-	      if( pUnpackedTileAttr )
       	{
        	   InitXYAttrToPixel();
    	      mpTextureTileMapAttr = pUnpackedTileAttr;
@@ -2574,10 +2568,8 @@ video_start_common( void )
       Machine->gfx[GFX_TEXTURE_TILE]->gfxdata ) == 0 )
 	{
 		dirtypal = auto_malloc(NAMCOS22_PALETTE_SIZE/4);
-		if( dirtypal )
 		{
 			cgdirty = auto_malloc( 0x400 );
-			if( cgdirty )
 			{
 				mPtRomSize = memory_region_length(REGION_POINTROM)/3;
 				mpPolyL = memory_region(REGION_POINTROM);

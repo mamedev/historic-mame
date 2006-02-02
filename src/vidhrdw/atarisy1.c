@@ -658,9 +658,10 @@ static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 		objlayout.planeoffset[i] = (bpp - i - 1) * 0x10000 * 8;
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(&memory_region(REGION_GFX2)[0x80000 * (bank_index - 1)], &objlayout);
+	Machine->gfx[gfx_index] = allocgfx(&objlayout);
 	if (!Machine->gfx[gfx_index])
 		return -1;
+	decodegfx(Machine->gfx[gfx_index], &memory_region(REGION_GFX2)[0x80000 * (bank_index - 1)], 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[256];

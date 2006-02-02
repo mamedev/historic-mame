@@ -457,7 +457,7 @@ static void *ics2115_start(int sndindex, int clock, const void *config)
 	chip->ulaw = auto_malloc(256*sizeof(INT16));
 	chip->stream = stream_create(0, 2, Machine->sample_rate, chip, update);
 
-	if(!chip->timer[0].timer || !chip->timer[1].timer || !chip->ulaw)
+	if(!chip->timer[0].timer || !chip->timer[1].timer)
 		return NULL;
 
 	for(i=0; i<256; i++) {

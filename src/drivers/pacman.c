@@ -2761,9 +2761,9 @@ INPUT_PORTS_START( rocktrv2 )
 	PORT_DIPSETTING(    0x20, "47500" )
 	PORT_DIPSETTING(    0x10, "55000" )
 	PORT_DIPSETTING(    0x00, "62500" )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown )  )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Music" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /*************************************

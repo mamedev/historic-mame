@@ -28,7 +28,6 @@ struct dsd_555_astbl_context
 	double	ac_shift;	// DC shift needed to make waveform ac
 	double	x_init;
 	double	vCap;		// voltage on cap
-	double	step;		// time for sampling rate
 	double	threshold;
 	double	trigger;
 	double	vHigh;		// Logic 1 voltage level
@@ -43,7 +42,6 @@ struct dsd_555_mstbl_context
 	int		is_ac;
 	double	ac_shift;	// DC shift needed to make waveform ac
 	double	vCap;		// voltage on cap
-	double	step;		// time for sampling rate
 	double	threshold;
 	double	trigger;
 	double	vHigh;		// Logic 1 voltage level
@@ -60,7 +58,6 @@ struct dsd_555_cc_context
 	double			ac_shift;	// DC shift needed to make waveform ac
 	double			x_init;
 	double			vCap;		// voltage on cap
-	double			step;		// time for sampling rate
 	double			threshold;
 	double			trigger;
 	double			vHigh;		// Logic 1 voltage level
@@ -72,7 +69,6 @@ struct dsd_566_context
 	unsigned int	state[2];	// keeps track of excess flip_flop changes during the current step
 	int			flip_flop;		// 566 flip/flop output state
 	double		vCap;			// voltage on cap
-	double		step;			// time for sampling rate
 	double		vDiff;			// voltage difference between vPlus and vNeg
 	double		vSqrLow;		// voltage for a squarewave at low
 	double		vSqrHigh;		// voltage for a squarewave at high
@@ -197,7 +193,7 @@ void dsd_555_astbl_step(struct node_description *node)
      * dt = R*C(log(1/(1-(Vc/Vr))))
      */
 
-	dt = context->step;
+	dt = discrete_current_context->sample_time;
 	xTime = context->x_init;
 
 	/* Sometimes a switching network is used to setup the capacitance.
@@ -278,7 +274,7 @@ void dsd_555_astbl_step(struct node_description *node)
 	}
 
 	/* Convert last switch time to a ratio */
-	xTime = xTime / context->step;
+	xTime = xTime / discrete_current_context->sample_time;
 
 	switch (context->wav_type)
 	{
@@ -345,12 +341,11 @@ void dsd_555_astbl_reset(struct node_description *node)
 	context->v555 = (info->options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) ? info->v555 - 0.5: info->v555;
 	context->flip_flop = 1;
 	context->vCap = 0;
-	context->step = 1.0 / Machine->sample_rate;
 
 	/* Used to adjust the ratio depending on if it is the extra percent or energy */
 	context->x_init = 0;
 	if (context->wav_type == DISC_555_OUT_ENERGY)
-		context->x_init = context->step;
+		context->x_init = discrete_current_context->sample_time;
 
 	/* Step to set the output */
 	dsd_555_astbl_step(node);
@@ -422,7 +417,7 @@ void dsd_555_mstbl_step(struct node_description *node)
 			else
 			{
 				/* Charging */
-				vCnext = vC + ((info->v555 - vC) * (1.0 - exp(-(context->step / (DSD_555_MSTBL__R * DSD_555_MSTBL__C)))));
+				vCnext = vC + ((info->v555 - vC) * (1.0 - exp(-(discrete_current_context->sample_time / (DSD_555_MSTBL__R * DSD_555_MSTBL__C)))));
 
 				/* Has it charged past upper limit? */
 				/* If trigger is still enabled, then we keep charging,
@@ -483,7 +478,6 @@ void dsd_555_mstbl_reset(struct node_description *node)
 
 	context->flip_flop = 0;
 	context->vCap = 0;
-	context->step = 1.0 / Machine->sample_rate;
 
 	node->output = 0;
 }
@@ -545,7 +539,7 @@ void dsd_555_cc_step(struct node_description *node)
 		return;
 	}
 
-	dt = context->step;	// Change in time
+	dt = discrete_current_context->sample_time;	// Change in time
 	xTime = context->x_init;
 	vC = context->vCap;	// Set to voltage before change
 	viLimit = DSD_555_CC__VIN + info->vCCjunction;	// the max vC can be and still be charged by i
@@ -744,6 +738,9 @@ void dsd_555_cc_step(struct node_description *node)
 
 	context->vCap = vCnext;
 
+	/* Convert last switch time to a ratio */
+	xTime = xTime / discrete_current_context->sample_time;
+
 	switch (context->wav_type)
 	{
 		case DISC_555_OUT_SQW:
@@ -789,14 +786,13 @@ void dsd_555_cc_reset(struct node_description *node)
 
 	context->flip_flop=1;
 	context->vCap = 0;
-	context->step = 1.0 / Machine->sample_rate;
 
 	context->wav_type = info->options & DISC_555_OUT_MASK;
 
 	/* Used to adjust the ratio depending on if it is the extra percent or energy */
 	context->x_init = 0;
 	if (context->wav_type == DISC_555_OUT_ENERGY)
-		context->x_init = context->step;
+		context->x_init = discrete_current_context->sample_time;
 
 	/* Use the supplied values or set to defaults. */
 	context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 *2 /3 : info->threshold555;
@@ -954,6 +950,30 @@ void dsd_555_cc_reset(struct node_description *node)
 
 /************************************************************************
  *
+ * DSD_555_VCO1 - Usage of node_description values
+ *
+ * input[0]    - Reset input value
+ * input[1]    - Modulation Voltage (Vin1)
+ * input[2]    - Control Voltage (Vin2)
+ *
+ * also passed discrete_5555_vco1_desc structure
+ *
+ * Feb 2006, D Renaud.
+ ************************************************************************/
+#define DSD_555_VCO1__RESET	(*(node->input[0]))
+#define DSD_555_VCO1__VIN1	(*(node->input[1]))
+#define DSD_555_VCO1__VIN2	(*(node->input[2]))
+
+void dsd_555_vco1_step(struct node_description *node)
+{
+}
+
+void dsd_555_vco1_reset(struct node_description *node)
+{
+}
+
+/************************************************************************
+ *
  * DSD_566 - Usage of node_description values
  *
  * input[0]    - Enable input value
@@ -982,7 +1002,7 @@ void dsd_566_step(struct node_description *node)
 
 	if (DSD_566__ENABLE && !context->error)
 	{
-		dt = context->step;	// Change in time
+		dt = discrete_current_context->sample_time;	// Change in time
 		vC = context->vCap;	// Set to voltage before change
 		/* Calculate charging current */
 		i = (context->vDiff - DSD_566__VMOD) / DSD_566__R;
@@ -1097,7 +1117,6 @@ void dsd_566_reset(struct node_description *node)
 	context->vDiff = info->vPlus - info->vNeg;
 	context->flip_flop = 0;
 	context->vCap = 0;
-	context->step = 1.0 / Machine->sample_rate;
 	context->state[0] = 0;
 	context->state[1] = 0;
 

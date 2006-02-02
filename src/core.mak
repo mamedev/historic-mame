@@ -1,10 +1,27 @@
-# the core object files (without target specific objects;
-# those are added in the target.mak files)
+###########################################################################
+#
+#   core.mak
+#
+#   MAME core makefile
+#
+#   Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+#   Visit http://mamedev.org for licensing and usage restrictions.
+#
+###########################################################################
+
+
+#-------------------------------------------------
+# the core object files (without target specific
+# objects; those are added in the target.mak
+# files)
+#-------------------------------------------------
+
 COREOBJS = \
 	$(OBJ)/artwork.o \
 	$(OBJ)/audit.o \
 	$(OBJ)/cdrom.o \
 	$(OBJ)/chd.o \
+	$(OBJ)/cheat.o \
 	$(OBJ)/common.o \
 	$(OBJ)/config.o \
 	$(OBJ)/cpuexec.o \
@@ -34,26 +51,24 @@ COREOBJS = \
 	$(OBJ)/usrintrf.o \
 	$(OBJ)/validity.o \
 	$(OBJ)/version.o \
+	$(OBJ)/x86drc.o \
 	$(OBJ)/xmlfile.o \
-	$(OBJ)/machine/eeprom.o \
 	$(OBJ)/sound/filter.o \
 	$(OBJ)/sound/flt_vol.o \
 	$(OBJ)/sound/flt_rc.o \
 	$(OBJ)/sound/streams.o \
 	$(OBJ)/sound/wavwrite.o \
+	$(OBJ)/machine/eeprom.o \
 	$(OBJ)/vidhrdw/generic.o \
 	$(OBJ)/vidhrdw/vector.o \
-	$(sort $(CPUOBJS)) \
-	$(sort $(SOUNDOBJS))
 
-ifdef X86_MIPS3_DRC
-COREOBJS += $(OBJ)/x86drc.o
-endif
+
+
+#-------------------------------------------------
+# additional core files needed for the debugger
+#-------------------------------------------------
 
 ifdef DEBUG
-COREOBJS += \
-	$(sort $(DBGOBJS))
-
 ifdef NEW_DEBUGGER
 COREOBJS += \
 	$(OBJ)/debug/debugcmd.o \
@@ -68,5 +83,11 @@ COREOBJS += \
 	$(OBJ)/debug/window.o
 endif
 endif
+
+
+
+#-------------------------------------------------
+# set of tool targets
+#-------------------------------------------------
 
 TOOLS = romcmp$(EXE) chdman$(EXE) xml2info$(EXE)

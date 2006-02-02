@@ -166,13 +166,20 @@ void neogeo_set_lower_resolution( void )
 		!strcmp(Machine->gamedrv->name,"kf10thep") ||
 		!strcmp(Machine->gamedrv->name,"kof2k4se") ||
 		!strcmp(Machine->gamedrv->name,"mslug5") ||
+		!strcmp(Machine->gamedrv->name,"ms5plus") ||
 		!strcmp(Machine->gamedrv->name,"svcpcb") ||
-		!strcmp(Machine->gamedrv->name,"svcpcbj") ||
 		!strcmp(Machine->gamedrv->name,"svc") ||
+		!strcmp(Machine->gamedrv->name,"svcboot") ||
+		!strcmp(Machine->gamedrv->name,"svcplus") ||
+		!strcmp(Machine->gamedrv->name,"svcplusa") ||
+		!strcmp(Machine->gamedrv->name,"svcsplus") ||
 		!strcmp(Machine->gamedrv->name,"samsho5") ||
 		!strcmp(Machine->gamedrv->name,"samsho5h") ||
 		!strcmp(Machine->gamedrv->name,"kf2k3pcb") ||
 		!strcmp(Machine->gamedrv->name,"kof2003") ||
+		!strcmp(Machine->gamedrv->name,"kf2k3bl") ||
+		!strcmp(Machine->gamedrv->name,"kf2k4ex") ||
+		!strcmp(Machine->gamedrv->name,"kf2k3upl") ||
 		!strcmp(Machine->gamedrv->name,"samsh5sp") ||
 		!strcmp(Machine->gamedrv->name,"samsh5sh") ||
 		!strcmp(Machine->gamedrv->name,"samsh5sn") ||
@@ -338,17 +345,11 @@ VIDEO_START( neogeo_mvs )
 	neogeo_vidram16 = NULL;
 
 	neogeo_palettebank[0] = auto_malloc(0x2000);
-	if (!neogeo_palettebank[0])
-		return 1;
 
 	neogeo_palettebank[1] = auto_malloc(0x2000);
-	if (!neogeo_palettebank[1])
-		return 1;
 
 	/* 0x20000 bytes even though only 0x10c00 is used */
 	neogeo_vidram16 = auto_malloc(0x20000);
-	if (!neogeo_vidram16)
-		return 1;
 	memset(neogeo_vidram16,0,0x20000);
 
 	neogeo_paletteram16 = neogeo_palettebank[0];

@@ -74,8 +74,6 @@ VIDEO_START( segae )
 
 	cache_bitmap = auto_malloc( (16+256+16) * 192); /* 16 pixels either side to simplify drawing */
 
-	if (!cache_bitmap) return 1;
-
 	return 0;
 }
 
@@ -99,8 +97,6 @@ int start_megatech_video_normal(void)
 	if (segae_vdp_start(0)) return 1;
 
 	cache_bitmap = auto_malloc( (16+256+16) * 192); /* 16 pixels either side to simplify drawing */
-
-	if (!cache_bitmap) return 1;
 
 	return 0;
 }
@@ -158,11 +154,6 @@ int	segae_vdp_start( UINT8 chip )
 	/*- VDP Registers -*/
 
 	segae_vdp_regs[chip] = auto_malloc(0x20);
-
-	/*- Check Allocation was Successful -*/
-
-	if (!segae_vdp_vram[chip] || !segae_vdp_cram[chip] || !segae_vdp_regs[chip])
-		return 1;
 
 	/*- Clear Memory -*/
 

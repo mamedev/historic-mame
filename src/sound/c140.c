@@ -469,12 +469,8 @@ static void *c140_start(int sndindex, int clock, const void *config)
 
 	/* allocate a pair of buffers to mix into - 1 second's worth should be more than enough */
 	info->mixer_buffer_left = auto_malloc(2 * sizeof(INT16)*info->sample_rate );
-	if( info->mixer_buffer_left )
-	{
-		info->mixer_buffer_right = info->mixer_buffer_left + info->sample_rate;
-		return info;
-	}
-	return NULL;
+	info->mixer_buffer_right = info->mixer_buffer_left + info->sample_rate;
+	return info;
 }
 
 

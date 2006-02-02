@@ -64,16 +64,12 @@ VIDEO_START( pang )
         OBJ RAM
     */
 	pang_objram=auto_malloc(pang_videoram_size);
-	if (!pang_objram)
-		return 1;
 	memset(pang_objram, 0, pang_videoram_size);
 
 	/*
         Palette RAM
     */
 	paletteram = auto_malloc(2*Machine->drv->total_colors);
-	if (!paletteram)
-		return 1;
 	memset(paletteram, 0, 2*Machine->drv->total_colors);
 
 	return 0;

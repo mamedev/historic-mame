@@ -310,8 +310,8 @@ static void nbmj8991_gfxdraw(void)
 VIDEO_START( nbmj8991 )
 {
 	if ((nbmj8991_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((nbmj8991_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8))) == 0) return 1;
-	if ((nbmj8991_clut = auto_malloc(0x800 * sizeof(UINT8))) == 0) return 1;
+	nbmj8991_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8));
+	nbmj8991_clut = auto_malloc(0x800 * sizeof(UINT8));
 	memset(nbmj8991_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8)));
 	return 0;
 }

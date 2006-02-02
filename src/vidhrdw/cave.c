@@ -751,7 +751,7 @@ static int sprite_init_cave(void)
 	blit.line_offset_zbuf = ((UINT8 *)sprite_zbuf->line[1])-((UINT8 *)sprite_zbuf->line[0]);
 
 	num_sprites = spriteram_size / 0x10 / 2;
-	if(!(sprite_cave = auto_malloc( num_sprites * sizeof(struct sprite_cave) ))) return 1;
+	sprite_cave = auto_malloc( num_sprites * sizeof(struct sprite_cave) );
 	memset(sprite_cave, 0, num_sprites * sizeof(struct sprite_cave));
 
 	memset(sprite_table,0,sizeof(sprite_table));

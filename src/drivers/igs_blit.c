@@ -79,8 +79,7 @@ VIDEO_START(igs)
 
 	for (i = 0; i < 8; i++)
 	{
-		if ((layer[i] = (UINT8*)auto_malloc(512 * 256)) == 0)
-			return 1;
+		layer[i] = auto_malloc(512 * 256);
 	}
 
 	chmplst2_pen_hi = 0;

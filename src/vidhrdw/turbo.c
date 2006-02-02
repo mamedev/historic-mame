@@ -224,13 +224,9 @@ static int init_sprites(UINT32 sprite_expand[16], UINT8 sprite_enable[16], int e
 
 	/* allocate the expanded sprite data */
 	sprite_expanded_data = auto_malloc(sprite_length * 2 * sizeof(UINT32));
-	if (!sprite_expanded_data)
-		return 1;
 
 	/* allocate the expanded sprite enable array */
 	sprite_expanded_enable = auto_malloc(sprite_length * 2 * sizeof(UINT8));
-	if (!sprite_expanded_enable)
-		return 1;
 
 	/* expand the sprite ROMs */
 	src = sprite_gfxdata;
@@ -279,8 +275,6 @@ static int init_fore(void)
 
 	/* allocate the expanded foreground data */
 	fore_expanded_data = auto_malloc(fore_length);
-	if (!fore_expanded_data)
-		return 1;
 
 	/* expand the foreground ROMs */
 	src = fore_gfxdata;
@@ -355,8 +349,6 @@ VIDEO_START( turbo )
 
 	/* allocate the expanded road palette */
 	road_expanded_palette = auto_malloc(0x40 * sizeof(UINT16));
-	if (!road_expanded_palette)
-		return 1;
 
 	/* expand the road palette */
 	src = road_palette;
@@ -400,8 +392,6 @@ VIDEO_START( subroc3d )
 
 	/* allocate the expanded sprite priority map */
 	sprite_expanded_priority = auto_malloc(1 << 12);
-	if (!sprite_expanded_priority)
-		return 1;
 
 	/* expand the sprite priority map */
 	for (i = 0; i < (1 << 12); i++)
@@ -448,8 +438,6 @@ VIDEO_START( buckrog )
 
 	/* allocate the expanded sprite priority map */
 	sprite_expanded_priority = auto_malloc(1 << 8);
-	if (!sprite_expanded_priority)
-		return 1;
 
 	/* expand the sprite priority map */
 	for (i = 0; i < (1 << 8); i++)
@@ -468,8 +456,6 @@ VIDEO_START( buckrog )
 
 	/* allocate the bitmap RAM */
 	buckrog_bitmap_ram = auto_malloc(0xe000);
-	if (!buckrog_bitmap_ram)
-		return 1;
 
 	/* other stuff */
 	sprite_mask = 0xffff;

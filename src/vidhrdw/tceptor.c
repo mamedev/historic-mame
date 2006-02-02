@@ -298,9 +298,10 @@ static int decode_bg(int region)
 	free(buffer);
 
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(memory_region(region), &bg_layout);
+	Machine->gfx[gfx_index] = allocgfx(&bg_layout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
+	decodegfx(Machine->gfx[gfx_index], memory_region(region), 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[2048];
@@ -312,9 +313,10 @@ static int decode_bg(int region)
 static int decode_sprite(int gfx_index, const gfx_layout *layout, const void *data)
 {
 	/* decode the graphics */
-	Machine->gfx[gfx_index] = decodegfx(data, layout);
+	Machine->gfx[gfx_index] = allocgfx(layout);
 	if (!Machine->gfx[gfx_index])
 		return 1;
+	decodegfx(Machine->gfx[gfx_index], data, 0, Machine->gfx[gfx_index]->total_elements);
 
 	/* set the color information */
 	Machine->gfx[gfx_index]->colortable = &Machine->remapped_colortable[1024];

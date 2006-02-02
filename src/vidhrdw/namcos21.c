@@ -37,16 +37,9 @@ AllocatePolyFrameBuffer( void )
 	mpPolyFrameBufferZ2    = auto_malloc( FRAMEBUFFER_SIZE_IN_BYTES );
 	mpPolyFrameBufferPens2 = auto_malloc( FRAMEBUFFER_SIZE_IN_BYTES );
 
-	if( mpPolyFrameBufferZ &&
-		mpPolyFrameBufferPens &&
-		mpPolyFrameBufferZ2 &&
-		mpPolyFrameBufferPens2 )
-	{
 		namcos21_ClearPolyFrameBuffer();
 		namcos21_ClearPolyFrameBuffer();
 		return 0;
-	}
-	return -1;
 } /* AllocatePolyFrameBuffer */
 
 void

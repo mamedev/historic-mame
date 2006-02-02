@@ -36,8 +36,6 @@ VIDEO_START( starfire )
 
 	/* make a dirty array */
 	scanline_dirty = auto_malloc(256);
-	if (!scanline_dirty)
-		return 1;
 
 	/* reset videoram */
 	memset(starfire_videoram, 0, 0x2000);

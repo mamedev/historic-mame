@@ -1050,8 +1050,6 @@ static void input_port_postload(void)
 
 				/* allocate memory */
 				info = auto_malloc(sizeof(*info));
-				if (!info)
-					osd_die("Out of memory allocating analog port info\n");
 				memset(info, 0, sizeof(*info));
 
 				/* fill in the data */

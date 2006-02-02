@@ -2114,7 +2114,6 @@ V-V                           TP-027
 	DRIVER( robotryo )	/* (c) 1982 */
 	DRIVER( joust )		/* (c) 1982 */
 	DRIVER( joustr )	/* (c) 1982 */
-	DRIVER( joustg )	/* (c) 1982 */
 	DRIVER( joustwr )	/* (c) 1982 */
 	DRIVER( bubbles )	/* (c) 1982 */
 	DRIVER( bubblesr )	/* (c) 1982 */
@@ -3260,6 +3259,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( crkdownj )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( sgmast )	/* (c) 1989 (protected) */
 	DRIVER( sgmastc )	/* (c) 1989 (FD1094, decrypted) */
+	DRIVER( sgmastj )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( roughrac )	/* (c) 1990 (FD1094, decrypted) */
 	DRIVER( bnzabros )	/* (c) 1990 */
 	DRIVER( bnzabrsj )	/* (c) 1990 */
@@ -5127,13 +5127,22 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( matrim )	/* 0266 (c) 2002 Atlus */
 	DRIVER( pnyaa )		/* 0267 (c) 2003 Aiky / Taito */
 	DRIVER( mslug5 )	/* 0268 (c) 2003 Playmore */
+	DRIVER( ms5plus )	/* bootleg */
 	DRIVER( svcpcb )	/* 0269 (c) 2003 Playmore / Capcom - JAMMA PCB */
-	DRIVER( svcpcbj )	/* 0269 (c) 2003 Playmore / Capcom - JAMMA PCB*/
 	DRIVER( svc )		/* 0269 (c) 2003 Playmore / Capcom */
+	DRIVER( svcboot )	/* bootleg */
+	DRIVER( svcplus )	/* bootleg */
+	DRIVER( svcplusa )	/* bootleg */
+	DRIVER( svcsplus )	/* bootleg */
 	DRIVER( samsho5 )	/* 0270 (c) 2003 Playmore */
 	DRIVER( samsho5h )	/* 0270 (c) 2003 Playmore */
+	DRIVER( samsho5b )	/* bootleg */
 	DRIVER( kf2k3pcb )	/* 0271 (c) 2003 Playmore - JAMMA PCB */
 	DRIVER( kof2003 )	/* 0271 (c) 2003 Playmore */
+	DRIVER( kf2k3bl )	/* bootleg */
+	DRIVER( kf2k3bla )	/* bootleg */
+	DRIVER( kf2k3pl )	/* bootleg */
+	DRIVER( kf2k3upl )	/* bootleg */
 	DRIVER( samsh5sp )	/* 0272 (c) 2003 Playmore */
 	DRIVER( samsh5sh )	/* 0272 (c) 2003 Playmore */
 	DRIVER( samsh5sn )	/* 0272 (c) 2003 Playmore */
@@ -5696,11 +5705,11 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tetrisp2 )	/* (c) 1997 Jaleco */
 	DRIVER( teplus2j )	/* (c) 1997 Jaleco */
 	DRIVER( rockn )		/* (c) 1999 Jaleco */
-	DRIVER( rocknb )	/* (c) 1999 Jaleco */
-	DRIVER( rockn2b )	/* (c) 1999 Jaleco */
-	DRIVER( rocknmsb )	/* (c) 1999 Jaleco */
-	DRIVER( rockn3b )	/* (c) 1999 Jaleco */
-	DRIVER( rockn4b )	/* (c) 2000 Jaleco */
+	DRIVER( rockna )	/* (c) 1999 Jaleco */
+	DRIVER( rockn2 )	/* (c) 1999 Jaleco */
+	DRIVER( rocknms )	/* (c) 1999 Jaleco */
+	DRIVER( rockn3 )	/* (c) 1999 Jaleco */
+	DRIVER( rockn4 )	/* (c) 2000 Jaleco */
 
 	/* Jaleco Mega System 1 games */
 	DRIVER( lomakai )	/* (c) 1988 (World) */
@@ -6756,6 +6765,7 @@ Other Sun games
 	DRIVER( 9ballsh3 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Games" */
 	DRIVER( gumbo )		/* (c) 1994 Min Corp. */
 	DRIVER( mspuzzle )	/* (c) 1994 Min Corp. */
+	DRIVER( mspuzzln )	/* (c) 1994 Min Corp. */
 	DRIVER( msbingo )	/* (C) 1994 Min Corp. */
 	DRIVER( dblpoint )	/* (c) 1995 Dong Bang Electron */
 	DRIVER( hangman )	/* (c) 1984 Status Games */

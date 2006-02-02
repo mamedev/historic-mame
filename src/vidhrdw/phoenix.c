@@ -164,11 +164,8 @@ static void get_bg_tile_info(int tile_index)
 
 VIDEO_START( phoenix )
 {
-	if ((videoram_pg1 = auto_malloc(0x1000)) == 0)
-		return 1;
-
-	if ((videoram_pg2 = auto_malloc(0x1000)) == 0)
-		return 1;
+	videoram_pg1 = auto_malloc(0x1000);
+	videoram_pg2 = auto_malloc(0x1000);
 
 	memory_configure_bank(1, 0, 1, videoram_pg1, 0);
 	memory_configure_bank(1, 1, 1, videoram_pg2, 0);

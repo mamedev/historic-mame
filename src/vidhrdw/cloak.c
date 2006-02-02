@@ -182,11 +182,8 @@ VIDEO_START( cloak )
 	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((tmpvideoram = auto_malloc(256*256)) == 0)
-		return 1;
-
-	if ((tmpvideoram2 = auto_malloc(256*256)) == 0)
-		return 1;
+	tmpvideoram = auto_malloc(256*256);
+	tmpvideoram2 = auto_malloc(256*256);
 
 	return 0;
 }

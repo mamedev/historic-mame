@@ -85,10 +85,6 @@ VIDEO_START( victory )
 	chardirty = auto_malloc(256);
 	scandirty = auto_malloc(512);
 
-	/* fail if something went wrong */
-	if (!rram || !gram || !bram || !bgbitmap || !fgbitmap || !bgdirty || !chardirty || !scandirty)
-		return 1;
-
 	/* mark everything dirty */
 	memset(bgdirty, 1, 32 * 32);
 	memset(chardirty, 1, 256);

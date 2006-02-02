@@ -137,9 +137,6 @@ VIDEO_START( kaneko16_sprites )
 	/* 0x400 sprites max */
 	spritelist.first_sprite = (struct tempsprite *)auto_malloc(0x400 * sizeof(spritelist.first_sprite[0]));
 
-	if (	!spritelist.first_sprite	)
-		return 1;
-
 	return 0;
 }
 

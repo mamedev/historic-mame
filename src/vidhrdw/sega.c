@@ -134,11 +134,7 @@ VIDEO_START( sega )
 
 	/* allocate memory for the sine and cosine lookup tables ASG 080697 */
 	sinTable = auto_malloc (0x400 * sizeof (long));
-	if (!sinTable)
-		return 1;
 	cosTable = auto_malloc (0x400 * sizeof (long));
-	if (!cosTable)
-		return 1;
 
 	/* generate the sine/cosine lookup tables */
 	for (i = 0; i < 0x400; i++)

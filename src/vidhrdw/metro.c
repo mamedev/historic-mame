@@ -392,7 +392,6 @@ static void alloc_empty_tiles(void)
 	int code,i;
 
 	empty_tiles = auto_malloc(16*16*16);
-	if (!empty_tiles) return;
 
 	for (code = 0;code < 0x10;code++)
 		for (i = 0;i < 16*16;i++)
@@ -416,7 +415,7 @@ VIDEO_START( metro_14100 )
 	tilemap_16x16[1] = NULL;
 	tilemap_16x16[2] = NULL;
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !empty_tiles || !metro_tiletable_old)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] )
 		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap[0],0);
@@ -443,7 +442,7 @@ VIDEO_START( metro_14220 )
 	tilemap_16x16[1] = NULL;
 	tilemap_16x16[2] = NULL;
 
-	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2] || !empty_tiles || !metro_tiletable_old)
+	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2])
 		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap[0],0);
@@ -475,8 +474,7 @@ VIDEO_START( metro_14300 )
 	tilemap_16x16[2] = tilemap_create(get_tile_info_2_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
 
 	if (!bg_tilemap[0] || !bg_tilemap[1] || !bg_tilemap[2]
-			|| !tilemap_16x16[0] || !tilemap_16x16[1] || !tilemap_16x16[2]
-			|| !empty_tiles || !metro_tiletable_old)
+			|| !tilemap_16x16[0] || !tilemap_16x16[1] || !tilemap_16x16[2])
 		return 1;
 
 	tilemap_set_transparent_pen(bg_tilemap[0],0);

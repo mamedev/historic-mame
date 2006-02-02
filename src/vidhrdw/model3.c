@@ -131,12 +131,7 @@ VIDEO_START( model3 )
 		return 1;
 
 	m3_char_ram = auto_malloc(0x100000);
-	if( !m3_char_ram )
-		return 1;
-
 	m3_tile_ram = auto_malloc(0x8000);
-	if( !m3_tile_ram )
-		return 1;
 
 	memset(m3_char_ram, 0, 0x100000);
 	memset(m3_tile_ram, 0, 0x8000);
@@ -145,9 +140,6 @@ VIDEO_START( model3 )
 	memset(pal_lookup, 0, 65536*2);
 
 	texture_fifo = auto_malloc(0x100000);
-	if( !texture_fifo ) {
-		return 1;
-	}
 
 	/* 2x 4MB texture sheets */
 	texture_ram[0] = auto_malloc(0x400000);

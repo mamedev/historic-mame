@@ -59,11 +59,12 @@ As this communication doesn't work, we cannot get any further with the emulation
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
+#include "cpu/m6809/m6809.h"
 #include "machine/random.h"
 #include "machine/6821pia.h"
 #include "machine/6840ptm.h"
-#include "machine/mpu4.c"//t6840.c"
-#include "machine/6850acia.c"
+#include "machine/6850acia.h"
+#include "machine/74148.h"
 //#include "machine/t6840.c"
 
 // MPU4
@@ -91,6 +92,12 @@ static int ay8910_adres;
 
 static int signal_50hz;
 static int ic4_input_b;
+
+static UINT8 m6840_irq_state;
+UINT8 m6850_irq_state; // referenced in machine/6850acia.c
+static UINT8 scn2674_irq_state;
+static void update_irq(void);
+
 
 // user interface stuff ///////////////////////////////////////////////////
 
@@ -122,6 +129,52 @@ UINT8 scn2674_cursor_l;
 UINT8 scn2674_cursor_h;
 UINT8 scn2674_screen2_l;
 UINT8 scn2674_screen2_h;
+
+
+/*************************************
+ *
+ *  Interrupt system
+ *
+ *************************************/
+
+/* the interrupt system consists of a 74148 priority encoder
+   with the following interrupt priorites.  A lower number
+   indicates a lower priority:
+
+    7 - Game Card
+    6 - Game Card
+    5 - Game Card
+    4 - Game Card
+    3 - AVDC
+    2 - ACIA
+    1 - PTM
+    0 - Unused (no such IRQ on 68k)
+*/
+
+void update_mpu68_interrupts(void)
+{
+	int newstate = 0;
+
+	/* all interrupts go through an LS148, which gives priority to the highest */
+	if (m6840_irq_state)//1
+		newstate = 1;
+	if (m6850_irq_state)//2
+		newstate = 2;
+	if (scn2674_irq_state == 1)//3
+		newstate = 3;
+
+	m6840_irq_state = 0;
+	m6850_irq_state = 0;
+	scn2674_irq_state = 0;
+
+	/* set the new state of the IRQ lines */
+	if (newstate)
+		cpunum_set_input_line(1, newstate, HOLD_LINE);
+	else
+		cpunum_set_input_line(1, 7, CLEAR_LINE);
+}
+
+
 
 
 // MPU4
@@ -1248,10 +1301,10 @@ VIDEO_START( mpu4_vid )
 		return 1;
 
 	/* create the char set (gfx will then be updated dynamically from RAM) */
-	Machine->gfx[mpu4_gfx_index+0] = decodegfx((UINT8 *)&mpu4_vid_vidram, &mpu4_vid_char_8x8_layout);
-	Machine->gfx[mpu4_gfx_index+1] = decodegfx((UINT8 *)&mpu4_vid_vidram, &mpu4_vid_char_8x16_layout);
-	Machine->gfx[mpu4_gfx_index+2] = decodegfx((UINT8 *)&mpu4_vid_vidram, &mpu4_vid_char_16x8_layout);
-	Machine->gfx[mpu4_gfx_index+3] = decodegfx((UINT8 *)&mpu4_vid_vidram, &mpu4_vid_char_16x16_layout);
+	Machine->gfx[mpu4_gfx_index+0] = allocgfx(&mpu4_vid_char_8x8_layout);
+	Machine->gfx[mpu4_gfx_index+1] = allocgfx(&mpu4_vid_char_8x16_layout);
+	Machine->gfx[mpu4_gfx_index+2] = allocgfx(&mpu4_vid_char_16x8_layout);
+	Machine->gfx[mpu4_gfx_index+3] = allocgfx(&mpu4_vid_char_16x16_layout);
 
 	/* set the color information */
 	Machine->gfx[mpu4_gfx_index+0]->colortable = Machine->pens;
@@ -1586,6 +1639,9 @@ static INTERRUPT_GEN( gen_50hz )
   pia_set_input_ca1(1,signal_50hz);		  // signal is connected to IC4 CA2
   pia_set_input_b(  1, ic4_input_b);	  // signal is connected to IC4 port
 }
+
+
+
 
 static MACHINE_DRIVER_START( mpu4_vid )
 

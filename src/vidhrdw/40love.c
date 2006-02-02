@@ -113,7 +113,7 @@ VIDEO_START( fortyl )
 
 	background  = tilemap_create(get_bg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8,8,64,32);
 
-	if (!background || !fortyl_pixram1 || !fortyl_pixram2 || !pixel_bitmap1 || !pixel_bitmap2)
+	if (!background || !pixel_bitmap1 || !pixel_bitmap2)
 		return 1;
 
 	tilemap_set_scroll_rows(background,32);

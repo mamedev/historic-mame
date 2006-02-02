@@ -68,10 +68,7 @@ VIDEO_START( starshp1 )
 
 	tilemap_set_scrollx(bg_tilemap, 0, -8);
 
-	if ((LSFR = auto_malloc(0x20000)) == 0)
-	{
-		return 1;
-	}
+	LSFR = auto_malloc(0x20000);
 
 	for (i = 0; i < 0x10000; i++)
 	{

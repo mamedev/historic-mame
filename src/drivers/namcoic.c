@@ -61,8 +61,7 @@ namco_tilemap_init( int gfxbank, void *maskBaseAddr,
 	mTilemapInfo.maskBaseAddr = maskBaseAddr;
 	mTilemapInfo.cb = cb;
 	mTilemapInfo.videoram = auto_malloc( 0x10000*2 );
-	if( mTilemapInfo.videoram )
-	{
+
 		/* four scrolling tilemaps */
 		mTilemapInfo.tmap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
 		mTilemapInfo.tmap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
@@ -88,8 +87,6 @@ namco_tilemap_init( int gfxbank, void *maskBaseAddr,
 			tilemap_set_scrolldy( mTilemapInfo.tmap[i], -24, -(-224-24) );
 		}
 		return 0;
-	}
-	return -1;
 } /* namco_tilemap_init */
 
 void
@@ -888,10 +885,7 @@ namco_obj_init( int gfxbank, int palXOR, int (*codeToTile)( int code ) )
 		mpCodeToTile = DefaultCodeToTile;
 	}
 	spriteram16 = auto_malloc(0x20000);
-	if( spriteram16 )
-	{
-		memset( spriteram16, 0, 0x20000 ); /* needed for Nebulas Ray */
-	}
+	memset( spriteram16, 0, 0x20000 ); /* needed for Nebulas Ray */
 	memset( mSpritePos,0x00,sizeof(mSpritePos) );
 } /* namcosC355_init */
 
@@ -1101,8 +1095,7 @@ namco_roz_init( int gfxbank, int maskregion )
 	rozbank16 = auto_malloc(0x10);
 	rozvideoram16 = auto_malloc(0x20000);
 	rozcontrol16 = auto_malloc(0x20);
-	if( rozbank16 && rozvideoram16 && rozcontrol16 )
-	{
+
 		for( i=0; i<ROZ_TILEMAP_COUNT; i++ )
 		{
 			mRozTilemap[i] = tilemap_create(
@@ -1118,8 +1111,6 @@ namco_roz_init( int gfxbank, int maskregion )
 			}
 		}
 		return 0;
-	}
-	return -1;
 } /* namco_roz_init */
 
 struct RozParam
@@ -1596,16 +1587,15 @@ namco_road_init( int gfxbank )
 	mbRoadNeedTransparent = 0;
 	mRoadGfxBank = gfxbank;
 	mpRoadDirty = auto_malloc(ROAD_TILE_COUNT_MAX);
-	if( mpRoadDirty )
 	{
 		memset( mpRoadDirty,0x00,ROAD_TILE_COUNT_MAX );
 		mbRoadSomethingIsDirty = 0;
 		mpRoadRAM = auto_malloc(0x20000);
-		if( mpRoadRAM )
 		{
-			gfx_element *pGfx = decodegfx( 0x10000+(UINT8 *)mpRoadRAM, &RoadTileLayout );
+			gfx_element *pGfx = allocgfx( &RoadTileLayout );
 			if( pGfx )
 			{
+				decodegfx(pGfx, 0x10000+(UINT8 *)mpRoadRAM, 0, pGfx->total_elements);
 				pGfx->colortable = &Machine->remapped_colortable[0xf00];
 				pGfx->total_colors = 0x3f;
 

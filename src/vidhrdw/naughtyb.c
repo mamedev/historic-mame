@@ -157,8 +157,7 @@ VIDEO_START( naughtyb )
 	videoreg = palreg = bankreg = 0;
 
 	/* Naughty Boy has a virtual screen twice as large as the visible screen */
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer, 1, videoram_size);
 
 	if ((tmpbitmap = auto_bitmap_alloc(68*8,28*8)) == 0)

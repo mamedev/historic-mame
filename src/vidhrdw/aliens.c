@@ -54,8 +54,6 @@ static void sprite_callback(int *code,int *color,int *priority_mask,int *shadow)
 VIDEO_START( aliens )
 {
 	paletteram = auto_malloc(0x400);
-	if (!paletteram)
-		return 1;
 
 	layer_colorbase[0] = 0;
 	layer_colorbase[1] = 4;

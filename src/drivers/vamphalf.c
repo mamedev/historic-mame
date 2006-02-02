@@ -213,14 +213,14 @@ static void draw_sprites(mame_bitmap *bitmap)
 }
 
 
-VIDEO_UPDATE( common )
+static VIDEO_UPDATE( common )
 {
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 	draw_sprites(bitmap);
 }
 
 
-INPUT_PORTS_START( common )
+static INPUT_PORTS_START( common )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    ) PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_PLAYER(1)

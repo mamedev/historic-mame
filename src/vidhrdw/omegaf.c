@@ -252,16 +252,13 @@ static void get_fg_tile_info(int tile_index)
 static int videoram_alloc(int size)
 {
 	/* create video ram */
-	if ( (omegaf_bg0_videoram = auto_malloc(size)) == NULL )
-		return 1;
+	omegaf_bg0_videoram = auto_malloc(size);
 	memset( omegaf_bg0_videoram, 0x00, size );
 
-	if ( (omegaf_bg1_videoram = auto_malloc(size)) == NULL )
-		return 1;
+	omegaf_bg1_videoram = auto_malloc(size);
 	memset( omegaf_bg1_videoram, 0x00, size );
 
-	if ( (omegaf_bg2_videoram = auto_malloc(size)) == NULL )
-		return 1;
+	omegaf_bg2_videoram = auto_malloc(size);
 	memset( omegaf_bg2_videoram, 0x00, size );
 
 	if ( (bitmap_sp = auto_bitmap_alloc (Machine -> drv -> screen_width, Machine -> drv -> screen_height ) ) == NULL )

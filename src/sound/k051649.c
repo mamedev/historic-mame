@@ -62,8 +62,6 @@ static int make_mixer_table(struct k051649_info *info, int voices)
 
 	/* allocate memory */
 	info->mixer_table = auto_malloc(512 * voices * sizeof(INT16));
-	if (!info->mixer_table)
-		return 1;
 
 	/* find the middle of the table */
 	info->mixer_lookup = info->mixer_table + (256 * voices);
@@ -141,8 +139,7 @@ static void *k051649_start(int sndindex, int clock, const void *config)
 	info->rate = Machine->sample_rate;
 
 	/* allocate a buffer to mix into - 1 second's worth should be more than enough */
-	if ((info->mixer_buffer = auto_malloc(2 * sizeof(short) * Machine->sample_rate)) == 0)
-		return NULL;
+	info->mixer_buffer = auto_malloc(2 * sizeof(short) * Machine->sample_rate);
 
 	/* build the mixer table */
 	if (make_mixer_table(info, 5))

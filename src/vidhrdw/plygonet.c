@@ -78,7 +78,8 @@ VIDEO_START(polygonet_vh_start)
 		return 1;
 
 	// decode the ttl layer's gfx
-	Machine->gfx[ttl_gfx_index] = decodegfx(memory_region(REGION_GFX1), &charlayout);
+	Machine->gfx[ttl_gfx_index] = allocgfx(&charlayout);
+	decodegfx(Machine->gfx[ttl_gfx_index], memory_region(REGION_GFX1), 0, Machine->gfx[ttl_gfx_index]->total_elements);
 
 	if (Machine->drv->color_table_len)
 	{

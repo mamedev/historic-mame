@@ -29,12 +29,8 @@ VIDEO_START( volfied )
 		return 1;
 
 	line_dirty = auto_malloc(256);
-	if (line_dirty == NULL)
-		return 1;
 
 	video_ram = auto_malloc(0x40000 * sizeof (UINT16));
-	if (video_ram == NULL)
-		return 1;
 
 	state_save_register_UINT16("volfied", 0, "video_ram",   video_ram,    0x40000);
 	state_save_register_UINT16("volfied", 0, "video_ctrl",  &video_ctrl,  1);

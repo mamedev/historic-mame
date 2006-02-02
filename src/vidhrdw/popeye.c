@@ -268,8 +268,7 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( skyskipr )
 {
-	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
-		return 1;
+	popeye_bitmapram = auto_malloc(popeye_bitmapram_size);
 
 	if ((tmpbitmap2 = auto_bitmap_alloc(1024,1024)) == 0)	/* actually 1024x512 but not rolling over vertically? */
 		return 1;
@@ -289,8 +288,7 @@ VIDEO_START( skyskipr )
 
 VIDEO_START( popeye )
 {
-	if ((popeye_bitmapram = auto_malloc(popeye_bitmapram_size)) == 0)
-		return 1;
+	popeye_bitmapram = auto_malloc(popeye_bitmapram_size);
 
 	if ((tmpbitmap2 = auto_bitmap_alloc(512,512)) == 0)
 		return 1;

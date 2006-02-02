@@ -169,25 +169,6 @@ void decodechar(gfx_element *gfx,int num,const UINT8 *src,const gfx_layout *gl)
 
 			dp = gfx->gfxdata + num * gfx->char_modulo + (gfx->height-1) * gfx->line_modulo;
 
-#ifdef PREROTATE_GFX
-			y = gfx->height;
-			while (--y >= 0)
-			{
-				int yoffs;
-
-				yoffs = y;
-				x = gfx->width;
-				while (--x >= 0)
-				{
-					int xoffs;
-
-					xoffs = x;
-					if (readbit(src,offs + xoffset[xoffs] + yoffset[yoffs]))
-						dp[x] |= shiftedbit;
-				}
-				dp -= gfx->line_modulo;
-			}
-#else
 			y = gfx->height;
 			while (--y >= 0)
 			{
@@ -201,7 +182,6 @@ void decodechar(gfx_element *gfx,int num,const UINT8 *src,const gfx_layout *gl)
 				}
 				dp -= gfx->line_modulo;
 			}
-#endif
 		}
 	}
 
@@ -209,76 +189,92 @@ void decodechar(gfx_element *gfx,int num,const UINT8 *src,const gfx_layout *gl)
 }
 
 
-gfx_element *decodegfx(const UINT8 *src,const gfx_layout *gl)
+gfx_element *allocgfx(const gfx_layout *gl)
 {
-	int c;
 	gfx_element *gfx;
 
-
-	if ((gfx = malloc(sizeof(gfx_element))) == 0)
-		return 0;
+	/* allocate memory for the gfx_element structure */
+	gfx = malloc(sizeof(*gfx));
 	memset(gfx,0,sizeof(gfx_element));
 
+	/* fill it in */
+	gfx->layout = *gl;
 	gfx->width = gl->width;
 	gfx->height = gl->height;
-
 	gfx->total_elements = gl->total;
 	gfx->color_granularity = 1 << gl->planes;
+	if (gfx->color_granularity <= 32)
+		gfx->pen_usage = malloc(gfx->total_elements * sizeof(*gfx->pen_usage));
 
-	gfx->pen_usage = 0; /* need to make sure this is NULL if the next test fails) */
-	if (gfx->color_granularity <= 32)	/* can't handle more than 32 pens */
-		gfx->pen_usage = malloc(gfx->total_elements * sizeof(int));
-		/* no need to check for failure, the code can work without pen_usage */
-
+	/* raw graphics case */
 	if (gl->planeoffset[0] == GFX_RAW)
 	{
-		if (gl->planes <= 4) gfx->flags |= GFX_PACKED;
-
+		/* modulos are determined for us by the layout */
 		gfx->line_modulo = gl->yoffset[0] / 8;
 		gfx->char_modulo = gl->charincrement / 8;
 
-		gfx->gfxdata = (UINT8 *)src + gl->xoffset[0] / 8;
+		/* don't free the data because we will get a pointer at decode time */
 		gfx->flags |= GFX_DONT_FREE_GFXDATA;
-
-		for (c = 0;c < gfx->total_elements;c++)
-			calc_penusage(gfx,c);
+		if (gl->planes <= 4) gfx->flags |= GFX_PACKED;
 	}
+
+	/* decoded graphics case */
 	else
 	{
-		if (0 && gl->planes <= 4 && !(gfx->width & 1))
-//      if (gl->planes <= 4 && !(gfx->width & 1))
-		{
-			gfx->flags |= GFX_PACKED;
-			gfx->line_modulo = gfx->width/2;
-		}
-		else
-			gfx->line_modulo = gfx->width;
+		/* we get to pick our own modulos */
+		gfx->line_modulo = gfx->width;
 		gfx->char_modulo = gfx->line_modulo * gfx->height;
 
-		if ((gfx->gfxdata = malloc(gfx->total_elements * gfx->char_modulo * sizeof(UINT8))) == 0)
-		{
-			free(gfx->pen_usage);
-			free(gfx);
-			return 0;
-		}
-
-		for (c = 0;c < gfx->total_elements;c++)
-			decodechar(gfx,c,src,gl);
+		/* allocate memory for the data */
+		gfx->gfxdata = malloc(gfx->total_elements * gfx->char_modulo * sizeof(UINT8));
 	}
 
 	return gfx;
 }
 
 
+void decodegfx(gfx_element *gfx, const UINT8 *src, UINT32 first, UINT32 count)
+{
+	int last = first + count - 1;
+	int c;
+
+	assert(gfx);
+	assert(first < gfx->total_elements);
+	assert(last < gfx->total_elements);
+
+	/* if this is raw graphics data, just set the pointer and compute pen usage */
+	if (gfx->flags & GFX_DONT_FREE_GFXDATA)
+	{
+		/* only allowed to pass a pointer here for the first entry */
+		assert(first == 0 || src == NULL);
+
+		/* if we got a pointer, set it */
+		if (src)
+			gfx->gfxdata = (UINT8 *)src;
+
+		/* compute pen usage for everything */
+		for (c = first; c <= last; c++)
+			calc_penusage(gfx, c);
+	}
+
+	/* otherwise, we get to manually decode */
+	else
+	{
+		for (c = first; c <= last; c++)
+			decodechar(gfx, c, src, &gfx->layout);
+	}
+}
+
+
 void freegfx(gfx_element *gfx)
 {
-	if (gfx)
-	{
+	if (!gfx)
+		return;
+	if (gfx->pen_usage)
 		free(gfx->pen_usage);
-		if (!(gfx->flags & GFX_DONT_FREE_GFXDATA))
-			free(gfx->gfxdata);
-		free(gfx);
-	}
+	if (!(gfx->flags & GFX_DONT_FREE_GFXDATA))
+		free(gfx->gfxdata);
+	free(gfx);
 }
 
 

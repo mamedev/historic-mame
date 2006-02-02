@@ -569,10 +569,9 @@ static void decode_modified(UINT8 *sprite_ram, int interleave)
 
 VIDEO_START( decocass )
 {
-	if (NULL == (sprite_dirty = auto_malloc(256)) ||
-		NULL == (char_dirty = auto_malloc(1024)) ||
-		NULL == (tile_dirty = auto_malloc(16)))
-		return 1;
+	sprite_dirty = auto_malloc(256);
+	char_dirty = auto_malloc(1024);
+	tile_dirty = auto_malloc(16);
 
 	bg_tilemap_l = tilemap_create( get_bg_l_tile_info, bgvideoram_scan_cols, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );
 	bg_tilemap_r = tilemap_create( get_bg_r_tile_info, bgvideoram_scan_cols, TILEMAP_TRANSPARENT, 16, 16, 32, 32 );

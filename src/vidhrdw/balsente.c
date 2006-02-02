@@ -50,18 +50,12 @@ VIDEO_START( balsente )
 
 	/* allocate a local copy of video RAM */
 	local_videoram = auto_malloc(256 * 256);
-	if (!local_videoram)
-		return 1;
 
 	/* allocate a scanline dirty array */
 	scanline_dirty = auto_malloc(256);
-	if (!scanline_dirty)
-		return 1;
 
 	/* allocate a scanline palette array */
 	scanline_palette = auto_malloc(256);
-	if (!scanline_palette)
-		return 1;
 
 	/* mark everything dirty to start */
 	memset(scanline_dirty, 1, 256);

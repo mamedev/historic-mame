@@ -124,8 +124,7 @@ static int build_decoded_waveform(struct namco_sound *chip, int region)
 		size = 32 * 8;		/* 32 samples, 8 waveforms */
 	}
 
-	if ((p = (INT16 *)auto_malloc(size * MAX_VOLUME * sizeof (INT16))) == NULL)
-		return 1;
+	p = auto_malloc(size * MAX_VOLUME * sizeof (INT16));
 
 	for (v = 0; v < MAX_VOLUME; v++)
 	{

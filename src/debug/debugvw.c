@@ -703,6 +703,63 @@ static void registers_free(struct debug_view *view)
 
 
 /*-------------------------------------------------
+    add_register - adds a register to the
+    registers view
+-------------------------------------------------*/
+
+static void add_register(struct debug_view *view, int regnum, const char *str)
+{
+	struct debug_view_registers *regdata = view->extra_data;
+	int tagstart, taglen, valstart, vallen;
+	const char *colon;
+
+	colon = strchr(str, ':');
+
+	/* if no colon, mark everything as tag */
+	if (!colon)
+	{
+		tagstart = 0;
+		taglen = strlen(str);
+		valstart = 0;
+		vallen = 0;
+	}
+
+	/* otherwise, break the string at the colon */
+	else
+	{
+		tagstart = 0;
+		taglen = colon - str;
+		valstart = (colon + 1) - str;
+		vallen = strlen(colon + 1);
+	}
+
+	/* now trim spaces */
+	while (isspace(str[tagstart]) && taglen > 0)
+		tagstart++, taglen--;
+	while (isspace(str[tagstart + taglen - 1]) && taglen > 0)
+		taglen--;
+	while (isspace(str[valstart]) && vallen > 0)
+		valstart++, vallen--;
+	while (isspace(str[valstart + vallen - 1]) && vallen > 0)
+		vallen--;
+
+	/* note the register number and info */
+	regdata->reg[view->total_rows].lastval  =
+	regdata->reg[view->total_rows].currval  = cpunum_get_reg(view->cpunum, regnum);
+	regdata->reg[view->total_rows].regnum   = regnum;
+	regdata->reg[view->total_rows].tagstart = tagstart;
+	regdata->reg[view->total_rows].taglen   = taglen;
+	regdata->reg[view->total_rows].valstart = valstart;
+	regdata->reg[view->total_rows].vallen   = vallen;
+	view->total_rows++;
+
+	/* adjust the divider and total cols, if necessary */
+	regdata->divider = MAX(regdata->divider, 1 + taglen + 1);
+	view->total_cols = MAX(view->total_cols, 1 + taglen + 2 + vallen + 1);
+}
+
+
+/*-------------------------------------------------
     registers_recompute - recompute all info
     for the registers view
 -------------------------------------------------*/
@@ -784,70 +841,20 @@ static void registers_recompute(struct debug_view *view)
 	for (regnum = 0; regnum < MAX_REGS; regnum++)
 	{
 		const char *str = NULL;
+		int regid;
 
-		/* get the string */
-		if (!list)
-			str = cpunum_reg_string(view->cpunum, regnum);
-		else if (list[regnum] >= 0 && list[regnum] < MAX_REGS)
-			str = cpunum_reg_string(view->cpunum, list[regnum]);
-		else
+		/* identify the register id */
+		regid = list ? list[regnum] : regnum;
+		if (regid < 0)
 			break;
 
-		/* if we got a string, add one to the total rows */
-		if (str != NULL)
-		{
-			int tagstart, taglen, valstart, vallen;
-			const char *colon = strchr(str, ':');
+		/* retrieve the string for this register */
+		str = cpunum_reg_string(view->cpunum, regnum);
 
-			/* if no colon, mark everything as tag */
-			if (!colon)
-			{
-				tagstart = 0;
-				taglen = strlen(str);
-				valstart = 0;
-				vallen = 0;
-			}
-
-			/* otherwise, break the string at the colon */
-			else
-			{
-				tagstart = 0;
-				taglen = colon - str;
-				valstart = (colon + 1) - str;
-				vallen = strlen(colon + 1);
-			}
-
-			/* now trim spaces */
-			while (isspace(str[tagstart]) && taglen > 0)
-				tagstart++, taglen--;
-			while (isspace(str[tagstart + taglen - 1]) && taglen > 0)
-				taglen--;
-			while (isspace(str[valstart]) && vallen > 0)
-				valstart++, vallen--;
-			while (isspace(str[valstart + vallen - 1]) && vallen > 0)
-				vallen--;
-
-			/* note the register number and info */
-			regdata->reg[view->total_rows].lastval  =
-			regdata->reg[view->total_rows].currval  = cpunum_get_reg(view->cpunum, regnum);
-			regdata->reg[view->total_rows].regnum   = regnum;
-			regdata->reg[view->total_rows].tagstart = tagstart;
-			regdata->reg[view->total_rows].taglen   = taglen;
-			regdata->reg[view->total_rows].valstart = valstart;
-			regdata->reg[view->total_rows].vallen   = vallen;
-			view->total_rows++;
-
-			/* see if this is the longest tag */
-			if (taglen > maxtaglen)
-				maxtaglen = taglen;
-			if (vallen > maxvallen)
-				maxvallen = vallen;
-		}
+		/* did we get a string? */
+		if (str && str[0] != '~')
+			add_register(view, regnum, str);
 	}
-
-	/* set the final numbers */
-	regdata->divider = 1 + maxtaglen + 1;
-	view->total_cols = 1 + maxtaglen + 2 + maxvallen + 1;
 
 	/* update our concept of a CPU number */
 	regdata->cpunum = view->cpunum;

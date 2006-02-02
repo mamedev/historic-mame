@@ -239,8 +239,6 @@ VIDEO_START( karnov )
 		return 1;
 
 	dirty_f=auto_malloc(0x800);
-	if (!dirty_f)
-		return 1;
 	memset(dirty_f,1,0x800);
 
 	fix_tilemap=tilemap_create(get_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
@@ -258,8 +256,6 @@ VIDEO_START( wndrplnt )
 		return 1;
 
 	dirty_f=auto_malloc(0x800);
-	if (!dirty_f)
-		return 1;
 	memset(dirty_f,1,0x800);
 
 	fix_tilemap=tilemap_create(get_fix_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);

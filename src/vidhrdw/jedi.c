@@ -35,8 +35,6 @@ VIDEO_START( jedi )
 {
 	/* allocate dirty buffer for the foreground characters */
 	fgdirty = dirtybuffer = auto_malloc(videoram_size);
-	if (!fgdirty)
-		return 1;
 	memset(fgdirty, 1, videoram_size);
 
 	/* allocate an 8bpp bitmap for the raw foreground characters */
@@ -52,8 +50,6 @@ VIDEO_START( jedi )
 
 	/* allocate dirty buffer for the background characters */
 	bgdirty = auto_malloc(jedi_backgroundram_size);
-	if (!bgdirty)
-		return 1;
 	memset(bgdirty, 1, jedi_backgroundram_size);
 
 	/* the background area is 256x256, doubled by the hardware*/

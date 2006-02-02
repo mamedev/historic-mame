@@ -262,8 +262,6 @@ static void *dmadac_start(int sndindex, int clock, const void *config)
 
 	/* allocate a clear a buffer */
 	info->buffer = auto_malloc(sizeof(info->buffer[0]) * BUFFER_SIZE);
-	if (!info->buffer)
-		return NULL;
 	memset(info->buffer, 0, sizeof(info->buffer[0]) * BUFFER_SIZE);
 
 	/* reset the state */

@@ -54,12 +54,7 @@ VIDEO_START( gaelco3d )
 		return 1;
 
 	palette = auto_malloc(32768 * sizeof(palette[0]));
-	if (!palette)
-		return 1;
-
 	polydata_buffer = auto_malloc(MAX_POLYDATA * sizeof(polydata_buffer[0]));
-	if (!polydata_buffer)
-		return 1;
 
 	return 0;
 }

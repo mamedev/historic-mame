@@ -36,9 +36,6 @@ VIDEO_START( mole )
 {
 	tileram = (UINT16 *)auto_malloc(0x400 * sizeof(UINT16));
 
-	if ( !tileram )
-		return 1;
-
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 40, 25);
 

@@ -710,14 +710,14 @@ static void Video_Reset(void)
 
 VIDEO_START( hanamai )
 {
-	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[3][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[3][1] = auto_malloc(256*256)))	return 1;
+	dynax_pixmap[0][0] = auto_malloc(256*256);
+	dynax_pixmap[0][1] = auto_malloc(256*256);
+	dynax_pixmap[1][0] = auto_malloc(256*256);
+	dynax_pixmap[1][1] = auto_malloc(256*256);
+	dynax_pixmap[2][0] = auto_malloc(256*256);
+	dynax_pixmap[2][1] = auto_malloc(256*256);
+	dynax_pixmap[3][0] = auto_malloc(256*256);
+	dynax_pixmap[3][1] = auto_malloc(256*256);
 
 	Video_Reset();
 	layer_layout = LAYOUT_HANAMAI;
@@ -727,14 +727,14 @@ VIDEO_START( hanamai )
 
 VIDEO_START( hnoridur )
 {
-	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[3][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[3][1] = auto_malloc(256*256)))	return 1;
+	dynax_pixmap[0][0] = auto_malloc(256*256);
+	dynax_pixmap[0][1] = auto_malloc(256*256);
+	dynax_pixmap[1][0] = auto_malloc(256*256);
+	dynax_pixmap[1][1] = auto_malloc(256*256);
+	dynax_pixmap[2][0] = auto_malloc(256*256);
+	dynax_pixmap[2][1] = auto_malloc(256*256);
+	dynax_pixmap[3][0] = auto_malloc(256*256);
+	dynax_pixmap[3][1] = auto_malloc(256*256);
 
 	Video_Reset();
 	layer_layout = LAYOUT_HNORIDUR;
@@ -753,12 +753,12 @@ VIDEO_START( mcnpshnt )
 
 VIDEO_START( sprtmtch )
 {
-	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
+	dynax_pixmap[0][0] = auto_malloc(256*256);
+	dynax_pixmap[0][1] = auto_malloc(256*256);
+	dynax_pixmap[1][0] = auto_malloc(256*256);
+	dynax_pixmap[1][1] = auto_malloc(256*256);
+	dynax_pixmap[2][0] = auto_malloc(256*256);
+	dynax_pixmap[2][1] = auto_malloc(256*256);
 
 	Video_Reset();
 	layer_layout = LAYOUT_DRGPUNCH;
@@ -768,22 +768,22 @@ VIDEO_START( sprtmtch )
 
 VIDEO_START( jantouki )
 {
-	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[3][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[3][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[4][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[4][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[5][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[5][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[6][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[6][1] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[7][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[7][1] = auto_malloc(256*256)))	return 1;
+	dynax_pixmap[0][0] = auto_malloc(256*256);
+	dynax_pixmap[0][1] = auto_malloc(256*256);
+	dynax_pixmap[1][0] = auto_malloc(256*256);
+	dynax_pixmap[1][1] = auto_malloc(256*256);
+	dynax_pixmap[2][0] = auto_malloc(256*256);
+	dynax_pixmap[2][1] = auto_malloc(256*256);
+	dynax_pixmap[3][0] = auto_malloc(256*256);
+	dynax_pixmap[3][1] = auto_malloc(256*256);
+	dynax_pixmap[4][0] = auto_malloc(256*256);
+	dynax_pixmap[4][1] = auto_malloc(256*256);
+	dynax_pixmap[5][0] = auto_malloc(256*256);
+	dynax_pixmap[5][1] = auto_malloc(256*256);
+	dynax_pixmap[6][0] = auto_malloc(256*256);
+	dynax_pixmap[6][1] = auto_malloc(256*256);
+	dynax_pixmap[7][0] = auto_malloc(256*256);
+	dynax_pixmap[7][1] = auto_malloc(256*256);
 
 	Video_Reset();
 	layer_layout = LAYOUT_JANTOUKI;
@@ -795,8 +795,8 @@ VIDEO_START( jantouki )
 
 VIDEO_START( mjdialq2 )
 {
-	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
+	dynax_pixmap[0][0] = auto_malloc(256*256);
+	dynax_pixmap[1][0] = auto_malloc(256*256);
 
 	Video_Reset();
 	layer_layout = LAYOUT_MJDIALQ2;

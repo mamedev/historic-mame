@@ -6,9 +6,11 @@
     Asynchronous Communications Interface Adapters.
 
 **********************************************************************/
+
+#include "driver.h"
 #include "6850acia.h"
 
-extern UINT8 m6850_irq_state; // referenced from machine/mpu4.c
+UINT8 m6850_irq_state; // referenced from machine/mpu4.c
 void update_mpu68_interrupts(void); // referenced from machine/mpu4.c
 
 #define LOG_SERIAL	  // log serial communication
@@ -16,8 +18,8 @@ void update_mpu68_interrupts(void); // referenced from machine/mpu4.c
 #define LOG_CTRL	  // log serial communication
 
 static int  get_normal_uart_status(void);	// retrieve status of uart on MPU4 board
-static int uart1_status;	  // MC6850 status
-static int uart2_status;	  // MC6850 status
+int uart1_status;	  // MC6850 status
+int uart2_status;	  // MC6850 status
 int vid_data_from_norm;	// data available for vid from MPU4
 int vid_normdata;			// data
 int norm_data_from_vid;	// data available for MPU4 from vid
@@ -28,7 +30,7 @@ int norm_uart_status;
 int aciadata;
 int ctrl;
 
-static int vid_rx;
+int vid_rx;
 
 void send_to_vid(int data)
 {
@@ -125,14 +127,14 @@ static int get_normal_uart_status(void)
 // serial port ////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
 
-static READ8_HANDLER( uart1stat_r )
+READ8_HANDLER( uart1stat_r )
 {
   return uart1_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ8_HANDLER( uart1data_r )
+READ8_HANDLER( uart1data_r )
 {
 {
 if (norm_uart_status & 0x01)
@@ -146,7 +148,7 @@ uart1_status &= 0x7e; // Clear the IRQ and the RDR Full
 }
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE8_HANDLER( uart1ctrl_w )
+WRITE8_HANDLER( uart1ctrl_w )
 {
       switch (data & 0x03)
       {
@@ -225,7 +227,7 @@ logerror("#1 Uart control reg (%02X)\n",data);
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE8_HANDLER( uart1data_w )
+WRITE8_HANDLER( uart1data_w )
 {
 uart1_status &= 0x7d;// Clear the IRQ and the TDR Empty
   #ifdef UART_LOG
@@ -235,14 +237,14 @@ uart1_status &= 0x7d;// Clear the IRQ and the TDR Empty
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ8_HANDLER( uart2stat_r )
+READ8_HANDLER( uart2stat_r )
 {
   return uart2_status;
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ8_HANDLER( uart2data_r )
+READ8_HANDLER( uart2data_r )
 {
 if (norm_uart_status & 0x01)
 	{
@@ -254,7 +256,7 @@ uart2_status &= 0x7e; // Clear the IRQ and the RDR Full
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE8_HANDLER( uart2ctrl_w )
+WRITE8_HANDLER( uart2ctrl_w )
 {
       switch (data & 0x03)
       {
@@ -333,7 +335,7 @@ logerror("#2 Uart control reg (%02X)\n",data);
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE8_HANDLER( uart2data_w )
+WRITE8_HANDLER( uart2data_w )
 {
 uart2_status = uart2_status & 0x7d;// Clear the IRQ and the TDR Empty
 #ifdef UART_LOG
@@ -343,7 +345,7 @@ logerror("uart2:%c\n", data);
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE8_HANDLER( mpu4_uart_tx_w )
+WRITE8_HANDLER( mpu4_uart_tx_w )
 {
 norm_uart_status = norm_uart_status & 0xfd;// Clear the IRQ and the TDR Empty
 #ifdef LOG_SERIAL
@@ -354,7 +356,7 @@ logerror("transmitting to VidCard (%02X)\n",data);
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE8_HANDLER( mpu4_uart_ctrl_w )
+WRITE8_HANDLER( mpu4_uart_ctrl_w )
 {
 
 int ctrl;
@@ -443,7 +445,7 @@ logerror("MPU4 control reg (%02X)\n",data);
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ8_HANDLER( mpu4_uart_rx_r )
+READ8_HANDLER( mpu4_uart_rx_r )
 {
 if (norm_uart_status & 0x01)
 {
@@ -459,7 +461,7 @@ logerror("Received from VidCard (%02X)\n",aciadata);
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ8_HANDLER( mpu4_uart_ctrl_r )
+READ8_HANDLER( mpu4_uart_ctrl_r )
 {
   return get_normal_uart_status();
 }
@@ -469,14 +471,14 @@ static READ8_HANDLER( mpu4_uart_ctrl_r )
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ16_HANDLER( vidcard_uart_ctrl_r )
+READ16_HANDLER( vidcard_uart_ctrl_r )
 {
   return get_vid_uart_status();
 }
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE16_HANDLER( vidcard_uart_ctrl_w )
+WRITE16_HANDLER( vidcard_uart_ctrl_w )
 {
 //  vid_data_from_norm = 0; // data available for adder from sc2
 //  vid_normdata       = 0; // data
@@ -570,7 +572,7 @@ static WRITE16_HANDLER( vidcard_uart_ctrl_w )
 
 ///////////////////////////////////////////////////////////////////////////
 
-static READ16_HANDLER( vidcard_uart_rx_r )
+READ16_HANDLER( vidcard_uart_rx_r )
 {
 if (vid_uart_status & 0x01)
 {
@@ -588,7 +590,7 @@ vid_uart_status = vid_uart_status & 0x7e; // Clear the IRQ and the RDR Full
 
 ///////////////////////////////////////////////////////////////////////////
 
-static WRITE16_HANDLER( vidcard_uart_tx_w )
+WRITE16_HANDLER( vidcard_uart_tx_w )
 {
 vid_uart_status = vid_uart_status & 0xfd;//0x7d;// Clear the IRQ and the TDR Empty
 

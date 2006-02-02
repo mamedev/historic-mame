@@ -536,7 +536,7 @@ int deco16_1_video_init(void) /* 1 times playfield generator chip */
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !deco16_raster_display_list || !sprite_priority_bitmap)
+	if (!pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !sprite_priority_bitmap)
 		return 1;
 
 	memset(dirty_palette,0,4096);
@@ -588,7 +588,7 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !pf3_tilemap_16x16 || !pf4_tilemap_16x16 || !deco16_raster_display_list || !sprite_priority_bitmap)
+	if (!pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !pf3_tilemap_16x16 || !pf4_tilemap_16x16 || !sprite_priority_bitmap)
 		return 1;
 
 	memset(dirty_palette,0,4096);

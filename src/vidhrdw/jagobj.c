@@ -31,8 +31,6 @@ int jagobj_init(void)
 	/* allocate memory for tables */
 	blend_y = auto_malloc(256 * 256);
 	blend_cc = auto_malloc(256 * 256);
-	if (!blend_y || !blend_cc)
-		return 1;
 
 	/* fill tables */
 	for (i = 0; i < 256 * 256; i++)

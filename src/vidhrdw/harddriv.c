@@ -87,8 +87,6 @@ VIDEO_START( harddriv )
 
 	/* allocate the mask table */
 	mask_table = auto_malloc(sizeof(UINT32) * 4 * 65536);
-	if (!mask_table)
-		return 1;
 
 	/* fill in the mask table */
 	destmask = mask_table;

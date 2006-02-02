@@ -228,26 +228,22 @@ DRIVER_INIT( armwrest )
 ***************************************************************************/
 VIDEO_START( punchout )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((dirtybuffer2 = auto_malloc(punchout_videoram2_size)) == 0)
-		return 1;
+	dirtybuffer2 = auto_malloc(punchout_videoram2_size);
 	memset(dirtybuffer2,1,punchout_videoram2_size);
 
 	if ((tmpbitmap = auto_bitmap_alloc(512,480)) == 0)
 		return 1;
 
-	if ((bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size)) == 0)
-		return 1;
+	bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size);
 	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
 
 	if ((bs1tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 		return 1;
 
-	if ((bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size)) == 0)
-		return 1;
+	bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size);
 	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
 
 	if ((bs2tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
@@ -258,26 +254,22 @@ VIDEO_START( punchout )
 
 VIDEO_START( armwrest )
 {
-	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
-		return 1;
+	dirtybuffer = auto_malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((dirtybuffer2 = auto_malloc(punchout_videoram2_size)) == 0)
-		return 1;
+	dirtybuffer2 = auto_malloc(punchout_videoram2_size);
 	memset(dirtybuffer2,1,punchout_videoram2_size);
 
 	if ((tmpbitmap = auto_bitmap_alloc(512,480)) == 0)
 		return 1;
 
-	if ((bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size)) == 0)
-		return 1;
+	bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size);
 	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
 
 	if ((bs1tmpbitmap = auto_bitmap_alloc(ARMWREST_BIGSPRITE_WIDTH,ARMWREST_BIGSPRITE_HEIGHT)) == 0)
 		return 1;
 
-	if ((bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size)) == 0)
-		return 1;
+	bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size);
 	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
 
 	if ((bs2tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)

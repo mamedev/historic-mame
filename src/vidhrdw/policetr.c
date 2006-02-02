@@ -49,8 +49,6 @@ VIDEO_START( policetr )
 
 	/* the destination bitmap is not directly accessible to the CPU */
 	dstbitmap = auto_malloc(DSTBITMAP_WIDTH * DSTBITMAP_HEIGHT);
-	if (!dstbitmap)
-		return 1;
 
 	return 0;
 }

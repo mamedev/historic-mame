@@ -224,7 +224,7 @@ const struct discrete_555_desc phoenix_effect2_555 =
 {
 	DISC_555_OUT_ENERGY,
 	5,		// B+ voltage of 555
-	DEFAULT_555_VALUES
+	4.0, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
 };
 
 const struct discrete_comp_adder_table phoenix_effect2_cap_sel =
@@ -235,10 +235,36 @@ const struct discrete_comp_adder_table phoenix_effect2_cap_sel =
 	{CAP_U(0.47), CAP_U(1)}	// C16, C17
 };
 
-const struct discrete_mixer_desc phoenix_effect2_mixer =
+const struct discrete_mixer_desc phoenix_effect2_mixer1 =
 {
 	DISC_MIXER_IS_RESISTOR,
-	{RES_K(10), RES_K(5.1+5.1), RES_K(5)},	// R42, R45+R46, internal 555 R
+	{RES_K(10), RES_K(5.1) + RES_K(5.1), RES_K(5)},	// R42, R45+R46, internal 555 R
+	{0},			// No variable resistor nodes
+	{0},			// No caps
+	0,				// No rI
+	RES_K(10),		// internal 555
+	0,0,			// No Filter
+	0,				// not used in resistor network
+	1	// final gain
+};
+
+const struct discrete_mixer_desc phoenix_effect2_mixer2 =
+{
+	DISC_MIXER_IS_RESISTOR,
+	{RES_K(5.1), RES_K(5.1)},	// R45, R46
+	{0},			// No variable resistor nodes
+	{0},			// No caps
+	0,				// No rI
+	0,				// No rF
+	0,0,			// No Filter
+	0,				// not used in resistor network
+	1	// final gain
+};
+
+const struct discrete_mixer_desc phoenix_effect2_mixer3 =
+{
+	DISC_MIXER_IS_RESISTOR,
+	{RES_K(10), RES_K(5.1), RES_K(5)},	// R42, R46, internal 555 R
 	{0},			// No variable resistor nodes
 	{0},			// No caps
 	0,				// No rI
@@ -313,16 +339,28 @@ DISCRETE_SOUND_START(phoenix_discrete_interface)
 	/************************************************/
 	DISCRETE_COMP_ADDER(NODE_30, 1, PHOENIX_EFFECT_2_FREQ, &phoenix_effect2_cap_sel)
 	/* Part of the frequency select also effects the gain */
-	DISCRETE_DIVIDE(NODE_31, 1, PHOENIX_EFFECT_2_FREQ, 2)
+	DISCRETE_TRANSFORM2(NODE_31, 1, PHOENIX_EFFECT_2_FREQ, 2, "01&/") // get bit 0x02
 	DISCRETE_SWITCH(NODE_32, 1, NODE_31, DEFAULT_TTL_V_LOGIC_1, DEFAULT_TTL_V_LOGIC_1/2)
 	DISCRETE_555_ASTABLE(NODE_33, 1, RES_K(47), RES_K(100), NODE_30, &phoenix_effect2_555)		// R40, R41
+	/* C20 has been confirmed on real boards as 1uF, not 10uF in schematics  */
 	DISCRETE_555_ASTABLE(NODE_34, 1, RES_K(510), RES_K(510), CAP_U(1), &phoenix_effect2_555)	// R23, R24, C20
+	/* R45 & R46 have been confirmed on real boards as 5.1k, not 51k in schematics  */
+	/* We need to work backwards here and calculate the voltage at the junction of R42 & R46 */
+	/* If you remove C22 from the real PCB, you can WAVELOG NODE_35 with a gain of 1000 and compare
+     * it against the junction of R42 & R46 on a real PCB. */
+	DISCRETE_MIXER3(NODE_35, 1, NODE_33, NODE_34, 5, &phoenix_effect2_mixer1)
+	/* Then calculate the voltage going to C22 */
+	/* If you remove C22 from the real PCB, you can WAVELOG NODE_36 with a gain of 1000 and compare
+     * it against the junction of R45 & R46 on a real PCB. */
+	DISCRETE_MIXER2(NODE_36, 1, NODE_34, NODE_35, &phoenix_effect2_mixer2)
 	/* C22 charging is R45 in parallel with R46, R42 and the 555 CV internal resistance */
-	DISCRETE_RCFILTER(NODE_35, 1, NODE_34, 1.0/ (1.0/RES_K(5.1) + (1.0/(RES_K(5.1) + 1.0/(1.0/RES_K(10) + 1.0/RES_K(5) + 1.0/RES_K(10)) ))), CAP_U(100))	// R45, R46, R42, internal 555 Rs, C22
-	DISCRETE_MIXER3(NODE_36, 1, NODE_33, NODE_35, 5, &phoenix_effect2_mixer)
-	DISCRETE_555_ASTABLE_CV(NODE_37, 1, RES_K(20), RES_K(20), CAP_U(0.001), NODE_36, &phoenix_effect1_555)	// R47, R48, C23
-	DISCRETE_NOTE(NODE_38, 1, NODE_37, PHOENIX_EFFECT_2_DATA, 0x0f, 1, DISC_CLK_BY_COUNT | DISC_OUT_IS_ENERGY)
-	DISCRETE_MULTIPLY(PHOENIX_EFFECT_2_SND, 1, NODE_38, NODE_32)
+	DISCRETE_RCFILTER(NODE_37, 1, NODE_36, 1.0/ (1.0/RES_K(5.1) + (1.0/(RES_K(5.1) + 1.0/(1.0/RES_K(10) + 1.0/RES_K(5) + 1.0/RES_K(10)) ))), CAP_U(100))	// R45, R46, R42, internal 555 Rs, C22
+	/* Now mix from C22 on */
+	/* You can WAVELOG NODE_38 with a gain of 1000 and compare it against IC50 pin 5 on a real PCB. */
+	DISCRETE_MIXER3(NODE_38, 1, NODE_33, NODE_37, 5, &phoenix_effect2_mixer3)
+	DISCRETE_555_ASTABLE_CV(NODE_39, 1, RES_K(20), RES_K(20), CAP_U(0.001), NODE_38, &phoenix_effect1_555)	// R47, R48, C23
+	DISCRETE_NOTE(NODE_40, 1, NODE_39, PHOENIX_EFFECT_2_DATA, 0x0f, 1, DISC_CLK_BY_COUNT | DISC_OUT_IS_ENERGY)
+	DISCRETE_MULTIPLY(PHOENIX_EFFECT_2_SND, 1, NODE_40, NODE_32)
 
 	/************************************************/
 	/* Combine all sound sources.                   */

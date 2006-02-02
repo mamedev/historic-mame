@@ -1,9 +1,11 @@
 /********************************************************************
- Hyperstone based Eolith games driver (Gradation 2D system)
+ Eolith 32 bits hardware: Gradation 2D system
+
  driver by Tomasz Slanina    analog [at] op.pl
+ and       Pierpaolo Prazzoli
 
  Main CPU:
-  Hyperstone E1-32N 50 MHz
+  Hyperstone E1-32N @ 50MHz
 
   Sound CPU:
    80c301/AT89c52
@@ -22,25 +24,21 @@
     256KByte x2 VRAM
     512Kbyte/1Mega main RAM
 
-
-
  Games dumped
- - Hidden Catch
- - Land Breaker ver 3.03
- - Land Breaker ver 3.02(MCU internal flash dump is missing)
+ - Hidden Catch (pcb ver 3.03)
+ - Land Breaker (pcb ver 3.03) (MCU internal flash dump is missing)
+ - Land Breaker (pcb ver 3.02)
  - Raccoon World
- - Fortress 2 Blue Arcade
+ - Fortress 2 Blue Arcade (v. 1.00 / pcb ver 3.05)
 
  Known games not dumped
+ - Hidden Catch (pcb ver 3.02)
+ - Fortress 2 Blue Arcade (v. 1.01)
+ - Fortress 2 Blue Arcade (v. 1.02)
  - Ribbon (Step1. Mild Mind) (c) 1999
 
  TODO:
-
- - fix hidden catch (needs more ROM mirrors ?)
- - hook up EEPROM
  - sound & sound cpu
- - dips
-
 
  *********************************************************************/
 
@@ -55,17 +53,20 @@ VIDEO_UPDATE(eolith);
 
 extern int eolith_buffer;
 
+static int coin_counter_bit = 0;
 
-struct EEPROM_interface eeprom_interface_eolith =
+// It's configured for 512 bytes
+static struct EEPROM_interface eeprom_interface_93C66 =
 {
-	8,				// address bits 8
-	16,				// data bits    16
-	"*110",			// read         1 10 aaaaaa
-	"*101",			// write        1 01 aaaaaa dddddddddddddddd
-	"*111",			// erase        1 11 aaaaaa
-	"*10000xxxx",	// lock         1 00 00xxxx
-	"*10011xxxx"	// unlock       1 00 11xxxx
+	9,				// address bits 9
+	8,				// data bits    8
+	"*110",			// read         110 aaaaaaaaa
+	"*101",			// write        101 aaaaaaaaa dddddddd
+	"*111",			// erase        111 aaaaaaaaa
+	"*10000xxxxxx",	// lock         100 00xxxxxxx
+	"*10011xxxxxx"	// unlock       100 11xxxxxxx
 };
+
 
 
 static NVRAM_HANDLER( eolith )
@@ -74,101 +75,138 @@ static NVRAM_HANDLER( eolith )
 		EEPROM_save(file);
 	else
 	{
-		EEPROM_init(&eeprom_interface_eolith);
+		EEPROM_init(&eeprom_interface_93C66);
 		if (file)	EEPROM_load(file);
 	}
 }
 
 
-static READ32_HANDLER(inputs_r)
+static READ32_HANDLER( eeprom_r )
 {
 	/*
+        bit 3 = eeprom bit
         bit 6 = vblank flag
-        bit 8 = ??? eeprom read
+
+        Are these used only in landbrka ?
+        bit 8 = ???
         bit 9 = ???
     */
-	return  (input_port_0_dword_r(0,mem_mask)&~0x340) | (mame_rand()&0x340);
+
+	return (readinputport(0) & ~0x308) | (EEPROM_read_bit() << 3) | (mame_rand() & 0x300);
 }
 
-static WRITE32_HANDLER(systemcontrol_w) //BAD!!!
+static WRITE32_HANDLER( systemcontrol_w )
 {
-	if (!(mem_mask & 0x00ff))
-	{
-		eolith_buffer=(data&0x80)>>7;
-		EEPROM_write_bit(data & 0x08);
-		EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
-		EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
-	}
+	eolith_buffer = (data & 0x80) >> 7;
+	coin_counter_w(0, data & coin_counter_bit);
+	set_led_status(0, data & 1);
+
+	EEPROM_write_bit(data & 0x08);
+	EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
+	EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
+
+	// bit 0x100 and 0x040 ?
 }
 
 static ADDRESS_MAP_START( eolith_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x00ffffff) AM_RAM // fort2b needs ram here, mirror?
-	AM_RANGE(0x40000000, 0x40ffffff) AM_RAM
-	AM_RANGE(0x90000000, 0x907fffff) AM_WRITE(eolith_vram_w) AM_READ(eolith_vram_r)
-	AM_RANGE(0xfa000000, 0xfbffffff) AM_ROM AM_REGION(REGION_USER1, 0)//mirror for hiddnctch
-	AM_RANGE(0xfc000000, 0xfc000003) AM_READ(inputs_r)
+	AM_RANGE(0x00000000, 0x001fffff) AM_RAM // fort2b wants ram here
+	AM_RANGE(0x40000000, 0x401fffff) AM_RAM
+	AM_RANGE(0x90000000, 0x9003ffff) AM_READWRITE(eolith_vram_r, eolith_vram_w)
+	AM_RANGE(0xfc000000, 0xfc000003) AM_READ(eeprom_r)
 	AM_RANGE(0xfc400000, 0xfc400003) AM_WRITE(systemcontrol_w)
-	AM_RANGE(0xfc800000, 0xfc800003) AM_WRITENOP
-	AM_RANGE(0xfcc00000, 0xfcc0005b) AM_WRITENOP
+	AM_RANGE(0xfc800000, 0xfc800003) AM_WRITENOP // sound latch
+	AM_RANGE(0xfcc00000, 0xfcc0005b) AM_WRITENOP // crt registers ?
 	AM_RANGE(0xfca00000, 0xfca00003) AM_READ(input_port_1_dword_r)
 	AM_RANGE(0xfd000000, 0xfeffffff) AM_ROM AM_REGION(REGION_USER1, 0)
 	AM_RANGE(0xfff80000, 0xffffffff) AM_ROM AM_REGION(REGION_CPU1, 0)
 ADDRESS_MAP_END
 
-#define EOLITH_IN1 PORT_START_TAG("IN1") \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 ) \
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_VBLANK ) \
-	PORT_BIT( 0x00010000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1) \
-	PORT_BIT( 0x00020000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(1) \
-	PORT_BIT( 0x00040000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(1) \
-	PORT_BIT( 0x00080000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(1) \
-	PORT_BIT( 0x00100000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) \
-	PORT_BIT( 0x00200000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1) \
-	PORT_BIT( 0x01000000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(2) \
-	PORT_BIT( 0x02000000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(2) \
-	PORT_BIT( 0x04000000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(2) \
-	PORT_BIT( 0x08000000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(2) \
-	PORT_BIT( 0x10000000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) \
-	PORT_BIT( 0x20000000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) \
-	PORT_BIT( 0xc0c0ffac, IP_ACTIVE_LOW, IPT_UNUSED	)
-
-INPUT_PORTS_START( eolith )
-	EOLITH_IN1
+static INPUT_PORTS_START( common )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x00000001, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x00000002, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x00000004, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00000008, IP_ACTIVE_LOW, IPT_SPECIAL ) // eeprom bit
+	PORT_BIT( 0x00000010, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x00000020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00000040, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x00003f80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00004000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE( 0x00008000, IP_ACTIVE_LOW )
+	PORT_BIT( 0x00010000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00020000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00040000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00080000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x00100000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x00200000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x00400000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00800000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01000000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02000000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04000000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08000000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10000000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20000000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40000000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80000000, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x0001, 0x0001, "Test Mode" ) //hidnctch
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, "DSW1-2" )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "DSW1-3" )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "DSW1-4" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "DSW1-5" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "DSW1-6" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "DSW1-7" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080, 0x0080, "DSW1-8" )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT( 0xfffffffe, IP_ACTIVE_LOW, IPT_UNUSED	)
+	PORT_BIT( 0xffffffff, IP_ACTIVE_LOW, IPT_UNUSED	)
+INPUT_PORTS_END
 
+INPUT_PORTS_START( hidnctch )
+	PORT_INCLUDE(common)
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x00000020, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x00000001, 0x00000001, "Show Settings" )
+	PORT_DIPSETTING(          0x00000001, DEF_STR( Off ) )
+	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00000002, 0x00000002, "Show Counters" )
+	PORT_DIPSETTING(          0x00000002, DEF_STR( Off ) )
+	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_BIT( 0xfffffffc, IP_ACTIVE_LOW, IPT_UNUSED	)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( raccoon )
+	PORT_INCLUDE(common)
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x00008000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x0000000f, 0x0000000f, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(          0x0000000d, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(          0x0000000e, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(          0x0000000c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(          0x0000000f, DEF_STR( 1C_1C ) )
+	// other values are just mirrors
+	PORT_BIT( 0xfffffff0, IP_ACTIVE_LOW, IPT_UNUSED	)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( landbrk )
+	PORT_INCLUDE(common)
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x00000001, 0x00000001, "Show Settings" )
+	PORT_DIPSETTING(          0x00000001, DEF_STR( Off ) )
+	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00000002, 0x00000002, "Show Counters" )
+	PORT_DIPSETTING(          0x00000002, DEF_STR( Off ) )
+	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00000004, 0x00000004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(          0x00000004, DEF_STR( Off ) )
+	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00000008, 0x00000008, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(          0x00000008, DEF_STR( Off ) )
+	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_BIT( 0xfffffff0, IP_ACTIVE_LOW, IPT_UNUSED	)
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( eolith )
-	MDRV_CPU_ADD(E132N,10000000*2)		 /* 50 Mhz */
+	MDRV_CPU_ADD(E132N, 50000000)		 /* 50 MHz */
 	MDRV_CPU_PROGRAM_MAP(eolith_map,0)
+
+	/* sound cpu */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -179,12 +217,12 @@ static MACHINE_DRIVER_START( eolith )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(512, 512)
 	MDRV_VISIBLE_AREA(0, 319, 0, 239)
-
 	MDRV_PALETTE_LENGTH(32768)
 
 	MDRV_VIDEO_START(eolith)
 	MDRV_VIDEO_UPDATE(eolith)
 
+	/* sound hardware */
 MACHINE_DRIVER_END
 
 /*
@@ -202,6 +240,7 @@ hc_u43.bin    524288  0x635b4478  27C040
 hc_u97.bin    524288  0xebf9f77b  27C040
 hc_u107.bin    32768  0xafd5263d  AMIC 275308 dumped as 27256
 hc_u111.bin    32768  0x79012474  AMIC 275308 dumped as 27256
+
 */
 
 ROM_START( hidnctch )
@@ -215,6 +254,7 @@ ROM_START( hidnctch )
 	ROM_LOAD32_WORD_SWAP( "hc3_u35.bin", 0x0800002, 0x400000, CRC(80c59133) SHA1(66ca4c2c014c4a1c87c46a3971732f0a2be95408) )
 	ROM_LOAD32_WORD_SWAP( "hc4_u41.bin", 0x1000000, 0x400000, CRC(9a9e2203) SHA1(a90f5842b63696753e6c16114b1893bbeb91e45c) )
 	ROM_LOAD32_WORD_SWAP( "hc5_u36.bin", 0x1000002, 0x400000, CRC(74b1719d) SHA1(fe2325259117598ad7c23217426ac9c28440e3a0) )
+	// 0x1800000 - 0x1ffffff empty
 
 	ROM_REGION( 0x008000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
 	ROM_LOAD( "hc_u107.bin", 0x0000, 0x8000, CRC(afd5263d) SHA1(71ace1b749d8a6b84d08b97185e7e512d04e4b8d) )
@@ -227,6 +267,59 @@ ROM_START( hidnctch )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
 	ROM_LOAD( "hc_u97.bin", 0x00000, 0x80000, CRC(ebf9f77b) SHA1(5d472aeb84fc011e19b9e61d34aeddfe7d6ac216) )
+ROM_END
+
+
+/*
+
+Racoon World by Eolith
+
+U43, u97, u108   are 27c040 devices
+
+u111, u107   are 27c256 devices
+
+On the ROM sub board:
+u1, u2, u5, u10, u11, u14  are all 27c160 devices
+--------------------------------------------------------------------------
+Stereo sound?
+24MHz crystal near the sound section
+
+there is a 4 position DIP switch.
+
+Hyperstone E1-32N    45.00000 MHz  near this chip
+QDSP     QS1001A
+QDSP     QS1000
+EOLITH  EV0514-001  custom??   14.31818MHz  xtl near this chip
+12MHz crystal is near the U111
+
+U107 and U97 are mostlikely sound roms but not sure
+
+*/
+
+ROM_START( raccoon )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "racoon-u.43", 0x00000, 0x80000, CRC(711ee026) SHA1(c55dfaa24cbaa7a613657cfb25e7f0085f1e4cbf) )
+
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Game Data - banked ROM, swapping necessary */
+ 	ROM_LOAD32_WORD_SWAP( "racoon.u10", 0x0000000, 0x200000, CRC(f702390e) SHA1(47520ba0e6d3f044136a517ebbec7426a66ce33d) )
+	ROM_LOAD32_WORD_SWAP( "racoon.u1",  0x0000002, 0x200000, CRC(49775125) SHA1(2b8ee9dd767465999c828d65bb02b8aaad94177c) )
+ 	ROM_LOAD32_WORD_SWAP( "racoon.u11", 0x0400000, 0x200000, CRC(3f23f368) SHA1(eb1ea51def2cde5e7e4f334888294b794aa03dfc) )
+ 	ROM_LOAD32_WORD_SWAP( "racoon.u2",  0x0400002, 0x200000, CRC(1eb00529) SHA1(d9af75e116f5237a3c6812538b77155b9c08dd5c) )
+ 	ROM_LOAD32_WORD_SWAP( "racoon.u14", 0x0800000, 0x200000, CRC(870fe45e) SHA1(f8d800b92eb1ee9ef4663319fd3cb1f5e52d0e72) )
+ 	ROM_LOAD32_WORD_SWAP( "racoon.u5",  0x0800002, 0x200000, CRC(5fbac174) SHA1(1d3e3f40a737d61ff688627891dec183af7fa19a) )
+	// 0x0c00000 - 0x1ffffff empty
+
+	ROM_REGION( 0x08000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
+	ROM_LOAD( "racoon-u.107", 0x0000, 0x8000, CRC(89450a2f) SHA1(d58efa805f497bec179fdbfb8c5860ac5438b4ec) )
+
+	ROM_REGION( 0x08000, REGION_CPU3, 0 ) /* Sound (80c301) CPU Code */
+	ROM_LOAD( "racoon-u.111", 0x0000, 0x8000, CRC(52f419ea) SHA1(79c9f135b0cf8b1928411faed9b447cd98a83287) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
+	ROM_LOAD( "racoon-u.108", 0x00000, 0x80000, CRC(fc4f30ee) SHA1(74b9e60cceb03ad572e0e080fbe1de5cffa1b2c3) )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
+	ROM_LOAD( "racoon-u.97", 0x00000, 0x80000, CRC(fef828b1) SHA1(38352b67d18300db40113df9426c2aceec12a29b) )
 ROM_END
 
 ROM_START( landbrk )
@@ -314,6 +407,7 @@ ROM_START( landbrka )
 	ROM_LOAD( "lb_3.u97", 0x00000, 0x80000, CRC(5b34dff0) SHA1(1668763e977e272781ddcc74beba97b53477cc9d) )
 ROM_END
 
+
 /* Fortress 2 Blue */
 
 ROM_START( fort2b )
@@ -333,7 +427,7 @@ ROM_START( fort2b )
 	ROM_REGION( 0x008000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
 	ROM_LOAD( "ftii010.u107", 0x0000, 0x8000, CRC(afd5263d) SHA1(71ace1b749d8a6b84d08b97185e7e512d04e4b8d) )
 
-	ROM_REGION( 0x08000, REGION_CPU3, 0 ) /* AT89c52 */
+	ROM_REGION( 0x08000, REGION_CPU3, 0 ) /* Sound (80c301) CPU Code */
 	ROM_LOAD( "ftii008.u11", 0x0000, 0x8000, CRC(79012474) SHA1(09a2d5705d7bc52cc2d1644c87c1e31ee44813ef) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
@@ -344,70 +438,24 @@ ROM_START( fort2b )
 ROM_END
 
 
-
-/*
-
-Racoon World by Eolith
-
-U43, u97, u108   are 27c040 devices
-
-u111, u107   are 27c256 devices
-
-On the ROM sub board:
-u1, u2, u5, u10, u11, u14  are all 27c160 devices
---------------------------------------------------------------------------
-Stereo sound?
-24MHz crystal near the sound section
-
-there is a 4 position DIP switch.
-
-Hyperstone E1-32N    45.00000 MHz  near this chip
-QDSP     QS1001A
-QDSP     QS1000
-EOLITH  EV0514-001  custom??   14.31818MHz  xtl near this chip
-12MHz crystal is near the U111
-
-U107 and U97 are mostlikely sound roms but not sure
-
-*/
-
-ROM_START( raccoon )
-	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
-	ROM_LOAD( "racoon-u.43", 0x00000, 0x80000, CRC(711ee026) SHA1(c55dfaa24cbaa7a613657cfb25e7f0085f1e4cbf) )
-
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Game Data - banked ROM, swapping necessary */
- 	ROM_LOAD32_WORD_SWAP( "racoon.u10", 0x0000000, 0x200000, CRC(f702390e) SHA1(47520ba0e6d3f044136a517ebbec7426a66ce33d) )
-	ROM_LOAD32_WORD_SWAP( "racoon.u1",  0x0000002, 0x200000, CRC(49775125) SHA1(2b8ee9dd767465999c828d65bb02b8aaad94177c) )
- 	ROM_LOAD32_WORD_SWAP( "racoon.u11", 0x0400000, 0x200000, CRC(3f23f368) SHA1(eb1ea51def2cde5e7e4f334888294b794aa03dfc) )
- 	ROM_LOAD32_WORD_SWAP( "racoon.u2",  0x0400002, 0x200000, CRC(1eb00529) SHA1(d9af75e116f5237a3c6812538b77155b9c08dd5c) )
- 	ROM_LOAD32_WORD_SWAP( "racoon.u14", 0x0800000, 0x200000, CRC(870fe45e) SHA1(f8d800b92eb1ee9ef4663319fd3cb1f5e52d0e72) )
- 	ROM_LOAD32_WORD_SWAP( "racoon.u5",  0x0800002, 0x200000, CRC(5fbac174) SHA1(1d3e3f40a737d61ff688627891dec183af7fa19a) )
-
-	ROM_REGION( 0x08000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
-	ROM_LOAD( "racoon-u.107", 0x0000, 0x8000, CRC(89450a2f) SHA1(d58efa805f497bec179fdbfb8c5860ac5438b4ec) )
-
-	ROM_REGION( 0x08000, REGION_CPU3, 0 ) /* Sound (80c301) CPU Code */
-	ROM_LOAD( "racoon-u.111", 0x0000, 0x8000, CRC(52f419ea) SHA1(79c9f135b0cf8b1928411faed9b447cd98a83287) )
-
-	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
-	ROM_LOAD( "racoon-u.108", 0x00000, 0x80000, CRC(fc4f30ee) SHA1(74b9e60cceb03ad572e0e080fbe1de5cffa1b2c3) )
-
-	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
-	ROM_LOAD( "racoon-u.97", 0x00000, 0x80000, CRC(fef828b1) SHA1(38352b67d18300db40113df9426c2aceec12a29b) )
-ROM_END
-
-static DRIVER_INIT(landbrka)
+static DRIVER_INIT( landbrk )
 {
-	//patch to prevent dead loop after (failed) check - eeprom ?
-	UINT32 *rombase = (UINT32*)memory_region(REGION_CPU1);
-	rombase[0x14f00/4] = (rombase[0x14f00/4] & 0xffff) | 0x03000000; /* Change BR to NOP */
+	coin_counter_bit = 0x1000;
 }
 
-GAME( 1998, raccoon,  0, eolith, eolith, 0, ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
-GAME( 1999, landbrk,  0, eolith, eolith, 0, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.03)",  GAME_NO_SOUND  ) // or Miss Ttang Jjareugi
-GAME( 1999, landbrka,  landbrk, eolith, eolith, landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
+static DRIVER_INIT( landbrka )
+{
+	//it fails compares with memories:
+	//$4002d338 -> $4002d348 .... $4002d33f -> $4002d34f
+	//related with bits 0x100 - 0x200 read at startup from input(0) ?
+	UINT32 *rombase = (UINT32*)memory_region(REGION_CPU1);
+	rombase[0x14f00/4] = (rombase[0x14f00/4] & 0xffff) | 0x03000000; /* Change BR to NOP */
 
-GAME( 1998, hidnctch, 0, eolith, eolith, 0, ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea)",  GAME_NO_SOUND | GAME_NOT_WORKING ) // or Teurrin Geurim Chajgi '98
+	coin_counter_bit = 0x2000;
+}
 
-/* eeprom is broken? (at least credit display / settings are, will crash after inserting a couple of coins), weaspons seem partly broken, locks up in attract after a few loops */
-GAME( 2001, fort2b,  0, eolith, eolith, 0, ROT0, "Eolith", "Fortress 2 Blue Arcade",  GAME_NO_SOUND | GAME_NOT_WORKING  )
+GAME( 1998, hidnctch, 0,       eolith, hidnctch, 0,        ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea) (pcb ver 3.03)",  GAME_NO_SOUND ) // or Teurrin Geurim Chajgi '98
+GAME( 1998, raccoon,  0,       eolith, raccoon,  0,        ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
+GAME( 1999, landbrk,  0,       eolith, landbrk,  landbrk,  ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (pcb ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
+GAME( 1999, landbrka, landbrk, eolith, landbrk,  landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (pcb ver 3.03)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
+GAME( 2001, fort2b,   0,       eolith, common,   0,        ROT0, "Eolith", "Fortress 2 Blue Arcade (ver 1.00 / pcb ver 3.05)",  GAME_NO_SOUND )

@@ -27,10 +27,8 @@ VIDEO_START( mjsister )
 		return 1;
 	if ((mjsister_tmpbitmap1 = auto_bitmap_alloc(256,256)) == 0)
 		return 1;
-	if ((mjsister_videoram0 = auto_malloc(0x8000)) == 0)
-		return 1;
-	if ((mjsister_videoram1 = auto_malloc(0x8000)) == 0)
-		return 1;
+	mjsister_videoram0 = auto_malloc(0x8000);
+	mjsister_videoram1 = auto_malloc(0x8000);
 
 	return 0;
 }

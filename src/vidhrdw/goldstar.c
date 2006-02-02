@@ -42,7 +42,7 @@ VIDEO_START( goldstar )
 	tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 	tmpbitmap3 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
-	if (!(tmpbitmap1 && tmpbitmap2 && tmpbitmap3 && dirtybuffer1))
+	if (!(tmpbitmap1 && tmpbitmap2 && tmpbitmap3))
 	{
 		return 1;
 	}
