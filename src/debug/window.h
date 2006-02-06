@@ -1,3 +1,14 @@
+/*********************************************************************
+
+    window.h
+
+    Text mode window engine
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
+
 #ifndef _WINDOW_H_
 #define	_WINDOW_H_
 

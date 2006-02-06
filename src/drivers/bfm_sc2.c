@@ -550,7 +550,7 @@ static INTERRUPT_GEN( timer_irq )
 	timercnt++;
 
 
-	if ( (timercnt & 0x03) == 0 ) adder2_show_alpha_display = readinputport(12) & 0x01;  // debug port
+	if ( (timercnt & 0x03) == 0 ) adder2_show_alpha_display = readinputportbytag_safe("DEBUGPORT",13) & 0x01;  // debug port
 
 	if ( watchdog_kicked )
 	{
@@ -2108,6 +2108,7 @@ INPUT_PORTS_END
 	PORT_DIPSETTING(    0x04, "80%")
 	PORT_DIPSETTING(    0x14, "85%")
 
+	PORT_START_TAG("DEBUGPORT")
 #ifdef BFM_DEBUG
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_TOGGLE PORT_NAME( "Alpha display toggle" ) PORT_CODE( KEYCODE_X )
 #endif

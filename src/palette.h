@@ -4,6 +4,9 @@
 
     Palette handling functions.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
     There are several levels of abstraction in the way MAME handles the palette,
     and several display modes which can be used by the drivers.
 

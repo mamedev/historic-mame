@@ -4,9 +4,8 @@
 
     Core CPU interface functions and definitions.
 
-    Cleanup phase 1: split into two pieces
-    Cleanup phase 2: simplify CPU core interfaces
-    Cleanup phase 3: phase out old interrupt system
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
 
 ***************************************************************************/
 

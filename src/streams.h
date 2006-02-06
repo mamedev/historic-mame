@@ -1,3 +1,14 @@
+/***************************************************************************
+
+    streams.h
+
+    Handle general purpose audio streams
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+***************************************************************************/
+
 #ifndef STREAMS_H
 #define STREAMS_H
 

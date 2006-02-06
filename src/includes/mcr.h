@@ -16,6 +16,7 @@ extern INT16 spyhunt_scrollx, spyhunt_scrolly;
 extern double mcr68_timing_factor;
 
 extern struct z80_irq_daisy_chain mcr_daisy_chain[];
+extern struct z80_irq_daisy_chain ipu_daisy_chain[];
 extern UINT8 mcr_cocktail_flip;
 
 extern gfx_layout mcr_bg_layout;
@@ -26,10 +27,12 @@ extern UINT32 mcr_sprite_board;
 extern UINT32 mcr_ssio_board;
 
 MACHINE_INIT( mcr );
+MACHINE_INIT( nflfoot );
 MACHINE_INIT( mcr68 );
 MACHINE_INIT( zwackery );
 
 INTERRUPT_GEN( mcr_interrupt );
+INTERRUPT_GEN( ipu_interrupt );
 INTERRUPT_GEN( mcr68_interrupt );
 
 WRITE8_HANDLER( mcr_control_port_w );

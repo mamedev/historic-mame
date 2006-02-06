@@ -1,22 +1,25 @@
 /*****************************************************************************
- *
- *  cheat.c
- *  by Ian Patterson [ianpatt at pacbell dot net]
- *
- *  The cheat engine for MAME. Allows you to search for locations in memory
- *  where gameplay-related values are stored, and change them. In other words,
- *  it lets you cheat.
- *
- *  TODO:
- *      - conflict checking
- *      - look in to adding auto-fire
- *      - bounds checks for relative address cheats
- *
- *  Known Issues:
- *      - signed fields displayed in hex don't accept negative values from
- *        direct keyboard input
- *
- *****************************************************************************/
+
+    cheat.c
+    by Ian Patterson [ianpatt at pacbell dot net]
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+    The cheat engine for MAME. Allows you to search for locations in memory
+    where gameplay-related values are stored, and change them. In other words,
+    it lets you cheat.
+
+    TODO:
+        - conflict checking
+        - look in to adding auto-fire
+        - bounds checks for relative address cheats
+
+    Known Issues:
+        - signed fields displayed in hex don't accept negative values from
+            direct keyboard input
+
+*****************************************************************************/
 
 /****** Cheat File Specification **********************************************
 

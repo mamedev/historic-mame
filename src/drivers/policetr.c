@@ -15,6 +15,8 @@ Note:   Police Trainer v1.3B runs on the same revision PCB as Sharpshooter - Rev
         If you hold the test button down and boot the game, all program roms
         fail the checksum.  However, each checksum listed matches the checksum
         printed on the ROM label.  This has been verified on an original PCB.
+Note:   Police Trainer v1.0 (Rev 0.2 PCB), the checksum results in MAME have been
+        verified to be the same as an original PCB.
 
 To ID the version of your SharpShooter, check the 2nd printed line on each type of ROM.
 
@@ -33,7 +35,7 @@ Noted differences in versions of SharpShooter:
 The ATTILA Video System PCB (by EXIT Entertainment):
 
 Sharpshooter PCB is Rev 0.5B
-Police Trainer PCB is Rev 0.3
+Police Trainer PCB is Rev 0.3 / Rev 0.2
 
 |------------JAMMA Connector------------|
 |                     CN7               |
@@ -57,18 +59,27 @@ Chips:
   CPU: IDT 79R3041-25J (MIPS R3000 core)
 Sound: BSMT2000
 Other: Bt481AKPJ110 (44 Pin PQFP, Brooktree RAMDAC)
-       AT001 (160 Pin PQFP, P & P Marketing Custom)
+       AT001 (160 Pin PQFP, P & P Marketing, custom programmed XILINX XC4310)
        ATMEL 93C66 (EEPROM)
        CN7 - 4 pin connector for stero speaker output
 PLDs:
-       XILINX-1 Labeled as U175A (Rev 3: Not Used)
-       XILINX-2 Labeled as U109A (Rev 3: Lattice - U109.P)
-       XILINX-3 Labeled as U151A (Rev 3: Lattice - U151.P)
+       XILINX-1 XC9536 Labeled as U175A (Rev 2/3: Not Used)
+       XILINX-2 XC9536 Labeled as U109A (Rev 2/3: Lattice ispLSI 2032-80LJ - U109.P)
+       XILINX-3 XC9536 Labeled as U151A (Rev 2/3: Lattice ispLSI 2032-80LJ - U151.P)
 
-Note #1: On a Rev 3 PCB, the XILINX PLDs are replace with Lattice PLDs
-Note #2: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
-Note #3: For Rev 3 PCBs there is an optional daughter card to help with horizontal
+Note #1: Bt481A 256-Word Color Palette 15, 16 & 24-bit Color Power-Down RAMDAC
+Note #2: For Rev 2 & 3 PCBs there is an optional daughter card to help with horizontal
          light gun accuracy
+
+The main video chip is stamped:
+
+Rev 2 PCB              Rev 3 PCB              Rev 5B PCB
+------------------------------------------------------------
+XILINX                 P & P                  P & P
+XC4310                 Marketing              Marketing
+PQ160C 5380            AJ001                  AT001
+PC5380-9651            5380-JY3306A           5380-N1045503A
+ PROTO                                        AKI9749
 
 ***************************************************************************/
 
@@ -481,7 +492,7 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-ROM_START( policetr )
+ROM_START( policetr ) /* Rev 0.3 PCB , unknown program rom date */
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )
@@ -502,7 +513,7 @@ ROM_START( policetr )
 ROM_END
 
 
-ROM_START( polict11 )
+ROM_START( polict11 ) /* Rev 0.3 PCB with all chips dated 01/06/97 */
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )
@@ -513,7 +524,7 @@ ROM_START( polict11 )
 	ROM_LOAD32_BYTE( "pt-u113.v11", 0x00000, 0x20000, CRC(3d62f6d6) SHA1(342ffa38a6972bbb03c89b4dd603c2cc60609d3d) )
 	ROM_LOAD32_BYTE( "pt-u112.v11", 0x00001, 0x20000, CRC(942b280b) SHA1(c342ba3255203ce28ff59479da00f26f0bd026e0) )
 	ROM_LOAD32_BYTE( "pt-u111.v11", 0x00002, 0x20000, CRC(da6c45a7) SHA1(471bd372d2ad5bcb29af19dae09f3cfab4b010fd) )
-	ROM_LOAD32_BYTE( "pt-u110.v11", 0x00003, 0x20000, CRC(1360ac2b) SHA1(789673403d3acac7b3c9ebd7914b65f287a94a11) ) // Fails Checksum, Bug in the program/checksum code???
+	ROM_LOAD32_BYTE( "pt-u110.v11", 0x00003, 0x20000, CRC(f1c8a8c0) SHA1(8a2d1ada002be6f2a3c2d21d193e7cde6531545a) )
 
 	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
 	ROM_LOAD( "pt-u160.bin", 0x000000, 0x100000, CRC(f267f813) SHA1(ae58507947fe2e9701b5df46565fd9908e2f9d77) )
@@ -523,7 +534,38 @@ ROM_START( polict11 )
 ROM_END
 
 
-ROM_START( plctr13b )
+ROM_START( polict10 ) /* Rev 0.2 PCB with all chips dated 10/07/96 */
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
+	/* Same data as the other sets, but split in 4 meg roms */
+	ROM_LOAD16_BYTE( "pt-u121.v10", 0x000000, 0x080000, CRC(9d31e805) SHA1(482f38e07ddb758e1fb444af7b56a0ef6ea945c8) )
+	ROM_LOAD16_BYTE( "pt-u120.v10", 0x000001, 0x080000, CRC(b03b9d46) SHA1(2bb8fcb1df09aa762b98adf2e1edd186203746c0) )
+	ROM_LOAD16_BYTE( "pt-u123.v10", 0x100000, 0x080000, CRC(80557cf1) SHA1(ba96fd5b6673b382013e1810a36edb827caaff4b) )
+	ROM_LOAD16_BYTE( "pt-u122.v10", 0x100001, 0x080000, CRC(eca09f41) SHA1(bbb1466d39c09598899a3f50b3bb8f9d58b274ec) )
+	ROM_LOAD16_BYTE( "pt-u125.v10", 0x200000, 0x080000, CRC(24bddc51) SHA1(6d7c85dba47c675c65e1cb751d581af0d2c678ad) )
+	ROM_LOAD16_BYTE( "pt-u124.v10", 0x200001, 0x080000, CRC(f1a43dee) SHA1(2c0aa894e148315168239c7df391ef1f2b4d32a1) )
+	ROM_LOAD16_BYTE( "pt-u127.v10", 0x300000, 0x080000, CRC(5031ea1e) SHA1(c1f9272f9874150d510f22c44c186fad0ed3a7e4) )
+	ROM_LOAD16_BYTE( "pt-u126.v10", 0x300001, 0x080000, CRC(33bf2653) SHA1(357da2da7df417109adbf600f3455c224f6c076f) )
+
+	ROM_REGION32_BE( 0x80000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "pt-u113.v10", 0x00000, 0x20000, CRC(3e27a0ce) SHA1(0d010da68f950a10a74eddc57941e4c0e2144071) )
+	ROM_LOAD32_BYTE( "pt-u112.v10", 0x00001, 0x20000, CRC(fcbcf4ca) SHA1(374291600043cfbbd87260b12961ac6d68caeda0) )
+	ROM_LOAD32_BYTE( "pt-u111.v10", 0x00002, 0x20000, CRC(61f79667) SHA1(25298cd8706b5c59f7c9e0f8d44db0df73c23403) )
+	ROM_LOAD32_BYTE( "pt-u110.v10", 0x00003, 0x20000, CRC(5c3c1548) SHA1(aab977274ecff7cb5fd540a3d0da7940e9707906) )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 )
+	/* Same data as the other sets, but split in 4 meg roms */
+	ROM_LOAD( "pt-u160.v10", 0x000000, 0x080000, CRC(cd374405) SHA1(e53689d4344c78c3faac22747ada28bc3add8c56) )
+	ROM_RELOAD(              0x3f8000, 0x080000 )
+	ROM_LOAD( "pt-u161.v10", 0x080000, 0x080000, CRC(c33e3497) SHA1(a7d488f04bba3f1b884b0df210c3793f41967d73) )
+	ROM_RELOAD(              0x478000, 0x080000 )
+	ROM_LOAD( "pt-u162.v10", 0x100000, 0x080000, CRC(e7e02312) SHA1(ac92b8615b18528820a40dad025173e9f24072bf) )
+	ROM_RELOAD(              0x4f8000, 0x080000 )
+	ROM_LOAD( "pt-u163.v10", 0x180000, 0x080000, CRC(a45b3f85) SHA1(21965dcf89e04d5ee21e27eefd6baa34d6d4479a) )
+	ROM_RELOAD(              0x578000, 0x080000 )
+ROM_END
+
+
+ROM_START( plctr13b ) /* Rev 0.5B PCB , unknown program rom date */
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )
@@ -551,7 +593,7 @@ Note: If you set the dipswitch to service mode and reset the game within Mame.
 ROM_END
 
 
-ROM_START( sshooter )
+ROM_START( sshooter ) /* Rev 0.5B PCB , unknown program rom date */
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
 	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
 	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
@@ -576,7 +618,7 @@ ROM_START( sshooter )
 ROM_END
 
 
-ROM_START( sshoot12 )
+ROM_START( sshoot12 ) /* Rev 0.5B PCB , program roms dated 04/17/98 */
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
 	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
 	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
@@ -601,7 +643,7 @@ ROM_START( sshoot12 )
 ROM_END
 
 
-ROM_START( sshoot11 )
+ROM_START( sshoot11 ) /* Rev 0.5B PCB , program roms dated 04/03/98 */
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_ERASE00 ) /* Graphics v1.0 */
 	ROM_LOAD16_BYTE( "ss-u121.bin", 0x000000, 0x100000, CRC(22e27dd6) SHA1(cb9e8c450352bb116a9c0407cc8ce6d8ae9d9881) ) // 1:1
 	ROM_LOAD16_BYTE( "ss-u120.bin", 0x000001, 0x100000, CRC(30173b1b) SHA1(366464444ce208391ca350f1639403f0c2217330) ) // 1:2
@@ -666,9 +708,10 @@ static DRIVER_INIT( sshoot12 )
  *
  *************************************/
 
-GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3)", 0 )
-GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P&P Marketing", "Police Trainer (Rev 1.1)", 0 )
-GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P&P Marketing", "Police Trainer (Rev 1.3B)", 0 )
-GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.7)", 0 )
-GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.2)", 0 )
-GAME( 1998, sshoot11, sshooter, sshooter, policetr, sshoot12, ROT0, "P&P Marketing", "Sharpshooter (Rev 1.1)", 0 )
+GAME( 1996, policetr, 0,        policetr, policetr, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.3)", 0 )
+GAME( 1996, polict11, policetr, policetr, policetr, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.1)", 0 )
+GAME( 1996, polict10, policetr, policetr, policetr, policetr, ROT0, "P & P Marketing", "Police Trainer (Rev 1.0)", 0 )
+GAME( 1996, plctr13b, policetr, sshooter, policetr, plctr13b, ROT0, "P & P Marketing", "Police Trainer (Rev 1.3B)", 0 )
+GAME( 1998, sshooter, 0,        sshooter, policetr, sshooter, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.7)", 0 )
+GAME( 1998, sshoot12, sshooter, sshooter, policetr, sshoot12, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.2)", 0 )
+GAME( 1998, sshoot11, sshooter, sshooter, policetr, sshoot12, ROT0, "P & P Marketing", "Sharpshooter (Rev 1.1)", 0 )

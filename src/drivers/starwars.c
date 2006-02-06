@@ -166,13 +166,13 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4380, 0x439f) AM_READ(starwars_adc_r)			/* a-d control result */
 	AM_RANGE(0x4400, 0x4400) AM_READWRITE(starwars_main_read_r, starwars_main_wr_w)
 	AM_RANGE(0x4401, 0x4401) AM_READ(starwars_main_ready_flag_r)
-	AM_RANGE(0x4500, 0x45ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x4500, 0x45ff) AM_RAM AM_BASE(&starwars_ram_overlay) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x4600, 0x461f) AM_WRITE(avgdvg_go_w)
 	AM_RANGE(0x4620, 0x463f) AM_WRITE(avgdvg_reset_w)
 	AM_RANGE(0x4640, 0x465f) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x4660, 0x467f) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x4680, 0x469f) AM_READWRITE(MRA8_NOP,starwars_out_w)
-	AM_RANGE(0x46a0, 0x46bf) AM_WRITE(MWA8_NOP)                                     /* nstore */
+	AM_RANGE(0x46a0, 0x46bf) AM_WRITE(starwars_nstore_w)
 	AM_RANGE(0x46c0, 0x46c2) AM_WRITE(starwars_adc_select_w)
 	AM_RANGE(0x46e0, 0x46e0) AM_WRITE(starwars_soundrst_w)
 	AM_RANGE(0x4700, 0x4707) AM_WRITE(swmathbx_w)
@@ -518,6 +518,9 @@ ROM_END
 
 static DRIVER_INIT( starwars )
 {
+	/* X2212 nvram */
+	generic_nvram = auto_malloc(generic_nvram_size);
+
 	/* prepare the mathbox */
 	starwars_is_esb = 0;
 	swmathbox_init();
@@ -530,6 +533,9 @@ static DRIVER_INIT( starwars )
 
 static DRIVER_INIT( esb )
 {
+	/* X2212 nvram */
+	generic_nvram = auto_malloc(generic_nvram_size);
+
 	/* init the slapstic */
 	slapstic_init(101);
 	slapstic_source = &memory_region(REGION_CPU1)[0x14000];

@@ -4,6 +4,9 @@
 
     Generic functions, mostly ROM and graphics related.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
 *********************************************************************/
 
 #include "driver.h"
@@ -592,12 +595,14 @@ void *auto_malloc(size_t size)
 	void *result;
 
 	/* malloc-ing zero bytes is inherently unportable; hence this check */
-	assert(size != 0);
+	if (size == 0)
+		osd_die("Attempted to auto_malloc zero bytes");
 
 	result = malloc(size);
 
 	/* fail horribly if it doesn't work */
-	assert(result);
+	if (!result)
+		osd_die("Out of memory attempting to allocate %d bytes\n", (int)size);
 
 	auto_malloc_add(result);
 
@@ -622,8 +627,16 @@ char *auto_strdup(const char *str)
 void auto_free(void)
 {
 	/* start at the end and free everything till you reach the sentinel */
-	while (malloc_list[--malloc_list_index] != NULL)
+	while (malloc_list_index > 0 && malloc_list[--malloc_list_index] != NULL)
 		free(malloc_list[malloc_list_index]);
+
+	/* if we free everything, free the list */
+	if (malloc_list_index == 0)
+	{
+		free(malloc_list);
+		malloc_list = NULL;
+		malloc_list_size = 0;
+	}
 }
 
 

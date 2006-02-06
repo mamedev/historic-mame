@@ -463,7 +463,7 @@ static void discrete_stream_update(void *param, stream_sample_t **inputs, stream
 		/* Dump any csv logs */
 		for (outputnum = 0; outputnum < info->num_csvlogs; outputnum++)
 		{
-			fprintf(info->disc_csv_file[outputnum], "%I64d", ++info->sample_num);
+			fprintf(info->disc_csv_file[outputnum], "%lld", ++info->sample_num);
 			for (nodenum = 0; nodenum < info->csvlog_node[outputnum]->active_inputs; nodenum++)
 			{
 				fprintf(info->disc_csv_file[outputnum], ", %f", *info->csvlog_node[outputnum]->input[nodenum]);

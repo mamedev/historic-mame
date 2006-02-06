@@ -35,6 +35,7 @@
 
 
 UINT8 *starwars_mathram;
+UINT8 *starwars_ram_overlay;
 
 /* Local variables */
 static UINT8 control_num = kPitch;
@@ -55,6 +56,17 @@ static UINT8 *PROM_AM; /* Storage for address mode select only */
 static void run_mbox(void);
 
 
+
+/*************************************
+ *
+ *  X2212 nvram store
+ *
+ *************************************/
+
+WRITE8_HANDLER( starwars_nstore_w )
+{
+	memcpy (generic_nvram, starwars_ram_overlay, generic_nvram_size);
+}
 
 /*************************************
  *
@@ -94,8 +106,8 @@ WRITE8_HANDLER( starwars_out_w )
 			set_led_status(0, ~data & 0x80);
 			break;
 
-		case 7:
-			/* NVRAM array recall */
+		case 7:		/* NVRAM array recall */
+			memcpy (starwars_ram_overlay, generic_nvram, generic_nvram_size);
 			break;
 	}
 }

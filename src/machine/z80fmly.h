@@ -50,14 +50,14 @@ int z80ctc_irq_state(int which);
 int z80ctc_irq_ack(int which);
 void z80ctc_irq_reti(int which);
 /*--------------------------------------------------------------------*/
-#define MAX_PIO 1
+#define MAX_PIO 2
 
 typedef struct
 {
 	int num;                                      /* number of PIOs to emulate */
-	void (*intr[MAX_CTC])(int which);             /* callback when change interrupt status */
-	void (*rdyA[MAX_PIO])(int data );             /* portA ready active callback (do not support yet)*/
-	void (*rdyB[MAX_PIO])(int data );             /* portB ready active callback (do not support yet)*/
+	void (*intr[MAX_PIO])(int which);             /* callback when change interrupt status */
+	void (*rdyA[MAX_PIO])(int data);              /* portA ready active callback (do not support yet)*/
+	void (*rdyB[MAX_PIO])(int data);              /* portB ready active callback (do not support yet)*/
 } z80pio_interface;
 
 
@@ -82,15 +82,22 @@ int z80pio_irq_ack(int which);
 void z80pio_irq_reti(int which);
 
 /* mame interface */
-void z80pio_0_reset (void);
+void z80pio_0_reset(void);
+void z80pio_1_reset(void);
 
 /* this functions can use when C/D = A0 , A/B = A1 */
 WRITE8_HANDLER( z80pio_0_w );
 READ8_HANDLER( z80pio_0_r );
+WRITE8_HANDLER( z80pio_1_w );
+READ8_HANDLER( z80pio_1_r );
 
 WRITE8_HANDLER( z80pioA_0_p_w );
 WRITE8_HANDLER( z80pioB_0_p_w );
 READ8_HANDLER( z80pioA_0_p_r );
 READ8_HANDLER( z80pioB_0_p_r );
+WRITE8_HANDLER( z80pioA_1_p_w );
+WRITE8_HANDLER( z80pioB_1_p_w );
+READ8_HANDLER( z80pioA_1_p_r );
+READ8_HANDLER( z80pioB_1_p_r );
 
 

@@ -1,12 +1,13 @@
-/*###################################################################################################
-**
-**
-**      debugcmd.h
-**      Debugger command interface engine.
-**      Written by Aaron Giles
-**
-**
-**#################################################################################################*/
+/*********************************************************************
+
+    debugcmd.h
+
+    Debugger command interface engine.
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
 
 #ifndef __DEBUGCMD_H__
 #define __DEBUGCMD_H__

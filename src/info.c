@@ -4,6 +4,9 @@
 
     Dumps the MAME internal data as an XML file.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
 ***************************************************************************/
 
 #include <ctype.h>

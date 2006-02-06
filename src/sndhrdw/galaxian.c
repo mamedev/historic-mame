@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "sound/samples.h"
-#include "sound/streams.h"
 #include "state.h"
 #include <math.h>
 

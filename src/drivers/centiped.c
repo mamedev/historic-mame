@@ -8,9 +8,6 @@
         * Millipede
         * Bulls Eye Darts
 
-    Known bugs:
-        * are coins supposed to take over a second to register?
-
     Centipede sync-prom added by HIGHWAYMAN.
     The prom pcb location is:P4 and is 256x4
     (i need to update the dump, this one is read in 8bit-mode)

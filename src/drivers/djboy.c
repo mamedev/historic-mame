@@ -14,17 +14,17 @@ press button#3 to advance past color pattern
 buttons 1,2,3 are used to select and play sound/music
 
 
-- CPU1 manages sprites, which are also used to display text
+- CPU0 manages sprites, which are also used to display text
         irq (0x10) - timing/watchdog
         irq (0x30) - processes sprites
         nmi: wakes up this cpu
 
-- CPU2 manages the protection device, palette, and tilemap(s)
+- CPU1 manages the protection device, palette, and tilemap(s)
         nmi: resets this cpu
         irq: game update
         additional protection at d8xx?
 
-- CPU3 manages sound chips
+- CPU2 manages sound chips
         irq: update music
         nmi: handle sound command
 
@@ -83,22 +83,17 @@ static UINT8 *sharedram;
 static READ8_HANDLER( sharedram_r )	{ return sharedram[offset]; }
 static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
 
-static int prot_offs;
-static UINT8 prot_ram[0x80];
-
 /******************************************************************************/
 
-static WRITE8_HANDLER( cpu1_cause_nmi_w )
+static WRITE8_HANDLER( trigger_nmi_on_cpu0 )
 {
 	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE8_HANDLER( cpu1_bankswitch_w )
+static WRITE8_HANDLER( cpu0_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	logerror( "cpu1_bankswitch( 0x%02x )\n", data );
-
 	if( data < 4 )
 	{
 		RAM = &RAM[0x2000 * data];
@@ -112,12 +107,10 @@ static WRITE8_HANDLER( cpu1_bankswitch_w )
 
 /******************************************************************************/
 
-static WRITE8_HANDLER( cpu2_bankswitch_w )
+static WRITE8_HANDLER( cpu1_bankswitch_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU2);
-
 	djboy_set_videoreg( data );
-
 	switch( data&0xf )
 	{
 	/* bs65.5y */
@@ -141,209 +134,253 @@ static WRITE8_HANDLER( cpu2_bankswitch_w )
 	}
 }
 
-/**
- * HACK: fake out port behavior using the addresses at which reads/writes occur
- *
- * Once the behavior is fully understood, we can emulate this at the chip level,
- * rather than tying the behavior to specific addresses.
- */
+static int prot_busy_count;
+#define PROT_OUTPUT_BUFFER_SIZE 8
+static UINT8 prot_output_buffer[PROT_OUTPUT_BUFFER_SIZE];
+static int prot_available_data_count;
+static int prot_offs; /* internal state */
+static UINT8 prot_ram[0x80]; /* internal RAM */
 
-static WRITE8_HANDLER( cpu2_data_w )
+static enum
 {
-	switch( activecpu_get_pc() )
+	ePROT_NORMAL,
+	ePROT_WRITE_BYTES,
+	ePROT_WRITE_BYTE,
+	ePROT_READ_BYTES,
+	ePROT_WAIT_DSW1_WRITEBACK,
+	ePROT_WAIT_DSW2_WRITEBACK,
+	ePROT_STORE_PARAM
+} prot_mode;
+
+static void
+ProtectionOut( int i, UINT8 data )
+{
+	if( prot_available_data_count == i )
 	{
-	case 0x7987: /* 0x03 memtest write */
+		prot_output_buffer[prot_available_data_count++] = data;
+	}
+	else
+	{
+		logerror( "prot_output_buffer overflow!\n" );
+		exit(1);
+	}
+}
+
+static void
+OutputProtectionState( int i, int type )
+{ /* 0..e */
+	int dat = 0x82;
+	ProtectionOut( i, dat );
+}
+
+static void
+CommonProt( int i, int type )
+{
+	ProtectionOut( i++, 1/*credits*/ );
+	ProtectionOut( i++, readinputport(0) ); /* COIN/START */
+	OutputProtectionState( i, type );
+}
+
+static WRITE8_HANDLER( prot_data_w )
+{
+	prot_busy_count = 1;
+
+	logerror( "0x%04x: prot_w(0x%02x)\n", activecpu_get_pc(), data );
+
+	if( prot_mode == ePROT_WAIT_DSW1_WRITEBACK )
+	{
+		logerror( "[DSW1_WRITEBACK]\n" );
+		ProtectionOut( 0, readinputport(4) ); /* DSW2 */
+		prot_mode = ePROT_WAIT_DSW2_WRITEBACK;
+	}
+	else if( prot_mode == ePROT_WAIT_DSW2_WRITEBACK )
+	{
+		logerror( "[DSW2_WRITEBACK]\n" );
+		prot_mode = ePROT_STORE_PARAM;
 		prot_offs = 0;
-		break;
-
-	case 0x73a5: /* 1 is written; preceeds protection read */
-		return;
-
-	case 0x79ba: /* 0x00 preceeds each byte-write */
-		return;
-
-	case 0x79cd: /* 0x00,0xff,0x55,0xaa,0x92,0xd9,0x3d,... */
+	}
+	else if( prot_mode == ePROT_STORE_PARAM )
+	{
+		logerror( "prot param[%d]: 0x%02x\n", prot_offs, data );
+		prot_offs++;
+		if( prot_offs == 8 )
+		{
+			prot_mode = ePROT_NORMAL;
+		}
+	}
+	else if( prot_mode == ePROT_WRITE_BYTE )
+	{ /* pc == 0x79cd */
 		prot_ram[(prot_offs++)&0x7f] = data;
-		return;
-
-	case 0x79ee: /* 0xfe memtest read */
-		prot_offs = 0;
-		break;
-
-	case 0x7a06: /* 0x00 preceeds each byte-read */
-		return;
-
-	case 0x7a3f: /* 0xfe memtest write */
-		prot_offs = 0;
-		return;
-
-	case 0x7a4d: /* 0xff read-DSW */
-		break;
-
-	case 0x7a78: /* write back DSW1&0xfe */
-		break;
-
-	case 0x7a95: /* write back DSW2 */
-		break;
-
-	case 0x7aad: /* store lives per credit */
-		break;
-
-	case 0x7ad4: /* store coinage */
-		break;
-
-	case 0x7aeb: /* 0x02 (?) reset I/O? */
-		break;
-
-	case 0x726a: /* 0x08 (?) protection */
-		break;
-
-	case 0x7146: break; /* prot(0x01) */
-	case 0x71f4: break; /* prot(0x02) */
-
-	default:
-		logerror( "?" );
+		prot_mode = ePROT_WRITE_BYTES;
 	}
-	logerror( "pc == %04x; data_w(%02x)\n", activecpu_get_pc(), data );
-} /* cpu2_data_w */
-
-static READ8_HANDLER( cpu2_data_r )
-{
-	UINT8 result = 0x00;
-	static int which;
-
-	switch( activecpu_get_pc() )
+	else
 	{
-	case 0x7a16:
-		result = prot_ram[(prot_offs++)&0x7f];
-		return result;
-		break;
+		switch( data )
+		{
+		case 0x00:
+			if( prot_mode == ePROT_WRITE_BYTES )
+			{ /* next byte is data to write to internal prot RAM */
+				prot_mode = ePROT_WRITE_BYTE;
+			}
+			else if( prot_mode == ePROT_READ_BYTES )
+			{ /* request next byte of internal prot RAM */
+				ProtectionOut( 0, prot_ram[(prot_offs++)&0x7f] );
+			}
+			else
+			{
+				logerror( "UNEXPECTED PREFIX!\n" );
+			}
+			break;
 
-	case 0x7a5e:
-	case 0x72aa:
-		result = readinputport(3); /* DSW1 (ix+$44) */
-		break;
+		case 0x01: // pc=7389
+			OutputProtectionState( 0, 0x01 );
+			break;
 
-	case 0x7a88:
-	case 0x72bd:
-		result = readinputport(4); /* DSW2 (ix+$45) */
-		break;
+		case 0x02:
+			CommonProt( 0,0x02 );
+			break;
 
-	case 0x731a:
-	case 0x727a: /* (ix+$41) */
-		which = 0;
-		result = readinputport(0);
-		break;
+		case 0x03: /* prepare for memory write to protection device ram (pc == 0x7987) */ // -> 0x02
+			logerror( "[WRITE BYTES]\n" );
+			prot_mode = ePROT_WRITE_BYTES;
+			prot_offs = 0;
+			break;
 
-	case 0x7296: /* (ix+$42),(ix+$43) */
-		result = readinputport(1+which);
-		which = 1-which;
-		break;
+		case 0x04:
+			ProtectionOut( 0,0 ); // ?
+			ProtectionOut( 1,0 ); // ?
+			ProtectionOut( 2,0 ); // ?
+			ProtectionOut( 3,0 ); // ?
+			CommonProt(    4,0x04 );
+			break;
 
-	case 0x7307: /* (ix+$40) credits */
-		result = 1;
-		break;
+		case 0x05: /* 0x71f4 */
+			ProtectionOut( 0,readinputport(1) ); // to $42
+			ProtectionOut( 1,0 ); // ?
+			ProtectionOut( 2,readinputport(2) ); // to $43
+			ProtectionOut( 3,0 ); // ?
+			ProtectionOut( 4,0 ); // ?
+			CommonProt(    5,0x05 );
+			break;
 
-	case 0x73b5:
-		/**
-         * used to poll for "events"
-         * possible values include:
-         * 0x00, 0x01, 0x80,0x81,...0x8e
-         *
-         * Each value dispatches to a different routine.  Most of them do very little.
-         */
-		result = 0x82; // 'normal' - polls inputs
-		if( code_pressed( KEYCODE_Q ) ) result = 0;
-		if( code_pressed( KEYCODE_5 ) ) result = 1; /* "PUSH 1P START" */
-		if( code_pressed( KEYCODE_6 ) ) result = 0x8b; /* "COIN ERROR" */
-//      if( code_pressed( KEYCODE_B ) ) result = 0x8e;
-		return result;
+		case 0x07:
+			CommonProt( 0,0x07 );
+			break;
 
-	case 0x7204: result = readinputport(1); break; /* (ix+$42) */
-	case 0x7217: result = 0; break;
-	case 0x7227: result = readinputport(2); break; /* (ix+$43) */
-	case 0x723a: result = 0; break;
-	case 0x724a: result = 0; break;
+		case 0x08: /* pc == 0x727a */
+			ProtectionOut( 0,readinputport(0) ); /* COIN/START */
+			ProtectionOut( 1,readinputport(1) ); /* JOY1 */
+			ProtectionOut( 2,readinputport(2) ); /* JOY2 */
+			ProtectionOut( 3,readinputport(3) ); /* DSW1 */
+			ProtectionOut( 4,readinputport(4) ); /* DSW2 */
+			CommonProt(    5, 0x08 );
+			break;
 
-	default:
-		break;
+		case 0x09:
+			ProtectionOut( 0,0 ); // ?
+			ProtectionOut( 1,0 ); // ?
+			ProtectionOut( 2,0 ); // ?
+			CommonProt(    3, 0x09 );
+			break;
+
+		case 0x0a:
+			CommonProt( 0,0x0a );
+			break;
+
+		case 0x0c:
+			CommonProt( 1,0x0c );
+			break;
+
+		case 0x0d:
+			CommonProt( 2,0x0d );
+			break;
+
+		case 0xfe: /* prepare for memory read from protection device ram (pc == 0x79ee, 0x7a3f) */
+			if( prot_mode == ePROT_WRITE_BYTES )
+			{
+				prot_mode = ePROT_READ_BYTES;
+				logerror( "[READ BYTES]\n" );
+			}
+			else
+			{
+				prot_mode = ePROT_WRITE_BYTES;
+				logerror( "[WRITE BYTES*]\n" );
+			}
+			prot_offs = 0;
+			break;
+
+		case 0xff: /* read DSW (pc == 0x714d) */
+			ProtectionOut( 0,readinputport(3) ); /* DSW1 */
+			prot_mode = ePROT_WAIT_DSW1_WRITEBACK;
+			break;
+
+		case 0x92:
+		case 0x97:
+		case 0x9a:
+		case 0xa3:
+		case 0xa5:
+		case 0xa9:
+		case 0xad:
+		case 0xb0:
+		case 0xb3:
+		case 0xb7:
+			//ix+$60
+			break;
+
+		default:
+			logerror( "UNKNOWN PROT_W!\n" );
+			exit(1);
+			break;
+		}
 	}
-	logerror( "pc == %04x; data_r() == 0x%02x\n", activecpu_get_pc(), result );
+} /* prot_data_w */
+
+static READ8_HANDLER( prot_data_r )
+{ /* port#4 */
+	UINT8 data = 0x00;
+	if( prot_available_data_count )
+	{
+		int i;
+		data = prot_output_buffer[0];
+		prot_available_data_count--;
+		for( i=0; i<prot_available_data_count; i++ )
+		{
+			prot_output_buffer[i] = prot_output_buffer[i+1];
+		}
+	}
+	else
+	{
+		logerror( "prot_r: data expected!\n" );
+	}
+	logerror( "0x%04x: prot_r() == 0x%02x\n", activecpu_get_pc(), data );
+	return data;
+} /* prot_data_r */
+
+static READ8_HANDLER( prot_status_r )
+{ /* port 0xc */
+	UINT8 result = 0;
+//  logerror( "0x%04x: prot_status_r\n", activecpu_get_pc() );
+	if( prot_busy_count )
+	{
+		prot_busy_count--;
+		result |= 1<<3; /* 0x8 */
+	}
+	if( !prot_available_data_count )
+	{
+		result |= 1<<2; /* 0x4 */
+	}
 	return result;
-} /* cpu2_data_r */
-
-static READ8_HANDLER( cpu2_status_r )
-{
-	switch( activecpu_get_pc() )
-	{
-	case 0x27b3: return 0;//!0x02
-	case 0x27c5: return 0;//!0x02
-
-	case 0x28e9: return 0; /* unknown */
-
-	case 0x31cc: return 0;//!0x02
-
-	case 0x703f: return 1<<2;
-	case 0x70d0: return 1<<2;
-	case 0x70f0: return 1<<2; /* 0x0c */
-
-	case 0x7110: return 1<<2;
-	case 0x7130: return 1<<2; /* prot(0x01) */
-	case 0x7150: return 1<<2;
-	case 0x7170: return 1<<2;
-	case 0x718f: return 0; /* !0x04 */
-	case 0x71a4: return 1<<2;
-	case 0x71c3: return 0; /* !0x04 */
-	case 0x71de: return 1<<2; /* prot(0x02) */
-	case 0x71fb: return 0; /* prot(0x02) !0x04 */
-
-	case 0x720e: return 0; /* prot(0x02) !0x04 */
-	case 0x721e: return 0; /* prot(0x02) !0x04 */
-	case 0x7231: return 0; /* prot(0x02) !0x04 */
-	case 0x7241: return 0; /* prot(0x02) !0x04 */
-	case 0x7254: return 1<<2;
-	case 0x7271: return 0;//!0x04
-	case 0x728d: return 0;//!0x04
-	case 0x72a1: return 0;//!0x04
-	case 0x72b4: return 0;//!0x04
-	case 0x72db: return 1<<2;
-	case 0x72fe: return 0;//!0x04
-
-	case 0x7311: return 0;//!0x04
-	case 0x738f: return 1<<2;
-	case 0x73ac: return 0;//!0x04
-
-	case 0x7971: return 1<<2;
-	case 0x798e: return 0;//!0x08
-	case 0x79af: return 0;//!0x08
-	case 0x79c1: return 0;//!0x08
-	case 0x79e1: return 0;//!0x08
-	case 0x79fb: return 0;//!0x08
-
-	case 0x7a0d: return 0;//!0x04
-	case 0x7a2e: return 0;//!0x08
-	case 0x7a55: return 0;//!0x04
-	case 0x7a68: return 0;//!0x08
-	case 0x7a7f: return 0;//!0x04
-	case 0x7aa1: return 0;//!0x08
-	case 0x7ac8: return 0;//!0x08
-	case 0x7ade: return 0;//!0x08
-
-	default: break;
-	}
-	logerror( "pc == %04x; status_r\n", activecpu_get_pc() );
-	return 0x02|(rand()&0x0c);
 }
 
 /******************************************************************************/
 
-static WRITE8_HANDLER( cpu3_nmi_soundcommand_w )
+static WRITE8_HANDLER( trigger_nmi_on_sound_cpu2 )
 {
 	soundlatch_w(0,data);
 	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE8_HANDLER( cpu3_bankswitch_w )
+static WRITE8_HANDLER( cpu2_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -360,94 +397,59 @@ static WRITE8_HANDLER( cpu3_bankswitch_w )
 
 /******************************************************************************/
 
-static ADDRESS_MAP_START( cpu1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( cpu0_am, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM) /* spriteram */
+	AM_RANGE(0xb000, 0xbfff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
 	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) /* shareram */
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram)
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( cpu1_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xb000, 0xbfff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&sharedram)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cpu1_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( cpu0_port_am, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(cpu1_bankswitch_w)
+	AM_RANGE(0x00, 0x00) AM_WRITE(cpu0_bankswitch_w)
 ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static ADDRESS_MAP_START( cpu2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( cpu1_am, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM) /* videoram */
-	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM) /* paletteram */
-	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM) /* workram */
-	/* AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM) */ /* protection? */
-	AM_RANGE(0xe000, 0xffff) AM_READ(sharedram_r)
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM) AM_WRITE(djboy_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd000, 0xd3ff) AM_READ(MRA8_RAM) AM_WRITE(djboy_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd400, 0xd7ff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) /* workram */
+	AM_RANGE(0xd800, 0xd8ff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM) /* shared! */
+	AM_RANGE(0xe000, 0xffff) AM_READ(sharedram_r) AM_WRITE(sharedram_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( cpu2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(djboy_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(djboy_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(MWA8_RAM) /* workram */
-	/* AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) */ /* protection? */
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(sharedram_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( cpu1_port_am, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x04, 0x04) AM_READ(cpu2_data_r)
-	AM_RANGE(0x0c, 0x0c) AM_READ(cpu2_status_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport2, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(cpu2_bankswitch_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(cpu3_nmi_soundcommand_w)
-	AM_RANGE(0x04, 0x04) AM_WRITE(cpu2_data_w)
-	AM_RANGE(0x0a, 0x0a) AM_WRITE(cpu1_cause_nmi_w)
+	AM_RANGE(0x00, 0x00) AM_WRITE(cpu1_bankswitch_w)
+	AM_RANGE(0x02, 0x02) AM_WRITE(trigger_nmi_on_sound_cpu2)
+	AM_RANGE(0x04, 0x04) AM_READ(prot_data_r) AM_WRITE(prot_data_w)
 	AM_RANGE(0x06, 0x06) AM_WRITE(djboy_scrolly_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(djboy_scrollx_w)
+	AM_RANGE(0x0a, 0x0a) AM_WRITE(trigger_nmi_on_cpu0)
+	AM_RANGE(0x0c, 0x0c) AM_READ(prot_status_r)
 ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static ADDRESS_MAP_START( cpu3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( cpu2_am, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK3)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( cpu3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cpu3_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( cpu2_port_am, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r)
-	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r)
+	AM_RANGE(0x00, 0x00) AM_WRITE(cpu2_bankswitch_w)
+	AM_RANGE(0x02, 0x02) AM_READ(YM2203_status_port_0_r) AM_WRITE(YM2203_control_port_0_w)
+	AM_RANGE(0x03, 0x03) AM_READ(YM2203_read_port_0_r) AM_WRITE(YM2203_write_port_0_w)
 	AM_RANGE(0x04, 0x04) AM_READ(soundlatch_r)
-	AM_RANGE(0x06, 0x06) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0x07, 0x07) AM_READ(OKIM6295_status_1_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cpu3_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(cpu3_bankswitch_w)
-	AM_RANGE(0x02, 0x02) AM_WRITE(YM2203_control_port_0_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(YM2203_write_port_0_w)
-	AM_RANGE(0x06, 0x06) AM_WRITE(OKIM6295_data_0_w)
-	AM_RANGE(0x07, 0x07) AM_WRITE(OKIM6295_data_1_w)
+	AM_RANGE(0x06, 0x06) AM_READ(OKIM6295_status_0_r) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x07, 0x07) AM_READ(OKIM6295_status_1_r) AM_WRITE(OKIM6295_data_1_w)
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -491,19 +493,18 @@ static INTERRUPT_GEN( djboy_interrupt )
 
 static MACHINE_DRIVER_START( djboy )
 	MDRV_CPU_ADD(Z80,6000000) /* ? */
-	MDRV_CPU_PROGRAM_MAP(cpu1_readmem,cpu1_writemem)
-	MDRV_CPU_IO_MAP(0,cpu1_writeport)
+	MDRV_CPU_PROGRAM_MAP(cpu0_am,0)
+	MDRV_CPU_IO_MAP(cpu0_port_am,0)
 	MDRV_CPU_VBLANK_INT(djboy_interrupt,2)
 
 	MDRV_CPU_ADD(Z80,6000000) /* ? */
-	MDRV_CPU_PROGRAM_MAP(cpu2_readmem,cpu2_writemem)
-	MDRV_CPU_IO_MAP(readport2,writeport2)
+	MDRV_CPU_PROGRAM_MAP(cpu1_am,0)
+	MDRV_CPU_IO_MAP(cpu1_port_am,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 6000000) /* ? */
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(cpu3_readmem,cpu3_writemem)
-	MDRV_CPU_IO_MAP(cpu3_readport,cpu3_writeport)
+	MDRV_CPU_PROGRAM_MAP(cpu2_am,0)
+	MDRV_CPU_IO_MAP(cpu2_port_am,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)

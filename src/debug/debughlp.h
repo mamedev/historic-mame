@@ -1,12 +1,13 @@
-/*###################################################################################################
-**
-**
-**      debughlp.h
-**      Debugger help engine.
-**      Written by Aaron Giles
-**
-**
-**#################################################################################################*/
+/*********************************************************************
+
+    debughlp.h
+
+    Debugger help engine.
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
 
 #ifndef __DEBUGHLP_H__
 #define __DEBUGHLP_H__

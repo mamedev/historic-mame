@@ -2,23 +2,33 @@
 
   Merit trivia games
 
-  preliminary driver by Pierpaolo Prazzoli
+  driver by Pierpaolo Prazzoli
+
+  Games known to be needed:
+  - Triv Whiz (Edition 3) - (c) Merit 1985
+  - Some other missing categories romsets and new / old revision
 
   TODO:
   - finish video emulation (colors and flipped tiles?)
 
-Note: it's important that REGION_USER1 is 0xa0000 bytes with empty space filled
-      with 0xff, because the built-in roms test checks how many question roms
-      the games has and the type of each one.
-      The  type is stored in one byte in an offset which change for every game,
-      using it in a form of protection.
+Notes: it's important that REGION_USER1 is 0xa0000 bytes with empty space filled
+       with 0xff, because the built-in roms test checks how many question roms
+       the games has and the type of each one.
+       The  type is stored in one byte in an offset which change for every game,
+       using it in a form of protection.
 
-      Rom type byte legend:
-      0 -> 0x02000 bytes rom
-      1 -> 0x04000 bytes rom
-      2 -> 0x08000 bytes rom
-      3 -> 0x10000 bytes rom
+       Rom type byte legend:
+       0 -> 0x02000 bytes rom
+       1 -> 0x04000 bytes rom
+       2 -> 0x08000 bytes rom
+       3 -> 0x10000 bytes rom
 
+       ---------------------------------------------------------------------------
+
+       Trivia Whiz ? Horizontal and Vertical can accept 10 question roms, with
+       4 categories, but they only use 3 categories.
+
+       ---------------------------------------------------------------------------
 */
 
 #include "driver.h"
@@ -228,10 +238,25 @@ static ADDRESS_MAP_START( tictac_io_map, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
+static ADDRESS_MAP_START( trvwhziv_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xa000, 0xbfff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xc004, 0xc007) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0xc008, 0xc00b) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
+	AM_RANGE(0xce00, 0xceff) AM_READWRITE(questions_r, high_offset_w)
+	AM_RANGE(0xd600, 0xd6ff) AM_WRITE(low_offset_w)
+	AM_RANGE(0xda00, 0xdaff) AM_WRITE(med_offset_w)
+	AM_RANGE(0xe000, 0xe001) AM_WRITENOP // 6845 crt
+	AM_RANGE(0xe800, 0xefff) AM_READWRITE(MRA8_RAM, phrcraze_attr_w) AM_BASE(&phrcraze_attr)
+	AM_RANGE(0xf000, 0xf7ff) AM_READWRITE(MRA8_RAM, phrcraze_bg_w) AM_BASE(&videoram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(palette_w) AM_BASE(&paletteram)
+ADDRESS_MAP_END
 
-// To enter test-mode: enable "Enable Test Mode", enable "Service Mode",
+
+// To enter hidden test-mode: enable "Enable Test Mode", enable "Service Mode",
 // enable "Freeze ?" and disable "Service Mode"
-
+// keep service test button pressed to clear the coin counter.
+// keep it for other 5 seconds to clear all the memory.
 INPUT_PORTS_START( phrcraze )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -248,7 +273,7 @@ INPUT_PORTS_START( phrcraze )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, "Freeze ?" ) // ?
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -282,9 +307,9 @@ INPUT_PORTS_START( phrcraze )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPSETTING(    0x02, "6" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Topic \"8\"" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -297,9 +322,81 @@ INPUT_PORTS_START( phrcraze )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, "Cocktail sides" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
+INPUT_PORTS_END
+
+// To enter hidden test-mode: enable "Enable Test Mode", enable "Service Mode",
+// enable "Freeze ?" and disable "Service Mode"
+// keep service test button pressed for 5 seconds to clear the coin counter.
+// keep it for other 5 seconds to clear all the memory.
+INPUT_PORTS_START( phrcrazs )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, "Enable Test Mode" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, "Freeze ?" ) // ?
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x04, "XXX-Rated Sex Topic" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x08, "Bonus Phraze" )
+	PORT_DIPSETTING(    0x18, DEF_STR( None ) )
+	PORT_DIPSETTING(    0x10, "800K" )
+	PORT_DIPSETTING(    0x08, "1M" )
+	PORT_DIPSETTING(    0x00, "1.5M" )
+	PORT_DIPNAME( 0x20, 0x20, "Random Sex Category" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, "Cocktail sides" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tictac )
@@ -548,7 +645,13 @@ static MACHINE_DRIVER_START( phrcraze )
 	MDRV_CPU_IO_MAP(phrcraze_io_map,0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( trvwhziv )
+	MDRV_IMPORT_FROM(pitboss)
 
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(trvwhziv_map,0)
+	MDRV_CPU_IO_MAP(tictac_io_map,0)
+MACHINE_DRIVER_END
 
 
 ROM_START( pitboss )
@@ -566,7 +669,7 @@ ROM_START( pitboss )
 	ROM_LOAD( "u40.rom",   0x0000, 0x2000, CRC(52298162) SHA1(79aa6c4ab6bec6450d882615e64f61cfef934153) )
 ROM_END
 
-ROM_START( trvwhiz )
+ROM_START( trvwhzho )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "trivia.u5",    0x0000, 0x2000, CRC(731fd5b1) SHA1(1074780321029446da0e6765b9e036b06b067a48) )
 	ROM_LOAD( "trivia.u6",    0x2000, 0x2000, CRC(af6886c0) SHA1(48005b921d7ce33ffc0ba160be82053a26382a9d) )
@@ -588,7 +691,7 @@ ROM_START( trvwhiz )
 	ROM_LOAD( "trivia.sx2",   0x58000, 0x8000, CRC(32519098) SHA1(d070e02bb10e04964893903599a69a8943f9ac8a) )
 ROM_END
 
-ROM_START( trvwhza )
+ROM_START( trvwhzha )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "trivia.u5",    0x0000, 0x2000, CRC(731fd5b1) SHA1(1074780321029446da0e6765b9e036b06b067a48) )
 	ROM_LOAD( "trivia.u6",    0x2000, 0x2000, CRC(af6886c0) SHA1(48005b921d7ce33ffc0ba160be82053a26382a9d) )
@@ -605,6 +708,47 @@ ROM_START( trvwhza )
 	ROM_LOAD( "trivia.spo",   0x08000, 0x8000, CRC(64181d34) SHA1(f84e28fc589b86ca6a596815871ed26602bcc095) )
 	ROM_LOAD( "trivia1.spo",  0x18000, 0x8000, CRC(ae111429) SHA1(ff551d7ac7ad367338e908805aeb78c59a747919) )
 	ROM_LOAD( "trivia2.spo",  0x28000, 0x8000, CRC(ee9263b3) SHA1(1644ab01f17e3af1e193e509d64dcbb243d3eb80) )
+ROM_END
+
+ROM_START( trvwhzve )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5.bin",       0x0000, 0x2000, CRC(fd3531ac) SHA1(d11573df65676e704b28cc2d99fb004b48a358a4) )
+	ROM_LOAD( "u6.bin",       0x2000, 0x2000, CRC(29e43d0e) SHA1(ad610748fe37436880648078f5d1a305cb147c5d) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39",          0x0000, 0x2000, CRC(b9d9a80e) SHA1(55b6a0d09f8619df93ba936e083835c859a557df) )
+	ROM_LOAD( "u38",          0x2000, 0x2000, CRC(8348083e) SHA1(260a4c1ae043e7ceac65a8818c23940d32275879) )
+	ROM_LOAD( "u37",          0x4000, 0x2000, CRC(b4d3c9f4) SHA1(dda99549306519c147d275d8c6af672e80a96b67) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40.bin",      0x0000, 0x2000, CRC(1f0ff6e0) SHA1(5a31afde34aeb6f851389d093bb426e5cfdedbf2) )
+
+	ROM_REGION( 0xa0000, REGION_USER1, ROMREGION_ERASEFF ) // questions
+	ROM_LOAD( "ent_001_01.bin", 0x08000, 0x8000, CRC(c68ce954) SHA1(bf70fe64f095d5cfcf5347d83651b78c6c8bf05f) )
+	ROM_LOAD( "ent_001_02.bin", 0x18000, 0x8000, CRC(aac4ff63) SHA1(d68c4408b4dad976e317a33f2a4eaee39d90dbed) )
+	ROM_LOAD( "gen_001_01.bin", 0x28000, 0x8000, CRC(5deb1900) SHA1(b7e9407c37481ef8953e8283d45949d951302e92) )
+	ROM_LOAD( "gen_001_02.bin", 0x3c000, 0x4000, CRC(d2b53b6a) SHA1(f75334e47885086e277682daf018818a02ce1026) )
+	ROM_LOAD( "sex_001_01.bin", 0x48000, 0x8000, CRC(32519098) SHA1(d070e02bb10e04964893903599a69a8943f9ac8a) )
+	ROM_LOAD( "sex_001_02.bin", 0x58000, 0x8000, CRC(0be4ef9a) SHA1(c80080f1c853e1043bf7e47bea322540a8ac9195) )
+ROM_END
+
+ROM_START( trvwhzva )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5.bin",       0x0000, 0x2000, CRC(fd3531ac) SHA1(d11573df65676e704b28cc2d99fb004b48a358a4) )
+	ROM_LOAD( "u6.bin",       0x2000, 0x2000, CRC(29e43d0e) SHA1(ad610748fe37436880648078f5d1a305cb147c5d) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39",          0x0000, 0x2000, CRC(b9d9a80e) SHA1(55b6a0d09f8619df93ba936e083835c859a557df) )
+	ROM_LOAD( "u38",          0x2000, 0x2000, CRC(8348083e) SHA1(260a4c1ae043e7ceac65a8818c23940d32275879) )
+	ROM_LOAD( "u37",          0x4000, 0x2000, CRC(b4d3c9f4) SHA1(dda99549306519c147d275d8c6af672e80a96b67) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40.bin",      0x0000, 0x2000, CRC(1f0ff6e0) SHA1(5a31afde34aeb6f851389d093bb426e5cfdedbf2) )
+
+	ROM_REGION( 0xa0000, REGION_USER1, ROMREGION_ERASEFF ) // questions
+	ROM_LOAD( "spo_001_01.bin", 0x08000, 0x8000, CRC(7b56315d) SHA1(4c8c63b80176bfac9594958a7043627012baada3) )
+	ROM_LOAD( "spo_001_02.bin", 0x18000, 0x8000, CRC(148b63ee) SHA1(9f3b222d979f23b313f379cbc06cc00d88d08c56) )
+	ROM_LOAD( "spo_001_03.bin", 0x28000, 0x8000, CRC(a6af8e41) SHA1(64f672bfa5fb2c0575103614986e53e238c5984f) )
 ROM_END
 
 ROM_START( trvwhzii )
@@ -631,6 +775,31 @@ ROM_START( trvwhzii )
 	ROM_LOAD( "spo_101.03a",  0x78000, 0x8000, CRC(3d69c3a3) SHA1(9f16d45660f3cb15e44e9fc0d940a7b2b12819e8) )
 	ROM_LOAD( "sex-101.01a",  0x88000, 0x8000, CRC(301d65c2) SHA1(48d260077e9c9ed82f6dfa176b1103723dc9e19a) )
 	ROM_LOAD( "sex-101.02a",  0x98000, 0x8000, CRC(2596091b) SHA1(7fbb9c2c3f74e12714513928c8cf3769bf29fc8b) )
+ROM_END
+
+ROM_START( trvwhziv )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5.bin",       0x0000, 0x8000, CRC(bc23a1ab) SHA1(b9601f316e373c568c5b208de417617094046559) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39.bin",      0x0000, 0x2000, CRC(b9d9a80e) SHA1(55b6a0d09f8619df93ba936e083835c859a557df) )
+	ROM_LOAD( "u38.bin",      0x2000, 0x2000, CRC(8348083e) SHA1(260a4c1ae043e7ceac65a8818c23940d32275879) )
+	ROM_LOAD( "u37.bin",      0x4000, 0x2000, CRC(b4d3c9f4) SHA1(dda99549306519c147d275d8c6af672e80a96b67) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40.bin",      0x0000, 0x2000, CRC(fbfae092) SHA1(b8569819952a5c805f11b6854d64b3ae9c857f97) )
+
+	ROM_REGION( 0xa0000, REGION_USER1, ROMREGION_ERASEFF ) // questions
+	ROM_LOAD( "ent_4_1.bin",  0x08000, 0x8000, CRC(1b317149) SHA1(94e882e9cc041ac8f292136c1ce2d21340ac5e7f) )
+	ROM_LOAD( "ent_4_2.bin",  0x18000, 0x8000, CRC(43d51697) SHA1(7af3f16f9519184ae63d8818bbc52a2ba897f275) )
+	ROM_LOAD( "rnp_4_1.bin",  0x28000, 0x8000, CRC(e54fc4bc) SHA1(4607974ed2bf83c475396fc1cbb1e09ad084ace8) )
+	ROM_LOAD( "rnp_4_2.bin",  0x38000, 0x8000, CRC(fee2d0b0) SHA1(9c9abec4ce693fc2d3976f3d499213c2ce67c197) )
+	ROM_LOAD( "sbt_4_1.bin",  0x48000, 0x8000, CRC(f1560804) SHA1(2ef0d587fbedfc342a12e913fa3c94eb8d67e2c5) )
+	ROM_LOAD( "sbt_4_2.bin",  0x58000, 0x8000, CRC(b0d6f6b2) SHA1(b08622d3775d1bb40c3b07ef932f3db4166ee284) )
+	ROM_LOAD( "sex_4_1.bin",  0x68000, 0x8000, CRC(976352b0) SHA1(5f89caca410704ba8a90da3167ba18e45fb21d43) )
+	ROM_LOAD( "sex_4_2.bin",  0x78000, 0x8000, CRC(5f148bc9) SHA1(2fd2cf819c2f395dcffad59857b3533fe3cce60b) )
+	ROM_LOAD( "spo_4_1.bin",  0x88000, 0x8000, CRC(5fe0c6a3) SHA1(17bdb5262ce4edf5f022f075537f6161e1397b46) )
+	ROM_LOAD( "spo_4_2.bin",  0x98000, 0x8000, CRC(3f3390e0) SHA1(50bd7b79268438584bb0f497ab0055b4d4864590) )
 ROM_END
 
 /*
@@ -704,6 +873,31 @@ ROM_START( phrcraze )
 	ROM_LOAD( "phrz.6",       0x50000, 0x8000, CRC(48e24f17) SHA1(f50c85505f6ab2360f0885494001f174224f8575) )
 ROM_END
 
+ROM_START( phrcrazs )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5.bin",       0x00000, 0x8000, CRC(6122b5bb) SHA1(9952b14334287a992eefefbdc887b9a9215304ef) )
+
+	ROM_REGION( 0xc000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39.bin",      0x00000, 0x4000, CRC(adbd2cdc) SHA1(a1e9481bd6ee0f8915cea43eaad3ebdd54438eed) )
+	ROM_LOAD( "u38.bin",      0x04000, 0x4000, CRC(3578f00d) SHA1(c6780a6ee1b5eb00258a89bceabbbe380d79d299) )
+	ROM_LOAD( "u37.bin",      0x08000, 0x4000, CRC(962f18a3) SHA1(ec1c3e470c59905c0f56fce2703f6ff586849512) )
+
+	ROM_REGION( 0x4000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40.bin",      0x00000, 0x4000, CRC(493172c8) SHA1(a76ff5d0d3dd56b0ee4352f03c9ce92f107d34ec) )
+
+	ROM_REGION( 0xa0000, REGION_USER1, ROMREGION_ERASEFF ) // questions
+	ROM_LOAD( "std1.bin",     0x00000, 0x8000, CRC(0a016c5e) SHA1(1a24ecd7fe59b08c75a1b4575c7fe467cc7f0cf8) )
+	ROM_LOAD( "std2.bin",     0x10000, 0x8000, CRC(e67dc49e) SHA1(5265af228531dc16db7f7ee78da6e51ef9a1d772) )
+	ROM_LOAD( "std3.bin",     0x20000, 0x8000, CRC(5c79a653) SHA1(85a904465b347564e937074e2b18159604c83e51) )
+	ROM_LOAD( "std4.bin",     0x30000, 0x8000, CRC(9837f757) SHA1(01106114b6997fe6432e519101f95c83a1f7cc1e) )
+	ROM_LOAD( "std5.bin",     0x40000, 0x8000, CRC(dc9d8682) SHA1(46973da4298d0ed149c651498527c91b8ba57e0a) )
+	ROM_LOAD( "std6.bin",     0x50000, 0x8000, CRC(011ffca6) SHA1(5188431849b4613152fd7bdba6a3ff0a4fd6424b) )
+	/* empty space as per instructions for other "sex" category roms */
+	//"Sex" questions revision A
+	ROM_LOAD( "sex1_2a.bin",  0x80000, 0x8000, CRC(7ef3bca7) SHA1(f25cd01f996882a500e1a800d924759cd1de255d) )
+	ROM_LOAD( "sex1_1a.bin",  0x90000, 0x8000, CRC(ed7604b8) SHA1(b1e841b50b8ef6ae95fafac1c34b6d0337a05d18) )
+ROM_END
+
 
 DRIVER_INIT( trvwhiz )
 {
@@ -713,6 +907,11 @@ DRIVER_INIT( trvwhiz )
 DRIVER_INIT( trvwhzii )
 {
 	decryption_key = 2;
+}
+
+DRIVER_INIT( trvwhziv )
+{
+	decryption_key = 5;
 }
 
 DRIVER_INIT( tictac )
@@ -725,9 +924,13 @@ DRIVER_INIT( phrcraze )
 	decryption_key = 7;
 }
 
-GAME( 1983, pitboss,  0,       pitboss,  pitboss,  0,        ROT0,  "Merit", "Pit Boss",                       GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAME( 1985, trvwhiz,  0,       trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Question set 1)", GAME_WRONG_COLORS )
-GAME( 1985, trvwhza,  trvwhiz, trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Question set 2)", GAME_WRONG_COLORS )
-GAME( 1985, trvwhzii, 0,       trvwhiz,  tictac,   trvwhzii, ROT90, "Merit", "Trivia ? Whiz (Edition 2)",      GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
-GAME( 1985, tictac,   0,       tictac,   tictac,   tictac,   ROT0,  "Merit", "Tic Tac Trivia",                 GAME_WRONG_COLORS )
-GAME( 1986, phrcraze, 0,       phrcraze, phrcraze, phrcraze, ROT0,  "Merit", "Phraze Craze",                   GAME_WRONG_COLORS )
+GAME( 1983, pitboss,  0,       pitboss,  pitboss,  0,        ROT0,  "Merit", "Pit Boss",                                    GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1985, trvwhzho, 0,       trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Horizontal - Question set 1)", GAME_WRONG_COLORS )
+GAME( 1985, trvwhzha, trvwhzho,trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Horizontal - Question set 2)", GAME_WRONG_COLORS )
+GAME( 1985, trvwhzve, 0,       trvwhiz,  tictac,   trvwhiz,  ROT90, "Merit", "Trivia ? Whiz (Vertical - Question set 1)",   GAME_WRONG_COLORS )
+GAME( 1985, trvwhzva, trvwhzve,trvwhiz,  tictac,   trvwhiz,  ROT90, "Merit", "Trivia ? Whiz (Vertical - Question set 2)",   GAME_WRONG_COLORS )
+GAME( 1985, trvwhzii, 0,       trvwhiz,  tictac,   trvwhzii, ROT90, "Merit", "Trivia ? Whiz (Edition 2)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, trvwhziv, 0,       trvwhziv, tictac,   trvwhziv, ROT90, "Merit", "Trivia ? Whiz (Edition 4)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, tictac,   0,       tictac,   tictac,   tictac,   ROT0,  "Merit", "Tic Tac Trivia",                              GAME_WRONG_COLORS )
+GAME( 1986, phrcraze, 0,       phrcraze, phrcraze, phrcraze, ROT0,  "Merit", "Phraze Craze",                                GAME_WRONG_COLORS )
+GAME( 1986, phrcrazs, 0,       phrcraze, phrcrazs, phrcraze, ROT90, "Merit", "Phraze Craze (Sex Kit)",                      GAME_WRONG_COLORS )

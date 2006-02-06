@@ -1,3 +1,14 @@
+/*********************************************************************
+
+    drawgfx.c
+
+    Generic graphic functions.
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
+
 #ifndef DECLARE
 
 #include "driver.h"
@@ -245,11 +256,8 @@ void decodegfx(gfx_element *gfx, const UINT8 *src, UINT32 first, UINT32 count)
 	/* if this is raw graphics data, just set the pointer and compute pen usage */
 	if (gfx->flags & GFX_DONT_FREE_GFXDATA)
 	{
-		/* only allowed to pass a pointer here for the first entry */
-		assert(first == 0 || src == NULL);
-
 		/* if we got a pointer, set it */
-		if (src)
+		if (first == 0 && src)
 			gfx->gfxdata = (UINT8 *)src;
 
 		/* compute pen usage for everything */

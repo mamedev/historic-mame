@@ -5,6 +5,9 @@
     Functions used to retrieve text used by MAME, to aid in
     translation.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
 ***************************************************************************/
 
 #pragma once

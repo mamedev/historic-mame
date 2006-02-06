@@ -4,6 +4,9 @@
 
     Core sound interface functions and definitions.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
 ***************************************************************************/
 
 #pragma once
@@ -11,7 +14,7 @@
 #ifndef __SNDINTRF_H__
 #define __SNDINTRF_H__
 
-#include "sound/streams.h"
+#include "streams.h"
 
 
 

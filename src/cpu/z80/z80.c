@@ -4013,6 +4013,27 @@ static void z80_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z80_SP:
 			Z80.sp.w.l = info->i;
 			break;
+		case CPUINFO_INT_REGISTER + Z80_A:
+			Z80.af.b.h = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_B:
+			Z80.bc.b.h = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_C:
+			Z80.bc.b.l = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_D:
+			Z80.de.b.h = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_E:
+			Z80.de.b.l = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_H:
+			Z80.hl.b.h = info->i;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_L:
+			Z80.hl.b.l = info->i;
+			break;
 		case CPUINFO_INT_REGISTER + Z80_AF:
 			Z80.af.w.l = info->i;
 			break;
@@ -4178,6 +4199,27 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z80_SP:
 			info->i = Z80.sp.w.l;
 			break;
+		case CPUINFO_INT_REGISTER + Z80_A:
+			info->i = Z80.af.b.h;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_B:
+			info->i = Z80.bc.b.h;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_C:
+			info->i = Z80.bc.b.l;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_D:
+			info->i = Z80.de.b.h;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_E:
+			info->i = Z80.de.b.l;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_H:
+			info->i = Z80.hl.b.h;
+			break;
+		case CPUINFO_INT_REGISTER + Z80_L:
+			info->i = Z80.hl.b.l;
+			break;
 		case CPUINFO_INT_REGISTER + Z80_AF:
 			info->i = Z80.af.w.l;
 			break;
@@ -4322,6 +4364,27 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 			break;
 		case CPUINFO_STR_REGISTER + Z80_SP:
 			sprintf(info->s = cpuintrf_temp_str(), "SP:%04X", Z80.sp.w.l);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_A:
+			sprintf(info->s = cpuintrf_temp_str(), "~A:%02X", Z80.af.b.h);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_B:
+			sprintf(info->s = cpuintrf_temp_str(), "~B:%02X", Z80.bc.b.h);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_C:
+			sprintf(info->s = cpuintrf_temp_str(), "~C:%02X", Z80.bc.b.l);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_D:
+			sprintf(info->s = cpuintrf_temp_str(), "~D:%02X", Z80.de.b.h);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_E:
+			sprintf(info->s = cpuintrf_temp_str(), "~E:%02X", Z80.de.b.l);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_H:
+			sprintf(info->s = cpuintrf_temp_str(), "~H:%02X", Z80.hl.b.h);
+			break;
+		case CPUINFO_STR_REGISTER + Z80_L:
+			sprintf(info->s = cpuintrf_temp_str(), "~L:%02X", Z80.hl.b.l);
 			break;
 		case CPUINFO_STR_REGISTER + Z80_AF:
 			sprintf(info->s = cpuintrf_temp_str(), "AF:%04X", Z80.af.w.l);

@@ -1015,7 +1015,7 @@ INLINE void execute_one(int opcode)
 			M_RST(3);
 			break;
 
-		case 0xe0: i8085_ICount -= 5;	/* RPE    */
+		case 0xe0: i8085_ICount -= 5;	/* RPO    */
 			M_RET( !(I.AF.b.l & VF) );
 			break;
 		case 0xe1: i8085_ICount -= 10;	/* POP  H */
@@ -1029,7 +1029,7 @@ INLINE void execute_one(int opcode)
 			M_PUSH(HL);
 			I.HL.d = I.XX.d;
 			break;
-		case 0xe4: i8085_ICount -= 11;	/* CPE  nnnn */
+		case 0xe4: i8085_ICount -= 11;	/* CPO  nnnn */
 			M_CALL( !(I.AF.b.l & VF) );
 			break;
 		case 0xe5: i8085_ICount -= 11;	/* PUSH H */
@@ -1043,7 +1043,7 @@ INLINE void execute_one(int opcode)
 			M_RST(4);
 			break;
 
-		case 0xe8: i8085_ICount -= 5;	/* RPO  */
+		case 0xe8: i8085_ICount -= 5;	/* RPE  */
 			M_RET( I.AF.b.l & VF );
 			break;
 		case 0xe9: i8085_ICount -= 5;	/* PCHL */
@@ -1058,7 +1058,7 @@ INLINE void execute_one(int opcode)
 			I.DE.d = I.HL.d;
 			I.HL.d = I.XX.d;
 			break;
-		case 0xec: i8085_ICount -= 11;	/* CPO  nnnn */
+		case 0xec: i8085_ICount -= 11;	/* CPE  nnnn */
 			M_CALL( I.AF.b.l & VF );
 			break;
 		case 0xed:

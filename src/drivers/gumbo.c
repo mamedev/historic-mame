@@ -402,9 +402,11 @@ ROM_START( mspuzzle )
 ROM_END
 
 ROM_START( mspuzzln )
+	/* all the roms for this game could do with checking on another board, this one was in pretty bad condition
+       and reads weren't always consistent */
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_BYTE( "u1.rom", 0x00001, 0x20000, CRC(ec940df4) SHA1(20bb6e2757868cf8fbbb11e05adf8c1d625ee172) )
-	ROM_LOAD16_BYTE( "u2.rom", 0x00000, 0x20000, CRC(7b9cac82) SHA1(c5edfb3fbdf43219ba317c18222e671ebed94469) )
+	ROM_LOAD16_BYTE( "u1.rom", 0x00001, 0x20000, BAD_DUMP CRC(ec940df4) SHA1(20bb6e2757868cf8fbbb11e05adf8c1d625ee172) )
+	ROM_LOAD16_BYTE( "u2.rom", 0x00000, 0x20000, BAD_DUMP CRC(7b9cac82) SHA1(c5edfb3fbdf43219ba317c18222e671ebed94469) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "u210.rom", 0x00000, 0x40000, CRC(8826b018) SHA1(075e5cef114146c6c72c0331dd3434b27fed180d) )
@@ -440,5 +442,5 @@ ROM_END
 GAME( 1994, gumbo,    0,        gumbo,    gumbo,    0, ROT0,  "Min Corp.", "Gumbo", 0 )
 GAME( 1994, msbingo,  0,        mspuzzle, msbingo,  0, ROT0,  "Min Corp.", "Miss Bingo", 0 )
 GAME( 1994, mspuzzle, 0,        mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle", 0 )
-GAME( 1994, mspuzzln, mspuzzle, mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle (Nudes)", 0 )
+GAME( 1994, mspuzzln, mspuzzle, mspuzzle, mspuzzle, 0, ROT90, "Min Corp.", "Miss Puzzle (Nudes)", GAME_NOT_WORKING )
 GAME( 1995, dblpoint, 0,        dblpoint, dblpoint, 0, ROT0,  "Dong Bang Electron", "Double Point", 0 )

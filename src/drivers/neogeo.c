@@ -74,95 +74,6 @@
 
     ------------------------------------------------------
 
-    GRAPHICAL ISSUES :
-
-    - Effects created using the Raster Interrupt are probably not 100% correct,
-      e.g.:
-      - full screen zoom in trally and tpgolf is broken again :-( I think this was
-        caused by the fix for kof94 japan stage.
-      - Tests on the hardware show that there are 264 raster lines; however, there
-        are one or two line alignemnt issues with some games, SCANLINE_ADJUST is
-        a kludge to get the alignment almost right in most cases.
-        Some good places to test raster effects handling and alignment:
-        - aodk 100 mega shock logo
-        - viewpoin Sammy logo
-        - zedblade parallax scrolling
-        - ridhero road
-        - turfmast Japan course hole 4 (the one with the waterfall)
-        - fatfury3, 7th stage (Port Town). Raster effects are used for the background.
-      - spinmast uses IRQ2 with no noticeable effect (it seems to be always near
-        the bottom of the screen).
-      - garoup enables IRQ2 on Terry's stage, but with no noticeable effect. Note
-        that it is NOT enabled in 2 players mode, only vs cpu.
-      - strhoop enables IRQ2 on every scanline during attract mode, with no
-        noticeable effect.
-      - Money Idol Exchanger runs slow during the "vs. Computer" mode. Solo mode
-        works fine.
-
-    - Full screen zoom has some glitches in tpgolf.
-
-    - Gururin has bad tiles all over the place (used to work ..)
-
-    - Bad clipping during scrolling at the sides on some games.
-        (tpgolf for example)
-
-    AUDIO ISSUES :
-
-    - Sound (Music) was cutting out in ncommand and ncombat due to a bug in the
-      original code, which should obviously have no ill effect on the real YM2610 but
-      confused the emulated one. This is fixed in the YM2610 emulator.
-
-    - Some rather bad sounding parts in a couple of Games
-        (shocktro End of Intro)
-
-    - In mahretsu music should stop when you begin play (correct after a continue) *untested*
-
-    GAMEPLAY ISSUES / LOCKUPS :
-
-    - Viewpoint resets halfway through level 1. This is a bug in the asm 68k core.
-
-    - magdrop2 behaves strangely when P2 wins a 2 Player game (reports both as losing)
-
-    - popbounc without a patch this locks up when sound is disabled, also for this game 'paddle'
-      conroller can be selected in the setup menus, but Mame doesn't support this.
-
-    - ssideki2 locks up sometimes during play *not tested recently, certainly used to*
-
-    - 2020bb apparently resets when the batter gets hit by the pitcher *not tested*
-
-    - some games apparently crash / reset when you finish them before you get the ending *untested*
-
-    - fatfury3 locks up when you complete the game.
-
-    NON-ISSUES / FIXED ISSUES :
-
-    - Auto Animation Speed is not quite right in Many Games
-        (mslug waterfalls, some bg's in samsho4, blazstar lev 2 etc.)
-
-    - shocktro locking up at the bosses, this was fixed a long long time ago, it was due to bugs
-      in the 68k Core.
-
-    - sound, graphic, the odd game crash & any other strange happenings in kof99p and garoup are
-      probably because these machines are prototypes, the games are therefore not finished.  There
-      are 'patched' versions of these romsets available in some locations, however these will not
-      be supported.
-
-    OTHER MINOR THINGS :
-
-    - 2020bb version display, the program roms contains two version numbers, the one which always
-      get displayed when running in Mame is that which would be displayed on a console.
-      This depends on location 0x46 of nvram. That location is the BIOS "Demo sound" bit ('00' for
-      'set up in each game' and '01' for 'without'). If you set 0x46 to '01' ALL Demosound
-      (Neo Splash screen and in game attract mode) is off, and version number is 1.32X. If you set
-      0x46 to '00' and set 0x229 (Demosound bit for the game itself. '00' for 'ON' and '01' for
-      'OFF') to '01' The Neo splashscreen has sound but the ingame attract mode does not and
-      version is set to 1.32X. So it would seem that 1.32X gets displayed when demosund is off
-      and 1.02C when Demosound is on.
-
-    NOTES ABOUT UNSUPPORTED GAMES :
-
-    - Diggerman (???, 2000) - Not A Real Arcade Game .. Will Not Be Supported.
-
 =============================================================================
 
 Points to note, known and proven information deleted from this map:
@@ -236,38 +147,47 @@ Points to note, known and proven information deleted from this map:
 
 ******************************************************************************/
 
-/* Changes 25/03/2003 DH
+/*
 
--- using elsemi's information all the bios patches have been removed.
-this required
-bios / game vector selection to be emulated
-calender emulation fixes
-removal of hacks to change region / get info memory card manager
- *note1 memory card manager is reportedly only accessable on the
-  neogeo console so should be a job for MESS, not MAME
- *note2 to change region you must now recompile with the relevant
-  part of the code uncommented so the correct bios roms are loaded
- *note3 startup now takes longer, this is because it is performing
-  memory checks which were previously skipped
--- added correct Bang Bead set (again based on Elsemi's Information)
--- fixed bios filename (based on info from Guru)
+--------------------------------------------------------------------------------
 
--- are the EURO bios roms infact ASIA bios roms?
+   Driver Notes / Known Problems
 
-******************************************************************************
+   Fatal Fury 3 crashes during the ending
+    -- this doesn't occur if the language is set to Japanese, maybe the english endings
+       are incomplete / buggy?
 
-  Notes : Jan 2006
+   Graphical Glitches caused by incorrect timing?
+    -- Blazing Star glitches during the tunnel sequence
+    -- Ninja Combat sometimes glitches
+    -- Some raster effects are imperfect (off by a couple of lines)
 
-  The rendering code has been rewritten to be fully scanline based, this will
-  allow for more accurate rendering.
+--------------------------------------------------------------------------------
 
-  Partial updates are forced whenever a video ram write occurs.
+    *NON* bugs
 
-  Currently Blazing Star seems to have some issues with the new code
-   (flickering during the Tunnel level, there are probably some timing bugs
-    elsewhere in the driver)
+    Bad zooming in the Kof2003 bootlegs
+     -- this is what happens if you try and use the normal bios with a pcb set, it
+        looks like the bootleggers didn't care.
+
+    Glitches at the edges of the screen
+     -- the real hardware can display 320x240 but most of the games seem designed
+        to work with a width of 304, some less.
+
+    Distorted jumping sound in Nightmare in the Dark
+     -- Confirmed on real hardware
+
+--------------------------------------------------------------------------------
+
+    Not Implemented
+
+    Multi Cart support
+     -- the MVS can take up to 6 carts depending on the board being used.
+
+ --------------------------------------------------------------------------------
 
 */
+
 
 
 #include "driver.h"
@@ -1416,8 +1336,6 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(neo_readio,neo_writeio)
 
-	/* using a framerate of 59 will fix the sync of the kof98 video / sound however
-       using it would be a kludge as 60 has been measured using the hardware */
 	MDRV_FRAMES_PER_SECOND(15625.0 / 264) /* verified with real PCB */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_WATCHDOG_TIME_INIT(TIME_IN_SEC(0.128762))
@@ -6554,8 +6472,8 @@ ROM_END
 
 ROM_START( samsho5b )
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "270-p1b.bin", 0x000000, 0x400000, CRC(b6cbe386) SHA1(99c2407361116c2b2c5fe72df53e05c5f99163c1) )
-	ROM_LOAD16_WORD_SWAP( "270-p2b.bin", 0x400000, 0x400000, CRC(5023067f) SHA1(b1d682fa7d158f19664356a919da6572e8cfeee0) )
+	ROM_LOAD16_WORD_SWAP( "270-p2b.bin", 0x000000, 0x400000, CRC(5023067f) SHA1(b1d682fa7d158f19664356a919da6572e8cfeee0) )
+	ROM_LOAD16_WORD_SWAP( "270-p1b.bin", 0x400000, 0x400000, CRC(b6cbe386) SHA1(99c2407361116c2b2c5fe72df53e05c5f99163c1) )
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
 	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* larger char set */
@@ -6621,12 +6539,12 @@ ROM_START( kf2k3pcb ) /* Encrypted Set, Decrypted C - JAMMA board */
 
 	ROM_REGION( 0x6000000, REGION_GFX3, 0 )
 	/* Encrypted */
-	ROM_LOAD16_BYTE( "271-c1.bin", 0x0000000, 0x1000000, CRC(f5ebb327) SHA1(e4f799a54b09adcca13b1b0cf95971a1f4291b61) ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "271-c2.bin", 0x0000001, 0x1000000, CRC(2be21620) SHA1(872c658f53bbc558e90f18d5db9cbaa82e748a6a) ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "271-c3.bin", 0x2000000, 0x1000000, CRC(ddded4ff) SHA1(ff7b356125bc9e6637b164f5e81b13eabeb8d804) ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "271-c4.bin", 0x2000001, 0x1000000, CRC(d85521e6) SHA1(62278fa8690972ed32aca07a4f7f97e7203d9f3a) ) /* Plane 2,3 */
-	ROM_LOAD16_BYTE( "271-c5.bin", 0x4000000, 0x1000000, CRC(18aa3540) SHA1(15e0a8c4e0927b1f7eb9bee8f532acea6818d5eb) ) /* Plane 0,1 */
-	ROM_LOAD16_BYTE( "271-c6.bin", 0x4000001, 0x1000000, CRC(1c40de87) SHA1(8d6425aed43ff6a96c88194e203df6a783286373) ) /* Plane 2,3 */
+	ROM_LOAD32_WORD( "271-c1.bin", 0x0000000, 0x1000000, CRC(f5ebb327) SHA1(e4f799a54b09adcca13b1b0cf95971a1f4291b61) ) /* Plane 0,1 */
+	ROM_LOAD32_WORD( "271-c2.bin", 0x0000002, 0x1000000, CRC(2be21620) SHA1(872c658f53bbc558e90f18d5db9cbaa82e748a6a) ) /* Plane 2,3 */
+	ROM_LOAD32_WORD( "271-c3.bin", 0x2000000, 0x1000000, CRC(ddded4ff) SHA1(ff7b356125bc9e6637b164f5e81b13eabeb8d804) ) /* Plane 0,1 */
+	ROM_LOAD32_WORD( "271-c4.bin", 0x2000002, 0x1000000, CRC(d85521e6) SHA1(62278fa8690972ed32aca07a4f7f97e7203d9f3a) ) /* Plane 2,3 */
+	ROM_LOAD32_WORD( "271-c5.bin", 0x4000000, 0x1000000, CRC(18aa3540) SHA1(15e0a8c4e0927b1f7eb9bee8f532acea6818d5eb) ) /* Plane 0,1 */
+	ROM_LOAD32_WORD( "271-c6.bin", 0x4000002, 0x1000000, CRC(1c40de87) SHA1(8d6425aed43ff6a96c88194e203df6a783286373) ) /* Plane 2,3 */
 ROM_END
 
 ROM_START( kof2003 ) /* Encrypted Code + Sound + GFX Roms */
@@ -6669,8 +6587,10 @@ ROM_END
 
 ROM_START( kf2k3bl )
     ROM_REGION( 0x800000, REGION_CPU1, 0 )
-    ROM_LOAD16_WORD_SWAP( "2k3-p1.bin", 0x000000, 0x400000, CRC(92ed6ee3) SHA1(5e7e21eb40dfcc453ba73808760d5ddedd49c58a) )
-    ROM_LOAD16_WORD_SWAP( "2k3-p2.bin", 0x400000, 0x400000, CRC(5d3d8bb3) SHA1(7f2341f14ca12ff5721eb038b3496228a1f34b60) )
+ 	ROM_LOAD16_WORD_SWAP( "271-p1bl.bin" , 0x100000, 0x400000, CRC(92ed6ee3) SHA1(5e7e21eb40dfcc453ba73808760d5ddedd49c58a) )
+	ROM_LOAD16_WORD_SWAP( "271-p2bl.bin" , 0x500000, 0x200000, CRC(5d3d8bb3) SHA1(7f2341f14ca12ff5721eb038b3496228a1f34b60) )
+	ROM_CONTINUE( 0x000000, 0x100000 )
+	ROM_CONTINUE( 0x000000, 0x100000 )
 
 	NEO_SFIX_128K( "271-s1bl.bin",  CRC(482c48a5) SHA1(27e2f5295a9a838e112be28dafc111893a388a16) )
 
@@ -7438,7 +7358,8 @@ DRIVER_INIT( ms5plus )
 {
 	cmc50_neogeo_gfx_decrypt(0x19);
 	neo_pcm2_swap(2);
-	decrypt_ms5plus_s1();
+//  decrypt_ms5plus_s1();
+    neogeo_bootleg_sx_decrypt(1);
 	neogeo_fix_bank_type = 1;
 	init_neogeo();
 	install_ms5plus_protection();
@@ -7481,7 +7402,8 @@ DRIVER_INIT( svcplus )
 {
 	svcplus_px_decrypt();
 	svcboot_cx_decrypt();
-	svcplus_sx_decrypt();
+//  svcplus_sx_decrypt();
+	neogeo_bootleg_sx_decrypt(1);
 	svcplus_px_hack();
 	init_neogeo();
 }
@@ -7497,7 +7419,8 @@ DRIVER_INIT( svcplusa )
 DRIVER_INIT( svcsplus )
 {
 	svcsplus_px_decrypt();
-	svcsplus_sx_decrypt();
+//  svcsplus_sx_decrypt();
+	neogeo_bootleg_sx_decrypt(2);
 	svcboot_cx_decrypt();
 	svcsplus_px_hack();
 	init_neogeo();
@@ -7518,6 +7441,7 @@ DRIVER_INIT( samsho5b )
 	neo_pcm2_swap(4);
 	neogeo_fix_bank_type = 1;
 	kof2000_neogeo_gfx_decrypt(0x0f);
+	samsh5bl_px_decrypt();
 	init_neogeo();
 }
 
@@ -7549,8 +7473,8 @@ DRIVER_INIT( kof2003 )
 
 DRIVER_INIT( kof2003b )
 {
-    kof2003b_px_decrypt();
-    kof2003b_sx_decrypt();
+//  kof2003b_sx_decrypt();
+	neogeo_bootleg_sx_decrypt(1);
     init_neogeo();
 	kof2003b_install_protection();
 }
@@ -7558,21 +7482,20 @@ DRIVER_INIT( kof2003b )
 DRIVER_INIT( kof2k3pl )
 {
 	kof2k3pl_px_decrypt();
-	decrypt_ms5plus_s1();
-    init_neogeo();
-	install_pvc_protection();
-
+	//decrypt_ms5plus_s1();
+    neogeo_bootleg_sx_decrypt(1);
+	init_neogeo();
+	kf2k3pl_install_protection();
 }
 
 
 DRIVER_INIT( kof2k3up )
 {
-    kof2003b_px_decrypt();
     kof2k3up_px_decrypt();
-    kof2k3up_sx_decrypt();
+//  kof2k3up_sx_decrypt();
+	neogeo_bootleg_sx_decrypt(2);
     init_neogeo();
 	kof2k3up_install_protection();
-	install_pvc_protection();
 }
 
 
@@ -7907,13 +7830,13 @@ GAMEB( 2003, svcplusa, svc,      neogeo, neogeo, neogeo,  svcplusa, ROT0, "boole
 GAMEB( 2003, svcsplus, svc,      neogeo, neogeo, neogeo,  svcsplus, ROT0, "booleg", "SvC Chaos - SNK vs Capcom Super Plus (bootleg)",0 )
 GAMEB( 2003, samsho5,  neogeo,   neogeo, neogeo, neogeo,  samsho5,  ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V / Samurai Spirits Zero (set 1)", 0 )
 GAMEB( 2003, samsho5h, samsho5,  neogeo, neogeo, neogeo,  samsho5,  ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V / Samurai Spirits Zero (set 2)", 0 )
-GAMEB( 2003, samsho5b, samsho5,  neogeo, neogeo, neogeo,  samsho5b, ROT0, "bootleg", "Samurai Shodown V / Samurai Spirits Zero (bootleg?)", GAME_NOT_WORKING ) // different program scrambling
+GAMEB( 2003, samsho5b, samsho5,  neogeo, neogeo, neogeo,  samsho5b, ROT0, "bootleg", "Samurai Shodown V / Samurai Spirits Zero (bootleg)", 0 ) // different program scrambling
 GAME ( 2003, kf2k3pcb, 0,                neogeo, neogeo,  kf2k3pcb, ROT0, "SNK Playmore", "The King of Fighters 2003 (Japan, JAMMA PCB)", 0 ) // not a clone of neogeo because it's NOT a neogeo cart.
 GAMEB( 2003, kof2003,  neogeo,   neogeo, neogeo, neogeo,  kof2003,  ROT0, "SNK Playmore", "The King of Fighters 2003 (World / US, MVS)", 0 )
-GAMEB( 2003, kf2k3bl,  kof2003,  neogeo, neogeo, neogeo,  kof2003b, ROT0, "bootleg", "The King of Fighters 2003 (bootleg, set 1)",GAME_NOT_WORKING ) // wrong decyrption / protection handling?
-GAMEB( 2003, kf2k3bla, kof2003,  neogeo, neogeo, neogeo,  kof2k3pl, ROT0, "bootleg", "The King of Fighters 2003 (bootleg, set 2)",GAME_NOT_WORKING ) // wrong decyrption / protection handling?
-GAMEB( 2003, kf2k3pl,  kof2003,  neogeo, neogeo, neogeo,  kof2k3pl, ROT0, "bootleg", "The King of Fighters 2004 Plus (The King of Fighters 2003 bootleg)",GAME_NOT_WORKING ) // wrong decryption / protection handling?
-GAMEB( 2003, kf2k3upl, kof2003,  neogeo, neogeo, neogeo,  kof2k3up, ROT0, "bootleg", "The King of Fighters 2004 Ultra Plus (The King of Fighters 2003 bootleg)",GAME_NOT_WORKING ) // wrong decyrption / protection handling?
+GAMEB( 2003, kf2k3bl,  kof2003,  neogeo, neogeo, neogeo,  kof2003b, ROT0, "bootleg", "The King of Fighters 2003 (bootleg, set 1)",0 ) // zooming is wrong because its a bootleg of the pcb version on a cart (unless it was a bootleg pcb with the new bios?)
+GAMEB( 2003, kf2k3bla, kof2003,  neogeo, neogeo, neogeo,  kof2k3pl, ROT0, "bootleg", "The King of Fighters 2003 (bootleg, set 2)",0 ) // zooming is wrong because its a bootleg of the pcb version on a cart
+GAMEB( 2003, kf2k3pl,  kof2003,  neogeo, neogeo, neogeo,  kof2k3pl, ROT0, "bootleg", "The King of Fighters 2004 Plus / Hero (The King of Fighters 2003 bootleg)",0 ) // zooming is wrong because its a bootleg of the pcb version on a cart
+GAMEB( 2003, kf2k3upl, kof2003,  neogeo, neogeo, neogeo,  kof2k3up, ROT0, "bootleg", "The King of Fighters 2004 Ultra Plus (The King of Fighters 2003 bootleg)",0 ) // zooming is wrong because its a bootleg of the pcb version on a cart
 GAMEB( 2003, samsh5sp, neogeo,   neogeo, neogeo, neogeo,  samsh5sp, ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V Special / Samurai Spirits Zero Special (set 1, uncensored)", 0 )
 GAMEB( 2003, samsh5sh, samsh5sp, neogeo, neogeo, neogeo,  samsh5sp, ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V Special / Samurai Spirits Zero Special (set 2, censored)", 0 )
 GAMEB( 2003, samsh5sn, samsh5sp, neogeo, neogeo, neogeo,  samsh5sp, ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V Special / Samurai Spirits Zero Special (set 3, less censored)", 0 )

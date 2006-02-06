@@ -8,7 +8,6 @@
 #include <math.h>
 #include "driver.h"
 
-#include "sound/streams.h"
 #include "sound/custom.h"
 
 #include "mame.h"

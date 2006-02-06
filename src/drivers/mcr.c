@@ -70,8 +70,8 @@
 
         Tapper           91490  91464  90913
         Timber
-        Discs of Tron    91490  91464  91657
-        NFL Football     91490  91464  91657
+        Discs of Tron    91490  91464  91657  91660
+        NFL Football     91490  91464  91657  91660  91695
         Demolition Derby 91490  91464  90913
 
         Spy Hunter       91442  91433  91657/90913  91671
@@ -205,11 +205,18 @@
     91657 = Super Sound I/O with Panning (DOTron)
     91658 = Lamp Sequencer (DOTron)
     91659 = Flashing Fluorescent Assembly (DOTron)
-    91660 = Squawk & Talk (DOTron)
+    91660 = Squawk & Talk (DOTron, NFLFoot)
     91671 = Chip Squeak Deluxe (SpyHunt)
     91673 = Lamp Driver (SpyHunt)
+    91695 = IPU laserdisk controller (NFLFoot)
     91794 = Optical Encoder Deluxe (DemoDerb)
     91799 = Turbo Chip Squeak (DemoDerb)
+
+****************************************************************************
+
+    SSIO outputs:
+        Output port 4 = J5=10-17
+        Output port
 
 ****************************************************************************
 
@@ -479,6 +486,25 @@ static WRITE8_HANDLER( dotron_op4_w )
 
 /*************************************
  *
+ *  NFL Football Tron I/O ports
+ *
+ *************************************/
+
+static WRITE8_HANDLER( nflfoot_op4_w )
+{
+	/* bit 7 = J3-7 on IPU board = /RXDA on SIO */
+	/* bit 6 = J3-3 on IPU board = CTSA on SIO */
+	logerror("%04X:op4_w(%d%d%d)\n", activecpu_get_pc(), (data >> 7) & 1, (data >> 6) & 1, (data >> 5) & 1);
+
+	/* bit 4 = SEL0 (J1-8) on squawk n talk board */
+	/* bits 3-0 = MD3-0 connected to squawk n talk (J1-4,3,2,1) */
+	squawkntalk_data_w(offset, data);
+}
+
+
+
+/*************************************
+ *
  *  Demolition Derby I/O ports
  *
  *************************************/
@@ -581,6 +607,85 @@ static ADDRESS_MAP_START( cpu_91490_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xe0, 0xe0) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0xe8, 0xe8) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0xf0, 0xf3) AM_READWRITE(z80ctc_0_r, z80ctc_0_w)
+ADDRESS_MAP_END
+
+
+
+/*************************************
+ *
+ *  IPU board 91695 memory handlers
+ *
+ *************************************/
+
+#define MAX_SIO		1
+
+struct z80sio
+{
+	UINT8 regs[2][8];
+};
+
+static struct z80sio sios[MAX_SIO];
+
+static void sio_w(int which, int ch, offs_t offset, UINT8 data)
+{
+	struct z80sio *sio = sios + which;
+
+	if (offset == 0)
+	{
+		logerror("%04X:sio_data_w(%d) = %02X\n", activecpu_get_pc(), ch, data);
+	}
+	else
+	{
+		int reg = sio->regs[ch][0] & 7;
+		sio->regs[ch][reg] = data;
+		if (reg != 0)
+			sio->regs[ch][0] &= ~7;
+		if (reg != 0 || (reg & 0xf8))
+			logerror("%04X:sio_reg_w(%d,%d) = %02X\n", activecpu_get_pc(), ch, reg, data);
+	}
+}
+
+static READ8_HANDLER( ipu_sio_r )
+{
+	logerror("%04X:ipu_sio_r(%d)\n", activecpu_get_pc(), offset);
+	return 0xff;
+}
+
+static WRITE8_HANDLER( ipu_sio_w )
+{
+	sio_w(0, offset & 1, (offset >> 1) & 1, data);
+}
+
+static WRITE8_HANDLER( ipu_laserdisk_w )
+{
+	logerror("%04X:ipu_laserdisk_w(%d) = %02X\n", activecpu_get_pc(), offset, data);
+}
+
+static READ8_HANDLER( ipu_watchdog_r )
+{
+	return 0xff;
+}
+
+static WRITE8_HANDLER( ipu_watchdog_w )
+{
+}
+
+/* address map verified from schematics */
+static ADDRESS_MAP_START( ipu_91695_map, ADDRESS_SPACE_PROGRAM, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0xe000, 0xffff) AM_RAM
+ADDRESS_MAP_END
+
+/* I/O verified from schematics */
+static ADDRESS_MAP_START( ipu_91695_portmap, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) | AMEF_UNMAP(1) )
+	AM_RANGE(0x00, 0x03) AM_MIRROR(0xe0) AM_READWRITE(z80pio_0_r, z80pio_0_w)
+	AM_RANGE(0x04, 0x07) AM_MIRROR(0xe0) AM_READWRITE(ipu_sio_r, ipu_sio_w)
+	AM_RANGE(0x08, 0x0b) AM_MIRROR(0xe0) AM_READWRITE(z80ctc_1_r, z80ctc_1_w)
+	AM_RANGE(0x0c, 0x0f) AM_MIRROR(0xe0) AM_READWRITE(z80pio_1_r, z80pio_1_w)
+	AM_RANGE(0x10, 0x13) AM_MIRROR(0xe0) AM_WRITE(ipu_laserdisk_w)
+	AM_RANGE(0x1c, 0x1f) AM_MIRROR(0xe0) AM_READWRITE(ipu_watchdog_r, ipu_watchdog_w)
 ADDRESS_MAP_END
 
 
@@ -1213,33 +1318,33 @@ INPUT_PORTS_END
 INPUT_PORTS_START( nflfoot )
 	PORT_START_TAG("SSIO.IP0")	/* J4 1-8 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BILL1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )		/* continue game */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )	/* service */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )		/* new game */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START_TAG("SSIO.IP1")	/* J4 10-13,15-18 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1) 	/* left engage */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1) 	/* left select #1 play */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1) 	/* left select #2 play */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1) 	/* left select #3 play */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1) 	/* left select #4 play */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1) 	/* left select #5 play */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_PLAYER(1)		/* select one player */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START_TAG("SSIO.IP2")	/* J5 1-8 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* code at 105 waits for this to toggle */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2) 	/* right engage */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2) 	/* right select #1 play */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) 	/* right select #2 play */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2) 	/* right select #3 play */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2) 	/* right select #4 play */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(2) 	/* right select #5 play */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_PLAYER(2)		/* select two player */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SPECIAL )					/* connects to IPU board */
 
 	PORT_START_TAG("SSIO.IP3")	/* DIPSW @ B3 */
 	PORT_DIPNAME( 0x01, 0x01, "Coin Meters" )
@@ -1252,9 +1357,6 @@ INPUT_PORTS_START( nflfoot )
 
 	PORT_START_TAG("SSIO.DIP")
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START_TAG("FAKE")	/* fake port to make aiming up & down easier */
-	PORT_BIT( 0xff, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10)
 INPUT_PORTS_END
 
 
@@ -1446,6 +1548,21 @@ static MACHINE_DRIVER_START( mcr_91490_snt )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr_91490)
 	MDRV_IMPORT_FROM(squawk_n_talk)
+MACHINE_DRIVER_END
+
+
+/* 91490 CPU board plus 90908/90913/91483 sound board plus Squawk n' Talk sound board plus IPU */
+static MACHINE_DRIVER_START( mcr_91490_ipu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mcr_91490_snt)
+	MDRV_MACHINE_INIT(nflfoot)
+
+	MDRV_CPU_ADD_TAG("ipu", Z80, 7372800/2)
+	MDRV_CPU_CONFIG(ipu_daisy_chain)
+	MDRV_CPU_PROGRAM_MAP(ipu_91695_map,0)
+	MDRV_CPU_IO_MAP(ipu_91695_portmap,0)
+	MDRV_CPU_VBLANK_INT(ipu_interrupt,2)
 MACHINE_DRIVER_END
 
 
@@ -2160,9 +2277,14 @@ ROM_START( nflfoot )
 	ROM_LOAD( "nflsnd.a9",    0x2000, 0x1000, CRC(1e0fe4c8) SHA1(718dfaced2d8d84dab4c32265bed422e07af0f9e) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "pre.u3",       0x09000, 0x1000, NO_DUMP )
-	ROM_LOAD( "pre.u4",       0x0a000, 0x1000, NO_DUMP )
-	ROM_LOAD( "pre.u5",       0x0b000, 0x1000, NO_DUMP )
+	ROM_LOAD( "nfl-sqtk-11-15-83.u2", 0x08000, 0x1000, CRC(aeddda31) SHA1(8ebe9d8606c4328b1b3f4633db30d7636acf210b) )
+	ROM_LOAD( "nfl-sqtk-11-15-83.u3", 0x09000, 0x1000, CRC(36229d13) SHA1(d174098ce1e4bc89ded15a08db37933ab9532f2b) )
+	ROM_LOAD( "nfl-sqtk-11-15-83.u4", 0x0a000, 0x1000, CRC(b202439b) SHA1(b09e94b0b176f80b12fb4cefa6efd5b2cccb6192) )
+	ROM_LOAD( "nfl-sqtk-11-15-83.u5", 0x0b000, 0x1000, CRC(bbfe4d39) SHA1(161ed211701e576978d6ef8b9766eb7742a29eb3) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* 64k for the IPU CPU */
+	ROM_LOAD( "ipu-7-9.a2", 0x0000, 0x2000, CRC(0e083adb) SHA1(b799568ff851f7320869fb84821a90eb1156556f) )
+	ROM_LOAD( "ipu-7-9.a4", 0x2000, 0x2000, CRC(5c9c4764) SHA1(ee9fe1d85dbfb1089bc8ed106a28fe5f3c36fb42) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "nflcpubg.6f",  0x00000, 0x2000, CRC(6d116cd9) SHA1(72acbb593e011b7732915c05fd2376eb5a9c5078) )
@@ -2325,8 +2447,10 @@ static DRIVER_INIT( dotrone )
 
 static READ8_HANDLER( nflfoot_ip2_r )
 {
+	/* bit 7 = J3-2 on IPU board = TXDA on SIO */
 	static int val;
 	val ^= 0xff;
+	logerror("%04X:ip2_r\n", activecpu_get_pc());
 	return val;
 }
 static DRIVER_INIT( nflfoot )
@@ -2335,9 +2459,7 @@ static DRIVER_INIT( nflfoot )
 	mcr_sound_init(MCR_SSIO | MCR_SQUAWK_N_TALK);
 
 	ssio_set_custom_input(2, 0x80, nflfoot_ip2_r);
-
-	/* no program ROMs for the Squawk 'n' Talk yet */
-	cpunum_suspend(2, SUSPEND_REASON_DISABLE, 1);
+	ssio_set_custom_output(4, 0xff, nflfoot_op4_w);
 }
 
 
@@ -2399,8 +2521,8 @@ GAME( 1983, dotrona,  dotron,   mcr_91490,     dotron,   mcr_91490, ORIENTATION_
 /* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk */
 GAME( 1983, dotrone,  dotron,   mcr_91490_snt, dotron,   dotrone,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)", GAME_SUPPORTS_SAVE )
 
-/* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk + laserdisk interface */
-GAME( 1983, nflfoot,  0,        mcr_91490_snt, nflfoot,  nflfoot,   ROT0,  "Bally Midway", "NFL Football", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
+/* 91490 CPU board + 91464 video gen + 91657 sound I/O + Squawk n' Talk + IPU laserdisk interface */
+GAME( 1983, nflfoot,  0,        mcr_91490_ipu, nflfoot,  nflfoot,   ROT0,  "Bally Midway", "NFL Football", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
 
 /* 91490 CPU board + 91464 video gen + 90913 sound I/O + Turbo Chip Squeak */
 GAME( 1984, demoderb, 0,        mcr_91490_tcs, demoderb, demoderb,  ROT0,  "Bally Midway", "Demolition Derby", GAME_SUPPORTS_SAVE )

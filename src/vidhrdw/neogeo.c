@@ -175,10 +175,12 @@ void neogeo_set_lower_resolution( void )
 		!strcmp(Machine->gamedrv->name,"svcsplus") ||
 		!strcmp(Machine->gamedrv->name,"samsho5") ||
 		!strcmp(Machine->gamedrv->name,"samsho5h") ||
+		!strcmp(Machine->gamedrv->name,"samsho5b") ||
 		!strcmp(Machine->gamedrv->name,"kf2k3pcb") ||
 		!strcmp(Machine->gamedrv->name,"kof2003") ||
 		!strcmp(Machine->gamedrv->name,"kf2k3bl") ||
-		!strcmp(Machine->gamedrv->name,"kf2k4ex") ||
+		!strcmp(Machine->gamedrv->name,"kf2k3bla") ||
+		!strcmp(Machine->gamedrv->name,"kf2k3pl") ||
 		!strcmp(Machine->gamedrv->name,"kf2k3upl") ||
 		!strcmp(Machine->gamedrv->name,"samsh5sp") ||
 		!strcmp(Machine->gamedrv->name,"samsh5sh") ||

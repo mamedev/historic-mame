@@ -698,75 +698,35 @@ void svcchaos_s1data_decrypt( void )
 	}
 }
 
-/* from Razoola */
+/* Razoola & Halrin */
 void decode_kf2k3pcb_croms( void )
 {
-	UINT8 *src = memory_region( REGION_GFX3 );
-	UINT8 *buffer = (UINT8*)malloc(0x6000000);
-	int i,j;
-	int addrxor=0x00000000;
-	int dataxor1=0xC5; // 0xC5988549
-	int dataxor2=0x98;
-	int dataxor3=0x85;
-	int dataxor4=0x49;
-	if (buffer){
-		for (i=0;i<0x6000000;i+=4)
-			{
-			j= ((i&~0xffffff)|BITSWAP24(i,23,21,10,20,19,22,18,17,16,15,14,13,12,11,9,8,7,6,5,4,3,2,1,0))^addrxor;
-			buffer[j+0]=src[i+0];
-			buffer[j+1]=src[i+2];
-			buffer[j+2]=src[i+1];
-			buffer[j+3]=src[i+3];
-			}
-			for (i=0;i<0x6000000;i+=4)
-				{
-				src[i+3]=   ((buffer[i+0]>>5)&1)<<0|
-					((buffer[i+0]>>3)&1)<<1|
-					((buffer[i+1]>>7)&1)<<2|
-					((buffer[i+2]>>7)&1)<<3|
-					((buffer[i+0]>>0)&1)<<4|
-					((buffer[i+2]>>3)&1)<<5|
-					((buffer[i+1]>>5)&1)<<6|
-					((buffer[i+1]>>1)&1)<<7;
+	const unsigned char xor[ 4 ] = { 0x34, 0x21, 0xc4, 0xe9 };
+	int i;
+	int ofst;
+	int rom_size = memory_region_length( REGION_GFX3 );
+	UINT8 *rom = memory_region( REGION_GFX3 );
+	UINT8 *buf = malloc( rom_size );
 
-				src[i+2]=   ((buffer[i+3]>>5)&1)<<0|
-					((buffer[i+1]>>6)&1)<<1|
-					((buffer[i+0]>>2)&1)<<2|
-					((buffer[i+2]>>4)&1)<<3|
-					((buffer[i+3]>>4)&1)<<4|
-					((buffer[i+3]>>2)&1)<<5|
-					((buffer[i+1]>>2)&1)<<6|
-					((buffer[i+3]>>3)&1)<<7;
-
-				src[i+1]=   ((buffer[i+0]>>6)&1)<<0|
-					((buffer[i+1]>>3)&1)<<1|
-					((buffer[i+2]>>5)&1)<<2|
-					((buffer[i+2]>>2)&1)<<3|
-					((buffer[i+3]>>6)&1)<<4|
-					((buffer[i+2]>>1)&1)<<5|
-					((buffer[i+1]>>4)&1)<<6|
-					((buffer[i+0]>>4)&1)<<7;
-
-				src[i+0]=   ((buffer[i+2]>>6)&1)<<0|
-					((buffer[i+0]>>7)&1)<<1|
-					((buffer[i+3]>>7)&1)<<2|
-					((buffer[i+3]>>1)&1)<<3|
-					((buffer[i+2]>>0)&1)<<4|
-					((buffer[i+0]>>1)&1)<<5|
-					((buffer[i+1]>>0)&1)<<6|
-					((buffer[i+3]>>0)&1)<<7;
-
-				buffer[i+0]=src[i+0]^dataxor1;
-				buffer[i+2]=src[i+1]^dataxor2;
-				buffer[i+1]=src[i+2]^dataxor3;
-				buffer[i+3]=src[i+3]^dataxor4;
-		}
-		memcpy(src,buffer,0x6000000);
-		}
-	free(buffer);
+	for ( i = 0; i < rom_size; i++ )
+	{
+		rom[ i ] ^= xor[ (i % 4) ];
+	}
+	for ( i = 0; i < rom_size; i+=4 )
+	{
+		UINT32 *rom32 = (UINT32*)&rom[ i ];
+		*rom32 = BITSWAP32( *rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16 );
+	}
+	memcpy( buf, rom, rom_size );
+	for ( i = 0; i < rom_size; i+=4 )
+	{
+		ofst = BITSWAP24( (i & 0x7fffff), 0x17, 0x15, 0x0a, 0x14, 0x13, 0x16, 0x12, 0x11, 0x10, 0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00 );
+		ofst ^= 0x000000;
+		ofst += (i & 0xff800000);;
+		memcpy( &rom[ ofst ], &buf[ i ], 0x04 );
+	}
+	free( buf );
 }
-
-
 
 
 /***************************************************************************

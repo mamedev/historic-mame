@@ -1,12 +1,13 @@
-/*###################################################################################################
-**
-**
-**      debugvw.h
-**      Debugger view engine.
-**      Written by Aaron Giles
-**
-**
-**#################################################################################################*/
+/*********************************************************************
+
+    debugvw.h
+
+    Debugger view engine.
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
 
 #ifndef __DEBUGVIEW_H__
 #define __DEBUGVIEW_H__

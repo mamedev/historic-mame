@@ -175,10 +175,10 @@ CPUOBJS += $(OBJ)/cpu/g65816/g65816o4.o
 DBGOBJS += $(OBJ)/cpu/g65816/g65816ds.o
 $(OBJ)/cpu/g65816/g65816.o: g65816.c g65816.h g65816cm.h g65816op.h
 $(OBJ)/cpu/g65816/g65816o0.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o1.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o2.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o3.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o4.o: g65816o0.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o1.o: g65816o1.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o2.o: g65816o2.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o3.o: g65816o3.c g65816.h g65816cm.h g65816op.h
+$(OBJ)/cpu/g65816/g65816o4.o: g65816o4.c g65816.h g65816cm.h g65816op.h
 endif
 
 

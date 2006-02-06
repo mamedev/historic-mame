@@ -12,6 +12,8 @@ David Haywood
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+static UINT16 *data_type38;
+
 static UINT16 *blitter_regs;
 static mame_bitmap *littlerb_bitmap;
 
@@ -246,9 +248,90 @@ fclose(fp_4);
 }
 #endif
 
-	copybitmap(bitmap, littlerb_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+//  copybitmap(bitmap, littlerb_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+
+	int x,y,offs, code;
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	/* the spriteram format is something like this .. */
+	for (offs=2;offs<0x100;offs+=6)
+	{
+		x = data_type38[offs+4] & 0x01ff;
+		y = (data_type38[offs+5] & 0x01ff);
+		code =  (data_type38[offs+2] & 0xff00)>>8;
+
+		/* well.. these might be co-ordinates in a texture page.. or just sprite numbers,
+           i don't know, it depends how it actually stores the characters it writes.. for
+           now i just use the ui font to show the 'rom check' 'rom ok' message */
+		switch (code&0xf8)
+		{
+		case 0x00: ui_draw_text("A", x, y);break;
+		case 0x08: ui_draw_text("B", x, y);break;
+		case 0x10: ui_draw_text("C", x, y);break;
+		case 0x18: ui_draw_text("D", x, y);break;
+		case 0x20: ui_draw_text("E", x, y);break;
+		case 0x28: ui_draw_text("F", x, y);break;
+		case 0x30: ui_draw_text("G", x, y);break;
+		case 0x38: ui_draw_text("H", x, y);break;
+		case 0x40: ui_draw_text("I", x, y);break;
+		case 0x48: ui_draw_text("J", x, y);break;
+		case 0x50: ui_draw_text("K", x, y);break;
+		case 0x58: ui_draw_text("L", x, y);break;
+		case 0x60: ui_draw_text("M", x, y);break;
+		case 0x68: ui_draw_text("N", x, y);break;
+		case 0x70: ui_draw_text("O", x, y);break;
+		case 0x78: ui_draw_text("P", x, y);break;
+		case 0x80: ui_draw_text("Q", x, y);break;
+		case 0x88: ui_draw_text("R", x, y);break;
+		case 0x90: ui_draw_text("S", x, y);break;
+		case 0x98: ui_draw_text("T", x, y);break;
+		case 0xa0: ui_draw_text("U", x, y);break;
+		case 0xa8: ui_draw_text("V", x, y);break;
+		case 0xb0: ui_draw_text("W", x, y);break;
+		case 0xb8: ui_draw_text("X", x, y);break;
+		case 0xc0: ui_draw_text("Y", x, y);break;
+		case 0xc8: ui_draw_text("Z", x, y);break;
+
+		default: ui_draw_text("0", x, y); break;
+		}
+
+	}
 }
 
+static UINT16 offset_high;
+static UINT16 offset_low;
+static UINT32 complete_offset;
+static int words_written;
+static UINT16 write_mode;
+
+WRITE16_HANDLER( newblitter_w )
+{
+	switch (offset)
+	{
+		case 0/2:
+			offset_high = data;
+			break;
+		case 2/2:
+			offset_low = data;
+			complete_offset = offset_high<<16|data;
+	//      printf("offset set to %08x after %08x words written\n",complete_offset,words_written);
+			words_written = 0;
+			break;
+		case 4/2:
+			/* data write */
+			if (write_mode==0x3800)	data_type38[words_written] = data;
+			words_written ++;
+			break;
+		case 6/2:
+			write_mode = data;
+		//  printf("writemode set to %04x after %08x words written\n",data, words_written);
+			words_written = 0;
+			break;
+	}
+
+
+
+}
 
 static ADDRESS_MAP_START( littlerb_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000008, 0x000017) AM_WRITENOP
@@ -263,8 +346,13 @@ static ADDRESS_MAP_START( littlerb_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x7e0000, 0x7e0001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x7e0002, 0x7e0003) AM_READ(input_port_2_word_r)
 
+	AM_RANGE(0xf00000, 0xffffff) AM_READ(MRA16_RAM) AM_BASE(&data_type38) /* fake! */
 
-	AM_RANGE(0x700000, 0x700007) AM_WRITE(blitter_w) AM_READ(blitter_r) AM_BASE(&blitter_regs)
+
+
+	//AM_RANGE(0x700000, 0x700007) AM_WRITE(blitter_w) AM_READ(blitter_r) AM_BASE(&blitter_regs)
+
+	AM_RANGE(0x700000, 0x700007) AM_WRITE(newblitter_w) AM_READ(blitter_r) AM_BASE(&blitter_regs)
 
 //  AM_RANGE(0x740000, 0x740001) AM_WRITE(MWA16_NOP)
 //  AM_RANGE(0x760000, 0x760001) AM_WRITE(MWA16_NOP)
@@ -374,8 +462,8 @@ static MACHINE_DRIVER_START( littlerb )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(64*8, 64*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_SIZE(256*8, 256*8)
+	MDRV_VISIBLE_AREA(0*8, 540-1, 0*8, 540-1)
 
 	MDRV_PALETTE_LENGTH(256)
 
@@ -384,6 +472,11 @@ static MACHINE_DRIVER_START( littlerb )
 	MDRV_VIDEO_UPDATE(littlerb)
 MACHINE_DRIVER_END
 
+DRIVER_INIT ( littlerb )
+{
+	data_type38 = auto_malloc(0x100000);
+
+}
 
 ROM_START( littlerb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */

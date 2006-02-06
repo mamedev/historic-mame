@@ -52,6 +52,65 @@ Port I/O Write:
 8e  AY8910 #1 Control Port
 8f  AY8910 #1 Write Port
 
+***********************************************************
+
+The Pit
+Taito, 1982
+
+PCB Layout
+----------
+
+HT-01A
+HRK001188
+|-------------------------------------------------------|
+| MB3730               5MHz                             |
+|                                 |---------------|    |-|
+|         AY3-8910     Z80(1)     |               |    | |
+|                                 |     EPOXY     |    | |
+|                                 |    MODULE     |    | |
+|                                 |               |    | |
+|2  82S123.IC4                    |               |    | |
+|2  VOL                           |---------------|    |-|
+|W                                                      |
+|A                                                      |
+|Y    DSW1(4)                                          |-|
+|     DSW2(4)     PIT07.IC30   PIT01.IC38              | |
+|            2114                                      | |
+|            2114 PIT06.IC31   PIT02.IC39              | |
+|            2114                                      | |
+|            2114              PIT03.IC40  Z80(2)      | |
+|                                                      |-|
+|                 PIT05.IC33   PIT04.IC41               |
+|-------------------------------------------------------|
+Notes:
+      Z80(1)clock- 2.500MHz [5/2]
+      Z80(2)clock- 3.072MHz [18.432/6]
+      8910 clock - 1.536MHz [18.432/12]
+      HSync      - 15.5kHz
+      VSync      - 60Hz
+
+HT-01B
+|-------------------------------------------------------|
+|                                                       |
+|                                            PIT08.IC9 |-|
+|                                                      | |
+| 18.432MHz                                  PIT09.IC8 | |
+|                                                      | |
+|                                               2114   | |
+|                                                      | |
+|                     2125                      2114   |-|
+|                                                       |
+|                     2125                              |
+|                                                      |-|
+|                     2125                             | |
+|                                                      | |
+|                     2125                             | |
+|                                                      | |
+|                     2125                      2114   | |
+|                                                      |-|
+|                     2125                      2114    |
+|-------------------------------------------------------|
+
 
 ***************************************************************************/
 
@@ -669,6 +728,26 @@ MACHINE_DRIVER_END
 
 ROM_START( thepit )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "pit01.ic38",         0x0000, 0x1000, CRC(87c269bf) SHA1(78a85a637cbf0dcfde7ccaa9a2d543078655b566) )
+	ROM_LOAD( "pit02.ic39",         0x1000, 0x1000, CRC(e1dfd360) SHA1(fd18f12edd39574d20b1e053dd3e7131d49f3db2) )
+	ROM_LOAD( "pit03.ic40",         0x2000, 0x1000, CRC(3674ccac) SHA1(876de2994ffdbc1f2226b5d672b5e92125d879da) )
+	ROM_LOAD( "pit04.ic41",         0x3000, 0x1000, CRC(bddde829) SHA1(267fc2a65a906bcd5786a7a97af986adac0588c7) )
+	ROM_LOAD( "pit05.ic33",         0x4000, 0x1000, CRC(584d1546) SHA1(9758e4b012bf93c6d847cc2cac890febe5d8335e) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
+	ROM_LOAD( "pit07.ic30",          0x0000, 0x0800, CRC(2d4881f9) SHA1(4773235d427ab88116e07599d0d5b130377548e7) )
+	ROM_LOAD( "pit06.ic31",          0x0800, 0x0800, CRC(c9d8c1cc) SHA1(66d0840182ede356c53cd1f930ea8abf86094ab7) )
+
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
+	ROM_LOAD( "pit08.ic9",           0x0000, 0x0800, CRC(00dce65f) SHA1(ba0cce484d1f8693a85b85e0689d107588df9043) )
+	ROM_LOAD( "pit09.ic8",           0x1000, 0x0800, CRC(a2e2b218) SHA1(1aa293a9503f3cbbc2fbd84b6b1d30124ef462e7) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.ic4",   0x0000, 0x0020, CRC(a758b567) SHA1(d188c90dba10fe3abaae92488786b555b35218c5) )
+ROM_END
+
+ROM_START( thepitc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
 	ROM_LOAD( "p38b",         0x0000, 0x1000, CRC(7315e1bc) SHA1(a07f252efcc81b40ef273007e9ce74db140b1bee) )
 	ROM_LOAD( "p39b",         0x1000, 0x1000, CRC(c9cc30fe) SHA1(27938ebc27480e8cf40bfdd930a4899984cfeb83) )
 	ROM_LOAD( "p40b",         0x2000, 0x1000, CRC(986738b5) SHA1(5e5f326f589814251e3815babb9de425605f7ece) )
@@ -966,7 +1045,8 @@ DRIVER_INIT( rtriv )
 
 GAME( 1981, roundup,  0,        thepit,   roundup,  0,     ROT90, "Amenip/Centuri", "Round-Up", 0 )
 GAME( 1981, fitter,   roundup,  thepit,   fitter,   0,     ROT90, "Taito Corporation", "Fitter", 0 )
-GAME( 1982, thepit,   0,        thepit,   thepit,   0,     ROT90, "Centuri", "The Pit", 0 )
+GAME( 1982, thepit,   0,        thepit,   thepit,   0,     ROT90, "Taito", "The Pit", 0 )
+GAME( 1982, thepitc,  thepit,   thepit,   thepit,   0,     ROT90, "Centuri", "The Pit (Centuri)", 0 )
 GAME( 1982, dockman,  0,        intrepid, dockman,  0,     ROT90, "Taito Corporation", "Dock Man", 0 )
 GAME( 1982, portman,  dockman,  intrepid, dockman,  0,     ROT90, "Nova Games Ltd.", "Port Man", 0 )
 GAME( 1982, funnymou, 0,        suprmous, suprmous, 0,     ROT90, "Chuo Co. Ltd", "Funny Mouse", 0 )

@@ -1,22 +1,25 @@
 /*********************************************************************
 
-  png.c
+    png.c
 
-  PNG reading functions.
+    PNG reading functions.
 
-  07/15/1998 Created by Mathis Rosenhauer
-  10/02/1998 Code clean up and abstraction by Mike Balfour
-             and Mathis Rosenhauer
-  10/15/1998 Image filtering. MLR
-  11/09/1998 Bit depths 1-8 MLR
-  11/10/1998 Some additional PNG chunks recognized MLR
-  05/14/1999 Color type 2 and PNG save functions added
-  05/15/1999 Handle RGB555 while saving, use mame_fxxx
-             functions for writing MSH
-  04/27/2001 Simple MNG support MLR
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
 
-  TODO : Fully comply with the "Recommendations for Decoders"
-         of the W3C
+    07/15/1998 Created by Mathis Rosenhauer
+    10/02/1998 Code clean up and abstraction by Mike Balfour
+            and Mathis Rosenhauer
+    10/15/1998 Image filtering. MLR
+    11/09/1998 Bit depths 1-8 MLR
+    11/10/1998 Some additional PNG chunks recognized MLR
+    05/14/1999 Color type 2 and PNG save functions added
+    05/15/1999 Handle RGB555 while saving, use mame_fxxx
+            functions for writing MSH
+    04/27/2001 Simple MNG support MLR
+
+    TODO : Fully comply with the "Recommendations for Decoders"
+        of the W3C
 
 *********************************************************************/
 

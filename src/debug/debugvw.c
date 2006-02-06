@@ -1,12 +1,13 @@
-/*###################################################################################################
-**
-**
-**      debugvw.c
-**      Debugger view engine.
-**      Written by Aaron Giles
-**
-**
-**#################################################################################################*/
+/*********************************************************************
+
+    debugvw.c
+
+    Debugger view engine.
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
 
 #include "driver.h"
 #include "debugvw.h"
@@ -768,7 +769,7 @@ static void registers_recompute(struct debug_view *view)
 {
 	const int *list = cpunum_debug_register_list(view->cpunum);
 	struct debug_view_registers *regdata = view->extra_data;
-	int regnum, maxtaglen = 0, maxvallen = 0;
+	int regnum, maxtaglen, maxvallen;
 
 	/* reset the view parameters */
 	view->top_row = 0;
@@ -797,10 +798,8 @@ static void registers_recompute(struct debug_view *view)
 	regdata->reg[view->total_rows].taglen   = 5;
 	regdata->reg[view->total_rows].valstart = 6;
 	regdata->reg[view->total_rows].vallen   = 3;
-	if (regdata->reg[view->total_rows].taglen > maxtaglen)
-		maxtaglen = regdata->reg[view->total_rows].taglen;
-	if (regdata->reg[view->total_rows].vallen > maxvallen)
-		maxvallen = regdata->reg[view->total_rows].vallen;
+	maxtaglen = MAX(maxtaglen, regdata->reg[view->total_rows].taglen);
+	maxvallen = MAX(maxvallen, regdata->reg[view->total_rows].vallen);
 	view->total_rows++;
 
 	/* add a beam entry: beamy:456 */
@@ -811,10 +810,8 @@ static void registers_recompute(struct debug_view *view)
 	regdata->reg[view->total_rows].taglen   = 5;
 	regdata->reg[view->total_rows].valstart = 6;
 	regdata->reg[view->total_rows].vallen   = 3;
-	if (regdata->reg[view->total_rows].taglen > maxtaglen)
-		maxtaglen = regdata->reg[view->total_rows].taglen;
-	if (regdata->reg[view->total_rows].vallen > maxvallen)
-		maxvallen = regdata->reg[view->total_rows].vallen;
+	maxtaglen = MAX(maxtaglen, regdata->reg[view->total_rows].taglen);
+	maxvallen = MAX(maxvallen, regdata->reg[view->total_rows].vallen);
 	view->total_rows++;
 
 	/* add a flags entry: flags:xxxxxxxx */
@@ -825,10 +822,8 @@ static void registers_recompute(struct debug_view *view)
 	regdata->reg[view->total_rows].taglen   = 5;
 	regdata->reg[view->total_rows].valstart = 6;
 	regdata->reg[view->total_rows].vallen   = strlen(cpunum_flags(view->cpunum));
-	if (regdata->reg[view->total_rows].taglen > maxtaglen)
-		maxtaglen = regdata->reg[view->total_rows].taglen;
-	if (regdata->reg[view->total_rows].vallen > maxvallen)
-		maxvallen = regdata->reg[view->total_rows].vallen;
+	maxtaglen = MAX(maxtaglen, regdata->reg[view->total_rows].taglen);
+	maxvallen = MAX(maxvallen, regdata->reg[view->total_rows].vallen);
 	view->total_rows++;
 
 	/* add a divider entry */
@@ -836,6 +831,10 @@ static void registers_recompute(struct debug_view *view)
 	regdata->reg[view->total_rows].currval  = 0;
 	regdata->reg[view->total_rows].regnum   = MAX_REGS;
 	view->total_rows++;
+
+	/* set the current divider and total cols */
+	regdata->divider = 1 + maxtaglen + 1;
+	view->total_cols = 1 + maxtaglen + 2 + maxvallen + 1;
 
 	/* add all registers into it */
 	for (regnum = 0; regnum < MAX_REGS; regnum++)

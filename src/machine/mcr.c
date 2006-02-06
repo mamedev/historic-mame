@@ -192,9 +192,25 @@ static void ctc_interrupt(int state)
 }
 
 
+static void ipu_ctc_interrupt(int state)
+{
+	cpunum_set_input_line(3, 0, state);
+}
+
+
 struct z80_irq_daisy_chain mcr_daisy_chain[] =
 {
 	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 0 }, /* CTC number 0 */
+	{ 0, 0, 0, 0, -1 }		/* end mark */
+};
+
+
+struct z80_irq_daisy_chain ipu_daisy_chain[] =
+{
+	{ z80ctc_reset, z80ctc_irq_state, z80ctc_irq_ack, z80ctc_irq_reti, 1 }, /* CTC number 1 */
+	{ z80pio_reset, z80pio_irq_state, z80pio_irq_ack, z80pio_irq_reti, 1 }, /* PIO number 1 */
+//  { z80sio_reset, z80sio_irq_state, z80sio_irq_ack, z80sio_irq_reti, 0 }, /* SIO number 0 */
+	{ z80pio_reset, z80pio_irq_state, z80pio_irq_ack, z80pio_irq_reti, 0 }, /* PIO number 0 */
 	{ 0, 0, 0, 0, -1 }		/* end mark */
 };
 
@@ -211,6 +227,25 @@ static z80ctc_interface ctc_intf =
 };
 
 
+static z80ctc_interface nflfoot_ctc_intf =
+{
+	2,                  /* 2 chips */
+	{ 0, 0 },           /* clock (filled in from the CPU 0 clock) */
+	{ 0, 0 },           /* timer disables */
+	{ ctc_interrupt, ipu_ctc_interrupt },  /* interrupt handler */
+	{ z80ctc_1_trg1_w },/* ZC/TO0 callback */
+	{ 0 },              /* ZC/TO1 callback */
+	{ 0 }               /* ZC/TO2 callback */
+};
+
+
+static z80pio_interface nflfoot_pio_intf =
+{
+	2,					/* 2 chips */
+	{ ipu_ctc_interrupt, ipu_ctc_interrupt }  /* interrupt handler */
+};
+
+
 
 /*************************************
  *
@@ -223,6 +258,23 @@ MACHINE_INIT( mcr )
 	/* initialize the CTC */
 	ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
 	z80ctc_init(&ctc_intf);
+
+	/* reset cocktail flip */
+	mcr_cocktail_flip = 0;
+	state_save_register_global(mcr_cocktail_flip);
+
+	/* initialize the sound */
+	mcr_sound_reset();
+}
+
+
+MACHINE_INIT( nflfoot )
+{
+	/* initialize the CTC */
+	nflfoot_ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
+	nflfoot_ctc_intf.baseclock[1] = Machine->drv->cpu[3].cpu_clock;
+	z80ctc_init(&nflfoot_ctc_intf);
+	z80pio_init(&nflfoot_pio_intf);
 
 	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
@@ -335,6 +387,18 @@ INTERRUPT_GEN( mcr_interrupt )
 	{
 		z80ctc_0_trg3_w(0, 1);
 		z80ctc_0_trg3_w(0, 0);
+	}
+}
+
+
+INTERRUPT_GEN( ipu_interrupt )
+{
+	/* CTC line 3 is connected to 493, which is signalled once every */
+	/* frame at 30Hz */
+	if (cpu_getiloops() == 0)
+	{
+		z80ctc_1_trg3_w(0, 1);
+		z80ctc_1_trg3_w(0, 0);
 	}
 }
 

@@ -17,8 +17,82 @@
     To do:
         * map out unused RAM per-game via MRA8_NOP/MWA8_NOP
 
-    Note: There is believed to be a 68020 version of Maximum Force (not confirmed or dumped)
+    Note: There is believed to be a 68020 version of Maximum Force
+            (not confirmed or dumped)
 
+****************************************************************************
+
+    Area51/Maximum Force (c)1997 Atari Games
+    Maximum Force
+    A055451
+
+    Components:
+    sdt79r3041-20j
+    Atari Jaguar CPU V1.0 6sc880hf106
+    Atari Jaguar DSP V1.0 sc414201ft (has Motorolla logo)
+    Altera epm7128elc84-15 marked A-21652
+    VIA vt83c461 IDE controller
+    Actel a1010b marked A-22096 near IDE and gun inputs
+    Dallas ds1232s watchdog
+    52MHz osc near Altera PLCC
+    40MHz osc near 79R3041
+    14.318180MHz osc near Jag DSP
+    12x hm514260cj7 RAM (near Jaguar CPU/DSP)
+    4x  sdt71256 RAM (near Boot ROMs's)
+    Atmel atf16v8b marked a-21647 (near Jag CPU)
+    Altera ep22lc-10 marked A-21648 (near Jag DSP)
+    ICT 22cv10aj marked A-21649 (near Jag CPU)
+    ICT 22cv10aj marked A-21650 (near Jag CPU)
+    ICT 22cv10aj marked A-21651 (near Jag CPU)
+    tea6320t
+    AKM ak4310vm
+    tda1554q amplifier
+    Microchip 28c16a-15 BRAM
+
+    ROM's:
+    27c4001
+    R3K MAX/A51 KIT
+    LL
+    (c)1997 Atari
+    V 1.0
+
+    27c4001
+    R3K MAX/A51 KIT
+    LH
+    (c)1997 Atari
+    V 1.0
+
+    27c4001
+    R3K MAX/A51 KIT
+    HL
+    (c)1997 Atari
+    V 1.0
+
+    27c4001
+    R3K MAX/A51 KIT
+    HH
+    (c)1997 Atari
+    V 1.0
+
+    Jumpers:
+    jsp1 (1/2 connected= w/sub 2/3 connected= normal speaker)
+    jsp2 (1/2 connected= w/sub 2/3 connected= normal speaker)
+    jamaud (1/2 connected=stereo 2/3 connected=mono)
+    jimpr (1/2 connected=hi video R impedance 2/3 connected=lo)
+    jimpg (1/2 connected=hi video G impedance 2/3 connected=lo)
+    jimpb (1/2 connected=hi video B impedance 2/3 connected=lo)
+
+    Connectors:
+    idea  standard IDE connector
+    ideb laptop size IDE connector
+    jgun1 8 pin gun input
+    jgun2 8 pin gun input
+    xtracoin 1 6 pin (coin3/4 bills?)
+    jvupdn 3 pin (?)
+    jsync 3 pin (?)
+    JAMMA
+    jspkr left/right/subwoofer output
+    hdpower 4 pin PC power connector for HD
 
 ****************************************************************************
 

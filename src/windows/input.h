@@ -2,6 +2,9 @@
 //
 //  input.h - Win32 implementation of MAME input routines
 //
+//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Visit http://mamedev.org for licensing and usage restrictions.
+//
 //============================================================
 
 #ifndef __INPUT_H

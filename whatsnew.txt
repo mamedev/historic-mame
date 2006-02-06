@@ -1,3 +1,71 @@
+0.104
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+centiped0103u3ora
+
+
+
+Source Changes
+--------------
+Fixed tiny.mak for the changes from 0.103u5. [Derrick Renaud]
+
+Fixed NVRAM handling in Star Wars/ESB (only affects test mode).
+[Mathis Rosenhauer]
+
+Decrypted the question ROMs in the coinmstr.c games. [Nicola Salmoria]
+
+Updated djboy driver with more protection information.
+[Phil Stroffolino]
+
+More NeoGeo cleanups. [David Haywood]
+
+Phoenix Discrete Sounds - Changed R22 to 470 ohm per real board. This 
+should fix the remaining complaints with the discrete sound. The shot 
+& explosion noise sounds still need discrete emulation.
+[Derrick Renaud]
+
+Added 16-segment drawing code to the vacfdisp module. [El Condor]
+
+Made 8-bit A,B,C,D,E,H and L registers available in the Z80
+debugger. [Nicola Salmoria, Aaron Giles]
+
+Ensured that all core and windows files have some indication of
+copyright on them. [Aaron Giles]
+
+Shuffled a few more files around in mame.mak; rebuild clean once
+again to ensure correctness. [Aaron Giles]
+
+Removed all but the default debugger font from the source
+distribution. [Aaron Giles]
+
+Fixed miscomputed registers view size in debugger. [Aaron Giles]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Lord of Gun (USA) [Luca Elia]
+
+
+
+New clones added
+----------------
+Trivia ? Whiz (Vertical versions) [Pierpaolo Prazzoli]
+Trivia ? Whiz (Edition 4) [Pierpaolo Prazzoli]
+Phraze Craze (Sex Kit) [Pierpaolo Prazzoli]
+Police Trainer (Rev 1.0) [Brian Troha]
+
+
+
+New games marked as GAME_NOT_WORKING
+------------------------------------
+Huang Fei Hong [Luca Elia]
+
+
+
 0.103u5
 -------
 
@@ -19,8 +87,8 @@ Updates to the Hyperstone core: [Pierpaolo Prazzoli]
  - Removed nested delays
  - Added better delay branch support
  - Fixed PC seen by a delay instruction, because a delay instruction
-    should use the delayed PC (thus allowing the execution of software
-    opcodes too)
+    should use the delayed PC (thus allowing the execution of 
+    software opcodes too)
 
 Hooked up watchdog for NeoGeo games and removed a number of hacks.
 [David Haywood]
@@ -35,8 +103,8 @@ coded limit on the maximum number of allocations. Also audited the
 use of auto_malloc in the code and removed unnecessary checks for
 NULL (since auto_malloc doesn't return if it fails). [Atari Ace]
 
-Fixed osd_fopen error reporting to return the correct value if you hit 
-MAX_OPEN_FILES. [Nathan Woods]
+Fixed osd_fopen error reporting to return the correct value if you 
+hit MAX_OPEN_FILES. [Nathan Woods]
 
 Changed several byte operands in the i386 disassembler to be 
 diassembled as unsigned rather than signed. [Nathan Woods]
@@ -68,9 +136,9 @@ match the schematics. [Mathis Rosenhauer]
 
 Improved dip switches for rocktrv2. [Chaneman]
 
-Separated the allocation of graphics data from the decoding. This fixes
-the crashes that were introduced in u4, and will allow for decoding
-progress to be reported eventually. [Aaron Giles]
+Separated the allocation of graphics data from the decoding. This 
+fixes the crashes that were introduced in u4, and will allow for 
+decoding progress to be reported eventually. [Aaron Giles]
 
 Made a clean-up pass over all the makefiles. rules.mak is gone now,
 replaced by cpu.mak and sound.mak. mame.mak has been reorganized. All 
@@ -120,9 +188,9 @@ Intel i386/i486/Pentium update: [Nathan Woods]
 
 Fixed Top Shooter sprites. Game still not playable. [Tomasz Slanina]
 
-Changed debug view property code to pass property values as unions rather 
-than void pointers, in order to appease compilers that whine about strict 
-aliasing. [Nathan Woods]
+Changed debug view property code to pass property values as unions 
+rather than void pointers, in order to appease compilers that whine 
+about strict aliasing. [Nathan Woods]
 
 Fixed resource allocation issue with bitmaps in the Windows code and
 MESS. [Nathan Woods]
@@ -132,31 +200,32 @@ Removed a number of unnecessary video_stop and machine_stop routines.
 
 Converted a few more exit() calls to osd_die(). [Oliver Stoneberg]
 
-Fixed inputs on Ninja Spirit and the Sega System 16b driver to match the
-JAMMA button ordering. [Corrado Tomaselli]
+Fixed inputs on Ninja Spirit and the Sega System 16b driver to match 
+the JAMMA button ordering. [Corrado Tomaselli]
 
 Fixes to the Hyperstone core: [Pierpaolo Prazzoli]
  - Removed nested delays
  - Don't allow software opcodes to be executed in a delay slot
 
 Added/changed the following discrete modules: [Derrick Renaud]
- - DISCRETE_WAVELOG - easy way to log discrete nodes as a .wav file to 
-    compare against scope waveforms.
+ - DISCRETE_WAVELOG - easy way to log discrete nodes as a .wav file 
+    to compare against scope waveforms.
  - DISCRETE_OUTPUT - added a final gain parameter to get it to 16 bit 
-    wav level.  (The old VOL setting was disabled after the last sound 
-    re-write.)
+    wav level.  (The old VOL setting was disabled after the last 
+    sound re-write.)
 
-Fixed graphics banking in 8751-based Altered Beast sets. [David Haywood]
+Fixed graphics banking in 8751-based Altered Beast sets. 
+[David Haywood]
 
 Fixed some bad gfx in kdynastg when levels start. [Pierpaolo Prazzoli]
 
 Decrypted graphics in Darkmist and Panic Road. [Nicola Salmoria]
 
-Added stream_set_sample_rate() call, and converted the TMS5110, TMS5220, 
-ES5505/6, BSMT2000, AY8910, POKEY, TIA, Sega PCM/Multi-PCM, SN76496, 
-OKIM6295, and YMZ280B sound cores to output at their native sample rates, 
-allowing the core sound system to perform over/re-sampling to the output 
-rate. [Aaron Giles]
+Added stream_set_sample_rate() call, and converted the TMS5110, 
+TMS5220, ES5505/6, BSMT2000, AY8910, POKEY, TIA, Sega PCM/Multi-PCM, 
+SN76496, OKIM6295, and YMZ280B sound cores to output at their native 
+sample rates, allowing the core sound system to perform over/
+re-sampling to the output rate. [Aaron Giles]
 
 Moved CHD file access routines to fileio.c. [Aaron Giles]
 
@@ -201,8 +270,8 @@ H8/Last Fight update: [R. Belmont]
  * Loads all ROMs
  * Maps RAM for the stack
 
-Converted wcvol95 and hvysmash to use the 16-bit deco tilemap functions.
-[David Haywood]
+Converted wcvol95 and hvysmash to use the 16-bit deco tilemap 
+functions. [David Haywood]
 
 Added BCD multiply to ARM coprocessor to fix wcvol95. [David Haywood]
 
@@ -217,66 +286,73 @@ Converted Super Burger Time, Vapor Trail, and Crude Buster to use the
 deco tilemap functions. [David Haywood]
 
 Rewrote Neo-Geo video system, removing distinction between raster and
-non-raster games and cleaning up the code significantly. [David Haywood]
+non-raster games and cleaning up the code significantly. 
+[David Haywood]
 
 Improved DIP switches for clowns, clowns1, and bowler. [Bob Seidel]
 
 Added CPUINFO_PTR_DEBUG_SETUP_COMMANDS: a callback that is invoked to 
-tell CPU cores to set up commands specific to a CPU core. [Nathan Woods]
+tell CPU cores to set up commands specific to a CPU core.
+[Nathan Woods]
 
 Added SegBase() and SegLimit() functions to the i386 core debugger.
 [Nathan Woods]
 
 Improved sound balance in Night Slashers. [MAME Italia]
 
-Improvements to the Deco MLC games (added sprite buffering, fixed tile 
-banking, fixed clear colour, added sprite clipping & ARM interrupt bug 
-fix). The only thing left for this driver is really raster support for 
-the pitch in Stadium Hero. [Bryan McPhail]
+Improvements to the Deco MLC games (added sprite buffering, fixed 
+tile banking, fixed clear colour, added sprite clipping & ARM 
+interrupt bug fix). The only thing left for this driver is really 
+raster support for the pitch in Stadium Hero. [Bryan McPhail]
 
 Fixed Hang On stereo sound routine. [Mamesick]
 
 Cleaned up PC keyboard code. [Nathan Woods]
 
 Added memory_install_* calls that are not specific to specific bus 
-widths (only for static handlers, not for function pointers). [Nathan Woods]
+widths (only for static handlers, not for function pointers). 
+[Nathan Woods]
 
 Added sound to Ping Pong Masters '93. [Tomasz Slanina]
 
-Converted Crazy Balloon sound to use the discrete system. [Derrick Renaud]
+Converted Crazy Balloon sound to use the discrete system. 
+[Derrick Renaud]
 
 Major Namco System 22 update: [Phil Stroffolino]
  * Hooked up the real master DSP BIOS.  Many games are now working or
     displaying graphics that were having problems before; removed many
     hacks as a result.
- * Hooked up the runtime-configurable interrupt handlers, removing more
-    game-specific hacks.
+ * Hooked up the runtime-configurable interrupt handlers, removing 
+    more game-specific hacks.
  * Some improvements and additional documentation of video hardware.
- * Emulated Alpine Surfer protection and fixed bogus loading of Point
-    ROMs, though the game still has problems.
+ * Emulated Alpine Surfer protection and fixed bogus loading of 
+    Point ROMs, though the game still has problems.
 
 Fixed the Wild Western bonus screen, where the horse would not scroll 
 into view. [Nicola Salmoria]
 
 Cleaned up inputs in the bfm_sc2 driver. [El Condor]
 
-Fixed in the old debugger the display of opcodes for word-addressed CPUs 
-like the TMS32010, which was completely broken before. [Alex Jackson]
+Fixed in the old debugger the display of opcodes for word-addressed 
+CPUs like the TMS32010, which was completely broken before. 
+[Alex Jackson]
 
-Separated debugger break key from OSD display. They can now be programmed
-differently. Also fixed behavior in the new debugger when using the break so
-that text doesn't get entered onto the command line. [Aaron Giles]
+Separated debugger break key from OSD display. They can now be 
+programmed differently. Also fixed behavior in the new debugger when 
+using the break so that text doesn't get entered onto the command 
+line. [Aaron Giles]
 
 Fixed the handling of address masking and display within the debugger.
 [Aaron Giles, Nathan Woods]
 
-Fixed order of operations in the expression engine if functions were used.
-[Aaron Giles]
+Fixed order of operations in the expression engine if functions were 
+used. [Aaron Giles]
 
-Added timer support to the ADSP cores and hooked it up for the DCS games.
-[Aaron Giles]
+Added timer support to the ADSP cores and hooked it up for the DCS 
+games. [Aaron Giles]
 
-Many Voodoo updates to add Voodoo Banshee and Voodoo 3 support. [Aaron Giles]
+Many Voodoo updates to add Voodoo Banshee and Voodoo 3 support. 
+[Aaron Giles]
 
 
 
@@ -305,7 +381,6 @@ Poizone [Chris Hardy, David Haywood]
 
 
 
-
 0.103u2
 -------
 
@@ -325,7 +400,8 @@ Fixed sound bug in Phoenix sound effect #2 [Hans Andersson]
 
 NeoGeo updates [http://neosource.1emulation.com/forums/]
  * Fatal Fury 2 - Emulated Protection
- * King of Fighters 10th Anniversary - Added code to update SRAM tiles on the fly
+ * King of Fighters 10th Anniversary - Added code to update SRAM 
+    tiles on the fly
  * CCTHD2k3 - Fixed GFX / Colours
  * Added code to support remaining NeoGeo sets
 
@@ -334,28 +410,15 @@ Fixed Mat Mania dipswitches [Roberto Fresca]
 Fixed some Leap Year calculates [William Krick, smf]
 
 Sync Refresh / Waitvsync / Triplebuffer changes [Alan Kamrowski II]
-
- * It changes the waitvsync code to wait for the beginning of the vertical
-blank.  The previous code simply checked if it was in the vblank and only
-waited if it wasn't.  This caused 2 problems.  The first is that when using
-syncrefresh, if there was enough time, more than one frame can be rendered
-during a single vblank.  This is why syncrefresh would have odd behavior
-such as the game speeding up or slowing during during less cpu intensive
-sequences.  The second problem is that the retrace line could sometimes be
-seen because while the code checked to see if it was in the vblank, it did
-not check where in the vblank it was so it might be at the end of the vblank
-and by time the frame is rendered the monitor could be out of the vblank.
-
- * It removes the waitvsync only if game speed is above 95% restriction.
-This restriction would only cause waitvsync to vacillate between on and off
-depending on game speed.  If someone enables waitvsync and it is too slow,
-then it is.
-
- * When syncrefresh and triplebuffer are used, MAME would run the waitvsync
-code anyway.  The triplebuffer code takes care of this and having MAME wait
-for the retrace in the waitvsync code anyway is a waste of time and causes
-timing issues on some hardware.  If triplebuffering is enabled, then there
-is no need to run the waitvsync code because triplebuffer already does.
+ * Changed the waitvsync code to wait for the beginning of the 
+    vertical blank (the previous code simply checked if it was in the 
+    vblank and only waited if it wasn't).
+ * Removed the waitvsync only if game speed is above 95% restriction.
+    This restriction would only cause waitvsync to vacillate between 
+    on and off depending on game speed.
+ * When syncrefresh and triplebuffer are used, MAME would run the 
+    waitvsync code anyway. The triplebuffer code takes care of this 
+    already.
 
 Fixed typo in monzagp.c [Brad Oliver]
 
@@ -365,44 +428,33 @@ SS Mission and Air Attack dipswitch fixes [Brian Troha]
 
 Improvements to the Data East 156 (ARM) based games [Various]
  * Added Sound to Night Slashers [Tomasz Slanina]
- * Added Sound to World Cup Volleyball '95 and BackFire! [Pierpaolo Prazzoli]
+ * Added Sound to World Cup Volleyball '95 and BackFire!
+    [Pierpaolo Prazzoli]
  * Fixed sprite flipping in the Data East MLC driver, this fixes the
    graphics in Avengers in Galactic Storm [Tomasz Slanina]
  * Modified ARM CPU core to allow World Cup Volleyball '95 to
    start [Tomasz Slanina]
- * Added BCD opcodes to 156 / ARM co-processor, needed by the above [David Haywood]
+ * Added BCD opcodes to 156 / ARM co-processor, needed by the above 
+    [David Haywood]
  * Fixed Sound in Data East MLC games [David Haywood]
- * Split BackFire! into a separate driver and improved the graphics, and
-   added dual screen support [David Haywood]
+ * Split BackFire! into a separate driver and improved the graphics, 
+    and added dual screen support [David Haywood]
  * Corrected sound decoding in BackFire! [David Haywood] 
  * Cleanups to the ARM core [Bryan McPhail]
 
 Fixed fileio.c buffer overrun [Lawrence Gold]
 
 i486 CPU patch [Nathan Woods]
- src/cpu/i386/cycles.h:
- src/cpu/i386/i386.c:
- src/cpu/i386/i386dasm.c:
- src/cpu/i386/i386ops.h:
- src/cpu/i386/i486ops.c:
-    - Implemented the XADD, INVLPG and CMPXCHG instructions
-    - Made the opcode table const correct
+ - Implemented the XADD, INVLPG and CMPXCHG instructions
+ - Made the opcode table const correct
 
 H6280 updates [Rob Bohms]
- src/cpu/h6280/h6280.c:
- src/cpu/h6280/h6280.h:
- src/cpu/h6280/h6280ops.h:
- src/sound/c6280.c:
- src/sound/c6280.h:
-    - Added T-flag emulation
-    - Fixed read calls
+ - Added T-flag emulation
+ - Fixed read calls
 
 Debugger Improvements [Nathan Woods]
- src/debug/debugcmd.c:
- src/debug/debugcpu.c:
- src/debug/debugcpu.h:
- src/debug/debughlp.c:
-    - Added a 'gtime' command; like the "go" command, but breaks after a specified delay 
+ - Added a 'gtime' command; like the "go" command, but breaks after 
+    a specified delay 
 
 Corrected Frequencies in WWF Superstars [Phil Bennett]
 
@@ -444,10 +496,14 @@ SVC Chaos [http://neosource.1emulation.com/forums/]
 King of Fighter 2003 [http://neosource.1emulation.com/forums/]
 Samurai Shodown 5 [http://neosource.1emulation.com/forums/]
 
+
+
 New clones added
 ----------------
 Alien 3: The Gun (US) [Arzeno Fabrice]
 Magic Crystals (World, newer) [Uncle Tom]
+
+
 
 New games marked as GAME_NOT_WORKING
 ------------------------------------
@@ -491,21 +547,23 @@ Updates for the ARM core: [Bryan McPhail]
  * Preliminary coprocessor support.
 
 Deco fixes: [Bryan McPhail, Pierpaolo Prazzoli] 
- * Deco MLC video hardware near perfect for the most part, however no game 
-    works properly because of an unemulated math coprocessor attached to 
-    the DE156 chip.
- * Deco 32: Night Slashers pretty much perfect apart from lack of sound.  
+ * Deco MLC video hardware near perfect for the most part, however 
+    no game works properly because of an unemulated math coprocessor 
+    attached to the DE156 chip.
+ * Deco 32: Night Slashers pretty much perfect apart from lack of 
+    sound.  
  * Deco 32: Some graphics fixes for Tattoo Assassins.
  * Deco 156: Heavy Smash pretty much perfect.
 
-Tagged a number of constant arrays in the source as static. [Atari Ace]
+Tagged a number of constant arrays in the source as static. 
+[Atari Ace]
 
 Many H6280/PCE fixes: [Rob Bohms, Charles MacDonald]
  - fixed cases where sprites could render outside of the buffer
  - added VRAM to VRAM DMA (Charles)
  - multiple h6280 fixes (Charles)
- - provided functions to correctly handle VRAM accesses for the entire 
-    128K range (Charles)
+ - provided functions to correctly handle VRAM accesses for the 
+    entire 128K range (Charles)
  - added some of the I/O buffer bits from the hardware page
  - fixed h6280 IRQ ranges to support proper mirroring
  - hooked up h6280 IRQs to the PC Engine
@@ -516,14 +574,16 @@ Added new debugger command traceflush. [Nathan Woods]
 
 Fixed out-of-bounds array writes in the v810 core. [Atari Ace]
 
-Moved several BCD and date-related functions into mamecore.h. [Nathan woods]
+Moved several BCD and date-related functions into mamecore.h. 
+[Nathan woods]
 
-Hooked up sound effects in Triple Hunt. [Derrick Renaud, Stefan Jokisch]
+Hooked up sound effects in Triple Hunt.
+[Derrick Renaud, Stefan Jokisch]
 
 Fixed OKI frequency in Super Model. [Sonikos]
 
-Added PowerPC MMU code, but enabled only for MESS due to breakage of the
-Model 3 games. [Nathan Woods]
+Added PowerPC MMU code, but enabled only for MESS due to breakage of 
+the Model 3 games. [Nathan Woods]
 
 Fixed graphics layer priority in Grand Tour. [Tomasz Slanina, Guru]
 

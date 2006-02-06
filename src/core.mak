@@ -44,6 +44,7 @@ COREOBJS = \
 	$(OBJ)/sha1.o \
 	$(OBJ)/sndintrf.o \
 	$(OBJ)/state.o \
+	$(OBJ)/streams.o \
 	$(OBJ)/tilemap.o \
 	$(OBJ)/timer.o \
 	$(OBJ)/ui_text.o \
@@ -56,7 +57,6 @@ COREOBJS = \
 	$(OBJ)/sound/filter.o \
 	$(OBJ)/sound/flt_vol.o \
 	$(OBJ)/sound/flt_rc.o \
-	$(OBJ)/sound/streams.o \
 	$(OBJ)/sound/wavwrite.o \
 	$(OBJ)/machine/eeprom.o \
 	$(OBJ)/vidhrdw/generic.o \

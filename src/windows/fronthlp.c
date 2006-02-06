@@ -1,3 +1,12 @@
+//============================================================
+//
+//  fronthlp.c - Win32 frontend management functions
+//
+//  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+//  Visit http://mamedev.org for licensing and usage restrictions.
+//
+//============================================================
+
 #include <windows.h>
 #include "driver.h"
 #include "info.h"

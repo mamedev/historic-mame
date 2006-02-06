@@ -320,7 +320,8 @@ DISCRETE_SOUND_START(phoenix_discrete_interface)
 	/* - shield, bird explode, level 3&4 siren,     */
 	/* - level 5 spaceship                          */
 	/************************************************/
-	DISCRETE_RCDISC4(NODE_20, 1, PHOENIX_EFFECT_1_FREQ, RES_K(47), RES_K(100), RES_K(33), CAP_U(6.8), 12, 1)	// R22, R23, R24, C7
+	/* R22 has been confirmed on real boards as 470 ohm, not 47k in schematics  */
+	DISCRETE_RCDISC4(NODE_20, 1, PHOENIX_EFFECT_1_FREQ, 470, RES_K(100), RES_K(33), CAP_U(6.8), 12, 1)	// R22, R23, R24, C7
 	DISCRETE_555_ASTABLE_CV(NODE_21, 1, RES_K(47), RES_K(47), CAP_U(.001), NODE_20, &phoenix_effect1_555)		// R25, R26, C8
 	/* LS163 counts rising edge, but the LS14 inverts that */
 	DISCRETE_NOTE(NODE_22, 1, NODE_21, PHOENIX_EFFECT_1_DATA, 0x0f, 1, DISC_CLK_BY_COUNT | DISC_OUT_IS_ENERGY)

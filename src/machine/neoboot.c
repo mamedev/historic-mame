@@ -586,25 +586,6 @@ void lans2004_decrypt_68k( void )
 	rom[0xBBE42/2] = 0x6002;
 }
 
-void decrypt_ms5plus_s1(void)
-{
-	UINT8 *dst = malloc(0x20000);
-	UINT8 *roms1 = (memory_region(REGION_GFX1));
-	int j;
-
-	if ( dst )
-	{
-		memcpy(dst,roms1,0x20000);
-		// descrambling the S1 by dorriga
-		for (j=0;j<0x20000; j+=0x000010)
-		{
-			memcpy( roms1+j, dst+j+0x000008,8);
-			memcpy( roms1+j+0x000008, dst+j,8);
-		}
-	}
-	free( dst );
-}
-
 static READ16_HANDLER( mslug5_prot_r )
 {
 	logerror("PC %06x: access protected\n",activecpu_get_pc());
@@ -743,23 +724,6 @@ void svcplus_px_hack( void )
 	src[ 0x0f802c ] = 0x16;
 }
 
-void svcplus_sx_decrypt( void )
-{
-	int i;
-	int size = memory_region_length( REGION_GFX1 );
-	UINT8 *src = memory_region( REGION_GFX1 );
-	UINT8 *dst = malloc( size );
-	memcpy( dst, src, size );
-
-	for( i = 0; i < size; i += 0x10 ){
-		memcpy( &src[ i        ], &dst[ i + 0x08 ], 0x08 );
-		memcpy( &src[ i + 0x08 ], &dst[ i        ], 0x08 );
-	}
-	free(dst);
-}
-
-
-
 void svcplusa_px_decrypt( void )
 {
 	int i;
@@ -813,22 +777,6 @@ void svcsplus_px_hack( void )
 	mem16[0xa110/2] = 0x9750;
 }
 
-
-
-void svcsplus_sx_decrypt( void )
-{
-	int i;
-	UINT8 *rom = memory_region( REGION_GFX1 );
-	int size = memory_region_length( REGION_GFX1 );
-	for( i = 0; i < size; i++ ){
-		rom[ i ] = BITSWAP8( rom[ i ], 7, 6, 0, 4, 3, 2, 1, 5 );
-	}
-}
-
-
-
-
-
 static UINT16 mv0_bank_ram[ 0x10/2 ];
 
 static READ16_HANDLER( mv0_bankswitch_r )
@@ -847,11 +795,49 @@ static WRITE16_HANDLER( mv0_bankswitch_w )
 
 /***************************************************************************
  kof2003b
-***************************************************************************/
+****************************************************************************/
 
-READ16_HANDLER( kof2003b_prot_r )
+/* kof2003 bootleg init info */
+static UINT16 kof2003_tbl[4096];
+
+READ16_HANDLER( kof2003_r)
 {
-    return mv0_bank_ram[ 1 ];
+	return kof2003_tbl[offset];
+}
+
+WRITE16_HANDLER( kof2003_w )
+{
+	data = COMBINE_DATA(&kof2003_tbl[offset]);
+	if (offset == 0x1ff0/2 || offset == 0x1ff2/2) {
+		UINT8* cr = (UINT8 *)kof2003_tbl;
+		UINT32 address = (cr[0x1ff3]<<16)|(cr[0x1ff2]<<8)|cr[0x1ff1];
+		UINT8 prt = cr[0x1ff2];
+		UINT8* mem = (UINT8 *)memory_region(REGION_CPU1);
+
+		cr[0x1ff0] =  0xa0;
+		cr[0x1ff1] &= 0xfe;
+		cr[0x1ff3] &= 0x7f;
+		neogeo_set_cpu1_second_bank(address+0x100000);
+
+		mem[0x58196] = prt;
+	}
+}
+
+WRITE16_HANDLER( kof2003p_w )
+{
+	data = COMBINE_DATA(&kof2003_tbl[offset]);
+	if (offset == 0x1ff0/2 || offset == 0x1ff2/2) {
+		UINT8* cr = (UINT8 *)kof2003_tbl;
+		UINT32 address = (cr[0x1ff3]<<16)|(cr[0x1ff2]<<8)|cr[0x1ff0];
+		UINT8 prt = cr[0x1ff2];
+		UINT8* mem = (UINT8 *)memory_region(REGION_CPU1);
+
+		cr[0x1ff0] &= 0xfe;
+		cr[0x1ff3] &= 0x7f;
+		neogeo_set_cpu1_second_bank(address+0x100000);
+
+		mem[0x58196] = prt;
+	}
 }
 
 void kof2003b_px_decrypt( void )
@@ -872,29 +858,10 @@ void kof2003b_px_decrypt( void )
     free( buf );
 }
 
-void kof2003b_sx_decrypt( void )
-{
-	int i;
-    int rom_size = memory_region_length( REGION_GFX1 );
-    UINT8 *rom = memory_region( REGION_GFX1 );
-    UINT8 *buf = malloc( rom_size );
-    memcpy( buf, rom, rom_size );
-
-    for( i = 0; i < rom_size; i += 0x10 ){
-        memcpy( &rom[ i        ], &buf[ i + 0x08 ], 0x08 );
-        memcpy( &rom[ i + 0x08 ], &buf[ i        ], 0x08 );
-    }
-
-    free( buf );
-}
-
 void kof2003b_install_protection(void)
 {
-    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffef, 0, 0, MRA16_RAM );
-    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffef, 0, 0, MWA16_RAM );
-    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2fffff, 0, 0, mv0_bankswitch_r );
-    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2fffff, 0, 0, mv0_bankswitch_w );
-    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x058196, 0x058197, 0, 0, kof2003b_prot_r );
+    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, kof2003_r );
+    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, kof2003_w );
 }
 
 
@@ -921,47 +888,72 @@ void kof2k3pl_px_decrypt( void )
 	rom[0xf38ac/2] = 0x4e75;
 }
 
+void kf2k3pl_install_protection(void)
+{
+    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, kof2003_r );
+    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, kof2003p_w );
+}
+
+
 /***************************************************************************
  kof2k3up
 ***************************************************************************/
 
-// original code by bms1221
 
 void kof2k3up_px_decrypt( void )
 {
-	UINT16*tmp = (UINT16*)malloc(0x2000);
-	UINT16*rom = (UINT16*)(memory_region( REGION_CPU1 )+0xfe000);
-	int j;
+	{
+		UINT8 *src = memory_region(REGION_CPU1);
+		memcpy(src+0x100000, src, 0x600000);
+		memcpy(src, src+0x700000, 0x100000);
+	}
 
-	memcpy(tmp,memory_region( REGION_CPU1 )+0xd0610,0x2000);
+	{
 
-	for (j = 0;j < 0x2000/2;j++)
-		rom[j] = tmp[BITSWAP16(j,15,14,13,12,11,10,9,8,7,6,0,4,3,2,1,5)];
+		int ofst;
+		int i;
+		UINT8 *rom = memory_region( REGION_CPU1 ) + 0xfe000;
+		UINT8 *buf = memory_region( REGION_CPU1 ) + 0xd0610;
 
-	free(tmp);
-}
-
-
-
-void kof2k3up_sx_decrypt( void )
-{
-	int i;
-    UINT8 *rom = memory_region( REGION_GFX1 );
-    int rom_size = memory_region_length( REGION_GFX1 );
-    for( i = 0; i < rom_size; i++ ){
-        rom[ i ] = BITSWAP8( rom[ i ], 7, 6, 0, 4, 3, 2, 1, 5 );
-    }
+		for( i = 0; i < 0x2000 / 2; i++ ){
+			ofst = (i & 0xff00) + BITSWAP8( (i & 0x00ff), 7, 6, 0, 4, 3, 2, 1, 5 );
+			memcpy( &rom[ i * 2 ], &buf[ ofst * 2 ], 2 );
+		}
+	}
 }
 
 void kof2k3up_install_protection(void)
 {
-    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffef, 0, 0, MRA16_RAM );
-    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffef, 0, 0, MWA16_RAM );
-    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2fffff, 0, 0, mv0_bankswitch_r );
-    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2fffff, 0, 0, mv0_bankswitch_w );
-    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x058196, 0x058197, 0, 0, kof2003b_prot_r );
+    memory_install_read16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, kof2003_r );
+    memory_install_write16_handler( 0, ADDRESS_SPACE_PROGRAM, 0x2fe000, 0x2fffff, 0, 0, kof2003_w );
 }
 
+/* samsho5bl */
 
+void samsh5bl_px_decrypt( void )
+{
+	int px_size = memory_region_length( REGION_CPU1 );
+	UINT8 *rom = memory_region( REGION_CPU1 );
+	UINT8 *buf = malloc( px_size );
+	int ofst;
+	int i;
+
+	memcpy( buf, rom, px_size );
+
+	for( i = 0; i < px_size / 2; i++ ){
+		ofst = BITSWAP8( (i & 0x000ff), 7, 6, 5, 4, 3, 0, 1, 2 );
+		ofst += (i & 0xfffff00);
+		ofst ^= 0x060005;
+
+		memcpy( &rom[ i * 2 ], &buf[ ofst * 2 ], 0x02 );
+	}
+
+	memcpy( buf, rom, px_size );
+
+	memcpy( &rom[ 0x000000 ], &buf[ 0x700000 ], 0x100000 );
+	memcpy( &rom[ 0x100000 ], &buf[ 0x000000 ], 0x700000 );
+
+	free( buf );
+}
 
 

@@ -50,6 +50,10 @@ TODO:
  The actual Monsters World PCB is very close to the Speed Spin PCB but in terms
  of emulation the video etc. is closer to mitchell.c
 
+ The Joystick Version of Block Block looks like it might be a bad dump, level
+ 6 has a block missing making the level impossible to complete and there are
+ several writes to the ROM area.
+
 ******************************************************************************
 Monters World, from TCH (Spain)
 
@@ -1114,7 +1118,7 @@ INPUT_PORTS_START( block )
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(50) PORT_KEYDELTA(20) PORT_PLAYER(2)
 INPUT_PORTS_END
 
-INPUT_PORTS_START( blockj )
+INPUT_PORTS_START( blockjoy )
 	PORT_START      /* DSW */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* USED - handled in port5_r */
 	PORT_BIT(0x02, 0x02, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
@@ -1837,31 +1841,8 @@ ROM_START( qsangoku )
 	ROM_LOAD( "q4-01.rom",    0x00000, 0x20000, CRC(5d0d07d8) SHA1(d36e42852dd1ec0955d19b16e7dfe157b3d48522) )
 ROM_END
 
+
 ROM_START( block )
-	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
-	ROM_LOAD( "ble_05.bin",   0x00000, 0x08000, CRC(fa2a4536) SHA1(8f584745116bd0ced4d66719cd80c0372b797134) )
-	ROM_LOAD( "ble_06.bin",   0x10000, 0x20000, CRC(58a77402) SHA1(cb24b1edd53a0965c3a9a34fe764b5c1f8dd9733) )
-	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, CRC(1d114f13) SHA1(ee3588e1752b3432fd611e2d7d4fb43f942de580) )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, CRC(aa0f4ff1) SHA1(58f3c468f89d834caaf66d3c084ab87addbb75c0) )	/* chars */
-	ROM_RELOAD(               0x040000, 0x20000 )
-	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, CRC(6fa8c186) SHA1(d4dd26d666f2accce871f70e7882e140d924dd07) )
-	ROM_RELOAD(               0x060000, 0x20000 )
-	ROM_LOAD( "bl_18.rom",    0x080000, 0x20000, CRC(c0acafaf) SHA1(7c44b2605da6a324d0c145202cb8bac7af7a9c68) )
-	ROM_RELOAD(               0x0c0000, 0x20000 )
-	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, CRC(1ae942f5) SHA1(e9322790db0bf2a9e862b14e166ee3f36f9ea5ad) )
-	ROM_RELOAD(               0x0e0000, 0x20000 )
-
-	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "bl_16.rom",    0x000000, 0x20000, CRC(fadcaff7) SHA1(f4bd8e375fe6b1e6a07b4ec4e58f5807dbd738f8) )	/* sprites */
-	ROM_LOAD( "bl_17.rom",    0x020000, 0x20000, CRC(5f8cab42) SHA1(3a4c682a7938479e0be80c0494c2c8fc7303b663) )
-
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM */
-	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, CRC(c2ec2abb) SHA1(89981f2a887ace4c4580e2828cbdc962f89c215e) )
-ROM_END
-
-ROM_START( blocka )
 	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
 	ROM_LOAD( "ble_05.rom",   0x00000, 0x08000, CRC(c12e7f4c) SHA1(335f4eab2323b942d5feeb3bab6f7286fabfffb4) )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, CRC(cdb13d55) SHA1(2e4489d12a603b4c7dfb90d246ebff9176e88a0b) )
@@ -1890,6 +1871,30 @@ ROM_START( blockj )
 	ROM_LOAD( "blj_05.rom",   0x00000, 0x08000, CRC(3b55969a) SHA1(86de2f1f5878de380a8b1e3935cffa146863f07f) )
 	ROM_LOAD( "ble_06.rom",   0x10000, 0x20000, CRC(cdb13d55) SHA1(2e4489d12a603b4c7dfb90d246ebff9176e88a0b) )
 	ROM_LOAD( "blj_07.rom",   0x30000, 0x20000, CRC(1723883c) SHA1(e6b7575a55c045b90fb41290a60306713121acfb) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, CRC(aa0f4ff1) SHA1(58f3c468f89d834caaf66d3c084ab87addbb75c0) )	/* chars */
+	ROM_RELOAD(               0x040000, 0x20000 )
+	ROM_LOAD( "bl_09.rom",    0x020000, 0x20000, CRC(6fa8c186) SHA1(d4dd26d666f2accce871f70e7882e140d924dd07) )
+	ROM_RELOAD(               0x060000, 0x20000 )
+	ROM_LOAD( "bl_18.rom",    0x080000, 0x20000, CRC(c0acafaf) SHA1(7c44b2605da6a324d0c145202cb8bac7af7a9c68) )
+	ROM_RELOAD(               0x0c0000, 0x20000 )
+	ROM_LOAD( "bl_19.rom",    0x0a0000, 0x20000, CRC(1ae942f5) SHA1(e9322790db0bf2a9e862b14e166ee3f36f9ea5ad) )
+	ROM_RELOAD(               0x0e0000, 0x20000 )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "bl_16.rom",    0x000000, 0x20000, CRC(fadcaff7) SHA1(f4bd8e375fe6b1e6a07b4ec4e58f5807dbd738f8) )	/* sprites */
+	ROM_LOAD( "bl_17.rom",    0x020000, 0x20000, CRC(5f8cab42) SHA1(3a4c682a7938479e0be80c0494c2c8fc7303b663) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM */
+	ROM_LOAD( "bl_01.rom",    0x00000, 0x20000, CRC(c2ec2abb) SHA1(89981f2a887ace4c4580e2828cbdc962f89c215e) )
+ROM_END
+
+ROM_START( blockjoy )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* 320k for code */
+	ROM_LOAD( "ble_05.bin",   0x00000, 0x08000, BAD_DUMP CRC(fa2a4536) SHA1(8f584745116bd0ced4d66719cd80c0372b797134) )
+	ROM_LOAD( "ble_06.bin",   0x10000, 0x20000, BAD_DUMP CRC(58a77402) SHA1(cb24b1edd53a0965c3a9a34fe764b5c1f8dd9733) )
+	ROM_LOAD( "ble_07.rom",   0x30000, 0x20000, BAD_DUMP CRC(1d114f13) SHA1(ee3588e1752b3432fd611e2d7d4fb43f942de580) ) // this one is the same as the others so probably ok
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "bl_08.rom",    0x000000, 0x20000, CRC(aa0f4ff1) SHA1(58f3c468f89d834caaf66d3c084ab87addbb75c0) )	/* chars */
@@ -2133,7 +2138,7 @@ GAME( 1990, sbbros,   spang,    pang,    pang,     sbbros,   ROT0,   "Mitchell +
 GAME( 1990, marukin,  0,        marukin, marukin,  marukin,  ROT0,   "Yuga", "Super Marukin-Ban (Japan 901017)", 0 )
 GAME( 1991, qtono1,   0,        pang,    qtono1,   qtono1,   ROT0,   "Capcom", "Quiz Tonosama no Yabou (Japan)", 0 )
 GAME( 1991, qsangoku, 0,        pang,    qtono1,   qsangoku, ROT0,   "Capcom", "Quiz Sangokushi (Japan)", 0 )
-GAME( 1991, block,    0,        pang,    blockj,   block,    ROT270, "Capcom", "Block Block (World 911106 Joystick)", 0 )
-GAME( 1991, blocka,   block,    pang,    block,    block,    ROT270, "Capcom", "Block Block (World 910910)", 0 )
+GAME( 1991, block,    0,        pang,    block,    block,    ROT270, "Capcom", "Block Block (World 910910)", 0 )
 GAME( 1991, blockj,   block,    pang,    block,    block,    ROT270, "Capcom", "Block Block (Japan 910910)", 0 )
+GAME( 1991, blockjoy, block,    pang,    blockjoy, block,    ROT270, "Capcom", "Block Block (World 911106 Joystick, Bad Dump?)", GAME_NOT_WORKING ) // there is a block missing on level 6, level can't be finished!
 GAME( 1991, blockbl,  block,    pang,    block,    blockbl,  ROT270, "bootleg", "Block Block (bootleg)", 0 )

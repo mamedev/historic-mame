@@ -4,6 +4,9 @@
 
     Core sound interface functions and definitions.
 
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
 ****************************************************************************
 
     Still to do:
@@ -14,7 +17,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "sound/streams.h"
 #include "sound/wavwrite.h"
 #include "config.h"
 #include "state.h"

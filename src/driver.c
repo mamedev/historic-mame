@@ -1,14 +1,17 @@
 /******************************************************************************
 
-  driver.c
+    driver.c
 
-  The list of all available drivers. Drivers have to be included here to be
-  recognized by the executable.
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
 
-  To save some typing, we use a hack here. This file is recursively #included
-  twice, with different definitions of the DRIVER() macro. The first one
-  declares external references to the drivers; the second one builds an array
-  storing all the drivers.
+    The list of all available drivers. Drivers have to be included here to be
+    recognized by the executable.
+
+    To save some typing, we use a hack here. This file is recursively #included
+    twice, with different definitions of the DRIVER() macro. The first one
+    declares external references to the drivers; the second one builds an array
+    storing all the drivers.
 
 ******************************************************************************/
 
@@ -2716,9 +2719,9 @@ V-V                           TP-027
 	DRIVER( qtono1 )	/* 25/12/1990 (QUIZ 3) (c) 1991 Capcom (Japan) */
 				/*  4/1991 Ashita Tenki ni Naare (golf) */
 	DRIVER( qsangoku )	/* 07/06/1991 (QUIZ 4) (c) 1991 Capcom (Japan) */
-	DRIVER( block )		/* 06/11/1991 (c) 1991 Capcom (World) */
-	DRIVER( blocka )	/* 10/09/1991 (c) 1991 Capcom (World) */
+	DRIVER( block )		/* 10/09/1991 (c) 1991 Capcom (World) */
 	DRIVER( blockj )	/* 10/09/1991 (c) 1991 Capcom (Japan) */
+	DRIVER( blockjoy )	/* 06/11/1991 (c) 1991 Capcom (World) (Joystick version, bad dump?) */
 	DRIVER( blockbl )	/* bootleg */
 
 	/* Incredible Technologies games */
@@ -5534,7 +5537,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* "The Pit hardware" games */
 	DRIVER( roundup )	/* (c) 1981 Amenip/Centuri */
 	DRIVER( fitter )	/* (c) 1981 Taito */
-	DRIVER( thepit )	/* (c) 1982 Centuri */
+	DRIVER( thepit )	/* (c) 1982 Taito */
+	DRIVER( thepitc )	/* (c) 1982 Centuri */
 	DRIVER( dockman )	/* (c) 1982 Taito Corp. */
 	DRIVER( portman )	/* (c) 1982 Nova Games Ltd. */
 	DRIVER( funnymou )	/* (c) 1982 Chuo Co. Ltd */
@@ -6446,6 +6450,7 @@ Other Sun games
 	DRIVER( drgwrld3 )	/* (c) 1995 */
 
 	DRIVER( lordgun )	/* (c) 1994 */
+	DRIVER( hfh )		/* (c) 199? */
 	DRIVER( tarzan )
 
 	/* IGS PGM System Games */
@@ -6702,6 +6707,7 @@ Other Sun games
 	DRIVER( aquarium )	/* (c) 1996 Excellent System */
 	DRIVER( policetr )	/* (c) 1996 P&P Marketing */
 	DRIVER( polict11 )	/* (c) 1996 P&P Marketing */
+	DRIVER( polict10 )	/* (c) 1996 P&P Marketing */
 	DRIVER( plctr13b )	/* (c) 1996 P&P Marketing */
 	DRIVER( sshooter )	/* (c) 1998 P&P Marketing */
 	DRIVER( sshoot12 )	/* (c) 1998 P&P Marketing */
@@ -6852,11 +6858,15 @@ Other Sun games
 	DRIVER( cardline )	/* (c) 199? Veltmeijer */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( pitboss )	/* (c) 1983 Merit */
-	DRIVER( trvwhiz )	/* (c) 1985 Merit */
-	DRIVER( trvwhza )	/* (c) 1985 Merit */
+	DRIVER( trvwhzho )	/* (c) 1985 Merit */
+	DRIVER( trvwhzha )	/* (c) 1985 Merit */
+	DRIVER( trvwhzve )	/* (c) 1985 Merit */
+	DRIVER( trvwhzva )	/* (c) 1985 Merit */
 	DRIVER( trvwhzii )	/* (c) 1985 Merit */
+	DRIVER( trvwhziv )	/* (c) 1985 Merit */
 	DRIVER( tictac )	/* (c) 1985 Merit */
 	DRIVER( phrcraze )	/* (c) 1986 Merit */
+	DRIVER( phrcrazs )	/* (c) 1986 Merit */
 	DRIVER( couple )	/* (c) 1988 Merit */
 	DRIVER( couplep )	/* (c) 1988 Merit */
 	DRIVER( couplei )	/* (c) 1988 Merit */
@@ -6865,7 +6875,7 @@ Other Sun games
 	DRIVER( pntnpuzl )	/* Century? */
 	DRIVER( trucocl )	/* (c) 1991 Miky SRL */
 	DRIVER( ertictac )	/* (c) 1992 Sisteme */
-//  DRIVER( poizone )   /* (c) 1990 Sisteme */
+	DRIVER( poizone )   /* (c) 1990 Sisteme */
 	DRIVER( ssfindo )	/* (c) 1999 Icarus */
 	DRIVER( ppcar )		/* (c) 1999 Icarus */
 	DRIVER( monzagp )	/* (c) 1981 Leante Games */
