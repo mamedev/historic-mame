@@ -3041,6 +3041,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( endurobl )	/* (c) 1985 (Herb bootleg) */
 	DRIVER( hangon )	/* (c) 1985 */
 	DRIVER( sharrier )	/* (c) 1985 */
+	DRIVER( sharrirb )	/* (c) 1985 */
 	DRIVER( shangupb )	/* (c) 1992 (but bootleg, hangon hw?) */
 
 	/* Pre-16 */
@@ -4090,6 +4091,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( scontraj )	/* GX775 (c) 1988 (Japan) */
 	DRIVER( thunderx )	/* GX873 (c) 1988 */
 	DRIVER( thnderxa )	/* GX873 (c) 1988 */
+	DRIVER( thnderxb )	/* GX873 (c) 1988 */
 	DRIVER( thnderxj )	/* GX873 (c) 1988 (Japan) */
 	DRIVER( mainevt )	/* GX799 (c) 1988 */
 	DRIVER( mainevto )	/* GX799 (c) 1988 */
@@ -4343,6 +4345,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( thunderh )	/* GX680 (c)1996 */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
 	DRIVER( gticlubj )	/* GX688 (c)1996 */
+	DRIVER( hangplt )	/* GX685 (c)1997 */
 	DRIVER( nbapbp )	/* GX778 (c)1998 */
 	DRIVER( gradius4 )	/* GX837 (c)1999 */
 	DRIVER( sscope )	/* GX830 (c)1999 */
@@ -4891,6 +4894,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tdfeverj )	/* A6006 'TD' (c) 1987 */
 	DRIVER( tdfever2 )	/* A6006 'TD'?(c) 1988 */
 	DRIVER( ikari3 )	/* A7007 'IK3'(c) 1989 */
+	DRIVER( ikari3nr )	/* A7007 'IK3'(c) 1989 */
 	DRIVER( pow )		/* A7008 'DG' (c) 1988 */
 	DRIVER( powj )		/* A7008 'DG' (c) 1988 */
 	DRIVER( searchar )	/* A8007 'BH' (c) 1989 */
@@ -6821,6 +6825,7 @@ Other Sun games
 	DRIVER( landbrka )	/* (c) 1999 Eolith */
 	DRIVER( raccoon )	/* (c) 1999 Eolith */
 	DRIVER( fort2b )	/* (c) 2001 Eolith */
+	DRIVER( fort2ba )	/* (c) 2001 Eolith */
 	DRIVER( klondkp )	/* (c) 1999 Eolith */
 	DRIVER( xfiles )	/* (c) 1999 dgPIX Entertainment Inc */
 	DRIVER( kdynastg )	/* (c) 1999 dgPIX Entertainment Inc */

@@ -283,7 +283,9 @@
 
 
 #include "driver.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
+#include "machine/z80sio.h"
 #include "sndhrdw/mcr.h"
 #include "sound/samples.h"
 #include "vidhrdw/generic.h"
@@ -294,6 +296,14 @@
 
 static UINT8 input_mux;
 static UINT8 last_op4;
+
+static UINT8 nflfoot_serial_out_active;
+static UINT8 nflfoot_serial_out_bits;
+static UINT8 nflfoot_serial_out_numbits;
+
+static UINT8 nflfoot_serial_in_active;
+static UINT16 nflfoot_serial_in_bits;
+static UINT8 nflfoot_serial_in_numbits;
 
 
 
@@ -490,11 +500,73 @@ static WRITE8_HANDLER( dotron_op4_w )
  *
  *************************************/
 
+WRITE8_HANDLER( mcr_ipu_sio_transmit )
+{
+	logerror("ipu_sio_transmit: %02X\n", data);
+
+	/* create a 10-bit value with a '1','0' sequence for the start bit */
+	nflfoot_serial_in_active = TRUE;
+	nflfoot_serial_in_bits = (data << 2) | 1;
+	nflfoot_serial_in_numbits = 10;
+}
+
+
+static READ8_HANDLER( nflfoot_ip2_r )
+{
+	/* bit 7 = J3-2 on IPU board = TXDA on SIO */
+	UINT8 val = 0x80;
+
+	/* we only do this if we have active data */
+	if (nflfoot_serial_in_active)
+	{
+		val = (nflfoot_serial_in_bits & 1) ? 0x00 : 0x80;
+		nflfoot_serial_in_bits >>= 1;
+		if (--nflfoot_serial_in_numbits == 0)
+			nflfoot_serial_in_active = FALSE;
+	}
+
+	if (activecpu_get_pc() != 0x107)
+		logerror("%04X:ip2_r = %02X\n", activecpu_get_pc(), val);
+	return val;
+}
+
+
 static WRITE8_HANDLER( nflfoot_op4_w )
 {
 	/* bit 7 = J3-7 on IPU board = /RXDA on SIO */
-	/* bit 6 = J3-3 on IPU board = CTSA on SIO */
 	logerror("%04X:op4_w(%d%d%d)\n", activecpu_get_pc(), (data >> 7) & 1, (data >> 6) & 1, (data >> 5) & 1);
+
+	/* look for a non-zero start bit to go active */
+	if (!nflfoot_serial_out_active && (data & 0x80))
+	{
+		nflfoot_serial_out_active = TRUE;
+		nflfoot_serial_out_bits = 0;
+		nflfoot_serial_out_numbits = 0;
+		logerror(" -- serial active\n");
+	}
+
+	/* accumulate bits as they are written */
+	else if (nflfoot_serial_out_active)
+	{
+		/* if we've accumulated less than 8, just add to the pile */
+		if (nflfoot_serial_out_numbits < 8)
+		{
+			nflfoot_serial_out_bits = (nflfoot_serial_out_bits >> 1) | (~data & 0x80);
+			nflfoot_serial_out_numbits++;
+			logerror(" -- accumulated %d bits\n", nflfoot_serial_out_numbits);
+		}
+
+		/* once we have 8, the final bit is a stop bit, feed it to the SIO */
+		else
+		{
+			logerror(" -- stop bit = %d; final value = %02X\n", (data >> 7) & 1, nflfoot_serial_out_bits);
+			nflfoot_serial_out_active = FALSE;
+			z80sio_receive_data(0, 0, nflfoot_serial_out_bits);
+		}
+	}
+
+	/* bit 6 = J3-3 on IPU board = CTSA on SIO */
+	z80sio_set_cts(0, 0, (data >> 6) & 1);
 
 	/* bit 4 = SEL0 (J1-8) on squawk n talk board */
 	/* bits 3-0 = MD3-0 connected to squawk n talk (J1-4,3,2,1) */
@@ -617,59 +689,6 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-#define MAX_SIO		1
-
-struct z80sio
-{
-	UINT8 regs[2][8];
-};
-
-static struct z80sio sios[MAX_SIO];
-
-static void sio_w(int which, int ch, offs_t offset, UINT8 data)
-{
-	struct z80sio *sio = sios + which;
-
-	if (offset == 0)
-	{
-		logerror("%04X:sio_data_w(%d) = %02X\n", activecpu_get_pc(), ch, data);
-	}
-	else
-	{
-		int reg = sio->regs[ch][0] & 7;
-		sio->regs[ch][reg] = data;
-		if (reg != 0)
-			sio->regs[ch][0] &= ~7;
-		if (reg != 0 || (reg & 0xf8))
-			logerror("%04X:sio_reg_w(%d,%d) = %02X\n", activecpu_get_pc(), ch, reg, data);
-	}
-}
-
-static READ8_HANDLER( ipu_sio_r )
-{
-	logerror("%04X:ipu_sio_r(%d)\n", activecpu_get_pc(), offset);
-	return 0xff;
-}
-
-static WRITE8_HANDLER( ipu_sio_w )
-{
-	sio_w(0, offset & 1, (offset >> 1) & 1, data);
-}
-
-static WRITE8_HANDLER( ipu_laserdisk_w )
-{
-	logerror("%04X:ipu_laserdisk_w(%d) = %02X\n", activecpu_get_pc(), offset, data);
-}
-
-static READ8_HANDLER( ipu_watchdog_r )
-{
-	return 0xff;
-}
-
-static WRITE8_HANDLER( ipu_watchdog_w )
-{
-}
-
 /* address map verified from schematics */
 static ADDRESS_MAP_START( ipu_91695_map, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
@@ -680,12 +699,12 @@ ADDRESS_MAP_END
 /* I/O verified from schematics */
 static ADDRESS_MAP_START( ipu_91695_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) | AMEF_UNMAP(1) )
-	AM_RANGE(0x00, 0x03) AM_MIRROR(0xe0) AM_READWRITE(z80pio_0_r, z80pio_0_w)
-	AM_RANGE(0x04, 0x07) AM_MIRROR(0xe0) AM_READWRITE(ipu_sio_r, ipu_sio_w)
+	AM_RANGE(0x00, 0x03) AM_MIRROR(0xe0) AM_READWRITE(mcr_ipu_pio_0_r, mcr_ipu_pio_0_w)
+	AM_RANGE(0x04, 0x07) AM_MIRROR(0xe0) AM_READWRITE(mcr_ipu_sio_r, mcr_ipu_sio_w)
 	AM_RANGE(0x08, 0x0b) AM_MIRROR(0xe0) AM_READWRITE(z80ctc_1_r, z80ctc_1_w)
-	AM_RANGE(0x0c, 0x0f) AM_MIRROR(0xe0) AM_READWRITE(z80pio_1_r, z80pio_1_w)
-	AM_RANGE(0x10, 0x13) AM_MIRROR(0xe0) AM_WRITE(ipu_laserdisk_w)
-	AM_RANGE(0x1c, 0x1f) AM_MIRROR(0xe0) AM_READWRITE(ipu_watchdog_r, ipu_watchdog_w)
+	AM_RANGE(0x0c, 0x0f) AM_MIRROR(0xe0) AM_READWRITE(mcr_ipu_pio_1_r, mcr_ipu_pio_1_w)
+	AM_RANGE(0x10, 0x13) AM_MIRROR(0xe0) AM_WRITE(mcr_ipu_laserdisk_w)
+	AM_RANGE(0x1c, 0x1f) AM_MIRROR(0xe0) AM_READWRITE(mcr_ipu_watchdog_r, mcr_ipu_watchdog_w)
 ADDRESS_MAP_END
 
 
@@ -1559,10 +1578,10 @@ static MACHINE_DRIVER_START( mcr_91490_ipu )
 	MDRV_MACHINE_INIT(nflfoot)
 
 	MDRV_CPU_ADD_TAG("ipu", Z80, 7372800/2)
-	MDRV_CPU_CONFIG(ipu_daisy_chain)
+	MDRV_CPU_CONFIG(mcr_ipu_daisy_chain)
 	MDRV_CPU_PROGRAM_MAP(ipu_91695_map,0)
 	MDRV_CPU_IO_MAP(ipu_91695_portmap,0)
-	MDRV_CPU_VBLANK_INT(ipu_interrupt,2)
+	MDRV_CPU_VBLANK_INT(mcr_ipu_interrupt,2)
 MACHINE_DRIVER_END
 
 
@@ -2358,9 +2377,6 @@ static void mcr_init(int cpuboard, int vidboard, int ssioboard)
 
 static DRIVER_INIT( solarfox )
 {
-//  static const UINT8 hiscore_init[16] = { 0,0,1,1,1,1,1,3,3,3,7 };
-//  memcpy(generic_nvram, hiscore_init, sizeof(hiscore_init));
-
 	mcr_init(90009, 91399, 90908);
 	mcr_sound_init(MCR_SSIO);
 
@@ -2445,14 +2461,6 @@ static DRIVER_INIT( dotrone )
 }
 
 
-static READ8_HANDLER( nflfoot_ip2_r )
-{
-	/* bit 7 = J3-2 on IPU board = TXDA on SIO */
-	static int val;
-	val ^= 0xff;
-	logerror("%04X:ip2_r\n", activecpu_get_pc());
-	return val;
-}
 static DRIVER_INIT( nflfoot )
 {
 	mcr_init(91490, 91464, 91657);
@@ -2460,6 +2468,16 @@ static DRIVER_INIT( nflfoot )
 
 	ssio_set_custom_input(2, 0x80, nflfoot_ip2_r);
 	ssio_set_custom_output(4, 0xff, nflfoot_op4_w);
+
+	nflfoot_serial_out_active = FALSE;
+	nflfoot_serial_in_active = FALSE;
+
+	state_save_register_global(nflfoot_serial_out_active);
+	state_save_register_global(nflfoot_serial_out_bits);
+	state_save_register_global(nflfoot_serial_out_numbits);
+	state_save_register_global(nflfoot_serial_in_active);
+	state_save_register_global(nflfoot_serial_in_bits);
+	state_save_register_global(nflfoot_serial_in_numbits);
 }
 
 

@@ -945,6 +945,39 @@ ROM_START( thnderxa ) /* Alternate Starting stage then the other 2 sets, Perhaps
 	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, CRC(e2d09a1b) SHA1(a9651e137486b2df367c39eb43f52d0833589e87) )	/* priority encoder (not used) */
 ROM_END
 
+ROM_START( thnderxb ) /* Set had no labels, same starting stage as parent set */
+	ROM_REGION( 0x29000, REGION_CPU1, 0 )	/* ROMs + banked RAM */
+	ROM_LOAD( "873-03.k15", 0x10000, 0x10000, CRC(36680a4e) SHA1(9b3b6bf75a9c04e764448cd958277bd081cc4a53) )
+	ROM_LOAD( "873-02.k13", 0x20000, 0x08000, CRC(c58b2c34) SHA1(4050d2edc579ffedba3d40782a08e43ac89b1b86) )
+	ROM_CONTINUE(           0x08000, 0x08000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "873-h01.f8",    0x0000, 0x8000, CRC(990b7a7c) SHA1(0965e7350c6006a9652cea0f24d836b4979910fd) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, 0 )	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD16_BYTE( "873c06a.f6",   0x00000, 0x10000, CRC(0e340b67) SHA1(a76b1ee4bd4c99826a02b63a705447d0ba4e7b01) ) /* Chars */
+	ROM_LOAD16_BYTE( "873c06c.f5",   0x00001, 0x10000, CRC(ef0e72cd) SHA1(85b77a303378386f2d395da8707f4b638d37833e) )
+	ROM_LOAD16_BYTE( "873c06b.e6",   0x20000, 0x10000, CRC(97ad202e) SHA1(fd155aeb691814950711ead3bc2c93c67b7b0434) )
+	ROM_LOAD16_BYTE( "873c06d.e5",   0x20001, 0x10000, CRC(8393d42e) SHA1(ffcb5eca3f58994e05c49d803fa4831c0213e2e2) )
+	ROM_LOAD16_BYTE( "873c07a.f4",   0x40000, 0x10000, CRC(a8aab84f) SHA1(a68521a9abf45c3292b3090a2483edbf31356c7d) )
+	ROM_LOAD16_BYTE( "873c07c.f3",   0x40001, 0x10000, CRC(2521009a) SHA1(6546b88943615389c81b753ff5bb6aa9378c3266) )
+	ROM_LOAD16_BYTE( "873c07b.e4",   0x60000, 0x10000, CRC(12a2b8ba) SHA1(ffa32ca116e0b6ca65bb9ce83dd28f5c027956a5) )
+	ROM_LOAD16_BYTE( "873c07d.e3",   0x60001, 0x10000, CRC(fae9f965) SHA1(780c234507835c37bde445ab34f069714cc7a506) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, 0 )
+	ROM_LOAD16_BYTE( "873c04a.f11",  0x00000, 0x10000, CRC(f7740bf3) SHA1(f64b7e807f19a9523a517024a9eb56736cdda6bb) ) /* Sprites */
+	ROM_LOAD16_BYTE( "873c04c.f10",  0x00001, 0x10000, CRC(5dacbd2b) SHA1(deb943b99fd296d20be9c4250b2348549f65ba37) )
+	ROM_LOAD16_BYTE( "873c04b.e11",  0x20000, 0x10000, CRC(9ac581da) SHA1(fd0a603de8586621444055bbff8bb83349b8a0d8) )
+	ROM_LOAD16_BYTE( "873c04d.e10",  0x20001, 0x10000, CRC(44a4668c) SHA1(6d1526ed3408ddc763a071604e7b1e0773c87b99) )
+	ROM_LOAD16_BYTE( "873c05a.f9",   0x40000, 0x10000, CRC(d73e107d) SHA1(ba63b195e20a98c476e7d0f8d0187bc3327a8822) )
+	ROM_LOAD16_BYTE( "873c05c.f8",   0x40001, 0x10000, CRC(59903200) SHA1(d076802c53aa604df8c5fdd33cb41876ba2a3385) )
+	ROM_LOAD16_BYTE( "873c05b.e9",   0x60000, 0x10000, CRC(81059b99) SHA1(1e1a22ca45599abe0dce32fc0b188281deb3b8ac) )
+	ROM_LOAD16_BYTE( "873c05d.e8",   0x60001, 0x10000, CRC(7fa3d7df) SHA1(c78b9a949abdf44366d872daa1f2041158fae790) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "873a08.f20",   0x0000, 0x0100, CRC(e2d09a1b) SHA1(a9651e137486b2df367c39eb43f52d0833589e87) )	/* priority encoder (not used) */
+ROM_END
+
 ROM_START( thnderxj )
 	ROM_REGION( 0x29000, REGION_CPU1, 0 )	/* ROMs + banked RAM */
 	ROM_LOAD( "873-n03.k15", 0x10000, 0x10000, CRC(a01e2e3e) SHA1(eba0d95dc0c5eed18743a96e4bbda5e60d5d9c97) )
@@ -1020,6 +1053,7 @@ static DRIVER_INIT( scontra )
 
 GAME( 1988, scontra,  0,        scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra", 0 )
 GAME( 1988, scontraj, scontra,  scontra,  scontra,  scontra, ROT90, "Konami", "Super Contra (Japan)", 0 )
-GAME( 1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross", 0 )
-GAME( 1988, thnderxa, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Set 2)", 0 )
-GAME( 1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0, "Konami", "Thunder Cross (Japan)", 0 )
+GAME( 1988, thunderx, 0,        thunderx, thunderx, scontra, ROT0,  "Konami", "Thunder Cross", 0 )
+GAME( 1988, thnderxa, thunderx, thunderx, thunderx, scontra, ROT0,  "Konami", "Thunder Cross (Set 2)", 0 )
+GAME( 1988, thnderxb, thunderx, thunderx, thunderx, scontra, ROT0,  "Konami", "Thunder Cross (Set 3)", 0 )
+GAME( 1988, thnderxj, thunderx, thunderx, thunderx, scontra, ROT0,  "Konami", "Thunder Cross (Japan)", 0 )

@@ -20,7 +20,7 @@ Notes:
 ******************************************************************************/
 
 #include "driver.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "vidhrdw/generic.h"
 #include "sound/3812intf.h"
 #include "sound/dac.h"
@@ -504,23 +504,33 @@ static INTERRUPT_GEN( ctc0_trg1 )
 	z80ctc_0_trg1_w(0, 0);
 }
 
-static z80ctc_interface ctc_intf =
+static z80ctc_interface ctc_intf_1 =
 {
-	2,									/* 2 chip */
-	{ 0, 1 },							/* clock */
-	{ 0, 0 },							/* timer disables */
-	{ ctc0_interrupt, ctc1_interrupt },	/* interrupt handler */
-	{ 0, z80ctc_1_trg3_w },				/* ZC/TO0 callback ctc1.zc0 -> ctc1.trg3 */
-	{ 0, 0 },							/* ZC/TO1 callback */
-	{ 0, 0 },							/* ZC/TO2 callback */
+	0,							/* clock */
+	0,							/* timer disables */
+	ctc0_interrupt,				/* interrupt handler */
+	0,							/* ZC/TO0 callback ctc1.zc0 -> ctc1.trg3 */
+	0,							/* ZC/TO1 callback */
+	0,							/* ZC/TO2 callback */
+};
+
+static z80ctc_interface ctc_intf_2 =
+{
+	1,							/* clock */
+	0,							/* timer disables */
+	ctc1_interrupt,				/* interrupt handler */
+	z80ctc_1_trg3_w,			/* ZC/TO0 callback ctc1.zc0 -> ctc1.trg3 */
+	0,							/* ZC/TO1 callback */
+	0							/* ZC/TO2 callback */
 };
 
 static void tmpz84c011_init(void)
 {
 	// initialize the CTC
-	ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
-	ctc_intf.baseclock[1] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init(&ctc_intf);
+	ctc_intf_1.baseclock = Machine->drv->cpu[0].cpu_clock;
+	ctc_intf_2.baseclock = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init(0, &ctc_intf_1);
+	z80ctc_init(1, &ctc_intf_2);
 }
 
 static MACHINE_INIT( sailorws )

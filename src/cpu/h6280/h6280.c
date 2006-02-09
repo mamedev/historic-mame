@@ -91,6 +91,7 @@
 #include "cpuintrf.h"
 #include "mamedbg.h"
 #include "h6280.h"
+#include "state.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -137,15 +138,15 @@ typedef struct
     UINT8 irq_mask;     /* interrupt enable/disable */
     UINT8 timer_status; /* timer status */
 	UINT8 timer_ack;	/* timer acknowledge */
-    int timer_value;    /* timer interrupt */
-    int timer_load;		/* reload value */
-	int extra_cycles;	/* cycles used taking an interrupt */
-    int nmi_state;
-    int irq_state[3];
+    INT32 timer_value;    /* timer interrupt */
+    INT32 timer_load;		/* reload value */
+	INT32 extra_cycles;	/* cycles used taking an interrupt */
+    UINT8 nmi_state;
+    UINT8 irq_state[3];
     int (*irq_callback)(int irqline);
 
 #if LAZY_FLAGS
-    int NZ;             /* last value (lazy N and Z flag) */
+    INT32 NZ;             /* last value (lazy N and Z flag) */
 #endif
 	UINT8 io_buffer;	/* last value written to the PSG, timer, and interrupt pages */
 }   h6280_Regs;
@@ -167,6 +168,33 @@ static void set_irq_line(int irqline, int state);
 /*****************************************************************************/
 static void h6280_init(void)
 {
+   int cpu = cpu_getactivecpu();
+
+   state_save_register_item("h6280", cpu, h6280.ppc.w.l);
+   state_save_register_item("h6280", cpu, h6280.pc.w.l);
+   state_save_register_item("h6280", cpu, h6280.sp.w.l);
+   state_save_register_item("h6280", cpu, h6280.zp.w.l);
+   state_save_register_item("h6280", cpu, h6280.ea.w.l);
+   state_save_register_item("h6280", cpu, h6280.a);
+   state_save_register_item("h6280", cpu, h6280.x);
+   state_save_register_item("h6280", cpu, h6280.y);
+   state_save_register_item("h6280", cpu, h6280.p);
+   state_save_register_item_array("h6280", cpu, h6280.mmr);
+   state_save_register_item("h6280", cpu, h6280.irq_mask);
+   state_save_register_item("h6280", cpu, h6280.timer_status);
+   state_save_register_item("h6280", cpu, h6280.timer_ack);
+   state_save_register_item("h6280", cpu, h6280.timer_value);
+   state_save_register_item("h6280", cpu, h6280.timer_load);
+   state_save_register_item("h6280", cpu, h6280.extra_cycles);
+   state_save_register_item("h6280", cpu, h6280.nmi_state);
+   state_save_register_item("h6280", cpu, h6280.irq_state[0]);
+   state_save_register_item("h6280", cpu, h6280.irq_state[1]);
+   state_save_register_item("h6280", cpu, h6280.irq_state[2]);
+
+#if LAZY_FLAGS
+   state_save_register_item("h6280", cpu, h6280.NZ);
+#endif
+   state_save_register_item("h6280", cpu, h6280.io_buffer);
 }
 
 static void h6280_reset(void *param)

@@ -436,9 +436,40 @@ VIDEO_START( hornet )
 	return K037122_vh_start();
 }
 
+VIDEO_START( hornet_2board )
+{
+	if (voodoo_version == 0)
+	{
+		if (voodoo_start(0, VOODOO_1, 2, 4, 0) ||
+		    voodoo_start(1, VOODOO_1, 2, 4, 0))
+			return 1;
+	}
+	else
+	{
+		if (voodoo_start(0, VOODOO_2, 2, 4, 0) ||
+			voodoo_start(1, VOODOO_2, 2, 4, 0))
+			return 1;
+	}
+
+	return K037122_vh_start();
+}
+
+
 VIDEO_UPDATE( hornet )
 {
 	voodoo_update(0, bitmap, cliprect);
+
+	K037122_tile_update();
+	K037122_tile_draw(bitmap, cliprect);
+
+	draw_7segment_led(bitmap, 3, 3, led_reg0);
+	draw_7segment_led(bitmap, 9, 3, led_reg1);
+}
+
+VIDEO_UPDATE( hornet_2board )
+{
+	voodoo_update(0, bitmap, cliprect);
+	voodoo_update(1, bitmap, cliprect);
 
 	K037122_tile_update();
 	K037122_tile_draw(bitmap, cliprect);
@@ -664,16 +695,26 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static UINT32 *sharc_dataram;
+static UINT32 *sharc_dataram[2];
 
-static READ32_HANDLER( dsp_dataram_r )
+static READ32_HANDLER( dsp_dataram0_r )
 {
-	return sharc_dataram[offset] & 0xffff;
+	return sharc_dataram[0][offset] & 0xffff;
 }
 
-static WRITE32_HANDLER( dsp_dataram_w )
+static WRITE32_HANDLER( dsp_dataram0_w )
 {
-	sharc_dataram[offset] = data;
+	sharc_dataram[0][offset] = data;
+}
+
+static READ32_HANDLER( dsp_dataram1_r )
+{
+	return sharc_dataram[1][offset] & 0xffff;
+}
+
+static WRITE32_HANDLER( dsp_dataram1_w )
+{
+	sharc_dataram[1][offset] = data;
 }
 
 /* Konami 033906 seems to be a PCI bridge chip between SHARC and 3dfx chips */
@@ -742,11 +783,21 @@ WRITE32_HANDLER(pci_3dfx_w)
 	}
 }
 
-static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_DATA, 32 )
+static ADDRESS_MAP_START( sharc0_map, ADDRESS_SPACE_DATA, 32 )
 	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
-	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
+	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram0_r, dsp_dataram0_w)
 	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
 	AM_RANGE(0x2400000, 0x27fffff) AM_READWRITE(voodoo_0_r, voodoo_0_w)
+	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
+	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
+	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(5)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sharc1_map, ADDRESS_SPACE_DATA, 32 )
+	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram1_r, dsp_dataram1_w)
+	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
+	AM_RANGE(0x2400000, 0x27fffff) AM_READWRITE(voodoo_1_r, voodoo_1_w)
 	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
 	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
 	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(5)
@@ -860,7 +911,7 @@ static MACHINE_DRIVER_START( hornet )
 
 	MDRV_CPU_ADD(ADSP21062, 36000000)
 	MDRV_CPU_CONFIG(sharc_cfg)
-	MDRV_CPU_DATA_MAP(sharc_map, 0)
+	MDRV_CPU_DATA_MAP(sharc0_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -919,9 +970,18 @@ static MACHINE_DRIVER_START( hornet_2board )
 
 	MDRV_CPU_ADD(ADSP21062, 36000000)
 	MDRV_CPU_CONFIG(sharc_cfg)
-	MDRV_CPU_DATA_MAP(sharc_map, 0)
+	MDRV_CPU_DATA_MAP(sharc1_map, 0)
 
 	MDRV_MACHINE_INIT(hornet_2board)
+
+	MDRV_VIDEO_START(hornet_2board)
+	MDRV_VIDEO_UPDATE(hornet_2board)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(128*8, 48*8)
+	MDRV_VISIBLE_AREA(0*8, 128*8-1, 0*8, 48*8-1)
+	MDRV_PALETTE_LENGTH(65536)
 MACHINE_DRIVER_END
 
 
@@ -943,9 +1003,27 @@ static void jamma_w(int length)
 static UINT8 backup_ram[0x2000];
 static DRIVER_INIT( hornet )
 {
-	init_konami_cgboard(0);
+	init_konami_cgboard(0, CGBOARD_TYPE_HORNET);
 	set_cgboard_texture_bank(5);
-	sharc_dataram = auto_malloc(0x100000);
+	sharc_dataram[0] = auto_malloc(0x100000);
+
+	m68k_timer = timer_alloc(m68k_timer_tick);
+	timer_adjust(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
+
+	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
+
+	ppc403_install_spu_tx_dma_handler(jamma_w, jamma_wdata);
+	ppc403_install_spu_rx_dma_handler(jamma_r, jamma_rdata);
+}
+
+static DRIVER_INIT( hornet_2board )
+{
+	init_konami_cgboard(0, CGBOARD_TYPE_HORNET);
+	init_konami_cgboard(1, CGBOARD_TYPE_HORNET);
+
+	set_cgboard_texture_bank(5);
+	sharc_dataram[0] = auto_malloc(0x100000);
+	sharc_dataram[1] = auto_malloc(0x100000);
 
 	m68k_timer = timer_alloc(m68k_timer_tick);
 	timer_adjust(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
@@ -1045,9 +1123,7 @@ static DRIVER_INIT(sscope)
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 0;
-	init_hornet();
-
-	init_konami_cgboard(1);
+	init_hornet_2board();
 }
 
 static DRIVER_INIT(sscope2)
@@ -1109,9 +1185,7 @@ static DRIVER_INIT(sscope2)
 	backup_ram[0x1f4f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 1;
-	init_hornet();
-
-	init_konami_cgboard(1);
+	init_hornet_2board();
 }
 
 /*****************************************************************************/

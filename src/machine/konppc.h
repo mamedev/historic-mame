@@ -1,7 +1,12 @@
 #ifndef _KONPPC_H
 #define _KONPPC_H
 
-void init_konami_cgboard(int board_id);
+#define CGBOARD_TYPE_ZR107		0
+#define CGBOARD_TYPE_GTICLUB	1
+#define CGBOARD_TYPE_NWKTR		2
+#define CGBOARD_TYPE_HORNET		3
+
+void init_konami_cgboard(int board_id, int type);
 void set_cgboard_id(int board_id);
 void set_cgboard_texture_bank(int);
 

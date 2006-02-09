@@ -230,7 +230,7 @@ VIDEO_UPDATE( adder2 )
 	#ifdef FAKE_VIDEO
 
 	if ( adder2_show_alpha_display )
-		ui_draw_text(vfd_get_string(0), 10, 284);
+			draw_16seg(bitmap,10, 284,0,3,9);
 
 	if ( sc2_show_door )
 	{

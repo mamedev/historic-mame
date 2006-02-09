@@ -232,6 +232,35 @@ INLINE void compute_float(int rn, int rx)
 	/* TODO: AV flag */
 }
 
+/* Rn = FIX Fx */
+INLINE void compute_fix(int rn, int rx)
+{
+	INT32 alu_i;
+	SHARC_REG r_alu;
+
+	r_alu.f = FREG(rx);
+	if (sharc.mode1 & TRUNCATE)
+	{
+		alu_i = (INT32)(r_alu.f);
+	}
+	else
+	{
+		alu_i = (INT32)(r_alu.f < 0 ? (r_alu.f - 0.5f) : (r_alu.f + 0.5f));
+	}
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(alu_i);
+	// AZ
+	SET_FLAG_AZ(alu_i);
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+	/* TODO: AV flag */
+
+	REG(rn) = alu_i;
+}
+
 /* Rn = FIX Fx BY Ry */
 INLINE void compute_fix_scaled(int rn, int rx, int ry)
 {
@@ -560,6 +589,19 @@ INLINE void compute_mul_uuin(int rn, int rx, int ry)
 	REG(rn) = (UINT32)(r);
 }
 
+/* Rn = (signed)Rx * (signed)Ry, integer, no rounding */
+INLINE void compute_mul_ssin(int rn, int rx, int ry)
+{
+	UINT64 r = (INT64)(INT32)REG(rx) * (INT64)(INT32)REG(ry);
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN((UINT32)r);
+	SET_FLAG_MV(r);
+	SET_FLAG_MU(r);
+
+	REG(rn) = (UINT32)(r);
+}
+
 /* MRF + (signed)Rx * (signed)Ry, integer, no rounding */
 INLINE UINT32 compute_mrf_plus_mul_ssin(int rx, int ry)
 {
@@ -602,6 +644,7 @@ INLINE void compute_fmul(int rn, int rx, int ry)
 
 /* multi function opcodes */
 
+/* integer*/
 INLINE void compute_multi_mr_to_reg(int ai, int rk)
 {
 	switch(ai)
@@ -663,6 +706,55 @@ INLINE void compute_dual_add_sub(int ra, int rs, int rx, int ry)
 		sharc.astat |= AC;
 	}
 }
+
+/* Rm = (signed)Rxm * (signed)Rym, fractional, rounding,   Ra = Rxa + Rya */
+INLINE void compute_mul_ssfr_add(int rm, int rxm, int rym, int ra, int rxa, int rya)
+{
+	UINT32 r_mul = (UINT32)(((INT64)(REG(rxm)) * (INT64)(REG(rym))) >> 31);
+	UINT32 r_add = REG(rxa) + REG(rya);
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_add);
+	SET_FLAG_AZ(r_add);
+	SET_FLAG_AV_ADD(r_add, REG(rxa), REG(rya));
+	SET_FLAG_AC_ADD(r_add, REG(rxa), REG(rya));
+
+
+	REG(rm) = r_mul;
+	REG(ra) = r_add;
+}
+
+/* Rm = (signed)Rxm * (signed)Rym, fractional, rounding,   Ra = Rxa - Rya */
+INLINE void compute_mul_ssfr_sub(int rm, int rxm, int rym, int ra, int rxa, int rya)
+{
+	UINT32 r_mul = (UINT32)(((INT64)(REG(rxm)) * (INT64)(REG(rym))) >> 31);
+	UINT32 r_sub = REG(rxa) - REG(rya);
+
+	CLEAR_MULTIPLIER_FLAGS();
+	SET_FLAG_MN(r_mul);
+	/* TODO: MV flag */
+	/* TODO: MU flag */
+	/* TODO: MI flag */
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_sub);
+	SET_FLAG_AZ(r_sub);
+	SET_FLAG_AV_SUB(r_sub, REG(rxa), REG(rya));
+	SET_FLAG_AC_SUB(r_sub, REG(rxa), REG(rya));
+
+
+	REG(rm) = r_mul;
+	REG(ra) = r_sub;
+}
+
+
+/* floating-point */
 
 /* Fa = Fx + Fy,   Fs = Fx - Fy */
 INLINE void compute_dual_fadd_fsub(int ra, int rs, int rx, int ry)

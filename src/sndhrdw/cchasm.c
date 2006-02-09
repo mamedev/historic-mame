@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "cchasm.h"
 #include "sound/ay8910.h"
 
@@ -159,13 +159,12 @@ static WRITE8_HANDLER( ctc_timer_2_w )
 
 static z80ctc_interface ctc_intf =
 {
-	1,                   /* 1 chip */
-	{ 0 },               /* clock (filled in from the CPU 0 clock */
-	{ 0 },               /* timer disables */
-	{ ctc_interrupt },   /* interrupt handler */
-	{ 0 },               /* ZC/TO0 callback */
-	{ ctc_timer_1_w },     /* ZC/TO1 callback */
-	{ ctc_timer_2_w }      /* ZC/TO2 callback */
+	0,               /* clock (filled in from the CPU 0 clock */
+	0,               /* timer disables */
+	ctc_interrupt,   /* interrupt handler */
+	0,               /* ZC/TO0 callback */
+	ctc_timer_1_w,     /* ZC/TO1 callback */
+	ctc_timer_2_w      /* ZC/TO2 callback */
 };
 
 static void tone_update(void *param,stream_sample_t **inputs, stream_sample_t **outputs, int length)
@@ -195,8 +194,8 @@ void *cchasm_sh_start(int clock, const struct CustomSound_interface *config)
     channel[0] = stream_create(0, 1, Machine->sample_rate, (void *)0, tone_update);
     channel[1] = stream_create(0, 1, Machine->sample_rate, (void *)1, tone_update);
 
-	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init (&ctc_intf);
+	ctc_intf.baseclock = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init (0, &ctc_intf);
 
 	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, cchasm_sh_update);
 

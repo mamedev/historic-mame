@@ -188,7 +188,9 @@ typedef struct _running_machine running_machine;
 struct ImageFile
 {
 	const char *name;
-	iodevice_t type;
+	iodevice_t device_type;
+	const char *device_tag;
+	int device_index;
 };
 #endif /* MESS */
 

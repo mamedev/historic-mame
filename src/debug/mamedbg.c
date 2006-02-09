@@ -1701,12 +1701,18 @@ static void trace_output( void )
 			if( TRACE.regs[0] )
 			{
 				for( i = 0; i < MAX_REGS && TRACE.regs[i]; i++ )
-					dst += sprintf( dst, "%s ", activecpu_reg_string(TRACE.regs[i]) );
+				{
+					const char *result = activecpu_reg_string(TRACE.regs[i]);
+					if( result && *result == '~' )
+						result++;
+					dst += sprintf( dst, "%s ", result);
+				}
 			}
 			dst += sprintf( dst, "%0*X: ", addr_width, pc );
 			activecpu_dasm( dst, pc );
 			strcat( dst, "\n" );
 			fprintf( TRACE.file, "%s", buffer);
+			fflush( TRACE.file );
 			memmove(
 				&TRACE.last_pc[0],
 				&TRACE.last_pc[1],
@@ -2405,8 +2411,12 @@ static void dump_regs( void )
 				continue;		/* skip row breaks */
 
 			result=activecpu_reg_string(reg[i]);
-			if (result)
+			if( result )
+			{
+				if (*result == '~')
+					result++;
 				width = strlen( result );
+			}
 
 			if( width >= regs->max_width )
 				regs->max_width = width + 1;
@@ -2516,6 +2526,8 @@ static void dump_regs( void )
 			name = activecpu_reg_string(*reg);
 			if( !name || *name == '\0' )
 				continue;
+			if( *name == '~' )
+				name++;
 
 			regs->id[j] = *reg;
 			*val = activecpu_get_reg(regs->id[j]);

@@ -49,7 +49,7 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "sound/2203intf.h"
 #include "machine/8255ppi.h"
 #include "cpu/z80/z80daisy.h"
@@ -301,13 +301,12 @@ static void ctc0_interrupt(int state)
 
 static z80ctc_interface ctc_intf =
 {
-	1,						// 1 chip
-	{ 1 },					// clock
-	{ 0 },					// timer disables
-	{ ctc0_interrupt },		// interrupt handler
-	{ 0 },					// ZC/TO0 callback
-	{ 0 },					// ZC/TO1 callback
-	{ 0 },					// ZC/TO2 callback
+	1,					// clock
+	0,					// timer disables
+	ctc0_interrupt,		// interrupt handler
+	0,					// ZC/TO0 callback
+	0,					// ZC/TO1 callback
+	0,					// ZC/TO2 callback
 };
 
 static struct z80_irq_daisy_chain daisy_chain_sound[] =
@@ -356,8 +355,8 @@ static PALETTE_INIT(pipeline)
 
 MACHINE_INIT( pipeline )
 {
-   ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
-   z80ctc_init(&ctc_intf);
+   ctc_intf.baseclock = Machine->drv->cpu[0].cpu_clock;
+   z80ctc_init(0, &ctc_intf);
    ppi8255_init(&ppi8255_intf);
 }
 

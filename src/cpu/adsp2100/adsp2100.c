@@ -83,7 +83,7 @@
 #include "cpuintrf.h"
 #include "mamedbg.h"
 #include "adsp2100.h"
-
+#include "state.h"
 
 /*###################################################################################################
 **  CONSTANTS
@@ -619,10 +619,97 @@ static void adsp2100_set_context(void *src)
 
 static void adsp2100_init(void)
 {
+   int cpu = cpu_getactivecpu();
+
 	/* create the tables */
 	if (!create_tables())
 		osd_die("creating adsp2100 tables failed\n");
+
+   /* "core" */
+   state_save_register_item("adsp2100", cpu, adsp2100.core.ax0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.ax1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.ay0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.ay1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.ar.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.af.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.mx0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.mx1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.my0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.my1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.mr.mr);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.mf.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.si.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.se.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.sb.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.sr.sr);
+   state_save_register_item("adsp2100", cpu, adsp2100.core.zero.u);
+
+   /* "alt" */
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.ax0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.ax1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.ay0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.ay1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.ar.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.af.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.mx0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.mx1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.my0.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.my1.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.mr.mr);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.mf.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.si.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.se.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.sb.u);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.sr.sr);
+   state_save_register_item("adsp2100", cpu, adsp2100.alt.zero.u);
+
+   state_save_register_item_array("adsp2100", cpu, adsp2100.i);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.m);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.l);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.lmask);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.base);
+   state_save_register_item("adsp2100", cpu, adsp2100.px);
+
+   state_save_register_item("adsp2100", cpu, adsp2100.pc);
+   state_save_register_item("adsp2100", cpu, adsp2100.ppc);
+   state_save_register_item("adsp2100", cpu, adsp2100.loop);
+   state_save_register_item("adsp2100", cpu, adsp2100.loop_condition);
+   state_save_register_item("adsp2100", cpu, adsp2100.cntr);
+   state_save_register_item("adsp2100", cpu, adsp2100.astat);
+   state_save_register_item("adsp2100", cpu, adsp2100.sstat);
+   state_save_register_item("adsp2100", cpu, adsp2100.mstat);
+   state_save_register_item("adsp2100", cpu, adsp2100.astat_clear);
+   state_save_register_item("adsp2100", cpu, adsp2100.idle);
+
+   state_save_register_item_array("adsp2100", cpu, adsp2100.loop_stack);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.cntr_stack);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.pc_stack);
+   state_save_register_item_2d_array("adsp2100", cpu, adsp2100.stat_stack);
+
+   state_save_register_item("adsp2100", cpu, adsp2100.pc_sp);
+   state_save_register_item("adsp2100", cpu, adsp2100.cntr_sp);
+   state_save_register_item("adsp2100", cpu, adsp2100.stat_sp);
+   state_save_register_item("adsp2100", cpu, adsp2100.loop_sp);
+
+   state_save_register_item("adsp2100", cpu, adsp2100.flagout);
+   state_save_register_item("adsp2100", cpu, adsp2100.flagin);
+   state_save_register_item("adsp2100", cpu, adsp2100.fl0);
+   state_save_register_item("adsp2100", cpu, adsp2100.fl1);
+   state_save_register_item("adsp2100", cpu, adsp2100.fl2);
+
+   state_save_register_item("adsp2100", cpu, adsp2100.idma_addr);
+   state_save_register_item("adsp2100", cpu, adsp2100.idma_cache);
+   state_save_register_item("adsp2100", cpu, adsp2100.idma_offs);
+
+   state_save_register_item("adsp2100", cpu, adsp2100.imask);
+   state_save_register_item("adsp2100", cpu, adsp2100.icntl);
+   state_save_register_item("adsp2100", cpu, adsp2100.ifc);
+
+   state_save_register_item_array("adsp2100", cpu, adsp2100.irq_state);
+   state_save_register_item_array("adsp2100", cpu, adsp2100.irq_latch);
+   state_save_register_item("adsp2100", cpu, adsp2100.interrupt_cycles);
 }
+
 
 static void adsp2100_reset(void *param)
 {

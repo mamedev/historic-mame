@@ -40,16 +40,22 @@ static WRITE32_HANDLER( paletteram32_w )
 
 static UINT32 *K001604_tile_ram;
 static UINT32 *K001604_char_ram;
-static UINT8 *K001604_dirty_map;
-static int K001604_gfx_index, K001604_char_dirty;
-static tilemap *K001604_layer[1];
+static UINT8 *K001604_dirty_map[2];
+static int K001604_gfx_index[2], K001604_char_dirty[2];
+static tilemap *K001604_layer_8x8[2];
+static tilemap *K001604_layer_16x16[2];
 
-#define K001604_NUM_TILES		16384
+static UINT32 K001604_reg[256];
 
-static const gfx_layout K001604_char_layout =
+static int K001604_layer_size;
+
+#define K001604_NUM_TILES_LAYER0		8192
+#define K001604_NUM_TILES_LAYER1		2048
+
+static gfx_layout K001604_char_layout_layer_8x8 =
 {
 	8, 8,
-	K001604_NUM_TILES,
+	K001604_NUM_TILES_LAYER0,
 	8,
 	{ 8,9,10,11,12,13,14,15 },
 	{ 1*16, 0*16, 3*16, 2*16, 5*16, 4*16, 7*16, 6*16 },
@@ -57,68 +63,133 @@ static const gfx_layout K001604_char_layout =
 	8*128
 };
 
-static void K001604_tile_info(int tile_index)
+static gfx_layout K001604_char_layout_layer_16x16 =
+{
+	16, 16,
+	K001604_NUM_TILES_LAYER1,
+	8,
+	{ 8,9,10,11,12,13,14,15 },
+	{ 1*16, 0*16, 3*16, 2*16, 5*16, 4*16, 7*16, 6*16, 9*16, 8*16, 11*16, 10*16, 13*16, 12*16, 15*16, 14*16 },
+	{ 0*256, 1*256, 2*256, 3*256, 4*256, 5*256, 6*256, 7*256, 8*256, 9*256, 10*256, 11*256, 12*256, 13*256, 14*256, 15*256 },
+	16*256
+};
+
+static UINT32 K001604_scan_layer_8x8_0( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	int width = K001604_layer_size ? 256 : 128;
+	return (row * width) + col;
+}
+
+static UINT32 K001604_scan_layer_8x8_1( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	int width = K001604_layer_size ? 256 : 128;
+	return (row * width) + col + 64;
+}
+
+static UINT32 K001604_scan_layer_16x16_0( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return (row*256) + col + 128;
+}
+
+static UINT32 K001604_scan_layer_16x16_1( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	return (row*256) + col + 192;
+}
+
+static void K001604_tile_info_layer_8x8(int tile_index)
 {
 	UINT32 val = K001604_tile_ram[tile_index];
-	int color = val >> 16;
-	int tile = val & 0xffff;
-	SET_TILE_INFO(K001604_gfx_index, tile, color/2, 0);
+	int color = val >> 17;
+	int tile = (val & 0x3fff);
+	SET_TILE_INFO(K001604_gfx_index[0], tile, color, 0);
+}
+
+static void K001604_tile_info_layer_16x16(int tile_index)
+{
+	UINT32 val = K001604_tile_ram[tile_index];
+	int color = val >> 17;
+	int tile = (val & 0x7ff);
+	SET_TILE_INFO(K001604_gfx_index[1], tile, color, 0);
 }
 
 int K001604_vh_start(void)
 {
-	int width;
 	const char *gamename = Machine->gamedrv->name;
 
 	/* HACK !!! To be removed */
-	if (mame_stricmp(gamename, "racingj") == 0 || mame_stricmp(gamename, "racingj2") == 0)
+	if (mame_stricmp(gamename, "racingj") == 0 || mame_stricmp(gamename, "racingj2") == 0
+		|| mame_stricmp(gamename, "hangplt") == 0)
 	{
-		width = 128;
+		K001604_layer_size = 0;		// width = 128 tiles
 	}
 	else
 	{
-		width = 256;
+		K001604_layer_size = 1;		// width = 256 tiles
 	}
 
-	for(K001604_gfx_index = 0; K001604_gfx_index < MAX_GFX_ELEMENTS; K001604_gfx_index++)
-		if (Machine->gfx[K001604_gfx_index] == 0)
+	for(K001604_gfx_index[0] = 0; K001604_gfx_index[0] < MAX_GFX_ELEMENTS; K001604_gfx_index[0]++)
+		if (Machine->gfx[K001604_gfx_index[0]] == 0)
 			break;
-	if(K001604_gfx_index == MAX_GFX_ELEMENTS)
+	if(K001604_gfx_index[0] == MAX_GFX_ELEMENTS)
+		return 1;
+
+	for(K001604_gfx_index[1] = 0; K001604_gfx_index[1] < MAX_GFX_ELEMENTS; K001604_gfx_index[1]++)
+		if (Machine->gfx[K001604_gfx_index[1]] == 0)
+			break;
+	if(K001604_gfx_index[1] == MAX_GFX_ELEMENTS)
 		return 1;
 
 	K001604_char_ram = auto_malloc(0x400000);
 
 	K001604_tile_ram = auto_malloc(0x20000);
 
-	K001604_dirty_map = auto_malloc(K001604_NUM_TILES);
+	K001604_dirty_map[0] = auto_malloc(K001604_NUM_TILES_LAYER0);
+	K001604_dirty_map[1] = auto_malloc(K001604_NUM_TILES_LAYER1);
 
-	K001604_layer[0] = tilemap_create(K001604_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, width, 64);
+	K001604_layer_8x8[0] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_0, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	K001604_layer_8x8[1] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_1, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	K001604_layer_16x16[0] = tilemap_create(K001604_tile_info_layer_16x16, K001604_scan_layer_16x16_0, TILEMAP_OPAQUE, 16, 16, 64, 64);
+	K001604_layer_16x16[1] = tilemap_create(K001604_tile_info_layer_16x16, K001604_scan_layer_16x16_1, TILEMAP_OPAQUE, 16, 16, 64, 64);
 
-	if( !K001604_layer[0] ) {
+	if( !K001604_layer_8x8[0] || !K001604_layer_8x8[1] || !K001604_layer_16x16[0] || !K001604_layer_16x16[1]) {
 		return 1;
 	}
 
-	tilemap_set_transparent_pen(K001604_layer[0], 0);
+	tilemap_set_transparent_pen(K001604_layer_8x8[0], 0);
+	tilemap_set_transparent_pen(K001604_layer_8x8[1], 0);
 
 	memset(K001604_char_ram, 0, 0x400000);
 	memset(K001604_tile_ram, 0, 0x10000);
-	memset(K001604_dirty_map, 0, K001604_NUM_TILES);
+	memset(K001604_dirty_map[0], 0, K001604_NUM_TILES_LAYER0);
+	memset(K001604_dirty_map[1], 0, K001604_NUM_TILES_LAYER1);
 
-	Machine->gfx[K001604_gfx_index] = allocgfx(&K001604_char_layout);
-	decodegfx(Machine->gfx[K001604_gfx_index], (UINT8*)K001604_char_ram, 0, Machine->gfx[K001604_gfx_index]->total_elements);
-	if( !Machine->gfx[K001604_gfx_index] ) {
+
+	Machine->gfx[K001604_gfx_index[0]] = allocgfx(&K001604_char_layout_layer_8x8);
+	decodegfx(Machine->gfx[K001604_gfx_index[0]], (UINT8*)&K001604_char_ram[0], 0, Machine->gfx[K001604_gfx_index[0]]->total_elements);
+	Machine->gfx[K001604_gfx_index[1]] = allocgfx(&K001604_char_layout_layer_16x16);
+	decodegfx(Machine->gfx[K001604_gfx_index[1]], (UINT8*)&K001604_char_ram[0x100000/4], 0, Machine->gfx[K001604_gfx_index[1]]->total_elements);
+
+	if( !Machine->gfx[K001604_gfx_index[0]] ||!Machine->gfx[K001604_gfx_index[1]] ) {
 		return 1;
 	}
 
 	if (Machine->drv->color_table_len)
 	{
-		Machine->gfx[K001604_gfx_index]->colortable = Machine->remapped_colortable;
-		Machine->gfx[K001604_gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+		Machine->gfx[K001604_gfx_index[0]]->colortable = Machine->remapped_colortable;
+		Machine->gfx[K001604_gfx_index[0]]->total_colors = Machine->drv->color_table_len / 16;
+		Machine->gfx[K001604_gfx_index[1]]->colortable = Machine->remapped_colortable;
+		Machine->gfx[K001604_gfx_index[1]]->total_colors = Machine->drv->color_table_len / 16;
 	}
 	else
 	{
-		Machine->gfx[K001604_gfx_index]->colortable = Machine->pens;
-		Machine->gfx[K001604_gfx_index]->total_colors = Machine->drv->total_colors / 16;
+		Machine->gfx[K001604_gfx_index[0]]->colortable = Machine->pens;
+		Machine->gfx[K001604_gfx_index[0]]->total_colors = Machine->drv->total_colors / 16;
+		Machine->gfx[K001604_gfx_index[1]]->colortable = Machine->pens;
+		Machine->gfx[K001604_gfx_index[1]]->total_colors = Machine->drv->total_colors / 16;
 	}
 
 	return 0;
@@ -126,25 +197,41 @@ int K001604_vh_start(void)
 
 void K001604_tile_update(void)
 {
-	if(K001604_char_dirty) {
+	if(K001604_char_dirty[0])
+	{
 		int i;
-		for(i=0; i<K001604_NUM_TILES; i++) {
-			if(K001604_dirty_map[i]) {
-				K001604_dirty_map[i] = 0;
-				decodechar(Machine->gfx[K001604_gfx_index], i, (UINT8 *)K001604_char_ram, &K001604_char_layout);
+		for(i=0; i<K001604_NUM_TILES_LAYER0; i++) {
+			if(K001604_dirty_map[0][i]) {
+				K001604_dirty_map[0][i] = 0;
+				decodechar(Machine->gfx[K001604_gfx_index[0]], i, (UINT8*)&K001604_char_ram[0], &K001604_char_layout_layer_8x8);
 			}
 		}
-		tilemap_mark_all_tiles_dirty(K001604_layer[0]);
-		K001604_char_dirty = 0;
+		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[0]);
+		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[1]);
+		K001604_char_dirty[0] = 0;
+	}
+	if(K001604_char_dirty[1])
+	{
+		int i;
+		for(i=0; i<K001604_NUM_TILES_LAYER1; i++) {
+			if(K001604_dirty_map[1][i]) {
+				K001604_dirty_map[1][i] = 0;
+				decodechar(Machine->gfx[K001604_gfx_index[1]], i, (UINT8*)&K001604_char_ram[0x100000/4], &K001604_char_layout_layer_16x16);
+			}
+		}
+		tilemap_mark_all_tiles_dirty(K001604_layer_16x16[0]);
+		tilemap_mark_all_tiles_dirty(K001604_layer_16x16[1]);
+		K001604_char_dirty[1] = 0;
 	}
 }
 
 void K001604_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	tilemap_draw(bitmap, cliprect, K001604_layer[0], 0,0);
+//  tilemap_draw(bitmap, cliprect, K001604_layer_16x16[1], 0,0);
+//  tilemap_draw(bitmap, cliprect, K001604_layer_16x16[0], 0,0);
+	tilemap_draw(bitmap, cliprect, K001604_layer_8x8[1], 0,0);
+	tilemap_draw(bitmap, cliprect, K001604_layer_8x8[0], 0,0);
 }
-
-static UINT32 K001604_reg[256];
 
 READ32_HANDLER(K001604_tile_r)
 {
@@ -171,8 +258,36 @@ READ32_HANDLER(K001604_char_r)
 
 WRITE32_HANDLER(K001604_tile_w)
 {
+	int x, y;
 	COMBINE_DATA(K001604_tile_ram + offset);
-	tilemap_mark_tile_dirty(K001604_layer[0], offset);
+
+	if (K001604_layer_size)
+	{
+		x = offset & 0xff;
+		y = offset / 256;
+	}
+	else
+	{
+		x = offset & 0x7f;
+		y = offset / 128;
+	}
+
+	if (x < 64)
+	{
+		tilemap_mark_tile_dirty(K001604_layer_8x8[0], offset);
+	}
+	else if (x < 128)
+	{
+		tilemap_mark_tile_dirty(K001604_layer_8x8[1], offset);
+	}
+	else if (x < 192)
+	{
+		tilemap_mark_tile_dirty(K001604_layer_16x16[0], offset);
+	}
+	else
+	{
+		tilemap_mark_tile_dirty(K001604_layer_16x16[1], offset);
+	}
 }
 
 WRITE32_HANDLER(K001604_char_w)
@@ -191,8 +306,17 @@ WRITE32_HANDLER(K001604_char_w)
 	addr = offset + ((set + (bank * 0x40000)) / 4);
 
 	COMBINE_DATA(K001604_char_ram + addr);
-	K001604_dirty_map[addr / 32] = 1;
-	K001604_char_dirty = 1;
+
+	if (addr < 0x40000)
+	{
+		K001604_dirty_map[0][addr / 32] = 1;
+		K001604_char_dirty[0] = 1;
+	}
+	else
+	{
+		K001604_dirty_map[1][(addr - 0x40000) / 128] = 1;
+		K001604_char_dirty[1] = 1;
+	}
 }
 
 
@@ -200,6 +324,15 @@ WRITE32_HANDLER(K001604_char_w)
 WRITE32_HANDLER(K001604_reg_w)
 {
 	COMBINE_DATA(K001604_reg + offset);
+
+	switch (offset)
+	{
+		case 0x8:
+		case 0x9:
+		case 0xa:
+			//printf("K001604_reg_w %02X, %08X, %08X\n", offset, data, mem_mask);
+			break;
+	}
 }
 
 READ32_HANDLER(K001604_reg_r)
@@ -486,7 +619,7 @@ static MACHINE_DRIVER_START( nwktr )
 	MDRV_CPU_ADD(PPC403, 64000000/2)	/* PowerPC 403GA 32MHz */
 	MDRV_CPU_CONFIG(nwktr_ppc_cfg)
 	MDRV_CPU_PROGRAM_MAP(nwktr_map, 0)
-	MDRV_CPU_VBLANK_INT(nwktr_vblank, 2)
+	MDRV_CPU_VBLANK_INT(nwktr_vblank, 1)
 
 	MDRV_CPU_ADD(M68000, 64000000/4)	/* 16MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_memmap, 0)
@@ -533,7 +666,7 @@ static void jamma_w(int length)
 static UINT8 backup_ram[0x2000];
 static DRIVER_INIT( nwktr )
 {
-	init_konami_cgboard(0);
+	init_konami_cgboard(0, CGBOARD_TYPE_NWKTR);
 	sharc_dataram = auto_malloc(0x100000);
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
 
@@ -569,6 +702,7 @@ static DRIVER_INIT(thrilld)
 		checksum &= 0xffff;
 	}
 	checksum = -1 - checksum;
+
 	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 

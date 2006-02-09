@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
-#include "machine/z80fmly.h"
 #include "cchasm.h"
 
 #define M6840_CYCLE 1250  /* 800 kHz */

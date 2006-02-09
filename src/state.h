@@ -109,4 +109,7 @@ int state_save_check_file(mame_file *file, const char *gamename, int validate_si
 #define state_save_register_global_2d_array(_val) \
 	state_save_register_item_2d_array("globals", 0, _val)
 
+#define state_save_register_global_ponter(_val, _count) \
+	state_save_register_item_pointer("globals", 0, _val, _count)
+
 #endif	/* __STATE_H__ */

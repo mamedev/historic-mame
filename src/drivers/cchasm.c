@@ -14,7 +14,7 @@
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "cchasm.h"
 #include "sound/custom.h"
 #include "sound/ay8910.h"

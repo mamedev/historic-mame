@@ -813,6 +813,7 @@ static void print_game_info(FILE* out, const game_driver* game)
 	print_game_driver(out, game);
 #ifdef MESS
 	print_game_device(out, game);
+	print_game_ramoptions(out, game);
 #endif
 
 	fprintf(out, "\t</" XML_TOP ">\n");
@@ -920,7 +921,7 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"<!ELEMENT " XML_ROOT " (" XML_TOP "+)>\n"
 		"\t<!ATTLIST " XML_ROOT " build CDATA #IMPLIED>\n"
 #ifdef MESS
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
 #else
 		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
 #endif
@@ -997,10 +998,16 @@ void print_mame_xml(FILE* out, const game_driver* games[])
 		"\t\t\t<!ATTLIST driver savestate (supported|unsupported) #REQUIRED>\n"
  		"\t\t\t<!ATTLIST driver palettesize CDATA #REQUIRED>\n"
 #ifdef MESS
-		"\t\t<!ELEMENT device (extension*)>\n"
-		"\t\t\t<!ATTLIST device name CDATA #REQUIRED>\n"
+		"\t\t<!ELEMENT device (instance*, extension*)>\n"
+		"\t\t\t<!ATTLIST device type CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST device tag CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST device mandatory CDATA #IMPLIED>\n"
+		"\t\t\t<!ELEMENT instance EMPTY>\n"
+		"\t\t\t\t<!ATTLIST instance name CDATA #REQUIRED>\n"
+		"\t\t\t\t<!ATTLIST instance briefname CDATA #REQUIRED>\n"
 		"\t\t\t<!ELEMENT extension EMPTY>\n"
 		"\t\t\t\t<!ATTLIST extension name CDATA #REQUIRED>\n"
+		"\t\t<!ELEMENT ramoption (#PCDATA)>\n"
 #endif
 		"]>\n\n"
 		"<" XML_ROOT " build=\"%s\">\n",

@@ -1,86 +1,241 @@
 /* Dark Mist
 (c) Taito / Seibu
 
-Similar HW to Cross Shooter but without GFX in custom blocks?
-
-preliminary driver by Tomasz Slanina
-
 Main CPU : z80 (with encryption, external to z80)
 Sound CPU: custom T5182 cpu (like seibu sound system but with internal code)
 
-ToDo:
+$e000 - coins (two bytes)
+$e2b7 - player 1 energy
 
-(almost everything)
--- finish memory map
--- where is the banking register (is this why it resets over and over again, or is it a decrypt/irq error?)
--- emulate video hardware
--- hook up inputs
--- simulate sound? (or find a way of dumping t5182 internal rom)
+TODO:
+
+ - fix colors
+  (incomplete decryption ? color 15 of each pal looks like transparent)
+ - sprite/bg priorities (name entry screen)
+ - sound/fx emulation
+ - cocktail mode
+ - bad sprite gfx (additional line swaps ?)
 
 */
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-READ8_HANDLER( darkmist_random_read )
+READ8_HANDLER(darkmist_palette_r);
+WRITE8_HANDLER(darkmist_palette_w);
+VIDEO_START(darkmist);
+VIDEO_UPDATE(darkmist);
+
+unsigned char * darkmist_scroll;
+unsigned char * darkmist_workram;
+
+int darkmist_hw;
+static int coin_stat=0;
+
+static WRITE8_HANDLER(darkmist_hw_w)
 {
-//  return 0xff; // no flashing..
-	return 0x00;
-//  return rand();
+  darkmist_hw=data;
+  memory_set_bankptr(1,&memory_region(REGION_CPU1)[0x010000+((data&0x80)?0x4000:0)]);
 }
 
-VIDEO_UPDATE( darkmist)
+static void darkmist_coin_hack(void)
 {
-//tilemap_draw(bitmap,cliprect,tilemap,0,0);
+	/* coin inputs are handled by (unemulated) custom T5182 cpu, so here's a dirty hack  */
 
-	const UINT8 *pSource;
-	int sx,sy;
-	UINT8 tile;
-
-	pSource = videoram;
-	for( sy=0; sy<256; sy+=8 )
+	if(input_port_6_r(0)&1)
 	{
-		for( sx=0; sx<256; sx+=8 )
+		if(coin_stat==0)
 		{
-			tile = pSource[0];
-			if(tile<32 || tile >90)tile=32;
-
-			pSource ++;
-/*          drawgfx(
-                bitmap,Machine->uirotfont,
-                tile,
-                0,
-                0,0,
-                sx,sy,
-                &Machine->visible_area,
-                TRANSPARENCY_NONE,0 );*/
+			coin_stat=1;
+			if(darkmist_workram[0]<9)
+			{
+				darkmist_workram[0]++;
+			}
+			else
+			{
+				if(darkmist_workram[1]<9)
+				{
+					darkmist_workram[0]=0;
+					darkmist_workram[1]++;
+				}
+			}
 		}
+	}
+	else
+	{
+		coin_stat=0;
 	}
 }
 
 static ADDRESS_MAP_START( memmap, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1) // where is the bank register..
-	AM_RANGE(0xc000, 0xc1ff) AM_READ(MRA8_RAM) AM_WRITE(paletteram_BBGGGRRR_w) AM_BASE(&paletteram)	// guess, maybe not
-	AM_RANGE(0xc200, 0xc205) AM_READ(darkmist_random_read)//AM_RAM // inputs ?
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
 
-	AM_RANGE(0xc500, 0xc500) AM_READ(darkmist_random_read)//AM_RAM//AM_WRITE(cshooter_c500_w)
-	AM_RANGE(0xc600, 0xc600) AM_READ(darkmist_random_read)//AM_RAM//AM_WRITE(MWA8_NOP)          // see notes
-	AM_RANGE(0xc700, 0xc700) AM_READ(darkmist_random_read)//AM_RAM//AM_WRITE(cshooter_c700_w)
-	AM_RANGE(0xc800, 0xc80f) AM_READ(darkmist_random_read)//AM_RAM//AM_WRITE(MWA8_NOP)          // see notes
+	AM_RANGE(0xc801, 0xc801) AM_READ(input_port_0_r)
+	AM_RANGE(0xc802, 0xc802) AM_READ(input_port_1_r)
+	AM_RANGE(0xc803, 0xc803) AM_READ(input_port_2_r)
 
-	AM_RANGE(0xd000, 0xd7ff) AM_RAM //txtram
+	AM_RANGE(0xc804, 0xc804) AM_WRITE(darkmist_hw_w)
+	AM_RANGE(0xc805, 0xc805) AM_RAM /* unknown */
+
+	AM_RANGE(0xc806, 0xc806) AM_READ(input_port_3_r)
+	AM_RANGE(0xc807, 0xc807) AM_READ(input_port_4_r)
+	AM_RANGE(0xc808, 0xc808) AM_READ(input_port_5_r)
+
+	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(darkmist_palette_w) AM_READ(darkmist_palette_r) AM_BASE(&paletteram)
+
+	AM_RANGE(0xd400, 0xd41f) AM_RAM AM_BASE(&darkmist_scroll)
+
+	AM_RANGE(0xd600, 0xd6ff) AM_RAM /* shared with T5182 */
+
 	AM_RANGE(0xd800, 0xdfff) AM_RAM AM_BASE(&videoram)
-	AM_RANGE(0xe000, 0xffff) AM_RAM
+	AM_RANGE(0xe000, 0xefff) AM_RAM AM_BASE(&darkmist_workram)
+	AM_RANGE(0xf000, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
 
-
-
 INPUT_PORTS_START( darkmist )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "1-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "1-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "1-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, "1-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, "1-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "1-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "1-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "1-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "2-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "2-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "2-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 ) PORT_IMPULSE(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 ) PORT_IMPULSE(1)
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "2-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "2-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "2-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "3-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "3-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "3-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, "3-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, "3-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "TEST MODE" )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "3-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "4-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "4-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "4-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, "4-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, "4-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "4-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "4-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "4-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, "5-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x02, 0x02, "5-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x04, 0x04, "5-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x08, "5-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, "5-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "5-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "5-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "5-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+
+	PORT_START /* fake port */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(1)
 
 INPUT_PORTS_END
-
-
 
 static const gfx_layout charlayout =
 {
@@ -88,6 +243,7 @@ static const gfx_layout charlayout =
 	RGN_FRAC(1,2),
 	4,
 	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
 	16*8
@@ -99,6 +255,8 @@ static const gfx_layout tilelayout =
 	RGN_FRAC(1,2),
 	4,
 	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
+
+
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			16+0, 16+1, 16+2, 16+3, 24+0, 24+1, 24+2, 24+3 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
@@ -115,12 +273,6 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-VIDEO_START(darkmist)
-{
-	return 0;
-}
-
-
 INTERRUPT_GEN( darkmist_interrupt )
 {
 	if(cpu_getiloops())
@@ -129,10 +281,11 @@ INTERRUPT_GEN( darkmist_interrupt )
 	}
 	else
 	{
-//      cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x10);
+      cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x10);
 	}
-}
 
+	darkmist_coin_hack();
+}
 
 static MACHINE_DRIVER_START( darkmist )
 	/* basic machine hardware */
@@ -148,7 +301,7 @@ static MACHINE_DRIVER_START( darkmist )
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 256-1, 16, 256-16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x100)
+	MDRV_PALETTE_LENGTH(0x200)
 
 	MDRV_VIDEO_START(darkmist)
 	MDRV_VIDEO_UPDATE(darkmist)
@@ -156,35 +309,42 @@ static MACHINE_DRIVER_START( darkmist )
 MACHINE_DRIVER_END
 
 ROM_START( darkmist )
-	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "dm_15.rom", 0x00000, 0x08000, CRC(21e6503c) SHA1(09174fb424b76f7f2a381297e3420ddd2e76b008)  )
-	/* banked data (at least 16 is..)  */
+
 	ROM_LOAD( "dm_16.rom", 0x10000, 0x08000, CRC(094579d9) SHA1(2449bc9ba38396912ee9b72dd870ea9fcff95776)  )
-	ROM_LOAD( "dm_17.rom", 0x18000, 0x08000, CRC(7723dcae) SHA1(a0c69e7a7b6fd74f7ed6b9c6419aed94aabcd4b0)  )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Toshiba T5182 module*/
+	ROM_LOAD( "t5182.rom", 0x08000, 0x08000, NO_DUMP  )
+	ROM_LOAD( "dm_17.rom", 0x08000, 0x08000, CRC(7723dcae) SHA1(a0c69e7a7b6fd74f7ed6b9c6419aed94aabcd4b0)  )
 
 	ROM_REGION( 0x4000, REGION_GFX1, 0 )
 	ROM_LOAD( "dm_13.rom", 0x00000, 0x02000, CRC(38bb38d9) SHA1(d751990166dd3d503c5de7667679b96210061cd1)  )
 	ROM_LOAD( "dm_14.rom", 0x02000, 0x02000, CRC(ac5a31f3) SHA1(79083390671062be2eab93cc875a0f86d709a963)  )
 
 	ROM_REGION( 0x40000, REGION_GFX2, 0 )
-	ROM_LOAD( "dm_05.rom", 0x00000, 0x10000, CRC(ca79a738) SHA1(66a76ea0d8ecc44f6cc77102303df74f40bf6118)  )
-	ROM_LOAD( "dm_01.rom", 0x10000, 0x10000, CRC(652aee6b) SHA1(f4150784f7bd7be83a0041e4c52540aa564062ba) )
-	ROM_LOAD( "dm_06.rom", 0x20000, 0x10000, CRC(9629ed2c) SHA1(453f6a0b12efdadd7fcbe03ad37afb0afa6be051)  )
-	ROM_LOAD( "dm_02.rom", 0x30000, 0x10000, CRC(e2dd15aa) SHA1(1f3a6a1e1afabfe9dc47549ef13ae7696302ae88)  )
+	ROM_LOAD( "dm_05.rom", 0x10000, 0x10000, CRC(ca79a738) SHA1(66a76ea0d8ecc44f6cc77102303df74f40bf6118)  )
+	ROM_LOAD( "dm_01.rom", 0x00000, 0x10000, CRC(652aee6b) SHA1(f4150784f7bd7be83a0041e4c52540aa564062ba) )
+	ROM_LOAD( "dm_06.rom", 0x30000, 0x10000, CRC(9629ed2c) SHA1(453f6a0b12efdadd7fcbe03ad37afb0afa6be051)  )
+	ROM_LOAD( "dm_02.rom", 0x20000, 0x10000, CRC(e2dd15aa) SHA1(1f3a6a1e1afabfe9dc47549ef13ae7696302ae88)  )
 
-	ROM_REGION( 0x30000, REGION_GFX3, 0 )
+	ROM_REGION( 0x40000, REGION_GFX3, 0)
 	ROM_LOAD( "dm_09.rom", 0x00000, 0x10000, CRC(52154b50) SHA1(5ee1a4bcf0752a057b9993b0069d744c35cf55f4)  )
 	ROM_LOAD( "dm_11.rom", 0x10000, 0x08000, CRC(3118e2f9) SHA1(dfd946ea1310851f97d31ce58d8280f2d92b0f59)  )
-	ROM_LOAD( "dm_10.rom", 0x18000, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
-	ROM_LOAD( "dm_12.rom", 0x28000, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
+	ROM_LOAD( "dm_10.rom", 0x20000, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
+	ROM_LOAD( "dm_12.rom", 0x30000, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
 
-	ROM_REGION( 0x10000, REGION_USER1, 0 ) //tile/attrib maps (width 512x64 )
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* BG layer map ( 512x64 )*/
 	ROM_LOAD( "dm_03.rom", 0x00000, 0x08000, CRC(60b40c2a) SHA1(c046273b15dab95ea4851c26ce941e580fa1b6ec)  )
-	ROM_LOAD( "dm_04.rom", 0x08000, 0x08000, CRC(d47b8cd9) SHA1(86eb7a5d8ea63c0c91f455b1b8322cc7b9c4a968)  )
 
-	ROM_REGION( 0x08000, REGION_USER2, 0 ) //data ? gfx ? maps ? 64x256
+	ROM_REGION( 0x8000, REGION_USER2, 0 ) /* BG layer attr ( 512x64 ) */
+	ROM_LOAD( "dm_04.rom", 0x00000, 0x08000, CRC(d47b8cd9) SHA1(86eb7a5d8ea63c0c91f455b1b8322cc7b9c4a968)  )
+
+	ROM_REGION( 0x04000, REGION_USER3, 0 ) /* FG layer map ( 64x256 ) */
 	ROM_LOAD( "dm_07.rom", 0x00000, 0x04000, CRC(889b1277) SHA1(78405110b9cf1ab988c0cbfdb668498dadb41229)  )
-	ROM_LOAD( "dm_08.rom", 0x04000, 0x04000, CRC(f76f6f46) SHA1(ce1c67dc8976106b24fee8d3a0b9e5deb016a327)  )
+
+	ROM_REGION( 0x04000, REGION_USER4, 0 ) /* FG layer attr ( 64x256 ) */
+	ROM_LOAD( "dm_08.rom", 0x00000, 0x04000, CRC(f76f6f46) SHA1(ce1c67dc8976106b24fee8d3a0b9e5deb016a327)  )
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
 	ROM_LOAD( "63s281n.l1",  0x0000, 0x0100, NO_DUMP  )
@@ -203,13 +363,10 @@ static void decrypt_gfx(void)
 	int size;
 	int i;
 
-	if (!buf)
-		return;
-
 	rom = memory_region(REGION_GFX1);
 	size = memory_region_length(REGION_GFX1);
 
-	// data lines
+	/* data lines */
 	for (i = 0;i < size/2;i++)
 	{
 		int w1;
@@ -222,7 +379,7 @@ static void decrypt_gfx(void)
 		buf[i + 1*size/2] = w1 & 0xff;
 	}
 
-	// address lines
+	/* address lines */
 	for (i = 0;i < size;i++)
 	{
 		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12, 3,2,1, 11,10,9,8, 0, 7,6,5,4)];
@@ -232,7 +389,7 @@ static void decrypt_gfx(void)
 	rom = memory_region(REGION_GFX2);
 	size = memory_region_length(REGION_GFX2);
 
-	// data lines
+	/* data lines */
 	for (i = 0;i < size/2;i++)
 	{
 		int w1;
@@ -245,7 +402,7 @@ static void decrypt_gfx(void)
 		buf[i + 1*size/2] = w1 & 0xff;
 	}
 
-	// address lines
+	/* address lines */
 	for (i = 0;i < size;i++)
 	{
 		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13, 5,4,3,2, 12,11,10,9,8, 1,0, 7,6)];
@@ -255,7 +412,7 @@ static void decrypt_gfx(void)
 	rom = memory_region(REGION_GFX3);
 	size = memory_region_length(REGION_GFX3);
 
-	// data lines
+	/* data lines */
 	for (i = 0;i < size/2;i++)
 	{
 		int w1;
@@ -268,11 +425,12 @@ static void decrypt_gfx(void)
 		buf[i + 1*size/2] = w1 & 0xff;
 	}
 
-	// address lines
+	/* address lines */
 	for (i = 0;i < size;i++)
 	{
-		rom[i] = buf[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11, 9,8, 5,4,3, 10, 7,6, 1,0, 2)];
+		rom[i] = buf[BITSWAP24(i, 23,22,21,20,19,18,17,16,15,14, 12,11,10,9,8, 5,4,3, 13, 7,6, 1,0, 2)];
 	}
+
 	free(buf);
 }
 
@@ -283,11 +441,8 @@ static DRIVER_INIT(darkmist)
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	UINT8 *buffer = malloc(0x10000);
 	UINT8 *decrypt = auto_malloc(0x8000);
-	int size;
 
 	decrypt_gfx();
-
-	/* is this complete? */
 
 	for(i=0;i<0x8000;i++)
 	{
@@ -316,38 +471,38 @@ static DRIVER_INIT(darkmist)
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, decrypt);
 	memory_set_bankptr(1,&ROM[0x010000]);
 
-	//adr line swaps
-	if (!buffer)
-		return;
-
+	/* adr line swaps */
 	ROM = memory_region(REGION_USER1);
-	size = memory_region_length(REGION_USER1);
-	memcpy( buffer, ROM, size );
-	for(i=0;i<size;i++)
+	memcpy( buffer, ROM, memory_region_length(REGION_USER1) );
+
+	for(i=0;i<memory_region_length(REGION_USER1);i++)
 	{
 		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,6,5,4,3,2,14,13,12,11,8,7,1,0,10,9)];
 	}
 
 	ROM = memory_region(REGION_USER2);
-	size = memory_region_length(REGION_USER2);
-	memcpy( buffer, ROM, size );
-	for(i=0;i<size;i++)
+	memcpy( buffer, ROM, memory_region_length(REGION_USER2) );
+	for(i=0;i<memory_region_length(REGION_USER2);i++)
+	{
+		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,6,5,4,3,2,14,13,12,11,8,7,1,0,10,9)];
+	}
+
+	ROM = memory_region(REGION_USER3);
+	memcpy( buffer, ROM, memory_region_length(REGION_USER3) );
+	for(i=0;i<memory_region_length(REGION_USER3);i++)
+	{
+		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14 ,5,4,3,2,11,10,9,8,13,12,1,0,7,6)];
+
+	}
+
+	ROM = memory_region(REGION_USER4);
+	memcpy( buffer, ROM, memory_region_length(REGION_USER4) );
+	for(i=0;i<memory_region_length(REGION_USER4);i++)
 	{
 		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14 ,5,4,3,2,11,10,9,8,13,12,1,0,7,6)];
 	}
+
 	free(buffer);
-#if 0
-	{
-		FILE *f=fopen("user2.bin","wb");
-		fwrite(memory_region(REGION_USER2),1,memory_region_length(REGION_USER2),f);
-		fclose(f);
-		f=fopen("user1.bin","wb");
-		fwrite(memory_region(REGION_USER1),1,memory_region_length(REGION_USER1),f);
-		fclose(f);
-	}
-#endif
-
-
 }
 
 GAME( 1986, darkmist, 0, darkmist, darkmist, darkmist, ROT270, "Taito", "The Lost Castle In Darkmist", GAME_NOT_WORKING|GAME_NO_SOUND )

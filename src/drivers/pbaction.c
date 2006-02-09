@@ -35,7 +35,6 @@ Notes:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/z80fmly.h"
 #include "sound/ay8910.h"
 #include "machine/segacrpt.h"
 

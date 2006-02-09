@@ -70,7 +70,8 @@ I/O read/write
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
+#include "machine/z80pio.h"
 #include "sound/sn76496.h"
 #include "sound/samples.h"
 #include "cpu/z80/z80daisy.h"
@@ -203,15 +204,28 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 #endif
 ADDRESS_MAP_END
 
+WRITE8_HANDLER( pio_w )
+{
+	if (offset & 1)
+		z80pio_c_w(0, (offset >> 1) & 1, data);
+	else
+		z80pio_d_w(0, (offset >> 1) & 1, data);
+}
+
+READ8_HANDLER( pio_r )
+{
+	return (offset & 1) ? z80pio_c_r(0, (offset >> 1) & 1) : z80pio_d_r(0, (offset >> 1) & 1);
+}
+
 static ADDRESS_MAP_START( sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x03) AM_READ(z80pio_0_r)
+	AM_RANGE(0x00, 0x03) AM_READ(pio_r)
 	AM_RANGE(0x08, 0x0b) AM_READ(z80ctc_0_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x03) AM_WRITE(z80pio_0_w)
+	AM_RANGE(0x00, 0x03) AM_WRITE(pio_w)
 	AM_RANGE(0x08, 0x0b) AM_WRITE(z80ctc_0_w)
 ADDRESS_MAP_END
 

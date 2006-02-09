@@ -1,4 +1,4 @@
-Copyright (c) 1997-2005, Nicola Salmoria and the MAME team
+Copyright (c) 1997-2006, Nicola Salmoria and the MAME team
 All rights reserved. 
 
 Redistribution and use of this code or any derivative works are permitted

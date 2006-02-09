@@ -100,7 +100,9 @@ static int video_rol = 0;
 static int video_autoror = 0;
 static int video_autorol = 0;
 
+static int game_index;
 static int got_gamename;
+static int prompt_driver_name;
 
 static char *win_basename(char *filename);
 static char *win_dirname(char *filename);
@@ -390,7 +392,6 @@ int cli_frontend_init (int argc, char **argv)
 	machine_config drv;
 	char buffer[128];
 	char *cmd_name;
-	int game_index;
 	int i;
 
 	gamename = NULL;
@@ -407,7 +408,9 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* parse the commandline */
-	got_gamename = 0;
+	got_gamename = FALSE;
+	prompt_driver_name = FALSE;
+
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
 	{
 		osd_die ("error while parsing cmdline\n");
@@ -505,41 +508,6 @@ int cli_frontend_init (int argc, char **argv)
 	if (frontend_help(gamename) != 1234)
 		exit(0);
 
-	gamename = win_basename(gamename);
-	gamename = win_strip_extension(gamename);
-
-	/* if not given by .inp file yet */
-	if (game_index == -1)
-	{
-		/* do we have a driver for this? */
-		for (i = 0; drivers[i]; i++)
-			if (mame_stricmp(gamename,drivers[i]->name) == 0)
-			{
-				game_index = i;
-				break;
-			}
-	}
-
-#ifdef MAME_DEBUG
-	if (game_index == -1)
-	{
-		/* pick a random game */
-		if (strcmp(gamename,"random") == 0)
-		{
-			i = 0;
-			while (drivers[i]) i++;	/* count available drivers */
-
-			srand(time(0));
-			/* call rand() once to get away from the seed */
-			rand();
-			game_index = rand() % i;
-
-			fprintf(stderr, "running %s (%s) [press return]",drivers[game_index]->name,drivers[game_index]->description);
-			getchar();
-		}
-	}
-#endif
-
 	/* we give up. print a few approximate matches */
 	if (game_index == -1)
 	{
@@ -550,6 +518,11 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* ok, got a gamename */
+	if (prompt_driver_name)
+	{
+		fprintf(stderr, "running %s (%s) [press return]",drivers[game_index]->name,drivers[game_index]->description);
+		getchar();
+	}
 
 	/* if this is a vector game, parse vector.ini first */
 	expand_machine_driver(drivers[game_index]->drv, &drv);
@@ -777,6 +750,7 @@ void cli_frontend_exit(void)
 
 static int config_handle_arg(char *arg)
 {
+	int i;
 
 	/* notice: for MESS game means system */
 	if (got_gamename)
@@ -785,23 +759,52 @@ static int config_handle_arg(char *arg)
 		return -1;
 	}
 
-	rompath_extra = win_dirname(arg);
-
-	if (rompath_extra && !strlen(rompath_extra))
+	if (!strcmp(arg, "random"))
 	{
-		free (rompath_extra);
-		rompath_extra = NULL;
+		/* special case: random driver */
+		i = 0;
+		while (drivers[i])
+			i++;	/* count available drivers */
+
+		srand(time(0));
+		/* call rand() once to get away from the seed */
+		rand();
+		game_index = rand() % i;
+
+		/* make sure that we prompt the driver name */
+		prompt_driver_name = TRUE;
+	}
+	else
+	{
+		rompath_extra = win_dirname(arg);
+
+		if (rompath_extra && !strlen(rompath_extra))
+		{
+			free (rompath_extra);
+			rompath_extra = NULL;
+		}
+
+		gamename = arg;
+		gamename = win_basename(gamename);
+		gamename = win_strip_extension(gamename);
+
+		/* do we have a driver for this? */
+		for (i = 0; drivers[i]; i++)
+		{
+			if (mame_stricmp(gamename, drivers[i]->name) == 0)
+			{
+				game_index = i;
+				break;
+			}
+		}
 	}
 
-	gamename = arg;
+#ifdef MESS
+	if (game_index >= 0)
+		win_add_mess_device_options(rc, drivers[game_index]);
+#endif /* MESS */
 
-	if (!gamename || !strlen(gamename))
-	{
-		fprintf(stderr,"error: no gamename given in %s\n", arg);
-		return -1;
-	}
-
-	got_gamename = 1;
+	got_gamename = TRUE;
 	return 0;
 }
 

@@ -176,6 +176,13 @@ WRITE8_HANDLER( starwars_m6532_w )
  *
  *************************************/
 
+static void sound_callback(int param)
+{
+	port_A |= 0x40; /* result from sound cpu pending */
+	main_data = param;
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
+}
+
 READ8_HANDLER( starwars_sin_r )
 {
 	port_A &= 0x7f; /* ready to receive new commands from main */
@@ -187,10 +194,7 @@ READ8_HANDLER( starwars_sin_r )
 
 WRITE8_HANDLER( starwars_sout_w )
 {
-	port_A |= 0x40; /* result from sound cpu pending */
-	main_data = data;
-	cpu_boost_interleave(0, TIME_IN_USEC(100));
-	return;
+	mame_timer_set(time_zero, data, sound_callback);
 }
 
 
@@ -213,15 +217,22 @@ READ8_HANDLER( starwars_main_ready_flag_r )
 	return (port_A & 0xc0); /* only upper two flag bits mapped */
 }
 
-
-WRITE8_HANDLER( starwars_main_wr_w )
+static void main_callback(int param)
 {
+	if (port_A & 0x80)
+		logerror ("Sound data not read %x\n",sound_data);
+
 	port_A |= 0x80;  /* command from main cpu pending */
-	sound_data = data;
+	sound_data = param;
 	cpu_boost_interleave(0, TIME_IN_USEC(100));
 
 	if (PA7_irq)
 		cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
+}
+
+WRITE8_HANDLER( starwars_main_wr_w )
+{
+	mame_timer_set(time_zero, data, main_callback);
 }
 
 

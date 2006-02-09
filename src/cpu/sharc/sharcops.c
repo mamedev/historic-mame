@@ -223,6 +223,7 @@ static void systemreg_latency_op(void)
 
 			case 0xc:	sharc.astat = data; break;		/* ASTAT */
 			case 0xd:	sharc.imask = data; break;		/* IMASK */
+			case 0xe:	sharc.stky = data; break;		/* STKY */
 			default:	osd_die("SHARC: systemreg_latency_op: unknown register %02X at %08X\n", systemreg_latency_reg, sharc.pc);
 		}
 
@@ -316,6 +317,7 @@ static UINT32 GET_UREG(int ureg)
 					case 0xb:	return systemreg_latency_data;		/* MODE1 */
 					case 0xc:	return systemreg_latency_data;		/* ASTAT */
 					case 0xd:	return systemreg_latency_data;		/* IMASK */
+					case 0xe:	return systemreg_latency_data;		/* STKY */
 
 					// TODO: IMASKP has a read latency of one cycle
 					default:	osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
@@ -332,6 +334,7 @@ static UINT32 GET_UREG(int ureg)
 					case 0xb:	return sharc.mode1;			/* MODE1 */
 					case 0xc:	return sharc.astat;			/* ASTAT */
 					case 0xd:	return sharc.imask;			/* IMASK */
+					case 0xe:	return sharc.stky;			/* STKY */
 					default:	osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
 				}
 			}
@@ -408,6 +411,14 @@ static void SET_UREG(int ureg, UINT32 data)
 			}
 			break;
 
+		case 0x6:
+			switch (reg)
+			{
+				case 0x5:	sharc.pcstkp = data; break;		/* PCSTKP */
+				default:	osd_die("SHARC: SET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+			}
+			break;
+
 		case 0x7:		/* system regs */
 			switch(reg)
 			{
@@ -421,6 +432,7 @@ static void SET_UREG(int ureg, UINT32 data)
 				case 0xb:	add_systemreg_write(reg, data); break;		/* MODE1 */
 				case 0xc:	add_systemreg_write(reg, data); break;		/* ASTAT */
 				case 0xd:	add_systemreg_write(reg, data); break;		/* IMASK */
+				case 0xe:	add_systemreg_write(reg, data); break;		/* STKY */
 				default:	osd_die("SHARC: SET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
 			}
 			break;
@@ -658,6 +670,18 @@ static void COMPUTE(UINT32 opcode)
 			case 0x00:		compute_multi_mr_to_reg(op & 0xf, rn); break;
 			case 0x01:		compute_multi_reg_to_mr(op & 0xf, rn); break;
 
+			case 0x04:		/* Rm = Rxm * Rym (SSFR),   Ra = Rxa + Rya */
+			{
+				compute_mul_ssfr_add(fm, fxm, fym, fa, fxa, fya);
+				break;
+			}
+
+			case 0x05:		/* Rm = Rxm * Rym (SSFR),   Ra = Rxa - Rya */
+			{
+				compute_mul_ssfr_sub(fm, fxm, fym, fa, fxa, fya);
+				break;
+			}
+
 			case 0x18:		/* Fm = Fxm * Fym,   Fa = Fxa + Fya */
 			{
 				compute_fmul_fadd(fm, fxm, fym, fa, fxa, fya);
@@ -740,6 +764,7 @@ static void COMPUTE(UINT32 opcode)
 					case 0xc1:		compute_logb(rn, rx); break;
 					case 0xc4:		compute_recips(rn, rx); break;
 					case 0xc5:		compute_rsqrts(rn, rx); break;
+					case 0xc9:		compute_fix(rn, rx); break;
 					case 0xca:		compute_float(rn, rx); break;
 					case 0xd9:		compute_fix_scaled(rn, rx, ry); break;
 					case 0xda:		compute_float_scaled(rn, rx, ry); break;
@@ -782,6 +807,7 @@ static void COMPUTE(UINT32 opcode)
 
 					case 0x30:		compute_fmul(rn, rx, ry); break;
 					case 0x40:		compute_mul_uuin(rn, rx, ry); break;
+					case 0x70:		compute_mul_ssin(rn, rx, ry); break;
 
 					case 0xb0:		REG(rn) = compute_mrf_plus_mul_ssin(rx, ry); break;
 					case 0xb2:		REG(rn) = compute_mrb_plus_mul_ssin(rx, ry); break;
@@ -802,6 +828,25 @@ static void COMPUTE(UINT32 opcode)
 				op >>= 2;
 				switch(op)
 				{
+					case 0x00:		/* LSHIFT Rx BY Ry*/
+					{
+						int shift = REG(ry);
+						if(shift < 0)
+						{
+							REG(rn) = (shift > -32 ) ? (REG(rx) >> -shift) : 0;
+						}
+						else
+						{
+							REG(rn) = (shift < 32) ? (REG(rx) << shift) : 0;
+							if (shift > 0)
+							{
+								sharc.astat |= SV;
+							}
+						}
+						SET_FLAG_SZ(REG(rn));
+						break;
+					}
+
 					case 0x02:		/* ROT Rx BY Ry */
 					{
 						int shift = REG(ry);
@@ -874,6 +919,22 @@ static void COMPUTE(UINT32 opcode)
 						break;
 					}
 
+					case 0x19:		/* Rn = Rn OR FDEP Rx BY Ry */
+					{
+						int bit = REG(ry) & 0x3f;
+						int len = (REG(ry) >> 6) & 0x3f;
+						UINT32 ext = REG(rx) & MAKE_EXTRACT_MASK(0, len);
+
+						REG(rn) |= ext << bit;
+
+						SET_FLAG_SZ(REG(rn));
+						if (bit+len > 32)
+						{
+							sharc.astat |= SV;
+						}
+						break;
+					}
+
 					case 0x30:		/* BSET Rx BY Ry */
 					{
 						UINT32 shift = REG(ry);
@@ -881,6 +942,22 @@ static void COMPUTE(UINT32 opcode)
 						if (shift >= 0 && shift < 32)
 						{
 							REG(rn) |= (1 << shift);
+						}
+						else
+						{
+							sharc.astat |= SV;
+						}
+						SET_FLAG_SZ(REG(rn));
+						break;
+					}
+
+					case 0x31:		/* BCLR Rx BY Ry */
+					{
+						UINT32 shift = REG(ry);
+						REG(rn) = REG(rx);
+						if (shift >= 0 && shift < 32)
+						{
+							REG(rn) &= ~(1 << shift);
 						}
 						else
 						{
@@ -924,6 +1001,16 @@ INLINE void PUSH_PC(UINT32 pc)
 	if(sharc.pcstkp >= 32) {
 		osd_die("SHARC: PC Stack overflow !\n");
 	}
+
+	if (sharc.pcstkp == 0)
+	{
+		sharc.stky |= 0x400000;
+	}
+	else
+	{
+		sharc.stky &= ~0x400000;
+	}
+
 	sharc.pcstk = pc;
 	sharc.pcstack[sharc.pcstkp] = pc;
 }
@@ -935,6 +1022,16 @@ INLINE UINT32 POP_PC(void)
 	if(sharc.pcstkp < 0) {
 		osd_die("SHARC: PC Stack underflow !\n");
 	}
+
+	if (sharc.pcstkp == 0)
+	{
+		sharc.stky |= 0x400000;
+	}
+	else
+	{
+		sharc.stky &= ~0x400000;
+	}
+
 	return sharc.pcstk;
 }
 
@@ -949,6 +1046,16 @@ INLINE void PUSH_LOOP(UINT32 pc, UINT32 count)
 	if(sharc.lstkp >= 6) {
 		osd_die("SHARC: Loop Stack overflow !\n");
 	}
+
+	if (sharc.lstkp == 0)
+	{
+		sharc.stky |= 0x4000000;
+	}
+	else
+	{
+		sharc.stky &= ~0x4000000;
+	}
+
 	sharc.lcstack[sharc.lstkp] = count;
 	sharc.lastack[sharc.lstkp] = pc;
 	sharc.laddr = pc;
@@ -961,6 +1068,16 @@ INLINE void POP_LOOP(void)
 	if(sharc.lstkp < 0) {
 		osd_die("SHARC: Loop Stack underflow !\n");
 	}
+
+	if (sharc.lstkp == 0)
+	{
+		sharc.stky |= 0x4000000;
+	}
+	else
+	{
+		sharc.stky &= ~0x4000000;
+	}
+
 	sharc.curlcntr = sharc.lcstack[sharc.lstkp];
 	sharc.laddr = sharc.lastack[sharc.lstkp];
 }
@@ -971,6 +1088,14 @@ INLINE void PUSH_STATUS_REG(UINT32 value)
 	if (sharc.status_stkp >= 8) {
 		osd_die("SHARC: Status stack overflow !\n");
 	}
+	if (sharc.status_stkp == 0)
+	{
+		sharc.stky |= 0x1000000;
+	}
+	else
+	{
+		sharc.stky &= ~0x1000000;
+	}
 	sharc.status_stack[sharc.status_stkp] = value;
 }
 
@@ -979,6 +1104,14 @@ INLINE UINT32 POP_STATUS_REG(void)
 	sharc.status_stkp--;
 	if (sharc.status_stkp < 0) {
 		osd_die("SHARC: Status stack underflow !\n");
+	}
+	if (sharc.status_stkp == 0)
+	{
+		sharc.stky |= 0x1000000;
+	}
+	else
+	{
+		sharc.stky &= ~0x1000000;
 	}
 	return sharc.status_stack[sharc.status_stkp];
 }
@@ -1654,6 +1787,8 @@ static void sharcop_jump_direct_abs(void)
 				SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
 				SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
 			}
+
+			sharc.irptl &= ~(1 << sharc.irq_active_num);
 		}
 
 		if(j) {
@@ -1707,6 +1842,8 @@ static void sharcop_jump_direct_rel(void)
 				SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
 				SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
 			}
+
+			sharc.irptl &= ~(1 << sharc.irq_active_num);
 		}
 
 		if(j) {
@@ -1741,6 +1878,8 @@ static void sharcop_jump_indirect(void)
 			SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
 			SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
 		}
+
+		sharc.irptl &= ~(1 << sharc.irq_active_num);
 	}
 
 	if(e) {		/* IF...ELSE */
@@ -1835,6 +1974,8 @@ static void sharcop_jump_indirect_rel(void)
 			SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
 			SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
 		}
+
+		sharc.irptl &= ~(1 << sharc.irq_active_num);
 	}
 
 	if(e) {		/* IF...ELSE */
@@ -1902,6 +2043,43 @@ static void sharcop_call_indirect_rel(void)
 			} else {
 				PUSH_PC(sharc.pc+1);
 			}
+		}
+	}
+}
+
+/* | 110 | */
+static void sharcop_jump_indirect_dreg_dm(void)
+{
+	int d = (sharc.opcode >> 44) & 0x1;
+	int dmi = (sharc.opcode >> 41) & 0x7;
+	int dmm = (sharc.opcode >> 38) & 0x7;
+	int pmi = (sharc.opcode >> 30) & 0x7;
+	int pmm = (sharc.opcode >> 27) & 0x7;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		sharc.npc = PM_REG_I(pmi) + PM_REG_M(pmm);
+	}
+	else
+	{
+		UINT32 compute = sharc.opcode & 0x7fffff;
+		/* due to parallelity issues, source REG must be saved */
+		/* because the compute operation may change it */
+		UINT32 parallel_dreg = REG(dreg);
+
+		if (compute != 0)
+		{
+			COMPUTE(compute);
+		}
+
+		if (d) {	/* dreg -> DM */
+			dm_write32(DM_REG_I(dmi), parallel_dreg);
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+		} else {	/* DM <- dreg */
+			REG(dreg) = dm_read32(DM_REG_I(dmi));
+			DM_REG_I(dmi) += DM_REG_M(dmm);
 		}
 	}
 }
@@ -1986,7 +2164,7 @@ static void sharcop_rti(void)
 	int e = (sharc.opcode >> 25) & 0x1;
 	int compute = sharc.opcode & 0x7fffff;
 
-	sharc.irptl &= 1 << sharc.irq_active_num;
+	sharc.irptl &= ~(1 << sharc.irq_active_num);
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {
@@ -2026,12 +2204,18 @@ static void sharcop_do_until_counter_imm(void)
 	UINT32 address = sharc.pc + offset;
 	int type;
 	int cond = 0xf;		/* until LCE (loop counter expired */
+	int distance = abs(offset);
 
-	if(offset == 1) {
+	if(distance == 1)
+	{
 		type = 1;
-	} else if(offset == 2) {
+	}
+	else if(distance == 2)
+	{
 		type = 2;
-	} else {
+	}
+	else
+	{
 		type = 3;
 	}
 
@@ -2051,12 +2235,18 @@ static void sharcop_do_until_counter_ureg(void)
 	UINT32 address = sharc.pc + offset;
 	int type;
 	int cond = 0xf;		/* until LCE (loop counter expired */
+	int distance = abs(offset);
 
-	if(offset == 1) {
+	if(distance == 1)
+	{
 		type = 1;
-	} else if(offset == 2) {
+	}
+	else if(distance == 2)
+	{
 		type = 2;
-	} else {
+	}
+	else
+	{
 		type = 3;
 	}
 
@@ -2073,13 +2263,43 @@ static void sharcop_do_until(void)
 {
 	int cond = (sharc.opcode >> 33) & 0x1f;
 	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
-	UINT32 address = sharc.pc + offset;
+	UINT32 address = (sharc.pc + offset);
 
 	PUSH_PC(sharc.pc+1);
 	PUSH_LOOP(address | (cond << 24), 0);
 }
 
 /*****************************************************************************/
+
+/* 00010111 */
+/* push/pop stacks / flush cache */
+static void sharcop_push_pop_stacks(void)
+{
+	if (sharc.opcode & U64(0x008000000000))
+	{
+		osd_die("sharcop_push_pop_stacks: push loop not implemented\n");
+	}
+	if (sharc.opcode & U64(0x004000000000))
+	{
+		osd_die("sharcop_push_pop_stacks: pop loop not implemented\n");
+	}
+	if (sharc.opcode & U64(0x002000000000))
+	{
+		osd_die("sharcop_push_pop_stacks: push sts not implemented\n");
+	}
+	if (sharc.opcode & U64(0x001000000000))
+	{
+		osd_die("sharcop_push_pop_stacks: pop sts not implemented\n");
+	}
+	if (sharc.opcode & U64(0x000800000000))
+	{
+		PUSH_PC(sharc.pcstk);
+	}
+	if (sharc.opcode & U64(0x000400000000))
+	{
+		POP_PC();
+	}
+}
 
 static void sharcop_nop(void)
 {

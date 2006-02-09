@@ -33,7 +33,6 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "cpu/ccpu/ccpu.h"
-#include "machine/z80fmly.h"
 #include "cinemat.h"
 #include "state.h"
 

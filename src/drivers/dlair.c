@@ -2,7 +2,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "cpu/z80/z80daisy.h"
 
 
@@ -125,21 +125,20 @@ static void ctc_interrupt (int state)
 
 static z80ctc_interface ctc_intf =
 {
-	1,                  /* 1 chip */
-	{ 0 },              /* clock (filled in from the CPU 0 clock */
-	{ 0 },              /* timer disables */
-	{ ctc_interrupt },  /* interrupt handler */
-	{ 0 },              /* ZC/TO0 callback */
-	{ 0 },              /* ZC/TO1 callback */
-	{ 0 }               /* ZC/TO2 callback */
+	0,              /* clock (filled in from the CPU 0 clock */
+	0,              /* timer disables */
+	ctc_interrupt,  /* interrupt handler */
+	0,              /* ZC/TO0 callback */
+	0,              /* ZC/TO1 callback */
+	0               /* ZC/TO2 callback */
 };
 
 
 MACHINE_INIT( dlair )
 {
    /* initialize the CTC */
-   ctc_intf.baseclock[0] = Machine->drv->cpu[0].cpu_clock;
-   z80ctc_init(&ctc_intf);
+   ctc_intf.baseclock = Machine->drv->cpu[0].cpu_clock;
+   z80ctc_init(0, &ctc_intf);
 }
 
 

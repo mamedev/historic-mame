@@ -17,7 +17,7 @@
 #include "driver.h"
 #include "cpu/ccpu/ccpu.h"
 #include "cpu/z80/z80daisy.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "cinemat.h"
 #include "sound/samples.h"
 #include "sound/ay8910.h"
@@ -1494,13 +1494,12 @@ static void ctc_interrupt(int state)
 
 static z80ctc_interface demon_z80ctc_interface =
 {
-	1,                   /* 1 chip */
-	{ 0 },               /* clock (filled in from the CPU clock) */
-	{ 0 },               /* timer disables */
-	{ ctc_interrupt },   /* interrupt handler */
-	{ 0 },               /* ZC/TO0 callback */
-	{ 0 },               /* ZC/TO1 callback */
-	{ 0 }                /* ZC/TO2 callback */
+	0,               /* clock (filled in from the CPU clock) */
+	0,               /* timer disables */
+	ctc_interrupt,   /* interrupt handler */
+	0,               /* ZC/TO0 callback */
+	0,               /* ZC/TO1 callback */
+	0                /* ZC/TO2 callback */
 };
 
 
@@ -1510,8 +1509,8 @@ static MACHINE_INIT( demon_sound )
 	generic_init(demon_sound_w);
 
 	/* initialize the CTC interface */
-	demon_z80ctc_interface.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init(&demon_z80ctc_interface);
+	demon_z80ctc_interface.baseclock = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init(0, &demon_z80ctc_interface);
 
 	/* reset the FIFO */
 	sound_fifo_in = sound_fifo_out = 0;

@@ -34,7 +34,7 @@ Memo:
 
 #include "driver.h"
 #include "machine/m68kfmly.h"
-#include "machine/z80fmly.h"
+#include "machine/z80ctc.h"
 #include "vidhrdw/generic.h"
 #include "nb1413m3.h"
 #include "sound/dac.h"
@@ -192,20 +192,19 @@ static void ctc0_interrupt(int state)
 
 static z80ctc_interface ctc_intf =
 {
-	1,						/* 1 chip */
-	{ 1 },					/* clock */
-	{ 0 },					/* timer disables */
-	{ ctc0_interrupt },		/* interrupt handler */
-	{ z80ctc_0_trg3_w },	/* ZC/TO0 callback ctc1.zc0 -> ctc1.trg3 */
-	{ 0 },					/* ZC/TO1 callback */
-	{ 0 },					/* ZC/TO2 callback */
+	1,					/* clock */
+	0,					/* timer disables */
+	ctc0_interrupt,		/* interrupt handler */
+	z80ctc_0_trg3_w,	/* ZC/TO0 callback ctc1.zc0 -> ctc1.trg3 */
+	0,					/* ZC/TO1 callback */
+	0,					/* ZC/TO2 callback */
 };
 
 static void tmpz84c011_init(void)
 {
 	// initialize the CTC
-	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init(&ctc_intf);
+	ctc_intf.baseclock = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init(0, &ctc_intf);
 }
 
 static MACHINE_INIT( niyanpai )

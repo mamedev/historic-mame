@@ -17,7 +17,7 @@
 #include "cpuintrf.h"
 #include "mamedbg.h"
 #include "t11.h"
-
+#include "state.h"
 
 
 /*************************************
@@ -58,7 +58,7 @@ typedef struct
     UINT16	op;
     UINT8	wait_state;
     UINT8	irq_state;
-    int		interrupt_cycles;
+    INT32	interrupt_cycles;
     int		(*irq_callback)(int irqline);
 } t11_Regs;
 
@@ -316,6 +316,22 @@ static void t11_set_context(void *src)
 
 static void t11_init(void)
 {
+	int cpu = cpu_getactivecpu();
+
+	state_save_register_item("t11", cpu, t11.ppc.w.l);
+	state_save_register_item("t11", cpu, t11.reg[0].w.l);
+	state_save_register_item("t11", cpu, t11.reg[1].w.l);
+	state_save_register_item("t11", cpu, t11.reg[2].w.l);
+	state_save_register_item("t11", cpu, t11.reg[3].w.l);
+	state_save_register_item("t11", cpu, t11.reg[4].w.l);
+	state_save_register_item("t11", cpu, t11.reg[5].w.l);
+	state_save_register_item("t11", cpu, t11.reg[6].w.l);
+	state_save_register_item("t11", cpu, t11.reg[7].w.l);
+	state_save_register_item("t11", cpu, t11.psw.w.l);
+	state_save_register_item("t11", cpu, t11.op);
+	state_save_register_item("t11", cpu, t11.wait_state);
+	state_save_register_item("t11", cpu, t11.irq_state);
+	state_save_register_item("t11", cpu, t11.interrupt_cycles);
 }
 
 

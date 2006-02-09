@@ -425,7 +425,7 @@ MACHINE_DRIVER_END
 
 static DRIVER_INIT(zr107)
 {
-	init_konami_cgboard(0);
+	init_konami_cgboard(0, CGBOARD_TYPE_ZR107);
 	sharc_dataram = auto_malloc(0x100000);
 }
 

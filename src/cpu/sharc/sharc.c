@@ -789,7 +789,7 @@ static void sharc_set_irq_line(int irqline, int state)
 
 static void check_interrupts(void)
 {
-	if (sharc.imask & (1 << sharc.irq_active_num) && sharc.mode1 & 0x1000)
+	if ((sharc.imask & (1 << sharc.irq_active_num)) && (sharc.mode1 & 0x1000))
 	{
 		PUSH_PC(sharc.npc);
 
@@ -823,6 +823,7 @@ static void sharc_reset(void *param)
 	sharc.pc = 0x20004;
 	sharc.npc = sharc.pc + 1;
 	sharc.idle = 0;
+	sharc.stky = 0x5400000;
 
 	switch(config->boot_mode)
 	{
@@ -870,7 +871,51 @@ static int sharc_execute(int num_cycles)
 		sharc.npc++;
 
 		CALL_MAME_DEBUG;
-		DECODE_AND_EXEC_OPCODE();
+
+		/* handle looping */
+		if(sharc.pc == (sharc.laddr & 0xffffff))
+		{
+			int cond = (sharc.laddr >> 24) & 0x1f;
+
+			/* loop type */
+			switch((sharc.laddr >> 30) & 0x3)
+			{
+				case 0:		/* arithmetic condition-based */
+					if(DO_CONDITION_CODE(cond))
+					{
+						DECODE_AND_EXEC_OPCODE();
+						POP_LOOP();
+						POP_PC();
+					}
+					else
+					{
+						DECODE_AND_EXEC_OPCODE();
+						sharc.npc = TOP_PC();
+					}
+					break;
+				case 1:		/* counter-based, length 1 */
+				case 2:		/* counter-based, length 2 */
+				case 3:		/* counter-based, length >2 */
+					sharc.lcstack[sharc.lstkp]--;
+					sharc.curlcntr--;
+					if(sharc.curlcntr == 0)
+					{
+						DECODE_AND_EXEC_OPCODE();
+						POP_LOOP();
+						POP_PC();
+					}
+					else
+					{
+						DECODE_AND_EXEC_OPCODE();
+						sharc.npc = TOP_PC();
+					}
+					break;
+			}
+		}
+		else
+		{
+			DECODE_AND_EXEC_OPCODE();
+		}
 
 		systemreg_latency_op();
 		IOP_LATENCY_OP();
@@ -884,36 +929,6 @@ static int sharc_execute(int num_cycles)
 				{
 					schedule_chained_dma_op(dmaop_channel, dmaop_chain_ptr, dmaop_chained_direction);
 				}
-			}
-		}
-
-		/* handle looping */
-		if(sharc.pc == (sharc.laddr & 0xffffff)) {
-			int cond = (sharc.laddr >> 24) & 0x1f;
-
-			/* loop type */
-			switch((sharc.laddr >> 30) & 0x3)
-			{
-				case 0:		/* arithmetic condition-based */
-					if(DO_CONDITION_CODE(cond)) {
-						POP_LOOP();
-						POP_PC();
-					} else {
-						sharc.npc = TOP_PC();
-					}
-					break;
-				case 1:		/* counter-based, length 1 */
-				case 2:		/* counter-based, length 2 */
-				case 3:		/* counter-based, length >2 */
-					sharc.lcstack[sharc.lstkp]--;
-					sharc.curlcntr--;
-					if(sharc.curlcntr == 0) {
-						POP_LOOP();
-						POP_PC();
-					} else {
-						sharc.npc = TOP_PC();
-					}
-					break;
 			}
 		}
 

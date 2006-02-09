@@ -1,5 +1,6 @@
 #include "driver.h"
-#include "machine/z80fmly.h"
+#include "machine/z80pio.h"
+#include "machine/z80ctc.h"
 #include "sound/samples.h"
 #include <math.h>
 
@@ -12,10 +13,9 @@ static void pio_interrupt(int state)
 
 static z80pio_interface pio_intf =
 {
-	1,
-	{pio_interrupt},
-	{0},
-	{0}
+	pio_interrupt,
+	0,
+	0
 };
 
 /* z80 ctc */
@@ -26,13 +26,12 @@ static void ctc_interrupt (int state)
 
 static z80ctc_interface ctc_intf =
 {
-	1,                   /* 1 chip */
-	{ 0 },               /* clock (filled in from the CPU 0 clock */
-	{ NOTIMER_2 },       /* timer disables */
-	{ ctc_interrupt },   /* interrupt handler */
-	{ z80ctc_0_trg1_w }, /* ZC/TO0 callback */
-	{ 0 },               /* ZC/TO1 callback */
-	{ 0 }                /* ZC/TO2 callback */
+	0,               /* clock (filled in from the CPU 0 clock */
+	NOTIMER_2,       /* timer disables */
+	ctc_interrupt,   /* interrupt handler */
+	z80ctc_0_trg1_w, /* ZC/TO0 callback */
+	0,               /* ZC/TO1 callback */
+	0                /* ZC/TO2 callback */
 };
 
 
@@ -73,11 +72,11 @@ void senjyo_sh_start(void)
     int i;
 
 	/* z80 ctc init */
-	ctc_intf.baseclock[0] = Machine->drv->cpu[1].cpu_clock;
-	z80ctc_init (&ctc_intf);
+	ctc_intf.baseclock = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init (0, &ctc_intf);
 
 	/* z80 pio init */
-	z80pio_init (&pio_intf);
+	z80pio_init (0, &pio_intf);
 
 	_single = (INT16 *)auto_malloc(SINGLE_LENGTH*2);
 

@@ -368,7 +368,9 @@ $(OBJ)/shared.a: \
  	$(OBJ)/machine/smc91c9x.o \
 	$(OBJ)/machine/ticket.o \
 	$(OBJ)/machine/tmp68301.o \
-	$(OBJ)/machine/z80fmly.o \
+	$(OBJ)/machine/z80ctc.o \
+	$(OBJ)/machine/z80pio.o \
+	$(OBJ)/machine/z80sio.o \
 	$(OBJ)/vidhrdw/crtc6845.o \
 	$(OBJ)/vidhrdw/avgdvg.o \
 	$(OBJ)/vidhrdw/poly.o \
@@ -1198,7 +1200,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/changela.o \
 	$(OBJ)/drivers/crbaloon.o $(OBJ)/vidhrdw/crbaloon.o $(OBJ)/sndhrdw/crbaloon.o \
 	$(OBJ)/drivers/darius.o $(OBJ)/vidhrdw/darius.o \
-	$(OBJ)/drivers/darkmist.o \
+	$(OBJ)/drivers/darkmist.o $(OBJ)/vidhrdw/darkmist.o \
 	$(OBJ)/drivers/exzisus.o $(OBJ)/vidhrdw/exzisus.o \
 	$(OBJ)/drivers/fgoal.o $(OBJ)/vidhrdw/fgoal.o \
 	$(OBJ)/drivers/flstory.o $(OBJ)/machine/flstory.o $(OBJ)/vidhrdw/flstory.o \

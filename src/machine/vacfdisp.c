@@ -251,6 +251,7 @@ void vfd_shift_data(int id, int data)
 int vfd_newdata(int id, int data)
 {
 	int change = 0;
+	int cursor;
 
 	switch ( vfds[id].type )
 	{
@@ -321,16 +322,29 @@ int vfd_newdata(int id, int data)
 						if ( vfds[id].window_start > 0 )
 						{
 							memset( vfds[id].string, ' ', vfds[id].window_start);
+							for (cursor = 0; cursor < vfds[id].window_start; cursor++)
+							{
+								vfds[id].segments[cursor] = 0x0000;
+							}
 						}
 
 						if (vfds[id].window_end < 15 )
 						{
 							memset( vfds[id].string+vfds[id].window_end, ' ', 15-vfds[id].window_end);
+							for (cursor = vfds[id].window_end; cursor < 15-vfds[id].window_end; cursor++)
+							{
+								vfds[id].segments[cursor] = 0x0000;
+							}
+
 						}
 					}
 				case 0x03:	// clr entire display
 
 				memset(vfds[id].string, ' ' , 16);
+				for (cursor = 0; cursor < 16; cursor++)
+				{
+				vfds[id].segments[cursor] = 0x0000;
+				}
 				break;
 			}
 			change = 1;

@@ -1,6 +1,8 @@
 /* Konami PowerPC-based 3D games common functions */
 
 #include "driver.h"
+#include "cpu/sharc/sharc.h"
+#include "konppc.h"
 
 #define MAX_CG_BOARDS	2
 
@@ -10,16 +12,18 @@ static int dsp_shared_ram_bank[MAX_CG_BOARDS];
 
 static int cgboard_id;
 static int cgboard_texture_bank = -1;
+static int cgboard_type;
 
 static UINT32 *dsp_shared_ram[MAX_CG_BOARDS];
 
 /*****************************************************************************/
 
-void init_konami_cgboard(int board_id)
+void init_konami_cgboard(int board_id, int type)
 {
 	dsp_comm_ppc[board_id][0] = 0x00;
 	dsp_shared_ram[board_id] = auto_malloc(0x20000);
 	dsp_shared_ram_bank[board_id] = 0;
+	cgboard_type = type;
 }
 
 void set_cgboard_id(int board_id)
@@ -39,7 +43,7 @@ void set_cgboard_texture_bank(int bank)
 READ32_HANDLER( cgboard_dsp_comm_r_ppc )
 {
 //  printf("dsp_cmd_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
-	return dsp_comm_sharc[cgboard_id][offset] | dsp_comm_sharc[cgboard_id][offset+1] << 16;
+	return dsp_comm_sharc[cgboard_id][offset];
 }
 
 WRITE32_HANDLER( cgboard_dsp_comm_w_ppc )
@@ -139,6 +143,7 @@ READ32_HANDLER( cgboard_dsp_shared_r_ppc )
 
 WRITE32_HANDLER( cgboard_dsp_shared_w_ppc )
 {
+	cpu_trigger(10000);		// Remove the timeout (a part of the GTI Club FIFO test workaround)
 	COMBINE_DATA(dsp_shared_ram[cgboard_id] + (offset + (dsp_shared_ram_bank[cgboard_id] * 0x4000)));
 }
 
@@ -171,6 +176,11 @@ WRITE32_HANDLER( cgboard_dsp_comm_w_sharc )
 				memory_set_bankptr(cgboard_texture_bank, memory_region(REGION_USER5));
 			}
 		}
+	}
+
+	if (cgboard_type == CGBOARD_TYPE_GTICLUB)
+	{
+		cpunum_set_input_line(2, SHARC_INPUT_FLAG0, ASSERT_LINE);
 	}
 
 //  printf("cgboard_dsp_comm_w_sharc: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
