@@ -452,8 +452,6 @@ static void OKIM6295_data_w(int num, int data)
 			{
 				struct ADPCMVoice *voice = &info->voice[i];
 
-				if (Machine->sample_rate == 0) return;
-
 				/* determine the start/stop positions */
 				base = &info->region_base[info->bank_offset + info->command * 8];
 				start = ((base[0] << 16) + (base[1] << 8) + base[2]) & 0x3ffff;

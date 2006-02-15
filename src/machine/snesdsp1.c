@@ -672,7 +672,7 @@ void DSP1_Target(INT16 H, INT16 V, INT16 *X, INT16 *Y)
 // Input    byte(01H) integer(M) integer(Az) integer(Ay) integer(Ax)
 // Output   None
 
-INT16 MatrixA[3][3];
+static INT16 MatrixA[3][3];
 
 void DSP1_Attitude_A(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 {
@@ -702,7 +702,7 @@ void DSP1_Attitude_A(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 // Input    byte(11H) integer(M) integer(Az) integer(Ay) integer(Ax)
 // Output   None
 
-INT16 MatrixB[3][3];
+static INT16 MatrixB[3][3];
 
 void DSP1_Attitude_B(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 {
@@ -732,7 +732,7 @@ void DSP1_Attitude_B(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 // Input    byte(21H) integer(M) integer(Az) integer(Ay) integer(Ax)
 // Output   None
 
-INT16 MatrixC[3][3];
+static INT16 MatrixC[3][3];
 
 void DSP1_Attitude_C(INT16 M, INT16 Az, INT16 Ay, INT16 Ax)
 {

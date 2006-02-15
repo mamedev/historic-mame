@@ -63,7 +63,7 @@ PIC16F84
 static UINT16 *gms_vidram;
 static UINT16 *gms_vidram2;
 
-UINT16 tilebank=0;
+static UINT16 tilebank=0;
 
 static READ16_HANDLER( gms_read )
 {

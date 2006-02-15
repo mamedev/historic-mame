@@ -288,7 +288,7 @@ static WRITE8_HANDLER (segae_mem_8000_w)
 
 ***************************************/
 
-UINT8 rombank;
+static UINT8 rombank;
 
 void segae_bankswitch (void)
 {

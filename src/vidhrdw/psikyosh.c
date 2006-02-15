@@ -94,7 +94,7 @@ sol divide doesn't seem to make much use of tilemaps at all, it uses them to fad
 #include "psikyosh.h"
 
 /* Needed for psikyosh_drawgfxzoom */
-mame_bitmap *zoom_bitmap, *z_bitmap;
+static mame_bitmap *zoom_bitmap, *z_bitmap;
 
 /* Psikyo PS6406B */
 /* --- BACKGROUNDS --- */

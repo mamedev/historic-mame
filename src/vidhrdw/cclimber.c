@@ -718,15 +718,15 @@ VIDEO_UPDATE( yamato )
 
 static tilemap *bg_tilemap;
 
-UINT8 *videoram2;
-UINT8 *videoram3;
-UINT8 *videoram4;
+UINT8 *toprollr_videoram2;
+UINT8 *toprollr_videoram3;
+UINT8 *toprollr_videoram4;
 
 
 static void get_tile_info_bg(int tile_index)
 {
-	int code = videoram3[tile_index];
-	int atr = videoram4[tile_index];
+	int code = toprollr_videoram3[tile_index];
+	int atr = toprollr_videoram4[tile_index];
 	int flipx,flipy,bank;
 
 	bank=(atr&8)<<5;
@@ -790,7 +790,7 @@ VIDEO_UPDATE( toprollr )
 	UINT32 x,y,c,d;
 	int offs;
 
-	tilemap_set_scrollx(bg_tilemap,0,videoram3[0]+8);
+	tilemap_set_scrollx(bg_tilemap,0,toprollr_videoram3[0]+8);
 	tilemap_mark_all_tiles_dirty(bg_tilemap);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
@@ -834,7 +834,7 @@ VIDEO_UPDATE( toprollr )
 			int flipy=0;
 
 			c=videoram[y*32+x];
-			d=videoram2[y*32+x];
+			d=toprollr_videoram2[y*32+x];
 
 			if (flip_screen_x)
 			{

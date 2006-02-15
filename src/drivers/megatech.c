@@ -32,7 +32,7 @@ A fairly significant number of Genesis games were available for this system.
 #include "genesis.h"
 
 /* Megatech BIOS specific */
-unsigned int bios_port_ctrl;
+static unsigned int bios_port_ctrl;
 unsigned int bios_ctrl_inputs;
 
 #define MASTER_CLOCK		53693100

@@ -154,6 +154,7 @@ void mediagx_get_info(UINT32 state, union cpuinfo *info);
 void i960_get_info(UINT32 state, union cpuinfo *info);
 void h8_3002_get_info(UINT32 state, union cpuinfo *info);
 void v810_get_info(UINT32 state, union cpuinfo *info);
+void m37702_get_info(UINT32 state, union cpuinfo *info);
 void m37710_get_info(UINT32 state, union cpuinfo *info);
 void ppc403_get_info(UINT32 state, union cpuinfo *info);
 void ppc602_get_info(UINT32 state, union cpuinfo *info);
@@ -674,6 +675,9 @@ const struct
 #endif
 #if (HAS_V810)
 	{ CPU_V810, v810_get_info },
+#endif
+#if (HAS_M37702)
+	{ CPU_M37702, m37702_get_info },
 #endif
 #if (HAS_M37710)
 	{ CPU_M37710, m37710_get_info },

@@ -34,7 +34,7 @@ UINT8 *segae_vdp_regs[CHIPS];			/* Pointer to the VDP's Registers */
 
 UINT8 segae_vdp_vrambank[CHIPS];		/* Current VRAM Bank number (from writes to Port 0xf7) */
 
-UINT8 *cache_bitmap;					/* 8bpp bitmap with raw pen values */
+static UINT8 *cache_bitmap;					/* 8bpp bitmap with raw pen values */
 
 static int segasyse_palettebase; // needed for megatech for now..
 

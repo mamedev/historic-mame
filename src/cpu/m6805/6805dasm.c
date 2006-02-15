@@ -68,7 +68,7 @@ static const char *op_name_str[] = {
 #define _mwr	EA_UINT8,EA_MEM_WR
 #define _mrw	EA_UINT8,EA_MEM_RDWR
 
-const unsigned char disasm[0x100][4] = {
+static const unsigned char disasm[0x100][4] = {
 	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},/* 00 */
 	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},
 	{brset,_btr,_zrd},{brclr,_btr,_zrd},{brset,_btr,_zrd},{brclr,_btr,_zrd},

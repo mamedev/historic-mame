@@ -17,7 +17,7 @@ unsigned char *dday_textvideoram;
 unsigned char *dday_colorram;
 
 static tilemap *fg_tilemap, *bg_tilemap, *text_tilemap, *sl_tilemap;
-mame_bitmap *main_bitmap;
+static mame_bitmap *main_bitmap;
 static int control;
 static int sl_image;
 static int sl_enable;

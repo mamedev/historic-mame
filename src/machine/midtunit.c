@@ -551,7 +551,7 @@ READ16_HANDLER( midtunit_sound_state_r )
 {
 /*  logerror("%08X:Sound status read\n", activecpu_get_pc());*/
 
-	if (sound_type == SOUND_DCS && Machine->sample_rate)
+	if (sound_type == SOUND_DCS)
 		return dcs_control_r() >> 4;
 
 	if (fake_sound_state)
@@ -566,7 +566,7 @@ READ16_HANDLER( midtunit_sound_r )
 {
 	logerror("%08X:Sound data read\n", activecpu_get_pc());
 
-	if (sound_type == SOUND_DCS && Machine->sample_rate)
+	if (sound_type == SOUND_DCS)
 		return dcs_data_r() & 0xff;
 
 	return ~0;

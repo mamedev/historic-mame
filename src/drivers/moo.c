@@ -221,28 +221,7 @@ static WRITE16_HANDLER( sound_irq_w )
 
 static READ16_HANDLER( sound_status_r )
 {
-	int latch = soundlatch3_r(0);
-
-	/* make test pass with sound off.
-       these games are trickier than your usual konami stuff, they expect to
-       read 0xff (meaning the z80 booted properly) then 0x80 (z80 busy) then
-       the self-test result */
-	if (!Machine->sample_rate) {
-		if (init_nosound_count < 10)
-		{
-			if (!init_nosound_count)
-				latch = 0xff;
-			else
-				latch = 0x80;
-			init_nosound_count++;
-		}
-		else
-		{
-			latch = 0x0f;
-		}
-	}
-
-	return latch;
+	return soundlatch3_r(0);
 }
 
 static WRITE8_HANDLER( sound_bankswitch_w )

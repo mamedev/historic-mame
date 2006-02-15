@@ -95,16 +95,16 @@ WRITE8_HANDLER( polyplay_characterram_w );
 static READ8_HANDLER( polyplay_random_read );
 
 /* sound handling */
-void set_channel1(int active);
-void set_channel2(int active);
+void polyplay_set_channel1(int active);
+void polyplay_set_channel2(int active);
 static int prescale1;
 static int prescale2;
 static int channel1_active;
 static int channel1_const;
 static int channel2_active;
 static int channel2_const;
-void play_channel1(int data);
-void play_channel2(int data);
+void polyplay_play_channel1(int data);
+void polyplay_play_channel2(int data);
 void polyplay_sh_start(void);
 
 /* timer handling */
@@ -130,10 +130,10 @@ static MACHINE_INIT( polyplay )
 	channel2_active = 0;
 	channel2_const = 0;
 
-	set_channel1(0);
-	play_channel1(0);
-	set_channel2(0);
-	play_channel2(0);
+	polyplay_set_channel1(0);
+	polyplay_play_channel1(0);
+	polyplay_set_channel2(0);
+	polyplay_play_channel2(0);
 
 	polyplay_timer = timer_alloc(timer_callback);
 }
@@ -217,42 +217,42 @@ static WRITE8_HANDLER( polyplay_sound_channel )
 	case 0x00:
 		if (channel1_const) {
 			if (data <= 1) {
-				set_channel1(0);
+				polyplay_set_channel1(0);
 			}
 			channel1_const = 0;
-			play_channel1(data*prescale1);
+			polyplay_play_channel1(data*prescale1);
 
 		}
 		else {
 			prescale1 = (data & 0x20) ? 16 : 1;
 			if (data & 0x04) {
-				set_channel1(1);
+				polyplay_set_channel1(1);
 				channel1_const = 1;
 			}
 			if ((data == 0x41) || (data == 0x65) || (data == 0x45)) {
-				set_channel1(0);
-				play_channel1(0);
+				polyplay_set_channel1(0);
+				polyplay_play_channel1(0);
 			}
 		}
 		break;
 	case 0x01:
 		if (channel2_const) {
 			if (data <= 1) {
-				set_channel2(0);
+				polyplay_set_channel2(0);
 			}
 			channel2_const = 0;
-			play_channel2(data*prescale2);
+			polyplay_play_channel2(data*prescale2);
 
 		}
 		else {
 			prescale2 = (data & 0x20) ? 16 : 1;
 			if (data & 0x04) {
-				set_channel2(1);
+				polyplay_set_channel2(1);
 				channel2_const = 1;
 			}
 			if ((data == 0x41) || (data == 0x65) || (data == 0x45)) {
-				set_channel2(0);
-				play_channel2(0);
+				polyplay_set_channel2(0);
+				polyplay_play_channel2(0);
 			}
 		}
 		break;

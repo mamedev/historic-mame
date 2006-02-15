@@ -96,15 +96,25 @@ static int d3d_rc_prescale;
 static int d3d_rc_feedback;
 static int d3d_rc_rotate;
 
-struct d3d_preset_info {
+typedef struct _d3d_preset_info d3d_preset_info;
+
+struct _d3d_preset_info
+{
 	const char *presetname;
-	int use_rgbeffect; int pattern_mode; int pattern_white_level; int pattern_black_level; int pattern_desaturation;
-	int image_white_level_adjust; int use_feedback; int use_prescale; int use_scanlines;
+	int use_rgbeffect;
+	int pattern_mode;
+	int pattern_white_level;
+	int pattern_black_level;
+	int pattern_desaturation;
+	int image_white_level_adjust;
+	int use_feedback;
+	int use_prescale;
+	int use_scanlines;
 	const char *pattern_name;
 };
 
 // built-in presets
-static struct d3d_preset_info effects_preset[] =
+static d3d_preset_info effects_preset[] =
 {
 	{ "",				0, 0, 0,	  0,	0,	  0,	0,	  -2,	-1,			"none" },						//  0
 
@@ -144,10 +154,10 @@ static struct d3d_preset_info effects_preset[] =
 };
 
 // the settings from -effect custom
-static struct d3d_preset_info custom_preset;
+static d3d_preset_info custom_preset;
 
 // the settings in use
-static struct d3d_preset_info active_preset;
+static d3d_preset_info active_preset;
 
 
 

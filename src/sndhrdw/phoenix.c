@@ -340,7 +340,7 @@ DISCRETE_SOUND_START(phoenix_discrete_interface)
 	/************************************************/
 	DISCRETE_COMP_ADDER(NODE_30, 1, PHOENIX_EFFECT_2_FREQ, &phoenix_effect2_cap_sel)
 	/* Part of the frequency select also effects the gain */
-	DISCRETE_TRANSFORM2(NODE_31, 1, PHOENIX_EFFECT_2_FREQ, 2, "01&/") // get bit 0x02
+	DISCRETE_TRANSFORM2(NODE_31, 1, PHOENIX_EFFECT_2_FREQ, 2, "01&1/") // get bit 0x02
 	DISCRETE_SWITCH(NODE_32, 1, NODE_31, DEFAULT_TTL_V_LOGIC_1, DEFAULT_TTL_V_LOGIC_1/2)
 	DISCRETE_555_ASTABLE(NODE_33, 1, RES_K(47), RES_K(100), NODE_30, &phoenix_effect2_555)		// R40, R41
 	/* C20 has been confirmed on real boards as 1uF, not 10uF in schematics  */

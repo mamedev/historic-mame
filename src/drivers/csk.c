@@ -157,12 +157,12 @@ WRITE8_HANDLER( cpk_expansion_w );
 
 static size_t protection_res = 0;
 
-READ8_HANDLER( custom_io_r )
+static READ8_HANDLER( custom_io_r )
 {
 	return protection_res;
 }
 
-WRITE8_HANDLER( custom_io_w )
+static WRITE8_HANDLER( custom_io_w )
 {
 	switch (data)
 	{

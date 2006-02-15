@@ -21,7 +21,7 @@
 #define CHARGEN_NUM_CHARS		512		/* max number of characters handled by the chargen */
 
 /* default monochromatic colortable */
-pen_t default_colortable_mono[] =
+static const pen_t default_colortable_mono[] =
 {
 	0,1,2,3,
 	0,1,2,3,

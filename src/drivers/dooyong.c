@@ -854,7 +854,7 @@ static void irqhandler(int irq)
 	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-READ8_HANDLER( unk_r )
+static READ8_HANDLER( unk_r )
 {
 	return 0;
 }

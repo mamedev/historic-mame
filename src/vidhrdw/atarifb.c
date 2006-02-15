@@ -16,9 +16,9 @@ unsigned char *atarifb_alphap2_vram;
 unsigned char *atarifb_scroll_register;
 
 
-rectangle bigfield_area = {  4*8, 34*8-1, 0*8, 32*8-1 };
-rectangle left_area =     {  0*8,  3*8-1, 0*8, 32*8-1 };
-rectangle right_area =    { 34*8, 38*8-1, 0*8, 32*8-1 };
+static const rectangle bigfield_area = {  4*8, 34*8-1, 0*8, 32*8-1 };
+static const rectangle left_area =     {  0*8,  3*8-1, 0*8, 32*8-1 };
+static const rectangle right_area =    { 34*8, 38*8-1, 0*8, 32*8-1 };
 
 /***************************************************************************
 ***************************************************************************/

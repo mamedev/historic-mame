@@ -18,7 +18,7 @@ OKI M6295 sound ROM dump is bad.
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
-UINT8 *bg_paletteram, *missb2_bgvram;
+static UINT8 *bg_paletteram, *missb2_bgvram;
 
 /* vidhrdw/bublbobl.c */
 extern UINT8 *bublbobl_objectram;

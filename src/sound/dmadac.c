@@ -251,9 +251,6 @@ static void *dmadac_start(int sndindex, int clock, const void *config)
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
-	if (Machine->sample_rate == 0)
-		return info;
-
 	/* init globals */
 	freqmult = 1.0;
 	freqmult_quiece_time = 0;
@@ -292,9 +289,6 @@ static void *dmadac_start(int sndindex, int clock, const void *config)
 void dmadac_transfer(UINT8 first_channel, UINT8 num_channels, offs_t channel_spacing, offs_t frame_spacing, offs_t total_frames, INT16 *data)
 {
 	int i, j;
-
-	if (Machine->sample_rate == 0)
-		return;
 
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
@@ -350,9 +344,6 @@ void dmadac_enable(UINT8 first_channel, UINT8 num_channels, UINT8 enable)
 {
 	int i;
 
-	if (Machine->sample_rate == 0)
-		return;
-
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
 	{
@@ -376,9 +367,6 @@ void dmadac_set_frequency(UINT8 first_channel, UINT8 num_channels, double freque
 {
 	int i;
 
-	if (Machine->sample_rate == 0)
-		return;
-
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)
 	{
@@ -400,9 +388,6 @@ void dmadac_set_frequency(UINT8 first_channel, UINT8 num_channels, double freque
 void dmadac_set_volume(UINT8 first_channel, UINT8 num_channels, UINT16 volume)
 {
 	int i;
-
-	if (Machine->sample_rate == 0)
-		return;
 
 	/* flush out as much data as we can */
 	for (i = 0; i < num_channels; i++)

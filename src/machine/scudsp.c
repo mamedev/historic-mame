@@ -874,7 +874,7 @@ void dsp_execute_program()
     SCU DSP Disassembler
 
 ************************************************************************/
-const char* ALU_Commands[] =
+static const char* ALU_Commands[] =
 {
 	"",		/* 0000 */
 	"AND",	/* 0001 */
@@ -894,7 +894,7 @@ const char* ALU_Commands[] =
 	"RL8",	/* 1111 */
 };
 
-const char* X_Commands[] =
+static const char* X_Commands[] =
 {
 	"",				/* 000 */
 	"",				/* 001 */	/* NOP? check instruction @ 0x0B */
@@ -903,7 +903,7 @@ const char* X_Commands[] =
 	"MOV %s,X",		/* 100 */
 };
 
-const char* Y_Commands[] =
+static const char* Y_Commands[] =
 {
 	"",				/* 000 */
 	"CLR A",		/* 001 */
@@ -912,7 +912,7 @@ const char* Y_Commands[] =
 	"MOV %s,Y",		/* 100 */
 };
 
-const char* D1_Commands[] =
+static const char* D1_Commands[] =
 {
 	"",					/* 00 */
 	"MOV %I8,%d",		/* 01 */
@@ -920,7 +920,7 @@ const char* D1_Commands[] =
 	"MOV %S,%d",		/* 11 */
 };
 
-const char* SourceMemory[] =
+static const char* SourceMemory[] =
 {
 	"M0",			/* 000 */
 	"M1",			/* 001 */
@@ -932,7 +932,7 @@ const char* SourceMemory[] =
 	"MC3",			/* 111 */
 };
 
-const char* SourceMemory2[] =
+static const char* SourceMemory2[] =
 {
 	"M0",			/* 0000 */
 	"M1",			/* 0001 */
@@ -952,7 +952,7 @@ const char* SourceMemory2[] =
 	"???",			/* 1111 */
 };
 
-const char* DestMemory[] =
+static const char* DestMemory[] =
 {
 	"MC0",			/* 0000 */
 	"MC1",			/* 0001 */
@@ -972,7 +972,7 @@ const char* DestMemory[] =
 	"CT3",			/* 1111 */
 };
 
-const char* DestDMAMemory[] =
+static const char* DestDMAMemory[] =
 {
 	"M0",			/* 000 */
 	"M1",			/* 001 */
@@ -984,19 +984,19 @@ const char* DestDMAMemory[] =
 	"???",			/* 111 */
 };
 
-const char* MVI_Command[] =
+static const char* MVI_Command[] =
 {
 	"MVI %I,%d",	/* 0 */
 	"MVI %I,%d,%f",	/* 1 */
 };
 
-const char* JMP_Command[] =
+static const char* JMP_Command[] =
 {
 	"JMP %IA",
 	"JMP %f,%IA",
 };
 
-const char* DMA_Command[] =
+static const char* DMA_Command[] =
 {
 	"DMA%H%A D0,%M,%I",
 	"DMA%H%A %s,D0,%I",

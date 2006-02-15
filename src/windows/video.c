@@ -452,6 +452,7 @@ void win_disorient_rect(rectangle *rect)
 //============================================================
 //  devices_enum_callback
 //============================================================
+
 static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription,
 										 LPSTR lpDriverName, LPVOID lpContext, HMONITOR hm)
 {

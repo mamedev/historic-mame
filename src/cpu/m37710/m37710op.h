@@ -203,6 +203,9 @@ INLINE void m37710i_branch_16(uint offset)
 /* ============================ STATUS REGISTER =========================== */
 /* ======================================================================== */
 
+/* note: difference from 65816.  when switching to 8-bit X/Y, X and Y are *not* truncated
+   to 8 bits! */
+
 INLINE void m37710i_set_flag_mx(uint value)
 {
 #if FLAG_SET_M
@@ -232,8 +235,6 @@ INLINE void m37710i_set_flag_mx(uint value)
 #else
 	if(value & FLAGPOS_X)
 	{
-		REG_X = MAKE_UINT_8(REG_X);
-		REG_Y = MAKE_UINT_8(REG_Y);
 		FLAG_X = XFLAG_SET;
 	}
 #endif
@@ -1251,14 +1252,14 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #define OP_LDM(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);	\
 			REG_IM2 = EA_##MODE();		\
-			REG_IM = read_8_NORM(REG_PC);		\
+			REG_IM = read_8_NORM(REG_PB|REG_PC);		\
 			REG_PC++;				\
 			write_8_##MODE(REG_IM2, REG_IM)
 #else
 #define OP_LDM(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);	\
 			REG_IM2 = EA_##MODE();		\
-			REG_IM = read_16_NORM(REG_PC);		\
+			REG_IM = read_16_NORM(REG_PB|REG_PC);		\
 			REG_PC+=2;				\
 			write_16_##MODE(REG_IM2, REG_IM)
 #endif
@@ -1808,7 +1809,6 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 			m37710i_jumping(REG_PB | REG_PC)
 
 /* M37710  Return from Subroutine Long */
-/* Unusual behavior: Gets PC and increments */
 #undef OP_RTL
 #define OP_RTL()															\
 			CLK(6);															\
@@ -2902,7 +2902,6 @@ TABLE_FUNCTION(int, execute, (int clocks))
 		CLOCKS = clocks;
 		do
 		{
-//          if ((REG_PC < 0xc000) || (REG_PB|REG_PC > 0xffff)) osd_die("Dying: PC = %04x, PPC = %04x\n", REG_PC, REG_PPC);
 			REG_PPC = REG_PC;
 			M37710_CALL_DEBUGGER;
 			REG_PC++;

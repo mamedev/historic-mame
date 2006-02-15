@@ -41,7 +41,7 @@
 extern int verbose;
 
 // from video.c
-GUID *screen_guid_ptr;
+extern GUID *screen_guid_ptr;
 
 // from wind3dfx.c
 extern UINT32 win_d3d_tfactor;
@@ -513,15 +513,9 @@ static void adjust_prescale(int width, int height)
 //  win_d3d_wait_vsync
 //============================================================
 
-void win_d3d_wait_vsync(void)
+static void win_d3d_wait_vsync(void)
 {
-	BOOL is_vblank;
-
-	// if we're not already in VBLANK, wait for it
-	while (IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank) == DD_OK && is_vblank)
-		;
-	while (IDirectDraw7_GetVerticalBlankStatus(ddraw7, &is_vblank) == DD_OK && !is_vblank)
-		;
+	IDirectDraw7_WaitForVerticalBlank(ddraw7, DDWAITVB_BLOCKBEGIN, NULL);
 }
 
 
@@ -565,7 +559,7 @@ void win_d3d_kill(void)
 //  win_d3d_init
 //============================================================
 
-int win_d3d_init(int width, int height, int depth, int attributes, double aspect, const struct win_effect_data *effect)
+int win_d3d_init(int width, int height, int depth, int attributes, double aspect, const win_effect_data *effect)
 {
 	type_directdraw_create_ex fn_directdraw_create_ex;
 
@@ -1913,7 +1907,7 @@ static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *ve
 {
 	int dstdepth = blit_desc.DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
-	struct win_blit_params params;
+	win_blit_params params;
 	rectangle temprect;
 	RECT src, dst, margins;
 	int blit_width, blit_height;

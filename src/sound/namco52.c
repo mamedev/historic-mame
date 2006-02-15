@@ -139,9 +139,6 @@ static void *namco_52xx_start(int sndindex, int clock, const void *config)
 	chip->rom     = memory_region(chip->intf->region);
 	chip->rom_len = memory_region_length(chip->intf->region);
 
-	if (Machine->sample_rate == 0)
-		return chip;
-
 	if (chip->intf->play_rate == 0)
 	{
 		/* If play clock is 0 (grounded) then default to internal clock */

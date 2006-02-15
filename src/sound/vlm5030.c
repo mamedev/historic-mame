@@ -590,11 +590,6 @@ void VLM5030_ST(int pin )
 			else
 			{
 				/* start speech */
-				if (Machine->sample_rate == 0)
-				{
-					chip->pin_BSY = 0;
-					return;
-				}
 				/* check access mode */
 				if( chip->vcu_addr_h )
 				{	/* direct access mode */

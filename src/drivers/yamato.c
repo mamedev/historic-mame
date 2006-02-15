@@ -73,9 +73,9 @@ extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
 
-extern UINT8 *videoram2;
-extern UINT8 *videoram3;
-extern UINT8 *videoram4;
+extern UINT8 *toprollr_videoram2;
+extern UINT8 *toprollr_videoram3;
+extern UINT8 *toprollr_videoram4;
 
 WRITE8_HANDLER( cclimber_colorram_w );
 WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
@@ -288,13 +288,13 @@ static ADDRESS_MAP_START( trmem_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_BANK1)
 	AM_RANGE(0x6000, 0x6bff) AM_RAM
 	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
-	AM_RANGE(0x8c00, 0x8fff) AM_RAM AM_BASE(&videoram3)
+	AM_RANGE(0x8c00, 0x8fff) AM_RAM AM_BASE(&toprollr_videoram3)
 	AM_RANGE(0x9000, 0x93ff) AM_RAM AM_BASE(&videoram)
-	AM_RANGE(0x9400, 0x97ff) AM_RAM AM_BASE(&videoram4)
+	AM_RANGE(0x9400, 0x97ff) AM_RAM AM_BASE(&toprollr_videoram4)
 	AM_RANGE(0x9800, 0x987f) AM_RAM /* unused ? */
 	AM_RANGE(0x9880, 0x995f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x99dc, 0x99df) AM_RAM AM_BASE(&cclimber_bigspriteram)
-	AM_RANGE(0x9c00, 0x9fff) AM_RAM AM_BASE(&videoram2)
+	AM_RANGE(0x9c00, 0x9fff) AM_RAM AM_BASE(&toprollr_videoram2)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w) AM_READ(input_port_0_r)     /* IN0 */
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
 	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)

@@ -1,5 +1,5 @@
 /*
-    Mitsubishi M37710 CPU Emulator
+    Mitsubishi M37702/37710 CPU Emulator
 
     The 7700 series is based on the WDC 65C816 core, with the following
     notable changes:
@@ -22,6 +22,10 @@
       0x42 when used before an instruction involving the A accumulator makes
       it use the B accumulator instead.  0x89 adds multiply and divide
       opcodes, which the real 65816 doesn't have.
+    - The 65C816 preserves the upper 8 bits of A when in 8-bit M mode, but
+      not the upper 8 bits of X or Y when in 8-bit X.  The 7700 preserves
+      the top bits of all registers in all modes (code in the C74 BIOS
+      starting at d881 requires this!).
 
     The various 7700 series models differ primarily by their on board
     peripherals.  The 7750 and later models do include some additional
@@ -42,6 +46,9 @@
     - v1.0  RB  First version, basic operation OK, timers not complete
     - v1.1  RB  Data bus is 16-bit, dozens of bugfixes to IRQs, opcodes,
                     and opcode mapping.  New opcodes added, internal timers added.
+    - v1.2  RB  Fixed execution outside of bank 0, fixed LDM outside of bank 0,
+                fixed so top 8 bits of X & Y are preserved while in 8-bit mode,
+        added save state support.
 */
 
 #include "cpuintrf.h"
@@ -96,23 +103,23 @@ int m37710_irq_levels[M37710_LINE_MAX] =
 
 static int m37710_irq_vectors[M37710_LINE_MAX] =
 {
-	// maskable
-	0xffd6, // A-D converter
-	0xffd8, // UART1 transmit
-	0xffda, // UART1 receive
-	0xffdc, // UART0 transmit
-	0xffde,	// UART0 receive
-	0xffe0, // Timer B2
-	0xffe2, // Timer B1
-	0xffe4, // Timer B0
-	0xffe6, // Timer A4
-	0xffe8, // Timer A3
-	0xffea, // Timer A2
-	0xffec, // Timer A1
-	0xffee, // Timer A0
-	0xfff0, // external INT2 pin
-	0xfff2, // external INT1 pin
-	0xfff4, // external INT0 pin
+	// maskable          C74
+	0xffd6, // A-D converter     c68b
+	0xffd8, // UART1 transmit    c68e
+	0xffda, // UART1 receive     c691
+	0xffdc, // UART0 transmit    c694
+	0xffde,	// UART0 receive     c697
+	0xffe0, // Timer B2      c69a
+	0xffe2, // Timer B1      c69d
+	0xffe4, // Timer B0      c6a0
+	0xffe6, // Timer A4      c6a3
+	0xffe8, // Timer A3      c6a6
+	0xffea, // Timer A2      c6a9
+	0xffec, // Timer A1      c6ac
+	0xffee, // Timer A0      c6af
+	0xfff0, // external INT2 pin c6b2
+	0xfff2, // external INT1 pin c6b5
+	0xfff4, // external INT0 pin c6b8
 
 	// non-maskable
 	0xfff6, // watchdog timer
@@ -132,16 +139,16 @@ static unsigned char m37710i_register_layout[] =
 /* Layout of the MAME debugger windows x,y,w,h */
 static unsigned char m37710i_window_layout[] = {
 	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,34,16,	/* disassembler window (left colums) */
-	35, 5,50, 7,	/* memory #1 window (right, upper middle) */
-	35,14,50, 8,	/* memory #2 window (right, lower middle) */
+	 0, 5,29,16,	/* disassembler window (left colums) */
+	30, 5,50, 7,	/* memory #1 window (right, upper middle) */
+	30,14,50, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
 // M37710 internal peripherals
 
 #if M37710_DEBUG
-static char *m37710_rnames[128] =
+static const char *m37710_rnames[128] =
 {
 	"",
 	"",
@@ -159,7 +166,7 @@ static char *m37710_rnames[128] =
 	"Port P5 dir reg",
 	"Port P6 reg",
 	"Port P7 reg",
-	"Port P6 dir reg",
+	"Port P6 dir reg",	// 16
 	"Port P7 dir reg",
 	"Port P8 reg",
 	"",
@@ -175,7 +182,7 @@ static char *m37710_rnames[128] =
 	"",
 	"A/D control reg",
 	"A/D sweep pin select",
-	"A/D 0",
+	"A/D 0",		// 32 (0x20)
 	"",
 	"A/D 1",
 	"",
@@ -191,15 +198,15 @@ static char *m37710_rnames[128] =
 	"",
 	"A/D 7",
 	"",
-	"UART0 transmit/recv mode",
-	"UART0 baud rate",
-	"UART0 transmit buf L",
-	"UART0 transmit buf H",
-	"UART0 transmit/recv ctrl 0",
-	"UART0 transmit/recv ctrl 1",
-	"UART0 recv buf L",
-	"UART0 recv buf H",
-	"UART1 transmit/recv mode",
+	"UART0 transmit/recv mode", 	// 48 (0x30)
+	"UART0 baud rate",	     	// 0x31
+	"UART0 transmit buf L",		// 0x32
+	"UART0 transmit buf H",		// 0x33
+	"UART0 transmit/recv ctrl 0",	// 0x34
+	"UART0 transmit/recv ctrl 1",	// 0x35
+	"UART0 recv buf L",		// 0x36
+	"UART0 recv buf H",		// 0x37
+	"UART1 transmit/recv mode",	// 0x38
 	"UART1 baud rate",
 	"UART1 transmit buf L",
 	"UART1 transmit buf H",
@@ -273,7 +280,7 @@ static char *m37710_rnames[128] =
 	"INT2 IRQ ctrl",
 };
 
-static char *m37710_tnames[8] =
+static const char *m37710_tnames[8] =
 {
 	"A0", "A1", "A2", "A3", "A4", "B0", "B1", "B2"
 };
@@ -409,7 +416,7 @@ static void m37710_recalc_timer(int timer)
 	if (m37710i_cpu.m37710_regs[0x40] & (1<<timer))
 	{
 		#if M37710_DEBUG
-		logerror("Timer %d (%s) is enabled\n", timer, m37710_tnames[timer]);
+		printf("Timer %d (%s) is enabled\n", timer, m37710_tnames[timer]);
 		#endif
 
 		// set the timer's value
@@ -422,12 +429,12 @@ static void m37710_recalc_timer(int timer)
 			switch (m37710i_cpu.m37710_regs[0x56+timer] & 0x3)
 			{
 				case 0:	      	// timer mode
-					#if M37710_DEBUG
-					logerror("Timer %d in timer mode\n", timer);
-					#endif
-
 					time = (double)16000000 / tscales[m37710i_cpu.m37710_regs[tcr[timer]]>>6];
 					time /= ((double)tval+1.0);
+
+					#if M37710_DEBUG
+					printf("Timer %d in timer mode, %f Hz\n", timer, time);
+					#endif
 
 					timer_adjust(m37710i_cpu.timers[timer], TIME_IN_HZ(time), cpunum, 0);
 					m37710i_cpu.reload[timer] = time;
@@ -435,19 +442,19 @@ static void m37710_recalc_timer(int timer)
 
 				case 1:	      	// event counter mode
 					#if M37710_DEBUG
-					logerror("Timer %d in event counter mode\n", timer);
+					printf("Timer %d in event counter mode\n", timer);
 					#endif
 					break;
 
 				case 2:		// one-shot pulse mode
 					#if M37710_DEBUG
-					logerror("Timer %d in one-shot mode\n", timer);
+					printf("Timer %d in one-shot mode\n", timer);
 					#endif
 					break;
 
 				case 3:	      	// PWM mode
 					#if M37710_DEBUG
-					logerror("Timer %d in PWM mode\n", timer);
+					printf("Timer %d in PWM mode\n", timer);
 					#endif
 					break;
 			}
@@ -457,12 +464,12 @@ static void m37710_recalc_timer(int timer)
 			switch (m37710i_cpu.m37710_regs[0x56+timer] & 0x3)
 			{
 				case 0:	      	// timer mode
-					#if M37710_DEBUG
-					logerror("Timer %d in timer mode\n", timer);
-					#endif
-
 					time = (double)16000000 / tscales[m37710i_cpu.m37710_regs[tcr[timer]]>>6];
 					time /= ((double)tval+1.0);
+
+					#if M37710_DEBUG
+					printf("Timer %d in timer mode, %f Hz\n", timer, time);
+					#endif
 
 					timer_adjust(m37710i_cpu.timers[timer], TIME_IN_HZ(time), cpunum, 0);
 					m37710i_cpu.reload[timer] = time;
@@ -470,19 +477,19 @@ static void m37710_recalc_timer(int timer)
 
 				case 1:	      	// event counter mode
 					#if M37710_DEBUG
-					logerror("Timer %d in event counter mode\n", timer);
+					printf("Timer %d in event counter mode\n", timer);
 					#endif
 					break;
 
 				case 2:		// pulse period/pulse width measurement mode
 					#if M37710_DEBUG
-					logerror("Timer %d in pulse period/width measurement mode\n", timer);
+					printf("Timer %d in pulse period/width measurement mode\n", timer);
 					#endif
 					break;
 
 				case 3:
 					#if M37710_DEBUG
-					logerror("Timer %d in unknown mode!\n", timer);
+					printf("Timer %d in unknown mode!\n", timer);
 					#endif
 					break;
 			}
@@ -575,6 +582,9 @@ static UINT8 m37710_internal_r(int offset)
 		case 0x2f:
 			return io_read_byte_8(M37710_ADC7_H);
 			break;
+		case 0x35:
+			return 0xff;	// UART control
+			break;
 
 		case 0x70:	// A/D IRQ control
 			return m37710i_cpu.m37710_regs[offset] | 8;
@@ -650,7 +660,7 @@ static void m37710_internal_w(int offset, UINT8 data)
 	m37710i_cpu.m37710_regs[offset] = data;
 
 	#if M37710_DEBUG
-	if (offset >= 0x1e && offset <= 0x30)
+	if (offset >= 0x1e && offset <= 0x40)
 	logerror("m37710_internal_w %x to %02x: %s = %x\n", data, (int)offset, m37710_rnames[(int)offset], m37710i_cpu.m37710_regs[offset]);
 	#endif
 }
@@ -811,6 +821,7 @@ void m37710i_update_irqs(void)
 			// this IRQ is set
 			if (m37710_irq_levels[curirq])
 			{
+//              logerror("line %d set, level %x curpri %x IPL %x\n", curirq, m37710i_cpu.m37710_regs[m37710_irq_levels[curirq]] & 7, curpri, m37710i_cpu.ipl);
 				// it's maskable, check if the level works
 				if ((m37710i_cpu.m37710_regs[m37710_irq_levels[curirq]] & 7) > curpri)
 				{
@@ -852,7 +863,7 @@ void m37710i_update_irqs(void)
 		// let's do it...
 		// push PB, then PC, then status
 		CLK(8);
-//      logerror("taking IRQ %d: PC = %06x, SP = %04x\n", wantedIRQ, REG_PB | REG_PC, REG_S);
+//      printf("taking IRQ %d: PC = %06x, SP = %04x, IPL %d\n", wantedIRQ, REG_PB | REG_PC, REG_S, m37710i_cpu.ipl);
 		m37710i_push_8(REG_PB>>16);
 		m37710i_push_16(REG_PC);
 		m37710i_push_8(m37710i_cpu.ipl);
@@ -1021,13 +1032,21 @@ void m37710_set_irq_callback(int (*callback)(int))
 unsigned m37710_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	return m7700_disassemble(buffer, (pc&0xffff), REG_PB>>16, FLAG_M, FLAG_X);
+	return m7700_disassemble(buffer, (pc&0xffff), pc>>16, FLAG_M, FLAG_X);
 #else
-	sprintf(buffer, "$%02X", m37710_read_8_immediate(REG_PB | (pc&0xffff)));
+	sprintf(buffer, "$%02X", m37710_read_8_immediate(pc));
 	return 1;
 #endif
 }
 
+static void m37710_restore_state(void)
+{
+	// restore proper function pointers
+	m37710i_set_execution_mode((FLAG_M>>4) | (FLAG_X>>4));
+
+	// make sure the memory system can keep up
+	m37710i_jumping(REG_PB | REG_PC);
+}
 
 void m37710_init(void)
 {
@@ -1039,6 +1058,42 @@ void m37710_init(void)
 	m37710i_cpu.timers[5] = timer_alloc(m37710_timer_b0_cb);
 	m37710i_cpu.timers[6] = timer_alloc(m37710_timer_b1_cb);
 	m37710i_cpu.timers[7] = timer_alloc(m37710_timer_b2_cb);
+
+	state_save_register_UINT32("M377xx", 0, "a", &m37710i_cpu.a, 1);
+	state_save_register_UINT32("M377xx", 0, "b", &m37710i_cpu.b, 1);
+	state_save_register_UINT32("M377xx", 0, "ba", &m37710i_cpu.ba, 1);
+	state_save_register_UINT32("M377xx", 0, "bb", &m37710i_cpu.bb, 1);
+	state_save_register_UINT32("M377xx", 0, "x", &m37710i_cpu.x, 1);
+	state_save_register_UINT32("M377xx", 0, "y", &m37710i_cpu.y, 1);
+	state_save_register_UINT32("M377xx", 0, "s", &m37710i_cpu.s, 1);
+	state_save_register_UINT32("M377xx", 0, "pc", &m37710i_cpu.pc, 1);
+	state_save_register_UINT32("M377xx", 0, "ppc", &m37710i_cpu.ppc, 1);
+	state_save_register_UINT32("M377xx", 0, "pb", &m37710i_cpu.pb, 1);
+	state_save_register_UINT32("M377xx", 0, "db", &m37710i_cpu.db, 1);
+	state_save_register_UINT32("M377xx", 0, "d", &m37710i_cpu.d, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_e", &m37710i_cpu.flag_e, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_m", &m37710i_cpu.flag_m, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_x", &m37710i_cpu.flag_x, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_n", &m37710i_cpu.flag_n, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_v", &m37710i_cpu.flag_v, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_d", &m37710i_cpu.flag_d, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_i", &m37710i_cpu.flag_i, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_z", &m37710i_cpu.flag_z, 1);
+	state_save_register_UINT32("M377xx", 0, "flag_c", &m37710i_cpu.flag_c, 1);
+	state_save_register_UINT32("M377xx", 0, "line_irq", &m37710i_cpu.line_irq, 1);
+	state_save_register_UINT32("M377xx", 0, "ipl", &m37710i_cpu.ipl, 1);
+	state_save_register_UINT32("M377xx", 0, "ir", &m37710i_cpu.ir, 1);
+	state_save_register_UINT32("M377xx", 0, "im", &m37710i_cpu.im, 1);
+	state_save_register_UINT32("M377xx", 0, "im2", &m37710i_cpu.im2, 1);
+	state_save_register_UINT32("M377xx", 0, "im3", &m37710i_cpu.im3, 1);
+	state_save_register_UINT32("M377xx", 0, "im4", &m37710i_cpu.im4, 1);
+	state_save_register_UINT32("M377xx", 0, "irq_delay", &m37710i_cpu.irq_delay, 1);
+	state_save_register_UINT32("M377xx", 0, "irq_level", &m37710i_cpu.irq_level, 1);
+	state_save_register_UINT32("M377xx", 0, "stopped", &m37710i_cpu.stopped, 1);
+	state_save_register_UINT8("M377xx", 0, "periph regs", &m37710i_cpu.m37710_regs[0], 128);
+	state_save_register_float("M377xx", 0, "timer reloads", &m37710i_cpu.reload[0], 8);
+
+	state_save_register_func_postload(m37710_restore_state);
 }
 
 /**************************************************************************
@@ -1165,9 +1220,9 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:						strcpy(info->s = cpuintrf_temp_str(), "M37710"); break;
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "M7700"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.1"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.2"); break;
 		case CPUINFO_STR_CORE_FILE:					strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2004 R. Belmont, based on G65816 by Karl Stenerud"); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2004-2006 R. Belmont, based on G65816 by Karl Stenerud"); break;
 
 		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%c%c%c%c%c%c%c%c",
@@ -1202,6 +1257,18 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + M37710_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%04X", m37710i_cpu.y); break;
 		case CPUINFO_STR_REGISTER + M37710_IRQ_STATE:	sprintf(info->s = cpuintrf_temp_str(), "IRQ:%X", m37710i_cpu.line_irq); break;
 	}
+}
+
+// 37702 is identical except with an internal ROM, so just change the name
+void m37702_get_info(UINT32 state, union cpuinfo *info)
+{
+	if (state == CPUINFO_STR_NAME)
+	{
+		strcpy(info->s = cpuintrf_temp_str(), "M37702");
+		return;
+	}
+
+	return m37710_get_info(state, info);
 }
 
 /* ======================================================================== */

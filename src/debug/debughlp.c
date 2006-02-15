@@ -26,11 +26,12 @@
 **  TYPE DEFINITIONS
 **#################################################################################################*/
 
-struct help_item
+struct _help_item
 {
 	const char *		tag;
 	const char *		help;
 };
+typedef struct _help_item help_item;
 
 
 
@@ -50,7 +51,7 @@ struct help_item
 **  TABLE OF HELP
 **#################################################################################################*/
 
-static struct help_item static_help_list[] =
+static help_item static_help_list[] =
 {
 	{
 		"",
@@ -959,7 +960,7 @@ static struct help_item static_help_list[] =
 const char *debug_get_help(const char *tag)
 {
 	static char ambig_message[1024];
-	struct help_item *found = NULL;
+	help_item *found = NULL;
 	int i, msglen, foundcount = 0;
 	int taglen = strlen(tag);
 	char tagcopy[256];

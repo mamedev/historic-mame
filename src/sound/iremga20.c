@@ -79,8 +79,6 @@ void IremGA20_update( void *param, stream_sample_t **inputs, stream_sample_t **b
 	stream_sample_t *edi, *ebp;
 	int eax, ebx, ecx, edx;
 
-	if (!Machine->sample_rate) return;
-
 	/* precache some values */
 	for (ecx=0; ecx<4; ecx++)
 	{
@@ -129,9 +127,6 @@ WRITE8_HANDLER( IremGA20_w )
 
 	//logerror("GA20:  Offset %02x, data %04x\n",offset,data);
 
-	if (!Machine->sample_rate)
-		return;
-
 	stream_update(chip->stream, 0);
 
 	channel = offset >> 4;
@@ -175,9 +170,6 @@ READ8_HANDLER( IremGA20_r )
 {
 	struct IremGA20_chip_def *chip = sndti_token(SOUND_IREMGA20, 0);
 	int channel;
-
-	if (!Machine->sample_rate)
-		return 0;
 
 	stream_update(chip->stream, 0);
 
@@ -223,8 +215,6 @@ static void *iremga20_start(int sndindex, int clock, const void *config)
 
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
-
-	if (!Machine->sample_rate) return chip;
 
 	/* Initialize our chip structure */
 	chip->intf = config;

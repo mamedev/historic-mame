@@ -728,7 +728,7 @@ static void install_draw_handlers( tilemap *tmap )
 
 INLINE tilemap_draw_func pick_draw_func( mame_bitmap *dest )
 {
-	switch (dest ? dest->depth : Machine->scrbitmap->depth)
+	switch (dest->depth)
 	{
 		case 32:
 			return draw32BPP;

@@ -64,7 +64,7 @@ WRITE8_HANDLER( mnchmobl_soundlatch_w )
 	cpunum_set_input_line( 1, 0, HOLD_LINE );
 }
 
-WRITE8_HANDLER( sound_nmi_ack_w )
+static WRITE8_HANDLER( sound_nmi_ack_w )
 {
 	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 }

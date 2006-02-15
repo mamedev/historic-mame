@@ -11,7 +11,7 @@
 
 UINT8 *tp84_videoram2, *tp84_colorram2;
 
-int col0;
+static int col0;
 
 /*
 sprites are multiplexed, so we have to buffer the spriteram

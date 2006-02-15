@@ -57,8 +57,8 @@ JALCF1   BIN     1,048,576  02-07-99  1:11a JALCF1.BIN
 #include "sound/okim6295.h"
 
 static tilemap *tx_tilemap,*bg_tilemap;
-UINT16 *ac_txvram,*ac_bgvram;
-UINT16 *ac_vregs;
+static UINT16 *ac_txvram,*ac_bgvram;
+static UINT16 *ac_vregs;
 
 static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
@@ -278,7 +278,7 @@ static WRITE16_HANDLER(ac_txscroll_w)
 
 /******************************************************************************************/
 
-UINT16 *ac_devram;
+static UINT16 *ac_devram;
 
 
 static READ16_HANDLER(ac_devices_r)

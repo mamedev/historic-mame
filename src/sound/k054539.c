@@ -655,10 +655,7 @@ static void *k054539_start(int sndindex, int clock, const void *config)
 
 	info->intf = config;
 
-	if(Machine->sample_rate)
-		info->freq_ratio = (double)(clock) / (double)(Machine->sample_rate);
-	else
-		info->freq_ratio = 1.0;
+	info->freq_ratio = (double)(clock) / (double)(Machine->sample_rate);
 
 	/*
         I've tried various equations on volume control but none worked consistently.

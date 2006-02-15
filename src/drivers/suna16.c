@@ -47,8 +47,7 @@ WRITE16_HANDLER( suna16_soundlatch_w )
 {
 	if (ACCESSING_LSB)
 	{
-		if (Machine->sample_rate != 0)
-			soundlatch_w( 0, data & 0xff );
+		soundlatch_w( 0, data & 0xff );
 	}
 	if (data & ~0xff)	logerror("CPU#0 PC %06X - Sound latch unknown bits: %04X\n", activecpu_get_pc(), data);
 }

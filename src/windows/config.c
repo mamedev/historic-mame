@@ -67,7 +67,7 @@ static int readconfig;
 static int createconfig;
 extern int verbose;
 
-struct rc_struct *rc;
+static struct rc_struct *rc;
 
 /* fix me - need to have the core call osd_set_mastervolume with this value */
 /* instead of relying on the name of an osd variable */

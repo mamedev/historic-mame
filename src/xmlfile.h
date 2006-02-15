@@ -55,6 +55,7 @@ struct _xml_data_node
 
 xml_data_node *xml_file_create(void);
 xml_data_node *xml_file_read(mame_file *file);
+xml_data_node *xml_string_read(const char *string);
 void xml_file_write(xml_data_node *node, mame_file *file);
 void xml_file_free(xml_data_node *node);
 

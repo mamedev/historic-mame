@@ -158,7 +158,7 @@ Pipi & Bibis     | Fix Eight        | V-Five           | Snow Bros. 2     |
 extern  size_t toaplan2_tx_vram_size;		 /* 0x2000 Text layer RAM size */
 extern  size_t toaplan2_tx_offs_vram_size;	 /* 0x200 Text layer tile flip and positon ? */
 extern  size_t toaplan2_tx_scroll_vram_size; /* 0x200 Text layer scroll ? */
-extern  size_t paletteram_size;
+extern  size_t batrider_paletteram16_size;
 
 
 
@@ -226,7 +226,7 @@ static tilemap *tx_tilemap;	/* Tilemap for extra-text-layer */
 static int xoffset[4];
 static int yoffset[4];
 
-void defaultOffsets(void)
+static void defaultOffsets(void)
 {
 		xoffset[0]=0;
 		xoffset[1]=0;
@@ -741,8 +741,8 @@ WRITE16_HANDLER( batrider_textdata_decode )
 
 	memcpy(dest, toaplan2_txvideoram16, toaplan2_tx_vram_size);
 	dest += (toaplan2_tx_vram_size/2);
-	memcpy(dest, paletteram16, paletteram_size);
-	dest += (paletteram_size/2);
+	memcpy(dest, paletteram16, batrider_paletteram16_size);
+	dest += (batrider_paletteram16_size/2);
 	memcpy(dest, toaplan2_txvideoram16_offs, toaplan2_tx_offs_vram_size);
 	dest += (toaplan2_tx_offs_vram_size/2);
 	memcpy(dest, toaplan2_txscrollram16, toaplan2_tx_scroll_vram_size);

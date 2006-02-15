@@ -2644,8 +2644,7 @@ static struct MB87078interface mb87078_interface =
 
 static MACHINE_INIT( mb87078 )
 {
-	if (Machine->sample_rate != 0)
-		MB87078_start(0, &mb87078_interface); /*chip #0*/
+	MB87078_start(0, &mb87078_interface); /*chip #0*/
 /*
     {
         int i;

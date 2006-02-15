@@ -70,7 +70,7 @@ FF3F Should be written an 0x80 for Mode 0
 #include "sound/samples.h"
 
 #define TOTAL_SOUNDS 22
-int soundplaying[TOTAL_SOUNDS];
+static int soundplaying[TOTAL_SOUNDS];
 
 struct sa
 {
@@ -81,7 +81,7 @@ struct sa
 	int restartable;
 };
 
-struct sa sa[TOTAL_SOUNDS] =
+static const struct sa sa[TOTAL_SOUNDS] =
 {
 	{  0,  0, 1, 1, 1 },	/* Line  4 - Homing Missile  (channel 1) */
 	{  1,  1, 0, 1, 1 },	/* Line  5 - Base Missile */

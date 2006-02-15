@@ -13,8 +13,8 @@ int mjsister_screen_redraw;
 int mjsister_flip_screen;
 int mjsister_video_enable;
 
-int vrambank;
-int colorbank;
+int mjsister_vrambank;
+int mjsister_colorbank;
 
 static mame_bitmap *mjsister_tmpbitmap0, *mjsister_tmpbitmap1;
 static UINT8 *mjsister_videoram0, *mjsister_videoram1;
@@ -40,8 +40,8 @@ void mjsister_plot0(int offset,unsigned char data)
 	x = offset & 0x7f;
 	y = offset / 0x80;
 
-	c1 = (data & 0x0f)        + colorbank * 0x20;
-	c2 = ((data & 0xf0) >> 4) + colorbank * 0x20;
+	c1 = (data & 0x0f)        + mjsister_colorbank * 0x20;
+	c2 = ((data & 0xf0) >> 4) + mjsister_colorbank * 0x20;
 
 	plot_pixel(mjsister_tmpbitmap0, x*2,   y, Machine->pens[c1] );
 	plot_pixel(mjsister_tmpbitmap0, x*2+1, y, Machine->pens[c2] );
@@ -58,9 +58,9 @@ void mjsister_plot1(int offset,unsigned char data)
 	c2 = (data & 0xf0) >> 4;
 
 	if (c1)
-		c1 += colorbank * 0x20 + 0x10;
+		c1 += mjsister_colorbank * 0x20 + 0x10;
 	if (c2)
-		c2 += colorbank * 0x20 + 0x10;
+		c2 += mjsister_colorbank * 0x20 + 0x10;
 
 	plot_pixel(mjsister_tmpbitmap1, x*2,   y, Machine->pens[c1] );
 	plot_pixel(mjsister_tmpbitmap1, x*2+1, y, Machine->pens[c2] );
@@ -68,7 +68,7 @@ void mjsister_plot1(int offset,unsigned char data)
 
 WRITE8_HANDLER( mjsister_videoram_w )
 {
-	if (vrambank)
+	if (mjsister_vrambank)
 	{
 		mjsister_videoram1[offset] = data;
 		mjsister_plot1(offset,data);
@@ -103,7 +103,7 @@ VIDEO_UPDATE( mjsister )
 		for (i=0; i<256; i++)
 		{
 			for (j=0; j<4; j++)
-				plot_pixel(bitmap, 256+j, i, Machine->pens[colorbank * 0x20] );
+				plot_pixel(bitmap, 256+j, i, Machine->pens[mjsister_colorbank * 0x20] );
 		}
 
 		copybitmap(bitmap,mjsister_tmpbitmap0,f,f,0,0,cliprect,TRANSPARENCY_NONE,0);

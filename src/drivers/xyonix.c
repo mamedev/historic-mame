@@ -42,7 +42,7 @@ static WRITE8_HANDLER( xyonix_irqack_w )
 
 static int e0_data,credits,coins;
 
-void handle_coins(int coin)
+static void handle_coins(int coin)
 {
 	static const int coinage_table[4][2] = {{2,3},{2,1},{1,2},{1,1}};
 	int tmp = 0;

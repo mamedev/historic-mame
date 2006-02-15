@@ -150,7 +150,7 @@ static INTERRUPT_GEN( skyarmy_nmi_source )
 }
 
 
-WRITE8_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
         skyarmy_nmi=data&1;
 }

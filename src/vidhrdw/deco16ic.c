@@ -525,81 +525,52 @@ WRITE16_HANDLER( deco16_pf4_data_w )
 
 /*****************************************************************************************/
 
-int deco16_1_video_init(void) /* 1 times playfield generator chip */
+static int deco16_video_init(int pf12_only, int split, int full_width)
 {
-	pf2_tilemap_16x16 =	tilemap_create(get_pf2_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
-	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
-	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
 
-	dirty_palette = auto_malloc(4096);
-	deco16_raster_display_list=auto_malloc(20 * 256);
+	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
+	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 
-	if (!pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !sprite_priority_bitmap)
-		return 1;
-
-	memset(dirty_palette,0,4096);
-	tilemap_set_transparent_pen(pf1_tilemap_8x8,0);
-	tilemap_set_transparent_pen(pf2_tilemap_8x8,0);
-	tilemap_set_transparent_pen(pf1_tilemap_16x16,0);
-	tilemap_set_transparent_pen(pf2_tilemap_16x16,0);
-
-	pf3_tilemap_16x16=0;
-	pf4_tilemap_16x16=0;
-
-	deco16_bank_callback_1=0;
-	deco16_bank_callback_2=0;
-	deco16_bank_callback_3=0;
-	deco16_bank_callback_4=0;
-
-	deco16_pf1_trans_mask=0xf;
-	deco16_pf2_trans_mask=0xf;
-	deco16_pf3_trans_mask=0xf;
-	deco16_pf4_trans_mask=0xf;
-
-	deco16_pf1_colourmask=deco16_pf2_colourmask=0xf;
-	deco16_pf1_bank=deco16_pf2_bank=deco16_pf3_bank=deco16_pf4_bank=0;
-	deco16_pf4_colour_bank=deco16_pf2_colour_bank=16;
-	deco16_pf3_colour_bank=deco16_pf1_colour_bank=0;
-
-	deco16_pf12_8x8_gfx_bank=0;
-	deco16_pf12_16x16_gfx_bank=1;
-	deco16_pf34_16x16_gfx_bank=2;
-
-	deco16_raster_display_position=0;
-
-	return 0;
-}
-
-int deco16_2_video_init(int split) /* 2 times playfield generator chips */
-{
-	pf4_tilemap_16x16 =	tilemap_create(get_pf4_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
-	pf3_tilemap_16x16 =	tilemap_create(get_pf3_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	if (split)
-		pf2_tilemap_16x16 =	tilemap_create(get_pf2_tile_info,   deco16_scan_rows, TILEMAP_SPLIT,16,16,64,32);
+		pf2_tilemap_16x16 =	tilemap_create(get_pf2_tile_info,   deco16_scan_rows, TILEMAP_SPLIT,16,16,full_width ? 64 : 32,32);
 	else
-		pf2_tilemap_16x16 =	tilemap_create(get_pf2_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
-	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
-	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
+		pf2_tilemap_16x16 =	tilemap_create(get_pf2_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
+	pf2_tilemap_8x8 =	tilemap_create(get_pf2_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,full_width ? 64 : 32,32);
 
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !pf3_tilemap_16x16 || !pf4_tilemap_16x16 || !sprite_priority_bitmap)
+	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !deco16_raster_display_list || !sprite_priority_bitmap)
 		return 1;
 
-	memset(dirty_palette,0,4096);
+	if (!pf12_only)
+	{
+		pf4_tilemap_16x16 =	tilemap_create(get_pf4_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
+		pf3_tilemap_16x16 =	tilemap_create(get_pf3_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
+	}
+	else
+	{
+		pf3_tilemap_16x16=0;
+		pf4_tilemap_16x16=0;
+	}
+
+	if (!pf3_tilemap_16x16 || !pf4_tilemap_16x16)
+		return 1;
+
 	tilemap_set_transparent_pen(pf1_tilemap_8x8,0);
 	tilemap_set_transparent_pen(pf2_tilemap_8x8,0);
 	tilemap_set_transparent_pen(pf1_tilemap_16x16,0);
 	tilemap_set_transparent_pen(pf2_tilemap_16x16,0);
-	tilemap_set_transparent_pen(pf3_tilemap_16x16,0);
-	tilemap_set_transparent_pen(pf4_tilemap_16x16,0);
 	if (split) /* Caveman Ninja only */
 		tilemap_set_transmask(pf2_tilemap_16x16,0,0x00ff,0xff01);
+
+	if (!pf12_only)
+	{
+		tilemap_set_transparent_pen(pf3_tilemap_16x16,0);
+		tilemap_set_transparent_pen(pf4_tilemap_16x16,0);
+	}
+
 
 	deco16_bank_callback_1=0;
 	deco16_bank_callback_2=0;
@@ -624,6 +595,21 @@ int deco16_2_video_init(int split) /* 2 times playfield generator chips */
 	deco16_raster_display_position=0;
 
 	return 0;
+}
+
+int deco16_1_video_init(void)  /* 1 times playfield generator chip */
+{
+	return deco16_video_init(1, 0, 1);
+}
+
+int deco16_2_video_init(int split) /* 2 times playfield generator chips */
+{
+	return deco16_video_init(0, split, 1);
+}
+
+int deco16_2_video_init_half_width(void) /* 2 times playfield generator chips */
+{
+	return deco16_video_init(0, 0, 0);
 }
 
 int deco_allocate_sprite_bitmap(void)
@@ -714,6 +700,8 @@ static int deco16_pf_update(
 		}
 
 		if (tilemap_8x8) {
+			cols = cols / 2; /* Adjust because 8x8 tilemap is half the width of 16x16 */
+
 			tilemap_set_scroll_cols(tilemap_8x8,cols);
 			tilemap_set_scroll_rows(tilemap_8x8,1);
 			tilemap_set_scrollx(tilemap_8x8,0,scrollx );
@@ -926,8 +914,15 @@ void deco16_pdrawgfx(mame_bitmap *dest,const gfx_element *gfx,
 
 void deco16_tilemap_1_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
 {
-	if (pf1_tilemap_8x8) tilemap_draw(bitmap,cliprect,pf1_tilemap_8x8,flags,priority);
-	if (pf1_tilemap_16x16) tilemap_draw(bitmap,cliprect,pf1_tilemap_16x16,flags,priority);
+	if (use_custom_pf1)
+	{
+		custom_tilemap_draw(bitmap,pf1_tilemap_8x8,pf1_tilemap_16x16,0,0,pf1_rowscroll_ptr,deco16_pf12_control[1], deco16_pf12_control[2], deco16_pf12_control[5]&0xff, deco16_pf12_control[6]&0xff, 0, 0, deco16_pf1_trans_mask, flags, priority);
+	}
+	else
+	{
+		if (pf1_tilemap_8x8) tilemap_draw(bitmap,cliprect,pf1_tilemap_8x8,flags,priority);
+		if (pf1_tilemap_16x16) tilemap_draw(bitmap,cliprect,pf1_tilemap_16x16,flags,priority);
+	}
 }
 
 void deco16_tilemap_2_draw(mame_bitmap *bitmap, const rectangle *cliprect, int flags, UINT32 priority)
@@ -937,7 +932,8 @@ void deco16_tilemap_2_draw(mame_bitmap *bitmap, const rectangle *cliprect, int f
 		custom_tilemap_draw(bitmap,pf2_tilemap_8x8,pf2_tilemap_16x16,0,0,pf2_rowscroll_ptr,deco16_pf12_control[3], deco16_pf12_control[4], deco16_pf12_control[5]>>8, deco16_pf12_control[6]>>8, 0, 0, deco16_pf2_trans_mask, flags, priority);
 	}
 	else
-	{	if (pf2_tilemap_8x8) tilemap_draw(bitmap,cliprect,pf2_tilemap_8x8,flags,priority);
+	{
+		if (pf2_tilemap_8x8) tilemap_draw(bitmap,cliprect,pf2_tilemap_8x8,flags,priority);
 		if (pf2_tilemap_16x16) tilemap_draw(bitmap,cliprect,pf2_tilemap_16x16,flags,priority);
 	}
 }

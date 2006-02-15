@@ -88,7 +88,7 @@ void psychic5_paletteram_w(int color_offs, int offset, int data)
 	palette_set_color((offset / 2)-color_offs,r,g,b);
 }
 
-void set_background_palette_intensity(void)
+static void set_background_palette_intensity(void)
 {
 	int i,r,g,b,val,lo,hi,ir,ig,ib,ix;
 	int bit0,bit1,bit2,bit3;

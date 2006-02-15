@@ -22,7 +22,7 @@ Based on G65C816 CPU Emulator by Karl Stenerud
 #define INLINE static
 #endif
 
-#define m7700_read_8_disassembler(A) program_read_byte_8(A)
+#define m7700_read_8_disassembler(A) program_read_byte_16le(A)
 
 typedef struct
 {
@@ -165,7 +165,7 @@ static opcode_struct g_opcodes_prefix42[256] =
 {
 	{BRK, I, SIG }, {ORB, M, DXI }, {COP, I, SIG }, {ORB, M, S   },
 	{TSB, M, D   }, {ORB, M, D   }, {ASL, M, D   }, {ORB, M, DLI },
-	{PHP, I, IMP }, {ORB, M, IMM }, {ASL, M, ACC }, {PHD, I, IMP },
+	{PHP, I, IMP }, {ORB, M, IMM }, {ASL, M, ACCB }, {PHD, I, IMP },
 	{TSB, M, A   }, {ORB, M, A   }, {ASL, M, A   }, {ORB, M, AL  },
 // 0x10
 	{BPL, I, RELB}, {ORB, M, DIY }, {ORB, M, DI  }, {ORB, M, SIY },

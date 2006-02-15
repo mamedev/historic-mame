@@ -121,6 +121,5 @@ WRITE16_HANDLER( zwackery_paletteram_w );
 WRITE16_HANDLER( zwackery_videoram_w );
 WRITE16_HANDLER( zwackery_spriteram_w );
 
-PALETTE_INIT( zwackery );
 VIDEO_START( zwackery );
 VIDEO_UPDATE( zwackery );

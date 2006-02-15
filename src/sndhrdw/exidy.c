@@ -404,15 +404,13 @@ static void *common_start(void)
 
 	/* Init 6840 */
 	memset(sh6840_timer, 0, sizeof(sh6840_timer));
-	if (Machine->sample_rate != 0)
-		sh6840_clocks_per_sample = (int)((double)SH6840_CLOCK / (double)Machine->sample_rate * (double)(1 << 24));
+	sh6840_clocks_per_sample = (int)((double)SH6840_CLOCK / (double)Machine->sample_rate * (double)(1 << 24));
 	sh6840_MSB = 0;
 	exidy_sfxctrl = 0;
 
 	/* Init 8253 */
 	memset(sh8253_timer, 0, sizeof(sh8253_timer));
-	if (Machine->sample_rate != 0)
-		freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
+	freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
 
 	return auto_malloc(1);
 }

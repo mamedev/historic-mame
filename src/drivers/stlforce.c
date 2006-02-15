@@ -74,7 +74,7 @@ TO DO :
 UINT16 *stlforce_bg_videoram, *stlforce_mlow_videoram, *stlforce_mhigh_videoram, *stlforce_tx_videoram;
 UINT16 *stlforce_bg_scrollram, *stlforce_mlow_scrollram, *stlforce_mhigh_scrollram, *stlforce_vidattrram;
 UINT16 *stlforce_spriteram;
-UINT8  *default_eeprom;
+static UINT8  *default_eeprom;
 extern int stlforce_sprxoffs;
 
 VIDEO_START( stlforce );

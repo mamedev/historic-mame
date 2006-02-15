@@ -204,7 +204,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 #endif
 ADDRESS_MAP_END
 
-WRITE8_HANDLER( pio_w )
+static WRITE8_HANDLER( pio_w )
 {
 	if (offset & 1)
 		z80pio_c_w(0, (offset >> 1) & 1, data);
@@ -212,7 +212,7 @@ WRITE8_HANDLER( pio_w )
 		z80pio_d_w(0, (offset >> 1) & 1, data);
 }
 
-READ8_HANDLER( pio_r )
+static READ8_HANDLER( pio_r )
 {
 	return (offset & 1) ? z80pio_c_r(0, (offset >> 1) & 1) : z80pio_d_r(0, (offset >> 1) & 1);
 }

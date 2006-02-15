@@ -42,7 +42,9 @@
 //  TYPE DEFINITIONS
 //============================================================
 
-struct win_blit_params
+typedef struct _win_blit_params win_blit_params;
+
+struct _win_blit_params
 {
 	void *		dstdata;
 	int			dstpitch;
@@ -76,6 +78,6 @@ struct win_blit_params
 //  PROTOTYPES
 //============================================================
 
-int win_perform_blit(const struct win_blit_params *blit, int update);
+int win_perform_blit(const win_blit_params *blit, int update);
 
 #endif

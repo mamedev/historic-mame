@@ -157,10 +157,10 @@ VIDEO_START( gticlub )
 	return K001604_vh_start();
 }
 
-int decode_x[8] = {  0, 16, 2, 18, 4, 20, 6, 22 };
-int decode_y[16] = {  0, 8, 32, 40, 1, 9, 33, 41, 64, 72, 96, 104, 65, 73, 97, 105 };
+static const int decode_x[8] = {  0, 16, 2, 18, 4, 20, 6, 22 };
+static const int decode_y[16] = {  0, 8, 32, 40, 1, 9, 33, 41, 64, 72, 96, 104, 65, 73, 97, 105 };
 
-int texture_decode_x[64] =
+static const int texture_decode_x[64] =
 {
 	0x000, 0x010, 0x002, 0x012, 0x004, 0x014, 0x006, 0x016,
 	0x080, 0x090, 0x082, 0x092, 0x084, 0x094, 0x086, 0x096,
@@ -171,7 +171,7 @@ int texture_decode_x[64] =
 	0xa00, 0xa10, 0xa02, 0xa12, 0xa04, 0xa14, 0xa06, 0xa16,
 	0xa80, 0xa90, 0xa82, 0xa92, 0xa84, 0xa94, 0xa86, 0xa96
 };
-int texture_decode_y[64] =
+static const int texture_decode_y[64] =
 {
 	0x000, 0x008, 0x020, 0x028, 0x001, 0x009, 0x021, 0x029,
 	0x040, 0x048, 0x060, 0x068, 0x041, 0x049, 0x061, 0x069,
@@ -183,9 +183,9 @@ int texture_decode_y[64] =
 	0x540, 0x548, 0x560, 0x568, 0x541, 0x549, 0x561, 0x569
 };
 
-int tick = 0;
-int texture_page = 0;
-int texture_palette = 0;
+static int tick = 0;
+static int texture_page = 0;
+static int texture_palette = 0;
 
 VIDEO_UPDATE( gticlub )
 {

@@ -52,18 +52,6 @@ static cycles_t suspend_time;
 
 
 //============================================================
-//  has_rdtsc
-//============================================================
-
-static int has_rdtsc(void)
-{
-	return (drc_x86_get_features() & CPUID_FEATURES_TSC) ? TRUE : FALSE;
-}
-
-
-
-
-//============================================================
 //  init_cycle_counter
 //============================================================
 
@@ -81,34 +69,18 @@ static cycles_t init_cycle_counter(void)
 	{
 		// use performance counter if available as it is constant
 		cycle_counter = performance_cycle_counter;
+		ticks_counter = rdtsc_cycle_counter;
 		logerror("using performance counter for timing ... ");
-		cycles_per_sec = frequency.QuadPart;
 
-		if (has_rdtsc())
-		{
-			ticks_counter = rdtsc_cycle_counter;
-		}
-		else
-		{
-			ticks_counter = nop_cycle_counter;
-		}
+		cycles_per_sec = frequency.QuadPart;
 	}
 	else
 	{
-		if (has_rdtsc())
-		{
-			// if the RDTSC instruction is available use it because
-			// it is more precise and has less overhead than timeGetTime()
-			cycle_counter = rdtsc_cycle_counter;
-			ticks_counter = rdtsc_cycle_counter;
-			logerror("using RDTSC for timing ... ");
-		}
-		else
-		{
-			cycle_counter = time_cycle_counter;
-			ticks_counter = nop_cycle_counter;
-			logerror("using timeGetTime for timing ... ");
-		}
+		// if the RDTSC instruction is available use it because
+		// it is more precise and has less overhead than timeGetTime()
+		cycle_counter = rdtsc_cycle_counter;
+		ticks_counter = rdtsc_cycle_counter;
+		logerror("using RDTSC for timing ... ");
 
 		// temporarily set our priority higher
 		priority = GetThreadPriority(GetCurrentThread());

@@ -262,9 +262,6 @@ static void *gaelcosnd_start(int sndtype, int sndindex, int clock, const void *c
 
 	chip_type = sndtype;
 
-	/* bag on a 0 sample_rate */
-	if (Machine->sample_rate == 0)	return info;
-
 	/* copy rom banks */
 	for (j = 0; j < 4; j++){
 		info->banks[j] = intf->banks[j];

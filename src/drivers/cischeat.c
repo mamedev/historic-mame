@@ -208,11 +208,11 @@ VIDEO_UPDATE( scudhamm );
 
 **************************************************************************/
 
-READ16_HANDLER( sharedram1_r )  {return sharedram1[offset];}
-READ16_HANDLER( sharedram2_r )  {return sharedram2[offset];}
+static READ16_HANDLER( sharedram1_r )  {return sharedram1[offset];}
+static READ16_HANDLER( sharedram2_r )  {return sharedram2[offset];}
 
-WRITE16_HANDLER( sharedram1_w ) {COMBINE_DATA(&sharedram1[offset]);}
-WRITE16_HANDLER( sharedram2_w ) {COMBINE_DATA(&sharedram2[offset]);}
+static WRITE16_HANDLER( sharedram1_w ) {COMBINE_DATA(&sharedram1[offset]);}
+static WRITE16_HANDLER( sharedram2_w ) {COMBINE_DATA(&sharedram2[offset]);}
 
 static READ16_HANDLER( rom_1_r ) {return rom_1[offset];}
 static READ16_HANDLER( rom_2_r ) {return rom_2[offset];}

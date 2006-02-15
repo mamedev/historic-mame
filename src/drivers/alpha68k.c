@@ -205,7 +205,8 @@ WRITE16_HANDLER( alpha68k_V_video_control_w );
 
 static UINT16 *shared_ram;
 static int invert_controls;
-int microcontroller_id, coin_id;
+int microcontroller_id;
+static int coin_id;
 
 static unsigned trigstate=0, deposits1=0, deposits2=0, credits=0;
 

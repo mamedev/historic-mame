@@ -730,11 +730,8 @@ int palette_init(void)
 		pen_t color = Machine->game_colortable[i];
 
 		/* check for invalid colors set by Machine->drv->init_palette */
-		if (color < total_colors)
-			Machine->remapped_colortable[i] = Machine->pens[color];
-		else
-			ui_popup("colortable[%d] (=%d) out of range (total_colors = %d)",
-					i,color,total_colors);
+		assert(color < total_colors);
+		Machine->remapped_colortable[i] = Machine->pens[color];
 	}
 
 	/* all done */

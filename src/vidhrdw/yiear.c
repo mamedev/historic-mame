@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int nmi_enable;
+int yiear_nmi_enable;
 
 static tilemap *bg_tilemap;
 
@@ -83,7 +83,7 @@ WRITE8_HANDLER( yiear_control_w )
 
 	/* bit 1 is NMI enable */
 
-	nmi_enable = data & 0x02;
+	yiear_nmi_enable = data & 0x02;
 
 	/* bit 2 is IRQ enable */
 

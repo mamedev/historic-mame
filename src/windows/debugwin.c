@@ -87,10 +87,14 @@ enum
 //  TYPES
 //============================================================
 
-struct debugview_info
+typedef struct _debugview_info debugview_info;
+typedef struct _debugwin_info debugwin_info;
+
+
+struct _debugview_info
 {
-	struct debugwin_info *	owner;
-	struct debug_view *		view;
+	debugwin_info *			owner;
+	debug_view *			view;
 	HWND					wnd;
 	HWND					hscroll;
 	HWND					vscroll;
@@ -98,26 +102,26 @@ struct debugview_info
 };
 
 
-struct debugwin_info
+struct _debugwin_info
 {
-	struct debugwin_info *	next;
+	debugwin_info *			next;
 	HWND					wnd;
 	HWND					focuswnd;
 	WNDPROC					handler;
 
 	UINT32					minwidth, maxwidth;
 	UINT32					minheight, maxheight;
-	void					(*recompute_children)(struct debugwin_info *);
+	void					(*recompute_children)(debugwin_info *);
 
-	int						(*handle_command)(struct debugwin_info *, WPARAM, LPARAM);
-	int						(*handle_key)(struct debugwin_info *, WPARAM, LPARAM);
+	int						(*handle_command)(debugwin_info *, WPARAM, LPARAM);
+	int						(*handle_key)(debugwin_info *, WPARAM, LPARAM);
 	UINT16					ignore_char_lparam;
 
-	struct debugview_info	view[MAX_VIEWS];
+	debugview_info			view[MAX_VIEWS];
 
 	HWND					editwnd;
 	char					edit_defstr[256];
-	void					(*process_string)(struct debugwin_info *, const char *);
+	void					(*process_string)(debugwin_info *, const char *);
 	WNDPROC 				original_editproc;
 	char					history[HISTORY_LENGTH][MAX_EDIT_STRING];
 	int						history_count;
@@ -138,8 +142,8 @@ struct debugwin_info
 //  LOCAL VARIABLES
 //============================================================
 
-static struct debugwin_info *window_list;
-static struct debugwin_info *main_console;
+static debugwin_info *window_list;
+static debugwin_info *main_console;
 
 static UINT8 debugger_active_countdown;
 static UINT8 waiting_for_debugger;
@@ -164,15 +168,15 @@ static const char *address_space_name[ADDRESS_SPACES] = { "program", "data", "I/
 //  PROTOTYPES
 //============================================================
 
-static struct debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler);
-static void debug_window_free(struct debugwin_info *info);
+static debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler);
+static void debug_window_free(debugwin_info *info);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
-static void debug_view_draw_contents(struct debugview_info *view, HDC dc);
-static struct debugview_info *debug_view_find(struct debug_view *view);
+static void debug_view_draw_contents(debugview_info *view, HDC dc);
+static debugview_info *debug_view_find(debug_view *view);
 static LRESULT CALLBACK debug_view_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void debug_view_update(struct debug_view *view);
-static int debug_view_create(struct debugwin_info *info, int which, int type);
+static void debug_view_update(debug_view *view);
+static int debug_view_create(debugwin_info *info, int which, int type);
 
 static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
@@ -180,30 +184,30 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 static void generic_create_window(int type);
 #endif
 #if 0
-static void generic_recompute_children(struct debugwin_info *info);
+static void generic_recompute_children(debugwin_info *info);
 #endif
 
 static void memory_create_window(void);
-static void memory_recompute_children(struct debugwin_info *info);
-static void memory_process_string(struct debugwin_info *info, const char *string);
-static int memory_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam);
-static int memory_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam);
+static void memory_recompute_children(debugwin_info *info);
+static void memory_process_string(debugwin_info *info, const char *string);
+static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam);
+static int memory_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam);
 static void memory_update_caption(HWND wnd);
 
 static void disasm_create_window(void);
-static void disasm_recompute_children(struct debugwin_info *info);
-static void disasm_process_string(struct debugwin_info *info, const char *string);
-static int disasm_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam);
+static void disasm_recompute_children(debugwin_info *info);
+static void disasm_process_string(debugwin_info *info, const char *string);
+static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam);
 static void disasm_update_caption(HWND wnd);
 
 static void console_create_window(void);
-static void console_recompute_children(struct debugwin_info *info);
-static void console_process_string(struct debugwin_info *info, const char *string);
+static void console_recompute_children(debugwin_info *info);
+static void console_process_string(debugwin_info *info, const char *string);
 static void console_set_cpunum(int cpunum);
 
 static HMENU create_standard_menubar(void);
-static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam);
-static int global_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam);
+static int global_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam);
+static int global_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam);
 static void smart_set_window_bounds(HWND wnd, HWND parent, RECT *bounds);
 static void smart_show_window(HWND wnd, BOOL show);
 static void smart_show_all(BOOL show);
@@ -359,7 +363,7 @@ void debugwin_destroy_windows(void)
 
 void debugwin_show(int type)
 {
-	struct debugwin_info *info;
+	debugwin_info *info;
 
 	// loop over windows and show/hide them
 	for (info = window_list; info; info = info->next)
@@ -383,7 +387,7 @@ void debugwin_update_during_game(void)
 		temporarily_fake_that_we_are_not_visible = 1;
 		if (input_ui_pressed(IPT_UI_DEBUG_BREAK))
 		{
-			struct debugwin_info *info;
+			debugwin_info *info;
 			HWND focuswnd = GetFocus();
 
 			debug_halt_on_next_instruction();
@@ -409,7 +413,7 @@ void debugwin_update_during_game(void)
 
 int debugwin_is_debugger_visible(void)
 {
-	struct debugwin_info *info;
+	debugwin_info *info;
 
 	// a bit of hackiness to allow us to check key sequences even if we are visible
 	if (temporarily_fake_that_we_are_not_visible)
@@ -428,9 +432,9 @@ int debugwin_is_debugger_visible(void)
 //  debug_window_create
 //============================================================
 
-static struct debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler)
+static debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler)
 {
-	struct debugwin_info *info = NULL;
+	debugwin_info *info = NULL;
 	RECT work_bounds;
 
 	// allocate memory
@@ -476,9 +480,9 @@ cleanup:
 //  debug_window_free
 //============================================================
 
-static void debug_window_free(struct debugwin_info *info)
+static void debug_window_free(debugwin_info *info)
 {
-	struct debugwin_info *prev, *curr;
+	debugwin_info *prev, *curr;
 	int viewnum;
 
 	// first unlink us from the list
@@ -510,7 +514,7 @@ static void debug_window_free(struct debugwin_info *info)
 //  debug_window_draw_contents
 //============================================================
 
-static void debug_window_draw_contents(struct debugwin_info *info, HDC dc)
+static void debug_window_draw_contents(debugwin_info *info, HDC dc)
 {
 	RECT bounds, parent;
 	int curview, curwnd;
@@ -569,7 +573,7 @@ static void debug_window_draw_contents(struct debugwin_info *info, HDC dc)
 
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	struct debugwin_info *info = (struct debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
+	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 
 	// handle a few messages
 	switch (message)
@@ -578,7 +582,7 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		case WM_CREATE:
 		{
 			CREATESTRUCT *createinfo = (CREATESTRUCT *)lparam;
-			info = (struct debugwin_info *)createinfo->lpCreateParams;
+			info = (debugwin_info *)createinfo->lpCreateParams;
 			SetWindowLongPtr(wnd, GWLP_USERDATA, (UINT32)createinfo->lpCreateParams);
 			if (info->handler)
 				SetWindowLongPtr(wnd, GWLP_WNDPROC, (UINT32)info->handler);
@@ -719,9 +723,9 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 //  debug_view_create
 //============================================================
 
-static int debug_view_create(struct debugwin_info *info, int which, int type)
+static int debug_view_create(debugwin_info *info, int which, int type)
 {
-	struct debugview_info *view = &info->view[which];
+	debugview_info *view = &info->view[which];
 	void *callback = (void *)debug_view_update;
 
 	// set the owner
@@ -768,7 +772,7 @@ cleanup:
 //  debug_view_set_bounds
 //============================================================
 
-static void debug_view_set_bounds(struct debugview_info *info, HWND parent, const RECT *newbounds)
+static void debug_view_set_bounds(debugview_info *info, HWND parent, const RECT *newbounds)
 {
 	RECT bounds = *newbounds;
 
@@ -786,9 +790,9 @@ static void debug_view_set_bounds(struct debugview_info *info, HWND parent, cons
 //  debug_view_draw_contents
 //============================================================
 
-static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
+static void debug_view_draw_contents(debugview_info *view, HDC windc)
 {
-	struct debug_view_char *viewdata;
+	debug_view_char *viewdata;
 	HGDIOBJ oldfont, oldbitmap;
 	UINT32 visrows, viscols;
 	COLORREF oldfgcolor;
@@ -946,9 +950,9 @@ static void debug_view_draw_contents(struct debugview_info *view, HDC windc)
 //  debug_view_update
 //============================================================
 
-static void debug_view_update(struct debug_view *view)
+static void debug_view_update(debug_view *view)
 {
-	struct debugview_info *info = debug_view_find(view);
+	debugview_info *info = debug_view_find(view);
 
 	// if we have a view window, process it
 	if (info && info->view)
@@ -1060,9 +1064,9 @@ static void debug_view_update(struct debug_view *view)
 //  debug_view_find
 //============================================================
 
-static struct debugview_info *debug_view_find(struct debug_view *view)
+static debugview_info *debug_view_find(debug_view *view)
 {
-	struct debugwin_info *info;
+	debugwin_info *info;
 	int curview;
 
 	// loop over windows and find the view
@@ -1079,7 +1083,7 @@ static struct debugview_info *debug_view_find(struct debug_view *view)
 //  debug_view_process_scroll
 //============================================================
 
-static UINT32 debug_view_process_scroll(struct debugview_info *info, WORD type, HWND wnd)
+static UINT32 debug_view_process_scroll(debugview_info *info, WORD type, HWND wnd)
 {
 	SCROLLINFO scrollinfo;
 	INT32 maxval;
@@ -1152,7 +1156,7 @@ static UINT32 debug_view_process_scroll(struct debugview_info *info, WORD type, 
 //  debug_view_prev_view
 //============================================================
 
-static void debug_view_prev_view(struct debugwin_info *info, struct debugview_info *curview)
+static void debug_view_prev_view(debugwin_info *info, debugview_info *curview)
 {
 	int curindex = 1;
 	int numviews;
@@ -1196,7 +1200,7 @@ static void debug_view_prev_view(struct debugwin_info *info, struct debugview_in
 //  debug_view_next_view
 //============================================================
 
-static void debug_view_next_view(struct debugwin_info *info, struct debugview_info *curview)
+static void debug_view_next_view(debugwin_info *info, debugview_info *curview)
 {
 	int curindex = -1;
 	int numviews;
@@ -1242,7 +1246,7 @@ static void debug_view_next_view(struct debugwin_info *info, struct debugview_in
 
 static LRESULT CALLBACK debug_view_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	struct debugview_info *info = (struct debugview_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
+	debugview_info *info = (debugview_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 
 	// handle a few messages
 	switch (message)
@@ -1386,7 +1390,7 @@ static LRESULT CALLBACK debug_view_proc(HWND wnd, UINT message, WPARAM wparam, L
 
 static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
-	struct debugwin_info *info = (struct debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
+	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 	TCHAR buffer[MAX_EDIT_STRING];
 
 	// handle a few messages
@@ -1510,7 +1514,7 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 
 static void generic_create_window(int type)
 {
-	struct debugwin_info *info;
+	debugwin_info *info;
 	TCHAR title[256];
 	UINT32 width;
 	RECT bounds;
@@ -1555,7 +1559,7 @@ static void generic_create_window(int type)
 //  generic_recompute_children
 //============================================================
 
-static void generic_recompute_children(struct debugwin_info *info)
+static void generic_recompute_children(debugwin_info *info)
 {
 	RECT parent;
 
@@ -1577,7 +1581,7 @@ static void memory_create_window(void)
 {
 	int curcpu = cpu_getactivecpu(), cursel = 0;
 	UINT32 width, cpunum, spacenum;
-	struct debugwin_info *info;
+	debugwin_info *info;
 	HMENU optionsmenu;
 	RECT bounds;
 
@@ -1626,7 +1630,7 @@ static void memory_create_window(void)
 	// populate the combobox
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 		if (cpuinfo->valid)
 			for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 				if (cpuinfo->space[spacenum].databytes)
@@ -1684,7 +1688,7 @@ static void memory_create_window(void)
 //  memory_recompute_children
 //============================================================
 
-static void memory_recompute_children(struct debugwin_info *info)
+static void memory_recompute_children(debugwin_info *info)
 {
 	RECT parent, memrect, editrect, comborect;
 
@@ -1721,7 +1725,7 @@ static void memory_recompute_children(struct debugwin_info *info)
 //  memory_process_string
 //============================================================
 
-static void memory_process_string(struct debugwin_info *info, const char *string)
+static void memory_process_string(debugwin_info *info, const char *string)
 {
 	// set the string to the memory view
 	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, string);
@@ -1739,7 +1743,7 @@ static void memory_process_string(struct debugwin_info *info, const char *string
 //  memory_handle_command
 //============================================================
 
-static int memory_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
+static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
 	switch (HIWORD(wparam))
 	{
@@ -1753,7 +1757,7 @@ static int memory_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 				UINT32 cpunum, spacenum;
 				for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 				{
-					const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+					const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 					if (cpuinfo->valid)
 						for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 							if (cpuinfo->space[spacenum].databytes)
@@ -1813,7 +1817,7 @@ static int memory_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 //  memory_handle_key
 //============================================================
 
-static int memory_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
+static int memory_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
 	if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
 	{
@@ -1847,7 +1851,7 @@ static int memory_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM l
 
 static void memory_update_caption(HWND wnd)
 {
-	struct debugwin_info *info = (struct debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
+	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 	UINT32 cpunum, spacenum;
 	char title[100];
 
@@ -1869,7 +1873,7 @@ static void memory_update_caption(HWND wnd)
 static void disasm_create_window(void)
 {
 	int curcpu = cpu_getactivecpu(), cursel = 0;
-	struct debugwin_info *info;
+	debugwin_info *info;
 	UINT32 width, cpunum;
 	RECT bounds;
 
@@ -1908,7 +1912,7 @@ static void disasm_create_window(void)
 	// populate the combobox
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 		if (cpuinfo->valid)
 			if (cpuinfo->space[ADDRESS_SPACE_PROGRAM].databytes)
 			{
@@ -1964,7 +1968,7 @@ static void disasm_create_window(void)
 //  disasm_recompute_children
 //============================================================
 
-static void disasm_recompute_children(struct debugwin_info *info)
+static void disasm_recompute_children(debugwin_info *info)
 {
 	RECT parent, dasmrect, editrect, comborect;
 
@@ -2001,7 +2005,7 @@ static void disasm_recompute_children(struct debugwin_info *info)
 //  disasm_process_string
 //============================================================
 
-static void disasm_process_string(struct debugwin_info *info, const char *string)
+static void disasm_process_string(debugwin_info *info, const char *string)
 {
 	// set the string to the disasm view
 	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, string);
@@ -2019,7 +2023,7 @@ static void disasm_process_string(struct debugwin_info *info, const char *string
 //  disasm_handle_command
 //============================================================
 
-static int disasm_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
+static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
 	switch (HIWORD(wparam))
 	{
@@ -2033,7 +2037,7 @@ static int disasm_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 				UINT32 cpunum;
 				for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 				{
-					const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+					const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 					if (cpuinfo->valid)
 						if (cpuinfo->space[ADDRESS_SPACE_PROGRAM].databytes)
 							if (sel-- == 0)
@@ -2063,7 +2067,7 @@ static int disasm_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 
 static void disasm_update_caption(HWND wnd)
 {
-	struct debugwin_info *info = (struct debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
+	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
 	char title[100];
 	UINT32 cpunum;
 
@@ -2083,7 +2087,7 @@ static void disasm_update_caption(HWND wnd)
 
 void console_create_window(void)
 {
-	struct debugwin_info *info;
+	debugwin_info *info;
 	int bestwidth, bestheight;
 	RECT bounds, work_bounds;
 	UINT32 cpunum;
@@ -2198,7 +2202,7 @@ cleanup:
 //  console_recompute_children
 //============================================================
 
-static void console_recompute_children(struct debugwin_info *info)
+static void console_recompute_children(debugwin_info *info)
 {
 	RECT parent, regrect, disrect, conrect, editrect;
 	UINT32 regchars, dischars, conchars;
@@ -2247,7 +2251,7 @@ static void console_recompute_children(struct debugwin_info *info)
 //  console_process_string
 //============================================================
 
-static void console_process_string(struct debugwin_info *info, const char *string)
+static void console_process_string(debugwin_info *info, const char *string)
 {
 	TCHAR buffer = 0;
 
@@ -2331,7 +2335,7 @@ static HMENU create_standard_menubar(void)
 //  global_handle_command
 //============================================================
 
-static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
+static int global_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
 	if (HIWORD(wparam) == 0)
 		switch (LOWORD(wparam))
@@ -2384,7 +2388,7 @@ static int global_handle_command(struct debugwin_info *info, WPARAM wparam, LPAR
 //  global_handle_key
 //============================================================
 
-static int global_handle_key(struct debugwin_info *info, WPARAM wparam, LPARAM lparam)
+static int global_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
 	int ignoreme;
 
@@ -2505,7 +2509,7 @@ static void smart_show_window(HWND wnd, BOOL show)
 
 static void smart_show_all(BOOL show)
 {
-	struct debugwin_info *info;
+	debugwin_info *info;
 	if (!show)
 		SetForegroundWindow(win_video_window);
 	for (info = window_list; info; info = info->next)

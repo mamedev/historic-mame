@@ -901,7 +901,6 @@ static MACHINE_DRIVER_START( zwackery )
 	MDRV_GFXDECODE(zwackery_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
 
-	MDRV_PALETTE_INIT(zwackery)
 	MDRV_VIDEO_START(zwackery)
 	MDRV_VIDEO_UPDATE(zwackery)
 

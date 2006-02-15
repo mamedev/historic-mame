@@ -109,7 +109,7 @@ static struct {
 static int num_sprites;
 static struct sprite_cave *sprite_cave;
 static struct sprite_cave *sprite_table[MAX_PRIORITY][MAX_SPRITE_NUM+1];
-mame_bitmap *sprite_zbuf;
+static mame_bitmap *sprite_zbuf;
 static UINT16 sprite_zbuf_baseval = 0x10000-MAX_SPRITE_NUM;
 
 static void (*get_sprite_info)(void);

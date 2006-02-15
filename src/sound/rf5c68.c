@@ -126,10 +126,6 @@ static void *rf5c68_start(int sndindex, int clock, const void *config)
 	struct rf5c68pcm *chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
-	/* skip if no sound */
-	if (Machine->sample_rate == 0)
-		return 0;
-
 	/* allocate the stream */
 	chip->stream = stream_create(0, 2, clock / 384, chip, rf5c68_update);
 	return chip;

@@ -31,8 +31,12 @@
 // standard C headers
 #include <math.h>
 
-// MAME headers
+// Windows 95/NT multimonitor stubs
+#ifdef WIN95_MULTIMON
 #include "multidef.h"
+#endif
+
+// MAME headers
 #include "driver.h"
 #include "window.h"
 #include "winddraw.h"
@@ -63,7 +67,7 @@ extern int win_is_mouse_captured(void);
 extern UINT8 win_trying_to_quit;
 
 // from video.c
-HMONITOR monitor;
+extern HMONITOR monitor;
 
 // from wind3dfx.c
 int win_d3d_effects_in_use(void);
@@ -105,8 +109,6 @@ int	win_triple_buffer;
 int	win_use_ddraw;
 int	win_use_d3d;
 int	win_dd_hw_stretch;
-int	win_d3d_use_filter;
-int win_d3d_tex_manage;
 int win_force_int_stretch;
 int	win_gfx_width;
 int	win_gfx_height;
@@ -198,7 +200,7 @@ static BITMAPINFO *debug_dib_info = (BITMAPINFO *)debug_dib_info_data;
 #endif
 
 // effects table
-static const struct win_effect_data effect_table[] =
+static const win_effect_data effect_table[] =
 {
 	{ "none",    EFFECT_NONE,        1, 1, 3, 4 },
 	{ "scan25",  EFFECT_SCANLINE_25, 1, 2, 3, 4 },
@@ -1554,32 +1556,10 @@ int win_process_events(int ingame)
 
 
 //============================================================
-//  wait_for_vsync
-//============================================================
-
-void win_wait_for_vsync(void)
-{
-	// if we have DirectDraw, we can use that
-	if (win_use_directx)
-	{
-		if (win_use_directx == USE_D3D)
-		{
-			win_d3d_wait_vsync();
-		}
-		else
-		{
-			win_ddraw_wait_vsync();
-		}
-	}
-}
-
-
-
-//============================================================
 //  win_prepare_palette
 //============================================================
 
-UINT32 *win_prepare_palette(struct win_blit_params *params)
+UINT32 *win_prepare_palette(win_blit_params *params)
 {
 	// 16bpp source only needs a palette if RGB direct or modifiable
 	if (params->srcdepth == 15 || params->srcdepth == 16)
@@ -1598,7 +1578,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 static void dib_draw_window(HDC dc, mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
-	struct win_blit_params params;
+	win_blit_params params;
 	int xmult, ymult;
 	RECT client;
 	int cx, cy;
@@ -1703,7 +1683,7 @@ int win_lookup_effect(const char *arg)
 //  win_determine_effect
 //============================================================
 
-int win_determine_effect(const struct win_blit_params *params)
+int win_determine_effect(const win_blit_params *params)
 {
 	// default to what was selected
 	int result = effect_table[win_blit_effect].effect;

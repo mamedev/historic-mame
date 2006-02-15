@@ -501,7 +501,7 @@ static void *tms36xx_start(int sndindex, int clock, const void *config)
 	tms->intf = config;
 
    tms->channel = stream_create(0, 1, Machine->sample_rate, tms, tms36xx_sound_update);
-	tms->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
+	tms->samplerate = Machine->sample_rate;
 	tms->basefreq = clock;
 	enable = 0;
    for (j = 0; j < 6; j++)

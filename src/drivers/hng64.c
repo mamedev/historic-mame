@@ -469,7 +469,7 @@ VIDEO_UPDATE( hng64 ) ;
 static UINT32 activeBuffer ;
 
 
-UINT32 no_machine_error_code;
+static UINT32 no_machine_error_code;
 static int hng64_interrupt_level_request;
 WRITE32_HANDLER( hng64_videoram_w );
 
@@ -711,7 +711,7 @@ READ32_HANDLER( hng64_cart_r )
 	return hng_cart[offset];
 }
 
-READ32_HANDLER( no_machine_error )
+static READ32_HANDLER( no_machine_error )
 {
 	return no_machine_error_code;
 }
@@ -776,7 +776,7 @@ READ32_HANDLER( hng64_3d_2_r )
 
 // These are for the 3d 'display list'
 
-WRITE32_HANDLER( dl_w )
+static WRITE32_HANDLER( dl_w )
 {
 	COMBINE_DATA (&hng64_dl[offset]) ;
 
@@ -808,7 +808,7 @@ WRITE32_HANDLER( dl_w )
 //  printf("dl W (%08x) : %.8x %.8x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
 }
 
-READ32_HANDLER( dl_r )
+static READ32_HANDLER( dl_r )
 {
 	// A read of 0x86 ONLY happens if there are more display lists than what are readily available...
 	// See above for more compelling detail...  (PC = 8006fe1c)

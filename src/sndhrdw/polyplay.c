@@ -35,17 +35,17 @@ void polyplay_sh_start(void)
 	channel_playing2 = 0;
 }
 
-void set_channel1(int active)
+void polyplay_set_channel1(int active)
 {
 	channel_playing1 = active;
 }
 
-void set_channel2(int active)
+void polyplay_set_channel2(int active)
 {
 	channel_playing2 = active;
 }
 
-void play_channel1(int data)
+void polyplay_play_channel1(int data)
 {
 	if (data) {
 		freq1 = 2457600 / 16 / data / 8;
@@ -58,7 +58,7 @@ void play_channel1(int data)
 	}
 }
 
-void play_channel2(int data)
+void polyplay_play_channel2(int data)
 {
 	if (data) {
 		freq2 = 2457600 / 16 / data / 8;

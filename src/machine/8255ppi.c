@@ -122,6 +122,7 @@ typedef struct
 	UINT8 out_mask[3];	/* output mask */
 	UINT8 read[3];		/* data read from ports */
 	UINT8 latch[3];		/* data written to ports */
+	UINT8 output[3];	/* actual output data */
 } ppi8255;
 
 static ppi8255 chips[MAX_8255];
@@ -130,7 +131,7 @@ static void set_mode(int which, int data, int call_handlers);
 static void ppi8255_write_port(ppi8255 *chip, int port);
 
 
-void ppi8255_init( ppi8255_interface *intfce )
+void ppi8255_init( const ppi8255_interface *intfce )
 {
 	int i;
 
@@ -258,8 +259,8 @@ static void ppi8255_input(ppi8255 *chip, int port, UINT8 data)
 			if (changed)
 				ppi8255_write_port(chip, 2);
 		}
-		}
 	}
+}
 
 
 
@@ -285,10 +286,10 @@ static UINT8 ppi8255_read_port(ppi8255 *chip, int port)
 
 
 
-int ppi8255_r(int which, int offset)
+UINT8 ppi8255_r(int which, offs_t offset)
 {
 	ppi8255 *chip = &chips[which];
-	int result = 0;
+	UINT8 result = 0;
 
 	/* some bounds checking */
 	if (which > num)
@@ -305,11 +306,11 @@ int ppi8255_r(int which, int offset)
 		case 1: /* Port B read */
 		case 2: /* Port C read */
 			result = ppi8255_read_port(chip, offset);
-				break;
+			break;
 
 		case 3: /* Control word */
 			result = 0xFF;
-				break;
+			break;
 	}
 
 	return result;
@@ -328,13 +329,14 @@ static void ppi8255_write_port(ppi8255 *chip, int port)
 	if (port == 2)
 		ppi8255_get_handshake_signals(chip, 0, &write_data);
 
+	chip->output[port] = write_data;
 	if (chip->port_write[port])
 		chip->port_write[port](0, write_data);
 }
 
 
 
-void ppi8255_w(int which, int offset, int data)
+void ppi8255_w(int which, offs_t offset, UINT8 data)
 {
 	ppi8255	*chip = &chips[which];
 
@@ -546,9 +548,13 @@ static void set_mode(int which, int data, int call_handlers)
 }
 
 
-void ppi8255_set_portA( int which, int data ) { ppi8255_input(&chips[which], 0, data); }
-void ppi8255_set_portB( int which, int data ) { ppi8255_input(&chips[which], 1, data); }
-void ppi8255_set_portC( int which, int data ) { ppi8255_input(&chips[which], 2, data); }
+void ppi8255_set_portA( int which, UINT8 data ) { ppi8255_input(&chips[which], 0, data); }
+void ppi8255_set_portB( int which, UINT8 data ) { ppi8255_input(&chips[which], 1, data); }
+void ppi8255_set_portC( int which, UINT8 data ) { ppi8255_input(&chips[which], 2, data); }
+
+UINT8 ppi8255_get_portA( int which ) { return chips[which].output[0]; }
+UINT8 ppi8255_get_portB( int which ) { return chips[which].output[1]; }
+UINT8 ppi8255_get_portC( int which ) { return chips[which].output[2]; }
 
 /* Helpers */
 READ8_HANDLER( ppi8255_0_r ) { return ppi8255_r( 0, offset ); }

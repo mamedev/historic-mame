@@ -43,10 +43,10 @@ static int    character_page=0;
 static int    scroll_reg = 0;
 static int    stars_scroll=0;
 
-unsigned char *dirty_character;
-unsigned char *character_1_ram;
-unsigned char *character_2_ram;
-unsigned char *character_3_ram;
+static unsigned char *dirty_character;
+static unsigned char *character_1_ram;
+static unsigned char *character_2_ram;
+static unsigned char *character_3_ram;
 unsigned char *bullet_ram;
 unsigned char *s2636_1_ram;
 unsigned char *s2636_2_ram;
@@ -57,7 +57,7 @@ mame_bitmap *s2636_2_bitmap;
 mame_bitmap *s2636_3_bitmap;
 mame_bitmap *collision_bitmap;
 mame_bitmap *collision_background;
-mame_bitmap *scrolled_background;
+static mame_bitmap *scrolled_background;
 
 unsigned char s2636_1_dirty[4];
 unsigned char s2636_2_dirty[4];

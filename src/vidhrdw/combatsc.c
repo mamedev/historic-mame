@@ -15,9 +15,8 @@ static tilemap *textlayer;
 static UINT8 *private_spriteram[2];
 static int priority;
 
-UINT8 *combasc_io_ram;
+static UINT8 *combasc_io_ram;
 static int combasc_vreg;
-UINT8* banked_area;
 
 static int combasc_bank_select; /* 0x00..0x1f */
 static int combasc_video_circuit; /* 0 or 1 */

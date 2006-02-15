@@ -364,8 +364,6 @@ static void ymf278b_timer_b_reset(YMF278BChip *chip)
 
 static void ymf278b_A_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 {
-	if (!Machine->sample_rate) return;
-
 	switch(reg)
 	{
 		case 0x02:
@@ -398,15 +396,11 @@ static void ymf278b_A_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 
 static void ymf278b_B_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 {
-	if (!Machine->sample_rate) return;
-
 	logerror("YMF278B:  Port B write %02x, %02x\n", reg, data);
 }
 
 static void ymf278b_C_w(YMF278BChip *chip, UINT8 reg, UINT8 data)
 {
-	if (!Machine->sample_rate) return;
-
 	// Handle slot registers specifically
 	if (reg >= 0x08 && reg <= 0xf7)
 	{

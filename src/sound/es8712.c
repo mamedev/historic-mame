@@ -313,8 +313,7 @@ static void *es8712_start(int sndindex, int clock, const void *config)
 
 	/* initialize the rest of the structure */
 	chip->signal = -2;
-	if (Machine->sample_rate)
-		chip->source_step = (UINT32)((double)clock * (double)FRAC_ONE / (double)Machine->sample_rate);
+	chip->source_step = (UINT32)((double)clock * (double)FRAC_ONE / (double)Machine->sample_rate);
 
 	es8712_state_save_register(chip, sndindex);
 
@@ -371,8 +370,7 @@ void ES8712_set_frequency(int which, int frequency)
 	/* update the stream and set the new base */
 	stream_update(chip->stream, 0);
 
-	if (Machine->sample_rate)
-		chip->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
+	chip->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
 }
 
 
@@ -387,8 +385,6 @@ void ES8712_play(int which)
 {
 	struct es8712 *chip = sndti_token(SOUND_ES8712, which);
 
-
-	if (Machine->sample_rate == 0) return;
 
 	if (chip->start < chip->end)
 	{

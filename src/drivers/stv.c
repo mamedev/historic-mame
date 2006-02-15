@@ -318,7 +318,7 @@ if(stv_scu[42] & 1)//IRQ ACK
 
 /**************************************************************************************/
 
-int DectoBCD(int num)
+static int DectoBCD(int num)
 {
 	int i, cnt = 0, tmp, res = 0;
 
@@ -471,12 +471,12 @@ int DectoBCD(int num)
 7e
 7f -w EXLE2/1
 */
-UINT8 IOSEL1;
-UINT8 IOSEL2;
-UINT8 EXLE1;
-UINT8 EXLE2;
-UINT8 PDR1;
-UINT8 PDR2;
+static UINT8 IOSEL1;
+static UINT8 IOSEL2;
+static UINT8 EXLE1;
+static UINT8 EXLE2;
+static UINT8 PDR1;
+static UINT8 PDR2;
 
 #define SH2_DIRECT_MODE_PORT_1 IOSEL1 = 1
 #define SH2_DIRECT_MODE_PORT_2 IOSEL2 = 1

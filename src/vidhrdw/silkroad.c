@@ -150,7 +150,7 @@ VIDEO_START(silkroad)
 	return 0;
 }
 
-int enable1=1,enable2=1,enable3=1;
+static int enable1=1,enable2=1,enable3=1;
 
 VIDEO_UPDATE(silkroad)
 {

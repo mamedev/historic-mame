@@ -616,17 +616,13 @@ READ16_HANDLER( midwunit_sound_r )
 {
 	logerror("%08X:Sound read\n", activecpu_get_pc());
 
-	if (Machine->sample_rate)
-		return dcs_data_r() & 0xff;
-	return 0x0000;
+	return dcs_data_r() & 0xff;
 }
 
 
 READ16_HANDLER( midwunit_sound_state_r )
 {
-	if (Machine->sample_rate)
-		return dcs_control_r();
-	return 0x0800;
+	return dcs_control_r();
 }
 
 

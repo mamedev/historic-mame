@@ -182,7 +182,7 @@ Notes:  pzlbowl PCB with extra parts:
 
 WRITE16_HANDLER( seta2_sound_bank_w )
 {
-	if (ACCESSING_LSB && Machine->sample_rate)
+	if (ACCESSING_LSB)
 	{
 		UINT8 *ROM = memory_region( REGION_SOUND1 );
 		int banks = (memory_region_length( REGION_SOUND1 ) - 0x100000) / 0x20000;

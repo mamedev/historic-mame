@@ -17,7 +17,7 @@ typedef struct
 } mnemonic_t;
 
 
-mnemonic_t mnemonic[256] = {
+static const mnemonic_t mnemonic[256] = {
 	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 00
 	{ "b", 8 }, { "call", 8 }, { "ret", 9 }, { "bal", 8 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
@@ -67,7 +67,7 @@ mnemonic_t mnemonic[256] = {
 	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }
 };
 
-mnemonic_t mnem_reg[100] =
+static const mnemonic_t mnem_reg[100] =
 {
 	{ "notbit", 0x580 }, { "and", 0x581 }, { "andnot", 0x582 }, { "setbit", 0x583 }, { "notand",0x584 },
 	{ "xor", 0x586 }, { "or", 0x587 }, { "nor", 0x588 }, { "xnor",0x589 }, { "not",0x58a },
@@ -93,7 +93,7 @@ mnemonic_t mnem_reg[100] =
 	{ "ending_code",0 }
 };
 
-const char *regnames[32] =
+static const char *regnames[32] =
 {
 	"pfp","sp","rip","r3", "r4","r5","r6","r7", "r8","r9","r10","r11", "r12","r13","r14","r15",
 	"g0","g1","g2","g3", "g4","g5","g6","g7", "g8","g9","g10","g11", "g12","g13","g14","fp",

@@ -148,13 +148,6 @@ INLINE void update_step(struct YMZ280BChip *chip, struct YMZ280BVoice *voice)
 {
 	double frequency;
 
-	/* handle the sound-off case */
-	if (Machine->sample_rate == 0)
-	{
-		voice->output_step = 0;
-		return;
-	}
-
 	/* compute the frequency */
 	if (voice->mode == 1)
 		frequency = chip->master_clock * (double)((voice->fnum & 0x0ff) + 1) * (1.0 / 256.0);

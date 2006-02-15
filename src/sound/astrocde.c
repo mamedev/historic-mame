@@ -197,11 +197,6 @@ static void *astrocade_start(int sndindex, int clock, const void *config)
 
 	chip->intf = config;
 
-	if (Machine->sample_rate == 0)
-	{
-		return chip;
-	}
-
 	chip->div_by_N_factor = clock/Machine->sample_rate;
 
 	chip->stream = stream_create(0,1,Machine->sample_rate,chip,astrocade_update);

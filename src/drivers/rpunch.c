@@ -164,7 +164,7 @@ MACHINE_INIT( rpunch )
  *
  *************************************/
 
-READ16_HANDLER( common_port_r )
+static READ16_HANDLER( common_port_r )
 {
 	return readinputport(offset) | readinputport(2);
 }
@@ -177,7 +177,7 @@ READ16_HANDLER( common_port_r )
  *
  *************************************/
 
-void sound_command_w_callback(int data)
+static void sound_command_w_callback(int data)
 {
 	sound_busy = 1;
 	sound_data = data;
@@ -213,7 +213,7 @@ static READ16_HANDLER( sound_busy_r )
  *
  *************************************/
 
-WRITE8_HANDLER( upd_control_w )
+static WRITE8_HANDLER( upd_control_w )
 {
 	if ((data & 1) != upd_rom_bank)
 	{
@@ -224,7 +224,7 @@ WRITE8_HANDLER( upd_control_w )
 }
 
 
-WRITE8_HANDLER( upd_data_w )
+static WRITE8_HANDLER( upd_data_w )
 {
 	upd7759_port_w(0, data);
 	upd7759_start_w(0, 0);

@@ -44,10 +44,10 @@
 
 #define SAA5050_VBLANK 2500
 
-int malzak_bank1;
-int malzak_bank2;
+static int malzak_bank1;
 
-extern int temp_x,temp_y;
+extern int malzak_x;
+extern int malzak_y;
 
 extern unsigned char* saa5050_vidram;  /* Video RAM for SAA 5050 */
 extern unsigned char* s2636_1_ram;  /* Video RAM for S2636 #1 */
@@ -249,13 +249,13 @@ static WRITE8_HANDLER( port40_w )
 
 static WRITE8_HANDLER( port60_w )
 {
-	temp_x = data;
+	malzak_x = data;
 //  logerror("I/O: port 0x60 write 0x%02x\n",data);
 }
 
 static WRITE8_HANDLER( portc0_w )
 {
-	temp_y = data;
+	malzak_y = data;
 //  logerror("I/O: port 0xc0 write 0x%02x\n",data);
 }
 

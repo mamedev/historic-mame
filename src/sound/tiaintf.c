@@ -23,9 +23,6 @@ static void *tia_start(int sndindex, int clock, const void *config)
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
-    if (Machine->sample_rate == 0)
-        return info;
-
 	info->channel = stream_create(0, 1, clock, info, tia_update);
 
 	info->chip = tia_sound_init(clock, clock, 16);

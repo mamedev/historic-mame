@@ -261,16 +261,7 @@ READ8_HANDLER( vendetta_sound_interrupt_r )
 
 READ8_HANDLER( vendetta_sound_r )
 {
-	/* If the sound CPU is running, read the status, otherwise
-       just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
-	else
-	{
-		static int res = 0x00;
-
-		res = ((res + 1) & 0x07);
-		return offset ? res : 0x00;
-	}
+	return K053260_0_r(2 + offset);
 }
 
 /********************************************/

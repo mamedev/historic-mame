@@ -5,7 +5,7 @@
 
 
 UINT16 *suprslam_screen_videoram, *suprslam_bg_videoram,*suprslam_sp_videoram, *suprslam_spriteram;
-UINT16 screen_bank, bg_bank;
+static UINT16 screen_bank, bg_bank;
 static tilemap *suprslam_screen_tilemap, *suprslam_bg_tilemap;
 
 /* todo, fix zooming correctly, its _not_ like aerofgt */

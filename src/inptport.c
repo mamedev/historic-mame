@@ -239,6 +239,9 @@ static UINT8 ui_memory[__ipt_max];
 /* XML attributes for the different types */
 static const char *seqtypestrings[] = { "standard", "decrement", "increment" };
 
+/* original input_ports without modifications */
+input_port_entry *input_ports_default;
+
 
 
 /*************************************
@@ -978,8 +981,8 @@ int input_port_init(void (*construct_ipt)(input_port_init_params *))
 			return 1;
 
 		/* allocate default input ports */
-		Machine->input_ports_default = input_port_allocate(construct_ipt, NULL);
-		if (!Machine->input_ports_default)
+		input_ports_default = input_port_allocate(construct_ipt, NULL);
+		if (!input_ports_default)
 			return 1;
 
 		/* identify all the tagged ports up front so the memory system can access them */
@@ -1285,7 +1288,7 @@ static int apply_config_to_current(xml_data_node *portnode, int type, int player
 	defvalue = xml_get_attribute_int(portnode, "defvalue", 0);
 
 	/* find the indexed port; we scan the array to make sure we don't read past the end */
-	for (updateport = Machine->input_ports_default; updateport->type != IPT_END; updateport++)
+	for (updateport = input_ports_default; updateport->type != IPT_END; updateport++)
 		if (index-- == 0)
 			break;
 
@@ -1296,7 +1299,7 @@ static int apply_config_to_current(xml_data_node *portnode, int type, int player
 		const char *revstring;
 
 		/* point to the real port */
-		updateport = Machine->input_ports + (updateport - Machine->input_ports_default);
+		updateport = Machine->input_ports + (updateport - input_ports_default);
 
 		/* fill in the data from the attributes */
 		updateport->default_value = xml_get_attribute_int(portnode, "value", updateport->default_value);
@@ -1461,9 +1464,9 @@ static void save_game_inputs(xml_data_node *parentnode)
 	int portnum;
 
 	/* iterate over ports */
-	for (portnum = 0; Machine->input_ports_default[portnum].type != IPT_END; portnum++)
+	for (portnum = 0; input_ports_default[portnum].type != IPT_END; portnum++)
 	{
-		input_port_entry *defport = &Machine->input_ports_default[portnum];
+		input_port_entry *defport = &input_ports_default[portnum];
 		input_port_entry *curport = &Machine->input_ports[portnum];
 
 		/* only save if something has changed and this port is a type we save */

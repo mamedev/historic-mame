@@ -165,6 +165,7 @@ Games marked * need dumping / redumping
 /********** BITS & PIECES **********/
 
 #include "driver.h"
+#include "state.h"
 #include "sound/ymf271.h"
 
 extern UINT32 *ms32_fce00000;
@@ -1567,8 +1568,8 @@ static READ8_HANDLER( latch_r )
 
 static WRITE8_HANDLER( ms32_snd_bank_w )
 {
-		memory_set_bankptr(4, memory_region(REGION_CPU2) + 0x14000+0x4000*(data&0xf));
-		memory_set_bankptr(5, memory_region(REGION_CPU2) + 0x14000+0x4000*(data>>4));
+	memory_set_bank(4, (data >> 0) & 0x0F);
+	memory_set_bank(5, (data >> 4) & 0x0F);
 }
 
 static WRITE8_HANDLER( to_main_w )
@@ -1609,8 +1610,8 @@ static struct YMF271interface ymf271_interface =
 static MACHINE_INIT( ms32 )
 {
 	memory_set_bankptr(1, memory_region(REGION_CPU1));
-	memory_set_bankptr(4, memory_region(REGION_CPU2) + 0x14000);
-	memory_set_bankptr(5, memory_region(REGION_CPU2) + 0x18000);
+	memory_set_bank(4, 0);
+	memory_set_bank(5, 1);
 	irq_init();
 }
 
@@ -2306,9 +2307,17 @@ static void decrypt_ms32_bg(int addr_xor,int data_xor)
 
 
 
+static void configure_banks(void)
+{
+	state_save_register_UINT32("ms32", 0, "to_main", &to_main, 1);
+	memory_configure_bank(4, 0, 16, memory_region(REGION_CPU2) + 0x14000, 0x4000);
+	memory_configure_bank(5, 0, 16, memory_region(REGION_CPU2) + 0x14000, 0x4000);
+}
+
 /* SS91022-10: desertwr, gratiaa, tp2m32, gametngk */
 static DRIVER_INIT (ss91022_10)
 {
+	configure_banks();
 	rearrange_sprites();
 	decrypt_ms32_tx(0x00000,0x35);
 	decrypt_ms32_bg(0x00000,0xa3);
@@ -2317,6 +2326,7 @@ static DRIVER_INIT (ss91022_10)
 /* SS92046_01: bbbxing, f1superb, tetrisp, hayaosi1 */
 static DRIVER_INIT (ss92046_01)
 {
+	configure_banks();
 	rearrange_sprites();
 	decrypt_ms32_tx(0x00020,0x7e);
 	decrypt_ms32_bg(0x00001,0x9b);
@@ -2325,6 +2335,7 @@ static DRIVER_INIT (ss92046_01)
 /* SS92047-01: gratia, kirarast */
 static DRIVER_INIT (ss92047_01)
 {
+	configure_banks();
 	rearrange_sprites();
 	decrypt_ms32_tx(0x24000,0x18);
 	decrypt_ms32_bg(0x24000,0x55);
@@ -2333,6 +2344,7 @@ static DRIVER_INIT (ss92047_01)
 /* SS92048-01: p47aces, 47pie2, 47pie2o */
 static DRIVER_INIT (ss92048_01)
 {
+	configure_banks();
 	rearrange_sprites();
 	decrypt_ms32_tx(0x20400,0xd6);
 	decrypt_ms32_bg(0x20400,0xd4);
@@ -2365,17 +2377,17 @@ static DRIVER_INIT (f1superb)
 
 GAME( 1994, hayaosi1, 0,        ms32, hayaosi1, ss92046_01, ROT0,   "Jaleco", "Hayaoshi Quiz Ouza Ketteisen", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1994, bbbxing,  0,        ms32, bbbxing,  ss92046_01, ROT0,   "Jaleco", "Best Bout Boxing", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1994, 47pie2,   0,        ms32, akiss,    47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1994, 47pie2o,  47pie2,   ms32, akiss,    47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "Desert War / Wangan Sensou", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, tetrisp,  0,        ms32, tetrisp,  ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, p47aces,  0,        ms32, p47aces,  ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, akiss,    0,        ms32, akiss,    kirarast,   ROT0,   "Jaleco", "Mahjong Angel Kiss", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1996, gratia,   0,        ms32, gratia,   ss92047_01, ROT0,   "Jaleco", "Gratia - Second Earth (92047-01 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1996, gratiaa,  gratia,   ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth (91022-10 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1996, kirarast, 0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1997, tp2m32,   tetrisp2, ms32, tp2m32,   ss91022_10, ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1994, 47pie2,   0,        ms32, akiss,    47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1994, 47pie2o,  47pie2,   ms32, akiss,    47pie2,     ROT0,   "Jaleco", "Idol Janshi Su-Chi-Pie 2 (v1.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1995, desertwr, 0,        ms32, desertwr, ss91022_10, ROT270, "Jaleco", "Desert War / Wangan Sensou", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1995, gametngk, 0,        ms32, gametngk, ss91022_10, ROT270, "Jaleco", "The Game Paradise - Master of Shooting! / Game Tengoku - The Game Paradise", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1995, tetrisp,  0,        ms32, tetrisp,  ss92046_01, ROT0,   "Jaleco / BPS", "Tetris Plus", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1995, p47aces,  0,        ms32, p47aces,  ss92048_01, ROT0,   "Jaleco", "P-47 Aces", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1995, akiss,    0,        ms32, akiss,    kirarast,   ROT0,   "Jaleco", "Mahjong Angel Kiss", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1996, gratia,   0,        ms32, gratia,   ss92047_01, ROT0,   "Jaleco", "Gratia - Second Earth (92047-01 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1996, gratiaa,  gratia,   ms32, gratia,   ss91022_10, ROT0,   "Jaleco", "Gratia - Second Earth (91022-10 version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1996, kirarast, 0,        ms32, kirarast, kirarast,   ROT0,   "Jaleco", "Ryuusei Janshi Kirara Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1997, tp2m32,   tetrisp2, ms32, tp2m32,   ss91022_10, ROT0,   "Jaleco", "Tetris Plus 2 (MegaSystem 32 Version)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
 
 /* these boot and show something */
-GAME( 1994, f1superb, 0,        ms32, f1superb, f1superb, ROT0,   "Jaleco", "F1 Super Battle", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1994, f1superb, 0,        ms32, f1superb, f1superb, ROT0,   "Jaleco", "F1 Super Battle", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_SUPPORTS_SAVE )

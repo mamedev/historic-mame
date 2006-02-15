@@ -80,12 +80,12 @@ PALETTE_INIT( firetrap )
 
 ***************************************************************************/
 
-UINT32 get_fg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 get_fg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	return (row ^ 0x1f) + (col << 5);
 }
 
-UINT32 get_bg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 get_bg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	return ((row & 0x0f) ^ 0x0f) | ((col & 0x0f) << 4) |
 			/* hole at bit 8 */

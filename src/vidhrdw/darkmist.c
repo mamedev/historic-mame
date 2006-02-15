@@ -5,12 +5,7 @@
 extern unsigned char * darkmist_scroll;
 extern int darkmist_hw;
 
-#define DM_HACKS 1
-
-
-#if DM_HACKS
-static int palc=-1;
-#endif
+static int spritebank;
 
 /* vis. flags */
 
@@ -29,10 +24,6 @@ static void get_bgtile_info(int tile_index)
 	attr=memory_region(REGION_USER2)[tile_index]; /* -PPP--TT - FIXED BITS (0xxx00xx) */
 	code+=(attr&3)<<8;
 	pal=(attr>>4);
-
-#if DM_HACKS
-	pal+=1;
-#endif
 
 	SET_TILE_INFO(
 		1,
@@ -53,10 +44,7 @@ static void get_fgtile_info(int tile_index)
 
 	code+=0x400;
 
-#if DM_HACKS
-	if(pal==palc)
-		pal=rand()&0xf;
-#endif
+	pal+=16;
 
 	SET_TILE_INFO(
 		1,
@@ -71,10 +59,11 @@ static void get_txttile_info(int tile_index)
 
 	code=videoram[tile_index];
 	attr=videoram[tile_index+0x400];
-	pal=attr&0xf;
+	pal=(attr>>1);
 
 	code+=(attr&1)<<8;
 
+	pal+=48;
 
 	SET_TILE_INFO(
 		0,
@@ -83,21 +72,73 @@ static void get_txttile_info(int tile_index)
         0)
 }
 
-READ8_HANDLER(darkmist_palette_r)
+PALETTE_INIT(darkmist)
 {
-	return paletteram[offset];
+	int i;
+
+	/* black color */
+	palette_set_color(0x100, 0,0,0);
+
+	/* color lookup tables */
+
+	for (i = 0;i < 256;i++)
+	{
+		if (*color_prom & 0x40)
+			*(colortable++) = 0x100;
+		else
+			*(colortable++) = (*color_prom & 0x3f) + 0x80;
+		color_prom++;
+	}
+
+	for (i = 0;i < 256;i++)
+	{
+		if (*color_prom & 0x40)
+			*(colortable++) = 0x100;
+		else
+			*(colortable++) = (*color_prom & 0x3f) + 0x00;
+		color_prom++;
+	}
+
+	for (i = 0;i < 256;i++)
+	{
+		if (*color_prom & 0x40)
+			*(colortable++) = 0x100;
+		else
+			*(colortable++) = (*color_prom & 0x3f) + 0x40;
+		color_prom++;
+	}
+
+	for (i = 0;i < 256;i++)
+	{
+		if (*color_prom & 0x40)
+			*(colortable++) = 0x100;
+		else
+			*(colortable++) = (*color_prom & 0x3f) + 0xc0;
+		color_prom++;
+	}
 }
 
 WRITE8_HANDLER(darkmist_palette_w)
 {
 	int r,g,b;
+
 	paletteram[offset]=data;
-	offset&=0x1ff;
+	offset&=0xff;
 	r=paletteram[offset+0x200]&0xf;
 	g=(paletteram[offset])>>4;
 	b=paletteram[offset]&0x0f;
 
 	palette_set_color(offset, r * 0x11, g * 0x11, b * 0x11);
+}
+
+READ8_HANDLER(darkmist_palette_r)
+{
+	return paletteram[offset];
+}
+
+WRITE8_HANDLER(darkmist_spritebank_w)
+{
+	spritebank=data<<8;
 }
 
 VIDEO_START(darkmist)
@@ -113,24 +154,6 @@ VIDEO_START(darkmist)
 
 VIDEO_UPDATE( darkmist)
 {
-
-
-#if DM_HACKS
-	if(code_pressed_memory(KEYCODE_Q))
-	{
-		palc++;
-		printf("%x \n",palc);
-	}
-
-	if(code_pressed_memory(KEYCODE_W))
-	{
-		palc--;
-		printf("%x \n",palc);
-	}
-	tilemap_mark_all_tiles_dirty(fgtilemap);
-#endif
-
-
 
 #define DM_GETSCROLL(n) (((darkmist_scroll[(n)]<<1)&0xff) + ((darkmist_scroll[(n)]&0x80)?1:0) +( ((darkmist_scroll[(n)-1]<<4) | (darkmist_scroll[(n)-1]<<12) )&0xff00))
 
@@ -158,33 +181,32 @@ VIDEO_UPDATE( darkmist)
     Sprites
 
     76543210
-0 - TTTTTTTT - tile
-1 - xy0PPP21 - palette (P), flips (x,y), top bits of tile number (0,1,2)
-2 - YYYYYYYY - y coord
-3 - XXXXXXXX - x coord
+0 - TTTT TTTT - tile
+1 - xyBP PPP? - palette (P), flips (x,y), B - use spritebank,
+                ? - unknown, according to gamecode top bit of one of coords(y/x)
+2 - YYYY YYYY - y coord
+3 - XXXX XXXX - x coord
 
 */
-
 	int i,fx,fy,tile,palette;
 	for(i=0;i<spriteram_size;i+=32)
 	{
 		fy=spriteram[i+1]&0x40;
-		fx=spriteram[i+1]&0x80; /* guess ....*/
-		tile=(((spriteram[i+1]&3)<<9)|((spriteram[i+1]&0x20)<<3));
+		fx=spriteram[i+1]&0x80;
 
-#if DM_HACKS
-		if(tile==0x4000)
+		tile=spriteram[i+0];
+
+		if(spriteram[i+1]&0x20)
 		{
-			tile=0x3000;
+			tile+=spritebank;
 		}
-#endif
 
-		tile+=spriteram[i+0];
-		palette=(spriteram[i+1]>>2)&0x7; /* guess  ... */
+		palette=((spriteram[i+1])>>1)&0xf;
 
-#if DM_HACKS
-		palette+=1;
-#endif
+		if(spriteram[i+1]&0x1)
+			palette=rand()&15;
+
+		palette+=32;
 
 		drawgfx(
                bitmap,Machine->gfx[2],
@@ -195,6 +217,7 @@ VIDEO_UPDATE( darkmist)
                &Machine->visible_area,
                TRANSPARENCY_PEN,0 );
 		}
+
 	}
 
 	if(darkmist_hw & DISPLAY_TXT)
@@ -202,6 +225,8 @@ VIDEO_UPDATE( darkmist)
 		tilemap_mark_all_tiles_dirty(txtilemap);
 		tilemap_draw(bitmap,cliprect,txtilemap, 0,0);
 	}
+
+
 }
 
 

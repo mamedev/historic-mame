@@ -36,7 +36,7 @@
 extern int verbose;
 
 // from video.c
-GUID *screen_guid_ptr;
+extern GUID *screen_guid_ptr;
 
 
 //============================================================
@@ -190,15 +190,9 @@ INLINE void erase_outer_rect(RECT *outer, RECT *inner, LPDIRECTDRAWSURFACE surfa
 //  win_ddraw_wait_vsync
 //============================================================
 
-void win_ddraw_wait_vsync(void)
+static void win_ddraw_wait_vsync(void)
 {
-	BOOL is_vblank;
-
-	// if we're not already in VBLANK, wait for it
-	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank) == DD_OK && is_vblank)
-		;
-	while (IDirectDraw_GetVerticalBlankStatus(ddraw, &is_vblank) == DD_OK && !is_vblank)
-		;
+	IDirectDraw_WaitForVerticalBlank(ddraw, DDWAITVB_BLOCKBEGIN, NULL);
 }
 
 
@@ -207,7 +201,7 @@ void win_ddraw_wait_vsync(void)
 //  win_ddraw_init
 //============================================================
 
-int win_ddraw_init(int width, int height, int depth, int attributes, const struct win_effect_data *effect)
+int win_ddraw_init(int width, int height, int depth, int attributes, const win_effect_data *effect)
 {
 	HRESULT result;
 	DDCAPS hel_caps;
@@ -1064,7 +1058,7 @@ static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *ve
 	int dstdepth = blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
 	LPDIRECTDRAWSURFACE target_surface;
-	struct win_blit_params params;
+	win_blit_params params;
 	HRESULT result;
 	RECT src, dst, margins;
 	int dstxoffs;
@@ -1289,7 +1283,7 @@ static int render_to_primary(mame_bitmap *bitmap, const rectangle *bounds, void 
 	int wait_for_lock = lock_must_succeed(bounds, vector_dirty_pixels);
 	DDSURFACEDESC temp_desc = { sizeof(temp_desc) };
 	LPDIRECTDRAWSURFACE target_surface;
-	struct win_blit_params params;
+	win_blit_params params;
 	int xmult, ymult, dstdepth;
 	HRESULT result;
 	RECT outer, inner, temp;
@@ -1406,6 +1400,14 @@ tryagain:
 		params.srcyoffs += bounds->min_y - win_visible_rect.top;
 		params.srcwidth = bounds->max_x - bounds->min_x + 1;
 		params.srcheight = bounds->max_y - bounds->min_y + 1;
+	}
+
+	if ((win_wait_vsync || win_sync_refresh) && throttle && !(!win_window_mode && win_triple_buffer))
+	{
+		// this counts as idle time
+		profiler_mark(PROFILER_IDLE);
+		win_ddraw_wait_vsync();
+		profiler_mark(PROFILER_END);
 	}
 
 	win_perform_blit(&params, update);

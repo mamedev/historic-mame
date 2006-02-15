@@ -3106,11 +3106,11 @@ int ui_display_game_warnings(mame_bitmap *bitmap)
 	char buf[2048];
 	char *bufptr = buf;
 
-	if (Machine->rom_load_warnings > 0 || (Machine->gamedrv->flags & WARNING_FLAGS))
+	if (rom_load_warnings() > 0 || (Machine->gamedrv->flags & WARNING_FLAGS))
 	{
 		int done;
 
-		if (Machine->rom_load_warnings > 0)
+		if (rom_load_warnings() > 0)
 		{
 			bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_incorrectroms));
 			if (Machine->gamedrv->flags & WARNING_FLAGS)
@@ -3623,7 +3623,6 @@ static void onscrd_init(void)
 
 	item = 0;
 
-	if (Machine->sample_rate)
 	{
 		int num_vals = sound_get_user_gain_count();
 		onscrd_fnc[item] = onscrd_volume;

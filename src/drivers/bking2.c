@@ -465,7 +465,7 @@ static const gfx_layout charlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-gfx_layout crowlayout =
+static gfx_layout crowlayout =
 {
 	16,32,	/* 16*32 characters */
 	16,		/* 16 characters */
@@ -482,7 +482,7 @@ gfx_layout crowlayout =
 	128*8    /* every sprite takes 128 consecutive bytes */
 };
 
-gfx_layout balllayout =
+static gfx_layout balllayout =
 {
 	8,16,  /* 8*16 sprites */
 	8,     /* 8 sprites */

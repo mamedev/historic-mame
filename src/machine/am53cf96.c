@@ -13,7 +13,7 @@
 #include "state.h"
 #include "am53cf96.h"
 
-UINT8 scsi_regs[32], fifo[16], fptr = 0, xfer_state, last_id;
+static UINT8 scsi_regs[32], fifo[16], fptr = 0, xfer_state, last_id;
 static struct AM53CF96interface *intf;
 
 typedef struct

@@ -57,7 +57,9 @@ extern int cps1_port(int offset);
 extern void cps1_get_video_base(void);
 extern void cps1_build_palette(void);
 extern void cps1_update_transmasks(void);
-extern int scroll1x, scroll1y, scroll2x, scroll2y, scroll3x, scroll3y;
+extern int cps1_scroll1x, cps1_scroll1y;
+extern int cps1_scroll2x, cps1_scroll2y;
+extern int cps1_scroll3x, cps1_scroll3y;
 extern UINT16 *cps1_other;
 
 /* not verified */
@@ -139,11 +141,11 @@ VIDEO_UPDATE( fcrash )
 
 	cps1_update_transmasks();
 
-	tilemap_set_scrollx(cps1_bg_tilemap[0],0,scroll1x-60);
-	tilemap_set_scrolly(cps1_bg_tilemap[0],0,scroll1y);
+	tilemap_set_scrollx(cps1_bg_tilemap[0],0,cps1_scroll1x-60);
+	tilemap_set_scrolly(cps1_bg_tilemap[0],0,cps1_scroll1y);
 	if (videocontrol & 0x01)	/* linescroll enable */
 	{
-		int scrly=-scroll2y;
+		int scrly=-cps1_scroll2y;
 		int i;
 		int otheroffs;
 
@@ -152,16 +154,16 @@ VIDEO_UPDATE( fcrash )
 		otheroffs = cps1_port(CPS1_ROWSCROLL_OFFS);
 
 		for (i = 0;i < 256;i++)
-			tilemap_set_scrollx(cps1_bg_tilemap[1],(i - scrly) & 0x3ff,scroll2x + cps1_other[(i + otheroffs) & 0x3ff]);
+			tilemap_set_scrollx(cps1_bg_tilemap[1],(i - scrly) & 0x3ff,cps1_scroll2x + cps1_other[(i + otheroffs) & 0x3ff]);
 	}
 	else
 	{
 		tilemap_set_scroll_rows(cps1_bg_tilemap[1],1);
-		tilemap_set_scrollx(cps1_bg_tilemap[1],0,scroll2x-60);
+		tilemap_set_scrollx(cps1_bg_tilemap[1],0,cps1_scroll2x-60);
 	}
-	tilemap_set_scrolly(cps1_bg_tilemap[1],0,scroll2y);
-	tilemap_set_scrollx(cps1_bg_tilemap[2],0,scroll3x-60);
-	tilemap_set_scrolly(cps1_bg_tilemap[2],0,scroll3y);
+	tilemap_set_scrolly(cps1_bg_tilemap[1],0,cps1_scroll2y);
+	tilemap_set_scrollx(cps1_bg_tilemap[2],0,cps1_scroll3x-60);
+	tilemap_set_scrolly(cps1_bg_tilemap[2],0,cps1_scroll3y);
 
 
 	/* turn all tilemaps on regardless of settings in get_video_base() */

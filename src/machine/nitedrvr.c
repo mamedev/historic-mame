@@ -8,14 +8,17 @@
 #include "vidhrdw/generic.h"
 #include "nitedrvr.h"
 #include "sound/discrete.h"
+#include "state.h"
 
-static int nitedrvr_gear = 1;
-static int nitedrvr_track;
-static int nitedrvr_steering_buf;
-static int nitedrvr_steering_val;
-static int nitedrvr_crash_en;
-static int nitedrvr_crash_data = 0x0f;
-static int nitedrvr_crash_data_en;	// IC D8
+static UINT8 nitedrvr_gear = 1;
+static UINT8 nitedrvr_track;
+static INT32 nitedrvr_steering_buf;
+static INT32 nitedrvr_steering_val;
+static UINT8 nitedrvr_crash_en;
+static UINT8 nitedrvr_crash_data = 0x0f;
+static UINT8 nitedrvr_crash_data_en;	// IC D8
+static UINT8 ac_line;
+static INT32 last_steering_val;
 
 /***************************************************************************
 Steering
@@ -28,14 +31,13 @@ change in-between can affect the direction you move.
 ***************************************************************************/
 static int nitedrvr_steering(void)
 {
-	static int last_val=0;
 	int this_val;
 	int delta;
 
 	this_val = readinputport(5);
 
-	delta=this_val-last_val;
-	last_val=this_val;
+	delta=this_val-last_steering_val;
+	last_steering_val=this_val;
 	if (delta>128) delta-=256;
 	else if (delta<-128) delta+=256;
 	/* Divide by four to make our steering less sensitive */
@@ -164,7 +166,6 @@ Fill in the track difficulty switch and special signal in a special way.
 
 READ8_HANDLER( nitedrvr_in1_r )
 {
-	static int ac_line=0x00;
 	int port;
 
 	ac_line=(ac_line+1) % 3;
@@ -268,4 +269,17 @@ void nitedrvr_crash_toggle(int dummy)
 			palette_set_color(1,0xff,0xff,0xff); /* WHITE */
 		}
 	}
+}
+
+void nitedrvr_register_machine_vars(void)
+{/* save all the statics in this file. */
+	state_save_register_global(nitedrvr_gear);
+	state_save_register_global(nitedrvr_track);
+	state_save_register_global(nitedrvr_steering_buf);
+	state_save_register_global(nitedrvr_steering_val);
+	state_save_register_global(nitedrvr_crash_en);
+	state_save_register_global(nitedrvr_crash_data);
+	state_save_register_global(nitedrvr_crash_data_en);
+	state_save_register_global(ac_line);
+	state_save_register_global(last_steering_val);
 }

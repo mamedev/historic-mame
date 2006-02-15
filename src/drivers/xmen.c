@@ -136,9 +136,6 @@ static WRITE16_HANDLER( sound_cmd_w )
 	if (ACCESSING_LSB) {
 		data &= 0xff;
 		soundlatch_w(0, data);
-		if(!Machine->sample_rate)
-			if(data == 0xfc || data == 0xfe)
-				soundlatch2_w(0, 0x7f);
 	}
 }
 

@@ -48,7 +48,7 @@ static UINT16 spritebank[8];
 static UINT16 spritebank_buffered[8];
 static UINT16 koshien_spritebank;
 
-int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
+static int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 /* remember flip status over frames because driftout can fail to set it */
 static int sprites_flipscreen = 0;
 

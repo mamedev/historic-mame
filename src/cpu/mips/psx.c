@@ -247,7 +247,7 @@ void mips_stop( void )
 
 #if LOG_BIOSCALL
 
-struct
+static const struct
 {
 	int address;
 	int operation;

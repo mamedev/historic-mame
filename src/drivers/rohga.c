@@ -12,7 +12,7 @@
     Todo:  On Wizard Fire when you insert a coin and press start, the start
     button being held seems to select the knight right away.  Emulation bug.
 
-    Todo:  Priority errors & other graphics errors in Nitro Ball.
+    Todo:  Sprite priority errors in Nitro Ball.
 
     Todo:  There is some kind of full-screen flash in Rohga when you die,
         not emulated.
@@ -241,17 +241,18 @@ static ADDRESS_MAP_START( nitrobal_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x360000, 0x3607ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x380000, 0x381fff) AM_READ(MRA16_RAM)
 
+	AM_RANGE(0xfec000, 0xff3fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xff4000, 0xff47ff) AM_READ(deco16_146_nitroball_prot_r) /* Protection device */
-	AM_RANGE(0xfec000, 0xffffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( nitrobal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
 
-	AM_RANGE(0x200000, 0x200fff) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
-	AM_RANGE(0x202000, 0x202fff) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
-	AM_RANGE(0x208000, 0x208fff) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
-	AM_RANGE(0x20a000, 0x20afff) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
+	AM_RANGE(0x200000, 0x200fff) AM_MIRROR(0x1000) AM_WRITE(deco16_pf1_data_w) AM_BASE(&deco16_pf1_data)
+	AM_RANGE(0x202000, 0x2027ff) AM_MIRROR(0x800) AM_WRITE(deco16_pf2_data_w) AM_BASE(&deco16_pf2_data)
+	AM_RANGE(0x208000, 0x2087ff) AM_MIRROR(0x800) AM_WRITE(deco16_pf3_data_w) AM_BASE(&deco16_pf3_data)
+	AM_RANGE(0x20a000, 0x20a7ff) AM_MIRROR(0x800) AM_WRITE(deco16_pf4_data_w) AM_BASE(&deco16_pf4_data)
 
 	AM_RANGE(0x204000, 0x2047ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf1_rowscroll)
 	AM_RANGE(0x206000, 0x2067ff) AM_WRITE(MWA16_RAM) AM_BASE(&deco16_pf2_rowscroll)
@@ -273,8 +274,9 @@ static ADDRESS_MAP_START( nitrobal_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x380000, 0x381fff) AM_WRITE(deco16_buffered_palette_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x390008, 0x390009) AM_WRITE(deco16_palette_dma_w)
 
-	AM_RANGE(0xff4000, 0xff47ff) AM_WRITE(deco16_146_nitroball_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
-	AM_RANGE(0xfec000, 0xffffff) AM_WRITE(MWA16_RAM) /* Main ram */
+	AM_RANGE(0xfec000, 0xff3fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0xff4000, 0xff47ff) AM_MIRROR(0x800) AM_WRITE(deco16_146_nitroball_prot_w) AM_BASE(&deco16_prot_ram) /* Protection writes */
+	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM) /* Main ram */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( schmeisr_readmem, ADDRESS_SPACE_PROGRAM, 16 )

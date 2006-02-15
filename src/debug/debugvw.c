@@ -35,22 +35,24 @@
 **#################################################################################################*/
 
 /* debug_view_callbacks contains calbacks specific to a given view */
-struct debug_view_callbacks
+struct _debug_view_callbacks
 {
-	int				(*alloc)(struct debug_view *);	/* allocate memory */
-	void			(*free)(struct debug_view *);	/* free memory */
-	void			(*update)(struct debug_view *);	/* update contents */
-	void			(*getprop)(struct debug_view *, UINT32, union debug_property_info *value); /* get property */
-	void			(*setprop)(struct debug_view *, UINT32, union debug_property_info value); /* set property */
+	int				(*alloc)(debug_view *);		/* allocate memory */
+	void			(*free)(debug_view *);		/* free memory */
+	void			(*update)(debug_view *);	/* update contents */
+	void			(*getprop)(debug_view *, UINT32, debug_property_info *value); /* get property */
+	void			(*setprop)(debug_view *, UINT32, debug_property_info value); /* set property */
 };
+typedef struct _debug_view_callbacks debug_view_callbacks;
+
 
 /* debug_view describes a single text-based view */
-struct debug_view
+struct _debug_view
 {
-	struct debug_view *next;					/* link to the next view */
+	debug_view *	next;						/* link to the next view */
 	UINT8			type;						/* type of view */
 	void *			extra_data;					/* extra view-specific data */
-	struct debug_view_callbacks cb;				/* callback for this view */
+	debug_view_callbacks cb;					/* callback for this view */
 	void *			osd_private_data;			/* OSD-managed private data */
 
 	/* visibility info */
@@ -68,16 +70,18 @@ struct debug_view
 	/* update info */
 	UINT8			update_level;				/* update level; updates when this hits 0 */
 	UINT8			update_pending;				/* true if there is a pending update */
-	void			(*update_func)(struct debug_view *);/* callback for the update */
-	struct debug_view_char *viewdata;			/* current array of view data */
+	void			(*update_func)(debug_view *);/* callback for the update */
+	debug_view_char *viewdata;					/* current array of view data */
 	int				viewdata_size;				/* number of elements of the viewdata array */
 
 	/* common info */
 	UINT8			cpunum;						/* target CPU number */
 };
+/* typedef struct _debug_view debug_view -- defined in debugvw.h */
+
 
 /* debug_view_registers contains data specific to a register view */
-struct debug_view_register
+struct _debug_view_register
 {
 	UINT64			lastval;					/* last value */
 	UINT64			currval;					/* current value */
@@ -87,17 +91,21 @@ struct debug_view_register
 	UINT8			valstart;					/* starting value char */
 	UINT8			vallen;						/* number of value chars */
 };
+typedef struct _debug_view_register debug_view_register;
 
-struct debug_view_registers
+
+struct _debug_view_registers
 {
 	UINT8			cpunum;						/* target CPU number */
 	int				divider;					/* dividing column */
 	UINT32			last_update;				/* execution counter at last update */
-	struct debug_view_register reg[MAX_REGS];	/* register data */
+	debug_view_register reg[MAX_REGS];			/* register data */
 };
+typedef struct _debug_view_registers debug_view_registers;
+
 
 /* debug_view_disasm contains data specific to a disassembly view */
-struct debug_view_disasm
+struct _debug_view_disasm
 {
 	UINT8			cpunum;						/* target CPU number */
 	UINT8 *			last_opcode_base;			/* last opcode base */
@@ -105,15 +113,17 @@ struct debug_view_disasm
 	int				divider1, divider2;			/* left and right divider columns */
 	UINT8			live_tracking;				/* track the value of the live expression? */
 	UINT64			last_result;				/* last result from the expression */
-	struct parsed_expression *expression;		/* expression to compute */
+	parsed_expression *expression;		/* expression to compute */
 	char *			expression_string;			/* copy of the expression string */
 	UINT8			expression_dirty;			/* true if the expression needs to be re-evaluated */
 	offs_t			address[DASM_LINES];		/* addresses of the instructions */
 	char			dasm[DASM_LINES][DASM_MAX_CHARS];/* disassembled instructions */
 };
+typedef struct _debug_view_disasm debug_view_disasm;
+
 
 /* debug_view_memory contains data specific to a memory view */
-struct debug_view_memory
+struct _debug_view_memory
 {
 	UINT8			cpunum;						/* target CPU number */
 	int				divider1, divider2;			/* left and right divider columns */
@@ -124,10 +134,11 @@ struct debug_view_memory
 	UINT8			live_tracking;				/* track the value of the live expression? */
 	UINT8			byte_offset;				/* byte offset within each row */
 	UINT64			last_result;				/* last result from the expression */
-	struct parsed_expression *expression;		/* expression to compute */
+	parsed_expression *expression;		/* expression to compute */
 	char *			expression_string;			/* copy of the expression string */
 	UINT8			expression_dirty;			/* true if the expression needs to be re-evaluated */
 };
+typedef struct _debug_view_memory debug_view_memory;
 
 
 
@@ -135,7 +146,7 @@ struct debug_view_memory
 **  LOCAL VARIABLES
 **#################################################################################################*/
 
-static struct debug_view *first_view;
+static debug_view *first_view;
 
 
 
@@ -149,25 +160,25 @@ static struct debug_view *first_view;
 **  PROTOTYPES
 **#################################################################################################*/
 
-static void console_update(struct debug_view *view);
+static void console_update(debug_view *view);
 
-static int registers_alloc(struct debug_view *view);
-static void registers_free(struct debug_view *view);
-static void registers_update(struct debug_view *view);
+static int registers_alloc(debug_view *view);
+static void registers_free(debug_view *view);
+static void registers_update(debug_view *view);
 
-static int disasm_alloc(struct debug_view *view);
-static void disasm_free(struct debug_view *view);
-static void disasm_update(struct debug_view *view);
-static void	disasm_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value);
-static void	disasm_setprop(struct debug_view *view, UINT32 property, union debug_property_info value);
+static int disasm_alloc(debug_view *view);
+static void disasm_free(debug_view *view);
+static void disasm_update(debug_view *view);
+static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_info *value);
+static void	disasm_setprop(debug_view *view, UINT32 property, debug_property_info value);
 
-static int memory_alloc(struct debug_view *view);
-static void memory_free(struct debug_view *view);
-static void memory_update(struct debug_view *view);
-static void	memory_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value);
-static void	memory_setprop(struct debug_view *view, UINT32 property, union debug_property_info value);
+static int memory_alloc(debug_view *view);
+static void memory_free(debug_view *view);
+static void memory_update(debug_view *view);
+static void	memory_getprop(debug_view *view, UINT32 property, debug_property_info *value);
+static void	memory_setprop(debug_view *view, UINT32 property, debug_property_info value);
 
-static const struct debug_view_callbacks callback_table[] =
+static const debug_view_callbacks callback_table[] =
 {
 	{	NULL,				NULL,				NULL,				NULL,				NULL },
 	{	NULL,				NULL,				console_update,		NULL,				NULL },
@@ -215,9 +226,9 @@ void debug_view_exit(void)
     view
 -------------------------------------------------*/
 
-struct debug_view *debug_view_alloc(int type)
+debug_view *debug_view_alloc(int type)
 {
-	struct debug_view *view;
+	debug_view *view;
 
 	/* allocate memory for the view */
 	view = malloc(sizeof(*view));
@@ -264,9 +275,9 @@ struct debug_view *debug_view_alloc(int type)
     debug_view_free - free a debug view
 -------------------------------------------------*/
 
-void debug_view_free(struct debug_view *view)
+void debug_view_free(debug_view *view)
 {
-	struct debug_view *curview, *prevview;
+	debug_view *curview, *prevview;
 
 	/* find the view */
 	for (prevview = NULL, curview = first_view; curview != NULL; prevview = curview, curview = curview->next)
@@ -299,7 +310,7 @@ void debug_view_free(struct debug_view *view)
     of a given property
 -------------------------------------------------*/
 
-void debug_view_get_property(struct debug_view *view, int property, union debug_property_info *value)
+void debug_view_get_property(debug_view *view, int property, debug_property_info *value)
 {
 	switch (property)
 	{
@@ -374,7 +385,7 @@ void debug_view_get_property(struct debug_view *view, int property, union debug_
     of a given property
 -------------------------------------------------*/
 
-void debug_view_set_property(struct debug_view *view, int property, union debug_property_info value)
+void debug_view_set_property(debug_view *view, int property, debug_property_info value)
 {
 	switch (property)
 	{
@@ -440,7 +451,7 @@ void debug_view_set_property(struct debug_view *view, int property, union debug_
 
 		case DVP_UPDATE_CALLBACK:
 			debug_view_begin_update(view);
-			view->update_func = (void (*)(struct debug_view *)) value.f;
+			view->update_func = (void (*)(debug_view *)) value.f;
 			view->update_pending = 1;
 			debug_view_end_update(view);
 			break;
@@ -517,7 +528,7 @@ void debug_view_set_property(struct debug_view *view, int property, union debug_
     of changes so that only one update occurs
 -------------------------------------------------*/
 
-void debug_view_begin_update(struct debug_view *view)
+void debug_view_begin_update(debug_view *view)
 {
 	/* bump the level */
 	view->update_level++;
@@ -529,7 +540,7 @@ void debug_view_begin_update(struct debug_view *view)
     of changes so that only one update occurs
 -------------------------------------------------*/
 
-void debug_view_end_update(struct debug_view *view)
+void debug_view_end_update(debug_view *view)
 {
 	/* if we hit zero, call the update function */
 	if (view->update_level == 1)
@@ -571,7 +582,7 @@ void debug_view_end_update(struct debug_view *view)
 
 void debug_view_update_all(void)
 {
-	struct debug_view *view;
+	debug_view *view;
 
 	/* loop over each view and force an update */
 	for (view = first_view; view != NULL; view = view->next)
@@ -590,7 +601,7 @@ void debug_view_update_all(void)
 
 void debug_view_update_type(int type)
 {
-	struct debug_view *view;
+	debug_view *view;
 
 	/* loop over each view and force an update */
 	for (view = first_view; view != NULL; view = view->next)
@@ -612,9 +623,9 @@ void debug_view_update_type(int type)
     console_update - update the console view
 -------------------------------------------------*/
 
-static void console_update(struct debug_view *view)
+static void console_update(debug_view *view)
 {
-	struct debug_view_char *dest = view->viewdata;
+	debug_view_char *dest = view->viewdata;
 	int total_rows, total_cols;
 	UINT32 row;
 
@@ -668,9 +679,9 @@ static void console_update(struct debug_view *view)
     registers view
 -------------------------------------------------*/
 
-static int registers_alloc(struct debug_view *view)
+static int registers_alloc(debug_view *view)
 {
-	struct debug_view_registers *regdata;
+	debug_view_registers *regdata;
 
 	/* allocate memory */
 	regdata = malloc(sizeof(*regdata));
@@ -692,9 +703,9 @@ static int registers_alloc(struct debug_view *view)
     registers view
 -------------------------------------------------*/
 
-static void registers_free(struct debug_view *view)
+static void registers_free(debug_view *view)
 {
-	struct debug_view_registers *regdata = view->extra_data;
+	debug_view_registers *regdata = view->extra_data;
 
 	/* free any memory we callocated */
 	if (regdata)
@@ -708,9 +719,9 @@ static void registers_free(struct debug_view *view)
     registers view
 -------------------------------------------------*/
 
-static void add_register(struct debug_view *view, int regnum, const char *str)
+static void add_register(debug_view *view, int regnum, const char *str)
 {
-	struct debug_view_registers *regdata = view->extra_data;
+	debug_view_registers *regdata = view->extra_data;
 	int tagstart, taglen, valstart, vallen;
 	const char *colon;
 
@@ -765,10 +776,10 @@ static void add_register(struct debug_view *view, int regnum, const char *str)
     for the registers view
 -------------------------------------------------*/
 
-static void registers_recompute(struct debug_view *view)
+static void registers_recompute(debug_view *view)
 {
 	const int *list = cpunum_debug_register_list(view->cpunum);
-	struct debug_view_registers *regdata = view->extra_data;
+	debug_view_registers *regdata = view->extra_data;
 	int regnum, maxtaglen, maxvallen;
 
 	/* reset the view parameters */
@@ -865,11 +876,11 @@ static void registers_recompute(struct debug_view *view)
     the register view
 -------------------------------------------------*/
 
-static void registers_update(struct debug_view *view)
+static void registers_update(debug_view *view)
 {
 	UINT32 execution_counter = debug_get_execution_counter();
-	struct debug_view_registers *regdata = view->extra_data;
-	struct debug_view_char *dest = view->viewdata;
+	debug_view_registers *regdata = view->extra_data;
+	debug_view_char *dest = view->viewdata;
 	UINT32 row, i;
 
 	/* if our assumptions changed, revisit them */
@@ -885,7 +896,7 @@ static void registers_update(struct debug_view *view)
 		/* if this visible row is valid, add it to the buffer */
 		if (effrow < view->total_rows)
 		{
-			struct debug_view_register *reg = &regdata->reg[effrow];
+			debug_view_register *reg = &regdata->reg[effrow];
 			UINT32 effcol = view->left_col;
 			char temp[256], dummy[100];
 			UINT8 attrib = DCA_NORMAL;
@@ -991,9 +1002,9 @@ static void registers_update(struct debug_view *view)
     disassembly view
 -------------------------------------------------*/
 
-static int disasm_alloc(struct debug_view *view)
+static int disasm_alloc(debug_view *view)
 {
-	struct debug_view_disasm *dasmdata;
+	debug_view_disasm *dasmdata;
 
 	/* allocate disasm */
 	dasmdata = malloc(sizeof(*dasmdata));
@@ -1015,9 +1026,9 @@ static int disasm_alloc(struct debug_view *view)
     disassembly view
 -------------------------------------------------*/
 
-static void disasm_free(struct debug_view *view)
+static void disasm_free(debug_view *view)
 {
-	struct debug_view_disasm *dasmdata = view->extra_data;
+	debug_view_disasm *dasmdata = view->extra_data;
 
 	/* free any disasm we callocated */
 	if (dasmdata)
@@ -1037,7 +1048,7 @@ static void disasm_free(struct debug_view *view)
     of instructions from the given PC
 -------------------------------------------------*/
 
-static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, offs_t startpc, int numinstrs)
+static offs_t disasm_back_up(int cpunum, const debug_cpu_info *cpuinfo, offs_t startpc, int numinstrs)
 {
 	int minlen = BYTE2ADDR(activecpu_min_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
 	int maxlen = BYTE2ADDR(activecpu_max_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
@@ -1129,7 +1140,7 @@ static offs_t disasm_back_up(int cpunum, const struct debug_cpu_info *cpuinfo, o
     byte values
 -------------------------------------------------*/
 
-static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debug_cpu_info *cpuinfo, int minbytes, char *string, int maxchars)
+static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_info *cpuinfo, int minbytes, char *string, int maxchars)
 {
 	int byte, offset = 0;
 	UINT64 val;
@@ -1185,10 +1196,10 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const struct debu
     for the disassembly view
 -------------------------------------------------*/
 
-static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, int lines, int original_cpunum)
+static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lines, int original_cpunum)
 {
-	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
-	struct debug_view_disasm *dasmdata = view->extra_data;
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
+	debug_view_disasm *dasmdata = view->extra_data;
 	int chunksize, minbytes, maxbytes, maxbytes_clamped;
 	int use_new_dasm;
 	UINT32 addrmask;
@@ -1291,13 +1302,13 @@ static void disasm_recompute(struct debug_view *view, offs_t pc, int startline, 
     the disassembly view
 -------------------------------------------------*/
 
-static void disasm_update(struct debug_view *view)
+static void disasm_update(debug_view *view)
 {
-	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	offs_t pc = cpunum_get_reg(view->cpunum, REG_PC);
 	offs_t pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
-	struct debug_view_disasm *dasmdata = view->extra_data;
-	struct debug_view_char *dest = view->viewdata;
+	debug_view_disasm *dasmdata = view->extra_data;
+	debug_view_char *dest = view->viewdata;
 	int original_cpunum = cpu_getactivecpu();
 	UINT8 need_to_recompute = 0;
 	EXPRERR exprerr;
@@ -1309,7 +1320,7 @@ static void disasm_update(struct debug_view *view)
 	/* if our expression is dirty, fix it */
 	if ((dasmdata->expression_dirty || view->cpunum != dasmdata->cpunum) && dasmdata->expression_string)
 	{
-		struct parsed_expression *expr;
+		parsed_expression *expr;
 
 		/* parse the new expression */
 		exprerr = expression_parse(dasmdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
@@ -1381,7 +1392,7 @@ static void disasm_update(struct debug_view *view)
 	{
 		UINT32 effrow = view->top_row + row;
 		UINT8 attrib = DCA_NORMAL;
-		struct breakpoint *bp;
+		debug_cpu_breakpoint *bp;
 		UINT32 col = 0;
 
 		/* if we're on the line with the PC, hilight it */
@@ -1439,9 +1450,9 @@ static void disasm_update(struct debug_view *view)
     of a given property
 -------------------------------------------------*/
 
-static void	disasm_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value)
+static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_info *value)
 {
-	struct debug_view_disasm *dasmdata = view->extra_data;
+	debug_view_disasm *dasmdata = view->extra_data;
 
 	switch (property)
 	{
@@ -1465,9 +1476,9 @@ static void	disasm_getprop(struct debug_view *view, UINT32 property, union debug
     of a given property
 -------------------------------------------------*/
 
-static void	disasm_setprop(struct debug_view *view, UINT32 property, union debug_property_info value)
+static void	disasm_setprop(debug_view *view, UINT32 property, debug_property_info value)
 {
-	struct debug_view_disasm *dasmdata = view->extra_data;
+	debug_view_disasm *dasmdata = view->extra_data;
 
 	switch (property)
 	{
@@ -1516,9 +1527,9 @@ static void	disasm_setprop(struct debug_view *view, UINT32 property, union debug
     memory view
 -------------------------------------------------*/
 
-static int memory_alloc(struct debug_view *view)
+static int memory_alloc(debug_view *view)
 {
-	struct debug_view_memory *memdata;
+	debug_view_memory *memdata;
 
 	/* allocate memory */
 	memdata = malloc(sizeof(*memdata));
@@ -1543,9 +1554,9 @@ static int memory_alloc(struct debug_view *view)
     memory view
 -------------------------------------------------*/
 
-static void memory_free(struct debug_view *view)
+static void memory_free(debug_view *view)
 {
-	struct debug_view_memory *memdata = view->extra_data;
+	debug_view_memory *memdata = view->extra_data;
 
 	/* free any memory we callocated */
 	if (memdata)
@@ -1565,9 +1576,9 @@ static void memory_free(struct debug_view *view)
     position as an address and a shift value
 -------------------------------------------------*/
 
-static int memory_get_cursor_pos(struct debug_view *view, offs_t *address, UINT8 *shift)
+static int memory_get_cursor_pos(debug_view *view, offs_t *address, UINT8 *shift)
 {
-	struct debug_view_memory *memdata = view->extra_data;
+	debug_view_memory *memdata = view->extra_data;
 	int curx = view->cursor_col, cury = view->cursor_row;
 	int modval;
 
@@ -1656,9 +1667,9 @@ static int memory_get_cursor_pos(struct debug_view *view, offs_t *address, UINT8
     shift value
 -------------------------------------------------*/
 
-static void memory_set_cursor_pos(struct debug_view *view, offs_t address, UINT8 shift)
+static void memory_set_cursor_pos(debug_view *view, offs_t address, UINT8 shift)
 {
-	struct debug_view_memory *memdata = view->extra_data;
+	debug_view_memory *memdata = view->extra_data;
 	int curx, cury;
 
 	/* offset the address by the byte offset */
@@ -1724,9 +1735,9 @@ static void memory_set_cursor_pos(struct debug_view *view, offs_t address, UINT8
     within the current view
 -------------------------------------------------*/
 
-static void memory_handle_char(struct debug_view *view, char chval)
+static void memory_handle_char(debug_view *view, char chval)
 {
-	struct debug_view_memory *memdata = view->extra_data;
+	debug_view_memory *memdata = view->extra_data;
 	static const char *hexvals = "0123456789abcdef";
 	char *hexchar = strchr(hexvals, tolower(chval));
 	offs_t address;
@@ -1804,11 +1815,11 @@ static void memory_handle_char(struct debug_view *view, char chval)
     the register view
 -------------------------------------------------*/
 
-static void memory_update(struct debug_view *view)
+static void memory_update(debug_view *view)
 {
-	const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
-	struct debug_view_memory *memdata = view->extra_data;
-	struct debug_view_char *dest = view->viewdata;
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
+	debug_view_memory *memdata = view->extra_data;
+	debug_view_char *dest = view->viewdata;
 	char addrformat[16];
 	EXPRERR exprerr;
 	UINT32 row;
@@ -1840,7 +1851,7 @@ static void memory_update(struct debug_view *view)
 	/* if our expression is dirty, fix it */
 	if ((memdata->expression_dirty || view->cpunum != memdata->cpunum) && memdata->expression_string)
 	{
-		struct parsed_expression *expr;
+		parsed_expression *expr;
 
 		/* parse the new expression */
 		exprerr = expression_parse(memdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
@@ -2027,9 +2038,9 @@ static void memory_update(struct debug_view *view)
     of a given property
 -------------------------------------------------*/
 
-static void	memory_getprop(struct debug_view *view, UINT32 property, union debug_property_info *value)
+static void	memory_getprop(debug_view *view, UINT32 property, debug_property_info *value)
 {
-	struct debug_view_memory *memdata = view->extra_data;
+	debug_view_memory *memdata = view->extra_data;
 
 	switch (property)
 	{
@@ -2069,9 +2080,9 @@ static void	memory_getprop(struct debug_view *view, UINT32 property, union debug
     of a given property
 -------------------------------------------------*/
 
-static void	memory_setprop(struct debug_view *view, UINT32 property, union debug_property_info value)
+static void	memory_setprop(debug_view *view, UINT32 property, debug_property_info value)
 {
-	struct debug_view_memory *memdata = view->extra_data;
+	debug_view_memory *memdata = view->extra_data;
 
 	switch (property)
 	{

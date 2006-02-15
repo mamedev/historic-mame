@@ -127,13 +127,13 @@ static const int gauss[]=
 
 /*========== VARIABLES ==========*/
 
-int                     keyed_on;
-int                     keys;       /* 8-bits for 8 voices          */
-voice_state_type        voice_state[ 8 ];
+static int                     keyed_on;
+static int                     keys;       /* 8-bits for 8 voices          */
+static voice_state_type        voice_state[ 8 ];
 
 /* Noise stuff */
-int		                noise_cnt;
-int                     noise_lev;
+static int		                noise_cnt;
+static int                     noise_lev;
 
 /* These are for the FIR echo filter */
 #ifndef NO_ECHO
@@ -147,7 +147,7 @@ static int              echo_ptr;
 
 /* Original SPC DSP took samples 32000 times a second, which is once every
    (1024000/32000 = 32) cycles. */
-const int               TS_CYC = CPU_RATE / SAMP_FREQ;
+static const int               TS_CYC = CPU_RATE / SAMP_FREQ;
 
 /* Ptrs to Gaussian table */
 static const int *      G1 = &gauss[ 256 ];

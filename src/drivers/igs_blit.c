@@ -55,7 +55,7 @@ To do:
 
 ***************************************************************************/
 
-UINT8 *layer[8];
+static UINT8 *layer[8];
 
 static UINT16 igs_priority, *igs_priority_ram;
 

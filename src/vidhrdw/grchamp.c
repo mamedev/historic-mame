@@ -23,7 +23,7 @@ UINT8 grchamp_vreg1[0x10];	/* background control registers */
 UINT8 *grchamp_videoram;	/* background tilemaps */
 UINT8 *grchamp_radar;		/* bitmap for radar */
 
-tilemap *bg_tilemap[3];
+static tilemap *bg_tilemap[3];
 
 WRITE8_HANDLER( grchamp_player_xpos_w )
 {

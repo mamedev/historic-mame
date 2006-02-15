@@ -16,6 +16,7 @@
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
+#define DIRECTINPUT_VERSION 0x0500
 #include <dinput.h>
 
 // MAME headers
@@ -99,7 +100,9 @@ enum
 //  TYPEDEFS
 //============================================================
 
-struct axis_history
+typedef struct _axis_history axis_history;
+
+struct _axis_history
 {
 	LONG		value;
 	INT32		count;
@@ -175,7 +178,7 @@ static DIJOYSTATE			joystick_state[MAX_JOYSTICKS];
 static DIPROPRANGE			joystick_range[MAX_JOYSTICKS][MAX_AXES];
 static UINT8				joystick_digital[MAX_JOYSTICKS][MAX_AXES];
 static char					joystick_name[MAX_JOYSTICKS][MAX_PATH];
-static struct axis_history	joystick_history[MAX_JOYSTICKS][MAX_AXES][HISTORY_LENGTH];
+static axis_history			joystick_history[MAX_JOYSTICKS][MAX_AXES][HISTORY_LENGTH];
 static UINT8				joystick_type[MAX_JOYSTICKS][MAX_AXES];
 
 // gun states
@@ -1475,7 +1478,7 @@ static void update_joystick_axes(void)
 	for (joynum = 0; joynum < joystick_count; joynum++)
 		for (axis = 0; axis < MAX_AXES; axis++)
 		{
-			struct axis_history *history = &joystick_history[joynum][axis][0];
+			axis_history *history = &joystick_history[joynum][axis][0];
 			LONG curval = ((LONG *)&joystick_state[joynum].lX)[axis];
 			int newtype;
 

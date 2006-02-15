@@ -27,7 +27,7 @@ static int pitnrun_char_bank;
 static int pitnrun_color_select;
 static mame_bitmap *tmp_bitmap[4];
 static tilemap *bg, *fg;
-UINT8* videoram2;
+UINT8* pitnrun_videoram2;
 
 
 static void get_tile_info1(int tile_index)
@@ -44,7 +44,7 @@ static void get_tile_info1(int tile_index)
 static void get_tile_info2(int tile_index)
 {
 	int code;
-	code = videoram2[tile_index];
+	code = pitnrun_videoram2[tile_index];
 	SET_TILE_INFO(
 		1,
 		code + (pitnrun_char_bank<<8),
@@ -60,7 +60,7 @@ WRITE8_HANDLER( pitnrun_videoram_w )
 
 WRITE8_HANDLER( pitnrun_videoram2_w )
 {
-	videoram2[offset] = data;
+	pitnrun_videoram2[offset] = data;
 	tilemap_mark_all_tiles_dirty( bg );
 }
 
@@ -72,7 +72,7 @@ READ8_HANDLER( pitnrun_videoram_r )
 
 READ8_HANDLER( pitnrun_videoram2_r )
 {
-	return videoram2[offset];
+	return pitnrun_videoram2[offset];
 }
 
 WRITE8_HANDLER( pitnrun_char_bank_select )

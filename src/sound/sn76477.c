@@ -965,7 +965,7 @@ static void *sn76477_start(int sndindex, int clock, const void *config)
 	sn->index = sndindex;
 
 	sn->channel = stream_create(0, 1, Machine->sample_rate, sn, SN76477_sound_update);
-	sn->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
+	sn->samplerate = Machine->sample_rate;
 
 	sn->envelope_timer = timer_alloc(vco_envelope_cb);
 	sn->oneshot_timer = timer_alloc(oneshot_envelope_cb);

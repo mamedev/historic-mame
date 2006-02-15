@@ -28,7 +28,8 @@ WRITE8_HANDLER( vanvan_bgcolor_w );
 VIDEO_START( s2650games );
 VIDEO_UPDATE( s2650games );
 
-extern UINT8 *sprite_bank, *tiles_bankram;
+extern UINT8 *s2650games_spriteram;
+extern UINT8 *s2650games_tileram;
 
 WRITE8_HANDLER( s2650games_videoram_w );
 WRITE8_HANDLER( s2650games_colorram_w );

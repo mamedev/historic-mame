@@ -66,7 +66,7 @@ extern VIDEO_START( crbaloon );
 extern VIDEO_UPDATE( crbaloon );
 
 
-int val06,val08,val0a;
+static int val06,val08,val0a;
 
 
 static MACHINE_INIT( crbaloon )

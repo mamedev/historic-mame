@@ -496,7 +496,7 @@ static UINT8 *get_jaguar_memory(UINT32 offset)
  *
  *************************************/
 
-void blitter_run(void)
+static void blitter_run(void)
 {
 	UINT32 command = blitter_regs[B_CMD] & STATIC_COMMAND_MASK;
 	UINT32 a1flags = blitter_regs[A1_FLAGS] & STATIC_FLAGS_MASK;

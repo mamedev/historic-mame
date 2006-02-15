@@ -315,10 +315,6 @@ static void *saa1099_start(int sndindex, int clock, const void *config)
 	saa = auto_malloc(sizeof(*saa));
 	memset(saa, 0, sizeof(*saa));
 
-	/* bag on a 0 sample_rate */
-	if (Machine->sample_rate == 0)
-		return saa;
-
 	/* copy global parameters */
 	saa->sample_rate = 1.0 * Machine->sample_rate;
 

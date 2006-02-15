@@ -1103,12 +1103,12 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
     Space Harrier
-    CPU: 68000 (317-0063A?)
+    CPU: 68000 + i8751 (315-5163A)
 */
 ROM_START( sharrier )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr7188a.97",  0x000000, 0x8000, CRC(7c30a036) SHA1(d3902342be714b4e181c87ad2bad7102e3eeec20) )
-	ROM_LOAD16_BYTE( "epr7184a.84",  0x000001, 0x8000, CRC(16deaeb1) SHA1(bdf85b924a914865bf876eda7fc2b20131a4cf2d) )
+	ROM_LOAD16_BYTE( "epr7188a.97",  0x000000, 0x8000, CRC(45e173c3) SHA1(cbab555c5053f3e4a3f75ff78c41528e2d9d34c7) )
+	ROM_LOAD16_BYTE( "epr7184a.84",  0x000001, 0x8000, CRC(e1934a51) SHA1(67817a360b3f1f6c2440986272975bd696a38e70) )
 	ROM_LOAD16_BYTE( "ic98.bin",     0x010000, 0x8000, CRC(40b1309f) SHA1(9b050983f043a88f414745d02c912b59bbf1b121) )
 	ROM_LOAD16_BYTE( "ic85.bin",     0x010001, 0x8000, CRC(ce78045c) SHA1(ce640f05bed64ff5b47f1064b5fc13e58bc422a4) )
 	ROM_LOAD16_BYTE( "ic99.bin",     0x020000, 0x8000, CRC(f6391091) SHA1(3160b342b6447cccf67c932c7c1a42354cdfb058) )
@@ -1176,7 +1176,10 @@ ROM_START( sharrier )
 	ROM_REGION( 0x2000, REGION_PROMS, 0 ) /* zoom table */
 	ROM_LOAD( "sic123.bin", 0x0000, 0x2000, CRC(e3ec7bd6) SHA1(feec0fe664e16fac0fde61cf64b401b9b0575323) )
 ROM_END
-
+/**************************************************************************************************************************
+    Space Harrier
+    CPU: 68000 + i8751 (315-5163)
+*/
 ROM_START( sharrirb )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr7188.97",  0x000000, 0x8000, CRC(7c30a036) SHA1(d3902342be714b4e181c87ad2bad7102e3eeec20) )
@@ -1603,8 +1606,8 @@ static DRIVER_INIT( endurob2 )
 
 GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0, "Sega",    "Hang-On", 0 )
 GAME( 1992, shangupb, shangon,  shangupb, shangupb, hangon,   ROT0, "bootleg", "Super Hang-On (Hang-On upgrade, bootleg)", 0 )
-GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier (Rev A, 8751 317-0063A?)", 0 )
-GAME( 1985, sharrirb, sharrier, sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier (8751 317-0063?)", 0 )
+GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier (Rev A, 8751 315-5163A)", 0 )
+GAME( 1985, sharrirb, sharrier, sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier (8751 315-5163)", 0 )
 GAME( 1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2151, FD1089B 317-0013A)", 0 )
 GAME( 1986, enduror1, enduror,  enduror1, enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (YM2203, FD1089B 317-0013A)", 0 )
 GAME( 1986, endurobl, enduror,  enduror1, enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)", 0 )

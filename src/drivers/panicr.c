@@ -3,10 +3,9 @@ Panic Road
 ----------
 
 TODO:
-- wrong colors
+- there are 3 more bitplanes of tile graphics, but colors are correct as they are...
+  what are they, priority info? Should they be mapped at 8000-bfff in memory?
 - problems with bg tilemaps reading (USER3 region)
-- finish sprite gfx decyption
-- 'holes' in textlayer (transparent pixels in tiles..)
 - sound
 
 --
@@ -65,6 +64,42 @@ static tilemap *bgtilemap, *txttilemap;
 static unsigned char *scrollram;
 static unsigned char *mainram;
 
+PALETTE_INIT( panicr )
+{
+	int i;
+
+
+	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
+	color_prom += 256*3;
+
+	// txt lookup table
+	for (i = 0;i < 256;i++)
+	{
+		if (*color_prom & 0x40)
+			*(colortable++) = 0;
+		else
+			*(colortable++) = (*color_prom & 0x3f) + 0x80;
+		color_prom++;
+	}
+
+	// tile lookup table
+	for (i = 0;i < 256;i++)
+	{
+		*(colortable++) = (*color_prom & 0x3f) + 0x00;
+		color_prom++;
+	}
+
+	// sprite lookup table
+	for (i = 0;i < 256;i++)
+	{
+		if (*color_prom & 0x40)
+			*(colortable++) = 0;
+		else
+			*(colortable++) = (*color_prom & 0x3f) + 0x40;
+		color_prom++;
+	}
+}
+
 static void get_bgtile_info(int tile_index)
 {
 	int code,attr;
@@ -75,7 +110,7 @@ static void get_bgtile_info(int tile_index)
 	SET_TILE_INFO(
 		1,
         code,
-        0,
+		(attr & 0xf0) >> 4,
         0)
 }
 
@@ -112,7 +147,7 @@ ADDRESS_MAP_END
 VIDEO_START( panicr )
 {
 	bgtilemap = tilemap_create( get_bgtile_info,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,1024,16 );
-	txttilemap = tilemap_create( get_txttile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32 );
+	txttilemap = tilemap_create( get_txttile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,32,32 );
 	tilemap_set_transparent_pen(txttilemap, 0);
 	return 0;
 }
@@ -124,19 +159,19 @@ static void draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect )
 	for (offs = 0; offs<0x1000; offs+=16)
 	{
 
-		fx= 0;
-		fy=spriteram[offs+1]&0x80;
+		fx = 0;
+		fy = spriteram[offs+1] & 0x80;
 		y = spriteram[offs+2];
 		x = spriteram[offs+3];
 
-		color=0;
+		color = spriteram[offs+1] & 0x0f;
 
-		sprite = spriteram[offs+0]+256*((spriteram[offs+1])&7);
+		sprite = spriteram[offs+0]+(scrollram[0x0c]<<8);
 
 		drawgfx(bitmap,Machine->gfx[2],
 				sprite,
 				color,fx,fy,x,y,
-				cliprect,TRANSPARENCY_PEN,0);
+				cliprect,TRANSPARENCY_COLOR,0);
 	}
 }
 
@@ -267,8 +302,10 @@ static const gfx_layout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,4),
-	8,
-	{ 0, 4, RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+4, RGN_FRAC(2,4)+0, RGN_FRAC(2,4)+4, RGN_FRAC(3,4)+0, RGN_FRAC(3,4)+4 },
+//  8,
+//  { 0, 4, RGN_FRAC(1,4)+0, RGN_FRAC(1,4)+4, RGN_FRAC(2,4)+0, RGN_FRAC(2,4)+4, RGN_FRAC(3,4)+0, RGN_FRAC(3,4)+4 },
+	4,
+	{ RGN_FRAC(2,4)+0, RGN_FRAC(2,4)+4, RGN_FRAC(3,4)+0, RGN_FRAC(3,4)+4 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			16+0, 16+1, 16+2, 16+3, 24+0, 24+1, 24+2, 24+3 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
@@ -282,7 +319,7 @@ static const gfx_layout spritelayout =
 	16,16,
 	RGN_FRAC(1,2),
 	4,
-	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4  },
+	{ 0, 4, RGN_FRAC(1,2)+0, RGN_FRAC(1,2)+4 },
 	{ 0, 1, 2, 3, 4*8+0, 4*8+1, 4*8+2,  4*8+3,
 		8*8+0, 8*8+1, 8*8+2, 8*8+3, 12*8+0, 12*8+1, 12*8+2, 12*8+3 },
 	{ 0*8, 1*8, 2*8, 3*8, 16*8, 17*8, 18*8, 19*8,
@@ -290,12 +327,11 @@ static const gfx_layout spritelayout =
 	32*16
 };
 
-
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,   0, 8 },
-	{ REGION_GFX2, 0, &tilelayout,   0, 1 },
-	{ REGION_GFX3, 0, &spritelayout, 0, 8 },
+	{ REGION_GFX1, 0, &charlayout,   0x000,  8 },
+	{ REGION_GFX2, 0, &tilelayout,   0x100, 16 },
+	{ REGION_GFX3, 0, &spritelayout, 0x200, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -312,7 +348,8 @@ static MACHINE_DRIVER_START( panicr )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(256)
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_COLORTABLE_LENGTH(256*3)
+	MDRV_PALETTE_INIT(panicr)
 
 	MDRV_VIDEO_START(panicr)
 	MDRV_VIDEO_UPDATE(panicr)
@@ -328,17 +365,17 @@ ROM_START( panicr )
 	ROM_LOAD( "t5182.bin", 0x0000, 0x2000, NO_DUMP )
 	ROM_LOAD( "22d.bin",   0x010000, 0x08000, CRC(eb1a46e1) SHA1(278859ae4bca9f421247e646d789fa1206dcd8fc) ) //banked?
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE |ROMREGION_INVERT)
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "13f.bin", 0x000000, 0x2000, CRC(4e6b3c04) SHA1(f388969d5d822df0eaa4d8300cbf9cee47468360) )
 	ROM_LOAD( "15f.bin", 0x002000, 0x2000, CRC(d735b572) SHA1(edcdb6daec97ac01a73c5010727b1694f512be71) )
 
-	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE)
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "2a.bin", 0x000000, 0x20000, CRC(3ac0e5b4) SHA1(96b8bdf02002ec8ce87fd47fd21f7797a79d79c9) )
 	ROM_LOAD( "2b.bin", 0x020000, 0x20000, CRC(567d327b) SHA1(762b18ef1627d71074ba02b0eb270bd9a01ac0d8) )
 	ROM_LOAD( "2c.bin", 0x040000, 0x20000, CRC(cd77ec79) SHA1(94b61b7d77c016ae274eddbb1e66e755f312e11d) )
 	ROM_LOAD( "2d.bin", 0x060000, 0x20000, CRC(218d2c3e) SHA1(9503b3b67e71dc63448aed7815845b844e240afe) )
 
-	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE |ROMREGION_INVERT)
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
 	ROM_LOAD( "2j.bin", 0x000000, 0x20000, CRC(80f05923) SHA1(5c886446fd77d3c39cb4fa43ea4beb8c89d20636) )
 	ROM_LOAD( "2k.bin", 0x020000, 0x20000, CRC(35f07bca) SHA1(54e6f82c2e6e1373c3ac1c6138ef738e5a0be6d0) )
 
@@ -351,17 +388,16 @@ ROM_START( panicr )
 	ROM_COPY( REGION_USER2, 0x0000, 0x0000, 0x4000 )
 
 	ROM_REGION( 0x0800,  REGION_PROMS, 0 )
-	ROM_LOAD( "a.15c",   0x00000, 0x100, CRC(c75772bc) SHA1(ec84052aedc1d53f9caba3232ffff17de69561b2) )
-	ROM_LOAD( "b.14c",   0x00100, 0x100, CRC(145d1e0d) SHA1(8073fd176a1805552a5ac00ca0d9189e6e8936b1) )
-	ROM_LOAD( "c.13c",   0x00200, 0x100, CRC(11c11bbd) SHA1(73663b2cf7269a62011ee067a026269ce0c15a7c) )
-	ROM_REGION( 0x0800,  REGION_USER4, 0 )
-	ROM_LOAD( "d.9b",    0x00300, 0x100, CRC(f99cac4b) SHA1(b4e6d0e0186fe186e747a9f6857b97591948c682) )
-	ROM_LOAD( "10j.bpr", 0x00400, 0x100, CRC(1dd80ee1) SHA1(2d634e75666b919446e76fd35a06af27a1a89707) )
-	ROM_LOAD( "10l.bpr", 0x00500, 0x100, CRC(f3f29695) SHA1(2607e96564a5e6e9a542377a01f399ea86a36c48) )
-	ROM_LOAD( "12d.bpr", 0x00600, 0x100, CRC(0df8aa3c) SHA1(5149265d788ea4885793b0786f765524b4745f04) )
-	ROM_LOAD( "8a.bpr",  0x00700, 0x100, CRC(908684a6) SHA1(82d9cb8aed576d1132615b5341c36ef51856b3a6) )
-
+	ROM_LOAD( "b.14c",   0x00000, 0x100, CRC(145d1e0d) SHA1(8073fd176a1805552a5ac00ca0d9189e6e8936b1) )	// red
+	ROM_LOAD( "a.15c",   0x00100, 0x100, CRC(c75772bc) SHA1(ec84052aedc1d53f9caba3232ffff17de69561b2) )	// green
+	ROM_LOAD( "c.13c",   0x00200, 0x100, CRC(11c11bbd) SHA1(73663b2cf7269a62011ee067a026269ce0c15a7c) )	// blue
+	ROM_LOAD( "12d.bpr", 0x00300, 0x100, CRC(0df8aa3c) SHA1(5149265d788ea4885793b0786f765524b4745f04) )	// txt lookup table
+	ROM_LOAD( "8a.bpr",  0x00400, 0x100, CRC(908684a6) SHA1(82d9cb8aed576d1132615b5341c36ef51856b3a6) )	// tile lookup table
+	ROM_LOAD( "10j.bpr", 0x00500, 0x100, CRC(1dd80ee1) SHA1(2d634e75666b919446e76fd35a06af27a1a89707) )	// sprite lookup table
+	ROM_LOAD( "d.9b",    0x00600, 0x100, CRC(f99cac4b) SHA1(b4e6d0e0186fe186e747a9f6857b97591948c682) )	// unknown
+	ROM_LOAD( "10l.bpr", 0x00700, 0x100, CRC(f3f29695) SHA1(2607e96564a5e6e9a542377a01f399ea86a36c48) )	// unknown
 ROM_END
+
 
 static DRIVER_INIT( panicr )
 {
@@ -383,7 +419,7 @@ static DRIVER_INIT( panicr )
 
 		w1 = (rom[i + 0*size/2] << 8) + rom[i + 1*size/2];
 
-		w1 = BITSWAP16(w1,  9,12, 7, 3,  8,13, 6, 2, 11,14, 1, 5, 10,15, 4, 0);
+		w1 = BITSWAP16(w1,  9,12,7,3,  8,13,6,2, 11,14,1,5, 10,15,4,0);
 
 		buf[i + 0*size/2] = w1 >> 8;
 		buf[i + 1*size/2] = w1 & 0xff;
@@ -407,8 +443,8 @@ static DRIVER_INIT( panicr )
 		w1 = (rom[i + 0*size/4] << 8) + rom[i + 3*size/4];
 		w2 = (rom[i + 1*size/4] << 8) + rom[i + 2*size/4];
 
-		w1 = BITSWAP16(w1, 14,12,11, 9,  3, 2, 1, 0,  7, 6, 5, 4, 10,15,13, 8);
-		w2 = BITSWAP16(w2,  3,13,15, 4, 14, 6, 1,10,  8, 7, 9, 0, 12, 2, 5,11);
+		w1 = BITSWAP16(w1, 14,12,11,9,   3,2,1,0, 10,15,13,8,   7,6,5,4);
+		w2 = BITSWAP16(w2,  3,13,15,4, 12,2,5,11, 14,6,1,10,    8,7,9,0);
 
 		buf[i + 0*size/4] = w1 >> 8;
 		buf[i + 1*size/4] = w1 & 0xff;
@@ -434,7 +470,7 @@ static DRIVER_INIT( panicr )
 		w1 = (rom[i + 0*size/2] << 8) + rom[i + 1*size/2];
 
 
-		w1 = BITSWAP16(w1, 11,5,7,12, 0,15,1,8, 4,10,13,3, 6,14,9,2);
+		w1 = BITSWAP16(w1, 11,5,7,12, 4,10,13,3, 6,14,9,2, 0,15,1,8);
 
 
 		buf[i + 0*size/2] = w1 >> 8;

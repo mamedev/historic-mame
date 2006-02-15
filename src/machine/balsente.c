@@ -229,32 +229,29 @@ static void poly17_init(void)
 
 void balsente_noise_gen(int chip, int count, short *buffer)
 {
-	if (Machine->sample_rate)
+	/* noise generator runs at 100kHz */
+	UINT32 step = (100000 << 14) / Machine->sample_rate;
+	UINT32 noise_counter = noise_position[chip];
+
+	/* try to use the poly17 if we can */
+	if (poly17)
 	{
-		/* noise generator runs at 100kHz */
-		UINT32 step = (100000 << 14) / Machine->sample_rate;
-		UINT32 noise_counter = noise_position[chip];
-
-		/* try to use the poly17 if we can */
-		if (poly17)
+		while (count--)
 		{
-			while (count--)
-			{
-				*buffer++ = poly17[(noise_counter >> 14) & POLY17_SIZE] << 12;
-				noise_counter += step;
-			}
+			*buffer++ = poly17[(noise_counter >> 14) & POLY17_SIZE] << 12;
+			noise_counter += step;
 		}
-
-		/* otherwise just use random numbers */
-		else
-		{
-			while (count--)
-				*buffer++ = rand() & 0x1000;
-		}
-
-		/* remember the noise position */
-		noise_position[chip] = noise_counter;
 	}
+
+	/* otherwise just use random numbers */
+	else
+	{
+		while (count--)
+			*buffer++ = rand() & 0x1000;
+	}
+
+	/* remember the noise position */
+	noise_position[chip] = noise_counter;
 }
 
 

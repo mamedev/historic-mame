@@ -462,11 +462,11 @@ void a5200_interrupt(void);
 #define RDPMGFXS(o) cpunum_read_byte(0, antic.pmbase_s+(o)+(antic.scanline>>1))
 #define RDPMGFXD(o) cpunum_read_byte(0, antic.pmbase_d+(o)+antic.scanline)
 #else
-#define RDANTIC()	Machine->memory_region[0][antic.dpage+antic.doffs]
-#define RDVIDEO(o)	Machine->memory_region[0][antic.vpage+((antic.voffs+(o))&VOFFS)]
-#define RDCHGEN(o)	Machine->memory_region[0][antic.chbase+(o)]
-#define RDPMGFXS(o) Machine->memory_region[0][antic.pmbase_s+(o)+(antic.scanline>>1)]
-#define RDPMGFXD(o) Machine->memory_region[0][antic.pmbase_d+(o)+antic.scanline]
+#define RDANTIC()	(memory_region(REGION_CPU1))[antic.dpage+antic.doffs]
+#define RDVIDEO(o)	(memory_region(REGION_CPU1))[antic.vpage+((antic.voffs+(o))&VOFFS)]
+#define RDCHGEN(o)	(memory_region(REGION_CPU1))[antic.chbase+(o)]
+#define RDPMGFXS(o) (memory_region(REGION_CPU1))[antic.pmbase_s+(o)+(antic.scanline>>1)]
+#define RDPMGFXD(o) (memory_region(REGION_CPU1))[antic.pmbase_d+(o)+antic.scanline]
 #endif
 
 #define PREPARE()												\

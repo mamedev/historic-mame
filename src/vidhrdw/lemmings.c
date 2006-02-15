@@ -18,7 +18,7 @@
 UINT16 *lemmings_pixel_0_data,*lemmings_pixel_1_data,*lemmings_vram_data,*lemmings_control_data;
 static UINT16 *sprite_triple_buffer_0,*sprite_triple_buffer_1;
 static UINT8 *vram_buffer, *vram_dirty;
-mame_bitmap *bitmap0;
+static mame_bitmap *bitmap0;
 static tilemap *vram_tilemap;
 
 /******************************************************************************/

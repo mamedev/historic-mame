@@ -55,8 +55,15 @@ typedef void (*debug_hook_read_ptr)(int spacenum, int size, offs_t address);
 typedef void (*debug_hook_write_ptr)(int spacenum, int size, offs_t address, UINT64 data);
 
 
+typedef struct _debug_trace_info debug_trace_info;
+typedef struct _debug_space_info debug_space_info;
+typedef struct _debug_hotspot_entry debug_hotspot_entry;
+typedef struct _debug_cpu_info debug_cpu_info;
+typedef struct _debug_cpu_breakpoint debug_cpu_breakpoint;
+typedef struct _debug_cpu_watchpoint debug_cpu_watchpoint;
 
-struct debug_trace_info
+
+struct _debug_trace_info
 {
 	FILE *			file;						/* tracing file for this CPU */
 	char *			action;						/* action to perform during a trace */
@@ -81,9 +88,8 @@ struct _debug_space_info
 	offs_t			logaddrmask;				/* logical address mask */
 	offs_t			physbytemask;				/* physical byte mask */
 	offs_t			logbytemask;				/* logical byte mask */
-	struct watchpoint *first_wp;				/* first watchpoint */
+	debug_cpu_watchpoint *first_wp;				/* first watchpoint */
 };
-typedef struct _debug_space_info debug_space_info;
 
 
 struct _debug_hotspot_entry
@@ -93,10 +99,9 @@ struct _debug_hotspot_entry
 	int				spacenum;					/* space where the access occurred */
 	UINT32			count;						/* number of hits */
 };
-typedef struct _debug_hotspot_entry debug_hotspot_entry;
 
 
-struct debug_cpu_info
+struct _debug_cpu_info
 {
 	UINT8			valid;						/* are we valid? */
 	UINT8			endianness;					/* little or bigendian */
@@ -105,9 +110,9 @@ struct debug_cpu_info
 	offs_t			temp_breakpoint_pc;			/* temporary breakpoint PC */
 	int				read_watchpoints;			/* total read watchpoints on this CPU */
 	int				write_watchpoints;			/* total write watchpoints on this CPU */
-	struct symbol_table *symtable;				/* symbol table for expression evaluation */
-	struct debug_trace_info trace;				/* trace info */
-	struct breakpoint *first_bp;				/* first breakpoint */
+	symbol_table *symtable;				/* symbol table for expression evaluation */
+	debug_trace_info trace;						/* trace info */
+	debug_cpu_breakpoint *first_bp;				/* first breakpoint */
 	debug_space_info space[ADDRESS_SPACES];		/* per-address space info */
 	debug_hotspot_entry *hotspots;				/* hotspot list */
 	int				hotspot_count;				/* number of hotspots */
@@ -119,27 +124,27 @@ struct debug_cpu_info
 };
 
 
-struct breakpoint
+struct _debug_cpu_breakpoint
 {
 	int				index;						/* user reported index */
 	UINT8			enabled;					/* enabled? */
 	offs_t			address;					/* execution address */
-	struct parsed_expression *condition;		/* condition */
+	parsed_expression *condition;		/* condition */
 	char *			action;						/* action */
-	struct breakpoint *next;					/* next in the list */
+	debug_cpu_breakpoint *next;					/* next in the list */
 };
 
 
-struct watchpoint
+struct _debug_cpu_watchpoint
 {
 	int				index;						/* user reported index */
 	UINT8			enabled;					/* enabled? */
 	UINT8			type;						/* type (read/write) */
 	offs_t			address;					/* start address */
 	offs_t			length;						/* length of watch area */
-	struct parsed_expression *condition;		/* condition */
+	parsed_expression *condition;		/* condition */
 	char *			action;						/* action */
-	struct watchpoint *next;					/* next in the list */
+	debug_cpu_watchpoint *next;					/* next in the list */
 };
 
 
@@ -149,7 +154,7 @@ struct watchpoint
 **#################################################################################################*/
 
 extern FILE *debug_source_file;
-extern struct symbol_table *global_symtable;
+extern symbol_table *global_symtable;
 
 
 
@@ -162,7 +167,7 @@ void				debug_cpu_init(void);
 void				debug_cpu_exit(void);
 
 /* utilities */
-const struct debug_cpu_info *debug_get_cpu_info(int cpunum);
+const debug_cpu_info *debug_get_cpu_info(int cpunum);
 void				debug_halt_on_next_instruction(void);
 void				debug_refresh_display(void);
 int					debug_get_execution_state(void);
@@ -192,14 +197,14 @@ void				debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *acti
 
 /* breakpoints */
 void				debug_check_breakpoints(int cpunum, offs_t pc);
-struct breakpoint *	debug_breakpoint_first(int cpunum);
-int					debug_breakpoint_set(int cpunum, offs_t address, struct parsed_expression *condition, const char *action);
+debug_cpu_breakpoint *debug_breakpoint_first(int cpunum);
+int					debug_breakpoint_set(int cpunum, offs_t address, parsed_expression *condition, const char *action);
 int					debug_breakpoint_clear(int bpnum);
 int					debug_breakpoint_enable(int bpnum, int enable);
 
 /* watchpoints */
-struct watchpoint *	debug_watchpoint_first(int cpunum, int spacenum);
-int					debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, offs_t length, struct parsed_expression *condition, const char *action);
+debug_cpu_watchpoint *debug_watchpoint_first(int cpunum, int spacenum);
+int					debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, offs_t length, parsed_expression *condition, const char *action);
 int					debug_watchpoint_clear(int wpnum);
 int					debug_watchpoint_enable(int wpnum, int enable);
 

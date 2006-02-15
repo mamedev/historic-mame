@@ -53,7 +53,7 @@ The 6809 NMI is used for sound timing.
 #include "sound/sn76496.h"
 #include "sound/vlm5030.h"
 
-extern int nmi_enable;
+extern int yiear_nmi_enable;
 
 extern WRITE8_HANDLER( yiear_videoram_w );
 extern WRITE8_HANDLER( yiear_control_w );
@@ -83,7 +83,7 @@ static WRITE8_HANDLER( yiear_VLM5030_control_w )
 INTERRUPT_GEN( yiear_nmi_interrupt )
 {
 	/* can't use nmi_line_pulse() because interrupt_enable_w() effects it */
-	if (nmi_enable) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+	if (yiear_nmi_enable) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 

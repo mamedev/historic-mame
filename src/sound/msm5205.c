@@ -154,10 +154,6 @@ static void msm5205_reset(void *chip)
 {
 	struct MSM5205Voice *voice = chip;
 
-	/* bail if we're not emulating sound */
-	if (Machine->sample_rate == 0)
-		return;
-
 	/* initialize work */
 	voice->data    = 0;
 	voice->vclk    = 0;

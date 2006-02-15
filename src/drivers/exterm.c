@@ -219,7 +219,7 @@ static void sound_delayed_w(int data)
 }
 
 
-WRITE16_HANDLER( sound_latch_w )
+static WRITE16_HANDLER( sound_latch_w )
 {
 	if (ACCESSING_LSB)
 		timer_set(TIME_NOW, data & 0xff, sound_delayed_w);

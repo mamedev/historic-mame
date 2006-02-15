@@ -124,8 +124,8 @@ lev 7 : 0x7c : 0000 07e0 - input device clear?
 
 static tilemap *tx_tilemap;
 static UINT16 *tx_vram;
-UINT16 *slave_data;
-UINT16 *com_ram;
+static UINT16 *slave_data;
+static UINT16 *com_ram;
 //static UINT16 mux_data;
 
 #define MASTER_CPU (cpu_getactivecpu() == 0)

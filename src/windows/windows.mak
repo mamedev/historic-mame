@@ -10,6 +10,28 @@
 ###########################################################################
 
 
+###########################################################################
+#################   BEGIN USER-CONFIGURABLE OPTIONS   #####################
+###########################################################################
+
+
+#-------------------------------------------------
+# specify build options; see each option below
+# for details
+#-------------------------------------------------
+
+# uncomment next line to enable multi-monitor stubs on Windows 95/NT
+# you will need to find multimon.h and put it into your include
+# path in order to make this work
+# WIN95_MULTIMON = 1
+
+
+
+###########################################################################
+##################   END USER-CONFIGURABLE OPTIONS   ######################
+###########################################################################
+
+
 #-------------------------------------------------
 # nasm for Windows (but not cygwin) has a "w"
 # at the end
@@ -36,6 +58,10 @@ CURPATH = ./
 
 # add our prefix files to the mix
 CFLAGS += -mwindows -include src/$(MAMEOS)/winprefix.h
+
+ifdef WIN95_MULTIMON
+CFLAGS += -DWIN95_MULTIMON
+endif
 
 # add the windows libaries
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm

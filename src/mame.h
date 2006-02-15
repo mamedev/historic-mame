@@ -67,16 +67,6 @@ extern char build_version[];
 
 ***************************************************************************/
 
-struct _region_info
-{
-	UINT8 *		base;
-	size_t		length;
-	UINT32		type;
-	UINT32		flags;
-};
-typedef struct _region_info region_info;
-
-
 struct _running_machine
 {
 	/* ----- game-related information ----- */
@@ -87,20 +77,11 @@ struct _running_machine
 	/* points to the constructed MachineDriver */
 	const machine_config *	drv;
 
-	/* array of memory regions */
-	region_info				memory_region[MAX_MEMORY_REGIONS];
-
-	/* number of bad ROMs encountered */
-	int						rom_load_warnings;
-
 
 	/* ----- video-related information ----- */
 
 	/* array of pointers to graphic sets (chars, sprites) */
 	gfx_element *			gfx[MAX_GFX_ELEMENTS];
-
-	/* main bitmap to render to (but don't do it directly!) */
-	mame_bitmap *			scrbitmap;
 
 	/* current visible area, and a prerotated one adjusted for orientation */
 	rectangle 				visible_area;
@@ -126,7 +107,7 @@ struct _running_machine
 
 	/* ----- audio-related information ----- */
 
-	/* the digital audio sample rate; 0 if sound is disabled. */
+	/* the digital audio sample rate */
 	int						sample_rate;
 
 
@@ -134,9 +115,6 @@ struct _running_machine
 
 	/* the input ports definition from the driver is copied here and modified */
 	input_port_entry *		input_ports;
-
-	/* original input_ports without modifications */
-	input_port_entry *		input_ports_default;
 
 
 	/* ----- user interface-related information ----- */
@@ -160,7 +138,7 @@ struct _running_machine
 	gfx_element *			debugger_font;
 
 #ifdef MESS
-	struct IODevice *devices;
+	struct IODevice *		devices;
 #endif /* MESS */
 };
 typedef struct _running_machine running_machine;
@@ -281,17 +259,17 @@ struct _mame_display
 	UINT32					changed_flags;
 
 	/* game bitmap and display information */
-	mame_bitmap *	game_bitmap;			/* points to game's bitmap */
-	rectangle		game_bitmap_update;		/* bounds that need to be updated */
+	mame_bitmap *			game_bitmap;			/* points to game's bitmap */
+	rectangle				game_bitmap_update;		/* bounds that need to be updated */
 	const rgb_t *			game_palette;			/* points to game's adjusted palette */
 	UINT32					game_palette_entries;	/* number of palette entries in game's palette */
 	UINT32 *				game_palette_dirty;		/* points to game's dirty palette bitfield */
-	rectangle 		game_visible_area;		/* the game's visible area */
+	rectangle 				game_visible_area;		/* the game's visible area */
 	float					game_refresh_rate;		/* refresh rate */
 	void *					vector_dirty_pixels;	/* points to X,Y pairs of dirty vector pixels */
 
 	/* debugger bitmap and display information */
-	mame_bitmap *	debug_bitmap;			/* points to debugger's bitmap */
+	mame_bitmap *			debug_bitmap;			/* points to debugger's bitmap */
 	const rgb_t *			debug_palette;			/* points to debugger's palette */
 	UINT32					debug_palette_entries;	/* number of palette entries in debugger's palette */
 	UINT8					debug_focus;			/* set to 1 if debugger has focus */

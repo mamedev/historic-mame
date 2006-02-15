@@ -21,8 +21,8 @@ segac2.c
 /******************** Sega Genesis ******************************/
 
 /* Genesis based */
-unsigned int	z80_68000_latch			= 0;
-unsigned int	z80_latch_bitcount		= 0;
+static unsigned int	z80_68000_latch			= 0;
+static unsigned int	z80_latch_bitcount		= 0;
 
 /* interrupt states */
 static UINT8		irq2_int;			/* INT2 */

@@ -43,13 +43,13 @@ static NVRAM_HANDLER( goldstar )
 
 
 
-WRITE8_HANDLER( protection_w )
+static WRITE8_HANDLER( protection_w )
 {
 	if (data == 0x2a)
 		dataoffset = 0;
 }
 
-READ8_HANDLER( protection_r )
+static READ8_HANDLER( protection_r )
 {
 	static int data[4] = { 0x47, 0x4f, 0x4c, 0x44 };
 

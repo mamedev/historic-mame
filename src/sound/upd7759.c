@@ -592,8 +592,7 @@ static void *upd7759_start(int sndindex, int clock, const void *config)
 	chip->channel = stream_create(0, 1, Machine->sample_rate, chip, upd7759_update);
 
 	/* compute the stepping rate based on the chip's clock speed */
-	if (Machine->sample_rate != 0)
-		chip->step = ((INT64)clock * (INT64)FRAC_ONE) / Machine->sample_rate;
+	chip->step = ((INT64)clock * (INT64)FRAC_ONE) / Machine->sample_rate;
 
 	/* compute the clock period */
 	chip->clock_period = TIME_IN_HZ(clock);

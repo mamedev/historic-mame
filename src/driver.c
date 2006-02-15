@@ -119,6 +119,7 @@ const game_driver *drivers[] =
 	DRIVER( acitya )	/* (c) 1983 Epos Corporation */
 	DRIVER( theglobp )	/* (c) 1983 Epos Corporation */
 	DRIVER( sprglobp )	/* (c) 1983 Epos Corporation */
+	DRIVER( sprglbpg )	/* German bootleg */
 	DRIVER( beastf )	/* (c) 1984 Epos Corporation */
 	DRIVER( rocktrv2 )	/* (c) 1986 Triumph Software Inc */
 	DRIVER( bigbucks )	/* (c) 1986 Dynasoft Inc. */
@@ -721,6 +722,7 @@ const game_driver *drivers[] =
 	DRIVER( valkyrie )	/* (c) 1989 (Japan) */
 	DRIVER( finehour )	/* (c) 1989 (Japan) */
 	DRIVER( burnforc )	/* (c) 1989 (Japan) */
+	DRIVER( burnfrco )	/* (c) 1989 (Japan) */
 	DRIVER( marvland )	/* (c) 1989 (US) */
 	DRIVER( marvlanj )	/* (c) 1989 (Japan) */
 	DRIVER( kyukaidk )	/* (c) 1990 (Japan) */
@@ -5593,9 +5595,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( deadang )	/* (c) 1988 Seibu Kaihatsu */
 	DRIVER( ghunter )	/* (c) 1988 Seibu Kaihatsu + Segasa/Sonic license */
 	DRIVER( dynduke )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
-	DRIVER( dyndukj )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
+	DRIVER( dyndukf )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
 	DRIVER( dbldyn )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
-	DRIVER( dbldynj )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
+	DRIVER( dbldynf )	/* (c) 1989 Seibu Kaihatsu + Fabtek license */
 	DRIVER( raiden )	/* (c) 1990 Seibu Kaihatsu */
 	DRIVER( raidena )	/* (c) 1990 Seibu Kaihatsu */
 	DRIVER( raidenk )	/* (c) 1990 Seibu Kaihatsu + IBL Corporation license */

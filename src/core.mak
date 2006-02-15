@@ -41,6 +41,7 @@ COREOBJS = \
 	$(OBJ)/palette.o \
 	$(OBJ)/png.o \
 	$(OBJ)/profiler.o \
+	$(OBJ)/romload.o \
 	$(OBJ)/sha1.o \
 	$(OBJ)/sndintrf.o \
 	$(OBJ)/state.o \

@@ -125,7 +125,7 @@ UINT16 *f1gpstr2_ioready;
 
 ***************************************************************************/
 
-void prepare_shadows(void)
+static void prepare_shadows(void)
 {
 	int i;
 	for (i = 0;i < 16;i++)

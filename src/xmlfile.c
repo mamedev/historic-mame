@@ -343,6 +343,53 @@ xml_data_node *xml_file_read(mame_file *file)
 
 /*************************************
  *
+ *  XML string read
+ *
+ *************************************/
+
+xml_data_node *xml_string_read(const char *string)
+{
+	xml_data_node *rootnode, *curnode;
+	int length = strlen(string);
+	XML_Parser parser;
+
+	/* create a root node */
+	rootnode = xml_file_create();
+	if (!rootnode)
+		return NULL;
+
+	/* create the XML parser */
+	parser = XML_ParserCreate(NULL);
+	if (!parser)
+	{
+		free(rootnode);
+		return NULL;
+	}
+
+	/* configure the parser */
+	XML_SetElementHandler(parser, xml_element_start, xml_element_end);
+	XML_SetCharacterDataHandler(parser, xml_data);
+	XML_SetUserData(parser, &curnode);
+	curnode = rootnode;
+
+	/* parse the data */
+	if (XML_Parse(parser, string, length, TRUE) == XML_STATUS_ERROR)
+	{
+		xml_file_free(rootnode);
+		return NULL;
+	}
+
+	/* free the parser */
+	XML_ParserFree(parser);
+
+	/* return the root node */
+	return rootnode;
+}
+
+
+
+/*************************************
+ *
  *  Recursive XML node writer
  *
  *************************************/

@@ -559,7 +559,7 @@ anything to compare,infact
 ******************************************************************************************/
 
 UINT16 *mcu_shared_ram;
-UINT16 *work_ram;
+UINT16 *mcu_work_ram;
 
 #define PROT_JSR(_offs_,_protvalue_,_pc_) \
 	if(mcu_shared_ram[(_offs_)/2] == _protvalue_) \
@@ -730,7 +730,7 @@ static ADDRESS_MAP_START( hachamf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x09c000, 0x09c7ff) AM_WRITE(nmk_txvideoram_w) AM_BASE(&nmk_txvideoram)
 	AM_RANGE(0x0f0000, 0x0f7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0f8000, 0x0f8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x0f9000, 0x0fdfff) AM_WRITE(MWA16_RAM) AM_BASE(&work_ram) /* Work RAM */
+	AM_RANGE(0x0f9000, 0x0fdfff) AM_WRITE(MWA16_RAM) AM_BASE(&mcu_work_ram) /* Work RAM */
 	AM_RANGE(0x0fe000, 0x0fefff) AM_RAM AM_READWRITE(mcu_shared_r,hachamf_mcu_shared_w) AM_BASE(&mcu_shared_ram)	/* Work RAM */
 	AM_RANGE(0x0ff000, 0x0fffff) AM_WRITE(MWA16_RAM) /* Work RAM */
 ADDRESS_MAP_END
@@ -812,7 +812,7 @@ static ADDRESS_MAP_START( tdragon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x0b0000, 0x0b7fff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0b8000, 0x0b8fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)	/* Sprite RAM */
-	AM_RANGE(0x0b9000, 0x0bdfff) AM_WRITE(MWA16_RAM) AM_BASE(&work_ram)	/* Work RAM */
+	AM_RANGE(0x0b9000, 0x0bdfff) AM_WRITE(MWA16_RAM) AM_BASE(&mcu_work_ram)	/* Work RAM */
 	AM_RANGE(0x0be000, 0x0befff) AM_RAM AM_READWRITE(mcu_shared_r,tdragon_mcu_shared_w) AM_BASE(&mcu_shared_ram)	/* Work RAM */
 	AM_RANGE(0x0bf000, 0x0bffff) AM_WRITE(MWA16_RAM)	/* Work RAM */
 	AM_RANGE(0x0c0014, 0x0c0015) AM_WRITE(nmk_flipscreen_w) /* Maybe */

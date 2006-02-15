@@ -184,7 +184,7 @@ static ADDRESS_MAP_START( baraduke_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
 ADDRESS_MAP_END
 
-READ8_HANDLER( soundkludge_r )
+static READ8_HANDLER( soundkludge_r )
 {
 	static int counter;
 

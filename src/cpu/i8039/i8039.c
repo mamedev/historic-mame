@@ -119,7 +119,7 @@ typedef struct
 
 static I8039_Regs R;
 int	   i8039_ICount;
-int    inst_cycles;
+static int    inst_cycles;
 static UINT8 Old_T1;
 
 /* The opcode table now is a combination of cycle counts and function pointers */

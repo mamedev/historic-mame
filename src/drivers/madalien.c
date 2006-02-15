@@ -473,7 +473,7 @@ WRITE8_HANDLER( madalien_shift_counter_w )
 	madalien_shift_counter = data & 0x07;
 }
 
-UINT8 reverse_bits( int x )	/* bit reversal by wiring in Mad Alien hardware */
+static UINT8 reverse_bits( int x )	/* bit reversal by wiring in Mad Alien hardware */
 {
 	int bit, n;
 	n = 0;
@@ -483,7 +483,7 @@ UINT8 reverse_bits( int x )	/* bit reversal by wiring in Mad Alien hardware */
 	return n;
 }
 
-UINT8 swap_bits( int x )	/* special bit swap by wiring in Mad Alien hardware */
+static UINT8 swap_bits( int x )	/* special bit swap by wiring in Mad Alien hardware */
 {
 	int n = 0;
 	if (x & 0x40) n |= 0x01;

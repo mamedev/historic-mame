@@ -337,8 +337,6 @@ static void K007232_WriteReg( int r, int v, int chip )
   struct kdacApcm *info = sndti_token(SOUND_K007232, chip);
   int  data;
 
-  if (Machine->sample_rate == 0) return;
-
   stream_update(info->stream,0);
 
   info->wreg[r] = v;			/* stock write data */

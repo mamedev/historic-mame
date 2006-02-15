@@ -55,9 +55,6 @@ static void senjyo_sh_update(int param)
 {
 	double period;
 
-	if (Machine->sample_rate == 0) return;
-
-
 	/* ctc2 timer single tone generator frequency */
 	period = z80ctc_getperiod (0, 2);
 	if( period != 0 ) single_rate = (int)(1.0 / period );

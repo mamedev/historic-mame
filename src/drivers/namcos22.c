@@ -146,7 +146,6 @@
 #include "cpu/tms32025/tms32025.h"
 #include "cpu/m37710/m37710.h"
 #include "sound/c352.h"
-#include "sndhrdw/namcoc7x.h"
 
 #define SS22_MASTER_CLOCK (49152000)	/* info from Guru */
 
@@ -160,7 +159,6 @@ static UINT32 *namcos22_nvmem;
 static size_t namcos22_nvmem_size;
 static UINT16 mMasterBIOZ;
 static UINT32 *mpPointRAM;
-static UINT32 namcos22_usec7x = 0;
 static UINT32 old_coin_state, credits1, credits2;
 static UINT16 *mpSlaveExternalRAM;
 
@@ -375,6 +373,7 @@ InitDSP( int bSuperSystem22 )
 	mpPointRAM = auto_malloc(0x20000*sizeof(*mpPointRAM));
 	cpunum_set_input_line(1,INPUT_LINE_HALT,ASSERT_LINE); /* master DSP */
 	cpunum_set_input_line(2,INPUT_LINE_HALT,ASSERT_LINE); /* slave DSP */
+	cpunum_set_input_line(3,INPUT_LINE_HALT,ASSERT_LINE); /* MCU */
 } /* InitDSP */
 
 static READ16_HANDLER( pdp_status_r )
@@ -1150,7 +1149,7 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 			if( (mask&0xff000000)==0 )
 			{
 				int offs = offset*4+i;
-				if( offs!=0x14 && (offs<4 || offs>=8) )
+				if(offs<4 || offs>=8)
 				{
 					printf( "%08x: sys[0x%02x] := 0x%02x\n",
 						activecpu_get_previouspc(),
@@ -1166,17 +1165,26 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 	if( mbSuperSystem22 )
 	{
 		if (offset == 0x14/4 && mem_mask == 0xffff00ff)
-		{ /* SUBCPU enable */
+		{ /* SUBCPU enable for Super System 22 */
 			if (data)
 			{
-				logerror("MCU on\n");
 				cpunum_resume(3, SUSPEND_REASON_HALT);
 				cpunum_reset(3, NULL, NULL);
 			}
 			else
 			{
-				logerror("MCU off\n");
 				cpunum_set_input_line(3,INPUT_LINE_HALT,ASSERT_LINE); /* M37710 MCU */
+			}
+		}
+	}
+	else
+	{
+		if (offset == 0x18/4 && mem_mask == 0xffff00ff)
+		{ /* SUBCPU enable on System 22 (guessed, but too early crashes Rave Racer so it's a good test) */
+			if (data == 0xff00)
+			{
+				cpunum_resume(3, SUSPEND_REASON_HALT);
+				cpunum_reset(3, NULL, NULL);
 			}
 		}
 	}
@@ -1310,18 +1318,6 @@ static READ32_HANDLER( namcos22_mcuram_r )
 
 static WRITE32_HANDLER( namcos22_mcuram_w )
 {
-	if ((namcos22_usec7x) && (offset >= 0x400) && (offset < 0x4c0))
-	{
-		if (mem_mask == 0x0000ffff)
-		{
-			namcoc7x_sound_write16((data>>16), (offset-0x400)*2);
-		}
-		else if (mem_mask == 0xffff0000)
-		{
-			namcoc7x_sound_write16((data&0xffff), ((offset-0x400)*2)+1);
-		}
-	}
-
 	COMBINE_DATA(&namcos22_shareram[offset]);
 }
 
@@ -1489,8 +1485,6 @@ static WRITE16_HANDLER( s22mcu_shared_w )
 static MACHINE_INIT(namcoss22)
 {
 	InitDSP(1/*super*/);
-
-	cpunum_set_input_line(3,INPUT_LINE_HALT,ASSERT_LINE); /* MCU */
 }
 
 /*
@@ -1499,7 +1493,7 @@ static MACHINE_INIT(namcoss22)
   000000-00027f: internal MCU registers and RAM
   002000-002fff: C352 PCM chip
   004000-00bfff: shared RAM with host CPU
-  00c000-00ffff: BIOS ROM
+  00c000-00ffff: BIOS ROM (internal on System 22, external on Super)
   200000-27ffff: data ROM
   301000-301001: watchdog?
   308000-308003: unknown (I/O?)
@@ -1517,10 +1511,24 @@ static MACHINE_INIT(namcoss22)
   ADC   : analog inputs
 
 */
+
+// Super System 22 M37710
 static ADDRESS_MAP_START( mcu_program, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x002000, 0x002fff) AM_READWRITE( c352_0_r, c352_0_w )
 	AM_RANGE(0x004000, 0x00bfff) AM_READWRITE( s22mcu_shared_r, s22mcu_shared_w )
 	AM_RANGE(0x00c000, 0x00ffff) AM_ROM AM_REGION(REGION_USER4, 0xc000)
+	AM_RANGE(0x080000, 0x0fffff) AM_ROM AM_REGION(REGION_USER4, 0)
+	AM_RANGE(0x200000, 0x27ffff) AM_ROM AM_REGION(REGION_USER4, 0)
+	AM_RANGE(0x280000, 0x2fffff) AM_ROM AM_REGION(REGION_USER4, 0)
+	AM_RANGE(0x301000, 0x301001) AM_NOP	// watchdog? LEDs?
+	AM_RANGE(0x308000, 0x308003) AM_NOP	// volume control IC?
+ADDRESS_MAP_END
+
+// System 22 37702
+static ADDRESS_MAP_START( mcu_s22_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x002000, 0x002fff) AM_READWRITE( c352_0_r, c352_0_w )
+	AM_RANGE(0x004000, 0x00bfff) AM_READWRITE( s22mcu_shared_r, s22mcu_shared_w )
+	AM_RANGE(0x00c000, 0x00ffff) AM_ROM AM_REGION(REGION_CPU4, 0)
 	AM_RANGE(0x080000, 0x0fffff) AM_ROM AM_REGION(REGION_USER4, 0)
 	AM_RANGE(0x200000, 0x27ffff) AM_ROM AM_REGION(REGION_USER4, 0)
 	AM_RANGE(0x280000, 0x2fffff) AM_ROM AM_REGION(REGION_USER4, 0)
@@ -1766,6 +1774,34 @@ static ADDRESS_MAP_START( mcu_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(M37710_PORT7, M37710_PORT7) AM_READ( mcu_port7_r )
 ADDRESS_MAP_END
 
+static READ8_HANDLER( mcu_port4_s22_r )
+{
+	return p4 | 0x10;	// for C74, 0x10 selects sound MCU role, 0x00 selects control-reading role
+}
+
+static READ8_HANDLER( mcu_port5_s22_r )
+{
+	return 0xff;
+}
+
+static READ8_HANDLER( mcu_port6_s22_r )
+{
+	return 0;
+}
+
+static READ8_HANDLER( mcu_port7_s22_r )
+{
+	return 0;
+}
+
+static ADDRESS_MAP_START( mcu_s22_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(M37710_PORT4, M37710_PORT4) AM_READ( mcu_port4_s22_r ) //AM_WRITE( mcu_port4_w )
+//  AM_RANGE(M37710_PORT5, M37710_PORT5) AM_READ( mcu_port5_s22_r ) AM_WRITE( mcu_port5_w )
+//  AM_RANGE(M37710_PORT6, M37710_PORT6) AM_READ( mcu_port6_s22_r ) AM_WRITENOP
+//  AM_RANGE(M37710_PORT7, M37710_PORT7) AM_READ( mcu_port7_s22_r )
+//  AM_RANGE(0x10, 0x1f) AM_NOP
+ADDRESS_MAP_END
+
 static INTERRUPT_GEN( mcu_interrupt )
 {
 	if (cpu_getiloops() == 0)
@@ -1917,30 +1953,37 @@ static ADDRESS_MAP_START( namcos22_am, ADDRESS_SPACE_PROGRAM, 32 )
      * 40000001
      * 40000002 SCI IRQ level
      * 40000003 IRQ (unknown)
+
      * 40000004 VSYNC IRQ level
      * 40000005 IRQ (unknown) acknowledge
      * 40000006
      * 40000007 SCI IRQ acknowledge
+
      * 40000008 IRQ (unknown) acknowledge
      * 40000009 VSYNC IRQ acknowledge
      * 4000000a
      * 4000000b ?
+
      * 4000000c ?
      * 4000000d
      * 4000000e ?
      * 4000000f
+
      * 40000010 ?
      * 40000011 ?
      * 40000012 ?
      * 40000013 ?
+
      * 40000014 ?
      * 40000015 ? (cyc1)
      * 40000016 Watchdog timer reset
      * 40000017
+
      * 40000018 0 or 1 -> DSP control (reset?)
      * 40000019 sub cpu reset?
      * 4000001a 0 or 1 or 0xff -> DSP control
      * 4000001b ?
+
      * 4000001c
      * 4000001d
      * 4000001e
@@ -2193,7 +2236,7 @@ static MACHINE_INIT(namcos22)
 	InitDSP(0);
 }
 
-static MACHINE_DRIVER_START( namcos22ns )
+static MACHINE_DRIVER_START( namcos22 )
 	MDRV_CPU_ADD(M68020,SS22_MASTER_CLOCK/2) /* 25 MHz? */
 	MDRV_CPU_PROGRAM_MAP(namcos22_am,0)
 	MDRV_CPU_VBLANK_INT(namcos22_interrupt,2)
@@ -2209,6 +2252,10 @@ static MACHINE_DRIVER_START( namcos22ns )
 	MDRV_CPU_DATA_MAP(slave_dsp_data,0)
 	MDRV_CPU_IO_MAP(slave_dsp_io,0)
 
+	MDRV_CPU_ADD(M37702, SS22_MASTER_CLOCK/3)	// C74 on the CPU board has no periodic interrupts, it runs entirely off Timer A0
+	MDRV_CPU_PROGRAM_MAP( mcu_s22_program, 0 )
+	MDRV_CPU_IO_MAP( mcu_s22_io, 0 )
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_NVRAM_HANDLER(namcos22)
@@ -2220,14 +2267,16 @@ static MACHINE_DRIVER_START( namcos22ns )
 	MDRV_VIDEO_START(namcos22)
 	MDRV_VIDEO_UPDATE(namcos22)
 	MDRV_MACHINE_INIT(namcos22)
-MACHINE_DRIVER_END
 
-NAMCO_C7X_HARDWARE
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-static MACHINE_DRIVER_START( namcos22 )
-	MDRV_IMPORT_FROM( namcos22ns )
-	NAMCO_C7X_MCU(SS22_MASTER_CLOCK/3)
-	NAMCO_C7X_SOUND(SS22_MASTER_CLOCK/3)
+	MDRV_SOUND_ADD(C352, SS22_MASTER_CLOCK/3)
+	MDRV_SOUND_CONFIG(c352_interface)
+	MDRV_SOUND_ROUTE(0, "right", 0.60)
+	MDRV_SOUND_ROUTE(1, "left", 0.60)
+	MDRV_SOUND_ROUTE(2, "right", 0.60)
+	MDRV_SOUND_ROUTE(3, "left", 0.60)
 MACHINE_DRIVER_END
 
 /*********************************************************************************/
@@ -2629,10 +2678,10 @@ ROM_START( cybrcomm )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "cy1data.6r", 0, 0x020000, CRC(10d0005b) SHA1(10508eeaf74d24a611b44cd3bb12417ceb78904f) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -2812,6 +2861,7 @@ ROM_START( acedrvrw )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "ad1data.6r", 0, 0x080000, CRC(82024f74) SHA1(711ab0c4f027716aeab18e3a5d3d06fa82af8007) )
@@ -2865,10 +2915,10 @@ ROM_START( victlapw )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "adv1data.6r", 0, 0x080000, CRC(10eecdb4) SHA1(aaedeed166614e6670e765e0d7e4e9eb5f38ad10) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -2926,10 +2976,10 @@ ROM_START( raveracw )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) SHA1(140c513349240417bb546dd2d151f3666b818e91) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -2990,10 +3040,10 @@ ROM_START( raveracj )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rv1data.6r", 0, 0x080000, CRC(d358ec20) SHA1(140c513349240417bb546dd2d151f3666b818e91) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -3057,7 +3107,6 @@ ROM_START( ridgera2 )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -3110,7 +3159,6 @@ ROM_START( ridger2a )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -3161,10 +3209,10 @@ ROM_START( ridger2b )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -3214,10 +3262,10 @@ ROM_START( ridgerac )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
-	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data */
 	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )
-	NAMCO_C7X_BIOS
 
    ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -3267,10 +3315,11 @@ ROM_START( ridgeraj )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )
-	NAMCO_C7X_BIOS
+	ROM_LOAD( "c74.bin", 0x08c000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x20000, REGION_CGRAM, 0 )
 
@@ -4114,10 +4163,26 @@ static READ16_HANDLER( mcu130_speedup_r )
 	return su_82;
 }
 
+// for NSTX7702 v1.00 (C74)
+static READ16_HANDLER( mcuc74_speedup_r )
+{
+	if (((activecpu_get_pc() == 0xc0df) || (activecpu_get_pc() == 0xc101)) && (!(su_82 & 0xff00)))
+	{
+		cpu_spinuntil_int();
+	}
+
+	return su_82;
+}
+
+static void install_c74_speedup(void)
+{
+	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x80, 0x81, 0, 0, mcuc74_speedup_r);
+	memory_install_write16_handler(3, ADDRESS_SPACE_PROGRAM, 0x80, 0x81, 0, 0, mcu_speedup_w);
+}
+
 DRIVER_INIT( alpiner )
 {
 	namcos22_gametype = NAMCOS22_ALPINE_RACER;
-	namcos22_usec7x = 0;
 
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, alpineracer_mcu_adc_r);
 
@@ -4129,7 +4194,6 @@ DRIVER_INIT( alpiner )
 DRIVER_INIT( alpiner2 )
 {
 	namcos22_gametype = NAMCOS22_ALPINE_RACER_2;
-	namcos22_usec7x = 0;
 
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, alpineracer_mcu_adc_r);
 
@@ -4141,7 +4205,6 @@ DRIVER_INIT( alpiner2 )
 DRIVER_INIT( alpinesa )
 {
 	namcos22_gametype = NAMCOS22_ALPINE_SURFER;
-	namcos22_usec7x = 0;
 
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, alpineracer_mcu_adc_r);
 
@@ -4155,13 +4218,11 @@ DRIVER_INIT( airco22 )
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, airco22_mcu_adc_r);
 
 	namcos22_gametype = NAMCOS22_AIR_COMBAT22;
-	namcos22_usec7x = 0;
 }
 
 DRIVER_INIT( propcycl )
 {
    UINT32 *pROM = (UINT32 *)memory_region(REGION_CPU1);
-	namcos22_usec7x = 0;
 
 	/* patch out strange routine (uninitialized-eprom related?) */
 	pROM[0x1992C/4] = 0x4E754E75;
@@ -4190,8 +4251,8 @@ DRIVER_INIT( propcycl )
 DRIVER_INIT( ridgeraj )
 {
 	namcos22_gametype = NAMCOS22_RIDGE_RACER;
-	namcoc7x_on_driver_init();
-	namcos22_usec7x = 1;
+
+	install_c74_speedup();
 
 	old_coin_state = readinputport(1) & 0x1200;
 	credits1 = credits2 = 0;
@@ -4200,8 +4261,8 @@ DRIVER_INIT( ridgeraj )
 DRIVER_INIT( ridger2j )
 {
 	namcos22_gametype = NAMCOS22_RIDGE_RACER2;
-	namcoc7x_on_driver_init();
-	namcos22_usec7x = 1;
+
+	install_c74_speedup();
 
 	old_coin_state = readinputport(1) & 0x1200;
 	credits1 = credits2 = 0;
@@ -4210,7 +4271,8 @@ DRIVER_INIT( ridger2j )
 DRIVER_INIT( acedrvr )
 {
 	namcos22_gametype = NAMCOS22_ACE_DRIVER;
-	namcos22_usec7x = 0;
+
+	install_c74_speedup();
 
 	old_coin_state = readinputport(1) & 0x1200;
 	credits1 = credits2 = 0;
@@ -4219,8 +4281,8 @@ DRIVER_INIT( acedrvr )
 DRIVER_INIT( victlap )
 {
 	namcos22_gametype = NAMCOS22_VICTORY_LAP;
-	namcoc7x_on_driver_init();
-	namcos22_usec7x = 1;
+
+	install_c74_speedup();
 
 	old_coin_state = readinputport(1) & 0x1200;
 	credits1 = credits2 = 0;
@@ -4229,8 +4291,8 @@ DRIVER_INIT( victlap )
 DRIVER_INIT( raveracw )
 {
 	namcos22_gametype = NAMCOS22_RAVE_RACER;
-	namcoc7x_on_driver_init();
-	namcos22_usec7x = 1;
+
+	install_c74_speedup();
 
 	old_coin_state = readinputport(1) & 0x1200;
 	credits1 = credits2 = 0;
@@ -4246,8 +4308,8 @@ DRIVER_INIT( cybrcomm )
 	pROM[0x18aefc/4] = 0x4e714e71;
 
 	namcos22_gametype = NAMCOS22_CYBER_COMMANDO;
-	namcos22_usec7x = 1;
-	namcoc7x_on_driver_init();
+
+	install_c74_speedup();
 
 	old_coin_state = readinputport(1) & 0x1200;
 	credits1 = credits2 = 0;
@@ -4261,8 +4323,6 @@ DRIVER_INIT( cybrcyc )
 
 	namcos22_gametype = NAMCOS22_CYBER_CYCLES;
 
-	namcos22_usec7x = 0;
-
 	memory_install_read8_handler(3, ADDRESS_SPACE_IO, M37710_ADC0_L, M37710_ADC7_H, 0, 0, cybrcycc_mcu_adc_r);
 
 	// install speedup cheat for 1.30 MCU BIOS
@@ -4273,7 +4333,6 @@ DRIVER_INIT( cybrcyc )
 DRIVER_INIT( timecris )
 {
 	namcos22_gametype = NAMCOS22_TIME_CRISIS;
-	namcos22_usec7x = 0;
 
 	// install speedup cheat for 1.30 MCU BIOS
 	memory_install_read16_handler(3, ADDRESS_SPACE_PROGRAM, 0x82, 0x83, 0, 0, mcu130_speedup_r);
@@ -4292,7 +4351,7 @@ GAME( 1993, ridgeraj, ridgerac, namcos22,  ridgera,  ridgeraj, ROT0, "Namco", "R
 GAME( 1994, ridgera2, 0,        namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS2, US)"             , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) /* POSTs but doesn's start */
 GAME( 1994, ridger2a, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Ver.B, Japan)"   , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
 GAME( 1994, ridger2b, ridgera2, namcos22,  ridgera,  ridger2j, ROT0, "Namco", "Ridge Racer 2 (Rev. RRS1, Japan)"          , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING )
-GAME( 1994, acedrvrw, 0,        namcos22ns,acedrvr,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_NO_SOUND|GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, acedrvrw, 0,        namcos22,  acedrvr,  acedrvr,  ROT0, "Namco", "Ace Driver (Rev. AD2, World)"              , GAME_IMPERFECT_SOUND|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, victlapw, 0,        namcos22,  victlap,  victlap,  ROT0, "Namco", "Ace Driver: Victory Lap (Rev. ADV2, World)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )	/* runs but no 3D */
 
 /* Super System22 games */

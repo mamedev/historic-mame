@@ -161,13 +161,18 @@ typedef union
 
 ***************************************************************************/
 
-/* Standard MAME assertion macro */
+/* Standard MAME assertion macros */
 #undef assert
+#undef assert_always
+
 #ifdef MAME_DEBUG
 #define assert(x)	do { if (!(x)) osd_die("assert: %s:%d: %s", __FILE__, __LINE__, #x); } while (0)
+#define assert_always(x, msg) assert(x)
 #else
 #define assert(x)
+#define assert_always(x, msg) do { if (!(x)) osd_die("Fatal error: %s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
 #endif
+
 
 
 /* Standard MIN/MAX macros */

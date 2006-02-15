@@ -470,8 +470,8 @@ UINT32 sys16_text_map( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows 
     color RAM entry (Space Harrier, System 16B and most later boards).
 */
 
-const int resistances_normal[6] = {3900, 2000, 1000, 1000/2, 1000/4, 0};
-const int resistances_sh[6] = {3900, 2000, 1000, 1000/2, 1000/4, 470};
+static const int resistances_normal[6] = {3900, 2000, 1000, 1000/2, 1000/4, 0};
+static const int resistances_sh[6] = {3900, 2000, 1000, 1000/2, 1000/4, 470};
 static double weights[2][3][6];
 
 WRITE16_HANDLER( sys16_paletteram_w )

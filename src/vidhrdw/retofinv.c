@@ -188,7 +188,7 @@ WRITE8_HANDLER( retofinv_gfx_ctrl_w )
 
 ***************************************************************************/
 
-void draw_sprites(mame_bitmap *bitmap)
+static void draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 	static rectangle spritevisiblearea =

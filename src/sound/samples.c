@@ -221,7 +221,7 @@ void sample_start(int channel,int samplenum,int loop)
 	struct sample_channel *chan = &info->channel[channel];
 	struct loaded_sample *sample;
 
-	if (Machine->sample_rate == 0 || info->samples == NULL)
+	if (info->samples == NULL)
 		return;
 	if (channel >= info->numchannels)
 	{
@@ -253,8 +253,6 @@ void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,in
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 	struct sample_channel *chan = &info->channel[channel];
 
-	if (Machine->sample_rate == 0)
-		return;
 	if (channel >= info->numchannels)
 	{
 		logerror("error: sample_start() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
@@ -279,8 +277,6 @@ void sample_set_freq(int channel,int freq)
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 	struct sample_channel *chan = &info->channel[channel];
 
-	if (Machine->sample_rate == 0)
-		return;
 	if (channel >= info->numchannels)
 	{
 		logerror("error: sample_set_freq() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
@@ -298,8 +294,6 @@ void sample_set_volume(int channel,float volume)
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 	struct sample_channel *chan = &info->channel[channel];
 
-	if (Machine->sample_rate == 0)
-		return;
 	if (channel >= info->numchannels)
 	{
 		logerror("error: sample_set_volume() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
@@ -314,8 +308,6 @@ void sample_set_pause(int channel,int pause)
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 	struct sample_channel *chan = &info->channel[channel];
 
-	if (Machine->sample_rate == 0)
-		return;
 	if (channel >= info->numchannels)
 	{
 		logerror("error: sample_set_pause() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
@@ -333,8 +325,6 @@ void sample_stop(int channel)
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 	struct sample_channel *chan = &info->channel[channel];
 
-	if (Machine->sample_rate == 0)
-		return;
 	if (channel >= info->numchannels)
 	{
 		logerror("error: sample_stop() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
@@ -352,8 +342,6 @@ int sample_playing(int channel)
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 	struct sample_channel *chan = &info->channel[channel];
 
-	if (Machine->sample_rate == 0)
-		return 0;
 	if (channel >= info->numchannels)
 	{
 		logerror("error: sample_playing() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
@@ -370,7 +358,7 @@ int sample_loaded(int samplenum)
 {
 	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
 
-	if (Machine->sample_rate == 0 || info->samples == NULL)
+	if (info->samples == NULL)
 		return 0;
 	if (samplenum >= info->samples->total)
 	{

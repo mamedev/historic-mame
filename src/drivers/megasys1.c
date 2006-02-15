@@ -185,7 +185,7 @@ static READ16_HANDLER( dsw_r )		{return readinputport(4) * 256 +
 
 
 #define INTERRUPT_NUM_A		3
-INTERRUPT_GEN( interrupt_A )
+static INTERRUPT_GEN( interrupt_A )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -195,7 +195,7 @@ INTERRUPT_GEN( interrupt_A )
 	}
 }
 
-INTERRUPT_GEN( interrupt_A_iganinju )
+static INTERRUPT_GEN( interrupt_A_iganinju )
 {
 	switch ( cpu_getiloops() )
 	{
@@ -244,7 +244,7 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 #define INTERRUPT_NUM_B		3
-INTERRUPT_GEN( interrupt_B )
+static INTERRUPT_GEN( interrupt_B )
 {
 	switch (cpu_getiloops())
 	{
@@ -371,7 +371,7 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 #define INTERRUPT_NUM_D		1
-INTERRUPT_GEN( interrupt_D )
+static INTERRUPT_GEN( interrupt_D )
 {
 	cpunum_set_input_line(0, 2, HOLD_LINE);
 }
@@ -2637,7 +2637,7 @@ INPUT_PORTS_END
 
 
 
-UINT16 protection_val;
+static UINT16 protection_val;
 
 /* Read the input ports, through a protection device */
 static READ16_HANDLER( protection_peekaboo_r )

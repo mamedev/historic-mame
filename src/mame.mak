@@ -146,6 +146,7 @@ CPUS += MEDIAGX
 CPUS += I960
 CPUS += H83002
 CPUS += V810
+CPUS += M37702
 CPUS += M37710
 CPUS += PPC403
 CPUS += PPC602
@@ -989,7 +990,6 @@ $(OBJ)/omori.a: \
 	$(OBJ)/drivers/battlex.o $(OBJ)/vidhrdw/battlex.o \
 	$(OBJ)/drivers/carjmbre.o $(OBJ)/vidhrdw/carjmbre.o \
 	$(OBJ)/drivers/popper.o $(OBJ)/vidhrdw/popper.o \
-	$(OBJ)/drivers/shuttlei.o \
 	$(OBJ)/drivers/spaceg.o \
 
 $(OBJ)/orca.a: \

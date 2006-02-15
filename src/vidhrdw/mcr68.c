@@ -74,6 +74,11 @@ VIDEO_START( mcr68 )
 
 VIDEO_START( zwackery )
 {
+	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
+	gfx_element *gfx0 = Machine->gfx[0];
+	gfx_element *gfx2 = Machine->gfx[2];
+	int code, y, x;
+
 	/* initialize the background tilemap */
 	bg_tilemap = tilemap_create(zwackery_get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,16, 32,32);
 	if (!bg_tilemap)
@@ -84,24 +89,6 @@ VIDEO_START( zwackery )
 	if (!fg_tilemap)
 		return 1;
 	tilemap_set_transparent_pen(fg_tilemap, 0);
-
-	return 0;
-}
-
-
-
-/*************************************
- *
- *  Zwackery color data conversion
- *
- *************************************/
-
-PALETTE_INIT( zwackery )
-{
-	const UINT8 *colordatabase = (const UINT8 *)memory_region(REGION_GFX3);
-	gfx_element *gfx0 = Machine->gfx[0];
-	gfx_element *gfx2 = Machine->gfx[2];
-	int code, y, x;
 
 	/* "colorize" each code */
 	for (code = 0; code < gfx0->total_elements; code++)
@@ -138,6 +125,8 @@ PALETTE_INIT( zwackery )
 			gfxdata2 += gfx2->line_modulo;
 		}
 	}
+
+	return 0;
 }
 
 

@@ -24,11 +24,11 @@ typedef struct
 
 
 /* Init */
-void ppi8255_init( ppi8255_interface *intfce);
+void ppi8255_init( const ppi8255_interface *intfce);
 
 /* Read/Write */
-int ppi8255_r ( int which, int offset );
-void ppi8255_w( int which, int offset, int data );
+UINT8 ppi8255_r ( int which, offs_t offset );
+void ppi8255_w( int which, offs_t offset, UINT8 data );
 
 void ppi8255_set_portAread( int which, read8_handler portAread);
 void ppi8255_set_portBread( int which, read8_handler portBread);
@@ -38,9 +38,13 @@ void ppi8255_set_portAwrite( int which, write8_handler portAwrite);
 void ppi8255_set_portBwrite( int which, write8_handler portBwrite);
 void ppi8255_set_portCwrite( int which, write8_handler portCwrite);
 
-void ppi8255_set_portA( int which, int data );
-void ppi8255_set_portB( int which, int data );
-void ppi8255_set_portC( int which, int data );
+void ppi8255_set_portA( int which, UINT8 data );
+void ppi8255_set_portB( int which, UINT8 data );
+void ppi8255_set_portC( int which, UINT8 data );
+
+UINT8 ppi8255_get_portA( int which );
+UINT8 ppi8255_get_portB( int which );
+UINT8 ppi8255_get_portC( int which );
 
 /* Helpers */
 READ8_HANDLER( ppi8255_0_r );

@@ -4,7 +4,7 @@
 **      express.h
 **      Generic expressions engine.
 **      Written by Aaron Giles
-**      Copyright (c) 2005, Aaron Giles
+**      Copyright (c) 2006, Aaron Giles
 **
 **
 **#################################################################################################*/
@@ -80,46 +80,46 @@
 **  TYPE DEFINITIONS
 **#################################################################################################*/
 
-/* register_info provides symbol information that is specific to a register type */
-struct register_info
-{
-	UINT64			(*getter)(UINT32);			/* value getter */
-	void			(*setter)(UINT32, UINT64);	/* value setter */
-};
-
-/* function_info provides symbol information that is specific to a function type */
-struct function_info
-{
-	UINT16			minparams;					/* minimum expected parameters */
-	UINT16			maxparams;					/* maximum expected parameters */
-	UINT64			(*execute)(UINT32, UINT32, UINT64 *);/* execute */
-};
-
-/* generic_info provides symbol information with a pointer and a value */
-struct generic_info
-{
-	void *			ptr;						/* generic pointer */
-	UINT64			value;						/* generic value */
-};
-
 /* symbol_entry describes a symbol in a symbol table */
-struct symbol_entry
+typedef struct _symbol_entry symbol_entry;
+struct _symbol_entry
 {
 	UINT32			ref;						/* internal reference */
 	UINT32			type;						/* type of symbol */
 	union
 	{
-		struct register_info reg;				/* register info */
-		struct function_info func;				/* function info */
-		struct generic_info gen;				/* generic info */
+		/* register info */
+		struct
+		{
+			UINT64			(*getter)(UINT32);			/* value getter */
+			void			(*setter)(UINT32, UINT64);	/* value setter */
+		} reg;
+
+		/* function info */
+		struct
+		{
+			UINT16			minparams;					/* minimum expected parameters */
+			UINT16			maxparams;					/* maximum expected parameters */
+			UINT64			(*execute)(UINT32, UINT32, UINT64 *);/* execute */
+		} func;
+
+		/* generic info */
+		struct generic_info
+		{
+			void *			ptr;						/* generic pointer */
+			UINT64			value;						/* generic value */
+		} gen;
 	} info;
 };
 
+
 /* symbol_table is an opaque structure for holding a collection of symbols */
-struct symbol_table;
+typedef struct _symbol_table symbol_table;
+
 
 /* parsed_expression is an opaque structure for holding a pre-parsed expression */
-struct parsed_expression;
+typedef struct _parsed_expression parsed_expression;
+
 
 /* EXPRERR is an error code for expression evaluation */
 typedef UINT32 EXPRERR;
@@ -141,20 +141,20 @@ void	external_write_memory(int space, UINT32 offset, int size, UINT64 value);
 **#################################################################################################*/
 
 /* expression evaluation */
-EXPRERR 					expression_evaluate(const char *expression, const struct symbol_table *table, UINT64 *result);
-EXPRERR 					expression_parse(const char *expression, const struct symbol_table *table, struct parsed_expression **result);
-EXPRERR 					expression_execute(struct parsed_expression *expr, UINT64 *result);
-void 						expression_free(struct parsed_expression *expr);
-const char *				expression_original_string(struct parsed_expression *expr);
+EXPRERR 					expression_evaluate(const char *expression, const symbol_table *table, UINT64 *result);
+EXPRERR 					expression_parse(const char *expression, const symbol_table *table, parsed_expression **result);
+EXPRERR 					expression_execute(parsed_expression *expr, UINT64 *result);
+void 						expression_free(parsed_expression *expr);
+const char *				expression_original_string(parsed_expression *expr);
 const char *				exprerr_to_string(EXPRERR error);
 
 /* symbol table manipulation */
-struct symbol_table *		symtable_alloc(struct symbol_table *parent);
-int 						symtable_add(struct symbol_table *table, const char *name, const struct symbol_entry *entry);
-int 						symtable_add_register(struct symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64));
-int 						symtable_add_function(struct symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *));
-int							symtable_add_value(struct symbol_table *table, const char *name, UINT64 value);
-const struct symbol_entry *	symtable_find(const struct symbol_table *table, const char *name);
-void 						symtable_free(struct symbol_table *table);
+symbol_table *				symtable_alloc(symbol_table *parent);
+int 						symtable_add(symbol_table *table, const char *name, const symbol_entry *entry);
+int 						symtable_add_register(symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64));
+int 						symtable_add_function(symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *));
+int							symtable_add_value(symbol_table *table, const char *name, UINT64 value);
+const symbol_entry *		symtable_find(const symbol_table *table, const char *name);
+void 						symtable_free(symbol_table *table);
 
 #endif

@@ -149,41 +149,50 @@ enum
 **  TYPE DEFINITIONS
 **#################################################################################################*/
 
-union int_ptr
+typedef union _int_ptr int_ptr;
+union _int_ptr
 {
 	void *			p;				/* pointer value */
 	UINT64			i;				/* integer value */
 };
 
-struct token
+
+typedef struct _parse_token parse_token;
+struct _parse_token
 {
 	UINT16			type;			/* type of token */
 	UINT16			info;			/* info for token */
 	UINT32			offset;			/* offset within the string */
-	union int_ptr	value;			/* value of token */
+	int_ptr			value;			/* value of token */
 };
 
-struct internal_symbol_entry
+
+typedef struct _internal_symbol_entry internal_symbol_entry;
+struct _internal_symbol_entry
 {
-	struct internal_symbol_entry *next;	/* pointer to the next entry */
+	internal_symbol_entry *next;	/* pointer to the next entry */
 	const char *	name;			/* name of the symbol */
-	struct symbol_entry	entry;		/* actual entry data */
+	symbol_entry	entry;		/* actual entry data */
 };
 
-struct symbol_table
+
+/* typedef struct _symbol_table symbol_table -- defined in express.h */
+struct _symbol_table
 {
-	struct symbol_table *parent;	/* pointer to the parent symbol table */
-	struct internal_symbol_entry *hash[SYM_TABLE_HASH_SIZE]; /* hash table */
+	symbol_table *parent;	/* pointer to the parent symbol table */
+	internal_symbol_entry *hash[SYM_TABLE_HASH_SIZE]; /* hash table */
 };
 
-struct parsed_expression
+
+/* typedef struct _parsed_expression parsed_expression -- defined in express.h */
+struct _parsed_expression
 {
-	const struct symbol_table *table; /* symbol table */
+	const symbol_table *table; /* symbol table */
 	char *			original_string;/* original string (prior to parsing) */
 	char *			string[MAX_EXPRESSION_STRINGS]; /* string table */
-	struct token	token[MAX_TOKENS];/* array of tokens */
+	parse_token		token[MAX_TOKENS];/* array of tokens */
 	int				token_stack_ptr;/* stack poointer */
-	struct token token_stack[MAX_STACK_DEPTH];/* token stack */
+	parse_token		token_stack[MAX_STACK_DEPTH];/* token stack */
 };
 
 
@@ -196,7 +205,7 @@ struct parsed_expression
     init_token_stack - reset the token stack
 -------------------------------------------------*/
 
-INLINE void init_token_stack(struct parsed_expression *expr)
+INLINE void init_token_stack(parsed_expression *expr)
 {
 	expr->token_stack_ptr = 0;
 }
@@ -206,7 +215,7 @@ INLINE void init_token_stack(struct parsed_expression *expr)
     push_token - push a token onto the stack
 -------------------------------------------------*/
 
-INLINE EXPRERR push_token(struct parsed_expression *expr, struct token *token)
+INLINE EXPRERR push_token(parsed_expression *expr, parse_token *token)
 {
 	/* check for overflow */
 	if (expr->token_stack_ptr >= MAX_STACK_DEPTH)
@@ -222,7 +231,7 @@ INLINE EXPRERR push_token(struct parsed_expression *expr, struct token *token)
     pop_token - pop a token off the stack
 -------------------------------------------------*/
 
-INLINE EXPRERR pop_token(struct parsed_expression *expr, struct token *token)
+INLINE EXPRERR pop_token(parsed_expression *expr, parse_token *token)
 {
 	/* check for underflow */
 	if (expr->token_stack_ptr == 0)
@@ -239,7 +248,7 @@ INLINE EXPRERR pop_token(struct parsed_expression *expr, struct token *token)
     entries up the stack
 -------------------------------------------------*/
 
-INLINE struct token *peek_token(struct parsed_expression *expr, int count)
+INLINE parse_token *peek_token(parsed_expression *expr, int count)
 {
 	if (expr->token_stack_ptr <= count)
 		return NULL;
@@ -257,7 +266,7 @@ INLINE struct token *peek_token(struct parsed_expression *expr, int count)
     and ensure that it is a proper lval
 -------------------------------------------------*/
 
-INLINE EXPRERR pop_token_lval(struct parsed_expression *expr, struct token *token, const struct symbol_table *table)
+INLINE EXPRERR pop_token_lval(parsed_expression *expr, parse_token *token, const symbol_table *table)
 {
 	/* check for underflow */
 	if (expr->token_stack_ptr == 0)
@@ -269,7 +278,7 @@ INLINE EXPRERR pop_token_lval(struct parsed_expression *expr, struct token *toke
 	/* to be an lval, the token must be a valid read/write symbol or a memory token */
 	if (token->type == TOK_SYMBOL)
 	{
-		struct symbol_entry *symbol = token->value.p;
+		symbol_entry *symbol = token->value.p;
 		if (symbol == NULL || symbol->type != SMT_REGISTER || symbol->info.reg.setter == NULL)
 			return MAKE_EXPRERR_NOT_LVAL(token->offset);
 	}
@@ -285,7 +294,7 @@ INLINE EXPRERR pop_token_lval(struct parsed_expression *expr, struct token *toke
     and ensure that it is a proper rval
 -------------------------------------------------*/
 
-INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *token, const struct symbol_table *table)
+INLINE EXPRERR pop_token_rval(parsed_expression *expr, parse_token *token, const symbol_table *table)
 {
 	/* check for underflow */
 	if (expr->token_stack_ptr == 0)
@@ -297,7 +306,7 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
 	/* symbol tokens get resolved down to number tokens */
 	if (token->type == TOK_SYMBOL)
 	{
-		struct symbol_entry *symbol = token->value.p;
+		symbol_entry *symbol = token->value.p;
 		if (symbol == NULL || (symbol->type != SMT_REGISTER && symbol->type != SMT_VALUE))
 			return MAKE_EXPRERR_NOT_RVAL(token->offset);
 		token->type = TOK_NUMBER;
@@ -328,11 +337,11 @@ INLINE EXPRERR pop_token_rval(struct parsed_expression *expr, struct token *toke
     for a SYMBOL token
 -------------------------------------------------*/
 
-INLINE UINT64 get_lval_value(struct token *token, const struct symbol_table *table)
+INLINE UINT64 get_lval_value(parse_token *token, const symbol_table *table)
 {
 	if (token->type == TOK_SYMBOL)
 	{
-		struct symbol_entry *symbol = token->value.p;
+		symbol_entry *symbol = token->value.p;
 		if (symbol != NULL && symbol->type == SMT_REGISTER)
 			return (*symbol->info.reg.getter)(symbol->ref);
 	}
@@ -351,11 +360,11 @@ INLINE UINT64 get_lval_value(struct token *token, const struct symbol_table *tab
     for a SYMBOL token
 -------------------------------------------------*/
 
-INLINE void set_lval_value(struct token *token, const struct symbol_table *table, UINT64 value)
+INLINE void set_lval_value(parse_token *token, const symbol_table *table, UINT64 value)
 {
 	if (token->type == TOK_SYMBOL)
 	{
-		struct symbol_entry *symbol = token->value.p;
+		symbol_entry *symbol = token->value.p;
 		if (symbol != NULL && symbol->type == SMT_REGISTER && symbol->info.reg.setter)
 			(*symbol->info.reg.setter)(symbol->ref, value);
 	}
@@ -378,10 +387,10 @@ INLINE void set_lval_value(struct token *token, const struct symbol_table *table
     human readable token representation
 -------------------------------------------------*/
 
-static void print_tokens(FILE *out, struct parsed_expression *expr)
+static void print_tokens(FILE *out, parsed_expression *expr)
 {
 #if DEBUG_TOKENS
-	struct token *token = expr->token;
+	parse_token *token = expr->token;
 
 	printf("----\n");
 	while (token->type != TOK_END)
@@ -526,7 +535,7 @@ static int parse_memory_operator(const char *buffer, UINT16 *flags)
     string and break it into a sequence of tokens
 -------------------------------------------------*/
 
-static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_expression *expr, const struct symbol_table *table)
+static EXPRERR parse_string_into_tokens(const char *stringstart, parsed_expression *expr, const symbol_table *table)
 {
 	#define SET_TOKEN_INFO(_length, _type, _value, _info) \
 	do { \
@@ -536,7 +545,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 		string += _length; \
 	} while (0)
 
-	struct token *token = expr->token;
+	parse_token *token = expr->token;
 	const char *string = stringstart;
 
 	/* zap expression object */
@@ -800,7 +809,7 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
 					/* if we're not forced to be a number, check for a symbol match first */
 					if (!must_be_number)
 					{
-						const struct symbol_entry *symbol = symtable_find(expr->table, buffer);
+						const symbol_entry *symbol = symtable_find(expr->table, buffer);
 						if (symbol != NULL)
 						{
 							token->type = TOK_SYMBOL;
@@ -875,11 +884,11 @@ static EXPRERR parse_string_into_tokens(const char *stringstart, struct parsed_e
     ambiguities based on neighboring tokens
 -------------------------------------------------*/
 
-static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
+static EXPRERR normalize_operator(parsed_expression *expr, int tokindex)
 {
-	struct token *thistoken = &expr->token[tokindex];
-	struct token *nexttoken = thistoken + 1;
-	struct token *prevtoken = (tokindex == 0) ? NULL : (thistoken - 1);
+	parse_token *thistoken = &expr->token[tokindex];
+	parse_token *nexttoken = thistoken + 1;
+	parse_token *prevtoken = (tokindex == 0) ? NULL : (thistoken - 1);
 
 	switch (thistoken->value.i)
 	{
@@ -942,7 +951,7 @@ static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
 
 			for (lookback = 0; lookback < MAX_STACK_DEPTH; lookback++)
 			{
-				struct token *peek = peek_token(expr, lookback);
+				parse_token *peek = peek_token(expr, lookback);
 				if (!peek)
 					break;
 				if (peek->value.i == TVL_LPAREN)
@@ -969,11 +978,11 @@ static EXPRERR normalize_operator(struct parsed_expression *expr, int tokindex)
     of tokens to a postfix sequence for processing
 -------------------------------------------------*/
 
-static EXPRERR infix_to_postfix(struct parsed_expression *expr)
+static EXPRERR infix_to_postfix(parsed_expression *expr)
 {
-	struct token *dest = expr->token;
-	struct token dummy;
-	struct token *peek;
+	parse_token *dest = expr->token;
+	parse_token dummy;
+	parse_token *peek;
 	int tokindex = 0;
 	EXPRERR exprerr;
 
@@ -983,7 +992,7 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
 	/* loop over all the original tokens */
 	for ( ; expr->token[tokindex].type != TOK_END; tokindex++)
 	{
-		struct token *token = &expr->token[tokindex];
+		parse_token *token = &expr->token[tokindex];
 
 		/* If the character is an operand, append it to the result string */
 		if (token->type == TOK_NUMBER || token->type == TOK_SYMBOL || token->type == TOK_STRING)
@@ -1091,19 +1100,19 @@ static EXPRERR infix_to_postfix(struct parsed_expression *expr)
     operator
 -------------------------------------------------*/
 
-static EXPRERR execute_function(struct parsed_expression *expr, struct token *token)
+static EXPRERR execute_function(parsed_expression *expr, parse_token *token)
 {
 	UINT64 funcparams[MAX_FUNCTION_PARAMS];
-	struct symbol_entry *symbol = NULL;
+	symbol_entry *symbol = NULL;
 	int paramcount = 0;
-	struct token t1;
+	parse_token t1;
 	EXPRERR exprerr;
 
 	/* pop off all pushed parameters */
 	while (paramcount < MAX_FUNCTION_PARAMS)
 	{
 		/* peek at the next token on the stack */
-		struct token *peek = peek_token(expr, 0);
+		parse_token *peek = peek_token(expr, 0);
 		if (!peek)
 			return MAKE_EXPRERR_INVALID_PARAM_COUNT(token->offset);
 
@@ -1146,9 +1155,9 @@ static EXPRERR execute_function(struct parsed_expression *expr, struct token *to
     of tokens
 -------------------------------------------------*/
 
-static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
+static EXPRERR execute_tokens(parsed_expression *expr, UINT64 *result)
 {
-	struct token t1, t2, tempnum, tempmem;
+	parse_token t1, t2, tempnum, tempmem;
 	EXPRERR exprerr;
 	int tokindex;
 
@@ -1164,7 +1173,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
 	/* loop over the entire sequence */
 	for (tokindex = 0; expr->token[tokindex].type != TOK_END; tokindex++)
 	{
-		struct token *token = &expr->token[tokindex];
+		parse_token *token = &expr->token[tokindex];
 
 		switch (token->type)
 		{
@@ -1549,7 +1558,7 @@ static EXPRERR execute_tokens(struct parsed_expression *expr, UINT64 *result)
     allocated to an expression
 -------------------------------------------------*/
 
-static void free_expression_strings(struct parsed_expression *expr)
+static void free_expression_strings(parsed_expression *expr)
 {
 	int strindex;
 
@@ -1578,9 +1587,9 @@ static void free_expression_strings(struct parsed_expression *expr)
     expression using the passed symbol table
 -------------------------------------------------*/
 
-EXPRERR expression_evaluate(const char *expression, const struct symbol_table *table, UINT64 *result)
+EXPRERR expression_evaluate(const char *expression, const symbol_table *table, UINT64 *result)
 {
-	struct parsed_expression temp_expression;
+	parsed_expression temp_expression;
 	EXPRERR exprerr;
 
 	/* first parse the tokens into the token array in order */
@@ -1613,9 +1622,9 @@ cleanup:
     return an allocated token array
 -------------------------------------------------*/
 
-EXPRERR expression_parse(const char *expression, const struct symbol_table *table, struct parsed_expression **result)
+EXPRERR expression_parse(const char *expression, const symbol_table *table, parsed_expression **result)
 {
-	struct parsed_expression temp_expression;
+	parsed_expression temp_expression;
 	EXPRERR exprerr;
 
 	/* first parse the tokens into the token array in order */
@@ -1651,7 +1660,7 @@ cleanup:
     previously-parsed expression
 -------------------------------------------------*/
 
-EXPRERR expression_execute(struct parsed_expression *expr, UINT64 *result)
+EXPRERR expression_execute(parsed_expression *expr, UINT64 *result)
 {
 	/* execute the expression to get the result */
 	return execute_tokens(expr, result);
@@ -1663,7 +1672,7 @@ EXPRERR expression_execute(struct parsed_expression *expr, UINT64 *result)
     allocated parsed expression
 -------------------------------------------------*/
 
-void expression_free(struct parsed_expression *expr)
+void expression_free(parsed_expression *expr)
 {
 	if (expr)
 	{
@@ -1678,7 +1687,7 @@ void expression_free(struct parsed_expression *expr)
     pointer to the original expression string
 -------------------------------------------------*/
 
-const char *expression_original_string(struct parsed_expression *expr)
+const char *expression_original_string(parsed_expression *expr)
 {
 	return expr->original_string;
 }
@@ -1739,9 +1748,9 @@ INLINE UINT32 hash_string(const char *string)
     symtable_alloc - allocate a symbol table
 -------------------------------------------------*/
 
-struct symbol_table *symtable_alloc(struct symbol_table *parent)
+symbol_table *symtable_alloc(symbol_table *parent)
 {
-	struct symbol_table *table;
+	symbol_table *table;
 
 	/* allocate memory for the table */
 	table = malloc(sizeof(*table));
@@ -1760,16 +1769,16 @@ struct symbol_table *symtable_alloc(struct symbol_table *parent)
     symbol table
 -------------------------------------------------*/
 
-int symtable_add(struct symbol_table *table, const char *name, const struct symbol_entry *entry)
+int symtable_add(symbol_table *table, const char *name, const symbol_entry *entry)
 {
-	struct internal_symbol_entry *symbol;
-	struct symbol_entry *oldentry;
+	internal_symbol_entry *symbol;
+	symbol_entry *oldentry;
 	char *newstring;
 	UINT32 hash_index;
 	int strindex;
 
 	/* see if we already have an entry and just overwrite it if we do */
-	oldentry = (struct symbol_entry *)symtable_find(table, name);
+	oldentry = (symbol_entry *)symtable_find(table, name);
 	if (oldentry)
 	{
 		*oldentry = *entry;
@@ -1810,9 +1819,9 @@ int symtable_add(struct symbol_table *table, const char *name, const struct symb
     register symbol to a symbol table
 -------------------------------------------------*/
 
-int	symtable_add_register(struct symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64))
+int	symtable_add_register(symbol_table *table, const char *name, UINT32 ref, UINT64 (*getter)(UINT32), void (*setter)(UINT32, UINT64))
 {
-	struct symbol_entry symbol;
+	symbol_entry symbol;
 
 	symbol.ref = ref;
 	symbol.type = SMT_REGISTER;
@@ -1827,9 +1836,9 @@ int	symtable_add_register(struct symbol_table *table, const char *name, UINT32 r
     function symbol to a symbol table
 -------------------------------------------------*/
 
-int symtable_add_function(struct symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *))
+int symtable_add_function(symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *))
 {
-	struct symbol_entry symbol;
+	symbol_entry symbol;
 
 	symbol.ref = ref;
 	symbol.type = SMT_FUNCTION;
@@ -1845,9 +1854,9 @@ int symtable_add_function(struct symbol_table *table, const char *name, UINT32 r
     value symbol to a symbol table
 -------------------------------------------------*/
 
-int symtable_add_value(struct symbol_table *table, const char *name, UINT64 value)
+int symtable_add_value(symbol_table *table, const char *name, UINT64 value)
 {
-	struct symbol_entry symbol;
+	symbol_entry symbol;
 
 	symbol.ref = 0;
 	symbol.type = SMT_VALUE;
@@ -1861,10 +1870,10 @@ int symtable_add_value(struct symbol_table *table, const char *name, UINT64 valu
     table
 -------------------------------------------------*/
 
-const struct symbol_entry *symtable_find(const struct symbol_table *table, const char *name)
+const symbol_entry *symtable_find(const symbol_table *table, const char *name)
 {
 	UINT32 hash_index = hash_string(name) % SYM_TABLE_HASH_SIZE;
-	const struct internal_symbol_entry *symbol;
+	const internal_symbol_entry *symbol;
 
 	/* loop until we run out of tables */
 	while (table)
@@ -1886,9 +1895,9 @@ const struct symbol_entry *symtable_find(const struct symbol_table *table, const
     symtable_free - free a symbol table
 -------------------------------------------------*/
 
-void symtable_free(struct symbol_table *table)
+void symtable_free(symbol_table *table)
 {
-	struct internal_symbol_entry *entry, *next;
+	internal_symbol_entry *entry, *next;
 	int hash_index;
 
 	/* free all the entries in the hash table */

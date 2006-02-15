@@ -52,8 +52,7 @@ static READ8_HANDLER( rollerg_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
        just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
-	else return 0x00;
+	return K053260_0_r(2 + offset);
 }
 
 static WRITE8_HANDLER( soundirq_w )

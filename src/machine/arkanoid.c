@@ -18,8 +18,6 @@ static int z80write,fromz80,m68705write,toz80;
 static unsigned char portA_in,portA_out,ddrA;
 static unsigned char portC_out,ddrC;
 
-FILE *thelog;
-
 MACHINE_INIT( arkanoid )
 {
 	portA_in = portA_out = z80write = m68705write = 0;

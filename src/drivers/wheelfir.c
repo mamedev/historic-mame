@@ -335,7 +335,7 @@ static WRITE16_HANDLER( pal_reset_pos_w )
 	wheelfir_palpos = 0;
 }
 
-WRITE16_HANDLER( pal_data_w )
+static WRITE16_HANDLER( pal_data_w )
 {
 	wheelfir_palette[wheelfir_palpos] = data & 0xff;
 	wheelfir_palpos ++;

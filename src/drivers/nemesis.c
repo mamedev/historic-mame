@@ -76,10 +76,10 @@ extern UINT16 *nemesis_yscroll1, *nemesis_yscroll2;
 
 WRITE16_HANDLER( nemesis_palette_word_w );
 
-int irq_on = 0;
-int irq1_on = 0;
-int irq2_on = 0;
-int irq4_on = 0;
+static int irq_on = 0;
+static int irq1_on = 0;
+static int irq2_on = 0;
+static int irq4_on = 0;
 
 
 MACHINE_INIT( nemesis )

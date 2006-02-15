@@ -8,11 +8,12 @@
 #include "driver.h"
 #include "machine/random.h"
 
-extern INT16 *AU_PTR;
-extern int inst_index;
+static INT16 AU_DATA;
+static INT16 *AU_PTR = &AU_DATA;
+static int inst_index;
 
 /* Internal registers and so forth */
-struct Regs
+static struct Regs
 {
       INT16 X;    /* Multiplicand and divisor */
       INT16 X1;   /* Previous X */

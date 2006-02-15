@@ -3951,7 +3951,7 @@ static struct dasm_s  dasmXX_7807[256] =
 
 
 /* register names for bit manipulation instructions */
-const char *regname[32] =
+static const char *regname[32] =
 {
 	"illegal", "illegal", "illegal", "illegal",
 	"illegal", "illegal", "illegal", "illegal",
@@ -3965,7 +3965,7 @@ const char *regname[32] =
 
 static unsigned upd7810_get_reg(int reg) { union cpuinfo info; upd7810_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
-unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
+static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 {
 	UINT8 op = cpu_readop(pc++), op2, t;
 	int offset;

@@ -421,6 +421,8 @@ static UINT8 global_artwork_enable;
 
 static const artwork_overlay_piece *overlay_list;
 
+extern mame_bitmap *scrbitmap[];
+
 
 
 /***************************************************************************
@@ -922,7 +924,7 @@ void artwork_update_video_and_audio(mame_display *display)
 
 void artwork_override_screenshot_params(mame_bitmap **bitmap, rectangle *rect, UINT32 *rgb_components)
 {
-	if ((*bitmap == Machine->scrbitmap || *bitmap == uioverlay) && artwork_system_active())
+	if ((*bitmap == scrbitmap[0] || *bitmap == uioverlay) && artwork_system_active())
 	{
 		*rect = screenrect;
 
@@ -942,7 +944,7 @@ void artwork_override_screenshot_params(mame_bitmap **bitmap, rectangle *rect, U
 
 mame_bitmap *artwork_get_ui_bitmap(void)
 {
-	return uioverlay ? uioverlay : Machine->scrbitmap;
+	return uioverlay ? uioverlay : scrbitmap[0];
 }
 
 

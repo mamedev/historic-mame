@@ -163,7 +163,7 @@ static READ16_HANDLER( cave_irq_cause_r )
 
 /*  We need a FIFO buffer for sailormn, where the inter-CPUs
     communication is *really* tight */
-struct
+static struct
 {
 	int len;
 	UINT8 data[32];
@@ -413,7 +413,7 @@ NVRAM_HANDLER( cave )
 	}
 }
 
-struct EEPROM_interface eeprom_interface_93C46_8bit =
+static struct EEPROM_interface eeprom_interface_93C46_8bit =
 {
 	7,				// address bits 7
 	8,				// data bits    8
@@ -1173,7 +1173,6 @@ WRITE8_HANDLER( hotdogst_okibank_w )
 	UINT8 *RAM = memory_region(REGION_SOUND1);
 	int bank1 = (data >> 0) & 0x3;
 	int bank2 = (data >> 4) & 0x3;
-	if (Machine->sample_rate == 0)	return;
 	memcpy(RAM + 0x20000 * 0, RAM + 0x40000 + 0x20000 * bank1, 0x20000);
 	memcpy(RAM + 0x20000 * 1, RAM + 0x40000 + 0x20000 * bank2, 0x20000);
 }
@@ -1271,7 +1270,6 @@ WRITE8_HANDLER( metmqstr_okibank0_w )
 	UINT8 *ROM = memory_region(REGION_SOUND1);
 	int bank1 = (data >> 0) & 0x7;
 	int bank2 = (data >> 4) & 0x7;
-	if (Machine->sample_rate == 0)	return;
 	memcpy(ROM + 0x20000 * 0, ROM + 0x40000 + 0x20000 * bank1, 0x20000);
 	memcpy(ROM + 0x20000 * 1, ROM + 0x40000 + 0x20000 * bank2, 0x20000);
 }
@@ -1281,7 +1279,6 @@ WRITE8_HANDLER( metmqstr_okibank1_w )
 	UINT8 *ROM = memory_region(REGION_SOUND2);
 	int bank1 = (data >> 0) & 0x7;
 	int bank2 = (data >> 4) & 0x7;
-	if (Machine->sample_rate == 0)	return;
 	memcpy(ROM + 0x20000 * 0, ROM + 0x40000 + 0x20000 * bank1, 0x20000);
 	memcpy(ROM + 0x20000 * 1, ROM + 0x40000 + 0x20000 * bank2, 0x20000);
 }
@@ -1394,7 +1391,6 @@ WRITE8_HANDLER( sailormn_okibank0_w )
 	UINT8 *RAM = memory_region(REGION_SOUND1);
 	int bank1 = (data >> 0) & 0xf;
 	int bank2 = (data >> 4) & 0xf;
-	if (Machine->sample_rate == 0)	return;
 	memcpy(RAM + 0x20000 * 0, RAM + 0x40000 + 0x20000 * bank1, 0x20000);
 	memcpy(RAM + 0x20000 * 1, RAM + 0x40000 + 0x20000 * bank2, 0x20000);
 }
@@ -1404,7 +1400,6 @@ WRITE8_HANDLER( sailormn_okibank1_w )
 	UINT8 *RAM = memory_region(REGION_SOUND2);
 	int bank1 = (data >> 0) & 0xf;
 	int bank2 = (data >> 4) & 0xf;
-	if (Machine->sample_rate == 0)	return;
 	memcpy(RAM + 0x20000 * 0, RAM + 0x40000 + 0x20000 * bank1, 0x20000);
 	memcpy(RAM + 0x20000 * 1, RAM + 0x40000 + 0x20000 * bank2, 0x20000);
 }

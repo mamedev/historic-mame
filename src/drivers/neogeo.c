@@ -359,13 +359,8 @@ static READ16_HANDLER( timer16_r )
 
 	res = (readinputport(4) & ~(readinputport(5) & 0x20)) ^ (coinflip << 6) ^ (databit << 7);
 
-	if (Machine->sample_rate)
-	{
-		res |= result_code << 8;
-		if (pending_command) res &= 0x7fff;
-	}
-	else
-		res |= 0x0100;
+	res |= result_code << 8;
+	if (pending_command) res &= 0x7fff;
 
 	return res;
 }
@@ -7522,11 +7517,6 @@ READ16_HANDLER( vliner_coins_r )
 	UINT16 res;
 	res = readinputport(4);
 
-	if( !Machine->sample_rate )
-	{
-		res |= 0x0100;
-	}
-
 	return res;
 }
 
@@ -7538,11 +7528,8 @@ READ16_HANDLER( vliner_timer16_r )
 
 	res = 0x3f ^ (coinflip << 6) ^ (databit << 7);
 
-	if( Machine->sample_rate )
-	{
-		res |= result_code << 8;
-		if (pending_command) res &= 0x7fff;
-	}
+	res |= result_code << 8;
+	if (pending_command) res &= 0x7fff;
 
 	return res;
 }
@@ -7824,10 +7811,10 @@ GAMEB( 2003, mslug5,   neogeo,   neogeo, neogeo, neogeo,  mslug5,   ROT0, "SNK P
 GAMEB( 2003, ms5plus,  mslug5,   neogeo, neogeo, neogeo,  ms5plus,  ROT0, "bootleg", "Metal Slug 5 Plus (bootleg)",0 )
 GAME ( 2003, svcpcb,   0,                neogeo, svcpcb,  svcpcb,   ROT0, "Playmore", "SvC Chaos - SNK vs Capcom (JAMMA PCB)", 0 ) // not a clone of neogeo because it's NOT a neogeo cart.
 GAMEB( 2003, svc,      neogeo,   neogeo, neogeo, neogeo,  svchaosa, ROT0, "Playmore", "SvC Chaos - SNK vs Capcom (MVS)", 0 )
-GAMEB( 2003, svcboot,  svc,      neogeo, neogeo, neogeo,  svcboot,  ROT0, "booleg", "SvC Chaos - SNK vs Capcom (MVS) (bootleg)",0 )
-GAMEB( 2003, svcplus,  svc,      neogeo, neogeo, neogeo,  svcplus,  ROT0, "booleg", "SvC Chaos - SNK vs Capcom Plus (set 1, bootleg)",0 )
-GAMEB( 2003, svcplusa, svc,      neogeo, neogeo, neogeo,  svcplusa, ROT0, "booleg", "SvC Chaos - SNK vs Capcom Plus (set 2, bootleg)",0 )
-GAMEB( 2003, svcsplus, svc,      neogeo, neogeo, neogeo,  svcsplus, ROT0, "booleg", "SvC Chaos - SNK vs Capcom Super Plus (bootleg)",0 )
+GAMEB( 2003, svcboot,  svc,      neogeo, neogeo, neogeo,  svcboot,  ROT0, "bootleg", "SvC Chaos - SNK vs Capcom (MVS) (bootleg)",0 )
+GAMEB( 2003, svcplus,  svc,      neogeo, neogeo, neogeo,  svcplus,  ROT0, "bootleg", "SvC Chaos - SNK vs Capcom Plus (set 1, bootleg)",0 )
+GAMEB( 2003, svcplusa, svc,      neogeo, neogeo, neogeo,  svcplusa, ROT0, "bootleg", "SvC Chaos - SNK vs Capcom Plus (set 2, bootleg)",0 )
+GAMEB( 2003, svcsplus, svc,      neogeo, neogeo, neogeo,  svcsplus, ROT0, "bootleg", "SvC Chaos - SNK vs Capcom Super Plus (bootleg)",0 )
 GAMEB( 2003, samsho5,  neogeo,   neogeo, neogeo, neogeo,  samsho5,  ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V / Samurai Spirits Zero (set 1)", 0 )
 GAMEB( 2003, samsho5h, samsho5,  neogeo, neogeo, neogeo,  samsho5,  ROT0, "Yuki Enterprise / SNK Playmore", "Samurai Shodown V / Samurai Spirits Zero (set 2)", 0 )
 GAMEB( 2003, samsho5b, samsho5,  neogeo, neogeo, neogeo,  samsho5b, ROT0, "bootleg", "Samurai Shodown V / Samurai Spirits Zero (bootleg)", 0 ) // different program scrambling

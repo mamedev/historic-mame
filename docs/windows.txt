@@ -175,8 +175,10 @@ Windows video options
 	is not noticeable on all games, and some people hate it more than
 	others. However, if you turn this option on, you will waste more of
 	your CPU cycles waiting for the proper time to draw, so you will see a
-	performance hit. The default is OFF (-nowaitvsync). This option
-	requires -ddraw.
+	performance hit. You should only need to turn this on in windowed mode.
+	In full screen mode, it is only needed if -triplebuffer does not
+	remove the tearing.  In which case you should use -notb -waitvsync.
+	The default is OFF (-nowaitvsync). This option requires -ddraw.
 
 -[no]triplebuffer / -[no]tb
 
@@ -187,8 +189,9 @@ Windows video options
 	buffer is currently displayed, the second buffer is waiting to be
 	displayed, and the third buffer is being drawn to. Unfortunately, due
 	to some DirectDraw issues, this doesn't always work out as well as it
-	should. This is still being investigated. The default is OFF
-	(-notriplebuffer). This option required -ddraw and -nowindow.
+	should. This is still being investigated. -triplebuffer will override
+	-waitvsync, if the buffer is sucessfully created. The default is OFF.
+	(-notriplebuffer). This option requires -ddraw and -nowindow.
 
 -[no]window
 

@@ -143,8 +143,6 @@ static void *qsound_start(int sndindex, int clock, const void *config)
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(chip));
 
-	if (Machine->sample_rate == 0) return 0;
-
 	chip->intf = config;
 
 	chip->sample_rom = (QSOUND_SRC_SAMPLE *)memory_region(chip->intf->region);
@@ -213,7 +211,6 @@ static void *qsound_start(int sndindex, int clock, const void *config)
 
 static void qsound_stop (void *_chip)
 {
-	if (Machine->sample_rate == 0) return;
 #if LOG_WAVE
 	if (chip->fpRawDataR)
 	{
@@ -400,8 +397,6 @@ void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **buf
 	struct QSOUND_CHANNEL *pC=&chip->channel[0];
 	QSOUND_SRC_SAMPLE * pST;
 	stream_sample_t  *datap[2];
-
-	if (Machine->sample_rate == 0) return;
 
 	datap[0] = buffer[0];
 	datap[1] = buffer[1];

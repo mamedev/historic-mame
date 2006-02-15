@@ -11,6 +11,7 @@ extern int deco16_raster_display_position;
 
 int deco16_1_video_init(void);
 int deco16_2_video_init(int split);
+int deco16_2_video_init_half_width(void);
 int deco_allocate_sprite_bitmap(void);
 
 void deco16_pf12_update(const UINT16 *rowscroll_1_ptr, const UINT16 *rowscroll_2_ptr);

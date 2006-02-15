@@ -12,10 +12,7 @@ static int sound_status;
 
 READ16_HANDLER( aztarac_sound_r )
 {
-    if (Machine->sample_rate)
-        return sound_status & 0x01;
-    else
-        return 1;
+    return sound_status & 0x01;
 }
 
 WRITE16_HANDLER( aztarac_sound_w )

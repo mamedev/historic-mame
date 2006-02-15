@@ -25,12 +25,12 @@ VIDEO_UPDATE( ttmahjng );
 
 
 static int psel;
-WRITE8_HANDLER( input_port_matrix_w )
+static WRITE8_HANDLER( input_port_matrix_w )
 {
 	psel = data;
 }
 
-READ8_HANDLER( input_port_matrix_r )
+static READ8_HANDLER( input_port_matrix_r )
 {
 	int	cdata;
 

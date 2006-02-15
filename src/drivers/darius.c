@@ -169,7 +169,7 @@ static WRITE16_HANDLER( sharedram_w )
 	COMBINE_DATA(&sharedram[offset]);
 }
 
-void parse_control( void )	/* assumes Z80 sandwiched between 68Ks */
+static void parse_control( void )	/* assumes Z80 sandwiched between 68Ks */
 {
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state

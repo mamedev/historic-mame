@@ -231,24 +231,21 @@ static READ16_HANDLER( punkshot_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
        just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
-	else return 0x80;
+	return K053260_0_r(2 + offset);
 }
 
 static READ16_HANDLER( detatwin_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
        just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
-	else return offset ? 0xfe : 0x00;
+	return K053260_0_r(2 + offset);
 }
 
 static READ16_HANDLER( glfgreat_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
        just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset) << 8;
-	else return 0;
+	return K053260_0_r(2 + offset) << 8;
 }
 
 static WRITE16_HANDLER( glfgreat_sound_w )
@@ -272,15 +269,6 @@ static WRITE16_HANDLER( prmrsocr_sound_cmd_w )
 		data &= 0xff;
 		if (offset == 0) soundlatch_w(0,data);
 		else soundlatch2_w(0,data);
-
-		/* If the sound CPU is not running, make the tests pass anyway */
-		if (offset == 0 && !Machine->sample_rate)
-		{
-			if (data == 0xfe)	/* ROM & RAM test */
-				soundlatch3_w(0,0x0f);
-			if (data == 0xfc)	/* sample ROM test */
-				soundlatch3_w(0,0x10);
-		}
 	}
 }
 
@@ -299,10 +287,7 @@ static WRITE8_HANDLER( prmrsocr_s_bankswitch_w )
 
 static READ16_HANDLER( tmnt2_sound_r )
 {
-	/* If the sound CPU is running, read the status, otherwise
-       just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
-	else return offset ? 0x00 : 0x80;
+	return K053260_0_r(2 + offset);
 }
 
 READ8_HANDLER( tmnt_sres_r )

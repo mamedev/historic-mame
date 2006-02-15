@@ -647,7 +647,7 @@ VIDEO_UPDATE( macross )
 }
 
 extern UINT16 *mcu_shared_ram;
-extern UINT16 *work_ram;
+extern UINT16 *mcu_work_ram;
 
 /*coin setting MCU simulation*/
 static void mcu_run(UINT8 dsw_setting)
@@ -672,7 +672,7 @@ static void mcu_run(UINT8 dsw_setting)
 	old_value = readinputport(0);
 
 	if(dsw_a == 0 || dsw_b == 0)
-		work_ram[0x000/2]|=0x4000; //free_play
+		mcu_work_ram[0x000/2]|=0x4000; //free_play
 
 	if(read_coin != old_value)
 	{
@@ -749,20 +749,20 @@ static void mcu_run(UINT8 dsw_setting)
 		if(!(readinputport(0) & 0x04))//SERVICE_COIN
 			mcu_shared_ram[0xf00/2]++;
 
-		if(mcu_shared_ram[0xf00/2] >= 1 && (work_ram[0x000/2] & 0x8000))/*enable start button*/
+		if(mcu_shared_ram[0xf00/2] >= 1 && (mcu_work_ram[0x000/2] & 0x8000))/*enable start button*/
 		{
 			/*Start a 1-player game,but don't decrement if the player 1 is already playing*/
 			if((!(readinputport(0) & 0x08)) /*START1*/
-			&& (!(work_ram[0x000/2] & 0x0200)) /*PLAYER-1 playing*/
+			&& (!(mcu_work_ram[0x000/2] & 0x0200)) /*PLAYER-1 playing*/
 			)
 				mcu_shared_ram[0xf00/2]--;
 
 			/*Start a 2-players game,but don't decrement if the player 2 is already playing*/
 			if((!(readinputport(0) & 0x10))
-			&& (!(work_ram[0x000/2] & 0x0100))
+			&& (!(mcu_work_ram[0x000/2] & 0x0100))
 			)
 			{
-				if(!(work_ram[0x000/2] & 0x0200) && mcu_shared_ram[0xf00/2] >= 2)
+				if(!(mcu_work_ram[0x000/2] & 0x0200) && mcu_shared_ram[0xf00/2] >= 2)
 					mcu_shared_ram[0xf00/2]-=2;
 				else
 					mcu_shared_ram[0xf00/2]--;

@@ -356,7 +356,7 @@ VIDEO_START( rocknms )
 					TILEMAP_TRANSPARENT,
 					16, 16, 128, 128);
 
-	rocknms_main_tmpbitmap = auto_bitmap_alloc(Machine->scrbitmap->width, 224*1);
+	rocknms_main_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, 224*1);
 
 	if (!tilemap_bg || !tilemap_fg || !tilemap_rot)	return 1;
 	if (!tilemap_sub_bg || !tilemap_sub_fg || !tilemap_sub_rot)	return 1;

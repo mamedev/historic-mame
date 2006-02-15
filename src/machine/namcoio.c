@@ -310,11 +310,11 @@ Flags: 80h=high score, 40h=first bonus, 20h=interval bonus
 
 #define MAX_50XX 2
 
-static int		HiScore[MAX_50XX];
-int		Score[2][MAX_50XX];
-int		NextBonus[2][MAX_50XX];
-int		FirstBonus[MAX_50XX],IntervalBonus[MAX_50XX];
-int Player[MAX_50XX];
+static int HiScore[MAX_50XX];
+static int Score[2][MAX_50XX];
+static int NextBonus[2][MAX_50XX];
+static int FirstBonus[MAX_50XX],IntervalBonus[MAX_50XX];
+static int Player[MAX_50XX];
 
 static int in_count_50XX[MAX_50XX];
 
@@ -1185,7 +1185,7 @@ void namcoio_init(int chipnum, int type, const struct namcoio_interface *intf)
 
 
 
-void nmi_generate(int param)
+static void nmi_generate(int param)
 {
 	if (!cpunum_is_suspended(param, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE))
 	{

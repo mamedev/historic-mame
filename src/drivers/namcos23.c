@@ -1,11 +1,15 @@
 /*
     Namco (Super) System 23
-    Stub driver
 
     Hardware: R4650 (MIPS III) main CPU @ 166 MHz
               H8/3002 MCU for sound/inputs
           Custom polygon hardware
-          Tilemaps?  Sprites?
+      1 text tilemap
+          Sprites?
+
+    Note: first 128k of main program ROM is BIOS.
+    After that is an ELF image.
+    Text layer is identical to System 22 & Super System 22.
 */
 
 /*
@@ -295,10 +299,48 @@ Notes:
 #include "cpu/mips/mips3.h"
 
 static int ss23_vstat = 0;
+static tilemap *bgtilemap;
+static UINT32 *namcos23_textram;
 
-/* no video yet */
+static UINT16 nthword( const UINT32 *pSource, int offs )
+{
+	pSource += offs/2;
+	return (pSource[0]<<((offs&1)*16))>>16;
+}
+
+static void TextTilemapGetInfo( int tile_index )
+{
+	UINT16 data = nthword( namcos23_textram,tile_index );
+  /**
+    * x---.----.----.---- blend
+    * xxxx.----.----.---- palette select
+    * ----.xx--.----.---- flip
+    * ----.--xx.xxxx.xxxx code
+    */
+	SET_TILE_INFO( 0, data&0x03ff, data>>12, TILE_FLIPYX((data&0x0c00)>>10) );
+	if( data&0x8000 )
+	{
+		tile_info.priority = 1;
+	}
+} /* TextTilemapGetInfo */
+
+READ32_HANDLER( namcos23_textram_r )
+{
+	return namcos23_textram[offset];
+}
+
+WRITE32_HANDLER( namcos23_textram_w )
+{
+	COMBINE_DATA( &namcos23_textram[offset] );
+	tilemap_mark_tile_dirty( bgtilemap, offset*2 );
+	tilemap_mark_tile_dirty( bgtilemap, offset*2+1 );
+}
+
 VIDEO_START( ss23 )
 {
+	bgtilemap = tilemap_create( TextTilemapGetInfo,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,64,64 );
+	tilemap_set_transparent_pen( bgtilemap, 0xf );
+
 	return 0;
 }
 
@@ -396,6 +438,11 @@ DrawPoly( mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 
 VIDEO_UPDATE( ss23 )
 {
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(priority_bitmap, 0, cliprect);
+
+	tilemap_draw( bitmap, cliprect, bgtilemap, 0/*flags*/, 0x1/*priority*/ ); /* opaque */
+
 #if 0
 	static int bNew = 1;
 	static int code = 0x80;
@@ -445,92 +492,17 @@ VIDEO_UPDATE( ss23 )
 #endif
 }
 
-static READ32_HANDLER( keycus_KC010_r ) /* KC010 for Time Crisis 2 */
+static const gfx_layout namcos23_cg_layout;
+
+static WRITE32_HANDLER( s23_txtchar_w )
 {
-	logerror("Read keycus @ offset %x, PC=%x\n", offset, activecpu_get_pc());
+	UINT32 *chrdata = (UINT32 *)memory_region(REGION_GFX5);
 
-	switch (offset)
-	{
-		case 0:
-			return 0x7f454c46;
-			break;
+	COMBINE_DATA(&chrdata[offset]	);
 
-		case 1:
-			return 0x01020000;
-			break;
+	decodechar( Machine->gfx[0],offset/32,(UINT8 *)chrdata,&namcos23_cg_layout );
 
-		case 4:
-			return 8;
-			break;
-
-		case 8:
-			return 1;
-			break;
-
-//      case 9: // maybe not a good idea, makes program crash earlier
-//          return 0x20000000;
-//          break;
-
-		case 10:
-			return 0x20;
-			break;
-
-		case 11:
-			if (activecpu_get_pc() == 0xbfc0215c)
-				return 0;
-			else
-				return 0x00280028;
-			break;
-
-		default:
-			break;
-	}
-
-	return 0;
-}
-
-static READ32_HANDLER( keycus_KC029_r ) /* KC029 for GP500 */
-{
-	logerror("Read keycus @ offset %x, PC=%x\n", offset, activecpu_get_pc());
-
-	switch (offset)
-	{
-		case 0:
-			return 0x7f454c46;
-			break;
-
-		case 1:
-			return 0x01020000;
-			break;
-
-		case 4:
-			return 8;
-			break;
-
-		case 8:
-			return 1;
-			break;
-
-//      case 9: // maybe not a good idea, makes program crash earlier
-//          return 0x20000000;
-//          break;
-
-		case 10:
-			return 0x20;
-			break;
-
-		case 11:
-			if (activecpu_get_pc() == 0xbfc0215c)
-				return 0;
-			else
-				return 0x00280028;
-			break;
-
-		default:
-			break;
-	}
-
-	return 0;
+	tilemap_mark_all_tiles_dirty(bgtilemap);
 }
 
 static READ32_HANDLER( ss23_vstat_r )
@@ -539,18 +511,54 @@ static READ32_HANDLER( ss23_vstat_r )
 	return ss23_vstat;
 }
 
+static UINT8 nthbyte( const UINT32 *pSource, int offs )
+{
+	pSource += offs/4;
+	return (pSource[0]<<((offs&3)*8))>>24;
+}
+
+static void UpdatePalette( int entry )
+{
+         int j;
+
+	for( j=0; j<4; j++ )
+	{
+		int which = entry*4+j;
+		int r = nthbyte(paletteram32,which+0x00000);
+		int g = nthbyte(paletteram32,which+0x08000);
+		int b = nthbyte(paletteram32,which+0x10000);
+		palette_set_color( which,r,g,b );
+	}
+}
+
+READ32_HANDLER( namcos23_paletteram_r )
+{
+	return paletteram32[offset];
+}
+
+WRITE32_HANDLER( namcos23_paletteram_w )
+{
+	COMBINE_DATA( &paletteram32[offset] );
+	UpdatePalette(offset % (0x8000/4));
+}
+
 static ADDRESS_MAP_START( s23_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
-	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x04c3ff0c, 0x04c3ff0f) AM_RAM				// 3d FIFO
+	AM_RANGE(0x0fc00000, 0x0fc7ffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x1fc00000, 0x1ff7ffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ss23_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
-	AM_RANGE(0x06800000, 0x06803fff) AM_RAM 			/* palette RAM? */
-	AM_RANGE(0x06820008, 0x0682000b) AM_READ( ss23_vstat_r )
-	AM_RANGE(0x06810000, 0x0681ffff) AM_RAM				/* tilemap VRAM? */
-	AM_RANGE(0x0fc20000, 0x0fc203ff) AM_READ( keycus_KC029_r )
-	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x04c3ff0c, 0x04c3ff0f) AM_RAM				// 3d FIFO
+	AM_RANGE(0x06800000, 0x06800fff) AM_RAM 			// text layer palette
+	AM_RANGE(0x06800000, 0x06803fff) AM_WRITE( s23_txtchar_w )	// text layer characters
+	AM_RANGE(0x06820008, 0x0682000b) AM_READ( ss23_vstat_r )	// vblank status
+	AM_RANGE(0x0681e000, 0x0681ffff) AM_READ(namcos23_textram_r) AM_WRITE(namcos23_textram_w) AM_BASE(&namcos23_textram)
+	AM_RANGE(0x06a08000, 0x06a3ffff) AM_READ(namcos23_paletteram_r) AM_WRITE(namcos23_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x0fc00000, 0x0fffffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x1fc00000, 0x1fffffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( ss23 )
@@ -569,6 +577,22 @@ DRIVER_INIT(ss23)
     }
 */
 }
+#if 1
+static const gfx_layout namcos23_cg_layout =
+{
+	16,16,
+	0x400, /* 0x3c0 */
+	4,
+	{ 0,1,2,3 },
+#ifdef LSB_FIRST
+	{ 4*6,4*7,4*4,4*5,4*2,4*3,4*0,4*1,4*14,4*15,4*12,4*13,4*10,4*11,4*8,4*9 },
+#else
+	{ 4*0,4*1,4*2,4*3,4*4,4*5,4*6,4*7,4*8,4*9,4*10,4*11,4*12,4*13,4*14,4*15 },
+#endif
+	{ 64*0,64*1,64*2,64*3,64*4,64*5,64*6,64*7,64*8,64*9,64*10,64*11,64*12,64*13,64*14,64*15 },
+	64*16
+}; /* cg_layout */
+
 #if 0
 static const gfx_layout sprite_layout =
 {
@@ -588,11 +612,11 @@ static const gfx_layout sprite_layout =
 		24*32*8,25*32*8,26*32*8,27*32*8,28*32*8,29*32*8,30*32*8,31*32*8 },
 	32*32*8
 };
-
+#endif
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &sprite_layout,  0, 0x80 },
+	{ REGION_GFX5, 0, &namcos23_cg_layout,  0, 0x80 },
 	{ -1 },
 };
 #endif
@@ -602,6 +626,11 @@ static struct mips3_config config =
 	16384,				/* code cache size - guess */
 	16384				/* data cache size - guess */
 };
+
+static INTERRUPT_GEN( namcos23_interrupt )
+{
+	cpunum_set_input_line(0, MIPS3_IRQ0, HOLD_LINE);
+}
 
 MACHINE_DRIVER_START( s23 )
 
@@ -614,13 +643,11 @@ MACHINE_DRIVER_START( s23 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256,256)
-	MDRV_VISIBLE_AREA(0, 255, 0, 255)
-//  MDRV_SCREEN_SIZE(768, 512)
-//  MDRV_VISIBLE_AREA(0, 767, 0, 511)
+	MDRV_SCREEN_SIZE(64*16, 30*16)
+	MDRV_VISIBLE_AREA(0, 64*16-1, 0, 30*16-1)
 	MDRV_PALETTE_LENGTH(0x2000)
 
-//  MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
@@ -632,18 +659,17 @@ MACHINE_DRIVER_START( ss23 )
 	MDRV_CPU_ADD(R4600BE, 166000000)  /* actually R4650 */
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(ss23_map, 0)
+	MDRV_CPU_VBLANK_INT(namcos23_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(256,256)
-	MDRV_VISIBLE_AREA(0, 255, 0, 255)
-//  MDRV_SCREEN_SIZE(768, 512)
-//  MDRV_VISIBLE_AREA(0, 767, 0, 511)
+	MDRV_SCREEN_SIZE(48*16, 30*16)
+	MDRV_VISIBLE_AREA(0, 48*16-1, 0, 30*16-1)
 	MDRV_PALETTE_LENGTH(0x2000)
 
-//  MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
@@ -683,6 +709,8 @@ ROM_START( timecrs2 )
         ROM_LOAD32_WORD( "tss1pt2l.4c",  0x1000000, 0x400000, CRC(4b230d79) SHA1(794cee0a19993e90913f58507c53224f361e9663) )
         ROM_LOAD32_WORD( "tss1pt2h.4a",  0x1000002, 0x400000, CRC(9b06e22d) SHA1(cff5ed098112a4f0a2bc8937e226f50066e605b1) )
 
+	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
+
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "tss1wavel.2c", 0x000000, 0x800000, CRC(deaead26) SHA1(72dac0c3f41d4c3c290f9eb1b50236ae3040a472) )
         ROM_LOAD( "tss1waveh.2a", 0x800000, 0x800000, CRC(5c8758b4) SHA1(b85c8f6869900224ef83a2340b17f5bbb2801af9) )
@@ -700,7 +728,7 @@ ROM_START( gp500 )
         ROM_LOAD16_WORD_SWAP( "5gp3verc.3",   0x000000, 0x080000, CRC(b323abdf) SHA1(8962e39b48a7074a2d492afb5db3f5f3e5ae2389) )
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )	/* sprite? tilemap? tiles */
-		ROM_LOAD16_BYTE( "5gp1mtal.2h",  0x0000000, 0x800000, CRC(1bb00c7b) SHA1(922be45d57330c31853b2dc1642c589952b09188) )
+	ROM_LOAD16_BYTE( "5gp1mtal.2h",  0x0000000, 0x800000, CRC(1bb00c7b) SHA1(922be45d57330c31853b2dc1642c589952b09188) )
         ROM_LOAD16_BYTE( "5gp1mtah.2j",  0x0000001, 0x800000, CRC(246e4b7a) SHA1(75743294b8f48bffb84f062febfbc02230d49ce9) )
 
 		/* COMMON FUJII YASUI WAKAO KURE INOUE
@@ -726,11 +754,13 @@ ROM_START( gp500 )
         ROM_LOAD32_WORD( "5gp1pt1l.5c",  0x0800000, 0x400000, CRC(80b25ad2) SHA1(e9a03fe5bb4ce925f7218ab426ed2a1ca1a26a62) )
         ROM_LOAD32_WORD( "5gp1pt1h.5a",  0x0800002, 0x400000, CRC(b1feb5df) SHA1(45db259215511ac3e472895956f70204d4575482) )
 
-		ROM_LOAD32_WORD( "5gp1pt2l.4c",  0x1000000, 0x400000, CRC(9289dbeb) SHA1(ec546ad3b1c90609591e599c760c70049ba3b581) )
+	ROM_LOAD32_WORD( "5gp1pt2l.4c",  0x1000000, 0x400000, CRC(9289dbeb) SHA1(ec546ad3b1c90609591e599c760c70049ba3b581) )
         ROM_LOAD32_WORD( "5gp1pt2h.4a",  0x1000002, 0x400000, CRC(9a693771) SHA1(c988e04cd91c3b7e75b91376fd73be4a7da543e7) )
 
-		ROM_LOAD32_WORD( "5gp1pt3l.3c",  0x1800000, 0x400000, CRC(480b120d) SHA1(6c703550faa412095d9633cf508050614e15fbae) )
+	ROM_LOAD32_WORD( "5gp1pt3l.3c",  0x1800000, 0x400000, CRC(480b120d) SHA1(6c703550faa412095d9633cf508050614e15fbae) )
         ROM_LOAD32_WORD( "5gp1pt3h.3a",  0x1800002, 0x400000, CRC(26eaa400) SHA1(0157b76fffe81b40eb970e84c98398807ced92c4) )
+
+	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "5gp1wavel.2c", 0x000000, 0x800000, CRC(aa634cc2) SHA1(e96f5c682039bc6ef22bf90e98f4da78486bd2b1) )

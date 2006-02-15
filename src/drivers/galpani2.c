@@ -204,7 +204,6 @@ WRITE16_HANDLER( galpani2_oki_0_bank_w )
 	{
 		UINT8 *ROM = memory_region(REGION_SOUND1);
 		logerror("CPU #0 PC %06X : OKI 0 bank %08X\n",activecpu_get_pc(),data);
-		if (Machine->sample_rate == 0)	return;
 		memcpy(ROM + 0x30000, ROM + 0x40000 + 0x10000 * (~data & 0xf), 0x10000);
 	}
 }

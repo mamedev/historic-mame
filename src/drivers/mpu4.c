@@ -94,7 +94,7 @@ static int signal_50hz;
 static int ic4_input_b;
 
 static UINT8 m6840_irq_state;
-UINT8 m6850_irq_state; // referenced in machine/6850acia.c
+extern UINT8 m6850_irq_state; // referenced in machine/6850acia.c
 static UINT8 scn2674_irq_state;
 static void update_irq(void);
 
@@ -121,14 +121,14 @@ static UINT16 * mpu4_vid_vidram;
 static UINT8 * mpu4_vid_vidram_is_dirty;
 static UINT16 * mpu4_vid_mainram;
 
-UINT8 scn2674_IR[16];
-UINT8 scn2675_IR_pointer;
-UINT8 scn2674_screen1_l;
-UINT8 scn2674_screen1_h;
-UINT8 scn2674_cursor_l;
-UINT8 scn2674_cursor_h;
-UINT8 scn2674_screen2_l;
-UINT8 scn2674_screen2_h;
+static UINT8 scn2674_IR[16];
+static UINT8 scn2675_IR_pointer;
+static UINT8 scn2674_screen1_l;
+static UINT8 scn2674_screen1_h;
+static UINT8 scn2674_cursor_l;
+static UINT8 scn2674_cursor_h;
+static UINT8 scn2674_screen2_l;
+static UINT8 scn2674_screen2_h;
 
 
 /*************************************
@@ -734,36 +734,36 @@ static const gfx_layout mpu4_vid_char_16x16_layout =
 ///////////////////////////////////////////////////////////////////////////
 
 /* these are used by MAME */
-UINT8 IR0_scn2674_double_ht_wd;
-UINT8 IR0_scn2674_scanline_per_char_row;
-UINT8 IR0_scn2674_sync_select;
-UINT8 IR0_scn2674_buffer_mode_select;
-UINT8 IR1_scn2674_interlace_enable;
-UINT8 IR1_scn2674_equalizing_constant;
-UINT8 IR2_scn2674_row_table;
-UINT8 IR2_scn2674_horz_sync_width;
-UINT8 IR2_scn2674_horz_back_porch;
-UINT8 IR3_scn2674_vert_front_porch;
-UINT8 IR3_scn2674_vert_back_porch;
-UINT8 IR4_scn2674_rows_per_screen;
-UINT8 IR4_scn2674_character_blink_rate;
-UINT8 IR5_scn2674_character_per_row;
-UINT8 IR8_scn2674_display_buffer_first_address_LSB;
-UINT8 IR9_scn2674_display_buffer_first_address_MSB;
-UINT8 IR9_scn2674_display_buffer_last_address;
-UINT8 IR10_scn2674_display_pointer_address_lower;
-UINT8 IR11_scn2674_display_pointer_address_upper;
-UINT8 IR12_scn2674_scroll_start;
-UINT8 IR12_scn2674_split_register_1;
-UINT8 IR13_scn2674_scroll_end;
-UINT8 IR13_scn2674_split_register_2;
+static UINT8 IR0_scn2674_double_ht_wd;
+static UINT8 IR0_scn2674_scanline_per_char_row;
+static UINT8 IR0_scn2674_sync_select;
+static UINT8 IR0_scn2674_buffer_mode_select;
+static UINT8 IR1_scn2674_interlace_enable;
+static UINT8 IR1_scn2674_equalizing_constant;
+static UINT8 IR2_scn2674_row_table;
+static UINT8 IR2_scn2674_horz_sync_width;
+static UINT8 IR2_scn2674_horz_back_porch;
+static UINT8 IR3_scn2674_vert_front_porch;
+static UINT8 IR3_scn2674_vert_back_porch;
+static UINT8 IR4_scn2674_rows_per_screen;
+static UINT8 IR4_scn2674_character_blink_rate;
+static UINT8 IR5_scn2674_character_per_row;
+static UINT8 IR8_scn2674_display_buffer_first_address_LSB;
+static UINT8 IR9_scn2674_display_buffer_first_address_MSB;
+static UINT8 IR9_scn2674_display_buffer_last_address;
+static UINT8 IR10_scn2674_display_pointer_address_lower;
+static UINT8 IR11_scn2674_display_pointer_address_upper;
+static UINT8 IR12_scn2674_scroll_start;
+static UINT8 IR12_scn2674_split_register_1;
+static UINT8 IR13_scn2674_scroll_end;
+static UINT8 IR13_scn2674_split_register_2;
 
 
 VIDEO_UPDATE( mpu4_vid )
 {
 	int i;
 
-	int x,y,count;
+	int x,y,count = 0;
 
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 

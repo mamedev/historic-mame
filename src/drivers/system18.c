@@ -350,7 +350,7 @@ static WRITE16_HANDLER( sound_command_nmi_w ){
     315-5313 Video Display Processor (VDP) emulation
 */
 
-struct {
+static struct {
 	UINT16 vram[0x8000], read_buffer;
 	UINT16 cram[0x40];
 	UINT16 vsram[0x40];

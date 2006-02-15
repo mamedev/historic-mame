@@ -333,10 +333,6 @@ static void *cem3394_start(int sndindex, int clock, const void *config)
 	memset(chip, 0, sizeof(*chip));
 	chip->index = sndindex;
 
-	/* bag on a 0 sample_rate */
-	if (Machine->sample_rate == 0)
-		return chip;
-
 	/* copy global parameters */
 	chip->sample_rate = Machine->sample_rate;
 	chip->inv_sample_rate = 1.0 / (double)chip->sample_rate;

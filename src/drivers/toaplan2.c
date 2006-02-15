@@ -302,7 +302,7 @@ extern UINT16 *toaplan2_tx_gfxram16;
 size_t toaplan2_tx_vram_size;
 size_t toaplan2_tx_offs_vram_size;
 size_t toaplan2_tx_scroll_vram_size;
-size_t paletteram_size;
+size_t batrider_paletteram16_size;
 
 /********** Status related values **********/
 int toaplan2_sub_cpu = 0;
@@ -1960,7 +1960,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( batrider_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x200000, 0x201fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x202000, 0x202fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&paletteram_size)
+	AM_RANGE(0x202000, 0x202fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&batrider_paletteram16_size)
 	AM_RANGE(0x203000, 0x2031ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
 	AM_RANGE(0x203200, 0x2033ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
 	AM_RANGE(0x203400, 0x207fff) AM_WRITE(raizing_tx_gfxram16_w)
@@ -1998,7 +1998,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( bbakraid_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x200000, 0x201fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x202000, 0x202fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&paletteram_size)
+	AM_RANGE(0x202000, 0x202fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&batrider_paletteram16_size)
 	AM_RANGE(0x203000, 0x2031ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
 	AM_RANGE(0x203200, 0x2033ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
 	AM_RANGE(0x203400, 0x207fff) AM_WRITE(raizing_tx_gfxram16_w)

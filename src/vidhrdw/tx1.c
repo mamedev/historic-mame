@@ -10,7 +10,7 @@
 extern UINT8 *buggyb1_vram;
 extern UINT8 *buggyboy_vram;
 extern UINT8 *bb_objram;
-extern UINT8 *sky;
+extern UINT8 *bb_sky;
 
 extern tilemap *buggyb1_tilemap;
 extern tilemap *buggyboy_tilemap;
@@ -376,7 +376,7 @@ static void draw_sky(mame_bitmap *bitmap)
 	{
 		for (x = 0; x <= Machine->visible_area.max_x; x++)
 		{
-		        colour = (((*sky & 0x7f) + y)>>2)&0x3f;
+		        colour = (((*bb_sky & 0x7f) + y)>>2)&0x3f;
 			plot_pixel(bitmap,x,y,Machine->pens[0x80 + colour]);
 		}
 	}
@@ -396,7 +396,7 @@ See schematic page 11 for mixing logic.
 
 VIDEO_UPDATE( buggyb1 )
 {
-            if(*sky & 0x80)
+            if(*bb_sky & 0x80)
             {
                draw_sky(bitmap);
                tilemap_draw(bitmap,cliprect,buggyb1_tilemap,0,0);
@@ -411,7 +411,7 @@ VIDEO_UPDATE( buggyb1 )
 
 VIDEO_UPDATE( buggyboy )
 {
-            if(*sky & 0x80)
+            if(*bb_sky & 0x80)
             {
                draw_sky(bitmap);
                tilemap_draw(bitmap,cliprect,buggyboy_tilemap,0,0);

@@ -49,6 +49,7 @@
 
 #include "driver.h"
 #include "pokey.h"
+#include "state.h"
 
 /* clear this to use Machine->sample_rate instead of the native rate */
 #define OUTPUT_NATIVE		1
@@ -175,7 +176,8 @@
 #define DIV_64		28		 /* divisor for 1.78979 MHz clock to 63.9211 kHz */
 #define DIV_15		114 	 /* divisor for 1.78979 MHz clock to 15.6999 kHz */
 
-struct POKEYregisters {
+struct POKEYregisters
+{
 	INT32 counter[4];		/* channel counter */
 	INT32 divisor[4];		/* channel divisor (modulo value) */
 	UINT32 volume[4];		/* channel volume - derived */
@@ -604,6 +606,42 @@ static void rand_init(UINT8 *rng, int size, int left, int right, int add)
 	}
 }
 
+
+static void register_for_save(struct POKEYregisters *chip, int index)
+{
+	state_save_register_item_array("pokey", index, chip->counter);
+	state_save_register_item_array("pokey", index, chip->divisor);
+	state_save_register_item_array("pokey", index, chip->volume);
+	state_save_register_item_array("pokey", index, chip->output);
+	state_save_register_item_array("pokey", index, chip->audible);
+	state_save_register_item("pokey", index, chip->samplepos_fract);
+	state_save_register_item("pokey", index, chip->samplepos_whole);
+	state_save_register_item("pokey", index, chip->polyadjust);
+	state_save_register_item("pokey", index, chip->p4);
+	state_save_register_item("pokey", index, chip->p5);
+	state_save_register_item("pokey", index, chip->p9);
+	state_save_register_item("pokey", index, chip->p17);
+	state_save_register_item("pokey", index, chip->r9);
+	state_save_register_item("pokey", index, chip->r17);
+	state_save_register_item("pokey", index, chip->clockmult);
+	state_save_register_item_array("pokey", index, chip->timer_period);
+	state_save_register_item_array("pokey", index, chip->timer_param);
+	state_save_register_item_array("pokey", index, chip->AUDF);
+	state_save_register_item_array("pokey", index, chip->AUDC);
+	state_save_register_item_array("pokey", index, chip->POTx);
+	state_save_register_item("pokey", index, chip->AUDCTL);
+	state_save_register_item("pokey", index, chip->ALLPOT);
+	state_save_register_item("pokey", index, chip->KBCODE);
+	state_save_register_item("pokey", index, chip->RANDOM);
+	state_save_register_item("pokey", index, chip->SERIN);
+	state_save_register_item("pokey", index, chip->SEROUT);
+	state_save_register_item("pokey", index, chip->IRQST);
+	state_save_register_item("pokey", index, chip->IRQEN);
+	state_save_register_item("pokey", index, chip->SKSTAT);
+	state_save_register_item("pokey", index, chip->SKCTL);
+}
+
+
 static void *pokey_start(int sndindex, int clock, const void *config)
 {
 	int sample_rate = OUTPUT_NATIVE ? clock : Machine->sample_rate;
@@ -664,6 +702,8 @@ static void *pokey_start(int sndindex, int clock, const void *config)
 	chip->interrupt_cb = chip->intf.interrupt_cb;
 
 	chip->channel = stream_create(0, 1, sample_rate, chip, pokey_update);
+
+	register_for_save(chip, sndindex);
 
     return chip;
 }

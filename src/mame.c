@@ -179,6 +179,9 @@ running_machine *Machine = &active_machine;
 static const game_driver *gamedrv;
 static machine_config internal_drv;
 
+/* main bitmap to render to */
+mame_bitmap *scrbitmap[8];
+
 /* various game options filled in by the OSD */
 global_options options;
 
@@ -443,7 +446,6 @@ static int init_machine(void)
 cant_init_memory:
 cant_load_roms:
 cant_allocate_input_ports:
-	Machine->input_ports_default = 0;
 	Machine->input_ports = 0;
 	code_exit();
 cant_init_input:
@@ -482,20 +484,8 @@ static int run_machine(void)
 				bail_and_print("Unable to start audio emulation");
 			else
 			{
-				int region;
-
 				/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
-				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
-					if (Machine->memory_region[region].flags & ROMREGION_DISPOSE)
-					{
-						int i;
-
-						/* invalidate contents to avoid subtle bugs */
-						for (i = 0; i < memory_region_length(region); i++)
-							memory_region(region)[i] = rand();
-						free(Machine->memory_region[region].base);
-						Machine->memory_region[region].base = 0;
-					}
+				free_disposable_memory_regions();
 
 				/* before doing anything else, update the video and audio system once */
 				update_video_and_audio();
@@ -724,8 +714,8 @@ static int vh_open(void)
 		scale_vectorgames(options.vector_width, options.vector_height, &bmwidth, &bmheight);
 
 	/* now allocate the screen bitmap */
-	Machine->scrbitmap = auto_bitmap_alloc_depth(bmwidth, bmheight, Machine->color_depth);
-	if (!Machine->scrbitmap)
+	scrbitmap[0] = auto_bitmap_alloc_depth(bmwidth, bmheight, Machine->color_depth);
+	if (!scrbitmap)
 		goto cant_create_scrbitmap;
 
 	/* set the default refresh rate */
@@ -1114,9 +1104,9 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
 		Machine->absolute_visible_area.min_x = 0;
-		Machine->absolute_visible_area.max_x = Machine->scrbitmap->width - 1;
+		Machine->absolute_visible_area.max_x = scrbitmap[0]->width - 1;
 		Machine->absolute_visible_area.min_y = 0;
-		Machine->absolute_visible_area.max_y = Machine->scrbitmap->height - 1;
+		Machine->absolute_visible_area.max_y = scrbitmap[0]->height - 1;
 	}
 
 	/* raster games need to use the visible area */
@@ -1198,7 +1188,7 @@ void force_partial_update(int scanline)
 	/* if there's a dirty bitmap and we didn't do any partial updates yet, handle it now */
 	if (full_refresh_pending && last_partial_scanline == 0)
 	{
-		fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
+		fillbitmap(scrbitmap[0], get_black_pen(), NULL);
 		full_refresh_pending = 0;
 	}
 
@@ -1212,7 +1202,7 @@ void force_partial_update(int scanline)
 	if (clip.min_y <= clip.max_y)
 	{
 		profiler_mark(PROFILER_VIDEO);
-		(*Machine->drv->video_update)(0, Machine->scrbitmap, &clip);
+		(*Machine->drv->video_update)(0, scrbitmap[0], &clip);
 		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
 	}
@@ -1252,7 +1242,7 @@ void update_video_and_audio(void)
 	current_display.changed_flags = 0;
 
 	/* set the main game bitmap */
-	current_display.game_bitmap = Machine->scrbitmap;
+	current_display.game_bitmap = scrbitmap[0];
 	current_display.game_bitmap_update = Machine->absolute_visible_area;
 	if (!skipped_it)
 		current_display.changed_flags |= GAME_BITMAP_CHANGED;
@@ -1386,7 +1376,7 @@ int updatescreen(void)
 
 	/* update our movie recording state */
 	if (!mame_is_paused())
-		record_movie_frame(Machine->scrbitmap);
+		record_movie_frame(scrbitmap[0]);
 
 	/* blit to the screen */
 	update_video_and_audio();

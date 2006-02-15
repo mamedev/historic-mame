@@ -34,7 +34,9 @@
 
 #define MAX_SYMBOLS		65536
 
-struct map_entry
+typedef struct _map_entry map_entry;
+
+struct _map_entry
 {
 	UINT32 start;
 	UINT32 end;
@@ -63,7 +65,7 @@ static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
 
 #if ENABLE_PROFILER
-static struct map_entry symbol_map[MAX_SYMBOLS];
+static map_entry symbol_map[MAX_SYMBOLS];
 static int map_entries;
 static HANDLE profiler_thread;
 static DWORD profiler_thread_id;
@@ -522,14 +524,14 @@ static int get_code_base_size(UINT32 *base, UINT32 *size)
 
 static int CLIB_DECL compare_start(const void *item1, const void *item2)
 {
-	return ((const struct map_entry *)item1)->start - ((const struct map_entry *)item2)->start;
+	return ((const map_entry *)item1)->start - ((const map_entry *)item2)->start;
 }
 
 
 #if ENABLE_PROFILER
 static int compare_hits(const void *item1, const void *item2)
 {
-	return ((const struct map_entry *)item2)->hits - ((const struct map_entry *)item1)->hits;
+	return ((const map_entry *)item2)->hits - ((const map_entry *)item1)->hits;
 }
 
 
@@ -621,7 +623,7 @@ static void free_symbol_map(void)
 
 static void output_symbol_list(FILE *f)
 {
-	struct map_entry *entry;
+	map_entry *entry;
 	int i;
 
 	/* sort by hits */

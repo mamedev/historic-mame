@@ -410,7 +410,7 @@ static UINT8 dkgenm72_crc[CRC_LEN] =  {	0xc8,0xb4,0xdc,0xf8, 0xd3,0xba,0x48,0xed
 												0x79,0x08,0x1c,0xb3, 0x00,0x00 };
 
 
-UINT8 *protection_code,*protection_crc;
+static UINT8 *protection_code,*protection_crc;
 
 static READ8_HANDLER( protection_r )
 {

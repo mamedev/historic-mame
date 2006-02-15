@@ -27,11 +27,11 @@ UINT32 hackTilemap3, hackTm3Count, rowScrollOffset ;
 static void  matmul4( float *product, const float *a, const float *b ) ;
 static void  vecmatmul4( float *product, const float *a, const float *b) ;
 static float vecDotProduct( const float *a, const float *b) ;
-void normalize(float* x) ;
+static void normalize(float* x) ;
 
 // 3d helpers
 static float uToF(UINT16 input) ;
-void SetIdentity(float *matrix) ;
+static void SetIdentity(float *matrix) ;
 
 
 static void plot(INT32 x, INT32 y, INT32 color, mame_bitmap *bitmap) ;
@@ -1357,7 +1357,7 @@ static float vecDotProduct( const float *a, const float *b)
 	return ((a[0]*b[0]) + (a[1]*b[1]) + (a[2]*b[2])) ;
 }
 
-void SetIdentity(float *matrix)
+static void SetIdentity(float *matrix)
 {
 	int i ;
 
@@ -1385,7 +1385,7 @@ static float uToF(UINT16 input)
 	return retVal ;
 }
 
-void normalize(float* x)
+static void normalize(float* x)
 {
 	double l2 = (x[0]*x[0]) + (x[1]*x[1]) + (x[2]*x[2]);
 	double l=sqrt(l2) ;
@@ -1418,7 +1418,7 @@ void normalize(float* x)
 #define HNG64_FAR    5
 
 
-int Inside(struct polyVert *v, int plane)
+static int Inside(struct polyVert *v, int plane)
 {
 	switch(plane)
 	{
@@ -1443,7 +1443,7 @@ int Inside(struct polyVert *v, int plane)
 	return 0 ;
 }
 
-void Intersect(struct polyVert *input0, struct polyVert *input1, struct polyVert *output, int plane)
+static void Intersect(struct polyVert *input0, struct polyVert *input1, struct polyVert *output, int plane)
 {
 	float t = 0.0f ;
 

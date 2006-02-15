@@ -66,20 +66,15 @@ Buggy Boy Error Codes             TX-1 Error Codes
 #define ROM_PATCHES 1
 
 static int TS, z80_int = 0;
-int inst_index;
-
-INT16 AU_DATA;
-INT16 AU_LAST_VALUE;
-INT16 *AU_PTR = &AU_DATA;
 
 UINT8 *tx1_vram;
 UINT8 *tx1_object_ram;
 
 UINT8 *buggyboy_vram;        /* Tile RAM (three monitor)   */
 UINT8 *buggyb1_vram;         /* Tile RAM (single monitor)  */
-UINT8 *z80_ram;              /* Main 8086/Z80 shared RAM   */
+static UINT8 *z80_ram;              /* Main 8086/Z80 shared RAM   */
 UINT8 *bb_objram;
-UINT8 *sky;                  /* Sky register.              */
+UINT8 *bb_sky;                  /* Sky register.              */
 UINT8 *bb_rcram;
 
 size_t tx1_objectram_size;
@@ -545,7 +540,7 @@ static ADDRESS_MAP_START( buggyb1_master, ADDRESS_SPACE_PROGRAM, 8 )
         AM_RANGE(0x0b001, 0x0b001) AM_READWRITE (input_port_0_r, MWA8_NOP)
         AM_RANGE(0x0c000, 0x0c001) AM_RAM                                         /* /SCOLW  */
         AM_RANGE(0x0d000, 0x0d003) AM_RAM                                         /* /SLINCS */
-        AM_RANGE(0x0e000, 0x0e001) AM_RAM AM_BASE(&sky)                           /* /SKYCS  */
+        AM_RANGE(0x0e000, 0x0e001) AM_RAM AM_BASE(&bb_sky)                        /* /SKYCS  */
         AM_RANGE(0x0f000, 0x0f003) AM_READWRITE (MRA8_NOP, resume_slave)          /* Watchdog and slave resume */
         AM_RANGE(0x10000, 0x17fff) AM_ROM                                         /* Z80 ROM */
         AM_RANGE(0x18000, 0x18fff) AM_READWRITE (z80_shared_r, z80_shared_w)
@@ -563,7 +558,7 @@ static ADDRESS_MAP_START( buggyboy_master, ADDRESS_SPACE_PROGRAM, 8 )
         AM_RANGE(0x0b001, 0x0b001) AM_READWRITE (input_port_0_r, MWA8_NOP)
         AM_RANGE(0x0c000, 0x0c001) AM_RAM                                         /* /SCOLW  */
         AM_RANGE(0x0d000, 0x0d003) AM_RAM                                         /* /SLINCS */
-        AM_RANGE(0x0e000, 0x0e001) AM_RAM AM_BASE(&sky)                           /* /SKYCS  */
+        AM_RANGE(0x0e000, 0x0e001) AM_RAM AM_BASE(&bb_sky)                        /* /SKYCS  */
         AM_RANGE(0x0f000, 0x0f003) AM_READWRITE (MRA8_NOP, resume_slave)          /* Watchdog and slave resume */
         AM_RANGE(0x10000, 0x17fff) AM_ROM                                         /* Z80 ROM */
         AM_RANGE(0x18000, 0x18fff) AM_READWRITE (z80_shared_r, z80_shared_w)

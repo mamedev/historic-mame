@@ -67,7 +67,7 @@ WRITE8_HANDLER( cclimber_sample_volume_w )
 
 WRITE8_HANDLER( cclimber_sample_trigger_w )
 {
-	if (data == 0 || Machine->sample_rate == 0)
+	if (data == 0)
 		return;
 
 	cclimber_play_sample(32 * sample_num,sample_freq,sample_volume);

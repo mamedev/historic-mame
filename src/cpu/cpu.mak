@@ -466,12 +466,13 @@ endif
 
 
 #-------------------------------------------------
-# Mitsubishi M37710 (based on 65C816)
+# Mitsubishi M37702 and M37710 (based on 65C816)
 #-------------------------------------------------
 
+CPUDEFS += -DHAS_M37702=$(if $(filter M37702,$(CPUS)),1,0)
 CPUDEFS += -DHAS_M37710=$(if $(filter M37710,$(CPUS)),1,0)
 
-ifneq ($(filter M37710,$(CPUS)),)
+ifneq ($(filter M37702 M37710,$(CPUS)),)
 OBJDIRS += $(OBJ)/cpu/m37710
 CPUOBJS += $(OBJ)/cpu/m37710/m37710.o
 CPUOBJS += $(OBJ)/cpu/m37710/m37710o0.o

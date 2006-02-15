@@ -118,20 +118,7 @@ static INTERRUPT_GEN( snowbro3_interrupt )
 
 READ16_HANDLER( snowbros_68000_sound_r )
 {
-	int ret;
-
-	/* If the sound CPU is running, read the YM3812 status, otherwise
-       just make it pass the test */
-	if (Machine->sample_rate != 0)
-	{
-		ret = soundlatch_r(offset);
-	}
-	else
-	{
-		ret = 3;
-	}
-
-	return ret;
+	return soundlatch_r(offset);
 }
 
 

@@ -15,7 +15,7 @@
 #define ZOOMROM0_MEM_REGION REGION_GFX2
 #define ZOOMROM1_MEM_REGION REGION_GFX3
 
-int sprite_colorbase,zoom_colorbase[2];
+static int sprite_colorbase,zoom_colorbase[2];
 
 /***************************************************************************
 

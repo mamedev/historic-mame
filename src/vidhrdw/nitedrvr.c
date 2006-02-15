@@ -35,6 +35,8 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, 0, 0)
 }
 
+
+
 VIDEO_START( nitedrvr )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,

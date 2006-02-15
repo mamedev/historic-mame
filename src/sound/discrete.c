@@ -287,10 +287,6 @@ static void *discrete_start(int sndindex, int clock, const void *config)
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
-	/* do nothing if sound is disabled */
-	if (!Machine->sample_rate)
-		return info;
-
 	info->sndindex = sndindex;
 
 	/* If a clock is specified we will use it, otherwise run at the audio sample rate. */

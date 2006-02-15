@@ -74,12 +74,12 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-WRITE8_HANDLER( io_0x00_w )
+static WRITE8_HANDLER( io_0x00_w )
 {
 	mrjong_flipscreen_w(0, ((data & 0x04) > 2));
 }
 
-READ8_HANDLER( io_0x03_r )
+static READ8_HANDLER( io_0x03_r )
 {
 	return 0x00;
 }

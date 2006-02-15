@@ -38,8 +38,6 @@ READ8_HANDLER(discrete_sound_r)
 	struct node_description *node = discrete_find_node(info, offset);
 	UINT8 data = 0;
 
-	if (!Machine->sample_rate) return 0;
-
 	/* Read the node input value if allowed */
 	if (node)
 	{
@@ -60,8 +58,6 @@ WRITE8_HANDLER(discrete_sound_w)
 {
 	struct discrete_info *info = sndti_token(SOUND_DISCRETE, 0);
 	struct node_description *node = discrete_find_node(info, offset);
-
-	if (!Machine->sample_rate) return;
 
 	/* Update the node input value if it's a proper input node */
 	if (node)

@@ -57,8 +57,8 @@ VIDEO_START( xmen )
 	return 0;
 }
 
-mame_bitmap * screen_left;
-mame_bitmap * screen_right;
+static mame_bitmap * screen_left;
+static mame_bitmap * screen_right;
 
 VIDEO_START( xmen6p )
 {

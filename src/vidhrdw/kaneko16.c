@@ -77,7 +77,7 @@ struct tempsprite
 	int priority;
 };
 
-struct
+static struct
 {
 	struct tempsprite *first_sprite;
 }	spritelist;

@@ -95,10 +95,7 @@ static WRITE8_HANDLER( parodius_3fc0_w )
 
 static READ8_HANDLER( parodius_sound_r )
 {
-	/* If the sound CPU is running, read the status, otherwise
-       just make it pass the test */
-	if (Machine->sample_rate != 0) 	return K053260_0_r(2 + offset);
-	else return offset ? 0x00 : 0x80;
+	return K053260_0_r(2 + offset);
 }
 
 static WRITE8_HANDLER( parodius_sh_irqtrigger_w )

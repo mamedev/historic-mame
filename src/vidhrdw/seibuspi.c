@@ -6,7 +6,7 @@ static tilemap *back_layer;
 static tilemap *mid_layer;
 static tilemap *fore_layer;
 
-UINT32 *scroll_ram;
+UINT32 *spi_scrollram;
 
 static UINT32 layer_bank;
 static UINT32 layer_enable;
@@ -542,8 +542,8 @@ VIDEO_START( spi )
 static void set_rowscroll(tilemap *layer, int scroll, INT16* rows)
 {
 	int i;
-	int x = scroll_ram[scroll] & 0xffff;
-	int y = (scroll_ram[scroll] >> 16) & 0xffff;
+	int x = spi_scrollram[scroll] & 0xffff;
+	int y = (spi_scrollram[scroll] >> 16) & 0xffff;
 	tilemap_set_scroll_rows(layer, 512);
 	for( i=0; i < 512; i++ ) {
 		tilemap_set_scrollx(layer, i, x + rows[i]);
@@ -553,8 +553,8 @@ static void set_rowscroll(tilemap *layer, int scroll, INT16* rows)
 
 static void set_scroll(tilemap *layer, int scroll)
 {
-	int x = scroll_ram[scroll] & 0xffff;
-	int y = (scroll_ram[scroll] >> 16) & 0xffff;
+	int x = spi_scrollram[scroll] & 0xffff;
+	int y = (spi_scrollram[scroll] >> 16) & 0xffff;
 	tilemap_set_scrollx(layer, 0, x);
 	tilemap_set_scrolly(layer, 0, y);
 }
@@ -628,7 +628,7 @@ VIDEO_UPDATE( spi )
 
 	if (!(layer_enable & 0x1))
 	{
-		combine_tilemap(bitmap, cliprect, back_layer, scroll_ram[0] & 0xffff, (scroll_ram[0] >> 16) & 0xffff, 1, back_rowscroll);
+		combine_tilemap(bitmap, cliprect, back_layer, spi_scrollram[0] & 0xffff, (spi_scrollram[0] >> 16) & 0xffff, 1, back_rowscroll);
 	}
 
 	draw_sprites(bitmap, cliprect, 0);
@@ -641,7 +641,7 @@ VIDEO_UPDATE( spi )
 
 	if (!(layer_enable & 0x2))
 	{
-		combine_tilemap(bitmap, cliprect, mid_layer, scroll_ram[1] & 0xffff, (scroll_ram[1] >> 16) & 0xffff, 0, mid_rowscroll);
+		combine_tilemap(bitmap, cliprect, mid_layer, spi_scrollram[1] & 0xffff, (spi_scrollram[1] >> 16) & 0xffff, 0, mid_rowscroll);
 	}
 
 	// if fore layer is disabled, draw priority 1 sprites above mid layer
@@ -654,7 +654,7 @@ VIDEO_UPDATE( spi )
 
 	if (!(layer_enable & 0x4))
 	{
-		combine_tilemap(bitmap, cliprect, fore_layer, scroll_ram[2] & 0xffff, (scroll_ram[2] >> 16) & 0xffff, 0, fore_rowscroll);
+		combine_tilemap(bitmap, cliprect, fore_layer, spi_scrollram[2] & 0xffff, (spi_scrollram[2] >> 16) & 0xffff, 0, fore_rowscroll);
 	}
 
 	draw_sprites(bitmap, cliprect, 3);

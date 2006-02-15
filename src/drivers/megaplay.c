@@ -39,24 +39,22 @@ Only a handful of games were released for this system.
 #define MP_ROM  0x10
 #define MP_GAME 0
 
-unsigned int bios_bank; // ROM bank selection
-unsigned short game_banksel;  // Game bank selection
-unsigned int bios_game; // Game info selection
-unsigned int bios_mode = MP_ROM;  // determines whether ROM banks or Game data
+static unsigned int bios_bank; // ROM bank selection
+static unsigned short game_banksel;  // Game bank selection
+static unsigned int bios_mode = MP_ROM;  // determines whether ROM banks or Game data
                                   // is to read from 0x8000-0xffff
-unsigned int bios_width;  // determines the way the game info ROM is read
+static unsigned int bios_width;  // determines the way the game info ROM is read
 unsigned char bios_ctrl[6];
-unsigned char bios_6600;
+static unsigned char bios_6600;
 unsigned char bios_6204;
-unsigned char bios_6402;
-unsigned char bios_6403;
-unsigned char bios_6404;
+static unsigned char bios_6403;
+static unsigned char bios_6404;
 static unsigned char* ic3_ram;
 //static unsigned char ic36_ram[0x4000];
 static unsigned char ic37_ram[0x8000];
 UINT16 *ic36_ram;
 
-unsigned int readpos = 1;  // serial bank selection position (9-bit)
+static unsigned int readpos = 1;  // serial bank selection position (9-bit)
 
 
 static MACHINE_INIT( megaplay )

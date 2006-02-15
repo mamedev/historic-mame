@@ -84,7 +84,7 @@ INTERRUPT_GEN( nyny_interrupt )
     6821 PIA handlers
 ***************************************************************************/
 
-void cpu0_irq(int state)
+static void cpu0_irq(int state)
 {
 	cpunum_set_input_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE);
 }
@@ -151,7 +151,7 @@ WRITE8_HANDLER( ay8910_portb_w )
 	DAC_1_data_w( 0, dac_enable * dac_volume ) ;
 }
 
-WRITE8_HANDLER( shared_w_irq )
+static WRITE8_HANDLER( shared_w_irq )
 {
 	soundlatch_w(0,data);
 	cpunum_set_input_line(1,M6802_IRQ_LINE,HOLD_LINE);
@@ -160,12 +160,12 @@ WRITE8_HANDLER( shared_w_irq )
 
 static unsigned char snd_w = 0;
 
-READ8_HANDLER( snd_answer_r )
+static READ8_HANDLER( snd_answer_r )
 {
 	return snd_w;
 }
 
-WRITE8_HANDLER( snd_answer_w )
+static WRITE8_HANDLER( snd_answer_w )
 {
 	snd_w = data;
 }

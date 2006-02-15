@@ -8,11 +8,11 @@
 #include "vidhrdw/generic.h"
 
 UINT8 *s2636ram;
-mame_bitmap *spritebitmap;
+static mame_bitmap *spritebitmap;
 
-int dirtychar[16];
-int CollisionBackground;
-int CollisionSprite;
+static int dirtychar[16];
+static int CollisionBackground;
+static int CollisionSprite;
 
 static tilemap *bg_tilemap;
 

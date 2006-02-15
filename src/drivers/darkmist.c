@@ -1,5 +1,12 @@
-/* Dark Mist
-(c) Taito / Seibu
+/*
+***********************************************************************************
+Dark Mist (c)1986  Taito / Seibu
+
+driver by
+
+  David Haywood
+  Nicola Salmoria
+  Tomasz Slanina
 
 Main CPU : z80 (with encryption, external to z80)
 Sound CPU: custom T5182 cpu (like seibu sound system but with internal code)
@@ -9,13 +16,12 @@ $e2b7 - player 1 energy
 
 TODO:
 
- - fix colors
-  (incomplete decryption ? color 15 of each pal looks like transparent)
- - sprite/bg priorities (name entry screen)
- - sound/fx emulation
+ - sprite/bg and sprite/sprite priorities (name entry screen, player on raft)
+ - sound
  - cocktail mode
- - bad sprite gfx (additional line swaps ?)
-
+ - unknown bit in sprite attr (there's code used for OR-ing sprite attrib with some
+   value (taken from ram) when one of coords is greater than 256-16 )
+***********************************************************************************
 */
 
 #include "driver.h"
@@ -23,8 +29,10 @@ TODO:
 
 READ8_HANDLER(darkmist_palette_r);
 WRITE8_HANDLER(darkmist_palette_w);
+WRITE8_HANDLER(darkmist_spritebank_w);
 VIDEO_START(darkmist);
 VIDEO_UPDATE(darkmist);
+PALETTE_INIT(darkmist);
 
 unsigned char * darkmist_scroll;
 unsigned char * darkmist_workram;
@@ -70,24 +78,17 @@ static void darkmist_coin_hack(void)
 static ADDRESS_MAP_START( memmap, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-
 	AM_RANGE(0xc801, 0xc801) AM_READ(input_port_0_r)
 	AM_RANGE(0xc802, 0xc802) AM_READ(input_port_1_r)
 	AM_RANGE(0xc803, 0xc803) AM_READ(input_port_2_r)
-
 	AM_RANGE(0xc804, 0xc804) AM_WRITE(darkmist_hw_w)
-	AM_RANGE(0xc805, 0xc805) AM_RAM /* unknown */
-
+	AM_RANGE(0xc805, 0xc805) AM_WRITE(darkmist_spritebank_w)
 	AM_RANGE(0xc806, 0xc806) AM_READ(input_port_3_r)
 	AM_RANGE(0xc807, 0xc807) AM_READ(input_port_4_r)
 	AM_RANGE(0xc808, 0xc808) AM_READ(input_port_5_r)
-
 	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(darkmist_palette_w) AM_READ(darkmist_palette_r) AM_BASE(&paletteram)
-
 	AM_RANGE(0xd400, 0xd41f) AM_RAM AM_BASE(&darkmist_scroll)
-
 	AM_RANGE(0xd600, 0xd6ff) AM_RAM /* shared with T5182 */
-
 	AM_RANGE(0xd800, 0xdfff) AM_RAM AM_BASE(&videoram)
 	AM_RANGE(0xe000, 0xefff) AM_RAM AM_BASE(&darkmist_workram)
 	AM_RANGE(0xf000, 0xffff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
@@ -267,9 +268,9 @@ static const gfx_layout tilelayout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,  0, 16 },
-	{ REGION_GFX2, 0, &tilelayout,  0, 16 },
-	{ REGION_GFX3, 0, &tilelayout,  0, 16 },
+	{ REGION_GFX1, 0, &charlayout,  0, 16*4 },
+	{ REGION_GFX2, 0, &tilelayout,  0, 16*4 },
+	{ REGION_GFX3, 0, &tilelayout,  0, 16*4 },
 	{ -1 }
 };
 
@@ -301,8 +302,9 @@ static MACHINE_DRIVER_START( darkmist )
 	MDRV_SCREEN_SIZE(256, 256)
 	MDRV_VISIBLE_AREA(0, 256-1, 16, 256-16-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(0x200)
-
+	MDRV_PALETTE_LENGTH(0x100+1)
+	MDRV_PALETTE_INIT(darkmist)
+	MDRV_COLORTABLE_LENGTH(0x100*4)
 	MDRV_VIDEO_START(darkmist)
 	MDRV_VIDEO_UPDATE(darkmist)
 
@@ -315,7 +317,7 @@ ROM_START( darkmist )
 	ROM_LOAD( "dm_16.rom", 0x10000, 0x08000, CRC(094579d9) SHA1(2449bc9ba38396912ee9b72dd870ea9fcff95776)  )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Toshiba T5182 module*/
-	ROM_LOAD( "t5182.rom", 0x08000, 0x08000, NO_DUMP  )
+	ROM_LOAD( "t5182.rom", 0x02000, 0x02000, NO_DUMP  )
 	ROM_LOAD( "dm_17.rom", 0x08000, 0x08000, CRC(7723dcae) SHA1(a0c69e7a7b6fd74f7ed6b9c6419aed94aabcd4b0)  )
 
 	ROM_REGION( 0x4000, REGION_GFX1, 0 )
@@ -334,25 +336,31 @@ ROM_START( darkmist )
 	ROM_LOAD( "dm_10.rom", 0x20000, 0x10000, CRC(34fd52b5) SHA1(c4ee464ed79ec91f993b0f894572c0288f0ad1d4)  )
 	ROM_LOAD( "dm_12.rom", 0x30000, 0x08000, CRC(cc4b9839) SHA1(b7e95513d2e06929fed5005caf3bf8c3fba0b597) )
 
-	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* BG layer map ( 512x64 )*/
+	ROM_REGION( 0x8000, REGION_USER1, 0 )
+	/* BG layer map ( 512x64 )*/
 	ROM_LOAD( "dm_03.rom", 0x00000, 0x08000, CRC(60b40c2a) SHA1(c046273b15dab95ea4851c26ce941e580fa1b6ec)  )
 
-	ROM_REGION( 0x8000, REGION_USER2, 0 ) /* BG layer attr ( 512x64 ) */
+	ROM_REGION( 0x8000, REGION_USER2, 0 )
+	/* BG layer attr ( 512x64 ) */
 	ROM_LOAD( "dm_04.rom", 0x00000, 0x08000, CRC(d47b8cd9) SHA1(86eb7a5d8ea63c0c91f455b1b8322cc7b9c4a968)  )
 
-	ROM_REGION( 0x04000, REGION_USER3, 0 ) /* FG layer map ( 64x256 ) */
+	ROM_REGION( 0x04000, REGION_USER3, 0 )
+	/* FG layer map ( 64x256 ) */
 	ROM_LOAD( "dm_07.rom", 0x00000, 0x04000, CRC(889b1277) SHA1(78405110b9cf1ab988c0cbfdb668498dadb41229)  )
 
-	ROM_REGION( 0x04000, REGION_USER4, 0 ) /* FG layer attr ( 64x256 ) */
+	ROM_REGION( 0x04000, REGION_USER4, 0 )
+	/* FG layer attr ( 64x256 ) */
 	ROM_LOAD( "dm_08.rom", 0x00000, 0x04000, CRC(f76f6f46) SHA1(ce1c67dc8976106b24fee8d3a0b9e5deb016a327)  )
 
 	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "63s281n.l1",  0x0000, 0x0100, NO_DUMP  )
-	ROM_LOAD( "63s281n.m7",  0x0100, 0x0100, NO_DUMP  )
-	ROM_LOAD( "63s281n.d7",  0x0200, 0x0100, NO_DUMP  )
-	ROM_LOAD( "63s281n.j15", 0x0300, 0x0100, NO_DUMP  )
-	ROM_LOAD( "63s281n.f11", 0x0400, 0x0100, NO_DUMP  )
-	ROM_LOAD( "82s129.d11",  0x0500, 0x0100, NO_DUMP  )
+	/* color lookup tables */
+	ROM_LOAD( "63s281n.m7",  0x0000, 0x0100, CRC(897ef49f) SHA1(e40c0fb0a68aa91ceaee86e774a428819a4794bb)  )
+	ROM_LOAD( "63s281n.d7",  0x0100, 0x0100, CRC(a9975a96) SHA1(3a34569fc68ac15f91e1e90d4e273f844b315091)  )
+	ROM_LOAD( "63s281n.f11", 0x0200, 0x0100, CRC(8096b206) SHA1(257004aa3501121d058afa6f64b1129303246758)  )
+	ROM_LOAD( "63s281n.j15", 0x0300, 0x0100, CRC(2ea780a4) SHA1(0f8d6791114705e9982f9035f291d2a305b47f0a)  )
+	/* unknown */
+	ROM_LOAD( "63s281n.l1",  0x0400, 0x0100, CRC(208d17ca) SHA1(a77d56337bcac8d9a7bc3411239dfb3045e069ec)  )
+	ROM_LOAD( "82s129.d11",  0x0500, 0x0100, CRC(866eab0e) SHA1(398ffe2b82b6e2235746fd987d5f5995d7dc8687)  )
 ROM_END
 
 
@@ -492,7 +500,6 @@ static DRIVER_INIT(darkmist)
 	for(i=0;i<memory_region_length(REGION_USER3);i++)
 	{
 		ROM[i]=buffer[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14 ,5,4,3,2,11,10,9,8,13,12,1,0,7,6)];
-
 	}
 
 	ROM = memory_region(REGION_USER4);
@@ -505,4 +512,4 @@ static DRIVER_INIT(darkmist)
 	free(buffer);
 }
 
-GAME( 1986, darkmist, 0, darkmist, darkmist, darkmist, ROT270, "Taito", "The Lost Castle In Darkmist", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1986, darkmist, 0, darkmist, darkmist, darkmist, ROT270, "Taito", "The Lost Castle In Darkmist", GAME_IMPERFECT_GRAPHICS|GAME_NO_COCKTAIL|GAME_NO_SOUND )

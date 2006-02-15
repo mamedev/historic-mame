@@ -1752,7 +1752,7 @@ INLINE INT32 fast_reciplog(INT64 value, INT32 *log2)
 	}
 
 	/* if we've spilled out of 32 bits, push it down under 32 */
-	if (value & 0xffff00000000ull)
+	if (value & U64(0xffff00000000))
 	{
 		temp = (UINT32)(value >> 16);
 		exp -= 16;

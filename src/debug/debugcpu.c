@@ -42,7 +42,7 @@ int debug_key_pressed;
 /* fixme: end */
 
 FILE *debug_source_file;
-struct symbol_table *global_symtable;
+symbol_table *global_symtable;
 
 static const char *address_space_name[] = { "program", "data", "I/O" };
 
@@ -69,7 +69,7 @@ static mame_time break_on_time_target;
 static int memory_modified;
 static int memory_hook_cpunum;
 
-static struct debug_cpu_info debug_cpuinfo[MAX_CPU];
+static debug_cpu_info debug_cpuinfo[MAX_CPU];
 
 static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
@@ -79,7 +79,7 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
 **  PROTOTYPES
 **#################################################################################################*/
 
-static void perform_trace(struct debug_cpu_info *info);
+static void perform_trace(debug_cpu_info *info);
 static void prepare_for_step_overout(void);
 static void process_source_file(void);
 static UINT64 get_wpaddr(UINT32 ref);
@@ -573,7 +573,7 @@ void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
     block for a given CPU
 -------------------------------------------------*/
 
-const struct debug_cpu_info *debug_get_cpu_info(int cpunum)
+const debug_cpu_info *debug_get_cpu_info(int cpunum)
 {
 	return &debug_cpuinfo[cpunum];
 }
@@ -726,7 +726,7 @@ static void set_cpu_reg(UINT32 ref, UINT64 value)
 void MAME_Debug(void)
 {
 	int cpunum = cpu_getactivecpu();
-	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+	debug_cpu_info *info = &debug_cpuinfo[cpunum];
 
 	/* quick out if we are ignoring */
 	if (info->ignoring)
@@ -871,7 +871,7 @@ static UINT32 dasm_wrapped(char *buffer, offs_t pc)
 {
 	if (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL)
 	{
-		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
+		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
 		int maxbytes = activecpu_max_instruction_bytes();
 		UINT8 opbuf[64], argbuf[64];
 		offs_t pcbyte;
@@ -891,7 +891,7 @@ static UINT32 dasm_wrapped(char *buffer, offs_t pc)
 }
 
 
-static void perform_trace(struct debug_cpu_info *info)
+static void perform_trace(debug_cpu_info *info)
 {
 	offs_t pc = activecpu_get_pc();
 	int offset, count, i;
@@ -1076,7 +1076,7 @@ void debug_interrupt_hook(int cpunum, int irqline)
 
 static void standard_debug_hook_read(int spacenum, int size, offs_t address)
 {
-	struct debug_cpu_info *info = &debug_cpuinfo[memory_hook_cpunum];
+	debug_cpu_info *info = &debug_cpuinfo[memory_hook_cpunum];
 
 	/* check watchpoints */
 	if (info->read_watchpoints)
@@ -1094,7 +1094,7 @@ static void standard_debug_hook_read(int spacenum, int size, offs_t address)
 
 static void standard_debug_hook_write(int spacenum, int size, offs_t address, UINT64 data)
 {
-	struct debug_cpu_info *info = &debug_cpuinfo[memory_hook_cpunum];
+	debug_cpu_info *info = &debug_cpuinfo[memory_hook_cpunum];
 
 	/* check watchpoints */
 	if (info->write_watchpoints)
@@ -1135,7 +1135,7 @@ void debug_get_memory_hooks(int cpunum, debug_hook_read_ptr *read, debug_hook_wr
 
 void debug_check_breakpoints(int cpunum, offs_t pc)
 {
-	struct breakpoint *bp;
+	debug_cpu_breakpoint *bp;
 	UINT64 result;
 
 	/* see if we match */
@@ -1165,9 +1165,9 @@ void debug_check_breakpoints(int cpunum, offs_t pc)
     breakpoint for a given CPU
 -------------------------------------------------*/
 
-static struct breakpoint *find_breakpoint(int bpnum)
+static debug_cpu_breakpoint *find_breakpoint(int bpnum)
 {
-	struct breakpoint *bp;
+	debug_cpu_breakpoint *bp;
 	int cpunum;
 
 	/* loop over CPUs and find the requested breakpoint */
@@ -1185,7 +1185,7 @@ static struct breakpoint *find_breakpoint(int bpnum)
     breakpoint for a given CPU
 -------------------------------------------------*/
 
-struct breakpoint *debug_breakpoint_first(int cpunum)
+debug_cpu_breakpoint *debug_breakpoint_first(int cpunum)
 {
 	return (cpunum < MAX_CPU) ? debug_cpuinfo[cpunum].first_bp : NULL;
 }
@@ -1195,9 +1195,9 @@ struct breakpoint *debug_breakpoint_first(int cpunum)
     debug_breakpoint_set - set a new breakpoint
 -------------------------------------------------*/
 
-int debug_breakpoint_set(int cpunum, offs_t address, struct parsed_expression *condition, const char *action)
+int debug_breakpoint_set(int cpunum, offs_t address, parsed_expression *condition, const char *action)
 {
-	struct breakpoint *bp = malloc(sizeof(*bp));
+	debug_cpu_breakpoint *bp = malloc(sizeof(*bp));
 
 	/* if we can't allocate, return failure */
 	if (!bp)
@@ -1229,7 +1229,7 @@ int debug_breakpoint_set(int cpunum, offs_t address, struct parsed_expression *c
 
 int debug_breakpoint_clear(int bpnum)
 {
-	struct breakpoint *bp, *pbp;
+	debug_cpu_breakpoint *bp, *pbp;
 	int cpunum;
 
 	/* loop over CPUs and find the requested breakpoint */
@@ -1264,7 +1264,7 @@ int debug_breakpoint_clear(int bpnum)
 
 int debug_breakpoint_enable(int bpnum, int enable)
 {
-	struct breakpoint *bp = find_breakpoint(bpnum);
+	debug_cpu_breakpoint *bp = find_breakpoint(bpnum);
 
 	/* if we found it, set it */
 	if (bp != NULL)
@@ -1288,7 +1288,7 @@ int debug_breakpoint_enable(int bpnum, int enable)
 
 static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write)
 {
-	struct watchpoint *wp;
+	debug_cpu_watchpoint *wp;
 	UINT64 result;
 
 	/* if we're within debugger code, don't stop */
@@ -1349,9 +1349,9 @@ static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address
     watchpoint for a given CPU
 -------------------------------------------------*/
 
-static struct watchpoint *find_watchpoint(int wpnum)
+static debug_cpu_watchpoint *find_watchpoint(int wpnum)
 {
-	struct watchpoint *wp;
+	debug_cpu_watchpoint *wp;
 	int cpunum, spacenum;
 
 	/* loop over CPUs and address spaces and find the requested watchpoint */
@@ -1370,7 +1370,7 @@ static struct watchpoint *find_watchpoint(int wpnum)
     watchpoint for a given CPU
 -------------------------------------------------*/
 
-struct watchpoint *debug_watchpoint_first(int cpunum, int spacenum)
+debug_cpu_watchpoint *debug_watchpoint_first(int cpunum, int spacenum)
 {
 	return (cpunum < MAX_CPU && spacenum < ADDRESS_SPACES) ? debug_cpuinfo[cpunum].space[spacenum].first_wp : NULL;
 }
@@ -1380,9 +1380,9 @@ struct watchpoint *debug_watchpoint_first(int cpunum, int spacenum)
     debug_watchpoint_set - set a new watchpoint
 -------------------------------------------------*/
 
-int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, offs_t length, struct parsed_expression *condition, const char *action)
+int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, offs_t length, parsed_expression *condition, const char *action)
 {
-	struct watchpoint *wp = malloc(sizeof(*wp));
+	debug_cpu_watchpoint *wp = malloc(sizeof(*wp));
 
 	/* if we can't allocate, return failure */
 	if (!wp)
@@ -1420,7 +1420,7 @@ int debug_watchpoint_set(int cpunum, int spacenum, int type, offs_t address, off
 
 int debug_watchpoint_clear(int wpnum)
 {
-	struct watchpoint *wp, *pwp;
+	debug_cpu_watchpoint *wp, *pwp;
 	int cpunum, spacenum;
 
 	/* loop over CPUs and find the requested watchpoint */
@@ -1460,7 +1460,7 @@ int debug_watchpoint_clear(int wpnum)
 
 int debug_watchpoint_enable(int wpnum, int enable)
 {
-	struct watchpoint *wp = find_watchpoint(wpnum);
+	debug_cpu_watchpoint *wp = find_watchpoint(wpnum);
 
 	/* if we found it, set it */
 	if (wp != NULL)
@@ -1484,7 +1484,7 @@ int debug_watchpoint_enable(int wpnum, int enable)
 
 int debug_hotspot_track(int cpunum, int numspots, int threshhold)
 {
-	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+	debug_cpu_info *info = &debug_cpuinfo[cpunum];
 
 	/* if we already have tracking info, kill it */
 	if (info->hotspots)
@@ -1516,7 +1516,7 @@ int debug_hotspot_track(int cpunum, int numspots, int threshhold)
 
 static void check_hotspots(int cpunum, int spacenum, offs_t address)
 {
-	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+	debug_cpu_info *info = &debug_cpuinfo[cpunum];
 	offs_t pc = activecpu_get_pc();
 	int hotindex;
 
@@ -1566,7 +1566,7 @@ static void check_hotspots(int cpunum, int spacenum, offs_t address)
 
 UINT8 debug_read_byte(int spacenum, offs_t address)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	UINT64 custom;
 	UINT8 result;
 
@@ -1601,7 +1601,7 @@ UINT8 debug_read_byte(int spacenum, offs_t address)
 
 UINT16 debug_read_word(int spacenum, offs_t address)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	UINT64 custom;
 	UINT16 result;
 
@@ -1654,7 +1654,7 @@ UINT16 debug_read_word(int spacenum, offs_t address)
 
 UINT32 debug_read_dword(int spacenum, offs_t address)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	UINT64 custom;
 	UINT32 result;
 
@@ -1707,7 +1707,7 @@ UINT32 debug_read_dword(int spacenum, offs_t address)
 
 UINT64 debug_read_qword(int spacenum, offs_t address)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	UINT64 custom;
 	UINT64 result;
 
@@ -1760,7 +1760,7 @@ UINT64 debug_read_qword(int spacenum, offs_t address)
 
 void debug_write_byte(int spacenum, offs_t address, UINT8 data)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 
 	/* mask against the logical byte mask */
 	address &= info->space[spacenum].logbytemask;
@@ -1793,7 +1793,7 @@ void debug_write_byte(int spacenum, offs_t address, UINT8 data)
 
 void debug_write_word(int spacenum, offs_t address, UINT16 data)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 
 	/* mask against the logical byte mask */
 	address &= info->space[spacenum].logbytemask;
@@ -1845,7 +1845,7 @@ void debug_write_word(int spacenum, offs_t address, UINT16 data)
 
 void debug_write_dword(int spacenum, offs_t address, UINT32 data)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 
 	/* mask against the logical byte mask */
 	address &= info->space[spacenum].logbytemask;
@@ -1897,7 +1897,7 @@ void debug_write_dword(int spacenum, offs_t address, UINT32 data)
 
 void debug_write_qword(int spacenum, offs_t address, UINT64 data)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 
 	/* mask against the logical byte mask */
 	address &= info->space[spacenum].logbytemask;
@@ -1948,7 +1948,7 @@ void debug_write_qword(int spacenum, offs_t address, UINT64 data)
 
 UINT64 debug_read_opcode(offs_t address, int size, int arg)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	const void *ptr;
 
 	/* shortcut if we have a custom routine */
@@ -2048,7 +2048,7 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 
 UINT64 external_read_memory(int space, UINT32 offset, int size)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	if (info->space[space].databytes == 0)
 		return ~0;
 
@@ -2072,7 +2072,7 @@ UINT64 external_read_memory(int space, UINT32 offset, int size)
 
 void external_write_memory(int space, UINT32 offset, int size, UINT64 value)
 {
-	const struct debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
 	if (info->space[space].databytes == 0)
 		return;
 
@@ -2097,7 +2097,7 @@ void debug_trace_printf(int cpunum, const char *fmt, ...)
 {
 	va_list va;
 
-	struct debug_cpu_info *info = &debug_cpuinfo[cpunum];
+	debug_cpu_info *info = &debug_cpuinfo[cpunum];
 
 	if (info->trace.file)
 	{

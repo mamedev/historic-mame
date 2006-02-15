@@ -99,9 +99,9 @@ WRITE8_HANDLER( goldstar_fa00_w )
 
 
 
-rectangle visible1 = { 14*8, (14+48)*8-1,  4*8,  (4+7)*8-1 };
-rectangle visible2 = { 14*8, (14+48)*8-1, 12*8, (12+7)*8-1 };
-rectangle visible3 = { 14*8, (14+48)*8-1, 20*8, (20+7)*8-1 };
+static const rectangle visible1 = { 14*8, (14+48)*8-1,  4*8,  (4+7)*8-1 };
+static const rectangle visible2 = { 14*8, (14+48)*8-1, 12*8, (12+7)*8-1 };
+static const rectangle visible3 = { 14*8, (14+48)*8-1, 20*8, (20+7)*8-1 };
 
 /***************************************************************************
 

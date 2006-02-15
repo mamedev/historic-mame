@@ -245,7 +245,7 @@ static int validate_parameter_number(const char *param, UINT64 *result)
     expression parameter
 -------------------------------------------------*/
 
-static int validate_parameter_expression(const char *param, struct parsed_expression **result)
+static int validate_parameter_expression(const char *param, parsed_expression **result)
 {
 	EXPRERR err = expression_parse(param, debug_get_cpu_info(cpu_getactivecpu())->symtable, result);
 	if (err == EXPRERR_NONE)
@@ -616,7 +616,7 @@ static void execute_focus(int ref, int params, const char *param[])
 	/* then loop over CPUs and set the ignore flags on all other CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
+		const debug_cpu_info *info = debug_get_cpu_info(cpunum);
 		if (info && info->valid && cpunum != cpuwhich)
 			debug_cpu_ignore_cpu(cpunum, 1);
 	}
@@ -641,7 +641,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 		/* loop over all CPUs */
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *info = debug_get_cpu_info(cpunum);
 
 			/* build up a comma-separated list */
 			if (info && info->valid && info->ignoring)
@@ -678,7 +678,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 			/* make sure this isn't the last live CPU */
 			for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 			{
-				const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
+				const debug_cpu_info *info = debug_get_cpu_info(cpunum);
 				if (cpunum != cpuwhich[paramnum] && info && info->valid && !info->ignoring)
 					break;
 			}
@@ -712,7 +712,7 @@ static void execute_observe(int ref, int params, const char *param[])
 		/* loop over all CPUs */
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *info = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *info = debug_get_cpu_info(cpunum);
 
 			/* build up a comma-separated list */
 			if (info && info->valid && !info->ignoring)
@@ -760,7 +760,7 @@ static void execute_observe(int ref, int params, const char *param[])
 
 static void execute_bpset(int ref, int params, const char *param[])
 {
-	struct parsed_expression *condition = NULL;
+	parsed_expression *condition = NULL;
 	const char *action = NULL;
 	UINT64 address;
 	int bpnum;
@@ -799,10 +799,10 @@ static void execute_bpclear(int ref, int params, const char *param[])
 
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 			if (cpuinfo->valid)
 			{
-				struct breakpoint *bp;
+				debug_cpu_breakpoint *bp;
 				while ((bp = cpuinfo->first_bp) != NULL)
 					debug_breakpoint_clear(bp->index);
 			}
@@ -840,10 +840,10 @@ static void execute_bpdisenable(int ref, int params, const char *param[])
 
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 			if (cpuinfo->valid)
 			{
-				struct breakpoint *bp;
+				debug_cpu_breakpoint *bp;
 				for (bp = cpuinfo->first_bp; bp; bp = bp->next)
 					debug_breakpoint_enable(bp->index, ref);
 			}
@@ -881,11 +881,11 @@ static void execute_bplist(int ref, int params, const char *param[])
 	/* loop over all CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 
 		if (cpuinfo->valid && cpuinfo->first_bp)
 		{
-			struct breakpoint *bp;
+			debug_cpu_breakpoint *bp;
 
 			debug_console_printf("CPU %d breakpoints:", cpunum);
 
@@ -916,7 +916,7 @@ static void execute_bplist(int ref, int params, const char *param[])
 
 static void execute_wpset(int ref, int params, const char *param[])
 {
-	struct parsed_expression *condition = NULL;
+	parsed_expression *condition = NULL;
 	const char *action = NULL;
 	UINT64 address, length;
 	int type = 0;
@@ -973,14 +973,14 @@ static void execute_wpclear(int ref, int params, const char *param[])
 
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 			if (cpuinfo->valid)
 			{
 				int spacenum;
 
 				for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 				{
-					struct watchpoint *wp;
+					debug_cpu_watchpoint *wp;
 					while ((wp = cpuinfo->space[spacenum].first_wp) != NULL)
 						debug_watchpoint_clear(wp->index);
 				}
@@ -1019,14 +1019,14 @@ static void execute_wpdisenable(int ref, int params, const char *param[])
 
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 			if (cpuinfo->valid)
 			{
 				int spacenum;
 
 				for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 				{
-					struct watchpoint *wp;
+					debug_cpu_watchpoint *wp;
 					for (wp = cpuinfo->space[spacenum].first_wp; wp; wp = wp->next)
 						debug_watchpoint_enable(wp->index, ref);
 				}
@@ -1066,7 +1066,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 	/* loop over all CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 	{
-		const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 
 		if (cpuinfo->valid)
 		{
@@ -1077,7 +1077,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 				if (cpuinfo->space[spacenum].first_wp)
 				{
 					static const char *types[] = { "unkn ", "read ", "write", "r/w  " };
-					struct watchpoint *wp;
+					debug_cpu_watchpoint *wp;
 
 					debug_console_printf("CPU %d %s space watchpoints:", cpunum, spacenames[spacenum]);
 
@@ -1122,7 +1122,7 @@ static void execute_hotspot(int ref, int params, const char *param[])
 		/* loop over CPUs and find live spots */
 		for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
 		{
-			const struct debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+			const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
 
 			if (cpuinfo->valid && cpuinfo->hotspots)
 			{
@@ -1163,7 +1163,7 @@ static void execute_hotspot(int ref, int params, const char *param[])
 static void execute_save(int ref, int params, const char *param[])
 {
 	UINT64 offset, endoffset, length, cpunum = cpu_getactivecpu();
-	const struct debug_cpu_info *info;
+	const debug_cpu_info *info;
 	int spacenum = ref;
 	FILE *f;
 	UINT64 i;
@@ -1211,7 +1211,7 @@ static void execute_save(int ref, int params, const char *param[])
 static void execute_dump(int ref, int params, const char *param[])
 {
 	UINT64 offset, endoffset, length, width = 0, ascii = 1, cpunum = cpu_getactivecpu();
-	const struct debug_cpu_info *info;
+	const debug_cpu_info *info;
 	int spacenum = ref;
 	FILE *f = NULL;
 	UINT64 i, j;
@@ -1380,7 +1380,7 @@ static void execute_dump(int ref, int params, const char *param[])
 static void execute_find(int ref, int params, const char *param[])
 {
 	UINT64 offset, endoffset, length, cpunum = cpu_getactivecpu();
-	const struct debug_cpu_info *info;
+	const debug_cpu_info *info;
 	UINT64 data_to_find[256];
 	UINT8 data_size[256];
 	int cur_data_size;
@@ -1486,7 +1486,7 @@ static void execute_find(int ref, int params, const char *param[])
 static void execute_dasm(int ref, int params, const char *param[])
 {
 	UINT64 offset, length, bytes = 1, cpunum = cpu_getactivecpu();
-	const struct debug_cpu_info *info;
+	const debug_cpu_info *info;
 	int minbytes, maxbytes, byteswidth;
 	int use_new_dasm;
 	FILE *f = NULL;
@@ -1763,7 +1763,7 @@ static void execute_source(int ref, int params, const char *param[])
 static void execute_map(int ref, int params, const char *param[])
 {
 	UINT64 address, cpunum = cpu_getactivecpu();
-	const struct debug_cpu_info *info;
+	const debug_cpu_info *info;
 	int spacenum = ref;
 	offs_t taddress;
 

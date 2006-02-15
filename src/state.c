@@ -643,6 +643,25 @@ void state_save_register_float(const char *module, int instance,
 	ss_register_entry(module, instance, name, SS_FLOAT, val, size);
 }
 
+void state_save_register_bitmap(const char *module, int instance,
+								const char *name, mame_bitmap *val)
+{
+	switch (val->depth)
+	{
+		case 8:
+			ss_register_entry(module, instance, name, SS_UINT8, val->base, val->rowpixels * val->height);
+			break;
+
+		case 15:
+		case 16:
+			ss_register_entry(module, instance, name, SS_UINT16, val->base, val->rowpixels * val->height);
+			break;
+
+		case 32:
+			ss_register_entry(module, instance, name, SS_UINT32, val->base, val->rowpixels * val->height);
+			break;
+	}
+}
 
 
 
@@ -935,8 +954,6 @@ void state_save_save_finish(void)
 	TRACE(logerror("Finishing save\n"));
 
 	/* compute the flags */
-	if (!Machine->sample_rate)
-		flags |= SS_NO_SOUND;
 #ifndef LSB_FIRST
 	flags |= SS_MSB_FIRST;
 #endif

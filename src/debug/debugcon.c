@@ -31,9 +31,9 @@
 **  TYPE DEFINITIONS
 **#################################################################################################*/
 
-struct debug_command
+struct _debug_command
 {
-	struct debug_command *	next;
+	struct _debug_command *	next;
 	const char *			command;
 	void					(*handler)(int ref, int params, const char **param);
 	UINT32					flags;
@@ -41,6 +41,7 @@ struct debug_command
 	int						minparams;
 	int						maxparams;
 };
+typedef struct _debug_command debug_command;
 
 
 
@@ -51,7 +52,7 @@ struct debug_command
 static char *console_history;
 static int total_lines;
 
-static struct debug_command *commandlist;
+static debug_command *commandlist;
 
 
 
@@ -98,7 +99,7 @@ void debug_console_exit(void)
 	/* free the command list */
 	while (commandlist)
 	{
-		struct debug_command *temp = commandlist;
+		debug_command *temp = commandlist;
 		commandlist = commandlist->next;
 		free(temp);
 	}
@@ -174,7 +175,7 @@ static void trim_parameter(char **paramptr, int keep_quotes)
 
 static CMDERR internal_execute_command(int validate_only, int params, char **param)
 {
-	struct debug_command *cmd, *found = NULL;
+	debug_command *cmd, *found = NULL;
 	int len, i, foundcount = 0;
 	char *p, *command;
 
@@ -360,7 +361,7 @@ CMDERR debug_console_validate_command(const char *command)
 
 void debug_console_register_command(const char *command, UINT32 flags, int ref, int minparams, int maxparams, void (*handler)(int ref, int params, const char **param))
 {
-	struct debug_command *cmd = malloc(sizeof(*cmd));
+	debug_command *cmd = malloc(sizeof(*cmd));
 	if (!cmd)
 		osd_die("Out of memory registering new command with the debugger!");
 

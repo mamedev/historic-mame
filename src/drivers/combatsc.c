@@ -122,8 +122,6 @@ e000-e001   YM2203
 #include "sound/2203intf.h"
 #include "sound/upd7759.h"
 
-extern UINT8* banked_area;
-
 /* from vidhrdw/combasc.c */
 PALETTE_INIT( combasc );
 PALETTE_INIT( combascb );
@@ -308,7 +306,7 @@ static ADDRESS_MAP_START( combascb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0600, 0x06ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
 	AM_RANGE(0x0800, 0x1fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(combasc_video_w)
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_BANK1) AM_BASE(&banked_area)/* banked ROM/RAM area */
+	AM_RANGE(0x4000, 0x7fff) AM_WRITE(MWA8_BANK1) /* banked ROM/RAM area */
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)				/* ROM */
 ADDRESS_MAP_END
 

@@ -107,9 +107,9 @@ OSC:    12.000MHz
 #include "sound/okim6295.h"
 
 static tilemap *sc3_tilemap, *sc0_tilemap,*sc1_tilemap,*sc2_tilemap;
-UINT16 *sc3_vram, *sc0_vram,*sc1_vram,*sc2_vram;
-UINT16 *jm_regs,*jm_ram,*jm_mcu_code;
-UINT16 *jm_scrollram,*jm_vregs;
+static UINT16 *sc3_vram, *sc0_vram,*sc1_vram,*sc2_vram;
+static UINT16 *jm_regs,*jm_ram,*jm_mcu_code;
+static UINT16 *jm_scrollram,*jm_vregs;
 static UINT16 sc0bank,pri;
 /*
 MCU program number,different for each game(n.b. the numbering scheme is *mine*,do not
@@ -419,7 +419,7 @@ VIDEO_UPDATE( jalmah )
 }
 
 
-WRITE16_HANDLER( sc0_vram_w )
+static WRITE16_HANDLER( sc0_vram_w )
 {
 	int oldword = sc0_vram[offset];
 	int newword = oldword;
@@ -432,7 +432,7 @@ WRITE16_HANDLER( sc0_vram_w )
 	}
 }
 
-WRITE16_HANDLER( sc1_vram_w )
+static WRITE16_HANDLER( sc1_vram_w )
 {
 	int oldword = sc1_vram[offset];
 	int newword = oldword;
@@ -445,7 +445,7 @@ WRITE16_HANDLER( sc1_vram_w )
 	}
 }
 
-WRITE16_HANDLER( sc3_vram_w )
+static WRITE16_HANDLER( sc3_vram_w )
 {
 	int oldword = sc3_vram[offset];
 	int newword = oldword;
@@ -458,7 +458,7 @@ WRITE16_HANDLER( sc3_vram_w )
 	}
 }
 
-WRITE16_HANDLER( sc2_vram_w )
+static WRITE16_HANDLER( sc2_vram_w )
 {
 	int oldword = sc2_vram[offset];
 	int newword = oldword;
