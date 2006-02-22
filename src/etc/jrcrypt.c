@@ -122,7 +122,7 @@ struct {
 };
 #endif
 
-MACHINE_INIT( jrpacman )
+MACHINE_RESET( jrpacman )
 {
 #ifndef PreDecryptedRoms
 	s0 = 1;

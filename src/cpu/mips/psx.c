@@ -15,10 +15,10 @@
 
 #include <stdio.h>
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "memory.h"
-#include "mamedbg.h"
-#include "psx.h"
 #include "state.h"
+#include "psx.h"
 #include "usrintrf.h"
 
 #define LOG_BIOSCALL ( 0 )
@@ -239,8 +239,7 @@ static void mips_exception( int exception );
 void mips_stop( void )
 {
 #ifdef MAME_DEBUG
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
+	DEBUGGER_BREAK;
 	CALL_MAME_DEBUG;
 #endif
 }

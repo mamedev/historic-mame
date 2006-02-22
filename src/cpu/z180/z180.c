@@ -46,9 +46,7 @@
  *****************************************************************************/
 
 #include "driver.h"
-#include "cpuintrf.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "z180.h"
 #include "cpu/z80/z80daisy.h"
 
@@ -1821,29 +1819,29 @@ static void z180_init(void)
 {
 	int cpu = cpu_getactivecpu();
 
-	state_save_register_UINT16("z180", cpu, "AF", &Z180.AF.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "BC", &Z180.BC.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "DE", &Z180.DE.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "HL", &Z180.HL.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "IX", &Z180.IX.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "IY", &Z180.IY.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "PC", &Z180.PC.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "SP", &Z180.SP.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "AF2", &Z180.AF2.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "BC2", &Z180.BC2.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "DE2", &Z180.DE2.w.l, 1);
-	state_save_register_UINT16("z180", cpu, "HL2", &Z180.HL2.w.l, 1);
-	state_save_register_UINT8("z180", cpu, "R", &Z180.R, 1);
-	state_save_register_UINT8("z180", cpu, "R2", &Z180.R2, 1);
-	state_save_register_UINT8("z180", cpu, "IFF1", &Z180.IFF1, 1);
-	state_save_register_UINT8("z180", cpu, "IFF2", &Z180.IFF2, 1);
-	state_save_register_UINT8("z180", cpu, "HALT", &Z180.HALT, 1);
-	state_save_register_UINT8("z180", cpu, "IM", &Z180.IM, 1);
-	state_save_register_UINT8("z180", cpu, "I", &Z180.I, 1);
-	state_save_register_UINT8("z180", cpu, "nmi_state", &Z180.nmi_state, 1);
-	state_save_register_UINT8("z180", cpu, "int0_state", &Z180.irq_state[0], 1);
-	state_save_register_UINT8("z180", cpu, "int1_state", &Z180.irq_state[1], 1);
-	state_save_register_UINT8("z180", cpu, "int2_state", &Z180.irq_state[2], 1);
+	state_save_register_item("z180", cpu, Z180.AF.w.l);
+	state_save_register_item("z180", cpu, Z180.BC.w.l);
+	state_save_register_item("z180", cpu, Z180.DE.w.l);
+	state_save_register_item("z180", cpu, Z180.HL.w.l);
+	state_save_register_item("z180", cpu, Z180.IX.w.l);
+	state_save_register_item("z180", cpu, Z180.IY.w.l);
+	state_save_register_item("z180", cpu, Z180.PC.w.l);
+	state_save_register_item("z180", cpu, Z180.SP.w.l);
+	state_save_register_item("z180", cpu, Z180.AF2.w.l);
+	state_save_register_item("z180", cpu, Z180.BC2.w.l);
+	state_save_register_item("z180", cpu, Z180.DE2.w.l);
+	state_save_register_item("z180", cpu, Z180.HL2.w.l);
+	state_save_register_item("z180", cpu, Z180.R);
+	state_save_register_item("z180", cpu, Z180.R2);
+	state_save_register_item("z180", cpu, Z180.IFF1);
+	state_save_register_item("z180", cpu, Z180.IFF2);
+	state_save_register_item("z180", cpu, Z180.HALT);
+	state_save_register_item("z180", cpu, Z180.IM);
+	state_save_register_item("z180", cpu, Z180.I);
+	state_save_register_item("z180", cpu, Z180.nmi_state);
+	state_save_register_item("z180", cpu, Z180.irq_state[0]);
+	state_save_register_item("z180", cpu, Z180.irq_state[1]);
+	state_save_register_item("z180", cpu, Z180.irq_state[2]);
 }
 
 /****************************************************************************

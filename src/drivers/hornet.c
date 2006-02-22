@@ -890,7 +890,7 @@ static INTERRUPT_GEN( hornet_vblank )
 	cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
 }
 
-static MACHINE_INIT( hornet )
+static MACHINE_RESET( hornet )
 {
 	memory_set_bankptr(1, memory_region(REGION_USER3));
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
@@ -916,7 +916,7 @@ static MACHINE_DRIVER_START( hornet )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT( hornet )
+	MDRV_MACHINE_RESET( hornet )
 
 	MDRV_NVRAM_HANDLER( timekeeper_0 )
 
@@ -953,7 +953,7 @@ static INTERRUPT_GEN( hornet_2board_vblank )
 	vblank &= 1;
 }
 
-static MACHINE_INIT( hornet_2board )
+static MACHINE_RESET( hornet_2board )
 {
 	memory_set_bankptr(1, memory_region(REGION_USER3));
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
@@ -972,7 +972,7 @@ static MACHINE_DRIVER_START( hornet_2board )
 	MDRV_CPU_CONFIG(sharc_cfg)
 	MDRV_CPU_DATA_MAP(sharc1_map, 0)
 
-	MDRV_MACHINE_INIT(hornet_2board)
+	MDRV_MACHINE_RESET(hornet_2board)
 
 	MDRV_VIDEO_START(hornet_2board)
 	MDRV_VIDEO_UPDATE(hornet_2board)

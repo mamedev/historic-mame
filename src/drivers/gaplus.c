@@ -310,7 +310,7 @@ logerror("%04x: freset %d\n",activecpu_get_pc(),bit);
 	namcoio_set_reset_line(1, bit ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static MACHINE_INIT( gaplus )
+static MACHINE_RESET( gaplus )
 {
 	/* on reset, VINTON is reset, while the other flags don't seem to be affected */
 	cpu_interrupt_enable(1,0);
@@ -773,7 +773,7 @@ static MACHINE_DRIVER_START( gaplus )
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
-	MDRV_MACHINE_INIT(gaplus)
+	MDRV_MACHINE_RESET(gaplus)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -56,8 +56,8 @@ TODO:
 #include <stdlib.h>
 #include <string.h>
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m6800.h"
 
 #define VERBOSE 0
@@ -570,30 +570,30 @@ static void state_register(const char *type)
 {
 	int cpu = cpu_getactivecpu();
 
-	state_save_register_UINT16(type, cpu, "PPC",&m6800.ppc.w.l, 1);
-	state_save_register_UINT16(type, cpu, "PC", &m6800.pc.w.l, 1);
-	state_save_register_UINT16(type, cpu, "S",  &m6800.s.w.l, 1);
-	state_save_register_UINT16(type, cpu, "X",  &m6800.x.w.l, 1);
-	state_save_register_UINT16(type, cpu, "D",  &m6800.d.w.l, 1);
-	state_save_register_UINT8 (type, cpu, "CC", &m6800.cc, 1);
-	state_save_register_UINT8 (type, cpu, "WAI_STATE", &m6800.wai_state, 1);
-	state_save_register_UINT8 (type, cpu, "NMI_STATE", &m6800.nmi_state, 1);
-	state_save_register_UINT8 (type, cpu, "IRQ_STATE", &m6800.irq_state[0], 2);
-	state_save_register_UINT8 (type, cpu, "IC_EDGE", &m6800.ic_eddge, 1);
+	state_save_register_item(type, cpu, m6800.ppc.w.l);
+	state_save_register_item(type, cpu, m6800.pc.w.l);
+	state_save_register_item(type, cpu, m6800.s.w.l);
+	state_save_register_item(type, cpu, m6800.x.w.l);
+	state_save_register_item(type, cpu, m6800.d.w.l);
+	state_save_register_item(type, cpu, m6800.cc);
+	state_save_register_item(type, cpu, m6800.wai_state);
+	state_save_register_item(type, cpu, m6800.nmi_state);
+	state_save_register_item_array(type, cpu, m6800.irq_state);
+	state_save_register_item(type, cpu, m6800.ic_eddge);
 
-	state_save_register_UINT8 (type, cpu, "port1_ddr", &m6800.port1_ddr, 1);
-	state_save_register_UINT8 (type, cpu, "port2_ddr", &m6800.port2_ddr, 1);
-	state_save_register_UINT8 (type, cpu, "port1_data", &m6800.port1_data, 1);
-	state_save_register_UINT8 (type, cpu, "port2_data", &m6800.port2_data, 1);
-	state_save_register_UINT8 (type, cpu, "tcsr", &m6800.tcsr, 1);
-	state_save_register_UINT8 (type, cpu, "pending_tcsr", &m6800.pending_tcsr, 1);
-	state_save_register_UINT8 (type, cpu, "irq2", &m6800.irq2, 1);
-	state_save_register_UINT8 (type, cpu, "ram_ctrl", &m6800.ram_ctrl, 1);
+	state_save_register_item(type, cpu, m6800.port1_ddr);
+	state_save_register_item(type, cpu, m6800.port2_ddr);
+	state_save_register_item(type, cpu, m6800.port1_data);
+	state_save_register_item(type, cpu, m6800.port2_data);
+	state_save_register_item(type, cpu, m6800.tcsr);
+	state_save_register_item(type, cpu, m6800.pending_tcsr);
+	state_save_register_item(type, cpu, m6800.irq2);
+	state_save_register_item(type, cpu, m6800.ram_ctrl);
 
-	state_save_register_UINT32(type, cpu, "counter", &m6800.counter.d, 1);
-	state_save_register_UINT32(type, cpu, "output_compare", &m6800.output_compare.d, 1);
-	state_save_register_UINT16(type, cpu, "input_capture", &m6800.input_capture, 1);
-	state_save_register_UINT32(type, cpu, "timer_over", &m6800.timer_over.d, 1);
+	state_save_register_item(type, cpu, m6800.counter.d);
+	state_save_register_item(type, cpu, m6800.output_compare.d);
+	state_save_register_item(type, cpu, m6800.input_capture);
+	state_save_register_item(type, cpu, m6800.timer_over.d);
 }
 
 static void m6800_init(void)

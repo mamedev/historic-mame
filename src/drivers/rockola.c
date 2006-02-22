@@ -931,7 +931,7 @@ static INTERRUPT_GEN( rockola_interrupt )
 
 /* Machine Initialization */
 
-static MACHINE_INIT( sasuke )
+static MACHINE_RESET( sasuke )
 {
 	//rockola_set_music_clock(M_LN2 * (RES_K(1) + RES_K(10) * 2) * CAP_U(1));
 	// adjusted
@@ -967,7 +967,7 @@ static MACHINE_INIT( sasuke )
 	sasuke_start_counter();
 }
 
-static MACHINE_INIT( satansat )
+static MACHINE_RESET( satansat )
 {
 	// same as sasuke
 	rockola_set_music_freq(38000);
@@ -980,7 +980,7 @@ static MACHINE_INIT( satansat )
 	sasuke_start_counter();
 }
 
-static MACHINE_INIT( vanguard )
+static MACHINE_RESET( vanguard )
 {
 	// 41.6 Hz update (measured)
 	rockola_set_music_clock(1 / 41.6);
@@ -998,7 +998,7 @@ static MACHINE_INIT( vanguard )
 	SN76477_mixer_c_w(1, 0);
 }
 
-static MACHINE_INIT( fantasy )
+static MACHINE_RESET( fantasy )
 {
 	// BOMB
 	SN76477_mixer_a_w(0, 0);
@@ -1006,12 +1006,12 @@ static MACHINE_INIT( fantasy )
 	SN76477_mixer_c_w(0, 0);
 }
 
-static MACHINE_INIT( pballoon )
+static MACHINE_RESET( pballoon )
 {
 	// 40.3 Hz update (measured)
 	rockola_set_music_clock(1 / 40.3);
 
-	machine_init_fantasy();
+	machine_reset_fantasy();
 }
 
 /* Machine Drivers */
@@ -1025,7 +1025,7 @@ static MACHINE_DRIVER_START( sasuke )
 	MDRV_FRAMES_PER_SECOND((11289000.0 / 16) / (45 * 32 * 8))
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(sasuke)
+	MDRV_MACHINE_RESET(sasuke)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1069,7 +1069,7 @@ static MACHINE_DRIVER_START( satansat )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(satansat_map, 0)
 
-	MDRV_MACHINE_INIT(satansat)
+	MDRV_MACHINE_RESET(satansat)
 
 	// video hardware
 	MDRV_GFXDECODE(satansat_gfxdecodeinfo)
@@ -1097,7 +1097,7 @@ static MACHINE_DRIVER_START( vanguard )
 	MDRV_FRAMES_PER_SECOND((11289000.0 / 16) / (45 * 32 * 8))
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(vanguard)
+	MDRV_MACHINE_RESET(vanguard)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1137,7 +1137,7 @@ static MACHINE_DRIVER_START( fantasy )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(fantasy_map, 0)
 
-	MDRV_MACHINE_INIT(fantasy)
+	MDRV_MACHINE_RESET(fantasy)
 
 	// sound hardware
 	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
@@ -1165,7 +1165,7 @@ static MACHINE_DRIVER_START( pballoon )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(pballoon_map, 0)
 
-	MDRV_MACHINE_INIT(pballoon)
+	MDRV_MACHINE_RESET(pballoon)
 
 	// video hardware
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)

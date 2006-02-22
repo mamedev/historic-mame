@@ -13,7 +13,6 @@ David Widel d_widel@hotmail.com
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 static INT8 counter=0;
 
@@ -184,7 +183,7 @@ READ8_HANDLER( acitya_decrypt_rom )
 }
 
 
-MACHINE_INIT( acitya )
+MACHINE_RESET( acitya )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

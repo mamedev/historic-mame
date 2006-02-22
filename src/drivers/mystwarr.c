@@ -22,7 +22,6 @@
  */
 
 #include "driver.h"
-#include "state.h"
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
@@ -53,8 +52,8 @@ READ16_HANDLER(ddd_053936_tilerom_2_r);
 
 static UINT16 *gx_workram;
 
-static int init_eeprom_count;
-static int mw_irq_control;
+static INT32 init_eeprom_count;
+static UINT8 mw_irq_control;
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -855,7 +854,22 @@ static const gfx_decode gfxdecodeinfo_dadandrn[] =
 	{ -1 } /* end of array */
 };
 
-static MACHINE_INIT(mystwarr)
+static MACHINE_START( mystwarr )
+{
+	/* set default bankswitch */
+	cur_sound_region = 2;
+	reset_sound_region();
+
+	mw_irq_control = 0;
+
+	state_save_register_global(mw_irq_control);
+	state_save_register_global(cur_sound_region);
+	state_save_register_func_postload(reset_sound_region);
+
+	return 0;
+}
+
+static MACHINE_RESET(mystwarr)
 {
 	int i;
 
@@ -870,7 +884,7 @@ static MACHINE_INIT(mystwarr)
 	for (i=0; i<=7; i++) K054539_set_gain(1, i, 0.5);
 }
 
-static MACHINE_INIT(dadandrn)
+static MACHINE_RESET(dadandrn)
 {
 	int i;
 
@@ -878,7 +892,7 @@ static MACHINE_INIT(dadandrn)
 	for (i=4; i<=7; i++) K054539_set_gain(0, i, 2.0);
 }
 
-static MACHINE_INIT(viostorm)
+static MACHINE_RESET(viostorm)
 {
 	int i;
 
@@ -886,7 +900,7 @@ static MACHINE_INIT(viostorm)
 	for (i=4; i<=7; i++) K054539_set_gain(0, i, 2.0);
 }
 
-static MACHINE_INIT(metamrph)
+static MACHINE_RESET(metamrph)
 {
 	int i;
 
@@ -900,7 +914,7 @@ static MACHINE_INIT(metamrph)
 	}
 }
 
-static MACHINE_INIT(martchmp)
+static MACHINE_RESET(martchmp)
 {
 	int i;
 
@@ -910,7 +924,7 @@ static MACHINE_INIT(martchmp)
 	for (i=4; i<=7; i++) K054539_set_gain(0, i, 1.4);
 }
 
-static MACHINE_INIT(gaiapols)
+static MACHINE_RESET(gaiapols)
 {
 	int i;
 
@@ -935,7 +949,8 @@ static MACHINE_DRIVER_START( mystwarr )
 	MDRV_VBLANK_DURATION(600)
 
 	MDRV_NVRAM_HANDLER(mystwarr)
-	MDRV_MACHINE_INIT(mystwarr)
+	MDRV_MACHINE_START(mystwarr)
+	MDRV_MACHINE_RESET(mystwarr)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS | VIDEO_RGB_DIRECT | VIDEO_UPDATE_AFTER_VBLANK)
@@ -963,7 +978,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( viostorm )
 	MDRV_IMPORT_FROM(mystwarr)
 
-	MDRV_MACHINE_INIT(viostorm)
+	MDRV_MACHINE_RESET(viostorm)
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
@@ -981,7 +996,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( metamrph )
 	MDRV_IMPORT_FROM(mystwarr)
 
-	MDRV_MACHINE_INIT(metamrph)
+	MDRV_MACHINE_RESET(metamrph)
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
@@ -999,7 +1014,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( dadandrn )
 	MDRV_IMPORT_FROM(mystwarr)
 
-	MDRV_MACHINE_INIT(dadandrn)
+	MDRV_MACHINE_RESET(dadandrn)
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
@@ -1019,7 +1034,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gaiapols )
 	MDRV_IMPORT_FROM(mystwarr)
 
-	MDRV_MACHINE_INIT(gaiapols)
+	MDRV_MACHINE_RESET(gaiapols)
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
@@ -1041,7 +1056,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( martchmp )
 	MDRV_IMPORT_FROM(mystwarr)
 
-	MDRV_MACHINE_INIT(martchmp)
+	MDRV_MACHINE_RESET(martchmp)
 
 	/* basic machine hardware */
 	MDRV_CPU_MODIFY("main")
@@ -2108,50 +2123,30 @@ ROM_START( dadandrn )
 	ROM_LOAD("170a15.2m", 0x200000, 2*1024*1024, CRC(d4113ae9) SHA1(e234d06f462e3db64455c384c2f42174f9ef9c6a) )
 ROM_END
 
-static void init_common(void)
-{
-	/* set default bankswitch */
-	cur_sound_region = 2;
-	reset_sound_region();
-
-	mw_irq_control = 0;
-
-	state_save_register_int("Mystwarr", 0, "IRQ control", &mw_irq_control);
-	state_save_register_int("Mystwarr", 0, "sound region", &cur_sound_region);
-	state_save_register_func_postload(reset_sound_region);
-}
-
 static DRIVER_INIT(metamrph)
 {
-	init_common();
-
 	K053250_unpack_pixels(REGION_GFX3);
-}
-
-static DRIVER_INIT(mwcommon)
-{
-	init_common();
 }
 
 
 /*           ROM       parent    machine   inp       init */
-GAME( 1993, mystwarr, 0,        mystwarr, mystwarr, mwcommon, ROT0,  "Konami", "Mystic Warriors (ver EAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mystwaru, mystwarr, mystwarr, mystwarr, mwcommon, ROT0,  "Konami", "Mystic Warriors (ver UAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mmaulers, 0,        dadandrn, dadandrn, mwcommon, ROT0,  "Konami", "Monster Maulers (ver EAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, dadandrn, mmaulers, dadandrn, dadandrn, mwcommon, ROT0,  "Konami", "Kyukyoku Sentai Dadandarn (ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, viostorm, 0,        viostorm, viostorm, mwcommon, ROT0,  "Konami", "Violent Storm (ver EAB)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, viostrmu, viostorm, viostorm, viostorm, mwcommon, ROT0,  "Konami", "Violent Storm (ver UAB)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, viostrmj, viostorm, viostorm, viostorm, mwcommon, ROT0,  "Konami", "Violent Storm (ver JAC)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, viostrma, viostorm, viostorm, viostorm, mwcommon, ROT0,  "Konami", "Violent Storm (ver AAC)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mystwarr, 0,        mystwarr, mystwarr, 0,        ROT0,  "Konami", "Mystic Warriors (ver EAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mystwaru, mystwarr, mystwarr, mystwarr, 0,        ROT0,  "Konami", "Mystic Warriors (ver UAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mmaulers, 0,        dadandrn, dadandrn, 0,        ROT0,  "Konami", "Monster Maulers (ver EAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, dadandrn, mmaulers, dadandrn, dadandrn, 0,        ROT0,  "Konami", "Kyukyoku Sentai Dadandarn (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, viostorm, 0,        viostorm, viostorm, 0,        ROT0,  "Konami", "Violent Storm (ver EAB)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, viostrmu, viostorm, viostorm, viostorm, 0,        ROT0,  "Konami", "Violent Storm (ver UAB)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, viostrmj, viostorm, viostorm, viostorm, 0,        ROT0,  "Konami", "Violent Storm (ver JAC)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, viostrma, viostorm, viostorm, viostorm, 0,        ROT0,  "Konami", "Violent Storm (ver AAC)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, metamrph, 0,        metamrph, metamrph, metamrph, ROT0,  "Konami", "Metamorphic Force (ver EAA)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, metamrpu, metamrph, metamrph, metamrph, metamrph, ROT0,  "Konami", "Metamorphic Force (ver UAA)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, metamrpj, metamrph, metamrph, metamrph, metamrph, ROT0,  "Konami", "Metamorphic Force (ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mtlchamp, 0,        martchmp, martchmp, mwcommon, ROT0,  "Konami", "Martial Champion (ver EAB)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mtlchmp1, mtlchamp, martchmp, martchmp, mwcommon, ROT0,  "Konami", "Martial Champion (ver EAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mtlchmpu, mtlchamp, martchmp, martchmp, mwcommon, ROT0,  "Konami", "Martial Champion (ver UAD)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mtlchmpj, mtlchamp, martchmp, martchmp, mwcommon, ROT0,  "Konami", "Martial Champion (ver JAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, mtlchmpa, mtlchamp, martchmp, martchmp, mwcommon, ROT0,  "Konami", "Martial Champion (ver AAA)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, gaiapols, 0,        gaiapols, dadandrn, mwcommon, ROT90, "Konami", "Gaiapolis (ver EAF)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, gaiapolu, gaiapols, gaiapols, dadandrn, mwcommon, ROT90, "Konami", "Gaiapolis (ver UAF)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, gaiapolj, gaiapols, gaiapols, dadandrn, mwcommon, ROT90, "Konami", "Gaiapolis (ver JAF)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mtlchamp, 0,        martchmp, martchmp, 0,        ROT0,  "Konami", "Martial Champion (ver EAB)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mtlchmp1, mtlchamp, martchmp, martchmp, 0,        ROT0,  "Konami", "Martial Champion (ver EAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mtlchmpu, mtlchamp, martchmp, martchmp, 0,        ROT0,  "Konami", "Martial Champion (ver UAD)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mtlchmpj, mtlchamp, martchmp, martchmp, 0,        ROT0,  "Konami", "Martial Champion (ver JAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, mtlchmpa, mtlchamp, martchmp, martchmp, 0,        ROT0,  "Konami", "Martial Champion (ver AAA)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, gaiapols, 0,        gaiapols, dadandrn, 0,        ROT90, "Konami", "Gaiapolis (ver EAF)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, gaiapolu, gaiapols, gaiapols, dadandrn, 0,        ROT90, "Konami", "Gaiapolis (ver UAF)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1993, gaiapolj, gaiapols, gaiapols, dadandrn, 0,        ROT90, "Konami", "Gaiapolis (ver JAF)", GAME_IMPERFECT_GRAPHICS )
 

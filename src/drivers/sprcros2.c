@@ -55,7 +55,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "state.h"
 #include "sound/sn76496.h"
 
 extern UINT8 *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
@@ -70,8 +69,8 @@ PALETTE_INIT( sprcros2 );
 VIDEO_START( sprcros2 );
 VIDEO_UPDATE( sprcros2 );
 static UINT8 *sprcros2_sharedram;
-int sprcros2_m_port7 = 0;
-static int sprcros2_s_port3 = 0;
+UINT8 sprcros2_m_port7 = 0;
+static UINT8 sprcros2_s_port3 = 0;
 
 static READ8_HANDLER( sprcros2_sharedram_r )
 {
@@ -294,6 +293,13 @@ static INTERRUPT_GEN( sprcros2_s_interrupt )
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
+static MACHINE_START( sprcros2 )
+{
+	state_save_register_global(sprcros2_m_port7);
+	state_save_register_global(sprcros2_s_port3);
+	return 0;
+}
+
 static MACHINE_DRIVER_START( sprcros2 )
 
 	/* basic machine hardware */
@@ -309,6 +315,8 @@ static MACHINE_DRIVER_START( sprcros2 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_START(sprcros2)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -334,12 +342,6 @@ static MACHINE_DRIVER_START( sprcros2 )
 	MDRV_SOUND_ADD(SN76496, 10000000/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
-
-static DRIVER_INIT( sprcros2 )
-{
-	state_save_register_int("main", 0, "m_cpu_port7", &sprcros2_m_port7);
-	state_save_register_int("main", 0, "s_cpu_port3", &sprcros2_s_port3);
-}
 
 ROM_START( sprcros2 )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )
@@ -414,5 +416,5 @@ ROM_START( sprcrs2a )
 	ROM_LOAD( "sc-60.4k",    0x0320, 0x0100, CRC(d7a4e57d) SHA1(6db02ec6aa55b05422cb505e63c71e36b4b11b4a) )	//fg clut
 ROM_END
 
-GAME( 1986, sprcros2, 0,        sprcros2, sprcros2, sprcros2, ROT0, "GM Shoji", "Super Cross 2 (Japan set 1)", 0 )
-GAME( 1986, sprcrs2a, sprcros2, sprcros2, sprcros2, sprcros2, ROT0, "GM Shoji", "Super Cross 2 (Japan set 2)", 0 )
+GAME( 1986, sprcros2, 0,        sprcros2, sprcros2, 0, ROT0, "GM Shoji", "Super Cross 2 (Japan set 1)", 0 )
+GAME( 1986, sprcrs2a, sprcros2, sprcros2, sprcros2, 0, ROT0, "GM Shoji", "Super Cross 2 (Japan set 2)", 0 )

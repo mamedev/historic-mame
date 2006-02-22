@@ -15,8 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "s2650.h"
 #include "s2650cpu.h"
 
@@ -786,18 +785,19 @@ static void BRA_EA(void) _BRA_EA()
 static void s2650_init(void)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_register_UINT16("s2650", cpu, "PPC",  &S.ppc, 1);
-	state_save_register_UINT16("s2650", cpu, "PAGE", &S.page, 1);
-	state_save_register_UINT16("s2650", cpu, "IAR",  &S.iar, 1);
-	state_save_register_UINT16("s2650", cpu, "EA",   &S.ea, 1);
-	state_save_register_UINT8 ("s2650", cpu, "PSL",  &S.psl, 1);
-	state_save_register_UINT8 ("s2650", cpu, "PSU",  &S.psu, 1);
-	state_save_register_UINT8 ("s2650", cpu, "R",    &S.r, 1);
-	state_save_register_UINT8 ("s2650", cpu, "REG",  S.reg, 7);
-	state_save_register_UINT8 ("s2650", cpu, "HALT", &S.halt, 1);
-	state_save_register_UINT8 ("s2650", cpu, "IR",   &S.ir, 1);
-	state_save_register_UINT16("s2650", cpu, "RAS",  S.ras, 8);
-	state_save_register_UINT8 ("s2650", cpu, "IRQ_STATE",&S.irq_state, 1);
+
+	state_save_register_item("s2650", cpu, S.ppc);
+	state_save_register_item("s2650", cpu, S.page);
+	state_save_register_item("s2650", cpu, S.iar);
+	state_save_register_item("s2650", cpu, S.ea);
+	state_save_register_item("s2650", cpu, S.psl);
+	state_save_register_item("s2650", cpu, S.psu);
+	state_save_register_item("s2650", cpu, S.r);
+	state_save_register_item_array("s2650", cpu, S.reg);
+	state_save_register_item("s2650", cpu, S.halt);
+	state_save_register_item("s2650", cpu, S.ir);
+	state_save_register_item_array("s2650", cpu, S.ras);
+	state_save_register_item("s2650", cpu, S.irq_state);
 }
 
 static void s2650_reset(void *param)

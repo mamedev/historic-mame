@@ -11,7 +11,6 @@
 #include <math.h>
 
 #include "driver.h"
-#include "state.h"
 #include "ymz280b.h"
 
 
@@ -641,38 +640,38 @@ static void *ymz280b_start(int sndindex, int clock, const void *config)
 	/* state save */
 	{
 		int j;
-		state_save_register_UINT8("YMZ280B", sndindex, "current_register", &chip->current_register,1);
-		state_save_register_UINT8("YMZ280B", sndindex, "status_register", &chip->status_register,1);
-		state_save_register_UINT8("YMZ280B", sndindex, "irq_state", &chip->irq_state,1);
-		state_save_register_UINT8("YMZ280B", sndindex, "irq_mask", &chip->irq_mask,1);
-		state_save_register_UINT8("YMZ280B", sndindex, "irq_enable", &chip->irq_enable,1);
-		state_save_register_UINT8("YMZ280B", sndindex, "keyon_enable", &chip->keyon_enable,1);
-		state_save_register_UINT32("YMZ280B", sndindex, "rom_readback", &chip->rom_readback_addr,1);
+		state_save_register_item("YMZ280B", sndindex, chip->current_register);
+		state_save_register_item("YMZ280B", sndindex, chip->status_register);
+		state_save_register_item("YMZ280B", sndindex, chip->irq_state);
+		state_save_register_item("YMZ280B", sndindex, chip->irq_mask);
+		state_save_register_item("YMZ280B", sndindex, chip->irq_enable);
+		state_save_register_item("YMZ280B", sndindex, chip->keyon_enable);
+		state_save_register_item("YMZ280B", sndindex, chip->rom_readback_addr);
 		for (j = 0; j < 8; j++)
 		{
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "playing", &chip->voice[j].playing,1);
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "keyon", &chip->voice[j].keyon,1);
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "looping", &chip->voice[j].looping,1);
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "mode", &chip->voice[j].mode,1);
-			state_save_register_UINT16 ("YMZ280B.voice", sndindex*8+j, "fnum", &chip->voice[j].fnum,1);
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "level", &chip->voice[j].level,1);
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "pan", &chip->voice[j].pan,1);
-			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "start", &chip->voice[j].start,1);
-			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "stop", &chip->voice[j].stop,1);
-			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "loop_start", &chip->voice[j].loop_start,1);
-			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "loop_end", &chip->voice[j].loop_end,1);
-			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "position", &chip->voice[j].position,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "signal", &chip->voice[j].signal,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "step", &chip->voice[j].step,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "loop_signal", &chip->voice[j].loop_signal,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "loop_step", &chip->voice[j].loop_step,1);
-			state_save_register_UINT32 ("YMZ280B.voice", sndindex*8+j, "loop_count", &chip->voice[j].loop_count,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "output_left", &chip->voice[j].output_left,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "output_right", &chip->voice[j].output_right,1);
-			state_save_register_INT32 ("YMZ280B.voice", sndindex*8+j, "output_pos", &chip->voice[j].output_pos,1);
-			state_save_register_INT16 ("YMZ280B.voice", sndindex*8+j, "last_sample", &chip->voice[j].last_sample,1);
-			state_save_register_INT16 ("YMZ280B.voice", sndindex*8+j, "curr_sample", &chip->voice[j].curr_sample,1);
-			state_save_register_UINT8 ("YMZ280B.voice", sndindex*8+j, "irq_schedule", &chip->voice[j].irq_schedule,1);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].playing);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].keyon);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].looping);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].mode);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].fnum);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].level);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].pan);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].start);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].stop);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].loop_start);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].loop_end);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].position);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].signal);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].step);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].loop_signal);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].loop_step);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].loop_count);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].output_left);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].output_right);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].output_pos);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].last_sample);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].curr_sample);
+			state_save_register_item("YMZ280B.voice", sndindex*8+j, chip->voice[j].irq_schedule);
 		}
 	}
 

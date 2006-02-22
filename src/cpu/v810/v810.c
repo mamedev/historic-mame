@@ -17,8 +17,7 @@
 ********************************************/
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "state.h"
 
 #include <assert.h>
@@ -30,8 +29,8 @@
 typedef struct
 {
 	UINT32 reg[65];
-	int irq_line;
-	int nmi_line;
+	UINT8 irq_line;
+	UINT8 nmi_line;
 	int (*irq_cb)(int irqline);
 	UINT32 PPC;
 	UINT32 op;
@@ -958,10 +957,10 @@ void v810_init(void)
 	v810.irq_line = CLEAR_LINE;
 	v810.nmi_line = CLEAR_LINE;
 
-	state_save_register_UINT32("v810", cpu, "reg",       v810.reg, 65);
-	state_save_register_int   ("v810", cpu, "irq_line", &v810.irq_line);
-	state_save_register_int   ("v810", cpu, "nmi_line", &v810.nmi_line);
-	state_save_register_UINT32("v810", cpu, "ppc",      &PPC, 1);
+	state_save_register_item_array("v810", cpu, v810.reg);
+	state_save_register_item("v810", cpu, v810.irq_line);
+	state_save_register_item("v810", cpu, v810.nmi_line);
+	state_save_register_item("v810", cpu, PPC);
 
 }
 
@@ -980,10 +979,7 @@ int v810_execute(int cycles)
 	while(v810_ICount>=0)
 	{
 		PPC=PC;
-#ifdef MAME_DEBUG
-	if (mame_debug)
-		MAME_Debug();
-#endif
+		CALL_MAME_DEBUG;
 		OP=R_OP(PC);
 		PC+=2;
 		v810_ICount-= OpCodeTable[OP>>10]();

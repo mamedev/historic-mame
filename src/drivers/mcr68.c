@@ -53,7 +53,6 @@
 #include "sndhrdw/williams.h"
 #include "vidhrdw/generic.h"
 #include "mcr.h"
-#include "state.h"
 
 
 
@@ -892,7 +891,8 @@ static MACHINE_DRIVER_START( zwackery )
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 //  MDRV_WATCHDOG_VBLANK_INIT(8)
-	MDRV_MACHINE_INIT(zwackery)
+	MDRV_MACHINE_START(mcr68)
+	MDRV_MACHINE_RESET(zwackery)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -919,7 +919,8 @@ static MACHINE_DRIVER_START( mcr68 )
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_WATCHDOG_VBLANK_INIT(8)
-	MDRV_MACHINE_INIT(mcr68)
+	MDRV_MACHINE_START(mcr68)
+	MDRV_MACHINE_RESET(mcr68)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1266,7 +1267,7 @@ ROM_END
  *
  *************************************/
 
-static void common_init(int sound_board, int clip, int xoffset)
+static void mcr68_common_init(int sound_board, int clip, int xoffset)
 {
 	mcr_sound_init(sound_board);
 
@@ -1279,7 +1280,7 @@ static void common_init(int sound_board, int clip, int xoffset)
 
 static DRIVER_INIT( zwackery )
 {
-	common_init(MCR_CHIP_SQUEAK_DELUXE, 0, 0);
+	mcr68_common_init(MCR_CHIP_SQUEAK_DELUXE, 0, 0);
 
 	/* Zwackery doesn't care too much about this value; currently taken from Blasted */
 	mcr68_timing_factor = (256.0 + 16.0) / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1288,7 +1289,7 @@ static DRIVER_INIT( zwackery )
 
 static DRIVER_INIT( xenophob )
 {
-	common_init(MCR_SOUNDS_GOOD, 0, 0);
+	mcr68_common_init(MCR_SOUNDS_GOOD, 0, 0);
 
 	/* Xenophobe doesn't care too much about this value; currently taken from Blasted */
 	mcr68_timing_factor = (256.0 + 16.0) / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1300,7 +1301,7 @@ static DRIVER_INIT( xenophob )
 
 static DRIVER_INIT( spyhunt2 )
 {
-	common_init(MCR_TURBO_CHIP_SQUEAK | MCR_SOUNDS_GOOD, 0, -6);
+	mcr68_common_init(MCR_TURBO_CHIP_SQUEAK | MCR_SOUNDS_GOOD, 0, -6);
 
 	/* Spy Hunter 2 doesn't care too much about this value; currently taken from Blasted */
 	mcr68_timing_factor = (256.0 + 16.0) / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1314,7 +1315,7 @@ static DRIVER_INIT( spyhunt2 )
 
 static DRIVER_INIT( blasted )
 {
-	common_init(MCR_SOUNDS_GOOD, 0, 0);
+	mcr68_common_init(MCR_SOUNDS_GOOD, 0, 0);
 
 	/* Blasted checks the timing of VBLANK relative to the 493 interrupt */
 	/* VBLANK is required to come within 220-256 E clocks (i.e., 2200-2560 CPU clocks) */
@@ -1332,7 +1333,7 @@ static DRIVER_INIT( blasted )
 
 static DRIVER_INIT( archrivl )
 {
-	common_init(MCR_WILLIAMS_SOUND, 16, 0);
+	mcr68_common_init(MCR_WILLIAMS_SOUND, 16, 0);
 
 	/* Arch Rivals doesn't care too much about this value; currently taken from Blasted */
 	mcr68_timing_factor = (256.0 + 16.0) / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1351,7 +1352,7 @@ static DRIVER_INIT( archrivl )
 
 static DRIVER_INIT( pigskin )
 {
-	common_init(MCR_WILLIAMS_SOUND, 16, 0);
+	mcr68_common_init(MCR_WILLIAMS_SOUND, 16, 0);
 
 	/* Pigskin doesn't care too much about this value; currently taken from Tri-Sports */
 	mcr68_timing_factor = 115.0 / (double)(Machine->drv->cpu[0].cpu_clock / 10);
@@ -1362,7 +1363,7 @@ static DRIVER_INIT( pigskin )
 
 static DRIVER_INIT( trisport )
 {
-	common_init(MCR_WILLIAMS_SOUND, 0, 0);
+	mcr68_common_init(MCR_WILLIAMS_SOUND, 0, 0);
 
 	/* Tri-Sports checks the timing of VBLANK relative to the 493 interrupt */
 	/* VBLANK is required to come within 87-119 E clocks (i.e., 870-1190 CPU clocks) */

@@ -42,7 +42,6 @@ Shisensho II                            1993  Rev 3.34 M81  Yes
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "sound/dac.h"
 
 
@@ -67,8 +66,8 @@ enum
 	Z80_CLEAR
 };
 
-static int irqvector;
-static int sample_addr;
+static UINT8 irqvector;
+static UINT32 sample_addr;
 
 static void setvector_callback(int param)
 {
@@ -105,12 +104,12 @@ static void setvector_callback(int param)
 		cpunum_set_input_line(1,0,ASSERT_LINE);
 }
 
-MACHINE_INIT( m72_sound )
+MACHINE_RESET( m72_sound )
 {
 	setvector_callback(VECTOR_INIT);
 
-	state_save_register_int("sound", 0, "irqvector", &irqvector);
-	state_save_register_int("sound", 0, "sample_addr", &sample_addr);
+	state_save_register_global(irqvector);
+	state_save_register_global(sample_addr);
 }
 
 void m72_ym2151_irq_handler(int irq)

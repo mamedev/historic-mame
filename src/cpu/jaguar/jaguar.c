@@ -13,8 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "driver.h"
-#include "mamedbg.h"
-#include "state.h"
+#include "debugger.h"
 #include "jaguar.h"
 
 #define LOG_GPU_IO		0
@@ -427,10 +426,10 @@ static void init_tables(void)
 static void jaguar_state_register(const char *type)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_register_UINT32(type, cpu, "R",    jaguar.r, 32);
-	state_save_register_UINT32(type, cpu, "A",    jaguar.a, 32);
-	state_save_register_UINT32(type, cpu, "CTRL", jaguar.ctrl, G_CTRLMAX);
-	state_save_register_UINT32(type, cpu, "PPC",  &jaguar.ppc, 1);
+	state_save_register_item_array(type, cpu, jaguar.r);
+	state_save_register_item_array(type, cpu, jaguar.a);
+	state_save_register_item_array(type, cpu, jaguar.ctrl);
+	state_save_register_item(type, cpu, jaguar.ppc);
 	state_save_register_func_postload(update_register_banks);
 	state_save_register_func_postload(check_irqs);
 }

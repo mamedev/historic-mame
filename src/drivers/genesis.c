@@ -13,7 +13,6 @@ segac2.c
 
 #include "driver.h"
 #include "genesis.h"
-#include "state.h"
 
 #define MASTER_CLOCK		53693100
 
@@ -145,8 +144,16 @@ void genesis_irq2_interrupt(int state)
 }
 
 
+MACHINE_START( genesis )
+{
+	state_save_register_global(irq2_int);
+	state_save_register_global(scanline_int);
+	state_save_register_global(vblank_int);
+	return 0;
+}
 
-MACHINE_INIT( genesis )
+
+MACHINE_RESET( genesis )
 {
 	/* C2 doesn't have a Z80, so we can't just assume */
 	if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
@@ -166,14 +173,6 @@ MACHINE_INIT( genesis )
 	/* set the first scanline 0 timer to go off */
 	scan_timer = timer_alloc(vdp_reload_counter);
 	timer_adjust(scan_timer, cpu_getscanlinetime(0) + cpu_getscanlineperiod() * (320. / 342.), 0, 0);
-}
-
-
-DRIVER_INIT( genesis )
-{
-	state_save_register_UINT8 ("genesis", 0, "Int 2 Status", &irq2_int, 1);
-	state_save_register_UINT8 ("genesis", 0, "Int 4 Status", &scanline_int, 1);
-	state_save_register_UINT8 ("genesis", 0, "Int 6 Status", &vblank_int, 1);
 }
 
 
@@ -803,7 +802,8 @@ static MACHINE_DRIVER_START( genesis_base )
 
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(genesis)
+	MDRV_MACHINE_START(genesis)
+	MDRV_MACHINE_RESET(genesis)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)

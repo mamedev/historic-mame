@@ -68,7 +68,7 @@ READ16_HANDLER( namcos2_flap_prot_r )
 /* Perform basic machine initialisation                      */
 /*************************************************************/
 
-MACHINE_INIT( namcos2 ){
+MACHINE_RESET( namcos2 ){
 	int loop;
 
 	mFinalLapProtCount = 0;

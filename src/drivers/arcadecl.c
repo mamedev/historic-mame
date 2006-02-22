@@ -107,7 +107,7 @@ static void scanline_update(int scanline)
  *
  *************************************/
 
-static MACHINE_INIT( arcadecl )
+static MACHINE_RESET( arcadecl )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -350,7 +350,7 @@ static MACHINE_DRIVER_START( arcadecl )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(arcadecl)
+	MDRV_MACHINE_RESET(arcadecl)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

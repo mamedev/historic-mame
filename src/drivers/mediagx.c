@@ -697,7 +697,7 @@ static int irq_callback(int irqline)
 	return r;
 }
 
-static MACHINE_INIT(mediagx)
+static MACHINE_RESET(mediagx)
 {
 	UINT8 *rom = memory_region(REGION_USER1);
 
@@ -720,7 +720,7 @@ static MACHINE_DRIVER_START(mediagx)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_MACHINE_INIT(mediagx)
+	MDRV_MACHINE_RESET(mediagx)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 

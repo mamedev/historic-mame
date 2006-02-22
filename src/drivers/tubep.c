@@ -259,7 +259,7 @@ static void scanline_callback(int scanline)
 	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
 }
 
-static MACHINE_INIT( tubep )
+static MACHINE_RESET( tubep )
 {
 	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
 }
@@ -740,7 +740,7 @@ static MACHINE_DRIVER_START( tubep )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(tubep)
+	MDRV_MACHINE_RESET(tubep)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)

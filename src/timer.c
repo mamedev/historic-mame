@@ -10,10 +10,8 @@
 
 ***************************************************************************/
 
-#include "cpuintrf.h"
 #include "driver.h"
-#include "timer.h"
-#include "state.h"
+#include "profiler.h"
 #include <math.h>
 
 
@@ -286,8 +284,8 @@ void timer_init(void)
 
 	/* register with the save state system */
 	state_save_push_tag(0);
-	state_save_register_INT32("timer", 0, "global.secs", &global_basetime.seconds, 1);
-	state_save_register_INT64("timer", 0, "global.subs", &global_basetime.subseconds, 1);
+	state_save_register_item("timer", 0, global_basetime.seconds);
+	state_save_register_item("timer", 0, global_basetime.subseconds);
 	state_save_register_func_postload(timer_postload);
 	state_save_pop_tag();
 
@@ -462,14 +460,14 @@ static void timer_register_save(mame_timer *timer)
 
 	/* use different instances to differentiate the bits */
 	state_save_push_tag(0);
-	state_save_register_int  (buf, count, "callback_param", &timer->callback_param);
-	state_save_register_UINT8(buf, count, "enabled", &timer->enabled, 1);
-	state_save_register_INT32(buf, count, "period.sec", &timer->period.seconds, 1);
-	state_save_register_INT64(buf, count, "period.sub", &timer->period.subseconds, 1);
-	state_save_register_INT32(buf, count, "start.sec", &timer->start.seconds, 1);
-	state_save_register_INT64(buf, count, "start.sub", &timer->start.subseconds, 1);
-	state_save_register_INT32(buf, count, "expire.sec", &timer->expire.seconds, 1);
-	state_save_register_INT64(buf, count, "expire.sub", &timer->expire.subseconds, 1);
+	state_save_register_item(buf, count, timer->callback_param);
+	state_save_register_item(buf, count, timer->enabled);
+	state_save_register_item(buf, count, timer->period.seconds);
+	state_save_register_item(buf, count, timer->period.subseconds);
+	state_save_register_item(buf, count, timer->start.seconds);
+	state_save_register_item(buf, count, timer->start.subseconds);
+	state_save_register_item(buf, count, timer->expire.seconds);
+	state_save_register_item(buf, count, timer->expire.subseconds);
 	state_save_pop_tag();
 }
 
@@ -534,7 +532,7 @@ mame_timer *_mame_timer_alloc_ptr(void (*callback_ptr)(void *), void *param, con
     fire periodically
 -------------------------------------------------*/
 
-INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int param, mame_time period)
+INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, INT32 param, mame_time period)
 {
 	mame_time time = get_current_time();
 
@@ -573,7 +571,7 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, int 
 		activecpu_abort_timeslice();
 }
 
-void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period)
+void mame_timer_adjust(mame_timer *which, mame_time duration, INT32 param, mame_time period)
 {
 	if (which->ptr)
 		osd_die("mame_timer_adjust called on a ptr timer!\n");
@@ -595,7 +593,7 @@ void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, mame_time peri
     period
 -------------------------------------------------*/
 
-void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line, const char *func)
+void _mame_timer_pulse(mame_time period, INT32 param, void (*callback)(int), const char *file, int line, const char *func)
 {
 	mame_timer *timer = _mame_timer_alloc_common(callback, NULL, NULL, file, line, func, FALSE);
 
@@ -626,7 +624,7 @@ void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void 
     calls the callback after the given duration
 -------------------------------------------------*/
 
-void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line, const char *func)
+void _mame_timer_set(mame_time duration, INT32 param, void (*callback)(int), const char *file, int line, const char *func)
 {
 	mame_timer *timer = _mame_timer_alloc_common(callback, NULL, NULL, file, line, func, TRUE);
 

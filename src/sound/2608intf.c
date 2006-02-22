@@ -12,7 +12,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "ay8910.h"
 #include "2608intf.h"
 #include "fm.h"

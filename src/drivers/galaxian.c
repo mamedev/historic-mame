@@ -3629,7 +3629,7 @@ MACHINE_DRIVER_START( galaxian_base )
 
 	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 
-	MDRV_MACHINE_INIT(galaxian)
+	MDRV_MACHINE_RESET(galaxian)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -3733,7 +3733,7 @@ static MACHINE_DRIVER_START( devilfsg )
 	MDRV_IMPORT_FROM(galaxian)
 	MDRV_CPU_MODIFY("main")
 
-	MDRV_MACHINE_INIT(devilfsg)
+	MDRV_MACHINE_RESET(devilfsg)
 
 	/* video hardware */
 	MDRV_GFXDECODE(pacmanbl_gfxdecodeinfo)
@@ -3784,7 +3784,7 @@ static MACHINE_DRIVER_START( mshuttle )
 	MDRV_CPU_PROGRAM_MAP(mooncrst_readmem,mshuttle_writemem)
 	MDRV_CPU_IO_MAP(mshuttle_readport,mshuttle_writeport)
 
-	MDRV_MACHINE_INIT(devilfsg)
+	MDRV_MACHINE_RESET(devilfsg)
 
 	/* video hardware */
 	MDRV_VIDEO_START(mshuttle)
@@ -4002,7 +4002,7 @@ static MACHINE_DRIVER_START( bagmanmc )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(bagmanmc_readmem,bagmanmc_writemem)
 
-	MDRV_MACHINE_INIT( devilfsg )
+	MDRV_MACHINE_RESET( devilfsg )
 
 	/* video hardware */
 	MDRV_GFXDECODE(bagmanmc_gfxdecodeinfo)
@@ -4036,7 +4036,7 @@ static MACHINE_DRIVER_START( froggrmc )
 	MDRV_CPU_PROGRAM_MAP(frogger_sound_readmem,frogger_sound_writemem)
 	MDRV_CPU_IO_MAP(frogger_sound_readport,frogger_sound_writeport)
 
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+1)  /* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
@@ -4073,7 +4073,7 @@ static MACHINE_DRIVER_START( ozon1 )
 	MDRV_CPU_IO_MAP(0,ozon1_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_MACHINE_INIT(NULL)
+	MDRV_MACHINE_RESET(NULL)
 
 	MDRV_PALETTE_INIT(rockclim)
 	MDRV_PALETTE_LENGTH(32)
@@ -4171,7 +4171,7 @@ static MACHINE_DRIVER_START( harem )
 	MDRV_CPU_PROGRAM_MAP(harem_cpu2,0)
 	MDRV_CPU_IO_MAP(harem_cpu2_io,0)
 
-	MDRV_MACHINE_INIT(NULL)
+	MDRV_MACHINE_RESET(NULL)
 
 	MDRV_PALETTE_INIT(rockclim)
 	MDRV_PALETTE_LENGTH(32)

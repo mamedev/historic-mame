@@ -310,7 +310,7 @@ static void generate_interrupt(int scanline)
 }
 
 
-static MACHINE_INIT( centiped )
+static MACHINE_RESET( centiped )
 {
 	timer_set(cpu_getscanlinetime(0), 0, generate_interrupt);
 	cpunum_set_input_line(0, 0, CLEAR_LINE);
@@ -318,9 +318,9 @@ static MACHINE_INIT( centiped )
 }
 
 
-static MACHINE_INIT( magworm )
+static MACHINE_RESET( magworm )
 {
-	machine_init_centiped();
+	machine_reset_centiped();
 
 	/* kludge: clear RAM so that magworm can be reset cleanly */
 	memset(rambase, 0, 0x400);
@@ -1299,7 +1299,7 @@ static MACHINE_DRIVER_START( centiped )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1460)
 
-	MDRV_MACHINE_INIT(centiped)
+	MDRV_MACHINE_RESET(centiped)
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
@@ -1351,7 +1351,7 @@ static MACHINE_DRIVER_START( magworm )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(centiped)
-	MDRV_MACHINE_INIT(magworm)
+	MDRV_MACHINE_RESET(magworm)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", AY8910, 12096000/8)

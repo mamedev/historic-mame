@@ -18,7 +18,7 @@
 #include <string.h>
 #include <math.h>
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "mips3.h"
 #include "debugcpu.h"
 
@@ -341,12 +341,7 @@ INLINE void generate_exception(int exception, int backup)
     if (exception != 0)
     {
         fprintf(stderr, "Exception: PC=%08X, PPC=%08X\n", mips3.pc, mips3.ppc);
-        #ifdef MAME_DEBUG
-        {
-        extern int debug_key_pressed;
-        debug_key_pressed = 1;
-        }
-        #endif
+        DEBUGGER_BREAK;
     }
 */
 
@@ -1113,7 +1108,7 @@ INLINE void handle_cop0(UINT32 op)
 					break;
 
 				case 0x08:	/* TLBP */
-//                  debug_halt_on_next_instruction();
+//                  DEBUGGER_BREAK;
 					for (index = 0; index < 48; index++)
 					{
 						UINT64 mask = ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000)) & ~U64(0x1fff);
@@ -1137,7 +1132,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 						{
 #if PRINTF_TLB
 							printf("TLBP: Should have not found an entry\n");
-//                          debug_halt_on_next_instruction();
+//                          DEBUGGER_BREAK;
 #endif
 						}
 						mips3.cpr[0][COP0_Index] = index;
@@ -1148,7 +1143,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 						{
 #if PRINTF_TLB
 							printf("TLBP: Should have found an entry\n");
-//                          debug_halt_on_next_instruction();
+//                          DEBUGGER_BREAK;
 #endif
 						}
 						mips3.cpr[0][COP0_Index] = 0x80000000;
@@ -2374,6 +2369,16 @@ int mips3_execute(int cycles)
 			case 0x19:	/* DADDIU */	if (RTREG) RTVAL64 = RSVAL64 + (UINT64)SIMMVAL;							break;
 			case 0x1a:	/* LDL */		(*mips3.ldl)(op);														break;
 			case 0x1b:	/* LDR */		(*mips3.ldr)(op);														break;
+			case 0x1c:	/* IDT-specific opcodes: mad/madu/mul on R4640/4650, msub on RC32364 */
+				switch (op & 0x1f)
+				{
+					case 2: /* MUL */
+						RDVAL64 = (INT32)((INT32)RSVAL32 * (INT32)RTVAL32);
+						mips3_icount -= 3;
+						break;
+		 			default: invalid_instruction(op);
+				}
+				break;
 			case 0x20:	/* LB */		if (RBYTE(SIMMVAL+RSVAL32, &temp) && RTREG) RTVAL64 = (INT8)temp;		break;
 			case 0x21:	/* LH */		if (RWORD(SIMMVAL+RSVAL32, &temp) && RTREG) RTVAL64 = (INT16)temp;		break;
 			case 0x22:	/* LWL */		(*mips3.lwl)(op);														break;
@@ -3061,6 +3066,51 @@ void r4600le_get_info(UINT32 state, union cpuinfo *info)
 }
 #endif
 
+
+#if (HAS_R4650)
+/**************************************************************************
+ * CPU-specific set_info
+ **************************************************************************/
+
+void r4650be_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = r4600be_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "IDT R4650 (big)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+
+
+void r4650le_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_RESET:							info->reset = r4600le_reset;			break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "IDT R4650 (little)"); break;
+
+		default:
+			mips3_get_info(state, info);
+			break;
+	}
+}
+#endif
 
 #if (HAS_R4700)
 /**************************************************************************

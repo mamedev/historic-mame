@@ -296,7 +296,7 @@ static MACHINE_DRIVER_START( berzerk )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(2500)  /* Needs to be long enough so 2 of the 8 */
 								/* interrupts fall inside the VBLANK */
-	MDRV_MACHINE_INIT(berzerk)
+	MDRV_MACHINE_RESET(berzerk)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

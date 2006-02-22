@@ -521,7 +521,7 @@ DRIVER_INIT( mk2 )
  *
  *************************************/
 
-MACHINE_INIT( midtunit )
+MACHINE_RESET( midtunit )
 {
 	/* reset sound */
 	switch (sound_type)

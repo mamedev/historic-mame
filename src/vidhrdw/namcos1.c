@@ -5,7 +5,6 @@ Namco System 1 Video Hardware
 *******************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 
 
@@ -124,10 +123,10 @@ VIDEO_START( namcos1 )
 	tilemap_set_scrolldy(bg_tilemap[5],0x10,0x110);
 
 	/* register videoram to the save state system (post-allocation) */
-	state_save_register_UINT8("video", 0, "vram", namcos1_videoram, 0x8000);
-	state_save_register_UINT8("video", 0, "cus116", namcos1_cus116, 0x10);
-	state_save_register_UINT8("video", 0, "spriteram", namcos1_spriteram, 0x1000);
-	state_save_register_UINT8("video", 0, "playfield", namcos1_playfield_control, 0x20);
+	state_save_register_global_pointer(namcos1_videoram, 0x8000);
+	state_save_register_global_array(namcos1_cus116);
+	state_save_register_global_pointer(namcos1_spriteram, 0x1000);
+	state_save_register_global_array(namcos1_playfield_control);
 
 	/* set table for sprite color == 0x7f */
 	for (i = 0;i <= 15;i++)

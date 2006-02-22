@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "profiler.h"
 #include "vidhrdw/generic.h"
 
 UINT16 *taitob_scroll;

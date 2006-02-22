@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -48,9 +47,9 @@ static UINT16 spritebank[8];
 static UINT16 spritebank_buffered[8];
 static UINT16 koshien_spritebank;
 
-static int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
+static INT32 sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 /* remember flip status over frames because driftout can fail to set it */
-static int sprites_flipscreen = 0;
+static INT32 sprites_flipscreen = 0;
 
 
 /* On the left hand screen edge (assuming horiz screen, no
@@ -58,20 +57,20 @@ static int sprites_flipscreen = 0;
    there may be 0-3 unwanted pixels in both tilemaps *and*
    sprites. To erase this we use f2_hide_pixels (0 to +3). */
 
-static int f2_hide_pixels;
-static int f2_flip_hide_pixels;	/* Different in some games */
+static INT32 f2_hide_pixels;
+static INT32 f2_flip_hide_pixels;	/* Different in some games */
 
-static int f2_pivot_xdisp = 0;	/* Needed in games with a pivot layer */
-static int f2_pivot_ydisp = 0;
+static INT32 f2_pivot_xdisp = 0;	/* Needed in games with a pivot layer */
+static INT32 f2_pivot_ydisp = 0;
 
-static int f2_tilemap_xoffs = 0;	/* Needed in TC0480SCP games */
-static int f2_tilemap_yoffs = 0;
-static int f2_text_xoffs = 0;
+static INT32 f2_tilemap_xoffs = 0;	/* Needed in TC0480SCP games */
+static INT32 f2_tilemap_yoffs = 0;
+static INT32 f2_text_xoffs = 0;
 
 int f2_tilemap_col_base = 0;
 
-static int f2_game = 0;
-static int FOOTCHMP = 1;
+static INT32 f2_game = 0;
+static INT32 FOOTCHMP = 1;
 
 static UINT8 f2_tilepri[6]; // todo - move into taitoic.c
 static UINT8 f2_spritepri[6]; // todo - move into taitoic.c
@@ -135,14 +134,14 @@ int taitof2_core_vh_start (int sprite_type,int hide,int flip_hide,int x_offs,int
 
 	f2_game = 0;	/* means NOT footchmp */
 
-	state_save_register_int   ("main1", 0, "control", &f2_hide_pixels);
-	state_save_register_int   ("main2", 0, "control", &f2_sprite_type);
-	state_save_register_UINT16("main3", 0, "control", spritebank, 8);
-	state_save_register_UINT16("main4", 0, "control", &koshien_spritebank, 1);
-	state_save_register_int   ("main5", 0, "control", &sprites_disabled);
-	state_save_register_int   ("main6", 0, "control", &sprites_active_area);
-	state_save_register_UINT16("main7", 0, "memory", spriteram_delayed, spriteram_size/2);
-	state_save_register_UINT16("main8", 0, "memory", spriteram_buffered, spriteram_size/2);
+	state_save_register_global(f2_hide_pixels);
+	state_save_register_global(f2_sprite_type);
+	state_save_register_global_array(spritebank);
+	state_save_register_global(koshien_spritebank);
+	state_save_register_global(sprites_disabled);
+	state_save_register_global(sprites_active_area);
+	state_save_register_global_pointer(spriteram_delayed, spriteram_size/2);
+	state_save_register_global_pointer(spriteram_buffered, spriteram_size/2);
 
 	return 0;
 }

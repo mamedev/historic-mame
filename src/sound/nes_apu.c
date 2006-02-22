@@ -666,32 +666,88 @@ void NESPSG_update_sound(void *param, stream_sample_t **inputs, stream_sample_t 
 /* INITIALIZE APU SYSTEM */
 static void *nesapu_start(int sndindex, int clock, const void *config)
 {
-  const struct NESinterface *intf = config;
-  struct nesapu_info *info;
+	const struct NESinterface *intf = config;
+	struct nesapu_info *info;
+	int i;
 
-  info = auto_malloc(sizeof(*info));
-  memset(info, 0, sizeof(*info));
+	info = auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
 
-  /* Initialize global variables */
-  info->samps_per_sync = Machine->sample_rate / Machine->drv->frames_per_second;
-  info->buffer_size = info->samps_per_sync;
-  info->real_rate = info->samps_per_sync * Machine->drv->frames_per_second;
-  info->apu_incsize = (float) (N2A03_DEFAULTCLOCK / (float) info->real_rate);
+	/* Initialize global variables */
+	info->samps_per_sync = Machine->sample_rate / Machine->drv->frames_per_second;
+	info->buffer_size = info->samps_per_sync;
+	info->real_rate = info->samps_per_sync * Machine->drv->frames_per_second;
+	info->apu_incsize = (float) (N2A03_DEFAULTCLOCK / (float) info->real_rate);
 
-  /* Use initializer calls */
-  create_noise(info->noise_lut, 13, NOISE_LONG);
-  create_vbltimes(info->vbl_times,vbl_length,info->samps_per_sync);
-  create_syncs(info, info->samps_per_sync);
+	/* Use initializer calls */
+	create_noise(info->noise_lut, 13, NOISE_LONG);
+	create_vbltimes(info->vbl_times,vbl_length,info->samps_per_sync);
+	create_syncs(info, info->samps_per_sync);
 
-  /* Adjust buffer size if 16 bits */
-  info->buffer_size+=info->samps_per_sync;
+	/* Adjust buffer size if 16 bits */
+	info->buffer_size+=info->samps_per_sync;
 
-  /* Initialize individual chips */
-  (info->APU.dpcm).cpu_mem=memory_region(intf->region);
+	/* Initialize individual chips */
+	(info->APU.dpcm).cpu_mem=memory_region(intf->region);
 
-  info->stream = stream_create(0, 1, Machine->sample_rate, info, NESPSG_update_sound);
+	info->stream = stream_create(0, 1, Machine->sample_rate, info, NESPSG_update_sound);
 
-  return info;
+	/* register for save */
+	for (i = 0; i < 2; i++)
+	{
+		state_save_register_item_array("apu", sndindex + i * 100, info->APU.squ[i].regs);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].vbl_length);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].freq);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].phaseacc);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].output_vol);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].env_phase);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].sweep_phase);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].adder);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].env_vol);
+		state_save_register_item("apu", sndindex + i * 100, info->APU.squ[i].enabled);
+	}
+
+	state_save_register_item_array("apu", sndindex, info->APU.tri.regs);
+	state_save_register_item("apu", sndindex, info->APU.tri.linear_length);
+	state_save_register_item("apu", sndindex, info->APU.tri.vbl_length);
+	state_save_register_item("apu", sndindex, info->APU.tri.write_latency);
+	state_save_register_item("apu", sndindex, info->APU.tri.phaseacc);
+	state_save_register_item("apu", sndindex, info->APU.tri.output_vol);
+	state_save_register_item("apu", sndindex, info->APU.tri.adder);
+	state_save_register_item("apu", sndindex, info->APU.tri.counter_started);
+	state_save_register_item("apu", sndindex, info->APU.tri.enabled);
+
+	state_save_register_item_array("apu", sndindex, info->APU.noi.regs);
+	state_save_register_item("apu", sndindex, info->APU.noi.cur_pos);
+	state_save_register_item("apu", sndindex, info->APU.noi.vbl_length);
+	state_save_register_item("apu", sndindex, info->APU.noi.phaseacc);
+	state_save_register_item("apu", sndindex, info->APU.noi.output_vol);
+	state_save_register_item("apu", sndindex, info->APU.noi.env_phase);
+	state_save_register_item("apu", sndindex, info->APU.noi.env_vol);
+	state_save_register_item("apu", sndindex, info->APU.noi.enabled);
+
+	state_save_register_item_array("apu", sndindex, info->APU.dpcm.regs);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.address);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.length);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.bits_left);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.phaseacc);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.output_vol);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.cur_byte);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.enabled);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.irq_occurred);
+	state_save_register_item("apu", sndindex, info->APU.dpcm.vol);
+
+	state_save_register_item_array("apu", sndindex, info->APU.regs);
+
+#ifdef USE_QUEUE
+	state_save_register_item_array("apu", sndindex, info->APU.queue);
+	state_save_register_item("apu", sndindex, info->APU.head);
+	state_save_register_item("apu", sndindex, info->APU.tail);
+#else
+	state_save_register_item("apu", sndindex, info->APU.buf_pos);
+#endif
+
+	return info;
 }
 
 

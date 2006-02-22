@@ -107,7 +107,7 @@ void tmp68301_update_timer( int i )
 	}
 }
 
-MACHINE_INIT( tmp68301 )
+MACHINE_RESET( tmp68301 )
 {
 	int i;
 	for (i = 0; i < 3; i++)

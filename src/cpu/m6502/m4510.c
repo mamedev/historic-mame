@@ -102,8 +102,7 @@ z:      xxxx address bits a19 .. a16 for memory accesses with a15 1 ?
 
 #include <stdio.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "m6502.h"
 #include "m4510.h"
 

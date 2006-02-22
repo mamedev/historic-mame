@@ -9,9 +9,7 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "osd_cpu.h"
-#include "mamedbg.h"
-#include "state.h"
+#include "debugger.h"
 #include "h83002.h"
 #include "h8priv.h"
 

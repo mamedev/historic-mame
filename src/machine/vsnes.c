@@ -216,7 +216,7 @@ READ8_HANDLER( vsnes_in1_1_r )
  *
  *************************************/
 
-MACHINE_INIT( vsnes )
+MACHINE_RESET( vsnes )
 {
 	input_latch[0] = input_latch[1] = 0;
 	input_latch[2] = input_latch[3] = 0;
@@ -234,7 +234,7 @@ MACHINE_INIT( vsnes )
  *  Init machine
  *
  *************************************/
-MACHINE_INIT( vsdual )
+MACHINE_RESET( vsdual )
 {
 	input_latch[0] = input_latch[1] = 0;
 	input_latch[2] = input_latch[3] = 0;

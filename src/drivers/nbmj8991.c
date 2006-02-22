@@ -77,14 +77,14 @@ static READ8_HANDLER( nbmj8991_sound_r )
 	return data;
 }
 
-static MACHINE_INIT( nbmj8991 )
+static MACHINE_RESET( nbmj8991 )
 {
 	if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
 	{
 		memory_configure_bank(1, 0, 4, memory_region(REGION_CPU2) + 0x8000, 0x8000);
 		memory_set_bank(1, 0);
 	}
-	machine_init_nb1413m3();
+	machine_reset_nb1413m3();
 }
 
 static DRIVER_INIT( pstadium )
@@ -1781,7 +1781,7 @@ static MACHINE_DRIVER_START( nbmjdrv1 )	// galkoku
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nbmj8991)
+	MDRV_MACHINE_RESET(nbmj8991)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -1818,7 +1818,7 @@ static MACHINE_DRIVER_START( nbmjdrv2 )	// pstadium
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(nbmj8991)
+	MDRV_MACHINE_RESET(nbmj8991)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)

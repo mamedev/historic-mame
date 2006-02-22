@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 
 UINT8 *videoram;
@@ -43,6 +42,41 @@ mame_bitmap *tmpbitmap;
 
 int flip_screen_x, flip_screen_y;
 static int global_attribute_changed;
+
+void generic_video_init(void)
+{
+	videoram = NULL;
+	videoram16 = NULL;
+	videoram32 = NULL;
+	videoram_size = 0;
+	colorram = NULL;
+	colorram16 = NULL;
+	colorram32 = NULL;
+	spriteram = NULL;
+	spriteram16 = NULL;
+	spriteram32 = NULL;
+	spriteram_2 = NULL;
+	spriteram16_2 = NULL;
+	spriteram32_2 = NULL;
+	spriteram_3 = NULL;
+	spriteram16_3 = NULL;
+	spriteram32_3 = NULL;
+	buffered_spriteram = NULL;
+	buffered_spriteram16 = NULL;
+	buffered_spriteram32 = NULL;
+	buffered_spriteram_2 = NULL;
+	buffered_spriteram16_2 = NULL;
+	buffered_spriteram32_2 = NULL;
+	spriteram_size = 0;		/* ... here just for convenience */
+	spriteram_2_size = 0;
+	spriteram_3_size = 0;
+	dirtybuffer = NULL;
+	dirtybuffer16 = NULL;
+	dirtybuffer32 = NULL;
+	tmpbitmap = NULL;
+	flip_screen_x = flip_screen_y = 0;
+}
+
 
 void video_generic_postload(void)
 {
@@ -84,7 +118,7 @@ VIDEO_START( generic_bitmapped )
 
 	/* Generic_Bitmapped games (with no dirtybuffer) must store the current screen tmpbitmap
        in a save state to insure the screen redraws properly upon load                    */
-	state_save_register_UINT8("video", 0, "tmpbitmap", (UINT8*)tmpbitmap->base, tmpbitmap->rowbytes * tmpbitmap->height ) ;
+	state_save_register_bitmap("video", 0, "tmpbitmap", tmpbitmap) ;
 
 	return 0;
 }

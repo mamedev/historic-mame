@@ -64,11 +64,8 @@
  *****************************************************************************/
 
 #include <stdio.h>
-#include "cpuintrf.h"
-#include "memory.h"
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "i8051.h"
 
 #define VERBOSE 1
@@ -503,41 +500,41 @@ void i8051_init(void)
 	int cpu = cpu_getactivecpu();
 
 	//Internal stuff
-	state_save_register_UINT16("i8051", cpu, "PPC",       &i8051.ppc,    1);
-	state_save_register_UINT16("i8051", cpu, "PC",        &i8051.pc,     1);
-	state_save_register_UINT16("i8051", cpu, "SUBTYPE",   &i8051.subtype,1);
-	state_save_register_UINT8 ("i8051", cpu, "RWM",       &i8051.rwm ,1);
-	state_save_register_UINT8 ("i8051", cpu, "CUR_IRQ",   &i8051.cur_irq ,1);
+	state_save_register_item("i8051", cpu, i8051.ppc);
+	state_save_register_item("i8051", cpu, i8051.pc);
+	state_save_register_item("i8051", cpu, i8051.subtype);
+	state_save_register_item("i8051", cpu, i8051.rwm );
+	state_save_register_item("i8051", cpu, i8051.cur_irq );
 	//SFR Registers
-	state_save_register_UINT8 ("i8051", cpu, "PO",        &i8051.po,     1);
-	state_save_register_UINT8 ("i8051", cpu, "SP",        &i8051.sp,     1);
-	state_save_register_UINT8 ("i8051", cpu, "DPL",       &i8051.dpl,    1);
-	state_save_register_UINT8 ("i8051", cpu, "DPH",       &i8051.dph,    1);
-	state_save_register_UINT8 ("i8051", cpu, "PCON",	  &i8051.pcon,   1);
-	state_save_register_UINT8 ("i8051", cpu, "TCON",	  &i8051.tcon,   1);
-	state_save_register_UINT8 ("i8051", cpu, "TMOD",      &i8051.tmod,   1);
-	state_save_register_UINT8 ("i8051", cpu, "TL0",       &i8051.tl0,    1);
-	state_save_register_UINT8 ("i8051", cpu, "TL1",       &i8051.tl1,    1);
-	state_save_register_UINT8 ("i8051", cpu, "TH0",       &i8051.th0,    1);
-	state_save_register_UINT8 ("i8051", cpu, "TH1",       &i8051.th1,    1);
-	state_save_register_UINT8 ("i8051", cpu, "P1",        &i8051.p1,     1);
-	state_save_register_UINT8 ("i8051", cpu, "SCON",      &i8051.scon,   1);
-	state_save_register_UINT8 ("i8051", cpu, "SBUF",      &i8051.sbuf,   1);
-	state_save_register_UINT8 ("i8051", cpu, "P2",        &i8051.p2,     1);
-	state_save_register_UINT8 ("i8051", cpu, "IE",        &i8051.ie,     1);
-	state_save_register_UINT8 ("i8051", cpu, "P3",        &i8051.p3,     1);
-	state_save_register_UINT8 ("i8051", cpu, "IP",        &i8051.ip,     1);
+	state_save_register_item("i8051", cpu, i8051.po);
+	state_save_register_item("i8051", cpu, i8051.sp);
+	state_save_register_item("i8051", cpu, i8051.dpl);
+	state_save_register_item("i8051", cpu, i8051.dph);
+	state_save_register_item("i8051", cpu, i8051.pcon);
+	state_save_register_item("i8051", cpu, i8051.tcon);
+	state_save_register_item("i8051", cpu, i8051.tmod);
+	state_save_register_item("i8051", cpu, i8051.tl0);
+	state_save_register_item("i8051", cpu, i8051.tl1);
+	state_save_register_item("i8051", cpu, i8051.th0);
+	state_save_register_item("i8051", cpu, i8051.th1);
+	state_save_register_item("i8051", cpu, i8051.p1);
+	state_save_register_item("i8051", cpu, i8051.scon);
+	state_save_register_item("i8051", cpu, i8051.sbuf);
+	state_save_register_item("i8051", cpu, i8051.p2);
+	state_save_register_item("i8051", cpu, i8051.ie);
+	state_save_register_item("i8051", cpu, i8051.p3);
+	state_save_register_item("i8051", cpu, i8051.ip);
 	//8052 Only registers
 	#if (HAS_I8052 || HAS_I8752)
-		state_save_register_UINT8 ("i8051", cpu, "T2CON", &i8051.tcon,   1);
-		state_save_register_UINT8 ("i8051", cpu, "RCAP2L",&i8051.rcap2l, 1);
-		state_save_register_UINT8 ("i8051", cpu, "RCAP2H",&i8051.rcap2h, 1);
-		state_save_register_UINT8 ("i8051", cpu, "TL2",   &i8051.tl2,    1);
-		state_save_register_UINT8 ("i8051", cpu, "TH2",   &i8051.th2,    1);
+		state_save_register_item("i8051", cpu, i8051.tcon);
+		state_save_register_item("i8051", cpu, i8051.rcap2l);
+		state_save_register_item("i8051", cpu, i8051.rcap2h);
+		state_save_register_item("i8051", cpu, i8051.tl2);
+		state_save_register_item("i8051", cpu, i8051.th2);
 	#endif
-	state_save_register_UINT8 ("i8051", cpu, "PSW",       &i8051.psw,    1);
-	state_save_register_UINT8 ("i8051", cpu, "ACC",       &i8051.acc,    1);
-	state_save_register_UINT8 ("i8051", cpu, "B",         &i8051.b,      1);
+	state_save_register_item("i8051", cpu, i8051.psw);
+	state_save_register_item("i8051", cpu, i8051.acc);
+	state_save_register_item("i8051", cpu, i8051.b);
 }
 
 /* Reset registers to the initial values */

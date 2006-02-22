@@ -308,7 +308,7 @@ INTERRUPT_GEN( metlclsh_interrupt2 )
 		cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
-static MACHINE_INIT( metlclsh )
+static MACHINE_RESET( metlclsh )
 {
 	flip_screen_set(0);
 }
@@ -328,7 +328,7 @@ static MACHINE_DRIVER_START( metlclsh )
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
-	MDRV_MACHINE_INIT(metlclsh)
+	MDRV_MACHINE_RESET(metlclsh)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

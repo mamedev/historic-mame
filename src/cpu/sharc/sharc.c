@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "sharc.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 static void sharc_dma_exec(int channel);
 

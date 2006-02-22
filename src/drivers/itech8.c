@@ -610,7 +610,7 @@ static void generate_sound_irq(int state)
  *
  *************************************/
 
-static MACHINE_INIT( itech8 )
+static MACHINE_RESET( itech8 )
 {
 	/* make sure bank 0 is selected */
 	if (Machine->drv->cpu[0].cpu_type == CPU_M6809)
@@ -1756,7 +1756,7 @@ static MACHINE_DRIVER_START( itech8_core_lo )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((263. - 240.) / 263.) * 1000000. / 60.))
 
-	MDRV_MACHINE_INIT(itech8)
+	MDRV_MACHINE_RESET(itech8)
 	MDRV_NVRAM_HANDLER(itech8)
 
 	/* video hardware */

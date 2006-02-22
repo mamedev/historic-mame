@@ -132,8 +132,8 @@ VIDEO_START( combascb );
 
 WRITE8_HANDLER( combascb_bankselect_w );
 WRITE8_HANDLER( combasc_bankselect_w );
-MACHINE_INIT( combasc );
-MACHINE_INIT( combascb );
+MACHINE_RESET( combasc );
+MACHINE_RESET( combascb );
 WRITE8_HANDLER( combasc_pf_control_w );
 READ8_HANDLER( combasc_scrollram_r );
 WRITE8_HANDLER( combasc_scrollram_w );
@@ -675,7 +675,7 @@ static MACHINE_DRIVER_START( combasc )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(20)
 
-	MDRV_MACHINE_INIT(combasc)
+	MDRV_MACHINE_RESET(combasc)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -717,7 +717,7 @@ static MACHINE_DRIVER_START( combascb )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(20)
 
-	MDRV_MACHINE_INIT(combasc)
+	MDRV_MACHINE_RESET(combasc)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -56,7 +56,7 @@ static void update_interrupts(void)
 }
 
 
-static MACHINE_INIT( thunderj )
+static MACHINE_RESET( thunderj )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data, 2);
@@ -356,7 +356,7 @@ static MACHINE_DRIVER_START( thunderj )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(thunderj)
+	MDRV_MACHINE_RESET(thunderj)
 	MDRV_NVRAM_HANDLER(atarigen)
 	MDRV_INTERLEAVE(100)
 

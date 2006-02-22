@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"
 
@@ -1568,43 +1567,43 @@ void psx_driver_init( void )
 	psx_dma_install_write_handler( 0, mdec0_write );
 	psx_dma_install_write_handler( 2, gpu_write );
 
-	state_save_register_UINT32( "psx", 0, "m_n_irqdata", &m_n_irqdata, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_irqmask", &m_n_irqmask, 1 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_dmabase", m_p_n_dmabase, 7 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_dmablockcontrol", m_p_n_dmablockcontrol, 7 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_dmachannelcontrol", m_p_n_dmachannelcontrol, 7 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_dma_ticks", m_p_n_dma_ticks, 7 );
-	state_save_register_UINT32( "psx", 0, "m_p_b_dma_running", m_p_b_dma_running, 7 );
-	state_save_register_UINT32( "psx", 0, "m_n_dpcp", &m_n_dpcp, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_dicr", &m_n_dicr, 1 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_root_count", m_p_n_root_count, 3 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_root_mode", m_p_n_root_mode, 3 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_root_target", m_p_n_root_target, 3 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_root_start", m_p_n_root_start, 3 );
+	state_save_register_global( m_n_irqdata );
+	state_save_register_global( m_n_irqmask );
+	state_save_register_global_array( m_p_n_dmabase );
+	state_save_register_global_array( m_p_n_dmablockcontrol );
+	state_save_register_global_array( m_p_n_dmachannelcontrol );
+	state_save_register_global_array( m_p_n_dma_ticks );
+	state_save_register_global_array( m_p_b_dma_running );
+	state_save_register_global( m_n_dpcp );
+	state_save_register_global( m_n_dicr );
+	state_save_register_global_array( m_p_n_root_count );
+	state_save_register_global_array( m_p_n_root_mode );
+	state_save_register_global_array( m_p_n_root_target );
+	state_save_register_global_array( m_p_n_root_start );
 
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_status", m_p_n_sio_status, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_mode", m_p_n_sio_mode, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_control", m_p_n_sio_control, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_baud", m_p_n_sio_baud, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx", m_p_n_sio_tx, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx", m_p_n_sio_rx, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_prev", m_p_n_sio_tx_prev, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_prev", m_p_n_sio_rx_prev, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_data", m_p_n_sio_rx_data, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_data", m_p_n_sio_tx_data, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_shift", m_p_n_sio_rx_shift, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_shift", m_p_n_sio_tx_shift, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_bits", m_p_n_sio_rx_bits, 2 );
-	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_bits", m_p_n_sio_tx_bits, 2 );
+	state_save_register_global_array( m_p_n_sio_status );
+	state_save_register_global_array( m_p_n_sio_mode );
+	state_save_register_global_array( m_p_n_sio_control );
+	state_save_register_global_array( m_p_n_sio_baud );
+	state_save_register_global_array( m_p_n_sio_tx );
+	state_save_register_global_array( m_p_n_sio_rx );
+	state_save_register_global_array( m_p_n_sio_tx_prev );
+	state_save_register_global_array( m_p_n_sio_rx_prev );
+	state_save_register_global_array( m_p_n_sio_rx_data );
+	state_save_register_global_array( m_p_n_sio_tx_data );
+	state_save_register_global_array( m_p_n_sio_rx_shift );
+	state_save_register_global_array( m_p_n_sio_tx_shift );
+	state_save_register_global_array( m_p_n_sio_rx_bits );
+	state_save_register_global_array( m_p_n_sio_tx_bits );
 
-	state_save_register_UINT32( "psx", 0, "m_n_mdec0_command", &m_n_mdec0_command, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_mdec0_address", &m_n_mdec0_address, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_mdec0_size", &m_n_mdec0_size, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_mdec1_command", &m_n_mdec1_command, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_mdec1_status", &m_n_mdec1_status, 1 );
-	state_save_register_INT32( "psx", 0, "m_p_n_mdec_quantize_y", m_p_n_mdec_quantize_y, DCTSIZE2 );
-	state_save_register_INT32( "psx", 0, "m_p_n_mdec_quantize_uv", m_p_n_mdec_quantize_uv, DCTSIZE2 );
-	state_save_register_INT32( "psx", 0, "m_p_n_mdec_cos", m_p_n_mdec_cos, DCTSIZE2 );
+	state_save_register_global( m_n_mdec0_command );
+	state_save_register_global( m_n_mdec0_address );
+	state_save_register_global( m_n_mdec0_size );
+	state_save_register_global( m_n_mdec1_command );
+	state_save_register_global( m_n_mdec1_status );
+	state_save_register_global_array( m_p_n_mdec_quantize_y );
+	state_save_register_global_array( m_p_n_mdec_quantize_uv );
+	state_save_register_global_array( m_p_n_mdec_cos );
 
 	state_save_register_func_postload( psx_postload );
 }

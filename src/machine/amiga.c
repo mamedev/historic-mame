@@ -1539,7 +1539,7 @@ void amiga_m68k_reset( void )
 	}
 }
 
-MACHINE_INIT(amiga)
+MACHINE_RESET(amiga)
 {
 	/* set m68k reset  function */
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)amiga_m68k_reset);

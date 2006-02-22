@@ -23,10 +23,9 @@
 **  CONSTANTS
 **#################################################################################################*/
 
-#define DASM_LINES			(1000)
-#define DASM_WIDTH			(50)
+#define DEFAULT_DASM_LINES	(1000)
+#define DEFAULT_DASM_WIDTH	(50)
 #define DASM_MAX_BYTES		(16)
-#define DASM_MAX_CHARS		(8 + 2 + DASM_WIDTH + 2 + 3*DASM_MAX_BYTES)
 
 
 
@@ -73,9 +72,6 @@ struct _debug_view
 	void			(*update_func)(debug_view *);/* callback for the update */
 	debug_view_char *viewdata;					/* current array of view data */
 	int				viewdata_size;				/* number of elements of the viewdata array */
-
-	/* common info */
-	UINT8			cpunum;						/* target CPU number */
 };
 /* typedef struct _debug_view debug_view -- defined in debugvw.h */
 
@@ -96,6 +92,7 @@ typedef struct _debug_view_register debug_view_register;
 
 struct _debug_view_registers
 {
+	UINT8			recompute;					/* do we need to recompute the layout the next change? */
 	UINT8			cpunum;						/* target CPU number */
 	int				divider;					/* dividing column */
 	UINT32			last_update;				/* execution counter at last update */
@@ -107,17 +104,24 @@ typedef struct _debug_view_registers debug_view_registers;
 /* debug_view_disasm contains data specific to a disassembly view */
 struct _debug_view_disasm
 {
+	UINT8			recompute;					/* do we need to recompute the layout the next change? */
 	UINT8			cpunum;						/* target CPU number */
+	UINT8			display_raw;				/* display raw opcodes? */
+	UINT8			display_raw_encrypted;		/* display encrypted opcodes? */
+	UINT32			backwards_steps;			/* number of backwards steps */
+	UINT32			dasm_width;					/* width of the disassembly area */
 	UINT8 *			last_opcode_base;			/* last opcode base */
 	UINT8 *			last_opcode_arg_base;		/* last opcode arg base */
 	int				divider1, divider2;			/* left and right divider columns */
 	UINT8			live_tracking;				/* track the value of the live expression? */
 	UINT64			last_result;				/* last result from the expression */
-	parsed_expression *expression;		/* expression to compute */
+	parsed_expression *expression;				/* expression to compute */
 	char *			expression_string;			/* copy of the expression string */
 	UINT8			expression_dirty;			/* true if the expression needs to be re-evaluated */
-	offs_t			address[DASM_LINES];		/* addresses of the instructions */
-	char			dasm[DASM_LINES][DASM_MAX_CHARS];/* disassembled instructions */
+	UINT32			allocated_rows;				/* allocated rows */
+	UINT32			allocated_cols;				/* allocated columns */
+	offs_t *		address;					/* addresses of the instructions */
+	char *			dasm;						/* disassembled instructions */
 };
 typedef struct _debug_view_disasm debug_view_disasm;
 
@@ -134,7 +138,7 @@ struct _debug_view_memory
 	UINT8			live_tracking;				/* track the value of the live expression? */
 	UINT8			byte_offset;				/* byte offset within each row */
 	UINT64			last_result;				/* last result from the expression */
-	parsed_expression *expression;		/* expression to compute */
+	parsed_expression *expression;				/* expression to compute */
 	char *			expression_string;			/* copy of the expression string */
 	UINT8			expression_dirty;			/* true if the expression needs to be re-evaluated */
 };
@@ -165,6 +169,8 @@ static void console_update(debug_view *view);
 static int registers_alloc(debug_view *view);
 static void registers_free(debug_view *view);
 static void registers_update(debug_view *view);
+static void	registers_getprop(debug_view *view, UINT32 property, debug_property_info *value);
+static void	registers_setprop(debug_view *view, UINT32 property, debug_property_info value);
 
 static int disasm_alloc(debug_view *view);
 static void disasm_free(debug_view *view);
@@ -182,7 +188,7 @@ static const debug_view_callbacks callback_table[] =
 {
 	{	NULL,				NULL,				NULL,				NULL,				NULL },
 	{	NULL,				NULL,				console_update,		NULL,				NULL },
-	{	registers_alloc,	registers_free,		registers_update,	NULL,				NULL },
+	{	registers_alloc,	registers_free,		registers_update,	registers_getprop,	registers_setprop },
 	{	disasm_alloc,		disasm_free,		disasm_update,		disasm_getprop,		disasm_setprop },
 	{	memory_alloc,		memory_free,		memory_update,		memory_getprop,		memory_setprop }
 };
@@ -201,6 +207,7 @@ void debug_view_init(void)
 {
 	/* reset the initial list */
 	first_view = NULL;
+	add_exit_callback(debug_view_exit);
 }
 
 
@@ -346,10 +353,6 @@ void debug_view_get_property(debug_view *view, int property, debug_property_info
 			value->p = (void *) view->viewdata;
 			break;
 
-		case DVP_CPUNUM:
-			value->i = view->cpunum;
-			break;
-
 		case DVP_SUPPORTS_CURSOR:
 			value->i = view->supports_cursor;
 			break;
@@ -394,7 +397,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->visible_rows = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -404,7 +407,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->visible_cols = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -414,7 +417,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->total_rows = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -424,7 +427,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->total_cols = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -434,7 +437,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->top_row = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -444,7 +447,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->left_col = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -452,22 +455,12 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 		case DVP_UPDATE_CALLBACK:
 			debug_view_begin_update(view);
 			view->update_func = (void (*)(debug_view *)) value.f;
-			view->update_pending = 1;
+			view->update_pending = TRUE;
 			debug_view_end_update(view);
 			break;
 
 		case DVP_VIEW_DATA:
 			/* read-only */
-			break;
-
-		case DVP_CPUNUM:
-			if (value.i != view->cpunum)
-			{
-				debug_view_begin_update(view);
-				view->cpunum = value.i;
-				view->update_pending = 1;
-				debug_view_end_update(view);
-			}
 			break;
 
 		case DVP_SUPPORTS_CURSOR:
@@ -479,7 +472,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->cursor_visible = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -489,7 +482,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->cursor_row = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -499,7 +492,7 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			{
 				debug_view_begin_update(view);
 				view->cursor_col = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -588,7 +581,7 @@ void debug_view_update_all(void)
 	for (view = first_view; view != NULL; view = view->next)
 	{
 		debug_view_begin_update(view);
-		view->update_pending = 1;
+		view->update_pending = TRUE;
 		debug_view_end_update(view);
 	}
 }
@@ -608,7 +601,7 @@ void debug_view_update_type(int type)
 		if (view->type == type)
 		{
 			debug_view_begin_update(view);
-			view->update_pending = 1;
+			view->update_pending = TRUE;
 			debug_view_end_update(view);
 		}
 }
@@ -690,7 +683,7 @@ static int registers_alloc(debug_view *view)
 	memset(regdata, 0, sizeof(*regdata));
 
 	/* initialize */
-	regdata->cpunum = -1;
+	regdata->recompute = TRUE;
 
 	/* stash the extra data pointer */
 	view->extra_data = regdata;
@@ -757,7 +750,7 @@ static void add_register(debug_view *view, int regnum, const char *str)
 
 	/* note the register number and info */
 	regdata->reg[view->total_rows].lastval  =
-	regdata->reg[view->total_rows].currval  = cpunum_get_reg(view->cpunum, regnum);
+	regdata->reg[view->total_rows].currval  = cpunum_get_reg(regdata->cpunum, regnum);
 	regdata->reg[view->total_rows].regnum   = regnum;
 	regdata->reg[view->total_rows].tagstart = tagstart;
 	regdata->reg[view->total_rows].taglen   = taglen;
@@ -778,8 +771,8 @@ static void add_register(debug_view *view, int regnum, const char *str)
 
 static void registers_recompute(debug_view *view)
 {
-	const int *list = cpunum_debug_register_list(view->cpunum);
 	debug_view_registers *regdata = view->extra_data;
+	const int *list = cpunum_debug_register_list(regdata->cpunum);
 	int regnum, maxtaglen, maxvallen;
 
 	/* reset the view parameters */
@@ -832,7 +825,7 @@ static void registers_recompute(debug_view *view)
 	regdata->reg[view->total_rows].tagstart = 0;
 	regdata->reg[view->total_rows].taglen   = 5;
 	regdata->reg[view->total_rows].valstart = 6;
-	regdata->reg[view->total_rows].vallen   = strlen(cpunum_flags(view->cpunum));
+	regdata->reg[view->total_rows].vallen   = strlen(cpunum_flags(regdata->cpunum));
 	maxtaglen = MAX(maxtaglen, regdata->reg[view->total_rows].taglen);
 	maxvallen = MAX(maxvallen, regdata->reg[view->total_rows].vallen);
 	view->total_rows++;
@@ -859,15 +852,15 @@ static void registers_recompute(debug_view *view)
 			break;
 
 		/* retrieve the string for this register */
-		str = cpunum_reg_string(view->cpunum, regnum);
+		str = cpunum_reg_string(regdata->cpunum, regnum);
 
 		/* did we get a string? */
 		if (str && str[0] != '~')
 			add_register(view, regnum, str);
 	}
 
-	/* update our concept of a CPU number */
-	regdata->cpunum = view->cpunum;
+	/* no longer need to recompute */
+	regdata->recompute = FALSE;
 }
 
 
@@ -884,7 +877,7 @@ static void registers_update(debug_view *view)
 	UINT32 row, i;
 
 	/* if our assumptions changed, revisit them */
-	if (view->cpunum != regdata->cpunum)
+	if (regdata->recompute)
 		registers_recompute(view);
 
 	/* loop over visible rows */
@@ -938,10 +931,10 @@ static void registers_update(debug_view *view)
 			}
 			else
 			{
-				data = (char *)cpunum_reg_string(view->cpunum, reg->regnum);
+				data = (char *)cpunum_reg_string(regdata->cpunum, reg->regnum);
 				if (regdata->last_update != execution_counter)
 					reg->lastval = reg->currval;
-				reg->currval = cpunum_get_reg(view->cpunum, reg->regnum);
+				reg->currval = cpunum_get_reg(regdata->cpunum, reg->regnum);
 			}
 
 			/* see if we changed */
@@ -992,6 +985,57 @@ static void registers_update(debug_view *view)
 }
 
 
+/*-------------------------------------------------
+    registers_getprop - return the value
+    of a given property
+-------------------------------------------------*/
+
+static void	registers_getprop(debug_view *view, UINT32 property, debug_property_info *value)
+{
+	debug_view_registers *regdata = view->extra_data;
+
+	switch (property)
+	{
+		case DVP_REGS_CPUNUM:
+			value->i = regdata->cpunum;
+			break;
+
+		default:
+			osd_die("Attempt to get invalid property %d on debug view type %d\n", property, view->type);
+			break;
+	}
+}
+
+
+/*-------------------------------------------------
+    registers_getprop - set the value
+    of a given property
+-------------------------------------------------*/
+
+static void	registers_setprop(debug_view *view, UINT32 property, debug_property_info value)
+{
+	debug_view_registers *regdata = view->extra_data;
+
+	switch (property)
+	{
+		case DVP_REGS_CPUNUM:
+			if (value.i != regdata->cpunum)
+			{
+				debug_view_begin_update(view);
+				regdata->cpunum = value.i;
+				regdata->recompute = TRUE;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		default:
+			osd_die("Attempt to set invalid property %d on debug view type %d\n", property, view->type);
+			break;
+	}
+}
+
+
 
 /*###################################################################################################
 **  DISASSEMBLY VIEW
@@ -1013,9 +1057,13 @@ static int disasm_alloc(debug_view *view)
 	memset(dasmdata, 0, sizeof(*dasmdata));
 
 	/* initialize */
-	dasmdata->cpunum = -1;
+	dasmdata->recompute = TRUE;
+	dasmdata->display_raw = TRUE;
+	dasmdata->backwards_steps = 3;
+	dasmdata->dasm_width = DEFAULT_DASM_WIDTH;
 
 	/* stash the extra data pointer */
+	view->total_rows = DEFAULT_DASM_LINES;
 	view->extra_data = dasmdata;
 	return 1;
 }
@@ -1037,6 +1085,10 @@ static void disasm_free(debug_view *view)
 			expression_free(dasmdata->expression);
 		if (dasmdata->expression_string)
 			free(dasmdata->expression_string);
+		if (dasmdata->address)
+			free(dasmdata->address);
+		if (dasmdata->dasm)
+			free(dasmdata->dasm);
 		free(dasmdata);
 	}
 	view->extra_data = NULL;
@@ -1140,7 +1192,7 @@ static offs_t disasm_back_up(int cpunum, const debug_cpu_info *cpuinfo, offs_t s
     byte values
 -------------------------------------------------*/
 
-static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_info *cpuinfo, int minbytes, char *string, int maxchars)
+static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_info *cpuinfo, int minbytes, char *string, int maxchars, int encrypted)
 {
 	int byte, offset = 0;
 	UINT64 val;
@@ -1151,21 +1203,21 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_i
 			if (maxchars >= 2)
 				offset = sprintf(string, "%02X", (UINT32)debug_read_opcode(pcbyte, 1, FALSE));
 			for (byte = 1; byte < numbytes && offset + 3 < maxchars; byte++)
-				offset += sprintf(&string[offset], " %02X", (UINT32)debug_read_opcode(pcbyte + byte, 1, FALSE));
+				offset += sprintf(&string[offset], " %02X", (UINT32)debug_read_opcode(pcbyte + byte, 1, encrypted));
 			break;
 
 		case 2:
 			if (maxchars >= 4)
 				offset = sprintf(string, "%04X", (UINT32)debug_read_opcode(pcbyte, 2, FALSE));
 			for (byte = 2; byte < numbytes && offset + 5 < maxchars; byte += 2)
-				offset += sprintf(&string[offset], " %04X", (UINT32)debug_read_opcode(pcbyte + byte, 2, FALSE));
+				offset += sprintf(&string[offset], " %04X", (UINT32)debug_read_opcode(pcbyte + byte, 2, encrypted));
 			break;
 
 		case 4:
 			if (maxchars >= 8)
 				offset = sprintf(string, "%08X", (UINT32)debug_read_opcode(pcbyte, 4, FALSE));
 			for (byte = 4; byte < numbytes && offset + 9 < maxchars; byte += 4)
-				offset += sprintf(&string[offset], " %08X", (UINT32)debug_read_opcode(pcbyte + byte, 4, FALSE));
+				offset += sprintf(&string[offset], " %08X", (UINT32)debug_read_opcode(pcbyte + byte, 4, encrypted));
 			break;
 
 		case 8:
@@ -1174,7 +1226,7 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_i
 				offset = sprintf(string, "%08X%08X", (UINT32)(val >> 32), (UINT32)val);
 			for (byte = 8; byte < numbytes && offset + 17 < maxchars; byte += 8)
 			{
-				val = debug_read_opcode(pcbyte + byte, 8, FALSE);
+				val = debug_read_opcode(pcbyte + byte, 8, encrypted);
 				offset += sprintf(&string[offset], " %08X%08X", (UINT32)(val >> 32), (UINT32)val);
 			}
 			break;
@@ -1198,8 +1250,8 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_i
 
 static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lines, int original_cpunum)
 {
-	const debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	debug_view_disasm *dasmdata = view->extra_data;
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(dasmdata->cpunum);
 	int chunksize, minbytes, maxbytes, maxbytes_clamped;
 	int use_new_dasm;
 	UINT32 addrmask;
@@ -1212,19 +1264,42 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 	/* determine how many characters we need for an address and set the divider */
 	dasmdata->divider1 = 1 + cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars + 1;
 
-	/* assume a fixed 40 characters for the disassembly */
-	dasmdata->divider2 = dasmdata->divider1 + 1 + DASM_WIDTH + 1;
+	/* assume a fixed number of characters for the disassembly */
+	dasmdata->divider2 = dasmdata->divider1 + 1 + dasmdata->dasm_width + 1;
 
 	/* determine how many bytes we might need to display */
-	chunksize = activecpu_databus_width(ADDRESS_SPACE_PROGRAM) / 8;
 	minbytes = activecpu_min_instruction_bytes();
 	maxbytes = activecpu_max_instruction_bytes();
-	maxbytes_clamped = maxbytes;
-	if (maxbytes_clamped > DASM_MAX_BYTES)
-		maxbytes_clamped = DASM_MAX_BYTES;
-	view->total_cols = dasmdata->divider2 + 1 + 2 * maxbytes_clamped + (maxbytes_clamped / minbytes - 1) + 1;
-	view->total_rows = DASM_LINES;
+	if (dasmdata->display_raw)
+	{
+		chunksize = activecpu_databus_width(ADDRESS_SPACE_PROGRAM) / 8;
+		maxbytes_clamped = maxbytes;
+		if (maxbytes_clamped > DASM_MAX_BYTES)
+			maxbytes_clamped = DASM_MAX_BYTES;
+		view->total_cols = dasmdata->divider2 + 1 + 2 * maxbytes_clamped + (maxbytes_clamped / minbytes - 1) + 1;
+	}
+	else
+		view->total_cols = dasmdata->divider2 + 1;
 
+	/* reallocate memory if we don't have enough */
+	if (dasmdata->allocated_rows < view->total_rows || dasmdata->allocated_cols < view->total_cols)
+	{
+		/* update our values */
+		dasmdata->allocated_rows = view->total_rows;
+		dasmdata->allocated_cols = view->total_cols;
+
+		/* allocate address array */
+		if (dasmdata->address)
+			free(dasmdata->address);
+		dasmdata->address = malloc(sizeof(dasmdata->address[0]) * dasmdata->allocated_rows);
+
+		/* allocate disassembly buffer */
+		if (dasmdata->dasm)
+			free(dasmdata->dasm);
+		dasmdata->dasm = malloc(sizeof(dasmdata->dasm[0]) * dasmdata->allocated_rows * dasmdata->allocated_cols);
+	}
+
+	/* iterate over lines */
 	for (line = 0; line < lines; line++)
 	{
 		offs_t pcbyte, tempaddr;
@@ -1232,13 +1307,14 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		char buffer[100];
 		int numbytes;
 		int instr = startline + line;
+		char *destbuf = &dasmdata->dasm[instr * dasmdata->allocated_cols];
 
 		/* convert PC to a byte offset */
 		pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 		/* convert back and set the address of this instruction */
 		dasmdata->address[instr] = pcbyte;
-		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars, BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM));
+		sprintf(&destbuf[0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars, BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM));
 
 		/* make sure we can translate the address */
 		tempaddr = pcbyte;
@@ -1264,7 +1340,7 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 			else
 			{
 				/* get the disassembly, but only if mapped */
-				if (memory_get_op_ptr(view->cpunum, pcbyte, 0) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
+				if (memory_get_op_ptr(dasmdata->cpunum, pcbyte, 0) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
 				{
 					memory_set_opbase(pcbyte);
 					pc += numbytes = activecpu_dasm(buffer, pc & addrmask) & DASMFLAG_LENGTHMASK;
@@ -1279,21 +1355,26 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		}
 		else
 			sprintf(buffer, "<unmapped>");
-		sprintf(&dasmdata->dasm[instr][dasmdata->divider1 + 1], "%-*s  ", DASM_WIDTH, buffer);
+		sprintf(&destbuf[dasmdata->divider1 + 1], "%-*s  ", dasmdata->dasm_width, buffer);
 
 		/* get the bytes */
-		numbytes = ADDR2BYTE(numbytes, cpuinfo, ADDRESS_SPACE_PROGRAM);
-		disasm_generate_bytes(pcbyte, numbytes, cpuinfo, minbytes, &dasmdata->dasm[instr][dasmdata->divider2], DASM_MAX_CHARS - dasmdata->divider2);
+		if (dasmdata->display_raw)
+		{
+			numbytes = ADDR2BYTE(numbytes, cpuinfo, ADDRESS_SPACE_PROGRAM);
+			disasm_generate_bytes(pcbyte, numbytes, cpuinfo, minbytes, &destbuf[dasmdata->divider2], dasmdata->allocated_cols - dasmdata->divider2, dasmdata->display_raw_encrypted);
+		}
 	}
 
-	/* update our CPU number and opcode base */
-	dasmdata->cpunum = view->cpunum;
+	/* update opcode base information */
 	dasmdata->last_opcode_base = opcode_base;
 	dasmdata->last_opcode_arg_base = opcode_arg_base;
 
 	/* reset the opcode base */
-	if (view->cpunum == original_cpunum)
+	if (dasmdata->cpunum == original_cpunum)
 		memory_set_opbase(activecpu_get_physical_pc_byte());
+
+	/* now longer need to recompute */
+	dasmdata->recompute = FALSE;
 }
 
 
@@ -1304,26 +1385,25 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 
 static void disasm_update(debug_view *view)
 {
-	const debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
-	offs_t pc = cpunum_get_reg(view->cpunum, REG_PC);
-	offs_t pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 	debug_view_disasm *dasmdata = view->extra_data;
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(dasmdata->cpunum);
+	offs_t pc = cpunum_get_reg(dasmdata->cpunum, REG_PC);
+	offs_t pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 	debug_view_char *dest = view->viewdata;
 	int original_cpunum = cpu_getactivecpu();
-	UINT8 need_to_recompute = 0;
 	EXPRERR exprerr;
 	UINT32 row;
 
 	/* switch to the CPU's context */
-	cpuintrf_push_context(view->cpunum);
+	cpuintrf_push_context(dasmdata->cpunum);
 
 	/* if our expression is dirty, fix it */
-	if ((dasmdata->expression_dirty || view->cpunum != dasmdata->cpunum) && dasmdata->expression_string)
+	if (dasmdata->expression_dirty && dasmdata->expression_string)
 	{
 		parsed_expression *expr;
 
 		/* parse the new expression */
-		exprerr = expression_parse(dasmdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
+		exprerr = expression_parse(dasmdata->expression_string, debug_get_cpu_info(dasmdata->cpunum)->symtable, &expr);
 
 		/* if it worked, update the expression */
 		if (exprerr == EXPRERR_NONE)
@@ -1349,13 +1429,13 @@ static void disasm_update(debug_view *view)
 			dasmdata->last_result = result;
 
 			/* see if the new result is an address we already have */
-			for (row = 0; row < DASM_LINES; row++)
+			for (row = 0; row < dasmdata->allocated_rows; row++)
 				if (dasmdata->address[row] == resultbyte)
 					break;
 
 			/* if we didn't find it, or if it's really close to the bottom, recompute */
-			if (row == DASM_LINES || row >= view->total_rows - view->visible_rows)
-				need_to_recompute = 1;
+			if (row == dasmdata->allocated_rows || row >= view->total_rows - view->visible_rows)
+				dasmdata->recompute = TRUE;
 
 			/* otherwise, if it's not visible, adjust the view so it is */
 			else if (row < view->top_row || row >= view->top_row + view->visible_rows - 2)
@@ -1363,28 +1443,25 @@ static void disasm_update(debug_view *view)
 		}
 
 		/* no longer dirty */
-		dasmdata->expression_dirty = 0;
+		dasmdata->expression_dirty = FALSE;
 	}
-
-	/* if our CPU assumptions changed, revisit them */
-	if (view->cpunum != dasmdata->cpunum)
-		need_to_recompute = 1;
 
 	/* if the opcode base has changed, rework things */
 	if (opcode_base != dasmdata->last_opcode_base || opcode_arg_base != dasmdata->last_opcode_arg_base)
-		need_to_recompute = 1;
+		dasmdata->recompute = TRUE;
 
 	/* if we need to recompute, do it */
-	if (need_to_recompute)
+	if (dasmdata->recompute)
 	{
 		/* determine the addresses of what we will display */
-		pc = (UINT32)dasmdata->last_result;
-		pc = disasm_back_up(view->cpunum, cpuinfo, pc, 3);
+		offs_t backpc = disasm_back_up(dasmdata->cpunum, cpuinfo, (UINT32)dasmdata->last_result, dasmdata->backwards_steps);
 
+		/* put ourselves back in the top left */
 		view->top_row = 0;
 		view->left_col = 0;
 
-		disasm_recompute(view, pc, 0, DASM_LINES, original_cpunum);
+		/* recompute the view */
+		disasm_recompute(view, backpc, 0, view->total_rows, original_cpunum);
 	}
 
 	/* loop over visible rows */
@@ -1395,27 +1472,27 @@ static void disasm_update(debug_view *view)
 		debug_cpu_breakpoint *bp;
 		UINT32 col = 0;
 
-		/* if we're on the line with the PC, hilight it */
-		if (effrow < view->total_rows)
+		/* if this visible row is valid, add it to the buffer */
+		if (effrow < dasmdata->allocated_rows)
 		{
+			const char *data = &dasmdata->dasm[effrow * dasmdata->allocated_cols];
+			UINT32 effcol = view->left_col;
+			UINT32 len = 0;
+
+			/* if we're on the line with the PC, recompute and hilight it */
 			if (pcbyte == dasmdata->address[effrow])
 			{
 				attrib = DCA_CURRENT;
-				if (!need_to_recompute)
-					disasm_recompute(view, pc, effrow, 1, original_cpunum);
+				disasm_recompute(view, pc, effrow, 1, original_cpunum);
 			}
+
+			/* if we're on a line with a breakpoint, tag it changed */
 			else
+			{
 				for (bp = cpuinfo->first_bp; bp; bp = bp->next)
 					if (dasmdata->address[effrow] == ADDR2BYTE_MASKED(bp->address, cpuinfo, ADDRESS_SPACE_PROGRAM))
 						attrib = DCA_CHANGED;
-		}
-
-		/* if this visible row is valid, add it to the buffer */
-		if (effrow < view->total_rows)
-		{
-			const char *data = &dasmdata->dasm[effrow][0];
-			UINT32 effcol = view->left_col;
-			UINT32 len = 0;
+			}
 
 			/* get the effective string */
 			len = strlen(data);
@@ -1456,12 +1533,32 @@ static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_inf
 
 	switch (property)
 	{
-		case DVP_EXPRESSION:
+		case DVP_DASM_CPUNUM:
+			value->i = dasmdata->cpunum;
+			break;
+
+		case DVP_DASM_EXPRESSION:
 			value->s = dasmdata->expression_string;
 			break;
 
-		case DVP_TRACK_LIVE:
+		case DVP_DASM_TRACK_LIVE:
 			value->i = dasmdata->live_tracking;
+			break;
+
+		case DVP_DASM_DISPLAY_RAW:
+			value->i = dasmdata->display_raw;
+			break;
+
+		case DVP_DASM_DISPLAY_ENCRYPTED:
+			value->i = dasmdata->display_raw_encrypted;
+			break;
+
+		case DVP_DASM_BACKWARD_STEPS:
+			value->i = dasmdata->backwards_steps;
+			break;
+
+		case DVP_DASM_WIDTH:
+			value->i = dasmdata->dasm_width;
 			break;
 
 		default:
@@ -1482,24 +1579,87 @@ static void	disasm_setprop(debug_view *view, UINT32 property, debug_property_inf
 
 	switch (property)
 	{
-		case DVP_EXPRESSION:
+		case DVP_DASM_CPUNUM:
+			if (value.i != dasmdata->cpunum)
+			{
+				debug_view_begin_update(view);
+				dasmdata->cpunum = value.i;
+
+				/* we need to recompute the expression in the context of the new CPU */
+				dasmdata->expression_dirty = TRUE;
+				dasmdata->recompute = TRUE;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		case DVP_DASM_EXPRESSION:
 			debug_view_begin_update(view);
+
+			/* free the old expression string and allocate a new one */
 			if (dasmdata->expression_string)
 				free(dasmdata->expression_string);
 			dasmdata->expression_string = malloc(strlen(value.s) + 1);
 			if (dasmdata->expression_string)
 				strcpy(dasmdata->expression_string, value.s);
-			dasmdata->expression_dirty = 1;
-			view->update_pending = 1;
+
+			/* update everything as a result */
+			dasmdata->expression_dirty = TRUE;
+			dasmdata->recompute = TRUE;
+			view->update_pending = TRUE;
 			debug_view_end_update(view);
 			break;
 
-		case DVP_TRACK_LIVE:
+		case DVP_DASM_TRACK_LIVE:
 			if (value.i != dasmdata->live_tracking)
 			{
 				debug_view_begin_update(view);
 				dasmdata->live_tracking = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		case DVP_DASM_DISPLAY_RAW:
+			if (value.i != dasmdata->display_raw)
+			{
+				debug_view_begin_update(view);
+				dasmdata->display_raw = value.i;
+				dasmdata->recompute = TRUE;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		case DVP_DASM_DISPLAY_ENCRYPTED:
+			if (value.i != dasmdata->display_raw_encrypted)
+			{
+				debug_view_begin_update(view);
+				dasmdata->display_raw_encrypted = value.i;
+				dasmdata->recompute = TRUE;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		case DVP_DASM_BACKWARD_STEPS:
+			if (value.i != dasmdata->backwards_steps)
+			{
+				debug_view_begin_update(view);
+				dasmdata->backwards_steps = value.i;
+				dasmdata->recompute = TRUE;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		case DVP_DASM_WIDTH:
+			if (value.i != dasmdata->dasm_width)
+			{
+				debug_view_begin_update(view);
+				dasmdata->dasm_width = value.i;
+				dasmdata->recompute = TRUE;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -1538,13 +1698,14 @@ static int memory_alloc(debug_view *view)
 	memset(memdata, 0, sizeof(*memdata));
 
 	/* by default we track live */
-	memdata->live_tracking = 1;
+	memdata->live_tracking = TRUE;
+	memdata->ascii_view = TRUE;
 
 	/* stash the extra data pointer */
 	view->extra_data = memdata;
 
 	/* we support cursors */
-	view->supports_cursor = 1;
+	view->supports_cursor = TRUE;
 	return 1;
 }
 
@@ -1754,7 +1915,7 @@ static void memory_handle_char(debug_view *view, char chval)
 		address += 0x10;
 
 	/* switch off of the current chunk size */
-	cpuintrf_push_context(view->cpunum);
+	cpuintrf_push_context(memdata->cpunum);
 	switch (memdata->bytes_per_chunk)
 	{
 		default:
@@ -1817,22 +1978,22 @@ static void memory_handle_char(debug_view *view, char chval)
 
 static void memory_update(debug_view *view)
 {
-	const debug_cpu_info *cpuinfo = debug_get_cpu_info(view->cpunum);
 	debug_view_memory *memdata = view->extra_data;
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(memdata->cpunum);
 	debug_view_char *dest = view->viewdata;
 	char addrformat[16];
 	EXPRERR exprerr;
 	UINT32 row;
 
 	/* switch to the CPU's context */
-	cpuintrf_push_context(view->cpunum);
+	cpuintrf_push_context(memdata->cpunum);
 
 	/* determine how many characters we need for an address and set the divider */
 	sprintf(addrformat, " %*s%%0%dX ", 8 - cpuinfo->space[memdata->spacenum].logchars, "", cpuinfo->space[memdata->spacenum].logchars);
 
 	/* compute total rows and columns */
 	view->total_rows = (cpuinfo->space[memdata->spacenum].logbytemask / 0x10) + 1;
-	view->total_cols = 77;
+	view->total_cols = memdata->ascii_view ? 77 : 59;
 
 	/* set up the dividers */
 	memdata->divider1 = 1 + 8 + 1;
@@ -1849,12 +2010,12 @@ static void memory_update(debug_view *view)
 		memdata->bytes_per_chunk = (1 << cpuinfo->space[memdata->spacenum].addr2byte_lshift);
 
 	/* if our expression is dirty, fix it */
-	if ((memdata->expression_dirty || view->cpunum != memdata->cpunum) && memdata->expression_string)
+	if ((memdata->expression_dirty || memdata->cpunum != memdata->cpunum) && memdata->expression_string)
 	{
 		parsed_expression *expr;
 
 		/* parse the new expression */
-		exprerr = expression_parse(memdata->expression_string, debug_get_cpu_info(view->cpunum)->symtable, &expr);
+		exprerr = expression_parse(memdata->expression_string, debug_get_cpu_info(memdata->cpunum)->symtable, &expr);
 
 		/* if it worked, update the expression */
 		if (exprerr == EXPRERR_NONE)
@@ -1867,7 +2028,7 @@ static void memory_update(debug_view *view)
 	}
 
 	/* if we're tracking a value, make sure it is visible */
-	if (memdata->expression && (memdata->live_tracking || memdata->expression_dirty || view->cpunum != memdata->cpunum))
+	if (memdata->expression && (memdata->live_tracking || memdata->expression_dirty || memdata->cpunum != memdata->cpunum))
 	{
 		UINT64 result;
 
@@ -1875,7 +2036,7 @@ static void memory_update(debug_view *view)
 		exprerr = expression_execute(memdata->expression, &result);
 
 		/* reset the row number */
-		if (result != memdata->last_result || memdata->expression_dirty || view->cpunum != memdata->cpunum)
+		if (result != memdata->last_result || memdata->expression_dirty || memdata->cpunum != memdata->cpunum)
 		{
 			memdata->last_result = result;
 			view->top_row = ADDR2BYTE_MASKED(memdata->last_result, cpuinfo, memdata->spacenum) / 0x10;
@@ -1888,7 +2049,7 @@ static void memory_update(debug_view *view)
 	}
 
 	/* update our CPU number */
-	memdata->cpunum = view->cpunum;
+	memdata->cpunum = memdata->cpunum;
 
 	/* loop over visible rows */
 	for (row = 0; row < view->visible_rows; row++)
@@ -1948,22 +2109,29 @@ static void memory_update(debug_view *view)
 						break;
 				}
 				len += sprintf(&data[len], " ");
-				for (i = 0; i < 16; i++)
+				if (memdata->ascii_view)
 				{
-					char c = debug_read_byte(memdata->spacenum, addrbyte + i);
-					len += sprintf(&data[len], "%c", isprint(c) ? c : '.');
+					for (i = 0; i < 16; i++)
+					{
+						char c = debug_read_byte(memdata->spacenum, addrbyte + i);
+						len += sprintf(&data[len], "%c", isprint(c) ? c : '.');
+					}
+					len += sprintf(&data[len], " ");
 				}
-				len += sprintf(&data[len], " ");
 			}
 			else
 			{
 				len = sprintf(&data[len], " ");
-				for (i = 0; i < 16; i++)
+				if (memdata->ascii_view)
 				{
-					char c = debug_read_byte(memdata->spacenum, addrbyte + i);
-					len += sprintf(&data[len], "%c", isprint(c) ? c : '.');
+					for (i = 0; i < 16; i++)
+					{
+						char c = debug_read_byte(memdata->spacenum, addrbyte + i);
+						len += sprintf(&data[len], "%c", isprint(c) ? c : '.');
+					}
+					len += sprintf(&data[len], " ");
 				}
-				len += sprintf(&data[len], "  ");
+				len += sprintf(&data[len], " ");
 				switch (memdata->bytes_per_chunk)
 				{
 					default:
@@ -2044,27 +2212,31 @@ static void	memory_getprop(debug_view *view, UINT32 property, debug_property_inf
 
 	switch (property)
 	{
-		case DVP_EXPRESSION:
+		case DVP_MEM_EXPRESSION:
 			value->s = memdata->expression_string;
 			break;
 
-		case DVP_TRACK_LIVE:
+		case DVP_MEM_TRACK_LIVE:
 			value->i = memdata->live_tracking;
 			break;
 
-		case DVP_SPACENUM:
+		case DVP_MEM_CPUNUM:
+			value->i = memdata->cpunum;
+			break;
+
+		case DVP_MEM_SPACENUM:
 			value->i = memdata->spacenum;
 			break;
 
-		case DVP_BYTES_PER_CHUNK:
+		case DVP_MEM_BYTES_PER_CHUNK:
 			value->i = memdata->bytes_per_chunk;
 			break;
 
-		case DVP_REVERSE_VIEW:
+		case DVP_MEM_REVERSE_VIEW:
 			value->i = memdata->reverse_view;
 			break;
 
-		case DVP_ASCII_VIEW:
+		case DVP_MEM_ASCII_VIEW:
 			value->i = memdata->ascii_view;
 			break;
 
@@ -2086,64 +2258,77 @@ static void	memory_setprop(debug_view *view, UINT32 property, debug_property_inf
 
 	switch (property)
 	{
-		case DVP_EXPRESSION:
+		case DVP_MEM_EXPRESSION:
 			debug_view_begin_update(view);
+
+			/* free the old expression and allocate a new copy */
 			if (memdata->expression_string)
 				free(memdata->expression_string);
 			memdata->expression_string = malloc(strlen(value.s) + 1);
 			if (memdata->expression_string)
 				strcpy(memdata->expression_string, value.s);
-			memdata->expression_dirty = 1;
-			view->update_pending = 1;
+
+			memdata->expression_dirty = TRUE;
+			view->update_pending = TRUE;
 			debug_view_end_update(view);
 			break;
 
-		case DVP_TRACK_LIVE:
+		case DVP_MEM_TRACK_LIVE:
 			if (value.i != memdata->live_tracking)
 			{
 				debug_view_begin_update(view);
 				memdata->live_tracking = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
 
-		case DVP_SPACENUM:
+		case DVP_MEM_CPUNUM:
+			if (value.i != memdata->cpunum)
+			{
+				debug_view_begin_update(view);
+				memdata->cpunum = value.i;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
+		case DVP_MEM_SPACENUM:
 			if (value.i != memdata->spacenum)
 			{
 				debug_view_begin_update(view);
 				memdata->spacenum = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
 
-		case DVP_BYTES_PER_CHUNK:
+		case DVP_MEM_BYTES_PER_CHUNK:
 			if (value.i != memdata->bytes_per_chunk)
 			{
 				debug_view_begin_update(view);
 				memdata->bytes_per_chunk = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
 
-		case DVP_REVERSE_VIEW:
+		case DVP_MEM_REVERSE_VIEW:
 			if (value.i != memdata->reverse_view)
 			{
 				debug_view_begin_update(view);
 				memdata->reverse_view = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
 
-		case DVP_ASCII_VIEW:
+		case DVP_MEM_ASCII_VIEW:
 			if (value.i != memdata->ascii_view)
 			{
 				debug_view_begin_update(view);
 				memdata->ascii_view = value.i;
-				view->update_pending = 1;
+				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
 			break;
@@ -2151,7 +2336,7 @@ static void	memory_setprop(debug_view *view, UINT32 property, debug_property_inf
 		case DVP_CHARACTER:
 			debug_view_begin_update(view);
 			memory_handle_char(view, value.i);
-			view->update_pending = 1;
+			view->update_pending = TRUE;
 			debug_view_end_update(view);
 			break;
 

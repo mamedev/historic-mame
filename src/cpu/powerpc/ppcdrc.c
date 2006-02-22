@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "ppc.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "x86drc.h"
 
 

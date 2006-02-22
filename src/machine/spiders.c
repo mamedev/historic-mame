@@ -102,7 +102,7 @@ static struct pia6821_interface pia_3_intf =
 
 ***************************************************************************/
 
-MACHINE_INIT( spiders )
+MACHINE_RESET( spiders )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);

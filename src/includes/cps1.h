@@ -31,6 +31,7 @@ VIDEO_UPDATE( cps1 );
 VIDEO_EOF( cps1 );
 DRIVER_INIT( cps1 );
 DRIVER_INIT( cps2 );
+DRIVER_INIT( cps2_noxor );
 
 INTERRUPT_GEN( cps1_qsound_interrupt );
 

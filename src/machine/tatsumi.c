@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 #include "tatsumi.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
@@ -21,10 +20,10 @@ void tatsumi_reset(void)
 	tatsumi_control_word=0;
 	apache3_adc=0;
 
-	state_save_register_UINT16("tatsumi", 0, "lastirq", &tatsumi_last_irq, 1);
-	state_save_register_UINT16("tatsumi", 0, "lastcontrol", &tatsumi_last_control, 1);
-	state_save_register_UINT16("tatsumi", 0, "control", &tatsumi_control_word, 1);
-	state_save_register_UINT8("tatsumi", 0, "adc", &apache3_adc, 1);
+	state_save_register_global(tatsumi_last_irq);
+	state_save_register_global(tatsumi_last_control);
+	state_save_register_global(tatsumi_control_word);
+	state_save_register_global(apache3_adc);
 }
 
 /******************************************************************************/

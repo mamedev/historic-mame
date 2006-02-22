@@ -38,7 +38,8 @@
 
 #ifdef MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "i8051.h"
 
 #define SHOW_MEMORY_NAMES	1

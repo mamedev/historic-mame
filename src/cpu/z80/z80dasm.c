@@ -23,7 +23,8 @@
 #include <string.h>
 #ifdef	MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "z80.h"
 
 enum e_mnemonics {

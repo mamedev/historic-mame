@@ -79,7 +79,7 @@ static NVRAM_HANDLER( seicross )
 
 
 
-static MACHINE_INIT( friskyt )
+static MACHINE_RESET( friskyt )
 {
 	/* start with the protection mcu halted */
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
@@ -452,7 +452,7 @@ static MACHINE_DRIVER_START( nvram )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
 	MDRV_INTERLEAVE(20)	/* 20 CPU slices per frame - an high value to ensure proper */
 						/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(friskyt)
+	MDRV_MACHINE_RESET(friskyt)
 	MDRV_NVRAM_HANDLER(seicross)
 
 	/* video hardware */

@@ -8,7 +8,7 @@ Super Cross II (JPN Ver.)
 static tilemap *sprcros2_bgtilemap, *sprcros2_fgtilemap;
 UINT8 *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
 size_t sprcros2_spriteram_size;
-extern int sprcros2_m_port7;
+extern UINT8 sprcros2_m_port7;
 
 PALETTE_INIT( sprcros2 )
 {

@@ -17,7 +17,7 @@ static int nmi_enabled;
 static int int_count;
 
 
-MACHINE_INIT( berzerk )
+MACHINE_RESET( berzerk )
 {
 	irq_enabled = 0;
 	nmi_enabled = 0;

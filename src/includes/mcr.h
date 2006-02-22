@@ -32,10 +32,12 @@ extern UINT32 mcr_cpu_board;
 extern UINT32 mcr_sprite_board;
 extern UINT32 mcr_ssio_board;
 
-MACHINE_INIT( mcr );
-MACHINE_INIT( nflfoot );
-MACHINE_INIT( mcr68 );
-MACHINE_INIT( zwackery );
+MACHINE_START( mcr );
+MACHINE_RESET( mcr );
+MACHINE_RESET( nflfoot );
+MACHINE_START( mcr68 );
+MACHINE_RESET( mcr68 );
+MACHINE_RESET( zwackery );
 
 INTERRUPT_GEN( mcr_interrupt );
 INTERRUPT_GEN( mcr_ipu_interrupt );

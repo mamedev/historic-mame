@@ -41,15 +41,14 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 static tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer;
-static int pf1_control[8],pf2_control[8],pf3_control[8],pf4_control[8];
-static int pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr;
-static int pf1_enable,pf2_enable,pf3_enable;
-static int pf1_rowscroll,pf2_rowscroll,pf3_rowscroll;
-static int pf1_shape,pf2_shape,pf3_shape;
-static int m92_sprite_list;
+static INT32 pf1_control[8],pf2_control[8],pf3_control[8],pf4_control[8];
+static INT32 pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr;
+static INT32 pf1_enable,pf2_enable,pf3_enable;
+static INT32 pf1_rowscroll,pf2_rowscroll,pf3_rowscroll;
+static INT32 pf1_shape,pf2_shape,pf3_shape;
+static INT32 m92_sprite_list;
 
 int m92_raster_irq_position,m92_raster_enable;
 unsigned char *m92_vram_data,*m92_spritecontrol;
@@ -422,32 +421,32 @@ VIDEO_START( m92 )
 	memset(spriteram,0,0x800);
 	memset(buffered_spriteram,0,0x800);
 
-	state_save_register_int  ("video", 0, "pf1_vram_ptr",            &pf1_vram_ptr);
-	state_save_register_int  ("video", 0, "pf1_shape",               &pf1_shape);
-	state_save_register_int  ("video", 0, "pf1_enable",              &pf1_enable);
-	state_save_register_int  ("video", 0, "pf1_rowscroll",           &pf1_rowscroll);
-	state_save_register_UINT8("video", 0, "pf1_control",    (UINT8*) pf1_control, sizeof(pf1_control));
+	state_save_register_global(pf1_vram_ptr);
+	state_save_register_global(pf1_shape);
+	state_save_register_global(pf1_enable);
+	state_save_register_global(pf1_rowscroll);
+	state_save_register_global_array(pf1_control);
 
-	state_save_register_int  ("video", 0, "pf2_vram_ptr",            &pf2_vram_ptr);
-	state_save_register_int  ("video", 0, "pf2_shape",               &pf2_shape);
-	state_save_register_int  ("video", 0, "pf2_enable",              &pf2_enable);
-	state_save_register_int  ("video", 0, "pf2_rowscroll",           &pf2_rowscroll);
-	state_save_register_UINT8("video", 0, "pf2_control",    (UINT8*) pf2_control, sizeof(pf2_control));
+	state_save_register_global(pf2_vram_ptr);
+	state_save_register_global(pf2_shape);
+	state_save_register_global(pf2_enable);
+	state_save_register_global(pf2_rowscroll);
+	state_save_register_global_array(pf2_control);
 
-	state_save_register_int  ("video", 0, "pf3_vram_ptr",            &pf3_vram_ptr);
-	state_save_register_int  ("video", 0, "pf3_shape",               &pf3_shape);
-	state_save_register_int  ("video", 0, "pf3_enable",              &pf3_enable);
-	state_save_register_int  ("video", 0, "pf3_rowscroll",           &pf3_rowscroll);
-	state_save_register_UINT8("video", 0, "pf3_control",    (UINT8*) pf3_control, sizeof(pf3_control));
+	state_save_register_global(pf3_vram_ptr);
+	state_save_register_global(pf3_shape);
+	state_save_register_global(pf3_enable);
+	state_save_register_global(pf3_rowscroll);
+	state_save_register_global_array(pf3_control);
 
-	state_save_register_UINT8("video", 0, "pf4_control",    (UINT8*) pf4_control, sizeof(pf4_control));
+	state_save_register_global_array(pf4_control);
 
-	state_save_register_int  ("video", 0, "m92_sprite_list",         &m92_sprite_list);
-	state_save_register_int  ("video", 0, "m92_raster_irq_position", &m92_raster_irq_position);
-	state_save_register_int  ("video", 0, "m92_sprite_buffer_busy",  &m92_sprite_buffer_busy);
-	state_save_register_int  ("video", 0, "m92_palette_bank",        &m92_palette_bank);
+	state_save_register_global(m92_sprite_list);
+	state_save_register_global(m92_raster_irq_position);
+	state_save_register_global(m92_sprite_buffer_busy);
+	state_save_register_global(m92_palette_bank);
 
-	state_save_register_UINT8("video", 0, "paletteram",              paletteram, 0x1000);
+	state_save_register_global_pointer(paletteram, 0x1000);
 
 	return 0;
 }

@@ -61,7 +61,7 @@ static void update_interrupts(void)
 }
 
 
-static MACHINE_INIT( cyberbal )
+static MACHINE_RESET( cyberbal )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -95,7 +95,7 @@ static void cyberb2p_update_interrupts(void)
 }
 
 
-static MACHINE_INIT( cyberb2p )
+static MACHINE_RESET( cyberb2p )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(cyberb2p_update_interrupts);
@@ -472,7 +472,7 @@ static MACHINE_DRIVER_START( cyberbal )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(cyberbal)
+	MDRV_MACHINE_RESET(cyberbal)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
@@ -517,7 +517,7 @@ static MACHINE_DRIVER_START( cyberb2p )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cyberb2p)
+	MDRV_MACHINE_RESET(cyberb2p)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

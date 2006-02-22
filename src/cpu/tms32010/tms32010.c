@@ -54,9 +54,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "driver.h"
-#include "cpuintrf.h"
-#include "mamedbg.h"
-#include "state.h"
+#include "debugger.h"
 #include "tms32010.h"
 
 
@@ -737,21 +735,21 @@ static void tms32010_init (void)
 {
 	int cpu = cpu_getactivecpu();
 
-	state_save_register_UINT16("tms32010", cpu, "PC", &R.PC, 1);
-	state_save_register_UINT16("tms32010", cpu, "PrevPC", &R.PREVPC, 1);
-	state_save_register_UINT16("tms32010", cpu, "STR", &R.STR, 1);
-	state_save_register_UINT32("tms32010", cpu, "ACC", &R.ACC.d, 1);
-	state_save_register_UINT32("tms32010", cpu, "ALU", &R.ALU.d, 1);
-	state_save_register_UINT32("tms32010", cpu, "Preg", &R.Preg.d, 1);
-	state_save_register_UINT16("tms32010", cpu, "Treg", &R.Treg, 1);
-	state_save_register_UINT16("tms32010", cpu, "AR0", &R.AR[0], 1);
-	state_save_register_UINT16("tms32010", cpu, "AR1", &R.AR[1], 1);
-	state_save_register_UINT16("tms32010", cpu, "Stack0", &R.STACK[0], 1);
-	state_save_register_UINT16("tms32010", cpu, "Stack1", &R.STACK[1], 1);
-	state_save_register_UINT16("tms32010", cpu, "Stack2", &R.STACK[2], 1);
-	state_save_register_UINT16("tms32010", cpu, "Stack3", &R.STACK[3], 1);
-	state_save_register_INT32("tms32010",  cpu, "IRQ_Flag", &R.INTF, 1);
-	state_save_register_UINT32("tms32010", cpu, "Opcode", &R.opcode.d, 1);
+	state_save_register_item("tms32010", cpu, R.PC);
+	state_save_register_item("tms32010", cpu, R.PREVPC);
+	state_save_register_item("tms32010", cpu, R.STR);
+	state_save_register_item("tms32010", cpu, R.ACC.d);
+	state_save_register_item("tms32010", cpu, R.ALU.d);
+	state_save_register_item("tms32010", cpu, R.Preg.d);
+	state_save_register_item("tms32010", cpu, R.Treg);
+	state_save_register_item("tms32010", cpu, R.AR[0]);
+	state_save_register_item("tms32010", cpu, R.AR[1]);
+	state_save_register_item("tms32010", cpu, R.STACK[0]);
+	state_save_register_item("tms32010", cpu, R.STACK[1]);
+	state_save_register_item("tms32010", cpu, R.STACK[2]);
+	state_save_register_item("tms32010", cpu, R.STACK[3]);
+	state_save_register_item("tms32010", cpu, R.INTF);
+	state_save_register_item("tms32010", cpu, R.opcode.d);
 }
 
 /****************************************************************************

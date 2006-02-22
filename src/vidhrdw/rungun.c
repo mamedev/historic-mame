@@ -8,7 +8,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
@@ -128,7 +127,7 @@ VIDEO_START(rng)
 
 	tilemap_set_transparent_pen(ttl_tilemap, 0);
 
-	state_save_register_UINT16("RnGTTL", 0, "VRAM", ttl_vram, 0x1000);
+	state_save_register_global_array(ttl_vram);
 
 	sprite_colorbase = 0x20;
 

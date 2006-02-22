@@ -6896,7 +6896,7 @@ static INTERRUPT_GEN( wrofaero_interrupt )
 	cpunum_set_input_line( 0, 2, HOLD_LINE );
 }
 
-MACHINE_INIT( wrofaero ) { uPD71054_timer_init(); }
+MACHINE_RESET( wrofaero ) { uPD71054_timer_init(); }
 #endif	// __uPD71054_TIMER
 
 
@@ -6923,7 +6923,7 @@ static MACHINE_DRIVER_START( gundhara )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 #if	__uPD71054_TIMER
-	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_RESET( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7003,7 +7003,7 @@ static MACHINE_DRIVER_START( kamenrid )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 #if	__uPD71054_TIMER
-	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_RESET( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7076,7 +7076,7 @@ static MACHINE_DRIVER_START( madshark )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 #if	__uPD71054_TIMER
-	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_RESET( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7123,7 +7123,7 @@ static MACHINE_DRIVER_START( msgundam )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 #if	__uPD71054_TIMER
-	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_RESET( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */
@@ -7485,7 +7485,7 @@ static MACHINE_DRIVER_START( wrofaero )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 #if	__uPD71054_TIMER
-	MDRV_MACHINE_INIT( wrofaero )
+	MDRV_MACHINE_RESET( wrofaero )
 #endif	// __uPD71054_TIMER
 
 	/* video hardware */

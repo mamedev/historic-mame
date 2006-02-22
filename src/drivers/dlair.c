@@ -134,7 +134,7 @@ static z80ctc_interface ctc_intf =
 };
 
 
-MACHINE_INIT( dlair )
+MACHINE_RESET( dlair )
 {
    /* initialize the CTC */
    ctc_intf.baseclock = Machine->drv->cpu[0].cpu_clock;
@@ -231,7 +231,7 @@ static MACHINE_DRIVER_START( dlair )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(dlair)
+	MDRV_MACHINE_RESET(dlair)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

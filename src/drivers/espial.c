@@ -10,7 +10,7 @@
 #include "sound/ay8910.h"
 
 
-MACHINE_INIT( espial )
+MACHINE_RESET( espial )
 {
 	/* we must start with NMI interrupts disabled */
 	//interrupt_enable = 0;
@@ -302,7 +302,7 @@ static MACHINE_DRIVER_START( espial )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(espial)
+	MDRV_MACHINE_RESET(espial)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

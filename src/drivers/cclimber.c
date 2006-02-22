@@ -159,7 +159,7 @@ static WRITE8_HANDLER( flip_screen_y_w )
 }
 
 
-static MACHINE_INIT( cclimber )
+static MACHINE_RESET( cclimber )
 {
 	/* Disable interrupts, River Patrol / Silver Land needs this */
 	cpu_interrupt_enable(0,0);
@@ -615,7 +615,7 @@ static MACHINE_DRIVER_START( cclimber )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(cclimber)
+	MDRV_MACHINE_RESET(cclimber)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -653,7 +653,7 @@ static MACHINE_DRIVER_START( cannonb )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(cclimber)
+	MDRV_MACHINE_RESET(cclimber)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

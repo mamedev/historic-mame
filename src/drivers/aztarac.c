@@ -32,7 +32,7 @@ static int aztarac_irq_callback(int irqline)
 }
 
 
-static MACHINE_INIT( aztarac )
+static MACHINE_RESET( aztarac )
 {
 	cpu_set_irq_callback(0, aztarac_irq_callback);
 }
@@ -178,7 +178,7 @@ static MACHINE_DRIVER_START( aztarac )
 	MDRV_CPU_PERIODIC_INT(aztarac_snd_timed_irq,TIME_IN_HZ(100))
 
 	MDRV_FRAMES_PER_SECOND(40)
-	MDRV_MACHINE_INIT(aztarac)
+	MDRV_MACHINE_RESET(aztarac)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

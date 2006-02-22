@@ -508,7 +508,7 @@ static struct TTL7474_interface TTL7474_2U_2_intf =
 };
 
 
-MACHINE_INIT( carpolo )
+MACHINE_RESET( carpolo )
 {
 	/* set up the priority encoder */
 	TTL74148_config(TTL74148_3S, &TTL74148_3S_intf);

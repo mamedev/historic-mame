@@ -78,7 +78,7 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
-MACHINE_INIT( clayshoo )
+MACHINE_RESET( clayshoo )
 {
 	ppi8255_init(&ppi8255_intf);
 }

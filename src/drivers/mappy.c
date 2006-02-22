@@ -806,7 +806,7 @@ static WRITE8_HANDLER( mappy_latch_w )
 	}
 }
 
-static MACHINE_INIT( superpac )
+static MACHINE_RESET( superpac )
 {
 	int i;
 
@@ -815,7 +815,7 @@ static MACHINE_INIT( superpac )
 		superpac_latch_w(i,0);
 }
 
-static MACHINE_INIT( phozon )
+static MACHINE_RESET( phozon )
 {
 	int i;
 
@@ -824,7 +824,7 @@ static MACHINE_INIT( phozon )
 		phozon_latch_w(i,0);
 }
 
-static MACHINE_INIT( mappy )
+static MACHINE_RESET( mappy )
 {
 	int i;
 
@@ -1570,7 +1570,7 @@ static MACHINE_DRIVER_START( superpac )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(superpac)
+	MDRV_MACHINE_RESET(superpac)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1622,7 +1622,7 @@ static MACHINE_DRIVER_START( phozon )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(phozon)
+	MDRV_MACHINE_RESET(phozon)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1660,7 +1660,7 @@ static MACHINE_DRIVER_START( mappy )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(mappy)
+	MDRV_MACHINE_RESET(mappy)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

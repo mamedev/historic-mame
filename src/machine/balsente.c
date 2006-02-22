@@ -49,6 +49,8 @@ struct counter_state
 
 static struct counter_state counter[3];
 
+static mame_timer *scanline_timer;
+
 /* manually clocked counter 0 states */
 static UINT8 counter_control;
 static UINT8 counter_0_ff;
@@ -110,9 +112,9 @@ static void interrupt_timer(int param)
 {
 	/* next interrupt after scanline 256 is scanline 64 */
 	if (param == 256)
-		timer_set(cpu_getscanlinetime(64), 64, interrupt_timer);
+		timer_adjust(scanline_timer, cpu_getscanlinetime(64), 64, 0);
 	else
-		timer_set(cpu_getscanlinetime(param + 64), param + 64, interrupt_timer);
+		timer_adjust(scanline_timer, cpu_getscanlinetime(param + 64), param + 64, 0);
 
 	/* IRQ starts on scanline 0, 64, 128, etc. */
 	cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
@@ -145,8 +147,10 @@ static void interrupt_timer(int param)
 }
 
 
-MACHINE_INIT( balsente )
+MACHINE_RESET( balsente )
 {
+	int numbanks, i;
+
 	/* create the polynomial tables */
 	poly17_init();
 
@@ -181,11 +185,59 @@ MACHINE_INIT( balsente )
 	memset(noise_position, 0, sizeof(noise_position));
 
 	/* point the banks to bank 0 */
-	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000]);
-	memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000]);
+	numbanks = (memory_region_length(REGION_CPU1) > 0x40000) ? 16 : 8;
+	memory_configure_bank(1, 0, numbanks, &memory_region(REGION_CPU1)[0x10000], 0x6000);
+	memory_configure_bank(2, 0, numbanks, &memory_region(REGION_CPU1)[0x12000], 0x6000);
+	memory_set_bank(1, 0);
+	memory_set_bank(2, 0);
 
 	/* start a timer to generate interrupts */
-	timer_set(cpu_getscanlinetime(0), 0, interrupt_timer);
+	scanline_timer = timer_alloc(interrupt_timer);
+	timer_adjust(scanline_timer, cpu_getscanlinetime(0), 0, 0);
+
+	/* register for saving */
+	for (i = 0; i < 3; i++)
+	{
+		state_save_register_item("8253counter", i, counter[i].timer_active);
+		state_save_register_item("8253counter", i, counter[i].initial);
+		state_save_register_item("8253counter", i, counter[i].count);
+		state_save_register_item("8253counter", i, counter[i].gate);
+		state_save_register_item("8253counter", i, counter[i].out);
+		state_save_register_item("8253counter", i, counter[i].mode);
+		state_save_register_item("8253counter", i, counter[i].readbyte);
+		state_save_register_item("8253counter", i, counter[i].writebyte);
+	}
+
+	state_save_register_global(counter_control);
+	state_save_register_global(counter_0_ff);
+	state_save_register_global(counter_0_timer_active);
+
+	state_save_register_global_array(analog_input_data);
+	state_save_register_global(adc_value);
+
+	state_save_register_global(dac_value);
+	state_save_register_global(dac_register);
+	state_save_register_global(chip_select);
+
+	state_save_register_global(m6850_status);
+	state_save_register_global(m6850_control);
+	state_save_register_global(m6850_input);
+	state_save_register_global(m6850_output);
+	state_save_register_global(m6850_data_ready);
+
+	state_save_register_global(m6850_sound_status);
+	state_save_register_global(m6850_sound_control);
+	state_save_register_global(m6850_sound_input);
+	state_save_register_global(m6850_sound_output);
+
+	state_save_register_global_array(noise_position);
+
+	state_save_register_global(nstocker_bits);
+	state_save_register_global(spiker_expand_color);
+	state_save_register_global(spiker_expand_bgcolor);
+	state_save_register_global(spiker_expand_bits);
+	state_save_register_global(grudge_steering_result);
+	state_save_register_global_array(grudge_last_steering);
 }
 
 
@@ -230,7 +282,7 @@ static void poly17_init(void)
 void balsente_noise_gen(int chip, int count, short *buffer)
 {
 	/* noise generator runs at 100kHz */
-	UINT32 step = (100000 << 14) / Machine->sample_rate;
+	UINT32 step = (100000 << 14) / CEM3394_SAMPLE_RATE;
 	UINT32 noise_counter = noise_position[chip];
 
 	/* try to use the poly17 if we can */
@@ -290,11 +342,9 @@ READ8_HANDLER( balsente_random_num_r )
 
 WRITE8_HANDLER( balsente_rombank_select_w )
 {
-	int bank_offset = 0x6000 * ((data >> 4) & 7);
-
 	/* the bank number comes from bits 4-6 */
-	memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
-	memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000 + bank_offset]);
+	memory_set_bank(1, (data >> 4) & 7);
+	memory_set_bank(2, (data >> 4) & 7);
 }
 
 
@@ -309,15 +359,15 @@ WRITE8_HANDLER( balsente_rombank2_select_w )
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
 	{
-		memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
-		memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * 6]);
+		memory_set_bank(1, bank);
+		memory_set_bank(2, 6);
 	}
 
 	/* set both banks */
 	else
 	{
-		memory_set_bankptr(1, &memory_region(REGION_CPU1)[0x10000 + 0x6000 * bank]);
-		memory_set_bankptr(2, &memory_region(REGION_CPU1)[0x12000 + 0x6000 * bank]);
+		memory_set_bank(1, bank);
+		memory_set_bank(2, bank);
 	}
 }
 

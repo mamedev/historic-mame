@@ -54,7 +54,7 @@ static UINT32 *midvplus_misc;
  *
  *************************************/
 
-static MACHINE_INIT( midvunit )
+static MACHINE_RESET( midvunit )
 {
 	dcs_reset_w(1);
 	dcs_reset_w(0);
@@ -66,7 +66,7 @@ static MACHINE_INIT( midvunit )
 }
 
 
-static MACHINE_INIT( midvplus )
+static MACHINE_RESET( midvplus )
 {
 	dcs_reset_w(1);
 	dcs_reset_w(0);
@@ -995,7 +995,7 @@ MACHINE_DRIVER_START( midvcommon )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(midvunit)
+	MDRV_MACHINE_RESET(midvunit)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -1025,7 +1025,7 @@ MACHINE_DRIVER_START( midvplus )
 	MDRV_CPU_CONFIG(midvplus_config)
 	MDRV_CPU_PROGRAM_MAP(midvplus_map,0)
 
-	MDRV_MACHINE_INIT(midvplus)
+	MDRV_MACHINE_RESET(midvplus)
 	MDRV_NVRAM_HANDLER(midway_serial_pic2)
 
 	/* sound hardware */

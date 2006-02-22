@@ -11,10 +11,10 @@
 
 #include <math.h>
 #include "driver.h"
-#include "timer.h"
-#include "state.h"
-#include "mamedbg.h"
-#include "hiscore.h"
+#include "cheat.h"
+#include "profiler.h"
+#include "debugger.h"
+
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debugcpu.h"
 #endif
@@ -137,17 +137,17 @@ struct _cpuexec_data
 	UINT8	nextsuspend;			/* pending suspend reason mask */
 	UINT8	eatcycles;				/* true if we eat cycles while suspended */
 	UINT8	nexteatcycles;			/* pending value */
-	int		trigger;				/* pending trigger to release a trigger suspension */
+	INT32	trigger;				/* pending trigger to release a trigger suspension */
 
-	int 	iloops; 				/* number of interrupts remaining this frame */
+	INT32 	iloops; 				/* number of interrupts remaining this frame */
 
 	UINT64 	totalcycles;			/* total CPU cycles executed */
 	mame_time localtime;			/* local time, relative to the timer system's global time */
-	int		clock;					/* current active clock */
+	INT32	clock;					/* current active clock */
 	double	clockscale;				/* current active clock scale factor */
 
-	int 	vblankint_countdown;	/* number of vblank callbacks left until we interrupt */
-	int 	vblankint_multiplier;	/* number of vblank callbacks per interrupt */
+	INT32	vblankint_countdown;	/* number of vblank callbacks left until we interrupt */
+	INT32 	vblankint_multiplier;	/* number of vblank callbacks per interrupt */
 	void *	vblankint_timer;		/* reference to elapsed time counter */
 	mame_time vblankint_period;		/* timing period of the VBLANK interrupt */
 
@@ -170,8 +170,8 @@ static int time_to_reset;
 static int time_to_quit;
 static int is_paused;
 
-static int vblank;
-static int current_frame;
+static UINT8 vblank;
+static UINT32 current_frame;
 static INT32 watchdog_counter;
 
 static int cycles_running;
@@ -186,8 +186,8 @@ static int cycles_stolen;
  *************************************/
 
 static mame_timer *vblank_timer;
-static int vblank_countdown;
-static int vblank_multiplier;
+static INT32 vblank_countdown;
+static INT32 vblank_multiplier;
 static mame_time vblank_period;
 
 static mame_timer *update_timer;
@@ -285,9 +285,6 @@ int cpu_init(void)
 		if (cputype == CPU_DUMMY)
 			break;
 
-		/* set the save state tag */
-		state_save_push_tag(cpunum + 1);
-
 		/* initialize the cpuinfo struct */
 		memset(&cpu[cpunum], 0, sizeof(cpu[cpunum]));
 		cpu[cpunum].suspend = SUSPEND_REASON_RESET;
@@ -302,27 +299,29 @@ int cpu_init(void)
 		subseconds_per_cycle[cpunum] = MAX_SUBSECONDS / sec_to_cycles[cpunum];
 
 		/* register some of our variables for later */
-		state_save_register_UINT8 ("cpu", 0, "suspend", &cpu[cpunum].suspend, 1);
-		state_save_register_UINT8 ("cpu", 0, "nextsuspend", &cpu[cpunum].nextsuspend, 1);
-		state_save_register_UINT8 ("cpu", 0, "eatcycles", &cpu[cpunum].eatcycles, 1);
-		state_save_register_UINT8 ("cpu", 0, "nexteatcycles", &cpu[cpunum].nexteatcycles, 1);
-		state_save_register_int   ("cpu", 0, "trigger", &cpu[cpunum].trigger);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].suspend);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].nextsuspend);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].eatcycles);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].nexteatcycles);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].trigger);
 
-		state_save_register_int   ("cpu", 0, "iloops", &cpu[cpunum].iloops);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].iloops);
 
-		state_save_register_UINT64("cpu", 0, "totalcycles", &cpu[cpunum].totalcycles, 1);
-		state_save_register_INT32 ("cpu", 0, "localtime.sec", &cpu[cpunum].localtime.seconds, 1);
-		state_save_register_INT64 ("cpu", 0, "localtime.sub", &cpu[cpunum].localtime.subseconds, 1);
-		state_save_register_int   ("cpu", 0, "clock", &cpu[cpunum].clock);
-		state_save_register_double("cpu", 0, "clockscale", &cpu[cpunum].clockscale, 1);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].totalcycles);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].localtime.seconds);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].localtime.subseconds);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].clock);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].clockscale);
 
-		state_save_register_int   ("cpu", 0, "vblankint_countdown", &cpu[cpunum].vblankint_countdown);
+		state_save_register_item("cpu", cpunum, cpu[cpunum].vblankint_countdown);
 
 		/* initialize this CPU */
+		state_save_push_tag(cpunum + 1);
 		num_regs = state_save_get_reg_count();
 		if (cpuintrf_init_cpu(cpunum, cputype))
 			return 1;
 		num_regs = state_save_get_reg_count() - num_regs;
+		state_save_pop_tag();
 
 		/* if no state registered for saving, we can't save */
 		if (num_regs == 0)
@@ -331,20 +330,18 @@ int cpu_init(void)
 			if (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE)
 				osd_die("CPU #%d (%s) did not register any state to save!\n", cpunum, cputype_name(cputype));
 		}
-
-		/* pop the state tag */
-		state_save_pop_tag();
 	}
+	add_exit_callback(cpu_exit);
 
 	/* compute the perfect interleave factor */
 	compute_perfect_interleave();
 
 	/* save some stuff in the default tag */
 	state_save_push_tag(0);
-	state_save_register_int("cpu", 0, "vblank", &vblank);
-	state_save_register_int("cpu", 0, "current_frame", &current_frame);
-	state_save_register_INT32("cpu", 0, "watchdog_counter", &watchdog_counter, 1);
-	state_save_register_int("cpu", 0, "vblank_countdown", &vblank_countdown);
+	state_save_register_item("cpu", 0, vblank);
+	state_save_register_item("cpu", 0, current_frame);
+	state_save_register_item("cpu", 0, watchdog_counter);
+	state_save_register_item("cpu", 0, vblank_countdown);
 	state_save_pop_tag();
 
 	/* reset the IRQ lines and save those */
@@ -368,14 +365,8 @@ static void cpu_pre_run(void)
 
 	logerror("Machine reset\n");
 
-	begin_resource_tracking();
-
 	/* allow save state registrations starting here */
 	state_save_allow_registration(TRUE);
-
-	/* read hi scores information from hiscore.dat */
-	hs_open(Machine->gamedrv->name);
-	hs_init();
 
 	/* initialize the various timers (suspends all CPUs at startup) */
 	cpu_inittimers();
@@ -403,10 +394,15 @@ static void cpu_pre_run(void)
 
 	vblank = 0;
 
-	/* do this AFTER the above so machine_init() can use cpu_halt() to hold the */
+	/* call the driver's _RESET callbacks */
+	/* do this AFTER the above so machine_reset() can use cpu_halt() to hold the */
 	/* execution of some CPUs, or disable interrupts */
-	if (Machine->drv->machine_init)
-		(*Machine->drv->machine_init)();
+	if (Machine->drv->machine_reset != NULL)
+		(*Machine->drv->machine_reset)();
+	if (Machine->drv->sound_reset != NULL)
+		(*Machine->drv->sound_reset)();
+	if (Machine->drv->video_reset != NULL)
+		(*Machine->drv->video_reset)();
 
 	/* now reset each CPU */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -425,43 +421,18 @@ static void cpu_pre_run(void)
 
 /*************************************
  *
- *  Finish up execution
- *
- *************************************/
-
-static void cpu_post_run(void)
-{
-	/* write hi scores to disk - No scores saving if cheat */
-	hs_close();
-
-	/* stop the machine */
-	if (Machine->drv->machine_stop)
-		(*Machine->drv->machine_stop)();
-
-	end_resource_tracking();
-}
-
-
-
-/*************************************
- *
  *  Execute until done
  *
  *************************************/
 
 void cpu_run(void)
 {
-#ifdef MAME_DEBUG
-	/* initialize the debugger */
-	if (mame_debug)
-		mame_debug_init();
-#endif
-
 	/* loop over multiple resets, until the user quits */
 	time_to_quit = FALSE;
 	while (!time_to_quit)
 	{
 		/* prepare everything to run */
+		begin_resource_tracking();
 		cpu_pre_run();
 
 		/* loop until the user quits or resets */
@@ -497,14 +468,8 @@ void cpu_run(void)
 		}
 
 		/* finish up this iteration */
-		cpu_post_run();
+		end_resource_tracking();
 	}
-
-#ifdef MAME_DEBUG
-	/* shut down the debugger */
-	if (mame_debug)
-		mame_debug_exit();
-#endif
 }
 
 
@@ -1858,13 +1823,6 @@ int cpu_getiloops(void)
 static void cpu_vblankreset(void)
 {
 	int cpunum;
-
-	/* read hi scores from disk */
-	hs_update();
-
-	/* update the cheat engine */
-	if (options.cheat)
-		cheat_periodic();
 
 	/* read keyboard & update the status of the input ports */
 	input_port_vblank_start();

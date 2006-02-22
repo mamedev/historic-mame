@@ -1,7 +1,6 @@
 #include "driver.h"
 #include "hc55516.h"
 #include <math.h>
-#include "state.h"
 
 
 #define	INTEGRATOR_LEAK_TC		0.001

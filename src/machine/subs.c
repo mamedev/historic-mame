@@ -15,7 +15,7 @@ static int subs_steering_val2;
 /***************************************************************************
 subs_init_machine
 ***************************************************************************/
-MACHINE_INIT( subs )
+MACHINE_RESET( subs )
 {
 	subs_steering_buf1 = 0;
 	subs_steering_buf2 = 0;

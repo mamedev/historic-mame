@@ -468,6 +468,16 @@ unsigned dasmmips3(char *buffer, unsigned pc, UINT32 op)
 		case 0x19:	sprintf(buffer, "daddiu %s,%s,%s", reg[rt], reg[rs], signed_16bit(op));			break;
 		case 0x1a:	sprintf(buffer, "ldl    %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
 		case 0x1b:	sprintf(buffer, "ldr    %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
+		case 0x1c:	/* IDT-specific opcodes: mad/madu/mul on R4640/4650, msub on RC32364 */
+			switch (op & 0x1f)
+			{
+				case 0: sprintf(buffer, "mad    %s,%s", reg[rs], reg[rt]); break;
+				case 1: sprintf(buffer, "madu   %s,%s", reg[rs], reg[rt]); break;
+				case 2: sprintf(buffer, "mul    %s,%s,%s", reg[rs], reg[rt], reg[rd]); break;
+				case 4: sprintf(buffer, "msub   %s,%s", reg[rs], reg[rt]); break;
+	 			default:sprintf(buffer, "dc.l   $%08x [invalid]", op);	break;
+			}
+			break;
 		case 0x20:	sprintf(buffer, "lb     %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
 		case 0x21:	sprintf(buffer, "lh     %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;
 		case 0x22:	sprintf(buffer, "lwl    %s,%s(%s)", reg[rt], signed_16bit(op), reg[rs]);		break;

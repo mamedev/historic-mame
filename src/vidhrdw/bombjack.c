@@ -8,8 +8,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
-static int background_image;
+static UINT8 background_image;
 
 static tilemap *fg_tilemap, *bg_tilemap;
 
@@ -85,6 +86,8 @@ VIDEO_START( bombjack )
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);
+
+	state_save_register_global(background_image);
 
 	return 0;
 }

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "common.h"
 #include "usrintrf.h"
 #include "vidhrdw/generic.h"
 

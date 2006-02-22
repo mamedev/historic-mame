@@ -171,12 +171,14 @@ Changes:
 #include "sound/nes_apu.h"
 #include <math.h>
 
-static int page = 0,mcustatus;
-static int p[8] = { 255,255,255,255,255,255,255,255 };
-static int t[2] = { 1,1 };
+static UINT8 page,mcustatus;
+static UINT8 p[8];
+static UINT8 t[2];
 static double envelope,tt;
-static int decay;
-static int counter = 0;
+static UINT8 decay;
+static INT8 counter;
+int hunchloopback;
+
 
 extern WRITE8_HANDLER( radarscp_grid_enable_w );
 extern WRITE8_HANDLER( radarscp_grid_color_w );
@@ -273,28 +275,55 @@ static READ8_HANDLER( dkong_in2_r )
 
 /* EPOS games */
 
-static MACHINE_INIT( strtheat )
+static MACHINE_START( dkong )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
-
-	/* The initial state of the counter is 0x08 */
-	counter = 0x08;
-	memory_set_bankptr (1, &ROM[0x10000]);
+	state_save_register_global(page);
+	state_save_register_global(mcustatus);
+	state_save_register_global_array(p);
+	state_save_register_global_array(t);
+	state_save_register_global(envelope);
+	state_save_register_global(tt);
+	state_save_register_global(decay);
+	state_save_register_global(counter);
+	state_save_register_global(hunchloopback);
+	return 0;
 }
 
-static MACHINE_INIT( drakton )
+static MACHINE_RESET( dkong )
+{
+	page = 0;
+	p[0] = p[1] = p[2] = p[3] = p[4] = p[5] = p[6] = p[7] = 255;
+	t[0] = t[1] = 1;
+	counter = 0;
+}
+
+
+static MACHINE_RESET( strtheat )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
+	machine_reset_dkong();
+
+	/* The initial state of the counter is 0x08 */
+	memory_configure_bank(1, 0, 4, &ROM[0x10000], 0x4000);
+	counter = 0x08;
+	memory_set_bank(1, 0);
+}
+
+static MACHINE_RESET( drakton )
+{
+	unsigned char *ROM = memory_region(REGION_CPU1);
+
+	machine_reset_dkong();
+
 	/* The initial state of the counter is 0x09 */
+	memory_configure_bank(1, 0, 4, &ROM[0x10000], 0x4000);
 	counter = 0x09;
-	memory_set_bankptr (1, &ROM[0x14000]);
+	memory_set_bank(1, 1);
 }
 
 static READ8_HANDLER( epos_decrypt_rom )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
-
 	if (offset & 0x01)
 	{
 		counter = counter - 1;
@@ -308,10 +337,10 @@ static READ8_HANDLER( epos_decrypt_rom )
 
 	switch(counter)
 	{
-		case 0x08:	memory_set_bankptr (1, &ROM[0x10000]);		break;
-		case 0x09:	memory_set_bankptr (1, &ROM[0x14000]);		break;
-		case 0x0A:	memory_set_bankptr (1, &ROM[0x18000]);		break;
-		case 0x0B:	memory_set_bankptr (1, &ROM[0x1C000]);		break;
+		case 0x08:	memory_set_bank(1, 0);		break;
+		case 0x09:	memory_set_bank(1, 1);		break;
+		case 0x0A:	memory_set_bank(1, 2);		break;
+		case 0x0B:	memory_set_bank(1, 3);		break;
 		default:
 			logerror("Invalid counter = %02X\n",counter);
 			break;
@@ -460,8 +489,6 @@ static ADDRESS_MAP_START( epos_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7d85, 0x7d85) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x7d86, 0x7d87) AM_WRITE(dkong_palettebank_w)
 ADDRESS_MAP_END
-
-int hunchloopback;
 
 WRITE8_HANDLER( hunchbkd_data_w )
 {
@@ -1564,12 +1591,13 @@ static MACHINE_DRIVER_START( radarscp )
 	MDRV_CPU_PROGRAM_MAP(readmem,radarscp_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD(I8035,6000000/15)
-	/* audio CPU */	/* 6MHz crystal */
+	MDRV_CPU_ADD(I8035,6000000/15)	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -1601,12 +1629,13 @@ static MACHINE_DRIVER_START( dkong )
 	MDRV_CPU_PROGRAM_MAP(readmem,dkong_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD(I8035,6000000/15)
-	/* audio CPU */	/* 6MHz crystal */
+	MDRV_CPU_ADD(I8035,6000000/15)	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -1644,12 +1673,13 @@ static MACHINE_DRIVER_START( hunchbkd )
 	MDRV_CPU_IO_MAP(hunchbkd_readport,hunchbkd_writeport)
 	MDRV_CPU_VBLANK_INT(hunchbkd_interrupt,1)
 
-	MDRV_CPU_ADD_TAG("sound", I8035,6000000/15)
-	/* audio CPU */	/* 6MHz crystal */
+	MDRV_CPU_ADD_TAG("sound", I8035,6000000/15)	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_hunchbkd_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -1718,12 +1748,13 @@ static MACHINE_DRIVER_START( dkongjr )
 	MDRV_CPU_PROGRAM_MAP(readmem,dkongjr_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD(I8035,6000000/15)
-	/* audio CPU */	/* 6MHz crystal */
+	MDRV_CPU_ADD(I8035,6000000/15)	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -1762,12 +1793,13 @@ static MACHINE_DRIVER_START( pestplce )
 	MDRV_CPU_PROGRAM_MAP(readmem,pestplce_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD(I8035,6000000/15)
-	/* audio CPU */	/* 6MHz crystal */
+	MDRV_CPU_ADD(I8035,6000000/15)	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -1798,12 +1830,13 @@ static MACHINE_DRIVER_START( epos )
 	MDRV_CPU_IO_MAP(epos_readport,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_CPU_ADD(I8035,6000000/15)
-	/* audio CPU */	/* 6MHz crystal */
+	MDRV_CPU_ADD(I8035,6000000/15)	/* 6MHz crystal */
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -1827,13 +1860,13 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( strtheat )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(epos)
-	MDRV_MACHINE_INIT(strtheat)
+	MDRV_MACHINE_RESET(strtheat)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( drakton )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(epos)
-	MDRV_MACHINE_INIT(drakton)
+	MDRV_MACHINE_RESET(drakton)
 MACHINE_DRIVER_END
 
 static struct NESinterface nes_interface_1 = { REGION_CPU2 };
@@ -1849,16 +1882,16 @@ static MACHINE_DRIVER_START( dkong3 )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(N2A03,N2A03_DEFAULTCLOCK)
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dkong3_sound1_readmem,dkong3_sound1_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(N2A03,N2A03_DEFAULTCLOCK)
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(dkong3_sound2_readmem,dkong3_sound2_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_MACHINE_START(dkong)
+	MDRV_MACHINE_RESET(dkong)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -2814,42 +2847,42 @@ static DRIVER_INIT( radarscp )
 }
 
 
-GAME( 1980, radarscp, 0,        radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAME( 1980, radarscp, 0,        radarscp, dkong,    radarscp, ROT90, "Nintendo", "Radar Scope", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE )
 
-GAME( 1981, dkong,    0,        dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US set 1)", 0 )
-GAME( 1981, dkongo,   dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (US set 2)", 0 )
-GAME( 1981, dkongjp,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)", 0 )
-GAME( 1981, dkongjo,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)", 0 )
-GAME( 1981, dkongjo1, dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 3) (bad dump?)", 0 )
+GAME( 1981, dkong,    0,        dkong,    dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong (US set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, dkongo,   dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (US set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1981, dkongjp,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1981, dkongjo,  dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1981, dkongjo1, dkong,    dkong,    dkong,    0,        ROT90, "Nintendo", "Donkey Kong (Japan set 3) (bad dump?)", GAME_SUPPORTS_SAVE )
 
-GAME( 1982, dkongjr,  0,        dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (US)", 0 )
-GAME( 1982, dkongjrj, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Jr. (Japan)", 0 )
-GAME( 1982, dkngjnrj, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Junior (Japan?)", 0 )
-GAME( 1982, dkongjrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "bootleg", "Donkey Kong Jr. (bootleg)", 0 )
-GAME( 1982, dkngjnrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (bootleg?)", 0 )
+GAME( 1982, dkongjr,  0,        dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (US)", GAME_SUPPORTS_SAVE )
+GAME( 1982, dkongjrj, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Jr. (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1982, dkngjnrj, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo", "Donkey Kong Junior (Japan?)", GAME_SUPPORTS_SAVE )
+GAME( 1982, dkongjrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "bootleg", "Donkey Kong Jr. (bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1982, dkngjnrb, dkongjr,  dkongjr,  dkong,    0,        ROT90, "Nintendo of America", "Donkey Kong Junior (bootleg?)", GAME_SUPPORTS_SAVE )
 
-GAME( 1983, dkong3,   0,        dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)", 0 )
-GAME( 1983, dkong3j,  dkong3,   dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)", 0 )
-GAME( 1984, dkong3b,  dkong3,	dkong3b,  dkong3b,  0,        ROT90, "bootleg", "Donkey Kong 3 (bootleg on Donkey Kong Jr. hardware)", 0 )
+GAME( 1983, dkong3,   0,        dkong3,   dkong3,   0,        ROT90, "Nintendo of America", "Donkey Kong 3 (US)", GAME_SUPPORTS_SAVE )
+GAME( 1983, dkong3j,  dkong3,   dkong3,   dkong3,   0,        ROT90, "Nintendo", "Donkey Kong 3 (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1984, dkong3b,  dkong3,	dkong3b,  dkong3b,  0,        ROT90, "bootleg", "Donkey Kong 3 (bootleg on Donkey Kong Jr. hardware)", GAME_SUPPORTS_SAVE )
 
-GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)", 0)
+GAME( 1984, herbiedk, huncholy, herbiedk, herbiedk, 0,        ROT90, "CVS", "Herbie at the Olympics (DK conversion)", GAME_SUPPORTS_SAVE )
 
-GAME( 1983, hunchbkd, hunchbak, hunchbkd, hunchbkd, 0,        ROT90, "Century Electronics", "Hunchback (DK conversion)", GAME_WRONG_COLORS | GAME_NOT_WORKING )
+GAME( 1983, hunchbkd, hunchbak, hunchbkd, hunchbkd, 0,        ROT90, "Century Electronics", "Hunchback (DK conversion)", GAME_WRONG_COLORS | GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
 
-GAME( 1984, sbdk,	  superbik,	hunchbkd, sbdk,		0,        ROT90, "Century Electronics", "Super Bike (DK conversion)", 0 )
+GAME( 1984, sbdk,	  superbik,	hunchbkd, sbdk,		0,        ROT90, "Century Electronics", "Super Bike (DK conversion)", GAME_SUPPORTS_SAVE )
 
-GAME( 1984, herodk,   hero,     hunchbkd, herodk,   herodk,   ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion)", 0 )
-GAME( 1984, herodku,  hero,     hunchbkd, herodk,   0,        ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion not encrypted)", 0 )
+GAME( 1984, herodk,   hero,     hunchbkd, herodk,   herodk,   ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion)", GAME_SUPPORTS_SAVE )
+GAME( 1984, herodku,  hero,     hunchbkd, herodk,   0,        ROT90, "Seatongrove Ltd (Crown license)", "Hero in the Castle of Doom (DK conversion not encrypted)", GAME_SUPPORTS_SAVE )
 
-GAME( 1984, 8ballact, 0,    	eightact, 8ballact, 0,        ROT90, "Seatongrove Ltd (Magic Eletronics USA licence)", "Eight Ball Action (DK conversion)", 0 )
-GAME( 1984, 8ballat2, 8ballact,	eightact, 8ballact, 0,        ROT90, "Seatongrove Ltd (Magic Eletronics USA licence)", "Eight Ball Action (DKJr conversion)", 0 )
+GAME( 1984, 8ballact, 0,    	eightact, 8ballact, 0,        ROT90, "Seatongrove Ltd (Magic Eletronics USA licence)", "Eight Ball Action (DK conversion)", GAME_SUPPORTS_SAVE )
+GAME( 1984, 8ballat2, 8ballact,	eightact, 8ballact, 0,        ROT90, "Seatongrove Ltd (Magic Eletronics USA licence)", "Eight Ball Action (DKJr conversion)", GAME_SUPPORTS_SAVE )
 
-GAME( 1984, shootgal, 0,		shootgal, hunchbkd, 0,		  ROT180, "Seatongrove Ltd (Zaccaria licence)", "Shooting Gallery", GAME_NOT_WORKING )
+GAME( 1984, shootgal, 0,		shootgal, hunchbkd, 0,		  ROT180, "Seatongrove Ltd (Zaccaria licence)", "Shooting Gallery", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE )
 
-GAME( 1983, pestplce, mario,	pestplce, pestplce, 0,        ROT180, "bootleg", "Pest Place", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1983, pestplce, mario,	pestplce, pestplce, 0,        ROT180, "bootleg", "Pest Place", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
 
-GAME( 1985, spclforc, 0,		spclforc, spclforc, 0,        ROT90, "Senko Industries (Magic Eletronics Inc. licence)", "Special Forces", GAME_NO_SOUND )
-GAME( 1985, spcfrcii, 0,		spclforc, spclforc, 0,        ROT90, "Senko Industries (Magic Eletronics Inc. licence)", "Special Forces II", GAME_NO_SOUND )
+GAME( 1985, spclforc, 0,		spclforc, spclforc, 0,        ROT90, "Senko Industries (Magic Eletronics Inc. licence)", "Special Forces", GAME_NO_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1985, spcfrcii, 0,		spclforc, spclforc, 0,        ROT90, "Senko Industries (Magic Eletronics Inc. licence)", "Special Forces II", GAME_NO_SOUND | GAME_SUPPORTS_SAVE )
 
-GAME( 1984, drakton,  0,        drakton,  drakton,  drakton,  ROT90, "Epos Corporation", "Drakton", GAME_NO_SOUND )
-GAME( 1985, strtheat, 0,        strtheat, strtheat, strtheat, ROT90, "Epos Corporation", "Street Heat - Cardinal Amusements", GAME_NO_SOUND )
+GAME( 1984, drakton,  0,        drakton,  drakton,  drakton,  ROT90, "Epos Corporation", "Drakton", GAME_NO_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1985, strtheat, 0,        strtheat, strtheat, strtheat, ROT90, "Epos Corporation", "Street Heat - Cardinal Amusements", GAME_NO_SOUND | GAME_SUPPORTS_SAVE )

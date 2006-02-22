@@ -4,12 +4,11 @@ Omori Electric CAD (OEC) 1983
 */
 
 #include "driver.h"
-#include "state.h"
 
 static tilemap *popper_p123_tilemap, *popper_p0_tilemap, *popper_ol_p123_tilemap, *popper_ol_p0_tilemap;
 UINT8 *popper_videoram, *popper_attribram, *popper_ol_videoram, *popper_ol_attribram, *popper_spriteram;
 size_t popper_spriteram_size;
-static int popper_flipscreen, popper_e002, popper_gfx_bank;
+static INT32 popper_flipscreen, popper_e002, popper_gfx_bank;
 static rectangle tilemap_clip;
 
 PALETTE_INIT( popper )
@@ -187,9 +186,9 @@ VIDEO_START( popper )
 
 	tilemap_clip = Machine->visible_area;
 
-	state_save_register_int ("video", 0, "flipscreen", &popper_flipscreen);
-//  state_save_register_int ("video", 0, "e002",       &popper_e002);
-	state_save_register_int ("video", 0, "gfx_bank",   &popper_gfx_bank);
+	state_save_register_global(popper_flipscreen);
+//  state_save_register_global(popper_e002);
+	state_save_register_global(popper_gfx_bank);
 
 	return 0;
 }

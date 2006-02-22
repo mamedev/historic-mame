@@ -8,7 +8,6 @@
 ***********************************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "genesis.h"
 
 /* in vidhrdw/segasyse.c */
@@ -94,7 +93,7 @@ static UINT32		vdp_spritebase;				/* base address of sprite data */
 static UINT32		vdp_hscrollbase;			/* base address of H scroll values */
 
 /* other vdp variables */
-static int			vdp_hscrollmask;			/* mask for H scrolling */
+static INT32		vdp_hscrollmask;			/* mask for H scrolling */
 static UINT32		vdp_hscrollsize;			/* size of active H scroll values */
 static UINT8		vdp_vscrollmode;			/* current V scrolling mode */
 
@@ -176,29 +175,29 @@ VIDEO_START( genesis )
 	vdp_address = 0;
 
 	/* Save State Stuff */
-	state_save_register_UINT8 ("Genesis_VDP", 0, "VDP Registers", genesis_vdp_regs, 32);
-	state_save_register_UINT8 ("Genesis_VDP", 0, "VDP VRam", vdp_vram, 0x10000);
-	state_save_register_UINT8 ("Genesis_VDP", 0, "VDP VSRam", vdp_vsram, 0x80);
-	state_save_register_UINT16("Genesis_Video", 0, "Background Pal Lookup",  genesis_bg_pal_lookup, 4);
-	state_save_register_UINT16("Genesis_Video", 0, "Sprite Pal Base",  genesis_sp_pal_lookup, 4);
-	state_save_register_UINT8("Genesis_Video", 0, "Display Enabled",  &display_enable, 1);
-	state_save_register_UINT32("Genesis_Video", 0, "Scroll A Base in VRAM",  &vdp_scrollabase, 1);
-	state_save_register_UINT32("Genesis_Video", 0, "Scroll B Base in VRAM",  &vdp_scrollbbase, 1);
-	state_save_register_UINT32("Genesis_Video", 0, "Window Base in VRAM",  &vdp_windowbase, 1);
-	state_save_register_UINT32("Genesis_Video", 0, "Sprite Table Base in VRAM",  &vdp_spritebase, 1);
-	state_save_register_UINT32("Genesis_Video", 0, "HScroll Data Base in VRAM",  &vdp_hscrollbase, 1);
-	state_save_register_int("Genesis_Video", 0, "vdp_hscrollmask",  &vdp_hscrollmask);
-	state_save_register_UINT32("Genesis_Video", 0, "vdp_hscrollsize",  &vdp_hscrollsize, 1);
-	state_save_register_UINT8("Genesis_Video", 0, "vdp_vscrollmode",  &vdp_vscrollmode, 1);
-	state_save_register_UINT8("Genesis_VDP", 0, "VDP Command Part",  &vdp_cmdpart, 1);
-	state_save_register_UINT8("Genesis_VDP", 0, "VDP Current Code",  &vdp_code, 1);
-	state_save_register_UINT32("Genesis_VDP", 0, "VDP Address",  &vdp_address, 1);
-	state_save_register_UINT8("Genesis_VDP", 0, "VDP DMA Mode",  &vdp_dmafill, 1);
-	state_save_register_UINT8("Genesis_Video", 0, "scrollheight",  &scrollheight, 1);
-	state_save_register_UINT8("Genesis_Video", 0, "scrollwidth",  &scrollwidth, 1);
-	state_save_register_UINT8("Genesis_Video", 0, "Background Colour",  &bgcol, 1);
-	state_save_register_UINT8("Genesis_Video", 0, "Window Horz",  &window_down, 1);
-	state_save_register_UINT32("Genesis_Video", 0, "Window Vert",  &window_vpos, 1);
+	state_save_register_global_array(genesis_vdp_regs);
+	state_save_register_global_pointer(vdp_vram, 0x10000);
+	state_save_register_global_pointer(vdp_vsram, 0x80);
+	state_save_register_global_array(genesis_bg_pal_lookup);
+	state_save_register_global_array(genesis_sp_pal_lookup);
+	state_save_register_global(display_enable);
+	state_save_register_global(vdp_scrollabase);
+	state_save_register_global(vdp_scrollbbase);
+	state_save_register_global(vdp_windowbase);
+	state_save_register_global(vdp_spritebase);
+	state_save_register_global(vdp_hscrollbase);
+	state_save_register_global(vdp_hscrollmask);
+	state_save_register_global(vdp_hscrollsize);
+	state_save_register_global(vdp_vscrollmode);
+	state_save_register_global(vdp_cmdpart);
+	state_save_register_global(vdp_code);
+	state_save_register_global(vdp_address);
+	state_save_register_global(vdp_dmafill);
+	state_save_register_global(scrollheight);
+	state_save_register_global(scrollwidth);
+	state_save_register_global(bgcol);
+	state_save_register_global(window_down);
+	state_save_register_global(window_vpos);
 
 	return 0;
 }

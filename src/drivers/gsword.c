@@ -218,7 +218,7 @@ static struct TAITO8741interface gsword_8741interface=
 	{ input_port_7_r,input_port_6_r,gsword_8741_2_r,gsword_8741_3_r }    /* port handler */
 };
 
-MACHINE_INIT( gsword )
+MACHINE_RESET( gsword )
 {
 	int i;
 
@@ -600,7 +600,7 @@ static MACHINE_DRIVER_START( josvolly )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(gsword)
+	MDRV_MACHINE_RESET(gsword)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -651,7 +651,7 @@ static MACHINE_DRIVER_START( gsword )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(200) /* Allow time for 2nd cpu to interleave*/
 
-	MDRV_MACHINE_INIT(gsword)
+	MDRV_MACHINE_RESET(gsword)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

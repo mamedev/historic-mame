@@ -22,12 +22,12 @@ COREOBJS = \
 	$(OBJ)/cdrom.o \
 	$(OBJ)/chd.o \
 	$(OBJ)/cheat.o \
-	$(OBJ)/common.o \
 	$(OBJ)/config.o \
 	$(OBJ)/cpuexec.o \
 	$(OBJ)/cpuint.o \
 	$(OBJ)/cpuintrf.o \
 	$(OBJ)/drawgfx.o \
+	$(OBJ)/driver.o \
 	$(OBJ)/fileio.o \
 	$(OBJ)/harddisk.o \
 	$(OBJ)/hash.o \
@@ -53,12 +53,14 @@ COREOBJS = \
 	$(OBJ)/usrintrf.o \
 	$(OBJ)/validity.o \
 	$(OBJ)/version.o \
+	$(OBJ)/video.o \
 	$(OBJ)/xmlfile.o \
 	$(OBJ)/sound/filter.o \
 	$(OBJ)/sound/flt_vol.o \
 	$(OBJ)/sound/flt_rc.o \
 	$(OBJ)/sound/wavwrite.o \
 	$(OBJ)/machine/eeprom.o \
+	$(OBJ)/machine/generic.o \
 	$(OBJ)/vidhrdw/generic.o \
 	$(OBJ)/vidhrdw/vector.o \
 

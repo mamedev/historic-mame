@@ -747,6 +747,9 @@ do { OP1(0x1b); MODRM_MBD(dreg, base, disp); } while (0)
 #define _xor_r32_m32bd(dreg, base, disp) \
 do { OP1(0x33); MODRM_MBD(dreg, base, disp); } while (0)
 
+#define _imul_r32_m32bd(dreg, base, disp) \
+do { OP1(0x0f); OP1(0xaf); MODRM_MBD(dreg, base, disp); } while (0)
+
 
 
 #define _add_m32abs_r32(addr, sreg) \

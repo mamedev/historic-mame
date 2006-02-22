@@ -95,7 +95,7 @@ Notes:
 #include "sound/k053260.h"
 
 /* prototypes */
-static MACHINE_INIT( vendetta );
+static MACHINE_RESET( vendetta );
 static void vendetta_banking( int lines );
 static void vendetta_video_banking( int select );
 
@@ -593,7 +593,7 @@ static MACHINE_DRIVER_START( vendetta )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(vendetta)
+	MDRV_MACHINE_RESET(vendetta)
 	MDRV_NVRAM_HANDLER(vendetta)
 
 	/* video hardware */
@@ -837,7 +837,7 @@ static void vendetta_banking( int lines )
 		memory_set_bankptr( 1, &RAM[ 0x10000 + ( lines * 0x2000 ) ] );
 }
 
-static MACHINE_INIT( vendetta )
+static MACHINE_RESET( vendetta )
 {
 	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)vendetta_banking);
 

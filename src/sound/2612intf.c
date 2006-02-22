@@ -12,7 +12,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "sound/fm.h"
 #include "sound/2612intf.h"
 

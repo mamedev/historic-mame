@@ -44,7 +44,7 @@
  *****************************************************************************/
 
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "z8000.h"
 #include "z8000cpu.h"
 

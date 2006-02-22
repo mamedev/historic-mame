@@ -365,7 +365,7 @@ WRITE8_HANDLER( namcos1_sound_bankswitch_w );
 WRITE8_HANDLER( namcos1_mcu_bankswitch_w );
 WRITE8_HANDLER( namcos1_mcu_patch_w );
 
-MACHINE_INIT( namcos1 );
+MACHINE_RESET( namcos1 );
 
 DRIVER_INIT( shadowld );
 DRIVER_INIT( dspirit );
@@ -1011,7 +1011,7 @@ static MACHINE_DRIVER_START( ns1 )
 	// heavy sync required to prevent CPUs from fighting for video RAM access and going into deadlocks
 	MDRV_INTERLEAVE(640)
 
-	MDRV_MACHINE_INIT(namcos1)
+	MDRV_MACHINE_RESET(namcos1)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

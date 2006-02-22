@@ -453,7 +453,7 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }	/* end of array */
 };
 
-MACHINE_INIT( bigevglf )
+MACHINE_RESET( bigevglf )
 {
 	beg13_ls74[0] = 0;
 	beg13_ls74[1] = 0;
@@ -491,7 +491,7 @@ static MACHINE_DRIVER_START( bigevglf )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - interleaving is forced on the fly */
 
-	MDRV_MACHINE_INIT(bigevglf)
+	MDRV_MACHINE_RESET(bigevglf)
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)

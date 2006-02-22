@@ -11,7 +11,7 @@
 /* machine/chaknpop.c */
 extern UINT8 *chaknpop_ram;
 DRIVER_INIT( chaknpop );
-MACHINE_INIT( chaknpop );
+MACHINE_RESET( chaknpop );
 READ8_HANDLER( chaknpop_mcu_portA_r );
 READ8_HANDLER( chaknpop_mcu_portB_r );
 READ8_HANDLER( chaknpop_mcu_portC_r );
@@ -296,7 +296,7 @@ static MACHINE_DRIVER_START( chaknpop )
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(chaknpop)
+	MDRV_MACHINE_RESET(chaknpop)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

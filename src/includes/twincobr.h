@@ -31,8 +31,8 @@ WRITE16_HANDLER( wardner_dsp_w );
 WRITE8_HANDLER(   wardner_control_w );
 WRITE8_HANDLER(   wardner_coin_dsp_w );
 
-MACHINE_INIT( twincobr_reset );
-MACHINE_INIT( wardner );
+MACHINE_RESET( twincobr_reset );
+MACHINE_RESET( wardner );
 
 extern void twincobr_driver_savestate(void);
 extern void wardner_driver_savestate(void);

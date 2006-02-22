@@ -4,12 +4,7 @@
  */
 
 #include "driver.h"
-#include "state.h"
 #include "namcoic.h"
-
-#ifdef MAME_DEBUG
-extern int debug_key_pressed;
-#endif
 
 #define TX_TILE_OFFSET_CENTER	(32 * 2)
 #define TX_TILE_OFFSET_RIGHT	(32 * 0 + 2)
@@ -33,8 +28,8 @@ static tilemap *tx_tilemap;
 static tilemap *bg1_tilemap;
 static tilemap *bg2_tilemap;
 
-static int bg1_scroll_x, bg1_scroll_y;
-static int bg2_scroll_x, bg2_scroll_y;
+static INT32 bg1_scroll_x, bg1_scroll_y;
+static INT32 bg2_scroll_x, bg2_scroll_y;
 
 static mame_bitmap *temp_bitmap;
 
@@ -491,10 +486,10 @@ VIDEO_START( tceptor )
 	tilemap_set_transparent_pen(bg1_tilemap, 0);
 	tilemap_set_transparent_pen(bg2_tilemap, 0);
 
-	state_save_register_int   ("tceptor", 0, "bg1_scroll_x",      &bg1_scroll_x);
-	state_save_register_int   ("tceptor", 0, "bg1_scroll_y",      &bg1_scroll_y);
-	state_save_register_int   ("tceptor", 0, "bg2_scroll_x",      &bg2_scroll_x);
-	state_save_register_int   ("tceptor", 0, "bg2_scroll_y",      &bg2_scroll_y);
+	state_save_register_global(bg1_scroll_x);
+	state_save_register_global(bg1_scroll_y);
+	state_save_register_global(bg2_scroll_x);
+	state_save_register_global(bg2_scroll_y);
 
 	state_save_register_func_postload(mark_all_tiles_dirty);
 

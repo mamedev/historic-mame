@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -19,16 +18,16 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-static int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
+static INT32 sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 static int sprites_flipscreen = 0;
 static UINT16 *spriteram_buffered,*spriteram_delayed;
 
-int taito_sprite_type = 0;
+INT32 taito_sprite_type = 0;
 UINT16 *taito_sprite_ext;
 size_t taito_spriteext_size;
 static UINT16 spritebank[8];
 
-static int taito_hide_pixels;
+static INT32 taito_hide_pixels;
 
 
 
@@ -61,13 +60,13 @@ VIDEO_START( slapshot_core )
 	sprites_disabled = 1;
 	sprites_active_area = 0;
 
-	state_save_register_int   ("main1", 0, "control", &taito_hide_pixels);
-	state_save_register_int   ("main2", 0, "control", &taito_sprite_type);
-	state_save_register_UINT16("main3", 0, "control", spritebank, 8);
-	state_save_register_int   ("main5", 0, "control", &sprites_disabled);
-	state_save_register_int   ("main6", 0, "control", &sprites_active_area);
-	state_save_register_UINT16("main7", 0, "memory", spriteram_delayed, spriteram_size/2);
-	state_save_register_UINT16("main8", 0, "memory", spriteram_buffered, spriteram_size/2);
+	state_save_register_global(taito_hide_pixels);
+	state_save_register_global(taito_sprite_type);
+	state_save_register_global_array(spritebank);
+	state_save_register_global(sprites_disabled);
+	state_save_register_global(sprites_active_area);
+	state_save_register_global_pointer(spriteram_delayed, spriteram_size/2);
+	state_save_register_global_pointer(spriteram_buffered, spriteram_size/2);
 
 	return 0;
 }

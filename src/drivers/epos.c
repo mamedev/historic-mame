@@ -37,7 +37,7 @@
 
 static int counter = 0;
 
-MACHINE_INIT( dealer );
+MACHINE_RESET( dealer );
 
 WRITE8_HANDLER( dealer_decrypt_rom )
 {
@@ -392,7 +392,7 @@ static MACHINE_DRIVER_START( dealer )
 	MDRV_PALETTE_INIT(epos)
 	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(epos)
-	MDRV_MACHINE_INIT(dealer)
+	MDRV_MACHINE_RESET(dealer)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -561,7 +561,7 @@ ROM_START( revenger )
 	ROM_LOAD( "82s123.u66",		0x0000, 0x0020, NO_DUMP )	/* missing */
 ROM_END
 
-MACHINE_INIT( dealer )
+MACHINE_RESET( dealer )
 {
 	memory_set_bankptr(1, memory_region(REGION_CPU1));
 

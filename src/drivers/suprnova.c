@@ -457,7 +457,7 @@ static void interrupt_callback(int param)
 	cpunum_set_input_line(0,param,HOLD_LINE);
 }
 
-static MACHINE_INIT(skns)
+static MACHINE_RESET(skns)
 {
 	timer_pulse(TIME_IN_MSEC(2), 15, interrupt_callback);
 	timer_pulse(TIME_IN_MSEC(8), 11, interrupt_callback);
@@ -781,8 +781,6 @@ static WRITE32_HANDLER( skns_io_w )
 	}
 }
 
-extern void *record;
-extern void *playback;
 
 static READ32_HANDLER( msm6242_r )
 {
@@ -790,7 +788,7 @@ static READ32_HANDLER( msm6242_r )
 	time_t tms;
 	long value;
 
-	if(record != 0 || playback != 0)
+	if (Machine->record_file != NULL || Machine->playback_file != NULL)
 		return 0;
 
 	time(&tms);
@@ -1110,7 +1108,7 @@ static MACHINE_DRIVER_START(skns)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(skns)
+	MDRV_MACHINE_RESET(skns)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)

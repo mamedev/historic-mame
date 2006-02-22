@@ -156,7 +156,7 @@ INTERRUPT_GEN( micro3d_tms_vblank )
 }
 
 
-static MACHINE_INIT( micro3d )
+static MACHINE_RESET( micro3d )
 {
         i8051_set_serial_tx_callback(data_from_i8031);
         i8051_set_serial_rx_callback(data_to_i8031);
@@ -853,7 +853,7 @@ static MACHINE_DRIVER_START( micro3d )
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(micro3d)
+	MDRV_MACHINE_RESET(micro3d)
 	MDRV_INTERLEAVE(50)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

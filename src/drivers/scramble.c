@@ -30,7 +30,6 @@ Notes:
 #include "sound/5110intf.h"
 #include "sound/tms5110.h"
 #include "galaxian.h"
-#include "state.h"
 
 
 /***************************************************************************
@@ -115,13 +114,13 @@ static WRITE8_HANDLER( ad2083_tms5110_ctrl_w )
 	speech_rom_address = speech_rom_address_hi | (data * 0x40);
 }
 
-static MACHINE_INIT( ad2083 )
+static MACHINE_START( ad2083 )
 {
 	state_save_register_global(speech_rom_address);
 	state_save_register_global(speech_rom_address_hi);
 	state_save_register_global(speech_rom_bit);
 
-	machine_init_galaxian();
+	return 0;
 }
 
 
@@ -1791,7 +1790,7 @@ static MACHINE_DRIVER_START( scramble )
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
@@ -1844,7 +1843,7 @@ static MACHINE_DRIVER_START( explorer )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(explorer_readmem,explorer_writemem)
 
-	MDRV_MACHINE_INIT(explorer)
+	MDRV_MACHINE_RESET(explorer)
 
 	/* sound hardware */
 	MDRV_SOUND_MODIFY("8910.1")
@@ -2000,7 +1999,7 @@ static MACHINE_DRIVER_START( hotshock )
 	MDRV_CPU_MODIFY("audio")
 	MDRV_CPU_IO_MAP(hotshock_sound_readport,hotshock_sound_writeport)
 
-	MDRV_MACHINE_INIT(galaxian)
+	MDRV_MACHINE_RESET(galaxian)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+0)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
@@ -2038,7 +2037,7 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_CPU_PROGRAM_MAP(sfx_sample_readmem,sfx_sample_writemem)
 	MDRV_CPU_IO_MAP(sfx_sample_readport,sfx_sample_writeport)
 
-	MDRV_MACHINE_INIT(sfx)
+	MDRV_MACHINE_RESET(sfx)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(2*8, 30*8-1, 2*8, 30*8-1)
@@ -2166,7 +2165,7 @@ static MACHINE_DRIVER_START( ad2083 )
 	MDRV_CPU_PROGRAM_MAP(ad2083_sound_map,0)
 	MDRV_CPU_IO_MAP(ad2083_sound_io_map,0)
 
-	MDRV_MACHINE_INIT(ad2083)
+	MDRV_MACHINE_START(ad2083)
 
 	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

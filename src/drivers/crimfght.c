@@ -16,7 +16,7 @@ Preliminary driver by:
 
 
 /* prototypes */
-static MACHINE_INIT( crimfght );
+static MACHINE_RESET( crimfght );
 static void crimfght_banking( int lines );
 
 VIDEO_START( crimfght );
@@ -376,7 +376,7 @@ static MACHINE_DRIVER_START( crimfght )
 	MDRV_FRAMES_PER_SECOND(54)	/* adjusted - compared with PCB speed */
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(crimfght)
+	MDRV_MACHINE_RESET(crimfght)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -506,7 +506,7 @@ static void crimfght_banking( int lines )
 	memory_set_bankptr( 2, &RAM[offs] );
 }
 
-static MACHINE_INIT( crimfght )
+static MACHINE_RESET( crimfght )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

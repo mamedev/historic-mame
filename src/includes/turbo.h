@@ -17,9 +17,9 @@ extern UINT8 subroc3d_col, subroc3d_ply, subroc3d_chofs;
 
 extern UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
 
-MACHINE_INIT( turbo );
-MACHINE_INIT( subroc3d );
-MACHINE_INIT( buckrog );
+MACHINE_RESET( turbo );
+MACHINE_RESET( subroc3d );
+MACHINE_RESET( buckrog );
 
 READ8_HANDLER( turbo_8279_r );
 WRITE8_HANDLER( turbo_8279_w );

@@ -56,7 +56,6 @@
 
 #include "driver.h"
 #include "machine/eeprom.h"
-#include "state.h"
 
 READ16_HANDLER( deco16_104_rohga_prot_r ); // todo
 
@@ -1128,8 +1127,8 @@ static UINT16 deco16_mask=0xffff;
 void deco16_104_rohga_reset(void)
 {
 	deco16_prot_backbuffer_selected=0;
-	state_save_register_UINT8("rohga", 0, "protstate", &deco16_prot_backbuffer_selected, 1);
-	state_save_register_UINT16("rohga", 0, "prot", deco16_prot_backbuffer, 0x100);
+	state_save_register_global(deco16_prot_backbuffer_selected);
+	state_save_register_global_array(deco16_prot_backbuffer);
 // todo save mask/xor
 
 #if 0

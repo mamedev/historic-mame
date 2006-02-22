@@ -375,7 +375,7 @@ static const gfx_decode gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static MACHINE_INIT( pandoras )
+static MACHINE_RESET( pandoras )
 {
 	firq_old_data_a = firq_old_data_b = 0;
 	irq_enable_a = irq_enable_b = 0;
@@ -421,7 +421,7 @@ static MACHINE_DRIVER_START( pandoras )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(50)	/* slices per frame */
 
-	MDRV_MACHINE_INIT(pandoras)
+	MDRV_MACHINE_RESET(pandoras)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

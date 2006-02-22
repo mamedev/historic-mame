@@ -89,9 +89,9 @@
 ******************************************************************************/
 #include "memory.h"
 #include "cpuintrf.h"
-#include "mamedbg.h"
-#include "h6280.h"
+#include "debugger.h"
 #include "state.h"
+#include "h6280.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -247,14 +247,14 @@ static int h6280_execute(int cycles)
 
 #ifdef  MAME_DEBUG
 	 	{
-			if (mame_debug)
+			if (Machine->debug_mode)
 			{
 				/* Copy the segmentation registers for debugger to use */
 				int i;
 				for (i=0; i<8; i++)
 					H6280_debug_mmr[i]=h6280.mmr[i];
 
-				MAME_Debug();
+				mame_debug_hook();
 			}
 		}
 #endif

@@ -46,7 +46,7 @@ UINT8 starwars_is_esb;
  *
  *************************************/
 
-MACHINE_INIT( starwars )
+MACHINE_RESET( starwars )
 {
 	/* ESB-specific */
 	if (starwars_is_esb)
@@ -385,7 +385,7 @@ static MACHINE_DRIVER_START( starwars )
 	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	MDRV_FRAMES_PER_SECOND(30)
-	MDRV_MACHINE_INIT(starwars)
+	MDRV_MACHINE_RESET(starwars)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

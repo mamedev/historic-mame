@@ -14,7 +14,7 @@
 static unsigned char fromz80,toz80;
 static int zaccept,zready;
 
-MACHINE_INIT( pitnrun )
+MACHINE_RESET( pitnrun )
 {
 	zaccept = 1;
 	zready = 0;

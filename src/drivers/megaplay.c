@@ -57,7 +57,7 @@ UINT16 *ic36_ram;
 static unsigned int readpos = 1;  // serial bank selection position (9-bit)
 
 
-static MACHINE_INIT( megaplay )
+static MACHINE_RESET( megaplay )
 {
 //  unsigned char* ram = memory_region(REGION_CPU3);
 
@@ -66,7 +66,7 @@ static MACHINE_INIT( megaplay )
 	memory_set_bankptr(2, &ic36_ram[0]);
 	memory_set_bankptr(3, &genesis_68k_ram[0]);
 
-	machine_init_genesis();
+	machine_reset_genesis();
 }
 
 
@@ -658,7 +658,7 @@ static MACHINE_DRIVER_START( megaplay )
 
 	MDRV_VIDEO_START(megaplay)
 	MDRV_VIDEO_UPDATE(megaplay)
-	MDRV_MACHINE_INIT(megaplay)
+	MDRV_MACHINE_RESET(megaplay)
 
 	MDRV_CPU_ADD_TAG("megaplay_bios", Z80, MASTER_CLOCK / 15) /* ?? */
 	MDRV_CPU_PROGRAM_MAP(megaplay_bios_readmem, megaplay_bios_writemem)
@@ -837,8 +837,6 @@ static DRIVER_INIT (megaplay)
 	UINT8 *instruction_rom = memory_region(REGION_USER1);
 	UINT8 *game_rom = memory_region(REGION_CPU1);
 	int offs;
-
-	init_genesis();
 
 	memmove(src+0x10000,src+0x8000,0x18000); // move bios..
 

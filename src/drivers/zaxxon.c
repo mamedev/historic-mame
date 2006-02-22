@@ -1150,17 +1150,17 @@ static INTERRUPT_GEN( zaxxon_interrupt )
 
 /* Machine Initialization */
 
-MACHINE_INIT( zaxxon )
+MACHINE_RESET( zaxxon )
 {
 	zaxxon_vid_type = 0;
 }
 
-MACHINE_INIT( congo )
+MACHINE_RESET( congo )
 {
 	zaxxon_vid_type = 1;
 }
 
-MACHINE_INIT( futspy )
+MACHINE_RESET( futspy )
 {
 	zaxxon_vid_type = 2;
 }
@@ -1176,7 +1176,7 @@ static MACHINE_DRIVER_START( root )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(zaxxon)
+	MDRV_MACHINE_RESET(zaxxon)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1232,7 +1232,7 @@ static MACHINE_DRIVER_START( congo )
 	MDRV_CPU_PROGRAM_MAP(congo_snd_readmem, congo_snd_writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 4)
 
-	MDRV_MACHINE_INIT(congo)
+	MDRV_MACHINE_RESET(congo)
 
 	MDRV_GFXDECODE(congo_gfxdecodeinfo)
 
@@ -1258,7 +1258,7 @@ static MACHINE_DRIVER_START( futspy )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(readmem, futspy_writemem)
 
-	MDRV_MACHINE_INIT(futspy)
+	MDRV_MACHINE_RESET(futspy)
 
 	MDRV_GFXDECODE(congo_gfxdecodeinfo)
 

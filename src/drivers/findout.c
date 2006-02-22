@@ -101,7 +101,7 @@ static ppi8255_interface ppi8255_intf =
 	{ sound_w,        NULL },			/* Port C write */
 };
 
-MACHINE_INIT( findout )
+MACHINE_RESET( findout )
 {
 	ppi8255_init(&ppi8255_intf);
 }
@@ -304,7 +304,7 @@ static MACHINE_DRIVER_START( findout )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(findout)
+	MDRV_MACHINE_RESET(findout)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

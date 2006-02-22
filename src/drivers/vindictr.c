@@ -63,7 +63,7 @@ static void update_interrupts(void)
 }
 
 
-static MACHINE_INIT( vindictr )
+static MACHINE_RESET( vindictr )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -238,7 +238,7 @@ static MACHINE_DRIVER_START( vindictr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(vindictr)
+	MDRV_MACHINE_RESET(vindictr)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

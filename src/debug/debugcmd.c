@@ -173,16 +173,6 @@ void debug_command_init(void)
 }
 
 
-/*-------------------------------------------------
-    debug_command_exit - frees the command
-    system
--------------------------------------------------*/
-
-void debug_command_exit(void)
-{
-}
-
-
 
 /*###################################################################################################
 **  SIMPLE GLOBAL FUNCTIONS

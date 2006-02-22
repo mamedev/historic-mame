@@ -17,7 +17,6 @@
 #include <math.h>
 
 #include "driver.h"
-#include "state.h"
 #include "es8712.h"
 
 #define MAX_SAMPLE_CHUNK	10000
@@ -264,23 +263,23 @@ static void es8712_state_save_register(struct es8712 *chip, int sndindex)
 
 	sprintf(buf,"ES8712");
 
-	state_save_register_INT32  (buf, sndindex, "bank_offset", &chip->bank_offset, 1);
+	state_save_register_item(buf, sndindex, chip->bank_offset);
 
-	state_save_register_UINT8  (buf, sndindex, "playing", &chip->playing, 1);
-	state_save_register_UINT32 (buf, sndindex, "sample" , &chip->sample,  1);
-	state_save_register_UINT32 (buf, sndindex, "count"  , &chip->count,   1);
-	state_save_register_UINT32 (buf, sndindex, "signal" , &chip->signal,  1);
-	state_save_register_UINT32 (buf, sndindex, "step"   , &chip->step,    1);
+	state_save_register_item(buf, sndindex, chip->playing);
+	state_save_register_item(buf, sndindex, chip->sample);
+	state_save_register_item(buf, sndindex, chip->count);
+	state_save_register_item(buf, sndindex, chip->signal);
+	state_save_register_item(buf, sndindex, chip->step);
 
-	state_save_register_INT16  (buf, sndindex, "last_sample", &chip->last_sample, 1);
-	state_save_register_INT16  (buf, sndindex, "curr_sample", &chip->curr_sample, 1);
-	state_save_register_UINT32 (buf, sndindex, "source_step", &chip->source_step, 1);
-	state_save_register_UINT32 (buf, sndindex, "source_pos" , &chip->source_pos,  1);
-	state_save_register_UINT32 (buf, sndindex, "base_offset" , &chip->base_offset, 1);
+	state_save_register_item(buf, sndindex, chip->last_sample);
+	state_save_register_item(buf, sndindex, chip->curr_sample);
+	state_save_register_item(buf, sndindex, chip->source_step);
+	state_save_register_item(buf, sndindex, chip->source_pos);
+	state_save_register_item(buf, sndindex, chip->base_offset);
 
-	state_save_register_UINT32 (buf, sndindex, "start", &chip->start, 1);
-	state_save_register_UINT32 (buf, sndindex, "end", &chip->end, 1);
-	state_save_register_UINT8  (buf, sndindex, "repeat", &chip->repeat, 1);
+	state_save_register_item(buf, sndindex, chip->start);
+	state_save_register_item(buf, sndindex, chip->end);
+	state_save_register_item(buf, sndindex, chip->repeat);
 }
 
 

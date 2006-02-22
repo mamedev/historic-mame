@@ -94,10 +94,7 @@ static void illegal(void)
 {
 #ifdef MAME_DEBUG
 	logerror("Illegal op @ %06X: %08X (tbl=%03X)\n", tms32031.pc - 1, OP, OP >> 21);
-{
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-}
+	DEBUGGER_BREAK;
 #endif
 }
 

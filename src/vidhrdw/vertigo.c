@@ -44,9 +44,9 @@
 *************************************************************************/
 
 #include "driver.h"
+#include "profiler.h"
 #include "vidhrdw/vector.h"
 #include "vertigo.h"
-#include "state.h"
 
 
 /*************************************

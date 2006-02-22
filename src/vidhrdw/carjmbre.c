@@ -4,11 +4,11 @@ Omori Electric CAD (OEC) 1981
 */
 
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 static tilemap *carjmbre_tilemap;
 
-static int carjmbre_flipscreen, carjmbre_bgcolor;
+static UINT8 carjmbre_flipscreen;
+static UINT16 carjmbre_bgcolor;
 
 PALETTE_INIT( carjmbre )
 {
@@ -84,8 +84,8 @@ VIDEO_START( carjmbre )
 
 	carjmbre_tilemap = tilemap_create( get_carjmbre_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 
-	state_save_register_int ("video", 0, "flipscreen", &carjmbre_flipscreen);
-	state_save_register_int ("video", 0, "bgcolor",    &carjmbre_bgcolor);
+	state_save_register_global(carjmbre_flipscreen);
+	state_save_register_global(carjmbre_bgcolor);
 
 	return 0;
 }

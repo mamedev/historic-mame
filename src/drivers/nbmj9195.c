@@ -533,7 +533,7 @@ static void tmpz84c011_init(void)
 	z80ctc_init(1, &ctc_intf_2);
 }
 
-static MACHINE_INIT( sailorws )
+static MACHINE_RESET( sailorws )
 {
 	int i;
 
@@ -4180,7 +4180,7 @@ static MACHINE_DRIVER_START( NBMJDRV1 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(sailorws)
+	MDRV_MACHINE_RESET(sailorws)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2)

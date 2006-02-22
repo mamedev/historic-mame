@@ -107,7 +107,6 @@
 
 #ifndef __RAINE__
 #include "driver.h"		/* use M.A.M.E. */
-#include "state.h"
 #else
 #include "deftypes.h"		/* use RAINE */
 #include "support.h"		/* use RAINE */
@@ -603,10 +602,10 @@ typedef struct
 	UINT32	mode;		/* mode  CSM / 3SLOT    */
 	UINT8	prescaler_sel;/* prescaler selector */
 	UINT8	fn_h;		/* freq latch           */
-	int		TA;			/* timer a              */
-	int		TAC;		/* timer a counter      */
+	INT32	TA;			/* timer a              */
+	INT32	TAC;		/* timer a counter      */
 	UINT8	TB;			/* timer b              */
-	int		TBC;		/* timer b counter      */
+	INT32	TBC;		/* timer b counter      */
 	/* local time tables */
 	INT32	dt_tab[8][32];/* DeTune table       */
 	/* Extention Timer and IRQ handler */
@@ -1604,17 +1603,17 @@ static void FMsave_state_channel(const char *name,int num,FM_CH *CH,int num_ch)
 	{
 		/* channel */
 		sprintf(state_name,"%s.CH%d",name,ch);
-		state_save_register_INT32(state_name, num, "feedback" , CH->op1_out , 2);
-		state_save_register_UINT32(state_name, num, "phasestep"   , &CH->fc , 1);
+		state_save_register_item_array(state_name, num, CH->op1_out);
+		state_save_register_item(state_name, num, CH->fc);
 		/* slots */
 		for(slot=0;slot<4;slot++)
 		{
 			FM_SLOT *SLOT = &CH->SLOT[slot];
 
 			sprintf(state_name,"%s.CH%d.SLOT%d",name,ch,slot_array[slot]);
-			state_save_register_UINT32(state_name, num, "phasecount" , &SLOT->phase, 1);
-			state_save_register_UINT8 (state_name, num, "state"      , &SLOT->state, 1);
-			state_save_register_INT32 (state_name, num, "volume"     , &SLOT->volume, 1);
+			state_save_register_item(state_name, num, SLOT->phase);
+			state_save_register_item(state_name, num, SLOT->state);
+			state_save_register_item(state_name, num, SLOT->volume);
 		}
 	}
 }
@@ -1622,19 +1621,19 @@ static void FMsave_state_channel(const char *name,int num,FM_CH *CH,int num_ch)
 static void FMsave_state_st(const char *state_name,int num,FM_ST *ST)
 {
 #if FM_BUSY_FLAG_SUPPORT
-	state_save_register_double(state_name, num, "BusyExpire", &ST->BusyExpire , 1);
+	state_save_register_item(state_name, num, ST->BusyExpire );
 #endif
-	state_save_register_UINT8 (state_name, num, "address"   , &ST->address , 1);
-	state_save_register_UINT8 (state_name, num, "IRQ"       , &ST->irq     , 1);
-	state_save_register_UINT8 (state_name, num, "IRQ MASK"  , &ST->irqmask , 1);
-	state_save_register_UINT8 (state_name, num, "status"    , &ST->status  , 1);
-	state_save_register_UINT32(state_name, num, "mode"      , &ST->mode    , 1);
-	state_save_register_UINT8 (state_name, num, "prescaler" , &ST->prescaler_sel , 1);
-	state_save_register_UINT8 (state_name, num, "freq latch", &ST->fn_h , 1);
-	state_save_register_int   (state_name, num, "TIMER A"   , &ST->TA   );
-	state_save_register_int   (state_name, num, "TIMER Acnt", &ST->TAC  );
-	state_save_register_UINT8 (state_name, num, "TIMER B"   , &ST->TB   , 1);
-	state_save_register_int   (state_name, num, "TIMER Bcnt", &ST->TBC  );
+	state_save_register_item(state_name, num, ST->address );
+	state_save_register_item(state_name, num, ST->irq     );
+	state_save_register_item(state_name, num, ST->irqmask );
+	state_save_register_item(state_name, num, ST->status  );
+	state_save_register_item(state_name, num, ST->mode    );
+	state_save_register_item(state_name, num, ST->prescaler_sel );
+	state_save_register_item(state_name, num, ST->fn_h );
+	state_save_register_item(state_name, num, ST->TA   );
+	state_save_register_item(state_name, num, ST->TAC  );
+	state_save_register_item(state_name, num, ST->TB  );
+	state_save_register_item(state_name, num, ST->TBC  );
 }
 #endif /* _STATE_H */
 
@@ -2155,13 +2154,13 @@ static void YM2203_save_state(YM2203 *F2203, int index)
 {
 	static const char statename[] = "YM2203";
 
-	state_save_register_UINT8 (statename, index, "regs"   , F2203->REGS   , 256);
+	state_save_register_item_array(statename, index, F2203->REGS);
 	FMsave_state_st(statename,index,&F2203->OPN.ST);
 	FMsave_state_channel(statename,index,F2203->CH,3);
 	/* 3slots */
-	state_save_register_UINT32 (statename, index, "slot3fc" , F2203->OPN.SL3.fc , 3);
-	state_save_register_UINT8  (statename, index, "slot3fh" , &F2203->OPN.SL3.fn_h , 1);
-	state_save_register_UINT8  (statename, index, "slot3kc" , F2203->OPN.SL3.kcode , 3);
+	state_save_register_item_array (statename, index, F2203->OPN.SL3.fc);
+	state_save_register_item  (statename, index, F2203->OPN.SL3.fn_h);
+	state_save_register_item_array  (statename, index, F2203->OPN.SL3.kcode);
 }
 #endif /* _STATE_H */
 
@@ -2573,13 +2572,13 @@ static void FMsave_state_adpcma(const char *name,int num,ADPCM_CH *adpcm)
 	{
 		sprintf(state_name,"%s.CH%d",name,ch);
 
-		state_save_register_UINT8 (state_name, num, "flag"    , &adpcm->flag      , 1);
-		state_save_register_UINT8 (state_name, num, "data"    , &adpcm->now_data  , 1);
-		state_save_register_UINT32(state_name, num, "addr"    , &adpcm->now_addr  , 1);
-		state_save_register_UINT32(state_name, num, "step"    , &adpcm->now_step  , 1);
-		state_save_register_INT32 (state_name, num, "a_acc"   , &adpcm->adpcm_acc , 1);
-		state_save_register_INT32 (state_name, num, "a_step"  , &adpcm->adpcm_step, 1);
-		state_save_register_INT32 (state_name, num, "a_out"   , &adpcm->adpcm_out , 1);
+		state_save_register_item(state_name, num, adpcm->flag);
+		state_save_register_item(state_name, num, adpcm->now_data);
+		state_save_register_item(state_name, num, adpcm->now_addr);
+		state_save_register_item(state_name, num, adpcm->now_step);
+		state_save_register_item(state_name, num, adpcm->adpcm_acc);
+		state_save_register_item(state_name, num, adpcm->adpcm_step);
+		state_save_register_item(state_name, num, adpcm->adpcm_out);
 	}
 }
 #endif /* _STATE_H */
@@ -3370,15 +3369,15 @@ static void YM2608_save_state(YM2608 *F2608, int index)
 {
 	static const char statename[] = "YM2608";
 
-	state_save_register_UINT8 (statename, index, "regs"   , F2608->REGS   , 512);
+	state_save_register_item_array(statename, index, F2608->REGS);
 	FMsave_state_st(statename,index,&F2608->OPN.ST);
 	FMsave_state_channel(statename,index,F2608->CH,6);
 	/* 3slots */
-	state_save_register_UINT32(statename, index, "slot3fc" , F2608->OPN.SL3.fc   , 3);
-	state_save_register_UINT8 (statename, index, "slot3fh" , &F2608->OPN.SL3.fn_h, 1);
-	state_save_register_UINT8 (statename, index, "slot3kc" , F2608->OPN.SL3.kcode, 3);
+	state_save_register_item_array(statename, index, F2608->OPN.SL3.fc);
+	state_save_register_item(statename, index, F2608->OPN.SL3.fn_h);
+	state_save_register_item_array(statename, index, F2608->OPN.SL3.kcode);
 	/* address register1 */
-	state_save_register_UINT8 (statename, index, "addr_A1" , &F2608->addr_A1 ,1);
+	state_save_register_item(statename, index, F2608->addr_A1);
 	/* rythm(ADPCMA) */
 	FMsave_state_adpcma(statename,index,F2608->adpcm);
 	/* Delta-T ADPCM unit */
@@ -4055,17 +4054,17 @@ static void YM2610_save_state(YM2610 *F2610, int index)
 {
 	static const char statename[] = "YM2610";
 
-	state_save_register_UINT8 (statename, index, "regs"   , F2610->REGS   , 512);
+	state_save_register_item_array(statename, index, F2610->REGS);
 	FMsave_state_st(statename,index,&F2610->OPN.ST);
 	FMsave_state_channel(statename,index,F2610->CH,6);
 	/* 3slots */
-	state_save_register_UINT32(statename, index, "slot3fc" , F2610->OPN.SL3.fc   , 3);
-	state_save_register_UINT8 (statename, index, "slot3fh" , &F2610->OPN.SL3.fn_h, 1);
-	state_save_register_UINT8 (statename, index, "slot3kc" , F2610->OPN.SL3.kcode, 3);
+	state_save_register_item_array(statename, index, F2610->OPN.SL3.fc);
+	state_save_register_item(statename, index, F2610->OPN.SL3.fn_h);
+	state_save_register_item_array(statename, index, F2610->OPN.SL3.kcode);
 	/* address register1 */
-	state_save_register_UINT8 (statename, index, "addr_A1" , &F2610->addr_A1, 1);
+	state_save_register_item(statename, index, F2610->addr_A1);
 
-	state_save_register_UINT8 (statename, index, "arrivedFlag", &F2610->adpcm_arrivedEndAddress , 1);
+	state_save_register_item(statename, index, F2610->adpcm_arrivedEndAddress);
 	/* rythm(ADPCMA) */
 	FMsave_state_adpcma(statename,index,F2610->adpcm);
 	/* Delta-T ADPCM unit */
@@ -4540,15 +4539,15 @@ static void YM2612_save_state(YM2612 *F2612, int index)
 {
 	static const char statename[] = "YM2612";
 
-	state_save_register_UINT8 (statename, index, "regs"   , F2612->REGS   , 512);
+	state_save_register_item_array(statename, index, F2612->REGS);
 	FMsave_state_st(statename,index,&F2612->OPN.ST);
 	FMsave_state_channel(statename,index,F2612->CH,6);
 	/* 3slots */
-	state_save_register_UINT32 (statename, index, "slot3fc" , F2612->OPN.SL3.fc ,   3);
-	state_save_register_UINT8  (statename, index, "slot3fh" , &F2612->OPN.SL3.fn_h, 1);
-	state_save_register_UINT8  (statename, index, "slot3kc" , F2612->OPN.SL3.kcode, 3);
+	state_save_register_item_array(statename, index, F2612->OPN.SL3.fc);
+	state_save_register_item(statename, index, F2612->OPN.SL3.fn_h);
+	state_save_register_item_array(statename, index, F2612->OPN.SL3.kcode);
 	/* address register1 */
-	state_save_register_UINT8 (statename, index, "addr_A1" , &F2612->addr_A1, 1);
+	state_save_register_item(statename, index, F2612->addr_A1);
 }
 #endif /* _STATE_H */
 

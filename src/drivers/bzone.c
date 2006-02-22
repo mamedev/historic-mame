@@ -205,13 +205,36 @@
 #include "sound/custom.h"
 #include "artwork.h"
 #include "bzone.h"
-#include "state.h"
 
 #define IN0_3KHZ (1<<7)
 #define IN0_VG_HALT (1<<6)
 
 
+static UINT8 analog_data;
+
 UINT8 rb_input_select;
+
+
+
+/*************************************
+ *
+ *  Save state registration
+ *
+ *************************************/
+
+static MACHINE_START( bzone )
+{
+	state_save_register_global(analog_data);
+	return 0;
+}
+
+
+static MACHINE_START( redbaron )
+{
+	state_save_register_global(analog_data);
+	state_save_register_global(rb_input_select);
+	return 0;
+}
 
 
 
@@ -565,6 +588,8 @@ static MACHINE_DRIVER_START( bzone )
 
 	MDRV_FRAMES_PER_SECOND(40)
 
+	MDRV_MACHINE_START(bzone)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
@@ -607,6 +632,8 @@ static MACHINE_DRIVER_START( redbaron )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(redbaron_map,0)
 	MDRV_CPU_VBLANK_INT(bzone_interrupt,4) /* 5.4ms */
+
+	MDRV_MACHINE_START(redbaron)
 
 	MDRV_FRAMES_PER_SECOND(45)
 	MDRV_NVRAM_HANDLER(atari_vg)
@@ -715,8 +742,6 @@ ROM_END
  *
  *************************************/
 
-static UINT8 analog_data;
-
 static READ8_HANDLER( analog_data_r )
 {
 	return analog_data;
@@ -733,7 +758,6 @@ static WRITE8_HANDLER( analog_select_w )
 static DRIVER_INIT( bzone )
 {
 	artwork_set_overlay(bzone_overlay);
-	state_save_register_global(analog_data);
 }
 
 
@@ -746,7 +770,6 @@ static DRIVER_INIT( bradley )
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1809, 0x1809, 0, 0, input_port_5_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x180a, 0x180a, 0, 0, analog_data_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1848, 0x1850, 0, 0, analog_select_w);
-	state_save_register_global(analog_data);
 }
 
 
@@ -757,8 +780,6 @@ static DRIVER_INIT( redbaron )
 	OVERLAY_END
 
 	artwork_set_overlay(redbaron_overlay);
-	state_save_register_global(analog_data);
-	state_save_register_global(rb_input_select);
 }
 
 

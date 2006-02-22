@@ -7,7 +7,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "missile.h"
-#include "state.h"
 
 UINT8 *missile_videoram;
 extern UINT8 *missile_ram;
@@ -22,14 +21,16 @@ extern UINT8 *missile_ram;
 VIDEO_START( missile )
 {
 	/* force video ram to be $0000-$FFFF even though only $1900-$FFFF is used */
-	missile_videoram = auto_malloc (256 * 256);
+	missile_videoram = auto_malloc(256 * 256);
 
-	if ((tmpbitmap = auto_bitmap_alloc(256, 256)) == 0)
+	tmpbitmap = auto_bitmap_alloc(256, 256);
+	if (tmpbitmap == NULL)
 		return 1;
 
-	memset (missile_videoram, 0, 256 * 256);
+	memset(missile_videoram, 0, 256 * 256);
 
-        state_save_register_UINT8("missile",0,"missile_videoram",missile_videoram,256*256);
+	state_save_register_global_pointer(missile_videoram, 256*256);
+	state_save_register_global_bitmap(tmpbitmap);
 	return 0;
 }
 

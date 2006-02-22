@@ -1,4 +1,3 @@
-#include "state.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "namcos2.h" /* for game-specific hacks */
@@ -1476,7 +1475,7 @@ WRITE32_HANDLER( namco_rozvideoram32_le_w )
  *      0x1fffd             always 0xffff 0xffff?
  */
 static UINT16 *mpRoadRAM; /* at 0x880000 in Final Lap; at 0xa00000 in Lucky&Wild */
-static unsigned char *mpRoadDirty;
+static UINT8 *mpRoadDirty;
 static int mbRoadSomethingIsDirty;
 static int mRoadGfxBank;
 static tilemap *mpRoadTilemap;
@@ -1608,8 +1607,8 @@ namco_road_init( int gfxbank )
 
 				if( mpRoadTilemap )
 				{
-					state_save_register_UINT8 ("namco_road", 0, "RoadDirty", mpRoadDirty, ROAD_TILE_COUNT_MAX);
-					state_save_register_UINT16("namco_road", 0, "RoadRAM",   mpRoadRAM,   0x20000 / 2);
+					state_save_register_global_pointer(mpRoadDirty, ROAD_TILE_COUNT_MAX);
+					state_save_register_global_pointer(mpRoadRAM,   0x20000 / 2);
 					state_save_register_func_postload(RoadMarkAllDirty);
 
 					return 0;

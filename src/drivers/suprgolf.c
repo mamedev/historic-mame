@@ -55,7 +55,7 @@ static WRITE8_HANDLER( rom2_bank_select_w )
 	memory_set_bankptr(1, region_base + (data&0x3f ) * 0x4000);
 }
 
-static MACHINE_INIT( suprgolf )
+static MACHINE_RESET( suprgolf )
 {
 
 }
@@ -301,7 +301,7 @@ static MACHINE_DRIVER_START( suprgolf )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(suprgolf)
+	MDRV_MACHINE_RESET(suprgolf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

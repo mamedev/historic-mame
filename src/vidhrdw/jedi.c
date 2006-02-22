@@ -19,7 +19,7 @@ UINT8 *jedi_PIXIRAM;
 static UINT32 jedi_vscroll;
 static UINT32 jedi_hscroll;
 static UINT32 jedi_alpha_bank;
-static int video_off, smooth_table;
+static UINT8 video_off, smooth_table;
 static UINT8 *fgdirty, *bgdirty;
 static mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
 
@@ -30,6 +30,13 @@ static mame_bitmap *fgbitmap, *mobitmap, *bgbitmap, *bgexbitmap;
  *  Video startup
  *
  *************************************/
+
+static void jedi_postload(void)
+{
+	memset(fgdirty, 1, videoram_size);
+	memset(bgdirty, 1, jedi_backgroundram_size);
+}
+
 
 VIDEO_START( jedi )
 {
@@ -64,6 +71,15 @@ VIDEO_START( jedi )
 
 	/* reserve color 1024 for black (disabled display) */
 	palette_set_color(1024, 0, 0, 0);
+
+	/* register for saving */
+	state_save_register_global(jedi_vscroll);
+	state_save_register_global(jedi_hscroll);
+	state_save_register_global(jedi_alpha_bank);
+	state_save_register_global(video_off);
+	state_save_register_global(smooth_table);
+	state_save_register_func_postload(jedi_postload);
+
 	return 0;
 }
 

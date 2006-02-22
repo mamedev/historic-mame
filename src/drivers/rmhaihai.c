@@ -172,7 +172,7 @@ logerror("banksw %d\n",bank);
 	memory_set_bankptr(2, rom + bank*0x4000 + 0x2000);
 }
 
-static MACHINE_INIT( themj )
+static MACHINE_RESET( themj )
 {
 	themj_rombank_w(0,0);
 }
@@ -576,7 +576,7 @@ static MACHINE_DRIVER_START( themj )
 	MDRV_CPU_PROGRAM_MAP(themj_readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,themj_writeport)
 
-	MDRV_MACHINE_INIT(themj)
+	MDRV_MACHINE_RESET(themj)
 
 	/* video hardware */
 	MDRV_GFXDECODE(gfxdecodeinfo2)

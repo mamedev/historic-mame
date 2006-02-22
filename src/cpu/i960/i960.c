@@ -1,6 +1,5 @@
 #include "cpuintrf.h"
-#include "osd_cpu.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "state.h"
 #include "i960.h"
 #include "i960dis.h"
@@ -2061,16 +2060,16 @@ static void i960_init(void)
 	memset(&i960, 0, sizeof(i960));
 	i960.irq_cb = i960_default_irq_callback;
 
-	state_save_register_UINT32("i960", cpu, "ppc",       &i960.PIP, 1);
-	state_save_register_UINT32("i960", cpu, "sat",       &i960.SAT, 1);
-	state_save_register_UINT32("i960", cpu, "prcb",      &i960.PRCB, 1);
-	state_save_register_UINT32("i960", cpu, "pc",        &i960.PC, 1);
-	state_save_register_UINT32("i960", cpu, "ac",        &i960.AC, 1);
-	state_save_register_UINT32("i960", cpu, "icr",       &i960.ICR, 1);
-	state_save_register_UINT32("i960", cpu, "regs",      i960.r, 0x20);
- 	state_save_register_double("i960", cpu, "fpregs",    i960.fp, 4);
-	state_save_register_UINT32("i960", cpu, "rcache",    &i960.rcache[0][0], RCACHE_SIZE*0x10);
-	state_save_register_UINT32("i960", cpu, "rcache_fp", i960.rcache_frame_addr, RCACHE_SIZE);
+	state_save_register_item("i960", cpu, i960.PIP);
+	state_save_register_item("i960", cpu, i960.SAT);
+	state_save_register_item("i960", cpu, i960.PRCB);
+	state_save_register_item("i960", cpu, i960.PC);
+	state_save_register_item("i960", cpu, i960.AC);
+	state_save_register_item("i960", cpu, i960.ICR);
+	state_save_register_item_array("i960", cpu, i960.r);
+ 	state_save_register_item_array("i960", cpu, i960.fp);
+	state_save_register_item_2d_array("i960", cpu, i960.rcache);
+	state_save_register_item_array("i960", cpu, i960.rcache_frame_addr);
 }
 
 static offs_t i960_disasm(char *buffer, offs_t pc)
@@ -2162,8 +2161,8 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(i960_state); break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:     info->p = i960_reg_layout;			  break;
 	case CPUINFO_PTR_WINDOW_LAYOUT:	      info->p = i960_win_layout;			  break;
-	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 4;
-	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 8;
+	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 4;							break;
+	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 8;							break;
 
 		// Bus sizes
 	case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32; break;
@@ -2194,7 +2193,7 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 
 		// CPU main state
 	case CPUINFO_INT_PC:                 info->i = i960.IP;                               break;
-	case CPUINFO_INT_SP:		     info->i = i960.r[I960_SP];                       break;
+	case CPUINFO_INT_SP:		     	info->i = i960.r[I960_SP];                       break;
 	case CPUINFO_INT_PREVIOUSPC:         info->i = i960.PIP;                              break;
 
 	case CPUINFO_INT_REGISTER + I960_SAT:  info->i = i960.SAT;                            break;

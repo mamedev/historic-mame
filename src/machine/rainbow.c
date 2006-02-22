@@ -48,12 +48,11 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 static UINT8* CRAM[8];
 
 static int extra_version;
-static int current_bank;
+static UINT8 current_bank;
 
 /*************************************
  *
@@ -811,16 +810,12 @@ void rainbow_cchip_init(int version)
 
 	for (i = 0; i < 8; i++)
 	{
-		char buf[6];
-
 		CRAM[i] = auto_malloc(0x400);
 
-		sprintf(buf, "CRAM%d", i);
-
-		state_save_register_UINT8("cchip", i, buf, CRAM[i], 0x400);
+		state_save_register_item_pointer("cchip", i, CRAM[i], 0x400);
 	}
 
-	state_save_register_int("cchip", 0, "current_bank", &current_bank);
+	state_save_register_item("cchip", 0, current_bank);
 
 	timer_pulse(TIME_IN_HZ(60), 0, cchip_timer);
 }

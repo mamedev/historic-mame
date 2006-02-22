@@ -91,6 +91,9 @@ OSOBJS = \
 	$(OBJ)/$(MAMEOS)/winddraw.o \
 	$(OBJ)/$(MAMEOS)/winmain.o \
 
+OSTOOLOBJS = \
+	$(OBJ)/$(MAMEOS)/osd_tool.o
+
 # add debug-specific files
 ifdef DEBUG
 OSOBJS += \

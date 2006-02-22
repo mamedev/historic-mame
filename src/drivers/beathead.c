@@ -159,7 +159,7 @@ static void scanline_callback(int scanline)
 }
 
 
-static MACHINE_INIT( beathead )
+static MACHINE_RESET( beathead )
 {
 	/* reset the common subsystems */
 	atarigen_eeprom_reset();
@@ -434,7 +434,7 @@ static MACHINE_DRIVER_START( beathead )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 240.) / 262.) * 1000000. / 60.))
 
-	MDRV_MACHINE_INIT(beathead)
+	MDRV_MACHINE_RESET(beathead)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

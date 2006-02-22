@@ -46,8 +46,8 @@ READ8_HANDLER( indyheat_wheel_r );
 READ8_HANDLER( indyheat_analog_r );
 WRITE8_HANDLER( indyheat_analog_w );
 
-MACHINE_INIT( leland );
-MACHINE_INIT( ataxx );
+MACHINE_RESET( leland );
+MACHINE_RESET( ataxx );
 
 INTERRUPT_GEN( leland_master_interrupt );
 

@@ -38,22 +38,22 @@ extern VIDEO_UPDATE( zodiack );
 
 int percuss_hardware;
 
-extern MACHINE_INIT( espial );
+extern MACHINE_RESET( espial );
 extern WRITE8_HANDLER( zodiac_master_interrupt_enable_w );
 extern INTERRUPT_GEN( zodiac_master_interrupt );
 extern WRITE8_HANDLER( zodiac_master_soundlatch_w );
 
 
-static MACHINE_INIT( zodiack )
+static MACHINE_RESET( zodiack )
 {
 	percuss_hardware = 0;
-	machine_init_espial();
+	machine_reset_espial();
 }
 
-static MACHINE_INIT( percuss )
+static MACHINE_RESET( percuss )
 {
 	percuss_hardware = 1;
-	machine_init_espial();
+	machine_reset_espial();
 }
 
 
@@ -506,7 +506,7 @@ static MACHINE_DRIVER_START( zodiack )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */
 
-	MDRV_MACHINE_INIT(zodiack)
+	MDRV_MACHINE_RESET(zodiack)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -529,7 +529,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( percuss )
 	MDRV_IMPORT_FROM(zodiack)
-	MDRV_MACHINE_INIT(percuss)
+	MDRV_MACHINE_RESET(percuss)
 MACHINE_DRIVER_END
 
 

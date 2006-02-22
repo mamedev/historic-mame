@@ -1,10 +1,8 @@
 #include "stdio.h"
 #include "string.h"
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "se3208.h"
-#include "memory.h"
 
 
 //Decode the ER value thorugh the last opcodes, set to 0 to disable

@@ -7,8 +7,7 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "state.h"
-#include "machine/74181.h"
+#include "74181.h"
 
 struct TTL74181_chip
 {

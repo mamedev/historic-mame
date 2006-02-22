@@ -256,14 +256,14 @@ static WRITE16_HANDLER( coolpool_34010_io_register_w )
  *
  *************************************/
 
-static MACHINE_INIT( amerdart )
+static MACHINE_RESET( amerdart )
 {
 	nvram_write_enable = 0;
 	nvram_write_timer = timer_alloc(nvram_write_timeout);
 }
 
 
-static MACHINE_INIT( coolpool )
+static MACHINE_RESET( coolpool )
 {
 	timer_set(cpu_getscanlinetime(0), 0, coolpool_reset_dpyadr);
 	tlc34076_reset(6);
@@ -791,7 +791,7 @@ MACHINE_DRIVER_START( amerdart )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(amerdart)
+	MDRV_MACHINE_RESET(amerdart)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -823,7 +823,7 @@ static MACHINE_DRIVER_START( coolpool )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (261 - 240) / (261 * 60))
-	MDRV_MACHINE_INIT(coolpool)
+	MDRV_MACHINE_RESET(coolpool)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

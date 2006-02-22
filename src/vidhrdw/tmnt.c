@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/konamiic.h"
 
@@ -270,10 +269,10 @@ VIDEO_START( lgtnfght )	/* also tmnt2, ssriders */
 
 	dim_c = dim_v = lastdim = lasten = 0;
 
-	state_save_register_int  ("TMNT2", 0, "dim_c",   &dim_c);
-	state_save_register_int  ("TMNT2", 0, "dim_v",   &dim_v);
-	state_save_register_int  ("TMNT2", 0, "lastdim", &lastdim);
-	state_save_register_int  ("TMNT2", 0, "lasten",  &lasten);
+	state_save_register_global(dim_c);
+	state_save_register_global(dim_v);
+	state_save_register_global(lastdim);
+	state_save_register_global(lasten);
 
 	return 0;
 }

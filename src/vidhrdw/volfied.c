@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -32,9 +31,9 @@ VIDEO_START( volfied )
 
 	video_ram = auto_malloc(0x40000 * sizeof (UINT16));
 
-	state_save_register_UINT16("volfied", 0, "video_ram",   video_ram,    0x40000);
-	state_save_register_UINT16("volfied", 0, "video_ctrl",  &video_ctrl,  1);
-	state_save_register_UINT16("volfied", 0, "video_mask",  &video_mask,  1);
+	state_save_register_global_pointer(video_ram, 0x40000);
+	state_save_register_global(video_ctrl);
+	state_save_register_global(video_mask);
 
 	state_save_register_func_postload (mark_all_dirty);
 

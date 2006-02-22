@@ -28,7 +28,7 @@ extern int flkatck_irq_enabled;
 
 /***************************************************************************/
 
-static MACHINE_INIT( flkatck )
+static MACHINE_RESET( flkatck )
 {
 	K007232_set_bank( 0, 0, 1 );
 }
@@ -284,7 +284,7 @@ static MACHINE_DRIVER_START( flkatck )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(flkatck)
+	MDRV_MACHINE_RESET(flkatck)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

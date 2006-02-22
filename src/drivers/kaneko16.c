@@ -83,7 +83,7 @@ To Do:
 
 ***************************************************************************/
 
-MACHINE_INIT( kaneko16 )
+MACHINE_RESET( kaneko16 )
 {
 	kaneko16_sprite_type  = 0;
 
@@ -105,16 +105,16 @@ MACHINE_INIT( kaneko16 )
 	kaneko16_priority.sprite[3] = 8;	// above all
 }
 
-static MACHINE_INIT( berlwall )
+static MACHINE_RESET( berlwall )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	kaneko16_sprite_type = 2;	// like type 0, but using 16 instead of 8 bytes
 }
 
-static MACHINE_INIT( blazeon )
+static MACHINE_RESET( blazeon )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	kaneko16_sprite_xoffs = 0x10000 - 0x680;
 	kaneko16_sprite_yoffs = 0x000;
@@ -134,7 +134,7 @@ static MACHINE_INIT( blazeon )
 	kaneko16_priority.sprite[3] = 8;	// ""
 }
 
-static MACHINE_INIT( bloodwar )
+static MACHINE_RESET( bloodwar )
 {
 	kaneko16_priority.sprite[0] = 2;	// ever used ?
 	kaneko16_priority.sprite[1] = 3;	// character selection / vs. portraits
@@ -148,7 +148,7 @@ static MACHINE_INIT( bloodwar )
 	toybox_mcu_init();
 }
 
-static MACHINE_INIT( bonkadv )
+static MACHINE_RESET( bonkadv )
 {
 	kaneko16_priority.sprite[0] = 2;	// ever used ?
 	kaneko16_priority.sprite[1] = 3;	// volcano lava on level 2
@@ -162,9 +162,9 @@ static MACHINE_INIT( bonkadv )
 	toybox_mcu_init();
 }
 
-static MACHINE_INIT( bakubrkr )
+static MACHINE_RESET( bakubrkr )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	kaneko16_priority.sprite[0] = 8;	// above all
 	kaneko16_priority.sprite[1] = 8;	// above all
@@ -174,9 +174,9 @@ static MACHINE_INIT( bakubrkr )
 	kaneko16_priority.VIEW2_2_pri = 1;
 }
 
-static MACHINE_INIT( gtmr )
+static MACHINE_RESET( gtmr )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	kaneko16_sprite_type = 1;
 
@@ -185,9 +185,9 @@ static MACHINE_INIT( gtmr )
 	toybox_mcu_init();
 }
 
-static MACHINE_INIT( mgcrystl )
+static MACHINE_RESET( mgcrystl )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 /*
     Sx = Sprites with priority x, x = tiles with priority x,
     Sprites - Tiles Order:
@@ -212,18 +212,18 @@ static MACHINE_INIT( mgcrystl )
 	kaneko16_priority.VIEW2_2_pri = 0;
 }
 
-static MACHINE_INIT( sandscrp )
+static MACHINE_RESET( sandscrp )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	kaneko16_sprite_type = 3;	// "different" sprites layout
 
 	watchdog_reset16_r(0,0);	// start with an armed watchdog
 }
 
-static MACHINE_INIT( shogwarr )
+static MACHINE_RESET( shogwarr )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	calc3_mcu_init();
 }
@@ -2100,7 +2100,7 @@ static MACHINE_DRIVER_START( berlwall )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(berlwall)
+	MDRV_MACHINE_RESET(berlwall)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)	// mangled sprites otherwise
@@ -2144,7 +2144,7 @@ static MACHINE_DRIVER_START( bakubrkr )
 	MDRV_FRAMES_PER_SECOND(59)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(bakubrkr)
+	MDRV_MACHINE_RESET(bakubrkr)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
@@ -2202,7 +2202,7 @@ static MACHINE_DRIVER_START( blazeon )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(blazeon)
+	MDRV_MACHINE_RESET(blazeon)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
@@ -2248,7 +2248,7 @@ static MACHINE_DRIVER_START( gtmr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(gtmr)
+	MDRV_MACHINE_RESET(gtmr)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
@@ -2265,13 +2265,13 @@ static MACHINE_DRIVER_START( gtmr )
 
 	MDRV_SOUND_ADD(OKIM6295, 12000)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
 
 	MDRV_SOUND_ADD(OKIM6295, 12000)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2285,7 +2285,7 @@ static MACHINE_DRIVER_START( bloodwar )
 	MDRV_CPU_MODIFY("gtmr")
 	MDRV_CPU_PROGRAM_MAP(bloodwar,0)
 
-	MDRV_MACHINE_INIT( bloodwar )
+	MDRV_MACHINE_RESET( bloodwar )
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2322,7 +2322,7 @@ static MACHINE_DRIVER_START( bonkadv )
 	MDRV_CPU_PROGRAM_MAP(bonkadv,0)
 	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM + 1 ) // comment above
 
-	MDRV_MACHINE_INIT( bonkadv )
+	MDRV_MACHINE_RESET( bonkadv )
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -2339,7 +2339,7 @@ static MACHINE_DRIVER_START( mgcrystl )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(mgcrystl)
+	MDRV_MACHINE_RESET(mgcrystl)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
@@ -2404,7 +2404,7 @@ static MACHINE_DRIVER_START( sandscrp )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// eof callback
 
-	MDRV_MACHINE_INIT(sandscrp)
+	MDRV_MACHINE_RESET(sandscrp)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2469,7 +2469,7 @@ static MACHINE_DRIVER_START( shogwarr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(shogwarr)
+	MDRV_MACHINE_RESET(shogwarr)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

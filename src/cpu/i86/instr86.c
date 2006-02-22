@@ -3221,7 +3221,7 @@ static void PREFIX86(_invalid)(void)
 	i286_trap2(ILLEGAL_INSTRUCTION);
 #else
 	 /* makes the cpu loops forever until user resets it */
-	/*{ extern int debug_key_pressed; debug_key_pressed = 1; } */
+	/*{ DEBUGGER_BREAK; } */
 	logerror("illegal instruction %.2x at %.5x\n",PEEKBYTE(I.pc), I.pc);
 	I.pc--;
 	ICOUNT -= 10;

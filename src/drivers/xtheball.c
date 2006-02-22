@@ -32,7 +32,7 @@ static UINT8 bitvals[32];
  *
  *************************************/
 
-static MACHINE_INIT( xtheball )
+static MACHINE_RESET( xtheball )
 {
 	tlc34076_reset(6);
 	ticket_dispenser_init(100, 1, 1);
@@ -384,7 +384,7 @@ static MACHINE_DRIVER_START( xtheball )
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_PERIODIC_INT(irq1_line_pulse,TIME_IN_HZ(15000))
 
-	MDRV_MACHINE_INIT(xtheball)
+	MDRV_MACHINE_RESET(xtheball)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (256 - 224)) / (60 * 256))
 	MDRV_NVRAM_HANDLER(generic_1fill)

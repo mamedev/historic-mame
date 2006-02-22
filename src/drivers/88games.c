@@ -13,7 +13,7 @@
 #include "sound/upd7759.h"
 
 
-static MACHINE_INIT( 88games );
+static MACHINE_RESET( 88games );
 static void k88games_banking( int lines );
 
 static unsigned char *ram;
@@ -303,7 +303,7 @@ static MACHINE_DRIVER_START( 88games )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(88games)
+	MDRV_MACHINE_RESET(88games)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -543,7 +543,7 @@ logerror("%04x: bank select %02x\n",activecpu_get_pc(),lines);
 	k88games_priority = lines & 0x80;
 }
 
-static MACHINE_INIT( 88games )
+static MACHINE_RESET( 88games )
 {
 	cpunum_set_info_fct(0, CPUINFO_PTR_KONAMI_SETLINES_CALLBACK, (genf *)k88games_banking);
 	paletteram = &memory_region(REGION_CPU1)[0x20000];

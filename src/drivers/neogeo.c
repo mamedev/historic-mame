@@ -195,7 +195,6 @@ Points to note, known and proven information deleted from this map:
 #include "machine/pd4990a.h"
 #include "cpu/z80/z80.h"
 #include "neogeo.h"
-#include "state.h"
 #include "sound/2610intf.h"
 
 
@@ -216,10 +215,10 @@ unsigned int neogeo_frame_counter_speed=4;
 
 /******************************************************************************/
 
-static int irq2start=1000,irq2control;
-static int current_rastercounter,current_rasterline,scanline_read;
+static INT32 irq2start=1000,irq2control;
+static INT32 current_rastercounter,current_rasterline,scanline_read;
 static UINT32 irq2pos_value;
-static int vblank_int,scanline_int;
+static INT32 vblank_int,scanline_int;
 
 /*  flags for irq2control:
 
@@ -282,9 +281,9 @@ static WRITE16_HANDLER( neo_irqack_w )
 }
 
 
-static int fc = 0;
+static INT32 fc = 0;
 
-static int neogeo_raster_enable = 1;
+static INT32 neogeo_raster_enable = 1;
 
 static INTERRUPT_GEN( neogeo_raster_interrupt )
 {
@@ -345,8 +344,8 @@ static INTERRUPT_GEN( neogeo_raster_interrupt )
 	update_interrupts();
 }
 
-static int pending_command;
-static int result_code;
+static INT32 pending_command;
+static INT32 result_code;
 
 /* Calendar, coins + Z80 communication */
 static READ16_HANDLER( timer16_r )
@@ -1335,7 +1334,8 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_WATCHDOG_TIME_INIT(TIME_IN_SEC(0.128762))
 
-	MDRV_MACHINE_INIT(neogeo)
+	MDRV_MACHINE_START(neogeo)
+	MDRV_MACHINE_RESET(neogeo)
 	MDRV_NVRAM_HANDLER(neogeo)
 
 	/* video hardware */
@@ -7666,24 +7666,24 @@ static void neogeo_init_cpu_banks(void)
 
 void neogeo_register_main_savestate(void)
 {
-	state_save_register_UINT32("neogeo", 0, "neogeo_frame_counter",       &neogeo_frame_counter,       1);
-	state_save_register_UINT32("neogeo", 0, "neogeo_frame_counter_speed", &neogeo_frame_counter_speed, 1);
-	state_save_register_int   ("neogeo", 0, "current_rastercounter",      &current_rastercounter);
-	state_save_register_int   ("neogeo", 0, "current_rasterline",         &current_rasterline);
-	state_save_register_int   ("neogeo", 0, "scanline_read",              &scanline_read);
-	state_save_register_int   ("neogeo", 0, "irq2start",                  &irq2start);
-	state_save_register_int   ("neogeo", 0, "irq2control",                &irq2control);
-	state_save_register_UINT32("neogeo", 0, "irq2pos_value",              &irq2pos_value,              1);
-	state_save_register_int   ("neogeo", 0, "vblank_int",                 &vblank_int);
-	state_save_register_int   ("neogeo", 0, "scanline_int",               &scanline_int);
-	state_save_register_int   ("neogeo", 0, "fc",                         &fc);
-	state_save_register_int   ("neogeo", 0, "neogeo_raster_enable",       &neogeo_raster_enable);
-	state_save_register_int   ("neogeo", 0, "pending_command",            &pending_command);
-	state_save_register_int   ("neogeo", 0, "result_code",                &result_code);
-	state_save_register_int   ("neogeo", 0, "ts",                         &ts);
-	state_save_register_UINT32("neogeo", 0, "bank",                       bank,                        4);
-	state_save_register_int   ("neogeo", 0, "neogeo_rng",                 &neogeo_rng);
-	state_save_register_UINT32("neogeo", 0, "cpu1_second_bankaddress",    &cpu1_second_bankaddress,    1);
+	state_save_register_global(neogeo_frame_counter);
+	state_save_register_global(neogeo_frame_counter_speed);
+	state_save_register_global(current_rastercounter);
+	state_save_register_global(current_rasterline);
+	state_save_register_global(scanline_read);
+	state_save_register_global(irq2start);
+	state_save_register_global(irq2control);
+	state_save_register_global(irq2pos_value);
+	state_save_register_global(vblank_int);
+	state_save_register_global(scanline_int);
+	state_save_register_global(fc);
+	state_save_register_global(neogeo_raster_enable);
+	state_save_register_global(pending_command);
+	state_save_register_global(result_code);
+	state_save_register_global(ts);
+	state_save_register_global_array(bank);
+	state_save_register_global(neogeo_rng);
+	state_save_register_global(cpu1_second_bankaddress);
 
 	state_save_register_func_postload(neogeo_init_cpu_banks);
 }

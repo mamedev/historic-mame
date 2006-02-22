@@ -1,10 +1,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap, *fg_tilemap;
-static int flipscreen;
+static UINT8 flipscreen;
 static UINT8 ninjakun_xscroll,ninjakun_yscroll;
 
 UINT8 ninjakun_io_8000_ctrl[4];
@@ -205,9 +204,9 @@ VIDEO_START( ninjakid ){
 
 	/* Save State Support */
 
-	state_save_register_UINT8 ("NK_Video", 0, "ninjakun_io_8000_ctrl", ninjakun_io_8000_ctrl, 4);
-	state_save_register_int   ("NK_Video", 0, "flipscreen", &flipscreen);
-//  state_save_register_UINT8 ("NK_Video", 0, "old_scroll", &old_scroll, 1);
+	state_save_register_global_array(ninjakun_io_8000_ctrl);
+	state_save_register_global(flipscreen);
+//  state_save_register_global(old_scroll);
 
 	return 0;
 }

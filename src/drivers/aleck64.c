@@ -335,7 +335,7 @@ static struct mips3_config config =
 	16384				/* data cache size */
 };
 
-MACHINE_INIT( aleck64 )
+MACHINE_RESET( aleck64 )
 {
 	int i;
 	UINT32 *pif_rom	= (UINT32*)memory_region(REGION_USER1);
@@ -415,7 +415,7 @@ MACHINE_DRIVER_START( aleck64 )
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(aleck64_map, 0)
 
-	MDRV_MACHINE_INIT( aleck64 )
+	MDRV_MACHINE_RESET( aleck64 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

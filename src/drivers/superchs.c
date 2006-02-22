@@ -406,7 +406,7 @@ static const gfx_decode superchs_gfxdecodeinfo[] =
                  MACHINE DRIVERS
 ***********************************************************/
 
-static MACHINE_INIT( superchs )
+static MACHINE_RESET( superchs )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
@@ -483,7 +483,7 @@ static MACHINE_DRIVER_START( superchs )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(8)	/* CPU slices - Need to interleave Cpu's 1 & 3 */
 
-	MDRV_MACHINE_INIT(superchs)
+	MDRV_MACHINE_RESET(superchs)
 	MDRV_NVRAM_HANDLER(superchs)
 
 	/* video hardware */

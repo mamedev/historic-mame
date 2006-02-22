@@ -38,7 +38,6 @@
 #include "vidhrdw/generic.h"
 #include "sound/discrete.h"
 #include "nitedrvr.h"
-#include "state.h"
 
 extern READ8_HANDLER( nitedrvr_in0_r );
 extern READ8_HANDLER( nitedrvr_in1_r );
@@ -151,7 +150,7 @@ static const gfx_decode gfxdecodeinfo[] =
 
 /* Machine Initialization */
 
-static MACHINE_INIT( nitedrvr )
+static MACHINE_RESET( nitedrvr )
 {
 	timer_pulse(TIME_IN_SEC(0.693 * (180000 + (2 * 330)) * 1e-6), 0, nitedrvr_crash_toggle);
 	nitedrvr_register_machine_vars();
@@ -169,7 +168,7 @@ static MACHINE_DRIVER_START( nitedrvr )
 	MDRV_FRAMES_PER_SECOND(57) // how is this derived?
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(nitedrvr)
+	MDRV_MACHINE_RESET(nitedrvr)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

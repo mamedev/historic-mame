@@ -56,7 +56,7 @@ static DRIVER_INIT( namcos10 )
 	psx_driver_init();
 }
 
-MACHINE_INIT( namcos10 )
+MACHINE_RESET( namcos10 )
 {
 	psx_machine_init();
 }
@@ -70,7 +70,7 @@ static MACHINE_DRIVER_START( namcos10 )
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( namcos10 )
+	MDRV_MACHINE_RESET( namcos10 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )

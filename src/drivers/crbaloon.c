@@ -69,7 +69,7 @@ extern VIDEO_UPDATE( crbaloon );
 static int val06,val08,val0a;
 
 
-static MACHINE_INIT( crbaloon )
+static MACHINE_RESET( crbaloon )
 {
 	/* MIXER A = 0, MIXER C = 1 */
 	SN76477_mixer_a_w(0, 0);
@@ -358,7 +358,7 @@ static MACHINE_DRIVER_START( crbaloon )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(crbaloon)
+	MDRV_MACHINE_RESET(crbaloon)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

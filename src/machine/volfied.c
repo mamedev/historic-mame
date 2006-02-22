@@ -15,7 +15,6 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 static UINT8 current_bank = 0;
 static UINT8 current_flag = 0;
@@ -483,9 +482,9 @@ void volfied_cchip_init(void)
 {
 	cchip_ram=auto_malloc(0x400 * 8);
 
-	state_save_register_UINT8("volfied", 0, "cc_bank", &current_bank, 1);
-	state_save_register_UINT8("volfied", 0, "cc_data", &current_cmd, 1);
-	state_save_register_UINT8("volfied", 0, "cc_flag", &current_flag, 1);
-	state_save_register_UINT8("volfied", 0, "cc_port", &cc_port, 1);
-	state_save_register_UINT8("volfied", 0, "cc_ram", cchip_ram, 0x400 * 8);
+	state_save_register_global(current_bank);
+	state_save_register_global(current_cmd);
+	state_save_register_global(current_flag);
+	state_save_register_global(cc_port);
+	state_save_register_global_pointer(cchip_ram, 0x400 * 8);
 }

@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "x86drc.h"
+#include "debugger.h"
 
 #define LOG_DISPATCHES		0
 
@@ -351,12 +352,12 @@ void drc_append_verify_code(drc_core *drc, void *code, UINT8 length)
 void drc_append_call_debugger(drc_core *drc)
 {
 #ifdef MAME_DEBUG
-	if (mame_debug)
+	if (Machine->debug_mode)
 	{
 		link_info link;
-		_cmp_m32abs_imm(&mame_debug, 0);								// cmp  [mame_debug],0
+		_cmp_m32abs_imm(&Machine->debug_mode, 0);						// cmp  [Machine->debug_mode],0
 		_jcc_short_link(COND_E, &link);									// je   skip
-		drc_append_save_call_restore(drc, (genf *)MAME_Debug, 0);		// save volatiles
+		drc_append_save_call_restore(drc, (genf *)mame_debug_hook, 0);	// save volatiles
 		_resolve_link(&link);
 	}
 #endif

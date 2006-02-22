@@ -930,7 +930,7 @@ static INTERRUPT_GEN( pgm_interrupt ) {
 		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
-static MACHINE_INIT ( pgm )
+static MACHINE_RESET ( pgm )
 {
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 }
@@ -961,7 +961,7 @@ static MACHINE_DRIVER_START( pgm )
 	MDRV_VISIBLE_AREA(0*8, 56*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x1200/2)
-	MDRV_MACHINE_INIT ( pgm )
+	MDRV_MACHINE_RESET ( pgm )
 
 	MDRV_VIDEO_START(pgm)
 	MDRV_VIDEO_EOF(pgm)

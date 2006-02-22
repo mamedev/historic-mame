@@ -123,7 +123,7 @@ PALETTE_INIT( lnc )
 }
 
 
-MACHINE_INIT( lnc )
+MACHINE_RESET( lnc )
 {
     *lnc_charbank = 1;
 }

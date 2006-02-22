@@ -22,7 +22,6 @@ Change Log:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
-#include "state.h"
 #include "sound/ay8910.h"
 
 extern WRITE8_HANDLER( ninjakid_bg_videoram_w );
@@ -74,6 +73,17 @@ static WRITE8_HANDLER( cpu1_A002_w ){
 static WRITE8_HANDLER( cpu2_A002_w ){
 	if( data == 0x40 ) ninjakun_io_a002_ctrl |= 0x08;
 	if( data == 0x80 ) ninjakun_io_a002_ctrl &= ~0x04;
+}
+
+/*******************************************************************************
+ Init
+*******************************************************************************/
+
+static MACHINE_START( ninjakid )
+{
+	/* Save State Stuff */
+	state_save_register_global(ninjakun_io_a002_ctrl);
+	return 0;
 }
 
 /*******************************************************************************
@@ -188,6 +198,8 @@ static MACHINE_DRIVER_START( ninjakid )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) /* ? */
 
 	MDRV_FRAMES_PER_SECOND(60)
+
+	MDRV_MACHINE_START(ninjakid)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame */
 
@@ -321,17 +333,7 @@ INPUT_PORTS_START( ninjakid )
 INPUT_PORTS_END
 
 /*******************************************************************************
- Init
-*******************************************************************************/
-
-static DRIVER_INIT( ninjakid )
-{
-	/* Save State Stuff */
-	state_save_register_UINT8 ("NK_Main", 0, "ninjakun_io_a002_ctrl", &ninjakun_io_a002_ctrl, 1);
-}
-
-/*******************************************************************************
  Game Drivers
 *******************************************************************************/
 
-GAME( 1984, ninjakun, 0, ninjakid, ninjakid, ninjakid, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken", 0 )
+GAME( 1984, ninjakun, 0, ninjakid, ninjakid, 0, ROT0, "[UPL] (Taito license)", "Ninjakun Majou no Bouken", 0 )

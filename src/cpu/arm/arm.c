@@ -17,8 +17,7 @@
 
 #include <stdio.h>
 #include "arm.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #define READ8(addr)			cpu_read8(addr)
 #define WRITE8(addr,data)	cpu_write8(addr,data)
@@ -349,10 +348,7 @@ static int arm_execute( int cycles )
 	do
 	{
 
-#ifdef MAME_DEBUG
-		if (mame_debug)
-			MAME_Debug();
-#endif
+		CALL_MAME_DEBUG;
 
 		/* load instruction */
 		pc = R15;
@@ -540,17 +536,12 @@ static offs_t arm_dasm(char *buffer, offs_t pc)
 
 static void arm_init(void)
 {
-	int cpu = cpu_getactivecpu(),i;
-	char buf[8];
+	int cpu = cpu_getactivecpu();
 
-	for (i=0; i<kNumRegisters; i++) {
-		sprintf(buf,"R%d",i);
-		state_save_register_UINT32("arm", cpu, buf, &arm.sArmRegister[i], 4);
-	}
-	state_save_register_UINT8("arm", cpu, "IRQ", &arm.pendingIrq, 1);
-	state_save_register_UINT8("arm", cpu, "FIQ", &arm.pendingFiq, 1);
-
-	return;
+	state_save_register_item_array("arm", cpu, arm.sArmRegister);
+	state_save_register_item_array("arm", cpu, arm.coproRegister);
+	state_save_register_item("arm", cpu, arm.pendingIrq);
+	state_save_register_item("arm", cpu, arm.pendingFiq);
 }
 
 /***************************************************************************/

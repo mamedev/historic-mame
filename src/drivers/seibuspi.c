@@ -1606,7 +1606,7 @@ static int spi_irq_callback(int irq)
 
 /* SPI */
 
-static MACHINE_INIT( spi )
+static MACHINE_RESET( spi )
 {
 	int i;
 	UINT8 *sound = memory_region(REGION_SOUND1);
@@ -1658,7 +1658,7 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(200)
 
-	MDRV_MACHINE_INIT(spi)
+	MDRV_MACHINE_RESET(spi)
 	MDRV_NVRAM_HANDLER(spi)
 
  	/* video hardware */
@@ -1679,7 +1679,7 @@ static MACHINE_DRIVER_START( spi )
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
-static MACHINE_INIT( sxx2f )
+static MACHINE_RESET( sxx2f )
 {
 	UINT8 *rom = memory_region(REGION_CPU2);
 
@@ -1696,7 +1696,7 @@ static MACHINE_INIT( sxx2f )
 static MACHINE_DRIVER_START( sxx2f )
 
 	MDRV_IMPORT_FROM(spi)
-	MDRV_MACHINE_INIT(sxx2f)
+	MDRV_MACHINE_RESET(sxx2f)
 	MDRV_NVRAM_HANDLER(sxx2f)
 
 MACHINE_DRIVER_END
@@ -1918,7 +1918,7 @@ static DRIVER_INIT( rdft22kc )
 	init_rf2();
 }
 
-static MACHINE_INIT( seibu386 )
+static MACHINE_RESET( seibu386 )
 {
 	cpu_set_irq_callback(0, spi_irq_callback);
 }
@@ -1934,7 +1934,7 @@ static MACHINE_DRIVER_START( seibu386 )
 	MDRV_VBLANK_DURATION(0)
 
 	MDRV_NVRAM_HANDLER(sxx2f)
-	MDRV_MACHINE_INIT(seibu386)
+	MDRV_MACHINE_RESET(seibu386)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)

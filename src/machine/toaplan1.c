@@ -4,7 +4,6 @@
  ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
 
@@ -291,7 +290,7 @@ WRITE16_HANDLER( samesame_coin_w )
 }
 
 
-MACHINE_INIT( toaplan1 )
+MACHINE_RESET( toaplan1 )
 {
 	toaplan1_intenable = 0;
 	toaplan1_coin_count = 0;
@@ -300,42 +299,42 @@ MACHINE_INIT( toaplan1 )
 }
 void toaplan1_driver_savestate(void)
 {
-	state_save_register_INT32("toaplan1", 0, "Int_enable", &toaplan1_intenable, 1);
-	state_save_register_INT32("toaplan1", 0, "Coin_counter", &toaplan1_coin_count, 1);
-	state_save_register_INT32("outzwing", 0, "Unk_Reset", &toaplan1_unk_reset_port, 1);
+	state_save_register_global(toaplan1_intenable);
+	state_save_register_global(toaplan1_coin_count);
+	state_save_register_global(toaplan1_unk_reset_port);
 }
 
-MACHINE_INIT( zerozone )	/* Hack for ZeroWing and OutZone. See the video driver */
+MACHINE_RESET( zerozone )	/* Hack for ZeroWing and OutZone. See the video driver */
 {
-	machine_init_toaplan1();
+	machine_reset_toaplan1();
 	toaplan1_unk_reset_port = 1;
 }
 
-MACHINE_INIT( demonwld )
+MACHINE_RESET( demonwld )
 {
-	machine_init_toaplan1();
+	machine_reset_toaplan1();
 	dsp_addr_w = 0;
 	main_ram_seg = 0;
 	dsp_execute = 0;
 }
 void demonwld_driver_savestate(void)
 {
-	state_save_register_INT32( "demonwld", 0, "DSP_Running", &demonwld_dsp_on, 1);
-	state_save_register_UINT32("demonwld", 0, "DSP_out_addr", &dsp_addr_w, 1);
-	state_save_register_UINT32("demonwld", 0, "DSP_to_68K_RAM_bank", &main_ram_seg, 1);
-	state_save_register_INT32( "demonwld", 0, "DSP_BIO_pin", &demonwld_dsp_BIO, 1);
-	state_save_register_INT32( "demonwld", 0, "DSP_execute", &dsp_execute, 1);
+	state_save_register_global(demonwld_dsp_on);
+	state_save_register_global(dsp_addr_w);
+	state_save_register_global(main_ram_seg);
+	state_save_register_global(demonwld_dsp_BIO);
+	state_save_register_global(dsp_execute);
 	state_save_register_func_postload(demonwld_restore_dsp);
 }
 
-MACHINE_INIT( vimana )
+MACHINE_RESET( vimana )
 {
-	machine_init_toaplan1();
+	machine_reset_toaplan1();
 	vimana_credits = 0;
 	vimana_latch = 0;
 }
 void vimana_driver_savestate(void)
 {
-	state_save_register_INT32("vimana", 0, "Credits count", &vimana_credits, 1);
-	state_save_register_INT32("vimana", 0, "MCU_latch", &vimana_latch, 1);
+	state_save_register_global(vimana_credits);
+	state_save_register_global(vimana_latch);
 }

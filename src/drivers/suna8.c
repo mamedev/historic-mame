@@ -1733,7 +1733,7 @@ INTERRUPT_GEN( hardhea2_interrupt )
 	else cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
-static MACHINE_INIT( hardhea2 )
+static MACHINE_RESET( hardhea2 )
 {
 	hardhea2_rambank_0_w(0,0);
 }
@@ -1745,7 +1745,7 @@ static MACHINE_DRIVER_START( hardhea2 )
 	MDRV_CPU_PROGRAM_MAP(hardhea2_readmem,hardhea2_writemem)
 	MDRV_CPU_VBLANK_INT(hardhea2_interrupt,2)	/* IRQ & NMI */
 
-	MDRV_MACHINE_INIT(hardhea2)
+	MDRV_MACHINE_RESET(hardhea2)
 	MDRV_PALETTE_LENGTH(256)
 MACHINE_DRIVER_END
 

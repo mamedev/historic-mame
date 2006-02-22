@@ -175,11 +175,6 @@ static UINT8 key[16];	// security device on gamecard (video games only)
 
 static UINT8 e2ram[1024]; // x24C08 e2ram
 
-static long const rombank_address[] =
-{
-	0x10000, 0x02000, 0x04000, 0x06000
-};
-
 static int mmtr_latch;		  // mechanical meter latch
 static int triac_latch;		  // payslide triac latch
 static int vfd1_latch;		  // vfd1 latch
@@ -196,7 +191,6 @@ static int irq_timer_stat;
 static int expansion_latch;
 static int global_volume;	  // 0-31
 static int volume_override;	  // 0 / 1
-static int selected_rom_bank; // selected ROM bank (0-3)
 
 int adder2_data_from_sc2;	// data available for adder from sc2
 int adder2_sc2data;			// data
@@ -344,7 +338,6 @@ void on_scorpion2_reset(void)
 	irq_status        = 0;
 	timer_enabled     = 1;
 	coin_inhibits     = 0;
-	selected_rom_bank = 0;
 	irq_timer_stat    = 0;
 	expansion_latch   = 0;
 	global_volume     = 0;
@@ -404,8 +397,10 @@ void on_scorpion2_reset(void)
 	{
 		UINT8 *rom = memory_region(REGION_CPU1);
 
-		selected_rom_bank = 3;
-		memory_set_bankptr(1,&rom[ rombank_address[ selected_rom_bank  ] ]);
+		memory_configure_bank(1, 0, 1, &rom[0x10000], 0);
+		memory_configure_bank(1, 1, 3, &rom[0x02000], 0x02000);
+
+		memory_set_bank(1,3);
 	}
 }
 
@@ -536,11 +531,7 @@ static WRITE8_HANDLER( watchdog_w )
 
 static WRITE8_HANDLER( bankswitch_w )
 {
-	UINT8 *rom = memory_region(REGION_CPU1);
-
-	selected_rom_bank = data;
-
-	memory_set_bankptr(1,&rom[ rombank_address[ data & 0x03 ] ]);
+	memory_set_bank(1,data & 0x03);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1630,7 +1621,7 @@ static void decode_mainrom(int rom_region)
 
 // machine init (called only once) ////////////////////////////////////////
 
-static MACHINE_INIT( init )
+static MACHINE_RESET( init )
 {
 	// reset the board //////////////////////////////////////////////////////
 
@@ -2636,7 +2627,7 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( scorpion2_vid )
 
-  MDRV_MACHINE_INIT( adder2_init_vid )				  // main scorpion2 board initialisation
+  MDRV_MACHINE_RESET( adder2_init_vid )				  // main scorpion2 board initialisation
 
   MDRV_INTERLEAVE(16)						  // needed for serial communication !!
 

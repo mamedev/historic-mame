@@ -556,7 +556,7 @@ static MACHINE_DRIVER_START( mhavoc )
 	MDRV_CPU_PROGRAM_MAP(gamma_readmem,gamma_writemem)
 
 	MDRV_FRAMES_PER_SECOND(50)
-	MDRV_MACHINE_INIT(mhavoc)
+	MDRV_MACHINE_RESET(mhavoc)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

@@ -18,7 +18,7 @@
 UINT8 namcond1_h8_irq5_enabled;
 int namcond1_gfxbank;
 
-MACHINE_INIT( namcond1 )
+MACHINE_RESET( namcond1 )
 {
 #ifdef MAME_DEBUG
     /*unsigned char   *ROM = memory_region(REGION_CPU1);*/

@@ -265,7 +265,7 @@ static struct TAITO8741interface gsword_8741interface=
 	{gladiator_dsw1_r,gladiator_dsw2_r,gladiator_button3_r,gladiator_controll_r}	/* port handler */
 };
 
-static MACHINE_INIT( gladiator )
+static MACHINE_RESET( gladiator )
 {
 	TAITO8741_start(&gsword_8741interface);
 	/* 6809 bank memory set */
@@ -749,7 +749,7 @@ static MACHINE_DRIVER_START( gladiatr )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(gladiator)
+	MDRV_MACHINE_RESET(gladiator)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

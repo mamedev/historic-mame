@@ -11,12 +11,9 @@
 */
 
 #include "driver.h"
-#include "cpuintrf.h"
-#include "mamedbg.h"
-#include "osd_cpu.h"
+#include "debugger.h"
 #include "i386.h"
 #include "i386intf.h"
-#include "state.h"
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcpu.h"
@@ -496,33 +493,33 @@ void i386_init(void)
 		MODRM_table[i].rm.d = regs32[i & 0x7];
 	}
 
-	state_save_register_UINT32(state_type, cpu,	"REGS",			I.reg.d, 8);
-	state_save_register_UINT16(state_type, cpu,	"ES",			&I.sreg[ES].selector, 1);
-	state_save_register_UINT16(state_type, cpu,	"CS",			&I.sreg[CS].selector, 1);
-	state_save_register_UINT16(state_type, cpu,	"SS",			&I.sreg[SS].selector, 1);
-	state_save_register_UINT16(state_type, cpu,	"DS",			&I.sreg[DS].selector, 1);
-	state_save_register_UINT16(state_type, cpu,	"FS",			&I.sreg[FS].selector, 1);
-	state_save_register_UINT16(state_type, cpu,	"GS",			&I.sreg[GS].selector, 1);
-	state_save_register_UINT32(state_type, cpu,	"EIP",			&I.eip, 1);
-	state_save_register_UINT32(state_type, cpu,	"PREV_EIP",		&I.prev_eip, 1);
-	state_save_register_UINT8(state_type, cpu,	"CF",			&I.CF, 1);
-	state_save_register_UINT8(state_type, cpu,	"DF",			&I.DF, 1);
-	state_save_register_UINT8(state_type, cpu,	"SF",			&I.SF, 1);
-	state_save_register_UINT8(state_type, cpu,	"OF",			&I.OF, 1);
-	state_save_register_UINT8(state_type, cpu,	"ZF",			&I.ZF, 1);
-	state_save_register_UINT8(state_type, cpu,	"PF",			&I.PF, 1);
-	state_save_register_UINT8(state_type, cpu,	"AF",			&I.AF, 1);
-	state_save_register_UINT8(state_type, cpu,	"IF",			&I.IF, 1);
-	state_save_register_UINT8(state_type, cpu,	"TF",			&I.TF, 1);
-	state_save_register_UINT32(state_type, cpu,	"CR",			I.cr, 4);
-	state_save_register_UINT32(state_type, cpu,	"DR",			I.dr, 8);
-	state_save_register_UINT32(state_type, cpu,	"TR",			I.tr, 8);
-	state_save_register_UINT32(state_type, cpu,	"IDTR_BASE",	&I.idtr.base, 1);
-	state_save_register_UINT16(state_type, cpu,	"IDTR_LIMIT",	&I.idtr.limit, 1);
-	state_save_register_UINT32(state_type, cpu,	"GDTR_BASE",	&I.gdtr.base, 1);
-	state_save_register_UINT16(state_type, cpu,	"GDTR_LIMIT",	&I.gdtr.limit, 1);
-	state_save_register_int(state_type, cpu, "IRQ_LINE",		&I.irq_line);
-	state_save_register_UINT8(state_type, cpu,	"ISEGJMP",		&I.performed_intersegment_jump, 1);
+	state_save_register_item_array(state_type, cpu,	I.reg.d);
+	state_save_register_item(state_type, cpu, I.sreg[ES].selector);
+	state_save_register_item(state_type, cpu, I.sreg[CS].selector);
+	state_save_register_item(state_type, cpu, I.sreg[SS].selector);
+	state_save_register_item(state_type, cpu, I.sreg[DS].selector);
+	state_save_register_item(state_type, cpu, I.sreg[FS].selector);
+	state_save_register_item(state_type, cpu, I.sreg[GS].selector);
+	state_save_register_item(state_type, cpu, I.eip);
+	state_save_register_item(state_type, cpu, I.prev_eip);
+	state_save_register_item(state_type, cpu, I.CF);
+	state_save_register_item(state_type, cpu, I.DF);
+	state_save_register_item(state_type, cpu, I.SF);
+	state_save_register_item(state_type, cpu, I.OF);
+	state_save_register_item(state_type, cpu, I.ZF);
+	state_save_register_item(state_type, cpu, I.PF);
+	state_save_register_item(state_type, cpu, I.AF);
+	state_save_register_item(state_type, cpu, I.IF);
+	state_save_register_item(state_type, cpu, I.TF);
+	state_save_register_item_array(state_type, cpu,	I.cr);
+	state_save_register_item_array(state_type, cpu,	I.dr);
+	state_save_register_item_array(state_type, cpu,	I.tr);
+	state_save_register_item(state_type, cpu, I.idtr.base);
+	state_save_register_item(state_type, cpu, I.idtr.limit);
+	state_save_register_item(state_type, cpu, I.gdtr.base);
+	state_save_register_item(state_type, cpu, I.gdtr.limit);
+	state_save_register_item(state_type, cpu,  I.irq_line);
+	state_save_register_item(state_type, cpu, I.performed_intersegment_jump);
 	state_save_register_func_postload(i386_postload);
 }
 

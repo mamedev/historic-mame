@@ -198,13 +198,12 @@ Notes:
 #include "vidhrdw/generic.h"
 #include "m92.h"
 #include "machine/irem_cpu.h"
-#include "state.h"
 #include "sound/2151intf.h"
 #include "sound/iremga20.h"
 
-static int irqvector;
-static int sound_status;
-static int bankaddress;
+static UINT8 irqvector;
+static UINT16 sound_status;
+static UINT32 bankaddress;
 
 static int m92_irq_vectorbase;
 static unsigned char *m92_ram,*m92_snd_ram;
@@ -242,6 +241,16 @@ static void set_m92_bank(void)
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	memory_set_bankptr(1,&RAM[bankaddress]);
 }
+
+static MACHINE_START( m92 )
+{
+	state_save_register_global(irqvector);
+	state_save_register_global(sound_status);
+	state_save_register_global(bankaddress);
+	state_save_register_func_postload(set_m92_bank);
+	return 0;
+}
+
 
 /*****************************************************************************/
 
@@ -1197,6 +1206,7 @@ static MACHINE_DRIVER_START( raster )
 	MDRV_CPU_ADD(V30, 14318180/2)	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
+	MDRV_MACHINE_START(m92)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -1236,6 +1246,7 @@ static MACHINE_DRIVER_START( nonraster )
 	/* audio CPU */	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
+	MDRV_MACHINE_START(m92)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -1275,6 +1286,7 @@ static MACHINE_DRIVER_START( lethalth )
 	/* audio CPU */	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
+	MDRV_MACHINE_START(m92)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -1314,6 +1326,7 @@ static MACHINE_DRIVER_START( psoldier )
 	/* audio CPU */	/* 14.31818 MHz */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
+	MDRV_MACHINE_START(m92)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -2376,11 +2389,6 @@ static void init_m92(const unsigned char *decryption_table, int hasbanks)
 	m92_startup(hasbanks);
 	setvector_callback(VECTOR_INIT);
 	irem_cpu_decrypt(1,decryption_table);
-
-	state_save_register_int  ("main", 0, "irqvector",    &irqvector);
-	state_save_register_int  ("main", 0, "sound_status", &sound_status);
-	state_save_register_int("main", 0, "bankaddress", &bankaddress);
-	state_save_register_func_postload(set_m92_bank);
 }
 
 static DRIVER_INIT( bmaster )

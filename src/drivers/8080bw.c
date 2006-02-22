@@ -169,7 +169,7 @@ static MACHINE_DRIVER_START( invaders )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_MACHINE_INIT(invaders)
+	MDRV_MACHINE_RESET(invaders)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
@@ -613,7 +613,7 @@ static MACHINE_DRIVER_START( invad2ct )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_MACHINE_INIT(invad2ct)
+	MDRV_MACHINE_RESET(invad2ct)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -705,7 +705,7 @@ static MACHINE_DRIVER_START( sstrangr )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(sstrangr_readport,sstrangr_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
-	MDRV_MACHINE_INIT(sstrangr)
+	MDRV_MACHINE_RESET(sstrangr)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
@@ -798,7 +798,7 @@ static MACHINE_DRIVER_START( sstrngr2 )
 	MDRV_CPU_PROGRAM_MAP(sstrngr2_cpu_map,0)
 	MDRV_CPU_IO_MAP(sstrangr_readport,sstrangr_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
-	MDRV_MACHINE_INIT(sstrangr)
+	MDRV_MACHINE_RESET(sstrangr)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
@@ -1407,7 +1407,7 @@ static MACHINE_DRIVER_START( gunfight )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(gunfight_readport,writeport_2_4)
-	MDRV_MACHINE_INIT(gunfight)
+	MDRV_MACHINE_RESET(gunfight)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -1497,10 +1497,10 @@ INPUT_PORTS_START( boothill )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 //  PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x0c, 0x00, "Time" )
-	PORT_DIPSETTING(    0x00, "64" )
-	PORT_DIPSETTING(    0x04, "74" )
-	PORT_DIPSETTING(    0x08, "84" )
-	PORT_DIPSETTING(    0x0C, "94" )
+	PORT_DIPSETTING(    0x00, "60 seconds" )
+	PORT_DIPSETTING(    0x04, "70 seconds" )
+	PORT_DIPSETTING(    0x08, "80 seconds" )
+	PORT_DIPSETTING(    0x0C, "90 seconds" )
 	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1519,7 +1519,7 @@ static MACHINE_DRIVER_START( boothill )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
-	MDRV_MACHINE_INIT(boothill)
+	MDRV_MACHINE_RESET(boothill)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -1616,7 +1616,7 @@ static MACHINE_DRIVER_START( schaser )
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
 	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
 	MDRV_WATCHDOG_VBLANK_INIT(255)
-	MDRV_MACHINE_INIT(schaser)
+	MDRV_MACHINE_RESET(schaser)
 
 	/* video hardware */
 
@@ -1866,7 +1866,7 @@ static MACHINE_DRIVER_START( clowns )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_1_2)
-	MDRV_MACHINE_INIT(clowns)
+	MDRV_MACHINE_RESET(clowns)
 	MDRV_WATCHDOG_VBLANK_INIT(255)
 
 	/* sound hardware */
@@ -2133,7 +2133,7 @@ static MACHINE_DRIVER_START( polaris )
 
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_0_3)
 	MDRV_CPU_VBLANK_INT(polaris_interrupt,2)
-	MDRV_MACHINE_INIT(polaris)
+	MDRV_MACHINE_RESET(polaris)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
@@ -2244,7 +2244,7 @@ static MACHINE_DRIVER_START( phantom2 )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(gunfight_readport,writeport_1_2)
 	MDRV_CPU_VBLANK_INT(phantom2_interrupt,2)
-	MDRV_MACHINE_INIT(phantom2)
+	MDRV_MACHINE_RESET(phantom2)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
@@ -2364,7 +2364,7 @@ static MACHINE_DRIVER_START( bowler )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(bowler_readport,writeport_1_2)
-	MDRV_MACHINE_INIT(bowler)
+	MDRV_MACHINE_RESET(bowler)
 
 	/* video hardware */
 	MDRV_SCREEN_SIZE(35*8, 32*8)	/* Extra 3 lines for the bonus display */
@@ -2487,7 +2487,7 @@ static MACHINE_DRIVER_START( seawolf )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(seawolf_readport,writeport_4_3)
-	MDRV_MACHINE_INIT(seawolf)
+	MDRV_MACHINE_RESET(seawolf)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -2572,7 +2572,7 @@ static MACHINE_DRIVER_START( desertgu )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(seawolf_readport,writeport_1_2)
-	MDRV_MACHINE_INIT(desertgu)
+	MDRV_MACHINE_RESET(desertgu)
 
 	/* sound hardware */
 MACHINE_DRIVER_END
@@ -3070,7 +3070,7 @@ static MACHINE_DRIVER_START( ballbomb )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
-	MDRV_MACHINE_INIT(ballbomb)
+	MDRV_MACHINE_RESET(ballbomb)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)

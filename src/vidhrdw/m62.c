@@ -15,7 +15,6 @@ Tile/sprite priority system (for the Kung Fu Master M62 board):
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 UINT8 *m62_tileram;
 UINT8 *m62_textram;
@@ -23,18 +22,18 @@ UINT8 *horizon_scrollram;
 
 static tilemap *m62_background;
 static tilemap *m62_foreground;
-static int flipscreen;
+static UINT8 flipscreen;
 static const unsigned char *sprite_height_prom;
-static int m62_background_hscroll;
-static int m62_background_vscroll;
+static INT32 m62_background_hscroll;
+static INT32 m62_background_vscroll;
 
-unsigned char *irem_textram;
+UINT8 *irem_textram;
 size_t irem_textram_size;
 
-static int kidniki_background_bank;
-static int kidniki_text_vscroll;
+static UINT8 kidniki_background_bank;
+static INT32 kidniki_text_vscroll;
 
-static int spelunkr_palbank;
+static INT32 spelunkr_palbank;
 
 /***************************************************************************
 
@@ -229,13 +228,13 @@ PALETTE_INIT( spelunk2 )
 
 static void register_savestate(void)
 {
-	state_save_register_int  ("video", 0, "flipscreen",              &flipscreen);
-	state_save_register_int  ("video", 0, "kidniki_background_bank", &kidniki_background_bank);
-	state_save_register_int  ("video", 0, "m62_background_hscroll", &m62_background_hscroll);
-	state_save_register_int  ("video", 0, "m62_background_vscroll", &m62_background_vscroll);
-	state_save_register_int  ("video", 0, "kidniki_text_vscroll",    &kidniki_text_vscroll);
-	state_save_register_int  ("video", 0, "spelunkr_palbank",        &spelunkr_palbank);
-	state_save_register_UINT8("video", 0, "irem_textram",            irem_textram,   irem_textram_size);
+	state_save_register_global(flipscreen);
+	state_save_register_global(kidniki_background_bank);
+	state_save_register_global(m62_background_hscroll);
+	state_save_register_global(m62_background_vscroll);
+	state_save_register_global(kidniki_text_vscroll);
+	state_save_register_global(spelunkr_palbank);
+	state_save_register_global_pointer(irem_textram, irem_textram_size);
 }
 
 WRITE8_HANDLER( m62_flipscreen_w )

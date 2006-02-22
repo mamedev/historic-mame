@@ -123,7 +123,7 @@ static double calc_plunger_pos(void)
 }
 
 
-static MACHINE_INIT( mgolf )
+static MACHINE_RESET( mgolf )
 {
 	timer_set(cpu_getscanlinetime(16), 16, interrupt_callback);
 }
@@ -307,7 +307,7 @@ static MACHINE_DRIVER_START( mgolf )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(38 * 1000000 / 15750)
-	MDRV_MACHINE_INIT(mgolf)
+	MDRV_MACHINE_RESET(mgolf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

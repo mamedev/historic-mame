@@ -1226,7 +1226,7 @@ ROM_END
  *
  *************************************/
 
-static void common_init(UINT8 palette[], UINT16 colortable[], UINT8 cmask, UINT8 cinvert)
+static void exidy_common_init(UINT8 palette[], UINT16 colortable[], UINT8 cmask, UINT8 cinvert)
 {
 	exidy_palette 			= palette;
 	exidy_colortable 		= colortable;
@@ -1238,7 +1238,7 @@ static void common_init(UINT8 palette[], UINT16 colortable[], UINT8 cmask, UINT8
 
 DRIVER_INIT( sidetrac )
 {
-	common_init(sidetrac_palette, exidy_1bpp_colortable, 0x00, 0x00);
+	exidy_common_init(sidetrac_palette, exidy_1bpp_colortable, 0x00, 0x00);
 
 	/* ROM in place of character RAM */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x4bff, 0, 0, MWA8_ROM);
@@ -1247,19 +1247,19 @@ DRIVER_INIT( sidetrac )
 
 DRIVER_INIT( targ )
 {
-	common_init(targ_palette, exidy_1bpp_colortable, 0x00, 0x00);
+	exidy_common_init(targ_palette, exidy_1bpp_colortable, 0x00, 0x00);
 	targ_spec_flag = 1;
 }
 
 
 DRIVER_INIT( spectar )
 {
-	common_init(spectar_palette, exidy_1bpp_colortable, 0x00, 0x00);
+	exidy_common_init(spectar_palette, exidy_1bpp_colortable, 0x00, 0x00);
 }
 
 DRIVER_INIT( rallys )
 {
-	common_init(spectar_palette, exidy_1bpp_colortable, 0x00, 0x00);
+	exidy_common_init(spectar_palette, exidy_1bpp_colortable, 0x00, 0x00);
 
 	/* sprite locations are slightly different */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x5000, 0, 0, exidy_sprite1_xpos_w);
@@ -1270,7 +1270,7 @@ DRIVER_INIT( rallys )
 
 DRIVER_INIT( phantoma )
 {
-	common_init(spectar_palette, exidy_1bpp_colortable, 0x00, 0x00);
+	exidy_common_init(spectar_palette, exidy_1bpp_colortable, 0x00, 0x00);
 
 	/* sprite locations are slightly different */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x5000, 0, 0, exidy_sprite1_xpos_w);
@@ -1286,19 +1286,19 @@ DRIVER_INIT( phantoma )
 
 DRIVER_INIT( mtrap )
 {
-	common_init(NULL, exidy_1bpp_colortable, 0x14, 0x00);
+	exidy_common_init(NULL, exidy_1bpp_colortable, 0x14, 0x00);
 }
 
 
 DRIVER_INIT( venture )
 {
-	common_init(NULL, exidy_1bpp_colortable, 0x04, 0x04);
+	exidy_common_init(NULL, exidy_1bpp_colortable, 0x04, 0x04);
 }
 
 
 DRIVER_INIT( pepper2 )
 {
-	common_init(NULL, exidy_2bpp_colortable, 0x14, 0x04);
+	exidy_common_init(NULL, exidy_2bpp_colortable, 0x14, 0x04);
 
 	/* two 6116 character RAMs */
 	exidy_characterram = memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x6fff, 0, 0, MRA8_RAM);
@@ -1310,7 +1310,7 @@ DRIVER_INIT( pepper2 )
 
 DRIVER_INIT( fax )
 {
-	common_init(NULL, exidy_2bpp_colortable, 0x04, 0x04);
+	exidy_common_init(NULL, exidy_2bpp_colortable, 0x04, 0x04);
 
 	/* reset the ROM bank */
 	fax_bank_select_w(0,0);

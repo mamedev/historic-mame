@@ -1605,7 +1605,7 @@ static struct YM2151interface semicom_ym2151_interface =
 	semicom_irqhandler
 };
 
-MACHINE_INIT (htchctch)
+MACHINE_RESET (htchctch)
 {
 	/* copy protection data every reset */
 
@@ -1631,7 +1631,7 @@ static MACHINE_DRIVER_START( htchctch )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(2400) // ?? cookbib needs it above ~2400 or the Joystick on the How to Play screen is the wrong colour?!
 
-	MDRV_MACHINE_INIT ( htchctch )
+	MDRV_MACHINE_RESET ( htchctch )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

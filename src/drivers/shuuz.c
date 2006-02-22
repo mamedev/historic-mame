@@ -51,7 +51,7 @@ static void update_interrupts(void)
  *
  *************************************/
 
-static MACHINE_INIT( shuuz )
+static MACHINE_RESET( shuuz )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data, 1);
@@ -281,7 +281,7 @@ static MACHINE_DRIVER_START( shuuz )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(shuuz)
+	MDRV_MACHINE_RESET(shuuz)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

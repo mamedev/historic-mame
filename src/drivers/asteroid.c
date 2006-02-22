@@ -604,7 +604,7 @@ static MACHINE_DRIVER_START( asteroid )
 	MDRV_CPU_VBLANK_INT(asteroid_interrupt,4)	/* 250 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_MACHINE_INIT(asteroid)
+	MDRV_MACHINE_RESET(asteroid)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
@@ -662,7 +662,7 @@ static MACHINE_DRIVER_START( llander )
 	MDRV_CPU_VBLANK_INT(llander_interrupt,6)	/* 250 Hz */
 
 	MDRV_FRAMES_PER_SECOND(40)
-	MDRV_MACHINE_INIT(NULL)
+	MDRV_MACHINE_RESET(NULL)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 1050, 0, 900)

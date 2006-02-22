@@ -756,7 +756,7 @@ static void shdancbl_update_proc( void )
 		sys18_bg2_active=1;
 }
 
-static MACHINE_INIT( shdancbl )
+static MACHINE_RESET( shdancbl )
 {
 	sys16_sprxoffset = -0xbc+0x77;
 	sys16_update_proc = shdancbl_update_proc;
@@ -777,7 +777,7 @@ static DRIVER_INIT( shdancbl )
 	for(i = 0; i < 0xc0000; i++)
 		mem[i] ^= 0xFF;
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancbl_skip_r );
 
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
@@ -864,7 +864,7 @@ static void mwalkbl_update_proc( void ){
 		sys18_bg2_active=0;
 }
 
-static MACHINE_INIT( mwalkbl ){
+static MACHINE_RESET( mwalkbl ){
 	sys16_bg_priority_value=0x1000;
 	sys16_sprxoffset = -0x238;
 
@@ -920,7 +920,7 @@ static DRIVER_INIT( mwalkbl ){
 		0x1f, 0xA0000  // ROM #4 = 256K
 	};
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 
@@ -1020,7 +1020,7 @@ static void astormbl_update_proc( void ){
 		sys18_bg2_active=0;
 }
 
-static MACHINE_INIT( astormbl ){
+static MACHINE_RESET( astormbl ){
 	sys16_fgxoffset = sys16_bgxoffset = -9;
 
 	sys16_patch_code( 0x2D6E, 0x32 );
@@ -1101,7 +1101,7 @@ static DRIVER_INIT( astormbl ){
 		0x1f, 0xA0000  // ROM #4 = 256K
 	};
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 	sys16_MaxShadowColors = 0; // doesn't seem to use transparent shadows
@@ -1168,7 +1168,7 @@ static MACHINE_DRIVER_START( astormbl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(astormbl_readmem,astormbl_writemem)
 
-	MDRV_MACHINE_INIT(astormbl)
+	MDRV_MACHINE_RESET(astormbl)
 MACHINE_DRIVER_END
 
 
@@ -1181,7 +1181,7 @@ static MACHINE_DRIVER_START( mwalkbl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(mwalkbl_readmem,mwalkbl_writemem)
 
-	MDRV_MACHINE_INIT(mwalkbl)
+	MDRV_MACHINE_RESET(mwalkbl)
 MACHINE_DRIVER_END
 
 
@@ -1205,7 +1205,7 @@ static MACHINE_DRIVER_START( shdancbl )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 
-	MDRV_MACHINE_INIT(shdancbl)
+	MDRV_MACHINE_RESET(shdancbl)
 MACHINE_DRIVER_END
 
 

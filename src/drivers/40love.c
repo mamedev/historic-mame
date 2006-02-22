@@ -794,7 +794,7 @@ ADDRESS_MAP_END
 
 static int vol_ctrl[16];
 
-static MACHINE_INIT( ta7630 )
+static MACHINE_RESET( ta7630 )
 {
 	int i;
 
@@ -1194,7 +1194,7 @@ static MACHINE_DRIVER_START( 40love )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* high interleave to ensure proper synchronization of CPUs */
-	MDRV_MACHINE_INIT(ta7630)	/* init machine */
+	MDRV_MACHINE_RESET(ta7630)	/* init machine */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1239,7 +1239,7 @@ static MACHINE_DRIVER_START( undoukai )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(ta7630)	/* init machine */
+	MDRV_MACHINE_RESET(ta7630)	/* init machine */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

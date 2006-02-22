@@ -688,7 +688,7 @@ static struct AY8910interface survival_ay8910_interface =
 
 
 
-static MACHINE_INIT( phoenix )
+static MACHINE_RESET( phoenix )
 {
 	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x4000);
 }
@@ -703,7 +703,7 @@ static MACHINE_DRIVER_START( phoenix )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
 
-	MDRV_MACHINE_INIT(phoenix)
+	MDRV_MACHINE_RESET(phoenix)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

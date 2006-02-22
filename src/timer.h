@@ -87,11 +87,11 @@ mame_time mame_timer_next_fire_time(void);
 void mame_timer_set_global_time(mame_time newbase);
 mame_timer *_mame_timer_alloc(void (*callback)(int), const char *file, int line, const char *func);
 mame_timer *_mame_timer_alloc_ptr(void (*callback)(void *), void *param, const char *file, int line, const char *func);
-void mame_timer_adjust(mame_timer *which, mame_time duration, int param, mame_time period);
+void mame_timer_adjust(mame_timer *which, mame_time duration, INT32 param, mame_time period);
 void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, mame_time period);
-void _mame_timer_pulse(mame_time period, int param, void (*callback)(int), const char *file, int line, const char *func);
+void _mame_timer_pulse(mame_time period, INT32 param, void (*callback)(int), const char *file, int line, const char *func);
 void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void *), const char *file, int line, const char *func);
-void _mame_timer_set(mame_time duration, int param, void (*callback)(int), const char *file, int line, const char *func);
+void _mame_timer_set(mame_time duration, INT32 param, void (*callback)(int), const char *file, int line, const char *func);
 void _mame_timer_set_ptr(mame_time duration, void *param, void (*callback)(void *), const char *file, int line, const char *func);
 void mame_timer_reset(mame_timer *which, mame_time duration);
 int mame_timer_enable(mame_timer *which, int enable);
@@ -174,7 +174,7 @@ INLINE mame_time double_to_mame_time(double _time)
 		return time_never;
 
 	/* set seconds to the integral part */
-	abstime.seconds = (INT64)_time;
+	abstime.seconds = (seconds_t)_time;
 
 	/* set subseconds to the fractional part */
 	_time -= (double)abstime.seconds;

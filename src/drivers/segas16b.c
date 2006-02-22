@@ -1020,7 +1020,7 @@ static void system16b_generic_init(int _rom_board)
  *
  *************************************/
 
-static MACHINE_INIT( system16b )
+static MACHINE_RESET( system16b )
 {
 	static const UINT8 default_banklist[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
 	static const UINT8 alternate_banklist[] = { 0,255,255,255, 255,255,255,3, 255,255,255,2, 255,1,0,255 };
@@ -1049,9 +1049,9 @@ static void atomicp_sound_irq(int param)
 }
 
 
-static MACHINE_INIT( atomicp )
+static MACHINE_RESET( atomicp )
 {
-	machine_init_system16b();
+	machine_reset_system16b();
 	timer_pulse(TIME_IN_HZ(atomicp_sound_rate), 0, atomicp_sound_irq);
 }
 
@@ -3032,7 +3032,7 @@ static MACHINE_DRIVER_START( system16b )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(system16b)
+	MDRV_MACHINE_RESET(system16b)
 	MDRV_NVRAM_HANDLER(system16b)
 
 	/* video hardware */
@@ -3083,7 +3083,7 @@ static MACHINE_DRIVER_START( atomicp )
 
 	/* basic machine hardware */
 	MDRV_CPU_REMOVE("sound")
-	MDRV_MACHINE_INIT(atomicp)
+	MDRV_MACHINE_RESET(atomicp)
 
 	/* sound hardware */
 	MDRV_SPEAKER_REMOVE("left")

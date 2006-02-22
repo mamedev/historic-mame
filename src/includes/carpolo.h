@@ -8,7 +8,7 @@
 
 /* defined in machine/carpolo.c */
 
-MACHINE_INIT( carpolo );
+MACHINE_RESET( carpolo );
 
 READ8_HANDLER( carpolo_interrupt_cause_r );
 

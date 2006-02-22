@@ -16,7 +16,7 @@ static tilemap *bg_tilemap;
 static int width = 0;
 
 
-MACHINE_INIT( skydiver )
+MACHINE_RESET( skydiver )
 {
 	/* reset all latches */
 	skydiver_start_lamp_1_w(0, 0);

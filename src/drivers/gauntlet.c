@@ -171,7 +171,7 @@ static void scanline_update(int scanline)
 }
 
 
-static MACHINE_INIT( gauntlet )
+static MACHINE_RESET( gauntlet )
 {
 	last_speech_write = 0x80;
 	sound_reset_val = 1;
@@ -533,7 +533,7 @@ static MACHINE_DRIVER_START( gauntlet )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(gauntlet)
+	MDRV_MACHINE_RESET(gauntlet)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
@@ -1486,7 +1486,7 @@ ROM_END
  *
  *************************************/
 
-static void common_init(int slapstic, int vindctr2)
+static void gauntlet_common_init(int slapstic, int vindctr2)
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x038000, slapstic);
@@ -1505,19 +1505,19 @@ static void common_init(int slapstic, int vindctr2)
 
 static DRIVER_INIT( gauntlet )
 {
-	common_init(104, 0);
+	gauntlet_common_init(104, 0);
 }
 
 
 static DRIVER_INIT( gaunt2p )
 {
-	common_init(107, 0);
+	gauntlet_common_init(107, 0);
 }
 
 
 static DRIVER_INIT( gauntlet2 )
 {
-	common_init(106, 0);
+	gauntlet_common_init(106, 0);
 }
 
 
@@ -1527,7 +1527,7 @@ static DRIVER_INIT( vindctr2 )
 	UINT8 *data = malloc(0x8000);
 	int i;
 
-	common_init(118, 1);
+	gauntlet_common_init(118, 1);
 
 	/* highly strange -- the address bits on the chip at 2J (and only that
        chip) are scrambled -- this is verified on the schematics! */

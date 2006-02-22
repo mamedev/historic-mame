@@ -117,7 +117,7 @@ WRITE8_HANDLER( senjyo_volume_w );
 
 static int int_delay_kludge;
 
-MACHINE_INIT( senjyo )
+MACHINE_RESET( senjyo )
 {
 	/* we must avoid generating interrupts for the first few frames otherwise */
 	/* Senjyo locks up. There must be an interrupt enable port somewhere, */
@@ -589,7 +589,7 @@ static MACHINE_DRIVER_START( senjyo )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(senjyo)
+	MDRV_MACHINE_RESET(senjyo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -33,7 +33,7 @@ static UINT8 *psychic5_fg_videoram;
 static tilemap *bg_tilemap, *fg_tilemap;
 
 
-MACHINE_INIT( psychic5 )
+MACHINE_RESET( psychic5 )
 {
 	bg_clip_mode = -10;
 	flip_screen_set(0);

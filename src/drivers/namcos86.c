@@ -344,7 +344,7 @@ static WRITE8_HANDLER( cus115_w )
 }
 
 
-static MACHINE_INIT( namco86 )
+static MACHINE_RESET( namco86 )
 {
 	unsigned char *base = memory_region(REGION_CPU1) + 0x10000;
 
@@ -1084,7 +1084,7 @@ static MACHINE_DRIVER_START( hopmappy )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(800)	/* heavy interleaving needed to avoid hangs in rthunder */
 
-	MDRV_MACHINE_INIT(namco86)
+	MDRV_MACHINE_RESET(namco86)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

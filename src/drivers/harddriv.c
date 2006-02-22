@@ -954,7 +954,7 @@ static MACHINE_DRIVER_START( driver_nomsp )
 	MDRV_VBLANK_DURATION((1000000 * (416 - 384)) / (60 * 416))
 	MDRV_INTERLEAVE(500)
 
-	MDRV_MACHINE_INIT(harddriv)
+	MDRV_MACHINE_RESET(harddriv)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

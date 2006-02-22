@@ -8,7 +8,7 @@
  *
  */
 
-#include "state.h"
+#include "driver.h"
 #include "machine/at28c16.h"
 
 #define DATA_SIZE ( 0x800 )
@@ -53,9 +53,9 @@ static void at28c16_init( int chip )
 	memset( c->data, 0, DATA_SIZE );
 	memset( c->id, 0, ID_SIZE );
 
-	state_save_register_UINT8( "at28c16", chip, "data", c->data, DATA_SIZE );
-	state_save_register_UINT8( "at28c16", chip, "id", c->id, ID_SIZE );
-	state_save_register_UINT8( "at28c16", chip, "a9_12v", &c->a9_12v, 1 );
+	state_save_register_item_array( "at28c16", chip, c->data );
+	state_save_register_item_array( "at28c16", chip, c->id );
+	state_save_register_item( "at28c16", chip, c->a9_12v );
 }
 
 static void nvram_handler_at28c16( int chip, mame_file *file, int read_or_write )

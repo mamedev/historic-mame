@@ -176,7 +176,7 @@ static struct ide_interface ide_intf =
  *
  *************************************/
 
-static MACHINE_INIT( cojag )
+static MACHINE_RESET( cojag )
 {
 	/* 68020 only: copy the interrupt vectors into RAM */
 	if (!cojag_is_r3000)
@@ -813,7 +813,7 @@ MACHINE_DRIVER_START( cojagr3k )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cojag)
+	MDRV_MACHINE_RESET(cojag)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -861,7 +861,7 @@ MACHINE_DRIVER_START( cojag68k )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cojag)
+	MDRV_MACHINE_RESET(cojag)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -1011,7 +1011,7 @@ ROM_END
  *
  *************************************/
 
-static void common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
+static void cojag_common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
 {
 	/* copy over the ROM */
 	cojag_is_r3000 = (Machine->drv->cpu[0].cpu_type == CPU_R3000BE);
@@ -1036,7 +1036,7 @@ static void common_init(UINT8 crosshair, UINT16 gpu_jump_offs, UINT16 spin_pc)
 
 static DRIVER_INIT( area51a )
 {
-	common_init(1, 0x5c4, 0x5a0);
+	cojag_common_init(1, 0x5c4, 0x5a0);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
@@ -1047,7 +1047,7 @@ static DRIVER_INIT( area51a )
 
 static DRIVER_INIT( area51 )
 {
- common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(1, 0x0c0, 0x09e);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */
@@ -1058,7 +1058,7 @@ static DRIVER_INIT( area51 )
 
 static DRIVER_INIT( maxforce )
 {
-	common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(1, 0x0c0, 0x09e);
 
 	/* patch the protection */
 	rom_base[0x220/4] = 0x03e00008;
@@ -1073,7 +1073,7 @@ static DRIVER_INIT( maxforce )
 
 static DRIVER_INIT( area51mx )
 {
-	common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(1, 0x0c0, 0x09e);
 
 	/* patch the protection */
 	rom_base[0x418/4] = 0x4e754e75;
@@ -1087,7 +1087,7 @@ static DRIVER_INIT( area51mx )
 
 static DRIVER_INIT( a51mxr3k )
 {
-	common_init(1, 0x0c0, 0x09e);
+	cojag_common_init(1, 0x0c0, 0x09e);
 
 	/* patch the protection */
 	rom_base[0x220/4] = 0x03e00008;
@@ -1102,7 +1102,7 @@ static DRIVER_INIT( a51mxr3k )
 
 static DRIVER_INIT( vcircle )
 {
-	common_init(0, 0x5c0, 0x5a0);
+	cojag_common_init(0, 0x5c0, 0x5a0);
 
 #if ENABLE_SPEEDUP_HACKS
 	/* install speedup for main CPU */

@@ -206,7 +206,6 @@ Playfield tile info:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "taito_f3.h"
-#include "state.h"
 
 #define DARIUSG_KLUDGE
 //#define DEBUG_F3 1
@@ -628,8 +627,8 @@ VIDEO_START( f3 )
 	memset(spriteram32_buffered,0,spriteram_size);
 	memset(spriteram32,0,spriteram_size);
 
-	state_save_register_UINT32("f3", 0, "vcontrol0", f3_control_0, 8);
-	state_save_register_UINT32("f3", 0, "vcontrol1", f3_control_1, 8);
+	state_save_register_global_array(f3_control_0);
+	state_save_register_global_array(f3_control_1);
 
 	for (tile = 0;tile < 256;tile++)
 		vram_dirty[tile]=1;

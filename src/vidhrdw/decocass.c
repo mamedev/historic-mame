@@ -7,20 +7,19 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/decocass.h"
-#include "state.h"
 
-static int watchdog_count;
-static int watchdog_flip;
-static int color_missiles;
-static int color_center_bot;
-static int mode_set;
-static int back_h_shift;
-static int back_vl_shift;
-static int back_vr_shift;
-static int part_h_shift;
-static int part_v_shift;
-static int center_h_shift_space;
-static int center_v_shift;
+static INT32 watchdog_count;
+static INT32 watchdog_flip;
+static INT32 color_missiles;
+static INT32 color_center_bot;
+static INT32 mode_set;
+static INT32 back_h_shift;
+static INT32 back_vl_shift;
+static INT32 back_vr_shift;
+static INT32 part_h_shift;
+static INT32 part_v_shift;
+static INT32 center_h_shift_space;
+static INT32 center_v_shift;
 
 UINT8 *decocass_charram;
 UINT8 *decocass_fgvideoram;
@@ -85,18 +84,18 @@ static UINT32 tile_offset[32*32] = {
  ********************************************/
 void decocass_video_state_save_init(void)
 {
-	state_save_register_int("decocass", 0, "watchdog_count", &watchdog_count);
-	state_save_register_int("decocass", 0, "watchdog_flip", &watchdog_flip);
-	state_save_register_int("decocass", 0, "color_missiles", &color_missiles);
-	state_save_register_int("decocass", 0, "color_center_bot", &color_center_bot);
-	state_save_register_int("decocass", 0, "mode_set", &mode_set);
-	state_save_register_int("decocass", 0, "back_h_shift", &back_h_shift);
-	state_save_register_int("decocass", 0, "back_vl_shift", &back_vl_shift);
-	state_save_register_int("decocass", 0, "back_vr_shift", &back_vr_shift);
-	state_save_register_int("decocass", 0, "part_h_shift", &part_h_shift);
-	state_save_register_int("decocass", 0, "part_v_shift", &part_v_shift);
-	state_save_register_int("decocass", 0, "center_h_shift_space", &center_h_shift_space);
-	state_save_register_int("decocass", 0, "center_v_shift", &center_v_shift);
+	state_save_register_global(watchdog_count);
+	state_save_register_global(watchdog_flip);
+	state_save_register_global(color_missiles);
+	state_save_register_global(color_center_bot);
+	state_save_register_global(mode_set);
+	state_save_register_global(back_h_shift);
+	state_save_register_global(back_vl_shift);
+	state_save_register_global(back_vr_shift);
+	state_save_register_global(part_h_shift);
+	state_save_register_global(part_v_shift);
+	state_save_register_global(center_h_shift_space);
+	state_save_register_global(center_v_shift);
 }
 
 /********************************************

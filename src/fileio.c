@@ -117,7 +117,7 @@ static UINT64 chd_length_cb(chd_interface_file *file);
     HARD DISK INTERFACE
 ***************************************************************************/
 
-chd_interface mame_chd_interface =
+static chd_interface mame_chd_interface =
 {
 	chd_open_cb,
 	chd_close_cb,
@@ -125,6 +125,25 @@ chd_interface mame_chd_interface =
 	chd_write_cb,
 	chd_length_cb
 };
+
+
+
+/*-------------------------------------------------
+    fileio_init - open a file for access and
+    return an error code
+-------------------------------------------------*/
+
+void fileio_init(void)
+{
+	chd_set_interface(&mame_chd_interface);
+	add_exit_callback(fileio_exit);
+}
+
+
+void fileio_exit(void)
+{
+	unzip_cache_clear();
+}
 
 
 

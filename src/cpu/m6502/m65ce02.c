@@ -39,8 +39,7 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "m65ce02.h"
 
 #include "ops02.h"

@@ -584,7 +584,7 @@ struct AY8910interface merit_ay8912_interface =
 	led_w,0
 };
 
-static MACHINE_INIT( merit )
+static MACHINE_RESET( merit )
 {
 	ppi8255_init(&ppi8255_intf);
 }
@@ -600,7 +600,7 @@ static MACHINE_DRIVER_START( pitboss )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
-	MDRV_MACHINE_INIT(merit)
+	MDRV_MACHINE_RESET(merit)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

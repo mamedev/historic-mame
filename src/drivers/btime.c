@@ -60,7 +60,7 @@ extern UINT8 *deco_charram;
 PALETTE_INIT( btime );
 PALETTE_INIT( lnc );
 
-MACHINE_INIT( lnc );
+MACHINE_RESET( lnc );
 
 VIDEO_START( btime );
 VIDEO_START( bnj );
@@ -1365,7 +1365,7 @@ static MACHINE_DRIVER_START( lnc )
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_VBLANK_INT(lnc_sound_interrupt,16)
 
-	MDRV_MACHINE_INIT(lnc)
+	MDRV_MACHINE_RESET(lnc)
 
 	/* video hardware */
 	MDRV_GFXDECODE(lnc_gfxdecodeinfo)

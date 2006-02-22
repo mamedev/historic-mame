@@ -62,7 +62,6 @@ Unresolved Issues:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
@@ -76,12 +75,13 @@ VIDEO_START( xexex );
 VIDEO_UPDATE( xexex );
 void xexex_set_alpha(int on);
 
-MACHINE_INIT( xexex );
+MACHINE_START( xexex );
+MACHINE_RESET( xexex );
 
 static UINT16 *xexex_workram;
 static UINT16 cur_control2;
 static int init_eeprom_count;
-static int cur_sound_region, xexex_strip0x1a;
+static INT32 cur_sound_region, xexex_strip0x1a;
 static int suspension_active, resume_trigger;
 static void *dmadelay_timer;
 
@@ -489,7 +489,8 @@ static MACHINE_DRIVER_START( xexex )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(xexex)
+	MDRV_MACHINE_START(xexex)
+	MDRV_MACHINE_RESET(xexex)
 	MDRV_NVRAM_HANDLER(xexex)
 
 	/* video hardware */
@@ -587,12 +588,26 @@ ROM_START( xexexj )
 	ROM_LOAD( "xex_b07.rom", 0x200000, 0x100000, CRC(ec87fe1b) SHA1(ec9823aea5a1fc5c47c8262e15e10b28be87231c) )
 ROM_END
 
-MACHINE_INIT( xexex )
+MACHINE_RESET( xexex )
 {
 	cur_sound_region = 0;
 	suspension_active = 0;
 	K054539_init_flags(0, K054539_REVERSE_STEREO);
 }
+
+MACHINE_START( xexex )
+{
+	state_save_register_global(cur_control2);
+	state_save_register_func_postload(parse_control2);
+	state_save_register_global(cur_sound_region);
+	state_save_register_func_postload(reset_sound_region);
+
+	resume_trigger = 1000;
+
+	dmadelay_timer = timer_alloc(dmaend_callback);
+	return 0;
+}
+
 
 static DRIVER_INIT( xexex )
 {
@@ -607,17 +622,7 @@ static DRIVER_INIT( xexex )
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
 	K053250_unpack_pixels(REGION_GFX3);
-
-	state_save_register_UINT16("main", 0, "control2", &cur_control2, 1);
-	state_save_register_func_postload(parse_control2);
-	state_save_register_int("main", 0, "sound region", &cur_sound_region);
-	state_save_register_func_postload(reset_sound_region);
-
-	resume_trigger = 1000;
-
-	dmadelay_timer = timer_alloc(dmaend_callback);
 }
-
 
 GAME( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (ver EAA)", 0 )
 GAME( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (ver JAA)", 0 )

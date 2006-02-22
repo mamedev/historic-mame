@@ -245,7 +245,7 @@ static void outrun_reset(void)
 }
 
 
-static MACHINE_INIT( outrun )
+static MACHINE_RESET( outrun )
 {
 	fd1094_machine_init();
 
@@ -818,7 +818,7 @@ static MACHINE_DRIVER_START( outrun )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(outrun)
+	MDRV_MACHINE_RESET(outrun)
 	MDRV_NVRAM_HANDLER(outrun)
 	MDRV_INTERLEAVE(100)
 

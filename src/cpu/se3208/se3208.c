@@ -1,10 +1,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "se3208.h"
-#include "memory.h"
 
 /*
     SE3208 CPU Emulator by ElSemi

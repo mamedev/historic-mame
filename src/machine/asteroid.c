@@ -182,7 +182,7 @@ WRITE8_HANDLER( astdelux_led_w )
 }
 
 
-MACHINE_INIT( asteroid )
+MACHINE_RESET( asteroid )
 {
 	asteroid_bank_switch_w (0,0);
 }

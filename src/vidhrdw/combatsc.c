@@ -409,7 +409,7 @@ WRITE8_HANDLER( combascb_bankselect_w )
 	}
 }
 
-MACHINE_INIT( combasc )
+MACHINE_RESET( combasc )
 {
 	UINT8 *MEM = memory_region(REGION_CPU1) + 0x38000;
 

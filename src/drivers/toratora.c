@@ -127,7 +127,7 @@ static struct pia6821_interface pia2_intf =
 	/*irqs   : A/B             */ 0, 0,
 };
 
-MACHINE_INIT( toratora )
+MACHINE_RESET( toratora )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
@@ -226,7 +226,7 @@ static MACHINE_DRIVER_START( toratora )
 	MDRV_CPU_VBLANK_INT(toratora_interrupt,1)
 	MDRV_CPU_PERIODIC_INT(toratora_timer,TIME_IN_HZ(16))	/* timer counting at 16 Hz */
 
-	MDRV_MACHINE_INIT(toratora)
+	MDRV_MACHINE_RESET(toratora)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

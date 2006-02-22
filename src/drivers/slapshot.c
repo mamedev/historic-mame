@@ -132,7 +132,6 @@ Region byte at offset 0x031:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -226,12 +225,20 @@ static WRITE16_HANDLER( opwolf3_adc_req_w )
                 SOUND
 *****************************************************/
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
 	memory_set_bankptr( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
+
+static MACHINE_START( slapshot )
+{
+	state_save_register_global(banknum);
+	state_save_register_func_postload(reset_sound_region);
+	return 0;
+}
+
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
@@ -556,6 +563,7 @@ static MACHINE_DRIVER_START( slapshot )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
+	MDRV_MACHINE_START(slapshot)
 	MDRV_NVRAM_HANDLER(timekeeper_0)
 
 	/* video hardware */
@@ -738,9 +746,6 @@ static DRIVER_INIT( slapshot )
 		gfx[offset] = (d3<<2) | (d4<<6);
 		offset++;
 	}
-
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
 }
 
 GAME( 1994, slapshot, 0,       slapshot, slapshot, slapshot, ROT0, "Taito Corporation",         "Slap Shot (Japan)", 0 )

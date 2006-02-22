@@ -174,11 +174,11 @@ DRIVER_INIT( scorpion );
 DRIVER_INIT( ad2083 );
 DRIVER_INIT( zigzag );
 
-MACHINE_INIT( scramble );
-MACHINE_INIT( sfx );
-MACHINE_INIT( explorer );
-MACHINE_INIT( galaxian );
-MACHINE_INIT( devilfsg );
+MACHINE_RESET( scramble );
+MACHINE_RESET( sfx );
+MACHINE_RESET( explorer );
+MACHINE_RESET( galaxian );
+MACHINE_RESET( devilfsg );
 
 READ8_HANDLER(scobra_type2_ppi8255_0_r);
 READ8_HANDLER(scobra_type2_ppi8255_1_r);

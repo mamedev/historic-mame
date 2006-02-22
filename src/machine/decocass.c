@@ -8,21 +8,20 @@
 #include "cpu/m6502/m6502.h"
 #include "cpu/i8x41/i8x41.h"
 #include "machine/decocass.h"
-#include "state.h"
 
 /* tape direction, speed and timing (used also in vidhrdw/decocass.c) */
-int tape_dir;
-int tape_speed;
+INT32 tape_dir;
+INT32 tape_speed;
 double tape_time0;
 void *tape_timer;
 
 extern UINT8 *decocass_rambase;
 
-static int firsttime = 1;
-static int tape_present;
-static int tape_blocks;
-static int tape_length;
-static int tape_bot_eot;
+static INT32 firsttime = 1;
+static INT32 tape_present;
+static INT32 tape_blocks;
+static INT32 tape_length;
+static INT32 tape_bot_eot;
 static UINT8 crc16_lsb;
 static UINT8 crc16_msb;
 
@@ -52,18 +51,18 @@ static UINT8 i8041_p2;
 static UINT32 type1_inmap;
 static UINT32 type1_outmap;
 
-static int de0091_enable;	/* DE-0091xx daughter board enable */
+static INT32 de0091_enable;	/* DE-0091xx daughter board enable */
 
 /* dongle type #2: status of the latches */
-static int type2_d2_latch;	/* latched 8041-STATUS D2 value */
-static int type2_xx_latch;	/* latched value (D7-4 == 0xc0) ? 1 : 0 */
-static int type2_promaddr;	/* latched PROM address A0-A7 */
+static INT32 type2_d2_latch;	/* latched 8041-STATUS D2 value */
+static INT32 type2_xx_latch;	/* latched value (D7-4 == 0xc0) ? 1 : 0 */
+static INT32 type2_promaddr;	/* latched PROM address A0-A7 */
 
 /* dongle type #3: status and patches */
-static int type3_ctrs;			/* 12 bit counter stage */
-static int type3_d0_latch;		/* latched 8041-D0 value */
-static int type3_pal_19;		/* latched 1 for PAL input pin-19 */
-static int type3_swap;
+static INT32 type3_ctrs;			/* 12 bit counter stage */
+static INT32 type3_d0_latch;		/* latched 8041-D0 value */
+static INT32 type3_pal_19;		/* latched 1 for PAL input pin-19 */
+static INT32 type3_swap;
 enum {
 	TYPE3_SWAP_01,
 	TYPE3_SWAP_12,
@@ -78,11 +77,11 @@ enum {
 };
 
 /* dongle type #4: status */
-static int type4_ctrs;			/* latched PROM address (E5x0 LSB, E5x1 MSB) */
-static int type4_latch; 		/* latched enable PROM (1100xxxx written to E5x1) */
+static INT32 type4_ctrs;			/* latched PROM address (E5x0 LSB, E5x1 MSB) */
+static INT32 type4_latch; 		/* latched enable PROM (1100xxxx written to E5x1) */
 
 /* dongle type #5: status */
-static int type5_latch; 		/* latched enable PROM (1100xxxx written to E5x1) */
+static INT32 type5_latch; 		/* latched enable PROM (1100xxxx written to E5x1) */
 
 /* four inputs from the quadrature decoder (H1, V1, H2, V2) */
 static UINT8 decocass_quadrature_decoder[4];
@@ -1518,35 +1517,35 @@ static void decocass_state_save_postload(void)
 void decocass_machine_state_save_init(void)
 {
 	state_save_register_func_postload(decocass_state_save_postload);
-	state_save_register_int 	("decocass", 0, "tape_dir", &tape_dir);
-	state_save_register_int 	("decocass", 0, "tape_speed", &tape_speed);
-	state_save_register_double	("decocass", 0, "tape_time0", &tape_time0, 1);
-	state_save_register_int 	("decocass", 0, "firsttime", &firsttime);
-	state_save_register_int 	("decocass", 0, "tape_present", &tape_present);
-	state_save_register_int 	("decocass", 0, "tape_blocks", &tape_blocks);
-	state_save_register_int 	("decocass", 0, "tape_length", &tape_length);
-	state_save_register_int 	("decocass", 0, "tape_bot_eot", &tape_bot_eot);
-	state_save_register_UINT8	("decocass", 0, "crc16_lsb", &crc16_lsb, 1);
-	state_save_register_UINT8	("decocass", 0, "crc16_msb", &crc16_msb, 1);
-	state_save_register_UINT8	("decocass", 0, "tape_crc16_lsb", tape_crc16_lsb, 256);
-	state_save_register_UINT8	("decocass", 0, "tape_crc16_msb", tape_crc16_msb, 256);
-	state_save_register_UINT8	("decocass", 0, "decocass_reset", &decocass_reset, 1);
-	state_save_register_UINT8	("decocass", 0, "i8041_p1", &i8041_p1, 1);
-	state_save_register_UINT8	("decocass", 0, "i8041_p2", &i8041_p2, 1);
-	state_save_register_int		("decocass", 0, "de0091_enable", &de0091_enable);
-	state_save_register_UINT32	("decocass", 0, "type1_inmap", &type1_inmap, 1);
-	state_save_register_UINT32	("decocass", 0, "type1_outmap", &type1_outmap, 1);
-	state_save_register_int 	("decocass", 0, "type2_d2_latch", &type2_d2_latch);
-	state_save_register_int 	("decocass", 0, "type2_xx_latch", &type2_xx_latch);
-	state_save_register_int 	("decocass", 0, "type2_promaddr", &type2_promaddr);
-	state_save_register_int 	("decocass", 0, "type3_ctrs", &type3_ctrs);
-	state_save_register_int 	("decocass", 0, "type3_d0_latch", &type3_d0_latch);
-	state_save_register_int 	("decocass", 0, "type3_pal_19", &type3_pal_19);
-	state_save_register_int 	("decocass", 0, "type3_swap", &type3_swap);
-	state_save_register_int 	("decocass", 0, "type4_ctrs", &type4_ctrs);
-	state_save_register_int 	("decocass", 0, "type4_latch", &type4_latch);
-	state_save_register_int 	("decocass", 0, "type5_latch", &type5_latch);
-	state_save_register_UINT8	("decocass", 0, "decocass_sound_ack", &decocass_sound_ack, 1);
+	state_save_register_global(tape_dir);
+	state_save_register_global(tape_speed);
+	state_save_register_global(tape_time0);
+	state_save_register_global(firsttime);
+	state_save_register_global(tape_present);
+	state_save_register_global(tape_blocks);
+	state_save_register_global(tape_length);
+	state_save_register_global(tape_bot_eot);
+	state_save_register_global(crc16_lsb);
+	state_save_register_global(crc16_msb);
+	state_save_register_global_array(tape_crc16_lsb);
+	state_save_register_global_array(tape_crc16_msb);
+	state_save_register_global(decocass_reset);
+	state_save_register_global(i8041_p1);
+	state_save_register_global(i8041_p2);
+	state_save_register_global(de0091_enable);
+	state_save_register_global(type1_inmap);
+	state_save_register_global(type1_outmap);
+	state_save_register_global(type2_d2_latch);
+	state_save_register_global(type2_xx_latch);
+	state_save_register_global(type2_promaddr);
+	state_save_register_global(type3_ctrs);
+	state_save_register_global(type3_d0_latch);
+	state_save_register_global(type3_pal_19);
+	state_save_register_global(type3_swap);
+	state_save_register_global(type4_ctrs);
+	state_save_register_global(type4_latch);
+	state_save_register_global(type5_latch);
+	state_save_register_global(decocass_sound_ack);
 }
 
 /***************************************************************************
@@ -1619,19 +1618,19 @@ void decocass_init_common(void)
 	decocass_sound_timer = timer_alloc(decocass_sound_nmi_pulse);
 }
 
-MACHINE_INIT( decocass )
+MACHINE_RESET( decocass )
 {
 	decocass_init_common();
 }
 
-MACHINE_INIT( ctsttape )
+MACHINE_RESET( ctsttape )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061)\n"));
 	decocass_dongle_r = decocass_type1_map1_r;
 }
 
-MACHINE_INIT( clocknch )
+MACHINE_RESET( clocknch )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 flip 2-3)\n"));
@@ -1640,7 +1639,7 @@ MACHINE_INIT( clocknch )
 	type1_outmap = MAKE_MAP(0,1,3,2,4,5,6,7);
 }
 
-MACHINE_INIT( ctisland )
+MACHINE_RESET( ctisland )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 flip 0-2)\n"));
@@ -1649,7 +1648,7 @@ MACHINE_INIT( ctisland )
 	type1_outmap = MAKE_MAP(2,1,0,3,4,5,6,7);
 }
 
-MACHINE_INIT( csuperas )
+MACHINE_RESET( csuperas )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 flip 4-5)\n"));
@@ -1658,14 +1657,14 @@ MACHINE_INIT( csuperas )
 	type1_outmap = MAKE_MAP(0,1,2,3,5,4,6,7);
 }
 
-MACHINE_INIT( castfant )
+MACHINE_RESET( castfant )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 flip 1-2)\n"));
 	decocass_dongle_r = decocass_type1_map3_r;
 }
 
-MACHINE_INIT( cluckypo )
+MACHINE_RESET( cluckypo )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 flip 1-3)\n"));
@@ -1674,7 +1673,7 @@ MACHINE_INIT( cluckypo )
 	type1_outmap = MAKE_MAP(0,3,2,1,4,5,6,7);
 }
 
-MACHINE_INIT( cterrani )
+MACHINE_RESET( cterrani )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 straight)\n"));
@@ -1683,14 +1682,14 @@ MACHINE_INIT( cterrani )
 	type1_outmap = MAKE_MAP(0,1,2,3,4,5,6,7);
 }
 
-MACHINE_INIT( cexplore )
+MACHINE_RESET( cexplore )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061)\n"));
 	decocass_dongle_r = decocass_type1_map2_r;
 }
 
-MACHINE_INIT( cprogolf )
+MACHINE_RESET( cprogolf )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #1 (DE-0061 flip 0-1)\n"));
@@ -1699,7 +1698,7 @@ MACHINE_INIT( cprogolf )
 	type1_outmap = MAKE_MAP(1,0,2,3,4,5,6,7);
 }
 
-MACHINE_INIT( cmissnx )
+MACHINE_RESET( cmissnx )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #2 (CS82-007)\n"));
@@ -1707,7 +1706,7 @@ MACHINE_INIT( cmissnx )
 	decocass_dongle_w = decocass_type2_w;
 }
 
-MACHINE_INIT( cdiscon1 )
+MACHINE_RESET( cdiscon1 )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #2 (CS82-007)\n"));
@@ -1715,7 +1714,7 @@ MACHINE_INIT( cdiscon1 )
 	decocass_dongle_w = decocass_type2_w;
 }
 
-MACHINE_INIT( cptennis )
+MACHINE_RESET( cptennis )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #2 (CS82-007)\n"));
@@ -1723,7 +1722,7 @@ MACHINE_INIT( cptennis )
 	decocass_dongle_w = decocass_type2_w;
 }
 
-MACHINE_INIT( ctornado )
+MACHINE_RESET( ctornado )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #2 (CS82-007)\n"));
@@ -1731,7 +1730,7 @@ MACHINE_INIT( ctornado )
 	decocass_dongle_w = decocass_type2_w;
 }
 
-MACHINE_INIT( cbnj )
+MACHINE_RESET( cbnj )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1740,7 +1739,7 @@ MACHINE_INIT( cbnj )
 	type3_swap = TYPE3_SWAP_67;
 }
 
-MACHINE_INIT( cburnrub )
+MACHINE_RESET( cburnrub )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1749,7 +1748,7 @@ MACHINE_INIT( cburnrub )
 	type3_swap = TYPE3_SWAP_67;
 }
 
-MACHINE_INIT( cbtime )
+MACHINE_RESET( cbtime )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1758,7 +1757,7 @@ MACHINE_INIT( cbtime )
 	type3_swap = TYPE3_SWAP_12;
 }
 
-MACHINE_INIT( cgraplop )
+MACHINE_RESET( cgraplop )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1767,7 +1766,7 @@ MACHINE_INIT( cgraplop )
 	type3_swap = TYPE3_SWAP_56;
 }
 
-MACHINE_INIT( cgraplp2 )
+MACHINE_RESET( cgraplp2 )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1776,7 +1775,7 @@ MACHINE_INIT( cgraplp2 )
 	type3_swap = TYPE3_SWAP_67;
 }
 
-MACHINE_INIT( clapapa )
+MACHINE_RESET( clapapa )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1785,7 +1784,7 @@ MACHINE_INIT( clapapa )
 	type3_swap = TYPE3_SWAP_34_7;
 }
 
-MACHINE_INIT( cfghtice )
+MACHINE_RESET( cfghtice )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1794,7 +1793,7 @@ MACHINE_INIT( cfghtice )
 	type3_swap = TYPE3_SWAP_25;
 }
 
-MACHINE_INIT( cprobowl )
+MACHINE_RESET( cprobowl )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1803,7 +1802,7 @@ MACHINE_INIT( cprobowl )
 	type3_swap = TYPE3_SWAP_34_0;
 }
 
-MACHINE_INIT( cnightst )
+MACHINE_RESET( cnightst )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1812,7 +1811,7 @@ MACHINE_INIT( cnightst )
 	type3_swap = TYPE3_SWAP_13;
 }
 
-MACHINE_INIT( cprosocc )
+MACHINE_RESET( cprosocc )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1821,7 +1820,7 @@ MACHINE_INIT( cprosocc )
 	type3_swap = TYPE3_SWAP_24;
 }
 
-MACHINE_INIT( cppicf )
+MACHINE_RESET( cppicf )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #3 (PAL)\n"));
@@ -1830,7 +1829,7 @@ MACHINE_INIT( cppicf )
 	type3_swap = TYPE3_SWAP_01;
 }
 
-MACHINE_INIT( cscrtry )
+MACHINE_RESET( cscrtry )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #4 (32K ROM)\n"));
@@ -1838,7 +1837,7 @@ MACHINE_INIT( cscrtry )
 	decocass_dongle_w = decocass_type4_w;
 }
 
-MACHINE_INIT( cbdash )
+MACHINE_RESET( cbdash )
 {
 	decocass_init_common();
 	LOG(0,("dongle type #5 (NOP)\n"));
@@ -1846,14 +1845,14 @@ MACHINE_INIT( cbdash )
 	decocass_dongle_w = decocass_type5_w;
 }
 
-MACHINE_INIT( cflyball )
+MACHINE_RESET( cflyball )
 {
 	decocass_init_common();
 	LOG(0,("no dongle\n"));
 	decocass_dongle_r = decocass_nodong_r;
 }
 
-MACHINE_INIT( czeroize )
+MACHINE_RESET( czeroize )
 {
 	UINT8 *mem = memory_region(REGION_USER1);
 	decocass_init_common();

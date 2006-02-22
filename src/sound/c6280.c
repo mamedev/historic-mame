@@ -58,7 +58,6 @@
 #include <math.h>
 
 #include "driver.h"
-#include "state.h"
 #include "c6280.h"
 
 /* only needed for io_buffer */

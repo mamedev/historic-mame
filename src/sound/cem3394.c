@@ -30,11 +30,10 @@
 /*    snake pit - melody during first level too soft if minimum width is too small */
 /*    snake pit - bonus counter at the end of level */
 /*    snacks'n jaxson - laugh at end of level is too soft if minimum width is too small */
+
 #define LIMIT_WIDTH			1
 #define MINIMUM_WIDTH		0.25
 #define MAXIMUM_WIDTH		0.75
-
-#define LIMIT_STEP			1
 
 
 /********************************************************************************
@@ -221,15 +220,6 @@ static void cem3394_update(void *param, stream_sample_t **inputs, stream_sample_
 		{
 			UINT32 pulse_width = chip->pulse_width;
 
-			/* this is a kludge; Snake Pit uses very small pulse widths in the tune during */
-			/* level 1; this makes the melody almost silent unless we enforce a minimum */
-			/* pulse width; even then, it's pretty tinny */
-			if (LIMIT_STEP)
-			{
-				if (pulse_width <= step) pulse_width = step + 1;
-				else if (pulse_width >= FRACTION_ONE - step) pulse_width = FRACTION_ONE - step - 1;
-			}
-
 			/* if the width is wider than the step, we're guaranteed to hit it once per cycle */
 			if (pulse_width >= step)
 			{
@@ -334,7 +324,7 @@ static void *cem3394_start(int sndindex, int clock, const void *config)
 	chip->index = sndindex;
 
 	/* copy global parameters */
-	chip->sample_rate = Machine->sample_rate;
+	chip->sample_rate = CEM3394_SAMPLE_RATE;
 	chip->inv_sample_rate = 1.0 / (double)chip->sample_rate;
 
 	/* allocate stream channels, 1 per chip */
@@ -346,6 +336,19 @@ static void *cem3394_start(int sndindex, int clock, const void *config)
 	/* allocate memory for a mixer buffer and external buffer (1 second should do it!) */
 	chip->mixer_buffer = auto_malloc(chip->sample_rate * sizeof(INT16));
 	chip->external_buffer = auto_malloc(chip->sample_rate * sizeof(INT16));
+
+	state_save_register_item_array("cem3394", sndindex, chip->values);
+	state_save_register_item("cem3394", sndindex, chip->wave_select);
+	state_save_register_item("cem3394", sndindex, chip->volume);
+	state_save_register_item("cem3394", sndindex, chip->mixer_internal);
+	state_save_register_item("cem3394", sndindex, chip->mixer_external);
+	state_save_register_item("cem3394", sndindex, chip->position);
+	state_save_register_item("cem3394", sndindex, chip->step);
+	state_save_register_item("cem3394", sndindex, chip->filter_position);
+	state_save_register_item("cem3394", sndindex, chip->filter_step);
+	state_save_register_item("cem3394", sndindex, chip->modulation_depth);
+	state_save_register_item("cem3394", sndindex, chip->last_ext);
+	state_save_register_item("cem3394", sndindex, chip->pulse_width);
 
 	return chip;
 }

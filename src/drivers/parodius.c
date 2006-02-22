@@ -14,7 +14,7 @@ driver by Nicola Salmoria
 #include "sound/k053260.h"
 
 /* prototypes */
-static MACHINE_INIT( parodius );
+static MACHINE_RESET( parodius );
 static void parodius_banking( int lines );
 VIDEO_START( parodius );
 VIDEO_UPDATE( parodius );
@@ -308,7 +308,7 @@ static MACHINE_DRIVER_START( parodius )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(parodius)
+	MDRV_MACHINE_RESET(parodius)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -398,7 +398,7 @@ static void parodius_banking(int lines)
 	memory_set_bankptr( 1, &RAM[offs] );
 }
 
-static MACHINE_INIT( parodius )
+static MACHINE_RESET( parodius )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

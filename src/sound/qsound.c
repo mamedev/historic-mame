@@ -33,7 +33,6 @@
 
 #include <math.h>
 #include "driver.h"
-#include "state.h"
 #include "qsound.h"
 
 /*
@@ -75,32 +74,32 @@ typedef stream_sample_t QSOUND_SAMPLE;
 
 struct QSOUND_CHANNEL
 {
-	int bank;	   /* bank (x16)    */
-	int address;	/* start address */
-	int pitch;	  /* pitch */
-	int reg3;	   /* unknown (always 0x8000) */
-	int loop;	   /* loop address */
-	int end;		/* end address */
-	int vol;		/* master volume */
-	int pan;		/* Pan value */
-	int reg9;	   /* unknown */
+	INT32 bank;	   /* bank (x16)    */
+	INT32 address;	/* start address */
+	INT32 pitch;	  /* pitch */
+	INT32 reg3;	   /* unknown (always 0x8000) */
+	INT32 loop;	   /* loop address */
+	INT32 end;		/* end address */
+	INT32 vol;		/* master volume */
+	INT32 pan;		/* Pan value */
+	INT32 reg9;	   /* unknown */
 
 	/* Work variables */
-	int key;		/* Key on / key off */
+	INT32 key;		/* Key on / key off */
 
 #if QSOUND_DRIVER1
-	int lvol;	   /* left volume */
-	int rvol;	   /* right volume */
-	int lastdt;	 /* last sample value */
-	int offset;	 /* current offset counter */
+	INT32 lvol;	   /* left volume */
+	INT32 rvol;	   /* right volume */
+	INT32 lastdt;	 /* last sample value */
+	INT32 offset;	 /* current offset counter */
 #else
 	QSOUND_SRC_SAMPLE *buffer;
-	int factor;		   /*step factor (fixed point 8-bit)*/
-	int mixl,mixr;		/*mixing factor (fixed point)*/
-	int cursor;		   /*current sample position (fixed point)*/
-	int lpos;			 /*last cursor pos*/
-	int lastsaml;		 /*last left sample (to avoid any calculation)*/
-	int lastsamr;		 /*last right sample*/
+	INT32 factor;		   /*step factor (fixed point 8-bit)*/
+	INT32 mixl,mixr;		/*mixing factor (fixed point)*/
+	INT32 cursor;		   /*current sample position (fixed point)*/
+	INT32 lpos;			 /*last cursor pos*/
+	INT32 lastsaml;		 /*last left sample (to avoid any calculation)*/
+	INT32 lastsamr;		 /*last right sample*/
 #endif
 };
 
@@ -191,18 +190,18 @@ static void *qsound_start(int sndindex, int clock, const void *config)
 	/* state save (DRIVER1) */
 	for (i=0; i<QSOUND_CHANNELS; i++)
 	{
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "bank", &chip->channel[i].bank);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "address", &chip->channel[i].address);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "pitch", &chip->channel[i].pitch);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "loop", &chip->channel[i].loop);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "end", &chip->channel[i].end);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "vol", &chip->channel[i].vol);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "pan", &chip->channel[i].pan);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "key", &chip->channel[i].key);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "lvol", &chip->channel[i].lvol);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "rvol", &chip->channel[i].rvol);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "lastdt", &chip->channel[i].lastdt);
-		state_save_register_int("QSound", sndindex*QSOUND_CHANNELS+i, "offset", &chip->channel[i].offset);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].bank);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].address);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].pitch);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].loop);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].end);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].vol);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].pan);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].key);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].lvol);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].rvol);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].lastdt);
+		state_save_register_item("QSound", sndindex*QSOUND_CHANNELS+i, chip->channel[i].offset);
 	}
 #endif
 

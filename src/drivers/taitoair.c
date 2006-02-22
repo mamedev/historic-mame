@@ -178,7 +178,6 @@ cpu #2 (PC=0000060E): unmapped memory word read from 0000683A & FFFF
 ****************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
@@ -193,6 +192,7 @@ static UINT16 *dsp_ram;	/* Shared 68000/TMS32025 RAM */
 
 VIDEO_START( taitoair );
 VIDEO_UPDATE( taitoair );
+
 
 
 /***********************************************************
@@ -308,7 +308,7 @@ static READ16_HANDLER( stick2_input_r )
 }
 
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
@@ -319,6 +319,16 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 3;
 	reset_sound_region();
+}
+
+
+static MACHINE_START( taitoair )
+{
+	dsp_HOLD_signal = ASSERT_LINE;
+
+	state_save_register_global(banknum);
+	state_save_register_func_postload(reset_sound_region);
+	return 0;
 }
 
 
@@ -655,6 +665,8 @@ static MACHINE_DRIVER_START( airsys )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
+	MDRV_MACHINE_START(taitoair)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*16, 64*16)
@@ -767,16 +779,7 @@ ROM_START( ainferno )
 ROM_END
 
 
-static DRIVER_INIT( taitoair )
-{
-	dsp_HOLD_signal = ASSERT_LINE;
-
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
 
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR  COMPANY  FULLNAME */
-GAME( 1988, topland,  0,        airsys,   topland,  taitoair, ROT0,    "Taito Corporation Japan", "Top Landing (World)", GAME_NOT_WORKING )
-GAME( 1990, ainferno, 0,        airsys,   ainferno, taitoair, ROT0,    "Taito America Corporation", "Air Inferno (US)", GAME_NOT_WORKING )
+GAME( 1988, topland,  0,        airsys,   topland,  0,        ROT0,    "Taito Corporation Japan", "Top Landing (World)", GAME_NOT_WORKING )
+GAME( 1990, ainferno, 0,        airsys,   ainferno, 0,        ROT0,    "Taito America Corporation", "Air Inferno (US)", GAME_NOT_WORKING )

@@ -26,11 +26,26 @@ it will crash shortly afterwards tho
 #include "sndhrdw/seibu.h"
 
 static tilemap *background_layer,*midground_layer,*foreground_layer,*text_layer;
-static unsigned char *back_data,*fore_data,*mid_data, *scrollregs;
-static int mid_bank;
+static unsigned char *back_data,*fore_data,*mid_data, *w1ram;
+static int bg_bank=0, fg_bank=6, mid_bank=1, bg_col=0, fg_col=1, mid_col=2;
 
-static int tile_bank, tick;
-static UINT8 *zz;
+static int tick;
+static unsigned char *mainram;
+
+static int c_r[0xc000], c_w[0xc000];
+
+static void combine16(UINT16 *val, int offset, UINT8 data)
+{
+	offset *= 8;
+	*val = (*val & ~(0xff << offset)) | (data << offset);
+}
+
+static void combine32(UINT32 *val, int offset, UINT8 data)
+{
+	offset *= 8;
+	*val = (*val & ~(0xff << offset)) | (data << offset);
+}
+
 
 /* SPRITE DRAWING (move to vidhrdw file) */
 
@@ -132,82 +147,82 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect ,int pr
 
 /* VIDEO RELATED WRITE HANDLERS (move to vidhrdw file) */
 
-WRITE8_HANDLER ( raiden2_background_w )
+static WRITE8_HANDLER(raiden2_background_w)
 {
-	back_data[offset]=data;
-	tilemap_mark_tile_dirty( background_layer,offset/2 );
+	back_data[offset] = data;
+	tilemap_mark_tile_dirty(background_layer, offset/2);
 }
 
-WRITE8_HANDLER ( raiden2_midground_w )
+static WRITE8_HANDLER(raiden2_midground_w)
 {
-	mid_data[offset]=data;
-	tilemap_mark_tile_dirty( midground_layer,offset/2 );
+	mid_data[offset] = data;
+	tilemap_mark_tile_dirty(midground_layer,offset/2);
 }
 
-WRITE8_HANDLER ( raiden2_foreground_w )
+static WRITE8_HANDLER(raiden2_foreground_w)
 {
-	fore_data[offset]=data;
-	tilemap_mark_tile_dirty( foreground_layer,offset/2 );
+	fore_data[offset] = data;
+	tilemap_mark_tile_dirty(foreground_layer,offset/2);
 }
 
-WRITE8_HANDLER ( raiden2_text_w )
+static WRITE8_HANDLER(raiden2_text_w)
 {
-	videoram[offset]=data;
-	tilemap_mark_tile_dirty( text_layer,offset/2 );
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(text_layer, offset/2);
 }
 
 /* TILEMAP RELATED (move to vidhrdw file) */
 
 static void get_back_tile_info( int tile_index )
 {
-	int offs=tile_index*2;
-	int tile=back_data[offs]+(back_data[offs+1]<<8);
-	int color=tile >> 12;
+	int offs = tile_index*2;
+	int tile = back_data[offs]+(back_data[offs+1]<<8);
+	int color = (tile >> 12) | (bg_col << 4);
 
-	tile=tile&0xfff;
+	tile = (tile & 0xfff) | (bg_bank << 12);
 
 	SET_TILE_INFO(1,tile+0x0000,color,0)
 }
 
 static void get_mid_tile_info( int tile_index )
 {
-	int offs=tile_index*2;
-	int tile=mid_data[offs]+(mid_data[offs+1]<<8);
-	int color=(tile >> 12) | (1 << 4);
+	int offs = tile_index*2;
+	int tile = mid_data[offs]+(mid_data[offs+1]<<8);
+	int color = (tile >> 12) | (mid_col << 4);
 
-	tile = (tile & 0xfff) | (mid_bank<<12);
-	//tile = (tile & 0xfff) | 0x7000;
+	tile = (tile & 0xfff) | (mid_bank << 12);
 
 	SET_TILE_INFO(1,tile,color,0)
 }
 
 static void get_fore_tile_info( int tile_index )
 {
-	int offs=tile_index*2;
-	int tile=fore_data[offs]+(fore_data[offs+1]<<8);
-	int color=tile >> 12;
+	int offs = tile_index*2;
+	int tile = fore_data[offs]+(fore_data[offs+1]<<8);
+	int color = (tile >> 12) | (fg_col << 4);
 
-	//  tile=tile&0xfff;
-	tile = (tile & 0xfff) | (3<<12);  // 3000 intro (cliff) 1000 game (bg )
+
+	tile = (tile & 0xfff) | (fg_bank << 12);
+	//  tile = (tile & 0xfff) | (3<<12);  // 3000 intro (cliff) 1000 game (bg )
 
 	SET_TILE_INFO(1,tile,color,0)
 }
 
 static void get_text_tile_info( int tile_index )
 {
-	int offs=tile_index*2;
-	int tile=videoram[offs]+(videoram[offs+1]<<8);
-	int color=(tile>>12)&0xf;
+	int offs = tile_index*2;
+	int tile = videoram[offs]+(videoram[offs+1]<<8);
+	int color = (tile>>12)&0xf;
 
-	tile&=0xfff;
+	tile &= 0xfff;
 
 	SET_TILE_INFO(0,tile,color,0)
 }
 
 static void set_scroll(tilemap *tm, int plane)
 {
-	int x = (scrollregs[plane*4+1]<<8) | scrollregs[plane*4+0];
-	int y = (scrollregs[plane*4+3]<<8) | scrollregs[plane*4+2];
+	int x = (mainram[0x620+plane*4+1]<<8) | mainram[0x620+plane*4+0];
+	int y = (mainram[0x620+plane*4+3]<<8) | mainram[0x620+plane*4+2];
 	tilemap_set_scrollx(tm, 0, x);
 	tilemap_set_scrolly(tm, 0, y);
 }
@@ -216,7 +231,7 @@ static void set_scroll(tilemap *tm, int plane)
 
 VIDEO_START(raiden2)
 {
-	text_layer       = tilemap_create( get_text_tile_info,tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8,  64,64 );
+	text_layer       = tilemap_create( get_text_tile_info,tilemap_scan_rows, TILEMAP_TRANSPARENT,  8, 8,64,32 );
 	background_layer = tilemap_create( get_back_tile_info,tilemap_scan_rows, TILEMAP_OPAQUE,      16,16,32,32 );
 	midground_layer  = tilemap_create( get_mid_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,16,32,32 );
 	foreground_layer = tilemap_create( get_fore_tile_info,tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,16,32,32 );
@@ -225,132 +240,671 @@ VIDEO_START(raiden2)
 	tilemap_set_transparent_pen(foreground_layer,15);
 	tilemap_set_transparent_pen(text_layer,15);
 
-	tick = tile_bank = 0;
-	mid_bank = 0;
+	tick = 0;
 
 	return 0;
 }
+
+// XXX
+// 000 bg = dis, mid = dis, fg = 4.012 // push 1/2 player button
+// 002 bg = 0.0, mid = 1.2, fg = 6.1,  // level 1 start
+// 000 bg = 0.0, mid = 1.2, fg = 6.1,  // level 1 run
+// 013 bg = 0.0, mid = 3.0, fg = 7.1   // attract mode p1
+// 012 bg = 0.0, mid = 3.0, fg = 6.1   // attract mode p1
+// 000 bg = 0.0, mid = 1.1, fg = 5.1   // attract mode level 1
+// 002 bg = 0.0, mid = dis, fg = 6.1   // high scores
 
 /* VIDEO UPDATE (move to vidhrdw file) */
 
 VIDEO_UPDATE (raiden2)
 {
-	int new_mid_bank;
+	int info_1, info_2, info_3;
 
+#if 0
+	static unsigned char zz[16];
+	static unsigned char zz2[32];
+	static unsigned char zz3[12];
+#endif
+
+	info_1 = mainram[0x6cc] & 1;
+	info_2 = (mainram[0x6cc] & 2)>>1;
+	info_3 = (mainram[0x471] & 0xc0)>>6;
+
+#if 1
 	set_scroll(background_layer, 0);
-	set_scroll(foreground_layer, 1);
-	set_scroll(midground_layer, 2);
-	set_scroll(text_layer, 3);
+	set_scroll(midground_layer,  1);
+	set_scroll(foreground_layer, 2);
+#endif
 
-	new_mid_bank = 4 | (zz[0x71]>>6);
-	if(new_mid_bank == 4)
-		new_mid_bank = 5;
-	if(new_mid_bank != mid_bank) {
-		mid_bank = new_mid_bank;
-		tilemap_mark_all_tiles_dirty(midground_layer);
+#if 0
+	{
+		int new_bank;
+		new_bank = 0 | (mainram[0x6cc]&1);
+		if(new_bank != bg_bank) {
+			bg_bank = new_bank;
+			tilemap_mark_all_tiles_dirty(background_layer);
+		}
+
+		new_bank = 2 | ((mainram[0x6cc]>>1)&1);
+		if(new_bank != mid_bank) {
+			mid_bank = new_bank;
+			tilemap_mark_all_tiles_dirty(midground_layer);
+		}
+
+		new_bank = 4 | (mainram[0x471]>>6);
+		if(new_bank != fg_bank) {
+			fg_bank = new_bank;
+			tilemap_mark_all_tiles_dirty(foreground_layer);
+		}
+
+		bg_col = 0;
+		mid_col = 2;
+		fg_col = 1;
+	}
+#endif
+#if 0
+	if(0 && memcmp(zz, mainram+0x620, 16)) {
+		logerror("0:%04x %04x  1:%04x %04x 2:%04x %04x 3:%04x %04x\n",
+				 (mainram[0x623]<<8) | mainram[0x622],
+				 (mainram[0x621]<<8) | mainram[0x620],
+				 (mainram[0x627]<<8) | mainram[0x626],
+				 (mainram[0x625]<<8) | mainram[0x624],
+				 (mainram[0x62b]<<8) | mainram[0x62a],
+				 (mainram[0x629]<<8) | mainram[0x628],
+				 (mainram[0x62f]<<8) | mainram[0x62e],
+				 (mainram[0x62d]<<8) | mainram[0x62c]);
+		memcpy(zz, mainram+0x620, 16);
+	}
+	if(0 && memcmp(zz2, mainram+0x470, 32)) {
+		logerror("%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x  %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+				 mainram[0x470], mainram[0x471], mainram[0x472], mainram[0x473],
+				 mainram[0x474], mainram[0x475], mainram[0x476], mainram[0x477],
+				 mainram[0x478], mainram[0x479], mainram[0x47a], mainram[0x47b],
+				 mainram[0x47c], mainram[0x47d], mainram[0x47e], mainram[0x47f],
+				 mainram[0x480], mainram[0x481], mainram[0x482], mainram[0x483],
+				 mainram[0x484], mainram[0x485], mainram[0x486], mainram[0x487],
+				 mainram[0x488], mainram[0x489], mainram[0x48a], mainram[0x48b],
+				 mainram[0x48c], mainram[0x48d], mainram[0x48e], mainram[0x48f]);
+		memcpy(zz2, mainram+0x470, 32);
 	}
 
+#endif
+#if 0
+	if(memcmp(zz3, mainram+0x620, 12)) {
+		logerror("%02x%02x %02x%02x  %02x%02x %02x%02x  %02x%02x %02x%02x\n",
+				 mainram[0x623], mainram[0x622], mainram[0x621], mainram[0x620],
+				 mainram[0x627], mainram[0x626], mainram[0x625], mainram[0x624],
+				 mainram[0x62b], mainram[0x62a], mainram[0x629], mainram[0x628]);
+		memcpy(zz3, mainram+0x620, 12);
+	}
+#endif
+#if 1
 	tick++;
-	if(tick == 5) {
+	if(tick == 15) {
 		int mod = 0;
 		tick = 0;
 
+		if(code_pressed(KEYCODE_R)) {
+			mod = 1;
+			bg_bank++;
+			if(bg_bank == 8)
+				bg_bank = 0;
+		}
+		if(code_pressed(KEYCODE_T)) {
+			mod = 1;
+			if(bg_bank == 0)
+				bg_bank = 8;
+			bg_bank--;
+		}
+		if(code_pressed(KEYCODE_Y)) {
+			mod = 1;
+			mid_bank++;
+			if(mid_bank == 8)
+				mid_bank = 0;
+		}
+		if(code_pressed(KEYCODE_U)) {
+			mod = 1;
+			if(mid_bank == 0)
+				mid_bank = 8;
+			mid_bank--;
+		}
 		if(code_pressed(KEYCODE_O)) {
 			mod = 1;
-			tile_bank++;
-			if(tile_bank == 0x100)
-				tile_bank = 0;
+			fg_bank++;
+			if(fg_bank == 8)
+				fg_bank = 0;
 		}
 		if(code_pressed(KEYCODE_I)) {
 			mod = 1;
-			if(tile_bank == 0)
-				tile_bank = 0x100;
-			tile_bank--;
+			if(fg_bank == 0)
+				fg_bank = 8;
+			fg_bank--;
 		}
-		if(mod) {
-			ui_popup("%x", tile_bank);
+
+		if(code_pressed(KEYCODE_D)) {
+			mod = 1;
+			bg_col++;
+			if(bg_col == 8)
+				bg_col = 0;
+		}
+		if(code_pressed(KEYCODE_F)) {
+			mod = 1;
+			if(bg_col == 0)
+				bg_col = 8;
+			bg_col--;
+		}
+		if(code_pressed(KEYCODE_G)) {
+			mod = 1;
+			mid_col++;
+			if(mid_col == 8)
+				mid_col = 0;
+		}
+		if(code_pressed(KEYCODE_H)) {
+			mod = 1;
+			if(mid_col == 0)
+				mid_col = 8;
+			mid_col--;
+		}
+		if(code_pressed(KEYCODE_J)) {
+			mod = 1;
+			fg_col++;
+			if(fg_col == 8)
+				fg_col = 0;
+		}
+		if(code_pressed(KEYCODE_K)) {
+			mod = 1;
+			if(fg_col == 0)
+				fg_col = 8;
+			fg_col--;
+		}
+		if(mod || code_pressed(KEYCODE_L)) {
+			ui_popup("b:%x.%x m:%x.%x f:%x.%x %d%d%d", bg_bank, bg_col, mid_bank, mid_col, fg_bank, fg_col, info_1, info_2, info_3);
+			tilemap_mark_all_tiles_dirty(background_layer);
+			tilemap_mark_all_tiles_dirty(midground_layer);
 			tilemap_mark_all_tiles_dirty(foreground_layer);
 		}
 	}
-//      fillbitmap(bitmap, get_black_pen(), cliprect);
+#endif
 
-	tilemap_draw(bitmap,cliprect,background_layer,0,0);
-	tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
-	tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	if(!code_pressed(KEYCODE_Q))
+		tilemap_draw(bitmap,cliprect,background_layer,0,0);
+	if(!code_pressed(KEYCODE_W))
+		tilemap_draw(bitmap,cliprect,midground_layer,0,0);
+	if(!code_pressed(KEYCODE_E))
+		tilemap_draw(bitmap,cliprect,foreground_layer,0,0);
+
 	draw_sprites(bitmap,cliprect,0);
-	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	if(!code_pressed(KEYCODE_A))
+		tilemap_draw(bitmap,cliprect,text_layer,0,0);
 }
 
 
-static WRITE8_HANDLER(sound_w)
+//  COPX functions, terribly incomplete
+
+static UINT8 cop_buf[6];
+static UINT16 cop_adr, cop_fct;
+static UINT32 cop_reg[16];
+static UINT16 cop_data_fct[0x20], cop_data_val[0x20], cop_data_mask[0x20], cop_data_prg[0x100];
+
+
+static UINT32 r32(int adr)
 {
+	return program_read_byte(adr) |
+		(program_read_byte(adr+1)<<8) |
+		(program_read_byte(adr+2)<<16) |
+		(program_read_byte(adr+3)<<24);
 }
 
+static void w32(int adr, UINT32 v)
+{
+	program_write_byte(adr, v);
+	program_write_byte(adr+1, v>>8);
+	program_write_byte(adr+2, v>>16);
+	program_write_byte(adr+3, v>>24);
+}
+
+static void cop_init(void)
+{
+	memset(cop_buf, 0, sizeof(cop_buf));
+	memset(cop_reg, 0, sizeof(cop_reg));
+	memset(cop_data_fct, 0, sizeof(cop_data_fct));
+	memset(cop_data_val, 0, sizeof(cop_data_val));
+	memset(cop_data_mask, 0, sizeof(cop_data_mask));
+	memset(cop_data_prg, 0, sizeof(cop_data_prg));
+
+	cop_adr = 0;
+	cop_fct = 0;
+}
+
+static void cop_run(void)
+{
+	int i;
+
+	if(cop_fct != 0x5a05 && cop_fct != 0xf205 && cop_fct != 0x5205)
+		logerror("XCOP %04x %08x %08x %08x %08x (%06x)\n", cop_fct, cop_reg[0], cop_reg[1], cop_reg[2], cop_reg[3], activecpu_get_pc());
+
+	switch(cop_fct) {
+	case 0x0205: { // 0205 0006 ffeb 0000 - 0188 0282 0082 0b8e 098e 0000 0000 0000
+		UINT32 src = cop_reg[0];
+		int i;
+		logerror("COP %04x %08x (uns) (%06x)\n", cop_fct, src, activecpu_get_pc());
+		logerror(" COP -> %08x:", src);
+		for(i=0; i<32; i++)
+			logerror(" %02x", program_read_byte(src+i));
+		logerror("\n");
+		break;
+	}
+	case 0x138e: { // 130e 0005 bf7f 0010 - 0984 0aa4 0d82 0aa2 039b 0b9a 0b9a 0a9a
+		UINT32 src = cop_reg[0];
+		UINT32 dst = cop_reg[1];
+		logerror("COP %04x %08x %08x (uns) (%06x)\n", cop_fct, src, dst, activecpu_get_pc());
+		break;
+	}
+	case 0x3bb0: { // 3bb0 0004 007f 0038 - 0f9c 0b9c 0b9c 0b9c 0b9c 0b9c 0b9c 099c
+		UINT32 src = cop_reg[0];
+		UINT32 dst = cop_reg[1];
+		logerror("COP %04x %08x %08x (uns) (%06x)\n", cop_fct, src, dst, activecpu_get_pc());
+		break;
+	}
+	case 0x42c2: { // 42c2 0005 fcdd 0040 - 0f9a 0b9a 0b9c 0b9c 0b9c 029c 0000 0000
+		UINT32 src = cop_reg[0];
+		UINT32 dst = cop_reg[1];
+		logerror("COP %04x %08x %08x (uns) (%06x)\n", cop_fct, src, dst, activecpu_get_pc());
+		break;
+	}
+	case 0x5205:   // 5205 0006 fff7 0050 - 0180 02e0 03a0 00a0 03a0 0000 0000 0000
+	case 0x5a05: { // 5a05 0006 fff7 0058 - 0180 02e0 03a0 00a0 03a0 0000 0000 0000
+		UINT32 src = cop_reg[0];
+		UINT32 dst = cop_reg[1];
+		UINT32 val = r32(src);
+		w32(dst, val);
+		//      logerror("COP %04x %08x -> %08x - %08x (%06x)\n", cop_fct, src, dst, val, activecpu_get_pc());
+		break;
+	}
+	case 0x8100: { // 8100 0007 fdfb 0080 - 0b9a 0b88 0888 0000 0000 0000 0000 0000
+		UINT32 src = cop_reg[0];
+		logerror("COP %04x %08x (uns) (%06x)\n", cop_fct, src, activecpu_get_pc());
+		logerror(" COP -> %08x:", src);
+		for(i=0; i<32; i++)
+			logerror(" %02x", program_read_byte(src+i));
+		logerror("\n");
+		break;
+	}
+	case 0x8900: { // 8900 0007 fdfb 0088 - 0b9a 0b8a 088a 0000 0000 0000 0000 0000
+		UINT32 src = cop_reg[0];
+		logerror("COP %04x %08x (uns) (%06x)\n", cop_fct, src, activecpu_get_pc());
+		logerror(" COP -> %08x:", src);
+		for(i=0; i<32; i++)
+			logerror(" %02x", program_read_byte(src+i));
+		logerror("\n");
+		break;
+	}
+	case 0xf205: { // f205 0006 fff7 00f0 - 0182 02e0 03c0 00c0 03c0 0000 0000 0000
+		UINT32 src = cop_reg[0]+4;
+		UINT32 dst = cop_reg[2];
+		UINT32 val = r32(src);
+		w32(dst, val);
+		//      logerror("COP %04x %08x -> %08x - %08x (%06x)\n", cop_fct, src, dst, val, activecpu_get_pc());
+		break;
+	}
+	default:
+		logerror("Unknown COP routine %04x at %06x\n", cop_fct, activecpu_get_pc());
+		break;
+	}
+}
+
+static WRITE8_HANDLER(cop_up_fct_w)
+{
+	cop_buf[offset] = data;
+	if(offset == 3) {
+		int entry = cop_buf[5] >> 3;
+		cop_data_fct[entry]  = cop_buf[4] | (cop_buf[5] << 8);
+		cop_data_val[entry]  = cop_buf[0] | (cop_buf[1] << 8);
+		cop_data_mask[entry] = cop_buf[2] | (cop_buf[3] << 8);
+	}
+}
+
+static WRITE8_HANDLER(cop_up_adr_w)
+{
+	if(offset)
+		cop_adr = (cop_adr & 0xff) | (data << 8);
+	else
+		cop_adr = (cop_adr & 0xff00) | data;
+}
+
+static WRITE8_HANDLER(cop_up_data_w)
+{
+	if(offset)
+		cop_data_prg[cop_adr] = (cop_data_prg[cop_adr] & 0xff) | (data << 8);
+	else
+		cop_data_prg[cop_adr] = (cop_data_prg[cop_adr] & 0xff00) | data;
+}
+
+static WRITE8_HANDLER(cop_reg_w)
+{
+	int entry = (offset >> 1) & 15;
+	switch(offset & 0x21) {
+	case 0x00:
+		cop_reg[entry] = (cop_reg[entry] & 0xff00ffffU) | (data << 16);
+		break;
+	case 0x01:
+		cop_reg[entry] = (cop_reg[entry] & 0x00ffffffU) | (data << 24);
+		break;
+	case 0x20:
+		cop_reg[entry] = (cop_reg[entry] & 0xffffff00U) | data;
+		break;
+	case 0x21:
+		cop_reg[entry] = (cop_reg[entry] & 0xffff00ffU) | (data << 8);
+		break;
+	}
+	logerror("cop_reg_w %x, %08x\n", entry, cop_reg[entry]);
+}
+
+static WRITE8_HANDLER(cop_fct_w)
+{
+	if(offset) {
+		cop_fct = (cop_fct & 0xff) | (data << 8);
+		cop_run();
+	} else
+		cop_fct = (cop_fct & 0xff00) | data;
+}
+
+
+// Sprite encryption key upload
+
+static UINT32 sprcpt_adr, sprcpt_idx;
+
+static UINT16 sprcpt_flags2;
+static UINT32 sprcpt_val[2], sprcpt_flags1;
+static UINT32 sprcpt_data_1[0x100], sprcpt_data_2[0x40], sprcpt_data_3[6], sprcpt_data_4[4];
+
+static void sprcpt_init(void)
+{
+	memset(sprcpt_data_1, 0, sizeof(sprcpt_data_1));
+	memset(sprcpt_data_2, 0, sizeof(sprcpt_data_2));
+	memset(sprcpt_data_3, 0, sizeof(sprcpt_data_3));
+	memset(sprcpt_data_4, 0, sizeof(sprcpt_data_4));
+
+	sprcpt_adr = 0;
+	sprcpt_idx = 0;
+}
+
+
+static WRITE8_HANDLER(sprcpt_adr_w)
+{
+	combine32(&sprcpt_adr, offset, data);
+}
+
+static WRITE8_HANDLER(sprcpt_data_1_w)
+{
+	combine32(sprcpt_data_1+sprcpt_adr, offset, data);
+}
+
+static WRITE8_HANDLER(sprcpt_data_2_w)
+{
+	combine32(sprcpt_data_2+sprcpt_adr, offset, data);
+}
+
+static WRITE8_HANDLER(sprcpt_data_3_w)
+{
+	combine32(sprcpt_data_3+sprcpt_idx, offset, data);
+	if(offset == 3) {
+		sprcpt_idx ++;
+		if(sprcpt_idx == 6)
+			sprcpt_idx = 0;
+	}
+}
+
+static WRITE8_HANDLER(sprcpt_data_4_w)
+{
+	combine32(sprcpt_data_4+sprcpt_idx, offset, data);
+	if(offset == 3) {
+		sprcpt_idx ++;
+		if(sprcpt_idx == 4)
+			sprcpt_idx = 0;
+	}
+}
+
+static WRITE8_HANDLER(sprcpt_val_1_w)
+{
+	combine32(sprcpt_val+0, offset, data);
+}
+
+static WRITE8_HANDLER(sprcpt_val_2_w)
+{
+	combine32(sprcpt_val+1, offset, data);
+}
+
+static WRITE8_HANDLER(sprcpt_flags_1_w)
+{
+	combine32(&sprcpt_flags1, offset, data);
+	if(offset == 3) {
+		// bit 31: 1 = allow write on sprcpt data
+
+		if(!(sprcpt_flags1 & 0x80000000U)) {
+			// Upload finished
+			if(1) {
+				int i;
+				logerror("sprcpt_val 1: %08x\n", sprcpt_val[0]);
+				logerror("sprcpt_val 2: %08x\n", sprcpt_val[1]);
+				logerror("sprcpt_data 1:\n");
+				for(i=0; i<0x100; i++) {
+					logerror(" %08x", sprcpt_data_1[i]);
+					if(!((i+1) & 7))
+						logerror("\n");
+				}
+				logerror("sprcpt_data 2:\n");
+				for(i=0; i<0x40; i++) {
+					logerror(" %08x", sprcpt_data_2[i]);
+					if(!((i+1) & 7))
+						logerror("\n");
+				}
+			}
+		}
+	}
+}
+
+static WRITE8_HANDLER(sprcpt_flags_2_w)
+{
+	combine16(&sprcpt_flags2, offset, data);
+	if(offset == 1) {
+		if(sprcpt_flags2 & 0x8000) {
+			// Reset decryption -> redo it
+		}
+	}
+}
+
+
+
+// XXX
+// write only: 4c0 4c1 500 501 502 503
+
+static UINT8 handle_io_r(int offset)
+{
+	logerror("io_r %04x, %02x (%x)\n", offset, mainram[offset], activecpu_get_pc());
+	return mainram[offset];
+}
+
+static void handle_io_w(int offset, UINT8 data)
+{
+	mainram[offset] = data;
+	switch(offset) {
+	default:
+		logerror("io_w %04x, %02x (%x)\n", offset, data, activecpu_get_pc());
+	}
+}
 
 static READ8_HANDLER(any_r)
 {
-	return zz[offset];
+	c_r[offset]++;
+
+	if(offset >= 0x400 && offset < 0x800)
+		return handle_io_r(offset);
+
+	return mainram[offset];
 }
 
 static WRITE8_HANDLER(any_w)
 {
-	if(zz[offset] != data) {
-		switch(offset+0x400) {
-		case 0x444:
-		case 0x47e:
-		case 0x4a0:
-		case 0x4c0:
-		case 0x4c1:
-		case 0x500:
-		case 0x501:
-		case 0x6c6:
-		case 0x6c7:
-		case 0x6de:
-		case 0x6df:
-			break;
-		default:
-			logerror("Write %03x, %02x\n", offset+0x400, data);
-			break;
-		}
-		zz[offset] = data;
+	int show = 0;
+	if(offset >= 0x400 && offset < 0x800)
+		handle_io_w(offset, data);
+
+	c_w[offset]++;
+	//  logerror("mainram_w %04x, %02x (%x)\n", offset, data, activecpu_get_pc());
+	if(mainram[offset] != data && offset >= 0x400 && offset < 0x800) {
+		if(0 &&
+		   offset != 0x4c0 && offset != 0x4c1 && offset != 0x500 && offset != 0x501 &&
+		   offset != 0x444 && offset != 0x6de && offset != 0x6df && offset != 0x47e &&
+		   offset != 0x4a0 && offset != 0x6df && offset != 0x620 && offset != 0x6c6 &&
+		   offset != 0x6c7 && offset != 0x628 && offset != 0x62a && offset != 0x47f)
+			logerror("mainram_w %04x, %02x (%x)\n", offset, data, activecpu_get_pc());
 	}
+
+	if(0 && c_w[offset]>1000 && !c_r[offset]) {
+		if(offset != 0x4c0 && offset != 0x4c1 && (offset<0x500 || offset > 0x503))
+			logerror("mainram_w %04x, %02x [%d.%d] (%x)\n", offset, data, c_w[offset], c_r[offset], activecpu_get_pc());
+	}
+
+	//  if(offset == 0x471 || (offset >= 0xb146 && offset < 0xb156))
+
+	//  show = show || offset == 0xbfc || offset == 0xbfd || offset == 0xc10 || offset == 0xc11;
+	//  show = offset >= 0x400 && offset < 0x800;
+	//  show = offset >= 0x500 && offset < 0x504 && data != mainram[offset]; // Son?
+	//  show = offset == 0x704 || offset == 0x710 || offset == 0x71c;
+
+	if(show)
+		logerror("mainram_w %04x, %02x (%x)\n", offset, data, activecpu_get_pc());
+
+	//  if(offset == 0x700)
+	//      cpu_setbank(2, memory_region(REGION_USER1)+0x20000*data);
+
+	mainram[offset] = data;
+}
+#if 0
+static READ8_HANDLER(rb_r)
+{
+	static int bank = 0;
+	int pc = activecpu_get_pc();
+	int show = 0;
+	switch(pc) {
+	}
+	if(show)
+		logerror("rb_r %05x, pc=%05x\n", offset, activecpu_get_pc());
+
+	return memory_region(REGION_USER1)[offset+0x20000*bank];
+}
+#endif
+
+static WRITE8_HANDLER(w1x)
+{
+	w1ram[offset] = data;
+	if(0 && offset < 0x800)
+		logerror("w1x %05x, %02x (%05x)\n", offset+0x10000, data, activecpu_get_pc());
 }
 
-enum {SZ=16};
-//static UINT8 scroll[SZ];
+void r2_dt(UINT16 sc, UINT16 cc, UINT16 ent, UINT16 tm, UINT16 x, UINT16 y)
+{
+	int bank = mainram[0x704];
+
+#if 0
+	switch(ent) {
+	case 0x01: // bank 0 = intro (plane) on layer 3, tb=7/6 ; 1 = jeu, tb=0
+		bank = 0;
+		break;
+	case 0x08: // bank 0 = intro (ciel) on layer 1, tb=0 ; 1 = jeu, tb=0
+		bank = 0;
+		break;
+	case 0x09: // bank 0 = intro (cliff) on layer 2, tb=3 ; 1 = jeu, tb=0
+		bank = 0;
+		break;
+	case 0x10: // bank 0 = jeu (route) on layer 1, tb=0, 1 = idem
+		bank = 0;
+		break;
+	case 0x11: // bank 0 = ?jeu (route) on layer 1, tb=0, 1 = idem
+		bank = 0;
+		break;
+	case 0x20: // bank 0 = jeu on layer 2, tb=1, 1 = idem with layer 3 required
+		bank = 0;
+		break;
+	case 0x21: // bank 0 = ?jeu on layer 2, tb=1, 1 = idem with layer 3 required
+		bank = 0;
+		break;
+	case 0x30: // bank 0 = jeu on layer 3
+		bank = 0;
+		break;
+	case 0x31: // bank 0 = ?jeu on layer 3
+		bank = 0;
+		break;
+	case 0x39: // bank 0 = porte avion on layer 3, tb=6; 1 = idem
+		bank = 0;
+		break;
+	case 0x3a: // bank 0 = press start on layer 3, tb=4 ; 1 = idem
+		bank = 1;
+		break;
+	default:
+		logerror("  -> unknown %x, using bank 0\n", ent);
+		bank = 0;
+	}
+#endif
+
+	logerror("Draw tilemap %04x:%04x  %04x %04x  %04x %04x, bank %d\n",
+			 sc, cc, ent, tm, x, y, bank);
+
+	//  cpu_setbank(2, memory_region(REGION_USER1)+0x20000*bank);
+}
+
+void r2_6f6c(UINT16 cc, UINT16 v1, UINT16 v2)
+{
+//  int bank = 0;
+	logerror("6f6c: 9800:%04x  %04x %04x\n",
+			 cc, v1, v2);
+	//  cpu_setbank(2, memory_region(REGION_USER1)+0x20000*bank);
+}
+
+static MACHINE_RESET(raiden2)
+{
+	sprcpt_init();
+	cop_init();
+}
 
 
 /* MEMORY MAPS */
 
 static ADDRESS_MAP_START( raiden2_mem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x003ff) AM_RAM
+	AM_RANGE(0x00432, 0x00433) AM_WRITE(cop_up_data_w)
+	AM_RANGE(0x00434, 0x00435) AM_WRITE(cop_up_adr_w)
+	AM_RANGE(0x00438, 0x0043d) AM_WRITE(cop_up_fct_w)
+	AM_RANGE(0x004a0, 0x004df) AM_WRITE(cop_reg_w)
+	AM_RANGE(0x00500, 0x00501) AM_WRITE(cop_fct_w)
 
-	AM_RANGE(0x00430, 0x0043f) AM_WRITE(sound_w)
-	AM_RANGE(0x620, 0x62f) AM_RAM AM_BASE(&scrollregs)
-//   AM_RANGE(0x470, 0x47f) AM_WRITE(scroll_w)
+	AM_RANGE(0x006a0, 0x006a3) AM_WRITE(sprcpt_val_1_w)
+	AM_RANGE(0x006a4, 0x006a7) AM_WRITE(sprcpt_data_3_w)
+	AM_RANGE(0x006a8, 0x006ab) AM_WRITE(sprcpt_data_4_w)
+	AM_RANGE(0x006ac, 0x006af) AM_WRITE(sprcpt_flags_1_w)
+	AM_RANGE(0x006b0, 0x006b3) AM_WRITE(sprcpt_data_1_w)
+	AM_RANGE(0x006b4, 0x006b7) AM_WRITE(sprcpt_data_2_w)
+	AM_RANGE(0x006b8, 0x006bb) AM_WRITE(sprcpt_val_2_w)
+	AM_RANGE(0x006bc, 0x006bf) AM_WRITE(sprcpt_adr_w)
 
-	/* I have my doubts these are really mapped here, protection? */
-	AM_RANGE(0x00740, 0x00740) AM_READ(input_port_2_r) // dip 1
-	AM_RANGE(0x00741, 0x00741) AM_READ(input_port_3_r) // dip 2
-	AM_RANGE(0x00744, 0x00744) AM_READ(input_port_0_r) // player 1
-	AM_RANGE(0x00745, 0x00745) AM_READ(input_port_1_r) // player 2
-	AM_RANGE(0x0074b, 0x0074d) AM_READ(input_port_4_r) // start buttons
+	AM_RANGE(0x006ce, 0x006cf) AM_WRITE(sprcpt_flags_2_w)
 
-	AM_RANGE(0x00400, 0x007ff) AM_READWRITE(any_r, any_w) AM_BASE(&zz)
-
-	AM_RANGE(0x00800, 0x0afff) AM_RAM
-	AM_RANGE(0x0b000, 0x0bfff) AM_RAM // protection?
+	AM_RANGE(0x00000, 0x0bfff) AM_READWRITE(any_r, any_w) AM_BASE(&mainram)
+//  AM_RANGE(0x00000, 0x003ff) AM_RAM
 
 	AM_RANGE(0x0c000, 0x0cfff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x0d000, 0x0d7ff) AM_READWRITE(MRA8_RAM, raiden2_background_w) AM_BASE(&back_data)
-	AM_RANGE(0x0d800, 0x0dfff) AM_READWRITE(MRA8_RAM, raiden2_midground_w) AM_BASE(&mid_data)
-    AM_RANGE(0x0e000, 0x0e7ff) AM_READWRITE(MRA8_RAM, raiden2_foreground_w) AM_BASE(&fore_data)
+	AM_RANGE(0x0d800, 0x0dfff) AM_READWRITE(MRA8_RAM, raiden2_foreground_w) AM_BASE(&fore_data)
+    AM_RANGE(0x0e000, 0x0e7ff) AM_READWRITE(MRA8_RAM, raiden2_midground_w)  AM_BASE(&mid_data)
     AM_RANGE(0x0e800, 0x0f7ff) AM_READWRITE(MRA8_RAM, raiden2_text_w) AM_BASE(&videoram)
 	AM_RANGE(0x0f800, 0x0ffff) AM_RAM /* Stack area */
 
-	AM_RANGE(0x10000, 0x1efff) AM_RAM
+	AM_RANGE(0x10000, 0x1efff) AM_READWRITE(MRA8_RAM, w1x) AM_BASE(&w1ram)
 	AM_RANGE(0x1f000, 0x1ffff) AM_READWRITE(MRA8_RAM, paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
 
+//  AM_RANGE(0x20000, 0x3ffff) AM_READ(rb_r)
 	AM_RANGE(0x20000, 0x3ffff) AM_ROMBANK(1)
 	AM_RANGE(0x40000, 0xfffff) AM_ROMBANK(2)
 ADDRESS_MAP_END
@@ -430,6 +984,9 @@ INPUT_PORTS_START( raiden2 )
 	PORT_START	/* START BUTTONS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( raidendx )
@@ -618,7 +1175,25 @@ static const gfx_decode raiden2_gfxdecodeinfo[] =
 
 static INTERRUPT_GEN( raiden2_interrupt )
 {
+	mainram[0x740] = readinputport(2);
+	mainram[0x741] = readinputport(3);
+	mainram[0x742] = 0xff;
+	mainram[0x743] = 0xff;
+	mainram[0x744] = readinputport(0);
+	mainram[0x745] = readinputport(1);
+	mainram[0x746] = 0xff;
+	mainram[0x747] = 0xff;
+	mainram[0x748] = 0xff;
+	mainram[0x749] = 0xff;
+	mainram[0x74a] = 0xff;
+	mainram[0x74b] = 0xff;
+	mainram[0x74c] = readinputport(4);
+	mainram[0x74d] = 0xff; // Actually read but seems ignored
+	mainram[0x74e] = 0xff;
+	mainram[0x74f] = 0xff;
+
 	cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc0/4);	/* VBL */
+	logerror("VSYNC\n");
 }
 
 /* MACHINE DRIVERS */
@@ -633,10 +1208,17 @@ static MACHINE_DRIVER_START( raiden2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION/2)
 
+	MDRV_MACHINE_RESET(raiden2)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+#if 1
 	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(5*8, 43*8-1, 1, 30*8)
+#else
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0,511,0,511)
+#endif
 	MDRV_GFXDECODE(raiden2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2048)
 

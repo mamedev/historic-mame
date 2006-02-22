@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 
 
-static int gfx_bank, palette_bank;
-static int grid_on;
+static UINT8 gfx_bank, palette_bank;
+static UINT8 grid_on;
 static const UINT8 *color_codes;
 
 static tilemap *bg_tilemap;
@@ -163,6 +163,10 @@ VIDEO_START( dkong )
 {
 	gfx_bank = 0;
 	palette_bank = 0;
+
+	state_save_register_global(gfx_bank);
+	state_save_register_global(palette_bank);
+	state_save_register_global(grid_on);
 
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8, 8, 32, 32);
 

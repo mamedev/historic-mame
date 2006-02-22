@@ -485,18 +485,15 @@ static int storeDec( UINT32 pat, UINT32 rbv)
 //CPU INIT
 static void arm7_core_init(const char *cpuname)
 {
-    int cpu = cpu_getactivecpu(),i;
-    char buf[8];
-    for (i=0; i<kNumRegisters; i++) {
-        sprintf(buf,"R%d",i);
-        state_save_register_UINT32(cpuname, cpu, buf, &ARM7REG(i), 4);
-    }
-    state_save_register_UINT8(cpuname, cpu, "IRQ", &ARM7.pendingIrq, 1);
-    state_save_register_UINT8(cpuname, cpu, "FIQ", &ARM7.pendingFiq, 1);
-    state_save_register_UINT8(cpuname, cpu, "ABTD", &ARM7.pendingAbtD, 1);
-    state_save_register_UINT8(cpuname, cpu, "ABTP", &ARM7.pendingAbtP, 1);
-    state_save_register_UINT8(cpuname, cpu, "UND", &ARM7.pendingUnd, 1);
-    state_save_register_UINT8(cpuname, cpu, "SWI", &ARM7.pendingSwi, 1);
+    int cpu = cpu_getactivecpu();
+
+    state_save_register_item_array(cpuname, cpu, ARM7.sArmRegister);
+    state_save_register_item(cpuname, cpu, ARM7.pendingIrq);
+    state_save_register_item(cpuname, cpu, ARM7.pendingFiq);
+    state_save_register_item(cpuname, cpu, ARM7.pendingAbtD);
+    state_save_register_item(cpuname, cpu, ARM7.pendingAbtP);
+    state_save_register_item(cpuname, cpu, ARM7.pendingUnd);
+    state_save_register_item(cpuname, cpu, ARM7.pendingSwi);
 }
 
 //CPU RESET

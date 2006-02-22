@@ -11,7 +11,8 @@
 
 #ifdef MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "upd7810.h"
 
 struct dasm_s {

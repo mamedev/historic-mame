@@ -151,7 +151,7 @@ static void firq_timer(int param)
 }
 
 
-static MACHINE_INIT( gridlee )
+static MACHINE_RESET( gridlee )
 {
 	/* start timers to generate interrupts */
 	timer_set(cpu_getscanlinetime(0), 0, irq_timer);
@@ -440,7 +440,7 @@ static MACHINE_DRIVER_START( gridlee )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(gridlee)
+	MDRV_MACHINE_RESET(gridlee)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

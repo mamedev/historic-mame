@@ -7,7 +7,6 @@
 
 #include <time.h>
 #include "driver.h"
-#include "state.h"
 #include "machine/timekpr.h"
 
 struct timekeeper_chip

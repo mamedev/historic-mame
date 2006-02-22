@@ -179,7 +179,7 @@ VIDEO_UPDATE( spiders );
 
 /* MACHINE */
 
-MACHINE_INIT( spiders );
+MACHINE_RESET( spiders );
 INTERRUPT_GEN( spiders_timed_irq );
 
 
@@ -327,7 +327,7 @@ static MACHINE_DRIVER_START( spiders )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(spiders)
+	MDRV_MACHINE_RESET(spiders)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

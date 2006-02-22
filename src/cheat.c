@@ -865,6 +865,8 @@ const char	* cheatfile = NULL;
 
 /**** Local Globals **********************************************************/
 
+static mame_timer			* periodic_timer;
+
 static CheatEntry			* cheatList = NULL;
 static INT32				cheatListLength = 0;
 
@@ -1118,6 +1120,9 @@ const char *	kWatchDisplayTypeStringList[] =
 };
 
 /**** Function Prototypes ****************************************************/
+
+static void 	cheat_periodic(int param);
+static void 	cheat_exit(void);
 
 static int		ShiftKeyPressed(void);
 static int		ControlKeyPressed(void);
@@ -1784,9 +1789,14 @@ void cheat_init(void)
 	AllocateSearchRegions(GetCurrentSearch());
 
 	InitStringTable();
+
+	periodic_timer = timer_alloc(cheat_periodic);
+	timer_adjust(periodic_timer, Machine->refresh_rate, 0, Machine->refresh_rate);
+
+	add_exit_callback(cheat_exit);
 }
 
-void cheat_exit(void)
+static void cheat_exit(void)
 {
 	int	i;
 
@@ -7057,7 +7067,7 @@ static int SelectOptions(int selection)
 	return sel + 1;
 }
 
-void cheat_periodic(void)
+void cheat_periodic(int param)
 {
 	int	i;
 

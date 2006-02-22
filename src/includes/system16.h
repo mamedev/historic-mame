@@ -97,7 +97,7 @@ extern void sys16_patch_code( int offset, int data );
 #define SYS16_MRA16_WORKINGRAM2	MRA16_RAM
 #define SYS16_MWA16_WORKINGRAM2	MWA16_RAM
 
-extern MACHINE_INIT( sys16_onetime );
+extern MACHINE_RESET( sys16_onetime );
 
 #define SYS16_MRA16_SPRITERAM		MRA16_RAM
 #define SYS16_MWA16_SPRITERAM		MWA16_RAM

@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "eeprom.h"
-#include "state.h"
 
 #define VERBOSE 0
 
@@ -124,17 +123,17 @@ void EEPROM_init(struct EEPROM_interface *interface)
 	if (intf->cmd_unlock) locked = 1;
 	else locked = 0;
 
-	state_save_register_UINT8("eeprom", 0, "data",          eeprom_data,   MEMORY_SIZE);
-	state_save_register_UINT8("eeprom", 0, "serial buffer", serial_buffer, SERIAL_BUFFER_LENGTH);
-	state_save_register_int  ("eeprom", 0, "clock line",    &clock_line);
-	state_save_register_int  ("eeprom", 0, "reset line",    &reset_line);
-	state_save_register_int  ("eeprom", 0, "locked",        &locked);
-	state_save_register_int  ("eeprom", 0, "serial count",  &serial_count);
-	state_save_register_int  ("eeprom", 0, "latch",         &latch);
-	state_save_register_int  ("eeprom", 0, "reset delay",   &reset_delay);
-	state_save_register_int  ("eeprom", 0, "clock count",   &eeprom_clock_count);
-	state_save_register_int  ("eeprom", 0, "data bits",     &eeprom_data_bits);
-	state_save_register_int  ("eeprom", 0, "address",       &eeprom_read_address);
+	state_save_register_global_array(eeprom_data);
+	state_save_register_global_array(serial_buffer);
+	state_save_register_global(clock_line);
+	state_save_register_global(reset_line);
+	state_save_register_global(locked);
+	state_save_register_global(serial_count);
+	state_save_register_global(latch);
+	state_save_register_global(reset_delay);
+	state_save_register_global(eeprom_clock_count);
+	state_save_register_global(eeprom_data_bits);
+	state_save_register_global(eeprom_read_address);
 }
 
 static void EEPROM_write(int bit)

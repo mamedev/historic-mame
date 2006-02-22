@@ -356,7 +356,7 @@ WRITE8_HANDLER( indyheat_analog_w )
  *
  *************************************/
 
-MACHINE_INIT( leland )
+MACHINE_RESET( leland )
 {
 	/* set the odd data bank */
 	battery_ram = memory_region(REGION_USER2);
@@ -402,7 +402,7 @@ MACHINE_INIT( leland )
 }
 
 
-MACHINE_INIT( ataxx )
+MACHINE_RESET( ataxx )
 {
 	/* set the odd data banks */
 	battery_ram = memory_region(REGION_USER2);

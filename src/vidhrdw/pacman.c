@@ -18,7 +18,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 static tilemap *bg_tilemap;
 static UINT8 charbank;

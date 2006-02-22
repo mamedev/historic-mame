@@ -91,8 +91,7 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "i8x41.h"
 
 typedef struct {
@@ -1328,21 +1327,21 @@ static UINT8 i8x41_cycles[] = {
 static void i8x41_init(void)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_register_UINT16("i8x41", cpu, "PPC",       &i8x41.ppc,      1);
-	state_save_register_UINT16("i8x41", cpu, "PC",        &i8x41.pc,       1);
-	state_save_register_UINT8 ("i8x41", cpu, "TIMER",     &i8x41.timer,    1);
-	state_save_register_UINT8 ("i8x41", cpu, "PRESCALER", &i8x41.prescaler,1);
-	state_save_register_UINT16("i8x41", cpu, "SUBTYPE",   &i8x41.subtype,  1);
-	state_save_register_UINT8 ("i8x41", cpu, "A",         &i8x41.a,        1);
-	state_save_register_UINT8 ("i8x41", cpu, "PSW",       &i8x41.psw,      1);
-	state_save_register_UINT8 ("i8x41", cpu, "STATE",     &i8x41.state,    1);
-	state_save_register_UINT8 ("i8x41", cpu, "ENABLE",    &i8x41.enable,   1);
-	state_save_register_UINT8 ("i8x41", cpu, "CONTROL",   &i8x41.control,  1);
-	state_save_register_UINT8 ("i8x41", cpu, "DBBI",      &i8x41.dbbi,     1);
-	state_save_register_UINT8 ("i8x41", cpu, "DBBO",      &i8x41.dbbo,     1);
-	state_save_register_UINT8 ("i8x41", cpu, "P1",        &i8x41.p1,       1);
-	state_save_register_UINT8 ("i8x41", cpu, "P2",        &i8x41.p2,       1);
-	state_save_register_UINT8 ("i8x41", cpu, "P2_HS",     &i8x41.p2_hs,    1);
+	state_save_register_item("i8x41", cpu, i8x41.ppc);
+	state_save_register_item("i8x41", cpu, i8x41.pc);
+	state_save_register_item("i8x41", cpu, i8x41.timer);
+	state_save_register_item("i8x41", cpu, i8x41.prescaler);
+	state_save_register_item("i8x41", cpu, i8x41.subtype);
+	state_save_register_item("i8x41", cpu, i8x41.a);
+	state_save_register_item("i8x41", cpu, i8x41.psw);
+	state_save_register_item("i8x41", cpu, i8x41.state);
+	state_save_register_item("i8x41", cpu, i8x41.enable);
+	state_save_register_item("i8x41", cpu, i8x41.control);
+	state_save_register_item("i8x41", cpu, i8x41.dbbi);
+	state_save_register_item("i8x41", cpu, i8x41.dbbo);
+	state_save_register_item("i8x41", cpu, i8x41.p1);
+	state_save_register_item("i8x41", cpu, i8x41.p2);
+	state_save_register_item("i8x41", cpu, i8x41.p2_hs);
 }
 
 

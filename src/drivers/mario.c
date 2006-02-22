@@ -71,15 +71,14 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
-#include "state.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 #include "sound/samples.h"
 
-static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
-static int t[2] = { 0,0 };
+static UINT8 p[8] = { 0,0xf0,0,0,0,0,0,0 };
+static UINT8 t[2] = { 0,0 };
 
-static int last;
+static UINT8 last;
 
 
 extern WRITE8_HANDLER( mario_videoram_w );
@@ -98,6 +97,15 @@ extern WRITE8_HANDLER( mario_sh_w );
 extern WRITE8_HANDLER( mario_sh1_w );
 extern WRITE8_HANDLER( mario_sh2_w );
 extern WRITE8_HANDLER( mario_sh3_w );
+
+
+static MACHINE_START( mario )
+{
+	state_save_register_global_array(p);
+	state_save_register_global_array(t);
+	state_save_register_global(last);
+	return 0;
+}
 
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
@@ -400,6 +408,7 @@ static MACHINE_DRIVER_START( mario )
 	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
 	MDRV_CPU_IO_MAP(readport_sound,writeport_sound)
 
+	MDRV_MACHINE_START(mario)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -438,6 +447,7 @@ static MACHINE_DRIVER_START( masao )
 	/* audio CPU */	/* ???? */
 	MDRV_CPU_PROGRAM_MAP(masao_sound_readmem,masao_sound_writemem)
 
+	MDRV_MACHINE_START(mario)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -461,14 +471,6 @@ static MACHINE_DRIVER_START( masao )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
-
-
-static DRIVER_INIT( mario )
-{
-	state_save_register_UINT32("main", 0, "p", (UINT32*)p, 8);
-	state_save_register_UINT32("main", 0, "t", (UINT32*)t, 2);
-	state_save_register_int   ("main", 0, "last",    &last);
-}
 
 
 
@@ -558,6 +560,6 @@ ROM_END
 
 
 
-GAME( 1983, mario,   0,     mario, mario,   mario, ROT180, "Nintendo of America", "Mario Bros. (US)", 0 )
-GAME( 1983, mariojp, mario, mario, mariojp, mario, ROT180, "Nintendo", "Mario Bros. (Japan)", 0 )
-GAME( 1983, masao,   mario, masao, mario,   mario, ROT180, "bootleg", "Masao", 0 )
+GAME( 1983, mario,   0,     mario, mario,   0, ROT180, "Nintendo of America", "Mario Bros. (US)", 0 )
+GAME( 1983, mariojp, mario, mario, mariojp, 0, ROT180, "Nintendo", "Mario Bros. (Japan)", 0 )
+GAME( 1983, masao,   mario, masao, mario,   0, ROT180, "bootleg", "Masao", 0 )

@@ -388,7 +388,7 @@ INLINE UINT32 f2u(float f)
 
 
 /* convert a series of 64 bits into a double */
-INLINE float u2d(UINT64 v)
+INLINE double u2d(UINT64 v)
 {
 	union {
 		double dd;
@@ -523,13 +523,14 @@ INLINE int gregorian_days_in_month(int month, int year)
 
 /* Some optimizations/warnings cleanups for GCC */
 #if defined(__GNUC__) && (__GNUC__ >= 3)
-#define ATTR_UNUSED			__attribute__((__unused__))
-#define ATTR_NORETURN		__attribute__((noreturn))
-#define ATTR_PRINTF(x,y)	__attribute__((format(printf, x, y)))
-#define ATTR_MALLOC			__attribute__((malloc))
-#define ATTR_PURE			__attribute__((pure))
-#define ATTR_CONST			__attribute__((const))
-#define UNEXPECTED(exp)		__builtin_expect((exp), 0)
+#define ATTR_UNUSED				__attribute__((__unused__))
+#define ATTR_NORETURN			__attribute__((noreturn))
+#define ATTR_PRINTF(x,y)		__attribute__((format(printf, x, y)))
+#define ATTR_MALLOC				__attribute__((malloc))
+#define ATTR_PURE				__attribute__((pure))
+#define ATTR_CONST				__attribute__((const))
+#define UNEXPECTED(exp)			__builtin_expect((exp), 0)
+#define TYPES_COMPATIBLE(a,b)	__builtin_types_compatible_p((a), (b))
 #else
 #define ATTR_UNUSED
 #define ATTR_NORETURN
@@ -537,14 +538,15 @@ INLINE int gregorian_days_in_month(int month, int year)
 #define ATTR_MALLOC
 #define ATTR_PURE
 #define ATTR_CONST
-#define UNEXPECTED(exp)		(exp)
+#define UNEXPECTED(exp)			(exp)
+#define TYPES_COMPATIBLE(a,b)	0
 #endif
 
 
 
 /* And some MSVC optimizations/warnings */
 #if defined(_MSC_VER) && (_MSC_VER >= 1200)
-#define DECL_NORETURN		__declspec(noreturn)
+#define DECL_NORETURN			__declspec(noreturn)
 #else
 #define DECL_NORETURN
 #endif

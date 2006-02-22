@@ -843,7 +843,7 @@ WRITE32_HANDLER( graphics_w )
  *
  *************************************/
 
-static MACHINE_INIT( midzeus )
+static MACHINE_RESET( midzeus )
 {
 	memcpy(ram_base, memory_region(REGION_USER1), 0x20000*4);
 
@@ -1415,7 +1415,7 @@ MACHINE_DRIVER_START( midzeus )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(midzeus)
+	MDRV_MACHINE_RESET(midzeus)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

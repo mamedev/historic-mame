@@ -62,7 +62,7 @@ static void scanline_update(int scanline)
  *
  *************************************/
 
-static MACHINE_INIT( rampart )
+static MACHINE_RESET( rampart )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -388,7 +388,7 @@ static MACHINE_DRIVER_START( rampart )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(rampart)
+	MDRV_MACHINE_RESET(rampart)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

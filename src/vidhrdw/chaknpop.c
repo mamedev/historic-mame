@@ -6,7 +6,6 @@
 #include "driver.h"
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 #define GFX_FLIP_X	0x01
 #define GFX_FLIP_Y	0x02
@@ -32,7 +31,7 @@ static UINT8 *vram4;
 static tilemap *tx_tilemap;
 
 static UINT8 gfxmode;
-static int flip_x, flip_y;
+static UINT8 flip_x, flip_y;
 
 
 /***************************************************************************
@@ -197,13 +196,13 @@ VIDEO_START( chaknpop )
 	set_vram_bank();
 	tx_tilemap_mark_all_dirty();
 
-	state_save_register_UINT8("video", 0, "gfxmode", &gfxmode, 1);
-	state_save_register_UINT8("video", 0, "vram1",   vram1,    0x2000);
-	state_save_register_UINT8("video", 0, "vram2",   vram2,    0x2000);
-	state_save_register_UINT8("video", 0, "vram3",   vram3,    0x2000);
-	state_save_register_UINT8("video", 0, "vram4",   vram4,    0x2000);
-	state_save_register_int  ("video", 0, "flip_x",  &flip_x);
-	state_save_register_int  ("video", 0, "flip_y",  &flip_y);
+	state_save_register_global(gfxmode);
+	state_save_register_global_pointer(vram1, 0x2000);
+	state_save_register_global_pointer(vram2, 0x2000);
+	state_save_register_global_pointer(vram3, 0x2000);
+	state_save_register_global_pointer(vram4, 0x2000);
+	state_save_register_global(flip_x);
+	state_save_register_global(flip_y);
 
 	state_save_register_func_postload(set_vram_bank);
 	state_save_register_func_postload(tx_tilemap_mark_all_dirty);

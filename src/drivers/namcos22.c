@@ -1482,7 +1482,7 @@ static WRITE16_HANDLER( s22mcu_shared_w )
 	COMBINE_DATA(&share16[BYTE_XOR_BE(offset)]);
 }
 
-static MACHINE_INIT(namcoss22)
+static MACHINE_RESET(namcoss22)
 {
 	InitDSP(1/*super*/);
 }
@@ -1854,7 +1854,7 @@ static MACHINE_DRIVER_START( namcos22s )
 	MDRV_GFXDECODE(gfxdecodeinfo_super)
 	MDRV_VIDEO_START(namcos22s)
 	MDRV_VIDEO_UPDATE(namcos22s)
-	MDRV_MACHINE_INIT(namcoss22)
+	MDRV_MACHINE_RESET(namcoss22)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -2231,7 +2231,7 @@ static INTERRUPT_GEN( namcos22_interrupt )
 	}
 }
 
-static MACHINE_INIT(namcos22)
+static MACHINE_RESET(namcos22)
 {
 	InitDSP(0);
 }
@@ -2266,7 +2266,7 @@ static MACHINE_DRIVER_START( namcos22 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_VIDEO_START(namcos22)
 	MDRV_VIDEO_UPDATE(namcos22)
-	MDRV_MACHINE_INIT(namcos22)
+	MDRV_MACHINE_RESET(namcos22)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

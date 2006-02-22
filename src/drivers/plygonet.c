@@ -42,8 +42,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "state.h"
-#include "cpuintrf.h"
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"

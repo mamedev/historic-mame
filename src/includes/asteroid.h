@@ -22,7 +22,7 @@ WRITE8_HANDLER( asteroid_bank_switch_w );
 WRITE8_HANDLER( astdelux_bank_switch_w );
 WRITE8_HANDLER( astdelux_led_w );
 
-MACHINE_INIT( asteroid );
+MACHINE_RESET( asteroid );
 
 READ8_HANDLER( llander_IN0_r );
 

@@ -483,7 +483,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_VBLANK_DURATION((int)(((262. - 240.) / 262.) * 1000000. / 60.))
 	MDRV_INTERLEAVE(400)
 
-	MDRV_MACHINE_INIT( snes )
+	MDRV_MACHINE_RESET( snes )
 
 	/* video hardware */
 	MDRV_VIDEO_START( generic_bitmapped )

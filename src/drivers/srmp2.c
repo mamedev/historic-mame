@@ -133,12 +133,12 @@ static DRIVER_INIT( srmp3 )
 	RAM[0x00000 + 0x7850] = 0x00;							// NOP
 }
 
-static MACHINE_INIT( srmp2 )
+static MACHINE_RESET( srmp2 )
 {
 	srmp2_port_select = 0;
 }
 
-static MACHINE_INIT( srmp3 )
+static MACHINE_RESET( srmp3 )
 {
 	srmp2_port_select = 0;
 }
@@ -1085,7 +1085,7 @@ static MACHINE_DRIVER_START( srmp2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(srmp2)
+	MDRV_MACHINE_RESET(srmp2)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -1125,7 +1125,7 @@ static MACHINE_DRIVER_START( srmp3 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(srmp3)
+	MDRV_MACHINE_RESET(srmp3)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -1161,7 +1161,7 @@ static MACHINE_DRIVER_START( mjyuugi )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(srmp2)
+	MDRV_MACHINE_RESET(srmp2)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

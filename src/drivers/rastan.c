@@ -81,7 +81,6 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"

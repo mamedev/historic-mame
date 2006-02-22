@@ -71,7 +71,7 @@ extern float		win_gfx_brightness;
 extern int			win_blit_effect;
 extern float		win_screen_aspect;
 extern int			win_force_rdtsc;
-extern int			win_high_priority;
+extern int			win_priority;
 
 // windows
 extern HWND			win_video_window;

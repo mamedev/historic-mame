@@ -1095,7 +1095,7 @@ static struct K007232_interface wecleman_k007232_interface =
 	REGION_SOUND1	/* but the 2 channels use different ROMs !*/
 };
 
-MACHINE_INIT( wecleman )
+MACHINE_RESET( wecleman )
 {
 	K007232_set_bank( 0, 0, 1 );
 }
@@ -1119,7 +1119,7 @@ static MACHINE_DRIVER_START( wecleman )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(wecleman)
+	MDRV_MACHINE_RESET(wecleman)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)

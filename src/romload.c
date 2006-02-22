@@ -14,7 +14,6 @@
 #include "harddisk.h"
 #include "artwork.h"
 #include "config.h"
-#include "state.h"
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -378,22 +377,18 @@ static int display_rom_load_results(rom_load_data *romdata)
 	/* final status display */
 	osd_display_loading_rom_message(NULL, romdata);
 
-	/* only display if we have warnings or errors */
-	if (romdata->warnings || romdata->errors)
+	/* if we had errors, they are fatal */
+	if (romdata->errors)
 	{
-		extern int bailing;
+		strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.\n");
+		fatalerror(romdata->errorbuf);
+	}
 
-		/* display either an error message or a warning message */
-		if (romdata->errors)
-		{
-			strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.\n");
-			bailing = 1;
-		}
-		else
-			strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
-
-		/* display the result */
-		printf("%s", romdata->errorbuf);
+	/* if we had warnings, output them, but continue */
+	if (romdata->warnings)
+	{
+		strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
+		printf("%s\n", romdata->errorbuf);
 	}
 
 	/* clean up any regions */
@@ -926,11 +921,11 @@ static int process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 
 
 /*-------------------------------------------------
-    rom_load - new, more flexible ROM
+    rom_init - new, more flexible ROM
     loading system
 -------------------------------------------------*/
 
-int rom_load(const rom_entry *romp)
+int rom_init(const rom_entry *romp)
 {
 	const rom_entry *regionlist[REGION_MAX];
 	const rom_entry *region;
@@ -940,6 +935,10 @@ int rom_load(const rom_entry *romp)
 	/* reset the region list */
 	for (regnum = 0;regnum < REGION_MAX;regnum++)
 		regionlist[regnum] = NULL;
+
+	/* if no roms, bail */
+	if (romp == NULL)
+		return 0;
 
 	/* reset the romdata struct */
 	memset(&romdata, 0, sizeof(romdata));
@@ -966,7 +965,7 @@ int rom_load(const rom_entry *romp)
 		}
 
 		/* allocate memory for the region */
-		if (new_memory_region(regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)))
+		if (new_memory_region(regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)) != 0)
 		{
 			printf("Error: unable to allocate memory for region %d\n", regiontype);
 			return 1;
@@ -1020,7 +1019,26 @@ int rom_load(const rom_entry *romp)
 
 	/* display the results and exit */
 	total_rom_load_warnings = romdata.warnings;
+
+	add_exit_callback(rom_exit);
 	return display_rom_load_results(&romdata);
+}
+
+
+/*-------------------------------------------------
+    rom_exit - clean up after ourselves
+-------------------------------------------------*/
+
+void rom_exit(void)
+{
+	int i;
+
+	/* free the memory allocated for various regions */
+	for (i = 0; i < MAX_MEMORY_REGIONS; i++)
+		free_memory_region(i);
+
+	/* close all hard drives */
+	chd_close_all();
 }
 
 

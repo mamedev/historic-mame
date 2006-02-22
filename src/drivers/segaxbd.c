@@ -192,7 +192,7 @@ static void xboard_reset(void)
 }
 
 
-MACHINE_INIT( xboard )
+MACHINE_RESET( xboard )
 {
 	fd1094_machine_init();
 	segaic16_tilemap_reset(0);
@@ -1070,7 +1070,7 @@ static MACHINE_DRIVER_START( xboard )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(xboard)
+	MDRV_MACHINE_RESET(xboard)
 	MDRV_NVRAM_HANDLER(xboard)
 	MDRV_INTERLEAVE(100)
 

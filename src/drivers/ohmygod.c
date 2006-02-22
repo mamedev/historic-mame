@@ -30,7 +30,7 @@ static int adpcm_bank_shift;
 static int sndbank;
 static int nosound_kludge_step;
 
-static MACHINE_INIT( ohmygod )
+static MACHINE_RESET( ohmygod )
 {
 	unsigned char *rom = memory_region(REGION_SOUND1);
 
@@ -344,7 +344,7 @@ static MACHINE_DRIVER_START( ohmygod )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(ohmygod)
+	MDRV_MACHINE_RESET(ohmygod)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

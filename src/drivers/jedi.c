@@ -130,6 +130,8 @@ static UINT8 speech_write_buffer;
 static UINT8 speech_strobe_state;
 static UINT8 nvram_enabled;
 
+static mame_timer *interrupt_timer;
+
 
 /*************************************
  *
@@ -147,7 +149,7 @@ static void generate_interrupt(int scanline)
 	scanline += 32;
 	if (scanline > 256)
 		scanline = 32;
-	timer_set(cpu_getscanlinetime(scanline), scanline, generate_interrupt);
+	timer_adjust(interrupt_timer, cpu_getscanlinetime(scanline), scanline, 0);
 }
 
 
@@ -163,7 +165,28 @@ static WRITE8_HANDLER( sound_irq_ack_w )
 }
 
 
-static MACHINE_INIT( jedi )
+static MACHINE_START( jedi )
+{
+	/* set a timer to run the interrupts */
+	interrupt_timer = timer_alloc(generate_interrupt);
+	timer_adjust(interrupt_timer, cpu_getscanlinetime(32), 32, 0);
+
+	/* configure the banks */
+	memory_configure_bank(1, 0, 3, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+
+	/* set up save state */
+	state_save_register_global(control_num);
+	state_save_register_global(sound_latch);
+	state_save_register_global(sound_ack_latch);
+	state_save_register_global(sound_comm_stat);
+	state_save_register_global(speech_write_buffer);
+	state_save_register_global(speech_strobe_state);
+	state_save_register_global(nvram_enabled);
+	return 0;
+}
+
+
+static MACHINE_RESET( jedi )
 {
 	/* init globals */
 	control_num = 0;
@@ -173,9 +196,6 @@ static MACHINE_INIT( jedi )
 	speech_write_buffer = 0;
 	speech_strobe_state = 0;
 	nvram_enabled = 0;
-
-	/* set a timer to run the interrupts */
-	timer_set(cpu_getscanlinetime(32), 32, generate_interrupt);
 }
 
 
@@ -188,11 +208,9 @@ static MACHINE_INIT( jedi )
 
 static WRITE8_HANDLER( rom_banksel_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU1);
-
-    if (data & 0x01) memory_set_bankptr(1, &RAM[0x10000]);
-    if (data & 0x02) memory_set_bankptr(1, &RAM[0x14000]);
-    if (data & 0x04) memory_set_bankptr(1, &RAM[0x18000]);
+	if (data & 0x01) memory_set_bank(1, 0);
+	if (data & 0x02) memory_set_bank(1, 1);
+	if (data & 0x04) memory_set_bank(1, 2);
 }
 
 
@@ -349,25 +367,13 @@ static WRITE8_HANDLER( nvram_enable_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0800, 0x08ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM
+	AM_RANGE(0x0800, 0x08ff) AM_READWRITE(MRA8_RAM, nvram_data_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x0c00, 0x0c00) AM_READ(input_port_0_r)
 	AM_RANGE(0x0c01, 0x0c01) AM_READ(special_port1_r)
 	AM_RANGE(0x1400, 0x1400) AM_READ(sound_ack_latch_r)
 	AM_RANGE(0x1800, 0x1800) AM_READ(a2d_data_r)
-	AM_RANGE(0x2000, 0x27ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2800, 0x2fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x37bf) AM_READ(MRA8_RAM)
-	AM_RANGE(0x37c0, 0x3bff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0800, 0x08ff) AM_WRITE(nvram_data_w) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x1c00, 0x1c01) AM_WRITE(nvram_enable_w)
 	AM_RANGE(0x1c80, 0x1c82) AM_WRITE(a2d_select_w)
 	AM_RANGE(0x1d00, 0x1d00) AM_WRITE(MWA8_NOP)	/* NVRAM store */
@@ -380,14 +386,15 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1e87, 0x1e87) AM_WRITE(jedi_video_off_w)
 	AM_RANGE(0x1f00, 0x1f00) AM_WRITE(sound_latch_w)
 	AM_RANGE(0x1f80, 0x1f80) AM_WRITE(rom_banksel_w)
-	AM_RANGE(0x2000, 0x27ff) AM_WRITE(jedi_backgroundram_w) AM_BASE(&jedi_backgroundram) AM_SIZE(&jedi_backgroundram_size)
-	AM_RANGE(0x2800, 0x2fff) AM_WRITE(jedi_paletteram_w) AM_BASE(&paletteram)
-	AM_RANGE(0x3000, 0x37bf) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x37c0, 0x3bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x2000, 0x27ff) AM_READWRITE(MRA8_RAM, jedi_backgroundram_w) AM_BASE(&jedi_backgroundram) AM_SIZE(&jedi_backgroundram_size)
+	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(MRA8_RAM, jedi_paletteram_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3000, 0x37bf) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x37c0, 0x3bff) AM_READWRITE(MRA8_RAM, MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x3c00, 0x3c01) AM_WRITE(jedi_vscroll_w)
 	AM_RANGE(0x3d00, 0x3d01) AM_WRITE(jedi_hscroll_w)
 	AM_RANGE(0x3e00, 0x3fff) AM_WRITE(jedi_PIXIRAM_w) AM_BASE(&jedi_PIXIRAM)
-	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -398,30 +405,20 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0800, 0x080f) AM_READ(pokey1_r)
-	AM_RANGE(0x0810, 0x081f) AM_READ(pokey2_r)
-	AM_RANGE(0x0820, 0x082f) AM_READ(pokey3_r)
-	AM_RANGE(0x0830, 0x083f) AM_READ(pokey4_r)
-	AM_RANGE(0x1800, 0x1800) AM_READ(sound_latch_r)
-	AM_RANGE(0x1c00, 0x1c00) AM_READ(speech_ready_r)
-	AM_RANGE(0x1c01, 0x1c01) AM_READ(soundstat_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0800, 0x080f) AM_WRITE(pokey1_w)
-	AM_RANGE(0x0810, 0x081f) AM_WRITE(pokey2_w)
-	AM_RANGE(0x0820, 0x082f) AM_WRITE(pokey3_w)
-	AM_RANGE(0x0830, 0x083f) AM_WRITE(pokey4_w)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM
+	AM_RANGE(0x0800, 0x080f) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x0810, 0x081f) AM_READWRITE(pokey2_r, pokey2_w)
+	AM_RANGE(0x0820, 0x082f) AM_READWRITE(pokey3_r, pokey3_w)
+	AM_RANGE(0x0830, 0x083f) AM_READWRITE(pokey4_r, pokey4_w)
 	AM_RANGE(0x1000, 0x1000) AM_WRITE(sound_irq_ack_w)
 	AM_RANGE(0x1100, 0x11ff) AM_WRITE(speech_data_w)
 	AM_RANGE(0x1200, 0x13ff) AM_WRITE(speech_strobe_w)
 	AM_RANGE(0x1400, 0x1400) AM_WRITE(sound_ack_latch_w)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x1800, 0x1800) AM_READ(sound_latch_r)
+	AM_RANGE(0x1c00, 0x1c00) AM_READ(speech_ready_r)
+	AM_RANGE(0x1c01, 0x1c01) AM_READ(soundstat_r)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -522,16 +519,17 @@ static MACHINE_DRIVER_START( jedi )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502,MAIN_CPU_OSC/2/2)		/* 2.5MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 
 	MDRV_CPU_ADD(M6502,SOUND_CPU_OSC/2/4)		/* 1.5MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(4)
 
-	MDRV_MACHINE_INIT(jedi)
+	MDRV_MACHINE_START(jedi)
+	MDRV_MACHINE_RESET(jedi)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -612,4 +610,4 @@ ROM_END
  *
  *************************************/
 
-GAME( 1984, jedi, 0, jedi, jedi, 0, ROT0, "Atari", "Return of the Jedi", 0 )
+GAME( 1984, jedi, 0, jedi, jedi, 0, ROT0, "Atari", "Return of the Jedi", GAME_SUPPORTS_SAVE )

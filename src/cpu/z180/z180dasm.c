@@ -49,7 +49,8 @@
 #include <string.h>
 #ifdef	MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "z180.h"
 
 enum e_mnemonics {

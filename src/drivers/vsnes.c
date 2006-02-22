@@ -150,8 +150,8 @@ extern VIDEO_UPDATE( vsdual );
 extern PALETTE_INIT( vsdual );
 
 /* from machine */
-extern MACHINE_INIT( vsnes );
-extern MACHINE_INIT( vsdual );
+extern MACHINE_RESET( vsnes );
+extern MACHINE_RESET( vsdual );
 extern DRIVER_INIT( vsnes );
 extern DRIVER_INIT( suprmrio );
 extern DRIVER_INIT( excitebk );
@@ -2088,7 +2088,7 @@ static MACHINE_DRIVER_START( vsnes )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ))
 
-	MDRV_MACHINE_INIT(vsnes)
+	MDRV_MACHINE_RESET(vsnes)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2126,10 +2126,10 @@ static MACHINE_DRIVER_START( vsdual )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ))
 
-	MDRV_MACHINE_INIT(vsdual)
+	MDRV_MACHINE_RESET(vsdual)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(8,3)
 	MDRV_SCREEN_SIZE(32*8*2, 30*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8*2-1, 0*8, 30*8-1)

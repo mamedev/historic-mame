@@ -207,7 +207,7 @@ static void tmpz84c011_init(void)
 	z80ctc_init(0, &ctc_intf);
 }
 
-static MACHINE_INIT( niyanpai )
+static MACHINE_RESET( niyanpai )
 {
 	int i;
 
@@ -869,7 +869,7 @@ static MACHINE_DRIVER_START( niyanpai )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(niyanpai)
+	MDRV_MACHINE_RESET(niyanpai)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

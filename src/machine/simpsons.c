@@ -123,7 +123,7 @@ static void simpsons_banking( int lines )
 	memory_set_bank(1, lines & 0x3f);
 }
 
-MACHINE_INIT( simpsons )
+MACHINE_RESET( simpsons )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

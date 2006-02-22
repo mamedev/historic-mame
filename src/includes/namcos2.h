@@ -112,7 +112,7 @@ VIDEO_UPDATE( sgunner );
 
 /* MACHINE */
 
-MACHINE_INIT( namcos2 );
+MACHINE_RESET( namcos2 );
 
 WRITE16_HANDLER( namcos2_gfx_ctrl_w );
 READ16_HANDLER( namcos2_gfx_ctrl_r );

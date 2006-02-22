@@ -32,7 +32,7 @@ UINT16 *tickee_control;
  *
  *************************************/
 
-static MACHINE_INIT( tickee )
+static MACHINE_RESET( tickee )
 {
 	ticket_dispenser_init(100, 0, 1);
 
@@ -310,7 +310,7 @@ MACHINE_DRIVER_START( tickee )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (232 - 200)) / (60 * 232))
 
-	MDRV_MACHINE_INIT(tickee)
+	MDRV_MACHINE_RESET(tickee)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -401,7 +401,7 @@ MACHINE_DRIVER_START( ghoshunt )
 	MDRV_FRAMES_PER_SECOND(69)
 	MDRV_VBLANK_DURATION((1000000 * (232 - 200)) / (60 * 232))
 
-	MDRV_MACHINE_INIT(tickee)
+	MDRV_MACHINE_RESET(tickee)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

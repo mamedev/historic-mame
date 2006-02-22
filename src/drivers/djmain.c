@@ -38,7 +38,6 @@
  */
 
 #include "driver.h"
-#include "state.h"
 #include "artwork.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/idectrl.h"
@@ -59,11 +58,12 @@ static int turntable_select;
 static UINT8 turntable_last_pos[2];
 static UINT16 turntable_pos[2];
 
-static int pending_vb_int;
+static UINT8 pending_vb_int;
 static UINT16 v_ctrl;
 static UINT32 obj_regs[0xa0/4];
 
 #define DISABLE_VB_INT	(!(v_ctrl & 0x8000))
+
 
 
 /*************************************
@@ -900,7 +900,22 @@ static struct K054539interface k054539_interface =
  *
  *************************************/
 
-static MACHINE_INIT( djmain )
+static MACHINE_START( djmain )
+{
+	UINT8 *region = memory_region(REGION_SOUND1);
+
+	state_save_register_global(sndram_bank);
+	state_save_register_global_pointer(region, 0x80000 * 32);
+	state_save_register_global(pending_vb_int);
+	state_save_register_global(v_ctrl);
+	state_save_register_global_array(obj_regs);
+
+	state_save_register_func_postload(sndram_set_bank);
+	return 0;
+}
+
+
+static MACHINE_RESET( djmain )
 {
 	/* reset sound ram bank */
 	sndram_bank = 0;
@@ -935,7 +950,8 @@ static MACHINE_DRIVER_START( djmain )
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(djmain)
+	MDRV_MACHINE_START(djmain)
+	MDRV_MACHINE_RESET(djmain)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
@@ -1230,19 +1246,14 @@ ROM_END
 
 static DRIVER_INIT( beatmania )
 {
-	if (new_memory_region(REGION_SOUND1, 0x80000 * 32, 0))
+	UINT8 *region;
+
+	if (new_memory_region(REGION_SOUND1, 0x80000 * 32, 0) != 0)
 		return;
+	region = memory_region(REGION_SOUND1);
 
 	/* spin up the hard disk */
 	ide_controller_init(0, &ide_intf);
-
-	state_save_register_int   ("djmain", 0, "sndram_bank",    &sndram_bank);
-	state_save_register_UINT8 ("djmain", 0, "sndram",         memory_region(REGION_SOUND1), 0x80000 * 32);
-	state_save_register_int   ("djmain", 0, "pending_vb_int", &pending_vb_int);
-	state_save_register_UINT16("djmain", 0, "v_ctrl",         &v_ctrl,  1);
-	state_save_register_UINT32("djmain", 0, "obj_regs",       obj_regs, sizeof (obj_regs) / sizeof (UINT32));
-
-	state_save_register_func_postload(sndram_set_bank);
 }
 
 static UINT8 beatmania_master_password[2 + 32] =

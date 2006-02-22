@@ -72,7 +72,7 @@ static WRITE16_HANDLER( deniam16c_oki_rom_bank_w )
 		OKIM6295_set_bank_base(0,(data & 0x01) ? 0x40000 : 0x00000);
 }
 
-static MACHINE_INIT( deniam )
+static MACHINE_RESET( deniam )
 {
 	/* logicpr2 does not reset the bank base on startup */
 	OKIM6295_set_bank_base(0,0x00000);
@@ -337,7 +337,7 @@ static MACHINE_DRIVER_START( deniam16b )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(deniam)
+	MDRV_MACHINE_RESET(deniam)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -371,7 +371,7 @@ static MACHINE_DRIVER_START( deniam16c )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(deniam)
+	MDRV_MACHINE_RESET(deniam)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

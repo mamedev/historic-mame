@@ -26,8 +26,9 @@
 #include <string.h>
 #include "osd_cpu.h"
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "hd6309.h"
+#include "eainfo.h"
 
 typedef struct {				/* opcode structure */
    UINT8	opcode; 			/* 8-bit opcode value */

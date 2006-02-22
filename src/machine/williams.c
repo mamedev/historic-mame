@@ -14,7 +14,6 @@
 #include "williams.h"
 #include "sound/dac.h"
 #include "sound/hc55516.h"
-#include "state.h"
 
 
 /* timers */
@@ -309,7 +308,7 @@ static void williams_snd_irq(int state)
  *
  *************************************/
 
-static void common_init(void)
+static void williams_common_init(void)
 {
 	/* reset the PIAs */
 	pia_reset();
@@ -329,9 +328,9 @@ static void common_init(void)
 }
 
 
-MACHINE_INIT( williams )
+MACHINE_RESET( williams )
 {
-	common_init();
+	williams_common_init();
 
 	/* configure the memory bank */
 	memory_configure_bank(1, 0, 1, williams_videoram, 0);
@@ -395,7 +394,7 @@ static void williams2_postload(void)
 }
 
 
-MACHINE_INIT( williams2 )
+MACHINE_RESET( williams2 )
 {
 	/* reset the PIAs */
 	pia_reset();
@@ -670,9 +669,9 @@ static void defender_postload(void)
 }
 
 
-MACHINE_INIT( defender )
+MACHINE_RESET( defender )
 {
-	common_init();
+	williams_common_init();
 
 	/* configure the banking and make sure it is reset to 0 */
 	memory_configure_bank(1, 0, 9, &memory_region(REGION_CPU1)[0x10000], 0x1000);
@@ -766,9 +765,9 @@ WRITE8_HANDLER( sinistar_vram_select_w )
  *
  *************************************/
 
-MACHINE_INIT( blaster )
+MACHINE_RESET( blaster )
 {
-	common_init();
+	williams_common_init();
 
 	/* banking is different for blaster */
 	memory_configure_bank(1, 0, 1, williams_videoram, 0);
@@ -879,10 +878,10 @@ static WRITE8_HANDLER( tshoot_lamp_w )
  *
  *************************************/
 
-MACHINE_INIT( joust2 )
+MACHINE_RESET( joust2 )
 {
 	/* standard init */
-	machine_init_williams2();
+	machine_reset_williams2();
 
 	/* make sure sound board starts out in the reset state */
 	williams_cvsd_init(3);

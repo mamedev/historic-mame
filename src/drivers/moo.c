@@ -42,7 +42,6 @@ Bucky:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/m68000/m68000.h"
@@ -613,7 +612,14 @@ static struct K054539interface k054539_interface =
 	REGION_SOUND1
 };
 
-static MACHINE_INIT( moo )
+static MACHINE_START( moo )
+{
+	state_save_register_global(cur_control2);
+	state_save_register_global_array(protram);
+	return 0;
+}
+
+static MACHINE_RESET( moo )
 {
 	init_nosound_count = 0;
 }
@@ -633,7 +639,8 @@ static MACHINE_DRIVER_START( moo )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1200) // should give IRQ4 sufficient time to update scroll registers
 
-	MDRV_MACHINE_INIT(moo)
+	MDRV_MACHINE_START(moo)
+	MDRV_MACHINE_RESET(moo)
 
 	MDRV_NVRAM_HANDLER(moo)
 
@@ -670,7 +677,8 @@ static MACHINE_DRIVER_START( moobl )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1200) // should give IRQ4 sufficient time to update scroll registers
 
-	MDRV_MACHINE_INIT(moo)
+	MDRV_MACHINE_START(moo)
+	MDRV_MACHINE_RESET(moo)
 	MDRV_NVRAM_HANDLER(moo)
 
 	/* video hardware */
@@ -839,9 +847,6 @@ static DRIVER_INIT( moo )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
-
-	state_save_register_UINT16("Moo", 0, "control2", &cur_control2, 1);
-	state_save_register_UINT16("Moo", 0, "protram", protram, 16);
 
 	game_type = (!strcmp(Machine->gamedrv->name, "bucky") || !strcmp(Machine->gamedrv->name, "buckyua"));
 }

@@ -674,7 +674,7 @@ INTERRUPT_GEN( arknoid2_interrupt )
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
-MACHINE_INIT( tnzs )
+MACHINE_RESET( tnzs )
 {
 	/* initialize the mcu simulation */
 	switch (mcu_type)

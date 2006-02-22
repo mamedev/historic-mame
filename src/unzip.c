@@ -27,9 +27,6 @@ int	gUnzipQuiet = 0;		/* flag controls error messages */
 #define ERROR_UNSUPPORTED "The format of this zipfile is not supported, please recompress it"
 
 #define INFLATE_INPUT_BUFFER_MAX 16384
-#ifndef MIN
-#define MIN(x,y) ((x)<(y)?(x):(y))
-#endif
 
 /* Print a error message */
 void errormsg(const char* extmsg, const char* usermsg, const char* zipname) {

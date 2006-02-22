@@ -15,6 +15,14 @@
         * Test/tilt buttons seem to be swapped compared to test mode
         * Don't know what the opto switches do
 
+    [fredmem]
+    * ROM allocations are most likely wrong.
+    * Sprite display is broken. They work when U127 is allocated in
+       place of U123, but then backgrounds obviously don't display.
+    * Graphic ROM dump in test mode is broken, showing U125 as mirroring
+       U123, and U129 as mirroring U127. They aren't supposed to be.
+    * Sounds are broken, white noise is the only output.
+
 **************************************************************************/
 
 
@@ -97,7 +105,7 @@ static INTERRUPT_GEN( dcheese_vblank )
  *
  *************************************/
 
-static MACHINE_INIT( dcheese )
+static MACHINE_RESET( dcheese )
 {
 	cpu_set_irq_callback(0, irq_callback);
 }
@@ -357,10 +365,10 @@ INPUT_PORTS_START( fredmem )
 
 	PORT_START	/* 2a0002 */
 	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SPECIAL )
 	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -402,7 +410,7 @@ static MACHINE_DRIVER_START( dcheese )
 	MDRV_CPU_PROGRAM_MAP(sound_cpu_map,0)
 	MDRV_CPU_PERIODIC_INT(irq1_line_hold,TIME_IN_HZ(500))	/* guess */
 
-	MDRV_MACHINE_INIT(dcheese)
+	MDRV_MACHINE_RESET(dcheese)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_NVRAM_HANDLER(93C46)
@@ -503,13 +511,13 @@ ROM_START( fredmem )
 	ROM_LOAD16_BYTE( "prog1.103", 0x00001, 0x20000, CRC(79cadede) SHA1(bfc04edf6dc3beb942ffba442fe4203d1e1a3c0e) ) /* Program 1 - V2.0 at U103 */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* M6809 */
-	ROM_LOAD( "prog.102", 0x0000, 0x10000, CRC(b1526a1a) SHA1(456c44a0a908b3cd054b7c6741d7a1033c9b12fb) ) /* Sound Program 6809 code at U102 */
+	ROM_LOAD( "prog.102", 0x00000, 0x10000, CRC(b1526a1a) SHA1(456c44a0a908b3cd054b7c6741d7a1033c9b12fb) ) /* Sound Program 6809 code at U102 */
 
 	ROM_REGION( 0x200000, REGION_GFX1, 0 )
 	ROM_LOAD( "art-rom.123", 0x000000, 0x80000, CRC(48133505) SHA1(60f69b053e67256928db57e0a5335bbd5a72ddfc) ) /* Graphics / Art at U123 */
-	ROM_LOAD( "art-rom.127", 0x080000, 0x80000, CRC(93095f3b) SHA1(de746829e04bf153024e94e6ef0ceffb1eae2b14) ) /* Graphics / Art at U127 */
-	ROM_LOAD( "art-rom.125", 0x100000, 0x80000, CRC(8181e154) SHA1(4d16b84ad52d8e3d3bcad3fdf5f8da23df198d46) ) /* Graphics / Art at U125 */
-	ROM_LOAD( "art-rom.129", 0x180000, 0x80000, CRC(d5715a02) SHA1(b7d9d29f2fc5d74adff1fefce312e6472c0f7565) ) /* Graphics / Art at U129 */
+	ROM_LOAD( "art-rom.129", 0x080000, 0x80000, CRC(d5715a02) SHA1(b7d9d29f2fc5d74adff1fefce312e6472c0f7565) ) /* Graphics / Art at U129 */
+	ROM_LOAD( "art-rom.127", 0x100000, 0x80000, CRC(93095f3b) SHA1(de746829e04bf153024e94e6ef0ceffb1eae2b14) ) /* Graphics / Art at U127 */
+	ROM_LOAD( "art-rom.125", 0x180000, 0x80000, CRC(8181e154) SHA1(4d16b84ad52d8e3d3bcad3fdf5f8da23df198d46) ) /* Graphics / Art at U125 */
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
 	ROM_LOAD( "arom0", 0x000000, 0x80000, CRC(3b85ea34) SHA1(0a68e7df20a2c36e230c7935415dd5068c338669) )
@@ -548,4 +556,4 @@ static DRIVER_INIT( dcheese )
 
 GAME( 1993, dcheese, 0, dcheese, dcheese, dcheese, ROT90, "HAR", "Double Cheese", 0 )
 GAME( 1993, lottof2, 0, dcheese, lottof2, dcheese, ROT0,  "HAR", "Lotto Fun 2", 0 )
-GAME( 1993, fredmem, 0, dcheese, fredmem, dcheese, ROT0,  "HAR", "Fred Flintstones' Memory Match", GAME_NOT_WORKING )
+GAME( 1993, fredmem, 0, dcheese, fredmem, dcheese, ROT0,  "Coastal Amusements", "Fred Flintstones' Memory Match", GAME_NOT_WORKING )

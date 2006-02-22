@@ -122,7 +122,7 @@ static PALETTE_INIT( sprint8 )
 }
 
 
-static MACHINE_INIT( sprint8 )
+static MACHINE_RESET( sprint8 )
 {
 	collision_reset = 0;
 	collision_index = 0;
@@ -547,7 +547,7 @@ static MACHINE_DRIVER_START( sprint8 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(29 * 1000000 / 15750)
-	MDRV_MACHINE_INIT(sprint8)
+	MDRV_MACHINE_RESET(sprint8)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)

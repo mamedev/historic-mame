@@ -22,7 +22,8 @@
 #include <string.h>
 #include <stdio.h>
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "m6800.h"
 
 #ifdef MAME_DEBUG

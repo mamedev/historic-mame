@@ -52,7 +52,7 @@ static UINT8 protection_command, protection_data;
 static int protection_index, protection_irq;
 static int rombank;
 
-static MACHINE_INIT( thedeep )
+static MACHINE_RESET( thedeep )
 {
 	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x10000 + 0 * 0x4000);
 	thedeep_scroll[0] = 0;
@@ -378,7 +378,7 @@ static MACHINE_DRIVER_START( thedeep )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(thedeep)
+	MDRV_MACHINE_RESET(thedeep)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

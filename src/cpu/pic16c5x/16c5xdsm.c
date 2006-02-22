@@ -29,7 +29,7 @@
 #ifdef MAME_DEBUG					/* Compile interface to MAME */
 #include "memory.h"
 #include "pic16c5x.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #define READOP16(A)  (cpu_readop16(A))
 #define READARG16(A) (cpu_readop_arg16(A))
 #else                               /* Compile interface for standalone */

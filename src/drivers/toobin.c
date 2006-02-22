@@ -56,7 +56,7 @@ static void update_interrupts(void)
 }
 
 
-static MACHINE_INIT( toobin )
+static MACHINE_RESET( toobin )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -247,7 +247,7 @@ static MACHINE_DRIVER_START( toobin )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(toobin)
+	MDRV_MACHINE_RESET(toobin)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

@@ -614,7 +614,7 @@ static MACHINE_DRIVER_START( tunit_core )
 
 	MDRV_FRAMES_PER_SECOND(MKLA5_FPS)
 	MDRV_VBLANK_DURATION((1000000 * (288 - 254)) / (MKLA5_FPS * 288))
-	MDRV_MACHINE_INIT(midtunit)
+	MDRV_MACHINE_RESET(midtunit)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

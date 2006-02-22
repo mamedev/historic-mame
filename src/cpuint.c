@@ -11,10 +11,7 @@
 
 #include <signal.h>
 #include "driver.h"
-#include "timer.h"
-#include "state.h"
-#include "mamedbg.h"
-#include "hiscore.h"
+
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debugcpu.h"
 #endif
@@ -140,10 +137,10 @@ int cpuint_init(void)
 
 	/* set up some stuff to save */
 	state_save_push_tag(0);
-	state_save_register_UINT8("cpu", 0, "irq enable",  interrupt_enable,  cpu_gettotalcpu());
-	state_save_register_INT32("cpu", 0, "irq vector",  &interrupt_vector[0][0],cpu_gettotalcpu() * MAX_INPUT_LINES);
-	state_save_register_UINT8("cpu", 0, "line state",  &input_line_state[0][0],  cpu_gettotalcpu() * MAX_INPUT_LINES);
-	state_save_register_INT32("cpu", 0, "line vector", &input_line_vector[0][0], cpu_gettotalcpu() * MAX_INPUT_LINES);
+	state_save_register_item_array("cpu", 0, interrupt_enable);
+	state_save_register_item_2d_array("cpu", 0, interrupt_vector);
+	state_save_register_item_2d_array("cpu", 0, input_line_state);
+	state_save_register_item_2d_array("cpu", 0, input_line_vector);
 	state_save_pop_tag();
 
 	return 0;

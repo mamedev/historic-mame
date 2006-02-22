@@ -2,7 +2,8 @@
 
 #include "driver.h"
 #ifdef	MAME_DEBUG
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "sh2.h"
 
 #define SIGNX8(x)	(((INT32)(x) << 24) >> 24)

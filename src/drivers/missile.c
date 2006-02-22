@@ -160,8 +160,7 @@ UINT8 *missile_ram;
 UINT8 *missile_video2ram;
 
 
-static int ctrld;
-static int h_pos, v_pos;
+static UINT8 ctrld;
 
 
 
@@ -182,10 +181,11 @@ static offs_t missile_opbase_handler(offs_t address)
 }
 
 
-MACHINE_INIT( missile )
+MACHINE_START( missile )
 {
-	h_pos = v_pos = 0;
+	state_save_register_global(ctrld);
 	memory_set_opbase_handler(0, missile_opbase_handler);
+	return 0;
 }
 
 
@@ -547,7 +547,7 @@ static MACHINE_DRIVER_START( missile )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(missile)
+	MDRV_MACHINE_START(missile)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -722,7 +722,7 @@ static DRIVER_INIT( suprmatk )
  *
  *************************************/
 
-GAME( 1980, missile,  0,       missile, missile,         0, ROT0, "Atari", "Missile Command (set 1)", 0 )
-GAME( 1980, missile2, missile, missile, missile,         0, ROT0, "Atari", "Missile Command (set 2)", 0 )
-GAME( 1981, suprmatk, missile, missile, suprmatk, suprmatk, ROT0, "Atari + Gencomp", "Super Missile Attack (for set 2)", 0 )
-GAME( 1981, sprmatkd, missile, missile, suprmatk,        0, ROT0, "Atari + Gencomp", "Super Missile Attack (not encrypted)", 0 )
+GAME( 1980, missile,  0,       missile, missile,         0, ROT0, "Atari", "Missile Command (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1980, missile2, missile, missile, missile,         0, ROT0, "Atari", "Missile Command (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1981, suprmatk, missile, missile, suprmatk, suprmatk, ROT0, "Atari + Gencomp", "Super Missile Attack (for set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1981, sprmatkd, missile, missile, suprmatk,        0, ROT0, "Atari + Gencomp", "Super Missile Attack (not encrypted)", GAME_SUPPORTS_SAVE )

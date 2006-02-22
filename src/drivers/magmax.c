@@ -67,7 +67,7 @@ static void scanline_callback(int scanline)
 	timer_set( cpu_getscanlinetime( scanline ), scanline, scanline_callback );
 }
 
-static MACHINE_INIT( magmax )
+static MACHINE_RESET( magmax )
 {
 	timer_set(cpu_getscanlinetime( 64 ), 64, scanline_callback );
 #if 0
@@ -361,7 +361,7 @@ static MACHINE_DRIVER_START( magmax )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(magmax)
+	MDRV_MACHINE_RESET(magmax)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -6,7 +6,6 @@
  *
  */
 
-#include "state.h"
 #include "machine/mb3773.h"
 
 static void *watchdog_timer;
@@ -35,5 +34,5 @@ void mb3773_init( void )
 {
 	watchdog_timer = timer_alloc( watchdog_timeout );
 	reset_timer();
-	state_save_register_UINT8( "mb3773", 0, "ck", &ck, 1 );
+	state_save_register_global( ck );
 }

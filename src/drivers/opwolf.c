@@ -49,7 +49,6 @@ register. So what is controlling priority.
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
@@ -238,7 +237,15 @@ static int adpcm_pos[2],adpcm_end[2];
 //5 - different values
 //6 - different values
 
-static MACHINE_INIT( opwolf )
+static MACHINE_START( opwolf )
+{
+	/* (there are other sound vars that may need saving too) */
+	state_save_register_global_array(adpcm_b);
+	state_save_register_global_array(adpcm_c);
+	return 0;
+}
+
+static MACHINE_RESET( opwolf )
 {
 	MSM5205_reset_w(0, 1);
 	MSM5205_reset_w(1, 1);
@@ -525,7 +532,8 @@ static MACHINE_DRIVER_START( opwolf )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
-	MDRV_MACHINE_INIT(opwolf)
+	MDRV_MACHINE_START(opwolf)
+	MDRV_MACHINE_RESET(opwolf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -574,6 +582,8 @@ static MACHINE_DRIVER_START( opwolfb )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+
+	MDRV_MACHINE_START(opwolf)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -706,21 +716,14 @@ static DRIVER_INIT( opwolf )
 	// World & US version have different gun offsets, presumably slightly different gun hardware
 	opwolf_gun_xoffs = 0xec - (rom[0x1ffd8]&0xff);
 	opwolf_gun_yoffs = 0x1c - (rom[0x1ffd7]&0xff);
-
-	/* (there are other sound vars that may need saving too) */
-	state_save_register_UINT8("sound2", 0, "registers", adpcm_b, 8);
-	state_save_register_UINT8("sound3", 0, "registers", adpcm_c, 8);
 }
+
 
 static DRIVER_INIT( opwolfb )
 {
 	/* bootleg needs different range of raw gun coords */
 	opwolf_gun_xoffs = -2;
 	opwolf_gun_yoffs = 17;
-
-	/* (there are other sound vars that may need saving too) */
-	state_save_register_UINT8("sound2", 0, "registers", adpcm_b, 8);
-	state_save_register_UINT8("sound3", 0, "registers", adpcm_c, 8);
 }
 
 

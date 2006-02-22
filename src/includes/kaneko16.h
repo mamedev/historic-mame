@@ -69,7 +69,7 @@ VIDEO_START( sandscrp_1xVIEW2 );
 
 VIDEO_UPDATE( kaneko16 );
 
-MACHINE_INIT( kaneko16 );
+MACHINE_RESET( kaneko16 );
 
 
 /* in drivers/galpani2.c */

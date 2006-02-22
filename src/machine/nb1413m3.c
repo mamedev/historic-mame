@@ -126,7 +126,7 @@ DRIVER_INIT( nb1413m3 )
 	;
 }
 
-MACHINE_INIT( nb1413m3 )
+MACHINE_RESET( nb1413m3 )
 {
 	nb1413m3_nmi_clock = 0;
 	nb1413m3_nmi_enable = 0;

@@ -133,7 +133,7 @@ void spc700_branching(unsigned int new_pc);
 
 #include "cpuintrf.h"
 #include "memory.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 extern void spc700_get_info(UINT32 state, union cpuinfo *info);
 

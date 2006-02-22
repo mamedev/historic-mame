@@ -180,7 +180,7 @@ struct Samplesinterface invad2ct_samples_interface =
 };
 
 
-MACHINE_INIT( invaders )
+MACHINE_RESET( invaders )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, invaders_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
@@ -193,7 +193,7 @@ MACHINE_INIT( invaders )
 	SN76477_vco_w(0, 1);
 }
 
-MACHINE_INIT( sstrangr )
+MACHINE_RESET( sstrangr )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x42, 0x42, 0, 0, invaders_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x44, 0x44, 0, 0, invaders_sh_port5_w);
@@ -206,9 +206,9 @@ MACHINE_INIT( sstrangr )
 	SN76477_vco_w(0, 1);
 }
 
-MACHINE_INIT( invad2ct )
+MACHINE_RESET( invad2ct )
 {
-	machine_init_invaders();
+	machine_reset_invaders();
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invad2ct_sh_port1_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, invad2ct_sh_port7_w);
@@ -321,7 +321,7 @@ static WRITE8_HANDLER( invad2ct_sh_port7_w )
 /*                                                     */
 /*******************************************************/
 
-MACHINE_INIT( gunfight )
+MACHINE_RESET( gunfight )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, gunfight_port_0_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, gunfight_port_1_r);
@@ -354,7 +354,7 @@ struct Samplesinterface boothill_samples_interface =
 /* HC 4/14/98 NOTE: *I* THINK there are sounds missing...
 i dont know for sure... but that is my guess....... */
 
-MACHINE_INIT( boothill )
+MACHINE_RESET( boothill )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, boothill_port_0_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, boothill_port_1_r);
@@ -404,7 +404,7 @@ static WRITE8_HANDLER( boothill_sh_port5_w )
 /* This only does the color swap for the explosion */
 /* We do not have correct samples so sound not done */
 
-MACHINE_INIT( ballbomb )
+MACHINE_RESET( ballbomb )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, ballbomb_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, ballbomb_sh_port5_w);
@@ -779,7 +779,7 @@ DISCRETE_SOUND_START(polaris_discrete_interface)
 
 DISCRETE_SOUND_END
 
-MACHINE_INIT( polaris )
+MACHINE_RESET( polaris )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, polaris_sh_port2_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, polaris_sh_port4_w);
@@ -844,7 +844,7 @@ static WRITE8_HANDLER( polaris_sh_port6_w )
 /*                                                     */
 /*******************************************************/
 
-MACHINE_INIT( phantom2 )
+MACHINE_RESET( phantom2 )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, watchdog_reset_w);
 }
@@ -856,7 +856,7 @@ MACHINE_INIT( phantom2 )
 /*                                                     */
 /*******************************************************/
 
-MACHINE_INIT( bowler )
+MACHINE_RESET( bowler )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, watchdog_reset_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, bowler_bonus_display_w);
@@ -886,7 +886,7 @@ struct Samplesinterface seawolf_samples_interface =
 	seawolf_sample_names
 };
 
-MACHINE_INIT( seawolf )
+MACHINE_RESET( seawolf )
 {
 /*  Lamp Display Output (write) Ports are as follows:
 
@@ -954,7 +954,7 @@ static WRITE8_HANDLER( seawolf_sh_port5_w )
 /*                                                     */
 /*******************************************************/
 
-MACHINE_INIT( desertgu )
+MACHINE_RESET( desertgu )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, desertgu_port_1_r);
 
@@ -1189,7 +1189,7 @@ void schaser_effect_555_cb(int effect)
 	SN76477_enable_w(0, !(schaser_effect_555_is_low || explosion));
 }
 
-MACHINE_INIT( schaser )
+MACHINE_RESET( schaser )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
@@ -1401,7 +1401,7 @@ static WRITE8_HANDLER( clowns_sh_port7_w )
 		sample_start (1, 1, 0);  /* Springboard miss */
 }
 
-MACHINE_INIT( clowns )
+MACHINE_RESET( clowns )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, clowns_sh_port3_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, watchdog_reset_w);

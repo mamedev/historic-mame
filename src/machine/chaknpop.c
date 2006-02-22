@@ -5,7 +5,6 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "state.h"
 
 #define MCU_INITIAL_SEED	0x81
 
@@ -156,12 +155,12 @@ WRITE8_HANDLER( chaknpop_mcu_portC_w )
 
 DRIVER_INIT( chaknpop )
 {
-	state_save_register_UINT8("chankpop", 0, "mcu_seed",    &mcu_seed,    1);
-	state_save_register_UINT8("chankpop", 0, "mcu_result",  &mcu_result,  1);
-	state_save_register_UINT8("chankpop", 0, "mcu_select",  &mcu_select,  1);
+	state_save_register_global(mcu_seed);
+	state_save_register_global(mcu_result);
+	state_save_register_global(mcu_select);
 }
 
-MACHINE_INIT( chaknpop )
+MACHINE_RESET( chaknpop )
 {
 	mcu_seed = MCU_INITIAL_SEED;
 }

@@ -550,7 +550,7 @@ DRIVER_INIT( revx )
  *
  *************************************/
 
-MACHINE_INIT( midwunit )
+MACHINE_RESET( midwunit )
 {
 	int i;
 
@@ -564,9 +564,9 @@ MACHINE_INIT( midwunit )
 }
 
 
-MACHINE_INIT( midxunit )
+MACHINE_RESET( midxunit )
 {
-	machine_init_midwunit();
+	machine_reset_midwunit();
 	dcs_set_io_callbacks(midxunit_dcs_output_full, NULL);
 }
 

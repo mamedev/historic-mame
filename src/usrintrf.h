@@ -96,7 +96,7 @@ typedef struct _memcard_interface memcard_interface;
 
 extern memcard_interface memcard_intf;
 
-#define init_memcard() memset(&memcard_intf, 0, sizeof(memcard_interface))
+#define memcard_init() memset(&memcard_intf, 0, sizeof(memcard_interface))
 
 
 
@@ -107,7 +107,7 @@ extern memcard_interface memcard_intf;
  *************************************/
 
 /* main init/exit routines */
-int ui_init(void);
+int ui_init(int show_disclaimer, int show_warnings, int show_gameinfo);
 void ui_exit(void);
 
 /* once-per-frame update and render */

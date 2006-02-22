@@ -51,7 +51,7 @@ static void destroyr_frame_callback(int dummy)
 }
 
 
-static MACHINE_INIT( destroyr )
+static MACHINE_RESET( destroyr )
 {
 	timer_pulse(cpu_getscanlinetime(0), 0, destroyr_frame_callback);
 }
@@ -338,7 +338,7 @@ static MACHINE_DRIVER_START( destroyr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int) ((22. * 1000000) / (262. * 60) + 0.5))
 
-	MDRV_MACHINE_INIT(destroyr)
+	MDRV_MACHINE_RESET(destroyr)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

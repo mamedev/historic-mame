@@ -108,7 +108,7 @@ void s24_fd1094_kludge_reset_values(void)
 }
 
 
-/* function, to be called from MACHINE_INIT (every reset) */
+/* function, to be called from MACHINE_RESET (every reset) */
 void s24_fd1094_machine_init(void)
 {
 	/* punt if no key; this allows us to be called even for non-s24_fd1094 games */

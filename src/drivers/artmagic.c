@@ -75,7 +75,7 @@ static void m68k_gen_int(int state)
  *
  *************************************/
 
-static MACHINE_INIT( artmagic )
+static MACHINE_RESET( artmagic )
 {
 	tms_irq = hack_irq = 0;
 	update_irq_state();
@@ -729,7 +729,7 @@ MACHINE_DRIVER_START( artmagic )
 	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_PROGRAM_MAP(tms_map,0)
 
-	MDRV_MACHINE_INIT(artmagic)
+	MDRV_MACHINE_RESET(artmagic)
 	MDRV_FRAMES_PER_SECOND(50.27)
 	MDRV_VBLANK_DURATION((1000000 * (312 - 256)) / (50.27 * 312))
 	MDRV_INTERLEAVE(100)

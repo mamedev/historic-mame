@@ -13,7 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "r3000.h"
 
 

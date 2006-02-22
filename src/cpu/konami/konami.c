@@ -37,8 +37,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "konami.h"
 
 #define VERBOSE 0
@@ -487,40 +487,18 @@ static void set_irq_line(int irqline, int state)
 static void state_save(void *file, const char *module)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_UINT16(file, module, cpu, "PC", &PC, 1);
-	state_save_UINT16(file, module, cpu, "U", &U, 1);
-	state_save_UINT16(file, module, cpu, "S", &S, 1);
-	state_save_UINT16(file, module, cpu, "X", &X, 1);
-	state_save_UINT16(file, module, cpu, "Y", &Y, 1);
-	state_save_UINT8(file, module, cpu, "DP", &DP, 1);
-	state_save_UINT8(file, module, cpu, "CC", &CC, 1);
-	state_save_UINT8(file, module, cpu, "INT", &konami.int_state, 1);
-	state_save_UINT8(file, module, cpu, "NMI", &konami.nmi_state, 1);
-	state_save_UINT8(file, module, cpu, "IRQ", &konami.irq_state[0], 1);
-	state_save_UINT8(file, module, cpu, "FIRQ", &konami.irq_state[1], 1);
+	state_save_register_item(file, cpu, module, PC);
+	state_save_register_item(file, cpu, module, U);
+	state_save_register_item(file, cpu, module, S);
+	state_save_register_item(file, cpu, module, X);
+	state_save_register_item(file, cpu, module, Y);
+	state_save_register_item(file, cpu, module, DP);
+	state_save_register_item(file, cpu, module, CC);
+	state_save_register_item(file, cpu, module, konami.int_state);
+	state_save_register_item(file, cpu, module, konami.nmi_state);
+	state_save_register_item(file, cpu, module, konami.irq_state[0]);
+	state_save_register_item(file, cpu, module, konami.irq_state[1]);
 }
-
-/****************************************************************************
- * Load CPU state
- ****************************************************************************/
-static void state_load(void *file, const char *module)
-{
-	int cpu = cpu_getactivecpu();
-	state_load_UINT16(file, module, cpu, "PC", &PC, 1);
-	state_load_UINT16(file, module, cpu, "U", &U, 1);
-	state_load_UINT16(file, module, cpu, "S", &S, 1);
-	state_load_UINT16(file, module, cpu, "X", &X, 1);
-	state_load_UINT16(file, module, cpu, "Y", &Y, 1);
-	state_load_UINT8(file, module, cpu, "DP", &DP, 1);
-	state_load_UINT8(file, module, cpu, "CC", &CC, 1);
-	state_load_UINT8(file, module, cpu, "INT", &konami.int_state, 1);
-	state_load_UINT8(file, module, cpu, "NMI", &konami.nmi_state, 1);
-	state_load_UINT8(file, module, cpu, "IRQ", &konami.irq_state[0], 1);
-	state_load_UINT8(file, module, cpu, "FIRQ", &konami.irq_state[1], 1);
-}
-
-void konami_state_save(void *file) { state_save(file, "konami"); }
-void konami_state_load(void *file) { state_load(file, "konami"); }
 #endif
 
 static offs_t konami_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)

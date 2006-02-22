@@ -25,7 +25,7 @@ as it's used in Rastan and Super Space Invaders '91.
 It is believed that the NOPs in the 68k code are there to supply the
 necessary cycles to the cchip to switch banks.
 
-This code requires that the player & coin inputs be in input ports 4-6.
+This code requires that the player & coin inputs be in input ports 2-4.
 
 
 Mega Blast
@@ -38,9 +38,8 @@ original board.
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
-static int current_bank = 0;
+static UINT16 current_bank = 0;
 
 static UINT8 cc_port = 0;
 
@@ -63,10 +62,10 @@ static UINT8 superman_code[40] =
 	0x4e, 0x75                          /* RTS                    ( Return ) */
 };
 
-MACHINE_INIT( cchip1 )
+MACHINE_RESET( cchip1 )
 {
-	state_save_register_int  ("cchip1", 0, "current_bank", &current_bank);
-	state_save_register_UINT8("cchip1", 0, "cc_port",      &cc_port, 1);
+	state_save_register_global(current_bank);
+	state_save_register_global(cc_port);
 }
 
 WRITE16_HANDLER( cchip1_word_w )
@@ -105,9 +104,9 @@ READ16_HANDLER( cchip1_word_r )
 	{
 		switch (offset)
 		{
-			case 0x000: return readinputport(4);
-			case 0x001: return readinputport(5);
-			case 0x002: return readinputport(6);
+			case 0x000: return readinputport(2);
+			case 0x001: return readinputport(3);
+			case 0x002: return readinputport(4);
 			case 0x003: return cc_port;
 		}
 	}

@@ -533,7 +533,6 @@ Newer version of the I/O chip ?
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "taitoic.h"
 
 #define TOPSPEED_ROAD_COLORS
@@ -838,14 +837,8 @@ int PC080SN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int y_invert
 		PC080SN_bgscroll_ram[i][1] = PC080SN_ram[i] + 0xc000 /2;
 		memset(PC080SN_ram[i],0,PC080SN_RAM_SIZE);
 
-		{
-			char buf[20];	/* we need different labels for every item of save data */
-			sprintf(buf,"PC080SN-%01x",i);	/* so we add chip # as a suffix */
-
-			state_save_register_UINT16(buf, 0, "memory", PC080SN_ram[i], PC080SN_RAM_SIZE/2);
-			state_save_register_UINT16(strcat(buf,"a"), 0, "registers", PC080SN_ctrl[i], 8);
-		}
-
+		state_save_register_item_pointer("PC080SN", i, PC080SN_ram[i], PC080SN_RAM_SIZE/2);
+		state_save_register_item_array("PC080SN", i, PC080SN_ctrl[i]);
 		state_save_register_func_postload_int(PC080SN_restore_scroll, i);
 
 		/* use the given gfx set for bg tiles */
@@ -1252,9 +1245,9 @@ int PC090OJ_vh_start(int gfxnum,int x_offset,int y_offset,int use_buffer)
 	memset(PC090OJ_ram,0,PC090OJ_RAM_SIZE);
 	memset(PC090OJ_ram_buffered,0,PC090OJ_RAM_SIZE);
 
-	state_save_register_UINT16("PC090OJ", 0, "memory", PC090OJ_ram, PC090OJ_RAM_SIZE/2);
-	state_save_register_UINT16("PC090OJb", 0, "memory", PC090OJ_ram_buffered, PC090OJ_RAM_SIZE/2);
-	state_save_register_UINT16("PC090OJc", 0, "register", &PC090OJ_ctrl, 1);
+	state_save_register_global_pointer(PC090OJ_ram, PC090OJ_RAM_SIZE/2);
+	state_save_register_global_pointer(PC090OJ_ram_buffered, PC090OJ_RAM_SIZE/2);
+	state_save_register_global(PC090OJ_ctrl);
 
 //  state_save_register_func_postload(PC090OJ_restore);
 
@@ -1393,7 +1386,7 @@ static int TC0080VCO_bg_gfx,TC0080VCO_tx_gfx;
 static int TC0080VCO_bg_xoffs,TC0080VCO_bg_yoffs;
 static int TC0080VCO_bg_flip_yoffs;
 
-int TC0080VCO_flipscreen = 0,TC0080VCO_has_tx;
+INT32 TC0080VCO_flipscreen = 0,TC0080VCO_has_tx;
 
 
 #if 0
@@ -1579,8 +1572,8 @@ int TC0080VCO_vh_start(int gfxnum,int has_fg0,int bg_xoffs,int bg_yoffs,int bg_f
 	tilemap_set_scrolldy(TC0080VCO_tilemap[0],TC0080VCO_bg_yoffs,TC0080VCO_bg_flip_yoffs);
 	tilemap_set_scrolldy(TC0080VCO_tilemap[1],TC0080VCO_bg_yoffs,TC0080VCO_bg_flip_yoffs);
 
-	state_save_register_UINT16("TC0080VCOa", 0, "memory", TC0080VCO_ram, TC0080VCO_RAM_SIZE/2);
-	state_save_register_int   ("TC0080VCOb", 0, "registers", &TC0080VCO_has_tx);
+	state_save_register_global_pointer(TC0080VCO_ram, TC0080VCO_RAM_SIZE/2);
+	state_save_register_global(TC0080VCO_has_tx);
 	state_save_register_func_postload(TC0080VCO_set_layer_ptrs);
 
 	/* Perform extra initialisations for text layer */
@@ -2090,7 +2083,7 @@ static char *TC0100SCN_char_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_chars_dirty[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_gfx[TC0100SCN_MAX_CHIPS],TC0100SCN_tx_gfx[TC0100SCN_MAX_CHIPS];
 static int TC0100SCN_bg_col_mult,TC0100SCN_bg_tilemask,TC0100SCN_tx_col_mult;
-static int TC0100SCN_gfxbank,TC0100SCN_chip_colbank[3],TC0100SCN_colbank[3];
+static INT32 TC0100SCN_gfxbank,TC0100SCN_chip_colbank[3],TC0100SCN_colbank[3];
 static int TC0100SCN_dblwidth[TC0100SCN_MAX_CHIPS];
 
 
@@ -2381,13 +2374,9 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		memset(TC0100SCN_ram[i],0,TC0100SCN_RAM_SIZE);
 
 		{
-			char buf[20];	/* we need different labels for every item of save data */
-			sprintf(buf,"TC0100SCN-%01x",i);	/* so we add chip # as a suffix */
-			state_save_register_UINT16(strcat(buf,"a"), 0, "memory", TC0100SCN_ram[i], TC0100SCN_RAM_SIZE/2);
-			sprintf(buf,"TC0100SCN-%01x",i);
-			state_save_register_UINT16(strcat(buf,"b"), 0, "registers", TC0100SCN_ctrl[i], 8);
-			sprintf(buf,"TC0100SCN-%01x",i);
-			state_save_register_int   (strcat(buf,"c"), 0, "registers", &TC0100SCN_dblwidth[i]);
+			state_save_register_item_pointer("TC0100SCN", i, TC0100SCN_ram[i], TC0100SCN_RAM_SIZE/2);
+			state_save_register_item_array("TC0100SCN", i, TC0100SCN_ctrl[i]);
+			state_save_register_item("TC0100SCN", i, TC0100SCN_dblwidth[i]);
 		}
 
 		state_save_register_func_postload_int(TC0100SCN_set_layer_ptrs, i);
@@ -2476,7 +2465,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 	}
 
 	TC0100SCN_gfxbank= 0;	/* Mjnquest uniquely banks tiles */
-	state_save_register_int ("TC100SCN_bank", 0, "control", &TC0100SCN_gfxbank);
+	state_save_register_global(TC0100SCN_gfxbank);
 
 	TC0100SCN_bg_tilemask = 0xffff;	/* Mjnquest has 0x7fff tilemask */
 
@@ -2869,8 +2858,8 @@ int TC0280GRD_vh_start(int gfxnum)
 	if (!TC0280GRD_tilemap)
 		return 1;
 
-	state_save_register_UINT16("TC0280GRDa", 0, "memory", TC0280GRD_ram, TC0280GRD_RAM_SIZE/2);
-	state_save_register_UINT16("TC0280GRDb", 0, "registers", TC0280GRD_ctrl, 8);
+	state_save_register_global_pointer(TC0280GRD_ram, TC0280GRD_RAM_SIZE/2);
+	state_save_register_global_array(TC0280GRD_ctrl);
 
 	tilemap_set_transparent_pen(TC0280GRD_tilemap,0);
 
@@ -2978,7 +2967,7 @@ UINT8 TC0360PRI_regs[16];
 
 int TC0360PRI_vh_start(void)
 {
-	state_save_register_UINT8("TC0360PRI", 0, "registers", TC0360PRI_regs, 16);
+	state_save_register_global_array(TC0360PRI_regs);
 	return 0;
 }
 
@@ -3048,7 +3037,7 @@ static tilemap *TC0480SCP_tilemap[5][2];
 static char *TC0480SCP_char_dirty;
 static int TC0480SCP_chars_dirty;
 static int TC0480SCP_bg_gfx,TC0480SCP_tx_gfx;
-static int TC0480SCP_tile_colbase,TC0480SCP_dblwidth;
+static INT32 TC0480SCP_tile_colbase,TC0480SCP_dblwidth;
 static int TC0480SCP_x_offs,TC0480SCP_y_offs;
 static int TC0480SCP_text_xoffs,TC0480SCP_text_yoffs;
 static int TC0480SCP_flip_xoffs,TC0480SCP_flip_yoffs;
@@ -3281,9 +3270,9 @@ int TC0480SCP_vh_start(int gfxnum,int pixels,int x_offset,int y_offset,int text_
 		TC0480SCP_dirty_chars();
 		memset(TC0480SCP_ram,0,TC0480SCP_RAM_SIZE);
 
-		state_save_register_UINT16("TC0480SCPa", 0, "memory", TC0480SCP_ram, TC0480SCP_RAM_SIZE/2);
-		state_save_register_UINT16("TC0480SCPb", 0, "registers", TC0480SCP_ctrl, 0x18);
-		state_save_register_int   ("TC0480SCPc", 0, "registers", &TC0480SCP_dblwidth);
+		state_save_register_global_pointer(TC0480SCP_ram, TC0480SCP_RAM_SIZE/2);
+		state_save_register_global_array(TC0480SCP_ctrl);
+		state_save_register_global(TC0480SCP_dblwidth);
 		state_save_register_func_postload(TC0480SCP_set_layer_ptrs);
 		state_save_register_func_postload(TC0480SCP_dirty_chars);
 		state_save_register_func_postload(TC0480SCP_dirty_tilemaps);	// unnecessary ?
@@ -4038,7 +4027,7 @@ int TC0150ROD_vh_start(void)
 {
 	TC0150ROD_ram = auto_malloc(TC0150ROD_RAM_SIZE);
 
-	state_save_register_UINT16("TC0150ROD", 0, "memory", TC0150ROD_ram, TC0150ROD_RAM_SIZE/2);
+	state_save_register_global_pointer(TC0150ROD_ram, TC0150ROD_RAM_SIZE/2);
 	return 0;
 }
 
@@ -4846,8 +4835,7 @@ int TC0110PCR_vh_start(void)
 {
 	TC0110PCR_ram[0] = auto_malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]));
 
-	state_save_register_UINT16("TC0110PCR-0", 0, "memory", TC0110PCR_ram[0],
-		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[0]) / 2);
+	state_save_register_global_pointer(TC0110PCR_ram[0], TC0110PCR_RAM_SIZE);
 	state_save_register_func_postload_int(TC0110PCR_restore_colors, 0);
 
 	TC0110PCR_type = 0;	/* default, xBBBBBGGGGGRRRRR */
@@ -4859,8 +4847,7 @@ int TC0110PCR_1_vh_start(void)
 {
 	TC0110PCR_ram[1] = auto_malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1]));
 
-	state_save_register_UINT16("TC0110PCR-1", 0, "memory", TC0110PCR_ram[1],
-		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[1])/2);
+	state_save_register_global_pointer(TC0110PCR_ram[1], TC0110PCR_RAM_SIZE);
 	state_save_register_func_postload_int(TC0110PCR_restore_colors, 1);
 
 	return 0;
@@ -4870,8 +4857,7 @@ int TC0110PCR_2_vh_start(void)
 {
 	TC0110PCR_ram[2] = auto_malloc(TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2]));
 
-	state_save_register_UINT16("TC0110PCR-2", 0, "memory", TC0110PCR_ram[2],
-		TC0110PCR_RAM_SIZE * sizeof(*TC0110PCR_ram[2])/2);
+	state_save_register_global_pointer(TC0110PCR_ram[2], TC0110PCR_RAM_SIZE);
 	state_save_register_func_postload_int(TC0110PCR_restore_colors, 2);
 
 	return 0;

@@ -165,7 +165,6 @@ Games marked * need dumping / redumping
 /********** BITS & PIECES **********/
 
 #include "driver.h"
-#include "state.h"
 #include "sound/ymf271.h"
 
 extern UINT32 *ms32_fce00000;
@@ -1607,7 +1606,7 @@ static struct YMF271interface ymf271_interface =
 
 /********** MACHINE INIT **********/
 
-static MACHINE_INIT( ms32 )
+static MACHINE_RESET( ms32 )
 {
 	memory_set_bankptr(1, memory_region(REGION_CPU1));
 	memory_set_bank(4, 0);
@@ -1632,7 +1631,7 @@ static MACHINE_DRIVER_START( ms32 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1000)
 
-	MDRV_MACHINE_INIT(ms32)
+	MDRV_MACHINE_RESET(ms32)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_NEEDS_6BITS_PER_GUN)
@@ -2309,7 +2308,7 @@ static void decrypt_ms32_bg(int addr_xor,int data_xor)
 
 static void configure_banks(void)
 {
-	state_save_register_UINT32("ms32", 0, "to_main", &to_main, 1);
+	state_save_register_global(to_main);
 	memory_configure_bank(4, 0, 16, memory_region(REGION_CPU2) + 0x14000, 0x4000);
 	memory_configure_bank(5, 0, 16, memory_region(REGION_CPU2) + 0x14000, 0x4000);
 }

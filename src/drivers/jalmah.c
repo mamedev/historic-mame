@@ -904,7 +904,7 @@ static const gfx_decode jalmah_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static MACHINE_INIT (daireika)
+static MACHINE_RESET (daireika)
 {
 	respcount = 0;
 }
@@ -923,7 +923,7 @@ static MACHINE_DRIVER_START( jalmah )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_PALETTE_LENGTH(0x400)
-	MDRV_MACHINE_INIT(daireika)
+	MDRV_MACHINE_RESET(daireika)
 
 	MDRV_VIDEO_START(jalmah)
 	MDRV_VIDEO_UPDATE(jalmah)

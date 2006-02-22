@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "common.h"
 #include "vidhrdw/generic.h"
 
 UINT8 *gottlieb_charram;

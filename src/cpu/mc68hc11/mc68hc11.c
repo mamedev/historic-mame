@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "osd_cpu.h"
 #include "mc68hc11.h"
 

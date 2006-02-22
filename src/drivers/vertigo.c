@@ -135,7 +135,7 @@ static MACHINE_DRIVER_START( vertigo )
     */
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_MACHINE_INIT(vertigo)
+	MDRV_MACHINE_RESET(vertigo)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 

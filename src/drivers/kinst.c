@@ -153,7 +153,7 @@ static const UINT8 *control_map;
  *
  *************************************/
 
-static MACHINE_INIT( kinst )
+static MACHINE_RESET( kinst )
 {
 	/* set the fastest DRC options */
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS);
@@ -650,7 +650,7 @@ MACHINE_DRIVER_START( kinst )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(kinst)
+	MDRV_MACHINE_RESET(kinst)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_RGB_DIRECT)

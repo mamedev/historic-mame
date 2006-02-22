@@ -144,7 +144,7 @@ static void scanline_update(int scanline)
 }
 
 
-static MACHINE_INIT( badlands )
+static MACHINE_RESET( badlands )
 {
 	pedal_value[0] = pedal_value[1] = 0x80;
 
@@ -450,7 +450,7 @@ static MACHINE_DRIVER_START( badlands )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(badlands)
+	MDRV_MACHINE_RESET(badlands)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

@@ -10,8 +10,8 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "profiler.h"
 #include <time.h>
-#include <ctype.h>
 
 
 
@@ -538,9 +538,7 @@ int code_init(void)
 		}
 
 	/* allocate the table */
-	code_map = (input_code_info *)malloc((__code_max + extras) * sizeof(code_map[0]));
-	if (!code_map)
-		return -1;
+	code_map = (input_code_info *)auto_malloc((__code_max + extras) * sizeof(code_map[0]));
 	memset(code_map, 0, (__code_max + extras) * sizeof(code_map[0]));
 
 	/* now go through and match up the OS codes to the standard codes */
@@ -600,14 +598,6 @@ int code_init(void)
 		}
 	}
 	return 0;
-}
-
-
-void code_exit(void)
-{
-	code_count = 0;
-	free(code_map);
-	code_map = NULL;
 }
 
 

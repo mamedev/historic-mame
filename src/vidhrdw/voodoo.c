@@ -136,6 +136,7 @@ bits(7:4) and bit(24)), X, and Y:
 #define EXPAND_RASTERIZERS
 
 #include "driver.h"
+#include "profiler.h"
 #include "voodoo.h"
 #include "vooddefs.h"
 #include <math.h>

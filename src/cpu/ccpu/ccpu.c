@@ -12,7 +12,7 @@
 
 
 #include "driver.h"
-#include "state.h"
+#include "debugger.h"
 #include "ccpu.h"
 
 
@@ -152,15 +152,15 @@ static void ccpu_init(void)
 	int cpu = cpu_getactivecpu();
 	ccpu.external_input = read_jmi;
 
-	state_save_register_UINT16("ccpu", cpu, "PC", &ccpu.PC, 1);
-	state_save_register_UINT16("ccpu", cpu, "A", &ccpu.A, 1);
-	state_save_register_UINT16("ccpu", cpu, "B", &ccpu.B, 1);
-	state_save_register_UINT8("ccpu", cpu, "I", &ccpu.I, 1);
-	state_save_register_UINT16("ccpu", cpu, "J", &ccpu.J, 1);
-	state_save_register_UINT8("ccpu", cpu, "P", &ccpu.P, 1);
-	state_save_register_UINT16("ccpu", cpu, "X", &ccpu.X, 1);
-	state_save_register_UINT16("ccpu", cpu, "Y", &ccpu.Y, 1);
-	state_save_register_UINT16("ccpu", cpu, "T", &ccpu.T, 1);
+	state_save_register_item("ccpu", cpu, ccpu.PC);
+	state_save_register_item("ccpu", cpu, ccpu.A);
+	state_save_register_item("ccpu", cpu, ccpu.B);
+	state_save_register_item("ccpu", cpu, ccpu.I);
+	state_save_register_item("ccpu", cpu, ccpu.J);
+	state_save_register_item("ccpu", cpu, ccpu.P);
+	state_save_register_item("ccpu", cpu, ccpu.X);
+	state_save_register_item("ccpu", cpu, ccpu.Y);
+	state_save_register_item("ccpu", cpu, ccpu.T);
 }
 
 

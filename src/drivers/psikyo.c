@@ -87,7 +87,7 @@ extern void psikyo_switch_banks( int tilemap, int bank );
 static UINT8 psikyo_soundlatch;
 static int z80_nmi, mcu_status;
 
-MACHINE_INIT( psikyo )
+MACHINE_RESET( psikyo )
 {
 	z80_nmi = mcu_status = 0;
 }
@@ -761,7 +761,7 @@ INPUT_PORTS_START( sngkace )
 
     ************************************************/
 
-#if 0 // See Patch in MACHINE_INIT, only text not logo
+#if 0 // See Patch in MACHINE_RESET, only text not logo
 	PORT_DIPNAME( 0x00ff, 0x00ff, "Country" )
 	PORT_DIPSETTING(      0x00ff, DEF_STR( Japan ) )
 	PORT_DIPSETTING(      0x00ef, "USA & Canada" )
@@ -1577,7 +1577,7 @@ static MACHINE_DRIVER_START( sngkace )
 	MDRV_FRAMES_PER_SECOND(59.3)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
-	MDRV_MACHINE_INIT(psikyo)
+	MDRV_MACHINE_RESET(psikyo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1630,7 +1630,7 @@ static MACHINE_DRIVER_START( gunbird )
 	MDRV_FRAMES_PER_SECOND(59.3)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
-	MDRV_MACHINE_INIT(psikyo)
+	MDRV_MACHINE_RESET(psikyo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1693,7 +1693,7 @@ static MACHINE_DRIVER_START( s1945 )
 	MDRV_FRAMES_PER_SECOND(59.3)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// we're using IPT_VBLANK
 
-	MDRV_MACHINE_INIT(psikyo)
+	MDRV_MACHINE_RESET(psikyo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -63,7 +63,7 @@ static void update_interrupts(void)
 }
 
 
-static MACHINE_INIT( eprom )
+static MACHINE_RESET( eprom )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -344,7 +344,7 @@ static MACHINE_DRIVER_START( eprom )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(eprom)
+	MDRV_MACHINE_RESET(eprom)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
@@ -373,7 +373,7 @@ static MACHINE_DRIVER_START( klaxp )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(eprom)
+	MDRV_MACHINE_RESET(eprom)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

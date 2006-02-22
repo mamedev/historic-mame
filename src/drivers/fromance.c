@@ -65,7 +65,7 @@ static UINT8 fromance_vclk_left;
  *
  *************************************/
 
-static MACHINE_INIT( fromance )
+static MACHINE_RESET( fromance )
 {
 	fromance_directionflag = 0;
 	fromance_commanddata = 0;
@@ -1071,7 +1071,7 @@ static MACHINE_DRIVER_START( nekkyoku )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fromance)
+	MDRV_MACHINE_RESET(fromance)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1109,7 +1109,7 @@ static MACHINE_DRIVER_START( idolmj )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fromance)
+	MDRV_MACHINE_RESET(fromance)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1147,7 +1147,7 @@ static MACHINE_DRIVER_START( fromance )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fromance)
+	MDRV_MACHINE_RESET(fromance)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

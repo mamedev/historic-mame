@@ -16,9 +16,9 @@ extern UINT8 *qix_sharedram;
 extern UINT8 *qix_68705_port_out;
 extern UINT8 *qix_68705_ddr;
 
-MACHINE_INIT( qix );
-MACHINE_INIT( qixmcu );
-MACHINE_INIT( slither );
+MACHINE_RESET( qix );
+MACHINE_RESET( qixmcu );
+MACHINE_RESET( slither );
 
 READ8_HANDLER( qix_sharedram_r );
 WRITE8_HANDLER( qix_sharedram_w );

@@ -294,7 +294,7 @@ static struct AY8910interface ay8910_interface =
 	soundlatch_r
 };
 
-MACHINE_INIT( meijinsn )
+MACHINE_RESET( meijinsn )
 {
 	deposits1 = 0;
 	deposits2 = 0;
@@ -315,7 +315,7 @@ static MACHINE_DRIVER_START( meijinsn )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(meijinsn)
+	MDRV_MACHINE_RESET(meijinsn)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

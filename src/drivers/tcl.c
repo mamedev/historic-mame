@@ -100,7 +100,7 @@ static ppi8255_interface ppi8255_intf =
 	{ NULL, NULL },
 };
 
-MACHINE_INIT( tcl )
+MACHINE_RESET( tcl )
 {
 	ppi8255_init(&ppi8255_intf);
 }
@@ -125,7 +125,7 @@ static MACHINE_DRIVER_START( tcl )
 	MDRV_VIDEO_START(tcl)
 	MDRV_VIDEO_UPDATE(tcl)
 
-	MDRV_MACHINE_INIT(tcl)
+	MDRV_MACHINE_RESET(tcl)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

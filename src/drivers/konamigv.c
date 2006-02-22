@@ -109,7 +109,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "state.h"
 #include "cdrom.h"
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"
@@ -315,7 +314,7 @@ static DRIVER_INIT( konamigv )
 	psx_dma_install_write_handler(5, scsi_dma_write);
 }
 
-static MACHINE_INIT( konamigv )
+static MACHINE_RESET( konamigv )
 {
 	psx_machine_init();
 
@@ -340,7 +339,7 @@ static MACHINE_DRIVER_START( konamigv )
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( konamigv )
+	MDRV_MACHINE_RESET( konamigv )
 	MDRV_NVRAM_HANDLER(konamigv_93C46)
 
 	/* video hardware */

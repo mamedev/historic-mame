@@ -443,7 +443,7 @@ static PALETTE_INIT( malzak )
 }
 
 
-MACHINE_INIT(malzak)
+MACHINE_RESET(malzak)
 {
 //  val++;
 //  printf("val = %X\n",val);
@@ -489,7 +489,7 @@ static MACHINE_DRIVER_START( malzak )
 	MDRV_PALETTE_INIT(malzak)
 	MDRV_COLORTABLE_LENGTH(128)
 
-//  MDRV_MACHINE_INIT(malzak)
+//  MDRV_MACHINE_RESET(malzak)
 
 	MDRV_VIDEO_START(malzak)
 	MDRV_VIDEO_UPDATE(malzak)

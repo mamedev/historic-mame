@@ -597,7 +597,7 @@ static struct AY8910interface ay8910_interface =
 	0
 };
 
-static MACHINE_INIT( catnmous )
+static MACHINE_RESET( catnmous )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
@@ -671,7 +671,7 @@ static MACHINE_DRIVER_START( catnmous )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(catnmous)
+	MDRV_MACHINE_RESET(catnmous)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

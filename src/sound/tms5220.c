@@ -14,7 +14,6 @@
 
 #include "driver.h"
 #include "tms5220.h"
-#include "state.h"
 
 
 /* Pull in the ROM tables */

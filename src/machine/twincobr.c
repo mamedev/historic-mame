@@ -4,7 +4,6 @@
  ****************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "cpu/tms32010/tms32010.h"
 #include "twincobr.h"
@@ -345,7 +344,7 @@ WRITE8_HANDLER( wardner_coin_dsp_w )
 }
 
 
-MACHINE_INIT( twincobr_reset )	/* machine_init_twincobr_reset */
+MACHINE_RESET( twincobr_reset )	/* machine_reset_twincobr_reset */
 {
 	toaplan_main_cpu = 0;		/* 68000 */
 	twincobr_display(0);
@@ -358,18 +357,18 @@ MACHINE_INIT( twincobr_reset )	/* machine_init_twincobr_reset */
 }
 void twincobr_driver_savestate(void)
 {
-	state_save_register_INT32( "toaplan0", 0, "CPU#0_type", &toaplan_main_cpu, 1);
-	state_save_register_INT32( "toaplan0", 0, "Int_enable", &twincobr_intenable, 1);
-	state_save_register_INT32( "toaplan0", 0, "DSP_Running", &twincobr_dsp_on, 1);
-	state_save_register_UINT32("toaplan0", 0, "DSP_out_addr", &dsp_addr_w, 1);
-	state_save_register_UINT32("toaplan0", 0, "DSP_to_68K_RAM_bank", &main_ram_seg, 1);
-	state_save_register_INT32( "toaplan0", 0, "DSP_BIO_pin", &twincobr_dsp_BIO, 1);
-	state_save_register_INT32( "toaplan0", 0, "DSP_execute", &dsp_execute, 1);
-	state_save_register_INT32( "fsharkbt", 0, "MCU_Output", &fsharkbt_8741, 1);
+	state_save_register_global(toaplan_main_cpu);
+	state_save_register_global(twincobr_intenable);
+	state_save_register_global(twincobr_dsp_on);
+	state_save_register_global(dsp_addr_w);
+	state_save_register_global(main_ram_seg);
+	state_save_register_global(twincobr_dsp_BIO);
+	state_save_register_global(dsp_execute);
+	state_save_register_global(fsharkbt_8741);
 	state_save_register_func_postload(twincobr_restore_dsp);
 }
 
-MACHINE_INIT( wardner )
+MACHINE_RESET( wardner )
 {
 	toaplan_main_cpu = 1;		/* Z80 */
 	twincobr_display(1);
@@ -382,14 +381,14 @@ MACHINE_INIT( wardner )
 }
 void wardner_driver_savestate(void)
 {
-	state_save_register_INT32( "wardner", 0, "CPU#0_type", &toaplan_main_cpu, 1);
-	state_save_register_INT32( "wardner", 0, "Int_enable", &twincobr_intenable, 1);
-	state_save_register_INT32( "wardner", 0, "DSP_Running", &twincobr_dsp_on, 1);
-	state_save_register_UINT32("wardner", 0, "DSP_out_addr", &dsp_addr_w, 1);
-	state_save_register_UINT32("wardner", 0, "DSP_to_Z80_RAM_bank", &main_ram_seg, 1);
-	state_save_register_INT32( "wardner", 0, "DSP_BIO_pin", &twincobr_dsp_BIO, 1);
-	state_save_register_INT32( "wardner", 0, "DSP_execute", &dsp_execute, 1);
-	state_save_register_INT32( "wardner", 0, "Wardner_MemBank", &wardner_membank, 1);
+	state_save_register_global(toaplan_main_cpu);
+	state_save_register_global(twincobr_intenable);
+	state_save_register_global(twincobr_dsp_on);
+	state_save_register_global(dsp_addr_w);
+	state_save_register_global(main_ram_seg);
+	state_save_register_global(twincobr_dsp_BIO);
+	state_save_register_global(dsp_execute);
+	state_save_register_global(wardner_membank);
 	state_save_register_func_postload(wardner_restore_bank);	/* Restore the Main CPU bank */
 	state_save_register_func_postload(twincobr_restore_dsp);
 }

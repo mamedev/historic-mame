@@ -87,7 +87,7 @@ static void nmi_callback(int scanline)
 }
 
 
-static MACHINE_INIT( sprint4 )
+static MACHINE_RESET( sprint4 )
 {
 	timer_set(cpu_getscanlinetime(32), 32, nmi_callback);
 
@@ -95,7 +95,7 @@ static MACHINE_INIT( sprint4 )
 }
 
 
-static MACHINE_INIT( ultratnk )
+static MACHINE_RESET( ultratnk )
 {
 	timer_set(cpu_getscanlinetime(32), 32, nmi_callback);
 }
@@ -554,7 +554,7 @@ static MACHINE_DRIVER_START( sprint4 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(38 * 1000000 / 15750)
 	MDRV_WATCHDOG_VBLANK_INIT(8)
-	MDRV_MACHINE_INIT(sprint4)
+	MDRV_MACHINE_RESET(sprint4)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -589,7 +589,7 @@ static MACHINE_DRIVER_START( ultratnk )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(38 * 1000000 / 15750)
 	MDRV_WATCHDOG_VBLANK_INIT(8)
-	MDRV_MACHINE_INIT(ultratnk)
+	MDRV_MACHINE_RESET(ultratnk)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

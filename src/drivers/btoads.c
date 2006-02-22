@@ -35,7 +35,7 @@ static UINT8 sound_int_state;
  *
  *************************************/
 
-static MACHINE_INIT( btoads )
+static MACHINE_RESET( btoads )
 {
 	tlc34076_reset(6);
 }
@@ -352,7 +352,7 @@ static MACHINE_DRIVER_START( btoads )
 	MDRV_CPU_IO_MAP(sound_io_map,0)
 	MDRV_CPU_PERIODIC_INT(sound_interrupt,TIME_IN_HZ(183))
 
-	MDRV_MACHINE_INIT(btoads)
+	MDRV_MACHINE_RESET(btoads)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (256 - 224)) / (60 * 256))
 	MDRV_NVRAM_HANDLER(generic_1fill)

@@ -178,7 +178,7 @@ static void scanline_callback(int scanline)
 }
 
 
-MACHINE_INIT( yboard )
+MACHINE_RESET( yboard )
 {
 	timer_set(cpu_getscanlinetime(223), 223, scanline_callback);
 }
@@ -913,7 +913,7 @@ static MACHINE_DRIVER_START( yboard )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(yboard)
+	MDRV_MACHINE_RESET(yboard)
 	MDRV_NVRAM_HANDLER(yboard)
 	MDRV_INTERLEAVE(100)
 

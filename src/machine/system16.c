@@ -26,7 +26,7 @@ void sys16_patch_code( int offset, int data ){
 }
 
 
-MACHINE_INIT( sys16_onetime ){
+MACHINE_RESET( sys16_onetime ){
 	sys16_bg1_trans=0;
 	sys16_rowscroll_scroll=0;
 	sys18_splittab_bg_x=0;

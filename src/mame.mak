@@ -11,11 +11,11 @@
 
 
 #-------------------------------------------------
-# driver.c is MAME-specific and contains the
+# mamedriv.c is MAME-specific and contains the
 # list of drivers
 #-------------------------------------------------
 
-COREOBJS += $(OBJ)/driver.o
+COREOBJS += $(OBJ)/mamedriv.o
 
 
 

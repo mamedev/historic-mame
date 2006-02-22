@@ -23,7 +23,6 @@ System 24      68000x2  315-5292   315-5293  315-5294  315-5242        ym2151 da
 */
 
 #include "driver.h"
-#include "state.h"
 #include "generic.h"
 #include "drawgfx.h"
 #include "osdepend.h"
@@ -189,8 +188,8 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 		Machine->gfx[sys24_char_gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
 
-	state_save_register_UINT16("system24 tile", 0, "tile ram", sys24_tile_ram, 0x8000);
-	state_save_register_UINT16("system24 tile", 0, "char ram", sys24_char_ram, 0x40000);
+	state_save_register_global_pointer(sys24_tile_ram, 0x8000);
+	state_save_register_global_pointer(sys24_char_ram, 0x40000);
 	state_save_register_func_postload(sys24_tile_dirtyall);
 
 	return 0;
@@ -656,7 +655,7 @@ int sys24_sprite_vh_start(void)
 {
 	sys24_sprite_ram = auto_malloc(0x40000);
 
-	state_save_register_UINT16("system24 sprite", 0, "ram", sys24_sprite_ram, 0x20000);
+	state_save_register_global_pointer(sys24_sprite_ram, 0x20000);
 	//  kc = 0;
 	return 0;
 }
@@ -898,7 +897,7 @@ static UINT16 sys24_mixer_reg[0x10];
 int sys24_mixer_vh_start(void)
 {
 	memset(sys24_mixer_reg, 0, sizeof(sys24_mixer_reg));
-	state_save_register_UINT16("system24 mixer", 0, "regs", sys24_mixer_reg, 0x10);
+	state_save_register_global_array(sys24_mixer_reg);
 	return 0;
 }
 

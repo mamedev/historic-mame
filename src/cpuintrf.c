@@ -9,10 +9,7 @@
 
 ***************************************************************************/
 
-#include <signal.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
 
 
 
@@ -114,6 +111,8 @@ void r3000be_get_info(UINT32 state, union cpuinfo *info);
 void r3000le_get_info(UINT32 state, union cpuinfo *info);
 void r4600be_get_info(UINT32 state, union cpuinfo *info);
 void r4600le_get_info(UINT32 state, union cpuinfo *info);
+void r4650be_get_info(UINT32 state, union cpuinfo *info);
+void r4650le_get_info(UINT32 state, union cpuinfo *info);
 void r4700be_get_info(UINT32 state, union cpuinfo *info);
 void r4700le_get_info(UINT32 state, union cpuinfo *info);
 void r5000be_get_info(UINT32 state, union cpuinfo *info);
@@ -564,6 +563,10 @@ const struct
 	{ CPU_R4600BE, r4600be_get_info },
 	{ CPU_R4600LE, r4600le_get_info },
 #endif
+#if (HAS_R4650)
+	{ CPU_R4650BE, r4650be_get_info },
+	{ CPU_R4650LE, r4650le_get_info },
+#endif
 #if (HAS_R4700)
 	{ CPU_R4700BE, r4700be_get_info },
 	{ CPU_R4700LE, r4700le_get_info },
@@ -879,7 +882,7 @@ char *cpuintrf_temp_str(void)
  *
  *************************************/
 
-int cpuintrf_init(void)
+void cpuintrf_init(void)
 {
 	int mapindex;
 
@@ -969,8 +972,6 @@ int cpuintrf_init(void)
 	/* nothing active, nothing executing */
 	activecpu = -1;
 	executingcpu = -1;
-
-	return 0;
 }
 
 

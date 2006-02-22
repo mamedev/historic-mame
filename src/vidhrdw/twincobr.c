@@ -13,7 +13,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "tilemap.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
@@ -24,9 +23,9 @@ void twincobr_flipscreen(int flip);
 void twincobr_display(int enable);
 static void twincobr_restore_screen(void);
 
-int twincobr_fg_rom_bank;
-int twincobr_bg_ram_bank;
-int wardner_sprite_hack;	/* Required for weird sprite priority in wardner */
+INT32 twincobr_fg_rom_bank;
+INT32 twincobr_bg_ram_bank;
+INT32 wardner_sprite_hack;	/* Required for weird sprite priority in wardner */
 							/* when hero is in shop. Hero should cover shop owner */
 
 static UINT16 *twincobr_bgvideoram16;
@@ -37,19 +36,19 @@ static size_t twincobr_bgvideoram_size;
 static size_t twincobr_fgvideoram_size;
 static size_t twincobr_txvideoram_size;
 
-static int txscrollx;
-static int txscrolly;
-static int fgscrollx;
-static int fgscrolly;
-static int bgscrollx;
-static int bgscrolly;
-static int txoffs;
-static int fgoffs;
-static int bgoffs;
-static int scroll_x;
-static int scroll_y;
-static int twincobr_display_on;
-static int twincobr_flip_screen;
+static INT32 txscrollx;
+static INT32 txscrolly;
+static INT32 fgscrollx;
+static INT32 fgscrolly;
+static INT32 bgscrollx;
+static INT32 bgscrolly;
+static INT32 txoffs;
+static INT32 fgoffs;
+static INT32 bgoffs;
+static INT32 scroll_x;
+static INT32 scroll_y;
+static INT32 twincobr_display_on;
+static INT32 twincobr_flip_screen;
 
 static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
@@ -140,25 +139,25 @@ VIDEO_START( toaplan0 )
 	twincobr_display_on = 0;
 	twincobr_display(twincobr_display_on);
 
-	state_save_register_UINT16("toaplan0", 0, "Text_Field", twincobr_txvideoram16, twincobr_txvideoram_size);
-	state_save_register_UINT16("toaplan0", 0, "FG_PlayField", twincobr_fgvideoram16, twincobr_fgvideoram_size);
-	state_save_register_UINT16("toaplan0", 0, "BG_PlayField", twincobr_bgvideoram16, twincobr_bgvideoram_size);
-	state_save_register_int("toaplan0", 0, "txoffs", &txoffs);
-	state_save_register_int("toaplan0", 0, "fgoffs", &fgoffs);
-	state_save_register_int("toaplan0", 0, "bgoffs", &bgoffs);
-	state_save_register_int("toaplan0", 0, "scroll_x", &scroll_x);
-	state_save_register_int("toaplan0", 0, "scroll_y", &scroll_y);
-	state_save_register_int("toaplan0", 0, "txscrollx", &txscrollx);
-	state_save_register_int("toaplan0", 0, "fgscrollx", &fgscrollx);
-	state_save_register_int("toaplan0", 0, "bgscrollx", &bgscrollx);
-	state_save_register_int("toaplan0", 0, "txscrolly", &txscrolly);
-	state_save_register_int("toaplan0", 0, "fgscrolly", &fgscrolly);
-	state_save_register_int("toaplan0", 0, "bgscrolly", &bgscrolly);
-	state_save_register_int("toaplan0", 0, "Display_On", &twincobr_display_on);
-	state_save_register_int("toaplan0", 0, "twincobr_fg_rom_bank", &twincobr_fg_rom_bank);
-	state_save_register_int("toaplan0", 0, "twincobr_bg_ram_bank", &twincobr_bg_ram_bank);
-	state_save_register_int("toaplan0", 0, "twincobr_flip_screen", &twincobr_flip_screen);
-	state_save_register_int("wardner", 0, "wardner_sprite_hack", &wardner_sprite_hack);
+	state_save_register_global_pointer(twincobr_txvideoram16, twincobr_txvideoram_size);
+	state_save_register_global_pointer(twincobr_fgvideoram16, twincobr_fgvideoram_size);
+	state_save_register_global_pointer(twincobr_bgvideoram16, twincobr_bgvideoram_size);
+	state_save_register_global(txoffs);
+	state_save_register_global(fgoffs);
+	state_save_register_global(bgoffs);
+	state_save_register_global(scroll_x);
+	state_save_register_global(scroll_y);
+	state_save_register_global(txscrollx);
+	state_save_register_global(fgscrollx);
+	state_save_register_global(bgscrollx);
+	state_save_register_global(txscrolly);
+	state_save_register_global(fgscrolly);
+	state_save_register_global(bgscrolly);
+	state_save_register_global(twincobr_display_on);
+	state_save_register_global(twincobr_fg_rom_bank);
+	state_save_register_global(twincobr_bg_ram_bank);
+	state_save_register_global(twincobr_flip_screen);
+	state_save_register_global(wardner_sprite_hack);
 	state_save_register_func_postload(twincobr_restore_screen);
 
 	return 0;

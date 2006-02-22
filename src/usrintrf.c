@@ -16,10 +16,11 @@ To do:
 #include "driver.h"
 #include "info.h"
 #include "vidhrdw/vector.h"
+#include "ui_text.h"
+#include "profiler.h"
+#include "cheat.h"
 #include <stdarg.h>
 #include <math.h>
-#include "ui_text.h"
-#include "state.h"
 
 #ifdef MESS
 #include "mess.h"
@@ -363,8 +364,12 @@ static void render_ui(mame_bitmap *dest);
  *
  *************************************/
 
-int ui_init(void)
+int ui_init(int show_disclaimer, int show_warnings, int show_gameinfo)
 {
+	/* load the localization file */
+	if (uistring_init(options.language_file) != 0)
+		fatalerror("uistring_init failed");
+
 	/* build up the font */
 	create_font();
 
@@ -381,6 +386,30 @@ int ui_init(void)
 	/* reset globals */
 	single_step = FALSE;
 	load_save_state = LOADSAVE_NONE;
+
+	add_exit_callback(ui_exit);
+
+	/* disable artwork for the start */
+	artwork_enable(FALSE);
+
+	/* before doing anything else, update the video and audio system once */
+	update_video_and_audio();
+
+	/* if we didn't find a settings file, show the disclaimer */
+	if (show_disclaimer && ui_display_copyright(artwork_get_ui_bitmap()) != 0)
+		return 1;
+
+	/* show info about incorrect behaviour (wrong colors etc.) */
+	if (show_warnings && ui_display_game_warnings(artwork_get_ui_bitmap()) != 0)
+		return 1;
+
+	/* show info about the game */
+	if (show_gameinfo && ui_display_game_info(artwork_get_ui_bitmap()) != 0)
+		return 1;
+
+	/* enable artwork now */
+	artwork_enable(TRUE);
+
 	return 0;
 }
 
@@ -1243,7 +1272,7 @@ static int handle_keys(mame_bitmap *bitmap)
 
 	/* if the on-screen display isn't up and the user has toggled it, turn it on */
 #ifdef MAME_DEBUG
-	if (!mame_debug)
+	if (!Machine->debug_mode)
 #endif
 		if (therm_state == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 			therm_state = -1;
@@ -3032,7 +3061,6 @@ static void showcharset(mame_bitmap *bitmap)
 	/* mark all the tilemaps dirty on exit so they are updated correctly on the next frame */
 	tilemap_mark_all_tiles_dirty(NULL);
 }
-
 
 
 int ui_display_decoding(mame_bitmap *bitmap, int percent)

@@ -17,7 +17,6 @@ likewise be a 2 screen game
 #include "vidhrdw/konamiic.h"
 #include "machine/eeprom.h"
 #include "cpu/z80/z80.h"
-#include "state.h"
 #include "sound/2151intf.h"
 #include "sound/k054539.h"
 
@@ -512,6 +511,13 @@ static INTERRUPT_GEN( xmen_interrupt )
 	else irq3_line_hold();
 }
 
+static MACHINE_START( xmen )
+{
+	state_save_register_global(sound_curbank);
+	state_save_register_func_postload(sound_reset_bank);
+	return 0;
+}
+
 static MACHINE_DRIVER_START( xmen )
 
 	/* basic machine hardware */
@@ -522,6 +528,8 @@ static MACHINE_DRIVER_START( xmen )
 	MDRV_CPU_ADD(Z80,8000000)	/* verified with M1, guessed but accurate */
 	/* audio CPU */	/* ????? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+
+	MDRV_MACHINE_START(xmen)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -551,7 +559,7 @@ static MACHINE_DRIVER_START( xmen )
 MACHINE_DRIVER_END
 
 
-static MACHINE_INIT(xmen6p)
+static MACHINE_RESET(xmen6p)
 {
 	xmen_current_frame = 0x0000;
 }
@@ -591,7 +599,7 @@ static MACHINE_DRIVER_START( xmen6p )
 
 	MDRV_NVRAM_HANDLER(xmen)
 
-	MDRV_MACHINE_INIT(xmen6p)
+	MDRV_MACHINE_RESET(xmen6p)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -861,9 +869,6 @@ static DRIVER_INIT( xmen )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
-
-	state_save_register_UINT8("main", 0, "sound bank", &sound_curbank, 1);
-	state_save_register_func_postload(sound_reset_bank);
 }
 
 GAME( 1992, xmen,    0,    xmen, xmen,   xmen,   ROT0, "Konami", "X-Men (4 Players ver UBB)", 0 )

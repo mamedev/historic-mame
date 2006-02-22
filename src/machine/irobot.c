@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "profiler.h"
 #include "cpuintrf.h"
 #include "cpu/m6809/m6809.h"
 #include "irobot.h"
@@ -188,7 +189,7 @@ static void scanline_callback(int scanline)
 }
 
 static void irmb_done_callback (int param);
-MACHINE_INIT( irobot )
+MACHINE_RESET( irobot )
 {
 	UINT8 *MB = memory_region(REGION_CPU2);
 

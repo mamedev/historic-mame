@@ -163,7 +163,8 @@ static MACHINE_DRIVER_START( puckpkmn )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
 
-	MDRV_MACHINE_INIT(genesis)
+	MDRV_MACHINE_START(genesis)
+	MDRV_MACHINE_RESET(genesis)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
@@ -270,8 +271,6 @@ DRIVER_INIT( puckpkmn )
 	UINT8 *rom	=	memory_region(REGION_CPU1);
 	size_t len		=	memory_region_length(REGION_CPU1);
 	int i;
-
-	init_genesis();
 
 	for (i = 0; i < len; i++)
 		rom[i] = BITSWAP8(rom[i],1,4,2,0,7,5,3,6);

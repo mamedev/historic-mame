@@ -123,7 +123,7 @@ static struct Samplesinterface custom_interface =
 };
 
 
-static MACHINE_INIT( polyplay )
+static MACHINE_RESET( polyplay )
 {
 	channel1_active = 0;
 	channel1_const = 0;
@@ -317,7 +317,7 @@ static MACHINE_DRIVER_START( polyplay )
 
 	MDRV_FRAMES_PER_SECOND(50)
 
-	MDRV_MACHINE_INIT(polyplay)
+	MDRV_MACHINE_RESET(polyplay)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -2,6 +2,9 @@
 #define cem3394_h
 
 
+#define CEM3394_SAMPLE_RATE		(44100*4)
+
+
 /* interface */
 struct cem3394_interface
 {

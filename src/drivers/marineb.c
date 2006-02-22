@@ -43,7 +43,7 @@ write
 extern unsigned char *marineb_column_scroll;
 extern int marineb_active_low_flipscreen;
 
-MACHINE_INIT( espial );
+MACHINE_RESET( espial );
 PALETTE_INIT( espial );
 
 WRITE8_HANDLER( marineb_palbank0_w );
@@ -59,16 +59,16 @@ VIDEO_UPDATE( hoccer );
 VIDEO_UPDATE( hopprobo );
 
 
-static MACHINE_INIT( marineb )
+static MACHINE_RESET( marineb )
 {
 	marineb_active_low_flipscreen = 0;
-	machine_init_espial();
+	machine_reset_espial();
 }
 
-static MACHINE_INIT( springer )
+static MACHINE_RESET( springer )
 {
 	marineb_active_low_flipscreen = 1;
-	machine_init_espial();
+	machine_reset_espial();
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -553,7 +553,7 @@ static MACHINE_DRIVER_START( marineb )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(5000)	/* frames per second, vblank duration */
 
-	MDRV_MACHINE_INIT(marineb)
+	MDRV_MACHINE_RESET(marineb)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -588,7 +588,7 @@ static MACHINE_DRIVER_START( springer )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(marineb)
-	MDRV_MACHINE_INIT(springer)
+	MDRV_MACHINE_RESET(springer)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(springer)
@@ -642,7 +642,7 @@ static MACHINE_DRIVER_START( bcruzm12 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(wanted)
-	MDRV_MACHINE_INIT(springer)
+	MDRV_MACHINE_RESET(springer)
 MACHINE_DRIVER_END
 
 /***************************************************************************

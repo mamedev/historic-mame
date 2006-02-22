@@ -25,7 +25,7 @@ static int MMC2_bank[4], MMC2_bank_latch[2];
  *  Init machine
  *
  *************************************/
-MACHINE_INIT( pc10 )
+MACHINE_RESET( pc10 )
 {
 	/* initialize latches and flip-flops */
 	pc10_nmi_enable = pc10_dog_di = pc10_dispmask = pc10_sdcs = pc10_int_detect = 0;

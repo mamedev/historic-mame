@@ -46,7 +46,7 @@ static void update_interrupts(void)
 }
 
 
-static MACHINE_INIT( xybots )
+static MACHINE_RESET( xybots )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -203,7 +203,7 @@ static MACHINE_DRIVER_START( xybots )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(xybots)
+	MDRV_MACHINE_RESET(xybots)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

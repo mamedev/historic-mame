@@ -4,7 +4,7 @@
 #include "driver.h"
 
 // Machine init
-MACHINE_INIT( tmp68301 );
+MACHINE_RESET( tmp68301 );
 
 // Hardware Registers
 extern UINT16 *tmp68301_regs;

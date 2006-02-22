@@ -35,8 +35,7 @@
 *****************************************************************************/
 #include <stdio.h>
 #include "arm7.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "arm7core.h"   //include arm7 core
 
 /* Example for showing how Co-Proc functions work */

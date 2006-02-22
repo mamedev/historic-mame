@@ -73,8 +73,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "m6809.h"
 
 /* Enable big switch statement for the main opcodes */
@@ -440,18 +440,18 @@ static void m6809_set_context(void *src)
 static void m6809_init(void)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_register_UINT16("m6809", cpu, "PC", &PC, 1);
-	state_save_register_UINT16("m6809", cpu, "PPC", &PPC, 1);
-	state_save_register_UINT16("m6809", cpu, "D", &D, 1);
-	state_save_register_UINT8("m6809", cpu, "DP", &DP, 1);
-	state_save_register_UINT16("m6809", cpu, "U", &U, 1);
-	state_save_register_UINT16("m6809", cpu, "S", &S, 1);
-	state_save_register_UINT16("m6809", cpu, "X", &X, 1);
-	state_save_register_UINT16("m6809", cpu, "Y", &Y, 1);
-	state_save_register_UINT8("m6809", cpu, "CC", &CC, 1);
-	state_save_register_UINT8("m6809", cpu, "IRQ", &m6809.irq_state[0], 2);
-	state_save_register_UINT8("m6809", cpu, "INT", &m6809.int_state, 1);
-	state_save_register_UINT8("m6809", cpu, "NMI", &m6809.nmi_state, 1);
+	state_save_register_item("m6809", cpu, PC);
+	state_save_register_item("m6809", cpu, PPC);
+	state_save_register_item("m6809", cpu, D);
+	state_save_register_item("m6809", cpu, DP);
+	state_save_register_item("m6809", cpu, U);
+	state_save_register_item("m6809", cpu, S);
+	state_save_register_item("m6809", cpu, X);
+	state_save_register_item("m6809", cpu, Y);
+	state_save_register_item("m6809", cpu, CC);
+	state_save_register_item_array("m6809", cpu, m6809.irq_state);
+	state_save_register_item("m6809", cpu, m6809.int_state);
+	state_save_register_item("m6809", cpu, m6809.nmi_state);
 }
 
 static void m6809_reset(void *param)

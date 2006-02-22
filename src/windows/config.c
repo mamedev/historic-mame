@@ -54,7 +54,7 @@ extern struct rc_option video_opts[];
 #include "configms.h"
 #endif
 
-extern int frontend_help(char *gamename);
+extern int frontend_help (const char *gamename, const char *filename);
 static int config_handle_arg(char *arg);
 
 static FILE *logfile;
@@ -76,6 +76,7 @@ extern int attenuation;
 static char *playbackname;
 static char *recordname;
 static char *gamename;
+static char *gamepath;
 static char *statename;
 static char *debugscript;
 
@@ -387,6 +388,11 @@ struct rc_struct *cli_rc_create(void)
 	return result;
 }
 
+struct rc_struct *cli_rc_access(void)
+{
+	return rc;
+}
+
 int cli_frontend_init (int argc, char **argv)
 {
 	machine_config drv;
@@ -395,6 +401,7 @@ int cli_frontend_init (int argc, char **argv)
 	int i;
 
 	gamename = NULL;
+	gamepath = NULL;
 	game_index = -1;
 
 	/* clear all core options */
@@ -505,7 +512,7 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* check for frontend options, horrible 1234 hack */
-	if (frontend_help(gamename) != 1234)
+	if (frontend_help(gamename, gamepath) != 1234)
 		exit(0);
 
 	/* we give up. print a few approximate matches */
@@ -718,8 +725,16 @@ void cli_frontend_exit(void)
 		write_config(NULL, Machine->gamedrv);
 #endif /* MESS */
 
-	free(gamename);
-	gamename = NULL;
+	if (gamename)
+	{
+		free(gamename);
+		gamename = NULL;
+	}
+	if (gamepath)
+	{
+		free(gamepath);
+		gamepath = NULL;
+	}
 
 	rc_destroy(rc);
 	rc = NULL;
@@ -787,6 +802,7 @@ static int config_handle_arg(char *arg)
 		gamename = arg;
 		gamename = win_basename(gamename);
 		gamename = win_strip_extension(gamename);
+		gamepath = strdup(arg);
 
 		/* do we have a driver for this? */
 		for (i = 0; drivers[i]; i++)

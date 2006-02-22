@@ -119,7 +119,7 @@ extern READ16_HANDLER(amiga_cia_r);
 extern WRITE16_HANDLER(amiga_cia_w);
 extern READ16_HANDLER(amiga_custom_r);
 extern WRITE16_HANDLER(amiga_custom_w);
-extern MACHINE_INIT(amiga);
+extern MACHINE_RESET(amiga);
 extern void amiga_cia_issue_index( void );
 
 extern UINT16 *amiga_expansion_ram;

@@ -53,7 +53,7 @@ extern WRITE8_HANDLER( arkanoid_videoram_w );
 extern VIDEO_START( arkanoid );
 extern VIDEO_UPDATE( arkanoid );
 
-extern MACHINE_INIT( arkanoid );
+extern MACHINE_RESET( arkanoid );
 
 extern WRITE8_HANDLER( arkanoid_d008_w );
 
@@ -283,7 +283,7 @@ static MACHINE_DRIVER_START( arkanoid )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)					// 100 CPU slices per second to synchronize between the MCU and the main CPU
 
-	MDRV_MACHINE_INIT(arkanoid)
+	MDRV_MACHINE_RESET(arkanoid)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

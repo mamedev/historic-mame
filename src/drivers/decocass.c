@@ -434,7 +434,7 @@ static MACHINE_DRIVER_START( decocass )
 	MDRV_VBLANK_DURATION(3072)		/* frames per second, vblank duration */
 	MDRV_INTERLEAVE(7)				/* interleave CPUs */
 
-	MDRV_MACHINE_INIT(decocass)
+	MDRV_MACHINE_RESET(decocass)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -463,7 +463,7 @@ static MACHINE_DRIVER_START( ctsttape )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(ctsttape)
+	MDRV_MACHINE_RESET(ctsttape)
 MACHINE_DRIVER_END
 
 
@@ -471,7 +471,7 @@ static MACHINE_DRIVER_START( clocknch )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(clocknch)
+	MDRV_MACHINE_RESET(clocknch)
 MACHINE_DRIVER_END
 
 
@@ -479,7 +479,7 @@ static MACHINE_DRIVER_START( ctisland )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(ctisland)
+	MDRV_MACHINE_RESET(ctisland)
 MACHINE_DRIVER_END
 
 
@@ -487,7 +487,7 @@ static MACHINE_DRIVER_START( csuperas )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(csuperas)
+	MDRV_MACHINE_RESET(csuperas)
 MACHINE_DRIVER_END
 
 
@@ -495,7 +495,7 @@ static MACHINE_DRIVER_START( castfant )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(castfant)
+	MDRV_MACHINE_RESET(castfant)
 MACHINE_DRIVER_END
 
 
@@ -503,7 +503,7 @@ static MACHINE_DRIVER_START( cluckypo )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cluckypo)
+	MDRV_MACHINE_RESET(cluckypo)
 MACHINE_DRIVER_END
 
 
@@ -511,7 +511,7 @@ static MACHINE_DRIVER_START( cterrani )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cterrani)
+	MDRV_MACHINE_RESET(cterrani)
 MACHINE_DRIVER_END
 
 
@@ -519,7 +519,7 @@ static MACHINE_DRIVER_START( cexplore )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cexplore)
+	MDRV_MACHINE_RESET(cexplore)
 MACHINE_DRIVER_END
 
 
@@ -527,7 +527,7 @@ static MACHINE_DRIVER_START( cprogolf )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cprogolf)
+	MDRV_MACHINE_RESET(cprogolf)
 MACHINE_DRIVER_END
 
 
@@ -535,7 +535,7 @@ static MACHINE_DRIVER_START( cmissnx )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cmissnx)
+	MDRV_MACHINE_RESET(cmissnx)
 MACHINE_DRIVER_END
 
 
@@ -543,7 +543,7 @@ static MACHINE_DRIVER_START( cdiscon1 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cdiscon1)
+	MDRV_MACHINE_RESET(cdiscon1)
 MACHINE_DRIVER_END
 
 
@@ -551,7 +551,7 @@ static MACHINE_DRIVER_START( cptennis )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cptennis)
+	MDRV_MACHINE_RESET(cptennis)
 MACHINE_DRIVER_END
 
 
@@ -559,7 +559,7 @@ static MACHINE_DRIVER_START( ctornado )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(ctornado)
+	MDRV_MACHINE_RESET(ctornado)
 MACHINE_DRIVER_END
 
 
@@ -567,7 +567,7 @@ static MACHINE_DRIVER_START( cbnj )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cbnj)
+	MDRV_MACHINE_RESET(cbnj)
 MACHINE_DRIVER_END
 
 
@@ -575,7 +575,7 @@ static MACHINE_DRIVER_START( cburnrub )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cburnrub)
+	MDRV_MACHINE_RESET(cburnrub)
 MACHINE_DRIVER_END
 
 
@@ -583,7 +583,7 @@ static MACHINE_DRIVER_START( cbtime )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cbtime)
+	MDRV_MACHINE_RESET(cbtime)
 MACHINE_DRIVER_END
 
 
@@ -591,7 +591,7 @@ static MACHINE_DRIVER_START( cgraplop )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cgraplop)
+	MDRV_MACHINE_RESET(cgraplop)
 MACHINE_DRIVER_END
 
 
@@ -599,7 +599,7 @@ static MACHINE_DRIVER_START( cgraplp2 )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cgraplp2)
+	MDRV_MACHINE_RESET(cgraplp2)
 MACHINE_DRIVER_END
 
 
@@ -607,7 +607,7 @@ static MACHINE_DRIVER_START( clapapa )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(clapapa)
+	MDRV_MACHINE_RESET(clapapa)
 MACHINE_DRIVER_END
 
 
@@ -615,7 +615,7 @@ static MACHINE_DRIVER_START( cfghtice )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cfghtice)
+	MDRV_MACHINE_RESET(cfghtice)
 MACHINE_DRIVER_END
 
 
@@ -623,7 +623,7 @@ static MACHINE_DRIVER_START( cprobowl )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cprobowl)
+	MDRV_MACHINE_RESET(cprobowl)
 MACHINE_DRIVER_END
 
 
@@ -631,7 +631,7 @@ static MACHINE_DRIVER_START( cnightst )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cnightst)
+	MDRV_MACHINE_RESET(cnightst)
 MACHINE_DRIVER_END
 
 
@@ -639,7 +639,7 @@ static MACHINE_DRIVER_START( cprosocc )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cprosocc)
+	MDRV_MACHINE_RESET(cprosocc)
 MACHINE_DRIVER_END
 
 
@@ -647,7 +647,7 @@ static MACHINE_DRIVER_START( cppicf )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cppicf)
+	MDRV_MACHINE_RESET(cppicf)
 MACHINE_DRIVER_END
 
 
@@ -655,7 +655,7 @@ static MACHINE_DRIVER_START( cbdash )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cbdash)
+	MDRV_MACHINE_RESET(cbdash)
 MACHINE_DRIVER_END
 
 
@@ -663,7 +663,7 @@ static MACHINE_DRIVER_START( cscrtry )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cscrtry)
+	MDRV_MACHINE_RESET(cscrtry)
 MACHINE_DRIVER_END
 
 
@@ -671,7 +671,7 @@ static MACHINE_DRIVER_START( cflyball )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(cflyball)
+	MDRV_MACHINE_RESET(cflyball)
 MACHINE_DRIVER_END
 
 
@@ -679,7 +679,7 @@ static MACHINE_DRIVER_START( czeroize )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(decocass)
-	MDRV_MACHINE_INIT(czeroize)
+	MDRV_MACHINE_RESET(czeroize)
 	MDRV_VISIBLE_AREA(1*8, 32*8-1, 1*8, 31*8-1)
 MACHINE_DRIVER_END
 

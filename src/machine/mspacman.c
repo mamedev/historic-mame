@@ -178,7 +178,7 @@ void mspacman_decode(void)
 }
 
 
-MACHINE_INIT( mspacman )
+MACHINE_RESET( mspacman )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mspacman_decode();

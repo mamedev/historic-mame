@@ -176,7 +176,7 @@ static void update_interrupts(void)
 
 static void delayed_joystick_int(int param);
 
-static MACHINE_INIT( atarisy1 )
+static MACHINE_RESET( atarisy1 )
 {
 	/* initialize the system */
 	atarigen_eeprom_reset();
@@ -750,7 +750,7 @@ static MACHINE_DRIVER_START( atarisy1 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(atarisy1)
+	MDRV_MACHINE_RESET(atarisy1)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

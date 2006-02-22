@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "debugger.h"
 #include "midwayic.h"
 #include "machine/idectrl.h"
 #include "sndhrdw/cage.h"
@@ -340,12 +341,7 @@ void midway_serial_pic2_w(UINT8 data)
 					memcpy(pic.buffer, serial.data, 16);
 					pic.total = 16;
 					pic.index = 0;
-#ifdef MAME_DEBUG
-{
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-}
-#endif
+					DEBUGGER_BREAK;
 				}
 				break;
 

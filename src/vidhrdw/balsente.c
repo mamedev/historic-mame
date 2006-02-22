@@ -36,6 +36,12 @@ static UINT8 palettebank_vis;
  *
  *************************************/
 
+static void balsente_postload(void)
+{
+	memset(scanline_dirty, 1, 256);
+}
+
+
 VIDEO_START( balsente )
 {
 	/* reset the system */
@@ -67,6 +73,14 @@ VIDEO_START( balsente )
 	/* determine sprite size */
 	sprite_data = memory_region(REGION_GFX1);
 	sprite_mask = memory_region_length(REGION_GFX1) - 1;
+
+	/* register for saving */
+	state_save_register_global_pointer(local_videoram, 256 * 256);
+	state_save_register_global_pointer(scanline_palette, 256);
+	state_save_register_global(last_scanline_palette);
+	state_save_register_global(screen_refresh_counter);
+	state_save_register_global(palettebank_vis);
+	state_save_register_func_postload(balsente_postload);
 
 	return 0;
 }
@@ -294,7 +308,7 @@ VIDEO_UPDATE( balsente )
 	palette_set_color(1024, 0xff, 0xff, 0xff);
 
 	/* draw any dirty scanlines from the VRAM directly */
-	for (y = 0; y < 240; y++)
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		if (scanline_dirty[y] || update_all)
 		{
 			pen_t *pens = &Machine->pens[scanline_palette[y] * 256];

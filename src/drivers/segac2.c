@@ -80,7 +80,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
-#include "state.h"
 #include "machine/random.h"
 #include "genesis.h"
 
@@ -128,10 +127,21 @@ static UINT8		bloxeed_sound;		/* use kludge for bloxeed sound? */
 
 ******************************************************************************/
 
-MACHINE_INIT( segac2 )
+static MACHINE_START( segac2 )
+{
+	if (machine_start_genesis())
+		return 1;
+	state_save_register_global_array(misc_io_data);
+	state_save_register_global(prot_write_buf);
+	state_save_register_global(prot_read_buf);
+	return 0;
+}
+
+
+MACHINE_RESET( segac2 )
 {
 	/* set up interrupts and such */
-	machine_init_genesis();
+	machine_reset_genesis();
 
 	/* determine how many sound banks */
 	sound_banks = 0;
@@ -1294,7 +1304,8 @@ static MACHINE_DRIVER_START( segac )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int)(((262. - 224.) / 262.) * 1000000. / 60.))
 
-	MDRV_MACHINE_INIT(segac2)
+	MDRV_MACHINE_START(segac2)
+	MDRV_MACHINE_RESET(segac2)
 	MDRV_NVRAM_HANDLER(generic_randfill)
 
 	/* video hardware */
@@ -1726,27 +1737,22 @@ ROM_END
 
 ******************************************************************************/
 
-static void common_init(const UINT32 *table)
+static void segac2_common_init(const UINT32 *table)
 {
-	init_genesis();
 	prot_table = table;
 	bloxeed_sound = 0;
-
-	state_save_register_UINT8("C2_IO", 0, "I/O Writes", misc_io_data, 0x10);
-	state_save_register_UINT8("C2 Protection", 0, "Write Buffer", &prot_write_buf, 1);
-	state_save_register_UINT8("C2 Protection", 0, "Read Buffer", &prot_read_buf, 1);
 }
 
 
 static DRIVER_INIT( c2boot )
 {
-	common_init(NULL);
+	segac2_common_init(NULL);
 }
 
 
 static DRIVER_INIT( bloxeedc )
 {
-	common_init(NULL);
+	segac2_common_init(NULL);
 	bloxeed_sound = 1;
 }
 
@@ -1764,7 +1770,7 @@ static DRIVER_INIT( columns )
 		0x30b40387, 0x74f047c3, 0x75f546c6, 0x31b10282,
 		0x30b40387, 0x74f047c3, 0xfd75ce46, 0xb9318a02
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1781,7 +1787,7 @@ static DRIVER_INIT( columns2 )
 		0xaabfbba6, 0xaabfbba6, 0xeeffffe6, 0xa8b9fde4,
 		0xeeffffe6, 0xeeffffe6, 0xffffeee6, 0xb9b9ece4
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1799,7 +1805,7 @@ static DRIVER_INIT( borench )
 		0x12ba56fe, 0x56fe56ef, 0x00aa44ee, 0xcceeccff,
 		0xd77fd77f, 0xf55dd76e, 0xd57fd57f, 0x7f5d5d6e
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1816,14 +1822,14 @@ static DRIVER_INIT( tfrceac )
 		0x5d19084c, 0x5d19084c, 0x7ff72aa2, 0x6ee63bb3,
 		0x5d19084c, 0x5d19084c, 0x5d9108c4, 0x4c8019d5
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
 static DRIVER_INIT( tfrceacb )
 {
 	/* disable the palette bank switching from the protection chip */
-	common_init(NULL);
+	segac2_common_init(NULL);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x800001, 0, 0, MWA16_NOP);
 }
 
@@ -1841,7 +1847,7 @@ static DRIVER_INIT( twinsqua )
 		0x33bb22aa, 0xffffeeee, 0x66ee75fd, 0x33bb20a8,
 		0x33bb33bb, 0xbbbbbbbb, 0x66ee64ec, 0x77ff75fd
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1858,7 +1864,7 @@ static DRIVER_INIT( ribbit )
 		0xdfdf131b, 0x5757bbb3, 0xdede9a9a, 0x56563232,
 		0xceec0239, 0x5775bb91, 0xcfed8bb8, 0x56743210
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1876,7 +1882,7 @@ static DRIVER_INIT( tantr )
 		0x5d55b7bf, 0x4444aeae, 0x5c54b6be, 0x67678d8d,
 		0x5d77b79d, 0x5577bf9d, 0x5c76b69c, 0x76769c9c
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1893,7 +1899,7 @@ static DRIVER_INIT( tantrkor )
 		0xd5d76664, 0xd5d76664, 0x80c62264, 0x80c62264,
 		0xd5d76664, 0xd5d76664, 0x80c62264, 0x80c62264
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -1911,7 +1917,7 @@ static DRIVER_INIT( puyo )
 		0x22bb66ff, 0x7fa23be6, 0xab33ef77, 0xfe22ba66,
 		0x66ff66ff, 0x19c419c4, 0xef77ef77, 0x98449844
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 static DRIVER_INIT( ichir )
@@ -1927,7 +1933,7 @@ static DRIVER_INIT( ichir )
 		0x2a082a08, 0x2a082a08, 0x3b192a08, 0x3b192a08,
 		0xffddeecc, 0xbb99aa88, 0xeecceecc, 0xaa88aa88
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 static DRIVER_INIT( ichirk )
@@ -1943,7 +1949,7 @@ static DRIVER_INIT( ichirk )
 		0x8a8a8a8a, 0xcececece,	0x9b9b8a8a, 0xdfdfcece,
 		0x9b029b02, 0x9b029b02,	0xa831b920, 0xa831b920
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 static DRIVER_INIT( ichirj )
@@ -1960,7 +1966,7 @@ static DRIVER_INIT( ichirj )
 		0x99dd88cc, 0xdd99cc88, 0x99dd99dd, 0xdd99dd99,
 		0xee66ee66, 0xaa22aa22, 0xee66ff77, 0xaa22bb33
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 static DRIVER_INIT( ichirjbl )
 {
@@ -1983,7 +1989,7 @@ static DRIVER_INIT( stkclmns )
 		0x9911bb33, 0x8811aa33, 0x9911aa22, 0x8811bb22,
 		0x9b13b931, 0x8a13a831, 0x9b13a820, 0x8a13b920
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 static DRIVER_INIT( stkclmnj )
@@ -1999,7 +2005,7 @@ static DRIVER_INIT( stkclmnj )
 		0x00442266, 0x44006622, 0x00552277, 0x44116633,
 		0xeeeedddd, 0x22221111, 0xeeffddcc, 0x22331100
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -2017,7 +2023,7 @@ static DRIVER_INIT( puyopuy2 )
 		0x15159d9d, 0x15151515, 0x8c15049d, 0x8c158c15,
 		0x15159d9d, 0x37373737, 0x8c15049d, 0xae37ae37
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -2037,7 +2043,7 @@ static DRIVER_INIT( potopoto )
 		0x00000000, 0x00000000, 0x00000000, 0x00000000,
 		0x00000000, 0x00000000, 0x00000000, 0x00000000
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -2054,7 +2060,7 @@ static DRIVER_INIT( zunkyou )
 		0x28396c7d, 0x0a1b0a1b, 0x64752031, 0x64756475,
 		0x3b2a7f6e, 0x19081908, 0x33227766, 0x33223322
 	};
-	common_init(table);
+	segac2_common_init(table);
 }
 
 
@@ -2071,7 +2077,7 @@ static DRIVER_INIT( pclub )
 		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff,
 		0xffffffff, 0xffffffff, 0xffffffff, 0xffffffff
 	};
-	common_init(table);
+	segac2_common_init(table);
 
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880120, 0x880121, 0, 0, printer_r );/*Print Club Vol.1*/
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880124, 0x880125, 0, 0, printer_r );/*Print Club Vol.2*/
@@ -2091,7 +2097,7 @@ static DRIVER_INIT( pclubjv2 )
 		0x99dd99dd, 0x88cc88cc, 0x91d591d5, 0x91d591d5,
 		0x9b9b9b9b, 0x8ace8ace, 0x93939393, 0x93d793d7
 	};
-	common_init(table);
+	segac2_common_init(table);
 
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880120, 0x880121, 0, 0, printer_r );/*Print Club Vol.1*/
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880124, 0x880125, 0, 0, printer_r );/*Print Club Vol.2*/
@@ -2111,7 +2117,7 @@ static DRIVER_INIT( pclubjv4 )
 		0xea62ea62, 0xc840c840,	0xd951c840, 0x9d158c04,
 		0xea62ea62, 0xc840c840,	0xd951c840, 0x9d158c04
 	};
-	common_init(table);
+	segac2_common_init(table);
 
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880120, 0x880121, 0, 0, printer_r );/*Print Club Vol.1*/
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880124, 0x880125, 0, 0, printer_r );/*Print Club Vol.2*/
@@ -2131,7 +2137,7 @@ static DRIVER_INIT( pclubjv5 )
 		0x00888800, 0x44cccc44,	0x24acac24, 0x60e8e860,
 		0x99881100, 0xddcc5544,	0xbdac3524, 0xf9e87160
 	};
-	common_init(table);
+	segac2_common_init(table);
 
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880120, 0x880121, 0, 0, printer_r );/*Print Club Vol.1*/
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880124, 0x880125, 0, 0, printer_r );/*Print Club Vol.2*/

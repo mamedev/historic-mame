@@ -7,7 +7,7 @@
 /* defined in machine/kyugo.c */
 extern UINT8 *kyugo_sharedram;
 
-MACHINE_INIT( kyugo );
+MACHINE_RESET( kyugo );
 
 READ8_HANDLER( kyugo_sharedram_r );
 

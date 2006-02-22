@@ -43,7 +43,7 @@ static void periodic_callback(int scanline)
 }
 
 
-static MACHINE_INIT( wolfpack )
+static MACHINE_RESET( wolfpack )
 {
 	timer_set(cpu_getscanlinetime(0), 0, periodic_callback);
 }
@@ -345,7 +345,7 @@ static MACHINE_DRIVER_START(wolfpack)
 	MDRV_FRAMES_PER_SECOND(60)
 
 	/* video hardware */
-	MDRV_MACHINE_INIT(wolfpack)
+	MDRV_MACHINE_RESET(wolfpack)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(512, 262)

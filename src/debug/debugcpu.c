@@ -37,10 +37,6 @@
 **  LOCAL VARIABLES
 **#################################################################################################*/
 
-/* fixme: make this go away */
-int debug_key_pressed;
-/* fixme: end */
-
 FILE *debug_source_file;
 symbol_table *global_symtable;
 
@@ -115,107 +111,13 @@ void mame_debug_init(void)
 
 
 /*-------------------------------------------------
-    mame_debug_exit - shutdown all subsections
+    mame_debug_break - break into the debugger
 -------------------------------------------------*/
 
-void mame_debug_exit(void)
+void mame_debug_break(void)
 {
-	debug_view_exit();
-	debug_console_exit();
-	debug_command_exit();
-	debug_cpu_exit();
+	debug_halt_on_next_instruction();
 }
-
-
-/*-------------------------------------------------
-    set_ea_info - hacky substitute for the old
-    version in mamedbg.c
--------------------------------------------------*/
-
-#ifdef MAME_DEBUG
-const char *set_ea_info(int what, unsigned value, int size, int access)
-{
-	static char buffer[8][63+1];
-	static int which = 0;
-	const char *sign = "";
-	unsigned width, result;
-
-	which = (which + 1) % 8;
-
-	if( access == EA_REL_PC )
-		/* PC relative calls set_ea_info with value = PC and size = offset */
-		result = value + size;
-	else
-		result = value;
-
-	switch( access )
-	{
-		case EA_VALUE:	/* Immediate value */
-			switch( size )
-			{
-				case EA_INT8:
-				case EA_UINT8:
-					width = 2;
-					break;
-				case EA_INT16:
-				case EA_UINT16:
-					width = 4;
-					break;
-				case EA_INT32:
-				case EA_UINT32:
-					width = 8;
-					break;
-				default:
-					return "set_ea_info: invalid <size>!";
-			}
-
-			switch( size )
-			{
-				case EA_INT8:
-				case EA_INT16:
-				case EA_INT32:
-					if( result & (1 << ((width * 4) - 1)) )
-					{
-						sign = "-";
-						result = (unsigned)-result;
-					}
-					break;
-			}
-
-			if (width < 8)
-				result &= (1 << (width * 4)) - 1;
-			break;
-
-		case EA_ZPG_RD:
-		case EA_ZPG_WR:
-		case EA_ZPG_RDWR:
-			result &= 0xff;
-			width = 2;
-			break;
-
-		case EA_ABS_PC: /* Absolute program counter change */
-			result &= (active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
-			if( size == EA_INT8 || size == EA_UINT8 )
-				width = 2;
-			else
-			if( size == EA_INT16 || size == EA_UINT16 )
-				width = 4;
-			else
-			if( size == EA_INT32 || size == EA_UINT32 )
-				width = 8;
-			else
-				width = (activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM) + 3) / 4;
-			break;
-
-		case EA_REL_PC: /* Relative program counter change */
-		default:
-			result &= (active_address_space[ADDRESS_SPACE_PROGRAM].addrmask | 3);
-			width = (activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM) + 3) / 4;
-	}
-	sprintf( buffer[which], "%s$%0*X", sign, width, result );
-	return buffer[which];
-}
-#endif
 
 
 
@@ -349,6 +251,8 @@ void debug_cpu_init(void)
 			spaceinfo->logbytemask = ((spaceinfo->logaddrmask << spaceinfo->addr2byte_lshift) | ((1 << spaceinfo->addr2byte_lshift) - 1)) >> spaceinfo->addr2byte_rshift;
 		}
 	}
+
+	add_exit_callback(debug_cpu_exit);
 }
 
 
@@ -719,11 +623,11 @@ static void set_cpu_reg(UINT32 ref, UINT64 value)
 **#################################################################################################*/
 
 /*-------------------------------------------------
-    MAME_Debug - called by the CPU cores before
-    executing any instruction
+    mame_debug_hook - called by the CPU cores
+    before executing each instruction
 -------------------------------------------------*/
 
-void MAME_Debug(void)
+void mame_debug_hook(void)
 {
 	int cpunum = cpu_getactivecpu();
 	debug_cpu_info *info = &debug_cpuinfo[cpunum];

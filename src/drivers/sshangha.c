@@ -134,7 +134,7 @@ static READ16_HANDLER( deco_71_r )
 
 /******************************************************************************/
 
-static MACHINE_INIT( sshangha )
+static MACHINE_RESET( sshangha )
 {
 	/* Such thing is needed as there is no code to turn the screen
        to normal orientation when the game is reset.
@@ -354,7 +354,7 @@ static MACHINE_DRIVER_START( sshangha )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(529)
-	MDRV_MACHINE_INIT(sshangha)	/* init machine */
+	MDRV_MACHINE_RESET(sshangha)	/* init machine */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN /*| VIDEO_BUFFERS_SPRITERAM*/)

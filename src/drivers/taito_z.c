@@ -771,7 +771,6 @@ J1100256A VIDEO PCB
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/generic.h"
@@ -799,9 +798,9 @@ READ16_HANDLER ( TC0150ROD_word_r );	/* Road generator */
 WRITE16_HANDLER( TC0150ROD_word_w );
 
 static UINT16 cpua_ctrl = 0xff;
-static int sci_int6 = 0;
-static int dblaxle_int6 = 0;
-static int ioc220_port = 0;
+static INT32 sci_int6 = 0;
+static INT32 dblaxle_int6 = 0;
+static INT32 ioc220_port = 0;
 static UINT16 eep_latch = 0;
 
 //static UINT16 *taitoz_ram;
@@ -892,6 +891,7 @@ static void taitoz_cpub_interrupt6(int x)
 	cpunum_set_input_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 #endif
+
 
 
 /***** Routines for particular games *****/
@@ -1326,7 +1326,7 @@ static READ16_HANDLER( aquajack_unknown_r )
                         SOUND
 *****************************************************/
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)	/* assumes Z80 sandwiched between 68Ks */
 {
@@ -1390,6 +1390,27 @@ static READ16_HANDLER( taitoz_msb_sound_r )
 	else return 0;
 }
 #endif
+
+
+/***********************************************************
+                   SAVE STATES
+***********************************************************/
+
+static MACHINE_START( taitoz )
+{
+	state_save_register_global(cpua_ctrl);
+	state_save_register_func_postload(parse_control);
+
+	/* these are specific to various games: we ought to split the inits */
+	state_save_register_global(sci_int6);
+	state_save_register_global(dblaxle_int6);
+	state_save_register_global(ioc220_port);
+
+	state_save_register_global(banknum);
+	state_save_register_func_postload(reset_sound_region);
+	return 0;
+}
+
 
 /***********************************************************
                    MEMORY STRUCTURES
@@ -3217,6 +3238,8 @@ static MACHINE_DRIVER_START( contcirc )
 	MDRV_CPU_PROGRAM_MAP(contcirc_cpub_readmem,contcirc_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
+	MDRV_MACHINE_START(taitoz)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -3259,6 +3282,8 @@ static MACHINE_DRIVER_START( chasehq )
 	MDRV_CPU_PROGRAM_MAP(chq_cpub_readmem,chq_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
+	MDRV_MACHINE_START(taitoz)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -3299,6 +3324,8 @@ static MACHINE_DRIVER_START( enforce )
 	MDRV_CPU_PROGRAM_MAP(enforce_cpub_readmem,enforce_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
 
+	MDRV_MACHINE_START(taitoz)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
@@ -3337,6 +3364,8 @@ static MACHINE_DRIVER_START( bshark )
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(bshark_cpub_readmem,bshark_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_MACHINE_START(taitoz)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3379,6 +3408,8 @@ static MACHINE_DRIVER_START( sci )
 	MDRV_CPU_PROGRAM_MAP(sci_cpub_readmem,sci_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
+	MDRV_MACHINE_START(taitoz)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(50)
@@ -3419,6 +3450,8 @@ static MACHINE_DRIVER_START( nightstr )
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(nightstr_cpub_readmem,nightstr_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_MACHINE_START(taitoz)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3461,6 +3494,8 @@ static MACHINE_DRIVER_START( aquajack )
 	MDRV_CPU_PROGRAM_MAP(aquajack_cpub_readmem,aquajack_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
+	MDRV_MACHINE_START(taitoz)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(500)
@@ -3497,6 +3532,8 @@ static MACHINE_DRIVER_START( spacegun )
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(spacegun_cpub_readmem,spacegun_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_MACHINE_START(taitoz)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -3540,6 +3577,8 @@ static MACHINE_DRIVER_START( dblaxle )
 	MDRV_CPU_PROGRAM_MAP(dblaxle_cpub_readmem,dblaxle_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(dblaxle_cpub_interrupt,1)
 
+	MDRV_MACHINE_START(taitoz)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
@@ -3580,6 +3619,8 @@ static MACHINE_DRIVER_START( racingb )
 	MDRV_CPU_ADD(M68000, 16000000)	/* 16 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(racingb_cpub_readmem,racingb_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(dblaxle_cpub_interrupt,1)
+
+	MDRV_MACHINE_START(taitoz)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -4439,25 +4480,15 @@ static DRIVER_INIT( taitoz )
 //  taitosnd_setz80_soundcpu( 2 );
 
 	cpua_ctrl = 0xff;
-	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
-	state_save_register_func_postload(parse_control);
-
-	/* these are specific to various games: we ought to split the inits */
-	state_save_register_int   ("main2", 0, "control", &sci_int6);
-	state_save_register_int   ("main3", 0, "control", &dblaxle_int6);
-	state_save_register_int   ("main4", 0, "register", &ioc220_port);
-
-	state_save_register_int   ("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
 }
 
 static DRIVER_INIT( bshark )
 {
 	cpua_ctrl = 0xff;
-	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_global(cpua_ctrl);
 	state_save_register_func_postload(parse_control_noz80);
 
-	state_save_register_UINT16("main2", 0, "control", &eep_latch, 1);
+	state_save_register_global(eep_latch);
 }
 
 

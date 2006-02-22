@@ -51,11 +51,8 @@
         added save state support.
 */
 
-#include "cpuintrf.h"
-#include "memory.h"
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "m37710cm.h"
 
 #define M37710_DEBUG	(0)	// enables verbose logging for peripherals, etc.
@@ -1050,6 +1047,8 @@ static void m37710_restore_state(void)
 
 void m37710_init(void)
 {
+	int cpu = cpu_getactivecpu();
+
 	m37710i_cpu.timers[0] = timer_alloc(m37710_timer_a0_cb);
 	m37710i_cpu.timers[1] = timer_alloc(m37710_timer_a1_cb);
 	m37710i_cpu.timers[2] = timer_alloc(m37710_timer_a2_cb);
@@ -1059,39 +1058,39 @@ void m37710_init(void)
 	m37710i_cpu.timers[6] = timer_alloc(m37710_timer_b1_cb);
 	m37710i_cpu.timers[7] = timer_alloc(m37710_timer_b2_cb);
 
-	state_save_register_UINT32("M377xx", 0, "a", &m37710i_cpu.a, 1);
-	state_save_register_UINT32("M377xx", 0, "b", &m37710i_cpu.b, 1);
-	state_save_register_UINT32("M377xx", 0, "ba", &m37710i_cpu.ba, 1);
-	state_save_register_UINT32("M377xx", 0, "bb", &m37710i_cpu.bb, 1);
-	state_save_register_UINT32("M377xx", 0, "x", &m37710i_cpu.x, 1);
-	state_save_register_UINT32("M377xx", 0, "y", &m37710i_cpu.y, 1);
-	state_save_register_UINT32("M377xx", 0, "s", &m37710i_cpu.s, 1);
-	state_save_register_UINT32("M377xx", 0, "pc", &m37710i_cpu.pc, 1);
-	state_save_register_UINT32("M377xx", 0, "ppc", &m37710i_cpu.ppc, 1);
-	state_save_register_UINT32("M377xx", 0, "pb", &m37710i_cpu.pb, 1);
-	state_save_register_UINT32("M377xx", 0, "db", &m37710i_cpu.db, 1);
-	state_save_register_UINT32("M377xx", 0, "d", &m37710i_cpu.d, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_e", &m37710i_cpu.flag_e, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_m", &m37710i_cpu.flag_m, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_x", &m37710i_cpu.flag_x, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_n", &m37710i_cpu.flag_n, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_v", &m37710i_cpu.flag_v, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_d", &m37710i_cpu.flag_d, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_i", &m37710i_cpu.flag_i, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_z", &m37710i_cpu.flag_z, 1);
-	state_save_register_UINT32("M377xx", 0, "flag_c", &m37710i_cpu.flag_c, 1);
-	state_save_register_UINT32("M377xx", 0, "line_irq", &m37710i_cpu.line_irq, 1);
-	state_save_register_UINT32("M377xx", 0, "ipl", &m37710i_cpu.ipl, 1);
-	state_save_register_UINT32("M377xx", 0, "ir", &m37710i_cpu.ir, 1);
-	state_save_register_UINT32("M377xx", 0, "im", &m37710i_cpu.im, 1);
-	state_save_register_UINT32("M377xx", 0, "im2", &m37710i_cpu.im2, 1);
-	state_save_register_UINT32("M377xx", 0, "im3", &m37710i_cpu.im3, 1);
-	state_save_register_UINT32("M377xx", 0, "im4", &m37710i_cpu.im4, 1);
-	state_save_register_UINT32("M377xx", 0, "irq_delay", &m37710i_cpu.irq_delay, 1);
-	state_save_register_UINT32("M377xx", 0, "irq_level", &m37710i_cpu.irq_level, 1);
-	state_save_register_UINT32("M377xx", 0, "stopped", &m37710i_cpu.stopped, 1);
-	state_save_register_UINT8("M377xx", 0, "periph regs", &m37710i_cpu.m37710_regs[0], 128);
-	state_save_register_float("M377xx", 0, "timer reloads", &m37710i_cpu.reload[0], 8);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.a);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.b);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.ba);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.bb);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.x);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.y);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.s);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.pc);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.ppc);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.pb);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.db);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.d);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_e);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_m);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_x);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_n);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_v);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_d);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_i);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_z);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_c);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.line_irq);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.ipl);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.ir);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.im);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.im2);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.im3);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.im4);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.irq_delay);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.irq_level);
+	state_save_register_item("M377xx", cpu, m37710i_cpu.stopped);
+	state_save_register_item_array("M377xx", cpu, m37710i_cpu.m37710_regs);
+	state_save_register_item_array("M377xx", cpu, m37710i_cpu.reload);
 
 	state_save_register_func_postload(m37710_restore_state);
 }
@@ -1268,7 +1267,7 @@ void m37702_get_info(UINT32 state, union cpuinfo *info)
 		return;
 	}
 
-	return m37710_get_info(state, info);
+	m37710_get_info(state, info);
 }
 
 /* ======================================================================== */

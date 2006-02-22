@@ -28,7 +28,7 @@ TODO:
 
 extern UINT8 *jackal_videoctrl;
 
-extern MACHINE_INIT( jackal );
+extern MACHINE_RESET( jackal );
 
 extern READ8_HANDLER( jackal_zram_r );
 extern READ8_HANDLER( jackal_voram_r );
@@ -267,7 +267,7 @@ static MACHINE_DRIVER_START( jackal )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	// 10 CPU slices per frame - seems enough to keep the CPUs in sync
 
-	MDRV_MACHINE_INIT(jackal)
+	MDRV_MACHINE_RESET(jackal)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

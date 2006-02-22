@@ -123,7 +123,7 @@ static UINT8 sound_command;
  *
  *************************************/
 
-MACHINE_INIT( pipedrm )
+MACHINE_RESET( pipedrm )
 {
 	/* initialize main Z80 bank */
 	memory_configure_bank(1, 0, 8, memory_region(REGION_CPU1) + 0x10000, 0x2000);
@@ -568,7 +568,7 @@ static MACHINE_DRIVER_START( pipedrm )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(pipedrm)
+	MDRV_MACHINE_RESET(pipedrm)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -607,7 +607,7 @@ static MACHINE_DRIVER_START( hatris )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(pipedrm)
+	MDRV_MACHINE_RESET(pipedrm)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -433,7 +433,7 @@ static const gfx_decode gfxdecodeinfo_6bpp[] =
 
 /******************************************************************************/
 
-static MACHINE_INIT( mlc )
+static MACHINE_RESET( mlc )
 {
 	raster_irq_timer = timer_alloc(interrupt_gen);
 }
@@ -450,7 +450,7 @@ static MACHINE_DRIVER_START( avengrgs )
 	MDRV_CPU_ADD(SH2,42000000/2) /* 21 MHz clock confirmed on real board */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
-	MDRV_MACHINE_INIT(mlc)
+	MDRV_MACHINE_RESET(mlc)
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_NVRAM_HANDLER(93C46) /* Actually 93c45 */
@@ -481,7 +481,7 @@ static MACHINE_DRIVER_START( mlc )
 	MDRV_CPU_ADD(ARM,42000000/6) /* 42 MHz -> 7MHz clock confirmed on real board */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 
-	MDRV_MACHINE_INIT(mlc)
+	MDRV_MACHINE_RESET(mlc)
 	MDRV_FRAMES_PER_SECOND(58)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_NVRAM_HANDLER(93C46) /* Actually 93c45 */

@@ -20,7 +20,6 @@ GP1 HDD data contents:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/idectrl.h"
 #include "sound/k054539.h"
@@ -35,8 +34,8 @@ VIDEO_UPDATE( qdrmfgp );
 static UINT8 *sndram;
 static UINT16 *workram;
 static UINT16 control;
-static int qdrmfgp_pal;
-static int gp2_irq_control;
+static INT32 qdrmfgp_pal;
+static INT32 gp2_irq_control;
 
 /*************************************
  *
@@ -636,7 +635,15 @@ static struct K054539interface gp2_k054539_interface =
  *
  *************************************/
 
-static MACHINE_INIT( qdrmfgp )
+static MACHINE_START( qdrmfgp )
+{
+	state_save_register_global(control);
+	state_save_register_global(qdrmfgp_pal);
+	state_save_register_global(gp2_irq_control);
+	return 0;
+}
+
+static MACHINE_RESET( qdrmfgp )
 {
 	sndram = memory_region(REGION_SOUND1) + 0x100000;
 
@@ -645,7 +652,7 @@ static MACHINE_INIT( qdrmfgp )
 	ide_controller_reset(0);
 }
 
-static MACHINE_INIT( qdrmfgp2 )
+static MACHINE_RESET( qdrmfgp2 )
 {
 	sndram = memory_region(REGION_SOUND1) + 0x100000;
 
@@ -674,7 +681,8 @@ static MACHINE_DRIVER_START( qdrmfgp )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(qdrmfgp)
+	MDRV_MACHINE_START(qdrmfgp)
+	MDRV_MACHINE_RESET(qdrmfgp)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -705,7 +713,8 @@ static MACHINE_DRIVER_START( qdrmfgp2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(qdrmfgp2)
+	MDRV_MACHINE_START(qdrmfgp)
+	MDRV_MACHINE_RESET(qdrmfgp2)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -774,27 +783,16 @@ ROM_END
  *
  *************************************/
 
-static void qdrmfgp_common(void)
-{
-	state_save_register_UINT16("qdrmfgp", 0, "control",      &control,  1);
-	state_save_register_int   ("qdrmfgp", 0, "qdrmfgp_pal",  &qdrmfgp_pal);
-	state_save_register_int   ("qdrmfgp", 0, "gp2_irq_control",  &gp2_irq_control);
-}
-
 static DRIVER_INIT( qdrmfgp )
 {
 	/* spin up the hard disk */
 	ide_controller_init(0, &ide_intf);
-
-	qdrmfgp_common();
 }
 
 static DRIVER_INIT( qdrmfgp2 )
 {
 	/* spin up the hard disk */
 	ide_controller_init(0, &gp2_ide_intf);
-
-	qdrmfgp_common();
 }
 
 /*************************************

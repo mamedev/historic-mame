@@ -103,10 +103,8 @@
 #include <stdio.h>
 #include <signal.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "sh2.h"
-#include "memory.h"
 
 /* speed up delay loops, bail out of tight loops */
 #define BUSY_LOOP_HACKS 	1
@@ -2982,30 +2980,30 @@ static void sh2_init(void)
 		raise( SIGABRT );
 	}
 
-	state_save_register_UINT32("sh2", cpu, "PC",  &sh2.pc, 1);
-	state_save_register_UINT32("sh2", cpu, "SP",  &sh2.r[15], 1);
-	state_save_register_UINT32("sh2", cpu, "SR",  &sh2.sr, 1);
-	state_save_register_UINT32("sh2", cpu, "PR",  &sh2.pr, 1);
-	state_save_register_UINT32("sh2", cpu, "GBR", &sh2.gbr, 1);
-	state_save_register_UINT32("sh2", cpu, "VBR", &sh2.vbr, 1);
-	state_save_register_UINT32("sh2", cpu, "MACH",&sh2.mach, 1);
-	state_save_register_UINT32("sh2", cpu, "MACL",&sh2.macl, 1);
-	state_save_register_UINT32("sh2", cpu, "R0",  &sh2.r[ 0], 1);
-	state_save_register_UINT32("sh2", cpu, "R1",  &sh2.r[ 1], 1);
-	state_save_register_UINT32("sh2", cpu, "R2",  &sh2.r[ 2], 1);
-	state_save_register_UINT32("sh2", cpu, "R3",  &sh2.r[ 3], 1);
-	state_save_register_UINT32("sh2", cpu, "R4",  &sh2.r[ 4], 1);
-	state_save_register_UINT32("sh2", cpu, "R5",  &sh2.r[ 5], 1);
-	state_save_register_UINT32("sh2", cpu, "R6",  &sh2.r[ 6], 1);
-	state_save_register_UINT32("sh2", cpu, "R7",  &sh2.r[ 7], 1);
-	state_save_register_UINT32("sh2", cpu, "R8",  &sh2.r[ 8], 1);
-	state_save_register_UINT32("sh2", cpu, "R9",  &sh2.r[ 9], 1);
-	state_save_register_UINT32("sh2", cpu, "R10", &sh2.r[10], 1);
-	state_save_register_UINT32("sh2", cpu, "R11", &sh2.r[11], 1);
-	state_save_register_UINT32("sh2", cpu, "R12", &sh2.r[12], 1);
-	state_save_register_UINT32("sh2", cpu, "R13", &sh2.r[13], 1);
-	state_save_register_UINT32("sh2", cpu, "R14", &sh2.r[14], 1);
-	state_save_register_UINT32("sh2", cpu, "EA", &sh2.ea, 1);
+	state_save_register_item("sh2", cpu, sh2.pc);
+	state_save_register_item("sh2", cpu, sh2.r[15]);
+	state_save_register_item("sh2", cpu, sh2.sr);
+	state_save_register_item("sh2", cpu, sh2.pr);
+	state_save_register_item("sh2", cpu, sh2.gbr);
+	state_save_register_item("sh2", cpu, sh2.vbr);
+	state_save_register_item("sh2", cpu, sh2.mach);
+	state_save_register_item("sh2", cpu, sh2.macl);
+	state_save_register_item("sh2", cpu, sh2.r[ 0]);
+	state_save_register_item("sh2", cpu, sh2.r[ 1]);
+	state_save_register_item("sh2", cpu, sh2.r[ 2]);
+	state_save_register_item("sh2", cpu, sh2.r[ 3]);
+	state_save_register_item("sh2", cpu, sh2.r[ 4]);
+	state_save_register_item("sh2", cpu, sh2.r[ 5]);
+	state_save_register_item("sh2", cpu, sh2.r[ 6]);
+	state_save_register_item("sh2", cpu, sh2.r[ 7]);
+	state_save_register_item("sh2", cpu, sh2.r[ 8]);
+	state_save_register_item("sh2", cpu, sh2.r[ 9]);
+	state_save_register_item("sh2", cpu, sh2.r[10]);
+	state_save_register_item("sh2", cpu, sh2.r[11]);
+	state_save_register_item("sh2", cpu, sh2.r[12]);
+	state_save_register_item("sh2", cpu, sh2.r[13]);
+	state_save_register_item("sh2", cpu, sh2.r[14]);
+	state_save_register_item("sh2", cpu, sh2.ea);
 	return;
 }
 

@@ -15,6 +15,16 @@
 #define TEMP_BUFFER_SIZE		4096
 
 
+typedef struct _xml_parse_info xml_parse_info;
+struct _xml_parse_info
+{
+	XML_Parser			parser;
+	xml_data_node *		rootnode;
+	xml_data_node *		curnode;
+	UINT32				flags;
+};
+
+
 
 /*************************************
  *
@@ -164,7 +174,8 @@ static xml_attribute_node *add_attribute(xml_data_node *node, const char *name, 
 
 static void xml_element_start(void *data, const XML_Char *name, const XML_Char **attributes)
 {
-	xml_data_node **curnode = data;
+	xml_parse_info *parse_info = (xml_parse_info *) data;
+	xml_data_node **curnode = &parse_info->curnode;
 	xml_data_node *newnode;
 	int attr;
 
@@ -191,7 +202,8 @@ static void xml_element_start(void *data, const XML_Char *name, const XML_Char *
 
 static void xml_data(void *data, const XML_Char *s, int len)
 {
-	xml_data_node **curnode = data;
+	xml_parse_info *parse_info = (xml_parse_info *) data;
+	xml_data_node **curnode = &parse_info->curnode;
 	int oldlen = 0;
 	char *newdata;
 
@@ -224,12 +236,13 @@ static void xml_data(void *data, const XML_Char *s, int len)
 
 static void xml_element_end(void *data, const XML_Char *name)
 {
-	xml_data_node **curnode = data;
+	xml_parse_info *parse_info = (xml_parse_info *) data;
+	xml_data_node **curnode = &parse_info->curnode;
 	char *orig;
 
 	/* strip leading/trailing spaces from the value data */
 	orig = (char *)(*curnode)->value;
-	if (orig)
+	if (orig && !(parse_info->flags & XML_PARSE_FLAG_WHITESPACE_SIGNIFICANT))
 	{
 		char *start = orig;
 		char *end = start + strlen(start);
@@ -285,34 +298,66 @@ xml_data_node *xml_file_create(void)
 
 /*************************************
  *
+ *  XML parser setup
+ *
+ *************************************/
+
+static int setup_parser(xml_parse_info *parse_info, xml_parse_options *opts)
+{
+	/* setup parse_info structure */
+	memset(parse_info, 0, sizeof(*parse_info));
+	if (opts)
+	{
+		parse_info->flags = opts->flags;
+		if (opts->error)
+		{
+			opts->error->error_message = NULL;
+			opts->error->error_line = 0;
+			opts->error->error_column = 0;
+		}
+	}
+
+	/* create a root node */
+	parse_info->rootnode = xml_file_create();
+	if (!parse_info->rootnode)
+		return FALSE;
+	parse_info->curnode = parse_info->rootnode;
+
+	/* create the XML parser */
+	parse_info->parser = XML_ParserCreate(NULL);
+	if (!parse_info->parser)
+	{
+		free(parse_info->rootnode);
+		return FALSE;
+	}
+
+	/* configure the parser */
+	XML_SetElementHandler(parse_info->parser, xml_element_start, xml_element_end);
+	XML_SetCharacterDataHandler(parse_info->parser, xml_data);
+	XML_SetUserData(parse_info->parser, parse_info);
+
+	/* optional parser initialization step */
+	if (opts && opts->init_parser)
+		opts->init_parser(parse_info->parser);
+	return TRUE;
+}
+
+
+
+/*************************************
+ *
  *  XML file read
  *
  *************************************/
 
-xml_data_node *xml_file_read(mame_file *file)
+xml_data_node *xml_file_read(mame_file *file, xml_parse_options *opts)
 {
-	xml_data_node *rootnode, *curnode;
-	XML_Parser parser;
+	xml_parse_info parse_info;
 	int done;
 
-	/* create a root node */
-	rootnode = xml_file_create();
-	if (!rootnode)
+	/* set up the parser */
+	if (!setup_parser(&parse_info, opts))
 		return NULL;
-
-	/* create the XML parser */
-	parser = XML_ParserCreate(NULL);
-	if (!parser)
-	{
-		free(rootnode);
-		return NULL;
-	}
-
-	/* configure the parser */
-	XML_SetElementHandler(parser, xml_element_start, xml_element_end);
-	XML_SetCharacterDataHandler(parser, xml_data);
-	XML_SetUserData(parser, &curnode);
-	curnode = rootnode;
 
 	/* loop through the file and parse it */
 	do
@@ -324,19 +369,27 @@ xml_data_node *xml_file_read(mame_file *file)
 		done = mame_feof(file);
 
 		/* parse the data */
-		if (XML_Parse(parser, tempbuf, bytes, done) == XML_STATUS_ERROR)
+		if (XML_Parse(parse_info.parser, tempbuf, bytes, done) == XML_STATUS_ERROR)
 		{
-			xml_file_free(rootnode);
+			if (opts && opts->error)
+		{
+				opts->error->error_message = XML_ErrorString(XML_GetErrorCode(parse_info.parser));
+				opts->error->error_line = XML_GetCurrentLineNumber(parse_info.parser);
+				opts->error->error_column = XML_GetCurrentColumnNumber(parse_info.parser);
+			}
+
+			xml_file_free(parse_info.rootnode);
+			XML_ParserFree(parse_info.parser);
 			return NULL;
 		}
 
 	} while (!done);
 
 	/* free the parser */
-	XML_ParserFree(parser);
+	XML_ParserFree(parse_info.parser);
 
 	/* return the root node */
-	return rootnode;
+	return parse_info.rootnode;
 }
 
 
@@ -347,43 +400,35 @@ xml_data_node *xml_file_read(mame_file *file)
  *
  *************************************/
 
-xml_data_node *xml_string_read(const char *string)
+xml_data_node *xml_string_read(const char *string, xml_parse_options *opts)
 {
-	xml_data_node *rootnode, *curnode;
+	xml_parse_info parse_info;
 	int length = strlen(string);
-	XML_Parser parser;
 
-	/* create a root node */
-	rootnode = xml_file_create();
-	if (!rootnode)
+	/* set up the parser */
+	if (!setup_parser(&parse_info, opts))
 		return NULL;
-
-	/* create the XML parser */
-	parser = XML_ParserCreate(NULL);
-	if (!parser)
-	{
-		free(rootnode);
-		return NULL;
-	}
-
-	/* configure the parser */
-	XML_SetElementHandler(parser, xml_element_start, xml_element_end);
-	XML_SetCharacterDataHandler(parser, xml_data);
-	XML_SetUserData(parser, &curnode);
-	curnode = rootnode;
 
 	/* parse the data */
-	if (XML_Parse(parser, string, length, TRUE) == XML_STATUS_ERROR)
+	if (XML_Parse(parse_info.parser, string, length, TRUE) == XML_STATUS_ERROR)
 	{
-		xml_file_free(rootnode);
+		if (opts && opts->error)
+		{
+			opts->error->error_message = XML_ErrorString(XML_GetErrorCode(parse_info.parser));
+			opts->error->error_line = XML_GetCurrentLineNumber(parse_info.parser);
+			opts->error->error_column = XML_GetCurrentColumnNumber(parse_info.parser);
+	}
+
+		xml_file_free(parse_info.rootnode);
+		XML_ParserFree(parse_info.parser);
 		return NULL;
 	}
 
 	/* free the parser */
-	XML_ParserFree(parser);
+	XML_ParserFree(parse_info.parser);
 
 	/* return the root node */
-	return rootnode;
+	return parse_info.rootnode;
 }
 
 

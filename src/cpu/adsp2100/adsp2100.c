@@ -81,9 +81,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
-#include "adsp2100.h"
+#include "debugger.h"
 #include "state.h"
+#include "adsp2100.h"
 
 /*###################################################################################################
 **  CONSTANTS

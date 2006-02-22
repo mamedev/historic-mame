@@ -2888,7 +2888,7 @@ static void print_game_info(void)
 	print_file = NULL;
 }
 
-MACHINE_INIT( stv )
+MACHINE_RESET( stv )
 {
 	memory_set_bankptr(1,memory_region(REGION_USER1));
 
@@ -3047,7 +3047,7 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(192);	// guess, needed to force video update after V-Blank OUT interrupt
 
-	MDRV_MACHINE_INIT(stv)
+	MDRV_MACHINE_RESET(stv)
 	MDRV_NVRAM_HANDLER(stv) /* Actually 93c45 */
 
 	/* video hardware */

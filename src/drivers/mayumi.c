@@ -40,7 +40,7 @@ static WRITE8_HANDLER( bank_sel_w )
 	flip_screen_set(data & 2);
 }
 
-static MACHINE_INIT( mayumi )
+static MACHINE_RESET( mayumi )
 {
 	bank_sel_w(0,0);
 }
@@ -280,7 +280,7 @@ static MACHINE_DRIVER_START( mayumi )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT( mayumi )
+	MDRV_MACHINE_RESET( mayumi )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)

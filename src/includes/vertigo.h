@@ -13,7 +13,7 @@ WRITE16_HANDLER( vertigo_motor_w );
 WRITE16_HANDLER( vertigo_wsot_w );
 
 INTERRUPT_GEN( vertigo_interrupt );
-MACHINE_INIT( vertigo );
+MACHINE_RESET( vertigo );
 
 extern UINT16 *vertigo_vectorram;
 

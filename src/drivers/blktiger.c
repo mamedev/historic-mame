@@ -49,12 +49,7 @@ static READ8_HANDLER( blktiger_protection_r )
 
 static WRITE8_HANDLER( blktiger_bankswitch_w )
 {
-	int bankaddress;
-	unsigned char *rom = memory_region(REGION_CPU1);
-
-
-	bankaddress = 0x10000 + (data & 0x0f) * 0x4000;
-	memory_set_bankptr(1,&rom[bankaddress]);
+	memory_set_bank(1, data & 0x0f);
 }
 
 static WRITE8_HANDLER( blktiger_coinlockout_w )
@@ -267,7 +262,12 @@ static struct YM2203interface ym2203_interface =
 	irqhandler
 };
 
-
+static MACHINE_START( blktiger )
+{
+	/* configure bankswitching */
+	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
+	return 0;
+}
 
 static MACHINE_DRIVER_START( blktiger )
 
@@ -283,6 +283,7 @@ static MACHINE_DRIVER_START( blktiger )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_START(blktiger)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
@@ -447,7 +448,7 @@ ROM_END
 
 
 
-GAME( 1987, blktiger, 0,        blktiger, blktiger, 0, ROT0, "Capcom", "Black Tiger", 0 )
-GAME( 1987, bktigerb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Tiger (bootleg)", 0 )
-GAME( 1987, blkdrgon, blktiger, blktiger, blktiger, 0, ROT0, "Capcom", "Black Dragon", 0 )
-GAME( 1987, blkdrgnb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Dragon (bootleg)", 0 )
+GAME( 1987, blktiger, 0,        blktiger, blktiger, 0, ROT0, "Capcom", "Black Tiger", GAME_SUPPORTS_SAVE )
+GAME( 1987, bktigerb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Tiger (bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1987, blkdrgon, blktiger, blktiger, blktiger, 0, ROT0, "Capcom", "Black Dragon", GAME_SUPPORTS_SAVE )
+GAME( 1987, blkdrgnb, blktiger, blktiger, blktiger, 0, ROT0, "bootleg", "Black Dragon (bootleg)", GAME_SUPPORTS_SAVE )

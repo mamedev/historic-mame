@@ -46,7 +46,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "tms9928a.h"
 
@@ -146,7 +145,7 @@ static void (*ModeHandlers[])(mame_bitmap*) = {
 typedef struct {
     /* TMS9928A internal settings */
     UINT8 ReadAhead,Regs[8],StatusReg,oldStatusReg,FirstByte,latch,INT;
-    int Addr,BackColour,Change,mode;
+    INT32 Addr,BackColour,Change,mode;
     int colour,pattern,nametbl,spriteattribute,spritepattern;
     int colourmask,patternmask;
     void (*INTCallback)(int);
@@ -227,21 +226,21 @@ static int TMS9928A_start (const TMS9928a_interface *intf) {
     TMS9928A_reset ();
     tms.LimitSprites = 1;
 
-	state_save_register_UINT8 ("tms9928a", 0, "R0", &tms.Regs[0], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R1", &tms.Regs[1], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R2", &tms.Regs[2], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R3", &tms.Regs[3], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R4", &tms.Regs[4], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R5", &tms.Regs[5], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R6", &tms.Regs[6], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "R7", &tms.Regs[7], 1);
-	state_save_register_UINT8 ("tms9928a", 0, "S", &tms.StatusReg, 1);
-	state_save_register_UINT8 ("tms9928a", 0, "read_ahead", &tms.ReadAhead, 1);
-	state_save_register_UINT8 ("tms9928a", 0, "first_byte", &tms.FirstByte, 1);
-	state_save_register_UINT8 ("tms9928a", 0, "latch", &tms.latch, 1);
-	state_save_register_UINT16 ("tms9928a", 0, "vram_latch", (UINT16*)&tms.Addr, 1);
-	state_save_register_UINT8 ("tms9928a", 0, "interrupt_line", &tms.INT, 1);
-	state_save_register_UINT8 ("tms9928a", 0, "VRAM", tms.vMem, intf->vram);
+	state_save_register_item("tms9928a", 0, tms.Regs[0]);
+	state_save_register_item("tms9928a", 0, tms.Regs[1]);
+	state_save_register_item("tms9928a", 0, tms.Regs[2]);
+	state_save_register_item("tms9928a", 0, tms.Regs[3]);
+	state_save_register_item("tms9928a", 0, tms.Regs[4]);
+	state_save_register_item("tms9928a", 0, tms.Regs[5]);
+	state_save_register_item("tms9928a", 0, tms.Regs[6]);
+	state_save_register_item("tms9928a", 0, tms.Regs[7]);
+	state_save_register_item("tms9928a", 0, tms.StatusReg);
+	state_save_register_item("tms9928a", 0, tms.ReadAhead);
+	state_save_register_item("tms9928a", 0, tms.FirstByte);
+	state_save_register_item("tms9928a", 0, tms.latch);
+	state_save_register_item("tms9928a", 0, tms.Addr);
+	state_save_register_item("tms9928a", 0, tms.INT);
+	state_save_register_item_pointer("tms9928a", 0, tms.vMem, intf->vram);
 
     return 0;
 }

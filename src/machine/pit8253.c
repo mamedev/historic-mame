@@ -21,7 +21,6 @@
 #include "driver.h"
 #include "memconv.h"
 #include "machine/pit8253.h"
-#include "state.h"
 
 
 
@@ -68,15 +67,15 @@ struct pit8253_timer
 	UINT8 control;					/* 6-bit control byte */
 	UINT8 status;					/* status byte - 8254 only */
 	UINT8 lowcount;					/* LSB of new counter value for 16-bit writes */
-	int	rmsb;						/* 1 = Next read is MSB of 16-bit value */
-	int	wmsb;						/* 1 = Next write is MSB of 16-bit value */
-	int	output;						/* 0 = low, 1 = high */
+	INT32 rmsb;						/* 1 = Next read is MSB of 16-bit value */
+	INT32 wmsb;						/* 1 = Next write is MSB of 16-bit value */
+	INT32 output;						/* 0 = low, 1 = high */
 
-	int	gate;						/* gate input (0 = low, 1 = high) */
-	int	latched_count;				/* number of bytes of count latched */
-	int	latched_status;				/* 1 = status latched (8254 only) */
-	int	null_count;					/* 1 = mode control or count written, 0 = count loaded */
-	int	phase;						/* see phase definition tables in simulate2(), below */
+	INT32 gate;						/* gate input (0 = low, 1 = high) */
+	INT32 latched_count;				/* number of bytes of count latched */
+	INT32 latched_status;				/* 1 = status latched (8254 only) */
+	INT32 null_count;					/* 1 = mode control or count written, 0 = count loaded */
+	INT32 phase;						/* see phase definition tables in simulate2(), below */
 
 	UINT32 cycles_to_output;		/* cycles until output callback called */
 	UINT32 cycles_to_freq;			/* cycles until frequency callback called */
@@ -814,26 +813,26 @@ int	pit8253_init(int count,	const struct pit8253_config *config)
 			}
 
 			/* set up state save values */
-			state_save_register_double("pit8253", n, "clockin",          &timer->clockin,          1);
-			state_save_register_UINT8 ("pit8253", n, "control",          &timer->control,          1);
-			state_save_register_UINT8 ("pit8253", n, "status",           &timer->status,           1);
-			state_save_register_UINT8 ("pit8253", n, "lowcount",         &timer->lowcount,         1);
-			state_save_register_UINT16("pit8253", n, "latch",            &timer->latch,            1);
-			state_save_register_UINT16("pit8253", n, "count",            &timer->count,            1);
-			state_save_register_UINT16("pit8253", n, "value",            &timer->value,            1);
-			state_save_register_int	  ("pit8253", n, "wmsb",             &timer->wmsb);
-			state_save_register_int	  ("pit8253", n, "rmsb",             &timer->rmsb);
-			state_save_register_int	  ("pit8253", n, "output",           &timer->output);
-			state_save_register_int	  ("pit8253", n, "gate",             &timer->gate);
-			state_save_register_int	  ("pit8253", n, "latched_count",    &timer->latched_count);
-			state_save_register_int	  ("pit8253", n, "latched_status",   &timer->latched_status);
-			state_save_register_int	  ("pit8253", n, "null_count",       &timer->null_count);
-			state_save_register_int	  ("pit8253", n, "phase",            &timer->phase);
-			state_save_register_UINT32("pit8253", n, "cycles_to_output", &timer->cycles_to_output, 1);
-			state_save_register_UINT32("pit8253", n, "cycles_to_freq",   &timer->cycles_to_freq,   1);
-			state_save_register_UINT32("pit8253", n, "freq_count",       &timer->freq_count,       1);
-			state_save_register_INT32 ("pit8253", n, "last_updated.sec", &timer->last_updated.seconds, 1);
-			state_save_register_INT64 ("pit8253", n, "last_updated.sub", &timer->last_updated.subseconds, 1);
+			state_save_register_item("pit8253", n, timer->clockin);
+			state_save_register_item("pit8253", n, timer->control);
+			state_save_register_item("pit8253", n, timer->status);
+			state_save_register_item("pit8253", n, timer->lowcount);
+			state_save_register_item("pit8253", n, timer->latch);
+			state_save_register_item("pit8253", n, timer->count);
+			state_save_register_item("pit8253", n, timer->value);
+			state_save_register_item("pit8253", n, timer->wmsb);
+			state_save_register_item("pit8253", n, timer->rmsb);
+			state_save_register_item("pit8253", n, timer->output);
+			state_save_register_item("pit8253", n, timer->gate);
+			state_save_register_item("pit8253", n, timer->latched_count);
+			state_save_register_item("pit8253", n, timer->latched_status);
+			state_save_register_item("pit8253", n, timer->null_count);
+			state_save_register_item("pit8253", n, timer->phase);
+			state_save_register_item("pit8253", n, timer->cycles_to_output);
+			state_save_register_item("pit8253", n, timer->cycles_to_freq);
+			state_save_register_item("pit8253", n, timer->freq_count);
+			state_save_register_item("pit8253", n, timer->last_updated.seconds);
+			state_save_register_item("pit8253", n, timer->last_updated.subseconds);
 			++n;
 		}
 		pit8253_reset(i);

@@ -86,8 +86,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "hd6309.h"
 
 #define VERBOSE 0
@@ -111,10 +111,6 @@ extern offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, i
 #endif
 
 /*#define BIG_SWITCH*/
-
-#ifdef MAME_DEBUG
-extern int debug_key_pressed;
-#endif
 
 void CHECK_IRQ_LINES( void );
 static void IIError(void);
@@ -523,20 +519,20 @@ static void hd6309_set_context(void *src)
 static void hd6309_init(void)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_register_UINT16("hd6309", cpu, "PC", &PC, 1);
-	state_save_register_UINT16("hd6309", cpu, "U", &U, 1);
-	state_save_register_UINT16("hd6309", cpu, "S", &S, 1);
-	state_save_register_UINT16("hd6309", cpu, "X", &X, 1);
-	state_save_register_UINT16("hd6309", cpu, "Y", &Y, 1);
-	state_save_register_UINT16("hd6309", cpu, "V", &V, 1);
-	state_save_register_UINT8("hd6309", cpu, "DP", &DP, 1);
-	state_save_register_UINT8("hd6309", cpu, "CC", &CC, 1);
-	state_save_register_UINT8("hd6309", cpu, "MD", &MD, 1);
+	state_save_register_item("hd6309", cpu, PC);
+	state_save_register_item("hd6309", cpu, U);
+	state_save_register_item("hd6309", cpu, S);
+	state_save_register_item("hd6309", cpu, X);
+	state_save_register_item("hd6309", cpu, Y);
+	state_save_register_item("hd6309", cpu, V);
+	state_save_register_item("hd6309", cpu, DP);
+	state_save_register_item("hd6309", cpu, CC);
+	state_save_register_item("hd6309", cpu, MD);
 	state_save_register_func_postload( UpdateState );
-	state_save_register_UINT8("hd6309", cpu, "INT", &hd6309.int_state, 1);
-	state_save_register_UINT8("hd6309", cpu, "NMI", &hd6309.nmi_state, 1);
-	state_save_register_UINT8("hd6309", cpu, "IRQ", &hd6309.irq_state[0], 1);
-	state_save_register_UINT8("hd6309", cpu, "FIRQ", &hd6309.irq_state[1], 1);
+	state_save_register_item("hd6309", cpu, hd6309.int_state);
+	state_save_register_item("hd6309", cpu, hd6309.nmi_state);
+	state_save_register_item("hd6309", cpu, hd6309.irq_state[0]);
+	state_save_register_item("hd6309", cpu, hd6309.irq_state[1]);
 }
 
 /****************************************************************************/

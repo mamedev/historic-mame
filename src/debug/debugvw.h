@@ -34,23 +34,33 @@
 #define DVP_LEFT_COL						(6)		/* r/w - UINT32 */
 #define DVP_UPDATE_CALLBACK					(7)		/* r/w - void (*update)(debug_view *) */
 #define DVP_VIEW_DATA						(8)		/* r/o - debug_view_char * */
-#define DVP_CPUNUM							(9)		/* r/w - UINT32 */
-#define DVP_SUPPORTS_CURSOR					(10)	/* r/o - UINT32 */
-#define DVP_CURSOR_VISIBLE					(11)	/* r/w - UINT32 */
-#define DVP_CURSOR_ROW						(12)	/* r/w - UINT32 */
-#define DVP_CURSOR_COL						(13)	/* r/w - UINT32 */
-#define DVP_CHARACTER						(14)	/* w/o - UINT32 */
-#define DVP_OSD_PRIVATE						(15)	/* r/w - void * */
+#define DVP_SUPPORTS_CURSOR					(9)		/* r/o - UINT32 */
+#define DVP_CURSOR_VISIBLE					(10)	/* r/w - UINT32 */
+#define DVP_CURSOR_ROW						(11)	/* r/w - UINT32 */
+#define DVP_CURSOR_COL						(12)	/* r/w - UINT32 */
+#define DVP_CHARACTER						(13)	/* w/o - UINT32 */
+#define DVP_OSD_PRIVATE						(14)	/* r/w - void * */
 
-/* properties available for memory/disassembly views */
-#define DVP_EXPRESSION						(100)	/* const char * */
-#define DVP_TRACK_LIVE						(101)	/* UINT32 */
+/* properties available for register views */
+#define DVP_REGS_CPUNUM						(100)	/* r/w - UINT32 */
+
+/* properties available for disassembly views */
+#define DVP_DASM_CPUNUM						(100)	/* r/w - UINT32 */
+#define DVP_DASM_EXPRESSION					(101)	/* r/w - const char * */
+#define DVP_DASM_TRACK_LIVE					(102)	/* r/w - UINT32 */
+#define DVP_DASM_DISPLAY_RAW				(103)	/* r/w - UINT32 */
+#define DVP_DASM_DISPLAY_ENCRYPTED			(104)	/* r/w - UINT32 */
+#define DVP_DASM_BACKWARD_STEPS				(105)	/* r/w - UINT32 */
+#define DVP_DASM_WIDTH						(106)	/* r/w - UINT32 */
 
 /* properties available for memory views */
-#define DVP_SPACENUM						(102)	/* UINT32 */
-#define DVP_BYTES_PER_CHUNK					(103)	/* UINT32 */
-#define DVP_REVERSE_VIEW					(104)	/* UINT32 */
-#define DVP_ASCII_VIEW						(105)	/* UINT32 */
+#define DVP_MEM_CPUNUM						(100)	/* r/w - UINT32 */
+#define DVP_MEM_EXPRESSION					(101)	/* const char * */
+#define DVP_MEM_TRACK_LIVE					(102)	/* UINT32 */
+#define DVP_MEM_SPACENUM					(103)	/* UINT32 */
+#define DVP_MEM_BYTES_PER_CHUNK				(104)	/* UINT32 */
+#define DVP_MEM_REVERSE_VIEW				(105)	/* UINT32 */
+#define DVP_MEM_ASCII_VIEW					(106)	/* UINT32 */
 
 /* attribute bits for debug_view_char.attrib */
 #define DCA_NORMAL							(0x00)	/* in Windows: black on white */

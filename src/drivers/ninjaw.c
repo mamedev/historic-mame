@@ -145,7 +145,6 @@ rumbling on a subwoofer in the cabinet.)
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -153,7 +152,8 @@ rumbling on a subwoofer in the cabinet.)
 #include "sound/2610intf.h"
 #include "sound/flt_vol.h"
 
-MACHINE_INIT( ninjaw );
+MACHINE_START( ninjaw );
+MACHINE_RESET( ninjaw );
 
 VIDEO_START( ninjaw );
 VIDEO_UPDATE( ninjaw );
@@ -199,7 +199,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )
             SOUND
 *****************************************/
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
@@ -693,10 +693,11 @@ static MACHINE_DRIVER_START( ninjaw )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* CPU slices */
 
-	MDRV_MACHINE_INIT(ninjaw)
+	MDRV_MACHINE_START(ninjaw)
+	MDRV_MACHINE_RESET(ninjaw)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(12,3)
 	MDRV_SCREEN_SIZE(110*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 108*8-1, 3*8, 31*8-1)
@@ -750,10 +751,11 @@ static MACHINE_DRIVER_START( darius2 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* CPU slices */
 
-	MDRV_MACHINE_INIT(ninjaw)
+	MDRV_MACHINE_START(ninjaw)
+	MDRV_MACHINE_RESET(ninjaw)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(12,3)
 	MDRV_SCREEN_SIZE(110*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 108*8-1, 3*8, 31*8-1)
@@ -948,17 +950,18 @@ ROM_START( darius2 )
 ROM_END
 
 
-static DRIVER_INIT( ninjaw )
+MACHINE_START( ninjaw )
 {
 	cpua_ctrl = 0xff;
-	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
+	state_save_register_global(cpua_ctrl);
 	state_save_register_func_postload(parse_control);
 
-	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_global(banknum);
 	state_save_register_func_postload(reset_sound_region);
+	return 0;
 }
 
-MACHINE_INIT( ninjaw )
+MACHINE_RESET( ninjaw )
 {
   /**** mixer control enable ****/
   sound_global_enable( 1 );	/* mixer enabled */
@@ -967,7 +970,7 @@ MACHINE_INIT( ninjaw )
 
 /* Working Games */
 
-GAME( 1987, ninjaw,   0,      ninjaw,  ninjaw,   ninjaw,  ROT0, "Taito Corporation Japan", "The Ninja Warriors (World)", 0 )
-GAME( 1987, ninjawj,  ninjaw, ninjaw,  ninjawj,  ninjaw,  ROT0, "Taito Corporation", "The Ninja Warriors (Japan)", 0 )
-GAME( 1989, darius2,  0,      darius2, darius2,  ninjaw,  ROT0, "Taito Corporation", "Darius II (Japan)", 0 )
+GAME( 1987, ninjaw,   0,      ninjaw,  ninjaw,   0,  ROT0, "Taito Corporation Japan", "The Ninja Warriors (World)", 0 )
+GAME( 1987, ninjawj,  ninjaw, ninjaw,  ninjawj,  0,  ROT0, "Taito Corporation", "The Ninja Warriors (Japan)", 0 )
+GAME( 1989, darius2,  0,      darius2, darius2,  0,  ROT0, "Taito Corporation", "Darius II (Japan)", 0 )
 

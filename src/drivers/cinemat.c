@@ -34,7 +34,6 @@
 #include "vidhrdw/vector.h"
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
-#include "state.h"
 
 
 static UINT16 *rambase;
@@ -53,7 +52,17 @@ static UINT8 mux_select;
  *
  *************************************/
 
-MACHINE_INIT( cinemat )
+MACHINE_START( cinemat )
+{
+	state_save_register_global(coin_detected);
+	state_save_register_global(coin_last_input);
+	state_save_register_global(coin_last_reset);
+	state_save_register_global(mux_select);
+	return 0;
+}
+
+
+MACHINE_RESET( cinemat )
 {
 	/* reset the coin states */
 	coin_detected = 0;
@@ -62,12 +71,6 @@ MACHINE_INIT( cinemat )
 
 	/* reset mux select */
 	mux_select = 0;
-
-	/* register state saves */
-	state_save_register_global(coin_detected);
-	state_save_register_global(coin_last_input);
-	state_save_register_global(coin_last_reset);
-	state_save_register_global(mux_select);
 }
 
 
@@ -1015,7 +1018,8 @@ static MACHINE_DRIVER_START( cinemat_nojmi_4k )
 	MDRV_CPU_VBLANK_INT(check_coins,1)
 
 	MDRV_FRAMES_PER_SECOND(38)
-	MDRV_MACHINE_INIT(cinemat)
+	MDRV_MACHINE_START(cinemat)
+	MDRV_MACHINE_RESET(cinemat)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)

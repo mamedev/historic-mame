@@ -269,7 +269,7 @@ VIDEO_START( splndrbt )
 	return (0);
 }
 
-MACHINE_INIT( splndrbt )
+MACHINE_RESET( splndrbt )
 {
 	splndrbt_video_reset();
 }

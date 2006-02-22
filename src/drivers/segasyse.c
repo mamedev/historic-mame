@@ -159,7 +159,6 @@
 
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
 #include "sound/sn76496.h"
@@ -771,6 +770,22 @@ INPUT_PORTS_END
 }
 
 /*******************************************************************************
+ General Init
+********************************************************************************
+ for Save State support
+*******************************************************************************/
+
+static MACHINE_START( segasyse )
+{
+	state_save_register_global(segae_8000bank);
+	state_save_register_global(vintpending);
+	state_save_register_global(hintpending);
+	state_save_register_global(rombank);
+	state_save_register_func_postload(segae_bankswitch);
+	return 0;
+}
+
+/*******************************************************************************
  Machine Driver(s)
 ********************************************************************************
  a z80, unknown speed
@@ -792,6 +807,8 @@ static MACHINE_DRIVER_START( segae )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START( segasyse )
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 192)
@@ -812,21 +829,6 @@ static MACHINE_DRIVER_START( segae )
 MACHINE_DRIVER_END
 
 /*******************************************************************************
- General Init
-********************************************************************************
- for Save State support
-*******************************************************************************/
-
-static DRIVER_INIT( segasyse )
-{
-	state_save_register_UINT8 ( "SEGASYSE-MAIN", 0, "8000 Write Bank",		&segae_8000bank, 1);
-	state_save_register_UINT8 ( "SEGASYSE-MAIN", 0, "Vertical Int Pending",	&vintpending, 1);
-	state_save_register_UINT8 ( "SEGASYSE-MAIN", 0, "Line Int Pending",		&hintpending, 1);
-	state_save_register_UINT8 ( "SEGASYSE-MAIN", 0, "Main Rom Bank",		&rombank, 1);
-	state_save_register_func_postload(segae_bankswitch);
-}
-
-/*******************************************************************************
  Game Inits
 ********************************************************************************
  Just the One for now (Hang On Jr), Installing the custom READ/WRITE handlers
@@ -838,24 +840,18 @@ static DRIVER_INIT( hangonjr )
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, segae_hangonjr_port_f8_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfa, 0xfa, 0, 0, segae_hangonjr_port_fa_w);
 
-	state_save_register_UINT8 ( "SEGASYSE-HOJ", 0, "port_fa_last",			&port_fa_last, 1);
-
-	init_segasyse();
+	state_save_register_global(port_fa_last);
 }
 
 static DRIVER_INIT( ridleofp )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, segae_ridleofp_port_f8_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfa, 0xfa, 0, 0, segae_ridleofp_port_fa_w);
-
-	init_segasyse();
 }
 
 static DRIVER_INIT( astrofl )
 {
 	astrofl_decode();
-
-	init_segasyse();
 }
 
 /*******************************************************************************
@@ -956,9 +952,9 @@ ROM_END
 /*-- Game Drivers --*/
 
 GAME( 1985, hangonjr, 0,        segae, hangonjr, hangonjr, ROT0,  "Sega", "Hang-On Jr.", 0 )
-GAME( 1986, transfrm, 0,        segae, transfrm, segasyse, ROT0,  "Sega", "Transformer", 0 )
+GAME( 1986, transfrm, 0,        segae, transfrm, 0,        ROT0,  "Sega", "Transformer", 0 )
 GAME( 1986, astrofl,  transfrm, segae, transfrm, astrofl,  ROT0,  "Sega", "Astro Flash (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1986, ridleofp, 0,        segae, ridleofp, ridleofp, ROT90, "Sega / Nasco", "Riddle of Pythagoras (Japan)", 0 )
-GAME( 1988, fantzn2,  0,        segae, dummy,    segasyse, ROT0,  "Sega", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
-GAME( 198?, opaopa,   0,        segae, dummy,    segasyse, ROT0,  "Sega", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */
-GAME( 1988, tetrisse, 0,        segae, tetrisse, segasyse, ROT0,  "Sega", "Tetris (Japan, System E)", 0 )
+GAME( 1988, fantzn2,  0,        segae, dummy,    0,        ROT0,  "Sega", "Fantasy Zone 2", GAME_NOT_WORKING )	/* encrypted */
+GAME( 198?, opaopa,   0,        segae, dummy,    0,        ROT0,  "Sega", "Opa Opa", GAME_NOT_WORKING )	/* either encrypted or bad */
+GAME( 1988, tetrisse, 0,        segae, tetrisse, 0,        ROT0,  "Sega", "Tetris (Japan, System E)", 0 )

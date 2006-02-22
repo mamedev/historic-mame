@@ -74,7 +74,6 @@ chirp 12-..: vokume   0   : silent
 
 */
 #include "driver.h"
-#include "state.h"
 #include "vlm5030.h"
 
 /* interpolator per frame   */
@@ -660,25 +659,25 @@ static void *vlm5030_start(int sndindex, int clock, const void *config)
 
 	/* don't restore "UINT8 *chip->rom" when use VLM5030_set_rom() */
 
-	state_save_register_UINT16 (VLM_NAME,sndindex,"address", &chip->address, 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"busy"   , &chip->pin_BSY        , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"start"  , &chip->pin_ST         , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"vcu"    , &chip->pin_VCU        , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"reset"  , &chip->pin_RST        , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"data"   , &chip->latch_data     , 1);
-	state_save_register_UINT16 (VLM_NAME,sndindex,"vcu_addr", &chip->vcu_addr_h    , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"parameter", &chip->parameter, 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"phase"   , &chip->phase , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"interporator"  , &chip->interp_count , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"sample count"  , &chip->sample_count , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"pitch count"   , &chip->pitch_count , 1);
-	state_save_register_UINT16 (VLM_NAME,sndindex,"old energy"    , &chip->old_energy  , 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"old pitch"     , &chip->old_pitch   , 1);
-	state_save_register_INT16  (VLM_NAME,sndindex,"old K"         , chip->old_k        ,10);
-	state_save_register_UINT16 (VLM_NAME,sndindex,"tartget energy", &chip->target_energy, 1);
-	state_save_register_UINT8  (VLM_NAME,sndindex,"tartget pitch" , &chip->target_pitch , 1);
-	state_save_register_INT16  (VLM_NAME,sndindex,"tartget K"     , chip->target_k      ,10);
-	state_save_register_INT32  (VLM_NAME,sndindex,"x"             , chip->x             ,10);
+	state_save_register_item(VLM_NAME,sndindex,chip->address);
+	state_save_register_item(VLM_NAME,sndindex,chip->pin_BSY);
+	state_save_register_item(VLM_NAME,sndindex,chip->pin_ST);
+	state_save_register_item(VLM_NAME,sndindex,chip->pin_VCU);
+	state_save_register_item(VLM_NAME,sndindex,chip->pin_RST);
+	state_save_register_item(VLM_NAME,sndindex,chip->latch_data);
+	state_save_register_item(VLM_NAME,sndindex,chip->vcu_addr_h);
+	state_save_register_item(VLM_NAME,sndindex,chip->parameter);
+	state_save_register_item(VLM_NAME,sndindex,chip->phase);
+	state_save_register_item(VLM_NAME,sndindex,chip->interp_count);
+	state_save_register_item(VLM_NAME,sndindex,chip->sample_count);
+	state_save_register_item(VLM_NAME,sndindex,chip->pitch_count);
+	state_save_register_item(VLM_NAME,sndindex,chip->old_energy);
+	state_save_register_item(VLM_NAME,sndindex,chip->old_pitch);
+	state_save_register_item_array(VLM_NAME,sndindex,chip->old_k);
+	state_save_register_item(VLM_NAME,sndindex,chip->target_energy);
+	state_save_register_item(VLM_NAME,sndindex,chip->target_pitch);
+	state_save_register_item_array(VLM_NAME,sndindex,chip->target_k);
+	state_save_register_item_array(VLM_NAME,sndindex,chip->x);
 	state_save_register_func_postload_ptr(VLM5030_restore_state, chip);
 
 	return chip;

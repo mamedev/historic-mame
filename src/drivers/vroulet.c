@@ -260,7 +260,7 @@ static ppi8255_interface ppi8255_intf =
 
 /* Machine Initialization */
 
-static MACHINE_INIT( vroulet )
+static MACHINE_RESET( vroulet )
 {
 	ppi8255_init(&ppi8255_intf);
 }
@@ -276,7 +276,7 @@ static MACHINE_DRIVER_START( vroulet )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(vroulet)
+	MDRV_MACHINE_RESET(vroulet)
 
 	MDRV_NVRAM_HANDLER(generic_1fill)
 

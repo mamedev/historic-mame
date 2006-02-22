@@ -92,9 +92,8 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "osd_cpu.h"
-#include "state.h"
 #include "debugcpu.h"
+#include "profiler.h"
 
 #include <stdarg.h>
 
@@ -429,27 +428,28 @@ int memory_init(void)
 
 	/* init the CPUs */
 	if (!init_cpudata())
-		return 0;
+		return 1;
+	add_exit_callback(memory_exit);
 
 	/* preflight the memory handlers and check banks */
 	if (!preflight_memory())
-		return 0;
+		return 1;
 
 	/* then fill in the tables */
 	if (!populate_memory())
-		return 0;
+		return 1;
 
 	/* allocate any necessary memory */
 	if (!allocate_memory())
-		return 0;
+		return 1;
 
 	/* find all the allocated pointers */
 	if (!find_memory())
-		return 0;
+		return 1;
 
 	/* dump the final memory configuration */
 	mem_dump();
-	return 1;
+	return 0;
 }
 
 
@@ -1110,7 +1110,7 @@ static int init_cpudata(void)
 	memset(&cpudata, 0, sizeof(cpudata));
 
 	/* loop over CPUs */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 	{
 		/* set the RAM/ROM base */
 		cpudata[cpunum].op_ram = cpudata[cpunum].op_rom = memory_region(REGION_CPU1 + cpunum);
@@ -1280,7 +1280,7 @@ static int preflight_memory(void)
 	memset(&bankdata, 0, sizeof(bankdata));
 
 	/* loop over CPUs */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
@@ -1349,7 +1349,7 @@ static int preflight_memory(void)
 
 							/* wire up state saving for the entry the first time we see it */
 							if (!bdata->used)
-								state_save_register_UINT8("memory", bank, "bank.entry", &bdata->curentry, 1);
+								state_save_register_item("memory", bank, bdata->curentry);
 
 							bdata->used = TRUE;
 							bdata->dynamic = FALSE;
@@ -1388,7 +1388,7 @@ static int populate_memory(void)
 	int cpunum, spacenum;
 
 	/* loop over CPUs and address spaces */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
@@ -1457,7 +1457,7 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 
 			/* if we're allowed to, wire up state saving for the entry */
 			if (state_save_registration_allowed())
-				state_save_register_UINT8("memory", HANDLER_TO_BANK(handler), "bank.entry", &bdata->curentry, 1);
+				state_save_register_item("memory", HANDLER_TO_BANK(handler), bdata->curentry);
 
 			VPRINTF(("Allocated new bank %d\n", HANDLER_TO_BANK(handler)));
 		}
@@ -1988,7 +1988,7 @@ static int allocate_memory(void)
 	int cpunum, spacenum;
 
 	/* loop over all CPUs and memory spaces */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
@@ -2114,24 +2114,11 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 
 static void register_for_save(int cpunum, int spacenum, offs_t start, void *base, size_t numbytes)
 {
+	int bytes_per_element = cpudata[cpunum].space[spacenum].dbits/8;
 	char name[256];
 
 	sprintf(name, "%d.%08x-%08x", spacenum, start, (int)(start + numbytes - 1));
-	switch (cpudata[cpunum].space[spacenum].dbits)
-	{
-		case 8:
-			state_save_register_UINT8 ("memory", cpunum, name, base, numbytes);
-			break;
-		case 16:
-			state_save_register_UINT16("memory", cpunum, name, base, numbytes/2);
-			break;
-		case 32:
-			state_save_register_UINT32("memory", cpunum, name, base, numbytes/4);
-			break;
-		case 64:
-			state_save_register_UINT64("memory", cpunum, name, base, numbytes/8);
-			break;
-	}
+	state_save_register_memory("memory", cpunum, name, base, bytes_per_element, numbytes / bytes_per_element);
 }
 
 
@@ -2222,7 +2209,7 @@ static int find_memory(void)
 	int cpunum, spacenum, banknum;
 
 	/* loop over CPUs and address spaces */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].spacemask & (1 << spacenum))
 			{
@@ -3229,7 +3216,7 @@ void memory_dump(FILE *file)
 		return;
 
 	/* loop over CPUs */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	for (cpunum = 0; cpunum < MAX_CPU && Machine->drv->cpu[cpunum].cpu_type != CPU_DUMMY; cpunum++)
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 			if (cpudata[cpunum].space[spacenum].abits)
 			{

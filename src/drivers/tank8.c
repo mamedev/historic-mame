@@ -80,7 +80,7 @@ static PALETTE_INIT( tank8 )
 }
 
 
-static MACHINE_INIT( tank8 )
+static MACHINE_RESET( tank8 )
 {
 	collision_index = 0;
 }
@@ -403,7 +403,7 @@ static MACHINE_DRIVER_START( tank8 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(30 * 1000000 / 15681)
-	MDRV_MACHINE_INIT(tank8)
+	MDRV_MACHINE_RESET(tank8)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)

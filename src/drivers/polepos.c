@@ -410,7 +410,7 @@ static struct namcoio_interface intf1 =
 
 
 #include "cpu/z8000/z8000.h"
-static MACHINE_INIT( polepos )
+static MACHINE_RESET( polepos )
 {
 	int i;
 
@@ -922,7 +922,7 @@ static MACHINE_DRIVER_START( polepos )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* some interleaving */
 
-	MDRV_MACHINE_INIT(polepos)
+	MDRV_MACHINE_RESET(polepos)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

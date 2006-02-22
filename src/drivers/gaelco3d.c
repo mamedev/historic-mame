@@ -208,14 +208,14 @@ static void init_machine_common(void)
 }
 
 
-static MACHINE_INIT( gaelco3d )
+static MACHINE_RESET( gaelco3d )
 {
 	init_machine_common();
 	tms_offset_xor = 0;
 }
 
 
-static MACHINE_INIT( gaelco3d2 )
+static MACHINE_RESET( gaelco3d2 )
 {
 	init_machine_common();
 	tms_offset_xor = BYTE_XOR_BE(0);
@@ -930,7 +930,7 @@ MACHINE_DRIVER_START( gaelco3d )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(gaelco3d)
+	MDRV_MACHINE_RESET(gaelco3d)
 	MDRV_NVRAM_HANDLER(gaelco3d)
 
 	MDRV_INTERLEAVE(100)
@@ -970,7 +970,7 @@ MACHINE_DRIVER_START( gaelco3d2 )
 
 	MDRV_CPU_REPLACE("tms", TMS32031, 50000000)
 
-	MDRV_MACHINE_INIT(gaelco3d2)
+	MDRV_MACHINE_RESET(gaelco3d2)
 MACHINE_DRIVER_END
 
 

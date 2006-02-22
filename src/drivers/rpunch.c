@@ -151,7 +151,7 @@ static void ym2151_irq_gen(int state)
 }
 
 
-MACHINE_INIT( rpunch )
+MACHINE_RESET( rpunch )
 {
 	memcpy(memory_region(REGION_SOUND1), memory_region(REGION_SOUND1) + 0x20000, 0x20000);
 }
@@ -628,7 +628,7 @@ static MACHINE_DRIVER_START( rpunch )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(rpunch)
+	MDRV_MACHINE_RESET(rpunch)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

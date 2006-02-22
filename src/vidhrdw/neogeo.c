@@ -50,23 +50,21 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "common.h"
 #include "usrintrf.h"
 #include "vidhrdw/generic.h"
 #include "neogeo.h"
-#include "state.h"
 
 static UINT16 *neogeo_vidram16;
 static UINT16 *neogeo_paletteram16;	/* pointer to 1 of the 2 palette banks */
 static UINT16 *neogeo_palettebank[2]; /* 0x100*16 2 byte palette entries */
-static int neogeo_palette_index;
+static INT32 neogeo_palette_index;
 static UINT16 neogeo_vidram16_modulo;
 static UINT16 neogeo_vidram16_offset;
 static int high_tile;
 static int vhigh_tile;
 static int vvhigh_tile;
 static int no_of_tiles;
-static int fix_bank;
+static INT32 fix_bank;
 
 
 static UINT8 *memory_region_gfx4;
@@ -322,13 +320,13 @@ static void set_palettebank_on_postload(void)
 
 static void register_savestate(void)
 {
-	state_save_register_int   ("video", 0, "neogeo_palette_index",    &neogeo_palette_index);
-	state_save_register_UINT16("video", 0, "neogeo_palettebank[0]",   neogeo_palettebank[0],    0x2000/2);
-	state_save_register_UINT16("video", 0, "neogeo_palettebank[1]",   neogeo_palettebank[1],    0x2000/2);
-	state_save_register_UINT16("video", 0, "neogeo_vidram16",         neogeo_vidram16,          0x20000/2);
-	state_save_register_UINT16("video", 0, "neogeo_vidram16_modulo",  &neogeo_vidram16_modulo,  1);
-	state_save_register_UINT16("video", 0, "neogeo_vidram16_offset",  &neogeo_vidram16_offset,  1);
-	state_save_register_int   ("video", 0, "fix_bank",                &fix_bank);
+	state_save_register_global(neogeo_palette_index);
+	state_save_register_global_pointer(neogeo_palettebank[0],    0x2000/2);
+	state_save_register_global_pointer(neogeo_palettebank[1],    0x2000/2);
+	state_save_register_global_pointer(neogeo_vidram16,          0x20000/2);
+	state_save_register_global(neogeo_vidram16_modulo);
+	state_save_register_global(neogeo_vidram16_offset);
+	state_save_register_global(fix_bank);
 
 	state_save_register_func_postload(set_palettebank_on_postload);
 }

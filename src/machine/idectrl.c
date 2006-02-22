@@ -5,8 +5,7 @@
 ***************************************************************************/
 
 #include "idectrl.h"
-#include "state.h"
-#include "debugcpu.h"
+#include "debugger.h"
 
 
 /*************************************
@@ -162,8 +161,8 @@ struct ide_state
 	void *	last_status_timer;
 	void *	reset_timer;
 
-	int	master_password_enable;
-	int	user_password_enable;
+	UINT8	master_password_enable;
+	UINT8	user_password_enable;
 	UINT8 *	master_password;
 	UINT8 *	user_password;
 };
@@ -313,50 +312,50 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, chd_file *
 	ide->reset_timer = timer_alloc(reset_callback);
 
 	/* register ide status */
-	state_save_register_UINT8 ("ide", which, "adapter_control",        &ide->adapter_control,       1);
-	state_save_register_UINT8 ("ide", which, "status",                 &ide->status,                1);
-	state_save_register_UINT8 ("ide", which, "error",                  &ide->error,                 1);
-	state_save_register_UINT8 ("ide", which, "command",                &ide->command,               1);
-	state_save_register_UINT8 ("ide", which, "interrupt_pending",      &ide->interrupt_pending,     1);
-	state_save_register_UINT8 ("ide", which, "precomp_offset",         &ide->precomp_offset,        1);
+	state_save_register_item("ide", which, ide->adapter_control);
+	state_save_register_item("ide", which, ide->status);
+	state_save_register_item("ide", which, ide->error);
+	state_save_register_item("ide", which, ide->command);
+	state_save_register_item("ide", which, ide->interrupt_pending);
+	state_save_register_item("ide", which, ide->precomp_offset);
 
-	state_save_register_UINT8 ("ide", which, "buffer",                 ide->buffer,                 IDE_DISK_SECTOR_SIZE);
-	state_save_register_UINT8 ("ide", which, "features",               ide->features,               IDE_DISK_SECTOR_SIZE);
-	state_save_register_UINT16("ide", which, "buffer_offset",          &ide->buffer_offset,         1);
-	state_save_register_UINT16("ide", which, "sector_count",           &ide->sector_count,          1);
+	state_save_register_item_array("ide", which, ide->buffer);
+	state_save_register_item_array("ide", which, ide->features);
+	state_save_register_item("ide", which, ide->buffer_offset);
+	state_save_register_item("ide", which, ide->sector_count);
 
-	state_save_register_UINT16("ide", which, "block_count",            &ide->block_count,           1);
-	state_save_register_UINT16("ide", which, "sectors_until_int",      &ide->sectors_until_int,     1);
+	state_save_register_item("ide", which, ide->block_count);
+	state_save_register_item("ide", which, ide->sectors_until_int);
 
-	state_save_register_UINT8 ("ide", which, "dma_active",             &ide->dma_active,            1);
-	state_save_register_UINT8 ("ide", which, "dma_cpu",                &ide->dma_cpu,               1);
-	state_save_register_UINT8 ("ide", which, "dma_address_xor",        &ide->dma_address_xor,       1);
-	state_save_register_UINT8 ("ide", which, "dma_last_buffer",        &ide->dma_last_buffer,       1);
-	state_save_register_UINT32("ide", which, "dma_address",            &ide->dma_address,           1);
-	state_save_register_UINT32("ide", which, "dma_descriptor",         &ide->dma_descriptor,        1);
-	state_save_register_UINT32("ide", which, "dma_bytes_left",         &ide->dma_bytes_left,        1);
+	state_save_register_item("ide", which, ide->dma_active);
+	state_save_register_item("ide", which, ide->dma_cpu);
+	state_save_register_item("ide", which, ide->dma_address_xor);
+	state_save_register_item("ide", which, ide->dma_last_buffer);
+	state_save_register_item("ide", which, ide->dma_address);
+	state_save_register_item("ide", which, ide->dma_descriptor);
+	state_save_register_item("ide", which, ide->dma_bytes_left);
 
-	state_save_register_UINT8 ("ide", which, "bus_master_command",     &ide->bus_master_command,    1);
-	state_save_register_UINT8 ("ide", which, "bus_master_status",      &ide->bus_master_status,     1);
-	state_save_register_UINT32("ide", which, "bus_master_descriptor",  &ide->bus_master_descriptor, 1);
+	state_save_register_item("ide", which, ide->bus_master_command);
+	state_save_register_item("ide", which, ide->bus_master_status);
+	state_save_register_item("ide", which, ide->bus_master_descriptor);
 
-	state_save_register_UINT16("ide", which, "cur_cylinder",           &ide->cur_cylinder,          1);
-	state_save_register_UINT8 ("ide", which, "cur_sector",             &ide->cur_sector,            1);
-	state_save_register_UINT8 ("ide", which, "cur_head",               &ide->cur_head,              1);
-	state_save_register_UINT8 ("ide", which, "cur_head_reg",           &ide->cur_head_reg,          1);
+	state_save_register_item("ide", which, ide->cur_cylinder);
+	state_save_register_item("ide", which, ide->cur_sector);
+	state_save_register_item("ide", which, ide->cur_head);
+	state_save_register_item("ide", which, ide->cur_head_reg);
 
-	state_save_register_UINT32("ide", which, "cur_lba",                &ide->cur_lba,               1);
+	state_save_register_item("ide", which, ide->cur_lba);
 
-	state_save_register_UINT16("ide", which, "num_cylinders",          &ide->num_cylinders,         1);
-	state_save_register_UINT8 ("ide", which, "num_sectors",            &ide->num_sectors,           1);
-	state_save_register_UINT8 ("ide", which, "num_heads",              &ide->num_heads,             1);
+	state_save_register_item("ide", which, ide->num_cylinders);
+	state_save_register_item("ide", which, ide->num_sectors);
+	state_save_register_item("ide", which, ide->num_heads);
 
-	state_save_register_UINT8 ("ide", which, "config_unknown",         &ide->config_unknown,        1);
-	state_save_register_UINT8 ("ide", which, "config_register",        ide->config_register,        IDE_CONFIG_REGISTERS);
-	state_save_register_UINT8 ("ide", which, "config_register_num",    &ide->config_register_num,   1);
+	state_save_register_item("ide", which, ide->config_unknown);
+	state_save_register_item_array("ide", which, ide->config_register);
+	state_save_register_item("ide", which, ide->config_register_num);
 
-	state_save_register_int   ("ide", which, "master_password_enable", &ide->master_password_enable);
-	state_save_register_int   ("ide", which, "user_password_enable",   &ide->user_password_enable);
+	state_save_register_item("ide", which, ide->master_password_enable);
+	state_save_register_item("ide", which, ide->user_password_enable);
 
 	return 0;
 }
@@ -1271,12 +1270,7 @@ void handle_command(struct ide_state *ide, UINT8 command)
 
 		default:
 			LOGPRINT(("IDE unknown command (%02X)\n", command));
-#ifdef MAME_DEBUG
-{
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-}
-#endif
+			DEBUGGER_BREAK;
 			break;
 	}
 }

@@ -214,7 +214,7 @@ extern WRITE16_HANDLER(equites_scrollreg_w);
 extern WRITE16_HANDLER(equites_bgcolor_w);
 
 // Splendor Blast Hareware
-extern MACHINE_INIT( splndrbt );
+extern MACHINE_RESET( splndrbt );
 extern PALETTE_INIT( splndrbt );
 extern VIDEO_START( splndrbt );
 extern VIDEO_UPDATE( splndrbt );
@@ -749,7 +749,7 @@ static MACHINE_DRIVER_START( splndrbt )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(600)
-	MDRV_MACHINE_INIT(splndrbt)
+	MDRV_MACHINE_RESET(splndrbt)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)

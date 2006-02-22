@@ -104,7 +104,7 @@ static const struct R6532interface r6532_interface_1 =
 };
 
 
-static MACHINE_INIT( tourtabl )
+static MACHINE_RESET( tourtabl )
 {
 	r6532_init(0, &r6532_interface_0);
 	r6532_init(1, &r6532_interface_1);
@@ -195,7 +195,7 @@ static MACHINE_DRIVER_START( tourtabl )
 
 	MDRV_FRAMES_PER_SECOND(60)
 
-	MDRV_MACHINE_INIT(tourtabl)
+	MDRV_MACHINE_RESET(tourtabl)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

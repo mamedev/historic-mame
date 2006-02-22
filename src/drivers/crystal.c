@@ -117,7 +117,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "cpu/se3208/se3208.h"
 #include "vidhrdw/vrender0.h"
@@ -576,7 +575,7 @@ loop:
 #endif
 }
 
-static MACHINE_INIT(crystal)
+static MACHINE_RESET(crystal)
 {
 	memset(sysregs,0,0x10000);
 	memset(vidregs,0,0x10000);
@@ -832,7 +831,7 @@ static MACHINE_DRIVER_START( crystal )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(crystal)
+	MDRV_MACHINE_RESET(crystal)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 

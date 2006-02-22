@@ -771,7 +771,6 @@ Notes:
  */
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/mips/psx.h"
 #include "cpu/h83002/h83002.h"
 #include "includes/psx.h"
@@ -955,12 +954,16 @@ static DRIVER_INIT( namcos12 )
 	psx_driver_init();
 
 	psx_dma_install_read_handler( 5, namcos12_rom_read );
+}
 
-	state_save_register_UINT32( "namcos12", 0, "m_n_dmaoffset", &m_n_dmaoffset, 1 );
-	state_save_register_UINT32( "namcos12", 0, "m_n_dmabias", &m_n_dmabias, 1 );
-	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
-	state_save_register_UINT32( "namcos12", 0, "m_n_bankoffseth", &m_n_bankoffseth, 1 );
+static MACHINE_START( namcos12 )
+{
+	state_save_register_global( m_n_dmaoffset );
+	state_save_register_global( m_n_dmabias );
+	state_save_register_global( m_n_bankoffset );
+	state_save_register_global( m_n_bankoffseth );
 	state_save_register_func_postload( s12_resetbank );
+	return 0;
 }
 
 static unsigned char kcram[ 12 ];
@@ -975,7 +978,7 @@ static WRITE32_HANDLER( kcon_w )
 	memory_set_bankptr( 2, kcram );
 }
 
-MACHINE_INIT( namcos12 )
+MACHINE_RESET( namcos12 )
 {
 	psx_machine_init();
 	bankoffset_w(0,0,0);
@@ -1217,7 +1220,8 @@ static MACHINE_DRIVER_START( coh700 )
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( namcos12 )
+	MDRV_MACHINE_START( namcos12 )
+	MDRV_MACHINE_RESET( namcos12 )
 	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */

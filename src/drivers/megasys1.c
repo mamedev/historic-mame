@@ -127,7 +127,7 @@ RAM         RW      0f0000-0f3fff       0e0000-0effff?      <
 /* Variables only used here: */
 
 static UINT16 ip_select, ip_select_values[5];
-static UINT8 megasys1_ignore_oki_status = 0;	/* used in MACHINE_INIT */
+static UINT8 megasys1_ignore_oki_status = 0;	/* used in MACHINE_RESET */
 
 /* Variables defined in vidhrdw: */
 
@@ -148,13 +148,13 @@ WRITE16_HANDLER( megasys1_vregs_D_w );
 
 
 
-MACHINE_INIT( megasys1 )
+MACHINE_RESET( megasys1 )
 {
 	megasys1_ignore_oki_status = 1;	/* ignore oki status due 'protection' */
 	ip_select = 0;	/* reset protection */
 }
 
-MACHINE_INIT( megasys1_hachoo )
+MACHINE_RESET( megasys1_hachoo )
 {
 	megasys1_ignore_oki_status = 0;	/* strangely hachoo need real oki status */
 	ip_select = 0;	/* reset protection */
@@ -663,7 +663,7 @@ static MACHINE_DRIVER_START( system_A )
 
 	MDRV_INTERLEAVE(2000)
 
-	MDRV_MACHINE_INIT(megasys1)
+	MDRV_MACHINE_RESET(megasys1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -705,7 +705,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( system_A_hachoo )
 	MDRV_IMPORT_FROM(system_A)
-	MDRV_MACHINE_INIT(megasys1_hachoo)
+	MDRV_MACHINE_RESET(megasys1_hachoo)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( system_B )
@@ -755,7 +755,7 @@ static MACHINE_DRIVER_START( system_D )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(megasys1)
+	MDRV_MACHINE_RESET(megasys1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

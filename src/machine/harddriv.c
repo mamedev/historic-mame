@@ -162,7 +162,7 @@ static void duart_callback(int param);
  *
  *************************************/
 
-MACHINE_INIT( harddriv )
+MACHINE_RESET( harddriv )
 {
 	/* generic reset */
 	atarigen_eeprom_reset();

@@ -3,7 +3,7 @@
 #include <setjmp.h>
 #include "driver.h"
 #include "ppc.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #if (HAS_PPC603)
 void ppc603_exception(int exception);

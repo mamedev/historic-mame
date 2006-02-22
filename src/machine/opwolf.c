@@ -36,7 +36,6 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 static UINT8 current_bank=0;
 static UINT8 current_cmd=0;
@@ -663,18 +662,18 @@ void opwolf_cchip_init(void)
 {
 	cchip_ram=auto_malloc(0x400 * 8);
 
-	state_save_register_UINT8("opwolf", 0, "cc_bank", &current_bank, 1);
-	state_save_register_UINT8("opwolf", 0, "cc_data", &current_cmd, 1);
-	state_save_register_UINT8("opwolf", 0, "7a", &cchip_last_7a, 1);
-	state_save_register_UINT8("opwolf", 0, "04", &cchip_last_04, 1);
-	state_save_register_UINT8("opwolf", 0, "05", &cchip_last_05, 1);
-	state_save_register_UINT8("opwolf", 0, "c588", &c588, 1);
-	state_save_register_UINT8("opwolf", 0, "c589", &c589, 1);
-	state_save_register_UINT8("opwolf", 0, "c58a", &c58a, 1);
-	state_save_register_UINT8("opwolf", 0, "cc", &cchip_coins, 1);
-	state_save_register_UINT8("opwolf", 0, "ca", &cchip_coins_for_credit_a, 1);
-	state_save_register_UINT8("opwolf", 0, "cb", &cchip_credit_for_coin_b, 1);
-	state_save_register_UINT8("opwolf", 0, "cc_ram", cchip_ram, 0x400 * 8);
+	state_save_register_global(current_bank);
+	state_save_register_global(current_cmd);
+	state_save_register_global(cchip_last_7a);
+	state_save_register_global(cchip_last_04);
+	state_save_register_global(cchip_last_05);
+	state_save_register_global(c588);
+	state_save_register_global(c589);
+	state_save_register_global(c58a);
+	state_save_register_global(cchip_coins);
+	state_save_register_global(cchip_coins_for_credit_a);
+	state_save_register_global(cchip_credit_for_coin_b);
+	state_save_register_global_pointer(cchip_ram, 0x400 * 8);
 
 	cchip_last_7a=0;
 	cchip_last_04=0xfc;

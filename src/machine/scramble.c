@@ -11,7 +11,6 @@
 #include "machine/7474.h"
 #include "machine/8255ppi.h"
 #include "galaxian.h"
-#include "state.h"
 
 
 void cclimber_decode(const unsigned char xortable[8][16]);
@@ -82,7 +81,7 @@ static void interrupt_timer(int param)
 }
 
 
-static void machine_init_common( int line )
+static void machine_reset_common( int line )
 {
 	irq_line = line;
 
@@ -101,19 +100,19 @@ static void machine_init_common( int line )
 	timer_adjust(int_timer, cpu_getscanlinetime(0), 0, 0);
 }
 
-MACHINE_INIT( galaxian )
+MACHINE_RESET( galaxian )
 {
-	machine_init_common(INPUT_LINE_NMI);
+	machine_reset_common(INPUT_LINE_NMI);
 }
 
-MACHINE_INIT( devilfsg )
+MACHINE_RESET( devilfsg )
 {
-	machine_init_common(0);
+	machine_reset_common(0);
 }
 
-MACHINE_INIT( scramble )
+MACHINE_RESET( scramble )
 {
-	machine_init_galaxian();
+	machine_reset_galaxian();
 
 	if (cpu_gettotalcpu() > 1)
 	{
@@ -121,19 +120,19 @@ MACHINE_INIT( scramble )
 	}
 }
 
-MACHINE_INIT( sfx )
+MACHINE_RESET( sfx )
 {
-	machine_init_scramble();
+	machine_reset_scramble();
 
 	sfx_sh_init();
 }
 
-MACHINE_INIT( explorer )
+MACHINE_RESET( explorer )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	RAM[0x47ff] = 0; /* If not set, it doesn't reset after the 1st time */
 
-	machine_init_galaxian();
+	machine_reset_galaxian();
 }
 
 WRITE8_HANDLER( galaxian_coin_lockout_w )

@@ -138,7 +138,7 @@ static void interrupt_callback(int scanline)
 }
 
 
-static MACHINE_INIT( fgoal )
+static MACHINE_RESET( fgoal )
 {
 	timer_set(cpu_getscanlinetime(0), 0, interrupt_callback);
 }
@@ -396,7 +396,7 @@ static MACHINE_DRIVER_START( fgoal )
 	MDRV_CPU_ADD(M6800, 10065000 / 10) /* ? */
 	MDRV_CPU_PROGRAM_MAP(cpu_map, 0)
 
-	MDRV_MACHINE_INIT(fgoal)
+	MDRV_MACHINE_RESET(fgoal)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(24 * 1000000 / 15750)
 

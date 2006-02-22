@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 
 static rectangle spritevisiblearea =
@@ -28,8 +27,8 @@ unsigned char *wiz_colorram2;
 unsigned char *wiz_attributesram;
 unsigned char *wiz_attributesram2;
 
-static int flipx, flipy;
-static int bgpen;
+static INT32 flipx, flipy;
+static INT32 bgpen;
 
 unsigned char *wiz_sprite_bank;
 static unsigned char char_bank[2];
@@ -42,11 +41,11 @@ VIDEO_START( wiz )
 	if (video_start_generic())
 		return 1;
 
-	state_save_register_UINT8("wiz", 0, "char_bank",   char_bank,   2);
-	state_save_register_UINT8("wiz", 0, "palbank",	   palbank,     2);
-	state_save_register_int  ("wiz", 0, "flipx",       &flipx);
-	state_save_register_int  ("wiz", 0, "flipy",       &flipy);
-	state_save_register_int  ("wiz", 0, "bgpen",       &bgpen);
+	state_save_register_global_array(char_bank);
+	state_save_register_global_array(palbank);
+	state_save_register_global(flipx);
+	state_save_register_global(flipy);
+	state_save_register_global(bgpen);
 
 	return 0;
 }

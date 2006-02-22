@@ -1292,7 +1292,7 @@ static MACHINE_DRIVER_START( type1 )
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
@@ -1438,7 +1438,7 @@ static MACHINE_DRIVER_START( hustler )
 	MDRV_CPU_PROGRAM_MAP(frogger_sound_readmem,frogger_sound_writemem)
 	MDRV_CPU_IO_MAP(frogger_sound_readport,frogger_sound_writeport)
 
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
@@ -1464,7 +1464,7 @@ static MACHINE_DRIVER_START( hustlerb )
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,hustlerb_sound_writemem)
 	MDRV_CPU_IO_MAP(hustlerb_sound_readport,hustlerb_sound_writeport)
 
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */

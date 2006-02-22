@@ -165,7 +165,6 @@ maybe some priority issues / sprite placement issues..
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/m6809/m6809.h"
@@ -182,7 +181,7 @@ VIDEO_UPDATE(lethalen);
 WRITE8_HANDLER(le_palette_control);
 
 static int init_eeprom_count;
-static int cur_control2;
+static UINT8 cur_control2;
 
 /* Default Eeprom for the parent.. otherwise it will always complain first boot */
 /* its easy to init but this saves me a bit of time.. */
@@ -571,7 +570,13 @@ static struct K054539interface k054539_interface =
 	sound_nmi
 };
 
-static MACHINE_INIT( lethalen )
+static MACHINE_START( lethalen )
+{
+	state_save_register_global(cur_control2);
+	return 0;
+}
+
+static MACHINE_RESET( lethalen )
 {
 	UINT8 *prgrom = (UINT8 *)memory_region(REGION_CPU1);
 
@@ -611,7 +616,8 @@ static MACHINE_DRIVER_START( lethalen )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(lethalen)
+	MDRV_MACHINE_START(lethalen)
+	MDRV_MACHINE_RESET(lethalen)
 
 	MDRV_NVRAM_HANDLER(lethalen)
 
@@ -716,8 +722,6 @@ static DRIVER_INIT( lethalen )
 	konami_rom_deinterleave_2_half(REGION_GFX2);
 	konami_rom_deinterleave_2(REGION_GFX3);
 	konami_rom_deinterleave_2(REGION_GFX4);
-
-	state_save_register_int("LE", 0, "control2", &cur_control2);
 }
 
 GAME( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (ver UAE)", GAME_IMPERFECT_GRAPHICS)

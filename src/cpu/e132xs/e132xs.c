@@ -212,11 +212,9 @@
 
 *********************************************************************/
 
-#include "math.h"
+#include <math.h>
 #include "driver.h"
-#include "cpuintrf.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "e132xs.h"
 
 UINT8  (*hyp_cpu_read_byte)(offs_t address);
@@ -447,7 +445,7 @@ UINT8 hyperstone_win_layout[] =
 /* Delay information */
 struct _delay
 {
-	int		delay_cmd;
+	INT32	delay_cmd;
 	UINT32	delay_pc;
 };
 
@@ -465,15 +463,15 @@ typedef struct
 	UINT8	n;
 	void	*timer;
 	double	time;
-	int		delay_timer;
+	INT32	delay_timer;
 
 	struct _delay delay;
 
 	int	(*irq_callback)(int irqline);
 
-	int h_clear;
-	int instruction_length;
-	int intblock;
+	INT32 h_clear;
+	INT32 instruction_length;
+	INT32 intblock;
 
 } hyperstone_regs;
 
@@ -1774,19 +1772,19 @@ static void hyperstone_init(void)
 {
 	int cpu = cpu_getactivecpu();
 
-	state_save_register_UINT32("E132XS", cpu, "gregs",      hyperstone.global_regs, 32);
-	state_save_register_UINT32("E132XS", cpu, "lregs",      hyperstone.local_regs, 64);
-	state_save_register_UINT32("E132XS", cpu, "ppc",        &hyperstone.ppc, 1);
-	state_save_register_UINT32("E132XS", cpu, "trap_entry", &hyperstone.trap_entry, 1);
-	state_save_register_UINT32("E132XS", cpu, "delay_pc",   &hyperstone.delay.delay_pc, 1);
-	state_save_register_UINT16("E132XS", cpu, "op",         &hyperstone.op, 1);
-	state_save_register_UINT8( "E132XS", cpu, "n",	        &hyperstone.n, 1);
-	state_save_register_int(   "E132XS", cpu, "h_clear",    &hyperstone.h_clear);
-	state_save_register_int(   "E132XS", cpu, "ilc",        &hyperstone.instruction_length);
-	state_save_register_int(   "E132XS", cpu, "intblock",   &hyperstone.intblock);
-	state_save_register_int(   "E132XS", cpu, "delay_timer",&hyperstone.delay_timer);
-	state_save_register_int(   "E132XS", cpu, "delay_cmd",  &hyperstone.delay.delay_cmd);
-	state_save_register_double("E132XS", cpu, "time",       &hyperstone.time, 1);
+	state_save_register_item_array("E132XS", cpu, hyperstone.global_regs);
+	state_save_register_item_array("E132XS", cpu, hyperstone.local_regs);
+	state_save_register_item("E132XS", cpu, hyperstone.ppc);
+	state_save_register_item("E132XS", cpu, hyperstone.trap_entry);
+	state_save_register_item("E132XS", cpu, hyperstone.delay.delay_pc);
+	state_save_register_item("E132XS", cpu, hyperstone.op);
+	state_save_register_item("E132XS", cpu, hyperstone.n);
+	state_save_register_item("E132XS", cpu, hyperstone.h_clear);
+	state_save_register_item("E132XS", cpu, hyperstone.instruction_length);
+	state_save_register_item("E132XS", cpu, hyperstone.intblock);
+	state_save_register_item("E132XS", cpu, hyperstone.delay_timer);
+	state_save_register_item("E132XS", cpu, hyperstone.delay.delay_cmd);
+	state_save_register_item("E132XS", cpu, hyperstone.time);
 
 	hyperstone.timer = timer_alloc(hyperstone_timer);
 	timer_adjust(hyperstone.timer, TIME_NEVER, 0, 0);
@@ -3624,7 +3622,7 @@ void hyperstone_stxx2(void)
 						WRITE_W(DREG, SREG);
 					else
 					{
-						if(((DREG & 0xfc) >> 2) == current_regs.dst && D_BIT == LOCAL)
+						if(((DREG & 0xfc) >> 2) == ((current_regs.src + GET_FP) % 64) && S_BIT == LOCAL)
 							ui_popup("STW.S denoted the same local register @ %08X\n",PPC);
 
 						SET_ABS_L_REG((DREG & 0xfc) >> 2,SREG);

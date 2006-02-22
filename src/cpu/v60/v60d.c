@@ -2,7 +2,7 @@
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 #include "osdepend.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 #include <stdio.h>
 #include "v60.h"

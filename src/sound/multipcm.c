@@ -31,9 +31,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "driver.h"
-#include "cpuintrf.h"
 #include "multipcm.h"
-#include "state.h"
 
 #define MULTIPCM_CLOCKDIV    	(360.0)
 #define MULTIPCM_ONE		(18)
@@ -71,15 +69,15 @@ typedef struct Voice_t
 	INT8	loop;	        // loop flag
 	INT32   end;		// length of sample
 	INT32	loopst;		// loop start offset
-	int     pan;		// panning
+	INT32     pan;		// panning
 	INT32 	vol;		// volume
 	INT8    *pSamp;		// pointer to start of sample data
 
 	INT32	ptdelta;	// pitch step
 	INT32	ptoffset;	// fixed point offset
 	INT32	ptsum;		// fixed point sum
-  	int 	relamt;		// release amount
-  	int 	relcount;	// release counter
+  	INT32 	relamt;		// release amount
+  	INT32 	relcount;	// release counter
 	INT8	relstage;	// release stage
 } VoiceT;
 
@@ -211,7 +209,7 @@ static void MultiPCM_update(void *param, stream_sample_t **inputs, stream_sample
 
 static void *multipcm_start(int sndindex, int clock, const void *config)
 {
-	int i, j;
+	int i;
 	double unity = (double)(1<<MULTIPCM_ONE);
 	UINT8* phdr;
 	long nowadrs;
@@ -296,8 +294,10 @@ static void *multipcm_start(int sndindex, int clock, const void *config)
 
 		sprintf(mname, "MultiPCM %d", sndindex);
 
-		state_save_register_UINT32(mname, sndindex, "bankL", &mpcm->bankL, 1);
-		state_save_register_UINT32(mname, sndindex, "bankR", &mpcm->bankR, 1);
+		state_save_register_item(mname, sndindex, mpcm->bankL);
+		state_save_register_item(mname, sndindex, mpcm->bankR);
+
+		state_save_register_item_2d_array(mname, sndindex, mpcm->registers);
 
 		for (v = 0; v < 28; v++)
 		{
@@ -305,29 +305,21 @@ static void *multipcm_start(int sndindex, int clock, const void *config)
 
 			sprintf(mname2, "MultiPCM %d v %d", sndindex, v);
 
-			for (j = 0; j < 8; j++)
-			{
-				char sname[20];
-
-				sprintf(sname, "rawreg %d", j);
-
-				state_save_register_UINT8(mname2, 1, sname, &mpcm->registers[v][j], 1);
-			}
-			state_save_register_INT8(mname2, 1, "active", &mpcm->Voices[v].active, 1);
-			state_save_register_INT8(mname2, 1, "loop", &mpcm->Voices[v].loop, 1);
-			state_save_register_INT32(mname2, 1, "end", &mpcm->Voices[v].end, 1);
-			state_save_register_INT32(mname2, 1, "lpstart", &mpcm->Voices[v].loopst, 1);
-			state_save_register_int(mname2, 1, "pan", &mpcm->Voices[v].pan);
-			state_save_register_INT32(mname2, 1, "vol", &mpcm->Voices[v].vol, 1);
-			state_save_register_INT32(mname2, 1, "ptdelta", &mpcm->Voices[v].ptdelta, 1);
-			state_save_register_INT32(mname2, 1, "ptoffset", &mpcm->Voices[v].ptoffset, 1);
-			state_save_register_INT32(mname2, 1, "ptsum", &mpcm->Voices[v].ptsum, 1);
-			state_save_register_int(mname2, 1, "relamt", &mpcm->Voices[v].relamt);
-			state_save_register_INT8(mname2, 1, "relstage", &mpcm->Voices[v].relstage, 1);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].active);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].loop);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].end);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].loopst);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].pan);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].vol);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].ptdelta);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].ptoffset);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].ptsum);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].relamt);
+			state_save_register_item(mname2, sndindex, mpcm->Voices[v].relstage);
 		}
 
-		state_save_register_int(mname, sndindex, "curreg", &mpcm->curreg);
-		state_save_register_int(mname, sndindex, "curvoice", &mpcm->curvoice);
+		state_save_register_item(mname, sndindex, mpcm->curreg);
+		state_save_register_item(mname, sndindex, mpcm->curvoice);
 	}
 
 	state_save_register_func_postload_ptr(MultiPCM_postload, mpcm);

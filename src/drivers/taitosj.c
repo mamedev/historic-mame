@@ -171,7 +171,7 @@ TODO:
 
 
 
-MACHINE_INIT( taitosj );
+MACHINE_RESET( taitosj );
 WRITE8_HANDLER( taitosj_bankswitch_w );
 READ8_HANDLER( taitosj_fake_data_r );
 READ8_HANDLER( taitosj_fake_status_r );
@@ -1893,7 +1893,7 @@ static MACHINE_DRIVER_START( nomcu )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(taitosj)
+	MDRV_MACHINE_RESET(taitosj)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

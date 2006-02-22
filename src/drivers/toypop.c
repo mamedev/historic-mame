@@ -211,7 +211,7 @@ WRITE8_HANDLER( toypop_m68000_assert_w )
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-MACHINE_INIT( toypop )
+MACHINE_RESET( toypop )
 {
 	cpu_interrupt_enable(0,0);
 	cpunum_set_input_line(0, 0, CLEAR_LINE);
@@ -581,7 +581,7 @@ static MACHINE_DRIVER_START( liblrabl )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(toypop)
+	MDRV_MACHINE_RESET(toypop)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

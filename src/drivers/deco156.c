@@ -24,7 +24,6 @@ extern void decrypt156(void);
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
 #include "deco16ic.h"
-#include "state.h"
 
 VIDEO_START(hvysmsh);
 VIDEO_UPDATE(hvysmsh);
@@ -46,12 +45,12 @@ VIDEO_START( wcvol95 )
 	paletteram16 =  auto_malloc(0x1000);
 
 	/* and register the allocated ram so that save states still work */
-	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1 Data", deco16_pf1_data, 0x2000/2);
-	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 2 Data", deco16_pf2_data, 0x2000/2);
-	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1 Rowscroll", deco16_pf1_rowscroll, 0x800/2);
-	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 2 Rowscroll", deco16_pf2_rowscroll, 0x800/2);
-	state_save_register_UINT16 ("156VIDEO", 0, "Playfield 1+2 Control Registers", deco16_pf12_control, 0x10/2);
-	state_save_register_UINT16 ("156VIDEO", 0, "Paletteram", paletteram16, 0x1000/2);
+	state_save_register_global_pointer(deco16_pf1_data, 0x2000/2);
+	state_save_register_global_pointer(deco16_pf2_data, 0x2000/2);
+	state_save_register_global_pointer(deco16_pf1_rowscroll, 0x800/2);
+	state_save_register_global_pointer(deco16_pf2_rowscroll, 0x800/2);
+	state_save_register_global_pointer(deco16_pf12_control, 0x10/2);
+	state_save_register_global_pointer(paletteram16, 0x1000/2);
 
 	if (deco16_1_video_init())
 		return 1;

@@ -661,7 +661,7 @@ static const gfx_decode fantland_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-static MACHINE_INIT( fantland )
+static MACHINE_RESET( fantland )
 {
 	fantland_nmi_enable = 0;
 }
@@ -693,7 +693,7 @@ static MACHINE_DRIVER_START( fantland )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fantland)
+	MDRV_MACHINE_RESET(fantland)
 
 	MDRV_INTERLEAVE(8000/60)	// sound irq must feed the DAC at 8kHz
 
@@ -743,7 +743,7 @@ static MACHINE_DRIVER_START( galaxygn )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fantland)
+	MDRV_MACHINE_RESET(fantland)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -771,11 +771,11 @@ static struct MSM5205interface msm5205_interface =
 	MSM5205_S48_4B		/* 8 kHz, 4 Bits  */
 };
 
-static MACHINE_INIT( borntofi )
+static MACHINE_RESET( borntofi )
 {
 	int voice;
 
-	machine_init_fantland();
+	machine_reset_fantland();
 
 	for (voice = 0; voice < 4; voice++)
 		borntofi_adpcm_stop(voice);
@@ -794,7 +794,7 @@ static MACHINE_DRIVER_START( borntofi )
 	MDRV_FRAMES_PER_SECOND(54)	// 54 Hz
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(borntofi)
+	MDRV_MACHINE_RESET(borntofi)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

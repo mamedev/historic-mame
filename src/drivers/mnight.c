@@ -30,7 +30,7 @@ extern size_t mnight_foregroundram_size;
 
 static int mnight_bank_latch = 255, main_cpu_num;
 
-MACHINE_INIT( mnight )
+MACHINE_RESET( mnight )
 {
 	main_cpu_num = 0;
 }
@@ -357,7 +357,7 @@ static MACHINE_DRIVER_START( mnight )
 	MDRV_VBLANK_DURATION(10000)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(mnight)
+	MDRV_MACHINE_RESET(mnight)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

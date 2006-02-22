@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/segaic24.h"
 

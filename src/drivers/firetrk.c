@@ -219,7 +219,7 @@ static void write_output(UINT8 flags)
 }
 
 
-static MACHINE_INIT( firetrk )
+static MACHINE_RESET( firetrk )
 {
 	timer_pulse(1. / 60, 0, frame_callback);
 
@@ -1065,7 +1065,7 @@ static MACHINE_DRIVER_START( firetrk )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int) ((22. * 1000000) / (262. * 60) + 0.5))
 
-	MDRV_MACHINE_INIT(firetrk)
+	MDRV_MACHINE_RESET(firetrk)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

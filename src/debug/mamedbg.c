@@ -29,6 +29,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "mamedbg.h"
+#include "debugger.h"
 #include "window.h"
 
 
@@ -1160,127 +1161,6 @@ INLINE unsigned xtou( char **parg, int *size)
 	return val;
 }
 
-#ifndef NEW_DEBUGGER
-const char *set_ea_info( int what, unsigned value, int size, int access )
-{
-	static char buffer[8][63+1];
-	static int which = 0;
-	const char *sign = "";
-	unsigned width, result;
-
-	which = (which+1) % 8;
-
-	if( access == EA_REL_PC )
-		/* PC relative calls set_ea_info with value = PC and size = offset */
-		result = value + size;
-	else
-		result = value;
-
-	/* set source EA? */
-	if( what == EA_SRC )
-	{
-		DBGDASM.src_ea_access = access;
-		DBGDASM.src_ea_value = result;
-		DBGDASM.src_ea_size = size;
-	}
-	else
-	if( what == EA_DST )
-	{
-		DBGDASM.dst_ea_access = access;
-		DBGDASM.dst_ea_value = result;
-		DBGDASM.dst_ea_size = size;
-	}
-	else
-	{
-		return "set_ea_info: invalid <what>!";
-	}
-
-	switch( access )
-	{
-	case EA_VALUE:	/* Immediate value */
-		switch( size )
-		{
-		case EA_INT8:
-		case EA_UINT8:
-			width = 2;
-			break;
-		case EA_INT16:
-		case EA_UINT16:
-			width = 4;
-			break;
-		case EA_INT32:
-		case EA_UINT32:
-			width = 8;
-			break;
-		default:
-			return "set_ea_info: invalid <size>!";
-		}
-
-		switch( size )
-		{
-		case EA_INT8:
-		case EA_INT16:
-		case EA_INT32:
-			if( result & (1 << ((width * 4) - 1)) )
-			{
-				sign = "-";
-				result = (unsigned)-result;
-			}
-			break;
-		}
-
-		if (width < 8)
-			result &= (1 << (width * 4)) - 1;
-		break;
-
-	case EA_ZPG_RD:
-	case EA_ZPG_WR:
-	case EA_ZPG_RDWR:
-		result &= 0xff;
-		width = 2;
-		break;
-
-	case EA_ABS_PC: /* Absolute program counter change */
-		result &= AMASK;
-		if( size == EA_INT8 || size == EA_UINT8 )
-			width = 2;
-		else
-		if( size == EA_INT16 || size == EA_UINT16 )
-			width = 4;
-		else
-		if( size == EA_INT32 || size == EA_UINT32 )
-			width = 8;
-		else
-			width = (ABITS + 3) / 4;
-		break;
-
-	case EA_REL_PC: /* Relative program counter change */
-		if( dbg_dasm_relative_jumps )
-		{
-			if( size == 0 )
-				return "$";
-			if( size < 0 )
-			{
-				sign = "-";
-				result = (unsigned) -size;
-			}
-			else
-			{
-				sign = "+";
-				result = (unsigned) size;
-			}
-			sprintf( buffer[which], "$%s%u", sign, result );
-			return buffer[which];
-		}
-		/* fall through */
-	default:
-		result &= AMASK;
-		width = (ABITS + 3) / 4;
-	}
-	sprintf( buffer[which], "%s$%0*X", sign, width, result );
-	return buffer[which];
-}
-#endif /*NEW_DEBUGGER*/
 /**************************************************************************
  * lower
  * Convert string into all lower case.
@@ -5326,6 +5206,8 @@ void mame_debug_init(void)
 	debug_key_pressed = 1;
 
 	first_time = 1;
+
+	add_exit_callback(mame_debug_exit);
 }
 
 /**************************************************************************
@@ -5338,14 +5220,19 @@ void mame_debug_exit(void)
 	mame_debug_reset_statics();
 }
 
+void mame_debug_break(void)
+{
+	debug_key_pressed = 1;
+}
+
 /**************************************************************************
  **************************************************************************
  *      MAME_Debug
  *      This function is called from within an execution loop of a
- *      CPU core whenever mame_debug is non zero
+ *      CPU core whenever Machine->debug_mode is non zero
  **************************************************************************
  **************************************************************************/
-void MAME_Debug(void)
+void mame_debug_hook(void)
 {
 	if( ++debug_key_delay == 0x7fff )
 	{

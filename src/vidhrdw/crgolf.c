@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "crgolf.h"
-#include "state.h"
 
 
 /* globals */
@@ -205,9 +204,9 @@ VIDEO_START( crgolf )
 	fillbitmap(highbit, 16, NULL);
 
 	/* register for save states */
-	state_save_register_UINT8("video", 0, "screena", (UINT8 *)screena->base, screena->rowbytes * screena->height);
-	state_save_register_UINT8("video", 0, "screenb", (UINT8 *)screenb->base, screenb->rowbytes * screenb->height);
-	state_save_register_UINT8("video", 0, "highbit", (UINT8 *)highbit->base, highbit->rowbytes * highbit->height);
+	state_save_register_bitmap("video", 0, "screena", screena);
+	state_save_register_bitmap("video", 0, "screenb", screenb);
+	state_save_register_bitmap("video", 0, "highbit", highbit);
 
 	return 0;
 }

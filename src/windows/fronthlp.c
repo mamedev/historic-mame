@@ -434,7 +434,7 @@ int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
 }
 
 
-int frontend_help (const char *gamename)
+int frontend_help (const char *gamename, const char *filename)
 {
 	machine_config drv;
 	int i, j;
@@ -451,7 +451,7 @@ int frontend_help (const char *gamename)
 		#ifndef MESS
 		printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
 				"Copyright (C) 1997-2005 by Nicola Salmoria and the MAME Team\n\n",build_version);
-		showdisclaimer();
+		printf("%s\n", mame_disclaimer);
 		printf("Usage:  MAME gamename [options]\n\n"
 				"        MAME -showusage    for a brief list of options\n"
 				"        MAME -showconfig   for a list of configuration options\n"
@@ -740,7 +740,7 @@ nextloop:
 		else silentident = 0;
 
 		knownstatus = KNOWN_START;
-		romident(gamename,1);
+		romident(filename, 1);
 		if (ident == 2)
 		{
 			switch (knownstatus)

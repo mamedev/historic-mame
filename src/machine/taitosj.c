@@ -22,7 +22,7 @@ static int spacecr_prot_value;
 WRITE8_HANDLER( taitosj_bankswitch_w );
 
 
-MACHINE_INIT( taitosj )
+MACHINE_RESET( taitosj )
 {
 	/* set the default ROM bank (many games only have one bank and */
 	/* never write to the bank selector register) */

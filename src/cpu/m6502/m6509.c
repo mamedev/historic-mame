@@ -39,8 +39,7 @@ addresses take place.
 
 #include <stdio.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "m6509.h"
 #include "m6509.h"
 

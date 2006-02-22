@@ -3,7 +3,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "machine/random.h"
 #include <math.h>
 
@@ -19,13 +18,13 @@ static int model1_swa;
 static int fifoin_cbcount;
 static void (*fifoin_cb)(void);
 
-static int fifoout_rpos, fifoout_wpos;
+static INT32 fifoout_rpos, fifoout_wpos;
 static UINT32 fifoout_data[FIFO_SIZE];
 
 static UINT32 list_length;
 
 static float cmat[12], mat_stack[MAT_STACK_SIZE][12], mat_vector[21][12];
-static int mat_stack_pos;
+static INT32 mat_stack_pos;
 static float acc;
 
 static float tgp_vf_xmin, tgp_vf_xmax, tgp_vf_zmin, tgp_vf_zmax, tgp_vf_ygnd, tgp_vf_yflr, tgp_vf_yjmp;
@@ -1816,20 +1815,20 @@ void model1_tgp_reset(int swa)
 	model1_swa = swa;
 	next_fn();
 
-	state_save_register_UINT32("tgp", 0, "ram_data",       ram_data, 0x10000);
-	state_save_register_UINT16("tgp", 0, "ram_adr",       &ram_adr, 1);
-	state_save_register_UINT16("tgp", 0, "ram_scanadr",   &ram_scanadr, 1);
-	state_save_register_UINT16("tgp", 0, "ram_latch",      ram_latch, 2);
-	state_save_register_int   ("tgp", 0, "fifoout_rpos",  &fifoout_rpos);
-	state_save_register_int   ("tgp", 0, "fifoout_wpos",  &fifoout_wpos);
-	state_save_register_UINT32("tgp", 0, "fifoout_data",   fifoout_data, FIFO_SIZE);
-	state_save_register_int   ("tgp", 0, "fifoin_rpos",   &fifoin_rpos);
-	state_save_register_int   ("tgp", 0, "fifoin_wpos",   &fifoin_wpos);
-	state_save_register_UINT32("tgp", 0, "fifoin_data",    fifoin_data, FIFO_SIZE);
-	state_save_register_float ("tgp", 0, "cmat",           cmat, 12);
-	state_save_register_float ("tgp", 0, "mat_stack",     &mat_stack[0][0],  12*MAT_STACK_SIZE);
-	state_save_register_float ("tgp", 0, "mat_vector",    &mat_vector[0][0], 12*21);
-	state_save_register_int   ("tgp", 0, "mat_stack_pos", &mat_stack_pos);
-	state_save_register_float ("tgp", 0, "acc",           &acc, 1);
-	state_save_register_UINT32("tgp", 0, "list_length",   &list_length, 1);
+	state_save_register_global_pointer(ram_data, 0x10000);
+	state_save_register_global(ram_adr);
+	state_save_register_global(ram_scanadr);
+	state_save_register_global_array(ram_latch);
+	state_save_register_global(fifoout_rpos);
+	state_save_register_global(fifoout_wpos);
+	state_save_register_global_array(fifoout_data);
+	state_save_register_global(fifoin_rpos);
+	state_save_register_global(fifoin_wpos);
+	state_save_register_global_array(fifoin_data);
+	state_save_register_global_array(cmat);
+	state_save_register_global_2d_array(mat_stack);
+	state_save_register_global_2d_array(mat_vector);
+	state_save_register_global(mat_stack_pos);
+	state_save_register_global(acc);
+	state_save_register_global(list_length);
 }

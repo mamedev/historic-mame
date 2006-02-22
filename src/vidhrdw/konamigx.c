@@ -6,13 +6,12 @@
  */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/konamigx.h"
 
 static int layer_colorbase[4];
-static int gx_tilebanks[8], gx_oldbanks[8];
+static INT32 gx_tilebanks[8], gx_oldbanks[8];
 static int gx_invertlayersBC;
 static int gx_tilemode, gx_rozenable, psac_colorbase, last_psac_colorbase;
 static tilemap *gx_psac_tilemap, *gx_psac_tilemap2;
@@ -158,7 +157,7 @@ static int _gxcommoninitnosprites(void)
 		gx_tilebanks[i] = gx_oldbanks[i] = 0;
 	}
 
-	state_save_register_INT32("KGXVideo", 0, "tilebanks", gx_tilebanks, 8);
+	state_save_register_global_array(gx_tilebanks);
 
 	gx_invertlayersBC = 0;
 	gx_tilemode = 0;

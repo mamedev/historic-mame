@@ -103,7 +103,6 @@ the prog rom. Doesn't seem to cause problems though.
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "sound/2610intf.h"

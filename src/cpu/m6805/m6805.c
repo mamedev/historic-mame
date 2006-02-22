@@ -34,9 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "driver.h"
-#include "cpuintrf.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "m6805.h"
 
 #define IRQ_LEVEL_DETECT 0
@@ -443,13 +441,14 @@ static void Interrupt(void)
 static void state_register(const char *type)
 {
 	int cpu = cpu_getactivecpu();
-	state_save_register_UINT8(type, cpu, "A", &A, 1);
-	state_save_register_UINT16(type, cpu, "PC", &PC, 1);
-	state_save_register_UINT16(type, cpu, "S", &S, 1);
-	state_save_register_UINT8(type, cpu, "X", &X, 1);
-	state_save_register_UINT8(type, cpu, "CC", &CC, 1);
-	state_save_register_UINT16(type, cpu, "PENDING", &m6805.pending_interrupts, 1);
-	state_save_register_INT32(type, cpu, "IRQ_STATE", &m6805.irq_state[0], 1);
+
+	state_save_register_item(type, cpu, A);
+	state_save_register_item(type, cpu, PC);
+	state_save_register_item(type, cpu, S);
+	state_save_register_item(type, cpu, X);
+	state_save_register_item(type, cpu, CC);
+	state_save_register_item(type, cpu, m6805.pending_interrupts);
+	state_save_register_item(type, cpu, m6805.irq_state[0]);
 }
 
 static void m6805_init(void)
@@ -853,14 +852,14 @@ void hd63705_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	state_register("hd63705");
-	state_save_register_INT32("hd63705",cpu,"IRQ1_STATE", &m6805.irq_state[0], 1);
-	state_save_register_INT32("hd63705",cpu,"IRQ2_STATE", &m6805.irq_state[1], 1);
-	state_save_register_INT32("hd63705",cpu,"TIMER1_STATE", &m6805.irq_state[2], 1);
-	state_save_register_INT32("hd63705",cpu,"TIMER2_STATE", &m6805.irq_state[3], 1);
-	state_save_register_INT32("hd63705",cpu,"TIMER3_STATE", &m6805.irq_state[4], 1);
-	state_save_register_INT32("hd63705",cpu,"PCI_STATE", &m6805.irq_state[5], 1);
-	state_save_register_INT32("hd63705",cpu,"SCI_STATE", &m6805.irq_state[6], 1);
-	state_save_register_INT32("hd63705",cpu,"ADCONV_STATE", &m6805.irq_state[7], 1);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[0]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[1]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[2]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[3]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[4]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[5]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[6]);
+	state_save_register_item("hd63705", cpu, m6805.irq_state[7]);
 }
 
 void hd63705_reset(void *param)

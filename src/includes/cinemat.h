@@ -7,7 +7,7 @@
 
 /*----------- defined in driver/cinemat.c -----------*/
 
-MACHINE_INIT( cinemat );
+MACHINE_RESET( cinemat );
 
 
 /*----------- defined in sndhrdw/cinemat.c -----------*/

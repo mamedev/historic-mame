@@ -52,7 +52,7 @@ VIDEO_UPDATE( yunsung8 );
 
 
 
-MACHINE_INIT( yunsung8 )
+MACHINE_RESET( yunsung8 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1) + 0x24000;
 
@@ -455,7 +455,7 @@ static MACHINE_DRIVER_START( yunsung8 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(yunsung8)
+	MDRV_MACHINE_RESET(yunsung8)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

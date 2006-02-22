@@ -24,7 +24,7 @@
 **#################################################################################################*/
 
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "dsp56k.h"
 
 // #define PC_E000

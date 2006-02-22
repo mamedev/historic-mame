@@ -121,6 +121,8 @@ enum
 	CPU_R3000LE,
 	CPU_R4600BE,
 	CPU_R4600LE,
+	CPU_R4650BE,
+	CPU_R4650LE,
 	CPU_R4700BE,
 	CPU_R4700LE,
 	CPU_R5000BE,
@@ -432,7 +434,7 @@ typedef struct _cpu_interface cpu_interface;
  *************************************/
 
 /* reset the internal CPU tracking */
-int cpuintrf_init(void);
+void cpuintrf_init(void);
 
 /* set up the interface for one CPU of a given type */
 int	cpuintrf_init_cpu(int cpunum, int cputype);

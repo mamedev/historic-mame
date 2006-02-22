@@ -37,6 +37,5 @@
 
 /* initialization */
 void				debug_command_init(void);
-void				debug_command_exit(void);
 
 #endif

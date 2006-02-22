@@ -321,7 +321,7 @@ extern WRITE8_HANDLER( psychic5_title_screen_w );
 extern READ8_HANDLER( psychic5_paged_ram_r );
 extern READ8_HANDLER( psychic5_vram_page_select_r );
 
-extern MACHINE_INIT( psychic5 );
+extern MACHINE_RESET( psychic5 );
 
 extern VIDEO_START( psychic5 );
 extern VIDEO_UPDATE( psychic5 );
@@ -563,7 +563,7 @@ static MACHINE_DRIVER_START( psychic5 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	/* frames per second hand tuned to match game and music speed */
 	MDRV_INTERLEAVE(10)      /* Allow time for 2nd cpu to interleave*/
-	MDRV_MACHINE_INIT(psychic5)
+	MDRV_MACHINE_RESET(psychic5)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

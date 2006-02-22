@@ -10,8 +10,8 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include <math.h>
+#include "mamedbg.h"
 
 #define VERBOSE 0
 
@@ -191,8 +191,8 @@ int palette_start(void)
 		return 1;
 
 	/* set up save/restore of the palette */
-	state_save_register_UINT32("palette", 0, "colors", game_palette, total_colors);
-	state_save_register_UINT16("palette", 0, "brightness", pen_brightness, Machine->drv->total_colors);
+	state_save_register_global_pointer(game_palette, total_colors);
+	state_save_register_global_pointer(pen_brightness, Machine->drv->total_colors);
 	state_save_register_func_postload(palette_reset);
 
 	return 0;

@@ -26,7 +26,7 @@ READ8_HANDLER( ajax_sharedram_r );
 WRITE8_HANDLER( ajax_sharedram_w );
 READ8_HANDLER( ajax_ls138_f10_r );
 WRITE8_HANDLER( ajax_ls138_f10_w );
-MACHINE_INIT( ajax );
+MACHINE_RESET( ajax );
 INTERRUPT_GEN( ajax_interrupt );
 
 /* from vidhrdw/ajax.c */
@@ -283,7 +283,7 @@ static MACHINE_DRIVER_START( ajax )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(ajax)
+	MDRV_MACHINE_RESET(ajax)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)

@@ -699,7 +699,7 @@ DRIVER_INIT( hal21 )
 	snk_gamegroup = 1;
 }
 
-MACHINE_INIT( aso )
+MACHINE_RESET( aso )
 {
 	memset(hal21_vreg, 0, 8);
 	hal21_sound_scheduler(0, 0);
@@ -733,7 +733,7 @@ static MACHINE_DRIVER_START( aso )
 	MDRV_GFXDECODE(aso_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_MACHINE_INIT(aso)
+	MDRV_MACHINE_RESET(aso)
 
 	MDRV_PALETTE_INIT(aso)
 	MDRV_VIDEO_START(aso)
@@ -775,7 +775,7 @@ static MACHINE_DRIVER_START( hal21 )
 	MDRV_GFXDECODE(aso_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
-	MDRV_MACHINE_INIT(aso)
+	MDRV_MACHINE_RESET(aso)
 
 	MDRV_PALETTE_INIT(aso)
 	MDRV_VIDEO_START(aso)

@@ -56,7 +56,8 @@ enum
 
 typedef struct _mame_file mame_file;
 
-extern chd_interface mame_chd_interface;
+void fileio_init(void);
+void fileio_exit(void);
 
 int mame_faccess(const char *filename, int filetype);
 mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite);

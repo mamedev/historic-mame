@@ -17,7 +17,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
@@ -698,7 +697,16 @@ static struct YM3812interface ym3812_intf =
 	soundirq	/* IRQ Line */
 };
 
-static MACHINE_INIT( nmg5 )
+static MACHINE_START( nmg5 )
+{
+	state_save_register_global(gfx_bank);
+	state_save_register_global(priority_reg);
+	state_save_register_global(input_data);
+	state_save_register_item_array("nmg5", 0, nmg5_bitmap);
+	return 0;
+}
+
+static MACHINE_RESET( nmg5 )
 {
 	/* some games don't set the priority register so it should be hard-coded to a normal layout */
 	priority_reg = 7;
@@ -719,7 +727,8 @@ static MACHINE_DRIVER_START( nmg5 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(nmg5)
+	MDRV_MACHINE_START(nmg5)
+	MDRV_MACHINE_RESET(nmg5)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -973,29 +982,18 @@ ROM_START( garogun )
 	ROM_LOAD( "s.u137", 0x00000, 0x80000, CRC(3eadc21a) SHA1(b1c131c3f59adbc370696b277f8f04681212761d) )
 ROM_END
 
-static void set_save_states(void)
-{
-	state_save_register_UINT8("nmg5", 0, "Gfx Bank", &gfx_bank, 1);
-	state_save_register_UINT8("nmg5", 0, "Priority Reg", &priority_reg, 1);
-	state_save_register_UINT8("nmg5", 0, "Input Data", &input_data, 1);
-	state_save_register_item_array("nmg5", 0, nmg5_bitmap);
-}
-
 DRIVER_INIT( prot_val_10 )
 {
-	set_save_states();
 	prot_val = 0x10;
 }
 
 DRIVER_INIT( prot_val_00 )
 {
-	set_save_states();
 	prot_val = 0x00;
 }
 
 DRIVER_INIT( prot_val_40 )
 {
-	set_save_states();
 	prot_val = 0x40;
 }
 

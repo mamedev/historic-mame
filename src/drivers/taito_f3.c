@@ -39,7 +39,6 @@
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "taito_f3.h"
-#include "state.h"
 #include "sound/es5506.h"
 
 VIDEO_START( f3 );
@@ -440,7 +439,7 @@ static INTERRUPT_GEN( f3_interrupt2 )
 	mame_timer_set( MAME_TIME_IN_CYCLES(10000,0), 0, f3_interrupt3);
 }
 
-static MACHINE_INIT( f3 )
+static MACHINE_RESET( f3 )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
@@ -489,6 +488,12 @@ NVRAM_HANDLER( taito_f3 )
 	}
 }
 
+static MACHINE_START(f3)
+{
+	state_save_register_global_array(coin_word);
+	return 0;
+}
+
 static MACHINE_DRIVER_START( f3 )
 
 	/* basic machine hardware */
@@ -502,7 +507,8 @@ static MACHINE_DRIVER_START( f3 )
 	MDRV_FRAMES_PER_SECOND(58.97)
 	MDRV_VBLANK_DURATION(624) /* 58.97 Hz, 624us vblank time */
 
-	MDRV_MACHINE_INIT(f3)
+	MDRV_MACHINE_START(f3)
+	MDRV_MACHINE_RESET(f3)
 	MDRV_NVRAM_HANDLER(taito_f3)
 
  	/* video hardware */
@@ -3097,7 +3103,6 @@ static void tile_decode(int uses_5bpp_tiles)
 		gfx[offset] = (d3<<2) | (d4<<6);
 		offset++;
 	}
-	state_save_register_UINT32("f3", 0, "coinword", coin_word, 2);
 }
 
 #define F3_IRQ_SPEEDUP_1_R(GAME, counter, mem_addr, mask) 		\

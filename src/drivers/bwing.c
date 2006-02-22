@@ -385,7 +385,7 @@ static const gfx_decode gfxdecodeinfo[] =
 //****************************************************************************
 // Hardware Definitions
 
-MACHINE_INIT( bwing )
+MACHINE_RESET( bwing )
 {
 	bwp3_nmimask = 0;
 	fftail = ffhead = ffcount = 0;

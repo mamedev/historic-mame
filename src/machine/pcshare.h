@@ -20,37 +20,12 @@ UINT8 pc_keyb_read(void);
 void pc_keyb_set_clock(int on);
 void pc_keyb_clear(void);
 
-READ8_HANDLER ( pc_COM1_r );
-WRITE8_HANDLER( pc_COM1_w );
-READ8_HANDLER ( pc_COM2_r );
-WRITE8_HANDLER( pc_COM2_w );
-READ8_HANDLER ( pc_COM3_r );
-WRITE8_HANDLER( pc_COM3_w );
-READ8_HANDLER ( pc_COM4_r );
-WRITE8_HANDLER( pc_COM4_w );
-
-READ32_HANDLER ( pc32_COM1_r );
-WRITE32_HANDLER( pc32_COM1_w );
-READ32_HANDLER ( pc32_COM2_r );
-WRITE32_HANDLER( pc32_COM2_w );
-READ32_HANDLER ( pc32_COM3_r );
-WRITE32_HANDLER( pc32_COM3_w );
-READ32_HANDLER ( pc32_COM4_r );
-WRITE32_HANDLER( pc32_COM4_w );
-
 /* from sndhrdw/pc.c */
 extern struct CustomSound_interface pc_sound_interface;
 void pc_sh_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
 void pc_sh_speaker(int mode);
 
 void pc_sh_speaker_change_clock(double pc_clock);
-
-READ8_HANDLER ( pc_JOY_r );
-WRITE8_HANDLER ( pc_JOY_w );
-
-#define PC_JOYSTICK
-INPUT_PORTS_EXTERN( pc_joystick_none );
-INPUT_PORTS_EXTERN( pc_joystick );
 
 READ8_HANDLER(pc_page_r);
 WRITE8_HANDLER(pc_page_w);

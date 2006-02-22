@@ -2,7 +2,7 @@
 #define M68000__HEADER
 
 #include "osd_cpu.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 enum
 {

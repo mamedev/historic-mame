@@ -26,12 +26,11 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 static unsigned char *m90_spriteram;
 unsigned char *m90_video_data;
 static tilemap *pf1_layer,*pf2_layer,*pf1_wide_layer,*pf2_wide_layer;
-static int m90_video_control_data[16];
+static INT32 m90_video_control_data[16];
 
 static void get_tile_info(int tile_index,int layer,int page_mask)
 {
@@ -68,7 +67,7 @@ VIDEO_START( m90 )
 	tilemap_set_transparent_pen(pf1_layer,0);
 	tilemap_set_transparent_pen(pf1_wide_layer,0);
 
-	state_save_register_UINT32("video", 0, "m90_video_control_data", (UINT32*) m90_video_control_data, 16);
+	state_save_register_global_array(m90_video_control_data);
 
 	return 0;
 }

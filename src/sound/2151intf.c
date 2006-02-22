@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "fm.h"
 #include "2151intf.h"
 #include "ym2151.h"

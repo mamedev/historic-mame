@@ -99,7 +99,7 @@ Other references can be found on spies.com:
 
 
 #include "memory.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "tms9900.h"
 #include <math.h>
 
@@ -1466,7 +1466,7 @@ static int tms99xx_execute(int cycles)
 
 		#ifdef MAME_DEBUG
 		{
-			if (mame_debug)
+			if (Machine->debug_mode)
 			{
 				int icount_save = TMS99XX_ICOUNT;
 
@@ -1514,7 +1514,7 @@ static int tms99xx_execute(int cycles)
 
 				TMS99XX_ICOUNT = icount_save;
 
-				MAME_Debug();
+				mame_debug_hook();
 
 				TMS99XX_ICOUNT = icount_save;
 			}

@@ -28,7 +28,7 @@ static UINT32 address;
 static UINT8 * memory_devices;
 static UINT32  mem_dev_selected; /* an offset within memory_devices area */
 
-MACHINE_INIT (changela)
+MACHINE_RESET (changela)
 {
 	mcu_PC1=0;
 	mcu_PC0=0;
@@ -1143,7 +1143,7 @@ static MACHINE_DRIVER_START( changela )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(changela)
+	MDRV_MACHINE_RESET(changela)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)

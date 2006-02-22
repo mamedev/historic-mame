@@ -196,7 +196,6 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/generic.h"
@@ -217,7 +216,7 @@ extern UINT16 *othunder_ram;
 
 static int vblank_irq, ad_irq, last_irq_level;
 
-static MACHINE_INIT( othunder )
+static MACHINE_RESET( othunder )
 {
 	vblank_irq = 0;
 	ad_irq = 0;
@@ -411,12 +410,20 @@ static WRITE16_HANDLER( othunder_lightgun_w )
             SOUND
 *****************************************/
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
 	memory_set_bankptr( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
+
+static MACHINE_START( othunder )
+{
+	state_save_register_global(banknum);
+	state_save_register_func_postload(reset_sound_region);
+	return 0;
+}
+
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
@@ -708,7 +715,8 @@ static MACHINE_DRIVER_START( othunder )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(othunder)
-	MDRV_MACHINE_INIT(othunder)
+	MDRV_MACHINE_START(othunder)
+	MDRV_MACHINE_RESET(othunder)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -880,14 +888,7 @@ ROM_END
 
 
 
-static DRIVER_INIT( othunder )
-{
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
-GAME( 1988, othunder, 0,        othunder, othunder, othunder, ORIENTATION_FLIP_X, "Taito Corporation Japan", "Operation Thunderbolt (World)", 0 )
-GAME( 1988, othundu,  othunder, othunder, othundu,  othunder, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US)", 0 )
-GAME( 1988, othunduo, othunder, othunder, othundrj, othunder, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US, older)", 0 )
-GAME( 1988, othundrj, othunder, othunder, othundrj, othunder, ORIENTATION_FLIP_X, "Taito Corporation", "Operation Thunderbolt (Japan)", 0 )
+GAME( 1988, othunder, 0,        othunder, othunder, 0, ORIENTATION_FLIP_X, "Taito Corporation Japan", "Operation Thunderbolt (World)", 0 )
+GAME( 1988, othundu,  othunder, othunder, othundu,  0, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US)", 0 )
+GAME( 1988, othunduo, othunder, othunder, othundrj, 0, ORIENTATION_FLIP_X, "Taito America Corporation", "Operation Thunderbolt (US, older)", 0 )
+GAME( 1988, othundrj, othunder, othunder, othundrj, 0, ORIENTATION_FLIP_X, "Taito Corporation", "Operation Thunderbolt (Japan)", 0 )

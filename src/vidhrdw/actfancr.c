@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 
 static UINT8 actfancr_control_1[0x20],actfancr_control_2[0x20];
@@ -82,8 +81,8 @@ static void get_pf2_tile_info(int tile_index)
 
 static void register_savestate(void)
 {
-	state_save_register_UINT8("video", 0, "control_1", actfancr_control_1, 0x20);
-	state_save_register_UINT8("video", 0, "control_2", actfancr_control_2, 0x20);
+	state_save_register_global_array(actfancr_control_1);
+	state_save_register_global_array(actfancr_control_2);
 }
 
 VIDEO_START( actfancr )

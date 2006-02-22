@@ -81,7 +81,6 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
-#include "state.h"
 
 extern WRITE8_HANDLER( lvcards_videoram_w );
 extern WRITE8_HANDLER( lvcards_colorram_w );
@@ -95,14 +94,19 @@ static UINT8 payout;
 static UINT8 pulse;
 static UINT8 result;
 
-static MACHINE_INIT( lvpoker )
+static MACHINE_START( lvpoker )
+{
+	state_save_register_global(payout);
+	state_save_register_global(pulse);
+	state_save_register_global(result);
+	return 0;
+}
+
+static MACHINE_RESET( lvpoker )
 {
 payout = 0;
 pulse = 0;
 result = 0;
-state_save_register_global(payout);
-state_save_register_global(pulse);
-state_save_register_global(result);
 }
 
 static WRITE8_HANDLER(control_port_2_w)
@@ -506,7 +510,8 @@ static MACHINE_DRIVER_START( lvpoker )
 	MDRV_NVRAM_HANDLER(generic_1fill)
  	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(lvpoker_map,0)
-	MDRV_MACHINE_INIT(lvpoker)
+	MDRV_MACHINE_START(lvpoker)
+	MDRV_MACHINE_RESET(lvpoker)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ponttehk )
@@ -516,7 +521,7 @@ static MACHINE_DRIVER_START( ponttehk )
 	MDRV_NVRAM_HANDLER(generic_1fill)
  	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(ponttehk_map,0)
-	MDRV_MACHINE_INIT(lvpoker)
+	MDRV_MACHINE_RESET(lvpoker)
 
 	// video hardware
 	MDRV_PALETTE_INIT(ponttehk)

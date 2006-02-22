@@ -6,7 +6,7 @@
 
 /*----------- defined in machine/missile.c -----------*/
 
-MACHINE_INIT( missile );
+MACHINE_RESET( missile );
 READ8_HANDLER( missile_r );
 WRITE8_HANDLER( missile_w );
 

@@ -9,7 +9,6 @@
 #include "exidy440.h"
 #include "machine/74148.h"
 #include "machine/pit8253.h"
-#include "state.h"
 
 /*************************************
  *
@@ -192,7 +191,7 @@ READ16_HANDLER( vertigo_sio_r )
  *
  *************************************/
 
-MACHINE_INIT( vertigo )
+MACHINE_RESET( vertigo )
 {
 	int i;
 
@@ -211,7 +210,7 @@ MACHINE_INIT( vertigo )
 
 	state_save_register_global(irq_state);
 	state_save_register_global(adc_result);
-	state_save_register_double("globals", 0, "irq4_time", &irq4_time, 1);
+	state_save_register_global(irq4_time);
 }
 
 

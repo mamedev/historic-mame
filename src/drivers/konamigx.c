@@ -98,7 +98,6 @@
 #define GX_SKIPIDLE  1
 
 #include "driver.h"
-#include "state.h"
 
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
@@ -121,7 +120,8 @@ VIDEO_START(opengolf);
 VIDEO_START(racinfrc);
 VIDEO_UPDATE(konamigx);
 
-MACHINE_INIT(konamigx);
+MACHINE_START(konamigx);
+MACHINE_RESET(konamigx);
 
 WRITE32_HANDLER( konamigx_palette_w );
 WRITE32_HANDLER( konamigx_palette2_w );
@@ -1318,7 +1318,8 @@ static MACHINE_DRIVER_START( konamigx )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(600)
 
-	MDRV_MACHINE_INIT(konamigx)
+	MDRV_MACHINE_START(konamigx)
+	MDRV_MACHINE_RESET(konamigx)
 	MDRV_NVRAM_HANDLER(konamigx_93C46)
 
 	/* video hardware */
@@ -3228,7 +3229,15 @@ ROM_END
 /**********************************************************************************/
 /* initializers */
 
-MACHINE_INIT(konamigx)
+MACHINE_START( konamigx )
+{
+	state_save_register_global(konamigx_wrport1_1);
+	state_save_register_global_array(sndto020);
+	state_save_register_global_array(sndto000);
+	return 0;
+}
+
+MACHINE_RESET(konamigx)
 {
 	int i;
 
@@ -3286,10 +3295,6 @@ static DRIVER_INIT(konamigx)
 	esc_cb = 0;
 	snd020_hack = 0;
 	resume_trigger = 0;
-
-	state_save_register_UINT8("KonamiGX", 0, "IRQ enable", &konamigx_wrport1_1, 1);
-	state_save_register_UINT8("KonamiGX", 0, "Sound comms 1", sndto020, 16);
-	state_save_register_UINT8("KonamiGX", 0, "Sound comms 2", sndto000, 16);
 
 	dmadelay_timer = timer_alloc(dmaend_callback);
 

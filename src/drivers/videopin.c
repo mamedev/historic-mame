@@ -75,7 +75,7 @@ static void interrupt_callback(int scanline)
 }
 
 
-static MACHINE_INIT( videopin )
+static MACHINE_RESET( videopin )
 {
 	timer_set(cpu_getscanlinetime(32), 32, interrupt_callback);
 
@@ -353,7 +353,7 @@ static MACHINE_DRIVER_START( videopin )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(23. * 1000000 / 15750)
-	MDRV_MACHINE_INIT(videopin)
+	MDRV_MACHINE_RESET(videopin)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

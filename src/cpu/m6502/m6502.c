@@ -26,8 +26,7 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "m6502.h"
 #include "ops02.h"
 #include "ill02.h"
@@ -149,23 +148,23 @@ static void m6502_common_init(UINT8 subtype, void (**insn)(void), const char *ty
 	m6502.rdmem_id = program_read_byte_8;
 	m6502.wrmem_id = program_write_byte_8;
 
-	state_save_register_UINT16(type, cpu, "PC", &m6502.pc.w.l, 2);
-	state_save_register_UINT16(type, cpu, "SP", &m6502.sp.w.l, 2);
-	state_save_register_UINT8 (type, cpu, "P", &m6502.p, 1);
-	state_save_register_UINT8 (type, cpu, "A", &m6502.a, 1);
-	state_save_register_UINT8 (type, cpu, "X", &m6502.x, 1);
-	state_save_register_UINT8 (type, cpu, "Y", &m6502.y, 1);
-	state_save_register_UINT8 (type, cpu, "pending", &m6502.pending_irq, 1);
-	state_save_register_UINT8 (type, cpu, "after_cli", &m6502.after_cli, 1);
-	state_save_register_UINT8 (type, cpu, "nmi_state", &m6502.nmi_state, 1);
-	state_save_register_UINT8 (type, cpu, "irq_state", &m6502.irq_state, 1);
-	state_save_register_UINT8 (type, cpu, "so_state", &m6502.so_state, 1);
+	state_save_register_item(type, cpu, m6502.pc.w.l);
+	state_save_register_item(type, cpu, m6502.sp.w.l);
+	state_save_register_item(type, cpu, m6502.p);
+	state_save_register_item(type, cpu, m6502.a);
+	state_save_register_item(type, cpu, m6502.x);
+	state_save_register_item(type, cpu, m6502.y);
+	state_save_register_item(type, cpu, m6502.pending_irq);
+	state_save_register_item(type, cpu, m6502.after_cli);
+	state_save_register_item(type, cpu, m6502.nmi_state);
+	state_save_register_item(type, cpu, m6502.irq_state);
+	state_save_register_item(type, cpu, m6502.so_state);
 
 #if (HAS_M6510) || (HAS_M6510T) || (HAS_M8502) || (HAS_M7501)
 	if (subtype == SUBTYPE_6510)
 	{
-		state_save_register_UINT8 (type, cpu, "port", &m6502.port, 1);
-		state_save_register_UINT8 (type, cpu, "ddr", &m6502.ddr, 1);
+		state_save_register_item(type, cpu, m6502.port);
+		state_save_register_item(type, cpu, m6502.ddr);
 	}
 #endif
 }

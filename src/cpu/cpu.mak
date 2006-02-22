@@ -446,12 +446,13 @@ endif
 #-------------------------------------------------
 
 CPUDEFS += -DHAS_R4600=$(if $(filter R4600,$(CPUS)),1,0)
+CPUDEFS += -DHAS_R4650=$(if $(filter R4650,$(CPUS)),1,0)
 CPUDEFS += -DHAS_R4700=$(if $(filter R4700,$(CPUS)),1,0)
 CPUDEFS += -DHAS_R5000=$(if $(filter R5000,$(CPUS)),1,0)
 CPUDEFS += -DHAS_QED5271=$(if $(filter QED5271,$(CPUS)),1,0)
 CPUDEFS += -DHAS_RM7000=$(if $(filter RM7000,$(CPUS)),1,0)
 
-ifneq ($(filter R4600 R4700 R5000 QED5271 RM7000,$(CPUS)),)
+ifneq ($(filter R4600 R4650 R4700 R5000 QED5271 RM7000,$(CPUS)),)
 OBJDIRS += $(OBJ)/cpu/mips
 ifdef X86_MIPS3_DRC
 CPUOBJS += $(OBJ)/cpu/mips/mips3drc.o

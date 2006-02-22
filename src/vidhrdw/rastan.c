@@ -9,7 +9,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
@@ -62,8 +61,8 @@ VIDEO_START( jumping )
 	PC080SN_set_trans_pen(0,1,15);
 
 	/* not 100% sure Jumping needs to save both... */
-	state_save_register_UINT16("sprite_ctrl", 0, "sprites", &sprite_ctrl, 1);
-	state_save_register_UINT16("sprite_flip", 0, "sprites", &sprites_flipscreen, 1);
+	state_save_register_global(sprite_ctrl);
+	state_save_register_global(sprites_flipscreen);
 	return 0;
 }
 

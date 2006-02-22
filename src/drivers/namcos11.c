@@ -262,7 +262,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"
 #include "machine/at28c16.h"
@@ -792,8 +791,8 @@ static DRIVER_INIT( namcos11 )
 					memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa10020, 0x1fa1002f, 0, 0, bankswitch_rom64_w );
 					memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa10020, 0x1fa1002f, 0, 0, MRA32_NOP );
 				}
-				state_save_register_UINT32( "namcos11", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
-				state_save_register_UINT32( "namcos11", 0, "m_p_n_bankoffset", &m_p_n_bankoffset[ 0 ], 8 );
+				state_save_register_global( m_n_bankoffset );
+				state_save_register_global_array( m_p_n_bankoffset );
 				state_save_register_func_postload( bankswitch_update_all );
 			}
 			else
@@ -812,7 +811,7 @@ static DRIVER_INIT( namcos11 )
 	}
 }
 
-MACHINE_INIT( namcos11 )
+MACHINE_RESET( namcos11 )
 {
 	memset( namcos11_keycus, 0, namcos11_keycus_size );
 	psx_machine_init();
@@ -830,7 +829,7 @@ static MACHINE_DRIVER_START( coh100ns )
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( namcos11 )
+	MDRV_MACHINE_RESET( namcos11 )
 	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */

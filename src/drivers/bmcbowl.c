@@ -483,7 +483,7 @@ static struct via6522_interface via_interface =
 	/*irq                  */ via_irq
 };
 
-static MACHINE_INIT( bmcbowl )
+static MACHINE_RESET( bmcbowl )
 {
 	via_reset();
 }
@@ -512,7 +512,7 @@ static MACHINE_DRIVER_START( bmcbowl )
 	MDRV_VIDEO_UPDATE(bmcbowl)
 
 	MDRV_NVRAM_HANDLER(bmc_nvram)
-	MDRV_MACHINE_INIT(bmcbowl)
+	MDRV_MACHINE_RESET(bmcbowl)
 
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 

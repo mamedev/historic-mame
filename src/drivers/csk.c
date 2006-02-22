@@ -139,7 +139,7 @@ extern unsigned char * cpk_palette2;
 extern unsigned char * cpk_expram;
 
 
-MACHINE_INIT (cpk);
+MACHINE_RESET (cpk);
 INTERRUPT_GEN( cska_interrupt );
 VIDEO_UPDATE( cska );
 VIDEO_START( cska );
@@ -585,7 +585,7 @@ static MACHINE_DRIVER_START( csk227it )
 
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(cpk)
+	MDRV_MACHINE_RESET(cpk)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)

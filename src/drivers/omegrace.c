@@ -229,7 +229,7 @@
  *
  *************************************/
 
-static MACHINE_INIT( omegrace )
+static MACHINE_RESET( omegrace )
 {
 	/* Omega Race expects the vector processor to be ready. */
 	avgdvg_reset_w (0, 0);
@@ -525,7 +525,7 @@ static MACHINE_DRIVER_START( omegrace )
 
 	MDRV_FRAMES_PER_SECOND(40)
 
-	MDRV_MACHINE_INIT(omegrace)
+	MDRV_MACHINE_RESET(omegrace)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

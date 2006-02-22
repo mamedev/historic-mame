@@ -1448,7 +1448,7 @@ INPUT_PORTS_END
 
 
 
-static MACHINE_INIT( mazerbla )
+static MACHINE_RESET( mazerbla )
 {
 	game_id = MAZERBLA;
 	zpu_int_vector = 0xff;
@@ -1456,7 +1456,7 @@ static MACHINE_INIT( mazerbla )
 }
 
 
-static MACHINE_INIT( greatgun )
+static MACHINE_RESET( greatgun )
 {
 	game_id = GREATGUN;
 	zpu_int_vector = 0xff;
@@ -1514,7 +1514,7 @@ but handled differently for now
 
 	/* synchronization forced on the fly */
 
-	MDRV_MACHINE_INIT(mazerbla)
+	MDRV_MACHINE_RESET(mazerbla)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1555,7 +1555,7 @@ but handled differently for now
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(greatgun)
+	MDRV_MACHINE_RESET(greatgun)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

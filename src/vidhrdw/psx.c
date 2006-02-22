@@ -18,7 +18,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "includes/psx.h"
 #include "usrintrf.h"
 
@@ -164,13 +163,13 @@ static union
 
 struct PSXGPU
 {
-	int n_tx;
-	int n_ty;
-	int n_abr;
-	int n_tp;
-	int n_ix;
-	int n_iy;
-	int n_ti;
+	INT32 n_tx;
+	INT32 n_ty;
+	INT32 n_abr;
+	INT32 n_tp;
+	INT32 n_ix;
+	INT32 n_iy;
+	INT32 n_ti;
 } psxgpu;
 
 static UINT16 *m_p_vram;
@@ -747,38 +746,40 @@ static int psx_gpu_init( void )
 		}
 	}
 
-	state_save_register_UINT8( "psx", 0, "m_packet", (UINT8 *)&m_packet, sizeof( m_packet ) );
-	state_save_register_UINT16( "psx", 0, "m_p_vram", m_p_vram, m_n_vram_size );
-	state_save_register_UINT32( "psx", 0, "m_n_gpu_buffer_offset", &m_n_gpu_buffer_offset, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_vramx", &m_n_vramx, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_vramy", &m_n_vramy, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_twy", &m_n_twy, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_twx", &m_n_twx, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_twh", &m_n_tww, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_drawarea_x1", &m_n_drawarea_x1, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_drawarea_y1", &m_n_drawarea_y1, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_drawarea_x2", &m_n_drawarea_x2, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_drawarea_y2", &m_n_drawarea_y2, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_horiz_disstart", &m_n_horiz_disstart, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_horiz_disend", &m_n_horiz_disend, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_vert_disstart", &m_n_vert_disstart, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_vert_disend", &m_n_vert_disend, 1 );
-	state_save_register_UINT32( "psx", 0, "m_b_reverseflag", &m_b_reverseflag, 1 );
-	state_save_register_INT32( "psx", 0, "m_n_drawoffset_x", &m_n_drawoffset_x, 1 );
-	state_save_register_INT32( "psx", 0, "m_n_drawoffset_y", &m_n_drawoffset_y, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_displaystartx", &m_n_displaystartx, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_displaystarty", &m_n_displaystarty, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_gpustatus", &m_n_gpustatus, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_gpuinfo", &m_n_gpuinfo, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_lightgun_x", &m_n_lightgun_x, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_lightgun_y", &m_n_lightgun_y, 1 );
-	state_save_register_int( "psx", 0, "n_tx", &psxgpu.n_tx );
-	state_save_register_int( "psx", 0, "n_ty", &psxgpu.n_ty );
-	state_save_register_int( "psx", 0, "n_abr", &psxgpu.n_abr );
-	state_save_register_int( "psx", 0, "n_tp", &psxgpu.n_tp );
-	state_save_register_int( "psx", 0, "n_ix", &psxgpu.n_ix );
-	state_save_register_int( "psx", 0, "n_iy", &psxgpu.n_iy );
-	state_save_register_int( "psx", 0, "n_ti", &psxgpu.n_ti );
+	// icky!!!
+	state_save_register_memory( "globals", 0, "m_packet", (UINT8 *)&m_packet, 1, sizeof( m_packet ) );
+
+	state_save_register_global_pointer( m_p_vram, m_n_vram_size );
+	state_save_register_global( m_n_gpu_buffer_offset );
+	state_save_register_global( m_n_vramx );
+	state_save_register_global( m_n_vramy );
+	state_save_register_global( m_n_twy );
+	state_save_register_global( m_n_twx );
+	state_save_register_global( m_n_tww );
+	state_save_register_global( m_n_drawarea_x1 );
+	state_save_register_global( m_n_drawarea_y1 );
+	state_save_register_global( m_n_drawarea_x2 );
+	state_save_register_global( m_n_drawarea_y2 );
+	state_save_register_global( m_n_horiz_disstart );
+	state_save_register_global( m_n_horiz_disend );
+	state_save_register_global( m_n_vert_disstart );
+	state_save_register_global( m_n_vert_disend );
+	state_save_register_global( m_b_reverseflag );
+	state_save_register_global( m_n_drawoffset_x );
+	state_save_register_global( m_n_drawoffset_y );
+	state_save_register_global( m_n_displaystartx );
+	state_save_register_global( m_n_displaystarty );
+	state_save_register_global( m_n_gpustatus );
+	state_save_register_global( m_n_gpuinfo );
+	state_save_register_global( m_n_lightgun_x );
+	state_save_register_global( m_n_lightgun_y );
+	state_save_register_global( psxgpu.n_tx );
+	state_save_register_global( psxgpu.n_ty );
+	state_save_register_global( psxgpu.n_abr );
+	state_save_register_global( psxgpu.n_tp );
+	state_save_register_global( psxgpu.n_ix );
+	state_save_register_global( psxgpu.n_iy );
+	state_save_register_global( psxgpu.n_ti );
 
 	state_save_register_func_postload( updatevisiblearea );
 

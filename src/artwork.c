@@ -307,6 +307,7 @@
 #include "driver.h"
 #include "png.h"
 #include "artwork.h"
+#include "profiler.h"
 #include "vidhrdw/vector.h"
 #include <ctype.h>
 #include <math.h>

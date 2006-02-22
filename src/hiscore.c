@@ -16,6 +16,8 @@
 
 #define VERBOSE 0
 
+static mame_timer *timer;
+
 #if VERBOSE
 #define LOG(x)	logerror x
 #else
@@ -160,8 +162,8 @@ static int safe_to_load (void)
 	return 1;
 }
 
-/* hs_free disposes of the mem_range linked list */
-static void hs_free (void)
+/* hiscore_free disposes of the mem_range linked list */
+static void hiscore_free (void)
 {
 	memory_range *mem_range = state.mem_range;
 	while (mem_range)
@@ -173,11 +175,11 @@ static void hs_free (void)
 	state.mem_range = NULL;
 }
 
-static void hs_load (void)
+static void hiscore_load (void)
 {
 	mame_file *f = mame_fopen (Machine->gamedrv->name, 0, FILETYPE_HIGHSCORE, 0);
 	state.hiscores_have_been_loaded = 1;
-	LOG(("hs_load\n"));
+	LOG(("hiscore_load\n"));
 	if (f)
 	{
 		memory_range *mem_range = state.mem_range;
@@ -201,10 +203,10 @@ static void hs_load (void)
 	}
 }
 
-static void hs_save (void)
+static void hiscore_save (void)
 {
 	mame_file *f = mame_fopen (Machine->gamedrv->name, 0, FILETYPE_HIGHSCORE, 1);
-	LOG(("hs_save\n"));
+	LOG(("hiscore_save\n"));
 	if (f)
 	{
 		memory_range *mem_range = state.mem_range;
@@ -228,17 +230,64 @@ static void hs_save (void)
 	}
 }
 
+
+/* call hiscore_update periodically (i.e. once per frame) */
+static void hiscore_periodic (int param)
+{
+	if (state.mem_range)
+	{
+		if (!state.hiscores_have_been_loaded)
+		{
+			if (safe_to_load())
+			{
+				hiscore_load();
+				timer_enable(timer, FALSE);
+			}
+		}
+	}
+}
+
+
+/* call hiscore_close when done playing game */
+void hiscore_close (void)
+{
+	if (state.hiscores_have_been_loaded) hiscore_save();
+	hiscore_free();
+}
+
+
 /*****************************************************************************/
 /* public API */
 
-/* call hs_open once after loading a game */
-void hs_open (const char *name)
+/* call hiscore_open once after loading a game */
+void hiscore_init (const char *name)
 {
-	mame_file *f = mame_fopen (NULL, db_filename, FILETYPE_HIGHSCORE_DB, 0);
+	memory_range *mem_range = state.mem_range;
+	mame_file *f;
+
+	state.hiscores_have_been_loaded = 0;
+
+	while (mem_range)
+	{
+		cpunum_write_byte(
+			mem_range->cpu,
+			mem_range->addr,
+			~mem_range->start_value
+		);
+
+		cpunum_write_byte(
+			mem_range->cpu,
+			mem_range->addr + mem_range->num_bytes-1,
+			~mem_range->end_value
+		);
+		mem_range = mem_range->next;
+	}
+
 	state.mem_range = NULL;
 
-	LOG(("hs_open: '%s'\n", name));
+	LOG(("hiscore_open: '%s'\n", name));
 
+	f = mame_fopen (NULL, db_filename, FILETYPE_HIGHSCORE_DB, 0);
 	if (f)
 	{
 		char buffer[MAX_CONFIG_LINE_SIZE];
@@ -285,7 +334,7 @@ void hs_open (const char *name)
 				}
 				else
 				{
-					hs_free();
+					hiscore_free();
 					break;
 				}
 			}
@@ -297,46 +346,9 @@ void hs_open (const char *name)
 		}
 		mame_fclose (f);
 	}
-}
 
-/* call hs_init when emulation starts, and when the game is reset */
-void hs_init (void)
-{
-	memory_range *mem_range = state.mem_range;
-	state.hiscores_have_been_loaded = 0;
+	timer = timer_alloc(hiscore_periodic);
+	timer_adjust(timer, TIME_IN_HZ(60), 0, TIME_IN_HZ(60));
 
-	while (mem_range)
-	{
-		cpunum_write_byte(
-			mem_range->cpu,
-			mem_range->addr,
-			~mem_range->start_value
-		);
-
-		cpunum_write_byte(
-			mem_range->cpu,
-			mem_range->addr + mem_range->num_bytes-1,
-			~mem_range->end_value
-		);
-		mem_range = mem_range->next;
-	}
-}
-
-/* call hs_update periodically (i.e. once per frame) */
-void hs_update (void)
-{
-	if (state.mem_range)
-	{
-		if (!state.hiscores_have_been_loaded)
-		{
-			if (safe_to_load()) hs_load();
-		}
-	}
-}
-
-/* call hs_close when done playing game */
-void hs_close (void)
-{
-	if (state.hiscores_have_been_loaded) hs_save();
-	hs_free();
+	add_exit_callback(hiscore_close);
 }

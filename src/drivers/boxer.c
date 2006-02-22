@@ -83,7 +83,7 @@ static PALETTE_INIT( boxer )
 }
 
 
-static MACHINE_INIT( boxer )
+static MACHINE_RESET( boxer )
 {
 	timer_set(cpu_getscanlinetime(0), 0, periodic_callback);
 
@@ -305,7 +305,7 @@ static MACHINE_DRIVER_START(boxer)
 	MDRV_FRAMES_PER_SECOND(60)
 
 	/* video hardware */
-	MDRV_MACHINE_INIT(boxer)
+	MDRV_MACHINE_RESET(boxer)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 262)

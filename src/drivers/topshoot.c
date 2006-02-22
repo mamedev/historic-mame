@@ -249,7 +249,8 @@ static MACHINE_DRIVER_START( genesis_base )
 
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(genesis)
+	MDRV_MACHINE_START(genesis)
+	MDRV_MACHINE_RESET(genesis)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
@@ -298,7 +299,6 @@ static READ16_HANDLER( vdp_fake_r )
 DRIVER_INIT(topshoot)
 {
 	/* hack -- fix vdp emulation instead */
-	init_genesis();
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC00004, 0xC00005, 0, 0, vdp_fake_r);
 
 	memory_set_bankptr(3, memory_region(REGION_CPU1) );

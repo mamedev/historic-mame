@@ -111,7 +111,6 @@ Colscroll effects?
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -119,7 +118,8 @@ Colscroll effects?
 #include "sound/2610intf.h"
 #include "sound/flt_vol.h"
 
-MACHINE_INIT( taito_dualscreen );
+MACHINE_START( warriorb );
+MACHINE_RESET( taito_dualscreen );
 
 VIDEO_START( darius2d );
 VIDEO_START( warriorb );
@@ -130,7 +130,7 @@ VIDEO_UPDATE( warriorb );
                           SOUND
 ***********************************************************/
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
@@ -523,10 +523,11 @@ static MACHINE_DRIVER_START( darius2d )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT( taito_dualscreen )
+	MDRV_MACHINE_START( warriorb )
+	MDRV_MACHINE_RESET( taito_dualscreen )
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(8,3)
 	MDRV_SCREEN_SIZE(80*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 80*8-1, 3*8, 32*8-1)
@@ -573,10 +574,11 @@ static MACHINE_DRIVER_START( warriorb )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT( taito_dualscreen )
+	MDRV_MACHINE_START( warriorb )
+	MDRV_MACHINE_RESET( taito_dualscreen )
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(8,3)
 	MDRV_SCREEN_SIZE(80*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 80*8-1, 2*8, 32*8-1)
@@ -744,13 +746,14 @@ ROM_START( warriorb )
 ROM_END
 
 
-static DRIVER_INIT( warriorb )
+MACHINE_START( warriorb )
 {
-	state_save_register_int("sound1", 0, "sound region", &banknum);
+	state_save_register_global(banknum);
 	state_save_register_func_postload(reset_sound_region);
+	return 0;
 }
 
-MACHINE_INIT( taito_dualscreen )
+MACHINE_RESET( taito_dualscreen )
 {
 	/**** mixer control enable ****/
 	sound_global_enable( 1 );	/* mixer enabled */
@@ -759,6 +762,6 @@ MACHINE_INIT( taito_dualscreen )
 
 /* Working Games */
 
-GAME( 1989, darius2d, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)", 0 )
-GAME( 1989, drius2do, darius2,  darius2d, darius2d, warriorb, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)", 0 )
-GAME( 1991, warriorb, 0,        warriorb, warriorb, warriorb, ROT0, "Taito Corporation", "Warrior Blade - Rastan Saga Episode III (Japan)", 0 )
+GAME( 1989, darius2d, darius2,  darius2d, darius2d, 0, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan)", 0 )
+GAME( 1989, drius2do, darius2,  darius2d, darius2d, 0, ROT0, "Taito Corporation", "Darius II (dual screen) (Japan old version)", 0 )
+GAME( 1991, warriorb, 0,        warriorb, warriorb, 0, ROT0, "Taito Corporation", "Warrior Blade - Rastan Saga Episode III (Japan)", GAME_IMPERFECT_GRAPHICS )

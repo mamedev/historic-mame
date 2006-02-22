@@ -39,11 +39,11 @@ extern struct pia6821_interface tshoot_snd_pia_intf;
 extern struct pia6821_interface joust2_pia_1_intf;
 
 /* initialization */
-MACHINE_INIT( defender );
-MACHINE_INIT( williams );
-MACHINE_INIT( blaster );
-MACHINE_INIT( williams2 );
-MACHINE_INIT( joust2 );
+MACHINE_RESET( defender );
+MACHINE_RESET( williams );
+MACHINE_RESET( blaster );
+MACHINE_RESET( williams2 );
+MACHINE_RESET( joust2 );
 
 /* banking */
 WRITE8_HANDLER( defender_bank_select_w );

@@ -93,7 +93,7 @@ static WRITE8_HANDLER( adpcm_reset_inv_w )
 	MSM5205_reset_w(0,~data & 1);
 }
 
-static MACHINE_INIT( hnayayoi )
+static MACHINE_RESET( hnayayoi )
 {
 	/* start with the MSM5205 reset */
 	MSM5205_reset_w(0,1);
@@ -629,7 +629,7 @@ static MACHINE_DRIVER_START( hnayayoi )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(hnayayoi)
+	MDRV_MACHINE_RESET(hnayayoi)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 

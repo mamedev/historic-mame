@@ -91,25 +91,16 @@
 
 ***************************************************************************/
 
-#include <math.h>
 #include "driver.h"
 #include "config.h"
 #include "xmlfile.h"
+#include "profiler.h"
+#include "machine/generic.h"
+#include <math.h>
 
 #ifdef MESS
 #include "inputx.h"
 #endif
-
-
-/*************************************
- *
- *  Externals (ick)
- *
- *************************************/
-
-extern void *record;
-extern void *playback;
-
 
 
 /*************************************
@@ -936,6 +927,8 @@ static int default_ports_lookup[__ipt_max][MAX_PLAYERS];
  *
  *************************************/
 
+static void input_port_load(int config_type, xml_data_node *parentnode);
+static void input_port_save(int config_type, xml_data_node *parentnode);
 static void update_digital_joysticks(void);
 static void update_analog_port(int port);
 static void interpolate_analog_port(int port);
@@ -1001,6 +994,10 @@ int input_port_init(void (*construct_ipt)(input_port_init_params *))
 				port->condition.portnum = tag;
 			}
 	}
+
+	/* register callbacks for when we load configurations */
+	config_register("input", input_port_load, input_port_save);
+
 	return 0;
 }
 
@@ -1323,7 +1320,7 @@ static int apply_config_to_current(xml_data_node *portnode, int type, int player
 }
 
 
-void input_port_load(int config_type, xml_data_node *parentnode)
+static void input_port_load(int config_type, xml_data_node *parentnode)
 {
 	xml_data_node *portnode;
 	int seqnum;
@@ -1520,7 +1517,7 @@ static void save_game_inputs(xml_data_node *parentnode)
 }
 
 
-void input_port_save(int config_type, xml_data_node *parentnode)
+static void input_port_save(int config_type, xml_data_node *parentnode)
 {
 	if (parentnode)
 	{
@@ -1980,36 +1977,36 @@ profiler_mark(PROFILER_END);
 static void update_playback_record(int portnum, UINT32 portvalue)
 {
 	/* handle playback */
-	if (playback != NULL)
+	if (Machine->playback_file != NULL)
 	{
 		UINT32 result;
 
 		/* a successful read goes into the playback field which overrides everything else */
-		if (mame_fread(playback, &result, sizeof(result)) == sizeof(result))
+		if (mame_fread(Machine->playback_file, &result, sizeof(result)) == sizeof(result))
 			portvalue = port_info[portnum].playback = BIG_ENDIANIZE_INT32(result);
 
 		/* a failure causes us to close the playback file and stop playback */
 		else
 		{
-			mame_fclose(playback);
-			playback = NULL;
+			mame_fclose(Machine->playback_file);
+			Machine->playback_file = NULL;
 		}
 	}
 
 	/* handle recording */
-	if (record != NULL)
+	if (Machine->record_file != NULL)
 	{
 		UINT32 result = BIG_ENDIANIZE_INT32(portvalue);
 
 		/* a successful write just works */
-		if (mame_fwrite(record, &result, sizeof(result)) == sizeof(result))
+		if (mame_fwrite(Machine->record_file, &result, sizeof(result)) == sizeof(result))
 			;
 
 		/* a failure causes us to close the record file and stop recording */
 		else
 		{
-			mame_fclose(record);
-			record = NULL;
+			mame_fclose(Machine->record_file);
+			Machine->record_file = NULL;
 		}
 	}
 }
@@ -2487,7 +2484,7 @@ UINT32 readinputport(int port)
 		update_playback_record(port, result);
 
 	/* if we're playing back, use the recorded value for inputs instead */
-	if (playback != NULL)
+	if (Machine->playback_file != NULL)
 		result = portinfo->playback;
 
 	/* handle VBLANK bits after inputs */

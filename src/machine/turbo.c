@@ -204,7 +204,7 @@ static ppi8255_interface buckrog_8255_intf =
 
 *******************************************/
 
-MACHINE_INIT( turbo )
+MACHINE_RESET( turbo )
 {
 	ppi8255_init(&turbo_8255_intf);
 	segment_address = segment_increment = 0;
@@ -213,7 +213,7 @@ MACHINE_INIT( turbo )
 }
 
 
-MACHINE_INIT( subroc3d )
+MACHINE_RESET( subroc3d )
 {
 	ppi8255_init(&subroc3d_8255_intf);
 	segment_address = segment_increment = 0;
@@ -225,7 +225,7 @@ MACHINE_INIT( subroc3d )
 }
 
 
-MACHINE_INIT( buckrog )
+MACHINE_RESET( buckrog )
 {
 	ppi8255_init(&buckrog_8255_intf);
 	segment_address = segment_increment = 0;

@@ -308,7 +308,7 @@ extern VIDEO_START( playch10 );
 extern VIDEO_UPDATE( playch10 );
 
 /* from machine */
-extern MACHINE_INIT( pc10 );
+extern MACHINE_RESET( pc10 );
 extern DRIVER_INIT( playch10 );	/* standard games */
 extern DRIVER_INIT( pc_gun );	/* gun games */
 extern DRIVER_INIT( pc_hrz );	/* horizontal games */
@@ -744,10 +744,10 @@ static MACHINE_DRIVER_START( playch10 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 ))
 
-	MDRV_MACHINE_INIT(pc10)
+	MDRV_MACHINE_RESET(pc10)
 
 	// video hardware
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(4,6)
 	MDRV_SCREEN_SIZE(32*8, 30*8*2)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8*2-1)

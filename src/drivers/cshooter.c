@@ -133,7 +133,7 @@ INTERRUPT_GEN( cshooter_interrupt )
 
 static int cshooter_counter;
 
-static MACHINE_INIT( cshooter )
+static MACHINE_RESET( cshooter )
 {
 	cshooter_counter = 0;
 }
@@ -353,7 +353,7 @@ static MACHINE_DRIVER_START( cshooter )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cshooter)
+	MDRV_MACHINE_RESET(cshooter)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )

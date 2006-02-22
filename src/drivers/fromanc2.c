@@ -85,17 +85,17 @@ static UINT8 fromanc2_sndcpu_nmi_flag;
 //  MACHINE INITIALYZE
 // ----------------------------------------------------------------------------
 
-static MACHINE_INIT( fromanc2 )
+static MACHINE_RESET( fromanc2 )
 {
 	//
 }
 
-static MACHINE_INIT( fromancr )
+static MACHINE_RESET( fromancr )
 {
 	//
 }
 
-static MACHINE_INIT( fromanc4 )
+static MACHINE_RESET( fromanc4 )
 {
 	//
 }
@@ -760,7 +760,7 @@ static MACHINE_DRIVER_START( fromanc2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fromanc2)
+	MDRV_MACHINE_RESET(fromanc2)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
@@ -802,7 +802,7 @@ static MACHINE_DRIVER_START( fromancr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fromancr)
+	MDRV_MACHINE_RESET(fromancr)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
@@ -840,7 +840,7 @@ static MACHINE_DRIVER_START( fromanc4 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(fromanc4)
+	MDRV_MACHINE_RESET(fromanc4)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */

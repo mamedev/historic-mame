@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 #include "deco16ic.h"
 
 UINT32 *deco32_pf1_data,*deco32_pf2_data,*deco32_pf3_data,*deco32_pf4_data;
@@ -18,7 +17,7 @@ static int deco32_pf2_colourbank,deco32_pf4_colourbank,deco32_pri;
 
 static mame_bitmap *sprite0_mix_bitmap, *sprite1_mix_bitmap, *tilemap_alpha_bitmap;
 
-static int dragngun_sprite_ctrl;
+static UINT32 dragngun_sprite_ctrl;
 static int deco32_ace_ram_dirty, has_ace_ram;
 
 int deco32_raster_display_position;
@@ -1042,7 +1041,7 @@ VIDEO_START( dragngun )
 	deco32_pf2_colourbank=deco32_pf4_colourbank=0;
 
 	alpha_set_level(0x80);
-	state_save_register_int("deco32", 0, "SCTRL", &dragngun_sprite_ctrl);
+	state_save_register_global(dragngun_sprite_ctrl);
 	has_ace_ram=0;
 
 	return 0;
@@ -1070,7 +1069,7 @@ VIDEO_START( lockload )
 	deco32_pf2_colourbank=deco32_pf4_colourbank=0;
 
 	alpha_set_level(0x80);
-	state_save_register_int("deco32", 0, "SCTRL", &dragngun_sprite_ctrl);
+	state_save_register_global(dragngun_sprite_ctrl);
 	has_ace_ram=0;
 
 	return 0;
@@ -1100,7 +1099,7 @@ VIDEO_START( nslasher )
 	deco32_raster_display_list=0;
 	deco32_pf2_colourbank=16;
 	deco32_pf4_colourbank=16;
-	state_save_register_UINT32("deco32", 0, "pri", &deco32_pri, 1);
+	state_save_register_global(deco32_pri);
 	alpha_set_level(0x80);
 	has_ace_ram=1;
 

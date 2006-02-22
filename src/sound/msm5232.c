@@ -4,7 +4,6 @@
 #include <math.h>
 
 #include "driver.h"
-#include "state.h"
 
 #include "msm5232.h"
 

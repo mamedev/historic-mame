@@ -19,6 +19,9 @@ void cli_frontend_exit (void);
 // Creates an RC object
 struct rc_struct *cli_rc_create(void);
 
+// Accessor for the current RC object
+struct rc_struct *cli_rc_access(void);
+
 // Flushes the log file
 void win_flush_logfile(void);
 

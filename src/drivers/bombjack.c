@@ -68,7 +68,6 @@ NMI interrupts for music timing
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 #include "sound/ay8910.h"
 
 
@@ -81,7 +80,14 @@ extern VIDEO_START( bombjack );
 extern VIDEO_UPDATE( bombjack );
 
 
-static int latch;
+static UINT8 latch;
+
+static MACHINE_START( bombjack )
+{
+	state_save_register_global(latch);
+	return 0;
+}
+
 
 static void soundlatch_callback(int param)
 {
@@ -313,6 +319,8 @@ static MACHINE_DRIVER_START( bombjack )
 	MDRV_CPU_IO_MAP(0,bombjack_sound_writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
+	MDRV_MACHINE_START(bombjack)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
@@ -407,11 +415,6 @@ ROM_START( bombjac2 )
 	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000, CRC(398d4a02) SHA1(ac18a8219f99ba9178b96c9564de3978e39c59fd) )
 ROM_END
 
-static DRIVER_INIT( bombjack )
-{
-	state_save_register_int ("main", 0, "sound latch", &latch);
-}
 
-
-GAME( 1984, bombjack, 0,        bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 1)", 0 )
-GAME( 1984, bombjac2, bombjack, bombjack, bombjack, bombjack, ROT90, "Tehkan", "Bomb Jack (set 2)", 0 )
+GAME( 1984, bombjack, 0,        bombjack, bombjack, 0, ROT90, "Tehkan", "Bomb Jack (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1984, bombjac2, bombjack, bombjack, bombjack, 0, ROT90, "Tehkan", "Bomb Jack (set 2)", GAME_SUPPORTS_SAVE )

@@ -8,7 +8,6 @@
 #include "vidhrdw/generic.h"
 #include "nitedrvr.h"
 #include "sound/discrete.h"
-#include "state.h"
 
 static UINT8 nitedrvr_gear = 1;
 static UINT8 nitedrvr_track;

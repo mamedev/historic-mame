@@ -20,7 +20,6 @@
 
 #include "driver.h"
 #include "msm5205.h"
-#include "state.h"
 
 /*
  *

@@ -382,7 +382,7 @@ static READ16_HANDLER( prot_9a37_r )
 /* information about the sma random number generator provided by razoola */
 /* this RNG is correct for KOF99, other games might be different */
 
-int neogeo_rng = 0x2345;	/* this is reset in MACHINE_INIT() */
+INT32 neogeo_rng = 0x2345;	/* this is reset in MACHINE_RESET() */
 
 static READ16_HANDLER( sma_random_r )
 {

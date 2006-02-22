@@ -91,8 +91,7 @@
 *********************************************************************/
 
 #include "driver.h"
-#include "machine/8255ppi.h"
-#include "state.h"
+#include "8255ppi.h"
 
 
 static int num;

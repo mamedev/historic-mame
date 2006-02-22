@@ -31,6 +31,8 @@ extern UINT32 *dirtybuffer32;
 extern mame_bitmap *tmpbitmap;
 
 
+void generic_video_init(void);
+
 VIDEO_START( generic );
 VIDEO_START( generic_bitmapped );
 VIDEO_UPDATE( generic_bitmapped );

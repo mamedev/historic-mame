@@ -95,7 +95,6 @@
 #include "vidhrdw/generic.h"
 #include "res_net.h"
 #include "williams.h"
-#include "state.h"
 
 
 
@@ -210,7 +209,7 @@ VIDEO_START( williams2 )
 
 	/* allocate paletteram */
 	williams2_paletteram = auto_malloc(0x400 * 2);
-	state_save_register_UINT8("global", 0, "williams2_paletteram", williams2_paletteram, 0x400 * 2);
+	state_save_register_global_pointer(williams2_paletteram, 0x400 * 2);
 
 	/* create the tilemap */
 	bg_tilemap = tilemap_create(get_tile_info, tilemap_scan_cols, TILEMAP_OPAQUE, 24,16, 128,16);

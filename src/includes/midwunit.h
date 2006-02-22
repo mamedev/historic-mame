@@ -40,8 +40,8 @@ DRIVER_INIT( wwfmania );
 DRIVER_INIT( rmpgwt );
 DRIVER_INIT( revx );
 
-MACHINE_INIT( midwunit );
-MACHINE_INIT( midxunit );
+MACHINE_RESET( midwunit );
+MACHINE_RESET( midxunit );
 
 READ16_HANDLER( midwunit_security_r );
 WRITE16_HANDLER( midwunit_security_w );

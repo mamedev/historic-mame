@@ -1,15 +1,16 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 unsigned char *blktiger_txvideoram;
 
 #define BGRAM_BANK_SIZE 0x1000
 #define BGRAM_BANKS 4
 
-static int blktiger_scroll_bank;
-static unsigned char *scroll_ram;
-static int screen_layout;
-static int chon,objon,bgon;
+static UINT32 blktiger_scroll_bank;
+static UINT8 *scroll_ram;
+static UINT8 screen_layout;
+static UINT8 chon,objon,bgon;
 
 static tilemap *tx_tilemap,*bg_tilemap8x4,*bg_tilemap4x8;
 
@@ -90,6 +91,13 @@ VIDEO_START( blktiger )
 	tilemap_set_transmask(bg_tilemap4x8,1,0xfff0,0x800f);
 	tilemap_set_transmask(bg_tilemap4x8,2,0xff00,0x80ff);
 	tilemap_set_transmask(bg_tilemap4x8,3,0xf000,0x8fff);
+
+	state_save_register_global(blktiger_scroll_bank);
+	state_save_register_global(screen_layout);
+	state_save_register_global(chon);
+	state_save_register_global(objon);
+	state_save_register_global(bgon);
+	state_save_register_global_pointer(scroll_ram, BGRAM_BANK_SIZE * BGRAM_BANKS);
 
 	return 0;
 }

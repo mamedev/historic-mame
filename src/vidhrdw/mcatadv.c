@@ -12,6 +12,7 @@ ToDo: Fix Sprites for Cocktail
 */
 
 #include "driver.h"
+#include "profiler.h"
 #include "vidhrdw/generic.h"
 
 /* Defined in driver */

@@ -15,7 +15,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 /*-- Variables --*/
 
@@ -175,18 +174,14 @@ int	segae_vdp_start( UINT8 chip )
 
 	/* Save State Stuff (based on vidhrdw/taitoic.c) */
 
-	{
-		char buf[20];	/* we need different labels for every item of save data */
-			sprintf(buf,"SEGASYSE-VDP-%01x",chip);	/* so we add chip # as a suffix */
-			state_save_register_UINT8 ( buf, 0, "Video RAM",		segae_vdp_vram[chip], 0x8000);
-			state_save_register_UINT8 ( buf, 0, "Colour RAM",		segae_vdp_cram[chip], 0x20);
-			state_save_register_UINT8 ( buf, 0, "Registers",		segae_vdp_regs[chip], 0x20);
-			state_save_register_UINT8 ( buf, 0, "Command Part",		&segae_vdp_cmdpart[chip], 1);
-			state_save_register_UINT16( buf, 0, "Command Word",		&segae_vdp_command[chip], 1);
-			state_save_register_UINT8 ( buf, 0, "Access Mode",		&segae_vdp_accessmode[chip], 1);
-			state_save_register_UINT16( buf, 0, "Access Address",	&segae_vdp_accessaddr[chip], 1);
-			state_save_register_UINT8 ( buf, 0, "VRAM Bank",		&segae_vdp_vrambank[chip], 1);
-	}
+	state_save_register_item_pointer("VDP", chip, segae_vdp_vram[chip], 0x8000);
+	state_save_register_item_pointer("VDP", chip, segae_vdp_cram[chip], 0x20);
+	state_save_register_item_pointer("VDP", chip, segae_vdp_regs[chip], 0x20);
+	state_save_register_item("VDP", chip, segae_vdp_cmdpart[chip]);
+	state_save_register_item("VDP", chip, segae_vdp_command[chip]);
+	state_save_register_item("VDP", chip, segae_vdp_accessmode[chip]);
+	state_save_register_item("VDP", chip, segae_vdp_accessaddr[chip]);
+	state_save_register_item("VDP", chip, segae_vdp_vrambank[chip]);
 
 
 	return 0;

@@ -1,39 +1,38 @@
 #include "driver.h"
 #include "sndhrdw/m72.h"
 #include "vidhrdw/generic.h"
-#include "state.h"
 
 
 
-unsigned char *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
-static unsigned char *m72_spriteram;
-static int splitline;
+UINT8 *m72_videoram1,*m72_videoram2,*majtitle_rowscrollram;
+static UINT8 *m72_spriteram;
+static INT32 splitline;
 static tilemap *fg_tilemap,*bg_tilemap;
 static int xadjust;
 static int bgadjust;
-static int scrollx1,scrolly1,scrollx2,scrolly2;
-static int video_off;
-extern unsigned char *spriteram,*spriteram_2;
+static INT32 scrollx1,scrolly1,scrollx2,scrolly2;
+static INT32 video_off;
+extern UINT8 *spriteram,*spriteram_2;
 extern size_t spriteram_size;
 
 static int irqbase;
 
-MACHINE_INIT( m72 )
+MACHINE_RESET( m72 )
 {
 	irqbase = 0x20;
-	machine_init_m72_sound();
+	machine_reset_m72_sound();
 }
 
-MACHINE_INIT( xmultipl )
+MACHINE_RESET( xmultipl )
 {
 	irqbase = 0x08;
-	machine_init_m72_sound();
+	machine_reset_m72_sound();
 }
 
-MACHINE_INIT( kengo )
+MACHINE_RESET( kengo )
 {
 	irqbase = 0x18;
-	machine_init_m72_sound();
+	machine_reset_m72_sound();
 }
 
 INTERRUPT_GEN( m72_interrupt )
@@ -157,13 +156,13 @@ static UINT32 majtitle_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT3
 
 static void register_savestate(void)
 {
-	state_save_register_int  ("video", 0, "splitline",        &splitline);
-	state_save_register_int  ("video", 0, "video_off",        &video_off);
-	state_save_register_int  ("video", 0, "scrollx1",         &scrollx1);
-	state_save_register_int  ("video", 0, "scrolly1",         &scrolly1);
-	state_save_register_int  ("video", 0, "scrollx2",         &scrollx2);
-	state_save_register_int  ("video", 0, "scrolly2",         &scrolly2);
-	state_save_register_UINT8("video", 0, "m72_spriteram",    m72_spriteram, spriteram_size);
+	state_save_register_global(splitline);
+	state_save_register_global(video_off);
+	state_save_register_global(scrollx1);
+	state_save_register_global(scrolly1);
+	state_save_register_global(scrollx2);
+	state_save_register_global(scrolly2);
+	state_save_register_global_pointer(m72_spriteram, spriteram_size);
 }
 
 

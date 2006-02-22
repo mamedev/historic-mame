@@ -63,7 +63,7 @@ static int ojankohs_adpcm_data;
 static int ojankohs_vclk_left;
 
 
-static MACHINE_INIT( ojankohs )
+static MACHINE_RESET( ojankohs )
 {
 	ojankohs_portselect = 0;
 
@@ -962,7 +962,7 @@ static MACHINE_DRIVER_START( ojankohs )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_MACHINE_RESET(ojankohs)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -998,7 +998,7 @@ static MACHINE_DRIVER_START( ojankoy )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_MACHINE_RESET(ojankohs)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -1035,7 +1035,7 @@ static MACHINE_DRIVER_START( ccasino )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_MACHINE_RESET(ojankohs)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
@@ -1071,7 +1071,7 @@ static MACHINE_DRIVER_START( ojankoc )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(ojankohs)
+	MDRV_MACHINE_RESET(ojankohs)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

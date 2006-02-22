@@ -70,9 +70,9 @@ WRITE16_HANDLER(galpani2_eeprom_w)
 
 static UINT16 *galpani2_ram, *galpani2_ram2;
 
-static MACHINE_INIT( galpani2 )
+static MACHINE_RESET( galpani2 )
 {
-	machine_init_kaneko16();
+	machine_reset_kaneko16();
 
 	kaneko16_sprite_type = 1;
 
@@ -501,7 +501,7 @@ static MACHINE_DRIVER_START( galpani2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(galpani2)
+	MDRV_MACHINE_RESET(galpani2)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */

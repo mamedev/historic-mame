@@ -238,7 +238,7 @@ ADDRESS_MAP_END
 
 static int vol_ctrl[16];
 
-static MACHINE_INIT( ta7630 )
+static MACHINE_RESET( ta7630 )
 {
 	int i;
 
@@ -752,7 +752,7 @@ static MACHINE_DRIVER_START( flstory )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(ta7630)
+	MDRV_MACHINE_RESET(ta7630)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -798,7 +798,7 @@ static MACHINE_DRIVER_START( onna34ro )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(ta7630)
+	MDRV_MACHINE_RESET(ta7630)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -844,7 +844,7 @@ static MACHINE_DRIVER_START( victnine )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(ta7630)
+	MDRV_MACHINE_RESET(ta7630)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

@@ -119,7 +119,6 @@ Abnormalities:
 
 
 #include "driver.h"
-#include "state.h"
 #include "toaplan1.h"
 #include "tilemap.h"
 #include "palette.h"
@@ -144,25 +143,25 @@ size_t toaplan1_colorram2_size;
 UINT16 *toaplan1_colorram1;
 UINT16 *toaplan1_colorram2;
 
-static int bcu_flipscreen;		/* Tile   controller flip flag */
-static int fcu_flipscreen;		/* Sprite controller flip flag */
+static INT32 bcu_flipscreen;		/* Tile   controller flip flag */
+static INT32 fcu_flipscreen;		/* Sprite controller flip flag */
 
-static int pf_voffs;
-static int spriteram_offs;
+static INT32 pf_voffs;
+static INT32 spriteram_offs;
 
-static int pf1_scrollx;
-static int pf1_scrolly;
-static int pf2_scrollx;
-static int pf2_scrolly;
-static int pf3_scrollx;
-static int pf3_scrolly;
-static int pf4_scrollx;
-static int pf4_scrolly;
-static int scrollx_offs1;
-static int scrollx_offs2;
-static int scrollx_offs3;
-static int scrollx_offs4;
-static int scrolly_offs;
+static INT32 pf1_scrollx;
+static INT32 pf1_scrolly;
+static INT32 pf2_scrollx;
+static INT32 pf2_scrolly;
+static INT32 pf3_scrollx;
+static INT32 pf3_scrolly;
+static INT32 pf4_scrollx;
+static INT32 pf4_scrolly;
+static INT32 scrollx_offs1;
+static INT32 scrollx_offs2;
+static INT32 scrollx_offs3;
+static INT32 scrollx_offs4;
+static INT32 scrolly_offs;
 
 
 #ifdef MAME_DEBUG
@@ -173,8 +172,8 @@ static int display_pf4 = 1;
 static int displog = 0;
 #endif
 
-static int tiles_offsetx;
-static int tiles_offsety;
+static INT32 tiles_offsetx;
+static INT32 tiles_offsety;
 
 static int toaplan1_reset;		/* Hack! See toaplan1_bcu_control below */
 
@@ -355,30 +354,30 @@ VIDEO_START( rallybik )
 	bcu_flipscreen = -1;
 	toaplan1_reset = 0;
 
-	state_save_register_UINT16("toaplan1", 0, "PaletteRam", paletteram16, (toaplan1_colorram1_size + toaplan1_colorram2_size)/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField1", pf1_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField2", pf2_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField3", pf3_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField4", pf4_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(paletteram16, (toaplan1_colorram1_size + toaplan1_colorram2_size)/2);
+	state_save_register_global_pointer(pf1_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(pf2_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(pf3_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(pf4_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
 
-	state_save_register_int("toaplan1", 0, "PF1 scrollx offs", &scrollx_offs1);
-	state_save_register_int("toaplan1", 0, "PF2 scrollx offs", &scrollx_offs2);
-	state_save_register_int("toaplan1", 0, "PF3 scrollx offs", &scrollx_offs3);
-	state_save_register_int("toaplan1", 0, "PF4 scrollx offs", &scrollx_offs4);
-	state_save_register_int("toaplan1", 0, "PF  scrolly offs", &scrolly_offs);
-	state_save_register_int("toaplan1", 0, "BCU flipscreen", &bcu_flipscreen);
-	state_save_register_int("toaplan1", 0, "PF1 scrollx", &pf1_scrollx);
-	state_save_register_int("toaplan1", 0, "PF1 scrolly", &pf1_scrolly);
-	state_save_register_int("toaplan1", 0, "PF2 scrollx", &pf2_scrollx);
-	state_save_register_int("toaplan1", 0, "PF2 scrolly", &pf2_scrolly);
-	state_save_register_int("toaplan1", 0, "PF3 scrollx", &pf3_scrollx);
-	state_save_register_int("toaplan1", 0, "PF3 scrolly", &pf3_scrolly);
-	state_save_register_int("toaplan1", 0, "PF4 scrollx", &pf4_scrollx);
-	state_save_register_int("toaplan1", 0, "PF4 scrolly", &pf4_scrolly);
-	state_save_register_int("toaplan1", 0, "Tiles offsetx", &tiles_offsetx);
-	state_save_register_int("toaplan1", 0, "Tiles offsety", &tiles_offsety);
-	state_save_register_int("toaplan1", 0, "PlayField video offs", &pf_voffs);
-	state_save_register_int("toaplan1", 0, "SpriteRAM video offs", &spriteram_offs);
+	state_save_register_global(scrollx_offs1);
+	state_save_register_global(scrollx_offs2);
+	state_save_register_global(scrollx_offs3);
+	state_save_register_global(scrollx_offs4);
+	state_save_register_global(scrolly_offs);
+	state_save_register_global(bcu_flipscreen);
+	state_save_register_global(pf1_scrollx);
+	state_save_register_global(pf1_scrolly);
+	state_save_register_global(pf2_scrollx);
+	state_save_register_global(pf2_scrolly);
+	state_save_register_global(pf3_scrollx);
+	state_save_register_global(pf3_scrolly);
+	state_save_register_global(pf4_scrollx);
+	state_save_register_global(pf4_scrolly);
+	state_save_register_global(tiles_offsetx);
+	state_save_register_global(tiles_offsety);
+	state_save_register_global(pf_voffs);
+	state_save_register_global(spriteram_offs);
 
 	state_save_register_func_postload(rallybik_flipscreen);
 
@@ -402,35 +401,35 @@ VIDEO_START( toaplan1 )
 	fcu_flipscreen = 0;
 	toaplan1_reset = 1;
 
-	state_save_register_UINT16("toaplan1", 0, "PaletteRam", paletteram16, (toaplan1_colorram1_size + toaplan1_colorram2_size)/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField1", pf1_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField2", pf2_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField3", pf3_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "PlayField4", pf4_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "SpriteRam", spriteram16, TOAPLAN1_SPRITERAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "Buffered SpriteRam", buffered_spriteram16, TOAPLAN1_SPRITERAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "SpriteSize RAM", toaplan1_spritesizeram16, TOAPLAN1_SPRITESIZERAM_SIZE/2);
-	state_save_register_UINT16("toaplan1", 0, "Buffered SpriteSize RAM", toaplan1_buffered_spritesizeram16, TOAPLAN1_SPRITESIZERAM_SIZE/2);
+	state_save_register_global_pointer(paletteram16, (toaplan1_colorram1_size + toaplan1_colorram2_size)/2);
+	state_save_register_global_pointer(pf1_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(pf2_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(pf3_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(pf4_tilevram16, TOAPLAN1_TILEVRAM_SIZE/2);
+	state_save_register_global_pointer(spriteram16, TOAPLAN1_SPRITERAM_SIZE/2);
+	state_save_register_global_pointer(buffered_spriteram16, TOAPLAN1_SPRITERAM_SIZE/2);
+	state_save_register_global_pointer(toaplan1_spritesizeram16, TOAPLAN1_SPRITESIZERAM_SIZE/2);
+	state_save_register_global_pointer(toaplan1_buffered_spritesizeram16, TOAPLAN1_SPRITESIZERAM_SIZE/2);
 
-	state_save_register_int("toaplan1", 0, "PF1 scrollx offs", &scrollx_offs1);
-	state_save_register_int("toaplan1", 0, "PF2 scrollx offs", &scrollx_offs2);
-	state_save_register_int("toaplan1", 0, "PF3 scrollx offs", &scrollx_offs3);
-	state_save_register_int("toaplan1", 0, "PF4 scrollx offs", &scrollx_offs4);
-	state_save_register_int("toaplan1", 0, "PF  scrolly offs", &scrolly_offs);
-	state_save_register_int("toaplan1", 0, "BCU flipscreen", &bcu_flipscreen);
-	state_save_register_int("toaplan1", 0, "FCU flipscreen", &fcu_flipscreen);
-	state_save_register_int("toaplan1", 0, "PF1 scrollx", &pf1_scrollx);
-	state_save_register_int("toaplan1", 0, "PF1 scrolly", &pf1_scrolly);
-	state_save_register_int("toaplan1", 0, "PF2 scrolly", &pf2_scrolly);
-	state_save_register_int("toaplan1", 0, "PF2 scrollx", &pf2_scrollx);
-	state_save_register_int("toaplan1", 0, "PF3 scrollx", &pf3_scrollx);
-	state_save_register_int("toaplan1", 0, "PF3 scrolly", &pf3_scrolly);
-	state_save_register_int("toaplan1", 0, "PF4 scrollx", &pf4_scrollx);
-	state_save_register_int("toaplan1", 0, "PF4 scrolly", &pf4_scrolly);
-	state_save_register_int("toaplan1", 0, "Tiles offsetx", &tiles_offsetx);
-	state_save_register_int("toaplan1", 0, "Tiles offsety", &tiles_offsety);
-	state_save_register_int("toaplan1", 0, "PlayField video offs", &pf_voffs);
-	state_save_register_int("toaplan1", 0, "SpriteRam video offs", &spriteram_offs);
+	state_save_register_global(scrollx_offs1);
+	state_save_register_global(scrollx_offs2);
+	state_save_register_global(scrollx_offs3);
+	state_save_register_global(scrollx_offs4);
+	state_save_register_global(scrolly_offs);
+	state_save_register_global(bcu_flipscreen);
+	state_save_register_global(fcu_flipscreen);
+	state_save_register_global(pf1_scrollx);
+	state_save_register_global(pf1_scrolly);
+	state_save_register_global(pf2_scrolly);
+	state_save_register_global(pf2_scrollx);
+	state_save_register_global(pf3_scrollx);
+	state_save_register_global(pf3_scrolly);
+	state_save_register_global(pf4_scrollx);
+	state_save_register_global(pf4_scrolly);
+	state_save_register_global(tiles_offsetx);
+	state_save_register_global(tiles_offsety);
+	state_save_register_global(pf_voffs);
+	state_save_register_global(spriteram_offs);
 
 	state_save_register_func_postload(toaplan1_flipscreen);
 

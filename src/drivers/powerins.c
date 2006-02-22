@@ -319,7 +319,7 @@ static const gfx_decode powerins_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-MACHINE_INIT( powerins )
+MACHINE_RESET( powerins )
 {
 	oki_bank = -1;	// samples bank "unitialised"
 }
@@ -351,7 +351,7 @@ static MACHINE_DRIVER_START( powerins )
 	MDRV_FRAMES_PER_SECOND(56)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(powerins)
+	MDRV_MACHINE_RESET(powerins)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

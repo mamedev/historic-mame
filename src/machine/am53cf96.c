@@ -10,7 +10,6 @@
  */
 
 #include "driver.h"
-#include "state.h"
 #include "am53cf96.h"
 
 static UINT8 scsi_regs[32], fifo[16], fptr = 0, xfer_state, last_id;
@@ -211,10 +210,10 @@ void am53cf96_init( struct AM53CF96interface *interface )
 		interface->scsidevs->devices[i].handler(SCSIOP_ALLOC_INSTANCE, &devices[interface->scsidevs->devices[i].scsiID].data, interface->scsidevs->devices[i].diskID, (UINT8 *)NULL);
 	}
 
-	state_save_register_UINT8("53cf96", 0, "registers", scsi_regs, 32);
-	state_save_register_UINT8("53cf96", 0, "fifo", fifo, 16);
-	state_save_register_UINT8("53cf96", 0, "fifo pointer", &fptr, 1);
-	state_save_register_UINT8("53cf96", 0, "transfer state", &xfer_state, 1);
+	state_save_register_global_array(scsi_regs);
+	state_save_register_global_array(fifo);
+	state_save_register_global(fptr);
+	state_save_register_global(xfer_state);
 }
 
 // retrieve data from the SCSI controller

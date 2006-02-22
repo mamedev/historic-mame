@@ -30,7 +30,6 @@
 #include "sound/okim6295.h"
 #include "sound/hc55516.h"
 #include "sound/dac.h"
-#include "state.h"
 
 
 /***************************************************************************

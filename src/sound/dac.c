@@ -1,7 +1,6 @@
 #include "driver.h"
 #include "dac.h"
 #include <math.h>
-#include "state.h"
 
 
 struct dac_info

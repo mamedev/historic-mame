@@ -769,7 +769,7 @@ static struct namcoio_interface intf1 =
 };
 
 
-static MACHINE_INIT( bosco )
+static MACHINE_RESET( bosco )
 {
 	int i;
 
@@ -790,7 +790,7 @@ static MACHINE_INIT( bosco )
 		NAMCOIO_NONE, NULL);
 }
 
-static MACHINE_INIT( galaga )
+static MACHINE_RESET( galaga )
 {
 	int i;
 
@@ -805,7 +805,7 @@ static MACHINE_INIT( galaga )
 		NAMCOIO_54XX, NULL);
 }
 
-static MACHINE_INIT( xevious )
+static MACHINE_RESET( xevious )
 {
 	int i;
 
@@ -820,7 +820,7 @@ static MACHINE_INIT( xevious )
 		NAMCOIO_54XX, NULL);
 }
 
-static MACHINE_INIT( battles )
+static MACHINE_RESET( battles )
 {
 	int i;
 
@@ -831,7 +831,7 @@ static MACHINE_INIT( battles )
 	battles_customio_init();
 }
 
-static MACHINE_INIT( digdug )
+static MACHINE_RESET( digdug )
 {
 	int i;
 
@@ -1883,7 +1883,7 @@ static MACHINE_DRIVER_START( bosco )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(bosco)
+	MDRV_MACHINE_RESET(bosco)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1939,7 +1939,7 @@ static MACHINE_DRIVER_START( galaga )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(galaga)
+	MDRV_MACHINE_RESET(galaga)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -1996,7 +1996,7 @@ static MACHINE_DRIVER_START( xevious )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(xevious)
+	MDRV_MACHINE_RESET(xevious)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2031,7 +2031,7 @@ static MACHINE_DRIVER_START( battles )
 	MDRV_CPU_PROGRAM_MAP(readmem4_battles,writemem4_battles)
 	MDRV_CPU_VBLANK_INT(battles_interrupt_4,1)
 
-	MDRV_MACHINE_INIT(battles)
+	MDRV_MACHINE_RESET(battles)
 
 	/* video hardware */
 	MDRV_PALETTE_INIT(battles)
@@ -2064,7 +2064,7 @@ static MACHINE_DRIVER_START( digdug )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(digdug)
+	MDRV_MACHINE_RESET(digdug)
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */

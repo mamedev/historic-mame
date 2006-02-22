@@ -69,7 +69,7 @@ static void alpha_row_update(int scanline)
 }
 
 
-static MACHINE_INIT( skullxbo )
+static MACHINE_RESET( skullxbo )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -262,7 +262,7 @@ static MACHINE_DRIVER_START( skullxbo )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(skullxbo)
+	MDRV_MACHINE_RESET(skullxbo)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

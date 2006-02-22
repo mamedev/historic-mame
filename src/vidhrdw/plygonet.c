@@ -8,7 +8,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
@@ -97,7 +96,7 @@ VIDEO_START(polygonet_vh_start)
 
 	tilemap_set_transparent_pen(ttl_tilemap, 0);
 
-	state_save_register_UINT16("PolygonetTTL", 0, "VRAM", ttl_vram, 0x800);
+	state_save_register_global_array(ttl_vram);
 
 	return 0;
 }

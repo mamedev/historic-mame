@@ -28,7 +28,7 @@ extern struct discrete_sound_block skydiver_discrete_interface[];
 
 extern UINT8 *skydiver_videoram;
 
-MACHINE_INIT( skydiver );
+MACHINE_RESET( skydiver );
 WRITE8_HANDLER( skydiver_videoram_w );
 WRITE8_HANDLER( skydiver_wram_w );	/* the signal is WRAM, presumably Work RAM */
 READ8_HANDLER( skydiver_wram_r );

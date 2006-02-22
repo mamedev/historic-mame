@@ -50,7 +50,7 @@ static WRITE8_HANDLER( srumbler_bankswitch_w )
 	}
 }
 
-static MACHINE_INIT( srumbler )
+static MACHINE_RESET( srumbler )
 {
 	/* initialize banked ROM pointers */
 	srumbler_bankswitch_w(0,0);
@@ -274,7 +274,7 @@ static MACHINE_DRIVER_START( srumbler )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(srumbler)
+	MDRV_MACHINE_RESET(srumbler)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)

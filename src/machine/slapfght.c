@@ -23,7 +23,7 @@ extern unsigned char *getstar_e803;
 static unsigned char mcu_val;
 
 /* Perform basic machine initialisation */
-MACHINE_INIT( slapfight )
+MACHINE_RESET( slapfight )
 {
 	/* MAIN CPU */
 

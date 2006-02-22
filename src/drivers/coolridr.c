@@ -163,7 +163,7 @@ static INTERRUPT_GEN( system_h1 )
 	}
 }
 
-MACHINE_INIT ( coolridr )
+MACHINE_RESET ( coolridr )
 {
 
 //  cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
@@ -193,7 +193,7 @@ static MACHINE_DRIVER_START( coolridr )
 	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 64*8-1)
 	MDRV_PALETTE_LENGTH(0x2000)
-	MDRV_MACHINE_INIT(coolridr)
+	MDRV_MACHINE_RESET(coolridr)
 
 	MDRV_VIDEO_START(coolridr)
 	MDRV_VIDEO_UPDATE(coolridr)

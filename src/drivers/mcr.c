@@ -291,7 +291,6 @@
 #include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "mcr.h"
-#include "state.h"
 
 
 static UINT8 input_mux;
@@ -1503,7 +1502,8 @@ static MACHINE_DRIVER_START( mcr_90009 )
 	MDRV_FRAMES_PER_SECOND(30)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
 	MDRV_WATCHDOG_VBLANK_INIT(16)
-	MDRV_MACHINE_INIT(mcr)
+	MDRV_MACHINE_START(mcr)
+	MDRV_MACHINE_RESET(mcr)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
@@ -1575,7 +1575,7 @@ static MACHINE_DRIVER_START( mcr_91490_ipu )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr_91490_snt)
-	MDRV_MACHINE_INIT(nflfoot)
+	MDRV_MACHINE_RESET(nflfoot)
 
 	MDRV_CPU_ADD_TAG("ipu", Z80, 7372800/2)
 	MDRV_CPU_CONFIG(mcr_ipu_daisy_chain)

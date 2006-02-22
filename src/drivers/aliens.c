@@ -15,7 +15,7 @@ Preliminary driver by:
 #include "sound/2151intf.h"
 
 /* prototypes */
-static MACHINE_INIT( aliens );
+static MACHINE_RESET( aliens );
 static void aliens_banking( int lines );
 
 
@@ -272,7 +272,7 @@ static MACHINE_DRIVER_START( aliens )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(aliens)
+	MDRV_MACHINE_RESET(aliens)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -514,7 +514,7 @@ static void aliens_banking( int lines )
 	memory_set_bankptr( 1, &RAM[offs] );
 }
 
-static MACHINE_INIT( aliens )
+static MACHINE_RESET( aliens )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

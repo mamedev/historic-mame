@@ -539,7 +539,6 @@ typedef struct _os_code_info os_code_info;
 
 /* single code functions */
 int code_init(void);
-void code_exit(void);
 
 INT32 code_analog_value(input_code code);
 int code_pressed(input_code code);

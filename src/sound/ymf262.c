@@ -670,7 +670,6 @@ INLINE void advance(OPL3 *chip)
 	OPL3_SLOT *op;
 	int i;
 
-//profiler_mark(PROFILER_USER3);
 	chip->eg_timer += chip->eg_timer_add;
 
 	while (chip->eg_timer >= chip->eg_timer_overflow)
@@ -762,9 +761,7 @@ INLINE void advance(OPL3 *chip)
 #endif
 		}
 	}
-//profiler_mark(PROFILER_END);
 
-//profiler_mark(PROFILER_USER4);
 	for (i=0; i<9*2*2; i++)
 	{
 		CH  = &chip->P_CH[i/2];
@@ -796,7 +793,6 @@ INLINE void advance(OPL3 *chip)
 			op->Cnt += op->Incr;
 		}
 	}
-//profiler_mark(PROFILER_END);
 
 	/*  The Noise Generator of the YM3812 is 23-bit shift register.
     *   Period is equal to 2^23-2 samples.
@@ -2553,8 +2549,6 @@ void YMF262UpdateOne(void *_chip, OPL3SAMPLE **buffers, int length)
 		/* clear channel outputs */
 		memset(chanout, 0, sizeof(signed int) * 18);
 
-//profiler_mark(PROFILER_USER1);
-
 #if 1
 	/* register set #1 */
 		chan_calc(&chip->P_CH[0]);			/* extended 4op ch#0 part 1 or 2op ch#0 */
@@ -2616,11 +2610,7 @@ void YMF262UpdateOne(void *_chip, OPL3SAMPLE **buffers, int length)
 		chan_calc(&chip->P_CH[16]);
 		chan_calc(&chip->P_CH[17]);
 #endif
-//profiler_mark(PROFILER_END);
 
-
-
-//profiler_mark(PROFILER_USER2);
 		/* accumulator register set #1 */
 		a =  chanout[0] & chip->pan[0];
 		b =  chanout[0] & chip->pan[1];
@@ -2725,7 +2715,6 @@ void YMF262UpdateOne(void *_chip, OPL3SAMPLE **buffers, int length)
 		ch_b[i] = b;
 		ch_c[i] = c;
 		ch_d[i] = d;
-//profiler_mark(PROFILER_END);
 
 		advance(chip);
 	}

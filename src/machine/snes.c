@@ -334,7 +334,7 @@ static void snes_init_ram(void)
 }
 
 /* should we treat this as nvram in MAME? */
-MACHINE_INIT( snes )
+MACHINE_RESET( snes )
 {
 	snes_init_ram();
 

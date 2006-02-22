@@ -28,7 +28,8 @@
 #include <stdio.h>
 #ifdef MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
+#include "eainfo.h"
 #include "m6502.h"
 #if (HAS_M65CE02)
 #include "m65ce02.h"

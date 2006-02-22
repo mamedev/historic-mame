@@ -71,7 +71,6 @@ Recordbr: loads of unmapped IOC reads and writes.
 
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
@@ -184,7 +183,7 @@ static READ16_HANDLER( syvalion_input_bypass_r )
 }
 
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
@@ -573,6 +572,14 @@ static const gfx_decode dleague_gfxdecodeinfo[] =
 };
 
 
+static MACHINE_START( taitoh )
+{
+	state_save_register_global(banknum);
+	state_save_register_func_postload(reset_sound_region);
+	return 0;
+}
+
+
 static MACHINE_DRIVER_START( syvalion )
 
 	/* basic machine hardware */
@@ -582,6 +589,8 @@ static MACHINE_DRIVER_START( syvalion )
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+
+	MDRV_MACHINE_START(taitoh)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -618,6 +627,8 @@ static MACHINE_DRIVER_START( recordbr )
 	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
+	MDRV_MACHINE_START(taitoh)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
@@ -652,6 +663,8 @@ static MACHINE_DRIVER_START( dleague )
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)		/* 4 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+
+	MDRV_MACHINE_START(taitoh)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -781,14 +794,7 @@ ROM_START( dleague )
 ROM_END
 
 
-static DRIVER_INIT( taitoh )
-{
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
 /*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT     MONITOR  COMPANY  FULLNAME */
-GAME( 1988, syvalion, 0,        syvalion, syvalion, taitoh,  ROT0,    "Taito Corporation", "Syvalion (Japan)", 0 )
-GAME( 1988, recordbr, 0,        recordbr, recordbr, taitoh,  ROT0,    "Taito Corporation Japan", "Recordbreaker (World)", 0 )
-GAME( 1990, dleague,  0,        dleague,  dleague,  taitoh,  ROT0,    "Taito Corporation", "Dynamite League (Japan)", 0 )
+GAME( 1988, syvalion, 0,        syvalion, syvalion, 0,       ROT0,    "Taito Corporation", "Syvalion (Japan)", 0 )
+GAME( 1988, recordbr, 0,        recordbr, recordbr, 0,       ROT0,    "Taito Corporation Japan", "Recordbreaker (World)", 0 )
+GAME( 1990, dleague,  0,        dleague,  dleague,  0,       ROT0,    "Taito Corporation", "Dynamite League (Japan)", 0 )

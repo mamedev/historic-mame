@@ -1215,7 +1215,7 @@ static struct YM2151interface ym2151_interface =
 };
 
 
-MACHINE_INIT (semiprot)
+MACHINE_RESET (semiprot)
 {
 	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
@@ -1224,7 +1224,7 @@ MACHINE_INIT (semiprot)
 	hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 }
 
-MACHINE_INIT (finalttr)
+MACHINE_RESET (finalttr)
 {
 	UINT16 *PROTDATA = (UINT16*)memory_region(REGION_USER1);
 	int i;
@@ -1303,7 +1303,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( semiprot )
 	MDRV_IMPORT_FROM(semicom)
-	MDRV_MACHINE_INIT ( semiprot )
+	MDRV_MACHINE_RESET ( semiprot )
 MACHINE_DRIVER_END
 
 /*
@@ -1391,7 +1391,7 @@ static MACHINE_DRIVER_START( finalttr )
 
 	MDRV_CPU_REPLACE("sound", Z80, 3578545)
 
-	MDRV_MACHINE_INIT ( finalttr )
+	MDRV_MACHINE_RESET ( finalttr )
 
 	MDRV_SOUND_REPLACE("3812", YM2151, 4000000)
 	MDRV_SOUND_CONFIG(ym2151_interface)

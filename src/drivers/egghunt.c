@@ -380,7 +380,7 @@ static const gfx_decode gfxdecodeinfo[] =
 };
 
 
-static MACHINE_INIT( egghunt )
+static MACHINE_RESET( egghunt )
 {
 	egghunt_gfx_banking = 0;
 	egghunt_okibanking = 0;
@@ -399,7 +399,7 @@ static MACHINE_DRIVER_START( egghunt )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(egghunt)
+	MDRV_MACHINE_RESET(egghunt)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )

@@ -1247,7 +1247,7 @@ MACHINE_DRIVER_END
 
 mame_timer *croak_timer;
 
-static MACHINE_INIT( frogs )
+static MACHINE_RESET( frogs )
 {
 	croak_timer = timer_alloc(croak_callback);
 }
@@ -1256,7 +1256,7 @@ static MACHINE_DRIVER_START( frogs )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(2ports)
-	MDRV_MACHINE_INIT(frogs)
+	MDRV_MACHINE_RESET(frogs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, 0)

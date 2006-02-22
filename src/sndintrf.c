@@ -19,7 +19,7 @@
 #include "driver.h"
 #include "sound/wavwrite.h"
 #include "config.h"
-#include "state.h"
+#include "profiler.h"
 
 #define VERBOSE			(0)
 #define MAKE_WAVS		(0)
@@ -559,6 +559,8 @@ static wav_file *wavfile;
  *
  *************************************/
 
+static void sndintrf_load(int config_type, xml_data_node *parentnode);
+static void sndintrf_save(int config_type, xml_data_node *parentnode);
 static int start_sound_chips(void);
 static int start_speakers(void);
 static int route_sound(void);
@@ -622,14 +624,19 @@ int sound_init(void)
 
 	/* register globals with the save state system */
 	state_save_push_tag(0);
-	state_save_register_UINT16("sndintrf", 0, "latched_value", latched_value, 4);
-	state_save_register_UINT8("sndintrf", 0, "latch_read", latch_read, 4);
+	state_save_register_global_array(latched_value);
+	state_save_register_global_array(latch_read);
 	state_save_pop_tag();
 
 	if (MAKE_WAVS)
 		wavfile = wav_open("finalmix.wav", Machine->sample_rate, 2);
 
 	global_sound_enabled = 1;
+
+	/* load input ports settings (keys, dip switches, and so on) */
+	config_register("mixer", sndintrf_load, sndintrf_save);
+
+	add_exit_callback(sound_exit);
 	return 0;
 }
 
@@ -1018,7 +1025,7 @@ void sound_exit(void)
  *
  *************************************/
 
-void sndintrf_load(int config_type, xml_data_node *parentnode)
+static void sndintrf_load(int config_type, xml_data_node *parentnode)
 {
 	xml_data_node *channelnode;
 	int mixernum;
@@ -1046,7 +1053,7 @@ void sndintrf_load(int config_type, xml_data_node *parentnode)
 }
 
 
-void sndintrf_save(int config_type, xml_data_node *parentnode)
+static void sndintrf_save(int config_type, xml_data_node *parentnode)
 {
 	int mixernum;
 

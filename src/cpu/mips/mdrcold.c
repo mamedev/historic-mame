@@ -337,7 +337,7 @@ static UINT32 compile_one(drc_core *drc, UINT32 pc, UINT32 physpc)
 	cycles = (result >> 8) & 0xfff;
 
 	/* absorb any NOPs following */
-	if (STRIP_NOPS && !mame_debug)
+	if (STRIP_NOPS && !Machine->debug_mode)
 	{
 		if (!(result & (RECOMPILE_END_OF_STRING | RECOMPILE_CHECK_INTERRUPTS | RECOMPILE_CHECK_SW_INTERRUPTS)))
 			while ((((pc + pcdelta) ^ pc) & 0xfffff000) == 0 && pcdelta < 120 && opptr[pcdelta/4] == 0)
@@ -435,7 +435,7 @@ static void append_readwrite_and_translate(drc_core *drc, int is_write, int size
 		_jcc_short_link(COND_C, &link1);											// jc   error
 	}
 	for (ramnum = 0; ramnum < MIPS3_MAX_FASTRAM; ramnum++)
-		if (!mame_debug && mips3.fastram[ramnum].base && (!is_write || !mips3.fastram[ramnum].readonly))
+		if (!Machine->debug_mode && mips3.fastram[ramnum].base && (!is_write || !mips3.fastram[ramnum].readonly))
 		{
 			UINT32 fastbase = (UINT32)((UINT8 *)mips3.fastram[ramnum].base - mips3.fastram[ramnum].start);
 			if (mips3.fastram[ramnum].end != 0xffffffff)
@@ -834,7 +834,7 @@ static int recompile_delay_slot(drc_core *drc, UINT32 pc)
 	UINT32 physpc;
 
 #ifdef MAME_DEBUG
-	if (mame_debug)
+	if (Machine->debug_mode)
 	{
 		/* emit debugging */
 		_mov_r32_imm(REG_EDI, pc);
@@ -1407,6 +1407,60 @@ static UINT32 recompile_instruction(drc_core *drc, UINT32 pc, UINT32 physpc)
 			}
 			_mov_r32_m32abs(REG_EBP, &mips3_icount);								// mov  ebp,[mips3_icount]
 			return RECOMPILE_SUCCESSFUL_CP(1,4);
+
+		case 0x1c:	/* IDT-specific opcodes: mad/madu/mul on R4640/4650, msub on RC32364 */
+			switch (op & 0x1f)
+			{
+				case 0: /* MAD */
+					if (RSREG != 0 && RTREG != 0)
+					{
+						_mov_r32_m32bd(REG_EAX, REG_ESI, REGDISP(RSREG));		// mov  eax,[rsreg]
+						_mov_r32_m32bd(REG_EDX, REG_ESI, REGDISP(RTREG));		// mov  edx,[rtreg]
+						_imul_r32(REG_EDX);										// imul edx
+						_add_r32_m32abs(REG_EAX, &mips3.lo);					// add  eax,[lo]
+						_adc_r32_m32abs(REG_EDX, &mips3.hi);					// adc  edx,[hi]
+						_mov_r32_r32(REG_EBX, REG_EDX);							// mov  ebx,edx
+						_cdq();													// cdq
+						_mov_m64abs_r64(&mips3.lo, REG_EDX, REG_EAX);			// mov  [lo],edx:eax
+						_mov_r32_r32(REG_EAX, REG_EBX);							// mov  eax,ebx
+						_cdq();													// cdq
+						_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_EAX);			// mov  [hi],edx:eax
+					}
+					return RECOMPILE_SUCCESSFUL_CP(3,4);
+
+				case 1: /* MADU */
+					if (RSREG != 0 && RTREG != 0)
+					{
+						_mov_r32_m32bd(REG_EAX, REG_ESI, REGDISP(RSREG));		// mov  eax,[rsreg]
+						_mov_r32_m32bd(REG_EDX, REG_ESI, REGDISP(RTREG));		// mov  edx,[rtreg]
+						_mul_r32(REG_EDX);										// mul  edx
+						_add_r32_m32abs(REG_EAX, &mips3.lo);					// add  eax,[lo]
+						_adc_r32_m32abs(REG_EDX, &mips3.hi);					// adc  edx,[hi]
+						_mov_r32_r32(REG_EBX, REG_EDX);							// mov  ebx,edx
+						_cdq();													// cdq
+						_mov_m64abs_r64(&mips3.lo, REG_EDX, REG_EAX);			// mov  [lo],edx:eax
+						_mov_r32_r32(REG_EAX, REG_EBX);							// mov  eax,ebx
+						_cdq();													// cdq
+						_mov_m64abs_r64(&mips3.hi, REG_EDX, REG_EAX);			// mov  [hi],edx:eax
+					}
+					return RECOMPILE_SUCCESSFUL_CP(3,4);
+
+				case 2: /* MUL */
+					if (RDREG != 0)
+					{
+						if (RSREG != 0 && RTREG != 0)
+						{
+							_mov_r32_m32bd(REG_EAX, REG_ESI, REGDISP(RSREG));		// mov  eax,[rsreg]
+							_imul_r32_m32bd(REG_EAX, REG_ESI, REGDISP(RTREG));		// imul eax,[rtreg]
+							_cdq();													// cdq
+							_mov_m64bd_r64(REG_ESI, REGDISP(RDREG), REG_EDX, REG_EAX);// mov  [rdreg],edx:eax
+						}
+						else
+							_zero_m64bd(REG_ESI, REGDISP(RDREG));
+					}
+					return RECOMPILE_SUCCESSFUL_CP(3,4);
+			}
+			break;
 
 		case 0x20:	/* LB */
 			_mov_m32abs_r32(&mips3_icount, REG_EBP);								// mov  [mips3_icount],ebp
@@ -3423,7 +3477,7 @@ static UINT32 recompile_set_cop0_reg(drc_core *drc, UINT8 reg)
             _push_imm("System set 64-bit addressing mode, SR=%08X");                // push <string>
             _call(printf);                                                          // call printf
             _add_r32_imm(REG_ESP, 8);                                               // add esp,8
-            _call(debug_halt_on_next_instruction);                                  // call debug_halt_on_next_instruction
+            _call(mame_debug_break);                                                // call mame_debug_break
             _resolve_link(&link1);                                                  // skip:
 #endif
 */

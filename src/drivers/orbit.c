@@ -69,7 +69,7 @@ static void update_misc_flags(UINT8 val)
 }
 
 
-static MACHINE_INIT( orbit )
+static MACHINE_RESET( orbit )
 {
 	update_misc_flags(0);
 }
@@ -282,7 +282,7 @@ static MACHINE_DRIVER_START( orbit )
 
 	MDRV_FRAMES_PER_SECOND(60) /* interlaced */
 	MDRV_VBLANK_DURATION((int) ((22. * 1000000) / (262. * 60) + 0.5))
-	MDRV_MACHINE_INIT(orbit)
+	MDRV_MACHINE_RESET(orbit)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

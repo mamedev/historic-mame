@@ -192,7 +192,6 @@ Maybe the second area for each layer contains colscroll ?
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
@@ -207,7 +206,7 @@ VIDEO_START( topspeed );
 VIDEO_UPDATE( topspeed );
 
 static UINT16 cpua_ctrl = 0xff;
-static int ioc220_port = 0;
+static INT32 ioc220_port = 0;
 
 extern UINT16 *topspeed_spritemap;
 
@@ -360,7 +359,7 @@ logerror("CPU #0 PC %06x: warning - write %04x to motor cpu %03x\n",activecpu_ge
                         SOUND
 *****************************************************/
 
-static int banknum = -1;
+static INT32 banknum = -1;
 
 static void reset_sound_region(void)
 {
@@ -820,6 +819,18 @@ static struct MSM5205interface msm5205_interface =
                      MACHINE DRIVERS
 ***********************************************************/
 
+static MACHINE_START( topspeed )
+{
+	state_save_register_global(cpua_ctrl);
+	state_save_register_func_postload(parse_control);
+
+	state_save_register_global(ioc220_port);
+
+	state_save_register_global(banknum);
+	state_save_register_func_postload(reset_sound_region);
+	return 0;
+}
+
 static MACHINE_DRIVER_START( topspeed )
 
 	/* basic machine hardware */
@@ -834,6 +845,8 @@ static MACHINE_DRIVER_START( topspeed )
 	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(topspeed_cpub_readmem,topspeed_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(topspeed_cpub_interrupt,1)
+
+	MDRV_MACHINE_START(topspeed)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -999,15 +1012,7 @@ DRIVER_INIT( topspeed )
 //  taitosnd_setz80_soundcpu( 2 );
 
 	cpua_ctrl = 0xff;
-	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
-	state_save_register_func_postload(parse_control);
-
-	state_save_register_int   ("main2", 0, "register", &ioc220_port);
-
-	state_save_register_int   ("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
 }
-
 
 GAME( 1987, topspeed, 0,        topspeed, topspeed, topspeed, ROT0, "Taito Corporation Japan", "Top Speed (World)", 0 )
 GAME( 1987, topspedu, topspeed, topspeed, topspedu, topspeed, ROT0, "Taito America Corporation (Romstar license)", "Top Speed (US)", 0 )

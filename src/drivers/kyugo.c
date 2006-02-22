@@ -35,7 +35,7 @@ static UINT8 *shared_ram;
  *
  *************************************/
 
-MACHINE_INIT( kyugo )
+MACHINE_RESET( kyugo )
 {
 	// must start with interrupts and sub CPU disabled
 	cpu_interrupt_enable(0, 0);
@@ -516,7 +516,7 @@ static MACHINE_DRIVER_START( gyrodine )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(kyugo)
+	MDRV_MACHINE_RESET(kyugo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

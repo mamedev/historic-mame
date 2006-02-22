@@ -197,7 +197,7 @@ INTERRUPT_GEN( hyprduel_interrupt )
 	update_irq_state();
 }
 
-MACHINE_INIT( hyprduel )
+MACHINE_RESET( hyprduel )
 {
 	/* start with cpu2 halted */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
@@ -659,7 +659,7 @@ static MACHINE_DRIVER_START( hyprduel )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(hyprduel)
+	MDRV_MACHINE_RESET(hyprduel)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

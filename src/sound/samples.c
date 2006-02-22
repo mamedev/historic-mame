@@ -1,14 +1,13 @@
 #include "driver.h"
 #include "samples.h"
-#include "state.h"
 
 
 struct sample_channel
 {
 	sound_stream *stream;
 	INT16 *		source;
-	int			source_length;
-	int			source_num;
+	INT32		source_length;
+	INT32		source_num;
 	UINT32		pos;
 	UINT32		frac;
 	UINT32		step;
@@ -485,13 +484,13 @@ static void *samples_start(int sndindex, int clock, const void *config)
 		info->channel[i].paused = 0;
 
 		/* register with the save state system */
-		state_save_register_int   ("samples", i, "source_length", &info->channel[i].source_length);
-		state_save_register_int   ("samples", i, "source_num", &info->channel[i].source_num);
-		state_save_register_UINT32("samples", i, "pos", &info->channel[i].pos, 1);
-		state_save_register_UINT32("samples", i, "frac", &info->channel[i].frac, 1);
-		state_save_register_UINT32("samples", i, "step", &info->channel[i].step, 1);
-		state_save_register_UINT8 ("samples", i, "loop", &info->channel[i].loop, 1);
-		state_save_register_UINT8 ("samples", i, "paused", &info->channel[i].paused, 1);
+		state_save_register_item("samples", i, info->channel[i].source_length);
+		state_save_register_item("samples", i, info->channel[i].source_num);
+		state_save_register_item("samples", i, info->channel[i].pos);
+		state_save_register_item("samples", i, info->channel[i].frac);
+		state_save_register_item("samples", i, info->channel[i].step);
+		state_save_register_item("samples", i, info->channel[i].loop);
+		state_save_register_item("samples", i, info->channel[i].paused);
 	}
 	state_save_register_func_postload_ptr(samples_postload, info);
 

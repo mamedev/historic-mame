@@ -132,7 +132,7 @@ static WRITE8_HANDLER( inufuku_soundrombank_w )
 
 ******************************************************************************/
 
-static MACHINE_INIT( inufuku )
+static MACHINE_RESET( inufuku )
 {
 	;
 }
@@ -412,7 +412,7 @@ static MACHINE_DRIVER_START( inufuku )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(inufuku)
+	MDRV_MACHINE_RESET(inufuku)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */

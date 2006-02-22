@@ -697,7 +697,7 @@ static void reset_reset(void)
 			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 //          printf("enable 2nd cpu!\n");
-//          debug_halt_on_next_instruction();
+//          DEBUGGER_BREAK;
 			s24_fd1094_machine_init();
 
 		} else
@@ -1207,7 +1207,7 @@ static NVRAM_HANDLER(system24)
 		mame_fread(file, memory_region(REGION_USER2), 2*track_size);
 }
 
-static MACHINE_INIT(system24)
+static MACHINE_RESET(system24)
 {
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	prev_resetcontrol = resetcontrol = 0x06;
@@ -2241,7 +2241,7 @@ static MACHINE_DRIVER_START( system24 )
 	MDRV_VBLANK_DURATION(100)
 	MDRV_INTERLEAVE(4)
 
-	MDRV_MACHINE_INIT(system24)
+	MDRV_MACHINE_RESET(system24)
 	MDRV_NVRAM_HANDLER(system24)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)

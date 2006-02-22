@@ -74,7 +74,7 @@ READ8_HANDLER (pitnrun_68705_portA_r);
 READ8_HANDLER (pitnrun_68705_portB_r);
 READ8_HANDLER (pitnrun_68705_portC_r);
 
-MACHINE_INIT( pitnrun );
+MACHINE_RESET( pitnrun );
 
 READ8_HANDLER( pitnrun_mcu_data_r );
 READ8_HANDLER( pitnrun_mcu_status_r );
@@ -303,7 +303,7 @@ static MACHINE_DRIVER_START( pitnrun )
 	MDRV_CPU_ADD(M68705,2000000)
 	MDRV_CPU_PROGRAM_MAP(mcu_readmem,mcu_writemem)
 
-	MDRV_MACHINE_INIT(pitnrun)
+	MDRV_MACHINE_RESET(pitnrun)
 
 	MDRV_INTERLEAVE(100)
 

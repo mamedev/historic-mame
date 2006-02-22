@@ -14,7 +14,6 @@
 #include "z80pio.h"
 #include "cpu/z80/z80.h"
 #include "cpu/z80/z80daisy.h"
-#include "state.h"
 
 
 

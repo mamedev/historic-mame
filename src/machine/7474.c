@@ -38,8 +38,7 @@
 *****************************************************************************/
 
 #include "driver.h"
-#include "machine/7474.h"
-#include "state.h"
+#include "7474.h"
 
 
 #define MAX_TTL7474  12

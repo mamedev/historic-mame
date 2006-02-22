@@ -378,7 +378,7 @@ static const gfx_decode gunbustr_gfxdecodeinfo[] =
                  MACHINE DRIVERS
 ***********************************************************/
 
-static MACHINE_INIT( gunbustr )
+static MACHINE_RESET( gunbustr )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
@@ -448,7 +448,7 @@ static MACHINE_DRIVER_START( gunbustr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(gunbustr)
+	MDRV_MACHINE_RESET(gunbustr)
 	MDRV_NVRAM_HANDLER(gunbustr)
 
 	/* video hardware */

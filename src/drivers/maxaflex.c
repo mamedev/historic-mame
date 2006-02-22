@@ -197,7 +197,7 @@ WRITE8_HANDLER( mcu_tcr_w )
 	}
 }
 
-static MACHINE_INIT(supervisor_board)
+static MACHINE_RESET(supervisor_board)
 {
 	portA_in = portA_out = ddrA	= 0;
 	portB_in = portB_out = ddrB	= 0;
@@ -216,10 +216,10 @@ void supervisor_board_check_coin_input(void)
 	}
 }
 
-static MACHINE_INIT(maxaflex)
+static MACHINE_RESET(maxaflex)
 {
-	machine_init_supervisor_board();
-	machine_init_a600xl();
+	machine_reset_supervisor_board();
+	machine_reset_a600xl();
 }
 
 VIDEO_UPDATE(maxaflex)
@@ -512,7 +512,7 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_MACHINE_INIT( maxaflex )
+	MDRV_MACHINE_RESET( maxaflex )
 MACHINE_DRIVER_END
 
 ROM_START(maxaflex)

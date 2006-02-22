@@ -12,12 +12,11 @@ K052591 emulation by Eddie Edwards
 #include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "vidhrdw/konamiic.h"
-#include "mamedbg.h"
 #include "sound/2151intf.h"
 #include "sound/k007232.h"
 
-static MACHINE_INIT( scontra );
-static MACHINE_INIT( thunderx );
+static MACHINE_RESET( scontra );
+static MACHINE_RESET( thunderx );
 static void thunderx_banking(int lines);
 
 extern int scontra_priority;
@@ -25,7 +24,6 @@ VIDEO_START( scontra );
 VIDEO_UPDATE( scontra );
 
 static int unknown_enable = 0;
-extern int debug_key_pressed;
 
 /***************************************************************************/
 
@@ -704,7 +702,7 @@ static MACHINE_DRIVER_START( scontra )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(scontra)
+	MDRV_MACHINE_RESET(scontra)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -743,7 +741,7 @@ static MACHINE_DRIVER_START( thunderx )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(thunderx)
+	MDRV_MACHINE_RESET(thunderx)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -1025,14 +1023,14 @@ static void thunderx_banking( int lines )
 	memory_set_bankptr( 1, &RAM[offs] );
 }
 
-static MACHINE_INIT( scontra )
+static MACHINE_RESET( scontra )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	paletteram = &RAM[0x30000];
 }
 
-static MACHINE_INIT( thunderx )
+static MACHINE_RESET( thunderx )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

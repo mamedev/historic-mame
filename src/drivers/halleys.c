@@ -1930,7 +1930,7 @@ INPUT_PORTS_END
 //**************************************************************************
 // Machine Definitions and Initializations
 
-static MACHINE_INIT( halleys )
+static MACHINE_RESET( halleys )
 {
 	mVectorType     = 0;
 	firq_level      = 0;
@@ -1966,7 +1966,7 @@ static MACHINE_DRIVER_START( halleys )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(halleys)
+	MDRV_MACHINE_RESET(halleys)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

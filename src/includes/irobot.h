@@ -12,7 +12,7 @@ extern UINT8 irobot_alphamap;
 extern UINT8 *irobot_combase;
 
 DRIVER_INIT( irobot );
-MACHINE_INIT( irobot );
+MACHINE_RESET( irobot );
 
 READ8_HANDLER( irobot_status_r );
 WRITE8_HANDLER( irobot_statwr_w );

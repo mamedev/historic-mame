@@ -82,7 +82,7 @@ static unsigned char *vastar_sharedram;
 
 
 
-static MACHINE_INIT( vastar )
+static MACHINE_RESET( vastar )
 {
 	/* we must start with the second CPU halted */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
@@ -340,7 +340,7 @@ static MACHINE_DRIVER_START( vastar )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - seems enough to ensure proper */
 						/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(vastar)
+	MDRV_MACHINE_RESET(vastar)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

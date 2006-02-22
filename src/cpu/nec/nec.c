@@ -49,13 +49,10 @@ typedef UINT8 BYTE;
 typedef UINT16 WORD;
 typedef UINT32 DWORD;
 
-#include "cpuintrf.h"
-#include "memory.h"
-#include "mamedbg.h"
+#include "driver.h"
+#include "debugger.h"
 #include "nec.h"
 #include "necintrf.h"
-#include "driver.h"
-#include "state.h"
 
 extern int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
 
@@ -945,33 +942,26 @@ static offs_t nec_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int 
 static void nec_init(int type)
 {
 	const char *names[]={"V20","V30","V33"};
-	int cpu = cpu_getactivecpu(),i;
-	char buf[16];
+	int cpu = cpu_getactivecpu();
 
-	for (i=0; i<8; i++) {
-		sprintf(buf,"R%d",i);
-		state_save_register_UINT16(names[type], cpu, buf, &I.regs.w[i], 1);
-	}
-	for (i=0; i<4; i++) {
-		sprintf(buf,"SR%d",i);
-		state_save_register_UINT16(names[type], cpu, buf, &I.sregs[i], 1);
-	}
+	state_save_register_item_array(names[type], cpu, I.regs.w);
+	state_save_register_item_array(names[type], cpu, I.sregs);
 
-	state_save_register_UINT16(names[type], cpu, "IP", &I.ip, 1);
-	state_save_register_UINT8(names[type], cpu, "TF", &I.TF, 1);
-	state_save_register_UINT8(names[type], cpu, "IF", &I.IF, 1);
-	state_save_register_UINT8(names[type], cpu, "DF", &I.DF, 1);
-	state_save_register_UINT8(names[type], cpu, "MF", &I.MF, 1);
-	state_save_register_INT32(names[type], cpu, "SV", &I.SignVal, 1);
-	state_save_register_UINT32(names[type], cpu, "IV", &I.int_vector, 1);
-	state_save_register_UINT32(names[type], cpu, "PI", &I.pending_irq, 1);
-	state_save_register_UINT32(names[type], cpu, "NS", &I.nmi_state, 1);
-	state_save_register_UINT32(names[type], cpu, "IS", &I.irq_state, 1);
-	state_save_register_UINT32(names[type], cpu, "AV", &I.AuxVal, 1);
-	state_save_register_UINT32(names[type], cpu, "OV", &I.OverVal, 1);
-	state_save_register_UINT32(names[type], cpu, "ZV", &I.ZeroVal, 1);
-	state_save_register_UINT32(names[type], cpu, "CV", &I.CarryVal, 1);
-	state_save_register_UINT32(names[type], cpu, "PV", &I.ParityVal, 1);
+	state_save_register_item(names[type], cpu, I.ip);
+	state_save_register_item(names[type], cpu, I.TF);
+	state_save_register_item(names[type], cpu, I.IF);
+	state_save_register_item(names[type], cpu, I.DF);
+	state_save_register_item(names[type], cpu, I.MF);
+	state_save_register_item(names[type], cpu, I.SignVal);
+	state_save_register_item(names[type], cpu, I.int_vector);
+	state_save_register_item(names[type], cpu, I.pending_irq);
+	state_save_register_item(names[type], cpu, I.nmi_state);
+	state_save_register_item(names[type], cpu, I.irq_state);
+	state_save_register_item(names[type], cpu, I.AuxVal);
+	state_save_register_item(names[type], cpu, I.OverVal);
+	state_save_register_item(names[type], cpu, I.ZeroVal);
+	state_save_register_item(names[type], cpu, I.CarryVal);
+	state_save_register_item(names[type], cpu, I.ParityVal);
 }
 
 /* Wrappers for the different CPU types */

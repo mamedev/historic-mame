@@ -206,7 +206,7 @@ static ppi8255_interface single_ppi_intf =
 static void system16a_generic_init(void)
 {
 	/* call the generic init */
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 
 	/* init the FD1094 */
 	fd1094_driver_init();
@@ -229,7 +229,7 @@ static void system16a_generic_init(void)
  *
  *************************************/
 
-MACHINE_INIT( system16a )
+MACHINE_RESET( system16a )
 {
 	fd1094_machine_init();
 
@@ -1533,7 +1533,7 @@ static MACHINE_DRIVER_START( system16a )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(system16a)
+	MDRV_MACHINE_RESET(system16a)
 	MDRV_NVRAM_HANDLER(system16a)
 
 	/* video hardware */

@@ -18,7 +18,7 @@
 
 /*----------- defined in machine/subs.c -----------*/
 
-MACHINE_INIT( subs );
+MACHINE_RESET( subs );
 INTERRUPT_GEN( subs_interrupt );
 WRITE8_HANDLER( subs_steer_reset_w );
 READ8_HANDLER( subs_control_r );

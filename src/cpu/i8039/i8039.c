@@ -39,8 +39,8 @@
 #include <stdlib.h>
 
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "state.h"
-#include "mamedbg.h"
 #include "i8039.h"
 
 
@@ -614,30 +614,30 @@ static void i8039_init (void)
 {
 	int cpu = cpu_getactivecpu();
 
-	state_save_register_UINT16("i8039", cpu, "PC", &R.PC.w.l, 1);
-	state_save_register_UINT16("i8039", cpu, "PREVPC", &R.PREVPC.w.l, 1);
-	state_save_register_UINT8("i8039", cpu, "A", &R.A, 1);
-	state_save_register_UINT8("i8039", cpu, "SP", &R.SP, 1);
-	state_save_register_UINT8("i8039", cpu, "PSW", &R.PSW, 1);
-	state_save_register_UINT8("i8039", cpu, "RAM", intRAM, 128);
-	state_save_register_UINT8("i8039", cpu, "Bus", &R.bus, 1);
-	state_save_register_UINT8("i8039", cpu, "F1", &R.f1, 1);
-	state_save_register_UINT8("i8039", cpu, "P1", &R.P1, 1);
-	state_save_register_UINT8("i8039", cpu, "P2", &R.P2, 1);
-	state_save_register_UINT8("i8039", cpu, "Pending IRQ", &R.pending_irq, 1);
-	state_save_register_UINT8("i8039", cpu, "Executing IRQ", &R.irq_executing, 1);
-	state_save_register_UINT8("i8039", cpu, "Master Clock", &R.masterClock, 1);
-	state_save_register_UINT8("i8039", cpu, "Register Pointer", &R.regPtr, 1);
-	state_save_register_UINT8("i8039", cpu, "T flag", &R.t_flag, 1);
-	state_save_register_UINT8("i8039", cpu, "Timer", &R.timer, 1);
-	state_save_register_UINT8("i8039", cpu, "Timer ON", &R.timerON, 1);
-	state_save_register_UINT8("i8039", cpu, "Clock ON", &R.countON, 1);
-	state_save_register_UINT8("i8039", cpu, "External IRQ Enable", &R.xirq_en, 1);
-	state_save_register_UINT8("i8039", cpu, "Timer/Counter IRQ Enable", &R.tirq_en, 1);
-	state_save_register_UINT16("i8039", cpu, "A11", &R.A11, 1);
-	state_save_register_UINT16("i8039", cpu, "A11 FF", &R.A11ff, 1);
-	state_save_register_UINT8("i8039", cpu, "IRQ State", &R.irq_state, 1);
-	state_save_register_UINT8("i8039", cpu, "IRQ extra cycles", &R.irq_extra_cycles, 1);
+	state_save_register_item("i8039", cpu, R.PC.w.l);
+	state_save_register_item("i8039", cpu, R.PREVPC.w.l);
+	state_save_register_item("i8039", cpu, R.A);
+	state_save_register_item("i8039", cpu, R.SP);
+	state_save_register_item("i8039", cpu, R.PSW);
+	state_save_register_item_array("i8039", cpu, R.RAM);
+	state_save_register_item("i8039", cpu, R.bus);
+	state_save_register_item("i8039", cpu, R.f1);
+	state_save_register_item("i8039", cpu, R.P1);
+	state_save_register_item("i8039", cpu, R.P2);
+	state_save_register_item("i8039", cpu, R.pending_irq);
+	state_save_register_item("i8039", cpu, R.irq_executing);
+	state_save_register_item("i8039", cpu, R.masterClock);
+	state_save_register_item("i8039", cpu, R.regPtr);
+	state_save_register_item("i8039", cpu, R.t_flag);
+	state_save_register_item("i8039", cpu, R.timer);
+	state_save_register_item("i8039", cpu, R.timerON);
+	state_save_register_item("i8039", cpu, R.countON);
+	state_save_register_item("i8039", cpu, R.xirq_en);
+	state_save_register_item("i8039", cpu, R.tirq_en);
+	state_save_register_item("i8039", cpu, R.A11);
+	state_save_register_item("i8039", cpu, R.A11ff);
+	state_save_register_item("i8039", cpu, R.irq_state);
+	state_save_register_item("i8039", cpu, R.irq_extra_cycles);
 }
 
 /****************************************************************************

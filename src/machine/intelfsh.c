@@ -12,7 +12,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "intelfsh.h"
 
 enum
@@ -33,8 +32,8 @@ struct flash_chip
 	int type;
 	int size;
 	int bits;
-	int flash_mode;
-	int flash_master_lock;
+	INT32 flash_mode;
+	INT32 flash_master_lock;
 	int device_id;
 	int maker_id;
 	void *flash_memory;
@@ -96,9 +95,9 @@ void intelflash_init(int chip, int type, void *data)
 	c->flash_master_lock = 0;
 	c->flash_memory = data;
 
-	state_save_register_int( "intelfsh", chip, "flash_mode", &c->flash_mode );
-	state_save_register_int( "intelfsh", chip, "flash_master_lock", &c->flash_master_lock );
-	state_save_register_UINT8( "intelfsh", chip, "flash_memory", c->flash_memory, c->size );
+	state_save_register_item( "intelfsh", chip, c->flash_mode );
+	state_save_register_item( "intelfsh", chip, c->flash_master_lock );
+	state_save_register_memory( "intelfsh", chip, "flash_memory", c->flash_memory, c->bits/8, c->size / (c->bits/8) );
 }
 
 UINT32 intelflash_read(int chip, UINT32 address)

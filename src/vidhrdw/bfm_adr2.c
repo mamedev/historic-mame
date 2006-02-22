@@ -289,7 +289,7 @@ static void on_adder2_reset(void)
 
 ///////////////////////////////////////////////////////////////////////////
 
-MACHINE_INIT( adder2_init_vid )
+MACHINE_RESET( adder2_init_vid )
 {
 	// setup the standard bellfruit BD1 display /////////////////////////////
 

@@ -16,7 +16,7 @@ extern gfx_decode adder2_gfxdecodeinfo[];
 extern void adder2_decode_char_roms(void);
 
 
-MACHINE_INIT( adder2_init_vid );
+MACHINE_RESET( adder2_init_vid );
 INTERRUPT_GEN( adder2_vbl );
 
 ADDRESS_MAP_EXTERN( adder2_memmap );

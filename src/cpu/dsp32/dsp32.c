@@ -37,7 +37,7 @@
 #include <string.h>
 #include <math.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "dsp32.h"
 
 

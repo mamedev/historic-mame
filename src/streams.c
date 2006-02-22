@@ -11,7 +11,6 @@
 
 #include "driver.h"
 #include <math.h>
-#include "state.h"
 
 #define VERBOSE			(0)
 

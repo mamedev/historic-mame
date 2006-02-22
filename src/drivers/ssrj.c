@@ -47,7 +47,7 @@ PALETTE_INIT( ssrj );
 
 static int oldport=0x80;
 
-MACHINE_INIT(ssrj)
+MACHINE_RESET(ssrj)
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	memset(&rom[0xc000],0,0x3fff); /* req for some control types */
@@ -192,7 +192,7 @@ static MACHINE_DRIVER_START( ssrj )
 	MDRV_VIDEO_UPDATE(ssrj)
 	MDRV_ASPECT_RATIO(3,4)
 
-	MDRV_MACHINE_INIT(ssrj)
+	MDRV_MACHINE_RESET(ssrj)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

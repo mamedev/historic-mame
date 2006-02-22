@@ -17,12 +17,12 @@
 
 // MAME headers
 #include "driver.h"
-#include "mamedbg.h"
 #include "vidhrdw/vector.h"
 #include "blit.h"
 #include "video.h"
 #include "window.h"
 #include "rc.h"
+#include "profiler.h"
 
 #ifndef NEW_DEBUGGER
 #include "debugwin.h"
@@ -191,6 +191,7 @@ static char *cleanstretch;
 static char *resolution;
 static char *effect;
 static char *aspect;
+static char *mngwrite;
 
 // options struct
 struct rc_option video_opts[] =
@@ -221,13 +222,14 @@ struct rc_option video_opts[] =
 	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, decode_ftr, "sets the number of frames to run within the game" },
 	{ "effect", NULL, rc_string, &effect, "none", 0, 0, decode_effect, "specify the blitting effect" },
 	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
+	{ "mngwrite", NULL, rc_string, &mngwrite, NULL, 0, 0, NULL, "save video in specified mng file" },
 
 	{ NULL, NULL, rc_link, win_d3d_opts, NULL, 0, 0, NULL, NULL },
 
 	{ "Windows misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow " APPNAME " to give back time to the system when it's not needed" },
 	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
-	{ "high_priority", NULL, rc_bool, &win_high_priority, "0", 0, 0, NULL, "increase thread priority" },
+	{ "priority", NULL, rc_int, &win_priority, "-15", -15, 1, NULL, "thread priority" },
 
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -579,6 +581,11 @@ int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 
 	// indicate for later that we're just beginning
 	warming_up = 1;
+
+	// start recording movie
+	if (mngwrite != NULL)
+		record_movie_start(mngwrite);
+
     return 0;
 }
 

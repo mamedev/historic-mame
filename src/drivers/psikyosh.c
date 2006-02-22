@@ -269,8 +269,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "state.h"
-#include "cpuintrf.h"
 
 #include "vidhrdw/generic.h"
 #include "cpu/sh2/sh2.h"

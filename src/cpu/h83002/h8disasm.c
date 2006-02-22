@@ -10,7 +10,7 @@
 
 #include "driver.h"
 #include "osd_cpu.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "h83002.h"
 
 static const char *bit_instr[8] = {"bset", "bnot", "bclr", "btst", "bor", "bxor", "band", "bld"};

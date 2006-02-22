@@ -26,7 +26,7 @@ VIDEO_UPDATE( glass );
 
 static int cause_interrupt;
 
-static MACHINE_INIT( glass )
+static MACHINE_RESET( glass )
 {
 	cause_interrupt = 1;
 	glass_current_bit = 0;
@@ -211,7 +211,7 @@ static MACHINE_DRIVER_START( glass )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(glass)
+	MDRV_MACHINE_RESET(glass)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

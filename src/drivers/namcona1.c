@@ -1073,13 +1073,11 @@ static WRITE16_HANDLER( namcona1_vreg_w )
 
 static WRITE16_HANDLER( bogus_w )
 {
-//  extern int debug_key_pressed;
-//  debug_key_pressed = 1;
+//  DEBUGGER_BREAK;
 }
 static READ16_HANDLER( bogus_r )
 {
-//  extern int debug_key_pressed;
-//  debug_key_pressed = 1;
+//  DEBUGGER_BREAK;
 	return 0;
 }
 
@@ -1285,7 +1283,7 @@ static WRITE8_HANDLER( port8_w )
 }
 
 // for games with the MCU emulated, the MCU boots the 68000.  don't allow it before that.
-static MACHINE_INIT( namcona1_mcu )
+static MACHINE_RESET( namcona1_mcu )
 {
 	cpunum_suspend(0, SUSPEND_REASON_HALT, 1);
 
@@ -1371,7 +1369,7 @@ static MACHINE_DRIVER_START( namcona1 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(namcosna1)
-	MDRV_MACHINE_INIT(namcona1_mcu)
+	MDRV_MACHINE_RESET(namcona1_mcu)
 	MDRV_INTERLEAVE(40)
 
 	/* video hardware */

@@ -290,12 +290,12 @@ static ppi8255_interface gselect_ppi8255_intf =
 	{ NULL,		      sound_w },		/* Port C write */
 };
 
-static MACHINE_INIT( getrivia )
+static MACHINE_RESET( getrivia )
 {
 	ppi8255_init(&getrivia_ppi8255_intf);
 }
 
-static MACHINE_INIT( gselect )
+static MACHINE_RESET( gselect )
 {
 	ppi8255_init(&gselect_ppi8255_intf);
 }
@@ -314,7 +314,7 @@ static MACHINE_DRIVER_START( getrivia )
 	MDRV_VISIBLE_AREA(48, 511-48, 16, 255-16)
 	MDRV_PALETTE_LENGTH(256)
 
-	MDRV_MACHINE_INIT(getrivia)
+	MDRV_MACHINE_RESET(getrivia)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	MDRV_VIDEO_START(generic_bitmapped)
@@ -335,7 +335,7 @@ static MACHINE_DRIVER_START( gselect )
 	MDRV_CPU_MODIFY("cpu")
 	MDRV_CPU_PROGRAM_MAP(gselect_map,0)
 
-	MDRV_MACHINE_INIT(gselect)
+	MDRV_MACHINE_RESET(gselect)
 MACHINE_DRIVER_END
 
 ROM_START( gt102c )

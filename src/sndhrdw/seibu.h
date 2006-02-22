@@ -55,8 +55,8 @@ void seibu_ym2203_irqhandler(int linestate);
 READ8_HANDLER( seibu_soundlatch_r );
 READ8_HANDLER( seibu_main_data_pending_r );
 WRITE8_HANDLER( seibu_main_data_w );
-MACHINE_INIT( seibu_sound_1 );
-MACHINE_INIT( seibu_sound_2 );
+MACHINE_RESET( seibu_sound_1 );
+MACHINE_RESET( seibu_sound_2 );
 void seibu_sound_decrypt(int cpu_region,int length);
 
 void *seibu_adpcm_start(int clock, const struct CustomSound_interface *config);

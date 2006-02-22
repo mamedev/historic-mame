@@ -700,7 +700,7 @@ static void bayroute_update_proc( void )
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static MACHINE_INIT( bayroute )
+static MACHINE_RESET( bayroute )
 {
 	static int bank[16] = {
 		0,0,0,0,
@@ -716,7 +716,7 @@ static MACHINE_INIT( bayroute )
 static DRIVER_INIT( bayrtbl1 )
 {
 	int i;
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
 		memory_region(REGION_GFX1)[i] ^= 0xff;
@@ -763,7 +763,7 @@ static MACHINE_DRIVER_START( bayroute )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(bayroute_readmem,bayroute_writemem)
 
-	MDRV_MACHINE_INIT(bayroute)
+	MDRV_MACHINE_RESET(bayroute)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -853,7 +853,7 @@ static void dduxbl_update_proc( void )
 	}
 }
 
-static MACHINE_INIT( dduxbl )
+static MACHINE_RESET( dduxbl )
 {
 	sys16_patch_code( 0x1eb2e, 0x01 );
 	sys16_patch_code( 0x1eb2f, 0x01 );
@@ -878,7 +878,7 @@ static DRIVER_INIT( dduxbl )
 		0,2,0,0
 	};
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	sys16_video_config(dduxbl_update_proc, -0x48, bank);
 }
 /***************************************************************************/
@@ -926,7 +926,7 @@ static MACHINE_DRIVER_START( dduxbl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(dduxbl_readmem,dduxbl_writemem)
 
-	MDRV_MACHINE_INIT(dduxbl)
+	MDRV_MACHINE_RESET(dduxbl)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -989,7 +989,7 @@ static void eswatbl_update_proc( void )
 	sys16_tile_bank0 = eswat_tilebank0;
 }
 
-static MACHINE_INIT( eswatbl )
+static MACHINE_RESET( eswatbl )
 {
 	static int bank[] = {
 		0,1,	4,5,
@@ -1008,7 +1008,7 @@ static MACHINE_INIT( eswatbl )
 
 static DRIVER_INIT( eswatbl )
 {
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	sys16_rowscroll_scroll=0x8000;
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 }
@@ -1055,7 +1055,7 @@ static MACHINE_DRIVER_START( eswatbl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(eswat_readmem,eswatbl_writemem)
 
-	MDRV_MACHINE_INIT(eswatbl)
+	MDRV_MACHINE_RESET(eswatbl)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1101,7 +1101,7 @@ static void fpoint_update_proc( void )
 	sys16_bg_scrollx = sys16_textram[0x74d];
 }
 
-static MACHINE_INIT( fpointbl )
+static MACHINE_RESET( fpointbl )
 {
 	sys16_patch_code( 0x454, 0x33 );
 	sys16_patch_code( 0x455, 0xf8 );
@@ -1132,7 +1132,7 @@ static MACHINE_INIT( fpointbl )
 
 static DRIVER_INIT( fpointbl )
 {
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 	sys16_video_config(fpoint_update_proc, -0xb8, NULL);
 }
 /***************************************************************************/
@@ -1265,7 +1265,7 @@ static MACHINE_DRIVER_START( fpointbl )
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_PROGRAM_MAP(fpointbl_sound_readmem,sound_writemem)
 
-	MDRV_MACHINE_INIT(fpointbl)
+	MDRV_MACHINE_RESET(fpointbl)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1344,7 +1344,7 @@ static void goldnaxe_update_proc( void )
 	set_tile_bank( sys16_workingram[0x2c94/2] );
 }
 
-static MACHINE_INIT( goldnaxe )
+static MACHINE_RESET( goldnaxe )
 {
 	static int bank[16] = {
 		0,1,4,5,
@@ -1368,7 +1368,7 @@ static DRIVER_INIT( goldnabl )
 {
 	int i;
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x60000; i++)
@@ -1417,7 +1417,7 @@ static MACHINE_DRIVER_START( goldnaxe )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(goldnaxe_readmem,goldnaxe_writemem)
 
-	MDRV_MACHINE_INIT(goldnaxe)
+	MDRV_MACHINE_RESET(goldnaxe)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1561,7 +1561,7 @@ static void passht4b_update_proc( void )
 	set_bg_page( sys16_textram[0x0ff4/2] );
 }
 
-static MACHINE_INIT( passsht )
+static MACHINE_RESET( passsht )
 {
 	sys16_sprxoffset = -0x48;
 	sys16_spritesystem = sys16_sprite_passshot;
@@ -1572,7 +1572,7 @@ static MACHINE_INIT( passsht )
 	sys16_update_proc = passsht_update_proc;
 }
 
-static MACHINE_INIT( passht4b )
+static MACHINE_RESET( passht4b )
 {
 	sys16_sprxoffset = -0xb8;
 	sys16_spritesystem = sys16_sprite_passshot;
@@ -1585,14 +1585,14 @@ static MACHINE_INIT( passht4b )
 
 static DRIVER_INIT( passsht )
 {
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 }
 
 static DRIVER_INIT( passht4b )
 {
 	int i;
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -1738,7 +1738,7 @@ static MACHINE_DRIVER_START( passsht )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(passsht_readmem,passsht_writemem)
 
-	MDRV_MACHINE_INIT(passsht)
+	MDRV_MACHINE_RESET(passsht)
 MACHINE_DRIVER_END
 
 
@@ -1749,7 +1749,7 @@ static MACHINE_DRIVER_START( passht4b )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(passht4b_readmem,passht4b_writemem)
 
-	MDRV_MACHINE_INIT(passht4b)
+	MDRV_MACHINE_RESET(passht4b)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1763,7 +1763,7 @@ MACHINE_DRIVER_END
 
 static DRIVER_INIT( shinobi )
 {
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 }
 
 /***************************************************************************/
@@ -1842,7 +1842,7 @@ static void shinobl_update_proc( void )
 	sys16_bg_scrollx = sys16_textram[0x7fd] & 0x01ff;
 }
 
-static MACHINE_INIT( shinobl )
+static MACHINE_RESET( shinobl )
 {
 	static int bank[] = {
 		0,2,4,6,
@@ -1868,7 +1868,7 @@ static MACHINE_DRIVER_START( shinobl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(shinobl_readmem,shinobl_writemem)
 
-	MDRV_MACHINE_INIT(shinobl)
+	MDRV_MACHINE_RESET(shinobl)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -1923,7 +1923,7 @@ static void tetris_bootleg_update_proc( void )
 }
 
 
-static MACHINE_INIT( tetrisbl )
+static MACHINE_RESET( tetrisbl )
 {
 //  sys16_patch_code( 0xba6, 0x4e );
 //  sys16_patch_code( 0xba7, 0x71 );
@@ -1935,7 +1935,7 @@ static MACHINE_INIT( tetrisbl )
 
 static DRIVER_INIT( tetrisbl )
 {
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 }
 
 
@@ -1982,7 +1982,7 @@ static MACHINE_DRIVER_START( tetrisbl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(tetrisbl_readmem,tetrisbl_writemem)
 
-	MDRV_MACHINE_INIT(tetrisbl)
+	MDRV_MACHINE_RESET(tetrisbl)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -2123,7 +2123,7 @@ static void tturfbl_update_proc( void )
 	}
 }
 
-static MACHINE_INIT( tturfbl )
+static MACHINE_RESET( tturfbl )
 {
 	static int bank[16] = {
 		0,0,0,0,
@@ -2142,7 +2142,7 @@ static DRIVER_INIT( tturfbl )
 	UINT8 *mem;
 	int i;
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -2172,7 +2172,7 @@ static MACHINE_DRIVER_START( tturfbl )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.80)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.80)
 
-	MDRV_MACHINE_INIT(tturfbl)
+	MDRV_MACHINE_RESET(tturfbl)
 MACHINE_DRIVER_END
 
 
@@ -2267,7 +2267,7 @@ static void wb3bbl_update_proc( void )
 	set_bg_page( sys16_textram[0x0ff4/2] );
 }
 
-static MACHINE_INIT( wb3bbl )
+static MACHINE_RESET( wb3bbl )
 {
 	static int bank[16] = {
 		2,0,
@@ -2310,7 +2310,7 @@ static DRIVER_INIT( wb3bbl )
 {
 	int i;
 
-	machine_init_sys16_onetime();
+	machine_reset_sys16_onetime();
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -2326,7 +2326,7 @@ static MACHINE_DRIVER_START( wb3bbl )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(wb3bbl_readmem,wb3bbl_writemem)
 
-	MDRV_MACHINE_INIT(wb3bbl)
+	MDRV_MACHINE_RESET(wb3bbl)
 MACHINE_DRIVER_END
 
 

@@ -1,6 +1,5 @@
 #include <math.h>
 #include "driver.h"
-#include "state.h"
 #include "2203intf.h"
 #include "fm.h"
 

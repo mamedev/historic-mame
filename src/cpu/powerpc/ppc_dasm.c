@@ -14,7 +14,7 @@
  */
 
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 /*
  * Masks

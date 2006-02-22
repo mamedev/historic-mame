@@ -95,7 +95,7 @@ static void sbrkout_tones_4V(int foo)
 }
 
 
-static MACHINE_INIT( sbrkout )
+static MACHINE_RESET( sbrkout )
 {
 	timer_pulse(TIME_IN_MSEC(TIME_4V), 0, sbrkout_tones_4V);
 }
@@ -274,7 +274,7 @@ static MACHINE_DRIVER_START( sbrkout )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(sbrkout)
+	MDRV_MACHINE_RESET(sbrkout)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

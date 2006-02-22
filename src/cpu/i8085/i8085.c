@@ -115,9 +115,7 @@
 #define VERBOSE 0
 
 #include "driver.h"
-#include "state.h"
-#include "osd_cpu.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "i8085.h"
 #include "i8085cpu.h"
 #include "i8085daa.h"
@@ -1324,21 +1322,21 @@ static void i8085_init(void)
 	init_tables();
 	I.cputype = 1;
 
-	state_save_register_UINT16("i8085", cpu, "AF", &I.AF.w.l, 1);
-	state_save_register_UINT16("i8085", cpu, "BC", &I.BC.w.l, 1);
-	state_save_register_UINT16("i8085", cpu, "DE", &I.DE.w.l, 1);
-	state_save_register_UINT16("i8085", cpu, "HL", &I.HL.w.l, 1);
-	state_save_register_UINT16("i8085", cpu, "SP", &I.SP.w.l, 1);
-	state_save_register_UINT16("i8085", cpu, "PC", &I.PC.w.l, 1);
-	state_save_register_UINT8("i8085", cpu, "HALT", &I.HALT, 1);
-	state_save_register_UINT8("i8085", cpu, "IM", &I.IM, 1);
-	state_save_register_UINT8("i8085", cpu, "IREQ", &I.IREQ, 1);
-	state_save_register_UINT8("i8085", cpu, "ISRV", &I.ISRV, 1);
-	state_save_register_UINT32("i8085", cpu, "INTR", &I.INTR, 1);
-	state_save_register_UINT32("i8085", cpu, "IRQ2", &I.IRQ2, 1);
-	state_save_register_UINT32("i8085", cpu, "IRQ1", &I.IRQ1, 1);
-	state_save_register_INT8("i8085", cpu, "NMI_STATE", &I.nmi_state, 1);
-	state_save_register_INT8("i8085", cpu, "IRQ_STATE", I.irq_state, 4);
+	state_save_register_item("i8085", cpu, I.AF.w.l);
+	state_save_register_item("i8085", cpu, I.BC.w.l);
+	state_save_register_item("i8085", cpu, I.DE.w.l);
+	state_save_register_item("i8085", cpu, I.HL.w.l);
+	state_save_register_item("i8085", cpu, I.SP.w.l);
+	state_save_register_item("i8085", cpu, I.PC.w.l);
+	state_save_register_item("i8085", cpu, I.HALT);
+	state_save_register_item("i8085", cpu, I.IM);
+	state_save_register_item("i8085", cpu, I.IREQ);
+	state_save_register_item("i8085", cpu, I.ISRV);
+	state_save_register_item("i8085", cpu, I.INTR);
+	state_save_register_item("i8085", cpu, I.IRQ2);
+	state_save_register_item("i8085", cpu, I.IRQ1);
+	state_save_register_item("i8085", cpu, I.nmi_state);
+	state_save_register_item_array("i8085", cpu, I.irq_state);
 }
 
 /****************************************************************************
@@ -1568,20 +1566,20 @@ void i8080_init(void)
 	init_tables();
 	I.cputype = 0;
 
-	state_save_register_UINT16("i8080", cpu, "AF", &I.AF.w.l, 1);
-	state_save_register_UINT16("i8080", cpu, "BC", &I.BC.w.l, 1);
-	state_save_register_UINT16("i8080", cpu, "DE", &I.DE.w.l, 1);
-	state_save_register_UINT16("i8080", cpu, "HL", &I.HL.w.l, 1);
-	state_save_register_UINT16("i8080", cpu, "SP", &I.SP.w.l, 1);
-	state_save_register_UINT16("i8080", cpu, "PC", &I.PC.w.l, 1);
-	state_save_register_UINT8("i8080", cpu, "HALT", &I.HALT, 1);
-	state_save_register_UINT8("i8080", cpu, "IREQ", &I.IREQ, 1);
-	state_save_register_UINT8("i8080", cpu, "ISRV", &I.ISRV, 1);
-	state_save_register_UINT32("i8080", cpu, "INTR", &I.INTR, 1);
-	state_save_register_UINT32("i8080", cpu, "IRQ2", &I.IRQ2, 1);
-	state_save_register_UINT32("i8080", cpu, "IRQ1", &I.IRQ1, 1);
-	state_save_register_INT8("i8080", cpu, "nmi_state", &I.nmi_state, 1);
-	state_save_register_INT8("i8080", cpu, "irq_state", I.irq_state, 1);
+	state_save_register_item("i8080", cpu, I.AF.w.l);
+	state_save_register_item("i8080", cpu, I.BC.w.l);
+	state_save_register_item("i8080", cpu, I.DE.w.l);
+	state_save_register_item("i8080", cpu, I.HL.w.l);
+	state_save_register_item("i8080", cpu, I.SP.w.l);
+	state_save_register_item("i8080", cpu, I.PC.w.l);
+	state_save_register_item("i8080", cpu, I.HALT);
+	state_save_register_item("i8080", cpu, I.IREQ);
+	state_save_register_item("i8080", cpu, I.ISRV);
+	state_save_register_item("i8080", cpu, I.INTR);
+	state_save_register_item("i8080", cpu, I.IRQ2);
+	state_save_register_item("i8080", cpu, I.IRQ1);
+	state_save_register_item("i8080", cpu, I.nmi_state);
+	state_save_register_item("i8080", cpu, I.irq_state);
 }
 
 void i8080_set_irq_line(int irqline, int state)

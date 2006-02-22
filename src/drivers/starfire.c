@@ -89,7 +89,7 @@ static void update_callback(int scanline)
 }
 
 
-MACHINE_INIT( starfire )
+MACHINE_RESET( starfire )
 {
 	timer_set(cpu_getscanlinetime(32 + SCANLINE_UPDATE_CHUNK - 1), 32, update_callback);
 }
@@ -319,7 +319,7 @@ static MACHINE_DRIVER_START( starfire )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(starfire)
+	MDRV_MACHINE_RESET(starfire)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

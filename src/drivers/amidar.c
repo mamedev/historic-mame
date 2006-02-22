@@ -306,7 +306,7 @@ static MACHINE_DRIVER_START( amidar )
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
 	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
 
-	MDRV_MACHINE_INIT(scramble)
+	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(32+64+2+8)

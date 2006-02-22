@@ -36,7 +36,7 @@
 #ifdef MAME_DEBUG					/* Compile interface to MAME */
 #include "memory.h"
 #include "tms32025.h"
-#include "mamedbg.h"
+#include "debugger.h"
 extern UINT16 *tms32025_pgmmap[0x200];
 //#define READOP16(A)  (cpu_readop16((A)     | (TMS32025_PGM_OFFSET << 1)))
 //#define READARG16(A) (cpu_readop_arg16((A) | (TMS32025_PGM_OFFSET << 1)))

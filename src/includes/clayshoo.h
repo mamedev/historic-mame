@@ -8,7 +8,7 @@
 
 /* defined in machine/clayshoo.c */
 
-MACHINE_INIT( clayshoo );
+MACHINE_RESET( clayshoo );
 WRITE8_HANDLER( clayshoo_analog_reset_w );
 READ8_HANDLER( clayshoo_analog_r );
 

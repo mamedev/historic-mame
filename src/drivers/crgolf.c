@@ -28,7 +28,6 @@ WHO AM I?      (In place of "ARIES ELECA")
 
 #include "driver.h"
 #include "crgolf.h"
-#include "state.h"
 #include "sound/ay8910.h"
 #include "sound/msm5205.h"
 
@@ -57,7 +56,7 @@ static WRITE8_HANDLER( rom_bank_select_w )
 }
 
 
-static MACHINE_INIT( crgolf )
+static MACHINE_START( crgolf )
 {
 	/* configure the banking */
 	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x2000);
@@ -69,6 +68,7 @@ static MACHINE_INIT( crgolf )
 	state_save_register_global(sound_to_main_data);
 	state_save_register_global(sample_offset);
 	state_save_register_global(sample_count);
+	return 0;
 }
 
 
@@ -375,7 +375,7 @@ static MACHINE_DRIVER_START( crgolf )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(crgolf)
+	MDRV_MACHINE_START(crgolf)
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */

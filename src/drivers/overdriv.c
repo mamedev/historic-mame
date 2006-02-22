@@ -163,7 +163,7 @@ static INTERRUPT_GEN( cpuB_interrupt )
 }
 
 
-static MACHINE_INIT( overdriv )
+static MACHINE_RESET( overdriv )
 {
 	/* start with cpu B halted */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
@@ -415,7 +415,7 @@ static MACHINE_DRIVER_START( overdriv )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(200)
 
-	MDRV_MACHINE_INIT(overdriv)
+	MDRV_MACHINE_RESET(overdriv)
 	MDRV_NVRAM_HANDLER(overdriv)
 
 	/* video hardware */

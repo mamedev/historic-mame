@@ -242,7 +242,7 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
-static MACHINE_INIT( zaccaria )
+static MACHINE_RESET( zaccaria )
 {
 	ppi8255_init(&ppi8255_intf);
 
@@ -676,7 +676,7 @@ static MACHINE_DRIVER_START( zaccaria )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(zaccaria)
+	MDRV_MACHINE_RESET(zaccaria)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

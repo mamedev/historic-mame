@@ -13,7 +13,6 @@
 
 #include "driver.h"
 #include "machine/ticket.h"
-#include "state.h"
 
 /*#define DEBUG_TICKET*/
 

@@ -59,6 +59,7 @@ Word | Bit(s)           | Use
 ***************************************************************************/
 
 #include "driver.h"
+#include "profiler.h"
 #include "vidhrdw/generic.h"
 
 

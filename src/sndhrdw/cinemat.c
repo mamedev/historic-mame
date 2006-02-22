@@ -21,7 +21,6 @@
 #include "cinemat.h"
 #include "sound/samples.h"
 #include "sound/ay8910.h"
-#include "state.h"
 
 
 /*************************************
@@ -97,7 +96,7 @@ WRITE8_HANDLER( cinemat_sound_control_w )
 static void generic_init(void (*callback)(UINT8, UINT8))
 {
 	/* call the standard init */
-	machine_init_cinemat();
+	machine_reset_cinemat();
 
 	/* set the sound handler */
 	sound_handler = callback;
@@ -196,13 +195,13 @@ static void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	}
 }
 
-static MACHINE_INIT( spacewar )
+static MACHINE_RESET( spacewar )
 {
 	generic_init(spacewar_sound_w);
 }
 
 MACHINE_DRIVER_START( spacewar_sound )
-	MDRV_MACHINE_INIT(spacewar)
+	MDRV_MACHINE_RESET(spacewar)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -249,13 +248,13 @@ static void barrier_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(2, 2, 0);
 }
 
-static MACHINE_INIT( barrier )
+static MACHINE_RESET( barrier )
 {
 	generic_init(barrier_sound_w);
 }
 
 MACHINE_DRIVER_START( barrier_sound )
-	MDRV_MACHINE_INIT(barrier)
+	MDRV_MACHINE_RESET(barrier)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -307,13 +306,13 @@ static void speedfrk_sound_w(UINT8 sound_val, UINT8 bits_changed)
     set_led_status(0, ~sound_val & 0x02);
 }
 
-static MACHINE_INIT( speedfrk )
+static MACHINE_RESET( speedfrk )
 {
 	generic_init(speedfrk_sound_w);
 }
 
 MACHINE_DRIVER_START( speedfrk_sound )
-	MDRV_MACHINE_INIT(speedfrk)
+	MDRV_MACHINE_RESET(speedfrk)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -381,13 +380,13 @@ static void starhawk_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_stop(3);
 }
 
-static MACHINE_INIT( starhawk )
+static MACHINE_RESET( starhawk )
 {
 	generic_init(starhawk_sound_w);
 }
 
 MACHINE_DRIVER_START( starhawk_sound )
-	MDRV_MACHINE_INIT(starhawk)
+	MDRV_MACHINE_RESET(starhawk)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -449,13 +448,13 @@ static void sundance_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(5, 5, 0);
 }
 
-static MACHINE_INIT( sundance )
+static MACHINE_RESET( sundance )
 {
 	generic_init(sundance_sound_w);
 }
 
 MACHINE_DRIVER_START( sundance_sound )
-	MDRV_MACHINE_INIT(sundance)
+	MDRV_MACHINE_RESET(sundance)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -536,13 +535,13 @@ static void tailg_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	}
 }
 
-static MACHINE_INIT( tailg )
+static MACHINE_RESET( tailg )
 {
 	generic_init(tailg_sound_w);
 }
 
 MACHINE_DRIVER_START( tailg_sound )
-	MDRV_MACHINE_INIT(tailg)
+	MDRV_MACHINE_RESET(tailg)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -603,13 +602,13 @@ static void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(4, 4, 0);
 }
 
-static MACHINE_INIT( warrior )
+static MACHINE_RESET( warrior )
 {
 	generic_init(warrior_sound_w);
 }
 
 MACHINE_DRIVER_START( warrior_sound )
-	MDRV_MACHINE_INIT(warrior)
+	MDRV_MACHINE_RESET(warrior)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -696,13 +695,13 @@ static void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_stop(6);
 }
 
-static MACHINE_INIT( armora )
+static MACHINE_RESET( armora )
 {
 	generic_init(armora_sound_w);
 }
 
 MACHINE_DRIVER_START( armora_sound )
-	MDRV_MACHINE_INIT(armora)
+	MDRV_MACHINE_RESET(armora)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -786,13 +785,13 @@ static void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(4, 4, 0);
 }
 
-static MACHINE_INIT( ripoff )
+static MACHINE_RESET( ripoff )
 {
 	generic_init(ripoff_sound_w);
 }
 
 MACHINE_DRIVER_START( ripoff_sound )
-	MDRV_MACHINE_INIT(ripoff)
+	MDRV_MACHINE_RESET(ripoff)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -898,13 +897,13 @@ static void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(7, 7, 0);
 }
 
-static MACHINE_INIT( starcas )
+static MACHINE_RESET( starcas )
 {
 	generic_init(starcas_sound_w);
 }
 
 MACHINE_DRIVER_START( starcas_sound )
-	MDRV_MACHINE_INIT(starcas)
+	MDRV_MACHINE_RESET(starcas)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -1033,13 +1032,13 @@ static void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
     }
 }
 
-static MACHINE_INIT( solarq )
+static MACHINE_RESET( solarq )
 {
 	generic_init(solarq_sound_w);
 }
 
 MACHINE_DRIVER_START( solarq_sound )
-	MDRV_MACHINE_INIT(solarq)
+	MDRV_MACHINE_RESET(solarq)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -1166,13 +1165,13 @@ static void boxingb_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(11, 11, 0);
 }
 
-static MACHINE_INIT( boxingb )
+static MACHINE_RESET( boxingb )
 {
 	generic_init(boxingb_sound_w);
 }
 
 MACHINE_DRIVER_START( boxingb_sound )
-	MDRV_MACHINE_INIT(boxingb)
+	MDRV_MACHINE_RESET(boxingb)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -1278,13 +1277,13 @@ static void wotw_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(7, 7, 0);
 }
 
-static MACHINE_INIT( wotw )
+static MACHINE_RESET( wotw )
 {
 	generic_init(wotw_sound_w);
 }
 
 MACHINE_DRIVER_START( wotw_sound )
-	MDRV_MACHINE_INIT(wotw)
+	MDRV_MACHINE_RESET(wotw)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -1390,13 +1389,13 @@ static void wotwc_sound_w(UINT8 sound_val, UINT8 bits_changed)
 		sample_start(7, 7, 0);
 }
 
-static MACHINE_INIT( wotwc )
+static MACHINE_RESET( wotwc )
 {
 	generic_init(wotwc_sound_w);
 }
 
 MACHINE_DRIVER_START( wotwc_sound )
-	MDRV_MACHINE_INIT(wotwc)
+	MDRV_MACHINE_RESET(wotwc)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
@@ -1503,7 +1502,7 @@ static z80ctc_interface demon_z80ctc_interface =
 };
 
 
-static MACHINE_INIT( demon_sound )
+static MACHINE_RESET( demon_sound )
 {
 	/* generic init */
 	generic_init(demon_sound_w);
@@ -1560,7 +1559,7 @@ MACHINE_DRIVER_START( demon_sound )
 	MDRV_CPU_PROGRAM_MAP(demon_sound_map,0)
 	MDRV_CPU_IO_MAP(demon_sound_ports,0)
 
-	MDRV_MACHINE_INIT(demon_sound)
+	MDRV_MACHINE_RESET(demon_sound)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -1592,9 +1591,9 @@ static WRITE8_HANDLER( qb3_sound_w )
 }
 
 
-static MACHINE_INIT( qb3_sound )
+static MACHINE_RESET( qb3_sound )
 {
-	machine_init_demon_sound();
+	machine_reset_demon_sound();
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, qb3_sound_w);
 
 	/* this patch prevents the sound ROM from eating itself when command $0A is sent */
@@ -1605,5 +1604,5 @@ static MACHINE_INIT( qb3_sound )
 
 MACHINE_DRIVER_START( qb3_sound )
 	MDRV_IMPORT_FROM(demon_sound)
-	MDRV_MACHINE_INIT(qb3_sound)
+	MDRV_MACHINE_RESET(qb3_sound)
 MACHINE_DRIVER_END

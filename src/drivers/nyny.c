@@ -125,7 +125,7 @@ static struct pia6821_interface pia1_intf =
 	/*irqs   : A/B             */ 0, 0
 };
 
-MACHINE_INIT( nyny )
+MACHINE_RESET( nyny )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
@@ -353,7 +353,7 @@ static MACHINE_DRIVER_START( nyny )
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(nyny)
+	MDRV_MACHINE_RESET(nyny)
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */

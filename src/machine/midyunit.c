@@ -509,7 +509,7 @@ DRIVER_INIT( totcarn )
  *
  *************************************/
 
-MACHINE_INIT( midyunit )
+MACHINE_RESET( midyunit )
 {
 	/* reset sound */
 	switch (sound_type)

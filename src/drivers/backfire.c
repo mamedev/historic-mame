@@ -23,7 +23,6 @@ extern void decrypt156(void);
 #include "cpu/arm/arm.h"
 #include "machine/random.h"
 #include "deco16ic.h"
-#include "state.h"
 
 UINT32 *backfire_spriteram32_1;
 UINT32 *backfire_spriteram32_2;
@@ -66,16 +65,16 @@ VIDEO_START(backfire)
 	deco16_pf34_control = auto_malloc(0x10);
 
 	/* and register the allocated ram so that save states still work */
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 1 Data", deco16_pf1_data, 0x2000/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 2 Data", deco16_pf2_data, 0x2000/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 3 Data", deco16_pf3_data, 0x2000/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 4 Data", deco16_pf4_data, 0x2000/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 1 Rowscroll", deco16_pf1_rowscroll, 0x800/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 2 Rowscroll", deco16_pf2_rowscroll, 0x800/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 3 Rowscroll", deco16_pf3_rowscroll, 0x800/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 4 Rowscroll", deco16_pf4_rowscroll, 0x800/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 1+2 Control Registers", deco16_pf12_control, 0x10/2);
-	state_save_register_UINT16 ("BFVIDEO", 0, "Playfield 3+4 Control Registers", deco16_pf34_control, 0x10/2);
+	state_save_register_global_pointer(deco16_pf1_data, 0x2000/2);
+	state_save_register_global_pointer(deco16_pf2_data, 0x2000/2);
+	state_save_register_global_pointer(deco16_pf3_data, 0x2000/2);
+	state_save_register_global_pointer(deco16_pf4_data, 0x2000/2);
+	state_save_register_global_pointer(deco16_pf1_rowscroll, 0x800/2);
+	state_save_register_global_pointer(deco16_pf2_rowscroll, 0x800/2);
+	state_save_register_global_pointer(deco16_pf3_rowscroll, 0x800/2);
+	state_save_register_global_pointer(deco16_pf4_rowscroll, 0x800/2);
+	state_save_register_global_pointer(deco16_pf12_control, 0x10/2);
+	state_save_register_global_pointer(deco16_pf34_control, 0x10/2);
 
 	if (deco16_2_video_init(0))
 		return 1;

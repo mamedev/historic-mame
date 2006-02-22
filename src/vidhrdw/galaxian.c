@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 static rectangle _spritevisiblearea =
 {

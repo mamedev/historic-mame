@@ -19,7 +19,7 @@
 #include <string.h>
 #include <math.h>
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "mips3.h"
 #include "x86drc.h"
 #include "debugcpu.h"
@@ -737,7 +737,7 @@ static void tlbp(void)
 	UINT32 index;
 	UINT64 vpn;
 
-//  debug_halt_on_next_instruction();
+//  DEBUGGER_BREAK;
 	for (index = 0; index < 48; index++)
 	{
 		UINT64 mask = ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000)) & ~U64(0x1fff);
@@ -761,7 +761,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 		{
 #if PRINTF_TLB
 			printf("TLBP: Should have not found an entry\n");
-//          debug_halt_on_next_instruction();
+//          DEBUGGER_BREAK;
 #endif
 		}
 		mips3.cpr[0][COP0_Index] = index;
@@ -772,7 +772,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 		{
 #if PRINTF_TLB
 			printf("TLBP: Should havefound an entry\n");
-//          debug_halt_on_next_instruction();
+//          DEBUGGER_BREAK;
 #endif
 		}
 		mips3.cpr[0][COP0_Index] = 0x80000000;

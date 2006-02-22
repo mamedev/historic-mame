@@ -49,7 +49,6 @@
 
 #include "driver.h"
 #include "pokey.h"
-#include "state.h"
 
 /* clear this to use Machine->sample_rate instead of the native rate */
 #define OUTPUT_NATIVE		1

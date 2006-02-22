@@ -285,7 +285,7 @@ static const struct R6532interface r6532_interface =
 
 
 
-static MACHINE_INIT( gameplan )
+static MACHINE_RESET( gameplan )
 {
 	via_config(0, &via_0_interface);
 	via_config(1, &via_1_interface);
@@ -958,7 +958,7 @@ static MACHINE_DRIVER_START( gameplan )
 	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
 
-	MDRV_MACHINE_INIT(gameplan)
+	MDRV_MACHINE_RESET(gameplan)
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

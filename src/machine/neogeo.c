@@ -2,17 +2,14 @@
 #include "machine/pd4990a.h"
 #include "neogeo.h"
 #include "inptport.h"
-#include "state.h"
 #include <time.h>
 #include "sound/2610intf.h"
 
 
-extern int neogeo_sram_locked;
-extern void *record;
-extern void *playback;
+extern INT32 neogeo_sram_locked;
 
-extern int neogeo_rng;
-extern int neogeo_prot_data;
+extern INT32 neogeo_rng;
+extern INT32 neogeo_prot_data;
 
 UINT16 *neogeo_ram16;
 UINT16 *neogeo_sram16;
@@ -23,15 +20,15 @@ UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
 UINT8 *neogeo_game_vectors;
 
-int memcard_status;
-static int memcard_number;
+INT32 memcard_status;
+static INT32 memcard_number;
 
 static void neogeo_custom_memory(void);
 static void neogeo_register_sub_savestate(void);
 
 
 /* This function is called on every reset */
-MACHINE_INIT( neogeo )
+MACHINE_RESET( neogeo )
 {
 	time_t ltime;
 	struct tm *today;
@@ -48,7 +45,7 @@ MACHINE_INIT( neogeo )
 	/* Disable Real Time Clock if the user selects to record or playback an .inp file   */
 	/* This is needed in order to playback correctly an .inp on several games,as these  */
 	/* use the RTC of the NEC pd4990a as pseudo-random number generator   -kal 8 apr 02 */
-	if( record != 0 || playback != 0 )
+	if( Machine->record_file != NULL || Machine->playback_file != NULL )
 	{
 		pd4990a.seconds = 0;
 		pd4990a.minutes = 0;
@@ -197,11 +194,17 @@ DRIVER_INIT( neogeo )
 		neogeo_game_vectors = auto_malloc (0x80);
 		memcpy( neogeo_game_vectors, gamerom, 0x80 );
 	}
+}
 
+MACHINE_START( neogeo )
+{
 	/* register state save */
 	neogeo_register_main_savestate();
 	neogeo_register_sub_savestate();
+
+	return 0;
 }
+
 
 /******************************************************************************/
 
@@ -359,11 +362,11 @@ static void neogeo_register_sub_savestate(void)
 {
 	UINT8* gamevector = memory_region(REGION_CPU1);
 
-	state_save_register_int   ("neogeo", 0, "neogeo_sram_locked",      &neogeo_sram_locked);
-	state_save_register_UINT16("neogeo", 0, "neogeo_ram16",            neogeo_ram16,             0x10000/2);
-	state_save_register_UINT8 ("neogeo", 0, "neogeo_memcard",          neogeo_memcard,           0x800);
-	state_save_register_UINT8 ("neogeo", 0, "gamevector",              gamevector,               0x80);
-	state_save_register_int   ("neogeo", 0, "memcard_status",          &memcard_status);
-	state_save_register_int   ("neogeo", 0, "memcard_number",          &memcard_number);
-	state_save_register_int   ("neogeo", 0, "neogeo_prot_data",        &neogeo_prot_data);
+	state_save_register_global(neogeo_sram_locked);
+	state_save_register_global_pointer(neogeo_ram16, 0x10000/2);
+	state_save_register_global_pointer(neogeo_memcard, 0x800);
+	state_save_register_global_pointer(gamevector, 0x80);
+	state_save_register_global(memcard_status);
+	state_save_register_global(memcard_number);
+	state_save_register_global(neogeo_prot_data);
 }

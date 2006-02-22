@@ -65,8 +65,6 @@ Or use these cheats:
 ----------------------------------------------------------------*/
 
 #include "driver.h"
-#include "state.h"
-#include "cpuintrf.h"
 
 #include "vidhrdw/generic.h"
 #include "cpu/sh2/sh2.h"
@@ -442,7 +440,7 @@ static MACHINE_DRIVER_START( ps4big )
 	MDRV_NVRAM_HANDLER(93C56)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 #if DUAL_SCREEN
 	MDRV_ASPECT_RATIO(8,3)
 	MDRV_SCREEN_SIZE(80*8, 32*8)

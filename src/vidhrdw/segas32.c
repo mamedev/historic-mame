@@ -142,6 +142,7 @@
 */
 
 #include "driver.h"
+#include "profiler.h"
 #include "segas32.h"
 
 

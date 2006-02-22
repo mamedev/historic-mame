@@ -13,7 +13,6 @@
 #include "sound/pokey.h"
 #ifdef MESS
 #include "image.h"
-#include "state.h"
 #endif
 
 #define VERBOSE_POKEY	0
@@ -108,7 +107,7 @@ static void a800_setbank(int n)
 }
 #endif
 
-static void machine_init_atari_generic(int machine_type, int has_cart, int has_pia)
+static void machine_reset_atari_generic(int machine_type, int has_cart, int has_pia)
 {
 	atari = machine_type;
 
@@ -124,14 +123,14 @@ static void machine_init_atari_generic(int machine_type, int has_cart, int has_p
 #endif
 }
 
-MACHINE_INIT( a400 )
+MACHINE_RESET( a400 )
 {
-	machine_init_atari_generic(ATARI_400, TRUE, TRUE);
+	machine_reset_atari_generic(ATARI_400, TRUE, TRUE);
 }
 
-MACHINE_INIT( a800 )
+MACHINE_RESET( a800 )
 {
-	machine_init_atari_generic(ATARI_800, TRUE, TRUE);
+	machine_reset_atari_generic(ATARI_800, TRUE, TRUE);
 }
 
 #ifdef MESS
@@ -178,9 +177,9 @@ DEVICE_UNLOAD( a800_cart )
  * Atari 600XL (for MAME only)
  *
  **************************************************************/
-MACHINE_INIT(a600xl)
+MACHINE_RESET(a600xl)
 {
-	machine_init_atari_generic(ATARI_600XL, FALSE, TRUE);
+	machine_reset_atari_generic(ATARI_600XL, FALSE, TRUE);
 	a600xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
 }
 
@@ -190,9 +189,9 @@ MACHINE_INIT(a600xl)
  *
  **************************************************************/
 
-MACHINE_INIT( a800xl)
+MACHINE_RESET( a800xl)
 {
-	machine_init_atari_generic(ATARI_800XL, FALSE, TRUE);
+	machine_reset_atari_generic(ATARI_800XL, FALSE, TRUE);
 	a800xl_mmu(atari_pia.w.pbout, atari_pia.w.pbout);
 }
 
@@ -238,9 +237,9 @@ DEVICE_LOAD( a800xl_cart )
  *
  **************************************************************/
 
-MACHINE_INIT( a5200 )
+MACHINE_RESET( a5200 )
 {
-	machine_init_atari_generic(ATARI_5200, FALSE, FALSE);
+	machine_reset_atari_generic(ATARI_5200, FALSE, FALSE);
 }
 
 #ifdef MESS
@@ -1630,10 +1629,10 @@ DRIVER_INIT( atari )
 	memory_set_bankptr(2, mess_ram);
 
 	/* save states */
-	state_save_register_UINT8("atari", 0, "antic_r", (UINT8 *) &antic.r, sizeof(antic.r));
-	state_save_register_UINT8("atari", 0, "antic_w", (UINT8 *) &antic.w, sizeof(antic.w));
-	state_save_register_UINT8("atari", 0, "gtia_r", (UINT8 *) &gtia.r, sizeof(gtia.r));
-	state_save_register_UINT8("atari", 0, "gtia_w", (UINT8 *) &gtia.w, sizeof(gtia.w));
+	state_save_register_global_array(antic.r);
+	state_save_register_global_array(antic.w);
+	state_save_register_global_array(gtia.r);
+	state_save_register_global_array(gtia.w);
 }
 #endif
 

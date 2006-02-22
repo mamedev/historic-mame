@@ -204,7 +204,7 @@ WRITE8_HANDLER( slapfight_videoram_w );
 WRITE8_HANDLER( slapfight_colorram_w );
 
 /* MACHINE */
-MACHINE_INIT( slapfight );
+MACHINE_RESET( slapfight );
 extern unsigned char *slapfight_dpram;
 extern size_t slapfight_dpram_size;
 WRITE8_HANDLER( slapfight_dpram_w );
@@ -776,7 +776,7 @@ static MACHINE_DRIVER_START( perfrman )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)		/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
-	MDRV_MACHINE_INIT(slapfight)
+	MDRV_MACHINE_RESET(slapfight)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
@@ -819,7 +819,7 @@ static MACHINE_DRIVER_START( tigerhb )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
-	MDRV_MACHINE_INIT(slapfight)
+	MDRV_MACHINE_RESET(slapfight)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
@@ -864,7 +864,7 @@ static MACHINE_DRIVER_START( tigerh )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
-	MDRV_MACHINE_INIT(slapfight)
+	MDRV_MACHINE_RESET(slapfight)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
@@ -906,7 +906,7 @@ static MACHINE_DRIVER_START( slapfigh )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
-	MDRV_MACHINE_INIT(slapfight)
+	MDRV_MACHINE_RESET(slapfight)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)

@@ -12,7 +12,12 @@
 #ifndef DECLARE
 
 #include "driver.h"
+#include "profiler.h"
 
+
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
 #ifdef LSB_FIRST
 #define SHIFT0 0
@@ -27,32 +32,29 @@
 #endif
 
 
-typedef void (*plot_pixel_proc)(mame_bitmap *bitmap,int x,int y,pen_t pen);
-typedef pen_t (*read_pixel_proc)(mame_bitmap *bitmap,int x,int y);
-typedef void (*plot_box_proc)(mame_bitmap *bitmap,int x,int y,int width,int height,pen_t pen);
 
+/***************************************************************************
+    GLOBALS
+***************************************************************************/
 
 UINT8 gfx_drawmode_table[256];
 UINT8 gfx_alpharange_table[256];
 
 static UINT8 is_raw[TRANSPARENCY_MODES];
 
+alpha_cache drawgfx_alpha_cache;
+
+
+
+/***************************************************************************
+    INLINES
+***************************************************************************/
+
+/*-------------------------------------------------
+    write_dword - safely write an unaligned DWORD
+-------------------------------------------------*/
 
 #ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
-
-INLINE UINT32 read_dword(void *address)
-{
-	if ((long)address & 3)
-	{
-  		return	(*((UINT8 *)address  ) << SHIFT0) +
-				(*((UINT8 *)address+1) << SHIFT1) +
-				(*((UINT8 *)address+2) << SHIFT2) +
-				(*((UINT8 *)address+3) << SHIFT3);
-	}
-	else
-		return *(UINT32 *)address;
-}
-
 
 INLINE void write_dword(void *address, UINT32 data)
 {
@@ -67,138 +69,175 @@ INLINE void write_dword(void *address, UINT32 data)
   	else
 		*(UINT32 *)address = data;
 }
+
 #else
-#define read_dword(address) *(int *)address
+
 #define write_dword(address,data) *(int *)address=data
+
 #endif
 
 
+/*-------------------------------------------------
+    readbit - read a single bit from a base
+    offset
+-------------------------------------------------*/
 
-INLINE int readbit(const UINT8 *src,int bitnum)
+INLINE int readbit(const UINT8 *src, int bitnum)
 {
 	return src[bitnum / 8] & (0x80 >> (bitnum % 8));
 }
 
-alpha_cache drawgfx_alpha_cache;
-int alpha_active;
 
-void alpha_init(void)
+
+/***************************************************************************
+
+    Initialization
+
+***************************************************************************/
+
+void drawgfx_init(void)
 {
 	int lev, byte;
-	for(lev=0; lev<257; lev++)
-		for(byte=0; byte<256; byte++)
-			drawgfx_alpha_cache.alpha[lev][byte] = (byte*lev) >> 8;
+
+	/* fill in the raw drawing mode table */
+	is_raw[TRANSPARENCY_NONE_RAW]      = 1;
+	is_raw[TRANSPARENCY_PEN_RAW]       = 1;
+	is_raw[TRANSPARENCY_PENS_RAW]      = 1;
+	is_raw[TRANSPARENCY_PEN_TABLE_RAW] = 1;
+	is_raw[TRANSPARENCY_BLEND_RAW]     = 1;
+
+	/* initialize the alpha drawing table */
+	for (lev = 0; lev < 257; lev++)
+		for (byte = 0; byte < 256; byte++)
+			drawgfx_alpha_cache.alpha[lev][byte] = (byte * lev) >> 8;
 	alpha_set_level(255);
 }
 
 
-static void calc_penusage(gfx_element *gfx,int num)
+
+/***************************************************************************
+
+    Graphics Decoding
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    calc_penusage - calculate the pen usage for
+    a given graphics tile
+-------------------------------------------------*/
+
+static void calc_penusage(gfx_element *gfx, int num)
 {
-	int x,y;
-	UINT8 *dp;
+	const UINT8 *dp = gfx->gfxdata + num * gfx->char_modulo;
+	UINT32 usage = 0;
+	int x, y;
 
-	if (!gfx->pen_usage) return;
+	/* if nothing allocated, don't do it */
+	if (!gfx->pen_usage)
+		return;
 
-	/* fill the pen_usage array with info on the used pens */
-	gfx->pen_usage[num] = 0;
-
-	dp = gfx->gfxdata + num * gfx->char_modulo;
-
+	/* packed case */
 	if (gfx->flags & GFX_PACKED)
 	{
-		for (y = 0;y < gfx->height;y++)
+		for (y = 0; y < gfx->height; y++)
 		{
-			for (x = 0;x < gfx->width/2;x++)
-			{
-				gfx->pen_usage[num] |= 1 << (dp[x] & 0x0f);
-				gfx->pen_usage[num] |= 1 << (dp[x] >> 4);
-			}
+			for (x = 0; x < gfx->width/2; x++)
+				usage |= (1 << (dp[x] & 0x0f)) | (1 << (dp[x] >> 4));
+
 			dp += gfx->line_modulo;
 		}
 	}
+
+	/* unpacked case */
 	else
 	{
-		for (y = 0;y < gfx->height;y++)
+		for (y = 0; y < gfx->height; y++)
 		{
-			for (x = 0;x < gfx->width;x++)
-			{
-				gfx->pen_usage[num] |= 1 << dp[x];
-			}
+			for (x = 0; x < gfx->width; x++)
+				usage |= 1 << dp[x];
+
 			dp += gfx->line_modulo;
 		}
 	}
+
+	/* store the final result */
+	gfx->pen_usage[num] = usage;
 }
 
-void decodechar(gfx_element *gfx,int num,const UINT8 *src,const gfx_layout *gl)
+
+/*-------------------------------------------------
+    decodechar - decode a single character based
+    on a specified layout
+-------------------------------------------------*/
+
+void decodechar(gfx_element *gfx, int num, const UINT8 *src, const gfx_layout *gl)
 {
-	int plane,x,y;
-	UINT8 *dp;
-	int baseoffs;
-	const UINT32 *xoffset,*yoffset;
+	UINT8 *dp = gfx->gfxdata + num * gfx->char_modulo;
+	int plane, x, y;
 
+	/* zap the data to 0 */
+	memset(dp, 0, gfx->char_modulo);
 
-	xoffset = gl->xoffset;
-	yoffset = gl->yoffset;
-
-	dp = gfx->gfxdata + num * gfx->char_modulo;
-	memset(dp,0,gfx->char_modulo);
-
-	baseoffs = num * gl->charincrement;
-
+	/* packed case */
 	if (gfx->flags & GFX_PACKED)
 	{
-		for (plane = 0;plane < gl->planes;plane++)
+		for (plane = 0; plane < gl->planes; plane++)
 		{
-			int shiftedbit = 1 << (gl->planes-1-plane);
-			int offs = baseoffs + gl->planeoffset[plane];
+			int planebit = 1 << (gl->planes - 1 - plane);
+			int planeoffs = num * gl->charincrement + gl->planeoffset[plane];
 
-			dp = gfx->gfxdata + num * gfx->char_modulo + (gfx->height-1) * gfx->line_modulo;
-
-			y = gfx->height;
-			while (--y >= 0)
+			for (y = 0; y < gfx->height; y++)
 			{
-				int offs2 = offs + yoffset[y];
+				int yoffs = planeoffs + gl->yoffset[y];
 
-				x = gfx->width/2;
-				while (--x >= 0)
+				dp = gfx->gfxdata + num * gfx->char_modulo + y * gfx->line_modulo;
+				for (x = 0; x < gfx->width; x += 2)
 				{
-					if (readbit(src,offs2 + xoffset[2*x+1]))
-						dp[x] |= shiftedbit << 4;
-					if (readbit(src,offs2 + xoffset[2*x]))
-						dp[x] |= shiftedbit;
+					if (readbit(src, yoffs + gl->xoffset[x+0]))
+						dp[x+0] |= planebit;
+					if (readbit(src, yoffs + gl->xoffset[x+1]))
+						dp[x+1] |= planebit;
 				}
-				dp -= gfx->line_modulo;
 			}
 		}
 	}
+
+	/* unpacked case */
 	else
 	{
-		for (plane = 0;plane < gl->planes;plane++)
+		for (plane = 0; plane < gl->planes; plane++)
 		{
-			int shiftedbit = 1 << (gl->planes-1-plane);
-			int offs = baseoffs + gl->planeoffset[plane];
+			int planebit = 1 << (gl->planes - 1 - plane);
+			int planeoffs = num * gl->charincrement + gl->planeoffset[plane];
 
-			dp = gfx->gfxdata + num * gfx->char_modulo + (gfx->height-1) * gfx->line_modulo;
-
-			y = gfx->height;
-			while (--y >= 0)
+			for (y = 0; y < gfx->height; y++)
 			{
-				int offs2 = offs + yoffset[y];
+				int yoffs = planeoffs + gl->yoffset[y];
 
-				x = gfx->width;
-				while (--x >= 0)
-				{
-					if (readbit(src,offs2 + xoffset[x]))
-						dp[x] |= shiftedbit;
-				}
-				dp -= gfx->line_modulo;
+				dp = gfx->gfxdata + num * gfx->char_modulo + y * gfx->line_modulo;
+				for (x = 0; x < gfx->width; x++)
+					if (readbit(src, yoffs + gl->xoffset[x]))
+						dp[x] |= planebit;
 			}
 		}
 	}
 
-	calc_penusage(gfx,num);
+	/* compute pen usage */
+	calc_penusage(gfx, num);
 }
 
+
+
+/***************************************************************************
+
+    Graphics Set Management
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    allocgfx - allocate a gfx_element structure
+    based on a given layout
+-------------------------------------------------*/
 
 gfx_element *allocgfx(const gfx_layout *gl)
 {
@@ -206,7 +245,7 @@ gfx_element *allocgfx(const gfx_layout *gl)
 
 	/* allocate memory for the gfx_element structure */
 	gfx = malloc(sizeof(*gfx));
-	memset(gfx,0,sizeof(gfx_element));
+	memset(gfx, 0, sizeof(*gfx));
 
 	/* fill it in */
 	gfx->layout = *gl;
@@ -226,7 +265,8 @@ gfx_element *allocgfx(const gfx_layout *gl)
 
 		/* don't free the data because we will get a pointer at decode time */
 		gfx->flags |= GFX_DONT_FREE_GFXDATA;
-		if (gl->planes <= 4) gfx->flags |= GFX_PACKED;
+		if (gl->planes <= 4)
+			gfx->flags |= GFX_PACKED;
 	}
 
 	/* decoded graphics case */
@@ -243,6 +283,11 @@ gfx_element *allocgfx(const gfx_layout *gl)
 	return gfx;
 }
 
+
+/*-------------------------------------------------
+    decodegfx - decode a series of tiles from
+    a particular gfx_element
+-------------------------------------------------*/
 
 void decodegfx(gfx_element *gfx, const UINT8 *src, UINT32 first, UINT32 count)
 {
@@ -274,10 +319,17 @@ void decodegfx(gfx_element *gfx, const UINT8 *src, UINT32 first, UINT32 count)
 }
 
 
+/*-------------------------------------------------
+    freegfx - free a gfx_element
+-------------------------------------------------*/
+
 void freegfx(gfx_element *gfx)
 {
-	if (!gfx)
+	/* ignore NULL frees */
+	if (gfx == NULL)
 		return;
+
+	/* free our data */
 	if (gfx->pen_usage)
 		free(gfx->pen_usage);
 	if (!(gfx->flags & GFX_DONT_FREE_GFXDATA))
@@ -287,6 +339,11 @@ void freegfx(gfx_element *gfx)
 
 
 
+/***************************************************************************
+
+    Blockmove primitives
+
+***************************************************************************/
 
 INLINE void blockmove_NtoN_transpen_noremap8(
 		const UINT8 *srcdata,int srcwidth,int srcheight,int srcmodulo,
@@ -865,7 +922,8 @@ INLINE void common_drawgfx(mame_bitmap *dest,const gfx_element *gfx,
 	if (!is_raw[transparency])
 		color %= gfx->total_colors;
 
-	if (!alpha_active && (transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
+	if (!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
+		(transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
 	{
 		if (transparency == TRANSPARENCY_ALPHAONE && (cpu_getcurrentframe() & 1))
 		{
@@ -1379,7 +1437,8 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 		return;
 	}
 
-	if (!alpha_active && (transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
+	if (!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
+		(transparency == TRANSPARENCY_ALPHAONE || transparency == TRANSPARENCY_ALPHA || transparency == TRANSPARENCY_ALPHARANGE))
 	{
 		transparency = TRANSPARENCY_PEN;
 		transparent_color &= 0xff;
@@ -3468,55 +3527,6 @@ void mdrawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 			clip,transparency,transparent_color,scalex,scaley,priority_bitmap,priority_mask);
 	profiler_mark(PROFILER_END);
 }
-
-void plot_pixel2(mame_bitmap *bitmap1,mame_bitmap *bitmap2,int x,int y,pen_t pen)
-{
-	plot_pixel(bitmap1, x, y, pen);
-	plot_pixel(bitmap2, x, y, pen);
-}
-
-static void pp_8(mame_bitmap *b,int x,int y,pen_t p)  { ((UINT8 *)b->line[y])[x] = p; }
-static void pp_16(mame_bitmap *b,int x,int y,pen_t p)  { ((UINT16 *)b->line[y])[x] = p; }
-static void pp_32(mame_bitmap *b,int x,int y,pen_t p)  { ((UINT32 *)b->line[y])[x] = p; }
-
-static pen_t rp_8(mame_bitmap *b,int x,int y)  { return ((UINT8 *)b->line[y])[x]; }
-static pen_t rp_16(mame_bitmap *b,int x,int y)  { return ((UINT16 *)b->line[y])[x]; }
-static pen_t rp_32(mame_bitmap *b,int x,int y)  { return ((UINT32 *)b->line[y])[x]; }
-
-static void pb_8(mame_bitmap *b,int x,int y,int w,int h,pen_t p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT8 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_16(mame_bitmap *b,int x,int y,int w,int h,pen_t p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT16 *)b->line[y])[x] = p; x++; } y++; } }
-static void pb_32(mame_bitmap *b,int x,int y,int w,int h,pen_t p)  { int t=x; while(h-->0){ int c=w; x=t; while(c-->0){ ((UINT32 *)b->line[y])[x] = p; x++; } y++; } }
-
-
-void set_pixel_functions(mame_bitmap *bitmap)
-{
-	if (bitmap->depth == 8)
-	{
-		bitmap->read = rp_8;
-		bitmap->plot = pp_8;
-		bitmap->plot_box = pb_8;
-	}
-	else if(bitmap->depth == 15 || bitmap->depth == 16)
-	{
-		bitmap->read = rp_16;
-		bitmap->plot = pp_16;
-		bitmap->plot_box = pb_16;
-	}
-	else
-	{
-		bitmap->read = rp_32;
-		bitmap->plot = pp_32;
-		bitmap->plot_box = pb_32;
-	}
-
-	/* while we're here, fill in the raw drawing mode table as well */
-	is_raw[TRANSPARENCY_NONE_RAW]      = 1;
-	is_raw[TRANSPARENCY_PEN_RAW]       = 1;
-	is_raw[TRANSPARENCY_PENS_RAW]      = 1;
-	is_raw[TRANSPARENCY_PEN_TABLE_RAW] = 1;
-	is_raw[TRANSPARENCY_BLEND_RAW]     = 1;
-}
-
 
 INLINE void plotclip(mame_bitmap *bitmap,int x,int y,int pen,const rectangle *clip)
 {

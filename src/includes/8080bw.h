@@ -33,19 +33,19 @@ READ8_HANDLER( desertgu_port_1_r );
 
 /*----------- defined in sndhrdw/8080bw.c -----------*/
 
-MACHINE_INIT( invaders );
-MACHINE_INIT( sstrangr );
-MACHINE_INIT( invad2ct );
-MACHINE_INIT( gunfight );
-MACHINE_INIT( boothill );
-MACHINE_INIT( phantom2 );
-MACHINE_INIT( bowler );
-MACHINE_INIT( ballbomb );
-MACHINE_INIT( seawolf );
-MACHINE_INIT( desertgu );
-MACHINE_INIT( schaser );
-MACHINE_INIT( polaris );
-MACHINE_INIT( clowns );
+MACHINE_RESET( invaders );
+MACHINE_RESET( sstrangr );
+MACHINE_RESET( invad2ct );
+MACHINE_RESET( gunfight );
+MACHINE_RESET( boothill );
+MACHINE_RESET( phantom2 );
+MACHINE_RESET( bowler );
+MACHINE_RESET( ballbomb );
+MACHINE_RESET( seawolf );
+MACHINE_RESET( desertgu );
+MACHINE_RESET( schaser );
+MACHINE_RESET( polaris );
+MACHINE_RESET( clowns );
 
 WRITE8_HANDLER( indianbt_sh_port7_w );
 

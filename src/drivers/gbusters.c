@@ -15,7 +15,7 @@ Preliminary driver by:
 #include "sound/k007232.h"
 
 /* prototypes */
-static MACHINE_INIT( gbusters );
+static MACHINE_RESET( gbusters );
 static void gbusters_banking( int lines );
 
 
@@ -308,7 +308,7 @@ static MACHINE_DRIVER_START( gbusters )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(gbusters)
+	MDRV_MACHINE_RESET(gbusters)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
@@ -405,7 +405,7 @@ static void gbusters_banking( int lines )
 	/* other bits unknown */
 }
 
-static MACHINE_INIT( gbusters )
+static MACHINE_RESET( gbusters )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

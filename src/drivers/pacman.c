@@ -342,7 +342,7 @@ Boards:
  *
  *************************************/
 
-MACHINE_INIT( mschamp )
+MACHINE_RESET( mschamp )
 {
 	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
 	int whichbank = readinputportbytag("GAME") & 1;
@@ -2926,7 +2926,7 @@ static MACHINE_DRIVER_START( mspacman )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(mspacman_map,0)
 
-	MDRV_MACHINE_INIT(mspacman)
+	MDRV_MACHINE_RESET(mspacman)
 MACHINE_DRIVER_END
 
 
@@ -2977,7 +2977,7 @@ static MACHINE_DRIVER_START( theglobp )
 	MDRV_CPU_PROGRAM_MAP(epos_map,0)
 	MDRV_CPU_IO_MAP(theglobp_readport,writeport)
 
-	MDRV_MACHINE_INIT(theglobp)
+	MDRV_MACHINE_RESET(theglobp)
 MACHINE_DRIVER_END
 
 
@@ -2990,7 +2990,7 @@ static MACHINE_DRIVER_START( acitya )
 	MDRV_CPU_PROGRAM_MAP(epos_map,0)
 	MDRV_CPU_IO_MAP(acitya_readport,writeport)
 
-	MDRV_MACHINE_INIT(acitya)
+	MDRV_MACHINE_RESET(acitya)
 MACHINE_DRIVER_END
 
 
@@ -3109,7 +3109,7 @@ static MACHINE_DRIVER_START( mschamp )
 	MDRV_CPU_IO_MAP(mschamp_readport,writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_MACHINE_INIT(mschamp)
+	MDRV_MACHINE_RESET(mschamp)
 MACHINE_DRIVER_END
 
 

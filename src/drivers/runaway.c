@@ -44,7 +44,7 @@ static void interrupt_callback(int scanline)
 }
 
 
-static MACHINE_INIT( runaway )
+static MACHINE_RESET( runaway )
 {
 	timer_set(cpu_getscanlinetime(16), 16, interrupt_callback);
 }
@@ -363,7 +363,7 @@ static MACHINE_DRIVER_START( runaway )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(23. * 1000000 / 15750)
 
-	MDRV_MACHINE_INIT(runaway)
+	MDRV_MACHINE_RESET(runaway)
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */

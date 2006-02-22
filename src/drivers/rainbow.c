@@ -201,7 +201,6 @@ that can be entered on the copyright screen:
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
@@ -225,7 +224,7 @@ READ16_HANDLER( rainbow_cchip_ctrl_r );
 
 void rainbow_cchip_init(int version);
 
-static int jumping_latch = 0;
+static UINT8 jumping_latch = 0;
 
 
 static WRITE16_HANDLER( jumping_sound_w )
@@ -793,7 +792,7 @@ static DRIVER_INIT( jumping )
 	for (i = 0;i < memory_region_length(REGION_GFX2);i++)
 		memory_region(REGION_GFX2)[i] ^= 0xff;
 
-	state_save_register_int("jumping", 0, "sound", &jumping_latch);
+	state_save_register_global(jumping_latch);
 }
 
 

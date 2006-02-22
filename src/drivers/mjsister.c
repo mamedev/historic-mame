@@ -60,7 +60,7 @@ static WRITE8_HANDLER( mjsister_dac_adr_e_w )
 	dac_busy = 1;
 }
 
-static MACHINE_INIT( mjsister )
+static MACHINE_RESET( mjsister )
 {
 	dac_busy = 0;
 }
@@ -312,7 +312,7 @@ static MACHINE_DRIVER_START( mjsister )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(mjsister)
+	MDRV_MACHINE_RESET(mjsister)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

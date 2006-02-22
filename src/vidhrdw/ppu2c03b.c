@@ -9,6 +9,7 @@
 
 #include <math.h>
 #include "vidhrdw/ppu2c03b.h"
+#include "profiler.h"
 
 /* constant definitions */
 #define BOTTOM_VISIBLE_SCANLINE	239		/* The bottommost visible scanline */

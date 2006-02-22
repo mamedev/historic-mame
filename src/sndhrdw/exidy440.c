@@ -9,7 +9,6 @@
 
 #include "driver.h"
 #include "exidy440.h"
-#include "state.h"
 #include <math.h>
 
 
@@ -85,9 +84,9 @@ static sound_cache_entry *sound_cache_max;
 
 /* 6844 description */
 static m6844_channel_data m6844_channel[4];
-static int m6844_priority;
-static int m6844_interrupt;
-static int m6844_chain;
+static UINT8 m6844_priority;
+static UINT8 m6844_interrupt;
+static UINT8 m6844_chain;
 
 /* sound interface parameters */
 static sound_stream *stream;
@@ -168,9 +167,9 @@ void *exidy440_sh_start(int clock, const struct CustomSound_interface *config)
 	m6844_interrupt = 0x00;
 	m6844_chain = 0x00;
 
-	state_save_register_int("m6844", 0, "priority", &m6844_priority);
-	state_save_register_int("m6844", 0, "interrupt", &m6844_interrupt);
-	state_save_register_int("m6844", 0, "chain", &m6844_chain);
+	state_save_register_global(m6844_priority);
+	state_save_register_global(m6844_interrupt);
+	state_save_register_global(m6844_chain);
 
 	channel_frequency[0] = clock;   /* channels 0 and 1 are run by FCLK */
 	channel_frequency[1] = clock;

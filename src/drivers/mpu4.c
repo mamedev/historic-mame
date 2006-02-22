@@ -1562,7 +1562,7 @@ INTERRUPT_GEN(mpu4_vid_irq)
 }
 
 
-MACHINE_INIT( mpu4_vid )
+MACHINE_RESET( mpu4_vid )
 {
   pia_unconfig();
 
@@ -1660,7 +1660,7 @@ static MACHINE_DRIVER_START( mpu4_vid )
   MDRV_SCREEN_SIZE(64*8, 64*8)
   MDRV_VISIBLE_AREA(0*8, 63*8-1, 0*8, 37*8-1)
   MDRV_FRAMES_PER_SECOND(50)
-  MDRV_MACHINE_INIT(mpu4_vid)
+  MDRV_MACHINE_RESET(mpu4_vid)
   MDRV_VIDEO_START (mpu4_vid)
   MDRV_VIDEO_UPDATE(mpu4_vid)
 

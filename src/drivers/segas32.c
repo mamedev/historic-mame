@@ -241,7 +241,7 @@ static void signal_sound_irq(int which);
  *
  *************************************/
 
-static MACHINE_INIT( system32 )
+static MACHINE_RESET( system32 )
 {
 	/* initialize the interrupt controller */
 	memset(v60_irq_control, 0xff, sizeof(v60_irq_control));
@@ -2039,7 +2039,7 @@ static MACHINE_DRIVER_START( system32 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(system32)
+	MDRV_MACHINE_RESET(system32)
 	MDRV_NVRAM_HANDLER(system32)
 
 	/* video hardware */
@@ -2093,7 +2093,7 @@ static MACHINE_DRIVER_START( multi32 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(system32)
+	MDRV_MACHINE_RESET(system32)
 	MDRV_NVRAM_HANDLER(system32)
 
 	/* video hardware */
@@ -3452,7 +3452,7 @@ ROM_END
  *
  *************************************/
 
-static void common_init(read16_handler custom_r, write16_handler custom_w, const UINT8 *default_eeprom)
+static void segas32_common_init(read16_handler custom_r, write16_handler custom_w, const UINT8 *default_eeprom)
 {
 	/* reset the custom handlers and other pointers */
 	custom_io_r[0] = custom_r;
@@ -3484,7 +3484,7 @@ static DRIVER_INIT( alien3 )
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 	};
 
-	common_init(analog_custom_io_r, analog_custom_io_w, alien3_default_eeprom);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, alien3_default_eeprom);
 }
 
 static READ16_HANDLER( arescue_handshake_r )
@@ -3499,7 +3499,7 @@ static READ16_HANDLER( arescue_slavebusy_r )
 
 static DRIVER_INIT( arescue )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00006, 0, 0, arescue_dsp_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00006, 0, 0, arescue_dsp_w);
 
@@ -3516,7 +3516,7 @@ static DRIVER_INIT( arescue )
 
 static DRIVER_INIT( arabfgt )
 {
-	common_init(extra_custom_io_r, NULL, NULL);
+	segas32_common_init(extra_custom_io_r, NULL, NULL);
 
 	/* install protection handlers */
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa000ff, 0, 0, arabfgt_protection_r);
@@ -3527,7 +3527,7 @@ static DRIVER_INIT( arabfgt )
 
 static DRIVER_INIT( brival )
 {
-	common_init(extra_custom_io_r, NULL, NULL);
+	segas32_common_init(extra_custom_io_r, NULL, NULL);
 
 	/* install protection handlers */
 	system32_protram = auto_malloc (0x1000);
@@ -3538,7 +3538,7 @@ static DRIVER_INIT( brival )
 
 static DRIVER_INIT( darkedge )
 {
-	common_init(extra_custom_io_r, NULL, NULL);
+	segas32_common_init(extra_custom_io_r, NULL, NULL);
 
 	/* install protection handlers */
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa7ffff, 0, 0, darkedge_protection_r);
@@ -3548,7 +3548,7 @@ static DRIVER_INIT( darkedge )
 
 static DRIVER_INIT( dbzvrvs )
 {
-	common_init(NULL, NULL, NULL);
+	segas32_common_init(NULL, NULL, NULL);
 
 	/* install protection handlers */
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa7ffff, 0, 0, dbzvrvs_protection_r);
@@ -3563,7 +3563,7 @@ static WRITE16_HANDLER( f1en_comms_echo_w )
 
 static DRIVER_INIT( f1en )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 
 	dual_pcb_comms = auto_malloc(0x1000);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x810000, 0x810fff, 0, 0, dual_pcb_comms_r);
@@ -3576,13 +3576,13 @@ static DRIVER_INIT( f1en )
 
 static DRIVER_INIT( f1lap )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 }
 
 
 static DRIVER_INIT( ga2 )
 {
-	common_init(extra_custom_io_r, NULL, NULL);
+	segas32_common_init(extra_custom_io_r, NULL, NULL);
 
 	decrypt_ga2_protrom();
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, ga2_dpram_w);
@@ -3592,13 +3592,13 @@ static DRIVER_INIT( ga2 )
 
 static DRIVER_INIT( harddunk )
 {
-	common_init(extra_custom_io_r, NULL, NULL);
+	segas32_common_init(extra_custom_io_r, NULL, NULL);
 }
 
 
 static DRIVER_INIT( holo )
 {
-	common_init(NULL, NULL, NULL);
+	segas32_common_init(NULL, NULL, NULL);
 }
 
 
@@ -3607,7 +3607,7 @@ static DRIVER_INIT( jpark )
 	/* Temp. Patch until we emulate the 'Drive Board', thanks to Malice */
 	UINT16 *pROM = (UINT16 *)memory_region(REGION_CPU1);
 
-	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 
 	pROM[0xC15A8/2] = 0xCD70;
 	pROM[0xC15AA/2] = 0xD8CD;
@@ -3616,7 +3616,7 @@ static DRIVER_INIT( jpark )
 
 static DRIVER_INIT( orunners )
 {
-	common_init(analog_custom_io_r, orunners_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, orunners_custom_io_w, NULL);
 }
 
 
@@ -3635,7 +3635,7 @@ static DRIVER_INIT( radm )
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00
 	};
 
-	common_init(analog_custom_io_r, analog_custom_io_w, radm_default_eeprom);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, radm_default_eeprom);
 }
 
 
@@ -3654,26 +3654,26 @@ static DRIVER_INIT( radr )
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00
 	};
 
-	common_init(analog_custom_io_r, analog_custom_io_w, radr_default_eeprom);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, radr_default_eeprom);
 }
 
 
 static DRIVER_INIT( scross )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xb0, 0xbf, 0, 0, scross_bank_w);
 }
 
 
 static DRIVER_INIT( slipstrm )
 {
-	common_init(analog_custom_io_r, analog_custom_io_w, NULL);
+	segas32_common_init(analog_custom_io_r, analog_custom_io_w, NULL);
 }
 
 
 static DRIVER_INIT( sonic )
 {
-	common_init(sonic_custom_io_r, sonic_custom_io_w, NULL);
+	segas32_common_init(sonic_custom_io_r, sonic_custom_io_w, NULL);
 
 	/* install protection handlers */
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20E5C4, 0x20E5C5, 0, 0, sonic_level_load_protection);
@@ -3682,32 +3682,32 @@ static DRIVER_INIT( sonic )
 
 static DRIVER_INIT( sonicp )
 {
-	common_init(sonic_custom_io_r, sonic_custom_io_w, NULL);
+	segas32_common_init(sonic_custom_io_r, sonic_custom_io_w, NULL);
 }
 
 
 static DRIVER_INIT( spidman )
 {
-	common_init(extra_custom_io_r, NULL, NULL);
+	segas32_common_init(extra_custom_io_r, NULL, NULL);
 }
 
 
 static DRIVER_INIT( svf )
 {
-	common_init(NULL, NULL, NULL);
+	segas32_common_init(NULL, NULL, NULL);
 }
 
 
 static DRIVER_INIT( jleague )
 {
-	common_init(NULL, NULL, NULL);
+	segas32_common_init(NULL, NULL, NULL);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20F700, 0x20F705, 0, 0, jleague_protection_w);
 }
 
 
 static DRIVER_INIT( titlef )
 {
-	common_init(NULL, NULL, NULL);
+	segas32_common_init(NULL, NULL, NULL);
 }
 
 

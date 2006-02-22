@@ -63,7 +63,7 @@ static void flyball_quarter_callback(int scanline)
 }
 
 
-static MACHINE_INIT( flyball )
+static MACHINE_RESET( flyball )
 {
 	int i;
 
@@ -267,7 +267,7 @@ static MACHINE_DRIVER_START( flyball )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((int) ((22. * 1000000) / (262. * 60) + 0.5))
 
-	MDRV_MACHINE_INIT(flyball)
+	MDRV_MACHINE_RESET(flyball)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

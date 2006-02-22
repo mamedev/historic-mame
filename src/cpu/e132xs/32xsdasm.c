@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "e132xs.h"
 
 static const char *L_REG[] =

@@ -41,7 +41,6 @@ Known Issues
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
-#include "state.h"
 #include "sound/2151intf.h"
 #include "sound/k054539.h"
 
@@ -205,6 +204,15 @@ static void sound_nmi(void)
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
+static MACHINE_START( gijoe )
+{
+	state_save_register_global(cur_control2);
+
+	dmadelay_timer = timer_alloc(dmaend_callback);
+	return 0;
+}
+
+
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x100fff) AM_READ(MRA16_RAM)			// Sprites
@@ -348,6 +356,7 @@ static MACHINE_DRIVER_START( gijoe )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(gijoe)
 	MDRV_NVRAM_HANDLER(gijoe)
 
 	/* video hardware */
@@ -449,10 +458,6 @@ static DRIVER_INIT( gijoe )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_4(REGION_GFX2);
-
-	state_save_register_UINT16("main", 0, "control2", &cur_control2, 1);
-
-	dmadelay_timer = timer_alloc(dmaend_callback);
 }
 
 GAME( 1992, gijoe,  0,     gijoe, gijoe, gijoe, ROT0, "Konami", "GI Joe (World)", 0)

@@ -2042,7 +2042,7 @@ static const gfx_decode uopoko_gfxdecodeinfo[] =
 
 ***************************************************************************/
 
-MACHINE_INIT( cave )
+MACHINE_RESET( cave )
 {
 	soundbuf.len = 0;
 
@@ -2053,9 +2053,9 @@ MACHINE_INIT( cave )
 }
 
 /* start with the watchdog armed */
-MACHINE_INIT( cave_watchdog )
+MACHINE_RESET( cave_watchdog )
 {
-	machine_init_cave();
+	machine_reset_cave();
 	watchdog_reset16_w(0,0,0);
 }
 
@@ -2095,7 +2095,7 @@ static MACHINE_DRIVER_START( dfeveron )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2134,7 +2134,7 @@ static MACHINE_DRIVER_START( ddonpach )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2173,7 +2173,7 @@ static MACHINE_DRIVER_START( donpachi )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2217,7 +2217,7 @@ static MACHINE_DRIVER_START( esprade )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2254,7 +2254,7 @@ static MACHINE_DRIVER_START( gaia )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2290,7 +2290,7 @@ static MACHINE_DRIVER_START( guwange )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2331,7 +2331,7 @@ static MACHINE_DRIVER_START( hotdogst )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2381,7 +2381,7 @@ static MACHINE_DRIVER_START( korokoro )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(korokoro)
 
 	/* video hardware */
@@ -2425,7 +2425,7 @@ static MACHINE_DRIVER_START( mazinger )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave_watchdog)
+	MDRV_MACHINE_RESET(cave_watchdog)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2480,7 +2480,7 @@ static MACHINE_DRIVER_START( metmqstr )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave_watchdog)	/* start with the watchdog armed */
+	MDRV_MACHINE_RESET(cave_watchdog)	/* start with the watchdog armed */
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2536,7 +2536,7 @@ static MACHINE_DRIVER_START( pwrinst2 )
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2597,7 +2597,7 @@ static MACHINE_DRIVER_START( sailormn )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 //  MDRV_INTERLEAVE(10)
 
-	MDRV_MACHINE_INIT(cave)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */

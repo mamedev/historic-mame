@@ -12,7 +12,6 @@
 
 #include "driver.h"
 #include "ay8910.h"
-#include "state.h"
 
 #define MAX_OUTPUT 0x7fff
 
@@ -637,42 +636,42 @@ static void AY8910_init(struct AY8910 *PSG, int streams,
 
 static void AY8910_statesave(struct AY8910 *PSG, int sndindex)
 {
-	state_save_register_INT32("AY8910",  sndindex, "register_latch", &PSG->register_latch, 1);
-	state_save_register_UINT8("AY8910",  sndindex, "Regs",           PSG->Regs,            16);
-	state_save_register_INT32("AY8910",  sndindex, "lastEnable",     &PSG->lastEnable,     1);
+	state_save_register_item("AY8910", sndindex, PSG->register_latch);
+	state_save_register_item_array("AY8910", sndindex, PSG->Regs);
+	state_save_register_item("AY8910", sndindex, PSG->lastEnable);
 
-	state_save_register_INT32("AY8910",  sndindex, "PeriodA",        &PSG->PeriodA,        1);
-	state_save_register_INT32("AY8910",  sndindex, "PeriodB",        &PSG->PeriodB,        1);
-	state_save_register_INT32("AY8910",  sndindex, "PeriodC",        &PSG->PeriodC,        1);
-	state_save_register_INT32("AY8910",  sndindex, "PeriodN",        &PSG->PeriodN,        1);
-	state_save_register_INT32("AY8910",  sndindex, "PeriodE",        &PSG->PeriodE,        1);
+	state_save_register_item("AY8910", sndindex, PSG->PeriodA);
+	state_save_register_item("AY8910", sndindex, PSG->PeriodB);
+	state_save_register_item("AY8910", sndindex, PSG->PeriodC);
+	state_save_register_item("AY8910", sndindex, PSG->PeriodN);
+	state_save_register_item("AY8910", sndindex, PSG->PeriodE);
 
-	state_save_register_INT32("AY8910",  sndindex, "CountA",         &PSG->CountA,         1);
-	state_save_register_INT32("AY8910",  sndindex, "CountB",         &PSG->CountB,         1);
-	state_save_register_INT32("AY8910",  sndindex, "CountC",         &PSG->CountC,         1);
-	state_save_register_INT32("AY8910",  sndindex, "CountN",         &PSG->CountN,         1);
-	state_save_register_INT32("AY8910",  sndindex, "CountE",         &PSG->CountE,         1);
+	state_save_register_item("AY8910", sndindex, PSG->CountA);
+	state_save_register_item("AY8910", sndindex, PSG->CountB);
+	state_save_register_item("AY8910", sndindex, PSG->CountC);
+	state_save_register_item("AY8910", sndindex, PSG->CountN);
+	state_save_register_item("AY8910", sndindex, PSG->CountE);
 
-	state_save_register_UINT32("AY8910", sndindex, "VolA",           &PSG->VolA,           1);
-	state_save_register_UINT32("AY8910", sndindex, "VolB",           &PSG->VolB,           1);
-	state_save_register_UINT32("AY8910", sndindex, "VolC",           &PSG->VolC,           1);
-	state_save_register_UINT32("AY8910", sndindex, "VolE",           &PSG->VolE,           1);
+	state_save_register_item("AY8910", sndindex, PSG->VolA);
+	state_save_register_item("AY8910", sndindex, PSG->VolB);
+	state_save_register_item("AY8910", sndindex, PSG->VolC);
+	state_save_register_item("AY8910", sndindex, PSG->VolE);
 
-	state_save_register_UINT8("AY8910",  sndindex, "EnvelopeA",      &PSG->EnvelopeA,      1);
-	state_save_register_UINT8("AY8910",  sndindex, "EnvelopeB",      &PSG->EnvelopeB,      1);
-	state_save_register_UINT8("AY8910",  sndindex, "EnvelopeC",      &PSG->EnvelopeC,      1);
+	state_save_register_item("AY8910", sndindex, PSG->EnvelopeA);
+	state_save_register_item("AY8910", sndindex, PSG->EnvelopeB);
+	state_save_register_item("AY8910", sndindex, PSG->EnvelopeC);
 
-	state_save_register_UINT8("AY8910",  sndindex, "OutputA",        &PSG->OutputA,        1);
-	state_save_register_UINT8("AY8910",  sndindex, "OutputB",        &PSG->OutputB,        1);
-	state_save_register_UINT8("AY8910",  sndindex, "OutputC",        &PSG->OutputC,        1);
-	state_save_register_UINT8("AY8910",  sndindex, "OutputN",        &PSG->OutputN,        1);
+	state_save_register_item("AY8910", sndindex, PSG->OutputA);
+	state_save_register_item("AY8910", sndindex, PSG->OutputB);
+	state_save_register_item("AY8910", sndindex, PSG->OutputC);
+	state_save_register_item("AY8910", sndindex, PSG->OutputN);
 
-	state_save_register_INT8("AY8910",   sndindex, "CountEnv",       &PSG->CountEnv,       1);
-	state_save_register_UINT8("AY8910",  sndindex, "Hold",           &PSG->Hold,           1);
-	state_save_register_UINT8("AY8910",  sndindex, "Alternate",      &PSG->Alternate,      1);
-	state_save_register_UINT8("AY8910",  sndindex, "Attack",         &PSG->Attack,         1);
-	state_save_register_UINT8("AY8910",  sndindex, "Holding",        &PSG->Holding,        1);
-	state_save_register_INT32("AY8910",  sndindex, "RNG",            &PSG->RNG,            1);
+	state_save_register_item("AY8910", sndindex, PSG->CountEnv);
+	state_save_register_item("AY8910", sndindex, PSG->Hold);
+	state_save_register_item("AY8910", sndindex, PSG->Alternate);
+	state_save_register_item("AY8910", sndindex, PSG->Attack);
+	state_save_register_item("AY8910", sndindex, PSG->Holding);
+	state_save_register_item("AY8910", sndindex, PSG->RNG);
 }
 
 

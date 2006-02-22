@@ -129,7 +129,7 @@ interrupts:
  *
  *************************************/
 
-static MACHINE_INIT( kangaroo )
+static MACHINE_RESET( kangaroo )
 {
 	/* I think there is a bug in the startup checks of the game. At the very */
 	/* beginning, during the RAM check, it goes one byte too far, and ends up */
@@ -407,7 +407,7 @@ static MACHINE_DRIVER_START( kangaroo )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(kangaroo)
+	MDRV_MACHINE_RESET(kangaroo)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

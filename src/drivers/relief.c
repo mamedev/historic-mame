@@ -63,7 +63,7 @@ static void update_interrupts(void)
  *
  *************************************/
 
-static MACHINE_INIT( relief )
+static MACHINE_RESET( relief )
 {
 	atarigen_eeprom_reset();
 	atarivc_reset(atarivc_eof_data, 2);
@@ -341,7 +341,7 @@ static MACHINE_DRIVER_START( relief )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(relief)
+	MDRV_MACHINE_RESET(relief)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

@@ -80,6 +80,7 @@ In other words,the first three types uses the offset and not the color allocated
 */
 
 #include "driver.h"
+#include "profiler.h"
 
 UINT32* stv_vdp2_regs;
 UINT32* stv_vdp2_vram;

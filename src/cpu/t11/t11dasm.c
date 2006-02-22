@@ -11,8 +11,9 @@
 #include <string.h>
 #ifdef	MAME_DEBUG
 #include "driver.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "t11.h"
+#include "eainfo.h"
 
 static const char *regs[8] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 static UINT8 ridx[8] = { T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5,T11_SP,T11_PC };

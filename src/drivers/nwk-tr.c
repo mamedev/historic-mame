@@ -608,7 +608,7 @@ static INTERRUPT_GEN( nwktr_vblank )
 	vblank &= 1;
 }
 
-static MACHINE_INIT( nwktr )
+static MACHINE_RESET( nwktr )
 {
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
@@ -631,7 +631,7 @@ static MACHINE_DRIVER_START( nwktr )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
 
-	MDRV_MACHINE_INIT(nwktr)
+	MDRV_MACHINE_RESET(nwktr)
 	MDRV_NVRAM_HANDLER( timekeeper_0 )
 
  	/* video hardware */

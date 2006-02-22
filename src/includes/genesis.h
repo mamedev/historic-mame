@@ -22,7 +22,8 @@ extern WRITE16_HANDLER( sn76489_w );
 /* In src/drivers/genesis.c */
 extern unsigned char *genesis_z80_ram;
 extern UINT16 *genesis_68k_ram;
-extern MACHINE_INIT( genesis );
+extern MACHINE_START( genesis );
+extern MACHINE_RESET( genesis );
 extern READ16_HANDLER ( megaplay_genesis_io_r );
 extern WRITE16_HANDLER ( genesis_io_w );
 extern UINT16 *genesis_io_ram;
@@ -35,7 +36,6 @@ extern WRITE16_HANDLER(genesis_ctrl_w);
 extern WRITE16_HANDLER ( megaplay_68k_to_z80_w );
 extern READ16_HANDLER ( genesis_io_r );
 extern READ16_HANDLER ( genesis_68k_to_z80_r );
-extern DRIVER_INIT( genesis );
 extern INTERRUPT_GEN( genesis_vblank_interrupt );
 extern void genesis_irq2_interrupt(int state);
 

@@ -198,7 +198,7 @@ static ppi8255_interface ppi8255_intf =
 	{ misc_w,       shr_w          }
 };
 
-static MACHINE_INIT( dribling )
+static MACHINE_RESET( dribling )
 {
 	ppi8255_init(&ppi8255_intf);
 }
@@ -306,7 +306,7 @@ static MACHINE_DRIVER_START( dribling )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(dribling)
+	MDRV_MACHINE_RESET(dribling)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)

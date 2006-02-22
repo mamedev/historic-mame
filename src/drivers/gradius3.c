@@ -77,7 +77,7 @@ static WRITE16_HANDLER( K051960_halfword_w )
 static int irqAen,irqBmask;
 
 
-static MACHINE_INIT( gradius3 )
+static MACHINE_RESET( gradius3 )
 {
 	/* start with cpu B halted */
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
@@ -393,7 +393,7 @@ static MACHINE_DRIVER_START( gradius3 )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(gradius3)
+	MDRV_MACHINE_RESET(gradius3)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)

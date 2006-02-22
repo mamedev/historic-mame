@@ -25,7 +25,6 @@ Revisions:
 #include <math.h>
 #include "driver.h"
 #include "iremga20.h"
-#include "state.h"
 
 //AT
 #define MAX_VOL 256
@@ -63,12 +62,11 @@ struct IremGA20_chip_def
 {
 	const struct IremGA20_interface *intf;
 	unsigned char *rom;
-	int rom_size;
+	INT32 rom_size;
 	sound_stream * stream;
-	int mode;
-	int regs[0x40];
+	INT32 regs[0x40];
 	struct IremGA20_channel_def channel[4];
-	int sr_table[256];
+	INT32 sr_table[256];
 };
 
 void IremGA20_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
@@ -218,7 +216,6 @@ static void *iremga20_start(int sndindex, int clock, const void *config)
 
 	/* Initialize our chip structure */
 	chip->intf = config;
-	chip->mode = 0;
 	chip->rom = memory_region(chip->intf->region);
 	chip->rom_size = memory_region_length(chip->intf->region);
 
@@ -239,7 +236,21 @@ static void *iremga20_start(int sndindex, int clock, const void *config)
 
 	chip->stream = stream_create( 0, 2, Machine->sample_rate, chip, IremGA20_update );
 
-	state_save_register_UINT8("sound", sndindex, "IremGA20_chip",    (UINT8*) chip,   sizeof(*chip));
+	state_save_register_item_array("irem_ga20", sndindex, chip->regs);
+	for (i = 0; i < 4; i++)
+	{
+		char buf[20];
+		sprintf(buf, "irem_ga20.ch%d", i);
+		state_save_register_item(buf, sndindex, chip->channel[i].rate);
+		state_save_register_item(buf, sndindex, chip->channel[i].size);
+		state_save_register_item(buf, sndindex, chip->channel[i].start);
+		state_save_register_item(buf, sndindex, chip->channel[i].pos);
+		state_save_register_item(buf, sndindex, chip->channel[i].end);
+		state_save_register_item(buf, sndindex, chip->channel[i].volume);
+		state_save_register_item(buf, sndindex, chip->channel[i].pan);
+		state_save_register_item(buf, sndindex, chip->channel[i].effect);
+		state_save_register_item(buf, sndindex, chip->channel[i].play);
+	}
 
 	return chip;
 }

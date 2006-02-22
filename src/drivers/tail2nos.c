@@ -26,7 +26,7 @@ VIDEO_START( tail2nos );
 VIDEO_UPDATE( tail2nos );
 
 
-static MACHINE_INIT( tail2nos )
+static MACHINE_RESET( tail2nos )
 {
 	/* point to the extra ROMs */
 	memory_set_bankptr(1,memory_region(REGION_USER1));
@@ -279,7 +279,7 @@ static MACHINE_DRIVER_START( tail2nos )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(tail2nos)
+	MDRV_MACHINE_RESET(tail2nos)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

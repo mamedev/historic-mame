@@ -78,7 +78,9 @@ enum
 	ID_1_BYTE_CHUNKS,
 	ID_2_BYTE_CHUNKS,
 	ID_4_BYTE_CHUNKS,
-	ID_REVERSE_VIEW
+	ID_REVERSE_VIEW,
+
+	ID_SHOW_ENCRYPTED
 };
 
 
@@ -198,6 +200,7 @@ static void disasm_create_window(void);
 static void disasm_recompute_children(debugwin_info *info);
 static void disasm_process_string(debugwin_info *info, const char *string);
 static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam);
+static int disasm_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam);
 static void disasm_update_caption(HWND wnd);
 
 static void console_create_window(void);
@@ -1528,9 +1531,6 @@ static void generic_create_window(int type)
 	// set the child function
 	info->recompute_children = generic_recompute_children;
 
-	// set the CPUnum property
-	debug_view_set_property_UINT32(info->view[0].view, DVP_CPUNUM, 0);
-
 	// get the view width
 	width = debug_view_get_property_UINT32(info->view[0].view, DVP_TOTAL_COLS);
 
@@ -1605,9 +1605,9 @@ static void memory_create_window(void)
 
 	// set up the view to track the initial expression
 	debug_view_begin_update(info->view[0].view);
-	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, "0");
+	debug_view_set_property_string(info->view[0].view, DVP_MEM_EXPRESSION, "0");
 	strcpy(info->edit_defstr, "0");
-	debug_view_set_property_UINT32(info->view[0].view, DVP_TRACK_LIVE, 1);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[0].view);
 
 	// create an edit box and override its key handling
@@ -1650,8 +1650,8 @@ static void memory_create_window(void)
 	info->process_string = memory_process_string;
 
 	// set the CPUnum and spacenum properties
-	debug_view_set_property_UINT32(info->view[0].view, DVP_CPUNUM, (curcpu == -1) ? 0 : curcpu);
-	debug_view_set_property_UINT32(info->view[0].view, DVP_SPACENUM, ADDRESS_SPACE_PROGRAM);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, (curcpu == -1) ? 0 : curcpu);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, ADDRESS_SPACE_PROGRAM);
 
 	// get the view width
 	width = debug_view_get_property_UINT32(info->view[0].view, DVP_TOTAL_COLS);
@@ -1728,7 +1728,7 @@ static void memory_recompute_children(debugwin_info *info)
 static void memory_process_string(debugwin_info *info, const char *string)
 {
 	// set the string to the memory view
-	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, string);
+	debug_view_set_property_string(info->view[0].view, DVP_MEM_EXPRESSION, string);
 
 	// select everything in the edit text box
 	SendMessage(info->editwnd, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
@@ -1742,6 +1742,15 @@ static void memory_process_string(debugwin_info *info, const char *string)
 //============================================================
 //  memory_handle_command
 //============================================================
+
+static void memory_update_checkmarks(debugwin_info *info)
+{
+	CheckMenuItem(GetMenu(info->wnd), ID_1_BYTE_CHUNKS, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK == 1) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(GetMenu(info->wnd), ID_2_BYTE_CHUNKS, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK == 2) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(GetMenu(info->wnd), ID_4_BYTE_CHUNKS, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK == 4) ? MF_CHECKED : MF_UNCHECKED));
+	CheckMenuItem(GetMenu(info->wnd), ID_REVERSE_VIEW, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_REVERSE_VIEW) ? MF_CHECKED : MF_UNCHECKED));
+}
+
 
 static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
@@ -1764,8 +1773,8 @@ static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 								if (sel-- == 0)
 								{
 									debug_view_begin_update(info->view[0].view);
-									debug_view_set_property_UINT32(info->view[0].view, DVP_CPUNUM, cpunum);
-									debug_view_set_property_UINT32(info->view[0].view, DVP_SPACENUM, spacenum);
+									debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, cpunum);
+									debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, spacenum);
 									debug_view_end_update(info->view[0].view);
 									memory_update_caption(info->wnd);
 								}
@@ -1784,26 +1793,30 @@ static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 			{
 				case ID_1_BYTE_CHUNKS:
 					debug_view_begin_update(info->view[0].view);
-					debug_view_set_property_UINT32(info->view[0].view, DVP_BYTES_PER_CHUNK, 1);
+					debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, 1);
 					debug_view_end_update(info->view[0].view);
+					memory_update_checkmarks(info);
 					return 1;
 
 				case ID_2_BYTE_CHUNKS:
 					debug_view_begin_update(info->view[0].view);
-					debug_view_set_property_UINT32(info->view[0].view, DVP_BYTES_PER_CHUNK, 2);
+					debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, 2);
 					debug_view_end_update(info->view[0].view);
+					memory_update_checkmarks(info);
 					return 1;
 
 				case ID_4_BYTE_CHUNKS:
 					debug_view_begin_update(info->view[0].view);
-					debug_view_set_property_UINT32(info->view[0].view, DVP_BYTES_PER_CHUNK, 4);
+					debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, 4);
 					debug_view_end_update(info->view[0].view);
+					memory_update_checkmarks(info);
 					return 1;
 
 				case ID_REVERSE_VIEW:
 					debug_view_begin_update(info->view[0].view);
-					debug_view_set_property_UINT32(info->view[0].view, DVP_REVERSE_VIEW, !debug_view_get_property_UINT32(info->view[0].view, DVP_REVERSE_VIEW));
+					debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_REVERSE_VIEW, !debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_REVERSE_VIEW));
 					debug_view_end_update(info->view[0].view);
+					memory_update_checkmarks(info);
 					return 1;
 			}
 			break;
@@ -1856,8 +1869,8 @@ static void memory_update_caption(HWND wnd)
 	char title[100];
 
 	// get the properties
-	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_CPUNUM);
-	spacenum = debug_view_get_property_UINT32(info->view[0].view, DVP_SPACENUM);
+	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM);
+	spacenum = debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM);
 
 	// then update the caption
 	sprintf(title, "Memory: %s (%d) %s memory", cpunum_name(cpunum), cpunum, address_space_name[spacenum]);
@@ -1875,6 +1888,7 @@ static void disasm_create_window(void)
 	int curcpu = cpu_getactivecpu(), cursel = 0;
 	debugwin_info *info;
 	UINT32 width, cpunum;
+	HMENU optionsmenu;
 	RECT bounds;
 
 	// create the window
@@ -1882,14 +1896,20 @@ static void disasm_create_window(void)
 	if (!info || !debug_view_create(info, 0, DVT_DISASSEMBLY))
 		return;
 
+	// create the options menu
+	optionsmenu = CreatePopupMenu();
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
+	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
+
 	// set the handlers
 	info->handle_command = disasm_handle_command;
+	info->handle_key = disasm_handle_key;
 
 	// set up the view to track the initial expression
 	debug_view_begin_update(info->view[0].view);
-	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, "pc");
+	debug_view_set_property_string(info->view[0].view, DVP_DASM_EXPRESSION, "pc");
 	strcpy(info->edit_defstr, "pc");
-	debug_view_set_property_UINT32(info->view[0].view, DVP_TRACK_LIVE, 1);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_DASM_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[0].view);
 
 	// create an edit box and override its key handling
@@ -1931,7 +1951,7 @@ static void disasm_create_window(void)
 	info->process_string = disasm_process_string;
 
 	// set the CPUnum and spacenum properties
-	debug_view_set_property_UINT32(info->view[0].view, DVP_CPUNUM, (curcpu == -1) ? 0 : curcpu);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM, (curcpu == -1) ? 0 : curcpu);
 
 	// get the view width
 	width = debug_view_get_property_UINT32(info->view[0].view, DVP_TOTAL_COLS);
@@ -2008,7 +2028,7 @@ static void disasm_recompute_children(debugwin_info *info)
 static void disasm_process_string(debugwin_info *info, const char *string)
 {
 	// set the string to the disasm view
-	debug_view_set_property_string(info->view[0].view, DVP_EXPRESSION, string);
+	debug_view_set_property_string(info->view[0].view, DVP_DASM_EXPRESSION, string);
 
 	// select everything in the edit text box
 	SendMessage(info->editwnd, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
@@ -2022,6 +2042,12 @@ static void disasm_process_string(debugwin_info *info, const char *string)
 //============================================================
 //  disasm_handle_command
 //============================================================
+
+static void disasm_update_checkmarks(debugwin_info *info)
+{
+	CheckMenuItem(GetMenu(info->wnd), ID_SHOW_ENCRYPTED, MF_BYCOMMAND | (debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_DISPLAY_ENCRYPTED) ? MF_CHECKED : MF_UNCHECKED));
+}
+
 
 static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
@@ -2043,7 +2069,7 @@ static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 							if (sel-- == 0)
 							{
 								debug_view_begin_update(info->view[0].view);
-								debug_view_set_property_UINT32(info->view[0].view, DVP_CPUNUM, cpunum);
+								debug_view_set_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM, cpunum);
 								debug_view_end_update(info->view[0].view);
 								disasm_update_caption(info->wnd);
 							}
@@ -2055,8 +2081,41 @@ static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 			}
 			break;
 		}
+
+		// menu selections
+		case 0:
+			switch (LOWORD(wparam))
+			{
+				case ID_SHOW_ENCRYPTED:
+					debug_view_begin_update(info->view[0].view);
+					debug_view_set_property_UINT32(info->view[0].view, DVP_DASM_DISPLAY_ENCRYPTED, !debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_DISPLAY_ENCRYPTED));
+					debug_view_end_update(info->view[0].view);
+					disasm_update_checkmarks(info);
+					return 1;
+			}
+			break;
 	}
 	return global_handle_command(info, wparam, lparam);
+}
+
+
+
+//============================================================
+//  disasm_handle_key
+//============================================================
+
+static int disasm_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
+{
+	if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+	{
+		switch (wparam)
+		{
+			case 'E':
+				SendMessage(info->wnd, WM_COMMAND, ID_SHOW_ENCRYPTED, 0);
+				return 1;
+		}
+	}
+	return global_handle_key(info, wparam, lparam);
 }
 
 
@@ -2072,7 +2131,7 @@ static void disasm_update_caption(HWND wnd)
 	UINT32 cpunum;
 
 	// get the properties
-	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_CPUNUM);
+	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM);
 
 	// then update the caption
 	sprintf(title, "Disassembly: %s (%d)", cpunum_name(cpunum), cpunum);
@@ -2112,8 +2171,8 @@ void console_create_window(void)
 
 	// set up the disassembly view to track the current pc
 	debug_view_begin_update(info->view[1].view);
-	debug_view_set_property_string(info->view[1].view, DVP_EXPRESSION, "pc");
-	debug_view_set_property_UINT32(info->view[1].view, DVP_TRACK_LIVE, 1);
+	debug_view_set_property_string(info->view[1].view, DVP_DASM_EXPRESSION, "pc");
+	debug_view_set_property_UINT32(info->view[1].view, DVP_DASM_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[1].view);
 
 	// create an edit box and override its key handling
@@ -2139,9 +2198,8 @@ void console_create_window(void)
 			UINT32 minwidth, maxwidth;
 
 			// point all views to the new CPU number
-			debug_view_set_property_UINT32(info->view[0].view, DVP_CPUNUM, cpunum);
-			debug_view_set_property_UINT32(info->view[1].view, DVP_CPUNUM, cpunum);
-			debug_view_set_property_UINT32(info->view[2].view, DVP_CPUNUM, cpunum);
+			debug_view_set_property_UINT32(info->view[1].view, DVP_DASM_CPUNUM, cpunum);
+			debug_view_set_property_UINT32(info->view[2].view, DVP_REGS_CPUNUM, cpunum);
 
 			// get the total width of all three children
 			conchars = debug_view_get_property_UINT32(info->view[0].view, DVP_TOTAL_COLS);
@@ -2276,12 +2334,12 @@ static void console_process_string(debugwin_info *info, const char *string)
 static void console_set_cpunum(int cpunum)
 {
 	TCHAR title[256], curtitle[256];
-	int viewnum;
 
 	// first set all the views to the new cpu number
-	for (viewnum = 0; viewnum < MAX_VIEWS; viewnum++)
-		if (main_console->view[viewnum].view)
-			debug_view_set_property_UINT32(main_console->view[viewnum].view, DVP_CPUNUM, cpunum);
+	if (main_console->view[1].view)
+		debug_view_set_property_UINT32(main_console->view[1].view, DVP_DASM_CPUNUM, cpunum);
+	if (main_console->view[2].view)
+		debug_view_set_property_UINT32(main_console->view[2].view, DVP_REGS_CPUNUM, cpunum);
 
 	// then update the caption
 	sprintf(title, "Debug: %s - CPU %d (%s)", Machine->gamedrv->name, cpu_getactivecpu(), activecpu_name());

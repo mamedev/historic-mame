@@ -15,7 +15,7 @@
 #include <math.h>
 #define exp _exp
 #include "cpuintrf.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "tms32031.h"
 
 

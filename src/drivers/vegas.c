@@ -558,7 +558,7 @@ static VIDEO_UPDATE( vegas )
  *
  *************************************/
 
-static MACHINE_INIT( vegas )
+static MACHINE_RESET( vegas )
 {
 	/* set the fastest DRC options, but strict verification */
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY + MIPS3DRC_FLUSH_PC);
@@ -2224,7 +2224,7 @@ MACHINE_DRIVER_START( vegascore )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(vegas)
+	MDRV_MACHINE_RESET(vegas)
 	MDRV_NVRAM_HANDLER(timekeeper_save)
 
 	/* video hardware */

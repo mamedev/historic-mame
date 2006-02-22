@@ -6,7 +6,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/random.h"
-#include "state.h"
 
 UINT8 *st0016_charram,*st0016_spriteram,*st0016_paletteram;
 
@@ -26,7 +25,7 @@ UINT8 *st0016_charram,*st0016_spriteram,*st0016_paletteram;
 #define ST0016_CHAR_BANK_MASK (ST0016_MAX_CHAR_BANK-1)
 #define ST0016_PAL_BANK_MASK  (ST0016_MAX_PAL_BANK-1)
 
-static int st0016_spr_bank,st0016_spr2_bank,st0016_pal_bank,st0016_char_bank;
+static INT32 st0016_spr_bank,st0016_spr2_bank,st0016_pal_bank,st0016_char_bank;
 static int spr_dx,spr_dy;
 
 int st0016_game;
@@ -410,15 +409,15 @@ static void st0016_postload(void)
 
 void st0016_save_init(void)
 {
-	state_save_register_int("st0016", 0, "sprbank",&st0016_spr_bank);
-	state_save_register_int("st0016", 0, "sprbank2",&st0016_spr2_bank);
-	state_save_register_int("st0016", 0, "palbank",&st0016_pal_bank);
-	state_save_register_int("st0016", 0, "charbank",&st0016_char_bank);
-	state_save_register_int("st0016", 0, "rombank",&st0016_rom_bank);
-	state_save_register_UINT8("st0016", 0, "vregs",&st0016_vregs[0], 0xc0);
-	state_save_register_UINT8("st0016", 0, "charram",st0016_charram, ST0016_MAX_CHAR_BANK*ST0016_CHAR_BANK_SIZE);
-	state_save_register_UINT8("st0016", 0, "palram",(UINT8*)st0016_paletteram, ST0016_MAX_PAL_BANK*ST0016_PAL_BANK_SIZE);
-	state_save_register_UINT8("st0016", 0, "sprram",(UINT8*)st0016_spriteram, ST0016_MAX_SPR_BANK*ST0016_SPR_BANK_SIZE);
+	state_save_register_global(st0016_spr_bank);
+	state_save_register_global(st0016_spr2_bank);
+	state_save_register_global(st0016_pal_bank);
+	state_save_register_global(st0016_char_bank);
+	state_save_register_global(st0016_rom_bank);
+	state_save_register_global_array(st0016_vregs);
+	state_save_register_global_pointer(st0016_charram, ST0016_MAX_CHAR_BANK*ST0016_CHAR_BANK_SIZE);
+	state_save_register_global_pointer(st0016_paletteram, ST0016_MAX_PAL_BANK*ST0016_PAL_BANK_SIZE);
+	state_save_register_global_pointer(st0016_spriteram, ST0016_MAX_SPR_BANK*ST0016_SPR_BANK_SIZE);
 	state_save_register_func_postload(st0016_postload);
 }
 

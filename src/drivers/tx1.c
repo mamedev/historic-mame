@@ -839,7 +839,7 @@ static ppi8255_interface buggyboy_ppi8255_intf =
 	{ NULL },
 };
 
-static MACHINE_INIT( buggyb1 )
+static MACHINE_RESET( buggyb1 )
 {
        UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
 
@@ -852,7 +852,7 @@ Hence I've patched out part of the main code. It seems to work fine (phew). */
 }
 
 
-static MACHINE_INIT( buggyboy )
+static MACHINE_RESET( buggyboy )
 {
        UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
 
@@ -867,7 +867,7 @@ static MACHINE_INIT( buggyboy )
 }
 
 
-static MACHINE_INIT( tx1 )
+static MACHINE_RESET( tx1 )
 {
         UINT8 *rom = (UINT8 *)memory_region(REGION_CPU1);
        UINT8 *rom_b = (UINT8 *)memory_region(REGION_CPU2);
@@ -921,7 +921,7 @@ static MACHINE_DRIVER_START( tx1 )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(tx1)
+	MDRV_MACHINE_RESET(tx1)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -960,10 +960,10 @@ static MACHINE_DRIVER_START( buggyboy )
 
         MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(buggyboy)
+	MDRV_MACHINE_RESET(buggyboy)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_ASPECT_RATIO(12,3)
         MDRV_SCREEN_SIZE(110*8, 256)
        	MDRV_VISIBLE_AREA(0, 800, 0, 255)
@@ -1008,7 +1008,7 @@ static MACHINE_DRIVER_START( buggyb1 )
          /* Confirm this stuff */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT( buggyb1 )
+	MDRV_MACHINE_RESET( buggyb1 )
 	MDRV_INTERLEAVE(100)                                    /* ? */
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

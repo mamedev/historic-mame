@@ -7,7 +7,6 @@
  */
 
 #include "driver.h"
-#include "state.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6800/m6800.h"
@@ -41,9 +40,9 @@ static UINT8 *m6502_a_shared_ram;
 static UINT8 *m6502_b_shared_ram;
 static UINT8 *m68k_shared_ram;
 
-static int m6809_irq_enable;
-static int m68k_irq_enable;
-static int mcu_irq_enable;
+static UINT8 m6809_irq_enable;
+static UINT8 m68k_irq_enable;
+static UINT8 mcu_irq_enable;
 
 
 /*******************************************************************/
@@ -499,7 +498,18 @@ static struct namco_interface namco_interface =
 
 /*******************************************************************/
 
-static MACHINE_INIT( tceptor )
+static MACHINE_START( tceptor )
+{
+	state_save_register_global(m6809_irq_enable);
+	state_save_register_global(m68k_irq_enable);
+	state_save_register_global(mcu_irq_enable);
+	return 0;
+}
+
+
+/*******************************************************************/
+
+static MACHINE_RESET( tceptor )
 {
 	m6809_irq_enable = 0;
 	m68k_irq_enable = 0;
@@ -538,7 +548,8 @@ static MACHINE_DRIVER_START( tceptor )
 
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
-	MDRV_MACHINE_INIT(tceptor)
+	MDRV_MACHINE_START(tceptor)
+	MDRV_MACHINE_RESET(tceptor)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
@@ -568,16 +579,6 @@ static MACHINE_DRIVER_START( tceptor )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.40)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.40)
 MACHINE_DRIVER_END
-
-
-/*******************************************************************/
-
-static DRIVER_INIT( tceptor )
-{
-	state_save_register_int("tceptor", 0, "m6809_irq_enable",  &m6809_irq_enable);
-	state_save_register_int("tceptor", 0, "m68k_irq_enable",   &m68k_irq_enable);
-	state_save_register_int("tceptor", 0, "mcu_irq_enable",    &mcu_irq_enable);
-}
 
 
 /***************************************************************************
@@ -695,5 +696,5 @@ ROM_END
 
 
 /*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR   COMPANY FULLNAME ) */
-GAME( 1986, tceptor,  0,        tceptor,  tceptor,  tceptor,  ROT0,     "Namco",  "Thunder Ceptor", 0)
-GAME( 1986, tceptor2, tceptor,  tceptor,  tceptor2, tceptor,  ROT0,     "Namco",  "Thunder Ceptor II", 0)
+GAME( 1986, tceptor,  0,        tceptor,  tceptor,  0,        ROT0,     "Namco",  "Thunder Ceptor", 0)
+GAME( 1986, tceptor2, tceptor,  tceptor,  tceptor2, 0,        ROT0,     "Namco",  "Thunder Ceptor II", 0)

@@ -79,7 +79,7 @@ static ppi8255_interface ppi8255_intf =
 	{ NULL,             NULL },				/* Port C write */
 };
 
-MACHINE_INIT( freekckb )
+MACHINE_RESET( freekckb )
 {
 	ppi8255_init(&ppi8255_intf);
 }
@@ -920,7 +920,7 @@ static MACHINE_DRIVER_START( freekckb )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_MACHINE_INIT(freekckb)
+	MDRV_MACHINE_RESET(freekckb)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 

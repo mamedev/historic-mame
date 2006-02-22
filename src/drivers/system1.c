@@ -22,18 +22,18 @@ TODO: - background is misplaced in wbmlju
 #include "machine/segacrpt.h"
 #include "sound/sn76496.h"
 
-static MACHINE_INIT( system1 )
+static MACHINE_RESET( system1 )
 {
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_SINGLE);
 }
 
-static MACHINE_INIT( system1_banked )
+static MACHINE_RESET( system1_banked )
 {
-	machine_init_system1();
+	machine_reset_system1();
 	memory_configure_bank(1, 0, 4, memory_region(REGION_CPU1) + 0x10000, 0x4000);
 }
 
-static MACHINE_INIT( wbml )
+static MACHINE_RESET( wbml )
 {
 	system1_define_background_memory(system1_BACKGROUND_MEMORY_BANKED);
 	memory_configure_bank(1, 0, 4, memory_region(REGION_CPU1) + 0x10000, 0x4000);
@@ -2201,7 +2201,7 @@ static MACHINE_DRIVER_START( system1 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(system1)
+	MDRV_MACHINE_RESET(system1)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2254,7 +2254,7 @@ static MACHINE_DRIVER_START( hvymetal )
 	MDRV_CPU_PROGRAM_MAP(brain_readmem,writemem)
 	MDRV_CPU_IO_MAP(wbml_readport,hvymetal_writeport)
 
-	MDRV_MACHINE_INIT(system1_banked)
+	MDRV_MACHINE_RESET(system1_banked)
 
 MACHINE_DRIVER_END
 
@@ -2267,7 +2267,7 @@ static MACHINE_DRIVER_START( chplft )
 	MDRV_CPU_PROGRAM_MAP(brain_readmem,chplft_writemem)
 	MDRV_CPU_IO_MAP(wbml_readport,chplft_writeport)
 
-	MDRV_MACHINE_INIT(system1_banked)
+	MDRV_MACHINE_RESET(system1_banked)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(choplifter)
@@ -2283,7 +2283,7 @@ static MACHINE_DRIVER_START( brain )
 	MDRV_CPU_PROGRAM_MAP(brain_readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,brain_writeport)
 
-	MDRV_MACHINE_INIT(system1_banked)
+	MDRV_MACHINE_RESET(system1_banked)
 
 MACHINE_DRIVER_END
 
@@ -2296,7 +2296,7 @@ static MACHINE_DRIVER_START( wbml )
 	MDRV_CPU_PROGRAM_MAP(wbml_readmem,wbml_writemem)
 	MDRV_CPU_IO_MAP(wbml_readport,wbml_writeport)
 
-	MDRV_MACHINE_INIT(wbml)
+	MDRV_MACHINE_RESET(wbml)
 
 	/* video hardware */
 	MDRV_VIDEO_UPDATE(wbml)
@@ -2311,7 +2311,7 @@ static MACHINE_DRIVER_START( noboranb )
 	MDRV_CPU_PROGRAM_MAP(brain_readmem,nobo_writemem)
 	MDRV_CPU_IO_MAP(nobo_readport,nobo_writeport)
 
-	MDRV_MACHINE_INIT(system1_banked)
+	MDRV_MACHINE_RESET(system1_banked)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 28*8-1)

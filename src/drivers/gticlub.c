@@ -1124,7 +1124,7 @@ static sharc_config sharc_cfg =
 	BOOT_MODE_EPROM
 };
 
-static MACHINE_INIT( gticlub )
+static MACHINE_RESET( gticlub )
 {
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
@@ -1148,7 +1148,7 @@ static MACHINE_DRIVER_START( gticlub )
 	MDRV_VBLANK_DURATION(0)
 
 	MDRV_NVRAM_HANDLER(gticlub)
-	MDRV_MACHINE_INIT(gticlub)
+	MDRV_MACHINE_RESET(gticlub)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
@@ -1160,7 +1160,7 @@ static MACHINE_DRIVER_START( gticlub )
 	MDRV_VIDEO_UPDATE(gticlub)
 MACHINE_DRIVER_END
 
-static MACHINE_INIT( hangplt )
+static MACHINE_RESET( hangplt )
 {
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
@@ -1189,7 +1189,7 @@ static MACHINE_DRIVER_START( hangplt )
 	MDRV_VBLANK_DURATION(0)
 
 	MDRV_NVRAM_HANDLER(gticlub)
-	MDRV_MACHINE_INIT(hangplt)
+	MDRV_MACHINE_RESET(hangplt)
 
  	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)

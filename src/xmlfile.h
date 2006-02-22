@@ -19,31 +19,59 @@
 
 
 
+enum
+{
+	XML_PARSE_FLAG_WHITESPACE_SIGNIFICANT = 1
+};
+
+
+
 /*************************************
  *
  *  Type definitions
  *
  *************************************/
 
+struct XML_ParserStruct;
+
+
+typedef struct _xml_attribute_node xml_attribute_node;
 struct _xml_attribute_node
 {
-	struct _xml_attribute_node *next;		/* pointer to next attribute node */
+	xml_attribute_node *next;				/* pointer to next attribute node */
 	const char *name;						/* pointer to copy of tag name */
 	const char *value;						/* pointer to copy of value string */
 };
-typedef struct _xml_attribute_node xml_attribute_node;
 
 
+/* In mamecore.h: typedef struct _xml_data_node xml_data_node; */
 struct _xml_data_node
 {
-	struct _xml_data_node *next;			/* pointer to next sibling node */
-	struct _xml_data_node *parent;			/* pointer to parent node */
-	struct _xml_data_node *child;			/* pointer to first child node */
+	xml_data_node *next;					/* pointer to next sibling node */
+	xml_data_node *parent;					/* pointer to parent node */
+	xml_data_node *child;					/* pointer to first child node */
 	const char *name;						/* pointer to copy of tag name */
 	const char *value;						/* pointer to copy of value string */
 	xml_attribute_node *attribute;			/* pointer to array of attribute nodes */
 };
-/* In mamecore.h: typedef struct _xml_data_node xml_data_node; */
+
+
+typedef struct _xml_parse_error xml_parse_error;
+struct _xml_parse_error
+{
+	const char *error_message;
+	int error_line;
+	int error_column;
+};
+
+
+typedef struct _xml_parse_options xml_parse_options;
+struct _xml_parse_options
+{
+	xml_parse_error *error;
+	void (*init_parser)(struct XML_ParserStruct *parser);
+	UINT32 flags;
+};
 
 
 
@@ -54,8 +82,8 @@ struct _xml_data_node
  *************************************/
 
 xml_data_node *xml_file_create(void);
-xml_data_node *xml_file_read(mame_file *file);
-xml_data_node *xml_string_read(const char *string);
+xml_data_node *xml_file_read(mame_file *file, xml_parse_options *opts);
+xml_data_node *xml_string_read(const char *string, xml_parse_options *opts);
 void xml_file_write(xml_data_node *node, mame_file *file);
 void xml_file_free(xml_data_node *node);
 

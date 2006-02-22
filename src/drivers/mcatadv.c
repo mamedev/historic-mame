@@ -491,7 +491,7 @@ struct YM2610interface mcatadv_ym2610_interface =
 	REGION_SOUND1	/* adpcm */
 };
 
-static MACHINE_INIT( mcatadv )
+static MACHINE_RESET( mcatadv )
 {
 	watchdog_reset_r(0);
 }
@@ -518,7 +518,7 @@ static MACHINE_DRIVER_START( mcatadv )
 	MDRV_GFXDECODE(mcatadv_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x2000/2)
 
-	MDRV_MACHINE_INIT(mcatadv)
+	MDRV_MACHINE_RESET(mcatadv)
 
 	MDRV_VIDEO_START(mcatadv)
 	MDRV_VIDEO_EOF(mcatadv) // Buffer Spriteram

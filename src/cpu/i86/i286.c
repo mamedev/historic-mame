@@ -7,9 +7,8 @@
 #include <string.h>
 #include "host.h"
 #include "cpuintrf.h"
+#include "debugger.h"
 #include "memory.h"
-#include "mamedbg.h"
-#include "mame.h"
 #include "state.h"
 
 
@@ -87,7 +86,7 @@ typedef union
 typedef struct
 {
     i286basicregs regs;
-	int 	amask;			/* address mask */
+	UINT32 	amask;			/* address mask */
     UINT32  pc;
     UINT32  prevpc;
 	UINT16	flags;
@@ -107,14 +106,14 @@ typedef struct
 		UINT8 rights;
 	} ldtr, tr;
     int     (*irq_callback)(int irqline);
-    int     AuxVal, OverVal, SignVal, ZeroVal, CarryVal, DirVal; /* 0 or non-0 valued flags */
+    INT32     AuxVal, OverVal, SignVal, ZeroVal, CarryVal, DirVal; /* 0 or non-0 valued flags */
     UINT8	ParityVal;
 	UINT8	TF, IF; 	/* 0 or 1 valued flags */
 	UINT8	int_vector;
 	INT8	nmi_state;
 	INT8	irq_state;
 	INT8	test_state;		/* PJB 03/05 */
-	int 	extra_cycles;       /* extra cycles for interrupts */
+	INT32 	extra_cycles;       /* extra cycles for interrupts */
 } i286_Regs;
 
 int i286_ICount;
@@ -316,40 +315,40 @@ static void i286_init(void)
 {
 	int cpu = cpu_getactivecpu();
 	const char *type = "I286";
-	state_save_register_UINT16(type, cpu, "REGS",			I.regs.w, 8);
-	state_save_register_int(   type, cpu, "AMASK",			&I.amask);
-	state_save_register_UINT32(type, cpu, "PC",				&I.pc, 1);
-	state_save_register_UINT32(type, cpu, "PREVPC",			&I.prevpc, 1);
-	state_save_register_UINT16(type, cpu, "MSW",			&I.msw, 1);
-	state_save_register_UINT32(type, cpu, "BASE",			I.base, 4);
-	state_save_register_UINT16(type, cpu, "SREGS",			I.sregs, 4);
-	state_save_register_UINT16(type, cpu, "LIMIT",			I.limit, 4);
-	state_save_register_UINT8 (type, cpu, "RIGHTS",			I.rights, 4);
-	state_save_register_UINT32(type, cpu, "GDTR_BASE",		&I.gdtr.base, 1);
-	state_save_register_UINT16(type, cpu, "GDTR_LIMIT",		&I.gdtr.limit, 1);
-	state_save_register_UINT32(type, cpu, "IDTR_BASE",		&I.idtr.base, 1);
-	state_save_register_UINT16(type, cpu, "IDTR_LIMIT",		&I.idtr.limit, 1);
-	state_save_register_UINT16(type, cpu, "LDTR_SEL",		&I.ldtr.sel, 1);
-	state_save_register_UINT32(type, cpu, "LDTR_BASE",		&I.ldtr.base, 1);
-	state_save_register_UINT16(type, cpu, "LDTR_LIMIT",		&I.ldtr.limit, 1);
-	state_save_register_UINT8 (type, cpu, "LDTR_RIGHTS",	&I.ldtr.rights, 1);
-	state_save_register_UINT16(type, cpu, "TR_SEL",			&I.tr.sel, 1);
-	state_save_register_UINT32(type, cpu, "TR_BASE",		&I.tr.base, 1);
-	state_save_register_UINT16(type, cpu, "TR_LIMIT",		&I.tr.limit, 1);
-	state_save_register_UINT8 (type, cpu, "TR_RIGHTS",		&I.tr.rights, 1);
-	state_save_register_int(   type, cpu, "AUXVAL",			&I.AuxVal);
-	state_save_register_int(   type, cpu, "OVERVAL",		&I.OverVal);
-	state_save_register_int(   type, cpu, "SIGNVAL",		&I.SignVal);
-	state_save_register_int(   type, cpu, "ZEROVAL",		&I.ZeroVal);
-	state_save_register_int(   type, cpu, "CARRYVAL",		&I.CarryVal);
-	state_save_register_int(   type, cpu, "DIRVAL",			&I.DirVal);
-	state_save_register_UINT8( type, cpu, "PARITYVAL",		&I.ParityVal, 1);
-	state_save_register_UINT8( type, cpu, "TF",				&I.TF, 1);
-	state_save_register_UINT8( type, cpu, "IF",				&I.IF, 1);
-	state_save_register_UINT8( type, cpu, "INT_VECTOR",		&I.int_vector, 1);
-	state_save_register_INT8(  type, cpu, "NMI_STATE",		&I.nmi_state, 1);
-	state_save_register_INT8(  type, cpu, "IRQ_STATE",		&I.irq_state, 1);
-	state_save_register_int(   type, cpu, "EXTRA_CYCLES",	&I.extra_cycles);
+	state_save_register_item_array(type, cpu, I.regs.w);
+	state_save_register_item(type, cpu, I.amask);
+	state_save_register_item(type, cpu, I.pc);
+	state_save_register_item(type, cpu, I.prevpc);
+	state_save_register_item(type, cpu, I.msw);
+	state_save_register_item_array(type, cpu, I.base);
+	state_save_register_item_array(type, cpu, I.sregs);
+	state_save_register_item_array(type, cpu, I.limit);
+	state_save_register_item_array(type, cpu, I.rights);
+	state_save_register_item(type, cpu, I.gdtr.base);
+	state_save_register_item(type, cpu, I.gdtr.limit);
+	state_save_register_item(type, cpu, I.idtr.base);
+	state_save_register_item(type, cpu, I.idtr.limit);
+	state_save_register_item(type, cpu, I.ldtr.sel);
+	state_save_register_item(type, cpu, I.ldtr.base);
+	state_save_register_item(type, cpu, I.ldtr.limit);
+	state_save_register_item(type, cpu, I.ldtr.rights);
+	state_save_register_item(type, cpu, I.tr.sel);
+	state_save_register_item(type, cpu, I.tr.base);
+	state_save_register_item(type, cpu, I.tr.limit);
+	state_save_register_item(type, cpu, I.tr.rights);
+	state_save_register_item(type, cpu, I.AuxVal);
+	state_save_register_item(type, cpu, I.OverVal);
+	state_save_register_item(type, cpu, I.SignVal);
+	state_save_register_item(type, cpu, I.ZeroVal);
+	state_save_register_item(type, cpu, I.CarryVal);
+	state_save_register_item(type, cpu, I.DirVal);
+	state_save_register_item(type, cpu, I.ParityVal);
+	state_save_register_item(type, cpu, I.TF);
+	state_save_register_item(type, cpu, I.IF);
+	state_save_register_item(type, cpu, I.int_vector);
+	state_save_register_item(type, cpu, I.nmi_state);
+	state_save_register_item(type, cpu, I.irq_state);
+	state_save_register_item(type, cpu, I.extra_cycles);
 }
 
 

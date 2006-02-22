@@ -80,7 +80,7 @@ WRITE8_HANDLER( mhavoc_gamma_irq_ack_w )
  *
  *************************************/
 
-MACHINE_INIT( mhavoc )
+MACHINE_RESET( mhavoc )
 {
 	/* cache the base of memory region 1 */
 	ram_base = memory_region(REGION_CPU1);

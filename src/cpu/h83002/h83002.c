@@ -26,9 +26,7 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "osd_cpu.h"
-#include "mamedbg.h"
-#include "state.h"
+#include "debugger.h"
 #include "h83002.h"
 #include "h8priv.h"
 
@@ -329,21 +327,21 @@ static void h8_init(void)
 
 	h8.irq_cb = h8_default_irq_callback;
 
-	state_save_register_UINT32("H8/3002", cpu, "err", &h8.h8err, 1);
-	state_save_register_UINT32("H8/3002", cpu, "regs", &h8.regs[0], 8);
-	state_save_register_UINT32("H8/3002", cpu, "pc", &h8.pc, 1);
-	state_save_register_UINT32("H8/3002", cpu, "ppc", &h8.ppc, 1);
-	state_save_register_UINT32("H8/3002", cpu, "IRQH", &h8.h8_IRQrequestH, 1);
-	state_save_register_UINT32("H8/3002", cpu, "IRQL", &h8.h8_IRQrequestL, 1);
-	state_save_register_UINT8("H8/3002", cpu, "ccr", &h8.ccr, 1);
+	state_save_register_item("H8/3002", cpu, h8.h8err);
+	state_save_register_item_array("H8/3002", cpu, h8.regs);
+	state_save_register_item("H8/3002", cpu, h8.pc);
+	state_save_register_item("H8/3002", cpu, h8.ppc);
+	state_save_register_item("H8/3002", cpu, h8.h8_IRQrequestH);
+	state_save_register_item("H8/3002", cpu, h8.h8_IRQrequestL);
+	state_save_register_item("H8/3002", cpu, h8.ccr);
 
-	state_save_register_UINT8("H8/3002", cpu, "periph", &h8.per_regs[0], 256);
-	state_save_register_UINT8("H8/3002", cpu, "tstr", &h8.h8TSTR, 1);
-	state_save_register_UINT16("H8/3002", cpu, "t0cnt", &h8.h8TCNT0, 1);
-	state_save_register_UINT16("H8/3002", cpu, "t1cnt", &h8.h8TCNT1, 1);
-	state_save_register_UINT16("H8/3002", cpu, "t2cnt", &h8.h8TCNT2, 1);
-	state_save_register_UINT16("H8/3002", cpu, "t3cnt", &h8.h8TCNT3, 1);
-	state_save_register_UINT16("H8/3002", cpu, "t4cnt", &h8.h8TCNT4, 1);
+	state_save_register_item_array("H8/3002", cpu, h8.per_regs);
+	state_save_register_item("H8/3002", cpu, h8.h8TSTR);
+	state_save_register_item("H8/3002", cpu, h8.h8TCNT0);
+	state_save_register_item("H8/3002", cpu, h8.h8TCNT1);
+	state_save_register_item("H8/3002", cpu, h8.h8TCNT2);
+	state_save_register_item("H8/3002", cpu, h8.h8TCNT3);
+	state_save_register_item("H8/3002", cpu, h8.h8TCNT4);
 
 	state_save_register_func_postload(h8_onstateload);
 

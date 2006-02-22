@@ -4,10 +4,7 @@
 // Portability fixes by Richter Belmont
 
 #include "driver.h"	// needed for hack below.
-#include "cpuintrf.h"
-#include "osd_cpu.h"
-#include "mamedbg.h"
-#include "state.h"
+#include "debugger.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -82,8 +79,8 @@ struct v60info {
 	struct cpu_info info;
 	UINT32 reg[68];
 	Flags flags;
-	int irq_line;
-	int nmi_line;
+	UINT8 irq_line;
+	UINT8 nmi_line;
 	int (*irq_cb)(int irqline);
 	UINT32 PPC;
 } v60;
@@ -325,14 +322,14 @@ static void base_init(const char *type)
 	v60.irq_line = CLEAR_LINE;
 	v60.nmi_line = CLEAR_LINE;
 
-	state_save_register_UINT32(type, cpu, "reg",       v60.reg, 68);
-	state_save_register_int   (type, cpu, "irq_line", &v60.irq_line);
-	state_save_register_int   (type, cpu, "nmi_line", &v60.nmi_line);
-	state_save_register_UINT32(type, cpu, "ppc",      &PPC, 1);
-	state_save_register_UINT8 (type, cpu, "f.cy",     &_CY, 1);
-	state_save_register_UINT8 (type, cpu, "f.ov",     &_OV, 1);
-	state_save_register_UINT8 (type, cpu, "f.f",      &_S, 1);
-	state_save_register_UINT8 (type, cpu, "f.z",      &_Z, 1);
+	state_save_register_item_array(type, cpu, v60.reg);
+	state_save_register_item(type, cpu, v60.irq_line);
+	state_save_register_item(type, cpu, v60.nmi_line);
+	state_save_register_item(type, cpu, PPC);
+	state_save_register_item(type, cpu, _CY);
+	state_save_register_item(type, cpu, _OV);
+	state_save_register_item(type, cpu, _S);
+	state_save_register_item(type, cpu, _Z);
 }
 
 void v60_init(void)

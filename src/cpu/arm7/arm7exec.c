@@ -47,11 +47,7 @@
     ARM7_ICOUNT = cycles;
     do
     {
-
-#ifdef MAME_DEBUG
-        if (mame_debug)
-            MAME_Debug();
-#endif
+    	CALL_MAME_DEBUG;
 
         /* load 32 bit instruction */
         pc = R15;

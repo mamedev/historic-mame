@@ -224,7 +224,7 @@ static offs_t atarisy2_opbase_handler(offs_t pc)
 }
 
 
-static MACHINE_INIT( atarisy2 )
+static MACHINE_RESET( atarisy2 )
 {
 	atarigen_eeprom_reset();
 	slapstic_reset();
@@ -1308,7 +1308,7 @@ static MACHINE_DRIVER_START( atarisy2 )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(atarisy2)
+	MDRV_MACHINE_RESET(atarisy2)
 	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */

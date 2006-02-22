@@ -523,7 +523,7 @@ static VIDEO_UPDATE( seattle )
  *
  *************************************/
 
-static MACHINE_INIT( seattle )
+static MACHINE_RESET( seattle )
 {
 	/* set the fastest DRC options, but strict verification */
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
@@ -2514,7 +2514,7 @@ MACHINE_DRIVER_START( seattle_common )
 	MDRV_FRAMES_PER_SECOND(57)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(seattle)
+	MDRV_MACHINE_RESET(seattle)
 	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */

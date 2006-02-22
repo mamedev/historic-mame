@@ -48,7 +48,6 @@
 */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "vidhrdw/segaic24.h"
@@ -267,7 +266,7 @@ static void model2_timer_1_cb(int num) { model2_timer_exp(1, 3); }
 static void model2_timer_2_cb(int num) { model2_timer_exp(2, 4); }
 static void model2_timer_3_cb(int num) { model2_timer_exp(3, 5); }
 
-static MACHINE_INIT(model2o)
+static MACHINE_RESET(model2o)
 {
 	model2_intreq = 0;
 	model2_intena = 0;
@@ -295,9 +294,9 @@ static MACHINE_INIT(model2o)
 	timer_adjust(model2_timers[3], TIME_NEVER, 0, 0);
 }
 
-static MACHINE_INIT(model2)
+static MACHINE_RESET(model2)
 {
-	machine_init_model2o();
+	machine_reset_model2o();
 
 	memory_set_bankptr(4, memory_region(REGION_SOUND1) + 0x200000);
 	memory_set_bankptr(5, memory_region(REGION_SOUND1) + 0x600000);
@@ -306,9 +305,9 @@ static MACHINE_INIT(model2)
 	memcpy(memory_region(REGION_CPU2), memory_region(REGION_CPU2)+0x80000, 16);
 }
 
-static MACHINE_INIT(model2b)
+static MACHINE_RESET(model2b)
 {
-	machine_init_model2();
+	machine_reset_model2();
 
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
@@ -1418,7 +1417,7 @@ static MACHINE_DRIVER_START( model2o )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(model2o)
+	MDRV_MACHINE_RESET(model2o)
 	MDRV_NVRAM_HANDLER( model2 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
@@ -1458,7 +1457,7 @@ static MACHINE_DRIVER_START( model2a )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(model2)
+	MDRV_MACHINE_RESET(model2)
 	MDRV_NVRAM_HANDLER( model2 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
@@ -1503,7 +1502,7 @@ static MACHINE_DRIVER_START( model2b )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(model2b)
+	MDRV_MACHINE_RESET(model2b)
 	MDRV_NVRAM_HANDLER( model2 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)
@@ -1534,7 +1533,7 @@ static MACHINE_DRIVER_START( model2c )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(model2)
+	MDRV_MACHINE_RESET(model2)
 	MDRV_NVRAM_HANDLER( model2 )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_RGB_DIRECT)

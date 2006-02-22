@@ -75,9 +75,7 @@ static void unimpl(void)
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
 		cpunum_set_input_line(cpu_getactivecpu(), INPUT_LINE_HALT, ASSERT_LINE);
-#ifdef MAME_DEBUG
-		debug_key_pressed = 1;
-#endif
+		DEBUGGER_BREAK;
 	}
 }
 

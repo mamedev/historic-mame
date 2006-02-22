@@ -169,7 +169,7 @@ static void machine_init(void)
 }
 
 
-static MACHINE_INIT( fhawk )
+static MACHINE_RESET( fhawk )
 {
 	machine_init();
 	porte0_r = 0;
@@ -178,7 +178,7 @@ static MACHINE_INIT( fhawk )
 	portf1_r = 0;
 }
 
-static MACHINE_INIT( raimais )
+static MACHINE_RESET( raimais )
 {
 	machine_init();
 	porte0_r = 0;
@@ -187,7 +187,7 @@ static MACHINE_INIT( raimais )
 	portf1_r = 0;
 }
 
-static MACHINE_INIT( champwr )
+static MACHINE_RESET( champwr )
 {
 	machine_init();
 	porte0_r = 0;
@@ -197,7 +197,7 @@ static MACHINE_INIT( champwr )
 }
 
 
-static MACHINE_INIT( kurikint )
+static MACHINE_RESET( kurikint )
 {
 	machine_init();
 	porte0_r = 0;
@@ -206,7 +206,7 @@ static MACHINE_INIT( kurikint )
 	portf1_r = 0;
 }
 
-static MACHINE_INIT( evilston )
+static MACHINE_RESET( evilston )
 {
 	machine_init();
 	porte0_r = 0;
@@ -215,7 +215,7 @@ static MACHINE_INIT( evilston )
 	portf1_r = 0;
 }
 
-static MACHINE_INIT( puzznic )
+static MACHINE_RESET( puzznic )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -224,7 +224,7 @@ static MACHINE_INIT( puzznic )
 	portf1_r = input_port_3_r;
 }
 
-static MACHINE_INIT( plotting )
+static MACHINE_RESET( plotting )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -233,7 +233,7 @@ static MACHINE_INIT( plotting )
 	portf1_r = input_port_3_r;
 }
 
-static MACHINE_INIT( palamed )
+static MACHINE_RESET( palamed )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -242,7 +242,7 @@ static MACHINE_INIT( palamed )
 	portf1_r = 0;
 }
 
-static MACHINE_INIT( cachat )
+static MACHINE_RESET( cachat )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -251,7 +251,7 @@ static MACHINE_INIT( cachat )
 	portf1_r = 0;
 }
 
-static MACHINE_INIT( horshoes )
+static MACHINE_RESET( horshoes )
 {
 	machine_init();
 	porte0_r = input_port_0_r;
@@ -2312,7 +2312,7 @@ static MACHINE_DRIVER_START( fhawk )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(fhawk)
+	MDRV_MACHINE_RESET(fhawk)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2350,7 +2350,7 @@ static MACHINE_DRIVER_START( champwr )
 	MDRV_CPU_MODIFY("cpu2")
 	MDRV_CPU_PROGRAM_MAP(champwr_2_readmem,champwr_2_writemem)
 
-	MDRV_MACHINE_INIT(champwr)
+	MDRV_MACHINE_RESET(champwr)
 
 	/* sound hardware */
 	MDRV_SOUND_MODIFY("2203")
@@ -2380,7 +2380,7 @@ static MACHINE_DRIVER_START( raimais )
 	MDRV_CPU_MODIFY("cpu2")
 	MDRV_CPU_PROGRAM_MAP(raimais_2_readmem,raimais_2_writemem)
 
-	MDRV_MACHINE_INIT(raimais)
+	MDRV_MACHINE_RESET(raimais)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("2203", YM2610, 8000000)
@@ -2406,7 +2406,7 @@ static MACHINE_DRIVER_START( kurikint )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(kurikint)
+	MDRV_MACHINE_RESET(kurikint)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2450,7 +2450,7 @@ static MACHINE_DRIVER_START( plotting )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(plotting)
+	MDRV_MACHINE_RESET(plotting)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2482,7 +2482,7 @@ static MACHINE_DRIVER_START( puzznic )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(puzznic_readmem,puzznic_writemem)
 
-	MDRV_MACHINE_INIT(puzznic)
+	MDRV_MACHINE_RESET(puzznic)
 MACHINE_DRIVER_END
 
 
@@ -2493,7 +2493,7 @@ static MACHINE_DRIVER_START( horshoes )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(horshoes_readmem,horshoes_writemem)
 
-	MDRV_MACHINE_INIT(horshoes)
+	MDRV_MACHINE_RESET(horshoes)
 MACHINE_DRIVER_END
 
 
@@ -2504,7 +2504,7 @@ static MACHINE_DRIVER_START( palamed )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(palamed_readmem,palamed_writemem)
 
-	MDRV_MACHINE_INIT(palamed)
+	MDRV_MACHINE_RESET(palamed)
 MACHINE_DRIVER_END
 
 
@@ -2515,7 +2515,7 @@ static MACHINE_DRIVER_START( cachat )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(cachat_readmem,cachat_writemem)
 
-	MDRV_MACHINE_INIT(cachat)
+	MDRV_MACHINE_RESET(cachat)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( evilston )
@@ -2533,7 +2533,7 @@ static MACHINE_DRIVER_START( evilston )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(100)
 
-	MDRV_MACHINE_INIT(evilston)
+	MDRV_MACHINE_RESET(evilston)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

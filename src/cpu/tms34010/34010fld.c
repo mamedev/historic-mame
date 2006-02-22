@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "driver.h"
 #include "osd_cpu.h"
-#include "mamedbg.h"
+#include "debugger.h"
 #include "tms34010.h"
 #include "34010ops.h"
 

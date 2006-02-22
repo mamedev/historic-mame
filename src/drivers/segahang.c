@@ -100,7 +100,7 @@ static void hangon_generic_init(void)
  *
  *************************************/
 
-static MACHINE_INIT( hangon )
+static MACHINE_RESET( hangon )
 {
 	/* reset misc components */
 	segaic16_tilemap_reset(0);
@@ -814,7 +814,7 @@ static MACHINE_DRIVER_START( hangon_base )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (262 - 224) / (262 * 60))
 
-	MDRV_MACHINE_INIT(hangon)
+	MDRV_MACHINE_RESET(hangon)
 	MDRV_INTERLEAVE(100)
 
 	/* video hardware */

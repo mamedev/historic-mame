@@ -19,11 +19,8 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 
 unsigned g65816_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, int x_flag);
 
-#include "cpuintrf.h"
-#include "memory.h"
 #include "driver.h"
-#include "state.h"
-#include "mamedbg.h"
+#include "debugger.h"
 
 
 #endif /* HEADER__G65816DS */

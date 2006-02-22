@@ -352,7 +352,7 @@ void seibu_ym2203_irqhandler(int linestate)
 /***************************************************************************/
 
 /* Use this if the sound cpu is cpu 1 */
-MACHINE_INIT( seibu_sound_1 )
+MACHINE_RESET( seibu_sound_1 )
 {
 	int romlength = memory_region_length(REGION_CPU2);
 	UINT8 *rom = memory_region(REGION_CPU2);
@@ -364,7 +364,7 @@ MACHINE_INIT( seibu_sound_1 )
 }
 
 /* Use this if the sound cpu is cpu 2 */
-MACHINE_INIT( seibu_sound_2 )
+MACHINE_RESET( seibu_sound_2 )
 {
 	int romlength = memory_region_length(REGION_CPU3);
 	UINT8 *rom = memory_region(REGION_CPU3);

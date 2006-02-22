@@ -103,7 +103,6 @@ $8000 - $ffff   ROM
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "cpu/m6809/m6809.h"
-#include "state.h"
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
 #include "sound/custom.h"
@@ -120,11 +119,11 @@ extern UINT8 *renegade_videoram2;
 
 #define MCU_BUFFER_MAX 6
 static UINT8 mcu_buffer[MCU_BUFFER_MAX];
-static int mcu_input_size;
-static int mcu_output_byte;
-static int mcu_key;
+static UINT8 mcu_input_size;
+static UINT8 mcu_output_byte;
+static INT8 mcu_key;
 
-static int bank;
+static UINT8 bank;
 
 /********************************************************************************************/
 
@@ -243,15 +242,16 @@ static void setbank(void)
 	memory_set_bankptr(1, &RAM[bank ? 0x10000 : 0x4000]);
 }
 
-static void setup_statesave(void)
+static MACHINE_START( renegade )
 {
-	state_save_register_UINT8("renegade", 0, "mcu_buffer", mcu_buffer, MCU_BUFFER_MAX);
-	state_save_register_int("renegade", 0, "mcu_input_size", &mcu_input_size);
-	state_save_register_int("renegade", 0, "mcu_output_byte", &mcu_output_byte);
-	state_save_register_int("renegade", 0, "mcu_key", &mcu_key);
+	state_save_register_global_array(mcu_buffer);
+	state_save_register_global(mcu_input_size);
+	state_save_register_global(mcu_output_byte);
+	state_save_register_global(mcu_key);
 
-	state_save_register_int("renegade", 0, "bank", &bank);
+	state_save_register_global(bank);
 	state_save_register_func_postload(setbank);
+	return 0;
 }
 
 DRIVER_INIT( kuniokun )
@@ -259,8 +259,6 @@ DRIVER_INIT( kuniokun )
 	mcu_type = 0x85;
 	mcu_encrypt_table = kuniokun_xor_table;
 	mcu_encrypt_table_len = 0x2a;
-
-	setup_statesave();
 }
 
 DRIVER_INIT( renegade )
@@ -268,8 +266,6 @@ DRIVER_INIT( renegade )
 	mcu_type = 0xda;
 	mcu_encrypt_table = renegade_xor_table;
 	mcu_encrypt_table_len = 0x37;
-
-	setup_statesave();
 }
 
 static READ8_HANDLER( mcu_reset_r )
@@ -782,7 +778,7 @@ static struct CustomSound_interface adpcm_interface =
 };
 
 
-static MACHINE_INIT( renegade )
+static MACHINE_RESET( renegade )
 {
 	bank = 0;
 	setbank();
@@ -802,7 +798,8 @@ static MACHINE_DRIVER_START( renegade )
 								/* IRQs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION*2)
-	MDRV_MACHINE_INIT(renegade)
+	MDRV_MACHINE_START(renegade)
+	MDRV_MACHINE_RESET(renegade)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

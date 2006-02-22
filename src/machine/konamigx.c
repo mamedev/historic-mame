@@ -10,7 +10,6 @@
  */
 
 #include "driver.h"
-#include "state.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/konamigx.h"
 #include "machine/random.h"

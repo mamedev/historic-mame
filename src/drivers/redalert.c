@@ -405,7 +405,7 @@ static struct pia6821_interface pia_0_intf =
 	/*irqs   : A/B             */ 0, 0
 };
 
-MACHINE_INIT( demoneye )
+MACHINE_RESET( demoneye )
 {
 	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
@@ -426,7 +426,7 @@ static MACHINE_DRIVER_START( demoneye )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_MACHINE_INIT(demoneye)
+	MDRV_MACHINE_RESET(demoneye)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
